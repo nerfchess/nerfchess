@@ -17,7 +17,7 @@ import {
 } from "@/engine/game";
 import { Color, Move } from "@/engine/types";
 import { boardAtPly } from "@/lib/gameReview";
-import { MPSession, MPStart } from "@/lib/multiplayer";
+import { clearSavedFriendSession, loadSavedFriendSession, MPSession, MPStart } from "@/lib/multiplayer";
 import { isMuted, playCapture, playCheck, playMove as playMoveSfx, setMuted } from "@/lib/sounds";
 
 type View = "setup" | "lobby" | "joining" | "game";
@@ -73,6 +73,7 @@ export default function FriendPage() {
   const sessionRef = useRef<MPSession | null>(null);
   const boardShellRef = useRef<HTMLDivElement | null>(null);
   const clockEnabledRef = useRef(false);
+  const resumeAttemptedRef = useRef(false);
 
   useEffect(() => setMutedState(isMuted()), []);
 
@@ -86,7 +87,16 @@ export default function FriendPage() {
   const startGameFromSetup = (msg: MPStart) => {
     const w = IMPLEMENTED_BY_ID[msg.whiteDrawbackId] ?? pickRandomDrawback();
     const b = IMPLEMENTED_BY_ID[msg.blackDrawbackId] ?? pickRandomDrawback();
-    setGame(newGame(w, b, msg.seed));
+    let nextGame = newGame(w, b, msg.seed);
+    for (const uci of msg.moves ?? []) {
+      const move = legalMoves(nextGame).find((candidate) => moveToUCI(candidate) === uci);
+      if (!move) {
+        setError("Could not restore the saved game position.");
+        break;
+      }
+      nextGame = playMove(nextGame, move);
+    }
+    setGame(nextGame);
     setMyColor(msg.color);
     setCode(msg.id);
     setWhiteMs(msg.wc);
@@ -107,6 +117,9 @@ export default function FriendPage() {
         setError("Disconnected from the game server.");
       } else if (e.type === "opponent-gone") {
         setError("Opponent disconnected.");
+      } else if (e.type === "open") {
+        setCode(e.code);
+        setView("lobby");
       } else if (e.type === "start") {
         startGameFromSetup(e.setup);
       } else if (e.type === "clocks") {
@@ -137,8 +150,26 @@ export default function FriendPage() {
     });
   };
 
+  useEffect(() => {
+    if (resumeAttemptedRef.current || sessionRef.current) return;
+    resumeAttemptedRef.current = true;
+    const saved = loadSavedFriendSession();
+    if (!saved) return;
+    const sess = new MPSession();
+    sessionRef.current = sess;
+    wireSession(sess);
+    setCode(saved.id);
+    setView("joining");
+    sess.resume(saved).catch(() => {
+      clearSavedFriendSession();
+      if (sessionRef.current === sess) sessionRef.current = null;
+      setView("setup");
+    });
+  }, []);
+
   const handleCreate = async () => {
     setError(null);
+    clearSavedFriendSession();
     const sess = new MPSession();
     sessionRef.current = sess;
     wireSession(sess);
@@ -153,6 +184,7 @@ export default function FriendPage() {
 
   const handleJoin = async () => {
     setError(null);
+    clearSavedFriendSession();
     const trimmed = joinCode.trim().toUpperCase();
     if (!trimmed) {
       setError("Enter a code.");
@@ -264,6 +296,7 @@ export default function FriendPage() {
   };
 
   const handleRematch = () => {
+    clearSavedFriendSession();
     sessionRef.current?.destroy();
     sessionRef.current = null;
     setGame(null);

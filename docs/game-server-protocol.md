@@ -23,6 +23,7 @@ References:
 | --- | --- | --- |
 | `create` | `{ "timeSec": 600, "incrementSec": 5 }` | Create a waiting game as White. |
 | `join` | `{ "id": "A2BCD" }` | Join an unstarted game as Black. |
+| `reconnect` | `{ "id": "A2BCD", "color": "w", "token": "..." }` | Resume a reserved seat after reload or a dropped socket. |
 | `move` | `{ "u": "e2e4", "ply": 0 }` | Submit a UCI move for server validation. |
 | `resign` | none | Resign the current game. |
 | `p` | none | Application heartbeat; server replies with `n`. |
@@ -31,8 +32,8 @@ References:
 
 | Type | Data | Purpose |
 | --- | --- | --- |
-| `created` | `{ "id": "A2BCD", "color": "w" }` | Game code assigned. |
-| `start` | setup, color, and `wc`/`bc` | Both seats are present; construct the same initial game. |
+| `created` | `{ "id": "A2BCD", "color": "w", "token": "..." }` | Game code assigned; store `token` privately for reconnect. |
+| `start` | setup, color, token, `wc`/`bc`, and `moves` | Both seats are present, or a player reconnected; construct the same game and replay accepted UCI moves. |
 | `move` | `{ "u", "ply", "wc", "bc" }` | Accepted move and authoritative clocks in milliseconds. |
 | `end` | `{ "result", "wc", "bc" }` | Authoritative terminal result. |
 | `opponentGone` | none | Opponent websocket disconnected. |
@@ -43,3 +44,8 @@ The browser does not apply a submitted move until it receives `move` from the
 server. The server runs the same drawback engine as the UI, verifies the side
 to move and UCI legality, and owns clocks, increments, flag falls, and
 resignations.
+
+Browsers store only their own seat token in local storage. Reloading the page
+opens a new websocket and sends `reconnect`; the server reattaches that seat and
+returns `start` with the authoritative accepted move history. A short disconnect
+grace period prevents normal reloads from immediately notifying the opponent.

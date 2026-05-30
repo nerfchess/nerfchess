@@ -3,6 +3,7 @@ import type { Color } from "@/engine/types";
 export type MPStart = {
   id: string;
   color: Color;
+  token: string;
   whiteDrawbackId: string;
   blackDrawbackId: string;
   seed: number;
@@ -10,6 +11,7 @@ export type MPStart = {
   incrementSec: number;
   wc: number;
   bc: number;
+  moves: string[];
 };
 
 export type MPAcceptedMove = {
@@ -29,7 +31,7 @@ export type MPEnd = {
 };
 
 export type MPEvent =
-  | { type: "open"; code: string }
+  | { type: "open"; code: string; color: Color; token: string }
   | { type: "start"; setup: MPStart }
   | { type: "move"; move: MPAcceptedMove }
   | { type: "end"; end: MPEnd }
@@ -39,13 +41,46 @@ export type MPEvent =
   | { type: "error"; message: string };
 
 type ServerFrame =
-  | { t: "created"; d: { id: string; color: Color } }
+  | { t: "created"; d: { id: string; color: Color; token: string } }
   | { t: "start"; d: MPStart }
   | { t: "move"; d: MPAcceptedMove }
   | { t: "end"; d: MPEnd }
   | { t: "opponentGone" }
   | { t: "error"; d: { code?: string; message?: string } }
   | { t: "n"; d?: { wc?: number; bc?: number } };
+
+export type MPSavedSession = {
+  id: string;
+  color: Color;
+  token: string;
+};
+
+const STORAGE_KEY = "drawbackchess.friendSession.v1";
+
+export function loadSavedFriendSession(): MPSavedSession | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(STORAGE_KEY) || "null") as MPSavedSession | null;
+    if (!parsed?.id || !parsed.token || (parsed.color !== "w" && parsed.color !== "b")) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+export function clearSavedFriendSession() {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(STORAGE_KEY);
+  } catch {}
+}
+
+function saveFriendSession(session: MPSavedSession) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+  } catch {}
+}
 
 function gameServerUrl(): string {
   const configured = process.env.NEXT_PUBLIC_GAME_SERVER_URL?.trim();
@@ -137,10 +172,12 @@ export class MPSession {
     switch (frame.t) {
       case "created":
         this.code = frame.d.id;
-        this.emit({ type: "open", code: frame.d.id });
+        saveFriendSession({ id: frame.d.id, color: frame.d.color, token: frame.d.token });
+        this.emit({ type: "open", code: frame.d.id, color: frame.d.color, token: frame.d.token });
         break;
       case "start":
         this.code = frame.d.id;
+        saveFriendSession({ id: frame.d.id, color: frame.d.color, token: frame.d.token });
         this.emit({ type: "start", setup: frame.d });
         break;
       case "move":
@@ -193,6 +230,23 @@ export class MPSession {
         }
       });
       this.sendFrame("join", { id: code });
+    });
+  }
+
+  async resume(saved: MPSavedSession): Promise<void> {
+    this.code = saved.id;
+    await this.connect();
+    return new Promise((resolve, reject) => {
+      const off = this.on((event) => {
+        if (event.type === "open" || event.type === "start") {
+          off();
+          resolve();
+        } else if (event.type === "error") {
+          off();
+          reject(new Error(event.message));
+        }
+      });
+      this.sendFrame("reconnect", saved);
     });
   }
 

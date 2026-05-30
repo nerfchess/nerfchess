@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { createServer as createHttpServer } from "node:http";
 import { createServer as createHttpsServer } from "node:https";
+import { randomBytes } from "node:crypto";
 import { moveToUCI } from "../src/engine/board";
 import { PLAYABLE_DRAWBACKS } from "../src/engine/drawbacks/library";
 import { DrawbackGame, legalMoves, newGame, playMove, resign } from "../src/engine/game";
@@ -20,11 +21,14 @@ type Client = WebSocket & {
   alive?: boolean;
   matchId?: string;
   color?: Color;
+  token?: string;
 };
 type Match = {
   id: string;
   setup: Setup;
   clients: Partial<Record<Color, Client>>;
+  tokens: Record<Color, string>;
+  disconnectedAt: Partial<Record<Color, number>>;
   game: DrawbackGame | null;
   clocks: Record<Color, number>;
   runningSince: number | null;
@@ -42,6 +46,7 @@ const allowedOrigins = new Set(
     .filter(Boolean),
 );
 const matches = new Map<string, Match>();
+const disconnectGraceMs = 15 * 1000;
 
 function pickDrawbackId(): string {
   const pool = PLAYABLE_DRAWBACKS.filter((drawback) => drawback.id !== "lucky");
@@ -61,6 +66,10 @@ function newCode(): string {
   return code;
 }
 
+function newToken(): string {
+  return randomBytes(16).toString("hex");
+}
+
 function send(client: Client | undefined, t: string, d?: unknown) {
   if (!client || client.readyState !== WebSocket.OPEN) return;
   client.send(JSON.stringify(d === undefined ? { t } : { t, d }));
@@ -69,6 +78,43 @@ function send(client: Client | undefined, t: string, d?: unknown) {
 function broadcast(match: Match, t: string, d?: unknown) {
   send(match.clients.w, t, d);
   send(match.clients.b, t, d);
+}
+
+function attachClient(match: Match, client: Client, color: Color) {
+  const existing = match.clients[color];
+  if (existing && existing !== client && existing.readyState === WebSocket.OPEN) {
+    existing.close(1000, "Reconnected from another tab");
+  }
+  client.matchId = match.id;
+  client.color = color;
+  client.token = match.tokens[color];
+  match.clients[color] = client;
+  delete match.disconnectedAt[color];
+}
+
+function startPayload(match: Match, color: Color) {
+  const clocks = currentClocks(match);
+  return {
+    id: match.id,
+    color,
+    token: match.tokens[color],
+    ...match.setup,
+    wc: Math.round(clocks.w),
+    bc: Math.round(clocks.b),
+    moves: match.game?.board.history.map(moveToUCI) ?? [],
+  };
+}
+
+function sendStart(match: Match, color: Color) {
+  send(match.clients[color], "start", startPayload(match, color));
+  if (match.game?.result) {
+    const clocks = currentClocks(match);
+    send(match.clients[color], "end", {
+      result: match.game.result,
+      wc: Math.round(clocks.w),
+      bc: Math.round(clocks.b),
+    });
+  }
 }
 
 function error(client: Client, code: string, message: string) {
@@ -128,16 +174,17 @@ function createMatch(client: Client, data: unknown) {
       incrementSec,
     },
     clients: { w: client },
+    tokens: { w: newToken(), b: newToken() },
+    disconnectedAt: {},
     game: null,
     clocks: { w: timeSec * 1000, b: timeSec * 1000 },
     runningSince: null,
     createdAt: Date.now(),
     completedAt: null,
   };
-  client.matchId = id;
-  client.color = "w";
   matches.set(id, match);
-  send(client, "created", { id, color: "w" });
+  attachClient(match, client, "w");
+  send(client, "created", { id, color: "w", token: match.tokens.w });
 }
 
 function joinMatch(client: Client, data: unknown) {
@@ -147,23 +194,32 @@ function joinMatch(client: Client, data: unknown) {
   if (!match || match.game || match.clients.b) {
     return error(client, "not_found", "That code is not accepting a player.");
   }
-  client.matchId = id;
-  client.color = "b";
-  match.clients.b = client;
+  attachClient(match, client, "b");
   const white = PLAYABLE_DRAWBACKS.find((drawback) => drawback.id === match.setup.whiteDrawbackId);
   const black = PLAYABLE_DRAWBACKS.find((drawback) => drawback.id === match.setup.blackDrawbackId);
   if (!white || !black) return error(client, "server_error", "Could not prepare this game.");
   match.game = newGame(white, black, match.setup.seed);
   match.runningSince = Date.now();
   for (const color of ["w", "b"] as Color[]) {
-    send(match.clients[color], "start", {
-      id,
-      color,
-      ...match.setup,
-      wc: match.clocks.w,
-      bc: match.clocks.b,
-    });
+    sendStart(match, color);
   }
+}
+
+function reconnectMatch(client: Client, data: unknown) {
+  if (client.matchId) return error(client, "already_joined", "This connection already belongs to a game.");
+  const request = (data || {}) as { id?: unknown; color?: unknown; token?: unknown };
+  const id = String(request.id || "").trim().toUpperCase();
+  const color = request.color === "w" || request.color === "b" ? request.color : null;
+  const token = typeof request.token === "string" ? request.token : "";
+  const match = matches.get(id);
+  if (!match || !color || match.tokens[color] !== token) {
+    return error(client, "reconnect_failed", "Could not resume that game.");
+  }
+  attachClient(match, client, color);
+  if (!match.game) {
+    return send(client, "created", { id, color, token: match.tokens[color] });
+  }
+  sendStart(match, color);
 }
 
 function playClientMove(client: Client, data: unknown) {
@@ -217,6 +273,8 @@ function onMessage(client: Client, raw: RawData) {
       return createMatch(client, frame.d);
     case "join":
       return joinMatch(client, frame.d);
+    case "reconnect":
+      return reconnectMatch(client, frame.d);
     case "move":
       return playClientMove(client, frame.d);
     case "resign":
@@ -275,15 +333,7 @@ websocket.on("connection", (socket) => {
     if (!match) return;
     if (client.color && match.clients[client.color] === client) {
       delete match.clients[client.color];
-    }
-    if (!match.game) {
-      matches.delete(match.id);
-      return;
-    }
-    const opponent = client.color === "w" ? match.clients.b : match.clients.w;
-    send(opponent, "opponentGone");
-    if (!match.clients.w && !match.clients.b) {
-      matches.delete(match.id);
+      match.disconnectedAt[client.color] = Date.now();
     }
   });
 });
@@ -301,8 +351,21 @@ const maintenance = setInterval(() => {
   }
   for (const [id, match] of matches) {
     finishOnFlag(match, now);
+    for (const color of ["w", "b"] as Color[]) {
+      const disconnectedAt = match.disconnectedAt[color];
+      const opponent = color === "w" ? match.clients.b : match.clients.w;
+      if (disconnectedAt && opponent && now - disconnectedAt > disconnectGraceMs) {
+        send(opponent, "opponentGone");
+        delete match.disconnectedAt[color];
+      }
+    }
     const expiry = match.completedAt ?? match.createdAt;
-    if ((match.completedAt && now - expiry > 60 * 60 * 1000) || (!match.game && now - expiry > 30 * 60 * 1000)) {
+    const bothDisconnected = !match.clients.w && !match.clients.b;
+    if (
+      (match.completedAt && now - expiry > 60 * 60 * 1000) ||
+      (!match.game && now - expiry > 30 * 60 * 1000) ||
+      (match.game && bothDisconnected && now - Math.max(match.disconnectedAt.w ?? 0, match.disconnectedAt.b ?? 0) > 30 * 60 * 1000)
+    ) {
       matches.delete(id);
     }
   }

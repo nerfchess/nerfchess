@@ -36,6 +36,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const node_fs_1 = require("node:fs");
 const node_http_1 = require("node:http");
 const node_https_1 = require("node:https");
+const node_crypto_1 = require("node:crypto");
 const board_1 = require("../src/engine/board");
 const library_1 = require("../src/engine/drawbacks/library");
 const game_1 = require("../src/engine/game");
@@ -49,6 +50,7 @@ const allowedOrigins = new Set((process.env.GAME_SERVER_ORIGINS || "")
     .map((origin) => origin.trim())
     .filter(Boolean));
 const matches = new Map();
+const disconnectGraceMs = 15 * 1000;
 function pickDrawbackId() {
     const pool = library_1.PLAYABLE_DRAWBACKS.filter((drawback) => drawback.id !== "lucky");
     return pool[Math.floor(Math.random() * pool.length)].id;
@@ -66,6 +68,9 @@ function newCode() {
         code = randomCode();
     return code;
 }
+function newToken() {
+    return (0, node_crypto_1.randomBytes)(16).toString("hex");
+}
 function send(client, t, d) {
     if (!client || client.readyState !== ws_1.default.OPEN)
         return;
@@ -74,6 +79,40 @@ function send(client, t, d) {
 function broadcast(match, t, d) {
     send(match.clients.w, t, d);
     send(match.clients.b, t, d);
+}
+function attachClient(match, client, color) {
+    const existing = match.clients[color];
+    if (existing && existing !== client && existing.readyState === ws_1.default.OPEN) {
+        existing.close(1000, "Reconnected from another tab");
+    }
+    client.matchId = match.id;
+    client.color = color;
+    client.token = match.tokens[color];
+    match.clients[color] = client;
+    delete match.disconnectedAt[color];
+}
+function startPayload(match, color) {
+    const clocks = currentClocks(match);
+    return {
+        id: match.id,
+        color,
+        token: match.tokens[color],
+        ...match.setup,
+        wc: Math.round(clocks.w),
+        bc: Math.round(clocks.b),
+        moves: match.game?.board.history.map(board_1.moveToUCI) ?? [],
+    };
+}
+function sendStart(match, color) {
+    send(match.clients[color], "start", startPayload(match, color));
+    if (match.game?.result) {
+        const clocks = currentClocks(match);
+        send(match.clients[color], "end", {
+            result: match.game.result,
+            wc: Math.round(clocks.w),
+            bc: Math.round(clocks.b),
+        });
+    }
 }
 function error(client, code, message) {
     send(client, "error", { code, message });
@@ -133,16 +172,17 @@ function createMatch(client, data) {
             incrementSec,
         },
         clients: { w: client },
+        tokens: { w: newToken(), b: newToken() },
+        disconnectedAt: {},
         game: null,
         clocks: { w: timeSec * 1000, b: timeSec * 1000 },
         runningSince: null,
         createdAt: Date.now(),
         completedAt: null,
     };
-    client.matchId = id;
-    client.color = "w";
     matches.set(id, match);
-    send(client, "created", { id, color: "w" });
+    attachClient(match, client, "w");
+    send(client, "created", { id, color: "w", token: match.tokens.w });
 }
 function joinMatch(client, data) {
     if (client.matchId)
@@ -152,9 +192,7 @@ function joinMatch(client, data) {
     if (!match || match.game || match.clients.b) {
         return error(client, "not_found", "That code is not accepting a player.");
     }
-    client.matchId = id;
-    client.color = "b";
-    match.clients.b = client;
+    attachClient(match, client, "b");
     const white = library_1.PLAYABLE_DRAWBACKS.find((drawback) => drawback.id === match.setup.whiteDrawbackId);
     const black = library_1.PLAYABLE_DRAWBACKS.find((drawback) => drawback.id === match.setup.blackDrawbackId);
     if (!white || !black)
@@ -162,14 +200,25 @@ function joinMatch(client, data) {
     match.game = (0, game_1.newGame)(white, black, match.setup.seed);
     match.runningSince = Date.now();
     for (const color of ["w", "b"]) {
-        send(match.clients[color], "start", {
-            id,
-            color,
-            ...match.setup,
-            wc: match.clocks.w,
-            bc: match.clocks.b,
-        });
+        sendStart(match, color);
     }
+}
+function reconnectMatch(client, data) {
+    if (client.matchId)
+        return error(client, "already_joined", "This connection already belongs to a game.");
+    const request = (data || {});
+    const id = String(request.id || "").trim().toUpperCase();
+    const color = request.color === "w" || request.color === "b" ? request.color : null;
+    const token = typeof request.token === "string" ? request.token : "";
+    const match = matches.get(id);
+    if (!match || !color || match.tokens[color] !== token) {
+        return error(client, "reconnect_failed", "Could not resume that game.");
+    }
+    attachClient(match, client, color);
+    if (!match.game) {
+        return send(client, "created", { id, color, token: match.tokens[color] });
+    }
+    sendStart(match, color);
 }
 function playClientMove(client, data) {
     const match = client.matchId ? matches.get(client.matchId) : undefined;
@@ -229,6 +278,8 @@ function onMessage(client, raw) {
             return createMatch(client, frame.d);
         case "join":
             return joinMatch(client, frame.d);
+        case "reconnect":
+            return reconnectMatch(client, frame.d);
         case "move":
             return playClientMove(client, frame.d);
         case "resign":
@@ -283,15 +334,7 @@ websocket.on("connection", (socket) => {
             return;
         if (client.color && match.clients[client.color] === client) {
             delete match.clients[client.color];
-        }
-        if (!match.game) {
-            matches.delete(match.id);
-            return;
-        }
-        const opponent = client.color === "w" ? match.clients.b : match.clients.w;
-        send(opponent, "opponentGone");
-        if (!match.clients.w && !match.clients.b) {
-            matches.delete(match.id);
+            match.disconnectedAt[client.color] = Date.now();
         }
     });
 });
@@ -308,8 +351,19 @@ const maintenance = setInterval(() => {
     }
     for (const [id, match] of matches) {
         finishOnFlag(match, now);
+        for (const color of ["w", "b"]) {
+            const disconnectedAt = match.disconnectedAt[color];
+            const opponent = color === "w" ? match.clients.b : match.clients.w;
+            if (disconnectedAt && opponent && now - disconnectedAt > disconnectGraceMs) {
+                send(opponent, "opponentGone");
+                delete match.disconnectedAt[color];
+            }
+        }
         const expiry = match.completedAt ?? match.createdAt;
-        if ((match.completedAt && now - expiry > 60 * 60 * 1000) || (!match.game && now - expiry > 30 * 60 * 1000)) {
+        const bothDisconnected = !match.clients.w && !match.clients.b;
+        if ((match.completedAt && now - expiry > 60 * 60 * 1000) ||
+            (!match.game && now - expiry > 30 * 60 * 1000) ||
+            (match.game && bothDisconnected && now - Math.max(match.disconnectedAt.w ?? 0, match.disconnectedAt.b ?? 0) > 30 * 60 * 1000)) {
             matches.delete(id);
         }
     }
