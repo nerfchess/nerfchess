@@ -1,38 +1,70 @@
-// Thin wrapper around PeerJS for two-player chess over WebRTC. The free public
-// PeerJS signaling server handles peer discovery; once peers find each other
-// the data channel is direct browser-to-browser.
+import type { Color } from "@/engine/types";
 
-import type { Move } from "@/engine/types";
+export type MPStart = {
+  id: string;
+  color: Color;
+  whiteDrawbackId: string;
+  blackDrawbackId: string;
+  seed: number;
+  timeSec: number;
+  incrementSec: number;
+  wc: number;
+  bc: number;
+};
 
-export type MPMessage =
-  | { type: "init"; whiteDrawbackId: string; blackDrawbackId: string; seed: number; timeSec: number; incrementSec?: number }
-  | { type: "move"; move: Move }
-  | { type: "resign" }
-  | { type: "ping" };
+export type MPAcceptedMove = {
+  u: string;
+  ply: number;
+  wc: number;
+  bc: number;
+};
+
+export type MPEnd = {
+  result: {
+    winner: Color | "draw" | null;
+    reason: string;
+  };
+  wc: number;
+  bc: number;
+};
 
 export type MPEvent =
   | { type: "open"; code: string }
-  | { type: "guest-connected" }
-  | { type: "host-ready" }
-  | { type: "message"; message: MPMessage }
+  | { type: "start"; setup: MPStart }
+  | { type: "move"; move: MPAcceptedMove }
+  | { type: "end"; end: MPEnd }
+  | { type: "clocks"; wc: number; bc: number }
+  | { type: "opponent-gone" }
   | { type: "disconnected" }
   | { type: "error"; message: string };
 
-const ID_PREFIX = "drawbackchess-v1-";
+type ServerFrame =
+  | { t: "created"; d: { id: string; color: Color } }
+  | { t: "start"; d: MPStart }
+  | { t: "move"; d: MPAcceptedMove }
+  | { t: "end"; d: MPEnd }
+  | { t: "opponentGone" }
+  | { t: "error"; d: { code?: string; message?: string } }
+  | { t: "n"; d?: { wc?: number; bc?: number } };
 
-function randomCode(): string {
-  // Avoid 0/O/1/I/L for readability.
-  const chars = "BCDFGHJKMNPQRSTVWXYZ23456789";
-  let s = "";
-  for (let i = 0; i < 5; i++) s += chars[Math.floor(Math.random() * chars.length)];
-  return s;
+function gameServerUrl(): string {
+  const configured = process.env.NEXT_PUBLIC_GAME_SERVER_URL?.trim();
+  if (configured) return configured;
+
+  if (typeof window === "undefined") return "ws://127.0.0.1:8080/socket/v1";
+
+  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+  const isNextDev = window.location.port === "3000";
+  const host = isNextDev
+    ? `${window.location.hostname}:8080`
+    : window.location.host;
+  return `${protocol}//${host}/socket/v1`;
 }
 
 export class MPSession {
-  private peer: any | null = null;
-  private conn: any | null = null;
+  private socket: WebSocket | null = null;
   private listeners: Array<(e: MPEvent) => void> = [];
-  isHost = false;
+  private heartbeat: number | null = null;
   code = "";
 
   on(fn: (e: MPEvent) => void) {
@@ -46,141 +78,140 @@ export class MPSession {
     for (const fn of [...this.listeners]) fn(e);
   }
 
-  async host(): Promise<string> {
-    this.isHost = true;
-    const { default: Peer } = await import("peerjs");
+  private sendFrame(t: string, d?: unknown) {
+    if (this.socket?.readyState !== WebSocket.OPEN) return;
+    this.socket.send(JSON.stringify(d === undefined ? { t } : { t, d }));
+  }
 
-    // Try up to 5 codes — collisions on the free cloud are rare but possible.
-    let lastErr: any = null;
-    for (let attempt = 0; attempt < 5; attempt++) {
-      const code = randomCode();
-      try {
-        await new Promise<void>((resolve, reject) => {
-          let settled = false;
-          const peer = new Peer(ID_PREFIX + code, { debug: 1 });
-          this.peer = peer;
-          peer.on("open", () => {
-            if (settled) return;
-            settled = true;
-            this.code = code;
-            this.emit({ type: "open", code });
-            resolve();
-          });
-          peer.on("error", (e: any) => {
-            const msg = String(e?.type || e?.message || e);
-            console.error("[multiplayer] host peer error:", msg, e);
-            this.emit({ type: "error", message: msg });
-            if (!settled) {
-              settled = true;
-              reject(e);
-            }
-          });
-          peer.on("connection", (c: any) => {
-            this.conn = c;
-            c.on("open", () => {
-              this.emit({ type: "guest-connected" });
-            });
-            this.bindConn(c);
-          });
-        });
-        return code; // success
-      } catch (e: any) {
-        lastErr = e;
-        // Only retry on "unavailable-id" (someone has that code). Other errors
-        // (network, browser-incompatible) bubble up immediately.
-        const type = e?.type || "";
-        if (type !== "unavailable-id") break;
-        try {
-          this.peer?.destroy();
-        } catch {}
-        this.peer = null;
-      }
+  private connect(): Promise<void> {
+    if (this.socket && this.socket.readyState <= WebSocket.OPEN) return Promise.resolve();
+
+    return new Promise((resolve, reject) => {
+      const socket = new WebSocket(gameServerUrl());
+      this.socket = socket;
+      let opened = false;
+
+      const failTimer = window.setTimeout(() => {
+        if (opened) return;
+        reject(new Error("Could not reach the game server."));
+        this.destroy();
+      }, 8000);
+
+      socket.onopen = () => {
+        opened = true;
+        window.clearTimeout(failTimer);
+        this.heartbeat = window.setInterval(() => this.sendFrame("p"), 10000);
+        resolve();
+      };
+
+      socket.onmessage = (event) => this.handleFrame(event.data);
+
+      socket.onerror = () => {
+        const message = "Game server connection failed.";
+        this.emit({ type: "error", message });
+        if (!opened) {
+          window.clearTimeout(failTimer);
+          reject(new Error(message));
+        }
+      };
+
+      socket.onclose = () => {
+        window.clearTimeout(failTimer);
+        if (this.heartbeat) window.clearInterval(this.heartbeat);
+        this.heartbeat = null;
+        this.socket = null;
+        if (opened) this.emit({ type: "disconnected" });
+      };
+    });
+  }
+
+  private handleFrame(data: unknown) {
+    let frame: ServerFrame;
+    try {
+      frame = JSON.parse(String(data)) as ServerFrame;
+    } catch {
+      this.emit({ type: "error", message: "Game server sent an invalid message." });
+      return;
     }
-    throw lastErr ?? new Error("Could not create game");
+
+    switch (frame.t) {
+      case "created":
+        this.code = frame.d.id;
+        this.emit({ type: "open", code: frame.d.id });
+        break;
+      case "start":
+        this.code = frame.d.id;
+        this.emit({ type: "start", setup: frame.d });
+        break;
+      case "move":
+        this.emit({ type: "move", move: frame.d });
+        break;
+      case "end":
+        this.emit({ type: "end", end: frame.d });
+        break;
+      case "opponentGone":
+        this.emit({ type: "opponent-gone" });
+        break;
+      case "error":
+        this.emit({ type: "error", message: frame.d.message || frame.d.code || "Game server error." });
+        break;
+      case "n":
+        if (typeof frame.d?.wc === "number" && typeof frame.d?.bc === "number") {
+          this.emit({ type: "clocks", wc: frame.d.wc, bc: frame.d.bc });
+        }
+        break;
+    }
+  }
+
+  async host(timeSec: number, incrementSec: number): Promise<string> {
+    await this.connect();
+    return new Promise((resolve, reject) => {
+      const off = this.on((event) => {
+        if (event.type === "open") {
+          off();
+          resolve(event.code);
+        } else if (event.type === "error") {
+          off();
+          reject(new Error(event.message));
+        }
+      });
+      this.sendFrame("create", { timeSec, incrementSec });
+    });
   }
 
   async join(code: string): Promise<void> {
-    this.isHost = false;
     this.code = code;
-    const { default: Peer } = await import("peerjs");
-
+    await this.connect();
     return new Promise((resolve, reject) => {
-      let settled = false;
-      const peer = new Peer(undefined as any, { debug: 1 });
-      this.peer = peer;
-
-      // Safety timeout — public PeerJS sometimes silently fails on bad
-      // codes (host disconnected, code never existed). After 8 seconds
-      // surface a "couldn't reach host" error instead of hanging.
-      const timeout = setTimeout(() => {
-        if (settled) return;
-        settled = true;
-        const msg = `No response — check the code, or have your friend re-create the game.`;
-        console.error("[multiplayer] join timeout for code:", code);
-        this.emit({ type: "error", message: msg });
-        reject(new Error(msg));
-      }, 8000);
-
-      peer.on("open", () => {
-        const c = peer.connect(ID_PREFIX + code, { reliable: true });
-        this.conn = c;
-        c.on("open", () => {
-          if (settled) return;
-          settled = true;
-          clearTimeout(timeout);
-          this.emit({ type: "host-ready" });
+      const off = this.on((event) => {
+        if (event.type === "start") {
+          off();
           resolve();
-        });
-        c.on("error", (e: any) => {
-          console.error("[multiplayer] join conn error:", e);
-          this.emit({ type: "error", message: String(e?.message || e) });
-          if (!settled) {
-            settled = true;
-            clearTimeout(timeout);
-            reject(e);
-          }
-        });
-        this.bindConn(c);
-      });
-      peer.on("error", (e: any) => {
-        const msg = String(e?.type || e?.message || e);
-        console.error("[multiplayer] join peer error:", msg, e);
-        let friendly = msg;
-        if (e?.type === "peer-unavailable") {
-          friendly = "That code isn't active. Ask your friend to re-create the game.";
-        }
-        this.emit({ type: "error", message: friendly });
-        if (!settled) {
-          settled = true;
-          clearTimeout(timeout);
-          reject(new Error(friendly));
+        } else if (event.type === "error") {
+          off();
+          reject(new Error(event.message));
         }
       });
+      this.sendFrame("join", { id: code });
     });
   }
 
-  private bindConn(c: any) {
-    c.on("data", (data: any) => {
-      this.emit({ type: "message", message: data as MPMessage });
-    });
-    c.on("close", () => {
-      this.emit({ type: "disconnected" });
-    });
+  sendMove(uci: string, ply: number) {
+    this.sendFrame("move", { u: uci, ply });
   }
 
-  send(message: MPMessage) {
-    this.conn?.send(message);
+  resign() {
+    this.sendFrame("resign");
   }
 
   destroy() {
-    try {
-      this.conn?.close();
-    } catch {}
-    try {
-      this.peer?.destroy();
-    } catch {}
-    this.peer = null;
-    this.conn = null;
+    if (this.heartbeat) window.clearInterval(this.heartbeat);
+    this.heartbeat = null;
+    const socket = this.socket;
+    this.socket = null;
     this.listeners = [];
+    try {
+      socket?.close();
+    } catch {}
   }
 }

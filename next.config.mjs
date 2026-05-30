@@ -10,12 +10,11 @@ const csp = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob:",
   "font-src 'self' data:",
-  "connect-src 'self' https://vitals.vercel-insights.com https://va.vercel-scripts.com https://0.peerjs.com wss://0.peerjs.com",
+  "connect-src 'self' https://vitals.vercel-insights.com https://va.vercel-scripts.com ws: wss:",
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",
   "object-src 'none'",
-  "upgrade-insecure-requests",
 ].join("; ");
 
 const securityHeaders = [

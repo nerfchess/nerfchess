@@ -32,9 +32,9 @@ export default function PrivacyPolicyPage() {
 
       <InfoSection title="Friend games">
         <p>
-          Friend games use PeerJS signaling to establish a browser-to-browser connection.
-          A game code and connection metadata are used to connect players; game setup and
-          moves are then exchanged between the participating browsers.
+          Friend games use the Drawback Chess websocket game server to connect players
+          by code, validate moves, and keep clocks. Active games are kept in server
+          memory while they are in progress.
         </p>
       </InfoSection>
 

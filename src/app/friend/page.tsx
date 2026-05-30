@@ -7,7 +7,7 @@ import { BoardPlayerRow } from "@/components/BoardPlayerRow";
 import { DrawbackCard } from "@/components/DrawbackCard";
 import { GameOver } from "@/components/GameOver";
 import { MoveList } from "@/components/MoveList";
-import { isInCheck } from "@/engine/board";
+import { isInCheck, moveToUCI } from "@/engine/board";
 import { IMPLEMENTED_BY_ID, PLAYABLE_DRAWBACKS } from "@/engine/drawbacks/library";
 import {
   DrawbackGame,
@@ -15,10 +15,9 @@ import {
   newGame,
   playMove,
 } from "@/engine/game";
-import { makeSeed } from "@/engine/rng";
 import { Color, Move } from "@/engine/types";
 import { boardAtPly } from "@/lib/gameReview";
-import { MPMessage, MPSession } from "@/lib/multiplayer";
+import { MPSession, MPStart } from "@/lib/multiplayer";
 import { isMuted, playCapture, playCheck, playMove as playMoveSfx, setMuted } from "@/lib/sounds";
 
 type View = "setup" | "lobby" | "joining" | "game";
@@ -74,13 +73,8 @@ export default function FriendPage() {
   const sessionRef = useRef<MPSession | null>(null);
   const boardShellRef = useRef<HTMLDivElement | null>(null);
   const clockEnabledRef = useRef(false);
-  const incrementMsRef = useRef(0);
 
   useEffect(() => setMutedState(isMuted()), []);
-
-  // Outgoing move signal — when the local game gets a move from our side, send
-  // it to the peer. We dedupe by move count: only send moves we just played.
-  const lastSentCount = useRef(0);
 
   useEffect(() => {
     return () => {
@@ -89,66 +83,54 @@ export default function FriendPage() {
     };
   }, []);
 
-  const startGameFromInit = (msg: Extract<MPMessage, { type: "init" }>, asColor: Color) => {
+  const startGameFromSetup = (msg: MPStart) => {
     const w = IMPLEMENTED_BY_ID[msg.whiteDrawbackId] ?? pickRandomDrawback();
     const b = IMPLEMENTED_BY_ID[msg.blackDrawbackId] ?? pickRandomDrawback();
     setGame(newGame(w, b, msg.seed));
-    setMyColor(asColor);
-    setWhiteMs(msg.timeSec * 1000);
-    setBlackMs(msg.timeSec * 1000);
+    setMyColor(msg.color);
+    setCode(msg.id);
+    setWhiteMs(msg.wc);
+    setBlackMs(msg.bc);
     setHistoryPly(null);
     clockEnabledRef.current = msg.timeSec > 0;
-    incrementMsRef.current = (msg.incrementSec ?? 0) * 1000;
-    lastSentCount.current = 0;
+    setPremoves([]);
     setView("game");
   };
 
-  const addIncrement = (color: Color) => {
-    if (!clockEnabledRef.current || incrementMsRef.current <= 0) return;
-    if (color === "w") setWhiteMs((t) => t + incrementMsRef.current);
-    else setBlackMs((t) => t + incrementMsRef.current);
-  };
-
-  // Set up the session event handler. We do this once a session exists so we
-  // can react to guest joining / host init / opponent moves / disconnect.
-  const wireSession = (sess: MPSession, role: "host" | "guest", payload?: any) => {
+  // Set up the session event handler. The server is authoritative: local moves
+  // are not applied until the websocket sends back an accepted move.
+  const wireSession = (sess: MPSession) => {
     sess.on((e) => {
       if (e.type === "error") {
         setError(e.message);
       } else if (e.type === "disconnected") {
+        setError("Disconnected from the game server.");
+      } else if (e.type === "opponent-gone") {
         setError("Opponent disconnected.");
-      } else if (e.type === "guest-connected" && role === "host") {
-        // Host generates the entire game setup and sends it.
-        const initMsg = payload as Extract<MPMessage, { type: "init" }>;
-        sess.send(initMsg);
-        startGameFromInit(initMsg, "w");
-      } else if (e.type === "message" && role === "guest" && e.message.type === "init") {
-        startGameFromInit(e.message, "b");
-      } else if (e.type === "message" && e.message.type === "move") {
-        // Opponent's move — apply locally
-        const incoming = e.message.move;
+      } else if (e.type === "start") {
+        startGameFromSetup(e.setup);
+      } else if (e.type === "clocks") {
+        setWhiteMs(e.wc);
+        setBlackMs(e.bc);
+      } else if (e.type === "move") {
         setGame((g) => {
           if (!g) return g;
-          // Find the matching legal move (so engine state is consistent)
-          const lm = legalMoves(g).find(
-            (x) =>
-              x.from === incoming.from &&
-              x.to === incoming.to &&
-              (x.promotion ?? null) === (incoming.promotion ?? null),
-          );
+          const lm = legalMoves(g).find((x) => moveToUCI(x) === e.move.u);
           if (!lm) return g;
-          const mover = g.board.turn;
           const next = playMove(g, lm);
-          addIncrement(mover);
+          setWhiteMs(e.move.wc);
+          setBlackMs(e.move.bc);
           if (lm.captured) playCapture();
           else playMoveSfx();
           if (isInCheck(next.board, next.board.turn)) setTimeout(playCheck, 80);
           return { ...next };
         });
-      } else if (e.type === "message" && e.message.type === "resign") {
+      } else if (e.type === "end") {
+        setWhiteMs(e.end.wc);
+        setBlackMs(e.end.bc);
         setGame((g) => {
           if (!g) return g;
-          g.result = { winner: myColor, reason: "opponent resigned" };
+          g.result = e.end.result;
           return { ...g };
         });
       }
@@ -159,18 +141,9 @@ export default function FriendPage() {
     setError(null);
     const sess = new MPSession();
     sessionRef.current = sess;
-    // Pre-generate game setup so it's ready when the guest joins.
-    const init: Extract<MPMessage, { type: "init" }> = {
-      type: "init",
-      whiteDrawbackId: pickRandomDrawback().id,
-      blackDrawbackId: pickRandomDrawback().id,
-      seed: makeSeed(),
-      timeSec: baseSec,
-      incrementSec,
-    };
-    wireSession(sess, "host", init);
+    wireSession(sess);
     try {
-      const c = await sess.host();
+      const c = await sess.host(baseSec, incrementSec);
       setCode(c);
       setView("lobby");
     } catch (e: any) {
@@ -187,11 +160,11 @@ export default function FriendPage() {
     }
     const sess = new MPSession();
     sessionRef.current = sess;
-    wireSession(sess, "guest");
+    wireSession(sess);
     setView("joining");
     try {
       await sess.join(trimmed);
-      // game starts on receipt of `init` from host
+      // The game starts on receipt of the server `start` frame.
     } catch (e: any) {
       setError(String(e?.message || e) || "Failed to connect — check the code.");
       setView("setup");
@@ -248,13 +221,7 @@ export default function FriendPage() {
       (x) => x.from === m.from && x.to === m.to && (x.promotion ?? null) === (m.promotion ?? null),
     );
     if (!lm) return;
-    const next = playMove(game, lm);
-    setGame({ ...next });
-    addIncrement(myColor);
-    sessionRef.current?.send({ type: "move", move: lm });
-    if (lm.captured) playCapture();
-    else playMoveSfx();
-    if (isInCheck(next.board, next.board.turn)) setTimeout(playCheck, 80);
+    sessionRef.current?.sendMove(moveToUCI(lm), game.board.history.length);
   };
 
   // Execute queued premove when our turn comes
@@ -274,13 +241,8 @@ export default function FriendPage() {
       return;
     }
     const tid = setTimeout(() => {
-      const next = playMove(game, m);
-      setGame({ ...next });
-      addIncrement(myColor);
       setPremoves((q) => q.slice(1));
-      sessionRef.current?.send({ type: "move", move: m });
-      if (m.captured) playCapture();
-      else playMoveSfx();
+      sessionRef.current?.sendMove(moveToUCI(m), game.board.history.length);
     }, 90);
     return () => clearTimeout(tid);
   }, [game, premoves, moves, myColor]);
@@ -296,23 +258,9 @@ export default function FriendPage() {
     return () => clearInterval(id);
   }, [game]);
 
-  // Timeout loss
-  useEffect(() => {
-    if (!clockEnabledRef.current || !game || game.result) return;
-    if (whiteMs <= 0) {
-      game.result = { winner: "b", reason: "white ran out of time" };
-      setGame({ ...game });
-    } else if (blackMs <= 0) {
-      game.result = { winner: "w", reason: "black ran out of time" };
-      setGame({ ...game });
-    }
-  }, [whiteMs, blackMs, game]);
-
   const onResign = () => {
     if (!game || game.result) return;
-    sessionRef.current?.send({ type: "resign" });
-    game.result = { winner: myColor === "w" ? "b" : "w", reason: "resignation" };
-    setGame({ ...game });
+    sessionRef.current?.resign();
   };
 
   const handleRematch = () => {
