@@ -65,6 +65,7 @@ Run:
 Set-Location "C:\Users\boda\Documents\GitHub\drawbackchess"
 rg -n "drawbackchess-v1|PeerJS|peerjs|new Peer|0.peerjs.com" src package.json next.config.mjs
 ```
+h
 
 Expected:
 
