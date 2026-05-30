@@ -341,6 +341,34 @@ npm.cmd run deploy
 
 If using same-host `/socket/v1` routing, this env var may be omitted.
 
+After deploy, verify the built frontend bundle contains the intended websocket
+hostname. This catches a missing build-time environment variable:
+
+```powershell
+$html = (Invoke-WebRequest https://play.example.com/friend -UseBasicParsing).Content
+$srcs = [regex]::Matches($html, 'src="([^"]+\.js[^"]*)"') | ForEach-Object { $_.Groups[1].Value } | Select-Object -Unique
+foreach ($src in $srcs) {
+  $url = if ($src.StartsWith("http")) { $src } else { "https://play.example.com" + $src }
+  $js = (Invoke-WebRequest $url -UseBasicParsing).Content
+  if ($js -match "ws\.example\.com|socket/v1|drawbackchess-v1|peerjs") {
+    "$url"
+    ($js | Select-String -Pattern "ws\.example\.com|socket/v1|drawbackchess-v1|peerjs" -AllMatches).Matches.Value | Select-Object -Unique
+  }
+}
+```
+
+Expected:
+
+```text
+ws.example.com
+socket/v1
+```
+
+If the bundle contains `socket/v1` but not `ws.example.com`, it will fall back
+to same-host websocket routing such as `wss://play.example.com/socket/v1`.
+Either configure same-host Tunnel routing or redeploy with
+`NEXT_PUBLIC_GAME_SERVER_URL=wss://ws.example.com/socket/v1`.
+
 ## Step 8: Confirm Browser Websocket Target
 
 Open the deployed friend page:
