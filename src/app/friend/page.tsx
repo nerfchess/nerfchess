@@ -24,6 +24,7 @@ import { isMuted, playCapture, playCheck, playMove as playMoveSfx, setMuted } fr
 
 type View = "setup" | "lobby" | "joining" | "game";
 type PendingPremoveSend = { uci: string; ply: number };
+type PendingLocalMove = { uci: string; ply: number; move: Move };
 
 const TIME_STEPS_SEC = [
   5,
@@ -74,6 +75,7 @@ export default function FriendPage() {
   const [whiteMs, setWhiteMs] = useState(0);
   const [blackMs, setBlackMs] = useState(0);
   const [premoves, setPremoves] = useState<QueuedPremove[]>([]);
+  const [pendingLocalMove, setPendingLocalMoveState] = useState<PendingLocalMove | null>(null);
   const [awaitingPremoveAck, setAwaitingPremoveAckState] = useState(false);
   const [historyPly, setHistoryPly] = useState<number | null>(null);
   const [boardHeight, setBoardHeight] = useState<number | null>(null);
@@ -83,6 +85,7 @@ export default function FriendPage() {
   const clockEnabledRef = useRef(false);
   const awaitingPremoveAckRef = useRef(false);
   const pendingPremoveRef = useRef<PendingPremoveSend | null>(null);
+  const pendingLocalMoveRef = useRef<PendingLocalMove | null>(null);
   const premovesRef = useRef<QueuedPremove[]>([]);
   const premoveTimerRef = useRef<number | null>(null);
   const myColorRef = useRef<Color>("w");
@@ -91,6 +94,11 @@ export default function FriendPage() {
     awaitingPremoveAckRef.current = value;
     pendingPremoveRef.current = value ? pending : null;
     setAwaitingPremoveAckState(value);
+  };
+
+  const setPendingLocalMove = (pending: PendingLocalMove | null) => {
+    pendingLocalMoveRef.current = pending;
+    setPendingLocalMoveState(pending);
   };
 
   useEffect(() => setMutedState(isMuted()), []);
@@ -167,6 +175,7 @@ export default function FriendPage() {
     setHistoryPly(null);
     clockEnabledRef.current = msg.timeSec > 0;
     clearPremoves();
+    setPendingLocalMove(null);
     setAwaitingPremoveAck(false);
     setView("game");
   };
@@ -208,13 +217,16 @@ export default function FriendPage() {
     sess.on((e) => {
       if (e.type === "error") {
         setError(e.message);
+        setPendingLocalMove(null);
         setAwaitingPremoveAck(false);
         clearPremoves();
       } else if (e.type === "disconnected") {
         setError("Disconnected from the game server.");
+        setPendingLocalMove(null);
         setAwaitingPremoveAck(false);
       } else if (e.type === "opponent-gone") {
         setError("Opponent disconnected.");
+        setPendingLocalMove(null);
         setAwaitingPremoveAck(false);
       } else if (e.type === "open") {
         setCode(e.code);
@@ -228,9 +240,11 @@ export default function FriendPage() {
         setGame((g) => {
           if (!g) return g;
           const lm = legalMoves(g).find((x) => moveToUCI(x) === e.move.u);
+          const pendingLocal = pendingLocalMoveRef.current;
           const wasAwaitingPremove = awaitingPremoveAckRef.current;
           const pendingPremove = pendingPremoveRef.current;
           if (!lm) {
+            setPendingLocalMove(null);
             if (wasAwaitingPremove) {
               setAwaitingPremoveAck(false);
               clearPremoves();
@@ -240,6 +254,9 @@ export default function FriendPage() {
           const next = playMove(g, lm);
           setWhiteMs(e.move.wc);
           setBlackMs(e.move.bc);
+          if (pendingLocal) {
+            setPendingLocalMove(null);
+          }
           if (wasAwaitingPremove) {
             setAwaitingPremoveAck(false);
             if (
@@ -263,6 +280,7 @@ export default function FriendPage() {
       } else if (e.type === "end") {
         setWhiteMs(e.end.wc);
         setBlackMs(e.end.bc);
+        setPendingLocalMove(null);
         setAwaitingPremoveAck(false);
         clearPremoves();
         setGame((g) => {
@@ -355,6 +373,10 @@ export default function FriendPage() {
     if (!game || historyPly == null) return null;
     return boardAtPly(game.board.history, historyPly);
   }, [game, historyPly]);
+  const pendingLocalBoard = useMemo(() => {
+    if (!game || !pendingLocalMove || pendingLocalMove.ply !== game.board.history.length) return null;
+    return makeMove(cloneBoard(game.board), pendingLocalMove.move);
+  }, [game, pendingLocalMove]);
   const currentHistoryPly = historyPly ?? game?.board.history.length ?? 0;
   const isReviewingHistory = historyPly != null;
   const handleHistoryPlyChange = (ply: number) => {
@@ -445,9 +467,14 @@ export default function FriendPage() {
     if (!lm) return;
     clearPremoves();
     setAwaitingPremoveAck(false);
-    if (!sessionRef.current?.sendMove(moveToUCI(lm), game.board.history.length)) {
+    const uci = moveToUCI(lm);
+    const ply = game.board.history.length;
+    if (!sessionRef.current?.sendMove(uci, ply)) {
+      setPendingLocalMove(null);
       setError("Disconnected from the game server.");
+      return;
     }
+    setPendingLocalMove({ uci, ply, move: lm });
   };
 
   // Execute queued premove when our turn comes
@@ -460,11 +487,21 @@ export default function FriendPage() {
     if (!awaitingPremoveAck) return;
     const id = window.setTimeout(() => {
       setAwaitingPremoveAck(false);
+      setPendingLocalMove(null);
       clearPremoves();
       setError("The premove did not reach the game server. Try the move again.");
     }, 5000);
     return () => window.clearTimeout(id);
   }, [awaitingPremoveAck]);
+
+  useEffect(() => {
+    if (!pendingLocalMove) return;
+    const id = window.setTimeout(() => {
+      setPendingLocalMove(null);
+      setError("The move did not reach the game server. Try the move again.");
+    }, 5000);
+    return () => window.clearTimeout(id);
+  }, [pendingLocalMove]);
 
   // Clock tick
   useEffect(() => {
@@ -488,6 +525,7 @@ export default function FriendPage() {
     sessionRef.current = null;
     setGame(null);
     clearPremoves();
+    setPendingLocalMove(null);
     setAwaitingPremoveAck(false);
     setHistoryPly(null);
     setView("setup");
@@ -624,10 +662,10 @@ export default function FriendPage() {
   const myDrawback = myColor === "w" ? game.white.drawback : game.black.drawback;
   const opponentDrawback = myColor === "w" ? game.black.drawback : game.white.drawback;
   const lastMove = game.board.history[game.board.history.length - 1] ?? null;
-  const boardForDisplay = reviewBoard ?? virtualBoard ?? game.board;
+  const boardForDisplay = reviewBoard ?? pendingLocalBoard ?? virtualBoard ?? game.board;
   const lastMoveForDisplay = isReviewingHistory
     ? game.board.history[currentHistoryPly - 1] ?? null
-    : lastMove;
+    : pendingLocalMove?.move ?? lastMove;
   const railHeightStyle = boardHeight
     ? ({ "--board-height": `${boardHeight}px` } as CSSProperties)
     : undefined;
@@ -676,7 +714,7 @@ export default function FriendPage() {
                   onMove={handleLocalMove}
                   myColor={myColor}
                   lastMove={lastMoveForDisplay}
-                  disabled={!!game.result || isReviewingHistory || premovePending || awaitingPremoveAck}
+                  disabled={!!game.result || isReviewingHistory || premovePending || awaitingPremoveAck || !!pendingLocalMove}
                   premoveMode={!isReviewingHistory && premoveMode}
                   premoves={isReviewingHistory ? [] : validPremoves}
                   onCancelPremove={clearPremoves}

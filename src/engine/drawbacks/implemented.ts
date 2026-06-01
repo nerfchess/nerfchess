@@ -1,5 +1,5 @@
 import { Drawback } from "../drawback";
-import { findKing } from "../board";
+import { attackedBy, findKing, isInCheck, makeMove } from "../board";
 import { FILE, Move, PieceType, RANK, SQ, Square } from "../types";
 import { MORE_DRAWBACKS } from "./more";
 import { EXTRA_DRAWBACKS } from "./extras";
@@ -124,7 +124,6 @@ export const THREE_CHECK: Drawback = db({
   onTurnStart: (state, ctx) => {
     // If we start a turn in check, increment.
     const s = state as { checks: number };
-    const { isInCheck } = require("../board");
     if (isInCheck(ctx.board, ctx.me)) {
       return { checks: s.checks + 1 };
     }
@@ -453,12 +452,10 @@ export const SLEEPY_KING: Drawback = db({
   icon: "moon",
   implemented: true,
   filterMoves: (moves, _s, ctx) => {
-    const { isInCheck } = require("../board");
     if (isInCheck(ctx.board, ctx.me)) return moves;
     return moves.filter((m) => m.piece !== "k");
   },
   hint: (_s, ctx) => {
-    const { isInCheck } = require("../board");
     if (isInCheck(ctx.board, ctx.me)) {
       return { text: "The king stirs. He can move while in check.", tone: "info" };
     }
@@ -490,13 +487,11 @@ export const SKITTISH: Drawback = db({
   icon: "alert",
   implemented: true,
   filterMoves: (moves, _s, ctx) => {
-    const { isInCheck } = require("../board");
     if (!isInCheck(ctx.board, ctx.me)) return moves;
     const kingMoves = moves.filter((m) => m.piece === "k");
     return kingMoves.length ? kingMoves : moves;
   },
   hint: (_s, ctx) => {
-    const { isInCheck } = require("../board");
     if (!isInCheck(ctx.board, ctx.me)) return null;
     return { text: "You're in check — only the king may flee.", tone: "warn" };
   },
@@ -797,7 +792,6 @@ export const DEER_IN_HEADLIGHTS: Drawback = db({
   icon: "zap",
   implemented: true,
   filterMoves: (moves, _s, ctx) => {
-    const { attackedBy } = require("../board");
     const opp = ctx.me === "w" ? "b" : "w";
     const attacked = attackedBy(ctx.board, opp);
     return moves.filter((m) => !attacked.has(m.from));
@@ -813,7 +807,6 @@ export const RESPECTFUL: Drawback = db({
   icon: "hand",
   implemented: true,
   filterMoves: (moves, _s, ctx) => {
-    const { makeMove, isInCheck } = require("../board");
     const opp = ctx.me === "w" ? "b" : "w";
     return moves.filter((m) => {
       const nb = makeMove(ctx.board, m);
