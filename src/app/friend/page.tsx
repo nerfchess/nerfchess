@@ -7,12 +7,15 @@ import { BoardPlayerRow } from "@/components/BoardPlayerRow";
 import { DrawbackCard } from "@/components/DrawbackCard";
 import { GameOver } from "@/components/GameOver";
 import { MoveList } from "@/components/MoveList";
+import { SettingsPanel } from "@/components/SettingsPanel";
 import { cloneBoard, isInCheck, makeMove, moveToUCI } from "@/engine/board";
 import type { GameContext } from "@/engine/drawback";
 import { IMPLEMENTED_BY_ID, PLAYABLE_DRAWBACKS } from "@/engine/drawbacks/library";
 import {
+  currentHint,
   DrawbackGame,
   legalMoves,
+  makeContext,
   newGame,
   playMove,
 } from "@/engine/game";
@@ -69,6 +72,8 @@ export default function FriendPage() {
   const [incrementSec, setIncrementSec] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [muted, setMutedState] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [confirmingResign, setConfirmingResign] = useState(false);
 
   const [game, setGame] = useState<DrawbackGame | null>(null);
   const [myColor, setMyColor] = useState<Color>("w");
@@ -519,6 +524,12 @@ export default function FriendPage() {
     sessionRef.current?.resign();
   };
 
+  const toggleMute = () => {
+    const next = !muted;
+    setMuted(next);
+    setMutedState(next);
+  };
+
   const handleRematch = () => {
     clearSavedFriendSession();
     sessionRef.current?.destroy();
@@ -660,41 +671,137 @@ export default function FriendPage() {
   // -------- Game view --------
   if (!game) return null;
   const myDrawback = myColor === "w" ? game.white.drawback : game.black.drawback;
+  const myState = myColor === "w" ? game.white.state : game.black.state;
+  const myCtx = makeContext(game, myColor);
+  const visual = myDrawback.visual?.(myState, myCtx);
   const opponentDrawback = myColor === "w" ? game.black.drawback : game.white.drawback;
   const lastMove = game.board.history[game.board.history.length - 1] ?? null;
   const boardForDisplay = reviewBoard ?? pendingLocalBoard ?? virtualBoard ?? game.board;
   const lastMoveForDisplay = isReviewingHistory
     ? game.board.history[currentHistoryPly - 1] ?? null
     : pendingLocalMove?.move ?? lastMove;
+  const hint = currentHint(game, myColor);
+  const forcedSquares = hint?.squares ?? [];
   const railHeightStyle = boardHeight
     ? ({ "--board-height": `${boardHeight}px` } as CSSProperties)
     : undefined;
+  const boardFitClass = hint
+    ? "max-w-[min(92vw,720px,calc(100dvh-17rem))]"
+    : "max-w-[min(92vw,720px,calc(100dvh-14rem))]";
+  const historyActions = confirmingResign ? (
+    <div className="space-y-2">
+      <div className="smallcaps text-[10px] text-parchment-300">Resign the game?</div>
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          onClick={() => {
+            onResign();
+            setConfirmingResign(false);
+          }}
+          className="min-w-0 px-3 py-2 border border-oxblood/70 bg-oxblood/25 text-oxblood-glow hover:bg-oxblood/40 transition text-xs font-display font-semibold tracking-wide"
+        >
+          Yes
+        </button>
+        <button
+          onClick={() => setConfirmingResign(false)}
+          className="min-w-0 px-3 py-2 btn-ghost text-xs font-display tracking-wide"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  ) : (
+    <div className="space-y-2">
+      {error && (
+        <div className="text-xs text-oxblood-glow leading-snug">
+          {error}
+        </div>
+      )}
+      <button
+        onClick={() => setConfirmingResign(true)}
+        className="w-full min-w-0 px-3 py-2 border border-oxblood/40 bg-oxblood/10 text-oxblood-glow hover:bg-oxblood/20 hover:border-oxblood/70 transition text-xs font-display font-semibold tracking-wide"
+      >
+        Resign
+      </button>
+    </div>
+  );
 
   return (
-    <main className="min-h-screen pb-12">
-      <SiteNav />
-      <div className="max-w-[1500px] mx-auto px-3 sm:px-6 space-y-4">
-        <div className="flex items-center justify-between text-sm">
-            <span className="font-display text-parchment-200">
-              <span className="smallcaps text-[11px] text-parchment-400 mr-2">vs Friend</span>
-              <span className="text-gold-leaf font-semibold">{code || joinCode}</span>
-            </span>
-            <button
-              onClick={onResign}
-              className="px-4 py-1.5 rounded-full border border-oxblood/40 bg-oxblood/10 text-oxblood-glow hover:bg-oxblood/20 transition text-xs font-display font-semibold tracking-wide"
-            >
-              Resign
-            </button>
+    <main className="flex h-dvh min-h-0 flex-col overflow-hidden">
+      <nav className="sticky top-0 z-20 mx-auto flex w-full max-w-6xl shrink-0 items-center justify-between px-4 py-2 sm:px-6">
+        <Link href="/" className="font-display text-2xl tracking-tight">
+          drawback<span className="text-gold-leaf">chess</span>
+        </Link>
+        <div className="flex items-center gap-4">
+          <div className="smallcaps hidden text-[11px] text-parchment-400 sm:block">
+            playing {myColor === "w" ? "White" : "Black"} · code {code || joinCode}
           </div>
-        <div className="grid gap-y-4 lg:grid-cols-[280px_minmax(0,1fr)] lg:gap-x-6">
-          <aside className="grid gap-4 lg:grid-rows-[auto_1fr_auto] lg:self-stretch">
+          <button
+            onClick={() => setSettingsOpen(true)}
+            aria-label="Settings"
+            title="Settings"
+            className="w-9 h-9 inline-flex items-center justify-center rounded-full btn-ghost"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+            </svg>
+          </button>
+          <button
+            onClick={toggleMute}
+            aria-label={muted ? "Unmute" : "Mute"}
+            title={muted ? "Sound off" : "Sound on"}
+            className="w-9 h-9 inline-flex items-center justify-center rounded-full btn-ghost"
+          >
+            {muted ? (
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                <line x1="22" y1="9" x2="16" y2="15" />
+                <line x1="16" y1="9" x2="22" y2="15" />
+              </svg>
+            ) : (
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+              </svg>
+            )}
+          </button>
+        </div>
+      </nav>
+
+      <div className="mx-auto flex w-full max-w-[1500px] flex-1 min-h-0 flex-col gap-2 overflow-hidden px-3 pb-6 sm:px-6">
+        {hint && (
+          <div
+            role="status"
+            aria-live="polite"
+            className={
+              "plate shrink-0 p-2 px-3 flex items-center gap-2 " +
+              (hint.tone === "warn"
+                ? "border-oxblood-glow/60 bg-oxblood/15"
+                : "border-gold/40 bg-gold/10")
+            }
+          >
+            <span aria-hidden="true" className="text-gold-leaf font-display font-bold text-lg leading-none">!</span>
+            <span className="font-display text-sm text-parchment">
+              {hint.text}
+            </span>
+          </div>
+        )}
+        <div
+          className="grid min-h-0 flex-1 gap-y-2 lg:grid-cols-[280px_minmax(0,1fr)] lg:gap-x-6"
+          style={railHeightStyle}
+        >
+          <aside className="hidden min-h-0 gap-3 overflow-hidden lg:grid lg:h-[var(--board-height)] lg:grid-rows-[auto_minmax(0,1fr)_auto] lg:self-start lg:py-[3.25rem]">
             <DrawbackCard drawback={opponentDrawback} revealed={!!game.result} />
             <div className="hidden lg:block" />
-            <DrawbackCard drawback={myDrawback} />
+            <DrawbackCard
+              drawback={myDrawback}
+              progress={myDrawback.progress?.(myState, myCtx) ?? null}
+            />
           </aside>
-          <div className="flex flex-col sm:flex-row sm:items-stretch gap-3">
-            <div ref={boardShellRef} className="min-w-0 flex-1">
-              <div data-board-measure className="mx-auto w-full max-w-[min(92vw,720px)]">
+          <div className="flex min-h-0 flex-col gap-3 sm:flex-row sm:items-stretch">
+            <div ref={boardShellRef} className="min-h-0 min-w-0 flex-1">
+              <div data-board-measure className={`mx-auto w-full ${boardFitClass}`}>
                 <BoardPlayerRow
                   board={boardForDisplay}
                   playerColor={myColor === "w" ? "b" : "w"}
@@ -713,6 +820,7 @@ export default function FriendPage() {
                   orientation={myColor}
                   onMove={handleLocalMove}
                   myColor={myColor}
+                  visual={isReviewingHistory ? undefined : { ...(visual ?? {}), highlightSquares: forcedSquares }}
                   lastMove={lastMoveForDisplay}
                   disabled={!!game.result || isReviewingHistory || premovePending || awaitingPremoveAck || !!pendingLocalMove}
                   premoveMode={!isReviewingHistory && premoveMode}
@@ -722,37 +830,35 @@ export default function FriendPage() {
                 <BoardPlayerRow board={boardForDisplay} playerColor={myColor} myColor={myColor} name="You" />
               </div>
             </div>
-            {clockEnabledRef.current && (
-              <div
-                className="grid min-h-0 overflow-hidden gap-3 sm:h-[var(--board-height)] sm:w-52 sm:shrink-0 sm:grid-rows-[auto_minmax(0,1fr)_auto]"
-                style={railHeightStyle}
-              >
+            <div
+              className={
+                "hidden min-h-0 overflow-hidden gap-3 sm:grid sm:h-[var(--board-height)] sm:w-52 sm:shrink-0 " +
+                (clockEnabledRef.current ? "sm:grid-rows-[auto_minmax(0,1fr)_auto]" : "sm:grid-rows-[minmax(0,1fr)]")
+              }
+              style={railHeightStyle}
+            >
+              {clockEnabledRef.current && (
                 <ClockPill
                   ms={myColor === "w" ? blackMs : whiteMs}
                   active={!game.result && game.board.turn !== myColor}
                 />
+              )}
                 <MoveList
                   moves={game.board.history}
                   currentPly={currentHistoryPly}
                   onPlyChange={handleHistoryPlyChange}
                   compact
+                  showHeader={false}
+                  footer={historyActions}
                 />
+              {clockEnabledRef.current && (
                 <ClockPill
                   ms={myColor === "w" ? whiteMs : blackMs}
                   active={!game.result && game.board.turn === myColor}
                 />
-              </div>
-            )}
+              )}
+            </div>
           </div>
-          {!clockEnabledRef.current && (
-            <aside className="lg:col-start-2">
-            <MoveList
-              moves={game.board.history}
-              currentPly={currentHistoryPly}
-              onPlyChange={handleHistoryPlyChange}
-            />
-          </aside>
-          )}
         </div>
       </div>
 
@@ -765,6 +871,7 @@ export default function FriendPage() {
           onRematch={handleRematch}
         />
       )}
+      <SettingsPanel open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </main>
   );
 }
