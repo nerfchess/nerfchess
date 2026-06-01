@@ -1,9 +1,16 @@
 node_modules
 .next
 .open-next
+.wrangler
 out
 .env*
 *.log
 .DS_Store
 next-env.d.ts
 tsconfig.tsbuildinfo
+agent*.jsonl
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/tasks.json

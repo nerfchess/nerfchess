@@ -650,10 +650,11 @@ exports.BLINDED_BY_SUN = db({
     init: (rng) => ({ sq: rng.int(64) }),
     filterMoves: (moves, state, ctx) => {
         const s = state;
-        return moves.filter((m) => {
+        const legal = moves.filter((m) => {
             const nb = (0, board_1.makeMove)(ctx.board, m);
             return !(0, board_1.attackedBy)(nb, ctx.me).has(s.sq);
         });
+        return legal.length ? legal : moves;
     },
     visual: (state) => ({ bannedSquares: [state.sq] }),
 });

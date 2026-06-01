@@ -6,7 +6,7 @@ import { DrawbackCard } from "@/components/DrawbackCard";
 import { GameOver } from "@/components/GameOver";
 import { MoveList } from "@/components/MoveList";
 import { AILevel, pickAIMove } from "@/engine/ai";
-import { Drawback, DrawbackState, GameContext } from "@/engine/drawback";
+import { Drawback, type GameContext } from "@/engine/drawback";
 import { IMPLEMENTED_BY_ID, PLAYABLE_DRAWBACKS } from "@/engine/drawbacks/library";
 import {
   applyTurnStart,
@@ -20,7 +20,7 @@ import {
 } from "@/engine/game";
 import { makeSeed } from "@/engine/rng";
 import { BoardState, Color, Move } from "@/engine/types";
-import { cloneBoard, generateMoves, isInCheck, makeMove } from "@/engine/board";
+import { cloneBoard, isInCheck, makeMove } from "@/engine/board";
 import type { QueuedPremove } from "@/components/Board";
 import { buildCustomDrawback, CustomDrawback } from "@/engine/drawbacks/custom";
 import { isMuted, playCapture, playCheck, playDrawback, playMove as playMoveSfx, setMuted } from "@/lib/sounds";
@@ -28,6 +28,7 @@ import { applyResult, loadRating, saveRating } from "@/lib/rating";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { loadSavedAiGame, restoreSavedAiGame, saveAiGame } from "@/lib/gamePersistence";
 import { boardAtPly } from "@/lib/gameReview";
+import { premoveOptionsFor } from "@/lib/premoves";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, type CSSProperties, useEffect, useMemo, useRef, useState } from "react";
@@ -54,44 +55,6 @@ const BOT_ELO: Record<AILevel, number> = {
   medium: 1500,
   hard: 1900,
 };
-
-// Pseudo-legal premove options on a (turn-flipped) board. The active drawback's
-// filterMoves is applied to the base move list so drawback-illegal premoves
-// aren't queueable. On top of that we synthesize "friendly-target" moves —
-// moves that would land on one of our own non-king pieces — so the user can
-// premove anticipating an opponent capture. These synthetics aren't passed
-// through the drawback filter at queue-time; the real legal-move list at
-// execute-time decides whether they actually play.
-function premoveOptionsFor(
-  board: BoardState,
-  me: Color,
-  drawback: Drawback | null,
-  drawbackState: DrawbackState | null,
-  ctx: GameContext | null,
-): Move[] {
-  const base = generateMoves(board);
-  let filtered: Move[] = base;
-  if (drawback?.filterMoves && drawbackState && ctx) {
-    try {
-      filtered = drawback.filterMoves(base, drawbackState, ctx);
-    } catch {
-      filtered = base;
-    }
-  }
-  const extras: Move[] = [];
-  for (let sq = 0; sq < 64; sq++) {
-    const p = board.pieces[sq];
-    if (!p || p.color !== me || p.type === "k") continue;
-    const tmp = cloneBoard(board);
-    tmp.pieces[sq] = null;
-    const all = generateMoves(tmp);
-    for (const m of all) {
-      if (m.to !== sq) continue;
-      extras.push({ ...m, captured: p.type });
-    }
-  }
-  return [...filtered, ...extras];
-}
 
 export default function GamePageWrapper() {
   return (
@@ -180,7 +143,7 @@ function GamePage() {
           setGame(restored);
           setWhiteMs(saved.whiteMs);
           setBlackMs(saved.blackMs);
-          setPremoves(saved.premoves ?? []);
+          setPremoves([]);
           whiteCustomSpec.current =
             saved.game.white.drawback.kind === "custom" ? saved.game.white.drawback.spec : null;
           blackCustomSpec.current =
@@ -322,7 +285,7 @@ function GamePage() {
   // we keep showing the virtual board so the piece doesn't flicker back to its
   // original square between the AI move landing and our queued move firing.
   const premoveMode = !!game && !game.result && game.board.turn !== myColor && !!virtualBoard;
-  const premovePending = !!game && !game.result && game.board.turn === myColor && premoves.length > 0;
+  const premovePending = !!game && !game.result && game.board.turn === myColor && validPremoves.length > 0;
 
   // Played-move sound effects: react to history change.
   const lastSeenMoveCount = useRef(0);

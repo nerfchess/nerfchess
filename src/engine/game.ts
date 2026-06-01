@@ -1,4 +1,4 @@
-import { generateMoves, isInCheck, kingCaptured, makeMove } from "./board";
+import { generateMoves, initialBoard, isInCheck, kingCaptured, makeMove } from "./board";
 import { Drawback, DrawbackState, GameContext, Tier } from "./drawback";
 import { RNG } from "./rng";
 import { BoardState, Color, FILE, Move, PieceType, RANK } from "./types";
@@ -33,7 +33,6 @@ export function newGame(whiteDrawback: Drawback, blackDrawback: Drawback, seed: 
   const rng = new RNG(seed);
   const wRng = rng.fork();
   const bRng = rng.fork();
-  const { initialBoard } = require("./board") as typeof import("./board");
   const board = initialBoard();
   const white: PlayerSlot = {
     drawback: whiteDrawback,
