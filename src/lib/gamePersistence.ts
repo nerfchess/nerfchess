@@ -117,7 +117,7 @@ export function saveAiGame(input: {
     myColor: input.myColor,
     whiteMs: input.whiteMs,
     blackMs: input.blackMs,
-    premoves: input.premoves,
+    premoves: [],
     game: {
       board: input.game.board,
       white,

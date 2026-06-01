@@ -556,10 +556,11 @@ export const HALL_OF_MIRRORS: Drawback = db({
   icon: "split",
   implemented: true,
   filterMoves: (moves, _s, ctx) => {
-    return moves.filter((m) => {
+    const legal = moves.filter((m) => {
       const mirror = SQ(7 - FILE(m.to), RANK(m.to));
       return !!ctx.board.pieces[mirror];
     });
+    return legal.length ? legal : moves;
   },
 });
 
@@ -839,12 +840,13 @@ export const ARMORY: Drawback = db({
   icon: "shield",
   implemented: true,
   filterMoves: (moves, _s, ctx) => {
-    return moves.filter((m) => {
+    const legal = moves.filter((m) => {
       const nb = makeMove(ctx.board, m);
       const defenders = attackedBy(nb, ctx.me);
       const rooks = pieceSquares(nb, ctx.me, "r");
       return rooks.every((sq) => defenders.has(sq));
     });
+    return legal.length ? legal : moves;
   },
 });
 

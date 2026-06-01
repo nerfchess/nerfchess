@@ -550,10 +550,11 @@ exports.HALL_OF_MIRRORS = db({
     icon: "split",
     implemented: true,
     filterMoves: (moves, _s, ctx) => {
-        return moves.filter((m) => {
+        const legal = moves.filter((m) => {
             const mirror = (0, types_1.SQ)(7 - (0, types_1.FILE)(m.to), (0, types_1.RANK)(m.to));
             return !!ctx.board.pieces[mirror];
         });
+        return legal.length ? legal : moves;
     },
 });
 exports.QUARANTINE = db({
@@ -823,12 +824,13 @@ exports.ARMORY = db({
     icon: "shield",
     implemented: true,
     filterMoves: (moves, _s, ctx) => {
-        return moves.filter((m) => {
+        const legal = moves.filter((m) => {
             const nb = (0, board_1.makeMove)(ctx.board, m);
             const defenders = (0, board_1.attackedBy)(nb, ctx.me);
             const rooks = pieceSquares(nb, ctx.me, "r");
             return rooks.every((sq) => defenders.has(sq));
         });
+        return legal.length ? legal : moves;
     },
 });
 exports.COUNTING_SHEEP = db({

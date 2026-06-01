@@ -113,9 +113,10 @@ export class MPSession {
     for (const fn of [...this.listeners]) fn(e);
   }
 
-  private sendFrame(t: string, d?: unknown) {
-    if (this.socket?.readyState !== WebSocket.OPEN) return;
+  private sendFrame(t: string, d?: unknown): boolean {
+    if (this.socket?.readyState !== WebSocket.OPEN) return false;
     this.socket.send(JSON.stringify(d === undefined ? { t } : { t, d }));
+    return true;
   }
 
   private connect(): Promise<void> {
@@ -250,12 +251,12 @@ export class MPSession {
     });
   }
 
-  sendMove(uci: string, ply: number) {
-    this.sendFrame("move", { u: uci, ply });
+  sendMove(uci: string, ply: number): boolean {
+    return this.sendFrame("move", { u: uci, ply });
   }
 
-  resign() {
-    this.sendFrame("resign");
+  resign(): boolean {
+    return this.sendFrame("resign");
   }
 
   destroy() {

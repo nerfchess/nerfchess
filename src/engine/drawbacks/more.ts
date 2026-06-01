@@ -639,10 +639,11 @@ export const BLINDED_BY_SUN: Drawback = db({
   init: (rng) => ({ sq: rng.int(64) }),
   filterMoves: (moves, state, ctx) => {
     const s = state as { sq: number };
-    return moves.filter((m) => {
+    const legal = moves.filter((m) => {
       const nb = makeMove(ctx.board, m);
       return !attackedBy(nb, ctx.me).has(s.sq);
     });
+    return legal.length ? legal : moves;
   },
   visual: (state) => ({ bannedSquares: [(state as { sq: number }).sq] }),
 });

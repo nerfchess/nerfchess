@@ -7,3 +7,9 @@ out
 .DS_Store
 next-env.d.ts
 tsconfig.tsbuildinfo
+agent*.jsonl
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/tasks.json
