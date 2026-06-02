@@ -91,7 +91,7 @@ export function BoardPlayerRow({ board, playerColor, myColor, name, elo, classNa
         </div>
 
         {delta > 0 && (
-          <div className="shrink-0 rounded-full border border-gold/40 bg-gold/10 px-2.5 py-1 font-mono text-sm font-semibold text-gold-leaf">
+          <div className="shrink-0 font-mono text-sm font-semibold text-white">
             +{delta}
           </div>
         )}
