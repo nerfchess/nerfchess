@@ -727,7 +727,7 @@ export default function FriendPage() {
 
   return (
     <main className="flex h-dvh min-h-0 flex-col overflow-hidden">
-      <nav className="sticky top-0 z-20 mx-auto flex w-full max-w-6xl shrink-0 items-center justify-between px-4 py-2 sm:px-6">
+      <nav className="sticky top-0 z-20 flex w-full shrink-0 items-center justify-between py-3">
         <Link href="/" className="font-display text-2xl tracking-tight">
           drawback<span className="text-gold-leaf">chess</span>
         </Link>
@@ -943,7 +943,7 @@ function TimeSlider({
 
 function SiteNav() {
   return (
-    <nav className="px-6 py-6 max-w-6xl mx-auto flex items-center justify-between">
+    <nav className="flex items-center justify-between py-7">
       <Link href="/" className="font-display text-2xl tracking-tight">
         drawback<span className="text-gold-leaf">chess</span>
       </Link>

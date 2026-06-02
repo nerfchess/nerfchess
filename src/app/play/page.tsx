@@ -55,7 +55,7 @@ export default function PlayPage() {
 
   return (
     <main className="min-h-screen">
-      <nav className="px-6 py-6 max-w-6xl mx-auto flex items-center justify-between">
+      <nav className="flex items-center justify-between py-7">
         <Link href="/" className="font-display text-2xl tracking-tight">
           drawback<span className="text-gold-leaf">chess</span>
         </Link>

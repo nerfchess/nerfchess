@@ -108,7 +108,7 @@ export default function HomePage() {
 
 function SiteNav({ onOpenSettings }: { onOpenSettings: () => void }) {
   return (
-    <nav className="px-6 py-6 flex items-center justify-between max-w-6xl mx-auto">
+    <nav className="flex items-center justify-between py-7">
       <Link href="/" className="font-display text-2xl tracking-tight">
         drawback<span className="text-gold-leaf">chess</span>
       </Link>
