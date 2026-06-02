@@ -798,7 +798,7 @@ export default function FriendPage() {
               name="Opponent"
               drawback={opponentDrawback}
               revealed={!!game.result}
-              ownerLabel="Opponent nerf"
+              ownerLabel=""
             />
             <div className="hidden lg:block" />
             <PlayerNerfCard
@@ -807,7 +807,7 @@ export default function FriendPage() {
               myColor={myColor}
               name="You"
               drawback={myDrawback}
-              ownerLabel="Your nerf"
+              ownerLabel=""
               progress={myDrawback.progress?.(myState, myCtx) ?? null}
             />
           </aside>

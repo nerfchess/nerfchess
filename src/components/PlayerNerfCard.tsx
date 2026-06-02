@@ -122,7 +122,9 @@ export function PlayerNerfCard({
         <>
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <div className="smallcaps text-[10px] text-parchment-400">{ownerLabel}</div>
+              {ownerLabel && (
+                <div className="smallcaps text-[10px] text-parchment-400">{ownerLabel}</div>
+              )}
               <div className={`font-display text-2xl leading-tight tier-${drawback.tier}`}>
                 {drawback.name}
               </div>

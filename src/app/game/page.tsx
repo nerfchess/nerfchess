@@ -626,7 +626,7 @@ function GamePage() {
               elo={BOT_ELO[difficulty]}
               drawback={opponentDrawback}
               revealed={!!game.result}
-              ownerLabel="Opponent nerf"
+              ownerLabel=""
             />
             <div className="hidden lg:block" />
             <PlayerNerfCard
@@ -636,7 +636,7 @@ function GamePage() {
               name="You"
               elo={playerElo}
               drawback={myDrawback}
-              ownerLabel="Your nerf"
+              ownerLabel=""
               progress={myDrawback.progress?.(myState, myCtx) ?? null}
             />
           </aside>
