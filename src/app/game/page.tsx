@@ -1,10 +1,9 @@
 "use client";
 
 import { Board } from "@/components/Board";
-import { BoardPlayerRow } from "@/components/BoardPlayerRow";
-import { DrawbackCard } from "@/components/DrawbackCard";
 import { GameOver } from "@/components/GameOver";
 import { MoveList } from "@/components/MoveList";
+import { PlayerNerfCard } from "@/components/PlayerNerfCard";
 import { AILevel, pickAIMove } from "@/engine/ai";
 import { Drawback, type GameContext } from "@/engine/drawback";
 import { IMPLEMENTED_BY_ID, PLAYABLE_DRAWBACKS } from "@/engine/drawbacks/library";
@@ -618,26 +617,24 @@ function GamePage() {
           className="grid min-h-0 flex-1 gap-y-2 lg:grid-cols-[280px_auto] lg:justify-center lg:gap-x-3"
           style={railHeightStyle}
         >
-          <aside className="hidden min-h-0 gap-2 overflow-hidden lg:grid lg:h-[var(--board-height)] lg:grid-rows-[auto_auto_minmax(0,1fr)_auto_auto] lg:self-start">
-            <DrawbackCard drawback={opponentDrawback} revealed={!!game.result} ownerLabel="Opponent nerf" />
-            <BoardPlayerRow
+          <aside className="hidden min-h-0 gap-3 overflow-hidden lg:grid lg:h-[var(--board-height)] lg:grid-rows-[auto_minmax(0,1fr)_auto] lg:self-start">
+            <PlayerNerfCard
               board={boardForDisplay}
               playerColor={myColor === "w" ? "b" : "w"}
               myColor={myColor}
               name={`${difficulty[0].toUpperCase()}${difficulty.slice(1)} Bot`}
               elo={BOT_ELO[difficulty]}
-              className="plate min-h-[3rem] px-3 py-1 sm:px-3"
+              drawback={opponentDrawback}
+              revealed={!!game.result}
+              ownerLabel="Opponent nerf"
             />
             <div className="hidden lg:block" />
-            <BoardPlayerRow
+            <PlayerNerfCard
               board={boardForDisplay}
               playerColor={myColor}
               myColor={myColor}
               name="You"
               elo={playerElo}
-              className="plate min-h-[3rem] px-3 py-1 sm:px-3"
-            />
-            <DrawbackCard
               drawback={myDrawback}
               ownerLabel="Your nerf"
               progress={myDrawback.progress?.(myState, myCtx) ?? null}
