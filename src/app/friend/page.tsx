@@ -686,8 +686,8 @@ export default function FriendPage() {
     ? ({ "--board-height": `${boardHeight}px` } as CSSProperties)
     : undefined;
   const boardFitClass = hint
-    ? "max-w-[min(92vw,720px,calc(100dvh-17rem))]"
-    : "max-w-[min(92vw,720px,calc(100dvh-14rem))]";
+    ? "max-w-[min(92vw,720px,calc(100dvh-11rem))]"
+    : "max-w-[min(92vw,720px,calc(100dvh-8rem))]";
   const historyActions = confirmingResign ? (
     <div className="space-y-2">
       <div className="smallcaps text-[10px] text-parchment-300">Resign the game?</div>
@@ -791,23 +791,32 @@ export default function FriendPage() {
           className="grid min-h-0 flex-1 gap-y-2 lg:grid-cols-[280px_minmax(0,1fr)] lg:gap-x-6"
           style={railHeightStyle}
         >
-          <aside className="hidden min-h-0 gap-3 overflow-hidden lg:grid lg:h-[var(--board-height)] lg:grid-rows-[auto_minmax(0,1fr)_auto] lg:self-start lg:py-[3.25rem]">
-            <DrawbackCard drawback={opponentDrawback} revealed={!!game.result} />
+          <aside className="hidden min-h-0 gap-2 overflow-hidden lg:grid lg:h-[var(--board-height)] lg:grid-rows-[auto_auto_minmax(0,1fr)_auto_auto] lg:self-start">
+            <DrawbackCard drawback={opponentDrawback} revealed={!!game.result} ownerLabel="Opponent nerf" />
+            <BoardPlayerRow
+              board={boardForDisplay}
+              playerColor={myColor === "w" ? "b" : "w"}
+              myColor={myColor}
+              name="Opponent"
+              className="plate min-h-[3rem] px-3 py-1 sm:px-3"
+            />
             <div className="hidden lg:block" />
+            <BoardPlayerRow
+              board={boardForDisplay}
+              playerColor={myColor}
+              myColor={myColor}
+              name="You"
+              className="plate min-h-[3rem] px-3 py-1 sm:px-3"
+            />
             <DrawbackCard
               drawback={myDrawback}
+              ownerLabel="Your nerf"
               progress={myDrawback.progress?.(myState, myCtx) ?? null}
             />
           </aside>
           <div className="flex min-h-0 flex-col gap-3 sm:flex-row sm:items-stretch">
             <div ref={boardShellRef} className="min-h-0 min-w-0 flex-1">
               <div data-board-measure className={`mx-auto w-full ${boardFitClass}`}>
-                <BoardPlayerRow
-                  board={boardForDisplay}
-                  playerColor={myColor === "w" ? "b" : "w"}
-                  myColor={myColor}
-                  name="Opponent"
-                />
                 <Board
                   board={boardForDisplay}
                   legalMoves={
@@ -827,7 +836,6 @@ export default function FriendPage() {
                   premoves={isReviewingHistory ? [] : validPremoves}
                   onCancelPremove={clearPremoves}
                 />
-                <BoardPlayerRow board={boardForDisplay} playerColor={myColor} myColor={myColor} name="You" />
               </div>
             </div>
             <div

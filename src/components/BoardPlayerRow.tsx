@@ -13,6 +13,7 @@ interface Props {
   myColor: Color;
   name: string;
   elo?: number | null;
+  className?: string;
 }
 
 function opponentOf(color: Color): Color {
@@ -38,7 +39,7 @@ function capturedValue(pieces: PieceType[]): number {
   return pieces.reduce((total, piece) => total + PIECE_VALUES[piece], 0);
 }
 
-export function BoardPlayerRow({ board, playerColor, myColor, name, elo }: Props) {
+export function BoardPlayerRow({ board, playerColor, myColor, name, elo, className = "" }: Props) {
   const pieces = capturedPiecesFor(board, playerColor);
   const mineValue = capturedValue(capturedPiecesFor(board, myColor));
   const opponentValue = capturedValue(capturedPiecesFor(board, opponentOf(myColor)));
@@ -49,7 +50,7 @@ export function BoardPlayerRow({ board, playerColor, myColor, name, elo }: Props
   const initial = name.trim().charAt(0).toUpperCase() || "?";
 
   return (
-    <div className="flex min-h-[3.25rem] items-center gap-3 px-2 py-2 sm:px-6">
+    <div className={`flex min-h-[3.25rem] items-center gap-3 px-2 py-2 sm:px-6 ${className}`}>
       <div className="flex min-w-0 items-center gap-2">
         <div className="flex min-w-[8.5rem] items-center gap-2 px-0 py-2">
           <div
