@@ -554,7 +554,7 @@ function GamePage() {
 
   return (
     <main className="flex h-dvh min-h-0 flex-col overflow-hidden">
-      <nav className="sticky top-0 z-20 flex w-full shrink-0 items-center justify-between py-3">
+      <nav className="sticky top-0 z-20 flex w-full shrink-0 items-center justify-between px-5 py-3">
         <Link href="/" className="font-display text-2xl tracking-tight">
           drawback<span className="text-gold-leaf">chess</span>
         </Link>

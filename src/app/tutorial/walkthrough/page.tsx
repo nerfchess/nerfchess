@@ -134,7 +134,7 @@ export default function TutorialWalkthroughPage() {
 
   return (
     <main className="min-h-screen pb-20">
-      <nav className="flex items-center justify-between py-7">
+      <nav className="flex items-center justify-between px-10 py-7">
         <Link href="/" className="font-display text-2xl tracking-tight">
           drawback<span className="text-gold-leaf">chess</span>
         </Link>
