@@ -17,8 +17,7 @@ function newGame(whiteDrawback, blackDrawback, seed) {
     const rng = new rng_1.RNG(seed);
     const wRng = rng.fork();
     const bRng = rng.fork();
-    const { initialBoard } = require("./board");
-    const board = initialBoard();
+    const board = (0, board_1.initialBoard)();
     const white = {
         drawback: whiteDrawback,
         state: whiteDrawback.init ? whiteDrawback.init(wRng, "w") : {},

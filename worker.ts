@@ -26,6 +26,7 @@ type StoredMatch = {
   result: Result;
   clocks: Record<Color, number>;
   runningSince: number | null;
+  drawOfferBy: Color | null;
   createdAt: number;
   startedAt: number | null;
   completedAt: number | null;
@@ -42,6 +43,9 @@ type ClientFrame =
   | { t: "reconnect"; d?: { id?: unknown; color?: unknown; token?: unknown } }
   | { t: "move"; d?: { u?: unknown; ply?: unknown } }
   | { t: "resign" }
+  | { t: "drawOffer" }
+  | { t: "drawAccept" }
+  | { t: "drawDecline" }
   | { t: "p" };
 
 export interface Env {
@@ -159,6 +163,12 @@ export class GameServer extends DurableObject<Env> {
         return this.playClientMove(ws, frame.d);
       case "resign":
         return this.resignGame(ws);
+      case "drawOffer":
+        return this.offerDraw(ws);
+      case "drawAccept":
+        return this.acceptDraw(ws);
+      case "drawDecline":
+        return this.declineDraw(ws);
       case "p":
         return this.sendClocks(ws);
       default:
@@ -360,6 +370,7 @@ export class GameServer extends DurableObject<Env> {
       result: null,
       clocks: { w: timeSec * 1000, b: timeSec * 1000 },
       runningSince: null,
+      drawOfferBy: null,
       createdAt: Date.now(),
       startedAt: null,
       completedAt: null,
@@ -428,6 +439,11 @@ export class GameServer extends DurableObject<Env> {
 
     const now = Date.now();
     match.clocks = this.currentClocks(match, now);
+    if (match.drawOfferBy && match.drawOfferBy !== session.color) {
+      const declinedBy = session.color;
+      match.drawOfferBy = null;
+      this.broadcast(match, "drawDeclined", { color: declinedBy });
+    }
     const nextGame = playMove(game, move);
     match.moves.push(uci);
     if (match.setup.timeSec) match.clocks[session.color] += match.setup.incrementSec * 1000;
@@ -466,6 +482,56 @@ export class GameServer extends DurableObject<Env> {
 
     const clocks = this.currentClocks(match);
     this.broadcast(match, "end", { result: match.result, wc: Math.round(clocks.w), bc: Math.round(clocks.b) });
+  }
+
+  private async offerDraw(ws: WebSocket) {
+    const session = this.session(ws);
+    const match = session.matchId ? await this.loadMatch(session.matchId) : null;
+    if (!match || !session.color) return error(ws, "no_game", "Join a game before offering a draw.");
+    if (await this.finishOnFlag(match)) return;
+    if (match.result) return;
+    if (match.drawOfferBy === session.color) return error(ws, "draw_pending", "Your draw offer is already pending.");
+    if (match.drawOfferBy && match.drawOfferBy !== session.color) return this.acceptDraw(ws);
+
+    match.drawOfferBy = session.color;
+    await this.saveMatch(match);
+    this.broadcast(match, "drawOffer", { color: session.color });
+  }
+
+  private async acceptDraw(ws: WebSocket) {
+    const session = this.session(ws);
+    const match = session.matchId ? await this.loadMatch(session.matchId) : null;
+    if (!match || !session.color) return error(ws, "no_game", "Join a game before accepting a draw.");
+    if (await this.finishOnFlag(match)) return;
+    if (match.result) return;
+    if (!match.drawOfferBy || match.drawOfferBy === session.color) {
+      return error(ws, "no_draw_offer", "There is no opponent draw offer to accept.");
+    }
+
+    match.clocks = this.currentClocks(match);
+    match.runningSince = null;
+    match.drawOfferBy = null;
+    match.result = { winner: "draw", reason: "draw by agreement" };
+    match.completedAt = Date.now();
+    await this.saveMatch(match);
+
+    const clocks = this.currentClocks(match);
+    this.broadcast(match, "end", { result: match.result, wc: Math.round(clocks.w), bc: Math.round(clocks.b) });
+  }
+
+  private async declineDraw(ws: WebSocket) {
+    const session = this.session(ws);
+    const match = session.matchId ? await this.loadMatch(session.matchId) : null;
+    if (!match || !session.color) return error(ws, "no_game", "Join a game before declining a draw.");
+    if (await this.finishOnFlag(match)) return;
+    if (match.result) return;
+    if (!match.drawOfferBy || match.drawOfferBy === session.color) {
+      return error(ws, "no_draw_offer", "There is no opponent draw offer to decline.");
+    }
+
+    match.drawOfferBy = null;
+    await this.saveMatch(match);
+    this.broadcast(match, "drawDeclined", { color: session.color });
   }
 
   private async sendClocks(ws: WebSocket) {

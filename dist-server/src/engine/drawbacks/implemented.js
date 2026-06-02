@@ -113,8 +113,7 @@ exports.THREE_CHECK = db({
     onTurnStart: (state, ctx) => {
         // If we start a turn in check, increment.
         const s = state;
-        const { isInCheck } = require("../board");
-        if (isInCheck(ctx.board, ctx.me)) {
+        if ((0, board_1.isInCheck)(ctx.board, ctx.me)) {
             return { checks: s.checks + 1 };
         }
         return s;
@@ -448,14 +447,12 @@ exports.SLEEPY_KING = db({
     icon: "moon",
     implemented: true,
     filterMoves: (moves, _s, ctx) => {
-        const { isInCheck } = require("../board");
-        if (isInCheck(ctx.board, ctx.me))
+        if ((0, board_1.isInCheck)(ctx.board, ctx.me))
             return moves;
         return moves.filter((m) => m.piece !== "k");
     },
     hint: (_s, ctx) => {
-        const { isInCheck } = require("../board");
-        if (isInCheck(ctx.board, ctx.me)) {
+        if ((0, board_1.isInCheck)(ctx.board, ctx.me)) {
             return { text: "The king stirs. He can move while in check.", tone: "info" };
         }
         return null;
@@ -486,15 +483,13 @@ exports.SKITTISH = db({
     icon: "alert",
     implemented: true,
     filterMoves: (moves, _s, ctx) => {
-        const { isInCheck } = require("../board");
-        if (!isInCheck(ctx.board, ctx.me))
+        if (!(0, board_1.isInCheck)(ctx.board, ctx.me))
             return moves;
         const kingMoves = moves.filter((m) => m.piece === "k");
         return kingMoves.length ? kingMoves : moves;
     },
     hint: (_s, ctx) => {
-        const { isInCheck } = require("../board");
-        if (!isInCheck(ctx.board, ctx.me))
+        if (!(0, board_1.isInCheck)(ctx.board, ctx.me))
             return null;
         return { text: "You're in check — only the king may flee.", tone: "warn" };
     },
@@ -774,9 +769,8 @@ exports.DEER_IN_HEADLIGHTS = db({
     icon: "zap",
     implemented: true,
     filterMoves: (moves, _s, ctx) => {
-        const { attackedBy } = require("../board");
         const opp = ctx.me === "w" ? "b" : "w";
-        const attacked = attackedBy(ctx.board, opp);
+        const attacked = (0, board_1.attackedBy)(ctx.board, opp);
         return moves.filter((m) => !attacked.has(m.from));
     },
 });
@@ -789,11 +783,10 @@ exports.RESPECTFUL = db({
     icon: "hand",
     implemented: true,
     filterMoves: (moves, _s, ctx) => {
-        const { makeMove, isInCheck } = require("../board");
         const opp = ctx.me === "w" ? "b" : "w";
         return moves.filter((m) => {
-            const nb = makeMove(ctx.board, m);
-            return !isInCheck(nb, opp);
+            const nb = (0, board_1.makeMove)(ctx.board, m);
+            return !(0, board_1.isInCheck)(nb, opp);
         });
     },
 });

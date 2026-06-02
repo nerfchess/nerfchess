@@ -539,7 +539,7 @@ function GamePage() {
           disabled={drawOfferStatus !== "idle"}
           className="min-w-0 px-3 py-2 border border-gold/40 bg-gold/10 text-gold-leaf hover:bg-gold/20 hover:border-gold/70 transition text-xs font-display font-semibold tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {drawOfferStatus === "offering" ? "Offering..." : "Offer Draw"}
+          {drawOfferStatus === "offering" ? "Offering..." : "Draw"}
         </button>
         <button
           onClick={() => setConfirmingResign(true)}

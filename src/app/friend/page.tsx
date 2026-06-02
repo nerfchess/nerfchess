@@ -73,6 +73,8 @@ export default function FriendPage() {
   const [muted, setMutedState] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [confirmingResign, setConfirmingResign] = useState(false);
+  const [drawOfferBy, setDrawOfferBy] = useState<Color | null>(null);
+  const [drawOfferStatus, setDrawOfferStatus] = useState<"idle" | "offering" | "declined">("idle");
 
   const [game, setGame] = useState<DrawbackGame | null>(null);
   const [myColor, setMyColor] = useState<Color>("w");
@@ -181,6 +183,8 @@ export default function FriendPage() {
     clearPremoves();
     setPendingLocalMove(null);
     setAwaitingPremoveAck(false);
+    setDrawOfferBy(null);
+    setDrawOfferStatus("idle");
     setView("game");
   };
 
@@ -241,6 +245,8 @@ export default function FriendPage() {
         setWhiteMs(e.wc);
         setBlackMs(e.bc);
       } else if (e.type === "move") {
+        setDrawOfferBy(null);
+        setDrawOfferStatus("idle");
         setGame((g) => {
           if (!g) return g;
           const lm = legalMoves(g).find((x) => moveToUCI(x) === e.move.u);
@@ -286,12 +292,24 @@ export default function FriendPage() {
         setBlackMs(e.end.bc);
         setPendingLocalMove(null);
         setAwaitingPremoveAck(false);
+        setDrawOfferBy(null);
+        setDrawOfferStatus("idle");
         clearPremoves();
         setGame((g) => {
           if (!g) return g;
           g.result = e.end.result;
           return { ...g };
         });
+      } else if (e.type === "draw-offer") {
+        setError(null);
+        setDrawOfferBy(e.color);
+        setDrawOfferStatus(e.color === myColorRef.current ? "offering" : "idle");
+      } else if (e.type === "draw-declined") {
+        setDrawOfferBy(null);
+        setDrawOfferStatus(e.color === myColorRef.current ? "idle" : "declined");
+        if (e.color !== myColorRef.current) {
+          window.setTimeout(() => setDrawOfferStatus("idle"), 2500);
+        }
       }
     });
   };
@@ -523,6 +541,31 @@ export default function FriendPage() {
     sessionRef.current?.resign();
   };
 
+  const onOfferDraw = () => {
+    if (!game || game.result || drawOfferStatus === "offering") return;
+    setError(null);
+    if (!sessionRef.current?.offerDraw()) {
+      setError("Disconnected from the game server.");
+    }
+  };
+
+  const onAcceptDraw = () => {
+    if (!game || game.result) return;
+    setError(null);
+    if (!sessionRef.current?.acceptDraw()) {
+      setError("Disconnected from the game server.");
+    }
+  };
+
+  const onDeclineDraw = () => {
+    if (!game || game.result) return;
+    setError(null);
+    setDrawOfferBy(null);
+    if (!sessionRef.current?.declineDraw()) {
+      setError("Disconnected from the game server.");
+    }
+  };
+
   const toggleMute = () => {
     const next = !muted;
     setMuted(next);
@@ -537,6 +580,8 @@ export default function FriendPage() {
     clearPremoves();
     setPendingLocalMove(null);
     setAwaitingPremoveAck(false);
+    setDrawOfferBy(null);
+    setDrawOfferStatus("idle");
     setHistoryPly(null);
     setView("setup");
     setCode("");
@@ -708,19 +753,60 @@ export default function FriendPage() {
         </button>
       </div>
     </div>
-  ) : (
+  ) : drawOfferBy && drawOfferBy !== myColor ? (
     <div className="space-y-2">
+      <div className="smallcaps text-[10px] text-parchment-300">Opponent offered a draw.</div>
       {error && (
         <div className="text-xs text-oxblood-glow leading-snug">
           {error}
         </div>
       )}
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          onClick={onAcceptDraw}
+          className="min-w-0 px-3 py-2 border border-gold/40 bg-gold/10 text-gold-leaf hover:bg-gold/20 hover:border-gold/70 transition text-xs font-display font-semibold tracking-wide"
+        >
+          Accept
+        </button>
+        <button
+          onClick={onDeclineDraw}
+          className="min-w-0 px-3 py-2 btn-ghost text-xs font-display font-semibold tracking-wide"
+        >
+          Decline
+        </button>
+      </div>
       <button
         onClick={() => setConfirmingResign(true)}
         className="w-full min-w-0 px-3 py-2 border border-oxblood/40 bg-oxblood/10 text-oxblood-glow hover:bg-oxblood/20 hover:border-oxblood/70 transition text-xs font-display font-semibold tracking-wide"
       >
         Resign
       </button>
+    </div>
+  ) : (
+    <div className="space-y-2">
+      {drawOfferStatus === "declined" && (
+        <div className="smallcaps text-[10px] text-parchment-300">Draw declined.</div>
+      )}
+      {error && (
+        <div className="text-xs text-oxblood-glow leading-snug">
+          {error}
+        </div>
+      )}
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          onClick={onOfferDraw}
+          disabled={drawOfferStatus === "offering"}
+          className="min-w-0 px-3 py-2 border border-gold/40 bg-gold/10 text-gold-leaf hover:bg-gold/20 hover:border-gold/70 transition text-xs font-display font-semibold tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {drawOfferStatus === "offering" ? "Offered" : "Draw"}
+        </button>
+        <button
+          onClick={() => setConfirmingResign(true)}
+          className="min-w-0 px-3 py-2 border border-oxblood/40 bg-oxblood/10 text-oxblood-glow hover:bg-oxblood/20 hover:border-oxblood/70 transition text-xs font-display font-semibold tracking-wide"
+        >
+          Resign
+        </button>
+      </div>
     </div>
   );
 

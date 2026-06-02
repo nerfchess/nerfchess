@@ -35,6 +35,8 @@ export type MPEvent =
   | { type: "start"; setup: MPStart }
   | { type: "move"; move: MPAcceptedMove }
   | { type: "end"; end: MPEnd }
+  | { type: "draw-offer"; color: Color }
+  | { type: "draw-declined"; color: Color }
   | { type: "clocks"; wc: number; bc: number }
   | { type: "opponent-gone" }
   | { type: "disconnected" }
@@ -45,6 +47,8 @@ type ServerFrame =
   | { t: "start"; d: MPStart }
   | { t: "move"; d: MPAcceptedMove }
   | { t: "end"; d: MPEnd }
+  | { t: "drawOffer"; d: { color: Color } }
+  | { t: "drawDeclined"; d: { color: Color } }
   | { t: "opponentGone" }
   | { t: "error"; d: { code?: string; message?: string } }
   | { t: "n"; d?: { wc?: number; bc?: number } };
@@ -187,6 +191,12 @@ export class MPSession {
       case "end":
         this.emit({ type: "end", end: frame.d });
         break;
+      case "drawOffer":
+        this.emit({ type: "draw-offer", color: frame.d.color });
+        break;
+      case "drawDeclined":
+        this.emit({ type: "draw-declined", color: frame.d.color });
+        break;
       case "opponentGone":
         this.emit({ type: "opponent-gone" });
         break;
@@ -257,6 +267,18 @@ export class MPSession {
 
   resign(): boolean {
     return this.sendFrame("resign");
+  }
+
+  offerDraw(): boolean {
+    return this.sendFrame("drawOffer");
+  }
+
+  acceptDraw(): boolean {
+    return this.sendFrame("drawAccept");
+  }
+
+  declineDraw(): boolean {
+    return this.sendFrame("drawDecline");
   }
 
   destroy() {

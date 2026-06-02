@@ -177,6 +177,7 @@ function createMatch(client, data) {
         game: null,
         clocks: { w: timeSec * 1000, b: timeSec * 1000 },
         runningSince: null,
+        drawOfferBy: null,
         createdAt: Date.now(),
         completedAt: null,
     };
@@ -240,6 +241,11 @@ function playClientMove(client, data) {
         return error(client, "illegal_move", "That move is not legal in the current position.");
     const now = Date.now();
     match.clocks = currentClocks(match, now);
+    if (match.drawOfferBy && match.drawOfferBy !== client.color) {
+        const declinedBy = client.color;
+        match.drawOfferBy = null;
+        broadcast(match, "drawDeclined", { color: declinedBy });
+    }
     const nextGame = (0, game_1.playMove)(match.game, move);
     match.game = nextGame;
     if (match.setup.timeSec)
@@ -265,6 +271,46 @@ function resignGame(client) {
     match.game = (0, game_1.resign)(match.game, client.color);
     finish(match);
 }
+function offerDraw(client) {
+    const match = client.matchId ? matches.get(client.matchId) : undefined;
+    if (!match?.game || !client.color)
+        return error(client, "no_game", "Join a game before offering a draw.");
+    if (finishOnFlag(match) || match.game.result)
+        return;
+    if (match.drawOfferBy === client.color)
+        return error(client, "draw_pending", "Your draw offer is already pending.");
+    if (match.drawOfferBy && match.drawOfferBy !== client.color)
+        return acceptDraw(client);
+    match.drawOfferBy = client.color;
+    broadcast(match, "drawOffer", { color: client.color });
+}
+function acceptDraw(client) {
+    const match = client.matchId ? matches.get(client.matchId) : undefined;
+    if (!match?.game || !client.color)
+        return error(client, "no_game", "Join a game before accepting a draw.");
+    if (finishOnFlag(match) || match.game.result)
+        return;
+    if (!match.drawOfferBy || match.drawOfferBy === client.color) {
+        return error(client, "no_draw_offer", "There is no opponent draw offer to accept.");
+    }
+    match.clocks = currentClocks(match);
+    match.runningSince = null;
+    match.drawOfferBy = null;
+    match.game.result = { winner: "draw", reason: "draw by agreement" };
+    finish(match);
+}
+function declineDraw(client) {
+    const match = client.matchId ? matches.get(client.matchId) : undefined;
+    if (!match?.game || !client.color)
+        return error(client, "no_game", "Join a game before declining a draw.");
+    if (finishOnFlag(match) || match.game.result)
+        return;
+    if (!match.drawOfferBy || match.drawOfferBy === client.color) {
+        return error(client, "no_draw_offer", "There is no opponent draw offer to decline.");
+    }
+    match.drawOfferBy = null;
+    broadcast(match, "drawDeclined", { color: client.color });
+}
 function onMessage(client, raw) {
     let frame;
     try {
@@ -284,6 +330,12 @@ function onMessage(client, raw) {
             return playClientMove(client, frame.d);
         case "resign":
             return resignGame(client);
+        case "drawOffer":
+            return offerDraw(client);
+        case "drawAccept":
+            return acceptDraw(client);
+        case "drawDecline":
+            return declineDraw(client);
         case "p": {
             const match = client.matchId ? matches.get(client.matchId) : undefined;
             const clocks = match ? currentClocks(match) : null;
