@@ -674,7 +674,7 @@ export default function FriendPage() {
             Send the code to your friend. They open this page and tap “Join”.
           </p>
           <div className="mt-8 flex items-center justify-center gap-2 smallcaps text-[11px] text-parchment-400">
-            <span className="w-1.5 h-1.5 rounded-full bg-verdig                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  ris animate-flicker" />
+            <span className="w-1.5 h-1.5 rounded-full bg-verdigris animate-flicker" />
             Waiting for opponent…
           </div>
           {error && (
