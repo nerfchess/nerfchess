@@ -4,7 +4,7 @@ const RULES = [
   {
     n: "I",
     t: "No checkmate. No stalemate.",
-    d: "The game ends only when a king is physically captured (or a drawback triggers a loss, or a player resigns).",
+    d: "The game ends only when a king is physically captured (or a nerf triggers a loss, or a player resigns).",
   },
   {
     n: "II",
@@ -18,18 +18,18 @@ const RULES = [
   },
   {
     n: "IV",
-    t: "Drawbacks are secret.",
+    t: "Nerfs are secret.",
     d: "You see yours. You do not see your opponent’s. Infer it from their play.",
   },
   {
     n: "V",
-    t: "Illegal-by-drawback moves are pre-filtered.",
-    d: "The board only highlights moves you are actually allowed to make. Lose-condition drawbacks (“you lose if X”) still trigger on their own.",
+    t: "Illegal-by-nerf moves are pre-filtered.",
+    d: "The board only highlights moves you are actually allowed to make. Lose-condition nerfs (“you lose if X”) still trigger on their own.",
   },
   {
     n: "VI",
     t: "Distances are Chebyshev.",
-    d: "When a drawback talks about distance, count the larger of file-difference and rank-difference. Not Euclidean.",
+    d: "When a nerf talks about distance, count the larger of file-difference and rank-difference. Not Euclidean.",
   },
 ];
 
@@ -38,7 +38,7 @@ export default function TutorialPage() {
     <main className="min-h-screen pb-20">
       <nav className="flex items-center justify-between px-10 py-7">
         <Link href="/" className="font-display text-2xl tracking-tight">
-          drawback<span className="text-gold-leaf">chess</span>
+          nerf<span className="text-gold-leaf">chess</span>
         </Link>
         <Link href="/play" className="px-3 py-1.5 rounded-full text-sm font-display hover:bg-white/5 text-parchment">Play</Link>
       </nav>
@@ -46,7 +46,7 @@ export default function TutorialPage() {
         <div className="smallcaps text-[11px] text-parchment-400">how to play</div>
         <h1 className="font-display text-5xl sm:text-6xl mt-1">House rules</h1>
         <p className="mt-5 text-[16px] leading-[1.7] text-parchment-200">
-          Drawback Chess is chess, until it isn't. The six rules below are everything you need to know.
+          Nerf Chess is chess, until it isn't. The six rules below are everything you need to know.
           Everything else is in your secret rule.
         </p>
         <div className="mt-9 space-y-3">

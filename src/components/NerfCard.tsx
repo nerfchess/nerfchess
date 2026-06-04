@@ -1,10 +1,10 @@
 "use client";
 
-import { Drawback } from "@/engine/drawback";
+import { Nerf } from "@/engine/nerf";
 import { motion } from "framer-motion";
 
 interface Props {
-  drawback: Drawback;
+  nerf: Nerf;
   revealed?: boolean;
   compact?: boolean;
   ownerLabel?: string;
@@ -14,7 +14,7 @@ interface Props {
 const TIER_LABEL = ["", "Trivial", "Easy", "Common", "Severe", "Brutal"];
 const TIER_ROMAN = ["", "I", "II", "III", "IV", "V"];
 
-export function DrawbackCard({ drawback, revealed = true, compact = false, ownerLabel, progress }: Props) {
+export function NerfCard({ nerf, revealed = true, compact = false, ownerLabel, progress }: Props) {
   if (!revealed) {
     return (
       <div className="relative plate p-5 overflow-hidden">
@@ -36,29 +36,29 @@ export function DrawbackCard({ drawback, revealed = true, compact = false, owner
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`relative plate p-5 overflow-hidden tier-bg-${drawback.tier} border`}
+      className={`relative plate p-5 overflow-hidden tier-bg-${nerf.tier} border`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="smallcaps text-[11px] text-parchment-400">
-            {ownerLabel ?? "Your drawback"}
+            {ownerLabel ?? "Your nerf"}
           </div>
-          <div className={`font-display text-2xl leading-tight tier-${drawback.tier}`}>
-            {drawback.name}
+          <div className={`font-display text-2xl leading-tight tier-${nerf.tier}`}>
+            {nerf.name}
           </div>
         </div>
         <span
-          className={`font-display font-bold text-sm px-2.5 py-0.5 rounded-full border tier-bg-${drawback.tier} tier-${drawback.tier}`}
-          title={`Tier ${drawback.tier}: ${TIER_LABEL[drawback.tier]}`}
+          className={`font-display font-bold text-sm px-2.5 py-0.5 rounded-full border tier-bg-${nerf.tier} tier-${nerf.tier}`}
+          title={`Tier ${nerf.tier}: ${TIER_LABEL[nerf.tier]}`}
         >
-          {TIER_ROMAN[drawback.tier]}
+          {TIER_ROMAN[nerf.tier]}
         </span>
       </div>
       <div className="rule-ornament my-3 text-[10px]">
-        <span className="font-display">{TIER_LABEL[drawback.tier]}</span>
+        <span className="font-display">{TIER_LABEL[nerf.tier]}</span>
       </div>
       <p className="text-[15px] leading-relaxed text-parchment/95">
-        {drawback.description}
+        {nerf.description}
       </p>
       {progress && progress.max > 0 && (
         <div className="mt-3">
@@ -68,18 +68,18 @@ export function DrawbackCard({ drawback, revealed = true, compact = false, owner
           </div>
           <div className="h-1.5 bg-white/5 overflow-hidden">
             <div
-              className={`h-full tier-bg-${drawback.tier}`}
+              className={`h-full tier-bg-${nerf.tier}`}
               style={{ width: `${Math.min(100, (progress.value / progress.max) * 100)}%` }}
             />
           </div>
         </div>
       )}
-      {!compact && drawback.flavor && (
+      {!compact && nerf.flavor && (
         <p className="mt-3 text-[13px] text-parchment-300/85 font-display border-l-2 border-white/15 pl-3">
-          &ldquo;{drawback.flavor}&rdquo;
+          &ldquo;{nerf.flavor}&rdquo;
         </p>
       )}
-      {!drawback.implemented && (
+      {!nerf.implemented && (
         <div className="mt-3 smallcaps text-[10px] text-gold/80">
           Engine implementation pending
         </div>

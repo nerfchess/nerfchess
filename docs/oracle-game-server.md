@@ -47,17 +47,17 @@ NEXT_PUBLIC_GAME_SERVER_URL=wss://ws.example.com/socket/v1 npm run build
 
 ## Systemd Service
 
-Create `/etc/systemd/system/drawbackchess-game.service`:
+Create `/etc/systemd/system/nerfchess-game.service`:
 
 ```ini
 [Unit]
-Description=Drawback Chess game websocket service
+Description=Nerf Chess game websocket service
 After=network.target
 
 [Service]
 Type=simple
 User=ubuntu
-WorkingDirectory=/opt/drawbackchess
+WorkingDirectory=/opt/nerfchess
 Environment=NODE_ENV=production
 Environment=HOST=127.0.0.1
 Environment=PORT=8080
@@ -74,8 +74,8 @@ Then enable it:
 
 ```bash
 sudo systemctl daemon-reload
-sudo systemctl enable --now drawbackchess-game
-sudo systemctl status drawbackchess-game
+sudo systemctl enable --now nerfchess-game
+sudo systemctl status nerfchess-game
 ```
 
 If TLS terminates on the Node process rather than a reverse proxy, bind the

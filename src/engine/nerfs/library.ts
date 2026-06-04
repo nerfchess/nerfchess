@@ -1,7 +1,7 @@
-import { Drawback, Tier } from "../drawback";
+import { Nerf, Tier } from "../nerf";
 import { ALL_IMPLEMENTED, IMPLEMENTED_BY_ID } from "./implemented";
 
-// Stub drawbacks: cataloged for the Codex but not yet wired into the engine.
+// Stub nerfs: cataloged for the Codex but not yet wired into the engine.
 // (`implemented: false`; game flow will reject if attempted in play.)
 
 type Stub = {
@@ -180,8 +180,8 @@ const STUBS: Stub[] = [
   { id: "bottled_lightning", name: "Bottled Lightning", description: "If you can move your king, you must.", tier: 5 },
 ];
 
-export const ALL_DRAWBACKS: Drawback[] = (() => {
-  const out: Drawback[] = [...ALL_IMPLEMENTED];
+export const ALL_NERFS: Nerf[] = (() => {
+  const out: Nerf[] = [...ALL_IMPLEMENTED];
   const seen = new Set(out.map((d) => d.id));
   for (const s of STUBS) {
     if (seen.has(s.id)) continue;
@@ -190,14 +190,14 @@ export const ALL_DRAWBACKS: Drawback[] = (() => {
   return out;
 })();
 
-export const PLAYABLE_DRAWBACKS = ALL_IMPLEMENTED;
+export const PLAYABLE_NERFS = ALL_IMPLEMENTED;
 
-export function getDrawback(id: string): Drawback | undefined {
-  return ALL_DRAWBACKS.find((d) => d.id === id);
+export function getNerf(id: string): Nerf | undefined {
+  return ALL_NERFS.find((d) => d.id === id);
 }
 
-export function getDrawbacksByTier(tier: Tier): Drawback[] {
-  return ALL_DRAWBACKS.filter((d) => d.tier === tier);
+export function getNerfsByTier(tier: Tier): Nerf[] {
+  return ALL_NERFS.filter((d) => d.tier === tier);
 }
 
 export { IMPLEMENTED_BY_ID };

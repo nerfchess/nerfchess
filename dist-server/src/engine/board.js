@@ -119,7 +119,7 @@ function isInCheck(board, color) {
 }
 /**
  * Generate all pseudo-legal moves for the side to move.
- * In Drawback Chess, kings CAN move into check, castle through check, etc.
+ * In Nerf Chess, kings CAN move into check, castle through check, etc.
  * However, a king en passant capture is allowed for one ply after the opponent's king
  * passed through an attacked square.
  */
@@ -237,7 +237,7 @@ function generateMoves(board) {
                     if (!tp || tp.color === opp)
                         add(tsq);
                 }
-                // castling; in drawback chess, can castle through/into/out of check
+                // castling; in nerf chess, can castle through/into/out of check
                 const homeR = me === "w" ? 0 : 7;
                 if (r === homeR && f === 4) {
                     const ck = me === "w" ? board.castling.wk : board.castling.bk;

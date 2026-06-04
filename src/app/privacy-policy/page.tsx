@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { InfoPageLayout, InfoSection } from "@/components/InfoPageLayout";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | Drawback Chess",
+  title: "Privacy Policy | Nerf Chess",
 };
 
 export default function PrivacyPolicyPage() {
@@ -10,7 +10,7 @@ export default function PrivacyPolicyPage() {
     <InfoPageLayout
       eyebrow="privacy policy"
       title="Privacy policy"
-      intro="This page describes how this version of Drawback Chess handles information while you play. Last updated: May 27, 2026."
+      intro="This page describes how this version of Nerf Chess handles information while you play. Last updated: May 27, 2026."
     >
       <InfoSection title="Stored on your device">
         <p>
@@ -32,7 +32,7 @@ export default function PrivacyPolicyPage() {
 
       <InfoSection title="Friend games">
         <p>
-          Friend games use the Drawback Chess websocket game server to connect players
+          Friend games use the Nerf Chess websocket game server to connect players
           by code, validate moves, and keep clocks. Active games are kept in server
           memory while they are in progress.
         </p>

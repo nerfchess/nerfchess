@@ -1,10 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.describeCustom = describeCustom;
-exports.buildCustomDrawback = buildCustomDrawback;
-exports.loadCustomDrawbacks = loadCustomDrawbacks;
-exports.saveCustomDrawback = saveCustomDrawback;
-exports.deleteCustomDrawback = deleteCustomDrawback;
+exports.buildCustomNerf = buildCustomNerf;
+exports.loadCustomNerfs = loadCustomNerfs;
+exports.saveCustomNerf = saveCustomNerf;
+exports.deleteCustomNerf = deleteCustomNerf;
 const board_1 = require("../board");
 const types_1 = require("../types");
 const PIECE_NAMES = {
@@ -28,7 +28,7 @@ function describeCustom(d) {
     return d.rules.map(ruleText).join(" ");
 }
 const adj = (a, b) => a !== b && Math.abs((0, types_1.FILE)(a) - (0, types_1.FILE)(b)) <= 1 && Math.abs((0, types_1.RANK)(a) - (0, types_1.RANK)(b)) <= 1;
-function buildCustomDrawback(spec) {
+function buildCustomNerf(spec) {
     return {
         id: spec.id,
         name: spec.name,
@@ -98,8 +98,8 @@ function buildCustomDrawback(spec) {
         },
     };
 }
-const STORE_KEY = "dc:custom-drawbacks";
-function loadCustomDrawbacks() {
+const STORE_KEY = "dc:custom-nerfs";
+function loadCustomNerfs() {
     if (typeof window === "undefined")
         return [];
     try {
@@ -115,16 +115,16 @@ function loadCustomDrawbacks() {
         return [];
     }
 }
-function saveCustomDrawback(d) {
+function saveCustomNerf(d) {
     if (typeof window === "undefined")
         return;
-    const list = loadCustomDrawbacks().filter((x) => x.id !== d.id);
+    const list = loadCustomNerfs().filter((x) => x.id !== d.id);
     list.push(d);
     localStorage.setItem(STORE_KEY, JSON.stringify(list));
 }
-function deleteCustomDrawback(id) {
+function deleteCustomNerf(id) {
     if (typeof window === "undefined")
         return;
-    const list = loadCustomDrawbacks().filter((x) => x.id !== id);
+    const list = loadCustomNerfs().filter((x) => x.id !== id);
     localStorage.setItem(STORE_KEY, JSON.stringify(list));
 }

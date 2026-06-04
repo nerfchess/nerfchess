@@ -1,6 +1,6 @@
 # Cloudflare Agent Troubleshooting Runbook
 
-Use this runbook when diagnosing Drawback Chess friend-game connectivity through
+Use this runbook when diagnosing Nerf Chess friend-game connectivity through
 Cloudflare Tunnel. Execute steps in order. Stop when the failing layer is found
 and apply only the remediation for that layer.
 
@@ -14,7 +14,7 @@ WS_ORIGIN=https://ws.example.com
 WS_URL=wss://ws.example.com/socket/v1
 LOCAL_JUDGE=http://127.0.0.1:8080
 LOCAL_SOCKET=ws://127.0.0.1:8080/socket/v1
-REPO=C:\Users\boda\Documents\GitHub\drawbackchess
+REPO=C:\Users\boda\Documents\GitHub\nerfchess
 ```
 
 If the frontend and websocket use the same hostname, set:
@@ -62,8 +62,8 @@ Same-host setup is also valid:
 Run:
 
 ```powershell
-Set-Location "C:\Users\boda\Documents\GitHub\drawbackchess"
-rg -n "drawbackchess-v1|PeerJS|peerjs|new Peer|0.peerjs.com" src package.json next.config.mjs
+Set-Location "C:\Users\boda\Documents\GitHub\nerfchess"
+rg -n "nerfchess-v1|PeerJS|peerjs|new Peer|0.peerjs.com" src package.json next.config.mjs
 ```
 h
 
@@ -107,7 +107,7 @@ Expected body:
 If port `8080` is not listening or `/healthz` fails, start the judging server:
 
 ```powershell
-Set-Location "C:\Users\boda\Documents\GitHub\drawbackchess"
+Set-Location "C:\Users\boda\Documents\GitHub\nerfchess"
 npm.cmd run server:build
 $env:HOST="127.0.0.1"
 $env:PORT="8080"
@@ -117,7 +117,7 @@ npm.cmd run server:start
 If using a persistent background server, start it with hidden window and logs:
 
 ```powershell
-Set-Location "C:\Users\boda\Documents\GitHub\drawbackchess"
+Set-Location "C:\Users\boda\Documents\GitHub\nerfchess"
 $env:HOST="127.0.0.1"
 $env:PORT="8080"
 Start-Process -FilePath node -ArgumentList "dist-server/server/index.js" -WorkingDirectory (Get-Location) -WindowStyle Hidden -RedirectStandardOutput ".game-server.stdout.log" -RedirectStandardError ".game-server.stderr.log"
@@ -351,9 +351,9 @@ $srcs = [regex]::Matches($html, 'src="([^"]+\.js[^"]*)"') | ForEach-Object { $_.
 foreach ($src in $srcs) {
   $url = if ($src.StartsWith("http")) { $src } else { "https://play.example.com" + $src }
   $js = (Invoke-WebRequest $url -UseBasicParsing).Content
-  if ($js -match "ws\.example\.com|socket/v1|drawbackchess-v1|peerjs") {
+  if ($js -match "ws\.example\.com|socket/v1|nerfchess-v1|peerjs") {
     "$url"
-    ($js | Select-String -Pattern "ws\.example\.com|socket/v1|drawbackchess-v1|peerjs" -AllMatches).Matches.Value | Select-Object -Unique
+    ($js | Select-String -Pattern "ws\.example\.com|socket/v1|nerfchess-v1|peerjs" -AllMatches).Matches.Value | Select-Object -Unique
   }
 }
 ```
@@ -399,7 +399,7 @@ wss://play.example.com/socket/v1
 If the browser tries:
 
 ```text
-drawbackchess-v1-XXXXX
+nerfchess-v1-XXXXX
 0.peerjs.com
 ```
 
@@ -416,7 +416,7 @@ Then hard refresh.
 
 ## Step 9: Interpret Common Errors
 
-### `Negotiation of connection to drawbackchess-v1-XXXXX failed`
+### `Negotiation of connection to nerfchess-v1-XXXXX failed`
 
 Cause:
 
@@ -503,7 +503,7 @@ All of these must be true:
 Local health succeeds: http://127.0.0.1:8080/healthz
 Public health succeeds: https://ws.example.com/healthz
 Browser WS connects to: wss://ws.example.com/socket/v1
-No browser request references PeerJS or drawbackchess-v1
+No browser request references PeerJS or nerfchess-v1
 Friend game can create a code
 Second browser can join the code
 Server accepts first move and broadcasts it to both clients

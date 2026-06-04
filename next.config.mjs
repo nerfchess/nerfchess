@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 
-// Content Security Policy — drawback chess is fully client-side, no third-party scripts
+// Content Security Policy — nerf chess is fully client-side, no third-party scripts
 // other than Vercel Analytics. next/font self-hosts fonts so no font CDN is required.
 // 'unsafe-inline' for styles is needed because tailwind + next inject style tags;
 // 'unsafe-inline' for scripts is required by Next's hydration boot script.

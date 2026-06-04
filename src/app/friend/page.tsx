@@ -8,11 +8,11 @@ import { MoveList } from "@/components/MoveList";
 import { PlayerNerfCard } from "@/components/PlayerNerfCard";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { cloneBoard, isInCheck, makeMove, moveToUCI } from "@/engine/board";
-import type { GameContext } from "@/engine/drawback";
-import { IMPLEMENTED_BY_ID, PLAYABLE_DRAWBACKS } from "@/engine/drawbacks/library";
+import type { GameContext } from "@/engine/nerf";
+import { IMPLEMENTED_BY_ID, PLAYABLE_NERFS } from "@/engine/nerfs/library";
 import {
   currentHint,
-  DrawbackGame,
+  NerfGame,
   legalMoves,
   makeContext,
   newGameAsColor,
@@ -45,8 +45,8 @@ const TIME_STEPS_SEC = [
   ...range(35 * 60, 2 * 60 * 60, 5 * 60),
 ];
 
-function pickRandomDrawback() {
-  const pool = PLAYABLE_DRAWBACKS.filter((d) => d.id !== "lucky");
+function pickRandomNerf() {
+  const pool = PLAYABLE_NERFS.filter((d) => d.id !== "lucky");
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
@@ -76,7 +76,7 @@ export default function FriendPage() {
   const [drawOfferBy, setDrawOfferBy] = useState<Color | null>(null);
   const [drawOfferStatus, setDrawOfferStatus] = useState<"idle" | "offering" | "declined">("idle");
 
-  const [game, setGame] = useState<DrawbackGame | null>(null);
+  const [game, setGame] = useState<NerfGame | null>(null);
   const [myColor, setMyColor] = useState<Color>("w");
   const [whiteMs, setWhiteMs] = useState(0);
   const [blackMs, setBlackMs] = useState(0);
@@ -162,8 +162,8 @@ export default function FriendPage() {
   }, []);
 
   const startGameFromSetup = (msg: MPStart) => {
-    const myDrawback = IMPLEMENTED_BY_ID[msg.drawbackId] ?? pickRandomDrawback();
-    let nextGame = newGameAsColor(myDrawback, msg.color, msg.drawbackSeed);
+    const myNerf = IMPLEMENTED_BY_ID[msg.nerfId] ?? pickRandomNerf();
+    let nextGame = newGameAsColor(myNerf, msg.color, msg.nerfSeed);
     for (const uci of msg.moves ?? []) {
       const move = legalMoves(nextGame).find((candidate) => moveToUCI(candidate) === uci);
       if (!move) {
@@ -187,7 +187,7 @@ export default function FriendPage() {
     setView("game");
   };
 
-  function queuePremoveSend(snapshot: DrawbackGame) {
+  function queuePremoveSend(snapshot: NerfGame) {
     if (premoveTimerRef.current != null) return;
     if (awaitingPremoveAckRef.current || snapshot.result || snapshot.board.turn !== myColorRef.current) return;
     const head = premovesRef.current[0];
@@ -410,7 +410,7 @@ export default function FriendPage() {
     }
   };
 
-  const myDrawbackForPremove = game ? (myColor === "w" ? game.white.drawback : game.black.drawback) : null;
+  const myNerfForPremove = game ? (myColor === "w" ? game.white.nerf : game.black.nerf) : null;
   const myStateForPremove = game ? (myColor === "w" ? game.white.state : game.black.state) : null;
 
   const { virtualBoard, validPremoves } = useMemo(() => {
@@ -431,7 +431,7 @@ export default function FriendPage() {
         capturedByMe: game.captured[myColor],
         capturedFromMe: game.captured[myColor === "w" ? "b" : "w"],
       };
-      const strictOptions = premoveOptionsFor(board, myColor, myDrawbackForPremove, myStateForPremove, ctx);
+      const strictOptions = premoveOptionsFor(board, myColor, myNerfForPremove, myStateForPremove, ctx);
       const fallbackOptions = premoveOptionsFor(board, myColor, null, null, null);
       const options =
         game.board.turn === myColor
@@ -454,7 +454,7 @@ export default function FriendPage() {
       valid.push(pm);
     }
     return { virtualBoard: board, validPremoves: valid };
-  }, [game, myColor, premoves, myDrawbackForPremove, myStateForPremove]);
+  }, [game, myColor, premoves, myNerfForPremove, myStateForPremove]);
 
   const premoveOptions = useMemo<Move[]>(() => {
     if (!virtualBoard || !game) return [];
@@ -467,10 +467,10 @@ export default function FriendPage() {
       capturedByMe: game.captured[myColor],
       capturedFromMe: game.captured[myColor === "w" ? "b" : "w"],
     };
-    const strictOptions = premoveOptionsFor(virtualBoard, myColor, myDrawbackForPremove, myStateForPremove, ctx);
+    const strictOptions = premoveOptionsFor(virtualBoard, myColor, myNerfForPremove, myStateForPremove, ctx);
     const fallbackOptions = premoveOptionsFor(virtualBoard, myColor, null, null, null);
     return [...strictOptions, ...fallbackOptions.filter((m) => !strictOptions.some((s) => moveKey(s) === moveKey(m)))];
-  }, [virtualBoard, myColor, game, myDrawbackForPremove, myStateForPremove]);
+  }, [virtualBoard, myColor, game, myNerfForPremove, myStateForPremove]);
 
   const premoveMode = !!game && !game.result && game.board.turn !== myColor && !!virtualBoard;
   const premovePending = !!game && !game.result && game.board.turn === myColor && validPremoves.length > 0;
@@ -713,11 +713,11 @@ export default function FriendPage() {
 
   // -------- Game view --------
   if (!game) return null;
-  const myDrawback = myColor === "w" ? game.white.drawback : game.black.drawback;
+  const myNerf = myColor === "w" ? game.white.nerf : game.black.nerf;
   const myState = myColor === "w" ? game.white.state : game.black.state;
   const myCtx = makeContext(game, myColor);
-  const visual = myDrawback.visual?.(myState, myCtx);
-  const opponentDrawback = myColor === "w" ? game.black.drawback : game.white.drawback;
+  const visual = myNerf.visual?.(myState, myCtx);
+  const opponentNerf = myColor === "w" ? game.black.nerf : game.white.nerf;
   const lastMove = game.board.history[game.board.history.length - 1] ?? null;
   const boardForDisplay = reviewBoard ?? pendingLocalBoard ?? virtualBoard ?? game.board;
   const lastMoveForDisplay = isReviewingHistory
@@ -828,7 +828,7 @@ export default function FriendPage() {
     <main className="flex h-dvh min-h-0 flex-col overflow-hidden">
       <nav className="sticky top-0 z-20 flex w-full shrink-0 items-center justify-between px-5 py-3">
         <Link href="/" className="font-display text-2xl tracking-tight">
-          drawback<span className="text-gold-leaf">chess</span>
+          nerf<span className="text-gold-leaf">chess</span>
         </Link>
         <div className="flex items-center gap-4">
           <div className="smallcaps hidden text-[11px] text-parchment-400 sm:block">
@@ -896,7 +896,7 @@ export default function FriendPage() {
               playerColor={myColor === "w" ? "b" : "w"}
               myColor={myColor}
               name="Opponent"
-              drawback={opponentDrawback}
+              nerf={opponentNerf}
               revealed={!!game.result}
               ownerLabel=""
             />
@@ -906,9 +906,9 @@ export default function FriendPage() {
               playerColor={myColor}
               myColor={myColor}
               name="You"
-              drawback={myDrawback}
+              nerf={myNerf}
               ownerLabel=""
-              progress={myDrawback.progress?.(myState, myCtx) ?? null}
+              progress={myNerf.progress?.(myState, myCtx) ?? null}
             />
           </aside>
           <div className="flex min-h-0 flex-col gap-2 sm:flex-row sm:items-stretch sm:justify-start">
@@ -1039,7 +1039,7 @@ function SiteNav() {
   return (
     <nav className="flex items-center justify-between px-10 py-7">
       <Link href="/" className="font-display text-2xl tracking-tight">
-        drawback<span className="text-gold-leaf">chess</span>
+        nerf<span className="text-gold-leaf">chess</span>
       </Link>
       <Link href="/play" className="px-3 py-1.5 rounded-full text-sm font-display hover:bg-white/5 text-parchment">
         vs Bot

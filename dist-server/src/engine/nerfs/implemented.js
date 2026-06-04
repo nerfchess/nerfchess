@@ -8,14 +8,14 @@ const extras_1 = require("./extras");
 const cheb = (a, b) => Math.max(Math.abs((0, types_1.FILE)(a) - (0, types_1.FILE)(b)), Math.abs((0, types_1.RANK)(a) - (0, types_1.RANK)(b)));
 const adj = (a, b) => a !== b && Math.abs((0, types_1.FILE)(a) - (0, types_1.FILE)(b)) <= 1 && Math.abs((0, types_1.RANK)(a) - (0, types_1.RANK)(b)) <= 1;
 const PIECE_VAL = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
-// Helpers to make defining a drawback less verbose
+// Helpers to make defining a nerf less verbose
 function db(d) {
     return { ...d, implemented: true };
 }
 exports.LUCKY = db({
     id: "lucky",
     name: "Lucky",
-    description: "You have no drawback. A rare gift from the gods of chess.",
+    description: "You have no nerf. A rare gift from the gods of chess.",
     flavor: "Today, fortune smiles upon you.",
     tier: 1,
     icon: "sparkles",
@@ -288,7 +288,7 @@ exports.CHAMPING_AT_THE_BIT = db({
 });
 exports.UNTITLED_DUCK = db({
     id: "untitled_duck",
-    name: "Untitled duck drawback",
+    name: "Untitled duck nerf",
     description: "A duck sits on a random square at game start. You can't pass through it or land on it.",
     flavor: "Quack.",
     tier: 1,
@@ -905,7 +905,7 @@ exports.ALL_IMPLEMENTED = [
     exports.RESPECTFUL,
     exports.SIEGE,
     exports.SCENT_OF_BLOOD,
-    ...more_1.MORE_DRAWBACKS,
-    ...extras_1.EXTRA_DRAWBACKS,
+    ...more_1.MORE_NERFS,
+    ...extras_1.EXTRA_NERFS,
 ];
 exports.IMPLEMENTED_BY_ID = Object.fromEntries(exports.ALL_IMPLEMENTED.map((d) => [d.id, d]));

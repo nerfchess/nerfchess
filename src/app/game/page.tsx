@@ -5,12 +5,12 @@ import { GameOver } from "@/components/GameOver";
 import { MoveList } from "@/components/MoveList";
 import { PlayerNerfCard } from "@/components/PlayerNerfCard";
 import { AILevel, pickAIMove } from "@/engine/ai";
-import { Drawback, type GameContext } from "@/engine/drawback";
-import { IMPLEMENTED_BY_ID, PLAYABLE_DRAWBACKS } from "@/engine/drawbacks/library";
+import { Nerf, type GameContext } from "@/engine/nerf";
+import { IMPLEMENTED_BY_ID, PLAYABLE_NERFS } from "@/engine/nerfs/library";
 import {
   applyTurnStart,
   currentHint,
-  DrawbackGame,
+  NerfGame,
   legalMoves,
   makeContext,
   newGame,
@@ -21,8 +21,8 @@ import { makeSeed } from "@/engine/rng";
 import { BoardState, Color, Move } from "@/engine/types";
 import { cloneBoard, isInCheck, makeMove } from "@/engine/board";
 import type { QueuedPremove } from "@/components/Board";
-import { buildCustomDrawback, CustomDrawback } from "@/engine/drawbacks/custom";
-import { isMuted, playCapture, playCheck, playDrawback, playMove as playMoveSfx, setMuted } from "@/lib/sounds";
+import { buildCustomNerf, CustomNerf } from "@/engine/nerfs/custom";
+import { isMuted, playCapture, playCheck, playNerf, playMove as playMoveSfx, setMuted } from "@/lib/sounds";
 import { applyResult, loadRating, saveRating } from "@/lib/rating";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { loadSavedAiGame, restoreSavedAiGame, saveAiGame } from "@/lib/gamePersistence";
@@ -44,8 +44,8 @@ function formatClock(ms: number): string {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-function pickRandomDrawback(): Drawback {
-  const playable = PLAYABLE_DRAWBACKS.filter((d) => d.id !== "lucky");
+function pickRandomNerf(): Nerf {
+  const playable = PLAYABLE_NERFS.filter((d) => d.id !== "lucky");
   return playable[Math.floor(Math.random() * playable.length)];
 }
 
@@ -86,7 +86,7 @@ function GamePage() {
   const querySignature = params.toString();
   const difficulty = (params.get("difficulty") ?? "medium") as AILevel;
   const myColorParam = params.get("color") ?? "random";
-  const myDrawbackId = params.get("drawback") ?? "random";
+  const myNerfId = params.get("nerf") ?? "random";
   // t = seconds per side; 0 (or missing) disables the clock entirely.
   const initialTimeMs = useMemo(() => {
     const t = parseInt(params.get("t") ?? "0", 10);
@@ -104,7 +104,7 @@ function GamePage() {
     return Math.random() < 0.5 ? "w" : "b";
   });
 
-  const [game, setGame] = useState<DrawbackGame | null>(null);
+  const [game, setGame] = useState<NerfGame | null>(null);
   const [, force] = useState(0);
   const [muted, setMutedState] = useState(false);
   const [premoves, setPremoves] = useState<QueuedPremove[]>([]);
@@ -118,8 +118,8 @@ function GamePage() {
   const [playerElo, setPlayerElo] = useState<number | null>(null);
   const aiThinking = useRef(false);
   const boardShellRef = useRef<HTMLDivElement | null>(null);
-  const whiteCustomSpec = useRef<CustomDrawback | null>(null);
-  const blackCustomSpec = useRef<CustomDrawback | null>(null);
+  const whiteCustomSpec = useRef<CustomNerf | null>(null);
+  const blackCustomSpec = useRef<CustomNerf | null>(null);
 
   const addIncrement = (color: Color) => {
     if (!clockEnabled || incrementMs <= 0) return;
@@ -144,9 +144,9 @@ function GamePage() {
           setBlackMs(saved.blackMs);
           setPremoves([]);
           whiteCustomSpec.current =
-            saved.game.white.drawback.kind === "custom" ? saved.game.white.drawback.spec : null;
+            saved.game.white.nerf.kind === "custom" ? saved.game.white.nerf.spec : null;
           blackCustomSpec.current =
-            saved.game.black.drawback.kind === "custom" ? saved.game.black.drawback.spec : null;
+            saved.game.black.nerf.kind === "custom" ? saved.game.black.nerf.spec : null;
           lastSeenMoveCount.current = restored.board.history.length;
           sawResult.current = !!restored.result;
           return;
@@ -156,23 +156,23 @@ function GamePage() {
       // Ignore incompatible saved games and deal a fresh one below.
     }
 
-    let myDb: Drawback;
-    let myCustomSpec: CustomDrawback | null = null;
-    if (myDrawbackId === "__custom__") {
+    let myDb: Nerf;
+    let myCustomSpec: CustomNerf | null = null;
+    if (myNerfId === "__custom__") {
       try {
         const raw = sessionStorage.getItem("dc:active-custom");
-        const spec = raw ? (JSON.parse(raw) as CustomDrawback) : null;
+        const spec = raw ? (JSON.parse(raw) as CustomNerf) : null;
         myCustomSpec = spec;
-        myDb = spec ? buildCustomDrawback(spec) : pickRandomDrawback();
+        myDb = spec ? buildCustomNerf(spec) : pickRandomNerf();
       } catch {
-        myDb = pickRandomDrawback();
+        myDb = pickRandomNerf();
       }
-    } else if (myDrawbackId === "random") {
-      myDb = pickRandomDrawback();
+    } else if (myNerfId === "random") {
+      myDb = pickRandomNerf();
     } else {
-      myDb = IMPLEMENTED_BY_ID[myDrawbackId] ?? pickRandomDrawback();
+      myDb = IMPLEMENTED_BY_ID[myNerfId] ?? pickRandomNerf();
     }
-    const aiDb = pickRandomDrawback();
+    const aiDb = pickRandomNerf();
     const wDb = myColor === "w" ? myDb : aiDb;
     const bDb = myColor === "w" ? aiDb : myDb;
     whiteCustomSpec.current = myColor === "w" ? myCustomSpec : null;
@@ -227,7 +227,7 @@ function GamePage() {
   // opponent capturing first; at execute time, if the friendly piece is still
   // there the real legal-move list won't include the move and the premove is
   // discarded.
-  const myDrawbackForPremove = game ? (myColor === "w" ? game.white.drawback : game.black.drawback) : null;
+  const myNerfForPremove = game ? (myColor === "w" ? game.white.nerf : game.black.nerf) : null;
   const myStateForPremove = game ? (myColor === "w" ? game.white.state : game.black.state) : null;
 
   const { virtualBoard, validPremoves } = useMemo(() => {
@@ -248,7 +248,7 @@ function GamePage() {
         capturedByMe: game.captured[myColor],
         capturedFromMe: game.captured[myColor === "w" ? "b" : "w"],
       };
-      const options = premoveOptionsFor(board, myColor, myDrawbackForPremove, myStateForPremove, ctx);
+      const options = premoveOptionsFor(board, myColor, myNerfForPremove, myStateForPremove, ctx);
       const match = options.find(
         (c) =>
           c.from === pm.from &&
@@ -263,7 +263,7 @@ function GamePage() {
       valid.push(pm);
     }
     return { virtualBoard: board, validPremoves: valid };
-  }, [game, myColor, premoves, myDrawbackForPremove, myStateForPremove]);
+  }, [game, myColor, premoves, myNerfForPremove, myStateForPremove]);
 
   const premoveOptions = useMemo<Move[]>(() => {
     if (!virtualBoard || !game) return [];
@@ -276,8 +276,8 @@ function GamePage() {
       capturedByMe: game.captured[myColor],
       capturedFromMe: game.captured[myColor === "w" ? "b" : "w"],
     };
-    return premoveOptionsFor(virtualBoard, myColor, myDrawbackForPremove, myStateForPremove, ctx);
-  }, [virtualBoard, myColor, game, myDrawbackForPremove, myStateForPremove]);
+    return premoveOptionsFor(virtualBoard, myColor, myNerfForPremove, myStateForPremove, ctx);
+  }, [virtualBoard, myColor, game, myNerfForPremove, myStateForPremove]);
 
   // The board is in true premove mode only when it's the opponent's turn. When
   // it's our turn and premoves are still pending, the head is about to commit;
@@ -304,14 +304,14 @@ function GamePage() {
     lastSeenMoveCount.current = hist.length;
   }, [game]);
 
-  // Drawback-triggered loss sound when game ends with a non-mundane reason.
+  // Nerf-triggered loss sound when game ends with a non-mundane reason.
   const sawResult = useRef(false);
   const [ratingChange, setRatingChange] = useState<{ before: number; after: number } | null>(null);
   useEffect(() => {
     if (!game?.result || sawResult.current) return;
     sawResult.current = true;
     if (game.result.reason && game.result.reason.includes(":")) {
-      playDrawback();
+      playNerf();
     }
     const before = loadRating();
     const score: 0 | 0.5 | 1 =
@@ -430,11 +430,11 @@ function GamePage() {
     return <LoadingPanel />;
   }
 
-  const myDrawback = myColor === "w" ? game.white.drawback : game.black.drawback;
+  const myNerf = myColor === "w" ? game.white.nerf : game.black.nerf;
   const myState = myColor === "w" ? game.white.state : game.black.state;
   const myCtx = makeContext(game, myColor);
-  const visual = myDrawback.visual?.(myState, myCtx);
-  const opponentDrawback = myColor === "w" ? game.black.drawback : game.white.drawback;
+  const visual = myNerf.visual?.(myState, myCtx);
+  const opponentNerf = myColor === "w" ? game.black.nerf : game.white.nerf;
   const lastMove = game.board.history[game.board.history.length - 1] ?? null;
   const boardForDisplay = reviewBoard ?? virtualBoard ?? game.board;
   const lastMoveForDisplay = isReviewingHistory
@@ -570,7 +570,7 @@ function GamePage() {
     <main className="flex h-dvh min-h-0 flex-col overflow-hidden">
       <nav className="sticky top-0 z-20 flex w-full shrink-0 items-center justify-between px-5 py-3">
         <Link href="/" className="font-display text-2xl tracking-tight">
-          drawback<span className="text-gold-leaf">chess</span>
+          nerf<span className="text-gold-leaf">chess</span>
         </Link>
         <div className="flex items-center gap-4">
           <div className="smallcaps text-[11px] text-parchment-400 hidden sm:block">
@@ -639,7 +639,7 @@ function GamePage() {
               myColor={myColor}
               name={`${difficulty[0].toUpperCase()}${difficulty.slice(1)} Bot`}
               elo={BOT_ELO[difficulty]}
-              drawback={opponentDrawback}
+              nerf={opponentNerf}
               revealed={!!game.result}
               ownerLabel=""
             />
@@ -650,9 +650,9 @@ function GamePage() {
               myColor={myColor}
               name="You"
               elo={playerElo}
-              drawback={myDrawback}
+              nerf={myNerf}
               ownerLabel=""
-              progress={myDrawback.progress?.(myState, myCtx) ?? null}
+              progress={myNerf.progress?.(myState, myCtx) ?? null}
             />
           </aside>
           <div className="flex min-h-0 flex-col gap-2 sm:flex-row sm:items-stretch sm:justify-start">

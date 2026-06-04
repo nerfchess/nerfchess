@@ -1,7 +1,7 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "main": "worker.ts",
-  "name": "drawbackchess",
+  "name": "nerfchess",
   "compatibility_date": "2026-05-29",
   "compatibility_flags": [
     "nodejs_compat"

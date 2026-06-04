@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { PLAYABLE_DRAWBACKS } from "@/engine/drawbacks/library";
+import { PLAYABLE_NERFS } from "@/engine/nerfs/library";
 import { clearSavedAiGame } from "@/lib/gamePersistence";
 import { loadRating } from "@/lib/rating";
 
@@ -28,7 +28,7 @@ export default function PlayPage() {
   const router = useRouter();
   const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">("medium");
   const [color, setColor] = useState<"w" | "b" | "random">("random");
-  const [drawbackId, setDrawbackId] = useState<string>("random");
+  const [nerfId, setNerfId] = useState<string>("random");
   // Time control in seconds; base = 0 means unlimited (no clock).
   const [baseSec, setBaseSec] = useState<number>(10 * 60);
   const [incrementSec, setIncrementSec] = useState<number>(0);
@@ -46,7 +46,7 @@ export default function PlayPage() {
       mode: "ai",
       difficulty,
       color,
-      drawback: drawbackId,
+      nerf: nerfId,
       t: String(baseSec),
       inc: String(incrementSec),
     });
@@ -57,7 +57,7 @@ export default function PlayPage() {
     <main className="min-h-screen">
       <nav className="flex items-center justify-between px-10 py-7">
         <Link href="/" className="font-display text-2xl tracking-tight">
-          drawback<span className="text-gold-leaf">chess</span>
+          nerf<span className="text-gold-leaf">chess</span>
         </Link>
         <div className="flex items-center gap-3">
           {rating != null && (
@@ -128,10 +128,10 @@ export default function PlayPage() {
           </div>
 
           <Group label="Your secret rule">
-            <Pill selected={drawbackId === "random"} onClick={() => setDrawbackId("random")}>
+            <Pill selected={nerfId === "random"} onClick={() => setNerfId("random")}>
               Surprise me
             </Pill>
-            <Pill selected={drawbackId === "lucky"} onClick={() => setDrawbackId("lucky")}>
+            <Pill selected={nerfId === "lucky"} onClick={() => setNerfId("lucky")}>
               None (Lucky)
             </Pill>
           </Group>
@@ -141,13 +141,13 @@ export default function PlayPage() {
               Or pick a specific rule to practice
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-72 overflow-y-auto pr-1">
-              {PLAYABLE_DRAWBACKS.map((d) => (
+              {PLAYABLE_NERFS.map((d) => (
                 <button
                   key={d.id}
-                  onClick={() => setDrawbackId(d.id)}
+                  onClick={() => setNerfId(d.id)}
                   className={
                     "text-left p-3 rounded-2xl border transition " +
-                    (drawbackId === d.id
+                    (nerfId === d.id
                       ? `tier-bg-${d.tier} border-2 shadow-leaf`
                       : "border-white/10 hover:border-white/25 bg-ink-900/40")
                   }

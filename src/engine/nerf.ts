@@ -5,7 +5,7 @@ export type Tier = 1 | 2 | 3 | 4 | 5; // 1 = trivial, 5 = brutal
 
 export interface GameContext {
   board: BoardState;
-  me: Color; // the side whose drawback this is
+  me: Color; // the side whose nerf this is
   opponentLastMove: Move | null;
   myLastMove: Move | null;
   moveNumber: number; // full move number from my perspective (turns I've made)
@@ -13,9 +13,9 @@ export interface GameContext {
   capturedFromMe: { p: number; n: number; b: number; r: number; q: number; k: number };
 }
 
-export type DrawbackState = Record<string, unknown>;
+export type NerfState = Record<string, unknown>;
 
-export interface Drawback {
+export interface Nerf {
   id: string;
   name: string;
   description: string;
@@ -24,24 +24,24 @@ export interface Drawback {
   icon?: string;
   implemented: boolean;
 
-  init?: (rng: RNG, color: Color) => DrawbackState;
-  onTurnStart?: (state: DrawbackState, ctx: GameContext, rng: RNG) => DrawbackState;
-  filterMoves?: (moves: Move[], state: DrawbackState, ctx: GameContext) => Move[];
+  init?: (rng: RNG, color: Color) => NerfState;
+  onTurnStart?: (state: NerfState, ctx: GameContext, rng: RNG) => NerfState;
+  filterMoves?: (moves: Move[], state: NerfState, ctx: GameContext) => Move[];
   checkLoss?: (
-    state: DrawbackState,
+    state: NerfState,
     ctx: GameContext
   ) => null | { reason: string };
 
-  // Optional hint surfaced in the UI when the drawback narrows or forces moves
+  // Optional hint surfaced in the UI when the nerf narrows or forces moves
   // this turn. Returned squares (if any) will be highlighted on the board.
   hint?: (
-    state: DrawbackState,
+    state: NerfState,
     ctx: GameContext,
     legalMoves: Move[]
   ) => null | { text: string; squares?: number[]; tone?: "info" | "warn" };
 
   // Hooks for visualization
-  visual?: (state: DrawbackState, ctx: GameContext) => {
+  visual?: (state: NerfState, ctx: GameContext) => {
     fogged?: boolean;
     waterRank?: number; // ranks 1..8 underwater
     duckSquare?: number;
@@ -49,9 +49,9 @@ export interface Drawback {
     highlightSquares?: number[];
   };
 
-  // Trackable progress for drawbacks tied to a counter (captures, moves, etc.).
+  // Trackable progress for nerfs tied to a counter (captures, moves, etc.).
   // Returned as 0..1 fraction plus a short label like "2/3 pawns eaten".
-  progress?: (state: DrawbackState, ctx: GameContext) => null | {
+  progress?: (state: NerfState, ctx: GameContext) => null | {
     value: number;
     max: number;
     label: string;

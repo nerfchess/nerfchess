@@ -1,14 +1,14 @@
 "use client";
 
 import {
-  CustomDrawback,
+  CustomNerf,
   CustomRule,
-  buildCustomDrawback,
-  deleteCustomDrawback,
+  buildCustomNerf,
+  deleteCustomNerf,
   describeCustom,
-  loadCustomDrawbacks,
-  saveCustomDrawback,
-} from "@/engine/drawbacks/custom";
+  loadCustomNerfs,
+  saveCustomNerf,
+} from "@/engine/nerfs/custom";
 import { PieceType } from "@/engine/types";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -39,10 +39,10 @@ export default function BuilderPage() {
   const router = useRouter();
   const [name, setName] = useState("My Curse");
   const [rules, setRules] = useState<CustomRule[]>([{ kind: "ban_file", file: 7 }]);
-  const [saved, setSaved] = useState<CustomDrawback[]>([]);
+  const [saved, setSaved] = useState<CustomNerf[]>([]);
 
   useEffect(() => {
-    setSaved(loadCustomDrawbacks());
+    setSaved(loadCustomNerfs());
   }, []);
 
   const addRule = (kind: CustomRule["kind"]) => {
@@ -63,31 +63,31 @@ export default function BuilderPage() {
 
   const save = () => {
     const id = "custom_" + Date.now().toString(36);
-    const d: CustomDrawback = { id, name: name.trim() || "Untitled Curse", rules };
-    saveCustomDrawback(d);
-    setSaved(loadCustomDrawbacks());
+    const d: CustomNerf = { id, name: name.trim() || "Untitled Curse", rules };
+    saveCustomNerf(d);
+    setSaved(loadCustomNerfs());
   };
 
-  const play = (d: CustomDrawback) => {
+  const play = (d: CustomNerf) => {
     // Stash the spec under a key the game page can read back.
     try {
       sessionStorage.setItem("dc:active-custom", JSON.stringify(d));
     } catch {}
-    router.push(`/game?mode=ai&difficulty=medium&color=random&drawback=__custom__`);
+    router.push(`/game?mode=ai&difficulty=medium&color=random&nerf=__custom__`);
   };
 
   const erase = (id: string) => {
-    deleteCustomDrawback(id);
-    setSaved(loadCustomDrawbacks());
+    deleteCustomNerf(id);
+    setSaved(loadCustomNerfs());
   };
 
-  const preview: CustomDrawback = { id: "preview", name: name || "My Curse", rules };
+  const preview: CustomNerf = { id: "preview", name: name || "My Curse", rules };
 
   return (
     <main className="min-h-screen pb-20">
       <nav className="flex items-center justify-between px-10 py-7">
         <Link href="/" className="font-display text-2xl tracking-tight">
-          drawback<span className="text-gold-leaf">chess</span>
+          nerf<span className="text-gold-leaf">chess</span>
         </Link>
         <Link href="/codex" className="px-3 py-1.5 rounded-full text-sm font-display hover:bg-white/5 text-parchment">
           ← All the rules

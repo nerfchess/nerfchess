@@ -3,16 +3,16 @@ import { createServer as createHttpServer } from "node:http";
 import { createServer as createHttpsServer } from "node:https";
 import { randomBytes } from "node:crypto";
 import { moveToUCI } from "../src/engine/board";
-import { PLAYABLE_DRAWBACKS } from "../src/engine/drawbacks/library";
-import { DrawbackGame, legalMoves, newGame, playMove, resign } from "../src/engine/game";
+import { PLAYABLE_NERFS } from "../src/engine/nerfs/library";
+import { NerfGame, legalMoves, newGame, playMove, resign } from "../src/engine/game";
 import { makeSeed, RNG } from "../src/engine/rng";
 import { Color } from "../src/engine/types";
 import WebSocket, { RawData, WebSocketServer } from "ws";
 
-type Result = DrawbackGame["result"];
+type Result = NerfGame["result"];
 type Setup = {
-  whiteDrawbackId: string;
-  blackDrawbackId: string;
+  whiteNerfId: string;
+  blackNerfId: string;
   seed: number;
   timeSec: number;
   incrementSec: number;
@@ -29,7 +29,7 @@ type Match = {
   clients: Partial<Record<Color, Client>>;
   tokens: Record<Color, string>;
   disconnectedAt: Partial<Record<Color, number>>;
-  game: DrawbackGame | null;
+  game: NerfGame | null;
   clocks: Record<Color, number>;
   runningSince: number | null;
   drawOfferBy: Color | null;
@@ -49,8 +49,8 @@ const allowedOrigins = new Set(
 const matches = new Map<string, Match>();
 const disconnectGraceMs = 15 * 1000;
 
-function pickDrawbackId(): string {
-  const pool = PLAYABLE_DRAWBACKS.filter((drawback) => drawback.id !== "lucky");
+function pickNerfId(): string {
+  const pool = PLAYABLE_NERFS.filter((nerf) => nerf.id !== "lucky");
   return pool[Math.floor(Math.random() * pool.length)].id;
 }
 
@@ -95,17 +95,17 @@ function attachClient(match: Match, client: Client, color: Color) {
 
 function startPayload(match: Match, color: Color) {
   const clocks = currentClocks(match);
-  const myDrawbackId = color === "w" ? match.setup.whiteDrawbackId : match.setup.blackDrawbackId;
+  const myNerfId = color === "w" ? match.setup.whiteNerfId : match.setup.blackNerfId;
   const masterRng = new RNG(match.setup.seed);
   const wSeed = masterRng.fork().getState();
   const bSeed = masterRng.fork().getState();
-  const drawbackSeed = color === "w" ? wSeed : bSeed;
+  const nerfSeed = color === "w" ? wSeed : bSeed;
   return {
     id: match.id,
     color,
     token: match.tokens[color],
-    drawbackId: myDrawbackId,
-    drawbackSeed,
+    nerfId: myNerfId,
+    nerfSeed,
     timeSec: match.setup.timeSec,
     incrementSec: match.setup.incrementSec,
     wc: Math.round(clocks.w),
@@ -176,8 +176,8 @@ function createMatch(client: Client, data: unknown) {
   const match: Match = {
     id,
     setup: {
-      whiteDrawbackId: pickDrawbackId(),
-      blackDrawbackId: pickDrawbackId(),
+      whiteNerfId: pickNerfId(),
+      blackNerfId: pickNerfId(),
       seed: makeSeed(),
       timeSec,
       incrementSec,
@@ -205,8 +205,8 @@ function joinMatch(client: Client, data: unknown) {
     return error(client, "not_found", "That code is not accepting a player.");
   }
   attachClient(match, client, "b");
-  const white = PLAYABLE_DRAWBACKS.find((drawback) => drawback.id === match.setup.whiteDrawbackId);
-  const black = PLAYABLE_DRAWBACKS.find((drawback) => drawback.id === match.setup.blackDrawbackId);
+  const white = PLAYABLE_NERFS.find((nerf) => nerf.id === match.setup.whiteNerfId);
+  const black = PLAYABLE_NERFS.find((nerf) => nerf.id === match.setup.blackNerfId);
   if (!white || !black) return error(client, "server_error", "Could not prepare this game.");
   match.game = newGame(white, black, match.setup.seed);
   match.runningSince = Date.now();

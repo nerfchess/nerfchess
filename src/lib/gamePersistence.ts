@@ -1,19 +1,19 @@
 import type { QueuedPremove } from "@/components/Board";
-import { Drawback } from "@/engine/drawback";
-import { buildCustomDrawback, CustomDrawback } from "@/engine/drawbacks/custom";
-import { IMPLEMENTED_BY_ID } from "@/engine/drawbacks/library";
-import { DrawbackGame, PlayerSlot } from "@/engine/game";
+import { Nerf } from "@/engine/nerf";
+import { buildCustomNerf, CustomNerf } from "@/engine/nerfs/custom";
+import { IMPLEMENTED_BY_ID } from "@/engine/nerfs/library";
+import { NerfGame, PlayerSlot } from "@/engine/game";
 import { RNG } from "@/engine/rng";
 import { Color } from "@/engine/types";
 
 export const ACTIVE_AI_GAME_KEY = "dc:active-ai-game";
 
-type SavedDrawback =
+type SavedNerf =
   | { kind: "implemented"; id: string }
-  | { kind: "custom"; spec: CustomDrawback };
+  | { kind: "custom"; spec: CustomNerf };
 
 type SavedPlayerSlot = {
-  drawback: SavedDrawback;
+  nerf: SavedNerf;
   state: PlayerSlot["state"];
   color: Color;
   rngState: number;
@@ -27,31 +27,31 @@ export type SavedAiGame = {
   blackMs: number;
   premoves: QueuedPremove[];
   game: {
-    board: DrawbackGame["board"];
+    board: NerfGame["board"];
     white: SavedPlayerSlot;
     black: SavedPlayerSlot;
-    result: DrawbackGame["result"];
+    result: NerfGame["result"];
     startedAt: number;
-    captured: DrawbackGame["captured"];
+    captured: NerfGame["captured"];
   };
 };
 
-function drawbackRef(drawback: Drawback, customSpec?: CustomDrawback | null): SavedDrawback | null {
-  if (customSpec && customSpec.id === drawback.id) return { kind: "custom", spec: customSpec };
-  if (IMPLEMENTED_BY_ID[drawback.id]) return { kind: "implemented", id: drawback.id };
+function nerfRef(nerf: Nerf, customSpec?: CustomNerf | null): SavedNerf | null {
+  if (customSpec && customSpec.id === nerf.id) return { kind: "custom", spec: customSpec };
+  if (IMPLEMENTED_BY_ID[nerf.id]) return { kind: "implemented", id: nerf.id };
   return null;
 }
 
-function restoreDrawback(saved: SavedDrawback): Drawback | null {
-  if (saved.kind === "custom") return buildCustomDrawback(saved.spec);
+function restoreNerf(saved: SavedNerf): Nerf | null {
+  if (saved.kind === "custom") return buildCustomNerf(saved.spec);
   return IMPLEMENTED_BY_ID[saved.id] ?? null;
 }
 
-function saveSlot(slot: PlayerSlot, customSpec?: CustomDrawback | null): SavedPlayerSlot | null {
-  const drawback = drawbackRef(slot.drawback, customSpec);
-  if (!drawback) return null;
+function saveSlot(slot: PlayerSlot, customSpec?: CustomNerf | null): SavedPlayerSlot | null {
+  const nerf = nerfRef(slot.nerf, customSpec);
+  if (!nerf) return null;
   return {
-    drawback,
+    nerf,
     state: slot.state,
     color: slot.color,
     rngState: slot.rng.getState(),
@@ -59,10 +59,10 @@ function saveSlot(slot: PlayerSlot, customSpec?: CustomDrawback | null): SavedPl
 }
 
 function restoreSlot(saved: SavedPlayerSlot): PlayerSlot | null {
-  const drawback = restoreDrawback(saved.drawback);
-  if (!drawback) return null;
+  const nerf = restoreNerf(saved.nerf);
+  if (!nerf) return null;
   return {
-    drawback,
+    nerf,
     state: saved.state ?? {},
     color: saved.color,
     rng: RNG.fromState(saved.rngState),
@@ -83,7 +83,7 @@ export function loadSavedAiGame(query: string): SavedAiGame | null {
   }
 }
 
-export function restoreSavedAiGame(saved: SavedAiGame): DrawbackGame | null {
+export function restoreSavedAiGame(saved: SavedAiGame): NerfGame | null {
   const white = restoreSlot(saved.game.white);
   const black = restoreSlot(saved.game.black);
   if (!white || !black) return null;
@@ -100,12 +100,12 @@ export function restoreSavedAiGame(saved: SavedAiGame): DrawbackGame | null {
 export function saveAiGame(input: {
   query: string;
   myColor: Color;
-  game: DrawbackGame;
+  game: NerfGame;
   whiteMs: number;
   blackMs: number;
   premoves: QueuedPremove[];
-  whiteCustomSpec?: CustomDrawback | null;
-  blackCustomSpec?: CustomDrawback | null;
+  whiteCustomSpec?: CustomNerf | null;
+  blackCustomSpec?: CustomNerf | null;
 }) {
   if (typeof window === "undefined") return;
   const white = saveSlot(input.game.white, input.whiteCustomSpec);

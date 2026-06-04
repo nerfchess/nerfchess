@@ -1,4 +1,4 @@
-import { Drawback } from "../drawback";
+import { Nerf } from "../nerf";
 import { attackedBy, findKing, generateMoves, isInCheck, makeMove } from "../board";
 import { Color, FILE, Move, PieceType, RANK, SQ, Square } from "../types";
 
@@ -10,7 +10,7 @@ const adj = (a: Square, b: Square) =>
 
 const PIECE_VAL: Record<PieceType, number> = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
 
-function db(d: Drawback): Drawback {
+function db(d: Nerf): Nerf {
   return { ...d, implemented: true };
 }
 
@@ -29,9 +29,9 @@ function pieceSquares(board: { pieces: ({ type: PieceType; color: Color } | null
   return out;
 }
 
-// ------------------------- DRAWBACKS -------------------------
+// ------------------------- NERFS -------------------------
 
-export const ROOK_BUDDIES: Drawback = db({
+export const ROOK_BUDDIES: Nerf = db({
   id: "rook_buddies", name: "Rook Buddies", tier: 1, icon: "link", implemented: true,
   description: "Can't move rooks until they are connected (no pieces between them on home rank).",
   filterMoves: (moves, _s, ctx) => {
@@ -50,7 +50,7 @@ export const ROOK_BUDDIES: Drawback = db({
   },
 });
 
-export const SEPARATION_ANXIETY: Drawback = db({
+export const SEPARATION_ANXIETY: Nerf = db({
   id: "separation_anxiety", name: "Separation Anxiety", tier: 1, icon: "shield", implemented: true,
   description: "Pawns adjacent to your king can't move away from him.",
   filterMoves: (moves, _s, ctx) => {
@@ -64,7 +64,7 @@ export const SEPARATION_ANXIETY: Drawback = db({
   },
 });
 
-export const CROSSING_THE_RUBICON: Drawback = db({
+export const CROSSING_THE_RUBICON: Nerf = db({
   id: "crossing_the_rubicon", name: "Crossing the Rubicon", tier: 2, implemented: true,
   description: "Once a piece crosses to the opponent's half, it can't return.",
   filterMoves: (moves, _s, ctx) => {
@@ -73,7 +73,7 @@ export const CROSSING_THE_RUBICON: Drawback = db({
   },
 });
 
-export const QUEEN_DISGUISE: Drawback = db({
+export const QUEEN_DISGUISE: Nerf = db({
   id: "queen_disguise", name: "Queen Disguise", tier: 2, implemented: true,
   description: "Your queen is secretly either a rook or a bishop. Once you move it like one, you can't move it like the other.",
   init: () => ({ locked: null as "r" | "b" | null }),
@@ -97,7 +97,7 @@ export const QUEEN_DISGUISE: Drawback = db({
   },
 });
 
-export const QUEEN_BEE: Drawback = db({
+export const QUEEN_BEE: Nerf = db({
   id: "queen_bee", name: "Queen Bee", tier: 2, implemented: true,
   description: "Once you capture with your queen, you can no longer move queens.",
   filterMoves: (moves, _s, ctx) => {
@@ -106,13 +106,13 @@ export const QUEEN_BEE: Drawback = db({
   },
 });
 
-export const ENTRENCHED: Drawback = db({
+export const ENTRENCHED: Nerf = db({
   id: "entrenched", name: "Entrenched", tier: 2, implemented: true,
   description: "Rooks can't move more than 2 squares.",
   filterMoves: (moves) => moves.filter((m) => m.piece !== "r" || cheb(m.from, m.to) <= 2),
 });
 
-export const QUIT_HORSING_AROUND: Drawback = db({
+export const QUIT_HORSING_AROUND: Nerf = db({
   id: "quit_horsing_around", name: "Quit Horsing Around", tier: 1, implemented: true,
   description: "If you moved a knight last move, you can't move a knight this move.",
   filterMoves: (moves, _s, ctx) => {
@@ -121,7 +121,7 @@ export const QUIT_HORSING_AROUND: Drawback = db({
   },
 });
 
-export const ROYAL_JUBILEE: Drawback = db({
+export const ROYAL_JUBILEE: Nerf = db({
   id: "royal_jubilee", name: "Royal Jubilee", tier: 2, implemented: true,
   description: "Whenever you capture a non-pawn, you must move your king or queen on the next move.",
   filterMoves: (moves, _s, ctx) => {
@@ -132,7 +132,7 @@ export const ROYAL_JUBILEE: Drawback = db({
   },
 });
 
-export const PRIMA_DONNA: Drawback = db({
+export const PRIMA_DONNA: Nerf = db({
   id: "prima_donna", name: "Prima Donna", tier: 2, implemented: true,
   description: "Can't have more than one pawn on the same file.",
   filterMoves: (moves, _s, ctx) => {
@@ -151,7 +151,7 @@ export const PRIMA_DONNA: Drawback = db({
   },
 });
 
-export const SEPARATION_CHURCH_STATE: Drawback = db({
+export const SEPARATION_CHURCH_STATE: Nerf = db({
   id: "separation_church_state", name: "Separation of Church and State", tier: 2, implemented: true,
   description: "Can't move bishops next to a king and can't move king next to a bishop.",
   filterMoves: (moves, _s, ctx) => {
@@ -174,7 +174,7 @@ export const SEPARATION_CHURCH_STATE: Drawback = db({
   },
 });
 
-export const ESCORT_MISSION: Drawback = db({
+export const ESCORT_MISSION: Nerf = db({
   id: "escort_mission", name: "Escort Mission", tier: 1, implemented: true,
   description: "If your king can capture, it must.",
   filterMoves: (moves) => {
@@ -183,7 +183,7 @@ export const ESCORT_MISSION: Drawback = db({
   },
 });
 
-export const BATTLE_FATIGUE: Drawback = db({
+export const BATTLE_FATIGUE: Nerf = db({
   id: "battle_fatigue", name: "Battle Fatigue", tier: 2, implemented: true,
   description: "After a piece captures, it can't capture again until it makes a non-capturing move.",
   filterMoves: (moves, _s, ctx) => {
@@ -203,14 +203,14 @@ export const BATTLE_FATIGUE: Drawback = db({
   },
 });
 
-export const SNIPERS: Drawback = db({
+export const SNIPERS: Nerf = db({
   id: "snipers", name: "Snipers", tier: 2, implemented: true,
   description: "Bishops can only capture from distance ≥ 4.",
   filterMoves: (moves) =>
     moves.filter((m) => !(m.piece === "b" && m.captured && cheb(m.from, m.to) < 4)),
 });
 
-export const DIPLOMATIC_IMMUNITY: Drawback = db({
+export const DIPLOMATIC_IMMUNITY: Nerf = db({
   id: "diplomatic_immunity", name: "Diplomatic Immunity", tier: 2, implemented: true,
   description: "Can't capture a piece that just moved, unless that move was a capture.",
   filterMoves: (moves, _s, ctx) => {
@@ -220,21 +220,21 @@ export const DIPLOMATIC_IMMUNITY: Drawback = db({
   },
 });
 
-export const FEMME_FATALE: Drawback = db({
+export const FEMME_FATALE: Nerf = db({
   id: "femme_fatale", name: "Femme Fatale", tier: 2, implemented: true,
   description: "You can only capture the enemy king with your queen.",
   filterMoves: (moves) =>
     moves.filter((m) => !(m.captured === "k" && m.piece !== "q")),
 });
 
-export const GET_DOWN_MR_PRESIDENT: Drawback = db({
+export const GET_DOWN_MR_PRESIDENT: Nerf = db({
   id: "get_down_mr_president", name: "Get Down Mr. President", tier: 3, implemented: true,
   description: "Can't move your king while in check.",
   filterMoves: (moves, _s, ctx) =>
     isInCheck(ctx.board, ctx.me) ? moves.filter((m) => m.piece !== "k") : moves,
 });
 
-export const POWER_CELLS: Drawback = db({
+export const POWER_CELLS: Nerf = db({
   id: "power_cells", name: "Power Cells", tier: 3, implemented: true,
   description: "Can't move a piece farther than the number of pawns you have.",
   filterMoves: (moves, _s, ctx) => {
@@ -243,7 +243,7 @@ export const POWER_CELLS: Drawback = db({
   },
 });
 
-export const UNSPOOLING: Drawback = db({
+export const UNSPOOLING: Nerf = db({
   id: "unspooling", name: "Unspooling", tier: 3, implemented: true,
   description: "Total move distance budget = 100. When you run out, you lose.",
   init: () => ({ used: 0 }),
@@ -263,7 +263,7 @@ export const UNSPOOLING: Drawback = db({
   },
 });
 
-export const EVIL_TWIN: Drawback = db({
+export const EVIL_TWIN: Nerf = db({
   id: "evil_twin", name: "Evil Twin", tier: 3, implemented: true,
   description: "If you can capture a piece with a same-type piece, you must.",
   filterMoves: (moves) => {
@@ -272,7 +272,7 @@ export const EVIL_TWIN: Drawback = db({
   },
 });
 
-export const DOCTOR_OCTOPUS: Drawback = db({
+export const DOCTOR_OCTOPUS: Nerf = db({
   id: "doctor_octopus", name: "Doctor Octopus", tier: 3, implemented: true,
   description: "Can only capture non-king pieces 8 times total.",
   filterMoves: (moves, _s, ctx) => {
@@ -282,7 +282,7 @@ export const DOCTOR_OCTOPUS: Drawback = db({
   },
 });
 
-export const PROTECTED_PAWNS: Drawback = db({
+export const PROTECTED_PAWNS: Nerf = db({
   id: "protected_pawns", name: "Protected Pawns", tier: 3, implemented: true,
   description: "Can only move pawns to defended squares.",
   filterMoves: (moves, _s, ctx) => {
@@ -291,7 +291,7 @@ export const PROTECTED_PAWNS: Drawback = db({
   },
 });
 
-export const JUST_PASSING_THROUGH: Drawback = db({
+export const JUST_PASSING_THROUGH: Nerf = db({
   id: "just_passing_through", name: "Just Passing Through", tier: 2, implemented: true,
   description: "Can't capture on a random rank.",
   init: (rng) => ({ rank: rng.int(8) }),
@@ -301,14 +301,14 @@ export const JUST_PASSING_THROUGH: Drawback = db({
   },
 });
 
-export const REMORSEFUL: Drawback = db({
+export const REMORSEFUL: Nerf = db({
   id: "remorseful", name: "Remorseful", tier: 2, implemented: true,
   description: "Can't capture twice in a row.",
   filterMoves: (moves, _s, ctx) =>
     ctx.myLastMove?.captured ? moves.filter((m) => !m.captured) : moves,
 });
 
-export const SHAPESHIFTER: Drawback = db({
+export const SHAPESHIFTER: Nerf = db({
   id: "shapeshifter", name: "Shapeshifter", tier: 4, implemented: true,
   description: "Queen starts as a bishop. When you capture a non-pawn, queen becomes a copy of that piece. Capturing a knight freezes her.",
   init: () => ({ form: "b" as PieceType, frozen: false }),
@@ -340,7 +340,7 @@ export const SHAPESHIFTER: Drawback = db({
   },
 });
 
-export const HORSE_EATS_FIRST: Drawback = db({
+export const HORSE_EATS_FIRST: Nerf = db({
   id: "horse_eats_first", name: "Horse Eats First", tier: 3, implemented: true,
   description: "As long as you have a knight, you can only capture with knights.",
   filterMoves: (moves, _s, ctx) => {
@@ -350,7 +350,7 @@ export const HORSE_EATS_FIRST: Drawback = db({
   },
 });
 
-export const WINDUP_TOYS: Drawback = db({
+export const WINDUP_TOYS: Nerf = db({
   id: "windup_toys", name: "Windup Toys", tier: 3, implemented: true,
   description: "After move 12, can't move knights or bishops.",
   filterMoves: (moves, _s, ctx) => {
@@ -359,7 +359,7 @@ export const WINDUP_TOYS: Drawback = db({
   },
 });
 
-export const ABSTINENCE: Drawback = db({
+export const ABSTINENCE: Nerf = db({
   id: "abstinence", name: "Abstinence", tier: 4, implemented: true,
   description: "If opponent ever has two same-type non-pawns adjacent, you lose.",
   checkLoss: (_s, ctx) => {
@@ -377,7 +377,7 @@ export const ABSTINENCE: Drawback = db({
   },
 });
 
-export const YOU_BEST_NOT_MISS: Drawback = db({
+export const YOU_BEST_NOT_MISS: Nerf = db({
   id: "you_best_not_miss", name: "You Best Not Miss", tier: 4, implemented: true,
   description: "If you end your turn giving check, you must capture the king next turn or lose.",
   checkLoss: (_s, ctx) => {
@@ -413,7 +413,7 @@ export const YOU_BEST_NOT_MISS: Drawback = db({
   },
 });
 
-export const EYE_OF_SAURON: Drawback = db({
+export const EYE_OF_SAURON: Nerf = db({
   id: "eye_of_sauron", name: "Eye of Sauron", tier: 4, implemented: true,
   description: "As long as you have a rook, non-pawns can't go past the rook's farthest sight.",
   filterMoves: (moves, _s, ctx) => {
@@ -443,7 +443,7 @@ export const EYE_OF_SAURON: Drawback = db({
   },
 });
 
-export const SAVIOR_COMPLEX: Drawback = db({
+export const SAVIOR_COMPLEX: Nerf = db({
   id: "savior_complex", name: "Savior Complex", tier: 4, implemented: true,
   description: "When in check, must move your queen, or lose.",
   filterMoves: (moves, _s, ctx) => {
@@ -458,7 +458,7 @@ export const SAVIOR_COMPLEX: Drawback = db({
   },
 });
 
-export const RECONNAISSANCE: Drawback = db({
+export const RECONNAISSANCE: Nerf = db({
   id: "reconnaissance", name: "Reconnaissance", tier: 4, implemented: true,
   description: "Start unable to capture. After seeing each opponent piece type move, you may capture that type.",
   init: () => ({ known: [] as PieceType[] }),
@@ -473,14 +473,14 @@ export const RECONNAISSANCE: Drawback = db({
   },
 });
 
-export const CONTROL_CENTER: Drawback = db({
+export const CONTROL_CENTER: Nerf = db({
   id: "control_center", name: "Control Center", tier: 3, implemented: true,
   description: "Non-capturing moves must go to files c, d, e, or f.",
   filterMoves: (moves) =>
     moves.filter((m) => m.captured || (FILE(m.to) >= 2 && FILE(m.to) <= 5)),
 });
 
-export const HAUNTED: Drawback = db({
+export const HAUNTED: Nerf = db({
   id: "haunted", name: "Haunted", tier: 3, implemented: true,
   description: "Can't move to a square where you've previously captured.",
   filterMoves: (moves, _s, ctx) => {
@@ -490,7 +490,7 @@ export const HAUNTED: Drawback = db({
   },
 });
 
-export const TOWER_DEFENSE: Drawback = db({
+export const TOWER_DEFENSE: Nerf = db({
   id: "tower_defense", name: "Tower Defense", tier: 4, implemented: true,
   description: "Can't move rooks. If you lose all rooks, you lose.",
   filterMoves: (moves) => moves.filter((m) => m.piece !== "r"),
@@ -500,7 +500,7 @@ export const TOWER_DEFENSE: Drawback = db({
       : null,
 });
 
-export const PARANOID: Drawback = db({
+export const PARANOID: Nerf = db({
   id: "paranoid", name: "Paranoid", tier: 4, implemented: true,
   description: "Your king must always be defended, or you lose.",
   checkLoss: (_s, ctx) => {
@@ -512,7 +512,7 @@ export const PARANOID: Drawback = db({
   },
 });
 
-export const BIPARTISANSHIP: Drawback = db({
+export const BIPARTISANSHIP: Nerf = db({
   id: "bipartisanship", name: "Bipartisanship", tier: 3, implemented: true,
   description: "Can't move left twice in a row or right twice in a row.",
   filterMoves: (moves, _s, ctx) => {
@@ -525,7 +525,7 @@ export const BIPARTISANSHIP: Drawback = db({
   },
 });
 
-export const SHELLSHOCKED: Drawback = db({
+export const SHELLSHOCKED: Nerf = db({
   id: "shellshocked", name: "Shellshocked", tier: 3, implemented: true,
   description: "When opponent captures, pieces adjacent to the captured square can't move next turn.",
   filterMoves: (moves, _s, ctx) => {
@@ -536,7 +536,7 @@ export const SHELLSHOCKED: Drawback = db({
   },
 });
 
-export const COMFORT_ZONE: Drawback = db({
+export const COMFORT_ZONE: Nerf = db({
   id: "comfort_zone", name: "Comfort Zone", tier: 2, implemented: true,
   description: "If you can move to a random square X, you must.",
   init: () => ({ target: 0 }),
@@ -549,7 +549,7 @@ export const COMFORT_ZONE: Drawback = db({
   visual: (state) => ({ highlightSquares: [(state as { target: number }).target] }),
 });
 
-export const LETHAL_ATTRACTION: Drawback = db({
+export const LETHAL_ATTRACTION: Nerf = db({
   id: "lethal_attraction", name: "Lethal Attraction", tier: 4, implemented: true,
   description: "Can't make moves that move a piece farther from opponent's king than it started.",
   filterMoves: (moves, _s, ctx) => {
@@ -560,7 +560,7 @@ export const LETHAL_ATTRACTION: Drawback = db({
   },
 });
 
-export const MODEST: Drawback = db({
+export const MODEST: Nerf = db({
   id: "modest", name: "Modest", tier: 4, implemented: true,
   description: "Lose if you have more pieces than opponent.",
   checkLoss: (_s, ctx) => {
@@ -572,7 +572,7 @@ export const MODEST: Drawback = db({
   },
 });
 
-export const TRIPLE_PLAY: Drawback = db({
+export const TRIPLE_PLAY: Nerf = db({
   id: "triple_play", name: "Triple Play", tier: 4, implemented: true,
   description: "Can only capture the enemy king if you have 3 of a random piece type.",
   init: (rng) => ({ type: rng.pick(["n", "b", "r"] as PieceType[]) }),
@@ -584,7 +584,7 @@ export const TRIPLE_PLAY: Drawback = db({
   },
 });
 
-export const SIBLING_RIVALRY: Drawback = db({
+export const SIBLING_RIVALRY: Nerf = db({
   id: "sibling_rivalry", name: "Sibling Rivalry", tier: 3, implemented: true,
   description: "Can't move a piece adjacent to an opponent's piece of same type.",
   filterMoves: (moves, _s, ctx) => {
@@ -599,7 +599,7 @@ export const SIBLING_RIVALRY: Drawback = db({
   },
 });
 
-export const TORCHLIGHT: Drawback = db({
+export const TORCHLIGHT: Nerf = db({
   id: "torchlight", name: "Torchlight", tier: 4, implemented: true,
   description: "Non-pawns can only move if start or end square is adjacent to one of your pawns.",
   filterMoves: (moves, _s, ctx) => {
@@ -611,7 +611,7 @@ export const TORCHLIGHT: Drawback = db({
   },
 });
 
-export const TURN_OTHER_CHEEK: Drawback = db({
+export const TURN_OTHER_CHEEK: Nerf = db({
   id: "turn_other_cheek", name: "Turn the Other Cheek", tier: 4, implemented: true,
   description: "Can't recapture.",
   filterMoves: (moves, _s, ctx) => {
@@ -621,7 +621,7 @@ export const TURN_OTHER_CHEEK: Drawback = db({
   },
 });
 
-export const GAMBLER: Drawback = db({
+export const GAMBLER: Nerf = db({
   id: "gambler", name: "Gambler", tier: 4, implemented: true,
   description: "Can't move a specific piece type, re-randomized each turn.",
   init: () => ({ banned: "p" as PieceType }),
@@ -633,7 +633,7 @@ export const GAMBLER: Drawback = db({
   },
 });
 
-export const BLINDED_BY_SUN: Drawback = db({
+export const BLINDED_BY_SUN: Nerf = db({
   id: "blinded_by_sun", name: "Blinded by the Sun", tier: 3, implemented: true,
   description: "Can't end turn attacking a random square.",
   init: (rng) => ({ sq: rng.int(64) }),
@@ -648,7 +648,7 @@ export const BLINDED_BY_SUN: Drawback = db({
   visual: (state) => ({ bannedSquares: [(state as { sq: number }).sq] }),
 });
 
-export const BISHOP_FAN_CLUB: Drawback = db({
+export const BISHOP_FAN_CLUB: Nerf = db({
   id: "bishop_fan_club", name: "Bishop Fan Club", tier: 4, implemented: true,
   description: "Must promote to bishops. King and queen can only move diagonally.",
   filterMoves: (moves) =>
@@ -663,14 +663,14 @@ export const BISHOP_FAN_CLUB: Drawback = db({
     }),
 });
 
-export const CHIVALRY: Drawback = db({
+export const CHIVALRY: Nerf = db({
   id: "chivalry", name: "Chivalry", tier: 4, implemented: true,
   description: "Can only capture heavies (rooks, queens) with a knight.",
   filterMoves: (moves) =>
     moves.filter((m) => !((m.captured === "r" || m.captured === "q") && m.piece !== "n")),
 });
 
-export const SPREAD_OUT: Drawback = db({
+export const SPREAD_OUT: Nerf = db({
   id: "spread_out", name: "Spread Out", tier: 4, implemented: true,
   description: "Can't move a non-pawn adjacent to another of your non-pawns. Can't castle.",
   filterMoves: (moves, _s, ctx) =>
@@ -686,7 +686,7 @@ export const SPREAD_OUT: Drawback = db({
     }),
 });
 
-export const PEONS_FIRST: Drawback = db({
+export const PEONS_FIRST: Nerf = db({
   id: "peons_first", name: "Peons First", tier: 3, implemented: true,
   description: "Can't move pieces that are one square behind one of your pawns.",
   filterMoves: (moves, _s, ctx) => {
@@ -701,7 +701,7 @@ export const PEONS_FIRST: Drawback = db({
   },
 });
 
-export const MOVING_DAY: Drawback = db({
+export const MOVING_DAY: Nerf = db({
   id: "moving_day", name: "Moving Day", tier: 4, implemented: true,
   description: "After turn 20, no piece may be on your home row.",
   checkLoss: (_s, ctx) => {
@@ -715,7 +715,7 @@ export const MOVING_DAY: Drawback = db({
   },
 });
 
-export const ODDBALL: Drawback = db({
+export const ODDBALL: Nerf = db({
   id: "oddball", name: "Oddball", tier: 3, implemented: true,
   description: "Can only capture on odd-numbered moves.",
   filterMoves: (moves, _s, ctx) => {
@@ -725,7 +725,7 @@ export const ODDBALL: Drawback = db({
   },
 });
 
-export const EVEN_KEELED: Drawback = db({
+export const EVEN_KEELED: Nerf = db({
   id: "even_keeled", name: "Even Keeled", tier: 3, implemented: true,
   description: "Can only capture on even-numbered moves.",
   filterMoves: (moves, _s, ctx) => {
@@ -735,7 +735,7 @@ export const EVEN_KEELED: Drawback = db({
   },
 });
 
-export const SOCIAL_DISTANCING: Drawback = db({
+export const SOCIAL_DISTANCING: Nerf = db({
   id: "social_distancing", name: "Social Distancing", tier: 3, implemented: true,
   description: "Can't make non-capturing moves to squares adjacent to opponent pieces.",
   filterMoves: (moves, _s, ctx) => {
@@ -751,7 +751,7 @@ export const SOCIAL_DISTANCING: Drawback = db({
   },
 });
 
-export const DRAG: Drawback = db({
+export const DRAG: Nerf = db({
   id: "drag", name: "Drag", tier: 4, implemented: true,
   description: "Your queen IS a king. If captured, you lose.",
   checkLoss: (_s, ctx) => {
@@ -762,7 +762,7 @@ export const DRAG: Drawback = db({
   },
 });
 
-export const STIR_CRAZY: Drawback = db({
+export const STIR_CRAZY: Nerf = db({
   id: "stir_crazy", name: "Stir Crazy", tier: 3, implemented: true,
   description: "If you haven't moved your king for 4 turns, you must on the 5th.",
   filterMoves: (moves, _s, ctx) => {
@@ -778,7 +778,7 @@ export const STIR_CRAZY: Drawback = db({
   },
 });
 
-export const ROOK_ON_SEVENTH: Drawback = db({
+export const ROOK_ON_SEVENTH: Nerf = db({
   id: "rook_on_seventh", name: "Rook on the Seventh", tier: 4, implemented: true,
   description: "By move 15, you must have a rook on rank 7.",
   checkLoss: (_s, ctx) => {
@@ -792,7 +792,7 @@ export const ROOK_ON_SEVENTH: Drawback = db({
   },
 });
 
-export const GUERILLA_TACTICS: Drawback = db({
+export const GUERILLA_TACTICS: Nerf = db({
   id: "guerilla_tactics", name: "Guerilla Tactics", tier: 4, implemented: true,
   description: "After a capturing move, you must return the capturing piece to its previous square if possible.",
   filterMoves: (moves, _s, ctx) => {
@@ -803,7 +803,7 @@ export const GUERILLA_TACTICS: Drawback = db({
   },
 });
 
-export const CHEERLEADERS: Drawback = db({
+export const CHEERLEADERS: Nerf = db({
   id: "cheerleaders", name: "Cheerleaders", tier: 4, implemented: true,
   description: "Non-pawns can only capture if adjacent to one of your pawns.",
   filterMoves: (moves, _s, ctx) => {
@@ -816,7 +816,7 @@ export const CHEERLEADERS: Drawback = db({
   },
 });
 
-export const SCOUTING_AHEAD: Drawback = db({
+export const SCOUTING_AHEAD: Nerf = db({
   id: "scouting_ahead", name: "Scouting Ahead", tier: 4, implemented: true,
   description: "As long as you have a pawn, non-pawns can't go ahead of your most advanced pawn.",
   filterMoves: (moves, _s, ctx) => {
@@ -834,7 +834,7 @@ export const SCOUTING_AHEAD: Drawback = db({
   },
 });
 
-export const WARLORD: Drawback = db({
+export const WARLORD: Nerf = db({
   id: "warlord", name: "Warlord", tier: 4, implemented: true,
   description: "From turn 12 onward, your king can't be on the first two ranks.",
   checkLoss: (_s, ctx) => {
@@ -846,7 +846,7 @@ export const WARLORD: Drawback = db({
   },
 });
 
-export const MEDUSA: Drawback = db({
+export const MEDUSA: Nerf = db({
   id: "medusa", name: "Medusa", tier: 4, implemented: true,
   description: "Pieces attacked by opponent's queen are stone; they cannot move.",
   filterMoves: (moves, _s, ctx) => {
@@ -864,7 +864,7 @@ export const MEDUSA: Drawback = db({
   },
 });
 
-export const FISCHER_RANDOM_ENDGAME: Drawback = db({
+export const FISCHER_RANDOM_ENDGAME: Nerf = db({
   id: "fischer_random_endgame", name: "Fischer Random Endgame", tier: 5, implemented: true,
   description: "By move 20, all your non-pawns must be on home row AND on a square they couldn't have started on.",
   checkLoss: (_s, ctx) => {
@@ -883,7 +883,7 @@ export const FISCHER_RANDOM_ENDGAME: Drawback = db({
   },
 });
 
-export const CENTRALIZED_COMMAND: Drawback = db({
+export const CENTRALIZED_COMMAND: Nerf = db({
   id: "centralized_command", name: "Centralized Command", tier: 4, implemented: true,
   description: "Can only capture if you moved your king in last 3 turns.",
   filterMoves: (moves, _s, ctx) => {
@@ -895,7 +895,7 @@ export const CENTRALIZED_COMMAND: Drawback = db({
   },
 });
 
-export const STAND_YOUR_GROUND: Drawback = db({
+export const STAND_YOUR_GROUND: Nerf = db({
   id: "stand_your_ground", name: "Stand Your Ground", tier: 4, implemented: true,
   description: "Pieces can only capture if attacked.",
   filterMoves: (moves, _s, ctx) => {
@@ -905,13 +905,13 @@ export const STAND_YOUR_GROUND: Drawback = db({
   },
 });
 
-export const ALWAYS_CHECK_IT_MIGHT_BE_MATE: Drawback = db({
+export const ALWAYS_CHECK_IT_MIGHT_BE_MATE: Nerf = db({
   id: "always_check_it_might_be_mate", name: "Always Check, It Might Be Mate", tier: 5, implemented: true,
   description: "If you are checked, you lose.",
   checkLoss: (_s, ctx) => (isInCheck(ctx.board, ctx.me) ? { reason: "in check" } : null),
 });
 
-export const GLORIOUS_BATTLE: Drawback = db({
+export const GLORIOUS_BATTLE: Nerf = db({
   id: "glorious_battle", name: "Glorious Battle", tier: 5, implemented: true,
   description: "Starting on a random move, for 4 consecutive moves, you must capture or lose.",
   init: (rng) => ({ start: 4 + rng.int(8) }),
@@ -934,7 +934,7 @@ export const GLORIOUS_BATTLE: Drawback = db({
   },
 });
 
-export const FLATTERER: Drawback = db({
+export const FLATTERER: Nerf = db({
   id: "flatterer", name: "Flatterer", tier: 4, implemented: true,
   description: "If opponent moves a pawn, you must move a pawn. Same for non-pawns.",
   filterMoves: (moves, _s, ctx) => {
@@ -946,14 +946,14 @@ export const FLATTERER: Drawback = db({
   },
 });
 
-export const MESSY_DIVORCE: Drawback = db({
+export const MESSY_DIVORCE: Nerf = db({
   id: "messy_divorce", name: "Messy Divorce", tier: 4, implemented: true,
   description: "Pieces can't move from queenside to kingside or vice versa.",
   filterMoves: (moves) =>
     moves.filter((m) => (FILE(m.from) < 4) === (FILE(m.to) < 4)),
 });
 
-export const LEVELING_UP: Drawback = db({
+export const LEVELING_UP: Nerf = db({
   id: "leveling_up", name: "Leveling Up", tier: 5, implemented: true,
   description: "Can't capture a piece type until you've captured its predecessor.",
   filterMoves: (moves, _s, ctx) => {
@@ -969,7 +969,7 @@ export const LEVELING_UP: Drawback = db({
   },
 });
 
-export const HOMELAND_SECURITY: Drawback = db({
+export const HOMELAND_SECURITY: Nerf = db({
   id: "homeland_security", name: "Homeland Security", tier: 5, implemented: true,
   description: "If opponent enters your two home ranks, you lose.",
   checkLoss: (_s, ctx) => {
@@ -983,7 +983,7 @@ export const HOMELAND_SECURITY: Drawback = db({
   },
 });
 
-export const COWERING_IN_FEAR: Drawback = db({
+export const COWERING_IN_FEAR: Nerf = db({
   id: "cowering_in_fear", name: "Cowering in Fear", tier: 4, implemented: true,
   description: "Can't move a piece of less value than one opponent has captured from you.",
   filterMoves: (moves, _s, ctx) => {
@@ -997,7 +997,7 @@ export const COWERING_IN_FEAR: Drawback = db({
   },
 });
 
-export const BARBARIAN_RAGE: Drawback = db({
+export const BARBARIAN_RAGE: Nerf = db({
   id: "barbarian_rage", name: "Barbarian Rage", tier: 4, implemented: true,
   description: "If you captured last move, you must capture this move if able.",
   filterMoves: (moves, _s, ctx) => {
@@ -1007,14 +1007,14 @@ export const BARBARIAN_RAGE: Drawback = db({
   },
 });
 
-export const MY_KINGDOM_FOR_A_HORSE: Drawback = db({
+export const MY_KINGDOM_FOR_A_HORSE: Nerf = db({
   id: "my_kingdom_for_a_horse", name: "My Kingdom for a Horse", tier: 5, implemented: true,
   description: "If opponent captures a knight of yours, you lose.",
   checkLoss: (_s, ctx) =>
     ctx.capturedFromMe.n > 0 ? { reason: "lost a knight" } : null,
 });
 
-export const EYE_FOR_AN_EYE: Drawback = db({
+export const EYE_FOR_AN_EYE: Nerf = db({
   id: "eye_for_an_eye", name: "Eye for an Eye", tier: 4, implemented: true,
   description: "If opponent captures, you must capture next turn or lose.",
   filterMoves: (moves, _s, ctx) => {
@@ -1035,7 +1035,7 @@ export const EYE_FOR_AN_EYE: Drawback = db({
   },
 });
 
-export const SIMON_SAYS: Drawback = db({
+export const SIMON_SAYS: Nerf = db({
   id: "simon_says", name: "Simon Says", tier: 4, implemented: true,
   description: "Must move onto same color square as opponent's last move.",
   filterMoves: (moves, _s, ctx) => {
@@ -1046,7 +1046,7 @@ export const SIMON_SAYS: Drawback = db({
   },
 });
 
-export const IRRESISTIBLE: Drawback = db({
+export const IRRESISTIBLE: Nerf = db({
   id: "irresistible", name: "Irresistible", tier: 4, implemented: true,
   description: "If you can move a piece adjacent to opponent's king (that isn't already), you must.",
   filterMoves: (moves, _s, ctx) => {
@@ -1058,7 +1058,7 @@ export const IRRESISTIBLE: Drawback = db({
   },
 });
 
-export const BOASTFUL: Drawback = db({
+export const BOASTFUL: Nerf = db({
   id: "boastful", name: "Boastful", tier: 5, implemented: true,
   description: "Lose if you have fewer pieces than opponent.",
   checkLoss: (_s, ctx) => {
@@ -1070,7 +1070,7 @@ export const BOASTFUL: Drawback = db({
   },
 });
 
-export const WINDS_OF_FATE: Drawback = db({
+export const WINDS_OF_FATE: Nerf = db({
   id: "winds_of_fate", name: "Winds of Fate", tier: 4, implemented: true,
   description: "Each turn, randomly can't move left or can't move right.",
   init: () => ({ banned: "l" as "l" | "r" }),
@@ -1085,7 +1085,7 @@ export const WINDS_OF_FATE: Drawback = db({
   },
 });
 
-export const MONKEY_SEE: Drawback = db({
+export const MONKEY_SEE: Nerf = db({
   id: "monkey_see", name: "Monkey See", tier: 5, implemented: true,
   description: "Can only capture with piece types your opponent has captured with.",
   filterMoves: (moves, _s, ctx) => {
@@ -1095,7 +1095,7 @@ export const MONKEY_SEE: Drawback = db({
   },
 });
 
-export const TRUE_LOVE: Drawback = db({
+export const TRUE_LOVE: Nerf = db({
   id: "true_love", name: "True Love", tier: 4, implemented: true,
   description: "King and queen can only move to squares adjacent to each other.",
   filterMoves: (moves, _s, ctx) => {
@@ -1116,7 +1116,7 @@ export const TRUE_LOVE: Drawback = db({
   },
 });
 
-export const SUPERSTITIOUS: Drawback = db({
+export const SUPERSTITIOUS: Nerf = db({
   id: "superstitious", name: "Superstitious", tier: 3, implemented: true,
   description: "Can't move to a square where opponent has captured.",
   filterMoves: (moves, _s, ctx) => {
@@ -1126,7 +1126,7 @@ export const SUPERSTITIOUS: Drawback = db({
   },
 });
 
-export const EAT_YOUR_VEGETABLES: Drawback = db({
+export const EAT_YOUR_VEGETABLES: Nerf = db({
   id: "eat_your_vegetables", name: "Eat Your Vegetables", tier: 3, implemented: true,
   description: "Can't capture non-pawns until opponent has ≤ 4 pawns remaining.",
   filterMoves: (moves, _s, ctx) => {
@@ -1137,7 +1137,7 @@ export const EAT_YOUR_VEGETABLES: Drawback = db({
   },
 });
 
-export const BLOODTHIRSTY: Drawback = db({
+export const BLOODTHIRSTY: Nerf = db({
   id: "bloodthirsty", name: "Bloodthirsty", tier: 4, implemented: true,
   description: "After turn 3, if you go 2 turns without capturing, you must capture or lose.",
   filterMoves: (moves, _s, ctx) => {
@@ -1152,14 +1152,14 @@ export const BLOODTHIRSTY: Drawback = db({
   },
 });
 
-export const LEFT_FOR_DEAD: Drawback = db({
+export const LEFT_FOR_DEAD: Nerf = db({
   id: "left_for_dead", name: "Left for Dead", tier: 4, implemented: true,
   description: "Can only capture leftward (file decreasing).",
   filterMoves: (moves) =>
     moves.filter((m) => !m.captured || FILE(m.to) < FILE(m.from)),
 });
 
-export const CRUSADE: Drawback = db({
+export const CRUSADE: Nerf = db({
   id: "crusade", name: "Crusade", tier: 4, implemented: true,
   description: "For 4 moves starting on a random move, must end turn on a specific random square.",
   init: (rng) => ({ start: 4 + rng.int(10), sq: rng.int(64) }),
@@ -1173,7 +1173,7 @@ export const CRUSADE: Drawback = db({
   visual: (state) => ({ highlightSquares: [(state as { sq: number }).sq] }),
 });
 
-export const HEDONIC_TREADMILL: Drawback = db({
+export const HEDONIC_TREADMILL: Nerf = db({
   id: "hedonic_treadmill", name: "Hedonic Treadmill", tier: 4, implemented: true,
   description: "Must move a piece at least as valuable as opponent's last moved piece.",
   filterMoves: (moves, _s, ctx) => {
@@ -1185,7 +1185,7 @@ export const HEDONIC_TREADMILL: Drawback = db({
   },
 });
 
-export const DEATH_WISH: Drawback = db({
+export const DEATH_WISH: Nerf = db({
   id: "death_wish", name: "Death Wish", tier: 4, implemented: true,
   description: "If you can move king into check, you must.",
   filterMoves: (moves, _s, ctx) => {
@@ -1199,7 +1199,7 @@ export const DEATH_WISH: Drawback = db({
   },
 });
 
-export const CHECKERS: Drawback = db({
+export const CHECKERS: Nerf = db({
   id: "checkers", name: "Checkers", tier: 4, implemented: true,
   description: "Must capture if able.",
   filterMoves: (moves) => {
@@ -1208,7 +1208,7 @@ export const CHECKERS: Drawback = db({
   },
 });
 
-export const CLOSED_BOOK: Drawback = db({
+export const CLOSED_BOOK: Nerf = db({
   id: "closed_book", name: "Closed Book", tier: 4, implemented: true,
   description: "Lose if you ever start a turn with an open file.",
   checkLoss: (_s, ctx) => {
@@ -1225,7 +1225,7 @@ export const CLOSED_BOOK: Drawback = db({
   },
 });
 
-export const FIXATION: Drawback = db({
+export const FIXATION: Nerf = db({
   id: "fixation", name: "Fixation", tier: 4, implemented: true,
   description: "Pawn moves → pawn moves only; non-pawn → non-pawn only, until type switches.",
   filterMoves: (moves, _s, ctx) => {
@@ -1237,7 +1237,7 @@ export const FIXATION: Drawback = db({
   },
 });
 
-export const COVERING_FIRE: Drawback = db({
+export const COVERING_FIRE: Nerf = db({
   id: "covering_fire", name: "Covering Fire", tier: 4, implemented: true,
   description: "Can only capture a piece if you can capture it two different ways.",
   filterMoves: (moves) => {
@@ -1247,7 +1247,7 @@ export const COVERING_FIRE: Drawback = db({
   },
 });
 
-export const UNLUCKY: Drawback = db({
+export const UNLUCKY: Nerf = db({
   id: "unlucky", name: "Unlucky", tier: 5, implemented: true,
   description: "Half the squares are unusable each turn, re-randomized.",
   init: () => ({ banned: [] as number[] }),
@@ -1267,7 +1267,7 @@ export const UNLUCKY: Drawback = db({
   visual: (state) => ({ bannedSquares: (state as { banned: number[] }).banned }),
 });
 
-export const JUMPY: Drawback = db({
+export const JUMPY: Nerf = db({
   id: "jumpy", name: "Jumpy", tier: 4, implemented: true,
   description: "When possible, must move an attacked piece.",
   filterMoves: (moves, _s, ctx) => {
@@ -1278,7 +1278,7 @@ export const JUMPY: Drawback = db({
   },
 });
 
-export const HOPSCOTCH: Drawback = db({
+export const HOPSCOTCH: Nerf = db({
   id: "hopscotch", name: "Hopscotch", tier: 4, implemented: true,
   description: "Must alternate light/dark destination squares.",
   filterMoves: (moves, _s, ctx) => {
@@ -1289,7 +1289,7 @@ export const HOPSCOTCH: Drawback = db({
   },
 });
 
-export const LEAPS_AND_BOUNDS: Drawback = db({
+export const LEAPS_AND_BOUNDS: Nerf = db({
   id: "leaps_and_bounds", name: "Leaps and Bounds", tier: 4, implemented: true,
   description: "Can't move a piece to a square adjacent to where it just was.",
   filterMoves: (moves, _s, ctx) => {
@@ -1299,7 +1299,7 @@ export const LEAPS_AND_BOUNDS: Drawback = db({
   },
 });
 
-export const COLORBLIND: Drawback = db({
+export const COLORBLIND: Nerf = db({
   id: "colorblind", name: "Colorblind", tier: 4, implemented: true,
   description: "Can't move to one random color of squares, re-randomized each turn.",
   init: () => ({ banned: 0 as 0 | 1 }),
@@ -1310,7 +1310,7 @@ export const COLORBLIND: Drawback = db({
   },
 });
 
-export const INCHING_FORWARD: Drawback = db({
+export const INCHING_FORWARD: Nerf = db({
   id: "inching_forward", name: "Inching Forward", tier: 4, implemented: true,
   description: "After turn 6, king must be in front of home rank. Required rank advances every 6 turns.",
   checkLoss: (_s, ctx) => {
@@ -1325,7 +1325,7 @@ export const INCHING_FORWARD: Drawback = db({
   },
 });
 
-// Simple board evaluation for "Stockfish-like" drawbacks
+// Simple board evaluation for "Stockfish-like" nerfs
 function bestHeuristicMove(moves: Move[]): Move | null {
   if (!moves.length) return null;
   let best = moves[0];
@@ -1343,7 +1343,7 @@ function bestHeuristicMove(moves: Move[]): Move | null {
   return best;
 }
 
-export const ICHTHYOPHOBE: Drawback = db({
+export const ICHTHYOPHOBE: Nerf = db({
   id: "ichthyophobe", name: "Ichthyophobe", tier: 4, implemented: true,
   description: "Can't make the move Stockfish would make.",
   filterMoves: (moves) => {
@@ -1354,7 +1354,7 @@ export const ICHTHYOPHOBE: Drawback = db({
   },
 });
 
-export const LEFT_TO_RIGHT: Drawback = db({
+export const LEFT_TO_RIGHT: Nerf = db({
   id: "left_to_right", name: "Left to Right", tier: 4, implemented: true,
   description: "Unless you just moved to the rightmost file, must move right of your last move's destination.",
   filterMoves: (moves, _s, ctx) => {
@@ -1365,7 +1365,7 @@ export const LEFT_TO_RIGHT: Drawback = db({
   },
 });
 
-export const FRIENDLY_FIRE: Drawback = db({
+export const FRIENDLY_FIRE: Nerf = db({
   id: "friendly_fire", name: "Friendly Fire", tier: 4, implemented: true,
   description: "Can only move to squares defended by another of your pieces.",
   filterMoves: (moves, _s, ctx) => {
@@ -1378,7 +1378,7 @@ export const FRIENDLY_FIRE: Drawback = db({
   },
 });
 
-export const GOING_THE_DISTANCE: Drawback = db({
+export const GOING_THE_DISTANCE: Nerf = db({
   id: "going_the_distance", name: "Going the Distance", tier: 4, implemented: true,
   description: "Must move at least as far as opponent's last move or lose.",
   filterMoves: (moves, _s, ctx) => {
@@ -1390,7 +1390,7 @@ export const GOING_THE_DISTANCE: Drawback = db({
   },
 });
 
-export const HELICOPTER_PARENT: Drawback = db({
+export const HELICOPTER_PARENT: Nerf = db({
   id: "helicopter_parent", name: "Helicopter Parent", tier: 4, implemented: true,
   description: "Lose if you have an undefended pawn.",
   checkLoss: (_s, ctx) => {
@@ -1403,7 +1403,7 @@ export const HELICOPTER_PARENT: Drawback = db({
   },
 });
 
-export const EXCLUSIVITY_CLAUSE: Drawback = db({
+export const EXCLUSIVITY_CLAUSE: Nerf = db({
   id: "exclusivity_clause", name: "Exclusivity Clause", tier: 4, implemented: true,
   description: "Can't move to squares more than one of your pieces can move to.",
   filterMoves: (moves) => {
@@ -1413,7 +1413,7 @@ export const EXCLUSIVITY_CLAUSE: Drawback = db({
   },
 });
 
-export const RELAY_RACE: Drawback = db({
+export const RELAY_RACE: Nerf = db({
   id: "relay_race", name: "Relay Race", tier: 4, implemented: true,
   description: "If you can move a piece adjacent to your last move's destination, you must.",
   filterMoves: (moves, _s, ctx) => {
@@ -1441,7 +1441,7 @@ function pickWorstMove(moves: Move[]): Move | null {
   return worst;
 }
 
-export const DEVIL_ON_SHOULDER: Drawback = db({
+export const DEVIL_ON_SHOULDER: Nerf = db({
   id: "devil_on_shoulder", name: "Devil on Your Shoulder", tier: 5, implemented: true,
   description: "Each turn the devil suggests a bad move. Ignore him 7 turns in a row and on the 8th you must obey.",
   init: () => ({ streak: 0 }),
@@ -1477,7 +1477,7 @@ export const DEVIL_ON_SHOULDER: Drawback = db({
   },
 });
 
-export const REFLECTIVE: Drawback = db({
+export const REFLECTIVE: Nerf = db({
   id: "reflective", name: "Reflective", tier: 5, implemented: true,
   description: "Non-pawns must move to squares whose mirror across the center is occupied.",
   filterMoves: (moves, _s, ctx) => {
@@ -1489,7 +1489,7 @@ export const REFLECTIVE: Drawback = db({
   },
 });
 
-export const OBSESSION: Drawback = db({
+export const OBSESSION: Nerf = db({
   id: "obsession", name: "Obsession", tier: 5, implemented: true,
   description: "Each turn, a random square. If you can move to it, you must.",
   init: () => ({ sq: 0 }),
@@ -1502,7 +1502,7 @@ export const OBSESSION: Drawback = db({
   visual: (state) => ({ highlightSquares: [(state as { sq: number }).sq] }),
 });
 
-export const BOXING_WITH_SHADOW: Drawback = db({
+export const BOXING_WITH_SHADOW: Nerf = db({
   id: "boxing_with_shadow", name: "Boxing with Shadow", tier: 5, implemented: true,
   description: "When opponent moves, if you can move to the square they vacated, you must.",
   filterMoves: (moves, _s, ctx) => {
@@ -1513,7 +1513,7 @@ export const BOXING_WITH_SHADOW: Drawback = db({
   },
 });
 
-export const NOBLE_STEED: Drawback = db({
+export const NOBLE_STEED: Nerf = db({
   id: "noble_steed", name: "Noble Steed", tier: 5, implemented: true,
   description: "Non-knight pieces can only move if adjacent to one of your knights.",
   filterMoves: (moves, _s, ctx) => {
@@ -1525,7 +1525,7 @@ export const NOBLE_STEED: Drawback = db({
   },
 });
 
-export const TAKING_TURNS: Drawback = db({
+export const TAKING_TURNS: Nerf = db({
   id: "taking_turns", name: "Taking Turns", tier: 5, implemented: true,
   description: "Can't move a piece type until you've moved every piece of that type once.",
   filterMoves: (moves, _s, ctx) => {
@@ -1562,7 +1562,7 @@ export const TAKING_TURNS: Drawback = db({
   },
 });
 
-export const HAND_AND_GIGABRAIN: Drawback = db({
+export const HAND_AND_GIGABRAIN: Nerf = db({
   id: "hand_and_gigabrain", name: "Hand and Gigabrain", tier: 5, implemented: true,
   description: "Must move the piece type Stockfish recommends.",
   filterMoves: (moves) => {
@@ -1573,7 +1573,7 @@ export const HAND_AND_GIGABRAIN: Drawback = db({
   },
 });
 
-export const CRENELLATIONS: Drawback = db({
+export const CRENELLATIONS: Nerf = db({
   id: "crenellations", name: "Crenellations", tier: 4, implemented: true,
   description: "Pawns can only move to a random color of squares.",
   init: (rng) => ({ color: rng.int(2) as 0 | 1 }),
@@ -1583,7 +1583,7 @@ export const CRENELLATIONS: Drawback = db({
   },
 });
 
-export const LEADING_THE_CHARGE: Drawback = db({
+export const LEADING_THE_CHARGE: Nerf = db({
   id: "leading_the_charge", name: "Leading the Charge", tier: 4, implemented: true,
   description: "As long as you have a knight, non-knights can't be ahead of your most advanced knight.",
   filterMoves: (moves, _s, ctx) => {
@@ -1601,7 +1601,7 @@ export const LEADING_THE_CHARGE: Drawback = db({
   },
 });
 
-export const ACTIVE_VOLCANO: Drawback = db({
+export const ACTIVE_VOLCANO: Nerf = db({
   id: "active_volcano", name: "Active Volcano", tier: 4, implemented: true,
   description: "Can't move onto or orthogonally adjacent to a random square.",
   init: (rng) => ({ sq: rng.int(64) }),
@@ -1617,7 +1617,7 @@ export const ACTIVE_VOLCANO: Drawback = db({
   visual: (state) => ({ bannedSquares: [(state as { sq: number }).sq] }),
 });
 
-export const NURTURER: Drawback = db({
+export const NURTURER: Nerf = db({
   id: "nurturer", name: "Nurturer", tier: 5, implemented: true,
   description: "Can't capture the enemy king until you've promoted a pawn.",
   filterMoves: (moves, _s, ctx) => {
@@ -1627,7 +1627,7 @@ export const NURTURER: Drawback = db({
   },
 });
 
-export const PRINCE_CHARMING: Drawback = db({
+export const PRINCE_CHARMING: Nerf = db({
   id: "prince_charming", name: "Prince Charming", tier: 4, implemented: true,
   description: "If your queen is attacked, must move a knight if possible.",
   filterMoves: (moves, _s, ctx) => {
@@ -1641,7 +1641,7 @@ export const PRINCE_CHARMING: Drawback = db({
   },
 });
 
-export const ABSOLUTION: Drawback = db({
+export const ABSOLUTION: Nerf = db({
   id: "absolution", name: "Absolution", tier: 5, implemented: true,
   description: "After a non-bishop captures, it must start a turn adjacent to a bishop before it can capture again.",
   filterMoves: (moves, _s, ctx) => {
@@ -1664,7 +1664,7 @@ export const ABSOLUTION: Drawback = db({
   },
 });
 
-export const QUICKSAND: Drawback = db({
+export const QUICKSAND: Nerf = db({
   id: "quicksand", name: "Quicksand", tier: 4, implemented: true,
   description: "Middle ranks are quicksand. A piece that ends on the same middle-rank square twice in a row is stuck.",
   filterMoves: (moves, _s, ctx) => {
@@ -1686,7 +1686,7 @@ export const QUICKSAND: Drawback = db({
   },
 });
 
-export const ROOK_FAN_CLUB: Drawback = db({
+export const ROOK_FAN_CLUB: Nerf = db({
   id: "rook_fan_club", name: "Rook Fan Club", tier: 4, implemented: true,
   description: "Must promote to rooks. King/queen can't move diagonally.",
   filterMoves: (moves) =>
@@ -1701,7 +1701,7 @@ export const ROOK_FAN_CLUB: Drawback = db({
     }),
 });
 
-export const LADIES_FIRST: Drawback = db({
+export const LADIES_FIRST: Nerf = db({
   id: "ladies_first", name: "Ladies First", tier: 4, implemented: true,
   description: "Can only move king if you moved queen on previous turn.",
   filterMoves: (moves, _s, ctx) => {
@@ -1711,7 +1711,7 @@ export const LADIES_FIRST: Drawback = db({
   },
 });
 
-export const BRIDGE_OVER_TROUBLED_WATER: Drawback = db({
+export const BRIDGE_OVER_TROUBLED_WATER: Nerf = db({
   id: "bridge_over_troubled_water", name: "Bridge Over Troubled Water", tier: 5, implemented: true,
   description: "A river runs through the middle. Cross only via the center files.",
   filterMoves: (moves) =>
@@ -1723,7 +1723,7 @@ export const BRIDGE_OVER_TROUBLED_WATER: Drawback = db({
     }),
 });
 
-export const ROYAL_BERTH: Drawback = db({
+export const ROYAL_BERTH: Nerf = db({
   id: "royal_berth", name: "Royal Berth", tier: 4, implemented: true,
   description: "Can't place a piece adjacent to your king.",
   filterMoves: (moves, _s, ctx) => {
@@ -1733,7 +1733,7 @@ export const ROYAL_BERTH: Drawback = db({
   },
 });
 
-export const VELOCIRAPTOR: Drawback = db({
+export const VELOCIRAPTOR: Nerf = db({
   id: "velociraptor", name: "Velociraptor", tier: 5, implemented: true,
   description: "Can only capture a piece type if opponent moved that type in their last 3 moves.",
   filterMoves: (moves, _s, ctx) => {
@@ -1744,7 +1744,7 @@ export const VELOCIRAPTOR: Drawback = db({
   },
 });
 
-export const SECRET_GARDEN: Drawback = db({
+export const SECRET_GARDEN: Nerf = db({
   id: "secret_garden", name: "Secret Garden", tier: 5, implemented: true,
   description: "Two of your pawns have secret gardens. Don't trespass.",
   init: (rng, color) => {
@@ -1776,7 +1776,7 @@ export const SECRET_GARDEN: Drawback = db({
   visual: (state) => ({ bannedSquares: (state as { gardens: number[] }).gardens }),
 });
 
-export const THUNDERDOME: Drawback = db({
+export const THUNDERDOME: Nerf = db({
   id: "thunderdome", name: "Thunderdome", tier: 5, implemented: true,
   description: "Center 16 squares are the thunderdome. Pieces enter; pieces rarely leave.",
   filterMoves: (moves) => {
@@ -1788,7 +1788,7 @@ export const THUNDERDOME: Drawback = db({
   },
 });
 
-export const INDECISIVE: Drawback = db({
+export const INDECISIVE: Nerf = db({
   id: "indecisive", name: "Indecisive", tier: 4, implemented: true,
   description: "Pieces can't capture if they have multiple possible capture moves.",
   filterMoves: (moves) => {
@@ -1798,7 +1798,7 @@ export const INDECISIVE: Drawback = db({
   },
 });
 
-export const UNREQUITED_LOVE: Drawback = db({
+export const UNREQUITED_LOVE: Nerf = db({
   id: "unrequited_love", name: "Unrequited Love", tier: 5, implemented: true,
   description: "King can't move away from queen; queen can't move toward king.",
   filterMoves: (moves, _s, ctx) => {
@@ -1813,7 +1813,7 @@ export const UNREQUITED_LOVE: Drawback = db({
   },
 });
 
-export const TORPEDOES: Drawback = db({
+export const TORPEDOES: Nerf = db({
   id: "torpedoes", name: "Torpedoes", tier: 4, implemented: true,
   description: "If you made a non-capturing pawn move last turn and can move it again, you must.",
   filterMoves: (moves, _s, ctx) => {
@@ -1824,7 +1824,7 @@ export const TORPEDOES: Drawback = db({
   },
 });
 
-export const THEOCRACY: Drawback = db({
+export const THEOCRACY: Nerf = db({
   id: "theocracy", name: "Theocracy", tier: 4, implemented: true,
   description: "On odd/even moves, can only capture with bishops.",
   init: (rng) => ({ parity: rng.int(2) as 0 | 1 }),
@@ -1836,7 +1836,7 @@ export const THEOCRACY: Drawback = db({
   },
 });
 
-export const BOTTLED_LIGHTNING: Drawback = db({
+export const BOTTLED_LIGHTNING: Nerf = db({
   id: "bottled_lightning", name: "Bottled Lightning", tier: 5, implemented: true,
   description: "If you can move your king, you must.",
   filterMoves: (moves) => {
@@ -1845,7 +1845,7 @@ export const BOTTLED_LIGHTNING: Drawback = db({
   },
 });
 
-export const FOG_OF_WAR_OLD: Drawback = db({
+export const FOG_OF_WAR_OLD: Nerf = db({
   id: "fog_of_war_old", name: "Fog of War (extended)", tier: 5, icon: "cloud-fog", implemented: true,
   description: "Hide opponent pieces entirely.",
   visual: () => ({ fogged: true }),
@@ -1853,7 +1853,7 @@ export const FOG_OF_WAR_OLD: Drawback = db({
 
 // ------------------------- AGGREGATE -------------------------
 
-export const MORE_DRAWBACKS: Drawback[] = [
+export const MORE_NERFS: Nerf[] = [
   ROOK_BUDDIES, SEPARATION_ANXIETY, CROSSING_THE_RUBICON, QUEEN_DISGUISE, QUEEN_BEE,
   ENTRENCHED, QUIT_HORSING_AROUND, ROYAL_JUBILEE, PRIMA_DONNA, SEPARATION_CHURCH_STATE,
   ESCORT_MISSION, BATTLE_FATIGUE, SNIPERS, DIPLOMATIC_IMMUNITY, FEMME_FATALE,

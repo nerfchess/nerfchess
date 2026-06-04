@@ -1,6 +1,6 @@
 "use client";
 
-import { Drawback } from "@/engine/drawback";
+import { Nerf } from "@/engine/nerf";
 import { BoardState, Color, PieceType } from "@/engine/types";
 import { Piece } from "@/components/Pieces";
 
@@ -16,7 +16,7 @@ interface Props {
   myColor: Color;
   name: string;
   elo?: number | null;
-  drawback: Drawback;
+  nerf: Nerf;
   revealed?: boolean;
   ownerLabel: string;
   progress?: { value: number; max: number; label: string } | null;
@@ -51,7 +51,7 @@ export function PlayerNerfCard({
   myColor,
   name,
   elo,
-  drawback,
+  nerf,
   revealed = true,
   ownerLabel,
   progress,
@@ -69,7 +69,7 @@ export function PlayerNerfCard({
     <section
       className={
         "relative plate overflow-hidden border p-4 " +
-        (revealed ? `tier-bg-${drawback.tier}` : "border-white/10 bg-ink-900/45")
+        (revealed ? `tier-bg-${nerf.tier}` : "border-white/10 bg-ink-900/45")
       }
     >
       <div className="flex items-start gap-3">
@@ -125,21 +125,21 @@ export function PlayerNerfCard({
               {ownerLabel && (
                 <div className="smallcaps text-[10px] text-parchment-400">{ownerLabel}</div>
               )}
-              <div className={`font-display text-2xl leading-tight tier-${drawback.tier}`}>
-                {drawback.name}
+              <div className={`font-display text-2xl leading-tight tier-${nerf.tier}`}>
+                {nerf.name}
               </div>
             </div>
             <span
-              className={`shrink-0 rounded-full border px-2.5 py-0.5 font-display text-sm font-bold tier-bg-${drawback.tier} tier-${drawback.tier}`}
-              title={`Tier ${drawback.tier}: ${TIER_LABEL[drawback.tier]}`}
+              className={`shrink-0 rounded-full border px-2.5 py-0.5 font-display text-sm font-bold tier-bg-${nerf.tier} tier-${nerf.tier}`}
+              title={`Tier ${nerf.tier}: ${TIER_LABEL[nerf.tier]}`}
             >
-              {TIER_ROMAN[drawback.tier]}
+              {TIER_ROMAN[nerf.tier]}
             </span>
           </div>
           <div className="rule-ornament my-3 text-[10px]">
-            <span className="font-display">{TIER_LABEL[drawback.tier]}</span>
+            <span className="font-display">{TIER_LABEL[nerf.tier]}</span>
           </div>
-          <p className="text-[15px] leading-relaxed text-parchment/95">{drawback.description}</p>
+          <p className="text-[15px] leading-relaxed text-parchment/95">{nerf.description}</p>
           {progress && progress.max > 0 && (
             <div className="mt-3">
               <div className="mb-1 flex items-center justify-between">
@@ -148,15 +148,15 @@ export function PlayerNerfCard({
               </div>
               <div className="h-1.5 overflow-hidden bg-white/5">
                 <div
-                  className={`h-full tier-bg-${drawback.tier}`}
+                  className={`h-full tier-bg-${nerf.tier}`}
                   style={{ width: `${Math.min(100, (progress.value / progress.max) * 100)}%` }}
                 />
               </div>
             </div>
           )}
-          {drawback.flavor && (
+          {nerf.flavor && (
             <p className="mt-3 border-l-2 border-white/15 pl-3 font-display text-[13px] text-parchment-300/85">
-              &ldquo;{drawback.flavor}&rdquo;
+              &ldquo;{nerf.flavor}&rdquo;
             </p>
           )}
         </>

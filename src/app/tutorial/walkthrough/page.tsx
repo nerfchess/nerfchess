@@ -55,7 +55,7 @@ const STEPS: Step[] = [
   {
     title: "II. Castle through anything.",
     intro:
-      "Standard chess forbids castling through check. Drawback Chess does not. Your kingside is being raked by a black rook. Castle anyway.",
+      "Standard chess forbids castling through check. Nerf Chess does not. Your kingside is being raked by a black rook. Castle anyway.",
     setup: () => {
       const b = blankBoard("w");
       // white setup, kingside castling rights only
@@ -136,7 +136,7 @@ export default function TutorialWalkthroughPage() {
     <main className="min-h-screen pb-20">
       <nav className="flex items-center justify-between px-10 py-7">
         <Link href="/" className="font-display text-2xl tracking-tight">
-          drawback<span className="text-gold-leaf">chess</span>
+          nerf<span className="text-gold-leaf">chess</span>
         </Link>
         <Link href="/tutorial" className="px-3 py-1.5 rounded-full text-sm font-display hover:bg-white/5 text-parchment">
           ← House rules

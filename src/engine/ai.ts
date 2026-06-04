@@ -1,14 +1,14 @@
 import { findKing, generateMoves, makeMove } from "./board";
-import { DrawbackGame, legalMoves } from "./game";
+import { NerfGame, legalMoves } from "./game";
 import { BoardState, Color, Move, PieceType } from "./types";
 
 // A move is self-losing if making it (a) lets the opponent capture our king for free
-// next ply, or (b) trips our own drawback's checkLoss on the resulting board.
-function isSelfLosing(game: DrawbackGame, move: Move): boolean {
+// next ply, or (b) trips our own nerf's checkLoss on the resulting board.
+function isSelfLosing(game: NerfGame, move: Move): boolean {
   const me = game.board.turn;
   const slot = me === "w" ? game.white : game.black;
   const nb = makeMove(game.board, move);
-  if (slot.drawback.checkLoss) {
+  if (slot.nerf.checkLoss) {
     const ctx = {
       board: nb,
       me,
@@ -18,7 +18,7 @@ function isSelfLosing(game: DrawbackGame, move: Move): boolean {
       capturedByMe: game.captured[me],
       capturedFromMe: game.captured[me === "w" ? "b" : "w"],
     };
-    if (slot.drawback.checkLoss(slot.state, ctx)) return true;
+    if (slot.nerf.checkLoss(slot.state, ctx)) return true;
   }
   return false;
 }
@@ -127,7 +127,7 @@ export type AILevel = "easy" | "medium" | "hard";
 const TIME_BUDGET_MS: Record<AILevel, number> = { easy: 0, medium: 700, hard: 1600 };
 const MAX_DEPTH: Record<AILevel, number> = { easy: 1, medium: 4, hard: 6 };
 
-export function pickAIMove(game: DrawbackGame, level: AILevel): Move | null {
+export function pickAIMove(game: NerfGame, level: AILevel): Move | null {
   const all = legalMoves(game);
   if (!all.length) return null;
   const safe = all.filter((m) => !isSelfLosing(game, m));

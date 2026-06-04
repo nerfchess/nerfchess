@@ -210,8 +210,8 @@ export function playCheck() {
   tone({ freq: 1980, dur: 0.18, type: "sine", gain: 0.08, attack: 0.002, release: 0.18, delay: 0.01 });
 }
 
-// Drawback trigger: soft two-note descending notification.
-export function playDrawback() {
+// Nerf trigger: soft two-note descending notification.
+export function playNerf() {
   tone({ freq: 660, dur: 0.18, type: "triangle", gain: 0.14, attack: 0.005, release: 0.18 });
   tone({ freq: 494, dur: 0.22, type: "triangle", gain: 0.12, attack: 0.005, release: 0.22, delay: 0.13 });
 }

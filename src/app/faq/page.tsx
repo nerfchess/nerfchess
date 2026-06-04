@@ -3,7 +3,7 @@ import Link from "next/link";
 import { InfoPageLayout, InfoSection } from "@/components/InfoPageLayout";
 
 export const metadata: Metadata = {
-  title: "FAQ | Drawback Chess",
+  title: "FAQ | Nerf Chess",
 };
 
 const FAQS = [
@@ -13,9 +13,9 @@ const FAQS = [
       "It begins from a chessboard, but not all standard chess rules survive. There is no checkmate or stalemate: the goal is usually to capture the enemy king.",
   },
   {
-    question: "What is a drawback?",
+    question: "What is a nerf?",
     answer:
-      "A drawback is your secret rule for the game. It may restrict your moves or create a new way for you to lose. Your opponent has a different hidden rule.",
+      "A nerf is your secret rule for the game. It may restrict your moves or create a new way for you to lose. Your opponent has a different hidden rule.",
   },
   {
     question: "Can I see my opponent's rule?",
@@ -35,7 +35,7 @@ const FAQS = [
   {
     question: "Where can I learn the unusual rules?",
     answer:
-      "The How to play guide covers the core changes, and the rules library lets you browse the available drawbacks.",
+      "The How to play guide covers the core changes, and the rules library lets you browse the available nerfs.",
   },
 ];
 

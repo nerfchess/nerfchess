@@ -1,7 +1,7 @@
 "use client";
 
-import { DrawbackCard } from "@/components/DrawbackCard";
-import { ALL_DRAWBACKS } from "@/engine/drawbacks/library";
+import { NerfCard } from "@/components/NerfCard";
+import { ALL_NERFS } from "@/engine/nerfs/library";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
@@ -14,7 +14,7 @@ export default function CodexPage() {
   const [onlyPlayable, setOnlyPlayable] = useState(false);
 
   const filtered = useMemo(() => {
-    return ALL_DRAWBACKS.filter((d) => {
+    return ALL_NERFS.filter((d) => {
       if (tier && d.tier !== tier) return false;
       if (onlyPlayable && !d.implemented) return false;
       if (q && !(`${d.name} ${d.description}`.toLowerCase().includes(q.toLowerCase()))) return false;
@@ -22,13 +22,13 @@ export default function CodexPage() {
     });
   }, [q, tier, onlyPlayable]);
 
-  const implementedCount = ALL_DRAWBACKS.filter((d) => d.implemented).length;
+  const implementedCount = ALL_NERFS.filter((d) => d.implemented).length;
 
   return (
     <main className="min-h-screen pb-20">
       <nav className="flex items-center justify-between px-10 py-7">
         <Link href="/" className="font-display text-2xl tracking-tight">
-          drawback<span className="text-gold-leaf">chess</span>
+          nerf<span className="text-gold-leaf">chess</span>
         </Link>
         <Link href="/play" className="px-3 py-1.5 rounded-full text-sm font-display hover:bg-white/5 text-parchment">Play</Link>
       </nav>
@@ -37,7 +37,7 @@ export default function CodexPage() {
         <div className="smallcaps text-[11px] text-parchment-400">the rules</div>
         <h1 className="font-display text-5xl sm:text-6xl mt-1">All the rules</h1>
         <p className="mt-3 text-parchment-200">
-          {ALL_DRAWBACKS.length} secret rules in the library. {implementedCount} are playable today.
+          {ALL_NERFS.length} secret rules in the library. {implementedCount} are playable today.
         </p>
         <div className="mt-4">
           <Link
@@ -84,7 +84,7 @@ export default function CodexPage() {
 
         <div className="mt-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {filtered.map((d) => (
-            <DrawbackCard key={d.id} drawback={d} ownerLabel={`${TIER_ROMAN[d.tier]} · ${TIER_LABEL[d.tier]}`} />
+            <NerfCard key={d.id} nerf={d} ownerLabel={`${TIER_ROMAN[d.tier]} · ${TIER_LABEL[d.tier]}`} />
           ))}
           {filtered.length === 0 && (
             <div className="text-parchment-300/60 font-display">

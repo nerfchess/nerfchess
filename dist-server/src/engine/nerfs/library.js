@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.IMPLEMENTED_BY_ID = exports.PLAYABLE_DRAWBACKS = exports.ALL_DRAWBACKS = void 0;
-exports.getDrawback = getDrawback;
-exports.getDrawbacksByTier = getDrawbacksByTier;
+exports.IMPLEMENTED_BY_ID = exports.PLAYABLE_NERFS = exports.ALL_NERFS = void 0;
+exports.getNerf = getNerf;
+exports.getNerfsByTier = getNerfsByTier;
 const implemented_1 = require("./implemented");
 Object.defineProperty(exports, "IMPLEMENTED_BY_ID", { enumerable: true, get: function () { return implemented_1.IMPLEMENTED_BY_ID; } });
 const STUBS = [
@@ -167,7 +167,7 @@ const STUBS = [
     { id: "theocracy", name: "Theocracy", description: "On odd/even moves, can only capture with bishops.", tier: 4 },
     { id: "bottled_lightning", name: "Bottled Lightning", description: "If you can move your king, you must.", tier: 5 },
 ];
-exports.ALL_DRAWBACKS = (() => {
+exports.ALL_NERFS = (() => {
     const out = [...implemented_1.ALL_IMPLEMENTED];
     const seen = new Set(out.map((d) => d.id));
     for (const s of STUBS) {
@@ -177,10 +177,10 @@ exports.ALL_DRAWBACKS = (() => {
     }
     return out;
 })();
-exports.PLAYABLE_DRAWBACKS = implemented_1.ALL_IMPLEMENTED;
-function getDrawback(id) {
-    return exports.ALL_DRAWBACKS.find((d) => d.id === id);
+exports.PLAYABLE_NERFS = implemented_1.ALL_IMPLEMENTED;
+function getNerf(id) {
+    return exports.ALL_NERFS.find((d) => d.id === id);
 }
-function getDrawbacksByTier(tier) {
-    return exports.ALL_DRAWBACKS.filter((d) => d.tier === tier);
+function getNerfsByTier(tier) {
+    return exports.ALL_NERFS.filter((d) => d.tier === tier);
 }

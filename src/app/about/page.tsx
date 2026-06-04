@@ -3,7 +3,7 @@ import Link from "next/link";
 import { InfoPageLayout, InfoSection } from "@/components/InfoPageLayout";
 
 export const metadata: Metadata = {
-  title: "About | Drawback Chess",
+  title: "About | Nerf Chess",
 };
 
 export default function AboutPage() {
@@ -11,11 +11,11 @@ export default function AboutPage() {
     <InfoPageLayout
       eyebrow="about"
       title="Chess, with secrets."
-      intro="Drawback Chess keeps the familiar board and replaces certainty with hidden constraints. Every player receives a secret rule, and every move becomes both strategy and investigation."
+      intro="Nerf Chess keeps the familiar board and replaces certainty with hidden constraints. Every player receives a secret rule, and every move becomes both strategy and investigation."
     >
       <InfoSection title="The idea">
         <p>
-          Standard chess rewards calculation. Drawback Chess adds deduction: a move your
+          Standard chess rewards calculation. Nerf Chess adds deduction: a move your
           opponent avoids may reveal as much as the move they choose.
         </p>
         <p>

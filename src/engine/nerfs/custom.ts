@@ -1,8 +1,8 @@
-import { Drawback } from "../drawback";
+import { Nerf } from "../nerf";
 import { findKing } from "../board";
 import { FILE, Move, PieceType, RANK, Square } from "../types";
 
-// A custom drawback is built by ANDing together a small set of primitive rules.
+// A custom nerf is built by ANDing together a small set of primitive rules.
 // The shape is JSON-serializable so we can store it in localStorage.
 
 export type CustomRule =
@@ -16,7 +16,7 @@ export type CustomRule =
   | { kind: "lose_if_no_piece"; piece: PieceType }
   | { kind: "lose_if_enemy_adjacent_to_king" };
 
-export interface CustomDrawback {
+export interface CustomNerf {
   id: string;
   name: string;
   description?: string;
@@ -42,14 +42,14 @@ function ruleText(r: CustomRule): string {
   }
 }
 
-export function describeCustom(d: CustomDrawback): string {
+export function describeCustom(d: CustomNerf): string {
   return d.rules.map(ruleText).join(" ");
 }
 
 const adj = (a: Square, b: Square) =>
   a !== b && Math.abs(FILE(a) - FILE(b)) <= 1 && Math.abs(RANK(a) - RANK(b)) <= 1;
 
-export function buildCustomDrawback(spec: CustomDrawback): Drawback {
+export function buildCustomNerf(spec: CustomNerf): Nerf {
   return {
     id: spec.id,
     name: spec.name,
@@ -118,9 +118,9 @@ export function buildCustomDrawback(spec: CustomDrawback): Drawback {
   };
 }
 
-const STORE_KEY = "dc:custom-drawbacks";
+const STORE_KEY = "dc:custom-nerfs";
 
-export function loadCustomDrawbacks(): CustomDrawback[] {
+export function loadCustomNerfs(): CustomNerf[] {
   if (typeof window === "undefined") return [];
   try {
     const raw = localStorage.getItem(STORE_KEY);
@@ -128,7 +128,7 @@ export function loadCustomDrawbacks(): CustomDrawback[] {
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
     return parsed.filter(
-      (d): d is CustomDrawback =>
+      (d): d is CustomNerf =>
         typeof d === "object" && d && typeof d.id === "string" && typeof d.name === "string" && Array.isArray(d.rules)
     );
   } catch {
@@ -136,15 +136,15 @@ export function loadCustomDrawbacks(): CustomDrawback[] {
   }
 }
 
-export function saveCustomDrawback(d: CustomDrawback) {
+export function saveCustomNerf(d: CustomNerf) {
   if (typeof window === "undefined") return;
-  const list = loadCustomDrawbacks().filter((x) => x.id !== d.id);
+  const list = loadCustomNerfs().filter((x) => x.id !== d.id);
   list.push(d);
   localStorage.setItem(STORE_KEY, JSON.stringify(list));
 }
 
-export function deleteCustomDrawback(id: string) {
+export function deleteCustomNerf(id: string) {
   if (typeof window === "undefined") return;
-  const list = loadCustomDrawbacks().filter((x) => x.id !== id);
+  const list = loadCustomNerfs().filter((x) => x.id !== id);
   localStorage.setItem(STORE_KEY, JSON.stringify(list));
 }

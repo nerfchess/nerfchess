@@ -9,7 +9,7 @@ Frames are JSON objects with a short event name and optional data:
 
 This follows the practical conventions used by Lichess live games: a websocket
 transport, compact `{ "t", "d" }` event envelopes, UCI move strings, server
-clock updates, and liveness pings. It is a Drawback Chess protocol, not a
+clock updates, and liveness pings. It is a Nerf Chess protocol, not a
 drop-in Lichess endpoint.
 
 References:
@@ -41,7 +41,7 @@ References:
 | `n` | optional clocks | Heartbeat reply. |
 
 The browser does not apply a submitted move until it receives `move` from the
-server. The server runs the same drawback engine as the UI, verifies the side
+server. The server runs the same nerf engine as the UI, verifies the side
 to move and UCI legality, and owns clocks, increments, flag falls, and
 resignations.
 

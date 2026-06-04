@@ -1,6 +1,6 @@
 # Home PC Hosting
 
-This runs Drawback Chess from your own computer for local testing or play with
+This runs Nerf Chess from your own computer for local testing or play with
 people who can reach your machine.
 
 ## Same Computer
@@ -215,7 +215,7 @@ or, for same-host routing:
 wss://play.example.com/socket/v1
 ```
 
-If you see `drawbackchess-v1-XXXXX`, `PeerJS`, or `0.peerjs.com`, Cloudflare is
+If you see `nerfchess-v1-XXXXX`, `PeerJS`, or `0.peerjs.com`, Cloudflare is
 still serving an old frontend build. Redeploy the frontend and clear browser
 site data.
 
@@ -265,7 +265,7 @@ testing or includes the exact frontend origin, such as:
 $env:GAME_SERVER_ORIGINS="https://play.example.com"
 ```
 
-`Negotiation of connection to drawbackchess-v1-XXXXX failed`
+`Negotiation of connection to nerfchess-v1-XXXXX failed`
 
 This is the old PeerJS frontend, not the judging server. Redeploy the frontend
 from the current code and clear cached site data.

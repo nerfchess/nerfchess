@@ -1,5 +1,5 @@
 import { cloneBoard, generateMoves } from "@/engine/board";
-import type { Drawback, DrawbackState, GameContext } from "@/engine/drawback";
+import type { Nerf, NerfState, GameContext } from "@/engine/nerf";
 import { FILE, inBoard, RANK, SQ, type BoardState, type Color, type Move, type PieceType } from "@/engine/types";
 
 const PROMOTIONS: PieceType[] = ["q", "r", "b", "n"];
@@ -14,22 +14,22 @@ function pushUnique(moves: Move[], move: Move) {
   }
 }
 
-// Pseudo-legal premove options on a turn-flipped board. The active drawback's
-// filterMoves is applied to the base move list so drawback-illegal premoves
+// Pseudo-legal premove options on a turn-flipped board. The active nerf's
+// filterMoves is applied to the base move list so nerf-illegal premoves
 // are not queueable. Friendly-target moves are added separately so a player can
 // premove onto one of their own pieces in anticipation of an opponent capture.
 export function premoveOptionsFor(
   board: BoardState,
   me: Color,
-  drawback: Drawback | null,
-  drawbackState: DrawbackState | null,
+  nerf: Nerf | null,
+  nerfState: NerfState | null,
   ctx: GameContext | null,
 ): Move[] {
   const base = generateMoves(board);
   let filtered: Move[] = base;
-  if (drawback?.filterMoves && drawbackState && ctx) {
+  if (nerf?.filterMoves && nerfState && ctx) {
     try {
-      filtered = drawback.filterMoves(base, drawbackState, ctx);
+      filtered = nerf.filterMoves(base, nerfState, ctx);
     } catch {
       filtered = base;
     }

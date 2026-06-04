@@ -3,7 +3,7 @@ import Link from "next/link";
 import { InfoPageLayout, InfoSection } from "@/components/InfoPageLayout";
 
 export const metadata: Metadata = {
-  title: "Contact | Drawback Chess",
+  title: "Contact | Nerf Chess",
 };
 
 export default function ContactPage() {
@@ -11,7 +11,7 @@ export default function ContactPage() {
     <InfoPageLayout
       eyebrow="contact"
       title="Get in touch"
-      intro="Have a rule idea, found a confusing position, or spotted something that needs fixing? Feedback is welcome as Drawback Chess develops."
+      intro="Have a rule idea, found a confusing position, or spotted something that needs fixing? Feedback is welcome as Nerf Chess develops."
     >
       <InfoSection title="Contact channel">
         <p>

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.EXTRA_DRAWBACKS = exports.FAMINE = exports.COUNTING_SHEEP = exports.ARMORY = exports.SWITCHBACK = exports.COLD_FEET = exports.TRIBUTE = exports.SCHOLARSHIP = exports.PILGRIMAGE = exports.SLOWPOKE = exports.DOMINO = exports.COURT_JESTER = exports.VERTIGO = exports.ARTILLERY = exports.NEAT_FREAK = exports.COURT_MARTIAL = exports.BURNING_BRIDGES = exports.FRESH_FACES = exports.QUARANTINE = exports.HALL_OF_MIRRORS = exports.ICY_SQUARES = exports.RHYTHM_MASTER = exports.KNIGHT_PARADE = exports.PROMOTION_PHOBIA = exports.TRIPWIRE = exports.ECHO_CHAMBER = exports.VANISHING_POINT = exports.HOARDER = exports.WAGON_TRAIN = exports.SUNRISE = exports.SACRED_FILE = exports.PHOBIA_OF_EDGES = exports.TIDY_DESK = exports.HONEY_TRAP = exports.ROYAL_GUARD = exports.PAWN_STORM = exports.ASCETIC = exports.GOLDFISH = exports.HEAVY_BOOTS = exports.CLERGY = exports.RUSTY_KNIGHTS = exports.MIRROR_MARCH = exports.CONSTRICTION = exports.SOLAR_FLARE = exports.VAMPIRIC = exports.PAWN_DUTY = exports.MAGNETIC_KINGS = exports.KINGFISHER = exports.TIMID = void 0;
+exports.EXTRA_NERFS = exports.FAMINE = exports.COUNTING_SHEEP = exports.ARMORY = exports.SWITCHBACK = exports.COLD_FEET = exports.TRIBUTE = exports.SCHOLARSHIP = exports.PILGRIMAGE = exports.SLOWPOKE = exports.DOMINO = exports.COURT_JESTER = exports.VERTIGO = exports.ARTILLERY = exports.NEAT_FREAK = exports.COURT_MARTIAL = exports.BURNING_BRIDGES = exports.FRESH_FACES = exports.QUARANTINE = exports.HALL_OF_MIRRORS = exports.ICY_SQUARES = exports.RHYTHM_MASTER = exports.KNIGHT_PARADE = exports.PROMOTION_PHOBIA = exports.TRIPWIRE = exports.ECHO_CHAMBER = exports.VANISHING_POINT = exports.HOARDER = exports.WAGON_TRAIN = exports.SUNRISE = exports.SACRED_FILE = exports.PHOBIA_OF_EDGES = exports.TIDY_DESK = exports.HONEY_TRAP = exports.ROYAL_GUARD = exports.PAWN_STORM = exports.ASCETIC = exports.GOLDFISH = exports.HEAVY_BOOTS = exports.CLERGY = exports.RUSTY_KNIGHTS = exports.MIRROR_MARCH = exports.CONSTRICTION = exports.SOLAR_FLARE = exports.VAMPIRIC = exports.PAWN_DUTY = exports.MAGNETIC_KINGS = exports.KINGFISHER = exports.TIMID = void 0;
 const board_1 = require("../board");
 const types_1 = require("../types");
 const cheb = (a, b) => Math.max(Math.abs((0, types_1.FILE)(a) - (0, types_1.FILE)(b)), Math.abs((0, types_1.RANK)(a) - (0, types_1.RANK)(b)));
@@ -879,7 +879,7 @@ exports.FAMINE = db({
         return moves.filter((m) => m.captured !== "p");
     },
 });
-exports.EXTRA_DRAWBACKS = [
+exports.EXTRA_NERFS = [
     exports.TIMID,
     exports.KINGFISHER,
     exports.MAGNETIC_KINGS,

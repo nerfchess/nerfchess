@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.newGame = newGame;
+exports.newGameAsColor = newGameAsColor;
 exports.makeContext = makeContext;
 exports.applyTurnStart = applyTurnStart;
 exports.legalMoves = legalMoves;
@@ -13,20 +14,20 @@ const rng_1 = require("./rng");
 function emptyCounts() {
     return { p: 0, n: 0, b: 0, r: 0, q: 0, k: 0 };
 }
-function newGame(whiteDrawback, blackDrawback, seed) {
+function newGame(whiteNerf, blackNerf, seed) {
     const rng = new rng_1.RNG(seed);
     const wRng = rng.fork();
     const bRng = rng.fork();
     const board = (0, board_1.initialBoard)();
     const white = {
-        drawback: whiteDrawback,
-        state: whiteDrawback.init ? whiteDrawback.init(wRng, "w") : {},
+        nerf: whiteNerf,
+        state: whiteNerf.init ? whiteNerf.init(wRng, "w") : {},
         color: "w",
         rng: wRng,
     };
     const black = {
-        drawback: blackDrawback,
-        state: blackDrawback.init ? blackDrawback.init(bRng, "b") : {},
+        nerf: blackNerf,
+        state: blackNerf.init ? blackNerf.init(bRng, "b") : {},
         color: "b",
         rng: bRng,
     };
@@ -39,6 +40,44 @@ function newGame(whiteDrawback, blackDrawback, seed) {
         captured: { w: emptyCounts(), b: emptyCounts() },
     };
     // Run onTurnStart for the first player
+    applyTurnStart(game);
+    return game;
+}
+const NOOP_NERF = {
+    id: "noop",
+    name: "Unknown",
+    description: "",
+    tier: 1,
+    implemented: true,
+};
+function newGameAsColor(myNerf, myColor, mySeed) {
+    const myRng = rng_1.RNG.fromState(mySeed);
+    const opponentRng = new rng_1.RNG(0);
+    const whiteNerf = myColor === "w" ? myNerf : NOOP_NERF;
+    const blackNerf = myColor === "b" ? myNerf : NOOP_NERF;
+    const whiteRng = myColor === "w" ? myRng : opponentRng;
+    const blackRng = myColor === "b" ? myRng : opponentRng;
+    const board = (0, board_1.initialBoard)();
+    const white = {
+        nerf: whiteNerf,
+        state: whiteNerf.init ? whiteNerf.init(whiteRng, "w") : {},
+        color: "w",
+        rng: whiteRng,
+    };
+    const black = {
+        nerf: blackNerf,
+        state: blackNerf.init ? blackNerf.init(blackRng, "b") : {},
+        color: "b",
+        rng: blackRng,
+    };
+    const game = {
+        board,
+        white,
+        black,
+        result: null,
+        startedAt: Date.now(),
+        captured: { w: emptyCounts(), b: emptyCounts() },
+    };
     applyTurnStart(game);
     return game;
 }
@@ -61,9 +100,9 @@ function makeContext(game, color) {
 }
 function applyTurnStart(game) {
     const slot = game.board.turn === "w" ? game.white : game.black;
-    if (slot.drawback.onTurnStart) {
+    if (slot.nerf.onTurnStart) {
         const ctx = makeContext(game, slot.color);
-        slot.state = slot.drawback.onTurnStart(slot.state, ctx, slot.rng);
+        slot.state = slot.nerf.onTurnStart(slot.state, ctx, slot.rng);
     }
 }
 function legalMoves(game) {
@@ -71,10 +110,10 @@ function legalMoves(game) {
         return [];
     const all = (0, board_1.generateMoves)(game.board);
     const slot = game.board.turn === "w" ? game.white : game.black;
-    if (!slot.drawback.filterMoves)
+    if (!slot.nerf.filterMoves)
         return all;
     const ctx = makeContext(game, slot.color);
-    return slot.drawback.filterMoves(all, slot.state, ctx);
+    return slot.nerf.filterMoves(all, slot.state, ctx);
 }
 function checkLossConditions(game) {
     // King capture check first
@@ -84,12 +123,12 @@ function checkLossConditions(game) {
     }
     for (const color of ["w", "b"]) {
         const slot = color === "w" ? game.white : game.black;
-        if (!slot.drawback.checkLoss)
+        if (!slot.nerf.checkLoss)
             continue;
         const ctx = makeContext(game, color);
-        const res = slot.drawback.checkLoss(slot.state, ctx);
+        const res = slot.nerf.checkLoss(slot.state, ctx);
         if (res) {
-            return { winner: color === "w" ? "b" : "w", reason: `${slot.drawback.name}: ${res.reason}` };
+            return { winner: color === "w" ? "b" : "w", reason: `${slot.nerf.name}: ${res.reason}` };
         }
     }
     return null;
@@ -122,12 +161,12 @@ function playMove(game, move) {
 }
 function currentHint(game, color) {
     const slot = color === "w" ? game.white : game.black;
-    if (!slot.drawback.hint)
+    if (!slot.nerf.hint)
         return null;
     if (game.result || game.board.turn !== color)
         return null;
     const ctx = makeContext(game, color);
-    return slot.drawback.hint(slot.state, ctx, legalMoves(game));
+    return slot.nerf.hint(slot.state, ctx, legalMoves(game));
 }
 function resign(game, color) {
     if (game.result)

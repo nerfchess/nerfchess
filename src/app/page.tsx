@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useState } from "react";
-import { DrawbackCard } from "@/components/DrawbackCard";
+import { NerfCard } from "@/components/NerfCard";
 import { SettingsPanel } from "@/components/SettingsPanel";
-import { COWARDLY, FOG_OF_WAR, PACMAN, RISING_WATER } from "@/engine/drawbacks/implemented";
+import { COWARDLY, FOG_OF_WAR, PACMAN, RISING_WATER } from "@/engine/nerfs/implemented";
 
 export default function HomePage() {
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -55,16 +55,16 @@ export default function HomePage() {
         <div className="relative h-[440px] sm:h-[520px] overflow-hidden lg:overflow-visible">
           <div className="absolute -inset-16 sigil opacity-90 pointer-events-none" />
           <FloatCard className="absolute top-0 left-2 sm:left-8 -rotate-6">
-            <DrawbackCard drawback={FOG_OF_WAR} />
+            <NerfCard nerf={FOG_OF_WAR} />
           </FloatCard>
           <FloatCard className="absolute top-12 right-0 sm:right-2 rotate-3" delay={0.1}>
-            <DrawbackCard drawback={COWARDLY} />
+            <NerfCard nerf={COWARDLY} />
           </FloatCard>
           <FloatCard className="absolute bottom-12 left-6 sm:left-10 -rotate-2" delay={0.2}>
-            <DrawbackCard drawback={RISING_WATER} />
+            <NerfCard nerf={RISING_WATER} />
           </FloatCard>
           <FloatCard className="absolute bottom-0 right-0 sm:right-2 rotate-6" delay={0.3}>
-            <DrawbackCard drawback={PACMAN} />
+            <NerfCard nerf={PACMAN} />
           </FloatCard>
         </div>
       </section>
@@ -110,7 +110,7 @@ function SiteNav({ onOpenSettings }: { onOpenSettings: () => void }) {
   return (
     <nav className="flex items-center justify-between px-10 py-7">
       <Link href="/" className="font-display text-2xl tracking-tight">
-        drawback<span className="text-gold-leaf">chess</span>
+        nerf<span className="text-gold-leaf">chess</span>
       </Link>
       <div className="flex items-center gap-1 sm:gap-2 text-sm font-display">
         <Link href="/play" className="px-3 py-1.5 rounded-full hover:bg-white/5 text-parchment">Play</Link>
@@ -160,7 +160,7 @@ function SiteFooter() {
         ))}
       </nav>
       <div className="mt-3 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-parchment-400">
-        <span>A reimagining of Drawback Chess. Not affiliated with the original.</span>
+        <span>A reimagining of Nerf Chess. Not affiliated with the original.</span>
         <span className="font-mono text-[10px] opacity-70">made with ♥</span>
       </div>
     </footer>

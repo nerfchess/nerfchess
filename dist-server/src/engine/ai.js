@@ -4,12 +4,12 @@ exports.pickAIMove = pickAIMove;
 const board_1 = require("./board");
 const game_1 = require("./game");
 // A move is self-losing if making it (a) lets the opponent capture our king for free
-// next ply, or (b) trips our own drawback's checkLoss on the resulting board.
+// next ply, or (b) trips our own nerf's checkLoss on the resulting board.
 function isSelfLosing(game, move) {
     const me = game.board.turn;
     const slot = me === "w" ? game.white : game.black;
     const nb = (0, board_1.makeMove)(game.board, move);
-    if (slot.drawback.checkLoss) {
+    if (slot.nerf.checkLoss) {
         const ctx = {
             board: nb,
             me,
@@ -19,7 +19,7 @@ function isSelfLosing(game, move) {
             capturedByMe: game.captured[me],
             capturedFromMe: game.captured[me === "w" ? "b" : "w"],
         };
-        if (slot.drawback.checkLoss(slot.state, ctx))
+        if (slot.nerf.checkLoss(slot.state, ctx))
             return true;
     }
     return false;

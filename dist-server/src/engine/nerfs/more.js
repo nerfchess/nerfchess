@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PEONS_FIRST = exports.SPREAD_OUT = exports.CHIVALRY = exports.BISHOP_FAN_CLUB = exports.BLINDED_BY_SUN = exports.GAMBLER = exports.TURN_OTHER_CHEEK = exports.TORCHLIGHT = exports.SIBLING_RIVALRY = exports.TRIPLE_PLAY = exports.MODEST = exports.LETHAL_ATTRACTION = exports.COMFORT_ZONE = exports.SHELLSHOCKED = exports.BIPARTISANSHIP = exports.PARANOID = exports.TOWER_DEFENSE = exports.HAUNTED = exports.CONTROL_CENTER = exports.RECONNAISSANCE = exports.SAVIOR_COMPLEX = exports.EYE_OF_SAURON = exports.YOU_BEST_NOT_MISS = exports.ABSTINENCE = exports.WINDUP_TOYS = exports.HORSE_EATS_FIRST = exports.SHAPESHIFTER = exports.REMORSEFUL = exports.JUST_PASSING_THROUGH = exports.PROTECTED_PAWNS = exports.DOCTOR_OCTOPUS = exports.EVIL_TWIN = exports.UNSPOOLING = exports.POWER_CELLS = exports.GET_DOWN_MR_PRESIDENT = exports.FEMME_FATALE = exports.DIPLOMATIC_IMMUNITY = exports.SNIPERS = exports.BATTLE_FATIGUE = exports.ESCORT_MISSION = exports.SEPARATION_CHURCH_STATE = exports.PRIMA_DONNA = exports.ROYAL_JUBILEE = exports.QUIT_HORSING_AROUND = exports.ENTRENCHED = exports.QUEEN_BEE = exports.QUEEN_DISGUISE = exports.CROSSING_THE_RUBICON = exports.SEPARATION_ANXIETY = exports.ROOK_BUDDIES = void 0;
 exports.LEFT_TO_RIGHT = exports.ICHTHYOPHOBE = exports.INCHING_FORWARD = exports.COLORBLIND = exports.LEAPS_AND_BOUNDS = exports.HOPSCOTCH = exports.JUMPY = exports.UNLUCKY = exports.COVERING_FIRE = exports.FIXATION = exports.CLOSED_BOOK = exports.CHECKERS = exports.DEATH_WISH = exports.HEDONIC_TREADMILL = exports.CRUSADE = exports.LEFT_FOR_DEAD = exports.BLOODTHIRSTY = exports.EAT_YOUR_VEGETABLES = exports.SUPERSTITIOUS = exports.TRUE_LOVE = exports.MONKEY_SEE = exports.WINDS_OF_FATE = exports.BOASTFUL = exports.IRRESISTIBLE = exports.SIMON_SAYS = exports.EYE_FOR_AN_EYE = exports.MY_KINGDOM_FOR_A_HORSE = exports.BARBARIAN_RAGE = exports.COWERING_IN_FEAR = exports.HOMELAND_SECURITY = exports.LEVELING_UP = exports.MESSY_DIVORCE = exports.FLATTERER = exports.GLORIOUS_BATTLE = exports.ALWAYS_CHECK_IT_MIGHT_BE_MATE = exports.STAND_YOUR_GROUND = exports.CENTRALIZED_COMMAND = exports.FISCHER_RANDOM_ENDGAME = exports.MEDUSA = exports.WARLORD = exports.SCOUTING_AHEAD = exports.CHEERLEADERS = exports.GUERILLA_TACTICS = exports.ROOK_ON_SEVENTH = exports.STIR_CRAZY = exports.DRAG = exports.SOCIAL_DISTANCING = exports.EVEN_KEELED = exports.ODDBALL = exports.MOVING_DAY = void 0;
-exports.MORE_DRAWBACKS = exports.FOG_OF_WAR_OLD = exports.BOTTLED_LIGHTNING = exports.THEOCRACY = exports.TORPEDOES = exports.UNREQUITED_LOVE = exports.INDECISIVE = exports.THUNDERDOME = exports.SECRET_GARDEN = exports.VELOCIRAPTOR = exports.ROYAL_BERTH = exports.BRIDGE_OVER_TROUBLED_WATER = exports.LADIES_FIRST = exports.ROOK_FAN_CLUB = exports.QUICKSAND = exports.ABSOLUTION = exports.PRINCE_CHARMING = exports.NURTURER = exports.ACTIVE_VOLCANO = exports.LEADING_THE_CHARGE = exports.CRENELLATIONS = exports.HAND_AND_GIGABRAIN = exports.TAKING_TURNS = exports.NOBLE_STEED = exports.BOXING_WITH_SHADOW = exports.OBSESSION = exports.REFLECTIVE = exports.DEVIL_ON_SHOULDER = exports.RELAY_RACE = exports.EXCLUSIVITY_CLAUSE = exports.HELICOPTER_PARENT = exports.GOING_THE_DISTANCE = exports.FRIENDLY_FIRE = void 0;
+exports.MORE_NERFS = exports.FOG_OF_WAR_OLD = exports.BOTTLED_LIGHTNING = exports.THEOCRACY = exports.TORPEDOES = exports.UNREQUITED_LOVE = exports.INDECISIVE = exports.THUNDERDOME = exports.SECRET_GARDEN = exports.VELOCIRAPTOR = exports.ROYAL_BERTH = exports.BRIDGE_OVER_TROUBLED_WATER = exports.LADIES_FIRST = exports.ROOK_FAN_CLUB = exports.QUICKSAND = exports.ABSOLUTION = exports.PRINCE_CHARMING = exports.NURTURER = exports.ACTIVE_VOLCANO = exports.LEADING_THE_CHARGE = exports.CRENELLATIONS = exports.HAND_AND_GIGABRAIN = exports.TAKING_TURNS = exports.NOBLE_STEED = exports.BOXING_WITH_SHADOW = exports.OBSESSION = exports.REFLECTIVE = exports.DEVIL_ON_SHOULDER = exports.RELAY_RACE = exports.EXCLUSIVITY_CLAUSE = exports.HELICOPTER_PARENT = exports.GOING_THE_DISTANCE = exports.FRIENDLY_FIRE = void 0;
 const board_1 = require("../board");
 const types_1 = require("../types");
 const cheb = (a, b) => Math.max(Math.abs((0, types_1.FILE)(a) - (0, types_1.FILE)(b)), Math.abs((0, types_1.RANK)(a) - (0, types_1.RANK)(b)));
@@ -26,7 +26,7 @@ function pieceSquares(board, color, type) {
     }
     return out;
 }
-// ------------------------- DRAWBACKS -------------------------
+// ------------------------- NERFS -------------------------
 exports.ROOK_BUDDIES = db({
     id: "rook_buddies", name: "Rook Buddies", tier: 1, icon: "link", implemented: true,
     description: "Can't move rooks until they are connected (no pieces between them on home rank).",
@@ -1354,7 +1354,7 @@ exports.INCHING_FORWARD = db({
         return null;
     },
 });
-// Simple board evaluation for "Stockfish-like" drawbacks
+// Simple board evaluation for "Stockfish-like" nerfs
 function bestHeuristicMove(moves) {
     if (!moves.length)
         return null;
@@ -1904,7 +1904,7 @@ exports.FOG_OF_WAR_OLD = db({
     visual: () => ({ fogged: true }),
 });
 // ------------------------- AGGREGATE -------------------------
-exports.MORE_DRAWBACKS = [
+exports.MORE_NERFS = [
     exports.ROOK_BUDDIES, exports.SEPARATION_ANXIETY, exports.CROSSING_THE_RUBICON, exports.QUEEN_DISGUISE, exports.QUEEN_BEE,
     exports.ENTRENCHED, exports.QUIT_HORSING_AROUND, exports.ROYAL_JUBILEE, exports.PRIMA_DONNA, exports.SEPARATION_CHURCH_STATE,
     exports.ESCORT_MISSION, exports.BATTLE_FATIGUE, exports.SNIPERS, exports.DIPLOMATIC_IMMUNITY, exports.FEMME_FATALE,

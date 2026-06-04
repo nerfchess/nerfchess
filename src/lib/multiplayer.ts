@@ -4,8 +4,8 @@ export type MPStart = {
   id: string;
   color: Color;
   token: string;
-  drawbackId: string;
-  drawbackSeed: number;
+  nerfId: string;
+  nerfSeed: number;
   timeSec: number;
   incrementSec: number;
   wc: number;
@@ -58,7 +58,7 @@ export type MPSavedSession = {
   token: string;
 };
 
-const STORAGE_KEY = "drawbackchess.friendSession.v1";
+const STORAGE_KEY = "nerfchess.friendSession.v1";
 
 export function loadSavedFriendSession(): MPSavedSession | null {
   if (typeof window === "undefined") return null;
