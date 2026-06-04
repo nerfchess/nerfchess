@@ -15,7 +15,7 @@ import {
   DrawbackGame,
   legalMoves,
   makeContext,
-  newGame,
+  newGameAsColor,
   playMove,
 } from "@/engine/game";
 import { BoardState, Color, Move } from "@/engine/types";
@@ -162,9 +162,8 @@ export default function FriendPage() {
   }, []);
 
   const startGameFromSetup = (msg: MPStart) => {
-    const w = IMPLEMENTED_BY_ID[msg.whiteDrawbackId] ?? pickRandomDrawback();
-    const b = IMPLEMENTED_BY_ID[msg.blackDrawbackId] ?? pickRandomDrawback();
-    let nextGame = newGame(w, b, msg.seed);
+    const myDrawback = IMPLEMENTED_BY_ID[msg.drawbackId] ?? pickRandomDrawback();
+    let nextGame = newGameAsColor(myDrawback, msg.color, msg.drawbackSeed);
     for (const uci of msg.moves ?? []) {
       const move = legalMoves(nextGame).find((candidate) => moveToUCI(candidate) === uci);
       if (!move) {
@@ -675,7 +674,7 @@ export default function FriendPage() {
             Send the code to your friend. They open this page and tap “Join”.
           </p>
           <div className="mt-8 flex items-center justify-center gap-2 smallcaps text-[11px] text-parchment-400">
-            <span className="w-1.5 h-1.5 rounded-full bg-verdigris animate-flicker" />
+            <span className="w-1.5 h-1.5 rounded-full bg-verdig                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  ris animate-flicker" />
             Waiting for opponent…
           </div>
           {error && (
