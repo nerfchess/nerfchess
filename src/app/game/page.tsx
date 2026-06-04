@@ -510,22 +510,7 @@ function GamePage() {
     setMutedState(next);
   };
 
-  const historyActions = game.result ? (
-    <div className="grid grid-cols-2 gap-2">
-      <button
-        onClick={handleRematch}
-        className="min-w-0 px-3 py-2 border border-gold/40 bg-gold/10 text-gold-leaf hover:bg-gold/20 hover:border-gold/70 transition text-xs font-display font-semibold tracking-wide"
-      >
-        New Game
-      </button>
-      <button
-        onClick={handleRematch}
-        className="min-w-0 px-3 py-2 btn-ghost text-xs font-display font-semibold tracking-wide"
-      >
-        Rematch
-      </button>
-    </div>
-  ) : confirmingResign ? (
+  const historyActions = game.result ? null : confirmingResign ? (
     <div className="space-y-2">
       <div className="smallcaps text-[10px] text-parchment-300">Resign the game?</div>
       <div className="grid grid-cols-2 gap-2">
@@ -716,6 +701,8 @@ function GamePage() {
           result={game.result}
           myColor={myColor}
           ratingChange={ratingChange}
+          onRematch={handleRematch}
+          onNewGame={handleRematch}
         />
       )}
       <SettingsPanel open={settingsOpen} onClose={() => setSettingsOpen(false)} />
