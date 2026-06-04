@@ -92,7 +92,7 @@ export function newGameAsColor(myDrawback: Drawback, myColor: Color, mySeed: num
     white,
     black,
     result: null,
-    startedAt: 0,
+    startedAt: Date.now(),
     captured: { w: emptyCounts(), b: emptyCounts() },
   };
   applyTurnStart(game);
