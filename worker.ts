@@ -6,6 +6,7 @@ import { default as handler } from "./.open-next/worker.js";
 import { moveToUCI } from "./src/engine/board";
 import { PLAYABLE_DRAWBACKS } from "./src/engine/drawbacks/library";
 import { DrawbackGame, legalMoves, newGame, playMove, resign } from "./src/engine/game";
+import { RNG } from "./src/engine/rng";
 import { Color } from "./src/engine/types";
 
 type Result = DrawbackGame["result"];
@@ -273,11 +274,19 @@ export class GameServer extends DurableObject<Env> {
 
   private startPayload(match: StoredMatch, color: Color) {
     const clocks = this.currentClocks(match);
+    const myDrawbackId = color === "w" ? match.setup.whiteDrawbackId : match.setup.blackDrawbackId;
+    const masterRng = new RNG(match.setup.seed);
+    const wSeed = masterRng.fork().getState();
+    const bSeed = masterRng.fork().getState();
+    const drawbackSeed = color === "w" ? wSeed : bSeed;
     return {
       id: match.id,
       color,
       token: match.tokens[color],
-      ...match.setup,
+      drawbackId: myDrawbackId,
+      drawbackSeed,
+      timeSec: match.setup.timeSec,
+      incrementSec: match.setup.incrementSec,
       wc: Math.round(clocks.w),
       bc: Math.round(clocks.b),
       moves: match.moves,
