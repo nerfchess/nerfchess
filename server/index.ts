@@ -5,7 +5,7 @@ import { randomBytes } from "node:crypto";
 import { moveToUCI } from "../src/engine/board";
 import { PLAYABLE_DRAWBACKS } from "../src/engine/drawbacks/library";
 import { DrawbackGame, legalMoves, newGame, playMove, resign } from "../src/engine/game";
-import { makeSeed } from "../src/engine/rng";
+import { makeSeed, RNG } from "../src/engine/rng";
 import { Color } from "../src/engine/types";
 import WebSocket, { RawData, WebSocketServer } from "ws";
 
@@ -95,11 +95,19 @@ function attachClient(match: Match, client: Client, color: Color) {
 
 function startPayload(match: Match, color: Color) {
   const clocks = currentClocks(match);
+  const myDrawbackId = color === "w" ? match.setup.whiteDrawbackId : match.setup.blackDrawbackId;
+  const masterRng = new RNG(match.setup.seed);
+  const wSeed = masterRng.fork().getState();
+  const bSeed = masterRng.fork().getState();
+  const drawbackSeed = color === "w" ? wSeed : bSeed;
   return {
     id: match.id,
     color,
     token: match.tokens[color],
-    ...match.setup,
+    drawbackId: myDrawbackId,
+    drawbackSeed,
+    timeSec: match.setup.timeSec,
+    incrementSec: match.setup.incrementSec,
     wc: Math.round(clocks.w),
     bc: Math.round(clocks.b),
     moves: match.game?.board.history.map(moveToUCI) ?? [],

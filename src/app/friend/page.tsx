@@ -15,7 +15,7 @@ import {
   DrawbackGame,
   legalMoves,
   makeContext,
-  newGame,
+  newGameAsColor,
   playMove,
 } from "@/engine/game";
 import { BoardState, Color, Move } from "@/engine/types";
@@ -162,9 +162,8 @@ export default function FriendPage() {
   }, []);
 
   const startGameFromSetup = (msg: MPStart) => {
-    const w = IMPLEMENTED_BY_ID[msg.whiteDrawbackId] ?? pickRandomDrawback();
-    const b = IMPLEMENTED_BY_ID[msg.blackDrawbackId] ?? pickRandomDrawback();
-    let nextGame = newGame(w, b, msg.seed);
+    const myDrawback = IMPLEMENTED_BY_ID[msg.drawbackId] ?? pickRandomDrawback();
+    let nextGame = newGameAsColor(myDrawback, msg.color, msg.drawbackSeed);
     for (const uci of msg.moves ?? []) {
       const move = legalMoves(nextGame).find((candidate) => moveToUCI(candidate) === uci);
       if (!move) {

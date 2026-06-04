@@ -59,6 +59,46 @@ export function newGame(whiteDrawback: Drawback, blackDrawback: Drawback, seed: 
   return game;
 }
 
+const NOOP_DRAWBACK: Drawback = {
+  id: "noop",
+  name: "Unknown",
+  description: "",
+  tier: 1,
+  implemented: true,
+};
+
+export function newGameAsColor(myDrawback: Drawback, myColor: Color, mySeed: number): DrawbackGame {
+  const myRng = RNG.fromState(mySeed);
+  const opponentRng = new RNG(0);
+  const whiteDrawback = myColor === "w" ? myDrawback : NOOP_DRAWBACK;
+  const blackDrawback = myColor === "b" ? myDrawback : NOOP_DRAWBACK;
+  const whiteRng = myColor === "w" ? myRng : opponentRng;
+  const blackRng = myColor === "b" ? myRng : opponentRng;
+  const board = initialBoard();
+  const white: PlayerSlot = {
+    drawback: whiteDrawback,
+    state: whiteDrawback.init ? whiteDrawback.init(whiteRng, "w") : {},
+    color: "w",
+    rng: whiteRng,
+  };
+  const black: PlayerSlot = {
+    drawback: blackDrawback,
+    state: blackDrawback.init ? blackDrawback.init(blackRng, "b") : {},
+    color: "b",
+    rng: blackRng,
+  };
+  const game: DrawbackGame = {
+    board,
+    white,
+    black,
+    result: null,
+    startedAt: Date.now(),
+    captured: { w: emptyCounts(), b: emptyCounts() },
+  };
+  applyTurnStart(game);
+  return game;
+}
+
 export function makeContext(game: DrawbackGame, color: Color): GameContext {
   const me = color === "w" ? game.white : game.black;
   const opp = color === "w" ? game.black : game.white;

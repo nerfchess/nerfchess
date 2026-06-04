@@ -4,9 +4,8 @@ export type MPStart = {
   id: string;
   color: Color;
   token: string;
-  whiteDrawbackId: string;
-  blackDrawbackId: string;
-  seed: number;
+  drawbackId: string;
+  drawbackSeed: number;
   timeSec: number;
   incrementSec: number;
   wc: number;
