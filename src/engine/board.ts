@@ -288,6 +288,19 @@ export function makeMove(board: BoardState, move: Move): BoardState {
   const nb = cloneBoard(board);
   const piece = nb.pieces[move.from]!;
 
+  // Safety guard: never allow "self-capture" (should be impossible for legal moves,
+  // but can happen due to UI/premove timing bugs). If it does, treat it as a no-op.
+  const capSq = move.capturedSquare != null ? move.capturedSquare : (move.captured ? move.to : null);
+  if (capSq != null) {
+    const capPiece = nb.pieces[capSq];
+    if (capPiece && capPiece.color === piece.color) {
+      return board;
+    }
+  }
+  if (move.capturedSquare == null && nb.pieces[move.to] && nb.pieces[move.to]!.color === piece.color) {
+    return board;
+  }
+
   // Remove any captured piece first (handles en passant / king en passant)
   if (move.capturedSquare != null) {
     nb.pieces[move.capturedSquare] = null;
