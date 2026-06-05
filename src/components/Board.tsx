@@ -271,9 +271,6 @@ export function Board({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [drag]);
 
-  const inKingPass = (sq: Square) =>
-    board.kingPassThrough.includes(sq) && board.kingPassColor !== myColor;
-
   const draggedPiece = drag ? board.pieces[drag.from] : null;
 
   useEffect(() => {
@@ -340,7 +337,6 @@ export function Board({
             const underwater = visual?.waterRank ? RANK(sq) < visual.waterRank : false;
             const lastFrom = lastMove?.from === sq;
             const lastTo = lastMove?.to === sq;
-            const kep = inKingPass(sq);
             const isHover = hoverSq === sq && drag != null;
             const isDragging = drag?.from === sq;
             const isForced = visual?.highlightSquares?.includes(sq);
@@ -371,9 +367,6 @@ export function Board({
               >
                 {underwater && (
                   <div className="absolute inset-0 bg-cyan-500/25 mix-blend-screen pointer-events-none" />
-                )}
-                {kep && (
-                  <div className="absolute inset-0 bg-oxblood/25 pointer-events-none" />
                 )}
                 {banned && (
                   <div className="absolute inset-0 bg-red-900/45 pointer-events-none" />

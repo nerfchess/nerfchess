@@ -1,10 +1,10 @@
 "use client";
 
+import Link from "next/link";
+import { useMemo, useState } from "react";
 import { Board } from "@/components/Board";
 import { generateMoves, makeMove } from "@/engine/board";
 import { BoardState, Color, Move, PieceType, SQ } from "@/engine/types";
-import Link from "next/link";
-import { useMemo, useState } from "react";
 
 function blankBoard(turn: Color = "w"): BoardState {
   return {
@@ -12,8 +12,6 @@ function blankBoard(turn: Color = "w"): BoardState {
     turn,
     castling: { wk: false, wq: false, bk: false, bq: false },
     epTarget: null,
-    kingPassThrough: [],
-    kingPassColor: null,
     halfmove: 0,
     fullmove: 1,
     history: [],
@@ -30,8 +28,6 @@ interface Step {
   setup: () => BoardState;
   goalText: string;
   isComplete: (move: Move, board: BoardState) => boolean;
-  // optional follow-up move from the "opponent" to demo a rule
-  reply?: (board: BoardState) => Move | null;
   closing: string;
 }
 
@@ -44,13 +40,13 @@ const STEPS: Step[] = [
       const b = blankBoard("w");
       place(b, SQ(4, 0), "r", "w"); // e1
       place(b, SQ(4, 3), "k", "b"); // e4
-      place(b, SQ(0, 0), "k", "w"); // a1 (so neither side has a missing king)
+      place(b, SQ(0, 0), "k", "w"); // a1
       return b;
     },
     goalText: "Move the rook to e4 and capture the king.",
     isComplete: (m) => m.captured === "k",
     closing:
-      "The game ends the instant a king is captured. No mate, no stalemate; only a body on the floor.",
+      "The game ends the instant a king is captured. No mate, no stalemate; only the king leaving the board.",
   },
   {
     title: "II. Castle through anything.",
@@ -58,43 +54,34 @@ const STEPS: Step[] = [
       "Standard chess forbids castling through check. Nerf Chess does not. Your kingside is being raked by a black rook. Castle anyway.",
     setup: () => {
       const b = blankBoard("w");
-      // white setup, kingside castling rights only
       place(b, SQ(4, 0), "k", "w"); // e1
       place(b, SQ(7, 0), "r", "w"); // h1
-      place(b, SQ(0, 0), "r", "w"); // a1 (decorative)
-      // black king
+      place(b, SQ(0, 0), "r", "w"); // a1
       place(b, SQ(4, 7), "k", "b"); // e8
-      // black rook attacking f-file
-      place(b, SQ(5, 6), "r", "b"); // f7 attacks f1..f6
+      place(b, SQ(5, 6), "r", "b"); // f7 attacks f1
       b.castling.wk = true;
       return b;
     },
     goalText: "Castle kingside (O-O). The king strolls through fire.",
     isComplete: (m) => m.castle === "k",
     closing:
-      "His majesty walked through an attacked square. In any other variant, that's illegal. Here, it is simply Tuesday.",
+      "His majesty walked through an attacked square. In any other variant, that is illegal. Here, it is simply a risk.",
   },
   {
-    title: "III. King en passant.",
+    title: "III. Step into check.",
     intro:
-      "Because a king can pass through an attacked square, the opponent gets one chance to punish him. Any move that lands on a square he passed through captures him.",
+      "Kings are not protected by check rules. If a square is attacked, your king can still move there; the danger is that your opponent may capture him next.",
     setup: () => {
-      const b = blankBoard("b");
-      // The white king just walked from e1 to e3, passing through e2.
-      // Black has a knight on c1 that attacks e2: kep-territory.
-      place(b, SQ(4, 2), "k", "w"); // e3 (the king's current square)
-      place(b, SQ(0, 0), "r", "w"); // a1 (just for ambience)
-      place(b, SQ(2, 0), "n", "b"); // c1 attacks e2
+      const b = blankBoard("w");
+      place(b, SQ(4, 0), "k", "w"); // e1
+      place(b, SQ(4, 6), "r", "b"); // e7 attacks e2
       place(b, SQ(4, 7), "k", "b"); // e8
-      b.kingPassThrough = [SQ(4, 1)]; // e2
-      b.kingPassColor = "w";
       return b;
     },
-    goalText:
-      "Black to play. The white king passed through e2. Capture him there with the knight.",
-    isComplete: (m) => m.isKingEnPassant === true || m.captured === "k",
+    goalText: "Move the white king to e2, even though the black rook attacks that square.",
+    isComplete: (m) => m.piece === "k" && m.to === SQ(4, 1),
     closing:
-      "Any move landing on a square the king passed through captures him, even though he is no longer on it.",
+      "That move would be illegal in standard chess. Here, danger is allowed; capture is what ends the game.",
   },
 ];
 
@@ -139,13 +126,13 @@ export default function TutorialWalkthroughPage() {
           nerf<span className="text-gold-leaf">chess</span>
         </Link>
         <Link href="/tutorial" className="px-3 py-1.5 rounded-full text-sm font-display hover:bg-white/5 text-parchment">
-          ← House rules
+          Back to house rules
         </Link>
       </nav>
 
       <section className="max-w-6xl mx-auto px-4 sm:px-6">
         <div className="smallcaps text-[11px] text-parchment-400">
-          interactive walkthrough · step {stepIx + 1} of {STEPS.length}
+          interactive walkthrough - step {stepIx + 1} of {STEPS.length}
         </div>
         <h1 className="font-display text-3xl sm:text-5xl mt-1">{step.title}</h1>
         <p className="mt-3 max-w-2xl text-parchment-200/95 leading-relaxed">{step.intro}</p>
@@ -171,7 +158,7 @@ export default function TutorialWalkthroughPage() {
                   onClick={nextStep}
                   className="mt-4 w-full py-3 rounded-full btn-leaf font-display"
                 >
-                  {stepIx + 1 < STEPS.length ? "Next lesson →" : "Play a real game →"}
+                  {stepIx + 1 < STEPS.length ? "Next lesson" : "Play a real game"}
                 </button>
               </div>
             )}

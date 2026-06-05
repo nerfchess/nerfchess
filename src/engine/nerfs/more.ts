@@ -392,10 +392,6 @@ export const YOU_BEST_NOT_MISS: Nerf = db({
     if (history[lastIdx].color === ctx.me) return null; // mid-turn check
     // Reconstruct: simulate the position right after our last move (history[lastIdx-1])
     // and check if it was check on the opponent.
-    let board = { pieces: Array(64).fill(null) as ({ type: PieceType; color: Color } | null)[],
-                  turn: "w" as Color, castling: { wk: true, wq: true, bk: true, bq: true },
-                  epTarget: null as number | null, kingPassThrough: [] as number[],
-                  kingPassColor: null as Color | null, halfmove: 0, fullmove: 1, history: [] as Move[] };
     // Too complex to reconstruct here. Approximate via current-board: if opponent's king
     // is still alive and we previously checked them, we must have captured—skip strict check.
     // Implementation: track in state instead.

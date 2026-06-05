@@ -50,7 +50,7 @@ export default function HomePage() {
               <span className="font-display italic text-gold-leaf text-xs">ii.</span> Capture the king
             </li>
             <li className="flex items-baseline gap-2">
-              <span className="font-display italic text-gold-leaf text-xs">iii.</span> King en passant
+              <span className="font-display italic text-gold-leaf text-xs">iii.</span> Secret nerfs
             </li>
           </ul>
         </div>
@@ -88,7 +88,7 @@ export default function HomePage() {
             {
               n: "II",
               t: "Modified rules",
-              d: "Forget checkmate. The king is just another piece you can capture. Castle through check. King en passant exists.",
+              d: "Forget checkmate. The king is just another piece you can capture. Castling through check is allowed.",
             },
             {
               n: "III",

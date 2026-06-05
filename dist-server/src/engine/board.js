@@ -25,8 +25,6 @@ function initialBoard() {
         turn: "w",
         castling: { wk: true, wq: true, bk: true, bq: true },
         epTarget: null,
-        kingPassThrough: [],
-        kingPassColor: null,
         halfmove: 0,
         fullmove: 1,
         history: [],
@@ -38,8 +36,6 @@ function cloneBoard(b) {
         turn: b.turn,
         castling: { ...b.castling },
         epTarget: b.epTarget,
-        kingPassThrough: b.kingPassThrough.slice(),
-        kingPassColor: b.kingPassColor,
         halfmove: b.halfmove,
         fullmove: b.fullmove,
         history: b.history.slice(),
@@ -51,7 +47,7 @@ const KNIGHT_OFFSETS = [
 const BISHOP_DIRS = [[1, 1], [1, -1], [-1, 1], [-1, -1]];
 const ROOK_DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
 const KING_DIRS = [...BISHOP_DIRS, ...ROOK_DIRS];
-// Squares attacked by `color`; used for detecting check (informational) and "passes through attacked square" for king en passant.
+// Squares attacked by `color`; used for detecting check and rule-specific constraints.
 function attackedBy(board, color) {
     const attacked = new Set();
     for (let sq = 0; sq < 64; sq++) {
@@ -120,20 +116,11 @@ function isInCheck(board, color) {
 /**
  * Generate all pseudo-legal moves for the side to move.
  * In Nerf Chess, kings CAN move into check, castle through check, etc.
- * However, a king en passant capture is allowed for one ply after the opponent's king
- * passed through an attacked square.
  */
 function generateMoves(board) {
     const moves = [];
     const me = board.turn;
     const opp = me === "w" ? "b" : "w";
-    // King en passant: if it's our turn and opponent's king passed through attacked squares,
-    // any move of ours that LANDS on one of those squares captures the king.
-    // We add these as flagged moves on top of normal generation.
-    const kepTargets = board.kingPassColor === opp && board.kingPassThrough.length
-        ? new Set(board.kingPassThrough)
-        : null;
-    const oppKingSq = kepTargets ? findKing(board, opp) : null;
     for (let sq = 0; sq < 64; sq++) {
         const p = board.pieces[sq];
         if (!p || p.color !== me)
@@ -149,12 +136,6 @@ function generateMoves(board) {
                 ...(target ? { captured: target.type, capturedSquare: to } : {}),
                 ...extra,
             };
-            // king en passant: if `to` is a kep target, we also capture the opponent king
-            if (kepTargets && kepTargets.has(to) && oppKingSq != null && oppKingSq !== to) {
-                move.captured = "k";
-                move.capturedSquare = oppKingSq;
-                move.isKingEnPassant = true;
-            }
             moves.push(move);
         };
         switch (p.type) {
@@ -246,7 +227,7 @@ function generateMoves(board) {
                         const rookSq = (0, types_1.SQ)(7, homeR);
                         const rook = board.pieces[rookSq];
                         if (rook && rook.type === "r" && rook.color === me) {
-                            add((0, types_1.SQ)(6, homeR), { castle: "k", kingPath: [(0, types_1.SQ)(4, homeR), (0, types_1.SQ)(5, homeR), (0, types_1.SQ)(6, homeR)] });
+                            add((0, types_1.SQ)(6, homeR), { castle: "k" });
                         }
                     }
                     if (cq &&
@@ -256,7 +237,7 @@ function generateMoves(board) {
                         const rookSq = (0, types_1.SQ)(0, homeR);
                         const rook = board.pieces[rookSq];
                         if (rook && rook.type === "r" && rook.color === me) {
-                            add((0, types_1.SQ)(2, homeR), { castle: "q", kingPath: [(0, types_1.SQ)(4, homeR), (0, types_1.SQ)(3, homeR), (0, types_1.SQ)(2, homeR)] });
+                            add((0, types_1.SQ)(2, homeR), { castle: "q" });
                         }
                     }
                 }
@@ -291,7 +272,7 @@ function generateMoves(board) {
 function makeMove(board, move) {
     const nb = cloneBoard(board);
     const piece = nb.pieces[move.from];
-    // Remove any captured piece first (handles en passant / king en passant)
+    // Remove any captured piece first (handles en passant)
     if (move.capturedSquare != null) {
         nb.pieces[move.capturedSquare] = null;
     }
@@ -350,31 +331,6 @@ function makeMove(board, move) {
     if (move.isDoublePawn) {
         nb.epTarget = (move.from + move.to) >> 1;
     }
-    // King passthrough tracking; only set when castling, and only if king path passed through an attacked square OR started in check.
-    // We always set the king-pass-through for the squares EXCLUDING the start and end? Actually rule: opponent can capture on any square the king passed through. Include start if king was in check.
-    nb.kingPassThrough = [];
-    nb.kingPassColor = null;
-    if (move.castle && move.kingPath) {
-        // Check if any of those squares were attacked at start of move
-        const enemyAttacks = attackedBy(board, piece.color === "w" ? "b" : "w");
-        const dangerous = move.kingPath.filter((s, i) => i < move.kingPath.length - 1 && enemyAttacks.has(s));
-        // Include final square too only if attacked (king moved INTO check).
-        if (enemyAttacks.has(move.kingPath[move.kingPath.length - 1])) {
-            dangerous.push(move.kingPath[move.kingPath.length - 1]);
-        }
-        if (dangerous.length) {
-            nb.kingPassThrough = dangerous;
-            nb.kingPassColor = piece.color;
-        }
-    }
-    else if (piece.type === "k") {
-        // Normal king move out of an attacked square: opponent gets king en passant on the from-square
-        const enemyAttacks = attackedBy(board, piece.color === "w" ? "b" : "w");
-        if (enemyAttacks.has(move.from)) {
-            nb.kingPassThrough = [move.from];
-            nb.kingPassColor = piece.color;
-        }
-    }
     nb.turn = piece.color === "w" ? "b" : "w";
     if (piece.color === "b")
         nb.fullmove++;
@@ -416,7 +372,5 @@ function moveToSAN(m) {
     s += dest;
     if (m.promotion)
         s += "=" + m.promotion.toUpperCase();
-    if (m.isKingEnPassant)
-        s += "!K";
     return s;
 }
