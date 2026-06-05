@@ -24,21 +24,20 @@ export default function HomePage() {
           </div>
 
           <h1 className="mt-7 font-display font-normal text-5xl sm:text-7xl leading-[1.02] tracking-[-0.02em]">
-            <span className="block text-parchment">Chess,</span>
-            <span className="block italic text-gold-leaf">with secrets.</span>
+            <span className="block text-parchment">Nerf Chess:</span>
+            <span className="block italic text-gold-leaf">capture the king</span>
           </h1>
 
           <p className="mt-6 max-w-xl text-lg leading-relaxed text-parchment-200">
-            Every game, you get a secret rule that changes how you can move.
-            So does your opponent. Win the game, and figure out their rule before they figure out yours.
+            A chess-first game with hidden rules. Every game, you and your opponent get a secret constraint that changes how you can move.
           </p>
 
           <div className="mt-9 flex flex-wrap items-center gap-3">
             <Link href="/play" className="px-7 py-3 rounded-sm btn-leaf font-body text-base">
               Play now
             </Link>
-            <Link href="/friend" className="px-7 py-3 rounded-sm btn-ghost font-body">
-              Play a friend
+            <Link href="/tutorial" className="px-7 py-3 rounded-sm btn-ghost font-body">
+              Learn the basics
             </Link>
             <Link href="/codex" className="px-7 py-3 rounded-sm btn-ghost font-body">
               Browse the rules
@@ -53,6 +52,8 @@ export default function HomePage() {
         </div>
 
         <div className="relative h-[440px] sm:h-[520px] overflow-hidden lg:overflow-visible">
+          <ChessHeroBackdrop />
+
           <div className="absolute -inset-16 sigil opacity-90 pointer-events-none" />
           <FloatCard className="absolute top-0 left-2 sm:left-8 -rotate-6">
             <NerfCard nerf={FOG_OF_WAR} />
@@ -167,6 +168,21 @@ function SiteFooter() {
   );
 }
 
+function ChessHeroBackdrop() {
+  return (
+    <div className="absolute inset-0 pointer-events-none">
+      <div className="absolute inset-0 hero-board" />
+      <div className="absolute inset-0 hero-vignette" />
+      <div className="absolute left-8 top-10 hero-piece hero-piece-k" aria-hidden>
+        ♚
+      </div>
+      <div className="absolute right-10 bottom-12 hero-piece hero-piece-q" aria-hidden>
+        ♛
+      </div>
+    </div>
+  );
+}
+
 function FloatCard({
   children,
   className = "",
@@ -174,9 +190,9 @@ function FloatCard({
 }: { children: React.ReactNode; className?: string; delay?: number }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 24, scale: 0.96 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.5, delay, ease: [0.2, 0.8, 0.2, 1] }}
+      initial= opacity: 0, y: 24, scale: 0.96 
+      animate= opacity: 1, y: 0, scale: 1 
+      transition= duration: 0.5, delay, ease: [0.2, 0.8, 0.2, 1] 
       className={"w-[260px] " + className}
     >
       {children}
