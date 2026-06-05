@@ -191,9 +191,9 @@ function FloatCard({
 }: { children: React.ReactNode; className?: string; delay?: number }) {
   return (
     <motion.div
-      initial= opacity: 0, y: 24, scale: 0.96 
-      animate= opacity: 1, y: 0, scale: 1 
-      transition= duration: 0.5, delay, ease: [0.2, 0.8, 0.2, 1] 
+      initial={{ opacity: 0, y: 24, scale: 0.96 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.5, delay, ease: [0.2, 0.8, 0.2, 1] }}
       className={"w-[260px] " + className}
     >
       {children}
