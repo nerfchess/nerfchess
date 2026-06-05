@@ -18,9 +18,7 @@ export default function HomePage() {
         <div className="animate-rise">
           <div className="inline-flex items-center gap-2.5 px-3 py-1 border-y border-gold/30">
             <span className="w-1 h-1 rounded-full bg-gold-leaf animate-flicker" />
-            <span className="smallcaps text-[10px] text-gold-leaf">
-              150+ secret rules
-            </span>
+            <span className="smallcaps text-[10px] text-gold-leaf">150+ secret rules</span>
           </div>
 
           <h1 className="mt-7 font-display font-normal text-5xl sm:text-7xl leading-[1.02] tracking-[-0.02em]">
@@ -45,9 +43,15 @@ export default function HomePage() {
           </div>
 
           <ul className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-x-6 gap-y-2 text-sm text-parchment-200/90 border-t border-parchment/10 pt-5">
-            <li className="flex items-baseline gap-2"><span className="font-display italic text-gold-leaf text-xs">i.</span> No checkmate</li>
-            <li className="flex items-baseline gap-2"><span className="font-display italic text-gold-leaf text-xs">ii.</span> Capture the king</li>
-            <li className="flex items-baseline gap-2"><span className="font-display italic text-gold-leaf text-xs">iii.</span> King en passant</li>
+            <li className="flex items-baseline gap-2">
+              <span className="font-display italic text-gold-leaf text-xs">i.</span> No checkmate
+            </li>
+            <li className="flex items-baseline gap-2">
+              <span className="font-display italic text-gold-leaf text-xs">ii.</span> Capture the king
+            </li>
+            <li className="flex items-baseline gap-2">
+              <span className="font-display italic text-gold-leaf text-xs">iii.</span> King en passant
+            </li>
           </ul>
         </div>
 
@@ -151,10 +155,7 @@ function SiteFooter() {
         {footerLinks.map((link, index) => (
           <span key={link.href} className="flex items-center">
             {index > 0 && <span aria-hidden="true" className="mx-3 opacity-50">|</span>}
-            <Link
-              href={link.href}
-              className="transition-colors hover:text-parchment"
-            >
+            <Link href={link.href} className="transition-colors hover:text-parchment">
               {link.label}
             </Link>
           </span>
