@@ -350,7 +350,13 @@ function GamePage() {
       const next = playMove(game, m);
       setGame({ ...next });
       addIncrement(myColor);
-      setPremoves((q) => q.slice(1));
+      // If makeMove rejected the move (no-op: turn didn't flip), cancel the
+      // entire queue — subsequent premoves assumed this one landed.
+      if (next.board.turn === myColor) {
+        setPremoves([]);
+      } else {
+        setPremoves((q) => q.slice(1));
+      }
     }, 90);
     return () => clearTimeout(tid);
   }, [game, premoves, moves, myColor, clockEnabled, incrementMs]);
