@@ -399,10 +399,6 @@ exports.YOU_BEST_NOT_MISS = db({
             return null; // mid-turn check
         // Reconstruct: simulate the position right after our last move (history[lastIdx-1])
         // and check if it was check on the opponent.
-        let board = { pieces: Array(64).fill(null),
-            turn: "w", castling: { wk: true, wq: true, bk: true, bq: true },
-            epTarget: null, kingPassThrough: [],
-            kingPassColor: null, halfmove: 0, fullmove: 1, history: [] };
         // Too complex to reconstruct here. Approximate via current-board: if opponent's king
         // is still alive and we previously checked them, we must have captured—skip strict check.
         // Implementation: track in state instead.

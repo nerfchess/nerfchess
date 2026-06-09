@@ -4,7 +4,7 @@ const RULES = [
   {
     n: "I",
     t: "No checkmate. No stalemate.",
-    d: "The game ends only when a king is physically captured (or a nerf triggers a loss, or a player resigns).",
+    d: "The game ends only when a king is physically captured, a nerf triggers a loss, or a player resigns.",
   },
   {
     n: "II",
@@ -13,21 +13,16 @@ const RULES = [
   },
   {
     n: "III",
-    t: "King en passant.",
-    d: "If your king moves through an attacked square (typically while castling out of check), your opponent can capture him on their next move by playing any move that lands on a square he passed through.",
+    t: "Nerfs are secret.",
+    d: "You see yours. You do not see your opponent's. Infer it from their play.",
   },
   {
     n: "IV",
-    t: "Nerfs are secret.",
-    d: "You see yours. You do not see your opponent’s. Infer it from their play.",
+    t: "Illegal-by-nerf moves are pre-filtered.",
+    d: "The board only highlights moves you are actually allowed to make. Lose-condition nerfs still trigger on their own.",
   },
   {
     n: "V",
-    t: "Illegal-by-nerf moves are pre-filtered.",
-    d: "The board only highlights moves you are actually allowed to make. Lose-condition nerfs (“you lose if X”) still trigger on their own.",
-  },
-  {
-    n: "VI",
     t: "Distances are Chebyshev.",
     d: "When a nerf talks about distance, count the larger of file-difference and rank-difference. Not Euclidean.",
   },
@@ -46,7 +41,7 @@ export default function TutorialPage() {
         <div className="smallcaps text-[11px] text-parchment-400">how to play</div>
         <h1 className="font-display text-5xl sm:text-6xl mt-1">House rules</h1>
         <p className="mt-5 text-[16px] leading-[1.7] text-parchment-200">
-          Nerf Chess is chess, until it isn't. The six rules below are everything you need to know.
+          Nerf Chess is chess, until it isn't. The five rules below are everything you need to know.
           Everything else is in your secret rule.
         </p>
         <div className="mt-9 space-y-3">

@@ -14,13 +14,11 @@ export interface Move {
   piece: PieceType;
   color: Color;
   captured?: PieceType;
-  capturedSquare?: Square; // for en passant / king en passant
+  capturedSquare?: Square; // for en passant
   promotion?: PieceType;
   castle?: "k" | "q";
-  kingPath?: Square[]; // squares the king passed through (for king en passant)
   isDoublePawn?: boolean;
   isEnPassant?: boolean;
-  isKingEnPassant?: boolean;
 }
 
 export interface BoardState {
@@ -34,9 +32,6 @@ export interface BoardState {
   };
   // pawn en passant target square (the square skipped over)
   epTarget: Square | null;
-  // squares the opponent's king passed through last turn (king en passant targets)
-  kingPassThrough: Square[];
-  kingPassColor: Color | null; // color of the king that passed through
   halfmove: number;
   fullmove: number;
   history: Move[];

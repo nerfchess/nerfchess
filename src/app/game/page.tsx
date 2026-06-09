@@ -296,8 +296,7 @@ function GamePage() {
     if (last) {
       if (last.captured) playCapture();
       else playMoveSfx();
-      // play check / king-en-passant flag
-      if (last.isKingEnPassant || isInCheck(game.board, game.board.turn)) {
+      if (isInCheck(game.board, game.board.turn)) {
         setTimeout(playCheck, 80);
       }
     }
