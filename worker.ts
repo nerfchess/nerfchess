@@ -131,7 +131,7 @@ export class GameServer extends DurableObject<Env> {
     if (request.headers.get("Upgrade") !== "websocket") {
       return new Response("Expected WebSocket", { status: 426 });
     }
-    if (!this.originAllowed(request.headers.get("Origin"))) {
+    if (!this.originAllowed(request)) {
       return new Response("Forbidden", { status: 403 });
     }
 
@@ -189,12 +189,28 @@ export class GameServer extends DurableObject<Env> {
     await this.maintenanceAll();
   }
 
-  private originAllowed(origin: string | null): boolean {
+  private originAllowed(request: Request): boolean {
+    const origin = request.headers.get("Origin");
     const configured = (this.env.GAME_SERVER_ORIGINS || "")
       .split(",")
       .map((allowed) => allowed.trim())
       .filter(Boolean);
-    return configured.length === 0 || (!!origin && configured.includes(origin));
+
+    // Explicit allowlist: only the configured origins may connect.
+    if (configured.length > 0) {
+      return !!origin && configured.includes(origin);
+    }
+
+    // No allowlist configured: fail closed to same-origin only. Requests
+    // without an Origin header (non-browser clients, which cannot be targets
+    // of browser CSRF) are still permitted; cross-origin browser requests are
+    // rejected instead of being allowed unconditionally.
+    if (!origin) return true;
+    try {
+      return new URL(origin).host === new URL(request.url).host;
+    } catch {
+      return false;
+    }
   }
 
   private async loadMatch(id: string): Promise<StoredMatch | null> {
