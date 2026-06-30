@@ -1,6 +1,6 @@
 import { Nerf } from "../nerf";
 import { attackedBy, findKing, generateMoves, isInCheck, makeMove } from "../board";
-import { Color, FILE, Move, PieceType, RANK, SQ, Square } from "../types";
+import { Color, FILE, Move, PieceType, RANK, SQ, Square, squareName } from "../types";
 
 const cheb = (a: Square, b: Square) =>
   Math.max(Math.abs(FILE(a) - FILE(b)), Math.abs(RANK(a) - RANK(b)));
@@ -1167,6 +1167,17 @@ export const CRUSADE: Nerf = db({
     return hits.length ? hits : moves;
   },
   visual: (state) => ({ highlightSquares: [(state as { sq: number }).sq] }),
+  hint: (state, ctx) => {
+    const s = state as { start: number; sq: number };
+    const turn = ctx.moveNumber + 1;
+    if (turn < s.start || turn >= s.start + 4) return null;
+    const turnsLeft = s.start + 4 - turn;
+    return {
+      text: `Crusade: must end turn ${turn} on ${squareName(s.sq)} (${turnsLeft} turn${turnsLeft === 1 ? "" : "s"} left, started turn ${s.start}).`,
+      squares: [s.sq],
+      tone: "warn",
+    };
+  },
 });
 
 export const HEDONIC_TREADMILL: Nerf = db({
@@ -1287,12 +1298,12 @@ export const HOPSCOTCH: Nerf = db({
 
 export const LEAPS_AND_BOUNDS: Nerf = db({
   id: "leaps_and_bounds", name: "Leaps and Bounds", tier: 4, implemented: true,
-  description: "Can't move a piece to a square adjacent to where it just was.",
-  filterMoves: (moves, _s, ctx) => {
-    const last = ctx.myLastMove;
-    if (!last) return moves;
-    return moves.filter((m) => !(m.from === last.to && adj(m.to, last.from)));
-  },
+  description: "Every move must be a leap: a piece can't move to a square adjacent to the square it's leaving.",
+  // Bans any move of chebyshev distance 1 (the most common bug report was that this
+  // drawback "had no effect" — the old version only restricted the exact piece that
+  // moved last turn, so it almost never triggered). Since every pawn promotion is a
+  // one-square advance or diagonal capture, this also naturally blocks promotions.
+  filterMoves: (moves) => moves.filter((m) => !adj(m.to, m.from)),
 });
 
 export const COLORBLIND: Nerf = db({

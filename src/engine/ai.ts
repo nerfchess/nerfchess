@@ -1,27 +1,10 @@
 import { findKing, generateMoves, makeMove } from "./board";
 import { NerfGame, legalMoves } from "./game";
+import { triggersOwnNerfLoss } from "./moveSafety";
 import { BoardState, Color, Move, PieceType } from "./types";
 
-// A move is self-losing if making it (a) lets the opponent capture our king for free
-// next ply, or (b) trips our own nerf's checkLoss on the resulting board.
-function isSelfLosing(game: NerfGame, move: Move): boolean {
-  const me = game.board.turn;
-  const slot = me === "w" ? game.white : game.black;
-  const nb = makeMove(game.board, move);
-  if (slot.nerf.checkLoss) {
-    const ctx = {
-      board: nb,
-      me,
-      opponentLastMove: game.board.history[game.board.history.length - 1] ?? null,
-      myLastMove: move,
-      moveNumber: nb.history.filter((m) => m.color === me).length,
-      capturedByMe: game.captured[me],
-      capturedFromMe: game.captured[me === "w" ? "b" : "w"],
-    };
-    if (slot.nerf.checkLoss(slot.state, ctx)) return true;
-  }
-  return false;
-}
+// A move is self-losing if it trips our own nerf's checkLoss on the resulting board.
+const isSelfLosing = triggersOwnNerfLoss;
 
 const VAL: Record<PieceType, number> = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000 };
 

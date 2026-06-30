@@ -20,6 +20,8 @@ import {
 import { makeSeed } from "@/engine/rng";
 import { BoardState, Color, Move } from "@/engine/types";
 import { cloneBoard, isInCheck, makeMove } from "@/engine/board";
+import { computeMoveRisks } from "@/engine/moveSafety";
+import { loadSettings } from "@/lib/settings";
 import type { QueuedPremove } from "@/components/Board";
 import { buildCustomNerf, CustomNerf } from "@/engine/nerfs/custom";
 import { isMuted, playCapture, playCheck, playNerf, playMove as playMoveSfx, setMuted } from "@/lib/sounds";
@@ -113,6 +115,7 @@ function GamePage() {
   const [whiteMs, setWhiteMs] = useState(initialTimeMs);
   const [blackMs, setBlackMs] = useState(initialTimeMs);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [uiSettings, setUiSettings] = useState(() => loadSettings());
   const [historyPly, setHistoryPly] = useState<number | null>(null);
   const [boardHeight, setBoardHeight] = useState<number | null>(null);
   const [playerElo, setPlayerElo] = useState<number | null>(null);
@@ -204,6 +207,13 @@ function GamePage() {
   }, [game, historyPly]);
 
   const moves = useMemo(() => (game ? legalMoves(game) : []), [game]);
+  const moveRisks = useMemo(
+    () =>
+      uiSettings.moveRiskWarnings && game && game.board.turn === myColor
+        ? computeMoveRisks(game, moves)
+        : undefined,
+    [game, moves, myColor, uiSettings.moveRiskWarnings]
+  );
 
   useEffect(() => {
     if (!game) return;
@@ -666,6 +676,8 @@ function GamePage() {
                   premoveMode={!isReviewingHistory && premoveMode}
                   premoves={isReviewingHistory ? [] : validPremoves}
                   onCancelPremove={cancelPremove}
+                  moveRisks={isReviewingHistory || premovePending ? undefined : moveRisks}
+                  autoQueen={uiSettings.autoQueen}
                 />
               </div>
             </div>
@@ -710,7 +722,13 @@ function GamePage() {
           onNewGame={handleRematch}
         />
       )}
-      <SettingsPanel open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <SettingsPanel
+        open={settingsOpen}
+        onClose={() => {
+          setSettingsOpen(false);
+          setUiSettings(loadSettings());
+        }}
+      />
     </main>
   );
 }

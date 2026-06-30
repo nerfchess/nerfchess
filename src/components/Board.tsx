@@ -26,6 +26,8 @@ export interface QueuedPremove {
   capture?: boolean;
 }
 
+export type MoveRisk = "check" | "nerf" | null;
+
 interface Props {
   board: BoardState;
   legalMoves: Move[];
@@ -38,6 +40,23 @@ interface Props {
   premoveMode?: boolean;
   premoves?: QueuedPremove[];
   onCancelPremove?: () => void;
+  // Keyed by `${from}-${to}-${promotion ?? ""}` (see engine/moveSafety.ts).
+  // Tints a destination's move dot yellow (self-inflicted nerf loss) or red
+  // (moves into check) as a warning before the player commits to the move.
+  moveRisks?: Map<string, MoveRisk>;
+  // Skip the promotion picker and always promote to queen (Settings).
+  autoQueen?: boolean;
+}
+
+function riskOf(moves: Move[], moveRisks: Map<string, MoveRisk> | undefined): MoveRisk {
+  if (!moveRisks) return null;
+  let worst: MoveRisk = null;
+  for (const m of moves) {
+    const r = moveRisks.get(`${m.from}-${m.to}-${m.promotion ?? ""}`);
+    if (r === "check") return "check";
+    if (r === "nerf") worst = "nerf";
+  }
+  return worst;
 }
 
 function castleRookSquare(color: Color, side: "k" | "q"): Square {
@@ -65,6 +84,8 @@ export function Board({
   premoveMode = false,
   premoves,
   onCancelPremove,
+  moveRisks,
+  autoQueen,
 }: Props) {
   const premoveSquares = useMemo(() => {
     const s = new Set<Square>();
@@ -149,8 +170,9 @@ export function Board({
     if (selected != null && targets[sq]) {
       const candidates = targets[sq];
       if (candidates.length > 1 && candidates[0].promotion) {
-        if (premoveMode) {
-          // auto-queen premove promotions; the user can't be asked mid-opponent-turn
+        // premoves always auto-queen (the user can't be asked mid-opponent-turn);
+        // the Settings auto-queen toggle does the same for normal moves.
+        if (premoveMode || autoQueen) {
           const q = candidates.find((c) => c.promotion === "q") ?? candidates[0];
           onMove(q);
           setSelected(null);
@@ -332,6 +354,7 @@ export function Board({
             const isCastleHint = castleHintSquares.has(sq);
             const isTarget = !!targets[sq] && !isCastleHint;
             const isCapture = isTarget && targets[sq].some((m) => !!m.captured);
+            const targetRisk = isTarget ? riskOf(targets[sq], moveRisks) : null;
             const banned = visual?.bannedSquares?.includes(sq);
             const isDuck = visual?.duckSquare === sq;
             const underwater = visual?.waterRank ? RANK(sq) < visual.waterRank : false;
@@ -392,9 +415,19 @@ export function Board({
 
                 {isTarget && (
                   isCapture ? (
-                    <div className="dot-capture pointer-events-none" />
+                    <div
+                      className={
+                        "dot-capture pointer-events-none " +
+                        (targetRisk === "check" ? "dot-capture-red" : targetRisk === "nerf" ? "dot-capture-yellow" : "")
+                      }
+                    />
                   ) : (
-                    <div className="dot-target pointer-events-none" />
+                    <div
+                      className={
+                        "dot-target pointer-events-none " +
+                        (targetRisk === "check" ? "dot-target-red" : targetRisk === "nerf" ? "dot-target-yellow" : "")
+                      }
+                    />
                   )
                 )}
                 {isCastleHint && (
