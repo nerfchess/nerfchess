@@ -8,6 +8,8 @@ import { MoveList } from "@/components/MoveList";
 import { PlayerNerfCard } from "@/components/PlayerNerfCard";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { cloneBoard, isInCheck, makeMove, moveToUCI } from "@/engine/board";
+import { computeMoveRisks } from "@/engine/moveSafety";
+import { loadSettings } from "@/lib/settings";
 import type { GameContext } from "@/engine/nerf";
 import { IMPLEMENTED_BY_ID, PLAYABLE_NERFS } from "@/engine/nerfs/library";
 import {
@@ -72,6 +74,7 @@ export default function FriendPage() {
   const [error, setError] = useState<string | null>(null);
   const [muted, setMutedState] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [uiSettings, setUiSettings] = useState(() => loadSettings());
   const [confirmingResign, setConfirmingResign] = useState(false);
   const [drawOfferBy, setDrawOfferBy] = useState<Color | null>(null);
   const [drawOfferStatus, setDrawOfferStatus] = useState<"idle" | "offering" | "declined">("idle");
@@ -370,6 +373,13 @@ export default function FriendPage() {
   };
 
   const moves = useMemo(() => (game ? legalMoves(game) : []), [game]);
+  const moveRisks = useMemo(
+    () =>
+      uiSettings.moveRiskWarnings && game && game.board.turn === myColor
+        ? computeMoveRisks(game, moves)
+        : undefined,
+    [game, moves, myColor, uiSettings.moveRiskWarnings]
+  );
 
   useEffect(() => {
     if (!game || !clockEnabledRef.current) return;
@@ -917,6 +927,8 @@ export default function FriendPage() {
                   premoveMode={!isReviewingHistory && premoveMode}
                   premoves={isReviewingHistory ? [] : validPremoves}
                   onCancelPremove={clearPremoves}
+                  moveRisks={isReviewingHistory || premovePending ? undefined : moveRisks}
+                  autoQueen={uiSettings.autoQueen}
                 />
               </div>
             </div>
@@ -960,7 +972,13 @@ export default function FriendPage() {
           onNewGame={handleRematch}
         />
       )}
-      <SettingsPanel open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <SettingsPanel
+        open={settingsOpen}
+        onClose={() => {
+          setSettingsOpen(false);
+          setUiSettings(loadSettings());
+        }}
+      />
     </main>
   );
 }

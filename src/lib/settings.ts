@@ -6,10 +6,12 @@ export type BoardTheme = "wood" | "green" | "blue" | "slate";
 export interface Settings {
   boardTheme: BoardTheme;
   volume: number; // 0..1
+  moveRiskWarnings: boolean; // yellow/red move-dot warnings for self-loss / check
+  autoQueen: boolean; // skip the promotion picker and always promote to queen
 }
 
 const STORAGE_KEY = "dc:settings-v1";
-const DEFAULT: Settings = { boardTheme: "wood", volume: 0.8 };
+const DEFAULT: Settings = { boardTheme: "wood", volume: 0.8, moveRiskWarnings: true, autoQueen: false };
 
 export const BOARD_THEMES: Record<BoardTheme, { light: string; dark: string; label: string }> = {
   wood:  { light: "#e8dcc0", dark: "#8d6e4b", label: "Wood" },
@@ -27,6 +29,9 @@ export function loadSettings(): Settings {
     return {
       boardTheme: (parsed.boardTheme as BoardTheme) ?? DEFAULT.boardTheme,
       volume: typeof parsed.volume === "number" ? Math.max(0, Math.min(1, parsed.volume)) : DEFAULT.volume,
+      moveRiskWarnings:
+        typeof parsed.moveRiskWarnings === "boolean" ? parsed.moveRiskWarnings : DEFAULT.moveRiskWarnings,
+      autoQueen: typeof parsed.autoQueen === "boolean" ? parsed.autoQueen : DEFAULT.autoQueen,
     };
   } catch {}
   return { ...DEFAULT };

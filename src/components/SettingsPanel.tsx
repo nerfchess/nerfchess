@@ -12,23 +12,39 @@ interface Props {
 export function SettingsPanel({ open, onClose }: Props) {
   const [theme, setTheme] = useState<BoardTheme>("wood");
   const [vol, setVol] = useState(0.8);
+  const [moveRiskWarnings, setMoveRiskWarnings] = useState(true);
+  const [autoQueen, setAutoQueen] = useState(false);
 
   useEffect(() => {
     const s = loadSettings();
     setTheme(s.boardTheme);
     setVol(s.volume);
+    setMoveRiskWarnings(s.moveRiskWarnings);
+    setAutoQueen(s.autoQueen);
   }, [open]);
 
   if (!open) return null;
 
-  const update = (next: { boardTheme?: BoardTheme; volume?: number }) => {
-    const merged = { boardTheme: next.boardTheme ?? theme, volume: next.volume ?? vol };
+  const update = (next: {
+    boardTheme?: BoardTheme;
+    volume?: number;
+    moveRiskWarnings?: boolean;
+    autoQueen?: boolean;
+  }) => {
+    const merged = {
+      boardTheme: next.boardTheme ?? theme,
+      volume: next.volume ?? vol,
+      moveRiskWarnings: next.moveRiskWarnings ?? moveRiskWarnings,
+      autoQueen: next.autoQueen ?? autoQueen,
+    };
     saveSettings(merged);
     if (next.boardTheme) setTheme(next.boardTheme);
     if (next.volume != null) {
       setVol(next.volume);
       setVolume(next.volume);
     }
+    if (next.moveRiskWarnings != null) setMoveRiskWarnings(next.moveRiskWarnings);
+    if (next.autoQueen != null) setAutoQueen(next.autoQueen);
   };
 
   return (
@@ -95,6 +111,36 @@ export function SettingsPanel({ open, onClose }: Props) {
               className="w-full accent-gold-leaf"
             />
           </div>
+
+          <label className="flex items-center justify-between cursor-pointer">
+            <span className="smallcaps text-[11px] text-parchment-400">
+              Move risk warnings
+              <span className="block normal-case text-[11px] text-parchment-500 mt-0.5">
+                Tint move dots yellow (self-loss) or red (into check)
+              </span>
+            </span>
+            <input
+              type="checkbox"
+              checked={moveRiskWarnings}
+              onChange={(e) => update({ moveRiskWarnings: e.target.checked })}
+              className="accent-gold-leaf w-4 h-4 shrink-0"
+            />
+          </label>
+
+          <label className="flex items-center justify-between cursor-pointer">
+            <span className="smallcaps text-[11px] text-parchment-400">
+              Auto-queen promotions
+              <span className="block normal-case text-[11px] text-parchment-500 mt-0.5">
+                Skip the piece picker and always promote to queen
+              </span>
+            </span>
+            <input
+              type="checkbox"
+              checked={autoQueen}
+              onChange={(e) => update({ autoQueen: e.target.checked })}
+              className="accent-gold-leaf w-4 h-4 shrink-0"
+            />
+          </label>
         </div>
       </div>
     </div>

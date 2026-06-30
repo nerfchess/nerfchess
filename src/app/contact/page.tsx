@@ -15,10 +15,27 @@ export default function ContactPage() {
     >
       <InfoSection title="Contact channel">
         <p>
-          A public contact address has not been published for this version of the site yet.
-          This page is ready for the project&apos;s preferred support email or community
-          link once one is chosen.
+          The best place to share feedback, report bugs, or talk strategy is the
+          Nerf Chess Discord server. You can also find updates on Instagram.
         </p>
+        <div className="pt-2 flex flex-wrap gap-3">
+          <a
+            href="https://discord.gg/a5bJYFrTx"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-5 py-2.5 rounded-sm btn-leaf font-display"
+          >
+            Join the Discord
+          </a>
+          <a
+            href="https://instagram.com/nerfchess"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-5 py-2.5 rounded-sm btn-ghost font-display"
+          >
+            @nerfchess on Instagram
+          </a>
+        </div>
       </InfoSection>
 
       <InfoSection title="Looking for help playing?">
