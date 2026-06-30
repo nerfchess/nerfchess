@@ -12,9 +12,15 @@
   --oxblood: #b54641;
   --verdigris: #5a9b7a;
   --bruise: #7c7aa3;
-  --font-display: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
-  --font-body: "Segoe UI", Inter, system-ui, sans-serif;
+  /* Lichess uses Noto Sans throughout its UI. We mirror that for the whole
+     site: one clean sans for body and display, a bolder weight for headings. */
+  --font-display: "Noto Sans", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Noto Sans", "Segoe UI", system-ui, sans-serif;
   --font-mono: "Cascadia Mono", "JetBrains Mono", Consolas, monospace;
+  /* Lichess accent palette */
+  --lichess-green: #629924;
+  --lichess-green-hi: #6f9f2f;
+  --lichess-blue: #3692e7;
 }
 
 html, body {
@@ -163,6 +169,94 @@ body {
 }
 .btn-ghost:hover { background: rgba(236,231,214,0.07); border-color: rgba(236,231,214,0.30); }
 
+/* Lichess-style primary action: flat green, big, friendly. */
+.btn-lichess {
+  background: linear-gradient(180deg, var(--lichess-green-hi) 0%, var(--lichess-green) 100%);
+  color: #fff;
+  border: 1px solid rgba(0,0,0,0.22);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.18) inset,
+    0 10px 26px -14px rgba(98,153,36,0.7);
+  transition: transform 130ms ease, filter 200ms ease, box-shadow 200ms ease;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+.btn-lichess:hover {
+  filter: brightness(1.07);
+  transform: translateY(-1px);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.24) inset,
+    0 16px 34px -14px rgba(98,153,36,0.8);
+}
+.btn-lichess:active { transform: translateY(0); filter: brightness(0.97); }
+
+/* --- Rotating drawback orbit (home hero centerpiece) --- */
+.dc-orbit {
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+.dc-orbit-ring {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+.dc-orbit-ring.spin   { animation: dc-orbit-spin 64s linear infinite; }
+.dc-orbit-ring.spin-r { animation: dc-orbit-spin-r 52s linear infinite; }
+.dc-orbit-slot {
+  position: absolute;
+}
+/* Counter-rotation keeps each card upright while it orbits. Durations must
+   match the ring they live on so the cancellation is exact. */
+.dc-orbit-counter.spin   { animation: dc-orbit-spin-r 64s linear infinite; }
+.dc-orbit-counter.spin-r { animation: dc-orbit-spin   52s linear infinite; }
+.dc-orbit-hub {
+  position: relative;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  border-radius: 9999px;
+}
+@keyframes dc-orbit-spin   { to { transform: rotate(360deg); } }
+@keyframes dc-orbit-spin-r { to { transform: rotate(-360deg); } }
+
+.dc-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 150px;
+  padding: 8px 11px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(255,253,245,0.04), rgba(255,253,245,0.012)), rgba(17,26,43,0.92);
+  border: 1px solid rgba(236,231,214,0.09);
+  box-shadow: 0 10px 30px -18px rgba(0,0,0,0.7);
+  backdrop-filter: blur(4px);
+}
+.dc-chip-dot {
+  flex: 0 0 auto;
+  width: 9px;
+  height: 9px;
+  border-radius: 9999px;
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.04);
+}
+.dc-chip-name {
+  font-weight: 600;
+  font-size: 12.5px;
+  line-height: 1.15;
+  letter-spacing: -0.005em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dc-chip-tier {
+  margin-left: auto;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  opacity: 0.75;
+}
+
 /* --- Board treatments: warm wood-tone, less candy than chess.com green --- */
 :root {
   --sq-light: #e8dcc0;
@@ -290,6 +384,10 @@ main, nav, header, footer { position: relative; z-index: 2; }
 
 @media (prefers-reduced-motion: reduce) {
   .animate-rise, .animate-seal, .animate-sigil, .animate-flicker, .animate-reveal, .animate-bob {
+    animation: none !important;
+  }
+  .dc-orbit-ring.spin, .dc-orbit-ring.spin-r,
+  .dc-orbit-counter.spin, .dc-orbit-counter.spin-r {
     animation: none !important;
   }
   * { transition: none !important; }

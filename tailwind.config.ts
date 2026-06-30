@@ -52,6 +52,11 @@ export default {
           DEFAULT: "#7c7aa3",
           glow: "#9d9bc0",
         },
+        // lichess accent palette (primary CTA + links)
+        lichess: {
+          green: "#629924",
+          blue: "#3692e7",
+        },
       },
       boxShadow: {
         leaf: "0 0 24px -10px rgba(216,181,110,0.35)",

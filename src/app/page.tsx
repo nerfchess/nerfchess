@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { motion } from "framer-motion";
-import { useState } from "react";
-import { NerfCard } from "@/components/NerfCard";
+import { useEffect, useState } from "react";
+import { Logo } from "@/components/Logo";
+import { NerfOrbit } from "@/components/NerfOrbit";
 import { SettingsPanel } from "@/components/SettingsPanel";
-import { COWARDLY, FOG_OF_WAR, PACMAN, RISING_WATER } from "@/engine/nerfs/implemented";
+import { loadRating } from "@/lib/rating";
 
 export default function HomePage() {
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -14,94 +14,94 @@ export default function HomePage() {
     <main className="min-h-screen">
       <SiteNav onOpenSettings={() => setSettingsOpen(true)} />
 
-      <section className="max-w-6xl mx-auto px-6 pt-10 pb-16 sm:pt-16 sm:pb-24 grid lg:grid-cols-[1.1fr_1fr] gap-14 items-center">
-        <div className="animate-rise">
-          <div className="inline-flex items-center gap-2.5 px-3 py-1 border-y border-gold/30">
-            <span className="w-1 h-1 rounded-full bg-gold-leaf animate-flicker" />
-            <span className="smallcaps text-[10px] text-gold-leaf">150+ secret rules</span>
+      <section className="max-w-6xl mx-auto px-6 pt-6 pb-12 sm:pt-12 sm:pb-20 grid lg:grid-cols-[1.05fr_1fr] gap-10 lg:gap-6 items-center">
+        <div className="animate-rise order-2 lg:order-1 text-center lg:text-left">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-gold/30 bg-gold/5">
+            <span className="w-1.5 h-1.5 rounded-full bg-lichess-green animate-flicker" />
+            <span className="smallcaps text-[10px] text-gold-leaf">Free · open · no sign-up</span>
           </div>
 
-          <h1 className="mt-7 font-display font-normal text-5xl sm:text-7xl leading-[1.02] tracking-[-0.02em]">
-            <span className="block text-parchment">Nerf Chess:</span>
-            <span className="block italic text-gold-leaf">capture the king</span>
+          <h1 className="mt-6 font-display font-extrabold text-5xl sm:text-6xl lg:text-7xl leading-[0.98] tracking-tight">
+            <span className="block text-parchment">Chess, with a</span>
+            <span className="block text-gold-leaf">secret catch.</span>
           </h1>
 
-          <p className="mt-6 max-w-xl text-lg leading-relaxed text-parchment-200">
-            A chess-first game with hidden rules. Every game, you and your opponent get a secret constraint that changes how you can move.
+          <p className="mt-5 max-w-xl mx-auto lg:mx-0 text-lg leading-relaxed text-parchment-200">
+            Every game you&apos;re handed one of 150+ hidden rules that bends how your
+            pieces move. Forget checkmate &mdash; just capture the king before they
+            figure you out.
           </p>
 
-          <div className="mt-9 flex flex-wrap items-center gap-3">
-            <Link href="/play" className="px-7 py-3 rounded-sm btn-leaf font-body text-base">
+          <div className="mt-8 flex flex-wrap items-center justify-center lg:justify-start gap-3">
+            <Link href="/play" className="px-8 py-3.5 rounded-md btn-lichess text-base">
               Play now
             </Link>
-            <Link href="/tutorial" className="px-7 py-3 rounded-sm btn-ghost font-body">
-              Learn the basics
+            <Link href="/tutorial" className="px-6 py-3.5 rounded-md btn-ghost font-body font-medium">
+              How to play
             </Link>
-            <Link href="/codex" className="px-7 py-3 rounded-sm btn-ghost font-body">
+            <Link href="/codex" className="px-6 py-3.5 rounded-md btn-ghost font-body font-medium">
               Browse the rules
             </Link>
           </div>
 
-          <ul className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-x-6 gap-y-2 text-sm text-parchment-200/90 border-t border-parchment/10 pt-5">
-            <li className="flex items-baseline gap-2">
-              <span className="font-display italic text-gold-leaf text-xs">i.</span> No checkmate
-            </li>
-            <li className="flex items-baseline gap-2">
-              <span className="font-display italic text-gold-leaf text-xs">ii.</span> Capture the king
-            </li>
-            <li className="flex items-baseline gap-2">
-              <span className="font-display italic text-gold-leaf text-xs">iii.</span> Secret nerfs
-            </li>
+          <ul className="mt-9 grid grid-cols-3 max-w-md mx-auto lg:mx-0 gap-3 text-sm border-t border-parchment/10 pt-6">
+            <Stat value="150+" label="hidden rules" />
+            <Stat value="∞" label="ways to lose" />
+            <Stat value="0" label="checkmates" />
           </ul>
         </div>
 
-        <div className="relative h-[440px] sm:h-[520px] overflow-hidden lg:overflow-visible">
-          <ChessHeroBackdrop />
-
-          <div className="absolute -inset-16 sigil opacity-90 pointer-events-none" />
-          <FloatCard className="absolute top-0 left-2 sm:left-8 -rotate-6">
-            <NerfCard nerf={FOG_OF_WAR} />
-          </FloatCard>
-          <FloatCard className="absolute top-12 right-0 sm:right-2 rotate-3" delay={0.1}>
-            <NerfCard nerf={COWARDLY} />
-          </FloatCard>
-          <FloatCard className="absolute bottom-12 left-6 sm:left-10 -rotate-2" delay={0.2}>
-            <NerfCard nerf={RISING_WATER} />
-          </FloatCard>
-          <FloatCard className="absolute bottom-0 right-0 sm:right-2 rotate-6" delay={0.3}>
-            <NerfCard nerf={PACMAN} />
-          </FloatCard>
+        <div className="order-1 lg:order-2 flex justify-center -my-6 sm:my-0">
+          <NerfOrbit />
         </div>
       </section>
 
-      <section className="max-w-6xl mx-auto px-6 py-20">
-        <div className="rule-ornament mb-12">
-          <span>Three things to know</span>
+      <section className="max-w-6xl mx-auto px-6 py-16 sm:py-20">
+        <div className="rule-ornament mb-10">
+          <span>How it plays</span>
         </div>
-        <div className="grid sm:grid-cols-3 gap-6">
+        <div className="grid sm:grid-cols-3 gap-4">
           {[
             {
-              n: "I",
+              n: "01",
               t: "Hidden information",
-              d: "You see your rule. They see theirs. A misread is punished. A bluff is rewarded.",
+              d: "You see your rule. Your opponent sees theirs. Read the board, read the bluff.",
             },
             {
-              n: "II",
-              t: "Modified rules",
-              d: "Forget checkmate. The king is just another piece you can capture. Castling through check is allowed.",
+              n: "02",
+              t: "No checkmate",
+              d: "The king is just another piece. Capture it. Castle through check if you dare.",
             },
             {
-              n: "III",
+              n: "03",
               t: "150+ rules",
-              d: "From “you can't move to the h-file” to “if any enemy pawn touches your half, you lose.”",
+              d: "From “you can’t touch the h-file” to “if a pawn reaches your half, you lose.”",
             },
           ].map((f) => (
-            <article key={f.t} className="plate p-7 relative overflow-hidden">
-              <div className="font-display italic text-gold-leaf text-4xl leading-none tracking-tight">{f.n}</div>
-              <div className="mt-5 font-display text-2xl text-parchment leading-tight">{f.t}</div>
-              <p className="mt-3 text-[14px] leading-relaxed text-parchment-200/90">{f.d}</p>
+            <article
+              key={f.t}
+              className="plate p-6 rounded-lg transition-colors hover:border-gold/30"
+            >
+              <div className="font-mono text-gold-leaf text-sm tracking-widest">{f.n}</div>
+              <div className="mt-4 font-display font-bold text-xl text-parchment leading-tight">
+                {f.t}
+              </div>
+              <p className="mt-2 text-[14px] leading-relaxed text-parchment-200/90">{f.d}</p>
             </article>
           ))}
+        </div>
+
+        <div className="mt-12 flex justify-center">
+          <Link
+            href="/play"
+            className="px-9 py-4 rounded-md btn-lichess text-lg inline-flex items-center gap-2"
+          >
+            Start a game
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <line x1="5" y1="12" x2="19" y2="12" />
+              <polyline points="12 5 19 12 12 19" />
+            </svg>
+          </Link>
         </div>
       </section>
 
@@ -111,16 +111,35 @@ export default function HomePage() {
   );
 }
 
-function SiteNav({ onOpenSettings }: { onOpenSettings: () => void }) {
+function Stat({ value, label }: { value: string; label: string }) {
   return (
-    <nav className="flex items-center justify-between px-10 py-7">
-      <Link href="/" className="font-display text-2xl tracking-tight">
-        nerf<span className="text-gold-leaf">chess</span>
-      </Link>
-      <div className="flex items-center gap-1 sm:gap-2 text-sm font-display">
+    <li className="text-center lg:text-left">
+      <div className="font-display font-extrabold text-2xl text-parchment leading-none">{value}</div>
+      <div className="smallcaps text-[9px] text-parchment-400 mt-1.5">{label}</div>
+    </li>
+  );
+}
+
+function SiteNav({ onOpenSettings }: { onOpenSettings: () => void }) {
+  const [rating, setRating] = useState<number | null>(null);
+  useEffect(() => {
+    const r = loadRating();
+    if (r.games > 0) setRating(Math.round(r.rating));
+  }, []);
+
+  return (
+    <nav className="flex items-center justify-between px-5 sm:px-10 py-5 sm:py-6">
+      <Logo />
+      <div className="flex items-center gap-1 sm:gap-2 text-sm font-body font-medium">
+        {rating != null && (
+          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 mr-1 rounded-full border border-gold/25 bg-gold/5">
+            <span className="smallcaps text-[9px] text-parchment-400">Rating</span>
+            <span className="font-mono text-sm text-gold-leaf tabular-nums">{rating}</span>
+          </div>
+        )}
         <Link href="/play" className="px-3 py-1.5 rounded-full hover:bg-white/5 text-parchment">Play</Link>
         <Link href="/codex" className="px-3 py-1.5 rounded-full hover:bg-white/5 text-parchment">Rules</Link>
-        <Link href="/tutorial" className="px-3 py-1.5 rounded-full hover:bg-white/5 text-parchment">How to play</Link>
+        <Link href="/tutorial" className="hidden sm:inline-block px-3 py-1.5 rounded-full hover:bg-white/5 text-parchment">How to play</Link>
         <button
           type="button"
           onClick={onOpenSettings}
@@ -162,41 +181,9 @@ function SiteFooter() {
         ))}
       </nav>
       <div className="mt-3 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-parchment-400">
-        <span>A reimagining of Nerf Chess. Not affiliated with the original.</span>
-        <span className="font-mono text-[10px] opacity-70">made with ♥</span>
+        <span>Nerf Chess &mdash; chess with secret rules.</span>
+        <span className="font-mono text-[10px] opacity-70">made with &hearts;</span>
       </div>
     </footer>
-  );
-}
-
-function ChessHeroBackdrop() {
-  return (
-    <div className="absolute inset-0 pointer-events-none">
-      <div className="absolute inset-0 hero-board" />
-      <div className="absolute inset-0 hero-vignette" />
-      <div className="absolute left-8 top-10 hero-piece hero-piece-k" aria-hidden>
-        ♚
-      </div>
-      <div className="absolute right-10 bottom-12 hero-piece hero-piece-q" aria-hidden>
-        ♛
-      </div>
-    </div>
-  );
-}
-
-function FloatCard({
-  children,
-  className = "",
-  delay = 0,
-}: { children: React.ReactNode; className?: string; delay?: number }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 24, scale: 0.96 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.5, delay, ease: [0.2, 0.8, 0.2, 1] }}
-      className={"w-[260px] " + className}
-    >
-      {children}
-    </motion.div>
   );
 }
