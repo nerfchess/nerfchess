@@ -23,6 +23,7 @@ import {
   playMove,
 } from "@/engine/game";
 import { BoardState, Color, Move } from "@/engine/types";
+import { nerfSummary, outcomeFor, recordCompletedGame } from "@/lib/gameHistory";
 import { boardAtPly } from "@/lib/gameReview";
 import { clearSavedFriendSession, loadSavedFriendSession, MPSession, MPStart } from "@/lib/multiplayer";
 import { premoveOptionsFor } from "@/lib/premoves";
@@ -94,6 +95,10 @@ export default function FriendPage() {
   const sessionRef = useRef<MPSession | null>(null);
   const boardShellRef = useRef<HTMLDivElement | null>(null);
   const clockEnabledRef = useRef(false);
+  // Time control as announced by the server start frame (valid for both host
+  // and guest), kept for the history entry written when the game ends.
+  const timeControlRef = useRef({ baseSec: 0, incSec: 0 });
+  const recordedResult = useRef(false);
   const awaitingPremoveAckRef = useRef(false);
   const pendingPremoveRef = useRef<PendingPremoveSend | null>(null);
   const pendingLocalMoveRef = useRef<PendingLocalMove | null>(null);
@@ -184,6 +189,9 @@ export default function FriendPage() {
     setBlackMs(msg.bc);
     setHistoryPly(null);
     clockEnabledRef.current = msg.timeSec > 0;
+    timeControlRef.current = { baseSec: msg.timeSec, incSec: msg.incrementSec };
+    // A restored session may already carry a finished game; never re-record it.
+    recordedResult.current = nextGame.result != null;
     clearPremoves();
     setPendingLocalMove(null);
     setAwaitingPremoveAck(false);
@@ -401,6 +409,27 @@ export default function FriendPage() {
       setHistoryPly(game.board.history.length);
     }
   }, [game, historyPly]);
+
+  // Game-ended hook: write the finished game into the local history, once.
+  useEffect(() => {
+    if (!game?.result || recordedResult.current) return;
+    recordedResult.current = true;
+    recordCompletedGame({
+      mode: "friend",
+      opponent: "Anonymous Player",
+      myColor,
+      outcome: outcomeFor(game.result.winner, myColor),
+      reason: game.result.reason,
+      rated: false,
+      moveCount: game.board.history.length,
+      baseSec: timeControlRef.current.baseSec,
+      incSec: timeControlRef.current.incSec,
+      ratingChange: null,
+      myNerf: nerfSummary(myColor === "w" ? game.white.nerf : game.black.nerf),
+      // The opponent's rule is never sent to this client in friend games.
+      opponentNerf: null,
+    });
+  }, [game, myColor]);
 
   const reviewBoard = useMemo(() => {
     if (!game || historyPly == null) return null;

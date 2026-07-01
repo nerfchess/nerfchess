@@ -27,6 +27,7 @@ import { loadSettings } from "@/lib/settings";
 import type { QueuedPremove } from "@/components/Board";
 import { buildCustomNerf, CustomNerf } from "@/engine/nerfs/custom";
 import { isMuted, playCapture, playCheck, playNerf, playMove as playMoveSfx, setMuted } from "@/lib/sounds";
+import { nerfSummary, outcomeFor, recordCompletedGame } from "@/lib/gameHistory";
 import { applyResult, loadRating, saveRating } from "@/lib/rating";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { loadSavedAiGame, restoreSavedAiGame, saveAiGame } from "@/lib/gamePersistence";
@@ -321,7 +322,10 @@ function GamePage() {
     lastSeenMoveCount.current = hist.length;
   }, [game]);
 
-  // Nerf-triggered loss sound when game ends with a non-mundane reason.
+  // Game-ended hook: play the nerf sound, apply the rating, and record the
+  // finished game into the local history. Runs exactly once per game;
+  // restoring an already-finished saved game pre-sets sawResult so a refresh
+  // never double-records.
   const sawResult = useRef(false);
   const [ratingChange, setRatingChange] = useState<{ before: number; after: number } | null>(null);
   useEffect(() => {
@@ -331,15 +335,32 @@ function GamePage() {
       playNerf();
     }
     // Casual games don't affect your rating.
-    if (!rated) return;
-    const before = loadRating();
-    const score: 0 | 0.5 | 1 =
-      game.result.winner === "draw" ? 0.5 : game.result.winner === myColor ? 1 : 0;
-    const after = applyResult(before, difficulty, score);
-    saveRating(after);
-    setPlayerElo(after.rating);
-    setRatingChange({ before: before.rating, after: after.rating });
-  }, [game?.result, myColor, difficulty, rated]);
+    let change: { before: number; after: number } | null = null;
+    if (rated) {
+      const before = loadRating();
+      const score: 0 | 0.5 | 1 =
+        game.result.winner === "draw" ? 0.5 : game.result.winner === myColor ? 1 : 0;
+      const after = applyResult(before, difficulty, score);
+      saveRating(after);
+      setPlayerElo(after.rating);
+      change = { before: before.rating, after: after.rating };
+      setRatingChange(change);
+    }
+    recordCompletedGame({
+      mode: "ai",
+      opponent: `${difficulty[0].toUpperCase()}${difficulty.slice(1)} Bot`,
+      myColor,
+      outcome: outcomeFor(game.result.winner, myColor),
+      reason: game.result.reason,
+      rated,
+      moveCount: game.board.history.length,
+      baseSec: initialTimeMs / 1000,
+      incSec: incrementMs / 1000,
+      ratingChange: change,
+      myNerf: nerfSummary(myColor === "w" ? game.white.nerf : game.black.nerf),
+      opponentNerf: nerfSummary(myColor === "w" ? game.black.nerf : game.white.nerf),
+    });
+  }, [game, myColor, difficulty, rated, initialTimeMs, incrementMs]);
 
   // Execute the head of the premove queue when our turn returns. If the head
   // is no longer playable (target ran away, piece pinned, friendly target
