@@ -5,6 +5,7 @@ import { type CSSProperties, useEffect, useMemo, useRef, useState } from "react"
 import { Board, QueuedPremove } from "@/components/Board";
 import { BoardPlayerRow } from "@/components/BoardPlayerRow";
 import { GameOver } from "@/components/GameOver";
+import { MobileMoveDrawer } from "@/components/MobileMoveDrawer";
 import { MoveList } from "@/components/MoveList";
 import { PlayerNerfCard } from "@/components/PlayerNerfCard";
 import { SettingsPanel } from "@/components/SettingsPanel";
@@ -864,7 +865,7 @@ export default function FriendPage() {
         </div>
       </nav>
 
-      <div className="mx-auto flex w-full max-w-[1280px] flex-1 min-h-0 flex-col gap-2 overflow-hidden px-3 pb-6 sm:px-6">
+      <div className="mx-auto flex w-full max-w-[1280px] flex-1 min-h-0 flex-col gap-2 overflow-hidden px-3 pb-14 sm:px-6 sm:pb-6">
         {hint && (
           <div
             role="status"
@@ -1005,6 +1006,13 @@ export default function FriendPage() {
           </div>
         </div>
       </div>
+
+      <MobileMoveDrawer
+        moves={game.board.history}
+        currentPly={currentHistoryPly}
+        onPlyChange={handleHistoryPlyChange}
+        footer={historyActions}
+      />
 
       {game.result && (
         <GameOver
