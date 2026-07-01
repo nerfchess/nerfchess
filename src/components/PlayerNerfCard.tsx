@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { Nerf } from "@/engine/nerf";
 import { BoardState, Color, PieceType } from "@/engine/types";
 import { Piece } from "@/components/Pieces";
@@ -20,6 +21,7 @@ interface Props {
   revealed?: boolean;
   ownerLabel: string;
   progress?: { value: number; max: number; label: string } | null;
+  action?: ReactNode;
 }
 
 function opponentOf(color: Color): Color {
@@ -55,6 +57,7 @@ export function PlayerNerfCard({
   revealed = true,
   ownerLabel,
   progress,
+  action,
 }: Props) {
   const pieces = capturedPiecesFor(board, playerColor);
   const mineValue = capturedValue(capturedPiecesFor(board, myColor));
@@ -176,6 +179,8 @@ export function PlayerNerfCard({
           </p>
         </>
       )}
+
+      {action && <div className="mt-4">{action}</div>}
     </section>
   );
 }

@@ -14,6 +14,7 @@ export function SettingsPanel({ open, onClose }: Props) {
   const [vol, setVol] = useState(0.8);
   const [moveRiskWarnings, setMoveRiskWarnings] = useState(true);
   const [autoQueen, setAutoQueen] = useState(false);
+  const [hideOpponentReveal, setHideOpponentReveal] = useState(false);
 
   useEffect(() => {
     const s = loadSettings();
@@ -21,6 +22,7 @@ export function SettingsPanel({ open, onClose }: Props) {
     setVol(s.volume);
     setMoveRiskWarnings(s.moveRiskWarnings);
     setAutoQueen(s.autoQueen);
+    setHideOpponentReveal(s.hideOpponentReveal);
   }, [open]);
 
   if (!open) return null;
@@ -30,12 +32,14 @@ export function SettingsPanel({ open, onClose }: Props) {
     volume?: number;
     moveRiskWarnings?: boolean;
     autoQueen?: boolean;
+    hideOpponentReveal?: boolean;
   }) => {
     const merged = {
       boardTheme: next.boardTheme ?? theme,
       volume: next.volume ?? vol,
       moveRiskWarnings: next.moveRiskWarnings ?? moveRiskWarnings,
       autoQueen: next.autoQueen ?? autoQueen,
+      hideOpponentReveal: next.hideOpponentReveal ?? hideOpponentReveal,
     };
     saveSettings(merged);
     if (next.boardTheme) setTheme(next.boardTheme);
@@ -45,6 +49,7 @@ export function SettingsPanel({ open, onClose }: Props) {
     }
     if (next.moveRiskWarnings != null) setMoveRiskWarnings(next.moveRiskWarnings);
     if (next.autoQueen != null) setAutoQueen(next.autoQueen);
+    if (next.hideOpponentReveal != null) setHideOpponentReveal(next.hideOpponentReveal);
   };
 
   return (
@@ -138,6 +143,21 @@ export function SettingsPanel({ open, onClose }: Props) {
               type="checkbox"
               checked={autoQueen}
               onChange={(e) => update({ autoQueen: e.target.checked })}
+              className="accent-gold-leaf w-4 h-4 shrink-0"
+            />
+          </label>
+
+          <label className="flex items-center justify-between cursor-pointer">
+            <span className="smallcaps text-[11px] text-parchment-400">
+              Keep opponent's rule hidden
+              <span className="block normal-case text-[11px] text-parchment-500 mt-0.5">
+                Never reveal their rule to you — no mid-game peek, no reveal at the end
+              </span>
+            </span>
+            <input
+              type="checkbox"
+              checked={hideOpponentReveal}
+              onChange={(e) => update({ hideOpponentReveal: e.target.checked })}
               className="accent-gold-leaf w-4 h-4 shrink-0"
             />
           </label>

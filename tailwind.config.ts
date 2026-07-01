@@ -10,59 +10,54 @@ export default {
         mono: ["var(--font-mono)", "ui-monospace", "monospace"],
       },
       colors: {
-        // ink = deep cool navy (background tones)
+        // ink = warm near-black surfaces, tuned to Lichess's default dark theme
         ink: {
-          950: "#0a111e",
-          900: "#111a2b",
-          800: "#1a253b",
-          700: "#26334d",
-          600: "#384664",
-          500: "#566687",
-          400: "#7d8cab",
+          950: "#100f0d",
+          900: "#161512", // page background
+          800: "#1c1a17",
+          700: "#262421", // panels / cards
+          600: "#302d29",
+          500: "#403d38",
+          400: "#6a665f",
         },
-        // parchment = warm off-white (foreground text)
+        // parchment = neutral light grays (foreground text), Lichess-style
         parchment: {
-          DEFAULT: "#ece7d6",
-          50: "#f4f0e3",
-          100: "#ece7d6",
-          200: "#ddd5bf",
-          300: "#bdb39a",
-          400: "#8e8775",
-          500: "#5f5b50",
+          DEFAULT: "#b8b8b8",
+          50: "#e9e7e3",
+          100: "#dedddb",
+          200: "#c7c5c1",
+          300: "#a3a09b",
+          400: "#7f7d77",
+          500: "#5c5a55",
         },
-        // gold = aged brass (primary accent)
+        // gold = repurposed as Lichess's blue accent (links / primary)
         gold: {
-          DEFAULT: "#c89b4a",
-          leaf: "#d8b56e",
-          dim: "#9a7634",
+          DEFAULT: "#3692e7",
+          leaf: "#4a9fee",
+          dim: "#2a6fb0",
         },
-        // oxblood = deep brick (alert / danger)
+        // oxblood = alert / danger
         oxblood: {
-          DEFAULT: "#b54641",
-          glow: "#c66860",
+          DEFAULT: "#c0413b",
+          glow: "#dc5a54",
           deep: "#7e2c28",
         },
-        // verdigris = aged copper green (cool accent)
+        // verdigris = positive / success (used sparingly, not as primary)
         verdigris: {
-          DEFAULT: "#5a9b7a",
-          glow: "#7eb59a",
+          DEFAULT: "#629924",
+          glow: "#7bb52f",
         },
         // bruise = dusty slate violet (secondary accent)
         bruise: {
-          DEFAULT: "#7c7aa3",
-          glow: "#9d9bc0",
-        },
-        // lichess accent palette (primary CTA + links)
-        lichess: {
-          green: "#629924",
-          blue: "#3692e7",
+          DEFAULT: "#8a88a8",
+          glow: "#a7a5c4",
         },
       },
       boxShadow: {
-        leaf: "0 0 24px -10px rgba(216,181,110,0.35)",
-        oxblood: "0 0 32px -14px rgba(181,70,65,0.4)",
+        leaf: "0 0 24px -10px rgba(54,146,231,0.4)",
+        oxblood: "0 0 32px -14px rgba(192,65,59,0.4)",
         plate:
-          "0 14px 50px -22px rgba(0,0,0,0.55), 0 1px 0 0 rgba(255,255,255,0.04) inset",
+          "0 12px 40px -24px rgba(0,0,0,0.7), 0 1px 0 0 rgba(255,255,255,0.03) inset",
       },
       keyframes: {
         flicker: {

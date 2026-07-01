@@ -8,10 +8,19 @@ export interface Settings {
   volume: number; // 0..1
   moveRiskWarnings: boolean; // yellow/red move-dot warnings for self-loss / check
   autoQueen: boolean; // skip the promotion picker and always promote to queen
+  // When on, the opponent's rule is never shown to you — not even after the
+  // game ends, and mid-game reveal is disabled. Default off.
+  hideOpponentReveal: boolean;
 }
 
 const STORAGE_KEY = "dc:settings-v1";
-const DEFAULT: Settings = { boardTheme: "wood", volume: 0.8, moveRiskWarnings: true, autoQueen: false };
+const DEFAULT: Settings = {
+  boardTheme: "wood",
+  volume: 0.8,
+  moveRiskWarnings: true,
+  autoQueen: false,
+  hideOpponentReveal: false,
+};
 
 export const BOARD_THEMES: Record<BoardTheme, { light: string; dark: string; label: string }> = {
   wood:  { light: "#e8dcc0", dark: "#8d6e4b", label: "Wood" },
@@ -32,6 +41,10 @@ export function loadSettings(): Settings {
       moveRiskWarnings:
         typeof parsed.moveRiskWarnings === "boolean" ? parsed.moveRiskWarnings : DEFAULT.moveRiskWarnings,
       autoQueen: typeof parsed.autoQueen === "boolean" ? parsed.autoQueen : DEFAULT.autoQueen,
+      hideOpponentReveal:
+        typeof parsed.hideOpponentReveal === "boolean"
+          ? parsed.hideOpponentReveal
+          : DEFAULT.hideOpponentReveal,
     };
   } catch {}
   return { ...DEFAULT };
