@@ -21,6 +21,7 @@ type Setup = {
   incrementSec: number;
 };
 type SeatUser = { id: string; name: string; rating: number };
+type ChatEntry = { color: Color; name: string; text: string; at: number };
 type StoredMatch = {
   id: string;
   setup: Setup;
@@ -40,6 +41,13 @@ type StoredMatch = {
   rated?: boolean;
   users?: Partial<Record<Color, SeatUser>>;
   recorded?: boolean;
+  // Matchmade and rematch games start automatically once both seats connect
+  // (friend games wait in the lobby for a join instead).
+  autoStart?: boolean;
+  rematchOfferBy?: Color | null;
+  // Set once a rematch match has been created from this one.
+  rematchedTo?: string | null;
+  chat?: ChatEntry[];
 };
 type SessionAttachment = {
   id: string;
@@ -71,6 +79,8 @@ type ClientFrame =
   | { t: "queue"; d?: { pool?: unknown } }
   | { t: "queueCancel" }
   | { t: "watch"; d?: { id?: unknown } }
+  | { t: "rematch" }
+  | { t: "chat"; d?: { text?: unknown } }
   | { t: "p" };
 
 export interface Env {
@@ -236,6 +246,10 @@ export class GameServer extends DurableObject<Env> {
         return this.queueLeave(ws, true);
       case "watch":
         return this.watchMatch(ws, frame.d);
+      case "rematch":
+        return this.rematchRequest(ws);
+      case "chat":
+        return this.chatMessage(ws, frame.d);
       case "p":
         return this.sendClocks(ws);
       default:
@@ -418,6 +432,7 @@ export class GameServer extends DurableObject<Env> {
       moves: match.moves,
       players: this.playersPayload(match),
       rated: !!match.rated,
+      chat: match.chat ?? [],
     };
   }
 
@@ -605,9 +620,13 @@ export class GameServer extends DurableObject<Env> {
     await this.attachSession(ws, match, color);
     await this.saveMatch(match);
     if (!match.startedAt) {
-      // Matchmade games begin the moment both paired players arrive at the
-      // game URL; friend games wait in the lobby until someone joins by code.
-      if (match.rated && this.connectedSession(match.id, "w") && this.connectedSession(match.id, "b")) {
+      // Matchmade and rematch games begin the moment both paired players
+      // arrive at the game URL; friend games wait in the lobby for a join.
+      if (
+        (match.rated || match.autoStart) &&
+        this.connectedSession(match.id, "w") &&
+        this.connectedSession(match.id, "b")
+      ) {
         match.startedAt = Date.now();
         match.runningSince = match.startedAt;
         await this.saveMatch(match);
@@ -803,6 +822,7 @@ export class GameServer extends DurableObject<Env> {
       startedAt: null,
       completedAt: null,
       rated: true,
+      autoStart: true,
       users: { w: meWhite ? me : them, b: meWhite ? them : me },
     };
     await this.saveMatch(match);
@@ -825,6 +845,103 @@ export class GameServer extends DurableObject<Env> {
       if (next.length !== entries.length) await this.ctx.storage.put(key, next);
     }
     if (notify) send(ws, "queueCancelled");
+  }
+
+  // ---------------- rematch ----------------
+
+  private async rematchRequest(ws: WebSocket) {
+    const session = this.session(ws);
+    const match = session.matchId ? await this.loadMatch(session.matchId) : null;
+    if (!match || !session.color) return error(ws, "no_game", "Join a game before requesting a rematch.");
+    if (!match.result) return error(ws, "not_over", "The game is still in progress.");
+    if (match.rematchedTo) return error(ws, "rematch_done", "A rematch has already started.");
+
+    const opponentColor: Color = session.color === "w" ? "b" : "w";
+    if (match.rematchOfferBy === session.color) return;
+    if (match.rematchOfferBy !== opponentColor) {
+      if (!this.connectedSession(match.id, opponentColor)) {
+        return error(ws, "opponent_gone", "Your opponent has left.");
+      }
+      match.rematchOfferBy = session.color;
+      await this.saveMatch(match, false);
+      this.broadcast(match, "rematchOffer", { color: session.color });
+      return;
+    }
+
+    // Both agreed: new game with colors swapped, fresh rules and seed.
+    const users: StoredMatch["users"] = {};
+    if (match.users?.b) users.w = { ...match.users.b };
+    if (match.users?.w) users.b = { ...match.users.w };
+    const db = await this.db();
+    if (db) {
+      for (const color of ["w", "b"] as Color[]) {
+        const seat = users[color];
+        if (!seat) continue;
+        try {
+          const row = await db
+            .prepare("SELECT rating FROM users WHERE id = ?")
+            .bind(seat.id)
+            .first<{ rating: number }>();
+          if (row) seat.rating = row.rating;
+        } catch {}
+      }
+    }
+
+    const id = await this.newCode(match.rated ? 8 : 5);
+    const rematch: StoredMatch = {
+      id,
+      setup: {
+        whiteNerfId: pickNerfId(),
+        blackNerfId: pickNerfId(),
+        seed: makeSeed(),
+        timeSec: match.setup.timeSec,
+        incrementSec: match.setup.incrementSec,
+      },
+      tokens: { w: newToken(), b: newToken() },
+      disconnectedAt: {},
+      opponentGoneNotified: {},
+      moves: [],
+      result: null,
+      clocks: { w: match.setup.timeSec * 1000, b: match.setup.timeSec * 1000 },
+      runningSince: null,
+      drawOfferBy: null,
+      createdAt: Date.now(),
+      startedAt: null,
+      completedAt: null,
+      rated: match.rated,
+      autoStart: true,
+      users,
+    };
+    await this.saveMatch(rematch);
+    match.rematchOfferBy = null;
+    match.rematchedTo = id;
+    await this.saveMatch(match, false);
+
+    send(this.connectedSession(match.id, "w"), "rematched", { id, color: "b", token: rematch.tokens.b });
+    send(this.connectedSession(match.id, "b"), "rematched", { id, color: "w", token: rematch.tokens.w });
+  }
+
+  // ---------------- chat ----------------
+
+  // Per-socket chat throttle; in-memory only, so at worst a hibernation wake
+  // resets the window.
+  private lastChatAt = new Map<string, number>();
+
+  private async chatMessage(ws: WebSocket, data: unknown) {
+    const session = this.session(ws);
+    const match = session.matchId ? await this.loadMatch(session.matchId) : null;
+    if (!match || !session.color) return error(ws, "no_game", "Join a game before chatting.");
+    const raw = String((data as { text?: unknown } | undefined)?.text ?? "").trim();
+    if (!raw) return;
+    const now = Date.now();
+    if (now - (this.lastChatAt.get(session.id) ?? 0) < 500) return;
+    this.lastChatAt.set(session.id, now);
+
+    const name = match.users?.[session.color]?.name ?? (session.color === "w" ? "White" : "Black");
+    const entry: ChatEntry = { color: session.color, name, text: raw.slice(0, 200), at: now };
+    match.chat = [...(match.chat ?? []), entry].slice(-50);
+    await this.saveMatch(match, false);
+    this.broadcast(match, "chat", entry);
   }
 
   // ---------------- spectating ----------------

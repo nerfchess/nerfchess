@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AccountChip } from "@/components/AccountChip";
 import { Logo } from "@/components/Logo";
+import { PlayerSearch } from "@/components/PlayerSearch";
 import { AccountUser, fetchMe } from "@/lib/authClient";
 
 interface Row {
@@ -62,6 +63,8 @@ export default function LeaderboardPage() {
           </Link>{" "}
           to get on the board.
         </p>
+
+        <PlayerSearch className="mt-5 max-w-sm" />
 
         {error && (
           <div className="mt-6 plate p-3 px-4 border-oxblood-glow/60 bg-oxblood/15 text-parchment">

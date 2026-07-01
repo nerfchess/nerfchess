@@ -2,6 +2,8 @@ import type { Color } from "@/engine/types";
 
 export type MPPlayers = Record<Color, { name: string; rating: number | null }>;
 
+export type MPChatMessage = { color: Color; name: string; text: string; at: number };
+
 export type MPStart = {
   id: string;
   color: Color;
@@ -15,6 +17,7 @@ export type MPStart = {
   moves: string[];
   players?: MPPlayers;
   rated?: boolean;
+  chat?: MPChatMessage[];
 };
 
 export type MPWatchStart = {
@@ -62,6 +65,9 @@ export type MPEvent =
   | { type: "end"; end: MPEnd }
   | { type: "draw-offer"; color: Color }
   | { type: "draw-declined"; color: Color }
+  | { type: "rematch-offer"; color: Color }
+  | { type: "rematched"; id: string; color: Color; token: string }
+  | { type: "chat"; message: MPChatMessage }
   | { type: "clocks"; wc: number; bc: number }
   | { type: "opponent-gone" }
   | { type: "disconnected" }
@@ -78,6 +84,9 @@ type ServerFrame =
   | { t: "end"; d: MPEnd }
   | { t: "drawOffer"; d: { color: Color } }
   | { t: "drawDeclined"; d: { color: Color } }
+  | { t: "rematchOffer"; d: { color: Color } }
+  | { t: "rematched"; d: { id: string; color: Color; token: string } }
+  | { t: "chat"; d: MPChatMessage }
   | { t: "opponentGone" }
   | { t: "error"; d: { code?: string; message?: string } }
   | { t: "n"; d?: { wc?: number; bc?: number } };
@@ -276,6 +285,15 @@ export class MPSession {
       case "drawDeclined":
         this.emit({ type: "draw-declined", color: frame.d.color });
         break;
+      case "rematchOffer":
+        this.emit({ type: "rematch-offer", color: frame.d.color });
+        break;
+      case "rematched":
+        this.emit({ type: "rematched", id: frame.d.id, color: frame.d.color, token: frame.d.token });
+        break;
+      case "chat":
+        this.emit({ type: "chat", message: frame.d });
+        break;
       case "opponentGone":
         this.emit({ type: "opponent-gone" });
         break;
@@ -392,6 +410,14 @@ export class MPSession {
 
   resign(): boolean {
     return this.sendFrame("resign");
+  }
+
+  requestRematch(): boolean {
+    return this.sendFrame("rematch");
+  }
+
+  sendChat(text: string): boolean {
+    return this.sendFrame("chat", { text });
   }
 
   offerDraw(): boolean {

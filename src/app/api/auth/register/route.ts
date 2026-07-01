@@ -25,6 +25,10 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   }
+  // Reserved: would shadow API/product routes.
+  if (["search", "anonymous"].includes(username.toLowerCase())) {
+    return NextResponse.json({ error: "That username is reserved." }, { status: 400 });
+  }
   if (!validPassword(password)) {
     return NextResponse.json({ error: "Password must be at least 8 characters." }, { status: 400 });
   }

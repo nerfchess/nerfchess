@@ -4,6 +4,7 @@ import Link from "next/link";
 import { type CSSProperties, useEffect, useMemo, useRef, useState } from "react";
 import { Board, QueuedPremove } from "@/components/Board";
 import { BoardPlayerRow } from "@/components/BoardPlayerRow";
+import { ChatPanel } from "@/components/ChatPanel";
 import { ClockPill } from "@/components/ClockPill";
 import { GameOver } from "@/components/GameOver";
 import { MobileMoveDrawer } from "@/components/MobileMoveDrawer";
@@ -26,7 +27,7 @@ import {
 import { BoardState, Color, Move } from "@/engine/types";
 import { nerfSummary, outcomeFor, recordCompletedGame } from "@/lib/gameHistory";
 import { boardAtPly } from "@/lib/gameReview";
-import { MPSession, MPStart } from "@/lib/multiplayer";
+import { MPChatMessage, MPSession, MPStart, saveOnlineSeat } from "@/lib/multiplayer";
 import { premoveOptionsFor } from "@/lib/premoves";
 import { isMuted, playCapture, playCheck, playMove as playMoveSfx, setMuted } from "@/lib/sounds";
 
@@ -87,6 +88,8 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   const [boardHeight, setBoardHeight] = useState<number | null>(null);
   const [revealedOppNerf, setRevealedOppNerf] = useState<Nerf | null>(null);
   const [ratingChange, setRatingChange] = useState<{ before: number; after: number } | null>(null);
+  const [chatMessages, setChatMessages] = useState<MPChatMessage[]>(() => start.chat ?? []);
+  const [rematchStatus, setRematchStatus] = useState<"none" | "offered" | "incoming">("none");
 
   const boardShellRef = useRef<HTMLDivElement | null>(null);
   const recordedResult = useRef(false);
@@ -273,6 +276,14 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         if (e.color !== myColor) {
           window.setTimeout(() => setDrawOfferStatus("idle"), 2500);
         }
+      } else if (e.type === "chat") {
+        setChatMessages((msgs) => [...msgs, e.message].slice(-50));
+      } else if (e.type === "rematch-offer") {
+        setRematchStatus(e.color === myColor ? "offered" : "incoming");
+      } else if (e.type === "rematched") {
+        // Take the new seat and load the fresh game with a clean slate.
+        saveOnlineSeat(e.id, { color: e.color, token: e.token });
+        window.location.href = `/game/${e.id}`;
       }
     });
     return off;
@@ -518,6 +529,23 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     setMutedState(next);
   };
 
+  // No optimistic echo: the server broadcasts chat back to both players,
+  // including the sender.
+  const handleSendChat = (text: string) => {
+    if (!session.sendChat(text)) {
+      setError("Disconnected from the game server.");
+    }
+  };
+
+  const handleRematch = () => {
+    if (rematchStatus === "offered") return;
+    if (!session.requestRematch()) {
+      setError("Disconnected from the game server.");
+      return;
+    }
+    if (rematchStatus !== "incoming") setRematchStatus("offered");
+  };
+
   if (!game) return null;
   const myNerf = myColor === "w" ? game.white.nerf : game.black.nerf;
   const myState = myColor === "w" ? game.white.state : game.black.state;
@@ -684,7 +712,14 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               revealed={!!game.result && !!revealedOppNerf && !uiSettings.hideOpponentReveal}
               ownerLabel=""
             />
-            <div className="hidden lg:block" />
+            <div className="hidden min-h-0 lg:block">
+              <ChatPanel
+                messages={chatMessages}
+                myColor={myColor}
+                onSend={handleSendChat}
+                className="h-full"
+              />
+            </div>
             <PlayerNerfCard
               board={boardForDisplay}
               playerColor={myColor}
@@ -801,7 +836,17 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         moves={game.board.history}
         currentPly={currentHistoryPly}
         onPlyChange={handleHistoryPlyChange}
-        footer={historyActions}
+        footer={
+          <div className="space-y-2">
+            {historyActions}
+            <ChatPanel
+              messages={chatMessages}
+              myColor={myColor}
+              onSend={handleSendChat}
+              className="h-40"
+            />
+          </div>
+        }
       />
 
       {game.result && (
@@ -811,7 +856,8 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           myNerf={myNerf}
           opponentNerf={revealedOppNerf && !uiSettings.hideOpponentReveal ? revealedOppNerf : undefined}
           ratingChange={ratingChange}
-          onRematch={onExit}
+          rematchStatus={rematchStatus}
+          onRematch={handleRematch}
           onNewGame={onExit}
           onReview={() => setHistoryPly(0)}
         />

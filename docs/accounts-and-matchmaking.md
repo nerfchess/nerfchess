@@ -43,6 +43,7 @@ Schema lives in `src/lib/server/schema.ts` (runtime-idempotent) and
 | `GET /api/leaderboard` | Top 100 by rating (players with ≥1 rated game). |
 | `GET /api/games/:id` | Archived game for the replay page. |
 | `GET /api/users/:username` | Profile + 30 most recent games. |
+| `GET /api/users/search?q=` | Username prefix search (min 2 chars, top 10 by games/rating). |
 
 ## Websocket protocol additions
 
@@ -54,6 +55,8 @@ New frames on top of `docs/game-server-protocol.md`:
 | `queue` | `{ "pool": "3+2" }` | Join rated quick pairing (requires account). Server replies `queued`, then `paired { id, color, token }` for both players. |
 | `queueCancel` | none | Leave the queue (`queueCancelled`). |
 | `watch` | `{ "id": "AB12CD34" }` | Spectate. Server replies `wstart` with moves, clocks, player names/ratings — nerf ids only once the game has ended. Spectators then receive `move`/`end` broadcasts. |
+| `rematch` | none | After a game ends: first sender broadcasts `rematchOffer`; when the opponent also sends it, the server creates a fresh match (colors swapped, new rules/seed, same clock and ratedness) and sends both players `rematched { id, color, token }`. |
+| `chat` | `{ "text": "gl hf" }` | Player-to-player chat. Broadcast to both seats as `chat { color, name, text, at }`; the last 50 messages are stored on the match and included in `start`, so transcripts survive reloads. 200-char cap, 500ms per-socket throttle. |
 
 `start` payloads now include `players` (names + ratings) and `rated`.
 `end` payloads include `ratings` (before/after per color, rated games) and,
