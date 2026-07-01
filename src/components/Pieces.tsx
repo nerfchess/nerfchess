@@ -31,10 +31,12 @@ export const Piece = React.memo(function Piece({ type, color, size = 60, classNa
   );
 });
 
-// Simplified silhouettes; high-contrast white/black with outline for both
+// Simplified silhouettes; high-contrast white/black with outline for both.
+// Colors resolve through CSS variables so piece themes can recolor the whole
+// set at runtime (see PIECE_THEMES / applyPieceTheme in lib/settings).
 // Each entry is innerHTML for the SVG (viewBox 0 0 45 45)
-const fill = (c: Color) => (c === "w" ? "#f5f5f5" : "#1a1a22");
-const stroke = (c: Color) => (c === "w" ? "#1a1a22" : "#f5f5f5");
+const fill = (c: Color) => (c === "w" ? "var(--piece-w-fill)" : "var(--piece-b-fill)");
+const stroke = (c: Color) => (c === "w" ? "var(--piece-w-stroke)" : "var(--piece-b-stroke)");
 
 function make(svg: string) { return svg; }
 
