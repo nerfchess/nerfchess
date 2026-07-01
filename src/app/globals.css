@@ -242,6 +242,11 @@ body {
 :root {
   --sq-light: #e8dcc0;
   --sq-dark: #8d6e4b;
+  /* Piece palette (recolored per piece theme; see lib/settings) */
+  --piece-w-fill: #f5f5f5;
+  --piece-w-stroke: #1a1a22;
+  --piece-b-fill: #1a1a22;
+  --piece-b-stroke: #f5f5f5;
 }
 .sq-light { background-color: var(--sq-light); }
 .sq-dark  { background-color: var(--sq-dark); }
