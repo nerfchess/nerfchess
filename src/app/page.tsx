@@ -5,6 +5,9 @@ import { useEffect, useState } from "react";
 import { Logo } from "@/components/Logo";
 import { HeroBoard } from "@/components/HeroBoard";
 import { SettingsPanel } from "@/components/SettingsPanel";
+import { RatingCard } from "@/components/ratings/RatingCard";
+import { RATING_CATEGORIES } from "@/lib/ratingCategories";
+import { DEFAULT_STATS, loadRatings, type Ratings } from "@/lib/ratings";
 import { ALL_NERFS, PLAYABLE_NERFS } from "@/engine/nerfs/library";
 import type { Nerf } from "@/engine/nerf";
 
@@ -49,6 +52,9 @@ export default function HomePage() {
   // "secret rule" feels alive: it changes every visit and on demand.
   const [nerf, setNerf] = useState<Nerf | null>(null);
   useEffect(() => setNerf(rollNerf()), []);
+  // Display-only ratings snapshot for the home strip.
+  const [ratings, setRatings] = useState<Ratings | null>(null);
+  useEffect(() => setRatings(loadRatings()), []);
 
   return (
     <main className="min-h-screen flex flex-col">
@@ -105,6 +111,7 @@ export default function HomePage() {
         </div>
       </section>
 
+      <RatingsStrip ratings={ratings} />
       <StatStrip />
       <HowItWorks />
       <ExampleRules />
@@ -159,6 +166,32 @@ function SecretRule({ nerf, onReroll }: { nerf: Nerf | null; onReroll: () => voi
         )}
       </div>
     </div>
+  );
+}
+
+// Display-only snapshot of the player's per-category ratings, linking through
+// to the full profile. Ratings come from the shared registry so new queues
+// appear here automatically.
+function RatingsStrip({ ratings }: { ratings: Ratings | null }) {
+  return (
+    <section className="w-full max-w-6xl mx-auto px-5 sm:px-6 py-4">
+      <div className="mb-3 flex items-center justify-between">
+        <span className="smallcaps text-[10px] text-parchment-400">Your ratings</span>
+        <Link href="/profile" className="smallcaps text-[10px] text-parchment-400 hover:text-parchment-100 transition-colors">
+          View profile
+        </Link>
+      </div>
+      <div className="grid grid-cols-3 gap-3">
+        {RATING_CATEGORIES.map((c) => (
+          <Link key={c.id} href="/profile" className="block no-underline">
+            <RatingCard
+              categoryId={c.id}
+              stats={ratings ? ratings[c.id] : DEFAULT_STATS}
+            />
+          </Link>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -316,6 +349,7 @@ function SiteNav({ onOpenSettings }: { onOpenSettings: () => void }) {
       <div className="flex items-center gap-1 sm:gap-2 text-sm font-body font-medium">
         <Link href="/game?mode=ai" className="px-3 py-1.5 hover:bg-white/5 text-parchment-100">Play</Link>
         <Link href="/leaderboard" className="hidden sm:inline-block px-3 py-1.5 hover:bg-white/5 text-parchment-100">Leaderboard</Link>
+        <Link href="/profile" className="hidden sm:inline-block px-3 py-1.5 hover:bg-white/5 text-parchment-100">Profile</Link>
         <Link href="/codex" className="px-3 py-1.5 hover:bg-white/5 text-parchment-100">Rules</Link>
         <Link href="/tutorial" className="hidden sm:inline-block px-3 py-1.5 hover:bg-white/5 text-parchment-100">How to play</Link>
         <button
