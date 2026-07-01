@@ -89,6 +89,8 @@ function GamePage() {
   const difficulty = (params.get("difficulty") ?? "medium") as AILevel;
   const myColorParam = params.get("color") ?? "random";
   const myNerfId = params.get("nerf") ?? "random";
+  // Games vs bots are casual by default; only rated games touch your rating.
+  const rated = params.get("rated") === "1";
   // t = seconds per side; 0 (or missing) disables the clock entirely.
   const initialTimeMs = useMemo(() => {
     const t = parseInt(params.get("t") ?? "0", 10);
@@ -119,6 +121,10 @@ function GamePage() {
   const [historyPly, setHistoryPly] = useState<number | null>(null);
   const [boardHeight, setBoardHeight] = useState<number | null>(null);
   const [playerElo, setPlayerElo] = useState<number | null>(null);
+  // Reveal controls: peek at the opponent's rule mid-game, and offer to show
+  // your own rule to the opponent.
+  const [oppPeek, setOppPeek] = useState(false);
+  const [sharedMine, setSharedMine] = useState(false);
   const aiThinking = useRef(false);
   const boardShellRef = useRef<HTMLDivElement | null>(null);
   const whiteCustomSpec = useRef<CustomNerf | null>(null);
@@ -322,6 +328,8 @@ function GamePage() {
     if (game.result.reason && game.result.reason.includes(":")) {
       playNerf();
     }
+    // Casual games don't affect your rating.
+    if (!rated) return;
     const before = loadRating();
     const score: 0 | 0.5 | 1 =
       game.result.winner === "draw" ? 0.5 : game.result.winner === myColor ? 1 : 0;
@@ -329,11 +337,11 @@ function GamePage() {
     saveRating(after);
     setPlayerElo(after.rating);
     setRatingChange({ before: before.rating, after: after.rating });
-  }, [game?.result, myColor, difficulty]);
+  }, [game?.result, myColor, difficulty, rated]);
 
   // Execute the head of the premove queue when our turn returns. If the head
   // is no longer playable (target ran away, piece pinned, friendly target
-  // still standing) we clear the whole queue — subsequent links assumed the
+  // still standing) we clear the whole queue (subsequent links assumed the
   // head would land, so they can't be salvaged.
   useEffect(() => {
     if (premoves.length === 0 || !game || game.result) return;
@@ -345,7 +353,7 @@ function GamePage() {
         lm.to === head.to &&
         (lm.promotion ?? undefined) === (head.promotion ?? undefined) &&
         // If the user premoved a capture (real or friendly-target), the
-        // matching legal move must also be a capture — otherwise a planned
+        // matching legal move must also be a capture, otherwise a planned
         // Nxe5 silently downgrades to a quiet Ne5 when the target ran away,
         // and a friendly-target premove fires only when the opponent
         // actually took our piece.
@@ -360,7 +368,7 @@ function GamePage() {
       setGame({ ...next });
       addIncrement(myColor);
       // If makeMove rejected the move (no-op: turn didn't flip), cancel the
-      // entire queue — subsequent premoves assumed this one landed.
+      // entire queue (subsequent premoves assumed this one landed).
       if (next.board.turn === myColor) {
         setPremoves([]);
       } else {
@@ -370,7 +378,7 @@ function GamePage() {
     return () => clearTimeout(tid);
   }, [game, premoves, moves, myColor, clockEnabled, incrementMs]);
 
-  // Clock tick — decrement the active side's clock at 100ms intervals while the
+  // Clock tick: decrement the active side's clock at 100ms intervals while the
   // game is live. The actual loss check is in a separate effect so we don't
   // schedule state updates inside the tick callback.
   useEffect(() => {
@@ -450,6 +458,9 @@ function GamePage() {
   const myCtx = makeContext(game, myColor);
   const visual = myNerf.visual?.(myState, myCtx);
   const opponentNerf = myColor === "w" ? game.black.nerf : game.white.nerf;
+  // The opponent's rule shows if you peeked, or once the game ends, unless you
+  // opted to keep it hidden entirely.
+  const oppRevealed = !uiSettings.hideOpponentReveal && (oppPeek || !!game.result);
   const lastMove = game.board.history[game.board.history.length - 1] ?? null;
   const boardForDisplay = reviewBoard ?? virtualBoard ?? game.board;
   const lastMoveForDisplay = isReviewingHistory
@@ -552,12 +563,16 @@ function GamePage() {
         <button
           onClick={onOfferDraw}
           disabled={drawOfferStatus !== "idle"}
+          title="Offer a draw"
+          aria-label="Offer a draw"
           className="min-w-0 px-3 py-2 border border-gold/40 bg-gold/10 text-gold-leaf hover:bg-gold/20 hover:border-gold/70 transition text-xs font-display font-semibold tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {drawOfferStatus === "offering" ? "Offering..." : "Draw"}
         </button>
         <button
           onClick={() => setConfirmingResign(true)}
+          title="Resign the game"
+          aria-label="Resign the game"
           className="min-w-0 px-3 py-2 border border-oxblood/40 bg-oxblood/10 text-oxblood-glow hover:bg-oxblood/20 hover:border-oxblood/70 transition text-xs font-display font-semibold tracking-wide"
         >
           Resign
@@ -574,7 +589,7 @@ function GamePage() {
         </Link>
         <div className="flex items-center gap-4">
           <div className="smallcaps text-[11px] text-parchment-400 hidden sm:block">
-            playing {myColor === "w" ? "White" : "Black"} · bot on {difficulty}
+            playing {myColor === "w" ? "White" : "Black"} · bot on {difficulty} · {rated ? "rated" : "casual"}
           </div>
           <button
             onClick={toggleMute}
@@ -640,8 +655,18 @@ function GamePage() {
               name={`${difficulty[0].toUpperCase()}${difficulty.slice(1)} Bot`}
               elo={BOT_ELO[difficulty]}
               nerf={opponentNerf}
-              revealed={!!game.result}
+              revealed={oppRevealed}
               ownerLabel=""
+              action={
+                !oppRevealed && !uiSettings.hideOpponentReveal ? (
+                  <button
+                    onClick={() => setOppPeek(true)}
+                    className="w-full px-3 py-2 border border-white/15 bg-white/[0.03] text-parchment-200 hover:border-white/30 hover:bg-white/[0.06] transition text-xs font-semibold"
+                  >
+                    Reveal their rule
+                  </button>
+                ) : null
+              }
             />
             <div className="hidden lg:block" />
             <PlayerNerfCard
@@ -653,6 +678,19 @@ function GamePage() {
               nerf={myNerf}
               ownerLabel=""
               progress={myNerf.progress?.(myState, myCtx) ?? null}
+              action={
+                <button
+                  onClick={() => setSharedMine((v) => !v)}
+                  className={
+                    "w-full px-3 py-2 border transition text-xs font-semibold " +
+                    (sharedMine
+                      ? "border-gold/50 bg-gold/10 text-gold-leaf"
+                      : "border-white/15 bg-white/[0.03] text-parchment-200 hover:border-white/30 hover:bg-white/[0.06]")
+                  }
+                >
+                  {sharedMine ? "Rule shared with opponent" : "Reveal my rule to opponent"}
+                </button>
+              }
             />
           </aside>
           <div className="flex min-h-0 flex-col gap-2 sm:flex-row sm:items-stretch sm:justify-start">
@@ -717,9 +755,12 @@ function GamePage() {
         <GameOver
           result={game.result}
           myColor={myColor}
+          myNerf={myNerf}
+          opponentNerf={opponentNerf}
           ratingChange={ratingChange}
           onRematch={handleRematch}
           onNewGame={handleRematch}
+          onReview={() => setHistoryPly(0)}
         />
       )}
       <SettingsPanel
@@ -739,15 +780,15 @@ function ClockPill({ ms, active }: { ms: number; active: boolean }) {
   return (
     <div
       className={
-        "plate p-3 flex items-center justify-center transition " +
+        "plate p-4 flex items-center justify-center transition " +
         (active
-          ? "border-gold/70 bg-gold/10 shadow-leaf"
-          : "opacity-70")
+          ? "border-2 border-gold bg-gold/15 shadow-leaf ring-1 ring-gold/40"
+          : "opacity-60")
       }
     >
       <span
         className={
-          "font-mono text-xl tabular-nums font-semibold " +
+          "font-mono text-4xl tabular-nums font-bold tracking-wide " +
           (critical
             ? "text-oxblood-glow"
             : low

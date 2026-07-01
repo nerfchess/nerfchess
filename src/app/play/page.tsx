@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { PLAYABLE_NERFS } from "@/engine/nerfs/library";
 import { clearSavedAiGame } from "@/lib/gamePersistence";
 import { loadRating } from "@/lib/rating";
+import { Logo } from "@/components/Logo";
 
 const TIME_STEPS_SEC = [
   5,
@@ -32,6 +33,8 @@ export default function PlayPage() {
   // Time control in seconds; base = 0 means unlimited (no clock).
   const [baseSec, setBaseSec] = useState<number>(10 * 60);
   const [incrementSec, setIncrementSec] = useState<number>(0);
+  // Bot games are casual by default; rated games update your rating + ladder.
+  const [rated, setRated] = useState<boolean>(false);
   const [rating, setRating] = useState<number | null>(null);
   const [games, setGames] = useState<number>(0);
   useEffect(() => {
@@ -49,26 +52,29 @@ export default function PlayPage() {
       nerf: nerfId,
       t: String(baseSec),
       inc: String(incrementSec),
+      rated: rated ? "1" : "0",
     });
     router.push(`/game?${params.toString()}`);
   };
 
   return (
     <main className="min-h-screen">
-      <nav className="flex items-center justify-between px-10 py-7">
-        <Link href="/" className="font-display text-2xl tracking-tight">
-          nerf<span className="text-gold-leaf">chess</span>
-        </Link>
+      <nav className="flex items-center justify-between px-5 sm:px-10 py-6 sm:py-7">
+        <Logo />
         <div className="flex items-center gap-3">
           {rating != null && (
-            <div className="px-3 py-1.5 border border-gold/30 bg-gold/5 flex items-center gap-2 text-xs">
+            <Link
+              href="/leaderboard"
+              className="px-3 py-1.5 border border-gold/30 bg-gold/5 hover:border-gold/50 transition flex items-center gap-2 text-xs"
+            >
               <span className="smallcaps text-[10px] text-parchment-400">Rating</span>
-              <span className="font-mono text-sm text-parchment">{rating}</span>
+              <span className="font-mono text-sm text-parchment-100">{rating}</span>
               <span className="font-mono text-[10px] text-parchment-400">·</span>
               <span className="font-mono text-[10px] text-parchment-400">{games}g</span>
-            </div>
+            </Link>
           )}
-          <Link href="/codex" className="px-3 py-1.5 rounded-full text-sm font-display hover:bg-white/5 text-parchment">Rules</Link>
+          <Link href="/leaderboard" className="px-3 py-1.5 text-sm font-medium hover:bg-white/5 text-parchment-100">Leaderboard</Link>
+          <Link href="/codex" className="px-3 py-1.5 text-sm font-medium hover:bg-white/5 text-parchment-100">Rules</Link>
         </div>
       </nav>
 
@@ -94,6 +100,11 @@ export default function PlayPage() {
         </div>
 
         <div className="mt-8 plate p-6 sm:p-7 space-y-6">
+          <Group label="Mode">
+            <Pill selected={!rated} onClick={() => setRated(false)}>Casual</Pill>
+            <Pill selected={rated} onClick={() => setRated(true)}>Rated</Pill>
+          </Group>
+
           <Group label="Bot strength">
             {(["easy", "medium", "hard"] as const).map((d) => (
               <Pill key={d} selected={difficulty === d} onClick={() => setDifficulty(d)}>

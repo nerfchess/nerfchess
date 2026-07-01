@@ -3,35 +3,37 @@
 @tailwind utilities;
 
 :root {
-  --paper: #ece7d6;
-  --paper-dim: #8e8775;
-  --ink-deep: #0a111e;
-  --ink-warm: #111a2b;
-  --gold: #c89b4a;
-  --gold-leaf: #d8b56e;
-  --oxblood: #b54641;
-  --verdigris: #5a9b7a;
-  --bruise: #7c7aa3;
+  --paper: #b8b8b8;
+  --paper-dim: #7f7d77;
+  --ink-deep: #100f0d;
+  --ink-warm: #1c1a17;
+  /* accent = Lichess blue (Lichess has no signature green) */
+  --gold: #3692e7;
+  --gold-leaf: #4a9fee;
+  --oxblood: #c0413b;
+  --verdigris: #629924;
+  --bruise: #8a88a8;
   /* Lichess uses Noto Sans throughout its UI. We mirror that for the whole
      site: one clean sans for body and display, a bolder weight for headings. */
   --font-display: "Noto Sans", "Segoe UI", system-ui, sans-serif;
   --font-body: "Noto Sans", "Segoe UI", system-ui, sans-serif;
   --font-mono: "Cascadia Mono", "JetBrains Mono", Consolas, monospace;
-  /* Lichess accent palette */
-  --lichess-green: #629924;
-  --lichess-green-hi: #6f9f2f;
-  --lichess-blue: #3692e7;
+  --accent: #3692e7;
+  --accent-hi: #4a9fee;
 }
 
 html, body {
   background:
-    radial-gradient(ellipse 120% 70% at 50% -20%, rgba(200,155,74,0.07), transparent 60%),
-    radial-gradient(ellipse 80% 50% at 100% 110%, rgba(124,122,163,0.05), transparent 70%),
-    linear-gradient(180deg, #111a2b 0%, #0a111e 100%);
+    linear-gradient(180deg, #201e1b 0%, #161512 46%, #121110 100%);
   background-attachment: fixed;
   color: var(--paper);
   min-height: 100vh;
 }
+
+/* No round corners anywhere — square, Lichess-flat. Board move-hint dots are
+   driven by dedicated CSS classes (.dot-*), not these utilities, so they stay
+   circular where the game needs them. */
+[class*="rounded"] { border-radius: 0 !important; }
 
 body {
   font-family: var(--font-body), system-ui, sans-serif;
@@ -99,30 +101,22 @@ body {
 
 /* --- Card / plate --- */
 .plate {
-  background:
-    linear-gradient(180deg, rgba(255,253,245,0.025), rgba(255,253,245,0.008)),
-    rgba(17, 26, 43, 0.72);
-  border: 1px solid rgba(236,231,214,0.08);
-  box-shadow:
-    0 14px 50px -22px rgba(0,0,0,0.55),
-    0 1px 0 0 rgba(255,253,245,0.04) inset;
-  backdrop-filter: blur(8px);
-  border-radius: 2px;
+  background: #262421;
+  border: 1px solid rgba(255,255,255,0.07);
+  box-shadow: 0 12px 40px -24px rgba(0,0,0,0.7);
+  border-radius: 0;
   position: relative;
   z-index: 2;
 }
 .plate-warm {
-  background:
-    linear-gradient(180deg, rgba(255,253,245,0.035), rgba(255,253,245,0.012)),
-    rgba(26, 37, 59, 0.78);
+  background: #2b2824;
 }
 
-/* Hairline brass edge */
+/* Hairline accent edge */
 .gilt {
   box-shadow:
-    0 0 0 1px rgba(200,155,74,0.4),
-    0 14px 50px -22px rgba(0,0,0,0.6),
-    0 1px 0 0 rgba(255,253,245,0.06) inset;
+    0 0 0 1px rgba(54,146,231,0.45),
+    0 14px 50px -22px rgba(0,0,0,0.6);
 }
 
 /* --- Tier palette: muted editorial, brass→brick gradient by severity --- */
@@ -138,129 +132,41 @@ body {
 .tier-bg-4 { background: rgba(199,148,104,0.10); border-color: rgba(199,148,104,0.40); }
 .tier-bg-5 { background: rgba(198,104,96,0.12); border-color: rgba(198,104,96,0.45); }
 
-/* --- Buttons --- */
+/* --- Buttons --- Lichess-flat: solid blue primary, quiet ghost secondary. */
 .btn-leaf {
-  background: linear-gradient(180deg, #d8b56e 0%, #b48848 100%);
-  color: #1a1206;
-  border: 1px solid rgba(0,0,0,0.18);
-  box-shadow:
-    0 1px 0 rgba(255,253,245,0.22) inset,
-    0 10px 28px -14px rgba(200,155,74,0.45);
-  transition: transform 140ms ease, filter 220ms ease, box-shadow 220ms ease;
-  font-weight: 500;
-  letter-spacing: 0.005em;
-}
-.btn-leaf:hover {
-  filter: brightness(1.05);
-  transform: translateY(-1px);
-  box-shadow:
-    0 1px 0 rgba(255,253,245,0.28) inset,
-    0 14px 34px -14px rgba(200,155,74,0.55);
-}
-.btn-leaf:active { transform: translateY(0); filter: brightness(0.96); }
-
-.btn-ghost {
-  background: rgba(236,231,214,0.03);
-  color: var(--paper);
-  border: 1px solid rgba(236,231,214,0.16);
-  transition: background 220ms ease, border-color 220ms ease;
-  font-weight: 500;
-  letter-spacing: 0.005em;
-}
-.btn-ghost:hover { background: rgba(236,231,214,0.07); border-color: rgba(236,231,214,0.30); }
-
-/* Lichess-style primary action: flat green, big, friendly. */
-.btn-lichess {
-  background: linear-gradient(180deg, var(--lichess-green-hi) 0%, var(--lichess-green) 100%);
+  background: var(--accent);
   color: #fff;
   border: 1px solid rgba(0,0,0,0.22);
-  box-shadow:
-    0 1px 0 rgba(255,255,255,0.18) inset,
-    0 10px 26px -14px rgba(98,153,36,0.7);
-  transition: transform 130ms ease, filter 200ms ease, box-shadow 200ms ease;
-  font-weight: 700;
-  letter-spacing: 0.01em;
-}
-.btn-lichess:hover {
-  filter: brightness(1.07);
-  transform: translateY(-1px);
-  box-shadow:
-    0 1px 0 rgba(255,255,255,0.24) inset,
-    0 16px 34px -14px rgba(98,153,36,0.8);
-}
-.btn-lichess:active { transform: translateY(0); filter: brightness(0.97); }
-
-/* --- Rotating drawback orbit (home hero centerpiece) --- */
-.dc-orbit {
-  position: relative;
-  display: grid;
-  place-items: center;
-}
-.dc-orbit-ring {
-  position: absolute;
-  inset: 0;
-  transform-style: preserve-3d;
-  will-change: transform;
-}
-.dc-orbit-ring.spin   { animation: dc-orbit-spin 64s linear infinite; }
-.dc-orbit-ring.spin-r { animation: dc-orbit-spin-r 52s linear infinite; }
-.dc-orbit-slot {
-  position: absolute;
-}
-/* Counter-rotation keeps each card upright while it orbits. Durations must
-   match the ring they live on so the cancellation is exact. */
-.dc-orbit-counter.spin   { animation: dc-orbit-spin-r 64s linear infinite; }
-.dc-orbit-counter.spin-r { animation: dc-orbit-spin   52s linear infinite; }
-.dc-orbit-hub {
-  position: relative;
-  z-index: 5;
-  display: grid;
-  place-items: center;
-  border-radius: 9999px;
-}
-@keyframes dc-orbit-spin   { to { transform: rotate(360deg); } }
-@keyframes dc-orbit-spin-r { to { transform: rotate(-360deg); } }
-
-.dc-chip {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 150px;
-  padding: 8px 11px;
-  border-radius: 8px;
-  background: linear-gradient(180deg, rgba(255,253,245,0.04), rgba(255,253,245,0.012)), rgba(17,26,43,0.92);
-  border: 1px solid rgba(236,231,214,0.09);
-  box-shadow: 0 10px 30px -18px rgba(0,0,0,0.7);
-  backdrop-filter: blur(4px);
-}
-.dc-chip-dot {
-  flex: 0 0 auto;
-  width: 9px;
-  height: 9px;
-  border-radius: 9999px;
-  box-shadow: 0 0 0 3px rgba(255,255,255,0.04);
-}
-.dc-chip-name {
+  box-shadow: 0 1px 0 rgba(255,255,255,0.12) inset;
+  transition: background 140ms ease, filter 180ms ease;
   font-weight: 600;
-  font-size: 12.5px;
-  line-height: 1.15;
-  letter-spacing: -0.005em;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  letter-spacing: 0.005em;
 }
-.dc-chip-tier {
-  margin-left: auto;
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  opacity: 0.75;
+.btn-leaf:hover { background: var(--accent-hi); }
+.btn-leaf:active { filter: brightness(0.94); }
+
+.btn-ghost {
+  background: rgba(255,255,255,0.04);
+  color: var(--paper);
+  border: 1px solid rgba(255,255,255,0.12);
+  transition: background 180ms ease, border-color 180ms ease;
+  font-weight: 500;
+  letter-spacing: 0.005em;
 }
+.btn-ghost:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.22); }
+
+/* Kept as an alias so any stale references stay on-brand (blue, not green). */
+.btn-lichess { }
 
 /* --- Board treatments: warm wood-tone, less candy than chess.com green --- */
 :root {
   --sq-light: #e8dcc0;
   --sq-dark: #8d6e4b;
+  /* Piece palette (recolored per piece theme; see lib/settings) */
+  --piece-w-fill: #f5f5f5;
+  --piece-w-stroke: #1a1a22;
+  --piece-b-fill: #1a1a22;
+  --piece-b-stroke: #f5f5f5;
 }
 .sq-light { background-color: var(--sq-light); }
 .sq-dark  { background-color: var(--sq-dark); }
@@ -324,36 +230,6 @@ body {
   border-color: rgba(199, 56, 48, 0.95);
 }
 
-/* --- Home hero: make it immediately feel like "chess" --- */
-.hero-board {
-  opacity: 0.10;
-  filter: blur(0.2px);
-  background-size: 64px 64px;
-  background-image:
-    linear-gradient(45deg, rgba(232,220,192,0.35) 25%, transparent 25%),
-    linear-gradient(-45deg, rgba(232,220,192,0.35) 25%, transparent 25%),
-    linear-gradient(45deg, transparent 75%, rgba(141,110,75,0.35) 75%),
-    linear-gradient(-45deg, transparent 75%, rgba(141,110,75,0.35) 75%);
-  background-position: 0 0, 0 32px, 32px -32px, -32px 0;
-}
-.hero-vignette {
-  background:
-    radial-gradient(circle at 35% 25%, rgba(216,181,110,0.12), transparent 52%),
-    radial-gradient(circle at 70% 65%, rgba(232,220,192,0.08), transparent 52%),
-    radial-gradient(circle at 50% 55%, rgba(10,17,30,0.2), rgba(10,17,30,0.82) 70%);
-}
-.hero-piece {
-  font-family: "Segoe UI Symbol", "Apple Color Emoji", "Noto Color Emoji", system-ui;
-  font-size: 140px;
-  line-height: 1;
-  color: rgba(236,231,214,0.14);
-  text-shadow: 0 18px 50px rgba(0,0,0,0.55);
-  transform: rotate(-8deg);
-}
-.hero-piece-q {
-  transform: rotate(10deg);
-}
-
 /* --- Drag/drop --- */
 .dragging { cursor: grabbing !important; opacity: 0.35; }
 .drag-ghost {
@@ -395,7 +271,6 @@ main, nav, header, footer { position: relative; z-index: 2; }
 
 @media (max-width: 640px) {
   .btn-leaf, .btn-ghost { min-height: 44px; }
-  .hero-piece { font-size: 110px; }
 }
 
 ::selection { background: rgba(216,181,110,0.4); color: #1a1206; }

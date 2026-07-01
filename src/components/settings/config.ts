@@ -1,8 +1,9 @@
 // Data-driven description of the settings menu. Adding a new setting — or a new
 // "Coming soon" placeholder — is a matter of editing the SECTIONS array below;
-// the panel renders whatever it finds here. Only the four `live` controls are
-// wired to real functionality (via the `setting` key into the Settings model);
-// everything else is a disabled placeholder for a future feature.
+// the panel renders whatever it finds here. The `live` controls are wired to
+// real functionality (via the `setting` key into the Settings model, or a
+// dedicated picker kind); everything prefixed `ph-` is a disabled placeholder
+// for a future feature.
 
 import {
   Accessibility,
@@ -25,6 +26,7 @@ export type Control =
   | { kind: "toggle"; setting: BoolKey }
   | { kind: "slider"; setting: NumKey; min: number; max: number; step: number; format?: (v: number) => string }
   | { kind: "boardTheme" }
+  | { kind: "pieceTheme" }
   // Placeholder controls — purely visual, always disabled.
   | { kind: "ph-toggle"; on?: boolean }
   | { kind: "ph-slider"; value: number }
@@ -68,11 +70,10 @@ export const SECTIONS: SectionConfig[] = [
         control: { kind: "toggle", setting: "autoQueen" },
       },
       {
-        id: "hideOpponentRule",
+        id: "hideOpponentReveal",
         label: "Keep opponent's rule hidden",
-        hint: "Never reveal your opponent's drawback, even after the game",
-        comingSoon: true,
-        control: { kind: "ph-toggle", on: true },
+        hint: "Never reveal their rule to you — no mid-game peek, no reveal at the end",
+        control: { kind: "toggle", setting: "hideOpponentReveal" },
       },
       {
         id: "confirmResign",
@@ -111,10 +112,9 @@ export const SECTIONS: SectionConfig[] = [
         control: { kind: "boardTheme" },
       },
       {
-        id: "pieceType",
+        id: "pieceTheme",
         label: "Piece set",
-        comingSoon: true,
-        control: { kind: "ph-select", value: "Classic" },
+        control: { kind: "pieceTheme" },
       },
       {
         id: "uiScale",
