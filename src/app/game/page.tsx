@@ -773,15 +773,15 @@ function ClockPill({ ms, active }: { ms: number; active: boolean }) {
   return (
     <div
       className={
-        "plate p-3 flex items-center justify-center transition " +
+        "plate p-4 flex items-center justify-center transition " +
         (active
-          ? "border-gold/70 bg-gold/10 shadow-leaf"
-          : "opacity-70")
+          ? "border-2 border-gold bg-gold/15 shadow-leaf ring-1 ring-gold/40"
+          : "opacity-60")
       }
     >
       <span
         className={
-          "font-mono text-xl tabular-nums font-semibold " +
+          "font-mono text-4xl tabular-nums font-bold tracking-wide " +
           (critical
             ? "text-oxblood-glow"
             : low
