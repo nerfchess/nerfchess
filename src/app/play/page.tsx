@@ -82,7 +82,7 @@ export default function PlayPage() {
       <section className="max-w-2xl mx-auto px-6 py-8">
         <h1 className="font-display text-5xl">New game</h1>
         <p className="mt-3 text-parchment-200">
-          Pick how you want to play. You'll get a random secret rule (or pick one to practice).
+          Pick how you want to play. You&apos;ll get a random secret rule (or pick one to practice).
         </p>
 
         <div className="mt-6 flex flex-wrap gap-3">

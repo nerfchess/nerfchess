@@ -1,6 +1,7 @@
 "use client";
 
 import { Board } from "@/components/Board";
+import { BoardPlayerRow } from "@/components/BoardPlayerRow";
 import { GameOver } from "@/components/GameOver";
 import { MoveList } from "@/components/MoveList";
 import { PlayerNerfCard } from "@/components/PlayerNerfCard";
@@ -38,7 +39,7 @@ function formatClock(ms: number): string {
   const clamped = Math.max(0, ms);
   // Under 10s, show 1 decimal so the user can feel the rush.
   if (clamped < 10000) {
-    return `0:0${(clamped / 1000).toFixed(1)}`;
+    return `0:${(clamped / 1000).toFixed(1).padStart(4, "0")}`;
   }
   const totalSec = Math.ceil(clamped / 1000);
   const m = Math.floor(totalSec / 60);
@@ -695,6 +696,25 @@ function GamePage() {
           </aside>
           <div className="flex min-h-0 flex-col gap-2 sm:flex-row sm:items-stretch sm:justify-start">
             <div ref={boardShellRef} className="min-h-0 min-w-0 sm:flex-none">
+              {/* Mobile-only player strips: the side rails (clocks, cards,
+                  actions) are hidden below the sm breakpoint. */}
+              <div className="flex items-center justify-between gap-2 sm:hidden">
+                <BoardPlayerRow
+                  board={boardForDisplay}
+                  playerColor={myColor === "w" ? "b" : "w"}
+                  myColor={myColor}
+                  name={`${difficulty[0].toUpperCase()}${difficulty.slice(1)} Bot`}
+                  elo={BOT_ELO[difficulty]}
+                  className="min-w-0 flex-1 !px-0 !py-1"
+                />
+                {clockEnabled && (
+                  <ClockPill
+                    ms={myColor === "w" ? blackMs : whiteMs}
+                    active={!game.result && game.board.turn !== myColor}
+                    compact
+                  />
+                )}
+              </div>
               <div data-board-measure className={`mx-auto sm:mx-0 ${boardFitClass}`}>
                 <Board
                   board={boardForDisplay}
@@ -718,6 +738,30 @@ function GamePage() {
                   autoQueen={uiSettings.autoQueen}
                 />
               </div>
+              <div className="flex items-center justify-between gap-2 sm:hidden">
+                <BoardPlayerRow
+                  board={boardForDisplay}
+                  playerColor={myColor}
+                  myColor={myColor}
+                  name="You"
+                  elo={playerElo}
+                  className="min-w-0 flex-1 !px-0 !py-1"
+                />
+                {clockEnabled && (
+                  <ClockPill
+                    ms={myColor === "w" ? whiteMs : blackMs}
+                    active={!game.result && game.board.turn === myColor}
+                    compact
+                  />
+                )}
+              </div>
+              <div className="plate mt-1 p-2 px-3 sm:hidden">
+                <span className={`font-display text-sm font-semibold tier-${myNerf.tier}`}>
+                  {myNerf.name}
+                </span>
+                <span className="text-xs leading-snug text-parchment-300"> — {myNerf.description}</span>
+              </div>
+              {historyActions && <div className="mt-1 sm:hidden">{historyActions}</div>}
             </div>
             <div
               className={
@@ -774,13 +818,14 @@ function GamePage() {
   );
 }
 
-function ClockPill({ ms, active }: { ms: number; active: boolean }) {
+function ClockPill({ ms, active, compact = false }: { ms: number; active: boolean; compact?: boolean }) {
   const low = ms < 30000;
   const critical = ms < 10000;
   return (
     <div
       className={
-        "plate p-4 flex items-center justify-center transition " +
+        "plate flex items-center justify-center transition " +
+        (compact ? "shrink-0 px-3 py-1.5 " : "p-4 ") +
         (active
           ? "border-2 border-gold bg-gold/15 shadow-leaf ring-1 ring-gold/40"
           : "opacity-60")
@@ -788,7 +833,8 @@ function ClockPill({ ms, active }: { ms: number; active: boolean }) {
     >
       <span
         className={
-          "font-mono text-4xl tabular-nums font-bold tracking-wide " +
+          "font-mono tabular-nums font-bold tracking-wide " +
+          (compact ? "text-xl " : "text-4xl ") +
           (critical
             ? "text-oxblood-glow"
             : low

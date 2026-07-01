@@ -71,7 +71,7 @@ export default function HomePage() {
           </h1>
           <p className="mt-3 text-base sm:text-lg leading-relaxed text-parchment-200">
             You get a hidden restriction on how your pieces can move. So does
-            your opponent. Neither of you knows the other's rule. There is no
+            your opponent. Neither of you knows the other&apos;s rule. There is no
             checkmate: you win by capturing the king.
           </p>
 
