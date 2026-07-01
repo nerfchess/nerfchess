@@ -23,8 +23,8 @@
 }
 
 html, body {
-  background:
-    linear-gradient(180deg, #201e1b 0%, #161512 46%, #121110 100%);
+  background: var(--site-background,
+    linear-gradient(180deg, #201e1b 0%, #161512 46%, #121110 100%));
   background-attachment: fixed;
   color: var(--paper);
   min-height: 100vh;

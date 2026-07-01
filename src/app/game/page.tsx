@@ -2,7 +2,7 @@
 
 import { Board } from "@/components/Board";
 import { BoardPlayerRow } from "@/components/BoardPlayerRow";
-import { ClockPill } from "@/components/ClockPill";
+import { ClockPill, formatClock } from "@/components/ClockPill";
 import { GameOver } from "@/components/GameOver";
 import { MobileMoveDrawer } from "@/components/MobileMoveDrawer";
 import { MoveList } from "@/components/MoveList";
@@ -680,7 +680,15 @@ function GamePage() {
                 ) : null
               }
             />
-            <div className="hidden lg:block" />
+            <TiltMeter
+              game={game}
+              myColor={myColor}
+              myNerfTier={myNerf.tier}
+              clockEnabled={clockEnabled}
+              myMs={myColor === "w" ? whiteMs : blackMs}
+              opponentMs={myColor === "w" ? blackMs : whiteMs}
+              premovePending={premovePending}
+            />
             <PlayerNerfCard
               board={boardForDisplay}
               playerColor={myColor}
@@ -836,3 +844,74 @@ function GamePage() {
   );
 }
 
+function TiltMeter({
+  game,
+  myColor,
+  myNerfTier,
+  clockEnabled,
+  myMs,
+  opponentMs,
+  premovePending,
+}: {
+  game: NerfGame;
+  myColor: Color;
+  myNerfTier: number;
+  clockEnabled: boolean;
+  myMs: number;
+  opponentMs: number;
+  premovePending: boolean;
+}) {
+  const vals: Record<string, number> = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
+  let mine = 0;
+  let theirs = 0;
+  for (const piece of game.board.pieces) {
+    if (!piece) continue;
+    const value = vals[piece.type] ?? 0;
+    if (piece.color === myColor) mine += value;
+    else theirs += value;
+  }
+
+  const materialDeficit = Math.max(0, theirs - mine);
+  const clockDeficit = clockEnabled ? Math.max(0, opponentMs - myMs) / 1000 : 0;
+  const lowClock = clockEnabled && myMs < 30000;
+  const inCheck = isInCheck(game.board, myColor);
+  const notYourTurn = game.board.turn !== myColor;
+
+  const factors = [
+    { label: "Material", value: Math.min(34, materialDeficit * 7), caption: materialDeficit ? `down ${materialDeficit}` : "balanced" },
+    { label: "Clock", value: Math.min(28, clockDeficit / 3 + (lowClock ? 12 : 0)), caption: clockEnabled ? formatClock(myMs) : "untimed" },
+    { label: "Check", value: inCheck ? 18 : 0, caption: inCheck ? "king exposed" : "king quiet" },
+    { label: "Rule load", value: myNerfTier * 5, caption: `tier ${myNerfTier}` },
+    { label: "Tempo", value: notYourTurn ? 8 : 2, caption: premovePending ? "premove set" : notYourTurn ? "waiting" : "you move" },
+  ];
+  const relief = premovePending ? 6 : game.board.turn === myColor ? 4 : 0;
+  const score = Math.max(0, Math.min(100, Math.round(factors.reduce((sum, item) => sum + item.value, 0) - relief)));
+  const band = score >= 75 ? "Critical" : score >= 52 ? "Hot" : score >= 28 ? "Tense" : "Composed";
+  const color = score >= 75 ? "bg-oxblood-glow" : score >= 52 ? "bg-gold-leaf" : score >= 28 ? "bg-bruise-glow" : "bg-verdigris-glow";
+
+  return (
+    <section className="plate p-4">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <div className="smallcaps text-[10px] text-parchment-400">Tilt meter</div>
+          <div className="mt-1 font-display text-2xl text-parchment">{band}</div>
+        </div>
+        <div className="font-mono text-2xl text-gold-leaf tabular-nums">{score}</div>
+      </div>
+      <div className="mt-3 h-2 border border-white/10 bg-ink-950/60 overflow-hidden rounded-full">
+        <div className={`h-full ${color}`} style={{ width: `${score}%` }} />
+      </div>
+      <div className="mt-4 grid grid-cols-1 gap-2">
+        {factors.map((factor) => (
+          <div key={factor.label} className="grid grid-cols-[74px_1fr_auto] items-center gap-2 text-xs">
+            <span className="text-parchment-300/80">{factor.label}</span>
+            <span className="h-1.5 bg-white/10 overflow-hidden rounded-full">
+              <span className="block h-full bg-gold/70" style={{ width: `${Math.min(100, factor.value * 2.5)}%` }} />
+            </span>
+            <span className="text-parchment-400 text-right">{factor.caption}</span>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
