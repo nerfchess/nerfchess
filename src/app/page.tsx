@@ -318,6 +318,7 @@ function SiteNav({ onOpenSettings }: { onOpenSettings: () => void }) {
       <Logo />
       <div className="flex items-center gap-1 sm:gap-2 text-sm font-body font-medium">
         <Link href="/game?mode=ai" className="px-3 py-1.5 hover:bg-white/5 text-parchment-100">Play</Link>
+        <Link href="/history" className="hidden sm:inline-block px-3 py-1.5 hover:bg-white/5 text-parchment-100">History</Link>
         <Link href="/leaderboard" className="hidden sm:inline-block px-3 py-1.5 hover:bg-white/5 text-parchment-100">Leaderboard</Link>
         <Link href="/codex" className="px-3 py-1.5 hover:bg-white/5 text-parchment-100">Rules</Link>
         <Link href="/tutorial" className="hidden sm:inline-block px-3 py-1.5 hover:bg-white/5 text-parchment-100">How to play</Link>
