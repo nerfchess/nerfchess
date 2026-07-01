@@ -3,7 +3,7 @@
 import { moveToSAN } from "@/engine/board";
 import { Move } from "@/engine/types";
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
-import { type MutableRefObject, type ReactNode, useEffect, useRef } from "react";
+import { type MutableRefObject, type ReactNode, useCallback, useEffect, useRef } from "react";
 
 export function MoveList({
   moves,
@@ -29,7 +29,11 @@ export function MoveList({
   }
   const canBack = currentPly > 0;
   const canForward = currentPly < moves.length;
-  const jumpTo = (ply: number) => onPlyChange?.(Math.max(0, Math.min(ply, moves.length)));
+  const maxPly = moves.length;
+  const jumpTo = useCallback(
+    (ply: number) => onPlyChange?.(Math.max(0, Math.min(ply, maxPly))),
+    [onPlyChange, maxPly],
+  );
   const rootClass = compact ? "plate p-2 min-h-0 h-full flex flex-col" : "plate p-4";
   const titleClass = compact
     ? "smallcaps text-[9px] text-parchment-400 truncate"

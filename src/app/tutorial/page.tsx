@@ -41,7 +41,7 @@ export default function TutorialPage() {
         <div className="smallcaps text-[11px] text-parchment-400">how to play</div>
         <h1 className="font-display text-5xl sm:text-6xl mt-1">House rules</h1>
         <p className="mt-5 text-[16px] leading-[1.7] text-parchment-200">
-          Nerf Chess is chess, until it isn't. The five rules below are everything you need to know.
+          Nerf Chess is chess, until it isn&apos;t. The five rules below are everything you need to know.
           Everything else is in your secret rule.
         </p>
         <div className="mt-9 space-y-3">
