@@ -2,12 +2,10 @@
 
 import type { ReactNode } from "react";
 import { Nerf } from "@/engine/nerf";
-import { BoardState, Color, PieceType } from "@/engine/types";
+import { BoardState, Color } from "@/engine/types";
 import { Piece } from "@/components/Pieces";
+import { capturedPiecesFor, capturedValue, opponentOf } from "@/lib/material";
 
-const PIECE_ORDER: PieceType[] = ["p", "n", "b", "r", "q", "k"];
-const PIECE_VALUES: Record<PieceType, number> = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
-const START_COUNTS: Record<PieceType, number> = { p: 8, n: 2, b: 2, r: 2, q: 1, k: 1 };
 const TIER_LABEL = ["", "Trivial", "Easy", "Common", "Severe", "Brutal"];
 const TIER_ROMAN = ["", "I", "II", "III", "IV", "V"];
 
@@ -22,29 +20,6 @@ interface Props {
   ownerLabel: string;
   progress?: { value: number; max: number; label: string } | null;
   action?: ReactNode;
-}
-
-function opponentOf(color: Color): Color {
-  return color === "w" ? "b" : "w";
-}
-
-function capturedPiecesFor(board: BoardState, capturer: Color): PieceType[] {
-  const opponent = opponentOf(capturer);
-  const remaining: Record<PieceType, number> = { p: 0, n: 0, b: 0, r: 0, q: 0, k: 0 };
-  for (const piece of board.pieces) {
-    if (piece?.color === opponent) remaining[piece.type]++;
-  }
-
-  const captured: PieceType[] = [];
-  for (const type of PIECE_ORDER) {
-    const missing = Math.max(0, START_COUNTS[type] - remaining[type]);
-    for (let i = 0; i < missing; i++) captured.push(type);
-  }
-  return captured;
-}
-
-function capturedValue(pieces: PieceType[]): number {
-  return pieces.reduce((total, piece) => total + PIECE_VALUES[piece], 0);
 }
 
 export function PlayerNerfCard({
@@ -175,7 +150,7 @@ export function PlayerNerfCard({
             </div>
           </div>
           <p className="mt-3 text-sm leading-relaxed text-parchment-300/80">
-            You'll see their rule when the game ends.
+            You&apos;ll see their rule when the game ends.
           </p>
         </>
       )}

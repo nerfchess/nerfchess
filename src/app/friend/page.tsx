@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { type CSSProperties, useEffect, useMemo, useRef, useState } from "react";
 import { Board, QueuedPremove } from "@/components/Board";
+import { BoardPlayerRow } from "@/components/BoardPlayerRow";
 import { GameOver } from "@/components/GameOver";
 import { MoveList } from "@/components/MoveList";
 import { PlayerNerfCard } from "@/components/PlayerNerfCard";
@@ -54,7 +55,7 @@ function pickRandomNerf() {
 
 function formatClock(ms: number): string {
   const clamped = Math.max(0, ms);
-  if (clamped < 10000) return `0:0${(clamped / 1000).toFixed(1)}`;
+  if (clamped < 10000) return `0:${(clamped / 1000).toFixed(1).padStart(4, "0")}`;
   const totalSec = Math.ceil(clamped / 1000);
   const m = Math.floor(totalSec / 60);
   const s = totalSec % 60;
@@ -908,6 +909,24 @@ export default function FriendPage() {
           </aside>
           <div className="flex min-h-0 flex-col gap-2 sm:flex-row sm:items-stretch sm:justify-start">
             <div ref={boardShellRef} className="min-h-0 min-w-0 sm:flex-none">
+              {/* Mobile-only player strips: the side rails (clocks, cards,
+                  actions) are hidden below the sm breakpoint. */}
+              <div className="flex items-center justify-between gap-2 sm:hidden">
+                <BoardPlayerRow
+                  board={boardForDisplay}
+                  playerColor={myColor === "w" ? "b" : "w"}
+                  myColor={myColor}
+                  name="Opponent"
+                  className="min-w-0 flex-1 !px-0 !py-1"
+                />
+                {clockEnabledRef.current && (
+                  <ClockPill
+                    ms={myColor === "w" ? blackMs : whiteMs}
+                    active={!game.result && game.board.turn !== myColor}
+                    compact
+                  />
+                )}
+              </div>
               <div data-board-measure className={`mx-auto sm:mx-0 ${boardFitClass}`}>
                 <Board
                   board={boardForDisplay}
@@ -931,6 +950,29 @@ export default function FriendPage() {
                   autoQueen={uiSettings.autoQueen}
                 />
               </div>
+              <div className="flex items-center justify-between gap-2 sm:hidden">
+                <BoardPlayerRow
+                  board={boardForDisplay}
+                  playerColor={myColor}
+                  myColor={myColor}
+                  name="You"
+                  className="min-w-0 flex-1 !px-0 !py-1"
+                />
+                {clockEnabledRef.current && (
+                  <ClockPill
+                    ms={myColor === "w" ? whiteMs : blackMs}
+                    active={!game.result && game.board.turn === myColor}
+                    compact
+                  />
+                )}
+              </div>
+              <div className="plate mt-1 p-2 px-3 sm:hidden">
+                <span className={`font-display text-sm font-semibold tier-${myNerf.tier}`}>
+                  {myNerf.name}
+                </span>
+                <span className="text-xs leading-snug text-parchment-300"> — {myNerf.description}</span>
+              </div>
+              {historyActions && <div className="mt-1 sm:hidden">{historyActions}</div>}
             </div>
             <div
               className={
@@ -1053,19 +1095,21 @@ function SiteNav() {
   );
 }
 
-function ClockPill({ ms, active }: { ms: number; active: boolean }) {
+function ClockPill({ ms, active, compact = false }: { ms: number; active: boolean; compact?: boolean }) {
   const low = ms < 30000;
   const critical = ms < 10000;
   return (
     <div
       className={
-        "plate p-4 flex items-center justify-center transition " +
+        "plate flex items-center justify-center transition " +
+        (compact ? "shrink-0 px-3 py-1.5 " : "p-4 ") +
         (active ? "border-2 border-gold bg-gold/15 shadow-leaf ring-1 ring-gold/40" : "opacity-60")
       }
     >
       <span
         className={
-          "font-mono text-4xl tabular-nums font-bold tracking-wide " +
+          "font-mono tabular-nums font-bold tracking-wide " +
+          (compact ? "text-xl " : "text-4xl ") +
           (critical ? "text-oxblood-glow" : low ? "text-gold-leaf" : "text-parchment")
         }
       >
