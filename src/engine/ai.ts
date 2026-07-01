@@ -143,7 +143,7 @@ export function pickAIMove(game: NerfGame, level: AILevel): Move | null {
     for (const m of orderMoves(moves, bestMove)) {
       const nb = makeMove(game.board, m);
       const score = -negamax(nb, d - 1, -beta, -alpha, opp, me, start, budget);
-      if (score === TIMEOUT_SENTINEL) {
+      if (Number.isNaN(score)) {
         timedOut = true;
         break;
       }
@@ -163,7 +163,9 @@ export function pickAIMove(game: NerfGame, level: AILevel): Move | null {
   return bestMove ?? moves[0];
 }
 
-const TIMEOUT_SENTINEL = Number.NEGATIVE_INFINITY + 1;
+// NaN survives negation unchanged, so a timed-out subtree is detectable at
+// every level of the negamax recursion with a single isNaN check.
+const TIMEOUT_SENTINEL = Number.NaN;
 
 function negamax(
   board: BoardState,
@@ -179,8 +181,8 @@ function negamax(
 
   const wk = findKing(board, "w");
   const bk = findKing(board, "b");
-  if (!wk) return side === root ? -100000 : 100000;
-  if (!bk) return side === root ? 100000 : -100000;
+  if (wk == null) return side === root ? -100000 : 100000;
+  if (bk == null) return side === root ? 100000 : -100000;
   if (depth === 0) return quiesce(board, alpha, beta, side, 6);
 
   const moves = orderMoves(generateMoves(board));
@@ -189,7 +191,7 @@ function negamax(
   for (const m of moves) {
     const nb = makeMove(board, m);
     const v = -negamax(nb, depth - 1, -beta, -alpha, opp, root, start, budget);
-    if (v === -TIMEOUT_SENTINEL) return TIMEOUT_SENTINEL;
+    if (Number.isNaN(v)) return TIMEOUT_SENTINEL;
     if (v > best) best = v;
     if (best > alpha) alpha = best;
     if (alpha >= beta) break;
@@ -209,8 +211,8 @@ function quiesce(
 ): number {
   const wk = findKing(board, "w");
   const bk = findKing(board, "b");
-  if (!wk) return side === "w" ? -100000 : 100000;
-  if (!bk) return side === "b" ? -100000 : 100000;
+  if (wk == null) return side === "w" ? -100000 : 100000;
+  if (bk == null) return side === "b" ? -100000 : 100000;
 
   const standPat = evaluate(board, side);
   if (standPat >= beta) return beta;
