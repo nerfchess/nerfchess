@@ -1,12 +1,18 @@
-// Glicko-2 single-player rating persistence (localStorage) for the bot ladder.
-// One rating per player, updated after every completed rated game vs the AI.
+// Glicko-2 single-player rating, updated after every completed game vs the AI.
 // Bots get fixed seed ratings by difficulty so the player's rating converges
-// toward a stable estimate of their strength. Online rated games use the
-// server-side rating in D1 instead — see src/lib/server/games.ts.
+// toward a stable estimate of their strength.
+//
+// This module is a backwards-compatible facade over the multi-category store
+// in lib/ratings.ts: the historical "single rating" is the Blitz bucket
+// (DEFAULT_CATEGORY). Existing callers — including the game flow — keep using
+// loadRating / saveRating / applyResult unchanged; the rating just lives in,
+// and migrates from, the new per-category storage. The Glicko-2 math itself is
+// shared with the server-side online ratings in lib/glicko.ts. Online rated
+// games use the account rating in D1 instead — see src/lib/server/games.ts.
 
 import { glickoUpdate } from "./glicko";
-
-const STORAGE_KEY = "dc:rating-v1";
+import { DEFAULT_CATEGORY } from "./ratingCategories";
+import { loadRatings, saveRatings, type CategoryStats } from "./ratings";
 
 export interface Rating {
   rating: number;
@@ -14,8 +20,6 @@ export interface Rating {
   vol: number;
   games: number;
 }
-
-const DEFAULT: Rating = { rating: 1500, rd: 350, vol: 0.06, games: 0 };
 
 export type AILevel = "easy" | "medium" | "hard";
 
@@ -25,28 +29,24 @@ const BOT_RATING: Record<AILevel, { rating: number; rd: number }> = {
   hard: { rating: 1900, rd: 60 },
 };
 
+function toRating(s: CategoryStats): Rating {
+  return { rating: s.rating, rd: s.rd, vol: s.vol, games: s.games };
+}
+
 export function loadRating(): Rating {
-  if (typeof window === "undefined") return { ...DEFAULT };
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { ...DEFAULT };
-    const parsed = JSON.parse(raw);
-    if (
-      typeof parsed?.rating === "number" &&
-      typeof parsed?.rd === "number" &&
-      typeof parsed?.vol === "number"
-    ) {
-      return { rating: parsed.rating, rd: parsed.rd, vol: parsed.vol, games: parsed.games ?? 0 };
-    }
-  } catch {}
-  return { ...DEFAULT };
+  return toRating(loadRatings()[DEFAULT_CATEGORY]);
 }
 
 export function saveRating(r: Rating) {
   if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(r));
-  } catch {}
+  const all = loadRatings();
+  const s = all[DEFAULT_CATEGORY];
+  s.rating = r.rating;
+  s.rd = r.rd;
+  s.vol = r.vol;
+  s.games = r.games;
+  s.peak = Math.max(s.peak, r.rating);
+  saveRatings(all);
 }
 
 // score: 1 = win, 0.5 = draw, 0 = loss

@@ -76,6 +76,7 @@ export default function PlayPage() {
             </Link>
           )}
           <Link href="/leaderboard" className="px-3 py-1.5 text-sm font-medium hover:bg-white/5 text-parchment-100">Leaderboard</Link>
+          <Link href="/profile" className="px-3 py-1.5 text-sm font-medium hover:bg-white/5 text-parchment-100">Profile</Link>
           <Link href="/codex" className="px-3 py-1.5 text-sm font-medium hover:bg-white/5 text-parchment-100">Rules</Link>
           <AccountChip />
         </div>
@@ -91,12 +92,12 @@ export default function PlayPage() {
           <QueueButton />
         </div>
 
-        <div className="mt-4 flex flex-wrap gap-3">
+        <div className="mt-4">
           <Link
             href="/friend"
-            className="inline-flex items-center gap-2 px-5 py-3 rounded-sm btn-ghost font-body text-sm"
+            className="btn-leaf btn-cta w-full flex items-center justify-center gap-3 px-6 py-4 font-display text-lg font-semibold"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
               <circle cx="9" cy="7" r="4" />
               <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
@@ -104,6 +105,9 @@ export default function PlayPage() {
             </svg>
             Play a Friend
           </Link>
+          <div className="rule-ornament mt-6">
+            <span>or set up a bot game</span>
+          </div>
         </div>
 
         <div className="mt-8 plate p-6 sm:p-7 space-y-6">

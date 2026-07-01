@@ -44,15 +44,16 @@ export default function LeaderboardPage() {
     <main className="min-h-screen">
       <nav className="flex items-center justify-between px-5 sm:px-10 py-6 sm:py-7">
         <Logo />
-        <div className="flex items-center gap-3 text-sm font-medium">
+        <div className="flex items-center gap-1 sm:gap-2 text-sm font-medium">
           <Link href="/play" className="px-3 py-1.5 hover:bg-white/5 text-parchment-100">Play</Link>
+          <Link href="/profile" className="px-3 py-1.5 hover:bg-white/5 text-parchment-100">Profile</Link>
           <Link href="/codex" className="px-3 py-1.5 hover:bg-white/5 text-parchment-100">Rules</Link>
           <AccountChip />
         </div>
       </nav>
 
       <section className="max-w-3xl mx-auto px-6 py-8">
-        <h1 className="font-display text-4xl sm:text-5xl font-bold text-parchment-100">Leaderboard</h1>
+        <h1 className="font-display text-4xl sm:text-5xl text-parchment-50">Leaderboard</h1>
         <p className="mt-3 text-parchment-200">
           Ranked by rating from rated online games (3+2 blitz). Bot games are casual and don&apos;t
           count —{" "}
@@ -126,7 +127,11 @@ export default function LeaderboardPage() {
 
         <p className="mt-4 text-xs text-parchment-500">
           Ratings are Glicko-2, updated after every rated game. Your practice ladder against the
-          bots stays on your device.
+          bots stays on your device — see your{" "}
+          <Link href="/profile" className="text-gold-leaf hover:underline">
+            local profile
+          </Link>
+          .
         </p>
       </section>
     </main>

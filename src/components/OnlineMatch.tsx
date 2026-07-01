@@ -6,6 +6,7 @@ import { Board, QueuedPremove } from "@/components/Board";
 import { BoardPlayerRow } from "@/components/BoardPlayerRow";
 import { ClockPill } from "@/components/ClockPill";
 import { GameOver } from "@/components/GameOver";
+import { MobileMoveDrawer } from "@/components/MobileMoveDrawer";
 import { MoveList } from "@/components/MoveList";
 import { PlayerNerfCard } from "@/components/PlayerNerfCard";
 import { SettingsPanel } from "@/components/SettingsPanel";
@@ -23,6 +24,7 @@ import {
   playMove,
 } from "@/engine/game";
 import { BoardState, Color, Move } from "@/engine/types";
+import { nerfSummary, outcomeFor, recordCompletedGame } from "@/lib/gameHistory";
 import { boardAtPly } from "@/lib/gameReview";
 import { MPSession, MPStart } from "@/lib/multiplayer";
 import { premoveOptionsFor } from "@/lib/premoves";
@@ -87,6 +89,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   const [ratingChange, setRatingChange] = useState<{ before: number; after: number } | null>(null);
 
   const boardShellRef = useRef<HTMLDivElement | null>(null);
+  const recordedResult = useRef(false);
   const awaitingPremoveAckRef = useRef(false);
   const pendingPremoveRef = useRef<PendingPremoveSend | null>(null);
   const pendingLocalMoveRef = useRef<PendingLocalMove | null>(null);
@@ -303,6 +306,33 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
       setHistoryPly(game.board.history.length);
     }
   }, [game, historyPly]);
+
+  // Game-ended hook: write the finished game into the local history, once.
+  // A restored session may already carry a finished game; never re-record it.
+  useEffect(() => {
+    if (!game?.result) return;
+    if (!recordedResult.current && game.board.history.length === (start.moves?.length ?? 0)) {
+      // Result present on first render (restored finished game) — skip.
+      recordedResult.current = true;
+      return;
+    }
+    if (recordedResult.current) return;
+    recordedResult.current = true;
+    recordCompletedGame({
+      mode: start.rated ? "online" : "friend",
+      opponent: oppName,
+      myColor,
+      outcome: outcomeFor(game.result.winner, myColor),
+      reason: game.result.reason,
+      rated: !!start.rated,
+      moveCount: game.board.history.length,
+      baseSec: start.timeSec,
+      incSec: start.incrementSec,
+      ratingChange,
+      myNerf: nerfSummary(myColor === "w" ? game.white.nerf : game.black.nerf),
+      opponentNerf: nerfSummary(revealedOppNerf),
+    });
+  }, [game, myColor, oppName, ratingChange, revealedOppNerf, start]);
 
   const reviewBoard = useMemo(() => {
     if (!game || historyPly == null) return null;
@@ -621,7 +651,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         </div>
       </nav>
 
-      <div className="mx-auto flex w-full max-w-[1280px] flex-1 min-h-0 flex-col gap-2 overflow-hidden px-3 pb-6 sm:px-6">
+      <div className="mx-auto flex w-full max-w-[1280px] flex-1 min-h-0 flex-col gap-2 overflow-hidden px-3 pb-14 sm:px-6 sm:pb-6">
         {hint && (
           <div
             role="status"
@@ -766,6 +796,13 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           </div>
         </div>
       </div>
+
+      <MobileMoveDrawer
+        moves={game.board.history}
+        currentPly={currentHistoryPly}
+        onPlyChange={handleHistoryPlyChange}
+        footer={historyActions}
+      />
 
       {game.result && (
         <GameOver
