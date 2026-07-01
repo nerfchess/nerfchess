@@ -4,14 +4,44 @@ import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { GameResult } from "@/engine/game";
 import { Color } from "@/engine/types";
+import { Nerf } from "@/engine/nerf";
 import { playGameOver } from "@/lib/sounds";
+
+const TIER_LABEL = ["", "Trivial", "Easy", "Common", "Severe", "Brutal"];
+const TIER_ROMAN = ["", "I", "II", "III", "IV", "V"];
 
 interface Props {
   result: GameResult;
   myColor: Color;
+  myNerf?: Nerf;
+  opponentNerf?: Nerf;
   ratingChange?: { before: number; after: number } | null;
   onRematch: () => void;
   onNewGame: () => void;
+  onReview?: () => void;
+}
+
+// A single revealed rule row for the post game summary. Both players' rules are
+// shown once the game is over, so the "secret" finally pays off.
+function RuleReveal({ label, nerf }: { label: string; nerf: Nerf }) {
+  return (
+    <div className={`border p-3 text-left tier-bg-${nerf.tier}`}>
+      <div className="flex items-center justify-between gap-2">
+        <span className="smallcaps text-[9px] text-parchment-400">{label}</span>
+        <span
+          className={`inline-flex items-center gap-1 border px-1.5 py-0.5 font-display text-[10px] font-bold tier-bg-${nerf.tier} tier-${nerf.tier}`}
+          title={`Difficulty ${nerf.tier}: ${TIER_LABEL[nerf.tier]}`}
+        >
+          <span aria-hidden>{TIER_ROMAN[nerf.tier]}</span>
+          <span>{TIER_LABEL[nerf.tier]}</span>
+        </span>
+      </div>
+      <div className={`mt-1 font-display text-base font-semibold leading-tight tier-${nerf.tier}`}>
+        {nerf.name}
+      </div>
+      <p className="mt-1 text-xs leading-snug text-parchment-200">{nerf.description}</p>
+    </div>
+  );
 }
 
 function splitReason(reason: string) {
@@ -23,8 +53,18 @@ function splitReason(reason: string) {
   };
 }
 
-export function GameOver({ result, myColor, ratingChange, onRematch, onNewGame }: Props) {
+export function GameOver({
+  result,
+  myColor,
+  myNerf,
+  opponentNerf,
+  ratingChange,
+  onRematch,
+  onNewGame,
+  onReview,
+}: Props) {
   const [dismissed, setDismissed] = useState(false);
+  const [shared, setShared] = useState(false);
   const primaryRef = useRef<HTMLButtonElement | null>(null);
   const reduceMotion = useReducedMotion();
   const draw = result.winner === "draw";
@@ -39,6 +79,35 @@ export function GameOver({ result, myColor, ratingChange, onRematch, onNewGame }
     : "border-oxblood-glow/50 bg-oxblood/15 text-oxblood-glow";
   const { nerfName, cause } = useMemo(() => splitReason(result.reason), [result.reason]);
   const ratingDelta = ratingChange ? Math.round(ratingChange.after - ratingChange.before) : 0;
+
+  // Share copies a short text summary of the game (result plus both rules) to
+  // the clipboard. It works client side today; a hosted replay link can be
+  // dropped in later without changing the button.
+  const handleShare = async () => {
+    const lines = [
+      `Nerf Chess: ${outcome}`,
+      myNerf ? `My rule: ${myNerf.name} (${myNerf.description})` : null,
+      opponentNerf ? `Opponent rule: ${opponentNerf.name} (${opponentNerf.description})` : null,
+      typeof window !== "undefined" ? window.location.origin : "https://nerfchess.com",
+    ].filter(Boolean);
+    const text = lines.join("\n");
+    try {
+      if (navigator.share) {
+        await navigator.share({ text });
+      } else {
+        await navigator.clipboard.writeText(text);
+      }
+      setShared(true);
+      window.setTimeout(() => setShared(false), 2000);
+    } catch {
+      // User dismissed the share sheet or clipboard was blocked; ignore.
+    }
+  };
+
+  const handleReview = () => {
+    onReview?.();
+    setDismissed(true);
+  };
 
   useEffect(() => {
     playGameOver();
@@ -126,7 +195,14 @@ export function GameOver({ result, myColor, ratingChange, onRematch, onNewGame }
           </div>
         )}
 
-        <div className="mt-6 grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
+        {(myNerf || opponentNerf) && (
+          <div className="mt-5 grid gap-2 sm:grid-cols-2">
+            {myNerf && <RuleReveal label="Your rule" nerf={myNerf} />}
+            {opponentNerf && <RuleReveal label="Opponent rule" nerf={opponentNerf} />}
+          </div>
+        )}
+
+        <div className="mt-6 grid gap-2 sm:grid-cols-2">
           <button
             ref={primaryRef}
             type="button"
@@ -140,14 +216,34 @@ export function GameOver({ result, myColor, ratingChange, onRematch, onNewGame }
             onClick={onNewGame}
             className="rounded-sm px-5 py-2.5 btn-ghost font-display"
           >
-            New Game
+            New game
+          </button>
+        </div>
+        <div className="mt-2 grid gap-2 sm:grid-cols-2">
+          <button
+            type="button"
+            onClick={handleShare}
+            className="rounded-sm px-4 py-2 btn-ghost font-display text-sm inline-flex items-center justify-center gap-2"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <circle cx="18" cy="5" r="3" />
+              <circle cx="6" cy="12" r="3" />
+              <circle cx="18" cy="19" r="3" />
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+            </svg>
+            {shared ? "Copied" : "Share game"}
           </button>
           <button
             type="button"
-            onClick={() => setDismissed(true)}
-            className="rounded-sm px-3 py-2.5 btn-ghost font-display text-sm opacity-85"
+            onClick={handleReview}
+            className="rounded-sm px-4 py-2 btn-ghost font-display text-sm inline-flex items-center justify-center gap-2"
           >
-            Review board
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <polyline points="1 4 1 10 7 10" />
+              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+            </svg>
+            Replay
           </button>
         </div>
       </motion.div>
