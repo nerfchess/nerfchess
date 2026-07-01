@@ -2,42 +2,42 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { AccountChip } from "@/components/AccountChip";
 import { Logo } from "@/components/Logo";
-import { loadRating } from "@/lib/rating";
+import { AccountUser, fetchMe } from "@/lib/authClient";
 
 interface Row {
-  name: string;
+  username: string;
   rating: number;
+  rd: number;
   games: number;
-  tag?: "you" | "bot";
+  wins: number;
+  losses: number;
+  draws: number;
 }
-
-// A seeded ladder of notable drawback players plus the three bots. Rated games
-// move your own rating, which slots you into the board on load.
-const SEED: Row[] = [
-  { name: "en_prise_enjoyer", rating: 2418, games: 1204 },
-  { name: "FogWalker", rating: 2291, games: 863 },
-  { name: "queenless_wonder", rating: 2183, games: 651 },
-  { name: "Hard Bot", rating: 1900, games: 9999, tag: "bot" },
-  { name: "castle_through_check", rating: 1846, games: 412 },
-  { name: "h_file_hermit", rating: 1712, games: 289 },
-  { name: "Medium Bot", rating: 1500, games: 9999, tag: "bot" },
-  { name: "pawn_stormer", rating: 1433, games: 176 },
-  { name: "blunderful", rating: 1264, games: 98 },
-  { name: "Easy Bot", rating: 1100, games: 9999, tag: "bot" },
-  { name: "still_learning", rating: 1015, games: 41 },
-];
 
 export default function LeaderboardPage() {
   const [rows, setRows] = useState<Row[] | null>(null);
-  const [you, setYou] = useState<Row | null>(null);
+  const [me, setMe] = useState<AccountUser | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const r = loadRating();
-    const me: Row = { name: "You", rating: Math.round(r.rating), games: r.games, tag: "you" };
-    setYou(me);
-    const merged = [...SEED, me].sort((a, b) => b.rating - a.rating);
-    setRows(merged);
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/leaderboard");
+        if (!res.ok) throw new Error("Could not load the leaderboard.");
+        const data = (await res.json()) as { players: Row[] };
+        if (!cancelled) setRows(data.players);
+      } catch (e) {
+        if (!cancelled) setError(e instanceof Error ? e.message : "Could not load the leaderboard.");
+      }
+      const user = await fetchMe();
+      if (!cancelled) setMe(user);
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return (
@@ -47,70 +47,86 @@ export default function LeaderboardPage() {
         <div className="flex items-center gap-3 text-sm font-medium">
           <Link href="/play" className="px-3 py-1.5 hover:bg-white/5 text-parchment-100">Play</Link>
           <Link href="/codex" className="px-3 py-1.5 hover:bg-white/5 text-parchment-100">Rules</Link>
+          <AccountChip />
         </div>
       </nav>
 
       <section className="max-w-3xl mx-auto px-6 py-8">
         <h1 className="font-display text-4xl sm:text-5xl font-bold text-parchment-100">Leaderboard</h1>
         <p className="mt-3 text-parchment-200">
-          Bot games are casual and don&apos;t count. Win{" "}
-          <Link href="/play" className="text-gold-leaf hover:underline">rated games</Link>{" "}
-          to move your rating and climb the ladder.
+          Ranked by rating from rated online games (3+2 blitz). Bot games are casual and don&apos;t
+          count —{" "}
+          <Link href="/play" className="text-gold-leaf hover:underline">
+            queue up
+          </Link>{" "}
+          to get on the board.
         </p>
 
-        {you && (
-          <div className="mt-6 plate p-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="smallcaps text-[10px] text-parchment-400">Your rating</span>
-              <span className="font-mono text-2xl text-gold-leaf tabular-nums">{you.rating}</span>
-            </div>
-            <span className="text-xs text-parchment-400">
-              {you.games === 0 ? "No rated games yet" : `${you.games} rated ${you.games === 1 ? "game" : "games"}`}
-            </span>
+        {error && (
+          <div className="mt-6 plate p-3 px-4 border-oxblood-glow/60 bg-oxblood/15 text-parchment">
+            {error}
           </div>
         )}
 
-        <div className="mt-6 plate overflow-hidden">
-          <div className="grid grid-cols-[3rem_1fr_5rem_4rem] items-center px-4 py-3 border-b border-white/8 smallcaps text-[10px] text-parchment-400">
-            <span>#</span>
-            <span>Player</span>
-            <span className="text-right">Rating</span>
-            <span className="text-right">Games</span>
+        {!rows && !error && <div className="mt-8 text-parchment-300">Loading…</div>}
+
+        {rows && rows.length === 0 && (
+          <div className="mt-8 plate p-6 text-parchment-200">
+            Nobody has played a rated game yet. Be the first —{" "}
+            <Link href="/play" className="text-gold-leaf hover:underline">
+              find an opponent
+            </Link>
+            .
           </div>
-          {rows?.map((row, i) => (
-            <div
-              key={`${row.name}-${i}`}
-              className={
-                "grid grid-cols-[3rem_1fr_5rem_4rem] items-center px-4 py-2.5 border-b border-white/5 text-sm " +
-                (row.tag === "you" ? "bg-gold/10" : i % 2 ? "bg-white/[0.015]" : "")
-              }
-            >
-              <span className="font-mono text-parchment-400 tabular-nums">{i + 1}</span>
-              <span className="flex items-center gap-2 min-w-0">
-                <span
+        )}
+
+        {rows && rows.length > 0 && (
+          <div className="mt-6 plate overflow-hidden">
+            <div className="grid grid-cols-[3rem_1fr_5rem_4rem_6rem] items-center px-4 py-3 border-b border-white/8 smallcaps text-[10px] text-parchment-400">
+              <span>#</span>
+              <span>Player</span>
+              <span className="text-right">Rating</span>
+              <span className="text-right">Games</span>
+              <span className="text-right">W / L / D</span>
+            </div>
+            {rows.map((row, i) => {
+              const isMe = me && row.username.toLowerCase() === me.username.toLowerCase();
+              return (
+                <Link
+                  key={row.username}
+                  href={`/u/${row.username}`}
                   className={
-                    "truncate font-medium " +
-                    (row.tag === "you" ? "text-gold-leaf" : "text-parchment-100")
+                    "grid grid-cols-[3rem_1fr_5rem_4rem_6rem] items-center px-4 py-2.5 border-b border-white/5 text-sm transition hover:bg-white/[0.04] " +
+                    (isMe ? "bg-gold/10" : i % 2 ? "bg-white/[0.015]" : "")
                   }
                 >
-                  {row.name}
-                </span>
-                {row.tag === "bot" && (
-                  <span className="shrink-0 border border-white/15 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-parchment-400">
-                    bot
+                  <span className="font-mono text-parchment-400 tabular-nums">{i + 1}</span>
+                  <span className="flex min-w-0 items-center gap-2">
+                    <span className={"truncate font-medium " + (isMe ? "text-gold-leaf" : "text-parchment-100")}>
+                      {row.username}
+                    </span>
+                    {isMe && (
+                      <span className="shrink-0 border border-gold/40 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-gold-leaf">
+                        you
+                      </span>
+                    )}
                   </span>
-                )}
-              </span>
-              <span className="text-right font-mono text-parchment-100 tabular-nums">{row.rating}</span>
-              <span className="text-right font-mono text-parchment-400 tabular-nums">
-                {row.games >= 9999 ? "∞" : row.games}
-              </span>
-            </div>
-          ))}
-        </div>
+                  <span className="text-right font-mono text-parchment-100 tabular-nums">
+                    {Math.round(row.rating)}
+                  </span>
+                  <span className="text-right font-mono text-parchment-400 tabular-nums">{row.games}</span>
+                  <span className="text-right font-mono text-parchment-400 tabular-nums">
+                    {row.wins}/{row.losses}/{row.draws}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+        )}
 
         <p className="mt-4 text-xs text-parchment-500">
-          This ladder is stored on your device. Bots hold fixed reference ratings.
+          Ratings are Glicko-2, updated after every rated game. Your practice ladder against the
+          bots stays on your device.
         </p>
       </section>
     </main>

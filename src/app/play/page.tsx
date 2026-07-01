@@ -6,7 +6,9 @@ import { useEffect, useState } from "react";
 import { PLAYABLE_NERFS } from "@/engine/nerfs/library";
 import { clearSavedAiGame } from "@/lib/gamePersistence";
 import { loadRating } from "@/lib/rating";
+import { AccountChip } from "@/components/AccountChip";
 import { Logo } from "@/components/Logo";
+import { QueueButton } from "@/components/QueueButton";
 
 const TIME_STEPS_SEC = [
   5,
@@ -75,6 +77,7 @@ export default function PlayPage() {
           )}
           <Link href="/leaderboard" className="px-3 py-1.5 text-sm font-medium hover:bg-white/5 text-parchment-100">Leaderboard</Link>
           <Link href="/codex" className="px-3 py-1.5 text-sm font-medium hover:bg-white/5 text-parchment-100">Rules</Link>
+          <AccountChip />
         </div>
       </nav>
 
@@ -84,7 +87,11 @@ export default function PlayPage() {
           Pick how you want to play. You&apos;ll get a random secret rule (or pick one to practice).
         </p>
 
-        <div className="mt-6 flex flex-wrap gap-3">
+        <div className="mt-6">
+          <QueueButton />
+        </div>
+
+        <div className="mt-4 flex flex-wrap gap-3">
           <Link
             href="/friend"
             className="inline-flex items-center gap-2 px-5 py-3 rounded-sm btn-ghost font-body text-sm"
