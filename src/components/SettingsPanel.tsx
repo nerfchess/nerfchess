@@ -1,8 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { BOARD_THEMES, BoardTheme, loadSettings, saveSettings } from "@/lib/settings";
+import { X } from "lucide-react";
+import { BOARD_THEMES, BoardTheme, loadSettings, saveSettings, Settings } from "@/lib/settings";
 import { setVolume } from "@/lib/sounds";
+import { SECTIONS, type Control } from "@/components/settings/config";
+import { SettingsSection } from "@/components/settings/SettingsSection";
+import { SettingRow } from "@/components/settings/SettingRow";
+import {
+  FakeSelect,
+  GhostButton,
+  Slider,
+  Swatches,
+  Toggle,
+} from "@/components/settings/controls";
 
 interface Props {
   open: boolean;
@@ -10,139 +21,142 @@ interface Props {
 }
 
 export function SettingsPanel({ open, onClose }: Props) {
-  const [theme, setTheme] = useState<BoardTheme>("wood");
-  const [vol, setVol] = useState(0.8);
-  const [moveRiskWarnings, setMoveRiskWarnings] = useState(true);
-  const [autoQueen, setAutoQueen] = useState(false);
+  const [settings, setSettings] = useState<Settings>(loadSettings);
 
+  // Re-sync from storage each time the panel opens, matching the previous
+  // behaviour where values were reloaded on open.
   useEffect(() => {
-    const s = loadSettings();
-    setTheme(s.boardTheme);
-    setVol(s.volume);
-    setMoveRiskWarnings(s.moveRiskWarnings);
-    setAutoQueen(s.autoQueen);
+    if (open) setSettings(loadSettings());
   }, [open]);
 
   if (!open) return null;
 
-  const update = (next: {
-    boardTheme?: BoardTheme;
-    volume?: number;
-    moveRiskWarnings?: boolean;
-    autoQueen?: boolean;
-  }) => {
-    const merged = {
-      boardTheme: next.boardTheme ?? theme,
-      volume: next.volume ?? vol,
-      moveRiskWarnings: next.moveRiskWarnings ?? moveRiskWarnings,
-      autoQueen: next.autoQueen ?? autoQueen,
-    };
-    saveSettings(merged);
-    if (next.boardTheme) setTheme(next.boardTheme);
-    if (next.volume != null) {
-      setVol(next.volume);
-      setVolume(next.volume);
+  // Single write path for every live control: merge, persist, apply side
+  // effects. saveSettings() already re-applies the board theme; volume needs an
+  // explicit push into the audio engine.
+  const update = (patch: Partial<Settings>) => {
+    setSettings((prev) => {
+      const merged = { ...prev, ...patch };
+      saveSettings(merged);
+      if (patch.volume != null) setVolume(merged.volume);
+      return merged;
+    });
+  };
+
+  const renderControl = (control: Control, label: string) => {
+    switch (control.kind) {
+      case "toggle":
+        return (
+          <Toggle
+            label={label}
+            checked={settings[control.setting]}
+            onChange={(v) => update({ [control.setting]: v } as Partial<Settings>)}
+          />
+        );
+      case "slider":
+        return (
+          <Slider
+            label={label}
+            value={settings[control.setting]}
+            min={control.min}
+            max={control.max}
+            step={control.step}
+            format={control.format}
+            onChange={(v) => update({ [control.setting]: v } as Partial<Settings>)}
+          />
+        );
+      case "boardTheme":
+        return <BoardThemePicker value={settings.boardTheme} onChange={(t) => update({ boardTheme: t })} />;
+      case "ph-toggle":
+        return <Toggle label={label} checked={!!control.on} disabled />;
+      case "ph-slider":
+        return <Slider value={control.value} min={0} max={1} step={0.05} disabled format={() => "—"} />;
+      case "ph-select":
+        return <FakeSelect value={control.value} />;
+      case "ph-swatches":
+        return <Swatches colors={control.colors} />;
+      case "ph-button":
+        return <GhostButton label={control.label} />;
     }
-    if (next.moveRiskWarnings != null) setMoveRiskWarnings(next.moveRiskWarnings);
-    if (next.autoQueen != null) setAutoQueen(next.autoQueen);
   };
 
   return (
     <div
-      className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
-        className="plate gilt p-6 w-full max-w-md relative"
+        className="plate gilt relative flex max-h-[86vh] w-full max-w-md flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between mb-4">
-          <div className="font-display text-2xl text-parchment">Settings</div>
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-white/10 px-5 py-3.5">
+          <div className="font-display text-xl text-parchment">Settings</div>
           <button
             onClick={onClose}
-            className="text-parchment-400 hover:text-parchment text-xl leading-none px-2"
+            className="rounded p-1 text-parchment-400 transition-colors hover:bg-white/5 hover:text-parchment"
             aria-label="Close"
           >
-            ×
+            <X className="h-4 w-4" />
           </button>
         </div>
 
-        <div className="space-y-5">
-          <div>
-            <div className="smallcaps text-[11px] text-parchment-400 mb-2">Board theme</div>
-            <div className="grid grid-cols-2 gap-2">
-              {(Object.keys(BOARD_THEMES) as BoardTheme[]).map((k) => {
-                const t = BOARD_THEMES[k];
-                const selected = theme === k;
-                return (
-                  <button
-                    key={k}
-                    onClick={() => update({ boardTheme: k })}
-                    className={
-                      "flex items-center gap-3 p-2 border transition " +
-                      (selected ? "border-gold/70 bg-gold/10" : "border-white/10 hover:border-white/25")
-                    }
-                  >
-                    <span className="grid grid-cols-2 grid-rows-2 w-8 h-8 overflow-hidden">
-                      <span style={{ background: t.light }} />
-                      <span style={{ background: t.dark }} />
-                      <span style={{ background: t.dark }} />
-                      <span style={{ background: t.light }} />
-                    </span>
-                    <span className="font-display text-sm text-parchment">{t.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="smallcaps text-[11px] text-parchment-400">Volume</span>
-              <span className="font-mono text-[11px] text-parchment-300">{Math.round(vol * 100)}%</span>
-            </div>
-            <input
-              type="range"
-              min={0}
-              max={1}
-              step={0.05}
-              value={vol}
-              onChange={(e) => update({ volume: parseFloat(e.target.value) })}
-              className="w-full accent-gold-leaf"
-            />
-          </div>
-
-          <label className="flex items-center justify-between cursor-pointer">
-            <span className="smallcaps text-[11px] text-parchment-400">
-              Move risk warnings
-              <span className="block normal-case text-[11px] text-parchment-500 mt-0.5">
-                Tint move dots yellow (self-loss) or red (into check)
-              </span>
-            </span>
-            <input
-              type="checkbox"
-              checked={moveRiskWarnings}
-              onChange={(e) => update({ moveRiskWarnings: e.target.checked })}
-              className="accent-gold-leaf w-4 h-4 shrink-0"
-            />
-          </label>
-
-          <label className="flex items-center justify-between cursor-pointer">
-            <span className="smallcaps text-[11px] text-parchment-400">
-              Auto-queen promotions
-              <span className="block normal-case text-[11px] text-parchment-500 mt-0.5">
-                Skip the piece picker and always promote to queen
-              </span>
-            </span>
-            <input
-              type="checkbox"
-              checked={autoQueen}
-              onChange={(e) => update({ autoQueen: e.target.checked })}
-              className="accent-gold-leaf w-4 h-4 shrink-0"
-            />
-          </label>
+        {/* Scrollable body */}
+        <div className="flex flex-col gap-4 overflow-y-auto px-5 py-4">
+          {SECTIONS.map((section) => (
+            <SettingsSection key={section.id} title={section.title} icon={section.icon}>
+              {section.rows.map((row) => (
+                <SettingRow
+                  key={row.id}
+                  label={row.label}
+                  hint={row.hint}
+                  comingSoon={row.comingSoon}
+                  stacked={row.control.kind === "boardTheme"}
+                  control={renderControl(row.control, row.label)}
+                />
+              ))}
+            </SettingsSection>
+          ))}
         </div>
       </div>
+    </div>
+  );
+}
+
+/** The board-theme swatch grid — the one live control that spans a full row. */
+function BoardThemePicker({
+  value,
+  onChange,
+}: {
+  value: BoardTheme;
+  onChange: (theme: BoardTheme) => void;
+}) {
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      {(Object.keys(BOARD_THEMES) as BoardTheme[]).map((k) => {
+        const t = BOARD_THEMES[k];
+        const selected = value === k;
+        return (
+          <button
+            key={k}
+            onClick={() => onChange(k)}
+            className={
+              "flex items-center gap-2.5 rounded border p-2 transition-colors " +
+              (selected
+                ? "border-gold/70 bg-gold/10"
+                : "border-white/10 hover:border-white/25 hover:bg-white/[0.03]")
+            }
+          >
+            <span className="grid h-7 w-7 grid-cols-2 grid-rows-2 overflow-hidden rounded-sm">
+              <span style={{ background: t.light }} />
+              <span style={{ background: t.dark }} />
+              <span style={{ background: t.dark }} />
+              <span style={{ background: t.light }} />
+            </span>
+            <span className="font-display text-[13px] text-parchment">{t.label}</span>
+          </button>
+        );
+      })}
     </div>
   );
 }
