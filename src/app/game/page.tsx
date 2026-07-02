@@ -36,7 +36,7 @@ import { boardAtPly } from "@/lib/gameReview";
 import { premoveOptionsFor } from "@/lib/premoves";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, type CSSProperties, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, type CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 function pickRandomNerf(): Nerf {
   const playable = PLAYABLE_NERFS.filter((d) => d.id !== "lucky");
@@ -122,11 +122,14 @@ function GamePage() {
   const whiteCustomSpec = useRef<CustomNerf | null>(null);
   const blackCustomSpec = useRef<CustomNerf | null>(null);
 
-  const addIncrement = (color: Color) => {
-    if (!clockEnabled || incrementMs <= 0) return;
-    if (color === "w") setWhiteMs((t) => t + incrementMs);
-    else setBlackMs((t) => t + incrementMs);
-  };
+  const addIncrement = useCallback(
+    (color: Color) => {
+      if (!clockEnabled || incrementMs <= 0) return;
+      if (color === "w") setWhiteMs((t) => t + incrementMs);
+      else setBlackMs((t) => t + incrementMs);
+    },
+    [clockEnabled, incrementMs]
+  );
 
   useEffect(() => {
     setMutedState(isMuted());
@@ -388,7 +391,7 @@ function GamePage() {
       }
     }, 90);
     return () => clearTimeout(tid);
-  }, [game, premoves, moves, myColor, clockEnabled, incrementMs]);
+  }, [game, premoves, moves, myColor, addIncrement]);
 
   // Clock tick: decrement the active side's clock at 100ms intervals while the
   // game is live. The actual loss check is in a separate effect so we don't
@@ -443,7 +446,7 @@ function GamePage() {
       clearTimeout(tid);
       aiThinking.current = false;
     };
-  }, [game, myColor, difficulty, clockEnabled, incrementMs]);
+  }, [game, myColor, difficulty, addIncrement]);
 
   const reviewBoard = useMemo(() => {
     if (!game || historyPly == null) return null;
@@ -831,6 +834,12 @@ function GamePage() {
           onRematch={handleRematch}
           onNewGame={handleRematch}
           onReview={() => setHistoryPly(0)}
+          moves={game.board.history}
+          playerNames={{
+            w: myColor === "w" ? "You" : `${difficulty[0].toUpperCase()}${difficulty.slice(1)} Bot`,
+            b: myColor === "b" ? "You" : `${difficulty[0].toUpperCase()}${difficulty.slice(1)} Bot`,
+          }}
+          startedAt={game.startedAt}
         />
       )}
       <SettingsPanel

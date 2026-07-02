@@ -3,8 +3,9 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { GameResult } from "@/engine/game";
-import { Color } from "@/engine/types";
+import { Color, Move } from "@/engine/types";
 import { Nerf } from "@/engine/nerf";
+import { gameToPGN } from "@/lib/pgn";
 import { playGameOver } from "@/lib/sounds";
 
 const TIER_LABEL = ["", "Trivial", "Easy", "Common", "Severe", "Brutal"];
@@ -25,6 +26,10 @@ interface Props {
   // When true (the "keep opponent rules hidden" setting), the opponent's rule
   // starts face-down behind a "Reveal opponent's nerf" button.
   opponentHidden?: boolean;
+  // When provided, a "Copy PGN" button exports the move list.
+  moves?: Move[];
+  playerNames?: Record<Color, string>;
+  startedAt?: number;
 }
 
 // A single revealed rule row for the post game summary. Both players' rules are
@@ -70,16 +75,26 @@ export function GameOver({
   onReview,
   rematchStatus = "none",
   opponentHidden = false,
+  moves,
+  playerNames,
+  startedAt,
 }: Props) {
   const [dismissed, setDismissed] = useState(false);
   const [shared, setShared] = useState(false);
+  const [pgnCopied, setPgnCopied] = useState(false);
   const [oppRevealed, setOppRevealed] = useState(!opponentHidden);
   const primaryRef = useRef<HTMLButtonElement | null>(null);
   const reduceMotion = useReducedMotion();
   const draw = result.winner === "draw";
   const won = result.winner === myColor;
   const outcome = draw ? "Draw" : won ? "Victory" : "Defeat";
-  const headline = draw ? "Draw by agreement" : result.winner === "w" ? "White wins" : "Black wins";
+  // Draws carry their cause in the reason ("draw by agreement", "draw by
+  // threefold repetition", ...); surface it instead of assuming agreement.
+  const headline = draw
+    ? result.reason.charAt(0).toUpperCase() + result.reason.slice(1)
+    : result.winner === "w"
+    ? "White wins"
+    : "Black wins";
   const tone = draw ? "text-bruise-glow" : won ? "text-gold-leaf" : "text-oxblood-glow";
   const accent = draw
     ? "border-bruise-glow/40 bg-bruise/10 text-bruise-glow"
@@ -118,6 +133,30 @@ export function GameOver({
   const handleReview = () => {
     onReview?.();
     setDismissed(true);
+  };
+
+  // Copy PGN honors the hidden-rule setting: the opponent's nerf appears in
+  // the export only once it has been revealed on screen.
+  const handleCopyPGN = async () => {
+    if (!moves) return;
+    const myNerfName = myNerf?.name ?? null;
+    const oppNerfName = oppRevealed ? opponentNerf?.name ?? null : null;
+    const pgn = gameToPGN({
+      moves,
+      result,
+      white: playerNames?.w,
+      black: playerNames?.b,
+      whiteNerf: myColor === "w" ? myNerfName : oppNerfName,
+      blackNerf: myColor === "b" ? myNerfName : oppNerfName,
+      startedAt,
+    });
+    try {
+      await navigator.clipboard.writeText(pgn);
+      setPgnCopied(true);
+      window.setTimeout(() => setPgnCopied(false), 2000);
+    } catch {
+      // Clipboard blocked; ignore.
+    }
   };
 
   useEffect(() => {
@@ -259,7 +298,7 @@ export function GameOver({
             New game
           </button>
         </div>
-        <div className="mt-2 grid gap-2 sm:grid-cols-2">
+        <div className={`mt-2 grid gap-2 ${moves ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
           <button
             type="button"
             onClick={handleShare}
@@ -274,6 +313,19 @@ export function GameOver({
             </svg>
             {shared ? "Copied" : "Share game"}
           </button>
+          {moves && (
+            <button
+              type="button"
+              onClick={handleCopyPGN}
+              className="rounded-sm px-4 py-2 btn-ghost font-display text-sm inline-flex items-center justify-center gap-2"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+              </svg>
+              {pgnCopied ? "Copied" : "Copy PGN"}
+            </button>
+          )}
           <button
             type="button"
             onClick={handleReview}

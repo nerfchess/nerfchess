@@ -343,6 +343,40 @@ export function kingCaptured(board: BoardState): Color | null {
   return null;
 }
 
+// Compact identity of a position for repetition detection: piece placement,
+// side to move, castling rights, and en passant target (FEN fields 1–4).
+export function positionKey(board: BoardState): string {
+  let s = "";
+  for (let sq = 0; sq < 64; sq++) {
+    const p = board.pieces[sq];
+    s += p ? (p.color === "w" ? p.type.toUpperCase() : p.type) : ".";
+  }
+  s += board.turn;
+  s +=
+    (board.castling.wk ? "K" : "") +
+    (board.castling.wq ? "Q" : "") +
+    (board.castling.bk ? "k" : "") +
+    (board.castling.bq ? "q" : "");
+  s += board.epTarget ?? "-";
+  return s;
+}
+
+// How many times the current position has occurred over the whole game,
+// including right now. Replays the move history from the initial position;
+// the board only ever evolves through makeMove, so the replay is exact.
+// Positions before the last capture or pawn move can never match the current
+// one (material/pawn structure differ), so a plain full replay is correct.
+export function countRepetitions(board: BoardState): number {
+  const target = positionKey(board);
+  let b = initialBoard();
+  let count = positionKey(b) === target ? 1 : 0;
+  for (const m of board.history) {
+    b = makeMove(b, m);
+    if (positionKey(b) === target) count++;
+  }
+  return count;
+}
+
 export function moveToUCI(m: Move): string {
   const files = "abcdefgh";
   const a = files[FILE(m.from)] + (RANK(m.from) + 1);

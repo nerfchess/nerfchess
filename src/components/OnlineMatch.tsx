@@ -868,6 +868,12 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           onRematch={handleRematch}
           onNewGame={onExit}
           onReview={() => setHistoryPly(0)}
+          moves={game.board.history}
+          playerNames={{
+            w: myColor === "w" ? myName : oppName,
+            b: myColor === "b" ? myName : oppName,
+          }}
+          startedAt={game.startedAt}
         />
       )}
       <SettingsPanel
