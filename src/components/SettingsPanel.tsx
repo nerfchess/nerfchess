@@ -18,6 +18,7 @@ import {
 import { setUiSounds, setVolume } from "@/lib/sounds";
 import { Piece } from "@/components/Pieces";
 import { SECTIONS, type Control } from "@/components/settings/config";
+import { SettingsSection } from "@/components/settings/SettingsSection";
 import { SettingRow } from "@/components/settings/SettingRow";
 import {
   GhostButton,
@@ -34,16 +35,11 @@ interface Props {
 
 export function SettingsPanel({ open, onClose }: Props) {
   const [settings, setSettings] = useState<Settings>(loadSettings);
-  const [activeTab, setActiveTab] = useState(SECTIONS[0].id);
 
   // Re-sync from storage each time the panel opens, matching the previous
-  // behaviour where values were reloaded on open. Also start back on the
-  // first tab so the panel always opens in the same place.
+  // behaviour where values were reloaded on open.
   useEffect(() => {
-    if (open) {
-      setSettings(loadSettings());
-      setActiveTab(SECTIONS[0].id);
-    }
+    if (open) setSettings(loadSettings());
   }, [open]);
 
   if (!open) return null;
@@ -126,15 +122,13 @@ export function SettingsPanel({ open, onClose }: Props) {
   const isStacked = (control: Control) =>
     control.kind === "boardTheme" || control.kind === "pieceTheme";
 
-  const activeSection = SECTIONS.find((s) => s.id === activeTab) ?? SECTIONS[0];
-
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
-        className="plate gilt relative flex max-h-[86vh] w-full max-w-[34rem] flex-col"
+        className="plate gilt relative flex max-h-[86vh] w-full max-w-md flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -149,48 +143,21 @@ export function SettingsPanel({ open, onClose }: Props) {
           </button>
         </div>
 
-        {/* Tab bar — one tab per section; the active pane renders below. */}
-        <div
-          role="tablist"
-          aria-label="Settings sections"
-          className="flex gap-0.5 overflow-x-auto border-b border-white/10 px-2 pt-2"
-        >
-          {SECTIONS.map((section) => {
-            const selected = section.id === activeTab;
-            return (
-              <button
-                key={section.id}
-                role="tab"
-                aria-selected={selected}
-                onClick={() => setActiveTab(section.id)}
-                className={
-                  "flex shrink-0 items-center gap-1.5 rounded-t border-b-2 px-2 py-2 font-display text-[12.5px] transition-colors " +
-                  (selected
-                    ? "border-gold text-gold-leaf"
-                    : "border-transparent text-parchment-400 hover:bg-white/[0.04] hover:text-parchment")
-                }
-              >
-                <section.icon className="h-3.5 w-3.5" strokeWidth={2} />
-                {section.title}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Active tab's rows. Fixed height so switching tabs doesn't resize
-            the panel; the pane scrolls when a tab outgrows it. */}
-        <div role="tabpanel" className="h-[24rem] max-h-[60vh] overflow-y-auto px-5 py-3">
-          <div className="divide-y divide-white/[0.06]">
-            {activeSection.rows.map((row) => (
-              <SettingRow
-                key={row.id}
-                label={row.label}
-                hint={row.hint}
-                stacked={isStacked(row.control)}
-                control={renderControl(row.control, row.label)}
-              />
-            ))}
-          </div>
+        {/* Scrollable body */}
+        <div className="flex flex-col gap-4 overflow-y-auto px-5 py-4">
+          {SECTIONS.map((section) => (
+            <SettingsSection key={section.id} title={section.title} icon={section.icon}>
+              {section.rows.map((row) => (
+                <SettingRow
+                  key={row.id}
+                  label={row.label}
+                  hint={row.hint}
+                  stacked={isStacked(row.control)}
+                  control={renderControl(row.control, row.label)}
+                />
+              ))}
+            </SettingsSection>
+          ))}
         </div>
       </div>
     </div>

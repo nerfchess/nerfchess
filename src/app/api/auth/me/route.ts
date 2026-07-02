@@ -19,7 +19,6 @@ export async function GET(request: Request) {
       wins: user.wins,
       losses: user.losses,
       draws: user.draws,
-      avatar: user.avatar,
     },
   });
 }

@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { fetchMe, logout } from "@/lib/authClient";
-import { Avatar } from "@/components/Avatar";
 
 interface ProfileUser {
   username: string;
@@ -14,7 +13,6 @@ interface ProfileUser {
   wins: number;
   losses: number;
   draws: number;
-  avatar: string | null;
   createdAt: number;
 }
 
@@ -92,18 +90,11 @@ export default function ProfilePage() {
         ) : (
           <>
             <div className="flex flex-wrap items-end justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <Avatar
-                  name={profile.user.username}
-                  src={profile.user.avatar}
-                  className="h-16 w-16 text-3xl"
-                />
-                <div>
-                  <h1 className="font-display text-5xl">{profile.user.username}</h1>
-                  <p className="mt-2 text-parchment-300 text-sm">
-                    Member since {new Date(profile.user.createdAt).toLocaleDateString()}
-                  </p>
-                </div>
+              <div>
+                <h1 className="font-display text-5xl">{profile.user.username}</h1>
+                <p className="mt-2 text-parchment-300 text-sm">
+                  Member since {new Date(profile.user.createdAt).toLocaleDateString()}
+                </p>
               </div>
               {isMe && (
                 <button
