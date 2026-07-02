@@ -11,9 +11,8 @@ import { RATING_CATEGORIES } from "@/lib/ratingCategories";
 import { DEFAULT_STATS, loadRatings, type Ratings } from "@/lib/ratings";
 import { ALL_NERFS, PLAYABLE_NERFS } from "@/engine/nerfs/library";
 import type { Nerf } from "@/engine/nerf";
-
-const TIER_LABEL = ["", "Trivial", "Easy", "Common", "Severe", "Brutal"];
-const TIER_ROMAN = ["", "I", "II", "III", "IV", "V"];
+import { useLobbySnapshot } from "@/lib/lobbyClient";
+import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
 
 // Real library count, computed once. Feeds the social proof strip so the
 // number stays honest and updates automatically as the rule set grows.
@@ -74,11 +73,11 @@ export default function HomePage() {
             checkmate: you win by capturing the king.
           </p>
 
-          {/* Action hierarchy: friend games are the main flow. One big glowing
-              primary, a quieter bot button below it, everything else as text. */}
+          {/* Action hierarchy: playing a real person is THE flow. One big
+              glowing primary into the lobby, two quieter options below it. */}
           <div className="mt-7 flex flex-col gap-3">
             <Link
-              href="/friend"
+              href="/lobby"
               className="btn-leaf btn-cta w-full flex items-center justify-center gap-3 px-8 py-5 font-display text-xl sm:text-2xl font-semibold"
             >
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -87,19 +86,25 @@ export default function HomePage() {
                 <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
                 <path d="M16 3.13a4 4 0 0 1 0 7.75" />
               </svg>
-              Play a Friend
+              Play Someone
             </Link>
-            <Link
-              href="/game?mode=ai"
-              className="btn-ghost w-full sm:w-auto sm:self-start flex items-center justify-center gap-2 px-6 py-3 font-display text-base font-medium"
-            >
-              Play vs Bot
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                <line x1="5" y1="12" x2="19" y2="12" />
-                <polyline points="12 5 19 12 12 19" />
-              </svg>
-            </Link>
+            <div className="grid grid-cols-2 gap-3">
+              <Link
+                href="/friend"
+                className="btn-ghost flex items-center justify-center gap-2 px-4 py-3 font-display text-base font-medium"
+              >
+                Play a Friend
+              </Link>
+              <Link
+                href="/game?mode=ai"
+                className="btn-ghost flex items-center justify-center gap-2 px-4 py-3 font-display text-base font-medium"
+              >
+                Play vs Bot
+              </Link>
+            </div>
           </div>
+
+          <LiveNowStrip />
 
           <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-parchment-300">
             <Link href="/play" className="hover:text-parchment-100 transition-colors">Custom game</Link>
@@ -121,6 +126,31 @@ export default function HomePage() {
       <SiteFooter />
       <SettingsPanel open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </main>
+  );
+}
+
+// A live pulse under the primary action: who's online and what's being played
+// right now, so a new visitor sees immediately that there are people to play.
+function LiveNowStrip() {
+  const lobby = useLobbySnapshot(10000);
+  if (!lobby) return null;
+  const online = lobby.players.length + lobby.anonymous;
+  return (
+    <Link
+      href="/lobby"
+      className="plate mt-3 flex items-center justify-between gap-3 border border-white/10 p-3 px-4 no-underline transition-colors hover:border-gold/40"
+    >
+      <span className="flex items-center gap-2 text-sm text-parchment-200">
+        <span className="w-2 h-2 rounded-full bg-verdigris animate-flicker" />
+        {online} player{online === 1 ? "" : "s"} online
+        {lobby.games.length > 0 && (
+          <span className="text-parchment-400">
+            · {lobby.games.length} live game{lobby.games.length === 1 ? "" : "s"}
+          </span>
+        )}
+      </span>
+      <span className="smallcaps text-[10px] text-gold-leaf">Open lobby →</span>
+    </Link>
   );
 }
 
@@ -346,6 +376,7 @@ function SiteNav({ onOpenSettings }: { onOpenSettings: () => void }) {
     <nav className="flex items-center justify-between px-5 sm:px-10 py-5 sm:py-6">
       <Logo />
       <div className="flex items-center gap-1 sm:gap-2 text-sm font-body font-medium">
+        <Link href="/lobby" className="px-3 py-1.5 hover:bg-white/5 text-gold-leaf">Lobby</Link>
         <Link href="/game?mode=ai" className="px-3 py-1.5 hover:bg-white/5 text-parchment-100">Play</Link>
         <Link href="/history" className="hidden sm:inline-block px-3 py-1.5 hover:bg-white/5 text-parchment-100">History</Link>
         <Link href="/leaderboard" className="hidden sm:inline-block px-3 py-1.5 hover:bg-white/5 text-parchment-100">Leaderboard</Link>

@@ -67,6 +67,14 @@ export default function FriendPage() {
 
   useEffect(() => {
     if (sessionRef.current) return;
+    // Arriving with a shared code (e.g. from the lobby's join box) joins
+    // that game immediately.
+    const codeParam = new URLSearchParams(window.location.search).get("code")?.trim().toUpperCase();
+    if (codeParam) {
+      setJoinCode(codeParam);
+      joinWithCode(codeParam);
+      return;
+    }
     const saved = loadSavedFriendSession();
     if (!saved) return;
     const sess = new MPSession();
@@ -100,10 +108,9 @@ export default function FriendPage() {
     }
   };
 
-  const handleJoin = async () => {
+  const joinWithCode = async (trimmed: string) => {
     setError(null);
     clearSavedFriendSession();
-    const trimmed = joinCode.trim().toUpperCase();
     if (!trimmed) {
       setError("Enter a code.");
       return;
@@ -121,6 +128,8 @@ export default function FriendPage() {
       setView("setup");
     }
   };
+
+  const handleJoin = () => joinWithCode(joinCode.trim().toUpperCase());
 
   const handleExit = () => {
     clearSavedFriendSession();

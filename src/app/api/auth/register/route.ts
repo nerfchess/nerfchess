@@ -7,6 +7,7 @@ import {
   validPassword,
   validUsername,
 } from "@/lib/server/auth";
+import { containsProfanity } from "@/lib/profanity";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +29,9 @@ export async function POST(request: Request) {
   // Reserved: would shadow API/product routes.
   if (["search", "anonymous"].includes(username.toLowerCase())) {
     return NextResponse.json({ error: "That username is reserved." }, { status: 400 });
+  }
+  if (containsProfanity(username)) {
+    return NextResponse.json({ error: "Please pick a different username." }, { status: 400 });
   }
   if (!validPassword(password)) {
     return NextResponse.json({ error: "Password must be at least 8 characters." }, { status: 400 });

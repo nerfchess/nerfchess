@@ -148,12 +148,18 @@ body {
 .tier-3 { color: #d8b56e; }   /* brass */
 .tier-4 { color: #c79468; }   /* clay */
 .tier-5 { color: #c66860; }   /* brick */
+.tier-6 { color: #c65f8f; }   /* rose */
+.tier-7 { color: #a877d8; }   /* violet */
+.tier-8 { color: #e05252; }   /* blood */
 
 .tier-bg-1 { background: rgba(126,181,154,0.10); border-color: rgba(126,181,154,0.35); }
 .tier-bg-2 { background: rgba(139,169,196,0.10); border-color: rgba(139,169,196,0.35); }
 .tier-bg-3 { background: rgba(216,181,110,0.10); border-color: rgba(216,181,110,0.45); }
 .tier-bg-4 { background: rgba(199,148,104,0.10); border-color: rgba(199,148,104,0.40); }
 .tier-bg-5 { background: rgba(198,104,96,0.12); border-color: rgba(198,104,96,0.45); }
+.tier-bg-6 { background: rgba(198,95,143,0.12); border-color: rgba(198,95,143,0.45); }
+.tier-bg-7 { background: rgba(168,119,216,0.12); border-color: rgba(168,119,216,0.45); }
+.tier-bg-8 { background: rgba(224,82,82,0.14); border-color: rgba(224,82,82,0.50); }
 
 /* --- Buttons --- Lichess-flat: solid blue primary, quiet ghost secondary. */
 .btn-leaf {

@@ -850,7 +850,7 @@ export const SCENT_OF_BLOOD: Nerf = db({
   name: "The Scent of Blood",
   description: "If one of your pieces can capture, it must: that piece, this turn.",
   flavor: "Once they smell it, nothing else matters.",
-  tier: 4,
+  tier: 5,
   icon: "droplet",
   implemented: true,
   filterMoves: (moves) => {
@@ -901,7 +901,6 @@ export const ALL_IMPLEMENTED: Nerf[] = [
   SCORCHED_EARTH,
   SKITTISH,
   HORSE_TRANQUILIZER,
-  NUMBER_OF_THE_BEAST,
   SHADOW_QUEEN,
   NO_SHUFFLING,
   OUTFLANKED,
@@ -926,6 +925,10 @@ export const ALL_IMPLEMENTED: Nerf[] = [
   ...EXTRA_NERFS,
 ];
 
+// Retired rules: no longer dealt or shown in the Codex, but kept resolvable by
+// id so replays and histories of old games still render correctly.
+export const RETIRED_NERFS: Nerf[] = [NUMBER_OF_THE_BEAST];
+
 export const IMPLEMENTED_BY_ID: Record<string, Nerf> = Object.fromEntries(
-  ALL_IMPLEMENTED.map((d) => [d.id, d])
+  [...ALL_IMPLEMENTED, ...RETIRED_NERFS].map((d) => [d.id, d])
 );

@@ -36,6 +36,7 @@ export interface Settings {
   // When on, the opponent's rule is never shown to you — not even after the
   // game ends, and mid-game reveal is disabled. Default off.
   hideOpponentReveal: boolean;
+  muteChat: boolean; // hide in-game chat messages and input
   confirmResign: boolean; // ask before resigning
   showCoordinates: boolean; // file/rank labels on the board edge
   highlightLastMove: boolean; // tint the from/to squares of the last move
@@ -58,6 +59,7 @@ export const DEFAULT_SETTINGS: Settings = {
   moveRiskWarnings: true,
   autoQueen: false,
   hideOpponentReveal: false,
+  muteChat: false,
   confirmResign: true,
   showCoordinates: true,
   highlightLastMove: true,
@@ -132,6 +134,7 @@ export function loadSettings(): Settings {
       moveRiskWarnings: bool(parsed.moveRiskWarnings, DEFAULT.moveRiskWarnings),
       autoQueen: bool(parsed.autoQueen, DEFAULT.autoQueen),
       hideOpponentReveal: bool(parsed.hideOpponentReveal, DEFAULT.hideOpponentReveal),
+      muteChat: bool(parsed.muteChat, DEFAULT.muteChat),
       confirmResign: bool(parsed.confirmResign, DEFAULT.confirmResign),
       showCoordinates: bool(parsed.showCoordinates, DEFAULT.showCoordinates),
       highlightLastMove: bool(parsed.highlightLastMove, DEFAULT.highlightLastMove),

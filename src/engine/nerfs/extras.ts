@@ -293,7 +293,7 @@ export const HONEY_TRAP: Nerf = db({
   name: "Honey Trap",
   description: "Your queen can't move unless attacked.",
   flavor: "She waits, smiling.",
-  tier: 4,
+  tier: 3,
   icon: "honey",
   implemented: true,
   filterMoves: (moves, _s, ctx) => {
@@ -392,7 +392,7 @@ export const WAGON_TRAIN: Nerf = db({
   name: "Wagon Train",
   description: "All your moves must be to a square adjacent to your most recent move's destination.",
   flavor: "Keep the column tight.",
-  tier: 4,
+  tier: 7,
   icon: "route",
   implemented: true,
   filterMoves: (moves, _s, ctx) => {
@@ -602,7 +602,7 @@ export const FRESH_FACES: Nerf = db({
 export const BURNING_BRIDGES: Nerf = db({
   id: "burning_bridges",
   name: "Burning Bridges",
-  description: "Sliders can't pass over a square they previously crossed.",
+  description: "Your bishops, rooks, and queen can't travel over a square they have already passed over earlier in the game.",
   flavor: "The path collapses behind you.",
   tier: 5,
   icon: "flame",

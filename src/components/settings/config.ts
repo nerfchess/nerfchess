@@ -69,6 +69,12 @@ export const SECTIONS: SectionConfig[] = [
         control: { kind: "toggle", setting: "hideOpponentReveal" },
       },
       {
+        id: "muteChat",
+        label: "Mute chat",
+        hint: "Hide in-game chat messages from opponents",
+        control: { kind: "toggle", setting: "muteChat" },
+      },
+      {
         id: "confirmResign",
         label: "Confirm resign",
         hint: "Ask before resigning a game",
