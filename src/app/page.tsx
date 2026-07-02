@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { AccountChip } from "@/components/AccountChip";
 import { Logo } from "@/components/Logo";
 import { HeroBoard } from "@/components/HeroBoard";
 import { SettingsPanel } from "@/components/SettingsPanel";
@@ -357,7 +356,6 @@ function SiteNav({ onOpenSettings }: { onOpenSettings: () => void }) {
         <Link href="/profile" className="hidden sm:inline-block px-3 py-1.5 hover:bg-white/5 text-parchment-100">Profile</Link>
         <Link href="/codex" className="px-3 py-1.5 hover:bg-white/5 text-parchment-100">Rules</Link>
         <Link href="/tutorial" className="hidden sm:inline-block px-3 py-1.5 hover:bg-white/5 text-parchment-100">How to play</Link>
-        <AccountChip />
         <button
           type="button"
           onClick={onOpenSettings}

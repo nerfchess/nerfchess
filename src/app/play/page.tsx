@@ -6,9 +6,7 @@ import { useEffect, useState } from "react";
 import { PLAYABLE_NERFS } from "@/engine/nerfs/library";
 import { clearSavedAiGame } from "@/lib/gamePersistence";
 import { loadRating } from "@/lib/rating";
-import { AccountChip } from "@/components/AccountChip";
 import { Logo } from "@/components/Logo";
-import { QueueButton } from "@/components/QueueButton";
 
 const TIME_STEPS_SEC = [
   5,
@@ -78,7 +76,6 @@ export default function PlayPage() {
           <Link href="/leaderboard" className="px-3 py-1.5 text-sm font-medium hover:bg-white/5 text-parchment-100">Leaderboard</Link>
           <Link href="/profile" className="px-3 py-1.5 text-sm font-medium hover:bg-white/5 text-parchment-100">Profile</Link>
           <Link href="/codex" className="px-3 py-1.5 text-sm font-medium hover:bg-white/5 text-parchment-100">Rules</Link>
-          <AccountChip />
         </div>
       </nav>
 
@@ -89,10 +86,6 @@ export default function PlayPage() {
         </p>
 
         <div className="mt-6">
-          <QueueButton />
-        </div>
-
-        <div className="mt-4">
           <Link
             href="/friend"
             className="btn-leaf btn-cta w-full flex items-center justify-center gap-3 px-6 py-4 font-display text-lg font-semibold"

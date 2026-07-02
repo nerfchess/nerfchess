@@ -1,9 +1,5 @@
 import type { Color } from "@/engine/types";
 
-export type MPPlayers = Record<Color, { name: string; rating: number | null }>;
-
-export type MPChatMessage = { color: Color; name: string; text: string; at: number };
-
 export type MPStart = {
   id: string;
   color: Color;
@@ -15,23 +11,6 @@ export type MPStart = {
   wc: number;
   bc: number;
   moves: string[];
-  players?: MPPlayers;
-  rated?: boolean;
-  chat?: MPChatMessage[];
-};
-
-export type MPWatchStart = {
-  id: string;
-  timeSec: number;
-  incrementSec: number;
-  wc: number;
-  bc: number;
-  moves: string[];
-  players: MPPlayers;
-  rated: boolean;
-  started: boolean;
-  result: { winner: Color | "draw" | null; reason: string } | null;
-  nerfs?: Record<Color, string>;
 };
 
 export type MPAcceptedMove = {
@@ -41,8 +20,6 @@ export type MPAcceptedMove = {
   bc: number;
 };
 
-export type MPRatingChange = { userId: string; before: number; after: number };
-
 export type MPEnd = {
   result: {
     winner: Color | "draw" | null;
@@ -50,43 +27,27 @@ export type MPEnd = {
   };
   wc: number;
   bc: number;
-  ratings?: Record<Color, MPRatingChange | null>;
-  nerfs?: Record<Color, string>;
 };
 
 export type MPEvent =
   | { type: "open"; code: string; color: Color; token: string }
   | { type: "start"; setup: MPStart }
-  | { type: "watch-start"; setup: MPWatchStart }
-  | { type: "queued"; pool: string }
-  | { type: "paired"; id: string; color: Color; token: string }
-  | { type: "queue-cancelled" }
   | { type: "move"; move: MPAcceptedMove }
   | { type: "end"; end: MPEnd }
   | { type: "draw-offer"; color: Color }
   | { type: "draw-declined"; color: Color }
-  | { type: "rematch-offer"; color: Color }
-  | { type: "rematched"; id: string; color: Color; token: string }
-  | { type: "chat"; message: MPChatMessage }
   | { type: "clocks"; wc: number; bc: number }
   | { type: "opponent-gone" }
   | { type: "disconnected" }
-  | { type: "error"; message: string; code?: string };
+  | { type: "error"; message: string };
 
 type ServerFrame =
   | { t: "created"; d: { id: string; color: Color; token: string } }
   | { t: "start"; d: MPStart }
-  | { t: "wstart"; d: MPWatchStart }
-  | { t: "queued"; d: { pool: string } }
-  | { t: "paired"; d: { id: string; color: Color; token: string } }
-  | { t: "queueCancelled" }
   | { t: "move"; d: MPAcceptedMove }
   | { t: "end"; d: MPEnd }
   | { t: "drawOffer"; d: { color: Color } }
   | { t: "drawDeclined"; d: { color: Color } }
-  | { t: "rematchOffer"; d: { color: Color } }
-  | { t: "rematched"; d: { id: string; color: Color; token: string } }
-  | { t: "chat"; d: MPChatMessage }
   | { t: "opponentGone" }
   | { t: "error"; d: { code?: string; message?: string } }
   | { t: "n"; d?: { wc?: number; bc?: number } };
@@ -124,37 +85,6 @@ function saveFriendSession(session: MPSavedSession) {
   } catch {}
 }
 
-// Seat credentials for online (matchmade) games, keyed by game id, so
-// /game/[id] can reclaim the player's seat after navigation or reload.
-const SEAT_PREFIX = "dc:online-seat:";
-
-export type OnlineSeat = { color: Color; token: string };
-
-export function saveOnlineSeat(gameId: string, seat: OnlineSeat) {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(SEAT_PREFIX + gameId, JSON.stringify(seat));
-  } catch {}
-}
-
-export function loadOnlineSeat(gameId: string): OnlineSeat | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const parsed = JSON.parse(window.localStorage.getItem(SEAT_PREFIX + gameId) || "null") as OnlineSeat | null;
-    if (!parsed?.token || (parsed.color !== "w" && parsed.color !== "b")) return null;
-    return parsed;
-  } catch {
-    return null;
-  }
-}
-
-export function clearOnlineSeat(gameId: string) {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.removeItem(SEAT_PREFIX + gameId);
-  } catch {}
-}
-
 function gameServerUrl(): string {
   const configured = process.env.NEXT_PUBLIC_GAME_SERVER_URL?.trim();
   if (configured) return configured;
@@ -174,9 +104,6 @@ export class MPSession {
   private listeners: Array<(e: MPEvent) => void> = [];
   private heartbeat: number | null = null;
   code = "";
-  // Friend games save a resumable session under a well-known key; matchmade
-  // and spectator sessions manage their own persistence (see onlineSeat below).
-  persistFriendSession = true;
 
   on(fn: (e: MPEvent) => void) {
     this.listeners.push(fn);
@@ -249,29 +176,13 @@ export class MPSession {
     switch (frame.t) {
       case "created":
         this.code = frame.d.id;
-        if (this.persistFriendSession) {
-          saveFriendSession({ id: frame.d.id, color: frame.d.color, token: frame.d.token });
-        }
+        saveFriendSession({ id: frame.d.id, color: frame.d.color, token: frame.d.token });
         this.emit({ type: "open", code: frame.d.id, color: frame.d.color, token: frame.d.token });
         break;
       case "start":
         this.code = frame.d.id;
-        if (this.persistFriendSession) {
-          saveFriendSession({ id: frame.d.id, color: frame.d.color, token: frame.d.token });
-        }
+        saveFriendSession({ id: frame.d.id, color: frame.d.color, token: frame.d.token });
         this.emit({ type: "start", setup: frame.d });
-        break;
-      case "wstart":
-        this.emit({ type: "watch-start", setup: frame.d });
-        break;
-      case "queued":
-        this.emit({ type: "queued", pool: frame.d.pool });
-        break;
-      case "paired":
-        this.emit({ type: "paired", id: frame.d.id, color: frame.d.color, token: frame.d.token });
-        break;
-      case "queueCancelled":
-        this.emit({ type: "queue-cancelled" });
         break;
       case "move":
         this.emit({ type: "move", move: frame.d });
@@ -285,24 +196,11 @@ export class MPSession {
       case "drawDeclined":
         this.emit({ type: "draw-declined", color: frame.d.color });
         break;
-      case "rematchOffer":
-        this.emit({ type: "rematch-offer", color: frame.d.color });
-        break;
-      case "rematched":
-        this.emit({ type: "rematched", id: frame.d.id, color: frame.d.color, token: frame.d.token });
-        break;
-      case "chat":
-        this.emit({ type: "chat", message: frame.d });
-        break;
       case "opponentGone":
         this.emit({ type: "opponent-gone" });
         break;
       case "error":
-        this.emit({
-          type: "error",
-          message: frame.d.message || frame.d.code || "Game server error.",
-          code: frame.d.code,
-        });
+        this.emit({ type: "error", message: frame.d.message || frame.d.code || "Game server error." });
         break;
       case "n":
         if (typeof frame.d?.wc === "number" && typeof frame.d?.bc === "number") {
@@ -362,62 +260,12 @@ export class MPSession {
     });
   }
 
-  // Join the rated quick-pairing queue. Resolves with the paired game id.
-  async queue(pool: string): Promise<{ id: string; color: Color; token: string }> {
-    await this.connect();
-    return new Promise((resolve, reject) => {
-      const off = this.on((event) => {
-        if (event.type === "paired") {
-          off();
-          resolve({ id: event.id, color: event.color, token: event.token });
-        } else if (event.type === "error") {
-          off();
-          reject(new Error(event.message));
-        } else if (event.type === "disconnected") {
-          off();
-          reject(new Error("Disconnected from the game server."));
-        }
-      });
-      this.sendFrame("queue", { pool });
-    });
-  }
-
-  cancelQueue(): boolean {
-    return this.sendFrame("queueCancel");
-  }
-
-  // Spectate a live game. Resolves with the watch payload.
-  async watch(id: string): Promise<MPWatchStart> {
-    this.code = id;
-    await this.connect();
-    return new Promise((resolve, reject) => {
-      const off = this.on((event) => {
-        if (event.type === "watch-start") {
-          off();
-          resolve(event.setup);
-        } else if (event.type === "error") {
-          off();
-          reject(new Error(event.code === "not_found" ? "not_found" : event.message));
-        }
-      });
-      this.sendFrame("watch", { id });
-    });
-  }
-
   sendMove(uci: string, ply: number): boolean {
     return this.sendFrame("move", { u: uci, ply });
   }
 
   resign(): boolean {
     return this.sendFrame("resign");
-  }
-
-  requestRematch(): boolean {
-    return this.sendFrame("rematch");
-  }
-
-  sendChat(text: string): boolean {
-    return this.sendFrame("chat", { text });
   }
 
   offerDraw(): boolean {

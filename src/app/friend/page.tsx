@@ -1,16 +1,37 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
-import { OnlineMatch } from "@/components/OnlineMatch";
+import { type CSSProperties, useEffect, useMemo, useRef, useState } from "react";
+import { Board, QueuedPremove } from "@/components/Board";
+import { BoardPlayerRow } from "@/components/BoardPlayerRow";
+import { GameOver } from "@/components/GameOver";
+import { MobileMoveDrawer } from "@/components/MobileMoveDrawer";
+import { MoveList } from "@/components/MoveList";
+import { PlayerNerfCard } from "@/components/PlayerNerfCard";
+import { SettingsPanel } from "@/components/SettingsPanel";
+import { cloneBoard, isInCheck, makeMove, moveToUCI } from "@/engine/board";
+import { computeMoveRisks } from "@/engine/moveSafety";
+import { loadSettings } from "@/lib/settings";
+import type { GameContext } from "@/engine/nerf";
+import { IMPLEMENTED_BY_ID, PLAYABLE_NERFS } from "@/engine/nerfs/library";
 import {
-  clearSavedFriendSession,
-  loadSavedFriendSession,
-  MPSession,
-  MPStart,
-} from "@/lib/multiplayer";
+  currentHint,
+  NerfGame,
+  legalMoves,
+  makeContext,
+  newGameAsColor,
+  playMove,
+} from "@/engine/game";
+import { BoardState, Color, Move } from "@/engine/types";
+import { nerfSummary, outcomeFor, recordCompletedGame } from "@/lib/gameHistory";
+import { boardAtPly } from "@/lib/gameReview";
+import { clearSavedFriendSession, loadSavedFriendSession, MPSession, MPStart } from "@/lib/multiplayer";
+import { premoveOptionsFor } from "@/lib/premoves";
+import { isMuted, playCapture, playCheck, playMove as playMoveSfx, setMuted } from "@/lib/sounds";
 
 type View = "setup" | "lobby" | "joining" | "game";
+type PendingPremoveSend = { uci: string; ply: number };
+type PendingLocalMove = { uci: string; ply: number; move: Move };
 
 const TIME_STEPS_SEC = [
   5,
@@ -29,6 +50,24 @@ const TIME_STEPS_SEC = [
   ...range(35 * 60, 2 * 60 * 60, 5 * 60),
 ];
 
+function pickRandomNerf() {
+  const pool = PLAYABLE_NERFS.filter((d) => d.id !== "lucky");
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function formatClock(ms: number): string {
+  const clamped = Math.max(0, ms);
+  if (clamped < 10000) return `0:${(clamped / 1000).toFixed(1).padStart(4, "0")}`;
+  const totalSec = Math.ceil(clamped / 1000);
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+function moveKey(move: Move): string {
+  return `${move.from}:${move.to}:${move.promotion ?? ""}:${move.captured ?? ""}`;
+}
+
 export default function FriendPage() {
   const [view, setView] = useState<View>("setup");
   const [code, setCode] = useState("");
@@ -36,9 +75,94 @@ export default function FriendPage() {
   const [baseSec, setBaseSec] = useState(600);
   const [incrementSec, setIncrementSec] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  const [start, setStart] = useState<MPStart | null>(null);
+  const [muted, setMutedState] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [uiSettings, setUiSettings] = useState(() => loadSettings());
+  const [confirmingResign, setConfirmingResign] = useState(false);
+  const [drawOfferBy, setDrawOfferBy] = useState<Color | null>(null);
+  const [drawOfferStatus, setDrawOfferStatus] = useState<"idle" | "offering" | "declined">("idle");
+
+  const [game, setGame] = useState<NerfGame | null>(null);
+  const [myColor, setMyColor] = useState<Color>("w");
+  const [whiteMs, setWhiteMs] = useState(0);
+  const [blackMs, setBlackMs] = useState(0);
+  const [premoves, setPremoves] = useState<QueuedPremove[]>([]);
+  const [pendingLocalMove, setPendingLocalMoveState] = useState<PendingLocalMove | null>(null);
+  const [awaitingPremoveAck, setAwaitingPremoveAckState] = useState(false);
+  const [historyPly, setHistoryPly] = useState<number | null>(null);
+  const [boardHeight, setBoardHeight] = useState<number | null>(null);
 
   const sessionRef = useRef<MPSession | null>(null);
+  const boardShellRef = useRef<HTMLDivElement | null>(null);
+  const clockEnabledRef = useRef(false);
+  // Time control as announced by the server start frame (valid for both host
+  // and guest), kept for the history entry written when the game ends.
+  const timeControlRef = useRef({ baseSec: 0, incSec: 0 });
+  const recordedResult = useRef(false);
+  const awaitingPremoveAckRef = useRef(false);
+  const pendingPremoveRef = useRef<PendingPremoveSend | null>(null);
+  const pendingLocalMoveRef = useRef<PendingLocalMove | null>(null);
+  const premovesRef = useRef<QueuedPremove[]>([]);
+  const premoveTimerRef = useRef<number | null>(null);
+  const myColorRef = useRef<Color>("w");
+
+  const setAwaitingPremoveAck = (value: boolean, pending: PendingPremoveSend | null = null) => {
+    awaitingPremoveAckRef.current = value;
+    pendingPremoveRef.current = value ? pending : null;
+    setAwaitingPremoveAckState(value);
+  };
+
+  const setPendingLocalMove = (pending: PendingLocalMove | null) => {
+    pendingLocalMoveRef.current = pending;
+    setPendingLocalMoveState(pending);
+  };
+
+  useEffect(() => setMutedState(isMuted()), []);
+
+  useEffect(() => {
+    myColorRef.current = myColor;
+  }, [myColor]);
+
+  useEffect(() => {
+    premovesRef.current = premoves;
+  }, [premoves]);
+
+  const clearPremoves = () => {
+    if (premoveTimerRef.current != null) {
+      window.clearTimeout(premoveTimerRef.current);
+      premoveTimerRef.current = null;
+    }
+    premovesRef.current = [];
+    setPremoves([]);
+  };
+
+  const enqueuePremove = (move: Move) => {
+    setPremoves((queue) => {
+      const next = [
+        ...queue,
+        { from: move.from, to: move.to, promotion: move.promotion, capture: !!move.captured },
+      ];
+      premovesRef.current = next;
+      return next;
+    });
+  };
+
+  const shiftPremove = () => {
+    setPremoves((queue) => {
+      const next = queue.slice(1);
+      premovesRef.current = next;
+      return next;
+    });
+  };
+
+  useEffect(() => {
+    return () => {
+      if (premoveTimerRef.current != null) {
+        window.clearTimeout(premoveTimerRef.current);
+        premoveTimerRef.current = null;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -47,20 +171,157 @@ export default function FriendPage() {
     };
   }, []);
 
-  // Set up the session event handler for the pre-game phase; once `start`
-  // arrives, OnlineMatch takes over the event stream.
+  const startGameFromSetup = (msg: MPStart) => {
+    const myNerf = IMPLEMENTED_BY_ID[msg.nerfId] ?? pickRandomNerf();
+    let nextGame = newGameAsColor(myNerf, msg.color, msg.nerfSeed);
+    for (const uci of msg.moves ?? []) {
+      const move = legalMoves(nextGame).find((candidate) => moveToUCI(candidate) === uci);
+      if (!move) {
+        setError("Could not restore the saved game position.");
+        break;
+      }
+      nextGame = playMove(nextGame, move);
+    }
+    setGame(nextGame);
+    setMyColor(msg.color);
+    setCode(msg.id);
+    setWhiteMs(msg.wc);
+    setBlackMs(msg.bc);
+    setHistoryPly(null);
+    clockEnabledRef.current = msg.timeSec > 0;
+    timeControlRef.current = { baseSec: msg.timeSec, incSec: msg.incrementSec };
+    // A restored session may already carry a finished game; never re-record it.
+    recordedResult.current = nextGame.result != null;
+    clearPremoves();
+    setPendingLocalMove(null);
+    setAwaitingPremoveAck(false);
+    setDrawOfferBy(null);
+    setDrawOfferStatus("idle");
+    setView("game");
+  };
+
+  function queuePremoveSend(snapshot: NerfGame) {
+    if (premoveTimerRef.current != null) return;
+    if (awaitingPremoveAckRef.current || snapshot.result || snapshot.board.turn !== myColorRef.current) return;
+    const head = premovesRef.current[0];
+    if (!head) return;
+    const move = legalMoves(snapshot).find(
+      (candidate) =>
+        candidate.from === head.from &&
+        candidate.to === head.to &&
+        (candidate.promotion ?? undefined) === (head.promotion ?? undefined) &&
+        (!head.capture || !!candidate.captured),
+    );
+    if (!move) {
+      clearPremoves();
+      return;
+    }
+
+    const uci = moveToUCI(move);
+    const ply = snapshot.board.history.length;
+    premoveTimerRef.current = window.setTimeout(() => {
+      premoveTimerRef.current = null;
+      if (awaitingPremoveAckRef.current) return;
+      setAwaitingPremoveAck(true, { uci, ply });
+      if (!sessionRef.current?.sendMove(uci, ply)) {
+        setAwaitingPremoveAck(false);
+        clearPremoves();
+        setError("Disconnected from the game server.");
+      }
+    }, 90);
+  }
+
+  // Set up the session event handler. The server is authoritative: local moves
+  // are not applied until the websocket sends back an accepted move.
   const wireSession = (sess: MPSession) => {
     sess.on((e) => {
-      if (e.type === "open") {
+      if (e.type === "error") {
+        setError(e.message);
+        setPendingLocalMove(null);
+        setAwaitingPremoveAck(false);
+        clearPremoves();
+      } else if (e.type === "disconnected") {
+        setError("Disconnected from the game server.");
+        setPendingLocalMove(null);
+        setAwaitingPremoveAck(false);
+      } else if (e.type === "opponent-gone") {
+        setError("Opponent disconnected.");
+        setPendingLocalMove(null);
+        setAwaitingPremoveAck(false);
+      } else if (e.type === "open") {
         setCode(e.code);
         setView("lobby");
       } else if (e.type === "start") {
-        setStart(e.setup);
-        setCode(e.setup.id);
+        startGameFromSetup(e.setup);
+      } else if (e.type === "clocks") {
+        setWhiteMs(e.wc);
+        setBlackMs(e.bc);
+      } else if (e.type === "move") {
+        setDrawOfferBy(null);
+        setDrawOfferStatus("idle");
+        setGame((g) => {
+          if (!g) return g;
+          const lm = legalMoves(g).find((x) => moveToUCI(x) === e.move.u);
+          const pendingLocal = pendingLocalMoveRef.current;
+          const wasAwaitingPremove = awaitingPremoveAckRef.current;
+          const pendingPremove = pendingPremoveRef.current;
+          if (!lm) {
+            setPendingLocalMove(null);
+            if (wasAwaitingPremove) {
+              setAwaitingPremoveAck(false);
+              clearPremoves();
+            }
+            return g;
+          }
+          const next = playMove(g, lm);
+          setWhiteMs(e.move.wc);
+          setBlackMs(e.move.bc);
+          if (pendingLocal) {
+            setPendingLocalMove(null);
+          }
+          if (wasAwaitingPremove) {
+            setAwaitingPremoveAck(false);
+            if (
+              pendingPremove &&
+              lm.color === myColorRef.current &&
+              e.move.u === pendingPremove.uci &&
+              e.move.ply === pendingPremove.ply + 1
+            ) {
+              shiftPremove();
+            } else {
+              clearPremoves();
+            }
+          } else if (next.board.turn === myColorRef.current) {
+            window.setTimeout(() => queuePremoveSend(next), 0);
+          }
+          if (lm.captured) playCapture();
+          else playMoveSfx();
+          if (isInCheck(next.board, next.board.turn)) setTimeout(playCheck, 80);
+          return { ...next };
+        });
+      } else if (e.type === "end") {
+        setWhiteMs(e.end.wc);
+        setBlackMs(e.end.bc);
+        setPendingLocalMove(null);
+        setAwaitingPremoveAck(false);
+        setDrawOfferBy(null);
+        setDrawOfferStatus("idle");
+        clearPremoves();
+        setGame((g) => {
+          if (!g) return g;
+          g.result = e.end.result;
+          return { ...g };
+        });
+      } else if (e.type === "draw-offer") {
         setError(null);
-        setView("game");
-      } else if (e.type === "error" && view !== "game") {
-        setError(e.message);
+        setDrawOfferBy(e.color);
+        setDrawOfferStatus(e.color === myColorRef.current ? "offering" : "idle");
+      } else if (e.type === "draw-declined") {
+        setDrawOfferBy(null);
+        setDrawOfferStatus(e.color === myColorRef.current ? "idle" : "declined");
+        if (e.color !== myColorRef.current) {
+          window.setTimeout(() => setDrawOfferStatus("idle"), 2500);
+        }
       }
     });
   };
@@ -80,7 +341,6 @@ export default function FriendPage() {
       sessionRef.current = null;
       setView("setup");
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleCreate = async () => {
@@ -94,9 +354,9 @@ export default function FriendPage() {
       if (sessionRef.current !== sess) return;
       setCode(c);
       setView("lobby");
-    } catch (e) {
+    } catch (e: any) {
       if (sessionRef.current !== sess) return;
-      setError(e instanceof Error ? e.message : String(e));
+      setError(String(e?.message || e));
     }
   };
 
@@ -115,35 +375,335 @@ export default function FriendPage() {
     try {
       await sess.join(trimmed);
       // The game starts on receipt of the server `start` frame.
-    } catch (e) {
+    } catch (e: any) {
       if (sessionRef.current !== sess) return;
-      setError((e instanceof Error ? e.message : String(e)) || "Failed to connect — check the code.");
+      setError(String(e?.message || e) || "Failed to connect — check the code.");
       setView("setup");
     }
   };
 
-  const handleExit = () => {
+  const moves = useMemo(() => (game ? legalMoves(game) : []), [game]);
+  const moveRisks = useMemo(
+    () =>
+      uiSettings.moveRiskWarnings && game && game.board.turn === myColor
+        ? computeMoveRisks(game, moves)
+        : undefined,
+    [game, moves, myColor, uiSettings.moveRiskWarnings]
+  );
+
+  useEffect(() => {
+    if (!game || !clockEnabledRef.current) return;
+    const shell = boardShellRef.current;
+    const boardEl = shell?.querySelector("[data-board-measure]");
+    if (!boardEl) return;
+    const syncHeight = () => setBoardHeight(boardEl.getBoundingClientRect().height);
+    syncHeight();
+    const observer = new ResizeObserver(syncHeight);
+    observer.observe(boardEl);
+    return () => observer.disconnect();
+  }, [game]);
+
+  useEffect(() => {
+    if (!game || historyPly == null) return;
+    if (historyPly > game.board.history.length) {
+      setHistoryPly(game.board.history.length);
+    }
+  }, [game, historyPly]);
+
+  // Game-ended hook: write the finished game into the local history, once.
+  useEffect(() => {
+    if (!game?.result || recordedResult.current) return;
+    recordedResult.current = true;
+    recordCompletedGame({
+      mode: "friend",
+      opponent: "Anonymous Player",
+      myColor,
+      outcome: outcomeFor(game.result.winner, myColor),
+      reason: game.result.reason,
+      rated: false,
+      moveCount: game.board.history.length,
+      baseSec: timeControlRef.current.baseSec,
+      incSec: timeControlRef.current.incSec,
+      ratingChange: null,
+      myNerf: nerfSummary(myColor === "w" ? game.white.nerf : game.black.nerf),
+      // The opponent's rule is never sent to this client in friend games.
+      opponentNerf: null,
+    });
+  }, [game, myColor]);
+
+  const reviewBoard = useMemo(() => {
+    if (!game || historyPly == null) return null;
+    return boardAtPly(game.board.history, historyPly);
+  }, [game, historyPly]);
+  const pendingLocalBoard = useMemo(() => {
+    if (!game || !pendingLocalMove || pendingLocalMove.ply !== game.board.history.length) return null;
+    return makeMove(cloneBoard(game.board), pendingLocalMove.move);
+  }, [game, pendingLocalMove]);
+  const currentHistoryPly = historyPly ?? game?.board.history.length ?? 0;
+  const isReviewingHistory = historyPly != null;
+  const handleHistoryPlyChange = (ply: number) => {
+    const max = game?.board.history.length ?? 0;
+    if (ply >= max) {
+      setHistoryPly(null);
+    } else {
+      setHistoryPly(Math.max(0, ply));
+      clearPremoves();
+    }
+  };
+
+  const myNerfForPremove = game ? (myColor === "w" ? game.white.nerf : game.black.nerf) : null;
+  const myStateForPremove = game ? (myColor === "w" ? game.white.state : game.black.state) : null;
+
+  const { virtualBoard, validPremoves } = useMemo(() => {
+    if (!game || game.result || (game.board.turn === myColor && premoves.length === 0)) {
+      return { virtualBoard: null as BoardState | null, validPremoves: [] as QueuedPremove[] };
+    }
+    let board = cloneBoard(game.board);
+    board.turn = myColor;
+    board.epTarget = null;
+    const valid: QueuedPremove[] = [];
+    for (const pm of premoves) {
+      const ctx: GameContext = {
+        board,
+        me: myColor,
+        opponentLastMove: [...board.history].reverse().find((m) => m.color !== myColor) ?? null,
+        myLastMove: [...board.history].reverse().find((m) => m.color === myColor) ?? null,
+        moveNumber: board.history.filter((m) => m.color === myColor).length,
+        capturedByMe: game.captured[myColor],
+        capturedFromMe: game.captured[myColor === "w" ? "b" : "w"],
+      };
+      const strictOptions = premoveOptionsFor(board, myColor, myNerfForPremove, myStateForPremove, ctx);
+      const fallbackOptions = premoveOptionsFor(board, myColor, null, null, null);
+      const options =
+        game.board.turn === myColor
+          ? strictOptions
+          : [
+              ...strictOptions,
+              ...fallbackOptions.filter((m) => !strictOptions.some((s) => moveKey(s) === moveKey(m))),
+            ];
+      const match = options.find(
+        (c) =>
+          c.from === pm.from &&
+          c.to === pm.to &&
+          (c.promotion ?? undefined) === (pm.promotion ?? undefined) &&
+          (!pm.capture || !!c.captured),
+      );
+      if (!match) break;
+      board = makeMove(board, match);
+      board.turn = myColor;
+      board.epTarget = null;
+      valid.push(pm);
+    }
+    return { virtualBoard: board, validPremoves: valid };
+  }, [game, myColor, premoves, myNerfForPremove, myStateForPremove]);
+
+  const premoveOptions = useMemo<Move[]>(() => {
+    if (!virtualBoard || !game) return [];
+    const ctx: GameContext = {
+      board: virtualBoard,
+      me: myColor,
+      opponentLastMove: [...virtualBoard.history].reverse().find((m) => m.color !== myColor) ?? null,
+      myLastMove: [...virtualBoard.history].reverse().find((m) => m.color === myColor) ?? null,
+      moveNumber: virtualBoard.history.filter((m) => m.color === myColor).length,
+      capturedByMe: game.captured[myColor],
+      capturedFromMe: game.captured[myColor === "w" ? "b" : "w"],
+    };
+    const strictOptions = premoveOptionsFor(virtualBoard, myColor, myNerfForPremove, myStateForPremove, ctx);
+    const fallbackOptions = premoveOptionsFor(virtualBoard, myColor, null, null, null);
+    return [...strictOptions, ...fallbackOptions.filter((m) => !strictOptions.some((s) => moveKey(s) === moveKey(m)))];
+  }, [virtualBoard, myColor, game, myNerfForPremove, myStateForPremove]);
+
+  const premoveMode = !!game && !game.result && game.board.turn !== myColor && !!virtualBoard;
+  const premovePending = !!game && !game.result && game.board.turn === myColor && validPremoves.length > 0;
+
+  const handleLocalMove = (m: Move) => {
+    if (!game || game.result || isReviewingHistory) return;
+    if (game.board.turn !== myColor) {
+      enqueuePremove(m);
+      return;
+    }
+    if (premovePending) return;
+    const lm = moves.find(
+      (x) => x.from === m.from && x.to === m.to && (x.promotion ?? null) === (m.promotion ?? null),
+    );
+    if (!lm) return;
+    clearPremoves();
+    setAwaitingPremoveAck(false);
+    const uci = moveToUCI(lm);
+    const ply = game.board.history.length;
+    if (!sessionRef.current?.sendMove(uci, ply)) {
+      setPendingLocalMove(null);
+      setError("Disconnected from the game server.");
+      return;
+    }
+    setPendingLocalMove({ uci, ply, move: lm });
+  };
+
+  // Execute queued premove when our turn comes
+  useEffect(() => {
+    if (!game || game.result || premoves.length === 0) return;
+    queuePremoveSend(game);
+  }, [game, premoves, moves, myColor, awaitingPremoveAck]);
+
+  useEffect(() => {
+    if (!awaitingPremoveAck) return;
+    const id = window.setTimeout(() => {
+      setAwaitingPremoveAck(false);
+      setPendingLocalMove(null);
+      clearPremoves();
+      setError("The premove did not reach the game server. Try the move again.");
+    }, 5000);
+    return () => window.clearTimeout(id);
+  }, [awaitingPremoveAck]);
+
+  useEffect(() => {
+    if (!pendingLocalMove) return;
+    const id = window.setTimeout(() => {
+      setPendingLocalMove(null);
+      setError("The move did not reach the game server. Try the move again.");
+    }, 5000);
+    return () => window.clearTimeout(id);
+  }, [pendingLocalMove]);
+
+  // Clock tick
+  useEffect(() => {
+    if (!clockEnabledRef.current || !game || game.result) return;
+    const id = setInterval(() => {
+      const dec = (t: number) => Math.max(0, t - 100);
+      if (game.board.turn === "w") setWhiteMs(dec);
+      else setBlackMs(dec);
+    }, 100);
+    return () => clearInterval(id);
+  }, [game]);
+
+  const onResign = () => {
+    if (!game || game.result) return;
+    sessionRef.current?.resign();
+  };
+
+  const onOfferDraw = () => {
+    if (!game || game.result || drawOfferStatus === "offering") return;
+    setError(null);
+    if (!sessionRef.current?.offerDraw()) {
+      setError("Disconnected from the game server.");
+    }
+  };
+
+  const onAcceptDraw = () => {
+    if (!game || game.result) return;
+    setError(null);
+    if (!sessionRef.current?.acceptDraw()) {
+      setError("Disconnected from the game server.");
+    }
+  };
+
+  const onDeclineDraw = () => {
+    if (!game || game.result) return;
+    setError(null);
+    setDrawOfferBy(null);
+    if (!sessionRef.current?.declineDraw()) {
+      setError("Disconnected from the game server.");
+    }
+  };
+
+  const toggleMute = () => {
+    const next = !muted;
+    setMuted(next);
+    setMutedState(next);
+  };
+
+  const handleRematch = () => {
     clearSavedFriendSession();
     sessionRef.current?.destroy();
     sessionRef.current = null;
-    setStart(null);
+    setGame(null);
+    clearPremoves();
+    setPendingLocalMove(null);
+    setAwaitingPremoveAck(false);
+    setDrawOfferBy(null);
+    setDrawOfferStatus("idle");
+    setHistoryPly(null);
     setView("setup");
     setCode("");
     setJoinCode("");
     setError(null);
   };
 
-  if (view === "game" && start && sessionRef.current) {
+  // -------- Setup view --------
+  if (view === "setup") {
     return (
-      <OnlineMatch
-        session={sessionRef.current}
-        start={start}
-        subtitle={`code ${start.id}`}
-        onExit={handleExit}
-      />
+      <main className="min-h-screen">
+        <SiteNav />
+        <section className="max-w-2xl mx-auto px-6 py-8">
+          <h1 className="font-display text-5xl">Play a Friend</h1>
+          <p className="mt-3 text-parchment-200">
+            Create a game and share the code, or join one with a code your friend sent you.
+            Both players get a random secret rule.
+          </p>
+
+          {error && (
+            <div className="mt-5 plate p-3 px-4 border-oxblood-glow/60 bg-oxblood/15 text-parchment">
+              {error}
+            </div>
+          )}
+
+          <div className="mt-8 plate p-6 sm:p-7 space-y-6">
+            <div className="space-y-4">
+              <TimeSlider
+                label="Time per Side"
+                value={baseSec}
+                values={[0, ...TIME_STEPS_SEC]}
+                display={baseSec === 0 ? "Unlimited" : formatTimeControl(baseSec)}
+                formatEdgeLabel={formatTimeControl}
+                onChange={setBaseSec}
+              />
+              <TimeSlider
+                label="Increment (Seconds)"
+                value={incrementSec}
+                values={range(0, 30, 1)}
+                display={String(incrementSec)}
+                disabled={baseSec === 0}
+                onChange={setIncrementSec}
+              />
+            </div>
+
+            <button
+              onClick={handleCreate}
+              className="w-full py-3.5 rounded-sm btn-leaf font-body text-lg"
+            >
+              Create game
+            </button>
+
+            <div className="rule-ornament">
+              <span>or</span>
+            </div>
+
+            <div>
+              <div className="smallcaps text-[11px] text-parchment-400 mb-2">Join with a code</div>
+              <div className="flex gap-2">
+                <input
+                  value={joinCode}
+                  onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                  placeholder="ABCDE"
+                  maxLength={6}
+                  className="flex-1 bg-ink-900/60 border border-white/15 rounded-sm px-4 py-3 text-lg font-mono tracking-widest uppercase focus:outline-none focus:border-gold/60 text-parchment placeholder:text-parchment-400/40"
+                />
+                <button
+                  onClick={handleJoin}
+                  disabled={!joinCode.trim()}
+                  className="px-5 rounded-sm btn-ghost font-body disabled:opacity-50"
+                >
+                  Join
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
     );
   }
 
+  // -------- Lobby (host waiting) --------
   if (view === "lobby") {
     return (
       <main className="min-h-screen">
@@ -164,7 +724,7 @@ export default function FriendPage() {
             </div>
           )}
           <button
-            onClick={handleExit}
+            onClick={handleRematch}
             className="mt-8 px-5 py-2 rounded-sm btn-ghost font-body"
           >
             Cancel
@@ -174,13 +734,14 @@ export default function FriendPage() {
     );
   }
 
+  // -------- Joining (guest connecting) --------
   if (view === "joining") {
     return (
       <main className="min-h-screen">
         <SiteNav />
         <section className="max-w-xl mx-auto px-6 py-12 text-center">
           <div className="smallcaps text-[11px] text-parchment-400">Connecting…</div>
-          <div className="mt-3 font-mono text-4xl tracking-[0.2em] text-gold-leaf">{joinCode || code}</div>
+          <div className="mt-3 font-mono text-4xl tracking-[0.2em] text-gold-leaf">{joinCode}</div>
           {error && (
             <div className="mt-6 plate p-3 px-4 border-oxblood-glow/60 bg-oxblood/15 text-parchment">
               {error}
@@ -191,74 +752,312 @@ export default function FriendPage() {
     );
   }
 
-  return (
-    <main className="min-h-screen">
-      <SiteNav />
-      <section className="max-w-2xl mx-auto px-6 py-8">
-        <h1 className="font-display text-5xl">Play a Friend</h1>
-        <p className="mt-3 text-parchment-200">
-          Create a game and share the code, or join one with a code your friend sent you.
-          Both players get a random secret rule.
-        </p>
+  // -------- Game view --------
+  if (!game) return null;
+  const myNerf = myColor === "w" ? game.white.nerf : game.black.nerf;
+  const myState = myColor === "w" ? game.white.state : game.black.state;
+  const myCtx = makeContext(game, myColor);
+  const visual = myNerf.visual?.(myState, myCtx);
+  const opponentNerf = myColor === "w" ? game.black.nerf : game.white.nerf;
+  const lastMove = game.board.history[game.board.history.length - 1] ?? null;
+  const boardForDisplay = reviewBoard ?? pendingLocalBoard ?? virtualBoard ?? game.board;
+  const lastMoveForDisplay = isReviewingHistory
+    ? game.board.history[currentHistoryPly - 1] ?? null
+    : pendingLocalMove?.move ?? lastMove;
+  const hint = currentHint(game, myColor);
+  const forcedSquares = hint?.squares ?? [];
+  const railHeightStyle = boardHeight
+    ? ({ "--board-height": `${boardHeight}px` } as CSSProperties)
+    : undefined;
+  const boardFitClass = hint
+    ? "w-[min(92vw,720px,calc(100dvh-11rem))] max-w-full"
+    : "w-[min(92vw,720px,calc(100dvh-8rem))] max-w-full";
+  const historyActions = game.result ? null : confirmingResign ? (
+    <div className="space-y-2">
+      <div className="smallcaps text-[10px] text-parchment-300">Resign the game?</div>
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          onClick={() => {
+            onResign();
+            setConfirmingResign(false);
+          }}
+          className="min-w-0 px-3 py-2 border border-oxblood/70 bg-oxblood/25 text-oxblood-glow hover:bg-oxblood/40 transition text-xs font-display font-semibold tracking-wide"
+        >
+          Yes
+        </button>
+        <button
+          onClick={() => setConfirmingResign(false)}
+          className="min-w-0 px-3 py-2 btn-ghost text-xs font-display tracking-wide"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  ) : drawOfferBy && drawOfferBy !== myColor ? (
+    <div className="space-y-2">
+      <div className="smallcaps text-[10px] text-parchment-300">Opponent offered a draw.</div>
+      {error && (
+        <div className="text-xs text-oxblood-glow leading-snug">
+          {error}
+        </div>
+      )}
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          onClick={onAcceptDraw}
+          className="min-w-0 px-3 py-2 border border-gold/40 bg-gold/10 text-gold-leaf hover:bg-gold/20 hover:border-gold/70 transition text-xs font-display font-semibold tracking-wide"
+        >
+          Accept
+        </button>
+        <button
+          onClick={onDeclineDraw}
+          className="min-w-0 px-3 py-2 btn-ghost text-xs font-display font-semibold tracking-wide"
+        >
+          Decline
+        </button>
+      </div>
+      <button
+        onClick={() => setConfirmingResign(true)}
+        className="w-full min-w-0 px-3 py-2 border border-oxblood/40 bg-oxblood/10 text-oxblood-glow hover:bg-oxblood/20 hover:border-oxblood/70 transition text-xs font-display font-semibold tracking-wide"
+      >
+        Resign
+      </button>
+    </div>
+  ) : (
+    <div className="space-y-2">
+      {drawOfferStatus === "declined" && (
+        <div className="smallcaps text-[10px] text-parchment-300">Draw declined.</div>
+      )}
+      {error && (
+        <div className="text-xs text-oxblood-glow leading-snug">
+          {error}
+        </div>
+      )}
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          onClick={onOfferDraw}
+          disabled={drawOfferStatus === "offering"}
+          className="min-w-0 px-3 py-2 border border-gold/40 bg-gold/10 text-gold-leaf hover:bg-gold/20 hover:border-gold/70 transition text-xs font-display font-semibold tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {drawOfferStatus === "offering" ? "Offered" : "Draw"}
+        </button>
+        <button
+          onClick={() => setConfirmingResign(true)}
+          className="min-w-0 px-3 py-2 border border-oxblood/40 bg-oxblood/10 text-oxblood-glow hover:bg-oxblood/20 hover:border-oxblood/70 transition text-xs font-display font-semibold tracking-wide"
+        >
+          Resign
+        </button>
+      </div>
+    </div>
+  );
 
-        {error && (
-          <div className="mt-5 plate p-3 px-4 border-oxblood-glow/60 bg-oxblood/15 text-parchment">
-            {error}
+  return (
+    <main className="flex h-dvh min-h-0 flex-col overflow-hidden">
+      <nav className="sticky top-0 z-20 flex w-full shrink-0 items-center justify-between px-5 py-3">
+        <Link href="/" className="font-display text-2xl tracking-tight">
+          nerf<span className="text-gold-leaf">chess</span>
+        </Link>
+        <div className="flex items-center gap-4">
+          <div className="smallcaps hidden text-[11px] text-parchment-400 sm:block">
+            playing {myColor === "w" ? "White" : "Black"} · code {code || joinCode}
+          </div>
+          <button
+            onClick={toggleMute}
+            aria-label={muted ? "Unmute" : "Mute"}
+            title={muted ? "Sound off" : "Sound on"}
+            className="w-9 h-9 inline-flex items-center justify-center rounded-full btn-ghost"
+          >
+            {muted ? (
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                <line x1="22" y1="9" x2="16" y2="15" />
+                <line x1="16" y1="9" x2="22" y2="15" />
+              </svg>
+            ) : (
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+              </svg>
+            )}
+          </button>
+          <button
+            onClick={() => setSettingsOpen(true)}
+            aria-label="Settings"
+            title="Settings"
+            className="w-9 h-9 inline-flex items-center justify-center rounded-full btn-ghost"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+            </svg>
+          </button>
+        </div>
+      </nav>
+
+      <div className="mx-auto flex w-full max-w-[1280px] flex-1 min-h-0 flex-col gap-2 overflow-hidden px-3 pb-14 sm:px-6 sm:pb-6">
+        {hint && (
+          <div
+            role="status"
+            aria-live="polite"
+            className={
+              "plate shrink-0 p-2 px-3 flex items-center gap-2 " +
+              (hint.tone === "warn"
+                ? "border-oxblood-glow/60 bg-oxblood/15"
+                : "border-gold/40 bg-gold/10")
+            }
+          >
+            <span aria-hidden="true" className="text-gold-leaf font-display font-bold text-lg leading-none">!</span>
+            <span className="font-display text-sm text-parchment">
+              {hint.text}
+            </span>
           </div>
         )}
-
-        <div className="mt-8 plate p-6 sm:p-7 space-y-6">
-          <div className="space-y-4">
-            <TimeSlider
-              label="Time per Side"
-              value={baseSec}
-              values={[0, ...TIME_STEPS_SEC]}
-              display={baseSec === 0 ? "Unlimited" : formatTimeControl(baseSec)}
-              formatEdgeLabel={formatTimeControl}
-              onChange={setBaseSec}
+        <div
+          className="grid min-h-0 flex-1 gap-y-2 lg:grid-cols-[280px_auto] lg:justify-center lg:gap-x-3"
+          style={railHeightStyle}
+        >
+          <aside className="hidden min-h-0 gap-3 overflow-hidden lg:grid lg:h-[var(--board-height)] lg:grid-rows-[auto_minmax(0,1fr)_auto] lg:self-start">
+            <PlayerNerfCard
+              board={boardForDisplay}
+              playerColor={myColor === "w" ? "b" : "w"}
+              myColor={myColor}
+              name="Opponent"
+              nerf={opponentNerf}
+              revealed={!!game.result}
+              ownerLabel=""
             />
-            <TimeSlider
-              label="Increment (Seconds)"
-              value={incrementSec}
-              values={range(0, 30, 1)}
-              display={String(incrementSec)}
-              disabled={baseSec === 0}
-              onChange={setIncrementSec}
+            <div className="hidden lg:block" />
+            <PlayerNerfCard
+              board={boardForDisplay}
+              playerColor={myColor}
+              myColor={myColor}
+              name="You"
+              nerf={myNerf}
+              ownerLabel=""
+              progress={myNerf.progress?.(myState, myCtx) ?? null}
             />
-          </div>
-
-          <button
-            onClick={handleCreate}
-            className="w-full py-3.5 rounded-sm btn-leaf font-body text-lg"
-          >
-            Create game
-          </button>
-
-          <div className="rule-ornament">
-            <span>or</span>
-          </div>
-
-          <div>
-            <div className="smallcaps text-[11px] text-parchment-400 mb-2">Join with a code</div>
-            <div className="flex gap-2">
-              <input
-                value={joinCode}
-                onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-                placeholder="ABCDE"
-                maxLength={6}
-                className="flex-1 bg-ink-900/60 border border-white/15 rounded-sm px-4 py-3 text-lg font-mono tracking-widest uppercase focus:outline-none focus:border-gold/60 text-parchment placeholder:text-parchment-400/40"
-              />
-              <button
-                onClick={handleJoin}
-                disabled={!joinCode.trim()}
-                className="px-5 rounded-sm btn-ghost font-body disabled:opacity-50"
-              >
-                Join
-              </button>
+          </aside>
+          <div className="flex min-h-0 flex-col gap-2 sm:flex-row sm:items-stretch sm:justify-start">
+            <div ref={boardShellRef} className="min-h-0 min-w-0 sm:flex-none">
+              {/* Mobile-only player strips: the side rails (clocks, cards,
+                  actions) are hidden below the sm breakpoint. */}
+              <div className="flex items-center justify-between gap-2 sm:hidden">
+                <BoardPlayerRow
+                  board={boardForDisplay}
+                  playerColor={myColor === "w" ? "b" : "w"}
+                  myColor={myColor}
+                  name="Opponent"
+                  className="min-w-0 flex-1 !px-0 !py-1"
+                />
+                {clockEnabledRef.current && (
+                  <ClockPill
+                    ms={myColor === "w" ? blackMs : whiteMs}
+                    active={!game.result && game.board.turn !== myColor}
+                    compact
+                  />
+                )}
+              </div>
+              <div data-board-measure className={`mx-auto sm:mx-0 ${boardFitClass}`}>
+                <Board
+                  board={boardForDisplay}
+                  legalMoves={
+                    isReviewingHistory
+                      ? []
+                      : game.board.turn === myColor
+                      ? moves
+                      : premoveOptions
+                  }
+                  orientation={myColor}
+                  onMove={handleLocalMove}
+                  myColor={myColor}
+                  visual={isReviewingHistory ? undefined : { ...(visual ?? {}), highlightSquares: forcedSquares }}
+                  lastMove={lastMoveForDisplay}
+                  disabled={!!game.result || isReviewingHistory || premovePending || awaitingPremoveAck || !!pendingLocalMove}
+                  premoveMode={!isReviewingHistory && premoveMode}
+                  premoves={isReviewingHistory ? [] : validPremoves}
+                  onCancelPremove={clearPremoves}
+                  moveRisks={isReviewingHistory || premovePending ? undefined : moveRisks}
+                  autoQueen={uiSettings.autoQueen}
+                />
+              </div>
+              <div className="flex items-center justify-between gap-2 sm:hidden">
+                <BoardPlayerRow
+                  board={boardForDisplay}
+                  playerColor={myColor}
+                  myColor={myColor}
+                  name="You"
+                  className="min-w-0 flex-1 !px-0 !py-1"
+                />
+                {clockEnabledRef.current && (
+                  <ClockPill
+                    ms={myColor === "w" ? whiteMs : blackMs}
+                    active={!game.result && game.board.turn === myColor}
+                    compact
+                  />
+                )}
+              </div>
+              <div className="plate mt-1 p-2 px-3 sm:hidden">
+                <span className={`font-display text-sm font-semibold tier-${myNerf.tier}`}>
+                  {myNerf.name}
+                </span>
+                <span className="text-xs leading-snug text-parchment-300"> — {myNerf.description}</span>
+              </div>
+              {historyActions && <div className="mt-1 sm:hidden">{historyActions}</div>}
+            </div>
+            <div
+              className={
+                "hidden min-h-0 overflow-hidden gap-3 sm:grid sm:h-[var(--board-height)] sm:w-52 sm:shrink-0 " +
+                (clockEnabledRef.current ? "sm:grid-rows-[auto_minmax(0,1fr)_auto]" : "sm:grid-rows-[minmax(0,1fr)]")
+              }
+              style={railHeightStyle}
+            >
+              {clockEnabledRef.current && (
+                <ClockPill
+                  ms={myColor === "w" ? blackMs : whiteMs}
+                  active={!game.result && game.board.turn !== myColor}
+                />
+              )}
+                <MoveList
+                  moves={game.board.history}
+                  currentPly={currentHistoryPly}
+                  onPlyChange={handleHistoryPlyChange}
+                  compact
+                  showHeader={false}
+                  footer={historyActions}
+                />
+              {clockEnabledRef.current && (
+                <ClockPill
+                  ms={myColor === "w" ? whiteMs : blackMs}
+                  active={!game.result && game.board.turn === myColor}
+                />
+              )}
             </div>
           </div>
         </div>
-      </section>
+      </div>
+
+      <MobileMoveDrawer
+        moves={game.board.history}
+        currentPly={currentHistoryPly}
+        onPlyChange={handleHistoryPlyChange}
+        footer={historyActions}
+      />
+
+      {game.result && (
+        <GameOver
+          result={game.result}
+          myColor={myColor}
+          onRematch={handleRematch}
+          onNewGame={handleRematch}
+        />
+      )}
+      <SettingsPanel
+        open={settingsOpen}
+        onClose={() => {
+          setSettingsOpen(false);
+          setUiSettings(loadSettings());
+        }}
+      />
     </main>
   );
 }
@@ -330,5 +1129,29 @@ function SiteNav() {
         vs Bot
       </Link>
     </nav>
+  );
+}
+
+function ClockPill({ ms, active, compact = false }: { ms: number; active: boolean; compact?: boolean }) {
+  const low = ms < 30000;
+  const critical = ms < 10000;
+  return (
+    <div
+      className={
+        "plate flex items-center justify-center transition " +
+        (compact ? "shrink-0 px-3 py-1.5 " : "p-4 ") +
+        (active ? "border-2 border-gold bg-gold/15 shadow-leaf ring-1 ring-gold/40" : "opacity-60")
+      }
+    >
+      <span
+        className={
+          "font-mono tabular-nums font-bold tracking-wide " +
+          (compact ? "text-xl " : "text-4xl ") +
+          (critical ? "text-oxblood-glow" : low ? "text-gold-leaf" : "text-parchment")
+        }
+      >
+        {formatClock(ms)}
+      </span>
+    </div>
   );
 }
