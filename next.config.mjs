@@ -1,20 +1,15 @@
 /** @type {import('next').NextConfig} */
-import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
 
-// Expose Cloudflare bindings (D1, Durable Objects) to route handlers during
-// `next dev` via wrangler's platform proxy.
-initOpenNextCloudflareForDev();
-
-// Content Security Policy — nerf chess loads no third-party scripts other than
-// Vercel Analytics. Fonts come from Google Fonts (see src/app/layout.tsx).
+// Content Security Policy — nerf chess is fully client-side, no third-party scripts
+// other than Vercel Analytics. next/font self-hosts fonts so no font CDN is required.
 // 'unsafe-inline' for styles is needed because tailwind + next inject style tags;
 // 'unsafe-inline' for scripts is required by Next's hydration boot script.
 const csp = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com",
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob:",
-  "font-src 'self' data: https://fonts.gstatic.com",
+  "font-src 'self' data:",
   "connect-src 'self' https://vitals.vercel-insights.com https://va.vercel-scripts.com ws: wss:",
   "frame-ancestors 'none'",
   "base-uri 'self'",

@@ -16,17 +16,6 @@
       "custom_domain": true
     }
   ],
-  "d1_databases": [
-    {
-      "binding": "DB",
-      "database_name": "nerfchess",
-      // Placeholder for local dev/preview. Before deploying, run
-      // `npx wrangler d1 create nerfchess` and paste the real database_id here,
-      // then `npx wrangler d1 migrations apply nerfchess --remote`.
-      "database_id": "00000000-0000-0000-0000-000000000000",
-      "migrations_dir": "migrations"
-    }
-  ],
   "durable_objects": {
     "bindings": [
       {

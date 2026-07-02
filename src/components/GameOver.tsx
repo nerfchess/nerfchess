@@ -19,9 +19,6 @@ interface Props {
   onRematch: () => void;
   onNewGame: () => void;
   onReview?: () => void;
-  // Online games negotiate rematches over the wire: "offered" = waiting for
-  // the opponent, "incoming" = the opponent wants one.
-  rematchStatus?: "none" | "offered" | "incoming";
 }
 
 // A single revealed rule row for the post game summary. Both players' rules are
@@ -65,7 +62,6 @@ export function GameOver({
   onRematch,
   onNewGame,
   onReview,
-  rematchStatus = "none",
 }: Props) {
   const [dismissed, setDismissed] = useState(false);
   const [shared, setShared] = useState(false);
@@ -211,19 +207,9 @@ export function GameOver({
             ref={primaryRef}
             type="button"
             onClick={onRematch}
-            disabled={rematchStatus === "offered"}
-            className={
-              "rounded-sm px-5 py-2.5 font-display " +
-              (rematchStatus === "offered"
-                ? "btn-ghost opacity-70 cursor-default"
-                : "btn-leaf" + (rematchStatus === "incoming" ? " animate-flicker" : ""))
-            }
+            className="rounded-sm px-5 py-2.5 btn-leaf font-display"
           >
-            {rematchStatus === "offered"
-              ? "Rematch offered…"
-              : rematchStatus === "incoming"
-              ? "Accept rematch"
-              : "Rematch"}
+            Rematch
           </button>
           <button
             type="button"
