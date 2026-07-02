@@ -187,6 +187,7 @@ function createMatch(client, data) {
         clocks: { w: timeSec * 1000, b: timeSec * 1000 },
         runningSince: null,
         drawOfferBy: null,
+        rematchOfferBy: null,
         createdAt: Date.now(),
         completedAt: null,
     };
@@ -308,6 +309,62 @@ function acceptDraw(client) {
     match.game.result = { winner: "draw", reason: "draw by agreement" };
     finish(match);
 }
+// A rematch offer once the game is over. A second offer from the other player
+// counts as acceptance and starts the new game immediately.
+function offerRematch(client) {
+    const match = client.matchId ? matches.get(client.matchId) : undefined;
+    if (!match?.game || !client.color)
+        return error(client, "no_game", "Join a game before offering a rematch.");
+    if (!match.game.result)
+        return error(client, "game_live", "The game is still in progress.");
+    if (match.rematchOfferBy === client.color) {
+        return error(client, "rematch_pending", "Your rematch offer is already pending.");
+    }
+    if (match.rematchOfferBy && match.rematchOfferBy !== client.color)
+        return startRematch(match);
+    match.rematchOfferBy = client.color;
+    broadcast(match, "rematchOffer", { color: client.color });
+}
+function declineRematch(client) {
+    const match = client.matchId ? matches.get(client.matchId) : undefined;
+    if (!match?.game || !client.color)
+        return error(client, "no_game", "Join a game before declining a rematch.");
+    if (!match.rematchOfferBy || match.rematchOfferBy === client.color) {
+        return error(client, "no_rematch_offer", "There is no opponent rematch offer to decline.");
+    }
+    match.rematchOfferBy = null;
+    broadcast(match, "rematchDeclined", { color: client.color });
+}
+// Reset the match in place: fresh nerfs and seed, colors swapped for fairness,
+// clocks back to the original time control. Both players get a fresh "start".
+function startRematch(match) {
+    const white = match.clients.w;
+    const black = match.clients.b;
+    match.tokens = { w: match.tokens.b, b: match.tokens.w };
+    match.clients = {};
+    if (black)
+        attachClient(match, black, "w");
+    if (white)
+        attachClient(match, white, "b");
+    match.setup = {
+        ...match.setup,
+        whiteNerfId: pickNerfId(),
+        blackNerfId: pickNerfId(),
+        seed: (0, rng_1.makeSeed)(),
+    };
+    const whiteNerf = library_1.PLAYABLE_NERFS.find((nerf) => nerf.id === match.setup.whiteNerfId);
+    const blackNerf = library_1.PLAYABLE_NERFS.find((nerf) => nerf.id === match.setup.blackNerfId);
+    if (!whiteNerf || !blackNerf)
+        return;
+    match.game = (0, game_1.newGame)(whiteNerf, blackNerf, match.setup.seed);
+    match.clocks = { w: match.setup.timeSec * 1000, b: match.setup.timeSec * 1000 };
+    match.runningSince = Date.now();
+    match.drawOfferBy = null;
+    match.rematchOfferBy = null;
+    match.completedAt = null;
+    sendStart(match, "w");
+    sendStart(match, "b");
+}
 function declineDraw(client) {
     const match = client.matchId ? matches.get(client.matchId) : undefined;
     if (!match?.game || !client.color)
@@ -345,6 +402,10 @@ function onMessage(client, raw) {
             return acceptDraw(client);
         case "drawDecline":
             return declineDraw(client);
+        case "rematch":
+            return offerRematch(client);
+        case "rematchDecline":
+            return declineRematch(client);
         case "p": {
             const match = client.matchId ? matches.get(client.matchId) : undefined;
             const clocks = match ? currentClocks(match) : null;

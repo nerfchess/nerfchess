@@ -22,7 +22,6 @@ export default function CodexPage() {
     });
   }, [q, tier, onlyPlayable]);
 
-  const implementedCount = ALL_NERFS.filter((d) => d.implemented).length;
 
   return (
     <main className="min-h-screen pb-20">
@@ -37,7 +36,7 @@ export default function CodexPage() {
         <div className="smallcaps text-[11px] text-parchment-400">the rules</div>
         <h1 className="font-display text-5xl sm:text-6xl mt-1">All the rules</h1>
         <p className="mt-3 text-parchment-200">
-          {ALL_NERFS.length} secret rules in the library. {implementedCount} are playable today.
+          {ALL_NERFS.length} secret rules in the library.
         </p>
         <div className="mt-4">
           <Link
@@ -93,7 +92,7 @@ export default function CodexPage() {
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <polyline points="20 6 9 17 4 12" />
             </svg>
-            Playable today
+            Playable
           </button>
         </div>
 

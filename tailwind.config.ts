@@ -30,11 +30,12 @@ export default {
           400: "#7f7d77",
           500: "#5c5a55",
         },
-        // gold = repurposed as Lichess's blue accent (links / primary)
+        // gold = the configurable accent (links / primary); the rgb triples are
+        // set on :root and swapped by the accent-color setting.
         gold: {
-          DEFAULT: "#3692e7",
-          leaf: "#4a9fee",
-          dim: "#2a6fb0",
+          DEFAULT: "rgb(var(--accent-rgb) / <alpha-value>)",
+          leaf: "rgb(var(--accent-hi-rgb) / <alpha-value>)",
+          dim: "rgb(var(--accent-dim-rgb) / <alpha-value>)",
         },
         // oxblood = alert / danger
         oxblood: {

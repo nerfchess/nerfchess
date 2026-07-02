@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Logo } from "@/components/Logo";
 import { HeroBoard } from "@/components/HeroBoard";
@@ -12,10 +13,9 @@ import type { Nerf } from "@/engine/nerf";
 const TIER_LABEL = ["", "Trivial", "Easy", "Common", "Severe", "Brutal"];
 const TIER_ROMAN = ["", "I", "II", "III", "IV", "V"];
 
-// Real library counts, computed once. These feed the social proof strip so the
-// numbers stay honest and update automatically as the rule set grows.
+// Real library count, computed once. Feeds the social proof strip so the
+// number stays honest and updates automatically as the rule set grows.
 const TOTAL_RULES = ALL_NERFS.length;
-const PLAYABLE_TODAY = ALL_NERFS.filter((n) => n.implemented).length;
 
 // A hand-picked spread across the difficulty tiers so a first visitor sees the
 // range of what a "secret rule" can be, from gentle to brutal.
@@ -69,36 +69,14 @@ export default function HomePage() {
             checkmate: you win by capturing the king.
           </p>
 
-          <div className="mt-7 flex flex-col sm:flex-row gap-3">
-            <Link
-              href="/game?mode=ai"
-              className="btn-leaf w-full sm:w-auto sm:min-w-[200px] flex items-center justify-center gap-2 px-8 py-4 font-display text-xl font-semibold"
-            >
-              Play now
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                <line x1="5" y1="12" x2="19" y2="12" />
-                <polyline points="12 5 19 12 12 19" />
-              </svg>
-            </Link>
-            <Link
-              href="/tutorial"
-              className="btn-ghost w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-4 font-display text-lg font-semibold"
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                <circle cx="12" cy="12" r="10" />
-                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-                <line x1="12" y1="17" x2="12.01" y2="17" />
-              </svg>
-              How it works
-            </Link>
-          </div>
+          <Lobby />
 
           <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-parchment-300">
-            <Link href="/play" className="hover:text-parchment-100 transition-colors">Custom game</Link>
-            <span aria-hidden className="opacity-30">·</span>
-            <Link href="/friend" className="hover:text-parchment-100 transition-colors">Play a friend</Link>
+            <Link href="/tutorial" className="hover:text-parchment-100 transition-colors">How it works</Link>
             <span aria-hidden className="opacity-30">·</span>
             <Link href="/codex" className="hover:text-parchment-100 transition-colors">Browse the rules</Link>
+            <span aria-hidden className="opacity-30">·</span>
+            <Link href="/players" className="hover:text-parchment-100 transition-colors">Players</Link>
           </div>
 
           <SecretRulePreview nerf={nerf} />
@@ -112,6 +90,71 @@ export default function HomePage() {
       <SiteFooter />
       <SettingsPanel open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </main>
+  );
+}
+
+// The lobby is the centerpiece of the home page: online play first, with the
+// bot game one click away. Joining with a code goes straight into the game.
+function Lobby() {
+  const router = useRouter();
+  const [joinCode, setJoinCode] = useState("");
+
+  const join = () => {
+    const trimmed = joinCode.trim().toUpperCase();
+    if (trimmed) router.push(`/friend?code=${encodeURIComponent(trimmed)}`);
+  };
+
+  return (
+    <div className="plate mt-7 p-4 sm:p-5">
+      <div className="smallcaps text-[10px] text-parchment-400">Lobby</div>
+      <div className="mt-3 grid gap-2">
+        <Link
+          href="/friend"
+          className="btn-leaf flex items-center justify-center gap-2 px-8 py-4 font-display text-xl font-semibold"
+        >
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+          </svg>
+          Play online
+        </Link>
+        <Link
+          href="/play"
+          className="btn-ghost flex items-center justify-center gap-2 px-6 py-3.5 font-display text-lg font-semibold"
+        >
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <rect x="2" y="4" width="20" height="16" rx="2" />
+            <path d="M6 8h.01M6 12h.01M10 8h8M10 12h8M6 16h12" />
+          </svg>
+          Play the computer
+        </Link>
+      </div>
+      <form
+        className="mt-3 flex gap-2 border-t border-white/10 pt-3"
+        onSubmit={(e) => {
+          e.preventDefault();
+          join();
+        }}
+      >
+        <input
+          value={joinCode}
+          onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+          placeholder="Have a code? Join a game"
+          maxLength={6}
+          aria-label="Game code"
+          className="min-w-0 flex-1 rounded-sm border border-white/15 bg-ink-900/60 px-3 py-2 font-mono text-sm uppercase tracking-widest text-parchment placeholder:normal-case placeholder:font-body placeholder:tracking-normal placeholder:text-parchment-400/50 focus:border-gold/60 focus:outline-none"
+        />
+        <button
+          type="submit"
+          disabled={!joinCode.trim()}
+          className="btn-ghost px-4 py-2 font-display text-sm disabled:opacity-50"
+        >
+          Join
+        </button>
+      </form>
+    </div>
   );
 }
 
@@ -168,12 +211,11 @@ const PLACEHOLDER_GAMES = "12,400+";
 function StatStrip() {
   const stats = [
     { value: TOTAL_RULES.toString(), label: "secret rules" },
-    { value: PLAYABLE_TODAY.toString(), label: "playable today" },
     { value: PLACEHOLDER_GAMES, label: "games played" },
   ];
   return (
     <section className="w-full max-w-6xl mx-auto px-5 sm:px-6 py-4">
-      <div className="plate p-5 sm:p-6 grid grid-cols-3 divide-x divide-white/10">
+      <div className="plate p-5 sm:p-6 grid grid-cols-2 divide-x divide-white/10">
         {stats.map((s) => (
           <div key={s.label} className="px-2 sm:px-4 text-center">
             <div className="font-display text-2xl sm:text-4xl font-bold text-parchment-50 tabular-nums">
@@ -297,7 +339,7 @@ function ExampleRules() {
       </ul>
       <div className="mt-6 flex justify-center">
         <Link
-          href="/game?mode=ai"
+          href="/play"
           className="btn-leaf inline-flex items-center gap-2 px-8 py-3.5 font-display text-lg font-semibold"
         >
           Deal me a rule and play
@@ -312,8 +354,9 @@ function SiteNav({ onOpenSettings }: { onOpenSettings: () => void }) {
     <nav className="flex items-center justify-between px-5 sm:px-10 py-5 sm:py-6">
       <Logo />
       <div className="flex items-center gap-1 sm:gap-2 text-sm font-body font-medium">
-        <Link href="/game?mode=ai" className="px-3 py-1.5 hover:bg-white/5 text-parchment-100">Play</Link>
+        <Link href="/play" className="px-3 py-1.5 hover:bg-white/5 text-parchment-100">Play</Link>
         <Link href="/leaderboard" className="hidden sm:inline-block px-3 py-1.5 hover:bg-white/5 text-parchment-100">Leaderboard</Link>
+        <Link href="/stats" className="hidden sm:inline-block px-3 py-1.5 hover:bg-white/5 text-parchment-100">Stats</Link>
         <Link href="/codex" className="px-3 py-1.5 hover:bg-white/5 text-parchment-100">Rules</Link>
         <Link href="/tutorial" className="hidden sm:inline-block px-3 py-1.5 hover:bg-white/5 text-parchment-100">How to play</Link>
         <ProfileChip />

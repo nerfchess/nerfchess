@@ -39,6 +39,8 @@ export type MPEvent =
   | { type: "end"; end: MPEnd }
   | { type: "draw-offer"; color: Color }
   | { type: "draw-declined"; color: Color }
+  | { type: "rematch-offer"; color: Color }
+  | { type: "rematch-declined"; color: Color }
   | { type: "clocks"; wc: number; bc: number }
   | { type: "opponent-gone" }
   | { type: "disconnected" }
@@ -51,6 +53,8 @@ type ServerFrame =
   | { t: "end"; d: MPEnd }
   | { t: "drawOffer"; d: { color: Color } }
   | { t: "drawDeclined"; d: { color: Color } }
+  | { t: "rematchOffer"; d: { color: Color } }
+  | { t: "rematchDeclined"; d: { color: Color } }
   | { t: "opponentGone" }
   | { t: "error"; d: { code?: string; message?: string } }
   | { t: "n"; d?: { wc?: number; bc?: number } };
@@ -199,6 +203,12 @@ export class MPSession {
       case "drawDeclined":
         this.emit({ type: "draw-declined", color: frame.d.color });
         break;
+      case "rematchOffer":
+        this.emit({ type: "rematch-offer", color: frame.d.color });
+        break;
+      case "rematchDeclined":
+        this.emit({ type: "rematch-declined", color: frame.d.color });
+        break;
       case "opponentGone":
         this.emit({ type: "opponent-gone" });
         break;
@@ -281,6 +291,14 @@ export class MPSession {
 
   declineDraw(): boolean {
     return this.sendFrame("drawDecline");
+  }
+
+  offerRematch(): boolean {
+    return this.sendFrame("rematch");
+  }
+
+  declineRematch(): boolean {
+    return this.sendFrame("rematchDecline");
   }
 
   destroy() {

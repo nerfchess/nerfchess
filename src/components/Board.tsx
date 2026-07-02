@@ -46,6 +46,10 @@ interface Props {
   moveRisks?: Map<string, MoveRisk>;
   // Skip the promotion picker and always promote to queen (Settings).
   autoQueen?: boolean;
+  // File/rank labels on the board edge (Settings).
+  showCoordinates?: boolean;
+  // Tint the from/to squares of the last played move (Settings).
+  highlightLastMove?: boolean;
 }
 
 function riskOf(moves: Move[], moveRisks: Map<string, MoveRisk> | undefined): MoveRisk {
@@ -86,6 +90,8 @@ export function Board({
   onCancelPremove,
   moveRisks,
   autoQueen,
+  showCoordinates = true,
+  highlightLastMove = true,
 }: Props) {
   const premoveSquares = useMemo(() => {
     const s = new Set<Square>();
@@ -389,7 +395,7 @@ export function Board({
               "relative flex items-center justify-center",
               isLight ? "sq-light" : "sq-dark",
               isSelected ? "sq-sel" : "",
-              (lastFrom || lastTo) ? "sq-last" : "",
+              highlightLastMove && (lastFrom || lastTo) ? "sq-last" : "",
               isHover && (isTarget || isCastleHint) ? "sq-hover" : "",
             ].join(" ");
 
@@ -453,7 +459,7 @@ export function Board({
                   <div className="absolute inset-0 pointer-events-none bg-oxblood/45" />
                 )}
 
-                {f === (orientation === "w" ? 0 : 7) && (
+                {showCoordinates && f === (orientation === "w" ? 0 : 7) && (
                   <span
                     className={
                       "absolute top-0.5 left-1 text-[10px] font-mono font-semibold pointer-events-none " +
@@ -463,7 +469,7 @@ export function Board({
                     {r + 1}
                   </span>
                 )}
-                {r === (orientation === "w" ? 0 : 7) && (
+                {showCoordinates && r === (orientation === "w" ? 0 : 7) && (
                   <span
                     className={
                       "absolute bottom-0.5 right-1 text-[10px] font-mono font-semibold pointer-events-none " +

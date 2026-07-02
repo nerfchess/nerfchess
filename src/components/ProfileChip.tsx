@@ -1,6 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { Avatar } from "@/components/Avatar";
 import {
   loadProfile,
   saveUsername,
@@ -13,12 +15,17 @@ import {
 // survives page refreshes. Clicking it opens a small editor.
 export function ProfileChip() {
   const [username, setUsername] = useState<string | null>(null);
+  const [avatarId, setAvatarId] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState("");
   const rootRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    const sync = () => setUsername(loadProfile().username);
+    const sync = () => {
+      const p = loadProfile();
+      setUsername(p.username);
+      setAvatarId(p.avatarId);
+    };
     sync();
     window.addEventListener(PROFILE_CHANGED_EVENT, sync);
     window.addEventListener("storage", sync);
@@ -62,19 +69,7 @@ export function ProfileChip() {
         title={username ? "Edit your profile" : "Set your username"}
         className="btn-ghost flex items-center gap-2 px-2 py-1.5 sm:px-2.5"
       >
-        <span
-          aria-hidden
-          className="grid h-6 w-6 shrink-0 place-items-center rounded-full border border-gold/60 bg-gold/20 font-display text-[11px] font-semibold text-gold-leaf"
-        >
-          {username ? (
-            username.charAt(0).toUpperCase()
-          ) : (
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-              <circle cx="12" cy="7" r="4" />
-            </svg>
-          )}
-        </span>
+        <Avatar avatarId={avatarId} name={username} size={24} />
         <span className="hidden max-w-[9rem] truncate sm:inline">
           {username ?? "Set username"}
         </span>
@@ -102,6 +97,12 @@ export function ProfileChip() {
               Save
             </button>
           </form>
+          <div className="mt-2.5 flex items-center justify-between border-t border-white/10 pt-2 text-[11px]">
+            <Link href="/stats" className="text-parchment-300 transition-colors hover:text-parchment-100">
+              View stats
+            </Link>
+            <span className="text-parchment-500">Picture: Settings &gt; Profile</span>
+          </div>
         </div>
       )}
     </div>

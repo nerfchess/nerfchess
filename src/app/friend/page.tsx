@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { type CSSProperties, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, type CSSProperties, useEffect, useMemo, useRef, useState } from "react";
 import { Board, QueuedPremove } from "@/components/Board";
 import { GameOver } from "@/components/GameOver";
 import { MoveList } from "@/components/MoveList";
@@ -25,6 +26,7 @@ import { BoardState, Color, Move } from "@/engine/types";
 import { boardAtPly } from "@/lib/gameReview";
 import { clearSavedFriendSession, loadSavedFriendSession, MPSession, MPStart } from "@/lib/multiplayer";
 import { premoveOptionsFor } from "@/lib/premoves";
+import { formatTimeControl as formatTC, recordGame } from "@/lib/history";
 import { isMuted, playCapture, playCheck, playMove as playMoveSfx, setMuted } from "@/lib/sounds";
 
 type View = "setup" | "lobby" | "joining" | "game";
@@ -66,7 +68,17 @@ function moveKey(move: Move): string {
   return `${move.from}:${move.to}:${move.promotion ?? ""}:${move.captured ?? ""}`;
 }
 
-export default function FriendPage() {
+export default function FriendPageWrapper() {
+  return (
+    <Suspense fallback={null}>
+      <FriendPage />
+    </Suspense>
+  );
+}
+
+function FriendPage() {
+  const searchParams = useSearchParams();
+  const codeParam = searchParams.get("code");
   const [view, setView] = useState<View>("setup");
   const [code, setCode] = useState("");
   const [joinCode, setJoinCode] = useState("");
@@ -79,6 +91,9 @@ export default function FriendPage() {
   const [confirmingResign, setConfirmingResign] = useState(false);
   const [drawOfferBy, setDrawOfferBy] = useState<Color | null>(null);
   const [drawOfferStatus, setDrawOfferStatus] = useState<"idle" | "offering" | "declined">("idle");
+  const [rematchOfferBy, setRematchOfferBy] = useState<Color | null>(null);
+  const [rematchStatus, setRematchStatus] = useState<"idle" | "declined">("idle");
+  const [inviteCopied, setInviteCopied] = useState(false);
 
   const [game, setGame] = useState<NerfGame | null>(null);
   const [myColor, setMyColor] = useState<Color>("w");
@@ -90,6 +105,7 @@ export default function FriendPage() {
   const [historyPly, setHistoryPly] = useState<number | null>(null);
   const [boardHeight, setBoardHeight] = useState<number | null>(null);
   const [username, setUsername] = useState<string | null>(null);
+  const [avatarId, setAvatarId] = useState<string | null>(null);
 
   const sessionRef = useRef<MPSession | null>(null);
   const boardShellRef = useRef<HTMLDivElement | null>(null);
@@ -100,6 +116,11 @@ export default function FriendPage() {
   const premovesRef = useRef<QueuedPremove[]>([]);
   const premoveTimerRef = useRef<number | null>(null);
   const myColorRef = useRef<Color>("w");
+  const timeControlRef = useRef("unlimited");
+  const recordedEndRef = useRef(false);
+  // True while restoring a saved session; if the restored game turns out to be
+  // finished we drop it and return to setup instead of reopening it.
+  const resumingRef = useRef(false);
 
   const setAwaitingPremoveAck = (value: boolean, pending: PendingPremoveSend | null = null) => {
     awaitingPremoveAckRef.current = value;
@@ -114,7 +135,9 @@ export default function FriendPage() {
 
   useEffect(() => {
     setMutedState(isMuted());
-    setUsername(loadProfile().username);
+    const profile = loadProfile();
+    setUsername(profile.username);
+    setAvatarId(profile.avatarId);
   }, []);
 
   useEffect(() => {
@@ -187,11 +210,15 @@ export default function FriendPage() {
     setBlackMs(msg.bc);
     setHistoryPly(null);
     clockEnabledRef.current = msg.timeSec > 0;
+    timeControlRef.current = formatTC(msg.timeSec, msg.incrementSec);
+    recordedEndRef.current = !!nextGame.result;
     clearPremoves();
     setPendingLocalMove(null);
     setAwaitingPremoveAck(false);
     setDrawOfferBy(null);
     setDrawOfferStatus("idle");
+    setRematchOfferBy(null);
+    setRematchStatus("idle");
     setView("game");
   };
 
@@ -295,6 +322,20 @@ export default function FriendPage() {
           return { ...next };
         });
       } else if (e.type === "end") {
+        // Never reopen a finished game: if this end frame arrived while
+        // restoring a saved session, drop the session and start fresh.
+        if (resumingRef.current) {
+          resumingRef.current = false;
+          clearSavedFriendSession();
+          sessionRef.current?.destroy();
+          sessionRef.current = null;
+          setGame(null);
+          setView("setup");
+          return;
+        }
+        // The game is over; a page refresh should not reconnect to it. The
+        // live socket stays open so rematch offers still work.
+        clearSavedFriendSession();
         setWhiteMs(e.end.wc);
         setBlackMs(e.end.bc);
         setPendingLocalMove(null);
@@ -315,6 +356,25 @@ export default function FriendPage() {
             const slot = oppColor === "w" ? g.white : g.black;
             slot.nerf = oppNerf;
           }
+          if (!recordedEndRef.current && g.result) {
+            recordedEndRef.current = true;
+            const me = myColorRef.current;
+            recordGame({
+              ts: Date.now(),
+              mode: "friend",
+              outcome:
+                g.result.winner === "draw" ? "draw" : g.result.winner === me ? "win" : "loss",
+              reason: g.result.reason,
+              rated: false,
+              opponent: "Friend",
+              myNerf: (me === "w" ? g.white.nerf : g.black.nerf).name,
+              opponentNerf: oppNerf?.name ?? null,
+              moves: g.board.history.length,
+              durationSec: Math.max(0, Math.round((Date.now() - g.startedAt) / 1000)),
+              timeControl: timeControlRef.current,
+              ratingAfter: null,
+            });
+          }
           return { ...g };
         });
       } else if (e.type === "draw-offer") {
@@ -327,12 +387,24 @@ export default function FriendPage() {
         if (e.color !== myColorRef.current) {
           window.setTimeout(() => setDrawOfferStatus("idle"), 2500);
         }
+      } else if (e.type === "rematch-offer") {
+        setError(null);
+        setRematchOfferBy(e.color);
+        setRematchStatus("idle");
+      } else if (e.type === "rematch-declined") {
+        setRematchOfferBy(null);
+        if (e.color !== myColorRef.current) {
+          setRematchStatus("declined");
+          window.setTimeout(() => setRematchStatus("idle"), 2500);
+        }
       }
     });
   };
 
   useEffect(() => {
     if (sessionRef.current) return;
+    // An invite link takes priority over any leftover session.
+    if (codeParam) return;
     const saved = loadSavedFriendSession();
     if (!saved) return;
     const sess = new MPSession();
@@ -340,13 +412,35 @@ export default function FriendPage() {
     wireSession(sess);
     setCode(saved.id);
     setView("joining");
-    sess.resume(saved).catch(() => {
-      if (sessionRef.current !== sess) return;
-      clearSavedFriendSession();
-      sessionRef.current = null;
-      setView("setup");
-    });
+    resumingRef.current = true;
+    sess
+      .resume(saved)
+      .then(() => {
+        // The server replays "start" (and "end", if the game finished) right
+        // after the resume resolves; give those frames a moment to land.
+        window.setTimeout(() => {
+          resumingRef.current = false;
+        }, 1000);
+      })
+      .catch(() => {
+        resumingRef.current = false;
+        if (sessionRef.current !== sess) return;
+        clearSavedFriendSession();
+        sessionRef.current = null;
+        setView("setup");
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Invite links (/friend?code=XYZ) join the game directly.
+  useEffect(() => {
+    if (!codeParam || sessionRef.current) return;
+    const trimmed = codeParam.trim().toUpperCase();
+    if (!trimmed) return;
+    setJoinCode(trimmed);
+    void joinWithCode(trimmed);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [codeParam]);
 
   const handleCreate = async () => {
     setError(null);
@@ -365,14 +459,9 @@ export default function FriendPage() {
     }
   };
 
-  const handleJoin = async () => {
+  const joinWithCode = async (trimmed: string) => {
     setError(null);
     clearSavedFriendSession();
-    const trimmed = joinCode.trim().toUpperCase();
-    if (!trimmed) {
-      setError("Enter a code.");
-      return;
-    }
     const sess = new MPSession();
     sessionRef.current = sess;
     wireSession(sess);
@@ -382,9 +471,19 @@ export default function FriendPage() {
       // The game starts on receipt of the server `start` frame.
     } catch (e: any) {
       if (sessionRef.current !== sess) return;
-      setError(String(e?.message || e) || "Failed to connect — check the code.");
+      sessionRef.current = null;
+      setError(String(e?.message || e) || "Failed to connect. Check the code.");
       setView("setup");
     }
+  };
+
+  const handleJoin = async () => {
+    const trimmed = joinCode.trim().toUpperCase();
+    if (!trimmed) {
+      setError("Enter a code.");
+      return;
+    }
+    await joinWithCode(trimmed);
   };
 
   const moves = useMemo(() => (game ? legalMoves(game) : []), [game]);
@@ -565,6 +664,11 @@ export default function FriendPage() {
     sessionRef.current?.resign();
   };
 
+  const requestResign = () => {
+    if (uiSettings.confirmResign) setConfirmingResign(true);
+    else onResign();
+  };
+
   const onOfferDraw = () => {
     if (!game || game.result || drawOfferStatus === "offering") return;
     setError(null);
@@ -596,7 +700,32 @@ export default function FriendPage() {
     setMutedState(next);
   };
 
-  const handleRematch = () => {
+  // Offer (or accept) a rematch over the live socket. The server starts the
+  // new game as soon as both players have offered.
+  const onOfferRematch = () => {
+    if (!game?.result) return;
+    setError(null);
+    setRematchStatus("idle");
+    if (!sessionRef.current?.offerRematch()) {
+      setError("Disconnected from the game server.");
+      return;
+    }
+    setRematchOfferBy((current) => current ?? myColor);
+  };
+
+  const onDeclineRematch = () => {
+    setRematchOfferBy(null);
+    sessionRef.current?.declineRematch();
+  };
+
+  const rematchState: "idle" | "offering" | "incoming" | "declined" =
+    rematchOfferBy && rematchOfferBy !== myColor
+      ? "incoming"
+      : rematchOfferBy === myColor
+      ? "offering"
+      : rematchStatus;
+
+  const handleNewGame = () => {
     clearSavedFriendSession();
     sessionRef.current?.destroy();
     sessionRef.current = null;
@@ -606,6 +735,8 @@ export default function FriendPage() {
     setAwaitingPremoveAck(false);
     setDrawOfferBy(null);
     setDrawOfferStatus("idle");
+    setRematchOfferBy(null);
+    setRematchStatus("idle");
     setHistoryPly(null);
     setView("setup");
     setCode("");
@@ -619,9 +750,9 @@ export default function FriendPage() {
       <main className="min-h-screen">
         <SiteNav />
         <section className="max-w-2xl mx-auto px-6 py-8">
-          <h1 className="font-display text-5xl">Play a Friend</h1>
+          <h1 className="font-display text-5xl">Play online</h1>
           <p className="mt-3 text-parchment-200">
-            Create a game and share the code, or join one with a code your friend sent you.
+            Create a game and share the invite link, or join with a code.
             Both players get a random secret rule.
           </p>
 
@@ -696,8 +827,24 @@ export default function FriendPage() {
           <div className="smallcaps text-[11px] text-parchment-400">Share this code</div>
           <div className="mt-3 font-mono text-5xl tracking-[0.2em] text-gold-leaf">{code}</div>
           <p className="mt-6 text-parchment-200">
-            Send the code to your friend. They open this page and tap “Join”.
+            Send the code or the invite link to anyone. The game starts as soon as they join.
           </p>
+          <button
+            onClick={async () => {
+              try {
+                await navigator.clipboard.writeText(`${window.location.origin}/friend?code=${code}`);
+                setInviteCopied(true);
+                window.setTimeout(() => setInviteCopied(false), 2000);
+              } catch {}
+            }}
+            className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-sm btn-ghost font-body text-sm"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+            </svg>
+            {inviteCopied ? "Link copied" : "Copy invite link"}
+          </button>
           <div className="mt-8 flex items-center justify-center gap-2 smallcaps text-[11px] text-parchment-400">
             <span className="w-1.5 h-1.5 rounded-full bg-verdigris animate-flicker" />
             Waiting for opponent…
@@ -708,7 +855,7 @@ export default function FriendPage() {
             </div>
           )}
           <button
-            onClick={handleRematch}
+            onClick={handleNewGame}
             className="mt-8 px-5 py-2 rounded-sm btn-ghost font-body"
           >
             Cancel
@@ -759,7 +906,52 @@ export default function FriendPage() {
   const boardFitClass = hint
     ? "w-[min(92vw,720px,calc(100dvh-11rem))] max-w-full"
     : "w-[min(92vw,720px,calc(100dvh-8rem))] max-w-full";
-  const historyActions = game.result ? null : confirmingResign ? (
+  // After the game ends the sidebar keeps rematch controls available even if
+  // the summary modal was dismissed.
+  const postGameActions = (
+    <div className="space-y-2">
+      {rematchState === "incoming" ? (
+        <>
+          <div className="smallcaps text-[10px] text-parchment-300">Opponent wants a rematch.</div>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={onOfferRematch}
+              className="min-w-0 px-3 py-2 border border-gold/40 bg-gold/10 text-gold-leaf hover:bg-gold/20 hover:border-gold/70 transition text-xs font-display font-semibold tracking-wide"
+            >
+              Accept
+            </button>
+            <button
+              onClick={onDeclineRematch}
+              className="min-w-0 px-3 py-2 btn-ghost text-xs font-display font-semibold tracking-wide"
+            >
+              Decline
+            </button>
+          </div>
+        </>
+      ) : (
+        <>
+          {rematchState === "declined" && (
+            <div className="smallcaps text-[10px] text-parchment-300">Rematch declined.</div>
+          )}
+          <button
+            onClick={onOfferRematch}
+            disabled={rematchState === "offering"}
+            className="w-full min-w-0 px-3 py-2 border border-gold/40 bg-gold/10 text-gold-leaf hover:bg-gold/20 hover:border-gold/70 transition text-xs font-display font-semibold tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {rematchState === "offering" ? "Rematch offered..." : "Rematch"}
+          </button>
+        </>
+      )}
+      <button
+        onClick={handleNewGame}
+        className="w-full min-w-0 px-3 py-2 btn-ghost text-xs font-display tracking-wide"
+      >
+        New game
+      </button>
+    </div>
+  );
+
+  const historyActions = game.result ? postGameActions : confirmingResign ? (
     <div className="space-y-2">
       <div className="smallcaps text-[10px] text-parchment-300">Resign the game?</div>
       <div className="grid grid-cols-2 gap-2">
@@ -803,7 +995,7 @@ export default function FriendPage() {
         </button>
       </div>
       <button
-        onClick={() => setConfirmingResign(true)}
+        onClick={requestResign}
         className="w-full min-w-0 px-3 py-2 border border-oxblood/40 bg-oxblood/10 text-oxblood-glow hover:bg-oxblood/20 hover:border-oxblood/70 transition text-xs font-display font-semibold tracking-wide"
       >
         Resign
@@ -828,7 +1020,7 @@ export default function FriendPage() {
           {drawOfferStatus === "offering" ? "Offered" : "Draw"}
         </button>
         <button
-          onClick={() => setConfirmingResign(true)}
+          onClick={requestResign}
           className="min-w-0 px-3 py-2 border border-oxblood/40 bg-oxblood/10 text-oxblood-glow hover:bg-oxblood/20 hover:border-oxblood/70 transition text-xs font-display font-semibold tracking-wide"
         >
           Resign
@@ -919,6 +1111,7 @@ export default function FriendPage() {
               playerColor={myColor}
               myColor={myColor}
               name={username ?? "You"}
+              avatarId={avatarId}
               nerf={myNerf}
               ownerLabel=""
               progress={myNerf.progress?.(myState, myCtx) ?? null}
@@ -947,6 +1140,8 @@ export default function FriendPage() {
                   onCancelPremove={clearPremoves}
                   moveRisks={isReviewingHistory || premovePending ? undefined : moveRisks}
                   autoQueen={uiSettings.autoQueen}
+                  showCoordinates={uiSettings.showCoordinates}
+                  highlightLastMove={uiSettings.highlightLastMove}
                 />
               </div>
             </div>
@@ -989,8 +1184,11 @@ export default function FriendPage() {
           myNerf={myNerf}
           opponentNerf={opponentNerfKnown}
           opponentHidden={uiSettings.hideOpponentReveal}
-          onRematch={handleRematch}
-          onNewGame={handleRematch}
+          onRematch={onOfferRematch}
+          onNewGame={handleNewGame}
+          rematchState={rematchState}
+          onAcceptRematch={onOfferRematch}
+          onDeclineRematch={onDeclineRematch}
         />
       )}
       <SettingsPanel

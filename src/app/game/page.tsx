@@ -23,12 +23,13 @@ import { cloneBoard, isInCheck, makeMove } from "@/engine/board";
 import { computeMoveRisks } from "@/engine/moveSafety";
 import { loadSettings } from "@/lib/settings";
 import { loadProfile } from "@/lib/profile";
+import { formatTimeControl as formatTC, recordGame } from "@/lib/history";
 import type { QueuedPremove } from "@/components/Board";
 import { buildCustomNerf, CustomNerf } from "@/engine/nerfs/custom";
 import { isMuted, playCapture, playCheck, playNerf, playMove as playMoveSfx, setMuted } from "@/lib/sounds";
 import { applyResult, loadRating, saveRating } from "@/lib/rating";
 import { SettingsPanel } from "@/components/SettingsPanel";
-import { loadSavedAiGame, restoreSavedAiGame, saveAiGame } from "@/lib/gamePersistence";
+import { clearSavedAiGame, loadSavedAiGame, restoreSavedAiGame, saveAiGame } from "@/lib/gamePersistence";
 import { boardAtPly } from "@/lib/gameReview";
 import { premoveOptionsFor } from "@/lib/premoves";
 import Link from "next/link";
@@ -123,6 +124,7 @@ function GamePage() {
   const [boardHeight, setBoardHeight] = useState<number | null>(null);
   const [playerElo, setPlayerElo] = useState<number | null>(null);
   const [username, setUsername] = useState<string | null>(null);
+  const [avatarId, setAvatarId] = useState<string | null>(null);
   // Reveal controls: peek at the opponent's rule mid-game, and offer to show
   // your own rule to the opponent.
   const [oppPeek, setOppPeek] = useState(false);
@@ -141,7 +143,9 @@ function GamePage() {
   useEffect(() => {
     setMutedState(isMuted());
     setPlayerElo(loadRating().rating);
-    setUsername(loadProfile().username);
+    const profile = loadProfile();
+    setUsername(profile.username);
+    setAvatarId(profile.avatarId);
   }, []);
 
   useEffect(() => {
@@ -168,6 +172,16 @@ function GamePage() {
       // Ignore incompatible saved games and deal a fresh one below.
     }
 
+    dealNewGame(myColor);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Deal a fresh game vs the bot with the current page settings. Used for the
+  // first deal and for instant rematches.
+  function dealNewGame(color?: Color) {
+    clearSavedAiGame();
+    const nextColor: Color =
+      color ?? (myColorParam === "w" ? "w" : myColorParam === "b" ? "b" : Math.random() < 0.5 ? "w" : "b");
     let myDb: Nerf;
     let myCustomSpec: CustomNerf | null = null;
     if (myNerfId === "__custom__") {
@@ -185,14 +199,24 @@ function GamePage() {
       myDb = IMPLEMENTED_BY_ID[myNerfId] ?? pickRandomNerf();
     }
     const aiDb = pickRandomNerf();
-    const wDb = myColor === "w" ? myDb : aiDb;
-    const bDb = myColor === "w" ? aiDb : myDb;
-    whiteCustomSpec.current = myColor === "w" ? myCustomSpec : null;
-    blackCustomSpec.current = myColor === "w" ? null : myCustomSpec;
+    const wDb = nextColor === "w" ? myDb : aiDb;
+    const bDb = nextColor === "w" ? aiDb : myDb;
+    whiteCustomSpec.current = nextColor === "w" ? myCustomSpec : null;
+    blackCustomSpec.current = nextColor === "w" ? null : myCustomSpec;
+    setMyColor(nextColor);
+    setPremoves([]);
     setHistoryPly(null);
+    setOppPeek(false);
+    setSharedMine(false);
+    setRatingChange(null);
+    setConfirmingResign(false);
+    setDrawOfferStatus("idle");
+    setWhiteMs(initialTimeMs);
+    setBlackMs(initialTimeMs);
+    sawResult.current = false;
+    lastSeenMoveCount.current = 0;
     setGame(newGame(wDb, bDb, makeSeed()));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }
 
   useEffect(() => {
     if (!game) return;
@@ -331,16 +355,33 @@ function GamePage() {
     if (game.result.reason && game.result.reason.includes(":")) {
       playNerf();
     }
-    // Casual games don't affect your rating.
-    if (!rated) return;
-    const before = loadRating();
     const score: 0 | 0.5 | 1 =
       game.result.winner === "draw" ? 0.5 : game.result.winner === myColor ? 1 : 0;
-    const after = applyResult(before, difficulty, score);
-    saveRating(after);
-    setPlayerElo(after.rating);
-    setRatingChange({ before: before.rating, after: after.rating });
-  }, [game?.result, myColor, difficulty, rated]);
+    // Rated games move your rating; casual games only enter the history log.
+    let ratingAfter: number | null = null;
+    if (rated) {
+      const before = loadRating();
+      const after = applyResult(before, difficulty, score);
+      saveRating(after);
+      setPlayerElo(after.rating);
+      setRatingChange({ before: before.rating, after: after.rating });
+      ratingAfter = after.rating;
+    }
+    recordGame({
+      ts: Date.now(),
+      mode: "ai",
+      outcome: score === 1 ? "win" : score === 0 ? "loss" : "draw",
+      reason: game.result.reason,
+      rated,
+      opponent: `${difficulty[0].toUpperCase()}${difficulty.slice(1)} Bot`,
+      myNerf: (myColor === "w" ? game.white.nerf : game.black.nerf).name,
+      opponentNerf: (myColor === "w" ? game.black.nerf : game.white.nerf).name,
+      moves: game.board.history.length,
+      durationSec: Math.max(0, Math.round((Date.now() - game.startedAt) / 1000)),
+      timeControl: formatTC(initialTimeMs / 1000, incrementMs / 1000),
+      ratingAfter,
+    });
+  }, [game, myColor, difficulty, rated, initialTimeMs, incrementMs]);
 
   // Execute the head of the premove queue when our turn returns. If the head
   // is no longer playable (target ran away, piece pinned, friendly target
@@ -496,7 +537,10 @@ function GamePage() {
 
   const cancelPremove = () => setPremoves([]);
 
-  const handleRematch = () => router.push("/play");
+  // Rematch deals a new game immediately with the same settings; "New game"
+  // goes back to the setup screen.
+  const handleRematch = () => dealNewGame();
+  const handleNewGame = () => router.push("/play");
 
   const onResign = () => {
     if (!game.result) {
@@ -504,6 +548,11 @@ function GamePage() {
       setGame({ ...game });
       setPremoves([]);
     }
+  };
+
+  const requestResign = () => {
+    if (uiSettings.confirmResign) setConfirmingResign(true);
+    else onResign();
   };
 
   const onOfferDraw = () => {
@@ -573,7 +622,7 @@ function GamePage() {
           {drawOfferStatus === "offering" ? "Offering..." : "Draw"}
         </button>
         <button
-          onClick={() => setConfirmingResign(true)}
+          onClick={requestResign}
           title="Resign the game"
           aria-label="Resign the game"
           className="min-w-0 px-3 py-2 border border-oxblood/40 bg-oxblood/10 text-oxblood-glow hover:bg-oxblood/20 hover:border-oxblood/70 transition text-xs font-display font-semibold tracking-wide"
@@ -677,6 +726,7 @@ function GamePage() {
               playerColor={myColor}
               myColor={myColor}
               name={username ?? "You"}
+              avatarId={avatarId}
               elo={playerElo}
               nerf={myNerf}
               ownerLabel=""
@@ -719,6 +769,8 @@ function GamePage() {
                   onCancelPremove={cancelPremove}
                   moveRisks={isReviewingHistory || premovePending ? undefined : moveRisks}
                   autoQueen={uiSettings.autoQueen}
+                  showCoordinates={uiSettings.showCoordinates}
+                  highlightLastMove={uiSettings.highlightLastMove}
                 />
               </div>
             </div>
@@ -763,7 +815,7 @@ function GamePage() {
           opponentHidden={uiSettings.hideOpponentReveal && !oppPeek}
           ratingChange={ratingChange}
           onRematch={handleRematch}
-          onNewGame={handleRematch}
+          onNewGame={handleNewGame}
           onReview={() => setHistoryPly(0)}
         />
       )}

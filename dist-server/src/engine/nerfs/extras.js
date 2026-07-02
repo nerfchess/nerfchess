@@ -57,7 +57,7 @@ exports.KINGFISHER = db({
         if (!kc.length)
             return null;
         return {
-            text: "Your king hungers — it must take.",
+            text: "Your king hungers. It must take.",
             squares: Array.from(new Set(kc.map((m) => m.from))),
             tone: "warn",
         };
@@ -216,7 +216,7 @@ exports.GOLDFISH = db({
     id: "goldfish",
     name: "Goldfish",
     description: "You can't move a piece you moved 3 turns ago.",
-    flavor: "Wait — what was I doing?",
+    flavor: "Wait, what was I doing?",
     tier: 3,
     icon: "fish",
     implemented: true,
@@ -471,7 +471,7 @@ exports.TRIPWIRE = db({
 exports.PROMOTION_PHOBIA = db({
     id: "promotion_phobia",
     name: "Promotion Phobia",
-    description: "Your pawns can't promote — they get stuck on the back rank.",
+    description: "Your pawns can't promote. They get stuck on the back rank.",
     flavor: "Stage fright.",
     tier: 4,
     icon: "x-circle",
@@ -578,7 +578,7 @@ exports.QUARANTINE = db({
 exports.FRESH_FACES = db({
     id: "fresh_faces",
     name: "Fresh Faces",
-    description: "Each turn, you must move a piece that hasn't moved yet — until none remain.",
+    description: "Each turn, you must move a piece that hasn't moved yet, until none remain.",
     flavor: "Everyone gets a turn.",
     tier: 4,
     icon: "users",

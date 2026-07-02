@@ -4,6 +4,12 @@
 
 let ctx: AudioContext | null = null;
 let muted = false;
+// Interface blips (piece select) can be disabled separately from game sounds.
+let uiSounds = true;
+
+export function setUiSounds(v: boolean) {
+  uiSounds = v;
+}
 let noiseBuf: AudioBuffer | null = null;
 let volume = 0.8;
 
@@ -225,5 +231,6 @@ export function playGameOver() {
 
 // Select: very brief, soft pickup tick.
 export function playSelect() {
+  if (!uiSounds) return;
   knock({ filterFreq: 1600, filterQ: 5, dur: 0.025, gain: 0.18 });
 }

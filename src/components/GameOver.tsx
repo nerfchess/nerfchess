@@ -22,6 +22,12 @@ interface Props {
   onRematch: () => void;
   onNewGame: () => void;
   onReview?: () => void;
+  // Online games negotiate rematches: "offering" = we asked and are waiting,
+  // "incoming" = the opponent asked, "declined" = they said no. When omitted
+  // the Rematch button acts immediately (bot games).
+  rematchState?: "idle" | "offering" | "incoming" | "declined";
+  onAcceptRematch?: () => void;
+  onDeclineRematch?: () => void;
 }
 
 // A single revealed rule row for the post game summary. Both players' rules are
@@ -66,6 +72,9 @@ export function GameOver({
   onRematch,
   onNewGame,
   onReview,
+  rematchState = "idle",
+  onAcceptRematch,
+  onDeclineRematch,
 }: Props) {
   const [dismissed, setDismissed] = useState(false);
   const [shared, setShared] = useState(false);
@@ -228,23 +237,50 @@ export function GameOver({
           </div>
         )}
 
-        <div className="mt-6 grid gap-2 sm:grid-cols-2">
-          <button
-            ref={primaryRef}
-            type="button"
-            onClick={onRematch}
-            className="rounded-sm px-5 py-2.5 btn-leaf font-display"
-          >
-            Rematch
-          </button>
-          <button
-            type="button"
-            onClick={onNewGame}
-            className="rounded-sm px-5 py-2.5 btn-ghost font-display"
-          >
-            New game
-          </button>
-        </div>
+        {rematchState === "incoming" ? (
+          <div className="mt-6">
+            <p className="text-sm text-parchment-200">Your opponent wants a rematch.</p>
+            <div className="mt-2 grid gap-2 sm:grid-cols-2">
+              <button
+                ref={primaryRef}
+                type="button"
+                onClick={onAcceptRematch}
+                className="rounded-sm px-5 py-2.5 btn-leaf font-display"
+              >
+                Accept rematch
+              </button>
+              <button
+                type="button"
+                onClick={onDeclineRematch}
+                className="rounded-sm px-5 py-2.5 btn-ghost font-display"
+              >
+                Decline
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="mt-6 grid gap-2 sm:grid-cols-2">
+            <button
+              ref={primaryRef}
+              type="button"
+              onClick={onRematch}
+              disabled={rematchState === "offering"}
+              className="rounded-sm px-5 py-2.5 btn-leaf font-display disabled:opacity-60"
+            >
+              {rematchState === "offering" ? "Rematch offered..." : "Rematch"}
+            </button>
+            <button
+              type="button"
+              onClick={onNewGame}
+              className="rounded-sm px-5 py-2.5 btn-ghost font-display"
+            >
+              New game
+            </button>
+          </div>
+        )}
+        {rematchState === "declined" && (
+          <p className="mt-2 text-xs text-parchment-400">Your opponent declined the rematch.</p>
+        )}
         <div className="mt-2 grid gap-2 sm:grid-cols-2">
           <button
             type="button"

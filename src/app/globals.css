@@ -20,7 +20,31 @@
   --font-mono: "Cascadia Mono", "JetBrains Mono", Consolas, monospace;
   --accent: #3692e7;
   --accent-hi: #4a9fee;
+  --accent-rgb: 54 146 231;
+  --accent-hi-rgb: 74 159 238;
+  --accent-dim-rgb: 42 111 176;
 }
+
+/* Animation speed preference (Settings). "off" also serves reduced motion. */
+html[data-anim="off"] *,
+html[data-anim="off"] *::before,
+html[data-anim="off"] *::after {
+  transition-duration: 0.001ms !important;
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+}
+html[data-anim="fast"] *,
+html[data-anim="fast"] *::before,
+html[data-anim="fast"] *::after {
+  transition-duration: 80ms !important;
+}
+
+/* High contrast preference (Settings): brighter foregrounds, firmer borders. */
+html[data-contrast="high"] { --paper: #eceae6; --paper-dim: #b5b2ac; }
+html[data-contrast="high"] .plate { border-color: rgba(255, 255, 255, 0.28); }
+html[data-contrast="high"] .text-parchment-300 { color: #c9c7c2; }
+html[data-contrast="high"] .text-parchment-400 { color: #b0ada7; }
+html[data-contrast="high"] .text-parchment-500 { color: #97948e; }
 
 html, body {
   background:

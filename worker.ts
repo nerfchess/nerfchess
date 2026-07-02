@@ -28,6 +28,7 @@ type StoredMatch = {
   clocks: Record<Color, number>;
   runningSince: number | null;
   drawOfferBy: Color | null;
+  rematchOfferBy?: Color | null;
   createdAt: number;
   startedAt: number | null;
   completedAt: number | null;
@@ -47,6 +48,8 @@ type ClientFrame =
   | { t: "drawOffer" }
   | { t: "drawAccept" }
   | { t: "drawDecline" }
+  | { t: "rematch" }
+  | { t: "rematchDecline" }
   | { t: "p" };
 
 export interface Env {
@@ -170,6 +173,10 @@ export class GameServer extends DurableObject<Env> {
         return this.acceptDraw(ws);
       case "drawDecline":
         return this.declineDraw(ws);
+      case "rematch":
+        return this.offerRematch(ws);
+      case "rematchDecline":
+        return this.declineRematch(ws);
       case "p":
         return this.sendClocks(ws);
       default:
@@ -407,6 +414,7 @@ export class GameServer extends DurableObject<Env> {
       clocks: { w: timeSec * 1000, b: timeSec * 1000 },
       runningSince: null,
       drawOfferBy: null,
+      rematchOfferBy: null,
       createdAt: Date.now(),
       startedAt: null,
       completedAt: null,
@@ -550,6 +558,66 @@ export class GameServer extends DurableObject<Env> {
     await this.saveMatch(match);
 
     this.broadcast(match, "end", this.endPayload(match));
+  }
+
+  // A rematch offer once the game is over. A second offer from the other
+  // player counts as acceptance and starts the new game immediately.
+  private async offerRematch(ws: WebSocket) {
+    const session = this.session(ws);
+    const match = session.matchId ? await this.loadMatch(session.matchId) : null;
+    if (!match || !session.color) return error(ws, "no_game", "Join a game before offering a rematch.");
+    if (!match.result) return error(ws, "game_live", "The game is still in progress.");
+    if (match.rematchOfferBy === session.color) {
+      return error(ws, "rematch_pending", "Your rematch offer is already pending.");
+    }
+    if (match.rematchOfferBy && match.rematchOfferBy !== session.color) return this.startRematch(match);
+    match.rematchOfferBy = session.color;
+    await this.saveMatch(match);
+    this.broadcast(match, "rematchOffer", { color: session.color });
+  }
+
+  private async declineRematch(ws: WebSocket) {
+    const session = this.session(ws);
+    const match = session.matchId ? await this.loadMatch(session.matchId) : null;
+    if (!match || !session.color) return error(ws, "no_game", "Join a game before declining a rematch.");
+    if (!match.rematchOfferBy || match.rematchOfferBy === session.color) {
+      return error(ws, "no_rematch_offer", "There is no opponent rematch offer to decline.");
+    }
+    match.rematchOfferBy = null;
+    await this.saveMatch(match);
+    this.broadcast(match, "rematchDeclined", { color: session.color });
+  }
+
+  // Reset the match in place: fresh nerfs and seed, colors swapped for
+  // fairness, clocks back to the original time control. Each player keeps
+  // their token; the fresh "start" frame hands them their new color.
+  private async startRematch(match: StoredMatch) {
+    match.tokens = { w: match.tokens.b, b: match.tokens.w };
+    for (const [sock, sess] of this.sessions) {
+      if (sess.matchId !== match.id || !sess.color) continue;
+      const color: Color = sess.color === "w" ? "b" : "w";
+      const next = { ...sess, color, token: match.tokens[color] };
+      this.sessions.set(sock, next);
+      sock.serializeAttachment(next);
+    }
+
+    match.setup = {
+      ...match.setup,
+      whiteNerfId: pickNerfId(),
+      blackNerfId: pickNerfId(),
+      seed: makeSeed(),
+    };
+    match.moves = [];
+    match.result = null;
+    match.clocks = { w: match.setup.timeSec * 1000, b: match.setup.timeSec * 1000 };
+    match.startedAt = Date.now();
+    match.runningSince = match.startedAt;
+    match.drawOfferBy = null;
+    match.rematchOfferBy = null;
+    match.completedAt = null;
+    await this.saveMatch(match);
+    this.sendStart(match, "w");
+    this.sendStart(match, "b");
   }
 
   private async declineDraw(ws: WebSocket) {

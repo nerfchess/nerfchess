@@ -79,27 +79,46 @@ export default function PlayPage() {
       </nav>
 
       <section className="max-w-2xl mx-auto px-6 py-8">
-        <h1 className="font-display text-5xl">New game</h1>
+        <h1 className="font-display text-5xl">Play</h1>
         <p className="mt-3 text-parchment-200">
-          Pick how you want to play. You'll get a random secret rule (or pick one to practice).
+          Play online with a friend, or set up a game against the computer.
         </p>
 
-        <div className="mt-6 flex flex-wrap gap-3">
-          <Link
-            href="/friend"
-            className="inline-flex items-center gap-2 px-5 py-3 rounded-sm btn-ghost font-body text-sm"
+        <Link
+          href="/friend"
+          className="group mt-6 plate flex items-center justify-between gap-4 p-5 transition hover:border-gold/50"
+        >
+          <div className="flex items-center gap-4">
+            <span className="grid h-11 w-11 shrink-0 place-items-center border border-gold/40 bg-gold/10 text-gold-leaf">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+              </svg>
+            </span>
+            <div>
+              <div className="font-display text-xl font-semibold text-parchment-50">Play online</div>
+              <div className="mt-0.5 text-sm text-parchment-300">
+                Create a game and invite anyone with a link, or join with a code
+              </div>
+            </div>
+          </div>
+          <svg
+            width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden
+            className="shrink-0 text-parchment-400 transition group-hover:translate-x-0.5 group-hover:text-gold-leaf"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-              <circle cx="9" cy="7" r="4" />
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-            </svg>
-            Play a Friend
-          </Link>
+            <line x1="5" y1="12" x2="19" y2="12" />
+            <polyline points="12 5 19 12 12 19" />
+          </svg>
+        </Link>
+
+        <div className="rule-ornament mt-8 mb-4">
+          <span className="font-display">Play the computer</span>
         </div>
 
-        <div className="mt-8 plate p-6 sm:p-7 space-y-6">
+        <div className="plate p-6 sm:p-7 space-y-6">
           <Group label="Mode">
             <Pill selected={!rated} onClick={() => setRated(false)}>Casual</Pill>
             <Pill selected={rated} onClick={() => setRated(true)}>Rated</Pill>

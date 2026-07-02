@@ -1,8 +1,7 @@
 "use client";
 
 // Reusable, presentational controls for the settings menu. None of these hold
-// application state — they take a value and (optionally) an onChange, so both
-// the live settings and the disabled "Coming soon" placeholders reuse them.
+// application state — they take a value and an onChange.
 
 import { ChevronDown } from "lucide-react";
 
@@ -86,49 +85,77 @@ export function Slider({
   );
 }
 
-/** Static dropdown-styled control used only for disabled placeholders. */
-export function FakeSelect({ value, disabled = true }: { value: string; disabled?: boolean }) {
+/** Compact native select styled to match the panel. */
+export function Select<T extends string>({
+  value,
+  options,
+  onChange,
+  label,
+}: {
+  value: T;
+  options: Array<{ value: T; label: string }>;
+  onChange: (next: T) => void;
+  label?: string;
+}) {
   return (
-    <div
-      className={
-        "flex items-center gap-1 rounded border border-white/10 bg-white/[0.03] px-2 py-1 text-[11px] text-parchment-300 " +
-        (disabled ? "opacity-50 cursor-not-allowed" : "")
-      }
-    >
-      <span>{value}</span>
-      <ChevronDown className="h-3 w-3 text-parchment-400" />
+    <div className="relative">
+      <select
+        value={value}
+        aria-label={label}
+        onChange={(e) => onChange(e.target.value as T)}
+        className="cursor-pointer appearance-none rounded border border-white/10 bg-white/[0.03] py-1 pl-2 pr-6 text-[11px] text-parchment-300 transition-colors hover:border-white/25 focus:border-gold/60 focus:outline-none [&>option]:bg-ink-800"
+      >
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+      <ChevronDown className="pointer-events-none absolute right-1.5 top-1/2 h-3 w-3 -translate-y-1/2 text-parchment-400" />
     </div>
   );
 }
 
-/** Row of color swatches used only for the disabled Accent Color placeholder. */
-export function Swatches({ colors, disabled = true }: { colors: string[]; disabled?: boolean }) {
+/** Row of accent color swatches; the selected swatch gets a bright ring. */
+export function Swatches({
+  colors,
+  selected,
+  onSelect,
+}: {
+  colors: Array<{ id: string; color: string; label: string }>;
+  selected: string;
+  onSelect: (id: string) => void;
+}) {
   return (
-    <div className={"flex items-center gap-1 " + (disabled ? "opacity-40" : "")}>
-      {colors.map((c, i) => (
-        <span
-          key={i}
+    <div className="flex items-center gap-1.5">
+      {colors.map((c) => (
+        <button
+          key={c.id}
+          type="button"
+          title={c.label}
+          aria-label={c.label}
+          aria-pressed={selected === c.id}
+          onClick={() => onSelect(c.id)}
           className={
-            "h-4 w-4 rounded-full border " +
-            (i === 0 ? "border-parchment/60" : "border-white/15")
+            "h-4.5 w-4.5 rounded-full border transition " +
+            (selected === c.id
+              ? "border-parchment ring-1 ring-parchment/60"
+              : "border-white/15 hover:border-white/40")
           }
-          style={{ background: c }}
+          style={{ background: c.color, width: 18, height: 18 }}
         />
       ))}
     </div>
   );
 }
 
-/** Small secondary button used only for disabled placeholders (e.g. Reset). */
-export function GhostButton({ label, disabled = true }: { label: string; disabled?: boolean }) {
+/** Small secondary action button (e.g. Reset). */
+export function GhostButton({ label, onClick }: { label: string; onClick?: () => void }) {
   return (
     <button
       type="button"
-      disabled={disabled}
-      className={
-        "rounded border border-white/12 bg-white/[0.03] px-2.5 py-1 text-[11px] font-medium text-parchment-300 " +
-        (disabled ? "cursor-not-allowed opacity-50" : "hover:border-white/25")
-      }
+      onClick={onClick}
+      className="rounded border border-white/12 bg-white/[0.03] px-2.5 py-1 text-[11px] font-medium text-parchment-300 transition-colors hover:border-white/25 hover:text-parchment"
     >
       {label}
     </button>

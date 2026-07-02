@@ -5,29 +5,20 @@ import { useEffect, useState } from "react";
 import { Logo } from "@/components/Logo";
 import { loadRating } from "@/lib/rating";
 import { loadProfile } from "@/lib/profile";
+import { Avatar } from "@/components/Avatar";
+import { SEED_PLAYERS } from "@/lib/players";
 
 interface Row {
   name: string;
   rating: number;
   games: number;
   tag?: "you" | "bot";
+  avatarId?: string | null;
 }
 
 // A seeded ladder of notable drawback players plus the three bots. Rated games
 // move your own rating, which slots you into the board on load.
-const SEED: Row[] = [
-  { name: "en_prise_enjoyer", rating: 2418, games: 1204 },
-  { name: "FogWalker", rating: 2291, games: 863 },
-  { name: "queenless_wonder", rating: 2183, games: 651 },
-  { name: "Hard Bot", rating: 1900, games: 9999, tag: "bot" },
-  { name: "castle_through_check", rating: 1846, games: 412 },
-  { name: "h_file_hermit", rating: 1712, games: 289 },
-  { name: "Medium Bot", rating: 1500, games: 9999, tag: "bot" },
-  { name: "pawn_stormer", rating: 1433, games: 176 },
-  { name: "blunderful", rating: 1264, games: 98 },
-  { name: "Easy Bot", rating: 1100, games: 9999, tag: "bot" },
-  { name: "still_learning", rating: 1015, games: 41 },
-];
+const SEED: Row[] = SEED_PLAYERS;
 
 export default function LeaderboardPage() {
   const [rows, setRows] = useState<Row[] | null>(null);
@@ -35,11 +26,13 @@ export default function LeaderboardPage() {
 
   useEffect(() => {
     const r = loadRating();
+    const profile = loadProfile();
     const me: Row = {
-      name: loadProfile().username ?? "You",
+      name: profile.username ?? "You",
       rating: Math.round(r.rating),
       games: r.games,
       tag: "you",
+      avatarId: profile.avatarId,
     };
     setYou(me);
     const merged = [...SEED, me].sort((a, b) => b.rating - a.rating);
@@ -59,9 +52,9 @@ export default function LeaderboardPage() {
       <section className="max-w-3xl mx-auto px-6 py-8">
         <h1 className="font-display text-4xl sm:text-5xl font-bold text-parchment-100">Leaderboard</h1>
         <p className="mt-3 text-parchment-200">
-          Bot games are casual and don&apos;t count. Win{" "}
+          Win{" "}
           <Link href="/play" className="text-gold-leaf hover:underline">rated games</Link>{" "}
-          to move your rating and climb the ladder.
+          to climb the ladder.
         </p>
 
         {you && (
@@ -93,6 +86,7 @@ export default function LeaderboardPage() {
             >
               <span className="font-mono text-parchment-400 tabular-nums">{i + 1}</span>
               <span className="flex items-center gap-2 min-w-0">
+                <Avatar avatarId={row.avatarId} name={row.name} size={22} />
                 <span
                   className={
                     "truncate font-medium " +
@@ -116,7 +110,7 @@ export default function LeaderboardPage() {
         </div>
 
         <p className="mt-4 text-xs text-parchment-500">
-          This ladder is stored on your device. Bots hold fixed reference ratings.
+          Bots hold fixed reference ratings.
         </p>
       </section>
     </main>

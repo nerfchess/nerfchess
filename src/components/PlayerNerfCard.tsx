@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { Nerf } from "@/engine/nerf";
 import { BoardState, Color, PieceType } from "@/engine/types";
+import { Avatar } from "@/components/Avatar";
 import { Piece } from "@/components/Pieces";
 
 const PIECE_ORDER: PieceType[] = ["p", "n", "b", "r", "q", "k"];
@@ -22,6 +23,8 @@ interface Props {
   ownerLabel: string;
   progress?: { value: number; max: number; label: string } | null;
   action?: ReactNode;
+  // Preset profile picture id (local profile). Falls back to an initial.
+  avatarId?: string | null;
 }
 
 function opponentOf(color: Color): Color {
@@ -58,6 +61,7 @@ export function PlayerNerfCard({
   ownerLabel,
   progress,
   action,
+  avatarId,
 }: Props) {
   const pieces = capturedPiecesFor(board, playerColor);
   const mineValue = capturedValue(capturedPiecesFor(board, myColor));
@@ -76,17 +80,21 @@ export function PlayerNerfCard({
       }
     >
       <div className="flex items-start gap-3">
-        <div
-          className={
-            "grid h-9 w-9 shrink-0 place-items-center rounded-md border font-display text-xs font-semibold " +
-            (isMe
-              ? "border-gold/60 bg-gold/20 text-gold-leaf"
-              : "border-bruise/60 bg-bruise/20 text-bruise-glow")
-          }
-          aria-hidden="true"
-        >
-          {initial}
-        </div>
+        {avatarId ? (
+          <Avatar avatarId={avatarId} name={name} size={36} />
+        ) : (
+          <div
+            className={
+              "grid h-9 w-9 shrink-0 place-items-center rounded-md border font-display text-xs font-semibold " +
+              (isMe
+                ? "border-gold/60 bg-gold/20 text-gold-leaf"
+                : "border-bruise/60 bg-bruise/20 text-bruise-glow")
+            }
+            aria-hidden="true"
+          >
+            {initial}
+          </div>
+        )}
         <div className="min-w-0 flex-1">
           <div className="truncate font-display text-base font-semibold leading-tight text-parchment">
             {name}
