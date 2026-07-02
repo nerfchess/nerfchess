@@ -2,6 +2,7 @@ node_modules
 .next
 .open-next
 .wrangler
+.wrangler-dry-run
 .codex-run/
 .omc/state/
 out
