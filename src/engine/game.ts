@@ -1,4 +1,4 @@
-import { generateMoves, initialBoard, isInCheck, kingCaptured, makeMove } from "./board";
+import { countRepetitions, generateMoves, initialBoard, isInCheck, kingCaptured, makeMove } from "./board";
 import { Nerf, NerfState, GameContext, Tier } from "./nerf";
 import { RNG } from "./rng";
 import { BoardState, Color, FILE, Move, PieceType, RANK } from "./types";
@@ -162,6 +162,21 @@ export function playMove(game: NerfGame, move: Move): NerfGame {
   const result = checkLossConditions(game);
   if (result) {
     game.result = result;
+    return game;
+  }
+  // Standard draw rules: fifty moves without a capture or pawn move, and
+  // threefold repetition of the same position with the same side to move.
+  // These run inside playMove so every consumer (AI games, the multiplayer
+  // worker, and client-side replays of server move lists) agrees on when a
+  // game is drawn.
+  if (game.board.halfmove >= 100) {
+    game.result = { winner: "draw", reason: "draw by the fifty-move rule" };
+    return game;
+  }
+  // A repetition needs at least 8 reversible plies, so skip the history
+  // replay until then.
+  if (game.board.halfmove >= 8 && countRepetitions(game.board) >= 3) {
+    game.result = { winner: "draw", reason: "draw by threefold repetition" };
     return game;
   }
   // No moves available = loss for side to move (king will be captured)
