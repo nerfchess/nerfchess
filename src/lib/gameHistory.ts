@@ -16,7 +16,7 @@ export type NerfSummary = { name: string; description: string; tier: number };
 export type CompletedGame = {
   id: string;
   endedAt: number; // epoch ms
-  mode: "ai" | "friend";
+  mode: "ai" | "friend" | "online";
   opponent: string;
   myColor: Color;
   outcome: GameOutcome;
