@@ -111,15 +111,21 @@ function startPayload(match, color) {
         moves: match.game?.board.history.map(board_1.moveToUCI) ?? [],
     };
 }
+// Once a game is over both secret rules are public: every "end" frame carries
+// the nerf ids so each client can reveal the opponent's rule.
+function endPayload(match) {
+    const clocks = currentClocks(match);
+    return {
+        result: match.game?.result ?? null,
+        wc: Math.round(clocks.w),
+        bc: Math.round(clocks.b),
+        nerfs: { w: match.setup.whiteNerfId, b: match.setup.blackNerfId },
+    };
+}
 function sendStart(match, color) {
     send(match.clients[color], "start", startPayload(match, color));
     if (match.game?.result) {
-        const clocks = currentClocks(match);
-        send(match.clients[color], "end", {
-            result: match.game.result,
-            wc: Math.round(clocks.w),
-            bc: Math.round(clocks.b),
-        });
+        send(match.clients[color], "end", endPayload(match));
     }
 }
 function error(client, code, message) {
@@ -153,12 +159,7 @@ function finish(match) {
     if (!match.game?.result)
         return;
     match.completedAt = Date.now();
-    const clocks = currentClocks(match);
-    broadcast(match, "end", {
-        result: match.game.result,
-        wc: Math.round(clocks.w),
-        bc: Math.round(clocks.b),
-    });
+    broadcast(match, "end", endPayload(match));
 }
 function createMatch(client, data) {
     if (client.matchId)

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Logo } from "@/components/Logo";
 import { loadRating } from "@/lib/rating";
+import { loadProfile } from "@/lib/profile";
 
 interface Row {
   name: string;
@@ -34,7 +35,12 @@ export default function LeaderboardPage() {
 
   useEffect(() => {
     const r = loadRating();
-    const me: Row = { name: "You", rating: Math.round(r.rating), games: r.games, tag: "you" };
+    const me: Row = {
+      name: loadProfile().username ?? "You",
+      rating: Math.round(r.rating),
+      games: r.games,
+      tag: "you",
+    };
     setYou(me);
     const merged = [...SEED, me].sort((a, b) => b.rating - a.rating);
     setRows(merged);

@@ -309,12 +309,23 @@ export class GameServer extends DurableObject<Env> {
     };
   }
 
+  // Once a game is over both secret rules are public: every "end" frame
+  // carries the nerf ids so each client can reveal the opponent's rule.
+  private endPayload(match: StoredMatch) {
+    const clocks = this.currentClocks(match);
+    return {
+      result: match.result,
+      wc: Math.round(clocks.w),
+      bc: Math.round(clocks.b),
+      nerfs: { w: match.setup.whiteNerfId, b: match.setup.blackNerfId },
+    };
+  }
+
   private sendStart(match: StoredMatch, color: Color) {
     const ws = this.connectedSession(match.id, color);
     send(ws, "start", this.startPayload(match, color));
     if (match.result) {
-      const clocks = this.currentClocks(match);
-      send(ws, "end", { result: match.result, wc: Math.round(clocks.w), bc: Math.round(clocks.b) });
+      send(ws, "end", this.endPayload(match));
     }
   }
 
@@ -363,7 +374,7 @@ export class GameServer extends DurableObject<Env> {
     };
     match.completedAt = now;
     await this.saveMatch(match, schedule);
-    this.broadcast(match, "end", { result: match.result, wc: Math.round(clocks.w), bc: Math.round(clocks.b) });
+    this.broadcast(match, "end", this.endPayload(match));
     return true;
   }
 
@@ -484,8 +495,7 @@ export class GameServer extends DurableObject<Env> {
       bc: Math.round(match.clocks.b),
     });
     if (match.result) {
-      const clocks = this.currentClocks(match);
-      this.broadcast(match, "end", { result: match.result, wc: Math.round(clocks.w), bc: Math.round(clocks.b) });
+      this.broadcast(match, "end", this.endPayload(match));
     }
   }
 
@@ -505,8 +515,7 @@ export class GameServer extends DurableObject<Env> {
     match.completedAt = Date.now();
     await this.saveMatch(match);
 
-    const clocks = this.currentClocks(match);
-    this.broadcast(match, "end", { result: match.result, wc: Math.round(clocks.w), bc: Math.round(clocks.b) });
+    this.broadcast(match, "end", this.endPayload(match));
   }
 
   private async offerDraw(ws: WebSocket) {
@@ -540,8 +549,7 @@ export class GameServer extends DurableObject<Env> {
     match.completedAt = Date.now();
     await this.saveMatch(match);
 
-    const clocks = this.currentClocks(match);
-    this.broadcast(match, "end", { result: match.result, wc: Math.round(clocks.w), bc: Math.round(clocks.b) });
+    this.broadcast(match, "end", this.endPayload(match));
   }
 
   private async declineDraw(ws: WebSocket) {

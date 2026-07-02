@@ -22,6 +22,7 @@ import { BoardState, Color, Move } from "@/engine/types";
 import { cloneBoard, isInCheck, makeMove } from "@/engine/board";
 import { computeMoveRisks } from "@/engine/moveSafety";
 import { loadSettings } from "@/lib/settings";
+import { loadProfile } from "@/lib/profile";
 import type { QueuedPremove } from "@/components/Board";
 import { buildCustomNerf, CustomNerf } from "@/engine/nerfs/custom";
 import { isMuted, playCapture, playCheck, playNerf, playMove as playMoveSfx, setMuted } from "@/lib/sounds";
@@ -121,6 +122,7 @@ function GamePage() {
   const [historyPly, setHistoryPly] = useState<number | null>(null);
   const [boardHeight, setBoardHeight] = useState<number | null>(null);
   const [playerElo, setPlayerElo] = useState<number | null>(null);
+  const [username, setUsername] = useState<string | null>(null);
   // Reveal controls: peek at the opponent's rule mid-game, and offer to show
   // your own rule to the opponent.
   const [oppPeek, setOppPeek] = useState(false);
@@ -139,6 +141,7 @@ function GamePage() {
   useEffect(() => {
     setMutedState(isMuted());
     setPlayerElo(loadRating().rating);
+    setUsername(loadProfile().username);
   }, []);
 
   useEffect(() => {
@@ -673,7 +676,7 @@ function GamePage() {
               board={boardForDisplay}
               playerColor={myColor}
               myColor={myColor}
-              name="You"
+              name={username ?? "You"}
               elo={playerElo}
               nerf={myNerf}
               ownerLabel=""
@@ -757,6 +760,7 @@ function GamePage() {
           myColor={myColor}
           myNerf={myNerf}
           opponentNerf={opponentNerf}
+          opponentHidden={uiSettings.hideOpponentReveal && !oppPeek}
           ratingChange={ratingChange}
           onRematch={handleRematch}
           onNewGame={handleRematch}

@@ -27,6 +27,9 @@ export type MPEnd = {
   };
   wc: number;
   bc: number;
+  // Both players' nerf ids, sent by the server once the game is over so each
+  // client can reveal the opponent's rule. Optional for older servers.
+  nerfs?: Record<Color, string>;
 };
 
 export type MPEvent =

@@ -10,6 +10,7 @@ import { SettingsPanel } from "@/components/SettingsPanel";
 import { cloneBoard, isInCheck, makeMove, moveToUCI } from "@/engine/board";
 import { computeMoveRisks } from "@/engine/moveSafety";
 import { loadSettings } from "@/lib/settings";
+import { loadProfile } from "@/lib/profile";
 import type { GameContext } from "@/engine/nerf";
 import { IMPLEMENTED_BY_ID, PLAYABLE_NERFS } from "@/engine/nerfs/library";
 import {
@@ -88,6 +89,7 @@ export default function FriendPage() {
   const [awaitingPremoveAck, setAwaitingPremoveAckState] = useState(false);
   const [historyPly, setHistoryPly] = useState<number | null>(null);
   const [boardHeight, setBoardHeight] = useState<number | null>(null);
+  const [username, setUsername] = useState<string | null>(null);
 
   const sessionRef = useRef<MPSession | null>(null);
   const boardShellRef = useRef<HTMLDivElement | null>(null);
@@ -110,7 +112,10 @@ export default function FriendPage() {
     setPendingLocalMoveState(pending);
   };
 
-  useEffect(() => setMutedState(isMuted()), []);
+  useEffect(() => {
+    setMutedState(isMuted());
+    setUsername(loadProfile().username);
+  }, []);
 
   useEffect(() => {
     myColorRef.current = myColor;
@@ -300,6 +305,16 @@ export default function FriendPage() {
         setGame((g) => {
           if (!g) return g;
           g.result = e.end.result;
+          // The end frame carries both nerf ids: swap the opponent's
+          // placeholder "Unknown" nerf for their real rule so the post-game
+          // reveal always works.
+          const oppColor: Color = myColorRef.current === "w" ? "b" : "w";
+          const oppNerfId = e.end.nerfs?.[oppColor];
+          const oppNerf = oppNerfId ? IMPLEMENTED_BY_ID[oppNerfId] : undefined;
+          if (oppNerf) {
+            const slot = oppColor === "w" ? g.white : g.black;
+            slot.nerf = oppNerf;
+          }
           return { ...g };
         });
       } else if (e.type === "draw-offer") {
@@ -728,6 +743,9 @@ export default function FriendPage() {
   const myCtx = makeContext(game, myColor);
   const visual = myNerf.visual?.(myState, myCtx);
   const opponentNerf = myColor === "w" ? game.black.nerf : game.white.nerf;
+  // Until the server's end frame arrives the opponent slot holds the "noop"
+  // placeholder; only a real rule can be revealed.
+  const opponentNerfKnown = opponentNerf.id !== "noop" ? opponentNerf : undefined;
   const lastMove = game.board.history[game.board.history.length - 1] ?? null;
   const boardForDisplay = reviewBoard ?? pendingLocalBoard ?? virtualBoard ?? game.board;
   const lastMoveForDisplay = isReviewingHistory
@@ -892,7 +910,7 @@ export default function FriendPage() {
               myColor={myColor}
               name="Opponent"
               nerf={opponentNerf}
-              revealed={!!game.result}
+              revealed={!!game.result && !!opponentNerfKnown && !uiSettings.hideOpponentReveal}
               ownerLabel=""
             />
             <div className="hidden lg:block" />
@@ -900,7 +918,7 @@ export default function FriendPage() {
               board={boardForDisplay}
               playerColor={myColor}
               myColor={myColor}
-              name="You"
+              name={username ?? "You"}
               nerf={myNerf}
               ownerLabel=""
               progress={myNerf.progress?.(myState, myCtx) ?? null}
@@ -968,6 +986,9 @@ export default function FriendPage() {
         <GameOver
           result={game.result}
           myColor={myColor}
+          myNerf={myNerf}
+          opponentNerf={opponentNerfKnown}
+          opponentHidden={uiSettings.hideOpponentReveal}
           onRematch={handleRematch}
           onNewGame={handleRematch}
         />

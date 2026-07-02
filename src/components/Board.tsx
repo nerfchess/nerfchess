@@ -188,8 +188,9 @@ export function Board({
     return false;
   };
 
-  // Plain click / tap: keep a selected piece's legal moves visible until the
-  // user selects another movable piece or plays a legal destination.
+  // Plain click / tap: selecting another movable piece switches the selection,
+  // playing a legal destination moves, and clicking anything else (an empty
+  // square, an unreachable piece) clears the selection like Lichess/Chess.com.
   const handleSquareClick = (sq: Square) => {
     if (disabled) return;
     if (tryPlay(sq)) return;
@@ -197,8 +198,23 @@ export function Board({
     if (piece && piece.color === myColor && movesFrom.has(sq) && selected !== sq) {
       setSelected(sq);
       playSelect();
+    } else if (selected != null && selected !== sq) {
+      setSelected(null);
     }
   };
+
+  // Clicking anywhere outside the board also clears the selection.
+  useEffect(() => {
+    if (selected == null) return;
+    const onPointerDown = (e: PointerEvent) => {
+      if (!(e.target instanceof Node)) return;
+      if (boardRef.current && !boardRef.current.contains(e.target)) {
+        setSelected(null);
+      }
+    };
+    window.addEventListener("pointerdown", onPointerDown);
+    return () => window.removeEventListener("pointerdown", onPointerDown);
+  }, [selected]);
 
   // --- Drag & drop via pointer events ---
   const onPointerDownPiece = (e: React.PointerEvent, sq: Square) => {
