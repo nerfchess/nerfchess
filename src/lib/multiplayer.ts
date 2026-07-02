@@ -4,6 +4,10 @@ export type MPPlayers = Record<Color, { name: string; rating: number | null }>;
 
 export type MPChatMessage = { color: Color; name: string; text: string; at: number };
 
+// Projected rating movement for each outcome, computed by the server when a
+// rated game starts ("+8 / +0 / -8").
+export type MPRatingPreview = Record<Color, { win: number; draw: number; loss: number }>;
+
 export type MPStart = {
   id: string;
   color: Color;
@@ -18,6 +22,7 @@ export type MPStart = {
   players?: MPPlayers;
   rated?: boolean;
   chat?: MPChatMessage[];
+  preview?: MPRatingPreview;
 };
 
 export type MPWatchStart = {
@@ -32,6 +37,24 @@ export type MPWatchStart = {
   started: boolean;
   result: { winner: Color | "draw" | null; reason: string } | null;
   nerfs?: Record<Color, string>;
+  watchers?: number;
+};
+
+// One lobby snapshot: who is online and which games can be watched.
+export type MPLobbyPlayer = { name: string; rating: number | null; status: "online" | "searching" | "playing" };
+export type MPLobbyGame = {
+  id: string;
+  players: MPPlayers;
+  rated: boolean;
+  timeSec: number;
+  incrementSec: number;
+  moves: number;
+  watchers: number;
+};
+export type MPLobby = {
+  players: MPLobbyPlayer[];
+  anonymous: number;
+  games: MPLobbyGame[];
 };
 
 export type MPAcceptedMove = {
@@ -69,8 +92,11 @@ export type MPEvent =
   | { type: "rematched"; id: string; color: Color; token: string }
   | { type: "chat"; message: MPChatMessage }
   | { type: "clocks"; wc: number; bc: number }
+  | { type: "watchers"; n: number }
+  | { type: "lobby"; data: MPLobby }
   | { type: "opponent-gone" }
   | { type: "disconnected" }
+  | { type: "reconnecting"; attempt: number }
   | { type: "error"; message: string; code?: string };
 
 type ServerFrame =
@@ -87,6 +113,8 @@ type ServerFrame =
   | { t: "rematchOffer"; d: { color: Color } }
   | { t: "rematched"; d: { id: string; color: Color; token: string } }
   | { t: "chat"; d: MPChatMessage }
+  | { t: "watchers"; d: { n: number } }
+  | { t: "lobby"; d: MPLobby }
   | { t: "opponentGone" }
   | { t: "error"; d: { code?: string; message?: string } }
   | { t: "n"; d?: { wc?: number; bc?: number } };
@@ -178,6 +206,67 @@ export class MPSession {
   // and spectator sessions manage their own persistence (see onlineSeat below).
   persistFriendSession = true;
 
+  // --- automatic reconnection ---
+  // Once this session holds a seat (or is watching a game), an unexpected
+  // socket close triggers reconnect attempts with backoff. Reclaiming the seat
+  // makes the server replay the full game state (start + moves + end), so the
+  // UI can rebuild even if the game finished while we were away.
+  autoReconnect = true;
+  private seat: MPSavedSession | null = null;
+  private watchingId: string | null = null;
+  private destroyed = false;
+  private reconnectTimer: number | null = null;
+  private reconnectAttempt = 0;
+  private wakeListenersOn = false;
+
+  private readonly onWake = () => {
+    // Browser came back online / tab became visible: retry immediately.
+    if (this.reconnectTimer !== null) {
+      window.clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+      void this.tryReconnect();
+    }
+  };
+
+  private addWakeListeners() {
+    if (this.wakeListenersOn || typeof window === "undefined") return;
+    this.wakeListenersOn = true;
+    window.addEventListener("online", this.onWake);
+    document.addEventListener("visibilitychange", this.onWake);
+  }
+
+  private removeWakeListeners() {
+    if (!this.wakeListenersOn || typeof window === "undefined") return;
+    this.wakeListenersOn = false;
+    window.removeEventListener("online", this.onWake);
+    document.removeEventListener("visibilitychange", this.onWake);
+  }
+
+  private scheduleReconnect() {
+    if (this.destroyed || !this.autoReconnect) return;
+    if (!this.seat && !this.watchingId) return;
+    if (this.reconnectTimer !== null) return;
+    this.reconnectAttempt++;
+    this.addWakeListeners();
+    this.emit({ type: "reconnecting", attempt: this.reconnectAttempt });
+    const delay = Math.min(15000, 500 * 2 ** Math.min(this.reconnectAttempt, 5));
+    this.reconnectTimer = window.setTimeout(() => {
+      this.reconnectTimer = null;
+      void this.tryReconnect();
+    }, delay);
+  }
+
+  private async tryReconnect() {
+    if (this.destroyed) return;
+    try {
+      await this.connect();
+      if (this.seat) this.sendFrame("reconnect", this.seat);
+      else if (this.watchingId) this.sendFrame("watch", { id: this.watchingId });
+    } catch {
+      this.scheduleReconnect();
+    }
+  }
+
   on(fn: (e: MPEvent) => void) {
     this.listeners.push(fn);
     return () => {
@@ -232,7 +321,10 @@ export class MPSession {
         if (this.heartbeat) window.clearInterval(this.heartbeat);
         this.heartbeat = null;
         this.socket = null;
-        if (opened) this.emit({ type: "disconnected" });
+        if (opened) {
+          this.emit({ type: "disconnected" });
+          this.scheduleReconnect();
+        }
       };
     });
   }
@@ -249,6 +341,8 @@ export class MPSession {
     switch (frame.t) {
       case "created":
         this.code = frame.d.id;
+        this.seat = { id: frame.d.id, color: frame.d.color, token: frame.d.token };
+        this.reconnectAttempt = 0;
         if (this.persistFriendSession) {
           saveFriendSession({ id: frame.d.id, color: frame.d.color, token: frame.d.token });
         }
@@ -256,12 +350,16 @@ export class MPSession {
         break;
       case "start":
         this.code = frame.d.id;
+        this.seat = { id: frame.d.id, color: frame.d.color, token: frame.d.token };
+        this.reconnectAttempt = 0;
         if (this.persistFriendSession) {
           saveFriendSession({ id: frame.d.id, color: frame.d.color, token: frame.d.token });
         }
         this.emit({ type: "start", setup: frame.d });
         break;
       case "wstart":
+        this.watchingId = frame.d.id;
+        this.reconnectAttempt = 0;
         this.emit({ type: "watch-start", setup: frame.d });
         break;
       case "queued":
@@ -293,6 +391,12 @@ export class MPSession {
         break;
       case "chat":
         this.emit({ type: "chat", message: frame.d });
+        break;
+      case "watchers":
+        this.emit({ type: "watchers", n: frame.d.n });
+        break;
+      case "lobby":
+        this.emit({ type: "lobby", data: frame.d });
         break;
       case "opponentGone":
         this.emit({ type: "opponent-gone" });
@@ -347,6 +451,7 @@ export class MPSession {
 
   async resume(saved: MPSavedSession): Promise<void> {
     this.code = saved.id;
+    this.seat = saved;
     await this.connect();
     return new Promise((resolve, reject) => {
       const off = this.on((event) => {
@@ -355,7 +460,9 @@ export class MPSession {
           resolve();
         } else if (event.type === "error") {
           off();
-          reject(new Error(event.message));
+          // Server refused the seat (game gone / bad token): stop trying.
+          if (event.code === "reconnect_failed") this.seat = null;
+          reject(new Error(event.code === "reconnect_failed" ? "reconnect_failed" : event.message));
         }
       });
       this.sendFrame("reconnect", saved);
@@ -394,6 +501,7 @@ export class MPSession {
       const off = this.on((event) => {
         if (event.type === "watch-start") {
           off();
+          this.watchingId = id;
           resolve(event.setup);
         } else if (event.type === "error") {
           off();
@@ -401,6 +509,29 @@ export class MPSession {
         }
       });
       this.sendFrame("watch", { id });
+    });
+  }
+
+  // Request one lobby snapshot (online players + watchable games).
+  async fetchLobby(): Promise<MPLobby> {
+    await this.connect();
+    return new Promise((resolve, reject) => {
+      const off = this.on((event) => {
+        if (event.type === "lobby") {
+          off();
+          resolve(event.data);
+        } else if (event.type === "error") {
+          off();
+          reject(new Error(event.message));
+        } else if (event.type === "disconnected") {
+          off();
+          reject(new Error("Disconnected from the game server."));
+        }
+      });
+      if (!this.sendFrame("lobby")) {
+        off();
+        reject(new Error("Disconnected from the game server."));
+      }
     });
   }
 
@@ -433,6 +564,10 @@ export class MPSession {
   }
 
   destroy() {
+    this.destroyed = true;
+    if (this.reconnectTimer !== null) window.clearTimeout(this.reconnectTimer);
+    this.reconnectTimer = null;
+    this.removeWakeListeners();
     if (this.heartbeat) window.clearInterval(this.heartbeat);
     this.heartbeat = null;
     const socket = this.socket;

@@ -75,6 +75,7 @@ export default function PlayPage() {
               <span className="font-mono text-[10px] text-parchment-400">{games}g</span>
             </Link>
           )}
+          <Link href="/lobby" className="px-3 py-1.5 text-sm font-medium hover:bg-white/5 text-gold-leaf">Lobby</Link>
           <Link href="/leaderboard" className="px-3 py-1.5 text-sm font-medium hover:bg-white/5 text-parchment-100">Leaderboard</Link>
           <Link href="/profile" className="px-3 py-1.5 text-sm font-medium hover:bg-white/5 text-parchment-100">Profile</Link>
           <Link href="/codex" className="px-3 py-1.5 text-sm font-medium hover:bg-white/5 text-parchment-100">Rules</Link>

@@ -11,7 +11,7 @@ import {
   timeControlLabel,
 } from "@/lib/gameHistory";
 
-const TIER_LABEL = ["", "Trivial", "Easy", "Common", "Severe", "Brutal"];
+import { TIER_LABEL } from "@/lib/tiers";
 
 type Filter = "all" | GameOutcome;
 

@@ -8,8 +8,7 @@ import { Nerf } from "@/engine/nerf";
 import { gameToPGN } from "@/lib/pgn";
 import { playGameOver } from "@/lib/sounds";
 
-const TIER_LABEL = ["", "Trivial", "Easy", "Common", "Severe", "Brutal"];
-const TIER_ROMAN = ["", "I", "II", "III", "IV", "V"];
+import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
 
 interface Props {
   result: GameResult;

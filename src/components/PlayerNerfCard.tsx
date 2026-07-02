@@ -6,8 +6,7 @@ import { BoardState, Color } from "@/engine/types";
 import { Piece } from "@/components/Pieces";
 import { capturedPiecesFor, capturedValue, opponentOf } from "@/lib/material";
 
-const TIER_LABEL = ["", "Trivial", "Easy", "Common", "Severe", "Brutal"];
-const TIER_ROMAN = ["", "I", "II", "III", "IV", "V"];
+import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
 
 interface Props {
   board: BoardState;

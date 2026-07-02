@@ -11,6 +11,8 @@ import { Color } from "./src/engine/types";
 import { sessionTokenFromCookieHeader, userForSession } from "./src/lib/server/auth";
 import { ensureSchema } from "./src/lib/server/schema";
 import { recordFinishedGame, RatingChange } from "./src/lib/server/games";
+import { censorText, findProfanity } from "./src/lib/profanity";
+import { glickoUpdatePair } from "./src/lib/glicko";
 
 type Result = NerfGame["result"];
 type Setup = {
@@ -20,7 +22,7 @@ type Setup = {
   timeSec: number;
   incrementSec: number;
 };
-type SeatUser = { id: string; name: string; rating: number };
+type SeatUser = { id: string; name: string; rating: number; rd?: number; vol?: number };
 type ChatEntry = { color: Color; name: string; text: string; at: number };
 type StoredMatch = {
   id: string;
@@ -65,6 +67,8 @@ type QueueEntry = {
   userId: string;
   username: string;
   rating: number;
+  rd?: number;
+  vol?: number;
   at: number;
 };
 type ClientFrame =
@@ -79,6 +83,8 @@ type ClientFrame =
   | { t: "queue"; d?: { pool?: unknown } }
   | { t: "queueCancel" }
   | { t: "watch"; d?: { id?: unknown } }
+  | { t: "watchLeave" }
+  | { t: "lobby" }
   | { t: "rematch" }
   | { t: "chat"; d?: { text?: unknown } }
   | { t: "p" };
@@ -97,6 +103,9 @@ const QUEUE_POOLS: Record<string, { timeSec: number; incrementSec: number }> = {
 const socketPath = "/socket/v1";
 const globalServerName = "nerfchess-global";
 const disconnectGraceMs = 15 * 1000;
+// Lichess-style start-of-game grace: a player's clock only starts charging 15
+// seconds into their first move, so nobody loses time to a slow page load.
+const firstMoveGraceMs = 15 * 1000;
 
 function randomInt(max: number): number {
   const values = new Uint32Array(1);
@@ -246,6 +255,10 @@ export class GameServer extends DurableObject<Env> {
         return this.queueLeave(ws, true);
       case "watch":
         return this.watchMatch(ws, frame.d);
+      case "watchLeave":
+        return this.watchLeave(ws);
+      case "lobby":
+        return this.lobbySnapshot(ws);
       case "rematch":
         return this.rematchRequest(ws);
       case "chat":
@@ -259,12 +272,42 @@ export class GameServer extends DurableObject<Env> {
 
   async webSocketClose(ws: WebSocket) {
     await this.queueLeave(ws, false);
+    this.notifyWatcherCount(ws);
     await this.detachSession(ws);
   }
 
   async webSocketError(ws: WebSocket) {
     await this.queueLeave(ws, false);
+    this.notifyWatcherCount(ws);
     await this.detachSession(ws);
+  }
+
+  // When a spectating socket goes away, tell the remaining watchers the new
+  // count. Must run before the session is dropped from the map.
+  private notifyWatcherCount(ws: WebSocket) {
+    const session = this.sessions.get(ws);
+    if (!session?.watching) return;
+    const id = session.watching;
+    this.sessions.delete(ws);
+    this.broadcastWatchers(id);
+  }
+
+  private watcherCount(matchId: string): number {
+    let n = 0;
+    for (const [ws, session] of this.sessions) {
+      if (session.watching === matchId && ws.readyState === WebSocket.OPEN) n++;
+    }
+    return n;
+  }
+
+  private broadcastWatchers(matchId: string) {
+    const n = this.watcherCount(matchId);
+    for (const [ws, session] of this.sessions) {
+      if (ws.readyState !== WebSocket.OPEN) continue;
+      if (session.watching === matchId || session.matchId === matchId) {
+        send(ws, "watchers", { n });
+      }
+    }
   }
 
   async alarm() {
@@ -356,17 +399,26 @@ export class GameServer extends DurableObject<Env> {
     // never overwritten here.
     if (session.userId && session.username && !match.users?.[color]) {
       let rating = 1500;
+      let rd = 350;
+      let vol = 0.06;
       const db = await this.db();
       if (db) {
         try {
           const row = await db
-            .prepare("SELECT rating FROM users WHERE id = ?")
+            .prepare("SELECT rating, rd, vol FROM users WHERE id = ?")
             .bind(session.userId)
-            .first<{ rating: number }>();
-          if (row) rating = row.rating;
+            .first<{ rating: number; rd: number; vol: number }>();
+          if (row) {
+            rating = row.rating;
+            rd = row.rd;
+            vol = row.vol;
+          }
         } catch {}
       }
-      match.users = { ...(match.users ?? {}), [color]: { id: session.userId, name: session.username, rating } };
+      match.users = {
+        ...(match.users ?? {}),
+        [color]: { id: session.userId, name: session.username, rating, rd, vol },
+      };
     }
   }
 
@@ -412,6 +464,30 @@ export class GameServer extends DurableObject<Env> {
     }
   }
 
+  // Projected rating movement for each seat before the game is decided, so
+  // players can see what a win/draw/loss is worth ("+8 / +0 / -8").
+  private ratingPreview(match: StoredMatch): Record<Color, { win: number; draw: number; loss: number }> | null {
+    if (!match.rated || !match.users?.w || !match.users?.b) return null;
+    const w = { rating: match.users.w.rating, rd: match.users.w.rd ?? 350, vol: match.users.w.vol ?? 0.06 };
+    const b = { rating: match.users.b.rating, rd: match.users.b.rd ?? 350, vol: match.users.b.vol ?? 0.06 };
+    const whiteWins = glickoUpdatePair(w, b, 1);
+    const draw = glickoUpdatePair(w, b, 0.5);
+    const blackWins = glickoUpdatePair(w, b, 0);
+    const delta = (after: number, before: number) => Math.round(after - before);
+    return {
+      w: {
+        win: delta(whiteWins.a.rating, w.rating),
+        draw: delta(draw.a.rating, w.rating),
+        loss: delta(blackWins.a.rating, w.rating),
+      },
+      b: {
+        win: delta(blackWins.b.rating, b.rating),
+        draw: delta(draw.b.rating, b.rating),
+        loss: delta(whiteWins.b.rating, b.rating),
+      },
+    };
+  }
+
   private startPayload(match: StoredMatch, color: Color) {
     const clocks = this.currentClocks(match);
     const myNerfId = color === "w" ? match.setup.whiteNerfId : match.setup.blackNerfId;
@@ -419,6 +495,7 @@ export class GameServer extends DurableObject<Env> {
     const wSeed = masterRng.fork().getState();
     const bSeed = masterRng.fork().getState();
     const nerfSeed = color === "w" ? wSeed : bSeed;
+    const preview = this.ratingPreview(match);
     return {
       id: match.id,
       color,
@@ -433,6 +510,7 @@ export class GameServer extends DurableObject<Env> {
       players: this.playersPayload(match),
       rated: !!match.rated,
       chat: match.chat ?? [],
+      ...(preview ? { preview } : {}),
     };
   }
 
@@ -466,12 +544,22 @@ export class GameServer extends DurableObject<Env> {
     return game;
   }
 
+  // Moves the given color has already played (moves alternate w, b, w, …).
+  private movesByColor(match: StoredMatch, color: Color): number {
+    return color === "w" ? Math.ceil(match.moves.length / 2) : Math.floor(match.moves.length / 2);
+  }
+
   private currentClocks(match: StoredMatch, now = Date.now()): Record<Color, number> {
     const clocks = { ...match.clocks };
     const game = this.gameFromMatch(match);
     if (!match.setup.timeSec || !game || game.result || match.runningSince === null) return clocks;
     const active = game.board.turn;
-    clocks[active] = Math.max(0, clocks[active] - (now - match.runningSince));
+    let elapsed = now - match.runningSince;
+    // Start-of-game grace: the first move of each side gets 15 free seconds.
+    if (this.movesByColor(match, active) === 0) {
+      elapsed = Math.max(0, elapsed - firstMoveGraceMs);
+    }
+    clocks[active] = Math.max(0, clocks[active] - elapsed);
     return clocks;
   }
 
@@ -767,12 +855,18 @@ export class GameServer extends DurableObject<Env> {
     if (!db) return error(ws, "server_unconfigured", "Matchmaking is unavailable right now.");
 
     let rating = 1500;
+    let rd = 350;
+    let vol = 0.06;
     try {
       const row = await db
-        .prepare("SELECT rating FROM users WHERE id = ?")
+        .prepare("SELECT rating, rd, vol FROM users WHERE id = ?")
         .bind(session.userId)
-        .first<{ rating: number }>();
-      if (row) rating = row.rating;
+        .first<{ rating: number; rd: number; vol: number }>();
+      if (row) {
+        rating = row.rating;
+        rd = row.rd;
+        vol = row.vol;
+      }
     } catch {}
 
     const key = this.queueKey(poolName);
@@ -789,6 +883,8 @@ export class GameServer extends DurableObject<Env> {
         userId: session.userId,
         username: session.username,
         rating,
+        rd,
+        vol,
         at: Date.now(),
       });
       await this.ctx.storage.put(key, entries);
@@ -798,8 +894,14 @@ export class GameServer extends DurableObject<Env> {
 
     const opponentWs = this.socketForAttachment(opponent.attachmentId)!;
     const meWhite = randomInt(2) === 0;
-    const me: SeatUser = { id: session.userId, name: session.username, rating };
-    const them: SeatUser = { id: opponent.userId, name: opponent.username, rating: opponent.rating };
+    const me: SeatUser = { id: session.userId, name: session.username, rating, rd, vol };
+    const them: SeatUser = {
+      id: opponent.userId,
+      name: opponent.username,
+      rating: opponent.rating,
+      rd: opponent.rd,
+      vol: opponent.vol,
+    };
     const id = await this.newCode(8);
     const match: StoredMatch = {
       id,
@@ -879,10 +981,14 @@ export class GameServer extends DurableObject<Env> {
         if (!seat) continue;
         try {
           const row = await db
-            .prepare("SELECT rating FROM users WHERE id = ?")
+            .prepare("SELECT rating, rd, vol FROM users WHERE id = ?")
             .bind(seat.id)
-            .first<{ rating: number }>();
-          if (row) seat.rating = row.rating;
+            .first<{ rating: number; rd: number; vol: number }>();
+          if (row) {
+            seat.rating = row.rating;
+            seat.rd = row.rd;
+            seat.vol = row.vol;
+          }
         } catch {}
       }
     }
@@ -938,13 +1044,34 @@ export class GameServer extends DurableObject<Env> {
     this.lastChatAt.set(session.id, now);
 
     const name = match.users?.[session.color]?.name ?? (session.color === "w" ? "White" : "Black");
-    const entry: ChatEntry = { color: session.color, name, text: raw.slice(0, 200), at: now };
+    const clipped = raw.slice(0, 200);
+    // Censor profanity before it is stored or relayed, and keep the original
+    // in chat_flags so a moderator can review repeat offenders later.
+    const matched = findProfanity(clipped);
+    const text = matched.length ? censorText(clipped) : clipped;
+    if (matched.length) {
+      const db = await this.db();
+      if (db) {
+        try {
+          await db
+            .prepare(
+              `INSERT INTO chat_flags (id, match_id, user_id, username, color, text, matched_words, created_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            )
+            .bind(crypto.randomUUID(), match.id, session.userId ?? null, name, session.color, clipped, matched.join(","), now)
+            .run();
+        } catch (err) {
+          console.error("failed to record chat flag", match.id, err);
+        }
+      }
+    }
+    const entry: ChatEntry = { color: session.color, name, text, at: now };
     match.chat = [...(match.chat ?? []), entry].slice(-50);
     await this.saveMatch(match, false);
     this.broadcast(match, "chat", entry);
   }
 
-  // ---------------- spectating ----------------
+  // ---------------- spectating & lobby ----------------
 
   private async watchMatch(ws: WebSocket, data: unknown) {
     const session = this.session(ws);
@@ -970,9 +1097,110 @@ export class GameServer extends DurableObject<Env> {
       rated: !!match.rated,
       started: !!match.startedAt,
       result: match.result,
+      watchers: this.watcherCount(id),
       // Hidden rules are only revealed to spectators once the game is over.
       ...(match.result ? { nerfs: { w: match.setup.whiteNerfId, b: match.setup.blackNerfId } } : {}),
     });
+    this.broadcastWatchers(id);
+  }
+
+  private watchLeave(ws: WebSocket) {
+    const session = this.session(ws);
+    if (!session.watching) return;
+    const id = session.watching;
+    const next = { ...session };
+    delete next.watching;
+    this.sessions.set(ws, next);
+    ws.serializeAttachment(next);
+    this.broadcastWatchers(id);
+  }
+
+  // One snapshot for the lobby page: who is online right now and which games
+  // can be watched. Polled by the client every few seconds.
+  private async lobbySnapshot(ws: WebSocket) {
+    const matches = [...(await this.ctx.storage.list<StoredMatch>({ prefix: "match:" })).values()];
+    const now = Date.now();
+
+    const liveGames: Array<{
+      id: string;
+      players: ReturnType<GameServer["playersPayload"]>;
+      rated: boolean;
+      timeSec: number;
+      incrementSec: number;
+      moves: number;
+      watchers: number;
+    }> = [];
+    const playingUserIds = new Set<string>();
+    for (const match of matches) {
+      if (!match.startedAt || match.result) continue;
+      await this.finishOnFlag(match, now, false);
+      if (match.result) continue;
+      for (const color of ["w", "b"] as Color[]) {
+        const id = match.users?.[color]?.id;
+        if (id) playingUserIds.add(id);
+      }
+      liveGames.push({
+        id: match.id,
+        players: this.playersPayload(match),
+        rated: !!match.rated,
+        timeSec: match.setup.timeSec,
+        incrementSec: match.setup.incrementSec,
+        moves: match.moves.length,
+        watchers: this.watcherCount(match.id),
+      });
+    }
+    liveGames.sort((a, b) => b.watchers - a.watchers || b.moves - a.moves);
+
+    // Who is queued for quick pairing right now.
+    const queuedUserIds = new Set<string>();
+    for (const poolName of Object.keys(QUEUE_POOLS)) {
+      const entries = (await this.ctx.storage.get<QueueEntry[]>(this.queueKey(poolName))) ?? [];
+      for (const entry of entries) {
+        if (this.socketForAttachment(entry.attachmentId)) queuedUserIds.add(entry.userId);
+      }
+    }
+
+    // Every signed-in account with an open socket, deduped; anonymous sockets
+    // are only counted.
+    const seen = new Map<string, { name: string; rating: number | null; status: string }>();
+    let anonymous = 0;
+    for (const [socket, session] of this.sessions) {
+      if (socket.readyState !== WebSocket.OPEN) continue;
+      if (!session.userId || !session.username) {
+        anonymous++;
+        continue;
+      }
+      const status = playingUserIds.has(session.userId)
+        ? "playing"
+        : queuedUserIds.has(session.userId)
+        ? "searching"
+        : "online";
+      const existing = seen.get(session.userId);
+      // "playing" wins over "searching" wins over "online" across tabs.
+      if (!existing || existing.status === "online" || (existing.status === "searching" && status === "playing")) {
+        seen.set(session.userId, { name: session.username, rating: null, status });
+      }
+    }
+
+    // Attach ratings for the online list in one query.
+    const db = await this.db();
+    if (db && seen.size > 0) {
+      try {
+        const ids = [...seen.keys()];
+        const placeholders = ids.map(() => "?").join(",");
+        const rows = await db
+          .prepare(`SELECT id, username, rating FROM users WHERE id IN (${placeholders})`)
+          .bind(...ids)
+          .all<{ id: string; username: string; rating: number }>();
+        for (const row of rows.results) {
+          const entry = seen.get(row.id);
+          if (entry) entry.rating = Math.round(row.rating);
+        }
+      } catch {}
+    }
+
+    const players = [...seen.values()].sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0)).slice(0, 50);
+    send(ws, "lobby", { players, anonymous, games: liveGames.slice(0, 25) });
   }
 
   private async sendClocks(ws: WebSocket) {
@@ -989,7 +1217,8 @@ export class GameServer extends DurableObject<Env> {
     const candidates: number[] = [];
     const game = this.gameFromMatch(match);
     if (match.setup.timeSec && game && !game.result && match.runningSince !== null) {
-      candidates.push(match.runningSince + match.clocks[game.board.turn]);
+      const grace = this.movesByColor(match, game.board.turn) === 0 ? firstMoveGraceMs : 0;
+      candidates.push(match.runningSince + match.clocks[game.board.turn] + grace);
     }
     for (const color of ["w", "b"] as Color[]) {
       const disconnectedAt = match.disconnectedAt[color];

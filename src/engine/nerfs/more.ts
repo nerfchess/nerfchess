@@ -251,6 +251,11 @@ export const POWER_CELLS: Nerf = db({
 export const UNSPOOLING: Nerf = db({
   id: "unspooling", name: "Unspooling", tier: 3, implemented: true,
   description: "Total move distance budget = 100. When you run out, you lose.",
+  progress: (state) => {
+    const s = state as { used: number };
+    const used = Math.min(s.used ?? 0, 100);
+    return { value: used, max: 100, label: `${used}/100 distance used` };
+  },
   init: () => ({ used: 0 }),
   onTurnStart: (_s, ctx) => {
     let used = 0;
@@ -280,6 +285,10 @@ export const EVIL_TWIN: Nerf = db({
 export const DOCTOR_OCTOPUS: Nerf = db({
   id: "doctor_octopus", name: "Doctor Octopus", tier: 3, implemented: true,
   description: "Can only capture non-king pieces 8 times total.",
+  progress: (_s, ctx) => {
+    const caps = ctx.board.history.filter((m) => m.color === ctx.me && m.captured && m.captured !== "k").length;
+    return { value: Math.min(caps, 8), max: 8, label: `${Math.min(caps, 8)}/8 captures used` };
+  },
   filterMoves: (moves, _s, ctx) => {
     const caps = ctx.board.history.filter((m) => m.color === ctx.me && m.captured && m.captured !== "k").length;
     if (caps >= 8) return moves.filter((m) => !m.captured || m.captured === "k");
@@ -1593,7 +1602,7 @@ export const CRENELLATIONS: Nerf = db({
 });
 
 export const LEADING_THE_CHARGE: Nerf = db({
-  id: "leading_the_charge", name: "Leading the Charge", tier: 4, implemented: true,
+  id: "leading_the_charge", name: "Leading the Charge", tier: 3, implemented: true,
   description: "As long as you have a knight, non-knights can't be ahead of your most advanced knight.",
   filterMoves: (moves, _s, ctx) => {
     const knights = pieceSquares(ctx.board, ctx.me, "n");

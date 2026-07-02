@@ -15,8 +15,7 @@ import {
   type CodexFilters,
 } from "@/lib/nerfFilter";
 
-const TIER_LABEL = ["", "Trivial", "Easy", "Common", "Severe", "Brutal"];
-const TIER_ROMAN = ["", "I", "II", "III", "IV", "V"];
+import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
 
 export default function CodexPage() {
   const [filters, setFilters] = useState<CodexFilters>(EMPTY_FILTERS);
@@ -120,7 +119,7 @@ export default function CodexPage() {
             <FilterPill onClick={() => patch({ tier: null })} active={filters.tier === null}>
               All
             </FilterPill>
-            {[1, 2, 3, 4, 5].map((t) => (
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((t) => (
               <FilterPill
                 key={t}
                 onClick={() => patch({ tier: filters.tier === t ? null : t })}

@@ -13,13 +13,33 @@ import {
   type RatingCategoryId,
 } from "@/lib/ratingCategories";
 import { DEFAULT_STATS, loadRatings, type Ratings } from "@/lib/ratings";
+import { AccountUser, fetchMe } from "@/lib/authClient";
 
 export default function ProfilePage() {
   const [ratings, setRatings] = useState<Ratings | null>(null);
   const [active, setActive] = useState<RatingCategoryId>(DEFAULT_CATEGORY);
+  const [account, setAccount] = useState<AccountUser | null | undefined>(undefined);
 
   useEffect(() => {
     setRatings(loadRatings());
+  }, []);
+
+  // The online rating lives on the account (server-side) and moves after every
+  // rated game, so fetch it fresh on mount and again whenever the tab regains
+  // focus — e.g. right after finishing a game in another tab.
+  useEffect(() => {
+    let cancelled = false;
+    const refresh = () => {
+      fetchMe().then((me) => {
+        if (!cancelled) setAccount(me);
+      });
+    };
+    refresh();
+    window.addEventListener("focus", refresh);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("focus", refresh);
+    };
   }, []);
 
   const activeCategory = getCategory(active);
@@ -36,16 +56,61 @@ export default function ProfilePage() {
       </nav>
 
       <section className="max-w-3xl mx-auto px-6 py-8">
-        {/* Identity header — there are no accounts yet, so this is the local player. */}
+        {/* Identity header — the signed-in account, or the local player. */}
         <div className="flex items-center gap-4">
           <span className="grid h-14 w-14 shrink-0 place-items-center rounded-full border border-gold/40 bg-gold/10 font-display text-2xl text-gold-leaf">
-            Y
+            {account ? account.username[0].toUpperCase() : "Y"}
           </span>
           <div>
-            <h1 className="font-display text-3xl sm:text-4xl text-parchment-50">You</h1>
-            <p className="text-sm text-parchment-400">Your ratings and record, stored on this device.</p>
+            <h1 className="font-display text-3xl sm:text-4xl text-parchment-50">
+              {account ? account.username : "You"}
+            </h1>
+            <p className="text-sm text-parchment-400">
+              {account
+                ? "Your online rating updates after every rated game."
+                : "Your ratings and record, stored on this device."}
+            </p>
           </div>
         </div>
+
+        {/* Online (account) rating: the number that moves in rated games. */}
+        {account && (
+          <div className="mt-8">
+            <div className="rule-ornament mb-4">
+              <span className="font-display">Online rating</span>
+            </div>
+            <div className="plate gilt p-5 sm:p-6 flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <div className="font-mono text-4xl text-parchment-50 tabular-nums">
+                  {Math.round(account.rating)}
+                </div>
+                <div className="mt-1 smallcaps text-[10px] text-parchment-400">
+                  Rated 3+2 · {account.games} game{account.games === 1 ? "" : "s"}
+                </div>
+              </div>
+              <div className="flex gap-5 text-center">
+                <div>
+                  <div className="font-mono text-xl text-verdigris-glow tabular-nums">{account.wins}</div>
+                  <div className="smallcaps text-[9px] text-parchment-400">Wins</div>
+                </div>
+                <div>
+                  <div className="font-mono text-xl text-parchment-200 tabular-nums">{account.draws}</div>
+                  <div className="smallcaps text-[9px] text-parchment-400">Draws</div>
+                </div>
+                <div>
+                  <div className="font-mono text-xl text-oxblood-glow tabular-nums">{account.losses}</div>
+                  <div className="smallcaps text-[9px] text-parchment-400">Losses</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        {account === null && (
+          <div className="mt-6 plate p-4 text-sm text-parchment-300">
+            <Link href="/login?next=/profile" className="text-gold-leaf hover:underline">Sign in</Link>{" "}
+            to get an online rating that follows you across devices.
+          </div>
+        )}
 
         {/* Ratings section */}
         <div className="mt-8">

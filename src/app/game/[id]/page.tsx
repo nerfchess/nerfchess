@@ -55,6 +55,9 @@ export default function OnlineGamePage() {
   const params = useParams<{ id: string }>();
   const gameId = String(params.id ?? "").toUpperCase();
   const [mode, setMode] = useState<Mode>({ kind: "loading" });
+  // Bumped whenever a reconnect replays the spectator state, so the viewer
+  // remounts with the fresh payload.
+  const [watchGen, setWatchGen] = useState(0);
   const sessionRef = useRef<MPSession | null>(null);
 
   useEffect(() => {
@@ -76,13 +79,22 @@ export default function OnlineGamePage() {
       if (!cancelled) setMode({ kind: "missing" });
     };
 
+    // Any watch payload (initial or after an automatic reconnect) refreshes
+    // the spectator view with the server's replayed state.
+    const offWatch = session.on((e) => {
+      if (cancelled) return;
+      if (e.type === "watch-start") {
+        setWatchGen((g) => g + 1);
+        setMode({ kind: "spectator", setup: e.setup });
+      }
+    });
+
     const spectate = async () => {
       try {
-        const setup = await session.watch(gameId);
-        if (!cancelled) setMode({ kind: "spectator", setup });
+        await session.watch(gameId);
       } catch (e) {
-        session.destroy();
         if (e instanceof Error && e.message === "not_found") {
+          session.destroy();
           await loadReplay();
         } else if (!cancelled) {
           setMode({ kind: "error", message: e instanceof Error ? e.message : String(e) });
@@ -95,27 +107,43 @@ export default function OnlineGamePage() {
       const off = session.on((e) => {
         if (cancelled) return;
         if (e.type === "start") {
-          off();
           setMode({ kind: "player", start: e.setup });
         } else if (e.type === "open") {
           setMode({ kind: "waiting" });
         }
       });
-      session
-        .resume({ id: gameId, color: seat.color, token: seat.token })
-        .catch(() => {
-          if (cancelled) return;
-          // Seat expired (game archived or gone) — fall back to watching.
-          off();
-          clearOnlineSeat(gameId);
-          spectate();
-        });
+      // Resume the seat; transient connection failures retry with backoff,
+      // and only a server-side refusal downgrades us to spectating.
+      const tryResume = (attempt: number) => {
+        session
+          .resume({ id: gameId, color: seat.color, token: seat.token })
+          .catch((err) => {
+            if (cancelled) return;
+            if (err instanceof Error && err.message === "reconnect_failed") {
+              // Seat expired (game archived or gone) — fall back to watching.
+              off();
+              clearOnlineSeat(gameId);
+              spectate();
+              return;
+            }
+            if (attempt < 5) {
+              window.setTimeout(() => {
+                if (!cancelled) tryResume(attempt + 1);
+              }, Math.min(8000, 1500 * (attempt + 1)));
+            } else {
+              off();
+              spectate();
+            }
+          });
+      };
+      tryResume(0);
     } else {
       spectate();
     }
 
     return () => {
       cancelled = true;
+      offWatch();
       session.destroy();
       sessionRef.current = null;
     };
@@ -136,7 +164,7 @@ export default function OnlineGamePage() {
   }
 
   if (mode.kind === "spectator" && sessionRef.current) {
-    return <SpectatorView session={sessionRef.current} setup={mode.setup} />;
+    return <SpectatorView key={watchGen} session={sessionRef.current} setup={mode.setup} />;
   }
 
   if (mode.kind === "replay") {
@@ -180,6 +208,8 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
   const [blackMs, setBlackMs] = useState(setup.bc);
   const [result, setResult] = useState(setup.result);
   const [nerfs, setNerfs] = useState(setup.nerfs ?? null);
+  const [watchers, setWatchers] = useState(setup.watchers ?? 1);
+  const [reconnecting, setReconnecting] = useState(false);
   const [historyPly, setHistoryPly] = useState<number | null>(null);
 
   useEffect(() => {
@@ -196,6 +226,12 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
       } else if (e.type === "clocks") {
         setWhiteMs(e.wc);
         setBlackMs(e.bc);
+      } else if (e.type === "watchers") {
+        setWatchers(e.n);
+      } else if (e.type === "disconnected" || e.type === "reconnecting") {
+        setReconnecting(true);
+      } else if (e.type === "watch-start") {
+        setReconnecting(false);
       }
     });
     return off;
@@ -204,16 +240,21 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
   const { board, history } = useMemo(() => replayUci(uciMoves), [uciMoves]);
   const clockEnabled = setup.timeSec > 0;
 
-  // Local clock tick between server updates.
+  // Local clock tick between server updates. The side to move gets a 15s
+  // grace before its first move, so hold the display still until then.
   useEffect(() => {
     if (!clockEnabled || result || !setup.started) return;
     const id = setInterval(() => {
+      // Grace window: the side to move hasn't played yet (w before ply 1,
+      // b before ply 2). Server clock frames stay authoritative regardless.
+      if (board.turn === "w" && uciMoves.length === 0) return;
+      if (board.turn === "b" && uciMoves.length === 1) return;
       const dec = (t: number) => Math.max(0, t - 100);
       if (board.turn === "w") setWhiteMs(dec);
       else setBlackMs(dec);
     }, 100);
     return () => clearInterval(id);
-  }, [board.turn, clockEnabled, result, setup.started]);
+  }, [board.turn, clockEnabled, result, setup.started, uciMoves.length]);
 
   const currentPly = historyPly ?? history.length;
   const displayBoard = historyPly == null ? board : boardAtPly(history, historyPly);
@@ -232,7 +273,13 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
       whiteMs={whiteMs}
       blackMs={blackMs}
       activeColor={result ? null : board.turn}
-      statusLabel={result ? describeResult(result) : setup.started ? "Live game" : "Waiting for players"}
+      statusLabel={
+        (reconnecting
+          ? "Reconnecting… · "
+          : "") +
+        (result ? describeResult(result) : setup.started ? "Live game" : "Waiting for players") +
+        (watchers > 0 ? ` · ${watchers} watching` : "")
+      }
       nerfs={nerfs}
     />
   );

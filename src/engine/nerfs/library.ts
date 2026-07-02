@@ -26,7 +26,6 @@ const STUBS: Stub[] = [
   { id: "horse_tranquilizer", name: "Horse Tranquilizer", description: "Knights can't capture.", tier: 1 },
   { id: "quit_horsing_around", name: "Quit Horsing Around", description: "If you moved a knight last move, you can't move a knight this move.", tier: 1 },
   { id: "royal_jubilee", name: "Royal Jubilee", description: "Whenever you capture a non-pawn, you must move your king or queen on the next move.", tier: 2 },
-  { id: "number_of_the_beast", name: "Number of the Beast", description: "Can't move to the 6th rank.", tier: 1 },
   { id: "prima_donna", name: "Prima Donna", description: "Can't have more than one pawn on the same file.", tier: 2 },
   { id: "separation_church_state", name: "Separation of Church and State", description: "Can't move bishops next to a king and can't move king next to a bishop.", tier: 2 },
   { id: "escort_mission", name: "Escort Mission", description: "If your king can capture, it must.", tier: 2 },
@@ -158,8 +157,8 @@ const STUBS: Stub[] = [
   // ADDITIONAL
   { id: "hand_and_gigabrain", name: "Hand and Gigabrain", description: "Must move the piece type Stockfish recommends.", tier: 5 },
   { id: "crenellations", name: "Crenellations", description: "Pawns can only move to a random color of squares.", tier: 4 },
-  { id: "scent_of_blood", name: "The Scent of Blood", description: "Can't make a non-capturing move with a piece that can capture.", tier: 4 },
-  { id: "leading_the_charge", name: "Leading the Charge", description: "As long as you have a knight, non-knights can't be ahead of your most advanced knight.", tier: 4 },
+  { id: "scent_of_blood", name: "The Scent of Blood", description: "Can't make a non-capturing move with a piece that can capture.", tier: 5 },
+  { id: "leading_the_charge", name: "Leading the Charge", description: "As long as you have a knight, non-knights can't be ahead of your most advanced knight.", tier: 3 },
   { id: "active_volcano", name: "Active Volcano", description: "Can't move onto or orthogonally adjacent to a random square.", tier: 4 },
   { id: "nurturer", name: "Nurturer", description: "Can't capture the enemy king until you've promoted a pawn.", tier: 5 },
   { id: "prince_charming", name: "Prince Charming", description: "If your queen is attacked, must move a knight if possible.", tier: 4 },

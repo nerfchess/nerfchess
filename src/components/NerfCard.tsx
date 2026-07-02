@@ -11,8 +11,7 @@ interface Props {
   progress?: { value: number; max: number; label: string } | null;
 }
 
-const TIER_LABEL = ["", "Trivial", "Easy", "Common", "Severe", "Brutal"];
-const TIER_ROMAN = ["", "I", "II", "III", "IV", "V"];
+import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
 
 export function NerfCard({ nerf, revealed = true, compact = false, ownerLabel, progress }: Props) {
   if (!revealed) {

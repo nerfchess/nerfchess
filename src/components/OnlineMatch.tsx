@@ -43,11 +43,39 @@ function pickRandomNerf(): Nerf {
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
+// Rebuild the authoritative game state from a server `start` payload. Used on
+// mount and again whenever a reconnect replays the game.
+function buildGameFromStart(start: MPStart): NerfGame {
+  const myNerf = IMPLEMENTED_BY_ID[start.nerfId] ?? pickRandomNerf();
+  let next = newGameAsColor(myNerf, start.color, start.nerfSeed);
+  for (const uci of start.moves ?? []) {
+    const move = legalMoves(next).find((candidate) => moveToUCI(candidate) === uci);
+    if (!move) return next;
+    next = playMove(next, move);
+  }
+  return next;
+}
+
 interface Props {
   session: MPSession;
   start: MPStart;
   subtitle: string;
   onExit: () => void;
+}
+
+// What this rated game is worth: the projected rating change for each result.
+function RatingStakes({ stakes }: { stakes: { win: number; draw: number; loss: number } }) {
+  const fmt = (n: number) => (n >= 0 ? `+${n}` : `${n}`);
+  return (
+    <div className="plate flex items-center justify-between gap-2 p-2 px-3">
+      <span className="smallcaps text-[9px] text-parchment-400">Rating at stake</span>
+      <span className="font-mono text-[11px] tabular-nums">
+        <span className="text-verdigris">W {fmt(stakes.win)}</span>
+        <span className="text-parchment-400"> · D {fmt(stakes.draw)} · </span>
+        <span className="text-oxblood-glow">L {fmt(stakes.loss)}</span>
+      </span>
+    </div>
+  );
 }
 
 // The in-game view for any server-authoritative online game (friend games and
@@ -62,16 +90,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   const oppName = start.players?.[oppColor]?.name ?? "Opponent";
   const oppRating = start.players?.[oppColor]?.rating ?? null;
 
-  const [game, setGame] = useState<NerfGame | null>(() => {
-    const myNerf = IMPLEMENTED_BY_ID[start.nerfId] ?? pickRandomNerf();
-    let next = newGameAsColor(myNerf, start.color, start.nerfSeed);
-    for (const uci of start.moves ?? []) {
-      const move = legalMoves(next).find((candidate) => moveToUCI(candidate) === uci);
-      if (!move) return next;
-      next = playMove(next, move);
-    }
-    return next;
-  });
+  const [game, setGame] = useState<NerfGame | null>(() => buildGameFromStart(start));
   const [error, setError] = useState<string | null>(null);
   const [muted, setMutedState] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -194,9 +213,22 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         setAwaitingPremoveAck(false);
         clearPremoves();
       } else if (e.type === "disconnected") {
-        setError("Disconnected from the game server.");
+        setError("Connection lost — reconnecting…");
         setPendingLocalMove(null);
         setAwaitingPremoveAck(false);
+      } else if (e.type === "reconnecting") {
+        setError("Connection lost — reconnecting…");
+      } else if (e.type === "start") {
+        // Reconnected: the server replayed the full game (moves, clocks,
+        // chat, and a trailing `end` frame if it finished while we were away).
+        setError(null);
+        setPendingLocalMove(null);
+        setAwaitingPremoveAck(false);
+        clearPremoves();
+        setWhiteMs(e.setup.wc);
+        setBlackMs(e.setup.bc);
+        setChatMessages(e.setup.chat ?? []);
+        setGame(buildGameFromStart(e.setup));
       } else if (e.type === "opponent-gone") {
         setError("Opponent disconnected.");
         setPendingLocalMove(null);
@@ -482,12 +514,21 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingLocalMove]);
 
-  // Clock tick
+  // Clock tick. Each side's first move has a 15s server-side grace period, so
+  // the local display also holds still until it expires (server frames keep
+  // the clocks honest either way).
+  const turnStartedAtRef = useRef(Date.now());
+  useEffect(() => {
+    turnStartedAtRef.current = Date.now();
+  }, [game?.board.history.length]);
   useEffect(() => {
     if (!clockEnabled || !game || game.result) return;
     const id = setInterval(() => {
+      const active = game.board.turn;
+      const activeMoves = game.board.history.filter((m) => m.color === active).length;
+      if (activeMoves === 0 && Date.now() - turnStartedAtRef.current < 15000) return;
       const dec = (t: number) => Math.max(0, t - 100);
-      if (game.board.turn === "w") setWhiteMs(dec);
+      if (active === "w") setWhiteMs(dec);
       else setBlackMs(dec);
     }, 100);
     return () => clearInterval(id);
@@ -552,6 +593,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   };
 
   if (!game) return null;
+  const ratingStakes = start.rated && !game.result ? start.preview?.[myColor] ?? null : null;
   const myNerf = myColor === "w" ? game.white.nerf : game.black.nerf;
   const myState = myColor === "w" ? game.white.state : game.black.state;
   const myCtx = makeContext(game, myColor);
@@ -725,16 +767,19 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                 className="h-full"
               />
             </div>
-            <PlayerNerfCard
-              board={boardForDisplay}
-              playerColor={myColor}
-              myColor={myColor}
-              name={myName}
-              elo={myRating}
-              nerf={myNerf}
-              ownerLabel=""
-              progress={myNerf.progress?.(myState, myCtx) ?? null}
-            />
+            <div className="space-y-2">
+              <PlayerNerfCard
+                board={boardForDisplay}
+                playerColor={myColor}
+                myColor={myColor}
+                name={myName}
+                elo={myRating}
+                nerf={myNerf}
+                ownerLabel=""
+                progress={myNerf.progress?.(myState, myCtx) ?? null}
+              />
+              {ratingStakes && <RatingStakes stakes={ratingStakes} />}
+            </div>
           </aside>
           <div className="flex min-h-0 flex-col gap-2 sm:flex-row sm:items-stretch sm:justify-start">
             <div ref={boardShellRef} className="min-h-0 min-w-0 sm:flex-none">
@@ -805,6 +850,11 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                 </span>
                 <span className="text-xs leading-snug text-parchment-300">: {myNerf.description}</span>
               </div>
+              {ratingStakes && (
+                <div className="mt-1 sm:hidden">
+                  <RatingStakes stakes={ratingStakes} />
+                </div>
+              )}
               {historyActions && <div className="mt-1 sm:hidden">{historyActions}</div>}
             </div>
             <div

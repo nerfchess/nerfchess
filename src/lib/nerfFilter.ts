@@ -5,7 +5,7 @@
 import type { Nerf } from "@/engine/nerf";
 import { CATEGORY_IDS, categoriesOf, getCategoryLabel } from "@/lib/nerfCategories";
 
-const TIER_ROMAN = ["", "I", "II", "III", "IV", "V"];
+import { TIER_ROMAN } from "./tiers";
 const SORT_IDS: SortId[] = ["az", "za", "easy", "brutal"];
 
 export type SortId = "az" | "za" | "easy" | "brutal";
