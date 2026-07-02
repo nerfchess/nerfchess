@@ -26,7 +26,7 @@ export function NerfCard({ nerf, revealed = true, compact = false, ownerLabel, p
           </div>
         </div>
         <p className="mt-3 text-sm text-parchment-300/80 leading-relaxed">
-          You'll see their rule when the game ends.
+          You&apos;ll see their rule when the game ends.
         </p>
       </div>
     );

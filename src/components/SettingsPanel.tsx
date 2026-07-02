@@ -20,7 +20,6 @@ import { Piece } from "@/components/Pieces";
 import { SECTIONS, type Control } from "@/components/settings/config";
 import { SettingsSection } from "@/components/settings/SettingsSection";
 import { SettingRow } from "@/components/settings/SettingRow";
-import { ProfileEditor } from "@/components/settings/ProfileEditor";
 import {
   GhostButton,
   Select,
@@ -105,8 +104,6 @@ export function SettingsPanel({ open, onClose }: Props) {
         return <BoardThemePicker value={settings.boardTheme} onChange={(t) => update({ boardTheme: t })} />;
       case "pieceTheme":
         return <PieceThemePicker value={settings.pieceTheme} onChange={(t) => update({ pieceTheme: t })} />;
-      case "profile":
-        return <ProfileEditor />;
       case "reset":
         return (
           <GhostButton
@@ -123,7 +120,7 @@ export function SettingsPanel({ open, onClose }: Props) {
 
   // Pickers span a full row; simple controls sit inline on the right.
   const isStacked = (control: Control) =>
-    control.kind === "boardTheme" || control.kind === "pieceTheme" || control.kind === "profile";
+    control.kind === "boardTheme" || control.kind === "pieceTheme";
 
   return (
     <div

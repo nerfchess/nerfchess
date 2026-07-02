@@ -16,3 +16,4 @@ agent*.jsonl
 !.vscode/extensions.json
 !.vscode/launch.json
 !.vscode/tasks.json
+dist-server

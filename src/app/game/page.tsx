@@ -1,7 +1,10 @@
 "use client";
 
 import { Board } from "@/components/Board";
+import { BoardPlayerRow } from "@/components/BoardPlayerRow";
+import { ClockPill } from "@/components/ClockPill";
 import { GameOver } from "@/components/GameOver";
+import { MobileMoveDrawer } from "@/components/MobileMoveDrawer";
 import { MoveList } from "@/components/MoveList";
 import { PlayerNerfCard } from "@/components/PlayerNerfCard";
 import { AILevel, pickAIMove } from "@/engine/ai";
@@ -22,31 +25,18 @@ import { BoardState, Color, Move } from "@/engine/types";
 import { cloneBoard, isInCheck, makeMove } from "@/engine/board";
 import { computeMoveRisks } from "@/engine/moveSafety";
 import { loadSettings } from "@/lib/settings";
-import { loadProfile } from "@/lib/profile";
-import { formatTimeControl as formatTC, recordGame } from "@/lib/history";
 import type { QueuedPremove } from "@/components/Board";
 import { buildCustomNerf, CustomNerf } from "@/engine/nerfs/custom";
 import { isMuted, playCapture, playCheck, playNerf, playMove as playMoveSfx, setMuted } from "@/lib/sounds";
+import { nerfSummary, outcomeFor, recordCompletedGame } from "@/lib/gameHistory";
 import { applyResult, loadRating, saveRating } from "@/lib/rating";
 import { SettingsPanel } from "@/components/SettingsPanel";
-import { clearSavedAiGame, loadSavedAiGame, restoreSavedAiGame, saveAiGame } from "@/lib/gamePersistence";
+import { loadSavedAiGame, restoreSavedAiGame, saveAiGame } from "@/lib/gamePersistence";
 import { boardAtPly } from "@/lib/gameReview";
 import { premoveOptionsFor } from "@/lib/premoves";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, type CSSProperties, useEffect, useMemo, useRef, useState } from "react";
-
-function formatClock(ms: number): string {
-  const clamped = Math.max(0, ms);
-  // Under 10s, show 1 decimal so the user can feel the rush.
-  if (clamped < 10000) {
-    return `0:0${(clamped / 1000).toFixed(1)}`;
-  }
-  const totalSec = Math.ceil(clamped / 1000);
-  const m = Math.floor(totalSec / 60);
-  const s = totalSec % 60;
-  return `${m}:${s.toString().padStart(2, "0")}`;
-}
 
 function pickRandomNerf(): Nerf {
   const playable = PLAYABLE_NERFS.filter((d) => d.id !== "lucky");
@@ -123,8 +113,6 @@ function GamePage() {
   const [historyPly, setHistoryPly] = useState<number | null>(null);
   const [boardHeight, setBoardHeight] = useState<number | null>(null);
   const [playerElo, setPlayerElo] = useState<number | null>(null);
-  const [username, setUsername] = useState<string | null>(null);
-  const [avatarId, setAvatarId] = useState<string | null>(null);
   // Reveal controls: peek at the opponent's rule mid-game, and offer to show
   // your own rule to the opponent.
   const [oppPeek, setOppPeek] = useState(false);
@@ -143,9 +131,6 @@ function GamePage() {
   useEffect(() => {
     setMutedState(isMuted());
     setPlayerElo(loadRating().rating);
-    const profile = loadProfile();
-    setUsername(profile.username);
-    setAvatarId(profile.avatarId);
   }, []);
 
   useEffect(() => {
@@ -172,16 +157,6 @@ function GamePage() {
       // Ignore incompatible saved games and deal a fresh one below.
     }
 
-    dealNewGame(myColor);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Deal a fresh game vs the bot with the current page settings. Used for the
-  // first deal and for instant rematches.
-  function dealNewGame(color?: Color) {
-    clearSavedAiGame();
-    const nextColor: Color =
-      color ?? (myColorParam === "w" ? "w" : myColorParam === "b" ? "b" : Math.random() < 0.5 ? "w" : "b");
     let myDb: Nerf;
     let myCustomSpec: CustomNerf | null = null;
     if (myNerfId === "__custom__") {
@@ -199,24 +174,14 @@ function GamePage() {
       myDb = IMPLEMENTED_BY_ID[myNerfId] ?? pickRandomNerf();
     }
     const aiDb = pickRandomNerf();
-    const wDb = nextColor === "w" ? myDb : aiDb;
-    const bDb = nextColor === "w" ? aiDb : myDb;
-    whiteCustomSpec.current = nextColor === "w" ? myCustomSpec : null;
-    blackCustomSpec.current = nextColor === "w" ? null : myCustomSpec;
-    setMyColor(nextColor);
-    setPremoves([]);
+    const wDb = myColor === "w" ? myDb : aiDb;
+    const bDb = myColor === "w" ? aiDb : myDb;
+    whiteCustomSpec.current = myColor === "w" ? myCustomSpec : null;
+    blackCustomSpec.current = myColor === "w" ? null : myCustomSpec;
     setHistoryPly(null);
-    setOppPeek(false);
-    setSharedMine(false);
-    setRatingChange(null);
-    setConfirmingResign(false);
-    setDrawOfferStatus("idle");
-    setWhiteMs(initialTimeMs);
-    setBlackMs(initialTimeMs);
-    sawResult.current = false;
-    lastSeenMoveCount.current = 0;
     setGame(newGame(wDb, bDb, makeSeed()));
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (!game) return;
@@ -346,7 +311,10 @@ function GamePage() {
     lastSeenMoveCount.current = hist.length;
   }, [game]);
 
-  // Nerf-triggered loss sound when game ends with a non-mundane reason.
+  // Game-ended hook: play the nerf sound, apply the rating, and record the
+  // finished game into the local history. Runs exactly once per game;
+  // restoring an already-finished saved game pre-sets sawResult so a refresh
+  // never double-records.
   const sawResult = useRef(false);
   const [ratingChange, setRatingChange] = useState<{ before: number; after: number } | null>(null);
   useEffect(() => {
@@ -355,31 +323,31 @@ function GamePage() {
     if (game.result.reason && game.result.reason.includes(":")) {
       playNerf();
     }
-    const score: 0 | 0.5 | 1 =
-      game.result.winner === "draw" ? 0.5 : game.result.winner === myColor ? 1 : 0;
-    // Rated games move your rating; casual games only enter the history log.
-    let ratingAfter: number | null = null;
+    // Casual games don't affect your rating.
+    let change: { before: number; after: number } | null = null;
     if (rated) {
       const before = loadRating();
+      const score: 0 | 0.5 | 1 =
+        game.result.winner === "draw" ? 0.5 : game.result.winner === myColor ? 1 : 0;
       const after = applyResult(before, difficulty, score);
       saveRating(after);
       setPlayerElo(after.rating);
-      setRatingChange({ before: before.rating, after: after.rating });
-      ratingAfter = after.rating;
+      change = { before: before.rating, after: after.rating };
+      setRatingChange(change);
     }
-    recordGame({
-      ts: Date.now(),
+    recordCompletedGame({
       mode: "ai",
-      outcome: score === 1 ? "win" : score === 0 ? "loss" : "draw",
+      opponent: `${difficulty[0].toUpperCase()}${difficulty.slice(1)} Bot`,
+      myColor,
+      outcome: outcomeFor(game.result.winner, myColor),
       reason: game.result.reason,
       rated,
-      opponent: `${difficulty[0].toUpperCase()}${difficulty.slice(1)} Bot`,
-      myNerf: (myColor === "w" ? game.white.nerf : game.black.nerf).name,
-      opponentNerf: (myColor === "w" ? game.black.nerf : game.white.nerf).name,
-      moves: game.board.history.length,
-      durationSec: Math.max(0, Math.round((Date.now() - game.startedAt) / 1000)),
-      timeControl: formatTC(initialTimeMs / 1000, incrementMs / 1000),
-      ratingAfter,
+      moveCount: game.board.history.length,
+      baseSec: initialTimeMs / 1000,
+      incSec: incrementMs / 1000,
+      ratingChange: change,
+      myNerf: nerfSummary(myColor === "w" ? game.white.nerf : game.black.nerf),
+      opponentNerf: nerfSummary(myColor === "w" ? game.black.nerf : game.white.nerf),
     });
   }, [game, myColor, difficulty, rated, initialTimeMs, incrementMs]);
 
@@ -537,10 +505,7 @@ function GamePage() {
 
   const cancelPremove = () => setPremoves([]);
 
-  // Rematch deals a new game immediately with the same settings; "New game"
-  // goes back to the setup screen.
-  const handleRematch = () => dealNewGame();
-  const handleNewGame = () => router.push("/play");
+  const handleRematch = () => router.push("/play");
 
   const onResign = () => {
     if (!game.result) {
@@ -677,7 +642,7 @@ function GamePage() {
         </div>
       </nav>
 
-      <div className="mx-auto flex w-full max-w-[1280px] flex-1 min-h-0 flex-col gap-2 overflow-hidden px-3 pb-6 sm:px-6">
+      <div className="mx-auto flex w-full max-w-[1280px] flex-1 min-h-0 flex-col gap-2 overflow-hidden px-3 pb-14 sm:px-6 sm:pb-6">
         {hint && (
           <div
             role="status"
@@ -725,8 +690,7 @@ function GamePage() {
               board={boardForDisplay}
               playerColor={myColor}
               myColor={myColor}
-              name={username ?? "You"}
-              avatarId={avatarId}
+              name="You"
               elo={playerElo}
               nerf={myNerf}
               ownerLabel=""
@@ -748,6 +712,25 @@ function GamePage() {
           </aside>
           <div className="flex min-h-0 flex-col gap-2 sm:flex-row sm:items-stretch sm:justify-start">
             <div ref={boardShellRef} className="min-h-0 min-w-0 sm:flex-none">
+              {/* Mobile-only player strips: the side rails (clocks, cards,
+                  actions) are hidden below the sm breakpoint. */}
+              <div className="flex items-center justify-between gap-2 sm:hidden">
+                <BoardPlayerRow
+                  board={boardForDisplay}
+                  playerColor={myColor === "w" ? "b" : "w"}
+                  myColor={myColor}
+                  name={`${difficulty[0].toUpperCase()}${difficulty.slice(1)} Bot`}
+                  elo={BOT_ELO[difficulty]}
+                  className="min-w-0 flex-1 !px-0 !py-1"
+                />
+                {clockEnabled && (
+                  <ClockPill
+                    ms={myColor === "w" ? blackMs : whiteMs}
+                    active={!game.result && game.board.turn !== myColor}
+                    compact
+                  />
+                )}
+              </div>
               <div data-board-measure className={`mx-auto sm:mx-0 ${boardFitClass}`}>
                 <Board
                   board={boardForDisplay}
@@ -773,6 +756,30 @@ function GamePage() {
                   highlightLastMove={uiSettings.highlightLastMove}
                 />
               </div>
+              <div className="flex items-center justify-between gap-2 sm:hidden">
+                <BoardPlayerRow
+                  board={boardForDisplay}
+                  playerColor={myColor}
+                  myColor={myColor}
+                  name="You"
+                  elo={playerElo}
+                  className="min-w-0 flex-1 !px-0 !py-1"
+                />
+                {clockEnabled && (
+                  <ClockPill
+                    ms={myColor === "w" ? whiteMs : blackMs}
+                    active={!game.result && game.board.turn === myColor}
+                    compact
+                  />
+                )}
+              </div>
+              <div className="plate mt-1 p-2 px-3 sm:hidden">
+                <span className={`font-display text-sm font-semibold tier-${myNerf.tier}`}>
+                  {myNerf.name}
+                </span>
+                <span className="text-xs leading-snug text-parchment-300">: {myNerf.description}</span>
+              </div>
+              {historyActions && <div className="mt-1 sm:hidden">{historyActions}</div>}
             </div>
             <div
               className={
@@ -806,6 +813,13 @@ function GamePage() {
         </div>
       </div>
 
+      <MobileMoveDrawer
+        moves={game.board.history}
+        currentPly={currentHistoryPly}
+        onPlyChange={handleHistoryPlyChange}
+        footer={historyActions}
+      />
+
       {game.result && (
         <GameOver
           result={game.result}
@@ -815,7 +829,7 @@ function GamePage() {
           opponentHidden={uiSettings.hideOpponentReveal && !oppPeek}
           ratingChange={ratingChange}
           onRematch={handleRematch}
-          onNewGame={handleNewGame}
+          onNewGame={handleRematch}
           onReview={() => setHistoryPly(0)}
         />
       )}
@@ -830,30 +844,3 @@ function GamePage() {
   );
 }
 
-function ClockPill({ ms, active }: { ms: number; active: boolean }) {
-  const low = ms < 30000;
-  const critical = ms < 10000;
-  return (
-    <div
-      className={
-        "plate p-4 flex items-center justify-center transition " +
-        (active
-          ? "border-2 border-gold bg-gold/15 shadow-leaf ring-1 ring-gold/40"
-          : "opacity-60")
-      }
-    >
-      <span
-        className={
-          "font-mono text-4xl tabular-nums font-bold tracking-wide " +
-          (critical
-            ? "text-oxblood-glow"
-            : low
-            ? "text-gold-leaf"
-            : "text-parchment")
-        }
-      >
-        {formatClock(ms)}
-      </span>
-    </div>
-  );
-}

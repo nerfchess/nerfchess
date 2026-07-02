@@ -8,6 +8,9 @@ import { PLAYABLE_NERFS } from "./src/engine/nerfs/library";
 import { NerfGame, legalMoves, newGame, playMove, resign } from "./src/engine/game";
 import { RNG } from "./src/engine/rng";
 import { Color } from "./src/engine/types";
+import { sessionTokenFromCookieHeader, userForSession } from "./src/lib/server/auth";
+import { ensureSchema } from "./src/lib/server/schema";
+import { recordFinishedGame, RatingChange } from "./src/lib/server/games";
 
 type Result = NerfGame["result"];
 type Setup = {
@@ -17,6 +20,8 @@ type Setup = {
   timeSec: number;
   incrementSec: number;
 };
+type SeatUser = { id: string; name: string; rating: number };
+type ChatEntry = { color: Color; name: string; text: string; at: number };
 type StoredMatch = {
   id: string;
   setup: Setup;
@@ -28,17 +33,39 @@ type StoredMatch = {
   clocks: Record<Color, number>;
   runningSince: number | null;
   drawOfferBy: Color | null;
-  rematchOfferBy?: Color | null;
   createdAt: number;
   startedAt: number | null;
   completedAt: number | null;
+  // Rated matchmade games carry the two accounts; friend games may carry them
+  // too (for history) but stay casual.
+  rated?: boolean;
+  users?: Partial<Record<Color, SeatUser>>;
+  recorded?: boolean;
+  // Matchmade and rematch games start automatically once both seats connect
+  // (friend games wait in the lobby for a join instead).
+  autoStart?: boolean;
+  rematchOfferBy?: Color | null;
+  // Set once a rematch match has been created from this one.
+  rematchedTo?: string | null;
+  chat?: ChatEntry[];
 };
 type SessionAttachment = {
   id: string;
   matchId?: string;
   color?: Color;
   token?: string;
-  spectateId?: string;
+  // Account attached at websocket upgrade from the session cookie.
+  userId?: string;
+  username?: string;
+  // Match id this socket spectates (mutually exclusive with a seat).
+  watching?: string;
+};
+type QueueEntry = {
+  attachmentId: string;
+  userId: string;
+  username: string;
+  rating: number;
+  at: number;
 };
 type ClientFrame =
   | { t: "create"; d?: { timeSec?: unknown; incrementSec?: unknown } }
@@ -49,38 +76,23 @@ type ClientFrame =
   | { t: "drawOffer" }
   | { t: "drawAccept" }
   | { t: "drawDecline" }
-  | { t: "rematch" }
-  | { t: "rematchDecline" }
-  | { t: "queue"; d?: { rating?: unknown; timeSec?: unknown; incrementSec?: unknown } }
+  | { t: "queue"; d?: { pool?: unknown } }
   | { t: "queueCancel" }
-  | { t: "listGames" }
-  | { t: "spectate"; d?: { id?: unknown } }
-  | { t: "spectateLeave" }
+  | { t: "watch"; d?: { id?: unknown } }
+  | { t: "rematch" }
+  | { t: "chat"; d?: { text?: unknown } }
   | { t: "p" };
-
-// Quick pairing queue entry, persisted so it survives DO hibernation.
-type QueueEntry = {
-  sessionId: string;
-  rating: number;
-  timeSec: number;
-  incrementSec: number;
-  since: number;
-};
-
-// The acceptable rating gap starts at ±150 and widens by 100 every 5 seconds
-// a player waits, so nobody queues forever.
-function ratingBand(waitedMs: number): number {
-  return 150 + Math.floor(waitedMs / 5000) * 100;
-}
-
-function queueKey(sessionId: string): string {
-  return `queue:${sessionId}`;
-}
 
 export interface Env {
   GAME_SERVER: DurableObjectNamespace<GameServer>;
   GAME_SERVER_ORIGINS?: string;
+  DB: D1Database;
 }
+
+// Quick-pairing pools for rated matchmaking.
+const QUEUE_POOLS: Record<string, { timeSec: number; incrementSec: number }> = {
+  "3+2": { timeSec: 180, incrementSec: 2 },
+};
 
 const socketPath = "/socket/v1";
 const globalServerName = "nerfchess-global";
@@ -92,10 +104,10 @@ function randomInt(max: number): number {
   return values[0] % max;
 }
 
-function randomCode(): string {
+function randomCode(length = 5): string {
   const chars = "BCDFGHJKMNPQRSTVWXYZ23456789";
   let code = "";
-  for (let i = 0; i < 5; i++) code += chars[randomInt(chars.length)];
+  for (let i = 0; i < length; i++) code += chars[randomInt(chars.length)];
   return code;
 }
 
@@ -137,6 +149,7 @@ function moveByUci(game: NerfGame, uci: string) {
 
 export class GameServer extends DurableObject<Env> {
   private sessions = new Map<WebSocket, SessionAttachment>();
+  private dbReady: Promise<boolean> | null = null;
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
@@ -144,6 +157,19 @@ export class GameServer extends DurableObject<Env> {
       const attachment = ws.deserializeAttachment() as SessionAttachment | null;
       if (attachment) this.sessions.set(ws, attachment);
     }
+  }
+
+  // Resolves to true when D1 is configured and its schema is in place.
+  // Account features degrade to anonymous play when it isn't.
+  private async db(): Promise<D1Database | null> {
+    if (!this.env.DB) return null;
+    if (!this.dbReady) {
+      this.dbReady = ensureSchema(this.env.DB).then(
+        () => true,
+        () => false,
+      );
+    }
+    return (await this.dbReady) ? this.env.DB : null;
   }
 
   async fetch(request: Request): Promise<Response> {
@@ -163,9 +189,25 @@ export class GameServer extends DurableObject<Env> {
       return new Response("Forbidden", { status: 403 });
     }
 
+    // Same-origin websocket upgrades carry the session cookie; attach the
+    // account (if any) so queueing and rated games know who this socket is.
+    const attachment: SessionAttachment = { id: crypto.randomUUID() };
+    const db = await this.db();
+    if (db) {
+      try {
+        const token = sessionTokenFromCookieHeader(request.headers.get("Cookie"));
+        const user = await userForSession(db, token);
+        if (user) {
+          attachment.userId = user.id;
+          attachment.username = user.username;
+        }
+      } catch {
+        // Anonymous on any auth failure.
+      }
+    }
+
     const pair = new WebSocketPair();
     const [client, server] = Object.values(pair);
-    const attachment = { id: crypto.randomUUID() };
     server.serializeAttachment(attachment);
     this.sessions.set(server, attachment);
     this.ctx.acceptWebSocket(server);
@@ -198,20 +240,16 @@ export class GameServer extends DurableObject<Env> {
         return this.acceptDraw(ws);
       case "drawDecline":
         return this.declineDraw(ws);
-      case "rematch":
-        return this.offerRematch(ws);
-      case "rematchDecline":
-        return this.declineRematch(ws);
       case "queue":
-        return this.queueForPairing(ws, frame.d);
+        return this.queueJoin(ws, frame.d);
       case "queueCancel":
-        return this.cancelPairing(ws);
-      case "listGames":
-        return this.listGames(ws);
-      case "spectate":
-        return this.spectateMatch(ws, frame.d);
-      case "spectateLeave":
-        return this.stopSpectating(ws);
+        return this.queueLeave(ws, true);
+      case "watch":
+        return this.watchMatch(ws, frame.d);
+      case "rematch":
+        return this.rematchRequest(ws);
+      case "chat":
+        return this.chatMessage(ws, frame.d);
       case "p":
         return this.sendClocks(ws);
       default:
@@ -220,17 +258,17 @@ export class GameServer extends DurableObject<Env> {
   }
 
   async webSocketClose(ws: WebSocket) {
+    await this.queueLeave(ws, false);
     await this.detachSession(ws);
   }
 
   async webSocketError(ws: WebSocket) {
+    await this.queueLeave(ws, false);
     await this.detachSession(ws);
   }
 
   async alarm() {
-    await this.pairQueue();
     await this.maintenanceAll();
-    await this.ensureQueueAlarm();
   }
 
   private originAllowed(request: Request): boolean {
@@ -307,20 +345,34 @@ export class GameServer extends DurableObject<Env> {
     if (existing && existing !== ws) existing.close(1000, "Reconnected from another tab");
 
     const session = { ...this.session(ws), matchId: match.id, color, token: match.tokens[color] };
+    delete session.watching;
     this.sessions.set(ws, session);
     ws.serializeAttachment(session);
     delete match.disconnectedAt[color];
     delete match.opponentGoneNotified[color];
+
+    // Remember which account holds this seat (used for names in the UI and
+    // for game history). Matchmade seats are assigned at pairing and are
+    // never overwritten here.
+    if (session.userId && session.username && !match.users?.[color]) {
+      let rating = 1500;
+      const db = await this.db();
+      if (db) {
+        try {
+          const row = await db
+            .prepare("SELECT rating FROM users WHERE id = ?")
+            .bind(session.userId)
+            .first<{ rating: number }>();
+          if (row) rating = row.rating;
+        } catch {}
+      }
+      match.users = { ...(match.users ?? {}), [color]: { id: session.userId, name: session.username, rating } };
+    }
   }
 
   private async detachSession(ws: WebSocket) {
     const session = this.sessions.get(ws) ?? (ws.deserializeAttachment() as SessionAttachment | null);
     this.sessions.delete(ws);
-    if (session) await this.ctx.storage.delete(queueKey(session.id));
-    if (session?.spectateId) {
-      const watched = await this.loadMatch(session.spectateId);
-      if (watched) this.broadcastSpectatorCount(watched);
-    }
     if (!session?.matchId || !session.color) return;
     if (this.connectedSession(session.matchId, session.color)) return;
 
@@ -331,10 +383,33 @@ export class GameServer extends DurableObject<Env> {
     await this.saveMatch(match);
   }
 
-  private async newCode(): Promise<string> {
-    let code = randomCode();
-    while (await this.loadMatch(code)) code = randomCode();
+  private async newCode(length = 5): Promise<string> {
+    let code = randomCode(length);
+    while (await this.loadMatch(code)) code = randomCode(length);
     return code;
+  }
+
+  private socketForAttachment(id: string): WebSocket | undefined {
+    for (const [ws, session] of this.sessions) {
+      if (session.id === id && ws.readyState === WebSocket.OPEN) return ws;
+    }
+    return undefined;
+  }
+
+  private playersPayload(match: StoredMatch) {
+    const seat = (color: Color) => {
+      const user = match.users?.[color];
+      return user
+        ? { name: user.name, rating: Math.round(user.rating) }
+        : { name: "Anonymous", rating: null };
+    };
+    return { w: seat("w"), b: seat("b") };
+  }
+
+  private sendWatchers(match: StoredMatch, t: string, d?: unknown) {
+    for (const [ws, session] of this.sessions) {
+      if (session.watching === match.id && ws.readyState === WebSocket.OPEN) send(ws, t, d);
+    }
   }
 
   private startPayload(match: StoredMatch, color: Color) {
@@ -355,18 +430,9 @@ export class GameServer extends DurableObject<Env> {
       wc: Math.round(clocks.w),
       bc: Math.round(clocks.b),
       moves: match.moves,
-    };
-  }
-
-  // Once a game is over both secret rules are public: every "end" frame
-  // carries the nerf ids so each client can reveal the opponent's rule.
-  private endPayload(match: StoredMatch) {
-    const clocks = this.currentClocks(match);
-    return {
-      result: match.result,
-      wc: Math.round(clocks.w),
-      bc: Math.round(clocks.b),
-      nerfs: { w: match.setup.whiteNerfId, b: match.setup.blackNerfId },
+      players: this.playersPayload(match),
+      rated: !!match.rated,
+      chat: match.chat ?? [],
     };
   }
 
@@ -374,24 +440,14 @@ export class GameServer extends DurableObject<Env> {
     const ws = this.connectedSession(match.id, color);
     send(ws, "start", this.startPayload(match, color));
     if (match.result) {
-      send(ws, "end", this.endPayload(match));
+      const clocks = this.currentClocks(match);
+      send(ws, "end", { result: match.result, wc: Math.round(clocks.w), bc: Math.round(clocks.b) });
     }
   }
 
   private broadcast(match: StoredMatch, t: string, d?: unknown) {
     send(this.connectedSession(match.id, "w"), t, d);
     send(this.connectedSession(match.id, "b"), t, d);
-    for (const ws of this.spectatorSockets(match.id)) send(ws, t, d);
-  }
-
-  private spectatorSockets(matchId: string): WebSocket[] {
-    return [...this.sessions]
-      .filter(([ws, session]) => session.spectateId === matchId && ws.readyState === WebSocket.OPEN)
-      .map(([ws]) => ws);
-  }
-
-  private broadcastSpectatorCount(match: StoredMatch) {
-    this.broadcast(match, "spectators", { n: this.spectatorSockets(match.id).length });
   }
 
   private gameFromMatch(match: StoredMatch): NerfGame | null {
@@ -433,9 +489,62 @@ export class GameServer extends DurableObject<Env> {
       reason: active === "w" ? "white ran out of time" : "black ran out of time",
     };
     match.completedAt = now;
-    await this.saveMatch(match, schedule);
-    this.broadcast(match, "end", this.endPayload(match));
+    await this.endMatch(match, schedule);
     return true;
+  }
+
+  // Single exit point for a finished match: persist it to D1 (updating both
+  // ratings when the game was rated), then notify players and spectators.
+  private async endMatch(match: StoredMatch, schedule = true) {
+    if (!match.result) return;
+    if (!match.completedAt) match.completedAt = Date.now();
+
+    let ratings: { w: RatingChange | null; b: RatingChange | null } | null = null;
+    if (!match.recorded && match.startedAt) {
+      match.recorded = true;
+      const db = await this.db();
+      if (db) {
+        try {
+          const recorded = await recordFinishedGame(db, {
+            id: match.id,
+            whiteUserId: match.users?.w?.id ?? null,
+            blackUserId: match.users?.b?.id ?? null,
+            whiteName: match.users?.w?.name ?? "Anonymous",
+            blackName: match.users?.b?.name ?? "Anonymous",
+            whiteNerfId: match.setup.whiteNerfId,
+            blackNerfId: match.setup.blackNerfId,
+            seed: match.setup.seed,
+            timeSec: match.setup.timeSec,
+            incrementSec: match.setup.incrementSec,
+            moves: match.moves,
+            winner: match.result.winner,
+            reason: match.result.reason,
+            rated: !!match.rated,
+            startedAt: match.startedAt,
+            completedAt: match.completedAt,
+          });
+          if (recorded.white || recorded.black) {
+            ratings = { w: recorded.white, b: recorded.black };
+          }
+        } catch (err) {
+          console.error("failed to record game", match.id, err);
+        }
+      }
+    }
+    await this.saveMatch(match, schedule);
+
+    const clocks = this.currentClocks(match);
+    const payload = {
+      result: match.result,
+      wc: Math.round(clocks.w),
+      bc: Math.round(clocks.b),
+      ...(ratings ? { ratings } : {}),
+    };
+    this.broadcast(match, "end", payload);
+    this.sendWatchers(match, "end", {
+      ...payload,
+      nerfs: { w: match.setup.whiteNerfId, b: match.setup.blackNerfId },
+    });
   }
 
   private async createMatch(ws: WebSocket, data: unknown) {
@@ -467,7 +576,6 @@ export class GameServer extends DurableObject<Env> {
       clocks: { w: timeSec * 1000, b: timeSec * 1000 },
       runningSince: null,
       drawOfferBy: null,
-      rematchOfferBy: null,
       createdAt: Date.now(),
       startedAt: null,
       completedAt: null,
@@ -511,7 +619,23 @@ export class GameServer extends DurableObject<Env> {
 
     await this.attachSession(ws, match, color);
     await this.saveMatch(match);
-    if (!match.startedAt) return send(ws, "created", { id, color, token: match.tokens[color] });
+    if (!match.startedAt) {
+      // Matchmade and rematch games begin the moment both paired players
+      // arrive at the game URL; friend games wait in the lobby for a join.
+      if (
+        (match.rated || match.autoStart) &&
+        this.connectedSession(match.id, "w") &&
+        this.connectedSession(match.id, "b")
+      ) {
+        match.startedAt = Date.now();
+        match.runningSince = match.startedAt;
+        await this.saveMatch(match);
+        this.sendStart(match, "w");
+        this.sendStart(match, "b");
+        return;
+      }
+      return send(ws, "created", { id, color, token: match.tokens[color] });
+    }
     this.sendStart(match, color);
   }
 
@@ -549,15 +673,15 @@ export class GameServer extends DurableObject<Env> {
     if (nextGame.result) match.completedAt = now;
     await this.saveMatch(match);
 
-    this.broadcast(match, "move", {
+    const movePayload = {
       u: uci,
       ply: match.moves.length,
       wc: Math.round(match.clocks.w),
       bc: Math.round(match.clocks.b),
-    });
-    if (match.result) {
-      this.broadcast(match, "end", this.endPayload(match));
-    }
+    };
+    this.broadcast(match, "move", movePayload);
+    this.sendWatchers(match, "move", movePayload);
+    if (match.result) await this.endMatch(match);
   }
 
   private async resignGame(ws: WebSocket) {
@@ -574,9 +698,7 @@ export class GameServer extends DurableObject<Env> {
     match.runningSince = null;
     match.result = resign(game, session.color).result;
     match.completedAt = Date.now();
-    await this.saveMatch(match);
-
-    this.broadcast(match, "end", this.endPayload(match));
+    await this.endMatch(match);
   }
 
   private async offerDraw(ws: WebSocket) {
@@ -608,69 +730,7 @@ export class GameServer extends DurableObject<Env> {
     match.drawOfferBy = null;
     match.result = { winner: "draw", reason: "draw by agreement" };
     match.completedAt = Date.now();
-    await this.saveMatch(match);
-
-    this.broadcast(match, "end", this.endPayload(match));
-  }
-
-  // A rematch offer once the game is over. A second offer from the other
-  // player counts as acceptance and starts the new game immediately.
-  private async offerRematch(ws: WebSocket) {
-    const session = this.session(ws);
-    const match = session.matchId ? await this.loadMatch(session.matchId) : null;
-    if (!match || !session.color) return error(ws, "no_game", "Join a game before offering a rematch.");
-    if (!match.result) return error(ws, "game_live", "The game is still in progress.");
-    if (match.rematchOfferBy === session.color) {
-      return error(ws, "rematch_pending", "Your rematch offer is already pending.");
-    }
-    if (match.rematchOfferBy && match.rematchOfferBy !== session.color) return this.startRematch(match);
-    match.rematchOfferBy = session.color;
-    await this.saveMatch(match);
-    this.broadcast(match, "rematchOffer", { color: session.color });
-  }
-
-  private async declineRematch(ws: WebSocket) {
-    const session = this.session(ws);
-    const match = session.matchId ? await this.loadMatch(session.matchId) : null;
-    if (!match || !session.color) return error(ws, "no_game", "Join a game before declining a rematch.");
-    if (!match.rematchOfferBy || match.rematchOfferBy === session.color) {
-      return error(ws, "no_rematch_offer", "There is no opponent rematch offer to decline.");
-    }
-    match.rematchOfferBy = null;
-    await this.saveMatch(match);
-    this.broadcast(match, "rematchDeclined", { color: session.color });
-  }
-
-  // Reset the match in place: fresh nerfs and seed, colors swapped for
-  // fairness, clocks back to the original time control. Each player keeps
-  // their token; the fresh "start" frame hands them their new color.
-  private async startRematch(match: StoredMatch) {
-    match.tokens = { w: match.tokens.b, b: match.tokens.w };
-    for (const [sock, sess] of this.sessions) {
-      if (sess.matchId !== match.id || !sess.color) continue;
-      const color: Color = sess.color === "w" ? "b" : "w";
-      const next = { ...sess, color, token: match.tokens[color] };
-      this.sessions.set(sock, next);
-      sock.serializeAttachment(next);
-    }
-
-    match.setup = {
-      ...match.setup,
-      whiteNerfId: pickNerfId(),
-      blackNerfId: pickNerfId(),
-      seed: makeSeed(),
-    };
-    match.moves = [];
-    match.result = null;
-    match.clocks = { w: match.setup.timeSec * 1000, b: match.setup.timeSec * 1000 };
-    match.startedAt = Date.now();
-    match.runningSince = match.startedAt;
-    match.drawOfferBy = null;
-    match.rematchOfferBy = null;
-    match.completedAt = null;
-    await this.saveMatch(match);
-    this.sendStart(match, "w");
-    this.sendStart(match, "b");
+    await this.endMatch(match);
   }
 
   private async declineDraw(ws: WebSocket) {
@@ -688,200 +748,237 @@ export class GameServer extends DurableObject<Env> {
     this.broadcast(match, "drawDeclined", { color: session.color });
   }
 
-  // --- Spectating ----------------------------------------------------------
-  // Anyone can browse live games and watch one. Spectators never receive nerf
-  // ids while a game is live; those arrive with the public "end" frame.
+  // ---------------- matchmaking queue ----------------
 
-  private async listGames(ws: WebSocket) {
-    const stored = await this.ctx.storage.list<StoredMatch>({ prefix: "match:" });
-    const games: Array<{
-      id: string;
-      timeSec: number;
-      incrementSec: number;
-      moves: number;
-      spectators: number;
-      wc: number;
-      bc: number;
-    }> = [];
-    for (const match of stored.values()) {
-      if (!match.startedAt || match.result) continue;
-      const clocks = this.currentClocks(match);
-      games.push({
-        id: match.id,
-        timeSec: match.setup.timeSec,
-        incrementSec: match.setup.incrementSec,
-        moves: match.moves.length,
-        spectators: this.spectatorSockets(match.id).length,
-        wc: Math.round(clocks.w),
-        bc: Math.round(clocks.b),
+  private queueKey(pool: string): string {
+    return `queue:${pool}`;
+  }
+
+  private async queueJoin(ws: WebSocket, data: unknown) {
+    const session = this.session(ws);
+    if (session.matchId) return error(ws, "already_joined", "This connection already belongs to a game.");
+    if (!session.userId || !session.username) {
+      return error(ws, "auth_required", "Sign in to play rated games.");
+    }
+    const poolName = String((data as { pool?: unknown } | undefined)?.pool || "3+2");
+    const pool = QUEUE_POOLS[poolName];
+    if (!pool) return error(ws, "bad_pool", "Unknown queue pool.");
+    const db = await this.db();
+    if (!db) return error(ws, "server_unconfigured", "Matchmaking is unavailable right now.");
+
+    let rating = 1500;
+    try {
+      const row = await db
+        .prepare("SELECT rating FROM users WHERE id = ?")
+        .bind(session.userId)
+        .first<{ rating: number }>();
+      if (row) rating = row.rating;
+    } catch {}
+
+    const key = this.queueKey(poolName);
+    let entries = (await this.ctx.storage.get<QueueEntry[]>(key)) ?? [];
+    // Drop dead sockets and any previous entry by this same account.
+    entries = entries.filter(
+      (entry) => entry.userId !== session.userId && this.socketForAttachment(entry.attachmentId),
+    );
+
+    const opponent = entries.shift();
+    if (!opponent) {
+      entries.push({
+        attachmentId: session.id,
+        userId: session.userId,
+        username: session.username,
+        rating,
+        at: Date.now(),
       });
+      await this.ctx.storage.put(key, entries);
+      return send(ws, "queued", { pool: poolName });
     }
-    games.sort((a, b) => b.spectators - a.spectators || b.moves - a.moves);
-    send(ws, "games", { games });
-  }
+    await this.ctx.storage.put(key, entries);
 
-  private async spectateMatch(ws: WebSocket, data: unknown) {
-    const session = this.session(ws);
-    if (session.matchId) return error(ws, "already_joined", "This connection already belongs to a game.");
-    const id = String((data as { id?: unknown } | undefined)?.id || "").trim().toUpperCase();
-    const match = await this.loadMatch(id);
-    if (!match || !match.startedAt) return error(ws, "not_found", "That game is not available to watch.");
-
-    const previous = session.spectateId;
-    const next = { ...session, spectateId: id };
-    this.sessions.set(ws, next);
-    ws.serializeAttachment(next);
-    if (previous && previous !== id) {
-      const previousMatch = await this.loadMatch(previous);
-      if (previousMatch) this.broadcastSpectatorCount(previousMatch);
-    }
-
-    const clocks = this.currentClocks(match);
-    send(ws, "watch", {
-      id: match.id,
-      timeSec: match.setup.timeSec,
-      incrementSec: match.setup.incrementSec,
-      wc: Math.round(clocks.w),
-      bc: Math.round(clocks.b),
-      moves: match.moves,
-      spectators: this.spectatorSockets(match.id).length,
-    });
-    if (match.result) send(ws, "end", this.endPayload(match));
-    this.broadcastSpectatorCount(match);
-  }
-
-  private async stopSpectating(ws: WebSocket) {
-    const session = this.session(ws);
-    if (!session.spectateId) return;
-    const matchId = session.spectateId;
-    const next = { ...session };
-    delete next.spectateId;
-    this.sessions.set(ws, next);
-    ws.serializeAttachment(next);
-    const match = await this.loadMatch(matchId);
-    if (match) this.broadcastSpectatorCount(match);
-  }
-
-  // --- Quick pairing -------------------------------------------------------
-
-  private async queueForPairing(ws: WebSocket, data: unknown) {
-    const session = this.session(ws);
-    if (session.matchId) return error(ws, "already_joined", "This connection already belongs to a game.");
-
-    const requested = (data || {}) as { rating?: unknown; timeSec?: unknown; incrementSec?: unknown };
-    const rating =
-      typeof requested.rating === "number" && Number.isFinite(requested.rating)
-        ? Math.max(400, Math.min(3200, requested.rating))
-        : 1500;
-    const timeSec = Number.isInteger(requested.timeSec) ? Number(requested.timeSec) : 600;
-    const incrementSec = Number.isInteger(requested.incrementSec) ? Number(requested.incrementSec) : 0;
-    if (timeSec < 0 || timeSec > 7200 || incrementSec < 0 || incrementSec > 60) {
-      return error(ws, "invalid_clock", "Unsupported time control.");
-    }
-
-    const entry: QueueEntry = { sessionId: session.id, rating, timeSec, incrementSec, since: Date.now() };
-    await this.ctx.storage.put(queueKey(session.id), entry);
-    send(ws, "queued");
-    await this.pairQueue();
-    await this.ensureQueueAlarm();
-  }
-
-  private async cancelPairing(ws: WebSocket) {
-    const session = this.session(ws);
-    await this.ctx.storage.delete(queueKey(session.id));
-    send(ws, "queueLeft");
-  }
-
-  private socketForSessionId(sessionId: string): WebSocket | undefined {
-    for (const [ws, session] of this.sessions) {
-      if (session.id === sessionId && ws.readyState === WebSocket.OPEN) return ws;
-    }
-    return undefined;
-  }
-
-  private async pairQueue(now = Date.now()) {
-    const stored = await this.ctx.storage.list<QueueEntry>({ prefix: "queue:" });
-    const waiting: Array<{ entry: QueueEntry; ws: WebSocket }> = [];
-    for (const entry of stored.values()) {
-      const ws = this.socketForSessionId(entry.sessionId);
-      if (!ws) {
-        await this.ctx.storage.delete(queueKey(entry.sessionId));
-        continue;
-      }
-      waiting.push({ entry, ws });
-    }
-    waiting.sort((a, b) => a.entry.since - b.entry.since);
-
-    const taken = new Set<string>();
-    for (let i = 0; i < waiting.length; i++) {
-      const a = waiting[i];
-      if (taken.has(a.entry.sessionId)) continue;
-      for (let j = i + 1; j < waiting.length; j++) {
-        const b = waiting[j];
-        if (taken.has(b.entry.sessionId)) continue;
-        if (a.entry.timeSec !== b.entry.timeSec || a.entry.incrementSec !== b.entry.incrementSec) continue;
-        const band = Math.max(ratingBand(now - a.entry.since), ratingBand(now - b.entry.since));
-        if (Math.abs(a.entry.rating - b.entry.rating) > band) continue;
-        taken.add(a.entry.sessionId);
-        taken.add(b.entry.sessionId);
-        await this.ctx.storage.delete(queueKey(a.entry.sessionId));
-        await this.ctx.storage.delete(queueKey(b.entry.sessionId));
-        await this.startQuickMatch(a, b);
-        break;
-      }
-    }
-  }
-
-  private async startQuickMatch(
-    first: { entry: QueueEntry; ws: WebSocket },
-    second: { entry: QueueEntry; ws: WebSocket },
-  ) {
-    const [white, black] = randomInt(2) === 0 ? [first, second] : [second, first];
-    const id = await this.newCode();
+    const opponentWs = this.socketForAttachment(opponent.attachmentId)!;
+    const meWhite = randomInt(2) === 0;
+    const me: SeatUser = { id: session.userId, name: session.username, rating };
+    const them: SeatUser = { id: opponent.userId, name: opponent.username, rating: opponent.rating };
+    const id = await this.newCode(8);
     const match: StoredMatch = {
       id,
       setup: {
         whiteNerfId: pickNerfId(),
         blackNerfId: pickNerfId(),
         seed: makeSeed(),
-        timeSec: first.entry.timeSec,
-        incrementSec: first.entry.incrementSec,
+        timeSec: pool.timeSec,
+        incrementSec: pool.incrementSec,
       },
       tokens: { w: newToken(), b: newToken() },
       disconnectedAt: {},
       opponentGoneNotified: {},
       moves: [],
       result: null,
-      clocks: { w: first.entry.timeSec * 1000, b: first.entry.timeSec * 1000 },
+      clocks: { w: pool.timeSec * 1000, b: pool.timeSec * 1000 },
       runningSince: null,
       drawOfferBy: null,
-      rematchOfferBy: null,
       createdAt: Date.now(),
       startedAt: null,
       completedAt: null,
+      rated: true,
+      autoStart: true,
+      users: { w: meWhite ? me : them, b: meWhite ? them : me },
     };
-    await this.attachSession(white.ws, match, "w");
-    await this.attachSession(black.ws, match, "b");
-    match.startedAt = Date.now();
-    match.runningSince = match.startedAt;
     await this.saveMatch(match);
-    this.sendStart(match, "w");
-    this.sendStart(match, "b");
+
+    // Both clients navigate to /game/{id} and take their seat via `reconnect`;
+    // the game starts once both have arrived.
+    const myColor: Color = meWhite ? "w" : "b";
+    const theirColor: Color = meWhite ? "b" : "w";
+    send(ws, "paired", { id, color: myColor, token: match.tokens[myColor], pool: poolName });
+    send(opponentWs, "paired", { id, color: theirColor, token: match.tokens[theirColor], pool: poolName });
   }
 
-  // While anyone is queued, keep an alarm within 5s so widening bands get
-  // re-evaluated even with no incoming traffic.
-  private async ensureQueueAlarm() {
-    const stored = await this.ctx.storage.list<QueueEntry>({ prefix: "queue:" });
-    if (stored.size === 0) return;
-    const next = Date.now() + 5000;
-    const existing = await this.ctx.storage.getAlarm();
-    if (!existing || next < existing) await this.ctx.storage.setAlarm(next);
+  private async queueLeave(ws: WebSocket, notify: boolean) {
+    const session = this.sessions.get(ws) ?? (ws.deserializeAttachment() as SessionAttachment | null);
+    if (!session) return;
+    for (const poolName of Object.keys(QUEUE_POOLS)) {
+      const key = this.queueKey(poolName);
+      const entries = (await this.ctx.storage.get<QueueEntry[]>(key)) ?? [];
+      const next = entries.filter((entry) => entry.attachmentId !== session.id);
+      if (next.length !== entries.length) await this.ctx.storage.put(key, next);
+    }
+    if (notify) send(ws, "queueCancelled");
+  }
+
+  // ---------------- rematch ----------------
+
+  private async rematchRequest(ws: WebSocket) {
+    const session = this.session(ws);
+    const match = session.matchId ? await this.loadMatch(session.matchId) : null;
+    if (!match || !session.color) return error(ws, "no_game", "Join a game before requesting a rematch.");
+    if (!match.result) return error(ws, "not_over", "The game is still in progress.");
+    if (match.rematchedTo) return error(ws, "rematch_done", "A rematch has already started.");
+
+    const opponentColor: Color = session.color === "w" ? "b" : "w";
+    if (match.rematchOfferBy === session.color) return;
+    if (match.rematchOfferBy !== opponentColor) {
+      if (!this.connectedSession(match.id, opponentColor)) {
+        return error(ws, "opponent_gone", "Your opponent has left.");
+      }
+      match.rematchOfferBy = session.color;
+      await this.saveMatch(match, false);
+      this.broadcast(match, "rematchOffer", { color: session.color });
+      return;
+    }
+
+    // Both agreed: new game with colors swapped, fresh rules and seed.
+    const users: StoredMatch["users"] = {};
+    if (match.users?.b) users.w = { ...match.users.b };
+    if (match.users?.w) users.b = { ...match.users.w };
+    const db = await this.db();
+    if (db) {
+      for (const color of ["w", "b"] as Color[]) {
+        const seat = users[color];
+        if (!seat) continue;
+        try {
+          const row = await db
+            .prepare("SELECT rating FROM users WHERE id = ?")
+            .bind(seat.id)
+            .first<{ rating: number }>();
+          if (row) seat.rating = row.rating;
+        } catch {}
+      }
+    }
+
+    const id = await this.newCode(match.rated ? 8 : 5);
+    const rematch: StoredMatch = {
+      id,
+      setup: {
+        whiteNerfId: pickNerfId(),
+        blackNerfId: pickNerfId(),
+        seed: makeSeed(),
+        timeSec: match.setup.timeSec,
+        incrementSec: match.setup.incrementSec,
+      },
+      tokens: { w: newToken(), b: newToken() },
+      disconnectedAt: {},
+      opponentGoneNotified: {},
+      moves: [],
+      result: null,
+      clocks: { w: match.setup.timeSec * 1000, b: match.setup.timeSec * 1000 },
+      runningSince: null,
+      drawOfferBy: null,
+      createdAt: Date.now(),
+      startedAt: null,
+      completedAt: null,
+      rated: match.rated,
+      autoStart: true,
+      users,
+    };
+    await this.saveMatch(rematch);
+    match.rematchOfferBy = null;
+    match.rematchedTo = id;
+    await this.saveMatch(match, false);
+
+    send(this.connectedSession(match.id, "w"), "rematched", { id, color: "b", token: rematch.tokens.b });
+    send(this.connectedSession(match.id, "b"), "rematched", { id, color: "w", token: rematch.tokens.w });
+  }
+
+  // ---------------- chat ----------------
+
+  // Per-socket chat throttle; in-memory only, so at worst a hibernation wake
+  // resets the window.
+  private lastChatAt = new Map<string, number>();
+
+  private async chatMessage(ws: WebSocket, data: unknown) {
+    const session = this.session(ws);
+    const match = session.matchId ? await this.loadMatch(session.matchId) : null;
+    if (!match || !session.color) return error(ws, "no_game", "Join a game before chatting.");
+    const raw = String((data as { text?: unknown } | undefined)?.text ?? "").trim();
+    if (!raw) return;
+    const now = Date.now();
+    if (now - (this.lastChatAt.get(session.id) ?? 0) < 500) return;
+    this.lastChatAt.set(session.id, now);
+
+    const name = match.users?.[session.color]?.name ?? (session.color === "w" ? "White" : "Black");
+    const entry: ChatEntry = { color: session.color, name, text: raw.slice(0, 200), at: now };
+    match.chat = [...(match.chat ?? []), entry].slice(-50);
+    await this.saveMatch(match, false);
+    this.broadcast(match, "chat", entry);
+  }
+
+  // ---------------- spectating ----------------
+
+  private async watchMatch(ws: WebSocket, data: unknown) {
+    const session = this.session(ws);
+    if (session.matchId) return error(ws, "already_joined", "This connection already belongs to a game.");
+    const id = String((data as { id?: unknown } | undefined)?.id || "").trim().toUpperCase();
+    const match = await this.loadMatch(id);
+    if (!match) return error(ws, "not_found", "No live game with that id.");
+    await this.finishOnFlag(match);
+
+    const next = { ...session, watching: id };
+    this.sessions.set(ws, next);
+    ws.serializeAttachment(next);
+
+    const clocks = this.currentClocks(match);
+    send(ws, "wstart", {
+      id,
+      timeSec: match.setup.timeSec,
+      incrementSec: match.setup.incrementSec,
+      wc: Math.round(clocks.w),
+      bc: Math.round(clocks.b),
+      moves: match.moves,
+      players: this.playersPayload(match),
+      rated: !!match.rated,
+      started: !!match.startedAt,
+      result: match.result,
+      // Hidden rules are only revealed to spectators once the game is over.
+      ...(match.result ? { nerfs: { w: match.setup.whiteNerfId, b: match.setup.blackNerfId } } : {}),
+    });
   }
 
   private async sendClocks(ws: WebSocket) {
     const session = this.session(ws);
-    const match = session.matchId ? await this.loadMatch(session.matchId) : null;
+    const watchedId = session.matchId ?? session.watching;
+    const match = watchedId ? await this.loadMatch(watchedId) : null;
     if (!match) return send(ws, "n");
     if (await this.finishOnFlag(match)) return;
     const clocks = this.currentClocks(match);

@@ -2,13 +2,10 @@
 
 import type { ReactNode } from "react";
 import { Nerf } from "@/engine/nerf";
-import { BoardState, Color, PieceType } from "@/engine/types";
-import { Avatar } from "@/components/Avatar";
+import { BoardState, Color } from "@/engine/types";
 import { Piece } from "@/components/Pieces";
+import { capturedPiecesFor, capturedValue, opponentOf } from "@/lib/material";
 
-const PIECE_ORDER: PieceType[] = ["p", "n", "b", "r", "q", "k"];
-const PIECE_VALUES: Record<PieceType, number> = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
-const START_COUNTS: Record<PieceType, number> = { p: 8, n: 2, b: 2, r: 2, q: 1, k: 1 };
 const TIER_LABEL = ["", "Trivial", "Easy", "Common", "Severe", "Brutal"];
 const TIER_ROMAN = ["", "I", "II", "III", "IV", "V"];
 
@@ -23,31 +20,6 @@ interface Props {
   ownerLabel: string;
   progress?: { value: number; max: number; label: string } | null;
   action?: ReactNode;
-  // Preset profile picture id (local profile). Falls back to an initial.
-  avatarId?: string | null;
-}
-
-function opponentOf(color: Color): Color {
-  return color === "w" ? "b" : "w";
-}
-
-function capturedPiecesFor(board: BoardState, capturer: Color): PieceType[] {
-  const opponent = opponentOf(capturer);
-  const remaining: Record<PieceType, number> = { p: 0, n: 0, b: 0, r: 0, q: 0, k: 0 };
-  for (const piece of board.pieces) {
-    if (piece?.color === opponent) remaining[piece.type]++;
-  }
-
-  const captured: PieceType[] = [];
-  for (const type of PIECE_ORDER) {
-    const missing = Math.max(0, START_COUNTS[type] - remaining[type]);
-    for (let i = 0; i < missing; i++) captured.push(type);
-  }
-  return captured;
-}
-
-function capturedValue(pieces: PieceType[]): number {
-  return pieces.reduce((total, piece) => total + PIECE_VALUES[piece], 0);
 }
 
 export function PlayerNerfCard({
@@ -61,7 +33,6 @@ export function PlayerNerfCard({
   ownerLabel,
   progress,
   action,
-  avatarId,
 }: Props) {
   const pieces = capturedPiecesFor(board, playerColor);
   const mineValue = capturedValue(capturedPiecesFor(board, myColor));
@@ -80,21 +51,17 @@ export function PlayerNerfCard({
       }
     >
       <div className="flex items-start gap-3">
-        {avatarId ? (
-          <Avatar avatarId={avatarId} name={name} size={36} />
-        ) : (
-          <div
-            className={
-              "grid h-9 w-9 shrink-0 place-items-center rounded-md border font-display text-xs font-semibold " +
-              (isMe
-                ? "border-gold/60 bg-gold/20 text-gold-leaf"
-                : "border-bruise/60 bg-bruise/20 text-bruise-glow")
-            }
-            aria-hidden="true"
-          >
-            {initial}
-          </div>
-        )}
+        <div
+          className={
+            "grid h-9 w-9 shrink-0 place-items-center rounded-md border font-display text-xs font-semibold " +
+            (isMe
+              ? "border-gold/60 bg-gold/20 text-gold-leaf"
+              : "border-bruise/60 bg-bruise/20 text-bruise-glow")
+          }
+          aria-hidden="true"
+        >
+          {initial}
+        </div>
         <div className="min-w-0 flex-1">
           <div className="truncate font-display text-base font-semibold leading-tight text-parchment">
             {name}
@@ -183,7 +150,7 @@ export function PlayerNerfCard({
             </div>
           </div>
           <p className="mt-3 text-sm leading-relaxed text-parchment-300/80">
-            You'll see their rule when the game ends.
+            You&apos;ll see their rule when the game ends.
           </p>
         </>
       )}

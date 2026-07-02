@@ -1,6 +1,6 @@
 import { Nerf } from "../nerf";
-import { attackedBy, findKing, generateMoves, isInCheck, makeMove } from "../board";
-import { Color, FILE, Move, PieceType, RANK, SQ, Square, squareName } from "../types";
+import { attackedBy, findKing, initialBoard, isInCheck, makeMove } from "../board";
+import { BoardState, Color, FILE, Move, PieceType, RANK, SQ, Square, squareName } from "../types";
 
 const cheb = (a: Square, b: Square) =>
   Math.max(Math.abs(FILE(a) - FILE(b)), Math.abs(RANK(a) - RANK(b)));
@@ -14,9 +14,14 @@ function db(d: Nerf): Nerf {
   return { ...d, implemented: true };
 }
 
-function myPieceSquares(b: ReturnType<typeof generateMoves> extends Move[] ? unknown : never, color: Color) {
-  void b;
-  void color;
+// Replays `count` half-moves from the initial position. Used by nerfs that
+// need to inspect a past position (e.g. "did my last move give check?").
+function boardAfter(history: Move[], count: number): BoardState {
+  let board = initialBoard();
+  for (let i = 0; i < count && i < history.length; i++) {
+    board = makeMove(board, history[i]);
+  }
+  return board;
 }
 
 function pieceSquares(board: { pieces: ({ type: PieceType; color: Color } | null)[] }, color: Color, type?: PieceType) {
@@ -380,32 +385,33 @@ export const ABSTINENCE: Nerf = db({
 export const YOU_BEST_NOT_MISS: Nerf = db({
   id: "you_best_not_miss", name: "You Best Not Miss", tier: 4, implemented: true,
   description: "If you end your turn giving check, you must capture the king next turn or lose.",
-  checkLoss: (_s, ctx) => {
-    const last = ctx.myLastMove;
-    if (!last) return null;
-    // We can only judge after the opponent has moved (i.e., when it's our turn again).
-    // Find penultimate position approximation: if our last move left them in check and
-    // we haven't captured their king since, we lose.
-    const history = ctx.board.history;
-    if (history.length < 2) return null;
-    const lastIdx = history.length - 1;
-    if (history[lastIdx].color === ctx.me) return null; // mid-turn check
-    // Reconstruct: simulate the position right after our last move (history[lastIdx-1])
-    // and check if it was check on the opponent.
-    // Too complex to reconstruct here. Approximate via current-board: if opponent's king
-    // is still alive and we previously checked them, we must have captured—skip strict check.
-    // Implementation: track in state instead.
-    return null;
-  },
   init: () => ({ owed: false }),
-  onTurnStart: (state, ctx) => {
+  onTurnStart: (_s, ctx) => {
+    // Replay to the position right after my last move and see whether it left
+    // the opponent in check. If so, this turn's move must capture their king.
+    const h = ctx.board.history;
+    let lastMineIdx = -1;
+    for (let i = h.length - 1; i >= 0; i--) {
+      if (h[i].color === ctx.me) { lastMineIdx = i; break; }
+    }
+    if (lastMineIdx < 0) return { owed: false };
+    const after = boardAfter(h, lastMineIdx + 1);
+    const opp = ctx.me === "w" ? "b" : "w";
+    return { owed: isInCheck(after, opp) };
+  },
+  checkLoss: (state, ctx) => {
     const s = state as { owed: boolean };
-    // Did opponent move? If so, check whether we delivered check on the prior move.
-    // We approximate: if our last move and opponent then moved, look if the move right after ours
-    // came out of check. Use isInCheck on history snapshot is complex; instead use a simpler
-    // approximation: after our move, if the opponent is currently NOT in check and we previously
-    // owed a king-capture, we've failed.
-    return s;
+    if (!s.owed) return null;
+    // Judged immediately after my move (a king capture would already have
+    // ended the game via the king-capture check, which runs first).
+    const last = ctx.board.history[ctx.board.history.length - 1];
+    if (!last || last.color !== ctx.me) return null;
+    return last.captured === "k" ? null : { reason: "checked but didn't finish the king" };
+  },
+  hint: (state) => {
+    const s = state as { owed: boolean };
+    if (!s.owed) return null;
+    return { text: "You gave check. Capture the king this turn or lose.", tone: "warn" };
   },
 });
 
@@ -1019,15 +1025,27 @@ export const EYE_FOR_AN_EYE: Nerf = db({
     return caps.length ? caps : moves;
   },
   checkLoss: (_s, ctx) => {
-    // Look back: pairs of (opp captured, my response)
+    // Judged immediately after my move: if the opponent's move just before it
+    // was a capture, mine must be one too. filterMoves already forces captures
+    // when any exist, so this only fires when no capture was available.
     const h = ctx.board.history;
-    for (let i = 0; i < h.length - 1; i++) {
-      if (h[i].color !== ctx.me && h[i].captured && h[i + 1].color === ctx.me && !h[i + 1].captured) {
-        // Could not capture? We approximate: if I had any capture available and didn't, lose.
-        // Without re-simulating, skip strict check.
-      }
+    const last = h[h.length - 1];
+    if (!last || last.color !== ctx.me) return null;
+    const prev = h[h.length - 2];
+    if (!prev || prev.color === ctx.me || !prev.captured) return null;
+    return last.captured ? null : { reason: "failed to avenge a capture" };
+  },
+  hint: (_s, ctx, legal) => {
+    if (!ctx.opponentLastMove?.captured) return null;
+    const caps = legal.filter((m) => m.captured);
+    if (!caps.length) {
+      return { text: "They captured and you have no capture. This move loses.", tone: "warn" };
     }
-    return null;
+    return {
+      text: "Eye for an eye: you must capture this turn.",
+      squares: Array.from(new Set(caps.map((m) => m.from))),
+      tone: "warn",
+    };
   },
 });
 
@@ -1534,38 +1552,22 @@ export const NOBLE_STEED: Nerf = db({
 
 export const TAKING_TURNS: Nerf = db({
   id: "taking_turns", name: "Taking Turns", tier: 5, implemented: true,
-  description: "Can't move a piece type until you've moved every piece of that type once.",
+  description: "Can't move a piece a second time until every piece of its type has moved once.",
   filterMoves: (moves, _s, ctx) => {
-    // For each piece type, track the set of "starting squares" (where they currently are or were)
-    // Approximate: a piece type T is "free" only if every piece of that type has appeared as a move source.
-    const sourcesByType = new Map<PieceType, Set<number>>();
-    for (const m of ctx.board.history) {
-      if (m.color !== ctx.me) continue;
-      if (!sourcesByType.has(m.piece)) sourcesByType.set(m.piece, new Set());
-      // Trace back the piece's original square by following its history.
-      sourcesByType.get(m.piece)!.add(m.to);
-    }
-    // Count current pieces per type.
-    const countByType: Record<PieceType, number> = { p: 0, n: 0, b: 0, r: 0, q: 0, k: 0 };
+    // A piece has moved iff its current square was ever a destination of one of
+    // my moves (my moves can't land on my own pieces, so the occupant of such a
+    // square must be the piece that moved there — or a later mover, also moved).
+    // Castling rooks slip through this net; that's an accepted approximation.
+    const movedSquares = new Set<number>();
+    for (const m of ctx.board.history) if (m.color === ctx.me) movedSquares.add(m.to);
+    const unmovedByType: Record<PieceType, number> = { p: 0, n: 0, b: 0, r: 0, q: 0, k: 0 };
     for (const sq of pieceSquares(ctx.board, ctx.me)) {
-      const p = ctx.board.pieces[sq]!;
-      countByType[p.type]++;
+      if (!movedSquares.has(sq)) unmovedByType[ctx.board.pieces[sq]!.type]++;
     }
-    // A type is "free" if number of moves of that type ≥ count of pieces of that type.
-    const movesByType: Record<PieceType, number> = { p: 0, n: 0, b: 0, r: 0, q: 0, k: 0 };
-    for (const m of ctx.board.history) if (m.color === ctx.me) movesByType[m.piece]++;
-    return moves.filter((m) => movesByType[m.piece] < countByType[m.piece] ? true : true).filter((m) => {
-      // Block type T if there's a different type U with movesByType[U] < countByType[U].
-      for (const t of ["p", "n", "b", "r", "q", "k"] as PieceType[]) {
-        if (t === m.piece) continue;
-        if (countByType[t] > 0 && movesByType[t] < countByType[t]) {
-          // Must move the unmoved type instead — but only if it has any legal moves.
-          // Approximation: just block.
-          // Check if any move exists for type t in the full pool: handled by overall fallthrough
-        }
-      }
-      return true;
-    });
+    const filtered = moves.filter(
+      (m) => !movedSquares.has(m.from) || unmovedByType[m.piece] === 0,
+    );
+    return filtered.length ? filtered : moves;
   },
 });
 
@@ -1683,11 +1685,8 @@ export const QUICKSAND: Nerf = db({
     for (const sq of pieceSquares(ctx.board, ctx.me)) {
       const r = RANK(sq);
       if (r !== 3 && r !== 4) continue;
-      // Was the last move ending at sq by me, also was the move before that to sq?
-      const lastIdx = mine.findIndex((m) => m.to === sq);
-      const lastTwo = mine.filter((m) => m.to === sq).slice(-2);
-      void lastIdx;
-      if (lastTwo.length >= 2) stuck.add(sq);
+      const landings = mine.filter((m) => m.to === sq);
+      if (landings.length >= 2) stuck.add(sq);
     }
     return moves.filter((m) => !stuck.has(m.from));
   },
@@ -1883,7 +1882,7 @@ export const MORE_NERFS: Nerf[] = [
   HOPSCOTCH, LEAPS_AND_BOUNDS, COLORBLIND, INCHING_FORWARD, ICHTHYOPHOBE,
   LEFT_TO_RIGHT, FRIENDLY_FIRE, GOING_THE_DISTANCE, HELICOPTER_PARENT, EXCLUSIVITY_CLAUSE,
   RELAY_RACE, DEVIL_ON_SHOULDER, REFLECTIVE, OBSESSION, BOXING_WITH_SHADOW,
-  NOBLE_STEED, CRENELLATIONS, LEADING_THE_CHARGE,
+  NOBLE_STEED, TAKING_TURNS, HAND_AND_GIGABRAIN, CRENELLATIONS, LEADING_THE_CHARGE,
   ACTIVE_VOLCANO, PRINCE_CHARMING, ABSOLUTION, QUICKSAND,
   ROOK_FAN_CLUB, LADIES_FIRST, BRIDGE_OVER_TROUBLED_WATER, ROYAL_BERTH, VELOCIRAPTOR,
   THUNDERDOME, INDECISIVE, UNREQUITED_LOVE, TORPEDOES,

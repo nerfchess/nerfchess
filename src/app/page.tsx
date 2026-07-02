@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { AccountChip } from "@/components/AccountChip";
 import { Logo } from "@/components/Logo";
 import { HeroBoard } from "@/components/HeroBoard";
-import { ProfileChip } from "@/components/ProfileChip";
 import { SettingsPanel } from "@/components/SettingsPanel";
+import { RatingCard } from "@/components/ratings/RatingCard";
+import { RATING_CATEGORIES } from "@/lib/ratingCategories";
+import { DEFAULT_STATS, loadRatings, type Ratings } from "@/lib/ratings";
 import { ALL_NERFS, PLAYABLE_NERFS } from "@/engine/nerfs/library";
 import type { Nerf } from "@/engine/nerf";
 
@@ -49,6 +51,9 @@ export default function HomePage() {
   // "secret rule" feels alive: it changes on every visit.
   const [nerf, setNerf] = useState<Nerf | null>(null);
   useEffect(() => setNerf(rollNerf()), []);
+  // Display-only ratings snapshot for the home strip.
+  const [ratings, setRatings] = useState<Ratings | null>(null);
+  useEffect(() => setRatings(loadRatings()), []);
 
   return (
     <main className="min-h-screen flex flex-col">
@@ -65,24 +70,50 @@ export default function HomePage() {
           </h1>
           <p className="mt-3 text-base sm:text-lg leading-relaxed text-parchment-200">
             You get a hidden restriction on how your pieces can move. So does
-            your opponent. Neither of you knows the other's rule. There is no
+            your opponent. Neither of you knows the other&apos;s rule. There is no
             checkmate: you win by capturing the king.
           </p>
 
-          <Lobby />
+          {/* Action hierarchy: friend games are the main flow. One big glowing
+              primary, a quieter bot button below it, everything else as text. */}
+          <div className="mt-7 flex flex-col gap-3">
+            <Link
+              href="/friend"
+              className="btn-leaf btn-cta w-full flex items-center justify-center gap-3 px-8 py-5 font-display text-xl sm:text-2xl font-semibold"
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+              </svg>
+              Play a Friend
+            </Link>
+            <Link
+              href="/game?mode=ai"
+              className="btn-ghost w-full sm:w-auto sm:self-start flex items-center justify-center gap-2 px-6 py-3 font-display text-base font-medium"
+            >
+              Play vs Bot
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <line x1="5" y1="12" x2="19" y2="12" />
+                <polyline points="12 5 19 12 12 19" />
+              </svg>
+            </Link>
+          </div>
 
           <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-parchment-300">
+            <Link href="/play" className="hover:text-parchment-100 transition-colors">Custom game</Link>
+            <span aria-hidden className="opacity-30">·</span>
             <Link href="/tutorial" className="hover:text-parchment-100 transition-colors">How it works</Link>
             <span aria-hidden className="opacity-30">·</span>
             <Link href="/codex" className="hover:text-parchment-100 transition-colors">Browse the rules</Link>
-            <span aria-hidden className="opacity-30">·</span>
-            <Link href="/players" className="hover:text-parchment-100 transition-colors">Players</Link>
           </div>
 
           <SecretRulePreview nerf={nerf} />
         </div>
       </section>
 
+      <RatingsStrip ratings={ratings} />
       <StatStrip />
       <HowItWorks />
       <ExampleRules />
@@ -90,71 +121,6 @@ export default function HomePage() {
       <SiteFooter />
       <SettingsPanel open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </main>
-  );
-}
-
-// The lobby is the centerpiece of the home page: online play first, with the
-// bot game one click away. Joining with a code goes straight into the game.
-function Lobby() {
-  const router = useRouter();
-  const [joinCode, setJoinCode] = useState("");
-
-  const join = () => {
-    const trimmed = joinCode.trim().toUpperCase();
-    if (trimmed) router.push(`/friend?code=${encodeURIComponent(trimmed)}`);
-  };
-
-  return (
-    <div className="plate mt-7 p-4 sm:p-5">
-      <div className="smallcaps text-[10px] text-parchment-400">Lobby</div>
-      <div className="mt-3 grid gap-2">
-        <Link
-          href="/friend"
-          className="btn-leaf flex items-center justify-center gap-2 px-8 py-4 font-display text-xl font-semibold"
-        >
-          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-            <circle cx="9" cy="7" r="4" />
-            <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-          </svg>
-          Play online
-        </Link>
-        <Link
-          href="/play"
-          className="btn-ghost flex items-center justify-center gap-2 px-6 py-3.5 font-display text-lg font-semibold"
-        >
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-            <rect x="2" y="4" width="20" height="16" rx="2" />
-            <path d="M6 8h.01M6 12h.01M10 8h8M10 12h8M6 16h12" />
-          </svg>
-          Play the computer
-        </Link>
-      </div>
-      <form
-        className="mt-3 flex gap-2 border-t border-white/10 pt-3"
-        onSubmit={(e) => {
-          e.preventDefault();
-          join();
-        }}
-      >
-        <input
-          value={joinCode}
-          onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-          placeholder="Have a code? Join a game"
-          maxLength={6}
-          aria-label="Game code"
-          className="min-w-0 flex-1 rounded-sm border border-white/15 bg-ink-900/60 px-3 py-2 font-mono text-sm uppercase tracking-widest text-parchment placeholder:normal-case placeholder:font-body placeholder:tracking-normal placeholder:text-parchment-400/50 focus:border-gold/60 focus:outline-none"
-        />
-        <button
-          type="submit"
-          disabled={!joinCode.trim()}
-          className="btn-ghost px-4 py-2 font-display text-sm disabled:opacity-50"
-        >
-          Join
-        </button>
-      </form>
-    </div>
   );
 }
 
@@ -200,6 +166,32 @@ function SecretRulePreview({ nerf }: { nerf: Nerf | null }) {
         Every game deals you a rule like this. Yours stays secret until the game ends.
       </p>
     </div>
+  );
+}
+
+// Display-only snapshot of the player's per-category ratings, linking through
+// to the full profile. Ratings come from the shared registry so new queues
+// appear here automatically.
+function RatingsStrip({ ratings }: { ratings: Ratings | null }) {
+  return (
+    <section className="w-full max-w-6xl mx-auto px-5 sm:px-6 py-4">
+      <div className="mb-3 flex items-center justify-between">
+        <span className="smallcaps text-[10px] text-parchment-400">Your ratings</span>
+        <Link href="/profile" className="smallcaps text-[10px] text-parchment-400 hover:text-parchment-100 transition-colors">
+          View profile
+        </Link>
+      </div>
+      <div className="grid grid-cols-3 gap-3">
+        {RATING_CATEGORIES.map((c) => (
+          <Link key={c.id} href="/profile" className="block no-underline">
+            <RatingCard
+              categoryId={c.id}
+              stats={ratings ? ratings[c.id] : DEFAULT_STATS}
+            />
+          </Link>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -339,7 +331,7 @@ function ExampleRules() {
       </ul>
       <div className="mt-6 flex justify-center">
         <Link
-          href="/play"
+          href="/game?mode=ai"
           className="btn-leaf inline-flex items-center gap-2 px-8 py-3.5 font-display text-lg font-semibold"
         >
           Deal me a rule and play
@@ -354,13 +346,13 @@ function SiteNav({ onOpenSettings }: { onOpenSettings: () => void }) {
     <nav className="flex items-center justify-between px-5 sm:px-10 py-5 sm:py-6">
       <Logo />
       <div className="flex items-center gap-1 sm:gap-2 text-sm font-body font-medium">
-        <Link href="/play" className="px-3 py-1.5 hover:bg-white/5 text-parchment-100">Play</Link>
-        <Link href="/watch" className="hidden sm:inline-block px-3 py-1.5 hover:bg-white/5 text-parchment-100">Watch</Link>
+        <Link href="/game?mode=ai" className="px-3 py-1.5 hover:bg-white/5 text-parchment-100">Play</Link>
+        <Link href="/history" className="hidden sm:inline-block px-3 py-1.5 hover:bg-white/5 text-parchment-100">History</Link>
         <Link href="/leaderboard" className="hidden sm:inline-block px-3 py-1.5 hover:bg-white/5 text-parchment-100">Leaderboard</Link>
-        <Link href="/stats" className="hidden sm:inline-block px-3 py-1.5 hover:bg-white/5 text-parchment-100">Stats</Link>
+        <Link href="/profile" className="hidden sm:inline-block px-3 py-1.5 hover:bg-white/5 text-parchment-100">Profile</Link>
         <Link href="/codex" className="px-3 py-1.5 hover:bg-white/5 text-parchment-100">Rules</Link>
         <Link href="/tutorial" className="hidden sm:inline-block px-3 py-1.5 hover:bg-white/5 text-parchment-100">How to play</Link>
-        <ProfileChip />
+        <AccountChip />
         <button
           type="button"
           onClick={onOpenSettings}

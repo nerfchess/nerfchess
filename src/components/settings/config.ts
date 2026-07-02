@@ -8,7 +8,6 @@ import {
   Gamepad2,
   Palette,
   SlidersHorizontal,
-  User,
   Volume2,
   type LucideIcon,
 } from "lucide-react";
@@ -27,7 +26,6 @@ export type Control =
   | { kind: "accentColor" }
   | { kind: "boardTheme" }
   | { kind: "pieceTheme" }
-  | { kind: "profile" }
   | { kind: "reset" };
 
 export interface RowConfig {
@@ -47,19 +45,6 @@ export interface SectionConfig {
 const pct = (v: number) => `${Math.round(v * 100)}%`;
 
 export const SECTIONS: SectionConfig[] = [
-  {
-    id: "profile",
-    title: "Profile",
-    icon: User,
-    rows: [
-      {
-        id: "profile",
-        label: "Username and picture",
-        hint: "Shown with your games, rating, and on the leaderboard",
-        control: { kind: "profile" },
-      },
-    ],
-  },
   {
     id: "gameplay",
     title: "Gameplay",

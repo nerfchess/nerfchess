@@ -338,8 +338,8 @@ export function kingCaptured(board: BoardState): Color | null {
   // Returns color of the king that was captured (i.e. is missing).
   const w = findKing(board, "w");
   const b = findKing(board, "b");
-  if (!w) return "w";
-  if (!b) return "b";
+  if (w == null) return "w";
+  if (b == null) return "b";
   return null;
 }
 
