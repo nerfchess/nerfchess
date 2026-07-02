@@ -493,7 +493,7 @@ export const SKITTISH: Nerf = db({
   },
   hint: (_s, ctx) => {
     if (!isInCheck(ctx.board, ctx.me)) return null;
-    return { text: "You're in check — only the king may flee.", tone: "warn" };
+    return { text: "You're in check. Only the king may flee.", tone: "warn" };
   },
 });
 
@@ -737,8 +737,8 @@ export const ALTERNATOR: Nerf = db({
     if (!last) return null;
     return {
       text: last.piece === "p"
-        ? "You moved a pawn last turn — now a non-pawn."
-        : "You moved a non-pawn — now a pawn.",
+        ? "You moved a pawn last turn. Now move a non-pawn."
+        : "You moved a non-pawn. Now move a pawn.",
       tone: "info",
     };
   },
@@ -848,7 +848,7 @@ export const SIEGE: Nerf = db({
 export const SCENT_OF_BLOOD: Nerf = db({
   id: "scent_of_blood",
   name: "The Scent of Blood",
-  description: "If one of your pieces can capture, it must — that piece, this turn.",
+  description: "If one of your pieces can capture, it must: that piece, this turn.",
   flavor: "Once they smell it, nothing else matters.",
   tier: 4,
   icon: "droplet",
@@ -867,7 +867,7 @@ export const SCENT_OF_BLOOD: Nerf = db({
     for (const m of legal) if (m.captured) sources.add(m.from);
     if (sources.size === 0) return null;
     return {
-      text: "A piece smells blood — if it moves, it must capture.",
+      text: "A piece smells blood. If it moves, it must capture.",
       squares: Array.from(sources),
       tone: "warn",
     };

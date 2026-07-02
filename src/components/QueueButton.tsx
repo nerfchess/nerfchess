@@ -93,7 +93,7 @@ export function QueueButton() {
               </button>
             </div>
           ) : state === "paired" ? (
-            <span className="text-sm text-gold-leaf">Opponent found — starting…</span>
+            <span className="text-sm text-gold-leaf">Opponent found. Starting…</span>
           ) : (
             <button
               onClick={startSearch}

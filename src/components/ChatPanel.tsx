@@ -38,7 +38,7 @@ export function ChatPanel({
       <div className="smallcaps shrink-0 px-1 pb-1 text-[9px] text-parchment-400">Chat</div>
       <div ref={listRef} className="min-h-0 flex-1 space-y-1 overflow-y-auto px-1 text-[12px] leading-snug">
         {messages.length === 0 && (
-          <div className="text-parchment-400/60">Say hello — your opponent can read this.</div>
+          <div className="text-parchment-400/60">Say hello. Your opponent can read this.</div>
         )}
         {messages.map((m, i) => (
           <div key={`${m.at}-${i}`} className="break-words">

@@ -4,22 +4,25 @@ import { useEffect, useState } from "react";
 import type { CSSProperties } from "react";
 import { X } from "lucide-react";
 import {
+  ACCENT_THEMES,
+  AccentColor,
   BOARD_THEMES,
   BoardTheme,
+  DEFAULT_SETTINGS,
   PIECE_THEMES,
   PieceTheme,
   loadSettings,
   saveSettings,
   Settings,
 } from "@/lib/settings";
-import { setVolume } from "@/lib/sounds";
+import { setUiSounds, setVolume } from "@/lib/sounds";
 import { Piece } from "@/components/Pieces";
 import { SECTIONS, type Control } from "@/components/settings/config";
 import { SettingsSection } from "@/components/settings/SettingsSection";
 import { SettingRow } from "@/components/settings/SettingRow";
 import {
-  FakeSelect,
   GhostButton,
+  Select,
   Slider,
   Swatches,
   Toggle,
@@ -42,13 +45,14 @@ export function SettingsPanel({ open, onClose }: Props) {
   if (!open) return null;
 
   // Single write path for every live control: merge, persist, apply side
-  // effects. saveSettings() already re-applies the board and piece themes;
-  // volume needs an explicit push into the audio engine.
+  // effects. saveSettings() already re-applies the themes and UI preferences;
+  // audio needs an explicit push into the sound engine.
   const update = (patch: Partial<Settings>) => {
     setSettings((prev) => {
       const merged = { ...prev, ...patch };
       saveSettings(merged);
       if (patch.volume != null) setVolume(merged.volume);
+      if (patch.uiSounds != null) setUiSounds(merged.uiSounds);
       return merged;
     });
   };
@@ -75,20 +79,42 @@ export function SettingsPanel({ open, onClose }: Props) {
             onChange={(v) => update({ [control.setting]: v } as Partial<Settings>)}
           />
         );
+      case "animationSpeed":
+        return (
+          <Select
+            label={label}
+            value={settings.animationSpeed}
+            options={control.options}
+            onChange={(v) => update({ animationSpeed: v })}
+          />
+        );
+      case "accentColor":
+        return (
+          <Swatches
+            colors={(Object.keys(ACCENT_THEMES) as AccentColor[]).map((id) => ({
+              id,
+              color: ACCENT_THEMES[id].accent,
+              label: ACCENT_THEMES[id].label,
+            }))}
+            selected={settings.accentColor}
+            onSelect={(id) => update({ accentColor: id as AccentColor })}
+          />
+        );
       case "boardTheme":
         return <BoardThemePicker value={settings.boardTheme} onChange={(t) => update({ boardTheme: t })} />;
       case "pieceTheme":
         return <PieceThemePicker value={settings.pieceTheme} onChange={(t) => update({ pieceTheme: t })} />;
-      case "ph-toggle":
-        return <Toggle label={label} checked={!!control.on} disabled />;
-      case "ph-slider":
-        return <Slider value={control.value} min={0} max={1} step={0.05} disabled format={() => "—"} />;
-      case "ph-select":
-        return <FakeSelect value={control.value} />;
-      case "ph-swatches":
-        return <Swatches colors={control.colors} />;
-      case "ph-button":
-        return <GhostButton label={control.label} />;
+      case "reset":
+        return (
+          <GhostButton
+            label="Reset"
+            onClick={() => {
+              update({ ...DEFAULT_SETTINGS });
+              setVolume(DEFAULT_SETTINGS.volume);
+              setUiSounds(DEFAULT_SETTINGS.uiSounds);
+            }}
+          />
+        );
     }
   };
 
@@ -126,7 +152,6 @@ export function SettingsPanel({ open, onClose }: Props) {
                   key={row.id}
                   label={row.label}
                   hint={row.hint}
-                  comingSoon={row.comingSoon}
                   stacked={isStacked(row.control)}
                   control={renderControl(row.control, row.label)}
                 />

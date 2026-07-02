@@ -24,6 +24,9 @@ export type PieceTheme =
   | "ocean"
   | "gold";
 
+export type AccentColor = "blue" | "green" | "amber" | "rose";
+export type AnimationSpeed = "off" | "fast" | "normal";
+
 export interface Settings {
   boardTheme: BoardTheme;
   pieceTheme: PieceTheme;
@@ -33,16 +36,49 @@ export interface Settings {
   // When on, the opponent's rule is never shown to you — not even after the
   // game ends, and mid-game reveal is disabled. Default off.
   hideOpponentReveal: boolean;
+  confirmResign: boolean; // ask before resigning
+  showCoordinates: boolean; // file/rank labels on the board edge
+  highlightLastMove: boolean; // tint the from/to squares of the last move
+  uiScale: number; // 0.85..1.15, multiplies the root font size
+  accentColor: AccentColor;
+  animationSpeed: AnimationSpeed;
+  uiSounds: boolean; // interface blips (piece select), separate from game sounds
+  highContrast: boolean;
+  reducedMotion: boolean;
+  fpsCounter: boolean;
 }
 
+export const SETTINGS_CHANGED_EVENT = "nerfchess:settings-changed";
+
 const STORAGE_KEY = "dc:settings-v1";
-const DEFAULT: Settings = {
+export const DEFAULT_SETTINGS: Settings = {
   boardTheme: "wood",
   pieceTheme: "classic",
   volume: 0.8,
   moveRiskWarnings: true,
   autoQueen: false,
   hideOpponentReveal: false,
+  confirmResign: true,
+  showCoordinates: true,
+  highlightLastMove: true,
+  uiScale: 1,
+  accentColor: "blue",
+  animationSpeed: "normal",
+  uiSounds: true,
+  highContrast: false,
+  reducedMotion: false,
+  fpsCounter: false,
+};
+const DEFAULT = DEFAULT_SETTINGS;
+
+export const ACCENT_THEMES: Record<
+  AccentColor,
+  { label: string; accent: string; accentHi: string; rgb: string; rgbHi: string; rgbDim: string }
+> = {
+  blue:  { label: "Blue",  accent: "#3692e7", accentHi: "#4a9fee", rgb: "54 146 231",  rgbHi: "74 159 238",  rgbDim: "42 111 176" },
+  green: { label: "Green", accent: "#629924", accentHi: "#7bb52f", rgb: "98 153 36",   rgbHi: "123 181 47",  rgbDim: "74 116 27" },
+  amber: { label: "Amber", accent: "#d8b56e", accentHi: "#e6bf6a", rgb: "216 181 110", rgbHi: "230 191 106", rgbDim: "168 138 79" },
+  rose:  { label: "Rose",  accent: "#c66860", accentHi: "#dc7a72", rgb: "198 104 96",  rgbHi: "220 122 114", rgbDim: "150 76 70" },
 };
 
 export const BOARD_THEMES: Record<BoardTheme, { light: string; dark: string; label: string }> = {
@@ -73,6 +109,10 @@ export const PIECE_THEMES: Record<
   gold:     { label: "Gold",     wFill: "#f4ead0", wStroke: "#6b4e15", bFill: "#3a2c0e", bStroke: "#e9c877" },
 };
 
+function bool(v: unknown, fallback: boolean): boolean {
+  return typeof v === "boolean" ? v : fallback;
+}
+
 export function loadSettings(): Settings {
   if (typeof window === "undefined") return { ...DEFAULT };
   try {
@@ -89,13 +129,28 @@ export function loadSettings(): Settings {
           ? (parsed.pieceTheme as PieceTheme)
           : DEFAULT.pieceTheme,
       volume: typeof parsed.volume === "number" ? Math.max(0, Math.min(1, parsed.volume)) : DEFAULT.volume,
-      moveRiskWarnings:
-        typeof parsed.moveRiskWarnings === "boolean" ? parsed.moveRiskWarnings : DEFAULT.moveRiskWarnings,
-      autoQueen: typeof parsed.autoQueen === "boolean" ? parsed.autoQueen : DEFAULT.autoQueen,
-      hideOpponentReveal:
-        typeof parsed.hideOpponentReveal === "boolean"
-          ? parsed.hideOpponentReveal
-          : DEFAULT.hideOpponentReveal,
+      moveRiskWarnings: bool(parsed.moveRiskWarnings, DEFAULT.moveRiskWarnings),
+      autoQueen: bool(parsed.autoQueen, DEFAULT.autoQueen),
+      hideOpponentReveal: bool(parsed.hideOpponentReveal, DEFAULT.hideOpponentReveal),
+      confirmResign: bool(parsed.confirmResign, DEFAULT.confirmResign),
+      showCoordinates: bool(parsed.showCoordinates, DEFAULT.showCoordinates),
+      highlightLastMove: bool(parsed.highlightLastMove, DEFAULT.highlightLastMove),
+      uiScale:
+        typeof parsed.uiScale === "number"
+          ? Math.max(0.85, Math.min(1.15, parsed.uiScale))
+          : DEFAULT.uiScale,
+      accentColor:
+        parsed.accentColor && parsed.accentColor in ACCENT_THEMES
+          ? (parsed.accentColor as AccentColor)
+          : DEFAULT.accentColor,
+      animationSpeed:
+        parsed.animationSpeed === "off" || parsed.animationSpeed === "fast" || parsed.animationSpeed === "normal"
+          ? parsed.animationSpeed
+          : DEFAULT.animationSpeed,
+      uiSounds: bool(parsed.uiSounds, DEFAULT.uiSounds),
+      highContrast: bool(parsed.highContrast, DEFAULT.highContrast),
+      reducedMotion: bool(parsed.reducedMotion, DEFAULT.reducedMotion),
+      fpsCounter: bool(parsed.fpsCounter, DEFAULT.fpsCounter),
     };
   } catch {}
   return { ...DEFAULT };
@@ -108,6 +163,26 @@ export function saveSettings(s: Settings) {
   } catch {}
   applyBoardTheme(s.boardTheme);
   applyPieceTheme(s.pieceTheme);
+  applyUiPrefs(s);
+  window.dispatchEvent(new Event(SETTINGS_CHANGED_EVENT));
+}
+
+/** Push the interface-wide preferences (scale, accent, motion, contrast) into
+ *  the document so every page picks them up. */
+export function applyUiPrefs(s: Settings) {
+  if (typeof document === "undefined") return;
+  const html = document.documentElement;
+  html.style.fontSize = s.uiScale === 1 ? "" : `${16 * s.uiScale}px`;
+  const accent = ACCENT_THEMES[s.accentColor] ?? ACCENT_THEMES.blue;
+  html.style.setProperty("--accent", accent.accent);
+  html.style.setProperty("--accent-hi", accent.accentHi);
+  html.style.setProperty("--gold", accent.accent);
+  html.style.setProperty("--gold-leaf", accent.accentHi);
+  html.style.setProperty("--accent-rgb", accent.rgb);
+  html.style.setProperty("--accent-hi-rgb", accent.rgbHi);
+  html.style.setProperty("--accent-dim-rgb", accent.rgbDim);
+  html.dataset.anim = s.reducedMotion ? "off" : s.animationSpeed;
+  html.dataset.contrast = s.highContrast ? "high" : "normal";
 }
 
 export function applyBoardTheme(theme: BoardTheme) {

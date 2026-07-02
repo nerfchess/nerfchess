@@ -22,6 +22,9 @@ interface Props {
   // Online games negotiate rematches over the wire: "offered" = waiting for
   // the opponent, "incoming" = the opponent wants one.
   rematchStatus?: "none" | "offered" | "incoming";
+  // When true (the "keep opponent rules hidden" setting), the opponent's rule
+  // starts face-down behind a "Reveal opponent's nerf" button.
+  opponentHidden?: boolean;
 }
 
 // A single revealed rule row for the post game summary. Both players' rules are
@@ -66,9 +69,11 @@ export function GameOver({
   onNewGame,
   onReview,
   rematchStatus = "none",
+  opponentHidden = false,
 }: Props) {
   const [dismissed, setDismissed] = useState(false);
   const [shared, setShared] = useState(false);
+  const [oppRevealed, setOppRevealed] = useState(!opponentHidden);
   const primaryRef = useRef<HTMLButtonElement | null>(null);
   const reduceMotion = useReducedMotion();
   const draw = result.winner === "draw";
@@ -91,7 +96,9 @@ export function GameOver({
     const lines = [
       `Nerf Chess: ${outcome}`,
       myNerf ? `My rule: ${myNerf.name} (${myNerf.description})` : null,
-      opponentNerf ? `Opponent rule: ${opponentNerf.name} (${opponentNerf.description})` : null,
+      opponentNerf && oppRevealed
+        ? `Opponent rule: ${opponentNerf.name} (${opponentNerf.description})`
+        : null,
       typeof window !== "undefined" ? window.location.origin : "https://nerfchess.com",
     ].filter(Boolean);
     const text = lines.join("\n");
@@ -202,7 +209,26 @@ export function GameOver({
         {(myNerf || opponentNerf) && (
           <div className="mt-5 grid gap-2 sm:grid-cols-2">
             {myNerf && <RuleReveal label="Your rule" nerf={myNerf} />}
-            {opponentNerf && <RuleReveal label="Opponent rule" nerf={opponentNerf} />}
+            {opponentNerf &&
+              (oppRevealed ? (
+                <RuleReveal label="Opponent rule" nerf={opponentNerf} />
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setOppRevealed(true)}
+                  className="flex min-h-[6.5rem] flex-col items-center justify-center gap-2 border border-white/15 bg-white/[0.03] p-3 text-parchment-200 transition hover:border-gold/50 hover:bg-gold/10 hover:text-gold-leaf"
+                >
+                  <span
+                    aria-hidden
+                    className="grid h-8 w-8 place-items-center rounded-full border border-gold/40 bg-gold/10 font-display text-lg font-bold text-gold/80"
+                  >
+                    ?
+                  </span>
+                  <span className="font-display text-sm font-semibold">
+                    Reveal opponent&apos;s nerf
+                  </span>
+                </button>
+              ))}
           </div>
         )}
 

@@ -411,7 +411,7 @@ export const YOU_BEST_NOT_MISS: Nerf = db({
   hint: (state) => {
     const s = state as { owed: boolean };
     if (!s.owed) return null;
-    return { text: "You gave check — capture the king this turn or lose.", tone: "warn" };
+    return { text: "You gave check. Capture the king this turn or lose.", tone: "warn" };
   },
 });
 
@@ -1039,7 +1039,7 @@ export const EYE_FOR_AN_EYE: Nerf = db({
     if (!ctx.opponentLastMove?.captured) return null;
     const caps = legal.filter((m) => m.captured);
     if (!caps.length) {
-      return { text: "They captured and you have no capture — this move loses.", tone: "warn" };
+      return { text: "They captured and you have no capture. This move loses.", tone: "warn" };
     }
     return {
       text: "Eye for an eye: you must capture this turn.",

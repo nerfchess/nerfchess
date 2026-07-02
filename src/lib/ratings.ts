@@ -150,5 +150,5 @@ export function winRate(s: CategoryStats): number | null {
 
 export function formatWinRate(s: CategoryStats): string {
   const rate = winRate(s);
-  return rate === null ? "—" : `${Math.round(rate * 100)}%`;
+  return rate === null ? "-" : `${Math.round(rate * 100)}%`;
 }

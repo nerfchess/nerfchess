@@ -498,6 +498,11 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     session.resign();
   };
 
+  const requestResign = () => {
+    if (uiSettings.confirmResign) setConfirmingResign(true);
+    else onResign();
+  };
+
   const onOfferDraw = () => {
     if (!game || game.result || drawOfferStatus === "offering") return;
     setError(null);
@@ -605,7 +610,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         </button>
       </div>
       <button
-        onClick={() => setConfirmingResign(true)}
+        onClick={requestResign}
         className="w-full min-w-0 px-3 py-2 border border-oxblood/40 bg-oxblood/10 text-oxblood-glow hover:bg-oxblood/20 hover:border-oxblood/70 transition text-xs font-display font-semibold tracking-wide"
       >
         Resign
@@ -626,7 +631,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           {drawOfferStatus === "offering" ? "Offered" : "Draw"}
         </button>
         <button
-          onClick={() => setConfirmingResign(true)}
+          onClick={requestResign}
           className="min-w-0 px-3 py-2 border border-oxblood/40 bg-oxblood/10 text-oxblood-glow hover:bg-oxblood/20 hover:border-oxblood/70 transition text-xs font-display font-semibold tracking-wide"
         >
           Resign
@@ -773,6 +778,8 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   onCancelPremove={clearPremoves}
                   moveRisks={isReviewingHistory || premovePending ? undefined : moveRisks}
                   autoQueen={uiSettings.autoQueen}
+                  showCoordinates={uiSettings.showCoordinates}
+                  highlightLastMove={uiSettings.highlightLastMove}
                 />
               </div>
               <div className="flex items-center justify-between gap-2 sm:hidden">
@@ -796,7 +803,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                 <span className={`font-display text-sm font-semibold tier-${myNerf.tier}`}>
                   {myNerf.name}
                 </span>
-                <span className="text-xs leading-snug text-parchment-300"> — {myNerf.description}</span>
+                <span className="text-xs leading-snug text-parchment-300">: {myNerf.description}</span>
               </div>
               {historyActions && <div className="mt-1 sm:hidden">{historyActions}</div>}
             </div>
@@ -854,7 +861,8 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           result={game.result}
           myColor={myColor}
           myNerf={myNerf}
-          opponentNerf={revealedOppNerf && !uiSettings.hideOpponentReveal ? revealedOppNerf : undefined}
+          opponentNerf={revealedOppNerf ?? undefined}
+          opponentHidden={uiSettings.hideOpponentReveal}
           ratingChange={ratingChange}
           rematchStatus={rematchStatus}
           onRematch={handleRematch}

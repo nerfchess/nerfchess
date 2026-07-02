@@ -515,6 +515,11 @@ function GamePage() {
     }
   };
 
+  const requestResign = () => {
+    if (uiSettings.confirmResign) setConfirmingResign(true);
+    else onResign();
+  };
+
   const onOfferDraw = () => {
     if (game.result || drawOfferStatus !== "idle") return;
     setDrawOfferStatus("offering");
@@ -582,7 +587,7 @@ function GamePage() {
           {drawOfferStatus === "offering" ? "Offering..." : "Draw"}
         </button>
         <button
-          onClick={() => setConfirmingResign(true)}
+          onClick={requestResign}
           title="Resign the game"
           aria-label="Resign the game"
           className="min-w-0 px-3 py-2 border border-oxblood/40 bg-oxblood/10 text-oxblood-glow hover:bg-oxblood/20 hover:border-oxblood/70 transition text-xs font-display font-semibold tracking-wide"
@@ -747,6 +752,8 @@ function GamePage() {
                   onCancelPremove={cancelPremove}
                   moveRisks={isReviewingHistory || premovePending ? undefined : moveRisks}
                   autoQueen={uiSettings.autoQueen}
+                  showCoordinates={uiSettings.showCoordinates}
+                  highlightLastMove={uiSettings.highlightLastMove}
                 />
               </div>
               <div className="flex items-center justify-between gap-2 sm:hidden">
@@ -770,7 +777,7 @@ function GamePage() {
                 <span className={`font-display text-sm font-semibold tier-${myNerf.tier}`}>
                   {myNerf.name}
                 </span>
-                <span className="text-xs leading-snug text-parchment-300"> — {myNerf.description}</span>
+                <span className="text-xs leading-snug text-parchment-300">: {myNerf.description}</span>
               </div>
               {historyActions && <div className="mt-1 sm:hidden">{historyActions}</div>}
             </div>
@@ -819,6 +826,7 @@ function GamePage() {
           myColor={myColor}
           myNerf={myNerf}
           opponentNerf={opponentNerf}
+          opponentHidden={uiSettings.hideOpponentReveal && !oppPeek}
           ratingChange={ratingChange}
           onRematch={handleRematch}
           onNewGame={handleRematch}

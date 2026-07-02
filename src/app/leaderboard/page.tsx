@@ -56,10 +56,9 @@ export default function LeaderboardPage() {
       <section className="max-w-3xl mx-auto px-6 py-8">
         <h1 className="font-display text-4xl sm:text-5xl text-parchment-50">Leaderboard</h1>
         <p className="mt-3 text-parchment-200">
-          Ranked by rating from rated online games (3+2 blitz). Bot games are casual and don&apos;t
-          count —{" "}
+          Ranked by rating from rated online games (3+2 blitz).{" "}
           <Link href="/play" className="text-gold-leaf hover:underline">
-            queue up
+            Queue up
           </Link>{" "}
           to get on the board.
         </p>
@@ -76,7 +75,7 @@ export default function LeaderboardPage() {
 
         {rows && rows.length === 0 && (
           <div className="mt-8 plate p-6 text-parchment-200">
-            Nobody has played a rated game yet. Be the first —{" "}
+            Nobody has played a rated game yet. Be the first:{" "}
             <Link href="/play" className="text-gold-leaf hover:underline">
               find an opponent
             </Link>
@@ -130,7 +129,7 @@ export default function LeaderboardPage() {
 
         <p className="mt-4 text-xs text-parchment-500">
           Ratings are Glicko-2, updated after every rated game. Your practice ladder against the
-          bots stays on your device — see your{" "}
+          bots is tracked separately. See your{" "}
           <Link href="/profile" className="text-gold-leaf hover:underline">
             local profile
           </Link>

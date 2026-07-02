@@ -172,7 +172,7 @@ export default function CodexPage() {
               }
             >
               <CheckIcon />
-              Playable today
+              Playable
             </button>
           </div>
         </div>

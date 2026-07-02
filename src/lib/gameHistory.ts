@@ -90,7 +90,7 @@ export function speedLabel(baseSec: number): string {
   return "Classical";
 }
 
-/** Compact "10+0" style time control; "—" when there is no clock. */
+/** Compact "10+0" style time control; a dash when there is no clock. */
 export function timeControlLabel(baseSec: number, incSec: number): string {
   if (baseSec <= 0) return "∞";
   const base = baseSec < 60 ? `${baseSec}s` : `${Math.round(baseSec / 60)}`;

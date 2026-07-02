@@ -117,7 +117,7 @@ export default function FriendPage() {
       // The game starts on receipt of the server `start` frame.
     } catch (e) {
       if (sessionRef.current !== sess) return;
-      setError((e instanceof Error ? e.message : String(e)) || "Failed to connect — check the code.");
+      setError((e instanceof Error ? e.message : String(e)) || "Failed to connect. Check the code.");
       setView("setup");
     }
   };

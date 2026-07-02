@@ -286,7 +286,7 @@ function NerfLine({ label, nerfId }: { label: string; nerfId: string }) {
     <div className="plate p-2 px-3">
       <span className="smallcaps text-[10px] text-parchment-400">{label} </span>
       <span className={`font-display text-sm font-semibold tier-${nerf.tier}`}>{nerf.name}</span>
-      <span className="text-xs leading-snug text-parchment-300"> — {nerf.description}</span>
+      <span className="text-xs leading-snug text-parchment-300">: {nerf.description}</span>
     </div>
   );
 }

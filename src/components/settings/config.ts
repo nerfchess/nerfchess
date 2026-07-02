@@ -1,9 +1,7 @@
-// Data-driven description of the settings menu. Adding a new setting — or a new
-// "Coming soon" placeholder — is a matter of editing the SECTIONS array below;
-// the panel renders whatever it finds here. The `live` controls are wired to
-// real functionality (via the `setting` key into the Settings model, or a
-// dedicated picker kind); everything prefixed `ph-` is a disabled placeholder
-// for a future feature.
+// Data-driven description of the settings menu. Adding a new setting is a
+// matter of editing the SECTIONS array below; the panel renders whatever it
+// finds here. Every control is live and bound to real functionality, either
+// through the `setting` key into the Settings model or a dedicated picker kind.
 
 import {
   Accessibility,
@@ -13,7 +11,7 @@ import {
   Volume2,
   type LucideIcon,
 } from "lucide-react";
-import type { Settings } from "@/lib/settings";
+import type { AnimationSpeed, Settings } from "@/lib/settings";
 
 // Setting keys that hold a boolean (valid targets for a live toggle) and those
 // that hold a number (valid targets for a live slider), derived from the model
@@ -22,23 +20,18 @@ type BoolKey = { [K in keyof Settings]: Settings[K] extends boolean ? K : never 
 type NumKey = { [K in keyof Settings]: Settings[K] extends number ? K : never }[keyof Settings];
 
 export type Control =
-  // Live, functional controls — bound to the persisted Settings object.
   | { kind: "toggle"; setting: BoolKey }
   | { kind: "slider"; setting: NumKey; min: number; max: number; step: number; format?: (v: number) => string }
+  | { kind: "animationSpeed"; options: Array<{ value: AnimationSpeed; label: string }> }
+  | { kind: "accentColor" }
   | { kind: "boardTheme" }
   | { kind: "pieceTheme" }
-  // Placeholder controls — purely visual, always disabled.
-  | { kind: "ph-toggle"; on?: boolean }
-  | { kind: "ph-slider"; value: number }
-  | { kind: "ph-select"; value: string }
-  | { kind: "ph-swatches"; colors: string[] }
-  | { kind: "ph-button"; label: string };
+  | { kind: "reset" };
 
 export interface RowConfig {
   id: string;
   label: string;
   hint?: string;
-  comingSoon?: boolean;
   control: Control;
 }
 
@@ -72,32 +65,24 @@ export const SECTIONS: SectionConfig[] = [
       {
         id: "hideOpponentReveal",
         label: "Keep opponent's rule hidden",
-        hint: "Never reveal their rule to you — no mid-game peek, no reveal at the end",
+        hint: "Never reveal their rule to you: no mid-game peek, no reveal at the end",
         control: { kind: "toggle", setting: "hideOpponentReveal" },
       },
       {
         id: "confirmResign",
         label: "Confirm resign",
-        comingSoon: true,
-        control: { kind: "ph-toggle", on: true },
-      },
-      {
-        id: "confirmRestart",
-        label: "Confirm restart",
-        comingSoon: true,
-        control: { kind: "ph-toggle" },
+        hint: "Ask before resigning a game",
+        control: { kind: "toggle", setting: "confirmResign" },
       },
       {
         id: "showCoordinates",
         label: "Show coordinates",
-        comingSoon: true,
-        control: { kind: "ph-toggle", on: true },
+        control: { kind: "toggle", setting: "showCoordinates" },
       },
       {
         id: "highlightLastMove",
         label: "Highlight last move",
-        comingSoon: true,
-        control: { kind: "ph-toggle", on: true },
+        control: { kind: "toggle", setting: "highlightLastMove" },
       },
     ],
   },
@@ -117,22 +102,26 @@ export const SECTIONS: SectionConfig[] = [
         control: { kind: "pieceTheme" },
       },
       {
-        id: "uiScale",
-        label: "UI scale",
-        comingSoon: true,
-        control: { kind: "ph-slider", value: 0.5 },
-      },
-      {
         id: "accentColor",
         label: "Accent color",
-        comingSoon: true,
-        control: { kind: "ph-swatches", colors: ["#d8b56e", "#5a9b7a", "#7c7aa3", "#b54641"] },
+        control: { kind: "accentColor" },
+      },
+      {
+        id: "uiScale",
+        label: "UI scale",
+        control: { kind: "slider", setting: "uiScale", min: 0.85, max: 1.15, step: 0.05, format: pct },
       },
       {
         id: "animationSpeed",
         label: "Animation speed",
-        comingSoon: true,
-        control: { kind: "ph-select", value: "Normal" },
+        control: {
+          kind: "animationSpeed",
+          options: [
+            { value: "off", label: "Off" },
+            { value: "fast", label: "Fast" },
+            { value: "normal", label: "Normal" },
+          ],
+        },
       },
     ],
   },
@@ -147,16 +136,10 @@ export const SECTIONS: SectionConfig[] = [
         control: { kind: "slider", setting: "volume", min: 0, max: 1, step: 0.05, format: pct },
       },
       {
-        id: "musicVolume",
-        label: "Music volume",
-        comingSoon: true,
-        control: { kind: "ph-slider", value: 0.6 },
-      },
-      {
         id: "uiSounds",
         label: "UI sounds",
-        comingSoon: true,
-        control: { kind: "ph-toggle", on: true },
+        hint: "Interface blips like piece selection",
+        control: { kind: "toggle", setting: "uiSounds" },
       },
     ],
   },
@@ -168,15 +151,13 @@ export const SECTIONS: SectionConfig[] = [
       {
         id: "highContrast",
         label: "High contrast",
-        comingSoon: true,
-        control: { kind: "ph-toggle" },
+        control: { kind: "toggle", setting: "highContrast" },
       },
       {
         id: "reducedMotion",
         label: "Reduced motion",
         hint: "Minimize animations and transitions",
-        comingSoon: true,
-        control: { kind: "ph-toggle" },
+        control: { kind: "toggle", setting: "reducedMotion" },
       },
     ],
   },
@@ -188,15 +169,13 @@ export const SECTIONS: SectionConfig[] = [
       {
         id: "fpsCounter",
         label: "FPS counter",
-        comingSoon: true,
-        control: { kind: "ph-toggle" },
+        control: { kind: "toggle", setting: "fpsCounter" },
       },
       {
         id: "resetSettings",
         label: "Reset settings",
         hint: "Restore every option to its default",
-        comingSoon: true,
-        control: { kind: "ph-button", label: "Reset" },
+        control: { kind: "reset" },
       },
     ],
   },
