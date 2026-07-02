@@ -70,7 +70,7 @@ export const SEPARATION_ANXIETY: Nerf = db({
 });
 
 export const CROSSING_THE_RUBICON: Nerf = db({
-  id: "crossing_the_rubicon", name: "Crossing the Rubicon", tier: 2, implemented: true,
+  id: "crossing_the_rubicon", name: "Crossing the Rubicon", tier: 3, implemented: true,
   description: "Once a piece crosses to the opponent's half, it can't return.",
   filterMoves: (moves, _s, ctx) => {
     const oppHalf = (sq: number) => (ctx.me === "w" ? RANK(sq) >= 4 : RANK(sq) <= 3);
@@ -112,7 +112,7 @@ export const QUEEN_BEE: Nerf = db({
 });
 
 export const ENTRENCHED: Nerf = db({
-  id: "entrenched", name: "Entrenched", tier: 2, implemented: true,
+  id: "entrenched", name: "Entrenched", tier: 3, implemented: true,
   description: "Rooks can't move more than 2 squares.",
   filterMoves: (moves) => moves.filter((m) => m.piece !== "r" || cheb(m.from, m.to) <= 2),
 });
@@ -127,7 +127,7 @@ export const QUIT_HORSING_AROUND: Nerf = db({
 });
 
 export const ROYAL_JUBILEE: Nerf = db({
-  id: "royal_jubilee", name: "Royal Jubilee", tier: 2, implemented: true,
+  id: "royal_jubilee", name: "Royal Jubilee", tier: 3, implemented: true,
   description: "Whenever you capture a non-pawn, you must move your king or queen on the next move.",
   filterMoves: (moves, _s, ctx) => {
     const last = ctx.myLastMove;
@@ -216,7 +216,7 @@ export const SNIPERS: Nerf = db({
 });
 
 export const DIPLOMATIC_IMMUNITY: Nerf = db({
-  id: "diplomatic_immunity", name: "Diplomatic Immunity", tier: 2, implemented: true,
+  id: "diplomatic_immunity", name: "Diplomatic Immunity", tier: 3, implemented: true,
   description: "Can't capture a piece that just moved, unless that move was a capture.",
   filterMoves: (moves, _s, ctx) => {
     const last = ctx.opponentLastMove;
@@ -226,21 +226,21 @@ export const DIPLOMATIC_IMMUNITY: Nerf = db({
 });
 
 export const FEMME_FATALE: Nerf = db({
-  id: "femme_fatale", name: "Femme Fatale", tier: 2, implemented: true,
+  id: "femme_fatale", name: "Femme Fatale", tier: 3, implemented: true,
   description: "You can only capture the enemy king with your queen.",
   filterMoves: (moves) =>
     moves.filter((m) => !(m.captured === "k" && m.piece !== "q")),
 });
 
 export const GET_DOWN_MR_PRESIDENT: Nerf = db({
-  id: "get_down_mr_president", name: "Get Down Mr. President", tier: 3, implemented: true,
+  id: "get_down_mr_president", name: "Get Down Mr. President", tier: 4, implemented: true,
   description: "Can't move your king while in check.",
   filterMoves: (moves, _s, ctx) =>
     isInCheck(ctx.board, ctx.me) ? moves.filter((m) => m.piece !== "k") : moves,
 });
 
 export const POWER_CELLS: Nerf = db({
-  id: "power_cells", name: "Power Cells", tier: 3, implemented: true,
+  id: "power_cells", name: "Power Cells", tier: 4, implemented: true,
   description: "Can't move a piece farther than the number of pawns you have.",
   filterMoves: (moves, _s, ctx) => {
     const pawns = pieceSquares(ctx.board, ctx.me, "p").length;
@@ -249,7 +249,7 @@ export const POWER_CELLS: Nerf = db({
 });
 
 export const UNSPOOLING: Nerf = db({
-  id: "unspooling", name: "Unspooling", tier: 3, implemented: true,
+  id: "unspooling", name: "Unspooling", tier: 5, implemented: true,
   description: "Total move distance budget = 100. When you run out, you lose.",
   progress: (state) => {
     const s = state as { used: number };
@@ -283,7 +283,7 @@ export const EVIL_TWIN: Nerf = db({
 });
 
 export const DOCTOR_OCTOPUS: Nerf = db({
-  id: "doctor_octopus", name: "Doctor Octopus", tier: 3, implemented: true,
+  id: "doctor_octopus", name: "Doctor Octopus", tier: 4, implemented: true,
   description: "Can only capture non-king pieces 8 times total.",
   progress: (_s, ctx) => {
     const caps = ctx.board.history.filter((m) => m.color === ctx.me && m.captured && m.captured !== "k").length;
@@ -316,7 +316,7 @@ export const JUST_PASSING_THROUGH: Nerf = db({
 });
 
 export const REMORSEFUL: Nerf = db({
-  id: "remorseful", name: "Remorseful", tier: 2, implemented: true,
+  id: "remorseful", name: "Remorseful", tier: 3, implemented: true,
   description: "Can't capture twice in a row.",
   filterMoves: (moves, _s, ctx) =>
     ctx.myLastMove?.captured ? moves.filter((m) => !m.captured) : moves,
@@ -355,7 +355,7 @@ export const SHAPESHIFTER: Nerf = db({
 });
 
 export const HORSE_EATS_FIRST: Nerf = db({
-  id: "horse_eats_first", name: "Horse Eats First", tier: 3, implemented: true,
+  id: "horse_eats_first", name: "Horse Eats First", tier: 4, implemented: true,
   description: "As long as you have a knight, you can only capture with knights.",
   filterMoves: (moves, _s, ctx) => {
     const hasKnight = pieceSquares(ctx.board, ctx.me, "n").length > 0;
@@ -365,7 +365,7 @@ export const HORSE_EATS_FIRST: Nerf = db({
 });
 
 export const WINDUP_TOYS: Nerf = db({
-  id: "windup_toys", name: "Windup Toys", tier: 3, implemented: true,
+  id: "windup_toys", name: "Windup Toys", tier: 4, implemented: true,
   description: "After move 12, can't move knights or bishops.",
   filterMoves: (moves, _s, ctx) => {
     if (ctx.moveNumber < 12) return moves;
@@ -374,7 +374,7 @@ export const WINDUP_TOYS: Nerf = db({
 });
 
 export const ABSTINENCE: Nerf = db({
-  id: "abstinence", name: "Abstinence", tier: 4, implemented: true,
+  id: "abstinence", name: "Abstinence", tier: 6, implemented: true,
   description: "If opponent ever has two same-type non-pawns adjacent, you lose.",
   checkLoss: (_s, ctx) => {
     const opp = ctx.me === "w" ? "b" : "w";
@@ -392,7 +392,7 @@ export const ABSTINENCE: Nerf = db({
 });
 
 export const YOU_BEST_NOT_MISS: Nerf = db({
-  id: "you_best_not_miss", name: "You Best Not Miss", tier: 4, implemented: true,
+  id: "you_best_not_miss", name: "You Best Not Miss", tier: 5, implemented: true,
   description: "If you end your turn giving check, you must capture the king next turn or lose.",
   init: () => ({ owed: false }),
   onTurnStart: (_s, ctx) => {
@@ -425,7 +425,7 @@ export const YOU_BEST_NOT_MISS: Nerf = db({
 });
 
 export const EYE_OF_SAURON: Nerf = db({
-  id: "eye_of_sauron", name: "Eye of Sauron", tier: 4, implemented: true,
+  id: "eye_of_sauron", name: "Eye of Sauron", tier: 5, implemented: true,
   description: "As long as you have a rook, non-pawns can't go past the rook's farthest sight.",
   filterMoves: (moves, _s, ctx) => {
     const rooks = pieceSquares(ctx.board, ctx.me, "r");
@@ -455,7 +455,7 @@ export const EYE_OF_SAURON: Nerf = db({
 });
 
 export const SAVIOR_COMPLEX: Nerf = db({
-  id: "savior_complex", name: "Savior Complex", tier: 4, implemented: true,
+  id: "savior_complex", name: "Savior Complex", tier: 5, implemented: true,
   description: "When in check, must move your queen, or lose.",
   filterMoves: (moves, _s, ctx) => {
     if (!isInCheck(ctx.board, ctx.me)) return moves;
@@ -470,7 +470,7 @@ export const SAVIOR_COMPLEX: Nerf = db({
 });
 
 export const RECONNAISSANCE: Nerf = db({
-  id: "reconnaissance", name: "Reconnaissance", tier: 4, implemented: true,
+  id: "reconnaissance", name: "Reconnaissance", tier: 5, implemented: true,
   description: "Start unable to capture. After seeing each opponent piece type move, you may capture that type.",
   init: () => ({ known: [] as PieceType[] }),
   onTurnStart: (_s, ctx) => {
@@ -485,7 +485,7 @@ export const RECONNAISSANCE: Nerf = db({
 });
 
 export const CONTROL_CENTER: Nerf = db({
-  id: "control_center", name: "Control Center", tier: 3, implemented: true,
+  id: "control_center", name: "Control Center", tier: 4, implemented: true,
   description: "Non-capturing moves must go to files c, d, e, or f.",
   filterMoves: (moves) =>
     moves.filter((m) => m.captured || (FILE(m.to) >= 2 && FILE(m.to) <= 5)),
@@ -502,7 +502,7 @@ export const HAUNTED: Nerf = db({
 });
 
 export const TOWER_DEFENSE: Nerf = db({
-  id: "tower_defense", name: "Tower Defense", tier: 4, implemented: true,
+  id: "tower_defense", name: "Tower Defense", tier: 5, implemented: true,
   description: "Can't move rooks. If you lose all rooks, you lose.",
   filterMoves: (moves) => moves.filter((m) => m.piece !== "r"),
   checkLoss: (_s, ctx) =>
@@ -512,7 +512,7 @@ export const TOWER_DEFENSE: Nerf = db({
 });
 
 export const PARANOID: Nerf = db({
-  id: "paranoid", name: "Paranoid", tier: 4, implemented: true,
+  id: "paranoid", name: "Paranoid", tier: 6, implemented: true,
   description: "Your king must always be defended, or you lose.",
   checkLoss: (_s, ctx) => {
     const ks = findKing(ctx.board, ctx.me);
@@ -524,7 +524,7 @@ export const PARANOID: Nerf = db({
 });
 
 export const BIPARTISANSHIP: Nerf = db({
-  id: "bipartisanship", name: "Bipartisanship", tier: 3, implemented: true,
+  id: "bipartisanship", name: "Bipartisanship", tier: 4, implemented: true,
   description: "Can't move left twice in a row or right twice in a row.",
   filterMoves: (moves, _s, ctx) => {
     const last = ctx.myLastMove;
@@ -548,7 +548,7 @@ export const SHELLSHOCKED: Nerf = db({
 });
 
 export const COMFORT_ZONE: Nerf = db({
-  id: "comfort_zone", name: "Comfort Zone", tier: 2, implemented: true,
+  id: "comfort_zone", name: "Comfort Zone", tier: 3, implemented: true,
   description: "If you can move to a random square X, you must.",
   init: () => ({ target: 0 }),
   onTurnStart: (_s, _ctx, rng) => ({ target: rng.int(64) }),
@@ -561,7 +561,7 @@ export const COMFORT_ZONE: Nerf = db({
 });
 
 export const LETHAL_ATTRACTION: Nerf = db({
-  id: "lethal_attraction", name: "Lethal Attraction", tier: 4, implemented: true,
+  id: "lethal_attraction", name: "Lethal Attraction", tier: 5, implemented: true,
   description: "Can't make moves that move a piece farther from opponent's king than it started.",
   filterMoves: (moves, _s, ctx) => {
     const opp = ctx.me === "w" ? "b" : "w";
@@ -572,7 +572,7 @@ export const LETHAL_ATTRACTION: Nerf = db({
 });
 
 export const MODEST: Nerf = db({
-  id: "modest", name: "Modest", tier: 4, implemented: true,
+  id: "modest", name: "Modest", tier: 6, implemented: true,
   description: "Lose if you have more pieces than opponent.",
   checkLoss: (_s, ctx) => {
     if (ctx.moveNumber === 0) return null;
@@ -584,7 +584,7 @@ export const MODEST: Nerf = db({
 });
 
 export const TRIPLE_PLAY: Nerf = db({
-  id: "triple_play", name: "Triple Play", tier: 4, implemented: true,
+  id: "triple_play", name: "Triple Play", tier: 5, implemented: true,
   description: "Can only capture the enemy king if you have 3 of a random piece type.",
   init: (rng) => ({ type: rng.pick(["n", "b", "r"] as PieceType[]) }),
   filterMoves: (moves, state, ctx) => {
@@ -611,7 +611,7 @@ export const SIBLING_RIVALRY: Nerf = db({
 });
 
 export const TORCHLIGHT: Nerf = db({
-  id: "torchlight", name: "Torchlight", tier: 4, implemented: true,
+  id: "torchlight", name: "Torchlight", tier: 5, implemented: true,
   description: "Non-pawns can only move if start or end square is adjacent to one of your pawns.",
   filterMoves: (moves, _s, ctx) => {
     const pawns = pieceSquares(ctx.board, ctx.me, "p");
@@ -682,7 +682,7 @@ export const CHIVALRY: Nerf = db({
 });
 
 export const SPREAD_OUT: Nerf = db({
-  id: "spread_out", name: "Spread Out", tier: 4, implemented: true,
+  id: "spread_out", name: "Spread Out", tier: 5, implemented: true,
   description: "Can't move a non-pawn adjacent to another of your non-pawns. Can't castle.",
   filterMoves: (moves, _s, ctx) =>
     moves.filter((m) => {
@@ -727,7 +727,7 @@ export const MOVING_DAY: Nerf = db({
 });
 
 export const ODDBALL: Nerf = db({
-  id: "oddball", name: "Oddball", tier: 3, implemented: true,
+  id: "oddball", name: "Oddball", tier: 4, implemented: true,
   description: "Can only capture on odd-numbered moves.",
   filterMoves: (moves, _s, ctx) => {
     const turn = ctx.moveNumber + 1; // 1-indexed move I'm about to make
@@ -737,7 +737,7 @@ export const ODDBALL: Nerf = db({
 });
 
 export const EVEN_KEELED: Nerf = db({
-  id: "even_keeled", name: "Even Keeled", tier: 3, implemented: true,
+  id: "even_keeled", name: "Even Keeled", tier: 4, implemented: true,
   description: "Can only capture on even-numbered moves.",
   filterMoves: (moves, _s, ctx) => {
     const turn = ctx.moveNumber + 1;
@@ -747,7 +747,7 @@ export const EVEN_KEELED: Nerf = db({
 });
 
 export const SOCIAL_DISTANCING: Nerf = db({
-  id: "social_distancing", name: "Social Distancing", tier: 3, implemented: true,
+  id: "social_distancing", name: "Social Distancing", tier: 4, implemented: true,
   description: "Can't make non-capturing moves to squares adjacent to opponent pieces.",
   filterMoves: (moves, _s, ctx) => {
     const opp = ctx.me === "w" ? "b" : "w";
@@ -763,7 +763,7 @@ export const SOCIAL_DISTANCING: Nerf = db({
 });
 
 export const DRAG: Nerf = db({
-  id: "drag", name: "Drag", tier: 4, implemented: true,
+  id: "drag", name: "Drag", tier: 5, implemented: true,
   description: "Your queen IS a king. If captured, you lose.",
   checkLoss: (_s, ctx) => {
     if (ctx.moveNumber === 0) return null;
@@ -790,7 +790,7 @@ export const STIR_CRAZY: Nerf = db({
 });
 
 export const ROOK_ON_SEVENTH: Nerf = db({
-  id: "rook_on_seventh", name: "Rook on the Seventh", tier: 4, implemented: true,
+  id: "rook_on_seventh", name: "Rook on the Seventh", tier: 5, implemented: true,
   description: "By move 15, you must have a rook on rank 7.",
   checkLoss: (_s, ctx) => {
     if (ctx.moveNumber < 15) return null;
@@ -804,7 +804,7 @@ export const ROOK_ON_SEVENTH: Nerf = db({
 });
 
 export const GUERILLA_TACTICS: Nerf = db({
-  id: "guerilla_tactics", name: "Guerilla Tactics", tier: 4, implemented: true,
+  id: "guerilla_tactics", name: "Guerilla Tactics", tier: 5, implemented: true,
   description: "After a capturing move, you must return the capturing piece to its previous square if possible.",
   filterMoves: (moves, _s, ctx) => {
     const last = ctx.myLastMove;
@@ -815,7 +815,7 @@ export const GUERILLA_TACTICS: Nerf = db({
 });
 
 export const CHEERLEADERS: Nerf = db({
-  id: "cheerleaders", name: "Cheerleaders", tier: 4, implemented: true,
+  id: "cheerleaders", name: "Cheerleaders", tier: 5, implemented: true,
   description: "Non-pawns can only capture if adjacent to one of your pawns.",
   filterMoves: (moves, _s, ctx) => {
     const pawns = pieceSquares(ctx.board, ctx.me, "p");
@@ -858,7 +858,7 @@ export const WARLORD: Nerf = db({
 });
 
 export const MEDUSA: Nerf = db({
-  id: "medusa", name: "Medusa", tier: 4, implemented: true,
+  id: "medusa", name: "Medusa", tier: 5, implemented: true,
   description: "Pieces attacked by opponent's queen are stone; they cannot move.",
   filterMoves: (moves, _s, ctx) => {
     const opp = ctx.me === "w" ? "b" : "w";
@@ -876,7 +876,7 @@ export const MEDUSA: Nerf = db({
 });
 
 export const FISCHER_RANDOM_ENDGAME: Nerf = db({
-  id: "fischer_random_endgame", name: "Fischer Random Endgame", tier: 5, implemented: true,
+  id: "fischer_random_endgame", name: "Fischer Random Endgame", tier: 7, implemented: true,
   description: "By move 20, all your non-pawns must be on home row AND on a square they couldn't have started on.",
   checkLoss: (_s, ctx) => {
     if (ctx.moveNumber < 20) return null;
@@ -895,7 +895,7 @@ export const FISCHER_RANDOM_ENDGAME: Nerf = db({
 });
 
 export const CENTRALIZED_COMMAND: Nerf = db({
-  id: "centralized_command", name: "Centralized Command", tier: 4, implemented: true,
+  id: "centralized_command", name: "Centralized Command", tier: 6, implemented: true,
   description: "Can only capture if you moved your king in last 3 turns.",
   filterMoves: (moves, _s, ctx) => {
     const mine = ctx.board.history.filter((m) => m.color === ctx.me);
@@ -907,7 +907,7 @@ export const CENTRALIZED_COMMAND: Nerf = db({
 });
 
 export const STAND_YOUR_GROUND: Nerf = db({
-  id: "stand_your_ground", name: "Stand Your Ground", tier: 4, implemented: true,
+  id: "stand_your_ground", name: "Stand Your Ground", tier: 5, implemented: true,
   description: "Pieces can only capture if attacked.",
   filterMoves: (moves, _s, ctx) => {
     const opp = ctx.me === "w" ? "b" : "w";
@@ -917,13 +917,13 @@ export const STAND_YOUR_GROUND: Nerf = db({
 });
 
 export const ALWAYS_CHECK_IT_MIGHT_BE_MATE: Nerf = db({
-  id: "always_check_it_might_be_mate", name: "Always Check, It Might Be Mate", tier: 5, implemented: true,
+  id: "always_check_it_might_be_mate", name: "Always Check, It Might Be Mate", tier: 8, implemented: true,
   description: "If you are checked, you lose.",
   checkLoss: (_s, ctx) => (isInCheck(ctx.board, ctx.me) ? { reason: "in check" } : null),
 });
 
 export const GLORIOUS_BATTLE: Nerf = db({
-  id: "glorious_battle", name: "Glorious Battle", tier: 5, implemented: true,
+  id: "glorious_battle", name: "Glorious Battle", tier: 7, implemented: true,
   description: "Starting on a random move, for 4 consecutive moves, you must capture or lose.",
   init: (rng) => ({ start: 4 + rng.int(8) }),
   filterMoves: (moves, state, ctx) => {
@@ -946,7 +946,7 @@ export const GLORIOUS_BATTLE: Nerf = db({
 });
 
 export const FLATTERER: Nerf = db({
-  id: "flatterer", name: "Flatterer", tier: 4, implemented: true,
+  id: "flatterer", name: "Flatterer", tier: 5, implemented: true,
   description: "If opponent moves a pawn, you must move a pawn. Same for non-pawns.",
   filterMoves: (moves, _s, ctx) => {
     const last = ctx.opponentLastMove;
@@ -965,7 +965,7 @@ export const MESSY_DIVORCE: Nerf = db({
 });
 
 export const LEVELING_UP: Nerf = db({
-  id: "leveling_up", name: "Leveling Up", tier: 5, implemented: true,
+  id: "leveling_up", name: "Leveling Up", tier: 6, implemented: true,
   description: "Can't capture a piece type until you've captured its predecessor.",
   filterMoves: (moves, _s, ctx) => {
     const order: PieceType[] = ["p", "n", "b", "r", "q"];
@@ -981,7 +981,7 @@ export const LEVELING_UP: Nerf = db({
 });
 
 export const HOMELAND_SECURITY: Nerf = db({
-  id: "homeland_security", name: "Homeland Security", tier: 5, implemented: true,
+  id: "homeland_security", name: "Homeland Security", tier: 8, implemented: true,
   description: "If opponent enters your two home ranks, you lose.",
   checkLoss: (_s, ctx) => {
     const opp = ctx.me === "w" ? "b" : "w";
@@ -995,7 +995,7 @@ export const HOMELAND_SECURITY: Nerf = db({
 });
 
 export const COWERING_IN_FEAR: Nerf = db({
-  id: "cowering_in_fear", name: "Cowering in Fear", tier: 4, implemented: true,
+  id: "cowering_in_fear", name: "Cowering in Fear", tier: 5, implemented: true,
   description: "Can't move a piece of less value than one opponent has captured from you.",
   filterMoves: (moves, _s, ctx) => {
     let max = 0;
@@ -1019,14 +1019,14 @@ export const BARBARIAN_RAGE: Nerf = db({
 });
 
 export const MY_KINGDOM_FOR_A_HORSE: Nerf = db({
-  id: "my_kingdom_for_a_horse", name: "My Kingdom for a Horse", tier: 5, implemented: true,
+  id: "my_kingdom_for_a_horse", name: "My Kingdom for a Horse", tier: 7, implemented: true,
   description: "If opponent captures a knight of yours, you lose.",
   checkLoss: (_s, ctx) =>
     ctx.capturedFromMe.n > 0 ? { reason: "lost a knight" } : null,
 });
 
 export const EYE_FOR_AN_EYE: Nerf = db({
-  id: "eye_for_an_eye", name: "Eye for an Eye", tier: 4, implemented: true,
+  id: "eye_for_an_eye", name: "Eye for an Eye", tier: 5, implemented: true,
   description: "If opponent captures, you must capture next turn or lose.",
   filterMoves: (moves, _s, ctx) => {
     if (!ctx.opponentLastMove?.captured) return moves;
@@ -1059,7 +1059,7 @@ export const EYE_FOR_AN_EYE: Nerf = db({
 });
 
 export const SIMON_SAYS: Nerf = db({
-  id: "simon_says", name: "Simon Says", tier: 4, implemented: true,
+  id: "simon_says", name: "Simon Says", tier: 5, implemented: true,
   description: "Must move onto same color square as opponent's last move.",
   filterMoves: (moves, _s, ctx) => {
     const last = ctx.opponentLastMove;
@@ -1070,7 +1070,7 @@ export const SIMON_SAYS: Nerf = db({
 });
 
 export const IRRESISTIBLE: Nerf = db({
-  id: "irresistible", name: "Irresistible", tier: 4, implemented: true,
+  id: "irresistible", name: "Irresistible", tier: 5, implemented: true,
   description: "If you can move a piece adjacent to opponent's king (that isn't already), you must.",
   filterMoves: (moves, _s, ctx) => {
     const opp = ctx.me === "w" ? "b" : "w";
@@ -1082,7 +1082,7 @@ export const IRRESISTIBLE: Nerf = db({
 });
 
 export const BOASTFUL: Nerf = db({
-  id: "boastful", name: "Boastful", tier: 5, implemented: true,
+  id: "boastful", name: "Boastful", tier: 7, implemented: true,
   description: "Lose if you have fewer pieces than opponent.",
   checkLoss: (_s, ctx) => {
     if (ctx.moveNumber === 0) return null;
@@ -1109,7 +1109,7 @@ export const WINDS_OF_FATE: Nerf = db({
 });
 
 export const MONKEY_SEE: Nerf = db({
-  id: "monkey_see", name: "Monkey See", tier: 5, implemented: true,
+  id: "monkey_see", name: "Monkey See", tier: 6, implemented: true,
   description: "Can only capture with piece types your opponent has captured with.",
   filterMoves: (moves, _s, ctx) => {
     const types = new Set<PieceType>();
@@ -1119,7 +1119,7 @@ export const MONKEY_SEE: Nerf = db({
 });
 
 export const TRUE_LOVE: Nerf = db({
-  id: "true_love", name: "True Love", tier: 4, implemented: true,
+  id: "true_love", name: "True Love", tier: 5, implemented: true,
   description: "King and queen can only move to squares adjacent to each other.",
   filterMoves: (moves, _s, ctx) => {
     const ks = findKing(ctx.board, ctx.me);
@@ -1150,7 +1150,7 @@ export const SUPERSTITIOUS: Nerf = db({
 });
 
 export const EAT_YOUR_VEGETABLES: Nerf = db({
-  id: "eat_your_vegetables", name: "Eat Your Vegetables", tier: 3, implemented: true,
+  id: "eat_your_vegetables", name: "Eat Your Vegetables", tier: 4, implemented: true,
   description: "Can't capture non-pawns until opponent has ≤ 4 pawns remaining.",
   filterMoves: (moves, _s, ctx) => {
     const opp = ctx.me === "w" ? "b" : "w";
@@ -1161,7 +1161,7 @@ export const EAT_YOUR_VEGETABLES: Nerf = db({
 });
 
 export const BLOODTHIRSTY: Nerf = db({
-  id: "bloodthirsty", name: "Bloodthirsty", tier: 4, implemented: true,
+  id: "bloodthirsty", name: "Bloodthirsty", tier: 6, implemented: true,
   description: "After turn 3, if you go 2 turns without capturing, you must capture or lose.",
   filterMoves: (moves, _s, ctx) => {
     if (ctx.moveNumber < 3) return moves;
@@ -1183,7 +1183,7 @@ export const LEFT_FOR_DEAD: Nerf = db({
 });
 
 export const CRUSADE: Nerf = db({
-  id: "crusade", name: "Crusade", tier: 4, implemented: true,
+  id: "crusade", name: "Crusade", tier: 5, implemented: true,
   description: "For 4 moves starting on a random move, must end turn on a specific random square.",
   init: (rng) => ({ start: 4 + rng.int(10), sq: rng.int(64) }),
   filterMoves: (moves, state, ctx) => {
@@ -1208,7 +1208,7 @@ export const CRUSADE: Nerf = db({
 });
 
 export const HEDONIC_TREADMILL: Nerf = db({
-  id: "hedonic_treadmill", name: "Hedonic Treadmill", tier: 4, implemented: true,
+  id: "hedonic_treadmill", name: "Hedonic Treadmill", tier: 5, implemented: true,
   description: "Must move a piece at least as valuable as opponent's last moved piece.",
   filterMoves: (moves, _s, ctx) => {
     const last = ctx.opponentLastMove;
@@ -1220,7 +1220,7 @@ export const HEDONIC_TREADMILL: Nerf = db({
 });
 
 export const DEATH_WISH: Nerf = db({
-  id: "death_wish", name: "Death Wish", tier: 4, implemented: true,
+  id: "death_wish", name: "Death Wish", tier: 6, implemented: true,
   description: "If you can move king into check, you must.",
   filterMoves: (moves, _s, ctx) => {
     const opp = ctx.me === "w" ? "b" : "w";
@@ -1234,7 +1234,7 @@ export const DEATH_WISH: Nerf = db({
 });
 
 export const CHECKERS: Nerf = db({
-  id: "checkers", name: "Checkers", tier: 4, implemented: true,
+  id: "checkers", name: "Checkers", tier: 5, implemented: true,
   description: "Must capture if able.",
   filterMoves: (moves) => {
     const caps = moves.filter((m) => m.captured);
@@ -1243,7 +1243,7 @@ export const CHECKERS: Nerf = db({
 });
 
 export const CLOSED_BOOK: Nerf = db({
-  id: "closed_book", name: "Closed Book", tier: 4, implemented: true,
+  id: "closed_book", name: "Closed Book", tier: 6, implemented: true,
   description: "Lose if you ever start a turn with an open file.",
   checkLoss: (_s, ctx) => {
     if (ctx.moveNumber === 0) return null;
@@ -1260,7 +1260,7 @@ export const CLOSED_BOOK: Nerf = db({
 });
 
 export const FIXATION: Nerf = db({
-  id: "fixation", name: "Fixation", tier: 4, implemented: true,
+  id: "fixation", name: "Fixation", tier: 5, implemented: true,
   description: "Pawn moves → pawn moves only; non-pawn → non-pawn only, until type switches.",
   filterMoves: (moves, _s, ctx) => {
     const last = ctx.myLastMove;
@@ -1272,7 +1272,7 @@ export const FIXATION: Nerf = db({
 });
 
 export const COVERING_FIRE: Nerf = db({
-  id: "covering_fire", name: "Covering Fire", tier: 4, implemented: true,
+  id: "covering_fire", name: "Covering Fire", tier: 5, implemented: true,
   description: "Can only capture a piece if you can capture it two different ways.",
   filterMoves: (moves) => {
     const capCounts = new Map<number, number>();
@@ -1282,7 +1282,7 @@ export const COVERING_FIRE: Nerf = db({
 });
 
 export const UNLUCKY: Nerf = db({
-  id: "unlucky", name: "Unlucky", tier: 5, implemented: true,
+  id: "unlucky", name: "Unlucky", tier: 6, implemented: true,
   description: "Half the squares are unusable each turn, re-randomized.",
   init: () => ({ banned: [] as number[] }),
   onTurnStart: (_s, _ctx, rng) => {
@@ -1302,7 +1302,7 @@ export const UNLUCKY: Nerf = db({
 });
 
 export const JUMPY: Nerf = db({
-  id: "jumpy", name: "Jumpy", tier: 4, implemented: true,
+  id: "jumpy", name: "Jumpy", tier: 5, implemented: true,
   description: "When possible, must move an attacked piece.",
   filterMoves: (moves, _s, ctx) => {
     const opp = ctx.me === "w" ? "b" : "w";
@@ -1313,7 +1313,7 @@ export const JUMPY: Nerf = db({
 });
 
 export const HOPSCOTCH: Nerf = db({
-  id: "hopscotch", name: "Hopscotch", tier: 4, implemented: true,
+  id: "hopscotch", name: "Hopscotch", tier: 5, implemented: true,
   description: "Must alternate light/dark destination squares.",
   filterMoves: (moves, _s, ctx) => {
     const last = ctx.myLastMove;
@@ -1324,7 +1324,7 @@ export const HOPSCOTCH: Nerf = db({
 });
 
 export const LEAPS_AND_BOUNDS: Nerf = db({
-  id: "leaps_and_bounds", name: "Leaps and Bounds", tier: 4, implemented: true,
+  id: "leaps_and_bounds", name: "Leaps and Bounds", tier: 6, implemented: true,
   description: "Every move must be a leap: a piece can't move to a square adjacent to the square it's leaving.",
   // Bans any move of chebyshev distance 1 (the most common bug report was that this
   // drawback "had no effect" — the old version only restricted the exact piece that
@@ -1334,7 +1334,7 @@ export const LEAPS_AND_BOUNDS: Nerf = db({
 });
 
 export const COLORBLIND: Nerf = db({
-  id: "colorblind", name: "Colorblind", tier: 4, implemented: true,
+  id: "colorblind", name: "Colorblind", tier: 5, implemented: true,
   description: "Can't move to one random color of squares, re-randomized each turn.",
   init: () => ({ banned: 0 as 0 | 1 }),
   onTurnStart: (_s, _ctx, rng) => ({ banned: rng.int(2) as 0 | 1 }),
@@ -1345,7 +1345,7 @@ export const COLORBLIND: Nerf = db({
 });
 
 export const INCHING_FORWARD: Nerf = db({
-  id: "inching_forward", name: "Inching Forward", tier: 4, implemented: true,
+  id: "inching_forward", name: "Inching Forward", tier: 6, implemented: true,
   description: "After turn 6, king must be in front of home rank. Required rank advances every 6 turns.",
   checkLoss: (_s, ctx) => {
     if (ctx.moveNumber < 6) return null;
@@ -1378,7 +1378,7 @@ function bestHeuristicMove(moves: Move[]): Move | null {
 }
 
 export const ICHTHYOPHOBE: Nerf = db({
-  id: "ichthyophobe", name: "Ichthyophobe", tier: 4, implemented: true,
+  id: "ichthyophobe", name: "Ichthyophobe", tier: 3, implemented: true,
   description: "Can't make the move Stockfish would make.",
   filterMoves: (moves) => {
     const best = bestHeuristicMove(moves);
@@ -1389,7 +1389,7 @@ export const ICHTHYOPHOBE: Nerf = db({
 });
 
 export const LEFT_TO_RIGHT: Nerf = db({
-  id: "left_to_right", name: "Left to Right", tier: 4, implemented: true,
+  id: "left_to_right", name: "Left to Right", tier: 6, implemented: true,
   description: "Unless you just moved to the rightmost file, must move right of your last move's destination.",
   filterMoves: (moves, _s, ctx) => {
     const last = ctx.myLastMove;
@@ -1400,7 +1400,7 @@ export const LEFT_TO_RIGHT: Nerf = db({
 });
 
 export const FRIENDLY_FIRE: Nerf = db({
-  id: "friendly_fire", name: "Friendly Fire", tier: 4, implemented: true,
+  id: "friendly_fire", name: "Friendly Fire", tier: 6, implemented: true,
   description: "Can only move to squares defended by another of your pieces.",
   filterMoves: (moves, _s, ctx) => {
     // We need defenders excluding the moving piece. Simulate by removing the piece from its square.
@@ -1413,7 +1413,7 @@ export const FRIENDLY_FIRE: Nerf = db({
 });
 
 export const GOING_THE_DISTANCE: Nerf = db({
-  id: "going_the_distance", name: "Going the Distance", tier: 4, implemented: true,
+  id: "going_the_distance", name: "Going the Distance", tier: 6, implemented: true,
   description: "Must move at least as far as opponent's last move or lose.",
   filterMoves: (moves, _s, ctx) => {
     const last = ctx.opponentLastMove;
@@ -1425,7 +1425,7 @@ export const GOING_THE_DISTANCE: Nerf = db({
 });
 
 export const HELICOPTER_PARENT: Nerf = db({
-  id: "helicopter_parent", name: "Helicopter Parent", tier: 4, implemented: true,
+  id: "helicopter_parent", name: "Helicopter Parent", tier: 6, implemented: true,
   description: "Lose if you have an undefended pawn.",
   checkLoss: (_s, ctx) => {
     if (ctx.moveNumber === 0) return null;
@@ -1438,7 +1438,7 @@ export const HELICOPTER_PARENT: Nerf = db({
 });
 
 export const EXCLUSIVITY_CLAUSE: Nerf = db({
-  id: "exclusivity_clause", name: "Exclusivity Clause", tier: 4, implemented: true,
+  id: "exclusivity_clause", name: "Exclusivity Clause", tier: 6, implemented: true,
   description: "Can't move to squares more than one of your pieces can move to.",
   filterMoves: (moves) => {
     const counts = new Map<number, number>();
@@ -1448,7 +1448,7 @@ export const EXCLUSIVITY_CLAUSE: Nerf = db({
 });
 
 export const RELAY_RACE: Nerf = db({
-  id: "relay_race", name: "Relay Race", tier: 4, implemented: true,
+  id: "relay_race", name: "Relay Race", tier: 5, implemented: true,
   description: "If you can move a piece adjacent to your last move's destination, you must.",
   filterMoves: (moves, _s, ctx) => {
     const last = ctx.myLastMove;
@@ -1476,7 +1476,7 @@ function pickWorstMove(moves: Move[]): Move | null {
 }
 
 export const DEVIL_ON_SHOULDER: Nerf = db({
-  id: "devil_on_shoulder", name: "Devil on Your Shoulder", tier: 5, implemented: true,
+  id: "devil_on_shoulder", name: "Devil on Your Shoulder", tier: 6, implemented: true,
   description: "Each turn the devil suggests a bad move. Ignore him 7 turns in a row and on the 8th you must obey.",
   init: () => ({ streak: 0 }),
   onTurnStart: (state, ctx) => {
@@ -1512,7 +1512,7 @@ export const DEVIL_ON_SHOULDER: Nerf = db({
 });
 
 export const REFLECTIVE: Nerf = db({
-  id: "reflective", name: "Reflective", tier: 5, implemented: true,
+  id: "reflective", name: "Reflective", tier: 7, implemented: true,
   description: "Non-pawns must move to squares whose mirror across the center is occupied.",
   filterMoves: (moves, _s, ctx) => {
     return moves.filter((m) => {
@@ -1524,7 +1524,7 @@ export const REFLECTIVE: Nerf = db({
 });
 
 export const OBSESSION: Nerf = db({
-  id: "obsession", name: "Obsession", tier: 5, implemented: true,
+  id: "obsession", name: "Obsession", tier: 6, implemented: true,
   description: "Each turn, a random square. If you can move to it, you must.",
   init: () => ({ sq: 0 }),
   onTurnStart: (_s, _ctx, rng) => ({ sq: rng.int(64) }),
@@ -1537,7 +1537,7 @@ export const OBSESSION: Nerf = db({
 });
 
 export const BOXING_WITH_SHADOW: Nerf = db({
-  id: "boxing_with_shadow", name: "Boxing with Shadow", tier: 5, implemented: true,
+  id: "boxing_with_shadow", name: "Boxing with Shadow", tier: 6, implemented: true,
   description: "When opponent moves, if you can move to the square they vacated, you must.",
   filterMoves: (moves, _s, ctx) => {
     const last = ctx.opponentLastMove;
@@ -1548,7 +1548,7 @@ export const BOXING_WITH_SHADOW: Nerf = db({
 });
 
 export const NOBLE_STEED: Nerf = db({
-  id: "noble_steed", name: "Noble Steed", tier: 5, implemented: true,
+  id: "noble_steed", name: "Noble Steed", tier: 7, implemented: true,
   description: "Non-knight pieces can only move if adjacent to one of your knights.",
   filterMoves: (moves, _s, ctx) => {
     const knights = pieceSquares(ctx.board, ctx.me, "n");
@@ -1560,7 +1560,7 @@ export const NOBLE_STEED: Nerf = db({
 });
 
 export const TAKING_TURNS: Nerf = db({
-  id: "taking_turns", name: "Taking Turns", tier: 5, implemented: true,
+  id: "taking_turns", name: "Taking Turns", tier: 6, implemented: true,
   description: "Can't move a piece a second time until every piece of its type has moved once.",
   filterMoves: (moves, _s, ctx) => {
     // A piece has moved iff its current square was ever a destination of one of
@@ -1581,7 +1581,7 @@ export const TAKING_TURNS: Nerf = db({
 });
 
 export const HAND_AND_GIGABRAIN: Nerf = db({
-  id: "hand_and_gigabrain", name: "Hand and Gigabrain", tier: 5, implemented: true,
+  id: "hand_and_gigabrain", name: "Hand and Gigabrain", tier: 6, implemented: true,
   description: "Must move the piece type Stockfish recommends.",
   filterMoves: (moves) => {
     const best = bestHeuristicMove(moves);
@@ -1592,7 +1592,7 @@ export const HAND_AND_GIGABRAIN: Nerf = db({
 });
 
 export const CRENELLATIONS: Nerf = db({
-  id: "crenellations", name: "Crenellations", tier: 4, implemented: true,
+  id: "crenellations", name: "Crenellations", tier: 5, implemented: true,
   description: "Pawns can only move to a random color of squares.",
   init: (rng) => ({ color: rng.int(2) as 0 | 1 }),
   filterMoves: (moves, state) => {
@@ -1602,7 +1602,7 @@ export const CRENELLATIONS: Nerf = db({
 });
 
 export const LEADING_THE_CHARGE: Nerf = db({
-  id: "leading_the_charge", name: "Leading the Charge", tier: 3, implemented: true,
+  id: "leading_the_charge", name: "Leading the Charge", tier: 4, implemented: true,
   description: "As long as you have a knight, non-knights can't be ahead of your most advanced knight.",
   filterMoves: (moves, _s, ctx) => {
     const knights = pieceSquares(ctx.board, ctx.me, "n");
@@ -1636,7 +1636,7 @@ export const ACTIVE_VOLCANO: Nerf = db({
 });
 
 export const NURTURER: Nerf = db({
-  id: "nurturer", name: "Nurturer", tier: 5, implemented: true,
+  id: "nurturer", name: "Nurturer", tier: 6, implemented: true,
   description: "Can't capture the enemy king until you've promoted a pawn.",
   filterMoves: (moves, _s, ctx) => {
     const promoted = ctx.board.history.some((m) => m.color === ctx.me && m.promotion);
@@ -1660,7 +1660,7 @@ export const PRINCE_CHARMING: Nerf = db({
 });
 
 export const ABSOLUTION: Nerf = db({
-  id: "absolution", name: "Absolution", tier: 5, implemented: true,
+  id: "absolution", name: "Absolution", tier: 6, implemented: true,
   description: "After a non-bishop captures, it must start a turn adjacent to a bishop before it can capture again.",
   filterMoves: (moves, _s, ctx) => {
     // Track per-source-square whether it captured (non-bishop) and hasn't been "absolved".
@@ -1727,7 +1727,7 @@ export const LADIES_FIRST: Nerf = db({
 });
 
 export const BRIDGE_OVER_TROUBLED_WATER: Nerf = db({
-  id: "bridge_over_troubled_water", name: "Bridge Over Troubled Water", tier: 5, implemented: true,
+  id: "bridge_over_troubled_water", name: "Bridge Over Troubled Water", tier: 6, implemented: true,
   description: "A river runs through the middle. Cross only via the center files.",
   filterMoves: (moves) =>
     moves.filter((m) => {
@@ -1739,7 +1739,7 @@ export const BRIDGE_OVER_TROUBLED_WATER: Nerf = db({
 });
 
 export const ROYAL_BERTH: Nerf = db({
-  id: "royal_berth", name: "Royal Berth", tier: 4, implemented: true,
+  id: "royal_berth", name: "Royal Berth", tier: 5, implemented: true,
   description: "Can't place a piece adjacent to your king.",
   filterMoves: (moves, _s, ctx) => {
     const ks = findKing(ctx.board, ctx.me);
@@ -1749,7 +1749,7 @@ export const ROYAL_BERTH: Nerf = db({
 });
 
 export const VELOCIRAPTOR: Nerf = db({
-  id: "velociraptor", name: "Velociraptor", tier: 5, implemented: true,
+  id: "velociraptor", name: "Velociraptor", tier: 7, implemented: true,
   description: "Can only capture a piece type if opponent moved that type in their last 3 moves.",
   filterMoves: (moves, _s, ctx) => {
     const recent = new Set<PieceType>();
@@ -1760,7 +1760,7 @@ export const VELOCIRAPTOR: Nerf = db({
 });
 
 export const SECRET_GARDEN: Nerf = db({
-  id: "secret_garden", name: "Secret Garden", tier: 5, implemented: true,
+  id: "secret_garden", name: "Secret Garden", tier: 6, implemented: true,
   description: "Two of your pawns have secret gardens. Don't trespass.",
   init: (rng, color) => {
     // Pick two random pawn starting files for this color; garden = the 3x3 area in front of that pawn.
@@ -1792,7 +1792,7 @@ export const SECRET_GARDEN: Nerf = db({
 });
 
 export const THUNDERDOME: Nerf = db({
-  id: "thunderdome", name: "Thunderdome", tier: 5, implemented: true,
+  id: "thunderdome", name: "Thunderdome", tier: 6, implemented: true,
   description: "Center 16 squares are the thunderdome. Pieces enter; pieces rarely leave.",
   filterMoves: (moves) => {
     const inDome = (sq: number) => {
@@ -1804,7 +1804,7 @@ export const THUNDERDOME: Nerf = db({
 });
 
 export const INDECISIVE: Nerf = db({
-  id: "indecisive", name: "Indecisive", tier: 4, implemented: true,
+  id: "indecisive", name: "Indecisive", tier: 5, implemented: true,
   description: "Pieces can't capture if they have multiple possible capture moves.",
   filterMoves: (moves) => {
     const capCount = new Map<number, number>();
@@ -1814,7 +1814,7 @@ export const INDECISIVE: Nerf = db({
 });
 
 export const UNREQUITED_LOVE: Nerf = db({
-  id: "unrequited_love", name: "Unrequited Love", tier: 5, implemented: true,
+  id: "unrequited_love", name: "Unrequited Love", tier: 6, implemented: true,
   description: "King can't move away from queen; queen can't move toward king.",
   filterMoves: (moves, _s, ctx) => {
     const ks = findKing(ctx.board, ctx.me);
@@ -1840,7 +1840,7 @@ export const TORPEDOES: Nerf = db({
 });
 
 export const THEOCRACY: Nerf = db({
-  id: "theocracy", name: "Theocracy", tier: 4, implemented: true,
+  id: "theocracy", name: "Theocracy", tier: 5, implemented: true,
   description: "On odd/even moves, can only capture with bishops.",
   init: (rng) => ({ parity: rng.int(2) as 0 | 1 }),
   filterMoves: (moves, state, ctx) => {
@@ -1852,7 +1852,7 @@ export const THEOCRACY: Nerf = db({
 });
 
 export const BOTTLED_LIGHTNING: Nerf = db({
-  id: "bottled_lightning", name: "Bottled Lightning", tier: 5, implemented: true,
+  id: "bottled_lightning", name: "Bottled Lightning", tier: 8, implemented: true,
   description: "If you can move your king, you must.",
   filterMoves: (moves) => {
     const km = moves.filter((m) => m.piece === "k");
@@ -1861,7 +1861,7 @@ export const BOTTLED_LIGHTNING: Nerf = db({
 });
 
 export const FOG_OF_WAR_OLD: Nerf = db({
-  id: "fog_of_war_old", name: "Fog of War (extended)", tier: 5, icon: "cloud-fog", implemented: true,
+  id: "fog_of_war_old", name: "Fog of War (extended)", tier: 7, icon: "cloud-fog", implemented: true,
   description: "Hide opponent pieces entirely.",
   visual: () => ({ fogged: true }),
 });
