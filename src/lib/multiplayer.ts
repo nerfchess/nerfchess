@@ -41,6 +41,8 @@ export type MPEvent =
   | { type: "draw-declined"; color: Color }
   | { type: "rematch-offer"; color: Color }
   | { type: "rematch-declined"; color: Color }
+  | { type: "queued" }
+  | { type: "queue-left" }
   | { type: "clocks"; wc: number; bc: number }
   | { type: "opponent-gone" }
   | { type: "disconnected" }
@@ -55,6 +57,8 @@ type ServerFrame =
   | { t: "drawDeclined"; d: { color: Color } }
   | { t: "rematchOffer"; d: { color: Color } }
   | { t: "rematchDeclined"; d: { color: Color } }
+  | { t: "queued" }
+  | { t: "queueLeft" }
   | { t: "opponentGone" }
   | { t: "error"; d: { code?: string; message?: string } }
   | { t: "n"; d?: { wc?: number; bc?: number } };
@@ -209,6 +213,12 @@ export class MPSession {
       case "rematchDeclined":
         this.emit({ type: "rematch-declined", color: frame.d.color });
         break;
+      case "queued":
+        this.emit({ type: "queued" });
+        break;
+      case "queueLeft":
+        this.emit({ type: "queue-left" });
+        break;
       case "opponentGone":
         this.emit({ type: "opponent-gone" });
         break;
@@ -291,6 +301,28 @@ export class MPSession {
 
   declineDraw(): boolean {
     return this.sendFrame("drawDecline");
+  }
+
+  // Join the quick-pairing queue: the server matches players with similar
+  // ratings and the same time control, widening the band over time.
+  async quickPair(rating: number, timeSec: number, incrementSec: number): Promise<void> {
+    await this.connect();
+    return new Promise((resolve, reject) => {
+      const off = this.on((event) => {
+        if (event.type === "queued") {
+          off();
+          resolve();
+        } else if (event.type === "error") {
+          off();
+          reject(new Error(event.message));
+        }
+      });
+      this.sendFrame("queue", { rating, timeSec, incrementSec });
+    });
+  }
+
+  cancelQueue(): boolean {
+    return this.sendFrame("queueCancel");
   }
 
   offerRematch(): boolean {

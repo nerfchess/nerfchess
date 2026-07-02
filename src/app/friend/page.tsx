@@ -12,6 +12,7 @@ import { cloneBoard, isInCheck, makeMove, moveToUCI } from "@/engine/board";
 import { computeMoveRisks } from "@/engine/moveSafety";
 import { loadSettings } from "@/lib/settings";
 import { loadProfile } from "@/lib/profile";
+import { loadRating } from "@/lib/rating";
 import type { GameContext } from "@/engine/nerf";
 import { IMPLEMENTED_BY_ID, PLAYABLE_NERFS } from "@/engine/nerfs/library";
 import {
@@ -29,7 +30,7 @@ import { premoveOptionsFor } from "@/lib/premoves";
 import { formatTimeControl as formatTC, recordGame } from "@/lib/history";
 import { isMuted, playCapture, playCheck, playMove as playMoveSfx, setMuted } from "@/lib/sounds";
 
-type View = "setup" | "lobby" | "joining" | "game";
+type View = "setup" | "lobby" | "joining" | "queueing" | "game";
 type PendingPremoveSend = { uci: string; ply: number };
 type PendingLocalMove = { uci: string; ply: number; move: Move };
 
@@ -459,6 +460,32 @@ function FriendPage() {
     }
   };
 
+  // Quick pairing: queue on the server for an opponent near your rating with
+  // the same time control. The game starts on the server's "start" frame.
+  const handleQuickPair = async () => {
+    setError(null);
+    clearSavedFriendSession();
+    const sess = new MPSession();
+    sessionRef.current = sess;
+    wireSession(sess);
+    setView("queueing");
+    try {
+      await sess.quickPair(Math.round(loadRating().rating), baseSec, incrementSec);
+    } catch (e: any) {
+      if (sessionRef.current !== sess) return;
+      sessionRef.current = null;
+      setError(String(e?.message || e));
+      setView("setup");
+    }
+  };
+
+  const cancelQuickPair = () => {
+    sessionRef.current?.cancelQueue();
+    sessionRef.current?.destroy();
+    sessionRef.current = null;
+    setView("setup");
+  };
+
   const joinWithCode = async (trimmed: string) => {
     setError(null);
     clearSavedFriendSession();
@@ -782,12 +809,24 @@ function FriendPage() {
               />
             </div>
 
-            <button
-              onClick={handleCreate}
-              className="w-full py-3.5 rounded-sm btn-leaf font-body text-lg"
-            >
-              Create game
-            </button>
+            <div className="grid gap-2">
+              <button
+                onClick={handleQuickPair}
+                className="w-full py-3.5 rounded-sm btn-leaf font-body text-lg"
+              >
+                Quick pairing
+              </button>
+              <button
+                onClick={handleCreate}
+                className="w-full py-3 rounded-sm btn-ghost font-body"
+              >
+                Create a private game
+              </button>
+            </div>
+            <p className="text-xs leading-relaxed text-parchment-400">
+              Quick pairing matches you with an opponent near your rating.
+              A private game gives you a code and an invite link to share.
+            </p>
 
             <div className="rule-ornament">
               <span>or</span>
@@ -856,6 +895,41 @@ function FriendPage() {
           )}
           <button
             onClick={handleNewGame}
+            className="mt-8 px-5 py-2 rounded-sm btn-ghost font-body"
+          >
+            Cancel
+          </button>
+        </section>
+      </main>
+    );
+  }
+
+  // -------- Queueing (waiting for quick pairing) --------
+  if (view === "queueing") {
+    return (
+      <main className="min-h-screen">
+        <SiteNav />
+        <section className="max-w-xl mx-auto px-6 py-12 text-center">
+          <div className="smallcaps text-[11px] text-parchment-400">Quick pairing</div>
+          <h1 className="mt-3 font-display text-3xl text-parchment-100">
+            Searching for an opponent…
+          </h1>
+          <p className="mt-3 text-parchment-300">
+            Looking for a player near your rating at{" "}
+            {baseSec === 0 ? "unlimited time" : `${formatTimeControl(baseSec)} + ${incrementSec}s`}.
+            The search widens the longer you wait.
+          </p>
+          <div className="mt-8 flex items-center justify-center gap-2 smallcaps text-[11px] text-parchment-400">
+            <span className="w-1.5 h-1.5 rounded-full bg-verdigris animate-flicker" />
+            In queue…
+          </div>
+          {error && (
+            <div className="mt-6 plate p-3 px-4 border-oxblood-glow/60 bg-oxblood/15 text-parchment">
+              {error}
+            </div>
+          )}
+          <button
+            onClick={cancelQuickPair}
             className="mt-8 px-5 py-2 rounded-sm btn-ghost font-body"
           >
             Cancel

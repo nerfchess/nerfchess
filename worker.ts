@@ -50,7 +50,28 @@ type ClientFrame =
   | { t: "drawDecline" }
   | { t: "rematch" }
   | { t: "rematchDecline" }
+  | { t: "queue"; d?: { rating?: unknown; timeSec?: unknown; incrementSec?: unknown } }
+  | { t: "queueCancel" }
   | { t: "p" };
+
+// Quick pairing queue entry, persisted so it survives DO hibernation.
+type QueueEntry = {
+  sessionId: string;
+  rating: number;
+  timeSec: number;
+  incrementSec: number;
+  since: number;
+};
+
+// The acceptable rating gap starts at ±150 and widens by 100 every 5 seconds
+// a player waits, so nobody queues forever.
+function ratingBand(waitedMs: number): number {
+  return 150 + Math.floor(waitedMs / 5000) * 100;
+}
+
+function queueKey(sessionId: string): string {
+  return `queue:${sessionId}`;
+}
 
 export interface Env {
   GAME_SERVER: DurableObjectNamespace<GameServer>;
@@ -177,6 +198,10 @@ export class GameServer extends DurableObject<Env> {
         return this.offerRematch(ws);
       case "rematchDecline":
         return this.declineRematch(ws);
+      case "queue":
+        return this.queueForPairing(ws, frame.d);
+      case "queueCancel":
+        return this.cancelPairing(ws);
       case "p":
         return this.sendClocks(ws);
       default:
@@ -193,7 +218,9 @@ export class GameServer extends DurableObject<Env> {
   }
 
   async alarm() {
+    await this.pairQueue();
     await this.maintenanceAll();
+    await this.ensureQueueAlarm();
   }
 
   private originAllowed(request: Request): boolean {
@@ -279,6 +306,7 @@ export class GameServer extends DurableObject<Env> {
   private async detachSession(ws: WebSocket) {
     const session = this.sessions.get(ws) ?? (ws.deserializeAttachment() as SessionAttachment | null);
     this.sessions.delete(ws);
+    if (session) await this.ctx.storage.delete(queueKey(session.id));
     if (!session?.matchId || !session.color) return;
     if (this.connectedSession(session.matchId, session.color)) return;
 
@@ -633,6 +661,123 @@ export class GameServer extends DurableObject<Env> {
     match.drawOfferBy = null;
     await this.saveMatch(match);
     this.broadcast(match, "drawDeclined", { color: session.color });
+  }
+
+  // --- Quick pairing -------------------------------------------------------
+
+  private async queueForPairing(ws: WebSocket, data: unknown) {
+    const session = this.session(ws);
+    if (session.matchId) return error(ws, "already_joined", "This connection already belongs to a game.");
+
+    const requested = (data || {}) as { rating?: unknown; timeSec?: unknown; incrementSec?: unknown };
+    const rating =
+      typeof requested.rating === "number" && Number.isFinite(requested.rating)
+        ? Math.max(400, Math.min(3200, requested.rating))
+        : 1500;
+    const timeSec = Number.isInteger(requested.timeSec) ? Number(requested.timeSec) : 600;
+    const incrementSec = Number.isInteger(requested.incrementSec) ? Number(requested.incrementSec) : 0;
+    if (timeSec < 0 || timeSec > 7200 || incrementSec < 0 || incrementSec > 60) {
+      return error(ws, "invalid_clock", "Unsupported time control.");
+    }
+
+    const entry: QueueEntry = { sessionId: session.id, rating, timeSec, incrementSec, since: Date.now() };
+    await this.ctx.storage.put(queueKey(session.id), entry);
+    send(ws, "queued");
+    await this.pairQueue();
+    await this.ensureQueueAlarm();
+  }
+
+  private async cancelPairing(ws: WebSocket) {
+    const session = this.session(ws);
+    await this.ctx.storage.delete(queueKey(session.id));
+    send(ws, "queueLeft");
+  }
+
+  private socketForSessionId(sessionId: string): WebSocket | undefined {
+    for (const [ws, session] of this.sessions) {
+      if (session.id === sessionId && ws.readyState === WebSocket.OPEN) return ws;
+    }
+    return undefined;
+  }
+
+  private async pairQueue(now = Date.now()) {
+    const stored = await this.ctx.storage.list<QueueEntry>({ prefix: "queue:" });
+    const waiting: Array<{ entry: QueueEntry; ws: WebSocket }> = [];
+    for (const entry of stored.values()) {
+      const ws = this.socketForSessionId(entry.sessionId);
+      if (!ws) {
+        await this.ctx.storage.delete(queueKey(entry.sessionId));
+        continue;
+      }
+      waiting.push({ entry, ws });
+    }
+    waiting.sort((a, b) => a.entry.since - b.entry.since);
+
+    const taken = new Set<string>();
+    for (let i = 0; i < waiting.length; i++) {
+      const a = waiting[i];
+      if (taken.has(a.entry.sessionId)) continue;
+      for (let j = i + 1; j < waiting.length; j++) {
+        const b = waiting[j];
+        if (taken.has(b.entry.sessionId)) continue;
+        if (a.entry.timeSec !== b.entry.timeSec || a.entry.incrementSec !== b.entry.incrementSec) continue;
+        const band = Math.max(ratingBand(now - a.entry.since), ratingBand(now - b.entry.since));
+        if (Math.abs(a.entry.rating - b.entry.rating) > band) continue;
+        taken.add(a.entry.sessionId);
+        taken.add(b.entry.sessionId);
+        await this.ctx.storage.delete(queueKey(a.entry.sessionId));
+        await this.ctx.storage.delete(queueKey(b.entry.sessionId));
+        await this.startQuickMatch(a, b);
+        break;
+      }
+    }
+  }
+
+  private async startQuickMatch(
+    first: { entry: QueueEntry; ws: WebSocket },
+    second: { entry: QueueEntry; ws: WebSocket },
+  ) {
+    const [white, black] = randomInt(2) === 0 ? [first, second] : [second, first];
+    const id = await this.newCode();
+    const match: StoredMatch = {
+      id,
+      setup: {
+        whiteNerfId: pickNerfId(),
+        blackNerfId: pickNerfId(),
+        seed: makeSeed(),
+        timeSec: first.entry.timeSec,
+        incrementSec: first.entry.incrementSec,
+      },
+      tokens: { w: newToken(), b: newToken() },
+      disconnectedAt: {},
+      opponentGoneNotified: {},
+      moves: [],
+      result: null,
+      clocks: { w: first.entry.timeSec * 1000, b: first.entry.timeSec * 1000 },
+      runningSince: null,
+      drawOfferBy: null,
+      rematchOfferBy: null,
+      createdAt: Date.now(),
+      startedAt: null,
+      completedAt: null,
+    };
+    await this.attachSession(white.ws, match, "w");
+    await this.attachSession(black.ws, match, "b");
+    match.startedAt = Date.now();
+    match.runningSince = match.startedAt;
+    await this.saveMatch(match);
+    this.sendStart(match, "w");
+    this.sendStart(match, "b");
+  }
+
+  // While anyone is queued, keep an alarm within 5s so widening bands get
+  // re-evaluated even with no incoming traffic.
+  private async ensureQueueAlarm() {
+    const stored = await this.ctx.storage.list<QueueEntry>({ prefix: "queue:" });
+    if (stored.size === 0) return;
+    const next = Date.now() + 5000;
+    const existing = await this.ctx.storage.getAlarm();
+    if (!existing || next < existing) await this.ctx.storage.setAlarm(next);
   }
 
   private async sendClocks(ws: WebSocket) {

@@ -50,6 +50,22 @@ const allowedOrigins = new Set(
 const matches = new Map<string, Match>();
 const disconnectGraceMs = 15 * 1000;
 
+// Quick pairing queue: players waiting for a rating-matched opponent.
+type QueueEntry = {
+  client: Client;
+  rating: number;
+  timeSec: number;
+  incrementSec: number;
+  since: number;
+};
+const pairingQueue: QueueEntry[] = [];
+
+// The acceptable rating gap starts at ±150 and widens by 100 every 5 seconds
+// a player waits, so nobody queues forever.
+function ratingBand(waitedMs: number): number {
+  return 150 + Math.floor(waitedMs / 5000) * 100;
+}
+
 function pickNerfId(): string {
   const pool = PLAYABLE_NERFS.filter((nerf) => nerf.id !== "lucky");
   return pool[Math.floor(Math.random() * pool.length)].id;
@@ -165,6 +181,103 @@ function finish(match: Match) {
   if (!match.game?.result) return;
   match.completedAt = Date.now();
   broadcast(match, "end", endPayload(match));
+}
+
+function removeFromQueue(client: Client): boolean {
+  const index = pairingQueue.findIndex((entry) => entry.client === client);
+  if (index < 0) return false;
+  pairingQueue.splice(index, 1);
+  return true;
+}
+
+function queueForPairing(client: Client, data: unknown) {
+  if (client.matchId) return error(client, "already_joined", "This connection already belongs to a game.");
+  if (pairingQueue.some((entry) => entry.client === client)) return send(client, "queued");
+  const requested = (data || {}) as { rating?: unknown; timeSec?: unknown; incrementSec?: unknown };
+  const rating =
+    typeof requested.rating === "number" && Number.isFinite(requested.rating)
+      ? Math.max(400, Math.min(3200, requested.rating))
+      : 1500;
+  const timeSec = Number.isInteger(requested.timeSec) ? Number(requested.timeSec) : 600;
+  const incrementSec = Number.isInteger(requested.incrementSec) ? Number(requested.incrementSec) : 0;
+  if (timeSec < 0 || timeSec > 7200 || incrementSec < 0 || incrementSec > 60) {
+    return error(client, "invalid_clock", "Unsupported time control.");
+  }
+  pairingQueue.push({ client, rating, timeSec, incrementSec, since: Date.now() });
+  send(client, "queued");
+  tryPairQueue();
+}
+
+function cancelPairing(client: Client) {
+  removeFromQueue(client);
+  send(client, "queueLeft");
+}
+
+function tryPairQueue(now = Date.now()) {
+  pairingQueue.sort((a, b) => a.since - b.since);
+  for (let i = 0; i < pairingQueue.length; i++) {
+    const a = pairingQueue[i];
+    if (a.client.readyState !== WebSocket.OPEN) {
+      pairingQueue.splice(i, 1);
+      i--;
+      continue;
+    }
+    for (let j = i + 1; j < pairingQueue.length; j++) {
+      const b = pairingQueue[j];
+      if (b.client.readyState !== WebSocket.OPEN) {
+        pairingQueue.splice(j, 1);
+        j--;
+        continue;
+      }
+      if (a.timeSec !== b.timeSec || a.incrementSec !== b.incrementSec) continue;
+      const band = Math.max(ratingBand(now - a.since), ratingBand(now - b.since));
+      if (Math.abs(a.rating - b.rating) > band) continue;
+      pairingQueue.splice(j, 1);
+      pairingQueue.splice(i, 1);
+      startQuickMatch(a, b);
+      i--;
+      break;
+    }
+  }
+}
+
+function startQuickMatch(first: QueueEntry, second: QueueEntry) {
+  const [whitePlayer, blackPlayer] = Math.random() < 0.5 ? [first, second] : [second, first];
+  const id = newCode();
+  const match: Match = {
+    id,
+    setup: {
+      whiteNerfId: pickNerfId(),
+      blackNerfId: pickNerfId(),
+      seed: makeSeed(),
+      timeSec: first.timeSec,
+      incrementSec: first.incrementSec,
+    },
+    clients: {},
+    tokens: { w: newToken(), b: newToken() },
+    disconnectedAt: {},
+    game: null,
+    clocks: { w: first.timeSec * 1000, b: first.timeSec * 1000 },
+    runningSince: null,
+    drawOfferBy: null,
+    rematchOfferBy: null,
+    createdAt: Date.now(),
+    completedAt: null,
+  };
+  const white = PLAYABLE_NERFS.find((nerf) => nerf.id === match.setup.whiteNerfId);
+  const black = PLAYABLE_NERFS.find((nerf) => nerf.id === match.setup.blackNerfId);
+  if (!white || !black) {
+    error(whitePlayer.client, "server_error", "Could not prepare this game.");
+    error(blackPlayer.client, "server_error", "Could not prepare this game.");
+    return;
+  }
+  matches.set(id, match);
+  attachClient(match, whitePlayer.client, "w");
+  attachClient(match, blackPlayer.client, "b");
+  match.game = newGame(white, black, match.setup.seed);
+  match.runningSince = Date.now();
+  sendStart(match, "w");
+  sendStart(match, "b");
 }
 
 function createMatch(client: Client, data: unknown) {
@@ -396,6 +509,10 @@ function onMessage(client: Client, raw: RawData) {
       return offerRematch(client);
     case "rematchDecline":
       return declineRematch(client);
+    case "queue":
+      return queueForPairing(client, frame.d);
+    case "queueCancel":
+      return cancelPairing(client);
     case "p": {
       const match = client.matchId ? matches.get(client.matchId) : undefined;
       const clocks = match ? currentClocks(match) : null;
@@ -446,6 +563,7 @@ websocket.on("connection", (socket) => {
   });
   client.on("message", (raw) => onMessage(client, raw));
   client.on("close", () => {
+    removeFromQueue(client);
     const match = client.matchId ? matches.get(client.matchId) : undefined;
     if (!match) return;
     if (client.color && match.clients[client.color] === client) {
@@ -457,6 +575,7 @@ websocket.on("connection", (socket) => {
 
 const maintenance = setInterval(() => {
   const now = Date.now();
+  tryPairQueue(now);
   for (const client of websocket.clients) {
     const active = client as Client;
     if (active.alive === false) {
