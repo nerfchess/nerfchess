@@ -19,7 +19,7 @@ export const SORT_OPTIONS: { id: SortId; label: string }[] = [
 
 export interface CodexFilters {
   search: string;
-  tier: number | null; // 1..5 or null for all
+  tier: number | null; // 1..8 or null for all
   categories: string[]; // category ids; a nerf must match ALL selected (AND)
   playableOnly: boolean;
   sort: SortId;
