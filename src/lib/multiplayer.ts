@@ -32,6 +32,28 @@ export type MPEnd = {
   nerfs?: Record<Color, string>;
 };
 
+// A live game as shown in the Watch browser.
+export type MPGameSummary = {
+  id: string;
+  timeSec: number;
+  incrementSec: number;
+  moves: number;
+  spectators: number;
+  wc: number;
+  bc: number;
+};
+
+// Initial payload when spectating a game.
+export type MPWatch = {
+  id: string;
+  timeSec: number;
+  incrementSec: number;
+  wc: number;
+  bc: number;
+  moves: string[];
+  spectators: number;
+};
+
 export type MPEvent =
   | { type: "open"; code: string; color: Color; token: string }
   | { type: "start"; setup: MPStart }
@@ -43,6 +65,9 @@ export type MPEvent =
   | { type: "rematch-declined"; color: Color }
   | { type: "queued" }
   | { type: "queue-left" }
+  | { type: "games"; games: MPGameSummary[] }
+  | { type: "watch"; watch: MPWatch }
+  | { type: "spectators"; n: number }
   | { type: "clocks"; wc: number; bc: number }
   | { type: "opponent-gone" }
   | { type: "disconnected" }
@@ -59,6 +84,9 @@ type ServerFrame =
   | { t: "rematchDeclined"; d: { color: Color } }
   | { t: "queued" }
   | { t: "queueLeft" }
+  | { t: "games"; d: { games: MPGameSummary[] } }
+  | { t: "watch"; d: MPWatch }
+  | { t: "spectators"; d: { n: number } }
   | { t: "opponentGone" }
   | { t: "error"; d: { code?: string; message?: string } }
   | { t: "n"; d?: { wc?: number; bc?: number } };
@@ -219,6 +247,15 @@ export class MPSession {
       case "queueLeft":
         this.emit({ type: "queue-left" });
         break;
+      case "games":
+        this.emit({ type: "games", games: frame.d.games ?? [] });
+        break;
+      case "watch":
+        this.emit({ type: "watch", watch: frame.d });
+        break;
+      case "spectators":
+        this.emit({ type: "spectators", n: frame.d.n });
+        break;
       case "opponentGone":
         this.emit({ type: "opponent-gone" });
         break;
@@ -323,6 +360,20 @@ export class MPSession {
 
   cancelQueue(): boolean {
     return this.sendFrame("queueCancel");
+  }
+
+  async listGames(): Promise<void> {
+    await this.connect();
+    this.sendFrame("listGames");
+  }
+
+  async spectate(id: string): Promise<void> {
+    await this.connect();
+    this.sendFrame("spectate", { id });
+  }
+
+  leaveSpectate(): boolean {
+    return this.sendFrame("spectateLeave");
   }
 
   offerRematch(): boolean {

@@ -22,6 +22,7 @@ type Client = WebSocket & {
   matchId?: string;
   color?: Color;
   token?: string;
+  spectatingId?: string;
 };
 type Match = {
   id: string;
@@ -34,6 +35,7 @@ type Match = {
   runningSince: number | null;
   drawOfferBy: Color | null;
   rematchOfferBy: Color | null;
+  spectators: Set<Client>;
   createdAt: number;
   completedAt: number | null;
 };
@@ -96,6 +98,11 @@ function send(client: Client | undefined, t: string, d?: unknown) {
 function broadcast(match: Match, t: string, d?: unknown) {
   send(match.clients.w, t, d);
   send(match.clients.b, t, d);
+  for (const spectator of match.spectators) send(spectator, t, d);
+}
+
+function broadcastSpectatorCount(match: Match) {
+  broadcast(match, "spectators", { n: match.spectators.size });
 }
 
 function attachClient(match: Match, client: Client, color: Color) {
@@ -261,6 +268,7 @@ function startQuickMatch(first: QueueEntry, second: QueueEntry) {
     runningSince: null,
     drawOfferBy: null,
     rematchOfferBy: null,
+    spectators: new Set(),
     createdAt: Date.now(),
     completedAt: null,
   };
@@ -278,6 +286,71 @@ function startQuickMatch(first: QueueEntry, second: QueueEntry) {
   match.runningSince = Date.now();
   sendStart(match, "w");
   sendStart(match, "b");
+}
+
+// --- Spectating ---
+// Anyone can browse live games and watch one. Spectators never receive nerf
+// ids while a game is live; those arrive with the public "end" frame.
+
+function activeGamesSummary() {
+  const games: Array<{
+    id: string;
+    timeSec: number;
+    incrementSec: number;
+    moves: number;
+    spectators: number;
+    wc: number;
+    bc: number;
+  }> = [];
+  for (const match of matches.values()) {
+    if (!match.game || match.game.result) continue;
+    const clocks = currentClocks(match);
+    games.push({
+      id: match.id,
+      timeSec: match.setup.timeSec,
+      incrementSec: match.setup.incrementSec,
+      moves: match.game.board.history.length,
+      spectators: match.spectators.size,
+      wc: Math.round(clocks.w),
+      bc: Math.round(clocks.b),
+    });
+  }
+  games.sort((a, b) => b.spectators - a.spectators || b.moves - a.moves);
+  return games;
+}
+
+function listGames(client: Client) {
+  send(client, "games", { games: activeGamesSummary() });
+}
+
+function stopSpectating(client: Client, notify = true) {
+  const match = client.spectatingId ? matches.get(client.spectatingId) : undefined;
+  client.spectatingId = undefined;
+  if (match && match.spectators.delete(client) && notify) {
+    broadcastSpectatorCount(match);
+  }
+}
+
+function spectateMatch(client: Client, data: unknown) {
+  if (client.matchId) return error(client, "already_joined", "This connection already belongs to a game.");
+  const id = String((data as { id?: unknown } | undefined)?.id || "").trim().toUpperCase();
+  const match = matches.get(id);
+  if (!match?.game) return error(client, "not_found", "That game is not available to watch.");
+  stopSpectating(client, true);
+  match.spectators.add(client);
+  client.spectatingId = id;
+  const clocks = currentClocks(match);
+  send(client, "watch", {
+    id: match.id,
+    timeSec: match.setup.timeSec,
+    incrementSec: match.setup.incrementSec,
+    wc: Math.round(clocks.w),
+    bc: Math.round(clocks.b),
+    moves: match.game.board.history.map(moveToUCI),
+    spectators: match.spectators.size,
+  });
+  if (match.game.result) send(client, "end", endPayload(match));
+  broadcastSpectatorCount(match);
 }
 
 function createMatch(client: Client, data: unknown) {
@@ -306,6 +379,7 @@ function createMatch(client: Client, data: unknown) {
     runningSince: null,
     drawOfferBy: null,
     rematchOfferBy: null,
+    spectators: new Set(),
     createdAt: Date.now(),
     completedAt: null,
   };
@@ -513,6 +587,12 @@ function onMessage(client: Client, raw: RawData) {
       return queueForPairing(client, frame.d);
     case "queueCancel":
       return cancelPairing(client);
+    case "listGames":
+      return listGames(client);
+    case "spectate":
+      return spectateMatch(client, frame.d);
+    case "spectateLeave":
+      return stopSpectating(client);
     case "p": {
       const match = client.matchId ? matches.get(client.matchId) : undefined;
       const clocks = match ? currentClocks(match) : null;
@@ -564,6 +644,7 @@ websocket.on("connection", (socket) => {
   client.on("message", (raw) => onMessage(client, raw));
   client.on("close", () => {
     removeFromQueue(client);
+    stopSpectating(client);
     const match = client.matchId ? matches.get(client.matchId) : undefined;
     if (!match) return;
     if (client.color && match.clients[client.color] === client) {

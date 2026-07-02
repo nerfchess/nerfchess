@@ -38,6 +38,7 @@ type SessionAttachment = {
   matchId?: string;
   color?: Color;
   token?: string;
+  spectateId?: string;
 };
 type ClientFrame =
   | { t: "create"; d?: { timeSec?: unknown; incrementSec?: unknown } }
@@ -52,6 +53,9 @@ type ClientFrame =
   | { t: "rematchDecline" }
   | { t: "queue"; d?: { rating?: unknown; timeSec?: unknown; incrementSec?: unknown } }
   | { t: "queueCancel" }
+  | { t: "listGames" }
+  | { t: "spectate"; d?: { id?: unknown } }
+  | { t: "spectateLeave" }
   | { t: "p" };
 
 // Quick pairing queue entry, persisted so it survives DO hibernation.
@@ -202,6 +206,12 @@ export class GameServer extends DurableObject<Env> {
         return this.queueForPairing(ws, frame.d);
       case "queueCancel":
         return this.cancelPairing(ws);
+      case "listGames":
+        return this.listGames(ws);
+      case "spectate":
+        return this.spectateMatch(ws, frame.d);
+      case "spectateLeave":
+        return this.stopSpectating(ws);
       case "p":
         return this.sendClocks(ws);
       default:
@@ -307,6 +317,10 @@ export class GameServer extends DurableObject<Env> {
     const session = this.sessions.get(ws) ?? (ws.deserializeAttachment() as SessionAttachment | null);
     this.sessions.delete(ws);
     if (session) await this.ctx.storage.delete(queueKey(session.id));
+    if (session?.spectateId) {
+      const watched = await this.loadMatch(session.spectateId);
+      if (watched) this.broadcastSpectatorCount(watched);
+    }
     if (!session?.matchId || !session.color) return;
     if (this.connectedSession(session.matchId, session.color)) return;
 
@@ -367,6 +381,17 @@ export class GameServer extends DurableObject<Env> {
   private broadcast(match: StoredMatch, t: string, d?: unknown) {
     send(this.connectedSession(match.id, "w"), t, d);
     send(this.connectedSession(match.id, "b"), t, d);
+    for (const ws of this.spectatorSockets(match.id)) send(ws, t, d);
+  }
+
+  private spectatorSockets(matchId: string): WebSocket[] {
+    return [...this.sessions]
+      .filter(([ws, session]) => session.spectateId === matchId && ws.readyState === WebSocket.OPEN)
+      .map(([ws]) => ws);
+  }
+
+  private broadcastSpectatorCount(match: StoredMatch) {
+    this.broadcast(match, "spectators", { n: this.spectatorSockets(match.id).length });
   }
 
   private gameFromMatch(match: StoredMatch): NerfGame | null {
@@ -661,6 +686,80 @@ export class GameServer extends DurableObject<Env> {
     match.drawOfferBy = null;
     await this.saveMatch(match);
     this.broadcast(match, "drawDeclined", { color: session.color });
+  }
+
+  // --- Spectating ----------------------------------------------------------
+  // Anyone can browse live games and watch one. Spectators never receive nerf
+  // ids while a game is live; those arrive with the public "end" frame.
+
+  private async listGames(ws: WebSocket) {
+    const stored = await this.ctx.storage.list<StoredMatch>({ prefix: "match:" });
+    const games: Array<{
+      id: string;
+      timeSec: number;
+      incrementSec: number;
+      moves: number;
+      spectators: number;
+      wc: number;
+      bc: number;
+    }> = [];
+    for (const match of stored.values()) {
+      if (!match.startedAt || match.result) continue;
+      const clocks = this.currentClocks(match);
+      games.push({
+        id: match.id,
+        timeSec: match.setup.timeSec,
+        incrementSec: match.setup.incrementSec,
+        moves: match.moves.length,
+        spectators: this.spectatorSockets(match.id).length,
+        wc: Math.round(clocks.w),
+        bc: Math.round(clocks.b),
+      });
+    }
+    games.sort((a, b) => b.spectators - a.spectators || b.moves - a.moves);
+    send(ws, "games", { games });
+  }
+
+  private async spectateMatch(ws: WebSocket, data: unknown) {
+    const session = this.session(ws);
+    if (session.matchId) return error(ws, "already_joined", "This connection already belongs to a game.");
+    const id = String((data as { id?: unknown } | undefined)?.id || "").trim().toUpperCase();
+    const match = await this.loadMatch(id);
+    if (!match || !match.startedAt) return error(ws, "not_found", "That game is not available to watch.");
+
+    const previous = session.spectateId;
+    const next = { ...session, spectateId: id };
+    this.sessions.set(ws, next);
+    ws.serializeAttachment(next);
+    if (previous && previous !== id) {
+      const previousMatch = await this.loadMatch(previous);
+      if (previousMatch) this.broadcastSpectatorCount(previousMatch);
+    }
+
+    const clocks = this.currentClocks(match);
+    send(ws, "watch", {
+      id: match.id,
+      timeSec: match.setup.timeSec,
+      incrementSec: match.setup.incrementSec,
+      wc: Math.round(clocks.w),
+      bc: Math.round(clocks.b),
+      moves: match.moves,
+      spectators: this.spectatorSockets(match.id).length,
+    });
+    if (match.result) send(ws, "end", this.endPayload(match));
+    this.broadcastSpectatorCount(match);
+  }
+
+  private async stopSpectating(ws: WebSocket) {
+    const session = this.session(ws);
+    if (!session.spectateId) return;
+    const matchId = session.spectateId;
+    const next = { ...session };
+    delete next.spectateId;
+    this.sessions.set(ws, next);
+    ws.serializeAttachment(next);
+    const match = await this.loadMatch(matchId);
+    if (match) this.broadcastSpectatorCount(match);
   }
 
   // --- Quick pairing -------------------------------------------------------

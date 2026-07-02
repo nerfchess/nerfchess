@@ -85,6 +85,11 @@ function send(client, t, d) {
 function broadcast(match, t, d) {
     send(match.clients.w, t, d);
     send(match.clients.b, t, d);
+    for (const spectator of match.spectators)
+        send(spectator, t, d);
+}
+function broadcastSpectatorCount(match) {
+    broadcast(match, "spectators", { n: match.spectators.size });
 }
 function attachClient(match, client, color) {
     const existing = match.clients[color];
@@ -245,6 +250,7 @@ function startQuickMatch(first, second) {
         runningSince: null,
         drawOfferBy: null,
         rematchOfferBy: null,
+        spectators: new Set(),
         createdAt: Date.now(),
         completedAt: null,
     };
@@ -262,6 +268,62 @@ function startQuickMatch(first, second) {
     match.runningSince = Date.now();
     sendStart(match, "w");
     sendStart(match, "b");
+}
+// --- Spectating ---
+// Anyone can browse live games and watch one. Spectators never receive nerf
+// ids while a game is live; those arrive with the public "end" frame.
+function activeGamesSummary() {
+    const games = [];
+    for (const match of matches.values()) {
+        if (!match.game || match.game.result)
+            continue;
+        const clocks = currentClocks(match);
+        games.push({
+            id: match.id,
+            timeSec: match.setup.timeSec,
+            incrementSec: match.setup.incrementSec,
+            moves: match.game.board.history.length,
+            spectators: match.spectators.size,
+            wc: Math.round(clocks.w),
+            bc: Math.round(clocks.b),
+        });
+    }
+    games.sort((a, b) => b.spectators - a.spectators || b.moves - a.moves);
+    return games;
+}
+function listGames(client) {
+    send(client, "games", { games: activeGamesSummary() });
+}
+function stopSpectating(client, notify = true) {
+    const match = client.spectatingId ? matches.get(client.spectatingId) : undefined;
+    client.spectatingId = undefined;
+    if (match && match.spectators.delete(client) && notify) {
+        broadcastSpectatorCount(match);
+    }
+}
+function spectateMatch(client, data) {
+    if (client.matchId)
+        return error(client, "already_joined", "This connection already belongs to a game.");
+    const id = String(data?.id || "").trim().toUpperCase();
+    const match = matches.get(id);
+    if (!match?.game)
+        return error(client, "not_found", "That game is not available to watch.");
+    stopSpectating(client, true);
+    match.spectators.add(client);
+    client.spectatingId = id;
+    const clocks = currentClocks(match);
+    send(client, "watch", {
+        id: match.id,
+        timeSec: match.setup.timeSec,
+        incrementSec: match.setup.incrementSec,
+        wc: Math.round(clocks.w),
+        bc: Math.round(clocks.b),
+        moves: match.game.board.history.map(board_1.moveToUCI),
+        spectators: match.spectators.size,
+    });
+    if (match.game.result)
+        send(client, "end", endPayload(match));
+    broadcastSpectatorCount(match);
 }
 function createMatch(client, data) {
     if (client.matchId)
@@ -290,6 +352,7 @@ function createMatch(client, data) {
         runningSince: null,
         drawOfferBy: null,
         rematchOfferBy: null,
+        spectators: new Set(),
         createdAt: Date.now(),
         completedAt: null,
     };
@@ -512,6 +575,12 @@ function onMessage(client, raw) {
             return queueForPairing(client, frame.d);
         case "queueCancel":
             return cancelPairing(client);
+        case "listGames":
+            return listGames(client);
+        case "spectate":
+            return spectateMatch(client, frame.d);
+        case "spectateLeave":
+            return stopSpectating(client);
         case "p": {
             const match = client.matchId ? matches.get(client.matchId) : undefined;
             const clocks = match ? currentClocks(match) : null;
@@ -558,6 +627,7 @@ websocket.on("connection", (socket) => {
     client.on("message", (raw) => onMessage(client, raw));
     client.on("close", () => {
         removeFromQueue(client);
+        stopSpectating(client);
         const match = client.matchId ? matches.get(client.matchId) : undefined;
         if (!match)
             return;
