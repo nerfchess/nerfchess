@@ -58,8 +58,10 @@ export function PlayerSearch({ className = "" }: { className?: string }) {
         onFocus={() => hits.length > 0 && setOpen(true)}
         onKeyDown={(e) => {
           if (e.key === "Enter" && hits[0]) {
-            router.push(`/u/${hits[0].username}`);
-            setOpen(false);
+            // Hard navigation: router.push from a keydown inside this input
+            // proved unreliable in the packaged worker build.
+            e.preventDefault();
+            window.location.assign(`/u/${hits[0].username}`);
           } else if (e.key === "Escape") {
             setOpen(false);
           }

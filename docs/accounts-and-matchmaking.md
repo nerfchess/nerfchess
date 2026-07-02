@@ -5,20 +5,17 @@ game history, and the real leaderboard all run on the existing Cloudflare
 deployment: Next.js route handlers + the `GameServer` Durable Object, with
 persistence in Cloudflare D1.
 
-## One-time deploy setup
+## Deploy
 
-The repo ships with a placeholder D1 `database_id` in `wrangler.jsonc`.
-Before the first deploy:
+No manual database setup. The D1 binding in `wrangler.jsonc` is declared by
+`database_name` only, so `npm run deploy` resolves the `nerfchess` database on
+your Cloudflare account — creating (provisioning) it automatically on the
+first deploy. The schema is ensured idempotently at runtime on first database
+access, so no migration step is required either; `migrations/0001_init.sql`
+exists for anyone who prefers `wrangler d1 migrations apply nerfchess --remote`.
 
-```bash
-npx wrangler d1 create nerfchess
-# paste the printed database_id into wrangler.jsonc (d1_databases[0].database_id)
-npx wrangler d1 migrations apply nerfchess --remote
-npm run deploy
-```
-
-Local dev and `wrangler dev` need nothing: the schema is also ensured at
-runtime on first database access, and local D1 state lives in `.wrangler/`.
+Local dev and `wrangler dev` also need nothing: local D1 state lives in
+`.wrangler/`.
 
 ## Storage (D1)
 
