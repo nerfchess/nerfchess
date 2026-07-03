@@ -125,7 +125,7 @@ const STUBS: Stub[] = [
   { id: "fog_of_war_old", name: "Fog of War (extended)", description: "Hide opponent pieces entirely.", tier: 7, icon: "cloud-fog" },
   { id: "hedonic_treadmill", name: "Hedonic Treadmill", description: "Must move a piece at least as valuable as opponent's last moved piece.", tier: 5 },
   { id: "death_wish", name: "Death Wish", description: "If you can move king into check, you must.", tier: 6 },
-  { id: "checkers", name: "Checkers", description: "Must capture if able.", tier: 5 },
+  { id: "checkers", name: "Checkers", description: "Must capture if able.", tier: 6 },
   { id: "closed_book", name: "Closed Book", description: "Lose if you ever start a turn with an open file.", tier: 6 },
   { id: "fixation", name: "Fixation", description: "Pawn moves → pawn moves only; non-pawn → non-pawn only, until type switches.", tier: 5 },
   { id: "covering_fire", name: "Covering Fire", description: "Can only capture a piece if you can capture it two different ways.", tier: 5 },

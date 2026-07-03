@@ -1,5 +1,6 @@
 "use client";
 
+import { MobileNavMenu } from "@/components/MobileNavMenu";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { OnlineMatch } from "@/components/OnlineMatch";
@@ -377,9 +378,12 @@ function SiteNav() {
       <Link href="/" className="font-display text-2xl tracking-tight">
         nerf<span className="text-gold-leaf">chess</span>
       </Link>
-      <Link href="/play" className="px-3 py-1.5 rounded-full text-sm font-display hover:bg-white/5 text-parchment">
-        vs Bot
-      </Link>
+      <div className="flex items-center gap-1">
+        <Link href="/play" className="hidden sm:inline-block px-3 py-1.5 rounded-full text-sm font-display hover:bg-white/5 text-parchment">
+          vs Bot
+        </Link>
+        <MobileNavMenu />
+      </div>
     </nav>
   );
 }

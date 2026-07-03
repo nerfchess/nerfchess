@@ -1234,7 +1234,7 @@ export const DEATH_WISH: Nerf = db({
 });
 
 export const CHECKERS: Nerf = db({
-  id: "checkers", name: "Checkers", tier: 5, implemented: true,
+  id: "checkers", name: "Checkers", tier: 6, implemented: true,
   description: "Must capture if able.",
   filterMoves: (moves) => {
     const caps = moves.filter((m) => m.captured);
