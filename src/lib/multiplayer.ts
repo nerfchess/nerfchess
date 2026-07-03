@@ -644,6 +644,13 @@ export class MPSession {
     return this.sendFrame("move", { u: uci, ply });
   }
 
+  // Ask the server for authoritative clocks now (outside the regular
+  // heartbeat). The server runs its flag check before answering, so pinging
+  // when a clock looks expired makes the game end promptly on timeout.
+  requestClocks(): boolean {
+    return this.sendFrame("p");
+  }
+
   resign(): boolean {
     return this.sendFrame("resign");
   }

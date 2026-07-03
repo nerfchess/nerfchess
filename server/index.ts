@@ -204,6 +204,35 @@ function currentClocks(match: Match, now = Date.now()): Record<Color, number> {
   return clocks;
 }
 
+// Precise per-match flag timers so a game ends the moment a clock hits zero
+// (the 5s maintenance sweep is only a backstop). Timers live outside the
+// match objects; they are re-armed on every clock-affecting change and
+// cleared when the game ends or the match is deleted.
+const flagTimers = new Map<string, NodeJS.Timeout>();
+
+function clearFlagTimer(matchId: string) {
+  const timer = flagTimers.get(matchId);
+  if (timer) {
+    clearTimeout(timer);
+    flagTimers.delete(matchId);
+  }
+}
+
+function scheduleFlagCheck(match: Match) {
+  clearFlagTimer(match.id);
+  if (!match.game || match.game.result || !match.setup.timeSec || match.runningSince === null) return;
+  const active = match.game.board.turn;
+  const activeMoves = match.game.board.history.filter((m) => m.color === active).length;
+  const grace = activeMoves === 0 ? firstMoveGraceMs : 0;
+  const deadline = match.runningSince + match.clocks[active] + grace;
+  const timer = setTimeout(() => {
+    flagTimers.delete(match.id);
+    if (matches.get(match.id) === match) finishOnFlag(match);
+  }, Math.max(0, deadline - Date.now()) + 5);
+  timer.unref();
+  flagTimers.set(match.id, timer);
+}
+
 function finishOnFlag(match: Match, now = Date.now()): boolean {
   if (!match.game || match.game.result || !match.setup.timeSec) return false;
   const clocks = currentClocks(match, now);
@@ -221,6 +250,7 @@ function finishOnFlag(match: Match, now = Date.now()): boolean {
 
 function finish(match: Match) {
   if (!match.game?.result) return;
+  clearFlagTimer(match.id);
   match.completedAt = Date.now();
   broadcast(match, "end", endPayload(match));
 }
@@ -509,6 +539,7 @@ function joinMatch(client: Client, data: unknown) {
   if (!white || !black) return error(client, "server_error", "Could not prepare this game.");
   match.game = newGame(white, black, match.setup.seed);
   match.runningSince = Date.now();
+  scheduleFlagCheck(match);
   for (const color of ["w", "b"] as Color[]) {
     sendStart(match, color);
   }
@@ -534,6 +565,7 @@ function reconnectMatch(client: Client, data: unknown) {
       if (!white || !black) return error(client, "server_error", "Could not prepare this game.");
       match.game = newGame(white, black, match.setup.seed);
       match.runningSince = Date.now();
+      scheduleFlagCheck(match);
       sendStart(match, "w");
       sendStart(match, "b");
       return;
@@ -568,6 +600,7 @@ function playClientMove(client: Client, data: unknown) {
   match.game = nextGame;
   if (match.setup.timeSec) match.clocks[client.color] += match.setup.incrementSec * 1000;
   match.runningSince = nextGame.result ? null : now;
+  scheduleFlagCheck(match);
   broadcast(match, "move", {
     u: uci,
     ply: nextGame.board.history.length,
@@ -660,6 +693,7 @@ function startRematch(match: Match) {
   match.rematchOfferBy = null;
   match.chat = [];
   match.completedAt = null;
+  scheduleFlagCheck(match);
   sendStart(match, "w");
   sendStart(match, "b");
 }
@@ -722,6 +756,7 @@ function onMessage(client: Client, raw: RawData) {
     case "p": {
       const watchedId = client.matchId ?? client.spectatingId;
       const match = watchedId ? matches.get(watchedId) : undefined;
+      if (match) finishOnFlag(match);
       const clocks = match ? currentClocks(match) : null;
       return send(client, "n", clocks ? { wc: Math.round(clocks.w), bc: Math.round(clocks.b) } : undefined);
     }
@@ -813,6 +848,7 @@ const maintenance = setInterval(() => {
       (!match.game && now - expiry > 30 * 60 * 1000) ||
       (match.game && bothDisconnected && now - Math.max(match.disconnectedAt.w ?? 0, match.disconnectedAt.b ?? 0) > 30 * 60 * 1000)
     ) {
+      clearFlagTimer(id);
       matches.delete(id);
     }
   }

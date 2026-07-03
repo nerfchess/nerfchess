@@ -140,11 +140,21 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
 
   const boardShellRef = useRef<HTMLDivElement | null>(null);
   const recordedResult = useRef(false);
+  // The authoritative game, mirrored in a ref so websocket events can read
+  // and advance it synchronously (several frames can arrive in one tick).
+  // Server events must never do their work inside a setState updater: React
+  // may invoke updaters more than once, which would double-fire side effects
+  // like shifting the premove queue.
+  const gameRef = useRef<NerfGame | null>(game);
   const awaitingPremoveAckRef = useRef(false);
   const pendingPremoveRef = useRef<PendingPremoveSend | null>(null);
   const pendingLocalMoveRef = useRef<PendingLocalMove | null>(null);
   const premovesRef = useRef<QueuedPremove[]>([]);
-  const premoveTimerRef = useRef<number | null>(null);
+
+  const applyGame = (next: NerfGame | null) => {
+    gameRef.current = next;
+    setGame(next);
+  };
 
   const setAwaitingPremoveAck = (value: boolean, pending: PendingPremoveSend | null = null) => {
     awaitingPremoveAckRef.current = value;
@@ -168,76 +178,56 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     if (game?.result) clearActiveGame(start.id);
   }, [game?.result, start.id]);
 
-  useEffect(() => {
-    premovesRef.current = premoves;
-  }, [premoves]);
-
-  const clearPremoves = () => {
-    if (premoveTimerRef.current != null) {
-      window.clearTimeout(premoveTimerRef.current);
-      premoveTimerRef.current = null;
-    }
-    premovesRef.current = [];
-    setPremoves([]);
+  // The queue ref is always updated synchronously alongside the state, so
+  // websocket handlers can trust it without waiting for a render.
+  const setPremoveQueue = (next: QueuedPremove[]) => {
+    premovesRef.current = next;
+    setPremoves(next);
   };
+
+  const clearPremoves = () => setPremoveQueue([]);
 
   const enqueuePremove = (move: Move) => {
-    setPremoves((queue) => {
-      const next = [
-        ...queue,
-        { from: move.from, to: move.to, promotion: move.promotion, capture: !!move.captured },
-      ];
-      premovesRef.current = next;
-      return next;
-    });
+    setPremoveQueue([
+      ...premovesRef.current,
+      { from: move.from, to: move.to, promotion: move.promotion, capture: !!move.captured },
+    ]);
   };
 
-  const shiftPremove = () => {
-    setPremoves((queue) => {
-      const next = queue.slice(1);
-      premovesRef.current = next;
-      return next;
-    });
-  };
+  const shiftPremove = () => setPremoveQueue(premovesRef.current.slice(1));
 
-  useEffect(() => {
-    return () => {
-      if (premoveTimerRef.current != null) {
-        window.clearTimeout(premoveTimerRef.current);
-        premoveTimerRef.current = null;
-      }
-    };
-  }, []);
+  // Matches a queued premove against a concrete legal move. A premove queued
+  // as a capture only fires as a capture; a quiet premove may still fire as a
+  // capture if the destination got occupied in the meantime.
+  const premoveMatches = (head: QueuedPremove) => (candidate: Move) =>
+    candidate.from === head.from &&
+    candidate.to === head.to &&
+    (candidate.promotion ?? undefined) === (head.promotion ?? undefined) &&
+    (!head.capture || !!candidate.captured);
 
+  // Fire the queued premove the instant it becomes our turn. No artificial
+  // delay: the board already shows the premoved position, so the accepted
+  // move landing is visually a no-op (Lichess-style).
   function queuePremoveSend(snapshot: NerfGame) {
-    if (premoveTimerRef.current != null) return;
-    if (awaitingPremoveAckRef.current || snapshot.result || snapshot.board.turn !== myColor) return;
+    if (awaitingPremoveAckRef.current || pendingLocalMoveRef.current) return;
+    if (snapshot.result || snapshot.board.turn !== myColor) return;
     const head = premovesRef.current[0];
     if (!head) return;
-    const move = legalMoves(snapshot).find(
-      (candidate) =>
-        candidate.from === head.from &&
-        candidate.to === head.to &&
-        (candidate.promotion ?? undefined) === (head.promotion ?? undefined) &&
-        (!head.capture || !!candidate.captured),
-    );
+    const move = legalMoves(snapshot).find(premoveMatches(head));
     if (!move) {
+      // The premove became illegal: cancel the queue cleanly.
       clearPremoves();
       return;
     }
 
     const uci = moveToUCI(move);
     const ply = snapshot.board.history.length;
-    premoveTimerRef.current = window.setTimeout(() => {
-      premoveTimerRef.current = null;
-      if (awaitingPremoveAckRef.current) return;
-      setAwaitingPremoveAck(true, { uci, ply });
-      if (!session.sendMove(uci, ply)) {
-        setAwaitingPremoveAck(false);
-        clearPremoves();
-        setError("Disconnected from the game server.");
-      }
-    }, 90);
+    setAwaitingPremoveAck(true, { uci, ply });
+    if (!session.sendMove(uci, ply)) {
+      setAwaitingPremoveAck(false);
+      clearPremoves();
+      setError("Disconnected from the game server.");
+    }
   }
 
   // Server events. The server is authoritative: local moves are not applied
@@ -271,7 +261,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           setLiveOppReveal(true);
         }
         if (e.setup.revealed?.[myColor]) setMyRevealState("revealed");
-        setGame(buildGameFromStart(e.setup));
+        applyGame(buildGameFromStart(e.setup));
       } else if (e.type === "opponent-gone") {
         setError("Opponent disconnected.");
         setPendingLocalMove(null);
@@ -282,46 +272,45 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
       } else if (e.type === "move") {
         setDrawOfferBy(null);
         setDrawOfferStatus("idle");
-        setGame((g) => {
-          if (!g) return g;
-          const lm = legalMoves(g).find((x) => moveToUCI(x) === e.move.u);
-          const pendingLocal = pendingLocalMoveRef.current;
-          const wasAwaitingPremove = awaitingPremoveAckRef.current;
-          const pendingPremove = pendingPremoveRef.current;
-          if (!lm) {
-            setPendingLocalMove(null);
-            if (wasAwaitingPremove) {
-              setAwaitingPremoveAck(false);
-              clearPremoves();
-            }
-            return g;
-          }
-          const next = playMove(g, lm);
-          setWhiteMs(e.move.wc);
-          setBlackMs(e.move.bc);
-          if (pendingLocal) {
-            setPendingLocalMove(null);
-          }
+        const g = gameRef.current;
+        if (!g) return;
+        const lm = legalMoves(g).find((x) => moveToUCI(x) === e.move.u);
+        const wasAwaitingPremove = awaitingPremoveAckRef.current;
+        const pendingPremove = pendingPremoveRef.current;
+        if (!lm) {
+          setPendingLocalMove(null);
           if (wasAwaitingPremove) {
             setAwaitingPremoveAck(false);
-            if (
-              pendingPremove &&
-              lm.color === myColor &&
-              e.move.u === pendingPremove.uci &&
-              e.move.ply === pendingPremove.ply + 1
-            ) {
-              shiftPremove();
-            } else {
-              clearPremoves();
-            }
-          } else if (next.board.turn === myColor) {
-            window.setTimeout(() => queuePremoveSend(next), 0);
+            clearPremoves();
           }
-          if (lm.captured) playCapture();
-          else playMoveSfx();
-          if (isInCheck(next.board, next.board.turn)) setTimeout(playCheck, 80);
-          return { ...next };
-        });
+          return;
+        }
+        const next = playMove(g, lm);
+        applyGame({ ...next });
+        setWhiteMs(e.move.wc);
+        setBlackMs(e.move.bc);
+        if (pendingLocalMoveRef.current) {
+          setPendingLocalMove(null);
+        }
+        if (wasAwaitingPremove) {
+          setAwaitingPremoveAck(false);
+          if (
+            pendingPremove &&
+            lm.color === myColor &&
+            e.move.u === pendingPremove.uci &&
+            e.move.ply === pendingPremove.ply + 1
+          ) {
+            shiftPremove();
+          } else {
+            clearPremoves();
+          }
+        }
+        if (lm.captured) playCapture();
+        else playMoveSfx();
+        if (isInCheck(next.board, next.board.turn)) setTimeout(playCheck, 80);
+        // Our turn again (opponent moved, or our premove landed and the next
+        // queued one already applies): fire the queued premove immediately.
+        if (next.board.turn === myColor) queuePremoveSend(next);
       } else if (e.type === "end") {
         setShowResult(true);
         setWhiteMs(e.end.wc);
@@ -337,11 +326,8 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         }
         const change = e.end.ratings?.[myColor];
         if (change) setRatingChange({ before: change.before, after: change.after });
-        setGame((g) => {
-          if (!g) return g;
-          g.result = e.end.result;
-          return { ...g };
-        });
+        const finished = gameRef.current;
+        if (finished) applyGame({ ...finished, result: e.end.result });
       } else if (e.type === "draw-offer") {
         setError(null);
         setDrawOfferBy(e.color);
@@ -375,7 +361,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         setDrawOfferBy(null);
         setWhiteMs(e.wc);
         setBlackMs(e.bc);
-        setGame(buildGameFromStart({ ...start, moves: e.moves }));
+        applyGame(buildGameFromStart({ ...start, moves: e.moves }));
         playMoveSfx();
       } else if (e.type === "chat") {
         setChatMessages((msgs) => [...msgs, e.message].slice(-50));
@@ -479,40 +465,48 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   const myNerfForPremove = game ? (myColor === "w" ? game.white.nerf : game.black.nerf) : null;
   const myStateForPremove = game ? (myColor === "w" ? game.white.state : game.black.state) : null;
 
+  // The board shown while premoves are queued: the current position (plus my
+  // own not-yet-acknowledged move, if any) with every still-plausible queued
+  // premove applied. Premoved pieces stay visually "held" on their destination
+  // squares through opponent moves until the premove executes or is cancelled.
   const { virtualBoard, validPremoves } = useMemo(() => {
-    if (!game || game.result || (game.board.turn === myColor && premoves.length === 0)) {
+    if (
+      !game ||
+      game.result ||
+      (game.board.turn === myColor && !pendingLocalMove && premoves.length === 0)
+    ) {
       return { virtualBoard: null as BoardState | null, validPremoves: [] as QueuedPremove[] };
     }
-    let board = cloneBoard(game.board);
+    let board = cloneBoard(pendingLocalBoard ?? game.board);
     board.turn = myColor;
     board.epTarget = null;
+    // When it's actually my turn (no local move in flight), the head premove
+    // is about to be sent: validate it against the same legal-move list
+    // queuePremoveSend uses, so the display never disagrees with execution.
+    const executingHead = game.board.turn === myColor && !pendingLocalBoard;
     const valid: QueuedPremove[] = [];
-    for (const pm of premoves) {
-      const ctx: GameContext = {
-        board,
-        me: myColor,
-        opponentLastMove: [...board.history].reverse().find((m) => m.color !== myColor) ?? null,
-        myLastMove: [...board.history].reverse().find((m) => m.color === myColor) ?? null,
-        moveNumber: board.history.filter((m) => m.color === myColor).length,
-        capturedByMe: game.captured[myColor],
-        capturedFromMe: game.captured[myColor === "w" ? "b" : "w"],
-      };
-      const strictOptions = premoveOptionsFor(board, myColor, myNerfForPremove, myStateForPremove, ctx);
-      const fallbackOptions = premoveOptionsFor(board, myColor, null, null, null);
-      const options =
-        game.board.turn === myColor
-          ? strictOptions
-          : [
-              ...strictOptions,
-              ...fallbackOptions.filter((m) => !strictOptions.some((s) => moveKey(s) === moveKey(m))),
-            ];
-      const match = options.find(
-        (c) =>
-          c.from === pm.from &&
-          c.to === pm.to &&
-          (c.promotion ?? undefined) === (pm.promotion ?? undefined) &&
-          (!pm.capture || !!c.captured),
-      );
+    for (const [index, pm] of premoves.entries()) {
+      let match: Move | undefined;
+      if (index === 0 && executingHead) {
+        match = legalMoves(game).find(premoveMatches(pm));
+      } else {
+        const ctx: GameContext = {
+          board,
+          me: myColor,
+          opponentLastMove: [...board.history].reverse().find((m) => m.color !== myColor) ?? null,
+          myLastMove: [...board.history].reverse().find((m) => m.color === myColor) ?? null,
+          moveNumber: board.history.filter((m) => m.color === myColor).length,
+          capturedByMe: game.captured[myColor],
+          capturedFromMe: game.captured[myColor === "w" ? "b" : "w"],
+        };
+        const strictOptions = premoveOptionsFor(board, myColor, myNerfForPremove, myStateForPremove, ctx);
+        const fallbackOptions = premoveOptionsFor(board, myColor, null, null, null);
+        const options = [
+          ...strictOptions,
+          ...fallbackOptions.filter((m) => !strictOptions.some((s) => moveKey(s) === moveKey(m))),
+        ];
+        match = options.find(premoveMatches(pm));
+      }
       if (!match) break;
       board = makeMove(board, match);
       board.turn = myColor;
@@ -520,7 +514,8 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
       valid.push(pm);
     }
     return { virtualBoard: board, validPremoves: valid };
-  }, [game, myColor, premoves, myNerfForPremove, myStateForPremove]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [game, myColor, premoves, pendingLocalBoard, myNerfForPremove, myStateForPremove]);
 
   const premoveOptions = useMemo<Move[]>(() => {
     if (!virtualBoard || !game) return [];
@@ -540,17 +535,25 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     return premoveOptionsFor(virtualBoard, myColor, myNerfForPremove, myStateForPremove, ctx);
   }, [virtualBoard, myColor, game, myNerfForPremove, myStateForPremove]);
 
+  // Any time it is not strictly "my turn with nothing in flight" — opponent
+  // thinking, my own move awaiting its ack, or a queued premove being sent —
+  // board input queues premoves instead of being dropped, so fast players
+  // never hit a dead input window between moves.
   const premoveMode =
-    uiSettings.premovesEnabled && !!game && !game.result && game.board.turn !== myColor && !!virtualBoard;
-  const premovePending = !!game && !game.result && game.board.turn === myColor && validPremoves.length > 0;
+    uiSettings.premovesEnabled &&
+    !!game &&
+    !game.result &&
+    !!virtualBoard &&
+    (game.board.turn !== myColor || !!pendingLocalMove || awaitingPremoveAck || premoves.length > 0);
 
   const handleLocalMove = (m: Move) => {
     if (!game || game.result || isReviewingHistory) return;
-    if (game.board.turn !== myColor) {
-      if (uiSettings.premovesEnabled) enqueuePremove(m);
+    if (premoveMode) {
+      enqueuePremove(m);
       return;
     }
-    if (premovePending) return;
+    if (game.board.turn !== myColor) return;
+    if (awaitingPremoveAck || pendingLocalMove) return;
     const lm = moves.find(
       (x) => x.from === m.from && x.to === m.to && (x.promotion ?? null) === (m.promotion ?? null),
     );
@@ -611,6 +614,28 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     if (activeMoves > 0) return 0;
     return Math.max(0, FIRST_MOVE_GRACE_MS - (Date.now() - turnStartedAtRef.current));
   };
+
+  // Server-authoritative timeout: the moment the active side's clock reads
+  // zero locally, ask the server for clocks — it runs its flag check before
+  // answering and broadcasts the end frame, so the game finishes promptly
+  // even if neither player sends another move. Keep nudging until the end
+  // arrives (covers clock drift and dropped frames); the server remains the
+  // sole judge of whether anyone actually flagged.
+  useEffect(() => {
+    if (!clockEnabled || !game || game.result) return;
+    const active = game.board.turn;
+    const activeMs = active === "w" ? whiteMs : blackMs;
+    let interval: number | undefined;
+    const timer = window.setTimeout(() => {
+      session.requestClocks();
+      interval = window.setInterval(() => session.requestClocks(), 500);
+    }, Math.max(0, clockStartDelay(active) + activeMs) + 200);
+    return () => {
+      window.clearTimeout(timer);
+      if (interval !== undefined) window.clearInterval(interval);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [game, whiteMs, blackMs, clockEnabled, session]);
 
   useEffect(() => {
     if (!clockEnabled || !game || game.result) {
@@ -755,7 +780,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   const visual = myNerf.visual?.(myState, myCtx);
   const opponentNerf = revealedOppNerf ?? (myColor === "w" ? game.black.nerf : game.white.nerf);
   const lastMove = game.board.history[game.board.history.length - 1] ?? null;
-  const boardForDisplay = reviewBoard ?? pendingLocalBoard ?? virtualBoard ?? game.board;
+  // virtualBoard already includes the pending local move (it builds on
+  // pendingLocalBoard), so it wins while premoves are queued.
+  const boardForDisplay = reviewBoard ?? virtualBoard ?? pendingLocalBoard ?? game.board;
   const lastMoveForDisplay = isReviewingHistory
     ? game.board.history[currentHistoryPly - 1] ?? null
     : pendingLocalMove?.move ?? lastMove;
@@ -1063,20 +1090,26 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   legalMoves={
                     isReviewingHistory
                       ? []
+                      : premoveMode
+                      ? premoveOptions
                       : game.board.turn === myColor
                       ? moves
-                      : premoveOptions
+                      : []
                   }
                   orientation={myColor}
                   onMove={handleLocalMove}
                   myColor={myColor}
                   visual={isReviewingHistory ? undefined : { ...(visual ?? {}), highlightSquares: forcedSquares }}
                   lastMove={lastMoveForDisplay}
-                  disabled={!!game.result || isReviewingHistory || premovePending || awaitingPremoveAck || !!pendingLocalMove}
+                  disabled={
+                    !!game.result ||
+                    isReviewingHistory ||
+                    (!uiSettings.premovesEnabled && (awaitingPremoveAck || !!pendingLocalMove))
+                  }
                   premoveMode={!isReviewingHistory && premoveMode}
                   premoves={isReviewingHistory ? [] : validPremoves}
                   onCancelPremove={clearPremoves}
-                  moveRisks={isReviewingHistory || premovePending ? undefined : moveRisks}
+                  moveRisks={isReviewingHistory || premoveMode ? undefined : moveRisks}
                   autoQueen={uiSettings.autoQueen}
                   showCoordinates={uiSettings.showCoordinates}
                   highlightLastMove={uiSettings.highlightLastMove}
