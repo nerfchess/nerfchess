@@ -330,7 +330,13 @@ html[data-piece-source="lichess"] .piece-asset {
 
 .no-tap-highlight { -webkit-tap-highlight-color: transparent; }
 
-main, nav, header, footer { position: relative; z-index: 2; }
+main, footer { position: relative; z-index: 2; }
+/* Navs/headers host dropdown menus and the settings modal. They must paint
+   above .plate cards (z-index 2, later in the DOM) and the codex sticky
+   search bar (z-20), or their popups render underneath the page content.
+   Navs that set their own z-index utility (e.g. the sticky in-game bar's
+   z-20) still win: a class beats this element selector. */
+nav, header { position: relative; z-index: 30; }
 
 /* Accessibility */
 :focus-visible {
