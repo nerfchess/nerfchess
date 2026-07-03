@@ -22,7 +22,7 @@ type Setup = {
   timeSec: number;
   incrementSec: number;
 };
-type SeatUser = { id: string; name: string; rating: number; rd?: number; vol?: number };
+type SeatUser = { id: string; name: string; rating: number; rd?: number; vol?: number; avatar?: string | null };
 type ChatEntry = { color: Color; name: string; text: string; at: number };
 type StoredMatch = {
   id: string;
@@ -69,6 +69,7 @@ type QueueEntry = {
   rating: number;
   rd?: number;
   vol?: number;
+  avatar?: string | null;
   at: number;
 };
 type ClientFrame =
@@ -400,23 +401,25 @@ export class GameServer extends DurableObject<Env> {
       let rating = 1500;
       let rd = 350;
       let vol = 0.06;
+      let avatar: string | null = null;
       const db = await this.db();
       if (db) {
         try {
           const row = await db
-            .prepare("SELECT rating, rd, vol FROM users WHERE id = ?")
+            .prepare("SELECT rating, rd, vol, avatar FROM users WHERE id = ?")
             .bind(session.userId)
-            .first<{ rating: number; rd: number; vol: number }>();
+            .first<{ rating: number; rd: number; vol: number; avatar: string | null }>();
           if (row) {
             rating = row.rating;
             rd = row.rd;
             vol = row.vol;
+            avatar = row.avatar;
           }
         } catch {}
       }
       match.users = {
         ...(match.users ?? {}),
-        [color]: { id: session.userId, name: session.username, rating, rd, vol },
+        [color]: { id: session.userId, name: session.username, rating, rd, vol, avatar },
       };
     }
   }
@@ -451,8 +454,8 @@ export class GameServer extends DurableObject<Env> {
     const seat = (color: Color) => {
       const user = match.users?.[color];
       return user
-        ? { name: user.name, rating: Math.round(user.rating) }
-        : { name: "Anonymous", rating: null };
+        ? { name: user.name, rating: Math.round(user.rating), avatar: user.avatar ?? null }
+        : { name: "Anonymous", rating: null, avatar: null };
     };
     return { w: seat("w"), b: seat("b") };
   }
@@ -855,15 +858,17 @@ export class GameServer extends DurableObject<Env> {
     let rating = 1500;
     let rd = 350;
     let vol = 0.06;
+    let avatar: string | null = null;
     try {
       const row = await db
-        .prepare("SELECT rating, rd, vol FROM users WHERE id = ?")
+        .prepare("SELECT rating, rd, vol, avatar FROM users WHERE id = ?")
         .bind(session.userId)
-        .first<{ rating: number; rd: number; vol: number }>();
+        .first<{ rating: number; rd: number; vol: number; avatar: string | null }>();
       if (row) {
         rating = row.rating;
         rd = row.rd;
         vol = row.vol;
+        avatar = row.avatar;
       }
     } catch {}
 
@@ -883,6 +888,7 @@ export class GameServer extends DurableObject<Env> {
         rating,
         rd,
         vol,
+        avatar,
         at: Date.now(),
       });
       await this.ctx.storage.put(key, entries);
@@ -892,13 +898,14 @@ export class GameServer extends DurableObject<Env> {
 
     const opponentWs = this.socketForAttachment(opponent.attachmentId)!;
     const meWhite = randomInt(2) === 0;
-    const me: SeatUser = { id: session.userId, name: session.username, rating, rd, vol };
+    const me: SeatUser = { id: session.userId, name: session.username, rating, rd, vol, avatar };
     const them: SeatUser = {
       id: opponent.userId,
       name: opponent.username,
       rating: opponent.rating,
       rd: opponent.rd,
       vol: opponent.vol,
+      avatar: opponent.avatar ?? null,
     };
     const id = await this.newCode(8);
     const match: StoredMatch = {
@@ -978,13 +985,14 @@ export class GameServer extends DurableObject<Env> {
         if (!seat) continue;
         try {
           const row = await db
-            .prepare("SELECT rating, rd, vol FROM users WHERE id = ?")
+            .prepare("SELECT rating, rd, vol, avatar FROM users WHERE id = ?")
             .bind(seat.id)
-            .first<{ rating: number; rd: number; vol: number }>();
+            .first<{ rating: number; rd: number; vol: number; avatar: string | null }>();
           if (row) {
             seat.rating = row.rating;
             seat.rd = row.rd;
             seat.vol = row.vol;
+            seat.avatar = row.avatar;
           }
         } catch {}
       }
@@ -1127,7 +1135,32 @@ export class GameServer extends DurableObject<Env> {
       watchers: number;
     }> = [];
     const playingUserIds = new Set<string>();
+    // Friend games waiting for an opponent, shown in the lobby as open
+    // challenges anyone can accept. Matchmade (autoStart) games waiting for
+    // their paired players to arrive are not challenges.
+    const challenges: Array<{
+      id: string;
+      host: { name: string; rating: number | null };
+      timeSec: number;
+      incrementSec: number;
+      createdAt: number;
+    }> = [];
     for (const match of matches) {
+      if (!match.startedAt && !match.result && !match.autoStart) {
+        // Only list codes whose host is still connected — otherwise the code
+        // is a dead end for whoever clicks it.
+        if (this.connectedSession(match.id, "w")) {
+          const host = match.users?.w;
+          challenges.push({
+            id: match.id,
+            host: host ? { name: host.name, rating: Math.round(host.rating) } : { name: "Anonymous", rating: null },
+            timeSec: match.setup.timeSec,
+            incrementSec: match.setup.incrementSec,
+            createdAt: match.createdAt,
+          });
+        }
+        continue;
+      }
       if (!match.startedAt || match.result) continue;
       await this.finishOnFlag(match, now, false);
       if (match.result) continue;
@@ -1146,6 +1179,7 @@ export class GameServer extends DurableObject<Env> {
       });
     }
     liveGames.sort((a, b) => b.watchers - a.watchers || b.moves - a.moves);
+    challenges.sort((a, b) => b.createdAt - a.createdAt);
 
     // Who is queued for quick pairing right now.
     const queuedUserIds = new Set<string>();
@@ -1158,7 +1192,7 @@ export class GameServer extends DurableObject<Env> {
 
     // Every signed-in account with an open socket, deduped; anonymous sockets
     // are only counted.
-    const seen = new Map<string, { name: string; rating: number | null; status: string }>();
+    const seen = new Map<string, { name: string; rating: number | null; status: string; avatar: string | null }>();
     let anonymous = 0;
     for (const [socket, session] of this.sessions) {
       if (socket.readyState !== WebSocket.OPEN) continue;
@@ -1174,7 +1208,7 @@ export class GameServer extends DurableObject<Env> {
       const existing = seen.get(session.userId);
       // "playing" wins over "searching" wins over "online" across tabs.
       if (!existing || existing.status === "online" || (existing.status === "searching" && status === "playing")) {
-        seen.set(session.userId, { name: session.username, rating: null, status });
+        seen.set(session.userId, { name: session.username, rating: null, status, avatar: null });
       }
     }
 
@@ -1185,18 +1219,26 @@ export class GameServer extends DurableObject<Env> {
         const ids = [...seen.keys()];
         const placeholders = ids.map(() => "?").join(",");
         const rows = await db
-          .prepare(`SELECT id, username, rating FROM users WHERE id IN (${placeholders})`)
+          .prepare(`SELECT id, username, rating, avatar FROM users WHERE id IN (${placeholders})`)
           .bind(...ids)
-          .all<{ id: string; username: string; rating: number }>();
+          .all<{ id: string; username: string; rating: number; avatar: string | null }>();
         for (const row of rows.results) {
           const entry = seen.get(row.id);
-          if (entry) entry.rating = Math.round(row.rating);
+          if (entry) {
+            entry.rating = Math.round(row.rating);
+            entry.avatar = row.avatar;
+          }
         }
       } catch {}
     }
 
     const players = [...seen.values()].sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0)).slice(0, 50);
-    send(ws, "lobby", { players, anonymous, games: liveGames.slice(0, 25) });
+    send(ws, "lobby", {
+      players,
+      anonymous,
+      games: liveGames.slice(0, 25),
+      challenges: challenges.slice(0, 25),
+    });
   }
 
   private async sendClocks(ws: WebSocket) {

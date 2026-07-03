@@ -365,7 +365,10 @@ export function Board({
       <div className="absolute inset-2 sm:inset-3 rounded-sm overflow-hidden border border-black/40">
         <div
           data-board-grid
-          className="grid grid-cols-8 grid-rows-8 w-full h-full select-none"
+          // touch-action: none is what makes drag work on mobile — without it
+          // the browser claims the touch for scrolling and fires pointercancel
+          // mid-drag. Tap-to-move keeps working either way.
+          className="grid grid-cols-8 grid-rows-8 w-full h-full select-none [touch-action:none]"
           onContextMenu={(e) => e.preventDefault()}
         >
           {orderedSquares.map((sq) => {

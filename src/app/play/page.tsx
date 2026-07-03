@@ -63,11 +63,11 @@ export default function PlayPage() {
     <main className="min-h-screen">
       <nav className="flex items-center justify-between px-5 sm:px-10 py-6 sm:py-7">
         <Logo />
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1 sm:gap-3">
           {rating != null && (
             <Link
               href="/leaderboard"
-              className="px-3 py-1.5 border border-gold/30 bg-gold/5 hover:border-gold/50 transition flex items-center gap-2 text-xs"
+              className="hidden sm:flex px-3 py-1.5 border border-gold/30 bg-gold/5 hover:border-gold/50 transition items-center gap-2 text-xs"
             >
               <span className="smallcaps text-[10px] text-parchment-400">Rating</span>
               <span className="font-mono text-sm text-parchment-100">{rating}</span>
@@ -76,8 +76,8 @@ export default function PlayPage() {
             </Link>
           )}
           <Link href="/lobby" className="px-3 py-1.5 text-sm font-medium hover:bg-white/5 text-gold-leaf">Lobby</Link>
-          <Link href="/leaderboard" className="px-3 py-1.5 text-sm font-medium hover:bg-white/5 text-parchment-100">Leaderboard</Link>
-          <Link href="/profile" className="px-3 py-1.5 text-sm font-medium hover:bg-white/5 text-parchment-100">Profile</Link>
+          <Link href="/leaderboard" className="hidden sm:inline-block px-3 py-1.5 text-sm font-medium hover:bg-white/5 text-parchment-100">Leaderboard</Link>
+          <Link href="/profile" className="hidden sm:inline-block px-3 py-1.5 text-sm font-medium hover:bg-white/5 text-parchment-100">Profile</Link>
           <Link href="/codex" className="px-3 py-1.5 text-sm font-medium hover:bg-white/5 text-parchment-100">Rules</Link>
           <AccountChip />
         </div>

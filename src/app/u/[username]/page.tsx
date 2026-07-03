@@ -4,17 +4,17 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { fetchMe, logout } from "@/lib/authClient";
-import { Avatar } from "@/components/Avatar";
+import { PlayerAvatar } from "@/components/PlayerAvatar";
 
 interface ProfileUser {
   username: string;
+  avatar?: string | null;
   rating: number;
   rd: number;
   games: number;
   wins: number;
   losses: number;
   draws: number;
-  avatar: string | null;
   createdAt: number;
 }
 
@@ -93,11 +93,7 @@ export default function ProfilePage() {
           <>
             <div className="flex flex-wrap items-end justify-between gap-4">
               <div className="flex items-center gap-4">
-                <Avatar
-                  name={profile.user.username}
-                  src={profile.user.avatar}
-                  className="h-16 w-16 text-3xl"
-                />
+                <PlayerAvatar name={profile.user.username} avatar={profile.user.avatar} size={56} />
                 <div>
                   <h1 className="font-display text-5xl">{profile.user.username}</h1>
                   <p className="mt-2 text-parchment-300 text-sm">

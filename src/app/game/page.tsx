@@ -22,7 +22,7 @@ import {
 } from "@/engine/game";
 import { makeSeed } from "@/engine/rng";
 import { BoardState, Color, Move } from "@/engine/types";
-import { cloneBoard, isInCheck, makeMove } from "@/engine/board";
+import { cloneBoard, isInCheck, makeMove, moveToUCI } from "@/engine/board";
 import { computeMoveRisks } from "@/engine/moveSafety";
 import { loadSettings } from "@/lib/settings";
 import type { QueuedPremove } from "@/components/Board";
@@ -351,6 +351,8 @@ function GamePage() {
       ratingChange: change,
       myNerf: nerfSummary(myColor === "w" ? game.white.nerf : game.black.nerf),
       opponentNerf: nerfSummary(myColor === "w" ? game.black.nerf : game.white.nerf),
+      moves: game.board.history.map(moveToUCI),
+      serverGameId: null,
     });
   }, [game, myColor, difficulty, rated, initialTimeMs, incrementMs]);
 

@@ -68,19 +68,30 @@ export const SCHEMA_STATEMENTS: string[] = [
     reviewed INTEGER NOT NULL DEFAULT 0
   )`,
   `CREATE INDEX IF NOT EXISTS idx_chat_flags_created ON chat_flags(reviewed, created_at DESC)`,
+  // Player-submitted rule ideas from the "Suggest a rule" form.
+  `CREATE TABLE IF NOT EXISTS rule_suggestions (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT NOT NULL,
+    contact TEXT,
+    user_id TEXT,
+    username TEXT,
+    created_at INTEGER NOT NULL
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_rule_suggestions_created ON rule_suggestions(created_at DESC)`,
 ];
 
-// Columns added after 0001_init.sql. CREATE TABLE IF NOT EXISTS is a no-op on
-// existing databases, so each addition also needs an ALTER here (and a
-// matching wrangler migration). SQLite has no ADD COLUMN IF NOT EXISTS, so the
-// duplicate-column error on already-migrated databases is swallowed.
-const COLUMN_ADDITIONS: string[] = [
-  `ALTER TABLE users ADD COLUMN avatar TEXT`, // migrations/0003_avatar.sql
+// Columns added after launch. SQLite has no "ADD COLUMN IF NOT EXISTS", so
+// each is attempted and a duplicate-column error means it is already there.
+const ADDITIVE_COLUMNS: string[] = [
+  `ALTER TABLE users ADD COLUMN avatar TEXT`,
 ];
 
 export async function ensureSchema(db: D1Database): Promise<void> {
   await db.batch(SCHEMA_STATEMENTS.map((sql) => db.prepare(sql)));
-  for (const sql of COLUMN_ADDITIONS) {
-    await db.prepare(sql).run().catch(() => {});
+  for (const sql of ADDITIVE_COLUMNS) {
+    try {
+      await db.prepare(sql).run();
+    } catch {}
   }
 }

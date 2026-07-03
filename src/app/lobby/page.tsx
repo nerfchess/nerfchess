@@ -7,7 +7,8 @@ import { AccountChip } from "@/components/AccountChip";
 import { Logo } from "@/components/Logo";
 import { QueueButton } from "@/components/QueueButton";
 import { AccountUser, fetchMe } from "@/lib/authClient";
-import { MPLobby, MPLobbyGame, MPSession } from "@/lib/multiplayer";
+import { MPLobby, MPLobbyChallenge, MPLobbyGame, MPSession } from "@/lib/multiplayer";
+import { PlayerAvatar } from "@/components/PlayerAvatar";
 
 // The lobby: the central place to find a game. Shows who is online, the games
 // being played right now (click to watch), and every way to start playing.
@@ -134,6 +135,30 @@ export default function LobbyPage() {
               </div>
             </div>
 
+            {/* Open challenges: friend games waiting for an opponent. */}
+            <div className="plate p-5 sm:p-6">
+              <div className="flex items-center justify-between gap-3">
+                <div className="font-display text-2xl text-parchment">Open challenges</div>
+                <span className="smallcaps text-[10px] text-parchment-400">
+                  {lobby ? `${(lobby.challenges ?? []).length} waiting` : "…"}
+                </span>
+              </div>
+              {!lobby ? (
+                <p className="mt-3 text-sm text-parchment-400">Loading challenges…</p>
+              ) : (lobby.challenges ?? []).length === 0 ? (
+                <p className="mt-3 text-sm text-parchment-400">
+                  No open challenges right now. Create a game above and it will show up here
+                  until someone accepts.
+                </p>
+              ) : (
+                <ul className="mt-3 divide-y divide-white/5">
+                  {(lobby.challenges ?? []).map((challenge) => (
+                    <ChallengeRow key={challenge.id} challenge={challenge} />
+                  ))}
+                </ul>
+              )}
+            </div>
+
             {/* Step 3 (optional): watch a game that's happening right now. */}
             <div className="plate p-5 sm:p-6">
               <div className="flex items-center justify-between gap-3">
@@ -188,8 +213,9 @@ export default function LobbyPage() {
                     <li key={p.name} className="flex items-center justify-between gap-2 text-sm">
                       <Link
                         href={`/u/${encodeURIComponent(p.name)}`}
-                        className="min-w-0 truncate text-parchment-100 hover:text-gold-leaf transition-colors"
+                        className="flex min-w-0 items-center gap-2 truncate text-parchment-100 hover:text-gold-leaf transition-colors"
                       >
+                        <PlayerAvatar name={p.name} avatar={p.avatar} size={22} />
                         {p.name}
                         {p.rating != null && (
                           <span className="ml-1.5 font-mono text-xs text-parchment-400">{p.rating}</span>
@@ -236,6 +262,33 @@ function StatusBadge({ status }: { status: "online" | "searching" | "playing" })
     <span className={`shrink-0 border px-2 py-0.5 smallcaps text-[9px] ${styles[status]}`}>
       {labels[status]}
     </span>
+  );
+}
+
+function ChallengeRow({ challenge }: { challenge: MPLobbyChallenge }) {
+  const clock =
+    challenge.timeSec > 0
+      ? `${Math.round(challenge.timeSec / 60)}+${challenge.incrementSec}`
+      : "No clock";
+  const host =
+    challenge.host.rating != null
+      ? `${challenge.host.name} (${challenge.host.rating})`
+      : challenge.host.name;
+  return (
+    <li className="flex items-center justify-between gap-3 py-2.5">
+      <div className="min-w-0">
+        <div className="truncate text-sm text-parchment-100">{host}</div>
+        <div className="mt-0.5 smallcaps text-[9px] text-parchment-400">
+          Casual · {clock} · code {challenge.id}
+        </div>
+      </div>
+      <Link
+        href={`/friend?code=${encodeURIComponent(challenge.id)}`}
+        className="btn-leaf shrink-0 inline-flex items-center px-4 py-2 font-display text-sm font-semibold"
+      >
+        Accept
+      </Link>
+    </li>
   );
 }
 

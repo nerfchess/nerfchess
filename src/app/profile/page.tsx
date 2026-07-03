@@ -1,9 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
-import { Camera } from "lucide-react";
-import { Avatar } from "@/components/Avatar";
+import { useEffect, useState } from "react";
 import { Logo } from "@/components/Logo";
 import { CategoryTabs } from "@/components/ratings/CategoryTabs";
 import { RatingCard } from "@/components/ratings/RatingCard";
@@ -15,16 +13,37 @@ import {
   type RatingCategoryId,
 } from "@/lib/ratingCategories";
 import { DEFAULT_STATS, loadRatings, type Ratings } from "@/lib/ratings";
-import { AccountUser, fetchMe, updateAvatar } from "@/lib/authClient";
-import { fileToAvatarDataUrl } from "@/lib/avatar";
+import { AccountUser, fetchMe } from "@/lib/authClient";
+import { PlayerAvatar } from "@/components/PlayerAvatar";
+import { AVATAR_IDS, avatarIdFor } from "@/lib/avatars";
 
 export default function ProfilePage() {
   const [ratings, setRatings] = useState<Ratings | null>(null);
   const [active, setActive] = useState<RatingCategoryId>(DEFAULT_CATEGORY);
   const [account, setAccount] = useState<AccountUser | null | undefined>(undefined);
-  const [avatarBusy, setAvatarBusy] = useState(false);
+  const [savingAvatar, setSavingAvatar] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const pickAvatar = async (id: string) => {
+    if (!account) return;
+    setSavingAvatar(true);
+    setAvatarError(null);
+    const previous = account.avatar;
+    setAccount({ ...account, avatar: id });
+    try {
+      const res = await fetch("/api/auth/avatar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ avatar: id }),
+      });
+      if (!res.ok) throw new Error("Could not save your avatar.");
+    } catch {
+      setAccount((a) => (a ? { ...a, avatar: previous } : a));
+      setAvatarError("Could not save — try again.");
+    } finally {
+      setSavingAvatar(false);
+    }
+  };
 
   useEffect(() => {
     setRatings(loadRatings());
@@ -48,23 +67,6 @@ export default function ProfilePage() {
     };
   }, []);
 
-  // Downscale the chosen file locally, push it to the account, and reflect it
-  // in the header immediately. `next = null` removes the current picture.
-  const changeAvatar = async (next: File | null) => {
-    if (!account) return;
-    setAvatarError(null);
-    setAvatarBusy(true);
-    try {
-      const dataUrl = next ? await fileToAvatarDataUrl(next) : null;
-      await updateAvatar(dataUrl);
-      setAccount({ ...account, avatar: dataUrl });
-    } catch (e) {
-      setAvatarError(e instanceof Error ? e.message : "Could not update your profile picture.");
-    } finally {
-      setAvatarBusy(false);
-    }
-  };
-
   const activeCategory = getCategory(active);
 
   return (
@@ -73,7 +75,7 @@ export default function ProfilePage() {
         <Logo />
         <div className="flex items-center gap-1 sm:gap-2 text-sm font-medium">
           <Link href="/play" className="px-3 py-1.5 hover:bg-white/5 text-parchment-100">Play</Link>
-          <Link href="/leaderboard" className="px-3 py-1.5 hover:bg-white/5 text-parchment-100">Leaderboard</Link>
+          <Link href="/leaderboard" className="hidden sm:inline-block px-3 py-1.5 hover:bg-white/5 text-parchment-100">Leaderboard</Link>
           <Link href="/codex" className="px-3 py-1.5 hover:bg-white/5 text-parchment-100">Rules</Link>
         </div>
       </nav>
@@ -82,25 +84,11 @@ export default function ProfilePage() {
         {/* Identity header — the signed-in account, or the local player. */}
         <div className="flex items-center gap-4">
           {account ? (
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              disabled={avatarBusy}
-              className="group relative shrink-0 rounded-full disabled:cursor-wait"
-              title="Change profile picture"
-              aria-label="Change profile picture"
-            >
-              <Avatar name={account.username} src={account.avatar} className="h-16 w-16 text-2xl" />
-              <span
-                className={
-                  "absolute inset-0 grid place-items-center rounded-full bg-black/55 text-parchment transition-opacity " +
-                  (avatarBusy ? "opacity-100" : "opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100")
-                }
-              >
-                <Camera className="h-5 w-5" />
-              </span>
-            </button>
+            <PlayerAvatar name={account.username} avatar={account.avatar} size={56} />
           ) : (
-            <Avatar name="You" className="h-16 w-16 text-2xl" />
+            <span className="grid h-14 w-14 shrink-0 place-items-center rounded-full border border-gold/40 bg-gold/10 font-display text-2xl text-gold-leaf">
+              Y
+            </span>
           )}
           <div>
             <h1 className="font-display text-3xl sm:text-4xl text-parchment-50">
@@ -111,43 +99,46 @@ export default function ProfilePage() {
                 ? "Your online rating updates after every rated game."
                 : "Your ratings and record, stored on this device."}
             </p>
-            {account && (
-              <p className="mt-1 text-xs text-parchment-500">
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={avatarBusy}
-                  className="text-gold-leaf hover:underline disabled:opacity-50"
-                >
-                  {account.avatar ? "Change photo" : "Add a profile picture"}
-                </button>
-                {account.avatar && (
-                  <>
-                    {" · "}
-                    <button
-                      onClick={() => changeAvatar(null)}
-                      disabled={avatarBusy}
-                      className="hover:underline disabled:opacity-50"
-                    >
-                      Remove
-                    </button>
-                  </>
-                )}
-              </p>
-            )}
-            {avatarError && <p className="mt-1 text-xs text-oxblood-glow">{avatarError}</p>}
           </div>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0] ?? null;
-              e.target.value = ""; // allow re-picking the same file
-              if (file) changeAvatar(file);
-            }}
-          />
         </div>
+
+        {/* Profile picture picker */}
+        {account && (
+          <div className="mt-8">
+            <div className="rule-ornament mb-4">
+              <span className="font-display">Profile picture</span>
+            </div>
+            <div className="plate p-4 sm:p-5">
+              <div className="flex flex-wrap gap-2">
+                {AVATAR_IDS.map((id) => {
+                  const selected = avatarIdFor(account.username, account.avatar) === id;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => pickAvatar(id)}
+                      disabled={savingAvatar}
+                      aria-label={`Avatar ${id.replace("_", " ")}`}
+                      aria-pressed={selected}
+                      className={
+                        "rounded-lg p-0.5 transition " +
+                        (selected
+                          ? "ring-2 ring-gold-leaf"
+                          : "ring-1 ring-white/10 hover:ring-white/40")
+                      }
+                    >
+                      <PlayerAvatar name={account.username} avatar={id} size={44} />
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="mt-3 text-xs text-parchment-400">
+                Shown in the lobby, on leaderboards, and at the board.
+                {avatarError && <span className="ml-2 text-oxblood-glow">{avatarError}</span>}
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Online (account) rating: the number that moves in rated games. */}
         {account && (
