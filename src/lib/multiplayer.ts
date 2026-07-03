@@ -98,6 +98,9 @@ export type MPEvent =
   | { type: "end"; end: MPEnd }
   | { type: "draw-offer"; color: Color }
   | { type: "draw-declined"; color: Color }
+  | { type: "takeback-offer"; color: Color }
+  | { type: "takeback-declined"; color: Color }
+  | { type: "takeback"; by: Color; moves: string[]; ply: number; wc: number; bc: number }
   | { type: "rematch-offer"; color: Color }
   | { type: "rematched"; id: string; color: Color; token: string }
   | { type: "chat"; message: MPChatMessage }
@@ -120,6 +123,9 @@ type ServerFrame =
   | { t: "end"; d: MPEnd }
   | { t: "drawOffer"; d: { color: Color } }
   | { t: "drawDeclined"; d: { color: Color } }
+  | { t: "takebackOffer"; d: { color: Color } }
+  | { t: "takebackDeclined"; d: { color: Color } }
+  | { t: "takeback"; d: { by: Color; moves: string[]; ply: number; wc: number; bc: number } }
   | { t: "rematchOffer"; d: { color: Color } }
   | { t: "rematched"; d: { id: string; color: Color; token: string } }
   | { t: "chat"; d: MPChatMessage }
@@ -393,6 +399,15 @@ export class MPSession {
       case "drawDeclined":
         this.emit({ type: "draw-declined", color: frame.d.color });
         break;
+      case "takebackOffer":
+        this.emit({ type: "takeback-offer", color: frame.d.color });
+        break;
+      case "takebackDeclined":
+        this.emit({ type: "takeback-declined", color: frame.d.color });
+        break;
+      case "takeback":
+        this.emit({ type: "takeback", ...frame.d });
+        break;
       case "rematchOffer":
         this.emit({ type: "rematch-offer", color: frame.d.color });
         break;
@@ -571,6 +586,18 @@ export class MPSession {
 
   declineDraw(): boolean {
     return this.sendFrame("drawDecline");
+  }
+
+  offerTakeback(): boolean {
+    return this.sendFrame("takebackOffer");
+  }
+
+  acceptTakeback(): boolean {
+    return this.sendFrame("takebackAccept");
+  }
+
+  declineTakeback(): boolean {
+    return this.sendFrame("takebackDecline");
   }
 
   destroy() {

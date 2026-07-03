@@ -12,6 +12,7 @@ export function formatClock(ms: number): string {
 
 export function ClockPill({ ms, active, compact = false }: { ms: number; active: boolean; compact?: boolean }) {
   const low = ms < 30000;
+  const warning = ms < 15000;
   const critical = ms < 10000;
   return (
     <div
@@ -19,7 +20,9 @@ export function ClockPill({ ms, active, compact = false }: { ms: number; active:
         "plate flex items-center justify-center transition " +
         (compact ? "shrink-0 px-3 py-1.5 " : "p-4 ") +
         (active
-          ? "border-2 border-gold bg-gold/15 shadow-leaf ring-1 ring-gold/40"
+          ? warning
+            ? "border-2 border-oxblood-glow bg-oxblood/20 shadow-oxblood ring-1 ring-oxblood-glow/40 animate-pulse"
+            : "border-2 border-gold bg-gold/15 shadow-leaf ring-1 ring-gold/40"
           : "opacity-60")
       }
     >

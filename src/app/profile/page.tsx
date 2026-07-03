@@ -15,7 +15,46 @@ import {
 import { DEFAULT_STATS, loadRatings, type Ratings } from "@/lib/ratings";
 import { AccountUser, fetchMe } from "@/lib/authClient";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
-import { AVATAR_IDS, avatarIdFor } from "@/lib/avatars";
+import { AVATAR_IDS, avatarIdFor, CUSTOM_AVATAR_MAX_CHARS, isCustomAvatar } from "@/lib/avatars";
+
+// Center-crop to a square and downscale to 96px, returning a compact JPEG
+// data URL small enough to store inline in the avatar column.
+async function fileToAvatarDataUrl(file: File): Promise<string> {
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const el = new Image();
+      el.onload = () => resolve(el);
+      el.onerror = () => reject(new Error("That file doesn't look like an image."));
+      el.src = url;
+    });
+    const side = Math.min(img.naturalWidth, img.naturalHeight);
+    if (!side) throw new Error("That file doesn't look like an image.");
+    const canvas = document.createElement("canvas");
+    canvas.width = 96;
+    canvas.height = 96;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("Could not process the image.");
+    ctx.drawImage(
+      img,
+      (img.naturalWidth - side) / 2,
+      (img.naturalHeight - side) / 2,
+      side,
+      side,
+      0,
+      0,
+      96,
+      96,
+    );
+    for (const quality of [0.82, 0.6, 0.4]) {
+      const data = canvas.toDataURL("image/jpeg", quality);
+      if (data.length <= CUSTOM_AVATAR_MAX_CHARS) return data;
+    }
+    throw new Error("Could not compress the image enough.");
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
 
 export default function ProfilePage() {
   const [ratings, setRatings] = useState<Ratings | null>(null);
@@ -23,6 +62,17 @@ export default function ProfilePage() {
   const [account, setAccount] = useState<AccountUser | null | undefined>(undefined);
   const [savingAvatar, setSavingAvatar] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
+
+  const uploadAvatar = async (file: File | null | undefined) => {
+    if (!file || !account) return;
+    setAvatarError(null);
+    try {
+      const data = await fileToAvatarDataUrl(file);
+      await pickAvatar(data);
+    } catch (e) {
+      setAvatarError(e instanceof Error ? e.message : "Could not read that image.");
+    }
+  };
 
   const pickAvatar = async (id: string) => {
     if (!account) return;
@@ -110,8 +160,34 @@ export default function ProfilePage() {
             </div>
             <div className="plate p-4 sm:p-5">
               <div className="flex flex-wrap gap-2">
+                <label
+                  className={
+                    "grid h-[46px] w-[46px] cursor-pointer place-items-center rounded-lg p-0.5 text-center transition " +
+                    (isCustomAvatar(account.avatar)
+                      ? "ring-2 ring-gold-leaf"
+                      : "ring-1 ring-white/10 hover:ring-white/40")
+                  }
+                  title="Upload your own picture"
+                >
+                  {isCustomAvatar(account.avatar) ? (
+                    <PlayerAvatar name={account.username} avatar={account.avatar} size={44} />
+                  ) : (
+                    <span className="font-display text-xl text-parchment-300 leading-none">+</span>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    disabled={savingAvatar}
+                    onChange={(e) => {
+                      uploadAvatar(e.target.files?.[0]);
+                      e.target.value = "";
+                    }}
+                  />
+                </label>
                 {AVATAR_IDS.map((id) => {
-                  const selected = avatarIdFor(account.username, account.avatar) === id;
+                  const selected =
+                    !isCustomAvatar(account.avatar) && avatarIdFor(account.username, account.avatar) === id;
                   return (
                     <button
                       key={id}
@@ -133,7 +209,8 @@ export default function ProfilePage() {
                 })}
               </div>
               <p className="mt-3 text-xs text-parchment-400">
-                Shown in the lobby, on leaderboards, and at the board.
+                Shown in the lobby, on leaderboards, and at the board. Use the + tile to upload
+                your own picture (cropped square, scaled down automatically).
                 {avatarError && <span className="ml-2 text-oxblood-glow">{avatarError}</span>}
               </p>
             </div>

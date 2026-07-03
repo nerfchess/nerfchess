@@ -29,7 +29,7 @@ import { nerfSummary, outcomeFor, recordCompletedGame } from "@/lib/gameHistory"
 import { boardAtPly } from "@/lib/gameReview";
 import { MPChatMessage, MPSession, MPStart, saveOnlineSeat } from "@/lib/multiplayer";
 import { premoveOptionsFor } from "@/lib/premoves";
-import { isMuted, playCapture, playCheck, playMove as playMoveSfx, setMuted } from "@/lib/sounds";
+import { isMuted, playCapture, playCheck, playLowTime, playMove as playMoveSfx, setMuted } from "@/lib/sounds";
 
 type PendingPremoveSend = { uci: string; ply: number };
 type PendingLocalMove = { uci: string; ply: number; move: Move };
@@ -98,6 +98,8 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   const [confirmingResign, setConfirmingResign] = useState(false);
   const [drawOfferBy, setDrawOfferBy] = useState<Color | null>(null);
   const [drawOfferStatus, setDrawOfferStatus] = useState<"idle" | "offering" | "declined">("idle");
+  const [takebackOfferBy, setTakebackOfferBy] = useState<Color | null>(null);
+  const [takebackStatus, setTakebackStatus] = useState<"idle" | "offering" | "declined">("idle");
   const [whiteMs, setWhiteMs] = useState(start.wc);
   const [blackMs, setBlackMs] = useState(start.bc);
   const [premoves, setPremoves] = useState<QueuedPremove[]>([]);
@@ -308,6 +310,31 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         if (e.color !== myColor) {
           window.setTimeout(() => setDrawOfferStatus("idle"), 2500);
         }
+      } else if (e.type === "takeback-offer") {
+        setError(null);
+        setTakebackOfferBy(e.color);
+        setTakebackStatus(e.color === myColor ? "offering" : "idle");
+      } else if (e.type === "takeback-declined") {
+        setTakebackOfferBy(null);
+        setTakebackStatus(e.color === myColor ? "idle" : "declined");
+        if (e.color !== myColor) {
+          window.setTimeout(() => setTakebackStatus("idle"), 2500);
+        }
+      } else if (e.type === "takeback") {
+        // The server rewound the move list — rebuild the whole game from it,
+        // exactly like a reconnect replay.
+        setError(null);
+        setPendingLocalMove(null);
+        setAwaitingPremoveAck(false);
+        clearPremoves();
+        setHistoryPly(null);
+        setTakebackOfferBy(null);
+        setTakebackStatus("idle");
+        setDrawOfferBy(null);
+        setWhiteMs(e.wc);
+        setBlackMs(e.bc);
+        setGame(buildGameFromStart({ ...start, moves: e.moves }));
+        playMoveSfx();
       } else if (e.type === "chat") {
         setChatMessages((msgs) => [...msgs, e.message].slice(-50));
       } else if (e.type === "rematch-offer") {
@@ -456,9 +483,11 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
       capturedByMe: game.captured[myColor],
       capturedFromMe: game.captured[myColor === "w" ? "b" : "w"],
     };
-    const strictOptions = premoveOptionsFor(virtualBoard, myColor, myNerfForPremove, myStateForPremove, ctx);
-    const fallbackOptions = premoveOptionsFor(virtualBoard, myColor, null, null, null);
-    return [...strictOptions, ...fallbackOptions.filter((m) => !strictOptions.some((s) => moveKey(s) === moveKey(m)))];
+    // Strict (nerf-filtered) options only, so the dots shown during the
+    // opponent's turn already reflect where your rule forbids you to move.
+    // Queued premoves are still re-validated with a lenient fallback when the
+    // turn actually arrives (context-dependent rules can change by then).
+    return premoveOptionsFor(virtualBoard, myColor, myNerfForPremove, myStateForPremove, ctx);
   }, [virtualBoard, myColor, game, myNerfForPremove, myStateForPremove]);
 
   const premoveMode = !!game && !game.result && game.board.turn !== myColor && !!virtualBoard;
@@ -516,6 +545,20 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingLocalMove]);
 
+  // Low-time alarm: one warning sound the moment my clock first drops under
+  // 15 seconds. Re-arms if increment lifts the clock clearly back above it.
+  const lowTimeArmedRef = useRef(true);
+  const myMs = myColor === "w" ? whiteMs : blackMs;
+  useEffect(() => {
+    if (!clockEnabled || !game || game.result) return;
+    if (myMs >= 20000) {
+      lowTimeArmedRef.current = true;
+    } else if (myMs < 15000 && lowTimeArmedRef.current) {
+      lowTimeArmedRef.current = false;
+      playLowTime();
+    }
+  }, [myMs, clockEnabled, game]);
+
   // Clock tick. Each side's first move has a 15s server-side grace period, so
   // the local display also holds still until it expires (server frames keep
   // the clocks honest either way).
@@ -571,6 +614,31 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     }
   };
 
+  const onOfferTakeback = () => {
+    if (!game || game.result || takebackStatus === "offering") return;
+    setError(null);
+    if (!session.offerTakeback()) {
+      setError("Disconnected from the game server.");
+    }
+  };
+
+  const onAcceptTakeback = () => {
+    if (!game || game.result) return;
+    setError(null);
+    if (!session.acceptTakeback()) {
+      setError("Disconnected from the game server.");
+    }
+  };
+
+  const onDeclineTakeback = () => {
+    if (!game || game.result) return;
+    setError(null);
+    setTakebackOfferBy(null);
+    if (!session.declineTakeback()) {
+      setError("Disconnected from the game server.");
+    }
+  };
+
   const toggleMute = () => {
     const next = !muted;
     setMuted(next);
@@ -614,6 +682,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   const boardFitClass = hint
     ? "w-[min(92vw,720px,calc(100dvh-11rem))] max-w-full"
     : "w-[min(92vw,720px,calc(100dvh-8rem))] max-w-full";
+  // Takebacks are casual-only and need a move of mine on the board.
+  const takebackAvailable =
+    !start.rated && game.board.history.some((m) => m.color === myColor);
   const historyActions = game.result ? null : confirmingResign ? (
     <div className="space-y-2">
       <div className="smallcaps text-[10px] text-parchment-300">Resign the game?</div>
@@ -632,6 +703,25 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           className="min-w-0 px-3 py-2 btn-ghost text-xs font-display tracking-wide"
         >
           Cancel
+        </button>
+      </div>
+    </div>
+  ) : takebackOfferBy && takebackOfferBy !== myColor ? (
+    <div className="space-y-2">
+      <div className="smallcaps text-[10px] text-parchment-300">Opponent asks for a takeback.</div>
+      {error && <div className="text-xs text-oxblood-glow leading-snug">{error}</div>}
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          onClick={onAcceptTakeback}
+          className="min-w-0 px-3 py-2 border border-gold/40 bg-gold/10 text-gold-leaf hover:bg-gold/20 hover:border-gold/70 transition text-xs font-display font-semibold tracking-wide"
+        >
+          Allow
+        </button>
+        <button
+          onClick={onDeclineTakeback}
+          className="min-w-0 px-3 py-2 btn-ghost text-xs font-display font-semibold tracking-wide"
+        >
+          Decline
         </button>
       </div>
     </div>
@@ -665,8 +755,11 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
       {drawOfferStatus === "declined" && (
         <div className="smallcaps text-[10px] text-parchment-300">Draw declined.</div>
       )}
+      {takebackStatus === "declined" && (
+        <div className="smallcaps text-[10px] text-parchment-300">Takeback declined.</div>
+      )}
       {error && <div className="text-xs text-oxblood-glow leading-snug">{error}</div>}
-      <div className="grid grid-cols-2 gap-2">
+      <div className={"grid gap-2 " + (takebackAvailable ? "grid-cols-3" : "grid-cols-2")}>
         <button
           onClick={onOfferDraw}
           disabled={drawOfferStatus === "offering"}
@@ -674,6 +767,16 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         >
           {drawOfferStatus === "offering" ? "Offered" : "Draw"}
         </button>
+        {takebackAvailable && (
+          <button
+            onClick={onOfferTakeback}
+            disabled={takebackStatus === "offering"}
+            title="Ask your opponent to let you take your last move back"
+            className="min-w-0 px-3 py-2 border border-bruise-glow/40 bg-bruise/10 text-bruise-glow hover:bg-bruise/20 hover:border-bruise-glow/70 transition text-xs font-display font-semibold tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {takebackStatus === "offering" ? "Asked" : "Takeback"}
+          </button>
+        )}
         <button
           onClick={requestResign}
           className="min-w-0 px-3 py-2 border border-oxblood/40 bg-oxblood/10 text-oxblood-glow hover:bg-oxblood/20 hover:border-oxblood/70 transition text-xs font-display font-semibold tracking-wide"

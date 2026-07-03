@@ -1,10 +1,11 @@
 "use client";
 
 import { Piece } from "./Pieces";
-import { AVATARS, avatarIdFor } from "@/lib/avatars";
+import { AVATARS, avatarIdFor, isCustomAvatar } from "@/lib/avatars";
 
-// A player's profile picture: preset piece-on-plate, deterministic default
-// when the account never picked one (or for anonymous players).
+// A player's profile picture: an uploaded image (stored as a small data URL),
+// a preset piece-on-plate, or a deterministic default when the account never
+// picked one (and for anonymous players).
 export function PlayerAvatar({
   name,
   avatar,
@@ -16,6 +17,18 @@ export function PlayerAvatar({
   size?: number;
   className?: string;
 }) {
+  if (isCustomAvatar(avatar)) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={avatar}
+        alt=""
+        className={"shrink-0 overflow-hidden rounded-md border border-white/20 object-cover " + className}
+        style={{ width: size, height: size }}
+        aria-hidden="true"
+      />
+    );
+  }
   const spec = AVATARS[avatarIdFor(name, avatar)];
   return (
     <div

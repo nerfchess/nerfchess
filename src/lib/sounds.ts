@@ -229,6 +229,13 @@ export function playGameOver() {
   tone({ freq: 1318, dur: 0.30, type: "sine", gain: 0.06, attack: 0.005, release: 0.28, delay: 0.13 });
 }
 
+// Low time: urgent double tick, like a clock tapping your shoulder.
+export function playLowTime() {
+  tone({ freq: 988, dur: 0.09, type: "square", gain: 0.10, attack: 0.003, release: 0.08 });
+  tone({ freq: 988, dur: 0.09, type: "square", gain: 0.10, attack: 0.003, release: 0.08, delay: 0.16 });
+  tone({ freq: 1319, dur: 0.12, type: "square", gain: 0.08, attack: 0.003, release: 0.10, delay: 0.32 });
+}
+
 // Select: very brief, soft pickup tick.
 export function playSelect() {
   if (!uiSounds) return;

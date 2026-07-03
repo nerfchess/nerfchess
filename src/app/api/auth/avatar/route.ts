@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/server/db";
 import { sessionTokenFromCookieHeader, userForSession } from "@/lib/server/auth";
-import { isAvatarId } from "@/lib/avatars";
+import { isAvatarId, isCustomAvatar } from "@/lib/avatars";
 
 export const dynamic = "force-dynamic";
 
-// Sets the signed-in account's profile picture (a preset id from lib/avatars).
+// Sets the signed-in account's profile picture: a preset id from lib/avatars,
+// or an uploaded image as a small data URL (client-side cropped to 96px).
 export async function POST(request: Request) {
   let body: { avatar?: unknown };
   try {
@@ -19,7 +20,7 @@ export async function POST(request: Request) {
   if (!user) return NextResponse.json({ error: "Sign in first." }, { status: 401 });
 
   const avatar = body.avatar === null ? null : body.avatar;
-  if (avatar !== null && !isAvatarId(avatar)) {
+  if (avatar !== null && !isAvatarId(avatar) && !isCustomAvatar(avatar)) {
     return NextResponse.json({ error: "Unknown avatar." }, { status: 400 });
   }
 
