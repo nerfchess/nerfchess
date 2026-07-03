@@ -24,6 +24,8 @@ type Setup = {
 };
 type SeatUser = { id: string; name: string; rating: number; rd?: number; vol?: number; avatar?: string | null };
 type ChatEntry = { color: Color; name: string; text: string; at: number };
+// Spectator-room chat: watchers only, players never see it.
+type SpectatorChatEntry = { name: string; text: string; at: number };
 type StoredMatch = {
   id: string;
   setup: Setup;
@@ -52,6 +54,7 @@ type StoredMatch = {
   // Set once a rematch match has been created from this one.
   rematchedTo?: string | null;
   chat?: ChatEntry[];
+  spectatorChat?: SpectatorChatEntry[];
   // Colors that voluntarily revealed their rule to the table mid-game.
   revealed?: Partial<Record<Color, boolean>>;
 };
@@ -97,6 +100,7 @@ type ClientFrame =
   | { t: "lobby" }
   | { t: "rematch" }
   | { t: "chat"; d?: { text?: unknown } }
+  | { t: "schat"; d?: { text?: unknown } }
   | { t: "reveal" }
   | { t: "p" };
 
@@ -292,6 +296,8 @@ export class GameServer extends DurableObject<Env> {
         return this.rematchRequest(ws);
       case "chat":
         return this.chatMessage(ws, frame.d);
+      case "schat":
+        return this.spectatorChatMessage(ws, frame.d);
       case "reveal":
         return this.revealRule(ws);
       case "p":
@@ -324,19 +330,29 @@ export class GameServer extends DurableObject<Env> {
   }
 
   private watcherCount(matchId: string): number {
+    return this.watcherInfo(matchId).n;
+  }
+
+  // Count plus the signed-in watchers' usernames (deduped across tabs);
+  // anonymous watchers only contribute to the count.
+  private watcherInfo(matchId: string): { n: number; names: string[] } {
     let n = 0;
+    const names = new Set<string>();
     for (const [ws, session] of this.sessions) {
-      if (session.watching === matchId && ws.readyState === WebSocket.OPEN) n++;
+      if (session.watching === matchId && ws.readyState === WebSocket.OPEN) {
+        n++;
+        if (session.username) names.add(session.username);
+      }
     }
-    return n;
+    return { n, names: [...names].slice(0, 30) };
   }
 
   private broadcastWatchers(matchId: string) {
-    const n = this.watcherCount(matchId);
+    const { n, names } = this.watcherInfo(matchId);
     for (const [ws, session] of this.sessions) {
       if (ws.readyState !== WebSocket.OPEN) continue;
       if (session.watching === matchId || session.matchId === matchId) {
-        send(ws, "watchers", { n });
+        send(ws, "watchers", { n, names });
       }
     }
   }
@@ -1208,6 +1224,49 @@ export class GameServer extends DurableObject<Env> {
     this.broadcast(match, "chat", entry);
   }
 
+  // Chat between spectators. Relayed only to sockets watching the same game,
+  // so the players can't read it (no coaching from the rail).
+  private async spectatorChatMessage(ws: WebSocket, data: unknown) {
+    const session = this.session(ws);
+    const match = session.watching ? await this.loadMatch(session.watching) : null;
+    if (!match) return error(ws, "not_watching", "Watch a game before chatting.");
+    const raw = String((data as { text?: unknown } | undefined)?.text ?? "").trim();
+    if (!raw) return;
+    const now = Date.now();
+    if (now - (this.lastChatAt.get(session.id) ?? 0) < 500) return;
+    this.lastChatAt.set(session.id, now);
+
+    const name = session.username ?? "Anonymous";
+    const clipped = raw.slice(0, 200);
+    // Shadow-mute works here too: the muted watcher sees only their own echo.
+    if (session.mutedUntil && session.mutedUntil > Date.now()) {
+      send(ws, "schat", { name, text: clipped, at: now } satisfies SpectatorChatEntry);
+      return;
+    }
+    const matched = findProfanity(clipped);
+    const text = matched.length ? censorText(clipped) : clipped;
+    if (matched.length) {
+      const db = await this.db();
+      if (db) {
+        try {
+          await db
+            .prepare(
+              `INSERT INTO chat_flags (id, match_id, user_id, username, color, text, matched_words, created_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            )
+            .bind(crypto.randomUUID(), match.id, session.userId ?? null, name, "s", clipped, matched.join(","), now)
+            .run();
+        } catch (err) {
+          console.error("failed to record chat flag", match.id, err);
+        }
+      }
+    }
+    const entry: SpectatorChatEntry = { name, text, at: now };
+    match.spectatorChat = [...(match.spectatorChat ?? []), entry].slice(-50);
+    await this.saveMatch(match, false);
+    this.sendWatchers(match, "schat", entry);
+  }
+
   // ---------------- voluntary rule reveal ----------------
 
   // A player may show their secret rule to the table mid-game. Irreversible;
@@ -1255,6 +1314,8 @@ export class GameServer extends DurableObject<Env> {
       started: !!match.startedAt,
       result: match.result,
       watchers: this.watcherCount(id),
+      watcherNames: this.watcherInfo(id).names,
+      spectatorChat: match.spectatorChat ?? [],
       // Hidden rules are only revealed to spectators once the game is over.
       ...(match.result ? { nerfs: { w: match.setup.whiteNerfId, b: match.setup.blackNerfId } } : {}),
     });

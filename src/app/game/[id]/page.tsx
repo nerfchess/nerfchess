@@ -14,10 +14,12 @@ import { Color } from "@/engine/types";
 import { boardAtPly, replayUci } from "@/lib/gameReview";
 import { timeControlLabel } from "@/lib/gameHistory";
 import {
+  clearActiveGame,
   clearOnlineSeat,
   loadOnlineSeat,
   MPPlayers,
   MPSession,
+  MPSpectatorChatMessage,
   MPStart,
   MPWatchStart,
 } from "@/lib/multiplayer";
@@ -162,6 +164,7 @@ export default function OnlineGamePage() {
         }
         onExit={() => {
           clearOnlineSeat(gameId);
+          clearActiveGame(gameId);
           window.location.href = "/play";
         }}
       />
@@ -214,6 +217,8 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
   const [result, setResult] = useState(setup.result);
   const [nerfs, setNerfs] = useState<Partial<Record<Color, string>> | null>(setup.nerfs ?? null);
   const [watchers, setWatchers] = useState(setup.watchers ?? 1);
+  const [watcherNames, setWatcherNames] = useState<string[]>(setup.watcherNames ?? []);
+  const [spectatorChat, setSpectatorChat] = useState<MPSpectatorChatMessage[]>(setup.spectatorChat ?? []);
   const [reconnecting, setReconnecting] = useState(false);
   const [historyPly, setHistoryPly] = useState<number | null>(null);
 
@@ -238,6 +243,9 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
         setHistoryPly(null);
       } else if (e.type === "watchers") {
         setWatchers(e.n);
+        if (e.names) setWatcherNames(e.names);
+      } else if (e.type === "spectator-chat") {
+        setSpectatorChat((msgs) => [...msgs, e.message].slice(-50));
       } else if (e.type === "rule-revealed") {
         // A player voluntarily showed their rule mid-game.
         setNerfs((prev) => ({ ...(prev ?? {}), [e.color]: e.nerfId }));
@@ -295,7 +303,103 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
         (watchers > 0 ? ` · ${watchers} watching` : "")
       }
       nerfs={nerfs}
+      rail={
+        <div className="mt-3 space-y-3">
+          <WatchersPanel count={watchers} names={watcherNames} />
+          <SpectatorChat
+            messages={spectatorChat}
+            onSend={(text) => session.sendSpectatorChat(text)}
+          />
+        </div>
+      }
     />
+  );
+}
+
+// Who is on the rail with you. Signed-in watchers by name; the rest counted.
+function WatchersPanel({ count, names }: { count: number; names: string[] }) {
+  const anonymous = Math.max(0, count - names.length);
+  return (
+    <div className="plate p-2 px-3">
+      <div className="flex items-center justify-between">
+        <span className="smallcaps text-[9px] text-parchment-400">Spectators</span>
+        <span className="font-mono text-[11px] tabular-nums text-parchment-200">{count}</span>
+      </div>
+      {(names.length > 0 || anonymous > 0) && (
+        <p className="mt-1 text-[11px] leading-snug text-parchment-300 break-words">
+          {names.join(", ")}
+          {anonymous > 0 && (
+            <span className="text-parchment-400">
+              {names.length > 0 ? " + " : ""}
+              {anonymous} anonymous
+            </span>
+          )}
+        </p>
+      )}
+    </div>
+  );
+}
+
+// Chat between spectators only — the players never see this room.
+function SpectatorChat({
+  messages,
+  onSend,
+}: {
+  messages: MPSpectatorChatMessage[];
+  onSend: (text: string) => void;
+}) {
+  const [draft, setDraft] = useState("");
+  const listRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const list = listRef.current;
+    if (list) list.scrollTop = list.scrollHeight;
+  }, [messages]);
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const text = draft.trim();
+    if (!text) return;
+    onSend(text);
+    setDraft("");
+  };
+
+  return (
+    <div className="plate flex h-56 flex-col p-2">
+      <div className="shrink-0 px-1 pb-1 smallcaps text-[9px] text-parchment-400">
+        Spectator chat
+      </div>
+      <div ref={listRef} className="min-h-0 flex-1 space-y-1 overflow-y-auto px-1 text-[12px] leading-snug">
+        {messages.length === 0 && (
+          <div className="text-parchment-400/60">
+            Chat with the other spectators. The players can&apos;t see this.
+          </div>
+        )}
+        {messages.map((m, i) => (
+          <div key={`${m.at}-${i}`} className="break-words">
+            <span className="font-display font-semibold text-bruise-glow">{m.name}</span>
+            <span className="text-parchment-200"> {m.text}</span>
+          </div>
+        ))}
+      </div>
+      <form onSubmit={submit} className="mt-2 flex shrink-0 gap-1">
+        <input
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          maxLength={200}
+          placeholder="Message…"
+          aria-label="Spectator chat message"
+          className="min-w-0 flex-1 rounded-sm border border-white/15 bg-ink-900/60 px-2 py-1.5 text-base sm:text-[12px] text-parchment placeholder:text-parchment-400/40 focus:border-gold/60 focus:outline-none"
+        />
+        <button
+          type="submit"
+          disabled={!draft.trim()}
+          className="btn-ghost shrink-0 rounded-sm px-2.5 py-1.5 font-display text-[11px] disabled:opacity-40"
+        >
+          Send
+        </button>
+      </form>
+    </div>
   );
 }
 
@@ -368,6 +472,7 @@ function GameShell({
   activeColor,
   statusLabel,
   nerfs,
+  rail,
 }: {
   players: MPPlayers;
   rated: boolean;
@@ -383,6 +488,7 @@ function GameShell({
   activeColor: Color | null;
   statusLabel: string;
   nerfs: Partial<Record<Color, string>> | null;
+  rail?: React.ReactNode;
 }) {
   const nameOf = (color: Color) => {
     const p = players[color];
@@ -464,6 +570,7 @@ function GameShell({
               onPlyChange={onPlyChange}
               compact
             />
+            {rail}
           </div>
         </div>
       </div>

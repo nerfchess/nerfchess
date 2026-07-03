@@ -32,6 +32,15 @@ export async function GET() {
       avg_plies: number | null;
     }>();
 
+  // Bot games are counted separately (they never get a `games` row).
+  let botGames = 0;
+  try {
+    const row = await db
+      .prepare(`SELECT value FROM site_counters WHERE key = 'bot_games'`)
+      .first<{ value: number }>();
+    botGames = row?.value ?? 0;
+  } catch {}
+
   const players = await db
     .prepare(
       `SELECT COUNT(*) AS total,
@@ -52,9 +61,10 @@ export async function GET() {
     .all<{ nerf: string; dealt: number; wins: number | null }>();
 
   return NextResponse.json({
-    gamesPlayed: games?.total ?? 0,
+    gamesPlayed: (games?.total ?? 0) + botGames,
     games: {
       total: games?.total ?? 0,
+      vsBots: botGames,
       rated: games?.rated ?? 0,
       today: games?.today ?? 0,
       whiteWins: games?.white_wins ?? 0,

@@ -9,6 +9,7 @@ import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
 interface SiteStats {
   games: {
     total: number;
+    vsBots?: number;
     rated: number;
     today: number;
     whiteWins: number;
@@ -63,7 +64,8 @@ export default function StatsPage() {
         ) : (
           <>
             <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <StatCard label="Games played" value={stats.games.total} />
+              <StatCard label="Games played" value={stats.games.total + (stats.games.vsBots ?? 0)} />
+              <StatCard label="Games vs bots" value={stats.games.vsBots ?? 0} />
               <StatCard label="Games today" value={stats.games.today} />
               <StatCard label="Rated games" value={stats.games.rated} />
               <StatCard label="Avg. game length" value={stats.games.averageMoves} suffix=" moves" />

@@ -48,13 +48,6 @@ export default function LeaderboardPage() {
 
       <section className="max-w-3xl mx-auto px-6 py-8">
         <h1 className="font-display text-4xl sm:text-5xl text-parchment-50">Leaderboard</h1>
-        <p className="mt-3 text-parchment-200">
-          Every account is ranked from the moment it exists.{" "}
-          <Link href="/play" className="text-gold-leaf hover:underline">
-            Queue up
-          </Link>{" "}
-          for rated 3+2 blitz to make your rating mean something.
-        </p>
 
         <PlayerSearch className="mt-5 max-w-sm" />
 

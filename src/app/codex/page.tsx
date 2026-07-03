@@ -49,8 +49,7 @@ export default function CodexPage() {
   const clearAll = () => setFilters({ ...EMPTY_FILTERS });
 
   const active = hasActiveFilters(filters);
-  const activeCount =
-    filters.categories.length + (filters.tier !== null ? 1 : 0) + (filters.playableOnly ? 1 : 0);
+  const activeCount = filters.categories.length + (filters.tier !== null ? 1 : 0);
 
   return (
     <main className="min-h-screen pb-20">
@@ -155,20 +154,6 @@ export default function CodexPage() {
                 ))}
               </select>
             </label>
-
-            <button
-              onClick={() => patch({ playableOnly: !filters.playableOnly })}
-              aria-pressed={filters.playableOnly}
-              className={
-                "px-3 py-1.5 rounded-full border text-xs font-display transition inline-flex items-center gap-1.5 " +
-                (filters.playableOnly
-                  ? "bg-verdigris/20 border-verdigris text-verdigris-glow"
-                  : "border-white/15 text-parchment-300 hover:border-white/30")
-              }
-            >
-              <CheckIcon />
-              Playable
-            </button>
           </div>
         </div>
 
@@ -217,7 +202,9 @@ export default function CodexPage() {
 function FilterRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-3">
-      <span className="smallcaps text-[11px] text-parchment-400 shrink-0 sm:w-16 sm:pt-1.5">{label}</span>
+      {/* Wide enough for "Difficulty" — a narrower box let the label bleed
+          into the first pill. */}
+      <span className="smallcaps text-[11px] text-parchment-400 shrink-0 sm:w-24 sm:pt-1.5">{label}</span>
       <div className="flex flex-wrap gap-1.5" role="group" aria-label={`Filter by ${label.toLowerCase()}`}>
         {children}
       </div>
@@ -268,14 +255,6 @@ function FilterIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
       <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
-    </svg>
-  );
-}
-
-function CheckIcon() {
-  return (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <polyline points="20 6 9 17 4 12" />
     </svg>
   );
 }

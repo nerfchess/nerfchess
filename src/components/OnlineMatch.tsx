@@ -29,7 +29,14 @@ import {
 import { BoardState, Color, Move } from "@/engine/types";
 import { nerfSummary, outcomeFor, recordCompletedGame } from "@/lib/gameHistory";
 import { boardAtPly } from "@/lib/gameReview";
-import { MPChatMessage, MPSession, MPStart, saveOnlineSeat } from "@/lib/multiplayer";
+import {
+  clearActiveGame,
+  MPChatMessage,
+  MPSession,
+  MPStart,
+  saveActiveGame,
+  saveOnlineSeat,
+} from "@/lib/multiplayer";
 import { premoveOptionsFor } from "@/lib/premoves";
 import { isMuted, playCapture, playCheck, playCountdownTick, playLowTime, playMove as playMoveSfx, playNerf, setMuted } from "@/lib/sounds";
 
@@ -151,6 +158,15 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   };
 
   useEffect(() => setMutedState(isMuted()), []);
+
+  // Remember that this device is mid-game so the home page can offer a
+  // "rejoin" shortcut if the tab is closed; forget it once the game ends.
+  useEffect(() => {
+    saveActiveGame(start.id);
+  }, [start.id]);
+  useEffect(() => {
+    if (game?.result) clearActiveGame(start.id);
+  }, [game?.result, start.id]);
 
   useEffect(() => {
     premovesRef.current = premoves;
@@ -961,16 +977,18 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           className="grid min-h-0 flex-1 gap-y-2 lg:grid-cols-[280px_auto] lg:justify-center lg:gap-x-3"
           style={railHeightStyle}
         >
-          <aside className="hidden min-h-0 gap-3 overflow-y-auto lg:grid lg:h-[var(--board-height)] lg:grid-rows-[auto_minmax(8rem,1fr)_auto] lg:self-start">
+          <aside className="hidden min-h-0 gap-2 overflow-y-auto lg:grid lg:h-[var(--board-height)] lg:grid-rows-[auto_minmax(6rem,1fr)_auto] lg:self-start">
             <PlayerNerfCard
               board={boardForDisplay}
               playerColor={oppColor}
               myColor={myColor}
               name={oppName}
               elo={oppRating}
+              avatar={start.players?.[oppColor]?.avatar}
               nerf={opponentNerf}
               revealed={!!revealedOppNerf && (liveOppReveal || !uiSettings.hideOpponentReveal)}
               ownerLabel=""
+              compact
             />
             <div className="hidden min-h-0 lg:block">
               <ChatPanel
@@ -987,9 +1005,11 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                 myColor={myColor}
                 name={myName}
                 elo={myRating}
+                avatar={start.players?.[myColor]?.avatar}
                 nerf={myNerf}
                 ownerLabel=""
                 progress={myNerf.progress?.(myState, myCtx) ?? null}
+                compact
               />
               {revealControl}
               {ratingStakes && <RatingStakes stakes={ratingStakes} />}

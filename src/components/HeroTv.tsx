@@ -10,9 +10,22 @@ import { useLobbySnapshot } from "@/lib/lobbyClient";
 import { MPPlayers, MPSession } from "@/lib/multiplayer";
 import type { Color } from "@/engine/types";
 
+// The last archived game, fetched once for the no-live-games fallback.
+type RecentGame = {
+  id: string;
+  white_name: string;
+  black_name: string;
+  white_rating_before: number | null;
+  black_rating_before: number | null;
+  moves: string;
+  white_avatar: string | null;
+  black_avatar: string | null;
+};
+
 // Lichess-TV-style hero: when a real game is being played, the landing board
 // streams it live (top game = most watched, then longest running). With no
-// live games it falls back to the static demo position.
+// live games it shows the most recently finished game; the static demo
+// position only appears before anything has ever been played.
 export function HeroTv() {
   const lobby = useLobbySnapshot(10000);
   const topGameId = lobby?.games[0]?.id ?? null;
@@ -20,6 +33,23 @@ export function HeroTv() {
   const [moves, setMoves] = useState<string[]>([]);
   const [players, setPlayers] = useState<MPPlayers | null>(null);
   const [over, setOver] = useState(false);
+  const [recent, setRecent] = useState<RecentGame | null>(null);
+
+  // With nothing live, pull the latest finished game once so the board still
+  // shows real play instead of the canned demo position.
+  useEffect(() => {
+    if (!lobby || lobby.games.length > 0 || recent) return;
+    let cancelled = false;
+    fetch("/api/games/recent")
+      .then((res) => (res.ok ? (res.json() as Promise<{ game: RecentGame | null }>) : null))
+      .then((data) => {
+        if (!cancelled && data?.game) setRecent(data.game);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [lobby, recent]);
 
   // Keep watching a finished game briefly rather than cutting away mid-frame;
   // the next lobby poll supplies the replacement.
@@ -58,13 +88,35 @@ export function HeroTv() {
     };
   }, [streamId]);
 
-  const { board, history } = useMemo(() => replayUci(moves), [moves]);
+  const live = !!streamId && !!players;
+  const recentPlayers = useMemo<MPPlayers | null>(() => {
+    if (!recent) return null;
+    return {
+      w: {
+        name: recent.white_name,
+        rating: recent.white_rating_before ? Math.round(recent.white_rating_before) : null,
+        avatar: recent.white_avatar,
+      },
+      b: {
+        name: recent.black_name,
+        rating: recent.black_rating_before ? Math.round(recent.black_rating_before) : null,
+        avatar: recent.black_avatar,
+      },
+    };
+  }, [recent]);
+  const shownMoves = useMemo(
+    () => (live ? moves : recent?.moves ? recent.moves.split(" ").filter(Boolean) : []),
+    [live, moves, recent],
+  );
+  const { board, history } = useMemo(() => replayUci(shownMoves), [shownMoves]);
   const lastMove = history[history.length - 1] ?? null;
 
-  if (!streamId || !players) return <HeroBoard />;
+  const shownId = live ? streamId : recent?.id ?? null;
+  const shownPlayers = live ? players : recentPlayers;
+  if (!shownId || !shownPlayers) return <HeroBoard />;
 
   const seat = (color: Color) => {
-    const p = players[color];
+    const p = shownPlayers[color];
     return (
       <span className="flex min-w-0 items-center gap-2">
         <PlayerAvatar name={p.name} avatar={p.avatar} size={22} />
@@ -77,12 +129,12 @@ export function HeroTv() {
   };
 
   return (
-    <Link href={`/game/${streamId}`} className="block w-full max-w-[560px] mx-auto no-underline group">
+    <Link href={`/game/${shownId}`} className="block w-full max-w-[560px] mx-auto no-underline group">
       <div className="flex items-center justify-between gap-2 pb-1.5">
         {seat("b")}
         <span className="flex items-center gap-1.5 smallcaps text-[10px] text-parchment-300">
-          <span className={"h-2 w-2 rounded-full " + (over ? "bg-parchment-400" : "bg-oxblood-glow animate-flicker")} />
-          {over ? "Just finished" : "Live"}
+          <span className={"h-2 w-2 rounded-full " + (live && !over ? "bg-oxblood-glow animate-flicker" : "bg-parchment-400")} />
+          {live ? (over ? "Just finished" : "Live") : "Latest game"}
         </span>
       </div>
       <div className="border border-black/50 shadow-[0_24px_70px_-30px_rgba(0,0,0,0.85)] transition group-hover:border-gold/40">
@@ -100,7 +152,7 @@ export function HeroTv() {
       <div className="flex items-center justify-between gap-2 pt-1.5">
         {seat("w")}
         <span className="smallcaps text-[10px] text-parchment-400 transition group-hover:text-gold-leaf">
-          Watch →
+          {live ? "Watch →" : "Replay →"}
         </span>
       </div>
     </Link>

@@ -26,6 +26,7 @@ type Client = WebSocket & {
   spectatingId?: string;
 };
 type ChatEntry = { color: Color; name: string; text: string; at: number };
+type SpectatorChatEntry = { name: string; text: string; at: number };
 type Match = {
   id: string;
   setup: Setup;
@@ -41,6 +42,7 @@ type Match = {
   // the game URL and reclaim their seats (friend games wait for a join).
   autoStart?: boolean;
   chat: ChatEntry[];
+  spectatorChat: SpectatorChatEntry[];
   revealed: Partial<Record<Color, boolean>>;
   spectators: Set<Client>;
   createdAt: number;
@@ -111,7 +113,8 @@ function broadcast(match: Match, t: string, d?: unknown) {
 }
 
 function broadcastWatcherCount(match: Match) {
-  broadcast(match, "watchers", { n: match.spectators.size });
+  // The standalone server is account-less, so every watcher is anonymous.
+  broadcast(match, "watchers", { n: match.spectators.size, names: [] });
 }
 
 // Seat names shown in the UI. The standalone server has no accounts, so
@@ -275,6 +278,7 @@ function startQuickMatch(first: Client, second: Client, poolName: string, pool: 
     rematchOfferBy: null,
     autoStart: true,
     chat: [],
+    spectatorChat: [],
     revealed: {},
     spectators: new Set(),
     createdAt: Date.now(),
@@ -393,6 +397,8 @@ function watchMatch(client: Client, data: unknown) {
     started: !!match.game,
     result,
     watchers: match.spectators.size,
+    watcherNames: [],
+    spectatorChat: match.spectatorChat,
     // Hidden rules are only revealed to spectators once the game is over.
     ...(result ? { nerfs: { w: match.setup.whiteNerfId, b: match.setup.blackNerfId } } : {}),
   });
@@ -436,6 +442,23 @@ function chatMessage(client: Client, data: unknown) {
   broadcast(match, "chat", entry);
 }
 
+// Spectator-room chat: relayed only to the other watchers of the same game.
+function spectatorChatMessage(client: Client, data: unknown) {
+  const match = client.spectatingId ? matches.get(client.spectatingId) : undefined;
+  if (!match) return error(client, "not_watching", "Watch a game before chatting.");
+  const raw = String((data as { text?: unknown } | undefined)?.text ?? "").trim();
+  if (!raw) return;
+  const now = Date.now();
+  if (now - (lastChatAt.get(client) ?? 0) < 500) return;
+  lastChatAt.set(client, now);
+
+  const clipped = raw.slice(0, 200);
+  const text = findProfanity(clipped).length ? censorText(clipped) : clipped;
+  const entry: SpectatorChatEntry = { name: "Anonymous", text, at: now };
+  match.spectatorChat = [...match.spectatorChat, entry].slice(-50);
+  for (const spectator of match.spectators) send(spectator, "schat", entry);
+}
+
 function createMatch(client: Client, data: unknown) {
   if (client.matchId) return error(client, "already_joined", "This connection already belongs to a game.");
   const requested = (data || {}) as { timeSec?: unknown; incrementSec?: unknown };
@@ -462,6 +485,7 @@ function createMatch(client: Client, data: unknown) {
     drawOfferBy: null,
     rematchOfferBy: null,
     chat: [],
+    spectatorChat: [],
     revealed: {},
     spectators: new Set(),
     createdAt: Date.now(),
@@ -691,6 +715,8 @@ function onMessage(client: Client, raw: RawData) {
       return stopSpectating(client);
     case "chat":
       return chatMessage(client, frame.d);
+    case "schat":
+      return spectatorChatMessage(client, frame.d);
     case "reveal":
       return revealRule(client);
     case "p": {
