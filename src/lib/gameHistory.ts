@@ -88,6 +88,7 @@ export function recordCompletedGame(
 /** Lichess-style speed bucket for a base time in seconds (0 = no clock). */
 export function speedLabel(baseSec: number): string {
   if (baseSec <= 0) return "Unlimited";
+  if (baseSec < 30) return "UltraBullet";
   if (baseSec < 180) return "Bullet";
   if (baseSec < 600) return "Blitz";
   if (baseSec < 1800) return "Rapid";

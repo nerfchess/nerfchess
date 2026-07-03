@@ -42,6 +42,19 @@ export function isAvatarId(value: unknown): value is string {
   return typeof value === "string" && value in AVATARS;
 }
 
+// Uploaded profile pictures are stored inline as small data URLs (the client
+// crops + downscales to 96px before uploading), so no object storage is
+// needed. The size cap keeps list endpoints (leaderboard, lobby) light.
+export const CUSTOM_AVATAR_MAX_CHARS = 24_000;
+
+export function isCustomAvatar(value: unknown): value is string {
+  return (
+    typeof value === "string" &&
+    value.length <= CUSTOM_AVATAR_MAX_CHARS &&
+    /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(value)
+  );
+}
+
 /** The avatar to show: the stored preset when valid, else a stable default
  *  hashed from the username so the same player always looks the same. */
 export function avatarIdFor(name: string, stored?: string | null): string {

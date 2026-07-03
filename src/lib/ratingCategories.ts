@@ -6,9 +6,9 @@
 // NOTE: this only describes the *rating buckets*. Actual time controls and
 // matchmaking are intentionally out of scope for now.
 
-import { Flame, Timer, Zap, type LucideIcon } from "lucide-react";
+import { Flame, Rabbit, Rocket, Zap, type LucideIcon } from "lucide-react";
 
-export type RatingCategoryId = "bullet" | "blitz" | "rapid";
+export type RatingCategoryId = "ultrabullet" | "bullet" | "blitz" | "rapid";
 
 export interface RatingCategory {
   id: RatingCategoryId;
@@ -21,10 +21,13 @@ export interface RatingCategory {
   blurb: string;
 }
 
+// Lichess-style speed iconography: lightning for UltraBullet, a bullet-fast
+// rocket, fire for Blitz, and the rapid rabbit.
 export const RATING_CATEGORIES: RatingCategory[] = [
-  { id: "bullet", label: "Bullet", icon: Zap,   accent: "#c66860", blurb: "Lightning-fast games" },
-  { id: "blitz",  label: "Blitz",  icon: Flame, accent: "#4a9fee", blurb: "Fast, tactical games" },
-  { id: "rapid",  label: "Rapid",  icon: Timer, accent: "#7eb59a", blurb: "Room to think it through" },
+  { id: "ultrabullet", label: "UltraBullet", icon: Zap,    accent: "#b78fd6", blurb: "Pure reflexes — 15 seconds" },
+  { id: "bullet",      label: "Bullet",      icon: Rocket, accent: "#c66860", blurb: "Lightning-fast games" },
+  { id: "blitz",       label: "Blitz",       icon: Flame,  accent: "#4a9fee", blurb: "Fast, tactical games" },
+  { id: "rapid",       label: "Rapid",       icon: Rabbit, accent: "#7eb59a", blurb: "Room to think it through" },
 ];
 
 export const RATING_CATEGORY_IDS = RATING_CATEGORIES.map((c) => c.id);

@@ -27,6 +27,7 @@ References:
 | `move` | `{ "u": "e2e4", "ply": 0 }` | Submit a UCI move for server validation. |
 | `resign` | none | Resign the current game. |
 | `drawOffer` / `drawAccept` / `drawDecline` | none | Draw negotiation. |
+| `takebackOffer` / `takebackAccept` / `takebackDecline` | none | Takeback negotiation (casual games only; rated games reject with `takeback_rated`). Accepting rewinds the offerer's last move, plus the reply if one was already played. |
 | `rematch` | none | Offer (or accept a pending) rematch once the game is over. |
 | `queue` | `{ "pool": "3+2" }` | Join the rated quick-pairing pool (signed-in sockets only). |
 | `queueCancel` | none | Leave the pairing pool. |
@@ -50,6 +51,8 @@ References:
 | `watchers` | `{ "n" }` | Live spectator count, sent to players and watchers. |
 | `lobby` | `{ "players", "anonymous", "games" }` | Lobby snapshot reply. |
 | `drawOffer` / `drawDeclined` / `rematchOffer` / `rematched` | negotiation events | |
+| `takebackOffer` / `takebackDeclined` | `{ "color" }` | Takeback negotiation events. Moving past an opponent's request declines it. |
+| `takeback` | `{ "by", "moves", "ply", "wc", "bc" }` | Accepted takeback: the authoritative rewound move list — rebuild the game from it (players and spectators). |
 | `opponentGone` | none | Opponent websocket disconnected. |
 | `error` | `{ "code", "message" }` | Rejected request or illegal/stale move. |
 | `n` | optional clocks | Heartbeat reply. |

@@ -12,6 +12,7 @@ import { Nerf } from "@/engine/nerf";
 import { IMPLEMENTED_BY_ID } from "@/engine/nerfs/library";
 import { Color } from "@/engine/types";
 import { boardAtPly, replayUci } from "@/lib/gameReview";
+import { timeControlLabel } from "@/lib/gameHistory";
 import {
   clearOnlineSeat,
   loadOnlineSeat,
@@ -154,7 +155,11 @@ export default function OnlineGamePage() {
       <OnlineMatch
         session={sessionRef.current}
         start={mode.start}
-        subtitle={mode.start.rated ? "rated 3+2" : `game ${gameId}`}
+        subtitle={
+          mode.start.rated
+            ? `rated ${timeControlLabel(mode.start.timeSec, mode.start.incrementSec)}`
+            : `game ${gameId}`
+        }
         onExit={() => {
           clearOnlineSeat(gameId);
           window.location.href = "/play";
@@ -226,6 +231,11 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
       } else if (e.type === "clocks") {
         setWhiteMs(e.wc);
         setBlackMs(e.bc);
+      } else if (e.type === "takeback") {
+        setUciMoves(e.moves);
+        setWhiteMs(e.wc);
+        setBlackMs(e.bc);
+        setHistoryPly(null);
       } else if (e.type === "watchers") {
         setWatchers(e.n);
       } else if (e.type === "disconnected" || e.type === "reconnecting") {
@@ -264,6 +274,7 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
     <GameShell
       players={setup.players}
       rated={setup.rated}
+      timeControl={timeControlLabel(setup.timeSec, setup.incrementSec)}
       board={displayBoard}
       lastMove={lastMove}
       history={history}
@@ -303,6 +314,7 @@ function ReplayView({ game }: { game: ReplayGame }) {
     <GameShell
       players={players}
       rated={!!game.rated}
+      timeControl={timeControlLabel(game.time_sec, game.increment_sec)}
       board={displayBoard}
       lastMove={lastMove}
       history={history}
@@ -341,6 +353,7 @@ function NerfLine({ label, nerfId }: { label: string; nerfId: string }) {
 function GameShell({
   players,
   rated,
+  timeControl,
   board,
   lastMove,
   history,
@@ -355,6 +368,7 @@ function GameShell({
 }: {
   players: MPPlayers;
   rated: boolean;
+  timeControl?: string;
   board: ReturnType<typeof replayUci>["board"];
   lastMove: ReturnType<typeof replayUci>["history"][number] | null;
   history: ReturnType<typeof replayUci>["history"];
@@ -378,7 +392,7 @@ function GameShell({
       <div className="mx-auto w-full max-w-[1100px] px-3 pb-10 sm:px-6">
         <div className="mb-2 flex items-center justify-between gap-3">
           <div className="smallcaps text-[11px] text-parchment-400">
-            {rated ? "Rated 3+2 · " : ""}
+            {rated ? `Rated ${timeControl ? `${timeControl} · ` : ""}` : ""}
             {statusLabel}
           </div>
         </div>

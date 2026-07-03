@@ -35,6 +35,8 @@ type StoredMatch = {
   clocks: Record<Color, number>;
   runningSince: number | null;
   drawOfferBy: Color | null;
+  // Pending takeback request (casual games only).
+  takebackOfferBy?: Color | null;
   createdAt: number;
   startedAt: number | null;
   completedAt: number | null;
@@ -83,6 +85,9 @@ type ClientFrame =
   | { t: "drawOffer" }
   | { t: "drawAccept" }
   | { t: "drawDecline" }
+  | { t: "takebackOffer" }
+  | { t: "takebackAccept" }
+  | { t: "takebackDecline" }
   | { t: "queue"; d?: { pool?: unknown } }
   | { t: "queueCancel" }
   | { t: "watch"; d?: { id?: unknown } }
@@ -98,9 +103,19 @@ export interface Env {
   DB: D1Database;
 }
 
-// Quick-pairing pools for rated matchmaking.
+// Quick-pairing pools for rated matchmaking. Keys are the wire names clients
+// send; keep them in sync with QUEUE_POOL_OPTIONS in the QueueButton UI.
 const QUEUE_POOLS: Record<string, { timeSec: number; incrementSec: number }> = {
+  "15s+0": { timeSec: 15, incrementSec: 0 }, // ultrabullet
+  "1+0": { timeSec: 60, incrementSec: 0 },
+  "2+1": { timeSec: 120, incrementSec: 1 },
+  "3+0": { timeSec: 180, incrementSec: 0 },
   "3+2": { timeSec: 180, incrementSec: 2 },
+  "5+0": { timeSec: 300, incrementSec: 0 },
+  "5+3": { timeSec: 300, incrementSec: 3 },
+  "10+0": { timeSec: 600, incrementSec: 0 },
+  "10+5": { timeSec: 600, incrementSec: 5 },
+  "15+10": { timeSec: 900, incrementSec: 10 },
 };
 
 const socketPath = "/socket/v1";
@@ -254,6 +269,12 @@ export class GameServer extends DurableObject<Env> {
         return this.acceptDraw(ws);
       case "drawDecline":
         return this.declineDraw(ws);
+      case "takebackOffer":
+        return this.offerTakeback(ws);
+      case "takebackAccept":
+        return this.acceptTakeback(ws);
+      case "takebackDecline":
+        return this.declineTakeback(ws);
       case "queue":
         return this.queueJoin(ws, frame.d);
       case "queueCancel":
@@ -759,6 +780,11 @@ export class GameServer extends DurableObject<Env> {
       match.drawOfferBy = null;
       this.broadcast(match, "drawDeclined", { color: declinedBy });
     }
+    // Moving past an opponent's takeback request declines it.
+    if (match.takebackOfferBy && match.takebackOfferBy !== session.color) {
+      match.takebackOfferBy = null;
+      this.broadcast(match, "takebackDeclined", { color: session.color });
+    }
     const nextGame = playMove(game, move);
     match.moves.push(uci);
     if (match.setup.timeSec) match.clocks[session.color] += match.setup.incrementSec * 1000;
@@ -840,6 +866,88 @@ export class GameServer extends DurableObject<Env> {
     match.drawOfferBy = null;
     await this.saveMatch(match);
     this.broadcast(match, "drawDeclined", { color: session.color });
+  }
+
+  // ---------------- takebacks (casual games only) ----------------
+
+  // How many plies an accepted takeback removes: the offerer's last move,
+  // plus the opponent's reply if they already answered it.
+  private takebackPlies(match: StoredMatch, offerer: Color): number {
+    const lastMover: Color = match.moves.length % 2 === 1 ? "w" : "b";
+    return lastMover === offerer ? 1 : 2;
+  }
+
+  private async offerTakeback(ws: WebSocket) {
+    const session = this.session(ws);
+    const match = session.matchId ? await this.loadMatch(session.matchId) : null;
+    if (!match || !session.color) return error(ws, "no_game", "Join a game before requesting a takeback.");
+    if (await this.finishOnFlag(match)) return;
+    if (match.result) return;
+    if (match.rated) return error(ws, "takeback_rated", "Takebacks are not allowed in rated games.");
+    const myMoves = session.color === "w" ? Math.ceil(match.moves.length / 2) : Math.floor(match.moves.length / 2);
+    if (myMoves === 0) return error(ws, "no_moves", "You have no move to take back.");
+    if (this.takebackPlies(match, session.color) > match.moves.length) {
+      return error(ws, "no_moves", "You have no move to take back.");
+    }
+    if (match.takebackOfferBy === session.color) {
+      return error(ws, "takeback_pending", "Your takeback request is already pending.");
+    }
+    if (match.takebackOfferBy && match.takebackOfferBy !== session.color) return this.acceptTakeback(ws);
+
+    match.takebackOfferBy = session.color;
+    await this.saveMatch(match);
+    this.broadcast(match, "takebackOffer", { color: session.color });
+  }
+
+  private async acceptTakeback(ws: WebSocket) {
+    const session = this.session(ws);
+    const match = session.matchId ? await this.loadMatch(session.matchId) : null;
+    if (!match || !session.color) return error(ws, "no_game", "Join a game before accepting a takeback.");
+    if (await this.finishOnFlag(match)) return;
+    if (match.result) return;
+    const offerer = match.takebackOfferBy;
+    if (!offerer || offerer === session.color) {
+      return error(ws, "no_takeback_offer", "There is no takeback request to accept.");
+    }
+
+    const remove = this.takebackPlies(match, offerer);
+    if (remove > match.moves.length) {
+      match.takebackOfferBy = null;
+      await this.saveMatch(match);
+      return error(ws, "no_moves", "There is nothing to take back.");
+    }
+
+    const now = Date.now();
+    match.clocks = this.currentClocks(match, now);
+    match.moves = match.moves.slice(0, match.moves.length - remove);
+    match.takebackOfferBy = null;
+    match.runningSince = match.startedAt ? now : null;
+    await this.saveMatch(match);
+
+    const payload = {
+      by: offerer,
+      moves: match.moves,
+      ply: match.moves.length,
+      wc: Math.round(match.clocks.w),
+      bc: Math.round(match.clocks.b),
+    };
+    this.broadcast(match, "takeback", payload);
+    this.sendWatchers(match, "takeback", payload);
+  }
+
+  private async declineTakeback(ws: WebSocket) {
+    const session = this.session(ws);
+    const match = session.matchId ? await this.loadMatch(session.matchId) : null;
+    if (!match || !session.color) return error(ws, "no_game", "Join a game before declining a takeback.");
+    if (await this.finishOnFlag(match)) return;
+    if (match.result) return;
+    if (!match.takebackOfferBy || match.takebackOfferBy === session.color) {
+      return error(ws, "no_takeback_offer", "There is no takeback request to decline.");
+    }
+
+    match.takebackOfferBy = null;
+    await this.saveMatch(match);
+    this.broadcast(match, "takebackDeclined", { color: session.color });
   }
 
   // ---------------- matchmaking queue ----------------
