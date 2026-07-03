@@ -76,6 +76,14 @@ interface DragState {
 
 type RightClickMark = 1 | 2 | 3 | 4;
 
+const ORDERED_SQUARES_WHITE: Square[] = [];
+for (let r = 7; r >= 0; r--) {
+  for (let f = 0; f < 8; f++) {
+    ORDERED_SQUARES_WHITE.push(SQ(f, r));
+  }
+}
+const ORDERED_SQUARES_BLACK = [...ORDERED_SQUARES_WHITE].reverse();
+
 export function Board({
   board,
   legalMoves,
@@ -114,9 +122,12 @@ export function Board({
   const movesFrom = useMemo(() => {
     const m = new Map<Square, Move[]>();
     for (const mv of legalMoves) {
-      const list = m.get(mv.from) ?? [];
+      let list = m.get(mv.from);
+      if (!list) {
+        list = [];
+        m.set(mv.from, list);
+      }
       list.push(mv);
-      m.set(mv.from, list);
     }
     return m;
   }, [legalMoves]);
@@ -148,13 +159,12 @@ export function Board({
     return set;
   }, [selected, movesFrom]);
 
-  const orderedSquares: Square[] = [];
-  for (let r = 7; r >= 0; r--) {
-    for (let f = 0; f < 8; f++) {
-      orderedSquares.push(SQ(f, r));
-    }
-  }
-  if (orientation === "b") orderedSquares.reverse();
+  const orderedSquares = orientation === "w" ? ORDERED_SQUARES_WHITE : ORDERED_SQUARES_BLACK;
+  const bannedSquares = useMemo(() => new Set(visual?.bannedSquares ?? []), [visual?.bannedSquares]);
+  const highlightSquares = useMemo(
+    () => new Set(visual?.highlightSquares ?? []),
+    [visual?.highlightSquares],
+  );
 
   const squareAtClient = (clientX: number, clientY: number): Square | null => {
     const rect = gridRectRef.current ?? (() => {
@@ -380,14 +390,14 @@ export function Board({
             const isTarget = !!targets[sq] && !isCastleHint;
             const isCapture = isTarget && targets[sq].some((m) => !!m.captured);
             const targetRisk = isTarget ? riskOf(targets[sq], moveRisks) : null;
-            const banned = visual?.bannedSquares?.includes(sq);
+            const banned = bannedSquares.has(sq);
             const isDuck = visual?.duckSquare === sq;
             const underwater = visual?.waterRank ? RANK(sq) < visual.waterRank : false;
             const lastFrom = lastMove?.from === sq;
             const lastTo = lastMove?.to === sq;
             const isHover = hoverSq === sq && drag != null;
             const isDragging = drag?.from === sq;
-            const isForced = visual?.highlightSquares?.includes(sq);
+            const isForced = highlightSquares.has(sq);
             const isPremoveSquare = premoveSquares.has(sq);
             const rightClickMark = rightClickMarks[sq];
 

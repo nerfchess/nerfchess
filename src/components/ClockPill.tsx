@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
 export function formatClock(ms: number): string {
   const clamped = Math.max(0, ms);
   // Under 10s, show 1 decimal so the user can feel the rush.
@@ -10,10 +12,48 @@ export function formatClock(ms: number): string {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-export function ClockPill({ ms, active, compact = false }: { ms: number; active: boolean; compact?: boolean }) {
-  const low = ms < 30000;
-  const warning = ms < 15000;
-  const critical = ms < 10000;
+export function ClockPill({
+  ms,
+  active,
+  compact = false,
+  startDelayMs = 0,
+}: {
+  ms: number;
+  active: boolean;
+  compact?: boolean;
+  startDelayMs?: number;
+}) {
+  const [displayMs, setDisplayMs] = useState(ms);
+
+  useEffect(() => {
+    setDisplayMs(ms);
+    if (!active) return;
+
+    const startedAt = performance.now();
+    let raf = 0;
+    let timer = 0;
+
+    const update = () => {
+      const elapsed = Math.max(0, performance.now() - startedAt - startDelayMs);
+      setDisplayMs(Math.max(0, ms - elapsed));
+    };
+
+    const tick = () => {
+      update();
+      const nextDelay = ms < 10000 ? 100 : 250;
+      timer = window.setTimeout(tick, nextDelay);
+    };
+
+    raf = window.requestAnimationFrame(tick);
+    return () => {
+      window.cancelAnimationFrame(raf);
+      window.clearTimeout(timer);
+    };
+  }, [active, ms, startDelayMs]);
+
+  const low = displayMs < 30000;
+  const warning = displayMs < 15000;
+  const critical = displayMs < 10000;
   return (
     <div
       className={
@@ -37,7 +77,7 @@ export function ClockPill({ ms, active, compact = false }: { ms: number; active:
             : "text-parchment")
         }
       >
-        {formatClock(ms)}
+        {formatClock(displayMs)}
       </span>
     </div>
   );
