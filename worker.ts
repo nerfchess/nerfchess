@@ -1293,40 +1293,46 @@ export class GameServer extends DurableObject<Env> {
 
     // A human waiting alone in a pool gets picked up by a bot after a short
     // beat (a real opponent pairs instantly, so waiting means nobody came).
+    // Each pool is isolated: a storage/pairing hiccup in one must not skip the
+    // rest of orchestration (due moves, seek top-up, new bot games) below.
     for (const poolName of Object.keys(QUEUE_POOLS)) {
-      const key = this.queueKey(poolName);
-      const entries = (await this.ctx.storage.get<QueueEntry[]>(key)) ?? [];
-      const alive = entries.filter((entry) => this.socketForAttachment(entry.attachmentId));
-      if (alive.length !== entries.length) await this.ctx.storage.put(key, alive);
-      const waiting = alive[0];
-      if (!waiting || now - waiting.at < 4000) continue;
+      try {
+        const key = this.queueKey(poolName);
+        const entries = (await this.ctx.storage.get<QueueEntry[]>(key)) ?? [];
+        const alive = entries.filter((entry) => this.socketForAttachment(entry.attachmentId));
+        if (alive.length !== entries.length) await this.ctx.storage.put(key, alive);
+        const waiting = alive[0];
+        if (!waiting || now - waiting.at < 4000) continue;
 
-      // Prefer a bot already seeking this pool, then an idle bot, then a bot
-      // seeking some other pool (it switches) — a queued human always gets a
-      // game even when the roster is saturated.
-      let bot: BotSeat | undefined;
-      const seekIndex = seeks.findIndex((seek) => seek.pool === poolName);
-      if (seekIndex >= 0) bot = seats.get(seeks.splice(seekIndex, 1)[0].userId);
-      if (!bot) bot = free.pop();
-      if (!bot && seeks.length) bot = seats.get(seeks.shift()!.userId);
-      if (!bot) continue;
-      busy.add(bot.id);
-      const humanWs = this.socketForAttachment(waiting.attachmentId);
-      if (!humanWs) continue;
-      await this.ctx.storage.put(key, alive.slice(1));
-      await this.pairHumanWithBot(
-        {
-          id: waiting.userId,
-          name: waiting.username,
-          rating: waiting.rating,
-          rd: waiting.rd,
-          vol: waiting.vol,
-          avatar: waiting.avatar ?? null,
-        },
-        humanWs,
-        poolName,
-        bot,
-      );
+        // Prefer a bot already seeking this pool, then an idle bot, then a bot
+        // seeking some other pool (it switches) — a queued human always gets a
+        // game even when the roster is saturated.
+        let bot: BotSeat | undefined;
+        const seekIndex = seeks.findIndex((seek) => seek.pool === poolName);
+        if (seekIndex >= 0) bot = seats.get(seeks.splice(seekIndex, 1)[0].userId);
+        if (!bot) bot = free.pop();
+        if (!bot && seeks.length) bot = seats.get(seeks.shift()!.userId);
+        if (!bot) continue;
+        busy.add(bot.id);
+        const humanWs = this.socketForAttachment(waiting.attachmentId);
+        if (!humanWs) continue;
+        await this.ctx.storage.put(key, alive.slice(1));
+        await this.pairHumanWithBot(
+          {
+            id: waiting.userId,
+            name: waiting.username,
+            rating: waiting.rating,
+            rd: waiting.rd,
+            vol: waiting.vol,
+            avatar: waiting.avatar ?? null,
+          },
+          humanWs,
+          poolName,
+          bot,
+        );
+      } catch (err) {
+        console.error("bot human-pickup failed", poolName, err);
+      }
     }
 
     // Due moves and missing timers. Runs after the human pickup above so a
@@ -1340,21 +1346,40 @@ export class GameServer extends DurableObject<Env> {
     const due = liveBotMatches
       .filter((match) => match.botMoveAt && match.botMoveAt <= now)
       .sort((a, b) => Number(isFiller(a)) - Number(isFiller(b)) || (a.botMoveAt ?? 0) - (b.botMoveAt ?? 0));
+    // A game that throws while moving (engine edge case, corrupt record, D1
+    // hiccup) must never wedge the roster. Without isolation the failed match
+    // keeps its due botMoveAt, so every later tick re-hits it, re-throws, and
+    // never reaches the seek top-up / new-game code below — the house players
+    // drain out of the lobby and any human paired with a bot waits forever for
+    // a move. Retire the bad match instead so its bots free up and it drops
+    // out of the due list (skip re-arming it below so it isn't resurrected).
+    const retired = new Set<string>();
     let fillerPlayed = 0;
     for (const match of due) {
-      if (isFiller(match)) {
-        if (fillerPlayed >= 1) continue;
-        fillerPlayed++;
+      const filler = isFiller(match);
+      if (filler && fillerPlayed >= 1) continue;
+      try {
+        await this.playBotMoveNow(match, Date.now());
+        if (filler) fillerPlayed++;
+      } catch (err) {
+        console.error("bot move failed, retiring match", match.id, err);
+        retired.add(match.id);
+        try {
+          await this.deleteMatch(match);
+        } catch {}
       }
-      await this.playBotMoveNow(match, Date.now());
     }
     for (const match of liveBotMatches) {
-      if (match.botMoveAt || match.result) continue;
-      if (await this.finishOnFlag(match, now, false)) continue;
-      const turn: Color = match.moves.length % 2 === 0 ? "w" : "b";
-      if (!match.bots?.[turn]) continue;
-      this.armBotMove(match, now);
-      await this.saveMatch(match, false);
+      if (retired.has(match.id) || match.botMoveAt || match.result) continue;
+      try {
+        if (await this.finishOnFlag(match, now, false)) continue;
+        const turn: Color = match.moves.length % 2 === 0 ? "w" : "b";
+        if (!match.bots?.[turn]) continue;
+        this.armBotMove(match, now);
+        await this.saveMatch(match, false);
+      } catch (err) {
+        console.error("bot re-arm failed", match.id, err);
+      }
     }
 
     // Top up the lobby seeks to 2-3.
@@ -1385,12 +1410,16 @@ export class GameServer extends DurableObject<Env> {
     // Keep bot-vs-bot games running, starting at most one per tick with a
     // random gap so games don't all begin (and end) in lockstep.
     if (botVsBotCount < botTargetGames && free.length >= 2) {
-      const nextGameAt = (await this.ctx.storage.get<number>(botNextGameKey)) ?? 0;
-      if (now >= nextGameAt) {
-        const a = free.splice(randomInt(free.length), 1)[0];
-        const b = free.splice(randomInt(free.length), 1)[0];
-        await this.startBotVsBotGame(a, b);
-        await this.ctx.storage.put(botNextGameKey, now + 5000 + randomInt(40_000));
+      try {
+        const nextGameAt = (await this.ctx.storage.get<number>(botNextGameKey)) ?? 0;
+        if (now >= nextGameAt) {
+          const a = free.splice(randomInt(free.length), 1)[0];
+          const b = free.splice(randomInt(free.length), 1)[0];
+          await this.startBotVsBotGame(a, b);
+          await this.ctx.storage.put(botNextGameKey, now + 5000 + randomInt(40_000));
+        }
+      } catch (err) {
+        console.error("bot-vs-bot start failed", err);
       }
     }
   }
