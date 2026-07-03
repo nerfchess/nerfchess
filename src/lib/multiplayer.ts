@@ -4,6 +4,9 @@ export type MPPlayers = Record<Color, { name: string; rating: number | null; ava
 
 export type MPChatMessage = { color: Color; name: string; text: string; at: number };
 
+// Spectator-room chat: visible to watchers only, never to the players.
+export type MPSpectatorChatMessage = { name: string; text: string; at: number };
+
 // Projected rating movement for each outcome, computed by the server when a
 // rated game starts ("+8 / +0 / -8").
 export type MPRatingPreview = Record<Color, { win: number; draw: number; loss: number }>;
@@ -40,6 +43,9 @@ export type MPWatchStart = {
   result: { winner: Color | "draw" | null; reason: string } | null;
   nerfs?: Record<Color, string>;
   watchers?: number;
+  // Signed-in watcher usernames (anonymous watchers only count toward `watchers`).
+  watcherNames?: string[];
+  spectatorChat?: MPSpectatorChatMessage[];
 };
 
 // One lobby snapshot: who is online and which games can be watched.
@@ -117,9 +123,10 @@ export type MPEvent =
   | { type: "rematch-offer"; color: Color }
   | { type: "rematched"; id: string; color: Color; token: string }
   | { type: "chat"; message: MPChatMessage }
+  | { type: "spectator-chat"; message: MPSpectatorChatMessage }
   | { type: "rule-revealed"; color: Color; nerfId: string }
   | { type: "clocks"; wc: number; bc: number }
-  | { type: "watchers"; n: number }
+  | { type: "watchers"; n: number; names?: string[] }
   | { type: "lobby"; data: MPLobby }
   | { type: "opponent-gone" }
   | { type: "disconnected" }
@@ -143,8 +150,9 @@ type ServerFrame =
   | { t: "rematchOffer"; d: { color: Color } }
   | { t: "rematched"; d: { id: string; color: Color; token: string } }
   | { t: "chat"; d: MPChatMessage }
+  | { t: "schat"; d: MPSpectatorChatMessage }
   | { t: "reveal"; d: { color: Color; nerfId: string } }
-  | { t: "watchers"; d: { n: number } }
+  | { t: "watchers"; d: { n: number; names?: string[] } }
   | { t: "lobby"; d: MPLobby }
   | { t: "opponentGone" }
   | { t: "error"; d: { code?: string; message?: string } }
@@ -211,6 +219,44 @@ export function clearOnlineSeat(gameId: string) {
   if (typeof window === "undefined") return;
   try {
     window.localStorage.removeItem(SEAT_PREFIX + gameId);
+  } catch {}
+}
+
+// The game this device is currently playing, so other tabs/pages (the home
+// page in particular) can offer a "return to your game" shortcut after the
+// player wanders off or closes the tab mid-game.
+const ACTIVE_GAME_KEY = "nerfchess.activeGame.v1";
+const ACTIVE_GAME_TTL_MS = 24 * 60 * 60 * 1000;
+
+export type ActiveGame = { id: string; at: number };
+
+export function saveActiveGame(gameId: string) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(ACTIVE_GAME_KEY, JSON.stringify({ id: gameId, at: Date.now() }));
+  } catch {}
+}
+
+export function loadActiveGame(): ActiveGame | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(ACTIVE_GAME_KEY) || "null") as ActiveGame | null;
+    if (!parsed?.id || typeof parsed.at !== "number") return null;
+    if (Date.now() - parsed.at > ACTIVE_GAME_TTL_MS) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+export function clearActiveGame(gameId?: string) {
+  if (typeof window === "undefined") return;
+  try {
+    if (gameId) {
+      const current = loadActiveGame();
+      if (current && current.id !== gameId) return;
+    }
+    window.localStorage.removeItem(ACTIVE_GAME_KEY);
   } catch {}
 }
 
@@ -432,11 +478,14 @@ export class MPSession {
       case "chat":
         this.emit({ type: "chat", message: frame.d });
         break;
+      case "schat":
+        this.emit({ type: "spectator-chat", message: frame.d });
+        break;
       case "reveal":
         this.emit({ type: "rule-revealed", color: frame.d.color, nerfId: frame.d.nerfId });
         break;
       case "watchers":
-        this.emit({ type: "watchers", n: frame.d.n });
+        this.emit({ type: "watchers", n: frame.d.n, names: frame.d.names });
         break;
       case "lobby":
         this.emit({ type: "lobby", data: frame.d });
@@ -592,6 +641,11 @@ export class MPSession {
 
   sendChat(text: string): boolean {
     return this.sendFrame("chat", { text });
+  }
+
+  // Chat in the spectator room (only reaches other watchers).
+  sendSpectatorChat(text: string): boolean {
+    return this.sendFrame("schat", { text });
   }
 
   // Voluntarily show my rule to the opponent (and any spectators).

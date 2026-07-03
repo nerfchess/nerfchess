@@ -358,6 +358,9 @@ function GamePage() {
       moves: game.board.history.map(moveToUCI),
       serverGameId: null,
     });
+    // Bot games never touch the game server, so tell the site counter about
+    // this one; the home "games played" stat includes bot games.
+    fetch("/api/games/bot", { method: "POST" }).catch(() => {});
   }, [game, myColor, difficulty, rated, initialTimeMs, incrementMs]);
 
   // Execute the head of the premove queue when our turn returns. If the head

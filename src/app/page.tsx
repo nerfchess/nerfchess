@@ -7,6 +7,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { ALL_NERFS, PLAYABLE_NERFS } from "@/engine/nerfs/library";
 import type { Nerf } from "@/engine/nerf";
 import { useLobbySnapshot } from "@/lib/lobbyClient";
+import { ActiveGame, loadActiveGame } from "@/lib/multiplayer";
 import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
 
 // Real library count, computed once. Feeds the social proof strip so the
@@ -24,11 +25,6 @@ const EXAMPLE_RULE_IDS = [
   "abstinence",
 ];
 
-function rollNerf(): Nerf {
-  const pool = PLAYABLE_NERFS.filter((n) => n.id !== "lucky");
-  return pool[Math.floor(Math.random() * pool.length)];
-}
-
 function exampleRules(): Nerf[] {
   const byId = new Map(ALL_NERFS.map((n) => [n.id, n]));
   const picked = EXAMPLE_RULE_IDS.map((id) => byId.get(id)).filter(
@@ -40,11 +36,6 @@ function exampleRules(): Nerf[] {
 }
 
 export default function HomePage() {
-  // Rolled on the client after mount to avoid a hydration mismatch, and so the
-  // "secret rule" feels alive: it changes on every visit.
-  const [nerf, setNerf] = useState<Nerf | null>(null);
-  useEffect(() => setNerf(rollNerf()), []);
-
   return (
     <main className="min-h-screen flex flex-col">
       <SiteHeader />
@@ -54,19 +45,20 @@ export default function HomePage() {
           <HeroTv />
         </div>
 
+        {/* The action column is kept short on purpose: it should never run
+            taller than the board beside it. */}
         <div className="order-2">
-          <h1 className="font-display text-3xl sm:text-4xl font-bold leading-[1.1] text-parchment-50">
-            Chess, but every game gives you a secret rule.
-          </h1>
-          <p className="mt-3 text-base sm:text-lg leading-relaxed text-parchment-200">
+          <p className="text-lg sm:text-xl leading-relaxed text-parchment-100">
             You get a hidden restriction on how your pieces can move. So does
             your opponent. Neither of you knows the other&apos;s rule. There is no
             checkmate: you win by capturing the king.
           </p>
 
+          <ReturnToGameBanner />
+
           {/* Action hierarchy: playing a real person is THE flow. One big
               glowing primary into the lobby, two quieter options below it. */}
-          <div className="mt-7 flex flex-col gap-3">
+          <div className="mt-5 flex flex-col gap-3">
             <Link
               href="/lobby"
               className="btn-leaf btn-cta w-full flex items-center justify-center gap-3 px-8 py-5 font-display text-xl sm:text-2xl font-semibold"
@@ -104,8 +96,6 @@ export default function HomePage() {
             <span aria-hidden className="opacity-30">·</span>
             <Link href="/codex" className="hover:text-parchment-100 transition-colors">Browse the rules</Link>
           </div>
-
-          <SecretRulePreview nerf={nerf} />
         </div>
       </section>
 
@@ -143,48 +133,24 @@ function LiveNowStrip() {
   );
 }
 
-// A quiet "dealt card" beside the play action: one rule drawn from the deck so
-// a first visitor sees what a secret rule looks like without any extra chrome.
-function SecretRulePreview({ nerf }: { nerf: Nerf | null }) {
+// If this device has a game in progress (tab closed mid-game, wandered home),
+// offer the way back in. The record is written when an online game starts and
+// cleared when it ends.
+function ReturnToGameBanner() {
+  const [active, setActive] = useState<ActiveGame | null>(null);
+  useEffect(() => setActive(loadActiveGame()), []);
+  if (!active) return null;
   return (
-    <div
-      className={
-        "plate relative mt-9 overflow-hidden border p-4 sm:p-5 " +
-        (nerf ? `tier-bg-${nerf.tier}` : "border-white/10")
-      }
+    <Link
+      href={`/game/${active.id}`}
+      className="plate mt-4 flex items-center justify-between gap-3 border border-gold/40 bg-gold/10 p-3 px-4 no-underline transition-colors hover:border-gold/70"
     >
-      <span className="card-corner tl" />
-      <span className="card-corner br" />
-      <div className="flex items-center justify-between gap-3">
-        <span className="smallcaps text-[10px] text-parchment-400">From the deck</span>
-        {nerf && (
-          <span
-            className={`shrink-0 inline-flex items-center gap-1 border px-2 py-0.5 font-display text-xs font-bold tier-bg-${nerf.tier} tier-${nerf.tier}`}
-            title={`Difficulty ${nerf.tier}: ${TIER_LABEL[nerf.tier]}`}
-          >
-            <span aria-hidden>{TIER_ROMAN[nerf.tier]}</span>
-            <span>{TIER_LABEL[nerf.tier]}</span>
-          </span>
-        )}
-      </div>
-      <div className="mt-2 min-h-[4.25rem]">
-        {nerf ? (
-          <>
-            <div className={`font-display text-xl font-semibold leading-tight tier-${nerf.tier}`}>
-              {nerf.name}
-            </div>
-            <p className="mt-1.5 text-sm leading-snug text-parchment-200">
-              {nerf.description}
-            </p>
-          </>
-        ) : (
-          <div className="text-sm text-parchment-400">Shuffling the deck…</div>
-        )}
-      </div>
-      <p className="mt-3 border-t border-white/10 pt-2.5 text-xs leading-relaxed text-parchment-400">
-        Every game deals you a rule like this. Yours stays secret until the game ends.
-      </p>
-    </div>
+      <span className="flex items-center gap-2 text-sm text-parchment-100">
+        <span className="w-2 h-2 rounded-full bg-gold-leaf animate-flicker" />
+        You have a game in progress.
+      </span>
+      <span className="smallcaps text-[10px] text-gold-leaf">Rejoin →</span>
+    </Link>
   );
 }
 
@@ -333,14 +299,6 @@ function ExampleRules() {
           </li>
         ))}
       </ul>
-      <div className="mt-6 flex justify-center">
-        <Link
-          href="/lobby"
-          className="btn-leaf inline-flex items-center gap-2 px-8 py-3.5 font-display text-lg font-semibold"
-        >
-          Deal me a rule and play
-        </Link>
-      </div>
     </section>
   );
 }

@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { Nerf } from "@/engine/nerf";
 import { BoardState, Color } from "@/engine/types";
 import { Piece } from "@/components/Pieces";
+import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { capturedPiecesFor, capturedValue, opponentOf } from "@/lib/material";
 
 import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
@@ -14,11 +15,15 @@ interface Props {
   myColor: Color;
   name: string;
   elo?: number | null;
+  avatar?: string | null;
   nerf: Nerf;
   revealed?: boolean;
   ownerLabel: string;
   progress?: { value: number; max: number; label: string } | null;
   action?: ReactNode;
+  // Tighter paddings/typography for the in-game rail, so the whole rail fits
+  // beside the board without scrolling.
+  compact?: boolean;
 }
 
 export function PlayerNerfCard({
@@ -27,11 +32,13 @@ export function PlayerNerfCard({
   myColor,
   name,
   elo,
+  avatar,
   nerf,
   revealed = true,
   ownerLabel,
   progress,
   action,
+  compact = false,
 }: Props) {
   const pieces = capturedPiecesFor(board, playerColor);
   const mineValue = capturedValue(capturedPiecesFor(board, myColor));
@@ -42,25 +49,33 @@ export function PlayerNerfCard({
   const isMe = playerColor === myColor;
   const initial = name.trim().charAt(0).toUpperCase() || "?";
 
+  const showAvatar = name !== "Anonymous" && name !== "You";
+
   return (
     <section
       className={
-        "relative plate overflow-hidden border p-4 " +
+        "relative plate overflow-hidden border " +
+        (compact ? "p-3 " : "p-4 ") +
         (revealed ? `tier-bg-${nerf.tier}` : "border-white/10 bg-ink-900/45")
       }
     >
       <div className="flex items-start gap-3">
-        <div
-          className={
-            "grid h-9 w-9 shrink-0 place-items-center rounded-md border font-display text-xs font-semibold " +
-            (isMe
-              ? "border-gold/60 bg-gold/20 text-gold-leaf"
-              : "border-bruise/60 bg-bruise/20 text-bruise-glow")
-          }
-          aria-hidden="true"
-        >
-          {initial}
-        </div>
+        {showAvatar ? (
+          <PlayerAvatar name={name} avatar={avatar} size={compact ? 32 : 36} />
+        ) : (
+          <div
+            className={
+              "grid shrink-0 place-items-center rounded-md border font-display text-xs font-semibold " +
+              (compact ? "h-8 w-8 " : "h-9 w-9 ") +
+              (isMe
+                ? "border-gold/60 bg-gold/20 text-gold-leaf"
+                : "border-bruise/60 bg-bruise/20 text-bruise-glow")
+            }
+            aria-hidden="true"
+          >
+            {initial}
+          </div>
+        )}
         <div className="min-w-0 flex-1">
           <div className="truncate font-display text-base font-semibold leading-tight text-parchment">
             {name}
@@ -93,7 +108,7 @@ export function PlayerNerfCard({
         </div>
       </div>
 
-      <div className="my-4 h-px bg-white/10" />
+      <div className={(compact ? "my-2.5" : "my-4") + " h-px bg-white/10"} />
 
       {revealed ? (
         <>
@@ -102,7 +117,7 @@ export function PlayerNerfCard({
               {ownerLabel && (
                 <div className="smallcaps text-[10px] text-parchment-400">{ownerLabel}</div>
               )}
-              <div className={`font-display text-2xl leading-tight tier-${nerf.tier}`}>
+              <div className={`font-display ${compact ? "text-lg" : "text-2xl"} leading-tight tier-${nerf.tier}`}>
                 {nerf.name}
               </div>
             </div>
@@ -113,10 +128,20 @@ export function PlayerNerfCard({
               {TIER_ROMAN[nerf.tier]}
             </span>
           </div>
-          <div className="rule-ornament my-3 text-[10px]">
-            <span className="font-display">{TIER_LABEL[nerf.tier]}</span>
-          </div>
-          <p className="text-[15px] leading-relaxed text-parchment/95">{nerf.description}</p>
+          {!compact && (
+            <div className="rule-ornament my-3 text-[10px]">
+              <span className="font-display">{TIER_LABEL[nerf.tier]}</span>
+            </div>
+          )}
+          <p
+            className={
+              compact
+                ? "mt-2 text-[13px] leading-snug text-parchment/95"
+                : "text-[15px] leading-relaxed text-parchment/95"
+            }
+          >
+            {nerf.description}
+          </p>
           {progress && progress.max > 0 && (
             <div className="mt-3">
               <div className="mb-1 flex items-center justify-between">
@@ -131,7 +156,7 @@ export function PlayerNerfCard({
               </div>
             </div>
           )}
-          {nerf.flavor && (
+          {nerf.flavor && !compact && (
             <p className="mt-3 border-l-2 border-white/15 pl-3 font-display text-[13px] text-parchment-300/85">
               &ldquo;{nerf.flavor}&rdquo;
             </p>
