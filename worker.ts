@@ -649,11 +649,18 @@ export class GameServer extends DurableObject<Env> {
     return color === "w" ? Math.ceil(match.moves.length / 2) : Math.floor(match.moves.length / 2);
   }
 
+  // Whose turn it is. Turns always alternate w, b, w, … (no nerf skips a
+  // turn), so this is pure move-count parity — no need to replay the game.
+  // Keeping clock and flag checks off the replay path is what stops the
+  // single-threaded Durable Object from stalling live sockets and the lobby.
+  private activeColor(match: StoredMatch): Color {
+    return match.moves.length % 2 === 0 ? "w" : "b";
+  }
+
   private currentClocks(match: StoredMatch, now = Date.now()): Record<Color, number> {
     const clocks = { ...match.clocks };
-    const game = this.gameFromMatch(match);
-    if (!match.setup.timeSec || !game || game.result || match.runningSince === null) return clocks;
-    const active = game.board.turn;
+    if (!match.setup.timeSec || match.result || !match.startedAt || match.runningSince === null) return clocks;
+    const active = this.activeColor(match);
     let elapsed = now - match.runningSince;
     // Start-of-game grace: the first move of each side gets 10 free seconds.
     if (this.movesByColor(match, active) === 0) {
@@ -664,10 +671,9 @@ export class GameServer extends DurableObject<Env> {
   }
 
   private async finishOnFlag(match: StoredMatch, now = Date.now(), schedule = true): Promise<boolean> {
-    const game = this.gameFromMatch(match);
-    if (!game || game.result || !match.setup.timeSec) return false;
+    if (!match.startedAt || match.result || !match.setup.timeSec) return false;
     const clocks = this.currentClocks(match, now);
-    const active = game.board.turn;
+    const active = this.activeColor(match);
     if (clocks[active] > 0) return false;
 
     match.clocks = clocks;
@@ -1079,10 +1085,12 @@ export class GameServer extends DurableObject<Env> {
     const color = game.board.turn;
     if (!match.bots?.[color]) return;
 
-    // Full-strength search whenever a human sits at the table; bot-vs-bot
-    // games use the faster search so the tick loop stays cheap.
+    // Full-strength search whenever a human sits at the table (these are rare,
+    // so the occasional ~2s block is fine). Bot-vs-bot filler games run a
+    // hard-capped search so a move never ties up the single-threaded Durable
+    // Object long enough to stall live sockets or the lobby poll.
     const botVsBot = !!(match.bots.w && match.bots.b);
-    const move = pickAIMove(game, botVsBot ? "medium" : "hard");
+    const move = botVsBot ? pickAIMove(game, "hard", 150) : pickAIMove(game, "hard");
     if (!move) {
       // No legal move but no result — should be unreachable; resign to avoid
       // wedging the match.
@@ -1308,19 +1316,22 @@ export class GameServer extends DurableObject<Env> {
     }
 
     // Due moves and missing timers. Runs after the human pickup above so a
-    // waiting player is never stuck behind a batch of engine searches, and
-    // plays at most a couple of engine moves per tick — the rest re-fire on
-    // the next alarm (candidateAlarm clamps overdue timers to ~now) so each
-    // tick stays short and move timing stays honest. Games with a human get
-    // priority so their opponent never feels laggy.
+    // waiting player is never stuck behind engine searches. Each tick stays
+    // short by design: every human-facing move is played (there are only ever
+    // a handful of those and they must feel responsive), but at most one
+    // bot-vs-bot filler move runs per tick — the rest re-fire on the next
+    // alarm (candidateAlarm clamps overdue timers to ~now), so the Durable
+    // Object never blocks on a long batch of searches.
+    const isFiller = (match: StoredMatch) => !!(match.bots?.w && match.bots?.b);
     const due = liveBotMatches
       .filter((match) => match.botMoveAt && match.botMoveAt <= now)
-      .sort((a, b) => {
-        const aHuman = a.bots?.w && a.bots?.b ? 1 : 0;
-        const bHuman = b.bots?.w && b.bots?.b ? 1 : 0;
-        return aHuman - bHuman || (a.botMoveAt ?? 0) - (b.botMoveAt ?? 0);
-      });
-    for (const match of due.slice(0, 2)) {
+      .sort((a, b) => Number(isFiller(a)) - Number(isFiller(b)) || (a.botMoveAt ?? 0) - (b.botMoveAt ?? 0));
+    let fillerPlayed = 0;
+    for (const match of due) {
+      if (isFiller(match)) {
+        if (fillerPlayed >= 1) continue;
+        fillerPlayed++;
+      }
       await this.playBotMoveNow(match, Date.now());
     }
     for (const match of liveBotMatches) {
@@ -1944,10 +1955,10 @@ export class GameServer extends DurableObject<Env> {
 
   private candidateAlarm(match: StoredMatch, now = Date.now()): number | null {
     const candidates: number[] = [];
-    const game = this.gameFromMatch(match);
-    if (match.setup.timeSec && game && !game.result && match.runningSince !== null) {
-      const grace = this.movesByColor(match, game.board.turn) === 0 ? firstMoveGraceMs : 0;
-      candidates.push(match.runningSince + match.clocks[game.board.turn] + grace);
+    if (match.setup.timeSec && match.startedAt && !match.result && match.runningSince !== null) {
+      const active = this.activeColor(match);
+      const grace = this.movesByColor(match, active) === 0 ? firstMoveGraceMs : 0;
+      candidates.push(match.runningSince + match.clocks[active] + grace);
     }
     for (const color of ["w", "b"] as Color[]) {
       const disconnectedAt = match.disconnectedAt[color];

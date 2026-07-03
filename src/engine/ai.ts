@@ -144,7 +144,10 @@ const MAX_DEPTH: Record<AILevel, number> = { easy: 1, medium: 5, hard: 8 };
 // hanging material instead of moving at random.
 const EASY_NOISE = 60;
 
-export function pickAIMove(game: NerfGame, level: AILevel): Move | null {
+// `overrideBudgetMs` caps the search time regardless of level, used by the
+// game server's house players so a bot-vs-bot move never blocks the (single
+// threaded) Durable Object long enough to stall live sockets or the lobby.
+export function pickAIMove(game: NerfGame, level: AILevel, overrideBudgetMs?: number): Move | null {
   const all = legalMoves(game);
   if (!all.length) return null;
   const safe = all.filter((m) => !isSelfLosing(game, m));
@@ -168,7 +171,7 @@ export function pickAIMove(game: NerfGame, level: AILevel): Move | null {
   }
 
   const opp: Color = me === "w" ? "b" : "w";
-  const budget = TIME_BUDGET_MS[level];
+  const budget = overrideBudgetMs ?? TIME_BUDGET_MS[level];
   const maxDepth = MAX_DEPTH[level];
   const start = Date.now();
   const state = newSearchState();

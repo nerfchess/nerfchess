@@ -37,15 +37,24 @@ export default function LobbyPage() {
     session.persistFriendSession = false;
     session.autoReconnect = false; // fetchLobby reconnects on demand
     sessionRef.current = session;
+    // The game server runs on a single-threaded Durable Object, so a snapshot
+    // can occasionally arrive late. Keep showing the last good snapshot and
+    // only surface the error banner after a couple of misses in a row, so a
+    // one-off blip doesn't flap "can't reach the game server" at the player.
+    let failures = 0;
     const poll = async () => {
       try {
         const data = await session.fetchLobby();
         if (!cancelled) {
+          failures = 0;
           setLobby(data);
           setLobbyError(null);
         }
       } catch {
-        if (!cancelled) setLobbyError("Can't reach the game server right now.");
+        if (!cancelled) {
+          failures++;
+          if (failures >= 2) setLobbyError("Can't reach the game server right now.");
+        }
       }
     };
     poll();
