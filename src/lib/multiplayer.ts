@@ -59,12 +59,23 @@ export type MPLobbyChallenge = {
   incrementSec: number;
   createdAt: number;
 };
+// A player waiting in a quick-pairing pool; queueing into the same pool pairs
+// with them immediately.
+export type MPLobbySeek = {
+  pool: string;
+  name: string;
+  rating: number | null;
+  timeSec: number;
+  incrementSec: number;
+  at: number;
+};
 export type MPLobby = {
   players: MPLobbyPlayer[];
   anonymous: number;
   games: MPLobbyGame[];
   // Optional so lobby snapshots from an older server still parse.
   challenges?: MPLobbyChallenge[];
+  seeks?: MPLobbySeek[];
 };
 
 export type MPAcceptedMove = {

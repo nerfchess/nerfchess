@@ -3,16 +3,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Logo } from "@/components/Logo";
-import { CategoryTabs } from "@/components/ratings/CategoryTabs";
-import { RatingCard } from "@/components/ratings/RatingCard";
-import { StatGrid } from "@/components/ratings/StatGrid";
-import {
-  DEFAULT_CATEGORY,
-  RATING_CATEGORIES,
-  getCategory,
-  type RatingCategoryId,
-} from "@/lib/ratingCategories";
-import { DEFAULT_STATS, loadRatings, type Ratings } from "@/lib/ratings";
+import { PlayerStatsPanel } from "@/components/PlayerStatsPanel";
+import type { PlayerStats } from "@/lib/playerStats";
 import { AccountUser, fetchMe } from "@/lib/authClient";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { AVATAR_IDS, avatarIdFor, CUSTOM_AVATAR_MAX_CHARS, isCustomAvatar } from "@/lib/avatars";
@@ -57,8 +49,7 @@ async function fileToAvatarDataUrl(file: File): Promise<string> {
 }
 
 export default function ProfilePage() {
-  const [ratings, setRatings] = useState<Ratings | null>(null);
-  const [active, setActive] = useState<RatingCategoryId>(DEFAULT_CATEGORY);
+  const [stats, setStats] = useState<PlayerStats | null>(null);
   const [account, setAccount] = useState<AccountUser | null | undefined>(undefined);
   const [savingAvatar, setSavingAvatar] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
@@ -95,10 +86,6 @@ export default function ProfilePage() {
     }
   };
 
-  useEffect(() => {
-    setRatings(loadRatings());
-  }, []);
-
   // The online rating lives on the account (server-side) and moves after every
   // rated game, so fetch it fresh on mount and again whenever the tab regains
   // focus — e.g. right after finishing a game in another tab.
@@ -106,7 +93,15 @@ export default function ProfilePage() {
     let cancelled = false;
     const refresh = () => {
       fetchMe().then((me) => {
-        if (!cancelled) setAccount(me);
+        if (cancelled) return;
+        setAccount(me);
+        if (!me) return;
+        fetch(`/api/users/${encodeURIComponent(me.username)}/stats`)
+          .then((res) => (res.ok ? (res.json() as Promise<{ stats: PlayerStats }>) : null))
+          .then((data) => {
+            if (!cancelled && data) setStats(data.stats);
+          })
+          .catch(() => {});
       });
     };
     refresh();
@@ -116,8 +111,6 @@ export default function ProfilePage() {
       window.removeEventListener("focus", refresh);
     };
   }, []);
-
-  const activeCategory = getCategory(active);
 
   return (
     <main className="min-h-screen">
@@ -147,7 +140,7 @@ export default function ProfilePage() {
             <p className="text-sm text-parchment-400">
               {account
                 ? "Your online rating updates after every rated game."
-                : "Your ratings and record, stored on this device."}
+                : "Sign in to build a rating and record that follow you everywhere."}
             </p>
           </div>
         </div>
@@ -229,7 +222,13 @@ export default function ProfilePage() {
                   {Math.round(account.rating)}
                 </div>
                 <div className="mt-1 smallcaps text-[10px] text-parchment-400">
-                  Rated 3+2 · {account.games} game{account.games === 1 ? "" : "s"}
+                  <span aria-hidden className="mr-1">🎖️</span>
+                  {account.games} rated game{account.games === 1 ? "" : "s"}
+                  {stats?.highest && (
+                    <span className="ml-2">
+                      <span aria-hidden className="mr-1">📈</span>peak {Math.round(stats.highest.rating)}
+                    </span>
+                  )}
                 </div>
               </div>
               <div className="flex gap-5 text-center">
@@ -256,47 +255,26 @@ export default function ProfilePage() {
           </div>
         )}
 
-        {/* Ratings section */}
+        {/* Detailed statistics, computed from every recorded online game. */}
         <div className="mt-8">
           <div className="rule-ornament mb-4">
-            <span className="font-display">Ratings</span>
+            <span className="font-display">📊 Statistics</span>
           </div>
-          <div className="grid gap-3 sm:grid-cols-3">
-            {RATING_CATEGORIES.map((c) => (
-              <RatingCard
-                key={c.id}
-                categoryId={c.id}
-                stats={ratings ? ratings[c.id] : DEFAULT_STATS}
-                variant="large"
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* Detailed statistics, per category */}
-        <div className="mt-8">
-          <div className="flex items-center justify-between gap-4 mb-4">
-            <div className="rule-ornament flex-1">
-              <span className="font-display">Statistics</span>
+          {account === undefined ? (
+            <div className="plate p-5 text-sm text-parchment-400">Loading…</div>
+          ) : !account ? (
+            <div className="plate p-5 text-sm text-parchment-300">
+              <Link href="/login?next=/profile" className="text-gold-leaf hover:underline">
+                Sign in
+              </Link>{" "}
+              to track detailed statistics: streaks, best victories, time played, and more.
             </div>
-          </div>
-
-          <CategoryTabs value={active} onChange={setActive} className="mb-4" />
-
-          <div className="plate p-4 sm:p-5">
-            <div className="mb-3 flex items-center gap-2">
-              <activeCategory.icon className="h-4 w-4" style={{ color: activeCategory.accent }} strokeWidth={2.2} />
-              <span className="font-display text-lg text-parchment-50">{activeCategory.label}</span>
-              <span className="text-xs text-parchment-400">· {activeCategory.blurb}</span>
-            </div>
-            {ratings && <StatGrid categoryId={active} stats={ratings[active]} />}
-          </div>
+          ) : !stats ? (
+            <div className="plate p-5 text-sm text-parchment-400">Crunching your games…</div>
+          ) : (
+            <PlayerStatsPanel stats={stats} />
+          )}
         </div>
-
-        <p className="mt-6 text-xs text-parchment-500">
-          Separate ratings per category are ready for upcoming rated queues. For now only your
-          Blitz rating updates from games; Bullet and Rapid start at their defaults.
-        </p>
       </section>
     </main>
   );

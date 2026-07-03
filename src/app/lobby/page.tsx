@@ -7,8 +7,9 @@ import { AccountChip } from "@/components/AccountChip";
 import { Logo } from "@/components/Logo";
 import { QueueButton } from "@/components/QueueButton";
 import { AccountUser, fetchMe } from "@/lib/authClient";
-import { MPLobby, MPLobbyChallenge, MPLobbyGame, MPSession } from "@/lib/multiplayer";
+import { MPLobby, MPLobbyChallenge, MPLobbyGame, MPLobbySeek, MPSession, saveOnlineSeat } from "@/lib/multiplayer";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
+import { categoryForTimeControl, getCategory } from "@/lib/ratingCategories";
 
 // The lobby: the central place to find a game. Shows who is online, the games
 // being played right now (click to watch), and every way to start playing.
@@ -59,6 +60,44 @@ export default function LobbyPage() {
   }, []);
 
   const onlineCount = lobby ? lobby.players.length + lobby.anonymous : null;
+  const seeks = lobby?.seeks ?? [];
+  const challenges = lobby?.challenges ?? [];
+  const waitingCount = seeks.length + challenges.length;
+
+  // Answer a quick-pairing seek by queueing into the same pool: the server
+  // pairs with the first waiting player immediately. A timeout covers the
+  // race where the seeker left between the last poll and the click.
+  const [joiningPool, setJoiningPool] = useState<string | null>(null);
+  const joinSeek = async (pool: string) => {
+    if (!user) {
+      router.push("/login?next=/lobby");
+      return;
+    }
+    if (joiningPool) return;
+    setJoiningPool(pool);
+    const session = new MPSession();
+    session.persistFriendSession = false;
+    try {
+      const paired = await Promise.race([
+        session.queue(pool),
+        new Promise<never>((_, reject) =>
+          window.setTimeout(() => reject(new Error("seek_gone")), 10000),
+        ),
+      ]);
+      saveOnlineSeat(paired.id, { color: paired.color, token: paired.token });
+      session.destroy();
+      router.push(`/game/${paired.id}`);
+    } catch (e) {
+      session.cancelQueue();
+      session.destroy();
+      setJoiningPool(null);
+      setLobbyError(
+        e instanceof Error && e.message === "seek_gone"
+          ? "That player is no longer waiting — try quick pairing instead."
+          : "Could not join that game right now.",
+      );
+    }
+  };
 
   return (
     <main className="min-h-screen pb-16">
@@ -135,24 +174,35 @@ export default function LobbyPage() {
               </div>
             </div>
 
-            {/* Open challenges: friend games waiting for an opponent. */}
+            {/* Open challenges: players waiting in a quick-pairing pool plus
+                friend games waiting for an opponent. */}
             <div className="plate p-5 sm:p-6">
               <div className="flex items-center justify-between gap-3">
                 <div className="font-display text-2xl text-parchment">Open challenges</div>
                 <span className="smallcaps text-[10px] text-parchment-400">
-                  {lobby ? `${(lobby.challenges ?? []).length} waiting` : "…"}
+                  {lobby ? `${waitingCount} waiting` : "…"}
                 </span>
               </div>
               {!lobby ? (
                 <p className="mt-3 text-sm text-parchment-400">Loading challenges…</p>
-              ) : (lobby.challenges ?? []).length === 0 ? (
+              ) : waitingCount === 0 ? (
                 <p className="mt-3 text-sm text-parchment-400">
-                  No open challenges right now. Create a game above and it will show up here
-                  until someone accepts.
+                  No one is waiting right now. Queue for a rated game or create a friend game
+                  above and it will show up here until someone accepts.
                 </p>
               ) : (
                 <ul className="mt-3 divide-y divide-white/5">
-                  {(lobby.challenges ?? []).map((challenge) => (
+                  {seeks.map((seek) => (
+                    <SeekRow
+                      key={`${seek.pool}:${seek.name}:${seek.at}`}
+                      seek={seek}
+                      isMine={!!user && user.username === seek.name}
+                      joining={joiningPool === seek.pool}
+                      busy={joiningPool !== null}
+                      onJoin={() => joinSeek(seek.pool)}
+                    />
+                  ))}
+                  {challenges.map((challenge) => (
                     <ChallengeRow key={challenge.id} challenge={challenge} />
                   ))}
                 </ul>
@@ -262,6 +312,56 @@ function StatusBadge({ status }: { status: "online" | "searching" | "playing" })
     <span className={`shrink-0 border px-2 py-0.5 smallcaps text-[9px] ${styles[status]}`}>
       {labels[status]}
     </span>
+  );
+}
+
+// A player waiting in a quick-pairing pool. Joining queues into the same
+// pool, which pairs the two immediately.
+function SeekRow({
+  seek,
+  isMine,
+  joining,
+  busy,
+  onJoin,
+}: {
+  seek: MPLobbySeek;
+  isMine: boolean;
+  joining: boolean;
+  busy: boolean;
+  onJoin: () => void;
+}) {
+  const category = getCategory(categoryForTimeControl(seek.timeSec, seek.incrementSec));
+  const Icon = category.icon;
+  const clock =
+    seek.timeSec >= 60
+      ? `${Math.round(seek.timeSec / 60)}+${seek.incrementSec}`
+      : `${seek.timeSec}s+${seek.incrementSec}`;
+  const name = seek.rating != null ? `${seek.name} (${seek.rating})` : seek.name;
+  return (
+    <li className="flex items-center justify-between gap-3 py-2.5">
+      <div className="min-w-0">
+        <div className="flex items-center gap-2 truncate text-sm text-parchment-100">
+          <Icon size={14} style={{ color: category.accent }} aria-hidden className="shrink-0" />
+          {name}
+        </div>
+        <div className="mt-0.5 smallcaps text-[9px] text-parchment-400">
+          Rated · {clock} · {category.label}
+        </div>
+      </div>
+      {isMine ? (
+        <span className="shrink-0 border border-gold/40 bg-gold/10 px-3 py-1.5 smallcaps text-[9px] text-gold-leaf">
+          Your seek
+        </span>
+      ) : (
+        <button
+          onClick={onJoin}
+          disabled={busy}
+          className="btn-leaf shrink-0 inline-flex items-center px-4 py-2 font-display text-sm font-semibold disabled:opacity-50"
+        >
+          {joining ? "Joining…" : "Join"}
+        </button>
+      )}
+    </li>
   );
 }
 

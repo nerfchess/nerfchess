@@ -5,6 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AccountUser, fetchMe, logout } from "@/lib/authClient";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
+import { PlayerStatsPanel } from "@/components/PlayerStatsPanel";
+import type { PlayerStats } from "@/lib/playerStats";
 import { RatingChart, RatingPoint } from "@/components/RatingChart";
 
 interface ProfileUser {
@@ -48,6 +50,7 @@ export default function ProfilePage() {
   const router = useRouter();
   const username = String(params.username ?? "");
   const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [stats, setStats] = useState<PlayerStats | null>(null);
   const [me, setMe] = useState<AccountUser | null>(null);
   const [missing, setMissing] = useState(false);
   const [reporting, setReporting] = useState(false);
@@ -63,6 +66,12 @@ export default function ProfilePage() {
       }
       const data = (await res.json()) as ProfileData;
       setProfile(data);
+      fetch(`/api/users/${encodeURIComponent(username)}/stats`)
+        .then((r) => (r.ok ? (r.json() as Promise<{ stats: PlayerStats }>) : null))
+        .then((s) => {
+          if (!cancelled && s) setStats(s.stats);
+        })
+        .catch(() => {});
       const account = await fetchMe();
       if (!cancelled) setMe(account);
     })();
@@ -179,6 +188,15 @@ export default function ProfilePage() {
               <div className="mt-6">
                 <RatingChart points={profile.ratingHistory} />
               </div>
+            )}
+
+            {stats && (
+              <>
+                <h2 className="mt-10 font-display text-2xl">📊 Statistics</h2>
+                <div className="mt-3">
+                  <PlayerStatsPanel stats={stats} />
+                </div>
+              </>
             )}
 
             <h2 className="mt-10 font-display text-2xl">Recent games</h2>

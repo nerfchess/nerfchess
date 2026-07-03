@@ -61,7 +61,16 @@ const disconnectGraceMs = 15 * 1000;
 // Quick-pairing pools, first come first served (mirrors the production
 // worker's protocol; this standalone server has no accounts or ratings).
 const QUEUE_POOLS: Record<string, { timeSec: number; incrementSec: number }> = {
+  "15s+0": { timeSec: 15, incrementSec: 0 },
+  "1+0": { timeSec: 60, incrementSec: 0 },
+  "2+1": { timeSec: 120, incrementSec: 1 },
+  "3+0": { timeSec: 180, incrementSec: 0 },
   "3+2": { timeSec: 180, incrementSec: 2 },
+  "5+0": { timeSec: 300, incrementSec: 0 },
+  "5+3": { timeSec: 300, incrementSec: 3 },
+  "10+0": { timeSec: 600, incrementSec: 0 },
+  "10+5": { timeSec: 600, incrementSec: 5 },
+  "15+10": { timeSec: 900, incrementSec: 10 },
 };
 type QueueEntry = {
   client: Client;
@@ -313,6 +322,18 @@ function lobbySnapshot(client: Client) {
   games.sort((a, b) => b.watchers - a.watchers || b.moves - a.moves);
   challenges.sort((a, b) => b.createdAt - a.createdAt);
 
+  // Players waiting in a quick-pairing pool, shown as joinable seeks.
+  const seeks = pairingQueue
+    .filter((entry) => entry.client.readyState === WebSocket.OPEN && entry.pool in QUEUE_POOLS)
+    .map((entry) => ({
+      pool: entry.pool,
+      name: "Anonymous",
+      rating: null,
+      timeSec: QUEUE_POOLS[entry.pool].timeSec,
+      incrementSec: QUEUE_POOLS[entry.pool].incrementSec,
+      at: entry.since,
+    }));
+
   // No accounts on the standalone server: every open socket is anonymous.
   let anonymous = 0;
   for (const socket of websocket.clients) {
@@ -323,6 +344,7 @@ function lobbySnapshot(client: Client) {
     anonymous,
     games: games.slice(0, 25),
     challenges: challenges.slice(0, 25),
+    seeks: seeks.slice(0, 25),
   });
 }
 
