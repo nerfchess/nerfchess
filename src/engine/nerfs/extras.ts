@@ -405,7 +405,7 @@ export const WAGON_TRAIN: Nerf = db({
 export const HOARDER: Nerf = db({
   id: "hoarder",
   name: "Hoarder",
-  description: "You lose if you ever have fewer pawns than at the start of the game.",
+  description: "If you lose a pawn, you lose the game.",
   flavor: "Don't lose a single one.",
   tier: 8,
   icon: "wheat",
@@ -527,9 +527,9 @@ export const RHYTHM_MASTER: Nerf = db({
 export const ICY_SQUARES: Nerf = db({
   id: "icy_squares",
   name: "Icy Squares",
-  description: "After moving to a square, the piece must keep moving in the same direction next turn (if possible).",
+  description: "After you move a piece, it must slide once more in the same direction on your next move (if possible). Forced slides don't force another.",
   flavor: "Slide.",
-  tier: 5,
+  tier: 6,
   icon: "snowflake",
   implemented: true,
   filterMoves: (moves, _s, ctx) => {
@@ -538,6 +538,19 @@ export const ICY_SQUARES: Nerf = db({
     const df = Math.sign(FILE(last.to) - FILE(last.from));
     const dr = Math.sign(RANK(last.to) - RANK(last.from));
     if (df === 0 && dr === 0) return moves;
+    // The ice only carries a piece one extra step: if the last move was
+    // itself the slide continuing the move before it, the piece has already
+    // slid and this turn is free.
+    const mine = ctx.board.history.filter((m) => m.color === ctx.me);
+    const prev = mine[mine.length - 2];
+    if (
+      prev &&
+      last.from === prev.to &&
+      df === Math.sign(FILE(prev.to) - FILE(prev.from)) &&
+      dr === Math.sign(RANK(prev.to) - RANK(prev.from))
+    ) {
+      return moves;
+    }
     const slides = moves.filter((m) => {
       if (m.from !== last.to) return false;
       return Math.sign(FILE(m.to) - FILE(m.from)) === df &&
@@ -643,7 +656,7 @@ export const COURT_MARTIAL: Nerf = db({
   name: "Court Martial",
   description: "A piece that's attacked at turn start can't capture.",
   flavor: "Under investigation.",
-  tier: 4,
+  tier: 3,
   icon: "gavel",
   implemented: true,
   filterMoves: (moves, _s, ctx) => {

@@ -15,7 +15,7 @@ type Stub = {
 
 const STUBS: Stub[] = [
   // EASY / TRIVIAL
-  { id: "rook_buddies", name: "Rook Buddies", description: "Can't move rooks until they are connected (no pieces between them on home rank).", tier: 1, icon: "link" },
+  { id: "rook_buddies", name: "Rook Buddies", description: "Can't move rooks until they are connected (no pieces between them on home rank).", tier: 2, icon: "link" },
   { id: "skittish", name: "Skittish", description: "While in check, you must move your king.", tier: 2, icon: "alert" },
   { id: "separation_anxiety", name: "Separation Anxiety", description: "Pawns adjacent to your king can't move away from him.", tier: 1, icon: "shield" },
   { id: "crossing_the_rubicon", name: "Crossing the Rubicon", description: "Once a piece crosses to the opponent's half, it can't return.", tier: 3 },
@@ -101,12 +101,12 @@ const STUBS: Stub[] = [
   { id: "stand_your_ground", name: "Stand Your Ground", description: "Pieces can only capture if attacked.", tier: 5 },
 
   // HARD
-  { id: "always_check_it_might_be_mate", name: "Always Check, It Might Be Mate", description: "If you are checked, you lose.", tier: 8 },
+  { id: "always_check_it_might_be_mate", name: "Always Check, It Might Be Mate", description: "If you are checked, you lose.", tier: 6 },
   { id: "glorious_battle", name: "Glorious Battle", description: "Starting on a random move, for 4 consecutive moves, you must capture or lose.", tier: 7 },
   { id: "flatterer", name: "Flatterer", description: "If opponent moves a pawn, you must move a pawn. Same for non-pawns.", tier: 5 },
   { id: "messy_divorce", name: "Messy Divorce", description: "Pieces can't move from queenside to kingside or vice versa.", tier: 4 },
   { id: "leveling_up", name: "Leveling Up", description: "Can't capture a piece type until you've captured its predecessor.", tier: 6 },
-  { id: "homeland_security", name: "Homeland Security", description: "If opponent enters your two home ranks, you lose.", tier: 8 },
+  { id: "homeland_security", name: "Homeland Security", description: "If opponent enters your two home ranks, you lose.", tier: 6 },
   { id: "cowering_in_fear", name: "Cowering in Fear", description: "Can't move a piece of less value than one opponent has captured from you.", tier: 5 },
   { id: "barbarian_rage", name: "Barbarian Rage", description: "If you captured last move, you must capture this move if able.", tier: 4 },
   { id: "my_kingdom_for_a_horse", name: "My Kingdom for a Horse", description: "If opponent captures a knight of yours, you lose.", tier: 7 },

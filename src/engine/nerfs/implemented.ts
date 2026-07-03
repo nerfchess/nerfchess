@@ -154,7 +154,7 @@ export const IVORY_TOWER: Nerf = db({
   name: "Ivory Tower",
   description: "You lose if any opponent piece is adjacent to your king.",
   flavor: "Royalty does not mingle.",
-  tier: 6,
+  tier: 4,
   icon: "tower-control",
   implemented: true,
   checkLoss: (state, ctx) => {
