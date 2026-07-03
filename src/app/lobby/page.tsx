@@ -37,15 +37,24 @@ export default function LobbyPage() {
     session.persistFriendSession = false;
     session.autoReconnect = false; // fetchLobby reconnects on demand
     sessionRef.current = session;
+    // The game server runs on a single-threaded Durable Object, so a snapshot
+    // can occasionally arrive late. Keep showing the last good snapshot and
+    // only surface the error banner after a couple of misses in a row, so a
+    // one-off blip doesn't flap "can't reach the game server" at the player.
+    let failures = 0;
     const poll = async () => {
       try {
         const data = await session.fetchLobby();
         if (!cancelled) {
+          failures = 0;
           setLobby(data);
           setLobbyError(null);
         }
       } catch {
-        if (!cancelled) setLobbyError("Can't reach the game server right now.");
+        if (!cancelled) {
+          failures++;
+          if (failures >= 2) setLobbyError("Can't reach the game server right now.");
+        }
       }
     };
     poll();
@@ -67,18 +76,20 @@ export default function LobbyPage() {
   // pairs with the first waiting player immediately. A timeout covers the
   // race where the seeker left between the last poll and the click.
   const [joiningPool, setJoiningPool] = useState<string | null>(null);
-  const joinSeek = async (pool: string) => {
+  const joinSeek = async (seek: MPLobbySeek) => {
     if (!user) {
       router.push("/login?next=/lobby");
       return;
     }
     if (joiningPool) return;
-    setJoiningPool(pool);
+    setJoiningPool(seek.pool);
     const session = new MPSession();
     session.persistFriendSession = false;
     try {
       const paired = await Promise.race([
-        session.queue(pool),
+        // Pass the row's name so accepting a house player's challenge pairs
+        // with that exact bot.
+        session.queue(seek.pool, seek.name),
         new Promise<never>((_, reject) =>
           window.setTimeout(() => reject(new Error("seek_gone")), 10000),
         ),
@@ -190,7 +201,7 @@ export default function LobbyPage() {
                       isMine={!!user && user.username === seek.name}
                       joining={joiningPool === seek.pool}
                       busy={joiningPool !== null}
-                      onJoin={() => joinSeek(seek.pool)}
+                      onJoin={() => joinSeek(seek)}
                     />
                   ))}
                   {challenges.map((challenge) => (

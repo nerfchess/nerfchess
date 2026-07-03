@@ -562,7 +562,9 @@ export class MPSession {
   }
 
   // Join the rated quick-pairing queue. Resolves with the paired game id.
-  async queue(pool: string): Promise<{ id: string; color: Color; token: string }> {
+  // `seek` is the name on an accepted lobby row; when it's a house player, the
+  // server pairs with that exact opponent.
+  async queue(pool: string, seek?: string): Promise<{ id: string; color: Color; token: string }> {
     await this.connect();
     return new Promise((resolve, reject) => {
       const off = this.on((event) => {
@@ -577,7 +579,7 @@ export class MPSession {
           reject(new Error("Disconnected from the game server."));
         }
       });
-      this.sendFrame("queue", { pool });
+      this.sendFrame("queue", seek ? { pool, seek } : { pool });
     });
   }
 
@@ -604,18 +606,24 @@ export class MPSession {
     });
   }
 
-  // Request one lobby snapshot (online players + watchable games).
+  // Request one lobby snapshot (online players + watchable games). Resolves
+  // with the next snapshot, or rejects on error/disconnect/timeout so a single
+  // slow response can't hang the caller's poll forever.
   async fetchLobby(): Promise<MPLobby> {
     await this.connect();
     return new Promise((resolve, reject) => {
+      let timer = 0;
       const off = this.on((event) => {
         if (event.type === "lobby") {
+          if (timer) window.clearTimeout(timer);
           off();
           resolve(event.data);
         } else if (event.type === "error") {
+          if (timer) window.clearTimeout(timer);
           off();
           reject(new Error(event.message));
         } else if (event.type === "disconnected") {
+          if (timer) window.clearTimeout(timer);
           off();
           reject(new Error("Disconnected from the game server."));
         }
@@ -623,7 +631,12 @@ export class MPSession {
       if (!this.sendFrame("lobby")) {
         off();
         reject(new Error("Disconnected from the game server."));
+        return;
       }
+      timer = window.setTimeout(() => {
+        off();
+        reject(new Error("The game server did not respond in time."));
+      }, 10000);
     });
   }
 
