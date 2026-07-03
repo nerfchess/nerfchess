@@ -102,7 +102,7 @@ export default function LeaderboardPage() {
                     )}
                   </span>
                   <span className="text-right font-mono text-parchment-100 tabular-nums">
-                    {row.rating.toFixed(1)}
+                    {Math.round(row.rating)}
                     {row.rd > 150 && (
                       <span className="text-parchment-400" title="Provisional — rating deviation above 150">
                         ?
@@ -119,16 +119,6 @@ export default function LeaderboardPage() {
           </div>
         )}
 
-        <p className="mt-4 text-xs text-parchment-500">
-          Ratings are Glicko-2, updated after every rated game. A{" "}
-          <span className="font-mono">?</span> marks a provisional rating (deviation above 150) —
-          play rated games to shed it. Your practice ladder against the
-          bots is tracked separately. See your{" "}
-          <Link href="/profile" className="text-gold-leaf hover:underline">
-            local profile
-          </Link>
-          .
-        </p>
       </section>
     </main>
   );

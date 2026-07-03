@@ -139,6 +139,12 @@ body {
   position: relative;
   z-index: 2;
 }
+/* A plate used as a floating menu must stay absolutely positioned; without
+   this the base rule above beats the `absolute` utility, the menu joins the
+   layout flow, and opening it shoves the whole header around. */
+.plate.dropdown {
+  position: absolute;
+}
 .plate-warm {
   background: #2b2824;
 }

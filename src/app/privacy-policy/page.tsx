@@ -10,16 +10,52 @@ export default function PrivacyPolicyPage() {
     <InfoPageLayout
       eyebrow="privacy policy"
       title="Privacy policy"
-      intro="This page describes how this version of Nerf Chess handles information while you play. Last updated: May 27, 2026."
+      intro="This page describes what information Nerf Chess stores and how it is used. Last updated: July 3, 2026."
     >
+      <InfoSection title="Your account">
+        <p>
+          Creating an account stores your username, a hashed password (never the password
+          itself), your account creation date, and your rating data. Signing in sets an
+          httpOnly session cookie so you stay signed in; signing out removes it. Optional
+          profile content you add, such as a bio or an uploaded profile picture, is stored
+          with your account and shown publicly on your player page.
+        </p>
+      </InfoSection>
+
+      <InfoSection title="Games and ratings">
+        <p>
+          Finished online games are recorded: the players, moves, time control, result, and
+          rating changes. This powers game history, replays, profile statistics, and the
+          leaderboard. Your username, rating, game record, and statistics are publicly
+          visible on your player page.
+        </p>
+      </InfoSection>
+
+      <InfoSection title="Messages, challenges, and notifications">
+        <p>
+          Direct messages you send to other players are stored so both participants can read
+          the conversation, along with read status. Challenges you send and notifications
+          addressed to you (new messages, challenges, and moderation notices) are also
+          stored. In-game chat is relayed live; messages that trip the profanity filter are
+          kept for moderator review.
+        </p>
+      </InfoSection>
+
+      <InfoSection title="Moderation">
+        <p>
+          Player reports, moderation actions (warnings, mutes, bans), and their audit trail
+          are stored to keep the site playable and fair. Moderators can see reported content
+          and account standing, but not your password or private data beyond what is
+          described above.
+        </p>
+      </InfoSection>
+
       <InfoSection title="Stored on your device">
         <p>
-          Board appearance, sound preferences, custom rules, and your single-player rating
-          may be saved in your browser&apos;s local or session storage. This lets those
-          features work across page visits without requiring an account.
-        </p>
-        <p>
-          You can remove this information by clearing site data in your browser.
+          Board appearance, sound preferences, custom rules, and your practice rating
+          against the bots are saved in your browser&apos;s local storage so those features
+          work without an account. You can remove this information by clearing site data in
+          your browser.
         </p>
       </InfoSection>
 
@@ -30,19 +66,10 @@ export default function PrivacyPolicyPage() {
         </p>
       </InfoSection>
 
-      <InfoSection title="Friend games">
+      <InfoSection title="Removing your data">
         <p>
-          Friend games use the Nerf Chess websocket game server to connect players
-          by code, validate moves, and keep clocks. Active games are kept in server
-          memory while they are in progress.
-        </p>
-      </InfoSection>
-
-      <InfoSection title="Accounts and contact">
-        <p>
-          This version does not include user accounts or a contact submission form. If
-          these features are introduced, this policy should be updated to describe any
-          additional information collected.
+          To have your account or its content removed, reach out via the contact page and
+          we will handle it.
         </p>
       </InfoSection>
     </InfoPageLayout>

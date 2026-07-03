@@ -39,8 +39,8 @@ export type PlayerStats = {
   timePlayedMs: number;
   /** Mean rating of opponents in rated games (their rating going in). */
   avgOpponentRating: number | null;
-  highest: { rating: number; at: number } | null;
-  lowest: { rating: number; at: number } | null;
+  highest: { rating: number; at: number; gameId: string } | null;
+  lowest: { rating: number; at: number; gameId: string } | null;
   winStreak: { longest: StreakInfo; current: number };
   lossStreak: { longest: StreakInfo; current: number };
   /** Strongest rated opponents beaten, one entry per opponent. */
@@ -107,7 +107,7 @@ export function computePlayerStats(userId: string, rows: StatsGameRow[]): Player
       opponentRatingCount++;
     }
     if (row.rated && myRatingAfter != null) {
-      const point = { rating: myRatingAfter, at: row.completed_at };
+      const point = { rating: myRatingAfter, at: row.completed_at, gameId: row.id };
       if (!stats.highest || point.rating > stats.highest.rating) stats.highest = point;
       if (!stats.lowest || point.rating < stats.lowest.rating) stats.lowest = point;
     }
