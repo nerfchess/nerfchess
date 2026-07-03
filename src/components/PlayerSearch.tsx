@@ -11,12 +11,19 @@ interface Hit {
 
 // Debounced prefix search over account usernames; picking a result opens the
 // player's profile.
-export function PlayerSearch({ className = "" }: { className?: string }) {
+export function PlayerSearch({ className = "", autoFocus = false }: { className?: string; autoFocus?: boolean }) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [hits, setHits] = useState<Hit[]>([]);
   const [open, setOpen] = useState(false);
   const boxRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (!autoFocus) return;
+    const id = window.requestAnimationFrame(() => inputRef.current?.focus());
+    return () => window.cancelAnimationFrame(id);
+  }, [autoFocus]);
 
   useEffect(() => {
     const q = query.trim();
@@ -53,6 +60,7 @@ export function PlayerSearch({ className = "" }: { className?: string }) {
   return (
     <div ref={boxRef} className={"relative " + className}>
       <input
+        ref={inputRef}
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         onFocus={() => hits.length > 0 && setOpen(true)}
