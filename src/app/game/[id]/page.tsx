@@ -212,7 +212,7 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
   const [whiteMs, setWhiteMs] = useState(setup.wc);
   const [blackMs, setBlackMs] = useState(setup.bc);
   const [result, setResult] = useState(setup.result);
-  const [nerfs, setNerfs] = useState(setup.nerfs ?? null);
+  const [nerfs, setNerfs] = useState<Partial<Record<Color, string>> | null>(setup.nerfs ?? null);
   const [watchers, setWatchers] = useState(setup.watchers ?? 1);
   const [reconnecting, setReconnecting] = useState(false);
   const [historyPly, setHistoryPly] = useState<number | null>(null);
@@ -238,6 +238,9 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
         setHistoryPly(null);
       } else if (e.type === "watchers") {
         setWatchers(e.n);
+      } else if (e.type === "rule-revealed") {
+        // A player voluntarily showed their rule mid-game.
+        setNerfs((prev) => ({ ...(prev ?? {}), [e.color]: e.nerfId }));
       } else if (e.type === "disconnected" || e.type === "reconnecting") {
         setReconnecting(true);
       } else if (e.type === "watch-start") {
@@ -250,7 +253,7 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
   const { board, history } = useMemo(() => replayUci(uciMoves), [uciMoves]);
   const clockEnabled = setup.timeSec > 0;
 
-  // Local clock tick between server updates. The side to move gets a 15s
+  // Local clock tick between server updates. The side to move gets a 10s
   // grace before its first move, so hold the display still until then.
   useEffect(() => {
     if (!clockEnabled || result || !setup.started) return;
@@ -379,7 +382,7 @@ function GameShell({
   blackMs: number;
   activeColor: Color | null;
   statusLabel: string;
-  nerfs: Record<Color, string> | null;
+  nerfs: Partial<Record<Color, string>> | null;
 }) {
   const nameOf = (color: Color) => {
     const p = players[color];
@@ -431,10 +434,22 @@ function GameShell({
               />
               {clockEnabled && <ClockPill ms={whiteMs} active={activeColor === "w"} compact />}
             </div>
-            {nerfs ? (
+            {nerfs && (nerfs.w || nerfs.b) ? (
               <div className="mt-2 space-y-1.5">
-                <NerfLine label={`${players.w.name} (White)`} nerfId={nerfs.w} />
-                <NerfLine label={`${players.b.name} (Black)`} nerfId={nerfs.b} />
+                {nerfs.w ? (
+                  <NerfLine label={`${players.w.name} (White)`} nerfId={nerfs.w} />
+                ) : (
+                  <div className="plate p-2 px-3 text-xs text-parchment-300">
+                    {players.w.name} (White) keeps their rule secret until the end.
+                  </div>
+                )}
+                {nerfs.b ? (
+                  <NerfLine label={`${players.b.name} (Black)`} nerfId={nerfs.b} />
+                ) : (
+                  <div className="plate p-2 px-3 text-xs text-parchment-300">
+                    {players.b.name} (Black) keeps their rule secret until the end.
+                  </div>
+                )}
               </div>
             ) : (
               <div className="plate mt-2 p-2 px-3 text-xs text-parchment-300">

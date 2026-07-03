@@ -1,7 +1,7 @@
 import { Nerf } from "../nerf";
 import { attackedBy, findKing, isInCheck, makeMove } from "../board";
 import { FILE, Move, PieceType, RANK, SQ, Square } from "../types";
-import { MORE_NERFS } from "./more";
+import { HAND_AND_GIGABRAIN, MORE_NERFS } from "./more";
 import { EXTRA_NERFS } from "./extras";
 
 const cheb = (a: Square, b: Square) =>
@@ -927,7 +927,7 @@ export const ALL_IMPLEMENTED: Nerf[] = [
 
 // Retired rules: no longer dealt or shown in the Codex, but kept resolvable by
 // id so replays and histories of old games still render correctly.
-export const RETIRED_NERFS: Nerf[] = [NUMBER_OF_THE_BEAST];
+export const RETIRED_NERFS: Nerf[] = [NUMBER_OF_THE_BEAST, HAND_AND_GIGABRAIN];
 
 export const IMPLEMENTED_BY_ID: Record<string, Nerf> = Object.fromEntries(
   [...ALL_IMPLEMENTED, ...RETIRED_NERFS].map((d) => [d.id, d])

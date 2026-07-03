@@ -642,6 +642,13 @@ export const GAMBLER: Nerf = db({
     const filtered = moves.filter((m) => m.piece !== s.banned);
     return filtered.length ? filtered : moves;
   },
+  hint: (state) => {
+    const s = state as { banned: PieceType };
+    const names: Record<PieceType, string> = {
+      p: "pawns", n: "knights", b: "bishops", r: "rooks", q: "queens", k: "your king",
+    };
+    return { text: `The dice say: no moving ${names[s.banned]} this turn.`, tone: "warn" };
+  },
 });
 
 export const BLINDED_BY_SUN: Nerf = db({
@@ -1116,6 +1123,15 @@ export const MONKEY_SEE: Nerf = db({
     for (const m of ctx.board.history) if (m.color !== ctx.me && m.captured) types.add(m.piece);
     return moves.filter((m) => !m.captured || types.has(m.piece));
   },
+  hint: (_s, ctx) => {
+    const names: Record<PieceType, string> = {
+      p: "pawns", n: "knights", b: "bishops", r: "rooks", q: "queens", k: "king",
+    };
+    const types = new Set<PieceType>();
+    for (const m of ctx.board.history) if (m.color !== ctx.me && m.captured) types.add(m.piece);
+    if (types.size === 0) return { text: "You can't capture yet — your opponent hasn't captured with anything.", tone: "info" };
+    return { text: `You may capture with: ${[...types].map((t) => names[t]).join(", ")}.`, tone: "info" };
+  },
 });
 
 export const TRUE_LOVE: Nerf = db({
@@ -1341,6 +1357,10 @@ export const COLORBLIND: Nerf = db({
   filterMoves: (moves, state) => {
     const s = state as { banned: 0 | 1 };
     return moves.filter((m) => (FILE(m.to) + RANK(m.to)) % 2 !== s.banned);
+  },
+  hint: (state) => {
+    const s = state as { banned: 0 | 1 };
+    return { text: `This turn you can't move to ${s.banned === 1 ? "light" : "dark"} squares.`, tone: "warn" };
   },
 });
 
@@ -1599,6 +1619,10 @@ export const CRENELLATIONS: Nerf = db({
     const s = state as { color: 0 | 1 };
     return moves.filter((m) => m.piece !== "p" || (FILE(m.to) + RANK(m.to)) % 2 === s.color);
   },
+  hint: (state) => {
+    const s = state as { color: 0 | 1 };
+    return { text: `Your pawns may only step on ${s.color === 1 ? "light" : "dark"} squares.`, tone: "info" };
+  },
 });
 
 export const LEADING_THE_CHARGE: Nerf = db({
@@ -1849,6 +1873,12 @@ export const THEOCRACY: Nerf = db({
     if (turn % 2 !== s.parity) return moves;
     return moves.filter((m) => !m.captured || m.piece === "b");
   },
+  hint: (state, ctx) => {
+    const s = state as { parity: 0 | 1 };
+    const turn = ctx.moveNumber + 1;
+    if (turn % 2 !== s.parity) return null;
+    return { text: "A holy turn: only bishops may capture.", tone: "info" };
+  },
 });
 
 export const BOTTLED_LIGHTNING: Nerf = db({
@@ -1891,7 +1921,7 @@ export const MORE_NERFS: Nerf[] = [
   HOPSCOTCH, LEAPS_AND_BOUNDS, COLORBLIND, INCHING_FORWARD, ICHTHYOPHOBE,
   LEFT_TO_RIGHT, FRIENDLY_FIRE, GOING_THE_DISTANCE, HELICOPTER_PARENT, EXCLUSIVITY_CLAUSE,
   RELAY_RACE, DEVIL_ON_SHOULDER, REFLECTIVE, OBSESSION, BOXING_WITH_SHADOW,
-  NOBLE_STEED, TAKING_TURNS, HAND_AND_GIGABRAIN, CRENELLATIONS, LEADING_THE_CHARGE,
+  NOBLE_STEED, TAKING_TURNS, CRENELLATIONS, LEADING_THE_CHARGE,
   ACTIVE_VOLCANO, PRINCE_CHARMING, ABSOLUTION, QUICKSAND,
   ROOK_FAN_CLUB, LADIES_FIRST, BRIDGE_OVER_TROUBLED_WATER, ROYAL_BERTH, VELOCIRAPTOR,
   THUNDERDOME, INDECISIVE, UNREQUITED_LOVE, TORPEDOES,

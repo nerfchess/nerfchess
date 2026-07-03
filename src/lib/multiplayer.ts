@@ -23,6 +23,8 @@ export type MPStart = {
   rated?: boolean;
   chat?: MPChatMessage[];
   preview?: MPRatingPreview;
+  // Rules already voluntarily revealed mid-game (color -> nerf id).
+  revealed?: Partial<Record<Color, string>>;
 };
 
 export type MPWatchStart = {
@@ -115,6 +117,7 @@ export type MPEvent =
   | { type: "rematch-offer"; color: Color }
   | { type: "rematched"; id: string; color: Color; token: string }
   | { type: "chat"; message: MPChatMessage }
+  | { type: "rule-revealed"; color: Color; nerfId: string }
   | { type: "clocks"; wc: number; bc: number }
   | { type: "watchers"; n: number }
   | { type: "lobby"; data: MPLobby }
@@ -140,6 +143,7 @@ type ServerFrame =
   | { t: "rematchOffer"; d: { color: Color } }
   | { t: "rematched"; d: { id: string; color: Color; token: string } }
   | { t: "chat"; d: MPChatMessage }
+  | { t: "reveal"; d: { color: Color; nerfId: string } }
   | { t: "watchers"; d: { n: number } }
   | { t: "lobby"; d: MPLobby }
   | { t: "opponentGone" }
@@ -428,6 +432,9 @@ export class MPSession {
       case "chat":
         this.emit({ type: "chat", message: frame.d });
         break;
+      case "reveal":
+        this.emit({ type: "rule-revealed", color: frame.d.color, nerfId: frame.d.nerfId });
+        break;
       case "watchers":
         this.emit({ type: "watchers", n: frame.d.n });
         break;
@@ -585,6 +592,11 @@ export class MPSession {
 
   sendChat(text: string): boolean {
     return this.sendFrame("chat", { text });
+  }
+
+  // Voluntarily show my rule to the opponent (and any spectators).
+  revealRule(): boolean {
+    return this.sendFrame("reveal");
   }
 
   offerDraw(): boolean {

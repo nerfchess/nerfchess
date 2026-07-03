@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { HeroBoard } from "@/components/HeroBoard";
+import { HeroTv } from "@/components/HeroTv";
 import { SiteHeader } from "@/components/SiteHeader";
 import { ALL_NERFS, PLAYABLE_NERFS } from "@/engine/nerfs/library";
 import type { Nerf } from "@/engine/nerf";
@@ -51,7 +51,7 @@ export default function HomePage() {
 
       <section className="w-full max-w-6xl mx-auto px-5 sm:px-6 pt-2 pb-8 sm:pt-6 grid lg:grid-cols-[minmax(0,1fr)_380px] gap-8 lg:gap-14 items-center">
         <div className="order-1">
-          <HeroBoard />
+          <HeroTv />
         </div>
 
         <div className="order-2">

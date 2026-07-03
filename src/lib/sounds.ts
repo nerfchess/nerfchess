@@ -236,6 +236,11 @@ export function playLowTime() {
   tone({ freq: 1319, dur: 0.12, type: "square", gain: 0.08, attack: 0.003, release: 0.10, delay: 0.32 });
 }
 
+// Countdown tick: short urgent blip for the last seconds of the grace timer.
+export function playCountdownTick() {
+  tone({ freq: 988, dur: 0.09, type: "square", gain: 0.10, attack: 0.002, release: 0.09 });
+}
+
 // Select: very brief, soft pickup tick.
 export function playSelect() {
   if (!uiSounds) return;
