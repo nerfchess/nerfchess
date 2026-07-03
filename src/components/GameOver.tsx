@@ -1,12 +1,13 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { GameResult } from "@/engine/game";
 import { Color, Move } from "@/engine/types";
 import { Nerf } from "@/engine/nerf";
 import { gameToPGN } from "@/lib/pgn";
 import { playGameOver } from "@/lib/sounds";
+import { ThumbsDown, ThumbsUp } from "lucide-react";
 
 import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
 
@@ -32,11 +33,66 @@ interface Props {
   // When provided, dismissal is delegated to the parent (which can re-show
   // the screen later); otherwise the component hides itself permanently.
   onDismiss?: () => void;
+  // Server game id, attached to rule feedback votes.
+  gameId?: string;
+}
+
+// One-tap verdict on the rule you were dealt; lands in the moderators' rule
+// feedback queue so unpopular rules get rebalanced.
+function RuleFeedback({ nerfId, gameId }: { nerfId: string; gameId?: string }) {
+  const [vote, setVote] = useState<1 | -1 | null>(null);
+
+  const cast = async (value: 1 | -1) => {
+    setVote(value);
+    try {
+      await fetch("/api/nerf-feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nerfId, vote: value, ...(gameId ? { gameId } : {}) }),
+      });
+    } catch {}
+  };
+
+  return (
+    <div className="mt-2 flex items-center justify-between gap-2 border-t border-white/10 pt-2">
+      <span className="text-[11px] text-parchment-400">
+        {vote ? "Thanks for the feedback" : "Like this rule?"}
+      </span>
+      <span className="flex gap-1">
+        <button
+          type="button"
+          aria-label="Thumbs up"
+          onClick={() => cast(1)}
+          className={
+            "grid h-7 w-7 place-items-center border transition " +
+            (vote === 1
+              ? "border-verdigris/60 bg-verdigris/20 text-verdigris-glow"
+              : "border-white/15 text-parchment-300 hover:border-verdigris/50 hover:text-verdigris-glow")
+          }
+        >
+          <ThumbsUp size={13} />
+        </button>
+        <button
+          type="button"
+          aria-label="Thumbs down"
+          onClick={() => cast(-1)}
+          className={
+            "grid h-7 w-7 place-items-center border transition " +
+            (vote === -1
+              ? "border-oxblood-glow/60 bg-oxblood/20 text-oxblood-glow"
+              : "border-white/15 text-parchment-300 hover:border-oxblood-glow/50 hover:text-oxblood-glow")
+          }
+        >
+          <ThumbsDown size={13} />
+        </button>
+      </span>
+    </div>
+  );
 }
 
 // A single revealed rule row for the post game summary. Both players' rules are
 // shown once the game is over, so the "secret" finally pays off.
-function RuleReveal({ label, nerf }: { label: string; nerf: Nerf }) {
+function RuleReveal({ label, nerf, children }: { label: string; nerf: Nerf; children?: ReactNode }) {
   return (
     <div className={`border p-3 text-left tier-bg-${nerf.tier}`}>
       <div className="flex items-center justify-between gap-2">
@@ -53,6 +109,7 @@ function RuleReveal({ label, nerf }: { label: string; nerf: Nerf }) {
         {nerf.name}
       </div>
       <p className="mt-1 text-xs leading-snug text-parchment-200">{nerf.description}</p>
+      {children}
     </div>
   );
 }
@@ -81,6 +138,7 @@ export function GameOver({
   playerNames,
   startedAt,
   onDismiss,
+  gameId,
 }: Props) {
   const [dismissed, setDismissed] = useState(false);
   const dismiss = useCallback(() => {
@@ -254,7 +312,11 @@ export function GameOver({
 
         {(myNerf || opponentNerf) && (
           <div className="mt-5 grid gap-2 sm:grid-cols-2">
-            {myNerf && <RuleReveal label="Your rule" nerf={myNerf} />}
+            {myNerf && (
+              <RuleReveal label="Your rule" nerf={myNerf}>
+                <RuleFeedback nerfId={myNerf.id} gameId={gameId} />
+              </RuleReveal>
+            )}
             {opponentNerf &&
               (oppRevealed ? (
                 <RuleReveal label="Opponent rule" nerf={opponentNerf} />

@@ -5,11 +5,12 @@
 // Server-side authorization happens in the /api/mod routes; this page just
 // hides itself from non-mods.
 
+import { ALL_NERFS } from "@/engine/nerfs/library";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { AccountUser, fetchMe } from "@/lib/authClient";
 
-type Tab = "reports" | "chat" | "users" | "suggestions" | "log";
+type Tab = "reports" | "chat" | "users" | "suggestions" | "rules" | "log";
 
 interface Report {
   id: string;
@@ -140,6 +141,7 @@ export default function ModPage() {
                   ["chat", "Chat flags"],
                   ["users", "Players"],
                   ["suggestions", "Suggestions"],
+                  ["rules", "Rule feedback"],
                   ["log", "Mod log"],
                 ] as [Tab, string][]
               ).map(([key, label]) => (
@@ -162,12 +164,109 @@ export default function ModPage() {
               {tab === "chat" && <ChatFlagsTab />}
               {tab === "users" && <UsersTab isAdmin={me.role === "admin"} />}
               {tab === "suggestions" && <SuggestionsTab />}
+              {tab === "rules" && <RuleFeedbackTab />}
               {tab === "log" && <LogTab />}
             </div>
           </>
         )}
       </section>
     </main>
+  );
+}
+
+// ---------------- rule feedback ----------------
+
+type NerfFeedbackTotal = { nerf_id: string; up: number; down: number; last_at: number };
+type NerfFeedbackVote = {
+  nerf_id: string;
+  vote: number;
+  username: string | null;
+  game_id: string | null;
+  created_at: number;
+};
+
+// Post-game thumbs from players, aggregated per rule. The sort favours the
+// most-voted rules so the ones that need rebalancing surface first.
+function RuleFeedbackTab() {
+  const [totals, setTotals] = useState<NerfFeedbackTotal[] | null>(null);
+  const [recent, setRecent] = useState<NerfFeedbackVote[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/mod/nerf-feedback")
+      .then((res) => (res.ok ? (res.json() as Promise<{ totals: NerfFeedbackTotal[]; recent: NerfFeedbackVote[] }>) : null))
+      .then((data) => {
+        if (cancelled || !data) return;
+        setTotals(data.totals);
+        setRecent(data.recent);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const nerfName = (id: string) => ALL_NERFS.find((n) => n.id === id)?.name ?? id;
+
+  if (!totals) return <p className="text-sm text-parchment-400">Loading rule feedback…</p>;
+  if (totals.length === 0) {
+    return <p className="text-sm text-parchment-400">No feedback yet. Votes appear after players rate their rule post-game.</p>;
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="plate overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="smallcaps text-[9px] text-parchment-400">
+              <th className="px-4 py-2 text-left font-normal">Rule</th>
+              <th className="px-4 py-2 text-right font-normal">Liked</th>
+              <th className="px-4 py-2 text-right font-normal">Disliked</th>
+              <th className="px-4 py-2 text-right font-normal">Score</th>
+              <th className="px-4 py-2 text-right font-normal">Last vote</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/5">
+            {totals.map((row) => (
+              <tr key={row.nerf_id}>
+                <td className="px-4 py-2 text-parchment-100">{nerfName(row.nerf_id)}</td>
+                <td className="px-4 py-2 text-right font-mono tabular-nums text-verdigris-glow">{row.up}</td>
+                <td className="px-4 py-2 text-right font-mono tabular-nums text-oxblood-glow">{row.down}</td>
+                <td className="px-4 py-2 text-right font-mono tabular-nums text-parchment-100">
+                  {row.up - row.down > 0 ? "+" : ""}
+                  {row.up - row.down}
+                </td>
+                <td className="px-4 py-2 text-right text-xs text-parchment-400">
+                  {new Date(row.last_at).toLocaleDateString()}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {recent.length > 0 && (
+        <div>
+          <h3 className="smallcaps text-xs text-parchment-400">Recent votes</h3>
+          <ul className="mt-2 plate divide-y divide-white/5 text-sm">
+            {recent.map((v, i) => (
+              <li key={i} className="flex items-center justify-between gap-3 px-4 py-2">
+                <span className="min-w-0 truncate text-parchment-100">
+                  <span className={v.vote > 0 ? "text-verdigris-glow" : "text-oxblood-glow"}>
+                    {v.vote > 0 ? "+1" : "-1"}
+                  </span>{" "}
+                  {nerfName(v.nerf_id)}
+                  <span className="text-parchment-400"> by {v.username ?? "unknown"}</span>
+                </span>
+                <span className="shrink-0 text-xs text-parchment-400">
+                  {new Date(v.created_at).toLocaleString()}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
   );
 }
 

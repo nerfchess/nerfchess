@@ -3,12 +3,12 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Bell, LogOut, Mail, Search, Settings, Shield, Swords, User } from "lucide-react";
+import { Bell, LogOut, Mail, Search, Settings, Shield, Swords, User, UserPlus } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { PlayerSearch } from "@/components/PlayerSearch";
 import { SettingsPanel } from "@/components/SettingsPanel";
-import { AccountUser, fetchMe, logout } from "@/lib/authClient";
+import { AccountUser, ensureAccount, logout } from "@/lib/authClient";
 
 // Site-wide header, Lichess-style: main nav on the left; on the right a user
 // search, incoming challenges, notifications, and the account menu.
@@ -94,7 +94,9 @@ export function SiteHeader({ active }: { active?: string }) {
   useEffect(() => {
     let cancelled = false;
     let interval: number | null = null;
-    fetchMe().then((me) => {
+    // First visit mints an instant guest account so everyone can play rated
+    // games right away; registering later upgrades the same account.
+    ensureAccount().then((me) => {
       if (cancelled) return;
       setUser(me);
       if (me) {
@@ -321,6 +323,23 @@ export function SiteHeader({ active }: { active?: string }) {
             </button>
             {menu === "profile" && (
               <div className="absolute right-0 top-full z-40 mt-2 w-56 plate dropdown py-1 shadow-2xl">
+                {user.isGuest && (
+                  <>
+                    <div className="px-4 pb-1 pt-2 text-[11px] leading-snug text-parchment-400">
+                      You are playing as a guest. Register to keep this name and rating on any
+                      device.
+                    </div>
+                    <MenuItem
+                      icon={<UserPlus size={14} />}
+                      label="Create account"
+                      onClick={() => {
+                        setMenu(null);
+                        router.push("/login?upgrade=1");
+                      }}
+                    />
+                    <div className="my-1 border-t border-white/10" />
+                  </>
+                )}
                 <MenuItem
                   icon={<User size={14} />}
                   label="Profile"

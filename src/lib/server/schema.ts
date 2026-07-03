@@ -23,7 +23,8 @@ export const SCHEMA_STATEMENTS: string[] = [
     role TEXT NOT NULL DEFAULT 'user',
     muted_until INTEGER,
     banned_until INTEGER,
-    bio TEXT
+    bio TEXT,
+    is_guest INTEGER NOT NULL DEFAULT 0
   )`,
   `CREATE INDEX IF NOT EXISTS idx_users_rating ON users(rating DESC)`,
   `CREATE TABLE IF NOT EXISTS sessions (
@@ -154,6 +155,17 @@ export const SCHEMA_STATEMENTS: string[] = [
     key TEXT PRIMARY KEY,
     value INTEGER NOT NULL DEFAULT 0
   )`,
+  // Post-game thumbs up / down on the secret rule a player was dealt.
+  `CREATE TABLE IF NOT EXISTS nerf_feedback (
+    id TEXT PRIMARY KEY,
+    nerf_id TEXT NOT NULL,
+    vote INTEGER NOT NULL,
+    user_id TEXT,
+    username TEXT,
+    game_id TEXT,
+    created_at INTEGER NOT NULL
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_nerf_feedback_nerf ON nerf_feedback(nerf_id, created_at DESC)`,
 ];
 
 // Columns added after launch. SQLite has no "ADD COLUMN IF NOT EXISTS", so
@@ -164,6 +176,7 @@ const ADDITIVE_COLUMNS: string[] = [
   `ALTER TABLE users ADD COLUMN muted_until INTEGER`,
   `ALTER TABLE users ADD COLUMN banned_until INTEGER`,
   `ALTER TABLE users ADD COLUMN bio TEXT`,
+  `ALTER TABLE users ADD COLUMN is_guest INTEGER NOT NULL DEFAULT 0`,
 ];
 
 export async function ensureSchema(db: D1Database): Promise<void> {

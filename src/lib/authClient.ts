@@ -14,6 +14,7 @@ export interface AccountUser {
   role: "user" | "mod" | "admin";
   mutedUntil: number | null;
   bio: string | null;
+  isGuest: boolean;
 }
 
 async function post(path: string, body: unknown): Promise<Response> {
@@ -51,4 +52,25 @@ export async function fetchMe(): Promise<AccountUser | null> {
   } catch {
     return null;
   }
+}
+
+// One guest-creation attempt per page load, shared across components.
+let guestPromise: Promise<AccountUser | null> | null = null;
+
+/** Who am I, creating an instant guest account on the first visit. */
+export async function ensureAccount(): Promise<AccountUser | null> {
+  const me = await fetchMe();
+  if (me) return me;
+  if (!guestPromise) {
+    guestPromise = (async () => {
+      try {
+        const res = await post("/api/auth/guest", {});
+        if (!res.ok) return null;
+        return await fetchMe();
+      } catch {
+        return null;
+      }
+    })();
+  }
+  return guestPromise;
 }

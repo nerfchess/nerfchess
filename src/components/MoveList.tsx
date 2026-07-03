@@ -60,11 +60,17 @@ export function MoveList({
       } else if (event.key === "ArrowRight" && canForward) {
         event.preventDefault();
         jumpTo(currentPly + 1);
+      } else if (event.key === "ArrowUp" && canBack) {
+        event.preventDefault();
+        jumpTo(0);
+      } else if (event.key === "ArrowDown" && canForward) {
+        event.preventDefault();
+        jumpTo(maxPly);
       }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [canBack, canForward, currentPly, jumpTo, onPlyChange]);
+  }, [canBack, canForward, currentPly, jumpTo, maxPly, onPlyChange]);
 
   return (
     <div className={rootClass + (compact ? " overflow-hidden" : "")}>
