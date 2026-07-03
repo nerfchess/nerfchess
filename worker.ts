@@ -1300,14 +1300,34 @@ export class GameServer extends DurableObject<Env> {
     liveGames.sort((a, b) => b.watchers - a.watchers || b.moves - a.moves);
     challenges.sort((a, b) => b.createdAt - a.createdAt);
 
-    // Who is queued for quick pairing right now.
+    // Who is queued for quick pairing right now. Each connected entry is also
+    // surfaced as a joinable seek, so a player browsing the lobby can see and
+    // answer someone waiting in a different pool instead of both idling.
     const queuedUserIds = new Set<string>();
-    for (const poolName of Object.keys(QUEUE_POOLS)) {
+    const seeks: Array<{
+      pool: string;
+      name: string;
+      rating: number | null;
+      timeSec: number;
+      incrementSec: number;
+      at: number;
+    }> = [];
+    for (const [poolName, pool] of Object.entries(QUEUE_POOLS)) {
       const entries = (await this.ctx.storage.get<QueueEntry[]>(this.queueKey(poolName))) ?? [];
       for (const entry of entries) {
-        if (this.socketForAttachment(entry.attachmentId)) queuedUserIds.add(entry.userId);
+        if (!this.socketForAttachment(entry.attachmentId)) continue;
+        queuedUserIds.add(entry.userId);
+        seeks.push({
+          pool: poolName,
+          name: entry.username,
+          rating: Math.round(entry.rating),
+          timeSec: pool.timeSec,
+          incrementSec: pool.incrementSec,
+          at: entry.at,
+        });
       }
     }
+    seeks.sort((a, b) => a.at - b.at);
 
     // Every signed-in account with an open socket, deduped; anonymous sockets
     // are only counted.
@@ -1357,6 +1377,7 @@ export class GameServer extends DurableObject<Env> {
       anonymous,
       games: liveGames.slice(0, 25),
       challenges: challenges.slice(0, 25),
+      seeks: seeks.slice(0, 25),
     });
   }
 

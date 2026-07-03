@@ -43,3 +43,14 @@ export function getCategory(id: RatingCategoryId): RatingCategory {
 export function isRatingCategoryId(value: unknown): value is RatingCategoryId {
   return typeof value === "string" && RATING_CATEGORY_IDS.includes(value as RatingCategoryId);
 }
+
+/** Classify a time control into a speed bucket, Lichess-style: the estimated
+ *  game duration is base time plus 40 moves of increment. Matches the pool →
+ *  speed mapping in QueueButton for every quick-pairing pool. */
+export function categoryForTimeControl(timeSec: number, incrementSec: number): RatingCategoryId {
+  const estimatedSec = timeSec + 40 * incrementSec;
+  if (estimatedSec < 30) return "ultrabullet";
+  if (estimatedSec < 180) return "bullet";
+  if (estimatedSec < 480) return "blitz";
+  return "rapid";
+}
