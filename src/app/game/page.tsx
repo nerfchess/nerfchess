@@ -4,9 +4,11 @@ import { Board } from "@/components/Board";
 import { BoardPlayerRow } from "@/components/BoardPlayerRow";
 import { ClockPill } from "@/components/ClockPill";
 import { GameOver } from "@/components/GameOver";
+import { MobileActionsMenu } from "@/components/MobileActionsMenu";
 import { MobileMoveDrawer } from "@/components/MobileMoveDrawer";
 import { MoveList } from "@/components/MoveList";
 import { PlayerNerfCard } from "@/components/PlayerNerfCard";
+import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
 import { AILevel, pickAIMove } from "@/engine/ai";
 import { Nerf, type GameContext } from "@/engine/nerf";
 import { IMPLEMENTED_BY_ID, PLAYABLE_NERFS } from "@/engine/nerfs/library";
@@ -779,12 +781,24 @@ function GamePage() {
                 )}
               </div>
               <div className="plate mt-1 p-2 px-3 sm:hidden">
-                <span className={`font-display text-sm font-semibold tier-${myNerf.tier}`}>
-                  {myNerf.name}
-                </span>
-                <span className="text-xs leading-snug text-parchment-300">: {myNerf.description}</span>
+                <div className="flex items-center gap-2">
+                  <span className={`min-w-0 truncate font-display text-sm font-semibold tier-${myNerf.tier}`}>
+                    {myNerf.name}
+                  </span>
+                  <span
+                    className={`ml-auto shrink-0 rounded-full border px-2 py-0.5 font-display text-[10px] font-bold tier-bg-${myNerf.tier} tier-${myNerf.tier}`}
+                    title={`Tier ${myNerf.tier}: ${TIER_LABEL[myNerf.tier]}`}
+                  >
+                    {TIER_ROMAN[myNerf.tier]} · {TIER_LABEL[myNerf.tier]}
+                  </span>
+                </div>
+                <p className="mt-0.5 text-xs leading-snug text-parchment-300">{myNerf.description}</p>
               </div>
-              {historyActions && <div className="mt-1 sm:hidden">{historyActions}</div>}
+              {historyActions && (
+                <div className="mt-1 sm:hidden">
+                  <MobileActionsMenu>{historyActions}</MobileActionsMenu>
+                </div>
+              )}
             </div>
             <div
               className={
