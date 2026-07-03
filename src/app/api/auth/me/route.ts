@@ -23,6 +23,7 @@ export async function GET(request: Request) {
       role: user.role,
       mutedUntil: user.muted_until && user.muted_until > Date.now() ? user.muted_until : null,
       bio: user.bio,
+      isGuest: !!user.is_guest,
     },
   });
 }

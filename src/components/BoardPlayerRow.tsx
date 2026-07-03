@@ -46,7 +46,20 @@ export function BoardPlayerRow({ board, playerColor, myColor, name, elo, avatar,
           )}
           <div className="min-w-0">
             <div className="truncate font-display text-sm font-semibold text-parchment">
-              {name}
+              {name !== "Anonymous" && name !== "You" ? (
+                // Opens in a new tab so following a player never abandons a
+                // live board (relevant for both players and spectators).
+                <a
+                  href={`/u/${encodeURIComponent(name)}`}
+                  target="_blank"
+                  rel="noopener"
+                  className="hover:text-gold-leaf hover:underline transition-colors"
+                >
+                  {name}
+                </a>
+              ) : (
+                name
+              )}
               {typeof elo === "number" && (
                 <span className="text-parchment-400"> ({Math.round(elo)})</span>
               )}

@@ -96,6 +96,36 @@ function StreakCard({
   );
 }
 
+function ExtremeCard({
+  title,
+  point,
+  valueClass,
+}: {
+  title: string;
+  point: { rating: number; at: number; gameId: string } | null;
+  valueClass: string;
+}) {
+  if (!point) {
+    return (
+      <div className="plate p-4">
+        <div className="smallcaps text-[10px] text-parchment-400">{title}</div>
+        <div className="mt-2 text-sm text-parchment-400">No rated games yet</div>
+      </div>
+    );
+  }
+  return (
+    <Link
+      href={`/game/${point.gameId}`}
+      title="View the game"
+      className="plate block p-4 no-underline transition-colors hover:border-gold/40"
+    >
+      <div className="smallcaps text-[10px] text-parchment-400">{title}</div>
+      <div className={`mt-1 font-mono text-2xl tabular-nums ${valueClass}`}>{Math.round(point.rating)}</div>
+      <div className="mt-0.5 text-xs text-parchment-400">{formatDate(point.at)}</div>
+    </Link>
+  );
+}
+
 export function PlayerStatsPanel({ stats }: { stats: PlayerStats }) {
   const decided = stats.wins + stats.draws + stats.losses;
 
@@ -142,34 +172,10 @@ export function PlayerStatsPanel({ stats }: { stats: PlayerStats }) {
         </div>
       </div>
 
-      {/* Rating extremes. */}
+      {/* Rating extremes, each linking to the game that set it. */}
       <div className="grid gap-3 sm:grid-cols-2">
-        <div className="plate p-4">
-          <div className="smallcaps text-[10px] text-parchment-400">Highest rating</div>
-          {stats.highest ? (
-            <>
-              <div className="mt-1 font-mono text-2xl tabular-nums text-gold-leaf">
-                {Math.round(stats.highest.rating)}
-              </div>
-              <div className="mt-0.5 text-xs text-parchment-400">{formatDate(stats.highest.at)}</div>
-            </>
-          ) : (
-            <div className="mt-2 text-sm text-parchment-400">No rated games yet</div>
-          )}
-        </div>
-        <div className="plate p-4">
-          <div className="smallcaps text-[10px] text-parchment-400">Lowest rating</div>
-          {stats.lowest ? (
-            <>
-              <div className="mt-1 font-mono text-2xl tabular-nums text-parchment-200">
-                {Math.round(stats.lowest.rating)}
-              </div>
-              <div className="mt-0.5 text-xs text-parchment-400">{formatDate(stats.lowest.at)}</div>
-            </>
-          ) : (
-            <div className="mt-2 text-sm text-parchment-400">No rated games yet</div>
-          )}
-        </div>
+        <ExtremeCard title="Highest rating" point={stats.highest} valueClass="text-gold-leaf" />
+        <ExtremeCard title="Lowest rating" point={stats.lowest} valueClass="text-parchment-200" />
       </div>
 
       {/* Streaks. */}

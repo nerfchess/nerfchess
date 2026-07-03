@@ -1,5 +1,6 @@
 // Inline SVG chess pieces (derived from public-domain Wikimedia Cburnett set, simplified).
 import React from "react";
+import type { CSSProperties } from "react";
 import { Color, PieceType } from "@/engine/types";
 
 interface Props {
@@ -19,15 +20,28 @@ const SHEETS: Record<string, string> = {
 export const Piece = React.memo(function Piece({ type, color, size = 60, className = "" }: Props) {
   const key = `${color}${type}`;
   const path = PATHS[key];
+  const style: CSSProperties = { width: size, height: size };
   return (
-    <svg
-      viewBox="0 0 45 45"
-      width={size}
-      height={size}
-      className={"select-none " + className}
+    <span
+      className={"piece-shell inline-grid place-items-center select-none " + className}
+      style={style}
+      role="img"
       aria-label={`${color === "w" ? "White" : "Black"} ${type}`}
-      dangerouslySetInnerHTML={{ __html: path }}
-    />
+    >
+      <svg
+        viewBox="0 0 45 45"
+        width="100%"
+        height="100%"
+        className="piece-inline"
+        aria-hidden="true"
+        dangerouslySetInnerHTML={{ __html: path }}
+      />
+      <span
+        className="piece-asset"
+        aria-hidden="true"
+        style={{ backgroundImage: `var(--piece-${key}-image)` }}
+      />
+    </span>
   );
 });
 

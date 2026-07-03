@@ -11,12 +11,19 @@ interface Hit {
 
 // Debounced prefix search over account usernames; picking a result opens the
 // player's profile.
-export function PlayerSearch({ className = "" }: { className?: string }) {
+export function PlayerSearch({ className = "", autoFocus = false }: { className?: string; autoFocus?: boolean }) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [hits, setHits] = useState<Hit[]>([]);
   const [open, setOpen] = useState(false);
   const boxRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (!autoFocus) return;
+    const id = window.requestAnimationFrame(() => inputRef.current?.focus());
+    return () => window.cancelAnimationFrame(id);
+  }, [autoFocus]);
 
   useEffect(() => {
     const q = query.trim();
@@ -53,6 +60,7 @@ export function PlayerSearch({ className = "" }: { className?: string }) {
   return (
     <div ref={boxRef} className={"relative " + className}>
       <input
+        ref={inputRef}
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         onFocus={() => hits.length > 0 && setOpen(true)}
@@ -72,7 +80,7 @@ export function PlayerSearch({ className = "" }: { className?: string }) {
         className="w-full rounded-sm border border-white/15 bg-ink-900/60 px-4 py-2.5 text-base sm:text-sm text-parchment placeholder:text-parchment-400/50 focus:border-gold/60 focus:outline-none"
       />
       {open && hits.length > 0 && (
-        <div className="absolute inset-x-0 top-full z-30 mt-1 plate divide-y divide-white/5 overflow-hidden shadow-2xl">
+        <div className="absolute inset-x-0 top-full z-30 mt-1 plate dropdown divide-y divide-white/5 overflow-hidden shadow-2xl">
           {hits.map((hit) => (
             <button
               key={hit.username}
@@ -92,7 +100,7 @@ export function PlayerSearch({ className = "" }: { className?: string }) {
         </div>
       )}
       {open && query.trim().length >= 2 && hits.length === 0 && (
-        <div className="absolute inset-x-0 top-full z-30 mt-1 plate px-4 py-2.5 text-sm text-parchment-400 shadow-2xl">
+        <div className="absolute inset-x-0 top-full z-30 mt-1 plate dropdown px-4 py-2.5 text-sm text-parchment-400 shadow-2xl">
           No players match “{query.trim()}”.
         </div>
       )}

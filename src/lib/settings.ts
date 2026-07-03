@@ -22,7 +22,17 @@ export type PieceTheme =
   | "rosewood"
   | "forest"
   | "ocean"
-  | "gold";
+  | "gold"
+  | "lichessCburnett"
+  | "lichessMerida"
+  | "lichessAlpha"
+  | "lichessCalifornia"
+  | "lichessCardinal"
+  | "lichessChess7"
+  | "lichessKosal"
+  | "lichessMaestro"
+  | "lichessPirouetti"
+  | "lichessStaunty";
 
 export type AccentColor = "blue" | "green" | "amber" | "rose";
 export type AnimationSpeed = "off" | "fast" | "normal";
@@ -106,15 +116,25 @@ export const BOARD_THEMES: Record<BoardTheme, { light: string; dark: string; lab
 
 export const PIECE_THEMES: Record<
   PieceTheme,
-  { label: string; wFill: string; wStroke: string; bFill: string; bStroke: string }
+  { label: string; wFill: string; wStroke: string; bFill: string; bStroke: string; assetSet?: string }
 > = {
-  classic:  { label: "Classic",  wFill: "#f5f5f5", wStroke: "#1a1a22", bFill: "#1a1a22", bStroke: "#f5f5f5" },
-  ivory:    { label: "Ivory",    wFill: "#f0e8d5", wStroke: "#3a2f22", bFill: "#26201a", bStroke: "#f0e8d5" },
-  steel:    { label: "Steel",    wFill: "#e8edf2", wStroke: "#2a3340", bFill: "#2b3440", bStroke: "#e8edf2" },
-  rosewood: { label: "Rosewood", wFill: "#f3e6e4", wStroke: "#5a2b2b", bFill: "#4a2222", bStroke: "#f3e6e4" },
-  forest:   { label: "Forest",   wFill: "#eef1e6", wStroke: "#24331f", bFill: "#22301c", bStroke: "#eef1e6" },
-  ocean:    { label: "Ocean",    wFill: "#e6f1f5", wStroke: "#123243", bFill: "#123243", bStroke: "#e6f1f5" },
-  gold:     { label: "Gold",     wFill: "#f4ead0", wStroke: "#6b4e15", bFill: "#3a2c0e", bStroke: "#e9c877" },
+  classic:           { label: "Classic",             wFill: "#f5f5f5", wStroke: "#1a1a22", bFill: "#1a1a22", bStroke: "#f5f5f5" },
+  ivory:             { label: "Ivory",               wFill: "#f0e8d5", wStroke: "#3a2f22", bFill: "#26201a", bStroke: "#f0e8d5" },
+  steel:             { label: "Steel",               wFill: "#e8edf2", wStroke: "#2a3340", bFill: "#2b3440", bStroke: "#e8edf2" },
+  rosewood:          { label: "Rosewood",            wFill: "#f3e6e4", wStroke: "#5a2b2b", bFill: "#4a2222", bStroke: "#f3e6e4" },
+  forest:            { label: "Forest",              wFill: "#eef1e6", wStroke: "#24331f", bFill: "#22301c", bStroke: "#eef1e6" },
+  ocean:             { label: "Ocean",               wFill: "#e6f1f5", wStroke: "#123243", bFill: "#123243", bStroke: "#e6f1f5" },
+  gold:              { label: "Gold",                wFill: "#f4ead0", wStroke: "#6b4e15", bFill: "#3a2c0e", bStroke: "#e9c877" },
+  lichessCburnett:   { label: "Lichess Cburnett",    wFill: "#f5f5f5", wStroke: "#1a1a22", bFill: "#1a1a22", bStroke: "#f5f5f5", assetSet: "cburnett" },
+  lichessMerida:     { label: "Lichess Merida",      wFill: "#f5f5f5", wStroke: "#1a1a22", bFill: "#1a1a22", bStroke: "#f5f5f5", assetSet: "merida" },
+  lichessAlpha:      { label: "Lichess Alpha",       wFill: "#f5f5f5", wStroke: "#1a1a22", bFill: "#1a1a22", bStroke: "#f5f5f5", assetSet: "alpha" },
+  lichessCalifornia: { label: "Lichess California",  wFill: "#f5f5f5", wStroke: "#1a1a22", bFill: "#1a1a22", bStroke: "#f5f5f5", assetSet: "california" },
+  lichessCardinal:   { label: "Lichess Cardinal",    wFill: "#f5f5f5", wStroke: "#1a1a22", bFill: "#1a1a22", bStroke: "#f5f5f5", assetSet: "cardinal" },
+  lichessChess7:     { label: "Lichess Chess7",      wFill: "#f5f5f5", wStroke: "#1a1a22", bFill: "#1a1a22", bStroke: "#f5f5f5", assetSet: "chess7" },
+  lichessKosal:      { label: "Lichess Kosal",       wFill: "#f5f5f5", wStroke: "#1a1a22", bFill: "#1a1a22", bStroke: "#f5f5f5", assetSet: "kosal" },
+  lichessMaestro:    { label: "Lichess Maestro",     wFill: "#f5f5f5", wStroke: "#1a1a22", bFill: "#1a1a22", bStroke: "#f5f5f5", assetSet: "maestro" },
+  lichessPirouetti:  { label: "Lichess Pirouetti",   wFill: "#f5f5f5", wStroke: "#1a1a22", bFill: "#1a1a22", bStroke: "#f5f5f5", assetSet: "pirouetti" },
+  lichessStaunty:    { label: "Lichess Staunty",     wFill: "#f5f5f5", wStroke: "#1a1a22", bFill: "#1a1a22", bStroke: "#f5f5f5", assetSet: "staunty" },
 };
 
 function bool(v: unknown, fallback: boolean): boolean {
@@ -207,9 +227,23 @@ export function applyBoardTheme(theme: BoardTheme) {
 export function applyPieceTheme(theme: PieceTheme) {
   if (typeof document === "undefined") return;
   const t = PIECE_THEMES[theme] ?? PIECE_THEMES.classic;
+  const html = document.documentElement;
   const root = document.documentElement.style;
   root.setProperty("--piece-w-fill", t.wFill);
   root.setProperty("--piece-w-stroke", t.wStroke);
   root.setProperty("--piece-b-fill", t.bFill);
   root.setProperty("--piece-b-stroke", t.bStroke);
+  if (t.assetSet) {
+    html.dataset.pieceSource = "lichess";
+    for (const color of ["w", "b"] as const) {
+      for (const type of ["k", "q", "r", "b", "n", "p"] as const) {
+        root.setProperty(
+          `--piece-${color}${type}-image`,
+          `url("/piece/lichess/${t.assetSet}/${color}${type.toUpperCase()}.svg")`,
+        );
+      }
+    }
+  } else {
+    html.dataset.pieceSource = "inline";
+  }
 }

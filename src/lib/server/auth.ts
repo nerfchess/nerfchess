@@ -24,6 +24,7 @@ export interface SessionUser {
   role: UserRole;
   muted_until: number | null;
   bio: string | null;
+  is_guest: number;
 }
 
 export function isModerator(user: Pick<SessionUser, "role"> | null): boolean {
@@ -131,7 +132,7 @@ export async function userForSession(db: D1Database, token: string | null): Prom
   const row = await db
     .prepare(
       `SELECT u.id, u.username, u.rating, u.rd, u.vol, u.games, u.wins, u.losses, u.draws, u.avatar,
-              u.role, u.muted_until, u.banned_until, u.bio, s.expires_at
+              u.role, u.muted_until, u.banned_until, u.bio, u.is_guest, s.expires_at
        FROM sessions s JOIN users u ON u.id = s.user_id
        WHERE s.token_hash = ?`,
     )

@@ -16,6 +16,7 @@ interface Row {
   wins: number;
   losses: number;
   draws: number;
+  guest?: boolean;
 }
 
 export default function LeaderboardPage() {
@@ -57,7 +58,7 @@ export default function LeaderboardPage() {
           </div>
         )}
 
-        {!rows && !error && <div className="mt-8 text-parchment-300">Loading…</div>}
+        {!rows && !error && <div className="mt-8 text-parchment-300">Loading...</div>}
 
         {rows && rows.length === 0 && (
           <div className="mt-8 plate p-6 text-parchment-200">
@@ -80,21 +81,22 @@ export default function LeaderboardPage() {
             </div>
             {rows.map((row, i) => {
               const isMe = me && row.username.toLowerCase() === me.username.toLowerCase();
-              return (
-                <Link
-                  key={row.username}
-                  href={`/u/${row.username}`}
-                  className={
-                    "grid grid-cols-[3rem_1fr_5rem_4rem_6rem] items-center px-4 py-2.5 border-b border-white/5 text-sm transition hover:bg-white/[0.04] " +
-                    (isMe ? "bg-gold/10" : i % 2 ? "bg-white/[0.015]" : "")
-                  }
-                >
+              const rowClass =
+                "grid grid-cols-[3rem_1fr_5rem_4rem_6rem] items-center px-4 py-2.5 border-b border-white/5 text-sm transition hover:bg-white/[0.04] " +
+                (isMe ? "bg-gold/10" : i % 2 ? "bg-white/[0.015]" : "");
+              const content = (
+                <>
                   <span className="font-mono text-parchment-400 tabular-nums">{i + 1}</span>
                   <span className="flex min-w-0 items-center gap-2">
                     <PlayerAvatar name={row.username} avatar={row.avatar} size={24} />
                     <span className={"truncate font-medium " + (isMe ? "text-gold-leaf" : "text-parchment-100")}>
                       {row.username}
                     </span>
+                    {row.guest && (
+                      <span className="shrink-0 border border-white/15 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-parchment-400">
+                        guest
+                      </span>
+                    )}
                     {isMe && (
                       <span className="shrink-0 border border-gold/40 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-gold-leaf">
                         you
@@ -102,7 +104,7 @@ export default function LeaderboardPage() {
                     )}
                   </span>
                   <span className="text-right font-mono text-parchment-100 tabular-nums">
-                    {row.rating.toFixed(1)}
+                    {Math.round(row.rating)}
                     {row.rd > 150 && (
                       <span className="text-parchment-400" title="Provisional: rating deviation above 150">
                         ?
@@ -113,6 +115,20 @@ export default function LeaderboardPage() {
                   <span className="text-right font-mono text-parchment-400 tabular-nums">
                     {row.wins}/{row.losses}/{row.draws}
                   </span>
+                </>
+              );
+
+              if (row.guest) {
+                return (
+                  <div key={`guest:${row.username}`} className={rowClass}>
+                    {content}
+                  </div>
+                );
+              }
+
+              return (
+                <Link key={row.username} href={`/u/${row.username}`} className={rowClass}>
+                  {content}
                 </Link>
               );
             })}

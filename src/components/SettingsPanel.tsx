@@ -270,8 +270,23 @@ function PieceThemePicker({
                 } as CSSProperties
               }
             >
-              <Piece type="n" color="w" size={16} />
-              <Piece type="n" color="b" size={16} className="-ml-1" />
+              {t.assetSet ? (
+                <>
+                  <span
+                    className="h-4 w-4 bg-contain bg-center bg-no-repeat"
+                    style={{ backgroundImage: `url("/piece/lichess/${t.assetSet}/wN.svg")` }}
+                  />
+                  <span
+                    className="-ml-1 h-4 w-4 bg-contain bg-center bg-no-repeat"
+                    style={{ backgroundImage: `url("/piece/lichess/${t.assetSet}/bN.svg")` }}
+                  />
+                </>
+              ) : (
+                <>
+                  <Piece type="n" color="w" size={16} />
+                  <Piece type="n" color="b" size={16} className="-ml-1" />
+                </>
+              )}
             </span>
             <span className="font-display text-[13px] text-parchment">{t.label}</span>
           </button>
