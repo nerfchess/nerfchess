@@ -41,6 +41,7 @@ type Match = {
   // the game URL and reclaim their seats (friend games wait for a join).
   autoStart?: boolean;
   chat: ChatEntry[];
+  revealed: Partial<Record<Color, boolean>>;
   spectators: Set<Client>;
   createdAt: number;
   completedAt: number | null;
@@ -57,6 +58,8 @@ const allowedOrigins = new Set(
 );
 const matches = new Map<string, Match>();
 const disconnectGraceMs = 15 * 1000;
+// Each side's first move gets 10 free seconds (mirrors the production worker).
+const firstMoveGraceMs = 10 * 1000;
 
 // Quick-pairing pools, first come first served (mirrors the production
 // worker's protocol; this standalone server has no accounts or ratings).
@@ -153,6 +156,14 @@ function startPayload(match: Match, color: Color) {
     players: playersPayload(),
     rated: false,
     chat: match.chat,
+    ...(match.revealed.w || match.revealed.b
+      ? {
+          revealed: {
+            ...(match.revealed.w ? { w: match.setup.whiteNerfId } : {}),
+            ...(match.revealed.b ? { b: match.setup.blackNerfId } : {}),
+          },
+        }
+      : {}),
   };
 }
 
@@ -183,7 +194,10 @@ function currentClocks(match: Match, now = Date.now()): Record<Color, number> {
   const clocks = { ...match.clocks };
   if (!match.setup.timeSec || !match.game || match.game.result || match.runningSince === null) return clocks;
   const active = match.game.board.turn;
-  clocks[active] = Math.max(0, clocks[active] - (now - match.runningSince));
+  let elapsed = now - match.runningSince;
+  const activeMoves = match.game.board.history.filter((m) => m.color === active).length;
+  if (activeMoves === 0) elapsed = Math.max(0, elapsed - firstMoveGraceMs);
+  clocks[active] = Math.max(0, clocks[active] - elapsed);
   return clocks;
 }
 
@@ -261,6 +275,7 @@ function startQuickMatch(first: Client, second: Client, poolName: string, pool: 
     rematchOfferBy: null,
     autoStart: true,
     chat: [],
+    revealed: {},
     spectators: new Set(),
     createdAt: Date.now(),
     completedAt: null,
@@ -384,6 +399,18 @@ function watchMatch(client: Client, data: unknown) {
   broadcastWatcherCount(match);
 }
 
+// --- Voluntary rule reveal ---
+
+function revealRule(client: Client) {
+  const match = client.matchId ? matches.get(client.matchId) : undefined;
+  if (!match || !client.color) return error(client, "no_game", "Join a game before revealing your rule.");
+  if (!match.game) return error(client, "not_started", "The game has not started yet.");
+  if (match.revealed[client.color]) return;
+  match.revealed[client.color] = true;
+  const nerfId = client.color === "w" ? match.setup.whiteNerfId : match.setup.blackNerfId;
+  broadcast(match, "reveal", { color: client.color, nerfId });
+}
+
 // --- Chat ---
 
 const lastChatAt = new WeakMap<Client, number>();
@@ -435,6 +462,7 @@ function createMatch(client: Client, data: unknown) {
     drawOfferBy: null,
     rematchOfferBy: null,
     chat: [],
+    revealed: {},
     spectators: new Set(),
     createdAt: Date.now(),
     completedAt: null,
@@ -663,6 +691,8 @@ function onMessage(client: Client, raw: RawData) {
       return stopSpectating(client);
     case "chat":
       return chatMessage(client, frame.d);
+    case "reveal":
+      return revealRule(client);
     case "p": {
       const watchedId = client.matchId ?? client.spectatingId;
       const match = watchedId ? matches.get(watchedId) : undefined;

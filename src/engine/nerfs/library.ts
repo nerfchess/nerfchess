@@ -155,7 +155,6 @@ const STUBS: Stub[] = [
   { id: "taking_turns", name: "Taking Turns", description: "Can't move a piece type until you've moved every piece of that type once.", tier: 6 },
 
   // ADDITIONAL
-  { id: "hand_and_gigabrain", name: "Hand and Gigabrain", description: "Must move the piece type Stockfish recommends.", tier: 6 },
   { id: "crenellations", name: "Crenellations", description: "Pawns can only move to a random color of squares.", tier: 5 },
   { id: "scent_of_blood", name: "The Scent of Blood", description: "Can't make a non-capturing move with a piece that can capture.", tier: 7 },
   { id: "leading_the_charge", name: "Leading the Charge", description: "As long as you have a knight, non-knights can't be ahead of your most advanced knight.", tier: 4 },

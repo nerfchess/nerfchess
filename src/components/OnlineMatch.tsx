@@ -31,7 +31,11 @@ import { nerfSummary, outcomeFor, recordCompletedGame } from "@/lib/gameHistory"
 import { boardAtPly } from "@/lib/gameReview";
 import { MPChatMessage, MPSession, MPStart, saveOnlineSeat } from "@/lib/multiplayer";
 import { premoveOptionsFor } from "@/lib/premoves";
-import { isMuted, playCapture, playCheck, playLowTime, playMove as playMoveSfx, setMuted } from "@/lib/sounds";
+import { isMuted, playCapture, playCheck, playCountdownTick, playLowTime, playMove as playMoveSfx, playNerf, setMuted } from "@/lib/sounds";
+
+// Mirrors the server's start-of-game grace: each side's first move gets this
+// many free milliseconds before their clock starts charging.
+const FIRST_MOVE_GRACE_MS = 10_000;
 
 type PendingPremoveSend = { uci: string; ply: number };
 type PendingLocalMove = { uci: string; ply: number; move: Move };
@@ -109,10 +113,23 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   const [awaitingPremoveAck, setAwaitingPremoveAckState] = useState(false);
   const [historyPly, setHistoryPly] = useState<number | null>(null);
   const [boardHeight, setBoardHeight] = useState<number | null>(null);
-  const [revealedOppNerf, setRevealedOppNerf] = useState<Nerf | null>(null);
+  const [revealedOppNerf, setRevealedOppNerf] = useState<Nerf | null>(() => {
+    const oppId = start.revealed?.[start.color === "w" ? "b" : "w"];
+    return oppId ? IMPLEMENTED_BY_ID[oppId] ?? null : null;
+  });
   const [ratingChange, setRatingChange] = useState<{ before: number; after: number } | null>(null);
   const [chatMessages, setChatMessages] = useState<MPChatMessage[]>(() => start.chat ?? []);
   const [rematchStatus, setRematchStatus] = useState<"none" | "offered" | "incoming">("none");
+  // Seconds left on my first-move grace window (null = not in the window).
+  const [graceSecondsLeft, setGraceSecondsLeft] = useState<number | null>(null);
+  const lastGraceBeepRef = useRef<number | null>(null);
+  // Voluntary rule reveals: mine (button flow) and the opponent's (event).
+  const [myRevealState, setMyRevealState] = useState<"hidden" | "confirm" | "revealed">(() =>
+    start.revealed?.[start.color] ? "revealed" : "hidden",
+  );
+  const [liveOppReveal, setLiveOppReveal] = useState(() => !!start.revealed?.[start.color === "w" ? "b" : "w"]);
+  // The end screen can be dismissed and brought back.
+  const [showResult, setShowResult] = useState(true);
 
   const boardShellRef = useRef<HTMLDivElement | null>(null);
   const recordedResult = useRef(false);
@@ -232,6 +249,12 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         setWhiteMs(e.setup.wc);
         setBlackMs(e.setup.bc);
         setChatMessages(e.setup.chat ?? []);
+        const oppRevealId = e.setup.revealed?.[oppColor];
+        if (oppRevealId && IMPLEMENTED_BY_ID[oppRevealId]) {
+          setRevealedOppNerf(IMPLEMENTED_BY_ID[oppRevealId]);
+          setLiveOppReveal(true);
+        }
+        if (e.setup.revealed?.[myColor]) setMyRevealState("revealed");
         setGame(buildGameFromStart(e.setup));
       } else if (e.type === "opponent-gone") {
         setError("Opponent disconnected.");
@@ -284,6 +307,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           return { ...next };
         });
       } else if (e.type === "end") {
+        setShowResult(true);
         setWhiteMs(e.end.wc);
         setBlackMs(e.end.bc);
         setPendingLocalMove(null);
@@ -339,6 +363,14 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         playMoveSfx();
       } else if (e.type === "chat") {
         setChatMessages((msgs) => [...msgs, e.message].slice(-50));
+      } else if (e.type === "rule-revealed") {
+        if (e.color === myColor) {
+          setMyRevealState("revealed");
+        } else if (IMPLEMENTED_BY_ID[e.nerfId]) {
+          setRevealedOppNerf(IMPLEMENTED_BY_ID[e.nerfId]);
+          setLiveOppReveal(true);
+          playNerf();
+        }
       } else if (e.type === "rematch-offer") {
         setRematchStatus(e.color === myColor ? "offered" : "incoming");
       } else if (e.type === "rematched") {
@@ -561,25 +593,41 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     }
   }, [myMs, clockEnabled, game]);
 
-  // Clock tick. Each side's first move has a 15s server-side grace period, so
+  // Clock tick. Each side's first move has a 10s server-side grace period, so
   // the local display also holds still until it expires (server frames keep
-  // the clocks honest either way).
+  // the clocks honest either way). While MY grace window runs, surface a
+  // countdown and tick audibly through the last five seconds.
   const turnStartedAtRef = useRef(Date.now());
   useEffect(() => {
     turnStartedAtRef.current = Date.now();
   }, [game?.board.history.length]);
   useEffect(() => {
-    if (!clockEnabled || !game || game.result) return;
+    if (!clockEnabled || !game || game.result) {
+      setGraceSecondsLeft(null);
+      return;
+    }
     const id = setInterval(() => {
       const active = game.board.turn;
       const activeMoves = game.board.history.filter((m) => m.color === active).length;
-      if (activeMoves === 0 && Date.now() - turnStartedAtRef.current < 15000) return;
+      const graceLeft = FIRST_MOVE_GRACE_MS - (Date.now() - turnStartedAtRef.current);
+      if (activeMoves === 0 && graceLeft > 0) {
+        if (active === myColor) {
+          const seconds = Math.ceil(graceLeft / 1000);
+          setGraceSecondsLeft(seconds);
+          if (seconds <= 5 && lastGraceBeepRef.current !== seconds) {
+            lastGraceBeepRef.current = seconds;
+            playCountdownTick();
+          }
+        }
+        return;
+      }
+      setGraceSecondsLeft(null);
       const dec = (t: number) => Math.max(0, t - 100);
       if (active === "w") setWhiteMs(dec);
       else setBlackMs(dec);
     }, 100);
     return () => clearInterval(id);
-  }, [game, clockEnabled]);
+  }, [game, clockEnabled, myColor]);
 
   const onResign = () => {
     if (!game || game.result) return;
@@ -687,6 +735,42 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   // Takebacks are casual-only and need a move of mine on the board.
   const takebackAvailable =
     !start.rated && game.board.history.some((m) => m.color === myColor);
+  const revealControl = game.result ? null : myRevealState === "revealed" ? (
+    <div className="plate flex items-center gap-2 p-2 px-3 text-xs text-parchment-300">
+      <span aria-hidden className="text-verdigris-glow">✓</span>
+      Your rule is visible to your opponent.
+    </div>
+  ) : myRevealState === "confirm" ? (
+    <div className="plate space-y-2 p-2 px-3">
+      <div className="smallcaps text-[10px] text-parchment-300">
+        Show your secret rule to your opponent? This can&apos;t be undone.
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          onClick={() => {
+            if (!session.revealRule()) setError("Disconnected from the game server.");
+          }}
+          className="min-w-0 px-3 py-2 border border-gold/40 bg-gold/10 text-gold-leaf hover:bg-gold/20 hover:border-gold/70 transition text-xs font-display font-semibold tracking-wide"
+        >
+          Reveal
+        </button>
+        <button
+          onClick={() => setMyRevealState("hidden")}
+          className="min-w-0 px-3 py-2 btn-ghost text-xs font-display tracking-wide"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  ) : (
+    <button
+      onClick={() => setMyRevealState("confirm")}
+      className="plate w-full p-2 px-3 text-left text-xs text-parchment-300 transition hover:border-gold/40 hover:text-gold-leaf"
+    >
+      Reveal my rule to my opponent…
+    </button>
+  );
+
   const historyActions = game.result ? null : confirmingResign ? (
     <div className="space-y-2">
       <div className="smallcaps text-[10px] text-parchment-300">Resign the game?</div>
@@ -834,6 +918,28 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
       </nav>
 
       <div className="mx-auto flex w-full max-w-[1280px] flex-1 min-h-0 flex-col gap-2 overflow-hidden px-3 pb-14 sm:px-6 sm:pb-6">
+        {graceSecondsLeft != null && (
+          <div
+            role="status"
+            aria-live="polite"
+            className={
+              "plate shrink-0 flex items-center gap-2 p-2 px-3 " +
+              (graceSecondsLeft <= 5 ? "border-oxblood-glow/60 bg-oxblood/15" : "border-gold/40 bg-gold/10")
+            }
+          >
+            <span
+              className={
+                "font-mono text-lg font-bold tabular-nums " +
+                (graceSecondsLeft <= 5 ? "text-oxblood-glow" : "text-gold-leaf")
+              }
+            >
+              {graceSecondsLeft}
+            </span>
+            <span className="font-display text-sm text-parchment">
+              Free time — your clock starts when this hits zero.
+            </span>
+          </div>
+        )}
         {hint && (
           <div
             role="status"
@@ -855,7 +961,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           className="grid min-h-0 flex-1 gap-y-2 lg:grid-cols-[280px_auto] lg:justify-center lg:gap-x-3"
           style={railHeightStyle}
         >
-          <aside className="hidden min-h-0 gap-3 overflow-hidden lg:grid lg:h-[var(--board-height)] lg:grid-rows-[auto_minmax(0,1fr)_auto] lg:self-start">
+          <aside className="hidden min-h-0 gap-3 overflow-y-auto lg:grid lg:h-[var(--board-height)] lg:grid-rows-[auto_minmax(8rem,1fr)_auto] lg:self-start">
             <PlayerNerfCard
               board={boardForDisplay}
               playerColor={oppColor}
@@ -863,7 +969,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               name={oppName}
               elo={oppRating}
               nerf={opponentNerf}
-              revealed={!!game.result && !!revealedOppNerf && !uiSettings.hideOpponentReveal}
+              revealed={!!revealedOppNerf && (liveOppReveal || !uiSettings.hideOpponentReveal)}
               ownerLabel=""
             />
             <div className="hidden min-h-0 lg:block">
@@ -885,6 +991,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                 ownerLabel=""
                 progress={myNerf.progress?.(myState, myCtx) ?? null}
               />
+              {revealControl}
               {ratingStakes && <RatingStakes stakes={ratingStakes} />}
             </div>
           </aside>
@@ -1028,8 +1135,18 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         }
       />
 
-      {game.result && (
+      {game.result && !showResult && (
+        <button
+          type="button"
+          onClick={() => setShowResult(true)}
+          className="btn-leaf fixed bottom-14 right-3 z-40 px-4 py-2 font-display text-sm font-semibold shadow-xl sm:bottom-4"
+        >
+          Show result
+        </button>
+      )}
+      {game.result && showResult && (
         <GameOver
+          onDismiss={() => setShowResult(false)}
           result={game.result}
           myColor={myColor}
           myNerf={myNerf}

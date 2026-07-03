@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GameResult } from "@/engine/game";
 import { Color, Move } from "@/engine/types";
 import { Nerf } from "@/engine/nerf";
@@ -29,6 +29,9 @@ interface Props {
   moves?: Move[];
   playerNames?: Record<Color, string>;
   startedAt?: number;
+  // When provided, dismissal is delegated to the parent (which can re-show
+  // the screen later); otherwise the component hides itself permanently.
+  onDismiss?: () => void;
 }
 
 // A single revealed rule row for the post game summary. Both players' rules are
@@ -77,8 +80,13 @@ export function GameOver({
   moves,
   playerNames,
   startedAt,
+  onDismiss,
 }: Props) {
   const [dismissed, setDismissed] = useState(false);
+  const dismiss = useCallback(() => {
+    if (onDismiss) onDismiss();
+    else setDismissed(true);
+  }, [onDismiss]);
   const [shared, setShared] = useState(false);
   const [pgnCopied, setPgnCopied] = useState(false);
   const [oppRevealed, setOppRevealed] = useState(!opponentHidden);
@@ -131,7 +139,7 @@ export function GameOver({
 
   const handleReview = () => {
     onReview?.();
-    setDismissed(true);
+    dismiss();
   };
 
   // Copy PGN honors the hidden-rule setting: the opponent's nerf appears in
@@ -168,12 +176,12 @@ export function GameOver({
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
-        setDismissed(true);
+        dismiss();
       }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [dismissed]);
+  }, [dismissed, dismiss]);
 
   if (dismissed) return null;
 
@@ -186,7 +194,7 @@ export function GameOver({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       className="fixed inset-0 z-50 grid place-items-center bg-[#0a111e]/65 px-4 py-6 backdrop-blur-sm"
-      onMouseDown={() => setDismissed(true)}
+      onMouseDown={dismiss}
     >
       <motion.div
         initial={reduceMotion ? { opacity: 0 } : { y: 16, scale: 0.96, opacity: 0 }}

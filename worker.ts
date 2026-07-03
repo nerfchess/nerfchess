@@ -52,6 +52,8 @@ type StoredMatch = {
   // Set once a rematch match has been created from this one.
   rematchedTo?: string | null;
   chat?: ChatEntry[];
+  // Colors that voluntarily revealed their rule to the table mid-game.
+  revealed?: Partial<Record<Color, boolean>>;
 };
 type SessionAttachment = {
   id: string;
@@ -95,6 +97,7 @@ type ClientFrame =
   | { t: "lobby" }
   | { t: "rematch" }
   | { t: "chat"; d?: { text?: unknown } }
+  | { t: "reveal" }
   | { t: "p" };
 
 export interface Env {
@@ -121,9 +124,9 @@ const QUEUE_POOLS: Record<string, { timeSec: number; incrementSec: number }> = {
 const socketPath = "/socket/v1";
 const globalServerName = "nerfchess-global";
 const disconnectGraceMs = 15 * 1000;
-// Lichess-style start-of-game grace: a player's clock only starts charging 15
+// Lichess-style start-of-game grace: a player's clock only starts charging 10
 // seconds into their first move, so nobody loses time to a slow page load.
-const firstMoveGraceMs = 15 * 1000;
+const firstMoveGraceMs = 10 * 1000;
 
 function randomInt(max: number): number {
   const values = new Uint32Array(1);
@@ -289,6 +292,8 @@ export class GameServer extends DurableObject<Env> {
         return this.rematchRequest(ws);
       case "chat":
         return this.chatMessage(ws, frame.d);
+      case "reveal":
+        return this.revealRule(ws);
       case "p":
         return this.sendClocks(ws);
       default:
@@ -524,6 +529,9 @@ export class GameServer extends DurableObject<Env> {
     const bSeed = masterRng.fork().getState();
     const nerfSeed = color === "w" ? wSeed : bSeed;
     const preview = this.ratingPreview(match);
+    const revealed: Partial<Record<Color, string>> = {};
+    if (match.revealed?.w) revealed.w = match.setup.whiteNerfId;
+    if (match.revealed?.b) revealed.b = match.setup.blackNerfId;
     return {
       id: match.id,
       color,
@@ -538,6 +546,7 @@ export class GameServer extends DurableObject<Env> {
       players: this.playersPayload(match),
       rated: !!match.rated,
       chat: match.chat ?? [],
+      ...(Object.keys(revealed).length ? { revealed } : {}),
       ...(preview ? { preview } : {}),
     };
   }
@@ -547,7 +556,12 @@ export class GameServer extends DurableObject<Env> {
     send(ws, "start", this.startPayload(match, color));
     if (match.result) {
       const clocks = this.currentClocks(match);
-      send(ws, "end", { result: match.result, wc: Math.round(clocks.w), bc: Math.round(clocks.b) });
+      send(ws, "end", {
+        result: match.result,
+        wc: Math.round(clocks.w),
+        bc: Math.round(clocks.b),
+        nerfs: { w: match.setup.whiteNerfId, b: match.setup.blackNerfId },
+      });
     }
   }
 
@@ -583,7 +597,7 @@ export class GameServer extends DurableObject<Env> {
     if (!match.setup.timeSec || !game || game.result || match.runningSince === null) return clocks;
     const active = game.board.turn;
     let elapsed = now - match.runningSince;
-    // Start-of-game grace: the first move of each side gets 15 free seconds.
+    // Start-of-game grace: the first move of each side gets 10 free seconds.
     if (this.movesByColor(match, active) === 0) {
       elapsed = Math.max(0, elapsed - firstMoveGraceMs);
     }
@@ -650,17 +664,17 @@ export class GameServer extends DurableObject<Env> {
     await this.saveMatch(match, schedule);
 
     const clocks = this.currentClocks(match);
+    // Both secret rules become public at game end — players and spectators
+    // all receive them with the result.
     const payload = {
       result: match.result,
       wc: Math.round(clocks.w),
       bc: Math.round(clocks.b),
+      nerfs: { w: match.setup.whiteNerfId, b: match.setup.blackNerfId },
       ...(ratings ? { ratings } : {}),
     };
     this.broadcast(match, "end", payload);
-    this.sendWatchers(match, "end", {
-      ...payload,
-      nerfs: { w: match.setup.whiteNerfId, b: match.setup.blackNerfId },
-    });
+    this.sendWatchers(match, "end", payload);
   }
 
   private async createMatch(ws: WebSocket, data: unknown) {
@@ -1192,6 +1206,26 @@ export class GameServer extends DurableObject<Env> {
     match.chat = [...(match.chat ?? []), entry].slice(-50);
     await this.saveMatch(match, false);
     this.broadcast(match, "chat", entry);
+  }
+
+  // ---------------- voluntary rule reveal ----------------
+
+  // A player may show their secret rule to the table mid-game. Irreversible;
+  // the opponent and all spectators learn it immediately, and reconnects
+  // replay it via the start payload.
+  private async revealRule(ws: WebSocket) {
+    const session = this.session(ws);
+    const match = session.matchId ? await this.loadMatch(session.matchId) : null;
+    if (!match || !session.color) return error(ws, "no_game", "Join a game before revealing your rule.");
+    if (!match.startedAt) return error(ws, "not_started", "The game has not started yet.");
+    if (match.revealed?.[session.color]) return;
+
+    match.revealed = { ...(match.revealed ?? {}), [session.color]: true };
+    await this.saveMatch(match, false);
+    const nerfId = session.color === "w" ? match.setup.whiteNerfId : match.setup.blackNerfId;
+    const payload = { color: session.color, nerfId };
+    this.broadcast(match, "reveal", payload);
+    this.sendWatchers(match, "reveal", payload);
   }
 
   // ---------------- spectating & lobby ----------------

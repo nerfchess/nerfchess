@@ -38,6 +38,7 @@ const NAV_LINKS = [
   { href: "/leaderboard", label: "Leaderboard" },
   { href: "/history", label: "History" },
   { href: "/codex", label: "Rules" },
+  { href: "/stats", label: "Stats" },
 ];
 
 function clockLabel(timeSec: number, incrementSec: number): string {
