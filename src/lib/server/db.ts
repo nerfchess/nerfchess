@@ -21,6 +21,14 @@ export async function getDb(): Promise<D1Database> {
   return db;
 }
 
+// Reads a plain-text var from the worker environment (wrangler.jsonc `vars`
+// or a secret). Used for deploy-time knobs like ADMIN_USERNAMES.
+export function getEnvVar(name: string): string | undefined {
+  const { env } = getCloudflareContext();
+  const value = (env as Record<string, unknown>)[name];
+  return typeof value === "string" ? value : undefined;
+}
+
 export function requestIsSecure(request: Request): boolean {
   try {
     return new URL(request.url).protocol === "https:";

@@ -8,6 +8,8 @@ export const SESSION_COOKIE = "dc_session";
 const SESSION_TTL_MS = 90 * 24 * 60 * 60 * 1000;
 const PBKDF2_ITERATIONS = 100_000;
 
+export type UserRole = "user" | "mod" | "admin";
+
 export interface SessionUser {
   id: string;
   username: string;
@@ -19,6 +21,17 @@ export interface SessionUser {
   losses: number;
   draws: number;
   avatar: string | null;
+  role: UserRole;
+  muted_until: number | null;
+  bio: string | null;
+}
+
+export function isModerator(user: Pick<SessionUser, "role"> | null): boolean {
+  return user?.role === "mod" || user?.role === "admin";
+}
+
+export function isMuted(user: Pick<SessionUser, "muted_until"> | null): boolean {
+  return !!user?.muted_until && user.muted_until > Date.now();
 }
 
 export function validUsername(name: string): boolean {
@@ -117,18 +130,21 @@ export async function userForSession(db: D1Database, token: string | null): Prom
   if (!token || !/^[0-9a-f]{64}$/.test(token)) return null;
   const row = await db
     .prepare(
-      `SELECT u.id, u.username, u.rating, u.rd, u.vol, u.games, u.wins, u.losses, u.draws, u.avatar, s.expires_at
+      `SELECT u.id, u.username, u.rating, u.rd, u.vol, u.games, u.wins, u.losses, u.draws, u.avatar,
+              u.role, u.muted_until, u.banned_until, u.bio, s.expires_at
        FROM sessions s JOIN users u ON u.id = s.user_id
        WHERE s.token_hash = ?`,
     )
     .bind(await sha256Hex(token))
-    .first<SessionUser & { expires_at: number }>();
+    .first<SessionUser & { expires_at: number; banned_until: number | null }>();
   if (!row) return null;
   if (row.expires_at < Date.now()) {
     await db.prepare("DELETE FROM sessions WHERE expires_at < ?").bind(Date.now()).run();
     return null;
   }
-  const { expires_at: _ignored, ...user } = row;
+  // A banned account has no valid sessions anywhere (web or game server).
+  if (row.banned_until && row.banned_until > Date.now()) return null;
+  const { expires_at: _ignored, banned_until: _banned, ...user } = row;
   return user;
 }
 
