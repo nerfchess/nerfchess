@@ -1,5 +1,6 @@
 "use client";
 
+import { MobileNavMenu } from "@/components/MobileNavMenu";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Logo } from "@/components/Logo";
@@ -117,9 +118,10 @@ export default function ProfilePage() {
       <nav className="flex items-center justify-between px-5 sm:px-10 py-6 sm:py-7">
         <Logo />
         <div className="flex items-center gap-1 sm:gap-2 text-sm font-medium">
-          <Link href="/play" className="px-3 py-1.5 hover:bg-white/5 text-parchment-100">Play</Link>
+          <Link href="/play" className="hidden sm:inline-block px-3 py-1.5 hover:bg-white/5 text-parchment-100">Play</Link>
           <Link href="/leaderboard" className="hidden sm:inline-block px-3 py-1.5 hover:bg-white/5 text-parchment-100">Leaderboard</Link>
-          <Link href="/codex" className="px-3 py-1.5 hover:bg-white/5 text-parchment-100">Rules</Link>
+          <Link href="/codex" className="hidden sm:inline-block px-3 py-1.5 hover:bg-white/5 text-parchment-100">Rules</Link>
+          <MobileNavMenu />
         </div>
       </nav>
 

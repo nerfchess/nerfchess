@@ -4,6 +4,7 @@ import Link from "next/link";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { useEffect, useState } from "react";
 import { AccountChip } from "@/components/AccountChip";
+import { MobileNavMenu } from "@/components/MobileNavMenu";
 import { Logo } from "@/components/Logo";
 import { PlayerSearch } from "@/components/PlayerSearch";
 import { AccountUser, fetchMe } from "@/lib/authClient";
@@ -48,10 +49,11 @@ export default function LeaderboardPage() {
       <nav className="flex items-center justify-between px-5 sm:px-10 py-6 sm:py-7">
         <Logo />
         <div className="flex items-center gap-1 sm:gap-2 text-sm font-medium">
-          <Link href="/play" className="px-3 py-1.5 hover:bg-white/5 text-parchment-100">Play</Link>
+          <Link href="/play" className="hidden sm:inline-block px-3 py-1.5 hover:bg-white/5 text-parchment-100">Play</Link>
           <Link href="/profile" className="hidden sm:inline-block px-3 py-1.5 hover:bg-white/5 text-parchment-100">Profile</Link>
-          <Link href="/codex" className="px-3 py-1.5 hover:bg-white/5 text-parchment-100">Rules</Link>
-          <AccountChip />
+          <Link href="/codex" className="hidden sm:inline-block px-3 py-1.5 hover:bg-white/5 text-parchment-100">Rules</Link>
+          <span className="hidden sm:block"><AccountChip /></span>
+          <MobileNavMenu />
         </div>
       </nav>
 

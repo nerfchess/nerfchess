@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AccountChip } from "@/components/AccountChip";
+import { MobileNavMenu } from "@/components/MobileNavMenu";
 import { Logo } from "@/components/Logo";
 import { HeroBoard } from "@/components/HeroBoard";
 import { SettingsPanel } from "@/components/SettingsPanel";
@@ -343,14 +344,15 @@ function SiteNav({ onOpenSettings }: { onOpenSettings: () => void }) {
     <nav className="flex items-center justify-between px-5 sm:px-10 py-5 sm:py-6">
       <Logo />
       <div className="flex items-center gap-1 sm:gap-2 text-sm font-body font-medium">
-        <Link href="/lobby" className="px-3 py-1.5 hover:bg-white/5 text-gold-leaf">Lobby</Link>
+        <Link href="/lobby" className="hidden sm:inline-block px-3 py-1.5 hover:bg-white/5 text-gold-leaf">Lobby</Link>
         <Link href="/game?mode=ai" className="hidden sm:inline-block px-3 py-1.5 hover:bg-white/5 text-parchment-100">Play</Link>
         <Link href="/history" className="hidden sm:inline-block px-3 py-1.5 hover:bg-white/5 text-parchment-100">History</Link>
         <Link href="/leaderboard" className="hidden sm:inline-block px-3 py-1.5 hover:bg-white/5 text-parchment-100">Leaderboard</Link>
         <Link href="/profile" className="hidden sm:inline-block px-3 py-1.5 hover:bg-white/5 text-parchment-100">Profile</Link>
         <Link href="/codex" className="hidden sm:inline-block px-3 py-1.5 hover:bg-white/5 text-parchment-100">Rules</Link>
         <Link href="/tutorial" className="hidden sm:inline-block px-3 py-1.5 hover:bg-white/5 text-parchment-100">How to play</Link>
-        <AccountChip />
+        <span className="hidden sm:block"><AccountChip /></span>
+        <MobileNavMenu />
         <button
           type="button"
           onClick={onOpenSettings}
