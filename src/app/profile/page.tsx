@@ -14,11 +14,36 @@ import {
 } from "@/lib/ratingCategories";
 import { DEFAULT_STATS, loadRatings, type Ratings } from "@/lib/ratings";
 import { AccountUser, fetchMe } from "@/lib/authClient";
+import { PlayerAvatar } from "@/components/PlayerAvatar";
+import { AVATAR_IDS, avatarIdFor } from "@/lib/avatars";
 
 export default function ProfilePage() {
   const [ratings, setRatings] = useState<Ratings | null>(null);
   const [active, setActive] = useState<RatingCategoryId>(DEFAULT_CATEGORY);
   const [account, setAccount] = useState<AccountUser | null | undefined>(undefined);
+  const [savingAvatar, setSavingAvatar] = useState(false);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
+
+  const pickAvatar = async (id: string) => {
+    if (!account) return;
+    setSavingAvatar(true);
+    setAvatarError(null);
+    const previous = account.avatar;
+    setAccount({ ...account, avatar: id });
+    try {
+      const res = await fetch("/api/auth/avatar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ avatar: id }),
+      });
+      if (!res.ok) throw new Error("Could not save your avatar.");
+    } catch {
+      setAccount((a) => (a ? { ...a, avatar: previous } : a));
+      setAvatarError("Could not save — try again.");
+    } finally {
+      setSavingAvatar(false);
+    }
+  };
 
   useEffect(() => {
     setRatings(loadRatings());
@@ -50,7 +75,7 @@ export default function ProfilePage() {
         <Logo />
         <div className="flex items-center gap-1 sm:gap-2 text-sm font-medium">
           <Link href="/play" className="px-3 py-1.5 hover:bg-white/5 text-parchment-100">Play</Link>
-          <Link href="/leaderboard" className="px-3 py-1.5 hover:bg-white/5 text-parchment-100">Leaderboard</Link>
+          <Link href="/leaderboard" className="hidden sm:inline-block px-3 py-1.5 hover:bg-white/5 text-parchment-100">Leaderboard</Link>
           <Link href="/codex" className="px-3 py-1.5 hover:bg-white/5 text-parchment-100">Rules</Link>
         </div>
       </nav>
@@ -58,9 +83,13 @@ export default function ProfilePage() {
       <section className="max-w-3xl mx-auto px-6 py-8">
         {/* Identity header — the signed-in account, or the local player. */}
         <div className="flex items-center gap-4">
-          <span className="grid h-14 w-14 shrink-0 place-items-center rounded-full border border-gold/40 bg-gold/10 font-display text-2xl text-gold-leaf">
-            {account ? account.username[0].toUpperCase() : "Y"}
-          </span>
+          {account ? (
+            <PlayerAvatar name={account.username} avatar={account.avatar} size={56} />
+          ) : (
+            <span className="grid h-14 w-14 shrink-0 place-items-center rounded-full border border-gold/40 bg-gold/10 font-display text-2xl text-gold-leaf">
+              Y
+            </span>
+          )}
           <div>
             <h1 className="font-display text-3xl sm:text-4xl text-parchment-50">
               {account ? account.username : "You"}
@@ -72,6 +101,44 @@ export default function ProfilePage() {
             </p>
           </div>
         </div>
+
+        {/* Profile picture picker */}
+        {account && (
+          <div className="mt-8">
+            <div className="rule-ornament mb-4">
+              <span className="font-display">Profile picture</span>
+            </div>
+            <div className="plate p-4 sm:p-5">
+              <div className="flex flex-wrap gap-2">
+                {AVATAR_IDS.map((id) => {
+                  const selected = avatarIdFor(account.username, account.avatar) === id;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => pickAvatar(id)}
+                      disabled={savingAvatar}
+                      aria-label={`Avatar ${id.replace("_", " ")}`}
+                      aria-pressed={selected}
+                      className={
+                        "rounded-lg p-0.5 transition " +
+                        (selected
+                          ? "ring-2 ring-gold-leaf"
+                          : "ring-1 ring-white/10 hover:ring-white/40")
+                      }
+                    >
+                      <PlayerAvatar name={account.username} avatar={id} size={44} />
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="mt-3 text-xs text-parchment-400">
+                Shown in the lobby, on leaderboards, and at the board.
+                {avatarError && <span className="ml-2 text-oxblood-glow">{avatarError}</span>}
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Online (account) rating: the number that moves in rated games. */}
         {account && (

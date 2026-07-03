@@ -257,6 +257,15 @@ function GameSummary({ game, onClose }: { game: CompletedGame; onClose: () => vo
           </div>
         )}
 
+        {(game.moves?.length || game.serverGameId) && (
+          <Link
+            href={game.moves?.length ? `/history/${game.id}` : `/game/${game.serverGameId}`}
+            className="btn-leaf mt-5 inline-flex w-full items-center justify-center px-5 py-2.5 font-display text-sm font-semibold"
+          >
+            Watch replay
+          </Link>
+        )}
+
         <p className="mt-5 font-mono text-[10px] text-parchment-400/60 break-all">
           id {game.id}
         </p>

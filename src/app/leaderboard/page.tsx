@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { useEffect, useState } from "react";
 import { AccountChip } from "@/components/AccountChip";
 import { Logo } from "@/components/Logo";
@@ -9,6 +10,7 @@ import { AccountUser, fetchMe } from "@/lib/authClient";
 
 interface Row {
   username: string;
+  avatar?: string | null;
   rating: number;
   rd: number;
   games: number;
@@ -47,7 +49,7 @@ export default function LeaderboardPage() {
         <Logo />
         <div className="flex items-center gap-1 sm:gap-2 text-sm font-medium">
           <Link href="/play" className="px-3 py-1.5 hover:bg-white/5 text-parchment-100">Play</Link>
-          <Link href="/profile" className="px-3 py-1.5 hover:bg-white/5 text-parchment-100">Profile</Link>
+          <Link href="/profile" className="hidden sm:inline-block px-3 py-1.5 hover:bg-white/5 text-parchment-100">Profile</Link>
           <Link href="/codex" className="px-3 py-1.5 hover:bg-white/5 text-parchment-100">Rules</Link>
           <AccountChip />
         </div>
@@ -105,6 +107,7 @@ export default function LeaderboardPage() {
                 >
                   <span className="font-mono text-parchment-400 tabular-nums">{i + 1}</span>
                   <span className="flex min-w-0 items-center gap-2">
+                    <PlayerAvatar name={row.username} avatar={row.avatar} size={24} />
                     <span className={"truncate font-medium " + (isMe ? "text-gold-leaf" : "text-parchment-100")}>
                       {row.username}
                     </span>

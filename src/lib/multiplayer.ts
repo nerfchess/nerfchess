@@ -1,6 +1,6 @@
 import type { Color } from "@/engine/types";
 
-export type MPPlayers = Record<Color, { name: string; rating: number | null }>;
+export type MPPlayers = Record<Color, { name: string; rating: number | null; avatar?: string | null }>;
 
 export type MPChatMessage = { color: Color; name: string; text: string; at: number };
 
@@ -41,7 +41,7 @@ export type MPWatchStart = {
 };
 
 // One lobby snapshot: who is online and which games can be watched.
-export type MPLobbyPlayer = { name: string; rating: number | null; status: "online" | "searching" | "playing" };
+export type MPLobbyPlayer = { name: string; rating: number | null; status: "online" | "searching" | "playing"; avatar?: string | null };
 export type MPLobbyGame = {
   id: string;
   players: MPPlayers;
@@ -51,10 +51,20 @@ export type MPLobbyGame = {
   moves: number;
   watchers: number;
 };
+// A friend game waiting for an opponent; anyone in the lobby can accept it.
+export type MPLobbyChallenge = {
+  id: string;
+  host: { name: string; rating: number | null };
+  timeSec: number;
+  incrementSec: number;
+  createdAt: number;
+};
 export type MPLobby = {
   players: MPLobbyPlayer[];
   anonymous: number;
   games: MPLobbyGame[];
+  // Optional so lobby snapshots from an older server still parse.
+  challenges?: MPLobbyChallenge[];
 };
 
 export type MPAcceptedMove = {

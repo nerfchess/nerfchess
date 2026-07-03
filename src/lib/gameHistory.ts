@@ -29,6 +29,10 @@ export type CompletedGame = {
   ratingChange: { before: number; after: number } | null;
   myNerf: NerfSummary | null;
   opponentNerf: NerfSummary | null;
+  /** UCI move list, recorded since replays shipped; older entries lack it. */
+  moves?: string[];
+  /** Server match id for online/friend games — the archived copy lives at /game/{id}. */
+  serverGameId?: string | null;
 };
 
 export function nerfSummary(nerf: Nerf | null | undefined): NerfSummary | null {

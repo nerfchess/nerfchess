@@ -41,3 +41,16 @@ Deploy from a machine that is logged in to wrangler:
 ```sh
 npm run deploy
 ```
+
+### Troubleshooting: `Could not resolve "./server-functions/default/handler.mjs"`
+
+Wrangler was pointed at a stale or partially built `.open-next/` directory —
+its `worker.js` exists but the `server-functions/` bundle next to it doesn't.
+This happens when `wrangler deploy` (or `wrangler dev`) is run on its own
+after an earlier OpenNext build was interrupted. The bundle must be rebuilt
+first; `npm run deploy` and `npm run preview` always do this. To recover:
+
+```sh
+rm -rf .open-next
+npm run deploy   # or: npx opennextjs-cloudflare build && npx wrangler deploy
+```

@@ -7,7 +7,7 @@ export async function GET() {
   const db = await getDb();
   const rows = await db
     .prepare(
-      `SELECT username, rating, rd, games, wins, losses, draws
+      `SELECT username, rating, rd, games, wins, losses, draws, avatar
        FROM users WHERE games > 0
        ORDER BY rating DESC LIMIT 100`,
     )
@@ -19,6 +19,7 @@ export async function GET() {
       wins: number;
       losses: number;
       draws: number;
+      avatar: string | null;
     }>();
   return NextResponse.json({ players: rows.results });
 }
