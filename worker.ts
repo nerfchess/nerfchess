@@ -387,7 +387,14 @@ export class GameServer extends DurableObject<Env> {
   }
 
   async alarm() {
-    await this.botTick();
+    // House-player orchestration must never take down clock enforcement: a
+    // botTick failure (D1 hiccup, engine error) would otherwise skip
+    // maintenanceAll and leave flagged games running until the next event.
+    try {
+      await this.botTick();
+    } catch (err) {
+      console.error("botTick failed", err);
+    }
     await this.maintenanceAll();
   }
 
@@ -2024,29 +2031,35 @@ export class GameServer extends DurableObject<Env> {
     const remaining: StoredMatch[] = [];
 
     for (const match of matches) {
-      let changed = await this.finishOnFlag(match, now, false);
-      for (const color of ["w", "b"] as Color[]) {
-        const disconnectedAt = match.disconnectedAt[color];
-        const opponent = this.connectedSession(match.id, color === "w" ? "b" : "w");
-        if (disconnectedAt && opponent && !match.opponentGoneNotified[color] && now - disconnectedAt > disconnectGraceMs) {
-          send(opponent, "opponentGone");
-          match.opponentGoneNotified[color] = true;
-          changed = true;
+      // One bad match (corrupt record, transient storage error) must not stop
+      // flag enforcement for every other live game or break the alarm chain.
+      try {
+        let changed = await this.finishOnFlag(match, now, false);
+        for (const color of ["w", "b"] as Color[]) {
+          const disconnectedAt = match.disconnectedAt[color];
+          const opponent = this.connectedSession(match.id, color === "w" ? "b" : "w");
+          if (disconnectedAt && opponent && !match.opponentGoneNotified[color] && now - disconnectedAt > disconnectGraceMs) {
+            send(opponent, "opponentGone");
+            match.opponentGoneNotified[color] = true;
+            changed = true;
+          }
         }
-      }
 
-      const bothDisconnected = this.connectedSessions(match.id).length === 0;
-      const latestDisconnect = Math.max(match.disconnectedAt.w ?? 0, match.disconnectedAt.b ?? 0);
-      if (
-        (match.completedAt && now - match.completedAt > 60 * 60 * 1000) ||
-        (!match.startedAt && now - match.createdAt > 30 * 60 * 1000) ||
-        (match.startedAt && bothDisconnected && latestDisconnect && now - latestDisconnect > 30 * 60 * 1000)
-      ) {
-        await this.deleteMatch(match);
-        continue;
-      }
+        const bothDisconnected = this.connectedSessions(match.id).length === 0;
+        const latestDisconnect = Math.max(match.disconnectedAt.w ?? 0, match.disconnectedAt.b ?? 0);
+        if (
+          (match.completedAt && now - match.completedAt > 60 * 60 * 1000) ||
+          (!match.startedAt && now - match.createdAt > 30 * 60 * 1000) ||
+          (match.startedAt && bothDisconnected && latestDisconnect && now - latestDisconnect > 30 * 60 * 1000)
+        ) {
+          await this.deleteMatch(match);
+          continue;
+        }
 
-      if (changed) await this.saveMatch(match, false);
+        if (changed) await this.saveMatch(match, false);
+      } catch (err) {
+        console.error("maintenance failed for match", match.id, err);
+      }
       remaining.push(match);
     }
 
