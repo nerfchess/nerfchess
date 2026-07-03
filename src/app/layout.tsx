@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Analytics } from "@vercel/analytics/react";
 import { SettingsBootstrap } from "@/components/SettingsBootstrap";
 import "./globals.css";
@@ -11,6 +11,15 @@ export const metadata: Metadata = {
     icon: [{ url: "/logo.svg", type: "image/svg+xml" }],
     apple: [{ url: "/logo.svg" }],
   },
+};
+
+// resizes-content makes the mobile on-screen keyboard shrink the layout
+// viewport, so bottom-fixed UI (the in-game move/chat drawer) stays visible
+// above the keyboard instead of being covered by it.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  interactiveWidget: "resizes-content",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

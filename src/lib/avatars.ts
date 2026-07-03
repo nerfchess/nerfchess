@@ -12,8 +12,12 @@ const PALETTES = [
   { id: "verdigris", bg: "#28604f" },
   { id: "bruise", bg: "#4e3f6e" },
   { id: "oxblood", bg: "#6e2727" },
+  { id: "slate", bg: "#3b4a5c" },
+  { id: "copper", bg: "#7a4526" },
+  { id: "moss", bg: "#4c5722" },
+  { id: "plum", bg: "#5e2c4e" },
 ] as const;
-const PIECES: PieceType[] = ["n", "b", "r", "q"];
+const PIECES: PieceType[] = ["p", "n", "b", "r", "q", "k"];
 
 export const AVATAR_IDS: string[] = [];
 export const AVATARS: Record<string, AvatarSpec> = {};
@@ -25,6 +29,15 @@ for (const palette of PALETTES) {
   }
 }
 
+// Defaults for accounts that never picked an avatar hash into the original
+// 16-preset pool only, so expanding the catalog never reshuffles the look of
+// existing players.
+const DEFAULT_POOL = AVATAR_IDS.filter(
+  (id) =>
+    ["gold", "verdigris", "bruise", "oxblood"].some((p) => id.startsWith(`${p}_`)) &&
+    ["n", "b", "r", "q"].includes(id.split("_")[1]),
+);
+
 export function isAvatarId(value: unknown): value is string {
   return typeof value === "string" && value in AVATARS;
 }
@@ -35,5 +48,5 @@ export function avatarIdFor(name: string, stored?: string | null): string {
   if (stored && stored in AVATARS) return stored;
   let hash = 0;
   for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
-  return AVATAR_IDS[hash % AVATAR_IDS.length];
+  return DEFAULT_POOL[hash % DEFAULT_POOL.length];
 }

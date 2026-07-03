@@ -5,12 +5,15 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   const db = await getDb();
+  // Every account is ranked from day one (fresh accounts sit at the 1500
+  // default with a high deviation); banned accounts are dropped entirely.
   const rows = await db
     .prepare(
       `SELECT username, rating, rd, games, wins, losses, draws, avatar
-       FROM users WHERE games > 0
-       ORDER BY rating DESC LIMIT 100`,
+       FROM users WHERE banned_until IS NULL OR banned_until <= ?
+       ORDER BY rating DESC, games DESC LIMIT 100`,
     )
+    .bind(Date.now())
     .all<{
       username: string;
       rating: number;

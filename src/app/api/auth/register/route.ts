@@ -27,7 +27,7 @@ export async function POST(request: Request) {
     );
   }
   // Reserved: would shadow API/product routes.
-  if (["search", "anonymous"].includes(username.toLowerCase())) {
+  if (["search", "anonymous", "mod", "admin", "moderator", "nerfchess"].includes(username.toLowerCase())) {
     return NextResponse.json({ error: "That username is reserved." }, { status: 400 });
   }
   if (containsProfanity(username)) {

@@ -28,9 +28,30 @@ export function MobileMoveDrawer({
 }) {
   const [open, setOpen] = useState(false);
   const [seenChat, setSeenChat] = useState(0);
+  // Height of the on-screen keyboard when it overlaps the layout viewport
+  // (iOS Safari doesn't shrink the layout viewport, so a bottom-fixed drawer
+  // would otherwise sit underneath it while typing in chat).
+  const [keyboardInset, setKeyboardInset] = useState(0);
   useEffect(() => {
     if (open) setSeenChat(chatCount);
   }, [open, chatCount]);
+
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!open || !vv) return;
+    const update = () => {
+      const inset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      setKeyboardInset(Math.round(inset));
+    };
+    update();
+    vv.addEventListener("resize", update);
+    vv.addEventListener("scroll", update);
+    return () => {
+      vv.removeEventListener("resize", update);
+      vv.removeEventListener("scroll", update);
+      setKeyboardInset(0);
+    };
+  }, [open]);
   const unreadChat = open ? 0 : Math.max(0, chatCount - seenChat);
   const lastMove = moves[moves.length - 1] ?? null;
   const lastLabel = lastMove
@@ -47,7 +68,10 @@ export function MobileMoveDrawer({
           className="fixed inset-0 z-30 bg-black/50"
         />
       )}
-      <div className="fixed inset-x-0 bottom-0 z-40 plate border-t border-white/10">
+      <div
+        className="fixed inset-x-0 bottom-0 z-40 plate border-t border-white/10"
+        style={keyboardInset > 0 ? { bottom: keyboardInset } : undefined}
+      >
         <button
           type="button"
           aria-expanded={open}
@@ -72,7 +96,7 @@ export function MobileMoveDrawer({
         <div
           className={
             "overflow-hidden transition-[height] duration-200 ease-out " +
-            (open ? "h-[46dvh]" : "h-0")
+            (open ? (keyboardInset > 0 ? "h-[30dvh]" : "h-[46dvh]") : "h-0")
           }
         >
           <div className="h-full px-2 pb-[max(env(safe-area-inset-bottom),0.5rem)]">

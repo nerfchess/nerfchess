@@ -11,6 +11,9 @@ export interface AccountUser {
   losses: number;
   draws: number;
   avatar: string | null;
+  role: "user" | "mod" | "admin";
+  mutedUntil: number | null;
+  bio: string | null;
 }
 
 async function post(path: string, body: unknown): Promise<Response> {

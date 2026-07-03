@@ -58,11 +58,11 @@ export default function LeaderboardPage() {
       <section className="max-w-3xl mx-auto px-6 py-8">
         <h1 className="font-display text-4xl sm:text-5xl text-parchment-50">Leaderboard</h1>
         <p className="mt-3 text-parchment-200">
-          Ranked by rating from rated online games (3+2 blitz).{" "}
+          Every account is ranked from the moment it exists.{" "}
           <Link href="/play" className="text-gold-leaf hover:underline">
             Queue up
           </Link>{" "}
-          to get on the board.
+          for rated 3+2 blitz to make your rating mean something.
         </p>
 
         <PlayerSearch className="mt-5 max-w-sm" />
@@ -77,11 +77,11 @@ export default function LeaderboardPage() {
 
         {rows && rows.length === 0 && (
           <div className="mt-8 plate p-6 text-parchment-200">
-            Nobody has played a rated game yet. Be the first:{" "}
-            <Link href="/play" className="text-gold-leaf hover:underline">
-              find an opponent
-            </Link>
-            .
+            No accounts yet.{" "}
+            <Link href="/login" className="text-gold-leaf hover:underline">
+              Create one
+            </Link>{" "}
+            to claim the top spot.
           </div>
         )}
 
@@ -118,7 +118,12 @@ export default function LeaderboardPage() {
                     )}
                   </span>
                   <span className="text-right font-mono text-parchment-100 tabular-nums">
-                    {Math.round(row.rating)}
+                    {row.rating.toFixed(1)}
+                    {row.rd > 150 && (
+                      <span className="text-parchment-400" title="Provisional — rating deviation above 150">
+                        ?
+                      </span>
+                    )}
                   </span>
                   <span className="text-right font-mono text-parchment-400 tabular-nums">{row.games}</span>
                   <span className="text-right font-mono text-parchment-400 tabular-nums">
@@ -131,7 +136,9 @@ export default function LeaderboardPage() {
         )}
 
         <p className="mt-4 text-xs text-parchment-500">
-          Ratings are Glicko-2, updated after every rated game. Your practice ladder against the
+          Ratings are Glicko-2, updated after every rated game. A{" "}
+          <span className="font-mono">?</span> marks a provisional rating (deviation above 150) —
+          play rated games to shed it. Your practice ladder against the
           bots is tracked separately. See your{" "}
           <Link href="/profile" className="text-gold-leaf hover:underline">
             local profile

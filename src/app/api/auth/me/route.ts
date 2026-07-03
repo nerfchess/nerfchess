@@ -20,6 +20,9 @@ export async function GET(request: Request) {
       losses: user.losses,
       draws: user.draws,
       avatar: user.avatar,
+      role: user.role,
+      mutedUntil: user.muted_until && user.muted_until > Date.now() ? user.muted_until : null,
+      bio: user.bio,
     },
   });
 }

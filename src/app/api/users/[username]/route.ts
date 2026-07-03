@@ -8,7 +8,7 @@ export async function GET(_request: Request, { params }: { params: { username: s
   const db = await getDb();
   const user = await db
     .prepare(
-      `SELECT id, username, rating, rd, games, wins, losses, draws, avatar, created_at
+      `SELECT id, username, rating, rd, games, wins, losses, draws, avatar, created_at, role, bio
        FROM users WHERE username_lower = ?`,
     )
     .bind(username)
@@ -23,6 +23,8 @@ export async function GET(_request: Request, { params }: { params: { username: s
       draws: number;
       avatar: string | null;
       created_at: number;
+      role: string;
+      bio: string | null;
     }>();
   if (!user) return NextResponse.json({ error: "User not found." }, { status: 404 });
 
@@ -39,6 +41,19 @@ export async function GET(_request: Request, { params }: { params: { username: s
     .bind(user.id, user.id)
     .all();
 
+  // Rating after each rated game, oldest first — powers the profile's
+  // rating-history graph (a la Lichess).
+  const ratingHistory = await db
+    .prepare(
+      `SELECT completed_at AS at,
+              CASE WHEN white_user_id = ? THEN white_rating_after ELSE black_rating_after END AS rating
+       FROM games
+       WHERE (white_user_id = ? OR black_user_id = ?) AND rated = 1
+       ORDER BY completed_at ASC LIMIT 300`,
+    )
+    .bind(user.id, user.id, user.id)
+    .all<{ at: number; rating: number | null }>();
+
   return NextResponse.json({
     user: {
       username: user.username,
@@ -50,7 +65,10 @@ export async function GET(_request: Request, { params }: { params: { username: s
       draws: user.draws,
       avatar: user.avatar,
       createdAt: user.created_at,
+      role: user.role,
+      bio: user.bio,
     },
     games: games.results,
+    ratingHistory: ratingHistory.results.filter((p) => p.rating != null),
   });
 }

@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { fetchMe, logout } from "@/lib/authClient";
+import { AccountUser, fetchMe, logout } from "@/lib/authClient";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
+import { RatingChart, RatingPoint } from "@/components/RatingChart";
 
 interface ProfileUser {
   username: string;
@@ -16,6 +17,8 @@ interface ProfileUser {
   losses: number;
   draws: number;
   createdAt: number;
+  role: "user" | "mod" | "admin";
+  bio: string | null;
 }
 
 interface ProfileGame {
@@ -34,13 +37,20 @@ interface ProfileGame {
   completed_at: number;
 }
 
+interface ProfileData {
+  user: ProfileUser;
+  games: ProfileGame[];
+  ratingHistory: RatingPoint[];
+}
+
 export default function ProfilePage() {
   const params = useParams<{ username: string }>();
   const router = useRouter();
   const username = String(params.username ?? "");
-  const [profile, setProfile] = useState<{ user: ProfileUser; games: ProfileGame[] } | null>(null);
-  const [isMe, setIsMe] = useState(false);
+  const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [me, setMe] = useState<AccountUser | null>(null);
   const [missing, setMissing] = useState(false);
+  const [reporting, setReporting] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -51,17 +61,17 @@ export default function ProfilePage() {
         setMissing(true);
         return;
       }
-      const data = (await res.json()) as { user: ProfileUser; games: ProfileGame[] };
+      const data = (await res.json()) as ProfileData;
       setProfile(data);
-      const me = await fetchMe();
-      if (!cancelled && me && me.username.toLowerCase() === data.user.username.toLowerCase()) {
-        setIsMe(true);
-      }
+      const account = await fetchMe();
+      if (!cancelled) setMe(account);
     })();
     return () => {
       cancelled = true;
     };
   }, [username]);
+
+  const isMe = !!me && !!profile && me.username.toLowerCase() === profile.user.username.toLowerCase();
 
   const handleLogout = async () => {
     await logout();
@@ -93,26 +103,70 @@ export default function ProfilePage() {
           <>
             <div className="flex flex-wrap items-end justify-between gap-4">
               <div className="flex items-center gap-4">
-                <PlayerAvatar name={profile.user.username} avatar={profile.user.avatar} size={56} />
+                {isMe ? (
+                  <Link
+                    href="/profile"
+                    title="Change your profile picture"
+                    className="group relative rounded-md ring-1 ring-transparent hover:ring-gold/60 transition"
+                  >
+                    <PlayerAvatar name={profile.user.username} avatar={profile.user.avatar} size={56} />
+                    <span className="absolute inset-x-0 bottom-0 hidden bg-black/70 text-center text-[9px] uppercase tracking-wider text-parchment-100 group-hover:block">
+                      edit
+                    </span>
+                  </Link>
+                ) : (
+                  <PlayerAvatar name={profile.user.username} avatar={profile.user.avatar} size={56} />
+                )}
                 <div>
-                  <h1 className="font-display text-5xl">{profile.user.username}</h1>
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <h1 className="font-display text-5xl">{profile.user.username}</h1>
+                    {profile.user.role !== "user" && (
+                      <span className="smallcaps text-[10px] px-2 py-0.5 rounded-full border border-gold/40 text-gold-leaf">
+                        {profile.user.role === "admin" ? "Admin" : "Moderator"}
+                      </span>
+                    )}
+                  </div>
                   <p className="mt-2 text-parchment-300 text-sm">
                     Member since {new Date(profile.user.createdAt).toLocaleDateString()}
                   </p>
                 </div>
               </div>
-              {isMe && (
-                <button
-                  onClick={handleLogout}
-                  className="px-4 py-2 rounded-sm btn-ghost text-sm font-display"
-                >
-                  Sign out
-                </button>
-              )}
+              <div className="flex items-center gap-2">
+                {me && !isMe && (
+                  <button
+                    onClick={() => setReporting(true)}
+                    className="px-4 py-2 rounded-sm btn-ghost text-sm font-display text-oxblood-glow"
+                  >
+                    Report
+                  </button>
+                )}
+                {isMe && me && (me.role === "mod" || me.role === "admin") && (
+                  <Link href="/mod" className="px-4 py-2 rounded-sm btn-ghost text-sm font-display text-gold-leaf">
+                    Moderation
+                  </Link>
+                )}
+                {isMe && (
+                  <button onClick={handleLogout} className="px-4 py-2 rounded-sm btn-ghost text-sm font-display">
+                    Sign out
+                  </button>
+                )}
+              </div>
             </div>
 
+            <BioSection
+              bio={profile.user.bio}
+              editable={isMe}
+              onSaved={(bio) =>
+                setProfile((p) => (p ? { ...p, user: { ...p.user, bio } } : p))
+              }
+            />
+
             <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-2">
-              <StatCard label="Rating" value={Math.round(profile.user.rating).toString()} accent />
+              <StatCard
+                label="Rating"
+                value={`${profile.user.rating.toFixed(1)}${profile.user.rd > 150 ? "?" : ""}`}
+                accent
+              />
               <StatCard label="Rated games" value={profile.user.games.toString()} />
               <StatCard
                 label="Record"
@@ -120,6 +174,12 @@ export default function ProfilePage() {
               />
               <StatCard label="Deviation" value={`±${Math.round(profile.user.rd)}`} />
             </div>
+
+            {profile.ratingHistory.length >= 2 && (
+              <div className="mt-6">
+                <RatingChart points={profile.ratingHistory} />
+              </div>
+            )}
 
             <h2 className="mt-10 font-display text-2xl">Recent games</h2>
             {profile.games.length === 0 ? (
@@ -137,10 +197,182 @@ export default function ProfilePage() {
                 ))}
               </div>
             )}
+
+            {reporting && (
+              <ReportModal username={profile.user.username} onClose={() => setReporting(false)} />
+            )}
           </>
         )}
       </section>
     </main>
+  );
+}
+
+function BioSection({
+  bio,
+  editable,
+  onSaved,
+}: {
+  bio: string | null;
+  editable: boolean;
+  onSaved: (bio: string | null) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(bio ?? "");
+  const [saving, setSaving] = useState(false);
+
+  if (!bio && !editable) return null;
+
+  const save = async () => {
+    setSaving(true);
+    const res = await fetch("/api/auth/bio", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ bio: draft.trim() || null }),
+    });
+    setSaving(false);
+    if (res.ok) {
+      const data = (await res.json()) as { bio: string | null };
+      onSaved(data.bio);
+      setDraft(data.bio ?? "");
+      setEditing(false);
+    }
+  };
+
+  return (
+    <div className="mt-5">
+      {editing ? (
+        <div className="plate p-3">
+          <textarea
+            value={draft}
+            onChange={(e) => setDraft(e.target.value.slice(0, 300))}
+            rows={3}
+            placeholder="Say something about yourself…"
+            className="w-full bg-transparent text-sm text-parchment-100 outline-none resize-none"
+            autoFocus
+          />
+          <div className="mt-2 flex items-center gap-2 text-sm">
+            <button
+              onClick={save}
+              disabled={saving}
+              className="px-3 py-1 rounded-sm btn-ghost text-gold-leaf font-display"
+            >
+              {saving ? "Saving…" : "Save"}
+            </button>
+            <button onClick={() => setEditing(false)} className="px-3 py-1 rounded-sm btn-ghost">
+              Cancel
+            </button>
+            <span className="ml-auto text-parchment-400 text-xs">{draft.length}/300</span>
+          </div>
+        </div>
+      ) : (
+        <p className="text-parchment-200 text-sm whitespace-pre-wrap">
+          {bio}
+          {editable && (
+            <button
+              onClick={() => {
+                setDraft(bio ?? "");
+                setEditing(true);
+              }}
+              className="ml-2 text-gold-leaf hover:underline"
+            >
+              {bio ? "Edit" : "Add a bio"}
+            </button>
+          )}
+        </p>
+      )}
+    </div>
+  );
+}
+
+const REPORT_REASONS = [
+  ["cheating", "Cheating / outside assistance"],
+  ["boosting", "Rating manipulation"],
+  ["chat", "Offensive chat"],
+  ["username", "Inappropriate username"],
+  ["other", "Something else"],
+] as const;
+
+function ReportModal({ username, onClose }: { username: string; onClose: () => void }) {
+  const [reason, setReason] = useState<string>("cheating");
+  const [description, setDescription] = useState("");
+  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [error, setError] = useState("");
+
+  const submit = async () => {
+    setStatus("sending");
+    const res = await fetch("/api/report", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, reason, description }),
+    });
+    if (res.ok) {
+      setStatus("sent");
+    } else {
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      setError(data.error ?? "Could not send the report.");
+      setStatus("error");
+    }
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4"
+      onClick={onClose}
+    >
+      <div className="plate p-5 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+        {status === "sent" ? (
+          <>
+            <h2 className="font-display text-2xl">Report sent</h2>
+            <p className="mt-2 text-parchment-200 text-sm">
+              Thanks — a moderator will take a look.
+            </p>
+            <button onClick={onClose} className="mt-4 px-4 py-2 rounded-sm btn-ghost text-sm font-display">
+              Close
+            </button>
+          </>
+        ) : (
+          <>
+            <h2 className="font-display text-2xl">
+              Report <span className="text-gold-leaf">{username}</span>
+            </h2>
+            <div className="mt-4 space-y-2">
+              {REPORT_REASONS.map(([value, label]) => (
+                <label key={value} className="flex items-center gap-2 text-sm text-parchment-100 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="report-reason"
+                    checked={reason === value}
+                    onChange={() => setReason(value)}
+                  />
+                  {label}
+                </label>
+              ))}
+            </div>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value.slice(0, 1000))}
+              rows={4}
+              placeholder="What happened? Include game links or examples."
+              className="mt-4 w-full plate bg-transparent p-3 text-sm text-parchment-100 outline-none resize-none focus:border-gold/40"
+            />
+            {status === "error" && <p className="mt-2 text-oxblood-glow text-sm">{error}</p>}
+            <div className="mt-4 flex items-center gap-2">
+              <button
+                onClick={submit}
+                disabled={status === "sending" || !description.trim()}
+                className="px-4 py-2 rounded-sm btn-ghost text-sm font-display text-oxblood-glow disabled:opacity-50"
+              >
+                {status === "sending" ? "Sending…" : "Send report"}
+              </button>
+              <button onClick={onClose} className="px-4 py-2 rounded-sm btn-ghost text-sm font-display">
+                Cancel
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
   );
 }
 

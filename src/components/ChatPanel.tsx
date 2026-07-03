@@ -89,10 +89,17 @@ export function ChatPanel({
             <input
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
+              onFocus={(e) => {
+                // Keep the input visible once the on-screen keyboard settles.
+                const el = e.currentTarget;
+                window.setTimeout(() => el.scrollIntoView({ block: "nearest" }), 250);
+              }}
               maxLength={200}
               placeholder="Message…"
               aria-label="Chat message"
-              className="min-w-0 flex-1 rounded-sm border border-white/15 bg-ink-900/60 px-2 py-1.5 text-[12px] text-parchment placeholder:text-parchment-400/40 focus:border-gold/60 focus:outline-none"
+              // 16px on phones: anything smaller makes iOS Safari zoom the
+              // page on focus, which is what used to box the input off-screen.
+              className="min-w-0 flex-1 rounded-sm border border-white/15 bg-ink-900/60 px-2 py-1.5 text-base sm:text-[12px] text-parchment placeholder:text-parchment-400/40 focus:border-gold/60 focus:outline-none"
             />
             <button
               type="submit"

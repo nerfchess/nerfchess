@@ -1,0 +1,609 @@
+"use client";
+
+// Moderation panel (Lichess-inspired): report queue, flagged chat, player
+// lookup with mute/ban actions, rule suggestions, and the audit log.
+// Server-side authorization happens in the /api/mod routes; this page just
+// hides itself from non-mods.
+
+import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
+import { AccountUser, fetchMe } from "@/lib/authClient";
+
+type Tab = "reports" | "chat" | "users" | "suggestions" | "log";
+
+interface Report {
+  id: string;
+  reporter_name: string;
+  reported_name: string;
+  reason: string;
+  description: string;
+  game_id: string | null;
+  status: string;
+  handled_by: string | null;
+  created_at: number;
+}
+
+interface ChatFlag {
+  id: string;
+  match_id: string;
+  username: string;
+  text: string;
+  matched_words: string;
+  created_at: number;
+  reviewed: number;
+}
+
+interface ModUser {
+  id: string;
+  username: string;
+  role: string;
+  rating: number;
+  games: number;
+  created_at: number;
+  muted_until: number | null;
+  banned_until: number | null;
+}
+
+interface HistoryEntry {
+  mod_name: string;
+  target_name?: string;
+  action: string;
+  expires_at: number | null;
+  note: string | null;
+  created_at: number;
+}
+
+interface Suggestion {
+  id: string;
+  name: string;
+  description: string;
+  contact: string | null;
+  username: string | null;
+  created_at: number;
+}
+
+const DURATIONS: { label: string; ms: number | null }[] = [
+  { label: "1 hour", ms: 60 * 60 * 1000 },
+  { label: "1 day", ms: 24 * 60 * 60 * 1000 },
+  { label: "7 days", ms: 7 * 24 * 60 * 60 * 1000 },
+  { label: "30 days", ms: 30 * 24 * 60 * 60 * 1000 },
+  { label: "Permanent", ms: null },
+];
+
+function when(ts: number): string {
+  return new Date(ts).toLocaleString();
+}
+
+function untilLabel(ts: number | null): string {
+  if (!ts || ts <= Date.now()) return "";
+  return ts > Date.now() + 50 * 365 * 24 * 60 * 60 * 1000 ? "permanently" : `until ${when(ts)}`;
+}
+
+async function postJson(path: string, body: unknown): Promise<{ ok: boolean; error?: string }> {
+  const res = await fetch(path, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const data = (await res.json().catch(() => ({}))) as { error?: string };
+  return { ok: res.ok, error: data.error };
+}
+
+export default function ModPage() {
+  const [me, setMe] = useState<AccountUser | null | undefined>(undefined);
+  const [tab, setTab] = useState<Tab>("reports");
+
+  useEffect(() => {
+    fetchMe().then(setMe);
+  }, []);
+
+  const isMod = me && (me.role === "mod" || me.role === "admin");
+
+  return (
+    <main className="min-h-screen">
+      <nav className="flex items-center justify-between px-5 sm:px-10 py-6">
+        <Link href="/" className="font-display text-2xl tracking-tight">
+          nerf<span className="text-gold-leaf">chess</span>
+        </Link>
+        <div className="flex items-center gap-3 text-sm font-medium">
+          <Link href="/play" className="px-3 py-1.5 hover:bg-white/5 text-parchment-100">Play</Link>
+          <Link href="/leaderboard" className="px-3 py-1.5 hover:bg-white/5 text-parchment-100">Leaderboard</Link>
+        </div>
+      </nav>
+
+      <section className="max-w-4xl mx-auto px-6 py-8">
+        {me === undefined ? (
+          <div className="text-parchment-300">Loading…</div>
+        ) : !isMod ? (
+          <>
+            <h1 className="font-display text-4xl">Moderation</h1>
+            <p className="mt-3 text-parchment-200">
+              This page is for moderators.{" "}
+              {!me && (
+                <Link href="/login" className="text-gold-leaf hover:underline">Sign in</Link>
+              )}
+            </p>
+          </>
+        ) : (
+          <>
+            <div className="flex items-end justify-between gap-4 flex-wrap">
+              <h1 className="font-display text-4xl">Moderation</h1>
+              <span className="smallcaps text-xs text-parchment-400">
+                signed in as {me.username} · {me.role}
+              </span>
+            </div>
+
+            <div className="mt-6 flex flex-wrap gap-1 border-b border-white/10 pb-px">
+              {(
+                [
+                  ["reports", "Reports"],
+                  ["chat", "Chat flags"],
+                  ["users", "Players"],
+                  ["suggestions", "Suggestions"],
+                  ["log", "Mod log"],
+                ] as [Tab, string][]
+              ).map(([key, label]) => (
+                <button
+                  key={key}
+                  onClick={() => setTab(key)}
+                  className={`px-4 py-2 text-sm font-display border-b-2 transition ${
+                    tab === key
+                      ? "border-gold text-gold-leaf"
+                      : "border-transparent text-parchment-300 hover:text-parchment-100"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            <div className="mt-6">
+              {tab === "reports" && <ReportsTab />}
+              {tab === "chat" && <ChatFlagsTab />}
+              {tab === "users" && <UsersTab isAdmin={me.role === "admin"} />}
+              {tab === "suggestions" && <SuggestionsTab />}
+              {tab === "log" && <LogTab />}
+            </div>
+          </>
+        )}
+      </section>
+    </main>
+  );
+}
+
+// ---------------- reports ----------------
+
+function ReportsTab() {
+  const [status, setStatus] = useState<"open" | "all">("open");
+  const [reports, setReports] = useState<Report[] | null>(null);
+
+  const load = useCallback(async () => {
+    const res = await fetch(`/api/mod/reports?status=${status === "open" ? "open" : "all"}`);
+    if (res.ok) setReports(((await res.json()) as { reports: Report[] }).reports);
+  }, [status]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const close = async (id: string, next: "resolved" | "dismissed") => {
+    await postJson("/api/mod/reports", { id, status: next });
+    load();
+  };
+
+  return (
+    <div>
+      <div className="flex items-center gap-2 text-sm">
+        <FilterButton active={status === "open"} onClick={() => setStatus("open")}>Open</FilterButton>
+        <FilterButton active={status === "all"} onClick={() => setStatus("all")}>All</FilterButton>
+      </div>
+      {!reports ? (
+        <p className="mt-4 text-parchment-300">Loading…</p>
+      ) : reports.length === 0 ? (
+        <p className="mt-4 text-parchment-300">No reports. Quiet day.</p>
+      ) : (
+        <div className="mt-4 space-y-2">
+          {reports.map((r) => (
+            <div key={r.id} className="plate p-4">
+              <div className="flex flex-wrap items-center gap-2 text-sm">
+                <Link href={`/u/${r.reported_name}`} className="font-display font-semibold text-gold-leaf hover:underline">
+                  {r.reported_name}
+                </Link>
+                <span className="smallcaps text-[10px] px-2 py-0.5 rounded-full border border-white/15 text-parchment-300">
+                  {r.reason}
+                </span>
+                <span className="text-parchment-400">
+                  reported by {r.reporter_name} · {when(r.created_at)}
+                </span>
+                {r.status !== "open" && (
+                  <span className="text-parchment-400">· {r.status} by {r.handled_by}</span>
+                )}
+              </div>
+              <p className="mt-2 text-parchment-100 text-sm whitespace-pre-wrap">{r.description}</p>
+              <div className="mt-3 flex flex-wrap gap-2 text-sm">
+                {r.game_id && (
+                  <Link href={`/game/${r.game_id}`} className="px-3 py-1 rounded-sm btn-ghost">
+                    View game
+                  </Link>
+                )}
+                {r.status === "open" && (
+                  <>
+                    <button onClick={() => close(r.id, "resolved")} className="px-3 py-1 rounded-sm btn-ghost text-gold-leaf">
+                      Resolve
+                    </button>
+                    <button onClick={() => close(r.id, "dismissed")} className="px-3 py-1 rounded-sm btn-ghost">
+                      Dismiss
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------- chat flags ----------------
+
+function ChatFlagsTab() {
+  const [all, setAll] = useState(false);
+  const [flags, setFlags] = useState<ChatFlag[] | null>(null);
+
+  const load = useCallback(async () => {
+    const res = await fetch(`/api/mod/chat-flags${all ? "?all=1" : ""}`);
+    if (res.ok) setFlags(((await res.json()) as { flags: ChatFlag[] }).flags);
+  }, [all]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const review = async (id: string) => {
+    await postJson("/api/mod/chat-flags", { id });
+    load();
+  };
+
+  return (
+    <div>
+      <div className="flex items-center gap-2 text-sm">
+        <FilterButton active={!all} onClick={() => setAll(false)}>Unreviewed</FilterButton>
+        <FilterButton active={all} onClick={() => setAll(true)}>All</FilterButton>
+        {flags && flags.some((f) => !f.reviewed) && (
+          <button
+            onClick={async () => {
+              await postJson("/api/mod/chat-flags", { all: true });
+              load();
+            }}
+            className="ml-auto px-3 py-1 rounded-sm btn-ghost"
+          >
+            Mark all reviewed
+          </button>
+        )}
+      </div>
+      {!flags ? (
+        <p className="mt-4 text-parchment-300">Loading…</p>
+      ) : flags.length === 0 ? (
+        <p className="mt-4 text-parchment-300">Nothing flagged.</p>
+      ) : (
+        <div className="mt-4 plate divide-y divide-white/5">
+          {flags.map((f) => (
+            <div key={f.id} className="px-4 py-3 flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <div className="text-sm">
+                  <span className="font-display font-semibold">{f.username}</span>
+                  <span className="text-parchment-400"> · game {f.match_id} · {when(f.created_at)}</span>
+                </div>
+                <p className="mt-1 text-parchment-100 text-sm break-words">{f.text}</p>
+                <p className="mt-1 text-oxblood-glow text-xs">matched: {f.matched_words}</p>
+              </div>
+              {!f.reviewed ? (
+                <button onClick={() => review(f.id)} className="shrink-0 px-3 py-1 rounded-sm btn-ghost text-sm">
+                  Reviewed
+                </button>
+              ) : (
+                <span className="shrink-0 text-parchment-400 text-xs">reviewed</span>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------- players ----------------
+
+function UsersTab({ isAdmin }: { isAdmin: boolean }) {
+  const [query, setQuery] = useState("");
+  const [users, setUsers] = useState<ModUser[]>([]);
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const [reports, setReports] = useState<{ reporter_name: string; reason: string; description: string; status: string; created_at: number }[]>([]);
+  const [selected, setSelected] = useState<ModUser | null>(null);
+  const [action, setAction] = useState<"warn" | "mute" | "ban">("mute");
+  const [duration, setDuration] = useState<number | null>(DURATIONS[2].ms);
+  const [note, setNote] = useState("");
+  const [message, setMessage] = useState<string | null>(null);
+
+  const search = useCallback(async (q: string) => {
+    if (!q.trim()) {
+      setUsers([]);
+      setHistory([]);
+      setReports([]);
+      return;
+    }
+    const res = await fetch(`/api/mod/users?q=${encodeURIComponent(q.trim())}`);
+    if (!res.ok) return;
+    const data = (await res.json()) as {
+      users: ModUser[];
+      history: HistoryEntry[];
+      reports: { reporter_name: string; reason: string; description: string; status: string; created_at: number }[];
+    };
+    setUsers(data.users);
+    setHistory(data.history);
+    setReports(data.reports);
+  }, []);
+
+  useEffect(() => {
+    const t = setTimeout(() => search(query), 300);
+    return () => clearTimeout(t);
+  }, [query, search]);
+
+  const act = async (username: string, body: Record<string, unknown>) => {
+    setMessage(null);
+    const res = await postJson("/api/mod/users", { username, ...body });
+    setMessage(res.ok ? "Done." : res.error ?? "Failed.");
+    search(query);
+    if (selected) {
+      const refreshed = await fetch(`/api/mod/users?q=${encodeURIComponent(selected.username)}`);
+      if (refreshed.ok) {
+        const data = (await refreshed.json()) as { users: ModUser[] };
+        setSelected(data.users.find((u) => u.username === selected.username) ?? null);
+      }
+    }
+  };
+
+  return (
+    <div>
+      <input
+        value={query}
+        onChange={(e) => {
+          setQuery(e.target.value);
+          setSelected(null);
+        }}
+        placeholder="Search players…"
+        className="w-full max-w-sm bg-transparent plate px-4 py-2 text-sm outline-none focus:border-gold/40"
+      />
+
+      {users.length > 0 && (
+        <div className="mt-4 plate divide-y divide-white/5">
+          {users.map((u) => (
+            <button
+              key={u.id}
+              onClick={() => setSelected(u)}
+              className={`w-full text-left px-4 py-3 flex flex-wrap items-center gap-2 hover:bg-white/[0.03] transition ${
+                selected?.id === u.id ? "bg-white/[0.04]" : ""
+              }`}
+            >
+              <span className="font-display font-semibold">{u.username}</span>
+              {u.role !== "user" && <RoleBadge role={u.role} />}
+              {u.banned_until && u.banned_until > Date.now() && (
+                <span className="smallcaps text-[10px] px-2 py-0.5 rounded-full bg-oxblood-glow/20 text-oxblood-glow">
+                  banned {untilLabel(u.banned_until)}
+                </span>
+              )}
+              {u.muted_until && u.muted_until > Date.now() && (
+                <span className="smallcaps text-[10px] px-2 py-0.5 rounded-full bg-bruise-glow/20 text-bruise-glow">
+                  muted {untilLabel(u.muted_until)}
+                </span>
+              )}
+              <span className="ml-auto text-parchment-400 text-sm">
+                {Math.round(u.rating)} · {u.games} games · joined {new Date(u.created_at).toLocaleDateString()}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {selected && (
+        <div className="mt-4 plate p-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <Link href={`/u/${selected.username}`} className="font-display text-xl text-gold-leaf hover:underline">
+              {selected.username}
+            </Link>
+            {selected.role !== "user" && <RoleBadge role={selected.role} />}
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center gap-2 text-sm">
+            <select
+              value={action}
+              onChange={(e) => setAction(e.target.value as typeof action)}
+              className="bg-transparent plate px-3 py-1.5 outline-none"
+            >
+              <option value="warn">Warn (log only)</option>
+              <option value="mute">Mute chat</option>
+              <option value="ban">Ban account</option>
+            </select>
+            {action !== "warn" && (
+              <select
+                value={duration === null ? "perm" : String(duration)}
+                onChange={(e) => setDuration(e.target.value === "perm" ? null : Number(e.target.value))}
+                className="bg-transparent plate px-3 py-1.5 outline-none"
+              >
+                {DURATIONS.map((d) => (
+                  <option key={d.label} value={d.ms === null ? "perm" : String(d.ms)}>
+                    {d.label}
+                  </option>
+                ))}
+              </select>
+            )}
+            <input
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="Note (for the mod log)"
+              className="flex-1 min-w-[160px] bg-transparent plate px-3 py-1.5 outline-none"
+            />
+            <button
+              onClick={() => act(selected.username, { action, durationMs: duration, note })}
+              className="px-4 py-1.5 rounded-sm btn-ghost text-oxblood-glow font-display"
+            >
+              Apply
+            </button>
+          </div>
+
+          <div className="mt-3 flex flex-wrap gap-2 text-sm">
+            {selected.muted_until && selected.muted_until > Date.now() && (
+              <button onClick={() => act(selected.username, { action: "unmute" })} className="px-3 py-1 rounded-sm btn-ghost">
+                Unmute
+              </button>
+            )}
+            {selected.banned_until && selected.banned_until > Date.now() && (
+              <button onClick={() => act(selected.username, { action: "unban" })} className="px-3 py-1 rounded-sm btn-ghost">
+                Unban
+              </button>
+            )}
+            {isAdmin && selected.role === "user" && (
+              <button
+                onClick={() => act(selected.username, { action: "set_role", role: "mod" })}
+                className="px-3 py-1 rounded-sm btn-ghost text-gold-leaf"
+              >
+                Make moderator
+              </button>
+            )}
+            {isAdmin && selected.role === "mod" && (
+              <button
+                onClick={() => act(selected.username, { action: "set_role", role: "user" })}
+                className="px-3 py-1 rounded-sm btn-ghost"
+              >
+                Remove moderator
+              </button>
+            )}
+          </div>
+
+          {message && <p className="mt-3 text-sm text-parchment-200">{message}</p>}
+
+          {(history.length > 0 || reports.length > 0) && (
+            <div className="mt-5 grid sm:grid-cols-2 gap-4 text-sm">
+              <div>
+                <h3 className="smallcaps text-xs text-parchment-400">Mod history</h3>
+                {history.length === 0 ? (
+                  <p className="mt-2 text-parchment-300">Clean record.</p>
+                ) : (
+                  <ul className="mt-2 space-y-1.5">
+                    {history.map((h, i) => (
+                      <li key={i} className="text-parchment-200">
+                        <span className="text-gold-leaf">{h.action}</span> by {h.mod_name} · {when(h.created_at)}
+                        {h.note && <span className="text-parchment-400"> — {h.note}</span>}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              <div>
+                <h3 className="smallcaps text-xs text-parchment-400">Reports against them</h3>
+                {reports.length === 0 ? (
+                  <p className="mt-2 text-parchment-300">None.</p>
+                ) : (
+                  <ul className="mt-2 space-y-1.5">
+                    {reports.map((r, i) => (
+                      <li key={i} className="text-parchment-200">
+                        <span className="text-oxblood-glow">{r.reason}</span> by {r.reporter_name} ({r.status}) ·{" "}
+                        {when(r.created_at)}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------- suggestions ----------------
+
+function SuggestionsTab() {
+  const [suggestions, setSuggestions] = useState<Suggestion[] | null>(null);
+
+  useEffect(() => {
+    fetch("/api/mod/suggestions").then(async (res) => {
+      if (res.ok) setSuggestions(((await res.json()) as { suggestions: Suggestion[] }).suggestions);
+    });
+  }, []);
+
+  if (!suggestions) return <p className="text-parchment-300">Loading…</p>;
+  if (suggestions.length === 0) return <p className="text-parchment-300">No rule suggestions yet.</p>;
+  return (
+    <div className="space-y-2">
+      {suggestions.map((s) => (
+        <div key={s.id} className="plate p-4">
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            <span className="font-display font-semibold text-gold-leaf">{s.name}</span>
+            <span className="text-parchment-400">
+              by {s.username ?? "anonymous"}
+              {s.contact ? ` (${s.contact})` : ""} · {when(s.created_at)}
+            </span>
+          </div>
+          <p className="mt-2 text-parchment-100 text-sm whitespace-pre-wrap">{s.description}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ---------------- mod log ----------------
+
+function LogTab() {
+  const [log, setLog] = useState<HistoryEntry[] | null>(null);
+
+  useEffect(() => {
+    fetch("/api/mod/log").then(async (res) => {
+      if (res.ok) setLog(((await res.json()) as { log: HistoryEntry[] }).log);
+    });
+  }, []);
+
+  if (!log) return <p className="text-parchment-300">Loading…</p>;
+  if (log.length === 0) return <p className="text-parchment-300">No moderation actions yet.</p>;
+  return (
+    <div className="plate divide-y divide-white/5">
+      {log.map((entry, i) => (
+        <div key={i} className="px-4 py-3 text-sm flex flex-wrap items-baseline gap-x-2">
+          <span className="font-display font-semibold">{entry.mod_name}</span>
+          <span className="text-gold-leaf">{entry.action}</span>
+          <Link href={`/u/${entry.target_name}`} className="font-display font-semibold hover:underline">
+            {entry.target_name}
+          </Link>
+          {entry.expires_at && <span className="text-parchment-400">{untilLabel(entry.expires_at)}</span>}
+          {entry.note && <span className="text-parchment-400">— {entry.note}</span>}
+          <span className="ml-auto text-parchment-400">{when(entry.created_at)}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ---------------- shared bits ----------------
+
+function FilterButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`px-3 py-1 rounded-full border transition ${
+        active ? "border-gold/50 text-gold-leaf" : "border-white/15 text-parchment-300 hover:text-parchment-100"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function RoleBadge({ role }: { role: string }) {
+  return (
+    <span className="smallcaps text-[10px] px-2 py-0.5 rounded-full border border-gold/40 text-gold-leaf">
+      {role === "admin" ? "Admin" : "Moderator"}
+    </span>
+  );
+}

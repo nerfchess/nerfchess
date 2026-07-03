@@ -59,6 +59,8 @@ type SessionAttachment = {
   // Account attached at websocket upgrade from the session cookie.
   userId?: string;
   username?: string;
+  // Chat mute (moderation): timestamp the mute expires, read at connect time.
+  mutedUntil?: number;
   // Match id this socket spectates (mutually exclusive with a seat).
   watching?: string;
 };
@@ -209,6 +211,9 @@ export class GameServer extends DurableObject<Env> {
         if (user) {
           attachment.userId = user.id;
           attachment.username = user.username;
+          if (user.muted_until && user.muted_until > Date.now()) {
+            attachment.mutedUntil = user.muted_until;
+          }
         }
       } catch {
         // Anonymous on any auth failure.
@@ -1049,6 +1054,12 @@ export class GameServer extends DurableObject<Env> {
 
     const name = match.users?.[session.color]?.name ?? (session.color === "w" ? "White" : "Black");
     const clipped = raw.slice(0, 200);
+    // Shadow-mute (Lichess-style): a chat-muted player sees their own message
+    // echoed back, but it is neither stored nor shown to anyone else.
+    if (session.mutedUntil && session.mutedUntil > Date.now()) {
+      send(ws, "chat", { color: session.color, name, text: clipped, at: now } satisfies ChatEntry);
+      return;
+    }
     // Censor profanity before it is stored or relayed, and keep the original
     // in chat_flags so a moderator can review repeat offenders later.
     const matched = findProfanity(clipped);
