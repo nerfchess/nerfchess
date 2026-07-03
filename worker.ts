@@ -155,6 +155,10 @@ const botSeekTtlMs = 8 * 60 * 1000;
 const botSeeksKey = "bots:seeks";
 const botSeededKey = "bots:seeded:v1";
 const botNextGameKey = "bots:nextGameAt";
+// Bumped whenever the worker changes in a way we want to confirm shipped.
+// Surfaced at GET /healthz so a deploy can be verified without Cloudflare
+// dashboard access (compare the value there against this one).
+const buildVersion = "bots-diag-1";
 // Lichess-style start-of-game grace: a player's clock only starts charging 10
 // seconds into their first move, so nobody loses time to a slow page load.
 const firstMoveGraceMs = 10 * 1000;
@@ -238,8 +242,58 @@ export class GameServer extends DurableObject<Env> {
     if (url.pathname === "/healthz") {
       await this.ensureBotAlarm();
       await this.cleanupExpired();
-      const matches = await this.ctx.storage.list<StoredMatch>({ prefix: "match:" });
-      return Response.json({ ok: true, games: matches.size, sockets: this.sessions.size });
+      // Run one orchestration pass so simply opening this URL also nudges the
+      // roster to fill, and record why if it fails — this is the only window
+      // into the house players for anyone without Cloudflare dashboard access.
+      let tickError: string | null = null;
+      try {
+        await this.botTick();
+      } catch (err) {
+        tickError = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
+      }
+
+      const matches = [...(await this.ctx.storage.list<StoredMatch>({ prefix: "match:" })).values()];
+      let liveBotGames = 0;
+      let botVsBot = 0;
+      for (const match of matches) {
+        const botCount = (["w", "b"] as Color[]).filter((c) => match.bots?.[c]).length;
+        if (!botCount || match.result || !match.startedAt) continue;
+        liveBotGames++;
+        if (botCount === 2) botVsBot++;
+      }
+      const seeks = (await this.ctx.storage.get<BotSeekEntry[]>(botSeeksKey)) ?? [];
+      const seeded = !!(await this.ctx.storage.get<number>(botSeededKey));
+      let seatCount = -1;
+      let seatError: string | null = null;
+      const db = await this.db();
+      if (!db) {
+        seatError = "db_unavailable";
+      } else {
+        try {
+          seatCount = (await loadBotSeats(db)).size;
+        } catch (err) {
+          seatError = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
+        }
+      }
+      const alarmAt = await this.ctx.storage.getAlarm();
+
+      return Response.json({
+        ok: true,
+        version: buildVersion,
+        sockets: this.sessions.size,
+        games: matches.length,
+        bots: {
+          seeded,
+          seats: seatCount, // expected 15 once bot users exist; 0 means loadBotSeats found no rows
+          seatError,
+          seeks: seeks.length,
+          liveBotGames,
+          botVsBot,
+          tickError,
+          alarmAt, // ms epoch of the next scheduled tick; null means the chain is dead
+          alarmInMs: alarmAt ? alarmAt - Date.now() : null,
+        },
+      });
     }
 
     if (url.pathname !== socketPath) return new Response("Not found", { status: 404 });
@@ -407,7 +461,13 @@ export class GameServer extends DurableObject<Env> {
     if (this.botAlarmChecked) return;
     this.botAlarmChecked = true;
     const existing = await this.ctx.storage.getAlarm();
-    if (!existing) await this.ctx.storage.setAlarm(Date.now() + 1000);
+    // Revive the chain if there is no alarm, or if the stored alarm is well
+    // overdue — an alarm stuck in the past isn't firing (an abandoned/wedged
+    // chain), and without this a dead roster never recovers on its own since
+    // getAlarm() returns a non-null-but-stale value and nothing re-arms it.
+    if (!existing || existing < Date.now() - botHeartbeatMs) {
+      await this.ctx.storage.setAlarm(Date.now() + 1000);
+    }
   }
 
   private originAllowed(request: Request): boolean {
