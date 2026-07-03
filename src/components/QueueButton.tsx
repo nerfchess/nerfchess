@@ -1,9 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { AccountUser, fetchMe } from "@/lib/authClient";
+import { AccountUser, ensureAccount } from "@/lib/authClient";
 import { MPSession, saveOnlineSeat } from "@/lib/multiplayer";
 import { getCategory, type RatingCategoryId } from "@/lib/ratingCategories";
 
@@ -35,7 +34,7 @@ export function QueueButton() {
 
   useEffect(() => {
     let cancelled = false;
-    fetchMe().then((me) => {
+    ensureAccount().then((me) => {
       if (!cancelled) setUser(me);
     });
     try {
@@ -107,12 +106,12 @@ export function QueueButton() {
           {user === undefined ? (
             <div className="px-6 py-3 text-parchment-400 text-sm">…</div>
           ) : !user ? (
-            <Link
-              href="/login?next=/play"
-              className="inline-block px-6 py-3 rounded-full btn-leaf font-display text-base"
+            <button
+              onClick={startSearch}
+              className="px-6 py-3 rounded-full btn-leaf font-display text-base"
             >
-              Sign in to play rated
-            </Link>
+              Find opponent Â· {selected.label}
+            </button>
           ) : state === "searching" ? (
             <div className="flex items-center gap-3">
               <span className="flex items-center gap-2 text-sm text-parchment-200">

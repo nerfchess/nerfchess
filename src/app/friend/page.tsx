@@ -30,6 +30,25 @@ const TIME_STEPS_SEC = [
   ...range(35 * 60, 2 * 60 * 60, 5 * 60),
 ];
 
+function botChallengeHref(target: string): string | null {
+  const normalized = target.trim().toLowerCase().replace(/[_\s-]+/g, "-");
+  const difficulty =
+    normalized.includes("easy") ? "easy" :
+    normalized.includes("hard") ? "hard" :
+    normalized.includes("bot") ? "medium" :
+    null;
+  if (!difficulty) return null;
+  return `/game?${new URLSearchParams({
+    mode: "ai",
+    difficulty,
+    color: "random",
+    nerf: "random",
+    t: "600",
+    inc: "0",
+    rated: "0",
+  }).toString()}`;
+}
+
 export default function FriendPage() {
   const [view, setView] = useState<View>("setup");
   const [code, setCode] = useState("");
@@ -104,6 +123,11 @@ export default function FriendPage() {
     }
     const challengeParam = search.get("challenge")?.trim();
     if (challengeParam) {
+      const botHref = botChallengeHref(challengeParam);
+      if (botHref) {
+        window.location.replace(botHref);
+        return;
+      }
       setChallenging(challengeParam);
       return;
     }
