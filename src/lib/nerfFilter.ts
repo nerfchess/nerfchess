@@ -11,10 +11,10 @@ const SORT_IDS: SortId[] = ["az", "za", "easy", "brutal"];
 export type SortId = "az" | "za" | "easy" | "brutal";
 
 export const SORT_OPTIONS: { id: SortId; label: string }[] = [
-  { id: "az", label: "Name (A–Z)" },
-  { id: "za", label: "Name (Z–A)" },
-  { id: "easy", label: "Difficulty (Easy → Brutal)" },
-  { id: "brutal", label: "Difficulty (Brutal → Easy)" },
+  { id: "az", label: "Name (A to Z)" },
+  { id: "za", label: "Name (Z to A)" },
+  { id: "easy", label: "Easiest first" },
+  { id: "brutal", label: "Hardest first" },
 ];
 
 export interface CodexFilters {

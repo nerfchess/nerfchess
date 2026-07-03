@@ -50,6 +50,9 @@ export interface Settings {
   confirmResign: boolean; // ask before resigning
   showCoordinates: boolean; // file/rank labels on the board edge
   highlightLastMove: boolean; // tint the from/to squares of the last move
+  showLegalMoves: boolean; // dots on the squares a selected piece can move to
+  premovesEnabled: boolean; // allow queuing moves during the opponent's turn
+  lowTimeWarning: boolean; // ticking alert when the clock runs low
   uiScale: number; // 0.85..1.15, multiplies the root font size
   accentColor: AccentColor;
   animationSpeed: AnimationSpeed;
@@ -73,6 +76,9 @@ export const DEFAULT_SETTINGS: Settings = {
   confirmResign: true,
   showCoordinates: true,
   highlightLastMove: true,
+  showLegalMoves: true,
+  premovesEnabled: true,
+  lowTimeWarning: true,
   uiScale: 1,
   accentColor: "blue",
   animationSpeed: "normal",
@@ -158,6 +164,9 @@ export function loadSettings(): Settings {
       confirmResign: bool(parsed.confirmResign, DEFAULT.confirmResign),
       showCoordinates: bool(parsed.showCoordinates, DEFAULT.showCoordinates),
       highlightLastMove: bool(parsed.highlightLastMove, DEFAULT.highlightLastMove),
+      showLegalMoves: bool(parsed.showLegalMoves, DEFAULT.showLegalMoves),
+      premovesEnabled: bool(parsed.premovesEnabled, DEFAULT.premovesEnabled),
+      lowTimeWarning: bool(parsed.lowTimeWarning, DEFAULT.lowTimeWarning),
       uiScale:
         typeof parsed.uiScale === "number"
           ? Math.max(0.85, Math.min(1.15, parsed.uiScale))

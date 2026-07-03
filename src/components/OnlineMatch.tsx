@@ -250,11 +250,11 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         setAwaitingPremoveAck(false);
         clearPremoves();
       } else if (e.type === "disconnected") {
-        setError("Connection lost — reconnecting…");
+        setError("Connection lost, reconnecting…");
         setPendingLocalMove(null);
         setAwaitingPremoveAck(false);
       } else if (e.type === "reconnecting") {
-        setError("Connection lost — reconnecting…");
+        setError("Connection lost, reconnecting…");
       } else if (e.type === "start") {
         // Reconnected: the server replayed the full game (moves, clocks,
         // chat, and a trailing `end` frame if it finished while we were away).
@@ -540,13 +540,14 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     return premoveOptionsFor(virtualBoard, myColor, myNerfForPremove, myStateForPremove, ctx);
   }, [virtualBoard, myColor, game, myNerfForPremove, myStateForPremove]);
 
-  const premoveMode = !!game && !game.result && game.board.turn !== myColor && !!virtualBoard;
+  const premoveMode =
+    uiSettings.premovesEnabled && !!game && !game.result && game.board.turn !== myColor && !!virtualBoard;
   const premovePending = !!game && !game.result && game.board.turn === myColor && validPremoves.length > 0;
 
   const handleLocalMove = (m: Move) => {
     if (!game || game.result || isReviewingHistory) return;
     if (game.board.turn !== myColor) {
-      enqueuePremove(m);
+      if (uiSettings.premovesEnabled) enqueuePremove(m);
       return;
     }
     if (premovePending) return;
@@ -644,7 +645,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   // ClockPill owns the visible countdown, so the whole match surface does not
   // re-render ten times a second during bullet games.
   useEffect(() => {
-    if (!clockEnabled || !game || game.result) return;
+    if (!clockEnabled || !game || game.result || !uiSettings.lowTimeWarning) return;
     if (myMs >= 20000) {
       lowTimeArmedRef.current = true;
     }
@@ -661,7 +662,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     }, delay);
     return () => window.clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [myMs, clockEnabled, game, myColor]);
+  }, [myMs, clockEnabled, game, myColor, uiSettings.lowTimeWarning]);
 
   const onResign = () => {
     if (!game || game.result) return;
@@ -970,7 +971,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               {graceSecondsLeft}
             </span>
             <span className="font-display text-sm text-parchment">
-              Free time — your clock starts when this hits zero.
+              Free time. Your clock starts when this hits zero.
             </span>
           </div>
         )}
@@ -1079,6 +1080,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   autoQueen={uiSettings.autoQueen}
                   showCoordinates={uiSettings.showCoordinates}
                   highlightLastMove={uiSettings.highlightLastMove}
+                  showLegalMoves={uiSettings.showLegalMoves}
                 />
               </div>
               <div className="flex items-center justify-between gap-2 sm:hidden">

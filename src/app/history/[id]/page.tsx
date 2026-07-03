@@ -63,7 +63,7 @@ export default function HistoryReplayPage() {
           <>
             <h1 className="font-display text-3xl">Game not found</h1>
             <p className="mt-3 text-parchment-200">
-              Game history is stored per device — this game isn&apos;t saved on this one.
+              Game history is stored per device; this game isn&apos;t saved on this one.
             </p>
           </>
         )}

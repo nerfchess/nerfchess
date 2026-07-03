@@ -106,7 +106,7 @@ export default function LeaderboardPage() {
                   <span className="text-right font-mono text-parchment-100 tabular-nums">
                     {Math.round(row.rating)}
                     {row.rd > 150 && (
-                      <span className="text-parchment-400" title="Provisional - rating deviation above 150">
+                      <span className="text-parchment-400" title="Provisional: rating deviation above 150">
                         ?
                       </span>
                     )}
@@ -135,16 +135,6 @@ export default function LeaderboardPage() {
           </div>
         )}
 
-        <p className="mt-4 text-xs text-parchment-500">
-          Ratings are Glicko-2, updated after every rated game. A{" "}
-          <span className="font-mono">?</span> marks a provisional rating (deviation above 150). Guest rows are
-          instant accounts with real ratings; registering keeps that name and progress. Your practice ladder against
-          the bots is tracked separately. See your{" "}
-          <Link href="/profile" className="text-gold-leaf hover:underline">
-            local profile
-          </Link>
-          .
-        </p>
       </section>
     </main>
   );

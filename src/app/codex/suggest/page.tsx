@@ -53,7 +53,7 @@ export default function SuggestRulePage() {
 
         {state === "sent" ? (
           <div className="mt-7 plate gilt p-6 text-center">
-            <div className="font-display text-2xl text-gold-leaf">Sent — thank you!</div>
+            <div className="font-display text-2xl text-gold-leaf">Sent. Thank you!</div>
             <p className="mt-2 text-sm text-parchment-200">
               Your idea is in the queue. If it makes the cut you&apos;ll see it in the Codex.
             </p>
@@ -99,7 +99,7 @@ export default function SuggestRulePage() {
                 onChange={(e) => setDescription(e.target.value.slice(0, 1000))}
                 required
                 rows={5}
-                placeholder="Describe what the rule does — what it restricts, forces, or how you lose. Example: “Your bishops melt after 3 captures.”"
+                placeholder="Describe what the rule does: what it restricts, forces, or how you lose. Example: “Your bishops melt after 3 captures.”"
                 className="bg-ink-900/60 border border-white/15 rounded-2xl px-4 py-3 text-sm w-full focus:outline-none focus:border-gold/60 text-parchment placeholder:text-parchment-400/40 resize-y"
               />
               <div className="mt-1 text-right font-mono text-[10px] text-parchment-400/60">

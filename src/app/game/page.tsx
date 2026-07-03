@@ -308,7 +308,8 @@ function GamePage() {
   // it's our turn and premoves are still pending, the head is about to commit;
   // we keep showing the virtual board so the piece doesn't flicker back to its
   // original square between the AI move landing and our queued move firing.
-  const premoveMode = !!game && !game.result && game.board.turn !== myColor && !!virtualBoard;
+  const premoveMode =
+    uiSettings.premovesEnabled && !!game && !game.result && game.board.turn !== myColor && !!virtualBoard;
   const premovePending = !!game && !game.result && game.board.turn === myColor && validPremoves.length > 0;
 
   // Played-move sound effects: react to history change.
@@ -516,6 +517,7 @@ function GamePage() {
   const handleMove = (m: Move) => {
     if (game.result || isReviewingHistory) return;
     if (game.board.turn !== myColor) {
+      if (!uiSettings.premovesEnabled) return;
       // append to the premove queue; chained premoves are evaluated against
       // the virtual board derived from any prior queued moves
       setPremoves((q) => [
@@ -780,6 +782,7 @@ function GamePage() {
                   autoQueen={uiSettings.autoQueen}
                   showCoordinates={uiSettings.showCoordinates}
                   highlightLastMove={uiSettings.highlightLastMove}
+                  showLegalMoves={uiSettings.showLegalMoves}
                 />
               </div>
               <div className="flex items-center justify-between gap-2 sm:hidden">

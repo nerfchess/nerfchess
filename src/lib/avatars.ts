@@ -38,6 +38,10 @@ const DEFAULT_POOL = AVATAR_IDS.filter(
     ["n", "b", "r", "q"].includes(id.split("_")[1]),
 );
 
+// The picker offers this curated subset; AVATARS keeps the full catalog so
+// accounts that chose one of the retired presets still render correctly.
+export const AVATAR_PICKER_IDS = [...DEFAULT_POOL];
+
 export function isAvatarId(value: unknown): value is string {
   return typeof value === "string" && value in AVATARS;
 }

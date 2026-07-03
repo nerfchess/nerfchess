@@ -54,8 +54,13 @@ html[data-contrast="high"] .text-parchment-300 { color: #c9c7c2; }
 html[data-contrast="high"] .text-parchment-400 { color: #b0ada7; }
 html[data-contrast="high"] .text-parchment-500 { color: #97948e; }
 
+/* A solid dark background-color must sit behind the gradient: during fast
+   scrolls (and rubber-band overscroll) mobile browsers reveal areas the
+   fixed-attachment gradient hasn't painted yet, which otherwise flash the
+   default white. */
 html, body {
-  background:
+  background-color: #121110;
+  background-image:
     linear-gradient(180deg, #201e1b 0%, #161512 46%, #121110 100%);
   background-attachment: fixed;
   color: var(--paper);

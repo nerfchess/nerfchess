@@ -20,12 +20,15 @@ import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
 
 export default function CodexPage() {
   const [filters, setFilters] = useState<CodexFilters>(EMPTY_FILTERS);
-  const [drawerOpen, setDrawerOpen] = useState(false);
   const hydrated = useRef(false);
+  const initialSearch = useRef<string | null>(null);
 
   // Initialise from the URL on mount so links / refreshes restore filters.
+  // The search string is cached because the mirror effect below may rewrite
+  // the URL before a strict-mode re-run of this effect reads it again.
   useEffect(() => {
-    setFilters(filtersFromQueryString(window.location.search));
+    if (initialSearch.current === null) initialSearch.current = window.location.search;
+    setFilters(filtersFromQueryString(initialSearch.current));
     hydrated.current = true;
   }, []);
 
@@ -39,17 +42,9 @@ export default function CodexPage() {
   const filtered = useMemo(() => filterAndSortNerfs(ALL_NERFS, filters), [filters]);
 
   const patch = (p: Partial<CodexFilters>) => setFilters((f) => ({ ...f, ...p }));
-  const toggleCategory = (id: string) =>
-    setFilters((f) => ({
-      ...f,
-      categories: f.categories.includes(id)
-        ? f.categories.filter((c) => c !== id)
-        : [...f.categories, id],
-    }));
   const clearAll = () => setFilters({ ...EMPTY_FILTERS });
 
   const active = hasActiveFilters(filters);
-  const activeCount = filters.categories.length + (filters.tier !== null ? 1 : 0);
 
   return (
     <main className="min-h-screen pb-20">
@@ -66,95 +61,72 @@ export default function CodexPage() {
             href="/codex/suggest"
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full btn-ghost font-display text-sm"
           >
-            <span aria-hidden="true">✦</span> Suggest a rule
+            Suggest a rule
           </Link>
         </div>
 
-        {/* Sticky search + a mobile "Filters" disclosure. */}
+        {/* Sticky search bar. */}
         <div className="sticky top-0 z-20 -mx-6 mt-6 px-6 py-3 bg-ink-950/85 backdrop-blur-md border-b border-white/5">
-          <div className="flex items-center gap-2">
-            <label className="relative flex-1">
-              <span className="sr-only">Search the rules</span>
-              <SearchIcon className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-parchment-400" />
-              <input
-                value={filters.search}
-                onChange={(e) => patch({ search: e.target.value })}
-                placeholder="Search the rules…"
-                className="w-full bg-ink-900/70 border border-white/15 rounded-full pl-9 pr-9 py-2.5 text-sm font-body focus:outline-none focus:border-gold/60 text-parchment placeholder:text-parchment-400/60 transition-colors"
-              />
-              {filters.search && (
-                <button
-                  onClick={() => patch({ search: "" })}
-                  aria-label="Clear search"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-parchment-400 hover:text-parchment"
-                >
-                  ×
-                </button>
-              )}
-            </label>
-            <button
-              onClick={() => setDrawerOpen((o) => !o)}
-              aria-expanded={drawerOpen}
-              className="sm:hidden inline-flex items-center gap-1.5 shrink-0 px-3 py-2.5 rounded-full border border-white/15 text-sm text-parchment-200 hover:border-white/30"
-            >
-              <FilterIcon />
-              Filters
-              {activeCount > 0 && (
-                <span className="grid place-items-center min-w-[18px] h-[18px] px-1 rounded-full bg-gold/25 text-gold-leaf text-[10px] font-mono">
-                  {activeCount}
-                </span>
-              )}
-            </button>
-          </div>
+          <label className="relative block">
+            <span className="sr-only">Search the rules</span>
+            <SearchIcon className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-parchment-400" />
+            <input
+              value={filters.search}
+              onChange={(e) => patch({ search: e.target.value })}
+              placeholder="Search the rules…"
+              className="w-full bg-ink-900/70 border border-white/15 rounded-full pl-9 pr-9 py-2.5 text-base sm:text-sm font-body focus:outline-none focus:border-gold/60 text-parchment placeholder:text-parchment-400/60 transition-colors"
+            />
+            {filters.search && (
+              <button
+                onClick={() => patch({ search: "" })}
+                aria-label="Clear search"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-parchment-400 hover:text-parchment"
+              >
+                ×
+              </button>
+            )}
+          </label>
         </div>
 
-        {/* Filter panel: always visible on sm+, collapsible on mobile. */}
-        <div className={(drawerOpen ? "block" : "hidden") + " sm:block mt-4 space-y-4"}>
-          <FilterRow label="Difficulty">
-            <FilterPill onClick={() => patch({ tier: null })} active={filters.tier === null}>
-              All
-            </FilterPill>
+        {/* Compact filter bar: three labeled dropdowns instead of pill walls. */}
+        <div className="mt-4 flex flex-wrap items-end gap-x-4 gap-y-3">
+          <FilterSelect
+            label="Difficulty"
+            value={filters.tier === null ? "" : String(filters.tier)}
+            onChange={(v) => patch({ tier: v === "" ? null : Number(v) })}
+          >
+            <option value="" className="bg-ink-900 text-parchment">All difficulties</option>
             {[1, 2, 3, 4, 5, 6, 7, 8].map((t) => (
-              <FilterPill
-                key={t}
-                onClick={() => patch({ tier: filters.tier === t ? null : t })}
-                active={filters.tier === t}
-                tone={`tier-${t}`}
-              >
-                <span className="mr-1 opacity-80">{TIER_ROMAN[t]}</span>
-                {TIER_LABEL[t]}
-              </FilterPill>
+              <option key={t} value={t} className="bg-ink-900 text-parchment">
+                {TIER_ROMAN[t]}. {TIER_LABEL[t]}
+              </option>
             ))}
-          </FilterRow>
+          </FilterSelect>
 
-          <FilterRow label="Category">
+          <FilterSelect
+            label="Category"
+            value={filters.categories[0] ?? ""}
+            onChange={(v) => patch({ categories: v === "" ? [] : [v] })}
+          >
+            <option value="" className="bg-ink-900 text-parchment">All categories</option>
             {CATEGORY_DEFS.map((c) => (
-              <FilterPill
-                key={c.id}
-                onClick={() => toggleCategory(c.id)}
-                active={filters.categories.includes(c.id)}
-              >
+              <option key={c.id} value={c.id} className="bg-ink-900 text-parchment">
                 {c.label}
-              </FilterPill>
+              </option>
             ))}
-          </FilterRow>
+          </FilterSelect>
 
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
-            <label className="flex items-center gap-2">
-              <span className="smallcaps text-[11px] text-parchment-400">Sort</span>
-              <select
-                value={filters.sort}
-                onChange={(e) => patch({ sort: e.target.value as CodexFilters["sort"] })}
-                className="bg-ink-900/70 border border-white/15 rounded-full px-3 py-1.5 text-xs font-body text-parchment focus:outline-none focus:border-gold/60 cursor-pointer"
-              >
-                {SORT_OPTIONS.map((o) => (
-                  <option key={o.id} value={o.id} className="bg-ink-900 text-parchment">
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
+          <FilterSelect
+            label="Sort"
+            value={filters.sort}
+            onChange={(v) => patch({ sort: v as CodexFilters["sort"] })}
+          >
+            {SORT_OPTIONS.map((o) => (
+              <option key={o.id} value={o.id} className="bg-ink-900 text-parchment">
+                {o.label}
+              </option>
+            ))}
+          </FilterSelect>
         </div>
 
         <div className="mt-5 flex items-center justify-between gap-3">
@@ -199,43 +171,28 @@ export default function CodexPage() {
   );
 }
 
-function FilterRow({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-3">
-      {/* Wide enough for "Difficulty" — a narrower box let the label bleed
-          into the first pill. */}
-      <span className="smallcaps text-[11px] text-parchment-400 shrink-0 sm:w-24 sm:pt-1.5">{label}</span>
-      <div className="flex flex-wrap gap-1.5" role="group" aria-label={`Filter by ${label.toLowerCase()}`}>
-        {children}
-      </div>
-    </div>
-  );
-}
-
-function FilterPill({
-  active,
-  onClick,
+function FilterSelect({
+  label,
+  value,
+  onChange,
   children,
-  tone,
 }: {
-  active: boolean;
-  onClick: () => void;
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
   children: React.ReactNode;
-  tone?: string;
 }) {
   return (
-    <button
-      onClick={onClick}
-      aria-pressed={active}
-      className={
-        "px-3 py-1.5 rounded-full border text-xs font-display transition-colors duration-150 " +
-        (active
-          ? `bg-gold/15 border-gold text-gold-leaf ${tone ?? ""}`
-          : `border-white/12 text-parchment-300 hover:border-white/30 hover:bg-white/[0.03] ${tone ?? ""}`)
-      }
-    >
-      {children}
-    </button>
+    <label className="flex min-w-0 flex-col gap-1.5">
+      <span className="smallcaps text-[10px] text-parchment-400">{label}</span>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="max-w-full bg-ink-900/70 border border-white/15 rounded-full px-3 py-1.5 text-xs font-body text-parchment focus:outline-none focus:border-gold/60 cursor-pointer"
+      >
+        {children}
+      </select>
+    </label>
   );
 }
 
@@ -251,10 +208,3 @@ function SearchIcon({ className = "" }: { className?: string }) {
   );
 }
 
-function FilterIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
-    </svg>
-  );
-}

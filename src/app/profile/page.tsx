@@ -7,7 +7,7 @@ import { PlayerStatsPanel } from "@/components/PlayerStatsPanel";
 import type { PlayerStats } from "@/lib/playerStats";
 import { AccountUser, fetchMe } from "@/lib/authClient";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
-import { AVATAR_IDS, avatarIdFor, CUSTOM_AVATAR_MAX_CHARS, isCustomAvatar } from "@/lib/avatars";
+import { AVATAR_PICKER_IDS, avatarIdFor, CUSTOM_AVATAR_MAX_CHARS, isCustomAvatar } from "@/lib/avatars";
 
 // Center-crop to a square and downscale to 96px, returning a compact JPEG
 // data URL small enough to store inline in the avatar column.
@@ -80,7 +80,7 @@ export default function ProfilePage() {
       if (!res.ok) throw new Error("Could not save your avatar.");
     } catch {
       setAccount((a) => (a ? { ...a, avatar: previous } : a));
-      setAvatarError("Could not save — try again.");
+      setAvatarError("Could not save. Try again.");
     } finally {
       setSavingAvatar(false);
     }
@@ -171,7 +171,13 @@ export default function ProfilePage() {
                     }}
                   />
                 </label>
-                {AVATAR_IDS.map((id) => {
+                {(AVATAR_PICKER_IDS.includes(avatarIdFor(account.username, account.avatar)) ||
+                isCustomAvatar(account.avatar)
+                  ? AVATAR_PICKER_IDS
+                  : // Keep a retired preset visible (and selectable back) for
+                    // accounts that picked it before the catalog was trimmed.
+                    [...AVATAR_PICKER_IDS, avatarIdFor(account.username, account.avatar)]
+                ).map((id) => {
                   const selected =
                     !isCustomAvatar(account.avatar) && avatarIdFor(account.username, account.avatar) === id;
                   return (

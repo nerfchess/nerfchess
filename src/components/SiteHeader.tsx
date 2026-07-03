@@ -202,7 +202,7 @@ export function SiteHeader({ active }: { active?: string }) {
           <Search size={17} />
         </button>
         {menu === "search" && (
-          <div className="absolute right-0 top-full z-40 mt-2 w-72 plate dropdown p-3 shadow-2xl">
+          <div className="absolute right-0 top-full z-40 mt-3 w-72 plate dropdown p-3 shadow-2xl">
             <PlayerSearch autoFocus />
             <p className="mt-2 text-[11px] text-parchment-400">
               Open a player&apos;s page to message or challenge them.
@@ -224,7 +224,7 @@ export function SiteHeader({ active }: { active?: string }) {
               <Badge n={challenges.length} />
             </button>
             {menu === "challenges" && (
-              <div className="absolute right-0 top-full z-40 mt-2 w-80 plate dropdown shadow-2xl">
+              <div className="absolute right-0 top-full z-40 mt-3 w-80 plate dropdown shadow-2xl">
                 <div className="border-b border-white/10 px-4 py-2.5 smallcaps text-[10px] text-parchment-400">
                   Challenges
                 </div>
@@ -267,7 +267,7 @@ export function SiteHeader({ active }: { active?: string }) {
               <Badge n={unread} />
             </button>
             {menu === "bell" && (
-              <div className="absolute right-0 top-full z-40 mt-2 w-80 plate dropdown shadow-2xl">
+              <div className="absolute right-0 top-full z-40 mt-3 w-80 plate dropdown shadow-2xl">
                 <div className="flex items-center justify-between border-b border-white/10 px-4 py-2.5">
                   <span className="smallcaps text-[10px] text-parchment-400">Notifications</span>
                   {unread > 0 && (
@@ -324,7 +324,7 @@ export function SiteHeader({ active }: { active?: string }) {
               <PlayerAvatar name={user.username} avatar={user.avatar} size={24} className="rounded-full" />
             </button>
             {menu === "profile" && (
-              <div className="absolute right-0 top-full z-40 mt-2 w-56 plate dropdown py-1 shadow-2xl">
+              <div className="absolute right-0 top-full z-40 mt-3 w-56 plate dropdown py-1 shadow-2xl">
                 {user.isGuest && (
                   <>
                     <div className="px-4 pb-1 pt-2 text-[11px] leading-snug text-parchment-400">

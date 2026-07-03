@@ -149,7 +149,7 @@ export default function LobbyPage() {
                         router.push(`/friend?code=${encodeURIComponent(joinCode.trim())}`);
                       }
                     }}
-                    placeholder="Enter a code — ABCDE"
+                    placeholder="Enter a code, e.g. ABCDE"
                     maxLength={8}
                     aria-label="Friend game code"
                     className="min-w-0 flex-1 bg-ink-900/60 border border-white/15 rounded-sm px-4 py-3 font-mono tracking-widest uppercase focus:outline-none focus:border-gold/60 text-parchment placeholder:text-parchment-400/40 placeholder:tracking-normal placeholder:normal-case"
@@ -245,7 +245,7 @@ export default function LobbyPage() {
                   <p className="mt-3 text-sm text-parchment-400">
                     No signed-in players right now
                     {lobby.anonymous > 0
-                      ? ` — but ${lobby.anonymous} anonymous player${lobby.anonymous === 1 ? " is" : "s are"} around.`
+                      ? `, but ${lobby.anonymous} anonymous player${lobby.anonymous === 1 ? " is" : "s are"} around.`
                       : "."}
                   </p>
                 )}

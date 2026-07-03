@@ -50,6 +50,9 @@ interface Props {
   showCoordinates?: boolean;
   // Tint the from/to squares of the last played move (Settings).
   highlightLastMove?: boolean;
+  // Dots/rings on the squares a selected piece can move to (Settings). Moves
+  // stay playable when off; only the hints are hidden.
+  showLegalMoves?: boolean;
 }
 
 function riskOf(moves: Move[], moveRisks: Map<string, MoveRisk> | undefined): MoveRisk {
@@ -156,6 +159,7 @@ export function Board({
   autoQueen,
   showCoordinates = true,
   highlightLastMove = true,
+  showLegalMoves = true,
 }: Props) {
   const premoveSquares = useMemo(() => {
     const s = new Set<Square>();
@@ -536,7 +540,7 @@ export function Board({
                   </div>
                 ) : null}
 
-                {isTarget && (
+                {showLegalMoves && isTarget && (
                   isCapture ? (
                     <div
                       className={
