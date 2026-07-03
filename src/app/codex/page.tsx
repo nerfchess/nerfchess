@@ -1,5 +1,6 @@
 "use client";
 
+import { MobileNavMenu } from "@/components/MobileNavMenu";
 import { NerfCard } from "@/components/NerfCard";
 import { ALL_NERFS } from "@/engine/nerfs/library";
 import Link from "next/link";
@@ -57,7 +58,10 @@ export default function CodexPage() {
         <Link href="/" className="font-display text-2xl tracking-tight">
           nerf<span className="text-gold-leaf">chess</span>
         </Link>
-        <Link href="/play" className="px-3 py-1.5 rounded-full text-sm font-display hover:bg-white/5 text-parchment">Play</Link>
+        <div className="flex items-center gap-1">
+          <Link href="/play" className="hidden sm:inline-block px-3 py-1.5 rounded-full text-sm font-display hover:bg-white/5 text-parchment">Play</Link>
+          <MobileNavMenu />
+        </div>
       </nav>
 
       <section className="max-w-6xl mx-auto px-6 pt-4">

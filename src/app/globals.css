@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Phones must never scroll sideways. `clip` (not `hidden`) so position:sticky
+   descendants keep working — hidden would turn the root into a scroll
+   container and detach sticky elements. */
+html,
+body {
+  overflow-x: clip;
+}
+
 :root {
   --paper: #b8b8b8;
   --paper-dim: #7f7d77;

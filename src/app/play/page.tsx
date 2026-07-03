@@ -7,6 +7,7 @@ import { PLAYABLE_NERFS } from "@/engine/nerfs/library";
 import { clearSavedAiGame } from "@/lib/gamePersistence";
 import { loadRating } from "@/lib/rating";
 import { AccountChip } from "@/components/AccountChip";
+import { MobileNavMenu } from "@/components/MobileNavMenu";
 import { Logo } from "@/components/Logo";
 import { QueueButton } from "@/components/QueueButton";
 
@@ -75,11 +76,12 @@ export default function PlayPage() {
               <span className="font-mono text-[10px] text-parchment-400">{games}g</span>
             </Link>
           )}
-          <Link href="/lobby" className="px-3 py-1.5 text-sm font-medium hover:bg-white/5 text-gold-leaf">Lobby</Link>
+          <Link href="/lobby" className="hidden sm:inline-block px-3 py-1.5 text-sm font-medium hover:bg-white/5 text-gold-leaf">Lobby</Link>
           <Link href="/leaderboard" className="hidden sm:inline-block px-3 py-1.5 text-sm font-medium hover:bg-white/5 text-parchment-100">Leaderboard</Link>
           <Link href="/profile" className="hidden sm:inline-block px-3 py-1.5 text-sm font-medium hover:bg-white/5 text-parchment-100">Profile</Link>
-          <Link href="/codex" className="px-3 py-1.5 text-sm font-medium hover:bg-white/5 text-parchment-100">Rules</Link>
-          <AccountChip />
+          <Link href="/codex" className="hidden sm:inline-block px-3 py-1.5 text-sm font-medium hover:bg-white/5 text-parchment-100">Rules</Link>
+          <span className="hidden sm:block"><AccountChip /></span>
+          <MobileNavMenu />
         </div>
       </nav>
 

@@ -37,7 +37,9 @@ export function MobileActionsMenu({ children }: { children: ReactNode }) {
             onClick={() => setOpen(false)}
             className="fixed inset-0 z-30 cursor-default"
           />
-          <div className="absolute bottom-full left-0 right-0 z-40 mb-1 plate p-2">
+          {/* !absolute / !z-40: .plate hard-codes position:relative and
+              z-index:2 later in the cascade, so plain utilities lose. */}
+          <div className="!absolute bottom-full left-0 right-0 !z-40 mb-1 plate p-2">
             {children}
           </div>
         </>

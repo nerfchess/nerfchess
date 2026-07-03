@@ -1,5 +1,6 @@
 "use client";
 
+import { MobileNavMenu } from "@/components/MobileNavMenu";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -94,9 +95,10 @@ export default function ProfilePage() {
         <Link href="/" className="font-display text-2xl tracking-tight">
           nerf<span className="text-gold-leaf">chess</span>
         </Link>
-        <div className="flex items-center gap-3 text-sm font-medium">
-          <Link href="/play" className="px-3 py-1.5 hover:bg-white/5 text-parchment-100">Play</Link>
-          <Link href="/leaderboard" className="px-3 py-1.5 hover:bg-white/5 text-parchment-100">Leaderboard</Link>
+        <div className="flex items-center gap-1 sm:gap-3 text-sm font-medium">
+          <Link href="/play" className="hidden sm:inline-block px-3 py-1.5 hover:bg-white/5 text-parchment-100">Play</Link>
+          <Link href="/leaderboard" className="hidden sm:inline-block px-3 py-1.5 hover:bg-white/5 text-parchment-100">Leaderboard</Link>
+          <MobileNavMenu />
         </div>
       </nav>
 
