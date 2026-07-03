@@ -114,6 +114,41 @@ export const SCHEMA_STATEMENTS: string[] = [
   )`,
   `CREATE INDEX IF NOT EXISTS idx_mod_actions_created ON mod_actions(created_at DESC)`,
   `CREATE INDEX IF NOT EXISTS idx_mod_actions_target ON mod_actions(target_user_id, created_at DESC)`,
+  // Direct messages between players (the inbox).
+  `CREATE TABLE IF NOT EXISTS messages (
+    id TEXT PRIMARY KEY,
+    from_user_id TEXT NOT NULL,
+    to_user_id TEXT NOT NULL,
+    text TEXT NOT NULL,
+    created_at INTEGER NOT NULL,
+    read INTEGER NOT NULL DEFAULT 0
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_messages_to ON messages(to_user_id, created_at DESC)`,
+  `CREATE INDEX IF NOT EXISTS idx_messages_from ON messages(from_user_id, created_at DESC)`,
+  // Bell notifications: new messages, challenges, moderation notices.
+  `CREATE TABLE IF NOT EXISTS notifications (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    type TEXT NOT NULL,
+    actor_name TEXT,
+    text TEXT NOT NULL,
+    href TEXT,
+    created_at INTEGER NOT NULL,
+    read INTEGER NOT NULL DEFAULT 0
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id, read, created_at DESC)`,
+  // Direct challenges: a friend-game code addressed to a specific player.
+  `CREATE TABLE IF NOT EXISTS challenges (
+    id TEXT PRIMARY KEY,
+    from_user_id TEXT NOT NULL,
+    from_name TEXT NOT NULL,
+    to_user_id TEXT NOT NULL,
+    time_sec INTEGER NOT NULL,
+    increment_sec INTEGER NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending',
+    created_at INTEGER NOT NULL
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_challenges_to ON challenges(to_user_id, status, created_at DESC)`,
 ];
 
 // Columns added after launch. SQLite has no "ADD COLUMN IF NOT EXISTS", so

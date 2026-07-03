@@ -13,6 +13,7 @@ import {
   type SessionUser,
   type UserRole,
 } from "./auth";
+import { createNotification } from "./social";
 
 // Sentinel for "permanent": far enough out to outlive the site.
 export const PERMANENT_MS = 4102444800000; // 2100-01-01
@@ -114,5 +115,21 @@ export async function applyModAction(
 
   const timed = action === "mute" || action === "ban";
   await logAction(db, mod, target, action === "set_role" ? `set_role:${role}` : action, timed ? until : null, note);
+
+  // Warned or muted players find out via their bell. Bans kill the session,
+  // so a ban notice waits in the bell if the account ever comes back.
+  if (action === "warn" || action === "mute" || action === "ban") {
+    const untilText =
+      timed && until < PERMANENT_MS ? ` until ${new Date(until).toLocaleString("en-US", { timeZone: "UTC" })} UTC` : "";
+    const text =
+      action === "warn"
+        ? `You received a warning from the moderators${note ? `: ${note}` : "."}`
+        : action === "mute"
+        ? `You have been muted${untilText}. You cannot chat or send messages while muted.`
+        : `You have been banned${untilText}.`;
+    try {
+      await createNotification(db, { userId: target.id, type: action, text });
+    } catch {}
+  }
   return null;
 }

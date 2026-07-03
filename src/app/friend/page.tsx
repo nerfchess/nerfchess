@@ -37,8 +37,33 @@ export default function FriendPage() {
   const [incrementSec, setIncrementSec] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [start, setStart] = useState<MPStart | null>(null);
+  // Direct challenge: ?challenge=NAME pre-addresses the game to that player;
+  // creating it then notifies them instead of relying on a shared code.
+  const [challenging, setChallenging] = useState<string | null>(null);
 
   const sessionRef = useRef<MPSession | null>(null);
+
+  // Tell the target the game exists; failures degrade to a plain friend code.
+  const registerChallenge = async (to: string, gameCode: string, timeSec: number, incSec: number) => {
+    try {
+      await fetch("/api/challenges", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ to, code: gameCode, timeSec, incrementSec: incSec }),
+      });
+    } catch {}
+  };
+
+  const cancelChallenge = (gameCode: string) => {
+    if (!gameCode) return;
+    try {
+      void fetch(`/api/challenges/${encodeURIComponent(gameCode)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "cancelled" }),
+      });
+    } catch {}
+  };
 
   useEffect(() => {
     return () => {
@@ -67,12 +92,18 @@ export default function FriendPage() {
 
   useEffect(() => {
     if (sessionRef.current) return;
+    const search = new URLSearchParams(window.location.search);
     // Arriving with a shared code (e.g. from the lobby's join box) joins
     // that game immediately.
-    const codeParam = new URLSearchParams(window.location.search).get("code")?.trim().toUpperCase();
+    const codeParam = search.get("code")?.trim().toUpperCase();
     if (codeParam) {
       setJoinCode(codeParam);
       joinWithCode(codeParam);
+      return;
+    }
+    const challengeParam = search.get("challenge")?.trim();
+    if (challengeParam) {
+      setChallenging(challengeParam);
       return;
     }
     const saved = loadSavedFriendSession();
@@ -102,6 +133,7 @@ export default function FriendPage() {
       if (sessionRef.current !== sess) return;
       setCode(c);
       setView("lobby");
+      if (challenging) registerChallenge(challenging, c, baseSec, incrementSec);
     } catch (e) {
       if (sessionRef.current !== sess) return;
       setError(e instanceof Error ? e.message : String(e));
@@ -132,6 +164,7 @@ export default function FriendPage() {
   const handleJoin = () => joinWithCode(joinCode.trim().toUpperCase());
 
   const handleExit = () => {
+    if (challenging && view === "lobby") cancelChallenge(code);
     clearSavedFriendSession();
     sessionRef.current?.destroy();
     sessionRef.current = null;
@@ -158,10 +191,14 @@ export default function FriendPage() {
       <main className="min-h-screen">
         <SiteNav />
         <section className="max-w-xl mx-auto px-6 py-12 text-center">
-          <div className="smallcaps text-[11px] text-parchment-400">Share this code</div>
+          <div className="smallcaps text-[11px] text-parchment-400">
+            {challenging ? `Challenge sent to ${challenging}` : "Share this code"}
+          </div>
           <div className="mt-3 font-mono text-5xl tracking-[0.2em] text-gold-leaf">{code}</div>
           <p className="mt-6 text-parchment-200">
-            Send the code to your friend. They open this page and tap “Join”.
+            {challenging
+              ? `${challenging} has been notified. The game starts as soon as they accept.`
+              : "Send the code to your friend. They open this page and tap “Join”."}
           </p>
           <div className="mt-8 flex items-center justify-center gap-2 smallcaps text-[11px] text-parchment-400">
             <span className="w-1.5 h-1.5 rounded-full bg-verdigris animate-flicker" />
@@ -204,10 +241,11 @@ export default function FriendPage() {
     <main className="min-h-screen">
       <SiteNav />
       <section className="max-w-2xl mx-auto px-6 py-8">
-        <h1 className="font-display text-5xl">Play a Friend</h1>
+        <h1 className="font-display text-5xl">{challenging ? `Challenge ${challenging}` : "Play a Friend"}</h1>
         <p className="mt-3 text-parchment-200">
-          Create a game and share the code, or join one with a code your friend sent you.
-          Both players get a random secret rule.
+          {challenging
+            ? `Pick a time control and create the game. ${challenging} gets a notification and the game starts when they accept.`
+            : "Create a game and share the code, or join one with a code your friend sent you. Both players get a random secret rule."}
         </p>
 
         {error && (
@@ -240,9 +278,11 @@ export default function FriendPage() {
             onClick={handleCreate}
             className="w-full py-3.5 rounded-sm btn-leaf font-body text-lg"
           >
-            Create game
+            {challenging ? `Send challenge to ${challenging}` : "Create game"}
           </button>
 
+          {!challenging && (
+          <>
           <div className="rule-ornament">
             <span>or</span>
           </div>
@@ -266,6 +306,8 @@ export default function FriendPage() {
               </button>
             </div>
           </div>
+          </>
+          )}
         </div>
       </section>
     </main>

@@ -1,8 +1,8 @@
 "use client";
 
+import { SiteHeader } from "@/components/SiteHeader";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Logo } from "@/components/Logo";
 import { PlayerStatsPanel } from "@/components/PlayerStatsPanel";
 import type { PlayerStats } from "@/lib/playerStats";
 import { AccountUser, fetchMe } from "@/lib/authClient";
@@ -114,14 +114,7 @@ export default function ProfilePage() {
 
   return (
     <main className="min-h-screen">
-      <nav className="flex items-center justify-between px-5 sm:px-10 py-6 sm:py-7">
-        <Logo />
-        <div className="flex items-center gap-1 sm:gap-2 text-sm font-medium">
-          <Link href="/lobby" className="px-3 py-1.5 hover:bg-white/5 text-parchment-100">Play</Link>
-          <Link href="/leaderboard" className="hidden sm:inline-block px-3 py-1.5 hover:bg-white/5 text-parchment-100">Leaderboard</Link>
-          <Link href="/codex" className="px-3 py-1.5 hover:bg-white/5 text-parchment-100">Rules</Link>
-        </div>
-      </nav>
+      <SiteHeader />
 
       <section className="max-w-3xl mx-auto px-6 py-8">
         {/* Identity header — the signed-in account, or the local player. */}

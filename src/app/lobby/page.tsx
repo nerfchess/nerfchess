@@ -1,10 +1,9 @@
 "use client";
 
+import { SiteHeader } from "@/components/SiteHeader";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { AccountChip } from "@/components/AccountChip";
-import { Logo } from "@/components/Logo";
 import { QueueButton } from "@/components/QueueButton";
 import { AccountUser, fetchMe } from "@/lib/authClient";
 import { MPLobby, MPLobbyChallenge, MPLobbyGame, MPLobbySeek, MPSession, saveOnlineSeat } from "@/lib/multiplayer";
@@ -101,15 +100,7 @@ export default function LobbyPage() {
 
   return (
     <main className="min-h-screen pb-16">
-      <nav className="flex items-center justify-between px-5 sm:px-10 py-6 sm:py-7">
-        <Logo />
-        <div className="flex items-center gap-1 sm:gap-2 text-sm font-medium">
-          <Link href="/play" className="px-3 py-1.5 hover:bg-white/5 text-parchment-100">vs Bot</Link>
-          <Link href="/leaderboard" className="hidden sm:inline-block px-3 py-1.5 hover:bg-white/5 text-parchment-100">Leaderboard</Link>
-          <Link href="/codex" className="px-3 py-1.5 hover:bg-white/5 text-parchment-100">Rules</Link>
-          <AccountChip />
-        </div>
-      </nav>
+      <SiteHeader active="/lobby" />
 
       <section className="max-w-5xl mx-auto px-5 sm:px-6">
         <div className="flex flex-wrap items-end justify-between gap-3">

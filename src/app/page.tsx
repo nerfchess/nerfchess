@@ -2,10 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { AccountChip } from "@/components/AccountChip";
-import { Logo } from "@/components/Logo";
 import { HeroBoard } from "@/components/HeroBoard";
-import { SettingsPanel } from "@/components/SettingsPanel";
+import { SiteHeader } from "@/components/SiteHeader";
 import { ALL_NERFS, PLAYABLE_NERFS } from "@/engine/nerfs/library";
 import type { Nerf } from "@/engine/nerf";
 import { useLobbySnapshot } from "@/lib/lobbyClient";
@@ -42,7 +40,6 @@ function exampleRules(): Nerf[] {
 }
 
 export default function HomePage() {
-  const [settingsOpen, setSettingsOpen] = useState(false);
   // Rolled on the client after mount to avoid a hydration mismatch, and so the
   // "secret rule" feels alive: it changes on every visit.
   const [nerf, setNerf] = useState<Nerf | null>(null);
@@ -50,7 +47,7 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen flex flex-col">
-      <SiteNav onOpenSettings={() => setSettingsOpen(true)} />
+      <SiteHeader />
 
       <section className="w-full max-w-6xl mx-auto px-5 sm:px-6 pt-2 pb-8 sm:pt-6 grid lg:grid-cols-[minmax(0,1fr)_380px] gap-8 lg:gap-14 items-center">
         <div className="order-1">
@@ -117,7 +114,6 @@ export default function HomePage() {
       <ExampleRules />
 
       <SiteFooter />
-      <SettingsPanel open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </main>
   );
 }
@@ -346,35 +342,6 @@ function ExampleRules() {
         </Link>
       </div>
     </section>
-  );
-}
-
-function SiteNav({ onOpenSettings }: { onOpenSettings: () => void }) {
-  return (
-    <nav className="flex items-center justify-between px-5 sm:px-10 py-5 sm:py-6">
-      <Logo />
-      <div className="flex items-center gap-1 sm:gap-2 text-sm font-body font-medium">
-        <Link href="/lobby" className="px-3 py-1.5 hover:bg-white/5 text-gold-leaf">Play</Link>
-        <Link href="/history" className="hidden sm:inline-block px-3 py-1.5 hover:bg-white/5 text-parchment-100">History</Link>
-        <Link href="/leaderboard" className="hidden sm:inline-block px-3 py-1.5 hover:bg-white/5 text-parchment-100">Leaderboard</Link>
-        <Link href="/profile" className="hidden sm:inline-block px-3 py-1.5 hover:bg-white/5 text-parchment-100">Profile</Link>
-        <Link href="/codex" className="hidden sm:inline-block px-3 py-1.5 hover:bg-white/5 text-parchment-100">Rules</Link>
-        <Link href="/tutorial" className="hidden sm:inline-block px-3 py-1.5 hover:bg-white/5 text-parchment-100">How to play</Link>
-        <AccountChip />
-        <button
-          type="button"
-          onClick={onOpenSettings}
-          aria-label="Settings"
-          title="Settings"
-          className="ml-1 w-9 h-9 inline-flex items-center justify-center btn-ghost"
-        >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-            <circle cx="12" cy="12" r="3" />
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33 1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82 1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-          </svg>
-        </button>
-      </div>
-    </nav>
   );
 }
 

@@ -1,8 +1,8 @@
 "use client";
 
+import { SiteHeader } from "@/components/SiteHeader";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { Logo } from "@/components/Logo";
 import {
   CompletedGame,
   GameOutcome,
@@ -60,14 +60,7 @@ export default function HistoryPage() {
 
   return (
     <main className="min-h-screen">
-      <nav className="flex items-center justify-between px-5 sm:px-10 py-6 sm:py-7">
-        <Logo />
-        <div className="flex items-center gap-1 sm:gap-2 text-sm font-body font-medium">
-          <Link href="/friend" className="px-3 py-1.5 hover:bg-white/5 text-parchment-100 transition-colors">Play a Friend</Link>
-          <Link href="/game?mode=ai" className="px-3 py-1.5 hover:bg-white/5 text-parchment-100 transition-colors">Play vs Bot</Link>
-          <Link href="/leaderboard" className="hidden sm:inline-block px-3 py-1.5 hover:bg-white/5 text-parchment-100 transition-colors">Leaderboard</Link>
-        </div>
-      </nav>
+      <SiteHeader active="/history" />
 
       <section className="max-w-3xl mx-auto px-5 sm:px-6 py-6 sm:py-8">
         <h1 className="font-display text-4xl sm:text-5xl">Game history</h1>

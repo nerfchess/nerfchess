@@ -1,3 +1,4 @@
+import { SiteHeader } from "@/components/SiteHeader";
 import Link from "next/link";
 
 const RULES = [
@@ -31,12 +32,7 @@ const RULES = [
 export default function TutorialPage() {
   return (
     <main className="min-h-screen pb-20">
-      <nav className="flex items-center justify-between px-10 py-7">
-        <Link href="/" className="font-display text-2xl tracking-tight">
-          nerf<span className="text-gold-leaf">chess</span>
-        </Link>
-        <Link href="/lobby" className="px-3 py-1.5 rounded-full text-sm font-display hover:bg-white/5 text-parchment">Play</Link>
-      </nav>
+      <SiteHeader />
       <section className="max-w-3xl mx-auto px-6 pt-4">
         <div className="smallcaps text-[11px] text-parchment-400">how to play</div>
         <h1 className="font-display text-5xl sm:text-6xl mt-1">House rules</h1>
