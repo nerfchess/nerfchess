@@ -192,15 +192,26 @@ function SecretRulePreview({ nerf }: { nerf: Nerf | null }) {
   );
 }
 
-// Social proof strip. Rule counts are real and pulled from the library. The
-// games-played figure is a placeholder until a backend counter is wired in;
-// swap PLACEHOLDER_GAMES for a fetched value when the API exists.
-const PLACEHOLDER_GAMES = "12,400+";
-
+// Social proof strip. Rule counts are pulled from the library and the
+// games-played figure is the real total from the games table.
 function StatStrip() {
+  const [gamesPlayed, setGamesPlayed] = useState<number | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/stats")
+      .then((res) => (res.ok ? (res.json() as Promise<{ gamesPlayed: number }>) : null))
+      .then((data) => {
+        if (!cancelled && data) setGamesPlayed(data.gamesPlayed);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const stats = [
     { value: TOTAL_RULES.toString(), label: "secret rules" },
-    { value: PLACEHOLDER_GAMES, label: "games played" },
+    { value: gamesPlayed === null ? "…" : gamesPlayed.toLocaleString(), label: "games played" },
   ];
   return (
     <section className="w-full max-w-6xl mx-auto px-5 sm:px-6 py-4">
@@ -328,7 +339,7 @@ function ExampleRules() {
       </ul>
       <div className="mt-6 flex justify-center">
         <Link
-          href="/game?mode=ai"
+          href="/lobby"
           className="btn-leaf inline-flex items-center gap-2 px-8 py-3.5 font-display text-lg font-semibold"
         >
           Deal me a rule and play
@@ -343,8 +354,7 @@ function SiteNav({ onOpenSettings }: { onOpenSettings: () => void }) {
     <nav className="flex items-center justify-between px-5 sm:px-10 py-5 sm:py-6">
       <Logo />
       <div className="flex items-center gap-1 sm:gap-2 text-sm font-body font-medium">
-        <Link href="/lobby" className="px-3 py-1.5 hover:bg-white/5 text-gold-leaf">Lobby</Link>
-        <Link href="/game?mode=ai" className="hidden sm:inline-block px-3 py-1.5 hover:bg-white/5 text-parchment-100">Play</Link>
+        <Link href="/lobby" className="px-3 py-1.5 hover:bg-white/5 text-gold-leaf">Play</Link>
         <Link href="/history" className="hidden sm:inline-block px-3 py-1.5 hover:bg-white/5 text-parchment-100">History</Link>
         <Link href="/leaderboard" className="hidden sm:inline-block px-3 py-1.5 hover:bg-white/5 text-parchment-100">Leaderboard</Link>
         <Link href="/profile" className="hidden sm:inline-block px-3 py-1.5 hover:bg-white/5 text-parchment-100">Profile</Link>

@@ -95,7 +95,7 @@ export default function ProfilePage() {
           nerf<span className="text-gold-leaf">chess</span>
         </Link>
         <div className="flex items-center gap-3 text-sm font-medium">
-          <Link href="/play" className="px-3 py-1.5 hover:bg-white/5 text-parchment-100">Play</Link>
+          <Link href="/lobby" className="px-3 py-1.5 hover:bg-white/5 text-parchment-100">Play</Link>
           <Link href="/leaderboard" className="px-3 py-1.5 hover:bg-white/5 text-parchment-100">Leaderboard</Link>
         </div>
       </nav>
@@ -192,7 +192,7 @@ export default function ProfilePage() {
 
             {stats && (
               <>
-                <h2 className="mt-10 font-display text-2xl">📊 Statistics</h2>
+                <h2 className="mt-10 font-display text-2xl">Statistics</h2>
                 <div className="mt-3">
                   <PlayerStatsPanel stats={stats} />
                 </div>

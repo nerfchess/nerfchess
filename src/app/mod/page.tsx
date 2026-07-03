@@ -106,7 +106,7 @@ export default function ModPage() {
           nerf<span className="text-gold-leaf">chess</span>
         </Link>
         <div className="flex items-center gap-3 text-sm font-medium">
-          <Link href="/play" className="px-3 py-1.5 hover:bg-white/5 text-parchment-100">Play</Link>
+          <Link href="/lobby" className="px-3 py-1.5 hover:bg-white/5 text-parchment-100">Play</Link>
           <Link href="/leaderboard" className="px-3 py-1.5 hover:bg-white/5 text-parchment-100">Leaderboard</Link>
         </div>
       </nav>

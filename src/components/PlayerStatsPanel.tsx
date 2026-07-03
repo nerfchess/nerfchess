@@ -27,17 +27,15 @@ function formatDuration(ms: number): string {
 }
 
 function percent(part: number, whole: number): string {
-  return whole === 0 ? "–" : `${Math.round((part / whole) * 100)}%`;
+  return whole === 0 ? "-" : `${Math.round((part / whole) * 100)}%`;
 }
 
 function StatRow({
-  emoji,
   label,
   value,
   detail,
   tone,
 }: {
-  emoji: string;
   label: string;
   value: string;
   detail?: string;
@@ -47,10 +45,7 @@ function StatRow({
     tone === "win" ? "text-verdigris-glow" : tone === "loss" ? "text-oxblood-glow" : "text-parchment-50";
   return (
     <div className="flex items-center justify-between gap-3 py-2">
-      <span className="flex items-center gap-2 text-sm text-parchment-300">
-        <span aria-hidden>{emoji}</span>
-        {label}
-      </span>
+      <span className="text-sm text-parchment-300">{label}</span>
       <span className="text-right">
         <span className={`font-mono text-sm tabular-nums ${valueColor}`}>{value}</span>
         {detail && <span className="ml-2 font-mono text-xs tabular-nums text-parchment-400">{detail}</span>}
@@ -60,13 +55,11 @@ function StatRow({
 }
 
 function StreakCard({
-  emoji,
   title,
   longest,
   current,
   tone,
 }: {
-  emoji: string;
   title: string;
   longest: StreakInfo;
   current: number;
@@ -75,10 +68,7 @@ function StreakCard({
   const accent = tone === "win" ? "text-verdigris-glow" : "text-oxblood-glow";
   return (
     <div className="plate p-4">
-      <div className="smallcaps text-[10px] text-parchment-400">
-        <span aria-hidden className="mr-1.5">{emoji}</span>
-        {title}
-      </div>
+      <div className="smallcaps text-[10px] text-parchment-400">{title}</div>
       {longest.length === 0 ? (
         <div className="mt-2 text-sm text-parchment-400">None yet</div>
       ) : (
@@ -89,7 +79,7 @@ function StreakCard({
           {longest.from != null && longest.to != null && (
             <div className="mt-0.5 text-xs text-parchment-400">
               {formatDate(longest.from)}
-              {longest.to !== longest.from ? ` – ${formatDate(longest.to)}` : ""}
+              {longest.to !== longest.from ? ` - ${formatDate(longest.to)}` : ""}
             </div>
           )}
         </>
@@ -99,7 +89,7 @@ function StreakCard({
         {current > 0 ? (
           <span className={`font-mono tabular-nums ${accent}`}>{current} game{current === 1 ? "" : "s"}</span>
         ) : (
-          "–"
+          "-"
         )}
       </div>
     </div>
@@ -112,8 +102,7 @@ export function PlayerStatsPanel({ stats }: { stats: PlayerStats }) {
   if (stats.totalGames === 0) {
     return (
       <div className="plate p-5 text-sm text-parchment-300">
-        <span aria-hidden className="mr-1.5">🌱</span>
-        No online games recorded yet — win your first game and the numbers start here.
+        No online games recorded yet. Win your first game and the numbers start here.
       </div>
     );
   }
@@ -123,36 +112,32 @@ export function PlayerStatsPanel({ stats }: { stats: PlayerStats }) {
       {/* Overview: the Lichess-style two-column count grid. */}
       <div className="plate p-4 sm:p-5 grid gap-x-8 sm:grid-cols-2">
         <div className="divide-y divide-white/5">
-          <StatRow emoji="⚔️" label="Total games" value={String(stats.totalGames)} />
+          <StatRow label="Total games" value={String(stats.totalGames)} />
           <StatRow
-            emoji="🎖️"
             label="Rated games"
             value={String(stats.ratedGames)}
             detail={percent(stats.ratedGames, stats.totalGames)}
           />
-          <StatRow emoji="⏳" label="Time spent playing" value={formatDuration(stats.timePlayedMs)} />
-          <StatRow emoji="🕰️" label="Losses on time" value={String(stats.timeoutLosses)} />
+          <StatRow label="Time spent playing" value={formatDuration(stats.timePlayedMs)} />
+          <StatRow label="Losses on time" value={String(stats.timeoutLosses)} />
         </div>
         <div className="divide-y divide-white/5">
           <StatRow
-            emoji="🏆"
             label="Victories"
             value={String(stats.wins)}
             detail={percent(stats.wins, decided)}
             tone="win"
           />
-          <StatRow emoji="🤝" label="Draws" value={String(stats.draws)} detail={percent(stats.draws, decided)} />
+          <StatRow label="Draws" value={String(stats.draws)} detail={percent(stats.draws, decided)} />
           <StatRow
-            emoji="💀"
             label="Defeats"
             value={String(stats.losses)}
             detail={percent(stats.losses, decided)}
             tone="loss"
           />
           <StatRow
-            emoji="🎯"
             label="Average opponent"
-            value={stats.avgOpponentRating != null ? String(stats.avgOpponentRating) : "–"}
+            value={stats.avgOpponentRating != null ? String(stats.avgOpponentRating) : "-"}
           />
         </div>
       </div>
@@ -160,9 +145,7 @@ export function PlayerStatsPanel({ stats }: { stats: PlayerStats }) {
       {/* Rating extremes. */}
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="plate p-4">
-          <div className="smallcaps text-[10px] text-parchment-400">
-            <span aria-hidden className="mr-1.5">📈</span>Highest rating
-          </div>
+          <div className="smallcaps text-[10px] text-parchment-400">Highest rating</div>
           {stats.highest ? (
             <>
               <div className="mt-1 font-mono text-2xl tabular-nums text-gold-leaf">
@@ -175,9 +158,7 @@ export function PlayerStatsPanel({ stats }: { stats: PlayerStats }) {
           )}
         </div>
         <div className="plate p-4">
-          <div className="smallcaps text-[10px] text-parchment-400">
-            <span aria-hidden className="mr-1.5">📉</span>Lowest rating
-          </div>
+          <div className="smallcaps text-[10px] text-parchment-400">Lowest rating</div>
           {stats.lowest ? (
             <>
               <div className="mt-1 font-mono text-2xl tabular-nums text-parchment-200">
@@ -194,14 +175,12 @@ export function PlayerStatsPanel({ stats }: { stats: PlayerStats }) {
       {/* Streaks. */}
       <div className="grid gap-3 sm:grid-cols-2">
         <StreakCard
-          emoji="🔥"
           title="Winning streak"
           longest={stats.winStreak.longest}
           current={stats.winStreak.current}
           tone="win"
         />
         <StreakCard
-          emoji="🧊"
           title="Losing streak"
           longest={stats.lossStreak.longest}
           current={stats.lossStreak.current}
@@ -212,9 +191,7 @@ export function PlayerStatsPanel({ stats }: { stats: PlayerStats }) {
       {/* Strongest opponents beaten in rated play. */}
       {stats.bestWins.length > 0 && (
         <div className="plate p-4 sm:p-5">
-          <div className="smallcaps text-[10px] text-parchment-400">
-            <span aria-hidden className="mr-1.5">🥇</span>Best rated victories
-          </div>
+          <div className="smallcaps text-[10px] text-parchment-400">Best rated victories</div>
           <ul className="mt-2 divide-y divide-white/5">
             {stats.bestWins.map((win) => (
               <li key={win.id} className="flex items-center justify-between gap-3 py-2">
@@ -238,9 +215,7 @@ export function PlayerStatsPanel({ stats }: { stats: PlayerStats }) {
 
       {/* Per-speed record. */}
       <div className="plate p-4 sm:p-5 overflow-x-auto">
-        <div className="smallcaps text-[10px] text-parchment-400">
-          <span aria-hidden className="mr-1.5">🐇</span>By speed
-        </div>
+        <div className="smallcaps text-[10px] text-parchment-400">By speed</div>
         <table className="mt-2 w-full text-sm">
           <thead>
             <tr className="smallcaps text-[9px] text-parchment-400">
@@ -270,7 +245,7 @@ export function PlayerStatsPanel({ stats }: { stats: PlayerStats }) {
                   <td className="py-2 text-right font-mono tabular-nums text-parchment-200">{s.draws}</td>
                   <td className="py-2 text-right font-mono tabular-nums text-oxblood-glow">{s.losses}</td>
                   <td className="py-2 text-right font-mono tabular-nums text-parchment-100">
-                    {speedDecided > 0 ? percent(s.wins, speedDecided) : "–"}
+                    {speedDecided > 0 ? percent(s.wins, speedDecided) : "-"}
                   </td>
                 </tr>
               );

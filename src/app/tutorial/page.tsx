@@ -35,7 +35,7 @@ export default function TutorialPage() {
         <Link href="/" className="font-display text-2xl tracking-tight">
           nerf<span className="text-gold-leaf">chess</span>
         </Link>
-        <Link href="/play" className="px-3 py-1.5 rounded-full text-sm font-display hover:bg-white/5 text-parchment">Play</Link>
+        <Link href="/lobby" className="px-3 py-1.5 rounded-full text-sm font-display hover:bg-white/5 text-parchment">Play</Link>
       </nav>
       <section className="max-w-3xl mx-auto px-6 pt-4">
         <div className="smallcaps text-[11px] text-parchment-400">how to play</div>

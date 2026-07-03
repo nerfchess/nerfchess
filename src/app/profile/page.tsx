@@ -117,7 +117,7 @@ export default function ProfilePage() {
       <nav className="flex items-center justify-between px-5 sm:px-10 py-6 sm:py-7">
         <Logo />
         <div className="flex items-center gap-1 sm:gap-2 text-sm font-medium">
-          <Link href="/play" className="px-3 py-1.5 hover:bg-white/5 text-parchment-100">Play</Link>
+          <Link href="/lobby" className="px-3 py-1.5 hover:bg-white/5 text-parchment-100">Play</Link>
           <Link href="/leaderboard" className="hidden sm:inline-block px-3 py-1.5 hover:bg-white/5 text-parchment-100">Leaderboard</Link>
           <Link href="/codex" className="px-3 py-1.5 hover:bg-white/5 text-parchment-100">Rules</Link>
         </div>
@@ -222,13 +222,8 @@ export default function ProfilePage() {
                   {Math.round(account.rating)}
                 </div>
                 <div className="mt-1 smallcaps text-[10px] text-parchment-400">
-                  <span aria-hidden className="mr-1">🎖️</span>
                   {account.games} rated game{account.games === 1 ? "" : "s"}
-                  {stats?.highest && (
-                    <span className="ml-2">
-                      <span aria-hidden className="mr-1">📈</span>peak {Math.round(stats.highest.rating)}
-                    </span>
-                  )}
+                  {stats?.highest && <span className="ml-2">peak {Math.round(stats.highest.rating)}</span>}
                 </div>
               </div>
               <div className="flex gap-5 text-center">
@@ -258,7 +253,7 @@ export default function ProfilePage() {
         {/* Detailed statistics, computed from every recorded online game. */}
         <div className="mt-8">
           <div className="rule-ornament mb-4">
-            <span className="font-display">📊 Statistics</span>
+            <span className="font-display">Statistics</span>
           </div>
           {account === undefined ? (
             <div className="plate p-5 text-sm text-parchment-400">Loading…</div>

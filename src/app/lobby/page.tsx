@@ -93,7 +93,7 @@ export default function LobbyPage() {
       setJoiningPool(null);
       setLobbyError(
         e instanceof Error && e.message === "seek_gone"
-          ? "That player is no longer waiting — try quick pairing instead."
+          ? "That player is no longer waiting. Try quick pairing instead."
           : "Could not join that game right now.",
       );
     }
