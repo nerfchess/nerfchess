@@ -1181,14 +1181,21 @@ export class GameServer extends DurableObject<Env> {
     send(humanWs, "paired", { id: match.id, color, token: match.tokens[color], pool: poolName });
   }
 
-  // Claim a lobby seek by a house player: one advertising this pool if
-  // possible, otherwise any seeking bot switches over — so a queued human is
-  // paired immediately whenever any house player is available.
-  private async takeBotSeek(poolName: string): Promise<BotSeat | null> {
+  // Claim a lobby seek by a house player. When the human accepted a specific
+  // bot's row (`preferName`), that bot is claimed so you play the opponent you
+  // clicked; otherwise a bot advertising this pool, else any seeking bot
+  // switches over — so a queued human is paired immediately whenever any house
+  // player is available.
+  private async takeBotSeek(poolName: string, preferName?: string | null): Promise<BotSeat | null> {
     const db = await this.db();
     if (!db) return null;
     const seeks = (await this.ctx.storage.get<BotSeekEntry[]>(botSeeksKey)) ?? [];
-    let index = seeks.findIndex((seek) => seek.pool === poolName);
+    let index = -1;
+    if (preferName) {
+      index = seeks.findIndex((seek) => seek.pool === poolName && seek.name === preferName);
+      if (index < 0) index = seeks.findIndex((seek) => seek.name === preferName);
+    }
+    if (index < 0) index = seeks.findIndex((seek) => seek.pool === poolName);
     if (index < 0 && seeks.length) index = 0;
     if (index < 0) return null;
     const [seek] = seeks.splice(index, 1);
@@ -1393,7 +1400,11 @@ export class GameServer extends DurableObject<Env> {
     if (!session.userId || !session.username) {
       return error(ws, "auth_required", "Sign in to play rated games.");
     }
-    const poolName = String((data as { pool?: unknown } | undefined)?.pool || "3+2");
+    const req = (data as { pool?: unknown; seek?: unknown } | undefined) ?? {};
+    const poolName = String(req.pool || "3+2");
+    // Optional: the name on the lobby row the human accepted. When it's a
+    // house player, they get paired with that exact bot.
+    const seekHint = typeof req.seek === "string" ? req.seek : null;
     const pool = QUEUE_POOLS[poolName];
     if (!pool) return error(ws, "bad_pool", "Unknown queue pool.");
     const db = await this.db();
@@ -1426,8 +1437,9 @@ export class GameServer extends DurableObject<Env> {
     const opponent = entries.shift();
     if (!opponent) {
       // No human waiting — but a house player advertising this pool in the
-      // lobby picks the game up immediately.
-      const bot = await this.takeBotSeek(poolName);
+      // lobby picks the game up immediately (the exact bot the human clicked,
+      // when the accepted row named one).
+      const bot = await this.takeBotSeek(poolName, seekHint);
       if (bot) {
         await this.ctx.storage.put(key, entries);
         await this.pairHumanWithBot(
