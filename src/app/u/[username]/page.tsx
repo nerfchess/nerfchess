@@ -103,7 +103,20 @@ export default function ProfilePage() {
           <>
             <div className="flex flex-wrap items-end justify-between gap-4">
               <div className="flex items-center gap-4">
-                <PlayerAvatar name={profile.user.username} avatar={profile.user.avatar} size={56} />
+                {isMe ? (
+                  <Link
+                    href="/profile"
+                    title="Change your profile picture"
+                    className="group relative rounded-md ring-1 ring-transparent hover:ring-gold/60 transition"
+                  >
+                    <PlayerAvatar name={profile.user.username} avatar={profile.user.avatar} size={56} />
+                    <span className="absolute inset-x-0 bottom-0 hidden bg-black/70 text-center text-[9px] uppercase tracking-wider text-parchment-100 group-hover:block">
+                      edit
+                    </span>
+                  </Link>
+                ) : (
+                  <PlayerAvatar name={profile.user.username} avatar={profile.user.avatar} size={56} />
+                )}
                 <div>
                   <div className="flex items-center gap-3 flex-wrap">
                     <h1 className="font-display text-5xl">{profile.user.username}</h1>
@@ -149,7 +162,11 @@ export default function ProfilePage() {
             />
 
             <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-2">
-              <StatCard label="Rating" value={Math.round(profile.user.rating).toString()} accent />
+              <StatCard
+                label="Rating"
+                value={`${profile.user.rating.toFixed(1)}${profile.user.rd > 150 ? "?" : ""}`}
+                accent
+              />
               <StatCard label="Rated games" value={profile.user.games.toString()} />
               <StatCard
                 label="Record"

@@ -16,6 +16,10 @@
       "custom_domain": true
     }
   ],
+  "vars": {
+    // Promoted to admin on their next login (see docs/moderation.md).
+    "ADMIN_USERNAMES": "ilovenewjeans,ruylopezsolos"
+  },
   "d1_databases": [
     {
       "binding": "DB",

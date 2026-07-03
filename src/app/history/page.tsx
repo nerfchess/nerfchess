@@ -143,12 +143,20 @@ function GameRow({ game, onSelect }: { game: CompletedGame; onSelect: () => void
   const delta = game.ratingChange
     ? Math.round(game.ratingChange.after - game.ratingChange.before)
     : null;
+  // Straight to the board: local move list replays at /history/{id}, online
+  // games pull the archived copy at /game/{serverGameId}.
+  const replayHref = game.moves?.length
+    ? `/history/${game.id}`
+    : game.serverGameId
+      ? `/game/${game.serverGameId}`
+      : null;
   return (
-    <button
-      type="button"
-      onClick={onSelect}
-      className="plate w-full p-3 sm:p-4 flex items-center gap-3 sm:gap-4 text-left transition-colors duration-150 hover:bg-white/[0.04] active:bg-white/[0.06]"
-    >
+    <div className="plate w-full flex items-stretch transition-colors duration-150 hover:bg-white/[0.04]">
+      <button
+        type="button"
+        onClick={onSelect}
+        className="min-w-0 flex-1 p-3 sm:p-4 flex items-center gap-3 sm:gap-4 text-left active:bg-white/[0.06]"
+      >
       <span
         className={`shrink-0 grid h-10 w-10 place-items-center border font-display text-sm font-bold ${style.badge}`}
         aria-label={style.label}
@@ -187,7 +195,17 @@ function GameRow({ game, onSelect }: { game: CompletedGame; onSelect: () => void
           {delta}
         </span>
       )}
-    </button>
+      </button>
+      {replayHref && (
+        <Link
+          href={replayHref}
+          title="Step through this game move by move"
+          className="smallcaps shrink-0 grid place-items-center border-l border-white/10 px-3 text-[9px] text-parchment-400 hover:text-gold-leaf transition-colors"
+        >
+          Replay
+        </Link>
+      )}
+    </div>
   );
 }
 
