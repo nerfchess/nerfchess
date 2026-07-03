@@ -153,13 +153,19 @@ export function SiteHeader({ active }: { active?: string }) {
   };
 
   const respondChallenge = async (challenge: HeaderChallenge, action: "accepted" | "declined") => {
+    let ok = false;
     try {
-      await fetch(`/api/challenges/${encodeURIComponent(challenge.id)}`, {
+      const res = await fetch(`/api/challenges/${encodeURIComponent(challenge.id)}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action }),
       });
+      ok = res.ok;
     } catch {}
+    if (!ok) {
+      await refreshSocial();
+      return;
+    }
     setChallenges((list) => list.filter((c) => c.id !== challenge.id));
     if (action === "accepted") {
       setMenu(null);

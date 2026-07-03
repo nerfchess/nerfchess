@@ -43,6 +43,7 @@ export default function FriendPage() {
   const [challenging, setChallenging] = useState<string | null>(null);
 
   const sessionRef = useRef<MPSession | null>(null);
+  const expectedChallengeHostRef = useRef<string | null>(null);
 
   // Tell the target the game exists; failures degrade to a plain friend code.
   const registerChallenge = async (to: string, gameCode: string, timeSec: number, incSec: number) => {
@@ -66,6 +67,25 @@ export default function FriendPage() {
     } catch {}
   };
 
+  const claimIncomingChallenge = async (gameCode: string): Promise<{ ok: boolean; from?: string }> => {
+    try {
+      const res = await fetch(`/api/challenges/${encodeURIComponent(gameCode)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "accepted" }),
+      });
+      // Not every friend code is a direct challenge. Public codes, signed-out
+      // users, and hosts simply fall through to the normal websocket join.
+      if (res.status === 401 || res.status === 403 || res.status === 404) return { ok: true };
+      const data = (await res.json().catch(() => null)) as { error?: string; from?: string } | null;
+      if (res.ok) return { ok: true, from: data?.from };
+      setError(data?.error ?? "That challenge is no longer available.");
+      return { ok: false };
+    } catch {
+      return { ok: true };
+    }
+  };
+
   useEffect(() => {
     return () => {
       sessionRef.current?.destroy();
@@ -81,6 +101,15 @@ export default function FriendPage() {
         setCode(e.code);
         setView("lobby");
       } else if (e.type === "start") {
+        const expectedHost = expectedChallengeHostRef.current;
+        if (expectedHost && e.setup.players?.w?.name !== expectedHost) {
+          setError("That challenge no longer points to the player who sent it.");
+          sess.destroy();
+          if (sessionRef.current === sess) sessionRef.current = null;
+          clearSavedFriendSession();
+          setView("setup");
+          return;
+        }
         setStart(e.setup);
         setCode(e.setup.id);
         setError(null);
@@ -153,6 +182,16 @@ export default function FriendPage() {
     wireSession(sess);
     setView("joining");
     try {
+      const claimed = await claimIncomingChallenge(trimmed);
+      expectedChallengeHostRef.current = claimed.from ?? null;
+      if (!claimed.ok) {
+        if (sessionRef.current === sess) {
+          sess.destroy();
+          sessionRef.current = null;
+          setView("setup");
+        }
+        return;
+      }
       await sess.join(trimmed);
       // The game starts on receipt of the server `start` frame.
     } catch (e) {

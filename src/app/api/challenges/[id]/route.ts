@@ -23,9 +23,9 @@ export async function POST(request: Request, { params }: { params: { id: string 
 
   const id = params.id.trim().toUpperCase();
   const challenge = await db
-    .prepare(`SELECT id, from_user_id, to_user_id, status FROM challenges WHERE id = ?`)
+    .prepare(`SELECT id, from_user_id, from_name, to_user_id, status FROM challenges WHERE id = ?`)
     .bind(id)
-    .first<{ id: string; from_user_id: string; to_user_id: string; status: string }>();
+    .first<{ id: string; from_user_id: string; from_name: string; to_user_id: string; status: string }>();
   if (!challenge) return NextResponse.json({ error: "Challenge not found." }, { status: 404 });
 
   const isTarget = challenge.to_user_id === user.id;
@@ -34,13 +34,22 @@ export async function POST(request: Request, { params }: { params: { id: string 
     (action === "cancelled" && isChallenger) || ((action === "accepted" || action === "declined") && isTarget);
   if (!allowed) return NextResponse.json({ error: "Not your challenge." }, { status: 403 });
 
-  if (challenge.status === "pending") {
-    await db.prepare(`UPDATE challenges SET status = ? WHERE id = ?`).bind(action, id).run();
-    // A resolved challenge no longer needs its bell entry.
-    await db
-      .prepare(`UPDATE notifications SET read = 1 WHERE user_id = ? AND type = 'challenge' AND href LIKE ?`)
-      .bind(challenge.to_user_id, `%code=${encodeURIComponent(id)}%`)
-      .run();
+  if (challenge.status !== "pending") {
+    if (action === "accepted" && challenge.status === "accepted") {
+      return NextResponse.json({ ok: true, from: challenge.from_name, alreadyHandled: true });
+    }
+    return NextResponse.json(
+      { error: "This challenge has already been handled.", status: challenge.status },
+      { status: 409 },
+    );
   }
-  return NextResponse.json({ ok: true });
+
+  await db.prepare(`UPDATE challenges SET status = ? WHERE id = ?`).bind(action, id).run();
+  // A resolved challenge no longer needs its bell entry.
+  await db
+    .prepare(`UPDATE notifications SET read = 1 WHERE user_id = ? AND type = 'challenge' AND href LIKE ?`)
+    .bind(challenge.to_user_id, `%code=${encodeURIComponent(id)}%`)
+    .run();
+
+  return NextResponse.json({ ok: true, from: challenge.from_name });
 }

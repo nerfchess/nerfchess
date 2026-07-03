@@ -121,6 +121,8 @@ function GamePage() {
   const [oppPeek, setOppPeek] = useState(false);
   const [sharedMine, setSharedMine] = useState(false);
   const aiThinking = useRef(false);
+  const gameRef = useRef<NerfGame | null>(null);
+  const addIncrementRef = useRef<(color: Color) => void>(() => {});
   const boardShellRef = useRef<HTMLDivElement | null>(null);
   const whiteCustomSpec = useRef<CustomNerf | null>(null);
   const blackCustomSpec = useRef<CustomNerf | null>(null);
@@ -144,6 +146,14 @@ function GamePage() {
     },
     [clockEnabled, incrementMs, remainingClock]
   );
+
+  useEffect(() => {
+    gameRef.current = game;
+  }, [game]);
+
+  useEffect(() => {
+    addIncrementRef.current = addIncrement;
+  }, [addIncrement]);
 
   useEffect(() => {
     setMutedState(isMuted());
@@ -448,29 +458,46 @@ function GamePage() {
     if (game.board.turn === myColor) return;
     if (aiThinking.current) return;
     aiThinking.current = true;
+    const expectedPly = game.board.history.length;
     // Visual minimum wait; the engine's iterative-deepening search budget runs
     // inside this window, so the move appears deliberate even when the search
     // finishes early.
     const delay = difficulty === "easy" ? 600 : difficulty === "medium" ? 1200 : 2000;
     const tid = setTimeout(() => {
-      const m = pickAIMove(game, difficulty);
-      if (m) {
-        const mover = game.board.turn;
-        const next = playMove(game, m);
-        setGame({ ...next });
-        addIncrement(mover);
-      } else {
-        game.result = { winner: myColor, reason: "AI has no legal moves" };
-        setGame({ ...game });
+      try {
+        const current = gameRef.current;
+        if (!current || current.result || current.board.turn === myColor || current.board.history.length !== expectedPly) {
+          return;
+        }
+        const m = pickAIMove(current, difficulty);
+        if (m) {
+          const mover = current.board.turn;
+          const next = playMove(current, m);
+          setGame({ ...next });
+          addIncrementRef.current(mover);
+        } else {
+          current.result = { winner: myColor, reason: "AI has no legal moves" };
+          setGame({ ...current });
+        }
+      } catch {
+        const current = gameRef.current;
+        if (current && !current.result) {
+          current.result = { winner: myColor, reason: "AI move failed" };
+          setGame({ ...current });
+        }
+      } finally {
+        aiThinking.current = false;
+        force((x) => x + 1);
       }
-      aiThinking.current = false;
-      force((x) => x + 1);
     }, delay);
     return () => {
       clearTimeout(tid);
       aiThinking.current = false;
     };
-  }, [game, myColor, difficulty, addIncrement]);
+    // The timer reads the latest game through gameRef; depending on the whole
+    // object can cancel a bot turn on unrelated state refreshes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [game?.board.history.length, game?.board.turn, game?.result, myColor, difficulty]);
 
   const reviewBoard = useMemo(() => {
     if (!game || historyPly == null) return null;

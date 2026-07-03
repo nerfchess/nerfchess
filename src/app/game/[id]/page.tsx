@@ -52,6 +52,14 @@ interface ReplayGame {
   completed_at: number;
 }
 
+function withResponseTimeout<T>(promise: Promise<T>, message: string, ms = 10000): Promise<T> {
+  let timeoutId = 0;
+  const timeout = new Promise<never>((_, reject) => {
+    timeoutId = window.setTimeout(() => reject(new Error(message)), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => window.clearTimeout(timeoutId));
+}
+
 // Lichess-style game URL: the player who owns a seat token plays here; anyone
 // else watches live, or gets the stored replay once the game has been archived.
 export default function OnlineGamePage() {
@@ -94,10 +102,12 @@ export default function OnlineGamePage() {
 
     const spectate = async () => {
       try {
-        await session.watch(gameId);
+        await withResponseTimeout(session.watch(gameId), "watch_timeout", 15000);
       } catch (e) {
         if (e instanceof Error && e.message === "not_found") {
           session.destroy();
+          await loadReplay();
+        } else if (e instanceof Error && e.message === "watch_timeout") {
           await loadReplay();
         } else if (!cancelled) {
           setMode({ kind: "error", message: e instanceof Error ? e.message : String(e) });
@@ -118,8 +128,11 @@ export default function OnlineGamePage() {
       // Resume the seat; transient connection failures retry with backoff,
       // and only a server-side refusal downgrades us to spectating.
       const tryResume = (attempt: number) => {
-        session
-          .resume({ id: gameId, color: seat.color, token: seat.token })
+        withResponseTimeout(
+          session.resume({ id: gameId, color: seat.color, token: seat.token }),
+          "resume_timeout",
+          9000,
+        )
           .catch((err) => {
             if (cancelled) return;
             if (err instanceof Error && err.message === "reconnect_failed") {
@@ -129,10 +142,10 @@ export default function OnlineGamePage() {
               spectate();
               return;
             }
-            if (attempt < 5) {
+            if (attempt < 1) {
               window.setTimeout(() => {
                 if (!cancelled) tryResume(attempt + 1);
-              }, Math.min(8000, 1500 * (attempt + 1)));
+              }, 1200);
             } else {
               off();
               spectate();
