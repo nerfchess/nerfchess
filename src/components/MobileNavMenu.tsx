@@ -11,6 +11,8 @@ const NAV_LINKS: { href: string; label: string }[] = [
   { href: "/play", label: "New game" },
   { href: "/friend", label: "Play a friend" },
   { href: "/lobby", label: "Lobby" },
+  { href: "/clubs", label: "Clubs" },
+  { href: "/tournaments", label: "Tournaments" },
   { href: "/history", label: "Game history" },
   { href: "/leaderboard", label: "Leaderboard" },
   { href: "/codex", label: "Rules" },

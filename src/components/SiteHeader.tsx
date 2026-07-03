@@ -36,6 +36,8 @@ type Menu = "search" | "challenges" | "bell" | "profile" | null;
 const NAV_LINKS = [
   { href: "/lobby", label: "Play" },
   { href: "/leaderboard", label: "Leaderboard" },
+  { href: "/clubs", label: "Clubs" },
+  { href: "/tournaments", label: "Tournaments" },
   { href: "/history", label: "History" },
   { href: "/codex", label: "Rules" },
   { href: "/stats", label: "Stats" },
@@ -201,7 +203,7 @@ export function SiteHeader({ active }: { active?: string }) {
         </button>
         {menu === "search" && (
           <div className="absolute right-0 top-full z-40 mt-2 w-72 plate dropdown p-3 shadow-2xl">
-            <PlayerSearch />
+            <PlayerSearch autoFocus />
             <p className="mt-2 text-[11px] text-parchment-400">
               Open a player&apos;s page to message or challenge them.
             </p>
