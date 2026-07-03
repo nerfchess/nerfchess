@@ -37,7 +37,7 @@ function pieceSquares(board: { pieces: ({ type: PieceType; color: Color } | null
 // ------------------------- NERFS -------------------------
 
 export const ROOK_BUDDIES: Nerf = db({
-  id: "rook_buddies", name: "Rook Buddies", tier: 1, icon: "link", implemented: true,
+  id: "rook_buddies", name: "Rook Buddies", tier: 2, icon: "link", implemented: true,
   description: "Can't move rooks until they are connected (no pieces between them on home rank).",
   filterMoves: (moves, _s, ctx) => {
     const homeR = ctx.me === "w" ? 0 : 7;
@@ -917,7 +917,7 @@ export const STAND_YOUR_GROUND: Nerf = db({
 });
 
 export const ALWAYS_CHECK_IT_MIGHT_BE_MATE: Nerf = db({
-  id: "always_check_it_might_be_mate", name: "Always Check, It Might Be Mate", tier: 8, implemented: true,
+  id: "always_check_it_might_be_mate", name: "Always Check, It Might Be Mate", tier: 6, implemented: true,
   description: "If you are checked, you lose.",
   checkLoss: (_s, ctx) => (isInCheck(ctx.board, ctx.me) ? { reason: "in check" } : null),
 });
@@ -981,7 +981,7 @@ export const LEVELING_UP: Nerf = db({
 });
 
 export const HOMELAND_SECURITY: Nerf = db({
-  id: "homeland_security", name: "Homeland Security", tier: 8, implemented: true,
+  id: "homeland_security", name: "Homeland Security", tier: 6, implemented: true,
   description: "If opponent enters your two home ranks, you lose.",
   checkLoss: (_s, ctx) => {
     const opp = ctx.me === "w" ? "b" : "w";
