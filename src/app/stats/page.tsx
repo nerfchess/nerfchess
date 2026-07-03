@@ -43,7 +43,7 @@ export default function StatsPage() {
   }, []);
 
   const decided = stats ? stats.games.whiteWins + stats.games.blackWins + stats.games.draws : 0;
-  const pct = (n: number) => (decided > 0 ? `${Math.round((n / decided) * 100)}%` : "—");
+  const pct = (n: number) => (decided > 0 ? `${Math.round((n / decided) * 100)}%` : "-");
 
   return (
     <main className="min-h-screen pb-16">
@@ -57,7 +57,7 @@ export default function StatsPage() {
 
         {failed ? (
           <div className="mt-8 plate p-6 text-parchment-300">
-            Stats are unavailable right now — try again in a minute.
+            Stats are unavailable right now. Try again in a minute.
           </div>
         ) : !stats ? (
           <div className="mt-8 text-parchment-300/60">Loading…</div>
@@ -119,7 +119,7 @@ export default function StatsPage() {
                         <span className="text-right font-mono text-parchment-100 tabular-nums">{row.dealt}</span>
                         <span className="text-right font-mono text-parchment-300 tabular-nums">{row.wins}</span>
                         <span className="text-right font-mono text-parchment-100 tabular-nums">
-                          {row.dealt > 0 ? `${Math.round((row.wins / row.dealt) * 100)}%` : "—"}
+                          {row.dealt > 0 ? `${Math.round((row.wins / row.dealt) * 100)}%` : "-"}
                         </span>
                       </div>
                     );

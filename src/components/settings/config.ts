@@ -81,6 +81,18 @@ export const SECTIONS: SectionConfig[] = [
         control: { kind: "toggle", setting: "confirmResign" },
       },
       {
+        id: "showLegalMoves",
+        label: "Show legal moves",
+        hint: "Mark the squares a selected piece can move to",
+        control: { kind: "toggle", setting: "showLegalMoves" },
+      },
+      {
+        id: "premovesEnabled",
+        label: "Premoves",
+        hint: "Queue your next move during the opponent's turn",
+        control: { kind: "toggle", setting: "premovesEnabled" },
+      },
+      {
         id: "showCoordinates",
         label: "Show coordinates",
         control: { kind: "toggle", setting: "showCoordinates" },
@@ -146,6 +158,12 @@ export const SECTIONS: SectionConfig[] = [
         label: "UI sounds",
         hint: "Interface blips like piece selection",
         control: { kind: "toggle", setting: "uiSounds" },
+      },
+      {
+        id: "lowTimeWarning",
+        label: "Low-time warning",
+        hint: "Ticking alert when your clock runs low",
+        control: { kind: "toggle", setting: "lowTimeWarning" },
       },
     ],
   },

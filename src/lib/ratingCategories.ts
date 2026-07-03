@@ -24,7 +24,7 @@ export interface RatingCategory {
 // Lichess-style speed iconography: lightning for UltraBullet, a bullet-fast
 // rocket, fire for Blitz, and the rapid rabbit.
 export const RATING_CATEGORIES: RatingCategory[] = [
-  { id: "ultrabullet", label: "UltraBullet", icon: Zap,    accent: "#b78fd6", blurb: "Pure reflexes — 15 seconds" },
+  { id: "ultrabullet", label: "UltraBullet", icon: Zap,    accent: "#b78fd6", blurb: "Pure reflexes: 15 seconds" },
   { id: "bullet",      label: "Bullet",      icon: Rocket, accent: "#c66860", blurb: "Lightning-fast games" },
   { id: "blitz",       label: "Blitz",       icon: Flame,  accent: "#4a9fee", blurb: "Fast, tactical games" },
   { id: "rapid",       label: "Rapid",       icon: Rabbit, accent: "#7eb59a", blurb: "Room to think it through" },

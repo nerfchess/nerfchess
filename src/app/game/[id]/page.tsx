@@ -559,7 +559,7 @@ function GameShell({
               </div>
             ) : (
               <div className="plate mt-2 p-2 px-3 text-xs text-parchment-300">
-                Both players have secret rules — revealed when the game ends.
+                Both players have secret rules, revealed when the game ends.
               </div>
             )}
           </div>

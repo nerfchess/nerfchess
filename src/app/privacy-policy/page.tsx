@@ -10,39 +10,74 @@ export default function PrivacyPolicyPage() {
     <InfoPageLayout
       eyebrow="privacy policy"
       title="Privacy policy"
-      intro="This page describes how this version of Nerf Chess handles information while you play. Last updated: May 27, 2026."
+      intro="This page describes what information Nerf Chess collects and how it is used. Last updated: July 3, 2026."
     >
-      <InfoSection title="Stored on your device">
+      <InfoSection title="Accounts">
         <p>
-          Board appearance, sound preferences, custom rules, and your single-player rating
-          may be saved in your browser&apos;s local or session storage. This lets those
-          features work across page visits without requiring an account.
+          Creating an account stores your username, a hashed version of your password
+          (never the password itself), and the date the account was created. No email
+          address or other contact information is required or collected.
         </p>
         <p>
+          Signing in sets a session cookie so you stay logged in. Sessions expire on
+          their own, and signing out removes the session immediately.
+        </p>
+      </InfoSection>
+
+      <InfoSection title="Profile information">
+        <p>
+          Anything you add to your profile is optional and visible to other players:
+          your profile picture (a preset, or an image you upload, which is cropped and
+          scaled down before it is stored) and your bio. You can change or replace
+          these at any time from your profile page.
+        </p>
+      </InfoSection>
+
+      <InfoSection title="Games and ratings">
+        <p>
+          Finished online games are stored on the server: the players, moves, secret
+          rules, result, clock settings, and, for rated games, the rating change. This
+          record powers game history, player profiles, the leaderboard, and site-wide
+          statistics. Ratings and win/loss/draw counts are public.
+        </p>
+        <p>
+          Games played against the bots, along with your practice rating, are stored
+          only in your browser and never leave your device.
+        </p>
+      </InfoSection>
+
+      <InfoSection title="Chat, messages, and moderation">
+        <p>
+          In-game chat is delivered live to the players and spectators in that game.
+          Messages that trip the profanity filter are kept for moderator review.
+        </p>
+        <p>
+          Direct messages sent through the inbox are stored so both players can read
+          the conversation. Player reports and the actions moderators take on them are
+          also stored, so moderation decisions can be audited.
+        </p>
+      </InfoSection>
+
+      <InfoSection title="Stored on your device">
+        <p>
+          Preferences such as board and piece themes, sound volume, and other settings
+          are saved in your browser&apos;s local storage so they persist between visits.
           You can remove this information by clearing site data in your browser.
         </p>
       </InfoSection>
 
       <InfoSection title="Analytics">
         <p>
-          The site uses Vercel Analytics to understand basic site usage and performance.
-          Analytics data is processed by Vercel according to its service practices.
+          The site uses Vercel Analytics to understand basic usage and performance.
+          This data is aggregated and processed by Vercel according to its service
+          practices. Nerf Chess does not run ads or sell data to anyone.
         </p>
       </InfoSection>
 
-      <InfoSection title="Friend games">
+      <InfoSection title="Questions">
         <p>
-          Friend games use the Nerf Chess websocket game server to connect players
-          by code, validate moves, and keep clocks. Active games are kept in server
-          memory while they are in progress.
-        </p>
-      </InfoSection>
-
-      <InfoSection title="Accounts and contact">
-        <p>
-          This version does not include user accounts or a contact submission form. If
-          these features are introduced, this policy should be updated to describe any
-          additional information collected.
+          If you have questions about this policy or want content associated with your
+          account removed, reach out through the contact page.
         </p>
       </InfoSection>
     </InfoPageLayout>

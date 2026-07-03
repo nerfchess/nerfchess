@@ -339,7 +339,7 @@ function ReportModal({ username, onClose }: { username: string; onClose: () => v
           <>
             <h2 className="font-display text-2xl">Report sent</h2>
             <p className="mt-2 text-parchment-200 text-sm">
-              Thanks — a moderator will take a look.
+              Thanks, a moderator will take a look.
             </p>
             <button onClick={onClose} className="mt-4 px-4 py-2 rounded-sm btn-ghost text-sm font-display">
               Close

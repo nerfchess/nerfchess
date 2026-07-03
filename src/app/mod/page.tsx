@@ -494,7 +494,7 @@ function UsersTab({ isAdmin }: { isAdmin: boolean }) {
                     {history.map((h, i) => (
                       <li key={i} className="text-parchment-200">
                         <span className="text-gold-leaf">{h.action}</span> by {h.mod_name} · {when(h.created_at)}
-                        {h.note && <span className="text-parchment-400"> — {h.note}</span>}
+                        {h.note && <span className="text-parchment-400">: {h.note}</span>}
                       </li>
                     ))}
                   </ul>
@@ -577,7 +577,7 @@ function LogTab() {
             {entry.target_name}
           </Link>
           {entry.expires_at && <span className="text-parchment-400">{untilLabel(entry.expires_at)}</span>}
-          {entry.note && <span className="text-parchment-400">— {entry.note}</span>}
+          {entry.note && <span className="text-parchment-400">{entry.note}</span>}
           <span className="ml-auto text-parchment-400">{when(entry.created_at)}</span>
         </div>
       ))}
