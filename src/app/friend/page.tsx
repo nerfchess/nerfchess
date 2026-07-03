@@ -255,7 +255,7 @@ export default function FriendPage() {
                 onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
                 placeholder="ABCDE"
                 maxLength={6}
-                className="flex-1 bg-ink-900/60 border border-white/15 rounded-sm px-4 py-3 text-lg font-mono tracking-widest uppercase focus:outline-none focus:border-gold/60 text-parchment placeholder:text-parchment-400/40"
+                className="min-w-0 flex-1 bg-ink-900/60 border border-white/15 rounded-sm px-4 py-3 text-lg font-mono tracking-widest uppercase focus:outline-none focus:border-gold/60 text-parchment placeholder:text-parchment-400/40"
               />
               <button
                 onClick={handleJoin}

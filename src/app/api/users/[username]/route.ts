@@ -8,7 +8,7 @@ export async function GET(_request: Request, { params }: { params: { username: s
   const db = await getDb();
   const user = await db
     .prepare(
-      `SELECT id, username, rating, rd, games, wins, losses, draws, created_at
+      `SELECT id, username, rating, rd, games, wins, losses, draws, avatar, created_at
        FROM users WHERE username_lower = ?`,
     )
     .bind(username)
@@ -21,6 +21,7 @@ export async function GET(_request: Request, { params }: { params: { username: s
       wins: number;
       losses: number;
       draws: number;
+      avatar: string | null;
       created_at: number;
     }>();
   if (!user) return NextResponse.json({ error: "User not found." }, { status: 404 });
@@ -47,6 +48,7 @@ export async function GET(_request: Request, { params }: { params: { username: s
       wins: user.wins,
       losses: user.losses,
       draws: user.draws,
+      avatar: user.avatar,
       createdAt: user.created_at,
     },
     games: games.results,

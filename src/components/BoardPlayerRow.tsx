@@ -3,6 +3,7 @@
 import { BoardState, Color } from "@/engine/types";
 import { Piece } from "@/components/Pieces";
 import { capturedPiecesFor, capturedValue, opponentOf } from "@/lib/material";
+import { PlayerAvatar } from "@/components/PlayerAvatar";
 
 interface Props {
   board: BoardState;
@@ -10,10 +11,11 @@ interface Props {
   myColor: Color;
   name: string;
   elo?: number | null;
+  avatar?: string | null;
   className?: string;
 }
 
-export function BoardPlayerRow({ board, playerColor, myColor, name, elo, className = "" }: Props) {
+export function BoardPlayerRow({ board, playerColor, myColor, name, elo, avatar, className = "" }: Props) {
   const pieces = capturedPiecesFor(board, playerColor);
   const mineValue = capturedValue(capturedPiecesFor(board, myColor));
   const opponentValue = capturedValue(capturedPiecesFor(board, opponentOf(myColor)));
@@ -27,17 +29,21 @@ export function BoardPlayerRow({ board, playerColor, myColor, name, elo, classNa
     <div className={`flex min-h-[3.25rem] items-center gap-3 px-2 py-2 sm:px-6 ${className}`}>
       <div className="flex min-w-0 items-center gap-2">
         <div className="flex min-w-[8.5rem] items-center gap-2 px-0 py-2">
-          <div
-            className={
-              "grid h-8 w-8 shrink-0 place-items-center rounded-md border font-display text-xs font-semibold " +
-              (isMe
-                ? "border-gold/60 bg-gold/20 text-gold-leaf"
-                : "border-bruise/60 bg-bruise/20 text-bruise-glow")
-            }
-            aria-hidden="true"
-          >
-            {initial}
-          </div>
+          {name !== "Anonymous" && name !== "You" ? (
+            <PlayerAvatar name={name} avatar={avatar} size={32} />
+          ) : (
+            <div
+              className={
+                "grid h-8 w-8 shrink-0 place-items-center rounded-md border font-display text-xs font-semibold " +
+                (isMe
+                  ? "border-gold/60 bg-gold/20 text-gold-leaf"
+                  : "border-bruise/60 bg-bruise/20 text-bruise-glow")
+              }
+              aria-hidden="true"
+            >
+              {initial}
+            </div>
+          )}
           <div className="min-w-0">
             <div className="truncate font-display text-sm font-semibold text-parchment">
               {name}

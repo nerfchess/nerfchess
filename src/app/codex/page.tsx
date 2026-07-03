@@ -68,10 +68,10 @@ export default function CodexPage() {
         </p>
         <div className="mt-4">
           <Link
-            href="/codex/build"
+            href="/codex/suggest"
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full btn-ghost font-display text-sm"
           >
-            <span aria-hidden="true">✦</span> Build your own rule
+            <span aria-hidden="true">✦</span> Suggest a rule
           </Link>
         </div>
 

@@ -374,6 +374,8 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
       ratingChange,
       myNerf: nerfSummary(myColor === "w" ? game.white.nerf : game.black.nerf),
       opponentNerf: nerfSummary(revealedOppNerf),
+      moves: game.board.history.map(moveToUCI),
+      serverGameId: start.id,
     });
   }, [game, myColor, oppName, ratingChange, revealedOppNerf, start]);
 
@@ -792,6 +794,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   myColor={myColor}
                   name={oppName}
                   elo={oppRating}
+                  avatar={start.players?.[oppColor]?.avatar}
                   className="min-w-0 flex-1 !px-0 !py-1"
                 />
                 {clockEnabled && (
@@ -834,6 +837,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   myColor={myColor}
                   name={myName}
                   elo={myRating}
+                  avatar={start.players?.[myColor]?.avatar}
                   className="min-w-0 flex-1 !px-0 !py-1"
                 />
                 {clockEnabled && (
@@ -893,6 +897,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         moves={game.board.history}
         currentPly={currentHistoryPly}
         onPlyChange={handleHistoryPlyChange}
+        chatCount={chatMessages.length}
         footer={
           <div className="space-y-2">
             {historyActions}

@@ -390,6 +390,7 @@ function GameShell({
                 playerColor="b"
                 myColor="w"
                 name={nameOf("b")}
+                avatar={players.b.avatar}
                 className="min-w-0 flex-1 !px-0 !py-1"
               />
               {clockEnabled && <ClockPill ms={blackMs} active={activeColor === "b"} compact />}
@@ -411,6 +412,7 @@ function GameShell({
                 playerColor="w"
                 myColor="w"
                 name={nameOf("w")}
+                avatar={players.w.avatar}
                 className="min-w-0 flex-1 !px-0 !py-1"
               />
               {clockEnabled && <ClockPill ms={whiteMs} active={activeColor === "w"} compact />}

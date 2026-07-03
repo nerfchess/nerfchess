@@ -18,6 +18,7 @@ export interface SessionUser {
   wins: number;
   losses: number;
   draws: number;
+  avatar: string | null;
 }
 
 export function validUsername(name: string): boolean {
@@ -116,7 +117,7 @@ export async function userForSession(db: D1Database, token: string | null): Prom
   if (!token || !/^[0-9a-f]{64}$/.test(token)) return null;
   const row = await db
     .prepare(
-      `SELECT u.id, u.username, u.rating, u.rd, u.vol, u.games, u.wins, u.losses, u.draws, s.expires_at
+      `SELECT u.id, u.username, u.rating, u.rd, u.vol, u.games, u.wins, u.losses, u.draws, u.avatar, s.expires_at
        FROM sessions s JOIN users u ON u.id = s.user_id
        WHERE s.token_hash = ?`,
     )

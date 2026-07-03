@@ -106,8 +106,8 @@ function broadcastWatcherCount(match: Match) {
 // every seat is anonymous.
 function playersPayload() {
   return {
-    w: { name: "Anonymous", rating: null },
-    b: { name: "Anonymous", rating: null },
+    w: { name: "Anonymous", rating: null, avatar: null },
+    b: { name: "Anonymous", rating: null, avatar: null },
   };
 }
 
@@ -277,7 +277,28 @@ function lobbySnapshot(client: Client) {
     moves: number;
     watchers: number;
   }> = [];
+  const challenges: Array<{
+    id: string;
+    host: { name: string; rating: number | null };
+    timeSec: number;
+    incrementSec: number;
+    createdAt: number;
+  }> = [];
   for (const match of matches.values()) {
+    if (!match.game && !match.autoStart) {
+      // A friend game waiting for an opponent is an open challenge, but only
+      // while its host is still connected.
+      if (match.clients.w && match.clients.w.readyState === WebSocket.OPEN) {
+        challenges.push({
+          id: match.id,
+          host: { name: "Anonymous", rating: null },
+          timeSec: match.setup.timeSec,
+          incrementSec: match.setup.incrementSec,
+          createdAt: match.createdAt,
+        });
+      }
+      continue;
+    }
     if (!match.game || match.game.result) continue;
     games.push({
       id: match.id,
@@ -290,13 +311,19 @@ function lobbySnapshot(client: Client) {
     });
   }
   games.sort((a, b) => b.watchers - a.watchers || b.moves - a.moves);
+  challenges.sort((a, b) => b.createdAt - a.createdAt);
 
   // No accounts on the standalone server: every open socket is anonymous.
   let anonymous = 0;
   for (const socket of websocket.clients) {
     if (socket.readyState === WebSocket.OPEN) anonymous++;
   }
-  send(client, "lobby", { players: [], anonymous, games: games.slice(0, 25) });
+  send(client, "lobby", {
+    players: [],
+    anonymous,
+    games: games.slice(0, 25),
+    challenges: challenges.slice(0, 25),
+  });
 }
 
 function stopSpectating(client: Client, notify = true) {
