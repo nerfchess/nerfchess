@@ -155,10 +155,18 @@ const botSeekTtlMs = 8 * 60 * 1000;
 const botSeeksKey = "bots:seeks";
 const botSeededKey = "bots:seeded:v1";
 const botNextGameKey = "bots:nextGameAt";
+// Engine search budgets for bot moves. The game server is a single-threaded
+// Durable Object, so a bot's search blocks every other socket and lobby poll
+// while it runs — an uncapped ~2s "hard" search is what makes the site show
+// "Can't reach the game server" once a few people are playing bots at once.
+// Cap both: a human opponent still gets a clearly stronger search than the
+// bot-vs-bot filler, but neither can monopolize the thread.
+const botHumanMoveBudgetMs = 700;
+const botFillerMoveBudgetMs = 120;
 // Bumped whenever the worker changes in a way we want to confirm shipped.
 // Surfaced at GET /healthz so a deploy can be verified without Cloudflare
 // dashboard access (compare the value there against this one).
-const buildVersion = "bots-diag-1";
+const buildVersion = "bots-diag-2";
 // Lichess-style start-of-game grace: a player's clock only starts charging 10
 // seconds into their first move, so nobody loses time to a slow page load.
 const firstMoveGraceMs = 10 * 1000;
@@ -240,17 +248,13 @@ export class GameServer extends DurableObject<Env> {
     const url = new URL(request.url);
 
     if (url.pathname === "/healthz") {
+      // Read-only status only. Never run botTick here: it drives the chess
+      // engine (a multi-second CPU search) and doing that inside a request
+      // blows the Worker's per-request CPU limit → 1101. ensureBotAlarm
+      // re-arms the tick to run off-request instead, which still nudges the
+      // roster to fill a beat later.
       await this.ensureBotAlarm();
       await this.cleanupExpired();
-      // Run one orchestration pass so simply opening this URL also nudges the
-      // roster to fill, and record why if it fails — this is the only window
-      // into the house players for anyone without Cloudflare dashboard access.
-      let tickError: string | null = null;
-      try {
-        await this.botTick();
-      } catch (err) {
-        tickError = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
-      }
 
       const matches = [...(await this.ctx.storage.list<StoredMatch>({ prefix: "match:" })).values()];
       let liveBotGames = 0;
@@ -1152,12 +1156,13 @@ export class GameServer extends DurableObject<Env> {
     const color = game.board.turn;
     if (!match.bots?.[color]) return;
 
-    // Full-strength search whenever a human sits at the table (these are rare,
-    // so the occasional ~2s block is fine). Bot-vs-bot filler games run a
-    // hard-capped search so a move never ties up the single-threaded Durable
-    // Object long enough to stall live sockets or the lobby poll.
+    // Both searches are time-capped so a single move never ties up the
+    // single-threaded Durable Object long enough to stall live sockets or the
+    // lobby poll for everyone else. A human opponent gets the longer budget
+    // (still a strong move); bot-vs-bot filler runs shorter since nobody is
+    // waiting on it.
     const botVsBot = !!(match.bots.w && match.bots.b);
-    const move = botVsBot ? pickAIMove(game, "hard", 150) : pickAIMove(game, "hard");
+    const move = pickAIMove(game, "hard", botVsBot ? botFillerMoveBudgetMs : botHumanMoveBudgetMs);
     if (!move) {
       // No legal move but no result — should be unreachable; resign to avoid
       // wedging the match.
