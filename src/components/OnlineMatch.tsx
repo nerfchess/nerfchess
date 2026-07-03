@@ -599,51 +599,69 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   // 15 seconds. Re-arms if increment lifts the clock clearly back above it.
   const lowTimeArmedRef = useRef(true);
   const myMs = myColor === "w" ? whiteMs : blackMs;
-  useEffect(() => {
-    if (!clockEnabled || !game || game.result) return;
-    if (myMs >= 20000) {
-      lowTimeArmedRef.current = true;
-    } else if (myMs < 15000 && lowTimeArmedRef.current) {
-      lowTimeArmedRef.current = false;
-      playLowTime();
-    }
-  }, [myMs, clockEnabled, game]);
-
-  // Clock tick. Each side's first move has a 10s server-side grace period, so
-  // the local display also holds still until it expires (server frames keep
-  // the clocks honest either way). While MY grace window runs, surface a
-  // countdown and tick audibly through the last five seconds.
   const turnStartedAtRef = useRef(Date.now());
   useEffect(() => {
     turnStartedAtRef.current = Date.now();
   }, [game?.board.history.length]);
+
+  const clockStartDelay = (color: Color) => {
+    if (!game || game.result || game.board.turn !== color) return 0;
+    const activeMoves = game.board.history.filter((m) => m.color === color).length;
+    if (activeMoves > 0) return 0;
+    return Math.max(0, FIRST_MOVE_GRACE_MS - (Date.now() - turnStartedAtRef.current));
+  };
+
   useEffect(() => {
     if (!clockEnabled || !game || game.result) {
       setGraceSecondsLeft(null);
       return;
     }
-    const id = setInterval(() => {
+    const syncGrace = () => {
       const active = game.board.turn;
       const activeMoves = game.board.history.filter((m) => m.color === active).length;
       const graceLeft = FIRST_MOVE_GRACE_MS - (Date.now() - turnStartedAtRef.current);
       if (activeMoves === 0 && graceLeft > 0) {
         if (active === myColor) {
           const seconds = Math.ceil(graceLeft / 1000);
-          setGraceSecondsLeft(seconds);
+          setGraceSecondsLeft((prev) => (prev === seconds ? prev : seconds));
           if (seconds <= 5 && lastGraceBeepRef.current !== seconds) {
             lastGraceBeepRef.current = seconds;
             playCountdownTick();
           }
+        } else {
+          setGraceSecondsLeft(null);
         }
         return;
       }
       setGraceSecondsLeft(null);
-      const dec = (t: number) => Math.max(0, t - 100);
-      if (active === "w") setWhiteMs(dec);
-      else setBlackMs(dec);
-    }, 100);
-    return () => clearInterval(id);
+      lastGraceBeepRef.current = null;
+    };
+    syncGrace();
+    const id = window.setInterval(syncGrace, 250);
+    return () => window.clearInterval(id);
   }, [game, clockEnabled, myColor]);
+
+  // ClockPill owns the visible countdown, so the whole match surface does not
+  // re-render ten times a second during bullet games.
+  useEffect(() => {
+    if (!clockEnabled || !game || game.result) return;
+    if (myMs >= 20000) {
+      lowTimeArmedRef.current = true;
+    }
+    if (game.board.turn !== myColor || !lowTimeArmedRef.current) return;
+    const delay = clockStartDelay(myColor) + myMs - 15000;
+    if (delay <= 0) {
+      lowTimeArmedRef.current = false;
+      playLowTime();
+      return;
+    }
+    const id = window.setTimeout(() => {
+      lowTimeArmedRef.current = false;
+      playLowTime();
+    }, delay);
+    return () => window.clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [myMs, clockEnabled, game, myColor]);
 
   const onResign = () => {
     if (!game || game.result) return;
@@ -1033,6 +1051,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   <ClockPill
                     ms={myColor === "w" ? blackMs : whiteMs}
                     active={!game.result && game.board.turn !== myColor}
+                    startDelayMs={clockStartDelay(oppColor)}
                     compact
                   />
                 )}
@@ -1076,6 +1095,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   <ClockPill
                     ms={myColor === "w" ? whiteMs : blackMs}
                     active={!game.result && game.board.turn === myColor}
+                    startDelayMs={clockStartDelay(myColor)}
                     compact
                   />
                 )}
@@ -1116,6 +1136,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                 <ClockPill
                   ms={myColor === "w" ? blackMs : whiteMs}
                   active={!game.result && game.board.turn !== myColor}
+                  startDelayMs={clockStartDelay(oppColor)}
                 />
               )}
               <MoveList
@@ -1130,6 +1151,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                 <ClockPill
                   ms={myColor === "w" ? whiteMs : blackMs}
                   active={!game.result && game.board.turn === myColor}
+                  startDelayMs={clockStartDelay(myColor)}
                 />
               )}
             </div>

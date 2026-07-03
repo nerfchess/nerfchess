@@ -124,14 +124,25 @@ function GamePage() {
   const boardShellRef = useRef<HTMLDivElement | null>(null);
   const whiteCustomSpec = useRef<CustomNerf | null>(null);
   const blackCustomSpec = useRef<CustomNerf | null>(null);
+  const turnStartedAtRef = useRef(Date.now());
+
+  const remainingClock = useCallback(
+    (color: Color) => {
+      const base = color === "w" ? whiteMs : blackMs;
+      if (!clockEnabled || !game || game.result || game.board.turn !== color) return base;
+      return Math.max(0, base - (Date.now() - turnStartedAtRef.current));
+    },
+    [blackMs, clockEnabled, game, whiteMs]
+  );
 
   const addIncrement = useCallback(
     (color: Color) => {
-      if (!clockEnabled || incrementMs <= 0) return;
-      if (color === "w") setWhiteMs((t) => t + incrementMs);
-      else setBlackMs((t) => t + incrementMs);
+      if (!clockEnabled) return;
+      const next = remainingClock(color) + incrementMs;
+      if (color === "w") setWhiteMs(next);
+      else setBlackMs(next);
     },
-    [clockEnabled, incrementMs]
+    [clockEnabled, incrementMs, remainingClock]
   );
 
   useEffect(() => {
@@ -195,13 +206,13 @@ function GamePage() {
       query: querySignature,
       myColor,
       game,
-      whiteMs,
-      blackMs,
+      whiteMs: remainingClock("w"),
+      blackMs: remainingClock("b"),
       premoves,
       whiteCustomSpec: whiteCustomSpec.current,
       blackCustomSpec: blackCustomSpec.current,
     });
-  }, [game, querySignature, myColor, whiteMs, blackMs, premoves]);
+  }, [game, querySignature, myColor, premoves, remainingClock]);
 
   useEffect(() => {
     if (!game || historyPly == null) return;
@@ -402,30 +413,33 @@ function GamePage() {
     return () => clearTimeout(tid);
   }, [game, premoves, moves, myColor, addIncrement]);
 
-  // Clock tick: decrement the active side's clock at 100ms intervals while the
-  // game is live. The actual loss check is in a separate effect so we don't
-  // schedule state updates inside the tick callback.
   useEffect(() => {
-    if (!clockEnabled || !game || game.result) return;
-    const id = setInterval(() => {
-      const dec = (t: number) => Math.max(0, t - 100);
-      if (game.board.turn === "w") setWhiteMs(dec);
-      else setBlackMs(dec);
-    }, 100);
-    return () => clearInterval(id);
-  }, [game, clockEnabled]);
+    turnStartedAtRef.current = Date.now();
+  }, [game?.board.history.length]);
 
-  // Timeout: when a clock hits 0, the side whose clock ran out loses.
+  // Timeout: schedule one wake-up for the active side instead of repainting the
+  // whole game view every clock tick. ClockPill handles the visual countdown.
   useEffect(() => {
     if (!clockEnabled || !game || game.result) return;
-    if (whiteMs <= 0) {
-      game.result = { winner: "b", reason: "white ran out of time" };
+    const active = game.board.turn;
+    const remaining = remainingClock(active);
+    if (remaining <= 0) {
+      game.result = {
+        winner: active === "w" ? "b" : "w",
+        reason: `${active === "w" ? "white" : "black"} ran out of time`,
+      };
       setGame({ ...game });
-    } else if (blackMs <= 0) {
-      game.result = { winner: "w", reason: "black ran out of time" };
-      setGame({ ...game });
+      return;
     }
-  }, [whiteMs, blackMs, clockEnabled, game]);
+    const id = window.setTimeout(() => {
+      game.result = {
+        winner: active === "w" ? "b" : "w",
+        reason: `${active === "w" ? "white" : "black"} ran out of time`,
+      };
+      setGame({ ...game });
+    }, remaining + 20);
+    return () => window.clearTimeout(id);
+  }, [clockEnabled, game, remainingClock]);
 
   // AI move
   useEffect(() => {

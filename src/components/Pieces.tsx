@@ -24,7 +24,7 @@ export const Piece = React.memo(function Piece({ type, color, size = 60, classNa
       viewBox="0 0 45 45"
       width={size}
       height={size}
-      className={"select-none drop-shadow " + className}
+      className={"select-none " + className}
       aria-label={`${color === "w" ? "White" : "Black"} ${type}`}
       dangerouslySetInnerHTML={{ __html: path }}
     />
