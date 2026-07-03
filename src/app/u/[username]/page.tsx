@@ -1,12 +1,12 @@
 "use client";
 
-import { MobileNavMenu } from "@/components/MobileNavMenu";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { AccountUser, fetchMe, logout } from "@/lib/authClient";
+import { AccountUser, fetchMe } from "@/lib/authClient";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { PlayerStatsPanel } from "@/components/PlayerStatsPanel";
+import { SiteHeader } from "@/components/SiteHeader";
 import type { PlayerStats } from "@/lib/playerStats";
 import { RatingChart, RatingPoint } from "@/components/RatingChart";
 
@@ -83,24 +83,9 @@ export default function ProfilePage() {
 
   const isMe = !!me && !!profile && me.username.toLowerCase() === profile.user.username.toLowerCase();
 
-  const handleLogout = async () => {
-    await logout();
-    router.push("/");
-    router.refresh();
-  };
-
   return (
     <main className="min-h-screen">
-      <nav className="flex items-center justify-between px-5 sm:px-10 py-6">
-        <Link href="/" className="font-display text-2xl tracking-tight">
-          nerf<span className="text-gold-leaf">chess</span>
-        </Link>
-        <div className="flex items-center gap-1 sm:gap-3 text-sm font-medium">
-          <Link href="/play" className="hidden sm:inline-block px-3 py-1.5 hover:bg-white/5 text-parchment-100">Play</Link>
-          <Link href="/leaderboard" className="hidden sm:inline-block px-3 py-1.5 hover:bg-white/5 text-parchment-100">Leaderboard</Link>
-          <MobileNavMenu />
-        </div>
-      </nav>
+      <SiteHeader />
 
       <section className="max-w-3xl mx-auto px-6 py-8">
         {missing ? (
@@ -144,22 +129,31 @@ export default function ProfilePage() {
               </div>
               <div className="flex items-center gap-2">
                 {me && !isMe && (
-                  <button
-                    onClick={() => setReporting(true)}
-                    className="px-4 py-2 rounded-sm btn-ghost text-sm font-display text-oxblood-glow"
-                  >
-                    Report
-                  </button>
-                )}
-                {isMe && me && (me.role === "mod" || me.role === "admin") && (
-                  <Link href="/mod" className="px-4 py-2 rounded-sm btn-ghost text-sm font-display text-gold-leaf">
-                    Moderation
-                  </Link>
+                  <>
+                    <button
+                      onClick={() => router.push(`/friend?challenge=${encodeURIComponent(profile.user.username)}`)}
+                      className="px-4 py-2 rounded-sm btn-leaf text-sm font-display font-semibold"
+                    >
+                      Challenge
+                    </button>
+                    <Link
+                      href={`/inbox/${encodeURIComponent(profile.user.username)}`}
+                      className="px-4 py-2 rounded-sm btn-ghost text-sm font-display"
+                    >
+                      Message
+                    </Link>
+                    <button
+                      onClick={() => setReporting(true)}
+                      className="px-4 py-2 rounded-sm btn-ghost text-sm font-display text-oxblood-glow"
+                    >
+                      Report
+                    </button>
+                  </>
                 )}
                 {isMe && (
-                  <button onClick={handleLogout} className="px-4 py-2 rounded-sm btn-ghost text-sm font-display">
-                    Sign out
-                  </button>
+                  <Link href="/profile" className="px-4 py-2 rounded-sm btn-ghost text-sm font-display">
+                    Edit profile
+                  </Link>
                 )}
               </div>
             </div>
@@ -194,7 +188,7 @@ export default function ProfilePage() {
 
             {stats && (
               <>
-                <h2 className="mt-10 font-display text-2xl">📊 Statistics</h2>
+                <h2 className="mt-10 font-display text-2xl">Statistics</h2>
                 <div className="mt-3">
                   <PlayerStatsPanel stats={stats} />
                 </div>

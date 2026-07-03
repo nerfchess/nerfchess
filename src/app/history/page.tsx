@@ -1,74 +1,17 @@
 "use client";
 
-import { MobileNavMenu } from "@/components/MobileNavMenu";
+import { SiteHeader } from "@/components/SiteHeader";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { Logo } from "@/components/Logo";
 import {
   CompletedGame,
   GameOutcome,
   loadGameHistory,
-  nerfSummary,
-  outcomeFor,
   speedLabel,
   timeControlLabel,
 } from "@/lib/gameHistory";
-import { getNerf } from "@/engine/nerfs/library";
-import { Color } from "@/engine/types";
 
 import { TIER_LABEL } from "@/lib/tiers";
-
-// A row from GET /api/history (the server-side `games` table).
-type ServerGameRow = {
-  id: string;
-  white_name: string;
-  black_name: string;
-  white_user_id: string | null;
-  black_user_id: string | null;
-  white_nerf_id: string;
-  black_nerf_id: string;
-  winner: "w" | "b" | "draw" | null;
-  reason: string;
-  rated: number;
-  white_rating_before: number | null;
-  white_rating_after: number | null;
-  black_rating_before: number | null;
-  black_rating_after: number | null;
-  time_sec: number;
-  increment_sec: number;
-  moves: string | null;
-  completed_at: number;
-};
-
-// Map an account-stored game into the CompletedGame shape the UI renders.
-function fromServerRow(row: ServerGameRow, userId: string): CompletedGame {
-  const myColor: Color = row.white_user_id === userId ? "w" : "b";
-  const opponent = myColor === "w" ? row.black_name : row.white_name;
-  const myNerfId = myColor === "w" ? row.white_nerf_id : row.black_nerf_id;
-  const oppNerfId = myColor === "w" ? row.black_nerf_id : row.white_nerf_id;
-  const before = myColor === "w" ? row.white_rating_before : row.black_rating_before;
-  const after = myColor === "w" ? row.white_rating_after : row.black_rating_after;
-  const moveCount = row.moves ? row.moves.split(" ").filter(Boolean).length : 0;
-  return {
-    id: row.id,
-    endedAt: row.completed_at,
-    mode: row.rated ? "online" : "friend",
-    opponent,
-    myColor,
-    outcome: outcomeFor(row.winner, myColor),
-    reason: row.reason,
-    rated: !!row.rated,
-    moveCount,
-    baseSec: row.time_sec,
-    incSec: row.increment_sec,
-    ratingChange:
-      row.rated && before != null && after != null ? { before, after } : null,
-    myNerf: nerfSummary(getNerf(myNerfId)),
-    opponentNerf: nerfSummary(getNerf(oppNerfId)),
-    // Server games replay from their archived copy at /game/{id}.
-    serverGameId: row.id,
-  };
-}
 
 type Filter = "all" | GameOutcome;
 
@@ -98,36 +41,8 @@ export default function HistoryPage() {
   const [games, setGames] = useState<CompletedGame[] | null>(null);
   const [filter, setFilter] = useState<Filter>("all");
   const [selected, setSelected] = useState<CompletedGame | null>(null);
-  const [onAccount, setOnAccount] = useState(false);
 
-  // Signed-in players see their account history (online/friend games recorded
-  // server-side, so it follows them across devices); guests fall back to the
-  // device-local list. Bot games are always device-local.
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch("/api/history");
-        const data = (await res.json()) as {
-          authenticated: boolean;
-          userId?: string;
-          games: ServerGameRow[];
-        };
-        if (cancelled) return;
-        if (data.authenticated && data.userId) {
-          setOnAccount(true);
-          setGames(data.games.map((row) => fromServerRow(row, data.userId!)));
-          return;
-        }
-      } catch {
-        // Network/parse failure: fall through to the local list.
-      }
-      if (!cancelled) setGames(loadGameHistory());
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  useEffect(() => setGames(loadGameHistory()), []);
 
   const filtered = useMemo(() => {
     if (!games) return [];
@@ -145,22 +60,12 @@ export default function HistoryPage() {
 
   return (
     <main className="min-h-screen">
-      <nav className="flex items-center justify-between px-5 sm:px-10 py-6 sm:py-7">
-        <Logo />
-        <div className="flex items-center gap-1 sm:gap-2 text-sm font-body font-medium">
-          <Link href="/friend" className="hidden sm:inline-block px-3 py-1.5 hover:bg-white/5 text-parchment-100 transition-colors">Play a Friend</Link>
-          <Link href="/game?mode=ai" className="hidden sm:inline-block px-3 py-1.5 hover:bg-white/5 text-parchment-100 transition-colors">Play vs Bot</Link>
-          <Link href="/leaderboard" className="hidden sm:inline-block px-3 py-1.5 hover:bg-white/5 text-parchment-100 transition-colors">Leaderboard</Link>
-          <MobileNavMenu />
-        </div>
-      </nav>
+      <SiteHeader active="/history" />
 
       <section className="max-w-3xl mx-auto px-5 sm:px-6 py-6 sm:py-8">
         <h1 className="font-display text-4xl sm:text-5xl">Game history</h1>
         <p className="mt-3 text-parchment-200">
-          {onAccount
-            ? "Your online and friend games, saved to your account, most recent first."
-            : "Your finished games on this device, most recent first. Sign in to keep them on your account."}
+          Every finished game is saved on this device, most recent first.
         </p>
 
         <div className="mt-6 flex flex-wrap gap-2">

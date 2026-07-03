@@ -90,25 +90,59 @@ function sameMove(a: Move, b: Move): boolean {
   return a.from === b.from && a.to === b.to && (a.promotion ?? null) === (b.promotion ?? null);
 }
 
-// MVV-LVA — most valuable victim taken by least valuable attacker is best.
-// Optional priority move (e.g., PV move from prior iteration) sorts first.
-function orderMoves(moves: Move[], priority?: Move | null): Move[] {
+// Per-search ordering memory. Killer moves are quiet moves that caused a beta
+// cutoff at the same ply; the history table counts cutoffs per from/to square
+// pair. Both make alpha-beta prune far more of the tree within the same time
+// budget, which is where most of the engine's strength comes from.
+type SearchState = {
+  killers: (Move | null)[][];
+  history: Int32Array;
+};
+
+function newSearchState(): SearchState {
+  return { killers: [], history: new Int32Array(64 * 64) };
+}
+
+// MVV-LVA for captures (most valuable victim taken by least valuable attacker
+// first), then killers, then quiet moves by history score. An optional
+// priority move (the PV move from the previous iteration) sorts before all.
+function orderMoves(moves: Move[], priority?: Move | null, state?: SearchState, ply?: number): Move[] {
+  const killers = state && ply != null ? state.killers[ply] : undefined;
   const scored = moves.map((m) => {
-    let s = m.captured ? VAL[m.captured] * 10 - VAL[m.piece] : 0;
+    let s = 0;
+    if (m.captured) s = 1_000_000 + VAL[m.captured] * 10 - VAL[m.piece];
+    else if (killers?.[0] && sameMove(m, killers[0])) s = 900_000;
+    else if (killers?.[1] && sameMove(m, killers[1])) s = 800_000;
+    else if (state) s = state.history[m.from * 64 + m.to];
     if (m.promotion) s += VAL[m.promotion];
-    if (priority && sameMove(m, priority)) s += 1_000_000;
+    if (priority && sameMove(m, priority)) s += 100_000_000;
     return { m, s };
   });
   scored.sort((a, b) => b.s - a.s);
   return scored.map((x) => x.m);
 }
 
+function recordCutoff(state: SearchState, ply: number, m: Move, depth: number) {
+  if (m.captured) return;
+  state.history[m.from * 64 + m.to] += depth * depth;
+  const killers = (state.killers[ply] ??= [null, null]);
+  if (!killers[0] || !sameMove(m, killers[0])) {
+    killers[1] = killers[0];
+    killers[0] = m;
+  }
+}
+
 export type AILevel = "easy" | "medium" | "hard";
 
-// Time budgets per difficulty — the search runs iterative-deepening until it
+// Time budgets per difficulty: the search runs iterative-deepening until it
 // either finishes the cap depth or exceeds the budget, whichever comes first.
-const TIME_BUDGET_MS: Record<AILevel, number> = { easy: 0, medium: 700, hard: 1600 };
-const MAX_DEPTH: Record<AILevel, number> = { easy: 1, medium: 4, hard: 6 };
+const TIME_BUDGET_MS: Record<AILevel, number> = { easy: 0, medium: 900, hard: 2000 };
+const MAX_DEPTH: Record<AILevel, number> = { easy: 1, medium: 5, hard: 8 };
+
+// Randomness added to easy's one-ply evaluation, in centipawns. Enough to vary
+// its play and misjudge quiet positions, small enough that it still grabs
+// hanging material instead of moving at random.
+const EASY_NOISE = 60;
 
 export function pickAIMove(game: NerfGame, level: AILevel): Move | null {
   const all = legalMoves(game);
@@ -116,17 +150,28 @@ export function pickAIMove(game: NerfGame, level: AILevel): Move | null {
   const safe = all.filter((m) => !isSelfLosing(game, m));
   const moves = safe.length ? safe : all;
 
+  const me = game.board.turn;
+
   if (level === "easy") {
-    const caps = moves.filter((m) => m.captured);
-    const pool = caps.length ? caps : moves;
-    return pool[Math.floor(Math.random() * pool.length)];
+    // Greedy one-ply search: take the move with the best immediate evaluation,
+    // with noise. No lookahead, so it still walks into tactics.
+    let best: Move | null = null;
+    let bestScore = -Infinity;
+    for (const m of moves) {
+      const score = evaluate(makeMove(game.board, m), me) + Math.random() * EASY_NOISE;
+      if (score > bestScore) {
+        bestScore = score;
+        best = m;
+      }
+    }
+    return best ?? moves[0];
   }
 
-  const me = game.board.turn;
   const opp: Color = me === "w" ? "b" : "w";
   const budget = TIME_BUDGET_MS[level];
   const maxDepth = MAX_DEPTH[level];
   const start = Date.now();
+  const state = newSearchState();
 
   let bestMove: Move | null = null;
 
@@ -140,9 +185,9 @@ export function pickAIMove(game: NerfGame, level: AILevel): Move | null {
     const beta = Infinity;
     let timedOut = false;
 
-    for (const m of orderMoves(moves, bestMove)) {
+    for (const m of orderMoves(moves, bestMove, state, 0)) {
       const nb = makeMove(game.board, m);
-      const score = -negamax(nb, d - 1, -beta, -alpha, opp, me, start, budget);
+      const score = -negamax(nb, d - 1, -beta, -alpha, opp, me, start, budget, state, 1);
       if (Number.isNaN(score)) {
         timedOut = true;
         break;
@@ -176,6 +221,8 @@ function negamax(
   root: Color,
   start: number,
   budget: number,
+  state: SearchState,
+  ply: number,
 ): number {
   if (budget > 0 && Date.now() - start > budget * 2) return TIMEOUT_SENTINEL;
 
@@ -185,16 +232,19 @@ function negamax(
   if (bk == null) return side === root ? 100000 : -100000;
   if (depth === 0) return quiesce(board, alpha, beta, side, 6);
 
-  const moves = orderMoves(generateMoves(board));
+  const moves = orderMoves(generateMoves(board), null, state, ply);
   const opp: Color = side === "w" ? "b" : "w";
   let best = -Infinity;
   for (const m of moves) {
     const nb = makeMove(board, m);
-    const v = -negamax(nb, depth - 1, -beta, -alpha, opp, root, start, budget);
+    const v = -negamax(nb, depth - 1, -beta, -alpha, opp, root, start, budget, state, ply + 1);
     if (Number.isNaN(v)) return TIMEOUT_SENTINEL;
     if (v > best) best = v;
     if (best > alpha) alpha = best;
-    if (alpha >= beta) break;
+    if (alpha >= beta) {
+      recordCutoff(state, ply, m, depth);
+      break;
+    }
   }
   if (best === -Infinity) return evaluate(board, side);
   return best;

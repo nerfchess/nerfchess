@@ -1,6 +1,6 @@
 "use client";
 
-import { MobileNavMenu } from "@/components/MobileNavMenu";
+import { SiteHeader } from "@/components/SiteHeader";
 import { NerfCard } from "@/components/NerfCard";
 import { ALL_NERFS } from "@/engine/nerfs/library";
 import Link from "next/link";
@@ -54,15 +54,7 @@ export default function CodexPage() {
 
   return (
     <main className="min-h-screen pb-20">
-      <nav className="flex items-center justify-between px-6 sm:px-10 py-6 sm:py-7">
-        <Link href="/" className="font-display text-2xl tracking-tight">
-          nerf<span className="text-gold-leaf">chess</span>
-        </Link>
-        <div className="flex items-center gap-1">
-          <Link href="/play" className="hidden sm:inline-block px-3 py-1.5 rounded-full text-sm font-display hover:bg-white/5 text-parchment">Play</Link>
-          <MobileNavMenu />
-        </div>
-      </nav>
+      <SiteHeader active="/codex" />
 
       <section className="max-w-6xl mx-auto px-6 pt-4">
         <div className="smallcaps text-[11px] text-parchment-400">the rules</div>
