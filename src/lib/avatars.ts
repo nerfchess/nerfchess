@@ -5,7 +5,7 @@
 
 import type { PieceType } from "@/engine/types";
 
-export type AvatarSpec = { piece: PieceType; pieceColor: "w" | "b"; bg: string };
+export type AvatarSpec = { piece: PieceType; pieceColor: "w" | "b"; bg: string; star?: boolean };
 
 const PALETTES = [
   { id: "gold", bg: "#7c611f" },
@@ -26,6 +26,11 @@ for (const palette of PALETTES) {
     const id = `${palette.id}_${piece}`;
     AVATAR_IDS.push(id);
     AVATARS[id] = { piece, pieceColor: "w", bg: palette.bg };
+    // A starred twin of every preset, assigned to house accounts only. The
+    // star renders as a faint mark in the avatar's top-right corner. These ids
+    // never appear in the picker and isAvatarId rejects them, so a regular
+    // account cannot claim one.
+    AVATARS[`${id}_star`] = { piece, pieceColor: "w", bg: palette.bg, star: true };
   }
 }
 
@@ -43,7 +48,7 @@ const DEFAULT_POOL = AVATAR_IDS.filter(
 export const AVATAR_PICKER_IDS = [...DEFAULT_POOL];
 
 export function isAvatarId(value: unknown): value is string {
-  return typeof value === "string" && value in AVATARS;
+  return typeof value === "string" && value in AVATARS && !AVATARS[value].star;
 }
 
 // Uploaded profile pictures are stored inline as small data URLs (the client
