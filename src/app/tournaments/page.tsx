@@ -1,7 +1,7 @@
 "use client";
 
 import { SiteHeader } from "@/components/SiteHeader";
-import { AccountUser, fetchMe } from "@/lib/authClient";
+import { AccountUser, ensureAccount } from "@/lib/authClient";
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
@@ -62,7 +62,7 @@ export default function TournamentsPage() {
     let cancelled = false;
     const initialClub = new URLSearchParams(window.location.search).get("club");
     if (initialClub) setClubId(initialClub);
-    fetchMe().then((me) => !cancelled && setUser(me));
+    ensureAccount().then((me) => !cancelled && setUser(me));
     load().catch((e) => !cancelled && setError(e instanceof Error ? e.message : "Could not load tournaments."));
     return () => {
       cancelled = true;

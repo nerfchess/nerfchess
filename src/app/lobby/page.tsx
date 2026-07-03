@@ -5,10 +5,24 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { QueueButton } from "@/components/QueueButton";
-import { AccountUser, fetchMe } from "@/lib/authClient";
+import { AccountUser, ensureAccount } from "@/lib/authClient";
 import { MPLobby, MPLobbyChallenge, MPLobbyGame, MPLobbySeek, MPSession, saveOnlineSeat } from "@/lib/multiplayer";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { categoryForTimeControl, getCategory } from "@/lib/ratingCategories";
+
+const BOT_DIFFICULTIES = ["easy", "medium", "hard"] as const;
+
+function botGameHref(difficulty: (typeof BOT_DIFFICULTIES)[number]) {
+  return `/game?${new URLSearchParams({
+    mode: "ai",
+    difficulty,
+    color: "random",
+    nerf: "random",
+    t: "600",
+    inc: "0",
+    rated: "0",
+  }).toString()}`;
+}
 
 // The lobby: the central place to find a game. Shows who is online, the games
 // being played right now (click to watch), and every way to start playing.
@@ -22,7 +36,7 @@ export default function LobbyPage() {
 
   useEffect(() => {
     let cancelled = false;
-    fetchMe().then((me) => {
+    ensureAccount().then((me) => {
       if (!cancelled) setUser(me);
     });
     return () => {
@@ -126,6 +140,21 @@ export default function LobbyPage() {
           <div className="space-y-4 min-w-0">
             {/* Step 1: the main action — get matched with a real opponent. */}
             <QueueButton />
+
+            <div className="plate p-5 sm:p-6">
+              <div className="font-display text-2xl text-parchment">Challenge a bot</div>
+              <div className="mt-4 grid gap-2 sm:grid-cols-3">
+                {BOT_DIFFICULTIES.map((difficulty) => (
+                  <Link
+                    key={difficulty}
+                    href={botGameHref(difficulty)}
+                    className="btn-ghost inline-flex items-center justify-center px-4 py-3 font-display text-base capitalize"
+                  >
+                    {difficulty}
+                  </Link>
+                ))}
+              </div>
+            </div>
 
             {/* Step 2: play a specific person via a shared code. */}
             <div className="plate p-5 sm:p-6">

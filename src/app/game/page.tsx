@@ -441,6 +441,12 @@ function GamePage() {
     return () => window.clearTimeout(id);
   }, [clockEnabled, game, remainingClock]);
 
+  useEffect(() => {
+    if (!game || game.result || game.board.turn === myColor) {
+      aiThinking.current = false;
+    }
+  }, [game, myColor]);
+
   // AI move
   useEffect(() => {
     if (!game || game.result) return;
@@ -452,18 +458,24 @@ function GamePage() {
     // finishes early.
     const delay = difficulty === "easy" ? 600 : difficulty === "medium" ? 1200 : 2000;
     const tid = setTimeout(() => {
-      const m = pickAIMove(game, difficulty);
-      if (m) {
-        const mover = game.board.turn;
-        const next = playMove(game, m);
-        setGame({ ...next });
-        addIncrement(mover);
-      } else {
-        game.result = { winner: myColor, reason: "AI has no legal moves" };
+      try {
+        const m = pickAIMove(game, difficulty);
+        if (m) {
+          const mover = game.board.turn;
+          const next = playMove(game, m);
+          setGame({ ...next });
+          addIncrement(mover);
+        } else {
+          game.result = { winner: myColor, reason: "AI has no legal moves" };
+          setGame({ ...game });
+        }
+      } catch {
+        game.result = { winner: myColor, reason: "AI move failed" };
         setGame({ ...game });
+      } finally {
+        aiThinking.current = false;
+        force((x) => x + 1);
       }
-      aiThinking.current = false;
-      force((x) => x + 1);
     }, delay);
     return () => {
       clearTimeout(tid);
