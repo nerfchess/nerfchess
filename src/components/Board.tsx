@@ -76,6 +76,62 @@ interface DragState {
 
 type RightClickMark = 1 | 2 | 3 | 4;
 
+// Drawn annotations, lichess-style: right-click drag for an arrow, plain
+// right-click for a square mark. Modifier keys pick the colour.
+type BoardArrow = { from: Square; to: Square; mark: RightClickMark };
+
+const MARK_COLORS: Record<RightClickMark, string> = {
+  1: "rgb(216,181,110)",
+  2: "rgb(90,155,122)",
+  3: "rgb(124,122,163)",
+  4: "rgb(181,70,65)",
+};
+
+function ArrowShape({
+  from,
+  to,
+  mark,
+  orientation,
+  preview = false,
+}: BoardArrow & { orientation: Color; preview?: boolean }) {
+  const center = (sq: Square) =>
+    orientation === "w"
+      ? { x: FILE(sq) + 0.5, y: 7.5 - RANK(sq) }
+      : { x: 7.5 - FILE(sq), y: RANK(sq) + 0.5 };
+  const a = center(from);
+  const b = center(to);
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const len = Math.hypot(dx, dy);
+  if (len < 0.5) return null;
+  const ux = dx / len;
+  const uy = dy / len;
+  const px = -uy;
+  const py = ux;
+  const headLen = 0.42;
+  const headW = 0.24;
+  const start = { x: a.x + ux * 0.34, y: a.y + uy * 0.34 };
+  const base = { x: b.x - ux * headLen, y: b.y - uy * headLen };
+  const color = MARK_COLORS[mark];
+  return (
+    <g opacity={preview ? 0.5 : 0.8}>
+      <line
+        x1={start.x}
+        y1={start.y}
+        x2={base.x}
+        y2={base.y}
+        stroke={color}
+        strokeWidth={0.18}
+        strokeLinecap="round"
+      />
+      <polygon
+        points={`${b.x},${b.y} ${base.x + px * headW},${base.y + py * headW} ${base.x - px * headW},${base.y - py * headW}`}
+        fill={color}
+      />
+    </g>
+  );
+}
+
 const ORDERED_SQUARES_WHITE: Square[] = [];
 for (let r = 7; r >= 0; r--) {
   for (let f = 0; f < 8; f++) {
@@ -114,6 +170,8 @@ export function Board({
   const [drag, setDrag] = useState<DragState | null>(null);
   const [hoverSq, setHoverSq] = useState<Square | null>(null);
   const [rightClickMarks, setRightClickMarks] = useState<Record<number, RightClickMark>>({});
+  const [arrows, setArrows] = useState<BoardArrow[]>([]);
+  const [rightDrag, setRightDrag] = useState<{ from: Square; mark: RightClickMark; hover: Square } | null>(null);
   const boardRef = useRef<HTMLDivElement>(null);
   const ghostRef = useRef<HTMLDivElement>(null);
   const gridRectRef = useRef<DOMRect | null>(null);
@@ -208,6 +266,8 @@ export function Board({
   // playing a legal destination moves, and clicking anything else (an empty
   // square, an unreachable piece) clears the selection like Lichess/Chess.com.
   const handleSquareClick = (sq: Square) => {
+    setRightClickMarks((marks) => (Object.keys(marks).length ? {} : marks));
+    setArrows((current) => (current.length ? [] : current));
     if (disabled) return;
     if (tryPlay(sq)) return;
     const piece = board.pieces[sq];
@@ -327,21 +387,52 @@ export function Board({
 
   const draggedPiece = drag ? board.pieces[drag.from] : null;
 
+  // Any move wipes the scratchpad, like Lichess.
   useEffect(() => {
-    setRightClickMarks((marks) => {
-      let changed = false;
-      const next: Record<number, RightClickMark> = {};
-      for (const [rawSq, mark] of Object.entries(marks)) {
-        const sq = Number(rawSq) as Square;
-        if (board.pieces[sq]) {
-          next[sq] = mark;
-        } else {
-          changed = true;
-        }
-      }
-      return changed ? next : marks;
-    });
+    setRightClickMarks((marks) => (Object.keys(marks).length ? {} : marks));
+    setArrows((current) => (current.length ? [] : current));
   }, [board.pieces]);
+
+  // Right-click drag: drop on another square to toggle an arrow, release on
+  // the starting square to toggle its mark instead.
+  useEffect(() => {
+    if (!rightDrag) return;
+    const onMovePointer = (e: PointerEvent) => {
+      const sq = squareAtClient(e.clientX, e.clientY);
+      if (sq != null) setRightDrag((d) => (d && d.hover !== sq ? { ...d, hover: sq } : d));
+    };
+    const onUp = (e: PointerEvent) => {
+      if (e.button !== 2) return;
+      const drop = squareAtClient(e.clientX, e.clientY) ?? rightDrag.hover;
+      const { from, mark } = rightDrag;
+      setRightDrag(null);
+      if (drop === from) {
+        setRightClickMarks((marks) => {
+          const next = { ...marks };
+          if (next[from] === mark) delete next[from];
+          else next[from] = mark;
+          return next;
+        });
+        return;
+      }
+      setArrows((current) => {
+        const existing = current.find((a) => a.from === from && a.to === drop);
+        const rest = current.filter((a) => !(a.from === from && a.to === drop));
+        if (existing && existing.mark === mark) return rest;
+        return [...rest, { from, to: drop, mark }];
+      });
+    };
+    const onCancel = () => setRightDrag(null);
+    window.addEventListener("pointermove", onMovePointer);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onCancel);
+    return () => {
+      window.removeEventListener("pointermove", onMovePointer);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onCancel);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rightDrag]);
 
   const markFromModifiers = (e: React.MouseEvent): RightClickMark => {
     if (e.altKey) return 2;
@@ -350,24 +441,18 @@ export function Board({
     return 1;
   };
 
-  const handleSquareContextMenu = (e: React.MouseEvent, sq: Square) => {
+  const handleSquareContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
     // right-click cancels the whole premove queue (chess.com convention)
     if (premoves && premoves.length > 0 && onCancelPremove) {
       onCancelPremove();
       setSelected(null);
     }
-    if (!board.pieces[sq]) return;
-    const mark = markFromModifiers(e);
-    setRightClickMarks((marks) => {
-      const next = { ...marks };
-      if (next[sq] === mark) {
-        delete next[sq];
-      } else {
-        next[sq] = mark;
-      }
-      return next;
-    });
+  };
+
+  const startRightDrag = (e: React.PointerEvent, sq: Square) => {
+    e.preventDefault();
+    setRightDrag({ from: sq, mark: markFromModifiers(e), hover: sq });
   };
 
   return (
@@ -416,8 +501,11 @@ export function Board({
               <div
                 key={sq}
                 onClick={() => handleSquareClick(sq)}
-                onContextMenu={(e) => handleSquareContextMenu(e, sq)}
-                onPointerDown={(e) => piece && onPointerDownPiece(e, sq)}
+                onContextMenu={handleSquareContextMenu}
+                onPointerDown={(e) => {
+                  if (e.button === 2) startRightDrag(e, sq);
+                  else if (piece) onPointerDownPiece(e, sq);
+                }}
                 className={classes}
                 style={{ cursor: piece && piece.color === myColor && !disabled ? "grab" : "default" }}
                 role="gridcell"
@@ -496,6 +584,24 @@ export function Board({
             );
           })}
         </div>
+
+        {/* Drawn annotations: arrows above the pieces, clicks pass through. */}
+        {(arrows.length > 0 || (rightDrag && rightDrag.hover !== rightDrag.from)) && (
+          <svg viewBox="0 0 8 8" className="pointer-events-none absolute inset-0 z-10 h-full w-full">
+            {arrows.map((arrow) => (
+              <ArrowShape key={`${arrow.from}-${arrow.to}`} {...arrow} orientation={orientation} />
+            ))}
+            {rightDrag && rightDrag.hover !== rightDrag.from && (
+              <ArrowShape
+                from={rightDrag.from}
+                to={rightDrag.hover}
+                mark={rightDrag.mark}
+                orientation={orientation}
+                preview
+              />
+            )}
+          </svg>
+        )}
       </div>
 
       {/* Floating drag ghost — position is written directly via ref to avoid React re-renders */}

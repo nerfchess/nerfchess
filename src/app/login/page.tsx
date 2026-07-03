@@ -17,7 +17,10 @@ function LoginPage() {
   const router = useRouter();
   const params = useSearchParams();
   const next = params.get("next") || "/";
-  const [tab, setTab] = useState<"login" | "register">("login");
+  // Guests arriving to upgrade land on the register tab; their guest account
+  // is converted in place, keeping their rating and history.
+  const upgrading = params.get("upgrade") === "1";
+  const [tab, setTab] = useState<"login" | "register">(upgrading ? "register" : "login");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -51,8 +54,9 @@ function LoginPage() {
           {tab === "login" ? "Welcome back" : "Create your account"}
         </h1>
         <p className="mt-2 text-parchment-200 text-sm">
-          An account gives you rated online games, a real rating, game history, and a spot on the
-          leaderboard.
+          {upgrading
+            ? "Pick a username and password. Your guest rating, games, and member date carry over."
+            : "An account gives you rated online games, a real rating, game history, and a spot on the leaderboard."}
         </p>
 
         <div className="mt-6 grid grid-cols-2 gap-1 plate p-1">

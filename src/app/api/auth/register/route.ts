@@ -4,6 +4,8 @@ import {
   createSession,
   hashPassword,
   sessionCookie,
+  sessionTokenFromCookieHeader,
+  userForSession,
   validPassword,
   validUsername,
 } from "@/lib/server/auth";
@@ -38,12 +40,26 @@ export async function POST(request: Request) {
   }
 
   const db = await getDb();
+  const caller = await userForSession(db, sessionTokenFromCookieHeader(request.headers.get("cookie")));
+
   const existing = await db
     .prepare("SELECT id FROM users WHERE username_lower = ?")
     .bind(username.toLowerCase())
-    .first();
-  if (existing) {
+    .first<{ id: string }>();
+  if (existing && existing.id !== caller?.id) {
     return NextResponse.json({ error: "That username is taken." }, { status: 409 });
+  }
+
+  // A signed-in guest registering upgrades their account in place, keeping
+  // their rating, games, and member-since date.
+  if (caller?.is_guest) {
+    await db
+      .prepare(
+        "UPDATE users SET username = ?, username_lower = ?, password_hash = ?, is_guest = 0 WHERE id = ?",
+      )
+      .bind(username, username.toLowerCase(), await hashPassword(password), caller.id)
+      .run();
+    return NextResponse.json({ id: caller.id, username });
   }
 
   const id = crypto.randomUUID();

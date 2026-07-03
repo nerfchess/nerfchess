@@ -10,7 +10,8 @@ export async function GET() {
   const rows = await db
     .prepare(
       `SELECT username, rating, rd, games, wins, losses, draws, avatar
-       FROM users WHERE banned_until IS NULL OR banned_until <= ?
+       FROM users
+       WHERE (banned_until IS NULL OR banned_until <= ?) AND (is_guest = 0 OR games > 0)
        ORDER BY rating DESC, games DESC LIMIT 100`,
     )
     .bind(Date.now())
