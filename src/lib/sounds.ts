@@ -1,6 +1,9 @@
-// Chess.com-style synthesized sounds. Short, percussive wood-knock clicks
-// generated with Web Audio (filtered noise burst + low body thump).
-// No assets, no licensing.
+// Game sounds, in two themes (Settings > Sound):
+//  - "lichess": the standard sound set from lichess.org, vendored under
+//    /public/sound/lichess (lila is AGPL — see the README in that directory).
+//  - "classic": the original synthesized wood-knock clicks (Web Audio only).
+// Sample playback always falls back to the synth while a file is still
+// loading or failed to load, so a sound never silently goes missing.
 
 let ctx: AudioContext | null = null;
 let muted = false;
@@ -13,9 +16,18 @@ export function setUiSounds(v: boolean) {
 let noiseBuf: AudioBuffer | null = null;
 let volume = 0.8;
 
+export type SoundTheme = "lichess" | "classic";
+
 // Per-event sound preferences (Settings > Sound). `enabled` is the master
 // switch; the rest gate individual game sounds.
-const soundPrefs = { enabled: true, move: true, capture: true, check: true, gameEnd: true };
+const soundPrefs = {
+  enabled: true,
+  move: true,
+  capture: true,
+  check: true,
+  gameEnd: true,
+  theme: "lichess" as SoundTheme,
+};
 
 export function configureSoundPrefs(prefs: Partial<typeof soundPrefs>) {
   Object.assign(soundPrefs, prefs);
@@ -50,6 +62,75 @@ function audio(): AudioContext | null {
   }
   if (ctx.state === "suspended") ctx.resume().catch(() => {});
   return ctx;
+}
+
+// --- Lichess sample playback ---
+// Decoded once, cached forever. `null` marks a failed load so we stop
+// retrying and just use the synth fallback.
+
+type SampleName =
+  | "Move"
+  | "Capture"
+  | "Select"
+  | "GenericNotify"
+  | "LowTime"
+  | "CountDown0"
+  | "Error";
+
+const samples = new Map<SampleName, AudioBuffer | null>();
+const samplesLoading = new Set<SampleName>();
+
+function loadSample(name: SampleName) {
+  if (samples.has(name) || samplesLoading.has(name)) return;
+  if (typeof window === "undefined") return;
+  const a = audio();
+  if (!a) return;
+  samplesLoading.add(name);
+  fetch(`/sound/lichess/${name}.mp3`)
+    .then((res) => (res.ok ? res.arrayBuffer() : Promise.reject(new Error(String(res.status)))))
+    .then((raw) => a.decodeAudioData(raw))
+    .then((decoded) => samples.set(name, decoded))
+    .catch(() => samples.set(name, null))
+    .finally(() => samplesLoading.delete(name));
+}
+
+/** Fetch and decode every sample up front so the first move of a game is
+ *  never the one that pays the network round trip. Safe to call repeatedly. */
+export function preloadSounds() {
+  if (typeof window === "undefined") return;
+  const names: SampleName[] = [
+    "Move",
+    "Capture",
+    "Select",
+    "GenericNotify",
+    "LowTime",
+    "CountDown0",
+    "Error",
+  ];
+  for (const name of names) loadSample(name);
+}
+
+/** Play a lichess sample. Returns true when the sound was handled (played, or
+ *  intentionally silent because the player muted); false = use the fallback. */
+function playSample(name: SampleName, gain = 1): boolean {
+  if (soundPrefs.theme !== "lichess") return false;
+  if (isMuted()) return true;
+  const a = audio();
+  if (!a) return false;
+  const buf = samples.get(name);
+  if (buf === undefined) {
+    loadSample(name);
+    return false;
+  }
+  if (buf === null) return false;
+  const src = a.createBufferSource();
+  src.buffer = buf;
+  const g = a.createGain();
+  g.gain.value = gain * getVolume();
+  src.connect(g);
+  g.connect(a.destination);
+  src.start();
+  return true;
 }
 
 function noise(a: AudioContext): AudioBuffer {
@@ -190,11 +271,12 @@ function tone(opts: {
   osc.stop(t0 + opts.dur + (opts.release ?? 0.05) + 0.02);
 }
 
-// --- Public API: chess.com-shaped sounds ---
+// --- Public API ---
 
 // Standard move: a single short, mid-frequency wood click.
 export function playMove() {
   if (!soundPrefs.enabled || !soundPrefs.move) return;
+  if (playSample("Move")) return;
   knock({
     filterFreq: 1100,
     filterQ: 3.5,
@@ -209,6 +291,7 @@ export function playMove() {
 // Capture: lower, thicker click with a slight "thud" body.
 export function playCapture() {
   if (!soundPrefs.enabled || !soundPrefs.capture) return;
+  if (playSample("Capture")) return;
   knock({
     filterFreq: 700,
     filterQ: 2.5,
@@ -234,9 +317,10 @@ export function playNerf() {
   tone({ freq: 494, dur: 0.22, type: "triangle", gain: 0.12, attack: 0.005, release: 0.22, delay: 0.13 });
 }
 
-// Game over: chess.com-style two-note descending chime.
+// Game over: lichess notify dong, or a two-note descending chime.
 export function playGameOver() {
   if (!soundPrefs.enabled || !soundPrefs.gameEnd) return;
+  if (playSample("GenericNotify")) return;
   tone({ freq: 880, dur: 0.18, type: "sine", gain: 0.18, attack: 0.005, release: 0.18 });
   tone({ freq: 698, dur: 0.30, type: "sine", gain: 0.18, attack: 0.005, release: 0.28, delay: 0.13 });
   tone({ freq: 1318, dur: 0.30, type: "sine", gain: 0.06, attack: 0.005, release: 0.28, delay: 0.13 });
@@ -245,6 +329,7 @@ export function playGameOver() {
 // Low time: urgent double tick, like a clock tapping your shoulder.
 export function playLowTime() {
   if (!soundPrefs.enabled) return;
+  if (playSample("LowTime")) return;
   tone({ freq: 988, dur: 0.09, type: "square", gain: 0.10, attack: 0.003, release: 0.08 });
   tone({ freq: 988, dur: 0.09, type: "square", gain: 0.10, attack: 0.003, release: 0.08, delay: 0.16 });
   tone({ freq: 1319, dur: 0.12, type: "square", gain: 0.08, attack: 0.003, release: 0.10, delay: 0.32 });
@@ -253,11 +338,20 @@ export function playLowTime() {
 // Countdown tick: short urgent blip for the last seconds of the grace timer.
 export function playCountdownTick() {
   if (!soundPrefs.enabled) return;
+  if (playSample("CountDown0", 0.8)) return;
   tone({ freq: 988, dur: 0.09, type: "square", gain: 0.10, attack: 0.002, release: 0.09 });
 }
 
 // Select: very brief, soft pickup tick.
 export function playSelect() {
   if (!soundPrefs.enabled || !uiSounds) return;
+  if (playSample("Select", 0.6)) return;
   knock({ filterFreq: 1600, filterQ: 5, dur: 0.025, gain: 0.18 });
+}
+
+// Error: a move (or premove) failed to reach the server, or was rejected.
+export function playError() {
+  if (!soundPrefs.enabled) return;
+  if (playSample("Error", 0.7)) return;
+  tone({ freq: 330, dur: 0.14, type: "square", gain: 0.10, attack: 0.003, release: 0.10 });
 }

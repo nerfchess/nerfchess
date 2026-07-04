@@ -37,6 +37,7 @@ export type PieceTheme =
 export type AccentColor = "blue" | "green" | "amber" | "rose";
 export type AnimationSpeed = "off" | "fast" | "normal";
 export type SiteTheme = "dark" | "light" | "system";
+export type SoundTheme = "lichess" | "classic";
 
 export interface Settings {
   boardTheme: BoardTheme;
@@ -64,6 +65,7 @@ export interface Settings {
   checkSound: boolean; // ping when a king is in check
   gameEndSound: boolean; // chime when the game ends
   soundEnabled: boolean; // master switch for all game audio
+  soundTheme: SoundTheme; // lichess sample set, or the classic synth clicks
   siteTheme: SiteTheme; // dark, light, or follow the OS
   compactMode: boolean; // tighter interface density
   lowTimeWarning: boolean; // ticking alert when the clock runs low
@@ -104,6 +106,7 @@ export const DEFAULT_SETTINGS: Settings = {
   checkSound: true,
   gameEndSound: true,
   soundEnabled: true,
+  soundTheme: "lichess",
   siteTheme: "dark",
   compactMode: false,
   uiScale: 1,
@@ -208,6 +211,10 @@ export function loadSettings(): Settings {
       checkSound: bool(parsed.checkSound, DEFAULT.checkSound),
       gameEndSound: bool(parsed.gameEndSound, DEFAULT.gameEndSound),
       soundEnabled: bool(parsed.soundEnabled, DEFAULT.soundEnabled),
+      soundTheme:
+        parsed.soundTheme === "lichess" || parsed.soundTheme === "classic"
+          ? parsed.soundTheme
+          : DEFAULT.soundTheme,
       siteTheme:
         parsed.siteTheme === "dark" || parsed.siteTheme === "light" || parsed.siteTheme === "system"
           ? parsed.siteTheme

@@ -15,7 +15,7 @@ import {
   saveSettings,
   Settings,
 } from "@/lib/settings";
-import { configureSoundPrefs, setUiSounds, setVolume } from "@/lib/sounds";
+import { configureSoundPrefs, playMove as playMoveSample, setUiSounds, setVolume } from "@/lib/sounds";
 import Link from "next/link";
 import { Piece } from "@/components/Pieces";
 import { SECTIONS, type Control } from "@/components/settings/config";
@@ -64,7 +64,10 @@ export function SettingsPanel({ open, onClose }: Props) {
         capture: merged.captureSound,
         check: merged.checkSound,
         gameEnd: merged.gameEndSound,
+        theme: merged.soundTheme,
       });
+      // Audition the new set so the choice is audible immediately.
+      if (patch.soundTheme != null || patch.volume != null) playMoveSample();
       return merged;
     });
   };
@@ -107,6 +110,15 @@ export function SettingsPanel({ open, onClose }: Props) {
             value={settings.siteTheme}
             options={control.options}
             onChange={(v) => update({ siteTheme: v })}
+          />
+        );
+      case "soundTheme":
+        return (
+          <Select
+            label={label}
+            value={settings.soundTheme}
+            options={control.options}
+            onChange={(v) => update({ soundTheme: v })}
           />
         );
       case "account":

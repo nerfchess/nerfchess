@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Piece } from "./Pieces";
 import { BoardState, Color, FILE, Move, PieceType, RANK, SQ, Square } from "@/engine/types";
@@ -138,6 +138,77 @@ function ArrowShape({
   );
 }
 
+// --- Move animation (chessground/lichess technique) ---
+// When the position changes, each piece that "appeared" on a square is
+// matched to the nearest vanished piece of the same type and colour. It is
+// rendered on its destination square pre-translated back to its origin, then
+// eased to identity — so pieces glide instead of teleporting. Castling
+// animates both king and rook for free.
+
+interface PieceAnim {
+  dxCells: number;
+  dyCells: number;
+}
+
+function animDurationMs(): number {
+  if (typeof document === "undefined") return 0;
+  const mode = document.documentElement.dataset.anim;
+  if (mode === "off") return 0;
+  if (mode === "fast") return 120;
+  return 220;
+}
+
+// Pending animation cleanups, per piece element: starting a new slide on an
+// element cancels the old cleanup so back-to-back moves (premove chains)
+// don't get clipped mid-flight.
+const animCleanups = new WeakMap<HTMLElement, number>();
+
+function computeAnims(
+  prev: BoardState["pieces"],
+  next: BoardState["pieces"],
+  orientation: Color,
+  skipSquare: Square | null,
+): Map<Square, PieceAnim> {
+  const anims = new Map<Square, PieceAnim>();
+  const vanished: Square[] = [];
+  const appeared: Square[] = [];
+  for (let sq = 0 as Square; sq < 64; sq++) {
+    const a = prev[sq];
+    const b = next[sq];
+    if (a && (!b || a.type !== b.type || a.color !== b.color)) vanished.push(sq);
+    if (b && (!a || a.type !== b.type || a.color !== b.color)) appeared.push(sq);
+  }
+  // A flood of changes is a reset (new game, history jump), not a move.
+  if (appeared.length === 0 || appeared.length > 6) return anims;
+  const used = new Set<Square>();
+  for (const to of appeared) {
+    if (to === skipSquare) continue; // drag drops land instantly
+    const piece = next[to]!;
+    let best: Square | null = null;
+    let bestDist = Infinity;
+    for (const from of vanished) {
+      if (used.has(from)) continue;
+      const q = prev[from]!;
+      if (q.type !== piece.type || q.color !== piece.color) continue;
+      const d = (FILE(from) - FILE(to)) ** 2 + (RANK(from) - RANK(to)) ** 2;
+      if (d < bestDist) {
+        bestDist = d;
+        best = from;
+      }
+    }
+    if (best == null) continue;
+    used.add(best);
+    let dxCells = FILE(best) - FILE(to);
+    let dyCells = RANK(to) - RANK(best);
+    if (orientation === "b") {
+      dxCells = -dxCells;
+      dyCells = -dyCells;
+    }
+    anims.set(to, { dxCells, dyCells });
+  }
+  return anims;
+}
+
 const ORDERED_SQUARES_WHITE: Square[] = [];
 for (let r = 7; r >= 0; r--) {
   for (let f = 0; f < 8; f++) {
@@ -184,6 +255,64 @@ export function Board({
   const ghostRef = useRef<HTMLDivElement>(null);
   const gridRectRef = useRef<DOMRect | null>(null);
   const lastHoverRef = useRef<Square | null>(null);
+  // Remembers what was under the pointer when a press began, so releasing on
+  // the same square can toggle the selection off (lichess click behaviour).
+  const pressRef = useRef<{ sq: Square; wasSelected: boolean } | null>(null);
+  // The destination of a just-dropped drag: that piece must not animate.
+  const dropSkipRef = useRef<Square | null>(null);
+  const prevPiecesRef = useRef<BoardState["pieces"] | null>(null);
+  const animsRef = useRef<Map<Square, PieceAnim>>(new Map());
+
+  // Diff against the previous position during render (reference equality
+  // guards against re-runs) so animated squares can be tagged in this pass.
+  if (prevPiecesRef.current && prevPiecesRef.current !== board.pieces) {
+    animsRef.current = computeAnims(
+      prevPiecesRef.current,
+      board.pieces,
+      orientation,
+      dropSkipRef.current,
+    );
+    dropSkipRef.current = null;
+  }
+  prevPiecesRef.current = board.pieces;
+
+  // Start the animations before paint: place each tagged piece on its origin
+  // square via transform, force a reflow, then transition to rest. All
+  // imperative — React never renders the transform, so unrelated re-renders
+  // (hover, selection) can't snap a piece mid-flight.
+  useLayoutEffect(() => {
+    const anims = animsRef.current;
+    if (anims.size === 0) return;
+    animsRef.current = new Map();
+    const dur = animDurationMs();
+    if (dur === 0) return;
+    const grid = boardRef.current?.querySelector("[data-board-grid]") as HTMLElement | null;
+    if (!grid) return;
+    const cell = grid.getBoundingClientRect().width / 8;
+    for (const el of Array.from(grid.querySelectorAll<HTMLElement>("[data-anim-piece]"))) {
+      const sq = Number(el.dataset.animPiece) as Square;
+      const anim = anims.get(sq);
+      if (!anim) continue;
+      const pendingCleanup = animCleanups.get(el);
+      if (pendingCleanup !== undefined) window.clearTimeout(pendingCleanup);
+      el.style.transition = "none";
+      el.style.transform = `translate(${anim.dxCells * cell}px, ${anim.dyCells * cell}px)`;
+      el.style.position = "relative";
+      el.style.zIndex = "5";
+      el.getBoundingClientRect(); // commit the starting transform
+      el.style.transition = `transform ${dur}ms ease-out`;
+      el.style.transform = "translate(0, 0)";
+      animCleanups.set(
+        el,
+        window.setTimeout(() => {
+          el.style.transition = "";
+          el.style.zIndex = "";
+          el.style.position = "";
+          animCleanups.delete(el);
+        }, dur + 50),
+      );
+    }
+  }, [board.pieces, orientation]);
 
   const movesFrom = useMemo(() => {
     const m = new Map<Square, Move[]>();
@@ -270,19 +399,36 @@ export function Board({
     return false;
   };
 
-  // Plain click / tap: selecting another movable piece switches the selection,
-  // playing a legal destination moves, and clicking anything else (an empty
-  // square, an unreachable piece) clears the selection like Lichess/Chess.com.
-  const handleSquareClick = (sq: Square) => {
+  // Latest-value mirrors for the drag listeners. The drag effect only re-runs
+  // when the drag starts, so without these its handlers would keep validating
+  // drops against the move list from that moment — if the opponent moved (or
+  // a premove fired) mid-drag, a perfectly good drop would silently die.
+  const tryPlayRef = useRef(tryPlay);
+  tryPlayRef.current = tryPlay;
+  const targetsRef = useRef(targets);
+  targetsRef.current = targets;
+
+  // Everything happens on pointer *down*, lichess-style: pressing a legal
+  // destination plays the move immediately (no waiting for the release —
+  // that saves the whole press-to-release delay on every move, which adds up
+  // fast in bullet), pressing a movable piece selects it and arms a drag, and
+  // pressing anything else clears the selection. Releasing on the same
+  // already-selected piece toggles it off (handled in the drag-up listener).
+  const handleSquarePointerDown = (e: React.PointerEvent, sq: Square) => {
+    if (e.button === 2) {
+      startRightDrag(e, sq);
+      return;
+    }
+    if (e.button !== undefined && e.button !== 0) return;
     setRightClickMarks((marks) => (Object.keys(marks).length ? {} : marks));
     setArrows((current) => (current.length ? [] : current));
     if (disabled) return;
     if (tryPlay(sq)) return;
     const piece = board.pieces[sq];
-    if (piece && piece.color === myColor && movesFrom.has(sq) && selected !== sq) {
-      setSelected(sq);
-      playSelect();
-    } else if (selected != null && selected !== sq) {
+    if (piece && piece.color === myColor && movesFrom.has(sq)) {
+      pressRef.current = { sq, wasSelected: selected === sq };
+      onPointerDownPiece(e, sq);
+    } else if (selected != null) {
       setSelected(null);
     }
   };
@@ -302,10 +448,6 @@ export function Board({
 
   // --- Drag & drop via pointer events ---
   const onPointerDownPiece = (e: React.PointerEvent, sq: Square) => {
-    if (disabled) return;
-    if (e.button !== undefined && e.button !== 0) return;
-    const piece = board.pieces[sq];
-    if (!piece || piece.color !== myColor || !movesFrom.has(sq)) return;
     const grid = boardRef.current?.querySelector("[data-board-grid]") as HTMLElement | null;
     if (!grid) return;
     const rect = grid.getBoundingClientRect();
@@ -313,7 +455,7 @@ export function Board({
     const cell = rect.width / 8;
 
     setSelected(sq);
-    playSelect();
+    if (selected !== sq) playSelect();
     setDrag({ from: sq, pointerId: e.pointerId, cell });
     setHoverSq(sq);
     lastHoverRef.current = sq;
@@ -357,11 +499,18 @@ export function Board({
     const onUp = (e: PointerEvent) => {
       if (e.pointerId !== drag.pointerId) return;
       const sq = squareAtClient(e.clientX, e.clientY);
-      if (sq != null && sq !== drag.from && targets[sq]) {
-        tryPlay(sq);
+      // Validate the drop against the *current* move list (via refs), not the
+      // one captured when the drag began — the position may have changed.
+      if (sq != null && sq !== drag.from && targetsRef.current[sq]) {
+        dropSkipRef.current = sq;
+        tryPlayRef.current(sq);
       } else if (sq != null && sq !== drag.from) {
         setSelected(null);
+      } else if (sq === drag.from && pressRef.current?.sq === sq && pressRef.current.wasSelected) {
+        // Releasing on an already-selected piece deselects it (click toggle).
+        setSelected(null);
       }
+      pressRef.current = null;
       setDrag(null);
       setHoverSq(null);
       lastHoverRef.current = null;
@@ -509,12 +658,8 @@ export function Board({
             return (
               <div
                 key={sq}
-                onClick={() => handleSquareClick(sq)}
                 onContextMenu={handleSquareContextMenu}
-                onPointerDown={(e) => {
-                  if (e.button === 2) startRightDrag(e, sq);
-                  else if (piece) onPointerDownPiece(e, sq);
-                }}
+                onPointerDown={(e) => handleSquarePointerDown(e, sq)}
                 className={classes}
                 style={{ cursor: piece && piece.color === myColor && !disabled ? "grab" : "default" }}
                 role="gridcell"
@@ -540,6 +685,7 @@ export function Board({
                 ) : piece ? (
                   <div
                     className={"pointer-events-none " + (isDragging ? "opacity-30" : "")}
+                    data-anim-piece={animsRef.current.has(sq) ? sq : undefined}
                     style={{ width: "var(--piece-fit, 88%)", height: "var(--piece-fit, 88%)" }}
                   >
                     <Piece type={piece.type} color={piece.color} size="100%" />
