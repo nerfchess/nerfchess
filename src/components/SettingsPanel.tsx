@@ -15,7 +15,8 @@ import {
   saveSettings,
   Settings,
 } from "@/lib/settings";
-import { setUiSounds, setVolume } from "@/lib/sounds";
+import { configureSoundPrefs, setUiSounds, setVolume } from "@/lib/sounds";
+import Link from "next/link";
 import { Piece } from "@/components/Pieces";
 import { SECTIONS, type Control } from "@/components/settings/config";
 import { SettingRow } from "@/components/settings/SettingRow";
@@ -57,6 +58,13 @@ export function SettingsPanel({ open, onClose }: Props) {
       saveSettings(merged);
       if (patch.volume != null) setVolume(merged.volume);
       if (patch.uiSounds != null) setUiSounds(merged.uiSounds);
+      configureSoundPrefs({
+        enabled: merged.soundEnabled,
+        move: merged.moveSound,
+        capture: merged.captureSound,
+        check: merged.checkSound,
+        gameEnd: merged.gameEndSound,
+      });
       return merged;
     });
   };
@@ -92,6 +100,17 @@ export function SettingsPanel({ open, onClose }: Props) {
             onChange={(v) => update({ animationSpeed: v })}
           />
         );
+      case "siteTheme":
+        return (
+          <Select
+            label={label}
+            value={settings.siteTheme}
+            options={control.options}
+            onChange={(v) => update({ siteTheme: v })}
+          />
+        );
+      case "account":
+        return <AccountSettings />;
       case "accentColor":
         return (
           <Swatches
@@ -124,7 +143,7 @@ export function SettingsPanel({ open, onClose }: Props) {
 
   // Pickers span a full row; simple controls sit inline on the right.
   const isStacked = (control: Control) =>
-    control.kind === "boardTheme" || control.kind === "pieceTheme";
+    control.kind === "boardTheme" || control.kind === "pieceTheme" || control.kind === "account";
 
   const activeSection = SECTIONS.find((s) => s.id === activeTab) ?? SECTIONS[0];
 
@@ -292,6 +311,48 @@ function PieceThemePicker({
           </button>
         );
       })}
+    </div>
+  );
+}
+
+/** Account section: live actions where the platform supports them today,
+ *  clearly-labelled placeholders for the rest so the section is ready to grow. */
+function AccountSettings() {
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between gap-3 rounded border border-white/10 bg-white/[0.02] p-2.5">
+        <div>
+          <div className="text-[13px] font-medium text-parchment">Profile</div>
+          <p className="text-[11px] text-parchment-500">Avatar, bio, and game history</p>
+        </div>
+        <Link href="/profile" className="btn-ghost rounded px-3 py-1.5 text-[12px] font-display">
+          Edit profile
+        </Link>
+      </div>
+      {[
+        { label: "Change username", hint: "Not available yet" },
+        { label: "Change password", hint: "Not available yet" },
+        { label: "Email preferences", hint: "Coming soon" },
+        { label: "Log out of all devices", hint: "Coming soon" },
+      ].map((item) => (
+        <div
+          key={item.label}
+          className="flex items-center justify-between gap-3 rounded border border-white/5 bg-white/[0.01] p-2.5 opacity-60"
+        >
+          <div className="text-[13px] font-medium text-parchment-300">{item.label}</div>
+          <span className="shrink-0 border border-white/10 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-parchment-500">
+            {item.hint}
+          </span>
+        </div>
+      ))}
+      <form action="/api/auth/logout" method="post">
+        <button
+          type="submit"
+          className="w-full rounded border border-oxblood/40 bg-oxblood/10 px-3 py-2 text-[12px] font-display font-semibold text-oxblood-glow transition hover:bg-oxblood/20"
+        >
+          Log out
+        </button>
+      </form>
     </div>
   );
 }

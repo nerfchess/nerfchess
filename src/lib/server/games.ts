@@ -5,6 +5,7 @@
 // only apply to rated games where both seats belong to accounts.
 
 import { glickoUpdatePair, GlickoRating } from "../glicko";
+import { categoryForTimeControl, type SpeedCategory } from "../speed";
 
 export interface FinishedGameRecord {
   id: string;
@@ -26,10 +27,51 @@ export interface FinishedGameRecord {
 }
 
 interface UserRatingRow {
-  id: string;
+  user_id: string;
   rating: number;
   rd: number;
   vol: number;
+  games: number;
+}
+
+// Every rated bucket is stored in user_ratings, one row per (user, category).
+// A user's first contact with a category seeds it from their legacy shared
+// rating (users.rating), which is how pre-split accounts migrate: the old
+// value becomes the starting point of every bucket, then each bucket moves
+// independently.
+export async function seedCategoryRatings(db: D1Database, userIds: string[], category: SpeedCategory) {
+  const placeholders = userIds.map(() => "?").join(",");
+  await db
+    .prepare(
+      `INSERT OR IGNORE INTO user_ratings (user_id, category, rating, rd, vol, peak)
+       SELECT id, ?, rating, rd, vol, rating FROM users WHERE id IN (${placeholders})`,
+    )
+    .bind(category, ...userIds)
+    .run();
+}
+
+export type CategoryRating = GlickoRating & { games: number };
+
+/** Load (seeding on first use) the given users' ratings for one category. */
+export async function loadCategoryRatings(
+  db: D1Database,
+  userIds: string[],
+  category: SpeedCategory,
+): Promise<Map<string, CategoryRating>> {
+  const out = new Map<string, CategoryRating>();
+  if (!userIds.length) return out;
+  await seedCategoryRatings(db, userIds, category);
+  const placeholders = userIds.map(() => "?").join(",");
+  const rows = await db
+    .prepare(
+      `SELECT user_id, rating, rd, vol, games FROM user_ratings WHERE category = ? AND user_id IN (${placeholders})`,
+    )
+    .bind(category, ...userIds)
+    .all<UserRatingRow>();
+  for (const row of rows.results) {
+    out.set(row.user_id, { rating: row.rating, rd: row.rd, vol: row.vol, games: row.games });
+  }
+  return out;
 }
 
 export interface RatingChange {
@@ -50,14 +92,14 @@ export async function recordFinishedGame(
   let blackBefore: GlickoRating | null = null;
 
   const rated = game.rated && !!game.whiteUserId && !!game.blackUserId && game.winner !== null;
+  // Which independent rating bucket this game counts toward. Only that
+  // bucket's rating moves; the other time controls are untouched.
+  const category = categoryForTimeControl(game.timeSec, game.incrementSec);
 
   if (rated) {
-    const rows = await db
-      .prepare("SELECT id, rating, rd, vol FROM users WHERE id IN (?, ?)")
-      .bind(game.whiteUserId, game.blackUserId)
-      .all<UserRatingRow>();
-    const white = rows.results.find((r) => r.id === game.whiteUserId);
-    const black = rows.results.find((r) => r.id === game.blackUserId);
+    const ratings = await loadCategoryRatings(db, [game.whiteUserId!, game.blackUserId!], category);
+    const white = ratings.get(game.whiteUserId!);
+    const black = ratings.get(game.blackUserId!);
     if (white && black) {
       whiteBefore = { rating: white.rating, rd: white.rd, vol: white.vol };
       blackBefore = { rating: black.rating, rd: black.rd, vol: black.vol };
@@ -65,8 +107,8 @@ export async function recordFinishedGame(
       const updated = glickoUpdatePair(whiteBefore, blackBefore, scoreForWhite);
       whiteAfter = updated.a;
       blackAfter = updated.b;
-      whiteChange = { userId: white.id, before: whiteBefore.rating, after: whiteAfter.rating };
-      blackChange = { userId: black.id, before: blackBefore.rating, after: blackAfter.rating };
+      whiteChange = { userId: game.whiteUserId!, before: whiteBefore.rating, after: whiteAfter.rating };
+      blackChange = { userId: game.blackUserId!, before: blackBefore.rating, after: blackAfter.rating };
     }
   }
 
@@ -76,10 +118,10 @@ export async function recordFinishedGame(
         `INSERT OR IGNORE INTO games (
           id, white_user_id, black_user_id, white_name, black_name,
           white_nerf_id, black_nerf_id, seed, time_sec, increment_sec,
-          moves, winner, reason, rated,
+          moves, winner, reason, rated, category,
           white_rating_before, white_rating_after, black_rating_before, black_rating_after,
           started_at, completed_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .bind(
         game.id,
@@ -96,6 +138,7 @@ export async function recordFinishedGame(
         game.winner,
         game.reason,
         rated ? 1 : 0,
+        category,
         whiteBefore?.rating ?? null,
         whiteAfter?.rating ?? null,
         blackBefore?.rating ?? null,
@@ -109,17 +152,32 @@ export async function recordFinishedGame(
     const winCol = (won: boolean, drew: boolean) =>
       drew ? "draws = draws + 1" : won ? "wins = wins + 1" : "losses = losses + 1";
     const drew = game.winner === "draw";
+    // The category bucket is the rating's single source of truth: only this
+    // time control's rating moves.
     statements.push(
       db
         .prepare(
-          `UPDATE users SET rating = ?, rd = ?, vol = ?, games = games + 1, ${winCol(game.winner === "w", drew)} WHERE id = ?`,
+          `UPDATE user_ratings SET rating = ?, rd = ?, vol = ?, games = games + 1, peak = MAX(peak, ?),
+             ${winCol(game.winner === "w", drew)}
+           WHERE user_id = ? AND category = ?`,
         )
-        .bind(whiteAfter.rating, whiteAfter.rd, whiteAfter.vol, game.whiteUserId),
+        .bind(whiteAfter.rating, whiteAfter.rd, whiteAfter.vol, whiteAfter.rating, game.whiteUserId, category),
       db
         .prepare(
-          `UPDATE users SET rating = ?, rd = ?, vol = ?, games = games + 1, ${winCol(game.winner === "b", drew)} WHERE id = ?`,
+          `UPDATE user_ratings SET rating = ?, rd = ?, vol = ?, games = games + 1, peak = MAX(peak, ?),
+             ${winCol(game.winner === "b", drew)}
+           WHERE user_id = ? AND category = ?`,
         )
-        .bind(blackAfter.rating, blackAfter.rd, blackAfter.vol, game.blackUserId),
+        .bind(blackAfter.rating, blackAfter.rd, blackAfter.vol, blackAfter.rating, game.blackUserId, category),
+      // Aggregate account counters (total rated games / results) still live on
+      // the users row for profiles and the guest-visibility filter; the shared
+      // users.rating column is legacy and no longer written.
+      db
+        .prepare(`UPDATE users SET games = games + 1, ${winCol(game.winner === "w", drew)} WHERE id = ?`)
+        .bind(game.whiteUserId),
+      db
+        .prepare(`UPDATE users SET games = games + 1, ${winCol(game.winner === "b", drew)} WHERE id = ?`)
+        .bind(game.blackUserId),
     );
   }
 

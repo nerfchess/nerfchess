@@ -24,18 +24,19 @@ import {
 } from "@/engine/game";
 import { makeSeed } from "@/engine/rng";
 import { BoardState, Color, Move } from "@/engine/types";
-import { cloneBoard, isInCheck, makeMove, moveToUCI } from "@/engine/board";
+import { cloneBoard, findKing, isInCheck, makeMove, moveToUCI } from "@/engine/board";
 import { computeMoveRisks } from "@/engine/moveSafety";
 import { loadSettings } from "@/lib/settings";
 import type { QueuedPremove } from "@/components/Board";
 import { buildCustomNerf, CustomNerf } from "@/engine/nerfs/custom";
 import { isMuted, playCapture, playCheck, playNerf, playMove as playMoveSfx, setMuted } from "@/lib/sounds";
 import { nerfSummary, outcomeFor, recordCompletedGame } from "@/lib/gameHistory";
-import { applyResult, loadRating, saveRating } from "@/lib/rating";
+import { applyResult, loadRatingFor, saveRatingFor } from "@/lib/rating";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { loadSavedAiGame, restoreSavedAiGame, saveAiGame, snapshotGame } from "@/lib/gamePersistence";
 import { boardAtPly } from "@/lib/gameReview";
 import { premoveOptionsFor } from "@/lib/premoves";
+import { categoryForTimeControl } from "@/lib/ratingCategories";
 import type { AIWorkerRequest, AIWorkerResponse } from "@/workers/aiWorker";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -96,6 +97,9 @@ function GamePage() {
     return Number.isFinite(inc) && inc > 0 ? inc * 1000 : 0;
   }, [params]);
   const clockEnabled = initialTimeMs > 0;
+  // Which independent rating bucket a rated result counts toward — derived
+  // from the chosen time control, exactly like online games.
+  const ratingCategory = categoryForTimeControl(initialTimeMs / 1000, incrementMs / 1000);
 
   const [myColor, setMyColor] = useState<Color>(() => {
     if (myColorParam === "w") return "w";
@@ -108,6 +112,9 @@ function GamePage() {
   const [muted, setMutedState] = useState(false);
   const [premoves, setPremoves] = useState<QueuedPremove[]>([]);
   const [confirmingResign, setConfirmingResign] = useState(false);
+  const [confirmingDraw, setConfirmingDraw] = useState(false);
+  // A move held for confirmation (Settings > Gameplay > Move confirmation).
+  const [confirmMovePending, setConfirmMovePending] = useState<Move | null>(null);
   const [showResult, setShowResult] = useState(true);
   const [drawOfferStatus, setDrawOfferStatus] = useState<"idle" | "offering" | "declined">("idle");
   const [whiteMs, setWhiteMs] = useState(initialTimeMs);
@@ -175,7 +182,8 @@ function GamePage() {
 
   useEffect(() => {
     setMutedState(isMuted());
-    setPlayerElo(loadRating().rating);
+    setPlayerElo(loadRatingFor(ratingCategory).rating);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -384,11 +392,11 @@ function GamePage() {
     // Casual games don't affect your rating.
     let change: { before: number; after: number } | null = null;
     if (rated) {
-      const before = loadRating();
+      const before = loadRatingFor(ratingCategory);
       const score: 0 | 0.5 | 1 =
         game.result.winner === "draw" ? 0.5 : game.result.winner === myColor ? 1 : 0;
       const after = applyResult(before, difficulty, score);
-      saveRating(after);
+      saveRatingFor(ratingCategory, after, score === 1 ? "win" : score === 0 ? "loss" : "draw");
       setPlayerElo(after.rating);
       change = { before: before.rating, after: after.rating };
       setRatingChange(change);
@@ -413,7 +421,7 @@ function GamePage() {
     // Bot games never touch the game server, so tell the site counter about
     // this one; the home "games played" stat includes bot games.
     fetch("/api/games/bot", { method: "POST" }).catch(() => {});
-  }, [game, myColor, difficulty, rated, initialTimeMs, incrementMs]);
+  }, [game, myColor, difficulty, rated, initialTimeMs, incrementMs, ratingCategory]);
 
   // Execute the head of the premove queue when our turn returns. If the head
   // is no longer playable (target ran away, piece pinned, friendly target
@@ -638,18 +646,28 @@ function GamePage() {
   // opted to keep it hidden entirely.
   const oppRevealed = !uiSettings.hideOpponentReveal && (oppPeek || !!game.result);
   const lastMove = game.board.history[game.board.history.length - 1] ?? null;
-  const boardForDisplay = reviewBoard ?? virtualBoard ?? game.board;
+  // A held move (confirmation setting) previews on the board before playing.
+  const confirmPreviewBoard = confirmMovePending
+    ? makeMove(cloneBoard(game.board), confirmMovePending)
+    : null;
+  const boardForDisplay = reviewBoard ?? confirmPreviewBoard ?? virtualBoard ?? game.board;
   const lastMoveForDisplay = isReviewingHistory
     ? game.board.history[currentHistoryPly - 1] ?? null
-    : lastMove;
+    : confirmMovePending ?? lastMove;
+  const orientation: Color = uiSettings.flipBoard ? (myColor === "w" ? "b" : "w") : myColor;
+  const checkedBoard = reviewBoard ?? game.board;
+  const checkSquare =
+    uiSettings.checkHighlight && isInCheck(checkedBoard, checkedBoard.turn)
+      ? findKing(checkedBoard, checkedBoard.turn)
+      : null;
   const hint = currentHint(game, myColor);
   const forcedSquares = hint?.squares ?? [];
   const railHeightStyle = boardHeight
     ? ({ "--board-height": `${boardHeight}px` } as CSSProperties)
     : undefined;
   const boardFitClass = hint
-    ? "w-[min(92vw,720px,calc(100dvh-11rem))] max-w-full"
-    : "w-[min(92vw,720px,calc(100dvh-8rem))] max-w-full";
+    ? "w-[min(92vw,var(--board-cap,720px),calc(100dvh-11rem))] max-w-full"
+    : "w-[min(92vw,var(--board-cap,720px),calc(100dvh-8rem))] max-w-full";
 
   const handleMove = (m: Move) => {
     if (game.result || isReviewingHistory) return;
@@ -663,9 +681,24 @@ function GamePage() {
       ]);
       return;
     }
+    if (uiSettings.confirmMove) {
+      // Hold the move for an explicit confirm tap; the board previews it.
+      setConfirmMovePending(m);
+      return;
+    }
+    playHeldMove(m);
+  };
+
+  const playHeldMove = (m: Move) => {
     commitClock(myColor);
     const next = playMove(game, m);
     setGame({ ...next });
+  };
+
+  const confirmHeldMove = () => {
+    const held = confirmMovePending;
+    setConfirmMovePending(null);
+    if (held) playHeldMove(held);
   };
 
   const cancelPremove = () => setPremoves([]);
@@ -687,6 +720,11 @@ function GamePage() {
 
   const onOfferDraw = () => {
     if (game.result || drawOfferStatus !== "idle") return;
+    if (uiSettings.confirmDrawOffer && !confirmingDraw) {
+      setConfirmingDraw(true);
+      return;
+    }
+    setConfirmingDraw(false);
     setDrawOfferStatus("offering");
     // Simple AI policy: accept if its material isn't ahead. Otherwise decline.
     const vals: Record<string, number> = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
@@ -718,7 +756,43 @@ function GamePage() {
     setMutedState(next);
   };
 
-  const historyActions = game.result ? null : confirmingResign ? (
+  const historyActions = game.result ? null : confirmMovePending ? (
+    <div className="space-y-2">
+      <div className="smallcaps text-[10px] text-parchment-300">Play this move?</div>
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          onClick={confirmHeldMove}
+          className="min-w-0 px-3 py-2 border border-gold/40 bg-gold/10 text-gold-leaf hover:bg-gold/20 hover:border-gold/70 transition text-xs font-display font-semibold tracking-wide"
+        >
+          Confirm
+        </button>
+        <button
+          onClick={() => setConfirmMovePending(null)}
+          className="min-w-0 px-3 py-2 btn-ghost text-xs font-display tracking-wide"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  ) : confirmingDraw ? (
+    <div className="space-y-2">
+      <div className="smallcaps text-[10px] text-parchment-300">Offer a draw?</div>
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          onClick={onOfferDraw}
+          className="min-w-0 px-3 py-2 border border-gold/40 bg-gold/10 text-gold-leaf hover:bg-gold/20 hover:border-gold/70 transition text-xs font-display font-semibold tracking-wide"
+        >
+          Offer draw
+        </button>
+        <button
+          onClick={() => setConfirmingDraw(false)}
+          className="min-w-0 px-3 py-2 btn-ghost text-xs font-display tracking-wide"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  ) : confirmingResign ? (
     <div className="space-y-2">
       <div className="smallcaps text-[10px] text-parchment-300">Resign the game?</div>
       <div className="grid grid-cols-2 gap-2">
@@ -906,12 +980,12 @@ function GamePage() {
                       ? moves
                       : premoveOptions
                   }
-                  orientation={myColor}
+                  orientation={orientation}
                   onMove={handleMove}
                   myColor={myColor}
                   visual={isReviewingHistory ? undefined : { ...(visual ?? {}), highlightSquares: forcedSquares }}
                   lastMove={lastMoveForDisplay}
-                  disabled={!!game.result || premovePending || isReviewingHistory}
+                  disabled={!!game.result || premovePending || isReviewingHistory || !!confirmMovePending}
                   premoveMode={!isReviewingHistory && premoveMode}
                   premoves={isReviewingHistory ? [] : validPremoves}
                   onCancelPremove={cancelPremove}
@@ -920,6 +994,7 @@ function GamePage() {
                   showCoordinates={uiSettings.showCoordinates}
                   highlightLastMove={uiSettings.highlightLastMove}
                   showLegalMoves={uiSettings.showLegalMoves}
+                  checkSquare={isReviewingHistory ? null : checkSquare}
                 />
               </div>
               <div className="flex items-center justify-between gap-2 sm:hidden">

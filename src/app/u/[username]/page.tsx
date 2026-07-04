@@ -9,6 +9,7 @@ import { PlayerStatsPanel } from "@/components/PlayerStatsPanel";
 import { SiteHeader } from "@/components/SiteHeader";
 import type { PlayerStats } from "@/lib/playerStats";
 import { RatingChart, RatingPoint } from "@/components/RatingChart";
+import { RATING_CATEGORIES } from "@/lib/ratingCategories";
 
 interface ProfileUser {
   username: string;
@@ -40,9 +41,20 @@ interface ProfileGame {
   completed_at: number;
 }
 
+interface CategoryRatingRow {
+  rating: number;
+  rd: number;
+  games: number;
+  wins: number;
+  losses: number;
+  draws: number;
+  peak: number;
+}
+
 interface ProfileData {
   user: ProfileUser;
   games: ProfileGame[];
+  ratings?: Record<string, CategoryRatingRow>;
   ratingHistory: RatingPoint[];
 }
 
@@ -166,18 +178,42 @@ export default function ProfilePage() {
               }
             />
 
+            {/* One independent rating per time control, Lichess-style. */}
             <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-2">
-              <StatCard
-                label="Rating"
-                value={`${profile.user.rating.toFixed(1)}${profile.user.rd > 150 ? "?" : ""}`}
-                accent
-              />
+              {RATING_CATEGORIES.map((c) => {
+                const r = profile.ratings?.[c.id];
+                const Icon = c.icon;
+                return (
+                  <div key={c.id} className="plate p-3">
+                    <div className="flex items-center gap-1.5 smallcaps text-[10px] text-parchment-400">
+                      <Icon className="h-3 w-3" style={{ color: c.accent }} strokeWidth={2.2} />
+                      {c.label}
+                    </div>
+                    <div className="mt-1 font-mono text-xl tabular-nums text-parchment-100">
+                      {r ? (
+                        <>
+                          {Math.round(r.rating)}
+                          {r.rd > 150 && <span className="text-parchment-400">?</span>}
+                        </>
+                      ) : (
+                        <span className="text-parchment-500">—</span>
+                      )}
+                    </div>
+                    <div className="mt-0.5 font-mono text-[10px] text-parchment-400">
+                      {r ? `${r.games} games · peak ${Math.round(r.peak)}` : "no rated games"}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-2">
               <StatCard label="Rated games" value={profile.user.games.toString()} />
               <StatCard
                 label="Record"
                 value={`${profile.user.wins}-${profile.user.losses}-${profile.user.draws}`}
               />
-              <StatCard label="Deviation" value={`±${Math.round(profile.user.rd)}`} />
+              <StatCard label="Member since" value={new Date(profile.user.createdAt).toLocaleDateString()} />
             </div>
 
             {profile.ratingHistory.length >= 2 && (

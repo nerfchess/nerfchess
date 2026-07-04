@@ -53,6 +53,9 @@ interface Props {
   // Dots/rings on the squares a selected piece can move to (Settings). Moves
   // stay playable when off; only the hints are hidden.
   showLegalMoves?: boolean;
+  // The checked king's square, tinted red when the check-highlight setting is
+  // on (pages pass null/undefined when disabled or not in check).
+  checkSquare?: Square | null;
 }
 
 function riskOf(moves: Move[], moveRisks: Map<string, MoveRisk> | undefined): MoveRisk {
@@ -160,6 +163,7 @@ export function Board({
   showCoordinates = true,
   highlightLastMove = true,
   showLegalMoves = true,
+  checkSquare = null,
 }: Props) {
   const premoveSquares = useMemo(() => {
     const s = new Set<Square>();
@@ -498,6 +502,7 @@ export function Board({
               isLight ? "sq-light" : "sq-dark",
               isSelected ? "sq-sel" : "",
               highlightLastMove && (lastFrom || lastTo) ? "sq-last" : "",
+              checkSquare === sq ? "sq-check" : "",
               isHover && (isTarget || isCastleHint) ? "sq-hover" : "",
             ].join(" ");
 
@@ -534,7 +539,8 @@ export function Board({
                   <div className="absolute inset-0 bg-gradient-to-br from-stone-700/85 to-stone-900/95 backdrop-blur-sm pointer-events-none" />
                 ) : piece ? (
                   <div
-                    className={"w-[88%] h-[88%] pointer-events-none " + (isDragging ? "opacity-30" : "")}
+                    className={"pointer-events-none " + (isDragging ? "opacity-30" : "")}
+                    style={{ width: "var(--piece-fit, 88%)", height: "var(--piece-fit, 88%)" }}
                   >
                     <Piece type={piece.type} color={piece.color} size="100%" />
                   </div>
