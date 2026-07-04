@@ -9,7 +9,7 @@ import {
   pullSettingsFromServer,
   SETTINGS_CHANGED_EVENT,
 } from "@/lib/settings";
-import { configureSoundPrefs, setUiSounds, setVolume } from "@/lib/sounds";
+import { configureSoundPrefs, preloadSounds, setUiSounds, setVolume } from "@/lib/sounds";
 
 export function SettingsBootstrap() {
   const [fps, setFps] = useState(false);
@@ -28,7 +28,9 @@ export function SettingsBootstrap() {
         capture: s.captureSound,
         check: s.checkSound,
         gameEnd: s.gameEndSound,
+        theme: s.soundTheme,
       });
+      if (s.soundEnabled && s.soundTheme === "lichess") preloadSounds();
       setFps(s.fpsCounter);
     };
     apply();

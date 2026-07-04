@@ -38,7 +38,7 @@ import {
   saveOnlineSeat,
 } from "@/lib/multiplayer";
 import { premoveOptionsFor } from "@/lib/premoves";
-import { isMuted, playCapture, playCheck, playCountdownTick, playLowTime, playMove as playMoveSfx, playNerf, setMuted } from "@/lib/sounds";
+import { isMuted, playCapture, playCheck, playCountdownTick, playError, playLowTime, playMove as playMoveSfx, playNerf, setMuted } from "@/lib/sounds";
 
 // Mirrors the server's start-of-game grace: each side's first move gets this
 // many free milliseconds before their clock starts charging.
@@ -208,6 +208,15 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     (candidate.promotion ?? undefined) === (head.promotion ?? undefined) &&
     (!head.capture || !!candidate.captured);
 
+  // Immediate audio feedback for a move we just sent: the board already shows
+  // it optimistically, so the sound must not wait for the server ack either.
+  const playMoveSound = (move: Move, base: BoardState) => {
+    if (move.captured) playCapture();
+    else playMoveSfx();
+    const after = makeMove(cloneBoard(base), move);
+    if (isInCheck(after, after.turn)) setTimeout(playCheck, 80);
+  };
+
   // Fire the queued premove the instant it becomes our turn. No artificial
   // delay: the board already shows the premoved position, so the accepted
   // move landing is visually a no-op (Lichess-style).
@@ -230,7 +239,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
       setAwaitingPremoveAck(false);
       clearPremoves();
       setError("Disconnected from the game server.");
+      return;
     }
+    playMoveSound(move, snapshot.board);
   }
 
   // Server events. The server is authoritative: local moves are not applied
@@ -280,6 +291,14 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         const lm = legalMoves(g).find((x) => moveToUCI(x) === e.move.u);
         const wasAwaitingPremove = awaitingPremoveAckRef.current;
         const pendingPremove = pendingPremoveRef.current;
+        const pendingLocal = pendingLocalMoveRef.current;
+        // Our own optimistic sends already sounded at send time.
+        const alreadySounded =
+          (pendingLocal && pendingLocal.uci === e.move.u && e.move.ply === pendingLocal.ply + 1) ||
+          (wasAwaitingPremove &&
+            pendingPremove &&
+            pendingPremove.uci === e.move.u &&
+            e.move.ply === pendingPremove.ply + 1);
         if (!lm) {
           setPendingLocalMove(null);
           if (wasAwaitingPremove) {
@@ -309,9 +328,11 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
             clearPremoves();
           }
         }
-        if (lm.captured) playCapture();
-        else playMoveSfx();
-        if (isInCheck(next.board, next.board.turn)) setTimeout(playCheck, 80);
+        if (!alreadySounded) {
+          if (lm.captured) playCapture();
+          else playMoveSfx();
+          if (isInCheck(next.board, next.board.turn)) setTimeout(playCheck, 80);
+        }
         // Our turn again (opponent moved, or our premove landed and the next
         // queued one already applies): fire the queued premove immediately.
         if (next.board.turn === myColor) queuePremoveSend(next);
@@ -585,6 +606,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
       return;
     }
     setPendingLocalMove({ uci, ply, move: lm });
+    playMoveSound(lm, game.board);
   };
 
   const confirmHeldMove = () => {
@@ -606,6 +628,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
       setAwaitingPremoveAck(false);
       setPendingLocalMove(null);
       clearPremoves();
+      playError();
       setError("The premove did not reach the game server. Try the move again.");
     }, 5000);
     return () => window.clearTimeout(id);
@@ -616,6 +639,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     if (!pendingLocalMove) return;
     const id = window.setTimeout(() => {
       setPendingLocalMove(null);
+      playError();
       setError("The move did not reach the game server. Try the move again.");
     }, 5000);
     return () => window.clearTimeout(id);

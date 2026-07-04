@@ -13,7 +13,7 @@ import {
   Volume2,
   type LucideIcon,
 } from "lucide-react";
-import type { AnimationSpeed, Settings, SiteTheme } from "@/lib/settings";
+import type { AnimationSpeed, Settings, SiteTheme, SoundTheme } from "@/lib/settings";
 
 // Setting keys that hold a boolean (valid targets for a live toggle) and those
 // that hold a number (valid targets for a live slider), derived from the model
@@ -26,6 +26,7 @@ export type Control =
   | { kind: "slider"; setting: NumKey; min: number; max: number; step: number; format?: (v: number) => string }
   | { kind: "animationSpeed"; options: Array<{ value: AnimationSpeed; label: string }> }
   | { kind: "siteTheme"; options: Array<{ value: SiteTheme; label: string }> }
+  | { kind: "soundTheme"; options: Array<{ value: SoundTheme; label: string }> }
   | { kind: "accentColor" }
   | { kind: "boardTheme" }
   | { kind: "pieceTheme" }
@@ -187,6 +188,18 @@ export const SECTIONS: SectionConfig[] = [
         id: "volume",
         label: "Volume",
         control: { kind: "slider", setting: "volume", min: 0, max: 1, step: 0.05, format: pct },
+      },
+      {
+        id: "soundTheme",
+        label: "Sound set",
+        hint: "Lichess standard sounds, or the classic synth clicks",
+        control: {
+          kind: "soundTheme",
+          options: [
+            { value: "lichess", label: "Lichess" },
+            { value: "classic", label: "Classic" },
+          ],
+        },
       },
       {
         id: "moveSound",
