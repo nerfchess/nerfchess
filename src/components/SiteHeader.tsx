@@ -41,8 +41,15 @@ const PLAY_MENU_LINKS = [
   { href: "/tournaments", label: "Arena tournaments" },
 ];
 
+const WATCH_MENU_LINKS = [
+  { href: "/tv", label: "Nerf TV" },
+  { href: "/analysis", label: "Analysis board" },
+];
+
 const NAV_LINKS: NavLink[] = [
   { href: "/lobby", label: "Play", menu: PLAY_MENU_LINKS },
+  { href: "/puzzles", label: "Puzzles" },
+  { href: "/tv", label: "Watch", menu: WATCH_MENU_LINKS },
   { href: "/leaderboard", label: "Leaderboard" },
   { href: "/clubs", label: "Clubs" },
   { href: "/tournaments", label: "Tournaments" },

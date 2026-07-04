@@ -279,6 +279,59 @@ export function pickAIMove(game: NerfGame, level: AILevel, overrideBudgetMs?: nu
   return bestMove ?? moves[0];
 }
 
+export interface BoardAnalysis {
+  /** Best move found, or null if the side to move has no moves. */
+  move: Move | null;
+  /** Score in centipawns from the side to move's perspective. */
+  scoreCp: number;
+  /** Deepest fully-searched depth. */
+  depth: number;
+}
+
+// Plain-chess analysis for the analysis board: same iterative-deepening
+// negamax as the hard bot, but over a bare BoardState (no nerfs) and
+// returning the score alongside the move so callers can drive an eval bar.
+export function analyzeBoard(board: BoardState, budgetMs = 300, maxDepth = 10): BoardAnalysis {
+  const moves = generateMoves(board);
+  const me = board.turn;
+  if (!moves.length) return { move: null, scoreCp: 0, depth: 0 };
+
+  const opp: Color = me === "w" ? "b" : "w";
+  const start = Date.now();
+  const state = newSearchState(true);
+  let bestMove: Move | null = null;
+  let bestScore = 0;
+  let completed = 0;
+
+  for (let d = 1; d <= maxDepth; d++) {
+    let depthBest: Move | null = null;
+    let depthBestScore = -Infinity;
+    let alpha = -Infinity;
+    let timedOut = false;
+    for (const m of orderMoves(moves, bestMove, state, 0)) {
+      const nb = makeMove(board, m);
+      const score = -negamax(nb, d - 1, -Infinity, -alpha, opp, start, budgetMs, state, 1);
+      if (Number.isNaN(score)) {
+        timedOut = true;
+        break;
+      }
+      if (score > depthBestScore) {
+        depthBestScore = score;
+        depthBest = m;
+      }
+      if (score > alpha) alpha = score;
+    }
+    if (!timedOut && depthBest) {
+      bestMove = depthBest;
+      bestScore = depthBestScore;
+      completed = d;
+    }
+    if (Date.now() - start > budgetMs) break;
+  }
+
+  return { move: bestMove ?? moves[0], scoreCp: bestScore, depth: completed };
+}
+
 // NaN survives negation unchanged, so a timed-out subtree is detectable at
 // every level of the negamax recursion with a single isNaN check.
 const TIMEOUT_SENTINEL = Number.NaN;
