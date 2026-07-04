@@ -186,6 +186,7 @@ export function makeBuffApi(game: NerfGame, me: Color): BuffApi {
     theirs: bs.players[opp],
     rng: slot.rng,
     capturedFromMe: game.captured[opp],
+    capturedByMe: game.captured[me],
     place: (sq, type, color) => {
       bs.historyDiverged = true;
       game.board.pieces[sq] = { type, color };
@@ -626,7 +627,7 @@ function aiCollectPicks(
   const opp: Color = color === "w" ? "b" : "w";
   const picks: BuffPick[] = [];
   let value = 0;
-  for (let step = 0; step < 8; step++) {
+  for (let step = 0; step < 16; step++) {
     const target = buffNextTarget(game, color, buffIndex, picks);
     if (!target) return { picks, value };
     if (target.kind === "square") {

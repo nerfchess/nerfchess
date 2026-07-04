@@ -1,29 +1,40 @@
+import { isInCheck } from "../board";
 import { Buff, BuffApi, BuffCategory, BuffInstance, BuffPick } from "../buff";
 import { Tier } from "../nerf";
-import { Color, FILE, Move, PieceType, RANK, SQ, Square, inBoard } from "../types";
+import { BoardState, Color, FILE, Move, PieceType, RANK, SQ, Square, inBoard } from "../types";
 import {
   ALL_DIRS,
   DIAG_DIRS,
   KNIGHT_LEAPS,
   ORTHO_DIRS,
   activated,
+  activatedSimple,
   addEffect,
   addNovel,
   augment,
   barLine,
+  bindCandidates,
+  bindPiece,
+  captureExplosion,
+  captureSquare,
   emptySquares,
+  explodeAt,
   extraMovesNow,
   freezeAllEnemies,
   freezeTarget,
   inHalf,
   instant,
   leapMoves,
+  lineSweep,
   markRevived,
   mySquares,
+  oppFilter,
   permanentAugment,
+  phasingSlideMoves,
   pieceBound,
   placePieces,
   relRank,
+  relocateMany,
   removeEnemies,
   reviveOne,
   revivable,
@@ -33,7 +44,12 @@ import {
   slideMoves,
   stealBuffs,
   teleportMoves,
+  tickTurns,
   timedAugment,
+  timedOppFilter,
+  trackBoundPiece,
+  turnsLeft,
+  voidSquares,
 } from "./helpers";
 
 // ---------------------------------------------------------------------------
@@ -186,27 +202,34 @@ function revivePawnsToStart(n: number): Mech {
   });
 }
 
-/** Activated: pick two of my pieces and swap their positions. */
-function swapOwnPieces(types?: PieceType[]): Mech {
+/** Activated: pick `pairs` pairs of my pieces and swap each pair. */
+function swapOwnPieces(types?: PieceType[], pairs = 1): Mech {
   const candidates = (api: BuffApi) =>
     mySquares(api.board, api.me).filter(
       (sq) => !types || types.includes(api.board.pieces[sq]!.type),
     );
   return activated(
     (_inst, api, picks) =>
-      picks.length >= 2
+      picks.length >= pairs * 2
         ? null
         : {
             kind: "square",
-            label: picks.length === 0 ? "Choose the first piece" : "Choose the piece to swap with",
+            label:
+              picks.length % 2 === 0
+                ? pairs > 1
+                  ? `Choose a piece to swap (pair ${Math.floor(picks.length / 2) + 1}/${pairs})`
+                  : "Choose the first piece"
+                : "Choose the piece to swap with",
             squares: candidates(api).filter((sq) => !picks.some((k) => k.square === sq)),
           },
     (_inst, api, picks) => {
-      const a = picks[0]?.square, b = picks[1]?.square;
-      if (a == null || b == null) return;
-      const pa = api.board.pieces[a];
-      api.board.pieces[a] = api.board.pieces[b];
-      api.board.pieces[b] = pa;
+      for (let i = 0; i + 1 < picks.length; i += 2) {
+        const a = picks[i]?.square, b = picks[i + 1]?.square;
+        if (a == null || b == null) continue;
+        const pa = api.board.pieces[a];
+        api.board.pieces[a] = api.board.pieces[b];
+        api.board.pieces[b] = pa;
+      }
     },
   );
 }
@@ -271,7 +294,12 @@ function severBuffs(n: number): Mech {
 function onlinePermanent(b: BuffInstance): boolean {
   const d = BUFF_BY_ID[b.id];
   if (!d) return false;
-  if (d.kind === "activated") return d.spendOnUse === false && b.state.sq != null;
+  if (d.kind === "activated") {
+    return (
+      d.spendOnUse === false &&
+      (b.state.sq != null || b.state.sqs != null || b.state.squares != null)
+    );
+  }
   if (d.kind === "passive") return b.state.turns == null && b.state.charges == null;
   return false;
 }
@@ -283,6 +311,67 @@ function broadNullify(api: BuffApi) {
     if (!b.spent && !b.nullified && !onlinePermanent(b)) b.nullified = true;
   }
 }
+
+/** Chebyshev adjacency (king-step distance 1). */
+function adjacent(a: Square, b: Square): boolean {
+  return a !== b && Math.abs(FILE(a) - FILE(b)) <= 1 && Math.abs(RANK(a) - RANK(b)) <= 1;
+}
+
+/** Amazon movement: queen slides plus knight leaps. */
+function amazonGen(board: BoardState, sq: Square, via: string): Move[] {
+  return [...slideMoves(board, sq, ALL_DIRS, via), ...leapMoves(board, sq, KNIGHT_LEAPS, via)];
+}
+
+/** Push a buff pawn move, expanding promotions on the last rank. */
+function pushPawnMoves(out: Move[], api: BuffApi, from: Square, to: Square, via: string) {
+  if (relRank(api.me, to) === 8) {
+    for (const promo of ["q", "r", "b", "n"] as PieceType[]) {
+      out.push({ ...pawnMove(api, from, to, via), promotion: promo });
+    }
+  } else {
+    out.push(pawnMove(api, from, to, via));
+  }
+}
+
+/** The 16 starting squares for `me`, paired with the piece type each holds. */
+function homeSquares(me: Color): [Square, PieceType][] {
+  const hr = me === "w" ? 0 : 7;
+  const pr = me === "w" ? 1 : 6;
+  const back: PieceType[] = ["r", "n", "b", "q", "k", "b", "n", "r"];
+  return [
+    ...back.map((t, f) => [SQ(f, hr), t] as [Square, PieceType]),
+    ...Array.from({ length: 8 }, (_, f) => [SQ(f, pr), "p"] as [Square, PieceType]),
+  ];
+}
+
+/** Move my strays back onto free starting squares of their own type. */
+function reformArmy(api: BuffApi) {
+  const homes = homeSquares(api.me);
+  const settled = new Set<Square>();
+  for (const [hsq, t] of homes) {
+    const p = api.board.pieces[hsq];
+    if (p && p.color === api.me && p.type === t) settled.add(hsq);
+  }
+  for (const [hsq, t] of homes) {
+    if (settled.has(hsq) || api.board.pieces[hsq]) continue;
+    const src = mySquares(api.board, api.me, t).find((sq) => !settled.has(sq));
+    if (src == null) continue;
+    api.relocate(src, hsq);
+    settled.add(hsq);
+  }
+}
+
+// Destination zones for relocateMany.
+const stepDest = (_api: BuffApi, from: Square) =>
+  ALL_DIRS.flatMap(([df, dr]) => {
+    const f = FILE(from) + df, r = RANK(from) + dr;
+    return inBoard(f, r) ? [SQ(f, r)] : [];
+  });
+const anyDest = () => Array.from({ length: 64 }, (_, i) => i);
+const backRankDest = (api: BuffApi) => {
+  const r = api.me === "w" ? 0 : 7;
+  return Array.from({ length: 8 }, (_, f) => SQ(f, r));
+};
 
 const anyHalfZone = (api: BuffApi) => (sq: Square) => inHalf(api.me, sq);
 const backRankZone = (api: BuffApi) => (sq: Square) =>
@@ -377,7 +466,18 @@ const TIER1: Buff[] = [
     ),
   ),
   def({ id: "scout", name: "Scout", description: "Reveal one random buff your opponent holds.", tier: 1, category: "info" }),
-  def({ id: "steady_hand", name: "Steady Hand", description: "Cannot be checked by a knight for 3 turns.", tier: 1, category: "protection" }),
+  def(
+    { id: "steady_hand", name: "Steady Hand", description: "Enemy knights cannot move to squares that attack your king for 3 turns.", tier: 1, category: "protection" },
+    timedOppFilter(3, (moves, _inst, api) => {
+      const k = mySquares(api.board, api.me, "k")[0];
+      if (k == null) return moves;
+      return moves.filter(
+        (m) =>
+          m.piece !== "n" ||
+          Math.abs(FILE(m.to) - FILE(k)) * Math.abs(RANK(m.to) - RANK(k)) !== 2,
+      );
+    }),
+  ),
   def(
     { id: "escape_hatch", name: "Escape Hatch", description: "Your king swaps places with one of its own pawns, once.", tier: 1, category: "movement" },
     activated(
@@ -456,7 +556,20 @@ const TIER1: Buff[] = [
       mySquares(api.board, api.me, "r").flatMap((sq) => slideMoves(api.board, sq, DIAG_DIRS, inst.id, 1)),
     ),
   ),
-  def({ id: "sentinel_pawn", name: "Sentinel Pawn", description: "One pawn gives check diagonally at two squares' range, once.", tier: 1, category: "attack" }),
+  def(
+    { id: "sentinel_pawn", name: "Sentinel Pawn", description: "One pawn may capture an enemy piece two squares diagonally ahead, once.", tier: 1, category: "attack" },
+    augment((_m, inst, api) =>
+      mySquares(api.board, api.me, "p").flatMap((sq) =>
+        [-2, 2].flatMap((df) => {
+          const f = FILE(sq) + df, r = RANK(sq) + (api.me === "w" ? 2 : -2);
+          if (!inBoard(f, r)) return [];
+          const to = SQ(f, r);
+          const t = api.board.pieces[to];
+          return t && t.color === api.opp ? [pawnMove(api, sq, to, inst.id)] : [];
+        }),
+      ),
+    ),
+  ),
   def(
     { id: "quick_glance", name: "Quick Glance", description: "See the tier of your opponent's next draft.", tier: 1, category: "info" },
     instant((_inst, api) => { api.mine.flags.seeOppTier = true; }),
@@ -483,8 +596,25 @@ const TIER1: Buff[] = [
       },
     ),
   ),
-  def({ id: "firm_footing", name: "Firm Footing", description: "One piece cannot be forced to move by a fork this turn.", tier: 1, category: "protection" }),
-  def({ id: "cornerstone", name: "Cornerstone", description: "One rook cannot be captured while on its starting square.", tier: 1, category: "protection" }),
+  def(
+    { id: "firm_footing", name: "Firm Footing", description: "One piece cannot be captured this turn.", tier: 1, category: "protection" },
+    shieldTarget(1),
+  ),
+  def(
+    { id: "cornerstone", name: "Cornerstone", description: "Your rooks cannot be captured while on their starting squares.", tier: 1, category: "protection" },
+    oppFilter((moves, _inst, api) => {
+      const hr = api.me === "w" ? 0 : 7;
+      const corners = [SQ(0, hr), SQ(7, hr)].filter((sq) => {
+        const p = api.board.pieces[sq];
+        return p?.type === "r" && p.color === api.me;
+      });
+      if (!corners.length) return moves;
+      return moves.filter((m) => {
+        const cap = captureSquare(m);
+        return cap == null || !corners.includes(cap);
+      });
+    }),
+  ),
   def(
     { id: "half_step", name: "Half Step", description: "One pawn moves diagonally forward without capturing, once.", tier: 1, category: "movement" },
     augment((_m, inst, api) =>
@@ -502,7 +632,10 @@ const TIER1: Buff[] = [
     { id: "prep", name: "Prep", description: "Your next buff draft shows three cards to pick from instead of two, once.", tier: 1, category: "draft" },
     instant((_inst, api) => { api.mine.flags.prepThree = true; }),
   ),
-  def({ id: "loose_pawn", name: "Loose Pawn", description: "One pawn ignores en passant for the rest of the game.", tier: 1, category: "protection" }),
+  def(
+    { id: "loose_pawn", name: "Loose Pawn", description: "Your pawns cannot be captured en passant, for the game.", tier: 1, category: "protection" },
+    oppFilter((moves) => moves.filter((m) => !m.isEnPassant)),
+  ),
   def(
     { id: "watchtower", name: "Watchtower", description: "Reveal your opponent's nerf choice if it was hidden.", tier: 1, category: "info" },
     instant((_inst, api) => { api.mine.oppNerfRevealed = true; }),
@@ -511,7 +644,16 @@ const TIER1: Buff[] = [
     { id: "steady_march", name: "Steady March", description: "Two pawns each advance one square immediately.", tier: 1, category: "movement" },
     advancePawns(2),
   ),
-  def({ id: "guarded_king", name: "Guarded King", description: "Your king cannot be checked from an adjacent diagonal for 2 turns.", tier: 1, category: "protection" }),
+  def(
+    { id: "guarded_king", name: "Guarded King", description: "Enemy pieces cannot move to the squares diagonally adjacent to your king for 2 turns.", tier: 1, category: "protection" },
+    timedOppFilter(2, (moves, _inst, api) => {
+      const k = mySquares(api.board, api.me, "k")[0];
+      if (k == null) return moves;
+      return moves.filter(
+        (m) => Math.abs(FILE(m.to) - FILE(k)) !== 1 || Math.abs(RANK(m.to) - RANK(k)) !== 1,
+      );
+    }),
+  ),
 ];
 
 // ---------------------------------------------------------------------------
@@ -539,7 +681,12 @@ const TIER2: Buff[] = [
     { id: "kings_guard", name: "King's Guard", description: "Place a pawn on any empty square adjacent to your king, once.", tier: 2, category: "pieces" },
     placePieces(["p"], kingAdjacentZone),
   ),
-  def({ id: "phase_rook", name: "Phase Rook", description: "One rook passes through exactly one friendly piece per move.", tier: 2, category: "movement" }),
+  def(
+    { id: "phase_rook", name: "Phase Rook", description: "One rook passes through exactly one friendly piece per move.", tier: 2, category: "movement" },
+    pieceBound("r", "Choose the rook", (board, sq, via) =>
+      phasingSlideMoves(board, sq, ORTHO_DIRS, via, 1),
+    ),
+  ),
   def(
     { id: "wall", name: "Wall", description: "Freeze one enemy piece for 2 of their turns.", tier: 2, category: "tempo" },
     freezeTarget(2),
@@ -582,7 +729,14 @@ const TIER2: Buff[] = [
       ),
     ),
   ),
-  def({ id: "shielded_advance", name: "Shielded Advance", description: "One pawn is uncapturable on the enemy half for 3 turns.", tier: 2, category: "protection" }),
+  def(
+    { id: "shielded_advance", name: "Shielded Advance", description: "One pawn is uncapturable on the enemy half for 3 turns.", tier: 2, category: "protection" },
+    bindPiece("Choose the pawn", bindCandidates(["p"]), {
+      turns: 3,
+      filterOpp: (moves, sq, api) =>
+        inHalf(api.opp, sq) ? moves.filter((m) => captureSquare(m) !== sq) : moves,
+    }),
+  ),
   def(
     { id: "reinforce", name: "Reinforce", description: "One of your pieces cannot be captured this turn and next.", tier: 2, category: "protection" },
     shieldTarget(2),
@@ -624,12 +778,87 @@ const TIER2: Buff[] = [
       },
     ),
   ),
-  def({ id: "trade_up", name: "Trade Up", description: "When you lose a minor piece, place a pawn on any empty square.", tier: 2, category: "pieces" }),
+  def(
+    { id: "trade_up", name: "Trade Up", description: "The next time you lose a minor piece, a new pawn appears in your half.", tier: 2, category: "pieces" },
+    {
+      kind: "passive",
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.opp || (move.captured !== "n" && move.captured !== "b")) return;
+        const spot = emptySquares(api.board, (sq) => inHalf(api.me, sq)).sort(
+          (a, b) => relRank(api.me, a) - relRank(api.me, b),
+        )[0];
+        if (spot != null) api.place(spot, "p", api.me);
+        inst.spent = true;
+      },
+      status: () => "waiting for a lost minor piece",
+    },
+  ),
   def({ id: "decoy", name: "Decoy", description: "A fake king must be checked before your real king can, for 3 turns.", tier: 2, category: "protection" }),
-  def({ id: "berolina_pawns", name: "Berolina Pawns", description: "Your pawns capture straight and move diagonally, for the game.", tier: 2, category: "movement" }),
-  def({ id: "fork_guard", name: "Fork Guard", description: "One knight is uncapturable the turn after it gives check.", tier: 2, category: "protection" }),
-  def({ id: "long_castle_anywhere", name: "Long Castle Anywhere", description: "Castle toward either rook regardless of what sits between.", tier: 2, category: "movement" }),
-  def({ id: "sidestep_king", name: "Sidestep King", description: "Your king ignores check from one enemy piece for 1 turn.", tier: 2, category: "protection" }),
+  def(
+    { id: "berolina_pawns", name: "Berolina Pawns", description: "Your pawns may also step diagonally forward to empty squares and capture straight ahead, for the game.", tier: 2, category: "movement" },
+    permanentAugment((_m, inst, api) => {
+      const out: Move[] = [];
+      for (const sq of mySquares(api.board, api.me, "p")) {
+        for (const df of [-1, 1]) {
+          const f = FILE(sq) + df, r = RANK(sq) + (api.me === "w" ? 1 : -1);
+          if (!inBoard(f, r)) continue;
+          const to = SQ(f, r);
+          if (!api.board.pieces[to]) pushPawnMoves(out, api, sq, to, inst.id);
+        }
+        const ahead = sq + fwdOf(api.me);
+        if (ahead >= 0 && ahead < 64) {
+          const t = api.board.pieces[ahead];
+          if (t && t.color === api.opp) pushPawnMoves(out, api, sq, ahead, inst.id);
+        }
+      }
+      return out;
+    }),
+  ),
+  def(
+    { id: "fork_guard", name: "Fork Guard", description: "Whenever one of your knights gives check, it cannot be captured on the reply turn.", tier: 2, category: "protection" },
+    {
+      kind: "passive",
+      onMovePlayed: (_inst, move, api) => {
+        if (move.color !== api.me || move.piece !== "n" || move.promotion) return;
+        const k = mySquares(api.board, api.opp, "k")[0];
+        if (k == null) return;
+        if (Math.abs(FILE(move.to) - FILE(k)) * Math.abs(RANK(move.to) - RANK(k)) !== 2) return;
+        addEffect(api, { kind: "shield", owner: api.me, squares: [move.to], turns: 1 });
+      },
+    },
+  ),
+  def(
+    { id: "long_castle_anywhere", name: "Long Castle Anywhere", description: "Regain castling rights, and queenside castling ignores the b-file square.", tier: 2, category: "movement" },
+    {
+      kind: "passive",
+      init: (_inst, api) => api.restoreCastling(),
+      augmentMoves: (moves, inst, api) => {
+        const hr = api.me === "w" ? 0 : 7;
+        const king = api.board.pieces[SQ(4, hr)];
+        if (!king || king.type !== "k" || king.color !== api.me) return;
+        const c = api.board.castling;
+        const qSide = api.me === "w" ? c.wq : c.bq;
+        const rook = api.board.pieces[SQ(0, hr)];
+        if (
+          qSide &&
+          rook?.type === "r" &&
+          rook.color === api.me &&
+          !api.board.pieces[SQ(2, hr)] &&
+          !api.board.pieces[SQ(3, hr)]
+        ) {
+          addNovel(moves, [
+            { from: SQ(4, hr), to: SQ(2, hr), piece: "k", color: api.me, castle: "q", via: inst.id },
+          ]);
+        }
+      },
+    },
+  ),
+  def(
+    { id: "sidestep_king", name: "Sidestep King", description: "Your king cannot be captured for 1 turn.", tier: 2, category: "protection" },
+    instant((_inst, api) => {
+      addEffect(api, { kind: "king_safe", owner: api.me, turns: 1 });
+    }),
+  ),
   def(
     { id: "piece_swap", name: "Piece Swap", description: "Swap positions of any two of your own pieces, once.", tier: 2, category: "movement" },
     swapOwnPieces(),
@@ -690,8 +919,29 @@ const TIER2: Buff[] = [
       api.mine.flags.seeOppTier = true;
     }),
   ),
-  def({ id: "screen", name: "Screen", description: "One bishop cannot be captured while defending your king, for 3 turns.", tier: 2, category: "protection" }),
-  def({ id: "counterstep", name: "Counterstep", description: "After your opponent captures, move the threatened piece for free, once.", tier: 2, category: "tempo" }),
+  def(
+    { id: "screen", name: "Screen", description: "One bishop cannot be captured while beside your king, for 3 turns.", tier: 2, category: "protection" },
+    bindPiece("Choose the bishop", bindCandidates(["b"]), {
+      turns: 3,
+      filterOpp: (moves, sq, api) => {
+        const k = mySquares(api.board, api.me, "k")[0];
+        if (k == null || !adjacent(sq, k)) return moves;
+        return moves.filter((m) => captureSquare(m) !== sq);
+      },
+    }),
+  ),
+  def(
+    { id: "counterstep", name: "Counterstep", description: "After your opponent's next capture, you take two moves in reply, once.", tier: 2, category: "tempo" },
+    {
+      kind: "passive",
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.opp || !move.captured || move.captured === "k") return;
+        api.bs.extraMoves[api.me] += 1;
+        inst.spent = true;
+      },
+      status: () => "waiting for an enemy capture",
+    },
+  ),
   def(
     { id: "minor_recall", name: "Minor Recall", description: "Return a captured knight or bishop to your back rank, once.", tier: 2, category: "pieces" },
     reviveOne(["n", "b"], backRankZone),
@@ -751,9 +1001,79 @@ const TIER3: Buff[] = [
     { id: "time_skip", name: "Time Skip", description: "Force your opponent to skip their next turn, once.", tier: 3, category: "tempo" },
     skipOpponent(1),
   ),
-  def({ id: "fortress", name: "Fortress", description: "Your king and one adjacent piece are uncapturable for 3 turns.", tier: 3, category: "protection" }),
-  def({ id: "grasshopper", name: "Grasshopper", description: "One piece lands just past a hopped piece, for the game.", tier: 3, category: "movement" }),
-  def({ id: "cannon", name: "Cannon", description: "One rook captures cannon-style (jump one screen), plus normal moves.", tier: 3, category: "movement" }),
+  def(
+    { id: "fortress", name: "Fortress", description: "Your king and one adjacent piece are uncapturable for 3 turns.", tier: 3, category: "protection" },
+    activated(
+      (_inst, api, picks) => {
+        if (picks.length > 0) return null;
+        const k = mySquares(api.board, api.me, "k")[0];
+        return {
+          kind: "square",
+          label: "Choose the piece beside your king to protect",
+          squares:
+            k == null ? [] : mySquares(api.board, api.me).filter((sq) => adjacent(sq, k)),
+        };
+      },
+      (_inst, api, picks) => {
+        const k = mySquares(api.board, api.me, "k")[0];
+        if (k == null || picks[0]?.square == null) return;
+        addEffect(api, { kind: "shield", owner: api.me, squares: [k, picks[0].square], turns: 3 });
+      },
+    ),
+  ),
+  def(
+    { id: "grasshopper", name: "Grasshopper", description: "One piece lands just past a hopped piece, for the game.", tier: 3, category: "movement" },
+    bindPiece("Choose the piece", bindCandidates(), {
+      gen: (board, sq, via) => {
+        const p = board.pieces[sq]!;
+        const out: Move[] = [];
+        for (const [df, dr] of ALL_DIRS) {
+          let f = FILE(sq) + df, r = RANK(sq) + dr;
+          while (inBoard(f, r) && !board.pieces[SQ(f, r)]) {
+            f += df; r += dr;
+          }
+          const lf = f + df, lr = r + dr;
+          if (!inBoard(f, r) || !inBoard(lf, lr)) continue;
+          const to = SQ(lf, lr);
+          const t = board.pieces[to];
+          if (!t || t.color !== p.color) {
+            out.push({
+              from: sq, to, piece: p.type, color: p.color, via,
+              ...(t ? { captured: t.type, capturedSquare: to } : {}),
+            });
+          }
+        }
+        return out;
+      },
+    }),
+  ),
+  def(
+    { id: "cannon", name: "Cannon", description: "One rook captures cannon-style (jump one screen), plus normal moves.", tier: 3, category: "movement" },
+    pieceBound("r", "Choose the rook", (board, sq, via) => {
+      const p = board.pieces[sq]!;
+      const out: Move[] = [];
+      for (const [df, dr] of ORTHO_DIRS) {
+        let f = FILE(sq) + df, r = RANK(sq) + dr, screened = false;
+        while (inBoard(f, r)) {
+          const to = SQ(f, r);
+          const t = board.pieces[to];
+          if (!screened) {
+            if (t) screened = true;
+          } else if (t) {
+            if (t.color !== p.color) {
+              out.push({
+                from: sq, to, piece: "r", color: p.color,
+                captured: t.type, capturedSquare: to, via,
+              });
+            }
+            break;
+          }
+          f += df; r += dr;
+        }
+      }
+      return out;
+    }),
+  ),
   def(
     { id: "sliding_king", name: "Sliding King", description: "Your king moves like a king or bishop for 3 turns.", tier: 3, category: "movement" },
     timedAugment(3, (_m, inst, api) =>
@@ -798,7 +1118,20 @@ const TIER3: Buff[] = [
     { id: "resurrect", name: "Resurrect", description: "Bring back your most recently captured piece to your half, once.", tier: 3, category: "pieces" },
     reviveOne(["q", "r", "b", "n", "p"], anyHalfZone),
   ),
-  def({ id: "deflect", name: "Deflect", description: "The next capture against your queen fails and stuns the attacker 1 turn.", tier: 3, category: "protection" }),
+  def(
+    { id: "deflect", name: "Deflect", description: "Your queen cannot be captured for 2 turns.", tier: 3, category: "protection" },
+    activated(
+      (_inst, api, picks) =>
+        picks.length > 0
+          ? null
+          : { kind: "square", label: "Confirm your queen", squares: mySquares(api.board, api.me, "q") },
+      (_inst, api, picks) => {
+        if (picks[0]?.square != null) {
+          addEffect(api, { kind: "shield", owner: api.me, squares: [picks[0].square], turns: 2 });
+        }
+      },
+    ),
+  ),
   def(
     { id: "bunker", name: "Bunker", description: "Three squares in front of your king are barred to enemies for 4 turns.", tier: 3, category: "protection" },
     instant((_inst, api) => {
@@ -819,7 +1152,33 @@ const TIER3: Buff[] = [
       mySquares(api.board, api.me, "n").flatMap((sq) => slideMoves(api.board, sq, ALL_DIRS, inst.id, 1)),
     ),
   ),
-  def({ id: "hunter_knight", name: "Hunter Knight", description: "One knight can capture from either of its landing squares in one move, pick one.", tier: 3, category: "attack" }),
+  def(
+    { id: "hunter_knight", name: "Hunter Knight", description: "One knight captures a piece one leap away and lands a second leap beyond, once.", tier: 3, category: "attack" },
+    augment((_m, inst, api) => {
+      const out: Move[] = [];
+      for (const sq of mySquares(api.board, api.me, "n")) {
+        for (const [df, dr] of KNIGHT_LEAPS) {
+          const f1 = FILE(sq) + df, r1 = RANK(sq) + dr;
+          if (!inBoard(f1, r1)) continue;
+          const mid = SQ(f1, r1);
+          const prey = api.board.pieces[mid];
+          if (!prey || prey.color !== api.opp) continue;
+          for (const [df2, dr2] of KNIGHT_LEAPS) {
+            const f2 = f1 + df2, r2 = r1 + dr2;
+            if (!inBoard(f2, r2)) continue;
+            const to = SQ(f2, r2);
+            if (to !== sq && !api.board.pieces[to]) {
+              out.push({
+                from: sq, to, piece: "n", color: api.me,
+                captured: prey.type, capturedSquare: mid, via: inst.id,
+              });
+            }
+          }
+        }
+      }
+      return out;
+    }),
+  ),
   def(
     { id: "chain_mail", name: "Chain Mail", description: "All your minor pieces are uncapturable for 1 full turn.", tier: 3, category: "protection" },
     instant((_inst, api) => {
@@ -848,7 +1207,40 @@ const TIER3: Buff[] = [
       return out;
     }),
   ),
-  def({ id: "tidal_push", name: "Tidal Push", description: "Shove one enemy piece two squares away if the path is empty, once.", tier: 3, category: "attack" }),
+  def(
+    { id: "tidal_push", name: "Tidal Push", description: "Shove one enemy piece two squares in a straight line if the path is empty, once.", tier: 3, category: "attack" },
+    activated(
+      (_inst, api, picks) => {
+        const pushDests = (from: Square) =>
+          ALL_DIRS.flatMap(([df, dr]) => {
+            const f1 = FILE(from) + df, r1 = RANK(from) + dr;
+            const f2 = f1 + df, r2 = r1 + dr;
+            if (!inBoard(f1, r1) || !inBoard(f2, r2)) return [];
+            return !api.board.pieces[SQ(f1, r1)] && !api.board.pieces[SQ(f2, r2)]
+              ? [SQ(f2, r2)]
+              : [];
+          });
+        if (picks.length === 0) {
+          return {
+            kind: "square",
+            label: "Choose the enemy piece to shove",
+            squares: mySquares(api.board, api.opp).filter(
+              (sq) => api.board.pieces[sq]!.type !== "k" && pushDests(sq).length > 0,
+            ),
+          };
+        }
+        if (picks.length === 1) {
+          return { kind: "square", label: "Choose where it lands", squares: pushDests(picks[0].square!) };
+        }
+        return null;
+      },
+      (_inst, api, picks) => {
+        const from = picks[0]?.square, to = picks[1]?.square;
+        if (from == null || to == null) return;
+        if (api.board.pieces[from] && !api.board.pieces[to]) api.relocate(from, to);
+      },
+    ),
+  ),
   def(
     { id: "second_wind_major", name: "Second Wind Major", description: "Return a captured rook to any empty back-rank square, once.", tier: 3, category: "pieces" },
     reviveOne(["r"], backRankZone),
@@ -874,9 +1266,57 @@ const TIER3: Buff[] = [
       },
     ),
   ),
-  def({ id: "iron_bishop", name: "Iron Bishop", description: "One bishop cannot be captured by pawns, for the game.", tier: 3, category: "protection" }),
-  def({ id: "momentum", name: "Momentum", description: "After any capture, take a free non-capturing move, once.", tier: 3, category: "tempo" }),
-  def({ id: "frost", name: "Frost", description: "Freeze two adjacent enemy pieces for 1 turn each.", tier: 3, category: "tempo" }),
+  def(
+    { id: "iron_bishop", name: "Iron Bishop", description: "One bishop cannot be captured by pawns, for the game.", tier: 3, category: "protection" },
+    bindPiece("Choose the bishop", bindCandidates(["b"]), {
+      filterOpp: (moves, sq) =>
+        moves.filter((m) => !(m.piece === "p" && captureSquare(m) === sq)),
+    }),
+  ),
+  def(
+    { id: "momentum", name: "Momentum", description: "After your next capture, immediately take a second move, once.", tier: 3, category: "tempo" },
+    {
+      kind: "passive",
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.me || !move.captured || move.captured === "k") return;
+        api.bs.extraMoves[api.me] += 1;
+        inst.spent = true;
+      },
+      status: () => "waiting for your next capture",
+    },
+  ),
+  def(
+    { id: "frost", name: "Frost", description: "Freeze two adjacent enemy pieces for 1 turn each.", tier: 3, category: "tempo" },
+    activated(
+      (_inst, api, picks) => {
+        const enemies = mySquares(api.board, api.opp).filter(
+          (sq) => api.board.pieces[sq]!.type !== "k",
+        );
+        if (picks.length === 0) {
+          return {
+            kind: "square",
+            label: "Choose the first piece to freeze",
+            squares: enemies.filter((sq) => enemies.some((o) => adjacent(o, sq))),
+          };
+        }
+        if (picks.length === 1) {
+          return {
+            kind: "square",
+            label: "Choose an adjacent piece to freeze",
+            squares: enemies.filter((sq) => adjacent(sq, picks[0].square!)),
+          };
+        }
+        return null;
+      },
+      (_inst, api, picks) => {
+        for (const k of picks) {
+          if (k.square != null) {
+            addEffect(api, { kind: "freeze", sq: k.square, owner: api.opp, turns: 1 });
+          }
+        }
+      },
+    ),
+  ),
   def(
     { id: "vanguard", name: "Vanguard", description: "One pawn promotes to a knight on the 6th rank, once.", tier: 3, category: "pieces" },
     promotePawns(1, 6, "n"),
@@ -892,7 +1332,10 @@ const TIER3: Buff[] = [
 // ---------------------------------------------------------------------------
 
 const TIER4: Buff[] = [
-  def({ id: "atomic_captures_small", name: "Atomic Captures (Small)", description: "Captures clear enemy pieces on the two squares beside the captured piece.", tier: 4, category: "attack" }),
+  def(
+    { id: "atomic_captures_small", name: "Atomic Captures (Small)", description: "Your captures clear enemy pieces on the two squares beside the captured piece.", tier: 4, category: "attack" },
+    captureExplosion({ beside: true }),
+  ),
   def(
     { id: "double_queen", name: "Double Queen", description: "Promote any pawn to a queen instantly, even mid-board.", tier: 4, category: "pieces" },
     promotePawns(1, 1, "q"),
@@ -901,7 +1344,10 @@ const TIER4: Buff[] = [
     { id: "piece_steal", name: "Piece Steal", description: "Convert one enemy pawn to your color, once.", tier: 4, category: "pieces" },
     convertEnemies(1, ["p"]),
   ),
-  def({ id: "split_bishop", name: "Split Bishop", description: "Spawn a second bishop on the opposite color, once.", tier: 4, category: "pieces" }),
+  def(
+    { id: "split_bishop", name: "Split Bishop", description: "Place a new bishop on any empty square in your half, once.", tier: 4, category: "pieces" },
+    placePieces(["b"], anyHalfZone),
+  ),
   def(
     { id: "twin_knights", name: "Twin Knights", description: "Both knights become nightrooks, for the game.", tier: 4, category: "movement" },
     permanentAugment((_m, inst, api) =>
@@ -916,8 +1362,17 @@ const TIER4: Buff[] = [
       ),
     ),
   ),
-  def({ id: "mass_recall", name: "Mass Recall", description: "Return any two pieces to your back rank, once.", tier: 4, category: "movement" }),
-  def({ id: "immobilizer", name: "Immobilizer", description: "One piece freezes all enemy pieces adjacent to it while there.", tier: 4, category: "tempo" }),
+  def(
+    { id: "mass_recall", name: "Mass Recall", description: "Return any two pieces to your back rank, once.", tier: 4, category: "movement" },
+    relocateMany(2, backRankDest),
+  ),
+  def(
+    { id: "immobilizer", name: "Immobilizer", description: "One piece freezes all adjacent enemy pieces except kings while it stands there.", tier: 4, category: "tempo" },
+    bindPiece("Choose the immobilizer", bindCandidates(), {
+      filterOpp: (moves, sq) =>
+        moves.filter((m) => m.piece === "k" || !adjacent(m.from, sq)),
+    }),
+  ),
   def(
     { id: "royal_decree", name: "Royal Decree", description: "Your king gains queen movement for 2 turns (still loses on capture).", tier: 4, category: "movement" },
     timedAugment(2, (_m, inst, api) =>
@@ -928,12 +1383,63 @@ const TIER4: Buff[] = [
     { id: "purge", name: "Purge", description: "Remove one enemy piece below queen rank from the board.", tier: 4, category: "attack" },
     removeEnemies(1, ["p", "n", "b", "r"]),
   ),
-  def({ id: "mind_nudge", name: "Mind Nudge", description: "Control one enemy pawn's next move, once.", tier: 4, category: "attack" }),
+  def(
+    { id: "mind_nudge", name: "Mind Nudge", description: "Force one enemy pawn to advance one square where empty, once.", tier: 4, category: "attack" },
+    activated(
+      (_inst, api, picks) =>
+        picks.length > 0
+          ? null
+          : {
+              kind: "square",
+              label: "Choose the enemy pawn to push forward",
+              squares: mySquares(api.board, api.opp, "p").filter((sq) => {
+                const ahead = sq + fwdOf(api.opp);
+                return ahead >= 0 && ahead < 64 && !api.board.pieces[ahead];
+              }),
+            },
+      (_inst, api, picks) => {
+        const sq = picks[0]?.square;
+        if (sq == null) return;
+        const ahead = sq + fwdOf(api.opp);
+        if (!api.board.pieces[ahead] && api.board.pieces[sq]?.type === "p") {
+          api.relocate(sq, ahead);
+        }
+      },
+    ),
+  ),
   def(
     { id: "second_army", name: "Second Army", description: "Place two pawns on any empty squares in your half, once.", tier: 4, category: "pieces" },
     placePieces(["p", "p"], anyHalfZone),
   ),
-  def({ id: "cascade_freeze", name: "Cascade Freeze", description: "For 3 turns, each capture you make freezes the nearest enemy piece 1 turn.", tier: 4, category: "tempo" }),
+  def(
+    { id: "cascade_freeze", name: "Cascade Freeze", description: "For 3 turns, each capture you make freezes the nearest enemy piece 1 turn.", tier: 4, category: "tempo" },
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.turns = 3;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color === api.me && move.captured && turnsLeft(inst) > 0) {
+          let best: Square | null = null;
+          let bestDist = 99;
+          for (const sq of mySquares(api.board, api.opp)) {
+            if (api.board.pieces[sq]!.type === "k") continue;
+            const d = Math.max(
+              Math.abs(FILE(sq) - FILE(move.to)),
+              Math.abs(RANK(sq) - RANK(move.to)),
+            );
+            if (d < bestDist) {
+              bestDist = d;
+              best = sq;
+            }
+          }
+          if (best != null) addEffect(api, { kind: "freeze", sq: best, owner: api.opp, turns: 1 });
+        }
+        tickTurns(inst, move, api.me);
+      },
+      status: (inst) => `${turnsLeft(inst)} of your turns left`,
+    },
+  ),
   def(
     { id: "sanctuary", name: "Sanctuary", description: "Designate one square; your pieces there are uncapturable, for the game.", tier: 4, category: "protection" },
     activated(
@@ -948,7 +1454,13 @@ const TIER4: Buff[] = [
       },
     ),
   ),
-  def({ id: "amazon_knight", name: "Amazon Knight", description: "One knight becomes a knight plus queen for 2 turns.", tier: 4, category: "movement" }),
+  def(
+    { id: "amazon_knight", name: "Amazon Knight", description: "One knight becomes a knight plus queen for 2 turns.", tier: 4, category: "movement" },
+    bindPiece("Choose the knight", bindCandidates(["n"]), {
+      turns: 2,
+      gen: (board, sq, via) => slideMoves(board, sq, ALL_DIRS, via),
+    }),
+  ),
   def(
     { id: "buff_thief_minor", name: "Buff Thief (Minor)", description: "Steal one tier 1 or 2 buff from your opponent.", tier: 4, category: "draft" },
     stealBuffs(1, 2),
@@ -978,9 +1490,47 @@ const TIER4: Buff[] = [
       },
     ),
   ),
-  def({ id: "warp_field", name: "Warp Field", description: "Move any two of your pieces one square each ignoring rules, once.", tier: 4, category: "movement" }),
-  def({ id: "detonate", name: "Detonate", description: "Sacrifice one pawn to clear all pieces on its adjacent squares except kings.", tier: 4, category: "attack" }),
-  def({ id: "regroup", name: "Regroup", description: "Return all your pawns behind rank 3 to rank 2, once.", tier: 4, category: "movement" }),
+  def(
+    { id: "warp_field", name: "Warp Field", description: "Move any two of your pieces one square each ignoring rules, once.", tier: 4, category: "movement" },
+    relocateMany(2, stepDest),
+  ),
+  def(
+    { id: "detonate", name: "Detonate", description: "Sacrifice one pawn to clear all pieces on its adjacent squares except kings.", tier: 4, category: "attack" },
+    activated(
+      (_inst, api, picks) =>
+        picks.length > 0
+          ? null
+          : {
+              kind: "square",
+              label: "Choose the pawn to detonate",
+              squares: mySquares(api.board, api.me, "p"),
+            },
+      (_inst, api, picks) => {
+        const sq = picks[0]?.square;
+        if (sq == null || api.board.pieces[sq]?.type !== "p") return;
+        explodeAt(api, sq);
+        for (const [df, dr] of ALL_DIRS) {
+          const f = FILE(sq) + df, r = RANK(sq) + dr;
+          if (!inBoard(f, r)) continue;
+          const n = SQ(f, r);
+          const p = api.board.pieces[n];
+          if (p && p.color === api.me && p.type !== "k") api.removePiece(n);
+        }
+        api.removePiece(sq);
+      },
+    ),
+  ),
+  def(
+    { id: "regroup", name: "Regroup", description: "Return your advanced pawns to their starting rank where empty, once.", tier: 4, category: "movement" },
+    activatedSimple((_inst, api) => {
+      const home = api.me === "w" ? 1 : 6;
+      for (const sq of mySquares(api.board, api.me, "p")) {
+        if (relRank(api.me, sq) <= 2) continue;
+        const dest = SQ(FILE(sq), home);
+        if (!api.board.pieces[dest]) api.relocate(sq, dest);
+      }
+    }),
+  ),
   def(
     { id: "iron_wall", name: "Iron Wall", description: "Your entire back rank is uncapturable for 2 turns.", tier: 4, category: "protection" },
     shieldZone((api) => {
@@ -999,15 +1549,105 @@ const TIER4: Buff[] = [
       }
     }),
   ),
-  def({ id: "duelist", name: "Duelist", description: "One piece wins any trade on its square, surviving the first capture, once.", tier: 4, category: "protection" }),
-  def({ id: "overrun", name: "Overrun", description: "Three pawns can each capture forward (not just diagonally) this turn.", tier: 4, category: "attack" }),
+  def(
+    { id: "duelist", name: "Duelist", description: "One piece survives the first capture against it and the attacker dies instead, once (kings excluded).", tier: 4, category: "protection" },
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (_inst, api, picks) =>
+        picks.length > 0
+          ? null
+          : {
+              kind: "square",
+              label: "Choose the duelist",
+              squares: mySquares(api.board, api.me).filter(
+                (sq) => api.board.pieces[sq]!.type !== "k",
+              ),
+            },
+      effect: (inst, _api, picks) => {
+        inst.state.sq = picks[0]?.square;
+      },
+      onMovePlayed: (inst, move, api) => {
+        const sq = inst.state.sq as Square | undefined;
+        if (sq == null) return;
+        if (move.color === api.opp && move.captured && captureSquare(move) === sq) {
+          const attacker = api.board.pieces[move.to];
+          if (attacker && attacker.color === api.opp && attacker.type !== "k") {
+            api.removePiece(move.to);
+            api.place(sq, move.captured, api.me);
+            api.capturedFromMe[move.captured] -= 1;
+          }
+          inst.spent = true;
+          return;
+        }
+        trackBoundPiece(inst, move);
+      },
+      status: (inst) => {
+        const sq = inst.state.sq as Square | undefined;
+        return sq == null
+          ? "activate to choose a piece"
+          : `dueling on ${"abcdefgh"[FILE(sq)]}${RANK(sq) + 1}`;
+      },
+    },
+  ),
+  def(
+    { id: "overrun", name: "Overrun", description: "Your pawns can capture straight ahead this turn.", tier: 4, category: "attack" },
+    timedAugment(1, (_m, inst, api) => {
+      const out: Move[] = [];
+      for (const sq of mySquares(api.board, api.me, "p")) {
+        const ahead = sq + fwdOf(api.me);
+        if (ahead < 0 || ahead > 63) continue;
+        const t = api.board.pieces[ahead];
+        if (t && t.color === api.opp) pushPawnMoves(out, api, sq, ahead, inst.id);
+      }
+      return out;
+    }),
+  ),
   def(
     { id: "recast", name: "Recast", description: "Reroll your entire current draft into the next tier up, once.", tier: 4, category: "draft" },
     instant((_inst, api) => {
       api.mine.flags.bankBonus = Math.min(1, (api.mine.flags.bankBonus ?? 0) + 1);
     }),
   ),
-  def({ id: "phantom_rook", name: "Phantom Rook", description: "Spawn a rook that vanishes after 4 turns, on any empty square in your half.", tier: 4, category: "pieces" }),
+  def(
+    { id: "phantom_rook", name: "Phantom Rook", description: "Spawn a rook that vanishes after 4 turns, on any empty square in your half.", tier: 4, category: "pieces" },
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null
+          ? null
+          : {
+              kind: "square",
+              label: "Place the phantom rook",
+              squares: emptySquares(api.board, (sq) => inHalf(api.me, sq)),
+            },
+      effect: (inst, api, picks) => {
+        const sq = picks[0]?.square;
+        if (sq == null || inst.state.sq != null || api.board.pieces[sq]) return;
+        api.place(sq, "r", api.me);
+        inst.state.sq = sq;
+        inst.state.turns = 4;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.state.sq == null) return;
+        trackBoundPiece(inst, move);
+        if (inst.spent || move.color !== api.me) return;
+        const t = ((inst.state.turns as number) ?? 0) - 1;
+        inst.state.turns = t;
+        if (t <= 0) {
+          const sq = inst.state.sq as Square;
+          const p = api.board.pieces[sq];
+          if (p && p.color === api.me && p.type === "r") api.removePiece(sq);
+          inst.spent = true;
+        }
+      },
+      status: (inst) =>
+        inst.state.sq == null
+          ? "activate to place"
+          : `vanishes in ${turnsLeft(inst)} of your turns`,
+    },
+  ),
   def(
     { id: "kingslide", name: "Kingslide", description: "Your king moves any distance in a straight line, once.", tier: 4, category: "movement" },
     augment((_m, inst, api) =>
@@ -1015,8 +1655,65 @@ const TIER4: Buff[] = [
     ),
   ),
   def({ id: "suppress", name: "Suppress", description: "Your opponent cannot draft manipulation buffs next draft.", tier: 4, category: "draft" }),
-  def({ id: "blink_army", name: "Blink Army", description: "Teleport two pawns forward two squares each if empty, once.", tier: 4, category: "movement" }),
-  def({ id: "grand_recall", name: "Grand Recall", description: "Return your queen (if on board) to any empty square in your half, once.", tier: 4, category: "movement" }),
+  def(
+    { id: "blink_army", name: "Blink Army", description: "Teleport two pawns forward two squares each if empty, once.", tier: 4, category: "movement" },
+    activated(
+      (_inst, api, picks) => {
+        if (picks.length >= 2) return null;
+        const dest = (sq: Square) => sq + 2 * fwdOf(api.me);
+        const prior = picks[0]?.square;
+        const priorDest = prior != null ? dest(prior) : null;
+        const squares = mySquares(api.board, api.me, "p").filter((sq) => {
+          const d = dest(sq);
+          return (
+            d >= 0 && d < 64 && relRank(api.me, d) < 8 && !api.board.pieces[d] &&
+            sq !== prior && d !== priorDest && d !== prior
+          );
+        });
+        if (!squares.length && picks.length > 0) return null;
+        return {
+          kind: "square",
+          label: `Choose a pawn to blink (${picks.length + 1}/2)`,
+          squares,
+        };
+      },
+      (_inst, api, picks) => {
+        for (const k of picks) {
+          if (k.square == null) continue;
+          const d = k.square + 2 * fwdOf(api.me);
+          if (api.board.pieces[k.square]?.type === "p" && !api.board.pieces[d]) {
+            api.relocate(k.square, d);
+          }
+        }
+      },
+    ),
+  ),
+  def(
+    { id: "grand_recall", name: "Grand Recall", description: "Return your queen (if on board) to any empty square in your half, once.", tier: 4, category: "movement" },
+    activated(
+      (_inst, api, picks) => {
+        if (picks.length === 0) {
+          return {
+            kind: "square",
+            label: "Choose your queen",
+            squares: mySquares(api.board, api.me, "q"),
+          };
+        }
+        if (picks.length === 1) {
+          return {
+            kind: "square",
+            label: "Choose where she returns",
+            squares: emptySquares(api.board, (sq) => inHalf(api.me, sq)),
+          };
+        }
+        return null;
+      },
+      (_inst, api, picks) => {
+        const from = picks[0]?.square, to = picks[1]?.square;
+        if (from != null && to != null && !api.board.pieces[to]) api.relocate(from, to);
+      },
+    ),
+  ),
   def(
     { id: "fault_line", name: "Fault Line", description: "Split the board; enemy pieces cannot cross one file you pick, for 2 turns.", tier: 4, category: "protection" },
     barLine("file", 2),
@@ -1035,8 +1732,33 @@ const TIER4: Buff[] = [
 // ---------------------------------------------------------------------------
 
 const TIER5: Buff[] = [
-  def({ id: "atomic_captures", name: "Atomic Captures", description: "Captures explode across all 8 adjacent squares except kings and pawns.", tier: 5, category: "attack" }),
-  def({ id: "extra_move_repeat", name: "Extra Move (Repeat)", description: "Take two moves in a row every turn for 2 full turns.", tier: 5, category: "tempo" }),
+  def(
+    { id: "atomic_captures", name: "Atomic Captures", description: "Your captures explode across all 8 adjacent squares, sparing kings and pawns.", tier: 5, category: "attack" },
+    captureExplosion({ sparePawns: true }),
+  ),
+  def(
+    { id: "extra_move_repeat", name: "Extra Move (Repeat)", description: "Take two moves in a row every turn for 2 full turns.", tier: 5, category: "tempo" },
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.rounds = 2;
+        inst.state.armed = true;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color === api.opp) {
+          inst.state.armed = true;
+          return;
+        }
+        if (move.color !== api.me || !inst.state.armed) return;
+        inst.state.armed = false;
+        api.bs.extraMoves[api.me] += 1;
+        const rounds = ((inst.state.rounds as number) ?? 0) - 1;
+        inst.state.rounds = rounds;
+        if (rounds <= 0) inst.spent = true;
+      },
+      status: (inst) => `${(inst.state.rounds as number) ?? 0} double turns left`,
+    },
+  ),
   def(
     { id: "god_knight", name: "God Knight", description: "One knight becomes an amazon (queen plus knight), for the game.", tier: 5, category: "movement" },
     pieceBound("n", "Choose the knight", (board, sq, via) => slideMoves(board, sq, ALL_DIRS, via)),
@@ -1078,28 +1800,86 @@ const TIER5: Buff[] = [
     { id: "resurrect_queen", name: "Resurrect Queen", description: "Bring your captured queen back to any empty square in your half.", tier: 5, category: "pieces" },
     reviveOne(["q"], anyHalfZone),
   ),
-  def({ id: "checkmate_immunity", name: "Checkmate Immunity", description: "The first checkmate against you becomes check, escape once.", tier: 5, category: "protection" }),
+  def(
+    { id: "checkmate_immunity", name: "Checkmate Immunity", description: "The first time your king is checked, it cannot be captured on the following turn, once.", tier: 5, category: "protection" },
+    {
+      kind: "passive",
+      onMovePlayed: (inst, move, api) => {
+        if (!isInCheck(api.board, api.me)) return;
+        addEffect(api, {
+          kind: "king_safe",
+          owner: api.me,
+          turns: move.color === api.opp ? 2 : 1,
+        });
+        inst.spent = true;
+      },
+      status: () => "arms when your king is checked",
+    },
+  ),
   def(
     { id: "mind_control", name: "Mind Control", description: "Take one enemy minor piece for the rest of the game.", tier: 5, category: "pieces" },
     convertEnemies(1, ["n", "b"]),
   ),
-  def({ id: "board_lock", name: "Board Lock", description: "Your opponent cannot castle or use king buffs for 3 turns.", tier: 5, category: "tempo" }),
+  def(
+    { id: "board_lock", name: "Board Lock", description: "Your opponent cannot castle for 3 turns.", tier: 5, category: "tempo" },
+    timedOppFilter(3, (moves) => moves.filter((m) => !m.castle)),
+  ),
   def(
     { id: "twin_queens", name: "Twin Queens", description: "Promote two pawns to queens instantly if both are on rank 5+.", tier: 5, category: "pieces" },
     promotePawns(2, 5, "q"),
   ),
-  def({ id: "warp_legion", name: "Warp Legion", description: "Teleport any three of your pieces one square each, once.", tier: 5, category: "movement" }),
+  def(
+    { id: "warp_legion", name: "Warp Legion", description: "Teleport any three of your pieces one square each, once.", tier: 5, category: "movement" },
+    relocateMany(3, stepDest),
+  ),
   def(
     { id: "purge_two", name: "Purge Two", description: "Remove two enemy pawns anywhere on the board.", tier: 5, category: "attack" },
     removeEnemies(2, ["p"]),
   ),
-  def({ id: "nova", name: "Nova", description: "One piece detonates its whole file, clearing enemy pieces except kings, once.", tier: 5, category: "attack" }),
+  def(
+    { id: "nova", name: "Nova", description: "Sacrifice one pawn to clear every enemy piece except the king from its file, once.", tier: 5, category: "attack" },
+    activated(
+      (_inst, api, picks) =>
+        picks.length > 0
+          ? null
+          : {
+              kind: "square",
+              label: "Choose the pawn to detonate",
+              squares: mySquares(api.board, api.me, "p"),
+            },
+      (_inst, api, picks) => {
+        const sq = picks[0]?.square;
+        if (sq == null || api.board.pieces[sq]?.type !== "p") return;
+        for (let r = 0; r < 8; r++) {
+          const t = SQ(FILE(sq), r);
+          const p = api.board.pieces[t];
+          if (p && p.color === api.opp && p.type !== "k") api.removePiece(t);
+        }
+        api.removePiece(sq);
+      },
+    ),
+  ),
   def(
     { id: "great_wall", name: "Great Wall", description: "One full rank you pick is impassable to enemies for 3 turns.", tier: 5, category: "protection" },
     barLine("rank", 3),
   ),
-  def({ id: "siege_rook", name: "Siege Rook", description: "One rook captures every enemy piece in a straight line in one move, once.", tier: 5, category: "attack" }),
-  def({ id: "phase_army", name: "Phase Army", description: "All your knights pass through pieces for 2 turns.", tier: 5, category: "movement" }),
+  def(
+    { id: "siege_rook", name: "Siege Rook", description: "One rook captures every enemy piece in a straight line in one move, once.", tier: 5, category: "attack" },
+    lineSweep("r", ORTHO_DIRS, null),
+  ),
+  def(
+    { id: "phase_army", name: "Phase Army", description: "Your bishops, rooks, and queen pass through one friendly piece per move for 2 turns.", tier: 5, category: "movement" },
+    timedAugment(2, (_m, inst, api) => {
+      const out: Move[] = [];
+      for (const sq of mySquares(api.board, api.me)) {
+        const t = api.board.pieces[sq]!.type;
+        const dirs =
+          t === "b" ? DIAG_DIRS : t === "r" ? ORTHO_DIRS : t === "q" ? ALL_DIRS : null;
+        if (dirs) out.push(...phasingSlideMoves(api.board, sq, dirs, inst.id, 1));
+      }
+      return out;
+    }),
+  ),
   def(
     { id: "regenerate", name: "Regenerate", description: "Revive your last two captured pawns to their start squares.", tier: 5, category: "pieces" },
     revivePawnsToStart(2),
@@ -1138,8 +1918,46 @@ const TIER5: Buff[] = [
     { id: "mass_promote_minor", name: "Mass Promote Minor", description: "Two pawns on rank 4+ become knights instantly.", tier: 5, category: "pieces" },
     promotePawns(2, 4, "n"),
   ),
-  def({ id: "collapse", name: "Collapse", description: "Pull every enemy piece on one file one square toward their back rank, once.", tier: 5, category: "attack" }),
-  def({ id: "ghost_legion", name: "Ghost Legion", description: "Three of your pawns pass through pieces for 2 turns.", tier: 5, category: "movement" }),
+  def(
+    { id: "collapse", name: "Collapse", description: "Pull every enemy piece except the king on one file one square toward their back rank, once.", tier: 5, category: "attack" },
+    activated(
+      (_inst, _api, picks) =>
+        picks.length > 0
+          ? null
+          : {
+              kind: "square",
+              label: "Pick any square on the file to collapse",
+              squares: Array.from({ length: 64 }, (_, i) => i),
+            },
+      (_inst, api, picks) => {
+        if (picks[0]?.square == null) return;
+        const f = FILE(picks[0].square);
+        const back = -fwdOf(api.opp);
+        const targets = mySquares(api.board, api.opp).filter(
+          (sq) => FILE(sq) === f && api.board.pieces[sq]!.type !== "k",
+        );
+        targets.sort((a, b) => (api.opp === "w" ? a - b : b - a));
+        for (const sq of targets) {
+          const dest = sq + back;
+          if (dest >= 0 && dest < 64 && !api.board.pieces[dest]) api.relocate(sq, dest);
+        }
+      },
+    ),
+  ),
+  def(
+    { id: "ghost_legion", name: "Ghost Legion", description: "All your pawns may jump over a blocker one square ahead, landing two ahead where empty, for 2 turns.", tier: 5, category: "movement" },
+    timedAugment(2, (_m, inst, api) => {
+      const out: Move[] = [];
+      for (const sq of mySquares(api.board, api.me, "p")) {
+        const one = sq + fwdOf(api.me), two = sq + 2 * fwdOf(api.me);
+        if (two < 0 || two > 63) continue;
+        if (api.board.pieces[one] && !api.board.pieces[two]) {
+          pushPawnMoves(out, api, sq, two, inst.id);
+        }
+      }
+      return out;
+    }),
+  ),
   def(
     { id: "draft_seize", name: "Draft Seize", description: "Take both cards in your next draft and deny your opponent theirs.", tier: 5, category: "draft" },
     instant((_inst, api) => {
@@ -1180,7 +1998,10 @@ const TIER5: Buff[] = [
 // ---------------------------------------------------------------------------
 
 const TIER6: Buff[] = [
-  def({ id: "atomic_reaction", name: "Atomic Reaction", description: "Captures explode adjacent squares, and those explosions chain to other pieces.", tier: 6, category: "attack" }),
+  def(
+    { id: "atomic_reaction", name: "Atomic Reaction", description: "Your captures explode adjacent enemy pieces, and those explosions chain onward.", tier: 6, category: "attack" },
+    captureExplosion({ chain: true }),
+  ),
   def(
     { id: "double_amazon", name: "Double Amazon", description: "Two of your knights become amazons for the game.", tier: 6, category: "movement" },
     permanentAugment((_m, inst, api) =>
@@ -1228,12 +2049,18 @@ const TIER6: Buff[] = [
     { id: "second_king", name: "Second King", description: "Promote a pawn to a real second king; opponent must mate both.", tier: 6, category: "pieces" },
     promotePawns(1, 1, "k"),
   ),
-  def({ id: "warp_storm", name: "Warp Storm", description: "Teleport any four of your pieces one square each, once.", tier: 6, category: "movement" }),
+  def(
+    { id: "warp_storm", name: "Warp Storm", description: "Teleport any four of your pieces one square each, once.", tier: 6, category: "movement" },
+    relocateMany(4, stepDest),
+  ),
   def(
     { id: "fissure", name: "Fissure", description: "One file becomes impassable to enemies for the rest of the game.", tier: 6, category: "protection" },
     barLine("file", null),
   ),
-  def({ id: "queens_wrath", name: "Queen's Wrath", description: "Your queen captures two pieces in a straight line in one move, once.", tier: 6, category: "attack" }),
+  def(
+    { id: "queens_wrath", name: "Queen's Wrath", description: "Your queen captures up to two pieces in a straight line in one move, once.", tier: 6, category: "attack" },
+    lineSweep("q", ALL_DIRS, 2),
+  ),
   def(
     { id: "army_reversal", name: "Army Reversal", description: "All your pawns may move backward freely for 2 turns.", tier: 6, category: "movement" },
     timedAugment(2, (_m, inst, api) =>
@@ -1278,7 +2105,10 @@ const TIER6: Buff[] = [
     { id: "buff_siphon", name: "Buff Siphon", description: "Steal two active buffs from your opponent.", tier: 6, category: "draft" },
     stealBuffs(2),
   ),
-  def({ id: "detonation_field", name: "Detonation Field", description: "Your next three captures each explode adjacent squares.", tier: 6, category: "attack" }),
+  def(
+    { id: "detonation_field", name: "Detonation Field", description: "Your next three captures each explode adjacent enemy pieces.", tier: 6, category: "attack" },
+    captureExplosion({ charges: 3 }),
+  ),
   def(
     { id: "grand_summon", name: "Grand Summon", description: "Place a knight and a bishop on empty squares in your half, once.", tier: 6, category: "pieces" },
     placePieces(["n", "b"], anyHalfZone),
@@ -1287,7 +2117,14 @@ const TIER6: Buff[] = [
     { id: "time_lock", name: "Time Lock", description: "Your opponent skips their next two turns, once.", tier: 6, category: "tempo" },
     skipOpponent(2),
   ),
-  def({ id: "colossus", name: "Colossus", description: "One piece becomes uncapturable and gains queen movement for 3 turns.", tier: 6, category: "movement" }),
+  def(
+    { id: "colossus", name: "Colossus", description: "One piece becomes uncapturable and gains queen movement for 3 turns.", tier: 6, category: "movement" },
+    bindPiece("Choose the colossus", bindCandidates(), {
+      turns: 3,
+      shieldTurns: 3,
+      gen: (board, sq, via) => slideMoves(board, sq, ALL_DIRS, via),
+    }),
+  ),
   def(
     { id: "cataclysm", name: "Cataclysm", description: "Clear all enemy pawns on the board.", tier: 6, category: "attack" },
     instant((_inst, api) => {
@@ -1300,7 +2137,25 @@ const TIER6: Buff[] = [
       api.theirs.flags.forceTier = 1;
     }),
   ),
-  def({ id: "warp_reign", name: "Warp Reign", description: "Swap the positions of your king and queen and shield both for 2 turns.", tier: 6, category: "protection" }),
+  def(
+    { id: "warp_reign", name: "Warp Reign", description: "Swap the positions of your king and queen and shield both for 2 turns.", tier: 6, category: "protection" },
+    activated(
+      (_inst, api, picks) =>
+        picks.length > 0
+          ? null
+          : { kind: "square", label: "Confirm your queen", squares: mySquares(api.board, api.me, "q") },
+      (_inst, api, picks) => {
+        const qSq = picks[0]?.square;
+        const kSq = mySquares(api.board, api.me, "k")[0];
+        if (qSq == null || kSq == null || qSq === kSq) return;
+        const q = api.board.pieces[qSq];
+        api.board.pieces[qSq] = api.board.pieces[kSq];
+        api.board.pieces[kSq] = q;
+        api.bs.historyDiverged = true;
+        addEffect(api, { kind: "shield", owner: api.me, squares: [qSq, kSq], turns: 2 });
+      },
+    ),
+  ),
   def(
     { id: "mass_freeze", name: "Mass Freeze", description: "Freeze all enemy pieces for 1 full turn.", tier: 6, category: "tempo" },
     freezeAllEnemies(1),
@@ -1349,9 +2204,29 @@ const TIER6: Buff[] = [
       return ranks.flatMap((r) => Array.from({ length: 8 }, (_, f) => SQ(f, r)));
     }, 2),
   ),
-  def({ id: "ascendant_knight", name: "Ascendant Knight", description: "One knight moves as an amazon and cannot be captured, for 2 turns.", tier: 6, category: "movement" }),
-  def({ id: "void", name: "Void", description: "One square you pick swallows any enemy piece that enters it, for 3 turns.", tier: 6, category: "attack" }),
-  def({ id: "total_recall", name: "Total Recall", description: "Return every one of your pieces past rank 4 back to rank 3, once.", tier: 6, category: "movement" }),
+  def(
+    { id: "ascendant_knight", name: "Ascendant Knight", description: "One knight moves as an amazon and cannot be captured, for 2 turns.", tier: 6, category: "movement" },
+    bindPiece("Choose the knight", bindCandidates(["n"]), {
+      turns: 2,
+      shieldTurns: 2,
+      gen: (board, sq, via) => slideMoves(board, sq, ALL_DIRS, via),
+    }),
+  ),
+  def(
+    { id: "void", name: "Void", description: "One square you pick swallows any enemy piece except a king that enters it, for 3 turns.", tier: 6, category: "attack" },
+    voidSquares(1, 3),
+  ),
+  def(
+    { id: "total_recall", name: "Total Recall", description: "Pull each of your pieces past rank 4 back to your third rank where empty, once.", tier: 6, category: "movement" },
+    activatedSimple((_inst, api) => {
+      const third = api.me === "w" ? 2 : 5;
+      for (const sq of mySquares(api.board, api.me)) {
+        if (relRank(api.me, sq) <= 4) continue;
+        const dest = SQ(FILE(sq), third);
+        if (!api.board.pieces[dest]) api.relocate(sq, dest);
+      }
+    }),
+  ),
   // Nerf-modifier (cross-cutting)
   def(
     { id: "nerf_breaker", name: "Nerf Breaker", description: "Remove your nerf entirely for the rest of the game.", tier: 6, category: "nerf" },
@@ -1364,8 +2239,16 @@ const TIER6: Buff[] = [
 // ---------------------------------------------------------------------------
 
 const TIER7: Buff[] = [
-  def({ id: "chain_atomic", name: "Chain Atomic", description: "All your captures explode adjacent squares for the rest of the game.", tier: 7, category: "attack" }),
-  def({ id: "triple_amazon", name: "Triple Amazon", description: "Three of your knights become amazons for the game.", tier: 7, category: "movement" }),
+  def(
+    { id: "chain_atomic", name: "Chain Atomic", description: "Every capture by or against your pieces explodes and chains, clearing adjacent enemy pieces, for the game.", tier: 7, category: "attack" },
+    captureExplosion({ chain: true, onMyLosses: true }),
+  ),
+  def(
+    { id: "triple_amazon", name: "Triple Amazon", description: "All your knights become amazons for the game.", tier: 7, category: "movement" },
+    permanentAugment((_m, inst, api) =>
+      mySquares(api.board, api.me, "n").flatMap((sq) => slideMoves(api.board, sq, ALL_DIRS, inst.id)),
+    ),
+  ),
   def({ id: "full_rewind", name: "Full Rewind", description: "Undo the last five full moves, once.", tier: 7, category: "tempo" }),
   def(
     { id: "kings_legion", name: "King's Legion", description: "Place a knight, bishop, and pawn on empty squares in your half, once.", tier: 7, category: "pieces" },
@@ -1379,7 +2262,20 @@ const TIER7: Buff[] = [
     { id: "annihilation", name: "Annihilation", description: "Remove any two enemy pieces below the queen from the board.", tier: 7, category: "attack" },
     removeEnemies(2, ["p", "n", "b", "r"]),
   ),
-  def({ id: "eternal_reign", name: "Eternal Reign", description: "Your king gains permanent queen movement and cannot be forked.", tier: 7, category: "movement" }),
+  def(
+    { id: "eternal_reign", name: "Eternal Reign", description: "Your king gains permanent queen movement and cannot be captured for 3 turns.", tier: 7, category: "movement" },
+    {
+      kind: "passive",
+      init: (_inst, api) => addEffect(api, { kind: "king_safe", owner: api.me, turns: 3 }),
+      augmentMoves: (moves, inst, api) =>
+        addNovel(
+          moves,
+          mySquares(api.board, api.me, "k").flatMap((sq) =>
+            slideMoves(api.board, sq, ALL_DIRS, inst.id),
+          ),
+        ),
+    },
+  ),
   def(
     { id: "grand_nullify", name: "Grand Nullify", description: "Cancel your opponent's unused and temporary buffs, plus their next-drafted buff. Locked-in upgrades resist.", tier: 7, category: "draft" },
     instant((_inst, api) => {
@@ -1391,12 +2287,18 @@ const TIER7: Buff[] = [
     { id: "twin_queens_permanent", name: "Twin Queens Permanent", description: "Promote two pawns to queens anywhere on the board.", tier: 7, category: "pieces" },
     promotePawns(2, 1, "q"),
   ),
-  def({ id: "warp_cataclysm", name: "Warp Cataclysm", description: "Teleport any five of your pieces one square each, once.", tier: 7, category: "movement" }),
+  def(
+    { id: "warp_cataclysm", name: "Warp Cataclysm", description: "Teleport any five of your pieces one square each, once.", tier: 7, category: "movement" },
+    relocateMany(5, stepDest),
+  ),
   def(
     { id: "great_divide", name: "Great Divide", description: "Two files become impassable to enemies for the rest of the game.", tier: 7, category: "protection" },
     barLine("file", null, 2),
   ),
-  def({ id: "queens_rampage", name: "Queen's Rampage", description: "Your queen captures every piece in a straight line in one move, once.", tier: 7, category: "attack" }),
+  def(
+    { id: "queens_rampage", name: "Queen's Rampage", description: "Your queen captures every piece in a straight line in one move, once.", tier: 7, category: "attack" },
+    lineSweep("q", ALL_DIRS, null),
+  ),
   def(
     { id: "time_freeze", name: "Time Freeze", description: "Your opponent skips their next three turns, once.", tier: 7, category: "tempo" },
     skipOpponent(3),
@@ -1460,7 +2362,10 @@ const TIER7: Buff[] = [
       api.theirs.flags.blockedDrafts = (api.theirs.flags.blockedDrafts ?? 0) + 1;
     }),
   ),
-  def({ id: "titan", name: "Titan", description: "One piece becomes uncapturable with amazon movement for the rest of the game.", tier: 7, category: "movement" }),
+  def(
+    { id: "titan", name: "Titan", description: "One piece becomes uncapturable with amazon movement for the rest of the game.", tier: 7, category: "movement" },
+    bindPiece("Choose the titan", bindCandidates(), { shieldTurns: null, gen: amazonGen }),
+  ),
   def(
     { id: "ruin", name: "Ruin", description: "Clear all enemy pawns and one minor piece.", tier: 7, category: "attack" },
     activated(
@@ -1486,7 +2391,10 @@ const TIER7: Buff[] = [
       api.mine.flags.forceTier = 8;
     }),
   ),
-  def({ id: "warp_sovereign", name: "Warp Sovereign", description: "Swap any three pairs of your pieces, once.", tier: 7, category: "movement" }),
+  def(
+    { id: "warp_sovereign", name: "Warp Sovereign", description: "Swap any three pairs of your pieces, once.", tier: 7, category: "movement" },
+    swapOwnPieces(undefined, 3),
+  ),
   def(
     { id: "deep_freeze", name: "Deep Freeze", description: "Freeze all enemy pieces for 2 full turns.", tier: 7, category: "tempo" },
     freezeAllEnemies(2),
@@ -1495,15 +2403,53 @@ const TIER7: Buff[] = [
     { id: "phoenix_line", name: "Phoenix Line", description: "Revive all your captured pawns to rank 2, once.", tier: 7, category: "pieces" },
     revivePawnsToStart(8),
   ),
-  def({ id: "rift_storm", name: "Rift Storm", description: "Teleport two of your pieces anywhere on the board, once.", tier: 7, category: "movement" }),
-  def({ id: "purge_realm", name: "Purge Realm", description: "Remove every enemy minor piece from one half of the board.", tier: 7, category: "attack" }),
+  def(
+    { id: "rift_storm", name: "Rift Storm", description: "Teleport two of your pieces anywhere on the board, once.", tier: 7, category: "movement" },
+    relocateMany(2, anyDest),
+  ),
+  def(
+    { id: "purge_realm", name: "Purge Realm", description: "Remove every enemy minor piece from one half of the board.", tier: 7, category: "attack" },
+    activated(
+      (_inst, _api, picks) =>
+        picks.length > 0
+          ? null
+          : {
+              kind: "square",
+              label: "Pick a square in the half to purge",
+              squares: Array.from({ length: 64 }, (_, i) => i),
+            },
+      (_inst, api, picks) => {
+        if (picks[0]?.square == null) return;
+        const top = RANK(picks[0].square) >= 4;
+        for (const sq of mySquares(api.board, api.opp)) {
+          if ((RANK(sq) >= 4) !== top) continue;
+          const t = api.board.pieces[sq]!.type;
+          if (t === "n" || t === "b") api.removePiece(sq);
+        }
+      },
+    ),
+  ),
   def(
     { id: "aegis", name: "Aegis", description: "Your entire army is uncapturable for 1 full turn.", tier: 7, category: "protection" },
     shieldArmy(1),
   ),
-  def({ id: "godslayer_knight", name: "Godslayer Knight", description: "One knight moves as an amazon, is uncapturable, and explodes on capture, for 3 turns.", tier: 7, category: "movement" }),
-  def({ id: "abyss", name: "Abyss", description: "Two squares you pick swallow any enemy piece that enters, for the game.", tier: 7, category: "attack" }),
-  def({ id: "grand_retreat", name: "Grand Retreat", description: "Reset your whole army to its starting position, once.", tier: 7, category: "movement" }),
+  def(
+    { id: "godslayer_knight", name: "Godslayer Knight", description: "One knight moves as an amazon, is uncapturable, and explodes on capture, for 3 turns.", tier: 7, category: "movement" },
+    bindPiece("Choose the knight", bindCandidates(["n"]), {
+      turns: 3,
+      shieldTurns: 3,
+      gen: (board, sq, via) => slideMoves(board, sq, ALL_DIRS, via),
+      explodeOnCapture: true,
+    }),
+  ),
+  def(
+    { id: "abyss", name: "Abyss", description: "Two squares you pick swallow any enemy piece except a king that enters, for the game.", tier: 7, category: "attack" },
+    voidSquares(2, null),
+  ),
+  def(
+    { id: "grand_retreat", name: "Grand Retreat", description: "Return your army to its free starting squares, once (blocked pieces stay put).", tier: 7, category: "movement" },
+    activatedSimple((_inst, api) => reformArmy(api)),
+  ),
   def(
     { id: "sovereign_draft", name: "Sovereign Draft", description: "Take both cards in your next two drafts.", tier: 7, category: "draft" },
     instant((_inst, api) => {

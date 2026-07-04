@@ -193,6 +193,8 @@ export interface BuffApi {
   rng: RNG;
   /** Piece counts the opponent has captured from me (revivable pool). */
   capturedFromMe: Record<PieceType, number>;
+  /** Piece counts I have captured from the opponent (their revivable pool). */
+  capturedByMe: Record<PieceType, number>;
   place: (sq: Square, type: PieceType, color: Color) => void;
   removePiece: (sq: Square) => void;
   relocate: (from: Square, to: Square) => void;
