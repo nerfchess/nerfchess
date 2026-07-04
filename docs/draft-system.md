@@ -11,11 +11,12 @@ draft your way back to power. The comeback is the game.
    but **not** which one they took (hidden choice was picked over visible for
    chaos; reveal buffs like *Extra Glance* / *Watchtower* exist to buy the
    information back).
-2. **Buff cadence** — every **6** of your own moves you get a buff draft: two
-   cards, pick one. Buff offers, picks, and held buffs are **public** —
-   both players can see them (the opponent's current offer is only shown to
-   you if you drafted *Peek* / *Draft Insight*, their held buffs are always
-   visible in the dock).
+2. **Buff cadence**: drafts are simultaneous. A shared move counter fires
+   every **6** full moves and hands both players an offer at the same moment
+   (two cards, pick one), so neither side ever runs a draft ahead of the
+   other. Buff offers, picks, and held buffs are **public**: both players can
+   see them (the opponent's current offer is only shown to you if you drafted
+   *Peek* / *Draft Insight*, their held buffs are always visible in the dock).
 3. **Banking** — on any buff draft you can skip instead of picking. Your next
    draft then rolls one tier higher. Banking **does not stack** (cap +1); a
    second consecutive skip just re-banks the same +1.

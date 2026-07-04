@@ -38,7 +38,7 @@ export default function TutorialPage() {
         <h1 className="font-display text-5xl sm:text-6xl mt-1">House rules</h1>
         <p className="mt-5 text-[16px] leading-[1.7] text-parchment-200">
           Nerf Chess is chess, until it isn&apos;t. The five rules below are everything you need to know.
-          Everything else is in your secret rule.
+          Everything else is in your secret rule, or in the buff cards a Draft game deals you along the way.
         </p>
         <div className="mt-9 space-y-3">
           {RULES.map((r) => (
