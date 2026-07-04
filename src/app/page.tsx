@@ -328,7 +328,10 @@ function SiteFooter() {
       </nav>
       <div className="mt-3 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-parchment-400">
         <span>Nerf Chess: chess with secret rules.</span>
-        <span className="font-mono text-[10px] opacity-70">made with &hearts;</span>
+        <span className="font-mono text-[10px] opacity-70" title="Deployed version">
+          made with &hearts;
+          {process.env.NEXT_PUBLIC_BUILD_VERSION ? ` · ${process.env.NEXT_PUBLIC_BUILD_VERSION}` : ""}
+        </span>
       </div>
     </footer>
   );
