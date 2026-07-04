@@ -10,6 +10,7 @@
     "server:build": "tsc -p tsconfig.server.json",
     "server:start": "node dist-server/server/index.js",
     "lint": "next lint",
+    "typecheck": "tsc --noEmit",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy"
   },
