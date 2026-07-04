@@ -8,22 +8,30 @@ export type MPPlayers = Record<Color, { name: string; rating: number | null; ava
 // One public draft card: identity plus the tier it rolled at.
 export type MPDraftCard = { id: string; tier: number };
 
-// The public draft record: picked cards are public the moment they are held,
-// banks only reveal that they happened, and buff activations carry their
-// targets. `ply` is the number of accepted moves when the action happened,
-// so clients can interleave the record with the move list and rebuild the
-// exact board (buff effects mutate it outside move history).
+// A held or picked card whose identity the server withheld: the receiver only
+// learns that a card of this tier exists (and whether it is spent/nullified).
+// Everything reveals at game end via the end frame's draftBuffs.
+export type MPHiddenCard = { hidden: true; tier: number; spent?: boolean; nullified?: boolean };
+
+// The draft record a viewer may replay: your own picked cards are yours to
+// see, the opponent's arrive masked until their identity shows on the table
+// (instant effect, activation, or a buff-granted move). Banks only reveal
+// that they happened, and buff activations carry their targets. `ply` is the
+// number of accepted moves when the action happened, so clients can
+// interleave the record with the move list and rebuild the exact board (buff
+// effects mutate it outside move history).
 export type MPDraftAction =
-  | { ply: number; color: Color; a: "pick"; cards: MPDraftCard[] }
+  | { ply: number; color: Color; a: "pick"; cards: (MPDraftCard | MPHiddenCard)[] }
   | { ply: number; color: Color; a: "bank" }
-  | { ply: number; color: Color; a: "use"; buffIndex: number; picks: BuffPick[] };
+  | { ply: number; color: Color; a: "use"; buffIndex: number; picks: BuffPick[]; card?: MPDraftCard };
 
 // Per-receiver filtered view of one player's draft state. The own seat gets
 // its offer, flags, and oppReveal snapshot; the opponent's copy is stripped
 // of those unless the match has picksVisible (then offer and flags are
-// shared); spectator copies carry only the public parts.
+// shared), and its held-buff identities arrive masked; spectator copies
+// carry only the public parts with both sides' held buffs masked.
 export type MPDraftPlayerState = {
-  buffs: BuffInstance[];
+  buffs: (BuffInstance | MPHiddenCard)[];
   draftsTaken: number;
   nextDraftAt: number;
   offer: BuffOffer | null;
@@ -45,9 +53,22 @@ export type MPDraftState = {
   players: Record<Color, MPDraftPlayerState>;
 };
 
-export type MPDraftOffer = { color: Color; cards: MPDraftCard[]; index: number; banked?: boolean };
-export type MPDraftResolved = { color: Color; kind: "picked" | "banked"; cards?: MPDraftCard[] };
-export type MPDraftUsed = { color: Color; buffIndex: number; picks: BuffPick[] };
+export type MPDraftOffer = {
+  color: Color;
+  cards: MPDraftCard[];
+  index: number;
+  banked?: boolean;
+  // Lock-in deadline (ms epoch): the offer auto-resolves server-side then.
+  deadline?: number;
+};
+export type MPDraftResolved = {
+  color: Color;
+  kind: "picked" | "banked";
+  cards?: (MPDraftCard | MPHiddenCard)[];
+};
+// `card` names the fired buff: identity goes public on use so every replica
+// can apply the effect (and fill in a previously masked slot).
+export type MPDraftUsed = { color: Color; buffIndex: number; picks: BuffPick[]; card?: MPDraftCard };
 export type MPDraftHeldBuff = { id: string; tier: number; spent?: boolean; nullified?: boolean };
 
 // Draft games: the opening nerf draft (pick one of two rules before the game
@@ -58,6 +79,8 @@ export type MPNerfDraft = {
   options: Record<Color, string[]>;
   myPick: number | null;
   oppPicked: boolean;
+  // Lock-in deadline (ms epoch): unpicked seats auto-pick their first option.
+  deadline?: number | null;
 };
 
 export type MPChatMessage = { color: Color; name: string; text: string; at: number };
@@ -92,6 +115,8 @@ export type MPStart = {
   picksVisible?: boolean;
   dtActions?: MPDraftAction[];
   dtState?: MPDraftState;
+  // Lock-in deadline for a buff offer that was pending at (re)connect time.
+  dtDeadline?: number | null;
   // Present while the opening nerf draft is unresolved: the game has not
   // started yet and this seat must pick one of its two nerf options.
   nerfDraft?: MPNerfDraft;
