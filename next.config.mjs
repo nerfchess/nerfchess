@@ -1,5 +1,23 @@
 /** @type {import('next').NextConfig} */
 import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
+import { execSync } from "node:child_process";
+
+// Deployed-version stamp for the site footer: the most recent PR number in
+// the commit log plus the short commit hash, computed at build time.
+// Cloudflare Workers Builds clones the repo, so git is available on deploys;
+// local dev without git history falls back to "dev".
+function buildVersion() {
+  try {
+    const subjects = execSync("git log -20 --pretty=%s", { stdio: ["ignore", "pipe", "ignore"] }).toString();
+    const pr = subjects.match(/#(\d+)/);
+    const sha = execSync("git rev-parse --short HEAD", { stdio: ["ignore", "pipe", "ignore"] })
+      .toString()
+      .trim();
+    return pr ? `PR #${pr[1]} · ${sha}` : sha;
+  } catch {
+    return "dev";
+  }
+}
 
 // Expose Cloudflare bindings (D1, Durable Objects) to route handlers during
 // `next dev` via wrangler's platform proxy.
@@ -33,6 +51,9 @@ const securityHeaders = [
 
 const nextConfig = {
   reactStrictMode: true,
+  env: {
+    NEXT_PUBLIC_BUILD_VERSION: buildVersion(),
+  },
   async headers() {
     return [
       {
