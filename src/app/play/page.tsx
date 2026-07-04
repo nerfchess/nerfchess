@@ -38,6 +38,8 @@ export default function PlayPage() {
   const [incrementSec, setIncrementSec] = useState<number>(0);
   // Bot games are casual by default; rated games update your rating + ladder.
   const [rated, setRated] = useState<boolean>(false);
+  // Draft ruleset: nerf draft at the start, buff drafts every few moves.
+  const [draft, setDraft] = useState<boolean>(false);
   const [rating, setRating] = useState<number | null>(null);
   const [games, setGames] = useState<number>(0);
   useEffect(() => {
@@ -56,6 +58,7 @@ export default function PlayPage() {
       t: String(baseSec),
       inc: String(incrementSec),
       rated: rated ? "1" : "0",
+      draft: draft ? "1" : "0",
     });
     router.push(`/game?${params.toString()}`);
   };
@@ -119,6 +122,20 @@ export default function PlayPage() {
             <Pill selected={rated} onClick={() => setRated(true)}>Rated</Pill>
           </Group>
 
+          <div>
+            <Group label="Ruleset">
+              <Pill selected={!draft} onClick={() => setDraft(false)}>Classic</Pill>
+              <Pill selected={draft} onClick={() => setDraft(true)}>Draft</Pill>
+            </Group>
+            {draft && (
+              <p className="mt-2 text-[12px] text-parchment-300 leading-snug">
+                Draft mode: pick one of two nerfs at the start, then draft a buff every
+                few moves. Buffs grow stronger as the game goes on — skip a draft to
+                bank a tier for the next one.
+              </p>
+            )}
+          </div>
+
           <Group label="Bot strength">
             {(["easy", "medium", "hard"] as const).map((d) => (
               <Pill key={d} selected={difficulty === d} onClick={() => setDifficulty(d)}>
@@ -152,6 +169,7 @@ export default function PlayPage() {
             />
           </div>
 
+          {!draft && (<>
           <Group label="Your secret rule">
             <Pill selected={nerfId === "random"} onClick={() => setNerfId("random")}>
               Surprise me
@@ -183,6 +201,7 @@ export default function PlayPage() {
               ))}
             </div>
           </div>
+          </>)}
 
           <button
             onClick={start}

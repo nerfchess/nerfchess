@@ -33,6 +33,8 @@ export type SavedAiGame = {
     result: NerfGame["result"];
     startedAt: number;
     captured: NerfGame["captured"];
+    /** Draft-mode state (buffs, offers, board effects); absent in classic games. */
+    buffs?: NerfGame["buffs"];
   };
 };
 
@@ -88,6 +90,7 @@ export function snapshotGame(
     result: game.result,
     startedAt: game.startedAt,
     captured: game.captured,
+    ...(game.buffs ? { buffs: game.buffs } : {}),
   };
 }
 
@@ -102,6 +105,7 @@ export function restoreGameSnapshot(saved: SavedGameSnapshot): NerfGame | null {
     result: saved.result,
     startedAt: saved.startedAt,
     captured: saved.captured,
+    ...(saved.buffs ? { buffs: saved.buffs } : {}),
   };
 }
 
@@ -151,6 +155,7 @@ export function saveAiGame(input: {
       result: input.game.result,
       startedAt: input.game.startedAt,
       captured: input.game.captured,
+      ...(input.game.buffs ? { buffs: input.game.buffs } : {}),
     },
   };
   window.localStorage.setItem(ACTIVE_AI_GAME_KEY, JSON.stringify(saved));
