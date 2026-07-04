@@ -48,7 +48,6 @@ const WATCH_MENU_LINKS = [
 
 const NAV_LINKS: NavLink[] = [
   { href: "/lobby", label: "Play", menu: PLAY_MENU_LINKS },
-  { href: "/puzzles", label: "Puzzles" },
   { href: "/tv", label: "Watch", menu: WATCH_MENU_LINKS },
   { href: "/leaderboard", label: "Leaderboard" },
   { href: "/clubs", label: "Clubs" },

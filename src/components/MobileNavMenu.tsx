@@ -11,7 +11,6 @@ const NAV_LINKS: { href: string; label: string }[] = [
   { href: "/play", label: "New game" },
   { href: "/friend", label: "Play a friend" },
   { href: "/lobby", label: "Lobby" },
-  { href: "/puzzles", label: "Puzzles" },
   { href: "/tv", label: "Watch TV" },
   { href: "/analysis", label: "Analysis board" },
   { href: "/clubs", label: "Clubs" },
