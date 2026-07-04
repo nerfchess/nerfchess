@@ -33,8 +33,16 @@ type HeaderChallenge = {
 
 type Menu = "search" | "challenges" | "bell" | "profile" | null;
 
-const NAV_LINKS = [
-  { href: "/lobby", label: "Play" },
+type NavLink = { href: string; label: string; menu?: { href: string; label: string }[] };
+
+const PLAY_MENU_LINKS = [
+  { href: "/lobby", label: "Create lobby game" },
+  { href: "/friend", label: "Challenge a friend" },
+  { href: "/tournaments", label: "Arena tournaments" },
+];
+
+const NAV_LINKS: NavLink[] = [
+  { href: "/lobby", label: "Play", menu: PLAY_MENU_LINKS },
   { href: "/leaderboard", label: "Leaderboard" },
   { href: "/clubs", label: "Clubs" },
   { href: "/tournaments", label: "Tournaments" },
@@ -187,18 +195,47 @@ export function SiteHeader({ active }: { active?: string }) {
       <div className="flex min-w-0 items-center gap-2 sm:gap-5">
         <Logo />
         <div className="hidden items-center gap-1 text-sm font-body font-medium md:flex">
-          {NAV_LINKS.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={
-                "px-3 py-1.5 transition-colors hover:bg-white/5 " +
-                (active === link.href ? "text-gold-leaf" : "text-parchment-100")
-              }
-            >
-              {link.label}
-            </Link>
-          ))}
+          {NAV_LINKS.map((link) =>
+            link.menu ? (
+              // Lichess-style: the label is still a link, and hovering it (or
+              // tabbing into it) reveals a dropdown of sub-destinations.
+              <div key={link.href} className="group relative">
+                <Link
+                  href={link.href}
+                  className={
+                    "block px-3 py-1.5 transition-colors group-hover:bg-white/5 " +
+                    (active === link.href ? "text-gold-leaf" : "text-parchment-100")
+                  }
+                >
+                  {link.label}
+                </Link>
+                <div className="invisible absolute left-0 top-full z-40 w-52 opacity-0 transition-opacity group-focus-within:visible group-focus-within:opacity-100 group-hover:visible group-hover:opacity-100">
+                  <div className="plate dropdown py-1 shadow-2xl">
+                    {link.menu.map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className="block px-4 py-2 text-sm text-parchment-100 transition-colors hover:bg-white/5 hover:text-parchment-50"
+                      >
+                        {item.label}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={
+                  "px-3 py-1.5 transition-colors hover:bg-white/5 " +
+                  (active === link.href ? "text-gold-leaf" : "text-parchment-100")
+                }
+              >
+                {link.label}
+              </Link>
+            )
+          )}
         </div>
       </div>
 
