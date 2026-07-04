@@ -125,6 +125,10 @@ export interface PlayerBuffState {
 export interface BuffMatchState {
   /** Own moves between buff drafts. */
   cadence: number;
+  /** Shared draft trigger in total plies: both players draft at the same
+   * time when the game reaches this ply. Optional so saved games from the
+   * per-player cadence era still load; playMove backfills it. */
+  nextDraftAtPly?: number;
   rngState: number;
   effects: ActiveEffect[];
   extraMoves: { w: number; b: number };

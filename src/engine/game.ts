@@ -418,16 +418,26 @@ export function playMove(game: NerfGame, move: Move): NerfGame {
       game.board.epTarget = null;
       bs.chainKingGuard = move.color;
     }
-    // Buff draft cadence: the mover's own move count reaching the threshold
-    // rolls a fresh offer (unless a draft-block effect eats it).
-    const ps = bs.players[move.color];
-    const ownMoves = game.board.history.filter((m) => m.color === move.color).length;
-    if (!ps.offer && ownMoves >= ps.nextDraftAt) {
-      ps.nextDraftAt += bs.cadence;
-      if ((ps.flags.blockedDrafts ?? 0) > 0) {
-        ps.flags.blockedDrafts = (ps.flags.blockedDrafts ?? 0) - 1;
-      } else {
-        rollOffer(bs, move.color);
+    // Buff draft cadence: both players draft at the same time. The shared
+    // trigger runs on total plies (a full round is two plies), so neither
+    // side ever runs a draft ahead of the other. White rolls first for a
+    // stable RNG stream; draft-block effects eat offers individually.
+    if (bs.nextDraftAtPly == null) {
+      // Saved games from the per-player cadence era resume on the earlier
+      // of the two old thresholds.
+      bs.nextDraftAtPly = Math.min(bs.players.w.nextDraftAt, bs.players.b.nextDraftAt) * 2;
+    }
+    if (game.board.history.length >= bs.nextDraftAtPly) {
+      bs.nextDraftAtPly += bs.cadence * 2;
+      for (const color of ["w", "b"] as Color[]) {
+        const ps = bs.players[color];
+        ps.nextDraftAt += bs.cadence;
+        if (ps.offer) continue;
+        if ((ps.flags.blockedDrafts ?? 0) > 0) {
+          ps.flags.blockedDrafts = (ps.flags.blockedDrafts ?? 0) - 1;
+        } else {
+          rollOffer(bs, color);
+        }
       }
     }
   }
