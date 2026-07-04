@@ -4,6 +4,8 @@ Behavioral guidelines to reduce common LLM coding mistakes. Merge with project-s
 
 **Tradeoff:** These guidelines bias toward caution over speed. For trivial tasks, use judgment.
 
+Concrete wrong-vs-right code examples for each principle are in `EXAMPLES.md` — consult it when unsure how a principle applies.
+
 ## 1. Think Before Coding
 
 **Don't assume. Don't hide confusion. Surface tradeoffs.**
