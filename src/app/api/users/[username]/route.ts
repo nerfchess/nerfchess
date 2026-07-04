@@ -28,9 +28,30 @@ export async function GET(_request: Request, { params }: { params: { username: s
     }>();
   if (!user) return NextResponse.json({ error: "User not found." }, { status: 404 });
 
+  // Independent per-time-control ratings; buckets a user never played show
+  // as null so the UI can label them provisional/unrated.
+  const categoryRows = await db
+    .prepare(
+      `SELECT category, rating, rd, games, wins, losses, draws, peak
+       FROM user_ratings WHERE user_id = ?`,
+    )
+    .bind(user.id)
+    .all<{
+      category: string;
+      rating: number;
+      rd: number;
+      games: number;
+      wins: number;
+      losses: number;
+      draws: number;
+      peak: number;
+    }>();
+  const ratings: Record<string, (typeof categoryRows.results)[number]> = {};
+  for (const row of categoryRows.results) ratings[row.category] = row;
+
   const games = await db
     .prepare(
-      `SELECT id, white_name, black_name, winner, reason, rated,
+      `SELECT id, white_name, black_name, winner, reason, rated, category,
               white_user_id, black_user_id,
               white_rating_before, white_rating_after, black_rating_before, black_rating_after,
               time_sec, increment_sec, completed_at
@@ -69,6 +90,7 @@ export async function GET(_request: Request, { params }: { params: { username: s
       bio: user.bio,
     },
     games: games.results,
+    ratings,
     ratingHistory: ratingHistory.results.filter((p) => p.rating != null),
   });
 }

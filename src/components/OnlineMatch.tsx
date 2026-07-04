@@ -13,7 +13,7 @@ import { MoveList } from "@/components/MoveList";
 import { PlayerNerfCard } from "@/components/PlayerNerfCard";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
-import { cloneBoard, isInCheck, makeMove, moveToUCI } from "@/engine/board";
+import { cloneBoard, findKing, isInCheck, makeMove, moveToUCI } from "@/engine/board";
 import { computeMoveRisks } from "@/engine/moveSafety";
 import { loadSettings } from "@/lib/settings";
 import type { GameContext, Nerf } from "@/engine/nerf";
@@ -109,6 +109,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [uiSettings, setUiSettings] = useState(() => loadSettings());
   const [confirmingResign, setConfirmingResign] = useState(false);
+  const [confirmingDraw, setConfirmingDraw] = useState(false);
+  // A move held for confirmation (Settings > Gameplay > Move confirmation).
+  const [confirmMovePending, setConfirmMovePending] = useState<Move | null>(null);
   const [drawOfferBy, setDrawOfferBy] = useState<Color | null>(null);
   const [drawOfferStatus, setDrawOfferStatus] = useState<"idle" | "offering" | "declined">("idle");
   const [takebackOfferBy, setTakebackOfferBy] = useState<Color | null>(null);
@@ -287,6 +290,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         }
         const next = playMove(g, lm);
         applyGame({ ...next });
+        setConfirmMovePending(null);
         setWhiteMs(e.move.wc);
         setBlackMs(e.move.bc);
         if (pendingLocalMoveRef.current) {
@@ -312,6 +316,8 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         // queued one already applies): fire the queued premove immediately.
         if (next.board.turn === myColor) queuePremoveSend(next);
       } else if (e.type === "end") {
+        setConfirmMovePending(null);
+        setConfirmingDraw(false);
         setShowResult(true);
         setWhiteMs(e.end.wc);
         setBlackMs(e.end.bc);
@@ -356,6 +362,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         setAwaitingPremoveAck(false);
         clearPremoves();
         setHistoryPly(null);
+        setConfirmMovePending(null);
         setTakebackOfferBy(null);
         setTakebackStatus("idle");
         setDrawOfferBy(null);
@@ -558,6 +565,16 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
       (x) => x.from === m.from && x.to === m.to && (x.promotion ?? null) === (m.promotion ?? null),
     );
     if (!lm) return;
+    if (uiSettings.confirmMove) {
+      // Hold the move for an explicit confirm tap; the board previews it.
+      setConfirmMovePending(lm);
+      return;
+    }
+    sendMoveNow(lm);
+  };
+
+  const sendMoveNow = (lm: Move) => {
+    if (!game) return;
     clearPremoves();
     setAwaitingPremoveAck(false);
     const uci = moveToUCI(lm);
@@ -568,6 +585,12 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
       return;
     }
     setPendingLocalMove({ uci, ply, move: lm });
+  };
+
+  const confirmHeldMove = () => {
+    const held = confirmMovePending;
+    setConfirmMovePending(null);
+    if (held) sendMoveNow(held);
   };
 
   // Execute queued premove when our turn comes
@@ -701,6 +724,11 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
 
   const onOfferDraw = () => {
     if (!game || game.result || drawOfferStatus === "offering") return;
+    if (uiSettings.confirmDrawOffer && !confirmingDraw) {
+      setConfirmingDraw(true);
+      return;
+    }
+    setConfirmingDraw(false);
     setError(null);
     if (!session.offerDraw()) {
       setError("Disconnected from the game server.");
@@ -780,20 +808,31 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   const visual = myNerf.visual?.(myState, myCtx);
   const opponentNerf = revealedOppNerf ?? (myColor === "w" ? game.black.nerf : game.white.nerf);
   const lastMove = game.board.history[game.board.history.length - 1] ?? null;
+  // A held move (confirmation setting) previews on the board before sending.
+  const confirmPreviewBoard = confirmMovePending
+    ? makeMove(cloneBoard(game.board), confirmMovePending)
+    : null;
   // virtualBoard already includes the pending local move (it builds on
   // pendingLocalBoard), so it wins while premoves are queued.
-  const boardForDisplay = reviewBoard ?? virtualBoard ?? pendingLocalBoard ?? game.board;
+  const boardForDisplay =
+    reviewBoard ?? confirmPreviewBoard ?? virtualBoard ?? pendingLocalBoard ?? game.board;
+  const orientation: Color = uiSettings.flipBoard ? oppColor : myColor;
+  const checkedBoard = reviewBoard ?? game.board;
+  const checkSquare =
+    uiSettings.checkHighlight && isInCheck(checkedBoard, checkedBoard.turn)
+      ? findKing(checkedBoard, checkedBoard.turn)
+      : null;
   const lastMoveForDisplay = isReviewingHistory
     ? game.board.history[currentHistoryPly - 1] ?? null
-    : pendingLocalMove?.move ?? lastMove;
+    : confirmMovePending ?? pendingLocalMove?.move ?? lastMove;
   const hint = currentHint(game, myColor);
   const forcedSquares = hint?.squares ?? [];
   const railHeightStyle = boardHeight
     ? ({ "--board-height": `${boardHeight}px` } as CSSProperties)
     : undefined;
   const boardFitClass = hint
-    ? "w-[min(92vw,720px,calc(100dvh-11rem))] max-w-full"
-    : "w-[min(92vw,720px,calc(100dvh-8rem))] max-w-full";
+    ? "w-[min(92vw,var(--board-cap,720px),calc(100dvh-11rem))] max-w-full"
+    : "w-[min(92vw,var(--board-cap,720px),calc(100dvh-8rem))] max-w-full";
   // Takebacks are casual-only and need a move of mine on the board.
   const takebackAvailable =
     !start.rated && game.board.history.some((m) => m.color === myColor);
@@ -833,7 +872,43 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     </button>
   );
 
-  const historyActions = game.result ? null : confirmingResign ? (
+  const historyActions = game.result ? null : confirmMovePending ? (
+    <div className="space-y-2">
+      <div className="smallcaps text-[10px] text-parchment-300">Play this move?</div>
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          onClick={confirmHeldMove}
+          className="min-w-0 px-3 py-2 border border-gold/40 bg-gold/10 text-gold-leaf hover:bg-gold/20 hover:border-gold/70 transition text-xs font-display font-semibold tracking-wide"
+        >
+          Confirm
+        </button>
+        <button
+          onClick={() => setConfirmMovePending(null)}
+          className="min-w-0 px-3 py-2 btn-ghost text-xs font-display tracking-wide"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  ) : confirmingDraw ? (
+    <div className="space-y-2">
+      <div className="smallcaps text-[10px] text-parchment-300">Offer a draw?</div>
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          onClick={onOfferDraw}
+          className="min-w-0 px-3 py-2 border border-gold/40 bg-gold/10 text-gold-leaf hover:bg-gold/20 hover:border-gold/70 transition text-xs font-display font-semibold tracking-wide"
+        >
+          Offer draw
+        </button>
+        <button
+          onClick={() => setConfirmingDraw(false)}
+          className="min-w-0 px-3 py-2 btn-ghost text-xs font-display tracking-wide"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  ) : confirmingResign ? (
     <div className="space-y-2">
       <div className="smallcaps text-[10px] text-parchment-300">Resign the game?</div>
       <div className="grid grid-cols-2 gap-2">
@@ -1096,7 +1171,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                       ? moves
                       : []
                   }
-                  orientation={myColor}
+                  orientation={orientation}
                   onMove={handleLocalMove}
                   myColor={myColor}
                   visual={isReviewingHistory ? undefined : { ...(visual ?? {}), highlightSquares: forcedSquares }}
@@ -1104,6 +1179,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   disabled={
                     !!game.result ||
                     isReviewingHistory ||
+                    !!confirmMovePending ||
                     (!uiSettings.premovesEnabled && (awaitingPremoveAck || !!pendingLocalMove))
                   }
                   premoveMode={!isReviewingHistory && premoveMode}
@@ -1114,6 +1190,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   showCoordinates={uiSettings.showCoordinates}
                   highlightLastMove={uiSettings.highlightLastMove}
                   showLegalMoves={uiSettings.showLegalMoves}
+                  checkSquare={isReviewingHistory ? null : checkSquare}
                 />
               </div>
               <div className="flex items-center justify-between gap-2 sm:hidden">

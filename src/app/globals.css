@@ -47,6 +47,26 @@ html[data-anim="fast"] *::after {
   transition-duration: 80ms !important;
 }
 
+/* Site theme (Settings > Appearance): the site is dark-first; "light" remaps
+   the core surfaces and text ramps like the high-contrast block below. */
+html[data-theme="light"] body {
+  background: linear-gradient(180deg, #efece5 0%, #e4e0d6 100%) fixed, #e9e6de;
+  background-color: #e9e6de;
+  color: #2b2822;
+}
+html[data-theme="light"] { --paper: #2b2822; --paper-dim: #5c584f; }
+html[data-theme="light"] .plate {
+  background: rgba(255, 255, 255, 0.55);
+  border-color: rgba(0, 0, 0, 0.14);
+}
+html[data-theme="light"] .text-parchment,
+html[data-theme="light"] .text-parchment-50,
+html[data-theme="light"] .text-parchment-100,
+html[data-theme="light"] .text-parchment-200 { color: #2b2822; }
+html[data-theme="light"] .text-parchment-300 { color: #4a463e; }
+html[data-theme="light"] .text-parchment-400 { color: #6b665c; }
+html[data-theme="light"] .text-parchment-500 { color: #86816f; }
+
 /* High contrast preference (Settings): brighter foregrounds, firmer borders. */
 html[data-contrast="high"] { --paper: #eceae6; --paper-dim: #b5b2ac; }
 html[data-contrast="high"] .plate { border-color: rgba(255, 255, 255, 0.28); }
@@ -251,6 +271,16 @@ html[data-piece-source="lichess"] .piece-asset {
 }
 .sq-light { background-color: var(--sq-light); }
 .sq-dark  { background-color: var(--sq-dark); }
+/* Checked king (Settings > Board & Pieces > Check highlight): a red radial
+   burst under the piece, like Lichess. */
+.sq-check {
+  background-image: radial-gradient(
+    ellipse at center,
+    rgba(255, 60, 50, 0.85) 0%,
+    rgba(230, 40, 30, 0.45) 42%,
+    rgba(180, 0, 0, 0) 72%
+  );
+}
 /* Selection: thick brass ring + light wash, so the piece stays readable on top */
 .sq-sel {
   box-shadow:

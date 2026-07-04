@@ -13,6 +13,14 @@ export function setUiSounds(v: boolean) {
 let noiseBuf: AudioBuffer | null = null;
 let volume = 0.8;
 
+// Per-event sound preferences (Settings > Sound). `enabled` is the master
+// switch; the rest gate individual game sounds.
+const soundPrefs = { enabled: true, move: true, capture: true, check: true, gameEnd: true };
+
+export function configureSoundPrefs(prefs: Partial<typeof soundPrefs>) {
+  Object.assign(soundPrefs, prefs);
+}
+
 export function setVolume(v: number) {
   volume = Math.max(0, Math.min(1, v));
   if (typeof window !== "undefined") {
@@ -186,6 +194,7 @@ function tone(opts: {
 
 // Standard move: a single short, mid-frequency wood click.
 export function playMove() {
+  if (!soundPrefs.enabled || !soundPrefs.move) return;
   knock({
     filterFreq: 1100,
     filterQ: 3.5,
@@ -199,6 +208,7 @@ export function playMove() {
 
 // Capture: lower, thicker click with a slight "thud" body.
 export function playCapture() {
+  if (!soundPrefs.enabled || !soundPrefs.capture) return;
   knock({
     filterFreq: 700,
     filterQ: 2.5,
@@ -212,18 +222,21 @@ export function playCapture() {
 
 // Check: a brighter, bell-like ping (two-note overtone).
 export function playCheck() {
+  if (!soundPrefs.enabled || !soundPrefs.check) return;
   tone({ freq: 1320, dur: 0.18, type: "sine", gain: 0.18, attack: 0.002, release: 0.18 });
   tone({ freq: 1980, dur: 0.18, type: "sine", gain: 0.08, attack: 0.002, release: 0.18, delay: 0.01 });
 }
 
 // Nerf trigger: soft two-note descending notification.
 export function playNerf() {
+  if (!soundPrefs.enabled || !soundPrefs.gameEnd) return;
   tone({ freq: 660, dur: 0.18, type: "triangle", gain: 0.14, attack: 0.005, release: 0.18 });
   tone({ freq: 494, dur: 0.22, type: "triangle", gain: 0.12, attack: 0.005, release: 0.22, delay: 0.13 });
 }
 
 // Game over: chess.com-style two-note descending chime.
 export function playGameOver() {
+  if (!soundPrefs.enabled || !soundPrefs.gameEnd) return;
   tone({ freq: 880, dur: 0.18, type: "sine", gain: 0.18, attack: 0.005, release: 0.18 });
   tone({ freq: 698, dur: 0.30, type: "sine", gain: 0.18, attack: 0.005, release: 0.28, delay: 0.13 });
   tone({ freq: 1318, dur: 0.30, type: "sine", gain: 0.06, attack: 0.005, release: 0.28, delay: 0.13 });
@@ -231,6 +244,7 @@ export function playGameOver() {
 
 // Low time: urgent double tick, like a clock tapping your shoulder.
 export function playLowTime() {
+  if (!soundPrefs.enabled) return;
   tone({ freq: 988, dur: 0.09, type: "square", gain: 0.10, attack: 0.003, release: 0.08 });
   tone({ freq: 988, dur: 0.09, type: "square", gain: 0.10, attack: 0.003, release: 0.08, delay: 0.16 });
   tone({ freq: 1319, dur: 0.12, type: "square", gain: 0.08, attack: 0.003, release: 0.10, delay: 0.32 });
@@ -238,11 +252,12 @@ export function playLowTime() {
 
 // Countdown tick: short urgent blip for the last seconds of the grace timer.
 export function playCountdownTick() {
+  if (!soundPrefs.enabled) return;
   tone({ freq: 988, dur: 0.09, type: "square", gain: 0.10, attack: 0.002, release: 0.09 });
 }
 
 // Select: very brief, soft pickup tick.
 export function playSelect() {
-  if (!uiSounds) return;
+  if (!soundPrefs.enabled || !uiSounds) return;
   knock({ filterFreq: 1600, filterQ: 5, dur: 0.025, gain: 0.18 });
 }

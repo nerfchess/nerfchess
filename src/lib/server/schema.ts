@@ -27,6 +27,20 @@ export const SCHEMA_STATEMENTS: string[] = [
     is_guest INTEGER NOT NULL DEFAULT 0
   )`,
   `CREATE INDEX IF NOT EXISTS idx_users_rating ON users(rating DESC)`,
+  `CREATE TABLE IF NOT EXISTS user_ratings (
+    user_id TEXT NOT NULL REFERENCES users(id),
+    category TEXT NOT NULL,
+    rating REAL NOT NULL DEFAULT 1500,
+    rd REAL NOT NULL DEFAULT 350,
+    vol REAL NOT NULL DEFAULT 0.06,
+    games INTEGER NOT NULL DEFAULT 0,
+    wins INTEGER NOT NULL DEFAULT 0,
+    losses INTEGER NOT NULL DEFAULT 0,
+    draws INTEGER NOT NULL DEFAULT 0,
+    peak REAL NOT NULL DEFAULT 1500,
+    PRIMARY KEY (user_id, category)
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_user_ratings_leaderboard ON user_ratings(category, rating DESC)`,
   `CREATE TABLE IF NOT EXISTS sessions (
     token_hash TEXT PRIMARY KEY,
     user_id TEXT NOT NULL REFERENCES users(id),
@@ -218,6 +232,12 @@ const ADDITIVE_COLUMNS: string[] = [
   `ALTER TABLE users ADD COLUMN banned_until INTEGER`,
   `ALTER TABLE users ADD COLUMN bio TEXT`,
   `ALTER TABLE users ADD COLUMN is_guest INTEGER NOT NULL DEFAULT 0`,
+  // The speed bucket the game was rated under (ultrabullet|bullet|blitz|rapid).
+  `ALTER TABLE games ADD COLUMN category TEXT`,
+  // Per-account settings blob (JSON) so preferences follow the user across
+  // devices; see /api/users/settings.
+  `ALTER TABLE users ADD COLUMN settings TEXT`,
+  `ALTER TABLE users ADD COLUMN settings_updated_at INTEGER`,
 ];
 
 export async function ensureSchema(db: D1Database): Promise<void> {

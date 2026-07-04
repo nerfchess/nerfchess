@@ -69,6 +69,42 @@ function restoreSlot(saved: SavedPlayerSlot): PlayerSlot | null {
   };
 }
 
+// A structured-clone-safe snapshot of a NerfGame (functions replaced by nerf
+// ids / custom specs). Also used to ship positions to the AI web worker.
+export type SavedGameSnapshot = SavedAiGame["game"];
+
+export function snapshotGame(
+  game: NerfGame,
+  whiteCustomSpec?: CustomNerf | null,
+  blackCustomSpec?: CustomNerf | null,
+): SavedGameSnapshot | null {
+  const white = saveSlot(game.white, whiteCustomSpec);
+  const black = saveSlot(game.black, blackCustomSpec);
+  if (!white || !black) return null;
+  return {
+    board: game.board,
+    white,
+    black,
+    result: game.result,
+    startedAt: game.startedAt,
+    captured: game.captured,
+  };
+}
+
+export function restoreGameSnapshot(saved: SavedGameSnapshot): NerfGame | null {
+  const white = restoreSlot(saved.white);
+  const black = restoreSlot(saved.black);
+  if (!white || !black) return null;
+  return {
+    board: saved.board,
+    white,
+    black,
+    result: saved.result,
+    startedAt: saved.startedAt,
+    captured: saved.captured,
+  };
+}
+
 export function loadSavedAiGame(query: string): SavedAiGame | null {
   if (typeof window === "undefined") return null;
   try {
@@ -84,17 +120,7 @@ export function loadSavedAiGame(query: string): SavedAiGame | null {
 }
 
 export function restoreSavedAiGame(saved: SavedAiGame): NerfGame | null {
-  const white = restoreSlot(saved.game.white);
-  const black = restoreSlot(saved.game.black);
-  if (!white || !black) return null;
-  return {
-    board: saved.game.board,
-    white,
-    black,
-    result: saved.game.result,
-    startedAt: saved.game.startedAt,
-    captured: saved.game.captured,
-  };
+  return restoreGameSnapshot(saved.game);
 }
 
 export function saveAiGame(input: {

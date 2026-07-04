@@ -6,12 +6,14 @@
 import {
   Accessibility,
   Gamepad2,
+  Grid3x3,
   Palette,
   SlidersHorizontal,
+  UserRound,
   Volume2,
   type LucideIcon,
 } from "lucide-react";
-import type { AnimationSpeed, Settings } from "@/lib/settings";
+import type { AnimationSpeed, Settings, SiteTheme } from "@/lib/settings";
 
 // Setting keys that hold a boolean (valid targets for a live toggle) and those
 // that hold a number (valid targets for a live slider), derived from the model
@@ -23,9 +25,11 @@ export type Control =
   | { kind: "toggle"; setting: BoolKey }
   | { kind: "slider"; setting: NumKey; min: number; max: number; step: number; format?: (v: number) => string }
   | { kind: "animationSpeed"; options: Array<{ value: AnimationSpeed; label: string }> }
+  | { kind: "siteTheme"; options: Array<{ value: SiteTheme; label: string }> }
   | { kind: "accentColor" }
   | { kind: "boardTheme" }
   | { kind: "pieceTheme" }
+  | { kind: "account" }
   | { kind: "reset" };
 
 export interface RowConfig {
@@ -51,6 +55,24 @@ export const SECTIONS: SectionConfig[] = [
     icon: Gamepad2,
     rows: [
       {
+        id: "premovesEnabled",
+        label: "Premoves",
+        hint: "Queue your next move during the opponent's turn",
+        control: { kind: "toggle", setting: "premovesEnabled" },
+      },
+      {
+        id: "confirmMove",
+        label: "Move confirmation",
+        hint: "Require a confirm tap before each move is sent — for slower time controls",
+        control: { kind: "toggle", setting: "confirmMove" },
+      },
+      {
+        id: "showLegalMoves",
+        label: "Show legal moves",
+        hint: "Mark the squares a selected piece can move to",
+        control: { kind: "toggle", setting: "showLegalMoves" },
+      },
+      {
         id: "moveRiskWarnings",
         label: "Move risk warnings",
         hint: "Tint move dots yellow (self-loss) or red (into check)",
@@ -61,6 +83,18 @@ export const SECTIONS: SectionConfig[] = [
         label: "Auto-queen promotions",
         hint: "Skip the piece picker and always promote to queen",
         control: { kind: "toggle", setting: "autoQueen" },
+      },
+      {
+        id: "confirmResign",
+        label: "Confirm resign",
+        hint: "Ask before resigning a game",
+        control: { kind: "toggle", setting: "confirmResign" },
+      },
+      {
+        id: "confirmDrawOffer",
+        label: "Confirm draw offers",
+        hint: "Ask before sending a draw offer",
+        control: { kind: "toggle", setting: "confirmDrawOffer" },
       },
       {
         id: "hideOpponentReveal",
@@ -74,40 +108,12 @@ export const SECTIONS: SectionConfig[] = [
         hint: "Hide in-game chat messages from opponents",
         control: { kind: "toggle", setting: "muteChat" },
       },
-      {
-        id: "confirmResign",
-        label: "Confirm resign",
-        hint: "Ask before resigning a game",
-        control: { kind: "toggle", setting: "confirmResign" },
-      },
-      {
-        id: "showLegalMoves",
-        label: "Show legal moves",
-        hint: "Mark the squares a selected piece can move to",
-        control: { kind: "toggle", setting: "showLegalMoves" },
-      },
-      {
-        id: "premovesEnabled",
-        label: "Premoves",
-        hint: "Queue your next move during the opponent's turn",
-        control: { kind: "toggle", setting: "premovesEnabled" },
-      },
-      {
-        id: "showCoordinates",
-        label: "Show coordinates",
-        control: { kind: "toggle", setting: "showCoordinates" },
-      },
-      {
-        id: "highlightLastMove",
-        label: "Highlight last move",
-        control: { kind: "toggle", setting: "highlightLastMove" },
-      },
     ],
   },
   {
-    id: "appearance",
-    title: "Appearance",
-    icon: Palette,
+    id: "board",
+    title: "Board & Pieces",
+    icon: Grid3x3,
     rows: [
       {
         id: "boardTheme",
@@ -120,18 +126,41 @@ export const SECTIONS: SectionConfig[] = [
         control: { kind: "pieceTheme" },
       },
       {
-        id: "accentColor",
-        label: "Accent color",
-        control: { kind: "accentColor" },
+        id: "boardSize",
+        label: "Board size",
+        control: { kind: "slider", setting: "boardSize", min: 0.8, max: 1.1, step: 0.05, format: pct },
       },
       {
-        id: "uiScale",
-        label: "UI scale",
-        control: { kind: "slider", setting: "uiScale", min: 0.85, max: 1.15, step: 0.05, format: pct },
+        id: "largerPieces",
+        label: "Larger pieces",
+        hint: "Draw pieces bigger inside their squares",
+        control: { kind: "toggle", setting: "largerPieces" },
+      },
+      {
+        id: "flipBoard",
+        label: "Flip board",
+        hint: "View the board from the opponent's side",
+        control: { kind: "toggle", setting: "flipBoard" },
+      },
+      {
+        id: "showCoordinates",
+        label: "Show coordinates",
+        control: { kind: "toggle", setting: "showCoordinates" },
+      },
+      {
+        id: "highlightLastMove",
+        label: "Highlight last move",
+        control: { kind: "toggle", setting: "highlightLastMove" },
+      },
+      {
+        id: "checkHighlight",
+        label: "Check highlight",
+        hint: "Tint the checked king's square red",
+        control: { kind: "toggle", setting: "checkHighlight" },
       },
       {
         id: "animationSpeed",
-        label: "Animation speed",
+        label: "Move animations",
         control: {
           kind: "animationSpeed",
           options: [
@@ -145,13 +174,39 @@ export const SECTIONS: SectionConfig[] = [
   },
   {
     id: "audio",
-    title: "Audio",
+    title: "Sound",
     icon: Volume2,
     rows: [
       {
+        id: "soundEnabled",
+        label: "All sounds",
+        hint: "Master switch for every game sound",
+        control: { kind: "toggle", setting: "soundEnabled" },
+      },
+      {
         id: "volume",
-        label: "Master volume",
+        label: "Volume",
         control: { kind: "slider", setting: "volume", min: 0, max: 1, step: 0.05, format: pct },
+      },
+      {
+        id: "moveSound",
+        label: "Move sound",
+        control: { kind: "toggle", setting: "moveSound" },
+      },
+      {
+        id: "captureSound",
+        label: "Capture sound",
+        control: { kind: "toggle", setting: "captureSound" },
+      },
+      {
+        id: "checkSound",
+        label: "Check sound",
+        control: { kind: "toggle", setting: "checkSound" },
+      },
+      {
+        id: "gameEndSound",
+        label: "Game end sound",
+        control: { kind: "toggle", setting: "gameEndSound" },
       },
       {
         id: "uiSounds",
@@ -168,6 +223,59 @@ export const SECTIONS: SectionConfig[] = [
     ],
   },
   {
+    id: "appearance",
+    title: "Appearance",
+    icon: Palette,
+    rows: [
+      {
+        id: "siteTheme",
+        label: "Theme",
+        control: {
+          kind: "siteTheme",
+          options: [
+            { value: "dark", label: "Dark" },
+            { value: "light", label: "Light" },
+            { value: "system", label: "System" },
+          ],
+        },
+      },
+      {
+        id: "accentColor",
+        label: "Accent color",
+        control: { kind: "accentColor" },
+      },
+      {
+        id: "uiScale",
+        label: "UI scale",
+        control: { kind: "slider", setting: "uiScale", min: 0.85, max: 1.15, step: 0.05, format: pct },
+      },
+      {
+        id: "compactMode",
+        label: "Compact mode",
+        hint: "Tighter interface density",
+        control: { kind: "toggle", setting: "compactMode" },
+      },
+      {
+        id: "reducedMotion",
+        label: "Reduced motion",
+        hint: "Minimize animations and transitions",
+        control: { kind: "toggle", setting: "reducedMotion" },
+      },
+    ],
+  },
+  {
+    id: "account",
+    title: "Account",
+    icon: UserRound,
+    rows: [
+      {
+        id: "account",
+        label: "Account",
+        control: { kind: "account" },
+      },
+    ],
+  },
+  {
     id: "accessibility",
     title: "Accessibility",
     icon: Accessibility,
@@ -175,12 +283,24 @@ export const SECTIONS: SectionConfig[] = [
       {
         id: "highContrast",
         label: "High contrast",
+        hint: "Brighter text and firmer borders",
         control: { kind: "toggle", setting: "highContrast" },
       },
       {
-        id: "reducedMotion",
+        id: "largerPiecesA11y",
+        label: "Larger pieces",
+        hint: "Also available under Board & Pieces",
+        control: { kind: "toggle", setting: "largerPieces" },
+      },
+      {
+        id: "largerText",
+        label: "Larger text",
+        hint: "Scales the whole interface (same as UI scale)",
+        control: { kind: "slider", setting: "uiScale", min: 0.85, max: 1.15, step: 0.05, format: pct },
+      },
+      {
+        id: "reducedMotionA11y",
         label: "Reduced motion",
-        hint: "Minimize animations and transitions",
         control: { kind: "toggle", setting: "reducedMotion" },
       },
     ],
