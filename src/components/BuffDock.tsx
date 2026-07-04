@@ -67,7 +67,7 @@ export function BuffDock({ game, myColor, canAct, onChanged, onUse }: Props) {
       <div className="smallcaps text-[10px] text-parchment-400">Your buffs</div>
       {mine.length === 0 && (
         <p className="text-[11px] text-parchment-400">
-          None yet — your first draft arrives after {bs.players[myColor].nextDraftAt} moves.
+          None yet. Your first draft arrives after {bs.players[myColor].nextDraftAt} moves.
         </p>
       )}
       {mine.map((inst, i) => {

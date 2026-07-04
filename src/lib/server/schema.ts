@@ -247,6 +247,9 @@ const ADDITIVE_COLUMNS: string[] = [
   // devices; see /api/users/settings.
   `ALTER TABLE users ADD COLUMN settings TEXT`,
   `ALTER TABLE users ADD COLUMN settings_updated_at INTEGER`,
+  // Which rules variant the game was played under. Every live game today is
+  // classic nerf chess; future variants record their own id here.
+  `ALTER TABLE games ADD COLUMN ruleset TEXT NOT NULL DEFAULT 'classic'`,
 ];
 
 export async function ensureSchema(db: D1Database): Promise<void> {

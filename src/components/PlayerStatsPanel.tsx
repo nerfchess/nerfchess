@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { getNerf } from "@/engine/nerfs/library";
 import { RATING_CATEGORIES } from "@/lib/ratingCategories";
-import type { PlayerStats, StreakInfo } from "@/lib/playerStats";
+import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
+import type { DailyBucket, PlayerStats, StreakInfo } from "@/lib/playerStats";
 
 // Lichess-style detailed statistics block, shared by the own-profile page and
 // public player pages. Everything renders from one PlayerStats payload.
@@ -24,6 +26,17 @@ function formatDuration(ms: number): string {
   if (days > 0) return `${days} day${days === 1 ? "" : "s"}, ${hours} hr${hours === 1 ? "" : "s"}`;
   if (hours > 0) return `${hours} hr${hours === 1 ? "" : "s"}, ${mins} min`;
   return `${mins} min`;
+}
+
+// Compact duration for single games and sessions, where minute resolution
+// would round a bullet game down to nothing.
+function formatShortDuration(ms: number): string {
+  const totalSec = Math.round(ms / 1000);
+  if (totalSec < 60) return `${totalSec} sec`;
+  const minutes = Math.floor(totalSec / 60);
+  if (minutes >= 60) return formatDuration(ms);
+  const sec = totalSec % 60;
+  return sec > 0 ? `${minutes} min ${sec} sec` : `${minutes} min`;
 }
 
 function percent(part: number, whole: number): string {
@@ -126,6 +139,55 @@ function ExtremeCard({
   );
 }
 
+// One stacked bar per day: wins on top, then draws, losses at the bottom.
+// Hover (or long-press) a bar for the date and exact counts.
+function DailyStrip({ daily }: { daily: DailyBucket[] }) {
+  const max = daily.reduce((m, d) => Math.max(m, d.wins + d.losses + d.draws), 0);
+  return (
+    <div className="plate p-4 sm:p-5">
+      <div className="flex items-baseline justify-between gap-3">
+        <div className="smallcaps text-[10px] text-parchment-400">Last 30 days</div>
+        <span className="text-[10px] text-parchment-400">
+          <span className="text-verdigris-glow">wins</span> · draws ·{" "}
+          <span className="text-oxblood-glow">losses</span>
+        </span>
+      </div>
+      {max === 0 ? (
+        <div className="mt-2 text-sm text-parchment-400">No games in the last 30 days</div>
+      ) : (
+        <div className="mt-3 flex h-16 items-end gap-[3px]">
+          {daily.map((d) => {
+            const total = d.wins + d.losses + d.draws;
+            return (
+              <div
+                key={d.date}
+                title={`${d.date}: ${d.wins} won, ${d.losses} lost, ${d.draws} drawn`}
+                className="flex flex-1 flex-col justify-end self-stretch"
+              >
+                {total === 0 ? (
+                  <div className="h-[2px] bg-white/10" />
+                ) : (
+                  <>
+                    {d.wins > 0 && (
+                      <div className="bg-verdigris-glow/80" style={{ height: `${(d.wins / max) * 100}%` }} />
+                    )}
+                    {d.draws > 0 && (
+                      <div className="bg-parchment-400/60" style={{ height: `${(d.draws / max) * 100}%` }} />
+                    )}
+                    {d.losses > 0 && (
+                      <div className="bg-oxblood-glow/80" style={{ height: `${(d.losses / max) * 100}%` }} />
+                    )}
+                  </>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function PlayerStatsPanel({ stats }: { stats: PlayerStats }) {
   const decided = stats.wins + stats.draws + stats.losses;
 
@@ -172,6 +234,9 @@ export function PlayerStatsPanel({ stats }: { stats: PlayerStats }) {
         </div>
       </div>
 
+      {/* Daily results, one stacked bar per day. */}
+      <DailyStrip daily={stats.daily} />
+
       {/* Rating extremes, each linking to the game that set it. */}
       <div className="grid gap-3 sm:grid-cols-2">
         <ExtremeCard title="Highest rating" point={stats.highest} valueClass="text-gold-leaf" />
@@ -213,6 +278,146 @@ export function PlayerStatsPanel({ stats }: { stats: PlayerStats }) {
                 >
                   {formatDate(win.at)} →
                 </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* The opponents faced the most, with the record against each. */}
+      {stats.headToHead.length > 0 && (
+        <div className="plate p-4 sm:p-5 overflow-x-auto">
+          <div className="smallcaps text-[10px] text-parchment-400">Head to head</div>
+          <table className="mt-2 w-full text-sm">
+            <thead>
+              <tr className="smallcaps text-[9px] text-parchment-400">
+                <th className="py-1.5 text-left font-normal">Opponent</th>
+                <th className="py-1.5 text-right font-normal">Games</th>
+                <th className="py-1.5 text-right font-normal">W / L / D</th>
+                <th className="py-1.5 text-right font-normal">Last played</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              {stats.headToHead.map((entry) => (
+                <tr key={entry.opponent.toLowerCase()}>
+                  <td className="py-2">
+                    <Link
+                      href={`/u/${encodeURIComponent(entry.opponent)}`}
+                      className="text-parchment-100 hover:text-gold-leaf transition-colors"
+                    >
+                      {entry.opponent}
+                    </Link>
+                  </td>
+                  <td className="py-2 text-right font-mono tabular-nums text-parchment-100">{entry.games}</td>
+                  <td className="py-2 text-right font-mono tabular-nums">
+                    <span className="text-verdigris-glow">{entry.wins}</span>
+                    <span className="text-parchment-400"> / </span>
+                    <span className="text-oxblood-glow">{entry.losses}</span>
+                    <span className="text-parchment-400"> / </span>
+                    <span className="text-parchment-200">{entry.draws}</span>
+                  </td>
+                  <td className="py-2 text-right text-xs text-parchment-400">{formatDate(entry.lastPlayed)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* The secret rules this player is dealt the most. */}
+      {stats.favoriteNerfs.length > 0 && (
+        <div className="plate p-4 sm:p-5 overflow-x-auto">
+          <div className="smallcaps text-[10px] text-parchment-400">Favorite rules</div>
+          <table className="mt-2 w-full text-sm">
+            <thead>
+              <tr className="smallcaps text-[9px] text-parchment-400">
+                <th className="py-1.5 text-left font-normal">Rule</th>
+                <th className="py-1.5 text-right font-normal">Dealt</th>
+                <th className="py-1.5 text-right font-normal">Wins</th>
+                <th className="py-1.5 text-right font-normal">Win rate</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              {stats.favoriteNerfs.map((fav) => {
+                const nerf = getNerf(fav.nerfId);
+                return (
+                  <tr key={fav.nerfId}>
+                    <td className="py-2">
+                      {nerf ? (
+                        <span className="flex min-w-0 items-center gap-2">
+                          <span className={`truncate font-display font-semibold tier-${nerf.tier}`}>
+                            {nerf.name}
+                          </span>
+                          <span
+                            className="smallcaps shrink-0 text-[9px] text-parchment-400"
+                            title={`Difficulty ${nerf.tier}: ${TIER_LABEL[nerf.tier]}`}
+                          >
+                            {TIER_ROMAN[nerf.tier]}
+                          </span>
+                        </span>
+                      ) : (
+                        <span className="font-mono text-parchment-300">{fav.nerfId}</span>
+                      )}
+                    </td>
+                    <td className="py-2 text-right font-mono tabular-nums text-parchment-100">{fav.dealt}</td>
+                    <td className="py-2 text-right font-mono tabular-nums text-verdigris-glow">{fav.wins}</td>
+                    <td className="py-2 text-right font-mono tabular-nums text-parchment-100">
+                      {Math.round(fav.winRate * 100)}%
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* How long this player's games run. */}
+      <div className="plate p-4 sm:p-5">
+        <div className="smallcaps text-[10px] text-parchment-400">Game length</div>
+        <div className="mt-1 divide-y divide-white/5">
+          <StatRow
+            label="Average moves"
+            value={stats.gameLength.avgPlies != null ? String(Math.round(stats.gameLength.avgPlies / 2)) : "-"}
+          />
+          <StatRow
+            label="Average duration"
+            value={
+              stats.gameLength.avgDurationMs != null
+                ? formatShortDuration(stats.gameLength.avgDurationMs)
+                : "-"
+            }
+          />
+        </div>
+      </div>
+
+      {/* Play sessions: runs of games less than an hour apart. */}
+      {stats.sessions.recent.length > 0 && (
+        <div className="plate p-4 sm:p-5">
+          <div className="flex items-baseline justify-between gap-3">
+            <div className="smallcaps text-[10px] text-parchment-400">Recent sessions</div>
+            <span className="text-[10px] text-parchment-400">
+              longest {stats.sessions.longestGames} game{stats.sessions.longestGames === 1 ? "" : "s"} ·{" "}
+              {stats.sessions.avgGames} per session
+            </span>
+          </div>
+          <ul className="mt-2 divide-y divide-white/5">
+            {stats.sessions.recent.map((session) => (
+              <li key={session.startedAt} className="flex items-center justify-between gap-3 py-2 text-sm">
+                <span className="min-w-0 truncate text-parchment-100">
+                  {formatDate(session.startedAt)}
+                  <span className="ml-2 text-xs text-parchment-400">
+                    {session.games} game{session.games === 1 ? "" : "s"} ·{" "}
+                    {formatShortDuration(session.durationMs)}
+                  </span>
+                </span>
+                <span className="shrink-0 font-mono text-sm tabular-nums">
+                  <span className="text-verdigris-glow">{session.wins}</span>
+                  <span className="text-parchment-400"> / </span>
+                  <span className="text-oxblood-glow">{session.losses}</span>
+                  <span className="text-parchment-400"> / </span>
+                  <span className="text-parchment-200">{session.draws}</span>
+                </span>
               </li>
             ))}
           </ul>

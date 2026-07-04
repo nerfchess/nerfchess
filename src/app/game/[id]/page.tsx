@@ -23,6 +23,7 @@ import {
 } from "@/lib/draftOnline";
 import { boardAtPly, replayUci } from "@/lib/gameReview";
 import { timeControlLabel } from "@/lib/gameHistory";
+import { gameToPGN } from "@/lib/pgn";
 import {
   clearActiveGame,
   clearOnlineSeat,
@@ -59,6 +60,7 @@ interface ReplayGame {
   white_rating_after: number | null;
   black_rating_before: number | null;
   black_rating_after: number | null;
+  started_at: number;
   completed_at: number;
 }
 
@@ -545,12 +547,34 @@ function ReplayView({ game }: { game: ReplayGame }) {
   const uciMoves = useMemo(() => (game.moves ? game.moves.split(" ").filter(Boolean) : []), [game.moves]);
   const { history } = useMemo(() => replayUci(uciMoves), [uciMoves]);
   const [historyPly, setHistoryPly] = useState<number>(history.length);
+  const [pgnCopied, setPgnCopied] = useState(false);
   const displayBoard = useMemo(() => boardAtPly(history, historyPly), [history, historyPly]);
   const lastMove = displayBoard.history[displayBoard.history.length - 1] ?? null;
 
   const players: MPPlayers = {
     w: { name: game.white_name, rating: game.white_rating_before ? Math.round(game.white_rating_before) : null },
     b: { name: game.black_name, rating: game.black_rating_before ? Math.round(game.black_rating_before) : null },
+  };
+
+  // Same export as the post-game screen; the archive already has both rules
+  // revealed, so they always go into the tags.
+  const handleCopyPGN = async () => {
+    const pgn = gameToPGN({
+      moves: history,
+      result: { winner: game.winner, reason: game.reason },
+      white: game.white_name,
+      black: game.black_name,
+      whiteNerf: IMPLEMENTED_BY_ID[game.white_nerf_id]?.name ?? null,
+      blackNerf: IMPLEMENTED_BY_ID[game.black_nerf_id]?.name ?? null,
+      startedAt: game.started_at,
+    });
+    try {
+      await navigator.clipboard.writeText(pgn);
+      setPgnCopied(true);
+      window.setTimeout(() => setPgnCopied(false), 2000);
+    } catch {
+      // Clipboard blocked; ignore.
+    }
   };
 
   return (
@@ -569,6 +593,19 @@ function ReplayView({ game }: { game: ReplayGame }) {
       activeColor={null}
       statusLabel={describeResult({ winner: game.winner, reason: game.reason })}
       nerfs={{ w: game.white_nerf_id, b: game.black_nerf_id }}
+      rail={
+        <button
+          type="button"
+          onClick={handleCopyPGN}
+          className="mt-3 w-full rounded-sm px-4 py-2 btn-ghost font-display text-sm inline-flex items-center justify-center gap-2"
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+          </svg>
+          {pgnCopied ? "Copied" : "Copy PGN"}
+        </button>
+      }
     />
   );
 }

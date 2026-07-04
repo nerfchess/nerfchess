@@ -50,6 +50,7 @@ const NAV_LINKS: NavLink[] = [
   { href: "/lobby", label: "Play", menu: PLAY_MENU_LINKS },
   { href: "/tv", label: "Watch", menu: WATCH_MENU_LINKS },
   { href: "/leaderboard", label: "Leaderboard" },
+  { href: "/community", label: "Community" },
   { href: "/clubs", label: "Clubs" },
   { href: "/tournaments", label: "Tournaments" },
   { href: "/history", label: "History" },
