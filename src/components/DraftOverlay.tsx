@@ -18,6 +18,8 @@ interface Props {
     offer: BuffOffer | null;
     showCards: boolean;
     showTier: boolean;
+    /** One-shot reveal snapshot (Peek, Quick Glance, Draft Insight). */
+    reveal?: { index: number; cards?: { id: string; tier: number }[]; tier?: number } | null;
     lastPick?: { id: string; tier: number } | null;
   };
 }
@@ -29,7 +31,7 @@ export function DraftOverlay({ offer, takeBoth, bankedBonus, onPick, onBank, opp
       <motion.div
         initial={{ opacity: 0, y: 16, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        className="plate w-full max-w-2xl p-6 sm:p-8"
+        className="plate w-full max-w-2xl max-h-[90dvh] overflow-y-auto p-6 sm:p-8"
       >
         <div className="smallcaps text-[11px] text-parchment-400">Buff draft #{offer.index}</div>
         <h2 className="font-display text-3xl text-parchment mt-1">
@@ -38,7 +40,7 @@ export function DraftOverlay({ offer, takeBoth, bankedBonus, onPick, onBank, opp
         <p className="mt-1 text-sm text-parchment-300">
           {takeBoth
             ? "A draft-manipulation buff lets you take every card in this offer."
-            : "Pick one card — or skip and bank the draft to pull from one tier higher next time."}
+            : "Pick one card, or skip and bank the draft to pull from one tier higher next time."}
           {bankedBonus && " This draft rolled a tier higher thanks to your banked skip."}
         </p>
 
@@ -71,6 +73,17 @@ export function DraftOverlay({ offer, takeBoth, bankedBonus, onPick, onBank, opp
                 <span>
                   Opponent is drafting at tier{" "}
                   {Math.max(...oppOffer.cards.map((c) => c.tier))}
+                </span>
+              ) : opponent.reveal?.cards ? (
+                <span>
+                  Revealed draft #{opponent.reveal.index}:{" "}
+                  {opponent.reveal.cards
+                    .map((c) => `${BUFF_BY_ID[c.id]?.name ?? c.id} (T${c.tier})`)
+                    .join(" · ")}
+                </span>
+              ) : opponent.reveal?.tier != null ? (
+                <span>
+                  Revealed draft #{opponent.reveal.index} rolled tier {opponent.reveal.tier}
                 </span>
               ) : opponent.lastPick ? (
                 <span>

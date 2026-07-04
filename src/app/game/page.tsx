@@ -108,8 +108,11 @@ function GamePage() {
   const myNerfId = params.get("nerf") ?? "random";
   // Draft mode: nerf draft at game start, buff drafts on a cadence after.
   const draftMode = params.get("draft") === "1";
+  // Draft lobby setting: visible opponent picks (hidden is the default).
+  const picksVisible = draftMode && params.get("picks") === "open";
   // Games vs bots are casual by default; only rated games touch your rating.
-  const rated = params.get("rated") === "1";
+  // Draft games are always casual until a separate Draft rating exists.
+  const rated = params.get("rated") === "1" && !draftMode;
   // t = seconds per side; 0 (or missing) disables the clock entirely.
   const initialTimeMs = useMemo(() => {
     const t = parseInt(params.get("t") ?? "0", 10);
@@ -280,6 +283,8 @@ function GamePage() {
     enableDraftMode(g, makeSeed());
     g.buffs!.players[myColor].nerfOptions = nerfDraft.myOptions.map((n) => n.id);
     g.buffs!.players[myColor === "w" ? "b" : "w"].nerfOptions = nerfDraft.aiOptions.map((n) => n.id);
+    // Visible-picks setting: the opponent's nerf choice is open from move one.
+    if (picksVisible) g.buffs!.players[myColor].oppNerfRevealed = true;
     setNerfDraft(null);
     setHistoryPly(null);
     setGame(g);
@@ -1272,8 +1277,9 @@ function GamePage() {
           }}
           opponent={{
             offer: bsTheirs?.offer ?? null,
-            showCards: !!bsMine?.flags.seeOppCards,
+            showCards: picksVisible || !!bsMine?.flags.seeOppCards,
             showTier: !!bsMine?.flags.seeOppTier,
+            reveal: bsMine?.oppReveal ?? null,
             lastPick: bsTheirs?.buffs.length
               ? {
                   id: bsTheirs.buffs[bsTheirs.buffs.length - 1].id,

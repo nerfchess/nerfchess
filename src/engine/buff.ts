@@ -112,6 +112,10 @@ export interface PlayerBuffState {
   nerfOptions?: string[];
   /** This player can see the opponent's nerf (Extra Glance / Watchtower). */
   oppNerfRevealed?: boolean;
+  /** One-shot reveal result (Peek, Quick Glance, Draft Insight): a snapshot
+   * of a single opponent offer, kept so the holder can still read it after
+   * the offer resolves. Cards or tier only, depending on the source card. */
+  oppReveal?: { index: number; cards?: { id: string; tier: Tier }[]; tier?: Tier } | null;
   /** This player's own nerf has been permanently removed (Nerf Breaker). */
   nerfRemoved?: boolean;
   /** Pieces this player has revived, deducted from the revivable pool. */
@@ -125,6 +129,10 @@ export interface BuffMatchState {
   effects: ActiveEffect[];
   extraMoves: { w: number; b: number };
   skips: { w: number; b: number };
+  /** Set while a player is chaining moves through extra moves or opponent
+   * skips: that player cannot capture the king until the opponent has
+   * played one reply move. Cleared by the opponent's next actual move. */
+  chainKingGuard?: Color;
   players: { w: PlayerBuffState; b: PlayerBuffState };
   /**
    * Set once a buff mutates the board directly (summon, removal, teleport…).

@@ -20,7 +20,6 @@ import {
   leapMoves,
   markRevived,
   mySquares,
-  nullifyAll,
   permanentAugment,
   pieceBound,
   placePieces,
@@ -263,6 +262,26 @@ function severBuffs(n: number): Mech {
       }
     },
   );
+}
+
+/** True when a held buff is an already-online permanent: a piece-bound
+ * upgrade that has been attached (God Knight and friends) or a permanent
+ * passive engine with no charges or timer. These are build-arounds the
+ * opponent invested in; broad nullify effects leave them alone. */
+function onlinePermanent(b: BuffInstance): boolean {
+  const d = BUFF_BY_ID[b.id];
+  if (!d) return false;
+  if (d.kind === "activated") return d.spendOnUse === false && b.state.sq != null;
+  if (d.kind === "passive") return b.state.turns == null && b.state.charges == null;
+  return false;
+}
+
+/** Broad nullify: cancels unused activated cards and temporary passives.
+ * Online permanents resist; only targeted counters like Sever remove those. */
+function broadNullify(api: BuffApi) {
+  for (const b of api.theirs.buffs) {
+    if (!b.spent && !b.nullified && !onlinePermanent(b)) b.nullified = true;
+  }
 }
 
 const anyHalfZone = (api: BuffApi) => (sq: Square) => inHalf(api.me, sq);
@@ -1202,8 +1221,8 @@ const TIER6: Buff[] = [
     convertEnemies(1, ["r", "b"]),
   ),
   def(
-    { id: "total_nullify", name: "Total Nullify", description: "Cancel all your opponent's current buffs.", tier: 6, category: "draft" },
-    nullifyAll(),
+    { id: "total_nullify", name: "Total Nullify", description: "Cancel your opponent's unused and temporary buffs. Locked-in piece upgrades resist.", tier: 6, category: "draft" },
+    instant((_inst, api) => broadNullify(api)),
   ),
   def(
     { id: "second_king", name: "Second King", description: "Promote a pawn to a real second king; opponent must mate both.", tier: 6, category: "pieces" },
@@ -1362,9 +1381,9 @@ const TIER7: Buff[] = [
   ),
   def({ id: "eternal_reign", name: "Eternal Reign", description: "Your king gains permanent queen movement and cannot be forked.", tier: 7, category: "movement" }),
   def(
-    { id: "grand_nullify", name: "Grand Nullify", description: "Cancel all your opponent's current and next-drafted buffs.", tier: 7, category: "draft" },
+    { id: "grand_nullify", name: "Grand Nullify", description: "Cancel your opponent's unused and temporary buffs, plus their next-drafted buff. Locked-in upgrades resist.", tier: 7, category: "draft" },
     instant((_inst, api) => {
-      for (const b of api.theirs.buffs) if (!b.spent) b.nullified = true;
+      broadNullify(api);
       api.theirs.flags.nullifyIncoming = (api.theirs.flags.nullifyIncoming ?? 0) + 1;
     }),
   ),
@@ -1527,9 +1546,9 @@ const TIER8: Buff[] = [
   ),
   def({ id: "immortal_king", name: "Immortal King", description: "Your king cannot be checkmated for the rest of the game (only stalemate or resignation ends it).", tier: 8, category: "protection" }),
   def(
-    { id: "absolute_nullify", name: "Absolute Nullify", description: "Cancel all your opponent's buffs and block them from drafting for 2 turns.", tier: 8, category: "draft" },
+    { id: "absolute_nullify", name: "Absolute Nullify", description: "Cancel your opponent's unused and temporary buffs and block their next draft. Locked-in upgrades resist.", tier: 8, category: "draft" },
     instant((_inst, api) => {
-      for (const b of api.theirs.buffs) if (!b.spent) b.nullified = true;
+      broadNullify(api);
       api.theirs.flags.blockedDrafts = (api.theirs.flags.blockedDrafts ?? 0) + 1;
     }),
   ),
@@ -1563,10 +1582,14 @@ const TIER8: Buff[] = [
     extraMovesNow(4),
   ),
   def(
-    { id: "total_plunder", name: "Total Plunder", description: "Steal all active buffs from your opponent.", tier: 8, category: "draft" },
+    { id: "total_plunder", name: "Total Plunder", description: "Steal all your opponent's active buffs except locked-in upgrades.", tier: 8, category: "draft" },
     instant((_inst, api) => {
-      const stolen = api.theirs.buffs.filter((b) => !b.spent && !b.nullified);
-      api.theirs.buffs = api.theirs.buffs.filter((b) => b.spent || b.nullified);
+      const stolen = api.theirs.buffs.filter(
+        (b) => !b.spent && !b.nullified && !onlinePermanent(b),
+      );
+      api.theirs.buffs = api.theirs.buffs.filter(
+        (b) => b.spent || b.nullified || onlinePermanent(b),
+      );
       api.mine.buffs.push(...stolen);
     }),
   ),
