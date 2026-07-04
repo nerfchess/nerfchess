@@ -26,18 +26,21 @@ async function uniqueSlug(db: D1Database, name: string): Promise<string> {
   return `${base}-${crypto.randomUUID().slice(0, 8)}`;
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   const db = await getDb();
+  const user = await userForSession(db, sessionTokenFromCookieHeader(request.headers.get("cookie")));
   const rows = await db
     .prepare(
       `SELECT c.id, c.slug, c.name, c.description, c.owner_name, c.created_at,
-              COUNT(cm.user_id) AS members
+              COUNT(cm.user_id) AS members,
+              MAX(CASE WHEN cm.user_id = ? THEN 1 ELSE 0 END) AS joined
        FROM clubs c
        LEFT JOIN club_members cm ON cm.club_id = c.id
        GROUP BY c.id
-       ORDER BY c.created_at DESC
+       ORDER BY members DESC, c.created_at DESC
        LIMIT 50`,
     )
+    .bind(user?.id ?? "")
     .all<{
       id: string;
       slug: string;
@@ -46,6 +49,7 @@ export async function GET() {
       owner_name: string;
       created_at: number;
       members: number;
+      joined: number;
     }>();
   return NextResponse.json({ clubs: rows.results });
 }

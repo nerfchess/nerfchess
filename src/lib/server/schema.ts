@@ -198,6 +198,15 @@ export const SCHEMA_STATEMENTS: string[] = [
     PRIMARY KEY (club_id, user_id)
   )`,
   `CREATE INDEX IF NOT EXISTS idx_club_members_user ON club_members(user_id, joined_at DESC)`,
+  `CREATE TABLE IF NOT EXISTS club_posts (
+    id TEXT PRIMARY KEY,
+    club_id TEXT NOT NULL REFERENCES clubs(id),
+    user_id TEXT NOT NULL REFERENCES users(id),
+    username TEXT NOT NULL,
+    text TEXT NOT NULL,
+    created_at INTEGER NOT NULL
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_club_posts_club ON club_posts(club_id, created_at DESC)`,
   `CREATE TABLE IF NOT EXISTS tournaments (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,

@@ -3,6 +3,7 @@
 import { SiteHeader } from "@/components/SiteHeader";
 import { AccountUser, fetchMe } from "@/lib/authClient";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 
 interface Club {
@@ -13,9 +14,11 @@ interface Club {
   owner_name: string;
   created_at: number;
   members: number;
+  joined?: number;
 }
 
 export default function ClubsPage() {
+  const router = useRouter();
   const [user, setUser] = useState<AccountUser | null | undefined>(undefined);
   const [clubs, setClubs] = useState<Club[]>([]);
   const [name, setName] = useState("");
@@ -52,9 +55,7 @@ export default function ClubsPage() {
       });
       const data = (await res.json().catch(() => ({}))) as { club?: Club; error?: string };
       if (!res.ok || !data.club) throw new Error(data.error || "Could not create club.");
-      setClubs((list) => [data.club!, ...list]);
-      setName("");
-      setDescription("");
+      router.push(`/clubs/${encodeURIComponent(data.club.slug)}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not create club.");
     } finally {
@@ -138,19 +139,29 @@ export default function ClubsPage() {
             ) : (
               <ul className="divide-y divide-white/5">
                 {clubs.map((club) => (
-                  <li key={club.id} className="px-5 py-4">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div className="min-w-0">
-                        <div className="truncate font-display text-xl text-parchment">{club.name}</div>
-                        <div className="mt-0.5 smallcaps text-[9px] text-parchment-400">
-                          {club.members} member{club.members === 1 ? "" : "s"} - owner {club.owner_name}
+                  <li key={club.id}>
+                    <Link
+                      href={`/clubs/${encodeURIComponent(club.slug)}`}
+                      className="block px-5 py-4 transition-colors hover:bg-white/5"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="truncate font-display text-xl text-parchment">{club.name}</span>
+                            {!!club.joined && (
+                              <span className="shrink-0 rounded-full border border-gold/40 px-2 py-0.5 smallcaps text-[8px] text-gold-leaf">
+                                Joined
+                              </span>
+                            )}
+                          </div>
+                          <div className="mt-0.5 smallcaps text-[9px] text-parchment-400">
+                            {club.members} member{club.members === 1 ? "" : "s"} - owner {club.owner_name}
+                          </div>
                         </div>
+                        <span className="btn-ghost px-3 py-1.5 font-display text-xs">Visit →</span>
                       </div>
-                      <Link href={`/tournaments?club=${encodeURIComponent(club.id)}`} className="btn-ghost px-3 py-1.5 font-display text-xs">
-                        Events
-                      </Link>
-                    </div>
-                    {club.description && <p className="mt-2 text-sm text-parchment-300">{club.description}</p>}
+                      {club.description && <p className="mt-2 text-sm text-parchment-300">{club.description}</p>}
+                    </Link>
                   </li>
                 ))}
               </ul>
