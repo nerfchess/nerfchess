@@ -12,7 +12,7 @@ export async function GET(_request: Request, { params }: { params: { id: string 
   const row = await db
     .prepare(
       `SELECT id, white_name, black_name, white_nerf_id, black_nerf_id,
-              time_sec, increment_sec, moves, winner, reason, rated,
+              time_sec, increment_sec, moves, winner, reason, rated, ruleset,
               white_rating_before, white_rating_after, black_rating_before, black_rating_after,
               started_at, completed_at
        FROM games WHERE id = ?`,
