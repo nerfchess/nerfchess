@@ -623,7 +623,7 @@ export class MPSession {
   async host(
     timeSec: number,
     incrementSec: number,
-    options?: { draft?: boolean; picksVisible?: boolean },
+    options?: { draft?: boolean; picksVisible?: boolean; invite?: string },
   ): Promise<string> {
     await this.connect();
     return new Promise((resolve, reject) => {
@@ -640,6 +640,8 @@ export class MPSession {
         timeSec,
         incrementSec,
         ...(options?.draft ? { draft: true, picksVisible: !!options.picksVisible } : {}),
+        // Direct challenge: reserve the opponent seat for this username.
+        ...(options?.invite ? { invite: options.invite } : {}),
       });
     });
   }
@@ -771,6 +773,16 @@ export class MPSession {
 
   resign(): boolean {
     return this.sendFrame("resign");
+  }
+
+  // Abandonment claims: end a started game once the opponent has been
+  // disconnected for 30+ seconds (the server re-checks before ending it).
+  claimWin(): boolean {
+    return this.sendFrame("claimWin");
+  }
+
+  claimDraw(): boolean {
+    return this.sendFrame("claimDraw");
   }
 
   requestRematch(): boolean {

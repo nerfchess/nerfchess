@@ -172,6 +172,11 @@ function splitReason(reason: string) {
   };
 }
 
+// The game-over chime fires once per finished game, not once per mount:
+// dismissing and reopening the result screen, or a reconnect replaying the
+// end frame, remounts this component and must stay silent.
+const playedGameOverKeys = new Set<string>();
+
 export function GameOver({
   result,
   myColor,
@@ -285,7 +290,14 @@ export function GameOver({
   };
 
   useEffect(() => {
+    const key = gameId ?? (startedAt != null ? `local:${startedAt}` : null);
+    if (key) {
+      if (playedGameOverKeys.has(key)) return;
+      playedGameOverKeys.add(key);
+    }
     playGameOver();
+    // Mount-only by design: the key identifies the game, not a render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

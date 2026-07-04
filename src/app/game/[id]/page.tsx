@@ -34,6 +34,7 @@ import {
   MPSpectatorChatMessage,
   MPStart,
   MPWatchStart,
+  saveOnlineSeat,
 } from "@/lib/multiplayer";
 
 type Mode =
@@ -141,6 +142,12 @@ export default function OnlineGamePage() {
           setMode({ kind: "player", start: e.setup });
         } else if (e.type === "open") {
           setMode({ kind: "waiting" });
+        } else if (e.type === "rematched") {
+          // The server re-delivers the rematch seat on resume (e.g. after a
+          // refresh mid-rematch). Handle it here too: the frame can arrive
+          // before OnlineMatch has mounted and subscribed.
+          saveOnlineSeat(e.id, { color: e.color, token: e.token });
+          window.location.href = `/game/${e.id}`;
         }
       });
       // Resume the seat; transient connection failures retry with backoff,

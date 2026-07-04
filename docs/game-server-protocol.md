@@ -21,11 +21,12 @@ References:
 
 | Type | Data | Purpose |
 | --- | --- | --- |
-| `create` | `{ "timeSec": 600, "incrementSec": 5, "draft": true, "picksVisible": false }` | Create a waiting game as White. `draft` and `picksVisible` are optional and select the Draft ruleset (always casual). |
+| `create` | `{ "timeSec": 600, "incrementSec": 5, "draft": true, "picksVisible": false, "invite": "name" }` | Create a waiting game as White. `draft` and `picksVisible` are optional and select the Draft ruleset (always casual). `invite` (optional, signed-in hosts only) reserves the Black seat for that username: the game is never listed as an open challenge and other joiners are rejected with `invite_only`. |
 | `join` | `{ "id": "A2BCD" }` | Join an unstarted game as Black. |
 | `reconnect` | `{ "id": "A2BCD", "color": "w", "token": "..." }` | Resume a reserved seat after reload or a dropped socket. |
 | `move` | `{ "u": "e2e4", "ply": 0 }` | Submit a UCI move for server validation. |
 | `resign` | none | Resign the current game. |
+| `claimWin` / `claimDraw` | none | Abandonment claims: end a started, unfinished game once the opponent has been disconnected for 30+ seconds (server-checked; otherwise rejected with `no_claim`). Both end the match with reason "abandonment": `claimWin` awards the win to the caller, `claimDraw` makes it a draw. |
 | `drawOffer` / `drawAccept` / `drawDecline` | none | Draw negotiation. |
 | `takebackOffer` / `takebackAccept` / `takebackDecline` | none | Takeback negotiation (casual games only; rated games reject with `takeback_rated`). Accepting rewinds the offerer's last move, plus the reply if one was already played. |
 | `rematch` | none | Offer (or accept a pending) rematch once the game is over. |

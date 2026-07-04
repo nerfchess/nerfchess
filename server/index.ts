@@ -66,7 +66,6 @@ const firstMoveGraceMs = 10 * 1000;
 // Quick-pairing pools, first come first served (mirrors the production
 // worker's protocol; this standalone server has no accounts or ratings).
 const QUEUE_POOLS: Record<string, { timeSec: number; incrementSec: number }> = {
-  "15s+0": { timeSec: 15, incrementSec: 0 },
   "1+0": { timeSec: 60, incrementSec: 0 },
   "2+1": { timeSec: 120, incrementSec: 1 },
   "3+0": { timeSec: 180, incrementSec: 0 },
