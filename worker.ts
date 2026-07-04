@@ -228,6 +228,9 @@ function moveByUci(game: NerfGame, uci: string) {
 export class GameServer extends DurableObject<Env> {
   private sessions = new Map<WebSocket, SessionAttachment>();
   private dbReady: Promise<boolean> | null = null;
+  // Last error thrown by the alarm's botTick pass, surfaced in /healthz —
+  // the tick itself runs off-request, so this is the only window into it.
+  private lastTickError: string | null = null;
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
@@ -299,7 +302,7 @@ export class GameServer extends DurableObject<Env> {
           seeks: seeks.length,
           liveBotGames,
           botVsBot,
-          tickError,
+          tickError: this.lastTickError,
           alarmAt, // ms epoch of the next scheduled tick; null means the chain is dead
           alarmInMs: alarmAt ? alarmAt - Date.now() : null,
         },
@@ -457,7 +460,9 @@ export class GameServer extends DurableObject<Env> {
     // heartbeat is guaranteed at the end no matter what failed.
     try {
       await this.botTick();
+      this.lastTickError = null;
     } catch (err) {
+      this.lastTickError = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
       console.error("botTick failed", err);
     }
     try {
