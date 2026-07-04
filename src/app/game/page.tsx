@@ -745,7 +745,7 @@ function GamePage() {
                 {nerfDraft.aiOptions.map((n) => n.name).join("  ·  ")}
               </div>
               <div className="mt-0.5 text-[11px] text-parchment-400">
-                Which one they take stays hidden — unless you draft a reveal.
+                Which one they take stays hidden, unless you draft a reveal.
               </div>
             </div>
           </div>
