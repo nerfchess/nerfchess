@@ -180,6 +180,17 @@ export const SCHEMA_STATEMENTS: string[] = [
     created_at INTEGER NOT NULL
   )`,
   `CREATE INDEX IF NOT EXISTS idx_nerf_feedback_nerf ON nerf_feedback(nerf_id, created_at DESC)`,
+  // Post-game thumbs up / down on the buffs a player drafted during the game.
+  `CREATE TABLE IF NOT EXISTS buff_feedback (
+    id TEXT PRIMARY KEY,
+    buff_id TEXT NOT NULL,
+    vote INTEGER NOT NULL,
+    user_id TEXT,
+    username TEXT,
+    game_id TEXT,
+    created_at INTEGER NOT NULL
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_buff_feedback_buff ON buff_feedback(buff_id, created_at DESC)`,
   `CREATE TABLE IF NOT EXISTS clubs (
     id TEXT PRIMARY KEY,
     slug TEXT NOT NULL UNIQUE,

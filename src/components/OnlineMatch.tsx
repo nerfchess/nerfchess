@@ -1545,6 +1545,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           }}
           startedAt={game.startedAt}
           gameId={start.id}
+          myBuffs={game.buffs?.players[myColor].buffs}
         />
       )}
       <SettingsPanel

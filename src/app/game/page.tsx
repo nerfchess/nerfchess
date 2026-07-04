@@ -1317,6 +1317,7 @@ function GamePage() {
             b: myColor === "b" ? "You" : `${difficulty[0].toUpperCase()}${difficulty.slice(1)} Bot`,
           }}
           startedAt={game.startedAt}
+          myBuffs={game.buffs?.players[myColor].buffs}
         />
       )}
       <SettingsPanel
