@@ -33,6 +33,16 @@ export const RATING_CATEGORIES: RatingCategory[] = [
 
 export const RATING_CATEGORY_IDS = RATING_CATEGORIES.map((c) => c.id);
 
+// UltraBullet is retired: no queue pool or time preset under 30 seconds can
+// feed it anymore. The category stays in RATING_CATEGORIES so historical
+// rating rows, stats buckets, and archived games keep resolving; tabbed
+// surfaces (leaderboard, profile rating history) offer only the active ones.
+export const RETIRED_CATEGORY_IDS: RatingCategoryId[] = ["ultrabullet"];
+
+export const ACTIVE_RATING_CATEGORIES = RATING_CATEGORIES.filter(
+  (c) => !RETIRED_CATEGORY_IDS.includes(c.id),
+);
+
 // The bucket that existing single-rating data migrates into, and the default
 // view for tabbed surfaces (leaderboard, profile).
 export const DEFAULT_CATEGORY: RatingCategoryId = "blitz";

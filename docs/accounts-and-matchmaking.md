@@ -80,8 +80,9 @@ stays on-device.
 - The standalone Node server (`server/index.ts`) still speaks only the friend
   protocol — no accounts, queue, or persistence. Matchmaking features require
   the Cloudflare worker (`npm run preview` locally).
-- Ten queue pools from 15-second UltraBullet to 15+10 Rapid (`QUEUE_POOLS` in
-  `worker.ts`, mirrored by `QUEUE_POOL_OPTIONS` in `QueueButton.tsx`). All
+- Nine queue pools from 1+0 Bullet to 15+10 Rapid (`QUEUE_POOLS` in
+  `worker.ts`, mirrored by `QUEUE_POOL_OPTIONS` in `QueueButton.tsx`).
+  UltraBullet is retired: no pool or preset under 30 seconds exists. All
   pools currently feed the single account rating; per-speed ratings are a
   future step (the display buckets already exist in `ratingCategories.ts`).
 - Pairing is first-come-first-served, not rating-banded.
