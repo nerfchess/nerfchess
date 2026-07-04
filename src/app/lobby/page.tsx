@@ -87,9 +87,7 @@ export default function LobbyPage() {
     session.persistFriendSession = false;
     try {
       const paired = await Promise.race([
-        // Pass the row's name so accepting a house player's challenge pairs
-        // with that exact bot.
-        session.queue(seek.pool, seek.name),
+        session.queue(seek.pool),
         new Promise<never>((_, reject) =>
           window.setTimeout(() => reject(new Error("seek_gone")), 10000),
         ),

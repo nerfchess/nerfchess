@@ -6,11 +6,9 @@ import { default as handler } from "./.open-next/worker.js";
 import { moveToUCI } from "./src/engine/board";
 import { PLAYABLE_NERFS, pickNerfPair } from "./src/engine/nerfs/library";
 import { NerfGame, legalMoves, newGame, playMove, resign } from "./src/engine/game";
-import { pickAIMove } from "./src/engine/ai";
 import { RNG } from "./src/engine/rng";
 import { Color } from "./src/engine/types";
 import { sessionTokenFromCookieHeader, userForSession } from "./src/lib/server/auth";
-import { BotSeat, botThinkMs, ensureBotUsers, loadBotSeats, pickBotPool } from "./src/lib/server/bots";
 import { ensureSchema } from "./src/lib/server/schema";
 import { loadCategoryRatings, recordFinishedGame, RatingChange } from "./src/lib/server/games";
 import { categoryForTimeControl, type SpeedCategory } from "./src/lib/speed";
@@ -60,20 +58,6 @@ type StoredMatch = {
   spectatorChat?: SpectatorChatEntry[];
   // Colors that voluntarily revealed their rule to the table mid-game.
   revealed?: Partial<Record<Color, boolean>>;
-  // Seats held by house players (engine-driven accounts), keyed by color to
-  // the bot's user id. A bot seat counts as "connected" for game start.
-  bots?: Partial<Record<Color, string>>;
-  // When the bot on turn will make its move (its humanlike "think" timer).
-  botMoveAt?: number | null;
-};
-// A house player advertised in the lobby as a joinable quick-pairing seek.
-type BotSeekEntry = {
-  userId: string;
-  name: string;
-  pool: string;
-  rating: number;
-  avatar: string | null;
-  at: number;
 };
 type SessionAttachment = {
   id: string;
@@ -145,35 +129,13 @@ const QUEUE_POOLS: Record<string, { timeSec: number; incrementSec: number }> = {
 const socketPath = "/socket/v1";
 const globalServerName = "nerfchess-global";
 const disconnectGraceMs = 15 * 1000;
-// House-player orchestration: keep ~6 bot-vs-bot games running plus 2-3 bots
-// seeking in the lobby (10-15 engaged at all times). The alarm chain ticks at
-// least this often to keep the roster topped up.
-const botHeartbeatMs = 20 * 1000;
-// Fewer concurrent bot-vs-bot games means fewer move timers coming due, which
-// means the alarm fires less often and the single-threaded DO spends more time
-// free to answer lobby polls and socket upgrades. Three still keeps the lobby
-// looking active.
-const botTargetGames = 3;
-const botSeekMin = 2;
-const botSeekMax = 3;
-const botSeekTtlMs = 8 * 60 * 1000;
-const botSeeksKey = "bots:seeks";
-const botSeededKey = "bots:seeded:v1";
-const botNextGameKey = "bots:nextGameAt";
-// Engine search budgets for bot moves. The game server is a single-threaded
-// Durable Object, so a bot's search blocks every other socket and lobby poll
-// while it runs — an uncapped ~2s "hard" search is what makes the site show
-// "Can't reach the game server" once a few people are playing bots at once.
-// Cap both: a human opponent still gets a clearly stronger search than the
-// bot-vs-bot filler, but neither can monopolize the thread.
-const botHumanMoveBudgetMs = 700;
-const botFillerMoveBudgetMs = 120;
-// How long a loaded bot roster is reused before re-querying D1.
-const botSeatCacheTtlMs = 45 * 1000;
+// Leftover Durable Object storage from the retired house-player system,
+// cleared on first alarm/health check so the lobby never resurrects them.
+const legacyBotKeys = ["bots:seeks", "bots:seeded:v1", "bots:nextGameAt"];
 // Bumped whenever the worker changes in a way we want to confirm shipped.
 // Surfaced at GET /healthz so a deploy can be verified without Cloudflare
 // dashboard access (compare the value there against this one).
-const buildVersion = "bots-fix-5";
+const buildVersion = "no-bots-1";
 // Lichess-style start-of-game grace: a player's clock only starts charging 10
 // seconds into their first move, so nobody loses time to a slow page load.
 const firstMoveGraceMs = 10 * 1000;
@@ -229,9 +191,6 @@ function moveByUci(game: NerfGame, uci: string) {
 export class GameServer extends DurableObject<Env> {
   private sessions = new Map<WebSocket, SessionAttachment>();
   private dbReady: Promise<boolean> | null = null;
-  // Last error thrown by the alarm's botTick pass, surfaced in /healthz —
-  // the tick itself runs off-request, so this is the only window into it.
-  private lastTickError: string | null = null;
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
@@ -258,37 +217,10 @@ export class GameServer extends DurableObject<Env> {
     const url = new URL(request.url);
 
     if (url.pathname === "/healthz") {
-      // Read-only status only. Never run botTick here: it drives the chess
-      // engine (a multi-second CPU search) and doing that inside a request
-      // blows the Worker's per-request CPU limit → 1101. ensureBotAlarm
-      // re-arms the tick to run off-request instead, which still nudges the
-      // roster to fill a beat later.
-      await this.ensureBotAlarm();
+      await this.purgeLegacyBotState();
       await this.cleanupExpired();
 
       const matches = [...(await this.ctx.storage.list<StoredMatch>({ prefix: "match:" })).values()];
-      let liveBotGames = 0;
-      let botVsBot = 0;
-      for (const match of matches) {
-        const botCount = (["w", "b"] as Color[]).filter((c) => match.bots?.[c]).length;
-        if (!botCount || match.result || !match.startedAt) continue;
-        liveBotGames++;
-        if (botCount === 2) botVsBot++;
-      }
-      const seeks = (await this.ctx.storage.get<BotSeekEntry[]>(botSeeksKey)) ?? [];
-      const seeded = !!(await this.ctx.storage.get<number>(botSeededKey));
-      let seatCount = -1;
-      let seatError: string | null = null;
-      const db = await this.db();
-      if (!db) {
-        seatError = "db_unavailable";
-      } else {
-        try {
-          seatCount = (await loadBotSeats(db)).size;
-        } catch (err) {
-          seatError = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
-        }
-      }
       const alarmAt = await this.ctx.storage.getAlarm();
 
       return Response.json({
@@ -296,17 +228,8 @@ export class GameServer extends DurableObject<Env> {
         version: buildVersion,
         sockets: this.sessions.size,
         games: matches.length,
-        bots: {
-          seeded,
-          seats: seatCount, // expected 15 once bot users exist; 0 means loadBotSeats found no rows
-          seatError,
-          seeks: seeks.length,
-          liveBotGames,
-          botVsBot,
-          tickError: this.lastTickError,
-          alarmAt, // ms epoch of the next scheduled tick; null means the chain is dead
-          alarmInMs: alarmAt ? alarmAt - Date.now() : null,
-        },
+        alarmAt, // ms epoch of the next scheduled maintenance pass, if any
+        alarmInMs: alarmAt ? alarmAt - Date.now() : null,
       });
     }
 
@@ -344,7 +267,6 @@ export class GameServer extends DurableObject<Env> {
     this.sessions.set(server, attachment);
     this.ctx.acceptWebSocket(server);
 
-    await this.ensureBotAlarm();
     return new Response(null, { status: 101, webSocket: client });
   }
 
@@ -456,47 +378,31 @@ export class GameServer extends DurableObject<Env> {
 
   async alarm() {
     // Nothing in here may throw out of the handler: an uncaught alarm error
-    // stops rescheduling and the whole tick chain dies (no bot moves, no flag
-    // enforcement) until the next external event. Each stage is isolated and a
-    // heartbeat is guaranteed at the end no matter what failed.
+    // stops rescheduling until the next external event (no flag enforcement).
     try {
-      await this.botTick();
-      this.lastTickError = null;
+      await this.purgeLegacyBotState();
     } catch (err) {
-      this.lastTickError = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
-      console.error("botTick failed", err);
+      console.error("legacy bot purge failed", err);
     }
     try {
       await this.maintenanceAll();
     } catch (err) {
       console.error("maintenanceAll failed", err);
     }
-    // maintenanceAll normally sets the next alarm; if it threw before doing so,
-    // guarantee the chain survives.
-    try {
-      if (!(await this.ctx.storage.getAlarm())) {
-        await this.ctx.storage.setAlarm(Date.now() + botHeartbeatMs);
-      }
-    } catch (err) {
-      console.error("alarm reschedule failed", err);
-    }
   }
 
-  // Kickstart the alarm chain so the house players run even before any match
-  // exists. Once started it self-perpetuates via scheduleNextAlarm's
-  // heartbeat clamp.
-  private botAlarmChecked = false;
+  // The retired house-player system left seeks/seed markers in DO storage and
+  // unfinished bot matches that no longer have anything to move for them.
+  // Drop both once so old state can't wedge or clutter the lobby.
+  private legacyBotStatePurged = false;
 
-  private async ensureBotAlarm() {
-    if (this.botAlarmChecked) return;
-    this.botAlarmChecked = true;
-    const existing = await this.ctx.storage.getAlarm();
-    // Revive the chain if there is no alarm, or if the stored alarm is well
-    // overdue — an alarm stuck in the past isn't firing (an abandoned/wedged
-    // chain), and without this a dead roster never recovers on its own since
-    // getAlarm() returns a non-null-but-stale value and nothing re-arms it.
-    if (!existing || existing < Date.now() - botHeartbeatMs) {
-      await this.ctx.storage.setAlarm(Date.now() + 1000);
+  private async purgeLegacyBotState() {
+    if (this.legacyBotStatePurged) return;
+    this.legacyBotStatePurged = true;
+    await this.ctx.storage.delete(legacyBotKeys);
+    const matches = await this.ctx.storage.list<StoredMatch & { bots?: unknown }>({ prefix: "match:" });
+    for (const match of matches.values()) {
+      if (match.bots && !match.completedAt) await this.deleteMatch(match);
     }
   }
 
@@ -932,10 +838,13 @@ export class GameServer extends DurableObject<Env> {
     if (!match.startedAt) {
       // Matchmade and rematch games begin the moment both paired players
       // arrive at the game URL; friend games wait in the lobby for a join.
-      if ((match.rated || match.autoStart) && this.seatReady(match, "w") && this.seatReady(match, "b")) {
+      if (
+        (match.rated || match.autoStart) &&
+        this.connectedSession(match.id, "w") &&
+        this.connectedSession(match.id, "b")
+      ) {
         match.startedAt = Date.now();
         match.runningSince = match.startedAt;
-        this.armBotMove(match, match.startedAt);
         await this.saveMatch(match);
         this.sendStart(match, "w");
         this.sendStart(match, "b");
@@ -983,7 +892,6 @@ export class GameServer extends DurableObject<Env> {
     match.runningSince = nextGame.result ? null : now;
     match.result = nextGame.result;
     if (nextGame.result) match.completedAt = now;
-    this.armBotMove(match, now);
     await this.saveMatch(match);
 
     const movePayload = {
@@ -1022,13 +930,6 @@ export class GameServer extends DurableObject<Env> {
     if (match.result) return;
     if (match.drawOfferBy === session.color) return error(ws, "draw_pending", "Your draw offer is already pending.");
     if (match.drawOfferBy && match.drawOfferBy !== session.color) return this.acceptDraw(ws);
-
-    const opponentColor: Color = session.color === "w" ? "b" : "w";
-    if (match.bots?.[opponentColor]) {
-      // House players play on: the offer is declined right away.
-      this.broadcast(match, "drawDeclined", { color: opponentColor });
-      return;
-    }
 
     match.drawOfferBy = session.color;
     await this.saveMatch(match);
@@ -1094,12 +995,6 @@ export class GameServer extends DurableObject<Env> {
     }
     if (match.takebackOfferBy && match.takebackOfferBy !== session.color) return this.acceptTakeback(ws);
 
-    const opponentColor: Color = session.color === "w" ? "b" : "w";
-    if (match.bots?.[opponentColor]) {
-      this.broadcast(match, "takebackDeclined", { color: opponentColor });
-      return;
-    }
-
     match.takebackOfferBy = session.color;
     await this.saveMatch(match);
     this.broadcast(match, "takebackOffer", { color: session.color });
@@ -1156,410 +1051,6 @@ export class GameServer extends DurableObject<Env> {
     this.broadcast(match, "takebackDeclined", { color: session.color });
   }
 
-  // ---------------- house players (bots) ----------------
-
-  // A seat is ready to start when a socket holds it or a bot owns it.
-  private seatReady(match: StoredMatch, color: Color): boolean {
-    return !!match.bots?.[color] || !!this.connectedSession(match.id, color);
-  }
-
-  private botsSeeded = false;
-  // Bot ratings change slowly, so cache the roster in memory instead of
-  // querying D1 on every alarm tick — the per-tick DB round-trip was a big
-  // part of the constant load that kept the single-threaded DO from answering
-  // lobby polls. Refreshed at most once per botSeatCacheTtlMs.
-  private botSeatCache: { at: number; seats: Map<string, BotSeat> } | null = null;
-
-  private async loadBotSeatsCached(db: D1Database, now: number): Promise<Map<string, BotSeat>> {
-    if (this.botSeatCache && now - this.botSeatCache.at < botSeatCacheTtlMs) {
-      return this.botSeatCache.seats;
-    }
-    const seats = await loadBotSeats(db);
-    this.botSeatCache = { at: now, seats };
-    return seats;
-  }
-
-  private botSeatUser(seat: BotSeat): SeatUser {
-    return {
-      id: seat.id,
-      name: seat.name,
-      rating: seat.rating,
-      rd: seat.rd,
-      vol: seat.vol,
-      avatar: seat.avatar,
-    };
-  }
-
-  // Arm the humanlike think timer when it's a bot's turn. Mostly 1-4s, with
-  // occasional longer tanks; clamped once the bot's own clock runs low.
-  private armBotMove(match: StoredMatch, now = Date.now()) {
-    if (!match.startedAt || match.result) return;
-    const turn: Color = match.moves.length % 2 === 0 ? "w" : "b";
-    if (!match.bots?.[turn]) {
-      match.botMoveAt = null;
-      return;
-    }
-    if (match.botMoveAt) return;
-    const clocks = this.currentClocks(match, now);
-    const grace = this.movesByColor(match, turn) === 0 ? firstMoveGraceMs : 0;
-    match.botMoveAt = now + botThinkMs(randomInt, clocks[turn] + grace, match.setup.timeSec > 0);
-  }
-
-  // The bot's move lands: pick the strongest engine move and apply it exactly
-  // like a client move (clocks, pending-offer declines, broadcast, finish).
-  private async playBotMoveNow(match: StoredMatch, now = Date.now()) {
-    match.botMoveAt = null;
-    if (await this.finishOnFlag(match, now, false)) return;
-    if (!match.startedAt || match.result) return;
-    const game = this.gameFromMatch(match);
-    if (!game || game.result) return;
-    const color = game.board.turn;
-    if (!match.bots?.[color]) return;
-
-    // Both searches are time-capped so a single move never ties up the
-    // single-threaded Durable Object long enough to stall live sockets or the
-    // lobby poll for everyone else. A human opponent gets the longer budget
-    // (still a strong move); bot-vs-bot filler runs shorter since nobody is
-    // waiting on it.
-    const botVsBot = !!(match.bots.w && match.bots.b);
-    const move = pickAIMove(game, "hard", botVsBot ? botFillerMoveBudgetMs : botHumanMoveBudgetMs);
-    if (!move) {
-      // No legal move but no result — should be unreachable; resign to avoid
-      // wedging the match.
-      match.clocks = this.currentClocks(match, now);
-      match.runningSince = null;
-      match.result = resign(game, color).result;
-      match.completedAt = now;
-      await this.endMatch(match, false);
-      return;
-    }
-
-    const uci = moveToUCI(move);
-    match.clocks = this.currentClocks(match, now);
-    if (match.drawOfferBy && match.drawOfferBy !== color) {
-      match.drawOfferBy = null;
-      this.broadcast(match, "drawDeclined", { color });
-    }
-    if (match.takebackOfferBy && match.takebackOfferBy !== color) {
-      match.takebackOfferBy = null;
-      this.broadcast(match, "takebackDeclined", { color });
-    }
-    const nextGame = playMove(game, move);
-    match.moves.push(uci);
-    if (match.setup.timeSec) match.clocks[color] += match.setup.incrementSec * 1000;
-    match.runningSince = nextGame.result ? null : now;
-    match.result = nextGame.result;
-    if (nextGame.result) match.completedAt = now;
-    this.armBotMove(match, now);
-    await this.saveMatch(match);
-
-    const movePayload = {
-      u: uci,
-      ply: match.moves.length,
-      wc: Math.round(match.clocks.w),
-      bc: Math.round(match.clocks.b),
-    };
-    this.broadcast(match, "move", movePayload);
-    this.sendWatchers(match, "move", movePayload);
-    if (match.result) await this.endMatch(match);
-  }
-
-  private async newBotMatchRecord(
-    poolName: string,
-    users: Partial<Record<Color, SeatUser>>,
-    bots: Partial<Record<Color, string>>,
-  ): Promise<StoredMatch> {
-    const pool = QUEUE_POOLS[poolName];
-    const id = await this.newCode(8);
-    return {
-      id,
-      setup: {
-        ...pickNerfIds(),
-        seed: makeSeed(),
-        timeSec: pool.timeSec,
-        incrementSec: pool.incrementSec,
-      },
-      tokens: { w: newToken(), b: newToken() },
-      disconnectedAt: {},
-      opponentGoneNotified: {},
-      moves: [],
-      result: null,
-      clocks: { w: pool.timeSec * 1000, b: pool.timeSec * 1000 },
-      runningSince: null,
-      drawOfferBy: null,
-      createdAt: Date.now(),
-      startedAt: null,
-      completedAt: null,
-      rated: true,
-      autoStart: true,
-      users,
-      bots,
-    };
-  }
-
-  // Pair a queued human with a house player. The human gets the usual
-  // "paired" frame and takes their seat via reconnect; the bot seat counts as
-  // connected, so the game starts the moment the human arrives.
-  private async pairHumanWithBot(human: SeatUser, humanWs: WebSocket, poolName: string, bot: BotSeat) {
-    const humanWhite = randomInt(2) === 0;
-    const botUser = this.botSeatUser(bot);
-    const match = await this.newBotMatchRecord(
-      poolName,
-      { w: humanWhite ? human : botUser, b: humanWhite ? botUser : human },
-      humanWhite ? { b: bot.id } : { w: bot.id },
-    );
-    await this.saveMatch(match);
-    const color: Color = humanWhite ? "w" : "b";
-    send(humanWs, "paired", { id: match.id, color, token: match.tokens[color], pool: poolName });
-  }
-
-  // Claim a lobby seek by a house player. When the human accepted a specific
-  // bot's row (`preferName`), that bot is claimed so you play the opponent you
-  // clicked; otherwise a bot advertising this pool, else any seeking bot
-  // switches over — so a queued human is paired immediately whenever any house
-  // player is available.
-  private async takeBotSeek(poolName: string, preferName?: string | null): Promise<BotSeat | null> {
-    const db = await this.db();
-    if (!db) return null;
-    const seeks = (await this.ctx.storage.get<BotSeekEntry[]>(botSeeksKey)) ?? [];
-    let index = -1;
-    if (preferName) {
-      index = seeks.findIndex((seek) => seek.pool === poolName && seek.name === preferName);
-      if (index < 0) index = seeks.findIndex((seek) => seek.name === preferName);
-    }
-    if (index < 0) index = seeks.findIndex((seek) => seek.pool === poolName);
-    if (index < 0 && seeks.length) index = 0;
-    if (index < 0) return null;
-    const [seek] = seeks.splice(index, 1);
-    await this.ctx.storage.put(botSeeksKey, seeks);
-    try {
-      const row = await db
-        .prepare("SELECT id, username, avatar FROM users WHERE id = ?")
-        .bind(seek.userId)
-        .first<{ id: string; username: string; avatar: string | null }>();
-      if (!row) return null;
-      const pool = QUEUE_POOLS[poolName] ?? QUEUE_POOLS[seek.pool];
-      const r = pool
-        ? await this.seatCategoryRating(db, row.id, categoryForTimeControl(pool.timeSec, pool.incrementSec))
-        : null;
-      return {
-        id: row.id,
-        name: row.username,
-        rating: r?.rating ?? 1500,
-        rd: r?.rd ?? 350,
-        vol: r?.vol ?? 0.06,
-        avatar: row.avatar,
-      };
-    } catch {
-      return null;
-    }
-  }
-
-  private async startBotVsBotGame(a: BotSeat, b: BotSeat) {
-    const aWhite = randomInt(2) === 0;
-    const [white, black] = aWhite ? [a, b] : [b, a];
-    const match = await this.newBotMatchRecord(
-      pickBotPool(randomInt),
-      { w: this.botSeatUser(white), b: this.botSeatUser(black) },
-      { w: white.id, b: black.id },
-    );
-    const now = Date.now();
-    match.startedAt = now;
-    match.runningSince = now;
-    this.armBotMove(match, now);
-    await this.saveMatch(match);
-  }
-
-  // One orchestration pass, run from the alarm: play due bot moves, keep 2-3
-  // bots seeking in the lobby, rescue humans stuck alone in a queue, and keep
-  // enough bot-vs-bot games running that the site never looks empty.
-  private async botTick() {
-    const now = Date.now();
-    const db = await this.db();
-    if (!db) return;
-
-    if (!this.botsSeeded) {
-      try {
-        if (!(await this.ctx.storage.get<number>(botSeededKey))) {
-          await ensureBotUsers(db);
-          await this.ctx.storage.put(botSeededKey, now);
-        }
-        this.botsSeeded = true;
-      } catch {
-        return;
-      }
-    }
-
-    const matches = [...(await this.ctx.storage.list<StoredMatch>({ prefix: "match:" })).values()];
-    const busy = new Set<string>();
-    const liveBotMatches: StoredMatch[] = [];
-    let botVsBotCount = 0;
-    for (const match of matches) {
-      const botIds = (["w", "b"] as Color[]).map((color) => match.bots?.[color]).filter(Boolean) as string[];
-      if (!botIds.length || match.result) continue;
-      if (!match.startedAt) {
-        // A human paired with a bot but never arrived: free the bot.
-        if (now - match.createdAt > 2 * 60 * 1000) {
-          await this.deleteMatch(match);
-          continue;
-        }
-        for (const id of botIds) busy.add(id);
-        continue;
-      }
-      for (const id of botIds) busy.add(id);
-      liveBotMatches.push(match);
-      if (botIds.length === 2) botVsBotCount++;
-    }
-
-    let seats: Map<string, BotSeat>;
-    try {
-      seats = await this.loadBotSeatsCached(db, now);
-    } catch {
-      return;
-    }
-
-    // Seeks: drop bots that got busy and rotate stale ones out so the lobby
-    // list doesn't look frozen.
-    let seeks = (await this.ctx.storage.get<BotSeekEntry[]>(botSeeksKey)) ?? [];
-    seeks = seeks.filter((seek) => !busy.has(seek.userId) && seats.has(seek.userId) && now - seek.at < botSeekTtlMs);
-
-    const free = [...seats.values()].filter(
-      (seat) => !busy.has(seat.id) && !seeks.some((seek) => seek.userId === seat.id),
-    );
-
-    // A human waiting alone in a pool gets picked up by a bot after a short
-    // beat (a real opponent pairs instantly, so waiting means nobody came).
-    // Each pool is isolated: a storage/pairing hiccup in one must not skip the
-    // rest of orchestration (due moves, seek top-up, new bot games) below.
-    for (const poolName of Object.keys(QUEUE_POOLS)) {
-      try {
-        const key = this.queueKey(poolName);
-        const entries = (await this.ctx.storage.get<QueueEntry[]>(key)) ?? [];
-        const alive = entries.filter((entry) => this.socketForAttachment(entry.attachmentId));
-        if (alive.length !== entries.length) await this.ctx.storage.put(key, alive);
-        const waiting = alive[0];
-        if (!waiting || now - waiting.at < 4000) continue;
-
-        // Prefer a bot already seeking this pool, then an idle bot, then a bot
-        // seeking some other pool (it switches) — a queued human always gets a
-        // game even when the roster is saturated.
-        let bot: BotSeat | undefined;
-        const seekIndex = seeks.findIndex((seek) => seek.pool === poolName);
-        if (seekIndex >= 0) bot = seats.get(seeks.splice(seekIndex, 1)[0].userId);
-        if (!bot) bot = free.pop();
-        if (!bot && seeks.length) bot = seats.get(seeks.shift()!.userId);
-        if (!bot) continue;
-        busy.add(bot.id);
-        const humanWs = this.socketForAttachment(waiting.attachmentId);
-        if (!humanWs) continue;
-        await this.ctx.storage.put(key, alive.slice(1));
-        await this.pairHumanWithBot(
-          {
-            id: waiting.userId,
-            name: waiting.username,
-            rating: waiting.rating,
-            rd: waiting.rd,
-            vol: waiting.vol,
-            avatar: waiting.avatar ?? null,
-          },
-          humanWs,
-          poolName,
-          bot,
-        );
-      } catch (err) {
-        console.error("bot human-pickup failed", poolName, err);
-      }
-    }
-
-    // Due moves and missing timers. Runs after the human pickup above so a
-    // waiting player is never stuck behind engine searches. Each tick stays
-    // short by design: every human-facing move is played (there are only ever
-    // a handful of those and they must feel responsive), but at most one
-    // bot-vs-bot filler move runs per tick — the rest re-fire on the next
-    // alarm (candidateAlarm clamps overdue timers to ~now), so the Durable
-    // Object never blocks on a long batch of searches.
-    const isFiller = (match: StoredMatch) => !!(match.bots?.w && match.bots?.b);
-    const due = liveBotMatches
-      .filter((match) => match.botMoveAt && match.botMoveAt <= now)
-      .sort((a, b) => Number(isFiller(a)) - Number(isFiller(b)) || (a.botMoveAt ?? 0) - (b.botMoveAt ?? 0));
-    // A game that throws while moving (engine edge case, corrupt record, D1
-    // hiccup) must never wedge the roster. Without isolation the failed match
-    // keeps its due botMoveAt, so every later tick re-hits it, re-throws, and
-    // never reaches the seek top-up / new-game code below — the house players
-    // drain out of the lobby and any human paired with a bot waits forever for
-    // a move. Retire the bad match instead so its bots free up and it drops
-    // out of the due list (skip re-arming it below so it isn't resurrected).
-    const retired = new Set<string>();
-    let fillerPlayed = 0;
-    for (const match of due) {
-      const filler = isFiller(match);
-      if (filler && fillerPlayed >= 1) continue;
-      try {
-        await this.playBotMoveNow(match, Date.now());
-        if (filler) fillerPlayed++;
-      } catch (err) {
-        console.error("bot move failed, retiring match", match.id, err);
-        retired.add(match.id);
-        try {
-          await this.deleteMatch(match);
-        } catch {}
-      }
-    }
-    for (const match of liveBotMatches) {
-      if (retired.has(match.id) || match.botMoveAt || match.result) continue;
-      try {
-        if (await this.finishOnFlag(match, now, false)) continue;
-        const turn: Color = match.moves.length % 2 === 0 ? "w" : "b";
-        if (!match.bots?.[turn]) continue;
-        this.armBotMove(match, now);
-        await this.saveMatch(match, false);
-      } catch (err) {
-        console.error("bot re-arm failed", match.id, err);
-      }
-    }
-
-    // Top up the lobby seeks to 2-3.
-    while (seeks.length < botSeekMin && free.length) {
-      const seat = free.splice(randomInt(free.length), 1)[0];
-      seeks.push({
-        userId: seat.id,
-        name: seat.name,
-        pool: pickBotPool(randomInt),
-        rating: Math.round(seat.rating),
-        avatar: seat.avatar,
-        at: now,
-      });
-    }
-    if (seeks.length >= botSeekMin && seeks.length < botSeekMax && free.length && randomInt(100) < 4) {
-      const seat = free.splice(randomInt(free.length), 1)[0];
-      seeks.push({
-        userId: seat.id,
-        name: seat.name,
-        pool: pickBotPool(randomInt),
-        rating: Math.round(seat.rating),
-        avatar: seat.avatar,
-        at: now,
-      });
-    }
-    await this.ctx.storage.put(botSeeksKey, seeks);
-
-    // Keep bot-vs-bot games running, starting at most one per tick with a
-    // random gap so games don't all begin (and end) in lockstep.
-    if (botVsBotCount < botTargetGames && free.length >= 2) {
-      try {
-        const nextGameAt = (await this.ctx.storage.get<number>(botNextGameKey)) ?? 0;
-        if (now >= nextGameAt) {
-          const a = free.splice(randomInt(free.length), 1)[0];
-          const b = free.splice(randomInt(free.length), 1)[0];
-          await this.startBotVsBotGame(a, b);
-          await this.ctx.storage.put(botNextGameKey, now + 5000 + randomInt(40_000));
-        }
-      } catch (err) {
-        console.error("bot-vs-bot start failed", err);
-      }
-    }
-  }
-
   // ---------------- matchmaking queue ----------------
 
   private queueKey(pool: string): string {
@@ -1572,11 +1063,8 @@ export class GameServer extends DurableObject<Env> {
     if (!session.userId || !session.username) {
       return error(ws, "auth_required", "Sign in to play rated games.");
     }
-    const req = (data as { pool?: unknown; seek?: unknown } | undefined) ?? {};
+    const req = (data as { pool?: unknown } | undefined) ?? {};
     const poolName = String(req.pool || "3+2");
-    // Optional: the name on the lobby row the human accepted. When it's a
-    // house player, they get paired with that exact bot.
-    const seekHint = typeof req.seek === "string" ? req.seek : null;
     const pool = QUEUE_POOLS[poolName];
     if (!pool) return error(ws, "bad_pool", "Unknown queue pool.");
     const db = await this.db();
@@ -1611,20 +1099,6 @@ export class GameServer extends DurableObject<Env> {
 
     const opponent = entries.shift();
     if (!opponent) {
-      // No human waiting — but a house player advertising this pool in the
-      // lobby picks the game up immediately (the exact bot the human clicked,
-      // when the accepted row named one).
-      const bot = await this.takeBotSeek(poolName, seekHint);
-      if (bot) {
-        await this.ctx.storage.put(key, entries);
-        await this.pairHumanWithBot(
-          { id: session.userId, name: session.username, rating, rd, vol, avatar },
-          ws,
-          poolName,
-          bot,
-        );
-        return;
-      }
       entries.push({
         attachmentId: session.id,
         userId: session.userId,
@@ -1636,11 +1110,6 @@ export class GameServer extends DurableObject<Env> {
         at: Date.now(),
       });
       await this.ctx.storage.put(key, entries);
-      // Nobody around: pull the next bot tick forward so a house player
-      // picks this human up within a few seconds instead of a full heartbeat.
-      const rescueAt = Date.now() + 4500 + randomInt(3000);
-      const existingAlarm = await this.ctx.storage.getAlarm();
-      if (!existingAlarm || rescueAt < existingAlarm) await this.ctx.storage.setAlarm(rescueAt);
       return send(ws, "queued", { pool: poolName });
     }
     await this.ctx.storage.put(key, entries);
@@ -1713,8 +1182,7 @@ export class GameServer extends DurableObject<Env> {
 
     const opponentColor: Color = session.color === "w" ? "b" : "w";
     if (match.rematchOfferBy === session.color) return;
-    // A house-player opponent always accepts, so skip the offer round-trip.
-    if (match.rematchOfferBy !== opponentColor && !match.bots?.[opponentColor]) {
+    if (match.rematchOfferBy !== opponentColor) {
       if (!this.connectedSession(match.id, opponentColor)) {
         return error(ws, "opponent_gone", "Your opponent has left.");
       }
@@ -1770,15 +1238,6 @@ export class GameServer extends DurableObject<Env> {
       rated: match.rated,
       autoStart: true,
       users,
-      // Bot seats swap colors along with the accounts.
-      ...(match.bots
-        ? {
-            bots: {
-              ...(match.bots.b ? { w: match.bots.b } : {}),
-              ...(match.bots.w ? { b: match.bots.w } : {}),
-            },
-          }
-        : {}),
     };
     await this.saveMatch(rematch);
     match.rematchOfferBy = null;
@@ -2037,42 +1496,6 @@ export class GameServer extends DurableObject<Env> {
         });
       }
     }
-    // House players appear like everyone else: seats in live games show as
-    // "playing", advertised seeks as "searching" plus a joinable seek row.
-    const botPlayers: Array<{ name: string; rating: number | null; status: string; avatar: string | null }> = [];
-    const seenBots = new Set<string>();
-    for (const match of matches) {
-      if (!match.startedAt || match.result) continue;
-      for (const color of ["w", "b"] as Color[]) {
-        const botId = match.bots?.[color];
-        const user = match.users?.[color];
-        if (!botId || !user || seenBots.has(botId)) continue;
-        seenBots.add(botId);
-        botPlayers.push({
-          name: user.name,
-          rating: Math.round(user.rating),
-          status: "playing",
-          avatar: user.avatar ?? null,
-        });
-      }
-    }
-    const botSeeks = (await this.ctx.storage.get<BotSeekEntry[]>(botSeeksKey)) ?? [];
-    for (const seek of botSeeks) {
-      if (seenBots.has(seek.userId)) continue;
-      seenBots.add(seek.userId);
-      botPlayers.push({ name: seek.name, rating: seek.rating, status: "searching", avatar: seek.avatar });
-      const pool = QUEUE_POOLS[seek.pool];
-      if (pool) {
-        seeks.push({
-          pool: seek.pool,
-          name: seek.name,
-          rating: seek.rating,
-          timeSec: pool.timeSec,
-          incrementSec: pool.incrementSec,
-          at: seek.at,
-        });
-      }
-    }
     seeks.sort((a, b) => a.at - b.at);
 
     // Every signed-in account with an open socket, deduped; anonymous sockets
@@ -2117,7 +1540,7 @@ export class GameServer extends DurableObject<Env> {
       } catch {}
     }
 
-    const players = [...seen.values(), ...botPlayers]
+    const players = [...seen.values()]
       .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0))
       .slice(0, 50);
     send(ws, "lobby", {
@@ -2150,11 +1573,6 @@ export class GameServer extends DurableObject<Env> {
       const disconnectedAt = match.disconnectedAt[color];
       if (disconnectedAt && !match.opponentGoneNotified[color]) candidates.push(disconnectedAt + disconnectGraceMs);
     }
-    // An overdue think timer (the tick ran long) must fire again immediately,
-    // not wait out the heartbeat — clamp it just past now so the `> now`
-    // filter below keeps it.
-    if (match.botMoveAt && !match.result) candidates.push(Math.max(match.botMoveAt, now + 500));
-
     const expiry = match.completedAt ?? match.createdAt;
     if (match.completedAt) candidates.push(expiry + 60 * 60 * 1000);
     else if (!match.startedAt) candidates.push(expiry + 30 * 60 * 1000);
@@ -2176,10 +1594,10 @@ export class GameServer extends DurableObject<Env> {
 
   private async scheduleNextAlarm(matches: StoredMatch[]) {
     const now = Date.now();
-    let next = Math.min(...matches.map((match) => this.candidateAlarm(match) ?? Number.POSITIVE_INFINITY));
-    // The house-player roster ticks at least every heartbeat so seeks stay
-    // fresh, queued humans get picked up, and new bot games keep starting.
-    next = Math.min(next, now + botHeartbeatMs);
+    const next = Math.min(...matches.map((match) => this.candidateAlarm(match) ?? Number.POSITIVE_INFINITY));
+    // No pending deadline means no alarm: the Durable Object goes idle until
+    // the next socket/save re-arms it via scheduleAlarmForMatch.
+    if (!Number.isFinite(next)) return;
     await this.ctx.storage.setAlarm(Math.max(next, now + 250));
   }
 
