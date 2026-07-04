@@ -148,7 +148,11 @@ const disconnectGraceMs = 15 * 1000;
 // seeking in the lobby (10-15 engaged at all times). The alarm chain ticks at
 // least this often to keep the roster topped up.
 const botHeartbeatMs = 20 * 1000;
-const botTargetGames = 5;
+// Fewer concurrent bot-vs-bot games means fewer move timers coming due, which
+// means the alarm fires less often and the single-threaded DO spends more time
+// free to answer lobby polls and socket upgrades. Three still keeps the lobby
+// looking active.
+const botTargetGames = 3;
 const botSeekMin = 2;
 const botSeekMax = 3;
 const botSeekTtlMs = 8 * 60 * 1000;
@@ -163,10 +167,12 @@ const botNextGameKey = "bots:nextGameAt";
 // bot-vs-bot filler, but neither can monopolize the thread.
 const botHumanMoveBudgetMs = 700;
 const botFillerMoveBudgetMs = 120;
+// How long a loaded bot roster is reused before re-querying D1.
+const botSeatCacheTtlMs = 45 * 1000;
 // Bumped whenever the worker changes in a way we want to confirm shipped.
 // Surfaced at GET /healthz so a deploy can be verified without Cloudflare
 // dashboard access (compare the value there against this one).
-const buildVersion = "bots-diag-2";
+const buildVersion = "bots-diag-3";
 // Lichess-style start-of-game grace: a player's clock only starts charging 10
 // seconds into their first move, so nobody loses time to a slow page load.
 const firstMoveGraceMs = 10 * 1000;
@@ -1118,6 +1124,20 @@ export class GameServer extends DurableObject<Env> {
   }
 
   private botsSeeded = false;
+  // Bot ratings change slowly, so cache the roster in memory instead of
+  // querying D1 on every alarm tick — the per-tick DB round-trip was a big
+  // part of the constant load that kept the single-threaded DO from answering
+  // lobby polls. Refreshed at most once per botSeatCacheTtlMs.
+  private botSeatCache: { at: number; seats: Map<string, BotSeat> } | null = null;
+
+  private async loadBotSeatsCached(db: D1Database, now: number): Promise<Map<string, BotSeat>> {
+    if (this.botSeatCache && now - this.botSeatCache.at < botSeatCacheTtlMs) {
+      return this.botSeatCache.seats;
+    }
+    const seats = await loadBotSeats(db);
+    this.botSeatCache = { at: now, seats };
+    return seats;
+  }
 
   private botSeatUser(seat: BotSeat): SeatUser {
     return {
@@ -1342,7 +1362,7 @@ export class GameServer extends DurableObject<Env> {
 
     let seats: Map<string, BotSeat>;
     try {
-      seats = await loadBotSeats(db);
+      seats = await this.loadBotSeatsCached(db, now);
     } catch {
       return;
     }
