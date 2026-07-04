@@ -6,11 +6,12 @@
 // hides itself from non-mods.
 
 import { ALL_NERFS } from "@/engine/nerfs/library";
+import { BUFF_BY_ID } from "@/engine/buffs/library";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { AccountUser, fetchMe } from "@/lib/authClient";
 
-type Tab = "reports" | "chat" | "users" | "suggestions" | "rules" | "log";
+type Tab = "reports" | "chat" | "users" | "suggestions" | "rules" | "buffs" | "log";
 
 interface Report {
   id: string;
@@ -141,7 +142,8 @@ export default function ModPage() {
                   ["chat", "Chat flags"],
                   ["users", "Players"],
                   ["suggestions", "Suggestions"],
-                  ["rules", "Rule feedback"],
+                  ["rules", "Nerf feedback"],
+                  ["buffs", "Buff feedback"],
                   ["log", "Mod log"],
                 ] as [Tab, string][]
               ).map(([key, label]) => (
@@ -165,6 +167,7 @@ export default function ModPage() {
               {tab === "users" && <UsersTab isAdmin={me.role === "admin"} />}
               {tab === "suggestions" && <SuggestionsTab />}
               {tab === "rules" && <RuleFeedbackTab />}
+              {tab === "buffs" && <BuffFeedbackTab />}
               {tab === "log" && <LogTab />}
             </div>
           </>
@@ -256,6 +259,102 @@ function RuleFeedbackTab() {
                     {v.vote > 0 ? "+1" : "-1"}
                   </span>{" "}
                   {nerfName(v.nerf_id)}
+                  <span className="text-parchment-400"> by {v.username ?? "unknown"}</span>
+                </span>
+                <span className="shrink-0 text-xs text-parchment-400">
+                  {new Date(v.created_at).toLocaleString()}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------- buff feedback ----------------
+
+type BuffFeedbackTotal = { buff_id: string; up: number; down: number; last_at: number };
+type BuffFeedbackVote = {
+  buff_id: string;
+  vote: number;
+  username: string | null;
+  game_id: string | null;
+  created_at: number;
+};
+
+// Post-game thumbs from players, aggregated per buff. Same shape as the nerf
+// feedback tab: most-voted buffs first so unfair or unfun cards surface.
+function BuffFeedbackTab() {
+  const [totals, setTotals] = useState<BuffFeedbackTotal[] | null>(null);
+  const [recent, setRecent] = useState<BuffFeedbackVote[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/mod/buff-feedback")
+      .then((res) => (res.ok ? (res.json() as Promise<{ totals: BuffFeedbackTotal[]; recent: BuffFeedbackVote[] }>) : null))
+      .then((data) => {
+        if (cancelled || !data) return;
+        setTotals(data.totals);
+        setRecent(data.recent);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const buffName = (id: string) => BUFF_BY_ID[id]?.name ?? id;
+
+  if (!totals) return <p className="text-sm text-parchment-400">Loading buff feedback…</p>;
+  if (totals.length === 0) {
+    return <p className="text-sm text-parchment-400">No feedback yet. Votes appear after players rate their buffs post-game.</p>;
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="plate overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="smallcaps text-[9px] text-parchment-400">
+              <th className="px-4 py-2 text-left font-normal">Buff</th>
+              <th className="px-4 py-2 text-right font-normal">Liked</th>
+              <th className="px-4 py-2 text-right font-normal">Disliked</th>
+              <th className="px-4 py-2 text-right font-normal">Score</th>
+              <th className="px-4 py-2 text-right font-normal">Last vote</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/5">
+            {totals.map((row) => (
+              <tr key={row.buff_id}>
+                <td className="px-4 py-2 text-parchment-100">{buffName(row.buff_id)}</td>
+                <td className="px-4 py-2 text-right font-mono tabular-nums text-verdigris-glow">{row.up}</td>
+                <td className="px-4 py-2 text-right font-mono tabular-nums text-oxblood-glow">{row.down}</td>
+                <td className="px-4 py-2 text-right font-mono tabular-nums text-parchment-100">
+                  {row.up - row.down > 0 ? "+" : ""}
+                  {row.up - row.down}
+                </td>
+                <td className="px-4 py-2 text-right text-xs text-parchment-400">
+                  {new Date(row.last_at).toLocaleDateString()}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {recent.length > 0 && (
+        <div>
+          <h3 className="smallcaps text-xs text-parchment-400">Recent votes</h3>
+          <ul className="mt-2 plate divide-y divide-white/5 text-sm">
+            {recent.map((v, i) => (
+              <li key={i} className="flex items-center justify-between gap-3 px-4 py-2">
+                <span className="min-w-0 truncate text-parchment-100">
+                  <span className={v.vote > 0 ? "text-verdigris-glow" : "text-oxblood-glow"}>
+                    {v.vote > 0 ? "+1" : "-1"}
+                  </span>{" "}
+                  {buffName(v.buff_id)}
                   <span className="text-parchment-400"> by {v.username ?? "unknown"}</span>
                 </span>
                 <span className="shrink-0 text-xs text-parchment-400">
