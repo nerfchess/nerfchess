@@ -1,6 +1,54 @@
+import type { ActiveEffect, BuffInstance, BuffOffer, BuffPick, BuffTarget, DraftFlags } from "@/engine/buff";
 import type { Color } from "@/engine/types";
 
 export type MPPlayers = Record<Color, { name: string; rating: number | null; avatar?: string | null }>;
+
+// ---------------- draft mode (buff drafts) ----------------
+
+// One public draft card: identity plus the tier it rolled at.
+export type MPDraftCard = { id: string; tier: number };
+
+// The public draft record: picked cards are public the moment they are held,
+// banks only reveal that they happened, and buff activations carry their
+// targets. `ply` is the number of accepted moves when the action happened,
+// so clients can interleave the record with the move list and rebuild the
+// exact board (buff effects mutate it outside move history).
+export type MPDraftAction =
+  | { ply: number; color: Color; a: "pick"; cards: MPDraftCard[] }
+  | { ply: number; color: Color; a: "bank" }
+  | { ply: number; color: Color; a: "use"; buffIndex: number; picks: BuffPick[] };
+
+// Per-receiver filtered view of one player's draft state. The own seat gets
+// its offer, flags, and oppReveal snapshot; the opponent's copy is stripped
+// of those unless the match has picksVisible (then offer and flags are
+// shared); spectator copies carry only the public parts.
+export type MPDraftPlayerState = {
+  buffs: BuffInstance[];
+  draftsTaken: number;
+  nextDraftAt: number;
+  offer: BuffOffer | null;
+  // The opponent has an unresolved offer whose cards are hidden from you.
+  offerPending?: boolean;
+  flags?: DraftFlags;
+  oppReveal?: { index: number; cards?: MPDraftCard[]; tier?: number } | null;
+  nerfRemoved?: boolean;
+  revived?: Record<string, number>;
+};
+
+export type MPDraftState = {
+  cadence: number;
+  effects: ActiveEffect[];
+  extraMoves: Record<Color, number>;
+  skips: Record<Color, number>;
+  chainKingGuard?: Color;
+  historyDiverged?: boolean;
+  players: Record<Color, MPDraftPlayerState>;
+};
+
+export type MPDraftOffer = { color: Color; cards: MPDraftCard[]; index: number; banked?: boolean };
+export type MPDraftResolved = { color: Color; kind: "picked" | "banked"; cards?: MPDraftCard[] };
+export type MPDraftUsed = { color: Color; buffIndex: number; picks: BuffPick[] };
+export type MPDraftHeldBuff = { id: string; tier: number; spent?: boolean; nullified?: boolean };
 
 export type MPChatMessage = { color: Color; name: string; text: string; at: number };
 
@@ -28,6 +76,12 @@ export type MPStart = {
   preview?: MPRatingPreview;
   // Rules already voluntarily revealed mid-game (color -> nerf id).
   revealed?: Partial<Record<Color, string>>;
+  // Draft ruleset games (always casual): the public action record for exact
+  // replay plus this seat's filtered view of the live draft state.
+  draft?: boolean;
+  picksVisible?: boolean;
+  dtActions?: MPDraftAction[];
+  dtState?: MPDraftState;
 };
 
 export type MPWatchStart = {
@@ -46,6 +100,11 @@ export type MPWatchStart = {
   // Signed-in watcher usernames (anonymous watchers only count toward `watchers`).
   watcherNames?: string[];
   spectatorChat?: MPSpectatorChatMessage[];
+  // Draft ruleset games: spectator-safe payload (held buffs and board
+  // effects only; offers and reveals are never sent to watchers).
+  draft?: boolean;
+  dtActions?: MPDraftAction[];
+  dtState?: MPDraftState;
 };
 
 // One lobby snapshot: who is online and which games can be watched.
@@ -54,6 +113,8 @@ export type MPLobbyGame = {
   id: string;
   players: MPPlayers;
   rated: boolean;
+  // Optional so snapshots from an older server still parse.
+  draft?: boolean;
   timeSec: number;
   incrementSec: number;
   moves: number;
@@ -63,6 +124,7 @@ export type MPLobbyGame = {
 export type MPLobbyChallenge = {
   id: string;
   host: { name: string; rating: number | null };
+  draft?: boolean;
   timeSec: number;
   incrementSec: number;
   createdAt: number;
@@ -104,6 +166,8 @@ export type MPEnd = {
   bc: number;
   ratings?: Record<Color, MPRatingChange | null>;
   nerfs?: Record<Color, string>;
+  // Draft games: the public draft record at game end (held buffs per side).
+  draftBuffs?: Record<Color, MPDraftHeldBuff[]>;
 };
 
 export type MPEvent =
@@ -125,6 +189,11 @@ export type MPEvent =
   | { type: "chat"; message: MPChatMessage }
   | { type: "spectator-chat"; message: MPSpectatorChatMessage }
   | { type: "rule-revealed"; color: Color; nerfId: string }
+  | { type: "draft-offer"; offer: MPDraftOffer }
+  | { type: "draft-resolved"; resolved: MPDraftResolved }
+  | { type: "draft-used"; used: MPDraftUsed }
+  | { type: "draft-state"; state: MPDraftState }
+  | { type: "draft-target"; buffIndex: number; target: BuffTarget | null }
   | { type: "clocks"; wc: number; bc: number }
   | { type: "watchers"; n: number; names?: string[] }
   | { type: "lobby"; data: MPLobby }
@@ -152,6 +221,11 @@ type ServerFrame =
   | { t: "chat"; d: MPChatMessage }
   | { t: "schat"; d: MPSpectatorChatMessage }
   | { t: "reveal"; d: { color: Color; nerfId: string } }
+  | { t: "dtOffer"; d: MPDraftOffer }
+  | { t: "dtResolved"; d: MPDraftResolved }
+  | { t: "dtUsed"; d: MPDraftUsed }
+  | { t: "dtState"; d: { state: MPDraftState } }
+  | { t: "dtTargetReq"; d: { buffIndex: number; target: BuffTarget | null } }
   | { t: "watchers"; d: { n: number; names?: string[] } }
   | { t: "lobby"; d: MPLobby }
   | { t: "opponentGone" }
@@ -484,6 +558,21 @@ export class MPSession {
       case "reveal":
         this.emit({ type: "rule-revealed", color: frame.d.color, nerfId: frame.d.nerfId });
         break;
+      case "dtOffer":
+        this.emit({ type: "draft-offer", offer: frame.d });
+        break;
+      case "dtResolved":
+        this.emit({ type: "draft-resolved", resolved: frame.d });
+        break;
+      case "dtUsed":
+        this.emit({ type: "draft-used", used: frame.d });
+        break;
+      case "dtState":
+        this.emit({ type: "draft-state", state: frame.d.state });
+        break;
+      case "dtTargetReq":
+        this.emit({ type: "draft-target", buffIndex: frame.d.buffIndex, target: frame.d.target });
+        break;
       case "watchers":
         this.emit({ type: "watchers", n: frame.d.n, names: frame.d.names });
         break;
@@ -508,7 +597,11 @@ export class MPSession {
     }
   }
 
-  async host(timeSec: number, incrementSec: number): Promise<string> {
+  async host(
+    timeSec: number,
+    incrementSec: number,
+    options?: { draft?: boolean; picksVisible?: boolean },
+  ): Promise<string> {
     await this.connect();
     return new Promise((resolve, reject) => {
       const off = this.on((event) => {
@@ -520,7 +613,11 @@ export class MPSession {
           reject(new Error(event.message));
         }
       });
-      this.sendFrame("create", { timeSec, incrementSec });
+      this.sendFrame("create", {
+        timeSec,
+        incrementSec,
+        ...(options?.draft ? { draft: true, picksVisible: !!options.picksVisible } : {}),
+      });
     });
   }
 
@@ -669,6 +766,28 @@ export class MPSession {
   // Voluntarily show my rule to the opponent (and any spectators).
   revealRule(): boolean {
     return this.sendFrame("reveal");
+  }
+
+  // ---------------- draft mode ----------------
+
+  // Take a card from my pending buff offer.
+  sendDraftPick(index: number): boolean {
+    return this.sendFrame("dtPick", { index });
+  }
+
+  // Skip my pending offer, banking +1 tier for the next draft.
+  sendDraftBank(): boolean {
+    return this.sendFrame("dtBank");
+  }
+
+  // Activate a held buff with its collected targets.
+  useBuff(buffIndex: number, picks: BuffPick[]): boolean {
+    return this.sendFrame("dtUse", { buffIndex, picks });
+  }
+
+  // Ask the server for the buff's next target request (dtTargetReq reply).
+  requestBuffTarget(buffIndex: number, picks: BuffPick[]): boolean {
+    return this.sendFrame("dtTarget", { buffIndex, picks });
   }
 
   offerDraw(): boolean {

@@ -18,6 +18,10 @@ interface Props {
   /** Activation is only allowed on your turn while the game is live. */
   canAct: boolean;
   onChanged: () => void;
+  /** Online games: send the activation to the server instead of applying it
+   * locally. Targets are still computed from the local replica (held buffs
+   * and board effects are public state kept in sync by the server). */
+  onUse?: (buffIndex: number, picks: BuffPick[]) => void;
 }
 
 interface Targeting {
@@ -26,7 +30,7 @@ interface Targeting {
   target: BuffTarget;
 }
 
-export function BuffDock({ game, myColor, canAct, onChanged }: Props) {
+export function BuffDock({ game, myColor, canAct, onChanged, onUse }: Props) {
   const [targeting, setTargeting] = useState<Targeting | null>(null);
   const bs = game.buffs;
   if (!bs) return null;
@@ -37,7 +41,8 @@ export function BuffDock({ game, myColor, canAct, onChanged }: Props) {
     const target = buffNextTarget(game, myColor, index, []);
     if (!target) {
       // No targeting needed: fire immediately.
-      if (activateBuff(game, myColor, index, [])) onChanged();
+      if (onUse) onUse(index, []);
+      else if (activateBuff(game, myColor, index, [])) onChanged();
       return;
     }
     setTargeting({ buffIndex: index, picks: [], target });
@@ -48,9 +53,10 @@ export function BuffDock({ game, myColor, canAct, onChanged }: Props) {
     const picks = [...targeting.picks, pick];
     const next = buffNextTarget(game, myColor, targeting.buffIndex, picks);
     if (!next) {
-      activateBuff(game, myColor, targeting.buffIndex, picks);
+      if (onUse) onUse(targeting.buffIndex, picks);
+      else activateBuff(game, myColor, targeting.buffIndex, picks);
       setTargeting(null);
-      onChanged();
+      if (!onUse) onChanged();
     } else {
       setTargeting({ ...targeting, picks, target: next });
     }

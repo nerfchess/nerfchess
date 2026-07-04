@@ -5,12 +5,22 @@ import { useParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Board } from "@/components/Board";
 import { BoardPlayerRow } from "@/components/BoardPlayerRow";
+import { BuffCard } from "@/components/BuffCard";
 import { ClockPill } from "@/components/ClockPill";
 import { MoveList } from "@/components/MoveList";
 import { OnlineMatch } from "@/components/OnlineMatch";
+import { moveToUCI } from "@/engine/board";
+import { BUFF_BY_ID } from "@/engine/buffs/library";
+import { NerfGame, legalMoves } from "@/engine/game";
 import { Nerf } from "@/engine/nerf";
 import { IMPLEMENTED_BY_ID } from "@/engine/nerfs/library";
 import { Color } from "@/engine/types";
+import {
+  applyDraftAction,
+  buildSpectatorDraftGame,
+  draftZones,
+  playReplicaMove,
+} from "@/lib/draftOnline";
 import { boardAtPly, replayUci } from "@/lib/gameReview";
 import { timeControlLabel } from "@/lib/gameHistory";
 import { gameToPGN } from "@/lib/pgn";
@@ -236,6 +246,17 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
   const [spectatorChat, setSpectatorChat] = useState<MPSpectatorChatMessage[]>(setup.spectatorChat ?? []);
   const [reconnecting, setReconnecting] = useState(false);
   const [historyPly, setHistoryPly] = useState<number | null>(null);
+  // Draft games keep an engine replica so buff board mutations (summons,
+  // removals) and zone effects render correctly. The wstart payload is
+  // spectator-safe: held buffs and effects only, never pending offers.
+  const isDraft = !!setup.draft;
+  const draftGameRef = useRef<NerfGame | null>(null);
+  const [draftGame, setDraftGame] = useState<NerfGame | null>(() => {
+    if (!isDraft) return null;
+    const game = buildSpectatorDraftGame(setup.moves, setup.dtActions ?? [], setup.dtState);
+    draftGameRef.current = game;
+    return game;
+  });
 
   useEffect(() => {
     const off = session.on((e) => {
@@ -243,6 +264,39 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
         setUciMoves((m) => (e.move.ply === m.length + 1 ? [...m, e.move.u] : m));
         setWhiteMs(e.move.wc);
         setBlackMs(e.move.bc);
+        const g = draftGameRef.current;
+        if (g && !g.result) {
+          const move = legalMoves(g).find((candidate) => moveToUCI(candidate) === e.move.u);
+          if (move) {
+            const next = playReplicaMove(g, move);
+            draftGameRef.current = next;
+            setDraftGame({ ...next });
+          }
+        }
+      } else if (e.type === "draft-resolved" || e.type === "draft-used") {
+        const g = draftGameRef.current;
+        if (g?.buffs) {
+          applyDraftAction(
+            g,
+            e.type === "draft-used"
+              ? {
+                  ply: g.board.history.length,
+                  color: e.used.color,
+                  a: "use",
+                  buffIndex: e.used.buffIndex,
+                  picks: e.used.picks,
+                }
+              : e.resolved.kind === "picked"
+                ? {
+                    ply: g.board.history.length,
+                    color: e.resolved.color,
+                    a: "pick",
+                    cards: e.resolved.cards ?? [],
+                  }
+                : { ply: g.board.history.length, color: e.resolved.color, a: "bank" },
+          );
+          setDraftGame({ ...g });
+        }
       } else if (e.type === "end") {
         setResult(e.end.result);
         setWhiteMs(e.end.wc);
@@ -273,7 +327,11 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
     return off;
   }, [session]);
 
-  const { board, history } = useMemo(() => replayUci(uciMoves), [uciMoves]);
+  const replayed = useMemo(() => replayUci(uciMoves), [uciMoves]);
+  // Draft boards can diverge from plain move replay (buffs mutate the board
+  // outside move history), so the engine replica is authoritative there.
+  const board = isDraft && draftGame ? draftGame.board : replayed.board;
+  const history = isDraft && draftGame ? draftGame.board.history : replayed.history;
   const clockEnabled = setup.timeSec > 0;
 
   // Local clock tick between server updates. The side to move gets a 10s
@@ -292,9 +350,14 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
     return () => clearInterval(id);
   }, [board.turn, clockEnabled, result, setup.started, uciMoves.length]);
 
-  const currentPly = historyPly ?? history.length;
-  const displayBoard = historyPly == null ? board : boardAtPly(history, historyPly);
+  // Draft games disable history scrubbing: positions between buff mutations
+  // cannot be rebuilt from the move list alone.
+  const scrubbing = !isDraft;
+  const currentPly = scrubbing ? historyPly ?? history.length : history.length;
+  const displayBoard =
+    !scrubbing || historyPly == null ? board : boardAtPly(history, historyPly);
   const lastMove = displayBoard.history[displayBoard.history.length - 1] ?? null;
+  const zones = isDraft && draftGame ? draftZones(draftGame, "w") : null;
 
   return (
     <GameShell
@@ -305,7 +368,10 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
       lastMove={lastMove}
       history={history}
       currentPly={currentPly}
-      onPlyChange={(ply) => setHistoryPly(ply >= history.length ? null : Math.max(0, ply))}
+      onPlyChange={(ply) => {
+        if (!scrubbing) return;
+        setHistoryPly(ply >= history.length ? null : Math.max(0, ply));
+      }}
       clockEnabled={clockEnabled}
       whiteMs={whiteMs}
       blackMs={blackMs}
@@ -314,12 +380,24 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
         (reconnecting
           ? "Reconnecting… · "
           : "") +
+        (isDraft ? "Draft · " : "") +
         (result ? describeResult(result) : setup.started ? "Live game" : "Waiting for players") +
         (watchers > 0 ? ` · ${watchers} watching` : "")
       }
       nerfs={nerfs}
+      visual={
+        zones
+          ? {
+              bannedSquares: zones.barred,
+              frozenSquares: zones.frozen,
+              shieldedSquares: zones.shielded,
+              wardSquares: zones.ward,
+            }
+          : undefined
+      }
       rail={
         <div className="mt-3 space-y-3">
+          {isDraft && draftGame && <SpectatorBuffsPanel game={draftGame} players={setup.players} />}
           <WatchersPanel count={watchers} names={watcherNames} />
           <SpectatorChat
             messages={spectatorChat}
@@ -328,6 +406,51 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
         </div>
       }
     />
+  );
+}
+
+// Held buffs are public in draft games, so spectators see both docks.
+// Pending offers and reveal snapshots never reach this view.
+function SpectatorBuffsPanel({ game, players }: { game: NerfGame; players: MPPlayers }) {
+  const bs = game.buffs;
+  if (!bs) return null;
+  const side = (color: Color) => {
+    const held = bs.players[color].buffs;
+    return (
+      <div>
+        <div className="smallcaps text-[9px] text-parchment-400">
+          {players[color].name} ({color === "w" ? "White" : "Black"})
+        </div>
+        {held.length === 0 ? (
+          <p className="text-[11px] text-parchment-400">No buffs drafted yet.</p>
+        ) : (
+          <div className="mt-1 space-y-1">
+            {held.map((inst, i) => {
+              const def = BUFF_BY_ID[inst.id];
+              if (!def) return null;
+              return (
+                <BuffCard
+                  key={i}
+                  buff={def}
+                  tier={inst.tier}
+                  compact
+                  spent={inst.spent}
+                  nullified={inst.nullified}
+                  status={def.status?.(inst) ?? null}
+                />
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  };
+  return (
+    <div className="plate max-h-72 space-y-2 overflow-y-auto p-2 px-3">
+      <div className="smallcaps text-[9px] text-parchment-400">Drafted buffs</div>
+      {side("w")}
+      {side("b")}
+    </div>
   );
 }
 
@@ -522,6 +645,7 @@ function GameShell({
   activeColor,
   statusLabel,
   nerfs,
+  visual,
   rail,
 }: {
   players: MPPlayers;
@@ -538,6 +662,8 @@ function GameShell({
   activeColor: Color | null;
   statusLabel: string;
   nerfs: Partial<Record<Color, string>> | null;
+  // Draft spectating: public zone effects painted on the board.
+  visual?: React.ComponentProps<typeof Board>["visual"];
   rail?: React.ReactNode;
 }) {
   const nameOf = (color: Color) => {
@@ -575,6 +701,7 @@ function GameShell({
                 orientation="w"
                 onMove={() => {}}
                 myColor="w"
+                visual={visual}
                 lastMove={lastMove}
                 disabled
               />
