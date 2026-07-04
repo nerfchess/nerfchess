@@ -36,6 +36,11 @@ export default function FriendPage() {
   const [joinCode, setJoinCode] = useState("");
   const [baseSec, setBaseSec] = useState(600);
   const [incrementSec, setIncrementSec] = useState(0);
+  // Ruleset: Classic (default) or Draft (buff drafts every few moves).
+  // Draft games are always casual, and the host chooses whether both seats
+  // can see each other's pending offer cards.
+  const [ruleset, setRuleset] = useState<"classic" | "draft">("classic");
+  const [picksOpen, setPicksOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [start, setStart] = useState<MPStart | null>(null);
   // Direct challenge: ?challenge=NAME pre-addresses the game to that player;
@@ -159,7 +164,11 @@ export default function FriendPage() {
     sessionRef.current = sess;
     wireSession(sess);
     try {
-      const c = await sess.host(baseSec, incrementSec);
+      const c = await sess.host(
+        baseSec,
+        incrementSec,
+        ruleset === "draft" ? { draft: true, picksVisible: picksOpen } : undefined,
+      );
       if (sessionRef.current !== sess) return;
       setCode(c);
       setView("lobby");
@@ -314,6 +323,36 @@ export default function FriendPage() {
             />
           </div>
 
+          <div>
+            <div className="smallcaps text-[11px] text-parchment-400 mb-2">Ruleset</div>
+            <div className="grid grid-cols-2 gap-2">
+              <OptionButton selected={ruleset === "classic"} onClick={() => setRuleset("classic")}>
+                Classic
+              </OptionButton>
+              <OptionButton selected={ruleset === "draft"} onClick={() => setRuleset("draft")}>
+                Draft
+              </OptionButton>
+            </div>
+            {ruleset === "draft" && (
+              <div className="mt-3">
+                <div className="smallcaps text-[11px] text-parchment-400 mb-2">Opponent picks</div>
+                <div className="grid grid-cols-2 gap-2">
+                  <OptionButton selected={!picksOpen} onClick={() => setPicksOpen(false)}>
+                    Hidden
+                  </OptionButton>
+                  <OptionButton selected={picksOpen} onClick={() => setPicksOpen(true)}>
+                    Visible
+                  </OptionButton>
+                </div>
+                <p className="mt-2 text-[11px] leading-snug text-parchment-400">
+                  Every few moves each player drafts a buff. Held buffs are always public;
+                  this setting controls whether you also see the cards your opponent is
+                  choosing between. Draft games are always casual.
+                </p>
+              </div>
+            )}
+          </div>
+
           <button
             onClick={handleCreate}
             className="w-full py-3.5 rounded-sm btn-leaf font-body text-lg"
@@ -351,6 +390,30 @@ export default function FriendPage() {
         </div>
       </section>
     </main>
+  );
+}
+
+function OptionButton({
+  selected,
+  onClick,
+  children,
+}: {
+  selected: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={
+        "px-3 py-2 border transition text-xs font-display font-semibold tracking-wide " +
+        (selected
+          ? "border-gold/50 bg-gold/10 text-gold-leaf"
+          : "border-white/15 bg-white/[0.03] text-parchment-200 hover:border-white/30 hover:bg-white/[0.06]")
+      }
+    >
+      {children}
+    </button>
   );
 }
 

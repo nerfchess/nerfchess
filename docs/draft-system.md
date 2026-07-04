@@ -94,10 +94,6 @@ snapshots are deterministic.
 
 ## Known gaps / follow-ups
 
-- **Multiplayer**: draft mode is AI-only right now. The engine state is one
-  serializable object (`NerfGame.buffs`) designed to be relayed by the game
-  server; the server protocol and `OnlineMatch` need draft messages
-  (offer/pick/bank/activate) plus per-seat visibility filtering.
 - ~100 cards are stubs (atomic/explosion family, rewinds, move-history
   effects like *Momentum*, per-piece conditional shields). The `Buff` hook
   surface covers most of them; explosions and rewinds need new engine events.

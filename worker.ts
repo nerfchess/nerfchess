@@ -5,7 +5,19 @@ import { DurableObject } from "cloudflare:workers";
 import { default as handler } from "./.open-next/worker.js";
 import { moveToUCI } from "./src/engine/board";
 import { PLAYABLE_NERFS, pickNerfPair } from "./src/engine/nerfs/library";
-import { NerfGame, legalMoves, newGame, playMove, resign } from "./src/engine/game";
+import {
+  NerfGame,
+  activateBuff,
+  bankDraft,
+  buffNextTarget,
+  enableDraftMode,
+  legalMoves,
+  newGame,
+  pickDraftCard,
+  playMove,
+  resign,
+} from "./src/engine/game";
+import type { BuffPick } from "./src/engine/buff";
 import { RNG } from "./src/engine/rng";
 import { Color } from "./src/engine/types";
 import { sessionTokenFromCookieHeader, userForSession } from "./src/lib/server/auth";
@@ -27,6 +39,14 @@ type SeatUser = { id: string; name: string; rating: number; rd?: number; vol?: n
 type ChatEntry = { color: Color; name: string; text: string; at: number };
 // Spectator-room chat: watchers only, players never see it.
 type SpectatorChatEntry = { name: string; text: string; at: number };
+// One resolved draft interaction, stored in order. `ply` is the number of
+// accepted moves at the moment the action happened, so replaying moves and
+// actions interleaved through the engine rebuilds the exact game state
+// (board mutations, RNG stream, and all) on reconnects and DO restarts.
+type StoredDraftAction =
+  | { ply: number; color: Color; a: "pick"; index: number; cards: { id: string; tier: number }[] }
+  | { ply: number; color: Color; a: "bank" }
+  | { ply: number; color: Color; a: "use"; buffIndex: number; picks: BuffPick[] };
 type StoredMatch = {
   id: string;
   setup: Setup;
@@ -58,6 +78,15 @@ type StoredMatch = {
   spectatorChat?: SpectatorChatEntry[];
   // Colors that voluntarily revealed their rule to the table mid-game.
   revealed?: Partial<Record<Color, boolean>>;
+  // Draft ruleset games. Draft matches are always casual: createMatch never
+  // honors a rated request for them and the queue never creates them.
+  draft?: boolean;
+  // Friend-game setting: both seats see each other's pending offer cards.
+  picksVisible?: boolean;
+  // Seed for the draft engine RNG (offer rolls). Never sent to any client:
+  // it would let a client predict every future offer.
+  draftSeed?: number;
+  draftActions?: StoredDraftAction[];
 };
 type SessionAttachment = {
   id: string;
@@ -83,7 +112,7 @@ type QueueEntry = {
   at: number;
 };
 type ClientFrame =
-  | { t: "create"; d?: { timeSec?: unknown; incrementSec?: unknown } }
+  | { t: "create"; d?: { timeSec?: unknown; incrementSec?: unknown; draft?: unknown; picksVisible?: unknown } }
   | { t: "join"; d?: { id?: unknown } }
   | { t: "reconnect"; d?: { id?: unknown; color?: unknown; token?: unknown } }
   | { t: "move"; d?: { u?: unknown; ply?: unknown } }
@@ -103,6 +132,10 @@ type ClientFrame =
   | { t: "chat"; d?: { text?: unknown } }
   | { t: "schat"; d?: { text?: unknown } }
   | { t: "reveal" }
+  | { t: "dtPick"; d?: { index?: unknown } }
+  | { t: "dtBank" }
+  | { t: "dtUse"; d?: { buffIndex?: unknown; picks?: unknown } }
+  | { t: "dtTarget"; d?: { buffIndex?: unknown; picks?: unknown } }
   | { t: "p" };
 
 export interface Env {
@@ -319,6 +352,14 @@ export class GameServer extends DurableObject<Env> {
         return this.spectatorChatMessage(ws, frame.d);
       case "reveal":
         return this.revealRule(ws);
+      case "dtPick":
+        return this.draftPick(ws, frame.d);
+      case "dtBank":
+        return this.draftBank(ws);
+      case "dtUse":
+        return this.draftUse(ws, frame.d);
+      case "dtTarget":
+        return this.draftTarget(ws, frame.d);
       case "p":
         return this.sendClocks(ws);
       default:
@@ -613,6 +654,18 @@ export class GameServer extends DurableObject<Env> {
     const revealed: Partial<Record<Color, string>> = {};
     if (match.revealed?.w) revealed.w = match.setup.whiteNerfId;
     if (match.revealed?.b) revealed.b = match.setup.blackNerfId;
+    // Draft matches ship the public action record (for exact board replay)
+    // plus this seat's filtered view of the live draft state.
+    let draftExtras: Record<string, unknown> | null = null;
+    if (match.draft) {
+      const game = match.startedAt ? this.gameFromMatch(match) : null;
+      draftExtras = {
+        draft: true,
+        picksVisible: !!match.picksVisible,
+        dtActions: this.publicDraftActions(match),
+        ...(game?.buffs ? { dtState: this.draftStateFor(game, match, color) } : {}),
+      };
+    }
     return {
       id: match.id,
       color,
@@ -629,6 +682,7 @@ export class GameServer extends DurableObject<Env> {
       chat: match.chat ?? [],
       ...(Object.keys(revealed).length ? { revealed } : {}),
       ...(preview ? { preview } : {}),
+      ...(draftExtras ?? {}),
     };
   }
 
@@ -658,13 +712,34 @@ export class GameServer extends DurableObject<Env> {
     if (!white || !black) return null;
 
     let game = newGame(white, black, match.setup.seed);
-    for (const uci of match.moves) {
-      const move = moveByUci(game, uci);
+    if (match.draft) enableDraftMode(game, match.draftSeed ?? match.setup.seed);
+    // Draft actions replay interleaved with moves: an action recorded at ply
+    // N happened after N accepted moves, so replaying both streams through
+    // the engine reproduces the RNG stream, offers, and board mutations
+    // exactly. Classic matches carry no actions and take the same path.
+    const actions = match.draftActions ?? [];
+    let cursor = 0;
+    const applyActionsUpTo = (ply: number) => {
+      while (cursor < actions.length && actions[cursor].ply <= ply) {
+        this.applyStoredDraftAction(game, actions[cursor]);
+        cursor += 1;
+      }
+    };
+    for (let i = 0; i < match.moves.length; i++) {
+      applyActionsUpTo(i);
+      const move = moveByUci(game, match.moves[i]);
       if (!move) return null;
       game = playMove(game, move);
     }
+    applyActionsUpTo(match.moves.length);
     if (match.result) game.result = match.result;
     return game;
+  }
+
+  private applyStoredDraftAction(game: NerfGame, action: StoredDraftAction) {
+    if (action.a === "pick") pickDraftCard(game, action.color, action.index);
+    else if (action.a === "bank") bankDraft(game, action.color);
+    else activateBuff(game, action.color, action.buffIndex, action.picks);
   }
 
   // Moves the given color has already played (moves alternate w, b, w, …).
@@ -751,6 +826,26 @@ export class GameServer extends DurableObject<Env> {
     await this.saveMatch(match, schedule);
 
     const clocks = this.currentClocks(match);
+    // Draft games also close with the public draft record: each side's held
+    // buffs (public all game anyway, repeated here for post-game screens).
+    let draftBuffs: Record<Color, { id: string; tier: number; spent?: boolean; nullified?: boolean }[]> | null = null;
+    if (match.draft) {
+      try {
+        const game = this.gameFromMatch(match);
+        if (game?.buffs) {
+          const held = (color: Color) =>
+            game.buffs!.players[color].buffs.map((b) => ({
+              id: b.id,
+              tier: b.tier as number,
+              ...(b.spent ? { spent: true } : {}),
+              ...(b.nullified ? { nullified: true } : {}),
+            }));
+          draftBuffs = { w: held("w"), b: held("b") };
+        }
+      } catch {
+        // The end frame must go out even if the draft replay hiccups.
+      }
+    }
     // Both secret rules become public at game end — players and spectators
     // all receive them with the result.
     const payload = {
@@ -759,6 +854,7 @@ export class GameServer extends DurableObject<Env> {
       bc: Math.round(clocks.b),
       nerfs: { w: match.setup.whiteNerfId, b: match.setup.blackNerfId },
       ...(ratings ? { ratings } : {}),
+      ...(draftBuffs ? { draftBuffs } : {}),
     };
     this.broadcast(match, "end", payload);
     this.sendWatchers(match, "end", payload);
@@ -768,12 +864,17 @@ export class GameServer extends DurableObject<Env> {
     const session = this.session(ws);
     if (session.matchId) return error(ws, "already_joined", "This connection already belongs to a game.");
 
-    const requested = (data || {}) as { timeSec?: unknown; incrementSec?: unknown };
+    const requested = (data || {}) as { timeSec?: unknown; incrementSec?: unknown; draft?: unknown; picksVisible?: unknown };
     const timeSec = Number.isInteger(requested.timeSec) ? Number(requested.timeSec) : 600;
     const incrementSec = Number.isInteger(requested.incrementSec) ? Number(requested.incrementSec) : 0;
     if (timeSec < 0 || timeSec > 7200 || incrementSec < 0 || incrementSec > 60) {
       return error(ws, "invalid_clock", "Unsupported time control.");
     }
+    // Optional Draft ruleset for friend games. Draft matches are always
+    // casual: `rated` is deliberately never set here, whatever the client
+    // asks, so a draft game can never touch ratings.
+    const draft = requested.draft === true;
+    const picksVisible = draft && requested.picksVisible === true;
 
     const id = await this.newCode();
     const match: StoredMatch = {
@@ -795,6 +896,7 @@ export class GameServer extends DurableObject<Env> {
       createdAt: Date.now(),
       startedAt: null,
       completedAt: null,
+      ...(draft ? { draft: true, picksVisible, draftSeed: makeSeed(), draftActions: [] } : {}),
     };
 
     await this.attachSession(ws, match, "w");
@@ -865,6 +967,11 @@ export class GameServer extends DurableObject<Env> {
     const game = this.gameFromMatch(match);
     if (!game) return error(ws, "no_game", "Join a game before sending moves.");
     if (game.board.turn !== session.color) return error(ws, "not_your_turn", "It is not your turn.");
+    // Draft games: a pending buff offer blocks the seat's moves, mirroring
+    // how the client blocks the board until the draft is resolved.
+    if (match.draft && game.buffs?.players[session.color].offer) {
+      return error(ws, "draft_pending", "Resolve your buff draft before moving.");
+    }
 
     const request = (data || {}) as { u?: unknown; ply?: unknown };
     const uci = typeof request.u === "string" ? request.u.toLowerCase() : "";
@@ -902,6 +1009,26 @@ export class GameServer extends DurableObject<Env> {
     };
     this.broadcast(match, "move", movePayload);
     this.sendWatchers(match, "move", movePayload);
+    if (match.draft && nextGame.buffs) {
+      // An offer can only have rolled for the mover: the cadence counts the
+      // mover's own moves, and a seat with a pending offer cannot move.
+      const rolled = nextGame.buffs.players[session.color].offer;
+      if (rolled) {
+        const offerPayload = {
+          color: session.color,
+          cards: rolled.cards,
+          index: rolled.index,
+          ...(rolled.banked ? { banked: true } : {}),
+        };
+        // dtOffer goes to the drafting seat only, plus the opponent when the
+        // match was created with visible picks. Spectators never see offers.
+        send(this.connectedSession(match.id, session.color), "dtOffer", offerPayload);
+        if (match.picksVisible) {
+          send(this.connectedSession(match.id, session.color === "w" ? "b" : "w"), "dtOffer", offerPayload);
+        }
+        this.sendDraftState(match, nextGame);
+      }
+    }
     if (match.result) await this.endMatch(match);
   }
 
@@ -985,6 +1112,9 @@ export class GameServer extends DurableObject<Env> {
     if (await this.finishOnFlag(match)) return;
     if (match.result) return;
     if (match.rated) return error(ws, "takeback_rated", "Takebacks are not allowed in rated games.");
+    // Draft state (rolled offers, consumed RNG, applied buffs) cannot be
+    // rewound, so draft games have no takebacks.
+    if (match.draft) return error(ws, "takeback_draft", "Takebacks are not available in Draft games.");
     const myMoves = session.color === "w" ? Math.ceil(match.moves.length / 2) : Math.floor(match.moves.length / 2);
     if (myMoves === 0) return error(ws, "no_moves", "You have no move to take back.");
     if (this.takebackPlies(match, session.color) > match.moves.length) {
@@ -1238,6 +1368,9 @@ export class GameServer extends DurableObject<Env> {
       rated: match.rated,
       autoStart: true,
       users,
+      ...(match.draft
+        ? { draft: true, picksVisible: !!match.picksVisible, draftSeed: makeSeed(), draftActions: [] }
+        : {}),
     };
     await this.saveMatch(rematch);
     match.rematchOfferBy = null;
@@ -1361,6 +1494,253 @@ export class GameServer extends DurableObject<Env> {
     this.sendWatchers(match, "reveal", payload);
   }
 
+  // ---------------- draft mode (buff drafts) ----------------
+
+  // The single place that decides what each receiver may see of the draft
+  // state. Visibility rules:
+  // - Held (already drafted) buffs, board effects, tempo counters, and the
+  //   draft counters are public: both seats and spectators get them.
+  // - A pending offer's cards are visible to the offer's own seat, plus the
+  //   opposing seat when the match was created with picksVisible. Without
+  //   picksVisible the opposing seat only learns that an offer is pending.
+  // - Draft flags and the one-shot oppReveal snapshot are per-seat secrets;
+  //   the opposing seat gets flags only under picksVisible, never the reveal.
+  // - Spectators get none of the hidden data: no offers, no pending markers,
+  //   no flags, no reveals, regardless of settings.
+  // - The draft RNG state is never serialized for anyone: it would let a
+  //   client predict every future offer.
+  private draftStateFor(game: NerfGame, match: StoredMatch, seat: Color | "spectator") {
+    const bs = game.buffs;
+    if (!bs) return null;
+    const playerState = (color: Color) => {
+      const ps = bs.players[color];
+      const self = seat === color;
+      const open = self || (seat !== "spectator" && !!match.picksVisible);
+      return {
+        buffs: ps.buffs,
+        draftsTaken: ps.draftsTaken,
+        nextDraftAt: ps.nextDraftAt,
+        offer: open ? ps.offer : null,
+        ...(seat !== "spectator" && !open && ps.offer ? { offerPending: true } : {}),
+        ...(open ? { flags: ps.flags } : {}),
+        ...(self ? { oppReveal: ps.oppReveal ?? null } : {}),
+        ...(ps.nerfRemoved ? { nerfRemoved: true } : {}),
+        revived: ps.revived,
+      };
+    };
+    return {
+      cadence: bs.cadence,
+      effects: bs.effects,
+      extraMoves: bs.extraMoves,
+      skips: bs.skips,
+      ...(bs.chainKingGuard ? { chainKingGuard: bs.chainKingGuard } : {}),
+      ...(bs.historyDiverged ? { historyDiverged: true } : {}),
+      players: { w: playerState("w"), b: playerState("b") },
+    };
+  }
+
+  private sendDraftState(match: StoredMatch, game: NerfGame) {
+    for (const color of ["w", "b"] as Color[]) {
+      const seatWs = this.connectedSession(match.id, color);
+      if (!seatWs) continue;
+      const state = this.draftStateFor(game, match, color);
+      if (state) send(seatWs, "dtState", { state });
+    }
+  }
+
+  // The public draft record everyone may replay: picked cards are public the
+  // moment they are held, a bank only reveals that it happened, and buff
+  // activations carry their targets (the effects are on the board anyway).
+  // The pick's offer slot index stays private with the rest of the offer.
+  private publicDraftActions(match: StoredMatch) {
+    return (match.draftActions ?? []).map((action) =>
+      action.a === "pick"
+        ? { ply: action.ply, color: action.color, a: "pick" as const, cards: action.cards }
+        : action,
+    );
+  }
+
+  // Shared validation for the draft frames: a seated, live, started draft
+  // match rebuilt through the engine.
+  private async draftContext(
+    ws: WebSocket,
+  ): Promise<{ session: SessionAttachment; match: StoredMatch; game: NerfGame } | null> {
+    const session = this.session(ws);
+    const match = session.matchId ? await this.loadMatch(session.matchId) : null;
+    if (!match || !session.color) {
+      error(ws, "no_game", "Join a game before drafting.");
+      return null;
+    }
+    if (!match.draft) {
+      error(ws, "not_draft", "This game is not a Draft game.");
+      return null;
+    }
+    if (await this.finishOnFlag(match)) return null;
+    if (match.result) {
+      error(ws, "game_over", "This game is over.");
+      return null;
+    }
+    const game = this.gameFromMatch(match);
+    if (!game?.buffs) {
+      error(ws, "no_game", "The game has not started yet.");
+      return null;
+    }
+    return { session, match, game };
+  }
+
+  // Persist a resolved draft action, tell everyone the public outcome, and
+  // re-sync both seats' filtered state. Instant and activated buffs can end
+  // the game on the spot (a removal or freeze can decide it), so the end
+  // flow runs here too.
+  private async settleDraftAction(
+    match: StoredMatch,
+    game: NerfGame,
+    resolved: { color: Color; kind: "picked" | "banked"; cards?: { id: string; tier: number }[] } | null,
+    used?: { color: Color; buffIndex: number; picks: BuffPick[] },
+  ) {
+    if (game.result && !match.result) {
+      const now = Date.now();
+      match.clocks = this.currentClocks(match, now);
+      match.runningSince = null;
+      match.result = game.result;
+      match.completedAt = now;
+    }
+    await this.saveMatch(match);
+    if (resolved) {
+      this.broadcast(match, "dtResolved", resolved);
+      this.sendWatchers(match, "dtResolved", resolved);
+    }
+    if (used) {
+      this.broadcast(match, "dtUsed", used);
+      this.sendWatchers(match, "dtUsed", used);
+    }
+    this.sendDraftState(match, game);
+    if (match.result) await this.endMatch(match);
+  }
+
+  private async draftPick(ws: WebSocket, data: unknown) {
+    const ctx = await this.draftContext(ws);
+    if (!ctx) return;
+    const { session, match, game } = ctx;
+    const color = session.color!;
+    const ps = game.buffs!.players[color];
+    const offer = ps.offer;
+    if (!offer) return error(ws, "no_offer", "You have no pending buff draft.");
+    const request = (data || {}) as { index?: unknown };
+    const index = Number(request.index);
+    if (!Number.isInteger(index) || !offer.cards[index]) {
+      return error(ws, "bad_pick", "That card is not part of your offer.");
+    }
+    const before = ps.buffs.length;
+    pickDraftCard(game, color, index);
+    // Everything acquired by this pick (take-both drafts can grab several
+    // cards) becomes public the moment it is held.
+    const cards = ps.buffs.slice(before).map((b) => ({ id: b.id, tier: b.tier as number }));
+    match.draftActions = [
+      ...(match.draftActions ?? []),
+      { ply: match.moves.length, color, a: "pick", index, cards },
+    ];
+    await this.settleDraftAction(match, game, { color, kind: "picked", cards });
+  }
+
+  private async draftBank(ws: WebSocket) {
+    const ctx = await this.draftContext(ws);
+    if (!ctx) return;
+    const { session, match, game } = ctx;
+    const color = session.color!;
+    if (!game.buffs!.players[color].offer) {
+      return error(ws, "no_offer", "You have no pending buff draft.");
+    }
+    bankDraft(game, color);
+    match.draftActions = [...(match.draftActions ?? []), { ply: match.moves.length, color, a: "bank" }];
+    await this.settleDraftAction(match, game, { color, kind: "banked" });
+  }
+
+  private async draftUse(ws: WebSocket, data: unknown) {
+    const ctx = await this.draftContext(ws);
+    if (!ctx) return;
+    const { session, match, game } = ctx;
+    const color = session.color!;
+    const ps = game.buffs!.players[color];
+    if (ps.offer) return error(ws, "draft_pending", "Resolve your buff draft first.");
+    if (game.board.turn !== color) return error(ws, "not_your_turn", "Buffs activate on your turn.");
+    const request = (data || {}) as { buffIndex?: unknown; picks?: unknown };
+    const buffIndex = Number(request.buffIndex);
+    if (!Number.isInteger(buffIndex) || !ps.buffs[buffIndex]) {
+      return error(ws, "bad_buff", "You do not hold that buff.");
+    }
+    const picks = this.parseBuffPicks(request.picks);
+    if (!picks || !this.buffPicksComplete(game, color, buffIndex, picks)) {
+      return error(ws, "bad_target", "Those targets are not valid for that buff.");
+    }
+    if (!activateBuff(game, color, buffIndex, picks)) {
+      return error(ws, "bad_buff", "That buff cannot be used right now.");
+    }
+    match.draftActions = [
+      ...(match.draftActions ?? []),
+      { ply: match.moves.length, color, a: "use", buffIndex, picks },
+    ];
+    await this.settleDraftAction(match, game, null, { color, buffIndex, picks });
+  }
+
+  private async draftTarget(ws: WebSocket, data: unknown) {
+    const ctx = await this.draftContext(ws);
+    if (!ctx) return;
+    const { session, game } = ctx;
+    const color = session.color!;
+    const request = (data || {}) as { buffIndex?: unknown; picks?: unknown };
+    const buffIndex = Number(request.buffIndex);
+    if (!Number.isInteger(buffIndex) || !game.buffs!.players[color].buffs[buffIndex]) {
+      return error(ws, "bad_buff", "You do not hold that buff.");
+    }
+    const picks = this.parseBuffPicks(request.picks);
+    const collected = picks ? this.walkBuffPicks(game, color, buffIndex, picks) : null;
+    if (!collected) return error(ws, "bad_target", "Those targets are not valid for that buff.");
+    send(ws, "dtTargetReq", { buffIndex, target: buffNextTarget(game, color, buffIndex, collected) });
+  }
+
+  private parseBuffPicks(raw: unknown): BuffPick[] | null {
+    if (raw === undefined) return [];
+    if (!Array.isArray(raw) || raw.length > 8) return null;
+    const picks: BuffPick[] = [];
+    for (const entry of raw) {
+      const pick = (entry || {}) as { square?: unknown; buffIndex?: unknown };
+      const next: BuffPick = {};
+      if (Number.isInteger(pick.square)) next.square = Number(pick.square);
+      if (Number.isInteger(pick.buffIndex)) next.buffIndex = Number(pick.buffIndex);
+      if (next.square === undefined && next.buffIndex === undefined) return null;
+      picks.push(next);
+    }
+    return picks;
+  }
+
+  // Walk the buff's own target chain: every pick must be one of the engine's
+  // offered candidates. This keeps a client from smuggling arbitrary squares
+  // or buff indexes into an effect.
+  private walkBuffPicks(game: NerfGame, color: Color, buffIndex: number, picks: BuffPick[]): BuffPick[] | null {
+    const collected: BuffPick[] = [];
+    for (const pick of picks) {
+      const target = buffNextTarget(game, color, buffIndex, collected);
+      if (!target) return null;
+      if (target.kind === "square") {
+        if (pick.square === undefined || !target.squares.includes(pick.square)) return null;
+        collected.push({ square: pick.square });
+      } else {
+        if (pick.buffIndex === undefined || !target.options.some((option) => option.index === pick.buffIndex)) {
+          return null;
+        }
+        collected.push({ buffIndex: pick.buffIndex });
+      }
+    }
+    return collected;
+  }
+
+  private buffPicksComplete(game: NerfGame, color: Color, buffIndex: number, picks: BuffPick[]): boolean {
+    const collected = this.walkBuffPicks(game, color, buffIndex, picks);
+    if (!collected) return false;
+    return buffNextTarget(game, color, buffIndex, collected) === null;
+  }
+
   // ---------------- spectating & lobby ----------------
 
   private async watchMatch(ws: WebSocket, data: unknown) {
@@ -1376,6 +1756,17 @@ export class GameServer extends DurableObject<Env> {
     ws.serializeAttachment(next);
 
     const clocks = this.currentClocks(match);
+    // Spectator-safe draft payload: the public action record and a filtered
+    // state carrying held buffs and board effects only, never offers.
+    let draftExtras: Record<string, unknown> | null = null;
+    if (match.draft) {
+      const game = match.startedAt ? this.gameFromMatch(match) : null;
+      draftExtras = {
+        draft: true,
+        dtActions: this.publicDraftActions(match),
+        ...(game?.buffs ? { dtState: this.draftStateFor(game, match, "spectator") } : {}),
+      };
+    }
     send(ws, "wstart", {
       id,
       timeSec: match.setup.timeSec,
@@ -1392,6 +1783,7 @@ export class GameServer extends DurableObject<Env> {
       spectatorChat: match.spectatorChat ?? [],
       // Hidden rules are only revealed to spectators once the game is over.
       ...(match.result ? { nerfs: { w: match.setup.whiteNerfId, b: match.setup.blackNerfId } } : {}),
+      ...(draftExtras ?? {}),
     });
     this.broadcastWatchers(id);
   }
@@ -1417,6 +1809,7 @@ export class GameServer extends DurableObject<Env> {
       id: string;
       players: ReturnType<GameServer["playersPayload"]>;
       rated: boolean;
+      draft: boolean;
       timeSec: number;
       incrementSec: number;
       moves: number;
@@ -1429,6 +1822,7 @@ export class GameServer extends DurableObject<Env> {
     const challenges: Array<{
       id: string;
       host: { name: string; rating: number | null };
+      draft: boolean;
       timeSec: number;
       incrementSec: number;
       createdAt: number;
@@ -1442,6 +1836,7 @@ export class GameServer extends DurableObject<Env> {
           challenges.push({
             id: match.id,
             host: host ? { name: host.name, rating: Math.round(host.rating) } : { name: "Anonymous", rating: null },
+            draft: !!match.draft,
             timeSec: match.setup.timeSec,
             incrementSec: match.setup.incrementSec,
             createdAt: match.createdAt,
@@ -1460,6 +1855,7 @@ export class GameServer extends DurableObject<Env> {
         id: match.id,
         players: this.playersPayload(match),
         rated: !!match.rated,
+        draft: !!match.draft,
         timeSec: match.setup.timeSec,
         incrementSec: match.setup.incrementSec,
         moves: match.moves.length,

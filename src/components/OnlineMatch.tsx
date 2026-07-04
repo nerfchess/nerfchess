@@ -4,15 +4,20 @@ import Link from "next/link";
 import { type CSSProperties, useEffect, useMemo, useRef, useState } from "react";
 import { Board, QueuedPremove } from "@/components/Board";
 import { BoardPlayerRow } from "@/components/BoardPlayerRow";
+import { BuffDock } from "@/components/BuffDock";
 import { ChatPanel } from "@/components/ChatPanel";
 import { ClockPill } from "@/components/ClockPill";
+import { DraftOverlay } from "@/components/DraftOverlay";
 import { GameOver } from "@/components/GameOver";
 import { MobileActionsMenu } from "@/components/MobileActionsMenu";
+import { MobileBuffDrawer } from "@/components/MobileBuffDrawer";
 import { MobileMoveDrawer } from "@/components/MobileMoveDrawer";
 import { MoveList } from "@/components/MoveList";
 import { PlayerNerfCard } from "@/components/PlayerNerfCard";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
+import type { BuffOffer, BuffPick } from "@/engine/buff";
+import { BUFF_BY_ID } from "@/engine/buffs/library";
 import { cloneBoard, findKing, isInCheck, makeMove, moveToUCI } from "@/engine/board";
 import { computeMoveRisks } from "@/engine/moveSafety";
 import { loadSettings } from "@/lib/settings";
@@ -21,17 +26,26 @@ import { IMPLEMENTED_BY_ID, PLAYABLE_NERFS } from "@/engine/nerfs/library";
 import {
   currentHint,
   NerfGame,
+  enableDraftMode,
   legalMoves,
   makeContext,
   newGameAsColor,
   playMove,
 } from "@/engine/game";
 import { BoardState, Color, Move } from "@/engine/types";
+import {
+  applyDraftAction,
+  draftZones,
+  mergeDraftState,
+  playReplicaMove,
+  replayDraftGame,
+} from "@/lib/draftOnline";
 import { nerfSummary, outcomeFor, recordCompletedGame } from "@/lib/gameHistory";
 import { boardAtPly } from "@/lib/gameReview";
 import {
   clearActiveGame,
   MPChatMessage,
+  MPDraftAction,
   MPSession,
   MPStart,
   saveActiveGame,
@@ -61,6 +75,14 @@ function pickRandomNerf(): Nerf {
 function buildGameFromStart(start: MPStart): NerfGame {
   const myNerf = IMPLEMENTED_BY_ID[start.nerfId] ?? pickRandomNerf();
   let next = newGameAsColor(myNerf, start.color, start.nerfSeed);
+  if (start.draft) {
+    // Placeholder seed: replica offer rolls are discarded and the server's
+    // dtOffer / dtState frames carry the real cards.
+    enableDraftMode(next, 1);
+    next = replayDraftGame(next, start.moves ?? [], start.dtActions ?? []);
+    if (next.buffs && start.dtState) mergeDraftState(next.buffs, start.dtState, start.color);
+    return next;
+  }
   for (const uci of start.moves ?? []) {
     const move = legalMoves(next).find((candidate) => moveToUCI(candidate) === uci);
     if (!move) return next;
@@ -102,6 +124,10 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   const oppColor: Color = myColor === "w" ? "b" : "w";
   const oppName = start.players?.[oppColor]?.name ?? "Opponent";
   const oppRating = start.players?.[oppColor]?.rating ?? null;
+  // Draft ruleset: the server owns offers and resolutions; this component
+  // keeps a deterministic replica in the game object (see lib/draftOnline).
+  const isDraft = !!start.draft;
+  const picksVisible = !!start.picksVisible;
 
   const [game, setGame] = useState<NerfGame | null>(() => buildGameFromStart(start));
   const [error, setError] = useState<string | null>(null);
@@ -140,6 +166,13 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   const [liveOppReveal, setLiveOppReveal] = useState(() => !!start.revealed?.[start.color === "w" ? "b" : "w"]);
   // The end screen can be dismissed and brought back.
   const [showResult, setShowResult] = useState(true);
+  // Draft ruleset UI state: hide the overlay after sending a pick/bank (the
+  // server's dtResolved confirms it), and surface the opponent's drafting.
+  const [draftSubmitted, setDraftSubmitted] = useState(false);
+  const [oppDrafting, setOppDrafting] = useState(() => {
+    const opp = start.dtState?.players?.[start.color === "w" ? "b" : "w"];
+    return !!opp?.offerPending || !!opp?.offer;
+  });
 
   const boardShellRef = useRef<HTMLDivElement | null>(null);
   const recordedResult = useRef(false);
@@ -223,6 +256,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   function queuePremoveSend(snapshot: NerfGame) {
     if (awaitingPremoveAckRef.current || pendingLocalMoveRef.current) return;
     if (snapshot.result || snapshot.board.turn !== myColor) return;
+    // Draft: a pending buff offer blocks all of my moves (the server would
+    // reject them with draft_pending); the queue fires once it resolves.
+    if (snapshot.buffs?.players[myColor].offer) return;
     const head = premovesRef.current[0];
     if (!head) return;
     const move = legalMoves(snapshot).find(premoveMatches(head));
@@ -253,6 +289,8 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         setPendingLocalMove(null);
         setAwaitingPremoveAck(false);
         clearPremoves();
+        // A rejected draft frame re-opens the overlay for another try.
+        setDraftSubmitted(false);
       } else if (e.type === "disconnected") {
         setError("Connection lost, reconnecting…");
         setPendingLocalMove(null);
@@ -275,6 +313,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           setLiveOppReveal(true);
         }
         if (e.setup.revealed?.[myColor]) setMyRevealState("revealed");
+        setDraftSubmitted(false);
+        const oppState = e.setup.dtState?.players?.[oppColor];
+        setOppDrafting(!!oppState?.offerPending || !!oppState?.offer);
         applyGame(buildGameFromStart(e.setup));
       } else if (e.type === "opponent-gone") {
         setError("Opponent disconnected.");
@@ -307,7 +348,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           }
           return;
         }
-        const next = playMove(g, lm);
+        // Draft replicas discard the placeholder offer rolls playMove makes
+        // locally; the server's dtOffer / dtState frames carry the real ones.
+        const next = isDraft ? playReplicaMove(g, lm) : playMove(g, lm);
         applyGame({ ...next });
         setConfirmMovePending(null);
         setWhiteMs(e.move.wc);
@@ -401,6 +444,55 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           setLiveOppReveal(true);
           playNerf();
         }
+      } else if (e.type === "draft-offer") {
+        const g = gameRef.current;
+        if (e.offer.color !== myColor) setOppDrafting(true);
+        if (!g?.buffs) return;
+        // Only frames the server addressed to us carry cards we may see: our
+        // own offers always, the opponent's only under picksVisible.
+        if (e.offer.color === myColor || picksVisible) {
+          g.buffs.players[e.offer.color].offer = {
+            cards: e.offer.cards as BuffOffer["cards"],
+            index: e.offer.index,
+            ...(e.offer.banked ? { banked: true } : {}),
+          };
+          if (e.offer.color === myColor) setDraftSubmitted(false);
+          applyGame({ ...g });
+        }
+      } else if (e.type === "draft-state") {
+        const g = gameRef.current;
+        if (!g?.buffs) return;
+        mergeDraftState(g.buffs, e.state, myColor);
+        const opp = e.state.players[oppColor];
+        setOppDrafting(!!opp?.offerPending || !!opp?.offer);
+        applyGame({ ...g });
+      } else if (e.type === "draft-resolved") {
+        const g = gameRef.current;
+        if (!g?.buffs) return;
+        const action: MPDraftAction =
+          e.resolved.kind === "picked"
+            ? { ply: g.board.history.length, color: e.resolved.color, a: "pick", cards: e.resolved.cards ?? [] }
+            : { ply: g.board.history.length, color: e.resolved.color, a: "bank" };
+        applyDraftAction(g, action);
+        if (e.resolved.color === myColor) {
+          setDraftSubmitted(false);
+        } else {
+          setOppDrafting(false);
+          if (e.resolved.kind === "picked") playNerf();
+        }
+        applyGame({ ...g });
+      } else if (e.type === "draft-used") {
+        const g = gameRef.current;
+        if (!g?.buffs) return;
+        applyDraftAction(g, {
+          ply: g.board.history.length,
+          color: e.used.color,
+          a: "use",
+          buffIndex: e.used.buffIndex,
+          picks: e.used.picks,
+        });
+        if (e.used.color !== myColor) playNerf();
+        applyGame({ ...g });
       } else if (e.type === "rematch-offer") {
         setRematchStatus(e.color === myColor ? "offered" : "incoming");
       } else if (e.type === "rematched") {
@@ -576,6 +668,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
 
   const handleLocalMove = (m: Move) => {
     if (!game || game.result || isReviewingHistory) return;
+    // Draft: resolve the pending buff draft before moving (mirrors the
+    // server's draft_pending rejection).
+    if (game.buffs?.players[myColor].offer) return;
     if (premoveMode) {
       enqueuePremove(m);
       return;
@@ -830,6 +925,23 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   const myState = myColor === "w" ? game.white.state : game.black.state;
   const myCtx = makeContext(game, myColor);
   const visual = myNerf.visual?.(myState, myCtx);
+  // Draft ruleset: pending offer (blocks my board), held-buff dock, and the
+  // public zone-effect painting shared with the bot game.
+  const bsMine = isDraft ? game.buffs?.players[myColor] : undefined;
+  const bsTheirs = isDraft ? game.buffs?.players[oppColor] : undefined;
+  const myOffer = bsMine?.offer ?? null;
+  const zone = isDraft && game.buffs ? draftZones(game, myColor) : null;
+  const draftCanAct =
+    isDraft &&
+    !game.result &&
+    game.board.turn === myColor &&
+    !myOffer &&
+    !isReviewingHistory &&
+    !pendingLocalMove &&
+    !awaitingPremoveAck;
+  const sendBuffUse = (buffIndex: number, picks: BuffPick[]) => {
+    if (!session.useBuff(buffIndex, picks)) setError("Disconnected from the game server.");
+  };
   const opponentNerf = revealedOppNerf ?? (myColor === "w" ? game.black.nerf : game.white.nerf);
   const lastMove = game.board.history[game.board.history.length - 1] ?? null;
   // A held move (confirmation setting) previews on the board before sending.
@@ -857,9 +969,10 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   const boardFitClass = hint
     ? "w-[min(92vw,var(--board-cap,720px),calc(100dvh-11rem))] max-w-full"
     : "w-[min(92vw,var(--board-cap,720px),calc(100dvh-8rem))] max-w-full";
-  // Takebacks are casual-only and need a move of mine on the board.
+  // Takebacks are casual-only (and off in Draft games, whose rolled offers
+  // and applied buffs cannot rewind) and need a move of mine on the board.
   const takebackAvailable =
-    !start.rated && game.board.history.some((m) => m.color === myColor);
+    !start.rated && !isDraft && game.board.history.some((m) => m.color === myColor);
   const revealControl = game.result ? null : myRevealState === "revealed" ? (
     <div className="plate flex items-center gap-2 p-2 px-3 text-xs text-parchment-300">
       <span aria-hidden className="text-verdigris-glow">✓</span>
@@ -1042,7 +1155,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         </Link>
         <div className="flex items-center gap-4">
           <div className="smallcaps hidden text-[11px] text-parchment-400 sm:block">
-            playing {myColor === "w" ? "White" : "Black"} · {subtitle}
+            playing {myColor === "w" ? "White" : "Black"} · {isDraft ? "draft · " : ""}{subtitle}
           </div>
           <button
             onClick={toggleMute}
@@ -1118,6 +1231,12 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
             </span>
           </div>
         )}
+        {isDraft && oppDrafting && !game.result && (
+          <div role="status" aria-live="polite" className="plate shrink-0 flex items-center gap-2 p-2 px-3 border-gold/40 bg-gold/10">
+            <span className="w-1.5 h-1.5 rounded-full bg-gold animate-flicker" aria-hidden />
+            <span className="font-display text-sm text-parchment">Your opponent is choosing a buff…</span>
+          </div>
+        )}
         <div
           className="grid min-h-0 flex-1 gap-y-2 lg:grid-cols-[280px_auto] lg:justify-center lg:gap-x-3"
           style={railHeightStyle}
@@ -1135,7 +1254,23 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               ownerLabel=""
               compact
             />
-            <div className="hidden min-h-0 lg:block">
+            <div
+              className={
+                "hidden min-h-0 gap-2 lg:grid " +
+                (isDraft && game.buffs
+                  ? "grid-rows-[minmax(0,1.15fr)_minmax(0,1fr)]"
+                  : "grid-rows-[minmax(0,1fr)]")
+              }
+            >
+              {isDraft && game.buffs && (
+                <BuffDock
+                  game={game}
+                  myColor={myColor}
+                  canAct={draftCanAct}
+                  onChanged={() => {}}
+                  onUse={sendBuffUse}
+                />
+              )}
               <ChatPanel
                 messages={chatMessages}
                 myColor={myColor}
@@ -1198,12 +1333,28 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   orientation={orientation}
                   onMove={handleLocalMove}
                   myColor={myColor}
-                  visual={isReviewingHistory ? undefined : { ...(visual ?? {}), highlightSquares: forcedSquares }}
+                  visual={
+                    isReviewingHistory
+                      ? undefined
+                      : {
+                          ...(visual ?? {}),
+                          highlightSquares: forcedSquares,
+                          ...(zone
+                            ? {
+                                bannedSquares: [...(visual?.bannedSquares ?? []), ...zone.barred],
+                                frozenSquares: zone.frozen,
+                                shieldedSquares: zone.shielded,
+                                wardSquares: zone.ward,
+                              }
+                            : {}),
+                        }
+                  }
                   lastMove={lastMoveForDisplay}
                   disabled={
                     !!game.result ||
                     isReviewingHistory ||
                     !!confirmMovePending ||
+                    !!myOffer ||
                     (!uiSettings.premovesEnabled && (awaitingPremoveAck || !!pendingLocalMove))
                   }
                   premoveMode={!isReviewingHistory && premoveMode}
@@ -1312,6 +1463,58 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           </div>
         }
       />
+
+      {isDraft && game.buffs && (
+        <MobileBuffDrawer
+          held={game.buffs.players[myColor].buffs.length}
+          usable={
+            !draftCanAct
+              ? 0
+              : game.buffs.players[myColor].buffs.filter((inst) => {
+                  const def = BUFF_BY_ID[inst.id];
+                  return def?.kind === "activated" && !inst.spent && !inst.nullified;
+                }).length
+          }
+        >
+          <BuffDock
+            game={game}
+            myColor={myColor}
+            canAct={draftCanAct}
+            onChanged={() => {}}
+            onUse={sendBuffUse}
+          />
+        </MobileBuffDrawer>
+      )}
+
+      {isDraft && myOffer && !draftSubmitted && !game.result && (
+        <DraftOverlay
+          offer={myOffer}
+          takeBoth={(bsMine?.flags.takeBoth ?? 0) > 0}
+          bankedBonus={!!myOffer.banked}
+          onPick={(i) => {
+            if (session.sendDraftPick(i)) setDraftSubmitted(true);
+            else setError("Disconnected from the game server.");
+          }}
+          onBank={() => {
+            if (session.sendDraftBank()) setDraftSubmitted(true);
+            else setError("Disconnected from the game server.");
+          }}
+          opponent={{
+            // Replica opponent offers only ever hold cards the server sent
+            // us (picksVisible matches); otherwise they stay null.
+            offer: bsTheirs?.offer ?? null,
+            showCards: picksVisible || !!bsMine?.flags.seeOppCards,
+            showTier: !!bsMine?.flags.seeOppTier,
+            reveal: bsMine?.oppReveal ?? null,
+            lastPick: bsTheirs?.buffs.length
+              ? {
+                  id: bsTheirs.buffs[bsTheirs.buffs.length - 1].id,
+                  tier: bsTheirs.buffs[bsTheirs.buffs.length - 1].tier,
+                }
+              : null,
+          }}
+        />
+      )}
 
       {game.result && !showResult && (
         <button
