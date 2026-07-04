@@ -9,13 +9,13 @@ import { Color } from "./types";
 //
 // Design decisions (see docs/draft-system.md):
 // - Buff cadence: a draft every 6 of your own moves.
-// - Natural tier curve: draft #k rolls around tier min(6, k), with per-card
-//   jitter of ±1. Tiers 7-8 are gated: they are only reachable via jitter,
-//   banking, or draft-manipulation buffs, and every level above 6 has a 45%
-//   chance to be knocked back down one — so the top tiers stay rare blowout
-//   moments rather than the default endgame.
-// - Banking: skipping a draft banks +1 tier on your next one. It does not
-//   stack (cap +1).
+// - Natural tier curve: draft round k rolls one shared tier pair for BOTH
+//   players. The base follows TIER_CURVE (1, 2, 3, 5, 7; later rounds stay
+//   at 7), a single ±1 jitter applies to the whole round, and every level
+//   above 6 has a 45% chance to be knocked back down one, per card, so the
+//   top tiers stay rare blowout moments rather than the default endgame.
+// - Banking: skipping a draft lifts your next offer exactly one tier above
+//   the shared roll for that round. It does not stack (cap +1).
 // ---------------------------------------------------------------------------
 
 // Draft cadence in own moves. Tuning guide: 5 creates faster chaos, 6 is the
@@ -30,19 +30,34 @@ function saveRng(bs: BuffMatchState, rng: RNG) {
   bs.rngState = rng.getState();
 }
 
-export function rollTier(draftIndex: number, bonus: number, rng: RNG): Tier {
-  let t = Math.min(6, Math.max(1, draftIndex)) + bonus;
-  // Mild per-card jitter.
+// Base tier per draft round (1-based); later rounds stay at the cap.
+const TIER_CURVE = [1, 2, 3, 5, 7];
+
+/** Roll the shared pair of card tiers for the next draft round. Both
+ * players' offers that round use exactly this pair: the base comes from
+ * TIER_CURVE, a single ±1 jitter is rolled once for the whole round, and
+ * each card then runs the rare top-tier slip gate (every level above 6 has
+ * a 45% chance to slip back one). */
+export function rollSharedTiers(bs: BuffMatchState): [Tier, Tier] {
+  const rng = drawRng(bs);
+  const round = Math.max(bs.players.w.draftsTaken, bs.players.b.draftsTaken) + 1;
+  let t = TIER_CURVE[Math.min(Math.max(1, round), TIER_CURVE.length) - 1];
   const r = rng.next();
   if (r < 0.18) t += 1;
   else if (r > 0.82) t -= 1;
-  // Gate the top tiers: each level above 6 has a 45% chance to slip back.
-  while (t > 6 && rng.next() < 0.45) t -= 1;
-  return Math.max(1, Math.min(8, t)) as Tier;
+  const gate = (): Tier => {
+    let g = t;
+    while (g > 6 && rng.next() < 0.45) g -= 1;
+    return Math.max(1, Math.min(8, g)) as Tier;
+  };
+  const tiers: [Tier, Tier] = [gate(), gate()];
+  saveRng(bs, rng);
+  return tiers;
 }
 
-/** Roll a fresh offer for `color` and attach it to their draft state. */
-export function rollOffer(bs: BuffMatchState, color: Color): BuffOffer {
+/** Roll a fresh offer for `color` at the round's shared tiers and attach it
+ * to their draft state. */
+export function rollOffer(bs: BuffMatchState, color: Color, tiers: [Tier, Tier]): BuffOffer {
   const ps = bs.players[color];
   const rng = drawRng(bs);
   const index = ps.draftsTaken + 1;
@@ -60,7 +75,9 @@ export function rollOffer(bs: BuffMatchState, color: Color): BuffOffer {
     ps.buffs.filter((b) => !b.spent && !b.nullified).map((b) => b.id),
   );
   for (let i = 0; i < cardCount; i++) {
-    const tier = forced ?? rollTier(index, bonus, rng);
+    // A banked skip rolls exactly one tier above the shared roll (cap +1).
+    const shared = tiers[Math.min(i, tiers.length - 1)];
+    const tier = forced ?? (Math.min(8, shared + bonus) as Tier);
     let pool = BUFF_POOL_BY_TIER[tier].filter((b) => !used.has(b.id));
     // A tier's pool can run dry (few implemented cards, prep = 3 picks);
     // fall back to adjacent tiers rather than offering duplicates.

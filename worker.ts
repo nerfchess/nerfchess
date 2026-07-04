@@ -96,6 +96,10 @@ type StoredMatch = {
   // identity follows the usual reveal rules.
   nerfOptions?: Record<Color, string[]>;
   nerfPicks?: Partial<Record<Color, number>>;
+  // Draft games: the side actually to move. Buff activations consume the
+  // activator's turn and tempo cards insert extra moves or skips, so move
+  // parity no longer determines it. Classic games never set this.
+  turnColor?: Color;
 };
 type SessionAttachment = {
   id: string;
@@ -779,12 +783,14 @@ export class GameServer extends DurableObject<Env> {
     return color === "w" ? Math.ceil(match.moves.length / 2) : Math.floor(match.moves.length / 2);
   }
 
-  // Whose turn it is. Turns always alternate w, b, w, … (no nerf skips a
-  // turn), so this is pure move-count parity — no need to replay the game.
-  // Keeping clock and flag checks off the replay path is what stops the
-  // single-threaded Durable Object from stalling live sockets and the lobby.
+  // Whose turn it is. Classic turns always alternate w, b, w, … so this is
+  // pure move-count parity, with no need to replay the game. Keeping clock
+  // and flag checks off the replay path is what stops the single-threaded
+  // Durable Object from stalling live sockets and the lobby. Draft games
+  // track the real turn on the match instead (buff activations and tempo
+  // cards move it off parity).
   private activeColor(match: StoredMatch): Color {
-    return match.moves.length % 2 === 0 ? "w" : "b";
+    return match.turnColor ?? (match.moves.length % 2 === 0 ? "w" : "b");
   }
 
   private currentClocks(match: StoredMatch, now = Date.now()): Record<Color, number> {
@@ -1077,6 +1083,8 @@ export class GameServer extends DurableObject<Env> {
         : null;
     const nextGame = playMove(game, move);
     match.moves.push(uci);
+    // Draft games: extra moves and skips can leave the turn off parity.
+    if (match.draft) match.turnColor = nextGame.board.turn;
     if (match.setup.timeSec) match.clocks[session.color] += match.setup.incrementSec * 1000;
     match.runningSince = nextGame.result ? null : now;
     match.result = nextGame.result;
@@ -1726,6 +1734,13 @@ export class GameServer extends DurableObject<Env> {
       match.runningSince = null;
       match.result = game.result;
       match.completedAt = now;
+    } else if (!match.result && game.board.turn !== this.activeColor(match)) {
+      // A buff use consumed the activator's turn: bank their elapsed time
+      // and start charging the new mover, exactly like a played move.
+      const now = Date.now();
+      match.clocks = this.currentClocks(match, now);
+      if (match.runningSince !== null) match.runningSince = now;
+      match.turnColor = game.board.turn;
     }
     await this.saveMatch(match);
     if (resolved) {

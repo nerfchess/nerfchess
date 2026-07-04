@@ -598,6 +598,13 @@ function GamePage() {
             aiThinking.current = false;
             return;
           }
+          // Buff use consumes the turn unless the card was a free action:
+          // bank the bot's clock and hand the move back to the player.
+          if (game.board.turn !== botColor) {
+            commitClock(botColor);
+            aiThinking.current = false;
+            return;
+          }
         }
       } catch {
         // A buff that fails to resolve must never stall the bot's turn.
@@ -1119,7 +1126,11 @@ function GamePage() {
                 canAct={
                   !game.result && game.board.turn === myColor && !myOffer && !isReviewingHistory
                 }
-                onChanged={() => setGame({ ...game })}
+                onChanged={() => {
+                  // A buff use can consume the turn: bank my clock like a move.
+                  if (game.board.turn !== myColor) commitClock(myColor);
+                  setGame({ ...game });
+                }}
               />
             ) : (
               <div className="hidden lg:block" />
@@ -1303,7 +1314,11 @@ function GamePage() {
             game={game}
             myColor={myColor}
             canAct={!game.result && game.board.turn === myColor && !myOffer && !isReviewingHistory}
-            onChanged={() => setGame({ ...game })}
+            onChanged={() => {
+              // A buff use can consume the turn: bank my clock like a move.
+              if (game.board.turn !== myColor) commitClock(myColor);
+              setGame({ ...game });
+            }}
           />
         </MobileBuffDrawer>
       )}

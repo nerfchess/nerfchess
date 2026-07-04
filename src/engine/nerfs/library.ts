@@ -127,7 +127,6 @@ const STUBS: Stub[] = [
   { id: "death_wish", name: "Death Wish", description: "If you can move king into check, you must.", tier: 6 },
   { id: "checkers", name: "Checkers", description: "Must capture if able.", tier: 6 },
   { id: "closed_book", name: "Closed Book", description: "Lose if you ever start a turn with an open file.", tier: 6 },
-  { id: "fixation", name: "Fixation", description: "Pawn moves → pawn moves only; non-pawn → non-pawn only, until type switches.", tier: 5 },
   { id: "covering_fire", name: "Covering Fire", description: "Can only capture a piece if you can capture it two different ways.", tier: 5 },
   { id: "unlucky", name: "Unlucky", description: "Half the squares are unusable each turn, re-randomized.", tier: 6 },
   { id: "jumpy", name: "Jumpy", description: "When possible, must move an attacked piece.", tier: 5 },
