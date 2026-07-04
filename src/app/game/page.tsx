@@ -13,15 +13,22 @@ import { AILevel, aiBudgetMs, pickAIMove } from "@/engine/ai";
 import { Nerf, type GameContext } from "@/engine/nerf";
 import { IMPLEMENTED_BY_ID, PLAYABLE_NERFS } from "@/engine/nerfs/library";
 import {
+  aiResolveDraft,
   applyTurnStart,
+  bankDraft,
   currentHint,
+  enableDraftMode,
   NerfGame,
   legalMoves,
   makeContext,
   newGame,
+  pickDraftCard,
   playMove,
   resign,
 } from "@/engine/game";
+import { BuffDock } from "@/components/BuffDock";
+import { DraftOverlay } from "@/components/DraftOverlay";
+import { NerfCard } from "@/components/NerfCard";
 import { makeSeed } from "@/engine/rng";
 import { BoardState, Color, Move } from "@/engine/types";
 import { cloneBoard, findKing, isInCheck, makeMove, moveToUCI } from "@/engine/board";
@@ -45,6 +52,17 @@ import { Suspense, type CSSProperties, useCallback, useEffect, useMemo, useRef, 
 function pickRandomNerf(): Nerf {
   const playable = PLAYABLE_NERFS.filter((d) => d.id !== "lucky");
   return playable[Math.floor(Math.random() * playable.length)];
+}
+
+/** Deal `count` distinct random nerfs for a draft. */
+function dealNerfOptions(count: number, exclude: Set<string>): Nerf[] {
+  const pool = PLAYABLE_NERFS.filter((d) => d.id !== "lucky" && !exclude.has(d.id));
+  const out: Nerf[] = [];
+  while (out.length < count && pool.length > 0) {
+    const i = Math.floor(Math.random() * pool.length);
+    out.push(pool.splice(i, 1)[0]);
+  }
+  return out;
 }
 
 const BOT_ELO: Record<AILevel, number> = {
@@ -85,6 +103,8 @@ function GamePage() {
   const difficulty = (params.get("difficulty") ?? "medium") as AILevel;
   const myColorParam = params.get("color") ?? "random";
   const myNerfId = params.get("nerf") ?? "random";
+  // Draft mode: nerf draft at game start, buff drafts on a cadence after.
+  const draftMode = params.get("draft") === "1";
   // Games vs bots are casual by default; only rated games touch your rating.
   const rated = params.get("rated") === "1";
   // t = seconds per side; 0 (or missing) disables the clock entirely.
@@ -108,6 +128,9 @@ function GamePage() {
   });
 
   const [game, setGame] = useState<NerfGame | null>(null);
+  // Draft mode's opening nerf draft: both players see two nerf cards and pick
+  // one. The game object isn't created until the player commits.
+  const [nerfDraft, setNerfDraft] = useState<{ myOptions: Nerf[]; aiOptions: Nerf[] } | null>(null);
   const [, force] = useState(0);
   const [muted, setMutedState] = useState(false);
   const [premoves, setPremoves] = useState<QueuedPremove[]>([]);
@@ -210,6 +233,13 @@ function GamePage() {
       // Ignore incompatible saved games and deal a fresh one below.
     }
 
+    if (draftMode) {
+      // Deal both players' nerf options; the game starts when the player picks.
+      const dealt = dealNerfOptions(4, new Set());
+      setNerfDraft({ myOptions: dealt.slice(0, 2), aiOptions: dealt.slice(2, 4) });
+      return;
+    }
+
     let myDb: Nerf;
     let myCustomSpec: CustomNerf | null = null;
     if (myNerfId === "__custom__") {
@@ -235,6 +265,32 @@ function GamePage() {
     setGame(newGame(wDb, bDb, makeSeed()));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Draft mode: the player picked their nerf; the bot picks one of its two
+  // options at random and the game begins.
+  const startDraftGame = (picked: Nerf) => {
+    if (!nerfDraft) return;
+    const aiDb = nerfDraft.aiOptions[Math.floor(Math.random() * nerfDraft.aiOptions.length)];
+    const wDb = myColor === "w" ? picked : aiDb;
+    const bDb = myColor === "w" ? aiDb : picked;
+    const g = newGame(wDb, bDb, makeSeed());
+    enableDraftMode(g, makeSeed());
+    g.buffs!.players[myColor].nerfOptions = nerfDraft.myOptions.map((n) => n.id);
+    g.buffs!.players[myColor === "w" ? "b" : "w"].nerfOptions = nerfDraft.aiOptions.map((n) => n.id);
+    setNerfDraft(null);
+    setHistoryPly(null);
+    setGame(g);
+  };
+
+  // Draft mode: the bot resolves its pending buff drafts immediately.
+  useEffect(() => {
+    if (!game?.buffs || game.result) return;
+    const botColor: Color = myColor === "w" ? "b" : "w";
+    if (game.buffs.players[botColor].offer) {
+      aiResolveDraft(game, botColor);
+      setGame({ ...game });
+    }
+  }, [game, myColor]);
 
   useEffect(() => {
     if (!game) return;
@@ -430,6 +486,8 @@ function GamePage() {
   useEffect(() => {
     if (premoves.length === 0 || !game || game.result) return;
     if (game.board.turn !== myColor) return;
+    // A pending buff draft must be resolved before any move fires.
+    if (game.buffs?.players[myColor].offer) return;
     const head = premoves[0];
     const m = moves.find(
       (lm) =>
@@ -634,6 +692,40 @@ function GamePage() {
   };
 
   if (!game) {
+    if (draftMode && nerfDraft) {
+      return (
+        <main className="min-h-screen flex items-center justify-center px-4 py-8">
+          <div className="w-full max-w-2xl">
+            <div className="smallcaps text-[11px] text-parchment-400 text-center">Nerf draft</div>
+            <h1 className="font-display text-4xl text-parchment text-center mt-1">
+              Choose your handicap
+            </h1>
+            <p className="mt-2 text-sm text-parchment-300 text-center">
+              Every game opens weak: pick one of two nerfs, then draft buffs every few
+              moves to claw your way back to power.
+            </p>
+            <div className="mt-6 grid gap-4 sm:grid-cols-2">
+              {nerfDraft.myOptions.map((n) => (
+                <button key={n.id} onClick={() => startDraftGame(n)} className="text-left transition hover:-translate-y-1">
+                  <NerfCard nerf={n} ownerLabel="Pick this nerf" />
+                </button>
+              ))}
+            </div>
+            <div className="mt-5 plate p-3 text-center">
+              <span className="smallcaps text-[10px] text-parchment-400">
+                Your opponent is choosing between
+              </span>
+              <div className="mt-1 text-sm text-parchment-200 font-display">
+                {nerfDraft.aiOptions.map((n) => n.name).join("  ·  ")}
+              </div>
+              <div className="mt-0.5 text-[11px] text-parchment-400">
+                Which one they take stays hidden — unless you draft a reveal.
+              </div>
+            </div>
+          </div>
+        </main>
+      );
+    }
     return <LoadingPanel />;
   }
 
@@ -642,9 +734,13 @@ function GamePage() {
   const myCtx = makeContext(game, myColor);
   const visual = myNerf.visual?.(myState, myCtx);
   const opponentNerf = myColor === "w" ? game.black.nerf : game.white.nerf;
-  // The opponent's rule shows if you peeked, or once the game ends, unless you
-  // opted to keep it hidden entirely.
-  const oppRevealed = !uiSettings.hideOpponentReveal && (oppPeek || !!game.result);
+  const bsMine = game.buffs?.players[myColor];
+  const bsTheirs = game.buffs?.players[myColor === "w" ? "b" : "w"];
+  const myOffer = bsMine?.offer ?? null;
+  // The opponent's rule shows if you peeked, once the game ends, or when a
+  // reveal buff (Extra Glance / Watchtower) was drafted.
+  const oppRevealed =
+    (!uiSettings.hideOpponentReveal && (oppPeek || !!game.result)) || !!bsMine?.oppNerfRevealed;
   const lastMove = game.board.history[game.board.history.length - 1] ?? null;
   // A held move (confirmation setting) previews on the board before playing.
   const confirmPreviewBoard = confirmMovePending
@@ -671,6 +767,8 @@ function GamePage() {
 
   const handleMove = (m: Move) => {
     if (game.result || isReviewingHistory) return;
+    // Resolve the pending buff draft before moving.
+    if (myOffer) return;
     if (game.board.turn !== myColor) {
       if (!uiSettings.premovesEnabled) return;
       // append to the premove queue; chained premoves are evaluated against
@@ -924,7 +1022,18 @@ function GamePage() {
                 ) : null
               }
             />
-            <div className="hidden lg:block" />
+            {game.buffs ? (
+              <BuffDock
+                game={game}
+                myColor={myColor}
+                canAct={
+                  !game.result && game.board.turn === myColor && !myOffer && !isReviewingHistory
+                }
+                onChanged={() => setGame({ ...game })}
+              />
+            ) : (
+              <div className="hidden lg:block" />
+            )}
             <PlayerNerfCard
               board={boardForDisplay}
               playerColor={myColor}
@@ -985,7 +1094,7 @@ function GamePage() {
                   myColor={myColor}
                   visual={isReviewingHistory ? undefined : { ...(visual ?? {}), highlightSquares: forcedSquares }}
                   lastMove={lastMoveForDisplay}
-                  disabled={!!game.result || premovePending || isReviewingHistory || !!confirmMovePending}
+                  disabled={!!game.result || premovePending || isReviewingHistory || !!confirmMovePending || !!myOffer}
                   premoveMode={!isReviewingHistory && premoveMode}
                   premoves={isReviewingHistory ? [] : validPremoves}
                   onCancelPremove={cancelPremove}
@@ -1072,6 +1181,33 @@ function GamePage() {
         onPlyChange={handleHistoryPlyChange}
         footer={historyActions}
       />
+
+      {myOffer && !game.result && (
+        <DraftOverlay
+          offer={myOffer}
+          takeBoth={(bsMine?.flags.takeBoth ?? 0) > 0}
+          bankedBonus={!!myOffer.banked}
+          onPick={(i) => {
+            pickDraftCard(game, myColor, i);
+            setGame({ ...game });
+          }}
+          onBank={() => {
+            bankDraft(game, myColor);
+            setGame({ ...game });
+          }}
+          opponent={{
+            offer: bsTheirs?.offer ?? null,
+            showCards: !!bsMine?.flags.seeOppCards,
+            showTier: !!bsMine?.flags.seeOppTier,
+            lastPick: bsTheirs?.buffs.length
+              ? {
+                  id: bsTheirs.buffs[bsTheirs.buffs.length - 1].id,
+                  tier: bsTheirs.buffs[bsTheirs.buffs.length - 1].tier,
+                }
+              : null,
+          }}
+        />
+      )}
 
       {game.result && !showResult && (
         <button

@@ -19,6 +19,8 @@ export interface Move {
   castle?: "k" | "q";
   isDoublePawn?: boolean;
   isEnPassant?: boolean;
+  /** Id of the buff that generated this extra move (consumes its charge). */
+  via?: string;
 }
 
 export interface BoardState {
