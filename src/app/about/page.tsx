@@ -11,7 +11,7 @@ export default function AboutPage() {
     <InfoPageLayout
       eyebrow="about"
       title="Chess, with secrets."
-      intro="Nerf Chess keeps the familiar board and replaces certainty with hidden constraints. Every player receives a secret rule, and every move becomes both strategy and investigation."
+      intro="Nerf Chess keeps the familiar board and replaces certainty with hidden constraints. Every player receives a secret rule, every move becomes both strategy and investigation, and in Draft games the deck keeps dealing."
     >
       <InfoSection title="The idea">
         <p>
@@ -21,6 +21,11 @@ export default function AboutPage() {
         <p>
           Kings can be captured, checkmate is not the ending, and unusual rules can turn
           ordinary positions into puzzles that only exist for one game.
+        </p>
+        <p>
+          Draft games take the idea further. You pick your nerf from two cards, and every
+          few moves both players draft a buff at the same time. You start weakened and
+          build your way back; the comeback is the game.
         </p>
       </InfoSection>
 

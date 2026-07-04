@@ -23,6 +23,31 @@ const FAQS = [
       "Not during the game. You infer it from their play; it is revealed once the game is over.",
   },
   {
+    question: "What is Draft mode?",
+    answer:
+      "An alternate ruleset. You pick your nerf from two cards at the start, then every few moves both players draft a buff card at the same time. You begin weakened and build your way back.",
+  },
+  {
+    question: "What is a buff?",
+    answer:
+      "The opposite of a nerf: a card that helps you. Some work quietly while you hold them, some fire the moment you pick them, and some wait until you choose to use them. Offers grow stronger as the game goes on.",
+  },
+  {
+    question: "What happens if I skip a buff draft?",
+    answer:
+      "Skipping banks the draft: your next offer rolls a tier stronger. Banking does not stack, so the trick is picking the right moment to be patient.",
+  },
+  {
+    question: "Can I see what my opponent drafts?",
+    answer:
+      "That is up to whoever creates the game. Hidden picks keep the chaos: you never see what they chose. Visible picks show their nerf and draft choices for a more strategic game.",
+  },
+  {
+    question: "Are Draft games rated?",
+    answer:
+      "Not yet. Ratings only move in Classic games while Draft is being balanced; a separate Draft rating may come later.",
+  },
+  {
     question: "Can I play a friend?",
     answer:
       "Yes. Create a friend game, send the five-character code, and your opponent can join from their browser.",

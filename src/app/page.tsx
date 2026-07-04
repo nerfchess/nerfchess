@@ -50,8 +50,9 @@ export default function HomePage() {
         <div className="order-2">
           <p className="text-lg sm:text-xl leading-relaxed text-parchment-100">
             You get a hidden restriction on how your pieces can move. So does
-            your opponent. Neither of you knows the other&apos;s rule. There is no
-            checkmate: you win by capturing the king.
+            your opponent. Neither of you knows the other&apos;s rule. In Draft
+            games you also pick up buff cards as you play, both of you at once.
+            There is no checkmate: you win by capturing the king.
           </p>
 
           <ReturnToGameBanner />
@@ -198,7 +199,7 @@ function HowItWorks() {
     {
       n: "1",
       title: "Get a secret rule",
-      body: "At the start of every game you are dealt a hidden restriction, drawn from a deck of hundreds.",
+      body: "At the start of every game you are dealt a hidden restriction, drawn from a deck of hundreds. In Draft games you are shown two and keep one.",
       icon: (
         <>
           <rect x="3" y="4" width="18" height="16" rx="2" />
@@ -209,7 +210,7 @@ function HowItWorks() {
     {
       n: "2",
       title: "Play with your restriction",
-      body: "Move as normal, but your rule quietly limits your options. Illegal moves are filtered out for you.",
+      body: "Move as normal, but your rule quietly limits your options. In Draft games a buff draft lands every few moves; skip one and the next offer rolls stronger.",
       icon: (
         <>
           <path d="M12 2l2.4 6.9H21l-5.6 4 2.1 7L12 15.8 6.5 19.9l2.1-7L3 8.9h6.6z" />
@@ -327,7 +328,7 @@ function SiteFooter() {
         ))}
       </nav>
       <div className="mt-3 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-parchment-400">
-        <span>Nerf Chess: chess with secret rules.</span>
+        <span>Nerf Chess: chess with secret rules and a buff draft.</span>
         <span className="font-mono text-[10px] opacity-70" title="Deployed version">
           made with &hearts;
           {process.env.NEXT_PUBLIC_BUILD_VERSION ? ` · ${process.env.NEXT_PUBLIC_BUILD_VERSION}` : ""}
