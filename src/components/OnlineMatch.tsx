@@ -528,6 +528,12 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
 
   useEffect(() => {
     if (!game || historyPly == null) return;
+    // A buff mutated the board outside move history: replay can no longer
+    // reproduce the position, so snap any review back to the live board.
+    if (game.buffs?.historyDiverged) {
+      setHistoryPly(null);
+      return;
+    }
     if (historyPly > game.board.history.length) {
       setHistoryPly(game.board.history.length);
     }
@@ -563,7 +569,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   }, [game, myColor, oppName, ratingChange, revealedOppNerf, start]);
 
   const reviewBoard = useMemo(() => {
-    if (!game || historyPly == null) return null;
+    if (!game || historyPly == null || game.buffs?.historyDiverged) return null;
     return boardAtPly(game.board.history, historyPly);
   }, [game, historyPly]);
   const pendingLocalBoard = useMemo(() => {
@@ -573,6 +579,12 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   const currentHistoryPly = historyPly ?? game?.board.history.length ?? 0;
   const isReviewingHistory = historyPly != null;
   const handleHistoryPlyChange = (ply: number) => {
+    // Stepping is disabled once a buff has mutated the board outside
+    // history: stay clamped to the live board instead of replaying.
+    if (game?.buffs?.historyDiverged) {
+      setHistoryPly(null);
+      return;
+    }
     const max = game?.board.history.length ?? 0;
     if (ply >= max) {
       setHistoryPly(null);
