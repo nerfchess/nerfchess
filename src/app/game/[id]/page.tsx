@@ -28,6 +28,7 @@ import {
   clearActiveGame,
   clearOnlineSeat,
   loadOnlineSeat,
+  loadSavedFriendSession,
   MPPlayers,
   MPSession,
   MPSpectatorChatMessage,
@@ -127,7 +128,12 @@ export default function OnlineGamePage() {
       }
     };
 
-    const seat = loadOnlineSeat(gameId);
+    // Friend games persist their credentials under the friend-session key;
+    // accept those too so a seat holder always reclaims their seat here.
+    const friendSaved = loadSavedFriendSession();
+    const seat =
+      loadOnlineSeat(gameId) ??
+      (friendSaved?.id === gameId ? { color: friendSaved.color, token: friendSaved.token } : null);
     if (seat) {
       const off = session.on((e) => {
         if (cancelled) return;

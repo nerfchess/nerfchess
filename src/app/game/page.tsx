@@ -57,15 +57,27 @@ function pickRandomNerf(): Nerf {
   return playable[Math.floor(Math.random() * playable.length)];
 }
 
-/** Deal `count` distinct random nerfs for a draft. */
-function dealNerfOptions(count: number, exclude: Set<string>): Nerf[] {
+/** Deal the opening nerf draft: four distinct nerfs as two same-tier pairs
+ * (options 0-1 and 2-3), with the two pairs' tiers within one of each other
+ * (the fairness rule pickNerfPair uses for classic matchmaking). */
+function dealNerfOptions(exclude: Set<string>): Nerf[] {
   const pool = PLAYABLE_NERFS.filter((d) => d.id !== "lucky" && !exclude.has(d.id));
-  const out: Nerf[] = [];
-  while (out.length < count && pool.length > 0) {
-    const i = Math.floor(Math.random() * pool.length);
-    out.push(pool.splice(i, 1)[0]);
-  }
-  return out;
+  // Anchor on a random nerf whose tier still holds a partner, so tiers are
+  // weighted by how many nerfs they contain (the pickNerfPair convention).
+  const dealPair = (candidates: Nerf[]): Nerf[] => {
+    const anchors = candidates.filter((d) =>
+      candidates.some((o) => o.tier === d.tier && o.id !== d.id),
+    );
+    const first = anchors[Math.floor(Math.random() * anchors.length)];
+    const partners = candidates.filter((o) => o.tier === first.tier && o.id !== first.id);
+    return [first, partners[Math.floor(Math.random() * partners.length)]];
+  };
+  const pairA = dealPair(pool);
+  const rest = pool.filter((d) => !pairA.includes(d));
+  const pairB = dealPair(rest.filter((d) => Math.abs(d.tier - pairA[0].tier) <= 1));
+  // Randomize which side gets the anchor pair so tier-edge deals (1 and 8)
+  // don't always land on the same player.
+  return Math.random() < 0.5 ? [...pairA, ...pairB] : [...pairB, ...pairA];
 }
 
 const BOT_ELO: Record<AILevel, number> = {
@@ -241,7 +253,7 @@ function GamePage() {
 
     if (draftMode) {
       // Deal both players' nerf options; the game starts when the player picks.
-      const dealt = dealNerfOptions(4, new Set());
+      const dealt = dealNerfOptions(new Set());
       setNerfDraft({ myOptions: dealt.slice(0, 2), aiOptions: dealt.slice(2, 4) });
       return;
     }

@@ -99,12 +99,12 @@ export default function CodexPage() {
       <section className="max-w-6xl mx-auto px-6 pt-4">
         <div className="smallcaps text-[11px] text-parchment-400">the library</div>
         <h1 className="font-display text-5xl sm:text-6xl mt-1">
-          {library === "rules" ? "All the rules" : "All the buffs"}
+          {library === "rules" ? "All the nerfs" : "All the buffs"}
         </h1>
         <p className="mt-3 text-parchment-200">
           {library === "rules"
-            ? `${ALL_NERFS.length} secret rules in the library. Search by name, effect, or category.`
-            : `${ALL_BUFFS.length} draft buffs in the library, ordered by the same tiers as the rules. Search by name, effect, or category.`}
+            ? `${ALL_NERFS.length} nerfs in the library. Search by name, effect, or category.`
+            : `${ALL_BUFFS.length} buffs in the library, ordered by the same tiers as the nerfs. Search by name, effect, or category.`}
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-2">
           <button
@@ -116,7 +116,7 @@ export default function CodexPage() {
                 : "btn-ghost"
             }`}
           >
-            Secret rules
+            Nerfs
           </button>
           <button
             onClick={() => switchLibrary("buffs")}
@@ -127,7 +127,7 @@ export default function CodexPage() {
                 : "btn-ghost"
             }`}
           >
-            Draft buffs
+            Buffs
           </button>
           {library === "rules" && (
             <Link
@@ -142,12 +142,12 @@ export default function CodexPage() {
         {/* Sticky search bar. */}
         <div className="sticky top-0 z-20 -mx-6 mt-6 px-6 py-3 bg-ink-950/85 backdrop-blur-md border-b border-white/5">
           <label className="relative block">
-            <span className="sr-only">{library === "rules" ? "Search the rules" : "Search the buffs"}</span>
+            <span className="sr-only">{library === "rules" ? "Search the nerfs" : "Search the buffs"}</span>
             <SearchIcon className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-parchment-400" />
             <input
               value={filters.search}
               onChange={(e) => patch({ search: e.target.value })}
-              placeholder={library === "rules" ? "Search the rules…" : "Search the buffs…"}
+              placeholder={library === "rules" ? "Search the nerfs…" : "Search the buffs…"}
               className="w-full bg-ink-900/70 border border-white/15 rounded-full pl-9 pr-9 py-2.5 text-base sm:text-sm font-body focus:outline-none focus:border-gold/60 text-parchment placeholder:text-parchment-400/60 transition-colors"
             />
             {filters.search && (
@@ -207,7 +207,7 @@ export default function CodexPage() {
 
         <div className="mt-5 flex items-center justify-between gap-3">
           <p className="smallcaps text-[10px] text-parchment-400" role="status" aria-live="polite">
-            Showing {shownCount} of {totalCount} {library === "rules" ? "rules" : "buffs"}
+            Showing {shownCount} of {totalCount} {library === "rules" ? "nerfs" : "buffs"}
           </p>
           {active && (
             <button
@@ -240,7 +240,7 @@ export default function CodexPage() {
               <SearchIcon />
             </div>
             <p className="font-display text-lg text-parchment-100">
-              {library === "rules" ? "No rules match your filters." : "No buffs match your filters."}
+              {library === "rules" ? "No nerfs match your filters." : "No buffs match your filters."}
             </p>
             <p className="mt-1 text-sm text-parchment-400">
               Try a different word, or widen the tier and category filters.

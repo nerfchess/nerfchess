@@ -526,6 +526,11 @@ export class MPSession {
         this.emit({ type: "move", move: frame.d });
         break;
       case "end":
+        // A finished friend game must not auto-resume on the next /friend
+        // visit; drop the persisted session the moment the result arrives.
+        if (this.persistFriendSession && this.seat && loadSavedFriendSession()?.id === this.seat.id) {
+          clearSavedFriendSession();
+        }
         this.emit({ type: "end", end: frame.d });
         break;
       case "drawOffer":

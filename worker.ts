@@ -993,6 +993,12 @@ export class GameServer extends DurableObject<Env> {
       match.takebackOfferBy = null;
       this.broadcast(match, "takebackDeclined", { color: session.color });
     }
+    // Which seats already had a pending offer: playMove mutates the game, so
+    // newly rolled offers are detected against this pre-move snapshot.
+    const offersBefore =
+      match.draft && game.buffs
+        ? { w: !!game.buffs.players.w.offer, b: !!game.buffs.players.b.offer }
+        : null;
     const nextGame = playMove(game, move);
     match.moves.push(uci);
     if (match.setup.timeSec) match.clocks[session.color] += match.setup.incrementSec * 1000;
@@ -1010,24 +1016,28 @@ export class GameServer extends DurableObject<Env> {
     this.broadcast(match, "move", movePayload);
     this.sendWatchers(match, "move", movePayload);
     if (match.draft && nextGame.buffs) {
-      // An offer can only have rolled for the mover: the cadence counts the
-      // mover's own moves, and a seat with a pending offer cannot move.
-      const rolled = nextGame.buffs.players[session.color].offer;
-      if (rolled) {
+      // The shared draft cadence rolls offers for BOTH seats on the same
+      // move, so each seat whose offer appeared gets its dtOffer frame now,
+      // not just the mover's. dtOffer goes to the drafting seat only, plus
+      // the opponent when the match was created with visible picks.
+      // Spectators never see offers.
+      let rolledAny = false;
+      for (const color of ["w", "b"] as Color[]) {
+        const rolled = nextGame.buffs.players[color].offer;
+        if (!rolled || offersBefore?.[color]) continue;
+        rolledAny = true;
         const offerPayload = {
-          color: session.color,
+          color,
           cards: rolled.cards,
           index: rolled.index,
           ...(rolled.banked ? { banked: true } : {}),
         };
-        // dtOffer goes to the drafting seat only, plus the opponent when the
-        // match was created with visible picks. Spectators never see offers.
-        send(this.connectedSession(match.id, session.color), "dtOffer", offerPayload);
+        send(this.connectedSession(match.id, color), "dtOffer", offerPayload);
         if (match.picksVisible) {
-          send(this.connectedSession(match.id, session.color === "w" ? "b" : "w"), "dtOffer", offerPayload);
+          send(this.connectedSession(match.id, color === "w" ? "b" : "w"), "dtOffer", offerPayload);
         }
-        this.sendDraftState(match, nextGame);
       }
+      if (rolledAny) this.sendDraftState(match, nextGame);
     }
     if (match.result) await this.endMatch(match);
   }
