@@ -14,6 +14,7 @@ import {
   DEFAULT_CATEGORY,
   isRatingCategoryId,
   RATING_CATEGORIES,
+  RETIRED_CATEGORY_IDS,
   type RatingCategoryId,
 } from "@/lib/ratingCategories";
 
@@ -270,7 +271,11 @@ function RatingHistorySection({ points }: { points: ProfileRatingPoint[] }) {
   const mostPlayed = useMemo(() => {
     const counts = new Map<RatingCategoryId, number>();
     for (const p of points) {
-      if (isRatingCategoryId(p.category)) counts.set(p.category, (counts.get(p.category) ?? 0) + 1);
+      // Retired categories no longer have a tab, so never pick one as the
+      // default view (the points still exist for players who select nothing).
+      if (isRatingCategoryId(p.category) && !RETIRED_CATEGORY_IDS.includes(p.category)) {
+        counts.set(p.category, (counts.get(p.category) ?? 0) + 1);
+      }
     }
     let best: RatingCategoryId = DEFAULT_CATEGORY;
     let bestCount = 0;

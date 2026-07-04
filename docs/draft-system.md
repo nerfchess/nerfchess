@@ -23,12 +23,14 @@ draft your way back to power. The comeback is the game.
 
 ## Tier progression
 
-Draft #k rolls around tier `min(6, k)` with per-card jitter of ±1
-(18% up / 18% down). **Tiers 7–8 are gated**: the natural curve tops out at
-6, so the top tiers are only reachable via jitter, banking, or
-draft-manipulation buffs (*Recast*, *Draft Tyranny*) — and every rolled level
-above 6 has a 45% chance to slip back one. This keeps the board-clearing /
-near-invincibility cards rare blowout moments instead of the default endgame.
+Every draft round rolls one **shared** tier pair used by both players'
+offers. The base tier follows the curve **1, 2, 3, 5, 7** over rounds 1
+through 5 (later rounds stay at 7), then a single ±1 jitter (18% up / 18%
+down) is rolled once for the whole round. **Tiers above 6 are gated**: every
+rolled level above 6 has a 45% chance to slip back one, per card, so the
+board-clearing / near-invincibility cards stay rare blowout moments instead
+of the default endgame. A banked skip lifts your next offer exactly one tier
+above the shared roll for that round (cap +1, one round only).
 All rolls come from a seeded RNG stored in the match state, so replays and
 snapshots are deterministic.
 
@@ -66,6 +68,12 @@ snapshots are deterministic.
 
 ### Rules decisions baked into the engine
 
+- **Using an activated buff costs your turn**: after the effect resolves the
+  move passes to your opponent, with the same handover bookkeeping as a
+  played move. Free-action cards (the extra-move family) are the exception
+  and resolve within your turn. Every activation also arms the chained-move
+  king guard, so the activator cannot capture the king until the opponent
+  has replied.
 - Nerf constraints still govern buff-granted moves (augments run **before**
   the nerf's `filterMoves`).
 - Freezes never affect kings, and a player locked down entirely by buff

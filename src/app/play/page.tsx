@@ -12,10 +12,6 @@ import { Logo } from "@/components/Logo";
 import { QueueButton } from "@/components/QueueButton";
 
 const TIME_STEPS_SEC = [
-  5,
-  10,
-  15,
-  20,
   30,
   45,
   60,

@@ -627,6 +627,13 @@ function GamePage() {
             aiThinking.current = false;
             return;
           }
+          // Buff use consumes the turn unless the card was a free action:
+          // bank the bot's clock and hand the move back to the player.
+          if (game.board.turn !== botColor) {
+            commitClock(botColor);
+            aiThinking.current = false;
+            return;
+          }
         }
       } catch {
         // A buff that fails to resolve must never stall the bot's turn.
@@ -786,7 +793,10 @@ function GamePage() {
       !game.buffs.players[myColor].offer &&
       historyPly == null,
     onChanged: () => {
-      if (game) setGame({ ...game });
+      if (!game) return;
+      // A buff use can consume the turn: bank my clock like a move.
+      if (game.board.turn !== myColor) commitClock(myColor);
+      setGame({ ...game });
     },
   });
 

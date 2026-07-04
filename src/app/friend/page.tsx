@@ -14,10 +14,6 @@ import {
 type View = "setup" | "lobby" | "joining" | "game";
 
 const TIME_STEPS_SEC = [
-  5,
-  10,
-  15,
-  20,
   30,
   45,
   60,
@@ -111,6 +107,7 @@ export default function FriendPage() {
           setError("That challenge no longer points to the player who sent it.");
           sess.destroy();
           if (sessionRef.current === sess) sessionRef.current = null;
+          expectedChallengeHostRef.current = null;
           clearSavedFriendSession();
           setView("setup");
           return;
@@ -183,11 +180,12 @@ export default function FriendPage() {
     sessionRef.current = sess;
     wireSession(sess);
     try {
-      const c = await sess.host(
-        baseSec,
-        incrementSec,
-        ruleset === "draft" ? { draft: true, picksVisible: picksOpen } : undefined,
-      );
+      const c = await sess.host(baseSec, incrementSec, {
+        ...(ruleset === "draft" ? { draft: true, picksVisible: picksOpen } : {}),
+        // Direct challenge: the server reserves the opponent seat for them,
+        // so a lobby stranger can never take it first.
+        ...(challenging ? { invite: challenging } : {}),
+      });
       if (sessionRef.current !== sess) return;
       setCode(c);
       setView("lobby");
@@ -201,6 +199,7 @@ export default function FriendPage() {
   const joinWithCode = async (trimmed: string) => {
     setError(null);
     clearSavedFriendSession();
+    expectedChallengeHostRef.current = null;
     if (!trimmed) {
       setError("Enter a code.");
       return;
@@ -216,6 +215,7 @@ export default function FriendPage() {
         if (sessionRef.current === sess) {
           sess.destroy();
           sessionRef.current = null;
+          expectedChallengeHostRef.current = null;
           setView("setup");
         }
         return;
@@ -223,7 +223,12 @@ export default function FriendPage() {
       await sess.join(trimmed);
       // The game starts on receipt of the server `start` frame.
     } catch (e) {
+      // Join refused (host left, seat taken, bad code): drop the session and
+      // all challenge expectations so the setup form starts clean.
       if (sessionRef.current !== sess) return;
+      sess.destroy();
+      sessionRef.current = null;
+      expectedChallengeHostRef.current = null;
       setError((e instanceof Error ? e.message : String(e)) || "Failed to connect. Check the code.");
       setView("setup");
     }
@@ -236,6 +241,7 @@ export default function FriendPage() {
     clearSavedFriendSession();
     sessionRef.current?.destroy();
     sessionRef.current = null;
+    expectedChallengeHostRef.current = null;
     setStart(null);
     setView("setup");
     setCode("");

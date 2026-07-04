@@ -63,6 +63,11 @@ import { isMuted, playCapture, playCheck, playCountdownTick, playError, playLowT
 // many free milliseconds before their clock starts charging.
 const FIRST_MOVE_GRACE_MS = 10_000;
 
+// The server allows abandonment claims 30s after the opponent disconnected,
+// and its opponentGone frame already arrives after a 15s grace: wait out the
+// remainder before surfacing the claim buttons.
+const CLAIM_DELAY_AFTER_GONE_MS = 15_000;
+
 type PendingPremoveSend = { uci: string; ply: number };
 type PendingLocalMove = { uci: string; ply: number; move: Move };
 
@@ -167,6 +172,10 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   const [ratingChange, setRatingChange] = useState<{ before: number; after: number } | null>(null);
   const [chatMessages, setChatMessages] = useState<MPChatMessage[]>(() => start.chat ?? []);
   const [rematchStatus, setRematchStatus] = useState<"none" | "offered" | "incoming">("none");
+  // Abandonment claims: opponentGone arrived and no sign of life since; after
+  // CLAIM_DELAY_AFTER_GONE_MS the claim buttons appear (server re-checks).
+  const [opponentGone, setOpponentGone] = useState(false);
+  const [claimReady, setClaimReady] = useState(false);
   // Seconds left on my first-move grace window (null = not in the window).
   const [graceSecondsLeft, setGraceSecondsLeft] = useState<number | null>(null);
   const lastGraceBeepRef = useRef<number | null>(null);
@@ -324,6 +333,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         // Reconnected: the server replayed the full game (moves, clocks,
         // chat, and a trailing `end` frame if it finished while we were away).
         setError(null);
+        setOpponentGone(false);
         setPendingLocalMove(null);
         setAwaitingPremoveAck(false);
         clearPremoves();
@@ -354,6 +364,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         }
       } else if (e.type === "opponent-gone") {
         setError("Opponent disconnected.");
+        setOpponentGone(true);
         setPendingLocalMove(null);
         setAwaitingPremoveAck(false);
       } else if (e.type === "clocks") {
@@ -362,6 +373,8 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
       } else if (e.type === "move") {
         setDrawOfferBy(null);
         setDrawOfferStatus("idle");
+        // Any accepted move proves the opponent (or we) are alive again.
+        setOpponentGone(false);
         const g = gameRef.current;
         if (!g) return;
         const lm = legalMoves(g).find((x) => moveToUCI(x) === e.move.u);
@@ -417,6 +430,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
       } else if (e.type === "end") {
         setConfirmMovePending(null);
         setConfirmingDraw(false);
+        setOpponentGone(false);
         setShowResult(true);
         setWhiteMs(e.end.wc);
         setBlackMs(e.end.bc);
@@ -874,7 +888,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         if (active === myColor) {
           const seconds = Math.ceil(graceLeft / 1000);
           setGraceSecondsLeft((prev) => (prev === seconds ? prev : seconds));
-          if (seconds <= 5 && lastGraceBeepRef.current !== seconds) {
+          // The countdown itself is visual only: a single soft tick as the
+          // free-time window closes, never a per-second beep series.
+          if (seconds === 1 && lastGraceBeepRef.current !== seconds) {
             lastGraceBeepRef.current = seconds;
             playCountdownTick();
           }
@@ -912,6 +928,32 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     return () => window.clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [myMs, clockEnabled, game, myColor, uiSettings.lowTimeWarning]);
+
+  // Surface the claim buttons once the opponent has stayed gone long enough
+  // for the server to accept a claim; hide them the moment they return.
+  useEffect(() => {
+    if (!opponentGone || game?.result) {
+      setClaimReady(false);
+      return;
+    }
+    const id = window.setTimeout(() => setClaimReady(true), CLAIM_DELAY_AFTER_GONE_MS);
+    return () => {
+      window.clearTimeout(id);
+      setClaimReady(false);
+    };
+  }, [opponentGone, game?.result]);
+
+  const onClaimWin = () => {
+    if (!game || game.result) return;
+    setError(null);
+    if (!session.claimWin()) setError("Disconnected from the game server.");
+  };
+
+  const onClaimDraw = () => {
+    if (!game || game.result) return;
+    setError(null);
+    if (!session.claimDraw()) setError("Disconnected from the game server.");
+  };
 
   const onResign = () => {
     if (!game || game.result) return;
@@ -1229,6 +1271,27 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           className="min-w-0 px-3 py-2 btn-ghost text-xs font-display tracking-wide"
         >
           Cancel
+        </button>
+      </div>
+    </div>
+  ) : claimReady ? (
+    <div className="space-y-2">
+      <div className="smallcaps text-[10px] text-parchment-300">
+        Your opponent seems to have abandoned the game.
+      </div>
+      {error && <div className="text-xs text-oxblood-glow leading-snug">{error}</div>}
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          onClick={onClaimWin}
+          className="min-w-0 px-3 py-2 border border-gold/40 bg-gold/10 text-gold-leaf hover:bg-gold/20 hover:border-gold/70 transition text-xs font-display font-semibold tracking-wide"
+        >
+          Claim win
+        </button>
+        <button
+          onClick={onClaimDraw}
+          className="min-w-0 px-3 py-2 btn-ghost text-xs font-display font-semibold tracking-wide"
+        >
+          Claim draw
         </button>
       </div>
     </div>

@@ -73,6 +73,9 @@ type StoredMatch = {
   // Matchmade and rematch games start automatically once both seats connect
   // (friend games wait in the lobby for a join instead).
   autoStart?: boolean;
+  // Direct challenge: only this username may join as black. Never listed as
+  // an open challenge in the lobby.
+  invitedUsername?: string;
   rematchOfferBy?: Color | null;
   // Set once a rematch match has been created from this one.
   rematchedTo?: string | null;
@@ -99,6 +102,10 @@ type StoredMatch = {
   // buff offers auto-resolve when these pass; clocks stay paused meanwhile.
   nerfDeadline?: number | null;
   dtDeadline?: number | null;
+  // Draft games: the side actually to move. Buff activations consume the
+  // activator's turn and tempo cards insert extra moves or skips, so move
+  // parity no longer determines it. Classic games never set this.
+  turnColor?: Color;
 };
 type SessionAttachment = {
   id: string;
@@ -124,11 +131,13 @@ type QueueEntry = {
   at: number;
 };
 type ClientFrame =
-  | { t: "create"; d?: { timeSec?: unknown; incrementSec?: unknown; draft?: unknown; picksVisible?: unknown } }
+  | { t: "create"; d?: { timeSec?: unknown; incrementSec?: unknown; draft?: unknown; picksVisible?: unknown; invite?: unknown } }
   | { t: "join"; d?: { id?: unknown } }
   | { t: "reconnect"; d?: { id?: unknown; color?: unknown; token?: unknown } }
   | { t: "move"; d?: { u?: unknown; ply?: unknown } }
   | { t: "resign" }
+  | { t: "claimWin" }
+  | { t: "claimDraw" }
   | { t: "drawOffer" }
   | { t: "drawAccept" }
   | { t: "drawDecline" }
@@ -160,7 +169,6 @@ export interface Env {
 // Quick-pairing pools for rated matchmaking. Keys are the wire names clients
 // send; keep them in sync with QUEUE_POOL_OPTIONS in the QueueButton UI.
 const QUEUE_POOLS: Record<string, { timeSec: number; incrementSec: number }> = {
-  "15s+0": { timeSec: 15, incrementSec: 0 }, // ultrabullet
   "1+0": { timeSec: 60, incrementSec: 0 },
   "2+1": { timeSec: 120, incrementSec: 1 },
   "3+0": { timeSec: 180, incrementSec: 0 },
@@ -175,6 +183,9 @@ const QUEUE_POOLS: Record<string, { timeSec: number; incrementSec: number }> = {
 const socketPath = "/socket/v1";
 const globalServerName = "nerfchess-global";
 const disconnectGraceMs = 15 * 1000;
+// How long the opponent must have been disconnected before the remaining
+// player may claim the game by abandonment (claimWin / claimDraw).
+const abandonmentClaimMs = 30 * 1000;
 // Leftover Durable Object storage from the retired house-player system,
 // cleared on first alarm/health check so the lobby never resurrects them.
 const legacyBotKeys = ["bots:seeks", "bots:seeded:v1", "bots:nextGameAt"];
@@ -340,6 +351,10 @@ export class GameServer extends DurableObject<Env> {
         return this.playClientMove(ws, frame.d);
       case "resign":
         return this.resignGame(ws);
+      case "claimWin":
+        return this.claimAbandonment(ws, false);
+      case "claimDraw":
+        return this.claimAbandonment(ws, true);
       case "drawOffer":
         return this.offerDraw(ws);
       case "drawAccept":
@@ -839,12 +854,14 @@ export class GameServer extends DurableObject<Env> {
     return color === "w" ? Math.ceil(match.moves.length / 2) : Math.floor(match.moves.length / 2);
   }
 
-  // Whose turn it is. Turns always alternate w, b, w, … (no nerf skips a
-  // turn), so this is pure move-count parity — no need to replay the game.
-  // Keeping clock and flag checks off the replay path is what stops the
-  // single-threaded Durable Object from stalling live sockets and the lobby.
+  // Whose turn it is. Classic turns always alternate w, b, w, … so this is
+  // pure move-count parity, with no need to replay the game. Keeping clock
+  // and flag checks off the replay path is what stops the single-threaded
+  // Durable Object from stalling live sockets and the lobby. Draft games
+  // track the real turn on the match instead (buff activations and tempo
+  // cards move it off parity).
   private activeColor(match: StoredMatch): Color {
-    return match.moves.length % 2 === 0 ? "w" : "b";
+    return match.turnColor ?? (match.moves.length % 2 === 0 ? "w" : "b");
   }
 
   private currentClocks(match: StoredMatch, now = Date.now()): Record<Color, number> {
@@ -956,7 +973,7 @@ export class GameServer extends DurableObject<Env> {
     const session = this.session(ws);
     if (session.matchId) return error(ws, "already_joined", "This connection already belongs to a game.");
 
-    const requested = (data || {}) as { timeSec?: unknown; incrementSec?: unknown; draft?: unknown; picksVisible?: unknown };
+    const requested = (data || {}) as { timeSec?: unknown; incrementSec?: unknown; draft?: unknown; picksVisible?: unknown; invite?: unknown };
     const timeSec = Number.isInteger(requested.timeSec) ? Number(requested.timeSec) : 600;
     const incrementSec = Number.isInteger(requested.incrementSec) ? Number(requested.incrementSec) : 0;
     if (timeSec < 0 || timeSec > 7200 || incrementSec < 0 || incrementSec > 60) {
@@ -967,6 +984,11 @@ export class GameServer extends DurableObject<Env> {
     // asks, so a draft game can never touch ratings.
     const draft = requested.draft === true;
     const picksVisible = draft && requested.picksVisible === true;
+    // Direct challenge: reserve the black seat for the named player. Only a
+    // signed-in host can address a challenge (the API notification requires
+    // an account anyway).
+    const invite =
+      session.userId && typeof requested.invite === "string" ? requested.invite.trim().slice(0, 30) : "";
 
     const id = await this.newCode();
     const match: StoredMatch = {
@@ -989,6 +1011,7 @@ export class GameServer extends DurableObject<Env> {
       startedAt: null,
       completedAt: null,
       ...(draft ? { draft: true, picksVisible, draftSeed: makeSeed(), draftActions: [] } : {}),
+      ...(invite ? { invitedUsername: invite } : {}),
     };
 
     await this.attachSession(ws, match, "w");
@@ -1006,6 +1029,19 @@ export class GameServer extends DurableObject<Env> {
     // has not started, so the code is no longer joinable.
     if (!match || match.startedAt || match.nerfOptions || this.connectedSession(id, "b")) {
       return error(ws, "not_found", "That code is not accepting a player.");
+    }
+    // Direct challenges are reserved: only the invited account may take the
+    // black seat, so a lobby stranger can never race the invitee to it.
+    if (
+      match.invitedUsername &&
+      match.invitedUsername.toLowerCase() !== (session.username ?? "").toLowerCase()
+    ) {
+      return error(ws, "invite_only", "This game is reserved for the invited player.");
+    }
+    // The host is gone (navigated away or closed the tab): joining would
+    // start a game against an empty seat. Tell the joiner plainly instead.
+    if (!this.connectedSession(id, "w")) {
+      return error(ws, "host_gone", "The player who created this game has left.");
     }
 
     await this.attachSession(ws, match, "b");
@@ -1056,6 +1092,18 @@ export class GameServer extends DurableObject<Env> {
       return send(ws, "created", { id, color, token: match.tokens[color] });
     }
     this.sendStart(match, color);
+    // A rematch was created while this seat was away (page refresh or dropped
+    // socket mid-rematch): re-deliver the seat in the new game so the player
+    // reclaims it instead of arriving at the rematch as a spectator. Only
+    // while the rematch is still unfinished, so revisiting an old game page
+    // never bounces into an already-decided one.
+    if (match.rematchedTo) {
+      const rematch = await this.loadMatch(match.rematchedTo);
+      if (rematch && !rematch.result) {
+        const newColor: Color = color === "w" ? "b" : "w";
+        send(ws, "rematched", { id: rematch.id, color: newColor, token: rematch.tokens[newColor] });
+      }
+    }
   }
 
   private async playClientMove(ws: WebSocket, data: unknown) {
@@ -1114,6 +1162,8 @@ export class GameServer extends DurableObject<Env> {
     }
     const nextGame = playMove(game, move);
     match.moves.push(uci);
+    // Draft games: extra moves and skips can leave the turn off parity.
+    if (match.draft) match.turnColor = nextGame.board.turn;
     if (match.setup.timeSec) match.clocks[session.color] += match.setup.incrementSec * 1000;
     // Any pending buff offer pauses the game clock: the lock-in window is
     // free time for both players, enforced by dtDeadline instead.
@@ -1182,6 +1232,37 @@ export class GameServer extends DurableObject<Env> {
     match.clocks = this.currentClocks(match);
     match.runningSince = null;
     match.result = resign(game, session.color).result;
+    match.completedAt = Date.now();
+    await this.endMatch(match);
+  }
+
+  // ---------------- abandonment claims ----------------
+
+  // Once the opponent has been disconnected for 30+ seconds in a started,
+  // unfinished game, the remaining player may end it as a win or a draw.
+  private async claimAbandonment(ws: WebSocket, draw: boolean) {
+    const session = this.session(ws);
+    const match = session.matchId ? await this.loadMatch(session.matchId) : null;
+    if (!match || !session.color) return error(ws, "no_game", "Join a game before claiming.");
+    if (await this.finishOnFlag(match)) return;
+    if (match.result) return;
+    if (!match.startedAt) return error(ws, "not_started", "The game has not started yet.");
+
+    const opponent: Color = session.color === "w" ? "b" : "w";
+    const disconnectedAt = match.disconnectedAt[opponent];
+    if (
+      this.connectedSession(match.id, opponent) ||
+      !disconnectedAt ||
+      Date.now() - disconnectedAt < abandonmentClaimMs
+    ) {
+      return error(ws, "no_claim", "Your opponent has not been gone long enough to claim.");
+    }
+
+    match.clocks = this.currentClocks(match);
+    match.runningSince = null;
+    match.result = draw
+      ? { winner: "draw", reason: "abandonment" }
+      : { winner: session.color, reason: "abandonment" };
     match.completedAt = Date.now();
     await this.endMatch(match);
   }
@@ -1788,6 +1869,13 @@ export class GameServer extends DurableObject<Env> {
       match.runningSince = null;
       match.result = game.result;
       match.completedAt = now;
+    } else if (!match.result && game.board.turn !== this.activeColor(match)) {
+      // A buff use consumed the activator's turn: bank their elapsed time
+      // and start charging the new mover, exactly like a played move.
+      const now = Date.now();
+      match.clocks = this.currentClocks(match, now);
+      if (match.runningSince !== null) match.runningSince = now;
+      match.turnColor = game.board.turn;
     }
     // Resume the paused clock once no offer is pending on either side.
     const bs = game.buffs;
@@ -2208,9 +2296,10 @@ export class GameServer extends DurableObject<Env> {
     for (const match of matches) {
       // A dealt nerf draft means both seats are taken: not a challenge.
       if (!match.startedAt && !match.result && !match.autoStart && !match.nerfOptions) {
-        // Only list codes whose host is still connected — otherwise the code
-        // is a dead end for whoever clicks it.
-        if (this.connectedSession(match.id, "w")) {
+        // Only list codes whose host is still connected; otherwise the code
+        // is a dead end for whoever clicks it. Direct challenges are reserved
+        // for their invitee and never appear as open challenges.
+        if (!match.invitedUsername && this.connectedSession(match.id, "w")) {
           const host = match.users?.w;
           challenges.push({
             id: match.id,

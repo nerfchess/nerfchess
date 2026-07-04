@@ -4,7 +4,7 @@
 // the registry, so it automatically reflects any future queue. Shared by the
 // leaderboard and profile pages.
 
-import { RATING_CATEGORIES, type RatingCategoryId } from "@/lib/ratingCategories";
+import { ACTIVE_RATING_CATEGORIES, type RatingCategoryId } from "@/lib/ratingCategories";
 
 export function CategoryTabs({
   value,
@@ -21,7 +21,7 @@ export function CategoryTabs({
       aria-label="Rating category"
       className={"inline-flex gap-1 rounded-lg border border-white/10 bg-white/[0.03] p-1 " + className}
     >
-      {RATING_CATEGORIES.map((c) => {
+      {ACTIVE_RATING_CATEGORIES.map((c) => {
         const Icon = c.icon;
         const selected = value === c.id;
         return (
