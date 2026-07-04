@@ -98,12 +98,21 @@ snapshots are deterministic.
   serializable object (`NerfGame.buffs`) designed to be relayed by the game
   server; the server protocol and `OnlineMatch` need draft messages
   (offer/pick/bank/activate) plus per-seat visibility filtering.
-- The buff dock only renders in the desktop side rail (`lg:` breakpoint); a
-  mobile drawer is needed.
-- Bots draft (preferring cards they can use without a targeting UI) but never
-  *activate* targeted buffs they hold.
 - ~100 cards are stubs (atomic/explosion family, rewinds, move-history
   effects like *Momentum*, per-piece conditional shields). The `Buff` hook
   surface covers most of them; explosions and rewinds need new engine events.
-- Board visualization for zone effects (barred files, sanctuaries, frozen
-  pieces) — the effects work but aren't painted on the board yet.
+
+Closed gaps:
+
+- The buff dock renders in a bottom drawer (`MobileBuffDrawer`) below the
+  `lg:` breakpoint, with a badge when an activated buff is usable.
+- The AI activates targeted buffs it holds (`aiActivateBuffs`): targets are
+  auto-picked (enemy value first, then own pieces, then central squares), one
+  activation per turn before the search, and offensive one-shots hold out for
+  at least a minor piece of value. Boards mutated by buffs set
+  `BuffMatchState.historyDiverged`, which suspends replay-based threefold
+  detection instead of crashing it.
+- Zone effects are painted on the board: frozen pieces (icy tint +
+  snowflake), shielded/sanctuary squares (green inset ring), squares barred
+  against you (red wash, shared with nerf visuals), and squares your buffs
+  bar against the opponent (green wash).

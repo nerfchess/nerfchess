@@ -15,7 +15,7 @@ import { BUFF_BY_ID } from "./buffs/library";
 import { DEFAULT_CADENCE, bankOffer, rollOffer } from "./draft";
 import { Nerf, NerfState, GameContext, Tier } from "./nerf";
 import { RNG } from "./rng";
-import { BoardState, Color, FILE, Move, PieceType, RANK, SQ } from "./types";
+import { BoardState, Color, FILE, Move, PieceType, RANK, SQ, Square } from "./types";
 
 export interface PlayerSlot {
   nerf: Nerf;
@@ -187,21 +187,26 @@ export function makeBuffApi(game: NerfGame, me: Color): BuffApi {
     rng: slot.rng,
     capturedFromMe: game.captured[opp],
     place: (sq, type, color) => {
+      bs.historyDiverged = true;
       game.board.pieces[sq] = { type, color };
     },
     removePiece: (sq) => {
+      bs.historyDiverged = true;
       game.board.pieces[sq] = null;
     },
     relocate: (from, to) => {
+      bs.historyDiverged = true;
       const p = game.board.pieces[from];
       game.board.pieces[from] = null;
       game.board.pieces[to] = p;
     },
     setPieceType: (sq, type) => {
+      bs.historyDiverged = true;
       const p = game.board.pieces[sq];
       if (p) game.board.pieces[sq] = { ...p, type };
     },
     setPieceColor: (sq, color) => {
+      bs.historyDiverged = true;
       const p = game.board.pieces[sq];
       if (p) game.board.pieces[sq] = { ...p, color };
     },
@@ -367,8 +372,11 @@ export function playMove(game: NerfGame, move: Move): NerfGame {
     return game;
   }
   // A repetition needs at least 8 reversible plies, so skip the history
-  // replay until then.
-  if (game.board.halfmove >= 8 && countRepetitions(game.board) >= 3) {
+  // replay until then. Once a buff has mutated the board directly the replay
+  // no longer reproduces the position (it would crash on moves whose pieces
+  // were summoned or removed outside history), so repetition detection is
+  // suspended for the rest of the game.
+  if (game.board.halfmove >= 8 && !bs?.historyDiverged && countRepetitions(game.board) >= 3) {
     game.result = { winner: "draw", reason: "draw by threefold repetition" };
     return game;
   }
@@ -528,7 +536,9 @@ function settleAfterBuff(game: NerfGame) {
 }
 
 /** Auto-resolve a pending offer for a bot: prefer the highest-tier card it can
- * actually use without a targeting UI, otherwise just take the higher tier. */
+ * actually use, otherwise just take the higher tier. Passives and instants
+ * resolve themselves; activated cards score slightly lower because the bot's
+ * auto-targeting is cruder than a human's. */
 export function aiResolveDraft(game: NerfGame, color: Color) {
   const bs = game.buffs;
   if (!bs) return;
@@ -538,13 +548,95 @@ export function aiResolveDraft(game: NerfGame, color: Color) {
   let bestScore = -1;
   offer.cards.forEach((card, i) => {
     const def = BUFF_BY_ID[card.id];
-    const score = (def && aiCanUse(def) ? 100 : 0) + card.tier;
+    const usable = def && aiCanUse(def) ? 100 : def?.implemented && def.kind === "activated" ? 80 : 0;
+    const score = usable + card.tier;
     if (score > bestScore) {
       bestScore = score;
       best = i;
     }
   });
   pickDraftCard(game, color, best);
+}
+
+// ---------------------------------------------------------------------------
+// AI buff activation
+// ---------------------------------------------------------------------------
+
+const AI_PIECE_VALUE: Record<PieceType, number> = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 100 };
+
+/** Score a candidate square for auto-targeting: enemy pieces dominate (by
+ * value), then own pieces, then empty squares by centrality. */
+function aiSquareScore(game: NerfGame, me: Color, sq: Square): number {
+  const p = game.board.pieces[sq];
+  const centrality = 7 - Math.max(Math.abs(FILE(sq) - 3.5), Math.abs(RANK(sq) - 3.5)) * 2;
+  if (!p) return centrality;
+  const base = AI_PIECE_VALUE[p.type] * 20;
+  return p.color === me ? 100 + base + centrality : 1000 + base + centrality;
+}
+
+/** Collect a full pick sequence for an activated buff without a UI. Returns
+ * null when the buff currently has no valid use, plus a rough value of the
+ * best target so the caller can decide whether firing now is worth it. */
+function aiCollectPicks(
+  game: NerfGame,
+  color: Color,
+  buffIndex: number,
+): { picks: BuffPick[]; value: number } | null {
+  const opp: Color = color === "w" ? "b" : "w";
+  const picks: BuffPick[] = [];
+  let value = 0;
+  for (let step = 0; step < 8; step++) {
+    const target = buffNextTarget(game, color, buffIndex, picks);
+    if (!target) return { picks, value };
+    if (target.kind === "square") {
+      if (!target.squares.length) return null;
+      let best = target.squares[0];
+      let bestScore = -1;
+      for (const sq of target.squares) {
+        const score = aiSquareScore(game, color, sq);
+        if (score > bestScore) {
+          bestScore = score;
+          best = sq;
+        }
+      }
+      const piece = game.board.pieces[best];
+      if (piece && piece.color === opp) value = Math.max(value, AI_PIECE_VALUE[piece.type]);
+      picks.push({ square: best });
+    } else {
+      if (!target.options.length) return null;
+      const best = target.options.reduce((a, b) => (b.tier > a.tier ? b : a));
+      value = Math.max(value, best.tier);
+      picks.push({ buffIndex: best.index });
+    }
+  }
+  return { picks, value };
+}
+
+/** Fire at most one of the bot's activated buffs, auto-picking targets.
+ * Offensive cards wait for a target worth at least a minor piece so a
+ * one-shot isn't wasted on a pawn; defensive/placement cards (no enemy piece
+ * among the candidates) fire as soon as they are usable. Returns true when a
+ * buff was activated (the board and effects may have changed). */
+export function aiActivateBuffs(game: NerfGame, color: Color): boolean {
+  const bs = game.buffs;
+  if (!bs || game.result || game.board.turn !== color) return false;
+  const ps = bs.players[color];
+  for (let i = 0; i < ps.buffs.length; i++) {
+    const inst = ps.buffs[i];
+    const def = BUFF_BY_ID[inst.id];
+    if (!def?.implemented || def.kind !== "activated" || inst.spent || inst.nullified) continue;
+    const collected = aiCollectPicks(game, color, i);
+    if (!collected) continue;
+    const hitsEnemy = collected.picks.some((p) => {
+      if (p.buffIndex !== undefined) return true;
+      const piece = p.square !== undefined ? game.board.pieces[p.square] : null;
+      return !!piece && piece.color !== color;
+    });
+    // Offensive one-shots hold out for a knight's worth of value.
+    if (hitsEnemy && collected.value < 3) continue;
+    if (activateBuff(game, color, i, collected.picks)) return true;
+  }
+  return false;
 }
 
 export function resign(game: NerfGame, color: Color): NerfGame {

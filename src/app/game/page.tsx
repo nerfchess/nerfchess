@@ -12,7 +12,9 @@ import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
 import { AILevel, aiBudgetMs, pickAIMove } from "@/engine/ai";
 import { Nerf, type GameContext } from "@/engine/nerf";
 import { IMPLEMENTED_BY_ID, PLAYABLE_NERFS } from "@/engine/nerfs/library";
+import { BUFF_BY_ID } from "@/engine/buffs/library";
 import {
+  aiActivateBuffs,
   aiResolveDraft,
   applyTurnStart,
   bankDraft,
@@ -27,6 +29,7 @@ import {
   resign,
 } from "@/engine/game";
 import { BuffDock } from "@/components/BuffDock";
+import { MobileBuffDrawer } from "@/components/MobileBuffDrawer";
 import { DraftOverlay } from "@/components/DraftOverlay";
 import { NerfCard } from "@/components/NerfCard";
 import { makeSeed } from "@/engine/rng";
@@ -558,6 +561,24 @@ function GamePage() {
     if (aiThinking.current) return;
     aiThinking.current = true;
     const botColor: Color = myColor === "w" ? "b" : "w";
+
+    // Draft mode: fire an activated buff (auto-picked targets) before the
+    // search, so the engine looks at the post-activation board. Activation
+    // can decide the game on the spot (a removal ends it via loss checks).
+    if (game.buffs) {
+      try {
+        if (aiActivateBuffs(game, botColor)) {
+          setGame({ ...game });
+          if (game.result) {
+            aiThinking.current = false;
+            return;
+          }
+        }
+      } catch {
+        // A buff that fails to resolve must never stall the bot's turn.
+      }
+    }
+
     const expectedPly = game.board.history.length;
     const thinkStart = Date.now();
 
@@ -733,6 +754,28 @@ function GamePage() {
   const myState = myColor === "w" ? game.white.state : game.black.state;
   const myCtx = makeContext(game, myColor);
   const visual = myNerf.visual?.(myState, myCtx);
+  // Draft-mode zone effects are public information: paint frozen pieces,
+  // shielded (sanctuary) squares, and barred squares for both sides. Squares
+  // barred against me use the nerf's red "can't go there" wash; squares my
+  // buffs bar against the opponent get their own tint.
+  const zone = { frozen: [] as number[], shielded: [] as number[], ward: [] as number[], barred: [] as number[] };
+  if (game.buffs) {
+    for (const e of game.buffs.effects) {
+      if (e.turns != null && e.turns <= 0) continue;
+      if (e.kind === "freeze") zone.frozen.push(e.sq);
+      else if (e.kind === "shield") {
+        if (e.squares) zone.shielded.push(...e.squares);
+        else {
+          for (let sq = 0; sq < 64; sq++) {
+            const p = game.board.pieces[sq];
+            if (p && p.color === e.owner) zone.shielded.push(sq);
+          }
+        }
+      } else if (e.kind === "barred") {
+        (e.against === myColor ? zone.barred : zone.ward).push(...e.squares);
+      }
+    }
+  }
   const opponentNerf = myColor === "w" ? game.black.nerf : game.white.nerf;
   const bsMine = game.buffs?.players[myColor];
   const bsTheirs = game.buffs?.players[myColor === "w" ? "b" : "w"];
@@ -1092,7 +1135,18 @@ function GamePage() {
                   orientation={orientation}
                   onMove={handleMove}
                   myColor={myColor}
-                  visual={isReviewingHistory ? undefined : { ...(visual ?? {}), highlightSquares: forcedSquares }}
+                  visual={
+                    isReviewingHistory
+                      ? undefined
+                      : {
+                          ...(visual ?? {}),
+                          highlightSquares: forcedSquares,
+                          bannedSquares: [...(visual?.bannedSquares ?? []), ...zone.barred],
+                          frozenSquares: zone.frozen,
+                          shieldedSquares: zone.shielded,
+                          wardSquares: zone.ward,
+                        }
+                  }
                   lastMove={lastMoveForDisplay}
                   disabled={!!game.result || premovePending || isReviewingHistory || !!confirmMovePending || !!myOffer}
                   premoveMode={!isReviewingHistory && premoveMode}
@@ -1181,6 +1235,27 @@ function GamePage() {
         onPlyChange={handleHistoryPlyChange}
         footer={historyActions}
       />
+
+      {game.buffs && (
+        <MobileBuffDrawer
+          held={game.buffs.players[myColor].buffs.length}
+          usable={
+            game.result || game.board.turn !== myColor || myOffer || isReviewingHistory
+              ? 0
+              : game.buffs.players[myColor].buffs.filter((inst) => {
+                  const def = BUFF_BY_ID[inst.id];
+                  return def?.kind === "activated" && !inst.spent && !inst.nullified;
+                }).length
+          }
+        >
+          <BuffDock
+            game={game}
+            myColor={myColor}
+            canAct={!game.result && game.board.turn === myColor && !myOffer && !isReviewingHistory}
+            onChanged={() => setGame({ ...game })}
+          />
+        </MobileBuffDrawer>
+      )}
 
       {myOffer && !game.result && (
         <DraftOverlay

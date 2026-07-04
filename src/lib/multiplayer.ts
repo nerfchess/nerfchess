@@ -562,9 +562,7 @@ export class MPSession {
   }
 
   // Join the rated quick-pairing queue. Resolves with the paired game id.
-  // `seek` is the name on an accepted lobby row; when it's a house player, the
-  // server pairs with that exact opponent.
-  async queue(pool: string, seek?: string): Promise<{ id: string; color: Color; token: string }> {
+  async queue(pool: string): Promise<{ id: string; color: Color; token: string }> {
     await this.connect();
     return new Promise((resolve, reject) => {
       const off = this.on((event) => {
@@ -579,7 +577,7 @@ export class MPSession {
           reject(new Error("Disconnected from the game server."));
         }
       });
-      this.sendFrame("queue", seek ? { pool, seek } : { pool });
+      this.sendFrame("queue", { pool });
     });
   }
 

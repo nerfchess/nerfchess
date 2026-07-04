@@ -126,6 +126,12 @@ export interface BuffMatchState {
   extraMoves: { w: number; b: number };
   skips: { w: number; b: number };
   players: { w: PlayerBuffState; b: PlayerBuffState };
+  /**
+   * Set once a buff mutates the board directly (summon, removal, teleport…).
+   * The board can then no longer be reproduced by replaying move history, so
+   * replay-based checks (threefold repetition) must be skipped.
+   */
+  historyDiverged?: boolean;
 }
 
 export function newPlayerBuffState(cadence: number): PlayerBuffState {
