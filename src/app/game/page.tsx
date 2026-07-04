@@ -30,6 +30,7 @@ import {
 } from "@/engine/game";
 import { BuffDock } from "@/components/BuffDock";
 import { MobileBuffDrawer } from "@/components/MobileBuffDrawer";
+import { DraftNotice } from "@/components/DraftNotice";
 import { DraftOverlay } from "@/components/DraftOverlay";
 import { NerfCard } from "@/components/NerfCard";
 import { makeSeed } from "@/engine/rng";
@@ -340,6 +341,13 @@ function GamePage() {
 
   useEffect(() => {
     if (!game || historyPly == null) return;
+    // A buff mutated the board outside move history (summon, removal,
+    // teleport): replay can no longer reproduce the position, so snap any
+    // in-progress review back to the live board.
+    if (game.buffs?.historyDiverged) {
+      setHistoryPly(null);
+      return;
+    }
     if (historyPly > game.board.history.length) {
       setHistoryPly(game.board.history.length);
     }
@@ -714,12 +722,19 @@ function GamePage() {
   }, [game?.board.history.length, game?.board.turn, game?.result, myColor, difficulty]);
 
   const reviewBoard = useMemo(() => {
-    if (!game || historyPly == null) return null;
+    if (!game || historyPly == null || game.buffs?.historyDiverged) return null;
     return boardAtPly(game.board.history, historyPly);
   }, [game, historyPly]);
   const currentHistoryPly = historyPly ?? game?.board.history.length ?? 0;
   const isReviewingHistory = historyPly != null;
   const handleHistoryPlyChange = (ply: number) => {
+    // Once a buff has mutated the board outside history, stepping is
+    // disabled: arrow keys and move-list clicks stay clamped to the live
+    // board instead of replaying a history that can't be reproduced.
+    if (game?.buffs?.historyDiverged) {
+      setHistoryPly(null);
+      return;
+    }
     const max = game?.board.history.length ?? 0;
     if (ply >= max) {
       setHistoryPly(null);
@@ -914,6 +929,8 @@ function GamePage() {
     setMutedState(next);
   };
 
+  const reviewLocked = !!game.buffs?.historyDiverged;
+
   const historyActions = game.result ? null : confirmMovePending ? (
     <div className="space-y-2">
       <div className="smallcaps text-[10px] text-parchment-300">Play this move?</div>
@@ -995,6 +1012,18 @@ function GamePage() {
     </div>
   );
 
+  const moveListFooter =
+    reviewLocked || historyActions ? (
+      <div className="space-y-2">
+        {reviewLocked && (
+          <p className="text-[10px] leading-snug text-parchment-400">
+            Review is unavailable: a buff changed the board outside the move list.
+          </p>
+        )}
+        {historyActions}
+      </div>
+    ) : null;
+
   return (
     <main className="flex h-dvh min-h-0 flex-col overflow-hidden">
       <nav className="sticky top-0 z-20 flex w-full shrink-0 items-center justify-between px-5 py-3">
@@ -1061,7 +1090,7 @@ function GamePage() {
           className="grid min-h-0 flex-1 gap-y-2 lg:grid-cols-[280px_auto] lg:justify-center lg:gap-x-3"
           style={railHeightStyle}
         >
-          <aside className="hidden min-h-0 gap-3 overflow-hidden lg:grid lg:h-[var(--board-height)] lg:grid-rows-[auto_minmax(0,1fr)_auto] lg:self-start">
+          <aside className="hidden min-h-0 gap-3 overflow-hidden lg:grid lg:h-[var(--board-height)] lg:grid-rows-[auto_minmax(8rem,1fr)_auto] lg:self-start">
             <PlayerNerfCard
               board={boardForDisplay}
               playerColor={myColor === "w" ? "b" : "w"}
@@ -1071,6 +1100,7 @@ function GamePage() {
               nerf={opponentNerf}
               revealed={oppRevealed}
               ownerLabel=""
+              compact
               action={
                 !oppRevealed && !uiSettings.hideOpponentReveal ? (
                   <button
@@ -1102,6 +1132,7 @@ function GamePage() {
               elo={playerElo}
               nerf={myNerf}
               ownerLabel=""
+              compact
               progress={myNerf.progress?.(myState, myCtx) ?? null}
               action={
                 <button
@@ -1139,7 +1170,7 @@ function GamePage() {
                   />
                 )}
               </div>
-              <div data-board-measure className={`mx-auto sm:mx-0 ${boardFitClass}`}>
+              <div data-board-measure className={`relative mx-auto sm:mx-0 ${boardFitClass}`}>
                 <Board
                   board={boardForDisplay}
                   legalMoves={
@@ -1176,6 +1207,9 @@ function GamePage() {
                   showLegalMoves={uiSettings.showLegalMoves}
                   checkSquare={isReviewingHistory ? null : checkSquare}
                 />
+                {bsTheirs && (
+                  <DraftNotice buffs={bsTheirs.buffs} banked={!!bsTheirs.flags.bankBonus} />
+                )}
               </div>
               <div className="flex items-center justify-between gap-2 sm:hidden">
                 <BoardPlayerRow
@@ -1233,7 +1267,7 @@ function GamePage() {
                 onPlyChange={handleHistoryPlyChange}
                 compact
                 showHeader={false}
-                footer={historyActions}
+                footer={moveListFooter}
               />
               {clockEnabled && (
                 <ClockPill
@@ -1250,7 +1284,7 @@ function GamePage() {
         moves={game.board.history}
         currentPly={currentHistoryPly}
         onPlyChange={handleHistoryPlyChange}
-        footer={historyActions}
+        footer={moveListFooter}
       />
 
       {game.buffs && (
@@ -1322,7 +1356,7 @@ function GamePage() {
           ratingChange={ratingChange}
           onRematch={handleRematch}
           onNewGame={handleRematch}
-          onReview={() => setHistoryPly(0)}
+          onReview={() => handleHistoryPlyChange(0)}
           moves={game.board.history}
           playerNames={{
             w: myColor === "w" ? "You" : `${difficulty[0].toUpperCase()}${difficulty.slice(1)} Bot`,

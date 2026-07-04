@@ -24,9 +24,11 @@ interface Props {
   nullified?: boolean;
   onClick?: () => void;
   compact?: boolean;
+  /** Soft accent glow: this buff can be used right now. */
+  glow?: boolean;
 }
 
-export function BuffCard({ buff, tier, status, spent, nullified, onClick, compact }: Props) {
+export function BuffCard({ buff, tier, status, spent, nullified, onClick, compact, glow }: Props) {
   const t = tier ?? buff.tier;
   const dead = spent || nullified;
   const body = (
@@ -35,6 +37,7 @@ export function BuffCard({ buff, tier, status, spent, nullified, onClick, compac
         `relative plate overflow-hidden border tier-bg-${t} ` +
         (compact ? "p-3 " : "p-4 ") +
         (dead ? "opacity-45 " : "") +
+        (glow && !dead ? "ring-1 ring-gold/40 shadow-leaf " : "") +
         (onClick && !dead
           ? "cursor-pointer transition hover:border-gold/60 hover:-translate-y-0.5"
           : "")

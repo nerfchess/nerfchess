@@ -4,7 +4,7 @@ import { BuffPick, BuffTarget } from "@/engine/buff";
 import { BUFF_BY_ID } from "@/engine/buffs/library";
 import { NerfGame, activateBuff, buffNextTarget } from "@/engine/game";
 import { Color, FILE, RANK, SQ } from "@/engine/types";
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { BuffCard } from "./BuffCard";
 
 const GLYPH: Record<string, string> = {
@@ -32,6 +32,26 @@ interface Targeting {
 
 export function BuffDock({ game, myColor, canAct, onChanged, onUse }: Props) {
   const [targeting, setTargeting] = useState<Targeting | null>(null);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const [moreBelow, setMoreBelow] = useState(false);
+
+  // Scroll affordance: fade the bottom edge while more cards sit below the
+  // fold. Rechecked on scroll and whenever the dock resizes or the game
+  // state changes (drafts add cards without resizing the dock).
+  const syncScrollHint = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setMoreBelow(el.scrollHeight - el.scrollTop - el.clientHeight > 8);
+  }, []);
+  useEffect(() => {
+    syncScrollHint();
+    const el = scrollRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(syncScrollHint);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [syncScrollHint, game]);
+
   const bs = game.buffs;
   if (!bs) return null;
   const mine = bs.players[myColor].buffs;
@@ -63,59 +83,86 @@ export function BuffDock({ game, myColor, canAct, onChanged, onUse }: Props) {
   };
 
   return (
-    <div className="plate p-3 space-y-2 overflow-y-auto">
-      <div className="smallcaps text-[10px] text-parchment-400">Your buffs</div>
-      {mine.length === 0 && (
-        <p className="text-[11px] text-parchment-400">
-          None yet. Your first draft arrives after {bs.players[myColor].nextDraftAt} moves.
-        </p>
-      )}
-      {mine.map((inst, i) => {
-        const def = BUFF_BY_ID[inst.id];
-        if (!def) return null;
-        const usable = canAct && def.kind === "activated" && !inst.spent && !inst.nullified;
-        return (
-          <div key={i}>
-            <BuffCard
-              buff={def}
-              tier={inst.tier}
-              compact
-              spent={inst.spent}
-              nullified={inst.nullified}
-              status={def.status?.(inst) ?? null}
-            />
-            {def.kind === "activated" && !inst.spent && !inst.nullified && (
-              <button
-                onClick={() => startUse(i)}
-                disabled={!usable}
-                className="mt-1 w-full px-2 py-1.5 border border-gold/40 bg-gold/10 text-gold-leaf hover:bg-gold/20 transition text-[11px] font-display font-semibold tracking-wide disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                Use{!canAct ? " (your turn only)" : ""}
-              </button>
-            )}
-          </div>
-        );
-      })}
-      {theirs.length > 0 && (
-        <>
-          <div className="smallcaps text-[10px] text-parchment-400 pt-1 border-t border-white/10">
-            Opponent&apos;s buffs
-          </div>
-          {theirs.map((inst, i) => {
-            const def = BUFF_BY_ID[inst.id];
-            if (!def) return null;
-            return (
+    <div className="plate relative flex h-full min-h-0 flex-col">
+      <div
+        ref={scrollRef}
+        onScroll={syncScrollHint}
+        className="min-h-0 flex-1 space-y-2 overflow-y-auto bg-inherit px-3 pb-3"
+      >
+        {/* bg-inherit chains the plate background down to the sticky headers
+            so cards scroll under them in every theme. */}
+        <div className="sticky top-0 z-10 -mx-3 flex items-baseline justify-between gap-2 border-b border-white/10 bg-inherit px-3 pb-1.5 pt-3">
+          <span className="smallcaps text-[10px] text-parchment-400">Your buffs</span>
+          <span className="font-mono text-[10px] tabular-nums text-parchment-400">{mine.length}</span>
+        </div>
+        {mine.length === 0 && (
+          <p className="text-[11px] text-parchment-400">
+            None yet. Your first draft arrives after {bs.players[myColor].nextDraftAt} moves.
+          </p>
+        )}
+        {mine.map((inst, i) => {
+          const def = BUFF_BY_ID[inst.id];
+          if (!def) return null;
+          const activatable = def.kind === "activated" && !inst.spent && !inst.nullified;
+          const usable = canAct && activatable;
+          return (
+            <div key={i}>
               <BuffCard
-                key={i}
                 buff={def}
                 tier={inst.tier}
                 compact
                 spent={inst.spent}
                 nullified={inst.nullified}
+                status={def.status?.(inst) ?? null}
+                glow={usable}
               />
-            );
-          })}
-        </>
+              {activatable &&
+                (usable ? (
+                  <button
+                    onClick={() => startUse(i)}
+                    className="btn-leaf shadow-leaf animate-flicker mt-1.5 w-full px-2 py-2 text-[11px] font-display font-semibold tracking-wide"
+                  >
+                    Use
+                  </button>
+                ) : (
+                  <button
+                    disabled
+                    className="mt-1.5 w-full cursor-not-allowed border border-white/10 bg-white/[0.03] px-2 py-2 text-[11px] font-display font-semibold tracking-wide text-parchment-400"
+                  >
+                    Use · your turn only
+                  </button>
+                ))}
+            </div>
+          );
+        })}
+        {theirs.length > 0 && (
+          <>
+            <div className="sticky top-0 z-10 -mx-3 flex items-baseline justify-between gap-2 border-b border-white/10 bg-inherit px-3 pb-1.5 pt-3">
+              <span className="smallcaps text-[10px] text-parchment-400">Opponent&apos;s buffs</span>
+              <span className="font-mono text-[10px] tabular-nums text-parchment-400">{theirs.length}</span>
+            </div>
+            {theirs.map((inst, i) => {
+              const def = BUFF_BY_ID[inst.id];
+              if (!def) return null;
+              return (
+                <BuffCard
+                  key={i}
+                  buff={def}
+                  tier={inst.tier}
+                  compact
+                  spent={inst.spent}
+                  nullified={inst.nullified}
+                />
+              );
+            })}
+          </>
+        )}
+      </div>
+      {moreBelow && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-px bottom-px z-10 h-10 bg-gradient-to-t from-black/40 to-transparent"
+        />
       )}
 
       {targeting && (
