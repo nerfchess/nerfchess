@@ -18,6 +18,8 @@ import { Color } from "./types";
 //   stack (cap +1).
 // ---------------------------------------------------------------------------
 
+// Draft cadence in own moves. Tuning guide: 5 creates faster chaos, 6 is the
+// default arc, 7 slows the arc and delays high-tier cards.
 export const DEFAULT_CADENCE = 6;
 
 function drawRng(bs: BuffMatchState): RNG {
@@ -78,6 +80,21 @@ export function rollOffer(bs: BuffMatchState, color: Color): BuffOffer {
   const offer: BuffOffer = { cards, index, ...(bonus > 0 ? { banked: true } : {}) };
   ps.offer = offer;
   ps.draftsTaken = index;
+
+  // One-shot reveals (Peek, Quick Glance, Draft Insight): the holder gets a
+  // snapshot of this single offer, then the reveal expires.
+  const watcher = bs.players[color === "w" ? "b" : "w"];
+  if (watcher.flags.seeOppCards) {
+    watcher.oppReveal = { index, cards: offer.cards.map((c) => ({ ...c })) };
+    watcher.flags.seeOppCards = undefined;
+    watcher.flags.seeOppTier = undefined;
+  } else if (watcher.flags.seeOppTier) {
+    watcher.oppReveal = {
+      index,
+      tier: offer.cards.reduce<number>((t, c) => Math.max(t, c.tier), 1) as Tier,
+    };
+    watcher.flags.seeOppTier = undefined;
+  }
   return offer;
 }
 

@@ -249,6 +249,7 @@ export function legalMoves(game: NerfGame): Move[] {
   const opp: Color = me === "w" ? "b" : "w";
   const slot = me === "w" ? game.white : game.black;
   const bs = game.buffs;
+  let frozenOwnCount = 0;
 
   if (bs) {
     // Frozen pieces cannot move.
@@ -257,6 +258,7 @@ export function legalMoves(game: NerfGame): Move[] {
         .filter((e) => e.kind === "freeze" && e.owner === me && effectActive(e))
         .map((e) => (e.kind === "freeze" ? e.sq : -1)),
     );
+    frozenOwnCount = frozen.size;
     if (frozen.size) all = all.filter((m) => !frozen.has(m.from));
 
     // My buffs may add moves. Nerf constraints are applied afterwards, so a
@@ -306,6 +308,26 @@ export function legalMoves(game: NerfGame): Move[] {
     for (const { inst, def } of heldBuffs(game, opp)) {
       if (def.filterOpponentMoves) all = def.filterOpponentMoves(all, inst, oppApi);
     }
+    // Chained-move king guard: while a player is bursting through extra
+    // moves or opponent skips, capturing the king is off the table until the
+    // opponent has played one reply move. The final chained move may still
+    // give check or create threats; it just cannot end the game on the spot.
+    if (bs.chainKingGuard === me || bs.extraMoves[me] > 0 || bs.skips[opp] > 0) {
+      all = all.filter((m) => m.captured !== "k");
+    }
+    // Panic step: while mass freeze (3 or more of my pieces frozen) is
+    // active, my king keeps its plain one-square quiet steps regardless of
+    // zone effects, so a freeze plus extra-move stack can never leave a side
+    // with no meaningful reply.
+    if (frozenOwnCount >= 3) {
+      for (const m of generateMoves(game.board)) {
+        if (m.piece !== "k" || m.captured) continue;
+        if (Math.abs(FILE(m.to) - FILE(m.from)) > 1 || Math.abs(RANK(m.to) - RANK(m.from)) > 1) {
+          continue;
+        }
+        if (!all.some((x) => x.from === m.from && x.to === m.to)) all.push(m);
+      }
+    }
   }
   return all;
 }
@@ -336,6 +358,8 @@ export function playMove(game: NerfGame, move: Move): NerfGame {
   game.board = makeMove(game.board, move);
   const bs = game.buffs;
   if (bs) {
+    // A reply move from the other side lifts the chained-move king guard.
+    if (bs.chainKingGuard && bs.chainKingGuard !== move.color) bs.chainKingGuard = undefined;
     // Buff bookkeeping: piece tracking, charge consumption, timed passives.
     for (const color of ["w", "b"] as Color[]) {
       const api = makeBuffApi(game, color);
@@ -387,10 +411,12 @@ export function playMove(game: NerfGame, move: Move): NerfGame {
       bs.extraMoves[move.color] -= 1;
       game.board.turn = move.color;
       game.board.epTarget = null;
+      bs.chainKingGuard = move.color;
     } else if (bs.skips[game.board.turn] > 0) {
       bs.skips[game.board.turn] -= 1;
       game.board.turn = move.color;
       game.board.epTarget = null;
+      bs.chainKingGuard = move.color;
     }
     // Buff draft cadence: the mover's own move count reaching the threshold
     // rolls a fresh offer (unless a draft-block effect eats it).
@@ -538,7 +564,9 @@ function settleAfterBuff(game: NerfGame) {
 /** Auto-resolve a pending offer for a bot: prefer the highest-tier card it can
  * actually use, otherwise just take the higher tier. Passives and instants
  * resolve themselves; activated cards score slightly lower because the bot's
- * auto-targeting is cruder than a human's. */
+ * auto-targeting is cruder than a human's. Reveal cards score zero because
+ * the bot cannot act on the information, and when every option is unusable
+ * or purely informational the bot banks the draft instead. */
 export function aiResolveDraft(game: NerfGame, color: Color) {
   const bs = game.buffs;
   if (!bs) return;
@@ -548,13 +576,26 @@ export function aiResolveDraft(game: NerfGame, color: Color) {
   let bestScore = -1;
   offer.cards.forEach((card, i) => {
     const def = BUFF_BY_ID[card.id];
-    const usable = def && aiCanUse(def) ? 100 : def?.implemented && def.kind === "activated" ? 80 : 0;
+    const usable =
+      !def || !def.implemented || def.category === "info"
+        ? 0
+        : aiCanUse(def)
+          ? 100
+          : def.kind === "activated"
+            ? 80
+            : 0;
     const score = usable + card.tier;
     if (score > bestScore) {
       bestScore = score;
       best = i;
     }
   });
+  // Nothing here the bot can profit from: bank for a higher tier next time,
+  // unless this offer already came from a banked skip.
+  if (bestScore < 50 && !offer.banked) {
+    bankDraft(game, color);
+    return;
+  }
   pickDraftCard(game, color, best);
 }
 
@@ -621,6 +662,7 @@ export function aiActivateBuffs(game: NerfGame, color: Color): boolean {
   const bs = game.buffs;
   if (!bs || game.result || game.board.turn !== color) return false;
   const ps = bs.players[color];
+  const inDanger = isInCheck(game.board, color);
   for (let i = 0; i < ps.buffs.length; i++) {
     const inst = ps.buffs[i];
     const def = BUFF_BY_ID[inst.id];
@@ -634,6 +676,8 @@ export function aiActivateBuffs(game: NerfGame, color: Color): boolean {
     });
     // Offensive one-shots hold out for a knight's worth of value.
     if (hitsEnemy && collected.value < 3) continue;
+    // Protective cards wait for actual danger instead of firing blind.
+    if (!hitsEnemy && def.category === "protection" && !inDanger) continue;
     if (activateBuff(game, color, i, collected.picks)) return true;
   }
   return false;

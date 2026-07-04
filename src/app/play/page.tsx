@@ -40,6 +40,9 @@ export default function PlayPage() {
   const [rated, setRated] = useState<boolean>(false);
   // Draft ruleset: nerf draft at the start, buff drafts every few moves.
   const [draft, setDraft] = useState<boolean>(false);
+  // Draft only: whether the opponent's draft picks are visible. Hidden is the
+  // chaotic default; visible makes for a more strategic game.
+  const [openPicks, setOpenPicks] = useState<boolean>(false);
   const [rating, setRating] = useState<number | null>(null);
   const [games, setGames] = useState<number>(0);
   useEffect(() => {
@@ -57,8 +60,10 @@ export default function PlayPage() {
       nerf: nerfId,
       t: String(baseSec),
       inc: String(incrementSec),
-      rated: rated ? "1" : "0",
+      // Draft games are casual until a separate Draft rating exists.
+      rated: rated && !draft ? "1" : "0",
       draft: draft ? "1" : "0",
+      picks: draft && openPicks ? "open" : "hidden",
     });
     router.push(`/game?${params.toString()}`);
   };
@@ -117,24 +122,44 @@ export default function PlayPage() {
         </div>
 
         <div className="mt-8 plate p-6 sm:p-7 space-y-6">
-          <Group label="Mode">
-            <Pill selected={!rated} onClick={() => setRated(false)}>Casual</Pill>
-            <Pill selected={rated} onClick={() => setRated(true)}>Rated</Pill>
-          </Group>
+          <div>
+            <Group label="Mode">
+              <Pill selected={!rated || draft} onClick={() => setRated(false)}>Casual</Pill>
+              <Pill selected={rated && !draft} onClick={() => { if (!draft) setRated(true); }}>Rated</Pill>
+            </Group>
+            {draft && (
+              <p className="mt-2 text-[12px] text-parchment-300 leading-snug">
+                Draft games are casual for now. A separate Draft rating may come later.
+              </p>
+            )}
+          </div>
 
           <div>
             <Group label="Ruleset">
               <Pill selected={!draft} onClick={() => setDraft(false)}>Classic</Pill>
-              <Pill selected={draft} onClick={() => setDraft(true)}>Draft</Pill>
+              <Pill selected={draft} onClick={() => { setDraft(true); setRated(false); }}>Draft</Pill>
             </Group>
             {draft && (
               <p className="mt-2 text-[12px] text-parchment-300 leading-snug">
                 Draft mode: pick one of two nerfs at the start, then draft a buff every
-                few moves. Buffs grow stronger as the game goes on — skip a draft to
+                few moves. Buffs grow stronger as the game goes on. Skip a draft to
                 bank a tier for the next one.
               </p>
             )}
           </div>
+
+          {draft && (
+            <div>
+              <Group label="Opponent picks">
+                <Pill selected={!openPicks} onClick={() => setOpenPicks(false)}>Hidden</Pill>
+                <Pill selected={openPicks} onClick={() => setOpenPicks(true)}>Visible</Pill>
+              </Group>
+              <p className="mt-2 text-[12px] text-parchment-300 leading-snug">
+                Hidden keeps the chaos: you never see what your opponent is drafting.
+                Visible shows their nerf and draft options for a more strategic game.
+              </p>
+            </div>
+          )}
 
           <Group label="Bot strength">
             {(["easy", "medium", "hard"] as const).map((d) => (

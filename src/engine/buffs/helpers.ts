@@ -518,12 +518,3 @@ export function stealBuffs(n: number, maxTier?: number): Mech {
     },
   );
 }
-
-/** Instant: cancel all of the opponent's unspent buffs. */
-export function nullifyAll(): Mech {
-  return instant((_inst, api) => {
-    for (const b of api.theirs.buffs) {
-      if (!b.spent) b.nullified = true;
-    }
-  });
-}

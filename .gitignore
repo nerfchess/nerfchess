@@ -18,3 +18,6 @@ agent*.jsonl
 !.vscode/launch.json
 !.vscode/tasks.json
 dist-server
+
+# Claude agent worktrees
+.claude/worktrees/
