@@ -50,6 +50,16 @@ export type MPDraftResolved = { color: Color; kind: "picked" | "banked"; cards?:
 export type MPDraftUsed = { color: Color; buffIndex: number; picks: BuffPick[] };
 export type MPDraftHeldBuff = { id: string; tier: number; spent?: boolean; nullified?: boolean };
 
+// Draft games: the opening nerf draft (pick one of two rules before the game
+// starts). Both sides' two options are public, like the bot game's "your
+// opponent is choosing between" plate; the opponent's pick index is never
+// sent while it is secret.
+export type MPNerfDraft = {
+  options: Record<Color, string[]>;
+  myPick: number | null;
+  oppPicked: boolean;
+};
+
 export type MPChatMessage = { color: Color; name: string; text: string; at: number };
 
 // Spectator-room chat: visible to watchers only, never to the players.
@@ -82,6 +92,9 @@ export type MPStart = {
   picksVisible?: boolean;
   dtActions?: MPDraftAction[];
   dtState?: MPDraftState;
+  // Present while the opening nerf draft is unresolved: the game has not
+  // started yet and this seat must pick one of its two nerf options.
+  nerfDraft?: MPNerfDraft;
 };
 
 export type MPWatchStart = {
@@ -194,6 +207,7 @@ export type MPEvent =
   | { type: "draft-used"; used: MPDraftUsed }
   | { type: "draft-state"; state: MPDraftState }
   | { type: "draft-target"; buffIndex: number; target: BuffTarget | null }
+  | { type: "nerf-picked"; color: Color }
   | { type: "clocks"; wc: number; bc: number }
   | { type: "watchers"; n: number; names?: string[] }
   | { type: "lobby"; data: MPLobby }
@@ -226,6 +240,7 @@ type ServerFrame =
   | { t: "dtUsed"; d: MPDraftUsed }
   | { t: "dtState"; d: { state: MPDraftState } }
   | { t: "dtTargetReq"; d: { buffIndex: number; target: BuffTarget | null } }
+  | { t: "dtNerfPicked"; d: { color: Color } }
   | { t: "watchers"; d: { n: number; names?: string[] } }
   | { t: "lobby"; d: MPLobby }
   | { t: "opponentGone" }
@@ -573,6 +588,9 @@ export class MPSession {
       case "dtTargetReq":
         this.emit({ type: "draft-target", buffIndex: frame.d.buffIndex, target: frame.d.target });
         break;
+      case "dtNerfPicked":
+        this.emit({ type: "nerf-picked", color: frame.d.color });
+        break;
       case "watchers":
         this.emit({ type: "watchers", n: frame.d.n, names: frame.d.names });
         break;
@@ -773,6 +791,11 @@ export class MPSession {
   // Take a card from my pending buff offer.
   sendDraftPick(index: number): boolean {
     return this.sendFrame("dtPick", { index });
+  }
+
+  // Pick one of my two opening nerf options (by index, never by id).
+  sendNerfPick(index: number): boolean {
+    return this.sendFrame("dtNerfPick", { index });
   }
 
   // Skip my pending offer, banking +1 tier for the next draft.

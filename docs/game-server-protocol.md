@@ -36,6 +36,7 @@ References:
 | `dtBank` | none | Draft games: skip my pending offer and bank +1 tier for the next draft. |
 | `dtUse` | `{ "buffIndex": 0, "picks": [{ "square": 28 }] }` | Draft games: activate a held buff with its collected targets. The server re-walks the buff's own target chain, so invalid targets are rejected. |
 | `dtTarget` | `{ "buffIndex": 0, "picks": [] }` | Draft games: ask for the buff's next target request; the server replies with `dtTargetReq`. |
+| `dtNerfPick` | `{ "index": 0 }` | Draft games: pick one of my two opening nerf options. Validated by index against the server-dealt options (0 or 1, never a nerf id); the game starts once both seats have picked. |
 | `watch` | `{ "id": "A2BCD" }` | Spectate a live game. |
 | `watchLeave` | none | Stop spectating. |
 | `lobby` | none | Request a lobby snapshot (online players + live games). |
@@ -46,7 +47,7 @@ References:
 | Type | Data | Purpose |
 | --- | --- | --- |
 | `created` | `{ "id": "A2BCD", "color": "w", "token": "..." }` | Game code assigned; store `token` privately for reconnect. |
-| `start` | setup, color, token, `wc`/`bc`, `moves`, `players`, `rated`, `chat`, optional `preview`, optional `draft`/`picksVisible`/`dtActions`/`dtState` | Both seats are present, or a player reconnected; construct the same game and replay accepted UCI moves. `preview` carries the projected rating change per outcome for rated games. Draft games add the public draft action record (`dtActions`, interleaved with moves by ply for exact replay) and this seat's filtered draft state (`dtState`). |
+| `start` | setup, color, token, `wc`/`bc`, `moves`, `players`, `rated`, `chat`, optional `preview`, optional `draft`/`picksVisible`/`dtActions`/`dtState`/`nerfDraft` | Both seats are present, or a player reconnected; construct the same game and replay accepted UCI moves. `preview` carries the projected rating change per outcome for rated games. Draft games add the public draft action record (`dtActions`, interleaved with moves by ply for exact replay) and this seat's filtered draft state (`dtState`). While the opening nerf draft is unresolved they add `nerfDraft` instead: both sides' two options, this seat's own pick index (or `null`), and whether the opponent has picked. |
 | `move` | `{ "u", "ply", "wc", "bc" }` | Accepted move and authoritative clocks in milliseconds. |
 | `end` | `{ "result", "wc", "bc", "ratings?", "nerfs?", "draftBuffs?" }` | Authoritative terminal result; rating changes for rated games, and the revealed rules for spectators. Draft games add each side's held buffs (public all game, repeated for post-game screens). |
 | `queued` / `paired` / `queueCancelled` | pairing pool events | `paired` carries `{ id, color, token }` for the new game. |
@@ -57,6 +58,7 @@ References:
 | `dtUsed` | `{ "color", "buffIndex", "picks" }` | Draft games: a held buff was activated with these targets. Broadcast to both seats and spectators so replicas can reproduce the board mutation. |
 | `dtState` | `{ "state" }` | Draft games: the receiving seat's filtered draft state (own offer, flags, and one-shot reveal snapshot; opponent state stripped of those unless `picksVisible`). Sent per seat after every offer roll and resolution; never sent to spectators. |
 | `dtTargetReq` | `{ "buffIndex", "target" }` | Draft games: reply to `dtTarget` with the buff's next target request, or `null` when the pick chain is complete. |
+| `dtNerfPicked` | `{ "color" }` | Draft games: a seat locked in its opening nerf pick. Progress only, the pick's identity stays hidden. Sent to both seats, never to spectators. |
 | `watchers` | `{ "n" }` | Live spectator count, sent to players and watchers. |
 | `lobby` | `{ "players", "anonymous", "games" }` | Lobby snapshot reply. |
 | `drawOffer` / `drawDeclined` / `rematchOffer` / `rematched` | negotiation events | |
@@ -90,6 +92,18 @@ a move cadence, see `docs/draft-system.md`). Server rules:
 
 - Draft games are always casual. The server never rates a draft match,
   whatever the client asks, and the quick-pairing queue never creates one.
+- When the second seat arrives, the server deals the opening nerf draft
+  instead of starting the game: two nerf options per seat, all four distinct,
+  drawn from the match seed RNG. Each seat's two options share a tier and the
+  two seats' tiers sit within one of each other (the same fairness rule
+  classic games use for their nerf pair). Both sides' options are public; the
+  chosen index is not. The match stays un-started, so the clocks do not run
+  and `move` and draft frames are rejected with `nerf_pending` until both
+  seats have sent `dtNerfPick`. Reconnecting mid-draft replays `start` with
+  the seat's options and own pick state. With `picksVisible`, both chosen
+  rules are revealed the moment the game starts. Spectators joining during
+  the nerf draft get the normal waiting-for-start payload and never receive
+  options or picks.
 - The server runs the same draft engine as the client. Offers roll inside its
   authoritative `playMove`; the draft RNG seed and state are never sent to any
   client, since they would let a client predict every future offer.

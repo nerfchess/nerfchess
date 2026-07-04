@@ -87,6 +87,12 @@ type StoredMatch = {
   // it would let a client predict every future offer.
   draftSeed?: number;
   draftActions?: StoredDraftAction[];
+  // Opening nerf draft (Draft games only). Dealt when the second seat
+  // arrives; the match stays un-started (clocks off, moves rejected) until
+  // both seats have picked. Options are public to both seats; each pick's
+  // identity follows the usual reveal rules.
+  nerfOptions?: Record<Color, string[]>;
+  nerfPicks?: Partial<Record<Color, number>>;
 };
 type SessionAttachment = {
   id: string;
@@ -136,6 +142,7 @@ type ClientFrame =
   | { t: "dtBank" }
   | { t: "dtUse"; d?: { buffIndex?: unknown; picks?: unknown } }
   | { t: "dtTarget"; d?: { buffIndex?: unknown; picks?: unknown } }
+  | { t: "dtNerfPick"; d?: { index?: unknown } }
   | { t: "p" };
 
 export interface Env {
@@ -360,6 +367,8 @@ export class GameServer extends DurableObject<Env> {
         return this.draftUse(ws, frame.d);
       case "dtTarget":
         return this.draftTarget(ws, frame.d);
+      case "dtNerfPick":
+        return this.nerfDraftPick(ws, frame.d);
       case "p":
         return this.sendClocks(ws);
       default:
@@ -659,11 +668,23 @@ export class GameServer extends DurableObject<Env> {
     let draftExtras: Record<string, unknown> | null = null;
     if (match.draft) {
       const game = match.startedAt ? this.gameFromMatch(match) : null;
+      const opp: Color = color === "w" ? "b" : "w";
       draftExtras = {
         draft: true,
         picksVisible: !!match.picksVisible,
         dtActions: this.publicDraftActions(match),
         ...(game?.buffs ? { dtState: this.draftStateFor(game, match, color) } : {}),
+        // The opening nerf draft, while unresolved. Both sides' options are
+        // public; only this seat's own pick index is included.
+        ...(match.nerfOptions && !match.startedAt
+          ? {
+              nerfDraft: {
+                options: match.nerfOptions,
+                myPick: match.nerfPicks?.[color] ?? null,
+                oppPicked: match.nerfPicks?.[opp] != null,
+              },
+            }
+          : {}),
       };
     }
     return {
@@ -910,11 +931,15 @@ export class GameServer extends DurableObject<Env> {
 
     const id = String((data as { id?: unknown } | undefined)?.id || "").trim().toUpperCase();
     const match = await this.loadMatch(id);
-    if (!match || match.startedAt || this.connectedSession(id, "b")) {
+    // A dealt nerf draft means both seats are claimed even though the game
+    // has not started, so the code is no longer joinable.
+    if (!match || match.startedAt || match.nerfOptions || this.connectedSession(id, "b")) {
       return error(ws, "not_found", "That code is not accepting a player.");
     }
 
     await this.attachSession(ws, match, "b");
+    // Draft games open with the nerf draft instead of starting outright.
+    if (match.draft) return this.beginNerfDraft(match);
     match.startedAt = Date.now();
     match.runningSince = match.startedAt;
     await this.saveMatch(match);
@@ -938,6 +963,10 @@ export class GameServer extends DurableObject<Env> {
     await this.attachSession(ws, match, color);
     await this.saveMatch(match);
     if (!match.startedAt) {
+      // Mid nerf draft: resume it. The start payload restores this seat's
+      // options and pick state (a seat that already picked sees the waiting
+      // state again).
+      if (match.nerfOptions) return this.sendStart(match, color);
       // Matchmade and rematch games begin the moment both paired players
       // arrive at the game URL; friend games wait in the lobby for a join.
       if (
@@ -945,6 +974,7 @@ export class GameServer extends DurableObject<Env> {
         this.connectedSession(match.id, "w") &&
         this.connectedSession(match.id, "b")
       ) {
+        if (match.draft) return this.beginNerfDraft(match);
         match.startedAt = Date.now();
         match.runningSince = match.startedAt;
         await this.saveMatch(match);
@@ -963,6 +993,10 @@ export class GameServer extends DurableObject<Env> {
     if (!match || !session.color) return error(ws, "no_game", "Join a game before sending moves.");
     if (await this.finishOnFlag(match)) return;
     if (match.result) return error(ws, "game_over", "This game is over.");
+    // Draft games: no moves while the opening nerf draft is unresolved.
+    if (match.draft && match.nerfOptions && !match.startedAt) {
+      return error(ws, "nerf_pending", "Pick your nerf before the game starts.");
+    }
 
     const game = this.gameFromMatch(match);
     if (!game) return error(ws, "no_game", "Join a game before sending moves.");
@@ -1580,6 +1614,11 @@ export class GameServer extends DurableObject<Env> {
       error(ws, "game_over", "This game is over.");
       return null;
     }
+    // Buff frames wait for the opening nerf draft like moves do.
+    if (match.nerfOptions && !match.startedAt) {
+      error(ws, "nerf_pending", "Pick your nerf before the game starts.");
+      return null;
+    }
     const game = this.gameFromMatch(match);
     if (!game?.buffs) {
       error(ws, "no_game", "The game has not started yet.");
@@ -1697,6 +1736,107 @@ export class GameServer extends DurableObject<Env> {
     const collected = picks ? this.walkBuffPicks(game, color, buffIndex, picks) : null;
     if (!collected) return error(ws, "bad_target", "Those targets are not valid for that buff.");
     send(ws, "dtTargetReq", { buffIndex, target: buffNextTarget(game, color, buffIndex, collected) });
+  }
+
+  // ---------------- draft mode (opening nerf draft) ----------------
+
+  // Deal the opening nerf draft for a Draft match. Difficulty is matched the
+  // same way pickNerfPair matches classic games: each seat's two options
+  // share a tier, and the two seats' tiers sit within one of each other. All
+  // four cards are distinct. The deal comes from the match seed RNG so a
+  // Durable Object restart re-deals the same options (never Math.random).
+  private dealNerfDraftOptions(match: StoredMatch): Record<Color, string[]> {
+    const master = new RNG(match.setup.seed);
+    master.fork(); // skip: white's nerf seed, already derived in startPayload
+    master.fork(); // skip: black's nerf seed
+    const rng = master.fork();
+
+    const pool = PLAYABLE_NERFS.filter((nerf) => nerf.id !== "lucky");
+    const ofTier = (tier: number, exclude: ReadonlySet<string>) =>
+      pool.filter((nerf) => nerf.tier === tier && !exclude.has(nerf.id));
+    const takeTwo = (tier: number, exclude: ReadonlySet<string>): string[] => {
+      const candidates = ofTier(tier, exclude);
+      const first = candidates.splice(rng.int(candidates.length), 1)[0];
+      const second = candidates[rng.int(candidates.length)];
+      return [first.id, second.id];
+    };
+    const none = new Set<string>();
+    const tiers = [...new Set(pool.map((nerf) => nerf.tier))];
+    // A tier can anchor the deal if it holds two cards and a tier within one
+    // of it still holds two once the anchor's cards are gone.
+    const anchorTiers = tiers.filter((anchor) => {
+      if (ofTier(anchor, none).length < 2) return false;
+      return tiers.some(
+        (partner) =>
+          Math.abs(partner - anchor) <= 1 &&
+          ofTier(partner, none).length >= (partner === anchor ? 4 : 2),
+      );
+    });
+    const anchorTier = anchorTiers[rng.int(anchorTiers.length)];
+    const anchorCards = takeTwo(anchorTier, none);
+    const taken = new Set(anchorCards);
+    const partnerTiers = tiers.filter(
+      (partner) => Math.abs(partner - anchorTier) <= 1 && ofTier(partner, taken).length >= 2,
+    );
+    const partnerCards = takeTwo(partnerTiers[rng.int(partnerTiers.length)], taken);
+    // Like pickNerfPair, randomize which color holds the anchor so tier-edge
+    // deals do not always land on the same side.
+    return rng.int(2) === 0 ? { w: anchorCards, b: partnerCards } : { w: partnerCards, b: anchorCards };
+  }
+
+  // Both seats of a Draft match are present: deal the opening nerf draft
+  // instead of starting the game. The match stays un-started (clocks off,
+  // moves and buff frames rejected with nerf_pending) until both picks land.
+  private async beginNerfDraft(match: StoredMatch) {
+    if (!match.nerfOptions) match.nerfOptions = this.dealNerfDraftOptions(match);
+    await this.saveMatch(match);
+    this.sendStart(match, "w");
+    this.sendStart(match, "b");
+  }
+
+  private async nerfDraftPick(ws: WebSocket, data: unknown) {
+    const session = this.session(ws);
+    const match = session.matchId ? await this.loadMatch(session.matchId) : null;
+    if (!match || !session.color) return error(ws, "no_game", "Join a game before drafting.");
+    if (!match.draft) return error(ws, "not_draft", "This game is not a Draft game.");
+    if (match.result) return error(ws, "game_over", "This game is over.");
+    if (!match.nerfOptions || match.startedAt) {
+      return error(ws, "no_nerf_draft", "There is no nerf draft to pick from.");
+    }
+    const color = session.color;
+    if (match.nerfPicks?.[color] != null) {
+      return error(ws, "already_picked", "You already picked your nerf.");
+    }
+    // Index-only validation: clients choose between the two server-dealt
+    // options and can never smuggle in a nerf id of their own.
+    const index = Number((data as { index?: unknown } | undefined)?.index);
+    if (index !== 0 && index !== 1) {
+      return error(ws, "bad_pick", "That card is not part of your options.");
+    }
+
+    match.nerfPicks = { ...(match.nerfPicks ?? {}), [color]: index };
+    const opp: Color = color === "w" ? "b" : "w";
+    const oppPick = match.nerfPicks[opp];
+    if (oppPick == null) {
+      await this.saveMatch(match);
+      // Progress only: both seats learn that this side picked, never which
+      // card. Spectators learn nothing.
+      this.broadcast(match, "dtNerfPicked", { color });
+      return;
+    }
+
+    // Both picks are in: lock the chosen rules and start the game proper.
+    // Clocks only begin now, so neither side paid for choosing.
+    match.setup.whiteNerfId = match.nerfOptions.w[match.nerfPicks.w!];
+    match.setup.blackNerfId = match.nerfOptions.b[match.nerfPicks.b!];
+    // Visible-picks matches: both chosen rules are open from move one,
+    // through the same reveal channel voluntary reveals use.
+    if (match.picksVisible) match.revealed = { w: true, b: true };
+    match.startedAt = Date.now();
+    match.runningSince = match.startedAt;
+    await this.saveMatch(match);
+    this.sendStart(match, "w");
+    this.sendStart(match, "b");
   }
 
   private parseBuffPicks(raw: unknown): BuffPick[] | null {
@@ -1828,7 +1968,8 @@ export class GameServer extends DurableObject<Env> {
       createdAt: number;
     }> = [];
     for (const match of matches) {
-      if (!match.startedAt && !match.result && !match.autoStart) {
+      // A dealt nerf draft means both seats are taken: not a challenge.
+      if (!match.startedAt && !match.result && !match.autoStart && !match.nerfOptions) {
         // Only list codes whose host is still connected — otherwise the code
         // is a dead end for whoever clicks it.
         if (this.connectedSession(match.id, "w")) {

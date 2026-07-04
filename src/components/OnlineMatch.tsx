@@ -13,6 +13,7 @@ import { MobileActionsMenu } from "@/components/MobileActionsMenu";
 import { MobileBuffDrawer } from "@/components/MobileBuffDrawer";
 import { MobileMoveDrawer } from "@/components/MobileMoveDrawer";
 import { MoveList } from "@/components/MoveList";
+import { NerfCard } from "@/components/NerfCard";
 import { PlayerNerfCard } from "@/components/PlayerNerfCard";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
@@ -46,6 +47,7 @@ import {
   clearActiveGame,
   MPChatMessage,
   MPDraftAction,
+  MPNerfDraft,
   MPSession,
   MPStart,
   saveActiveGame,
@@ -129,7 +131,13 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   const isDraft = !!start.draft;
   const picksVisible = !!start.picksVisible;
 
-  const [game, setGame] = useState<NerfGame | null>(() => buildGameFromStart(start));
+  // Draft games open with a nerf draft: pick one of two rules before the
+  // game exists. While it is unresolved there is no game to build (the
+  // server holds the match un-started and the clocks off).
+  const [nerfDraft, setNerfDraft] = useState<MPNerfDraft | null>(() => start.nerfDraft ?? null);
+  const [game, setGame] = useState<NerfGame | null>(() =>
+    start.nerfDraft ? null : buildGameFromStart(start),
+  );
   const [error, setError] = useState<string | null>(null);
   const [muted, setMutedState] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -316,7 +324,17 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         setDraftSubmitted(false);
         const oppState = e.setup.dtState?.players?.[oppColor];
         setOppDrafting(!!oppState?.offerPending || !!oppState?.offer);
-        applyGame(buildGameFromStart(e.setup));
+        // Nerf draft still unresolved: (re)enter the pick screen with the
+        // server's authoritative options and pick state. Otherwise build the
+        // game as usual (this is also how the draft screen hands over once
+        // both picks are in).
+        setNerfDraft(e.setup.nerfDraft ?? null);
+        applyGame(e.setup.nerfDraft ? null : buildGameFromStart(e.setup));
+      } else if (e.type === "nerf-picked") {
+        // Progress only: never the card. My own echo is just an ack.
+        if (e.color !== myColor) {
+          setNerfDraft((nd) => (nd ? { ...nd, oppPicked: true } : nd));
+        }
       } else if (e.type === "opponent-gone") {
         setError("Opponent disconnected.");
         setPendingLocalMove(null);
@@ -918,6 +936,89 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     }
     if (rematchStatus !== "incoming") setRematchStatus("offered");
   };
+
+  // Draft games: the opening nerf draft runs before the game exists. Same
+  // screen as the bot game: pick one of two nerfs, with the opponent's two
+  // options shown on a plate below. The server owns the deal; we only ever
+  // send back an index.
+  if (nerfDraft) {
+    const toNerfs = (ids: string[]) =>
+      ids.map((id) => IMPLEMENTED_BY_ID[id]).filter((n): n is Nerf => !!n);
+    const myOptions = toNerfs(nerfDraft.options[myColor] ?? []);
+    const oppOptions = toNerfs(nerfDraft.options[oppColor] ?? []);
+    const picked = nerfDraft.myPick != null ? myOptions[nerfDraft.myPick] ?? null : null;
+    const sendPick = (index: number) => {
+      if (session.sendNerfPick(index)) {
+        setError(null);
+        setNerfDraft({ ...nerfDraft, myPick: index });
+      } else {
+        setError("Disconnected from the game server.");
+      }
+    };
+    return (
+      <main className="min-h-screen flex items-center justify-center px-4 py-8">
+        <div className="w-full max-w-2xl">
+          <div className="smallcaps text-[11px] text-parchment-400 text-center">Nerf draft</div>
+          <h1 className="font-display text-4xl text-parchment text-center mt-1">
+            Choose your handicap
+          </h1>
+          <p className="mt-2 text-sm text-parchment-300 text-center">
+            Every game opens weak: pick one of two nerfs, then draft buffs every few
+            moves to claw your way back to power.
+          </p>
+          {error && (
+            <p className="mt-2 text-center text-xs text-oxblood-glow">{error}</p>
+          )}
+          {picked ? (
+            <>
+              <div className="mt-6 mx-auto max-w-md">
+                <NerfCard nerf={picked} ownerLabel="Your nerf" />
+              </div>
+              <div role="status" aria-live="polite" className="mt-4 plate p-3 text-center">
+                <span className="font-display text-sm text-parchment-200">
+                  Waiting for opponent to choose their rule.
+                </span>
+              </div>
+            </>
+          ) : (
+            <>
+              {nerfDraft.oppPicked && (
+                <div role="status" aria-live="polite" className="mt-4 plate p-2 px-3 text-center">
+                  <span className="font-display text-sm text-parchment-200">
+                    Opponent has chosen. Pick your rule.
+                  </span>
+                </div>
+              )}
+              <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                {myOptions.map((n, i) => (
+                  <button
+                    key={n.id}
+                    onClick={() => sendPick(i)}
+                    className="text-left transition hover:-translate-y-1"
+                  >
+                    <NerfCard nerf={n} ownerLabel="Pick this nerf" />
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+          <div className="mt-5 plate p-3 text-center">
+            <span className="smallcaps text-[10px] text-parchment-400">
+              Your opponent is choosing between
+            </span>
+            <div className="mt-1 text-sm text-parchment-200 font-display">
+              {oppOptions.map((n) => n.name).join("  ·  ")}
+            </div>
+            <div className="mt-0.5 text-[11px] text-parchment-400">
+              {picksVisible
+                ? "Their choice will be visible when the game starts."
+                : "Which one they take stays hidden, unless you draft a reveal."}
+            </div>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   if (!game) return null;
   const ratingStakes = start.rated && !game.result ? start.preview?.[myColor] ?? null : null;
