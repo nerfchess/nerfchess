@@ -36,10 +36,10 @@ export default function FriendPage() {
   const [joinCode, setJoinCode] = useState("");
   const [baseSec, setBaseSec] = useState(600);
   const [incrementSec, setIncrementSec] = useState(0);
-  // Ruleset: Classic (default) or Draft (buff drafts every few moves).
-  // Draft games are always casual, and the host chooses whether both seats
-  // can see each other's pending offer cards.
-  const [ruleset, setRuleset] = useState<"classic" | "draft">("classic");
+  // Ruleset: Draft (the standard mode, buff drafts every few moves) or
+  // Classic (the buff-free variant). Draft games are always casual, and the
+  // host chooses whether both seats can see each other's pending offer cards.
+  const [ruleset, setRuleset] = useState<"classic" | "draft">("draft");
   const [picksOpen, setPicksOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [start, setStart] = useState<MPStart | null>(null);
@@ -143,17 +143,36 @@ export default function FriendPage() {
     }
     const saved = loadSavedFriendSession();
     if (!saved) return;
-    const sess = new MPSession();
-    sessionRef.current = sess;
-    wireSession(sess);
     setCode(saved.id);
     setView("joining");
-    sess.resume(saved).catch(() => {
-      if (sessionRef.current !== sess) return;
-      clearSavedFriendSession();
-      sessionRef.current = null;
-      setView("setup");
-    });
+    let cancelled = false;
+    const resumeSaved = async () => {
+      // A finished game must never re-capture this page: if the saved game
+      // is already archived, drop the stale session and show the setup form.
+      try {
+        const res = await fetch(`/api/games/${encodeURIComponent(saved.id)}`);
+        if (cancelled) return;
+        if (res.ok) {
+          clearSavedFriendSession();
+          setView("setup");
+          return;
+        }
+      } catch {}
+      if (cancelled || sessionRef.current) return;
+      const sess = new MPSession();
+      sessionRef.current = sess;
+      wireSession(sess);
+      sess.resume(saved).catch(() => {
+        if (sessionRef.current !== sess) return;
+        clearSavedFriendSession();
+        sessionRef.current = null;
+        setView("setup");
+      });
+    };
+    void resumeSaved();
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -294,7 +313,7 @@ export default function FriendPage() {
         <p className="mt-3 text-parchment-200">
           {challenging
             ? `Pick a time control and create the game. ${challenging} gets a notification and the game starts when they accept.`
-            : "Create a game and share the code, or join one with a code your friend sent you. Both players get a random secret rule."}
+            : "Create a game and share the code, or join one with a code your friend sent you. Both players get a random secret rule and draft buffs as the game goes; Classic is the buff-free variant."}
         </p>
 
         {error && (
@@ -350,6 +369,11 @@ export default function FriendPage() {
                   choosing between. Draft games are always casual.
                 </p>
               </div>
+            )}
+            {ruleset === "classic" && (
+              <p className="mt-2 text-[11px] leading-snug text-parchment-400">
+                Classic: the buff-free variant. One secret rule each, no drafts.
+              </p>
             )}
           </div>
 

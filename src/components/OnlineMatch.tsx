@@ -45,6 +45,7 @@ import { nerfSummary, outcomeFor, recordCompletedGame } from "@/lib/gameHistory"
 import { boardAtPly } from "@/lib/gameReview";
 import {
   clearActiveGame,
+  clearOnlineSeat,
   MPChatMessage,
   MPDraftAction,
   MPNerfDraft,
@@ -215,11 +216,18 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
 
   // Remember that this device is mid-game so the home page can offer a
   // "rejoin" shortcut if the tab is closed; forget it once the game ends.
+  // The seat credentials go into the per-game store too: friend games never
+  // pass through the queue/lobby seat save, so without this the rejoin link
+  // at /game/[id] would land the seat holder as a spectator.
   useEffect(() => {
     saveActiveGame(start.id);
-  }, [start.id]);
+    saveOnlineSeat(start.id, { color: start.color, token: start.token });
+  }, [start.id, start.color, start.token]);
   useEffect(() => {
-    if (game?.result) clearActiveGame(start.id);
+    if (!game?.result) return;
+    // A finished game must never re-capture /friend or /game/[id].
+    clearActiveGame(start.id);
+    clearOnlineSeat(start.id);
   }, [game?.result, start.id]);
 
   // The queue ref is always updated synchronously alongside the state, so
