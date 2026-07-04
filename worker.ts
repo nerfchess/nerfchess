@@ -172,7 +172,7 @@ const botSeatCacheTtlMs = 45 * 1000;
 // Bumped whenever the worker changes in a way we want to confirm shipped.
 // Surfaced at GET /healthz so a deploy can be verified without Cloudflare
 // dashboard access (compare the value there against this one).
-const buildVersion = "bots-diag-4";
+const buildVersion = "bots-fix-5";
 // Lichess-style start-of-game grace: a player's clock only starts charging 10
 // seconds into their first move, so nobody loses time to a slow page load.
 const firstMoveGraceMs = 10 * 1000;
@@ -228,6 +228,8 @@ function moveByUci(game: NerfGame, uci: string) {
 export class GameServer extends DurableObject<Env> {
   private sessions = new Map<WebSocket, SessionAttachment>();
   private dbReady: Promise<boolean> | null = null;
+  // Last error botTick threw (if any), surfaced at /healthz for diagnosis.
+  private lastTickError: string | null = null;
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
@@ -299,7 +301,7 @@ export class GameServer extends DurableObject<Env> {
           seeks: seeks.length,
           liveBotGames,
           botVsBot,
-          tickError,
+          tickError: this.lastTickError,
           alarmAt, // ms epoch of the next scheduled tick; null means the chain is dead
           alarmInMs: alarmAt ? alarmAt - Date.now() : null,
         },
@@ -457,7 +459,9 @@ export class GameServer extends DurableObject<Env> {
     // heartbeat is guaranteed at the end no matter what failed.
     try {
       await this.botTick();
+      this.lastTickError = null;
     } catch (err) {
+      this.lastTickError = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
       console.error("botTick failed", err);
     }
     try {
