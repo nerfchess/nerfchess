@@ -83,9 +83,13 @@ The skills in `.claude/skills/` are part of this project's workflow. Use them wh
 - For visual/design work, avoid generic "AI-generated" aesthetics: use **hallmark** (anti-slop rules and pre-ship design gates), **ui-ux-pro-max** (searchable styles, palettes, font pairings, and UX guidelines — pick product-appropriate, non-default choices), and **redesign-existing-projects** when upgrading existing pages.
 - **verification-before-completion** before claiming anything works, and **requesting-code-review** before merging.
 
-## 7. Obsidian Vault (mcpvault)
+## 7. Memory Vault
 
-When `mcpvault` MCP tools are available, the user's Obsidian vault is connected. Consult it whenever it could be relevant — project notes, design ideas, feature plans, or context the user has written down — before asking the user questions the vault might answer. If a task produces knowledge worth keeping (decisions, research, plans), offer to save a note back to the vault.
+The `vault/` directory in this repo is the project's persistent memory (Obsidian-compatible markdown). It works in every session, local or cloud.
+
+- At the start of a task, check `vault/notes/` for relevant notes before asking the user questions the vault might answer.
+- When a task produces durable knowledge — decisions, research findings, plans, user preferences — write it back as `vault/notes/YYYY-MM-DD-topic.md` and include it in the change's PR. Keep notes short and factual.
+- When `mcpvault` MCP tools are also available (local sessions), additionally consult the user's personal Obsidian vault the same way.
 
 ---
 
