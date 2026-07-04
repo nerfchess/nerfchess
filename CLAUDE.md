@@ -80,6 +80,7 @@ The skills in `.claude/skills/` are part of this project's workflow. Use them wh
 - **test-driven-development** when implementing features or bugfixes.
 - **systematic-debugging** for any bug or unexpected behavior, before proposing fixes.
 - **frontend-design** when building or reshaping UI; **webapp-testing** to verify UI changes in a real browser.
+- For visual/design work, avoid generic "AI-generated" aesthetics: use **hallmark** (anti-slop rules and pre-ship design gates), **ui-ux-pro-max** (searchable styles, palettes, font pairings, and UX guidelines — pick product-appropriate, non-default choices), and **redesign-existing-projects** when upgrading existing pages.
 - **verification-before-completion** before claiming anything works, and **requesting-code-review** before merging.
 
 ---
