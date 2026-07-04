@@ -12,6 +12,13 @@ interface Visual {
   duckSquare?: number;
   bannedSquares?: number[];
   highlightSquares?: number[];
+  // Draft-mode zone effects (all public information):
+  /** Squares holding a frozen piece (icy tint + snowflake). */
+  frozenSquares?: number[];
+  /** Shielded / sanctuary squares — pieces there can't be captured. */
+  shieldedSquares?: number[];
+  /** Squares your buffs bar the opponent from entering. */
+  wardSquares?: number[];
 }
 
 export interface QueuedPremove {
@@ -356,6 +363,9 @@ export function Board({
 
   const orderedSquares = orientation === "w" ? ORDERED_SQUARES_WHITE : ORDERED_SQUARES_BLACK;
   const bannedSquares = useMemo(() => new Set(visual?.bannedSquares ?? []), [visual?.bannedSquares]);
+  const frozenSquares = useMemo(() => new Set(visual?.frozenSquares ?? []), [visual?.frozenSquares]);
+  const shieldedSquares = useMemo(() => new Set(visual?.shieldedSquares ?? []), [visual?.shieldedSquares]);
+  const wardSquares = useMemo(() => new Set(visual?.wardSquares ?? []), [visual?.wardSquares]);
   const highlightSquares = useMemo(
     () => new Set(visual?.highlightSquares ?? []),
     [visual?.highlightSquares],
@@ -670,6 +680,20 @@ export function Board({
                 )}
                 {banned && (
                   <div className="absolute inset-0 bg-red-900/45 pointer-events-none" />
+                )}
+                {wardSquares.has(sq) && (
+                  <div className="absolute inset-0 bg-verdigris/20 pointer-events-none" />
+                )}
+                {frozenSquares.has(sq) && (
+                  <>
+                    <div className="absolute inset-0 bg-cyan-300/25 pointer-events-none" />
+                    <span className="absolute top-0.5 right-0.5 z-10 text-[11px] leading-none pointer-events-none drop-shadow">
+                      ❄
+                    </span>
+                  </>
+                )}
+                {shieldedSquares.has(sq) && (
+                  <div className="absolute inset-0 pointer-events-none ring-2 ring-inset ring-verdigris-glow/80 shadow-[inset_0_0_18px_-4px_rgba(123,181,47,0.6)]" />
                 )}
                 {rightClickMark && (
                   <div className={`absolute inset-0 pointer-events-none sq-rmb-mark sq-rmb-mark-${rightClickMark}`} />
