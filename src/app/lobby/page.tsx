@@ -179,9 +179,17 @@ export default function LobbyPage() {
             <div className="plate p-5 sm:p-6">
               <div className="flex items-center justify-between gap-3">
                 <div className="font-display text-2xl text-parchment">Open challenges</div>
-                <span className="smallcaps text-[10px] text-parchment-400">
-                  {lobby ? `${waitingCount} waiting` : "…"}
-                </span>
+                <div className="flex items-center gap-3">
+                  <Link
+                    href="/friend"
+                    className="smallcaps text-[10px] text-gold-leaf hover:text-gold transition-colors"
+                  >
+                    Create game: Classic or Draft
+                  </Link>
+                  <span className="smallcaps text-[10px] text-parchment-400">
+                    {lobby ? `${waitingCount} waiting` : "…"}
+                  </span>
+                </div>
               </div>
               {!lobby ? (
                 <p className="mt-3 text-sm text-parchment-400">Loading challenges…</p>
@@ -379,6 +387,7 @@ function ChallengeRow({ challenge }: { challenge: MPLobbyChallenge }) {
       <div className="min-w-0">
         <div className="truncate text-sm text-parchment-100">{host}</div>
         <div className="mt-0.5 smallcaps text-[9px] text-parchment-400">
+          {challenge.draft && <span className="text-gold-leaf">Draft · </span>}
           Casual · {clock} · code {challenge.id}
         </div>
       </div>
@@ -404,6 +413,7 @@ function LiveGameRow({ game }: { game: MPLobbyGame }) {
           {name(game.players.w)} <span className="text-parchment-400">vs</span> {name(game.players.b)}
         </div>
         <div className="mt-0.5 smallcaps text-[9px] text-parchment-400">
+          {game.draft && <span className="text-gold-leaf">Draft · </span>}
           {game.rated ? "Rated · " : "Casual · "}
           {clock} · move {Math.ceil(game.moves / 2)}
           {game.watchers > 0 ? ` · ${game.watchers} watching` : ""}
