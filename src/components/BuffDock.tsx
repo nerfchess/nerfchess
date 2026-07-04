@@ -3,182 +3,136 @@
 import { BuffPick, BuffTarget } from "@/engine/buff";
 import { BUFF_BY_ID } from "@/engine/buffs/library";
 import { NerfGame, activateBuff, buffNextTarget } from "@/engine/game";
-import { Color, FILE, RANK, SQ } from "@/engine/types";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Color } from "@/engine/types";
+import { Tier } from "@/engine/nerf";
+import { TIER_ROMAN } from "@/lib/tiers";
+import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 import { BuffCard } from "./BuffCard";
 
-const GLYPH: Record<string, string> = {
-  wp: "♙", wn: "♘", wb: "♗", wr: "♖", wq: "♕", wk: "♔",
-  bp: "♟", bn: "♞", bb: "♝", br: "♜", bq: "♛", bk: "♚",
-};
+// ---------------------------------------------------------------------------
+// Buff dock and targeting.
+//
+// Activated buffs target on the REAL board: useBuffTargeting owns the pick
+// chain, the page paints targeting.target.squares through the Board's
+// pickSquares prop, and clicking a highlighted square advances the chain.
+// Only enemy-buff-list targets (which have no board representation) fall
+// back to the EnemyBuffModal.
+//
+// Held-buff visibility: your cards render as compact rows; the opponent's
+// render as face-down minis (tier numeral only) whenever their identity is
+// hidden. Online the server already masks identities (placeholder instances
+// with an empty id); bot games pass hideOpponentCards to apply the same rule
+// locally.
+// ---------------------------------------------------------------------------
 
-interface Props {
-  game: NerfGame;
-  myColor: Color;
-  /** Activation is only allowed on your turn while the game is live. */
-  canAct: boolean;
-  onChanged: () => void;
-  /** Online games: send the activation to the server instead of applying it
-   * locally. Targets are still computed from the local replica (held buffs
-   * and board effects are public state kept in sync by the server). */
-  onUse?: (buffIndex: number, picks: BuffPick[]) => void;
-}
-
-interface Targeting {
+export interface BuffTargeting {
   buffIndex: number;
   picks: BuffPick[];
   target: BuffTarget;
 }
 
-export function BuffDock({ game, myColor, canAct, onChanged, onUse }: Props) {
-  const [targeting, setTargeting] = useState<Targeting | null>(null);
-  const scrollRef = useRef<HTMLDivElement | null>(null);
-  const [moreBelow, setMoreBelow] = useState(false);
+export function useBuffTargeting({
+  game,
+  myColor,
+  active,
+  onChanged,
+  onUse,
+}: {
+  game: NerfGame | null;
+  myColor: Color;
+  /** Targeting cancels itself the moment acting stops being legal. */
+  active: boolean;
+  onChanged?: () => void;
+  /** Online games: send the activation to the server instead of applying it
+   * locally. Targets are still computed from the local replica. */
+  onUse?: (buffIndex: number, picks: BuffPick[]) => void;
+}) {
+  const [targeting, setTargeting] = useState<BuffTargeting | null>(null);
 
-  // Scroll affordance: fade the bottom edge while more cards sit below the
-  // fold. Rechecked on scroll and whenever the dock resizes or the game
-  // state changes (drafts add cards without resizing the dock).
-  const syncScrollHint = useCallback(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    setMoreBelow(el.scrollHeight - el.scrollTop - el.clientHeight > 8);
-  }, []);
   useEffect(() => {
-    syncScrollHint();
-    const el = scrollRef.current;
-    if (!el || typeof ResizeObserver === "undefined") return;
-    const observer = new ResizeObserver(syncScrollHint);
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [syncScrollHint, game]);
+    if (!active && targeting) setTargeting(null);
+  }, [active, targeting]);
 
-  const bs = game.buffs;
-  if (!bs) return null;
-  const mine = bs.players[myColor].buffs;
-  const theirs = bs.players[myColor === "w" ? "b" : "w"].buffs;
+  useEffect(() => {
+    if (!targeting) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setTargeting(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [targeting]);
 
-  const startUse = (index: number) => {
+  const start = (index: number) => {
+    if (!game) return;
     const target = buffNextTarget(game, myColor, index, []);
     if (!target) {
       // No targeting needed: fire immediately.
       if (onUse) onUse(index, []);
-      else if (activateBuff(game, myColor, index, [])) onChanged();
+      else if (activateBuff(game, myColor, index, [])) onChanged?.();
       return;
     }
     setTargeting({ buffIndex: index, picks: [], target });
   };
 
-  const applyPick = (pick: BuffPick) => {
-    if (!targeting) return;
-    const picks = [...targeting.picks, pick];
+  const pick = (p: BuffPick) => {
+    if (!targeting || !game) return;
+    const picks = [...targeting.picks, p];
     const next = buffNextTarget(game, myColor, targeting.buffIndex, picks);
     if (!next) {
       if (onUse) onUse(targeting.buffIndex, picks);
-      else activateBuff(game, myColor, targeting.buffIndex, picks);
+      else {
+        activateBuff(game, myColor, targeting.buffIndex, picks);
+        onChanged?.();
+      }
       setTargeting(null);
-      if (!onUse) onChanged();
     } else {
       setTargeting({ ...targeting, picks, target: next });
     }
   };
 
-  return (
-    <div className="plate relative flex h-full min-h-0 flex-col">
-      <div
-        ref={scrollRef}
-        onScroll={syncScrollHint}
-        className="min-h-0 flex-1 space-y-2 overflow-y-auto bg-inherit px-3 pb-3"
-      >
-        {/* bg-inherit chains the plate background down to the sticky headers
-            so cards scroll under them in every theme. */}
-        <div className="sticky top-0 z-10 -mx-3 flex items-baseline justify-between gap-2 border-b border-white/10 bg-inherit px-3 pb-1.5 pt-3">
-          <span className="smallcaps text-[10px] text-parchment-400">Your buffs</span>
-          <span className="font-mono text-[10px] tabular-nums text-parchment-400">{mine.length}</span>
-        </div>
-        {mine.length === 0 && (
-          <p className="text-[11px] text-parchment-400">
-            None yet. Your first draft arrives after {bs.players[myColor].nextDraftAt} moves.
-          </p>
-        )}
-        {mine.map((inst, i) => {
-          const def = BUFF_BY_ID[inst.id];
-          if (!def) return null;
-          const activatable = def.kind === "activated" && !inst.spent && !inst.nullified;
-          const usable = canAct && activatable;
-          return (
-            <div key={i}>
-              <BuffCard
-                buff={def}
-                tier={inst.tier}
-                compact
-                spent={inst.spent}
-                nullified={inst.nullified}
-                status={def.status?.(inst) ?? null}
-                glow={usable}
-              />
-              {activatable &&
-                (usable ? (
-                  <button
-                    onClick={() => startUse(i)}
-                    className="btn-leaf shadow-leaf animate-flicker mt-1.5 w-full px-2 py-2 text-[11px] font-display font-semibold tracking-wide"
-                  >
-                    Use
-                  </button>
-                ) : (
-                  <button
-                    disabled
-                    className="mt-1.5 w-full cursor-not-allowed border border-white/10 bg-white/[0.03] px-2 py-2 text-[11px] font-display font-semibold tracking-wide text-parchment-400"
-                  >
-                    Use · your turn only
-                  </button>
-                ))}
-            </div>
-          );
-        })}
-        {theirs.length > 0 && (
-          <>
-            <div className="sticky top-0 z-10 -mx-3 flex items-baseline justify-between gap-2 border-b border-white/10 bg-inherit px-3 pb-1.5 pt-3">
-              <span className="smallcaps text-[10px] text-parchment-400">Opponent&apos;s buffs</span>
-              <span className="font-mono text-[10px] tabular-nums text-parchment-400">{theirs.length}</span>
-            </div>
-            {theirs.map((inst, i) => {
-              const def = BUFF_BY_ID[inst.id];
-              if (!def) return null;
-              return (
-                <BuffCard
-                  key={i}
-                  buff={def}
-                  tier={inst.tier}
-                  compact
-                  spent={inst.spent}
-                  nullified={inst.nullified}
-                />
-              );
-            })}
-          </>
-        )}
-      </div>
-      {moreBelow && (
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-px bottom-px z-10 h-10 bg-gradient-to-t from-black/40 to-transparent"
-        />
-      )}
+  const cancel = () => setTargeting(null);
 
-      {targeting && (
-        <TargetModal
-          game={game}
-          myColor={myColor}
-          targeting={targeting}
-          onPick={applyPick}
-          onCancel={() => setTargeting(null)}
-        />
-      )}
+  return { targeting, start, pick, cancel };
+}
+
+/** Floating chip over the board while a buff is picking its square targets:
+ * names the buff and step, offers cancel (Escape works too). */
+export function TargetingBanner({
+  game,
+  myColor,
+  targeting,
+  onCancel,
+}: {
+  game: NerfGame;
+  myColor: Color;
+  targeting: BuffTargeting;
+  onCancel: () => void;
+}) {
+  const inst = game.buffs?.players[myColor].buffs[targeting.buffIndex];
+  const name = (inst && BUFF_BY_ID[inst.id]?.name) ?? "Buff";
+  const empty = targeting.target.kind === "square" && targeting.target.squares.length === 0;
+  return (
+    <div className="pointer-events-none absolute inset-x-0 bottom-2 z-30 flex justify-center px-2">
+      <div className="pointer-events-auto flex max-w-full items-center gap-2 border border-gold/50 bg-ink-900/95 px-3 py-1.5 shadow-plate backdrop-blur-sm">
+        <span aria-hidden className="h-1.5 w-1.5 shrink-0 bg-gold-leaf animate-flicker" />
+        <span className="min-w-0 truncate font-display text-xs font-semibold text-parchment">
+          {name}: {empty ? "no valid targets right now" : targeting.target.label}
+        </span>
+        <button
+          onClick={onCancel}
+          className="btn-ghost shrink-0 px-2 py-0.5 font-display text-[10px] tracking-wide"
+        >
+          Cancel · Esc
+        </button>
+      </div>
     </div>
   );
 }
 
-function TargetModal({
+/** Fallback picker for enemy-buff-list targets only: those have no board
+ * representation, so the modal list remains. Masked cards show as hidden. */
+export function EnemyBuffModal({
   game,
   myColor,
   targeting,
@@ -187,30 +141,21 @@ function TargetModal({
 }: {
   game: NerfGame;
   myColor: Color;
-  targeting: Targeting;
+  targeting: BuffTargeting;
   onPick: (pick: BuffPick) => void;
   onCancel: () => void;
 }) {
   const { target } = targeting;
-  const buffName = BUFF_BY_ID[game.buffs!.players[myColor].buffs[targeting.buffIndex].id]?.name;
+  if (target.kind !== "enemy-buff") return null;
+  const inst = game.buffs?.players[myColor].buffs[targeting.buffIndex];
+  const buffName = (inst && BUFF_BY_ID[inst.id]?.name) ?? "Buff";
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4">
       <div className="plate w-full max-w-md p-5">
         <div className="smallcaps text-[11px] text-parchment-400">{buffName}</div>
         <div className="font-display text-lg text-parchment mt-0.5">{target.label}</div>
 
-        {target.kind === "square" ? (
-          target.squares.length === 0 ? (
-            <p className="mt-3 text-sm text-parchment-300">No valid targets right now.</p>
-          ) : (
-            <SquareGrid
-              game={game}
-              myColor={myColor}
-              candidates={target.squares}
-              onPick={(sq) => onPick({ square: sq })}
-            />
-          )
-        ) : target.options.length === 0 ? (
+        {target.options.length === 0 ? (
           <p className="mt-3 text-sm text-parchment-300">No valid targets right now.</p>
         ) : (
           <div className="mt-3 space-y-2">
@@ -225,7 +170,12 @@ function TargetModal({
                   {def ? (
                     <BuffCard buff={def} tier={opt.tier as 1} compact />
                   ) : (
-                    <span className="text-sm text-parchment">{opt.name}</span>
+                    <span className="flex items-center justify-between border border-white/15 bg-white/[0.03] px-3 py-2 text-sm text-parchment">
+                      Hidden buff
+                      <span className="font-display text-xs text-parchment-400">
+                        Tier {TIER_ROMAN[opt.tier as Tier]}
+                      </span>
+                    </span>
                   )}
                 </button>
               );
@@ -244,47 +194,235 @@ function TargetModal({
   );
 }
 
-function SquareGrid({
-  game,
-  myColor,
-  candidates,
-  onPick,
-}: {
+/** Face-down mini card: all the opponent shows for a hidden buff is its
+ * tier. Spent/nullified minis dim like used cards do. */
+function FaceDownMini({ tier, dead }: { tier: Tier; dead?: boolean }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.6, y: -6 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      transition={{ duration: 0.25 }}
+      title={`Hidden buff · tier ${tier}`}
+      className={
+        "relative flex h-11 w-8 shrink-0 items-center justify-center rounded-[3px] border border-gold/35 " +
+        "bg-[linear-gradient(135deg,rgba(216,181,110,0.14),rgba(14,12,9,0.95)_45%,rgba(216,181,110,0.05))] " +
+        (dead ? "opacity-40" : "")
+      }
+    >
+      <span aria-hidden className="absolute inset-[3px] rounded-[2px] border border-gold/20" />
+      <span className={`font-display text-[11px] font-bold tier-${tier}`}>{TIER_ROMAN[tier]}</span>
+      {dead && <span aria-hidden className="absolute inset-x-1 top-1/2 h-px bg-parchment-400/60" />}
+    </motion.div>
+  );
+}
+
+interface Props {
   game: NerfGame;
   myColor: Color;
-  candidates: number[];
-  onPick: (sq: number) => void;
-}) {
-  const set = new Set(candidates);
-  const ranks = myColor === "w" ? [7, 6, 5, 4, 3, 2, 1, 0] : [0, 1, 2, 3, 4, 5, 6, 7];
-  const files = myColor === "w" ? [0, 1, 2, 3, 4, 5, 6, 7] : [7, 6, 5, 4, 3, 2, 1, 0];
-  return (
-    <div className="mt-3 grid grid-cols-8 gap-px bg-white/10 border border-white/10 select-none">
-      {ranks.map((r) =>
-        files.map((f) => {
-          const sq = SQ(f, r);
-          const p = game.board.pieces[sq];
-          const candidate = set.has(sq);
-          const dark = (FILE(sq) + RANK(sq)) % 2 === 0;
-          return (
+  /** Activation is only allowed on your turn while the game is live. */
+  canAct: boolean;
+  /** Use clicked: the page starts on-board targeting (useBuffTargeting). */
+  onStartUse: (index: number) => void;
+  /** Bot games: mask the opponent's held cards locally (the online server
+   * already sends them masked). Revealed instances still show face-up. */
+  hideOpponentCards?: boolean;
+}
+
+export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards }: Props) {
+  const [showUsed, setShowUsed] = useState(false);
+
+  const bs = game.buffs;
+  if (!bs) return null;
+  const oppColor: Color = myColor === "w" ? "b" : "w";
+  const mine = bs.players[myColor].buffs;
+  const theirs = bs.players[oppColor].buffs;
+
+  const mineActive = mine.map((inst, i) => ({ inst, i })).filter(({ inst }) => !inst.spent && !inst.nullified);
+  const mineUsed = mine.map((inst, i) => ({ inst, i })).filter(({ inst }) => inst.spent || inst.nullified);
+  const theirsActive = theirs.map((inst, i) => ({ inst, i })).filter(({ inst }) => !inst.spent && !inst.nullified);
+  const theirsUsed = theirs.map((inst, i) => ({ inst, i })).filter(({ inst }) => inst.spent || inst.nullified);
+  const usedCount = mineUsed.length + theirsUsed.length;
+
+  const lastMine = mine[mine.length - 1] ?? null;
+  const lastMineDef = lastMine ? BUFF_BY_ID[lastMine.id] : undefined;
+  const lastTheirs = theirs[theirs.length - 1] ?? null;
+  const lastTheirsHidden =
+    !!lastTheirs && (!BUFF_BY_ID[lastTheirs.id] || (hideOpponentCards && !lastTheirs.spent && !lastTheirs.nullified));
+
+  const myRow = ({ inst, i }: { inst: (typeof mine)[number]; i: number }) => {
+    const def = BUFF_BY_ID[inst.id];
+    if (!def) return null;
+    const dead = inst.spent || inst.nullified;
+    const activatable = def.kind === "activated" && !dead;
+    const usable = canAct && activatable;
+    const status = dead ? null : def.status?.(inst) ?? null;
+    return (
+      <motion.div
+        key={i}
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.25 }}
+        title={def.description}
+        className={
+          "flex items-center gap-1.5 border border-white/10 bg-white/[0.02] px-2 py-1.5 " +
+          (dead ? "opacity-45 " : "") +
+          (usable ? "border-gold/30 " : "")
+        }
+      >
+        <span className={`min-w-0 flex-1 truncate font-display text-[12px] font-semibold leading-tight tier-${inst.tier}`}>
+          {def.name}
+        </span>
+        {status && (
+          <span className="smallcaps hidden max-w-[5.5rem] shrink-0 truncate text-[8px] text-gold/80 xl:inline">
+            {status}
+          </span>
+        )}
+        {inst.nullified && <span className="smallcaps shrink-0 text-[8px] text-oxblood-glow">Nullified</span>}
+        {inst.spent && !inst.nullified && <span className="smallcaps shrink-0 text-[8px] text-parchment-400">Used</span>}
+        <span
+          className={`shrink-0 rounded-full border px-1.5 py-px font-display text-[9px] font-bold tier-bg-${inst.tier} tier-${inst.tier}`}
+        >
+          {TIER_ROMAN[inst.tier]}
+        </span>
+        {activatable &&
+          (usable ? (
             <button
-              key={sq}
-              disabled={!candidate}
-              onClick={() => onPick(sq)}
-              title={"abcdefgh"[f] + (r + 1)}
-              className={
-                "aspect-square flex items-center justify-center text-lg leading-none " +
-                (dark ? "bg-black/40 " : "bg-white/[0.06] ") +
-                (candidate
-                  ? "ring-1 ring-inset ring-gold/70 bg-gold/20 hover:bg-gold/40 cursor-pointer"
-                  : "opacity-40 cursor-default")
-              }
+              onClick={() => onStartUse(i)}
+              className="btn-leaf shadow-leaf shrink-0 px-2 py-1 font-display text-[10px] font-semibold tracking-wide"
             >
-              {p ? GLYPH[p.color + p.type] : ""}
+              Use
             </button>
-          );
-        }),
-      )}
+          ) : (
+            <button
+              disabled
+              title="Your turn only"
+              className="shrink-0 cursor-not-allowed border border-white/10 bg-white/[0.03] px-2 py-1 font-display text-[10px] tracking-wide text-parchment-400"
+            >
+              Use
+            </button>
+          ))}
+      </motion.div>
+    );
+  };
+
+  const oppEntry = ({ inst, i }: { inst: (typeof theirs)[number]; i: number }) => {
+    const def = BUFF_BY_ID[inst.id];
+    const dead = inst.spent || inst.nullified;
+    // Face-down whenever the identity is hidden: masked placeholder online,
+    // or the bot-game blanket rule (revealed cards still show face-up).
+    if (!def || (hideOpponentCards && !dead)) {
+      return <FaceDownMini key={i} tier={inst.tier} dead={dead} />;
+    }
+    return (
+      <motion.div
+        key={i}
+        initial={{ opacity: 0, x: -14 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.25 }}
+        title={def.description}
+        className={
+          "flex w-full items-center gap-1.5 border border-white/10 bg-white/[0.02] px-2 py-1 " +
+          (dead ? "opacity-45" : "")
+        }
+      >
+        <span className={`min-w-0 flex-1 truncate font-display text-[11px] font-semibold tier-${inst.tier}`}>
+          {def.name}
+        </span>
+        {inst.nullified && <span className="smallcaps shrink-0 text-[8px] text-oxblood-glow">Nullified</span>}
+        {inst.spent && !inst.nullified && <span className="smallcaps shrink-0 text-[8px] text-parchment-400">Used</span>}
+        <span
+          className={`shrink-0 rounded-full border px-1.5 py-px font-display text-[9px] font-bold tier-bg-${inst.tier} tier-${inst.tier}`}
+        >
+          {TIER_ROMAN[inst.tier]}
+        </span>
+      </motion.div>
+    );
+  };
+
+  return (
+    <div className="plate flex h-full min-h-0 flex-col overflow-hidden">
+      <div className="min-h-0 flex-1 space-y-2 overflow-y-auto bg-inherit px-3 pb-2">
+        {/* Latest pick slot: your newest card stays visible here; the
+            opponent's side shows a face-down card while hidden. */}
+        {(lastMine || lastTheirs) && (
+          <div className="sticky top-0 z-10 -mx-3 flex items-center gap-2 border-b border-white/10 bg-inherit px-3 pb-1.5 pt-2.5">
+            <span className="smallcaps shrink-0 text-[9px] text-parchment-400">Latest</span>
+            {lastMine && (
+              <motion.span
+                key={`m${mine.length}`}
+                initial={{ opacity: 0, x: -18, scale: 0.9 }}
+                animate={{ opacity: 1, x: 0, scale: 1 }}
+                transition={{ duration: 0.3 }}
+                className={`min-w-0 flex-1 truncate font-display text-[11px] font-semibold tier-${lastMine.tier}`}
+              >
+                {lastMineDef?.name ?? "Banked"}
+              </motion.span>
+            )}
+            {!lastMine && <span className="min-w-0 flex-1" />}
+            {lastTheirs &&
+              (lastTheirsHidden ? (
+                <motion.span
+                  key={`t${theirs.length}`}
+                  initial={{ opacity: 0, scale: 0.6 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.3 }}
+                  title="Opponent's latest draft (hidden)"
+                  className={`flex h-6 w-[18px] shrink-0 items-center justify-center rounded-[2px] border border-gold/35 bg-[linear-gradient(135deg,rgba(216,181,110,0.14),rgba(14,12,9,0.95))] font-display text-[8px] font-bold tier-${lastTheirs.tier}`}
+                >
+                  {TIER_ROMAN[lastTheirs.tier]}
+                </motion.span>
+              ) : (
+                <motion.span
+                  key={`t${theirs.length}`}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.3 }}
+                  className={`max-w-[45%] shrink-0 truncate font-display text-[11px] tier-${lastTheirs.tier}`}
+                >
+                  {BUFF_BY_ID[lastTheirs.id]?.name}
+                </motion.span>
+              ))}
+          </div>
+        )}
+
+        <div className="flex items-baseline justify-between gap-2">
+          <span className="smallcaps text-[10px] text-parchment-400">Your buffs</span>
+          <span className="font-mono text-[10px] tabular-nums text-parchment-400">{mine.length}</span>
+        </div>
+        {mine.length === 0 && (
+          <p className="text-[11px] text-parchment-400">
+            None yet. Your first draft arrives after {bs.players[myColor].nextDraftAt} moves.
+          </p>
+        )}
+        <div className="space-y-1">{mineActive.map(myRow)}</div>
+
+        {theirs.length > 0 && (
+          <>
+            <div className="flex items-baseline justify-between gap-2 border-t border-white/10 pt-2">
+              <span className="smallcaps text-[10px] text-parchment-400">Opponent&apos;s buffs</span>
+              <span className="font-mono text-[10px] tabular-nums text-parchment-400">{theirs.length}</span>
+            </div>
+            <div className="flex flex-wrap items-start gap-1">{theirsActive.map(oppEntry)}</div>
+          </>
+        )}
+
+        {usedCount > 0 && (
+          <div className="border-t border-white/10 pt-1.5">
+            <button
+              onClick={() => setShowUsed((v) => !v)}
+              className="smallcaps w-full text-left text-[9px] text-parchment-400 transition hover:text-parchment-200"
+            >
+              {showUsed ? "Hide used" : `Show used (${usedCount})`}
+            </button>
+            {showUsed && (
+              <div className="mt-1.5 space-y-1">
+                {mineUsed.map(myRow)}
+                <div className="flex flex-wrap items-start gap-1">{theirsUsed.map(oppEntry)}</div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

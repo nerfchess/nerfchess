@@ -4,10 +4,11 @@ import Link from "next/link";
 import { type CSSProperties, useEffect, useMemo, useRef, useState } from "react";
 import { Board, QueuedPremove } from "@/components/Board";
 import { BoardPlayerRow } from "@/components/BoardPlayerRow";
-import { BuffDock } from "@/components/BuffDock";
+import { BuffDock, EnemyBuffModal, TargetingBanner, useBuffTargeting } from "@/components/BuffDock";
 import { ChatPanel } from "@/components/ChatPanel";
 import { ClockPill } from "@/components/ClockPill";
-import { DraftOverlay } from "@/components/DraftOverlay";
+import { DraftNotice } from "@/components/DraftNotice";
+import { DraftOverlay, LockInCountdown } from "@/components/DraftOverlay";
 import { GameOver } from "@/components/GameOver";
 import { MobileActionsMenu } from "@/components/MobileActionsMenu";
 import { MobileBuffDrawer } from "@/components/MobileBuffDrawer";
@@ -17,7 +18,7 @@ import { NerfCard } from "@/components/NerfCard";
 import { PlayerNerfCard } from "@/components/PlayerNerfCard";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
-import type { BuffOffer, BuffPick } from "@/engine/buff";
+import type { BuffOffer } from "@/engine/buff";
 import { BUFF_BY_ID } from "@/engine/buffs/library";
 import { cloneBoard, findKing, isInCheck, makeMove, moveToUCI } from "@/engine/board";
 import { computeMoveRisks } from "@/engine/moveSafety";
@@ -40,6 +41,7 @@ import {
   mergeDraftState,
   playReplicaMove,
   replayDraftGame,
+  revealHeldBuffs,
 } from "@/lib/draftOnline";
 import { nerfSummary, outcomeFor, recordCompletedGame } from "@/lib/gameHistory";
 import { boardAtPly } from "@/lib/gameReview";
@@ -182,6 +184,11 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     const opp = start.dtState?.players?.[start.color === "w" ? "b" : "w"];
     return !!opp?.offerPending || !!opp?.offer;
   });
+  // Lock-in window for the current buff offers; the server auto-resolves at
+  // the deadline while both clocks stay paused.
+  const [draftDeadline, setDraftDeadline] = useState<number | null>(() => start.dtDeadline ?? null);
+  // The opponent resolved their simultaneous draft while mine is still open.
+  const [oppLockedIn, setOppLockedIn] = useState(false);
 
   const boardShellRef = useRef<HTMLDivElement | null>(null);
   const recordedResult = useRef(false);
@@ -332,6 +339,8 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         setDraftSubmitted(false);
         const oppState = e.setup.dtState?.players?.[oppColor];
         setOppDrafting(!!oppState?.offerPending || !!oppState?.offer);
+        setDraftDeadline(e.setup.dtDeadline ?? null);
+        setOppLockedIn(false);
         // Nerf draft still unresolved: (re)enter the pick screen with the
         // server's authoritative options and pick state. Otherwise build the
         // game as usual (this is also how the draft screen hands over once
@@ -423,7 +432,12 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         const change = e.end.ratings?.[myColor];
         if (change) setRatingChange({ before: change.before, after: change.after });
         const finished = gameRef.current;
-        if (finished) applyGame({ ...finished, result: e.end.result });
+        if (finished) {
+          // Game over: every held buff goes public (like both nerfs), so
+          // swap the masked placeholders for the revealed record.
+          if (e.end.draftBuffs && finished.buffs) revealHeldBuffs(finished.buffs, e.end.draftBuffs);
+          applyGame({ ...finished, result: e.end.result });
+        }
       } else if (e.type === "draw-offer") {
         setError(null);
         setDrawOfferBy(e.color);
@@ -473,6 +487,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
       } else if (e.type === "draft-offer") {
         const g = gameRef.current;
         if (e.offer.color !== myColor) setOppDrafting(true);
+        // A fresh round of simultaneous offers: restart the lock-in window.
+        if (e.offer.deadline) setDraftDeadline(e.offer.deadline);
+        setOppLockedIn(false);
         if (!g?.buffs) return;
         // Only frames the server addressed to us carry cards we may see: our
         // own offers always, the opponent's only under picksVisible.
@@ -504,6 +521,8 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           setDraftSubmitted(false);
         } else {
           setOppDrafting(false);
+          // "Opponent locked in": shown while my own pick is still open.
+          setOppLockedIn(true);
           if (e.resolved.kind === "picked") playNerf();
         }
         applyGame({ ...g });
@@ -516,6 +535,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           a: "use",
           buffIndex: e.used.buffIndex,
           picks: e.used.picks,
+          card: e.used.card,
         });
         if (e.used.color !== myColor) playNerf();
         applyGame({ ...g });
@@ -704,6 +724,28 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     !!virtualBoard &&
     (game.board.turn !== myColor || !!pendingLocalMove || awaitingPremoveAck || premoves.length > 0);
 
+  // Draft ruleset: activation is only legal on my turn with nothing pending.
+  const draftCanAct =
+    isDraft &&
+    !!game &&
+    !game.result &&
+    game.board.turn === myColor &&
+    !game.buffs?.players[myColor].offer &&
+    !isReviewingHistory &&
+    !pendingLocalMove &&
+    !awaitingPremoveAck;
+  // Activated buffs target on the real board: candidate squares highlight on
+  // the live board and clicking one advances the pick chain. Enemy-buff-list
+  // targets fall back to the modal below.
+  const buffTargeting = useBuffTargeting({
+    game,
+    myColor,
+    active: draftCanAct,
+    onUse: (buffIndex, picks) => {
+      if (!session.useBuff(buffIndex, picks)) setError("Disconnected from the game server.");
+    },
+  });
+
   const handleLocalMove = (m: Move) => {
     if (!game || game.result || isReviewingHistory) return;
     // Draft: resolve the pending buff draft before moving (mirrors the
@@ -803,6 +845,8 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   // sole judge of whether anyone actually flagged.
   useEffect(() => {
     if (!clockEnabled || !game || game.result) return;
+    // Clock paused for a draft lock-in window: no flag can fall due.
+    if (isDraft && (!!game.buffs?.players[myColor].offer || oppDrafting)) return;
     const active = game.board.turn;
     const activeMs = active === "w" ? whiteMs : blackMs;
     let interval: number | undefined;
@@ -989,6 +1033,12 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           {error && (
             <p className="mt-2 text-center text-xs text-oxblood-glow">{error}</p>
           )}
+          {nerfDraft.deadline != null && (
+            <div className="mx-auto mt-4 max-w-sm">
+              {/* The server auto-picks the first option at the deadline. */}
+              <LockInCountdown deadline={nerfDraft.deadline} />
+            </div>
+          )}
           {picked ? (
             <>
               <div className="mt-6 mx-auto max-w-md">
@@ -996,7 +1046,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               </div>
               <div role="status" aria-live="polite" className="mt-4 plate p-3 text-center">
                 <span className="font-display text-sm text-parchment-200">
-                  Waiting for opponent to choose their rule.
+                  {nerfDraft.oppPicked
+                    ? "Opponent locked in."
+                    : "Locked in. Waiting for your opponent to choose their rule."}
                 </span>
               </div>
             </>
@@ -1004,9 +1056,10 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
             <>
               {nerfDraft.oppPicked && (
                 <div role="status" aria-live="polite" className="mt-4 plate p-2 px-3 text-center">
-                  <span className="font-display text-sm text-parchment-200">
-                    Opponent has chosen. Pick your rule.
+                  <span className="font-display text-sm font-semibold text-verdigris-glow">
+                    Opponent locked in.
                   </span>
+                  <span className="font-display text-sm text-parchment-200"> Pick your rule.</span>
                 </div>
               )}
               <div className="mt-6 grid gap-4 sm:grid-cols-2">
@@ -1052,17 +1105,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   const bsTheirs = isDraft ? game.buffs?.players[oppColor] : undefined;
   const myOffer = bsMine?.offer ?? null;
   const zone = isDraft && game.buffs ? draftZones(game, myColor) : null;
-  const draftCanAct =
-    isDraft &&
-    !game.result &&
-    game.board.turn === myColor &&
-    !myOffer &&
-    !isReviewingHistory &&
-    !pendingLocalMove &&
-    !awaitingPremoveAck;
-  const sendBuffUse = (buffIndex: number, picks: BuffPick[]) => {
-    if (!session.useBuff(buffIndex, picks)) setError("Disconnected from the game server.");
-  };
+  // The server pauses the match clock while any buff offer is pending (the
+  // lock-in window is free time); freeze the local display the same way.
+  const draftClockPaused = isDraft && !game.result && (!!myOffer || oppDrafting);
   const opponentNerf = revealedOppNerf ?? (myColor === "w" ? game.black.nerf : game.white.nerf);
   const lastMove = game.board.history[game.board.history.length - 1] ?? null;
   // A held move (confirmation setting) previews on the board before sending.
@@ -1388,8 +1433,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   game={game}
                   myColor={myColor}
                   canAct={draftCanAct}
-                  onChanged={() => {}}
-                  onUse={sendBuffUse}
+                  onStartUse={buffTargeting.start}
                 />
               )}
               <ChatPanel
@@ -1433,17 +1477,17 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                 {clockEnabled && (
                   <ClockPill
                     ms={myColor === "w" ? blackMs : whiteMs}
-                    active={!game.result && game.board.turn !== myColor}
+                    active={!game.result && !draftClockPaused && game.board.turn !== myColor}
                     startDelayMs={clockStartDelay(oppColor)}
                     compact
                   />
                 )}
               </div>
-              <div data-board-measure className={`mx-auto sm:mx-0 ${boardFitClass}`}>
+              <div data-board-measure className={`relative mx-auto sm:mx-0 ${boardFitClass}`}>
                 <Board
                   board={boardForDisplay}
                   legalMoves={
-                    isReviewingHistory
+                    isReviewingHistory || buffTargeting.targeting
                       ? []
                       : premoveMode
                       ? premoveOptions
@@ -1487,7 +1531,32 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   highlightLastMove={uiSettings.highlightLastMove}
                   showLegalMoves={uiSettings.showLegalMoves}
                   checkSquare={isReviewingHistory ? null : checkSquare}
+                  pickSquares={
+                    buffTargeting.targeting?.target.kind === "square"
+                      ? buffTargeting.targeting.target.squares
+                      : undefined
+                  }
+                  onPickSquare={
+                    buffTargeting.targeting?.target.kind === "square"
+                      ? (sq) => buffTargeting.pick({ square: sq })
+                      : undefined
+                  }
                 />
+                {isDraft && bsTheirs && (
+                  <DraftNotice
+                    buffs={bsTheirs.buffs}
+                    banked={!!bsTheirs.flags.bankBonus}
+                    hidden={!picksVisible}
+                  />
+                )}
+                {buffTargeting.targeting && buffTargeting.targeting.target.kind === "square" && (
+                  <TargetingBanner
+                    game={game}
+                    myColor={myColor}
+                    targeting={buffTargeting.targeting}
+                    onCancel={buffTargeting.cancel}
+                  />
+                )}
               </div>
               <div className="flex items-center justify-between gap-2 sm:hidden">
                 <BoardPlayerRow
@@ -1502,7 +1571,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                 {clockEnabled && (
                   <ClockPill
                     ms={myColor === "w" ? whiteMs : blackMs}
-                    active={!game.result && game.board.turn === myColor}
+                    active={!game.result && !draftClockPaused && game.board.turn === myColor}
                     startDelayMs={clockStartDelay(myColor)}
                     compact
                   />
@@ -1543,7 +1612,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               {clockEnabled && (
                 <ClockPill
                   ms={myColor === "w" ? blackMs : whiteMs}
-                  active={!game.result && game.board.turn !== myColor}
+                  active={!game.result && !draftClockPaused && game.board.turn !== myColor}
                   startDelayMs={clockStartDelay(oppColor)}
                 />
               )}
@@ -1558,7 +1627,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               {clockEnabled && (
                 <ClockPill
                   ms={myColor === "w" ? whiteMs : blackMs}
-                  active={!game.result && game.board.turn === myColor}
+                  active={!game.result && !draftClockPaused && game.board.turn === myColor}
                   startDelayMs={clockStartDelay(myColor)}
                 />
               )}
@@ -1596,15 +1665,25 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   return def?.kind === "activated" && !inst.spent && !inst.nullified;
                 }).length
           }
+          autoCloseWhen={!!buffTargeting.targeting}
         >
           <BuffDock
             game={game}
             myColor={myColor}
             canAct={draftCanAct}
-            onChanged={() => {}}
-            onUse={sendBuffUse}
+            onStartUse={buffTargeting.start}
           />
         </MobileBuffDrawer>
+      )}
+
+      {buffTargeting.targeting && buffTargeting.targeting.target.kind === "enemy-buff" && (
+        <EnemyBuffModal
+          game={game}
+          myColor={myColor}
+          targeting={buffTargeting.targeting}
+          onPick={buffTargeting.pick}
+          onCancel={buffTargeting.cancel}
+        />
       )}
 
       {isDraft && myOffer && !draftSubmitted && !game.result && (
@@ -1612,6 +1691,8 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           offer={myOffer}
           takeBoth={(bsMine?.flags.takeBoth ?? 0) > 0}
           bankedBonus={!!myOffer.banked}
+          deadline={draftDeadline}
+          oppLockedIn={oppLockedIn && !oppDrafting}
           onPick={(i) => {
             if (session.sendDraftPick(i)) setDraftSubmitted(true);
             else setError("Disconnected from the game server.");

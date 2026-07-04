@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 
 /**
  * Collapsible bottom drawer for the draft-mode buff dock below the lg
@@ -13,15 +13,22 @@ import { type ReactNode, useState } from "react";
 export function MobileBuffDrawer({
   held,
   usable,
+  autoCloseWhen,
   children,
 }: {
   /** Cards you currently hold (spent ones included — they stay on record). */
   held: number;
   /** Activated buffs you could use right now. */
   usable: number;
+  /** Collapse the drawer while true (a buff is targeting on the board). */
+  autoCloseWhen?: boolean;
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (autoCloseWhen) setOpen(false);
+  }, [autoCloseWhen]);
 
   return (
     <div className="lg:hidden">

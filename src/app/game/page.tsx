@@ -28,10 +28,10 @@ import {
   playMove,
   resign,
 } from "@/engine/game";
-import { BuffDock } from "@/components/BuffDock";
+import { BuffDock, EnemyBuffModal, TargetingBanner, useBuffTargeting } from "@/components/BuffDock";
 import { MobileBuffDrawer } from "@/components/MobileBuffDrawer";
 import { DraftNotice } from "@/components/DraftNotice";
-import { DraftOverlay } from "@/components/DraftOverlay";
+import { DraftOverlay, LockInCountdown } from "@/components/DraftOverlay";
 import { NerfCard } from "@/components/NerfCard";
 import { makeSeed } from "@/engine/rng";
 import { BoardState, Color, Move } from "@/engine/types";
@@ -150,6 +150,12 @@ function GamePage() {
   // Draft mode's opening nerf draft: both players see two nerf cards and pick
   // one. The game object isn't created until the player commits.
   const [nerfDraft, setNerfDraft] = useState<{ myOptions: Nerf[]; aiOptions: Nerf[] } | null>(null);
+  // Lock-in deadlines (15s), mirroring the online rules: the nerf pick and
+  // every buff offer auto-resolve when the timer runs out, and the game
+  // clock is paused while an offer is open.
+  const [nerfDeadline, setNerfDeadline] = useState<number | null>(null);
+  const [offerDeadline, setOfferDeadline] = useState<number | null>(null);
+  const [offerPausedAt, setOfferPausedAt] = useState<number | null>(null);
   const [, force] = useState(0);
   const [muted, setMutedState] = useState(false);
   const [premoves, setPremoves] = useState<QueuedPremove[]>([]);
@@ -188,9 +194,12 @@ function GamePage() {
     (color: Color) => {
       const base = color === "w" ? whiteMs : blackMs;
       if (!clockEnabled || !game || game.result || game.board.turn !== color) return base;
-      return Math.max(0, base - (Date.now() - turnStartedAtRef.current));
+      // Clock paused for a buff lock-in window: freeze the drain at the
+      // moment the offer opened (turnStartedAtRef is shifted on resolve).
+      const until = offerPausedAt ?? Date.now();
+      return Math.max(0, base - Math.max(0, until - turnStartedAtRef.current));
     },
-    [blackMs, clockEnabled, game, whiteMs]
+    [blackMs, clockEnabled, game, whiteMs, offerPausedAt]
   );
 
   // Bank the mover's clock at the moment their move is committed: subtract
@@ -253,9 +262,11 @@ function GamePage() {
     }
 
     if (draftMode) {
-      // Deal both players' nerf options; the game starts when the player picks.
+      // Deal both players' nerf options; the game starts when the player
+      // picks, or when the 15s lock-in window auto-picks the first option.
       const dealt = dealNerfOptions(new Set());
       setNerfDraft({ myOptions: dealt.slice(0, 2), aiOptions: dealt.slice(2, 4) });
+      setNerfDeadline(Date.now() + 15_000);
       return;
     }
 
@@ -299,6 +310,7 @@ function GamePage() {
     // Visible-picks setting: the opponent's nerf choice is open from move one.
     if (picksVisible) g.buffs!.players[myColor].oppNerfRevealed = true;
     setNerfDraft(null);
+    setNerfDeadline(null);
     setHistoryPly(null);
     setGame(g);
   };
@@ -312,6 +324,21 @@ function GamePage() {
       setGame({ ...game });
     }
   }, [game, myColor]);
+
+  // Lock-in window and clock pause for my buff offers: a fresh offer arms
+  // the 15s deadline and freezes the clock; resolving it shifts the turn
+  // start forward by the paused span so the pick cost no time.
+  useEffect(() => {
+    const offer = game?.buffs?.players[myColor].offer ?? null;
+    if (offer && offerPausedAt == null) {
+      setOfferPausedAt(Date.now());
+      setOfferDeadline(Date.now() + 15_000);
+    } else if (!offer && offerPausedAt != null) {
+      turnStartedAtRef.current += Date.now() - Math.max(offerPausedAt, turnStartedAtRef.current);
+      setOfferPausedAt(null);
+      setOfferDeadline(null);
+    }
+  }, [game, myColor, offerPausedAt]);
 
   useEffect(() => {
     if (!game) return;
@@ -556,6 +583,8 @@ function GamePage() {
   // whole game view every clock tick. ClockPill handles the visual countdown.
   useEffect(() => {
     if (!clockEnabled || !game || game.result) return;
+    // Clock paused for a buff lock-in window: no flag can fall due.
+    if (offerPausedAt != null) return;
     const active = game.board.turn;
     const remaining = remainingClock(active);
     if (remaining <= 0) {
@@ -744,6 +773,23 @@ function GamePage() {
     }
   };
 
+  // Activated buffs target on the real board: candidate squares highlight on
+  // the live position and clicking one advances the pick chain. Enemy-buff
+  // targets fall back to the modal list.
+  const buffTargeting = useBuffTargeting({
+    game,
+    myColor,
+    active:
+      !!game?.buffs &&
+      !game.result &&
+      game.board.turn === myColor &&
+      !game.buffs.players[myColor].offer &&
+      historyPly == null,
+    onChanged: () => {
+      if (game) setGame({ ...game });
+    },
+  });
+
   if (!game) {
     if (draftMode && nerfDraft) {
       return (
@@ -757,6 +803,15 @@ function GamePage() {
               Every game opens weak: pick one of two nerfs, then draft buffs every few
               moves to claw your way back to power.
             </p>
+            {nerfDeadline != null && (
+              <div className="mx-auto mt-4 max-w-sm">
+                {/* Lock-in window: the first option is picked automatically. */}
+                <LockInCountdown
+                  deadline={nerfDeadline}
+                  onExpire={() => startDraftGame(nerfDraft.myOptions[0])}
+                />
+              </div>
+            )}
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
               {nerfDraft.myOptions.map((n) => (
                 <button key={n.id} onClick={() => startDraftGame(n)} className="text-left transition hover:-translate-y-1">
@@ -1119,7 +1174,8 @@ function GamePage() {
                 canAct={
                   !game.result && game.board.turn === myColor && !myOffer && !isReviewingHistory
                 }
-                onChanged={() => setGame({ ...game })}
+                onStartUse={buffTargeting.start}
+                hideOpponentCards={!picksVisible}
               />
             ) : (
               <div className="hidden lg:block" />
@@ -1165,7 +1221,7 @@ function GamePage() {
                 {clockEnabled && (
                   <ClockPill
                     ms={myColor === "w" ? blackMs : whiteMs}
-                    active={!game.result && game.board.turn !== myColor}
+                    active={!game.result && offerPausedAt == null && game.board.turn !== myColor}
                     compact
                   />
                 )}
@@ -1174,7 +1230,7 @@ function GamePage() {
                 <Board
                   board={boardForDisplay}
                   legalMoves={
-                    isReviewingHistory
+                    isReviewingHistory || buffTargeting.targeting
                       ? []
                       : game.board.turn === myColor && !premovePending
                       ? moves
@@ -1206,9 +1262,31 @@ function GamePage() {
                   highlightLastMove={uiSettings.highlightLastMove}
                   showLegalMoves={uiSettings.showLegalMoves}
                   checkSquare={isReviewingHistory ? null : checkSquare}
+                  pickSquares={
+                    buffTargeting.targeting?.target.kind === "square"
+                      ? buffTargeting.targeting.target.squares
+                      : undefined
+                  }
+                  onPickSquare={
+                    buffTargeting.targeting?.target.kind === "square"
+                      ? (sq) => buffTargeting.pick({ square: sq })
+                      : undefined
+                  }
                 />
                 {bsTheirs && (
-                  <DraftNotice buffs={bsTheirs.buffs} banked={!!bsTheirs.flags.bankBonus} />
+                  <DraftNotice
+                    buffs={bsTheirs.buffs}
+                    banked={!!bsTheirs.flags.bankBonus}
+                    hidden={!picksVisible}
+                  />
+                )}
+                {buffTargeting.targeting && buffTargeting.targeting.target.kind === "square" && (
+                  <TargetingBanner
+                    game={game}
+                    myColor={myColor}
+                    targeting={buffTargeting.targeting}
+                    onCancel={buffTargeting.cancel}
+                  />
                 )}
               </div>
               <div className="flex items-center justify-between gap-2 sm:hidden">
@@ -1223,7 +1301,7 @@ function GamePage() {
                 {clockEnabled && (
                   <ClockPill
                     ms={myColor === "w" ? whiteMs : blackMs}
-                    active={!game.result && game.board.turn === myColor}
+                    active={!game.result && offerPausedAt == null && game.board.turn === myColor}
                     compact
                   />
                 )}
@@ -1258,7 +1336,7 @@ function GamePage() {
               {clockEnabled && (
                 <ClockPill
                   ms={myColor === "w" ? blackMs : whiteMs}
-                  active={!game.result && game.board.turn !== myColor}
+                  active={!game.result && offerPausedAt == null && game.board.turn !== myColor}
                 />
               )}
               <MoveList
@@ -1272,7 +1350,7 @@ function GamePage() {
               {clockEnabled && (
                 <ClockPill
                   ms={myColor === "w" ? whiteMs : blackMs}
-                  active={!game.result && game.board.turn === myColor}
+                  active={!game.result && offerPausedAt == null && game.board.turn === myColor}
                 />
               )}
             </div>
@@ -1298,14 +1376,26 @@ function GamePage() {
                   return def?.kind === "activated" && !inst.spent && !inst.nullified;
                 }).length
           }
+          autoCloseWhen={!!buffTargeting.targeting}
         >
           <BuffDock
             game={game}
             myColor={myColor}
             canAct={!game.result && game.board.turn === myColor && !myOffer && !isReviewingHistory}
-            onChanged={() => setGame({ ...game })}
+            onStartUse={buffTargeting.start}
+            hideOpponentCards={!picksVisible}
           />
         </MobileBuffDrawer>
+      )}
+
+      {buffTargeting.targeting && buffTargeting.targeting.target.kind === "enemy-buff" && (
+        <EnemyBuffModal
+          game={game}
+          myColor={myColor}
+          targeting={buffTargeting.targeting}
+          onPick={buffTargeting.pick}
+          onCancel={buffTargeting.cancel}
+        />
       )}
 
       {myOffer && !game.result && (
@@ -1313,6 +1403,15 @@ function GamePage() {
           offer={myOffer}
           takeBoth={(bsMine?.flags.takeBoth ?? 0) > 0}
           bankedBonus={!!myOffer.banked}
+          deadline={offerDeadline}
+          onExpire={() => {
+            // Mirror the server's auto-resolve rule: take the first card,
+            // unless a pending nullify would kill any pick (then bank).
+            if (!game.buffs?.players[myColor].offer) return;
+            if ((bsMine?.flags.nullifyIncoming ?? 0) > 0) bankDraft(game, myColor);
+            else pickDraftCard(game, myColor, 0);
+            setGame({ ...game });
+          }}
           onPick={(i) => {
             pickDraftCard(game, myColor, i);
             setGame({ ...game });
@@ -1326,12 +1425,14 @@ function GamePage() {
             showCards: picksVisible || !!bsMine?.flags.seeOppCards,
             showTier: !!bsMine?.flags.seeOppTier,
             reveal: bsMine?.oppReveal ?? null,
-            lastPick: bsTheirs?.buffs.length
-              ? {
-                  id: bsTheirs.buffs[bsTheirs.buffs.length - 1].id,
-                  tier: bsTheirs.buffs[bsTheirs.buffs.length - 1].tier,
-                }
-              : null,
+            // Hidden model: never name the bot's held cards in the overlay.
+            lastPick:
+              picksVisible && bsTheirs?.buffs.length
+                ? {
+                    id: bsTheirs.buffs[bsTheirs.buffs.length - 1].id,
+                    tier: bsTheirs.buffs[bsTheirs.buffs.length - 1].tier,
+                  }
+                : null,
           }}
         />
       )}
