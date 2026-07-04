@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/server/db";
+import { categoryForTimeControl } from "@/lib/speed";
 
 export const dynamic = "force-dynamic";
 
@@ -51,7 +52,7 @@ export async function GET(_request: Request, { params }: { params: { username: s
 
   const games = await db
     .prepare(
-      `SELECT id, white_name, black_name, winner, reason, rated, category,
+      `SELECT id, white_name, black_name, winner, reason, rated, category, ruleset,
               white_user_id, black_user_id,
               white_rating_before, white_rating_after, black_rating_before, black_rating_after,
               time_sec, increment_sec, completed_at
@@ -63,17 +64,19 @@ export async function GET(_request: Request, { params }: { params: { username: s
     .all();
 
   // Rating after each rated game, oldest first — powers the profile's
-  // rating-history graph (a la Lichess).
+  // rating-history graph (a la Lichess). Each point carries its speed
+  // category so the chart can show one bucket at a time; rows recorded
+  // before the category column existed fall back to the time control.
   const ratingHistory = await db
     .prepare(
-      `SELECT completed_at AS at,
+      `SELECT completed_at AS at, category, time_sec, increment_sec,
               CASE WHEN white_user_id = ? THEN white_rating_after ELSE black_rating_after END AS rating
        FROM games
        WHERE (white_user_id = ? OR black_user_id = ?) AND rated = 1
        ORDER BY completed_at ASC LIMIT 300`,
     )
     .bind(user.id, user.id, user.id)
-    .all<{ at: number; rating: number | null }>();
+    .all<{ at: number; category: string | null; time_sec: number; increment_sec: number; rating: number | null }>();
 
   return NextResponse.json({
     user: {
@@ -91,6 +94,12 @@ export async function GET(_request: Request, { params }: { params: { username: s
     },
     games: games.results,
     ratings,
-    ratingHistory: ratingHistory.results.filter((p) => p.rating != null),
+    ratingHistory: ratingHistory.results
+      .filter((p) => p.rating != null)
+      .map((p) => ({
+        at: p.at,
+        rating: p.rating,
+        category: p.category ?? categoryForTimeControl(p.time_sec, p.increment_sec),
+      })),
   });
 }

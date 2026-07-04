@@ -13,12 +13,16 @@ export type StatsGameRow = {
   black_user_id: string | null;
   white_name: string;
   black_name: string;
+  white_nerf_id: string;
+  black_nerf_id: string;
   white_rating_before: number | null;
   black_rating_before: number | null;
   white_rating_after: number | null;
   black_rating_after: number | null;
   time_sec: number;
   increment_sec: number;
+  /** Plies in the game, computed in SQL from the space-separated move list. */
+  move_count: number;
   started_at: number;
   completed_at: number;
 };
@@ -26,6 +30,30 @@ export type StatsGameRow = {
 export type StreakInfo = { length: number; from: number | null; to: number | null };
 
 export type SpeedStats = { games: number; wins: number; draws: number; losses: number };
+
+export type HeadToHeadEntry = {
+  opponent: string;
+  games: number;
+  wins: number;
+  losses: number;
+  draws: number;
+  lastPlayed: number;
+};
+
+export type FavoriteNerf = { nerfId: string; dealt: number; wins: number; winRate: number };
+
+/** One calendar day (UTC) of results, for the 30-day activity strip. */
+export type DailyBucket = { date: string; wins: number; losses: number; draws: number };
+
+export type SessionInfo = {
+  startedAt: number;
+  endedAt: number;
+  games: number;
+  wins: number;
+  losses: number;
+  draws: number;
+  durationMs: number;
+};
 
 export type PlayerStats = {
   totalGames: number;
@@ -45,6 +73,15 @@ export type PlayerStats = {
   lossStreak: { longest: StreakInfo; current: number };
   /** Strongest rated opponents beaten, one entry per opponent. */
   bestWins: Array<{ id: string; opponent: string; rating: number; at: number }>;
+  /** The five most-played opponents, with the record against each. */
+  headToHead: HeadToHeadEntry[];
+  /** Rules dealt at least 3 times, ranked by how often they came up. */
+  favoriteNerfs: FavoriteNerf[];
+  gameLength: { avgPlies: number | null; avgDurationMs: number | null };
+  /** Last 30 UTC days of decided results, oldest first, empty days included. */
+  daily: DailyBucket[];
+  /** Play sessions: runs of games separated by less than an hour. */
+  sessions: { count: number; longestGames: number; avgGames: number; recent: SessionInfo[] };
   perSpeed: Record<RatingCategoryId, SpeedStats>;
   firstGameAt: number | null;
 };
@@ -52,6 +89,18 @@ export type PlayerStats = {
 // A single game can't credibly last longer than this; guards the time-played
 // sum against clock skew or a match that idled before being recorded.
 const MAX_GAME_MS = 4 * 60 * 60 * 1000;
+
+// Games closer together than this belong to the same play session.
+const SESSION_GAP_MS = 60 * 60 * 1000;
+
+// A rule needs to have been dealt this often before it can rank as a favorite.
+const FAVORITE_NERF_MIN_GAMES = 3;
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function utcDay(at: number): string {
+  return new Date(at).toISOString().slice(0, 10);
+}
 
 function emptyStreak(): StreakInfo {
   return { length: 0, from: null, to: null };
@@ -76,6 +125,11 @@ export function computePlayerStats(userId: string, rows: StatsGameRow[]): Player
     winStreak: { longest: emptyStreak(), current: 0 },
     lossStreak: { longest: emptyStreak(), current: 0 },
     bestWins: [],
+    headToHead: [],
+    favoriteNerfs: [],
+    gameLength: { avgPlies: null, avgDurationMs: null },
+    daily: [],
+    sessions: { count: 0, longestGames: 0, avgGames: 0, recent: [] },
     perSpeed,
     firstGameAt: rows.length ? rows[0].completed_at : null,
   };
@@ -85,6 +139,18 @@ export function computePlayerStats(userId: string, rows: StatsGameRow[]): Player
   let runWins = emptyStreak();
   let runLosses = emptyStreak();
   const bestByOpponent = new Map<string, { id: string; opponent: string; rating: number; at: number }>();
+  const byOpponent = new Map<string, HeadToHeadEntry>();
+  const byNerf = new Map<string, { dealt: number; wins: number }>();
+  let plySum = 0;
+  let plyGames = 0;
+  const sessions: SessionInfo[] = [];
+  // The last 30 UTC days, oldest first, so the strip always spans a month.
+  const dailyByDate = new Map<string, DailyBucket>();
+  const now = Date.now();
+  for (let i = 29; i >= 0; i--) {
+    const date = utcDay(now - i * DAY_MS);
+    dailyByDate.set(date, { date, wins: 0, losses: 0, draws: 0 });
+  }
 
   const takeLongest = (run: StreakInfo, longest: StreakInfo) =>
     run.length > longest.length ? { ...run } : longest;
@@ -112,12 +178,62 @@ export function computePlayerStats(userId: string, rows: StatsGameRow[]): Player
       if (!stats.lowest || point.rating < stats.lowest.rating) stats.lowest = point;
     }
 
+    // Head-to-head, favorite rules, sessions, and game length track every
+    // game; the win/loss/draw tallies below only cover decided ones.
+    const h2hKey = opponentName.toLowerCase();
+    let h2h = byOpponent.get(h2hKey);
+    if (!h2h) {
+      h2h = { opponent: opponentName, games: 0, wins: 0, losses: 0, draws: 0, lastPlayed: row.completed_at };
+      byOpponent.set(h2hKey, h2h);
+    }
+    h2h.games++;
+    h2h.lastPlayed = row.completed_at;
+
+    const myNerfId = color === "w" ? row.white_nerf_id : row.black_nerf_id;
+    let nerf = byNerf.get(myNerfId);
+    if (!nerf) {
+      nerf = { dealt: 0, wins: 0 };
+      byNerf.set(myNerfId, nerf);
+    }
+    nerf.dealt++;
+
+    if (row.move_count > 0) {
+      plySum += row.move_count;
+      plyGames++;
+    }
+
+    // Rows arrive oldest first, so a session is just the tail entry as long
+    // as the next game starts within the gap.
+    const tail = sessions[sessions.length - 1];
+    let session: SessionInfo;
+    if (tail && row.started_at - tail.endedAt < SESSION_GAP_MS) {
+      session = tail;
+      session.games++;
+      session.endedAt = Math.max(session.endedAt, row.completed_at);
+    } else {
+      session = {
+        startedAt: row.started_at,
+        endedAt: row.completed_at,
+        games: 1,
+        wins: 0,
+        losses: 0,
+        draws: 0,
+        durationMs: 0,
+      };
+      sessions.push(session);
+    }
+
+    const daily = dailyByDate.get(utcDay(row.completed_at));
+
     // Aborted / unresolved games (no winner) count toward totals only.
     if (row.winner !== "w" && row.winner !== "b" && row.winner !== "draw") continue;
 
     if (row.winner === "draw") {
       stats.draws++;
       speed.draws++;
+      h2h.draws++;
+      session.draws++;
+      if (daily) daily.draws++;
       runWins = emptyStreak();
       runLosses = emptyStreak();
       continue;
@@ -126,6 +242,10 @@ export function computePlayerStats(userId: string, rows: StatsGameRow[]): Player
     if (row.winner === color) {
       stats.wins++;
       speed.wins++;
+      h2h.wins++;
+      nerf.wins++;
+      session.wins++;
+      if (daily) daily.wins++;
       runWins = {
         length: runWins.length + 1,
         from: runWins.from ?? row.completed_at,
@@ -147,6 +267,9 @@ export function computePlayerStats(userId: string, rows: StatsGameRow[]): Player
     } else {
       stats.losses++;
       speed.losses++;
+      h2h.losses++;
+      session.losses++;
+      if (daily) daily.losses++;
       if (/ran out of time/i.test(row.reason)) stats.timeoutLosses++;
       runLosses = {
         length: runLosses.length + 1,
@@ -163,5 +286,25 @@ export function computePlayerStats(userId: string, rows: StatsGameRow[]): Player
   stats.avgOpponentRating =
     opponentRatingCount > 0 ? Math.round(opponentRatingSum / opponentRatingCount) : null;
   stats.bestWins = [...bestByOpponent.values()].sort((a, b) => b.rating - a.rating).slice(0, 5);
+  stats.headToHead = [...byOpponent.values()]
+    .sort((a, b) => b.games - a.games || b.lastPlayed - a.lastPlayed)
+    .slice(0, 5);
+  stats.favoriteNerfs = [...byNerf.entries()]
+    .filter(([, n]) => n.dealt >= FAVORITE_NERF_MIN_GAMES)
+    .map(([nerfId, n]) => ({ nerfId, dealt: n.dealt, wins: n.wins, winRate: n.wins / n.dealt }))
+    .sort((a, b) => b.dealt - a.dealt || b.winRate - a.winRate)
+    .slice(0, 5);
+  stats.gameLength = {
+    avgPlies: plyGames > 0 ? plySum / plyGames : null,
+    avgDurationMs: stats.totalGames > 0 ? stats.timePlayedMs / stats.totalGames : null,
+  };
+  stats.daily = [...dailyByDate.values()];
+  for (const session of sessions) session.durationMs = Math.max(0, session.endedAt - session.startedAt);
+  stats.sessions = {
+    count: sessions.length,
+    longestGames: sessions.reduce((longest, s) => Math.max(longest, s.games), 0),
+    avgGames: sessions.length > 0 ? Math.round((stats.totalGames / sessions.length) * 10) / 10 : 0,
+    recent: sessions.slice(-5).reverse(),
+  };
   return stats;
 }

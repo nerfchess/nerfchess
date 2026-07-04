@@ -22,6 +22,8 @@ export interface FinishedGameRecord {
   winner: "w" | "b" | "draw" | null;
   reason: string;
   rated: boolean;
+  /** Rules variant the game was played under; omitted means classic. */
+  ruleset?: string;
   startedAt: number;
   completedAt: number;
 }
@@ -118,10 +120,10 @@ export async function recordFinishedGame(
         `INSERT OR IGNORE INTO games (
           id, white_user_id, black_user_id, white_name, black_name,
           white_nerf_id, black_nerf_id, seed, time_sec, increment_sec,
-          moves, winner, reason, rated, category,
+          moves, winner, reason, rated, category, ruleset,
           white_rating_before, white_rating_after, black_rating_before, black_rating_after,
           started_at, completed_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .bind(
         game.id,
@@ -139,6 +141,7 @@ export async function recordFinishedGame(
         game.reason,
         rated ? 1 : 0,
         category,
+        game.ruleset ?? "classic",
         whiteBefore?.rating ?? null,
         whiteAfter?.rating ?? null,
         blackBefore?.rating ?? null,

@@ -2,14 +2,20 @@
 
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AccountUser, fetchMe } from "@/lib/authClient";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { PlayerStatsPanel } from "@/components/PlayerStatsPanel";
 import { SiteHeader } from "@/components/SiteHeader";
 import type { PlayerStats } from "@/lib/playerStats";
 import { RatingChart, RatingPoint } from "@/components/RatingChart";
-import { RATING_CATEGORIES } from "@/lib/ratingCategories";
+import { CategoryTabs } from "@/components/ratings/CategoryTabs";
+import {
+  DEFAULT_CATEGORY,
+  isRatingCategoryId,
+  RATING_CATEGORIES,
+  type RatingCategoryId,
+} from "@/lib/ratingCategories";
 
 interface ProfileUser {
   username: string;
@@ -51,11 +57,13 @@ interface CategoryRatingRow {
   peak: number;
 }
 
+type ProfileRatingPoint = RatingPoint & { category?: string | null };
+
 interface ProfileData {
   user: ProfileUser;
   games: ProfileGame[];
   ratings?: Record<string, CategoryRatingRow>;
-  ratingHistory: RatingPoint[];
+  ratingHistory: ProfileRatingPoint[];
 }
 
 export default function ProfilePage() {
@@ -216,10 +224,8 @@ export default function ProfilePage() {
               <StatCard label="Member since" value={new Date(profile.user.createdAt).toLocaleDateString()} />
             </div>
 
-            {profile.ratingHistory.length >= 2 && (
-              <div className="mt-6">
-                <RatingChart points={profile.ratingHistory} />
-              </div>
+            {profile.ratingHistory.length > 0 && (
+              <RatingHistorySection points={profile.ratingHistory} />
             )}
 
             {stats && (
@@ -255,6 +261,41 @@ export default function ProfilePage() {
         )}
       </section>
     </main>
+  );
+}
+
+// The rating graph, one speed category at a time (mixing categories made the
+// line jump between unrelated ratings). Defaults to the most-played bucket.
+function RatingHistorySection({ points }: { points: ProfileRatingPoint[] }) {
+  const mostPlayed = useMemo(() => {
+    const counts = new Map<RatingCategoryId, number>();
+    for (const p of points) {
+      if (isRatingCategoryId(p.category)) counts.set(p.category, (counts.get(p.category) ?? 0) + 1);
+    }
+    let best: RatingCategoryId = DEFAULT_CATEGORY;
+    let bestCount = 0;
+    for (const [id, count] of counts) {
+      if (count > bestCount) {
+        best = id;
+        bestCount = count;
+      }
+    }
+    return best;
+  }, [points]);
+  const [category, setCategory] = useState<RatingCategoryId>(mostPlayed);
+  const filtered = useMemo(() => points.filter((p) => p.category === category), [points, category]);
+
+  return (
+    <div className="mt-6">
+      <CategoryTabs value={category} onChange={setCategory} />
+      <div className="mt-2">
+        {filtered.length >= 2 ? (
+          <RatingChart points={filtered} />
+        ) : (
+          <div className="plate p-4 text-sm text-parchment-400">Not enough rated games yet</div>
+        )}
+      </div>
+    </div>
   );
 }
 

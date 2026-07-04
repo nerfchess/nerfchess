@@ -17,6 +17,7 @@ const NAV_LINKS: { href: string; label: string }[] = [
   { href: "/tournaments", label: "Tournaments" },
   { href: "/history", label: "Game history" },
   { href: "/leaderboard", label: "Leaderboard" },
+  { href: "/community", label: "Community" },
   { href: "/codex", label: "Rules" },
   { href: "/tutorial", label: "How to play" },
 ];

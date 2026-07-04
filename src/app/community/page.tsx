@@ -1,0 +1,344 @@
+"use client";
+
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { SiteHeader } from "@/components/SiteHeader";
+import { PlayerAvatar } from "@/components/PlayerAvatar";
+import { useLobbySnapshot } from "@/lib/lobbyClient";
+import { DEFAULT_CATEGORY, getCategory, isRatingCategoryId } from "@/lib/ratingCategories";
+
+// The community hub: who is on top, who is playing the most, who is online
+// right now, and what was just played, plus doors to the social spaces.
+
+interface TopPlayer {
+  username: string;
+  avatar?: string | null;
+  rating: number;
+  rd: number;
+  games: number;
+  guest?: boolean;
+}
+
+interface ActivePlayer {
+  username: string;
+  avatar: string | null;
+  games: number;
+}
+
+interface RecentGame {
+  id: string;
+  whiteName: string;
+  blackName: string;
+  winner: "w" | "b" | "draw" | null;
+  reason: string;
+  rated: boolean;
+  category: string;
+  completedAt: number;
+}
+
+const HUB_LINKS = [
+  { href: "/clubs", title: "Clubs", blurb: "Join a club or start your own." },
+  { href: "/tournaments", title: "Tournaments", blurb: "Arena events, open to everyone." },
+  { href: "/tv", title: "Nerf TV", blurb: "Watch the best live game right now." },
+];
+
+function timeAgo(at: number): string {
+  const s = Math.max(1, Math.floor((Date.now() - at) / 1000));
+  if (s < 60) return `${s}s ago`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
+}
+
+function resultLabel(winner: "w" | "b" | "draw" | null): string {
+  if (winner === "w") return "1-0";
+  if (winner === "b") return "0-1";
+  if (winner === "draw") return "½-½";
+  return "-";
+}
+
+export default function CommunityPage() {
+  const [top, setTop] = useState<TopPlayer[] | null>(null);
+  const [active, setActive] = useState<ActivePlayer[] | null>(null);
+  const [recent, setRecent] = useState<RecentGame[] | null>(null);
+  const lobby = useLobbySnapshot();
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/leaderboard?category=${DEFAULT_CATEGORY}`)
+      .then((res) => (res.ok ? (res.json() as Promise<{ players: TopPlayer[] }>) : null))
+      .then((data) => {
+        if (!cancelled && data) setTop(data.players.slice(0, 10));
+      })
+      .catch(() => {});
+    fetch("/api/community/active")
+      .then((res) => (res.ok ? (res.json() as Promise<{ players: ActivePlayer[] }>) : null))
+      .then((data) => {
+        if (!cancelled && data) setActive(data.players);
+      })
+      .catch(() => {});
+    fetch("/api/community/recent")
+      .then((res) => (res.ok ? (res.json() as Promise<{ games: RecentGame[] }>) : null))
+      .then((data) => {
+        if (!cancelled && data) setRecent(data.games);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const onlineCount = lobby ? lobby.players.length + lobby.anonymous : null;
+  const blitz = getCategory(DEFAULT_CATEGORY);
+
+  return (
+    <main className="min-h-screen pb-16">
+      <SiteHeader active="/community" />
+
+      <section className="max-w-5xl mx-auto px-5 sm:px-6 py-6 sm:py-8">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h1 className="font-display text-4xl sm:text-5xl">Community</h1>
+            <p className="mt-2 text-parchment-200">
+              The players of nerfchess: who is on top, who is around, and what was just played.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 smallcaps text-[11px] text-parchment-300">
+            <span className="w-2 h-2 rounded-full bg-verdigris animate-flicker" />
+            {onlineCount === null ? "Connecting…" : `${onlineCount} player${onlineCount === 1 ? "" : "s"} online`}
+          </div>
+        </div>
+
+        {/* Doors to the social spaces. */}
+        <div className="mt-6 grid gap-3 sm:grid-cols-3">
+          {HUB_LINKS.map((card) => (
+            <Link
+              key={card.href}
+              href={card.href}
+              className="plate block p-4 no-underline transition-colors hover:border-gold/40"
+            >
+              <div className="font-display text-xl text-parchment">{card.title}</div>
+              <p className="mt-1 text-sm text-parchment-300">{card.blurb}</p>
+            </Link>
+          ))}
+        </div>
+
+        <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
+          <div className="space-y-4 min-w-0">
+            {/* The blitz top ten; the full ladder lives on /leaderboard. */}
+            <div className="plate p-5 sm:p-6">
+              <div className="flex items-center justify-between gap-3">
+                <div className="font-display text-2xl text-parchment">Top players</div>
+                <Link href="/leaderboard" className="text-xs text-parchment-400 hover:text-parchment-100 transition-colors">
+                  Full leaderboard →
+                </Link>
+              </div>
+              {!top ? (
+                <p className="mt-3 text-sm text-parchment-400">Loading…</p>
+              ) : top.length === 0 ? (
+                <p className="mt-3 text-sm text-parchment-400">
+                  Nobody has a {blitz.label} rating yet. Play a rated game to claim the top spot.
+                </p>
+              ) : (
+                <ul className="mt-3 divide-y divide-white/5">
+                  {top.map((player, i) => (
+                    <li key={player.guest ? `guest:${player.username}` : player.username}>
+                      <PlayerLine
+                        rank={i + 1}
+                        username={player.username}
+                        avatar={player.avatar}
+                        guest={player.guest}
+                        right={
+                          <span className="font-mono text-sm tabular-nums text-parchment-100">
+                            {Math.round(player.rating)}
+                            {player.rd > 150 && <span className="text-parchment-400">?</span>}
+                          </span>
+                        }
+                      />
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            {/* Who played the most this week. */}
+            <div className="plate p-5 sm:p-6">
+              <div className="font-display text-2xl text-parchment">Most active this week</div>
+              {!active ? (
+                <p className="mt-3 text-sm text-parchment-400">Loading…</p>
+              ) : active.length === 0 ? (
+                <p className="mt-3 text-sm text-parchment-400">No games in the last 7 days. Be the first.</p>
+              ) : (
+                <ul className="mt-3 divide-y divide-white/5">
+                  {active.map((player, i) => (
+                    <li key={player.username}>
+                      <PlayerLine
+                        rank={i + 1}
+                        username={player.username}
+                        avatar={player.avatar}
+                        right={
+                          <span className="font-mono text-sm tabular-nums text-parchment-100">
+                            {player.games}
+                            <span className="ml-1 text-xs text-parchment-400">
+                              game{player.games === 1 ? "" : "s"}
+                            </span>
+                          </span>
+                        }
+                      />
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            {/* The latest finished games, each opening its replay. */}
+            <div className="plate p-5 sm:p-6">
+              <div className="font-display text-2xl text-parchment">Recent games</div>
+              {!recent ? (
+                <p className="mt-3 text-sm text-parchment-400">Loading…</p>
+              ) : recent.length === 0 ? (
+                <p className="mt-3 text-sm text-parchment-400">No finished games yet.</p>
+              ) : (
+                <ul className="mt-3 divide-y divide-white/5">
+                  {recent.map((game) => (
+                    <RecentGameRow key={game.id} game={game} />
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+
+          {/* Who's here right now, same source as the lobby. */}
+          <aside className="plate p-5 h-fit">
+            <div className="font-display text-xl text-parchment">Online now</div>
+            {!lobby ? (
+              <p className="mt-3 text-sm text-parchment-400">Loading…</p>
+            ) : lobby.players.length === 0 ? (
+              <p className="mt-3 text-sm text-parchment-400">
+                No signed-in players right now
+                {lobby.anonymous > 0
+                  ? `, but ${lobby.anonymous} anonymous player${lobby.anonymous === 1 ? " is" : "s are"} around.`
+                  : "."}
+              </p>
+            ) : (
+              <>
+                <ul className="mt-3 space-y-2">
+                  {lobby.players.map((player) => (
+                    <li key={player.name} className="flex items-center justify-between gap-2 text-sm">
+                      <Link
+                        href={`/u/${encodeURIComponent(player.name)}`}
+                        className="flex min-w-0 items-center gap-2 truncate text-parchment-100 hover:text-gold-leaf transition-colors"
+                      >
+                        <PlayerAvatar name={player.name} avatar={player.avatar} size={22} />
+                        {player.name}
+                        {player.rating != null && (
+                          <span className="ml-1.5 font-mono text-xs text-parchment-400">{player.rating}</span>
+                        )}
+                      </Link>
+                      <OnlineStatusBadge status={player.status} />
+                    </li>
+                  ))}
+                </ul>
+                {lobby.anonymous > 0 && (
+                  <p className="mt-3 text-xs text-parchment-400">
+                    + {lobby.anonymous} anonymous player{lobby.anonymous === 1 ? "" : "s"}
+                  </p>
+                )}
+              </>
+            )}
+            <p className="mt-4 border-t border-white/10 pt-3 text-xs text-parchment-400">
+              Looking for a game?{" "}
+              <Link href="/lobby" className="text-gold-leaf hover:underline">
+                Head to the lobby
+              </Link>
+              .
+            </p>
+          </aside>
+        </div>
+      </section>
+    </main>
+  );
+}
+
+function PlayerLine({
+  rank,
+  username,
+  avatar,
+  guest,
+  right,
+}: {
+  rank: number;
+  username: string;
+  avatar?: string | null;
+  guest?: boolean;
+  right: React.ReactNode;
+}) {
+  const body = (
+    <>
+      <span className="w-6 shrink-0 font-mono text-xs tabular-nums text-parchment-400">{rank}</span>
+      <span className="flex min-w-0 flex-1 items-center gap-2">
+        <PlayerAvatar name={username} avatar={avatar} size={24} />
+        <span className="truncate font-medium text-parchment-100">{username}</span>
+        {guest && (
+          <span className="shrink-0 border border-white/15 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-parchment-400">
+            guest
+          </span>
+        )}
+      </span>
+      {right}
+    </>
+  );
+  const rowClass = "flex items-center gap-2 py-2";
+  if (guest) return <div className={rowClass}>{body}</div>;
+  return (
+    <Link href={`/u/${encodeURIComponent(username)}`} className={`${rowClass} hover:bg-white/[0.03] transition`}>
+      {body}
+    </Link>
+  );
+}
+
+function RecentGameRow({ game }: { game: RecentGame }) {
+  const category = getCategory(isRatingCategoryId(game.category) ? game.category : DEFAULT_CATEGORY);
+  const Icon = category.icon;
+  return (
+    <li>
+      <Link
+        href={`/game/${game.id}`}
+        className="flex items-center justify-between gap-3 py-2.5 hover:bg-white/[0.03] transition"
+      >
+        <span className="min-w-0">
+          <span className="block truncate text-sm text-parchment-100">
+            {game.whiteName} <span className="text-parchment-400">vs</span> {game.blackName}
+          </span>
+          <span className="mt-0.5 flex items-center gap-1.5 smallcaps text-[9px] text-parchment-400">
+            <Icon size={11} style={{ color: category.accent }} aria-hidden />
+            {category.label} · {game.rated ? "Rated" : "Casual"} · {timeAgo(game.completedAt)}
+          </span>
+        </span>
+        <span className="shrink-0 font-mono text-sm tabular-nums text-parchment-200">
+          {resultLabel(game.winner)}
+        </span>
+      </Link>
+    </li>
+  );
+}
+
+function OnlineStatusBadge({ status }: { status: "online" | "searching" | "playing" }) {
+  const styles: Record<string, string> = {
+    online: "border-verdigris/40 bg-verdigris/10 text-verdigris-glow",
+    searching: "border-gold/40 bg-gold/10 text-gold-leaf",
+    playing: "border-bruise/40 bg-bruise/10 text-bruise-glow",
+  };
+  const labels: Record<string, string> = {
+    online: "Online",
+    searching: "Searching",
+    playing: "In game",
+  };
+  return (
+    <span className={`shrink-0 border px-2 py-0.5 smallcaps text-[9px] ${styles[status]}`}>
+      {labels[status]}
+    </span>
+  );
+}
