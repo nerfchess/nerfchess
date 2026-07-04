@@ -172,7 +172,7 @@ const botSeatCacheTtlMs = 45 * 1000;
 // Bumped whenever the worker changes in a way we want to confirm shipped.
 // Surfaced at GET /healthz so a deploy can be verified without Cloudflare
 // dashboard access (compare the value there against this one).
-const buildVersion = "bots-diag-3";
+const buildVersion = "bots-diag-4";
 // Lichess-style start-of-game grace: a player's clock only starts charging 10
 // seconds into their first move, so nobody loses time to a slow page load.
 const firstMoveGraceMs = 10 * 1000;
@@ -451,15 +451,29 @@ export class GameServer extends DurableObject<Env> {
   }
 
   async alarm() {
-    // House-player orchestration must never take down clock enforcement: a
-    // botTick failure (D1 hiccup, engine error) would otherwise skip
-    // maintenanceAll and leave flagged games running until the next event.
+    // Nothing in here may throw out of the handler: an uncaught alarm error
+    // stops rescheduling and the whole tick chain dies (no bot moves, no flag
+    // enforcement) until the next external event. Each stage is isolated and a
+    // heartbeat is guaranteed at the end no matter what failed.
     try {
       await this.botTick();
     } catch (err) {
       console.error("botTick failed", err);
     }
-    await this.maintenanceAll();
+    try {
+      await this.maintenanceAll();
+    } catch (err) {
+      console.error("maintenanceAll failed", err);
+    }
+    // maintenanceAll normally sets the next alarm; if it threw before doing so,
+    // guarantee the chain survives.
+    try {
+      if (!(await this.ctx.storage.getAlarm())) {
+        await this.ctx.storage.setAlarm(Date.now() + botHeartbeatMs);
+      }
+    } catch (err) {
+      console.error("alarm reschedule failed", err);
+    }
   }
 
   // Kickstart the alarm chain so the house players run even before any match
@@ -2185,8 +2199,22 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     if (url.pathname === socketPath || url.pathname === "/healthz") {
-      const id = env.GAME_SERVER.idFromName(globalServerName);
-      return env.GAME_SERVER.get(id).fetch(request);
+      try {
+        const id = env.GAME_SERVER.idFromName(globalServerName);
+        return await env.GAME_SERVER.get(id).fetch(request);
+      } catch (err) {
+        // The game server threw. Without this the platform returns an opaque
+        // 1101 page with no detail. Surface the actual error on /healthz so it
+        // can be read from a browser (there is no other log access here), and
+        // fail the socket upgrade cleanly instead of crashing the request.
+        const message = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
+        const stack = err instanceof Error ? err.stack : undefined;
+        console.error("game server fetch threw", err);
+        if (url.pathname === "/healthz") {
+          return Response.json({ ok: false, version: buildVersion, error: message, stack }, { status: 200 });
+        }
+        return new Response("game server unavailable", { status: 503 });
+      }
     }
     return handler.fetch(request, env, ctx);
   },
