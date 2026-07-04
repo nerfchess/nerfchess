@@ -12,7 +12,8 @@ import { Color } from "./src/engine/types";
 import { sessionTokenFromCookieHeader, userForSession } from "./src/lib/server/auth";
 import { BotSeat, botThinkMs, ensureBotUsers, loadBotSeats, pickBotPool } from "./src/lib/server/bots";
 import { ensureSchema } from "./src/lib/server/schema";
-import { recordFinishedGame, RatingChange } from "./src/lib/server/games";
+import { loadCategoryRatings, recordFinishedGame, RatingChange } from "./src/lib/server/games";
+import { categoryForTimeControl, type SpeedCategory } from "./src/lib/speed";
 import { censorText, findProfanity } from "./src/lib/profanity";
 import { glickoUpdatePair } from "./src/lib/glicko";
 
@@ -228,7 +229,8 @@ function moveByUci(game: NerfGame, uci: string) {
 export class GameServer extends DurableObject<Env> {
   private sessions = new Map<WebSocket, SessionAttachment>();
   private dbReady: Promise<boolean> | null = null;
-  // Last error botTick threw (if any), surfaced at /healthz for diagnosis.
+  // Last error thrown by the alarm's botTick pass, surfaced in /healthz —
+  // the tick itself runs off-request, so this is the only window into it.
   private lastTickError: string | null = null;
 
   constructor(ctx: DurableObjectState, env: Env) {
@@ -588,18 +590,17 @@ export class GameServer extends DurableObject<Env> {
       let avatar: string | null = null;
       const db = await this.db();
       if (db) {
-        try {
-          const row = await db
-            .prepare("SELECT rating, rd, vol, avatar FROM users WHERE id = ?")
-            .bind(session.userId)
-            .first<{ rating: number; rd: number; vol: number; avatar: string | null }>();
-          if (row) {
-            rating = row.rating;
-            rd = row.rd;
-            vol = row.vol;
-            avatar = row.avatar;
-          }
-        } catch {}
+        const row = await this.seatCategoryRating(
+          db,
+          session.userId,
+          categoryForTimeControl(match.setup.timeSec, match.setup.incrementSec),
+        );
+        if (row) {
+          rating = row.rating;
+          rd = row.rd;
+          vol = row.vol;
+          avatar = row.avatar;
+        }
       }
       match.users = {
         ...(match.users ?? {}),
@@ -632,6 +633,27 @@ export class GameServer extends DurableObject<Env> {
       if (session.id === id && ws.readyState === WebSocket.OPEN) return ws;
     }
     return undefined;
+  }
+
+  // Rating shown/staked for a seat, from the independent per-time-control
+  // buckets (seeded from the legacy shared rating on first contact).
+  private async seatCategoryRating(
+    db: D1Database,
+    userId: string,
+    category: SpeedCategory,
+  ): Promise<{ rating: number; rd: number; vol: number; avatar: string | null } | null> {
+    try {
+      const ratings = await loadCategoryRatings(db, [userId], category);
+      const r = ratings.get(userId);
+      if (!r) return null;
+      const row = await db
+        .prepare("SELECT avatar FROM users WHERE id = ?")
+        .bind(userId)
+        .first<{ avatar: string | null }>();
+      return { rating: r.rating, rd: r.rd, vol: r.vol, avatar: row?.avatar ?? null };
+    } catch {
+      return null;
+    }
   }
 
   private playersPayload(match: StoredMatch) {
@@ -1312,11 +1334,22 @@ export class GameServer extends DurableObject<Env> {
     await this.ctx.storage.put(botSeeksKey, seeks);
     try {
       const row = await db
-        .prepare("SELECT id, username, rating, rd, vol, avatar FROM users WHERE id = ?")
+        .prepare("SELECT id, username, avatar FROM users WHERE id = ?")
         .bind(seek.userId)
-        .first<{ id: string; username: string; rating: number; rd: number; vol: number; avatar: string | null }>();
+        .first<{ id: string; username: string; avatar: string | null }>();
       if (!row) return null;
-      return { id: row.id, name: row.username, rating: row.rating, rd: row.rd, vol: row.vol, avatar: row.avatar };
+      const pool = QUEUE_POOLS[poolName] ?? QUEUE_POOLS[seek.pool];
+      const r = pool
+        ? await this.seatCategoryRating(db, row.id, categoryForTimeControl(pool.timeSec, pool.incrementSec))
+        : null;
+      return {
+        id: row.id,
+        name: row.username,
+        rating: r?.rating ?? 1500,
+        rd: r?.rd ?? 350,
+        vol: r?.vol ?? 0.06,
+        avatar: row.avatar,
+      };
     } catch {
       return null;
     }
@@ -1553,18 +1586,21 @@ export class GameServer extends DurableObject<Env> {
     let rd = 350;
     let vol = 0.06;
     let avatar: string | null = null;
-    try {
-      const row = await db
-        .prepare("SELECT rating, rd, vol, avatar FROM users WHERE id = ?")
-        .bind(session.userId)
-        .first<{ rating: number; rd: number; vol: number; avatar: string | null }>();
+    {
+      // Queueing uses (and later updates) the rating bucket for this pool's
+      // time control only.
+      const row = await this.seatCategoryRating(
+        db,
+        session.userId,
+        categoryForTimeControl(pool.timeSec, pool.incrementSec),
+      );
       if (row) {
         rating = row.rating;
         rd = row.rd;
         vol = row.vol;
         avatar = row.avatar;
       }
-    } catch {}
+    }
 
     const key = this.queueKey(poolName);
     let entries = (await this.ctx.storage.get<QueueEntry[]>(key)) ?? [];
@@ -1697,18 +1733,17 @@ export class GameServer extends DurableObject<Env> {
       for (const color of ["w", "b"] as Color[]) {
         const seat = users[color];
         if (!seat) continue;
-        try {
-          const row = await db
-            .prepare("SELECT rating, rd, vol, avatar FROM users WHERE id = ?")
-            .bind(seat.id)
-            .first<{ rating: number; rd: number; vol: number; avatar: string | null }>();
-          if (row) {
-            seat.rating = row.rating;
-            seat.rd = row.rd;
-            seat.vol = row.vol;
-            seat.avatar = row.avatar;
-          }
-        } catch {}
+        const row = await this.seatCategoryRating(
+          db,
+          seat.id,
+          categoryForTimeControl(match.setup.timeSec, match.setup.incrementSec),
+        );
+        if (row) {
+          seat.rating = row.rating;
+          seat.rd = row.rd;
+          seat.vol = row.vol;
+          seat.avatar = row.avatar;
+        }
       }
     }
 

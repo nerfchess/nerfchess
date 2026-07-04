@@ -9,7 +9,7 @@ import { MobileMoveDrawer } from "@/components/MobileMoveDrawer";
 import { MoveList } from "@/components/MoveList";
 import { PlayerNerfCard } from "@/components/PlayerNerfCard";
 import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
-import { AILevel, pickAIMove } from "@/engine/ai";
+import { AILevel, aiBudgetMs, pickAIMove } from "@/engine/ai";
 import { Nerf, type GameContext } from "@/engine/nerf";
 import { IMPLEMENTED_BY_ID, PLAYABLE_NERFS } from "@/engine/nerfs/library";
 import {
@@ -24,18 +24,20 @@ import {
 } from "@/engine/game";
 import { makeSeed } from "@/engine/rng";
 import { BoardState, Color, Move } from "@/engine/types";
-import { cloneBoard, isInCheck, makeMove, moveToUCI } from "@/engine/board";
+import { cloneBoard, findKing, isInCheck, makeMove, moveToUCI } from "@/engine/board";
 import { computeMoveRisks } from "@/engine/moveSafety";
 import { loadSettings } from "@/lib/settings";
 import type { QueuedPremove } from "@/components/Board";
 import { buildCustomNerf, CustomNerf } from "@/engine/nerfs/custom";
 import { isMuted, playCapture, playCheck, playNerf, playMove as playMoveSfx, setMuted } from "@/lib/sounds";
 import { nerfSummary, outcomeFor, recordCompletedGame } from "@/lib/gameHistory";
-import { applyResult, loadRating, saveRating } from "@/lib/rating";
+import { applyResult, loadRatingFor, saveRatingFor } from "@/lib/rating";
 import { SettingsPanel } from "@/components/SettingsPanel";
-import { loadSavedAiGame, restoreSavedAiGame, saveAiGame } from "@/lib/gamePersistence";
+import { loadSavedAiGame, restoreSavedAiGame, saveAiGame, snapshotGame } from "@/lib/gamePersistence";
 import { boardAtPly } from "@/lib/gameReview";
 import { premoveOptionsFor } from "@/lib/premoves";
+import { categoryForTimeControl } from "@/lib/ratingCategories";
+import type { AIWorkerRequest, AIWorkerResponse } from "@/workers/aiWorker";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, type CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -95,6 +97,9 @@ function GamePage() {
     return Number.isFinite(inc) && inc > 0 ? inc * 1000 : 0;
   }, [params]);
   const clockEnabled = initialTimeMs > 0;
+  // Which independent rating bucket a rated result counts toward — derived
+  // from the chosen time control, exactly like online games.
+  const ratingCategory = categoryForTimeControl(initialTimeMs / 1000, incrementMs / 1000);
 
   const [myColor, setMyColor] = useState<Color>(() => {
     if (myColorParam === "w") return "w";
@@ -107,6 +112,9 @@ function GamePage() {
   const [muted, setMutedState] = useState(false);
   const [premoves, setPremoves] = useState<QueuedPremove[]>([]);
   const [confirmingResign, setConfirmingResign] = useState(false);
+  const [confirmingDraw, setConfirmingDraw] = useState(false);
+  // A move held for confirmation (Settings > Gameplay > Move confirmation).
+  const [confirmMovePending, setConfirmMovePending] = useState<Move | null>(null);
   const [showResult, setShowResult] = useState(true);
   const [drawOfferStatus, setDrawOfferStatus] = useState<"idle" | "offering" | "declined">("idle");
   const [whiteMs, setWhiteMs] = useState(initialTimeMs);
@@ -122,12 +130,18 @@ function GamePage() {
   const [sharedMine, setSharedMine] = useState(false);
   const aiThinking = useRef(false);
   const gameRef = useRef<NerfGame | null>(null);
-  const addIncrementRef = useRef<(color: Color) => void>(() => {});
+  const aiWorkerRef = useRef<Worker | null>(null);
+  const aiRequestId = useRef(0);
   const boardShellRef = useRef<HTMLDivElement | null>(null);
   const whiteCustomSpec = useRef<CustomNerf | null>(null);
   const blackCustomSpec = useRef<CustomNerf | null>(null);
   const turnStartedAtRef = useRef(Date.now());
 
+  // whiteMs/blackMs are the single source of truth for remaining time: the
+  // banked milliseconds each side had when their last turn ended. While a
+  // side is on move, their live remaining time is banked minus the time since
+  // the turn started; nothing else ever writes these values, so time only
+  // decreases (plus increments) and never resets.
   const remainingClock = useCallback(
     (color: Color) => {
       const base = color === "w" ? whiteMs : blackMs;
@@ -137,14 +151,22 @@ function GamePage() {
     [blackMs, clockEnabled, game, whiteMs]
   );
 
-  const addIncrement = useCallback(
-    (color: Color) => {
+  // Bank the mover's clock at the moment their move is committed: subtract
+  // the time spent this turn, add the increment, and start the opponent's
+  // turn timer. Uses functional updates and no game state, so it is immune
+  // to `playMove` mutating the game (the turn has already flipped by the
+  // time any post-move code runs) and to stale closures.
+  const commitClock = useCallback(
+    (mover: Color) => {
       if (!clockEnabled) return;
-      const next = remainingClock(color) + incrementMs;
-      if (color === "w") setWhiteMs(next);
-      else setBlackMs(next);
+      const now = Date.now();
+      const spent = Math.max(0, now - turnStartedAtRef.current);
+      turnStartedAtRef.current = now;
+      const bank = (prev: number) => Math.max(0, prev - spent) + incrementMs;
+      if (mover === "w") setWhiteMs(bank);
+      else setBlackMs(bank);
     },
-    [clockEnabled, incrementMs, remainingClock]
+    [clockEnabled, incrementMs]
   );
 
   useEffect(() => {
@@ -152,12 +174,16 @@ function GamePage() {
   }, [game]);
 
   useEffect(() => {
-    addIncrementRef.current = addIncrement;
-  }, [addIncrement]);
+    return () => {
+      aiWorkerRef.current?.terminate();
+      aiWorkerRef.current = null;
+    };
+  }, []);
 
   useEffect(() => {
     setMutedState(isMuted());
-    setPlayerElo(loadRating().rating);
+    setPlayerElo(loadRatingFor(ratingCategory).rating);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -212,17 +238,29 @@ function GamePage() {
 
   useEffect(() => {
     if (!game) return;
-    saveAiGame({
-      query: querySignature,
-      myColor,
-      game,
-      whiteMs: remainingClock("w"),
-      blackMs: remainingClock("b"),
-      premoves,
-      whiteCustomSpec: whiteCustomSpec.current,
-      blackCustomSpec: blackCustomSpec.current,
-    });
-  }, [game, querySignature, myColor, premoves, remainingClock]);
+    const persist = () =>
+      saveAiGame({
+        query: querySignature,
+        myColor,
+        game,
+        whiteMs: remainingClock("w"),
+        blackMs: remainingClock("b"),
+        premoves,
+        whiteCustomSpec: whiteCustomSpec.current,
+        blackCustomSpec: blackCustomSpec.current,
+      });
+    persist();
+    if (!clockEnabled || game.result) return;
+    // The active side's clock keeps draining between renders, so re-save it
+    // periodically and on page hide — a refresh must restore the live
+    // remaining time, not the time as of the last move.
+    window.addEventListener("pagehide", persist);
+    const id = window.setInterval(persist, 3000);
+    return () => {
+      window.removeEventListener("pagehide", persist);
+      window.clearInterval(id);
+    };
+  }, [game, querySignature, myColor, premoves, remainingClock, clockEnabled]);
 
   useEffect(() => {
     if (!game || historyPly == null) return;
@@ -354,11 +392,11 @@ function GamePage() {
     // Casual games don't affect your rating.
     let change: { before: number; after: number } | null = null;
     if (rated) {
-      const before = loadRating();
+      const before = loadRatingFor(ratingCategory);
       const score: 0 | 0.5 | 1 =
         game.result.winner === "draw" ? 0.5 : game.result.winner === myColor ? 1 : 0;
       const after = applyResult(before, difficulty, score);
-      saveRating(after);
+      saveRatingFor(ratingCategory, after, score === 1 ? "win" : score === 0 ? "loss" : "draw");
       setPlayerElo(after.rating);
       change = { before: before.rating, after: after.rating };
       setRatingChange(change);
@@ -383,7 +421,7 @@ function GamePage() {
     // Bot games never touch the game server, so tell the site counter about
     // this one; the home "games played" stat includes bot games.
     fetch("/api/games/bot", { method: "POST" }).catch(() => {});
-  }, [game, myColor, difficulty, rated, initialTimeMs, incrementMs]);
+  }, [game, myColor, difficulty, rated, initialTimeMs, incrementMs, ratingCategory]);
 
   // Execute the head of the premove queue when our turn returns. If the head
   // is no longer playable (target ran away, piece pinned, friendly target
@@ -410,9 +448,9 @@ function GamePage() {
       return;
     }
     const tid = setTimeout(() => {
+      commitClock(myColor);
       const next = playMove(game, m);
       setGame({ ...next });
-      addIncrement(myColor);
       // If makeMove rejected the move (no-op: turn didn't flip), cancel the
       // entire queue (subsequent premoves assumed this one landed).
       if (next.board.turn === myColor) {
@@ -422,7 +460,7 @@ function GamePage() {
       }
     }, 90);
     return () => clearTimeout(tid);
-  }, [game, premoves, moves, myColor, addIncrement]);
+  }, [game, premoves, moves, myColor, commitClock]);
 
   useEffect(() => {
     turnStartedAtRef.current = Date.now();
@@ -452,50 +490,130 @@ function GamePage() {
     return () => window.clearTimeout(id);
   }, [clockEnabled, game, remainingClock]);
 
-  // AI move
+  // AI move. The search runs in a web worker so the main thread (board,
+  // clocks, input) never blocks while the bot thinks, and the bot's clock
+  // keeps counting down exactly like a human player's: its time is spent
+  // from the moment its turn starts until its move is committed.
   useEffect(() => {
     if (!game || game.result) return;
     if (game.board.turn === myColor) return;
     if (aiThinking.current) return;
     aiThinking.current = true;
+    const botColor: Color = myColor === "w" ? "b" : "w";
     const expectedPly = game.board.history.length;
-    // Visual minimum wait; the engine's iterative-deepening search budget runs
-    // inside this window, so the move appears deliberate even when the search
-    // finishes early.
-    const delay = difficulty === "easy" ? 600 : difficulty === "medium" ? 1200 : 2000;
-    const tid = setTimeout(() => {
-      try {
-        const current = gameRef.current;
-        if (!current || current.result || current.board.turn === myColor || current.board.history.length !== expectedPly) {
-          return;
-        }
-        const m = pickAIMove(current, difficulty);
-        if (m) {
-          const mover = current.board.turn;
-          const next = playMove(current, m);
-          setGame({ ...next });
-          addIncrementRef.current(mover);
-        } else {
-          current.result = { winner: myColor, reason: "AI has no legal moves" };
-          setGame({ ...current });
-        }
-      } catch {
-        const current = gameRef.current;
-        if (current && !current.result) {
-          current.result = { winner: myColor, reason: "AI move failed" };
-          setGame({ ...current });
-        }
-      } finally {
+    const thinkStart = Date.now();
+
+    // Pacing (how long the move takes to appear) and search budget are both
+    // clamped by the bot's remaining clock, so the bot spends its time like a
+    // human and can never think past its flag or ignore the time control.
+    const paceBase = difficulty === "easy" ? 600 : difficulty === "medium" ? 1200 : 2000;
+    const remaining = clockEnabled ? remainingClock(botColor) : undefined;
+    const pace = remaining !== undefined ? Math.min(paceBase, Math.max(150, remaining / 20)) : paceBase;
+    const budget = aiBudgetMs(difficulty, remaining);
+
+    let cancelled = false;
+    let watchdog = 0;
+    let applyTimer = 0;
+
+    // Apply the chosen move once the pacing window has elapsed. A null uci
+    // (worker unavailable/errored/out of sync) falls back to a quick
+    // synchronous pick so the game always continues.
+    const finish = (uci: string | null) => {
+      if (cancelled) return;
+      window.clearTimeout(watchdog);
+      const applyIn = Math.max(0, pace - (Date.now() - thinkStart));
+      applyTimer = window.setTimeout(() => {
+        if (cancelled) return;
         aiThinking.current = false;
-        force((x) => x + 1);
+        try {
+          const current = gameRef.current;
+          if (!current || current.result || current.board.turn === myColor || current.board.history.length !== expectedPly) {
+            return;
+          }
+          let m = uci ? legalMoves(current).find((c) => moveToUCI(c) === uci) ?? null : null;
+          if (!m) m = pickAIMove(current, difficulty, 150);
+          if (m) {
+            commitClock(botColor);
+            const next = playMove(current, m);
+            setGame({ ...next });
+          } else {
+            current.result = { winner: myColor, reason: "AI has no legal moves" };
+            setGame({ ...current });
+          }
+        } catch {
+          const current = gameRef.current;
+          if (current && !current.result) {
+            current.result = { winner: myColor, reason: "AI move failed" };
+            setGame({ ...current });
+          }
+        } finally {
+          force((x) => x + 1);
+        }
+      }, applyIn);
+    };
+
+    const snapshot = snapshotGame(game, whiteCustomSpec.current, blackCustomSpec.current);
+    let worker: Worker | null = null;
+    if (snapshot && typeof Worker !== "undefined") {
+      try {
+        if (!aiWorkerRef.current) {
+          aiWorkerRef.current = new Worker(new URL("../../workers/aiWorker", import.meta.url));
+        }
+        worker = aiWorkerRef.current;
+      } catch {
+        worker = null;
       }
-    }, delay);
+    }
+
+    if (worker && snapshot) {
+      const id = ++aiRequestId.current;
+      const activeWorker = worker;
+      const onMessage = (event: MessageEvent<AIWorkerResponse>) => {
+        if (event.data.id !== id) return;
+        activeWorker.removeEventListener("message", onMessage);
+        finish(event.data.uci ?? null);
+      };
+      activeWorker.addEventListener("message", onMessage);
+      // Watchdog: a wedged worker must never freeze the game or let the bot
+      // think indefinitely — terminate it and fall back to a quick sync pick.
+      watchdog = window.setTimeout(() => {
+        activeWorker.removeEventListener("message", onMessage);
+        aiWorkerRef.current?.terminate();
+        aiWorkerRef.current = null;
+        finish(null);
+      }, budget * 2 + 4000);
+      activeWorker.postMessage({ id, snapshot, level: difficulty, budgetMs: budget } satisfies AIWorkerRequest);
+      return () => {
+        cancelled = true;
+        activeWorker.removeEventListener("message", onMessage);
+        window.clearTimeout(watchdog);
+        window.clearTimeout(applyTimer);
+        aiThinking.current = false;
+      };
+    }
+
+    // No worker available (or non-serializable game): search synchronously
+    // after the pacing delay, accepting a short UI stall.
+    const syncTimer = window.setTimeout(() => {
+      if (cancelled) return;
+      const current = gameRef.current;
+      let uci: string | null = null;
+      try {
+        const m = current && !current.result ? pickAIMove(current, difficulty, budget) : null;
+        uci = m ? moveToUCI(m) : null;
+      } catch {
+        uci = null;
+      }
+      finish(uci);
+    }, pace);
     return () => {
-      clearTimeout(tid);
+      cancelled = true;
+      window.clearTimeout(syncTimer);
+      window.clearTimeout(applyTimer);
       aiThinking.current = false;
     };
-    // The timer reads the latest game through gameRef; depending on the whole
-    // object can cancel a bot turn on unrelated state refreshes.
+    // The handlers read the latest game through gameRef; depending on the
+    // whole object would cancel a bot turn on unrelated state refreshes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [game?.board.history.length, game?.board.turn, game?.result, myColor, difficulty]);
 
@@ -528,18 +646,28 @@ function GamePage() {
   // opted to keep it hidden entirely.
   const oppRevealed = !uiSettings.hideOpponentReveal && (oppPeek || !!game.result);
   const lastMove = game.board.history[game.board.history.length - 1] ?? null;
-  const boardForDisplay = reviewBoard ?? virtualBoard ?? game.board;
+  // A held move (confirmation setting) previews on the board before playing.
+  const confirmPreviewBoard = confirmMovePending
+    ? makeMove(cloneBoard(game.board), confirmMovePending)
+    : null;
+  const boardForDisplay = reviewBoard ?? confirmPreviewBoard ?? virtualBoard ?? game.board;
   const lastMoveForDisplay = isReviewingHistory
     ? game.board.history[currentHistoryPly - 1] ?? null
-    : lastMove;
+    : confirmMovePending ?? lastMove;
+  const orientation: Color = uiSettings.flipBoard ? (myColor === "w" ? "b" : "w") : myColor;
+  const checkedBoard = reviewBoard ?? game.board;
+  const checkSquare =
+    uiSettings.checkHighlight && isInCheck(checkedBoard, checkedBoard.turn)
+      ? findKing(checkedBoard, checkedBoard.turn)
+      : null;
   const hint = currentHint(game, myColor);
   const forcedSquares = hint?.squares ?? [];
   const railHeightStyle = boardHeight
     ? ({ "--board-height": `${boardHeight}px` } as CSSProperties)
     : undefined;
   const boardFitClass = hint
-    ? "w-[min(92vw,720px,calc(100dvh-11rem))] max-w-full"
-    : "w-[min(92vw,720px,calc(100dvh-8rem))] max-w-full";
+    ? "w-[min(92vw,var(--board-cap,720px),calc(100dvh-11rem))] max-w-full"
+    : "w-[min(92vw,var(--board-cap,720px),calc(100dvh-8rem))] max-w-full";
 
   const handleMove = (m: Move) => {
     if (game.result || isReviewingHistory) return;
@@ -553,9 +681,24 @@ function GamePage() {
       ]);
       return;
     }
+    if (uiSettings.confirmMove) {
+      // Hold the move for an explicit confirm tap; the board previews it.
+      setConfirmMovePending(m);
+      return;
+    }
+    playHeldMove(m);
+  };
+
+  const playHeldMove = (m: Move) => {
+    commitClock(myColor);
     const next = playMove(game, m);
     setGame({ ...next });
-    addIncrement(myColor);
+  };
+
+  const confirmHeldMove = () => {
+    const held = confirmMovePending;
+    setConfirmMovePending(null);
+    if (held) playHeldMove(held);
   };
 
   const cancelPremove = () => setPremoves([]);
@@ -577,6 +720,11 @@ function GamePage() {
 
   const onOfferDraw = () => {
     if (game.result || drawOfferStatus !== "idle") return;
+    if (uiSettings.confirmDrawOffer && !confirmingDraw) {
+      setConfirmingDraw(true);
+      return;
+    }
+    setConfirmingDraw(false);
     setDrawOfferStatus("offering");
     // Simple AI policy: accept if its material isn't ahead. Otherwise decline.
     const vals: Record<string, number> = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
@@ -608,7 +756,43 @@ function GamePage() {
     setMutedState(next);
   };
 
-  const historyActions = game.result ? null : confirmingResign ? (
+  const historyActions = game.result ? null : confirmMovePending ? (
+    <div className="space-y-2">
+      <div className="smallcaps text-[10px] text-parchment-300">Play this move?</div>
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          onClick={confirmHeldMove}
+          className="min-w-0 px-3 py-2 border border-gold/40 bg-gold/10 text-gold-leaf hover:bg-gold/20 hover:border-gold/70 transition text-xs font-display font-semibold tracking-wide"
+        >
+          Confirm
+        </button>
+        <button
+          onClick={() => setConfirmMovePending(null)}
+          className="min-w-0 px-3 py-2 btn-ghost text-xs font-display tracking-wide"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  ) : confirmingDraw ? (
+    <div className="space-y-2">
+      <div className="smallcaps text-[10px] text-parchment-300">Offer a draw?</div>
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          onClick={onOfferDraw}
+          className="min-w-0 px-3 py-2 border border-gold/40 bg-gold/10 text-gold-leaf hover:bg-gold/20 hover:border-gold/70 transition text-xs font-display font-semibold tracking-wide"
+        >
+          Offer draw
+        </button>
+        <button
+          onClick={() => setConfirmingDraw(false)}
+          className="min-w-0 px-3 py-2 btn-ghost text-xs font-display tracking-wide"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  ) : confirmingResign ? (
     <div className="space-y-2">
       <div className="smallcaps text-[10px] text-parchment-300">Resign the game?</div>
       <div className="grid grid-cols-2 gap-2">
@@ -796,12 +980,12 @@ function GamePage() {
                       ? moves
                       : premoveOptions
                   }
-                  orientation={myColor}
+                  orientation={orientation}
                   onMove={handleMove}
                   myColor={myColor}
                   visual={isReviewingHistory ? undefined : { ...(visual ?? {}), highlightSquares: forcedSquares }}
                   lastMove={lastMoveForDisplay}
-                  disabled={!!game.result || premovePending || isReviewingHistory}
+                  disabled={!!game.result || premovePending || isReviewingHistory || !!confirmMovePending}
                   premoveMode={!isReviewingHistory && premoveMode}
                   premoves={isReviewingHistory ? [] : validPremoves}
                   onCancelPremove={cancelPremove}
@@ -810,6 +994,7 @@ function GamePage() {
                   showCoordinates={uiSettings.showCoordinates}
                   highlightLastMove={uiSettings.highlightLastMove}
                   showLegalMoves={uiSettings.showLegalMoves}
+                  checkSquare={isReviewingHistory ? null : checkSquare}
                 />
               </div>
               <div className="flex items-center justify-between gap-2 sm:hidden">

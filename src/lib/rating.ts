@@ -11,7 +11,7 @@
 // games use the account rating in D1 instead — see src/lib/server/games.ts.
 
 import { glickoUpdate } from "./glicko";
-import { DEFAULT_CATEGORY } from "./ratingCategories";
+import { DEFAULT_CATEGORY, type RatingCategoryId } from "./ratingCategories";
 import { loadRatings, saveRatings, type CategoryStats } from "./ratings";
 
 export interface Rating {
@@ -34,18 +34,31 @@ function toRating(s: CategoryStats): Rating {
 }
 
 export function loadRating(): Rating {
-  return toRating(loadRatings()[DEFAULT_CATEGORY]);
+  return loadRatingFor(DEFAULT_CATEGORY);
 }
 
 export function saveRating(r: Rating) {
+  saveRatingFor(DEFAULT_CATEGORY, r);
+}
+
+// Per-time-control buckets: each category has its own independent rating, and
+// a rated game only ever touches the bucket its time control falls into.
+export function loadRatingFor(category: RatingCategoryId): Rating {
+  return toRating(loadRatings()[category]);
+}
+
+export function saveRatingFor(category: RatingCategoryId, r: Rating, outcome?: "win" | "loss" | "draw") {
   if (typeof window === "undefined") return;
   const all = loadRatings();
-  const s = all[DEFAULT_CATEGORY];
+  const s = all[category];
   s.rating = r.rating;
   s.rd = r.rd;
   s.vol = r.vol;
   s.games = r.games;
   s.peak = Math.max(s.peak, r.rating);
+  if (outcome === "win") s.wins += 1;
+  else if (outcome === "loss") s.losses += 1;
+  else if (outcome === "draw") s.draws += 1;
   saveRatings(all);
 }
 

@@ -36,6 +36,7 @@ export type PieceTheme =
 
 export type AccentColor = "blue" | "green" | "amber" | "rose";
 export type AnimationSpeed = "off" | "fast" | "normal";
+export type SiteTheme = "dark" | "light" | "system";
 
 export interface Settings {
   boardTheme: BoardTheme;
@@ -52,6 +53,19 @@ export interface Settings {
   highlightLastMove: boolean; // tint the from/to squares of the last move
   showLegalMoves: boolean; // dots on the squares a selected piece can move to
   premovesEnabled: boolean; // allow queuing moves during the opponent's turn
+  confirmMove: boolean; // require a confirm tap before a move is sent (slow games)
+  confirmDrawOffer: boolean; // ask before sending a draw offer
+  flipBoard: boolean; // view the board from the opponent's side
+  checkHighlight: boolean; // tint the checked king's square
+  boardSize: number; // board width multiplier, 0.8..1.1
+  largerPieces: boolean; // draw pieces bigger inside their squares
+  moveSound: boolean; // click on a quiet move
+  captureSound: boolean; // thud on a capture
+  checkSound: boolean; // ping when a king is in check
+  gameEndSound: boolean; // chime when the game ends
+  soundEnabled: boolean; // master switch for all game audio
+  siteTheme: SiteTheme; // dark, light, or follow the OS
+  compactMode: boolean; // tighter interface density
   lowTimeWarning: boolean; // ticking alert when the clock runs low
   uiScale: number; // 0.85..1.15, multiplies the root font size
   accentColor: AccentColor;
@@ -79,6 +93,19 @@ export const DEFAULT_SETTINGS: Settings = {
   showLegalMoves: true,
   premovesEnabled: true,
   lowTimeWarning: true,
+  confirmMove: false,
+  confirmDrawOffer: false,
+  flipBoard: false,
+  checkHighlight: true,
+  boardSize: 1,
+  largerPieces: false,
+  moveSound: true,
+  captureSound: true,
+  checkSound: true,
+  gameEndSound: true,
+  soundEnabled: true,
+  siteTheme: "dark",
+  compactMode: false,
   uiScale: 1,
   accentColor: "blue",
   animationSpeed: "normal",
@@ -167,6 +194,25 @@ export function loadSettings(): Settings {
       showLegalMoves: bool(parsed.showLegalMoves, DEFAULT.showLegalMoves),
       premovesEnabled: bool(parsed.premovesEnabled, DEFAULT.premovesEnabled),
       lowTimeWarning: bool(parsed.lowTimeWarning, DEFAULT.lowTimeWarning),
+      confirmMove: bool(parsed.confirmMove, DEFAULT.confirmMove),
+      confirmDrawOffer: bool(parsed.confirmDrawOffer, DEFAULT.confirmDrawOffer),
+      flipBoard: bool(parsed.flipBoard, DEFAULT.flipBoard),
+      checkHighlight: bool(parsed.checkHighlight, DEFAULT.checkHighlight),
+      boardSize:
+        typeof parsed.boardSize === "number"
+          ? Math.max(0.8, Math.min(1.1, parsed.boardSize))
+          : DEFAULT.boardSize,
+      largerPieces: bool(parsed.largerPieces, DEFAULT.largerPieces),
+      moveSound: bool(parsed.moveSound, DEFAULT.moveSound),
+      captureSound: bool(parsed.captureSound, DEFAULT.captureSound),
+      checkSound: bool(parsed.checkSound, DEFAULT.checkSound),
+      gameEndSound: bool(parsed.gameEndSound, DEFAULT.gameEndSound),
+      soundEnabled: bool(parsed.soundEnabled, DEFAULT.soundEnabled),
+      siteTheme:
+        parsed.siteTheme === "dark" || parsed.siteTheme === "light" || parsed.siteTheme === "system"
+          ? parsed.siteTheme
+          : DEFAULT.siteTheme,
+      compactMode: bool(parsed.compactMode, DEFAULT.compactMode),
       uiScale:
         typeof parsed.uiScale === "number"
           ? Math.max(0.85, Math.min(1.15, parsed.uiScale))
@@ -188,10 +234,12 @@ export function loadSettings(): Settings {
   return { ...DEFAULT };
 }
 
-export function saveSettings(s: Settings) {
-  if (typeof window === "undefined") return;
+const UPDATED_AT_KEY = "dc:settings-updated-at";
+
+function writeLocalSettings(s: Settings, updatedAt: number) {
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+    window.localStorage.setItem(UPDATED_AT_KEY, String(updatedAt));
   } catch {}
   applyBoardTheme(s.boardTheme);
   applyPieceTheme(s.pieceTheme);
@@ -199,12 +247,81 @@ export function saveSettings(s: Settings) {
   window.dispatchEvent(new Event(SETTINGS_CHANGED_EVENT));
 }
 
+export function saveSettings(s: Settings) {
+  if (typeof window === "undefined") return;
+  writeLocalSettings(s, Date.now());
+  schedulePushToServer();
+}
+
+// ---- Per-account settings sync ----
+// Settings are saved locally first (they must work signed out), then pushed
+// to the account so they follow the user across devices. On page load,
+// pullSettingsFromServer adopts the server copy when it is newer.
+
+let pushTimer: ReturnType<typeof setTimeout> | null = null;
+
+function localUpdatedAt(): number {
+  try {
+    return parseInt(window.localStorage.getItem(UPDATED_AT_KEY) ?? "0", 10) || 0;
+  } catch {
+    return 0;
+  }
+}
+
+function schedulePushToServer() {
+  if (pushTimer) clearTimeout(pushTimer);
+  pushTimer = setTimeout(() => {
+    pushTimer = null;
+    const updatedAt = localUpdatedAt();
+    void fetch("/api/users/settings", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ settings: loadSettings(), updatedAt }),
+    }).catch(() => {
+      // Signed out or offline: local settings still apply.
+    });
+  }, 800);
+}
+
+/** Adopt the account's stored settings when they are newer than this
+ *  device's. Returns true when the server copy was applied. */
+export async function pullSettingsFromServer(): Promise<boolean> {
+  if (typeof window === "undefined") return false;
+  try {
+    const res = await fetch("/api/users/settings");
+    if (!res.ok) return false;
+    const data = (await res.json()) as { settings: Partial<Settings> | null; updatedAt: number | null };
+    if (!data.settings || !data.updatedAt) return false;
+    if (data.updatedAt <= localUpdatedAt()) return false;
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(data.settings));
+    } catch {}
+    const merged = loadSettings(); // re-validate through the normal parser
+    writeLocalSettings(merged, data.updatedAt);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /** Push the interface-wide preferences (scale, accent, motion, contrast) into
  *  the document so every page picks them up. */
 export function applyUiPrefs(s: Settings) {
   if (typeof document === "undefined") return;
   const html = document.documentElement;
-  html.style.fontSize = s.uiScale === 1 ? "" : `${16 * s.uiScale}px`;
+  // Compact mode tightens the whole interface by shrinking the rem base a
+  // notch; it stacks with the UI scale preference.
+  const scale = s.uiScale * (s.compactMode ? 0.92 : 1);
+  html.style.fontSize = scale === 1 ? "" : `${16 * scale}px`;
+  html.style.setProperty("--board-cap", `${Math.round(720 * s.boardSize)}px`);
+  html.style.setProperty("--piece-fit", s.largerPieces ? "97%" : "88%");
+  html.dataset.theme =
+    s.siteTheme === "system"
+      ? window.matchMedia?.("(prefers-color-scheme: light)").matches
+        ? "light"
+        : "dark"
+      : s.siteTheme;
+  html.style.colorScheme = html.dataset.theme;
   const accent = ACCENT_THEMES[s.accentColor] ?? ACCENT_THEMES.blue;
   html.style.setProperty("--accent", accent.accent);
   html.style.setProperty("--accent-hi", accent.accentHi);

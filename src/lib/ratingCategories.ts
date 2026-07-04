@@ -7,8 +7,9 @@
 // matchmaking are intentionally out of scope for now.
 
 import { Flame, Rabbit, Rocket, Zap, type LucideIcon } from "lucide-react";
+import { categoryForTimeControl as speedCategoryForTimeControl, type SpeedCategory } from "./speed";
 
-export type RatingCategoryId = "ultrabullet" | "bullet" | "blitz" | "rapid";
+export type RatingCategoryId = SpeedCategory;
 
 export interface RatingCategory {
   id: RatingCategoryId;
@@ -44,13 +45,6 @@ export function isRatingCategoryId(value: unknown): value is RatingCategoryId {
   return typeof value === "string" && RATING_CATEGORY_IDS.includes(value as RatingCategoryId);
 }
 
-/** Classify a time control into a speed bucket, Lichess-style: the estimated
- *  game duration is base time plus 40 moves of increment. Matches the pool →
- *  speed mapping in QueueButton for every quick-pairing pool. */
-export function categoryForTimeControl(timeSec: number, incrementSec: number): RatingCategoryId {
-  const estimatedSec = timeSec + 40 * incrementSec;
-  if (estimatedSec < 30) return "ultrabullet";
-  if (estimatedSec < 180) return "bullet";
-  if (estimatedSec < 480) return "blitz";
-  return "rapid";
-}
+/** Classify a time control into a speed bucket. Shared with the game servers
+ *  via lib/speed.ts so client and server always agree on the bucket. */
+export const categoryForTimeControl = speedCategoryForTimeControl;

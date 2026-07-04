@@ -6,9 +6,10 @@ import {
   applyPieceTheme,
   applyUiPrefs,
   loadSettings,
+  pullSettingsFromServer,
   SETTINGS_CHANGED_EVENT,
 } from "@/lib/settings";
-import { setUiSounds, setVolume } from "@/lib/sounds";
+import { configureSoundPrefs, setUiSounds, setVolume } from "@/lib/sounds";
 
 export function SettingsBootstrap() {
   const [fps, setFps] = useState(false);
@@ -21,11 +22,28 @@ export function SettingsBootstrap() {
       applyUiPrefs(s);
       setVolume(s.volume);
       setUiSounds(s.uiSounds);
+      configureSoundPrefs({
+        enabled: s.soundEnabled,
+        move: s.moveSound,
+        capture: s.captureSound,
+        check: s.checkSound,
+        gameEnd: s.gameEndSound,
+      });
       setFps(s.fpsCounter);
     };
     apply();
+    // Signed-in accounts sync settings across devices: adopt the server copy
+    // when it is newer than this device's (writes re-fire the changed event).
+    void pullSettingsFromServer();
     window.addEventListener(SETTINGS_CHANGED_EVENT, apply);
-    return () => window.removeEventListener(SETTINGS_CHANGED_EVENT, apply);
+    // "System" theme follows the OS live.
+    const media = window.matchMedia?.("(prefers-color-scheme: light)");
+    const onScheme = () => applyUiPrefs(loadSettings());
+    media?.addEventListener?.("change", onScheme);
+    return () => {
+      window.removeEventListener(SETTINGS_CHANGED_EVENT, apply);
+      media?.removeEventListener?.("change", onScheme);
+    };
   }, []);
 
   return fps ? <FpsMeter /> : null;
