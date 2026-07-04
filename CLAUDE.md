@@ -83,6 +83,10 @@ The skills in `.claude/skills/` are part of this project's workflow. Use them wh
 - For visual/design work, avoid generic "AI-generated" aesthetics: use **hallmark** (anti-slop rules and pre-ship design gates), **ui-ux-pro-max** (searchable styles, palettes, font pairings, and UX guidelines — pick product-appropriate, non-default choices), and **redesign-existing-projects** when upgrading existing pages.
 - **verification-before-completion** before claiming anything works, and **requesting-code-review** before merging.
 
+## 7. Obsidian Vault (mcpvault)
+
+When `mcpvault` MCP tools are available, the user's Obsidian vault is connected. Consult it whenever it could be relevant — project notes, design ideas, feature plans, or context the user has written down — before asking the user questions the vault might answer. If a task produces knowledge worth keeping (decisions, research, plans), offer to save a note back to the vault.
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
