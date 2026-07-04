@@ -61,6 +61,25 @@ For multi-step tasks, state a brief plan:
 
 Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
 
+## 5. Workflow: Pull Requests
+
+**Every change ships as a pull request.**
+
+- Never commit directly to `master`. Work on a feature branch.
+- When a change is complete (committed and pushed), always open a PR for it — don't wait to be asked.
+- One PR per logical change, with a clear title and a body describing what changed and why.
+
+## 6. Use the Project Skills
+
+The skills in `.claude/skills/` are part of this project's workflow. Use them whenever they apply — don't wait for the user to invoke them:
+
+- **brainstorming** before designing any new feature or behavior change.
+- **writing-plans** for multi-step work, then **subagent-driven-development** or **dispatching-parallel-agents** to execute — prefer subagents for independent tasks (strongly preferred in this project).
+- **test-driven-development** when implementing features or bugfixes.
+- **systematic-debugging** for any bug or unexpected behavior, before proposing fixes.
+- **frontend-design** when building or reshaping UI; **webapp-testing** to verify UI changes in a real browser.
+- **verification-before-completion** before claiming anything works, and **requesting-code-review** before merging.
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
