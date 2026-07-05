@@ -2222,7 +2222,10 @@ export class GameServer extends DurableObject<Env> {
 
   private parseBuffPicks(raw: unknown): BuffPick[] | null {
     if (raw === undefined) return [];
-    if (!Array.isArray(raw) || raw.length > 8) return null;
+    // 32 bounds server work while leaving room for the longest pick chains
+    // (Total Warp moves up to 15 pieces via alternating piece / destination
+    // picks; Warp Sovereign runs up to 6).
+    if (!Array.isArray(raw) || raw.length > 32) return null;
     const picks: BuffPick[] = [];
     for (const entry of raw) {
       const pick = (entry || {}) as { square?: unknown; buffIndex?: unknown };
@@ -2259,7 +2262,11 @@ export class GameServer extends DurableObject<Env> {
   private buffPicksComplete(game: NerfGame, color: Color, buffIndex: number, picks: BuffPick[]): boolean {
     const collected = this.walkBuffPicks(game, color, buffIndex, picks);
     if (!collected) return false;
-    return buffNextTarget(game, color, buffIndex, collected) === null;
+    const next = buffNextTarget(game, color, buffIndex, collected);
+    // A finishable step means the picks so far already form a complete
+    // effect (Warp Sovereign's "stop after any pair"), so an early stop is
+    // as valid as walking the whole chain.
+    return next === null || (next.kind === "square" && !!next.finishable);
   }
 
   // ---------------- spectating & lobby ----------------

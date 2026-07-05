@@ -193,7 +193,14 @@ export function newBuffMatchState(seed: number, cadence: number, mode?: DraftMod
 // --- Targeting ---------------------------------------------------------------
 
 export type BuffTarget =
-  | { kind: "square"; label: string; squares: Square[] }
+  | {
+      kind: "square";
+      label: string;
+      squares: Square[];
+      /** The picks so far already form a complete effect: the player may
+       * stop here (the UI offers Done) instead of picking further targets. */
+      finishable?: boolean;
+    }
   | {
       kind: "enemy-buff";
       label: string;

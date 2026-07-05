@@ -91,9 +91,22 @@ export function useBuffTargeting({
     }
   };
 
+  /** Stop early on a finishable step (Warp Sovereign and friends): the picks
+   * so far already form a complete effect, so fire with what we have. */
+  const finish = () => {
+    if (!targeting || !game) return;
+    if (targeting.target.kind !== "square" || !targeting.target.finishable) return;
+    if (onUse) onUse(targeting.buffIndex, targeting.picks);
+    else {
+      activateBuff(game, myColor, targeting.buffIndex, targeting.picks);
+      onChanged?.();
+    }
+    setTargeting(null);
+  };
+
   const cancel = () => setTargeting(null);
 
-  return { targeting, start, pick, cancel };
+  return { targeting, start, pick, cancel, finish };
 }
 
 /** Floating chip over the board while a buff is picking its square targets:
@@ -103,15 +116,20 @@ export function TargetingBanner({
   myColor,
   targeting,
   onCancel,
+  onFinish,
 }: {
   game: NerfGame;
   myColor: Color;
   targeting: BuffTargeting;
   onCancel: () => void;
+  /** Finishable steps (the picks so far are a complete effect) show a Done
+   * button that fires the buff early instead of picking further targets. */
+  onFinish?: () => void;
 }) {
   const inst = game.buffs?.players[myColor].buffs[targeting.buffIndex];
   const name = (inst && BUFF_BY_ID[inst.id]?.name) ?? "Buff";
   const empty = targeting.target.kind === "square" && targeting.target.squares.length === 0;
+  const finishable = targeting.target.kind === "square" && !!targeting.target.finishable;
   return (
     <div className="pointer-events-none absolute inset-x-0 bottom-2 z-30 flex justify-center px-2">
       <div className="pointer-events-auto flex max-w-full items-center gap-2 border border-gold/50 bg-ink-900/95 px-3 py-1.5 shadow-plate backdrop-blur-sm">
@@ -119,6 +137,14 @@ export function TargetingBanner({
         <span className="min-w-0 truncate font-display text-xs font-semibold text-parchment">
           {name}: {empty ? "no valid targets right now" : targeting.target.label}
         </span>
+        {finishable && onFinish && (
+          <button
+            onClick={onFinish}
+            className="btn-leaf shadow-leaf shrink-0 px-2 py-0.5 font-display text-[10px] font-semibold tracking-wide"
+          >
+            Done
+          </button>
+        )}
         <button
           onClick={onCancel}
           className="btn-ghost shrink-0 px-2 py-0.5 font-display text-[10px] tracking-wide"

@@ -1403,6 +1403,7 @@ function GamePage() {
                     myColor={myColor}
                     targeting={buffTargeting.targeting}
                     onCancel={buffTargeting.cancel}
+                    onFinish={buffTargeting.finish}
                   />
                 )}
               </div>

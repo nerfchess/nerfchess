@@ -776,6 +776,9 @@ export function relocateMany(
           kind: "square",
           label: `Choose a piece to move (${froms.length + 1}/${count})`,
           squares,
+          // Every completed piece move is a full effect on its own: after
+          // the first one the player may stop instead of moving all `count`.
+          ...(picks.length > 0 ? { finishable: true } : {}),
         };
       }
       const from = froms[froms.length - 1];
@@ -898,14 +901,24 @@ export function voidSquares(count: number, turns: number | null): Mech {
   };
 }
 
-/** Steal up to `n` of the opponent's unspent buffs (targeted from a list). */
-export function stealBuffs(n: number, maxTier?: number): Mech {
+/** Steal up to `n` of the opponent's unspent buffs (targeted from a list).
+ * `canSteal` lets the library exclude cards a transfer cannot carry cleanly
+ * (locked-in piece-bound upgrades stay with their owner). */
+export function stealBuffs(
+  n: number,
+  maxTier?: number,
+  canSteal?: (b: BuffInstance) => boolean,
+): Mech {
   const stealable = (api: BuffApi, taken: number[]) =>
     api.theirs.buffs
       .map((b, index) => ({ b, index }))
       .filter(
         ({ b, index }) =>
-          !b.spent && !b.nullified && (!maxTier || b.tier <= maxTier) && !taken.includes(index),
+          !b.spent &&
+          !b.nullified &&
+          (!maxTier || b.tier <= maxTier) &&
+          (!canSteal || canSteal(b)) &&
+          !taken.includes(index),
       );
   return activated(
     (_inst, api, picks) => {

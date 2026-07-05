@@ -1734,6 +1734,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                     myColor={myColor}
                     targeting={buffTargeting.targeting}
                     onCancel={buffTargeting.cancel}
+                    onFinish={buffTargeting.finish}
                   />
                 )}
               </div>
