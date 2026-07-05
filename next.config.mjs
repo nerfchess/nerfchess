@@ -20,8 +20,15 @@ function buildVersion() {
 }
 
 // Expose Cloudflare bindings (D1, Durable Objects) to route handlers during
-// `next dev` via wrangler's platform proxy.
-initOpenNextCloudflareForDev();
+// `next dev` via wrangler's platform proxy. Guard to dev only: during a
+// production `next build` (e.g. Cloudflare Workers Builds / CI) this call sets
+// up the local platform proxy and, because of the Hyperdrive binding, demands a
+// local Postgres connection string that CI has no reason to provide — throwing
+// and failing the build. Production uses the real bindings at runtime, so the
+// dev proxy is never needed there.
+if (process.env.NODE_ENV === "development") {
+  initOpenNextCloudflareForDev();
+}
 
 // Content Security Policy — nerf chess loads no third-party scripts other than
 // Vercel Analytics. Fonts come from Google Fonts (see src/app/layout.tsx).
