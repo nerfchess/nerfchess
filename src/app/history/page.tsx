@@ -99,9 +99,9 @@ export default function HistoryPage() {
               className="mt-8"
               icon={History}
               title="No games yet"
-              body="Your finished games show up here — every result, with both secret rules finally revealed. Play your first one to start the record."
+              body="Your finished games show up here, every result with both secret rules finally revealed. Play your first one to start the record."
               action={{ href: "/friend", label: "Play a Friend" }}
-              secondary={{ href: "/game?mode=ai", label: "Play vs Bot" }}
+              secondary={{ href: "/play", label: "Play vs Bot" }}
             />
           ) : (
             <div className="mt-8 plate p-8 text-center">

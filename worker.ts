@@ -194,7 +194,7 @@ type QueueEntry = {
   at: number;
 };
 type ClientFrame =
-  | { t: "create"; d?: { timeSec?: unknown; incrementSec?: unknown; draft?: unknown; mode?: unknown; picksVisible?: unknown; invite?: unknown; stacked?: unknown } }
+  | { t: "create"; d?: { timeSec?: unknown; incrementSec?: unknown; draft?: unknown; mode?: unknown; picksVisible?: unknown; invite?: unknown; stacked?: unknown; rated?: unknown } }
   | { t: "join"; d?: { id?: unknown } }
   | { t: "reconnect"; d?: { id?: unknown; color?: unknown; token?: unknown } }
   | { t: "move"; d?: { u?: unknown; ply?: unknown } }
@@ -285,10 +285,10 @@ const houseHeartbeatMs = 20 * 1000;
 // the single-threaded DO past its CPU limit. Run it at most this often; the
 // cheap indexed reschedule keeps the alarm chain alive in between.
 const maintenanceMinIntervalMs = 8 * 1000;
-// Queue presence: keep 8-12 personas seeking across the two pools (raised for
-// the 50-persona roster / load test so the lobby shows a busy queue).
-const houseSeekMin = 8;
-const houseSeekMax = 12;
+// Queue presence: keep only 2-4 personas seeking. The rest of the roster should
+// be PLAYING each other (house-vs-house below), not sitting idle in the queue.
+const houseSeekMin = 2;
+const houseSeekMax = 4;
 const houseSeekTtlMs = 8 * 60 * 1000;
 // Hard caps: at most this many simultaneous house-vs-house filler games, and
 // at most this many unfinished games with any house seat at all. Above the
@@ -297,14 +297,14 @@ const houseSeekTtlMs = 8 * 60 * 1000;
 // optics and are pure background engine work on the single-threaded DO. One
 // filler still keeps the lobby looking alive while halving that background
 // load. Bump back to 2 if the lobby looks too quiet.
-// LOAD TEST config: with the backend hardened, run a big fleet of house-vs-house
-// games to stress the single-threaded DO with the 50-persona roster. Up to 25
-// filler games is ~50 bots playing at once. The per-alarm action ceiling below
-// still bounds how many engine searches run per tick, so this raises the
-// standing game count without letting one tick run a long batch. Dial both
-// back down (e.g. 0 and 3) if the server strains under real traffic.
-const houseVsHouseCap = 25;
-const houseTotalGamesCap = 28;
+// Bots should mostly be PLAYING each other, not queueing. Up to 18 house-vs-house
+// games (~36 bots in games) plus a couple of seekers. Paired with the faster
+// filler spawn cadence below so the freed personas actually start games quickly
+// instead of trickling in one per minute. The per-alarm action ceiling still
+// bounds engine searches per tick. Dial these (and the cadence below) back down
+// if the server strains under real traffic.
+const houseVsHouseCap = 18;
+const houseTotalGamesCap = 20;
 // Per-alarm ceiling on house engine actions (moves and draft resolves), across
 // all live house games. Human-facing actions used to ALL run in one tick, so
 // after any stall every overdue game became due at once and one alarm ran a
@@ -344,7 +344,7 @@ type HouseSeekEntry = {
 // Bump this on every deploy so /healthz identifies the running build. When it
 // is a static string that never changes, nobody can tell what code is live,
 // which is exactly how a shipped fix looks unfixed. Keep it short.
-const buildVersion = "server-cpu-fix-2";
+const buildVersion = "house-tune-1";
 // Lichess-style start-of-game grace: a player's clock only starts charging 10
 // seconds into their first move, so nobody loses time to a slow page load.
 const firstMoveGraceMs = 10 * 1000;
@@ -1384,15 +1384,20 @@ export class GameServer extends DurableObject<Env> {
     const session = this.session(ws);
     if (session.matchId) return error(ws, "already_joined", "This connection already belongs to a game.");
 
-    const requested = (data || {}) as { timeSec?: unknown; incrementSec?: unknown; draft?: unknown; mode?: unknown; picksVisible?: unknown; invite?: unknown; stacked?: unknown };
+    const requested = (data || {}) as { timeSec?: unknown; incrementSec?: unknown; draft?: unknown; mode?: unknown; picksVisible?: unknown; invite?: unknown; stacked?: unknown; rated?: unknown };
     const timeSec = Number.isInteger(requested.timeSec) ? Number(requested.timeSec) : 600;
     const incrementSec = Number.isInteger(requested.incrementSec) ? Number(requested.incrementSec) : 0;
     if (timeSec < 0 || timeSec > 7200 || incrementSec < 0 || incrementSec > 60) {
       return error(ws, "invalid_clock", "Unsupported time control.");
     }
-    // Optional Draft ruleset for friend games. Friend games are always
-    // casual: `rated` is deliberately never set here, whatever the client
-    // asks. Only the matchmaking queue creates rated games.
+    // Custom challenges may opt into a rated game. Rating still only moves when
+    // both seats belong to accounts (attachSession fills match.users for signed
+    // -in seats, and recordFinishedGame no-ops the rating when either side is
+    // anonymous), so a rated flag on an anonymous game degrades to casual on
+    // its own. The category is the same bucket the queue uses (mode for Draft,
+    // else time control), so a rated custom game moves the normal rating.
+    const rated = requested.rated === true;
+    // Optional Draft ruleset for friend games.
     const draft = requested.draft === true;
     // The game's section: "nerf" or "buff". Older clients send neither and
     // get the legacy merged rules.
@@ -1433,6 +1438,7 @@ export class GameServer extends DurableObject<Env> {
       startedAt: null,
       completedAt: null,
       replayVersion: REPLAY_VERSION,
+      ...(rated ? { rated: true } : {}),
       ...(draft
         ? {
             draft: true,
@@ -2446,7 +2452,7 @@ export class GameServer extends DurableObject<Env> {
           const a = free.splice(randomInt(free.length), 1)[0];
           const b = free.splice(randomInt(free.length), 1)[0];
           await this.startHouseVsHouseGame(a, b, db);
-          await this.ctx.storage.put(houseNextFillerKey, now + 20_000 + randomInt(60_000));
+          await this.ctx.storage.put(houseNextFillerKey, now + 4_000 + randomInt(6_000));
         }
       } catch (err) {
         console.error("house filler start failed", err);
@@ -3561,6 +3567,7 @@ export class GameServer extends DurableObject<Env> {
     const challenges: Array<{
       id: string;
       host: { name: string; rating: number | null };
+      rated: boolean;
       draft: boolean;
       mode?: DraftMode;
       timeSec: number;
@@ -3578,6 +3585,7 @@ export class GameServer extends DurableObject<Env> {
           challenges.push({
             id: match.id,
             host: host ? { name: host.name, rating: Math.round(host.rating) } : { name: "Anonymous", rating: null },
+            rated: !!match.rated,
             draft: !!match.draft,
             ...(match.mode ? { mode: match.mode } : {}),
             timeSec: match.setup.timeSec,

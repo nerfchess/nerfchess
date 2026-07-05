@@ -148,6 +148,11 @@ function GamePage() {
   const modeParam = params.get("mode");
   const gameMode: "nerf" | "buff" | null =
     modeParam === "nerf" || modeParam === "buff" ? modeParam : null;
+  // Plain chess vs the bot: no nerfs on either side and no buff drafts. Both
+  // the homepage/history "Play vs Bot" links (mode=ai) and the /play "Plain
+  // chess" option (mode=plain) land here, so clicking Play vs Bot never drops
+  // the player into a hidden-handicap game.
+  const plainMode = modeParam === "plain" || modeParam === "ai";
   // Draft mode: buff drafts on a cadence (plus a nerf draft outside buff mode).
   const draftMode = params.get("draft") === "1" || gameMode != null;
   // Games vs bots are casual by default; only rated games touch your rating.
@@ -309,6 +314,14 @@ function GamePage() {
       const dealt = dealNerfOptions(new Set());
       setNerfDraft({ myOptions: dealt.slice(0, 2), aiOptions: dealt.slice(2, 4) });
       setNerfDeadline(Date.now() + 15_000);
+      return;
+    }
+
+    if (plainMode) {
+      // Plain chess: both sides run the no-nerf sentinel, so neither player
+      // carries a hidden handicap. No buffs, no drafts, just chess vs the bot.
+      setHistoryPly(null);
+      setGame(newGame(UNRESTRICTED_NERF, UNRESTRICTED_NERF, makeSeed()));
       return;
     }
 
@@ -612,15 +625,17 @@ function GamePage() {
       baseSec: initialTimeMs / 1000,
       incSec: incrementMs / 1000,
       ratingChange: change,
-      myNerf: nerfSummary(myColor === "w" ? game.white.nerf : game.black.nerf),
-      opponentNerf: nerfSummary(myColor === "w" ? game.black.nerf : game.white.nerf),
+      // Plain chess has no rules to report; leave both nerf summaries empty so
+      // the history entry never shows a "No nerf" rule line.
+      myNerf: plainMode ? null : nerfSummary(myColor === "w" ? game.white.nerf : game.black.nerf),
+      opponentNerf: plainMode ? null : nerfSummary(myColor === "w" ? game.black.nerf : game.white.nerf),
       moves: game.board.history.map(moveToUCI),
       serverGameId: null,
     });
     // Bot games never touch the game server, so tell the site counter about
     // this one; the home "games played" stat includes bot games.
     fetch("/api/games/bot", { method: "POST" }).catch(() => {});
-  }, [game, myColor, difficulty, rated, initialTimeMs, incrementMs, ratingCategory]);
+  }, [game, myColor, difficulty, rated, initialTimeMs, incrementMs, ratingCategory, plainMode]);
 
   // Execute the head of the premove queue when our turn returns. If the head
   // is no longer playable (target ran away, piece pinned, friendly target
@@ -992,8 +1007,8 @@ function GamePage() {
   // Section games never show a "hidden rule" placeholder: the opponent card
   // carries only the player header until the rule reveals (game end). Buff
   // mode hides both rule sections entirely, there are no nerfs at all.
-  const hideOppNerfCard = gameMode === "buff" || (draftMode && !oppRevealed);
-  const hideMyNerfCard = gameMode === "buff";
+  const hideOppNerfCard = plainMode || gameMode === "buff" || (draftMode && !oppRevealed);
+  const hideMyNerfCard = plainMode || gameMode === "buff";
   // Nerf mode: held boons ride in the same corner card as the nerf, so the
   // handicap and its reliefs read together at a glance.
   const myHeldBoons =
@@ -1230,6 +1245,7 @@ function GamePage() {
                 {" · "}
               </>
             )}
+            {plainMode && <>plain chess · </>}
             bot on {difficulty} · {rated ? "rated" : "casual"}
           </div>
           <button
@@ -1302,8 +1318,9 @@ function GamePage() {
               compact
               action={
                 // Section games: the opponent's rule stays fully hidden until
-                // the game ends, so there is no self-peek.
-                gameMode == null && !oppRevealed && !uiSettings.hideOpponentReveal ? (
+                // the game ends, so there is no self-peek. Plain chess has no
+                // rule to reveal at all.
+                gameMode == null && !plainMode && !oppRevealed && !uiSettings.hideOpponentReveal ? (
                   <button
                     onClick={() => setOppPeek(true)}
                     className="w-full px-3 py-2 border border-white/15 bg-white/[0.03] text-parchment-200 hover:border-white/30 hover:bg-white/[0.06] transition text-xs font-semibold"
@@ -1339,7 +1356,7 @@ function GamePage() {
               progress={myNerf.progress?.(myState, myCtx) ?? null}
               boons={myHeldBoons}
               action={
-                gameMode === "buff" ? null : (
+                gameMode === "buff" || plainMode ? null : (
                   <button
                     onClick={() => setSharedMine((v) => !v)}
                     className={
@@ -1462,7 +1479,7 @@ function GamePage() {
                   />
                 )}
               </div>
-              {gameMode !== "buff" && (
+              {gameMode !== "buff" && !plainMode && (
                 <div className="plate mt-1 p-2 px-3 sm:hidden">
                   <div className="flex items-center gap-2">
                     <span className={`min-w-0 truncate font-display text-sm font-semibold tier-${myNerf.tier}`}>
@@ -1614,8 +1631,8 @@ function GamePage() {
           onDismiss={() => setShowResult(false)}
           result={game.result}
           myColor={myColor}
-          myNerf={gameMode === "buff" ? undefined : myNerf}
-          opponentNerf={gameMode === "buff" ? undefined : opponentNerf}
+          myNerf={gameMode === "buff" || plainMode ? undefined : myNerf}
+          opponentNerf={gameMode === "buff" || plainMode ? undefined : opponentNerf}
           opponentHidden={uiSettings.hideOpponentReveal && !oppPeek}
           ratingChange={ratingChange}
           onRematch={handleRematch}

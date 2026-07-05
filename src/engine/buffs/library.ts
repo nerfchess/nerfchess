@@ -300,29 +300,44 @@ function severBuffs(n: number): Mech {
   );
 }
 
-/** True when a held buff is an already-online permanent: a piece-bound
- * upgrade that has been attached (God Knight and friends) or a permanent
- * passive engine with no charges or timer. These are build-arounds the
- * opponent invested in; broad nullify effects leave them alone. */
+/** A genuinely owner-relative upgrade: an activated, spend-on-use:false card
+ * that has already been BOUND to specific square(s) of its owner (God Knight,
+ * Colossus, Living God, Anchor, the pieceBound family, a placed Void Realm).
+ * Its instance state points at those squares and any board effects it added
+ * are keyed to the owner, so a steal or copy would strand the effect on the
+ * victim and hand the thief a dead card whose bound square now holds an enemy
+ * piece. An unbound copy of the same card (never activated) has no square yet
+ * and transfers cleanly, so it stays stealable. */
+function boundUpgrade(b: BuffInstance): boolean {
+  const d = BUFF_BY_ID[b.id];
+  if (!d) return false;
+  return (
+    d.kind === "activated" &&
+    d.spendOnUse === false &&
+    (b.state.sq != null || b.state.sqs != null || b.state.squares != null)
+  );
+}
+
+/** True when a held buff is an already-online permanent: a bound piece upgrade
+ * (see boundUpgrade) or a permanent passive engine with no charges or timer.
+ * These are build-arounds the opponent invested in; broad nullify effects
+ * leave them alone. */
 function onlinePermanent(b: BuffInstance): boolean {
   const d = BUFF_BY_ID[b.id];
   if (!d) return false;
-  if (d.kind === "activated") {
-    return (
-      d.spendOnUse === false &&
-      (b.state.sq != null || b.state.sqs != null || b.state.squares != null)
-    );
-  }
+  if (d.kind === "activated") return boundUpgrade(b);
   if (d.kind === "passive") return b.state.turns == null && b.state.charges == null;
   return false;
 }
 
-/** Steal / copy rule: locked-in upgrades (a piece-bound card already attached
- * to a piece, or a permanent passive engine) stay with their owner. Their
- * board effects and bound squares are owner-relative, so a transfer would
- * strand the effect on the victim while handing the thief a dead card. Same
- * exclusion broad nullify already applies. */
-const notLockedIn = (b: BuffInstance) => !onlinePermanent(b);
+/** Steal / copy rule: only genuinely bound piece upgrades stay with their
+ * owner. Their state points at the owner's square, so a transfer strands the
+ * effect on the victim and hands the thief a dead card. Everything else a
+ * player holds transfers cleanly: a permanent passive augment (Amazon Army,
+ * Royal Ascension, the atomic-capture line) is re-derived from the current
+ * owner every turn, so it works fully once siphoned. This is deliberately
+ * narrower than the nullify exclusion, which also spares permanent passives. */
+const notLockedIn = (b: BuffInstance) => !boundUpgrade(b);
 
 /** Broad nullify: cancels unused activated cards and temporary passives.
  * Online permanents resist; only targeted counters like Sever remove those. */
@@ -2845,10 +2860,10 @@ const TIER8: Buff[] = [
     { id: "total_plunder", name: "Total Plunder", description: "Steal all your opponent's active buffs except locked-in upgrades.", tier: 8, category: "draft" },
     instant((_inst, api) => {
       const stolen = api.theirs.buffs.filter(
-        (b) => !b.spent && !b.nullified && !onlinePermanent(b),
+        (b) => !b.spent && !b.nullified && !boundUpgrade(b),
       );
       api.theirs.buffs = api.theirs.buffs.filter(
-        (b) => b.spent || b.nullified || onlinePermanent(b),
+        (b) => b.spent || b.nullified || boundUpgrade(b),
       );
       api.mine.buffs.push(...stolen);
     }),
