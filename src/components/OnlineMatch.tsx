@@ -250,6 +250,25 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     setPendingLocalMoveState(pending);
   };
 
+  // Replica drift recovery: when the server accepts a move our replica cannot
+  // reproduce (buff-granted moves, dropped frames) or rejects one of ours as
+  // stale, never strand the board. Log the desync, show a transient notice,
+  // and pull the full authoritative state; the replayed `start` frame rebuilds
+  // the game and clears the notice. Rate-limited so a persistent mismatch
+  // cannot spin the socket.
+  const lastResyncAtRef = useRef(0);
+  const resyncFromServer = (reason: string) => {
+    console.error(`[online] board desynced from server (${reason}); requesting authoritative state`);
+    setError("Board out of sync, refreshing from the server…");
+    setPendingLocalMove(null);
+    setAwaitingPremoveAck(false);
+    clearPremoves();
+    const now = Date.now();
+    if (now - lastResyncAtRef.current < 2000) return;
+    lastResyncAtRef.current = now;
+    session.resync();
+  };
+
   useEffect(() => setMutedState(isMuted()), []);
 
   // Remember that this device is mid-game so the home page can offer a
@@ -345,6 +364,12 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         clearPremoves();
         // A rejected draft frame re-opens the overlay for another try.
         setDraftSubmitted(false);
+        // The server refusing our move as stale or illegal means the local
+        // replica has drifted from the authoritative game: resync instead of
+        // dead-ending on the error message.
+        if (e.code === "stale_ply" || e.code === "illegal_move") {
+          resyncFromServer(`server rejected our move: ${e.code}`);
+        }
       } else if (e.type === "disconnected") {
         setError("Connection lost, reconnecting…");
         setPendingLocalMove(null);
@@ -411,11 +436,13 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
             pendingPremove.uci === e.move.u &&
             e.move.ply === pendingPremove.ply + 1);
         if (!lm) {
-          setPendingLocalMove(null);
-          if (wasAwaitingPremove) {
-            setAwaitingPremoveAck(false);
-            clearPremoves();
-          }
+          // The server accepted a move our replica considers illegal (a
+          // buff-granted move it could not regenerate, or any other drift).
+          // Keep the clocks honest and rebuild from the server's replay
+          // rather than leaving the board frozen.
+          setWhiteMs(e.move.wc);
+          setBlackMs(e.move.bc);
+          resyncFromServer(`accepted move ${e.move.u} (ply ${e.move.ply}) is not reproducible locally`);
           return;
         }
         // Draft replicas discard the placeholder offer rolls playMove makes

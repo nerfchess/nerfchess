@@ -717,6 +717,36 @@ export class MPSession {
     });
   }
 
+  // Force a full authoritative replay of the current game. The server only
+  // replays state on a seat (or watch) claim from a fresh socket, so drop the
+  // current socket quietly (no `disconnected` event) and run the reconnect
+  // handshake; the server answers with a complete `start` frame the UI can
+  // rebuild from. Used when the client replica detects it has drifted from
+  // the server (e.g. a server-accepted move the replica considers illegal).
+  resync(): boolean {
+    if (this.destroyed || (!this.seat && !this.watchingId)) return false;
+    if (this.reconnectTimer !== null) {
+      window.clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+    const socket = this.socket;
+    this.socket = null;
+    if (this.heartbeat) window.clearInterval(this.heartbeat);
+    this.heartbeat = null;
+    if (socket) {
+      // Detach handlers first: this close is intentional, not a disconnect.
+      socket.onopen = null;
+      socket.onmessage = null;
+      socket.onerror = null;
+      socket.onclose = null;
+      try {
+        socket.close();
+      } catch {}
+    }
+    void this.tryReconnect();
+    return true;
+  }
+
   // Join the rated quick-pairing queue. Resolves with the paired game id.
   async queue(pool: string): Promise<{ id: string; color: Color; token: string }> {
     await this.connect();
