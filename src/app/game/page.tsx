@@ -901,7 +901,7 @@ function GamePage() {
                   key={n.id}
                   onClick={() => (nerfSelected === i ? startDraftGame(n) : setNerfSelected(i))}
                   className={
-                    "text-left transition hover:-translate-y-1" +
+                    "mx-auto block w-full max-w-md sm:max-w-none text-left transition hover:-translate-y-1" +
                     (nerfSelected === i
                       ? " -translate-y-1 ring-2 ring-gold shadow-leaf"
                       : nerfSelected != null
