@@ -195,8 +195,8 @@ export default function ProfilePage() {
               }
             />
 
-            {/* One independent rating per time control, Lichess-style. */}
-            <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {/* Exactly two ratings: the Nerf and Buff mode buckets. */}
+            <div className="mt-6 grid grid-cols-2 gap-2">
               {ACTIVE_RATING_CATEGORIES.map((c) => {
                 const r = profile.ratings?.[c.id];
                 const Icon = c.icon;
@@ -217,7 +217,9 @@ export default function ProfilePage() {
                       )}
                     </div>
                     <div className="mt-0.5 font-mono text-[10px] text-parchment-400">
-                      {r ? `${r.games} games · peak ${Math.round(r.peak)}` : "no rated games"}
+                      {r
+                        ? `${r.games} games · ${r.wins}W ${r.losses}L ${r.draws}D · peak ${Math.round(r.peak)}`
+                        : "no rated games"}
                     </div>
                   </div>
                 );
@@ -273,8 +275,9 @@ export default function ProfilePage() {
   );
 }
 
-// The rating graph, one speed category at a time (mixing categories made the
-// line jump between unrelated ratings). Defaults to the most-played bucket.
+// The rating graph, one mode bucket (Nerf or Buff) at a time (mixing
+// categories made the line jump between unrelated ratings). Defaults to the
+// most-played active bucket.
 function RatingHistorySection({ points }: { points: ProfileRatingPoint[] }) {
   const mostPlayed = useMemo(() => {
     const counts = new Map<RatingCategoryId, number>();
