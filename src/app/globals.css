@@ -32,6 +32,31 @@ body {
   --accent-rgb: 54 146 231;
   --accent-hi-rgb: 74 159 238;
   --accent-dim-rgb: 42 111 176;
+
+  /* --- Signature: the mode seam ---------------------------------------------
+     NerfChess is one game with two opposed modes. The seam makes that duality
+     structural: a warm Nerf territory and a cool Buff territory meeting at a
+     single hairline. These two role colors drive every seam divider, the header
+     edge, and the hero field. They are the mode identities from tailwind.config,
+     kept as rgb triples so seams can fade in and out at any opacity. */
+  --seam-warm-rgb: 196 120 95;   /* Nerf terracotta */
+  --seam-cool-rgb: 91 155 212;   /* Buff sky */
+
+  /* --- Fluid type scale ------------------------------------------------------
+     One ratio, computed once, so every surface pulls headings from the same
+     ramp instead of ad-hoc text-2xl/4xl guesses. Display sizes tighten their
+     tracking as they grow (editorial, not default-Inter). */
+  --step-0:  clamp(0.95rem, 0.92rem + 0.16vw, 1.05rem);   /* body lead */
+  --step-1:  clamp(1.1rem,  1.04rem + 0.34vw, 1.3rem);
+  --step-2:  clamp(1.3rem,  1.18rem + 0.66vw, 1.75rem);
+  --step-3:  clamp(1.6rem,  1.36rem + 1.2vw,  2.35rem);
+  --step-4:  clamp(2rem,    1.58rem + 2.1vw,  3.25rem);
+  --step-5:  clamp(2.5rem,  1.85rem + 3.2vw,  4.4rem);
+
+  /* --- Spacing rhythm --------------------------------------------------------
+     Landing sections share one vertical cadence so the page breathes evenly
+     instead of the flat py-8 monotony. */
+  --rhythm-section: clamp(2.75rem, 1.6rem + 5vw, 5rem);
 }
 
 /* Animation speed preference (Settings). "off" also serves reduced motion. */
@@ -128,6 +153,129 @@ body {
   line-height: 0.88;
   padding: 0.05em 0.14em 0 0;
   color: var(--gold-leaf);
+}
+
+/* --- Fluid display scale utilities ---
+   Headings opt into the shared ramp. Tracking tightens with size so the large
+   marketing display reads deliberate rather than default-Inter loose. */
+.display-1 {
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-weight: 700;
+  font-size: var(--step-5);
+  line-height: 0.97;
+  letter-spacing: -0.021em;
+}
+.display-2 {
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-weight: 700;
+  font-size: var(--step-4);
+  line-height: 1.02;
+  letter-spacing: -0.016em;
+}
+.display-3 {
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-weight: 600;
+  font-size: var(--step-3);
+  line-height: 1.08;
+  letter-spacing: -0.01em;
+}
+.lead {
+  font-size: var(--step-1);
+  line-height: 1.5;
+}
+
+/* --- Eyebrow + chess-coordinate index --------------------------------------
+   Sections are labelled by squares on the board's long diagonal (a1, c3, e5,
+   g7): a numbering device that is genuinely from chess and encodes real order,
+   in place of the generic 01 / 02 / 03 marker. Set in the mono/data face. */
+.eyebrow {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.26em;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--paper-dim);
+}
+.coord-index {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--accent-hi);
+}
+
+/* --- SIGNATURE: the mode seam ----------------------------------------------
+   A hairline where the warm Nerf half meets the cool Buff half, with a small
+   flat diamond bead sitting on the join. Used as a section divider so the two
+   modes are felt structurally down the whole page, not just named in copy. */
+.mode-seam {
+  position: relative;
+  height: 1px;
+  border: 0;
+  margin: 0;
+  background: linear-gradient(
+    90deg,
+    rgb(var(--seam-warm-rgb) / 0) 0%,
+    rgb(var(--seam-warm-rgb) / 0.5) 24%,
+    rgb(255 255 255 / 0.13) 50%,
+    rgb(var(--seam-cool-rgb) / 0.5) 76%,
+    rgb(var(--seam-cool-rgb) / 0) 100%
+  );
+}
+.mode-seam::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  transform: translate(-50%, -50%) rotate(45deg);
+  background: #1c1a17;
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.28);
+}
+html[data-theme="light"] .mode-seam::after { background: #e4e0d6; }
+
+/* Header / edge variant: the seam as a bottom border, warm on the left, cool on
+   the right, anchoring the whole site under the nav. */
+.seam-edge-b {
+  position: relative;
+}
+.seam-edge-b::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    rgb(var(--seam-warm-rgb) / 0.5) 0%,
+    rgb(255 255 255 / 0.07) 50%,
+    rgb(var(--seam-cool-rgb) / 0.5) 100%
+  );
+}
+
+/* Hero field: the two territories bleeding faintly in from opposite corners,
+   so the split reads behind the board and action column without shouting. */
+.mode-field {
+  position: relative;
+  isolation: isolate;
+}
+.mode-field::before {
+  content: "";
+  position: absolute;
+  inset: -8% -4% -4%;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(58% 78% at 6% 4%, rgb(var(--seam-warm-rgb) / 0.11), transparent 62%),
+    radial-gradient(58% 78% at 98% 100%, rgb(var(--seam-cool-rgb) / 0.11), transparent 62%);
+}
+
+/* Shared landing rhythm: one cadence for every marketing band. */
+.section-rhythm {
+  padding-block: var(--rhythm-section);
 }
 
 /* --- Ornament rules → hairline dividers --- */

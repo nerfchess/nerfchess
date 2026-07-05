@@ -42,7 +42,7 @@ export default function HomePage() {
     <main className="min-h-screen flex flex-col">
       <SiteHeader />
 
-      <section className="w-full max-w-7xl mx-auto px-5 sm:px-6 pt-2 pb-8 sm:pt-6 grid lg:grid-cols-[minmax(0,1fr)_380px] gap-8 lg:gap-14 items-center">
+      <section className="mode-field w-full max-w-7xl mx-auto px-5 sm:px-6 pt-2 pb-10 sm:pt-6 grid lg:grid-cols-[minmax(0,1fr)_380px] gap-8 lg:gap-14 items-center">
         <div className="order-1">
           <HeroTv />
         </div>
@@ -50,7 +50,14 @@ export default function HomePage() {
         {/* The action column is kept short on purpose: it should never run
             taller than the board beside it. */}
         <div className="order-2">
-          <p className="text-lg sm:text-xl leading-relaxed text-parchment-100">
+          <span className="eyebrow">Two-mode chess</span>
+          <h1 className="display-2 mt-2 text-parchment-50">
+            One game.{" "}
+            <span className="text-mode-nerfGlow">Nerf</span>{" "}
+            <span className="text-parchment-400">or</span>{" "}
+            <span className="text-mode-buffGlow">Buff</span>.
+          </h1>
+          <p className="lead mt-4 text-parchment-100">
             Chess with two modes: choose{" "}
             <Link
               href="/lobby?mode=nerf"
@@ -117,11 +124,23 @@ export default function HomePage() {
       </section>
 
       <StatStrip />
+      <SeamDivider />
       <HowItWorks />
+      <SeamDivider />
       <ExampleRules />
 
       <SiteFooter />
     </main>
+  );
+}
+
+// The signature mode seam as a section rule: warm Nerf meeting cool Buff at a
+// single flat bead. It carries the two-mode identity down the whole page.
+function SeamDivider() {
+  return (
+    <div className="w-full max-w-7xl mx-auto px-5 sm:px-6" aria-hidden>
+      <hr className="mode-seam" />
+    </div>
   );
 }
 
@@ -197,7 +216,7 @@ function StatStrip() {
       <div className="plate p-5 sm:p-6 grid grid-cols-2 divide-x divide-white/10">
         {stats.map((s) => (
           <div key={s.label} className="px-2 sm:px-4 text-center">
-            <div className="font-display text-2xl sm:text-4xl font-bold text-parchment-50 tabular-nums">
+            <div className="display-3 font-bold text-parchment-50 tabular-nums">
               {s.value}
             </div>
             <div className="mt-1 smallcaps text-[9px] sm:text-[10px] text-parchment-400">
@@ -259,10 +278,11 @@ function HowItWorks() {
     },
   ];
   return (
-    <section className="w-full max-w-7xl mx-auto px-5 sm:px-6 py-8">
-      <div className="rule-ornament mb-6">
-        <span className="font-display">How it works</span>
-      </div>
+    <section className="section-rhythm w-full max-w-7xl mx-auto px-5 sm:px-6">
+      <header className="mb-7 flex items-baseline gap-3">
+        <span className="coord-index">c3</span>
+        <h2 className="display-3 text-parchment-50">How it works</h2>
+      </header>
       <div className="grid gap-4 sm:grid-cols-3">
         {steps.map((step) => (
           <div key={step.n} className="plate p-5 sm:p-6">
@@ -294,11 +314,12 @@ function HowItWorks() {
 function ExampleRules() {
   const rules = exampleRules();
   return (
-    <section className="w-full max-w-7xl mx-auto px-5 sm:px-6 py-8">
-      <div className="flex items-end justify-between gap-4 mb-6">
-        <div className="rule-ornament flex-1">
-          <span className="font-display">A few of the rules</span>
-        </div>
+    <section className="section-rhythm w-full max-w-7xl mx-auto px-5 sm:px-6">
+      <div className="flex items-end justify-between gap-4 mb-7">
+        <header className="flex items-baseline gap-3">
+          <span className="coord-index">e5</span>
+          <h2 className="display-3 text-parchment-50">A few of the rules</h2>
+        </header>
         <Link
           href="/codex"
           className="shrink-0 smallcaps text-[10px] text-parchment-400 hover:text-parchment-100 transition-colors"
