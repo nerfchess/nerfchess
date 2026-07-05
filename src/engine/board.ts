@@ -265,7 +265,13 @@ export function generateMoves(board: BoardState): Move[] {
 
 export function makeMove(board: BoardState, move: Move): BoardState {
   const nb = cloneBoard(board);
-  const piece = nb.pieces[move.from]!;
+  const piece = nb.pieces[move.from];
+
+  // Safety guard: a move whose origin square is empty is treated as a no-op
+  // instead of crashing. This happens when history is replayed over a board
+  // that buffs have mutated outside history (summons/removals), e.g. by a
+  // nerf inspecting a past position in a draft game.
+  if (!piece) return board;
 
   // Safety guard: never allow "self-capture" (should be impossible for legal moves,
   // but can happen due to UI/premove timing bugs). If it does, treat it as a no-op.

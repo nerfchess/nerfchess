@@ -444,35 +444,40 @@ export function playMove(game: NerfGame, move: Move): NerfGame {
       }
     }
   }
-  // No moves available = loss for side to move (king will be captured)
-  const slot = game.board.turn === "w" ? game.white : game.black;
   // Apply onTurnStart for the new mover BEFORE legal-move evaluation
   applyTurnStart(game);
-  const moves = legalMoves(game);
-  if (moves.length === 0) {
-    // In draft mode a player can be locked down purely by buff effects
-    // (mass freeze, World End...). That is a forced pass, not a loss: their
-    // effect timers tick as if they had moved and the turn goes back.
-    if (bs && generateMoves(game.board).length > 0) {
-      const stuck = game.board.turn;
-      for (const e of bs.effects) {
-        if (e.turns != null && effectTickColor(e) === stuck) e.turns -= 1;
-      }
-      bs.effects = bs.effects.filter((e) => e.turns == null || e.turns > 0);
-      game.board.turn = stuck === "w" ? "b" : "w";
-      game.board.epTarget = null;
-      applyTurnStart(game);
-      if (legalMoves(game).length === 0) {
-        game.result = { winner: "draw", reason: "mutual paralysis" };
-      }
-      return game;
-    }
-    game.result = {
-      winner: game.board.turn === "w" ? "b" : "w",
-      reason: "no legal moves",
-    };
-  }
+  resolveNoMoves(game);
   return game;
+}
+
+/** The no-move rule, run whenever the side to move may have changed or lost
+ * options: no moves available = loss for the side to move (their king will be
+ * captured). In draft mode a player can be locked down purely by buff effects
+ * (Mass Freeze, World End...). That is a forced pass, not a loss: their
+ * effect timers tick as if they had moved and the turn goes back. If the
+ * opponent is locked down too, the game is a draw. */
+function resolveNoMoves(game: NerfGame) {
+  if (game.result) return;
+  if (legalMoves(game).length > 0) return;
+  const bs = game.buffs;
+  if (bs && generateMoves(game.board).length > 0) {
+    const stuck = game.board.turn;
+    for (const e of bs.effects) {
+      if (e.turns != null && effectTickColor(e) === stuck) e.turns -= 1;
+    }
+    bs.effects = bs.effects.filter((e) => e.turns == null || e.turns > 0);
+    game.board.turn = stuck === "w" ? "b" : "w";
+    game.board.epTarget = null;
+    applyTurnStart(game);
+    if (legalMoves(game).length === 0) {
+      game.result = { winner: "draw", reason: "mutual paralysis" };
+    }
+    return;
+  }
+  game.result = {
+    winner: game.board.turn === "w" ? "b" : "w",
+    reason: "no legal moves",
+  };
 }
 
 export function currentHint(game: NerfGame, color: Color) {
@@ -594,28 +599,7 @@ function passTurnAfterBuff(game: NerfGame, color: Color) {
   }
   game.board.epTarget = null;
   applyTurnStart(game);
-  if (legalMoves(game).length === 0) {
-    if (generateMoves(game.board).length > 0) {
-      // Forced pass, exactly like playMove: locked down purely by buff
-      // effects is not a loss.
-      const stuck = game.board.turn;
-      for (const e of bs.effects) {
-        if (e.turns != null && effectTickColor(e) === stuck) e.turns -= 1;
-      }
-      bs.effects = bs.effects.filter((e) => e.turns == null || e.turns > 0);
-      game.board.turn = stuck === "w" ? "b" : "w";
-      game.board.epTarget = null;
-      applyTurnStart(game);
-      if (legalMoves(game).length === 0) {
-        game.result = { winner: "draw", reason: "mutual paralysis" };
-      }
-      return;
-    }
-    game.result = {
-      winner: game.board.turn === "w" ? "b" : "w",
-      reason: "no legal moves",
-    };
-  }
+  resolveNoMoves(game);
 }
 
 /** After a buff mutates the board, re-run loss checks (a removal or freeze can
@@ -623,7 +607,15 @@ function passTurnAfterBuff(game: NerfGame, color: Color) {
 function settleAfterBuff(game: NerfGame) {
   if (game.result) return;
   const result = checkLossConditions(game);
-  if (result) game.result = result;
+  if (result) {
+    game.result = result;
+    return;
+  }
+  // An instant buff resolved from a draft pick (Mass Freeze, World End...)
+  // can lock the current mover down outside any move handover. Run the same
+  // no-move rule as playMove so the game force-passes or ends instead of
+  // soft-locking with a stuck player.
+  resolveNoMoves(game);
 }
 
 /** Auto-resolve a pending offer for a bot: prefer the highest-tier card it can
