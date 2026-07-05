@@ -285,10 +285,10 @@ const houseHeartbeatMs = 20 * 1000;
 // the single-threaded DO past its CPU limit. Run it at most this often; the
 // cheap indexed reschedule keeps the alarm chain alive in between.
 const maintenanceMinIntervalMs = 8 * 1000;
-// Queue presence: keep 8-12 personas seeking across the two pools (raised for
-// the 50-persona roster / load test so the lobby shows a busy queue).
-const houseSeekMin = 8;
-const houseSeekMax = 12;
+// Queue presence: keep only 2-4 personas seeking. The rest of the roster should
+// be PLAYING each other (house-vs-house below), not sitting idle in the queue.
+const houseSeekMin = 2;
+const houseSeekMax = 4;
 const houseSeekTtlMs = 8 * 60 * 1000;
 // Hard caps: at most this many simultaneous house-vs-house filler games, and
 // at most this many unfinished games with any house seat at all. Above the
@@ -297,14 +297,14 @@ const houseSeekTtlMs = 8 * 60 * 1000;
 // optics and are pure background engine work on the single-threaded DO. One
 // filler still keeps the lobby looking alive while halving that background
 // load. Bump back to 2 if the lobby looks too quiet.
-// LOAD TEST config: with the backend hardened, run a big fleet of house-vs-house
-// games to stress the single-threaded DO with the 50-persona roster. Up to 25
-// filler games is ~50 bots playing at once. The per-alarm action ceiling below
-// still bounds how many engine searches run per tick, so this raises the
-// standing game count without letting one tick run a long batch. Dial both
-// back down (e.g. 0 and 3) if the server strains under real traffic.
-const houseVsHouseCap = 25;
-const houseTotalGamesCap = 28;
+// Bots should mostly be PLAYING each other, not queueing. Up to 18 house-vs-house
+// games (~36 bots in games) plus a couple of seekers. Paired with the faster
+// filler spawn cadence below so the freed personas actually start games quickly
+// instead of trickling in one per minute. The per-alarm action ceiling still
+// bounds engine searches per tick. Dial these (and the cadence below) back down
+// if the server strains under real traffic.
+const houseVsHouseCap = 18;
+const houseTotalGamesCap = 20;
 // Per-alarm ceiling on house engine actions (moves and draft resolves), across
 // all live house games. Human-facing actions used to ALL run in one tick, so
 // after any stall every overdue game became due at once and one alarm ran a
@@ -344,7 +344,7 @@ type HouseSeekEntry = {
 // Bump this on every deploy so /healthz identifies the running build. When it
 // is a static string that never changes, nobody can tell what code is live,
 // which is exactly how a shipped fix looks unfixed. Keep it short.
-const buildVersion = "server-cpu-fix-2";
+const buildVersion = "house-tune-1";
 // Lichess-style start-of-game grace: a player's clock only starts charging 10
 // seconds into their first move, so nobody loses time to a slow page load.
 const firstMoveGraceMs = 10 * 1000;
@@ -2452,7 +2452,7 @@ export class GameServer extends DurableObject<Env> {
           const a = free.splice(randomInt(free.length), 1)[0];
           const b = free.splice(randomInt(free.length), 1)[0];
           await this.startHouseVsHouseGame(a, b, db);
-          await this.ctx.storage.put(houseNextFillerKey, now + 20_000 + randomInt(60_000));
+          await this.ctx.storage.put(houseNextFillerKey, now + 4_000 + randomInt(6_000));
         }
       } catch (err) {
         console.error("house filler start failed", err);
