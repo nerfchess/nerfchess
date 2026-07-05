@@ -278,6 +278,10 @@ const houseNextFillerKey = "hp:nextFillerAt";
 // true to resume. This is intentionally a single obvious constant so it is easy
 // to toggle and revert.
 const HOUSE_ENABLED = true;
+// How long the runtime house-enabled flag (app_settings.house_enabled, flipped
+// by a moderator) is cached in the DO before re-reading D1, so the alarm path
+// does no per-tick database work. A mod's on/off takes effect within this long.
+const houseEnabledTtlMs = 15 * 1000;
 const houseHeartbeatMs = 20 * 1000;
 // The full-table maintenance sweep (GC of expired games, flag enforcement,
 // live-index rebuild) is the heaviest thing the alarm does. Bot moves wake the
@@ -349,7 +353,7 @@ type HouseSeekEntry = {
 // (deserializing every finished game's move history), which on a bloated table
 // blew the DO CPU limit before it could cache or GC anything: the crash loop.
 const liveIdsKey = "live:ids";
-const buildVersion = "server-boundedgc-1";
+const buildVersion = "house-toggle-1";
 // Lichess-style start-of-game grace: a player's clock only starts charging 10
 // seconds into their first move, so nobody loses time to a slow page load.
 const firstMoveGraceMs = 10 * 1000;
@@ -438,6 +442,33 @@ export class GameServer extends DurableObject<Env> {
       );
     }
     return (await this.dbReady) ? this.env.DB : null;
+  }
+
+  // Runtime on/off for the house bots. Read from the shared app_settings table
+  // (a moderator flips it via POST /api/mod/house) and cached briefly so the
+  // alarm/seek paths do no per-tick D1 work. The HOUSE_ENABLED constant stays a
+  // hard code-level kill switch that wins over the stored value. Missing row or
+  // any read error defaults to ON, so the bots never vanish on a transient blip.
+  private houseEnabledCache: { value: boolean; at: number } | null = null;
+  private async houseEnabled(): Promise<boolean> {
+    if (!HOUSE_ENABLED) return false;
+    const now = Date.now();
+    if (this.houseEnabledCache && now - this.houseEnabledCache.at < houseEnabledTtlMs) {
+      return this.houseEnabledCache.value;
+    }
+    let value = true;
+    try {
+      const db = await this.db();
+      if (db) {
+        const row = await db
+          .prepare("SELECT value FROM app_settings WHERE key = ?")
+          .bind("house_enabled")
+          .first<{ value: string }>();
+        if (row) value = row.value !== "0" && row.value !== "false";
+      }
+    } catch {}
+    this.houseEnabledCache = { value, at: now };
+    return value;
   }
 
   // Top-level fetch: a thin guard around handleFetch so a transient storage
@@ -1946,7 +1977,7 @@ export class GameServer extends DurableObject<Env> {
       if (isHouseUserId(targetUserId)) {
         // House players are paused: their seeks are cleared, but a stale client
         // may still try to accept one. Treat it as gone.
-        if (!HOUSE_ENABLED) return error(ws, "seek_gone", "That player is no longer waiting.");
+        if (!(await this.houseEnabled())) return error(ws, "seek_gone", "That player is no longer waiting.");
         const persona = housePersona(targetUserId);
         if (!persona) return error(ws, "seek_gone", "That player is no longer waiting.");
         const meEntry: QueueEntry = {
@@ -2165,7 +2196,7 @@ export class GameServer extends DurableObject<Env> {
   // One orchestration pass, run from the alarm before match maintenance.
   private async houseTick() {
     const now = Date.now();
-    if (!HOUSE_ENABLED) {
+    if (!(await this.houseEnabled())) {
       // Paused: stop advertising seeks so the lobby shows no bots, and end any
       // bot game already in progress as an unrated draw so no human is left
       // waiting on a bot that will never move. Idempotent: once seeks are empty

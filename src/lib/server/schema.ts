@@ -175,6 +175,15 @@ export const SCHEMA_STATEMENTS: string[] = [
     key TEXT PRIMARY KEY,
     value INTEGER NOT NULL DEFAULT 0
   )`,
+  // Site-wide key/value settings a moderator can flip at runtime (e.g.
+  // house_enabled = "1"/"0" to turn the house bots on or off). Read by the
+  // game-server Durable Object (cached) so a change takes effect without a
+  // redeploy.
+  `CREATE TABLE IF NOT EXISTS app_settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL,
+    updated_at INTEGER NOT NULL DEFAULT 0
+  )`,
   // Post-game thumbs up / down on the secret rule a player was dealt.
   `CREATE TABLE IF NOT EXISTS nerf_feedback (
     id TEXT PRIMARY KEY,

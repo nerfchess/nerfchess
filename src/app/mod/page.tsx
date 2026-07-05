@@ -140,6 +140,8 @@ export default function ModPage() {
               </span>
             </div>
 
+            <HouseBotsToggle />
+
             <div className="mt-6 flex flex-wrap gap-1 border-b border-white/10 pb-px">
               {(
                 [
@@ -516,6 +518,93 @@ function ChatFlagsTab() {
   );
 }
 
+// ---------------- house bots ----------------
+
+// A moderator switch for the house bots: the engine-driven roster that keeps
+// the lobby warm. Flipping it writes app_settings.house_enabled; the game
+// server reads it within a few seconds, stops advertising bot seeks, and winds
+// down any bot game already in progress. Persisted, so it survives redeploys.
+function HouseBotsToggle() {
+  const [enabled, setEnabled] = useState<boolean | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/mod/house")
+      .then((res) => (res.ok ? (res.json() as Promise<{ enabled: boolean }>) : null))
+      .then((data) => {
+        if (!cancelled && data) setEnabled(data.enabled);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const toggle = async () => {
+    if (enabled === null || saving) return;
+    const next = !enabled;
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/mod/house", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enabled: next }),
+      });
+      if (!res.ok) throw new Error();
+      const data = (await res.json()) as { enabled: boolean };
+      setEnabled(data.enabled);
+    } catch {
+      setError("Could not update. Try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="mt-4 plate flex flex-wrap items-center justify-between gap-3 p-4">
+      <div className="min-w-0">
+        <div className="font-display text-sm font-semibold text-parchment-50">House bots</div>
+        <p className="mt-0.5 max-w-md text-xs text-parchment-400">
+          The engine-driven roster that keeps the lobby warm. Turn off to run pure human traffic;
+          bot seeks clear and any bot game winds down within a few seconds.
+        </p>
+        {error && <p className="mt-1 text-xs text-oxblood-glow">{error}</p>}
+      </div>
+      <button
+        type="button"
+        onClick={toggle}
+        disabled={enabled === null || saving}
+        aria-pressed={enabled === true}
+        title={enabled === null ? "Loading…" : enabled ? "House bots are on — click to turn off" : "House bots are off — click to turn on"}
+        className={
+          "press shrink-0 inline-flex items-center gap-2 border px-4 py-2 font-display text-sm font-semibold transition disabled:opacity-60 " +
+          (enabled === null
+            ? "border-white/15 text-parchment-400"
+            : enabled
+              ? "border-verdigris/50 bg-verdigris/15 text-verdigris-glow"
+              : "border-oxblood-glow/50 bg-oxblood/15 text-oxblood-glow")
+        }
+      >
+        <span
+          aria-hidden
+          className={
+            "h-2 w-2 rounded-full " +
+            (enabled === null
+              ? "bg-parchment-400"
+              : enabled
+                ? "bg-verdigris-glow animate-flicker"
+                : "bg-oxblood-glow")
+          }
+        />
+        {enabled === null ? "…" : saving ? "Saving…" : enabled ? "On" : "Off"}
+      </button>
+    </div>
+  );
+}
+
 // ---------------- players ----------------
 
 function UsersTab({ isAdmin }: { isAdmin: boolean }) {
@@ -530,13 +619,11 @@ function UsersTab({ isAdmin }: { isAdmin: boolean }) {
   const [message, setMessage] = useState<string | null>(null);
 
   const search = useCallback(async (q: string) => {
-    if (!q.trim()) {
-      setUsers([]);
-      setHistory([]);
-      setReports([]);
-      return;
-    }
-    const res = await fetch(`/api/mod/users?q=${encodeURIComponent(q.trim())}`);
+    // An empty query loads the default roster (recent members) rather than
+    // clearing the list, so the panel always opens on something browsable.
+    const res = await fetch(
+      q.trim() ? `/api/mod/users?q=${encodeURIComponent(q.trim())}` : "/api/mod/users",
+    );
     if (!res.ok) return;
     const data = (await res.json()) as {
       users: ModUser[];
@@ -578,6 +665,17 @@ function UsersTab({ isAdmin }: { isAdmin: boolean }) {
         placeholder="Search players…"
         className="w-full max-w-sm bg-transparent plate px-4 py-2 text-sm outline-none focus:border-gold/40"
       />
+
+      {!query.trim() && (
+        <p className="mt-2 smallcaps text-[10px] text-parchment-400">
+          Recent players · type to search anyone
+        </p>
+      )}
+      {users.length === 0 && (
+        <p className="mt-4 text-sm text-parchment-400">
+          {query.trim() ? "No players match that search." : "No players yet."}
+        </p>
+      )}
 
       {users.length > 0 && (
         <div className="mt-4 plate divide-y divide-white/5">
