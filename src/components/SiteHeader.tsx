@@ -385,7 +385,9 @@ export function SiteHeader({ active }: { active?: string }) {
               aria-haspopup="menu"
               aria-expanded={menu === "profile"}
             >
-              {user.username}
+              {/* The name is dead weight at phone widths and can collide with
+                  the wordmark; the avatar alone opens the menu there. */}
+              <span className="hidden sm:inline">{user.username}</span>
               <PlayerAvatar name={user.username} avatar={user.avatar} size={24} className="rounded-full" />
             </button>
             {menu === "profile" && (

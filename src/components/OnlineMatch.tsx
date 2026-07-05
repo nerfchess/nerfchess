@@ -1585,7 +1585,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         </div>
       </nav>
 
-      <div className="mx-auto flex w-full max-w-[1280px] flex-1 min-h-0 flex-col gap-2 overflow-hidden px-3 pb-14 sm:px-6 sm:pb-6 xl:max-w-[1600px]">
+      <div className="mx-auto flex w-full max-w-[1360px] flex-1 min-h-0 flex-col gap-2 overflow-hidden px-3 pb-14 sm:px-6 sm:pb-6 xl:max-w-[1680px]">
         {hint && (
           <div
             role="status"
@@ -1606,7 +1606,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         {/* The opponent-drafting status lives in the waiting overlay below
             (and inside the draft overlay while my own pick is open). */}
         <div
-          className="grid min-h-0 flex-1 gap-y-2 lg:grid-cols-[340px_auto] lg:justify-center lg:gap-x-4 xl:grid-cols-[380px_auto]"
+          className="grid min-h-0 flex-1 gap-y-2 lg:grid-cols-[380px_auto] lg:justify-center lg:gap-x-4 xl:grid-cols-[420px_auto]"
           style={railHeightStyle}
         >
           <aside className="hidden min-h-0 gap-2 overflow-y-auto lg:grid lg:min-h-[var(--board-height)] lg:max-h-full lg:grid-rows-[auto_minmax(6rem,1fr)_auto] lg:self-start">
@@ -1814,7 +1814,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
             </div>
             <div
               className={
-                "hidden min-h-0 overflow-hidden gap-3 sm:grid sm:h-[var(--board-height)] sm:w-64 sm:shrink-0 " +
+                "hidden min-h-0 overflow-hidden gap-3 sm:grid sm:h-[var(--board-height)] sm:w-72 sm:shrink-0 " +
                 (clockEnabled ? "sm:grid-rows-[auto_minmax(0,1fr)_auto]" : "sm:grid-rows-[minmax(0,1fr)]")
               }
               style={railHeightStyle}
@@ -1917,7 +1917,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
             >
               <span className="h-1.5 w-1.5 rounded-full bg-gold animate-flicker" aria-hidden />
               <span className="font-display text-xs text-parchment-200">
-                Opponent is still choosing — on their clock now.
+                Opponent is still choosing, on their clock now.
               </span>
             </motion.div>
           </div>
