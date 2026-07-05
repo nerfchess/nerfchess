@@ -5,6 +5,7 @@ import { NerfCard } from "@/components/NerfCard";
 import { BuffCard } from "@/components/BuffCard";
 import { ALL_NERFS } from "@/engine/nerfs/library";
 import { ALL_BUFFS } from "@/engine/buffs/library";
+import { isBoon } from "@/engine/buff";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CATEGORY_DEFS } from "@/lib/nerfCategories";
@@ -33,13 +34,54 @@ const BUFF_CATEGORY_DEFS = [
   { id: "draft", label: "Draft manipulation" },
 ];
 
-// The plain buff library: everything except the nerf-relief boons.
-const PLAIN_BUFFS = ALL_BUFFS.filter((b) => b.category !== "nerf");
+// The four rule families the library can browse. Nerfs live in their own
+// library (ALL_NERFS); hexes, boons, and plain buffs are all drawn from
+// ALL_BUFFS but split apart here so each reads as its own category.
+type Library = "rules" | "buffs" | "hexes" | "boons";
+
+// Hexes are the curse cards (category "hex"); boons are the self-relief pool
+// (the nerf-breakers plus the light general cards flagged boon). A plain buff
+// is anything that is neither, so the three buff-family lists never overlap.
+const isHexCard = (b: (typeof ALL_BUFFS)[number]) => b.category === "hex";
+const isBoonCard = (b: (typeof ALL_BUFFS)[number]) => isBoon(b) && !isHexCard(b);
+
+const PLAIN_BUFFS = ALL_BUFFS.filter((b) => !isHexCard(b) && !isBoonCard(b));
+const HEX_CARDS = ALL_BUFFS.filter(isHexCard);
+const BOON_CARDS = ALL_BUFFS.filter(isBoonCard);
+
+// The buff-family list backing each library tab.
+const BUFF_LIST: Record<Exclude<Library, "rules">, typeof ALL_BUFFS> = {
+  buffs: PLAIN_BUFFS,
+  hexes: HEX_CARDS,
+  boons: BOON_CARDS,
+};
+
+// Per-library copy so the four tabs read consistently.
+const LIBRARY_NOUN: Record<Library, string> = {
+  rules: "nerf",
+  buffs: "buff",
+  hexes: "hex",
+  boons: "boon",
+};
+const LIBRARY_TITLE: Record<Library, string> = {
+  rules: "All the nerfs",
+  buffs: "All the buffs",
+  hexes: "All the hexes",
+  boons: "All the boons",
+};
+// The type each library preselects in the "Suggest a rule" form.
+const LIBRARY_SUGGEST_TYPE: Record<Library, string> = {
+  rules: "nerf",
+  buffs: "buff",
+  hexes: "hex",
+  boons: "boon",
+};
 
 export default function CodexPage() {
   const [filters, setFilters] = useState<CodexFilters>(EMPTY_FILTERS);
-  // Which library is shown: the secret rules (nerfs) or the draft buffs.
-  const [library, setLibrary] = useState<"rules" | "buffs">("rules");
+  // Which library is shown: the secret rules (nerfs), or one of the three
+  // buff families (plain buffs, hexes, boons).
+  const [library, setLibrary] = useState<Library>("rules");
   const hydrated = useRef(false);
   const initialSearch = useRef<string | null>(null);
 
@@ -61,11 +103,12 @@ export default function CodexPage() {
 
   const filtered = useMemo(() => filterAndSortNerfs(ALL_NERFS, filters), [filters]);
 
-  // The buff library reuses the same search, tier filter, and sort ids so
-  // both libraries read the same way: easy/brutal map to tier order.
+  // The buff-family libraries reuse the same search, tier filter, and sort
+  // ids so every library reads the same way: easy/brutal map to tier order.
+  const buffSource = library === "rules" ? PLAIN_BUFFS : BUFF_LIST[library];
   const buffFiltered = useMemo(() => {
     const q = filters.search.trim().toLowerCase();
-    const list = PLAIN_BUFFS.filter(
+    const list = buffSource.filter(
       (b) =>
         (filters.tier === null || b.tier === filters.tier) &&
         (filters.categories.length === 0 || filters.categories.includes(b.category)) &&
@@ -81,20 +124,28 @@ export default function CodexPage() {
     else if (filters.sort === "easy") list.sort((x, y) => x.tier - y.tier || byName(x, y));
     else list.sort((x, y) => y.tier - x.tier || byName(x, y));
     return list;
-  }, [filters]);
+  }, [filters, buffSource]);
 
   const patch = (p: Partial<CodexFilters>) => setFilters((f) => ({ ...f, ...p }));
   const clearAll = () => setFilters({ ...EMPTY_FILTERS });
-  const switchLibrary = (lib: "rules" | "buffs") => {
+  const switchLibrary = (lib: Library) => {
     setLibrary(lib);
-    // Category ids differ between the two libraries; a stale one would
-    // silently filter everything out.
+    // Category ids differ between libraries; a stale one would silently filter
+    // everything out.
     setFilters((f) => ({ ...f, categories: [] }));
   };
 
   const active = hasActiveFilters(filters);
-  const shownCount = library === "rules" ? filtered.length : buffFiltered.length;
-  const totalCount = library === "rules" ? ALL_NERFS.length : PLAIN_BUFFS.length;
+  const isRules = library === "rules";
+  // A category dropdown only makes sense where the cards carry varied
+  // categories: nerfs and plain buffs. Hexes are all one category and boons
+  // are a cross-cutting pool, so they browse by tier and search alone.
+  const showCategoryFilter = library === "rules" || library === "buffs";
+  const shownCount = isRules ? filtered.length : buffFiltered.length;
+  const totalCount = isRules ? ALL_NERFS.length : buffSource.length;
+  const noun = LIBRARY_NOUN[library];
+  const nounPlural = `${noun}s`;
+  const LIBRARY_TABS: Library[] = ["rules", "buffs", "hexes", "boons"];
 
   return (
     <main className="min-h-screen pb-20">
@@ -103,53 +154,45 @@ export default function CodexPage() {
       <section className="max-w-6xl mx-auto px-6 pt-4">
         <div className="smallcaps text-[11px] text-parchment-400">the library</div>
         <h1 className="font-display text-5xl sm:text-6xl mt-1">
-          {library === "rules" ? "All the nerfs" : "All the buffs"}
+          {LIBRARY_TITLE[library]}
         </h1>
         <p className="mt-3 text-parchment-200">
-          {library === "rules"
+          {isRules
             ? `${ALL_NERFS.length} nerfs in the library. Search by name, effect, or category.`
-            : `${PLAIN_BUFFS.length} buffs in the library, ordered by the same tiers as the nerfs. Search by name, effect, or category.`}
+            : `${totalCount} ${nounPlural} in the library, ordered by the same tiers as the nerfs. Search by name, effect, or category.`}
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-2">
-          <button
-            onClick={() => switchLibrary("rules")}
-            aria-pressed={library === "rules"}
-            className={`inline-flex items-center gap-2 px-4 py-2 rounded-full font-display text-sm transition ${
-              library === "rules"
-                ? "border border-gold/60 bg-gold/10 text-gold-leaf"
-                : "btn-ghost"
-            }`}
-          >
-            Nerfs
-          </button>
-          <button
-            onClick={() => switchLibrary("buffs")}
-            aria-pressed={library === "buffs"}
-            className={`inline-flex items-center gap-2 px-4 py-2 rounded-full font-display text-sm transition ${
-              library === "buffs"
-                ? "border border-gold/60 bg-gold/10 text-gold-leaf"
-                : "btn-ghost"
-            }`}
-          >
-            Buffs
-          </button>
+          {LIBRARY_TABS.map((lib) => (
+            <button
+              key={lib}
+              onClick={() => switchLibrary(lib)}
+              aria-pressed={library === lib}
+              className={`inline-flex items-center gap-2 px-4 py-2 rounded-full font-display text-sm transition capitalize ${
+                library === lib
+                  ? "border border-gold/60 bg-gold/10 text-gold-leaf"
+                  : "btn-ghost"
+              }`}
+            >
+              {`${LIBRARY_NOUN[lib]}s`}
+            </button>
+          ))}
           <Link
-            href={library === "rules" ? "/codex/suggest" : "/codex/suggest?kind=buff"}
+            href={`/codex/suggest?type=${LIBRARY_SUGGEST_TYPE[library]}`}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full btn-ghost font-display text-sm"
           >
-            {library === "rules" ? "Suggest a nerf" : "Suggest a buff"}
+            {`Suggest a ${noun}`}
           </Link>
         </div>
 
         {/* Sticky search bar. */}
         <div className="sticky top-0 z-20 -mx-6 mt-6 px-6 py-3 bg-ink-950/85 backdrop-blur-md border-b border-white/5">
           <label className="relative block">
-            <span className="sr-only">{library === "rules" ? "Search the nerfs" : "Search the buffs"}</span>
+            <span className="sr-only">{`Search the ${nounPlural}`}</span>
             <SearchIcon className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-parchment-400" />
             <input
               value={filters.search}
               onChange={(e) => patch({ search: e.target.value })}
-              placeholder={library === "rules" ? "Search the nerfs…" : "Search the buffs…"}
+              placeholder={`Search the ${nounPlural}…`}
               className="w-full bg-ink-900/70 border border-white/15 rounded-full pl-9 pr-9 py-2.5 text-base sm:text-sm font-body focus:outline-none focus:border-gold/60 text-parchment placeholder:text-parchment-400/60 transition-colors"
             />
             {filters.search && (
@@ -167,12 +210,12 @@ export default function CodexPage() {
         {/* Compact filter bar: three labeled dropdowns instead of pill walls. */}
         <div className="mt-4 flex flex-wrap items-end gap-x-4 gap-y-3">
           <FilterSelect
-            label={library === "rules" ? "Difficulty" : "Tier"}
+            label={isRules ? "Difficulty" : "Tier"}
             value={filters.tier === null ? "" : String(filters.tier)}
             onChange={(v) => patch({ tier: v === "" ? null : Number(v) })}
           >
             <option value="" className="bg-ink-900 text-parchment">
-              {library === "rules" ? "All difficulties" : "All tiers"}
+              {isRules ? "All difficulties" : "All tiers"}
             </option>
             {[1, 2, 3, 4, 5, 6, 7, 8].map((t) => (
               <option key={t} value={t} className="bg-ink-900 text-parchment">
@@ -181,18 +224,20 @@ export default function CodexPage() {
             ))}
           </FilterSelect>
 
-          <FilterSelect
-            label="Category"
-            value={filters.categories[0] ?? ""}
-            onChange={(v) => patch({ categories: v === "" ? [] : [v] })}
-          >
-            <option value="" className="bg-ink-900 text-parchment">All categories</option>
-            {(library === "rules" ? CATEGORY_DEFS : BUFF_CATEGORY_DEFS).map((c) => (
-              <option key={c.id} value={c.id} className="bg-ink-900 text-parchment">
-                {c.label}
-              </option>
-            ))}
-          </FilterSelect>
+          {showCategoryFilter && (
+            <FilterSelect
+              label="Category"
+              value={filters.categories[0] ?? ""}
+              onChange={(v) => patch({ categories: v === "" ? [] : [v] })}
+            >
+              <option value="" className="bg-ink-900 text-parchment">All categories</option>
+              {(isRules ? CATEGORY_DEFS : BUFF_CATEGORY_DEFS).map((c) => (
+                <option key={c.id} value={c.id} className="bg-ink-900 text-parchment">
+                  {c.label}
+                </option>
+              ))}
+            </FilterSelect>
+          )}
 
           <FilterSelect
             label="Sort"
@@ -209,7 +254,7 @@ export default function CodexPage() {
 
         <div className="mt-5 flex items-center justify-between gap-3">
           <p className="smallcaps text-[10px] text-parchment-400" role="status" aria-live="polite">
-            Showing {shownCount} of {totalCount} {library === "rules" ? "nerfs" : "buffs"}
+            Showing {shownCount} of {totalCount} {nounPlural}
           </p>
           {active && (
             <button
@@ -223,7 +268,7 @@ export default function CodexPage() {
 
         {shownCount > 0 ? (
           <div className="mt-4 grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {library === "rules"
+            {isRules
               ? filtered.map((d) => (
                   <NerfCard key={d.id} nerf={d} ownerLabel={`${TIER_ROMAN[d.tier]} · ${TIER_LABEL[d.tier]}`} />
                 ))
@@ -242,7 +287,7 @@ export default function CodexPage() {
               <SearchIcon />
             </div>
             <p className="font-display text-lg text-parchment-100">
-              {library === "rules" ? "No nerfs match your filters." : "No buffs match your filters."}
+              {`No ${nounPlural} match your filters.`}
             </p>
             <p className="mt-1 text-sm text-parchment-400">
               Try a different word, or widen the tier and category filters.

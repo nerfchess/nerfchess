@@ -30,6 +30,7 @@ import {
   housePersona,
   houseSeedRating,
   houseThinkMs,
+  isHouseUserId,
   pickHouseMove,
   pickHouseSeek,
 } from "./src/lib/server/bots";
@@ -202,7 +203,7 @@ type ClientFrame =
   | { t: "takebackOffer" }
   | { t: "takebackAccept" }
   | { t: "takebackDecline" }
-  | { t: "queue"; d?: { pool?: unknown; mode?: unknown } }
+  | { t: "queue"; d?: { pool?: unknown; mode?: unknown; target?: { userId?: unknown } } }
   | { t: "queueCancel" }
   | { t: "watch"; d?: { id?: unknown } }
   | { t: "watchLeave" }
@@ -268,6 +269,12 @@ const houseNextFillerKey = "hp:nextFillerAt";
 // Slow heartbeat while at least one human socket is connected; with nobody
 // online there is no heartbeat and the DO goes idle between match deadlines.
 const houseHeartbeatMs = 20 * 1000;
+// The full-table maintenance sweep (GC of expired games, flag enforcement,
+// live-index rebuild) is the heaviest thing the alarm does. Bot moves wake the
+// alarm about once a second, and running the full sweep every time is what tips
+// the single-threaded DO past its CPU limit. Run it at most this often; the
+// cheap indexed reschedule keeps the alarm chain alive in between.
+const maintenanceMinIntervalMs = 8 * 1000;
 // Queue presence: keep 2-3 personas seeking across the two pools.
 const houseSeekMin = 2;
 const houseSeekMax = 3;
@@ -279,8 +286,27 @@ const houseSeekTtlMs = 8 * 60 * 1000;
 // optics and are pure background engine work on the single-threaded DO. One
 // filler still keeps the lobby looking alive while halving that background
 // load. Bump back to 2 if the lobby looks too quiet.
-const houseVsHouseCap = 1;
-const houseTotalGamesCap = 6;
+// Emergency CPU relief (#174): no pure bot-vs-bot filler games (they exist only
+// for lobby optics and are pure engine work on the single-threaded DO), and a
+// low total house-game cap. Fewer house games means the per-move alarm fires
+// far less often, which is what was driving the Durable Object past its CPU
+// limit.
+const houseVsHouseCap = 0;
+const houseTotalGamesCap = 3;
+// Per-alarm ceiling on house engine actions (moves and draft resolves), across
+// all live house games. Human-facing actions used to ALL run in one tick, so
+// after any stall every overdue game became due at once and one alarm ran a
+// batch of ~80ms engine searches (plus full O(plies) replays) back to back on
+// the single thread — a CPU spike that could evict the isolate and re-wedge the
+// alarm chain. Now a tick acts on at most this many; the rest fire on an
+// immediate follow-up alarm. Complements #174's sweep throttle and low game
+// cap: a second, tighter bound on per-tick engine work. Filler is capped
+// separately to 1/tick.
+const houseMaxActionsPerTick = 3;
+// Soft wall-clock budget for one tick's due-action loop: once exceeded, the
+// remaining due actions defer to a follow-up tick even if under the count cap,
+// so a handful of long late-game replays cannot blow a single alarm's CPU.
+const houseTickBudgetMs = 250;
 // How long a queued human waits for a human opponent before a house player
 // picks them up.
 const houseHumanPickupMs = 4500;
@@ -303,7 +329,10 @@ type HouseSeekEntry = {
 // Bumped whenever the worker changes in a way we want to confirm shipped.
 // Surfaced at GET /healthz so a deploy can be verified without Cloudflare
 // dashboard access (compare the value there against this one).
-const buildVersion = "house-players-1";
+// Bump this on every deploy so /healthz identifies the running build. When it
+// is a static string that never changes, nobody can tell what code is live,
+// which is exactly how a shipped fix looks unfixed. Keep it short.
+const buildVersion = "server-cpu-fix-2";
 // Lichess-style start-of-game grace: a player's clock only starts charging 10
 // seconds into their first move, so nobody loses time to a slow page load.
 const firstMoveGraceMs = 10 * 1000;
@@ -425,9 +454,17 @@ export class GameServer extends DurableObject<Env> {
       // blows the per-request CPU limit (learned the hard way, see the
       // retired system's history). Best-effort: a storage hiccup in the
       // revival or cleanup must not stop /healthz from returning diagnostics.
+      // reviveAlarmChain is cheap (a getAlarm) and runs on every hit; the full
+      // GC scan in cleanupExpired is NOT — throttle it so an uptime monitor
+      // polling /healthz every few seconds cannot repeatedly trigger a
+      // whole-table scan (plus delete writes) on the single thread.
       try {
         await this.reviveAlarmChain();
-        await this.cleanupExpired();
+        const now = Date.now();
+        if (now - this.lastHealthzCleanupAt >= maintenanceMinIntervalMs) {
+          this.lastHealthzCleanupAt = now;
+          await this.cleanupExpired();
+        }
       } catch (err) {
         console.error("healthz maintenance failed", err);
       }
@@ -647,16 +684,60 @@ export class GameServer extends DurableObject<Env> {
     // House work runs first (a queued human waiting for a pickup is the most
     // latency-sensitive thing here) but is fully isolated: any house failure
     // degrades to "bots absent", never to broken human play.
+    //
+    // Alarm-chain liveness is the single most important invariant here: the
+    // reschedule happens via scheduleNextAlarm (at the tail of maintenanceAll,
+    // or directly on a throttled in-between tick below), so if that throws
+    // before rescheduling — or the isolate is evicted mid-tick by a CPU spike —
+    // the chain would die until a socket reconnect and every house game plus
+    // clock enforcement would freeze: exactly the "server is always crashing /
+    // bot won't move" symptom. Guard it two ways: (1) a defensive floor alarm
+    // set up front, before any heavy work, so an eviction still leaves a next
+    // alarm armed; (2) a fallback reschedule if either maintenance branch
+    // throws. Both only pull the alarm EARLIER or fill a gap; scheduleNextAlarm
+    // still refines the exact time (and clears it when truly idle). The floor is
+    // gated on someone being online, matching the heartbeat/idle rule, so an
+    // empty server still goes idle.
+    if (this.humanSocketCount() > 0) {
+      try {
+        await this.armAlarmBy(Date.now() + houseHeartbeatMs);
+      } catch {}
+    }
     try {
       await this.houseTick();
     } catch (err) {
       this.houseTickError = err instanceof Error ? err.message : String(err);
       console.error("houseTick failed", err);
     }
-    try {
-      await this.maintenanceAll();
-    } catch (err) {
-      console.error("maintenanceAll failed", err);
+    // The full maintenance sweep is the CPU-heavy part (a whole-table scan plus
+    // per-match work). Bot moves wake this alarm about once a second; running
+    // the sweep every time is what pushed the DO past its CPU limit (#174), so
+    // throttle it. On the in-between ticks do only the cheap indexed reschedule
+    // so the alarm chain stays alive and live house games keep moving;
+    // flag/deadline enforcement and GC still run on the next sweep, at most a
+    // few seconds out. Whichever branch runs IS the reschedule point, so if it
+    // throws before rescheduling the chain would die — fall back to a short
+    // re-arm so the next pass recovers instead of the whole DO going dark.
+    const now = Date.now();
+    if (now - this.lastMaintenanceAt >= maintenanceMinIntervalMs) {
+      this.lastMaintenanceAt = now;
+      try {
+        await this.maintenanceAll();
+      } catch (err) {
+        console.error("maintenanceAll failed", err);
+        try {
+          await this.armAlarmBy(Date.now() + 2000);
+        } catch {}
+      }
+    } else {
+      try {
+        await this.scheduleNextAlarm(await this.loadLiveMatches());
+      } catch (err) {
+        console.error("alarm reschedule failed", err);
+        try {
+          await this.armAlarmBy(Date.now() + 2000);
+        } catch {}
+      }
     }
   }
 
@@ -730,6 +811,14 @@ export class GameServer extends DurableObject<Env> {
   // rebuilt from a full scan every GC sweep, so it self-heals after an isolate
   // restart or any missed update.
   private liveMatchIndex: Set<string> | null = null;
+
+  // When the last full maintenance sweep ran. Gates the heavy sweep off the
+  // once-a-second bot-move alarm (see maintenanceMinIntervalMs).
+  private lastMaintenanceAt = 0;
+  // When /healthz last ran its full-table GC scan. Gates that scan so an
+  // uptime monitor polling /healthz cannot repeatedly force a whole-table
+  // deserialize (plus delete writes) on the single thread.
+  private lastHealthzCleanupAt = 0;
 
   // Keep the index in step with a write: a finished game leaves the live set,
   // any other save is a live game. A no-op until the index has been built.
@@ -1773,13 +1862,21 @@ export class GameServer extends DurableObject<Env> {
     if (!session.userId || !session.username) {
       return error(ws, "auth_required", "Sign in to use quick pairing.");
     }
-    const req = (data as { pool?: unknown; mode?: unknown } | undefined) ?? {};
+    const req = (data as { pool?: unknown; mode?: unknown; target?: unknown } | undefined) ?? {};
     const poolName = String(req.pool || "3+2");
     const pool = QUEUE_POOLS[poolName];
     if (!pool) return error(ws, "bad_pool", "Unknown queue pool.");
     // Which of the two pools (Nerf or Buff) this seek enters. Older clients
     // send no mode and land in Buff, which is what the queue always ran.
     const mode: DraftMode = req.mode === "nerf" ? "nerf" : "buff";
+    // Answering a specific lobby seek carries that seeker's identity. A targeted
+    // join must pair ONLY with that person (or that house persona) — never a
+    // random pool waiter or a random bot. Untargeted frames (the main Quick
+    // Pair button) leave this null and keep pairing with whoever is first.
+    const targetUserId =
+      typeof (req.target as { userId?: unknown } | undefined)?.userId === "string"
+        ? String((req.target as { userId: string }).userId).slice(0, 64)
+        : "";
     const db = await this.db();
     if (!db) return error(ws, "server_unconfigured", "Matchmaking is unavailable right now.");
 
@@ -1807,6 +1904,51 @@ export class GameServer extends DurableObject<Env> {
       (entry) => entry.userId !== session.userId && this.socketForAttachment(entry.attachmentId),
     );
 
+    const me: SeatUser = { id: session.userId, name: session.username, rating, rd, vol, avatar };
+
+    // Targeted join: the player tapped a specific seek row in the lobby, so
+    // they mean to play THAT person. Pair only with them; a stale seek must
+    // report "no longer waiting" rather than fall through to a random pool
+    // waiter or (via the house pickup) a random bot.
+    if (targetUserId) {
+      if (targetUserId === session.userId) {
+        return error(ws, "seek_gone", "That player is no longer waiting.");
+      }
+      // A house-persona seek pairs immediately with that exact bot. A human
+      // explicitly asked for THIS game, so honour it past the background cap.
+      if (isHouseUserId(targetUserId)) {
+        const persona = housePersona(targetUserId);
+        if (!persona) return error(ws, "seek_gone", "That player is no longer waiting.");
+        const meEntry: QueueEntry = {
+          attachmentId: session.id,
+          userId: session.userId,
+          username: session.username,
+          rating,
+          rd,
+          vol,
+          avatar,
+          at: Date.now(),
+        };
+        await this.pairHumanWithHouse(meEntry, ws, poolName, mode, persona, db);
+        // Retire that persona's advertised seek so it stops showing as waiting.
+        try {
+          const seeks = (await this.ctx.storage.get<HouseSeekEntry[]>(houseSeeksKey)) ?? [];
+          const remaining = seeks.filter((seek) => seek.userId !== persona.userId);
+          if (remaining.length !== seeks.length) await this.ctx.storage.put(houseSeeksKey, remaining);
+        } catch {}
+        return;
+      }
+      // A human seek: match by account id (never by name or `at`, so a re-queue
+      // is still the same person) and only if their socket is still live.
+      const idx = entries.findIndex(
+        (entry) => entry.userId === targetUserId && this.socketForAttachment(entry.attachmentId),
+      );
+      if (idx < 0) return error(ws, "seek_gone", "That player is no longer waiting.");
+      const opponent = entries.splice(idx, 1)[0];
+      await this.ctx.storage.put(key, entries);
+      return this.createQueueMatch(ws, me, opponent, poolName, mode);
+    }
+
     const opponent = entries.shift();
     if (!opponent) {
       entries.push({
@@ -1830,10 +1972,23 @@ export class GameServer extends DurableObject<Env> {
       return send(ws, "queued", { pool: poolName, mode });
     }
     await this.ctx.storage.put(key, entries);
+    return this.createQueueMatch(ws, me, opponent, poolName, mode);
+  }
 
+  // Create and store a rated queue match between the caller (already seated as
+  // `me`) and a waiting `opponent`, then send both the `paired` frame. Shared
+  // verbatim by quick pairing (pair-with-anyone) and a targeted seek join, so
+  // both produce identical rated games.
+  private async createQueueMatch(
+    ws: WebSocket,
+    me: SeatUser,
+    opponent: QueueEntry,
+    poolName: string,
+    mode: DraftMode,
+  ) {
+    const pool = QUEUE_POOLS[poolName];
     const opponentWs = this.socketForAttachment(opponent.attachmentId)!;
     const meWhite = randomInt(2) === 0;
-    const me: SeatUser = { id: session.userId, name: session.username, rating, rd, vol, avatar };
     const them: SeatUser = {
       id: opponent.userId,
       name: opponent.username,
@@ -2011,10 +2166,11 @@ export class GameServer extends DurableObject<Env> {
       if (ids.length === 2) houseVsHouse++;
     }
 
-    // Due house actions. Human-facing actions all run (there are only ever a
-    // few and they must feel responsive); at most ONE house-vs-house action
-    // runs per tick — the rest re-fire on the next alarm — so the
-    // single-threaded DO never runs a batch of engine searches back to back.
+    // Due house actions, capped per tick (houseMaxActionsPerTick + a wall-clock
+    // budget) so one alarm never runs a long batch of engine searches back to
+    // back on the single thread — the CPU spike that reset the DO. Human-facing
+    // actions are ordered first (filler last) and drained across follow-up
+    // ticks; at most ONE house-vs-house filler action runs per tick.
     const isFiller = (m: StoredMatch) => !!(m.bots?.w && m.bots?.b);
     // The human seat of a mixed house match (undefined for house-vs-house
     // filler, which has a bot on both sides).
@@ -2024,6 +2180,13 @@ export class GameServer extends DurableObject<Env> {
       .filter((m) => m.botActAt && m.botActAt <= now)
       .sort((a, b) => Number(isFiller(a)) - Number(isFiller(b)) || (a.botActAt ?? 0) - (b.botActAt ?? 0));
     let fillerActed = 0;
+    // Bound the engine work this tick can do (see houseMaxActionsPerTick): a
+    // stall used to make every game due at once and one alarm ran the whole
+    // batch back to back, spiking CPU. Count real actions only (the cheap skip
+    // below does not count); defer the rest to a prompt follow-up alarm.
+    let actionsActed = 0;
+    const tickStart = Date.now();
+    let deferredDueWork = false;
     for (const match of due) {
       // A match whose retire failed is left inert (see the catch below): never
       // act on it again this isolate, so it cannot re-throw on every tick.
@@ -2055,8 +2218,17 @@ export class GameServer extends DurableObject<Env> {
           continue;
         }
       }
+      // Per-tick budget: this match would run a real engine action, but we have
+      // already spent the tick's action/CPU budget. Leave it (and everything
+      // after it) for an immediate follow-up alarm so one tick never blocks the
+      // single thread with a long batch of searches.
+      if (actionsActed >= houseMaxActionsPerTick || Date.now() - tickStart > houseTickBudgetMs) {
+        deferredDueWork = true;
+        break;
+      }
       try {
         await this.playHouseAction(match, Date.now());
+        actionsActed++;
         if (filler) fillerActed++;
       } catch (err) {
         // A match that throws while acting (engine edge case, corrupt record,
@@ -2095,6 +2267,15 @@ export class GameServer extends DurableObject<Env> {
           } catch {}
         }
       }
+    }
+    // Deferred due actions (the per-tick budget was hit) fire on an immediate
+    // follow-up rather than waiting out the full heartbeat. Their botActAt is
+    // still in the past, so maintenanceAll's scheduleNextAlarm would catch them
+    // anyway; this just makes the drain prompt.
+    if (deferredDueWork) {
+      try {
+        await this.armAlarmBy(Date.now() + 300);
+      } catch {}
     }
     // Self-heal: a live house game with no result and no pending action gets
     // its timer re-armed (covers records saved before a crash or deploy).
@@ -3148,7 +3329,17 @@ export class GameServer extends DurableObject<Env> {
     if (match.picksVisible) match.revealed = { w: true, b: true };
     match.nerfDeadline = null;
     match.startedAt = Date.now();
-    match.runningSince = match.startedAt;
+    // The draft can finalize from the alarm (a house pick landing, or the
+    // 15s lock-in auto-resolve) while a human seat is disconnected — during the
+    // draft the game was not started, so detachSession could not pause the
+    // clock. Start PAUSED in that case so the human's clock does not burn on a
+    // board the guard-held bot cannot advance; reconnectMatch's house-resume
+    // block resumes it and re-arms the bot when they return. A present human
+    // (the normal accept) is byte-for-byte unchanged: runningSince = startedAt.
+    const humanGone = (["w", "b"] as Color[]).some(
+      (color) => !match.bots?.[color] && match.disconnectedAt[color] && !this.connectedSession(match.id, color),
+    );
+    match.runningSince = humanGone ? null : match.startedAt;
     // House seats: the game just started, so white's first move may be a
     // house action.
     match.botActAt = null;
@@ -3385,6 +3576,10 @@ export class GameServer extends DurableObject<Env> {
       timeSec: number;
       incrementSec: number;
       at: number;
+      // Stable identity so the client can answer a specific seek and the server
+      // can pair with exactly that person (or bot), never a random pool waiter.
+      userId: string;
+      house: boolean;
     }> = [];
     for (const mode of QUEUE_MODES) {
       for (const [poolName, pool] of Object.entries(QUEUE_POOLS)) {
@@ -3401,6 +3596,8 @@ export class GameServer extends DurableObject<Env> {
             timeSec: pool.timeSec,
             incrementSec: pool.incrementSec,
             at: entry.at,
+            userId: entry.userId,
+            house: false,
           });
         }
       }
@@ -3423,6 +3620,8 @@ export class GameServer extends DurableObject<Env> {
           timeSec: pool.timeSec,
           incrementSec: pool.incrementSec,
           at: seek.at,
+          userId: seek.userId,
+          house: true,
         });
       }
     } catch {
@@ -3526,6 +3725,18 @@ export class GameServer extends DurableObject<Env> {
     const match = watchedId ? await this.loadMatch(watchedId) : null;
     if (!match) return send(ws, "n");
     if (await this.finishOnFlag(match)) return;
+    // Self-heal from the client heartbeat (~every 10s): re-arm this game's own
+    // alarm so a pending house-bot move or a clock deadline keeps firing even if
+    // the global alarm chain died between deadlines (e.g. an isolate eviction
+    // mid-tick left no next alarm). This is what lets a stuck bot game recover
+    // on its own instead of freezing until the player refreshes. Cheap: a
+    // getAlarm read, and a setAlarm only when this game actually needs an
+    // earlier alarm than the one already stored (so a no-op in steady state).
+    if (!match.result) {
+      try {
+        await this.scheduleAlarmForMatch(match);
+      } catch {}
+    }
     const clocks = this.currentClocks(match);
     send(ws, "n", { wc: Math.round(clocks.w), bc: Math.round(clocks.b) });
   }
@@ -3542,8 +3753,23 @@ export class GameServer extends DurableObject<Env> {
       if (match.nerfDeadline && match.nerfOptions && !match.startedAt) candidates.push(match.nerfDeadline);
       if (match.dtDeadline && match.startedAt) candidates.push(match.dtDeadline);
       // Pending house action (move or draft pick). An overdue timer clamps to
-      // just past now so a missed alarm re-fires immediately instead of never.
-      if (match.botActAt) candidates.push(Math.max(match.botActAt, now + 300));
+      // just past now so a missed alarm re-fires immediately instead of never —
+      // UNLESS the bot is guard-held because the human seat is genuinely gone.
+      // In that case houseTick will only skip it, so clamping to now+300 would
+      // spin a ~3Hz alarm for the whole abandonment window (up to 30 min),
+      // burning CPU on the single thread and helping tip it past its reset
+      // limit. When guard-held, drop the pending-action candidate entirely: the
+      // move re-arms the moment the human reconnects (reconnectMatch) or pings
+      // (sendClocks), and the abandonment GC still fires via its own candidate.
+      if (match.botActAt) {
+        const guardHeld =
+          !!match.startedAt &&
+          !!match.bots &&
+          (["w", "b"] as Color[]).some(
+            (c) => !match.bots?.[c] && match.disconnectedAt[c] && !this.connectedSession(match.id, c),
+          );
+        if (!guardHeld) candidates.push(Math.max(match.botActAt, now + 300));
+      }
     }
     for (const color of ["w", "b"] as Color[]) {
       const disconnectedAt = match.disconnectedAt[color];
@@ -3570,7 +3796,17 @@ export class GameServer extends DurableObject<Env> {
 
   private async scheduleNextAlarm(matches: StoredMatch[]) {
     const now = Date.now();
-    let next = Math.min(...matches.map((match) => this.candidateAlarm(match) ?? Number.POSITIVE_INFINITY));
+    // One corrupt match must not abort the whole reschedule (which would kill
+    // the alarm chain): treat a candidate that throws as "no deadline".
+    let next = Math.min(
+      ...matches.map((match) => {
+        try {
+          return this.candidateAlarm(match) ?? Number.POSITIVE_INFINITY;
+        } catch {
+          return Number.POSITIVE_INFINITY;
+        }
+      }),
+    );
     // Slow house heartbeat while any human socket is connected, so the house
     // roster keeps its queue presence fresh. With nobody online there is no
     // heartbeat: the DO goes idle until the next socket/save re-arms it via

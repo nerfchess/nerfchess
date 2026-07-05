@@ -59,13 +59,6 @@ export default function PrivacyPolicyPage() {
         </p>
       </InfoSection>
 
-      <InfoSection title="Analytics">
-        <p>
-          The site uses Vercel Analytics to understand basic site usage and performance.
-          Analytics data is processed by Vercel according to its service practices.
-        </p>
-      </InfoSection>
-
       <InfoSection title="Removing your data">
         <p>
           To have your account or its content removed, reach out via the contact page and
