@@ -27,7 +27,7 @@ import { draftCardNoun } from "@/engine/buff";
 import { computeMoveRisks } from "@/engine/moveSafety";
 import { loadSettings } from "@/lib/settings";
 import type { GameContext, Nerf } from "@/engine/nerf";
-import { IMPLEMENTED_BY_ID, PLAYABLE_NERFS } from "@/engine/nerfs/library";
+import { IMPLEMENTED_BY_ID, openingNerfPool } from "@/engine/nerfs/library";
 import {
   currentHint,
   NerfGame,
@@ -80,7 +80,8 @@ function moveKey(move: Move): string {
 }
 
 function pickRandomNerf(): Nerf {
-  const pool = PLAYABLE_NERFS.filter((d) => d.id !== "lucky");
+  // Fallback for an unknown server nerf id; respects the opening tier cap.
+  const pool = openingNerfPool();
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
@@ -1164,7 +1165,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           </h1>
           <p className="mt-2 text-sm text-parchment-300 text-center">
             {isNerfMode
-              ? "Pick one of two nerfs. Every six moves you draft a boon, a card that helps you fight on, soften your rule, or remove it."
+              ? "Pick one of two nerfs. Every six moves you draft a card: a hex that curses your opponent, or a boon or item that helps you."
               : "Every game opens weak: pick one of two nerfs, then draft buffs every few moves to claw your way back to power."}
           </p>
           {error && (
@@ -1716,6 +1717,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                                 shieldedSquares: zone.shielded,
                                 wardSquares: zone.ward,
                                 strikeSquares: zone.strike,
+                                walnutSquares: zone.walnut,
                               }
                             : {}),
                         }
@@ -1868,7 +1870,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
 
       {isDraft && game.buffs && (
         <MobileBuffDrawer
-          label={draftCardNoun(start.mode) === "boon" ? "Boons" : "Buffs"}
+          label={draftCardNoun(start.mode) === "hex" ? "Hexes & boons" : "Buffs"}
           held={game.buffs.players[myColor].buffs.length}
           usable={
             !draftCanAct
@@ -1931,7 +1933,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               className="plate pointer-events-auto w-full max-w-xs border-gold/30 p-4 text-center"
             >
               <div className="smallcaps text-[10px] text-parchment-400">
-                {draftCardNoun(start.mode) === "boon" ? "Boon draft" : "Buff draft"}
+                {draftCardNoun(start.mode) === "hex" ? "Hex draft" : "Buff draft"}
               </div>
               <h2 className="font-display text-xl text-parchment mt-0.5">
                 Waiting for opponent

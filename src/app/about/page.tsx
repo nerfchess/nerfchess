@@ -24,10 +24,10 @@ export default function AboutPage() {
         </p>
         <p>
           The two modes split the idea in half. In Nerf mode you pick your secret handicap
-          from two cards, your opponent&apos;s stays hidden until the game ends, and a boon
-          draft every 6 moves mostly softens your nerf; the comeback is the game. In Buff
-          mode nobody is handicapped: both players draft buffs every 6 moves and race to
-          build the strongest army.
+          from two cards, your opponent&apos;s stays hidden until the game ends, and a draft
+          every 6 moves deals hexes to curse your opponent (plus the odd boon or item for
+          yourself); the curse war is the game. In Buff mode nobody is handicapped: both
+          players draft buffs every 6 moves and race to build the strongest army.
         </p>
       </InfoSection>
 

@@ -234,7 +234,7 @@ function HowItWorks() {
       body: (
         <>
           A draft lands every 6 moves. In <span className="font-semibold text-mode-nerfGlow">Nerf</span>{" "}
-          mode you pick boons that mostly soften your nerf. In{" "}
+          mode you pick hexes that curse your opponent, or boons for yourself. In{" "}
           <span className="font-semibold text-mode-buffGlow">Buff</span> mode you draft buffs
           and build the strongest army. Skip one and the next offer rolls stronger.
         </>

@@ -38,8 +38,8 @@ export default function TutorialPage() {
         <h1 className="font-display text-5xl sm:text-6xl mt-1">House rules</h1>
         <p className="mt-5 text-[16px] leading-[1.7] text-parchment-200">
           Nerf Chess is chess, until it isn&apos;t. The five rules below are everything you need to know.
-          Everything else depends on your mode: in Nerf mode, your secret handicap and the boons that
-          soften it; in Buff mode, the buff cards both players draft every 6 moves.
+          Everything else depends on your mode: in Nerf mode, your secret handicap and the hexes,
+          boons, and items you draft; in Buff mode, the buff cards both players draft every 6 moves.
         </p>
         <div className="mt-9 space-y-3">
           {RULES.map((r) => (

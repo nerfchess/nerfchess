@@ -260,6 +260,9 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards 
   const bs = game.buffs;
   if (!bs) return null;
   const noun = draftCardNoun(bs.mode);
+  // Nerf mode's dock holds a mix (hexes, boons, items); "hexes" is the
+  // umbrella noun the mode drafts under.
+  const nounPlural = noun === "hex" ? "hexes" : `${noun}s`;
   const oppColor: Color = myColor === "w" ? "b" : "w";
   const mine = bs.players[myColor].buffs;
   const theirs = bs.players[oppColor].buffs;
@@ -439,7 +442,7 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards 
         )}
 
         <div className="flex items-baseline justify-between gap-2">
-          <span className="smallcaps text-[10px] text-parchment-400">Your {noun}s</span>
+          <span className="smallcaps text-[10px] text-parchment-400">Your {nounPlural}</span>
           <span className="font-mono text-[10px] tabular-nums text-parchment-400">{mine.length}</span>
         </div>
         {mine.length === 0 && (
@@ -452,7 +455,7 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards 
         {theirs.length > 0 && (
           <>
             <div className="flex items-baseline justify-between gap-2 border-t border-white/10 pt-2">
-              <span className="smallcaps text-[10px] text-parchment-400">Opponent&apos;s {noun}s</span>
+              <span className="smallcaps text-[10px] text-parchment-400">Opponent&apos;s {nounPlural}</span>
               <span className="font-mono text-[10px] tabular-nums text-parchment-400">{theirs.length}</span>
             </div>
             <div className="flex flex-wrap items-start gap-1">{theirsActive.map(oppEntry)}</div>

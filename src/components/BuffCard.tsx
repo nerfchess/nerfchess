@@ -13,6 +13,8 @@ const CATEGORY_LABEL: Record<Buff["category"], string> = {
   info: "Insight",
   draft: "Draft",
   nerf: "Nerf-breaker",
+  hex: "Hex",
+  item: "Item",
 };
 
 interface Props {

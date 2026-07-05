@@ -210,7 +210,7 @@ export function PlayerNerfCard({
 
       {boons && boons.length > 0 && (
         <div className={(compact ? "mt-2.5" : "mt-4") + " border-t border-white/10 pt-2"}>
-          <div className="smallcaps text-[10px] text-parchment-400">Your boons</div>
+          <div className="smallcaps text-[10px] text-parchment-400">Your cards</div>
           <ul className="mt-1 space-y-1">
             {boons.map((b, i) => (
               <li key={`${b.name}-${i}`} className="flex items-baseline gap-1.5">

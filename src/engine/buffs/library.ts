@@ -3064,6 +3064,378 @@ const TIER8: Buff[] = [
 ];
 
 // ---------------------------------------------------------------------------
+// HEXES (nerf mode only): curses you cast on your OPPONENT, the mirror image
+// of buff mode's self-buffs. Piece hexes bend or lock down their army; the
+// drawback intensifiers stack a small extra handicap on top of their nerf.
+// Safety rails: kings are never frozen or turned into walnuts, and every
+// move filter either keeps a fallback move or leans on the forced-pass rule,
+// so a hex can never soft-lock the game.
+// ---------------------------------------------------------------------------
+
+/** Instant: every enemy piece of the given types becomes a walnut (an inert
+ * shell that cannot move) for `turns` of its owner's turns. Kings never. */
+function walnutAll(types: PieceType[], turns: number): Mech {
+  return instant((_inst, api) => {
+    for (const sq of mySquares(api.board, api.opp)) {
+      const t = api.board.pieces[sq]!.type;
+      if (t === "k" || !types.includes(t)) continue;
+      addEffect(api, { kind: "walnut", sq, owner: api.opp, turns });
+    }
+  });
+}
+
+/** One step from `from` toward `toward` (Chebyshev direction), or null. */
+function stepToward(from: Square, toward: Square): Square | null {
+  const df = Math.sign(FILE(toward) - FILE(from));
+  const dr = Math.sign(RANK(toward) - RANK(from));
+  if (df === 0 && dr === 0) return null;
+  const f = FILE(from) + df, r = RANK(from) + dr;
+  return inBoard(f, r) ? SQ(f, r) : null;
+}
+
+/** One square back toward `color`'s home rank, or null at the board edge. */
+function homeStep(sq: Square, color: Color): Square | null {
+  const back = sq - fwdOf(color);
+  return back >= 0 && back < 64 ? back : null;
+}
+
+const HEXES: Buff[] = [
+  def(
+    { id: "heavy_boots", name: "Heavy Boots", description: "Your opponent's pawns cannot double-step for their next 4 turns.", tier: 1, category: "hex" },
+    timedOppFilter(4, (moves) =>
+      moves.filter((m) => !(m.piece === "p" && Math.abs(RANK(m.to) - RANK(m.from)) === 2)),
+    ),
+  ),
+  def(
+    { id: "toll_gate", name: "Toll Gate", description: "Your opponent cannot capture en passant for their next 6 turns.", tier: 1, category: "hex" },
+    timedOppFilter(6, (moves) =>
+      moves.filter(
+        (m) => !(m.piece === "p" && m.capturedSquare != null && m.capturedSquare !== m.to),
+      ),
+    ),
+  ),
+  def(
+    { id: "cold_snap", name: "Cold Snap", description: "Freeze one enemy piece (not the king) for 2 of its owner's turns.", tier: 2, category: "hex" },
+    freezeTarget(2),
+  ),
+  def(
+    { id: "butter_bishops", name: "Butter Bishops", description: "Your opponent's bishops slide at most 2 squares for their next 4 turns.", tier: 2, category: "hex" },
+    timedOppFilter(4, (moves) =>
+      moves.filter(
+        (m) =>
+          m.piece !== "b" ||
+          Math.max(Math.abs(FILE(m.to) - FILE(m.from)), Math.abs(RANK(m.to) - RANK(m.from))) <= 2,
+      ),
+    ),
+  ),
+  def(
+    { id: "lame_horses", name: "Lame Horses", description: "Your opponent's knights cannot capture for their next 4 turns.", tier: 3, category: "hex" },
+    timedOppFilter(4, (moves) => moves.filter((m) => !(m.piece === "n" && m.captured))),
+  ),
+  def(
+    { id: "twist_the_knife", name: "Twist the Knife", description: "Their drawback bites back: for your opponent's next 3 captures, the capturing piece is frozen for 1 of their turns.", tier: 3, category: "hex" },
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.charges = 3;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.opp || !move.captured || move.captured === "k") return;
+        // Kings never freeze; a royal capture slips the knife.
+        if (move.piece === "k") return;
+        const left = (inst.state.charges as number) ?? 0;
+        if (left <= 0) return;
+        inst.state.charges = left - 1;
+        if (left - 1 <= 0) inst.spent = true;
+        addEffect(api, { kind: "freeze", sq: move.to, owner: api.opp, turns: 1 });
+      },
+      status: (inst) => `${(inst.state.charges as number) ?? 3} enemy captures left`,
+    },
+  ),
+  def(
+    { id: "flypaper_file", name: "Flypaper File", description: "Lime one file: for your next 4 turns, enemy pieces (kings excepted) that enter it are stuck for 2 of their turns.", tier: 4, category: "hex" },
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (_inst, api, picks) =>
+        picks.length > 0
+          ? null
+          : {
+              kind: "square",
+              label: "Pick any square on the file to lime",
+              squares: Array.from({ length: 64 }, (_, i) => i),
+            },
+      effect: (inst, _api, picks) => {
+        if (picks[0]?.square != null) {
+          inst.state.sq = picks[0].square;
+          inst.state.turns = 4;
+        }
+      },
+      onMovePlayed: (inst, move, api) => {
+        const sq = inst.state.sq as Square | undefined;
+        if (sq == null) return;
+        if (move.color === api.opp && move.piece !== "k" && FILE(move.to) === FILE(sq)) {
+          addEffect(api, { kind: "freeze", sq: move.to, owner: api.opp, turns: 2 });
+        }
+        tickTurns(inst, move, api.me);
+      },
+      status: (inst) => {
+        const sq = inst.state.sq as Square | undefined;
+        if (sq == null) return "activate to choose a file";
+        return `file ${"abcdefgh"[FILE(sq)]} is sticky, ${turnsLeft(inst)} of your turns left`;
+      },
+    },
+  ),
+  def(
+    { id: "dead_letter", name: "Dead Letter", description: "Your opponent's next draft never arrives: it is skipped outright.", tier: 4, category: "hex" },
+    instant((_inst, api) => {
+      api.theirs.flags.blockedDrafts = (api.theirs.flags.blockedDrafts ?? 0) + 1;
+    }),
+  ),
+  def(
+    { id: "walnut_queen", name: "Walnut Queen", description: "Your opponent's queen turns into a walnut for 3 of their turns. A walnut cannot move at all.", tier: 5, category: "hex" },
+    walnutAll(["q"], 3),
+  ),
+  def(
+    { id: "ball_and_chain", name: "Ball and Chain", description: "Their drawback grows teeth: for your opponent's next 5 turns, the piece they just moved must rest a turn before moving again.", tier: 5, category: "hex" },
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.turns = 5;
+      },
+      filterOpponentMoves: (moves, inst) => {
+        if (turnsLeft(inst) <= 0) return moves;
+        const last = inst.state.lastTo as Square | undefined;
+        if (last == null) return moves;
+        const rest = moves.filter((m) => m.from !== last);
+        // Never strand them with zero moves purely from this hex.
+        return rest.length > 0 ? rest : moves;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.opp) return;
+        inst.state.lastTo = move.to;
+        tickTurns(inst, move, api.opp);
+      },
+      status: (inst) => `${turnsLeft(inst)} of their turns left`,
+    },
+  ),
+  def(
+    { id: "royal_summons", name: "Royal Summons", description: "For your opponent's next 2 turns, they must move their king if it has a legal move.", tier: 5, category: "hex" },
+    timedOppFilter(2, (moves) => {
+      const kingMoves = moves.filter((m) => m.piece === "k");
+      // A boxed-in king waives the summons instead of soft-locking the game.
+      return kingMoves.length > 0 ? kingMoves : moves;
+    }),
+  ),
+  def(
+    { id: "creeping_frost", name: "Creeping Frost", description: "Freeze two enemy pieces (not the king) for 2 of their owner's turns.", tier: 6, category: "hex" },
+    activated(
+      (_inst, api, picks) =>
+        picks.length >= 2
+          ? null
+          : {
+              kind: "square",
+              label: `Choose an enemy piece to freeze (${picks.length + 1}/2)`,
+              squares: mySquares(api.board, api.opp).filter(
+                (sq) =>
+                  api.board.pieces[sq]!.type !== "k" && !picks.some((k) => k.square === sq),
+              ),
+            },
+      (_inst, api, picks) => {
+        for (const k of picks) {
+          if (k.square != null) {
+            addEffect(api, { kind: "freeze", sq: k.square, owner: api.opp, turns: 2 });
+          }
+        }
+      },
+    ),
+  ),
+  def(
+    { id: "walnut_court", name: "Walnut Court", description: "Every enemy rook turns into a walnut for 2 of their owner's turns.", tier: 7, category: "hex" },
+    walnutAll(["r"], 2),
+  ),
+  def(
+    { id: "grand_malediction", name: "Grand Malediction", description: "Your opponent skips their next turn and their next draft is skipped.", tier: 8, category: "hex" },
+    instant((_inst, api) => {
+      api.bs.skips[api.opp] += 1;
+      api.theirs.flags.blockedDrafts = (api.theirs.flags.blockedDrafts ?? 0) + 1;
+    }),
+  ),
+];
+
+// ---------------------------------------------------------------------------
+// ITEMS: playful consumables drafted in BOTH modes (nerf mode's boon share
+// and buff mode's general pool). Light, readable, one clear effect each.
+// ---------------------------------------------------------------------------
+
+const ITEMS: Buff[] = [
+  def(
+    { id: "walnut_shell", name: "Walnut Shell", description: "Crack it open: free one of your pieces from any freeze or walnut hex.", tier: 1, category: "item" },
+    activated(
+      (_inst, api, picks) =>
+        picks.length > 0
+          ? null
+          : {
+              kind: "square",
+              label: "Choose a piece to crack free",
+              squares: mySquares(api.board, api.me).filter((sq) =>
+                api.bs.effects.some(
+                  (e) =>
+                    (e.kind === "freeze" || e.kind === "walnut") &&
+                    e.owner === api.me &&
+                    e.sq === sq &&
+                    e.turns > 0,
+                ),
+              ),
+            },
+      (_inst, api, picks) => {
+        const sq = picks[0]?.square;
+        if (sq == null) return;
+        api.bs.effects = api.bs.effects.filter(
+          (e) =>
+            !((e.kind === "freeze" || e.kind === "walnut") && e.owner === api.me && e.sq === sq),
+        );
+      },
+    ),
+  ),
+  def(
+    { id: "apple", name: "Apple", description: "Feed one of your pieces: it digests for 2 turns and cannot be captured while it does.", tier: 2, category: "item" },
+    shieldTarget(2),
+  ),
+  def(
+    { id: "banana_peel", name: "Banana Peel", description: "Toss it on an empty square: the first enemy piece to step there slips one square back toward its home rank.", tier: 2, category: "item" },
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (_inst, api, picks) =>
+        picks.length > 0
+          ? null
+          : {
+              kind: "square",
+              label: "Toss the peel on an empty square",
+              squares: emptySquares(api.board),
+            },
+      effect: (inst, _api, picks) => {
+        inst.state.sq = picks[0]?.square;
+      },
+      onMovePlayed: (inst, move, api) => {
+        const sq = inst.state.sq as Square | undefined;
+        if (sq == null) return;
+        if (move.color !== api.opp || move.to !== sq || move.piece === "k") return;
+        inst.spent = true;
+        const back = homeStep(sq, move.color);
+        // The slip fizzles when the square behind is occupied or off-board
+        // (and the relocate backstop refuses pawns slipping onto rank 1/8).
+        if (back != null && !api.board.pieces[back]) api.relocate(sq, back);
+      },
+      status: (inst) => {
+        const sq = inst.state.sq as Square | undefined;
+        return sq == null
+          ? "activate to toss the peel"
+          : `peel waiting on ${"abcdefgh"[FILE(sq)]}${RANK(sq) + 1}`;
+      },
+    },
+  ),
+  def(
+    { id: "trampoline", name: "Trampoline", description: "Bounce one of your pieces (not the king) to any empty square within two squares of it.", tier: 3, category: "item" },
+    activated(
+      (_inst, api, picks) => {
+        if (picks.length >= 2) return null;
+        if (picks.length === 0) {
+          return {
+            kind: "square",
+            label: "Choose the piece to bounce",
+            squares: mySquares(api.board, api.me).filter(
+              (sq) => api.board.pieces[sq]!.type !== "k",
+            ),
+          };
+        }
+        const from = picks[0].square!;
+        const isPawn = api.board.pieces[from]?.type === "p";
+        return {
+          kind: "square",
+          label: "Choose where it lands",
+          squares: emptySquares(
+            api.board,
+            (sq) =>
+              sq !== from &&
+              Math.abs(FILE(sq) - FILE(from)) <= 2 &&
+              Math.abs(RANK(sq) - RANK(from)) <= 2 &&
+              (!isPawn || pawnRankOk(sq)),
+          ),
+        };
+      },
+      (_inst, api, picks) => {
+        const from = picks[0]?.square, to = picks[1]?.square;
+        if (from == null || to == null) return;
+        if (api.board.pieces[from] && !api.board.pieces[to]) api.relocate(from, to);
+      },
+    ),
+  ),
+  def(
+    { id: "magnet", name: "Magnet", description: "Drag one enemy piece (not the king) one square toward your king.", tier: 3, category: "item" },
+    activated(
+      (_inst, api, picks) => {
+        if (picks.length > 0) return null;
+        const k = mySquares(api.board, api.me, "k")[0];
+        const squares =
+          k == null
+            ? []
+            : mySquares(api.board, api.opp).filter((sq) => {
+                if (api.board.pieces[sq]!.type === "k") return false;
+                const step = stepToward(sq, k);
+                return step != null && !api.board.pieces[step];
+              });
+        return { kind: "square", label: "Choose the enemy piece to pull", squares };
+      },
+      (_inst, api, picks) => {
+        const sq = picks[0]?.square;
+        const k = mySquares(api.board, api.me, "k")[0];
+        if (sq == null || k == null) return;
+        const p = api.board.pieces[sq];
+        if (!p || p.color !== api.opp || p.type === "k") return;
+        const step = stepToward(sq, k);
+        if (step != null && !api.board.pieces[step]) api.relocate(sq, step);
+      },
+    ),
+  ),
+  def(
+    { id: "firecracker", name: "Firecracker", description: "Startle one enemy piece (not the king): it retreats one square toward its home rank.", tier: 4, category: "item" },
+    activated(
+      (_inst, api, picks) =>
+        picks.length > 0
+          ? null
+          : {
+              kind: "square",
+              label: "Choose the enemy piece to startle",
+              squares: mySquares(api.board, api.opp).filter((sq) => {
+                const p = api.board.pieces[sq]!;
+                if (p.type === "k") return false;
+                const back = homeStep(sq, api.opp);
+                return (
+                  back != null &&
+                  !api.board.pieces[back] &&
+                  (p.type !== "p" || pawnRankOk(back))
+                );
+              }),
+            },
+      (_inst, api, picks) => {
+        const sq = picks[0]?.square;
+        if (sq == null) return;
+        const p = api.board.pieces[sq];
+        if (!p || p.color !== api.opp || p.type === "k") return;
+        const back = homeStep(sq, api.opp);
+        if (back != null && !api.board.pieces[back]) api.relocate(sq, back);
+      },
+    ),
+  ),
+  def(
+    { id: "coffee", name: "Coffee", description: "Knock it back: take a second move this turn.", tier: 4, category: "item" },
+    extraMovesNow(1),
+  ),
+];
+
+// ---------------------------------------------------------------------------
 // Exports
 // ---------------------------------------------------------------------------
 
@@ -3076,6 +3448,8 @@ export const ALL_BUFFS: Buff[] = [
   ...TIER6,
   ...TIER7,
   ...TIER8,
+  ...HEXES,
+  ...ITEMS,
 ];
 
 export const BUFF_BY_ID: Record<string, Buff> = Object.fromEntries(

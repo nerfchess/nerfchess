@@ -11,7 +11,7 @@ import { PlayerNerfCard } from "@/components/PlayerNerfCard";
 import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
 import { AILevel, aiBudgetMs, pickAIMove } from "@/engine/ai";
 import { Nerf, type GameContext } from "@/engine/nerf";
-import { IMPLEMENTED_BY_ID, PLAYABLE_NERFS } from "@/engine/nerfs/library";
+import { IMPLEMENTED_BY_ID, openingNerfPool } from "@/engine/nerfs/library";
 import { BUFF_BY_ID } from "@/engine/buffs/library";
 import { BuffUsedToast } from "@/components/BuffUsedToast";
 import {
@@ -58,7 +58,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, type CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 function pickRandomNerf(): Nerf {
-  const playable = PLAYABLE_NERFS.filter((d) => d.id !== "lucky");
+  // Random rolls respect the temporary opening cap (tiers 1-2 only).
+  const playable = openingNerfPool();
   return playable[Math.floor(Math.random() * playable.length)];
 }
 
@@ -68,7 +69,8 @@ function pickRandomNerf(): Nerf {
  * each side (options 0-1 and 2-3) one card of the anchor tier and one of the
  * partner tier, so both players always draft from the same tier pair. */
 function dealNerfOptions(exclude: Set<string>): Nerf[] {
-  const pool = PLAYABLE_NERFS.filter((d) => d.id !== "lucky" && !exclude.has(d.id));
+  // The deal draws from the capped opening pool (see MAX_OPENING_NERF_TIER).
+  const pool = openingNerfPool().filter((d) => !exclude.has(d.id));
   const ofTier = (tier: number) => pool.filter((d) => d.tier === tier);
   const takeOne = (tier: number, taken: Set<string>): Nerf => {
     const candidates = ofTier(tier).filter((d) => !taken.has(d.id));
@@ -879,7 +881,7 @@ function GamePage() {
             </h1>
             <p className="mt-2 text-sm text-parchment-300 text-center">
               {gameMode === "nerf"
-                ? "Pick one of two nerfs. Every six moves you draft a boon, a card that helps you fight on, soften your rule, or remove it."
+                ? "Pick one of two nerfs. Every six moves you draft a card: a hex that curses your opponent, or a boon or item that helps you."
                 : "Every game opens weak: pick one of two nerfs, then draft buffs every few moves to claw your way back to power."}
             </p>
             {nerfDeadline != null && (
@@ -1377,6 +1379,7 @@ function GamePage() {
                           shieldedSquares: zone.shielded,
                           wardSquares: zone.ward,
                           strikeSquares: zone.strike,
+                          walnutSquares: zone.walnut,
                         }
                   }
                   lastMove={lastMoveForDisplay}
@@ -1499,7 +1502,7 @@ function GamePage() {
 
       {game.buffs && (
         <MobileBuffDrawer
-          label={draftCardNoun(game.buffs.mode) === "boon" ? "Boons" : "Buffs"}
+          label={draftCardNoun(game.buffs.mode) === "hex" ? "Hexes & boons" : "Buffs"}
           held={game.buffs.players[myColor].buffs.length}
           usable={
             game.result || game.board.turn !== myColor || myOffer || isReviewingHistory

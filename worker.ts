@@ -5,7 +5,7 @@ import { DurableObject } from "cloudflare:workers";
 import { default as handler } from "./.open-next/worker.js";
 import { moveToUCI } from "./src/engine/board";
 import { BUFF_BY_ID } from "./src/engine/buffs/library";
-import { PLAYABLE_NERFS, pickNerfPair } from "./src/engine/nerfs/library";
+import { PLAYABLE_NERFS, openingNerfPool, pickNerfPair } from "./src/engine/nerfs/library";
 import {
   NerfGame,
   UNRESTRICTED_NERF,
@@ -64,7 +64,11 @@ type Result = NerfGame["result"];
 //     changed. From here on, a version MISMATCH is the trigger for started
 //     draft games (their replay is known-desynced even when it happens not
 //     to throw).
-const REPLAY_VERSION = 2;
+//   3 - hexes and items joined the pools: nerf mode now drafts opponent
+//     hexes (60/40 weighted bucket roll inside rollOffer consumes an extra
+//     RNG draw per card), items joined both modes, and the opening nerf
+//     deal is capped at tier 2.
+const REPLAY_VERSION = 3;
 
 type Setup = {
   whiteNerfId: string;
@@ -2794,7 +2798,9 @@ export class GameServer extends DurableObject<Env> {
     master.fork(); // skip: black's nerf seed
     const rng = master.fork();
 
-    const pool = PLAYABLE_NERFS.filter((nerf) => nerf.id !== "lucky");
+    // The deal draws from the capped opening pool: tiers 1-2 only for now
+    // (see MAX_OPENING_NERF_TIER in the nerf library).
+    const pool = openingNerfPool();
     const ofTier = (tier: number) => pool.filter((nerf) => nerf.tier === tier);
     const takeOne = (tier: number, taken: Set<string>): string => {
       const candidates = ofTier(tier).filter((nerf) => !taken.has(nerf.id));

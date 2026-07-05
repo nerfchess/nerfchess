@@ -21,6 +21,8 @@ interface Visual {
   wardSquares?: number[];
   /** Squares just hit by Lightning Strike: a brief one-shot flash. */
   strikeSquares?: number[];
+  /** Pieces hexed into walnuts: frozen solid, marked with the nut. */
+  walnutSquares?: number[];
 }
 
 export interface QueuedPremove {
@@ -378,6 +380,7 @@ export function Board({
   const shieldedSquares = useMemo(() => new Set(visual?.shieldedSquares ?? []), [visual?.shieldedSquares]);
   const wardSquares = useMemo(() => new Set(visual?.wardSquares ?? []), [visual?.wardSquares]);
   const strikeSquares = useMemo(() => new Set(visual?.strikeSquares ?? []), [visual?.strikeSquares]);
+  const walnutSquares = useMemo(() => new Set(visual?.walnutSquares ?? []), [visual?.walnutSquares]);
   const highlightSquares = useMemo(
     () => new Set(visual?.highlightSquares ?? []),
     [visual?.highlightSquares],
@@ -719,6 +722,15 @@ export function Board({
                     <div className="absolute inset-0 bg-cyan-300/25 pointer-events-none sq-freeze" />
                     <span className="absolute top-0.5 right-0.5 z-10 text-[11px] leading-none pointer-events-none drop-shadow sq-freeze-flake">
                       ❄
+                    </span>
+                  </>
+                )}
+                {walnutSquares.has(sq) && (
+                  <>
+                    {/* Hexed into a walnut: amber tint plus the nut itself. */}
+                    <div className="absolute inset-0 bg-amber-700/30 pointer-events-none" />
+                    <span className="absolute top-0.5 right-0.5 z-10 text-[12px] leading-none pointer-events-none drop-shadow">
+                      🥜
                     </span>
                   </>
                 )}

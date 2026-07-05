@@ -24,7 +24,8 @@ interface Props {
   /** Free window over: render as a compact side panel instead of a blocking
    * overlay. The board is visible again and picking still works. */
   minimized?: boolean;
-  /** What the cards are called in this mode ("buff", or "boon" in nerf mode). */
+  /** What the cards are called in this mode ("buff", or "hex" in nerf mode,
+   * where the pool mixes opponent hexes with self boons and items). */
   cardNoun?: string;
   /** The opponent resolved their simultaneous draft while you are choosing. */
   oppLockedIn?: boolean;
@@ -250,7 +251,11 @@ export function DraftOverlay({
           )}
         </div>
         <h2 className="font-display text-3xl text-parchment mt-1">
-          {takeBoth ? "Take your cards" : `Choose a ${noun}`}
+          {takeBoth
+            ? "Take your cards"
+            : noun === "hex"
+            ? "Choose a hex or a boon"
+            : `Choose a ${noun}`}
         </h2>
         {takeBoth && (
           <div
@@ -267,6 +272,9 @@ export function DraftOverlay({
           {takeBoth
             ? "A draft-manipulation card lets you take every card in this offer."
             : "Pick one card, or skip and bank the draft to pull from one tier higher next time."}
+          {!takeBoth &&
+            noun === "hex" &&
+            " Hexes curse your opponent; boons and items help you."}
           {bankedBonus && " This draft rolled a tier higher thanks to your banked skip."}
         </p>
         {deadline != null && (
