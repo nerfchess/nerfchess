@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Bell, LogOut, Mail, Search, Settings, Shield, Swords, User, UserPlus } from "lucide-react";
 import { Logo } from "@/components/Logo";
+import { MobileNavMenu } from "@/components/MobileNavMenu";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { PlayerSearch } from "@/components/PlayerSearch";
 import { SettingsPanel } from "@/components/SettingsPanel";
@@ -212,6 +213,9 @@ export function SiteHeader({ active }: { active?: string }) {
   return (
     <nav className="flex items-center justify-between gap-3 px-5 sm:px-10 py-5 sm:py-6">
       <div className="flex min-w-0 items-center gap-2 sm:gap-5">
+        {/* Mobile hamburger, left of the wordmark: opens every destination on
+            phones and tablets, where the inline nav below is hidden. */}
+        <MobileNavMenu align="left" hideAt="md" />
         <Logo />
         <div className="hidden items-center gap-1 text-sm font-body font-medium md:flex">
           {NAV_LINKS.map((link) =>
