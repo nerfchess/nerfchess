@@ -1,4 +1,5 @@
 import { isInCheck } from "../board";
+import { NEW_HEXES } from "./hexes";
 import { Buff, BuffApi, BuffCategory, BuffInstance, BuffPick } from "../buff";
 import { Tier } from "../nerf";
 import { BoardState, Color, FILE, Move, PieceType, RANK, SQ, Square, inBoard } from "../types";
@@ -3449,6 +3450,7 @@ export const ALL_BUFFS: Buff[] = [
   ...TIER7,
   ...TIER8,
   ...HEXES,
+  ...NEW_HEXES,
   ...ITEMS,
 ];
 
