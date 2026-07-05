@@ -92,17 +92,6 @@ export const HEXES_T3: Buff[] = [
     curse(2, (moves) => moves.filter((m) => m.piece !== "b")),
   ),
 
-  // --- timed filter: queen short range ------------------------------------
-  H(
-    {
-      id: "leaden_queen",
-      name: "Leaden Queen",
-      description: "Your opponent's queen slides at most 2 squares for their next 3 turns.",
-      flavor: "Her gown is sewn with lead.",
-    },
-    curse(3, (moves) => moves.filter((m) => m.piece !== "q" || dist(m.from, m.to) <= 2)),
-  ),
-
   // --- timed filter: knights cannot move ----------------------------------
   H(
     {
@@ -112,19 +101,6 @@ export const HEXES_T3: Buff[] = [
       flavor: "The horses shy at every shadow.",
     },
     curse(2, (moves) => moves.filter((m) => m.piece !== "n")),
-  ),
-
-  // --- no_pawn_advance: pawns frozen forward ------------------------------
-  H(
-    {
-      id: "trench_line",
-      name: "Trench Line",
-      description: "Your opponent's pawns cannot advance for their next 3 turns.",
-      flavor: "The infantry are pinned in the mud.",
-    },
-    instant((_inst, api) => {
-      addEffect(api, { kind: "no_pawn_advance", against: api.opp, turns: 3 });
-    }),
   ),
 
   // --- king_only: only the king may move (one turn) -----------------------
@@ -140,31 +116,6 @@ export const HEXES_T3: Buff[] = [
     }),
   ),
 
-  // --- barred: seal the four center squares -------------------------------
-  H(
-    {
-      id: "no_mans_land",
-      name: "No Man's Land",
-      description: "Your opponent cannot enter the four center squares (d4, e4, d5, e5) for their next 3 turns.",
-      flavor: "The middle of the board is scorched ground.",
-    },
-    instant((_inst, api) => {
-      const squares = [SQ(3, 3), SQ(4, 3), SQ(3, 4), SQ(4, 4)];
-      addEffect(api, { kind: "barred", squares, against: api.opp, turns: 3 });
-    }),
-  ),
-
-  // --- draft denial: block one draft --------------------------------------
-  H(
-    {
-      id: "sealed_orders",
-      name: "Sealed Orders",
-      description: "Your opponent's next draft is skipped outright, giving them no new card.",
-      flavor: "The dispatch never reaches the tent.",
-    },
-    blockDrafts(1),
-  ),
-
   // --- skip: opponent loses a turn ----------------------------------------
   H(
     {
@@ -174,5 +125,32 @@ export const HEXES_T3: Buff[] = [
       flavor: "The whole camp oversleeps.",
     },
     skipOpponent(1),
+  ),
+
+  // --- timed filter: queen short range ------------------------------------
+  H(
+    { id: "leaden_crown", name: "Leaden Crown", description: "Your opponent's queen slides at most 2 squares for their next 4 turns.", flavor: "The crown weighs heavy." },
+    curse(4, (moves) => moves.filter((m) => m.piece !== "q" || dist(m.from, m.to) <= 2)),
+  ),
+
+  // --- no_pawn_advance: pawns frozen forward ------------------------------
+  H(
+    { id: "sown_salt", name: "Sown Salt", description: "Your opponent's pawns cannot advance for their next 4 turns.", flavor: "Nothing grows in salted fields." },
+    instant((_inst, api) => {
+      addEffect(api, { kind: "no_pawn_advance", against: api.opp, turns: 4 });
+    }),
+  ),
+
+  // --- barred: seal the four center squares -------------------------------
+  H(
+    { id: "no_trespass", name: "No Trespass", description: "Your opponent cannot move any piece onto the four center squares (d4, e4, d5, e5) for their next 4 turns." },
+    instant((_inst, api) => {
+      addEffect(api, {
+        kind: "barred",
+        squares: [SQ(3, 3), SQ(4, 3), SQ(3, 4), SQ(4, 4)],
+        against: api.opp,
+        turns: 4,
+      });
+    }),
   ),
 ];

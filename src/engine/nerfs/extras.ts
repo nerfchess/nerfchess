@@ -99,7 +99,7 @@ export const PAWN_DUTY: Nerf = db({
   name: "Pawn Duty",
   description: "Every third turn, you must move a pawn.",
   flavor: "Discipline above all.",
-  tier: 4,
+  tier: 3,
   icon: "footprints",
   implemented: true,
   filterMoves: (moves, _s, ctx) => {
@@ -293,7 +293,7 @@ export const HONEY_TRAP: Nerf = db({
   name: "Honey Trap",
   description: "Your queen can't move unless attacked.",
   flavor: "She waits, smiling.",
-  tier: 3,
+  tier: 4,
   icon: "honey",
   implemented: true,
   filterMoves: (moves, _s, ctx) => {

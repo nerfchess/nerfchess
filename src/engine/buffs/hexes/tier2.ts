@@ -34,20 +34,12 @@ export const HEXES_T2: Buff[] = [
     curse(4, (moves) => moves.filter((m) => m.piece !== "r" || dist(m.from, m.to) <= 2)),
   ),
   H(
-    { id: "leaden_crown", name: "Leaden Crown", description: "Your opponent's queen slides at most 2 squares for their next 4 turns.", flavor: "The crown weighs heavy." },
-    curse(4, (moves) => moves.filter((m) => m.piece !== "q" || dist(m.from, m.to) <= 2)),
-  ),
-  H(
     { id: "rusted_hinges", name: "Rusted Hinges", description: "Your opponent's rooks cannot capture for their next 4 turns." },
     curse(4, (moves) => moves.filter((m) => !(m.piece === "r" && m.captured))),
   ),
   H(
     { id: "blunted_lance", name: "Blunted Lance", description: "Your opponent's knights cannot capture for their next 4 turns.", flavor: "A lance with no point." },
     curse(4, (moves) => moves.filter((m) => !(m.piece === "n" && m.captured))),
-  ),
-  H(
-    { id: "royal_restraint", name: "Royal Restraint", description: "Your opponent's king cannot capture for their next 4 turns.", flavor: "The crown does not stoop to brawling." },
-    curse(4, (moves) => moves.filter((m) => !(m.piece === "k" && m.captured))),
   ),
   H(
     { id: "safe_passage", name: "Safe Passage", description: "Your opponent's pawns cannot capture for their next 4 turns." },
@@ -66,24 +58,32 @@ export const HEXES_T2: Buff[] = [
     freezeTarget(2),
   ),
   H(
-    { id: "sown_salt", name: "Sown Salt", description: "Your opponent's pawns cannot advance for their next 4 turns.", flavor: "Nothing grows in salted fields." },
-    instant((_inst, api) => {
-      addEffect(api, { kind: "no_pawn_advance", against: api.opp, turns: 4 });
-    }),
-  ),
-  H(
-    { id: "no_trespass", name: "No Trespass", description: "Your opponent cannot move any piece onto the four center squares (d4, e4, d5, e5) for their next 4 turns." },
-    instant((_inst, api) => {
-      addEffect(api, {
-        kind: "barred",
-        squares: [SQ(3, 3), SQ(4, 3), SQ(3, 4), SQ(4, 4)],
-        against: api.opp,
-        turns: 4,
-      });
-    }),
-  ),
-  H(
     { id: "cut_purse", name: "Cut Purse", description: "Your opponent's next draft is skipped.", flavor: "A hand in every pocket." },
+    blockDrafts(1),
+  ),
+  H(
+    { id: "timid_king", name: "Timid King", description: "Your opponent's king cannot capture for their next 4 turns.", flavor: "Beneath the dignity of the crown." },
+    curse(4, (moves) => moves.filter((m) => !(m.piece === "k" && m.captured))),
+  ),
+  H(
+    { id: "leaden_queen", name: "Leaden Queen", description: "Your opponent's queen slides at most 2 squares for their next 3 turns.", flavor: "Her gown is sewn with lead." },
+    curse(3, (moves) => moves.filter((m) => m.piece !== "q" || dist(m.from, m.to) <= 2)),
+  ),
+  H(
+    { id: "trench_line", name: "Trench Line", description: "Your opponent's pawns cannot advance for their next 3 turns.", flavor: "The infantry are pinned in the mud." },
+    instant((_inst, api) => {
+      addEffect(api, { kind: "no_pawn_advance", against: api.opp, turns: 3 });
+    }),
+  ),
+  H(
+    { id: "no_mans_land", name: "No Man's Land", description: "Your opponent cannot enter the four center squares (d4, e4, d5, e5) for their next 3 turns.", flavor: "The middle of the board is scorched ground." },
+    instant((_inst, api) => {
+      const squares = [SQ(3, 3), SQ(4, 3), SQ(3, 4), SQ(4, 4)];
+      addEffect(api, { kind: "barred", squares, against: api.opp, turns: 3 });
+    }),
+  ),
+  H(
+    { id: "sealed_orders", name: "Sealed Orders", description: "Your opponent's next draft is skipped outright, giving them no new card.", flavor: "The dispatch never reaches the tent." },
     blockDrafts(1),
   ),
 ];
