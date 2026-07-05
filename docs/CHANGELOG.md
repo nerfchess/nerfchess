@@ -6,7 +6,15 @@ only log: the NEWEST entries are at the BOTTOM, so each update adds a new
 `## <timestamp ET>` block and you keep reading down the file. Timestamps are US
 Eastern (ET). Keep the append-only discipline; do not rewrite old blocks.
 
-See CLAUDE.md for the process (when and how to update this).
+How to update it (do this with every change, without being asked):
+1. Get the time in ET: `date "+%Y-%m-%d %H:%M %Z"`.
+2. APPEND a new `## <timestamp ET>` block at the bottom (never rewrite old ones).
+3. List what changed, with PR numbers and status (OPEN / MERGED).
+4. Commit this file together with the change.
+
+Other standing conventions: PR-only (never commit to master; the owner merges);
+no em dashes anywhere; bump `buildVersion` in worker.ts on server changes; verify
+with `npx tsc --noEmit` and, for server/engine changes, `npm run server:build`.
 
 ---
 
