@@ -1947,13 +1947,29 @@ export class GameServer extends DurableObject<Env> {
       const filler = isFiller(match);
       if (filler && fillerActed >= 1) continue;
       // BUG #1: never advance a started house game while its human seat is
-      // disconnected — moving would run down their (paused) clock or end the
-      // game before they return. The bot's timer stays armed and fires on the
-      // first tick after they reconnect. Draft-deadline safety still runs in
-      // maintenance; pre-start nerf-draft picks are harmless (clocks off).
+      // GENUINELY gone — moving would change the board (or even end the game)
+      // before they return. "Gone" is the persisted disconnect signal
+      // (disconnectedAt, set on detach and CLEARED on attach), never a bare
+      // in-memory socket lookup: an alarm can wake this Durable Object out of
+      // hibernation with the sessions map only just being rebuilt, and a
+      // just-paired human who has never disconnected must not be mistaken for
+      // absent — that made the bot skip its first move on every tick and never
+      // play (the reported "bot game never starts"). A fresh seat has no
+      // disconnectedAt entry, so the bot acts immediately; the socket lookup is
+      // only a secondary guard so a present human (live socket, stale
+      // timestamp) is never paused. The bot's timer stays armed across a skip
+      // and fires on the first tick after they reconnect (reconnectMatch
+      // re-arms it). Draft-deadline safety still runs in maintenance; pre-start
+      // nerf-draft picks are harmless (clocks off).
       if (match.startedAt) {
         const humanSeat = humanSeatOf(match);
-        if (humanSeat && !this.connectedSession(match.id, humanSeat)) continue;
+        if (
+          humanSeat &&
+          match.disconnectedAt[humanSeat] &&
+          !this.connectedSession(match.id, humanSeat)
+        ) {
+          continue;
+        }
       }
       try {
         await this.playHouseAction(match, Date.now());
