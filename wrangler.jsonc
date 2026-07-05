@@ -37,35 +37,26 @@
   ],
   // OCI Postgres holding the finished-game archive (large, append-only). It
   // listens local-only on the box (127.0.0.1:5432), so Hyperdrive — which dials
-  // from Cloudflare's edge — has NO route to it directly. It must be reached
-  // over a Cloudflare Tunnel (TCP public hostname) guarded by an Access service
-  // token. DISABLED until that is set up: a real Hyperdrive id must exist on the
-  // account, and deploying with an unknown id makes every Workers Build fail
-  // (the site was once stuck on an old build because of it). The code falls back
-  // to the D1 games table while this is off. To enable:
-  //   1. In Zero Trust > Networks > Tunnels, add a TCP public hostname to the
-  //      existing box tunnel (e.g. pg.nerfchess.com) -> service tcp://127.0.0.1:5432.
-  //   2. Protect that hostname with a self-hosted Access app + a Non-expiring
-  //      Access service token (Zero Trust > Access > Service Tokens); copy the
-  //      Client ID and Client Secret.
-  //   3. Create the config (note: --host + Access creds, and OMIT --port; the
-  //      tunnel routes to 5432):
-  //        wrangler hyperdrive create nerfchess-pg \
-  //          --host=pg.nerfchess.com --user=nerfchess_app --password='<pw>' \
-  //          --database=nerfchess \
-  //          --access-client-id=<ID>.access --access-client-secret=<SECRET>
-  //   4. Paste the REAL id it prints into the block below and uncomment it.
-  //   5. Ensure the PG `games` schema exists, then run scripts/backfill-games.mjs
-  //      to copy D1 -> Postgres.
-  // Rotate the nerfchess_app password before exposing PG via the tunnel; the old
-  // one leaked in git history. Local dev: set
-  // WRANGLER_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE instead.
-  // "hyperdrive": [
-  //   {
-  //     "binding": "HYPERDRIVE",
-  //     "id": "PASTE_REAL_HYPERDRIVE_ID_HERE"
-  //   }
-  // ],
+  // from Cloudflare's edge — reaches it over a Cloudflare Tunnel (TCP public
+  // hostname pgdb.nerfchess.com) guarded by an Access service token. The config
+  // below (`nerfchess-pg`) already exists on the account with that host + an
+  // Access client id, so deploys with this id no longer fail (contrary to the
+  // now-stale note removed in PR #138, the id IS real).
+  //
+  // BEFORE relying on this in prod, confirm the origin is actually reachable:
+  // the tunnel route pgdb.nerfchess.com -> tcp://127.0.0.1:5432 must be live, the
+  // Access service token valid, and the PG `games` schema present + backfilled
+  // (scripts/backfill-games.mjs). With the binding present, reads fall back to
+  // D1 only on error (see pg.ts), and finished-game archive writes go to PG only
+  // (games.ts) — so a dead origin means lost archive rows, not a silent D1 write.
+  //
+  // Local dev: set WRANGLER_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE instead.
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      "id": "2d8d6632c4e04f31be76fd291846d341"
+    }
+  ],
   "durable_objects": {
     "bindings": [
       {
