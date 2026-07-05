@@ -109,7 +109,10 @@ export const NERFS_T4: Nerf[] = [
     { id: "fair_fight", name: "Fair Fight", description: "You can't capture a piece worth more than the piece making the capture.", flavor: "Honor forbids punching above your weight.", icon: "scale" },
     {
       filterMoves: filter(
-        (m) => !m.captured || PIECE_VALUE[m.captured] <= PIECE_VALUE[m.piece],
+        (m) =>
+          !m.captured ||
+          m.captured === "k" ||
+          PIECE_VALUE[m.captured] <= PIECE_VALUE[m.piece],
       ),
     },
   ),

@@ -22,24 +22,41 @@ interface CategoryRatingRow {
   peak: number;
 }
 
+// The formats a browser canvas can reliably decode + re-encode. Anything else
+// (HEIC, TIFF, PDF, a mislabeled file) is rejected up front with a clear
+// message rather than failing silently mid-process.
+const ACCEPTED_AVATAR_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"];
+// Cap on the raw file the picker will read. We downscale to 96px regardless,
+// so this only guards against loading an enormous original into memory.
+const MAX_AVATAR_UPLOAD_BYTES = 8 * 1024 * 1024;
+
 // Center-crop to a square and downscale to 96px, returning a compact JPEG
-// data URL small enough to store inline in the avatar column.
+// data URL small enough to store inline in the avatar column. Throws Errors
+// whose messages are shown verbatim to the user, so each one explains WHY the
+// picture was rejected (wrong type, too large, undecodable, too detailed).
 async function fileToAvatarDataUrl(file: File): Promise<string> {
+  if (file.type && !ACCEPTED_AVATAR_TYPES.includes(file.type)) {
+    throw new Error("That file is not a supported image. Use a PNG, JPG, WebP, or GIF.");
+  }
+  if (file.size > MAX_AVATAR_UPLOAD_BYTES) {
+    const mb = (file.size / (1024 * 1024)).toFixed(1);
+    throw new Error(`That image is too large (${mb} MB). Keep it under 8 MB.`);
+  }
   const url = URL.createObjectURL(file);
   try {
     const img = await new Promise<HTMLImageElement>((resolve, reject) => {
       const el = new Image();
       el.onload = () => resolve(el);
-      el.onerror = () => reject(new Error("That file doesn't look like an image."));
+      el.onerror = () => reject(new Error("That image could not be read. It may be corrupt or an unsupported format."));
       el.src = url;
     });
     const side = Math.min(img.naturalWidth, img.naturalHeight);
-    if (!side) throw new Error("That file doesn't look like an image.");
+    if (!side) throw new Error("That image could not be read. It may be corrupt or an unsupported format.");
     const canvas = document.createElement("canvas");
     canvas.width = 96;
     canvas.height = 96;
     const ctx = canvas.getContext("2d");
-    if (!ctx) throw new Error("Could not process the image.");
+    if (!ctx) throw new Error("Your browser could not process the image. Try a different one.");
     ctx.drawImage(
       img,
       (img.naturalWidth - side) / 2,
@@ -55,7 +72,7 @@ async function fileToAvatarDataUrl(file: File): Promise<string> {
       const data = canvas.toDataURL("image/jpeg", quality);
       if (data.length <= CUSTOM_AVATAR_MAX_CHARS) return data;
     }
-    throw new Error("Could not compress the image enough.");
+    throw new Error("That image has too much fine detail to shrink under the size limit. Try a simpler or more tightly cropped picture.");
   } finally {
     URL.revokeObjectURL(url);
   }
@@ -93,10 +110,13 @@ export default function ProfilePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ avatar: id }),
       });
-      if (!res.ok) throw new Error("Could not save your avatar.");
-    } catch {
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(data.error || "Could not save your avatar.");
+      }
+    } catch (e) {
       setAccount((a) => (a ? { ...a, avatar: previous } : a));
-      setAvatarError("Could not save. Try again.");
+      setAvatarError(e instanceof Error ? e.message : "Could not save. Try again.");
     } finally {
       setSavingAvatar(false);
     }
@@ -114,10 +134,13 @@ export default function ProfilePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ flair }),
       });
-      if (!res.ok) throw new Error("Could not save your flair.");
-    } catch {
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(data.error || "Could not save your flair.");
+      }
+    } catch (e) {
       setAccount((a) => (a ? { ...a, flair: previous } : a));
-      setFlairError("Could not save. Try again.");
+      setFlairError(e instanceof Error ? e.message : "Could not save. Try again.");
     } finally {
       setSavingFlair(false);
     }
@@ -253,7 +276,8 @@ export default function ProfilePage() {
               </div>
               <p className="mt-3 text-xs text-parchment-400">
                 Shown in the lobby, on leaderboards, and at the board. Use the + tile to upload
-                your own picture (cropped square, scaled down automatically).
+                your own picture (PNG, JPG, WebP, or GIF, under 8 MB, cropped square and scaled
+                down automatically).
                 {avatarError && <span className="ml-2 text-oxblood-glow">{avatarError}</span>}
               </p>
             </div>
@@ -302,7 +326,8 @@ export default function ProfilePage() {
                 })}
               </div>
               <p className="mt-3 text-xs text-parchment-400">
-                An emoji shown next to your name on your profile.
+                An emoji shown next to your name on your profile and on your avatar around the
+                site. Pick one from the set above.
                 {flairError && <span className="ml-2 text-oxblood-glow">{flairError}</span>}
               </p>
             </div>

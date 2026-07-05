@@ -43,10 +43,10 @@ export const HEXES_T6: Buff[] = [
     {
       id: "stone_riders",
       name: "Stone Riders",
-      description: "Your opponent's knights turn to walnuts for 2 of their turns.",
+      description: "Your opponent's knights turn to walnuts for 4 of their turns.",
       flavor: "Horse and rider both set hard in the saddle.",
     },
-    walnutAll(["n"], 2),
+    walnutAll(["n"], 4),
   ),
 
   // --- petrify all bishops ------------------------------------------------
@@ -54,10 +54,10 @@ export const HEXES_T6: Buff[] = [
     {
       id: "stone_prelates",
       name: "Stone Prelates",
-      description: "Your opponent's bishops turn to walnuts for 2 of their turns.",
+      description: "Your opponent's bishops turn to walnuts for 4 of their turns.",
       flavor: "The clergy is carved into the transept wall.",
     },
-    walnutAll(["b"], 2),
+    walnutAll(["b"], 4),
   ),
 
   // --- petrify all rooks --------------------------------------------------
@@ -65,10 +65,10 @@ export const HEXES_T6: Buff[] = [
     {
       id: "stone_bastions",
       name: "Stone Bastions",
-      description: "Your opponent's rooks turn to walnuts for 2 of their turns.",
+      description: "Your opponent's rooks turn to walnuts for 4 of their turns.",
       flavor: "The towers forget how to roll.",
     },
-    walnutAll(["r"], 2),
+    walnutAll(["r"], 4),
   ),
 
   // --- petrify the queen, long --------------------------------------------
@@ -99,7 +99,7 @@ export const HEXES_T6: Buff[] = [
     }),
   ),
 
-  // --- freeze the entire enemy army for three turns -----------------------
+  // --- freeze the whole enemy army but pawns and king for two turns -------
   H(
     {
       id: "total_whiteout",

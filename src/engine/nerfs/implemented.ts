@@ -201,7 +201,7 @@ export const PACMAN: Nerf = db({
 export const GREEDY: Nerf = db({
   id: "greedy",
   name: "Greedy",
-  description: "If you can capture a higher-value piece, you must (can't capture a lesser piece when a greater is available).",
+  description: "You can't capture a lesser piece when a higher-value capture is on the table. You may still play a quiet move.",
   flavor: "Eyes always on the biggest prize.",
   tier: 2,
   icon: "coins",
@@ -222,7 +222,7 @@ export const GREEDY: Nerf = db({
     const names: Record<number, string> = { 1: "pawn", 3: "minor piece", 5: "rook", 9: "queen" };
     const must = legal.filter((m) => m.captured && PIECE_VAL[m.captured] >= max);
     return {
-      text: `You must capture the ${names[max] ?? `${max}-point piece`}.`,
+      text: `If you capture, it must be the ${names[max] ?? `${max}-point piece`}.`,
       squares: Array.from(new Set(must.map((m) => m.from))),
       tone: "warn",
     };
@@ -255,7 +255,8 @@ export const HIPSTER: Nerf = db({
   filterMoves: (moves, _s, ctx) => {
     const last = ctx.opponentLastMove;
     if (!last) return moves;
-    return moves.filter((m) => m.piece !== last.piece);
+    const filtered = moves.filter((m) => m.piece !== last.piece);
+    return filtered.length ? filtered : moves;
   },
 });
 
@@ -276,7 +277,7 @@ export const FORWARD_MARCH: Nerf = db({
 export const WHITES_OF_THEIR_EYES: Nerf = db({
   id: "whites_of_their_eyes",
   name: "Whites of Their Eyes",
-  description: "Capturing moves must be at distance ≤ 2 (Chebyshev).",
+  description: "You can only capture within 2 squares (king-steps) of the capturing piece.",
   flavor: "Don't shoot until you see the whites of their eyes.",
   tier: 3,
   icon: "eye",
@@ -352,7 +353,8 @@ export const RISING_WATER: Nerf = db({
       ctx.me === "w"
         ? (sq: number) => RANK(sq) < s.level
         : (sq: number) => RANK(sq) > 7 - s.level;
-    return moves.filter((m) => !underwater(m.from) && !underwater(m.to));
+    const dry = moves.filter((m) => !underwater(m.from) && !underwater(m.to));
+    return dry.length ? dry : moves;
   },
   visual: (state) => ({ waterRank: (state as { level: number }).level }),
 });
@@ -641,7 +643,7 @@ export const ELEPHANTS_FEAR_MICE: Nerf = db({
 export const FAR_SIGHTED: Nerf = db({
   id: "far_sighted",
   name: "Far Sighted",
-  description: "You can't capture adjacent pieces (Chebyshev distance > 1).",
+  description: "You can't capture a piece standing right next to the capturing piece; captures must reach at least 2 squares away.",
   flavor: "Your eyes don't focus that close.",
   tier: 4,
   icon: "eye",
@@ -799,7 +801,8 @@ export const DEER_IN_HEADLIGHTS: Nerf = db({
   filterMoves: (moves, _s, ctx) => {
     const opp = ctx.me === "w" ? "b" : "w";
     const attacked = attackedBy(ctx.board, opp);
-    return moves.filter((m) => !attacked.has(m.from));
+    const safe = moves.filter((m) => !attacked.has(m.from));
+    return safe.length ? safe : moves;
   },
 });
 

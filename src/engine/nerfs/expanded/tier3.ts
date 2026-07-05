@@ -83,7 +83,7 @@ export const NERFS_T3: Nerf[] = [
     { id: "no_free_lunch", name: "No Free Lunch", description: "You can't capture a piece worth more than the piece making the capture.", flavor: "No favorable trades, ever.", icon: "ban" },
     {
       filterMoves: filter((m) => {
-        if (!m.captured) return true;
+        if (!m.captured || m.captured === "k") return true;
         return PIECE_VALUE[m.captured] <= PIECE_VALUE[m.piece];
       }),
     },
