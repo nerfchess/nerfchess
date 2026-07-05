@@ -165,6 +165,7 @@ export const SCHEMA_STATEMENTS: string[] = [
     to_user_id TEXT NOT NULL,
     time_sec INTEGER NOT NULL,
     increment_sec INTEGER NOT NULL,
+    rated INTEGER NOT NULL DEFAULT 0,
     status TEXT NOT NULL DEFAULT 'pending',
     created_at INTEGER NOT NULL
   )`,
@@ -282,6 +283,9 @@ const ADDITIVE_COLUMNS: string[] = [
   // DEFAULT backfills every pre-existing suggestion as a nerf.
   `ALTER TABLE rule_suggestions ADD COLUMN kind TEXT NOT NULL DEFAULT 'nerf'`,
   `ALTER TABLE rule_suggestions ADD COLUMN pool TEXT`,
+  // Direct challenges can be rated (a custom challenge staked on rating).
+  // Backfills every pre-existing challenge as casual.
+  `ALTER TABLE challenges ADD COLUMN rated INTEGER NOT NULL DEFAULT 0`,
   // Optional sign-in email and linked Google account (google_sub is the
   // stable Google account id from the OAuth id_token). The unique indexes
   // live here rather than SCHEMA_STATEMENTS because they must run after the
