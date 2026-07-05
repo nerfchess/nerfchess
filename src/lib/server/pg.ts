@@ -63,24 +63,34 @@ export async function pgAll<T = Record<string, unknown>>(
   params: unknown[] = [],
 ): Promise<T[]> {
   const hyperdrive = hyperdriveBinding();
-  if (!hyperdrive) {
-    const db = await getDb();
-    // Postgres `::type` casts exist only to coerce int8/numeric to JS
-    // numbers; SQLite already returns plain numbers, so strip them here.
-    const d1Text = text.replace(/::[a-z0-9_]+/gi, "");
-    const res = await db
-      .prepare(d1Text)
-      .bind(...(params as (string | number | null)[]))
-      .all<T>();
-    return res.results;
-  }
+  if (!hyperdrive) return d1Fallback<T>(text, params);
   const sql = makeClient(hyperdrive);
   try {
     const rows = await sql.unsafe(toPositional(text), params as never[]);
     return rows as unknown as T[];
+  } catch (err) {
+    // Binding present but the origin (OCI Postgres via the Cloudflare Tunnel)
+    // was unreachable: serve the D1 games table rather than 500 the caller.
+    // D1 may be stale once writes have cut over to Postgres, so surface the
+    // error for observability instead of failing silently.
+    console.error("Hyperdrive read failed; falling back to D1", err);
+    return d1Fallback<T>(text, params);
   } finally {
     closeSoon(sql);
   }
+}
+
+// Run a D1-style `?`-placeholder query against the D1 games table. Postgres
+// `::type` casts exist only to coerce int8/numeric to JS numbers; SQLite
+// already returns plain numbers, so strip them here.
+async function d1Fallback<T>(text: string, params: unknown[]): Promise<T[]> {
+  const db = await getDb();
+  const d1Text = text.replace(/::[a-z0-9_]+/gi, "");
+  const res = await db
+    .prepare(d1Text)
+    .bind(...(params as (string | number | null)[]))
+    .all<T>();
+  return res.results;
 }
 
 // Single-row helper mirroring D1's `.first()`.
