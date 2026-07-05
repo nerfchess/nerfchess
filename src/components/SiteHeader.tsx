@@ -9,6 +9,7 @@ import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { PlayerSearch } from "@/components/PlayerSearch";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { AccountUser, ensureAccount, logout } from "@/lib/authClient";
+import { playChallenge } from "@/lib/sounds";
 
 // Site-wide header, Lichess-style: main nav on the left; on the right a user
 // search, incoming challenges, notifications, and the account menu.
@@ -92,6 +93,10 @@ export function SiteHeader({ active }: { active?: string }) {
   const [unread, setUnread] = useState(0);
   const [challenges, setChallenges] = useState<HeaderChallenge[]>([]);
   const rightRef = useRef<HTMLDivElement | null>(null);
+  // Challenge IDs already seen by this header instance: a challenge that
+  // arrives while the page is open gets the lichess challenge sound. Null
+  // until the first poll so a pending challenge never dings on page load.
+  const knownChallengesRef = useRef<Set<string> | null>(null);
 
   const refreshSocial = useCallback(async () => {
     try {
@@ -103,6 +108,9 @@ export function SiteHeader({ active }: { active?: string }) {
       }
       if (chalRes.ok) {
         const data = (await chalRes.json()) as { challenges: HeaderChallenge[] };
+        const known = knownChallengesRef.current;
+        if (known && data.challenges.some((c) => !known.has(c.id))) playChallenge();
+        knownChallengesRef.current = new Set(data.challenges.map((c) => c.id));
         setChallenges(data.challenges);
       }
     } catch {}

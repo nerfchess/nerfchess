@@ -173,6 +173,9 @@ function GamePage() {
   // Draft mode's opening nerf draft: both players see two nerf cards and pick
   // one. The game object isn't created until the player commits.
   const [nerfDraft, setNerfDraft] = useState<{ myOptions: Nerf[]; aiOptions: Nerf[] } | null>(null);
+  // Two-step nerf pick: the first click only selects; Confirm (or a second
+  // click on the same card) commits it.
+  const [nerfSelected, setNerfSelected] = useState<number | null>(null);
   // Lock-in deadlines (15s), mirroring the online rules: the nerf pick and
   // every buff offer auto-resolve when the timer runs out, and the game
   // clock is paused while an offer is open.
@@ -331,6 +334,7 @@ function GamePage() {
   // options at random and the game begins.
   const startDraftGame = (picked: Nerf) => {
     if (!nerfDraft) return;
+    setNerfSelected(null);
     const aiDb = nerfDraft.aiOptions[Math.floor(Math.random() * nerfDraft.aiOptions.length)];
     const wDb = myColor === "w" ? picked : aiDb;
     const bDb = myColor === "w" ? aiDb : picked;
@@ -867,20 +871,46 @@ function GamePage() {
             </p>
             {nerfDeadline != null && (
               <div className="mx-auto mt-4 max-w-sm">
-                {/* Lock-in window: the first option is picked automatically. */}
+                {/* Lock-in window: an unconfirmed selection commits at the
+                    deadline; with nothing selected the first option is
+                    picked automatically. */}
                 <LockInCountdown
                   deadline={nerfDeadline}
-                  onExpire={() => startDraftGame(nerfDraft.myOptions[0])}
+                  onExpire={() => startDraftGame(nerfDraft.myOptions[nerfSelected ?? 0])}
                 />
               </div>
             )}
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
-              {nerfDraft.myOptions.map((n) => (
-                <button key={n.id} onClick={() => startDraftGame(n)} className="text-left transition hover:-translate-y-1">
-                  <NerfCard nerf={n} ownerLabel="Pick this nerf" />
+              {nerfDraft.myOptions.map((n, i) => (
+                <button
+                  key={n.id}
+                  onClick={() => (nerfSelected === i ? startDraftGame(n) : setNerfSelected(i))}
+                  className={
+                    "text-left transition hover:-translate-y-1" +
+                    (nerfSelected === i
+                      ? " -translate-y-1 ring-2 ring-gold shadow-leaf"
+                      : nerfSelected != null
+                      ? " opacity-60"
+                      : "")
+                  }
+                >
+                  <NerfCard nerf={n} ownerLabel={nerfSelected === i ? "Selected" : "Pick this nerf"} />
                 </button>
               ))}
             </div>
+            {nerfSelected != null && (
+              <div className="mt-4 text-center">
+                <button
+                  onClick={() => startDraftGame(nerfDraft.myOptions[nerfSelected])}
+                  className="btn-leaf px-6 py-2.5 font-display text-sm font-semibold tracking-wide"
+                >
+                  Confirm pick
+                </button>
+                <p className="mt-1.5 text-[11px] text-parchment-400">
+                  Clicking the card again also confirms.
+                </p>
+              </div>
+            )}
             {/* Nerf mode: the opponent's rule is completely hidden until the
                 game ends, so their options never show either. */}
             {gameMode === "nerf" ? (

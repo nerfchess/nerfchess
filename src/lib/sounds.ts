@@ -73,6 +73,7 @@ type SampleName =
   | "Capture"
   | "Select"
   | "GenericNotify"
+  | "SocialNotify"
   | "LowTime"
   | "CountDown0"
   | "Error";
@@ -103,6 +104,7 @@ export function preloadSounds() {
     "Capture",
     "Select",
     "GenericNotify",
+    "SocialNotify",
     "LowTime",
     "CountDown0",
     "Error",
@@ -324,6 +326,24 @@ export function playGameOver() {
   tone({ freq: 880, dur: 0.18, type: "sine", gain: 0.18, attack: 0.005, release: 0.18 });
   tone({ freq: 698, dur: 0.30, type: "sine", gain: 0.18, attack: 0.005, release: 0.28, delay: 0.13 });
   tone({ freq: 1318, dur: 0.30, type: "sine", gain: 0.06, attack: 0.005, release: 0.28, delay: 0.13 });
+}
+
+// Generic notification: something in the game needs your attention right now
+// (a draft offer just appeared). The lichess notify dong, softened a touch.
+export function playNotify() {
+  if (!soundPrefs.enabled) return;
+  if (playSample("GenericNotify", 0.85)) return;
+  tone({ freq: 880, dur: 0.18, type: "sine", gain: 0.16, attack: 0.005, release: 0.18 });
+  tone({ freq: 1108, dur: 0.22, type: "sine", gain: 0.10, attack: 0.005, release: 0.20, delay: 0.09 });
+}
+
+// Incoming challenge: the lichess social notify (what lichess plays when a
+// challenge lands in your inbox).
+export function playChallenge() {
+  if (!soundPrefs.enabled) return;
+  if (playSample("SocialNotify")) return;
+  tone({ freq: 660, dur: 0.16, type: "triangle", gain: 0.14, attack: 0.005, release: 0.16 });
+  tone({ freq: 880, dur: 0.22, type: "triangle", gain: 0.12, attack: 0.005, release: 0.20, delay: 0.12 });
 }
 
 // Low time: urgent double tick, like a clock tapping your shoulder.

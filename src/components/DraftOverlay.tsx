@@ -4,6 +4,7 @@ import { BuffOffer } from "@/engine/buff";
 import { BUFF_BY_ID } from "@/engine/buffs/library";
 import { motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
+import { playNotify } from "@/lib/sounds";
 import { BuffCard } from "./BuffCard";
 
 interface Props {
@@ -46,6 +47,10 @@ export function LockInCountdown({
   const total = 15_000;
   const [leftMs, setLeftMs] = useState(() => Math.max(0, deadline - Date.now()));
   const expiredRef = useRef(false);
+  // The interval closure survives re-renders; always call the latest
+  // onExpire so it sees current selection state, not a stale snapshot.
+  const onExpireRef = useRef(onExpire);
+  onExpireRef.current = onExpire;
 
   useEffect(() => {
     expiredRef.current = false;
@@ -54,7 +59,7 @@ export function LockInCountdown({
       setLeftMs(left);
       if (left <= 0 && !expiredRef.current) {
         expiredRef.current = true;
-        onExpire?.();
+        onExpireRef.current?.();
       }
     }, 100);
     return () => window.clearInterval(id);
@@ -96,25 +101,55 @@ export function DraftOverlay({
   opponent,
 }: Props) {
   const oppOffer = opponent?.offer ?? null;
-  // The chosen card slides toward the dock before the pick is committed:
+  // Two-step pick: the first click only selects (highlight); the Confirm
+  // button (or a second click on the same card) locks it in. `chosen` is the
+  // confirmed card sliding toward the dock before the pick is committed:
   // fast and subtle, well under half a second.
+  const [selected, setSelected] = useState<number | null>(null);
   const [chosen, setChosen] = useState<number | null>(null);
   const committedRef = useRef(false);
 
   useEffect(() => {
+    setSelected(null);
     setChosen(null);
     committedRef.current = false;
+    // A fresh offer demands attention: the board is blocked until it resolves.
+    playNotify();
   }, [offer.index]);
 
   const choose = (i: number) => {
     if (chosen != null) return;
-    setChosen(i);
+    if (selected === i) {
+      // Second click on the selected card confirms it.
+      setChosen(i);
+      return;
+    }
+    setSelected(i);
+  };
+
+  const confirmSelection = () => {
+    if (chosen != null || selected == null) return;
+    setChosen(selected);
   };
 
   const commit = (i: number) => {
     if (committedRef.current) return;
     committedRef.current = true;
     onPick(i);
+  };
+
+  // Lock-in deadline with a selection still unconfirmed: submit it, exactly
+  // as if the player had confirmed at the last second. With nothing selected,
+  // defer to onExpire (bot games mirror the server's card-0 auto-resolve
+  // there; online games let the server resolve).
+  const handleExpire = () => {
+    if (committedRef.current || chosen != null) return;
+    if (selected != null) {
+      setChosen(selected);
+      commit(selected);
+      return;
+    }
+    onExpire?.();
   };
 
   return (
@@ -148,7 +183,7 @@ export function DraftOverlay({
           {bankedBonus && " This draft rolled a tier higher thanks to your banked skip."}
         </p>
         {deadline != null && (
-          <LockInCountdown deadline={deadline} onExpire={onExpire} className="mt-3" />
+          <LockInCountdown deadline={deadline} onExpire={handleExpire} className="mt-3" />
         )}
 
         <div className={`mt-5 grid gap-3 lg:gap-4 ${offer.cards.length >= 3 ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
@@ -158,6 +193,13 @@ export function DraftOverlay({
             return (
               <motion.div
                 key={i}
+                className={
+                  selected === i && chosen == null
+                    ? "ring-2 ring-gold shadow-leaf"
+                    : selected != null && chosen == null
+                    ? "opacity-60"
+                    : ""
+                }
                 animate={
                   chosen === i
                     ? { x: -140, y: 180, scale: 0.35, opacity: 0 }
@@ -175,6 +217,20 @@ export function DraftOverlay({
             );
           })}
         </div>
+
+        {selected != null && chosen == null && (
+          <div className="mt-4 flex items-center justify-center gap-3">
+            <button
+              onClick={confirmSelection}
+              className="btn-leaf px-6 py-2.5 font-display text-sm font-semibold tracking-wide"
+            >
+              Confirm pick
+            </button>
+            <span className="text-[11px] text-parchment-400">
+              Clicking the card again also confirms.
+            </span>
+          </div>
+        )}
 
         <div className="mt-4 flex items-center justify-between gap-3">
           <button
