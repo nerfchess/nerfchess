@@ -298,7 +298,25 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards 
           (usable ? "border-gold/30 " : "")
         }
       >
-        <div className="flex items-center gap-1.5">
+        <div
+          // Second input path (additive): drag the usable chip onto a
+          // highlighted board square to pick it. Native HTML5 drag is separate
+          // from the board's pointer-drag, so the click flow is untouched. The
+          // custom dataTransfer type lets the Board react to card drags only.
+          draggable={usable || undefined}
+          onDragStart={
+            usable
+              ? (e) => {
+                  e.dataTransfer.setData("application/x-nerf-card", String(i));
+                  e.dataTransfer.effectAllowed = "move";
+                  // Same handler the Use button calls: engage target-select
+                  // mode so candidate squares light up as drop targets.
+                  onStartUse(i);
+                }
+              : undefined
+          }
+          className={"flex items-center gap-1.5 " + (usable ? "cursor-grab active:cursor-grabbing" : "")}
+        >
           <span className={`min-w-0 flex-1 truncate font-display text-[12px] font-semibold leading-tight tier-${inst.tier}`}>
             {def.name}
           </span>
