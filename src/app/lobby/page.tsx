@@ -188,7 +188,7 @@ export default function LobbyPage() {
                     href="/friend"
                     className="smallcaps text-[10px] text-gold-leaf hover:text-gold transition-colors"
                   >
-                    Create a Draft game
+                    Create a friend game
                   </Link>
                   <span className="smallcaps text-[10px] text-parchment-400">
                     {lobby ? `${waitingCount} waiting` : "…"}

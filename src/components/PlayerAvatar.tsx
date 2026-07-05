@@ -56,6 +56,20 @@ export function PlayerAvatar({
           <path d="M12 2l2.6 6.9 7.4.4-5.8 4.7 1.9 7.2L12 17.1 5.9 21.2l1.9-7.2L2 9.3l7.4-.4z" />
         </svg>
       )}
+      {spec.flower && (
+        <span
+          style={{
+            position: "absolute",
+            bottom: Math.max(0, Math.round(size * 0.02)),
+            left: Math.max(1, Math.round(size * 0.05)),
+            fontSize: Math.max(7, Math.round(size * 0.28)),
+            lineHeight: 1,
+            opacity: 0.85,
+          }}
+        >
+          {"\u{1F33C}"}
+        </span>
+      )}
     </div>
   );
 }

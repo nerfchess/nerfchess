@@ -234,6 +234,7 @@ export type MPEvent =
   | { type: "takeback-declined"; color: Color }
   | { type: "takeback"; by: Color; moves: string[]; ply: number; wc: number; bc: number }
   | { type: "rematch-offer"; color: Color }
+  | { type: "rematch-cancelled"; color: Color }
   | { type: "rematched"; id: string; color: Color; token: string }
   | { type: "chat"; message: MPChatMessage }
   | { type: "spectator-chat"; message: MPSpectatorChatMessage }
@@ -267,6 +268,7 @@ type ServerFrame =
   | { t: "takebackDeclined"; d: { color: Color } }
   | { t: "takeback"; d: { by: Color; moves: string[]; ply: number; wc: number; bc: number } }
   | { t: "rematchOffer"; d: { color: Color } }
+  | { t: "rematchCancelled"; d: { color: Color } }
   | { t: "rematched"; d: { id: string; color: Color; token: string } }
   | { t: "chat"; d: MPChatMessage }
   | { t: "schat"; d: MPSpectatorChatMessage }
@@ -602,6 +604,9 @@ export class MPSession {
       case "rematchOffer":
         this.emit({ type: "rematch-offer", color: frame.d.color });
         break;
+      case "rematchCancelled":
+        this.emit({ type: "rematch-cancelled", color: frame.d.color });
+        break;
       case "rematched":
         this.emit({ type: "rematched", id: frame.d.id, color: frame.d.color, token: frame.d.token });
         break;
@@ -861,6 +866,11 @@ export class MPSession {
 
   requestRematch(): boolean {
     return this.sendFrame("rematch");
+  }
+
+  // Withdraw a pending rematch offer of mine.
+  cancelRematch(): boolean {
+    return this.sendFrame("rematchCancel");
   }
 
   sendChat(text: string): boolean {

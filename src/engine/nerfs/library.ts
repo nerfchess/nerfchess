@@ -189,6 +189,21 @@ export const ALL_NERFS: Nerf[] = (() => {
 
 export const PLAYABLE_NERFS = ALL_IMPLEMENTED;
 
+// TEMPORARY cap on rolled drawbacks: opening nerf picks (and any random nerf
+// roll) may only offer nerfs BELOW tier three, i.e. tiers 1 and 2, while the
+// harsher tiers get rebalanced. Raise or remove this one constant to reopen
+// the full ladder; every roll site funnels through openingNerfPool().
+export const MAX_OPENING_NERF_TIER: Tier = 2;
+
+/** The pool every opening nerf roll draws from: implemented nerfs at or
+ * below the temporary tier cap, minus "lucky" (its reroll semantics do not
+ * fit a dealt pick). */
+export function openingNerfPool(): Nerf[] {
+  return PLAYABLE_NERFS.filter(
+    (nerf) => nerf.id !== "lucky" && nerf.tier <= MAX_OPENING_NERF_TIER,
+  );
+}
+
 export function getNerf(id: string): Nerf | undefined {
   return ALL_NERFS.find((d) => d.id === id);
 }
@@ -205,7 +220,7 @@ export function getNerfsByTier(tier: Tier): Nerf[] {
 export function pickNerfPair(
   rand: (max: number) => number = (max) => Math.floor(Math.random() * max),
 ): { whiteNerfId: string; blackNerfId: string } {
-  const pool = PLAYABLE_NERFS.filter((nerf) => nerf.id !== "lucky");
+  const pool = openingNerfPool();
   const first = pool[rand(pool.length)];
   const partners = pool.filter((nerf) => Math.abs(nerf.tier - first.tier) <= 1);
   const second = partners[rand(partners.length)];

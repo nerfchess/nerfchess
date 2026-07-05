@@ -210,15 +210,19 @@ export function makeBuffApi(game: NerfGame, me: Color): BuffApi {
       bs.historyDiverged = true;
       game.board.pieces[sq] = { type, color };
     },
-    removePiece: (sq) => {
+    removePiece: (sq, opts) => {
       const p = game.board.pieces[sq];
       bs.historyDiverged = true;
       game.board.pieces[sq] = null;
       // A piece destroyed by a buff is a real loss: count it as captured by
       // the other side so material counters and the owner's revivable pool
       // (Resurrect and friends) stay truthful. Kings are never removed by
-      // buffs; the guard is a backstop.
-      if (p && p.type !== "k") {
+      // buffs; the guard is a backstop. Whole-board rewrites (Perfect
+      // Rewind, Genesis) and effect-expiry removals of summoned pieces pass
+      // `uncounted` instead: those pieces were never lost to the opponent,
+      // so counting them would corrupt the revive pools and any
+      // capturedFromMe-based nerf conditions.
+      if (p && p.type !== "k" && !opts?.uncounted) {
         game.captured[p.color === "w" ? "b" : "w"][p.type] += 1;
       }
     },
@@ -297,11 +301,14 @@ export function legalMoves(game: NerfGame): Move[] {
   let frozenOwnCount = 0;
 
   if (bs) {
-    // Frozen pieces cannot move.
+    // Frozen pieces cannot move. Walnuts (hexed pieces) are freezes with a
+    // different board marker, so they share the lockdown path.
     const frozen = new Set(
       bs.effects
-        .filter((e) => e.kind === "freeze" && e.owner === me && effectActive(e))
-        .map((e) => (e.kind === "freeze" ? e.sq : -1)),
+        .filter(
+          (e) => (e.kind === "freeze" || e.kind === "walnut") && e.owner === me && effectActive(e),
+        )
+        .map((e) => (e.kind === "freeze" || e.kind === "walnut" ? e.sq : -1)),
     );
     frozenOwnCount = frozen.size;
     if (frozen.size) all = all.filter((m) => !frozen.has(m.from));
@@ -681,10 +688,24 @@ function settleAfterBuff(game: NerfGame) {
  * the bot cannot act on the information, and when every option is unusable
  * or purely informational the bot banks the draft instead. */
 export function aiResolveDraft(game: NerfGame, color: Color) {
+  const choice = aiDraftChoice(game, color);
+  if (!choice) return;
+  if (choice.action === "bank") bankDraft(game, color);
+  else pickDraftCard(game, color, choice.index);
+}
+
+/** The decision behind aiResolveDraft, without applying it: which card to
+ * pick, or bank. Lets the game server resolve a house player's offer through
+ * its own recorded-action flow (resolveDraftPick / resolveDraftBank) so the
+ * match record stays identical to a human game's. */
+export function aiDraftChoice(
+  game: NerfGame,
+  color: Color,
+): { action: "pick"; index: number } | { action: "bank" } | null {
   const bs = game.buffs;
-  if (!bs) return;
+  if (!bs) return null;
   const offer = bs.players[color].offer;
-  if (!offer) return;
+  if (!offer) return null;
   let best = 0;
   let bestScore = -1;
   offer.cards.forEach((card, i) => {
@@ -705,11 +726,8 @@ export function aiResolveDraft(game: NerfGame, color: Color) {
   });
   // Nothing here the bot can profit from: bank for a higher tier next time,
   // unless this offer already came from a banked skip.
-  if (bestScore < 50 && !offer.banked) {
-    bankDraft(game, color);
-    return;
-  }
-  pickDraftCard(game, color, best);
+  if (bestScore < 50 && !offer.banked) return { action: "bank" };
+  return { action: "pick", index: best };
 }
 
 // ---------------------------------------------------------------------------
@@ -776,6 +794,23 @@ export function aiActivateBuffs(
   game: NerfGame,
   color: Color,
 ): { id: string; tier: Tier } | null {
+  const choice = aiChooseBuffActivation(game, color);
+  if (!choice) return null;
+  const inst = game.buffs!.players[color].buffs[choice.buffIndex];
+  if (activateBuff(game, color, choice.buffIndex, choice.picks)) {
+    return { id: inst.id, tier: inst.tier };
+  }
+  return null;
+}
+
+/** The decision behind aiActivateBuffs, without applying it: the first held
+ * buff worth firing right now plus its auto-picked targets, or null. Lets the
+ * game server activate a house player's buff through its own recorded-action
+ * flow so the match record stays identical to a human game's. */
+export function aiChooseBuffActivation(
+  game: NerfGame,
+  color: Color,
+): { buffIndex: number; picks: BuffPick[] } | null {
   const bs = game.buffs;
   if (!bs || game.result || game.board.turn !== color) return null;
   const ps = bs.players[color];
@@ -807,9 +842,7 @@ export function aiActivateBuffs(
     if (hitsEnemy && collected.value < 3) continue;
     // Protective cards wait for actual danger instead of firing blind.
     if (!hitsEnemy && def.category === "protection" && !inDanger) continue;
-    if (activateBuff(game, color, i, collected.picks)) {
-      return { id: inst.id, tier: inst.tier };
-    }
+    return { buffIndex: i, picks: collected.picks };
   }
   return null;
 }

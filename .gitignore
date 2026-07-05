@@ -4,7 +4,7 @@ node_modules
 .wrangler
 .wrangler-dry-run
 .codex-run/
-.omc/state/
+.omc/
 out
 .env*
 *.log

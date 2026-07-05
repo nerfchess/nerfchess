@@ -213,6 +213,8 @@ export type DraftZones = {
   ward: number[];
   barred: number[];
   strike: number[];
+  /** Pieces hexed into walnuts: frozen, but painted with the nut marker. */
+  walnut: number[];
 };
 
 /** Squares held in place by an active Immobilizer: enemy non-king pieces
@@ -248,12 +250,13 @@ function immobilizedSquares(game: NerfGame): number[] {
  * frozen pieces, sanctuary squares, barred squares for each side, and the
  * lightning-struck squares' brief flash. */
 export function draftZones(game: NerfGame, myColor: Color): DraftZones {
-  const zones: DraftZones = { frozen: [], shielded: [], ward: [], barred: [], strike: [] };
+  const zones: DraftZones = { frozen: [], shielded: [], ward: [], barred: [], strike: [], walnut: [] };
   if (!game.buffs) return zones;
   zones.frozen.push(...immobilizedSquares(game));
   for (const e of game.buffs.effects) {
     if (e.turns != null && e.turns <= 0) continue;
     if (e.kind === "freeze") zones.frozen.push(e.sq);
+    else if (e.kind === "walnut") zones.walnut.push(e.sq);
     else if (e.kind === "shield") {
       if (e.squares) zones.shielded.push(...e.squares);
       else {

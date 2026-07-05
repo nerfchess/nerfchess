@@ -53,19 +53,23 @@ export default {
           DEFAULT: "#8a88a8",
           glow: "#a7a5c4",
         },
-        // mode identities: Nerf mode reads slightly red (oxblood family),
-        // Buff mode reads blue (the site's azure). Fixed hex on purpose so
-        // the identity survives accent-color settings swaps.
+        // mode identities: Nerf mode reads warm rose/terracotta (welcoming,
+        // deliberately softer than the oxblood alert red), Buff mode a gentle
+        // sky blue. Fixed hex on purpose so the identity survives
+        // accent-color settings swaps.
         mode: {
-          nerf: "#c0413b",
-          nerfGlow: "#dc5a54",
-          buff: "#3692e7",
-          buffGlow: "#4a9fee",
+          nerf: "#c4785f",
+          nerfGlow: "#dd9b82",
+          buff: "#5b9bd4",
+          buffGlow: "#84b7e2",
         },
       },
       boxShadow: {
         leaf: "0 0 24px -10px rgba(54,146,231,0.4)",
         oxblood: "0 0 32px -14px rgba(192,65,59,0.4)",
+        // Mode glows, softer than the alert shadows above.
+        nerf: "0 0 24px -12px rgba(196,120,95,0.35)",
+        buff: "0 0 24px -12px rgba(91,155,212,0.35)",
         plate:
           "0 12px 40px -24px rgba(0,0,0,0.7), 0 1px 0 0 rgba(255,255,255,0.03) inset",
       },

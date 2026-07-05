@@ -4,11 +4,15 @@ import { pgFirst } from "@/lib/server/pg";
 
 export const dynamic = "force-dynamic";
 
-// The most recently finished game, for the home hero: when nothing is being
-// played live, the landing board shows the latest archived game instead.
-// The game archive is on Postgres; player avatars are on D1, so this is a
-// two-step read (no cross-database join).
-export async function GET() {
+// The most recently finished game, for the home hero and TV fallback: when
+// nothing is being played live, the board shows the latest archived game
+// instead. `?mode=nerf|buff` narrows to that pool (mode games record their
+// mode in the `category` rating bucket column). The game archive is on
+// Postgres; player avatars are on D1, so this is a two-step read (no
+// cross-database join).
+export async function GET(request: Request) {
+  const rawMode = new URL(request.url).searchParams.get("mode");
+  const mode = rawMode === "nerf" || rawMode === "buff" ? rawMode : null;
   const game = await pgFirst<{
     id: string;
     white_name: string;
@@ -25,7 +29,9 @@ export async function GET() {
     `SELECT id, white_name, black_name, white_user_id, black_user_id,
             white_rating_before, black_rating_before,
             moves, winner, reason, completed_at
-     FROM games ORDER BY completed_at DESC LIMIT 1`,
+     FROM games ${mode ? "WHERE category = ?" : ""}
+     ORDER BY completed_at DESC LIMIT 1`,
+    mode ? [mode] : [],
   );
 
   if (!game) return NextResponse.json({ game: null });

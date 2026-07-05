@@ -15,7 +15,7 @@ const RULES = [
   {
     n: "III",
     t: "Nerfs are secret.",
-    d: "You see yours. You do not see your opponent's. Infer it from their play.",
+    d: "In Nerf mode you see yours but never your opponent's; infer it from their play. Buff mode has no nerfs at all.",
   },
   {
     n: "IV",
@@ -38,7 +38,8 @@ export default function TutorialPage() {
         <h1 className="font-display text-5xl sm:text-6xl mt-1">House rules</h1>
         <p className="mt-5 text-[16px] leading-[1.7] text-parchment-200">
           Nerf Chess is chess, until it isn&apos;t. The five rules below are everything you need to know.
-          Everything else is in your secret rule, or in the buff cards a Draft game deals you along the way.
+          Everything else depends on your mode: in Nerf mode, your secret handicap and the hexes,
+          boons, and items you draft; in Buff mode, the buff cards both players draft every 6 moves.
         </p>
         <div className="mt-9 space-y-3">
           {RULES.map((r) => (

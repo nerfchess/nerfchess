@@ -133,14 +133,12 @@ export default function CodexPage() {
           >
             Buffs
           </button>
-          {library === "rules" && (
-            <Link
-              href="/codex/suggest"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full btn-ghost font-display text-sm"
-            >
-              Suggest a rule
-            </Link>
-          )}
+          <Link
+            href={library === "rules" ? "/codex/suggest" : "/codex/suggest?kind=buff"}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full btn-ghost font-display text-sm"
+          >
+            {library === "rules" ? "Suggest a nerf" : "Suggest a buff"}
+          </Link>
         </div>
 
         {/* Sticky search bar. */}

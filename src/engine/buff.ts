@@ -16,10 +16,18 @@ import { RNG } from "./rng";
 // - absent: the legacy merged ruleset (kept so saved games still replay).
 export type DraftMode = "nerf" | "buff";
 
-/** What the draftable cards are called in each section: nerf mode's cards are
- * "boons" (they relieve or offset your handicap), everywhere else "buffs". */
-export function draftCardNoun(mode?: DraftMode): "boon" | "buff" {
-  return mode === "nerf" ? "boon" : "buff";
+/** What the draftable cards are called in each section: nerf mode's cards
+ * are "hexes" (curses cast on your opponent, with a boon or item minority in
+ * the pool), everywhere else "buffs". */
+export function draftCardNoun(mode?: DraftMode): "hex" | "buff" {
+  return mode === "nerf" ? "hex" : "buff";
+}
+
+/** True when a card belongs to nerf mode's boon (self-relief) share: every
+ * nerf-relief card (category "nerf") plus the light general cards flagged
+ * `boon`. Nerf mode's pool is these plus hexes and items (see draft.ts). */
+export function isBoon(b: { category: BuffCategory; boon?: boolean }): boolean {
+  return b.category === "nerf" || !!b.boon;
 }
 
 export type BuffCategory =
@@ -30,7 +38,9 @@ export type BuffCategory =
   | "attack" // removal / detonation
   | "info" // reveals (opponent nerf, draft options)
   | "draft" // manipulate either player's drafts
-  | "nerf"; // soften or remove your own nerf
+  | "nerf" // soften or remove your own nerf
+  | "hex" // curse the opponent: piece hexes and drawback intensifiers (nerf mode only)
+  | "item"; // playful consumables (apples, bananas...); drafted in both modes
 
 export type BuffState = Record<string, unknown>;
 
@@ -68,12 +78,17 @@ export type ActiveEffect =
   | { kind: "nerf_suspended"; owner: Color; turns: number | null }
   /** Purely visual: squares hit by Lightning Strike flash on the board until
    * the opponent replies. No gameplay effect. */
-  | { kind: "strike"; squares: Square[]; owner: Color; turns: number };
+  | { kind: "strike"; squares: Square[]; owner: Color; turns: number }
+  /** Hexed into a walnut (Walnut Queen and friends): mechanically a freeze
+   * (the piece cannot move at all) with its own board marker so the flavor
+   * lands. Kings are never turned into walnuts. */
+  | { kind: "walnut"; sq: Square; owner: Color; turns: number };
 
 /** Which side's completed moves tick this effect's timer down. */
 export function effectTickColor(e: ActiveEffect): Color {
   switch (e.kind) {
     case "freeze":
+    case "walnut":
     case "nerf_suspended":
       return e.owner;
     case "shield":
@@ -229,7 +244,11 @@ export interface BuffApi {
   /** Piece counts I have captured from the opponent (their revivable pool). */
   capturedByMe: Record<PieceType, number>;
   place: (sq: Square, type: PieceType, color: Color) => void;
-  removePiece: (sq: Square) => void;
+  /** Clear a square. By default the piece counts as captured by the other
+   * side (a buff destroying a piece is a real loss). Pass `uncounted` for
+   * board rewrites and summoned-piece expiry, where nothing was actually
+   * lost and the revive pools must stay untouched. */
+  removePiece: (sq: Square, opts?: { uncounted?: boolean }) => void;
   relocate: (from: Square, to: Square) => void;
   setPieceType: (sq: Square, type: PieceType) => void;
   setPieceColor: (sq: Square, color: Color) => void;
@@ -246,6 +265,10 @@ export interface Buff {
   /** Library tier; drafts may roll the card at a nearby tier. */
   tier: Tier;
   category: BuffCategory;
+  /** Part of nerf mode's boon pool. Category "nerf" cards are boons
+   * implicitly (see isBoon); light general cards flagged here round the
+   * pool out to roughly half nerf-relief, half small supportive effects. */
+  boon?: boolean;
   implemented: boolean;
   /**
    * passive   — hooks run automatically while held

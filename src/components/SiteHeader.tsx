@@ -34,16 +34,20 @@ type HeaderChallenge = {
 
 type Menu = "search" | "challenges" | "bell" | "profile" | null;
 
-type NavLink = { href: string; label: string; menu?: { href: string; label: string }[] };
+type NavMenuItem = { href: string; label: string; className?: string };
+type NavLink = { href: string; label: string; menu?: NavMenuItem[] };
 
-const PLAY_MENU_LINKS = [
+const PLAY_MENU_LINKS: NavMenuItem[] = [
   { href: "/lobby", label: "Create lobby game" },
   { href: "/friend", label: "Challenge a friend" },
   { href: "/tournaments", label: "Arena tournaments" },
 ];
 
-const WATCH_MENU_LINKS = [
-  { href: "/tv", label: "Nerf TV" },
+// Watch splits by mode: each TV entry wears its mode color and opens the TV
+// page filtered to that pool's live games.
+const WATCH_MENU_LINKS: NavMenuItem[] = [
+  { href: "/tv?mode=nerf", label: "Nerf TV", className: "text-mode-nerfGlow" },
+  { href: "/tv?mode=buff", label: "Buff TV", className: "text-mode-buffGlow" },
   { href: "/analysis", label: "Analysis board" },
 ];
 
@@ -230,7 +234,10 @@ export function SiteHeader({ active }: { active?: string }) {
                       <Link
                         key={item.href}
                         href={item.href}
-                        className="block px-4 py-2 text-sm text-parchment-100 transition-colors hover:bg-white/5 hover:text-parchment-50"
+                        className={
+                          "block px-4 py-2 text-sm transition-colors hover:bg-white/5 " +
+                          (item.className ?? "text-parchment-100 hover:text-parchment-50")
+                        }
                       >
                         {item.label}
                       </Link>
@@ -378,7 +385,9 @@ export function SiteHeader({ active }: { active?: string }) {
               aria-haspopup="menu"
               aria-expanded={menu === "profile"}
             >
-              {user.username}
+              {/* The name is dead weight at phone widths and can collide with
+                  the wordmark; the avatar alone opens the menu there. */}
+              <span className="hidden sm:inline">{user.username}</span>
               <PlayerAvatar name={user.username} avatar={user.avatar} size={24} className="rounded-full" />
             </button>
             {menu === "profile" && (

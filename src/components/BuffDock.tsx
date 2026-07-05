@@ -260,6 +260,9 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards 
   const bs = game.buffs;
   if (!bs) return null;
   const noun = draftCardNoun(bs.mode);
+  // Nerf mode's dock holds a mix (hexes, boons, items); "hexes" is the
+  // umbrella noun the mode drafts under.
+  const nounPlural = noun === "hex" ? "hexes" : `${noun}s`;
   const oppColor: Color = myColor === "w" ? "b" : "w";
   const mine = bs.players[myColor].buffs;
   const theirs = bs.players[oppColor].buffs;
@@ -299,6 +302,11 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards 
           <span className={`min-w-0 flex-1 truncate font-display text-[12px] font-semibold leading-tight tier-${inst.tier}`}>
             {def.name}
           </span>
+          {usable && (
+            <span className="smallcaps shrink-0 rounded-sm border border-verdigris-glow/50 bg-verdigris/15 px-1 py-px text-[8px] font-semibold text-verdigris-glow">
+              Usable
+            </span>
+          )}
           {status && (
             <span className="smallcaps hidden max-w-[7rem] shrink-0 truncate text-[8px] text-gold/80 lg:inline">
               {status}
@@ -419,8 +427,22 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards 
           </div>
         )}
 
+        {/* Pending take-both: the next offer is taken whole, and the player
+            should know before the draft opens, not discover it inside. */}
+        {(bs.players[myColor].flags.takeBoth ?? 0) > 0 && (
+          <div
+            role="status"
+            className="flex items-center gap-2 border border-gold/50 bg-gold/10 px-2 py-1.5"
+          >
+            <span aria-hidden className="h-1.5 w-1.5 shrink-0 bg-gold-leaf animate-flicker" />
+            <span className="font-display text-[11px] font-semibold text-gold-leaf">
+              Next draft: you take BOTH cards
+            </span>
+          </div>
+        )}
+
         <div className="flex items-baseline justify-between gap-2">
-          <span className="smallcaps text-[10px] text-parchment-400">Your {noun}s</span>
+          <span className="smallcaps text-[10px] text-parchment-400">Your {nounPlural}</span>
           <span className="font-mono text-[10px] tabular-nums text-parchment-400">{mine.length}</span>
         </div>
         {mine.length === 0 && (
@@ -433,7 +455,7 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards 
         {theirs.length > 0 && (
           <>
             <div className="flex items-baseline justify-between gap-2 border-t border-white/10 pt-2">
-              <span className="smallcaps text-[10px] text-parchment-400">Opponent&apos;s {noun}s</span>
+              <span className="smallcaps text-[10px] text-parchment-400">Opponent&apos;s {nounPlural}</span>
               <span className="font-mono text-[10px] tabular-nums text-parchment-400">{theirs.length}</span>
             </div>
             <div className="flex flex-wrap items-start gap-1">{theirsActive.map(oppEntry)}</div>

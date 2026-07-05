@@ -11,7 +11,7 @@ import { PlayerNerfCard } from "@/components/PlayerNerfCard";
 import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
 import { AILevel, aiBudgetMs, pickAIMove } from "@/engine/ai";
 import { Nerf, type GameContext } from "@/engine/nerf";
-import { IMPLEMENTED_BY_ID, PLAYABLE_NERFS } from "@/engine/nerfs/library";
+import { IMPLEMENTED_BY_ID, openingNerfPool } from "@/engine/nerfs/library";
 import { BUFF_BY_ID } from "@/engine/buffs/library";
 import { BuffUsedToast } from "@/components/BuffUsedToast";
 import {
@@ -58,7 +58,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, type CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 function pickRandomNerf(): Nerf {
-  const playable = PLAYABLE_NERFS.filter((d) => d.id !== "lucky");
+  // Random rolls respect the temporary opening cap (tiers 1-2 only).
+  const playable = openingNerfPool();
   return playable[Math.floor(Math.random() * playable.length)];
 }
 
@@ -68,7 +69,8 @@ function pickRandomNerf(): Nerf {
  * each side (options 0-1 and 2-3) one card of the anchor tier and one of the
  * partner tier, so both players always draft from the same tier pair. */
 function dealNerfOptions(exclude: Set<string>): Nerf[] {
-  const pool = PLAYABLE_NERFS.filter((d) => d.id !== "lucky" && !exclude.has(d.id));
+  // The deal draws from the capped opening pool (see MAX_OPENING_NERF_TIER).
+  const pool = openingNerfPool().filter((d) => !exclude.has(d.id));
   const ofTier = (tier: number) => pool.filter((d) => d.tier === tier);
   const takeOne = (tier: number, taken: Set<string>): Nerf => {
     const candidates = ofTier(tier).filter((d) => !taken.has(d.id));
@@ -879,7 +881,7 @@ function GamePage() {
             </h1>
             <p className="mt-2 text-sm text-parchment-300 text-center">
               {gameMode === "nerf"
-                ? "Pick one of two nerfs. About every ten moves you draft a boon — a card that helps you fight on, soften your rule, or remove it."
+                ? "Pick one of two nerfs. Every six moves you draft a card: a hex that curses your opponent, or a boon or item that helps you."
                 : "Every game opens weak: pick one of two nerfs, then draft buffs every few moves to claw your way back to power."}
             </p>
             {nerfDeadline != null && (
@@ -971,6 +973,17 @@ function GamePage() {
   // mode hides both rule sections entirely, there are no nerfs at all.
   const hideOppNerfCard = gameMode === "buff" || (draftMode && !oppRevealed);
   const hideMyNerfCard = gameMode === "buff";
+  // Nerf mode: held boons ride in the same corner card as the nerf, so the
+  // handicap and its reliefs read together at a glance.
+  const myHeldBoons =
+    game.buffs?.mode === "nerf"
+      ? game.buffs.players[myColor].buffs
+          .filter((b) => !b.spent && !b.nullified)
+          .flatMap((b) => {
+            const def = BUFF_BY_ID[b.id];
+            return def ? [{ name: def.name, tier: b.tier, status: def.status?.(b) ?? null }] : [];
+          })
+      : undefined;
   const lastMove = game.board.history[game.board.history.length - 1] ?? null;
   // A held move (confirmation setting) previews on the board before playing.
   const confirmPreviewBoard = confirmMovePending
@@ -1232,7 +1245,7 @@ function GamePage() {
         </div>
       </nav>
 
-      <div className="mx-auto flex w-full max-w-[1280px] flex-1 min-h-0 flex-col gap-2 overflow-hidden px-3 pb-14 sm:px-6 sm:pb-6 xl:max-w-[1600px]">
+      <div className="mx-auto flex w-full max-w-[1360px] flex-1 min-h-0 flex-col gap-2 overflow-hidden px-3 pb-14 sm:px-6 sm:pb-6 xl:max-w-[1680px]">
         {hint && (
           <div
             role="status"
@@ -1251,7 +1264,7 @@ function GamePage() {
           </div>
         )}
         <div
-          className="grid min-h-0 flex-1 gap-y-2 lg:grid-cols-[340px_auto] lg:justify-center lg:gap-x-4 xl:grid-cols-[380px_auto]"
+          className="grid min-h-0 flex-1 gap-y-2 lg:grid-cols-[380px_auto] lg:justify-center lg:gap-x-4 xl:grid-cols-[420px_auto]"
           style={railHeightStyle}
         >
           <aside className="hidden min-h-0 gap-3 overflow-hidden lg:grid lg:min-h-[var(--board-height)] lg:max-h-full lg:grid-rows-[auto_minmax(8rem,1fr)_auto] lg:self-start">
@@ -1303,6 +1316,7 @@ function GamePage() {
               ownerLabel=""
               compact
               progress={myNerf.progress?.(myState, myCtx) ?? null}
+              boons={myHeldBoons}
               action={
                 gameMode === "buff" ? null : (
                   <button
@@ -1365,6 +1379,7 @@ function GamePage() {
                           shieldedSquares: zone.shielded,
                           wardSquares: zone.ward,
                           strikeSquares: zone.strike,
+                          walnutSquares: zone.walnut,
                         }
                   }
                   lastMove={lastMoveForDisplay}
@@ -1448,7 +1463,7 @@ function GamePage() {
             </div>
             <div
               className={
-                "hidden min-h-0 overflow-hidden gap-3 sm:grid sm:h-[var(--board-height)] sm:w-64 sm:shrink-0 " +
+                "hidden min-h-0 overflow-hidden gap-3 sm:grid sm:h-[var(--board-height)] sm:w-72 sm:shrink-0 " +
                 (clockEnabled ? "sm:grid-rows-[auto_minmax(0,1fr)_auto]" : "sm:grid-rows-[minmax(0,1fr)]")
               }
               style={railHeightStyle}
@@ -1487,7 +1502,7 @@ function GamePage() {
 
       {game.buffs && (
         <MobileBuffDrawer
-          label={draftCardNoun(game.buffs.mode) === "boon" ? "Boons" : "Buffs"}
+          label={draftCardNoun(game.buffs.mode) === "hex" ? "Hexes & boons" : "Buffs"}
           held={game.buffs.players[myColor].buffs.length}
           usable={
             game.result || game.board.turn !== myColor || myOffer || isReviewingHistory
