@@ -38,7 +38,7 @@ function pieceSquares(board: { pieces: ({ type: PieceType; color: Color } | null
 
 export const ROOK_BUDDIES: Nerf = db({
   id: "rook_buddies", name: "Rook Buddies", tier: 2, icon: "link", implemented: true,
-  description: "Can't move rooks until they are connected (no pieces between them on home rank).",
+  description: "Your rooks can't move while any piece sits between them on your home rank; clear the back rank between them first.",
   filterMoves: (moves, _s, ctx) => {
     const homeR = ctx.me === "w" ? 0 : 7;
     const rooks = pieceSquares(ctx.board, ctx.me, "r").filter((sq) => RANK(sq) === homeR);
@@ -244,7 +244,8 @@ export const POWER_CELLS: Nerf = db({
   description: "Can't move a piece farther than the number of pawns you have.",
   filterMoves: (moves, _s, ctx) => {
     const pawns = pieceSquares(ctx.board, ctx.me, "p").length;
-    return moves.filter((m) => cheb(m.from, m.to) <= pawns);
+    const within = moves.filter((m) => cheb(m.from, m.to) <= pawns);
+    return within.length ? within : moves;
   },
 });
 
@@ -1024,7 +1025,8 @@ export const COWERING_IN_FEAR: Nerf = db({
       if (caps[t] > 0) max = Math.max(max, PIECE_VAL[t]);
     }
     if (max === 0) return moves;
-    return moves.filter((m) => PIECE_VAL[m.piece] >= max);
+    const brave = moves.filter((m) => PIECE_VAL[m.piece] >= max);
+    return brave.length ? brave : moves;
   },
 });
 
@@ -1142,7 +1144,7 @@ export const MONKEY_SEE: Nerf = db({
     };
     const types = new Set<PieceType>();
     for (const m of ctx.board.history) if (m.color !== ctx.me && m.captured) types.add(m.piece);
-    if (types.size === 0) return { text: "You can't capture yet — your opponent hasn't captured with anything.", tone: "info" };
+    if (types.size === 0) return { text: "You can't capture yet. Your opponent hasn't captured with anything.", tone: "info" };
     return { text: `You may capture with: ${[...types].map((t) => names[t]).join(", ")}.`, tone: "info" };
   },
 });
@@ -1344,7 +1346,7 @@ export const LEAPS_AND_BOUNDS: Nerf = db({
   id: "leaps_and_bounds", name: "Leaps and Bounds", tier: 6, implemented: true,
   description: "Every move must be a leap: a piece can't move to a square adjacent to the square it's leaving.",
   // Bans any move of chebyshev distance 1 (the most common bug report was that this
-  // drawback "had no effect" — the old version only restricted the exact piece that
+  // drawback "had no effect": the old version only restricted the exact piece that
   // moved last turn, so it almost never triggered). Since every pawn promotion is a
   // one-square advance or diagonal capture, this also naturally blocks promotions.
   filterMoves: (moves) => moves.filter((m) => !adj(m.to, m.from)),
@@ -1416,7 +1418,8 @@ export const LEFT_TO_RIGHT: Nerf = db({
     const last = ctx.myLastMove;
     if (!last) return moves;
     if (FILE(last.to) === 7) return moves;
-    return moves.filter((m) => FILE(m.to) > FILE(last.to));
+    const rightward = moves.filter((m) => FILE(m.to) > FILE(last.to));
+    return rightward.length ? rightward : moves;
   },
 });
 
@@ -1425,11 +1428,12 @@ export const FRIENDLY_FIRE: Nerf = db({
   description: "Can only move to squares defended by another of your pieces.",
   filterMoves: (moves, _s, ctx) => {
     // We need defenders excluding the moving piece. Simulate by removing the piece from its square.
-    return moves.filter((m) => {
+    const defended = moves.filter((m) => {
       const fake = { ...ctx.board, pieces: ctx.board.pieces.slice() };
       fake.pieces[m.from] = null;
       return attackedBy(fake, ctx.me).has(m.to);
     });
+    return defended.length ? defended : moves;
   },
 });
 
@@ -1573,10 +1577,12 @@ export const NOBLE_STEED: Nerf = db({
   description: "Non-knight pieces can only move if adjacent to one of your knights.",
   filterMoves: (moves, _s, ctx) => {
     const knights = pieceSquares(ctx.board, ctx.me, "n");
-    return moves.filter((m) => {
+    if (!knights.length) return moves;
+    const escorted = moves.filter((m) => {
       if (m.piece === "n") return true;
       return knights.some((k) => adj(k, m.from));
     });
+    return escorted.length ? escorted : moves;
   },
 });
 
@@ -1586,7 +1592,7 @@ export const TAKING_TURNS: Nerf = db({
   filterMoves: (moves, _s, ctx) => {
     // A piece has moved iff its current square was ever a destination of one of
     // my moves (my moves can't land on my own pieces, so the occupant of such a
-    // square must be the piece that moved there — or a later mover, also moved).
+    // square must be the piece that moved there, or a later mover, also moved).
     // Castling rooks slip through this net; that's an accepted approximation.
     const movedSquares = new Set<number>();
     for (const m of ctx.board.history) if (m.color === ctx.me) movedSquares.add(m.to);

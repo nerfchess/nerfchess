@@ -154,7 +154,15 @@ export default function OnlineGamePage() {
         }
       });
       // Resume the seat; transient connection failures retry with backoff,
-      // and only a server-side refusal downgrades us to spectating.
+      // and only a server-side refusal downgrades us to spectating. We hold a
+      // valid seat token, so keep retrying persistently: a downgrade to
+      // spectating our OWN game strands us watching a board we should be
+      // playing (and, in a bot game, leaves the bot guard-held/frozen because
+      // our seat reads as disconnected). The game server can briefly reject or
+      // time out a resume during a load spike / reset, so give it several
+      // chances (capped backoff) before giving up; only an explicit
+      // reconnect_failed (seat truly gone/archived) downgrades immediately.
+      const MAX_RESUME_ATTEMPTS = 6;
       const tryResume = (attempt: number) => {
         withResponseTimeout(
           session.resume({ id: gameId, color: seat.color, token: seat.token }),
@@ -170,10 +178,12 @@ export default function OnlineGamePage() {
               spectate();
               return;
             }
-            if (attempt < 1) {
+            if (attempt < MAX_RESUME_ATTEMPTS) {
+              // Backoff ~1.2s, 2.4s, 3.6s… capped at 5s.
+              const delay = Math.min(5000, 1200 * (attempt + 1));
               window.setTimeout(() => {
                 if (!cancelled) tryResume(attempt + 1);
-              }, 1200);
+              }, delay);
             } else {
               off();
               spectate();

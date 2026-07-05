@@ -37,7 +37,7 @@ export const NERFS_T8: Nerf[] = [
   N(
     {
       id: "own_half_only",
-      name: "No Man's Land",
+      name: "Own Half Only",
       description: "You can't move any piece past your own fourth rank; the enemy half of the board is off limits.",
       flavor: "Cross the line and you never come back, so no one crosses.",
       icon: "fence",

@@ -12,6 +12,7 @@ import { DEFAULT_CATEGORY, getCategory, type RatingCategoryId } from "@/lib/rati
 interface Row {
   username: string;
   avatar?: string | null;
+  flair?: string | null;
   rating: number;
   rd: number;
   games: number;
@@ -68,7 +69,7 @@ export default function LeaderboardPage() {
       <>
         <span className="font-mono text-parchment-400 tabular-nums">{rank}</span>
         <span className="flex min-w-0 items-center gap-2">
-          <PlayerAvatar name={row.username} avatar={row.avatar} size={24} />
+          <PlayerAvatar name={row.username} avatar={row.avatar} flair={row.flair} size={24} />
           <span className={"truncate font-medium " + (mine ? "text-gold-leaf" : "text-parchment-100")}>
             {row.username}
           </span>

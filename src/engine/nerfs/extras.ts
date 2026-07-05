@@ -168,7 +168,7 @@ export const CONSTRICTION: Nerf = db({
 export const MIRROR_MARCH: Nerf = db({
   id: "mirror_march",
   name: "Mirror March",
-  description: "Your move must mirror the file direction of your opponent's last move.",
+  description: "Your move must go the same file direction (left or right) as your opponent's last move.",
   flavor: "Copycat.",
   tier: 5,
   icon: "git-compare",
@@ -179,7 +179,8 @@ export const MIRROR_MARCH: Nerf = db({
     const dx = FILE(last.to) - FILE(last.from);
     if (dx === 0) return moves; // no constraint on perfectly straight opponent moves
     const sign = Math.sign(dx);
-    return moves.filter((m) => Math.sign(FILE(m.to) - FILE(m.from)) === sign);
+    const same = moves.filter((m) => Math.sign(FILE(m.to) - FILE(m.from)) === sign);
+    return same.length ? same : moves;
   },
 });
 
@@ -398,7 +399,8 @@ export const WAGON_TRAIN: Nerf = db({
   filterMoves: (moves, _s, ctx) => {
     const last = ctx.myLastMove;
     if (!last) return moves;
-    return moves.filter((m) => adj(m.to, last.to) || m.to === last.to);
+    const near = moves.filter((m) => adj(m.to, last.to) || m.to === last.to);
+    return near.length ? near : moves;
   },
 });
 
@@ -428,7 +430,8 @@ export const VANISHING_POINT: Nerf = db({
   filterMoves: (moves, _s, ctx) => {
     const used = new Set<number>();
     for (const m of ctx.board.history) if (m.color === ctx.me) used.add(m.to);
-    return moves.filter((m) => !used.has(m.to));
+    const fresh = moves.filter((m) => !used.has(m.to));
+    return fresh.length ? fresh : moves;
   },
 });
 
@@ -669,19 +672,27 @@ export const COURT_MARTIAL: Nerf = db({
 export const NEAT_FREAK: Nerf = db({
   id: "neat_freak",
   name: "Neat Freak",
-  description: "After turn 10, you lose if any two pieces share a diagonal.",
+  description: "After turn 10, you lose if two of your pieces of the same type (pawns aside) ever share a diagonal.",
   flavor: "Don't crowd me.",
   tier: 8,
   icon: "ruler",
   implemented: true,
   checkLoss: (_s, ctx) => {
     if (ctx.moveNumber < 10) return null;
-    const mine = pieceSquares(ctx.board, ctx.me);
-    for (let i = 0; i < mine.length; i++) {
-      for (let j = i + 1; j < mine.length; j++) {
-        const a = mine[i], b = mine[j];
-        if (Math.abs(FILE(a) - FILE(b)) === Math.abs(RANK(a) - RANK(b))) {
-          return { reason: "two pieces share a diagonal" };
+    const byType: Partial<Record<PieceType, number[]>> = {};
+    for (const sq of pieceSquares(ctx.board, ctx.me)) {
+      const t = ctx.board.pieces[sq]!.type;
+      if (t === "p" || t === "k") continue;
+      (byType[t] ||= []).push(sq);
+    }
+    for (const t of Object.keys(byType) as PieceType[]) {
+      const list = byType[t]!;
+      for (let i = 0; i < list.length; i++) {
+        for (let j = i + 1; j < list.length; j++) {
+          const a = list[i], b = list[j];
+          if (Math.abs(FILE(a) - FILE(b)) === Math.abs(RANK(a) - RANK(b))) {
+            return { reason: "two same pieces share a diagonal" };
+          }
         }
       }
     }
@@ -741,7 +752,8 @@ export const DOMINO: Nerf = db({
   filterMoves: (moves, _s, ctx) => {
     const last = ctx.myLastMove;
     if (!last) return moves;
-    return moves.filter((m) => adj(m.to, last.to));
+    const near = moves.filter((m) => adj(m.to, last.to));
+    return near.length ? near : moves;
   },
 });
 
@@ -792,14 +804,14 @@ export const SCHOLARSHIP: Nerf = db({
 export const TRIBUTE: Nerf = db({
   id: "tribute",
   name: "Tribute",
-  description: "Every 8 turns, you must lose a pawn (move it to a defended enemy attack).",
+  description: "Every 8th turn, if you can push a pawn onto a square the enemy attacks, you must.",
   flavor: "Pay the toll.",
   tier: 6,
   icon: "coins",
   implemented: true,
   filterMoves: (moves, _s, ctx) => {
     const turn = ctx.moveNumber + 1;
-    if (turn === 0 || turn % 8 !== 0) return moves;
+    if (turn % 8 !== 0) return moves;
     const opp = ctx.me === "w" ? "b" : "w";
     const oppAttacks = attackedBy(ctx.board, opp);
     const sacrifices = moves.filter((m) => m.piece === "p" && oppAttacks.has(m.to));
@@ -836,11 +848,12 @@ export const SWITCHBACK: Nerf = db({
     if (!last) return moves;
     const lastDf = Math.sign(FILE(last.to) - FILE(last.from));
     const lastDr = Math.sign(RANK(last.to) - RANK(last.from));
-    return moves.filter((m) => {
+    const zigzag = moves.filter((m) => {
       const df = Math.sign(FILE(m.to) - FILE(m.from));
       const dr = Math.sign(RANK(m.to) - RANK(m.from));
       return !(df === lastDf && dr === lastDr);
     });
+    return zigzag.length ? zigzag : moves;
   },
 });
 
@@ -885,7 +898,8 @@ export const COUNTING_SHEEP: Nerf = db({
   filterMoves: (moves, _s, ctx) => {
     const counts: Record<PieceType, number> = { p: 0, n: 0, b: 0, r: 0, q: 0, k: 0 };
     for (const m of ctx.board.history) if (m.color === ctx.me) counts[m.piece]++;
-    return moves.filter((m) => counts[m.piece] < 5);
+    const allowed = moves.filter((m) => counts[m.piece] < 5);
+    return allowed.length ? allowed : moves;
   },
 });
 
