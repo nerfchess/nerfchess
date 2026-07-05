@@ -3,7 +3,7 @@ import { requireMod } from "@/lib/server/mod";
 
 export const dynamic = "force-dynamic";
 
-// GET: player-submitted rule ideas, newest first.
+// GET: player-submitted nerf and buff ideas, newest first.
 export async function GET(request: Request) {
   const guard = await requireMod(request);
   if (guard instanceof NextResponse) return guard;
@@ -11,7 +11,7 @@ export async function GET(request: Request) {
 
   const rows = await db
     .prepare(
-      `SELECT id, name, description, contact, username, created_at
+      `SELECT id, name, description, contact, username, created_at, kind, pool
        FROM rule_suggestions ORDER BY created_at DESC LIMIT 200`,
     )
     .all();

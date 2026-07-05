@@ -1,0 +1,494 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1783211920905,
+  "projectRoot": "C:\\Users\\Jojo\\nerfchess",
+  "techStack": {
+    "languages": [
+      {
+        "name": "JavaScript/TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "package.json"
+        ]
+      },
+      {
+        "name": "TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "tsconfig.json"
+        ]
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "next",
+        "version": "14.2.35",
+        "category": "fullstack"
+      },
+      {
+        "name": "react",
+        "version": "18.3.1",
+        "category": "frontend"
+      },
+      {
+        "name": "react-dom",
+        "version": "18.3.1",
+        "category": "frontend"
+      }
+    ],
+    "packageManager": "npm",
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": "npm run build",
+    "testCommand": null,
+    "lintCommand": "npm run lint",
+    "devCommand": "npm run dev",
+    "scripts": {
+      "dev": "next dev",
+      "dev:host": "next dev -H 0.0.0.0",
+      "build": "next build",
+      "start": "next start",
+      "server:build": "tsc -p tsconfig.server.json",
+      "server:start": "node dist-server/server/index.js",
+      "lint": "next lint",
+      "typecheck": "tsc --noEmit",
+      "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+      "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy"
+    }
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": "type-based"
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [
+      "docs",
+      "public",
+      "src"
+    ],
+    "gitBranches": {
+      "defaultBranch": "master",
+      "branchingStrategy": null
+    }
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "dist-server": {
+      "path": "dist-server",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1783211920006,
+      "keyFiles": []
+    },
+    "docs": {
+      "path": "docs",
+      "purpose": "Documentation",
+      "fileCount": 6,
+      "lastAccessed": 1783211920006,
+      "keyFiles": [
+        "accounts-and-matchmaking.md",
+        "cloudflare-agent-troubleshooting.md",
+        "draft-system.md",
+        "game-server-protocol.md",
+        "moderation.md"
+      ]
+    },
+    "migrations": {
+      "path": "migrations",
+      "purpose": "Database migrations",
+      "fileCount": 10,
+      "lastAccessed": 1783211920017,
+      "keyFiles": [
+        "0001_init.sql",
+        "0002_chat_flags.sql",
+        "0003_rule_suggestions.sql",
+        "0004_moderation.sql",
+        "0005_clubs_tournaments.sql"
+      ]
+    },
+    "public": {
+      "path": "public",
+      "purpose": "Public files",
+      "fileCount": 1,
+      "lastAccessed": 1783211920019,
+      "keyFiles": [
+        "logo.svg"
+      ]
+    },
+    "server": {
+      "path": "server",
+      "purpose": null,
+      "fileCount": 1,
+      "lastAccessed": 1783211920020,
+      "keyFiles": [
+        "index.ts"
+      ]
+    },
+    "src": {
+      "path": "src",
+      "purpose": "Source code",
+      "fileCount": 0,
+      "lastAccessed": 1783211920020,
+      "keyFiles": []
+    },
+    "vault": {
+      "path": "vault",
+      "purpose": null,
+      "fileCount": 1,
+      "lastAccessed": 1783211920021,
+      "keyFiles": [
+        "README.md"
+      ]
+    },
+    "dist-server\\src": {
+      "path": "dist-server\\src",
+      "purpose": "Source code",
+      "fileCount": 0,
+      "lastAccessed": 1783211920022,
+      "keyFiles": []
+    },
+    "src\\app": {
+      "path": "src\\app",
+      "purpose": "Application code",
+      "fileCount": 5,
+      "lastAccessed": 1783211920025,
+      "keyFiles": [
+        "error.tsx",
+        "global-error.tsx",
+        "globals.css"
+      ]
+    },
+    "src\\components": {
+      "path": "src\\components",
+      "purpose": "UI components",
+      "fileCount": 31,
+      "lastAccessed": 1783211920150,
+      "keyFiles": [
+        "AccountChip.tsx",
+        "Board.tsx",
+        "BoardPlayerRow.tsx"
+      ]
+    },
+    "src\\lib": {
+      "path": "src\\lib",
+      "purpose": "Library code",
+      "fileCount": 26,
+      "lastAccessed": 1783211920153,
+      "keyFiles": [
+        "authClient.ts",
+        "avatars.ts",
+        "draftOnline.ts"
+      ]
+    }
+  },
+  "hotPaths": [
+    {
+      "path": "src\\components\\OnlineMatch.tsx",
+      "accessCount": 97,
+      "lastAccessed": 1783228911549,
+      "type": "file"
+    },
+    {
+      "path": "src\\engine\\buffs\\library.ts",
+      "accessCount": 80,
+      "lastAccessed": 1783226847358,
+      "type": "file"
+    },
+    {
+      "path": "worker.ts",
+      "accessCount": 76,
+      "lastAccessed": 1783227555651,
+      "type": "directory"
+    },
+    {
+      "path": "src\\app\\game\\page.tsx",
+      "accessCount": 65,
+      "lastAccessed": 1783229342947,
+      "type": "file"
+    },
+    {
+      "path": "src",
+      "accessCount": 35,
+      "lastAccessed": 1783229673789,
+      "type": "directory"
+    },
+    {
+      "path": "",
+      "accessCount": 29,
+      "lastAccessed": 1783229752723,
+      "type": "directory"
+    },
+    {
+      "path": "src\\lib\\multiplayer.ts",
+      "accessCount": 24,
+      "lastAccessed": 1783227906044,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\friend\\page.tsx",
+      "accessCount": 23,
+      "lastAccessed": 1783226670003,
+      "type": "directory"
+    },
+    {
+      "path": "src\\components\\DraftOverlay.tsx",
+      "accessCount": 22,
+      "lastAccessed": 1783228851100,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\game\\[id]\\page.tsx",
+      "accessCount": 21,
+      "lastAccessed": 1783228806086,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\QueueButton.tsx",
+      "accessCount": 16,
+      "lastAccessed": 1783228834695,
+      "type": "directory"
+    },
+    {
+      "path": "src\\app\\play\\page.tsx",
+      "accessCount": 16,
+      "lastAccessed": 1783228937149,
+      "type": "file"
+    },
+    {
+      "path": "src\\engine\\game.ts",
+      "accessCount": 15,
+      "lastAccessed": 1783226090776,
+      "type": "file"
+    },
+    {
+      "path": "src\\engine\\draft.ts",
+      "accessCount": 14,
+      "lastAccessed": 1783226450126,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\PlayerNerfCard.tsx",
+      "accessCount": 14,
+      "lastAccessed": 1783226593195,
+      "type": "directory"
+    },
+    {
+      "path": "docs\\game-server-protocol.md",
+      "accessCount": 13,
+      "lastAccessed": 1783221071019,
+      "type": "directory"
+    },
+    {
+      "path": "src\\app\\lobby\\page.tsx",
+      "accessCount": 13,
+      "lastAccessed": 1783228870783,
+      "type": "file"
+    },
+    {
+      "path": "src\\engine\\buff.ts",
+      "accessCount": 11,
+      "lastAccessed": 1783226434725,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\tv\\page.tsx",
+      "accessCount": 11,
+      "lastAccessed": 1783228272284,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\BuffDock.tsx",
+      "accessCount": 10,
+      "lastAccessed": 1783228851666,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\page.tsx",
+      "accessCount": 7,
+      "lastAccessed": 1783228923289,
+      "type": "file"
+    },
+    {
+      "path": "tailwind.config.ts",
+      "accessCount": 7,
+      "lastAccessed": 1783229689811,
+      "type": "directory"
+    },
+    {
+      "path": "src\\engine\\nerfs\\library.ts",
+      "accessCount": 6,
+      "lastAccessed": 1783220545561,
+      "type": "directory"
+    },
+    {
+      "path": "src\\app\\faq\\page.tsx",
+      "accessCount": 6,
+      "lastAccessed": 1783228355730,
+      "type": "file"
+    },
+    {
+      "path": "src\\engine\\buffs\\helpers.ts",
+      "accessCount": 5,
+      "lastAccessed": 1783226081463,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\GameOver.tsx",
+      "accessCount": 5,
+      "lastAccessed": 1783227494677,
+      "type": "directory"
+    },
+    {
+      "path": "src\\components\\ClockPill.tsx",
+      "accessCount": 5,
+      "lastAccessed": 1783228837374,
+      "type": "directory"
+    },
+    {
+      "path": "src\\components\\ModeBadge.tsx",
+      "accessCount": 5,
+      "lastAccessed": 1783229657335,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\draftOnline.ts",
+      "accessCount": 4,
+      "lastAccessed": 1783218328707,
+      "type": "file"
+    },
+    {
+      "path": "vault\\notes\\2026-07-04-owner-feedback-round3.md",
+      "accessCount": 2,
+      "lastAccessed": 1783212282634,
+      "type": "file"
+    },
+    {
+      "path": "vault\\notes\\2026-07-04-draft-economy-rules.md",
+      "accessCount": 2,
+      "lastAccessed": 1783212286494,
+      "type": "file"
+    },
+    {
+      "path": "src\\app",
+      "accessCount": 2,
+      "lastAccessed": 1783213967271,
+      "type": "directory"
+    },
+    {
+      "path": "src\\components\\BuffUsedToast.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1783228864099,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\HeroTv.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1783228935791,
+      "type": "directory"
+    },
+    {
+      "path": "CLAUDE.md",
+      "accessCount": 1,
+      "lastAccessed": 1783212246140,
+      "type": "file"
+    },
+    {
+      "path": "vault\\notes\\2026-07-04-hidden-buffs-lockins.md",
+      "accessCount": 1,
+      "lastAccessed": 1783212265727,
+      "type": "file"
+    },
+    {
+      "path": "src\\engine\\types.ts",
+      "accessCount": 1,
+      "lastAccessed": 1783212635979,
+      "type": "directory"
+    },
+    {
+      "path": "src\\components\\BoardPlayerRow.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1783213851959,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\DraftNotice.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1783214563053,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\gamePersistence.ts",
+      "accessCount": 1,
+      "lastAccessed": 1783214743476,
+      "type": "directory"
+    },
+    {
+      "path": "sim-modes.ts",
+      "accessCount": 1,
+      "lastAccessed": 1783215763561,
+      "type": "file"
+    },
+    {
+      "path": "vault\\notes\\2026-07-04-nerf-buff-mode-split.md",
+      "accessCount": 1,
+      "lastAccessed": 1783215834316,
+      "type": "file"
+    },
+    {
+      "path": "wrangler.jsonc",
+      "accessCount": 1,
+      "lastAccessed": 1783217287367,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\globals.css",
+      "accessCount": 1,
+      "lastAccessed": 1783217425423,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\lobbyClient.ts",
+      "accessCount": 1,
+      "lastAccessed": 1783217452172,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\community\\page.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1783217510905,
+      "type": "file"
+    },
+    {
+      "path": "vault\\notes\\2026-07-05-mode-color-identity.md",
+      "accessCount": 1,
+      "lastAccessed": 1783217900704,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\api\\challenges\\route.ts",
+      "accessCount": 1,
+      "lastAccessed": 1783218389470,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\api\\challenges\\[id]\\route.ts",
+      "accessCount": 1,
+      "lastAccessed": 1783218398862,
+      "type": "file"
+    },
+    {
+      "path": "server\\index.ts",
+      "accessCount": 1,
+      "lastAccessed": 1783218564590,
+      "type": "directory"
+    }
+  ],
+  "userDirectives": []
+}
