@@ -18,6 +18,9 @@ export function PlayerSearch({ className = "", autoFocus = false }: { className?
   const [open, setOpen] = useState(false);
   const boxRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  // Monotonic id for the most recently issued query. A slow older response
+  // whose id no longer matches is dropped, so results never flicker backwards.
+  const latestReqId = useRef(0);
 
   useEffect(() => {
     if (!autoFocus) return;
@@ -32,6 +35,9 @@ export function PlayerSearch({ className = "", autoFocus = false }: { className?
       return;
     }
     const controller = new AbortController();
+    const reqId = ++latestReqId.current;
+    // Short debounce so results feel instant while still coalescing bursts of
+    // fast typing (lichess uses a similarly tight window).
     const id = window.setTimeout(async () => {
       try {
         const res = await fetch(`/api/users/search?q=${encodeURIComponent(q)}`, {
@@ -39,10 +45,13 @@ export function PlayerSearch({ className = "", autoFocus = false }: { className?
         });
         if (!res.ok) return;
         const data = (await res.json()) as { players: Hit[] };
+        // Guard against out-of-order responses: only the newest query may
+        // write results, even if an earlier request resolves late.
+        if (reqId !== latestReqId.current) return;
         setHits(data.players);
         setOpen(true);
       } catch {}
-    }, 200);
+    }, 130);
     return () => {
       controller.abort();
       window.clearTimeout(id);
