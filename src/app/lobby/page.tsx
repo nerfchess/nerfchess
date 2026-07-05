@@ -39,9 +39,10 @@ export default function LobbyPage() {
     session.autoReconnect = false; // fetchLobby reconnects on demand
     sessionRef.current = session;
     // The game server runs on a single-threaded Durable Object, so a snapshot
-    // can occasionally arrive late. Keep showing the last good snapshot and
-    // only surface the error banner after a couple of misses in a row, so a
-    // one-off blip doesn't flap "can't reach the game server" at the player.
+    // can occasionally arrive late. Keep showing the last good snapshot (the
+    // catch below never clears `lobby`) and only surface the error banner
+    // after three misses in a row, so a one-off blip doesn't flap "can't reach
+    // the game server" at the player.
     let failures = 0;
     const poll = async () => {
       try {
@@ -54,7 +55,7 @@ export default function LobbyPage() {
       } catch {
         if (!cancelled) {
           failures++;
-          if (failures >= 2) setLobbyError("Can't reach the game server right now.");
+          if (failures >= 3) setLobbyError("Can't reach the game server right now.");
         }
       }
     };
