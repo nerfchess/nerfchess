@@ -8,6 +8,7 @@
 
 import postgres, { type Sql } from "postgres";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { getDb } from "./db";
 
 // Every int8 column we store is either an epoch-ms timestamp or an RNG seed —
 // all well under 2^53 — so decode int8 to a plain JS number, matching what
@@ -26,14 +27,12 @@ const bigintAsNumber = {
 // runtime cancelling the request. Hyperdrive already pools the *origin*
 // connections, so opening a fresh client per query is cheap (the Worker↔
 // Hyperdrive hop is local) and is the pattern Cloudflare documents.
-function makeClient(): Sql {
+function hyperdriveBinding(): Hyperdrive | null {
   const { env } = getCloudflareContext();
-  const hyperdrive = (env as { HYPERDRIVE?: Hyperdrive }).HYPERDRIVE;
-  if (!hyperdrive) {
-    throw new Error(
-      "Hyperdrive binding `HYPERDRIVE` is not configured. Check wrangler.jsonc `hyperdrive` and, for local dev, set WRANGLER_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE.",
-    );
-  }
+  return (env as { HYPERDRIVE?: Hyperdrive }).HYPERDRIVE ?? null;
+}
+
+function makeClient(hyperdrive: Hyperdrive): Sql {
   return postgres(hyperdrive.connectionString, {
     max: 1,
     fetch_types: false,
@@ -54,12 +53,28 @@ function closeSoon(sql: Sql): void {
 
 // Run a D1-style query (with `?` placeholders) against Postgres and return the
 // row array — the shape D1's `.all().results` produced, so route code ports
-// with minimal churn.
+// with minimal churn. When no Hyperdrive binding is configured (the OCI
+// archive is disabled in wrangler.jsonc), the same query runs against the D1
+// games table instead: these queries were originally written for D1 and the
+// archive writer dual-falls-back to D1 too, so D1 stays complete and correct
+// while Hyperdrive is off.
 export async function pgAll<T = Record<string, unknown>>(
   text: string,
   params: unknown[] = [],
 ): Promise<T[]> {
-  const sql = makeClient();
+  const hyperdrive = hyperdriveBinding();
+  if (!hyperdrive) {
+    const db = await getDb();
+    // Postgres `::type` casts exist only to coerce int8/numeric to JS
+    // numbers; SQLite already returns plain numbers, so strip them here.
+    const d1Text = text.replace(/::[a-z0-9_]+/gi, "");
+    const res = await db
+      .prepare(d1Text)
+      .bind(...(params as (string | number | null)[]))
+      .all<T>();
+    return res.results;
+  }
+  const sql = makeClient(hyperdrive);
   try {
     const rows = await sql.unsafe(toPositional(text), params as never[]);
     return rows as unknown as T[];
