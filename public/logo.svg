@@ -1,18 +1,59 @@
-<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Nerf Chess">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Nerf Chess">
   <defs>
-    <linearGradient id="dcPlate" x1="0" y1="0" x2="0" y2="64" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#2b2926"/>
-      <stop offset="1" stop-color="#161512"/>
-    </linearGradient>
-    <linearGradient id="dcKnight" x1="20" y1="10" x2="44" y2="54" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#eceae6"/>
-      <stop offset="1" stop-color="#a9a6a1"/>
-    </linearGradient>
+    <pattern id="ncChecker" x="116" y="65" width="70" height="70" patternUnits="userSpaceOnUse">
+      <rect width="70" height="70" fill="#eadfc4"/>
+      <rect width="35" height="35" fill="#a9895a"/>
+      <rect x="35" y="35" width="35" height="35" fill="#a9895a"/>
+    </pattern>
+    <!-- King: cross pattée, dome, flared crown, collar rings, tapered stem, skirt, stacked base -->
+    <g id="ncKing">
+      <path transform="translate(188 176) scale(0.62)" d="M-6 -6 L-16 -34 Q0 -40 16 -34 L6 -6 L34 -16 Q40 0 34 16 L6 6 L16 34 Q0 40 -16 34 L-6 6 L-34 16 Q-40 0 -34 -16 Z"/>
+      <ellipse cx="188" cy="206" rx="13" ry="9"/>
+      <path d="M158 205 C170 196 206 196 218 205 C214 228 200 240 200 252 L176 252 C176 240 162 228 158 205 Z"/>
+      <ellipse cx="188" cy="258" rx="24" ry="7"/>
+      <ellipse cx="188" cy="270" rx="19" ry="6"/>
+      <path d="M176 268 C176 310 172 358 163 400 L213 400 C204 358 200 310 200 268 Z"/>
+      <path d="M163 396 C150 410 143 420 141 432 L235 432 C233 420 226 410 213 396 Z"/>
+      <ellipse cx="188" cy="438" rx="49" ry="9"/>
+      <rect x="142" y="446" width="92" height="14" rx="5"/>
+      <rect x="134" y="462" width="108" height="16" rx="6"/>
+      <rect x="130" y="478" width="116" height="14" rx="5"/>
+    </g>
+    <!-- Queen: orb, zigzag coronet, collar rings, tapered stem, skirt, stacked base -->
+    <g id="ncQueen">
+      <circle cx="326" cy="212" r="9"/>
+      <path d="M292 240 L292 220 L303 233 L315 213 L326 229 L337 213 L349 233 L360 220 L360 240 C356 262 342 272 338 284 L314 284 C310 272 296 262 292 240 Z"/>
+      <ellipse cx="326" cy="290" rx="23" ry="7"/>
+      <ellipse cx="326" cy="302" rx="18" ry="6"/>
+      <path d="M315 298 C315 330 311 366 303 404 L349 404 C341 366 337 330 337 298 Z"/>
+      <path d="M303 400 C291 414 284 424 282 436 L370 436 C368 424 361 414 349 400 Z"/>
+      <ellipse cx="326" cy="442" rx="46" ry="9"/>
+      <rect x="284" y="450" width="84" height="14" rx="5"/>
+      <rect x="276" y="466" width="100" height="14" rx="6"/>
+      <rect x="272" y="480" width="108" height="12" rx="5"/>
+    </g>
   </defs>
-  <rect x="2" y="2" width="60" height="60" rx="0" fill="url(#dcPlate)" stroke="#3692e7" stroke-opacity="0.6" stroke-width="2"/>
-  <!-- Geometric knight, facing left -->
-  <path
-    d="M40.5 52H17.5c0-3.4 1.3-5.6 3.6-7.4 5.2-4 8.4-8.3 9.1-13.7l-3.7 2.9c-1.6 1.3-3.9 1-5-.6-.9-1.3-.8-3 .2-4.3l4.6-5.7c1.5-1.9 3.4-3.5 5.6-4.7l-1.2-3.1c-.5-1.2.1-2.6 1.3-3l1.4-.5c.9-.3 1.9 0 2.5.8l1.7 2.2c5.6.7 9.9 5.5 9.9 11.2V46c0 3.3 1 5 3 6Z"
-    fill="url(#dcKnight)"/>
-  <circle cx="33.5" cy="22.5" r="1.4" fill="#161512"/>
+
+  <!-- Diamond board -->
+  <g transform="rotate(45 256 205)">
+    <rect x="116" y="65" width="280" height="280" fill="url(#ncChecker)"/>
+  </g>
+
+  <!-- Hand-painted "nc" -->
+  <g fill="none" stroke-linecap="round" stroke-width="21">
+    <path stroke="#9a989b" d="M204 90 L204 152 M204 114 C206 96 236 90 238 112 L238 152"/>
+    <path stroke="#7cb6d9" d="M298 102 C276 88 256 106 258 126 C260 148 284 156 300 142"/>
+  </g>
+
+  <!-- Pieces: white outline pass, then solid fill pass -->
+  <use href="#ncKing" fill="#fff" stroke="#fff" stroke-width="16" stroke-linejoin="round" stroke-linecap="round"/>
+  <use href="#ncQueen" fill="#fff" stroke="#fff" stroke-width="16" stroke-linejoin="round" stroke-linecap="round"/>
+  <use href="#ncKing" fill="#0c0c0f"/>
+  <use href="#ncQueen" fill="#0c0c0f"/>
+
+  <!-- Piece values: the king's I and the nerfed queen's VIII -->
+  <g font-family="Georgia, 'Times New Roman', serif" font-weight="bold" text-anchor="middle">
+    <text x="188" y="334" font-size="26" fill="#8fae94">I</text>
+    <text x="326" y="334" font-size="19" fill="#e14b2e" letter-spacing="0.5">VIII</text>
+  </g>
 </svg>
