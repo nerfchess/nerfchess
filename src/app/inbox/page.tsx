@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { MailPlus } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
+import { EmptyState } from "@/components/EmptyState";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { PlayerSearch } from "@/components/PlayerSearch";
 import { AccountUser, fetchMe } from "@/lib/authClient";
@@ -74,9 +76,13 @@ export default function InboxPage() {
             {!conversations ? (
               <p className="mt-6 text-sm text-parchment-400">Loading conversations…</p>
             ) : conversations.length === 0 ? (
-              <p className="mt-6 text-sm text-parchment-400">
-                No conversations yet. Search for a player above to start one.
-              </p>
+              <EmptyState
+                className="mt-6"
+                icon={MailPlus}
+                title="No conversations yet"
+                body="Messages you send and receive land here. Find a player above, open their profile, and say hello."
+                action={{ href: "/community", label: "Browse players" }}
+              />
             ) : (
               <ul className="mt-6 plate divide-y divide-white/5">
                 {conversations.map((c) => (
