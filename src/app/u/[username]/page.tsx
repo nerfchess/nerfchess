@@ -213,7 +213,7 @@ export default function ProfilePage() {
                           {r.rd > 150 && <span className="text-parchment-400">?</span>}
                         </>
                       ) : (
-                        <span className="text-parchment-500">—</span>
+                        <span className="text-parchment-500">-</span>
                       )}
                     </div>
                     <div className="mt-0.5 font-mono text-[10px] text-parchment-400">

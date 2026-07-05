@@ -11,7 +11,22 @@ export async function GET(request: Request) {
   const { db } = guard;
 
   const q = (new URL(request.url).searchParams.get("q") ?? "").trim().toLowerCase();
-  if (!q) return NextResponse.json({ users: [], history: [], reports: [] });
+  if (!q) {
+    // Default view: the most recently registered real members, so the panel
+    // opens on a browsable roster instead of a blank box. Excludes seed
+    // leaderboard bots and transient guest accounts.
+    const recent = await db
+      .prepare(
+        `SELECT id, username, role, rating, games, created_at, muted_until, banned_until
+         FROM users
+         WHERE id NOT LIKE 'seed\\_%' ESCAPE '\\'
+           AND password_hash <> 'unusable'
+           AND is_guest = 0
+         ORDER BY created_at DESC LIMIT 30`,
+      )
+      .all();
+    return NextResponse.json({ users: recent.results, history: [], reports: [] });
+  }
 
   // Exclude the seeded leaderboard bots (id LIKE 'seed_%' AND/OR
   // password_hash = 'unusable' per migrations/0014_seed_leaderboard.sql).

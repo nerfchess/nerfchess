@@ -90,3 +90,19 @@ Tooling / process:
 
 Notes:
 - Anything visual is typecheck-clean but needs a preview-deploy eyeball; the game board cannot be run in the build environment.
+
+---
+
+## 2026-07-05 night ET (UI warmth pass, PR conflict fixes, moderator controls)
+
+UI / design:
+- PR #194 approachability/warmth pass, grounded in a fresh multi-agent research sweep (Lichess, chess.com, top UI, the AI-generated-look tells, verified brand hexes). Warm the neutrals and structure, never the single accent: warm text ramp (--paper + tailwind parchment), ink-ladder elevation (--surface-panel/raise/hover) for menus/modals/hover rows, warm hover-reactive hairline (--edge/--edge-strong), governed --pos/--warm status pair reusing the mode-seam hues, motion vocabulary (--ease-*/--dur-*), breathing hero aura (opacity-only, gated), .tabular/.press/.hover-lift/.stagger-in utilities. GameOver victory beat recolored to the Nerf->Buff seam with a warm scrim and a rating count-up. Shared warm EmptyState (history + inbox), dismissible first-run welcome, and an anti-slop guardrail in docs/DESIGN.md. tsc + next build green. OPEN.
+- Merged current master into PR #194 and resolved the conflicts (page.tsx: kept master's clickable example cards, added the staggered entrance; history: kept the new EmptyState, adopted /play for Play vs Bot).
+
+Server / moderation:
+- Resolved PR #192 against current master (bounded-GC preserved; master's house-tune changes coexist in disjoint regions); tsc + server:build clean; pushed.
+- Moderator house-bots on/off toggle. New app_settings key/value table (migration 0016) flipped by mods via a guarded POST /api/mod/house; the game-server DO reads house_enabled (cached ~15s) in place of the HOUSE_ENABLED constant, which stays a hard code-level kill switch. A flip takes effect within a few seconds without a redeploy: bot seeks clear and any bot game winds down. buildVersion -> house-toggle-1.
+- Mod Players tab now opens on a default roster (the most recent non-guest members) instead of a blank box, and still searches on input.
+
+Notes:
+- The warmth changes are typecheck/build-clean but want a preview-deploy eyeball; the board and the Durable Object can't fully run in the build environment.

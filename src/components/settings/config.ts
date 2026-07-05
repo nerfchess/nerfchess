@@ -64,7 +64,7 @@ export const SECTIONS: SectionConfig[] = [
       {
         id: "confirmMove",
         label: "Move confirmation",
-        hint: "Require a confirm tap before each move is sent — for slower time controls",
+        hint: "Require a confirm tap before each move is sent, for slower time controls",
         control: { kind: "toggle", setting: "confirmMove" },
       },
       {
