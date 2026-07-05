@@ -318,6 +318,23 @@ const ADDITIVE_COLUMNS: string[] = [
        WHERE category IN ('ultrabullet','bullet','blitz','rapid') AND games > 0
        GROUP BY user_id
      ) s ON s.user_id = u.id`,
+  // Richer tournament settings so an event carries its game mode, time control,
+  // and arena length rather than only a name and format. Live phase
+  // (upcoming/ongoing/finished) is derived from starts_at + duration_min at read
+  // time, so no status scheduler is needed. Mirrors
+  // migrations/0015_tournament_details.sql.
+  `ALTER TABLE tournaments ADD COLUMN mode TEXT NOT NULL DEFAULT 'nerf'`,
+  `ALTER TABLE tournaments ADD COLUMN rated INTEGER NOT NULL DEFAULT 0`,
+  `ALTER TABLE tournaments ADD COLUMN clock_time_sec INTEGER NOT NULL DEFAULT 180`,
+  `ALTER TABLE tournaments ADD COLUMN clock_increment_sec INTEGER NOT NULL DEFAULT 0`,
+  `ALTER TABLE tournaments ADD COLUMN duration_min INTEGER NOT NULL DEFAULT 60`,
+  // Per-entrant standings. Scores are written by the pairing/scoring engine
+  // (not yet built for this first version) and default to zero, so the
+  // standings table renders real entrants seeded by rating until then.
+  `ALTER TABLE tournament_entries ADD COLUMN score INTEGER NOT NULL DEFAULT 0`,
+  `ALTER TABLE tournament_entries ADD COLUMN games_played INTEGER NOT NULL DEFAULT 0`,
+  `ALTER TABLE tournament_entries ADD COLUMN streak INTEGER NOT NULL DEFAULT 0`,
+  `ALTER TABLE tournament_entries ADD COLUMN performance INTEGER`,
 ];
 
 export async function ensureSchema(db: D1Database): Promise<void> {
