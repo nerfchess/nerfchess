@@ -268,6 +268,12 @@ const houseNextFillerKey = "hp:nextFillerAt";
 // Slow heartbeat while at least one human socket is connected; with nobody
 // online there is no heartbeat and the DO goes idle between match deadlines.
 const houseHeartbeatMs = 20 * 1000;
+// The full-table maintenance sweep (GC of expired games, flag enforcement,
+// live-index rebuild) is the heaviest thing the alarm does. Bot moves wake the
+// alarm about once a second, and running the full sweep every time is what tips
+// the single-threaded DO past its CPU limit. Run it at most this often; the
+// cheap indexed reschedule keeps the alarm chain alive in between.
+const maintenanceMinIntervalMs = 8 * 1000;
 // Queue presence: keep 2-3 personas seeking across the two pools.
 const houseSeekMin = 2;
 const houseSeekMax = 3;
@@ -279,8 +285,12 @@ const houseSeekTtlMs = 8 * 60 * 1000;
 // optics and are pure background engine work on the single-threaded DO. One
 // filler still keeps the lobby looking alive while halving that background
 // load. Bump back to 2 if the lobby looks too quiet.
-const houseVsHouseCap = 1;
-const houseTotalGamesCap = 6;
+// Emergency CPU relief: no pure bot-vs-bot filler games (they exist only for
+// lobby optics and are pure engine work on the single-threaded DO), and a low
+// total house-game cap. Fewer house games means the per-move alarm fires far
+// less often, which is what was driving the Durable Object past its CPU limit.
+const houseVsHouseCap = 0;
+const houseTotalGamesCap = 3;
 // How long a queued human waits for a human opponent before a house player
 // picks them up.
 const houseHumanPickupMs = 4500;
@@ -303,7 +313,10 @@ type HouseSeekEntry = {
 // Bumped whenever the worker changes in a way we want to confirm shipped.
 // Surfaced at GET /healthz so a deploy can be verified without Cloudflare
 // dashboard access (compare the value there against this one).
-const buildVersion = "house-players-1";
+// Bump this on every deploy so /healthz identifies the running build. When it
+// is a static string that never changes, nobody can tell what code is live,
+// which is exactly how a shipped fix looks unfixed. Keep it short.
+const buildVersion = "server-cpu-fix-1";
 // Lichess-style start-of-game grace: a player's clock only starts charging 10
 // seconds into their first move, so nobody loses time to a slow page load.
 const firstMoveGraceMs = 10 * 1000;
@@ -653,10 +666,26 @@ export class GameServer extends DurableObject<Env> {
       this.houseTickError = err instanceof Error ? err.message : String(err);
       console.error("houseTick failed", err);
     }
-    try {
-      await this.maintenanceAll();
-    } catch (err) {
-      console.error("maintenanceAll failed", err);
+    // The full maintenance sweep is the CPU-heavy part (a whole-table scan plus
+    // per-match work). Bot moves wake this alarm about once a second; running
+    // the sweep every time is what pushed the DO past its CPU limit. Throttle
+    // it. On the in-between ticks do only the cheap indexed reschedule so the
+    // alarm chain stays alive and live house games keep moving; flag/deadline
+    // enforcement and GC still run on the next sweep, at most a few seconds out.
+    const now = Date.now();
+    if (now - this.lastMaintenanceAt >= maintenanceMinIntervalMs) {
+      this.lastMaintenanceAt = now;
+      try {
+        await this.maintenanceAll();
+      } catch (err) {
+        console.error("maintenanceAll failed", err);
+      }
+    } else {
+      try {
+        await this.scheduleNextAlarm(await this.loadLiveMatches());
+      } catch (err) {
+        console.error("alarm reschedule failed", err);
+      }
     }
   }
 
@@ -730,6 +759,10 @@ export class GameServer extends DurableObject<Env> {
   // rebuilt from a full scan every GC sweep, so it self-heals after an isolate
   // restart or any missed update.
   private liveMatchIndex: Set<string> | null = null;
+
+  // When the last full maintenance sweep ran. Gates the heavy sweep off the
+  // once-a-second bot-move alarm (see maintenanceMinIntervalMs).
+  private lastMaintenanceAt = 0;
 
   // Keep the index in step with a write: a finished game leaves the live set,
   // any other save is a live game. A no-op until the index has been built.
