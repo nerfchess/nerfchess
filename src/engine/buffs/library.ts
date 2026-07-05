@@ -369,6 +369,8 @@ const stepDest = (_api: BuffApi, from: Square) =>
     return inBoard(f, r) ? [SQ(f, r)] : [];
   });
 const anyDest = () => Array.from({ length: 64 }, (_, i) => i);
+const anyDestPawnSafe = (api: BuffApi, from: Square) =>
+  api.board.pieces[from]?.type === "p" ? anyDest().filter(pawnRankOk) : anyDest();
 const backRankDest = (api: BuffApi) => {
   const r = api.me === "w" ? 0 : 7;
   return Array.from({ length: 8 }, (_, f) => SQ(f, r));
@@ -466,7 +468,22 @@ const TIER1: Buff[] = [
       }),
     ),
   ),
-  def({ id: "scout", name: "Scout", description: "Reveal one random buff your opponent holds.", tier: 1, category: "info" }),
+  def(
+    { id: "scout", name: "Scout", description: "Reveal one random buff your opponent holds.", tier: 1, category: "info" },
+    {
+      kind: "passive",
+      init: (inst, api) => {
+        const options = api.theirs.buffs.filter((b) => !b.spent && !b.nullified);
+        if (options.length) inst.state.seen = options[api.rng.int(options.length)].id;
+      },
+      status: (inst) => {
+        const seen = inst.state.seen as string | undefined;
+        return seen
+          ? `opponent holds ${BUFF_BY_ID[seen]?.name ?? seen}`
+          : "opponent held no buffs";
+      },
+    },
+  ),
   def(
     { id: "steady_hand", name: "Steady Hand", description: "Enemy knights cannot move to squares that attack your king for 3 turns.", tier: 1, category: "protection" },
     timedOppFilter(3, (moves, _inst, api) => {
@@ -885,7 +902,11 @@ const TIER2: Buff[] = [
       mySquares(api.board, api.me, "n").flatMap((sq) => slideMoves(api.board, sq, ALL_DIRS, inst.id, 1)),
     ),
   ),
-  def({ id: "anchor", name: "Anchor", description: "One piece cannot be pushed or swapped by enemy buffs, for the game.", tier: 2, category: "protection" }),
+  def(
+    { id: "anchor", name: "Anchor", description: "One piece cannot be pushed or swapped by enemy buffs, for the game.", tier: 2, category: "protection" },
+    // The engine's relocate hook refuses enemy-buff pushes of the bound piece.
+    bindPiece("Choose the piece to anchor", bindCandidates(), {}),
+  ),
   def({ id: "shadow_step", name: "Shadow Step", description: "One piece moves without revealing its destination until next turn.", tier: 2, category: "movement" }),
   def(
     { id: "vault", name: "Vault", description: "One rook jumps its own pawn to the far side, once.", tier: 2, category: "movement" },
@@ -1646,7 +1667,12 @@ const TIER4: Buff[] = [
       mySquares(api.board, api.me, "k").flatMap((sq) => slideMoves(api.board, sq, ALL_DIRS, inst.id)),
     ),
   ),
-  def({ id: "suppress", name: "Suppress", description: "Your opponent cannot draft manipulation buffs next draft.", tier: 4, category: "draft" }),
+  def(
+    { id: "suppress", name: "Suppress", description: "Your opponent cannot draft manipulation buffs next draft.", tier: 4, category: "draft" },
+    instant((_inst, api) => {
+      api.theirs.flags.noDraftCards = (api.theirs.flags.noDraftCards ?? 0) + 1;
+    }),
+  ),
   def(
     { id: "blink_army", name: "Blink Army", description: "Teleport two pawns forward two squares each if empty, once.", tier: 4, category: "movement" },
     activated(
@@ -2211,6 +2237,39 @@ const TIER6: Buff[] = [
     voidSquares(1, 3),
   ),
   def(
+    { id: "lightning_strike", name: "Lightning Strike", description: "Call lightning down on up to three enemy knights, bishops, or pawns, removing them from the board.", tier: 6, category: "attack" },
+    activated(
+      (_inst, api, picks) => {
+        if (picks.length >= 3) return null;
+        const squares = mySquares(api.board, api.opp).filter((sq) => {
+          const t = api.board.pieces[sq]!.type;
+          return (t === "n" || t === "b" || t === "p") && !picks.some((k) => k.square === sq);
+        });
+        if (!squares.length && picks.length > 0) return null;
+        return {
+          kind: "square",
+          label: `Choose a piece to strike (${picks.length + 1}/3)`,
+          squares,
+        };
+      },
+      (_inst, api, picks) => {
+        const struck: Square[] = [];
+        for (const k of picks) {
+          if (k.square == null) continue;
+          const p = api.board.pieces[k.square];
+          if (p && p.color === api.opp && (p.type === "n" || p.type === "b" || p.type === "p")) {
+            api.removePiece(k.square);
+            struck.push(k.square);
+          }
+        }
+        // Visual only: the struck squares flash until the opponent replies.
+        if (struck.length) {
+          addEffect(api, { kind: "strike", squares: struck, owner: api.me, turns: 1 });
+        }
+      },
+    ),
+  ),
+  def(
     { id: "total_recall", name: "Total Recall", description: "Pull each of your pieces past rank 4 back to your third rank where empty, once.", tier: 6, category: "movement" },
     activatedSimple((_inst, api) => {
       const third = api.me === "w" ? 2 : 5;
@@ -2540,8 +2599,8 @@ const TIER8: Buff[] = [
     }),
   ),
   def(
-    { id: "reality_warp", name: "Reality Warp", description: "Teleport any six of your pieces anywhere you like, once.", tier: 8, category: "movement" },
-    relocateMany(6, anyDest),
+    { id: "reality_warp", name: "Reality Warp", description: "Teleport any six of your pieces anywhere you like, once. Pawns stay off the first and last ranks.", tier: 8, category: "movement" },
+    relocateMany(6, anyDestPawnSafe),
   ),
   def(
     { id: "sundering", name: "Sundering", description: "Three files become impassable to enemies for the rest of the game.", tier: 8, category: "protection" },
@@ -2683,8 +2742,8 @@ const TIER8: Buff[] = [
     }),
   ),
   def(
-    { id: "total_warp", name: "Total Warp", description: "Teleport your whole army except the king anywhere you like, once.", tier: 8, category: "movement" },
-    relocateMany(15, anyDest),
+    { id: "total_warp", name: "Total Warp", description: "Teleport your whole army except the king anywhere you like, once. Pawns stay off the first and last ranks.", tier: 8, category: "movement" },
+    relocateMany(15, anyDestPawnSafe),
   ),
   def(
     { id: "extinction", name: "Extinction", description: "Remove every enemy minor and pawn piece from the board.", tier: 8, category: "attack" },

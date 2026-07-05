@@ -196,8 +196,19 @@ export function makeBuffApi(game: NerfGame, me: Color): BuffApi {
       game.board.pieces[sq] = null;
     },
     relocate: (from, to) => {
-      bs.historyDiverged = true;
       const p = game.board.pieces[from];
+      // Anchor: an enemy piece bound by its owner's Anchor buff cannot be
+      // pushed or swapped by my buffs (its own moves are unaffected).
+      if (
+        p &&
+        p.color !== me &&
+        bs.players[p.color].buffs.some(
+          (b) => b.id === "anchor" && !b.spent && !b.nullified && b.state.sq === from,
+        )
+      ) {
+        return;
+      }
+      bs.historyDiverged = true;
       game.board.pieces[from] = null;
       game.board.pieces[to] = p;
     },
@@ -724,6 +735,18 @@ export function aiActivateBuffs(game: NerfGame, color: Color): boolean {
     const inst = ps.buffs[i];
     const def = BUFF_BY_ID[inst.id];
     if (!def?.implemented || def.kind !== "activated" || inst.spent || inst.nullified) continue;
+    // Reusable cards (spendOnUse: false) stay activatable forever; once one
+    // is online (bound to a piece or zone, or running) the bot must not burn
+    // its turns re-activating it.
+    if (
+      def.spendOnUse === false &&
+      (inst.state.sq != null ||
+        inst.state.sqs != null ||
+        inst.state.squares != null ||
+        inst.state.active === true)
+    ) {
+      continue;
+    }
     const collected = aiCollectPicks(game, color, i);
     if (!collected) continue;
     const hitsEnemy = collected.picks.some((p) => {

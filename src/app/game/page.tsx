@@ -868,7 +868,7 @@ function GamePage() {
   // shielded (sanctuary) squares, and barred squares for both sides. Squares
   // barred against me use the nerf's red "can't go there" wash; squares my
   // buffs bar against the opponent get their own tint.
-  const zone = { frozen: [] as number[], shielded: [] as number[], ward: [] as number[], barred: [] as number[] };
+  const zone = { frozen: [] as number[], shielded: [] as number[], ward: [] as number[], barred: [] as number[], strike: [] as number[] };
   if (game.buffs) {
     for (const e of game.buffs.effects) {
       if (e.turns != null && e.turns <= 0) continue;
@@ -883,6 +883,8 @@ function GamePage() {
         }
       } else if (e.kind === "barred") {
         (e.against === myColor ? zone.barred : zone.ward).push(...e.squares);
+      } else if (e.kind === "strike") {
+        zone.strike.push(...e.squares);
       }
     }
   }
@@ -1272,6 +1274,7 @@ function GamePage() {
                           frozenSquares: zone.frozen,
                           shieldedSquares: zone.shielded,
                           wardSquares: zone.ward,
+                          strikeSquares: zone.strike,
                         }
                   }
                   lastMove={lastMoveForDisplay}

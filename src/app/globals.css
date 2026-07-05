@@ -359,6 +359,26 @@ html[data-piece-source="lichess"] .piece-asset {
 }
 .animate-reveal { animation: nerf-reveal 0.55s cubic-bezier(0.2, 0.8, 0.2, 1); }
 
+/* Lightning Strike: a one-shot flash on each struck square. The effect record
+   lives until the opponent replies, but the overlay animates to transparent
+   on mount so the visual itself stays brief. */
+@keyframes strike-flash {
+  0% { opacity: 0; }
+  12% { opacity: 1; }
+  35% { opacity: 0.8; }
+  100% { opacity: 0; }
+}
+.sq-strike {
+  opacity: 0;
+  background: radial-gradient(
+    circle at 50% 35%,
+    rgba(255, 244, 200, 0.95),
+    rgba(240, 210, 120, 0.5) 45%,
+    transparent 72%
+  );
+  animation: strike-flash 0.9s ease-out forwards;
+}
+
 .no-tap-highlight { -webkit-tap-highlight-color: transparent; }
 
 main, footer { position: relative; z-index: 2; }
@@ -377,7 +397,8 @@ nav, header { position: relative; z-index: 30; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .animate-rise, .animate-seal, .animate-sigil, .animate-flicker, .animate-reveal, .animate-bob {
+  .animate-rise, .animate-seal, .animate-sigil, .animate-flicker, .animate-reveal, .animate-bob,
+  .sq-strike {
     animation: none !important;
   }
   .dc-orbit-ring.spin, .dc-orbit-ring.spin-r,

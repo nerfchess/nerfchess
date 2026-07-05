@@ -200,12 +200,19 @@ export function buildSpectatorDraftGame(
   return replayed;
 }
 
-export type DraftZones = { frozen: number[]; shielded: number[]; ward: number[]; barred: number[] };
+export type DraftZones = {
+  frozen: number[];
+  shielded: number[];
+  ward: number[];
+  barred: number[];
+  strike: number[];
+};
 
 /** Board paint for the public zone effects, matching the bot game's wiring:
- * frozen pieces, sanctuary squares, and barred squares for each side. */
+ * frozen pieces, sanctuary squares, barred squares for each side, and the
+ * lightning-struck squares' brief flash. */
 export function draftZones(game: NerfGame, myColor: Color): DraftZones {
-  const zones: DraftZones = { frozen: [], shielded: [], ward: [], barred: [] };
+  const zones: DraftZones = { frozen: [], shielded: [], ward: [], barred: [], strike: [] };
   if (!game.buffs) return zones;
   for (const e of game.buffs.effects) {
     if (e.turns != null && e.turns <= 0) continue;
@@ -220,6 +227,8 @@ export function draftZones(game: NerfGame, myColor: Color): DraftZones {
       }
     } else if (e.kind === "barred") {
       (e.against === myColor ? zones.barred : zones.ward).push(...e.squares);
+    } else if (e.kind === "strike") {
+      zones.strike.push(...e.squares);
     }
   }
   return zones;

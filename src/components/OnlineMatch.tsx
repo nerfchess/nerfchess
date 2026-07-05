@@ -1543,6 +1543,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                                 frozenSquares: zone.frozen,
                                 shieldedSquares: zone.shielded,
                                 wardSquares: zone.ward,
+                                strikeSquares: zone.strike,
                               }
                             : {}),
                         }

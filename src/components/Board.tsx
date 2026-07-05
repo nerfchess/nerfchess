@@ -19,6 +19,8 @@ interface Visual {
   shieldedSquares?: number[];
   /** Squares your buffs bar the opponent from entering. */
   wardSquares?: number[];
+  /** Squares just hit by Lightning Strike: a brief one-shot flash. */
+  strikeSquares?: number[];
 }
 
 export interface QueuedPremove {
@@ -375,6 +377,7 @@ export function Board({
   const frozenSquares = useMemo(() => new Set(visual?.frozenSquares ?? []), [visual?.frozenSquares]);
   const shieldedSquares = useMemo(() => new Set(visual?.shieldedSquares ?? []), [visual?.shieldedSquares]);
   const wardSquares = useMemo(() => new Set(visual?.wardSquares ?? []), [visual?.wardSquares]);
+  const strikeSquares = useMemo(() => new Set(visual?.strikeSquares ?? []), [visual?.strikeSquares]);
   const highlightSquares = useMemo(
     () => new Set(visual?.highlightSquares ?? []),
     [visual?.highlightSquares],
@@ -718,6 +721,13 @@ export function Board({
                 )}
                 {shieldedSquares.has(sq) && (
                   <div className="absolute inset-0 pointer-events-none ring-2 ring-inset ring-verdigris-glow/80 shadow-[inset_0_0_18px_-4px_rgba(123,181,47,0.6)]" />
+                )}
+                {strikeSquares.has(sq) && (
+                  <div className="absolute inset-0 pointer-events-none z-10 sq-strike">
+                    <span className="absolute inset-0 flex items-center justify-center text-2xl drop-shadow">
+                      ⚡
+                    </span>
+                  </div>
                 )}
                 {rightClickMark && (
                   <div className={`absolute inset-0 pointer-events-none sq-rmb-mark sq-rmb-mark-${rightClickMark}`} />
