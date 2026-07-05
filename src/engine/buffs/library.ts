@@ -171,15 +171,17 @@ function promotePawns(count: number, minRelRank: number, to: PieceType): Mech {
   );
 }
 
-/** Instant: auto-revive the given piece types (as many as revivable) onto
- * empty squares in my half, filling from my back rank outward. */
-function autoRevive(specs: PieceType[]): Mech {
+/** Instant: auto-revive one piece per spec entry onto empty squares in my
+ * half, filling from my back rank outward. An entry may list alternative
+ * types ("one minor piece"): the first revivable type in the list is taken. */
+function autoRevive(specs: (PieceType | PieceType[])[]): Mech {
   return instant((_inst, api) => {
     const spots = emptySquares(api.board, (sq) => inHalf(api.me, sq)).sort(
       (a, b) => relRank(api.me, a) - relRank(api.me, b),
     );
-    for (const type of specs) {
-      if (revivable(api, type) <= 0) continue;
+    for (const spec of specs) {
+      const type = (Array.isArray(spec) ? spec : [spec]).find((t) => revivable(api, t) > 0);
+      if (type == null) continue;
       const at = spots.findIndex((sq) => type !== "p" || pawnRankOk(sq));
       if (at < 0) return;
       api.place(spots.splice(at, 1)[0], type, api.me);
@@ -203,7 +205,10 @@ function revivePawnsToStart(n: number): Mech {
   });
 }
 
-/** Activated: pick `pairs` pairs of my pieces and swap each pair. */
+/** Activated: swap up to `pairs` pairs of my pieces. Every completed pair is
+ * a full effect on its own, so once at least one pair is picked the next
+ * pair's first step is finishable: the player may stop early instead of
+ * being forced through all `pairs * 2` picks. */
 function swapOwnPieces(types?: PieceType[], pairs = 1): Mech {
   const candidates = (api: BuffApi) =>
     mySquares(api.board, api.me).filter(
@@ -222,6 +227,7 @@ function swapOwnPieces(types?: PieceType[], pairs = 1): Mech {
                   : "Choose the first piece"
                 : "Choose the piece to swap with",
             squares: candidates(api).filter((sq) => !picks.some((k) => k.square === sq)),
+            ...(picks.length > 0 && picks.length % 2 === 0 ? { finishable: true } : {}),
           },
     (_inst, api, picks) => {
       for (let i = 0; i + 1 < picks.length; i += 2) {
@@ -304,6 +310,13 @@ function onlinePermanent(b: BuffInstance): boolean {
   if (d.kind === "passive") return b.state.turns == null && b.state.charges == null;
   return false;
 }
+
+/** Steal / copy rule: locked-in upgrades (a piece-bound card already attached
+ * to a piece, or a permanent passive engine) stay with their owner. Their
+ * board effects and bound squares are owner-relative, so a transfer would
+ * strand the effect on the victim while handing the thief a dead card. Same
+ * exclusion broad nullify already applies. */
+const notLockedIn = (b: BuffInstance) => !onlinePermanent(b);
 
 /** Broad nullify: cancels unused activated cards and temporary passives.
  * Online permanents resist; only targeted counters like Sever remove those. */
@@ -1144,7 +1157,7 @@ const TIER3: Buff[] = [
     }),
   ),
   def(
-    { id: "resurrect", name: "Resurrect", description: "Bring back your most recently captured piece to your half, once.", tier: 3, category: "pieces" },
+    { id: "resurrect", name: "Resurrect", description: "Bring back your strongest captured piece to your half, once.", tier: 3, category: "pieces" },
     reviveOne(["q", "r", "b", "n", "p"], anyHalfZone),
   ),
   def(
@@ -1497,8 +1510,8 @@ const TIER4: Buff[] = [
     }),
   ),
   def(
-    { id: "buff_thief_minor", name: "Buff Thief (Minor)", description: "Steal one tier 1 or 2 buff from your opponent.", tier: 4, category: "draft" },
-    stealBuffs(1, 2),
+    { id: "buff_thief_minor", name: "Buff Thief (Minor)", description: "Steal one tier 1 or 2 buff from your opponent. Locked-in upgrades stay put.", tier: 4, category: "draft" },
+    stealBuffs(1, 2, notLockedIn),
   ),
   def(
     { id: "chain_nullify", name: "Chain Nullify", description: "Cancel the next buff your opponent drafts before use.", tier: 4, category: "draft" },
@@ -1507,10 +1520,12 @@ const TIER4: Buff[] = [
     }),
   ),
   def(
-    { id: "mirror", name: "Mirror", description: "Copy one random unspent buff your opponent holds.", tier: 4, category: "draft" },
+    { id: "mirror", name: "Mirror", description: "Copy one random unspent buff your opponent holds. Locked-in upgrades cannot be copied.", tier: 4, category: "draft" },
     // Opponent buffs are hidden, so the copy is random rather than chosen.
+    // Locked-in upgrades are excluded: their state points at the owner's
+    // piece, so a copy would arrive bound to an enemy square.
     activatedSimple((_inst, api) => {
-      const options = api.theirs.buffs.filter((b) => !b.spent && !b.nullified);
+      const options = api.theirs.buffs.filter((b) => !b.spent && !b.nullified && notLockedIn(b));
       if (options.length === 0) return;
       const src = options[api.rng.int(options.length)];
       api.mine.buffs.push({ id: src.id, tier: src.tier, state: JSON.parse(JSON.stringify(src.state)) });
@@ -1812,8 +1827,8 @@ const TIER5: Buff[] = [
     removeEnemies(1, ["p", "n", "b", "r"]),
   ),
   def(
-    { id: "buff_thief", name: "Buff Thief", description: "Steal one active buff of any tier from your opponent.", tier: 5, category: "draft" },
-    stealBuffs(1),
+    { id: "buff_thief", name: "Buff Thief", description: "Steal one active buff of any tier from your opponent. Locked-in upgrades stay put.", tier: 5, category: "draft" },
+    stealBuffs(1, undefined, notLockedIn),
   ),
   def(
     { id: "promotion_storm", name: "Promotion Storm", description: "All pawns on rank 5 or beyond promote to knights.", tier: 5, category: "pieces" },
@@ -2141,8 +2156,8 @@ const TIER6: Buff[] = [
     extraMovesNow(2),
   ),
   def(
-    { id: "buff_siphon", name: "Buff Siphon", description: "Steal two active buffs from your opponent.", tier: 6, category: "draft" },
-    stealBuffs(2),
+    { id: "buff_siphon", name: "Buff Siphon", description: "Steal two active buffs from your opponent. Locked-in upgrades stay put.", tier: 6, category: "draft" },
+    stealBuffs(2, undefined, notLockedIn),
   ),
   def(
     { id: "detonation_field", name: "Detonation Field", description: "Your next three captures each explode adjacent enemy pieces.", tier: 6, category: "attack" },
@@ -2410,8 +2425,8 @@ const TIER7: Buff[] = [
     extraMovesNow(3),
   ),
   def(
-    { id: "buff_plunder", name: "Buff Plunder", description: "Steal three active buffs from your opponent.", tier: 7, category: "draft" },
-    stealBuffs(3),
+    { id: "buff_plunder", name: "Buff Plunder", description: "Steal three active buffs from your opponent. Locked-in upgrades stay put.", tier: 7, category: "draft" },
+    stealBuffs(3, undefined, notLockedIn),
   ),
   def(
     { id: "meteor", name: "Meteor", description: "Destroy every enemy piece on one rank and one file that cross at a square you pick.", tier: 7, category: "attack" },
@@ -2434,7 +2449,7 @@ const TIER7: Buff[] = [
   ),
   def(
     { id: "grand_resurrection", name: "Grand Resurrection", description: "Revive your queen and one minor piece to your half.", tier: 7, category: "pieces" },
-    autoRevive(["q", "n", "b"]),
+    autoRevive(["q", ["n", "b"]]),
   ),
   def(
     { id: "world_lock", name: "World Lock", description: "Your opponent cannot draft or use buffs for 3 turns.", tier: 7, category: "draft" },
@@ -2472,7 +2487,7 @@ const TIER7: Buff[] = [
     }),
   ),
   def(
-    { id: "warp_sovereign", name: "Warp Sovereign", description: "Swap any three pairs of your pieces, once.", tier: 7, category: "movement" },
+    { id: "warp_sovereign", name: "Warp Sovereign", description: "Swap up to three pairs of your pieces, once. Stop after any pair.", tier: 7, category: "movement" },
     swapOwnPieces(undefined, 3),
   ),
   def(
@@ -2709,7 +2724,7 @@ const TIER8: Buff[] = [
   ),
   def(
     { id: "full_resurrection", name: "Full Resurrection", description: "Revive your queen, both rooks, and one minor piece to your half.", tier: 8, category: "pieces" },
-    autoRevive(["q", "r", "r", "n", "b"]),
+    autoRevive(["q", "r", "r", ["n", "b"]]),
   ),
   def(
     { id: "world_end", name: "World End", description: "Your opponent cannot move any piece except the king for 2 turns.", tier: 8, category: "tempo" },
