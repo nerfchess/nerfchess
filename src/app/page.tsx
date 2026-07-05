@@ -40,7 +40,7 @@ export default function HomePage() {
     <main className="min-h-screen flex flex-col">
       <SiteHeader />
 
-      <section className="w-full max-w-6xl mx-auto px-5 sm:px-6 pt-2 pb-8 sm:pt-6 grid lg:grid-cols-[minmax(0,1fr)_380px] gap-8 lg:gap-14 items-center">
+      <section className="w-full max-w-7xl mx-auto px-5 sm:px-6 pt-2 pb-8 sm:pt-6 grid lg:grid-cols-[minmax(0,1fr)_380px] gap-8 lg:gap-14 items-center">
         <div className="order-1">
           <HeroTv />
         </div>
@@ -191,7 +191,7 @@ function StatStrip() {
     { value: gamesPlayed === null ? "…" : gamesPlayed.toLocaleString(), label: "games played" },
   ];
   return (
-    <section className="w-full max-w-6xl mx-auto px-5 sm:px-6 py-4">
+    <section className="w-full max-w-7xl mx-auto px-5 sm:px-6 py-4">
       <div className="plate p-5 sm:p-6 grid grid-cols-2 divide-x divide-white/10">
         {stats.map((s) => (
           <div key={s.label} className="px-2 sm:px-4 text-center">
@@ -257,7 +257,7 @@ function HowItWorks() {
     },
   ];
   return (
-    <section className="w-full max-w-6xl mx-auto px-5 sm:px-6 py-8">
+    <section className="w-full max-w-7xl mx-auto px-5 sm:px-6 py-8">
       <div className="rule-ornament mb-6">
         <span className="font-display">How it works</span>
       </div>
@@ -292,7 +292,7 @@ function HowItWorks() {
 function ExampleRules() {
   const rules = exampleRules();
   return (
-    <section className="w-full max-w-6xl mx-auto px-5 sm:px-6 py-8">
+    <section className="w-full max-w-7xl mx-auto px-5 sm:px-6 py-8">
       <div className="flex items-end justify-between gap-4 mb-6">
         <div className="rule-ornament flex-1">
           <span className="font-display">A few of the rules</span>
@@ -341,7 +341,7 @@ function SiteFooter() {
   ];
 
   return (
-    <footer className="max-w-6xl mx-auto w-full px-6 py-8">
+    <footer className="max-w-7xl mx-auto w-full px-6 py-8">
       <nav
         aria-label="Footer"
         className="flex flex-wrap items-center justify-center sm:justify-end gap-y-2 text-xs text-parchment-400"
