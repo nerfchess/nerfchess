@@ -130,7 +130,29 @@ export default function FriendPage() {
     const codeParam = search.get("code")?.trim().toUpperCase();
     if (codeParam) {
       setJoinCode(codeParam);
-      joinWithCode(codeParam);
+      // A refresh mid-game lands here with the challenge code still in the
+      // URL. By then the challenge record is consumed and the joiner seat is
+      // taken, so a fresh join can never succeed; the saved seat token is the
+      // only way back into the game. Resume it, and only fall back to a fresh
+      // join when there is no saved seat for this code or the server refuses
+      // the seat (game gone or archived).
+      const savedForCode = loadSavedFriendSession();
+      if (savedForCode && savedForCode.id === codeParam) {
+        setCode(savedForCode.id);
+        setView("joining");
+        const sess = new MPSession();
+        sessionRef.current = sess;
+        wireSession(sess);
+        sess.resume(savedForCode).catch(() => {
+          if (sessionRef.current !== sess) return;
+          sess.destroy();
+          sessionRef.current = null;
+          clearSavedFriendSession();
+          void joinWithCode(codeParam);
+        });
+      } else {
+        void joinWithCode(codeParam);
+      }
       return;
     }
     // Mode preselected on the play page carries over (?mode=nerf|buff).
