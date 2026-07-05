@@ -578,7 +578,7 @@ function HouseBotsToggle() {
         onClick={toggle}
         disabled={enabled === null || saving}
         aria-pressed={enabled === true}
-        title={enabled === null ? "Loading…" : enabled ? "House bots are on — click to turn off" : "House bots are off — click to turn on"}
+        title={enabled === null ? "Loading…" : enabled ? "House bots are on. Click to turn off." : "House bots are off. Click to turn on."}
         className={
           "press shrink-0 inline-flex items-center gap-2 border px-4 py-2 font-display text-sm font-semibold transition disabled:opacity-60 " +
           (enabled === null

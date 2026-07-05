@@ -38,7 +38,7 @@ export function WelcomeBanner() {
           normal chess with one twist: in{" "}
           <span className="font-semibold text-mode-nerfGlow">Nerf</span> mode you each carry a
           secret handicap; in <span className="font-semibold text-mode-buffGlow">Buff</span>{" "}
-          mode you both draft power-ups as you play. There is no checkmate — you win by
+          mode you both draft power-ups as you play. There is no checkmate: you win by
           capturing the king.
         </p>
         <Link
