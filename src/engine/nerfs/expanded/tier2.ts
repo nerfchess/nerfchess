@@ -46,10 +46,17 @@ export const NERFS_T2: Nerf[] = [
     },
   ),
   N(
-    { id: "knights_abroad", name: "Knights Abroad", description: "Your knights can't move to your own half of the board.", flavor: "The cavalry only feels alive in enemy territory.", icon: "ban" },
+    { id: "knights_abroad", name: "Knights Abroad", description: "Once one of your knights crosses into the enemy half, it can't come back to your own half.", flavor: "The cavalry only feels alive in enemy territory.", icon: "ban" },
     {
       filterMoves: (moves, _state, ctx) =>
-        moves.filter((m) => !(m.piece === "n" && relRank(ctx.me, m.to) <= 4)),
+        moves.filter(
+          (m) =>
+            !(
+              m.piece === "n" &&
+              relRank(ctx.me, m.from) > 4 &&
+              relRank(ctx.me, m.to) <= 4
+            ),
+        ),
     },
   ),
   N(
