@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { PLAYABLE_NERFS } from "@/engine/nerfs/library";
 import { clearSavedAiGame } from "@/lib/gamePersistence";
 import { loadRating } from "@/lib/rating";
 import { AccountChip } from "@/components/AccountChip";
@@ -28,16 +27,10 @@ export default function PlayPage() {
   const router = useRouter();
   const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">("medium");
   const [color, setColor] = useState<"w" | "b" | "random">("random");
-  const [nerfId, setNerfId] = useState<string>("random");
   // Time control in seconds; base = 0 means unlimited (no clock).
   const [baseSec, setBaseSec] = useState<number>(10 * 60);
   const [incrementSec, setIncrementSec] = useState<number>(0);
-  // Bot games are casual by default; rated games update your rating + ladder.
-  const [rated, setRated] = useState<boolean>(false);
-  // Draft is the standard ruleset: nerf draft at the start, buff drafts
-  // every few moves. Classic is the buff-free variant.
-  const [draft, setDraft] = useState<boolean>(true);
-  // Draft only: whether the opponent's draft picks are visible. Hidden is the
+  // Whether the opponent's draft picks are visible. Hidden is the
   // chaotic default; visible makes for a more strategic game.
   const [openPicks, setOpenPicks] = useState<boolean>(false);
   const [rating, setRating] = useState<number | null>(null);
@@ -54,13 +47,13 @@ export default function PlayPage() {
       mode: "ai",
       difficulty,
       color,
-      nerf: nerfId,
+      nerf: "random",
       t: String(baseSec),
       inc: String(incrementSec),
       // Draft games are casual until a separate Draft rating exists.
-      rated: rated && !draft ? "1" : "0",
-      draft: draft ? "1" : "0",
-      picks: draft && openPicks ? "open" : "hidden",
+      rated: "0",
+      draft: "1",
+      picks: openPicks ? "open" : "hidden",
     });
     router.push(`/game?${params.toString()}`);
   };
@@ -93,8 +86,8 @@ export default function PlayPage() {
       <section className="max-w-2xl mx-auto px-6 py-8">
         <h1 className="font-display text-5xl">New game</h1>
         <p className="mt-3 text-parchment-200">
-          Pick how you want to play. Draft your nerf and buffs as the game goes,
-          or switch to Classic for a buff-free game with a random secret rule.
+          Pick how you want to play. Every game is Draft: pick one of two nerfs
+          at the start, then draft a buff every few moves.
         </p>
 
         <div className="mt-6">
@@ -121,48 +114,15 @@ export default function PlayPage() {
 
         <div className="mt-8 plate p-6 sm:p-7 space-y-6">
           <div>
-            <Group label="Mode">
-              <Pill selected={!rated || draft} onClick={() => setRated(false)}>Casual</Pill>
-              <Pill selected={rated && !draft} onClick={() => { if (!draft) setRated(true); }}>Rated</Pill>
+            <Group label="Opponent picks">
+              <Pill selected={!openPicks} onClick={() => setOpenPicks(false)}>Hidden</Pill>
+              <Pill selected={openPicks} onClick={() => setOpenPicks(true)}>Visible</Pill>
             </Group>
-            {draft && (
-              <p className="mt-2 text-[12px] text-parchment-300 leading-snug">
-                Draft games are casual for now. A separate Draft rating may come later.
-              </p>
-            )}
+            <p className="mt-2 text-[12px] text-parchment-300 leading-snug">
+              Hidden keeps the chaos: you never see what your opponent is drafting.
+              Visible shows their nerf and draft options for a more strategic game.
+            </p>
           </div>
-
-          <div>
-            <Group label="Ruleset">
-              <Pill selected={!draft} onClick={() => setDraft(false)}>Classic</Pill>
-              <Pill selected={draft} onClick={() => { setDraft(true); setRated(false); }}>Draft</Pill>
-            </Group>
-            {draft && (
-              <p className="mt-2 text-[12px] text-parchment-300 leading-snug">
-                Draft mode: pick one of two nerfs at the start, then draft a buff every
-                few moves. Buffs grow stronger as the game goes on. Skip a draft to
-                bank a tier for the next one.
-              </p>
-            )}
-            {!draft && (
-              <p className="mt-2 text-[12px] text-parchment-300 leading-snug">
-                Classic: the buff-free variant. One secret rule each, no drafts.
-              </p>
-            )}
-          </div>
-
-          {draft && (
-            <div>
-              <Group label="Opponent picks">
-                <Pill selected={!openPicks} onClick={() => setOpenPicks(false)}>Hidden</Pill>
-                <Pill selected={openPicks} onClick={() => setOpenPicks(true)}>Visible</Pill>
-              </Group>
-              <p className="mt-2 text-[12px] text-parchment-300 leading-snug">
-                Hidden keeps the chaos: you never see what your opponent is drafting.
-                Visible shows their nerf and draft options for a more strategic game.
-              </p>
-            </div>
-          )}
 
           <Group label="Bot strength">
             {(["easy", "medium", "hard"] as const).map((d) => (
@@ -196,40 +156,6 @@ export default function PlayPage() {
               onChange={setIncrementSec}
             />
           </div>
-
-          {!draft && (<>
-          <Group label="Your secret rule">
-            <Pill selected={nerfId === "random"} onClick={() => setNerfId("random")}>
-              Surprise me
-            </Pill>
-            <Pill selected={nerfId === "lucky"} onClick={() => setNerfId("lucky")}>
-              None (Lucky)
-            </Pill>
-          </Group>
-
-          <div>
-            <div className="smallcaps text-[11px] text-parchment-400 mb-2">
-              Or pick a specific rule to practice
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-72 overflow-y-auto pr-1">
-              {PLAYABLE_NERFS.map((d) => (
-                <button
-                  key={d.id}
-                  onClick={() => setNerfId(d.id)}
-                  className={
-                    "text-left p-3 rounded-2xl border transition " +
-                    (nerfId === d.id
-                      ? `tier-bg-${d.tier} border-2 shadow-leaf`
-                      : "border-white/10 hover:border-white/25 bg-ink-900/40")
-                  }
-                >
-                  <div className={`font-display text-base tier-${d.tier}`}>{d.name}</div>
-                  <div className="text-[11px] text-parchment-300/80 mt-0.5 line-clamp-2 leading-snug">{d.description}</div>
-                </button>
-              ))}
-            </div>
-          </div>
-          </>)}
 
           <button
             onClick={start}

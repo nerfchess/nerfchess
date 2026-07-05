@@ -84,7 +84,8 @@ type StoredMatch = {
   // Colors that voluntarily revealed their rule to the table mid-game.
   revealed?: Partial<Record<Color, boolean>>;
   // Draft ruleset games. Draft matches are always casual: createMatch never
-  // honors a rated request for them and the queue never creates them.
+  // honors a rated request for them, and the queue only creates casual
+  // Draft matches.
   draft?: boolean;
   // Friend-game setting: both seats see each other's pending offer cards.
   picksVisible?: boolean;
@@ -166,7 +167,7 @@ export interface Env {
   DB: D1Database;
 }
 
-// Quick-pairing pools for rated matchmaking. Keys are the wire names clients
+// Quick-pairing pools for casual Draft matchmaking. Keys are the wire names clients
 // send; keep them in sync with QUEUE_POOL_OPTIONS in the QueueButton UI.
 const QUEUE_POOLS: Record<string, { timeSec: number; incrementSec: number }> = {
   "1+0": { timeSec: 60, incrementSec: 0 },
@@ -921,6 +922,7 @@ export class GameServer extends DurableObject<Env> {
             winner: match.result.winner,
             reason: match.result.reason,
             rated: !!match.rated,
+            ...(match.draft ? { ruleset: "draft" } : {}),
             startedAt: match.startedAt,
             completedAt: match.completedAt,
           });
@@ -1409,7 +1411,7 @@ export class GameServer extends DurableObject<Env> {
     const session = this.session(ws);
     if (session.matchId) return error(ws, "already_joined", "This connection already belongs to a game.");
     if (!session.userId || !session.username) {
-      return error(ws, "auth_required", "Sign in to play rated games.");
+      return error(ws, "auth_required", "Sign in to use quick pairing.");
     }
     const req = (data as { pool?: unknown } | undefined) ?? {};
     const poolName = String(req.pool || "3+2");
@@ -1423,8 +1425,8 @@ export class GameServer extends DurableObject<Env> {
     let vol = 0.06;
     let avatar: string | null = null;
     {
-      // Queueing uses (and later updates) the rating bucket for this pool's
-      // time control only.
+      // Queueing reads the rating bucket for this pool's time control, shown
+      // beside names. Queue games are casual Draft games, so it never updates.
       const row = await this.seatCategoryRating(
         db,
         session.userId,
@@ -1493,9 +1495,15 @@ export class GameServer extends DurableObject<Env> {
       createdAt: Date.now(),
       startedAt: null,
       completedAt: null,
-      rated: true,
+      // Queue games run the Draft ruleset, and Draft matches are always
+      // casual: `rated` is deliberately never set, so pairing can never
+      // touch ratings.
       autoStart: true,
       users: { w: meWhite ? me : them, b: meWhite ? them : me },
+      draft: true,
+      picksVisible: false,
+      draftSeed: makeSeed(),
+      draftActions: [],
     };
     await this.saveMatch(match);
 
