@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { Board } from "./Board";
 import { HeroBoard } from "./HeroBoard";
@@ -27,6 +28,7 @@ type RecentGame = {
 // live games it shows the most recently finished game; the static demo
 // position only appears before anything has ever been played.
 export function HeroTv() {
+  const router = useRouter();
   const lobby = useLobbySnapshot(10000);
   const topGameId = lobby?.games[0]?.id ?? null;
   const [streamId, setStreamId] = useState<string | null>(null);
@@ -115,6 +117,14 @@ export function HeroTv() {
 
   const shownId = live ? streamId : recent?.id ?? null;
   const shownPlayers = live ? players : recentPlayers;
+
+  // Warm the route the hero links to so tapping "Watch"/"Replay" navigates
+  // instantly instead of paying to load the /game/[id] chunk on click. Kept
+  // above the early return so hook order stays stable across renders.
+  useEffect(() => {
+    if (shownId) router.prefetch(`/game/${shownId}`);
+  }, [shownId, router]);
+
   if (!shownId || !shownPlayers) return <HeroBoard />;
 
   const seat = (color: Color) => {

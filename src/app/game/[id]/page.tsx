@@ -95,16 +95,23 @@ export default function OnlineGamePage() {
     session.persistFriendSession = false;
     sessionRef.current = session;
 
-    const loadReplay = async () => {
+    // Fetch the archived game once, returning it (or null if it is not stored).
+    // Kept separate from rendering so the request can be kicked off in parallel
+    // with the live-watch attempt and awaited later.
+    const fetchReplay = async (): Promise<ReplayGame | null> => {
       try {
         const res = await fetch(`/api/games/${gameId}`);
-        if (res.ok) {
-          const data = (await res.json()) as { game: ReplayGame };
-          if (!cancelled) setMode({ kind: "replay", game: data.game });
-          return;
-        }
+        if (res.ok) return ((await res.json()) as { game: ReplayGame }).game ?? null;
       } catch {}
-      if (!cancelled) setMode({ kind: "missing" });
+      return null;
+    };
+
+    // Render the stored replay, reusing a fetch already in flight when one was
+    // started in parallel with the watch attempt.
+    const showReplay = async (pending?: Promise<ReplayGame | null>) => {
+      const game = await (pending ?? fetchReplay());
+      if (cancelled) return;
+      setMode(game ? { kind: "replay", game } : { kind: "missing" });
     };
 
     // Any watch payload (initial or after an automatic reconnect) refreshes
@@ -117,15 +124,15 @@ export default function OnlineGamePage() {
       }
     });
 
-    const spectate = async () => {
+    const spectate = async (pendingReplay?: Promise<ReplayGame | null>) => {
       try {
         await withResponseTimeout(session.watch(gameId), "watch_timeout", 15000);
       } catch (e) {
         if (e instanceof Error && e.message === "not_found") {
           session.destroy();
-          await loadReplay();
+          await showReplay(pendingReplay);
         } else if (e instanceof Error && e.message === "watch_timeout") {
-          await loadReplay();
+          await showReplay(pendingReplay);
         } else if (!cancelled) {
           setMode({ kind: "error", message: e instanceof Error ? e.message : String(e) });
         }
@@ -182,7 +189,13 @@ export default function OnlineGamePage() {
       };
       tryResume(0);
     } else {
-      spectate();
+      // Not our seat: watch the live game, but start the archived-replay fetch
+      // in parallel. A finished game (the common case for links from history,
+      // the hero "Replay", or a lobby row of a game that just ended) then
+      // renders the moment the server answers "not_found", instead of waiting
+      // for a second, serial HTTP round-trip afterward. For a live game the
+      // extra request just resolves to null and is discarded.
+      spectate(fetchReplay());
     }
 
     return () => {
@@ -220,32 +233,76 @@ export default function OnlineGamePage() {
     return <ReplayView game={mode.game} />;
   }
 
+  if (mode.kind === "loading" || mode.kind === "waiting") {
+    // Paint the real board frame straight away so connecting reads as "the
+    // game is loading", not a frozen page. The skeleton mirrors GameShell's
+    // layout so the swap to the live board when `start`/`watch-start` arrives
+    // is a fill-in, not a jump.
+    return (
+      <main className="min-h-screen">
+        <SiteNav />
+        <div className="mx-auto w-full max-w-[1200px] px-3 pb-10 sm:px-6">
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <div className="smallcaps text-[11px] text-parchment-400">
+              {mode.kind === "waiting" ? "Waiting for your opponent…" : "Connecting…"}
+            </div>
+            <div className="font-mono text-[11px] tracking-[0.2em] text-gold-leaf">{gameId}</div>
+          </div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center justify-between gap-2 py-1">
+                <span className="skeleton h-6 w-40" aria-hidden />
+                <span className="skeleton h-6 w-14" aria-hidden />
+              </div>
+              <div className="w-full max-w-[720px]">
+                <BoardSkeleton />
+              </div>
+              <div className="flex items-center justify-between gap-2 py-1">
+                <span className="skeleton h-6 w-40" aria-hidden />
+                <span className="skeleton h-6 w-14" aria-hidden />
+              </div>
+            </div>
+            <div className="sm:w-64 sm:shrink-0">
+              <div className="skeleton h-64 w-full xl:h-72" aria-hidden />
+            </div>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen">
       <SiteNav />
       <section className="max-w-xl mx-auto px-6 py-16 text-center">
-        {mode.kind === "loading" || mode.kind === "waiting" ? (
-          <>
-            <div className="smallcaps text-[11px] text-parchment-400">
-              {mode.kind === "waiting" ? "Waiting for your opponent…" : "Connecting…"}
-            </div>
-            <div className="mt-3 font-mono text-4xl tracking-[0.2em] text-gold-leaf">{gameId}</div>
-          </>
-        ) : (
-          <>
-            <h1 className="font-display text-4xl">Game not found</h1>
-            <p className="mt-3 text-parchment-200">
-              {mode.kind === "error"
-                ? mode.message
-                : "This game doesn't exist, or it hasn't been played yet."}
-            </p>
-            <Link href="/play" className="inline-block mt-8 px-5 py-2 rounded-sm btn-leaf font-body">
-              Play a game
-            </Link>
-          </>
-        )}
+        <h1 className="font-display text-4xl">Game not found</h1>
+        <p className="mt-3 text-parchment-200">
+          {mode.kind === "error"
+            ? mode.message
+            : "This game doesn't exist, or it hasn't been played yet."}
+        </p>
+        <Link href="/play" className="inline-block mt-8 px-5 py-2 rounded-sm btn-leaf font-body">
+          Play a game
+        </Link>
       </section>
     </main>
+  );
+}
+
+// A quiet checkered board frame with a shimmer sweep, shown while a game
+// connects. Same 8x8 grid and square colors as the live board so it holds the
+// exact footprint the real Board will fill.
+function BoardSkeleton() {
+  return (
+    <div className="relative aspect-square w-full overflow-hidden border border-black/50 shadow-[0_24px_70px_-30px_rgba(0,0,0,0.85)]">
+      <div className="grid h-full w-full grid-cols-8 grid-rows-8" aria-hidden>
+        {Array.from({ length: 64 }).map((_, i) => {
+          const isLight = (Math.floor(i / 8) + (i % 8)) % 2 === 0;
+          return <div key={i} className={isLight ? "sq-light" : "sq-dark"} />;
+        })}
+      </div>
+      <div className="skeleton absolute inset-0" aria-hidden />
+    </div>
   );
 }
 
