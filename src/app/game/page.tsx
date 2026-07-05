@@ -13,6 +13,7 @@ import { AILevel, aiBudgetMs, pickAIMove } from "@/engine/ai";
 import { Nerf, type GameContext } from "@/engine/nerf";
 import { IMPLEMENTED_BY_ID, PLAYABLE_NERFS } from "@/engine/nerfs/library";
 import { BUFF_BY_ID } from "@/engine/buffs/library";
+import { BuffUsedToast } from "@/components/BuffUsedToast";
 import {
   aiActivateBuffs,
   aiResolveDraft,
@@ -343,14 +344,34 @@ function GamePage() {
     setGame(g);
   };
 
+  // Transient toast naming and explaining a card the bot just played, so its
+  // effect on the board is never a mystery.
+  const [oppUsedCard, setOppUsedCard] = useState<{
+    card: { id: string; tier: number };
+    label: string;
+  } | null>(null);
+  const oppUsedTimerRef = useRef<number | null>(null);
+  const showOppUsedCard = (card: { id: string; tier: number }, label: string) => {
+    setOppUsedCard({ card, label });
+    if (oppUsedTimerRef.current) window.clearTimeout(oppUsedTimerRef.current);
+    oppUsedTimerRef.current = window.setTimeout(() => setOppUsedCard(null), 7000);
+  };
+
   // Draft mode: the bot resolves its pending buff drafts immediately.
   useEffect(() => {
     if (!game?.buffs || game.result) return;
     const botColor: Color = myColor === "w" ? "b" : "w";
     if (game.buffs.players[botColor].offer) {
+      const before = game.buffs.players[botColor].buffs.length;
       aiResolveDraft(game, botColor);
+      // Instants show on the board the moment the bot picks them; surface
+      // what the card did, matching the online reveal-at-pick rule.
+      const gained = game.buffs.players[botColor].buffs.slice(before);
+      const instant = gained.find((b) => BUFF_BY_ID[b.id]?.kind === "instant" && !b.nullified);
+      if (instant) showOppUsedCard({ id: instant.id, tier: instant.tier }, "Bot played a buff");
       setGame({ ...game });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [game, myColor]);
 
   // Lock-in window and clock pause for my buff offers: a fresh offer arms
@@ -649,7 +670,9 @@ function GamePage() {
     // can decide the game on the spot (a removal ends it via loss checks).
     if (game.buffs) {
       try {
-        if (aiActivateBuffs(game, botColor)) {
+        const usedCard = aiActivateBuffs(game, botColor);
+        if (usedCard) {
+          showOppUsedCard(usedCard, "Bot used a buff");
           setGame({ ...game });
           if (game.result) {
             aiThinking.current = false;
@@ -1461,6 +1484,8 @@ function GamePage() {
           onCancel={buffTargeting.cancel}
         />
       )}
+
+      {oppUsedCard && <BuffUsedToast card={oppUsedCard.card} label={oppUsedCard.label} />}
 
       {myOffer && !game.result && (
         <DraftOverlay

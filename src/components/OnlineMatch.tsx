@@ -4,6 +4,7 @@ import Link from "next/link";
 import { type CSSProperties, useEffect, useMemo, useRef, useState } from "react";
 import { Board, QueuedPremove } from "@/components/Board";
 import { BoardPlayerRow } from "@/components/BoardPlayerRow";
+import { BuffUsedToast } from "@/components/BuffUsedToast";
 import { BuffDock, EnemyBuffModal, TargetingBanner, useBuffTargeting } from "@/components/BuffDock";
 import { ChatPanel } from "@/components/ChatPanel";
 import { ClockPill } from "@/components/ClockPill";
@@ -188,6 +189,18 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   const [claimReady, setClaimReady] = useState(false);
   // Seconds left on my first-move grace window (null = not in the window).
   const [graceSecondsLeft, setGraceSecondsLeft] = useState<number | null>(null);
+  // Transient toast naming and explaining a card the opponent just played,
+  // so its effect on the board is never a mystery.
+  const [oppUsedCard, setOppUsedCard] = useState<{
+    card: { id: string; tier: number };
+    label: string;
+  } | null>(null);
+  const oppUsedTimerRef = useRef<number | null>(null);
+  const showOppUsedCard = (card: { id: string; tier: number }, label: string) => {
+    setOppUsedCard({ card, label });
+    if (oppUsedTimerRef.current) window.clearTimeout(oppUsedTimerRef.current);
+    oppUsedTimerRef.current = window.setTimeout(() => setOppUsedCard(null), 7000);
+  };
   // Voluntary rule reveals: mine (button flow) and the opponent's (event).
   const [myRevealState, setMyRevealState] = useState<"hidden" | "confirm" | "revealed">(() =>
     start.revealed?.[start.color] ? "revealed" : "hidden",
@@ -546,7 +559,15 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           setOppDrafting(false);
           // "Opponent locked in": shown while my own pick is still open.
           setOppLockedIn(true);
-          if (e.resolved.kind === "picked") playNerf();
+          if (e.resolved.kind === "picked") {
+            playNerf();
+            // Instants reveal at pick because their effect already shows on
+            // the board; explain what the card did.
+            const revealed = (e.resolved.cards ?? []).find((c) => "id" in c) as
+              | { id: string; tier: number }
+              | undefined;
+            if (revealed) showOppUsedCard(revealed, "Opponent played a buff");
+          }
         }
         applyGame({ ...g });
       } else if (e.type === "draft-used") {
@@ -560,7 +581,10 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           picks: e.used.picks,
           card: e.used.card,
         });
-        if (e.used.color !== myColor) playNerf();
+        if (e.used.color !== myColor) {
+          playNerf();
+          if (e.used.card) showOppUsedCard(e.used.card, "Opponent used a buff");
+        }
         applyGame({ ...g });
       } else if (e.type === "rematch-offer") {
         setRematchStatus(e.color === myColor ? "offered" : "incoming");
@@ -913,6 +937,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   // re-render ten times a second during bullet games.
   useEffect(() => {
     if (!clockEnabled || !game || game.result || !uiSettings.lowTimeWarning) return;
+    // The clock is paused while any draft pick is open: no low-time warning
+    // should sound mid-selection.
+    if (isDraft && (!!game.buffs?.players[myColor].offer || oppDrafting)) return;
     if (myMs >= 20000) {
       lowTimeArmedRef.current = true;
     }
@@ -929,7 +956,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     }, delay);
     return () => window.clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [myMs, clockEnabled, game, myColor, uiSettings.lowTimeWarning]);
+  }, [myMs, clockEnabled, game, myColor, oppDrafting, uiSettings.lowTimeWarning]);
 
   // Surface the claim buttons once the opponent has stayed gone long enough
   // for the server to accept a claim; hide them the moment they return.
@@ -1726,6 +1753,8 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           </div>
         </div>
       </div>
+
+      {oppUsedCard && <BuffUsedToast card={oppUsedCard.card} label={oppUsedCard.label} />}
 
       <MobileMoveDrawer
         moves={game.board.history}
