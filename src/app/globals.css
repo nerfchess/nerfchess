@@ -192,14 +192,54 @@ body {
 .tier-7 { color: #a877d8; }   /* violet */
 .tier-8 { color: #e05252; }   /* blood */
 
-.tier-bg-1 { background: rgba(126,181,154,0.10); border-color: rgba(126,181,154,0.35); }
-.tier-bg-2 { background: rgba(139,169,196,0.10); border-color: rgba(139,169,196,0.35); }
-.tier-bg-3 { background: rgba(216,181,110,0.10); border-color: rgba(216,181,110,0.45); }
-.tier-bg-4 { background: rgba(199,148,104,0.10); border-color: rgba(199,148,104,0.40); }
-.tier-bg-5 { background: rgba(198,104,96,0.12); border-color: rgba(198,104,96,0.45); }
-.tier-bg-6 { background: rgba(198,95,143,0.12); border-color: rgba(198,95,143,0.45); }
-.tier-bg-7 { background: rgba(168,119,216,0.12); border-color: rgba(168,119,216,0.45); }
-.tier-bg-8 { background: rgba(224,82,82,0.14); border-color: rgba(224,82,82,0.50); }
+/* Each tier carries its color as an rgb triple too, so glass/glow layers on a
+   card face can tint themselves by severity (a tier-8 reads hotter than a
+   tier-1) using a single shared class. */
+.tier-bg-1 { background: rgba(126,181,154,0.10); border-color: rgba(126,181,154,0.35); --tier-rgb: 126 181 154; }
+.tier-bg-2 { background: rgba(139,169,196,0.10); border-color: rgba(139,169,196,0.35); --tier-rgb: 139 169 196; }
+.tier-bg-3 { background: rgba(216,181,110,0.10); border-color: rgba(216,181,110,0.45); --tier-rgb: 216 181 110; }
+.tier-bg-4 { background: rgba(199,148,104,0.10); border-color: rgba(199,148,104,0.40); --tier-rgb: 199 148 104; }
+.tier-bg-5 { background: rgba(198,104,96,0.12); border-color: rgba(198,104,96,0.45); --tier-rgb: 198 104 96; }
+.tier-bg-6 { background: rgba(198,95,143,0.12); border-color: rgba(198,95,143,0.45); --tier-rgb: 198 95 143; }
+.tier-bg-7 { background: rgba(168,119,216,0.12); border-color: rgba(168,119,216,0.45); --tier-rgb: 168 119 216; }
+.tier-bg-8 { background: rgba(224,82,82,0.14); border-color: rgba(224,82,82,0.50); --tier-rgb: 224 82 82; }
+
+/* --- Draft card face --------------------------------------------------------
+   A restrained frosted layer for draftable cards: a translucent top-lit sheen,
+   a hairline highlight along the top edge, and a soft inner glow tinted by the
+   card's tier. Sits on top of the existing tier tint, so it stays flat and
+   square (no rounding, no heavy blur) while reading a touch more premium.
+   Hovering lifts the tint into a tier-colored glow ring. */
+.draft-face {
+  background-image:
+    linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0) 42%),
+    radial-gradient(135% 100% at 50% -8%, rgb(var(--tier-rgb, 216 181 110) / 0.14), transparent 62%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.10),
+    inset 0 0 42px -20px rgb(var(--tier-rgb, 216 181 110) / 0.60);
+  transition: box-shadow 200ms ease, transform 160ms ease, border-color 160ms ease;
+}
+.draft-face:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.14),
+    inset 0 0 48px -16px rgb(var(--tier-rgb, 216 181 110) / 0.75),
+    0 0 0 1px rgb(var(--tier-rgb, 216 181 110) / 0.45),
+    0 14px 34px -20px rgb(var(--tier-rgb, 216 181 110) / 0.55);
+}
+
+/* Dock rows: a whisper of the same treatment (hairline top highlight + faint
+   top-lit sheen) so the buff dock reads as part of the same card family. */
+.dock-card {
+  background-image: linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0) 60%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+}
+
+/* Staggered entrance for a fresh draft offer: each card rises and settles. */
+@keyframes draft-in {
+  0% { opacity: 0; transform: translateY(18px) scale(0.965); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+.draft-in { animation: draft-in 0.44s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
 
 /* --- Buttons --- Lichess-flat: solid blue primary, quiet ghost secondary. */
 .btn-leaf {
@@ -421,6 +461,7 @@ nav, header { position: relative; z-index: 30; }
 
 @media (prefers-reduced-motion: reduce) {
   .animate-rise, .animate-seal, .animate-sigil, .animate-flicker, .animate-reveal, .animate-bob,
+  .draft-in,
   .sq-strike, .sq-freeze, .sq-freeze-flake, .sq-shield-in {
     animation: none !important;
   }

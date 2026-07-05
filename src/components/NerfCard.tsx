@@ -35,7 +35,7 @@ export function NerfCard({ nerf, revealed = true, compact = false, ownerLabel, p
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`relative plate p-5 overflow-hidden tier-bg-${nerf.tier} border`}
+      className={`relative plate draft-face p-5 overflow-hidden tier-bg-${nerf.tier} border`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
