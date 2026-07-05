@@ -601,7 +601,19 @@ export function activateBuff(
   const inst = bs.players[color].buffs[buffIndex];
   const def = inst && BUFF_BY_ID[inst.id];
   if (!inst || !def || def.kind !== "activated" || inst.spent || inst.nullified) return false;
+  const effectsBefore = bs.effects.length;
   def.effect?.(inst, makeBuffApi(game, color), picks);
+  // A turn-consuming activation costs the activator this turn, so protective
+  // timers it just created must not also burn a tick on the opponent's
+  // immediate reply: "for N turns" means N turns AFTER the activation turn.
+  // Only self-protection effects (shield / king-safe) suffer this overlap;
+  // effects constraining the opponent (freeze, barred...) already deliver
+  // their full N turns starting from the reply.
+  if (!def.freeAction) {
+    for (const e of bs.effects.slice(effectsBefore)) {
+      if ((e.kind === "shield" || e.kind === "king_safe") && e.turns != null) e.turns += 1;
+    }
+  }
   if (def.spendOnUse !== false) inst.spent = true;
   // Any activated use can reshape the board, so the activator cannot capture
   // the king until the opponent has replied (same guard as chained moves).

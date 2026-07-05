@@ -672,6 +672,13 @@ const TIER1: Buff[] = [
       );
     }),
   ),
+  // Nerf-modifier (cross-cutting)
+  def(
+    { id: "reprieve", name: "Reprieve", description: "Suspend your nerf for your next 2 turns.", tier: 1, category: "nerf" },
+    instant((_inst, api) => {
+      addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 2 });
+    }),
+  ),
 ];
 
 // ---------------------------------------------------------------------------
@@ -1347,6 +1354,12 @@ const TIER3: Buff[] = [
   // Nerf-modifiers (cross-cutting)
   def({ id: "piece_parole", name: "Piece Parole", description: "If your nerf disables a piece type, re-enable one piece of that type.", tier: 3, category: "nerf" }),
   def({ id: "half_measure", name: "Half Measure", description: "Cut any \"every turn\" nerf penalty to \"every other turn\".", tier: 3, category: "nerf" }),
+  def(
+    { id: "respite", name: "Respite", description: "Suspend your nerf for your next 5 turns.", tier: 3, category: "nerf" },
+    instant((_inst, api) => {
+      addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 5 });
+    }),
+  ),
 ];
 
 // ---------------------------------------------------------------------------
@@ -2011,6 +2024,12 @@ const TIER5: Buff[] = [
   ),
   // Nerf-modifier (cross-cutting)
   def({ id: "rehab", name: "Rehab", description: "Permanently downgrade your nerf to its weakest version.", tier: 5, category: "nerf" }),
+  def(
+    { id: "long_leash", name: "Long Leash", description: "Suspend your nerf for your next 7 turns.", tier: 5, category: "nerf" },
+    instant((_inst, api) => {
+      addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 7 });
+    }),
+  ),
 ];
 
 // ---------------------------------------------------------------------------
@@ -2519,6 +2538,12 @@ const TIER7: Buff[] = [
   ),
   // Nerf-modifier (cross-cutting)
   def({ id: "nerf_reversal", name: "Nerf Reversal", description: "Flip your nerf into its inverse benefit where one exists.", tier: 7, category: "nerf" }),
+  def(
+    { id: "sabbatical", name: "Sabbatical", description: "Suspend your nerf for your next 10 turns.", tier: 7, category: "nerf" },
+    instant((_inst, api) => {
+      addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 10 });
+    }),
+  ),
 ];
 
 /** Copy of the board's piece placement (Perfect Rewind snapshots). */

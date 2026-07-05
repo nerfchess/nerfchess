@@ -379,6 +379,29 @@ html[data-piece-source="lichess"] .piece-asset {
   animation: strike-flash 0.9s ease-out forwards;
 }
 
+/* Freeze (Wall, Frost, Immobilizer...): a single icy flash when the effect
+   lands on a piece, settling into the calm persistent tint. Runs once on
+   mount — never loops. */
+@keyframes freeze-in {
+  0% { opacity: 0; box-shadow: inset 0 0 0 0 rgba(165, 235, 255, 0); }
+  35% { opacity: 1; box-shadow: inset 0 0 26px 4px rgba(165, 235, 255, 0.85); }
+  100% { opacity: 1; box-shadow: inset 0 0 10px 0 rgba(165, 235, 255, 0.25); }
+}
+.sq-freeze { animation: freeze-in 0.6s ease-out; }
+@keyframes freeze-flake-in {
+  0% { opacity: 0; transform: scale(2.2) rotate(-90deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+.sq-freeze-flake { animation: freeze-flake-in 0.45s ease-out; }
+
+/* Shield / sanctuary: one soft pulse when the protection appears. */
+@keyframes shield-in {
+  0% { opacity: 0; transform: scale(1.12); }
+  60% { opacity: 1; }
+  100% { opacity: 1; transform: scale(1); }
+}
+.sq-shield-in { animation: shield-in 0.45s ease-out; }
+
 .no-tap-highlight { -webkit-tap-highlight-color: transparent; }
 
 main, footer { position: relative; z-index: 2; }
@@ -398,7 +421,7 @@ nav, header { position: relative; z-index: 30; }
 
 @media (prefers-reduced-motion: reduce) {
   .animate-rise, .animate-seal, .animate-sigil, .animate-flicker, .animate-reveal, .animate-bob,
-  .sq-strike {
+  .sq-strike, .sq-freeze, .sq-freeze-flake, .sq-shield-in {
     animation: none !important;
   }
   .dc-orbit-ring.spin, .dc-orbit-ring.spin-r,

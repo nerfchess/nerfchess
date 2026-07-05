@@ -1,6 +1,6 @@
 "use client";
 
-import { BuffPick, BuffTarget } from "@/engine/buff";
+import { BuffPick, BuffTarget, draftCardNoun } from "@/engine/buff";
 import { BUFF_BY_ID } from "@/engine/buffs/library";
 import { NerfGame, activateBuff, buffNextTarget } from "@/engine/game";
 import { Color } from "@/engine/types";
@@ -233,6 +233,7 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards 
 
   const bs = game.buffs;
   if (!bs) return null;
+  const noun = draftCardNoun(bs.mode);
   const oppColor: Color = myColor === "w" ? "b" : "w";
   const mine = bs.players[myColor].buffs;
   const theirs = bs.players[oppColor].buffs;
@@ -322,22 +323,26 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards 
         initial={{ opacity: 0, x: -14 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.25 }}
-        title={def.description}
         className={
-          "flex w-full items-center gap-1.5 border border-white/10 bg-white/[0.02] px-2 py-1 " +
+          "w-full border border-white/10 bg-white/[0.02] px-2 py-1 " +
           (dead ? "opacity-45" : "")
         }
       >
-        <span className={`min-w-0 flex-1 truncate font-display text-[11px] font-semibold tier-${inst.tier}`}>
-          {def.name}
-        </span>
-        {inst.nullified && <span className="smallcaps shrink-0 text-[8px] text-oxblood-glow">Nullified</span>}
-        {inst.spent && !inst.nullified && <span className="smallcaps shrink-0 text-[8px] text-parchment-400">Used</span>}
-        <span
-          className={`shrink-0 rounded-full border px-1.5 py-px font-display text-[9px] font-bold tier-bg-${inst.tier} tier-${inst.tier}`}
-        >
-          {TIER_ROMAN[inst.tier]}
-        </span>
+        <div className="flex items-center gap-1.5">
+          <span className={`min-w-0 flex-1 truncate font-display text-[11px] font-semibold tier-${inst.tier}`}>
+            {def.name}
+          </span>
+          {inst.nullified && <span className="smallcaps shrink-0 text-[8px] text-oxblood-glow">Nullified</span>}
+          {inst.spent && !inst.nullified && <span className="smallcaps shrink-0 text-[8px] text-parchment-400">Used</span>}
+          <span
+            className={`shrink-0 rounded-full border px-1.5 py-px font-display text-[9px] font-bold tier-bg-${inst.tier} tier-${inst.tier}`}
+          >
+            {TIER_ROMAN[inst.tier]}
+          </span>
+        </div>
+        {/* Rule text always visible, matching your own rows: what a revealed
+            card does must never require a hover. */}
+        <p className="mt-0.5 text-[10px] leading-snug text-parchment-300">{def.description}</p>
       </motion.div>
     );
   };
@@ -389,7 +394,7 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards 
         )}
 
         <div className="flex items-baseline justify-between gap-2">
-          <span className="smallcaps text-[10px] text-parchment-400">Your buffs</span>
+          <span className="smallcaps text-[10px] text-parchment-400">Your {noun}s</span>
           <span className="font-mono text-[10px] tabular-nums text-parchment-400">{mine.length}</span>
         </div>
         {mine.length === 0 && (
@@ -402,7 +407,7 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards 
         {theirs.length > 0 && (
           <>
             <div className="flex items-baseline justify-between gap-2 border-t border-white/10 pt-2">
-              <span className="smallcaps text-[10px] text-parchment-400">Opponent&apos;s buffs</span>
+              <span className="smallcaps text-[10px] text-parchment-400">Opponent&apos;s {noun}s</span>
               <span className="font-mono text-[10px] tabular-nums text-parchment-400">{theirs.length}</span>
             </div>
             <div className="flex flex-wrap items-start gap-1">{theirsActive.map(oppEntry)}</div>

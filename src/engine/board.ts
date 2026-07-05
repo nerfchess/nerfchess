@@ -390,6 +390,46 @@ export function moveToUCI(m: Move): string {
   return a + b + (m.promotion ?? "");
 }
 
+/**
+ * Build a Move directly from a UCI string against the current board, without
+ * consulting move generation. Used as a last-resort fallback when applying a
+ * server-accepted move that the local replica cannot regenerate (hidden nerf
+ * or buff effects it does not know about): the server already validated the
+ * move, so applying it raw keeps the boards in sync instead of dead-ending.
+ * Returns null when the origin square is empty or the string is malformed.
+ */
+export function moveFromUCI(board: BoardState, uci: string): Move | null {
+  if (!/^[a-h][1-8][a-h][1-8][qrbnk]?$/.test(uci)) return null;
+  const from = SQ(uci.charCodeAt(0) - 97, uci.charCodeAt(1) - 49);
+  const to = SQ(uci.charCodeAt(2) - 97, uci.charCodeAt(3) - 49);
+  const piece = board.pieces[from];
+  if (!piece) return null;
+  const move: Move = { from, to, piece: piece.type, color: piece.color };
+  const promo = uci[4] as PieceType | undefined;
+  if (promo) move.promotion = promo;
+  const target = board.pieces[to];
+  if (target && target.color !== piece.color) {
+    move.captured = target.type;
+    move.capturedSquare = to;
+  } else if (piece.type === "p" && FILE(from) !== FILE(to) && !target) {
+    // Diagonal pawn move to an empty square: en passant.
+    const capSq = SQ(FILE(to), RANK(from));
+    const capPiece = board.pieces[capSq];
+    if (capPiece && capPiece.color !== piece.color) {
+      move.captured = capPiece.type;
+      move.capturedSquare = capSq;
+      move.isEnPassant = true;
+    }
+  }
+  if (piece.type === "p" && Math.abs(RANK(to) - RANK(from)) === 2 && FILE(from) === FILE(to)) {
+    move.isDoublePawn = true;
+  }
+  if (piece.type === "k" && Math.abs(FILE(to) - FILE(from)) === 2 && RANK(from) === RANK(to)) {
+    move.castle = FILE(to) > FILE(from) ? "k" : "q";
+  }
+  return move;
+}
+
 export function moveToSAN(m: Move): string {
   const files = "abcdefgh";
   const dest = files[FILE(m.to)] + (RANK(m.to) + 1);

@@ -442,8 +442,9 @@ export function Board({
       return;
     }
     if (e.button !== undefined && e.button !== 0) return;
-    setRightClickMarks((marks) => (Object.keys(marks).length ? {} : marks));
-    setArrows((current) => (current.length ? [] : current));
+    // Drawn arrows and marks survive left clicks (including rejected/illegal
+    // move attempts); they are wiped only when a move actually lands on the
+    // board (the board.pieces effect below).
     // Targeting mode swallows the pointer entirely: a candidate square picks,
     // anything else is a no-op (Escape or the cancel chip exits the mode).
     if (pickingSquares) {
@@ -713,14 +714,16 @@ export function Board({
                 )}
                 {frozenSquares.has(sq) && (
                   <>
-                    <div className="absolute inset-0 bg-cyan-300/25 pointer-events-none" />
-                    <span className="absolute top-0.5 right-0.5 z-10 text-[11px] leading-none pointer-events-none drop-shadow">
+                    {/* One-shot icy flash when the freeze lands, then a calm
+                        persistent tint while it holds. */}
+                    <div className="absolute inset-0 bg-cyan-300/25 pointer-events-none sq-freeze" />
+                    <span className="absolute top-0.5 right-0.5 z-10 text-[11px] leading-none pointer-events-none drop-shadow sq-freeze-flake">
                       ❄
                     </span>
                   </>
                 )}
                 {shieldedSquares.has(sq) && (
-                  <div className="absolute inset-0 pointer-events-none ring-2 ring-inset ring-verdigris-glow/80 shadow-[inset_0_0_18px_-4px_rgba(123,181,47,0.6)]" />
+                  <div className="absolute inset-0 pointer-events-none ring-2 ring-inset ring-verdigris-glow/80 shadow-[inset_0_0_18px_-4px_rgba(123,181,47,0.6)] sq-shield-in" />
                 )}
                 {strikeSquares.has(sq) && (
                   <div className="absolute inset-0 pointer-events-none z-10 sq-strike">

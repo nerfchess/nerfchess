@@ -22,7 +22,8 @@ import { SettingsPanel } from "@/components/SettingsPanel";
 import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
 import type { BuffOffer } from "@/engine/buff";
 import { BUFF_BY_ID } from "@/engine/buffs/library";
-import { cloneBoard, findKing, isInCheck, makeMove, moveToUCI } from "@/engine/board";
+import { cloneBoard, findKing, isInCheck, makeMove, moveFromUCI, moveToUCI } from "@/engine/board";
+import { draftCardNoun } from "@/engine/buff";
 import { computeMoveRisks } from "@/engine/moveSafety";
 import { loadSettings } from "@/lib/settings";
 import type { GameContext, Nerf } from "@/engine/nerf";
@@ -102,7 +103,12 @@ function buildGameFromStart(start: MPStart): NerfGame {
     return next;
   }
   for (const uci of start.moves ?? []) {
-    const move = legalMoves(next).find((candidate) => moveToUCI(candidate) === uci);
+    // Server-validated moves the replica cannot regenerate (the opponent's
+    // hidden rule can force passes and other flows we cannot predict) are
+    // applied raw rather than stranding the replay mid-game.
+    const move =
+      legalMoves(next).find((candidate) => moveToUCI(candidate) === uci) ??
+      moveFromUCI(next.board, uci);
     if (!move) return next;
     next = playMove(next, move);
   }
@@ -223,6 +229,24 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   const [draftDeadline, setDraftDeadline] = useState<number | null>(() => start.dtDeadline ?? null);
   // The opponent resolved their simultaneous draft while mine is still open.
   const [oppLockedIn, setOppLockedIn] = useState(false);
+  // The free lock-in window has run out: the draft moves to a side panel,
+  // the board comes back, and the clock runs — deliberating past the window
+  // costs the straggler's own time (the server resumes the clock too).
+  const [draftGraceOver, setDraftGraceOver] = useState(false);
+  useEffect(() => {
+    if (draftDeadline == null) {
+      setDraftGraceOver(true);
+      return;
+    }
+    const left = draftDeadline - Date.now();
+    if (left <= 0) {
+      setDraftGraceOver(true);
+      return;
+    }
+    setDraftGraceOver(false);
+    const id = window.setTimeout(() => setDraftGraceOver(true), left + 50);
+    return () => window.clearTimeout(id);
+  }, [draftDeadline]);
 
   const boardShellRef = useRef<HTMLDivElement | null>(null);
   const recordedResult = useRef(false);
@@ -427,7 +451,23 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         setOpponentGone(false);
         const g = gameRef.current;
         if (!g) return;
-        const lm = legalMoves(g).find((x) => moveToUCI(x) === e.move.u);
+        // The server already validated this move. If the replica cannot
+        // regenerate it (a hidden nerf or buff effect it does not know
+        // about), apply it raw instead of freezing the board — a raw apply
+        // keeps the position, turn, and clocks in sync, where the old
+        // resync-only path could dead-end forever if the rebuilt replay hit
+        // the same blind spot. The ply guard keeps a raw apply from running
+        // on top of missed frames (then a full resync is the right tool).
+        let lm = legalMoves(g).find((x) => moveToUCI(x) === e.move.u);
+        if (!lm && e.move.ply === g.board.history.length + 1) {
+          const raw = moveFromUCI(g.board, e.move.u);
+          if (raw) {
+            console.warn(
+              `[online] applying server-accepted move ${e.move.u} raw (not locally reproducible)`,
+            );
+            lm = raw;
+          }
+        }
         const wasAwaitingPremove = awaitingPremoveAckRef.current;
         const pendingPremove = pendingPremoveRef.current;
         const pendingLocal = pendingLocalMoveRef.current;
@@ -596,7 +636,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
             const revealed = (e.resolved.cards ?? []).find((c) => "id" in c) as
               | { id: string; tier: number }
               | undefined;
-            if (revealed) showOppUsedCard(revealed, "Opponent played a buff");
+            if (revealed) showOppUsedCard(revealed, `Opponent played a ${draftCardNoun(start.mode)}`);
           }
         }
         applyGame({ ...g });
@@ -613,7 +653,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         });
         if (e.used.color !== myColor) {
           playNerf();
-          if (e.used.card) showOppUsedCard(e.used.card, "Opponent used a buff");
+          if (e.used.card) showOppUsedCard(e.used.card, `Opponent used a ${draftCardNoun(start.mode)}`);
         }
         applyGame({ ...g });
       } else if (e.type === "rematch-offer") {
@@ -922,8 +962,10 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   // sole judge of whether anyone actually flagged.
   useEffect(() => {
     if (!clockEnabled || !game || game.result) return;
-    // Clock paused for a draft lock-in window: no flag can fall due.
-    if (isDraft && (!!game.buffs?.players[myColor].offer || oppDrafting)) return;
+    // Clock paused for a draft lock-in window: no flag can fall due. Once
+    // the free window has expired the clock is live again even with an
+    // unresolved offer, so the flag check must keep running.
+    if (isDraft && !draftGraceOver && (!!game.buffs?.players[myColor].offer || oppDrafting)) return;
     const active = game.board.turn;
     const activeMs = active === "w" ? whiteMs : blackMs;
     let interval: number | undefined;
@@ -942,9 +984,10 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   // re-render ten times a second during bullet games.
   useEffect(() => {
     if (!clockEnabled || !game || game.result || !uiSettings.lowTimeWarning) return;
-    // The clock is paused while any draft pick is open: no low-time warning
-    // should sound mid-selection.
-    if (isDraft && (!!game.buffs?.players[myColor].offer || oppDrafting)) return;
+    // The clock is paused while a draft pick is inside its free window: no
+    // low-time warning should sound mid-selection. After the window the
+    // clock is live and the warning applies again.
+    if (isDraft && !draftGraceOver && (!!game.buffs?.players[myColor].offer || oppDrafting)) return;
     if (myMs >= 20000) {
       lowTimeArmedRef.current = true;
     }
@@ -1105,7 +1148,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           </h1>
           <p className="mt-2 text-sm text-parchment-300 text-center">
             {isNerfMode
-              ? "Pick one of two nerfs. About every ten moves you draft a card that softens or removes it."
+              ? "Pick one of two nerfs. About every ten moves you draft a boon — a card that helps you fight on, soften your rule, or remove it."
               : "Every game opens weak: pick one of two nerfs, then draft buffs every few moves to claw your way back to power."}
           </p>
           {error && (
@@ -1221,9 +1264,11 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   const bsTheirs = isDraft ? game.buffs?.players[oppColor] : undefined;
   const myOffer = bsMine?.offer ?? null;
   const zone = isDraft && game.buffs ? draftZones(game, myColor) : null;
-  // The server pauses the match clock while any buff offer is pending (the
-  // lock-in window is free time); freeze the local display the same way.
-  const draftClockPaused = isDraft && !game.result && (!!myOffer || oppDrafting);
+  // The server pauses the match clock while any buff offer is inside its
+  // free lock-in window; freeze the local display the same way. Past the
+  // window the server resumes the clock, so the display runs again.
+  const draftClockPaused =
+    isDraft && !game.result && !draftGraceOver && (!!myOffer || oppDrafting);
   const opponentNerf = revealedOppNerf ?? (myColor === "w" ? game.black.nerf : game.white.nerf);
   const oppNerfShown = !!revealedOppNerf && (liveOppReveal || !uiSettings.hideOpponentReveal);
   // Draft games have no "hidden rule" placeholder: while the opponent's rule
@@ -1680,6 +1725,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                     buffs={bsTheirs.buffs}
                     banked={!!bsTheirs.flags.bankBonus}
                     hidden={!picksVisible}
+                    cardNoun={draftCardNoun(start.mode)}
                   />
                 )}
                 {buffTargeting.targeting && buffTargeting.targeting.target.kind === "square" && (
@@ -1793,6 +1839,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
 
       {isDraft && game.buffs && (
         <MobileBuffDrawer
+          label={draftCardNoun(start.mode) === "boon" ? "Boons" : "Buffs"}
           held={game.buffs.players[myColor].buffs.length}
           usable={
             !draftCanAct
@@ -1824,32 +1871,53 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
       )}
 
       {/* Simultaneous draft, my side resolved (pick sent or already applied)
-          but the opponent's is still open: hold a waiting screen until their
-          dtResolved arrives. The clocks stay paused the whole time. */}
-      {isDraft && !game.result && oppDrafting && (draftSubmitted || !myOffer) && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 16, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            className="plate w-full max-w-sm p-6 text-center"
-          >
-            <div className="smallcaps text-[11px] text-parchment-400">Buff draft</div>
-            <h2 className="font-display text-2xl text-parchment mt-1">
-              Waiting for opponent&apos;s pick
-            </h2>
-            <p className="mt-2 text-sm text-parchment-300">
-              Your opponent is still selecting. Both clocks stay paused until
-              their draft resolves.
-            </p>
-            <div role="status" aria-live="polite" className="mt-4 flex items-center justify-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-gold animate-flicker" aria-hidden />
-              <span className="font-display text-sm text-parchment-200">
-                Opponent is choosing a buff…
+          but the opponent's is still open: a waiting screen holds while the
+          free window runs. Once it expires the screen shrinks to a corner
+          pill — the board stays usable and the dawdler burns their own
+          clock, so a straggling (or vanished) opponent can never lock this
+          player out of the game. */}
+      {isDraft && !game.result && oppDrafting && (draftSubmitted || !myOffer) &&
+        (draftGraceOver ? (
+          <div className="pointer-events-none fixed bottom-16 right-3 z-40 sm:bottom-4">
+            <motion.div
+              initial={{ opacity: 0, x: 40 }}
+              animate={{ opacity: 1, x: 0 }}
+              role="status"
+              aria-live="polite"
+              className="plate flex items-center gap-2 border-gold/40 px-3 py-2"
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-gold animate-flicker" aria-hidden />
+              <span className="font-display text-xs text-parchment-200">
+                Opponent is still choosing — on their clock now.
               </span>
-            </div>
-          </motion.div>
-        </div>
-      )}
+            </motion.div>
+          </div>
+        ) : (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4">
+            <motion.div
+              initial={{ opacity: 0, y: 16, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              className="plate w-full max-w-sm p-6 text-center"
+            >
+              <div className="smallcaps text-[11px] text-parchment-400">
+                {draftCardNoun(start.mode) === "boon" ? "Boon draft" : "Buff draft"}
+              </div>
+              <h2 className="font-display text-2xl text-parchment mt-1">
+                Waiting for opponent&apos;s pick
+              </h2>
+              <p className="mt-2 text-sm text-parchment-300">
+                Your opponent is still selecting. Both clocks stay paused
+                until the pick window runs out.
+              </p>
+              <div role="status" aria-live="polite" className="mt-4 flex items-center justify-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-gold animate-flicker" aria-hidden />
+                <span className="font-display text-sm text-parchment-200">
+                  Opponent is choosing a {draftCardNoun(start.mode)}…
+                </span>
+              </div>
+            </motion.div>
+          </div>
+        ))}
 
       {isDraft && myOffer && !draftSubmitted && !game.result && (
         <DraftOverlay
@@ -1857,6 +1925,8 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           takeBoth={(bsMine?.flags.takeBoth ?? 0) > 0}
           bankedBonus={!!myOffer.banked}
           deadline={draftDeadline}
+          minimized={draftGraceOver}
+          cardNoun={draftCardNoun(start.mode)}
           oppLockedIn={oppLockedIn && !oppDrafting}
           onPick={(i) => {
             if (session.sendDraftPick(i)) setDraftSubmitted(true);

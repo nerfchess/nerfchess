@@ -20,7 +20,9 @@ import {
 
 import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
 
-// Draft-buff categories, presented like the rule categories.
+// Draft-buff categories, presented like the rule categories. Nerf-relief
+// boons are deliberately absent: they only exist in Nerf mode's draft pool
+// and don't belong in the plain buff library.
 const BUFF_CATEGORY_DEFS = [
   { id: "movement", label: "Movement" },
   { id: "pieces", label: "Pieces" },
@@ -29,8 +31,10 @@ const BUFF_CATEGORY_DEFS = [
   { id: "attack", label: "Attack" },
   { id: "info", label: "Info" },
   { id: "draft", label: "Draft manipulation" },
-  { id: "nerf", label: "Nerf relief" },
 ];
+
+// The plain buff library: everything except the nerf-relief boons.
+const PLAIN_BUFFS = ALL_BUFFS.filter((b) => b.category !== "nerf");
 
 export default function CodexPage() {
   const [filters, setFilters] = useState<CodexFilters>(EMPTY_FILTERS);
@@ -61,7 +65,7 @@ export default function CodexPage() {
   // both libraries read the same way: easy/brutal map to tier order.
   const buffFiltered = useMemo(() => {
     const q = filters.search.trim().toLowerCase();
-    const list = ALL_BUFFS.filter(
+    const list = PLAIN_BUFFS.filter(
       (b) =>
         (filters.tier === null || b.tier === filters.tier) &&
         (filters.categories.length === 0 || filters.categories.includes(b.category)) &&
@@ -90,7 +94,7 @@ export default function CodexPage() {
 
   const active = hasActiveFilters(filters);
   const shownCount = library === "rules" ? filtered.length : buffFiltered.length;
-  const totalCount = library === "rules" ? ALL_NERFS.length : ALL_BUFFS.length;
+  const totalCount = library === "rules" ? ALL_NERFS.length : PLAIN_BUFFS.length;
 
   return (
     <main className="min-h-screen pb-20">
@@ -104,7 +108,7 @@ export default function CodexPage() {
         <p className="mt-3 text-parchment-200">
           {library === "rules"
             ? `${ALL_NERFS.length} nerfs in the library. Search by name, effect, or category.`
-            : `${ALL_BUFFS.length} buffs in the library, ordered by the same tiers as the nerfs. Search by name, effect, or category.`}
+            : `${PLAIN_BUFFS.length} buffs in the library, ordered by the same tiers as the nerfs. Search by name, effect, or category.`}
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-2">
           <button

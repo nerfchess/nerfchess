@@ -1187,15 +1187,10 @@ export class GameServer extends DurableObject<Env> {
     // Draft games: extra moves and skips can leave the turn off parity.
     if (match.draft) match.turnColor = nextGame.board.turn;
     if (match.setup.timeSec) match.clocks[session.color] += match.setup.incrementSec * 1000;
-    // Any pending buff offer pauses the game clock: the lock-in window is
-    // free time for both players, enforced by dtDeadline instead.
     const offersPending =
       match.draft && nextGame.buffs
         ? !!nextGame.buffs.players.w.offer || !!nextGame.buffs.players.b.offer
         : false;
-    match.runningSince = nextGame.result || offersPending ? null : now;
-    match.result = nextGame.result;
-    if (nextGame.result) match.completedAt = now;
     const rolledNow = ["w", "b"].some(
       (color) => nextGame.buffs?.players[color as Color].offer && !offersBefore?.[color as Color],
     );
@@ -1203,6 +1198,12 @@ export class GameServer extends DurableObject<Env> {
       if (rolledNow && !nextGame.result) match.dtDeadline = now + draftLockInMs;
       else if (!offersPending) match.dtDeadline = null;
     }
+    // A pending buff offer pauses the game clock only during its free
+    // lock-in window (dtDeadline). Once the window has expired the clock
+    // runs on: deliberating past it costs the straggler's own time.
+    match.runningSince = nextGame.result || (offersPending && match.dtDeadline) ? null : now;
+    match.result = nextGame.result;
+    if (nextGame.result) match.completedAt = now;
     await this.saveMatch(match);
 
     const movePayload = {
@@ -1916,14 +1917,19 @@ export class GameServer extends DurableObject<Env> {
       if (match.runningSince !== null) match.runningSince = now;
       match.turnColor = game.board.turn;
     }
-    // Resume the paused clock once no offer is pending on either side.
+    // Resume the paused clock once no offer is pending on either side, or
+    // once the free lock-in window has already expired (the clock only stays
+    // paused during the window itself).
     const bs = game.buffs;
     const offersPending = !!bs?.players.w.offer || !!bs?.players.b.offer;
-    if (!offersPending) {
-      match.dtDeadline = null;
-      if (match.startedAt && !match.result && match.runningSince === null) {
-        match.runningSince = Date.now();
-      }
+    if (!offersPending) match.dtDeadline = null;
+    if (
+      (!offersPending || !match.dtDeadline) &&
+      match.startedAt &&
+      !match.result &&
+      match.runningSince === null
+    ) {
+      match.runningSince = Date.now();
     }
     await this.saveMatch(match);
     if (resolved) {
@@ -2177,9 +2183,10 @@ export class GameServer extends DurableObject<Env> {
   }
 
   // Lock-in deadline enforcement, run from the alarm. Overdue nerf picks
-  // take the first option; overdue buff offers take the first card, or bank
-  // when every card would arrive dead (a pending nullify makes any pick
-  // strictly worse than banking).
+  // take the first option (the game cannot start without them). Overdue
+  // buff offers are NOT auto-resolved anymore: the offer stays open, the
+  // clock resumes, and the straggler pays for further deliberation with
+  // their own time — their client shows the pick in a side panel.
   private async enforceDraftDeadlines(match: StoredMatch, now: number): Promise<boolean> {
     if (!match.draft || match.result) return false;
     if (match.nerfOptions && !match.startedAt) {
@@ -2192,18 +2199,9 @@ export class GameServer extends DurableObject<Env> {
       return true;
     }
     if (!match.startedAt || !match.dtDeadline || now < match.dtDeadline) return false;
-    const game = this.gameFromMatch(match);
-    if (!game?.buffs) {
-      match.dtDeadline = null;
-      await this.saveMatch(match, false);
-      return true;
-    }
-    for (const color of ["w", "b"] as Color[]) {
-      const ps = game.buffs.players[color];
-      if (!ps.offer || game.result) continue;
-      if ((ps.flags.nullifyIncoming ?? 0) > 0) await this.resolveDraftBank(match, game, color);
-      else await this.resolveDraftPick(match, game, color, 0);
-    }
+    match.dtDeadline = null;
+    if (!match.result && match.runningSince === null) match.runningSince = now;
+    await this.saveMatch(match, false);
     return true;
   }
 

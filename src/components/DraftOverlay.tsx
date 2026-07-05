@@ -17,9 +17,15 @@ interface Props {
   onBank: () => void;
   /** Lock-in deadline (ms epoch). The countdown renders while set. */
   deadline?: number | null;
-  /** Called once when the deadline passes (bot games auto-resolve locally;
-   * online games leave this unset and let the server resolve). */
+  /** Called once when the free lock-in window ends. The offer stays open:
+   * the parent minimizes this overlay to the side and resumes the clock, so
+   * further deliberation costs the player's own time. */
   onExpire?: () => void;
+  /** Free window over: render as a compact side panel instead of a blocking
+   * overlay. The board is visible again and picking still works. */
+  minimized?: boolean;
+  /** What the cards are called in this mode ("buff", or "boon" in nerf mode). */
+  cardNoun?: string;
   /** The opponent resolved their simultaneous draft while you are choosing. */
   oppLockedIn?: boolean;
   /** What we can legitimately show about the opponent's draft. */
@@ -97,9 +103,13 @@ export function DraftOverlay({
   onBank,
   deadline,
   onExpire,
+  minimized,
+  cardNoun = "buff",
   oppLockedIn,
   opponent,
 }: Props) {
+  const noun = cardNoun;
+  const nounCap = noun.charAt(0).toUpperCase() + noun.slice(1);
   const oppOffer = opponent?.offer ?? null;
   // Two-step pick: the first click only selects (highlight); the Confirm
   // button (or a second click on the same card) locks it in. `chosen` is the
@@ -138,19 +148,78 @@ export function DraftOverlay({
     onPick(i);
   };
 
-  // Lock-in deadline with a selection still unconfirmed: submit it, exactly
-  // as if the player had confirmed at the last second. With nothing selected,
-  // defer to onExpire (bot games mirror the server's card-0 auto-resolve
-  // there; online games let the server resolve).
+  // Free window over: the pick stays open, but from here on it runs on the
+  // player's own clock. The parent minimizes the overlay to the side.
   const handleExpire = () => {
     if (committedRef.current || chosen != null) return;
-    if (selected != null) {
-      setChosen(selected);
-      commit(selected);
-      return;
-    }
     onExpire?.();
   };
+
+  if (minimized) {
+    return (
+      <div className="fixed bottom-16 right-3 z-40 w-[min(92vw,19rem)] sm:bottom-4">
+        <motion.div
+          initial={{ opacity: 0, x: 80, scale: 0.9 }}
+          animate={{ opacity: 1, x: 0, scale: 1 }}
+          transition={{ duration: 0.35, ease: "easeOut" }}
+          className="plate border-gold/40 p-3 shadow-plate"
+        >
+          <div className="flex items-center justify-between gap-2">
+            <span className="smallcaps text-[10px] text-parchment-400">
+              {nounCap} draft #{offer.index}
+            </span>
+            <span className="smallcaps text-[9px] text-oxblood-glow">On your clock</span>
+          </div>
+          <p className="mt-1 text-[11px] leading-snug text-parchment-300">
+            {takeBoth
+              ? "Picking any card takes the whole offer."
+              : `Still yours to pick — but the clock is running now.`}
+          </p>
+          <div className="mt-2 space-y-1.5">
+            {offer.cards.map((card, i) => {
+              const def = BUFF_BY_ID[card.id];
+              if (!def) return null;
+              return (
+                <div key={i} className={selected === i ? "ring-2 ring-gold" : ""}>
+                  <BuffCard
+                    buff={def}
+                    tier={card.tier}
+                    compact
+                    onClick={
+                      chosen == null
+                        ? () => (selected === i ? (setChosen(i), commit(i)) : setSelected(i))
+                        : undefined
+                    }
+                  />
+                </div>
+              );
+            })}
+          </div>
+          <div className="mt-2 flex items-center gap-2">
+            {selected != null && chosen == null && (
+              <button
+                onClick={() => {
+                  setChosen(selected);
+                  commit(selected);
+                }}
+                className="btn-leaf flex-1 px-3 py-1.5 font-display text-xs font-semibold tracking-wide"
+              >
+                Confirm pick
+              </button>
+            )}
+            <button
+              onClick={chosen == null ? onBank : undefined}
+              disabled={chosen != null}
+              className="flex-1 border border-white/15 bg-white/[0.03] px-3 py-1.5 font-display text-[11px] font-semibold tracking-wide text-parchment-200 transition hover:border-gold/50 hover:text-gold-leaf disabled:opacity-40"
+              title="Skip this draft; your next one pulls from a tier higher"
+            >
+              Skip &amp; bank
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4">
@@ -160,7 +229,7 @@ export function DraftOverlay({
         className="plate w-full max-w-2xl max-h-[90dvh] overflow-y-auto p-6 sm:p-8 lg:max-w-3xl"
       >
         <div className="flex items-center justify-between gap-4">
-          <div className="smallcaps text-[11px] text-parchment-400">Buff draft #{offer.index}</div>
+          <div className="smallcaps text-[11px] text-parchment-400">{nounCap} draft #{offer.index}</div>
           {oppLockedIn && (
             <div
               role="status"
@@ -174,16 +243,21 @@ export function DraftOverlay({
           )}
         </div>
         <h2 className="font-display text-3xl text-parchment mt-1">
-          {takeBoth ? "Take your cards" : "Choose a buff"}
+          {takeBoth ? "Take your cards" : `Choose a ${noun}`}
         </h2>
         <p className="mt-1 text-sm text-parchment-300">
           {takeBoth
-            ? "A draft-manipulation buff lets you take every card in this offer."
+            ? "A draft-manipulation card lets you take every card in this offer."
             : "Pick one card, or skip and bank the draft to pull from one tier higher next time."}
           {bankedBonus && " This draft rolled a tier higher thanks to your banked skip."}
         </p>
         {deadline != null && (
-          <LockInCountdown deadline={deadline} onExpire={handleExpire} className="mt-3" />
+          <>
+            <LockInCountdown deadline={deadline} onExpire={handleExpire} className="mt-3" />
+            <p className="mt-1 text-[10px] text-parchment-400">
+              When the timer runs out this panel moves aside and further thinking costs your own time.
+            </p>
+          </>
         )}
 
         <div className={`mt-5 grid gap-3 lg:gap-4 ${offer.cards.length >= 3 ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>

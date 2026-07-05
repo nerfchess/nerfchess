@@ -14,6 +14,7 @@ export function MobileBuffDrawer({
   held,
   usable,
   autoCloseWhen,
+  label = "Buffs",
   children,
 }: {
   /** Cards you currently hold (spent ones included — they stay on record). */
@@ -22,6 +23,8 @@ export function MobileBuffDrawer({
   usable: number;
   /** Collapse the drawer while true (a buff is targeting on the board). */
   autoCloseWhen?: boolean;
+  /** Drawer title ("Buffs", or "Boons" in nerf mode). */
+  label?: string;
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
@@ -48,7 +51,7 @@ export function MobileBuffDrawer({
           className="flex h-11 w-full items-center justify-between px-4 transition-colors duration-150 hover:bg-white/[0.04] active:bg-white/[0.07]"
         >
           <span className="flex items-center gap-2 smallcaps text-[10px] text-parchment-400">
-            Buffs
+            {label}
             {usable > 0 && (
               <span className="grid h-4 min-w-[1rem] place-items-center rounded-full bg-gold px-1 font-mono text-[9px] font-bold text-ink-950">
                 {usable}

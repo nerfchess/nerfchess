@@ -16,6 +16,12 @@ import { RNG } from "./rng";
 // - absent: the legacy merged ruleset (kept so saved games still replay).
 export type DraftMode = "nerf" | "buff";
 
+/** What the draftable cards are called in each section: nerf mode's cards are
+ * "boons" (they relieve or offset your handicap), everywhere else "buffs". */
+export function draftCardNoun(mode?: DraftMode): "boon" | "buff" {
+  return mode === "nerf" ? "boon" : "buff";
+}
+
 export type BuffCategory =
   | "movement" // new ways for pieces to move
   | "pieces" // summons, revivals, promotions, conversions

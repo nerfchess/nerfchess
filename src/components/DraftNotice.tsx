@@ -25,11 +25,14 @@ export function DraftNotice({
   buffs,
   banked,
   hidden,
+  cardNoun = "buff",
 }: {
   buffs: BuffInstance[];
   banked: boolean;
   /** Never name cards (hidden held-buff visibility model). */
   hidden?: boolean;
+  /** What the cards are called ("buff", or "boon" in nerf mode). */
+  cardNoun?: string;
 }) {
   const [notices, setNotices] = useState<Notice[]>([]);
   const nextKey = useRef(0);
@@ -52,7 +55,7 @@ export function DraftNotice({
       for (const inst of buffs.slice(prevCount.current)) {
         if (inst.spent) arrivedSpent += 1;
         const name = !hidden ? BUFF_BY_ID[inst.id]?.name : undefined;
-        texts.push(name ? `Opponent drafted ${name}` : "Opponent drafted a buff");
+        texts.push(name ? `Opponent drafted ${name}` : `Opponent drafted a ${cardNoun}`);
       }
     }
     prevCount.current = count;
@@ -61,7 +64,7 @@ export function DraftNotice({
     // A held card flipping to spent (beyond instants that arrive spent) means
     // the opponent fired an activated buff.
     if (spentCount - prevSpent.current - arrivedSpent > 0) {
-      texts.push("Opponent used a buff");
+      texts.push(`Opponent used a ${cardNoun}`);
     }
     prevSpent.current = spentCount;
     if (texts.length === 0) return;
