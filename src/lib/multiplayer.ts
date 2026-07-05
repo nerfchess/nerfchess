@@ -429,18 +429,35 @@ export class MPSession {
   private wakeListenersOn = false;
 
   private readonly onWake = () => {
-    // Browser came back online / tab became visible: retry immediately.
-    if (this.reconnectTimer !== null) {
-      window.clearTimeout(this.reconnectTimer);
-      this.reconnectTimer = null;
+    // The tab came back to the foreground (mobile app-switch, bfcache restore,
+    // regained focus, back online). Mobile freezes the tab and often leaves a
+    // ZOMBIE socket that still reads OPEN while the server already detached the
+    // seat (webSocketClose fired server-side, onclose never fired here). So
+    // reconnect off the socket STATE, not off a pending timer.
+    if (this.destroyed || !this.autoReconnect) return;
+    if (!this.seat && !this.watchingId && !this.searching) return;
+    // Ignore the "hidden" half of a visibilitychange (we only act on wake).
+    if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
+    if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
+      if (this.reconnectTimer !== null) {
+        window.clearTimeout(this.reconnectTimer);
+        this.reconnectTimer = null;
+      }
       void this.tryReconnect();
+      return;
     }
+    // Socket claims OPEN but may be dead after a freeze: poke it. A live server
+    // answers with a clock/state frame; a dead one triggers onclose -> reconnect.
+    this.requestClocks();
   };
 
   private addWakeListeners() {
     if (this.wakeListenersOn || typeof window === "undefined") return;
     this.wakeListenersOn = true;
     window.addEventListener("online", this.onWake);
+    window.addEventListener("focus", this.onWake);
+    window.addEventListener("pageshow", this.onWake); // bfcache restore (iOS return path)
+    window.addEventListener("resume", this.onWake); // mobile web shells
     document.addEventListener("visibilitychange", this.onWake);
   }
 
@@ -448,6 +465,9 @@ export class MPSession {
     if (!this.wakeListenersOn || typeof window === "undefined") return;
     this.wakeListenersOn = false;
     window.removeEventListener("online", this.onWake);
+    window.removeEventListener("focus", this.onWake);
+    window.removeEventListener("pageshow", this.onWake);
+    window.removeEventListener("resume", this.onWake);
     document.removeEventListener("visibilitychange", this.onWake);
   }
 
@@ -530,6 +550,10 @@ export class MPSession {
         opened = true;
         window.clearTimeout(failTimer);
         this.heartbeat = window.setInterval(() => this.sendFrame("p"), 10000);
+        // Attach wake listeners now (not lazily after an onclose). On mobile the
+        // socket can die during a freeze without ever firing onclose, so the
+        // foreground-return handlers must already be armed to detect the zombie.
+        this.addWakeListeners();
         resolve();
       };
 
