@@ -5,10 +5,12 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Bell, LogOut, Mail, Search, Settings, Shield, Swords, User, UserPlus } from "lucide-react";
 import { Logo } from "@/components/Logo";
+import { MobileNavMenu } from "@/components/MobileNavMenu";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { PlayerSearch } from "@/components/PlayerSearch";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { AccountUser, ensureAccount, logout } from "@/lib/authClient";
+import { playChallenge } from "@/lib/sounds";
 
 // Site-wide header, Lichess-style: main nav on the left; on the right a user
 // search, incoming challenges, notifications, and the account menu.
@@ -33,16 +35,20 @@ type HeaderChallenge = {
 
 type Menu = "search" | "challenges" | "bell" | "profile" | null;
 
-type NavLink = { href: string; label: string; menu?: { href: string; label: string }[] };
+type NavMenuItem = { href: string; label: string; className?: string };
+type NavLink = { href: string; label: string; menu?: NavMenuItem[] };
 
-const PLAY_MENU_LINKS = [
+const PLAY_MENU_LINKS: NavMenuItem[] = [
   { href: "/lobby", label: "Create lobby game" },
   { href: "/friend", label: "Challenge a friend" },
   { href: "/tournaments", label: "Arena tournaments" },
 ];
 
-const WATCH_MENU_LINKS = [
-  { href: "/tv", label: "Nerf TV" },
+// Watch splits by mode: each TV entry wears its mode color and opens the TV
+// page filtered to that pool's live games.
+const WATCH_MENU_LINKS: NavMenuItem[] = [
+  { href: "/tv?mode=nerf", label: "Nerf TV", className: "text-mode-nerfGlow" },
+  { href: "/tv?mode=buff", label: "Buff TV", className: "text-mode-buffGlow" },
   { href: "/analysis", label: "Analysis board" },
 ];
 
@@ -92,6 +98,10 @@ export function SiteHeader({ active }: { active?: string }) {
   const [unread, setUnread] = useState(0);
   const [challenges, setChallenges] = useState<HeaderChallenge[]>([]);
   const rightRef = useRef<HTMLDivElement | null>(null);
+  // Challenge IDs already seen by this header instance: a challenge that
+  // arrives while the page is open gets the lichess challenge sound. Null
+  // until the first poll so a pending challenge never dings on page load.
+  const knownChallengesRef = useRef<Set<string> | null>(null);
 
   const refreshSocial = useCallback(async () => {
     try {
@@ -103,6 +113,9 @@ export function SiteHeader({ active }: { active?: string }) {
       }
       if (chalRes.ok) {
         const data = (await chalRes.json()) as { challenges: HeaderChallenge[] };
+        const known = knownChallengesRef.current;
+        if (known && data.challenges.some((c) => !known.has(c.id))) playChallenge();
+        knownChallengesRef.current = new Set(data.challenges.map((c) => c.id));
         setChallenges(data.challenges);
       }
     } catch {}
@@ -200,6 +213,9 @@ export function SiteHeader({ active }: { active?: string }) {
   return (
     <nav className="flex items-center justify-between gap-3 px-5 sm:px-10 py-5 sm:py-6">
       <div className="flex min-w-0 items-center gap-2 sm:gap-5">
+        {/* Mobile hamburger, left of the wordmark: opens every destination on
+            phones and tablets, where the inline nav below is hidden. */}
+        <MobileNavMenu align="left" hideAt="md" />
         <Logo />
         <div className="hidden items-center gap-1 text-sm font-body font-medium md:flex">
           {NAV_LINKS.map((link) =>
@@ -222,7 +238,10 @@ export function SiteHeader({ active }: { active?: string }) {
                       <Link
                         key={item.href}
                         href={item.href}
-                        className="block px-4 py-2 text-sm text-parchment-100 transition-colors hover:bg-white/5 hover:text-parchment-50"
+                        className={
+                          "block px-4 py-2 text-sm transition-colors hover:bg-white/5 " +
+                          (item.className ?? "text-parchment-100 hover:text-parchment-50")
+                        }
                       >
                         {item.label}
                       </Link>
@@ -370,7 +389,9 @@ export function SiteHeader({ active }: { active?: string }) {
               aria-haspopup="menu"
               aria-expanded={menu === "profile"}
             >
-              {user.username}
+              {/* The name is dead weight at phone widths and can collide with
+                  the wordmark; the avatar alone opens the menu there. */}
+              <span className="hidden sm:inline">{user.username}</span>
               <PlayerAvatar name={user.username} avatar={user.avatar} size={24} className="rounded-full" />
             </button>
             {menu === "profile" && (

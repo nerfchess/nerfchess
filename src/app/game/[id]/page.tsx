@@ -407,18 +407,23 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
       blackMs={blackMs}
       activeColor={result ? null : board.turn}
       statusLabel={
-        (reconnecting
-          ? "Reconnecting… · "
-          : "") +
-        (isDraft
-          ? setup.mode === "buff"
-            ? "Buff mode · "
-            : setup.mode === "nerf"
-              ? "Nerf mode · "
-              : "Draft · "
-          : "") +
-        (result ? describeResult(result) : setup.started ? "Live game" : "Waiting for players") +
-        (watchers > 0 ? ` · ${watchers} watching` : "")
+        <>
+          {reconnecting ? "Reconnecting… · " : ""}
+          {isDraft && (
+            <>
+              {setup.mode === "buff" ? (
+                <span className="text-mode-buffGlow">Buff mode</span>
+              ) : setup.mode === "nerf" ? (
+                <span className="text-mode-nerfGlow">Nerf mode</span>
+              ) : (
+                "Draft"
+              )}
+              {" · "}
+            </>
+          )}
+          {result ? describeResult(result) : setup.started ? "Live game" : "Waiting for players"}
+          {watchers > 0 ? ` · ${watchers} watching` : ""}
+        </>
       }
       nerfs={nerfs}
       visual={
@@ -429,6 +434,8 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
               shieldedSquares: zones.shielded,
               wardSquares: zones.ward,
               strikeSquares: zones.strike,
+              walnutSquares: zones.walnut,
+              lockedSquares: zones.locked,
             }
           : undefined
       }
@@ -719,7 +726,7 @@ function GameShell({
   whiteMs: number;
   blackMs: number;
   activeColor: Color | null;
-  statusLabel: string;
+  statusLabel: React.ReactNode;
   nerfs: Partial<Record<Color, string>> | null;
   // Draft spectating: public zone effects painted on the board.
   visual?: React.ComponentProps<typeof Board>["visual"];
@@ -728,7 +735,7 @@ function GameShell({
   return (
     <main className="min-h-screen">
       <SiteNav />
-      <div className="mx-auto w-full max-w-[1100px] px-3 pb-10 sm:px-6">
+      <div className="mx-auto w-full max-w-[1200px] px-3 pb-10 sm:px-6">
         <div className="mb-2 flex items-center justify-between gap-3">
           <div className="smallcaps text-[11px] text-parchment-400">
             {rated ? `Rated ${timeControl ? `${timeControl} · ` : ""}` : ""}
@@ -783,13 +790,18 @@ function GameShell({
               </div>
             )}
           </div>
-          <div className="sm:w-56 sm:shrink-0">
-            <MoveList
-              moves={history}
-              currentPly={currentPly}
-              onPlyChange={onPlyChange}
-              compact
-            />
+          <div className="sm:w-64 sm:shrink-0">
+            {/* Fixed-height wrapper: the compact MoveList fills it and
+                scrolls internally, so long games never push the rail (or
+                the page) past the viewport. */}
+            <div className="h-64 xl:h-72">
+              <MoveList
+                moves={history}
+                currentPly={currentPly}
+                onPlyChange={onPlyChange}
+                compact
+              />
+            </div>
             {rail}
           </div>
         </div>

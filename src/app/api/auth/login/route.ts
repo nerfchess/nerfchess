@@ -20,14 +20,18 @@ export async function POST(request: Request) {
   } catch {
     return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
   }
+  // The username field doubles as "username or email": an @ means the
+  // account is looked up by its sign-in email instead.
   const username = typeof body.username === "string" ? body.username.trim() : "";
   const password = typeof body.password === "string" ? body.password : "";
+  const identifier = username.toLowerCase();
+  const byEmail = identifier.includes("@");
 
   const db = await getDb();
 
   // Brute-force protection: too many recent failures for this username or
   // from this IP blocks further attempts until the window passes.
-  const userKey = `u:${username.toLowerCase()}`;
+  const userKey = `u:${identifier}`;
   const ip = request.headers.get("CF-Connecting-IP");
   const ipKey = ip ? `ip:${ip}` : null;
   if (
@@ -41,8 +45,11 @@ export async function POST(request: Request) {
   }
 
   const user = await db
-    .prepare("SELECT id, username, password_hash, role, banned_until FROM users WHERE username_lower = ?")
-    .bind(username.toLowerCase())
+    .prepare(
+      `SELECT id, username, password_hash, role, banned_until FROM users
+       WHERE ${byEmail ? "email" : "username_lower"} = ?`,
+    )
+    .bind(identifier)
     .first<{ id: string; username: string; password_hash: string; role: string; banned_until: number | null }>();
 
   if (!user || !(await verifyPassword(password, user.password_hash))) {

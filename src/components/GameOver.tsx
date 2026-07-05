@@ -25,6 +25,11 @@ interface Props {
   // Online games negotiate rematches over the wire: "offered" = waiting for
   // the opponent, "incoming" = the opponent wants one.
   rematchStatus?: "none" | "offered" | "incoming";
+  // Online games: the opponent's socket has been gone past the server's
+  // grace period, so a rematch offer has nobody to answer it.
+  opponentLeft?: boolean;
+  // Withdraw a pending rematch offer (shown once the opponent has left).
+  onCancelRematch?: () => void;
   // When true (the "keep opponent rules hidden" setting), the opponent's rule
   // starts face-down behind a "Reveal opponent's nerf" button.
   opponentHidden?: boolean;
@@ -121,20 +126,25 @@ function BuffFeedbackRow({ buff, gameId }: { buff: BuffInstance; gameId?: string
 
   if (!def) return null;
   return (
-    <li className="flex items-center justify-between gap-2 py-1">
-      <span className="flex min-w-0 items-center gap-2">
-        <span
-          className={`shrink-0 border px-1 font-display text-[10px] font-bold tier-bg-${buff.tier} tier-${buff.tier}`}
-          title={`Tier ${buff.tier}: ${TIER_LABEL[buff.tier]}`}
-          aria-hidden
-        >
-          {TIER_ROMAN[buff.tier]}
+    <li className="py-1">
+      <div className="flex items-center justify-between gap-2">
+        <span className="flex min-w-0 items-center gap-2">
+          <span
+            className={`shrink-0 border px-1 font-display text-[10px] font-bold tier-bg-${buff.tier} tier-${buff.tier}`}
+            title={`Tier ${buff.tier}: ${TIER_LABEL[buff.tier]}`}
+            aria-hidden
+          >
+            {TIER_ROMAN[buff.tier]}
+          </span>
+          <span className="min-w-0 truncate text-xs text-parchment-200">{def.name}</span>
         </span>
-        <span className="min-w-0 truncate text-xs text-parchment-200" title={def.description}>
-          {def.name}
-        </span>
-      </span>
-      <VoteThumbs vote={vote} onVote={cast} />
+        <VoteThumbs vote={vote} onVote={cast} />
+      </div>
+      {/* The rule text always shows — a card's effect should never hide
+          behind a hover tooltip. */}
+      <p className="mt-0.5 text-left text-[10px] leading-snug text-parchment-400">
+        {def.description}
+      </p>
     </li>
   );
 }
@@ -187,6 +197,8 @@ export function GameOver({
   onNewGame,
   onReview,
   rematchStatus = "none",
+  opponentLeft = false,
+  onCancelRematch,
   opponentHidden = false,
   moves,
   playerNames,
@@ -426,25 +438,49 @@ export function GameOver({
           </div>
         )}
 
-        <div className="mt-6 grid gap-2 sm:grid-cols-2">
-          <button
-            ref={primaryRef}
-            type="button"
-            onClick={onRematch}
-            disabled={rematchStatus === "offered"}
-            className={
-              "rounded-sm px-5 py-2.5 font-display " +
-              (rematchStatus === "offered"
-                ? "btn-ghost opacity-70 cursor-default"
-                : "btn-leaf" + (rematchStatus === "incoming" ? " animate-flicker" : ""))
-            }
+        {opponentLeft && (
+          <p
+            role="status"
+            className="mt-5 flex items-center justify-center gap-2 text-xs text-oxblood-glow"
           >
-            {rematchStatus === "offered"
-              ? "Rematch offered…"
-              : rematchStatus === "incoming"
-              ? "Accept rematch"
-              : "Rematch"}
-          </button>
+            <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-oxblood-glow" />
+            Opponent left the game
+            {rematchStatus === "offered" ? ": your rematch offer has nobody to answer it." : "."}
+          </p>
+        )}
+
+        <div className="mt-6 grid gap-2 sm:grid-cols-2">
+          {rematchStatus === "offered" && opponentLeft && onCancelRematch ? (
+            // The opponent is gone, so "waiting" is a dead end: offer the way
+            // out instead.
+            <button
+              ref={primaryRef}
+              type="button"
+              onClick={onCancelRematch}
+              className="rounded-sm px-5 py-2.5 btn-ghost font-display"
+            >
+              Cancel rematch offer
+            </button>
+          ) : (
+            <button
+              ref={primaryRef}
+              type="button"
+              onClick={onRematch}
+              disabled={rematchStatus === "offered"}
+              className={
+                "rounded-sm px-5 py-2.5 font-display " +
+                (rematchStatus === "offered"
+                  ? "btn-ghost opacity-70 cursor-default"
+                  : "btn-leaf" + (rematchStatus === "incoming" ? " animate-flicker" : ""))
+              }
+            >
+              {rematchStatus === "offered"
+                ? "Rematch offered…"
+                : rematchStatus === "incoming"
+                ? "Accept rematch"
+                : "Rematch"}
+            </button>
+          )}
           <button
             type="button"
             onClick={onNewGame}

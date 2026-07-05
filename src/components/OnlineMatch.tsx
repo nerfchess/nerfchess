@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { motion } from "framer-motion";
 import { type CSSProperties, useEffect, useMemo, useRef, useState } from "react";
 import { Board, QueuedPremove } from "@/components/Board";
 import { BoardPlayerRow } from "@/components/BoardPlayerRow";
+import { BuffUsedToast } from "@/components/BuffUsedToast";
 import { BuffDock, EnemyBuffModal, TargetingBanner, useBuffTargeting } from "@/components/BuffDock";
 import { ChatPanel } from "@/components/ChatPanel";
 import { ClockPill } from "@/components/ClockPill";
@@ -20,11 +22,12 @@ import { SettingsPanel } from "@/components/SettingsPanel";
 import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
 import type { BuffOffer } from "@/engine/buff";
 import { BUFF_BY_ID } from "@/engine/buffs/library";
-import { cloneBoard, findKing, isInCheck, makeMove, moveToUCI } from "@/engine/board";
+import { cloneBoard, findKing, isInCheck, makeMove, moveFromUCI, moveToUCI } from "@/engine/board";
+import { draftCardNoun } from "@/engine/buff";
 import { computeMoveRisks } from "@/engine/moveSafety";
 import { loadSettings } from "@/lib/settings";
 import type { GameContext, Nerf } from "@/engine/nerf";
-import { IMPLEMENTED_BY_ID, PLAYABLE_NERFS } from "@/engine/nerfs/library";
+import { IMPLEMENTED_BY_ID, openingNerfPool } from "@/engine/nerfs/library";
 import {
   currentHint,
   NerfGame,
@@ -77,7 +80,8 @@ function moveKey(move: Move): string {
 }
 
 function pickRandomNerf(): Nerf {
-  const pool = PLAYABLE_NERFS.filter((d) => d.id !== "lucky");
+  // Fallback for an unknown server nerf id; respects the opening tier cap.
+  const pool = openingNerfPool();
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
@@ -100,7 +104,12 @@ function buildGameFromStart(start: MPStart): NerfGame {
     return next;
   }
   for (const uci of start.moves ?? []) {
-    const move = legalMoves(next).find((candidate) => moveToUCI(candidate) === uci);
+    // Server-validated moves the replica cannot regenerate (the opponent's
+    // hidden rule can force passes and other flows we cannot predict) are
+    // applied raw rather than stranding the replay mid-game.
+    const move =
+      legalMoves(next).find((candidate) => moveToUCI(candidate) === uci) ??
+      moveFromUCI(next.board, uci);
     if (!move) return next;
     next = playMove(next, move);
   }
@@ -153,6 +162,10 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   // game exists. While it is unresolved there is no game to build (the
   // server holds the match un-started and the clocks off).
   const [nerfDraft, setNerfDraft] = useState<MPNerfDraft | null>(() => start.nerfDraft ?? null);
+  // Two-step nerf pick: the first click only selects; Confirm (or a second
+  // click on the same card) sends it. Purely client-side, the server still
+  // receives the same single pick message.
+  const [nerfSelected, setNerfSelected] = useState<number | null>(null);
   const [game, setGame] = useState<NerfGame | null>(() =>
     start.nerfDraft ? null : buildGameFromStart(start),
   );
@@ -186,8 +199,18 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   // CLAIM_DELAY_AFTER_GONE_MS the claim buttons appear (server re-checks).
   const [opponentGone, setOpponentGone] = useState(false);
   const [claimReady, setClaimReady] = useState(false);
-  // Seconds left on my first-move grace window (null = not in the window).
-  const [graceSecondsLeft, setGraceSecondsLeft] = useState<number | null>(null);
+  // Transient toast naming and explaining a card the opponent just played,
+  // so its effect on the board is never a mystery.
+  const [oppUsedCard, setOppUsedCard] = useState<{
+    card: { id: string; tier: number };
+    label: string;
+  } | null>(null);
+  const oppUsedTimerRef = useRef<number | null>(null);
+  const showOppUsedCard = (card: { id: string; tier: number }, label: string) => {
+    setOppUsedCard({ card, label });
+    if (oppUsedTimerRef.current) window.clearTimeout(oppUsedTimerRef.current);
+    oppUsedTimerRef.current = window.setTimeout(() => setOppUsedCard(null), 7000);
+  };
   // Voluntary rule reveals: mine (button flow) and the opponent's (event).
   const [myRevealState, setMyRevealState] = useState<"hidden" | "confirm" | "revealed">(() =>
     start.revealed?.[start.color] ? "revealed" : "hidden",
@@ -207,6 +230,26 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   const [draftDeadline, setDraftDeadline] = useState<number | null>(() => start.dtDeadline ?? null);
   // The opponent resolved their simultaneous draft while mine is still open.
   const [oppLockedIn, setOppLockedIn] = useState(false);
+  // Their resolution was a bank rather than a pick (refines the badge copy).
+  const [oppBanked, setOppBanked] = useState(false);
+  // The free lock-in window has run out: the draft moves to a side panel,
+  // the board comes back, and the clock runs — deliberating past the window
+  // costs the straggler's own time (the server resumes the clock too).
+  const [draftGraceOver, setDraftGraceOver] = useState(false);
+  useEffect(() => {
+    if (draftDeadline == null) {
+      setDraftGraceOver(true);
+      return;
+    }
+    const left = draftDeadline - Date.now();
+    if (left <= 0) {
+      setDraftGraceOver(true);
+      return;
+    }
+    setDraftGraceOver(false);
+    const id = window.setTimeout(() => setDraftGraceOver(true), left + 50);
+    return () => window.clearTimeout(id);
+  }, [draftDeadline]);
 
   const boardShellRef = useRef<HTMLDivElement | null>(null);
   const recordedResult = useRef(false);
@@ -235,6 +278,25 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   const setPendingLocalMove = (pending: PendingLocalMove | null) => {
     pendingLocalMoveRef.current = pending;
     setPendingLocalMoveState(pending);
+  };
+
+  // Replica drift recovery: when the server accepts a move our replica cannot
+  // reproduce (buff-granted moves, dropped frames) or rejects one of ours as
+  // stale, never strand the board. Log the desync, show a transient notice,
+  // and pull the full authoritative state; the replayed `start` frame rebuilds
+  // the game and clears the notice. Rate-limited so a persistent mismatch
+  // cannot spin the socket.
+  const lastResyncAtRef = useRef(0);
+  const resyncFromServer = (reason: string) => {
+    console.error(`[online] board desynced from server (${reason}); requesting authoritative state`);
+    setError("Board out of sync, refreshing from the server…");
+    setPendingLocalMove(null);
+    setAwaitingPremoveAck(false);
+    clearPremoves();
+    const now = Date.now();
+    if (now - lastResyncAtRef.current < 2000) return;
+    lastResyncAtRef.current = now;
+    session.resync();
   };
 
   useEffect(() => setMutedState(isMuted()), []);
@@ -332,6 +394,12 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         clearPremoves();
         // A rejected draft frame re-opens the overlay for another try.
         setDraftSubmitted(false);
+        // The server refusing our move as stale or illegal means the local
+        // replica has drifted from the authoritative game: resync instead of
+        // dead-ending on the error message.
+        if (e.code === "stale_ply" || e.code === "illegal_move") {
+          resyncFromServer(`server rejected our move: ${e.code}`);
+        }
       } else if (e.type === "disconnected") {
         setError("Connection lost, reconnecting…");
         setPendingLocalMove(null);
@@ -386,7 +454,23 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         setOpponentGone(false);
         const g = gameRef.current;
         if (!g) return;
-        const lm = legalMoves(g).find((x) => moveToUCI(x) === e.move.u);
+        // The server already validated this move. If the replica cannot
+        // regenerate it (a hidden nerf or buff effect it does not know
+        // about), apply it raw instead of freezing the board — a raw apply
+        // keeps the position, turn, and clocks in sync, where the old
+        // resync-only path could dead-end forever if the rebuilt replay hit
+        // the same blind spot. The ply guard keeps a raw apply from running
+        // on top of missed frames (then a full resync is the right tool).
+        let lm = legalMoves(g).find((x) => moveToUCI(x) === e.move.u);
+        if (!lm && e.move.ply === g.board.history.length + 1) {
+          const raw = moveFromUCI(g.board, e.move.u);
+          if (raw) {
+            console.warn(
+              `[online] applying server-accepted move ${e.move.u} raw (not locally reproducible)`,
+            );
+            lm = raw;
+          }
+        }
         const wasAwaitingPremove = awaitingPremoveAckRef.current;
         const pendingPremove = pendingPremoveRef.current;
         const pendingLocal = pendingLocalMoveRef.current;
@@ -398,11 +482,13 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
             pendingPremove.uci === e.move.u &&
             e.move.ply === pendingPremove.ply + 1);
         if (!lm) {
-          setPendingLocalMove(null);
-          if (wasAwaitingPremove) {
-            setAwaitingPremoveAck(false);
-            clearPremoves();
-          }
+          // The server accepted a move our replica considers illegal (a
+          // buff-granted move it could not regenerate, or any other drift).
+          // Keep the clocks honest and rebuild from the server's replay
+          // rather than leaving the board frozen.
+          setWhiteMs(e.move.wc);
+          setBlackMs(e.move.bc);
+          resyncFromServer(`accepted move ${e.move.u} (ply ${e.move.ply}) is not reproducible locally`);
           return;
         }
         // Draft replicas discard the placeholder offer rolls playMove makes
@@ -513,6 +599,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         // A fresh round of simultaneous offers: restart the lock-in window.
         if (e.offer.deadline) setDraftDeadline(e.offer.deadline);
         setOppLockedIn(false);
+        setOppBanked(false);
         if (!g?.buffs) return;
         // Only frames the server addressed to us carry cards we may see: our
         // own offers always, the opponent's only under picksVisible.
@@ -546,7 +633,16 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           setOppDrafting(false);
           // "Opponent locked in": shown while my own pick is still open.
           setOppLockedIn(true);
-          if (e.resolved.kind === "picked") playNerf();
+          setOppBanked(e.resolved.kind !== "picked");
+          if (e.resolved.kind === "picked") {
+            playNerf();
+            // Instants reveal at pick because their effect already shows on
+            // the board; explain what the card did.
+            const revealed = (e.resolved.cards ?? []).find((c) => "id" in c) as
+              | { id: string; tier: number }
+              | undefined;
+            if (revealed) showOppUsedCard(revealed, `Opponent played a ${draftCardNoun(start.mode)}`);
+          }
         }
         applyGame({ ...g });
       } else if (e.type === "draft-used") {
@@ -560,10 +656,17 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           picks: e.used.picks,
           card: e.used.card,
         });
-        if (e.used.color !== myColor) playNerf();
+        if (e.used.color !== myColor) {
+          playNerf();
+          if (e.used.card) showOppUsedCard(e.used.card, `Opponent used a ${draftCardNoun(start.mode)}`);
+        }
         applyGame({ ...g });
       } else if (e.type === "rematch-offer") {
         setRematchStatus(e.color === myColor ? "offered" : "incoming");
+        // An offer from the opponent is proof of life.
+        if (e.color !== myColor) setOpponentGone(false);
+      } else if (e.type === "rematch-cancelled") {
+        setRematchStatus("none");
       } else if (e.type === "rematched") {
         // Take the new seat and load the fresh game with a clean slate.
         saveOnlineSeat(e.id, { color: e.color, token: e.token });
@@ -868,8 +971,10 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   // sole judge of whether anyone actually flagged.
   useEffect(() => {
     if (!clockEnabled || !game || game.result) return;
-    // Clock paused for a draft lock-in window: no flag can fall due.
-    if (isDraft && (!!game.buffs?.players[myColor].offer || oppDrafting)) return;
+    // Clock paused for a draft lock-in window: no flag can fall due. Once
+    // the free window has expired the clock is live again even with an
+    // unresolved offer, so the flag check must keep running.
+    if (isDraft && !draftGraceOver && (!!game.buffs?.players[myColor].offer || oppDrafting)) return;
     const active = game.board.turn;
     const activeMs = active === "w" ? whiteMs : blackMs;
     let interval: number | undefined;
@@ -884,35 +989,14 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [game, whiteMs, blackMs, clockEnabled, session]);
 
-  useEffect(() => {
-    if (!clockEnabled || !game || game.result) {
-      setGraceSecondsLeft(null);
-      return;
-    }
-    const syncGrace = () => {
-      const active = game.board.turn;
-      const activeMoves = game.board.history.filter((m) => m.color === active).length;
-      const graceLeft = FIRST_MOVE_GRACE_MS - (Date.now() - turnStartedAtRef.current);
-      if (activeMoves === 0 && graceLeft > 0) {
-        if (active === myColor) {
-          const seconds = Math.ceil(graceLeft / 1000);
-          setGraceSecondsLeft((prev) => (prev === seconds ? prev : seconds));
-        } else {
-          setGraceSecondsLeft(null);
-        }
-        return;
-      }
-      setGraceSecondsLeft(null);
-    };
-    syncGrace();
-    const id = window.setInterval(syncGrace, 250);
-    return () => window.clearInterval(id);
-  }, [game, clockEnabled, myColor]);
-
   // ClockPill owns the visible countdown, so the whole match surface does not
   // re-render ten times a second during bullet games.
   useEffect(() => {
     if (!clockEnabled || !game || game.result || !uiSettings.lowTimeWarning) return;
+    // The clock is paused while a draft pick is inside its free window: no
+    // low-time warning should sound mid-selection. After the window the
+    // clock is live and the warning applies again.
+    if (isDraft && !draftGraceOver && (!!game.buffs?.players[myColor].offer || oppDrafting)) return;
     if (myMs >= 20000) {
       lowTimeArmedRef.current = true;
     }
@@ -929,7 +1013,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     }, delay);
     return () => window.clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [myMs, clockEnabled, game, myColor, uiSettings.lowTimeWarning]);
+  }, [myMs, clockEnabled, game, myColor, oppDrafting, uiSettings.lowTimeWarning]);
 
   // Surface the claim buttons once the opponent has stayed gone long enough
   // for the server to accept a claim; hide them the moment they return.
@@ -1045,6 +1129,14 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     if (rematchStatus !== "incoming") setRematchStatus("offered");
   };
 
+  // Withdraw a pending rematch offer (surfaced when the opponent has left, so
+  // the player is not stuck staring at a "waiting" button nobody will answer).
+  const handleCancelRematch = () => {
+    if (rematchStatus !== "offered") return;
+    if (session.cancelRematch()) setRematchStatus("none");
+    else setError("Disconnected from the game server.");
+  };
+
   // Draft games: the opening nerf draft runs before the game exists. Same
   // screen as the bot game: pick one of two nerfs, with the opponent's two
   // options shown on a plate below. The server owns the deal; we only ever
@@ -1056,6 +1148,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     const oppOptions = toNerfs(nerfDraft.options[oppColor] ?? []);
     const picked = nerfDraft.myPick != null ? myOptions[nerfDraft.myPick] ?? null : null;
     const sendPick = (index: number) => {
+      if (nerfDraft.myPick != null) return;
       if (session.sendNerfPick(index)) {
         setError(null);
         setNerfDraft({ ...nerfDraft, myPick: index });
@@ -1072,7 +1165,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           </h1>
           <p className="mt-2 text-sm text-parchment-300 text-center">
             {isNerfMode
-              ? "Pick one of two nerfs. About every ten moves you draft a card that softens or removes it."
+              ? "Pick one of two nerfs. Every six moves you draft a card: a hex that curses your opponent, or a boon or item that helps you."
               : "Every game opens weak: pick one of two nerfs, then draft buffs every few moves to claw your way back to power."}
           </p>
           {error && (
@@ -1080,8 +1173,14 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           )}
           {nerfDraft.deadline != null && (
             <div className="mx-auto mt-4 max-w-sm">
-              {/* The server auto-picks the first option at the deadline. */}
-              <LockInCountdown deadline={nerfDraft.deadline} />
+              {/* At the deadline an unconfirmed selection is submitted as the
+                  pick; with nothing selected the server auto-picks option 0. */}
+              <LockInCountdown
+                deadline={nerfDraft.deadline}
+                onExpire={() => {
+                  if (nerfDraft.myPick == null && nerfSelected != null) sendPick(nerfSelected);
+                }}
+              />
             </div>
           )}
           {picked ? (
@@ -1111,13 +1210,37 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                 {myOptions.map((n, i) => (
                   <button
                     key={n.id}
-                    onClick={() => sendPick(i)}
-                    className="text-left transition hover:-translate-y-1"
+                    type="button"
+                    onClick={() => (nerfSelected === i ? sendPick(i) : setNerfSelected(i))}
+                    className={
+                      "mx-auto block w-full max-w-md sm:max-w-none text-left transition touch-manipulation [@media(hover:hover)]:hover:-translate-y-1" +
+                      (nerfSelected === i
+                        ? " -translate-y-1 ring-2 ring-gold shadow-leaf"
+                        : nerfSelected != null
+                        ? " opacity-60"
+                        : "")
+                    }
                   >
-                    <NerfCard nerf={n} ownerLabel="Pick this nerf" />
+                    <NerfCard
+                      nerf={n}
+                      ownerLabel={nerfSelected === i ? "Selected" : "Pick this nerf"}
+                    />
                   </button>
                 ))}
               </div>
+              {nerfSelected != null && (
+                <div className="mt-4 text-center">
+                  <button
+                    onClick={() => sendPick(nerfSelected)}
+                    className="btn-leaf px-6 py-2.5 font-display text-sm font-semibold tracking-wide"
+                  >
+                    Confirm pick
+                  </button>
+                  <p className="mt-1.5 text-[11px] text-parchment-400">
+                    Clicking the card again also confirms.
+                  </p>
+                </div>
+              )}
             </>
           )}
           {/* Nerf mode: the opponent's nerf is completely hidden; it only
@@ -1159,9 +1282,11 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   const bsTheirs = isDraft ? game.buffs?.players[oppColor] : undefined;
   const myOffer = bsMine?.offer ?? null;
   const zone = isDraft && game.buffs ? draftZones(game, myColor) : null;
-  // The server pauses the match clock while any buff offer is pending (the
-  // lock-in window is free time); freeze the local display the same way.
-  const draftClockPaused = isDraft && !game.result && (!!myOffer || oppDrafting);
+  // The server pauses the match clock while any buff offer is inside its
+  // free lock-in window; freeze the local display the same way. Past the
+  // window the server resumes the clock, so the display runs again.
+  const draftClockPaused =
+    isDraft && !game.result && !draftGraceOver && (!!myOffer || oppDrafting);
   const opponentNerf = revealedOppNerf ?? (myColor === "w" ? game.black.nerf : game.white.nerf);
   const oppNerfShown = !!revealedOppNerf && (liveOppReveal || !uiSettings.hideOpponentReveal);
   // Draft games have no "hidden rule" placeholder: while the opponent's rule
@@ -1169,6 +1294,17 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   // there once revealed (end of game or a voluntary reveal). Buff mode never
   // shows a rule section on either card, there are no nerfs at all.
   const hideOppNerfCard = isBuffMode || (isDraft && !oppNerfShown);
+  // Nerf mode: held boons ride in the same corner card as the nerf, so the
+  // handicap and its reliefs read together at a glance.
+  const myHeldBoons =
+    game.buffs?.mode === "nerf"
+      ? game.buffs.players[myColor].buffs
+          .filter((b) => !b.spent && !b.nullified)
+          .flatMap((b) => {
+            const def = BUFF_BY_ID[b.id];
+            return def ? [{ name: def.name, tier: b.tier, status: def.status?.(b) ?? null }] : [];
+          })
+      : undefined;
   const lastMove = game.board.history[game.board.history.length - 1] ?? null;
   // A held move (confirmation setting) previews on the board before sending.
   const confirmPreviewBoard = confirmMovePending
@@ -1403,7 +1539,18 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         <div className="flex items-center gap-4">
           <div className="smallcaps hidden text-[11px] text-parchment-400 sm:block">
             playing {myColor === "w" ? "White" : "Black"} ·{" "}
-            {isDraft ? (isBuffMode ? "buff mode · " : isNerfMode ? "nerf mode · " : "draft · ") : ""}
+            {isDraft && (
+              <>
+                {isBuffMode ? (
+                  <span className="text-mode-buffGlow">buff mode</span>
+                ) : isNerfMode ? (
+                  <span className="text-mode-nerfGlow">nerf mode</span>
+                ) : (
+                  "draft"
+                )}
+                {" · "}
+              </>
+            )}
             {subtitle}
           </div>
           <button
@@ -1440,7 +1587,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         </div>
       </nav>
 
-      <div className="mx-auto flex w-full max-w-[1280px] flex-1 min-h-0 flex-col gap-2 overflow-hidden px-3 pb-14 sm:px-6 sm:pb-6 xl:max-w-[1600px]">
+      <div className="mx-auto flex w-full max-w-[1360px] flex-1 min-h-0 flex-col gap-2 overflow-hidden px-3 pb-14 sm:px-6 sm:pb-6 xl:max-w-[1680px]">
         {hint && (
           <div
             role="status"
@@ -1458,14 +1605,10 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
             </span>
           </div>
         )}
-        {isDraft && oppDrafting && !game.result && (
-          <div role="status" aria-live="polite" className="plate shrink-0 flex items-center gap-2 p-2 px-3 border-gold/40 bg-gold/10">
-            <span className="w-1.5 h-1.5 rounded-full bg-gold animate-flicker" aria-hidden />
-            <span className="font-display text-sm text-parchment">Your opponent is choosing a buff…</span>
-          </div>
-        )}
+        {/* The opponent-drafting status lives in the waiting overlay below
+            (and inside the draft overlay while my own pick is open). */}
         <div
-          className="grid min-h-0 flex-1 gap-y-2 lg:grid-cols-[340px_auto] lg:justify-center lg:gap-x-4 xl:grid-cols-[380px_auto]"
+          className="grid min-h-0 flex-1 gap-y-2 lg:grid-cols-[380px_auto] lg:justify-center lg:gap-x-4 xl:grid-cols-[420px_auto]"
           style={railHeightStyle}
         >
           <aside className="hidden min-h-0 gap-2 overflow-y-auto lg:grid lg:min-h-[var(--board-height)] lg:max-h-full lg:grid-rows-[auto_minmax(6rem,1fr)_auto] lg:self-start">
@@ -1517,6 +1660,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                 hideNerf={isBuffMode}
                 ownerLabel=""
                 progress={myNerf.progress?.(myState, myCtx) ?? null}
+                boons={myHeldBoons}
                 compact
               />
               {!isBuffMode && revealControl}
@@ -1574,6 +1718,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                                 shieldedSquares: zone.shielded,
                                 wardSquares: zone.ward,
                                 strikeSquares: zone.strike,
+                                walnutSquares: zone.walnut,
                               }
                             : {}),
                         }
@@ -1611,6 +1756,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                     buffs={bsTheirs.buffs}
                     banked={!!bsTheirs.flags.bankBonus}
                     hidden={!picksVisible}
+                    cardNoun={draftCardNoun(start.mode)}
                   />
                 )}
                 {buffTargeting.targeting && buffTargeting.targeting.target.kind === "square" && (
@@ -1619,6 +1765,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                     myColor={myColor}
                     targeting={buffTargeting.targeting}
                     onCancel={buffTargeting.cancel}
+                    onFinish={buffTargeting.finish}
                   />
                 )}
               </div>
@@ -1633,23 +1780,12 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   className="min-w-0 flex-1 !px-0 !py-1"
                 />
                 {clockEnabled && (
-                  <div className="relative shrink-0">
-                    <ClockPill
-                      ms={myColor === "w" ? whiteMs : blackMs}
-                      active={!game.result && !draftClockPaused && game.board.turn === myColor}
-                      startDelayMs={clockStartDelay(myColor)}
-                      compact
-                    />
-                    {graceSecondsLeft != null && (
-                      <div
-                        role="status"
-                        aria-live="polite"
-                        className="pointer-events-none absolute right-0 top-full z-30 mt-1 animate-rise whitespace-nowrap border border-gold/40 bg-ink-700/95 px-2 py-1 shadow-plate backdrop-blur-sm smallcaps text-[10px] text-gold-leaf"
-                      >
-                        Free time · {graceSecondsLeft}s until your clock starts
-                      </div>
-                    )}
-                  </div>
+                  <ClockPill
+                    ms={myColor === "w" ? whiteMs : blackMs}
+                    active={!game.result && !draftClockPaused && game.board.turn === myColor}
+                    startDelayMs={clockStartDelay(myColor)}
+                    compact
+                  />
                 )}
               </div>
               {!isBuffMode && (
@@ -1681,7 +1817,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
             </div>
             <div
               className={
-                "hidden min-h-0 overflow-hidden gap-3 sm:grid sm:h-[var(--board-height)] sm:w-64 sm:shrink-0 " +
+                "hidden min-h-0 overflow-hidden gap-3 sm:grid sm:h-[var(--board-height)] sm:w-72 sm:shrink-0 " +
                 (clockEnabled ? "sm:grid-rows-[auto_minmax(0,1fr)_auto]" : "sm:grid-rows-[minmax(0,1fr)]")
               }
               style={railHeightStyle}
@@ -1702,30 +1838,18 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                 footer={historyActions}
               />
               {clockEnabled && (
-                <div className="relative">
-                  <ClockPill
-                    ms={myColor === "w" ? whiteMs : blackMs}
-                    active={!game.result && !draftClockPaused && game.board.turn === myColor}
-                    startDelayMs={clockStartDelay(myColor)}
-                  />
-                  {/* Overlay, never in flow: the rail clips overflow and this
-                      clock sits on its bottom edge, so the popup hugs the top
-                      of the pill instead of hanging below it. */}
-                  {graceSecondsLeft != null && (
-                    <div
-                      role="status"
-                      aria-live="polite"
-                      className="pointer-events-none absolute bottom-full left-1/2 z-30 mb-1 -translate-x-1/2 animate-rise whitespace-nowrap border border-gold/40 bg-ink-700/95 px-2 py-1 shadow-plate backdrop-blur-sm smallcaps text-[10px] text-gold-leaf"
-                    >
-                      Free time · {graceSecondsLeft}s until your clock starts
-                    </div>
-                  )}
-                </div>
+                <ClockPill
+                  ms={myColor === "w" ? whiteMs : blackMs}
+                  active={!game.result && !draftClockPaused && game.board.turn === myColor}
+                  startDelayMs={clockStartDelay(myColor)}
+                />
               )}
             </div>
           </div>
         </div>
       </div>
+
+      {oppUsedCard && <BuffUsedToast card={oppUsedCard.card} label={oppUsedCard.label} />}
 
       <MobileMoveDrawer
         moves={game.board.history}
@@ -1747,6 +1871,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
 
       {isDraft && game.buffs && (
         <MobileBuffDrawer
+          label={draftCardNoun(start.mode) === "hex" ? "Hexes & boons" : "Buffs"}
           held={game.buffs.players[myColor].buffs.length}
           usable={
             !draftCanAct
@@ -1777,13 +1902,73 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         />
       )}
 
+      {/* Simultaneous draft, my side resolved (pick sent or already applied)
+          but the opponent's is still open: a waiting screen holds while the
+          free window runs. Once it expires the screen shrinks to a corner
+          pill — the board stays usable and the dawdler burns their own
+          clock, so a straggling (or vanished) opponent can never lock this
+          player out of the game. */}
+      {isDraft && !game.result && oppDrafting && (draftSubmitted || !myOffer) &&
+        (draftGraceOver ? (
+          <div className="pointer-events-none fixed bottom-16 right-3 z-40 sm:bottom-4">
+            <motion.div
+              initial={{ opacity: 0, x: 40 }}
+              animate={{ opacity: 1, x: 0 }}
+              role="status"
+              aria-live="polite"
+              className="plate flex items-center gap-2 border-gold/40 px-3 py-2"
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-gold animate-flicker" aria-hidden />
+              <span className="font-display text-xs text-parchment-200">
+                Opponent is still choosing, on their clock now.
+              </span>
+            </motion.div>
+          </div>
+        ) : (
+          /* Deliberately translucent and compact: the pick is done, so the
+             player should see the board underneath while they wait. */
+          <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4">
+            <motion.div
+              initial={{ opacity: 0, y: 12, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              className="plate pointer-events-auto w-full max-w-xs border-gold/30 p-4 text-center"
+            >
+              <div className="smallcaps text-[10px] text-parchment-400">
+                {draftCardNoun(start.mode) === "hex" ? "Hex draft" : "Buff draft"}
+              </div>
+              <h2 className="font-display text-xl text-parchment mt-0.5">
+                Waiting for opponent
+              </h2>
+              <div role="status" aria-live="polite" className="mt-2 flex items-center justify-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-gold animate-flicker" aria-hidden />
+                <span className="font-display text-sm text-parchment-200">
+                  {oppLockedIn
+                    ? oppBanked
+                      ? "Opponent banked their draft."
+                      : "Opponent locked in."
+                    : `Opponent is still choosing a ${draftCardNoun(start.mode)}…`}
+                </span>
+              </div>
+              {draftDeadline != null && (
+                <LockInCountdown deadline={draftDeadline} className="mt-3" />
+              )}
+              <p className="mt-2 text-[10px] leading-snug text-parchment-400">
+                Both clocks stay paused until the pick window runs out.
+              </p>
+            </motion.div>
+          </div>
+        ))}
+
       {isDraft && myOffer && !draftSubmitted && !game.result && (
         <DraftOverlay
           offer={myOffer}
           takeBoth={(bsMine?.flags.takeBoth ?? 0) > 0}
           bankedBonus={!!myOffer.banked}
           deadline={draftDeadline}
+          minimized={draftGraceOver}
+          cardNoun={draftCardNoun(start.mode)}
           oppLockedIn={oppLockedIn && !oppDrafting}
+          oppBanked={oppBanked}
           onPick={(i) => {
             if (session.sendDraftPick(i)) setDraftSubmitted(true);
             else setError("Disconnected from the game server.");
@@ -1828,7 +2013,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           opponentHidden={uiSettings.hideOpponentReveal}
           ratingChange={ratingChange}
           rematchStatus={rematchStatus}
+          opponentLeft={opponentGone}
           onRematch={handleRematch}
+          onCancelRematch={handleCancelRematch}
           onNewGame={onExit}
           onReview={() => setHistoryPly(0)}
           moves={game.board.history}

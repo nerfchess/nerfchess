@@ -1,6 +1,6 @@
 "use client";
 
-import { BuffPick, BuffTarget } from "@/engine/buff";
+import { BuffPick, BuffTarget, draftCardNoun } from "@/engine/buff";
 import { BUFF_BY_ID } from "@/engine/buffs/library";
 import { NerfGame, activateBuff, buffNextTarget } from "@/engine/game";
 import { Color } from "@/engine/types";
@@ -91,9 +91,22 @@ export function useBuffTargeting({
     }
   };
 
+  /** Stop early on a finishable step (Warp Sovereign and friends): the picks
+   * so far already form a complete effect, so fire with what we have. */
+  const finish = () => {
+    if (!targeting || !game) return;
+    if (targeting.target.kind !== "square" || !targeting.target.finishable) return;
+    if (onUse) onUse(targeting.buffIndex, targeting.picks);
+    else {
+      activateBuff(game, myColor, targeting.buffIndex, targeting.picks);
+      onChanged?.();
+    }
+    setTargeting(null);
+  };
+
   const cancel = () => setTargeting(null);
 
-  return { targeting, start, pick, cancel };
+  return { targeting, start, pick, cancel, finish };
 }
 
 /** Floating chip over the board while a buff is picking its square targets:
@@ -103,15 +116,20 @@ export function TargetingBanner({
   myColor,
   targeting,
   onCancel,
+  onFinish,
 }: {
   game: NerfGame;
   myColor: Color;
   targeting: BuffTargeting;
   onCancel: () => void;
+  /** Finishable steps (the picks so far are a complete effect) show a Done
+   * button that fires the buff early instead of picking further targets. */
+  onFinish?: () => void;
 }) {
   const inst = game.buffs?.players[myColor].buffs[targeting.buffIndex];
   const name = (inst && BUFF_BY_ID[inst.id]?.name) ?? "Buff";
   const empty = targeting.target.kind === "square" && targeting.target.squares.length === 0;
+  const finishable = targeting.target.kind === "square" && !!targeting.target.finishable;
   return (
     <div className="pointer-events-none absolute inset-x-0 bottom-2 z-30 flex justify-center px-2">
       <div className="pointer-events-auto flex max-w-full items-center gap-2 border border-gold/50 bg-ink-900/95 px-3 py-1.5 shadow-plate backdrop-blur-sm">
@@ -119,6 +137,14 @@ export function TargetingBanner({
         <span className="min-w-0 truncate font-display text-xs font-semibold text-parchment">
           {name}: {empty ? "no valid targets right now" : targeting.target.label}
         </span>
+        {finishable && onFinish && (
+          <button
+            onClick={onFinish}
+            className="btn-leaf shadow-leaf shrink-0 px-2 py-0.5 font-display text-[10px] font-semibold tracking-wide"
+          >
+            Done
+          </button>
+        )}
         <button
           onClick={onCancel}
           className="btn-ghost shrink-0 px-2 py-0.5 font-display text-[10px] tracking-wide"
@@ -233,6 +259,10 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards 
 
   const bs = game.buffs;
   if (!bs) return null;
+  const noun = draftCardNoun(bs.mode);
+  // Nerf mode's dock holds a mix (hexes, boons, items); "hexes" is the
+  // umbrella noun the mode drafts under.
+  const nounPlural = noun === "hex" ? "hexes" : `${noun}s`;
   const oppColor: Color = myColor === "w" ? "b" : "w";
   const mine = bs.players[myColor].buffs;
   const theirs = bs.players[oppColor].buffs;
@@ -263,15 +293,38 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards 
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.25 }}
         className={
-          "border border-white/10 bg-white/[0.02] px-2 py-1.5 " +
+          "dock-card border border-white/10 bg-white/[0.02] px-2 py-1.5 " +
           (dead ? "opacity-45 " : "") +
           (usable ? "border-gold/30 " : "")
         }
       >
-        <div className="flex items-center gap-1.5">
+        <div
+          // Second input path (additive): drag the usable chip onto a
+          // highlighted board square to pick it. Native HTML5 drag is separate
+          // from the board's pointer-drag, so the click flow is untouched. The
+          // custom dataTransfer type lets the Board react to card drags only.
+          draggable={usable || undefined}
+          onDragStart={
+            usable
+              ? (e) => {
+                  e.dataTransfer.setData("application/x-nerf-card", String(i));
+                  e.dataTransfer.effectAllowed = "move";
+                  // Same handler the Use button calls: engage target-select
+                  // mode so candidate squares light up as drop targets.
+                  onStartUse(i);
+                }
+              : undefined
+          }
+          className={"flex items-center gap-1.5 " + (usable ? "cursor-grab active:cursor-grabbing" : "")}
+        >
           <span className={`min-w-0 flex-1 truncate font-display text-[12px] font-semibold leading-tight tier-${inst.tier}`}>
             {def.name}
           </span>
+          {usable && (
+            <span className="smallcaps shrink-0 rounded-sm border border-verdigris-glow/50 bg-verdigris/15 px-1 py-px text-[8px] font-semibold text-verdigris-glow">
+              Usable
+            </span>
+          )}
           {status && (
             <span className="smallcaps hidden max-w-[7rem] shrink-0 truncate text-[8px] text-gold/80 lg:inline">
               {status}
@@ -322,22 +375,26 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards 
         initial={{ opacity: 0, x: -14 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.25 }}
-        title={def.description}
         className={
-          "flex w-full items-center gap-1.5 border border-white/10 bg-white/[0.02] px-2 py-1 " +
+          "dock-card w-full border border-white/10 bg-white/[0.02] px-2 py-1 " +
           (dead ? "opacity-45" : "")
         }
       >
-        <span className={`min-w-0 flex-1 truncate font-display text-[11px] font-semibold tier-${inst.tier}`}>
-          {def.name}
-        </span>
-        {inst.nullified && <span className="smallcaps shrink-0 text-[8px] text-oxblood-glow">Nullified</span>}
-        {inst.spent && !inst.nullified && <span className="smallcaps shrink-0 text-[8px] text-parchment-400">Used</span>}
-        <span
-          className={`shrink-0 rounded-full border px-1.5 py-px font-display text-[9px] font-bold tier-bg-${inst.tier} tier-${inst.tier}`}
-        >
-          {TIER_ROMAN[inst.tier]}
-        </span>
+        <div className="flex items-center gap-1.5">
+          <span className={`min-w-0 flex-1 truncate font-display text-[11px] font-semibold tier-${inst.tier}`}>
+            {def.name}
+          </span>
+          {inst.nullified && <span className="smallcaps shrink-0 text-[8px] text-oxblood-glow">Nullified</span>}
+          {inst.spent && !inst.nullified && <span className="smallcaps shrink-0 text-[8px] text-parchment-400">Used</span>}
+          <span
+            className={`shrink-0 rounded-full border px-1.5 py-px font-display text-[9px] font-bold tier-bg-${inst.tier} tier-${inst.tier}`}
+          >
+            {TIER_ROMAN[inst.tier]}
+          </span>
+        </div>
+        {/* Rule text always visible, matching your own rows: what a revealed
+            card does must never require a hover. */}
+        <p className="mt-0.5 text-[10px] leading-snug text-parchment-300">{def.description}</p>
       </motion.div>
     );
   };
@@ -388,8 +445,22 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards 
           </div>
         )}
 
+        {/* Pending take-both: the next offer is taken whole, and the player
+            should know before the draft opens, not discover it inside. */}
+        {(bs.players[myColor].flags.takeBoth ?? 0) > 0 && (
+          <div
+            role="status"
+            className="flex items-center gap-2 border border-gold/50 bg-gold/10 px-2 py-1.5"
+          >
+            <span aria-hidden className="h-1.5 w-1.5 shrink-0 bg-gold-leaf animate-flicker" />
+            <span className="font-display text-[11px] font-semibold text-gold-leaf">
+              Next draft: you take BOTH cards
+            </span>
+          </div>
+        )}
+
         <div className="flex items-baseline justify-between gap-2">
-          <span className="smallcaps text-[10px] text-parchment-400">Your buffs</span>
+          <span className="smallcaps text-[10px] text-parchment-400">Your {nounPlural}</span>
           <span className="font-mono text-[10px] tabular-nums text-parchment-400">{mine.length}</span>
         </div>
         {mine.length === 0 && (
@@ -402,7 +473,7 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards 
         {theirs.length > 0 && (
           <>
             <div className="flex items-baseline justify-between gap-2 border-t border-white/10 pt-2">
-              <span className="smallcaps text-[10px] text-parchment-400">Opponent&apos;s buffs</span>
+              <span className="smallcaps text-[10px] text-parchment-400">Opponent&apos;s {nounPlural}</span>
               <span className="font-mono text-[10px] tabular-nums text-parchment-400">{theirs.length}</span>
             </div>
             <div className="flex flex-wrap items-start gap-1">{theirsActive.map(oppEntry)}</div>

@@ -3,6 +3,7 @@ import { attackedBy, findKing, isInCheck, makeMove } from "../board";
 import { FILE, Move, PieceType, RANK, SQ, Square } from "../types";
 import { HAND_AND_GIGABRAIN, MORE_NERFS } from "./more";
 import { EXTRA_NERFS } from "./extras";
+import { EXPANDED_NERFS } from "./expanded";
 
 const cheb = (a: Square, b: Square) =>
   Math.max(Math.abs(FILE(a) - FILE(b)), Math.abs(RANK(a) - RANK(b)));
@@ -43,7 +44,7 @@ export const VEGAN: Nerf = db({
   name: "Vegan",
   description: "You can't capture knights.",
   flavor: "Horses are friends, not food.",
-  tier: 1,
+  tier: 2,
   icon: "leaf",
   implemented: true,
   filterMoves: (moves) => moves.filter((m) => m.captured !== "n"),
@@ -113,7 +114,7 @@ export const THREE_CHECK: Nerf = db({
   name: "Three Check",
   description: "If you have been checked three times total, you lose.",
   flavor: "Three strikes and you're out.",
-  tier: 2,
+  tier: 3,
   icon: "alert-triangle",
   implemented: true,
   progress: (state) => {
@@ -140,7 +141,7 @@ export const SIMP: Nerf = db({
   name: "Simp",
   description: "You lose if you have no queen.",
   flavor: "Without her, what is the point of anything?",
-  tier: 3,
+  tier: 4,
   icon: "heart",
   implemented: true,
   checkLoss: (state, ctx) => {
@@ -331,9 +332,9 @@ export const UNTITLED_DUCK: Nerf = db({
 export const RISING_WATER: Nerf = db({
   id: "rising_water",
   name: "Rising Water",
-  description: "Every 10 of your turns, water rises one rank from rank 1. You can't move underwater pieces or to underwater squares.",
+  description: "Every 10 of your turns, water rises one rank from your back rank. You can't move underwater pieces or to underwater squares.",
   flavor: "The tide is rising.",
-  tier: 7,
+  tier: 5,
   icon: "waves",
   implemented: true,
   init: () => ({ level: 0 }),
@@ -345,8 +346,12 @@ export const RISING_WATER: Nerf = db({
   filterMoves: (moves, state, ctx) => {
     const s = state as { level: number };
     if (s.level <= 0) return moves;
-    // Water rises from white's side (rank 1, rank 2, ...) regardless of color; universal water layer
-    const underwater = (sq: number) => RANK(sq) < s.level;
+    // Water rises from the owner's own back rank, mirrored by color so the
+    // handicap is symmetric: white floods rank 1 upward, black floods rank 8 downward.
+    const underwater =
+      ctx.me === "w"
+        ? (sq: number) => RANK(sq) < s.level
+        : (sq: number) => RANK(sq) > 7 - s.level;
     return moves.filter((m) => !underwater(m.from) && !underwater(m.to));
   },
   visual: (state) => ({ waterRank: (state as { level: number }).level }),
@@ -502,7 +507,7 @@ export const HORSE_TRANQUILIZER: Nerf = db({
   name: "Horse Tranquilizer",
   description: "Your knights can't capture.",
   flavor: "Their hooves are heavy with sleep.",
-  tier: 2,
+  tier: 3,
   icon: "moon",
   implemented: true,
   filterMoves: (moves) => moves.filter((m) => !(m.piece === "n" && m.captured)),
@@ -850,7 +855,7 @@ export const SCENT_OF_BLOOD: Nerf = db({
   name: "The Scent of Blood",
   description: "If one of your pieces can capture, it must: that piece, this turn.",
   flavor: "Once they smell it, nothing else matters.",
-  tier: 7,
+  tier: 6,
   icon: "droplet",
   implemented: true,
   filterMoves: (moves) => {
@@ -923,6 +928,7 @@ export const ALL_IMPLEMENTED: Nerf[] = [
   SCENT_OF_BLOOD,
   ...MORE_NERFS,
   ...EXTRA_NERFS,
+  ...EXPANDED_NERFS,
 ];
 
 // Retired rules: no longer dealt or shown in the Codex, but kept resolvable by

@@ -87,7 +87,10 @@ export const SCHEMA_STATEMENTS: string[] = [
     reviewed INTEGER NOT NULL DEFAULT 0
   )`,
   `CREATE INDEX IF NOT EXISTS idx_chat_flags_created ON chat_flags(reviewed, created_at DESC)`,
-  // Player-submitted rule ideas from the "Suggest a rule" form.
+  // Player-submitted ideas from the "Suggest a nerf or a buff" form.
+  // kind is 'nerf' or 'buff'; pool only applies to buff ideas and records
+  // which draft pool the buff is meant for: 'buff' (Buff mode card) or
+  // 'boon' (Nerf-mode relief boon).
   `CREATE TABLE IF NOT EXISTS rule_suggestions (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
@@ -95,7 +98,9 @@ export const SCHEMA_STATEMENTS: string[] = [
     contact TEXT,
     user_id TEXT,
     username TEXT,
-    created_at INTEGER NOT NULL
+    created_at INTEGER NOT NULL,
+    kind TEXT NOT NULL DEFAULT 'nerf',
+    pool TEXT
   )`,
   `CREATE INDEX IF NOT EXISTS idx_rule_suggestions_created ON rule_suggestions(created_at DESC)`,
   // Player-filed reports (cheating, chat abuse, ...), reviewed by moderators.
@@ -270,6 +275,49 @@ const ADDITIVE_COLUMNS: string[] = [
   `ALTER TABLE games ADD COLUMN ruleset TEXT NOT NULL DEFAULT 'classic'`,
   // Emoji flair shown next to the username (see src/lib/flair.ts).
   `ALTER TABLE users ADD COLUMN flair TEXT`,
+  // Suggestion kind ('nerf' | 'buff') and, for buff ideas, the intended draft
+  // pool ('buff' = Buff mode card, 'boon' = Nerf-mode relief boon). Runtime
+  // additions like users.avatar (see migrations/0003's header) because
+  // ensureSchema may bootstrap the table before any migration runs; the
+  // DEFAULT backfills every pre-existing suggestion as a nerf.
+  `ALTER TABLE rule_suggestions ADD COLUMN kind TEXT NOT NULL DEFAULT 'nerf'`,
+  `ALTER TABLE rule_suggestions ADD COLUMN pool TEXT`,
+  // Optional sign-in email and linked Google account (google_sub is the
+  // stable Google account id from the OAuth id_token). The unique indexes
+  // live here rather than SCHEMA_STATEMENTS because they must run after the
+  // ALTERs on a fresh database.
+  `ALTER TABLE users ADD COLUMN email TEXT`,
+  `ALTER TABLE users ADD COLUMN google_sub TEXT`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email) WHERE email IS NOT NULL`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS idx_users_google_sub ON users(google_sub) WHERE google_sub IS NOT NULL`,
+  // Per-mode rating buckets ("nerf" and "buff") for rated queue games.
+  // Seeded from the games-weighted average of the account's legacy speed
+  // ratings (rating weighted by games in each speed bucket with games
+  // played), falling back to the legacy shared users.rating for accounts
+  // with no speed history. Idempotent (INSERT OR IGNORE) and additive:
+  // accounts whose mode rows already exist are never reseeded, so this
+  // formula only affects accounts seeded after it shipped. Accounts created
+  // later are seeded lazily on first contact by seedCategoryRatings, which
+  // uses the same formula. Supersedes migrations/0013_mode_ratings.sql
+  // (which seeded from the raw legacy rating).
+  `INSERT OR IGNORE INTO user_ratings (user_id, category, rating, rd, vol, peak)
+     SELECT u.id, 'nerf', COALESCE(s.wavg, u.rating), u.rd, u.vol, COALESCE(s.wavg, u.rating)
+     FROM users u
+     LEFT JOIN (
+       SELECT user_id, SUM(rating * games) * 1.0 / SUM(games) AS wavg
+       FROM user_ratings
+       WHERE category IN ('ultrabullet','bullet','blitz','rapid') AND games > 0
+       GROUP BY user_id
+     ) s ON s.user_id = u.id`,
+  `INSERT OR IGNORE INTO user_ratings (user_id, category, rating, rd, vol, peak)
+     SELECT u.id, 'buff', COALESCE(s.wavg, u.rating), u.rd, u.vol, COALESCE(s.wavg, u.rating)
+     FROM users u
+     LEFT JOIN (
+       SELECT user_id, SUM(rating * games) * 1.0 / SUM(games) AS wavg
+       FROM user_ratings
+       WHERE category IN ('ultrabullet','bullet','blitz','rapid') AND games > 0
+       GROUP BY user_id
+     ) s ON s.user_id = u.id`,
 ];
 
 export async function ensureSchema(db: D1Database): Promise<void> {

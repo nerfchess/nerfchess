@@ -5,7 +5,7 @@
 
 import type { PieceType } from "@/engine/types";
 
-export type AvatarSpec = { piece: PieceType; pieceColor: "w" | "b"; bg: string; star?: boolean };
+export type AvatarSpec = { piece: PieceType; pieceColor: "w" | "b"; bg: string; star?: boolean; flower?: boolean };
 
 const PALETTES = [
   { id: "gold", bg: "#7c611f" },
@@ -26,11 +26,16 @@ for (const palette of PALETTES) {
     const id = `${palette.id}_${piece}`;
     AVATAR_IDS.push(id);
     AVATARS[id] = { piece, pieceColor: "w", bg: palette.bg };
-    // A starred twin of every preset, assigned to house accounts only. The
-    // star renders as a faint mark in the avatar's top-right corner. These ids
-    // never appear in the picker and isAvatarId rejects them, so a regular
-    // account cannot claim one.
+    // A starred twin of every preset, kept so any account that ever stored
+    // one still renders. These ids never appear in the picker and isAvatarId
+    // rejects them, so a regular account cannot claim one.
     AVATARS[`${id}_star`] = { piece, pieceColor: "w", bg: palette.bg, star: true };
+    // A flowered twin of every preset, assigned to house-player accounts
+    // only. The flower renders as a small mark in the avatar's bottom-left
+    // corner, so house players are (subtly) recognizable everywhere an
+    // avatar shows: lobby, in-game, spectate, profiles. Like the starred
+    // twins these never appear in the picker and isAvatarId rejects them.
+    AVATARS[`${id}_flower`] = { piece, pieceColor: "w", bg: palette.bg, flower: true };
   }
 }
 
@@ -48,7 +53,7 @@ const DEFAULT_POOL = AVATAR_IDS.filter(
 export const AVATAR_PICKER_IDS = [...DEFAULT_POOL];
 
 export function isAvatarId(value: unknown): value is string {
-  return typeof value === "string" && value in AVATARS && !AVATARS[value].star;
+  return typeof value === "string" && value in AVATARS && !AVATARS[value].star && !AVATARS[value].flower;
 }
 
 // Uploaded profile pictures are stored inline as small data URLs (the client

@@ -56,6 +56,29 @@ export function PlayerAvatar({
           <path d="M12 2l2.6 6.9 7.4.4-5.8 4.7 1.9 7.2L12 17.1 5.9 21.2l1.9-7.2L2 9.3l7.4-.4z" />
         </svg>
       )}
+      {spec.flower && (
+        // House players carry a small flower, kept as muted as the star above
+        // (cream petals, low opacity) so it reads as a quiet mark, not a badge.
+        <svg
+          viewBox="0 0 24 24"
+          style={{
+            position: "absolute",
+            bottom: Math.max(1, Math.round(size * 0.05)),
+            left: Math.max(1, Math.round(size * 0.05)),
+            width: starSize,
+            height: starSize,
+            opacity: 0.4,
+          }}
+          fill="#f3e9c8"
+        >
+          <circle cx="12" cy="6" r="3.1" />
+          <circle cx="17.2" cy="9.8" r="3.1" />
+          <circle cx="15.2" cy="15.8" r="3.1" />
+          <circle cx="8.8" cy="15.8" r="3.1" />
+          <circle cx="6.8" cy="9.8" r="3.1" />
+          <circle cx="12" cy="11.4" r="2.4" fill="#caa94a" />
+        </svg>
+      )}
     </div>
   );
 }

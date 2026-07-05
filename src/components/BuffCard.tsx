@@ -3,6 +3,7 @@
 import { Buff } from "@/engine/buff";
 import { Tier } from "@/engine/nerf";
 import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
+import { GlossaryText } from "@/components/GlossaryText";
 
 const CATEGORY_LABEL: Record<Buff["category"], string> = {
   movement: "Movement",
@@ -13,6 +14,8 @@ const CATEGORY_LABEL: Record<Buff["category"], string> = {
   info: "Insight",
   draft: "Draft",
   nerf: "Nerf-breaker",
+  hex: "Hex",
+  item: "Item",
 };
 
 interface Props {
@@ -26,20 +29,25 @@ interface Props {
   compact?: boolean;
   /** Soft accent glow: this buff can be used right now. */
   glow?: boolean;
+  /** Draft picker only: stagger this card's entrance by the given delay (ms).
+   * Omit to skip the entrance animation (dock / modal contexts). */
+  enterDelayMs?: number;
 }
 
-export function BuffCard({ buff, tier, status, spent, nullified, onClick, compact, glow }: Props) {
+export function BuffCard({ buff, tier, status, spent, nullified, onClick, compact, glow, enterDelayMs }: Props) {
   const t = tier ?? buff.tier;
   const dead = spent || nullified;
   const body = (
     <div
+      style={enterDelayMs != null ? { animationDelay: `${enterDelayMs}ms` } : undefined}
       className={
-        `relative plate overflow-hidden border tier-bg-${t} ` +
+        `relative plate draft-face overflow-hidden border tier-bg-${t} ` +
+        (enterDelayMs != null ? "draft-in " : "") +
         (compact ? "p-3 " : "p-4 ") +
         (dead ? "opacity-45 " : "") +
         (glow && !dead ? "ring-1 ring-gold/40 shadow-leaf " : "") +
         (onClick && !dead
-          ? "cursor-pointer transition hover:border-gold/60 hover:-translate-y-0.5"
+          ? "cursor-pointer hover:border-gold/60 hover:-translate-y-0.5"
           : "")
       }
     >
@@ -59,8 +67,16 @@ export function BuffCard({ buff, tier, status, spent, nullified, onClick, compac
           {TIER_ROMAN[t]}
         </span>
       </div>
-      <p className={`mt-1.5 leading-snug text-parchment/90 ${compact ? "text-[11px]" : "text-[13px]"}`}>
-        {buff.description}
+      {/* Difficulty ornament: the tier label between hairline rules, the same
+          severity treatment nerf cards wear, so both libraries read alike.
+          Dropped in the compact draft/dock cards where space is tight. */}
+      {!compact && (
+        <div className="rule-ornament my-2.5 text-[10px]">
+          <span className="font-display">{TIER_LABEL[t]}</span>
+        </div>
+      )}
+      <p className={`leading-snug text-parchment/90 ${compact ? "mt-1.5 text-[11px]" : "text-[13px]"}`}>
+        <GlossaryText text={buff.description} />
       </p>
       {status && !dead && (
         <div className="mt-1.5 smallcaps text-[10px] text-gold/80">{status}</div>

@@ -5,11 +5,13 @@ import { DurableObject } from "cloudflare:workers";
 import { default as handler } from "./.open-next/worker.js";
 import { moveToUCI } from "./src/engine/board";
 import { BUFF_BY_ID } from "./src/engine/buffs/library";
-import { PLAYABLE_NERFS, pickNerfPair } from "./src/engine/nerfs/library";
+import { PLAYABLE_NERFS, openingNerfPool, pickNerfPair } from "./src/engine/nerfs/library";
 import {
   NerfGame,
   UNRESTRICTED_NERF,
   activateBuff,
+  aiChooseBuffActivation,
+  aiDraftChoice,
   bankDraft,
   buffNextTarget,
   enableDraftMode,
@@ -19,18 +21,55 @@ import {
   playMove,
   resign,
 } from "./src/engine/game";
+import {
+  HOUSE_ROSTER,
+  HousePersona,
+  ensureHouseUsers,
+  houseDraftThinkMs,
+  houseNerfPickIndex,
+  housePersona,
+  houseSeedRating,
+  houseThinkMs,
+  pickHouseMove,
+  pickHouseSeek,
+} from "./src/lib/server/bots";
 import type { BuffInstance, BuffPick, DraftMode } from "./src/engine/buff";
+import { DEFAULT_CADENCE, NERF_MODE_CADENCE } from "./src/engine/draft";
 import type { Move } from "./src/engine/types";
 import { RNG } from "./src/engine/rng";
 import { Color } from "./src/engine/types";
 import { sessionTokenFromCookieHeader, userForSession } from "./src/lib/server/auth";
 import { ensureSchema } from "./src/lib/server/schema";
 import { loadCategoryRatings, recordFinishedGame, RatingChange } from "./src/lib/server/games";
-import { categoryForTimeControl, type SpeedCategory } from "./src/lib/speed";
+import { categoryForTimeControl, type RatingCategory } from "./src/lib/speed";
 import { censorText, findProfanity } from "./src/lib/profanity";
 import { glickoUpdatePair } from "./src/lib/glicko";
 
 type Result = NerfGame["result"];
+
+// Replay compatibility version, stamped on every new match. Bump it whenever
+// an engine constant that feeds the deterministic replay changes (draft
+// cadence, boon/card pools, offer rolling): a stored game recorded under
+// different constants replays into a different stream of offers, so its
+// recorded picks no longer line up and moveByUci fails mid-replay. On load,
+// a started match whose stored replayVersion differs from this constant is
+// ended gracefully as a draw ("server update interrupted this game") through
+// the normal end flow: never silently deleted, never soft-locked.
+// Version history:
+//   1 (implicit) - matches stored before the field existed. They carry no
+//     version to compare, so replay FAILURE is their trigger: if their
+//     replay still succeeds under the current constants they play on
+//     untouched; if it fails they get the same graceful draw ending.
+//   2 - draft cadence moved from 10 to 6 and the nerf-mode boon pool
+//     changed. From here on, a version MISMATCH is the trigger for started
+//     draft games (their replay is known-desynced even when it happens not
+//     to throw).
+//   3 - hexes and items joined the pools: nerf mode now drafts opponent
+//     hexes (60/40 weighted bucket roll inside rollOffer consumes an extra
+//     RNG draw per card), items joined both modes, and the opening nerf
+//     deal is capped at tier 2.
+const REPLAY_VERSION = 3;
+
 type Setup = {
   whiteNerfId: string;
   blackNerfId: string;
@@ -84,9 +123,9 @@ type StoredMatch = {
   spectatorChat?: SpectatorChatEntry[];
   // Colors that voluntarily revealed their rule to the table mid-game.
   revealed?: Partial<Record<Color, boolean>>;
-  // Draft ruleset games. Draft matches are always casual: createMatch never
-  // honors a rated request for them, and the queue only creates casual
-  // Draft matches.
+  // Draft ruleset games. Friend/challenge Draft matches are always casual:
+  // createMatch never honors a rated request. Queue Draft matches are rated
+  // under their mode's rating bucket (see queueJoin).
   draft?: boolean;
   // Which section the draft game runs under: "nerf" (opening nerf pick,
   // nerf-modifier buffs only, slow cadence) or "buff" (no nerfs at all,
@@ -95,6 +134,11 @@ type StoredMatch = {
   mode?: DraftMode;
   // Friend-game setting: both seats see each other's pending offer cards.
   picksVisible?: boolean;
+  // Replay compatibility stamp (see REPLAY_VERSION). Absent = version 1.
+  replayVersion?: number;
+  // Draft cadence the game was created under, persisted so replays keep
+  // using it even after the engine default changes.
+  cadence?: number;
   // Seed for the draft engine RNG (offer rolls). Never sent to any client:
   // it would let a client predict every future offer.
   draftSeed?: number;
@@ -113,6 +157,13 @@ type StoredMatch = {
   // activator's turn and tempo cards insert extra moves or skips, so move
   // parity no longer determines it. Classic games never set this.
   turnColor?: Color;
+  // House-player seats: color -> house user id (see lib/server/bots.ts). A
+  // house seat counts as connected for game start; the alarm plays its moves
+  // and draft picks. Absent on every purely human game.
+  bots?: Partial<Record<Color, string>>;
+  // When the next pending house action (move, opening nerf pick, or buff
+  // offer resolve) lands. Null/absent when no house action is pending.
+  botActAt?: number | null;
 };
 type SessionAttachment = {
   id: string;
@@ -151,12 +202,13 @@ type ClientFrame =
   | { t: "takebackOffer" }
   | { t: "takebackAccept" }
   | { t: "takebackDecline" }
-  | { t: "queue"; d?: { pool?: unknown } }
+  | { t: "queue"; d?: { pool?: unknown; mode?: unknown } }
   | { t: "queueCancel" }
   | { t: "watch"; d?: { id?: unknown } }
   | { t: "watchLeave" }
   | { t: "lobby" }
   | { t: "rematch" }
+  | { t: "rematchCancel" }
   | { t: "chat"; d?: { text?: unknown } }
   | { t: "schat"; d?: { text?: unknown } }
   | { t: "reveal" }
@@ -171,10 +223,16 @@ export interface Env {
   GAME_SERVER: DurableObjectNamespace<GameServer>;
   GAME_SERVER_ORIGINS?: string;
   DB: D1Database;
+  // Postgres (OCI) holding the finished-game archive, reached via Hyperdrive.
+  // Optional so a worker without it still runs (games just aren't archived).
+  HYPERDRIVE?: Hyperdrive;
 }
 
-// Quick-pairing pools for casual Draft matchmaking. Keys are the wire names clients
-// send; keep them in sync with QUEUE_POOL_OPTIONS in the QueueButton UI.
+// Quick-pairing time controls for rated Draft matchmaking. Keys are the wire
+// names clients send; keep them in sync with QUEUE_POOL_OPTIONS in the
+// QueueButton UI. Each time control exists once per mode: the queue runs two
+// separate pools, Nerf and Buff, and only players in the same mode (and time
+// control) ever pair.
 const QUEUE_POOLS: Record<string, { timeSec: number; incrementSec: number }> = {
   "1+0": { timeSec: 60, incrementSec: 0 },
   "2+1": { timeSec: 120, incrementSec: 1 },
@@ -187,19 +245,65 @@ const QUEUE_POOLS: Record<string, { timeSec: number; incrementSec: number }> = {
   "15+10": { timeSec: 900, incrementSec: 10 },
 };
 
+// The two queue pools. Every seek names one explicitly; a missing/unknown
+// mode from an older client falls back to Buff (the only pool that existed
+// before the split). Each pool stakes its own rating bucket.
+const QUEUE_MODES: DraftMode[] = ["nerf", "buff"];
+
 const socketPath = "/socket/v1";
 const globalServerName = "nerfchess-global";
 const disconnectGraceMs = 15 * 1000;
 // How long the opponent must have been disconnected before the remaining
 // player may claim the game by abandonment (claimWin / claimDraw).
 const abandonmentClaimMs = 30 * 1000;
-// Leftover Durable Object storage from the retired house-player system,
-// cleared on first alarm/health check so the lobby never resurrects them.
-const legacyBotKeys = ["bots:seeks", "bots:seeded:v1", "bots:nextGameAt"];
+// House players (see src/lib/server/bots.ts). Storage keys use the "hp:"
+// prefix, distinct from the retired system's "bots:" keys, which were purged
+// in production long ago. Every knob here exists because the first system
+// starved the single-threaded DO (commit 7331763): the roster stands down
+// completely when no human socket is connected, at most one house-vs-house
+// action runs per alarm tick, and games above the caps simply do not start.
+const houseSeeksKey = "hp:seeks";
+const houseSeededKey = "hp:seeded:v1";
+const houseNextFillerKey = "hp:nextFillerAt";
+// Slow heartbeat while at least one human socket is connected; with nobody
+// online there is no heartbeat and the DO goes idle between match deadlines.
+const houseHeartbeatMs = 20 * 1000;
+// Queue presence: keep 2-3 personas seeking across the two pools.
+const houseSeekMin = 2;
+const houseSeekMax = 3;
+const houseSeekTtlMs = 8 * 60 * 1000;
+// Hard caps: at most this many simultaneous house-vs-house filler games, and
+// at most this many unfinished games with any house seat at all. Above the
+// caps, personas leave the queue instead of pairing.
+// Lowered from 2 to 1: house-vs-house filler games exist only for lobby
+// optics and are pure background engine work on the single-threaded DO. One
+// filler still keeps the lobby looking alive while halving that background
+// load. Bump back to 2 if the lobby looks too quiet.
+const houseVsHouseCap = 1;
+const houseTotalGamesCap = 6;
+// How long a queued human waits for a human opponent before a house player
+// picks them up.
+const houseHumanPickupMs = 4500;
+// How long a finished game is kept in storage after it completes. Long enough
+// for both players to see the end frame and grab a rematch, short enough that
+// the match table stays small so the maintenance/GC scans stay cheap. Every
+// lingering finished record was being deserialized on each full-table scan
+// (healthz, houseTick, lobby, maintenance) on the single-threaded DO, which is
+// what bloated the connect path.
+const finishedRetentionMs = 5 * 60 * 1000;
+type HouseSeekEntry = {
+  userId: string;
+  name: string;
+  pool: string;
+  mode: DraftMode;
+  rating: number;
+  avatar: string | null;
+  at: number;
+};
 // Bumped whenever the worker changes in a way we want to confirm shipped.
 // Surfaced at GET /healthz so a deploy can be verified without Cloudflare
 // dashboard access (compare the value there against this one).
-const buildVersion = "no-bots-1";
+const buildVersion = "house-players-1";
 // Lichess-style start-of-game grace: a player's clock only starts charging 10
 // seconds into their first move, so nobody loses time to a slow page load.
 const firstMoveGraceMs = 10 * 1000;
@@ -260,6 +364,14 @@ function moveByUci(game: NerfGame, uci: string) {
 export class GameServer extends DurableObject<Env> {
   private sessions = new Map<WebSocket, SessionAttachment>();
   private dbReady: Promise<boolean> | null = null;
+  // Short-lived in-memory cache of the assembled lobby snapshot. Every client
+  // polls the lobby roughly every 5s and each rebuild does a full match scan on
+  // this single-threaded DO, so concurrent polls serialize behind the scan.
+  // Caching the shared (public) snapshot for a couple of seconds collapses that
+  // burst into one scan. Cleared whenever the match set changes (saveMatch /
+  // deleteMatch); queue/seek changes are absorbed by the TTL.
+  private lobbyCache: { at: number; payload: unknown } | null = null;
+  private static readonly LOBBY_CACHE_TTL_MS = 2000;
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
@@ -282,23 +394,76 @@ export class GameServer extends DurableObject<Env> {
     return (await this.dbReady) ? this.env.DB : null;
   }
 
+  // Top-level fetch: a thin guard around handleFetch so a transient storage
+  // or accept throw returns a clean degraded response instead of rejecting at
+  // the RPC boundary and 503-ing every request into this Durable Object.
   async fetch(request: Request): Promise<Response> {
+    try {
+      return await this.handleFetch(request);
+    } catch (err) {
+      console.error("game server fetch failed", err);
+      let pathname = "";
+      try {
+        pathname = new URL(request.url).pathname;
+      } catch {}
+      if (pathname === "/healthz") {
+        return Response.json(
+          { ok: false, version: buildVersion, error: err instanceof Error ? `${err.name}: ${err.message}` : String(err) },
+          { status: 200 },
+        );
+      }
+      return new Response("game server unavailable", { status: 503 });
+    }
+  }
+
+  private async handleFetch(request: Request): Promise<Response> {
     const url = new URL(request.url);
 
     if (url.pathname === "/healthz") {
-      await this.purgeLegacyBotState();
-      await this.cleanupExpired();
+      // Read-only diagnostics plus a cheap alarm-chain revival. Never run
+      // orchestration here: driving engine searches from a request handler
+      // blows the per-request CPU limit (learned the hard way, see the
+      // retired system's history). Best-effort: a storage hiccup in the
+      // revival or cleanup must not stop /healthz from returning diagnostics.
+      try {
+        await this.reviveAlarmChain();
+        await this.cleanupExpired();
+      } catch (err) {
+        console.error("healthz maintenance failed", err);
+      }
 
-      const matches = [...(await this.ctx.storage.list<StoredMatch>({ prefix: "match:" })).values()];
+      // cleanupExpired above already ran (and refreshed) a full scan for GC;
+      // reuse the live index for these counts via targeted reads instead of a
+      // second whole-table deserialize on the single thread. "games" now
+      // reports live (unfinished) games, which is the number that matters here.
+      const liveMatches = await this.loadLiveMatches();
       const alarmAt = await this.ctx.storage.getAlarm();
+      let houseGames = 0;
+      let houseVsHouse = 0;
+      for (const match of liveMatches) {
+        const seats = (["w", "b"] as Color[]).filter((color) => match.bots?.[color]).length;
+        if (!seats) continue;
+        houseGames++;
+        if (seats === 2) houseVsHouse++;
+      }
+      const seeks = (await this.ctx.storage.get<HouseSeekEntry[]>(houseSeeksKey)) ?? [];
+      const seeded = !!(await this.ctx.storage.get<number>(houseSeededKey));
 
       return Response.json({
         ok: true,
         version: buildVersion,
         sockets: this.sessions.size,
-        games: matches.length,
+        games: liveMatches.length,
         alarmAt, // ms epoch of the next scheduled maintenance pass, if any
         alarmInMs: alarmAt ? alarmAt - Date.now() : null,
+        house: {
+          roster: HOUSE_ROSTER.length,
+          seeded,
+          seeks: seeks.length,
+          games: houseGames,
+          houseVsHouse,
+          tickError: this.houseTickError,
+        },
       });
     }
 
@@ -334,7 +499,22 @@ export class GameServer extends DurableObject<Env> {
     const [client, server] = Object.values(pair);
     server.serializeAttachment(attachment);
     this.sessions.set(server, attachment);
-    this.ctx.acceptWebSocket(server);
+    try {
+      this.ctx.acceptWebSocket(server);
+    } catch (err) {
+      // The accept itself failed (hibernation limit, transient platform
+      // error). Drop the half-registered session and fail this one upgrade
+      // cleanly instead of throwing out of fetch and 503-ing the isolate.
+      this.sessions.delete(server);
+      console.error("acceptWebSocket failed", err);
+      return new Response("game server unavailable", { status: 503 });
+    }
+
+    // A connecting human revives a wedged alarm chain so the house roster
+    // (and clock enforcement) always comes back after a bad deploy or crash.
+    try {
+      await this.reviveAlarmChain();
+    } catch {}
 
     return new Response(null, { status: 101, webSocket: client });
   }
@@ -386,6 +566,8 @@ export class GameServer extends DurableObject<Env> {
         return this.lobbySnapshot(ws);
       case "rematch":
         return this.rematchRequest(ws);
+      case "rematchCancel":
+        return this.rematchCancel(ws);
       case "chat":
         return this.chatMessage(ws, frame.d);
       case "schat":
@@ -462,10 +644,14 @@ export class GameServer extends DurableObject<Env> {
   async alarm() {
     // Nothing in here may throw out of the handler: an uncaught alarm error
     // stops rescheduling until the next external event (no flag enforcement).
+    // House work runs first (a queued human waiting for a pickup is the most
+    // latency-sensitive thing here) but is fully isolated: any house failure
+    // degrades to "bots absent", never to broken human play.
     try {
-      await this.purgeLegacyBotState();
+      await this.houseTick();
     } catch (err) {
-      console.error("legacy bot purge failed", err);
+      this.houseTickError = err instanceof Error ? err.message : String(err);
+      console.error("houseTick failed", err);
     }
     try {
       await this.maintenanceAll();
@@ -474,18 +660,16 @@ export class GameServer extends DurableObject<Env> {
     }
   }
 
-  // The retired house-player system left seeks/seed markers in DO storage and
-  // unfinished bot matches that no longer have anything to move for them.
-  // Drop both once so old state can't wedge or clutter the lobby.
-  private legacyBotStatePurged = false;
-
-  private async purgeLegacyBotState() {
-    if (this.legacyBotStatePurged) return;
-    this.legacyBotStatePurged = true;
-    await this.ctx.storage.delete(legacyBotKeys);
-    const matches = await this.ctx.storage.list<StoredMatch & { bots?: unknown }>({ prefix: "match:" });
-    for (const match of matches.values()) {
-      if (match.bots && !match.completedAt) await this.deleteMatch(match);
+  // Revive the alarm chain when the stored alarm is missing or well overdue.
+  // A chain wedged in the past returns a non-null getAlarm() value, so
+  // checking for "missing" alone never recovers a dead roster. Runs on every
+  // socket connect and /healthz: getAlarm() is a cheap local read, and a
+  // chain can wedge at any point in an isolate's life, so a once-per-isolate
+  // latch would leave a later-wedged chain dead until the isolate recycles.
+  private async reviveAlarmChain() {
+    const existing = await this.ctx.storage.getAlarm();
+    if (!existing || existing < Date.now() - houseHeartbeatMs) {
+      await this.ctx.storage.setAlarm(Date.now() + 1000);
     }
   }
 
@@ -518,18 +702,76 @@ export class GameServer extends DurableObject<Env> {
   }
 
   private async saveMatch(match: StoredMatch, schedule = true) {
+    // The match set changed (create / start / move / end), so the cached lobby
+    // snapshot is stale. Clearing it forces the next poll to rebuild.
+    this.lobbyCache = null;
     await this.ctx.storage.put(matchKey(match.id), match);
+    this.trackLive(match);
     if (schedule) await this.scheduleAlarmForMatch(match);
   }
 
   private async deleteMatch(match: StoredMatch) {
+    this.lobbyCache = null;
     for (const [ws, session] of this.sessions) {
       if (session.matchId === match.id) {
         this.sessions.delete(ws);
         ws.close(1000, "Game expired");
       }
     }
+    this.liveMatchIndex?.delete(match.id);
     await this.ctx.storage.delete(matchKey(match.id));
+  }
+
+  // In-memory index of unfinished (live) match ids on this DO instance. The
+  // single global DO serializes ALL traffic, so the frequent paths (houseTick
+  // on every alarm, lobbySnapshot on every lobby load) must not deserialize
+  // the whole match table (finished games included) just to reach the handful
+  // of live ones. The index is kept exact by saveMatch/deleteMatch and is
+  // rebuilt from a full scan every GC sweep, so it self-heals after an isolate
+  // restart or any missed update.
+  private liveMatchIndex: Set<string> | null = null;
+
+  // Keep the index in step with a write: a finished game leaves the live set,
+  // any other save is a live game. A no-op until the index has been built.
+  private trackLive(match: StoredMatch) {
+    if (!this.liveMatchIndex) return;
+    if (match.result) this.liveMatchIndex.delete(match.id);
+    else this.liveMatchIndex.add(match.id);
+  }
+
+  private async ensureLiveIndex(): Promise<Set<string>> {
+    if (this.liveMatchIndex) return this.liveMatchIndex;
+    const index = new Set<string>();
+    const all = await this.ctx.storage.list<StoredMatch>({ prefix: "match:" });
+    for (const match of all.values()) {
+      if (!match.result) index.add(match.id);
+    }
+    this.liveMatchIndex = index;
+    return index;
+  }
+
+  // Load only the unfinished matches, via batched point reads off the live
+  // index instead of a full-table scan. A stale entry (record already gone, or
+  // finished since the index last updated) is pruned in passing so it stops
+  // showing up on the live paths.
+  private async loadLiveMatches(): Promise<StoredMatch[]> {
+    const index = await this.ensureLiveIndex();
+    const ids = [...index];
+    const matches: StoredMatch[] = [];
+    // storage.get accepts up to 128 keys per batched read.
+    for (let i = 0; i < ids.length; i += 128) {
+      const chunk = ids.slice(i, i + 128);
+      const found = await this.ctx.storage.get<StoredMatch>(chunk.map(matchKey));
+      for (const id of chunk) {
+        const match = found.get(matchKey(id));
+        if (!match || match.result) {
+          index.delete(id);
+          continue;
+        }
+        matches.push(match);
+      }
+    }
+    return matches;
   }
 
   private connectedSession(matchId: string, color: Color): WebSocket | undefined {
@@ -579,11 +821,7 @@ export class GameServer extends DurableObject<Env> {
       let avatar: string | null = null;
       const db = await this.db();
       if (db) {
-        const row = await this.seatCategoryRating(
-          db,
-          session.userId,
-          categoryForTimeControl(match.setup.timeSec, match.setup.incrementSec),
-        );
+        const row = await this.seatCategoryRating(db, session.userId, this.matchRatingCategory(match));
         if (row) {
           rating = row.rating;
           rd = row.rd;
@@ -608,6 +846,21 @@ export class GameServer extends DurableObject<Env> {
     if (!match) return;
     match.disconnectedAt[session.color] = Date.now();
     match.opponentGoneNotified[session.color] = false;
+    // House game: pause the game clock when the human seat disconnects, so a
+    // disconnected human never flags while the bot waits for them (the clock
+    // resumes on reconnect). Bank the time run so far first, exactly like a
+    // draft-offer pause does. Bots have no socket, so only the human's
+    // departure triggers this; the bot itself never "disconnects".
+    if (
+      match.bots &&
+      !match.bots[session.color] &&
+      match.startedAt &&
+      !match.result &&
+      match.runningSince !== null
+    ) {
+      match.clocks = this.currentClocks(match, Date.now());
+      match.runningSince = null;
+    }
     await this.saveMatch(match);
   }
 
@@ -624,12 +877,20 @@ export class GameServer extends DurableObject<Env> {
     return undefined;
   }
 
-  // Rating shown/staked for a seat, from the independent per-time-control
-  // buckets (seeded from the legacy shared rating on first contact).
+  // Which rating bucket a match plays for: mode games (Draft with a section)
+  // use their mode bucket ("nerf"/"buff"); everything else buckets by time
+  // control (legacy classic behavior).
+  private matchRatingCategory(match: StoredMatch): RatingCategory {
+    if (match.draft && match.mode) return match.mode;
+    return categoryForTimeControl(match.setup.timeSec, match.setup.incrementSec);
+  }
+
+  // Rating shown/staked for a seat, from the independent rating buckets
+  // (seeded from the legacy shared rating on first contact).
   private async seatCategoryRating(
     db: D1Database,
     userId: string,
-    category: SpeedCategory,
+    category: RatingCategory,
   ): Promise<{ rating: number; rd: number; vol: number; avatar: string | null } | null> {
     try {
       const ratings = await loadCategoryRatings(db, [userId], category);
@@ -808,7 +1069,12 @@ export class GameServer extends DurableObject<Env> {
 
     let game = newGame(white, black, match.setup.seed);
     if (match.draft) {
-      enableDraftMode(game, match.draftSeed ?? match.setup.seed, { mode: match.mode });
+      // Replay under the cadence the game was recorded with (older records
+      // carry none and fall back to the mode default).
+      enableDraftMode(game, match.draftSeed ?? match.setup.seed, {
+        mode: match.mode,
+        ...(match.cadence ? { cadence: match.cadence } : {}),
+      });
       this.draftRebuild = { matchId: match.id, revealed: new Set(), acquired: new Map() };
     }
     // Draft actions replay interleaved with moves: an action recorded at ply
@@ -832,6 +1098,32 @@ export class GameServer extends DurableObject<Env> {
     }
     applyActionsUpTo(match.moves.length);
     if (match.result) game.result = match.result;
+    return game;
+  }
+
+  // Rebuild the live game for a play-path caller (moves, resigns, draft
+  // frames, house actions). A started, unfinished match whose replay can no
+  // longer be trusted is ended gracefully here instead of returning null
+  // into a soft-lock: a stamped replayVersion that differs from the current
+  // constant means the replay is known-desynced (v2+), and an outright
+  // replay failure catches v1 records from before the stamp existed (see
+  // REPLAY_VERSION). The draw goes through the normal end flow, so the end
+  // frame reaches both seats and the game is recorded, never deleted. The
+  // draw is forced UNRATED: a game the server cut short with an update should
+  // not move either player's rating (the rating apply path skips unrated, and
+  // the end frame reports rated:false to the clients).
+  private async gameForPlay(match: StoredMatch): Promise<NerfGame | null> {
+    const stale =
+      match.replayVersion != null && match.replayVersion !== REPLAY_VERSION && !match.result;
+    const game = stale ? null : this.gameFromMatch(match);
+    if (!game && match.startedAt && !match.result) {
+      match.clocks = this.currentClocks(match);
+      match.runningSince = null;
+      match.result = { winner: "draw", reason: "server update interrupted this game" };
+      match.completedAt = Date.now();
+      match.rated = false;
+      await this.endMatch(match);
+    }
     return game;
   }
 
@@ -933,9 +1225,12 @@ export class GameServer extends DurableObject<Env> {
             reason: match.result.reason,
             rated: !!match.rated,
             ...(match.draft ? { ruleset: "draft" } : {}),
+            // Mode games count toward (and, when rated, move) the per-mode
+            // rating bucket instead of a speed bucket.
+            ...(match.draft && match.mode ? { ratingCategory: match.mode } : {}),
             startedAt: match.startedAt,
             completedAt: match.completedAt,
-          });
+          }, this.env.HYPERDRIVE?.connectionString);
           if (recorded.white || recorded.black) {
             ratings = { w: recorded.white, b: recorded.black };
           }
@@ -991,9 +1286,9 @@ export class GameServer extends DurableObject<Env> {
     if (timeSec < 0 || timeSec > 7200 || incrementSec < 0 || incrementSec > 60) {
       return error(ws, "invalid_clock", "Unsupported time control.");
     }
-    // Optional Draft ruleset for friend games. Draft matches are always
+    // Optional Draft ruleset for friend games. Friend games are always
     // casual: `rated` is deliberately never set here, whatever the client
-    // asks, so a draft game can never touch ratings.
+    // asks. Only the matchmaking queue creates rated games.
     const draft = requested.draft === true;
     // The game's section: "nerf" or "buff". Older clients send neither and
     // get the legacy merged rules.
@@ -1030,7 +1325,17 @@ export class GameServer extends DurableObject<Env> {
       createdAt: Date.now(),
       startedAt: null,
       completedAt: null,
-      ...(draft ? { draft: true, ...(mode ? { mode } : {}), picksVisible, draftSeed: makeSeed(), draftActions: [] } : {}),
+      replayVersion: REPLAY_VERSION,
+      ...(draft
+        ? {
+            draft: true,
+            ...(mode ? { mode } : {}),
+            picksVisible,
+            cadence: mode === "nerf" ? NERF_MODE_CADENCE : DEFAULT_CADENCE,
+            draftSeed: makeSeed(),
+            draftActions: [],
+          }
+        : {}),
       ...(invite ? { invitedUsername: invite } : {}),
     };
 
@@ -1097,21 +1402,41 @@ export class GameServer extends DurableObject<Env> {
       if (match.nerfOptions) return this.sendStart(match, color);
       // Matchmade and rematch games begin the moment both paired players
       // arrive at the game URL; friend games wait in the lobby for a join.
-      if (
-        (match.rated || match.autoStart) &&
-        this.connectedSession(match.id, "w") &&
-        this.connectedSession(match.id, "b")
-      ) {
+      // A house-player seat counts as arrived (it has no socket).
+      if ((match.rated || match.autoStart) && this.seatReady(match, "w") && this.seatReady(match, "b")) {
         // Buff mode skips the opening nerf draft entirely.
         if (match.draft && match.mode !== "buff") return this.beginNerfDraft(match);
         match.startedAt = Date.now();
         match.runningSince = match.startedAt;
+        this.armBotAction(match, null, match.startedAt);
         await this.saveMatch(match);
         this.sendStart(match, "w");
         this.sendStart(match, "b");
         return;
       }
       return send(ws, "created", { id, color, token: match.tokens[color] });
+    }
+    // A live draft game whose replay went stale across a deploy ends now,
+    // through gameForPlay's graceful draw, so the returning player gets the
+    // end frame instead of a board that can never accept a move.
+    if (match.draft && !match.result) await this.gameForPlay(match);
+    // House game: the clock was paused when this human seat disconnected;
+    // resume it now that they are back, unless a draft offer's lock-in window
+    // is still holding it paused. Re-arm the bot so it resumes acting on its
+    // turn (its timer may have been left armed while play was paused).
+    if (
+      match.bots &&
+      !match.bots[color] &&
+      match.startedAt &&
+      !match.result &&
+      match.runningSince === null
+    ) {
+      const offerHolding = !!match.dtDeadline && Date.now() < match.dtDeadline;
+      if (!offerHolding) {
+        match.runningSince = Date.now();
+        this.armBotAction(match, null, Date.now());
+        await this.saveMatch(match);
+      }
     }
     this.sendStart(match, color);
     // A rematch was created while this seat was away (page refresh or dropped
@@ -1139,8 +1464,11 @@ export class GameServer extends DurableObject<Env> {
       return error(ws, "nerf_pending", "Pick your nerf before the game starts.");
     }
 
-    const game = this.gameFromMatch(match);
-    if (!game) return error(ws, "no_game", "Join a game before sending moves.");
+    const game = await this.gameForPlay(match);
+    // gameForPlay already ended a match whose replay went stale (the end
+    // frame is on its way to this seat); only a genuinely unjoined game
+    // still warrants the error.
+    if (!game) return match.result ? undefined : error(ws, "no_game", "Join a game before sending moves.");
     if (game.board.turn !== session.color) return error(ws, "not_your_turn", "It is not your turn.");
     // Draft games: a pending buff offer blocks the seat's moves, mirroring
     // how the client blocks the board until the draft is resolved.
@@ -1156,17 +1484,25 @@ export class GameServer extends DurableObject<Env> {
     const move = moveByUci(game, uci);
     if (!move) return error(ws, "illegal_move", "That move is not legal in the current position.");
 
+    await this.commitMove(match, game, session.color, move, uci);
+  }
+
+  // Apply an accepted move and everything that follows it: clocks, pending
+  // offer declines, draft offer rolls and deadlines, broadcasts, and the end
+  // flow. Shared verbatim by human moves (playClientMove) and house-player
+  // moves (playHouseAction), so a house game's record and wire frames are
+  // identical to a human game's.
+  private async commitMove(match: StoredMatch, game: NerfGame, mover: Color, move: Move, uci: string) {
     const now = Date.now();
     match.clocks = this.currentClocks(match, now);
-    if (match.drawOfferBy && match.drawOfferBy !== session.color) {
-      const declinedBy = session.color;
+    if (match.drawOfferBy && match.drawOfferBy !== mover) {
       match.drawOfferBy = null;
-      this.broadcast(match, "drawDeclined", { color: declinedBy });
+      this.broadcast(match, "drawDeclined", { color: mover });
     }
     // Moving past an opponent's takeback request declines it.
-    if (match.takebackOfferBy && match.takebackOfferBy !== session.color) {
+    if (match.takebackOfferBy && match.takebackOfferBy !== mover) {
       match.takebackOfferBy = null;
-      this.broadcast(match, "takebackDeclined", { color: session.color });
+      this.broadcast(match, "takebackDeclined", { color: mover });
     }
     // Which seats already had a pending offer: playMove mutates the game, so
     // newly rolled offers are detected against this pre-move snapshot.
@@ -1186,16 +1522,11 @@ export class GameServer extends DurableObject<Env> {
     match.moves.push(uci);
     // Draft games: extra moves and skips can leave the turn off parity.
     if (match.draft) match.turnColor = nextGame.board.turn;
-    if (match.setup.timeSec) match.clocks[session.color] += match.setup.incrementSec * 1000;
-    // Any pending buff offer pauses the game clock: the lock-in window is
-    // free time for both players, enforced by dtDeadline instead.
+    if (match.setup.timeSec) match.clocks[mover] += match.setup.incrementSec * 1000;
     const offersPending =
       match.draft && nextGame.buffs
         ? !!nextGame.buffs.players.w.offer || !!nextGame.buffs.players.b.offer
         : false;
-    match.runningSince = nextGame.result || offersPending ? null : now;
-    match.result = nextGame.result;
-    if (nextGame.result) match.completedAt = now;
     const rolledNow = ["w", "b"].some(
       (color) => nextGame.buffs?.players[color as Color].offer && !offersBefore?.[color as Color],
     );
@@ -1203,6 +1534,15 @@ export class GameServer extends DurableObject<Env> {
       if (rolledNow && !nextGame.result) match.dtDeadline = now + draftLockInMs;
       else if (!offersPending) match.dtDeadline = null;
     }
+    // A pending buff offer pauses the game clock only during its free
+    // lock-in window (dtDeadline). Once the window has expired the clock
+    // runs on: deliberating past it costs the straggler's own time.
+    match.runningSince = nextGame.result || (offersPending && match.dtDeadline) ? null : now;
+    match.result = nextGame.result;
+    if (nextGame.result) match.completedAt = now;
+    // House seats: arm the next pending house action (a reply move, or a
+    // freshly rolled offer on the house side). No-op for purely human games.
+    this.armBotAction(match, nextGame, now);
     await this.saveMatch(match);
 
     const movePayload = {
@@ -1248,8 +1588,8 @@ export class GameServer extends DurableObject<Env> {
     if (await this.finishOnFlag(match)) return;
     if (match.result) return;
 
-    const game = this.gameFromMatch(match);
-    if (!game) return error(ws, "no_game", "Join a game before resigning.");
+    const game = await this.gameForPlay(match);
+    if (!game) return match.result ? undefined : error(ws, "no_game", "Join a game before resigning.");
 
     match.clocks = this.currentClocks(match);
     match.runningSince = null;
@@ -1423,8 +1763,8 @@ export class GameServer extends DurableObject<Env> {
 
   // ---------------- matchmaking queue ----------------
 
-  private queueKey(pool: string): string {
-    return `queue:${pool}`;
+  private queueKey(mode: DraftMode, pool: string): string {
+    return `queue:${mode}:${pool}`;
   }
 
   private async queueJoin(ws: WebSocket, data: unknown) {
@@ -1433,10 +1773,13 @@ export class GameServer extends DurableObject<Env> {
     if (!session.userId || !session.username) {
       return error(ws, "auth_required", "Sign in to use quick pairing.");
     }
-    const req = (data as { pool?: unknown } | undefined) ?? {};
+    const req = (data as { pool?: unknown; mode?: unknown } | undefined) ?? {};
     const poolName = String(req.pool || "3+2");
     const pool = QUEUE_POOLS[poolName];
     if (!pool) return error(ws, "bad_pool", "Unknown queue pool.");
+    // Which of the two pools (Nerf or Buff) this seek enters. Older clients
+    // send no mode and land in Buff, which is what the queue always ran.
+    const mode: DraftMode = req.mode === "nerf" ? "nerf" : "buff";
     const db = await this.db();
     if (!db) return error(ws, "server_unconfigured", "Matchmaking is unavailable right now.");
 
@@ -1445,13 +1788,10 @@ export class GameServer extends DurableObject<Env> {
     let vol = 0.06;
     let avatar: string | null = null;
     {
-      // Queueing reads the rating bucket for this pool's time control, shown
-      // beside names. Queue games are casual Draft games, so it never updates.
-      const row = await this.seatCategoryRating(
-        db,
-        session.userId,
-        categoryForTimeControl(pool.timeSec, pool.incrementSec),
-      );
+      // Queueing reads (and stakes) the rating bucket for this pool's mode,
+      // shown beside names and updated when the game ends: queue games are
+      // rated under the per-mode buckets.
+      const row = await this.seatCategoryRating(db, session.userId, mode);
       if (row) {
         rating = row.rating;
         rd = row.rd;
@@ -1460,7 +1800,7 @@ export class GameServer extends DurableObject<Env> {
       }
     }
 
-    const key = this.queueKey(poolName);
+    const key = this.queueKey(mode, poolName);
     let entries = (await this.ctx.storage.get<QueueEntry[]>(key)) ?? [];
     // Drop dead sockets and any previous entry by this same account.
     entries = entries.filter(
@@ -1480,7 +1820,14 @@ export class GameServer extends DurableObject<Env> {
         at: Date.now(),
       });
       await this.ctx.storage.put(key, entries);
-      return send(ws, "queued", { pool: poolName });
+      // Nobody was waiting: make sure the alarm fires soon so a house player
+      // can pick this seek up if no human arrives (houseTick pairs a lone
+      // human with a persona after ~4.5s; a human opponent queueing in the
+      // meantime still pairs instantly through this method).
+      try {
+        await this.armAlarmBy(Date.now() + houseHumanPickupMs);
+      } catch {}
+      return send(ws, "queued", { pool: poolName, mode });
     }
     await this.ctx.storage.put(key, entries);
 
@@ -1499,9 +1846,12 @@ export class GameServer extends DurableObject<Env> {
     const match: StoredMatch = {
       id,
       setup: {
-        // Queue games run Buff mode: no nerfs, so no dealt rules either.
-        whiteNerfId: UNRESTRICTED_NERF.id,
-        blackNerfId: UNRESTRICTED_NERF.id,
+        // Buff mode has no nerfs, so no dealt rules either. Nerf mode deals
+        // an initial pair the same way friend games do; the opening nerf
+        // draft replaces both ids once the players pick.
+        ...(mode === "buff"
+          ? { whiteNerfId: UNRESTRICTED_NERF.id, blackNerfId: UNRESTRICTED_NERF.id }
+          : pickNerfIds()),
         seed: makeSeed(),
         timeSec: pool.timeSec,
         incrementSec: pool.incrementSec,
@@ -1517,14 +1867,16 @@ export class GameServer extends DurableObject<Env> {
       createdAt: Date.now(),
       startedAt: null,
       completedAt: null,
-      // Queue games run the Draft ruleset in Buff mode, and Draft matches
-      // are always casual: `rated` is deliberately never set, so pairing can
-      // never touch ratings.
+      // Queue games are rated under the pool's mode bucket ("nerf"/"buff").
+      // Friend and challenge games never set `rated`, so they stay casual.
+      replayVersion: REPLAY_VERSION,
+      rated: true,
       autoStart: true,
       users: { w: meWhite ? me : them, b: meWhite ? them : me },
       draft: true,
-      mode: "buff",
+      mode,
       picksVisible: false,
+      cadence: mode === "nerf" ? NERF_MODE_CADENCE : DEFAULT_CADENCE,
       draftSeed: makeSeed(),
       draftActions: [],
     };
@@ -1534,23 +1886,638 @@ export class GameServer extends DurableObject<Env> {
     // the game starts once both have arrived.
     const myColor: Color = meWhite ? "w" : "b";
     const theirColor: Color = meWhite ? "b" : "w";
-    send(ws, "paired", { id, color: myColor, token: match.tokens[myColor], pool: poolName });
-    send(opponentWs, "paired", { id, color: theirColor, token: match.tokens[theirColor], pool: poolName });
+    send(ws, "paired", { id, color: myColor, token: match.tokens[myColor], pool: poolName, mode });
+    send(opponentWs, "paired", { id, color: theirColor, token: match.tokens[theirColor], pool: poolName, mode });
   }
 
   private async queueLeave(ws: WebSocket, notify: boolean) {
     const session = this.sessions.get(ws) ?? (ws.deserializeAttachment() as SessionAttachment | null);
     if (!session) return;
-    for (const poolName of Object.keys(QUEUE_POOLS)) {
-      const key = this.queueKey(poolName);
-      const entries = (await this.ctx.storage.get<QueueEntry[]>(key)) ?? [];
-      const next = entries.filter((entry) => entry.attachmentId !== session.id);
-      if (next.length !== entries.length) await this.ctx.storage.put(key, next);
+    // Every queue entry lives under a "queue:" storage key; listing by prefix
+    // also scrubs pre-split legacy keys ("queue:<pool>", no mode segment).
+    const stored = await this.ctx.storage.list<QueueEntry[]>({ prefix: "queue:" });
+    for (const [key, entries] of stored) {
+      const next = (entries ?? []).filter((entry) => entry.attachmentId !== session.id);
+      if (next.length !== (entries ?? []).length) await this.ctx.storage.put(key, next);
     }
     if (notify) send(ws, "queueCancelled");
   }
 
+  // ---------------- house players ----------------
+  //
+  // Engine-driven roster (src/lib/server/bots.ts) that keeps the queue warm.
+  // Design rules, all learned from the first system's crash history:
+  // - Everything is alarm-driven and serialized: one pending action timer per
+  //   match (botActAt), at most one house-vs-house action per tick, never a
+  //   loop of engine searches.
+  // - Every engine search is hard-capped (HOUSE_SEARCH_CEILING_MS = 80ms).
+  // - D1 is touched only where human games already touch it (pairing reads a
+  //   rating, game end records the result) plus a one-time roster seeding.
+  // - Every house code path is isolated: a failure retires that match or
+  //   skips that step, degrading to "bots absent", never to broken human play.
+  // - With no human socket connected the roster stands down entirely.
+
+  // A seat is ready to start when a socket holds it or a house player owns it.
+  private seatReady(match: StoredMatch, color: Color): boolean {
+    return !!match.bots?.[color] || !!this.connectedSession(match.id, color);
+  }
+
+  private houseTickError: string | null = null;
+  private houseSeeded = false;
+  // Match ids whose retire (end/delete) itself failed while acting. Kept for
+  // the life of the isolate so neither the due loop nor the self-heal sweep
+  // re-arms a permanently failing match into a perpetual throw/re-arm loop.
+  private houseRetireFailed = new Set<string>();
+
+  // Arm the humanlike think timer for the next pending house action: an
+  // opening nerf pick, a buff-offer resolve, or a move. Never overwrites an
+  // already-armed timer; clears it when no house action is pending. Cheap by
+  // design (no game replay): callers pass the live game when they have one so
+  // offers can be detected, and the lock-in deadline enforcement plus the
+  // houseTick re-arm sweep cover the cases where they don't.
+  private armBotAction(match: StoredMatch, game: NerfGame | null, now = Date.now()) {
+    if (!match.bots || match.result) {
+      if (match.botActAt) match.botActAt = null;
+      return;
+    }
+    if (!match.startedAt) {
+      // Opening nerf draft: any house seat that has not picked yet acts
+      // after 2-8s, well inside the 15s lock-in.
+      if (match.nerfOptions) {
+        const pending = (["w", "b"] as Color[]).some(
+          (color) => match.bots?.[color] && match.nerfPicks?.[color] == null,
+        );
+        if (!pending) match.botActAt = null;
+        else if (!match.botActAt) match.botActAt = now + houseDraftThinkMs(randomInt);
+      } else {
+        match.botActAt = null;
+      }
+      return;
+    }
+    // A pending buff offer on a house seat resolves within its lock-in
+    // window whoever is on turn (the shared cadence rolls offers for both
+    // seats on the same move).
+    if (game?.buffs) {
+      const offerColor = (["w", "b"] as Color[]).find(
+        (color) => match.bots?.[color] && game.buffs!.players[color].offer,
+      );
+      if (offerColor) {
+        if (!match.botActAt) match.botActAt = now + houseDraftThinkMs(randomInt);
+        return;
+      }
+    }
+    const turn = this.activeColor(match);
+    if (!match.bots[turn]) {
+      match.botActAt = null;
+      return;
+    }
+    if (match.botActAt) return;
+    const clocks = this.currentClocks(match, now);
+    const grace = this.movesByColor(match, turn) === 0 ? firstMoveGraceMs : 0;
+    match.botActAt = now + houseThinkMs(randomInt, clocks[turn] + grace, match.setup.timeSec > 0);
+  }
+
+  // One orchestration pass, run from the alarm before match maintenance.
+  private async houseTick() {
+    const now = Date.now();
+    // Live matches only, via the in-memory index and targeted reads. Finished
+    // games were skipped here anyway (see the match.result guard below), so
+    // this changes nothing but the cost: no whole-table deserialize per tick.
+    const matches = await this.loadLiveMatches();
+
+    // Which personas are tied up, and the live house-game counts for the caps.
+    const busy = new Set<string>();
+    const liveHouseMatches: StoredMatch[] = [];
+    let houseVsHouse = 0;
+    let houseGames = 0;
+    for (const match of matches) {
+      const ids = (["w", "b"] as Color[])
+        .map((color) => match.bots?.[color])
+        .filter(Boolean) as string[];
+      if (!ids.length || match.result) continue;
+      // A house match still unstarted long past pairing (the paired human never
+      // arrived at the board) frees the seat. Generous window so a slow client
+      // load or a backgrounded mobile tab is not dropped mid-arrival; the
+      // 30-minute maintenance sweep is the ultimate backstop.
+      if (!match.startedAt && !match.nerfOptions && now - match.createdAt > 8 * 60 * 1000) {
+        try {
+          await this.deleteMatch(match);
+        } catch {}
+        continue;
+      }
+      for (const id of ids) busy.add(id);
+      houseGames++;
+      liveHouseMatches.push(match);
+      if (ids.length === 2) houseVsHouse++;
+    }
+
+    // Due house actions. Human-facing actions all run (there are only ever a
+    // few and they must feel responsive); at most ONE house-vs-house action
+    // runs per tick — the rest re-fire on the next alarm — so the
+    // single-threaded DO never runs a batch of engine searches back to back.
+    const isFiller = (m: StoredMatch) => !!(m.bots?.w && m.bots?.b);
+    // The human seat of a mixed house match (undefined for house-vs-house
+    // filler, which has a bot on both sides).
+    const humanSeatOf = (m: StoredMatch): Color | undefined =>
+      (["w", "b"] as Color[]).find((c) => !m.bots?.[c]);
+    const due = liveHouseMatches
+      .filter((m) => m.botActAt && m.botActAt <= now)
+      .sort((a, b) => Number(isFiller(a)) - Number(isFiller(b)) || (a.botActAt ?? 0) - (b.botActAt ?? 0));
+    let fillerActed = 0;
+    for (const match of due) {
+      // A match whose retire failed is left inert (see the catch below): never
+      // act on it again this isolate, so it cannot re-throw on every tick.
+      if (this.houseRetireFailed.has(match.id)) continue;
+      const filler = isFiller(match);
+      if (filler && fillerActed >= 1) continue;
+      // BUG #1: never advance a started house game while its human seat is
+      // GENUINELY gone — moving would change the board (or even end the game)
+      // before they return. "Gone" is the persisted disconnect signal
+      // (disconnectedAt, set on detach and CLEARED on attach), never a bare
+      // in-memory socket lookup: an alarm can wake this Durable Object out of
+      // hibernation with the sessions map only just being rebuilt, and a
+      // just-paired human who has never disconnected must not be mistaken for
+      // absent — that made the bot skip its first move on every tick and never
+      // play (the reported "bot game never starts"). A fresh seat has no
+      // disconnectedAt entry, so the bot acts immediately; the socket lookup is
+      // only a secondary guard so a present human (live socket, stale
+      // timestamp) is never paused. The bot's timer stays armed across a skip
+      // and fires on the first tick after they reconnect (reconnectMatch
+      // re-arms it). Draft-deadline safety still runs in maintenance; pre-start
+      // nerf-draft picks are harmless (clocks off).
+      if (match.startedAt) {
+        const humanSeat = humanSeatOf(match);
+        if (
+          humanSeat &&
+          match.disconnectedAt[humanSeat] &&
+          !this.connectedSession(match.id, humanSeat)
+        ) {
+          continue;
+        }
+      }
+      try {
+        await this.playHouseAction(match, Date.now());
+        if (filler) fillerActed++;
+      } catch (err) {
+        // A match that throws while acting (engine edge case, corrupt record,
+        // storage hiccup) must never wedge the roster: retire it so its seats
+        // free up and it drops out of the due list, instead of re-throwing on
+        // every later tick.
+        this.houseTickError = err instanceof Error ? err.message : String(err);
+        console.error("house action failed, retiring match", match.id, err);
+        try {
+          const humanSeat = humanSeatOf(match);
+          if (humanSeat) {
+            // A human is seated: deleting the record would close their
+            // socket with "Game expired" and erase a rated game with no end
+            // frame. The house seat resigns through the normal end flow
+            // instead, so the rating is recorded and the end frame goes out.
+            if (!match.result) {
+              match.clocks = this.currentClocks(match);
+              match.runningSince = null;
+              match.result = { winner: humanSeat, reason: "resignation" };
+              match.completedAt = Date.now();
+            }
+            await this.endMatch(match, false);
+          } else {
+            // House-vs-house filler: nobody is watching a rating, delete it.
+            await this.deleteMatch(match);
+          }
+        } catch (retireErr) {
+          // Retire itself failed (storage hiccup, corrupt record). Disable the
+          // match's timer and remember it so neither the due loop nor the
+          // self-heal sweep re-arms it into a perpetual throw/re-arm loop.
+          console.error("house retire failed, disabling match", match.id, retireErr);
+          this.houseRetireFailed.add(match.id);
+          try {
+            match.botActAt = null;
+            await this.saveMatch(match, false);
+          } catch {}
+        }
+      }
+    }
+    // Self-heal: a live house game with no result and no pending action gets
+    // its timer re-armed (covers records saved before a crash or deploy).
+    for (const match of liveHouseMatches) {
+      if (match.result || match.botActAt || this.houseRetireFailed.has(match.id)) continue;
+      try {
+        if (await this.finishOnFlag(match, now, false)) continue;
+        this.armBotAction(match, null, now);
+        if (match.botActAt) await this.saveMatch(match, false);
+      } catch (err) {
+        console.error("house re-arm failed", match.id, err);
+      }
+    }
+
+    // Queue presence and filler games only matter while someone is looking.
+    // With no human socket connected the roster stands down: seeks clear and
+    // nothing new starts (live games above still play out and finish).
+    let seeks = (await this.ctx.storage.get<HouseSeekEntry[]>(houseSeeksKey)) ?? [];
+    const seeksBefore = seeks.length;
+    seeks = seeks.filter((seek) => !busy.has(seek.userId) && now - seek.at < houseSeekTtlMs);
+    if (this.humanSocketCount() === 0) {
+      if (seeksBefore) await this.ctx.storage.put(houseSeeksKey, []);
+      return;
+    }
+
+    const db = await this.db();
+    if (!db) return;
+    if (!this.houseSeeded) {
+      try {
+        if (!(await this.ctx.storage.get<number>(houseSeededKey))) {
+          await ensureHouseUsers(db);
+          await this.ctx.storage.put(houseSeededKey, now);
+        }
+        this.houseSeeded = true;
+      } catch (err) {
+        console.error("house seeding failed", err);
+        return;
+      }
+    }
+
+    const free = HOUSE_ROSTER.filter(
+      (persona) => !busy.has(persona.userId) && !seeks.some((seek) => seek.userId === persona.userId),
+    );
+
+    // A human waiting alone in a pool gets picked up after a short beat (a
+    // human opponent pairs instantly through queueJoin, so still waiting
+    // means nobody came). One pickup per tick keeps the tick bounded; each
+    // pool is isolated so one hiccup cannot skip the rest. Above the total
+    // cap, personas leave the human waiting for a human instead.
+    if (houseGames < houseTotalGamesCap) {
+      let pickedUp = false;
+      outer: for (const mode of QUEUE_MODES) {
+        for (const poolName of Object.keys(QUEUE_POOLS)) {
+          try {
+            const key = this.queueKey(mode, poolName);
+            const entries = (await this.ctx.storage.get<QueueEntry[]>(key)) ?? [];
+            if (!entries.length) continue;
+            const alive = entries.filter((entry) => this.socketForAttachment(entry.attachmentId));
+            if (alive.length !== entries.length) await this.ctx.storage.put(key, alive);
+            const waiting = alive[0];
+            if (!waiting || now - waiting.at < houseHumanPickupMs - 500) continue;
+            // Prefer the persona already seeking this pool+mode (the row the
+            // human likely saw), then any seeking persona, then an idle one.
+            let personaId: string | undefined;
+            let index = seeks.findIndex((seek) => seek.mode === mode && seek.pool === poolName);
+            if (index < 0 && seeks.length) index = 0;
+            if (index >= 0) personaId = seeks.splice(index, 1)[0].userId;
+            const persona = (personaId ? housePersona(personaId) : undefined) ?? free.pop();
+            if (!persona) continue;
+            busy.add(persona.userId);
+            const humanWs = this.socketForAttachment(waiting.attachmentId);
+            if (!humanWs) continue;
+            // Pair first, drop the queue entry after: if pairing throws, the
+            // human stays queued for the next tick instead of silently
+            // sitting on "searching" forever.
+            await this.pairHumanWithHouse(waiting, humanWs, poolName, mode, persona, db);
+            await this.ctx.storage.put(key, alive.slice(1));
+            pickedUp = true;
+            break outer;
+          } catch (err) {
+            console.error("house pickup failed", mode, poolName, err);
+          }
+        }
+      }
+      // One pickup per tick: if it happened, come back quickly in case
+      // another human is still waiting in a different pool (the heartbeat
+      // alone could be up to 20s away).
+      if (pickedUp) {
+        try {
+          await this.armAlarmBy(now + 1500);
+        } catch {}
+      }
+    }
+
+    // Keep 2-3 personas seeking across the two pools at all times (a mix of
+    // Nerf and Buff, rotating which personas via random draw).
+    while (seeks.length < houseSeekMin && free.length) {
+      const persona = free.splice(randomInt(free.length), 1)[0];
+      seeks.push(this.newHouseSeek(persona, now));
+    }
+    if (seeks.length >= houseSeekMin && seeks.length < houseSeekMax && free.length && randomInt(100) < 5) {
+      const persona = free.splice(randomInt(free.length), 1)[0];
+      seeks.push(this.newHouseSeek(persona, now));
+    }
+    // Per-mode floor: guarantee at least one seek in each pool so neither the
+    // Nerf nor the Buff lobby is ever left without a house seeker (the random
+    // per-seek mode roll alone can leave one mode empty). Forces the mode but
+    // keeps the random pool from newHouseSeek.
+    for (const mode of QUEUE_MODES) {
+      if (!free.length) break;
+      if (seeks.some((seek) => seek.mode === mode)) continue;
+      const persona = free.splice(randomInt(free.length), 1)[0];
+      seeks.push({ ...this.newHouseSeek(persona, now), mode });
+    }
+    await this.ctx.storage.put(houseSeeksKey, seeks);
+
+    // Occasional house-vs-house filler so the lobby and TV look alive,
+    // capped and spaced out so games never start (or end) in lockstep.
+    if (houseVsHouse < houseVsHouseCap && houseGames + 1 < houseTotalGamesCap && free.length >= 2) {
+      try {
+        const nextAt = (await this.ctx.storage.get<number>(houseNextFillerKey)) ?? 0;
+        if (now >= nextAt) {
+          const a = free.splice(randomInt(free.length), 1)[0];
+          const b = free.splice(randomInt(free.length), 1)[0];
+          await this.startHouseVsHouseGame(a, b, db);
+          await this.ctx.storage.put(houseNextFillerKey, now + 20_000 + randomInt(60_000));
+        }
+      } catch (err) {
+        console.error("house filler start failed", err);
+      }
+    }
+  }
+
+  // The house player's pending action lands: an opening nerf pick, a buff
+  // offer resolve, an occasional buff activation, or a move. Exactly one
+  // action per invocation; every follow-up re-arms through armBotAction.
+  private async playHouseAction(match: StoredMatch, now = Date.now()) {
+    match.botActAt = null;
+    if (match.result) return;
+
+    // Opening nerf draft picks (no game replay needed).
+    if (!match.startedAt) {
+      if (!match.nerfOptions) return;
+      let picked = false;
+      for (const color of ["w", "b"] as Color[]) {
+        if (!match.bots?.[color] || match.nerfPicks?.[color] != null) continue;
+        const options = match.nerfOptions[color];
+        const tierOf = (id: string) => PLAYABLE_NERFS.find((nerf) => nerf.id === id)?.tier ?? 5;
+        const index = houseNerfPickIndex([tierOf(options[0]), tierOf(options[1])], randomInt);
+        match.nerfPicks = { ...(match.nerfPicks ?? {}), [color]: index };
+        picked = true;
+        const opp: Color = color === "w" ? "b" : "w";
+        if (match.nerfPicks[opp] == null) this.broadcast(match, "dtNerfPicked", { color });
+      }
+      if (!picked) return;
+      if (match.nerfPicks?.w != null && match.nerfPicks?.b != null) {
+        await this.finalizeNerfDraft(match);
+        return;
+      }
+      await this.saveMatch(match);
+      return;
+    }
+
+    if (await this.finishOnFlag(match, now, false)) return;
+    // A stale or failed replay ends the game gracefully inside gameForPlay
+    // (draw, end frame, recorded); nothing left for the house seat to do.
+    let game = await this.gameForPlay(match);
+    if (!game) return;
+    if (game.result) {
+      // Derived but unrecorded result (should not happen): settle it.
+      match.clocks = this.currentClocks(match, now);
+      match.runningSince = null;
+      match.result = game.result;
+      match.completedAt = now;
+      await this.endMatch(match);
+      return;
+    }
+
+    // A pending buff offer resolves first (it may not even be our turn). A
+    // card that throws while the AI evaluates or picks it must never wedge the
+    // bot: fall back to banking the offer, which is always a safe skip.
+    for (const color of ["w", "b"] as Color[]) {
+      if (!match.bots?.[color] || !game.buffs?.players[color].offer) continue;
+      try {
+        const choice = aiDraftChoice(game, color);
+        if (choice?.action === "pick") await this.resolveDraftPick(match, game, color, choice.index);
+        else await this.resolveDraftBank(match, game, color);
+      } catch (err) {
+        console.error("house draft resolve failed, banking offer", match.id, err);
+        await this.resolveDraftBank(match, game, color);
+      }
+      return; // settleDraftAction armed the next action and saved
+    }
+
+    const color = game.board.turn;
+    const personaId = match.bots?.[color];
+    if (!personaId) {
+      this.armBotAction(match, game, now);
+      await this.saveMatch(match, false);
+      return;
+    }
+    const persona = housePersona(personaId);
+    if (!persona) throw new Error(`unknown house persona ${personaId}`);
+
+    // Sometimes fire a held buff instead of moving. aiChooseBuffActivation
+    // applies its own worth-it gates; the extra coin keeps house players from
+    // dumping every card the moment it clears the bar. A buff that throws
+    // mid-activation must not wedge the bot or corrupt the move it plays next.
+    if (match.draft && game.buffs && randomInt(100) < 40) {
+      try {
+        const activation = aiChooseBuffActivation(game, color);
+        if (activation) {
+          const ps = game.buffs.players[color];
+          const inst = ps.buffs[activation.buffIndex];
+          const theirs = game.buffs.players[color === "w" ? "b" : "w"];
+          const mineBefore = ps.buffs.length;
+          const theirsBefore = theirs.buffs.length;
+          if (activateBuff(game, color, activation.buffIndex, activation.picks)) {
+            this.markBuffRevealed(inst);
+            for (const added of ps.buffs.slice(mineBefore)) this.markBuffRevealed(added);
+            for (const added of theirs.buffs.slice(theirsBefore)) this.markBuffRevealed(added);
+            match.draftActions = [
+              ...(match.draftActions ?? []),
+              { ply: match.moves.length, color, a: "use", buffIndex: activation.buffIndex, picks: activation.picks },
+            ];
+            await this.settleDraftAction(match, game, null, {
+              color,
+              buffIndex: activation.buffIndex,
+              picks: activation.picks,
+              card: { id: inst.id, tier: inst.tier as number },
+            });
+            return;
+          }
+        }
+      } catch (err) {
+        // Discard the possibly-mutated replica and rebuild a clean one from the
+        // stored record (the failed activation was never appended, so the
+        // rebuild is the pre-activation position), then fall through to a
+        // normal move so the bot still acts this turn.
+        console.error("house buff activation failed, skipping to a move", match.id, err);
+        const fresh = this.gameFromMatch(match);
+        if (!fresh || fresh.result) {
+          this.armBotAction(match, null, now);
+          await this.saveMatch(match, false);
+          return;
+        }
+        game = fresh;
+      }
+    }
+
+    // The move: engine-picked inside a hard-capped budget (see bots.ts). A
+    // throw or a null pick (an engine edge case) can never leave the bot idle:
+    // fall back to any legal move, and only end the game when there truly is
+    // no legal move at all.
+    const clocks = this.currentClocks(match, now);
+    let move: Move | null = null;
+    try {
+      move = pickHouseMove(game, persona.skill, randomInt, match.setup.timeSec ? clocks[color] : undefined);
+    } catch (err) {
+      console.error("house move pick failed, using a legal fallback", match.id, err);
+    }
+    if (!move) {
+      const legal = legalMoves(game);
+      if (legal.length) {
+        move = legal[randomInt(legal.length)];
+      } else {
+        // No legal move but no result — should be unreachable; end through the
+        // normal flow rather than wedge the match.
+        match.clocks = clocks;
+        match.runningSince = null;
+        match.result = resign(game, color).result;
+        match.completedAt = now;
+        await this.endMatch(match);
+        return;
+      }
+    }
+    await this.commitMove(match, game, color, move, moveToUCI(move));
+  }
+
+  private newHouseSeek(persona: HousePersona, now: number): HouseSeekEntry {
+    const { pool, mode } = pickHouseSeek(randomInt);
+    return {
+      userId: persona.userId,
+      name: persona.name,
+      pool,
+      mode,
+      rating: houseSeedRating(persona),
+      avatar: persona.avatar,
+      at: now,
+    };
+  }
+
+  // The persona's SeatUser for a match seat, with its live rating in the
+  // pool's mode bucket (one D1 read, event-scale only: pairing and filler
+  // starts, never per tick).
+  private async houseSeatUser(db: D1Database, persona: HousePersona, mode: DraftMode): Promise<SeatUser> {
+    try {
+      const row = await this.seatCategoryRating(db, persona.userId, mode);
+      if (row) {
+        return {
+          id: persona.userId,
+          name: persona.name,
+          rating: row.rating,
+          rd: row.rd,
+          vol: row.vol,
+          avatar: row.avatar ?? persona.avatar,
+        };
+      }
+    } catch {}
+    const rating = houseSeedRating(persona);
+    return { id: persona.userId, name: persona.name, rating, rd: 150, vol: 0.06, avatar: persona.avatar };
+  }
+
+  // A rated queue match against a house player, identical to a human-vs-human
+  // queue match except for the house seat markers.
+  private async newHouseMatchRecord(
+    poolName: string,
+    mode: DraftMode,
+    seats: { users: Partial<Record<Color, SeatUser>>; bots: Partial<Record<Color, string>> },
+  ): Promise<StoredMatch> {
+    const pool = QUEUE_POOLS[poolName];
+    const id = await this.newCode(8);
+    return {
+      id,
+      setup: {
+        ...(mode === "buff"
+          ? { whiteNerfId: UNRESTRICTED_NERF.id, blackNerfId: UNRESTRICTED_NERF.id }
+          : pickNerfIds()),
+        seed: makeSeed(),
+        timeSec: pool.timeSec,
+        incrementSec: pool.incrementSec,
+      },
+      tokens: { w: newToken(), b: newToken() },
+      disconnectedAt: {},
+      opponentGoneNotified: {},
+      moves: [],
+      result: null,
+      clocks: { w: pool.timeSec * 1000, b: pool.timeSec * 1000 },
+      runningSince: null,
+      drawOfferBy: null,
+      createdAt: Date.now(),
+      startedAt: null,
+      completedAt: null,
+      replayVersion: REPLAY_VERSION,
+      rated: true,
+      autoStart: true,
+      users: seats.users,
+      draft: true,
+      mode,
+      picksVisible: false,
+      cadence: mode === "nerf" ? NERF_MODE_CADENCE : DEFAULT_CADENCE,
+      draftSeed: makeSeed(),
+      draftActions: [],
+      bots: seats.bots,
+    };
+  }
+
+  // Pair a queued human with a house player. The human gets the usual
+  // "paired" frame and takes their seat via reconnect; the house seat counts
+  // as arrived, so the game starts the moment the human does.
+  private async pairHumanWithHouse(
+    waiting: QueueEntry,
+    humanWs: WebSocket,
+    poolName: string,
+    mode: DraftMode,
+    persona: HousePersona,
+    db: D1Database,
+  ) {
+    if (!QUEUE_POOLS[poolName]) return;
+    const human: SeatUser = {
+      id: waiting.userId,
+      name: waiting.username,
+      rating: waiting.rating,
+      rd: waiting.rd,
+      vol: waiting.vol,
+      avatar: waiting.avatar ?? null,
+    };
+    const house = await this.houseSeatUser(db, persona, mode);
+    const humanWhite = randomInt(2) === 0;
+    const match = await this.newHouseMatchRecord(poolName, mode, {
+      users: { w: humanWhite ? human : house, b: humanWhite ? house : human },
+      bots: humanWhite ? { b: persona.userId } : { w: persona.userId },
+    });
+    await this.saveMatch(match);
+    const color: Color = humanWhite ? "w" : "b";
+    send(humanWs, "paired", { id: match.id, color, token: match.tokens[color], pool: poolName, mode });
+  }
+
+  private async startHouseVsHouseGame(a: HousePersona, b: HousePersona, db: D1Database) {
+    const { pool, mode } = pickHouseSeek(randomInt);
+    const aWhite = randomInt(2) === 0;
+    const [white, black] = aWhite ? [a, b] : [b, a];
+    const match = await this.newHouseMatchRecord(pool, mode, {
+      users: { w: await this.houseSeatUser(db, white, mode), b: await this.houseSeatUser(db, black, mode) },
+      bots: { w: white.userId, b: black.userId },
+    });
+    // Nerf mode opens with the nerf draft (the house seats pick like anyone
+    // else); Buff mode starts outright.
+    if (mode !== "buff") {
+      await this.beginNerfDraft(match);
+      return;
+    }
+    const now = Date.now();
+    match.startedAt = now;
+    match.runningSince = now;
+    this.armBotAction(match, null, now);
+    await this.saveMatch(match);
+  }
+
   // ---------------- rematch ----------------
+
+  // Withdraw a pending rematch offer. Only the player who made the offer can
+  // cancel it, and only while no rematch game has been created yet.
+  private async rematchCancel(ws: WebSocket) {
+    const session = this.session(ws);
+    const match = session.matchId ? await this.loadMatch(session.matchId) : null;
+    if (!match || !session.color) return;
+    if (match.rematchedTo) return;
+    if (match.rematchOfferBy !== session.color) return;
+    match.rematchOfferBy = null;
+    await this.saveMatch(match, false);
+    this.broadcast(match, "rematchCancelled", { color: session.color });
+  }
 
   private async rematchRequest(ws: WebSocket) {
     const session = this.session(ws);
@@ -1580,11 +2547,7 @@ export class GameServer extends DurableObject<Env> {
       for (const color of ["w", "b"] as Color[]) {
         const seat = users[color];
         if (!seat) continue;
-        const row = await this.seatCategoryRating(
-          db,
-          seat.id,
-          categoryForTimeControl(match.setup.timeSec, match.setup.incrementSec),
-        );
+        const row = await this.seatCategoryRating(db, seat.id, this.matchRatingCategory(match));
         if (row) {
           seat.rating = row.rating;
           seat.rd = row.rd;
@@ -1616,6 +2579,7 @@ export class GameServer extends DurableObject<Env> {
       createdAt: Date.now(),
       startedAt: null,
       completedAt: null,
+      replayVersion: REPLAY_VERSION,
       rated: match.rated,
       autoStart: true,
       users,
@@ -1624,6 +2588,7 @@ export class GameServer extends DurableObject<Env> {
             draft: true,
             ...(match.mode ? { mode: match.mode } : {}),
             picksVisible: !!match.picksVisible,
+            cadence: match.mode === "nerf" ? NERF_MODE_CADENCE : DEFAULT_CADENCE,
             draftSeed: makeSeed(),
             draftActions: [],
           }
@@ -1874,9 +2839,9 @@ export class GameServer extends DurableObject<Env> {
       error(ws, "nerf_pending", "Pick your nerf before the game starts.");
       return null;
     }
-    const game = this.gameFromMatch(match);
+    const game = await this.gameForPlay(match);
     if (!game?.buffs) {
-      error(ws, "no_game", "The game has not started yet.");
+      if (!match.result) error(ws, "no_game", "The game has not started yet.");
       return null;
     }
     return { session, match, game };
@@ -1916,15 +2881,23 @@ export class GameServer extends DurableObject<Env> {
       if (match.runningSince !== null) match.runningSince = now;
       match.turnColor = game.board.turn;
     }
-    // Resume the paused clock once no offer is pending on either side.
+    // Resume the paused clock once no offer is pending on either side, or
+    // once the free lock-in window has already expired (the clock only stays
+    // paused during the window itself).
     const bs = game.buffs;
     const offersPending = !!bs?.players.w.offer || !!bs?.players.b.offer;
-    if (!offersPending) {
-      match.dtDeadline = null;
-      if (match.startedAt && !match.result && match.runningSince === null) {
-        match.runningSince = Date.now();
-      }
+    if (!offersPending) match.dtDeadline = null;
+    if (
+      (!offersPending || !match.dtDeadline) &&
+      match.startedAt &&
+      !match.result &&
+      match.runningSince === null
+    ) {
+      match.runningSince = Date.now();
     }
+    // House seats: a resolved action can hand the turn (or a fresh offer) to
+    // the house side. No-op for purely human games.
+    this.armBotAction(match, game, Date.now());
     await this.saveMatch(match);
     if (resolved) {
       const publicFrame = { color: resolved.color, kind: resolved.kind };
@@ -2077,7 +3050,9 @@ export class GameServer extends DurableObject<Env> {
     master.fork(); // skip: black's nerf seed
     const rng = master.fork();
 
-    const pool = PLAYABLE_NERFS.filter((nerf) => nerf.id !== "lucky");
+    // The deal draws from the capped opening pool: tiers 1-2 only for now
+    // (see MAX_OPENING_NERF_TIER in the nerf library).
+    const pool = openingNerfPool();
     const ofTier = (tier: number) => pool.filter((nerf) => nerf.tier === tier);
     const takeOne = (tier: number, taken: Set<string>): string => {
       const candidates = ofTier(tier).filter((nerf) => !taken.has(nerf.id));
@@ -2121,6 +3096,9 @@ export class GameServer extends DurableObject<Env> {
       // stalling (or vanished) player cannot hold the table hostage.
       match.nerfDeadline = Date.now() + draftLockInMs;
     }
+    // House seats pick their nerf after a human-like beat (2-8s), well
+    // inside the lock-in window.
+    this.armBotAction(match, null, Date.now());
     await this.saveMatch(match);
     this.sendStart(match, "w");
     this.sendStart(match, "b");
@@ -2171,15 +3149,20 @@ export class GameServer extends DurableObject<Env> {
     match.nerfDeadline = null;
     match.startedAt = Date.now();
     match.runningSince = match.startedAt;
+    // House seats: the game just started, so white's first move may be a
+    // house action.
+    match.botActAt = null;
+    this.armBotAction(match, null, match.startedAt);
     await this.saveMatch(match);
     this.sendStart(match, "w");
     this.sendStart(match, "b");
   }
 
   // Lock-in deadline enforcement, run from the alarm. Overdue nerf picks
-  // take the first option; overdue buff offers take the first card, or bank
-  // when every card would arrive dead (a pending nullify makes any pick
-  // strictly worse than banking).
+  // take the first option (the game cannot start without them). Overdue
+  // buff offers are NOT auto-resolved anymore: the offer stays open, the
+  // clock resumes, and the straggler pays for further deliberation with
+  // their own time — their client shows the pick in a side panel.
   private async enforceDraftDeadlines(match: StoredMatch, now: number): Promise<boolean> {
     if (!match.draft || match.result) return false;
     if (match.nerfOptions && !match.startedAt) {
@@ -2192,24 +3175,18 @@ export class GameServer extends DurableObject<Env> {
       return true;
     }
     if (!match.startedAt || !match.dtDeadline || now < match.dtDeadline) return false;
-    const game = this.gameFromMatch(match);
-    if (!game?.buffs) {
-      match.dtDeadline = null;
-      await this.saveMatch(match, false);
-      return true;
-    }
-    for (const color of ["w", "b"] as Color[]) {
-      const ps = game.buffs.players[color];
-      if (!ps.offer || game.result) continue;
-      if ((ps.flags.nullifyIncoming ?? 0) > 0) await this.resolveDraftBank(match, game, color);
-      else await this.resolveDraftPick(match, game, color, 0);
-    }
+    match.dtDeadline = null;
+    if (!match.result && match.runningSince === null) match.runningSince = now;
+    await this.saveMatch(match, false);
     return true;
   }
 
   private parseBuffPicks(raw: unknown): BuffPick[] | null {
     if (raw === undefined) return [];
-    if (!Array.isArray(raw) || raw.length > 8) return null;
+    // 32 bounds server work while leaving room for the longest pick chains
+    // (Total Warp moves up to 15 pieces via alternating piece / destination
+    // picks; Warp Sovereign runs up to 6).
+    if (!Array.isArray(raw) || raw.length > 32) return null;
     const picks: BuffPick[] = [];
     for (const entry of raw) {
       const pick = (entry || {}) as { square?: unknown; buffIndex?: unknown };
@@ -2246,7 +3223,11 @@ export class GameServer extends DurableObject<Env> {
   private buffPicksComplete(game: NerfGame, color: Color, buffIndex: number, picks: BuffPick[]): boolean {
     const collected = this.walkBuffPicks(game, color, buffIndex, picks);
     if (!collected) return false;
-    return buffNextTarget(game, color, buffIndex, collected) === null;
+    const next = buffNextTarget(game, color, buffIndex, collected);
+    // A finishable step means the picks so far already form a complete
+    // effect (Warp Sovereign's "stop after any pair"), so an early stop is
+    // as valid as walking the whole chain.
+    return next === null || (next.kind === "square" && !!next.finishable);
   }
 
   // ---------------- spectating & lobby ----------------
@@ -2311,14 +3292,27 @@ export class GameServer extends DurableObject<Env> {
   // One snapshot for the lobby page: who is online right now and which games
   // can be watched. Polled by the client every few seconds.
   private async lobbySnapshot(ws: WebSocket) {
-    const matches = [...(await this.ctx.storage.list<StoredMatch>({ prefix: "match:" })).values()];
     const now = Date.now();
+    // Serve the shared snapshot from cache when it is fresh. This skips the
+    // full match scan and every other await on the hot path (flag checks, the
+    // D1 rating lookup) for the burst of concurrent polls that land inside the
+    // TTL window. The snapshot is public and identical for every viewer, so a
+    // shared copy leaks no per-viewer private data.
+    if (this.lobbyCache && now - this.lobbyCache.at < GameServer.LOBBY_CACHE_TTL_MS) {
+      return send(ws, "lobby", this.lobbyCache.payload);
+    }
+    // Live matches only. The lobby only ever lists unfinished games (open
+    // challenges and in-progress games); finished records were filtered out
+    // below anyway. Reading them via the index avoids a full-table scan on
+    // every lobby poll, the most frequent human-driven path into the DO.
+    const matches = await this.loadLiveMatches();
 
     const liveGames: Array<{
       id: string;
       players: ReturnType<GameServer["playersPayload"]>;
       rated: boolean;
       draft: boolean;
+      mode?: DraftMode;
       timeSec: number;
       incrementSec: number;
       moves: number;
@@ -2332,6 +3326,7 @@ export class GameServer extends DurableObject<Env> {
       id: string;
       host: { name: string; rating: number | null };
       draft: boolean;
+      mode?: DraftMode;
       timeSec: number;
       incrementSec: number;
       createdAt: number;
@@ -2348,6 +3343,7 @@ export class GameServer extends DurableObject<Env> {
             id: match.id,
             host: host ? { name: host.name, rating: Math.round(host.rating) } : { name: "Anonymous", rating: null },
             draft: !!match.draft,
+            ...(match.mode ? { mode: match.mode } : {}),
             timeSec: match.setup.timeSec,
             incrementSec: match.setup.incrementSec,
             createdAt: match.createdAt,
@@ -2367,6 +3363,7 @@ export class GameServer extends DurableObject<Env> {
         players: this.playersPayload(match),
         rated: !!match.rated,
         draft: !!match.draft,
+        ...(match.mode ? { mode: match.mode } : {}),
         timeSec: match.setup.timeSec,
         incrementSec: match.setup.incrementSec,
         moves: match.moves.length,
@@ -2384,24 +3381,52 @@ export class GameServer extends DurableObject<Env> {
       pool: string;
       name: string;
       rating: number | null;
+      mode: DraftMode;
       timeSec: number;
       incrementSec: number;
       at: number;
     }> = [];
-    for (const [poolName, pool] of Object.entries(QUEUE_POOLS)) {
-      const entries = (await this.ctx.storage.get<QueueEntry[]>(this.queueKey(poolName))) ?? [];
-      for (const entry of entries) {
-        if (!this.socketForAttachment(entry.attachmentId)) continue;
-        queuedUserIds.add(entry.userId);
+    for (const mode of QUEUE_MODES) {
+      for (const [poolName, pool] of Object.entries(QUEUE_POOLS)) {
+        const entries = (await this.ctx.storage.get<QueueEntry[]>(this.queueKey(mode, poolName))) ?? [];
+        for (const entry of entries) {
+          if (!this.socketForAttachment(entry.attachmentId)) continue;
+          queuedUserIds.add(entry.userId);
+          seeks.push({
+            pool: poolName,
+            name: entry.username,
+            // The seeker's rating in this pool's mode bucket.
+            rating: Math.round(entry.rating),
+            mode,
+            timeSec: pool.timeSec,
+            incrementSec: pool.incrementSec,
+            at: entry.at,
+          });
+        }
+      }
+    }
+    // House players seeking in a pool surface exactly like human seeks. Their
+    // rows come from DO storage (no D1), and failures here degrade to "no
+    // house seeks" without touching the human lobby.
+    let houseSeeks: HouseSeekEntry[] = [];
+    try {
+      houseSeeks = (await this.ctx.storage.get<HouseSeekEntry[]>(houseSeeksKey)) ?? [];
+      for (const seek of houseSeeks) {
+        const pool = QUEUE_POOLS[seek.pool];
+        if (!pool) continue;
+        queuedUserIds.add(seek.userId);
         seeks.push({
-          pool: poolName,
-          name: entry.username,
-          rating: Math.round(entry.rating),
+          pool: seek.pool,
+          name: seek.name,
+          rating: Math.round(seek.rating),
+          mode: seek.mode,
           timeSec: pool.timeSec,
           incrementSec: pool.incrementSec,
-          at: entry.at,
+          at: seek.at,
         });
       }
+    } catch {
+      houseSeeks = [];
     }
     seeks.sort((a, b) => a.at - b.at);
 
@@ -2427,6 +3452,37 @@ export class GameServer extends DurableObject<Env> {
       }
     }
 
+    // House players appear in the online list too: seeking ones from the
+    // seek rows, playing ones from their live matches. Ratings and avatars
+    // come from what is already in hand (seek entries and match seats), so
+    // this adds no D1 work.
+    try {
+      for (const seek of houseSeeks) {
+        if (!seen.has(seek.userId)) {
+          seen.set(seek.userId, {
+            name: seek.name,
+            rating: Math.round(seek.rating),
+            status: "searching",
+            avatar: seek.avatar,
+          });
+        }
+      }
+      for (const match of matches) {
+        if (!match.startedAt || match.result) continue;
+        for (const color of ["w", "b"] as Color[]) {
+          const user = match.users?.[color];
+          if (user && match.bots?.[color] && !seen.has(user.id)) {
+            seen.set(user.id, {
+              name: user.name,
+              rating: Math.round(user.rating),
+              status: "playing",
+              avatar: user.avatar ?? null,
+            });
+          }
+        }
+      }
+    } catch {}
+
     // Attach ratings for the online list in one query.
     const db = await this.db();
     if (db && seen.size > 0) {
@@ -2450,13 +3506,18 @@ export class GameServer extends DurableObject<Env> {
     const players = [...seen.values()]
       .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0))
       .slice(0, 50);
-    send(ws, "lobby", {
+    const payload = {
       players,
       anonymous,
       games: liveGames.slice(0, 25),
       challenges: challenges.slice(0, 25),
       seeks: seeks.slice(0, 25),
-    });
+    };
+    // Refresh the shared cache so the rest of this poll burst is served without
+    // rescanning. Set last, after any finishOnFlag writes above, so the cached
+    // copy reflects the freshest state.
+    this.lobbyCache = { at: now, payload };
+    send(ws, "lobby", payload);
   }
 
   private async sendClocks(ws: WebSocket) {
@@ -2480,13 +3541,16 @@ export class GameServer extends DurableObject<Env> {
     if (!match.result) {
       if (match.nerfDeadline && match.nerfOptions && !match.startedAt) candidates.push(match.nerfDeadline);
       if (match.dtDeadline && match.startedAt) candidates.push(match.dtDeadline);
+      // Pending house action (move or draft pick). An overdue timer clamps to
+      // just past now so a missed alarm re-fires immediately instead of never.
+      if (match.botActAt) candidates.push(Math.max(match.botActAt, now + 300));
     }
     for (const color of ["w", "b"] as Color[]) {
       const disconnectedAt = match.disconnectedAt[color];
       if (disconnectedAt && !match.opponentGoneNotified[color]) candidates.push(disconnectedAt + disconnectGraceMs);
     }
     const expiry = match.completedAt ?? match.createdAt;
-    if (match.completedAt) candidates.push(expiry + 60 * 60 * 1000);
+    if (match.completedAt) candidates.push(expiry + finishedRetentionMs);
     else if (!match.startedAt) candidates.push(expiry + 30 * 60 * 1000);
     else if (this.connectedSessions(match.id).length === 0) {
       const latestDisconnect = Math.max(match.disconnectedAt.w ?? 0, match.disconnectedAt.b ?? 0);
@@ -2506,26 +3570,64 @@ export class GameServer extends DurableObject<Env> {
 
   private async scheduleNextAlarm(matches: StoredMatch[]) {
     const now = Date.now();
-    const next = Math.min(...matches.map((match) => this.candidateAlarm(match) ?? Number.POSITIVE_INFINITY));
-    // No pending deadline means no alarm: the Durable Object goes idle until
-    // the next socket/save re-arms it via scheduleAlarmForMatch.
+    let next = Math.min(...matches.map((match) => this.candidateAlarm(match) ?? Number.POSITIVE_INFINITY));
+    // Slow house heartbeat while any human socket is connected, so the house
+    // roster keeps its queue presence fresh. With nobody online there is no
+    // heartbeat: the DO goes idle until the next socket/save re-arms it via
+    // scheduleAlarmForMatch (live house games still wake it per move).
+    if (this.humanSocketCount() > 0) next = Math.min(next, now + houseHeartbeatMs);
+    // No pending deadline means no alarm.
     if (!Number.isFinite(next)) return;
-    await this.ctx.storage.setAlarm(Math.max(next, now + 250));
+    let target = Math.max(next, now + 250);
+    // Never push out an earlier still-future alarm someone armed mid-tick
+    // (e.g. the house pickup's quick follow-up).
+    const existing = await this.ctx.storage.getAlarm();
+    if (existing && existing > now && existing < target) target = existing;
+    await this.ctx.storage.setAlarm(target);
+  }
+
+  // Pull the stored alarm earlier when needed (never later).
+  private async armAlarmBy(at: number) {
+    const existing = await this.ctx.storage.getAlarm();
+    if (!existing || at < existing) await this.ctx.storage.setAlarm(at);
+  }
+
+  private humanSocketCount(): number {
+    let n = 0;
+    for (const [ws] of this.sessions) {
+      if (ws.readyState === WebSocket.OPEN) n++;
+    }
+    return n;
   }
 
   private async cleanupExpired() {
     const matches = [...(await this.ctx.storage.list<StoredMatch>({ prefix: "match:" })).values()];
     const now = Date.now();
+    // GC is inherently a full scan (finished records are not in the live
+    // index). Rebuild the live index from the same pass so the cheap paths
+    // that run off it stay correct and self-heal after an isolate restart.
+    const index = new Set<string>();
     for (const match of matches) {
-      if (match.completedAt && now - match.completedAt > 60 * 60 * 1000) await this.deleteMatch(match);
-      else if (!match.startedAt && now - match.createdAt > 30 * 60 * 1000) await this.deleteMatch(match);
+      if (match.completedAt && now - match.completedAt > finishedRetentionMs) {
+        await this.deleteMatch(match);
+        continue;
+      }
+      if (!match.startedAt && now - match.createdAt > 30 * 60 * 1000) {
+        await this.deleteMatch(match);
+        continue;
+      }
+      if (!match.result) index.add(match.id);
     }
+    this.liveMatchIndex = index;
   }
 
   private async maintenanceAll() {
     const matches = [...(await this.ctx.storage.list<StoredMatch>({ prefix: "match:" })).values()];
     const now = Date.now();
     const remaining: StoredMatch[] = [];
+    // Rebuild the live index from this GC scan (see cleanupExpired): the full
+    // pass we already pay for here keeps the cheap paths self-healing.
+    const index = new Set<string>();
 
     for (const match of matches) {
       // One bad match (corrupt record, transient storage error) must not stop
@@ -2546,7 +3648,7 @@ export class GameServer extends DurableObject<Env> {
         const bothDisconnected = this.connectedSessions(match.id).length === 0;
         const latestDisconnect = Math.max(match.disconnectedAt.w ?? 0, match.disconnectedAt.b ?? 0);
         if (
-          (match.completedAt && now - match.completedAt > 60 * 60 * 1000) ||
+          (match.completedAt && now - match.completedAt > finishedRetentionMs) ||
           (!match.startedAt && now - match.createdAt > 30 * 60 * 1000) ||
           (match.startedAt && bothDisconnected && latestDisconnect && now - latestDisconnect > 30 * 60 * 1000)
         ) {
@@ -2559,8 +3661,10 @@ export class GameServer extends DurableObject<Env> {
         console.error("maintenance failed for match", match.id, err);
       }
       remaining.push(match);
+      if (!match.result) index.add(match.id);
     }
 
+    this.liveMatchIndex = index;
     await this.scheduleNextAlarm(remaining);
   }
 }

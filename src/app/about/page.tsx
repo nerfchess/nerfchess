@@ -11,7 +11,7 @@ export default function AboutPage() {
     <InfoPageLayout
       eyebrow="about"
       title="Chess, with secrets."
-      intro="Nerf Chess keeps the familiar board and replaces certainty with hidden constraints. Every player receives a secret rule, every move becomes both strategy and investigation, and in Draft games the deck keeps dealing."
+      intro="Nerf Chess keeps the familiar board and offers two ways to bend it. In Nerf mode every player carries a secret rule, so every move becomes both strategy and investigation. In Buff mode nobody is handicapped and the deck deals power instead."
     >
       <InfoSection title="The idea">
         <p>
@@ -23,9 +23,11 @@ export default function AboutPage() {
           ordinary positions into puzzles that only exist for one game.
         </p>
         <p>
-          Draft games take the idea further. You pick your nerf from two cards, and every
-          few moves both players draft a buff at the same time. You start weakened and
-          build your way back; the comeback is the game.
+          The two modes split the idea in half. In Nerf mode you pick your secret handicap
+          from two cards, your opponent&apos;s stays hidden until the game ends, and a draft
+          every 6 moves deals hexes to curse your opponent (plus the odd boon or item for
+          yourself); the curse war is the game. In Buff mode nobody is handicapped: both
+          players draft buffs every 6 moves and race to build the strongest army.
         </p>
       </InfoSection>
 

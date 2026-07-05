@@ -5,14 +5,16 @@ import { useEffect, useState } from "react";
 import { HeroTv } from "@/components/HeroTv";
 import { SiteHeader } from "@/components/SiteHeader";
 import { ALL_NERFS, PLAYABLE_NERFS } from "@/engine/nerfs/library";
+import { ALL_BUFFS } from "@/engine/buffs/library";
 import type { Nerf } from "@/engine/nerf";
 import { useLobbySnapshot } from "@/lib/lobbyClient";
 import { ActiveGame, loadActiveGame } from "@/lib/multiplayer";
 import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
 
-// Real library count, computed once. Feeds the social proof strip so the
-// number stays honest and updates automatically as the rule set grows.
-const TOTAL_RULES = ALL_NERFS.length;
+// Real library counts, computed once. Feeds the social proof strip so the
+// numbers stay honest and update automatically as the library grows. The full
+// library is every nerf plus every buff, hex, boon, and item card.
+const TOTAL_RULES = ALL_NERFS.length + ALL_BUFFS.length;
 
 // A hand-picked spread across the difficulty tiers so a first visitor sees the
 // range of what a "secret rule" can be, from gentle to brutal.
@@ -40,7 +42,7 @@ export default function HomePage() {
     <main className="min-h-screen flex flex-col">
       <SiteHeader />
 
-      <section className="w-full max-w-6xl mx-auto px-5 sm:px-6 pt-2 pb-8 sm:pt-6 grid lg:grid-cols-[minmax(0,1fr)_380px] gap-8 lg:gap-14 items-center">
+      <section className="w-full max-w-7xl mx-auto px-5 sm:px-6 pt-2 pb-8 sm:pt-6 grid lg:grid-cols-[minmax(0,1fr)_380px] gap-8 lg:gap-14 items-center">
         <div className="order-1">
           <HeroTv />
         </div>
@@ -49,10 +51,24 @@ export default function HomePage() {
             taller than the board beside it. */}
         <div className="order-2">
           <p className="text-lg sm:text-xl leading-relaxed text-parchment-100">
-            You get a hidden restriction on how your pieces can move. So does
-            your opponent. Neither of you knows the other&apos;s rule. In Draft
-            games you also pick up buff cards as you play, both of you at once.
-            There is no checkmate: you win by capturing the king.
+            Chess with two modes: choose{" "}
+            <Link
+              href="/lobby?mode=nerf"
+              className="font-semibold text-mode-nerfGlow underline decoration-mode-nerf/50 underline-offset-4 transition-colors hover:decoration-mode-nerfGlow"
+            >
+              Nerf
+            </Link>{" "}
+            or{" "}
+            <Link
+              href="/lobby?mode=buff"
+              className="font-semibold text-mode-buffGlow underline decoration-mode-buff/50 underline-offset-4 transition-colors hover:decoration-mode-buffGlow"
+            >
+              Buff
+            </Link>
+            . In Nerf mode you each carry a secret handicap, revealed only when
+            the game ends. In Buff mode nobody is handicapped: you both draft
+            power-up cards as you play. There is no checkmate: you win by
+            capturing the king.
           </p>
 
           <ReturnToGameBanner />
@@ -62,7 +78,7 @@ export default function HomePage() {
           <div className="mt-5 flex flex-col gap-3">
             <Link
               href="/lobby"
-              className="btn-leaf btn-cta w-full flex items-center justify-center gap-3 px-8 py-5 font-display text-xl sm:text-2xl font-semibold"
+              className="btn-leaf btn-cta w-full flex items-center justify-center gap-3 px-8 py-5 font-display text-xl sm:text-2xl font-semibold motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out motion-safe:hover:-translate-y-px motion-safe:active:scale-[0.98]"
             >
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
@@ -75,13 +91,13 @@ export default function HomePage() {
             <div className="grid grid-cols-2 gap-3">
               <Link
                 href="/friend"
-                className="btn-ghost flex items-center justify-center gap-2 px-4 py-3 font-display text-base font-medium"
+                className="btn-ghost flex items-center justify-center gap-2 px-4 py-3 font-display text-base font-medium motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out motion-safe:hover:-translate-y-px motion-safe:active:scale-[0.98]"
               >
                 Play a Friend
               </Link>
               <Link
                 href="/game?mode=ai"
-                className="btn-ghost flex items-center justify-center gap-2 px-4 py-3 font-display text-base font-medium"
+                className="btn-ghost flex items-center justify-center gap-2 px-4 py-3 font-display text-base font-medium motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out motion-safe:hover:-translate-y-px motion-safe:active:scale-[0.98]"
               >
                 Play vs Bot
               </Link>
@@ -173,11 +189,11 @@ function StatStrip() {
   }, []);
 
   const stats = [
-    { value: TOTAL_RULES.toString(), label: "secret rules" },
+    { value: TOTAL_RULES.toLocaleString(), label: "rules and cards" },
     { value: gamesPlayed === null ? "…" : gamesPlayed.toLocaleString(), label: "games played" },
   ];
   return (
-    <section className="w-full max-w-6xl mx-auto px-5 sm:px-6 py-4">
+    <section className="w-full max-w-7xl mx-auto px-5 sm:px-6 py-4">
       <div className="plate p-5 sm:p-6 grid grid-cols-2 divide-x divide-white/10">
         {stats.map((s) => (
           <div key={s.label} className="px-2 sm:px-4 text-center">
@@ -195,11 +211,18 @@ function StatStrip() {
 }
 
 function HowItWorks() {
-  const steps = [
+  const steps: { n: string; title: string; body: React.ReactNode; icon: React.ReactNode }[] = [
     {
       n: "1",
-      title: "Get a secret rule",
-      body: "At the start of every game you are dealt a hidden restriction, drawn from a deck of hundreds. In Draft games you are shown two and keep one.",
+      title: "Pick your mode",
+      body: (
+        <>
+          In <span className="font-semibold text-mode-nerfGlow">Nerf</span> mode you pick a
+          secret handicap from two cards; your opponent&apos;s stays hidden until the game
+          ends. In <span className="font-semibold text-mode-buffGlow">Buff</span> mode nobody
+          is handicapped.
+        </>
+      ),
       icon: (
         <>
           <rect x="3" y="4" width="18" height="16" rx="2" />
@@ -209,8 +232,15 @@ function HowItWorks() {
     },
     {
       n: "2",
-      title: "Play with your restriction",
-      body: "Move as normal, but your rule quietly limits your options. In Draft games a buff draft lands every few moves; skip one and the next offer rolls stronger.",
+      title: "Draft as you play",
+      body: (
+        <>
+          A draft lands every 6 moves. In <span className="font-semibold text-mode-nerfGlow">Nerf</span>{" "}
+          mode you pick hexes that curse your opponent, or boons for yourself. In{" "}
+          <span className="font-semibold text-mode-buffGlow">Buff</span> mode you draft buffs
+          and build the strongest army. Skip one and the next offer rolls stronger.
+        </>
+      ),
       icon: (
         <>
           <path d="M12 2l2.4 6.9H21l-5.6 4 2.1 7L12 15.8 6.5 19.9l2.1-7L3 8.9h6.6z" />
@@ -220,7 +250,7 @@ function HowItWorks() {
     {
       n: "3",
       title: "Capture the king to win",
-      body: "There is no checkmate here. Read your opponent, exploit their hidden rule, and take the king.",
+      body: "There is no checkmate here. Read your opponent, exploit what you learn, and take the king.",
       icon: (
         <>
           <path d="M12 3v4M9 7h6M6 21h12l-1-9-4 3-1-6-1 6-4-3z" />
@@ -229,7 +259,7 @@ function HowItWorks() {
     },
   ];
   return (
-    <section className="w-full max-w-6xl mx-auto px-5 sm:px-6 py-8">
+    <section className="w-full max-w-7xl mx-auto px-5 sm:px-6 py-8">
       <div className="rule-ornament mb-6">
         <span className="font-display">How it works</span>
       </div>
@@ -264,7 +294,7 @@ function HowItWorks() {
 function ExampleRules() {
   const rules = exampleRules();
   return (
-    <section className="w-full max-w-6xl mx-auto px-5 sm:px-6 py-8">
+    <section className="w-full max-w-7xl mx-auto px-5 sm:px-6 py-8">
       <div className="flex items-end justify-between gap-4 mb-6">
         <div className="rule-ornament flex-1">
           <span className="font-display">A few of the rules</span>
@@ -313,7 +343,7 @@ function SiteFooter() {
   ];
 
   return (
-    <footer className="max-w-6xl mx-auto w-full px-6 py-8">
+    <footer className="max-w-7xl mx-auto w-full px-6 py-8">
       <nav
         aria-label="Footer"
         className="flex flex-wrap items-center justify-center sm:justify-end gap-y-2 text-xs text-parchment-400"
@@ -328,7 +358,7 @@ function SiteFooter() {
         ))}
       </nav>
       <div className="mt-3 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-parchment-400">
-        <span>Nerf Chess: chess with secret rules and a buff draft.</span>
+        <span>Nerf Chess: chess with two modes, secret nerfs or drafted buffs.</span>
         <span className="font-mono text-[10px] opacity-70" title="Deployed version">
           made with &hearts;
           {process.env.NEXT_PUBLIC_BUILD_VERSION ? ` · ${process.env.NEXT_PUBLIC_BUILD_VERSION}` : ""}

@@ -3,8 +3,8 @@
 //
 // Backwards compatibility: the app previously stored one Glicko-2 rating under
 // "dc:rating-v1". On first load we migrate that value into the Blitz bucket
-// (see DEFAULT_CATEGORY) and seed the other buckets at their defaults. The old
-// key is left in place, untouched, as a safety net.
+// (see LEGACY_LOCAL_CATEGORY) and seed the other buckets at their defaults.
+// The old key is left in place, untouched, as a safety net.
 //
 // Only rating / games / peak are wired to live play today (via lib/rating.ts,
 // which keeps the legacy single-rating API working against the Blitz bucket).
@@ -12,7 +12,7 @@
 // later, when real rated queues land — hence "stored and displayed" for now.
 
 import {
-  DEFAULT_CATEGORY,
+  LEGACY_LOCAL_CATEGORY,
   RATING_CATEGORIES,
   type RatingCategoryId,
 } from "./ratingCategories";
@@ -89,7 +89,7 @@ function migrateLegacy(): Ratings {
     if (raw) {
       const p = JSON.parse(raw) as Partial<CategoryStats> | null;
       if (p && typeof p.rating === "number") {
-        out[DEFAULT_CATEGORY] = {
+        out[LEGACY_LOCAL_CATEGORY] = {
           ...DEFAULT_STATS,
           rating: p.rating,
           rd: num(p.rd, DEFAULT_STATS.rd),

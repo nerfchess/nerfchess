@@ -5,6 +5,9 @@
 // only WebCrypto, so it runs identically on Workers and in `next dev` (Node).
 
 export const SESSION_COOKIE = "dc_session";
+// Short-lived cookie carrying the OAuth state + post-sign-in path across the
+// Google round trip (see /api/auth/google and its callback).
+export const OAUTH_STATE_COOKIE = "dc_oauth_state";
 const SESSION_TTL_MS = 90 * 24 * 60 * 60 * 1000;
 const PBKDF2_ITERATIONS = 100_000;
 
@@ -26,6 +29,7 @@ export interface SessionUser {
   bio: string | null;
   flair: string | null;
   is_guest: number;
+  email: string | null;
 }
 
 export function isModerator(user: Pick<SessionUser, "role"> | null): boolean {
@@ -38,6 +42,13 @@ export function isMuted(user: Pick<SessionUser, "muted_until"> | null): boolean 
 
 export function validUsername(name: string): boolean {
   return /^[A-Za-z0-9_]{3,20}$/.test(name);
+}
+
+// Reserved: would shadow API/product routes.
+export const RESERVED_USERNAMES = ["search", "anonymous", "mod", "admin", "moderator", "nerfchess"];
+
+export function validEmail(email: string): boolean {
+  return typeof email === "string" && email.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
 export function validPassword(password: string): boolean {
@@ -133,7 +144,7 @@ export async function userForSession(db: D1Database, token: string | null): Prom
   const row = await db
     .prepare(
       `SELECT u.id, u.username, u.rating, u.rd, u.vol, u.games, u.wins, u.losses, u.draws, u.avatar,
-              u.role, u.muted_until, u.banned_until, u.bio, u.flair, u.is_guest, s.expires_at
+              u.role, u.muted_until, u.banned_until, u.bio, u.flair, u.is_guest, u.email, s.expires_at
        FROM sessions s JOIN users u ON u.id = s.user_id
        WHERE s.token_hash = ?`,
     )

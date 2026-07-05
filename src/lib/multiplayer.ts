@@ -156,6 +156,9 @@ export type MPLobbyGame = {
   rated: boolean;
   // Optional so snapshots from an older server still parse.
   draft?: boolean;
+  // The game's section ("nerf" or "buff"); absent = legacy merged rules or an
+  // older server. Drives the mode badge on lobby listings.
+  mode?: DraftMode;
   timeSec: number;
   incrementSec: number;
   moves: number;
@@ -166,6 +169,7 @@ export type MPLobbyChallenge = {
   id: string;
   host: { name: string; rating: number | null };
   draft?: boolean;
+  mode?: DraftMode;
   timeSec: number;
   incrementSec: number;
   createdAt: number;
@@ -176,6 +180,10 @@ export type MPLobbySeek = {
   pool: string;
   name: string;
   rating: number | null;
+  // Which queue pool the seek waits in ("nerf" or "buff"); optional so
+  // snapshots from an older server still parse. Joining must pass the same
+  // mode back to `queue`, or the two players would sit in different pools.
+  mode?: DraftMode;
   timeSec: number;
   incrementSec: number;
   at: number;
@@ -226,6 +234,7 @@ export type MPEvent =
   | { type: "takeback-declined"; color: Color }
   | { type: "takeback"; by: Color; moves: string[]; ply: number; wc: number; bc: number }
   | { type: "rematch-offer"; color: Color }
+  | { type: "rematch-cancelled"; color: Color }
   | { type: "rematched"; id: string; color: Color; token: string }
   | { type: "chat"; message: MPChatMessage }
   | { type: "spectator-chat"; message: MPSpectatorChatMessage }
@@ -259,6 +268,7 @@ type ServerFrame =
   | { t: "takebackDeclined"; d: { color: Color } }
   | { t: "takeback"; d: { by: Color; moves: string[]; ply: number; wc: number; bc: number } }
   | { t: "rematchOffer"; d: { color: Color } }
+  | { t: "rematchCancelled"; d: { color: Color } }
   | { t: "rematched"; d: { id: string; color: Color; token: string } }
   | { t: "chat"; d: MPChatMessage }
   | { t: "schat"; d: MPSpectatorChatMessage }
@@ -408,24 +418,46 @@ export class MPSession {
   autoReconnect = true;
   private seat: MPSavedSession | null = null;
   private watchingId: string | null = null;
+  // Matchmaking is in progress: while true, an unexpected drop should
+  // auto-reconnect and re-send the queue frame (the seat is not yet known, so
+  // this keeps scheduleReconnect enabled during the search window).
+  private searching = false;
+  private searchQueue: { pool: string; mode?: DraftMode } | null = null;
   private destroyed = false;
   private reconnectTimer: number | null = null;
   private reconnectAttempt = 0;
   private wakeListenersOn = false;
 
   private readonly onWake = () => {
-    // Browser came back online / tab became visible: retry immediately.
-    if (this.reconnectTimer !== null) {
-      window.clearTimeout(this.reconnectTimer);
-      this.reconnectTimer = null;
+    // The tab came back to the foreground (mobile app-switch, bfcache restore,
+    // regained focus, back online). Mobile freezes the tab and often leaves a
+    // ZOMBIE socket that still reads OPEN while the server already detached the
+    // seat (webSocketClose fired server-side, onclose never fired here). So
+    // reconnect off the socket STATE, not off a pending timer.
+    if (this.destroyed || !this.autoReconnect) return;
+    if (!this.seat && !this.watchingId && !this.searching) return;
+    // Ignore the "hidden" half of a visibilitychange (we only act on wake).
+    if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
+    if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
+      if (this.reconnectTimer !== null) {
+        window.clearTimeout(this.reconnectTimer);
+        this.reconnectTimer = null;
+      }
       void this.tryReconnect();
+      return;
     }
+    // Socket claims OPEN but may be dead after a freeze: poke it. A live server
+    // answers with a clock/state frame; a dead one triggers onclose -> reconnect.
+    this.requestClocks();
   };
 
   private addWakeListeners() {
     if (this.wakeListenersOn || typeof window === "undefined") return;
     this.wakeListenersOn = true;
     window.addEventListener("online", this.onWake);
+    window.addEventListener("focus", this.onWake);
+    window.addEventListener("pageshow", this.onWake); // bfcache restore (iOS return path)
+    window.addEventListener("resume", this.onWake); // mobile web shells
     document.addEventListener("visibilitychange", this.onWake);
   }
 
@@ -433,12 +465,15 @@ export class MPSession {
     if (!this.wakeListenersOn || typeof window === "undefined") return;
     this.wakeListenersOn = false;
     window.removeEventListener("online", this.onWake);
+    window.removeEventListener("focus", this.onWake);
+    window.removeEventListener("pageshow", this.onWake);
+    window.removeEventListener("resume", this.onWake);
     document.removeEventListener("visibilitychange", this.onWake);
   }
 
   private scheduleReconnect() {
     if (this.destroyed || !this.autoReconnect) return;
-    if (!this.seat && !this.watchingId) return;
+    if (!this.seat && !this.watchingId && !this.searching) return;
     if (this.reconnectTimer !== null) return;
     this.reconnectAttempt++;
     this.addWakeListeners();
@@ -456,6 +491,11 @@ export class MPSession {
       await this.connect();
       if (this.seat) this.sendFrame("reconnect", this.seat);
       else if (this.watchingId) this.sendFrame("watch", { id: this.watchingId });
+      else if (this.searching && this.searchQueue)
+        this.sendFrame("queue", {
+          pool: this.searchQueue.pool,
+          ...(this.searchQueue.mode ? { mode: this.searchQueue.mode } : {}),
+        });
     } catch {
       this.scheduleReconnect();
     }
@@ -488,14 +528,32 @@ export class MPSession {
 
       const failTimer = window.setTimeout(() => {
         if (opened) return;
+        // Abandon this stalled attempt but keep the session alive so the
+        // caller can retry (previously this called this.destroy(), which tore
+        // the whole session down and prevented any retry). Detach and close
+        // the dead socket so a later connect() starts fresh instead of reusing
+        // a still-CONNECTING one.
+        if (this.socket === socket) {
+          socket.onopen = null;
+          socket.onmessage = null;
+          socket.onerror = null;
+          socket.onclose = null;
+          try {
+            socket.close();
+          } catch {}
+          this.socket = null;
+        }
         reject(new Error("Could not reach the game server."));
-        this.destroy();
       }, 8000);
 
       socket.onopen = () => {
         opened = true;
         window.clearTimeout(failTimer);
         this.heartbeat = window.setInterval(() => this.sendFrame("p"), 10000);
+        // Attach wake listeners now (not lazily after an onclose). On mobile the
+        // socket can die during a freeze without ever firing onclose, so the
+        // foreground-return handlers must already be armed to detect the zombie.
+        this.addWakeListeners();
         resolve();
       };
 
@@ -521,6 +579,29 @@ export class MPSession {
         }
       };
     });
+  }
+
+  // Establish a connection, retrying a few times with exponential backoff
+  // (~400ms, ~800ms) so a single transient reject of the global Durable Object
+  // does not immediately surface an error to the caller. Returns as soon as a
+  // socket is open (or already open); throws only after every attempt fails.
+  private async connectWithRetry(attempts = 3): Promise<void> {
+    let lastErr: unknown;
+    for (let i = 0; i < attempts; i++) {
+      if (this.destroyed) throw new Error("Session closed.");
+      try {
+        await this.connect();
+        return;
+      } catch (e) {
+        lastErr = e;
+        if (i < attempts - 1) {
+          await new Promise<void>((r) => window.setTimeout(r, 400 * 2 ** i));
+        }
+      }
+    }
+    throw lastErr instanceof Error
+      ? lastErr
+      : new Error("Could not reach the game server.");
   }
 
   private handleFrame(data: unknown) {
@@ -560,6 +641,15 @@ export class MPSession {
         this.emit({ type: "queued", pool: frame.d.pool });
         break;
       case "paired":
+        // Adopt the seat immediately so a socket drop in the window between
+        // pairing and the follow-up `start` frame can still auto-reconnect
+        // (scheduleReconnect is gated on holding a seat). `start`/`created`
+        // overwrite this with the same authoritative values. Matchmade seats
+        // are not persisted here as friend sessions; /game/[id] reclaims them
+        // via the saved online seat.
+        this.seat = { id: frame.d.id, color: frame.d.color, token: frame.d.token };
+        this.searching = false;
+        this.reconnectAttempt = 0;
         this.emit({ type: "paired", id: frame.d.id, color: frame.d.color, token: frame.d.token });
         break;
       case "queueCancelled":
@@ -593,6 +683,9 @@ export class MPSession {
         break;
       case "rematchOffer":
         this.emit({ type: "rematch-offer", color: frame.d.color });
+        break;
+      case "rematchCancelled":
+        this.emit({ type: "rematch-cancelled", color: frame.d.color });
         break;
       case "rematched":
         this.emit({ type: "rematched", id: frame.d.id, color: frame.d.color, token: frame.d.token });
@@ -717,27 +810,79 @@ export class MPSession {
     });
   }
 
-  // Join the rated quick-pairing queue. Resolves with the paired game id.
-  async queue(pool: string): Promise<{ id: string; color: Color; token: string }> {
-    await this.connect();
+  // Force a full authoritative replay of the current game. The server only
+  // replays state on a seat (or watch) claim from a fresh socket, so drop the
+  // current socket quietly (no `disconnected` event) and run the reconnect
+  // handshake; the server answers with a complete `start` frame the UI can
+  // rebuild from. Used when the client replica detects it has drifted from
+  // the server (e.g. a server-accepted move the replica considers illegal).
+  resync(): boolean {
+    if (this.destroyed || (!this.seat && !this.watchingId)) return false;
+    if (this.reconnectTimer !== null) {
+      window.clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+    const socket = this.socket;
+    this.socket = null;
+    if (this.heartbeat) window.clearInterval(this.heartbeat);
+    this.heartbeat = null;
+    if (socket) {
+      // Detach handlers first: this close is intentional, not a disconnect.
+      socket.onopen = null;
+      socket.onmessage = null;
+      socket.onerror = null;
+      socket.onclose = null;
+      try {
+        socket.close();
+      } catch {}
+    }
+    void this.tryReconnect();
+    return true;
+  }
+
+  // Join the rated quick-pairing queue. The queue runs two pools ("nerf" and
+  // "buff"); omitting the mode lands in Buff, matching older servers.
+  // Resolves with the paired game id.
+  async queue(pool: string, mode?: DraftMode): Promise<{ id: string; color: Color; token: string }> {
+    // Remember the search so an auto-reconnect mid-search can re-send the queue
+    // frame, and keep scheduleReconnect enabled while we have no seat yet.
+    this.searching = true;
+    this.searchQueue = { pool, ...(mode ? { mode } : {}) };
+    try {
+      await this.connectWithRetry();
+    } catch (e) {
+      this.searching = false;
+      throw e;
+    }
     return new Promise((resolve, reject) => {
       const off = this.on((event) => {
         if (event.type === "paired") {
+          this.searching = false;
           off();
           resolve({ id: event.id, color: event.color, token: event.token });
         } else if (event.type === "error") {
+          this.searching = false;
           off();
           reject(new Error(event.message));
         } else if (event.type === "disconnected") {
-          off();
-          reject(new Error("Disconnected from the game server."));
+          // With auto-reconnect on, a transient drop mid-search is
+          // recoverable: scheduleReconnect() re-sends the queue frame, so keep
+          // waiting instead of surfacing an error. Only reject when we cannot
+          // auto-recover.
+          if (!this.autoReconnect) {
+            this.searching = false;
+            off();
+            reject(new Error("Disconnected from the game server."));
+          }
         }
       });
-      this.sendFrame("queue", { pool });
+      this.sendFrame("queue", { pool, ...(mode ? { mode } : {}) });
     });
   }
 
   cancelQueue(): boolean {
+    this.searching = false;
+    this.searchQueue = null;
     return this.sendFrame("queueCancel");
   }
 
@@ -764,7 +909,7 @@ export class MPSession {
   // with the next snapshot, or rejects on error/disconnect/timeout so a single
   // slow response can't hang the caller's poll forever.
   async fetchLobby(): Promise<MPLobby> {
-    await this.connect();
+    await this.connectWithRetry();
     return new Promise((resolve, reject) => {
       let timer = 0;
       const off = this.on((event) => {
@@ -821,6 +966,11 @@ export class MPSession {
 
   requestRematch(): boolean {
     return this.sendFrame("rematch");
+  }
+
+  // Withdraw a pending rematch offer of mine.
+  cancelRematch(): boolean {
+    return this.sendFrame("rematchCancel");
   }
 
   sendChat(text: string): boolean {
@@ -890,6 +1040,8 @@ export class MPSession {
 
   destroy() {
     this.destroyed = true;
+    this.searching = false;
+    this.searchQueue = null;
     if (this.reconnectTimer !== null) window.clearTimeout(this.reconnectTimer);
     this.reconnectTimer = null;
     this.removeWakeListeners();

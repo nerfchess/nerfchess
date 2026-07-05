@@ -13,9 +13,14 @@ const FAQS = [
       "It begins from a chessboard, but not all standard chess rules survive. There is no checkmate or stalemate: the goal is usually to capture the enemy king.",
   },
   {
+    question: "What are the two modes?",
+    answer:
+      "Nerf mode and Buff mode. In Nerf mode you pick a secret handicap from two cards and your opponent's stays hidden until the game ends; every 6 moves you draft a card: usually a hex that curses your opponent, sometimes a boon or item that helps you. In Buff mode nobody is handicapped: every 6 moves both players draft a buff and build the strongest army.",
+  },
+  {
     question: "What is a nerf?",
     answer:
-      "A nerf is your secret rule for the game. It may restrict your moves or create a new way for you to lose. Your opponent has a different hidden rule.",
+      "A nerf is your secret rule in Nerf mode. It may restrict your moves or create a new way for you to lose. Your opponent has a different hidden rule. Buff mode has no nerfs at all.",
   },
   {
     question: "Can I see my opponent's rule?",
@@ -23,14 +28,9 @@ const FAQS = [
       "Not during the game. You infer it from their play; it is revealed once the game is over.",
   },
   {
-    question: "What is Draft mode?",
-    answer:
-      "An alternate ruleset. You pick your nerf from two cards at the start, then every few moves both players draft a buff card at the same time. You begin weakened and build your way back.",
-  },
-  {
     question: "What is a buff?",
     answer:
-      "The opposite of a nerf: a card that helps you. Some work quietly while you hold them, some fire the moment you pick them, and some wait until you choose to use them. Offers grow stronger as the game goes on.",
+      "The opposite of a nerf: a card that helps you. Some work quietly while you hold them, some fire the moment you pick them, and some wait until you choose to use them. Offers grow stronger as the game goes on. In Nerf mode the draft deals hexes instead: curses cast on your opponent, mixed with boons and items for yourself.",
   },
   {
     question: "What happens if I skip a buff draft?",
@@ -43,9 +43,9 @@ const FAQS = [
       "No. Your opponent's picks stay hidden while the game runs; you only learn that they drafted and the card's tier. Everything is revealed when the game ends.",
   },
   {
-    question: "Are Draft games rated?",
+    question: "Are games rated?",
     answer:
-      "Not yet. All games are Draft and unrated for now while the mode is balanced; a separate Draft rating may come later.",
+      "Queue games are rated: Nerf and Buff are separate pools, and each keeps its own rating. Friend games are casual.",
   },
   {
     question: "Can I play a friend?",
@@ -69,7 +69,7 @@ export default function FAQPage() {
     <InfoPageLayout
       eyebrow="questions"
       title="Frequently asked"
-      intro="The short version: it is chess until your secret rule says otherwise. Here are the questions players usually ask first."
+      intro="The short version: two modes, one board. Nerf mode is chess until your secret rule says otherwise; Buff mode is chess until the cards arrive. Here are the questions players usually ask first."
     >
       {FAQS.map((faq) => (
         <InfoSection key={faq.question} title={faq.question}>

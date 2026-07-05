@@ -1,4 +1,4 @@
-import { Buff, BuffMatchState, BuffOffer, PlayerBuffState } from "./buff";
+import { Buff, BuffMatchState, BuffOffer, PlayerBuffState, isBoon } from "./buff";
 import { BUFF_POOL_BY_TIER } from "./buffs/library";
 import { Tier } from "./nerf";
 import { RNG } from "./rng";
@@ -22,9 +22,19 @@ import { Color } from "./types";
 // default arc, 7 slows the arc and delays high-tier cards.
 export const DEFAULT_CADENCE = 6;
 
-// Nerf mode drafts much less often: only the nerf-modifier cards are in its
-// pool, so a pick lands roughly every ten of your own moves.
-export const NERF_MODE_CADENCE = 10;
+// Nerf mode draft cadence: a hex-or-boon pick lands every six of your own
+// moves, matching the buff-mode arc so the curses arrive steadily.
+export const NERF_MODE_CADENCE = 6;
+
+// Nerf mode pool composition: each card slot first rolls which bucket it
+// draws from. HEX_SHARE of draws prefer the hex bucket (curses cast on your
+// opponent, drawback intensifiers included); the rest prefer the boon/item
+// bucket (self-relief and consumables). When the preferred bucket has no
+// legal card at the rolled tier the slot falls back to the whole nerf-mode
+// pool, so composition bends rather than blocking a draft. The bucket roll
+// runs through the same draft RNG stream as the card pick, so offers stay
+// deterministic for a given seed.
+export const HEX_SHARE = 0.6;
 
 function drawRng(bs: BuffMatchState): RNG {
   return RNG.fromState(bs.rngState);
@@ -78,12 +88,18 @@ export function rollOffer(bs: BuffMatchState, color: Color, tiers: [Tier, Tier])
   const suppressed = (ps.flags.noDraftCards ?? 0) > 0;
   if (suppressed) ps.flags.noDraftCards = (ps.flags.noDraftCards ?? 0) - 1;
 
-  // Mode filter: buff mode never offers nerf-modifier cards, nerf mode
-  // offers ONLY nerf-modifier cards, and legacy merged games (no mode) keep
-  // the full pool. The adjacent-tier fallback below runs on the filtered
-  // pool too, so a mode can never leak the other section's cards.
+  // Mode filter: buff mode never offers nerf-relief cards or hexes (hexes
+  // are nerf-mode only); nerf mode draws hexes plus the boon pool (every
+  // nerf-relief card, the light general cards flagged `boon`, and items);
+  // legacy merged games (no mode) keep the full pool. The adjacent-tier
+  // fallback below runs on the filtered pool as well, so neither mode can
+  // leak the other's cards.
   const inMode = (b: Buff) =>
-    bs.mode === "buff" ? b.category !== "nerf" : bs.mode === "nerf" ? b.category === "nerf" : true;
+    bs.mode === "buff"
+      ? b.category !== "nerf" && b.category !== "hex"
+      : bs.mode === "nerf"
+        ? isBoon(b) || b.category === "hex" || b.category === "item"
+        : true;
 
   const cards: BuffOffer["cards"] = [];
   // Never offer a card the player already holds unspent.
@@ -106,6 +122,14 @@ export function rollOffer(bs: BuffMatchState, color: Color, tiers: [Tier, Tier])
       ].filter((b) => inMode(b) && !used.has(b.id) && (!suppressed || b.category !== "draft"));
     }
     if (pool.length === 0) break;
+    // Nerf mode composition: roll the slot's preferred bucket (HEX_SHARE of
+    // draws prefer hexes, the rest boons/items) and draw from it when it has
+    // cards; otherwise fall back to the full nerf-mode pool for this tier.
+    if (bs.mode === "nerf") {
+      const wantHex = rng.next() < HEX_SHARE;
+      const bucket = pool.filter((b) => (b.category === "hex") === wantHex);
+      if (bucket.length > 0) pool = bucket;
+    }
     const card = pool[rng.int(pool.length)];
     used.add(card.id);
     cards.push({ id: card.id, tier: card.tier });

@@ -5,14 +5,20 @@ import { sessionTokenFromCookieHeader, userForSession } from "@/lib/server/auth"
 
 export const dynamic = "force-dynamic";
 
-// Accepts a rule suggestion, stores it in D1, and — when an email provider is
-// configured — forwards it to the site owner. Set two worker secrets/vars to
-// enable email delivery:
+// Accepts a nerf or buff suggestion, stores it in D1, and, when an email
+// provider is configured, forwards it to the site owner. Set two worker
+// secrets/vars to enable email delivery:
 //   RESEND_API_KEY     an API key from https://resend.com
 //   SUGGESTIONS_EMAIL  the inbox that should receive suggestions
 // Without them the suggestion is still saved in the rule_suggestions table.
 export async function POST(request: Request) {
-  let body: { name?: unknown; description?: unknown; contact?: unknown };
+  let body: {
+    name?: unknown;
+    description?: unknown;
+    contact?: unknown;
+    kind?: unknown;
+    pool?: unknown;
+  };
   try {
     body = await request.json();
   } catch {
@@ -22,6 +28,12 @@ export async function POST(request: Request) {
   const name = typeof body.name === "string" ? body.name.trim().slice(0, 80) : "";
   const description = typeof body.description === "string" ? body.description.trim() : "";
   const contact = typeof body.contact === "string" ? body.contact.trim().slice(0, 120) : "";
+  // What kind of card the idea is. Legacy clients that send no kind are nerf
+  // suggestions; the pool only means something for buff ideas ('buff' = Buff
+  // mode draft card, 'boon' = Nerf-mode relief boon). Hexes (Nerf-mode curses)
+  // are their own kind and carry no pool.
+  const kind = body.kind === "buff" ? "buff" : body.kind === "hex" ? "hex" : "nerf";
+  const pool = kind === "buff" ? (body.pool === "boon" ? "boon" : "buff") : null;
   if (description.length < 10) {
     return NextResponse.json(
       { error: "Describe the rule in at least a sentence." },
@@ -35,13 +47,31 @@ export async function POST(request: Request) {
   const db = await getDb();
   const user = await userForSession(db, sessionTokenFromCookieHeader(request.headers.get("Cookie")));
 
+  const fallbackName =
+    kind === "buff"
+      ? pool === "boon"
+        ? "Untitled boon"
+        : "Untitled buff"
+      : kind === "hex"
+        ? "Untitled hex"
+        : "Untitled nerf";
   const id = crypto.randomUUID();
   await db
     .prepare(
-      `INSERT INTO rule_suggestions (id, name, description, contact, user_id, username, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO rule_suggestions (id, name, description, contact, user_id, username, created_at, kind, pool)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
-    .bind(id, name || "Untitled rule", description, contact || null, user?.id ?? null, user?.username ?? null, Date.now())
+    .bind(
+      id,
+      name || fallbackName,
+      description,
+      contact || null,
+      user?.id ?? null,
+      user?.username ?? null,
+      Date.now(),
+      kind,
+      pool,
+    )
     .run();
 
   // Best-effort email; a provider outage must not lose the suggestion.
@@ -51,8 +81,16 @@ export async function POST(request: Request) {
     const apiKey = (env as { RESEND_API_KEY?: string }).RESEND_API_KEY;
     const to = (env as { SUGGESTIONS_EMAIL?: string }).SUGGESTIONS_EMAIL;
     if (apiKey && to) {
+      const kindLabel =
+        kind === "buff"
+          ? pool === "boon"
+            ? "Boon (Nerf-mode relief)"
+            : "Buff (Buff mode card)"
+          : kind === "hex"
+            ? "Hex (Nerf-mode curse)"
+            : "Nerf";
       const lines = [
-        `Rule: ${name || "Untitled rule"}`,
+        `${kindLabel}: ${name || fallbackName}`,
         "",
         description,
         "",
@@ -64,7 +102,9 @@ export async function POST(request: Request) {
         body: JSON.stringify({
           from: "NerfChess <onboarding@resend.dev>",
           to: [to],
-          subject: `Rule suggestion: ${name || "Untitled rule"}`,
+          subject: `${
+            kind === "buff" ? (pool === "boon" ? "Boon" : "Buff") : kind === "hex" ? "Hex" : "Nerf"
+          } suggestion: ${name || fallbackName}`,
           text: lines.join("\n"),
         }),
       });

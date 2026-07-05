@@ -35,10 +35,12 @@ export function HeroTv() {
   const [over, setOver] = useState(false);
   const [recent, setRecent] = useState<RecentGame | null>(null);
 
-  // With nothing live, pull the latest finished game once so the board still
-  // shows real play instead of the canned demo position.
+  // Pull the latest finished game IMMEDIATELY on mount, in parallel with the
+  // lobby poll, so the hero board shows real play right away instead of waiting
+  // for the (single global Durable Object, sometimes slow) lobby snapshot. A
+  // live game, when one is being played, takes over below; until it does, this
+  // recent game keeps the board alive so a visitor never sees a loading gap.
   useEffect(() => {
-    if (!lobby || lobby.games.length > 0 || recent) return;
     let cancelled = false;
     fetch("/api/games/recent")
       .then((res) => (res.ok ? (res.json() as Promise<{ game: RecentGame | null }>) : null))
@@ -49,7 +51,7 @@ export function HeroTv() {
     return () => {
       cancelled = true;
     };
-  }, [lobby, recent]);
+  }, []);
 
   // Keep watching a finished game briefly rather than cutting away mid-frame;
   // the next lobby poll supplies the replacement.

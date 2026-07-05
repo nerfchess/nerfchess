@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { QueueButton } from "@/components/QueueButton";
 import { AccountUser, fetchMe } from "@/lib/authClient";
 import { MPLobby, MPLobbyChallenge, MPLobbyGame, MPLobbySeek, MPSession, saveOnlineSeat } from "@/lib/multiplayer";
+import { ModeBadge } from "@/components/ModeBadge";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { categoryForTimeControl, getCategory } from "@/lib/ratingCategories";
 
@@ -38,9 +39,10 @@ export default function LobbyPage() {
     session.autoReconnect = false; // fetchLobby reconnects on demand
     sessionRef.current = session;
     // The game server runs on a single-threaded Durable Object, so a snapshot
-    // can occasionally arrive late. Keep showing the last good snapshot and
-    // only surface the error banner after a couple of misses in a row, so a
-    // one-off blip doesn't flap "can't reach the game server" at the player.
+    // can occasionally arrive late. Keep showing the last good snapshot (the
+    // catch below never clears `lobby`) and only surface the error banner
+    // after three misses in a row, so a one-off blip doesn't flap "can't reach
+    // the game server" at the player.
     let failures = 0;
     const poll = async () => {
       try {
@@ -53,7 +55,7 @@ export default function LobbyPage() {
       } catch {
         if (!cancelled) {
           failures++;
-          if (failures >= 2) setLobbyError("Can't reach the game server right now.");
+          if (failures >= 3) setLobbyError("Can't reach the game server right now.");
         }
       }
     };
@@ -72,9 +74,10 @@ export default function LobbyPage() {
   const challenges = lobby?.challenges ?? [];
   const waitingCount = seeks.length + challenges.length;
 
-  // Answer a quick-pairing seek by queueing into the same pool: the server
-  // pairs with the first waiting player immediately. A timeout covers the
-  // race where the seeker left between the last poll and the click.
+  // Answer a quick-pairing seek by queueing into the same pool (same mode and
+  // time control): the server pairs with the first waiting player
+  // immediately. A timeout covers the race where the seeker left between the
+  // last poll and the click.
   const [joiningPool, setJoiningPool] = useState<string | null>(null);
   const joinSeek = async (seek: MPLobbySeek) => {
     if (!user) {
@@ -82,12 +85,14 @@ export default function LobbyPage() {
       return;
     }
     if (joiningPool) return;
-    setJoiningPool(seek.pool);
+    // The two modes share pool (time control) names, so key the in-flight
+    // marker on both.
+    setJoiningPool(`${seek.mode ?? "buff"}:${seek.pool}`);
     const session = new MPSession();
     session.persistFriendSession = false;
     try {
       const paired = await Promise.race([
-        session.queue(seek.pool),
+        session.queue(seek.pool, seek.mode ?? "buff"),
         new Promise<never>((_, reject) =>
           window.setTimeout(() => reject(new Error("seek_gone")), 10000),
         ),
@@ -111,7 +116,7 @@ export default function LobbyPage() {
     <main className="min-h-screen pb-16">
       <SiteHeader active="/lobby" />
 
-      <section className="max-w-5xl mx-auto px-5 sm:px-6">
+      <section className="max-w-7xl mx-auto px-5 sm:px-6">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h1 className="font-display text-4xl sm:text-5xl">Lobby</h1>
@@ -131,7 +136,7 @@ export default function LobbyPage() {
           </div>
         )}
 
-        <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
+        <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
           <div className="space-y-4 min-w-0">
             {/* Step 1: the main action — get matched with a real opponent. */}
             <QueueButton />
@@ -184,7 +189,7 @@ export default function LobbyPage() {
                     href="/friend"
                     className="smallcaps text-[10px] text-gold-leaf hover:text-gold transition-colors"
                   >
-                    Create a Draft game
+                    Create a friend game
                   </Link>
                   <span className="smallcaps text-[10px] text-parchment-400">
                     {lobby ? `${waitingCount} waiting` : "…"}
@@ -192,7 +197,10 @@ export default function LobbyPage() {
                 </div>
               </div>
               {!lobby ? (
-                <p className="mt-3 text-sm text-parchment-400">Loading challenges…</p>
+                <>
+                  <SkeletonRows count={3} />
+                  <p className="mt-3 text-sm text-parchment-500">Looking for open challenges…</p>
+                </>
               ) : waitingCount === 0 ? (
                 <p className="mt-3 text-sm text-parchment-400">
                   No one is waiting right now. Queue for a game or create a friend game
@@ -202,10 +210,10 @@ export default function LobbyPage() {
                 <ul className="mt-3 divide-y divide-white/5">
                   {seeks.map((seek) => (
                     <SeekRow
-                      key={`${seek.pool}:${seek.name}:${seek.at}`}
+                      key={`${seek.mode ?? "buff"}:${seek.pool}:${seek.name}:${seek.at}`}
                       seek={seek}
                       isMine={!!user && user.username === seek.name}
-                      joining={joiningPool === seek.pool}
+                      joining={joiningPool === `${seek.mode ?? "buff"}:${seek.pool}`}
                       busy={joiningPool !== null}
                       onJoin={() => joinSeek(seek)}
                     />
@@ -226,7 +234,10 @@ export default function LobbyPage() {
                 </span>
               </div>
               {!lobby ? (
-                <p className="mt-3 text-sm text-parchment-400">Loading live games…</p>
+                <>
+                  <SkeletonRows count={3} />
+                  <p className="mt-3 text-sm text-parchment-500">Finding live games…</p>
+                </>
               ) : lobby.games.length === 0 ? (
                 <p className="mt-3 text-sm text-parchment-400">
                   No games in play right now. Start one and someone can watch you.
@@ -255,7 +266,10 @@ export default function LobbyPage() {
               <div className="font-display text-xl text-parchment">Online now</div>
             </div>
             {!lobby ? (
-              <p className="mt-3 text-sm text-parchment-400">Loading…</p>
+              <>
+                <SkeletonPlayerRows count={5} />
+                <p className="mt-3 text-sm text-parchment-500">Seeing who&apos;s online…</p>
+              </>
             ) : (
               <>
                 {lobby.players.length === 0 && (
@@ -302,6 +316,42 @@ export default function LobbyPage() {
         </div>
       </section>
     </main>
+  );
+}
+
+// First-load placeholders. They mirror the real row structure (a two-line
+// text block on the left, an action chip on the right) so the panel keeps its
+// shape and nothing jumps when the first snapshot lands. Only shown while
+// `lobby` is still null; once a snapshot exists the last-good data stays up.
+function SkeletonRows({ count }: { count: number }) {
+  return (
+    <ul className="mt-3 divide-y divide-white/5" aria-hidden>
+      {Array.from({ length: count }).map((_, i) => (
+        <li key={i} className="flex items-center justify-between gap-3 py-2.5">
+          <div className="min-w-0 flex-1 space-y-2">
+            <span className="skeleton block h-3.5 w-1/2" />
+            <span className="skeleton block h-2.5 w-1/3" />
+          </div>
+          <span className="skeleton h-9 w-20 shrink-0" />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function SkeletonPlayerRows({ count }: { count: number }) {
+  return (
+    <ul className="mt-3 space-y-2" aria-hidden>
+      {Array.from({ length: count }).map((_, i) => (
+        <li key={i} className="flex items-center justify-between gap-2">
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <span className="skeleton h-[22px] w-[22px] shrink-0" />
+            <span className="skeleton block h-3 w-2/5" />
+          </div>
+          <span className="skeleton h-4 w-14 shrink-0" />
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -352,8 +402,12 @@ function SeekRow({
           <Icon size={14} style={{ color: category.accent }} aria-hidden className="shrink-0" />
           {name}
         </div>
-        <div className="mt-0.5 smallcaps text-[9px] text-parchment-400">
-          Draft · {clock} · {category.label}
+        <div className="mt-0.5 flex items-center gap-1.5 smallcaps text-[9px] text-parchment-400">
+          <ModeBadge mode={seek.mode} compact />
+          <span>
+            {seek.mode ? "Rated · " : "Draft · "}
+            {clock} · {category.label}
+          </span>
         </div>
       </div>
       {isMine ? (
@@ -386,9 +440,12 @@ function ChallengeRow({ challenge }: { challenge: MPLobbyChallenge }) {
     <li className="flex items-center justify-between gap-3 py-2.5">
       <div className="min-w-0">
         <div className="truncate text-sm text-parchment-100">{host}</div>
-        <div className="mt-0.5 smallcaps text-[9px] text-parchment-400">
-          {challenge.draft && <span className="text-gold-leaf">Draft · </span>}
-          Casual · {clock} · code {challenge.id}
+        <div className="mt-0.5 flex items-center gap-1.5 smallcaps text-[9px] text-parchment-400">
+          <ModeBadge mode={challenge.mode} compact />
+          <span>
+            {!challenge.mode && challenge.draft && <span className="text-gold-leaf">Draft · </span>}
+            Casual · {clock} · code {challenge.id}
+          </span>
         </div>
       </div>
       <Link
@@ -412,11 +469,14 @@ function LiveGameRow({ game }: { game: MPLobbyGame }) {
         <div className="truncate text-sm text-parchment-100">
           {name(game.players.w)} <span className="text-parchment-400">vs</span> {name(game.players.b)}
         </div>
-        <div className="mt-0.5 smallcaps text-[9px] text-parchment-400">
-          {game.draft && <span className="text-gold-leaf">Draft · </span>}
-          {game.rated ? "Rated · " : "Casual · "}
-          {clock} · move {Math.ceil(game.moves / 2)}
-          {game.watchers > 0 ? ` · ${game.watchers} watching` : ""}
+        <div className="mt-0.5 flex items-center gap-1.5 smallcaps text-[9px] text-parchment-400">
+          <ModeBadge mode={game.mode} compact />
+          <span>
+            {!game.mode && game.draft && <span className="text-gold-leaf">Draft · </span>}
+            {game.rated ? "Rated · " : "Casual · "}
+            {clock} · move {Math.ceil(game.moves / 2)}
+            {game.watchers > 0 ? ` · ${game.watchers} watching` : ""}
+          </span>
         </div>
       </div>
       <Link

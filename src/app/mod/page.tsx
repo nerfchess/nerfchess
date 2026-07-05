@@ -10,6 +10,7 @@ import { BUFF_BY_ID } from "@/engine/buffs/library";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { AccountUser, fetchMe } from "@/lib/authClient";
+import { ModeBadge } from "@/components/ModeBadge";
 
 type Tab = "reports" | "chat" | "users" | "suggestions" | "rules" | "buffs" | "log";
 
@@ -62,6 +63,10 @@ interface Suggestion {
   contact: string | null;
   username: string | null;
   created_at: number;
+  // 'nerf' or 'buff'; rows from before the buff form default to 'nerf'.
+  kind: string | null;
+  // For buff ideas: 'buff' (Buff mode card) or 'boon' (Nerf-mode boon).
+  pool: string | null;
 }
 
 const DURATIONS: { label: string; ms: number | null }[] = [
@@ -733,13 +738,19 @@ function SuggestionsTab() {
   }, []);
 
   if (!suggestions) return <p className="text-parchment-300">Loading…</p>;
-  if (suggestions.length === 0) return <p className="text-parchment-300">No rule suggestions yet.</p>;
+  if (suggestions.length === 0) return <p className="text-parchment-300">No suggestions yet.</p>;
   return (
     <div className="space-y-2">
       {suggestions.map((s) => (
         <div key={s.id} className="plate p-4">
           <div className="flex flex-wrap items-center gap-2 text-sm">
+            <ModeBadge mode={s.kind === "buff" ? "buff" : "nerf"} />
             <span className="font-display font-semibold text-gold-leaf">{s.name}</span>
+            {s.kind === "buff" && (
+              <span className="smallcaps text-[9px] text-parchment-400 border border-white/10 px-1.5 py-px">
+                {s.pool === "boon" ? "Nerf-mode boon" : "Buff mode card"}
+              </span>
+            )}
             <span className="text-parchment-400">
               by {s.username ?? "anonymous"}
               {s.contact ? ` (${s.contact})` : ""} · {when(s.created_at)}

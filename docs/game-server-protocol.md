@@ -30,7 +30,7 @@ References:
 | `drawOffer` / `drawAccept` / `drawDecline` | none | Draw negotiation. |
 | `takebackOffer` / `takebackAccept` / `takebackDecline` | none | Takeback negotiation (casual games only; rated games reject with `takeback_rated`). Accepting rewinds the offerer's last move, plus the reply if one was already played. |
 | `rematch` | none | Offer (or accept a pending) rematch once the game is over. |
-| `queue` | `{ "pool": "3+2" }` | Join the quick-pairing pool (signed-in sockets only; paired games are casual Draft games). |
+| `queue` | `{ "pool": "3+2", "mode": "nerf" }` | Join a quick-pairing pool (signed-in sockets only). The queue runs two separate pools, `"nerf"` and `"buff"`; only players in the same mode (and time control) pair. An omitted or unknown `mode` falls back to `"buff"`, which is the pool older clients always queued into. Paired games are rated Draft games in the pool's mode, staking that mode's rating bucket. |
 | `queueCancel` | none | Leave the pairing pool. |
 | `chat` | `{ "text": "gg" }` | Send an in-game chat message (profanity is censored and flagged). |
 | `dtPick` | `{ "index": 0 }` | Draft games: take a card from my pending buff offer. |
@@ -51,7 +51,7 @@ References:
 | `start` | setup, color, token, `wc`/`bc`, `moves`, `players`, `rated`, `chat`, optional `preview`, optional `draft`/`mode`/`picksVisible`/`dtActions`/`dtState`/`nerfDraft` | Both seats are present, or a player reconnected; construct the same game and replay accepted UCI moves. `preview` carries the projected rating change per outcome for rated games. Draft games add the public draft action record (`dtActions`, interleaved with moves by ply for exact replay) and this seat's filtered draft state (`dtState`). While the opening nerf draft is unresolved they add `nerfDraft` instead: both sides' two options, this seat's own pick index (or `null`), and whether the opponent has picked. |
 | `move` | `{ "u", "ply", "wc", "bc" }` | Accepted move and authoritative clocks in milliseconds. |
 | `end` | `{ "result", "wc", "bc", "ratings?", "nerfs?", "draftBuffs?" }` | Authoritative terminal result; rating changes for rated games, and the revealed rules for spectators. Draft games add each side's held buffs (public all game, repeated for post-game screens). |
-| `queued` / `paired` / `queueCancelled` | pairing pool events | `paired` carries `{ id, color, token }` for the new game. |
+| `queued` / `paired` / `queueCancelled` | pairing pool events | `queued` and `paired` carry `pool` and `mode`; `paired` adds `{ id, color, token }` for the new game. |
 | `chat` | `{ "color", "name", "text", "at" }` | Relayed chat message (censored server-side when profane). |
 | `wstart` | watch payload | Spectator joined: game snapshot with `moves`, `players`, clocks, `watchers`, and `nerfs` once over. Draft games add `draft`, `mode` (when the game runs a section), `dtActions`, and a spectator-safe `dtState` (held buffs and board effects only; never offers, pending markers, flags, or reveals). |
 | `dtOffer` | `{ "color", "cards", "index", "banked?" }` | Draft games: a buff offer rolled. Sent only to the drafting seat, plus the opposing seat when the match has `picksVisible`. Never sent to spectators. |
@@ -61,7 +61,7 @@ References:
 | `dtTargetReq` | `{ "buffIndex", "target" }` | Draft games: reply to `dtTarget` with the buff's next target request, or `null` when the pick chain is complete. |
 | `dtNerfPicked` | `{ "color" }` | Draft games: a seat locked in its opening nerf pick. Progress only, the pick's identity stays hidden. Sent to both seats, never to spectators. |
 | `watchers` | `{ "n" }` | Live spectator count, sent to players and watchers. |
-| `lobby` | `{ "players", "anonymous", "games" }` | Lobby snapshot reply. |
+| `lobby` | `{ "players", "anonymous", "games", "challenges", "seeks" }` | Lobby snapshot reply. Each live game and open challenge carries `draft` plus `mode` when the match runs a section (`"nerf"` or `"buff"`; omitted for legacy merged-rules matches). Each seek carries the `mode` of the pool it waits in, plus the seeker's rating in that mode's bucket; answering a seek must queue with the same `pool` and `mode`. Clients use `mode` to color-code listings (Nerf red, Buff blue) and render no badge when it is absent. |
 | `drawOffer` / `drawDeclined` / `rematchOffer` / `rematched` | negotiation events | |
 | `takebackOffer` / `takebackDeclined` | `{ "color" }` | Takeback negotiation events. Moving past an opponent's request declines it. |
 | `takeback` | `{ "by", "moves", "ply", "wc", "bc" }` | Accepted takeback: the authoritative rewound move list — rebuild the game from it (players and spectators). |
@@ -91,17 +91,21 @@ seconds before its clock starts charging, so a slow page load never costs time.
 Friend games created with `draft: true` run the Draft ruleset (buff drafts on
 a move cadence, see `docs/draft-system.md`). Server rules:
 
-- Draft games are always casual. The server never rates a draft match,
-  whatever the client asks. The quick-pairing queue only creates Draft
-  matches, so queue games are casual too.
+- Friend and challenge Draft games are always casual: `create` never honors
+  a rated request, whatever the client asks. Quick-pairing queue games are
+  rated, under per-mode rating buckets: a queue game in the Nerf pool moves
+  only the players' Nerf ratings, one in the Buff pool only their Buff
+  ratings (Glicko-2, same math the legacy speed buckets used). A mode bucket
+  is seeded from the account's legacy shared rating on first contact.
 - `mode` splits Draft games into the site's two sections. Buff mode
   (`"buff"`): no nerfs at all (both seats run the unrestricted `none` rule,
   the opening nerf draft is skipped and the game starts like a classic one)
   and the buff pool excludes the nerf-modifier category. Nerf mode
   (`"nerf"`): the opening nerf pick stays, the pool contains ONLY
   nerf-modifier cards, and the cadence stretches to 10 own moves. Queue
-  games always run Buff mode. Matches without a mode keep the legacy merged
-  rules so stored games replay unchanged, but no current UI creates them.
+  games run the mode of the pool they were queued into. Matches without a
+  mode keep the legacy merged rules so stored games replay unchanged, but no
+  current UI creates them.
 - When the second seat arrives, the server deals the opening nerf draft
   instead of starting the game: two nerf options per seat, all four distinct,
   drawn from the match seed RNG. Each seat's two options share a tier and the

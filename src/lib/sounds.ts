@@ -73,6 +73,7 @@ type SampleName =
   | "Capture"
   | "Select"
   | "GenericNotify"
+  | "SocialNotify"
   | "LowTime"
   | "CountDown0"
   | "Error";
@@ -103,6 +104,7 @@ export function preloadSounds() {
     "Capture",
     "Select",
     "GenericNotify",
+    "SocialNotify",
     "LowTime",
     "CountDown0",
     "Error",
@@ -326,6 +328,64 @@ export function playGameOver() {
   tone({ freq: 1318, dur: 0.30, type: "sine", gain: 0.06, attack: 0.005, release: 0.28, delay: 0.13 });
 }
 
+// Generic notification: something in the game needs your attention right now.
+// The lichess notify dong, softened a touch.
+export function playNotify() {
+  if (!soundPrefs.enabled) return;
+  if (playSample("GenericNotify", 0.85)) return;
+  tone({ freq: 880, dur: 0.18, type: "sine", gain: 0.16, attack: 0.005, release: 0.18 });
+  tone({ freq: 1108, dur: 0.22, type: "sine", gain: 0.10, attack: 0.005, release: 0.20, delay: 0.09 });
+}
+
+// Draft offer: a soft glistening shimmer, deliberately gentler than the
+// notify dong. Synthesized on purpose (no sample, dependency-free): a small
+// arpeggio of high partials, each doubled with a slight detune so the beating
+// between the voices glistens, with a fast attack and a long decay.
+export function playDraftChime() {
+  if (!soundPrefs.enabled) return;
+  if (isMuted()) return;
+  const a = audio();
+  if (!a) return;
+  const t0 = a.currentTime;
+  const master = a.createGain();
+  master.gain.value = 0.9 * getVolume();
+  master.connect(a.destination);
+
+  // G6 - B6 - E7 - G7: an Em7-ish sparkle, staggered a few tens of ms apart.
+  const partials: { freq: number; gain: number; delay: number; type: OscillatorType }[] = [
+    { freq: 1568, gain: 0.09, delay: 0, type: "sine" },
+    { freq: 1976, gain: 0.07, delay: 0.04, type: "sine" },
+    { freq: 2637, gain: 0.045, delay: 0.08, type: "triangle" },
+    { freq: 3136, gain: 0.028, delay: 0.12, type: "sine" },
+  ];
+  for (const p of partials) {
+    for (const detune of [-7, 7]) {
+      const osc = a.createOscillator();
+      osc.type = p.type;
+      osc.frequency.value = p.freq;
+      osc.detune.value = detune;
+      const g = a.createGain();
+      const start = t0 + p.delay;
+      g.gain.setValueAtTime(0, start);
+      g.gain.linearRampToValueAtTime(p.gain, start + 0.012);
+      g.gain.exponentialRampToValueAtTime(0.0001, start + 1.1);
+      osc.connect(g);
+      g.connect(master);
+      osc.start(start);
+      osc.stop(start + 1.15);
+    }
+  }
+}
+
+// Incoming challenge: the lichess social notify (what lichess plays when a
+// challenge lands in your inbox).
+export function playChallenge() {
+  if (!soundPrefs.enabled) return;
+  if (playSample("SocialNotify")) return;
+  tone({ freq: 660, dur: 0.16, type: "triangle", gain: 0.14, attack: 0.005, release: 0.16 });
+  tone({ freq: 880, dur: 0.22, type: "triangle", gain: 0.12, attack: 0.005, release: 0.20, delay: 0.12 });
+}
+
 // Low time: urgent double tick, like a clock tapping your shoulder.
 export function playLowTime() {
   if (!soundPrefs.enabled) return;
@@ -340,6 +400,16 @@ export function playCountdownTick() {
   if (!soundPrefs.enabled) return;
   if (playSample("CountDown0", 0.8)) return;
   tone({ freq: 988, dur: 0.09, type: "square", gain: 0.10, attack: 0.002, release: 0.09 });
+}
+
+// Urgent low-clock tick: a sharp, insistent two-note blip for the final
+// seconds of your own clock, pitched a step above the low-time warning so the
+// escalation is audible. Synthesized (no sample) and honours mute/enabled via
+// tone().
+export function playUrgentTick() {
+  if (!soundPrefs.enabled) return;
+  tone({ freq: 1245, dur: 0.06, type: "square", gain: 0.11, attack: 0.002, release: 0.06 });
+  tone({ freq: 1660, dur: 0.07, type: "square", gain: 0.08, attack: 0.002, release: 0.07, delay: 0.08 });
 }
 
 // Select: very brief, soft pickup tick.

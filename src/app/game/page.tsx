@@ -11,8 +11,9 @@ import { PlayerNerfCard } from "@/components/PlayerNerfCard";
 import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
 import { AILevel, aiBudgetMs, pickAIMove } from "@/engine/ai";
 import { Nerf, type GameContext } from "@/engine/nerf";
-import { IMPLEMENTED_BY_ID, PLAYABLE_NERFS } from "@/engine/nerfs/library";
+import { IMPLEMENTED_BY_ID, openingNerfPool } from "@/engine/nerfs/library";
 import { BUFF_BY_ID } from "@/engine/buffs/library";
+import { BuffUsedToast } from "@/components/BuffUsedToast";
 import {
   aiActivateBuffs,
   aiResolveDraft,
@@ -30,6 +31,8 @@ import {
   resign,
 } from "@/engine/game";
 import { BuffDock, EnemyBuffModal, TargetingBanner, useBuffTargeting } from "@/components/BuffDock";
+import { draftCardNoun } from "@/engine/buff";
+import { draftZones } from "@/lib/draftOnline";
 import { MobileBuffDrawer } from "@/components/MobileBuffDrawer";
 import { DraftNotice } from "@/components/DraftNotice";
 import { DraftOverlay, LockInCountdown } from "@/components/DraftOverlay";
@@ -55,7 +58,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, type CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 function pickRandomNerf(): Nerf {
-  const playable = PLAYABLE_NERFS.filter((d) => d.id !== "lucky");
+  // Random rolls respect the temporary opening cap (tiers 1-2 only).
+  const playable = openingNerfPool();
   return playable[Math.floor(Math.random() * playable.length)];
 }
 
@@ -65,7 +69,8 @@ function pickRandomNerf(): Nerf {
  * each side (options 0-1 and 2-3) one card of the anchor tier and one of the
  * partner tier, so both players always draft from the same tier pair. */
 function dealNerfOptions(exclude: Set<string>): Nerf[] {
-  const pool = PLAYABLE_NERFS.filter((d) => d.id !== "lucky" && !exclude.has(d.id));
+  // The deal draws from the capped opening pool (see MAX_OPENING_NERF_TIER).
+  const pool = openingNerfPool().filter((d) => !exclude.has(d.id));
   const ofTier = (tier: number) => pool.filter((d) => d.tier === tier);
   const takeOne = (tier: number, taken: Set<string>): Nerf => {
     const candidates = ofTier(tier).filter((d) => !taken.has(d.id));
@@ -172,12 +177,19 @@ function GamePage() {
   // Draft mode's opening nerf draft: both players see two nerf cards and pick
   // one. The game object isn't created until the player commits.
   const [nerfDraft, setNerfDraft] = useState<{ myOptions: Nerf[]; aiOptions: Nerf[] } | null>(null);
+  // Two-step nerf pick: the first click only selects; Confirm (or a second
+  // click on the same card) commits it.
+  const [nerfSelected, setNerfSelected] = useState<number | null>(null);
   // Lock-in deadlines (15s), mirroring the online rules: the nerf pick and
   // every buff offer auto-resolve when the timer runs out, and the game
   // clock is paused while an offer is open.
   const [nerfDeadline, setNerfDeadline] = useState<number | null>(null);
   const [offerDeadline, setOfferDeadline] = useState<number | null>(null);
   const [offerPausedAt, setOfferPausedAt] = useState<number | null>(null);
+  // Offer index whose free lock-in window has expired: the draft panel moves
+  // aside, the board comes back into view, and the clock resumes — the rest
+  // of the deliberation costs the player's own time.
+  const [offerOnClockIndex, setOfferOnClockIndex] = useState<number | null>(null);
   const [, force] = useState(0);
   const [muted, setMutedState] = useState(false);
   const [premoves, setPremoves] = useState<QueuedPremove[]>([]);
@@ -330,6 +342,7 @@ function GamePage() {
   // options at random and the game begins.
   const startDraftGame = (picked: Nerf) => {
     if (!nerfDraft) return;
+    setNerfSelected(null);
     const aiDb = nerfDraft.aiOptions[Math.floor(Math.random() * nerfDraft.aiOptions.length)];
     const wDb = myColor === "w" ? picked : aiDb;
     const bDb = myColor === "w" ? aiDb : picked;
@@ -343,22 +356,49 @@ function GamePage() {
     setGame(g);
   };
 
+  // Transient toast naming and explaining a card the bot just played, so its
+  // effect on the board is never a mystery.
+  const [oppUsedCard, setOppUsedCard] = useState<{
+    card: { id: string; tier: number };
+    label: string;
+  } | null>(null);
+  const oppUsedTimerRef = useRef<number | null>(null);
+  const showOppUsedCard = (card: { id: string; tier: number }, label: string) => {
+    setOppUsedCard({ card, label });
+    if (oppUsedTimerRef.current) window.clearTimeout(oppUsedTimerRef.current);
+    oppUsedTimerRef.current = window.setTimeout(() => setOppUsedCard(null), 7000);
+  };
+
   // Draft mode: the bot resolves its pending buff drafts immediately.
   useEffect(() => {
     if (!game?.buffs || game.result) return;
     const botColor: Color = myColor === "w" ? "b" : "w";
     if (game.buffs.players[botColor].offer) {
+      const before = game.buffs.players[botColor].buffs.length;
       aiResolveDraft(game, botColor);
+      // Instants show on the board the moment the bot picks them; surface
+      // what the card did, matching the online reveal-at-pick rule.
+      const gained = game.buffs.players[botColor].buffs.slice(before);
+      const instant = gained.find((b) => BUFF_BY_ID[b.id]?.kind === "instant" && !b.nullified);
+      if (instant) {
+        showOppUsedCard(
+          { id: instant.id, tier: instant.tier },
+          `Bot played a ${draftCardNoun(game.buffs.mode)}`,
+        );
+      }
       setGame({ ...game });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [game, myColor]);
 
   // Lock-in window and clock pause for my buff offers: a fresh offer arms
   // the 15s deadline and freezes the clock; resolving it shifts the turn
-  // start forward by the paused span so the pick cost no time.
+  // start forward by the paused span so the pick cost no time. Once the free
+  // window has expired for an offer (offerOnClockIndex), the clock stays
+  // live: the panel sits at the side and thinking runs on the player's time.
   useEffect(() => {
     const offer = game?.buffs?.players[myColor].offer ?? null;
-    if (offer && offerPausedAt == null) {
+    if (offer && offerPausedAt == null && offerOnClockIndex !== offer.index) {
       setOfferPausedAt(Date.now());
       setOfferDeadline(Date.now() + 15_000);
     } else if (!offer && offerPausedAt != null) {
@@ -366,7 +406,7 @@ function GamePage() {
       setOfferPausedAt(null);
       setOfferDeadline(null);
     }
-  }, [game, myColor, offerPausedAt]);
+  }, [game, myColor, offerPausedAt, offerOnClockIndex]);
 
   useEffect(() => {
     if (!game) return;
@@ -649,7 +689,9 @@ function GamePage() {
     // can decide the game on the spot (a removal ends it via loss checks).
     if (game.buffs) {
       try {
-        if (aiActivateBuffs(game, botColor)) {
+        const usedCard = aiActivateBuffs(game, botColor);
+        if (usedCard) {
+          showOppUsedCard(usedCard, `Bot used a ${draftCardNoun(game.buffs.mode)}`);
           setGame({ ...game });
           if (game.result) {
             aiThinking.current = false;
@@ -839,25 +881,52 @@ function GamePage() {
             </h1>
             <p className="mt-2 text-sm text-parchment-300 text-center">
               {gameMode === "nerf"
-                ? "Pick one of two nerfs. About every ten moves you draft a card that softens or removes it."
+                ? "Pick one of two nerfs. Every six moves you draft a card: a hex that curses your opponent, or a boon or item that helps you."
                 : "Every game opens weak: pick one of two nerfs, then draft buffs every few moves to claw your way back to power."}
             </p>
             {nerfDeadline != null && (
               <div className="mx-auto mt-4 max-w-sm">
-                {/* Lock-in window: the first option is picked automatically. */}
+                {/* Lock-in window: an unconfirmed selection commits at the
+                    deadline; with nothing selected the first option is
+                    picked automatically. */}
                 <LockInCountdown
                   deadline={nerfDeadline}
-                  onExpire={() => startDraftGame(nerfDraft.myOptions[0])}
+                  onExpire={() => startDraftGame(nerfDraft.myOptions[nerfSelected ?? 0])}
                 />
               </div>
             )}
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
-              {nerfDraft.myOptions.map((n) => (
-                <button key={n.id} onClick={() => startDraftGame(n)} className="text-left transition hover:-translate-y-1">
-                  <NerfCard nerf={n} ownerLabel="Pick this nerf" />
+              {nerfDraft.myOptions.map((n, i) => (
+                <button
+                  key={n.id}
+                  type="button"
+                  onClick={() => (nerfSelected === i ? startDraftGame(n) : setNerfSelected(i))}
+                  className={
+                    "mx-auto block w-full max-w-md sm:max-w-none text-left transition touch-manipulation [@media(hover:hover)]:hover:-translate-y-1" +
+                    (nerfSelected === i
+                      ? " -translate-y-1 ring-2 ring-gold shadow-leaf"
+                      : nerfSelected != null
+                      ? " opacity-60"
+                      : "")
+                  }
+                >
+                  <NerfCard nerf={n} ownerLabel={nerfSelected === i ? "Selected" : "Pick this nerf"} />
                 </button>
               ))}
             </div>
+            {nerfSelected != null && (
+              <div className="mt-4 text-center">
+                <button
+                  onClick={() => startDraftGame(nerfDraft.myOptions[nerfSelected])}
+                  className="btn-leaf px-6 py-2.5 font-display text-sm font-semibold tracking-wide"
+                >
+                  Confirm pick
+                </button>
+                <p className="mt-1.5 text-[11px] text-parchment-400">
+                  Clicking the card again also confirms.
+                </p>
+              </div>
+            )}
             {/* Nerf mode: the opponent's rule is completely hidden until the
                 game ends, so their options never show either. */}
             {gameMode === "nerf" ? (
@@ -888,30 +957,10 @@ function GamePage() {
   const myState = myColor === "w" ? game.white.state : game.black.state;
   const myCtx = makeContext(game, myColor);
   const visual = myNerf.visual?.(myState, myCtx);
-  // Draft-mode zone effects are public information: paint frozen pieces,
-  // shielded (sanctuary) squares, and barred squares for both sides. Squares
-  // barred against me use the nerf's red "can't go there" wash; squares my
-  // buffs bar against the opponent get their own tint.
-  const zone = { frozen: [] as number[], shielded: [] as number[], ward: [] as number[], barred: [] as number[], strike: [] as number[] };
-  if (game.buffs) {
-    for (const e of game.buffs.effects) {
-      if (e.turns != null && e.turns <= 0) continue;
-      if (e.kind === "freeze") zone.frozen.push(e.sq);
-      else if (e.kind === "shield") {
-        if (e.squares) zone.shielded.push(...e.squares);
-        else {
-          for (let sq = 0; sq < 64; sq++) {
-            const p = game.board.pieces[sq];
-            if (p && p.color === e.owner) zone.shielded.push(sq);
-          }
-        }
-      } else if (e.kind === "barred") {
-        (e.against === myColor ? zone.barred : zone.ward).push(...e.squares);
-      } else if (e.kind === "strike") {
-        zone.strike.push(...e.squares);
-      }
-    }
-  }
+  // Draft-mode zone effects are public information: paint frozen pieces
+  // (Immobilizer auras included), shielded (sanctuary) squares, and barred
+  // squares for both sides — the same painting the online match uses.
+  const zone = draftZones(game, myColor);
   const opponentNerf = myColor === "w" ? game.black.nerf : game.white.nerf;
   const bsMine = game.buffs?.players[myColor];
   const bsTheirs = game.buffs?.players[myColor === "w" ? "b" : "w"];
@@ -925,6 +974,17 @@ function GamePage() {
   // mode hides both rule sections entirely, there are no nerfs at all.
   const hideOppNerfCard = gameMode === "buff" || (draftMode && !oppRevealed);
   const hideMyNerfCard = gameMode === "buff";
+  // Nerf mode: held boons ride in the same corner card as the nerf, so the
+  // handicap and its reliefs read together at a glance.
+  const myHeldBoons =
+    game.buffs?.mode === "nerf"
+      ? game.buffs.players[myColor].buffs
+          .filter((b) => !b.spent && !b.nullified)
+          .flatMap((b) => {
+            const def = BUFF_BY_ID[b.id];
+            return def ? [{ name: def.name, tier: b.tier, status: def.status?.(b) ?? null }] : [];
+          })
+      : undefined;
   const lastMove = game.board.history[game.board.history.length - 1] ?? null;
   // A held move (confirmation setting) previews on the board before playing.
   const confirmPreviewBoard = confirmMovePending
@@ -1142,7 +1202,15 @@ function GamePage() {
         <div className="flex items-center gap-4">
           <div className="smallcaps text-[11px] text-parchment-400 hidden sm:block">
             playing {myColor === "w" ? "White" : "Black"} ·{" "}
-            {gameMode ? `${gameMode} mode · ` : ""}bot on {difficulty} · {rated ? "rated" : "casual"}
+            {gameMode && (
+              <>
+                <span className={gameMode === "nerf" ? "text-mode-nerfGlow" : "text-mode-buffGlow"}>
+                  {gameMode} mode
+                </span>
+                {" · "}
+              </>
+            )}
+            bot on {difficulty} · {rated ? "rated" : "casual"}
           </div>
           <button
             onClick={toggleMute}
@@ -1178,7 +1246,7 @@ function GamePage() {
         </div>
       </nav>
 
-      <div className="mx-auto flex w-full max-w-[1280px] flex-1 min-h-0 flex-col gap-2 overflow-hidden px-3 pb-14 sm:px-6 sm:pb-6 xl:max-w-[1600px]">
+      <div className="mx-auto flex w-full max-w-[1360px] flex-1 min-h-0 flex-col gap-2 overflow-hidden px-3 pb-14 sm:px-6 sm:pb-6 xl:max-w-[1680px]">
         {hint && (
           <div
             role="status"
@@ -1197,7 +1265,7 @@ function GamePage() {
           </div>
         )}
         <div
-          className="grid min-h-0 flex-1 gap-y-2 lg:grid-cols-[340px_auto] lg:justify-center lg:gap-x-4 xl:grid-cols-[380px_auto]"
+          className="grid min-h-0 flex-1 gap-y-2 lg:grid-cols-[380px_auto] lg:justify-center lg:gap-x-4 xl:grid-cols-[420px_auto]"
           style={railHeightStyle}
         >
           <aside className="hidden min-h-0 gap-3 overflow-hidden lg:grid lg:min-h-[var(--board-height)] lg:max-h-full lg:grid-rows-[auto_minmax(8rem,1fr)_auto] lg:self-start">
@@ -1249,6 +1317,7 @@ function GamePage() {
               ownerLabel=""
               compact
               progress={myNerf.progress?.(myState, myCtx) ?? null}
+              boons={myHeldBoons}
               action={
                 gameMode === "buff" ? null : (
                   <button
@@ -1311,6 +1380,8 @@ function GamePage() {
                           shieldedSquares: zone.shielded,
                           wardSquares: zone.ward,
                           strikeSquares: zone.strike,
+                          walnutSquares: zone.walnut,
+                          lockedSquares: zone.locked,
                         }
                   }
                   lastMove={lastMoveForDisplay}
@@ -1340,6 +1411,7 @@ function GamePage() {
                     buffs={bsTheirs.buffs}
                     banked={!!bsTheirs.flags.bankBonus}
                     hidden
+                    cardNoun={draftCardNoun(game.buffs?.mode)}
                   />
                 )}
                 {buffTargeting.targeting && buffTargeting.targeting.target.kind === "square" && (
@@ -1348,6 +1420,7 @@ function GamePage() {
                     myColor={myColor}
                     targeting={buffTargeting.targeting}
                     onCancel={buffTargeting.cancel}
+                    onFinish={buffTargeting.finish}
                   />
                 )}
               </div>
@@ -1364,6 +1437,7 @@ function GamePage() {
                   <ClockPill
                     ms={myColor === "w" ? whiteMs : blackMs}
                     active={!game.result && offerPausedAt == null && game.board.turn === myColor}
+                    warnLowTime={uiSettings.lowTimeWarning}
                     compact
                   />
                 )}
@@ -1392,7 +1466,7 @@ function GamePage() {
             </div>
             <div
               className={
-                "hidden min-h-0 overflow-hidden gap-3 sm:grid sm:h-[var(--board-height)] sm:w-64 sm:shrink-0 " +
+                "hidden min-h-0 overflow-hidden gap-3 sm:grid sm:h-[var(--board-height)] sm:w-72 sm:shrink-0 " +
                 (clockEnabled ? "sm:grid-rows-[auto_minmax(0,1fr)_auto]" : "sm:grid-rows-[minmax(0,1fr)]")
               }
               style={railHeightStyle}
@@ -1415,6 +1489,7 @@ function GamePage() {
                 <ClockPill
                   ms={myColor === "w" ? whiteMs : blackMs}
                   active={!game.result && offerPausedAt == null && game.board.turn === myColor}
+                  warnLowTime={uiSettings.lowTimeWarning}
                 />
               )}
             </div>
@@ -1431,6 +1506,7 @@ function GamePage() {
 
       {game.buffs && (
         <MobileBuffDrawer
+          label={draftCardNoun(game.buffs.mode) === "hex" ? "Hexes & boons" : "Buffs"}
           held={game.buffs.players[myColor].buffs.length}
           usable={
             game.result || game.board.turn !== myColor || myOffer || isReviewingHistory
@@ -1462,19 +1538,28 @@ function GamePage() {
         />
       )}
 
+      {oppUsedCard && <BuffUsedToast card={oppUsedCard.card} label={oppUsedCard.label} />}
+
       {myOffer && !game.result && (
         <DraftOverlay
           offer={myOffer}
           takeBoth={(bsMine?.flags.takeBoth ?? 0) > 0}
           bankedBonus={!!myOffer.banked}
           deadline={offerDeadline}
+          minimized={offerOnClockIndex === myOffer.index}
+          cardNoun={draftCardNoun(game.buffs?.mode)}
           onExpire={() => {
-            // Mirror the server's auto-resolve rule: take the first card,
-            // unless a pending nullify would kill any pick (then bank).
-            if (!game.buffs?.players[myColor].offer) return;
-            if ((bsMine?.flags.nullifyIncoming ?? 0) > 0) bankDraft(game, myColor);
-            else pickDraftCard(game, myColor, 0);
-            setGame({ ...game });
+            // Free window over: keep the offer open, slide the panel aside,
+            // and resume the clock — the pick now costs the player's time.
+            const offer = game.buffs?.players[myColor].offer;
+            if (!offer) return;
+            if (offerPausedAt != null) {
+              turnStartedAtRef.current +=
+                Date.now() - Math.max(offerPausedAt, turnStartedAtRef.current);
+            }
+            setOfferPausedAt(null);
+            setOfferDeadline(null);
+            setOfferOnClockIndex(offer.index);
           }}
           onPick={(i) => {
             pickDraftCard(game, myColor, i);

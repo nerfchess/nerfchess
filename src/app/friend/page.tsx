@@ -130,7 +130,29 @@ export default function FriendPage() {
     const codeParam = search.get("code")?.trim().toUpperCase();
     if (codeParam) {
       setJoinCode(codeParam);
-      joinWithCode(codeParam);
+      // A refresh mid-game lands here with the challenge code still in the
+      // URL. By then the challenge record is consumed and the joiner seat is
+      // taken, so a fresh join can never succeed; the saved seat token is the
+      // only way back into the game. Resume it, and only fall back to a fresh
+      // join when there is no saved seat for this code or the server refuses
+      // the seat (game gone or archived).
+      const savedForCode = loadSavedFriendSession();
+      if (savedForCode && savedForCode.id === codeParam) {
+        setCode(savedForCode.id);
+        setView("joining");
+        const sess = new MPSession();
+        sessionRef.current = sess;
+        wireSession(sess);
+        sess.resume(savedForCode).catch(() => {
+          if (sessionRef.current !== sess) return;
+          sess.destroy();
+          sessionRef.current = null;
+          clearSavedFriendSession();
+          void joinWithCode(codeParam);
+        });
+      } else {
+        void joinWithCode(codeParam);
+      }
       return;
     }
     // Mode preselected on the play page carries over (?mode=nerf|buff).
@@ -355,17 +377,17 @@ export default function FriendPage() {
           <div>
             <div className="smallcaps text-[11px] text-parchment-400 mb-2">Game mode</div>
             <div className="grid grid-cols-2 gap-2">
-              <OptionButton selected={gameMode === "buff"} onClick={() => setGameMode("buff")}>
+              <OptionButton mode="buff" selected={gameMode === "buff"} onClick={() => setGameMode("buff")}>
                 Buff mode
               </OptionButton>
-              <OptionButton selected={gameMode === "nerf"} onClick={() => setGameMode("nerf")}>
+              <OptionButton mode="nerf" selected={gameMode === "nerf"} onClick={() => setGameMode("nerf")}>
                 Nerf mode
               </OptionButton>
             </div>
             <p className="mt-2 text-[11px] leading-snug text-parchment-400">
               {gameMode === "buff"
                 ? "No nerfs at all. Every few moves both players draft a buff; the strongest build wins. Always casual."
-                : "Both players pick a secret nerf that only reveals when the game ends. Rare drafts, about every ten moves, can soften or remove it. Always casual."}
+                : "Both players pick a secret nerf that only reveals when the game ends. Boon drafts every six moves can soften or remove it. Always casual."}
             </p>
           </div>
 
@@ -409,22 +431,30 @@ export default function FriendPage() {
   );
 }
 
+// When selected, each mode button wears its color identity: Nerf slightly
+// red, Buff blue.
 function OptionButton({
+  mode,
   selected,
   onClick,
   children,
 }: {
+  mode: "nerf" | "buff";
   selected: boolean;
   onClick: () => void;
   children: React.ReactNode;
 }) {
+  const selectedIdentity =
+    mode === "nerf"
+      ? "border-mode-nerf/50 bg-mode-nerf/10 text-mode-nerfGlow"
+      : "border-mode-buff/50 bg-mode-buff/10 text-mode-buffGlow";
   return (
     <button
       onClick={onClick}
       className={
         "px-3 py-2 border transition text-xs font-display font-semibold tracking-wide " +
         (selected
-          ? "border-gold/50 bg-gold/10 text-gold-leaf"
+          ? selectedIdentity
           : "border-white/15 bg-white/[0.03] text-parchment-200 hover:border-white/30 hover:bg-white/[0.06]")
       }
     >

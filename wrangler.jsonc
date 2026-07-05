@@ -22,13 +22,45 @@
   ],
   "vars": {
     // Promoted to admin on their next login (see docs/moderation.md).
-    "ADMIN_USERNAMES": "ilovenewjeans,ruylopezsolos"
+    "ADMIN_USERNAMES": "ilovenewjeans,ruylopezsolos",
+    // OAuth client id for "Continue with Google" (see docs/google-sign-in.md).
+    // The matching secret is set with: wrangler secret put GOOGLE_CLIENT_SECRET
+    // Leave empty to disable Google sign-in.
+    "GOOGLE_CLIENT_ID": ""
   },
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "nerfchess",
       "migrations_dir": "migrations"
+    }
+  ],
+  // OCI Postgres holding the finished-game archive (large, append-only). It
+  // listens local-only on the box (127.0.0.1:5432), so Hyperdrive — which dials
+  // from Cloudflare's edge — reaches it over a Cloudflare Tunnel (TCP public
+  // hostname pgdb.nerfchess.com) guarded by an Access service token. The config
+  // below (`nerfchess-pg`) already exists on the account with that host + an
+  // Access client id, so deploys with this id no longer fail (contrary to the
+  // now-stale note removed in PR #138, the id IS real).
+  //
+  // BEFORE relying on this in prod, confirm the origin is actually reachable:
+  // the tunnel route pgdb.nerfchess.com -> tcp://127.0.0.1:5432 must be live, the
+  // Access service token valid, and the PG `games` schema present + backfilled
+  // (scripts/backfill-games.mjs). With the binding present, reads fall back to
+  // D1 only on error (see pg.ts), and finished-game archive writes go to PG only
+  // (games.ts) — so a dead origin means lost archive rows, not a silent D1 write.
+  //
+  // `localConnectionString` is a placeholder needed only at BUILD time: OpenNext
+  // runs getPlatformProxy during the build, which requires some local Hyperdrive
+  // string for this binding (else the build errors with "no local hyperdrive
+  // connection string"). It is never used in production — the deployed Worker
+  // talks to the real Hyperdrive config via `id`. For a real local Postgres,
+  // override it with WRANGLER_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE.
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      "id": "2d8d6632c4e04f31be76fd291846d341",
+      "localConnectionString": "postgres://user:password@localhost:5432/nerfchess"
     }
   ],
   "durable_objects": {

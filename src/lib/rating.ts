@@ -4,14 +4,14 @@
 //
 // This module is a backwards-compatible facade over the multi-category store
 // in lib/ratings.ts: the historical "single rating" is the Blitz bucket
-// (DEFAULT_CATEGORY). Existing callers — including the game flow — keep using
+// (LEGACY_LOCAL_CATEGORY). Existing callers, including the game flow, keep using
 // loadRating / saveRating / applyResult unchanged; the rating just lives in,
 // and migrates from, the new per-category storage. The Glicko-2 math itself is
 // shared with the server-side online ratings in lib/glicko.ts. Online rated
 // games use the account rating in D1 instead — see src/lib/server/games.ts.
 
 import { glickoUpdate } from "./glicko";
-import { DEFAULT_CATEGORY, type RatingCategoryId } from "./ratingCategories";
+import { LEGACY_LOCAL_CATEGORY, type RatingCategoryId } from "./ratingCategories";
 import { loadRatings, saveRatings, type CategoryStats } from "./ratings";
 
 export interface Rating {
@@ -34,11 +34,11 @@ function toRating(s: CategoryStats): Rating {
 }
 
 export function loadRating(): Rating {
-  return loadRatingFor(DEFAULT_CATEGORY);
+  return loadRatingFor(LEGACY_LOCAL_CATEGORY);
 }
 
 export function saveRating(r: Rating) {
-  saveRatingFor(DEFAULT_CATEGORY, r);
+  saveRatingFor(LEGACY_LOCAL_CATEGORY, r);
 }
 
 // Per-time-control buckets: each category has its own independent rating, and

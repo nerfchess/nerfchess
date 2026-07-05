@@ -99,7 +99,7 @@ export const PAWN_DUTY: Nerf = db({
   name: "Pawn Duty",
   description: "Every third turn, you must move a pawn.",
   flavor: "Discipline above all.",
-  tier: 4,
+  tier: 3,
   icon: "footprints",
   implemented: true,
   filterMoves: (moves, _s, ctx) => {
@@ -137,7 +137,7 @@ export const SOLAR_FLARE: Nerf = db({
 export const CONSTRICTION: Nerf = db({
   id: "constriction",
   name: "Constriction",
-  description: "Each of your turns, the playable board shrinks one rank from the back.",
+  description: "Every 6 of your turns, the playable board loses a rank from the back, up to 3 ranks.",
   flavor: "The walls close in.",
   tier: 6,
   icon: "minimize",
@@ -293,7 +293,7 @@ export const HONEY_TRAP: Nerf = db({
   name: "Honey Trap",
   description: "Your queen can't move unless attacked.",
   flavor: "She waits, smiling.",
-  tier: 3,
+  tier: 4,
   icon: "honey",
   implemented: true,
   filterMoves: (moves, _s, ctx) => {
@@ -405,7 +405,7 @@ export const WAGON_TRAIN: Nerf = db({
 export const HOARDER: Nerf = db({
   id: "hoarder",
   name: "Hoarder",
-  description: "If you lose a pawn, you lose the game.",
+  description: "If you ever have fewer than 8 pawns, you lose the game.",
   flavor: "Don't lose a single one.",
   tier: 8,
   icon: "wheat",
@@ -451,7 +451,7 @@ export const ECHO_CHAMBER: Nerf = db({
 export const TRIPWIRE: Nerf = db({
   id: "tripwire",
   name: "Tripwire",
-  description: "A random rank is a tripwire. If you ever cross it backwards, you lose.",
+  description: "A random rank is a tripwire. You can't cross it backwards.",
   flavor: "Snap.",
   tier: 4,
   icon: "trip",
@@ -826,7 +826,7 @@ export const COLD_FEET: Nerf = db({
 export const SWITCHBACK: Nerf = db({
   id: "switchback",
   name: "Switchback",
-  description: "You can't move in the same direction (file delta sign) twice in a row.",
+  description: "You can't move in the exact same direction (same file and rank step) twice in a row.",
   flavor: "Zig and zag.",
   tier: 4,
   icon: "shuffle",
