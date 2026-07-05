@@ -268,6 +268,12 @@ const houseSeededKey = "hp:seeded:v1";
 const houseNextFillerKey = "hp:nextFillerAt";
 // Slow heartbeat while at least one human socket is connected; with nobody
 // online there is no heartbeat and the DO goes idle between match deadlines.
+// Master switch for the house players (bots). Set to false to temporarily pause
+// all bot activity (no seeks, no new games, no engine moves) so the game server
+// runs pure human traffic while the backend is being worked on. Flip back to
+// true to resume. This is intentionally a single obvious constant so it is easy
+// to toggle and revert.
+const HOUSE_ENABLED = false;
 const houseHeartbeatMs = 20 * 1000;
 // The full-table maintenance sweep (GC of expired games, flag enforcement,
 // live-index rebuild) is the heaviest thing the alarm does. Bot moves wake the
@@ -1917,6 +1923,9 @@ export class GameServer extends DurableObject<Env> {
       // A house-persona seek pairs immediately with that exact bot. A human
       // explicitly asked for THIS game, so honour it past the background cap.
       if (isHouseUserId(targetUserId)) {
+        // House players are paused: their seeks are cleared, but a stale client
+        // may still try to accept one. Treat it as gone.
+        if (!HOUSE_ENABLED) return error(ws, "seek_gone", "That player is no longer waiting.");
         const persona = housePersona(targetUserId);
         if (!persona) return error(ws, "seek_gone", "That player is no longer waiting.");
         const meEntry: QueueEntry = {
@@ -2135,6 +2144,29 @@ export class GameServer extends DurableObject<Env> {
   // One orchestration pass, run from the alarm before match maintenance.
   private async houseTick() {
     const now = Date.now();
+    if (!HOUSE_ENABLED) {
+      // Paused: stop advertising seeks so the lobby shows no bots, and end any
+      // bot game already in progress as an unrated draw so no human is left
+      // waiting on a bot that will never move. Idempotent: once seeks are empty
+      // and house games are ended, later ticks do nothing. Maintenance and the
+      // alarm chain continue normally (this only skips house orchestration).
+      const seeks = (await this.ctx.storage.get<HouseSeekEntry[]>(houseSeeksKey)) ?? [];
+      if (seeks.length) await this.ctx.storage.put(houseSeeksKey, []);
+      for (const match of await this.loadLiveMatches()) {
+        if (match.result || !(match.bots?.w || match.bots?.b)) continue;
+        match.clocks = this.currentClocks(match);
+        match.runningSince = null;
+        match.result = { winner: "draw", reason: "House players are paused for maintenance" };
+        match.completedAt = Date.now();
+        match.rated = false;
+        try {
+          await this.endMatch(match);
+        } catch (err) {
+          console.error("failed to end paused house game", match.id, err);
+        }
+      }
+      return;
+    }
     // Live matches only, via the in-memory index and targeted reads. Finished
     // games were skipped here anyway (see the match.result guard below), so
     // this changes nothing but the cost: no whole-table deserialize per tick.
