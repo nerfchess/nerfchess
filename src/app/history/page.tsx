@@ -107,7 +107,7 @@ export default function HistoryPage() {
                   Play a Friend
                 </Link>
                 <Link
-                  href="/game?mode=ai"
+                  href="/play"
                   className="btn-ghost px-6 py-3 font-display text-base inline-flex items-center justify-center"
                 >
                   Play vs Bot
