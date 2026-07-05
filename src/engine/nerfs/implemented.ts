@@ -3,6 +3,7 @@ import { attackedBy, findKing, isInCheck, makeMove } from "../board";
 import { FILE, Move, PieceType, RANK, SQ, Square } from "../types";
 import { HAND_AND_GIGABRAIN, MORE_NERFS } from "./more";
 import { EXTRA_NERFS } from "./extras";
+import { EXPANDED_NERFS } from "./expanded";
 
 const cheb = (a: Square, b: Square) =>
   Math.max(Math.abs(FILE(a) - FILE(b)), Math.abs(RANK(a) - RANK(b)));
@@ -923,6 +924,7 @@ export const ALL_IMPLEMENTED: Nerf[] = [
   SCENT_OF_BLOOD,
   ...MORE_NERFS,
   ...EXTRA_NERFS,
+  ...EXPANDED_NERFS,
 ];
 
 // Retired rules: no longer dealt or shown in the Codex, but kept resolvable by
