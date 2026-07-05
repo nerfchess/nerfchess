@@ -693,6 +693,32 @@ export function Board({
                 key={sq}
                 onContextMenu={handleSquareContextMenu}
                 onPointerDown={(e) => handleSquarePointerDown(e, sq)}
+                // Additive drag-to-pick path: a card chip dragged from the dock
+                // (marked with the custom dataTransfer type) can be dropped on a
+                // highlighted candidate square. Only pick targets react, and
+                // only to card drags, so normal play and other drags are
+                // unaffected. The click flow (handleSquarePointerDown) is
+                // untouched.
+                onDragOver={
+                  isPickTarget
+                    ? (e) => {
+                        if (e.dataTransfer.types.includes("application/x-nerf-card")) {
+                          e.preventDefault();
+                          e.dataTransfer.dropEffect = "move";
+                        }
+                      }
+                    : undefined
+                }
+                onDrop={
+                  isPickTarget
+                    ? (e) => {
+                        if (e.dataTransfer.types.includes("application/x-nerf-card")) {
+                          e.preventDefault();
+                          onPickSquare?.(sq);
+                        }
+                      }
+                    : undefined
+                }
                 className={classes}
                 style={{
                   cursor: pickingSquares
