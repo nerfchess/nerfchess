@@ -35,16 +35,6 @@
       "migrations_dir": "migrations"
     }
   ],
-  // OCI Postgres holding the finished-game archive (large, append-only), reached
-  // over a Cloudflare Tunnel. Create the config and paste its id here:
-  //   wrangler hyperdrive create nerfchess-pg --connection-string="postgres://nerfchess_app:PASSWORD@HOST:5432/nerfchess?sslmode=require"
-  // Local dev: set WRANGLER_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE instead.
-  "hyperdrive": [
-    {
-      "binding": "HYPERDRIVE",
-      "id": "2d8d6632c4e04f31be76fd291846d341"
-    }
-  ],
   "durable_objects": {
     "bindings": [
       {

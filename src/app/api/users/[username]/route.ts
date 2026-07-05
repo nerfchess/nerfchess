@@ -1,13 +1,11 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/server/db";
-import { pgAll } from "@/lib/server/pg";
 import { categoryForTimeControl } from "@/lib/speed";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(_request: Request, { params }: { params: { username: string } }) {
   const username = params.username.trim().toLowerCase();
-  // Account + per-category ratings stay on D1; the game archive is on Postgres.
   const db = await getDb();
   const user = await db
     .prepare(
@@ -53,35 +51,33 @@ export async function GET(_request: Request, { params }: { params: { username: s
   const ratings: Record<string, (typeof categoryRows.results)[number]> = {};
   for (const row of categoryRows.results) ratings[row.category] = row;
 
-  const recentGames = await pgAll(
-    `SELECT id, white_name, black_name, winner, reason, rated, category, ruleset,
-            white_user_id, black_user_id,
-            white_rating_before, white_rating_after, black_rating_before, black_rating_after,
-            time_sec, increment_sec, completed_at
-     FROM games
-     WHERE white_user_id = ? OR black_user_id = ?
-     ORDER BY completed_at DESC LIMIT 30`,
-    [user.id, user.id],
-  );
+  const games = await db
+    .prepare(
+      `SELECT id, white_name, black_name, winner, reason, rated, category, ruleset,
+              white_user_id, black_user_id,
+              white_rating_before, white_rating_after, black_rating_before, black_rating_after,
+              time_sec, increment_sec, completed_at
+       FROM games
+       WHERE white_user_id = ? OR black_user_id = ?
+       ORDER BY completed_at DESC LIMIT 30`,
+    )
+    .bind(user.id, user.id)
+    .all();
 
   // Rating after each rated game, oldest first — powers the profile's
   // rating-history graph (a la Lichess). Each point carries its speed
   // category so the chart can show one bucket at a time; rows recorded
   // before the category column existed fall back to the time control.
-  const ratingHistory = await pgAll<{
-    at: number;
-    category: string | null;
-    time_sec: number;
-    increment_sec: number;
-    rating: number | null;
-  }>(
-    `SELECT completed_at AS at, category, time_sec, increment_sec,
-            CASE WHEN white_user_id = ? THEN white_rating_after ELSE black_rating_after END AS rating
-     FROM games
-     WHERE (white_user_id = ? OR black_user_id = ?) AND rated = 1
-     ORDER BY completed_at ASC LIMIT 300`,
-    [user.id, user.id, user.id],
-  );
+  const ratingHistory = await db
+    .prepare(
+      `SELECT completed_at AS at, category, time_sec, increment_sec,
+              CASE WHEN white_user_id = ? THEN white_rating_after ELSE black_rating_after END AS rating
+       FROM games
+       WHERE (white_user_id = ? OR black_user_id = ?) AND rated = 1
+       ORDER BY completed_at ASC LIMIT 300`,
+    )
+    .bind(user.id, user.id, user.id)
+    .all<{ at: number; category: string | null; time_sec: number; increment_sec: number; rating: number | null }>();
 
   return NextResponse.json({
     user: {
@@ -98,9 +94,9 @@ export async function GET(_request: Request, { params }: { params: { username: s
       bio: user.bio,
       flair: user.flair,
     },
-    games: recentGames,
+    games: games.results,
     ratings,
-    ratingHistory: ratingHistory
+    ratingHistory: ratingHistory.results
       .filter((p) => p.rating != null)
       .map((p) => ({
         at: p.at,

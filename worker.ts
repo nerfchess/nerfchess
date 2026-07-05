@@ -171,9 +171,6 @@ export interface Env {
   GAME_SERVER: DurableObjectNamespace<GameServer>;
   GAME_SERVER_ORIGINS?: string;
   DB: D1Database;
-  // Postgres (OCI) holding the finished-game archive, reached via Hyperdrive.
-  // Optional so a worker without it still runs (games just aren't archived).
-  HYPERDRIVE?: Hyperdrive;
 }
 
 // Quick-pairing time controls for rated Draft matchmaking. Keys are the wire
@@ -953,7 +950,7 @@ export class GameServer extends DurableObject<Env> {
             ...(match.draft && match.mode ? { ratingCategory: match.mode } : {}),
             startedAt: match.startedAt,
             completedAt: match.completedAt,
-          }, this.env.HYPERDRIVE?.connectionString);
+          });
           if (recorded.white || recorded.black) {
             ratings = { w: recorded.white, b: recorded.black };
           }
