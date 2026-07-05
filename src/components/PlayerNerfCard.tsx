@@ -78,7 +78,20 @@ export function PlayerNerfCard({
         )}
         <div className="min-w-0 flex-1">
           <div className="truncate font-display text-base font-semibold leading-tight text-parchment">
-            {name}
+            {showAvatar ? (
+              // Opens in a new tab so checking a profile never abandons a
+              // live board.
+              <a
+                href={`/u/${encodeURIComponent(name)}`}
+                target="_blank"
+                rel="noopener"
+                className="hover:text-gold-leaf hover:underline transition-colors"
+              >
+                {name}
+              </a>
+            ) : (
+              name
+            )}
             {typeof elo === "number" && (
               <span className="text-parchment-400"> ({Math.round(elo)})</span>
             )}

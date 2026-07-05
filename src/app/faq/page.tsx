@@ -40,7 +40,7 @@ const FAQS = [
   {
     question: "Can I see what my opponent drafts?",
     answer:
-      "That is up to whoever creates the game. Hidden picks keep the chaos: you never see what they chose. Visible picks show their nerf and draft choices for a more strategic game.",
+      "No. Your opponent's picks stay hidden while the game runs; you only learn that they drafted and the card's tier. Everything is revealed when the game ends.",
   },
   {
     question: "Are Draft games rated?",
