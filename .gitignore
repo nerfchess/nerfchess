@@ -12,12 +12,14 @@ out
 next-env.d.ts
 tsconfig.tsbuildinfo
 agent*.jsonl
-.vscode/*
-!.vscode/settings.json
-!.vscode/extensions.json
-!.vscode/launch.json
-!.vscode/tasks.json
+.vscode/
 dist-server
+snomuffinz
 
-# Claude agent worktrees
-.claude/worktrees/
+# Linting files
+.eslintrc.json
+.eslintcache
+
+# Claude: agent dir and instruction files
+.claude/
+CLAUDE.md
