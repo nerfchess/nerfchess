@@ -815,7 +815,7 @@ const TIER2: Buff[] = [
     advancePawns(3),
   ),
   def(
-    { id: "bodyguard", name: "Bodyguard", description: "Spawn a knight adjacent to your king, once.", tier: 2, category: "pieces" },
+    { id: "bodyguard", name: "Bodyguard", description: "Spawn a knight adjacent to your king, once.", tier: 3, category: "pieces" },
     placePieces(["n"], kingAdjacentZone),
   ),
   def(
@@ -1223,7 +1223,7 @@ const TIER3: Buff[] = [
     }),
   ),
   def(
-    { id: "resurrect", name: "Resurrect", description: "Bring back your strongest captured piece to your half, once.", tier: 3, category: "pieces" },
+    { id: "resurrect", name: "Resurrect", description: "Bring back your strongest captured piece to your half, once.", tier: 4, category: "pieces" },
     reviveOne(["q", "r", "b", "n", "p"], anyHalfZone),
   ),
   def(
@@ -1472,7 +1472,7 @@ const TIER4: Buff[] = [
     captureExplosion({ beside: true }),
   ),
   def(
-    { id: "double_queen", name: "Double Queen", description: "Promote any pawn to a queen instantly, even mid-board.", tier: 4, category: "pieces" },
+    { id: "double_queen", name: "Double Queen", description: "Promote any pawn to a queen instantly, even mid-board.", tier: 5, category: "pieces" },
     promotePawns(1, 1, "q"),
   ),
   def(
@@ -1519,7 +1519,7 @@ const TIER4: Buff[] = [
     removeEnemies(1, ["p", "n", "b", "r"]),
   ),
   def(
-    { id: "mind_nudge", name: "Mind Nudge", description: "Force one enemy pawn to advance one square where empty, once.", tier: 4, category: "attack" },
+    { id: "mind_nudge", name: "Mind Nudge", description: "Force one enemy pawn to advance one square where empty, once.", tier: 2, category: "attack" },
     activated(
       (_inst, api, picks) =>
         picks.length > 0
@@ -1855,7 +1855,7 @@ const TIER4: Buff[] = [
   ),
   // Nerf-modifiers (cross-cutting)
   def(
-    { id: "grace_period", name: "Grace Period", description: "Suspend your nerf entirely for 4 turns.", tier: 4, category: "nerf" },
+    { id: "grace_period", name: "Grace Period", description: "Suspend your nerf entirely for 4 turns.", tier: 3, category: "nerf" },
     instant((_inst, api) => {
       addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 4 });
     }),
@@ -1940,11 +1940,11 @@ const TIER5: Buff[] = [
     }),
   ),
   def(
-    { id: "time_stop_short", name: "Time Stop (Short)", description: "Take three consecutive moves right now, once.", tier: 5, category: "tempo" },
+    { id: "time_stop_short", name: "Time Stop (Short)", description: "Take three consecutive moves right now, once.", tier: 6, category: "tempo" },
     extraMovesNow(2),
   ),
   def(
-    { id: "resurrect_queen", name: "Resurrect Queen", description: "Bring your captured queen back to any empty square in your half.", tier: 5, category: "pieces" },
+    { id: "resurrect_queen", name: "Resurrect Queen", description: "Bring your captured queen back to any empty square in your half.", tier: 6, category: "pieces" },
     reviveOne(["q"], anyHalfZone),
   ),
   def(
@@ -1968,7 +1968,7 @@ const TIER5: Buff[] = [
     convertEnemies(1, ["n", "b"]),
   ),
   def(
-    { id: "board_lock", name: "Board Lock", description: "Your opponent cannot castle for 3 turns.", tier: 5, category: "tempo" },
+    { id: "board_lock", name: "Board Lock", description: "Your opponent cannot castle for 3 turns.", tier: 3, category: "tempo" },
     timedOppFilter(3, (moves) => moves.filter((m) => !m.castle)),
   ),
   def(
@@ -2046,7 +2046,7 @@ const TIER5: Buff[] = [
     skipOpponent(1),
   ),
   def(
-    { id: "blockade", name: "Blockade", description: "Enemy pawns cannot advance for 3 turns.", tier: 5, category: "tempo" },
+    { id: "blockade", name: "Blockade", description: "Enemy pawns cannot advance for 3 turns.", tier: 4, category: "tempo" },
     instant((_inst, api) => {
       addEffect(api, { kind: "no_pawn_advance", against: api.opp, turns: 3 });
     }),
@@ -2236,7 +2236,7 @@ const TIER6: Buff[] = [
     lineSweep("q", ALL_DIRS, 2),
   ),
   def(
-    { id: "army_reversal", name: "Army Reversal", description: "All your pawns may move backward freely for 2 turns.", tier: 6, category: "movement" },
+    { id: "army_reversal", name: "Army Reversal", description: "All your pawns may move backward freely for 2 turns.", tier: 4, category: "movement" },
     timedAugment(2, (_m, inst, api) =>
       mySquares(api.board, api.me, "p").flatMap((sq) => {
         const back = sq - fwdOf(api.me);
@@ -2763,7 +2763,7 @@ const TIER8: Buff[] = [
     },
   ),
   def(
-    { id: "divine_legion", name: "Divine Legion", description: "Place a queen on any empty square in your half, once.", tier: 8, category: "pieces" },
+    { id: "divine_legion", name: "Divine Legion", description: "Place a queen on any empty square in your half, once.", tier: 7, category: "pieces" },
     placePieces(["q"], anyHalfZone),
   ),
   def(
@@ -3048,7 +3048,7 @@ const TIER8: Buff[] = [
   ),
   // Nerf-modifiers (cross-cutting)
   def(
-    { id: "unshackled_wrath", name: "Unshackled Wrath", description: "Remove your nerf for good. Your opponent skips their next turn.", tier: 8, category: "nerf" },
+    { id: "unshackled_wrath", name: "Unshackled Wrath", description: "Remove your nerf for good. Your opponent skips their next turn.", tier: 7, category: "nerf" },
     instant((_inst, api) => {
       api.removeMyNerf();
       api.bs.skips[api.opp] += 1;
@@ -3130,7 +3130,7 @@ const HEXES: Buff[] = [
     ),
   ),
   def(
-    { id: "lame_horses", name: "Lame Horses", description: "Your opponent's knights cannot capture for their next 4 turns.", tier: 3, category: "hex" },
+    { id: "lame_horses", name: "Lame Horses", description: "Your opponent's knights cannot capture for their next 4 turns.", tier: 2, category: "hex" },
     timedOppFilter(4, (moves) => moves.filter((m) => !(m.piece === "n" && m.captured))),
   ),
   def(
@@ -3256,7 +3256,7 @@ const HEXES: Buff[] = [
     walnutAll(["r"], 2),
   ),
   def(
-    { id: "grand_malediction", name: "Grand Malediction", description: "Your opponent skips their next turn and their next draft is skipped.", tier: 8, category: "hex" },
+    { id: "grand_malediction", name: "Grand Malediction", description: "Your opponent skips their next turn and their next draft is skipped.", tier: 7, category: "hex" },
     instant((_inst, api) => {
       api.bs.skips[api.opp] += 1;
       api.theirs.flags.blockedDrafts = (api.theirs.flags.blockedDrafts ?? 0) + 1;

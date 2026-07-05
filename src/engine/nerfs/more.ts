@@ -209,7 +209,7 @@ export const BATTLE_FATIGUE: Nerf = db({
 });
 
 export const SNIPERS: Nerf = db({
-  id: "snipers", name: "Snipers", tier: 2, implemented: true,
+  id: "snipers", name: "Snipers", tier: 3, implemented: true,
   description: "Bishops can only capture from distance ≥ 4.",
   filterMoves: (moves) =>
     moves.filter((m) => !(m.piece === "b" && m.captured && cheb(m.from, m.to) < 4)),
@@ -355,7 +355,7 @@ export const SHAPESHIFTER: Nerf = db({
 });
 
 export const HORSE_EATS_FIRST: Nerf = db({
-  id: "horse_eats_first", name: "Horse Eats First", tier: 4, implemented: true,
+  id: "horse_eats_first", name: "Horse Eats First", tier: 5, implemented: true,
   description: "As long as you have a knight, you can only capture with knights.",
   filterMoves: (moves, _s, ctx) => {
     const hasKnight = pieceSquares(ctx.board, ctx.me, "n").length > 0;
@@ -374,7 +374,7 @@ export const WINDUP_TOYS: Nerf = db({
 });
 
 export const ABSTINENCE: Nerf = db({
-  id: "abstinence", name: "Abstinence", tier: 6, implemented: true,
+  id: "abstinence", name: "Abstinence", tier: 7, implemented: true,
   description: "If opponent ever has two same-type non-pawns adjacent, you lose.",
   checkLoss: (_s, ctx) => {
     const opp = ctx.me === "w" ? "b" : "w";
@@ -937,7 +937,7 @@ export const STAND_YOUR_GROUND: Nerf = db({
 });
 
 export const ALWAYS_CHECK_IT_MIGHT_BE_MATE: Nerf = db({
-  id: "always_check_it_might_be_mate", name: "Always Check, It Might Be Mate", tier: 6, implemented: true,
+  id: "always_check_it_might_be_mate", name: "Always Check, It Might Be Mate", tier: 7, implemented: true,
   description: "If you are checked, you lose.",
   checkLoss: (_s, ctx) => (isInCheck(ctx.board, ctx.me) ? { reason: "in check" } : null),
 });
