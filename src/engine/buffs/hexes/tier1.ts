@@ -51,10 +51,6 @@ export const HEXES_T1: Buff[] = [
     curse(3, (moves) => moves.filter((m) => !(m.piece === "q" && m.captured))),
   ),
   H(
-    { id: "timid_king", name: "Timid King", description: "Your opponent's king cannot capture for their next 4 turns.", flavor: "Beneath the dignity of the crown." },
-    curse(4, (moves) => moves.filter((m) => !(m.piece === "k" && m.captured))),
-  ),
-  H(
     { id: "stiff_joints", name: "Stiff Joints", description: "Your opponent's queen cannot move diagonally for their next 2 turns." },
     curse(2, (moves) =>
       moves.filter(
@@ -72,5 +68,9 @@ export const HEXES_T1: Buff[] = [
   H(
     { id: "cold_open", name: "Cold Open", description: "Your opponent cannot move their queen for their next 2 turns.", flavor: "The lady sits this one out." },
     curse(2, (moves) => moves.filter((m) => m.piece !== "q")),
+  ),
+  H(
+    { id: "royal_restraint", name: "Royal Restraint", description: "Your opponent's king cannot capture for their next 4 turns.", flavor: "The crown does not stoop to brawling." },
+    curse(4, (moves) => moves.filter((m) => !(m.piece === "k" && m.captured))),
   ),
 ];
