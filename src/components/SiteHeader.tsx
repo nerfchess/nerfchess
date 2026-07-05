@@ -208,7 +208,7 @@ export function SiteHeader({ active }: { active?: string }) {
   };
 
   const iconButton =
-    "relative grid h-9 w-9 place-items-center text-parchment-300 transition-colors hover:bg-white/5 hover:text-parchment-50";
+    "nav-icon-btn relative grid h-9 w-9 place-items-center text-parchment-300 hover:bg-white/5 hover:text-parchment-50";
 
   return (
     <nav className="seam-edge-b flex items-center justify-between gap-3 bg-gradient-to-b from-ink-900/70 to-transparent px-5 sm:px-10 py-5 sm:py-6">
@@ -225,8 +225,9 @@ export function SiteHeader({ active }: { active?: string }) {
               <div key={link.href} className="group relative">
                 <Link
                   href={link.href}
+                  data-active={active === link.href}
                   className={
-                    "block px-3 py-1.5 transition-colors group-hover:bg-white/5 " +
+                    "nav-item block px-3 py-1.5 group-hover:bg-white/5 " +
                     (active === link.href ? "text-gold-leaf" : "text-parchment-100")
                   }
                 >
@@ -253,8 +254,9 @@ export function SiteHeader({ active }: { active?: string }) {
               <Link
                 key={link.href}
                 href={link.href}
+                data-active={active === link.href}
                 className={
-                  "px-3 py-1.5 transition-colors hover:bg-white/5 " +
+                  "nav-item px-3 py-1.5 hover:bg-white/5 " +
                   (active === link.href ? "text-gold-leaf" : "text-parchment-100")
                 }
               >
