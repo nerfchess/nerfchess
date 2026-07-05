@@ -9,7 +9,7 @@ export async function GET(_request: Request, { params }: { params: { username: s
   const db = await getDb();
   const user = await db
     .prepare(
-      `SELECT id, username, rating, rd, games, wins, losses, draws, avatar, created_at, role, bio
+      `SELECT id, username, rating, rd, games, wins, losses, draws, avatar, created_at, role, bio, flair
        FROM users WHERE username_lower = ?`,
     )
     .bind(username)
@@ -26,6 +26,7 @@ export async function GET(_request: Request, { params }: { params: { username: s
       created_at: number;
       role: string;
       bio: string | null;
+      flair: string | null;
     }>();
   if (!user) return NextResponse.json({ error: "User not found." }, { status: 404 });
 
@@ -91,6 +92,7 @@ export async function GET(_request: Request, { params }: { params: { username: s
       createdAt: user.created_at,
       role: user.role,
       bio: user.bio,
+      flair: user.flair,
     },
     games: games.results,
     ratings,

@@ -11,9 +11,9 @@ import type { PlayerStats } from "@/lib/playerStats";
 import { RatingChart, RatingPoint } from "@/components/RatingChart";
 import { CategoryTabs } from "@/components/ratings/CategoryTabs";
 import {
+  ACTIVE_RATING_CATEGORIES,
   DEFAULT_CATEGORY,
   isRatingCategoryId,
-  RATING_CATEGORIES,
   RETIRED_CATEGORY_IDS,
   type RatingCategoryId,
 } from "@/lib/ratingCategories";
@@ -30,6 +30,7 @@ interface ProfileUser {
   createdAt: number;
   role: "user" | "mod" | "admin";
   bio: string | null;
+  flair: string | null;
 }
 
 interface ProfileGame {
@@ -136,7 +137,14 @@ export default function ProfilePage() {
                 )}
                 <div>
                   <div className="flex items-center gap-3 flex-wrap">
-                    <h1 className="font-display text-5xl">{profile.user.username}</h1>
+                    <h1 className="font-display text-5xl">
+                      {profile.user.username}
+                      {profile.user.flair && (
+                        <span className="ml-2 align-middle text-2xl" aria-hidden="true">
+                          {profile.user.flair}
+                        </span>
+                      )}
+                    </h1>
                     {profile.user.role !== "user" && (
                       <span className="smallcaps text-[10px] px-2 py-0.5 rounded-full border border-gold/40 text-gold-leaf">
                         {profile.user.role === "admin" ? "Admin" : "Moderator"}
@@ -188,8 +196,8 @@ export default function ProfilePage() {
             />
 
             {/* One independent rating per time control, Lichess-style. */}
-            <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {RATING_CATEGORIES.map((c) => {
+            <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {ACTIVE_RATING_CATEGORIES.map((c) => {
                 const r = profile.ratings?.[c.id];
                 const Icon = c.icon;
                 return (

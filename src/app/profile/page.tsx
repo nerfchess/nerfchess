@@ -8,6 +8,7 @@ import type { PlayerStats } from "@/lib/playerStats";
 import { AccountUser, fetchMe } from "@/lib/authClient";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { AVATAR_PICKER_IDS, avatarIdFor, CUSTOM_AVATAR_MAX_CHARS, isCustomAvatar } from "@/lib/avatars";
+import { FLAIR_EMOJI } from "@/lib/flair";
 
 // Center-crop to a square and downscale to 96px, returning a compact JPEG
 // data URL small enough to store inline in the avatar column.
@@ -53,6 +54,8 @@ export default function ProfilePage() {
   const [account, setAccount] = useState<AccountUser | null | undefined>(undefined);
   const [savingAvatar, setSavingAvatar] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
+  const [savingFlair, setSavingFlair] = useState(false);
+  const [flairError, setFlairError] = useState<string | null>(null);
 
   const uploadAvatar = async (file: File | null | undefined) => {
     if (!file || !account) return;
@@ -83,6 +86,27 @@ export default function ProfilePage() {
       setAvatarError("Could not save. Try again.");
     } finally {
       setSavingAvatar(false);
+    }
+  };
+
+  const pickFlair = async (flair: string | null) => {
+    if (!account) return;
+    setSavingFlair(true);
+    setFlairError(null);
+    const previous = account.flair;
+    setAccount({ ...account, flair });
+    try {
+      const res = await fetch("/api/auth/flair", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ flair }),
+      });
+      if (!res.ok) throw new Error("Could not save your flair.");
+    } catch {
+      setAccount((a) => (a ? { ...a, flair: previous } : a));
+      setFlairError("Could not save. Try again.");
+    } finally {
+      setSavingFlair(false);
     }
   };
 
@@ -129,6 +153,11 @@ export default function ProfilePage() {
           <div>
             <h1 className="font-display text-3xl sm:text-4xl text-parchment-50">
               {account ? account.username : "You"}
+              {account?.flair && (
+                <span className="ml-2 align-middle text-2xl" aria-hidden="true">
+                  {account.flair}
+                </span>
+              )}
             </h1>
             <p className="text-sm text-parchment-400">
               {account
@@ -204,6 +233,55 @@ export default function ProfilePage() {
                 Shown in the lobby, on leaderboards, and at the board. Use the + tile to upload
                 your own picture (cropped square, scaled down automatically).
                 {avatarError && <span className="ml-2 text-oxblood-glow">{avatarError}</span>}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Flair picker: an emoji shown next to the username, Lichess-style. */}
+        {account && (
+          <div className="mt-8">
+            <div className="rule-ornament mb-4">
+              <span className="font-display">Flair</span>
+            </div>
+            <div className="plate p-4 sm:p-5">
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => pickFlair(null)}
+                  disabled={savingFlair}
+                  aria-label="No flair"
+                  aria-pressed={!account.flair}
+                  className={
+                    "grid h-[46px] w-[46px] place-items-center rounded-lg text-xs text-parchment-300 transition " +
+                    (!account.flair ? "ring-2 ring-gold-leaf" : "ring-1 ring-white/10 hover:ring-white/40")
+                  }
+                >
+                  none
+                </button>
+                {FLAIR_EMOJI.map((emoji) => {
+                  const selected = account.flair === emoji;
+                  return (
+                    <button
+                      key={emoji}
+                      type="button"
+                      onClick={() => pickFlair(emoji)}
+                      disabled={savingFlair}
+                      aria-label={`Flair ${emoji}`}
+                      aria-pressed={selected}
+                      className={
+                        "grid h-[46px] w-[46px] place-items-center rounded-lg text-2xl transition " +
+                        (selected ? "ring-2 ring-gold-leaf" : "ring-1 ring-white/10 hover:ring-white/40")
+                      }
+                    >
+                      {emoji}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="mt-3 text-xs text-parchment-400">
+                An emoji shown next to your name on your profile.
+                {flairError && <span className="ml-2 text-oxblood-glow">{flairError}</span>}
               </p>
             </div>
           </div>
