@@ -902,7 +902,7 @@ function GamePage() {
                   type="button"
                   onClick={() => (nerfSelected === i ? startDraftGame(n) : setNerfSelected(i))}
                   className={
-                    "block w-full text-left transition touch-manipulation [@media(hover:hover)]:hover:-translate-y-1" +
+                    "mx-auto block w-full max-w-md sm:max-w-none text-left transition touch-manipulation [@media(hover:hover)]:hover:-translate-y-1" +
                     (nerfSelected === i
                       ? " -translate-y-1 ring-2 ring-gold shadow-leaf"
                       : nerfSelected != null
@@ -1381,6 +1381,7 @@ function GamePage() {
                           wardSquares: zone.ward,
                           strikeSquares: zone.strike,
                           walnutSquares: zone.walnut,
+                          lockedSquares: zone.locked,
                         }
                   }
                   lastMove={lastMoveForDisplay}
@@ -1436,6 +1437,7 @@ function GamePage() {
                   <ClockPill
                     ms={myColor === "w" ? whiteMs : blackMs}
                     active={!game.result && offerPausedAt == null && game.board.turn === myColor}
+                    warnLowTime={uiSettings.lowTimeWarning}
                     compact
                   />
                 )}
@@ -1487,6 +1489,7 @@ function GamePage() {
                 <ClockPill
                   ms={myColor === "w" ? whiteMs : blackMs}
                   active={!game.result && offerPausedAt == null && game.board.turn === myColor}
+                  warnLowTime={uiSettings.lowTimeWarning}
                 />
               )}
             </div>

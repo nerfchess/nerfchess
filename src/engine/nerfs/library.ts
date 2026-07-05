@@ -23,7 +23,7 @@ const STUBS: Stub[] = [
   { id: "queen_bee", name: "Queen Bee", description: "Once you capture with your queen, you can no longer move queens.", tier: 2 },
   { id: "entrenched", name: "Entrenched", description: "Rooks can't move more than 2 squares.", tier: 3 },
   { id: "shadow_queen", name: "Shadow Queen", description: "Queen can only move to dark squares.", tier: 2 },
-  { id: "horse_tranquilizer", name: "Horse Tranquilizer", description: "Knights can't capture.", tier: 2 },
+  { id: "horse_tranquilizer", name: "Horse Tranquilizer", description: "Knights can't capture.", tier: 3 },
   { id: "quit_horsing_around", name: "Quit Horsing Around", description: "If you moved a knight last move, you can't move a knight this move.", tier: 1 },
   { id: "royal_jubilee", name: "Royal Jubilee", description: "Whenever you capture a non-pawn, you must move your king or queen on the next move.", tier: 3 },
   { id: "prima_donna", name: "Prima Donna", description: "Can't have more than one pawn on the same file.", tier: 2 },
@@ -33,7 +33,7 @@ const STUBS: Stub[] = [
   { id: "no_shuffling", name: "No Shuffling", description: "Rooks can't move sideways.", tier: 3 },
   { id: "outflanked", name: "Outflanked", description: "Can't capture on the rim (a/h files, 1/8 ranks). King capture is allowed anywhere.", tier: 3 },
   { id: "professional_courtesy", name: "Professional Courtesy", description: "Can't capture non-pawn pieces with same-type pieces.", tier: 2 },
-  { id: "snipers", name: "Snipers", description: "Bishops can only capture from distance ≥ 4.", tier: 2 },
+  { id: "snipers", name: "Snipers", description: "Bishops can only capture from distance ≥ 4.", tier: 3 },
   { id: "diplomatic_immunity", name: "Diplomatic Immunity", description: "Can't capture a piece that just moved, unless that move was a capture.", tier: 3 },
   { id: "simplifier", name: "Simplifier", description: "If you can capture a piece with one of lesser or equal value, you must.", tier: 3 },
   { id: "femme_fatale", name: "Femme Fatale", description: "You can only capture the enemy king with your queen.", tier: 3 },
@@ -52,11 +52,11 @@ const STUBS: Stub[] = [
   { id: "shapeshifter", name: "Shapeshifter", description: "Queen starts as a bishop. When you capture a non-pawn, queen becomes a copy of that piece. Capturing a knight freezes her.", tier: 4 },
   { id: "conscientious_objectors", name: "Conscientious Objectors", description: "Can't capture with pawns.", tier: 3 },
   { id: "respectful", name: "Respectful", description: "Can't give check.", tier: 5 },
-  { id: "horse_eats_first", name: "Horse Eats First", description: "As long as you have a knight, you can only capture with knights.", tier: 4 },
+  { id: "horse_eats_first", name: "Horse Eats First", description: "As long as you have a knight, you can only capture with knights.", tier: 5 },
   { id: "punching_down", name: "Punching Down", description: "Pieces can't capture pieces worth more than them.", tier: 3 },
   { id: "elephants_fear_mice", name: "Elephants Fear Mice", description: "Non-pawns can't capture pawns.", tier: 3 },
   { id: "windup_toys", name: "Windup Toys", description: "After move 12, can't move knights or bishops.", tier: 4 },
-  { id: "abstinence", name: "Abstinence", description: "If opponent ever has two same-type non-pawns adjacent, you lose.", tier: 6 },
+  { id: "abstinence", name: "Abstinence", description: "If opponent ever has two same-type non-pawns adjacent, you lose.", tier: 7 },
   { id: "you_best_not_miss", name: "You Best Not Miss", description: "If you end your turn giving check, you must capture the king next turn or lose.", tier: 5 },
   { id: "eye_of_sauron", name: "Eye of Sauron", description: "As long as you have a rook, non-pawns can't go past the rook's farthest sight.", tier: 5 },
   { id: "savior_complex", name: "Savior Complex", description: "When in check, must move your queen, or lose.", tier: 5 },
@@ -87,7 +87,7 @@ const STUBS: Stub[] = [
   { id: "even_keeled", name: "Even Keeled", description: "Can only capture on even-numbered moves.", tier: 4 },
   { id: "social_distancing", name: "Social Distancing", description: "Can't make non-capturing moves to squares adjacent to opponent pieces.", tier: 4 },
   { id: "far_sighted", name: "Far Sighted", description: "Pieces can't capture pieces adjacent to them.", tier: 4 },
-  { id: "drag", name: "Drag", description: "Your queen IS a king. If captured, you lose.", tier: 5 },
+  { id: "drag", name: "Drag", description: "Your queen is now royal: if it is captured, you lose.", tier: 5 },
   { id: "stir_crazy", name: "Stir Crazy", description: "If you haven't moved your king for 4 turns, you must on the 5th.", tier: 3 },
   { id: "rook_on_seventh", name: "Rook on the Seventh", description: "By move 15, you must have a rook on rank 7.", tier: 5 },
   { id: "guerilla_tactics", name: "Guerilla Tactics", description: "After a capturing move, you must return the capturing piece to its previous square if possible.", tier: 5 },
@@ -101,7 +101,7 @@ const STUBS: Stub[] = [
   { id: "stand_your_ground", name: "Stand Your Ground", description: "Pieces can only capture if attacked.", tier: 5 },
 
   // HARD
-  { id: "always_check_it_might_be_mate", name: "Always Check, It Might Be Mate", description: "If you are checked, you lose.", tier: 6 },
+  { id: "always_check_it_might_be_mate", name: "Always Check, It Might Be Mate", description: "If you are checked, you lose.", tier: 7 },
   { id: "glorious_battle", name: "Glorious Battle", description: "Starting on a random move, for 4 consecutive moves, you must capture or lose.", tier: 7 },
   { id: "flatterer", name: "Flatterer", description: "If opponent moves a pawn, you must move a pawn. Same for non-pawns.", tier: 5 },
   { id: "messy_divorce", name: "Messy Divorce", description: "Pieces can't move from queenside to kingside or vice versa.", tier: 4 },
@@ -119,7 +119,7 @@ const STUBS: Stub[] = [
   { id: "true_love", name: "True Love", description: "King and queen can only move to squares adjacent to each other.", tier: 5 },
   { id: "superstitious", name: "Superstitious", description: "Can't move to a square where opponent has captured.", tier: 3 },
   { id: "eat_your_vegetables", name: "Eat Your Vegetables", description: "Can't capture non-pawns until opponent has ≤ 4 pawns remaining.", tier: 4 },
-  { id: "bloodthirsty", name: "Bloodthirsty", description: "After turn 3, if you go 2 turns without capturing, you must capture or lose.", tier: 6 },
+  { id: "bloodthirsty", name: "Bloodthirsty", description: "After turn 3, if you go 2 turns without capturing, you must capture if able.", tier: 6 },
   { id: "left_for_dead", name: "Left for Dead", description: "Can only capture leftward.", tier: 4 },
   { id: "crusade", name: "Crusade", description: "For 4 moves starting on a random move, must end turn on a specific random square.", tier: 5 },
   { id: "fog_of_war_old", name: "Fog of War (extended)", description: "Hide opponent pieces entirely.", tier: 7, icon: "cloud-fog" },
@@ -137,7 +137,7 @@ const STUBS: Stub[] = [
   { id: "ichthyophobe", name: "Ichthyophobe", description: "Can't make the move Stockfish would make.", tier: 3 },
   { id: "left_to_right", name: "Left to Right", description: "Unless you just moved to the rightmost file, must move right of your last move's destination.", tier: 6 },
   { id: "friendly_fire", name: "Friendly Fire", description: "Can only move to squares defended by another of your pieces.", tier: 6 },
-  { id: "going_the_distance", name: "Going the Distance", description: "Must move at least as far as opponent's last move or lose.", tier: 6 },
+  { id: "going_the_distance", name: "Going the Distance", description: "Must move at least as far as opponent's last move, if able.", tier: 6 },
   { id: "helicopter_parent", name: "Helicopter Parent", description: "Lose if you have an undefended pawn.", tier: 6 },
   { id: "exclusivity_clause", name: "Exclusivity Clause", description: "Can't move to squares more than one of your pieces can move to.", tier: 6 },
   { id: "relay_race", name: "Relay Race", description: "If you can move a piece adjacent to your last move's destination, you must.", tier: 5 },
@@ -155,7 +155,7 @@ const STUBS: Stub[] = [
 
   // ADDITIONAL
   { id: "crenellations", name: "Crenellations", description: "Pawns can only move to a random color of squares.", tier: 5 },
-  { id: "scent_of_blood", name: "The Scent of Blood", description: "Can't make a non-capturing move with a piece that can capture.", tier: 7 },
+  { id: "scent_of_blood", name: "The Scent of Blood", description: "Can't make a non-capturing move with a piece that can capture.", tier: 6 },
   { id: "leading_the_charge", name: "Leading the Charge", description: "As long as you have a knight, non-knights can't be ahead of your most advanced knight.", tier: 4 },
   { id: "active_volcano", name: "Active Volcano", description: "Can't move onto or orthogonally adjacent to a random square.", tier: 4 },
   { id: "nurturer", name: "Nurturer", description: "Can't capture the enemy king until you've promoted a pawn.", tier: 6 },
@@ -190,17 +190,22 @@ export const ALL_NERFS: Nerf[] = (() => {
 export const PLAYABLE_NERFS = ALL_IMPLEMENTED;
 
 // TEMPORARY cap on rolled drawbacks: opening nerf picks (and any random nerf
-// roll) may only offer nerfs BELOW tier three, i.e. tiers 1 and 2, while the
-// harsher tiers get rebalanced. Raise or remove this one constant to reopen
-// the full ladder; every roll site funnels through openingNerfPool().
-export const MAX_OPENING_NERF_TIER: Tier = 2;
+// roll) draws from the tier 3 to 5 band: tiers 1 and 2 are too mild to be
+// interesting and tiers 6 to 8 too brutal for an opening handicap. Adjust these
+// two constants to reshape the band; every roll site funnels through
+// openingNerfPool().
+export const MIN_OPENING_NERF_TIER: Tier = 3;
+export const MAX_OPENING_NERF_TIER: Tier = 5;
 
-/** The pool every opening nerf roll draws from: implemented nerfs at or
- * below the temporary tier cap, minus "lucky" (its reroll semantics do not
- * fit a dealt pick). */
+/** The pool every opening nerf roll draws from: implemented nerfs in the
+ * tier 3 to 5 band, minus "lucky" (its reroll semantics do not fit a dealt
+ * pick). */
 export function openingNerfPool(): Nerf[] {
   return PLAYABLE_NERFS.filter(
-    (nerf) => nerf.id !== "lucky" && nerf.tier <= MAX_OPENING_NERF_TIER,
+    (nerf) =>
+      nerf.id !== "lucky" &&
+      nerf.tier >= MIN_OPENING_NERF_TIER &&
+      nerf.tier <= MAX_OPENING_NERF_TIER,
   );
 }
 

@@ -215,6 +215,9 @@ export type DraftZones = {
   strike: number[];
   /** Pieces hexed into walnuts: frozen, but painted with the nut marker. */
   walnut: number[];
+  /** Pieces shackled by a king-only or no-pawn-advance hex: they cannot move
+   * while the hex holds, so they are marked with a chain. */
+  locked: number[];
 };
 
 /** Squares held in place by an active Immobilizer: enemy non-king pieces
@@ -250,7 +253,7 @@ function immobilizedSquares(game: NerfGame): number[] {
  * frozen pieces, sanctuary squares, barred squares for each side, and the
  * lightning-struck squares' brief flash. */
 export function draftZones(game: NerfGame, myColor: Color): DraftZones {
-  const zones: DraftZones = { frozen: [], shielded: [], ward: [], barred: [], strike: [], walnut: [] };
+  const zones: DraftZones = { frozen: [], shielded: [], ward: [], barred: [], strike: [], walnut: [], locked: [] };
   if (!game.buffs) return zones;
   zones.frozen.push(...immobilizedSquares(game));
   for (const e of game.buffs.effects) {
@@ -269,6 +272,18 @@ export function draftZones(game: NerfGame, myColor: Color): DraftZones {
       (e.against === myColor ? zones.barred : zones.ward).push(...e.squares);
     } else if (e.kind === "strike") {
       zones.strike.push(...e.squares);
+    } else if (e.kind === "king_only") {
+      // Only the king may move: every other friendly piece is shackled.
+      for (let sq = 0; sq < 64; sq++) {
+        const p = game.board.pieces[sq];
+        if (p && p.color === e.against && p.type !== "k") zones.locked.push(sq);
+      }
+    } else if (e.kind === "no_pawn_advance") {
+      // Pawns can't advance: mark them as shackled.
+      for (let sq = 0; sq < 64; sq++) {
+        const p = game.board.pieces[sq];
+        if (p && p.color === e.against && p.type === "p") zones.locked.push(sq);
+      }
     }
   }
   return zones;

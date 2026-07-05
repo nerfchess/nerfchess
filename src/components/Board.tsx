@@ -23,6 +23,8 @@ interface Visual {
   strikeSquares?: number[];
   /** Pieces hexed into walnuts: frozen solid, marked with the nut. */
   walnutSquares?: number[];
+  /** Pieces shackled by a king-only or no-pawn-advance hex: chained in place. */
+  lockedSquares?: number[];
 }
 
 export interface QueuedPremove {
@@ -126,6 +128,15 @@ function ArrowShape({
   const dy = b.y - a.y;
   const len = Math.hypot(dx, dy);
   if (len < 0.5) return null;
+  // TODO(knight-arrow): lichess draws knight moves as a bent "L" (the long leg
+  // first, then a right-angle turn into the short leg with the arrowhead on
+  // it) instead of the straight diagonal drawn below. To do that here: detect a
+  // knight jump via `const knight = (Math.abs(dx) === 1 && Math.abs(dy) === 2)
+  // || (Math.abs(dx) === 2 && Math.abs(dy) === 1);`, compute the elbow corner
+  // (travel the longer axis from `a`, then the shorter axis to `b`), and render
+  // the shaft as a two-segment <polyline> with the arrowhead based on the final
+  // segment's direction. Left as a TODO to avoid regressing the arrow geometry
+  // without a browser to verify against.
   const ux = dx / len;
   const uy = dy / len;
   const px = -uy;
@@ -381,6 +392,7 @@ export function Board({
   const wardSquares = useMemo(() => new Set(visual?.wardSquares ?? []), [visual?.wardSquares]);
   const strikeSquares = useMemo(() => new Set(visual?.strikeSquares ?? []), [visual?.strikeSquares]);
   const walnutSquares = useMemo(() => new Set(visual?.walnutSquares ?? []), [visual?.walnutSquares]);
+  const lockedSquares = useMemo(() => new Set(visual?.lockedSquares ?? []), [visual?.lockedSquares]);
   const highlightSquares = useMemo(
     () => new Set(visual?.highlightSquares ?? []),
     [visual?.highlightSquares],
@@ -460,7 +472,21 @@ export function Board({
     if (piece && piece.color === myColor && movesFrom.has(sq)) {
       pressRef.current = { sq, wasSelected: selected === sq };
       onPointerDownPiece(e, sq);
-    } else if (selected != null) {
+      return;
+    }
+    // Touch has no right-click, so a plain tap that neither queues a new premove
+    // (tryPlay above) nor picks up a piece (branch above) doubles as the
+    // premove-cancel gesture: while it is the opponent's turn with premoves
+    // queued, tapping an empty or non-premove square clears the whole queue,
+    // mirroring the desktop right-click cancel. This runs only in premoveMode
+    // (opponent's turn), so it never touches a legal move on your own turn, and
+    // it also clears any dangling selection so normal tap-to-deselect still works.
+    if (premoveMode && (premoves?.length ?? 0) > 0 && onCancelPremove) {
+      onCancelPremove();
+      setSelected(null);
+      return;
+    }
+    if (selected != null) {
       setSelected(null);
     }
   };
@@ -549,6 +575,11 @@ export function Board({
       gridRectRef.current = null;
     };
     const onCancel = () => {
+      // Clear every scrap of in-progress interaction state so a cancelled drag
+      // (e.g. an aborted illegal move) can't leave a stale press/skip square
+      // that corrupts the next interaction.
+      pressRef.current = null;
+      dropSkipRef.current = null;
       setDrag(null);
       setHoverSq(null);
       lastHoverRef.current = null;
@@ -574,10 +605,58 @@ export function Board({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [drag]);
 
+  // Keep the JS-measured pixel cache tracking the board's real size. The board
+  // itself is responsive via CSS, but drag targeting reads a cached grid rect
+  // (gridRectRef) captured at pointer-down; fullscreen, a window resize, or any
+  // layout change that resizes the board mid-drag would otherwise leave that
+  // rect stale and make drops land on the wrong square. A ResizeObserver on the
+  // grid (plus window resize / fullscreenchange, which don't always resize the
+  // element synchronously) re-measures it. We only refresh while the rect is in
+  // use (mid-drag); when idle it stays null so squareAtClient measures fresh,
+  // which also keeps it correct across scrolling. Piece-slide animations already
+  // re-measure the cell size on each run, so they track resizes for free.
+  useEffect(() => {
+    const grid = boardRef.current?.querySelector("[data-board-grid]") as HTMLElement | null;
+    if (!grid) return;
+    const refresh = () => {
+      if (gridRectRef.current) gridRectRef.current = grid.getBoundingClientRect();
+    };
+    const ro = new ResizeObserver(refresh);
+    ro.observe(grid);
+    window.addEventListener("resize", refresh);
+    document.addEventListener("fullscreenchange", refresh);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", refresh);
+      document.removeEventListener("fullscreenchange", refresh);
+    };
+  }, []);
+
   const draggedPiece = drag ? board.pieces[drag.from] : null;
 
-  // Any move wipes the scratchpad, like Lichess.
+  // Any *real* move wipes the scratchpad, like Lichess. A rejected/illegal move
+  // attempt leaves the position untouched (the engine no-ops it), so drawn
+  // arrows and marks must survive it. We diff the placement slot-by-slot rather
+  // than trusting board.pieces identity: makeMove returns the same array on a
+  // no-op (unchanged reference), and cloneBoard only shallow-copies pieces, so a
+  // parent re-render that hands us a fresh-but-identical pieces array (an
+  // illegal move that got no-oped, or unrelated churn) compares equal and does
+  // NOT erase the annotations. A genuine move changes at least two slots.
+  const wipePrevPiecesRef = useRef<BoardState["pieces"] | null>(null);
   useEffect(() => {
+    const prev = wipePrevPiecesRef.current;
+    wipePrevPiecesRef.current = board.pieces;
+    if (!prev || prev === board.pieces) return;
+    let moved = prev.length !== board.pieces.length;
+    if (!moved) {
+      for (let i = 0; i < board.pieces.length; i++) {
+        if (prev[i] !== board.pieces[i]) {
+          moved = true;
+          break;
+        }
+      }
+    }
+    if (!moved) return;
     setRightClickMarks((marks) => (Object.keys(marks).length ? {} : marks));
     setArrows((current) => (current.length ? [] : current));
   }, [board.pieces]);
@@ -641,6 +720,11 @@ export function Board({
 
   const startRightDrag = (e: React.PointerEvent, sq: Square) => {
     e.preventDefault();
+    // Drop any rect cached by an interrupted left-drag so the arrow's target is
+    // measured fresh for the whole draw (squareAtClient re-measures when null).
+    // Prevents a stale-rect left over from a rejected/illegal move attempt from
+    // making the next right-click-drag arrow point at the wrong square.
+    gridRectRef.current = null;
     setRightDrag({ from: sq, mark: markFromModifiers(e), hover: sq });
   };
 
@@ -757,6 +841,16 @@ export function Board({
                     <div className="absolute inset-0 bg-amber-700/30 pointer-events-none" />
                     <span className="absolute top-0.5 right-0.5 z-10 text-[12px] leading-none pointer-events-none drop-shadow">
                       🥜
+                    </span>
+                  </>
+                )}
+                {lockedSquares.has(sq) && (
+                  <>
+                    {/* Shackled by a king-only or no-pawn-advance hex: a grey
+                        pall plus a chain marker. One soft pulse on mount. */}
+                    <div className="absolute inset-0 bg-slate-800/35 pointer-events-none sq-locked" />
+                    <span className="absolute bottom-0.5 left-0.5 z-10 text-[11px] leading-none pointer-events-none drop-shadow sq-locked-chain">
+                      ⛓
                     </span>
                   </>
                 )}

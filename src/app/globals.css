@@ -192,27 +192,78 @@ body {
 .tier-7 { color: #a877d8; }   /* violet */
 .tier-8 { color: #e05252; }   /* blood */
 
-.tier-bg-1 { background: rgba(126,181,154,0.10); border-color: rgba(126,181,154,0.35); }
-.tier-bg-2 { background: rgba(139,169,196,0.10); border-color: rgba(139,169,196,0.35); }
-.tier-bg-3 { background: rgba(216,181,110,0.10); border-color: rgba(216,181,110,0.45); }
-.tier-bg-4 { background: rgba(199,148,104,0.10); border-color: rgba(199,148,104,0.40); }
-.tier-bg-5 { background: rgba(198,104,96,0.12); border-color: rgba(198,104,96,0.45); }
-.tier-bg-6 { background: rgba(198,95,143,0.12); border-color: rgba(198,95,143,0.45); }
-.tier-bg-7 { background: rgba(168,119,216,0.12); border-color: rgba(168,119,216,0.45); }
-.tier-bg-8 { background: rgba(224,82,82,0.14); border-color: rgba(224,82,82,0.50); }
+/* Each tier carries its color as an rgb triple too, so glass/glow layers on a
+   card face can tint themselves by severity (a tier-8 reads hotter than a
+   tier-1) using a single shared class. */
+.tier-bg-1 { background: rgba(126,181,154,0.10); border-color: rgba(126,181,154,0.35); --tier-rgb: 126 181 154; }
+.tier-bg-2 { background: rgba(139,169,196,0.10); border-color: rgba(139,169,196,0.35); --tier-rgb: 139 169 196; }
+.tier-bg-3 { background: rgba(216,181,110,0.10); border-color: rgba(216,181,110,0.45); --tier-rgb: 216 181 110; }
+.tier-bg-4 { background: rgba(199,148,104,0.10); border-color: rgba(199,148,104,0.40); --tier-rgb: 199 148 104; }
+.tier-bg-5 { background: rgba(198,104,96,0.12); border-color: rgba(198,104,96,0.45); --tier-rgb: 198 104 96; }
+.tier-bg-6 { background: rgba(198,95,143,0.12); border-color: rgba(198,95,143,0.45); --tier-rgb: 198 95 143; }
+.tier-bg-7 { background: rgba(168,119,216,0.12); border-color: rgba(168,119,216,0.45); --tier-rgb: 168 119 216; }
+.tier-bg-8 { background: rgba(224,82,82,0.14); border-color: rgba(224,82,82,0.50); --tier-rgb: 224 82 82; }
 
-/* --- Buttons --- Lichess-flat: solid blue primary, quiet ghost secondary. */
+/* --- Draft card face --------------------------------------------------------
+   A restrained frosted layer for draftable cards: a translucent top-lit sheen,
+   a hairline highlight along the top edge, and a soft inner glow tinted by the
+   card's tier. Sits on top of the existing tier tint, so it stays flat and
+   square (no rounding, no heavy blur) while reading a touch more premium.
+   Hovering lifts the tint into a tier-colored glow ring. */
+.draft-face {
+  background-image:
+    linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0) 42%),
+    radial-gradient(135% 100% at 50% -8%, rgb(var(--tier-rgb, 216 181 110) / 0.14), transparent 62%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.10),
+    inset 0 0 42px -20px rgb(var(--tier-rgb, 216 181 110) / 0.60);
+  transition: box-shadow 200ms ease, transform 160ms ease, border-color 160ms ease;
+}
+.draft-face:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.14),
+    inset 0 0 48px -16px rgb(var(--tier-rgb, 216 181 110) / 0.75),
+    0 0 0 1px rgb(var(--tier-rgb, 216 181 110) / 0.45),
+    0 14px 34px -20px rgb(var(--tier-rgb, 216 181 110) / 0.55);
+}
+
+/* Dock rows: a whisper of the same treatment (hairline top highlight + faint
+   top-lit sheen) so the buff dock reads as part of the same card family. */
+.dock-card {
+  background-image: linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0) 60%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+}
+
+/* Staggered entrance for a fresh draft offer: each card rises and settles. */
+@keyframes draft-in {
+  0% { opacity: 0; transform: translateY(18px) scale(0.965); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+.draft-in { animation: draft-in 0.44s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+
+/* --- Buttons --- Lichess-style: primary carries a subtle two-stop "metal"
+   gradient (lighter top, base bottom) plus an inset top highlight and a soft
+   drop, so it reads as a pressable physical control rather than a flat fill.
+   Hover lifts the gradient a touch; active presses it in by a half pixel. */
 .btn-leaf {
-  background: var(--accent);
+  background: linear-gradient(to bottom, var(--accent-hi), var(--accent));
   color: #fff;
-  border: 1px solid rgba(0,0,0,0.22);
-  box-shadow: 0 1px 0 rgba(255,255,255,0.12) inset;
-  transition: background 160ms ease, filter 160ms ease, box-shadow 180ms ease;
+  border: 1px solid rgba(0,0,0,0.28);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.18) inset,
+    0 2px 6px -2px rgba(0,0,0,0.5);
+  transition: background 160ms ease, filter 160ms ease, box-shadow 180ms ease, transform 120ms ease;
   font-weight: 600;
   letter-spacing: 0.005em;
 }
-.btn-leaf:hover { background: var(--accent-hi); }
-.btn-leaf:active { filter: brightness(0.94); }
+.btn-leaf:hover { filter: brightness(1.05); }
+.btn-leaf:active {
+  filter: brightness(0.95);
+  transform: translateY(0.5px);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.1) inset,
+    0 1px 2px -1px rgba(0,0,0,0.5);
+}
 
 /* Hero CTA: primary button with a soft accent glow + border emphasis, for the
    single most important action on a screen (e.g. "Play a Friend"). */
@@ -230,15 +281,34 @@ body {
 }
 
 .btn-ghost {
-  background: rgba(255,255,255,0.04);
+  background: linear-gradient(to bottom, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
   color: var(--paper);
   border: 1px solid rgba(255,255,255,0.12);
-  transition: background 160ms ease, border-color 160ms ease;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.06) inset;
+  transition: background 160ms ease, border-color 160ms ease, transform 120ms ease;
   font-weight: 500;
   letter-spacing: 0.005em;
 }
 .btn-ghost:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.22); }
-.btn-ghost:active { background: rgba(255,255,255,0.12); }
+.btn-ghost:active { background: rgba(255,255,255,0.12); transform: translateY(0.5px); }
+
+/* Deliberate keyboard-focus state on every control: a visible accent ring for
+   :focus-visible only, so mouse users never see it but keyboard and screen
+   reader users always get a clear target. Designing this state (rather than
+   leaving the browser default or none) is both an accessibility floor and one
+   of the details that separates a crafted UI from a generated one. */
+a:focus-visible,
+button:focus-visible,
+[role="button"]:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--accent-hi);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .btn-leaf, .btn-ghost { transition: none; }
+}
 
 /* Kept as an alias so any stale references stay on-brand (blue, not green). */
 .btn-lichess { }
@@ -394,6 +464,20 @@ html[data-piece-source="lichess"] .piece-asset {
 }
 .sq-freeze-flake { animation: freeze-flake-in 0.45s ease-out; }
 
+/* Shackled (king-only / no-pawn-advance hex): a single grey clamp-down pulse
+   when the lock lands, then a calm persistent pall. Runs once on mount. */
+@keyframes locked-in {
+  0% { opacity: 0; }
+  40% { opacity: 1; box-shadow: inset 0 0 22px 3px rgba(30, 41, 59, 0.7); }
+  100% { opacity: 1; box-shadow: inset 0 0 8px 0 rgba(30, 41, 59, 0.25); }
+}
+.sq-locked { animation: locked-in 0.55s ease-out; }
+@keyframes locked-chain-in {
+  0% { opacity: 0; transform: scale(1.8) rotate(12deg); }
+  100% { opacity: 0.85; transform: scale(1) rotate(0deg); }
+}
+.sq-locked-chain { animation: locked-chain-in 0.45s ease-out; }
+
 /* Shield / sanctuary: one soft pulse when the protection appears. */
 @keyframes shield-in {
   0% { opacity: 0; transform: scale(1.12); }
@@ -403,6 +487,36 @@ html[data-piece-source="lichess"] .piece-asset {
 .sq-shield-in { animation: shield-in 0.45s ease-out; }
 
 .no-tap-highlight { -webkit-tap-highlight-color: transparent; }
+
+/* --- Skeleton placeholders (first-load shimmer) ---
+   Flat, square blocks tinted onto the ink surface. A single light sweep passes
+   across them; under prefers-reduced-motion the sweep is dropped and the block
+   holds as a static muted placeholder. */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.055);
+  border-radius: 0;
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.07) 50%,
+    transparent 100%
+  );
+  animation: skeleton-sweep 1.6s ease-in-out infinite;
+}
+@keyframes skeleton-sweep {
+  100% { transform: translateX(100%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after { animation: none; content: none; }
+}
 
 main, footer { position: relative; z-index: 2; }
 /* Navs/headers host dropdown menus and the settings modal. They must paint
@@ -421,6 +535,7 @@ nav, header { position: relative; z-index: 30; }
 
 @media (prefers-reduced-motion: reduce) {
   .animate-rise, .animate-seal, .animate-sigil, .animate-flicker, .animate-reveal, .animate-bob,
+  .draft-in,
   .sq-strike, .sq-freeze, .sq-freeze-flake, .sq-shield-in {
     animation: none !important;
   }

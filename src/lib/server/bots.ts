@@ -178,8 +178,8 @@ const HOUSE_POOL_WEIGHTS: Array<[pool: string, weight: number]> = [
   ["5+3", 2],
 ];
 
-/** Pool + mode for a new house seek: weighted blitz pools, roughly 60% Buff
- * and 40% Nerf so both queues stay warm. */
+/** Pool + mode for a new house seek: weighted blitz pools, an even 50/50
+ * split of Buff and Nerf so neither queue is starved. */
 export function pickHouseSeek(random: (max: number) => number): { pool: string; mode: DraftMode } {
   const total = HOUSE_POOL_WEIGHTS.reduce((sum, [, weight]) => sum + weight, 0);
   let roll = random(total);
@@ -191,7 +191,7 @@ export function pickHouseSeek(random: (max: number) => number): { pool: string; 
       break;
     }
   }
-  return { pool, mode: random(10) < 6 ? "buff" : "nerf" };
+  return { pool, mode: random(2) === 0 ? "buff" : "nerf" };
 }
 
 // ---------------------------------------------------------------------------

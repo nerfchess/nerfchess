@@ -39,9 +39,10 @@ export default function LobbyPage() {
     session.autoReconnect = false; // fetchLobby reconnects on demand
     sessionRef.current = session;
     // The game server runs on a single-threaded Durable Object, so a snapshot
-    // can occasionally arrive late. Keep showing the last good snapshot and
-    // only surface the error banner after a couple of misses in a row, so a
-    // one-off blip doesn't flap "can't reach the game server" at the player.
+    // can occasionally arrive late. Keep showing the last good snapshot (the
+    // catch below never clears `lobby`) and only surface the error banner
+    // after three misses in a row, so a one-off blip doesn't flap "can't reach
+    // the game server" at the player.
     let failures = 0;
     const poll = async () => {
       try {
@@ -54,7 +55,7 @@ export default function LobbyPage() {
       } catch {
         if (!cancelled) {
           failures++;
-          if (failures >= 2) setLobbyError("Can't reach the game server right now.");
+          if (failures >= 3) setLobbyError("Can't reach the game server right now.");
         }
       }
     };
@@ -115,7 +116,7 @@ export default function LobbyPage() {
     <main className="min-h-screen pb-16">
       <SiteHeader active="/lobby" />
 
-      <section className="max-w-5xl mx-auto px-5 sm:px-6">
+      <section className="max-w-7xl mx-auto px-5 sm:px-6">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h1 className="font-display text-4xl sm:text-5xl">Lobby</h1>
@@ -135,7 +136,7 @@ export default function LobbyPage() {
           </div>
         )}
 
-        <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
+        <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
           <div className="space-y-4 min-w-0">
             {/* Step 1: the main action — get matched with a real opponent. */}
             <QueueButton />
@@ -196,7 +197,10 @@ export default function LobbyPage() {
                 </div>
               </div>
               {!lobby ? (
-                <p className="mt-3 text-sm text-parchment-400">Loading challenges…</p>
+                <>
+                  <SkeletonRows count={3} />
+                  <p className="mt-3 text-sm text-parchment-500">Looking for open challenges…</p>
+                </>
               ) : waitingCount === 0 ? (
                 <p className="mt-3 text-sm text-parchment-400">
                   No one is waiting right now. Queue for a game or create a friend game
@@ -230,7 +234,10 @@ export default function LobbyPage() {
                 </span>
               </div>
               {!lobby ? (
-                <p className="mt-3 text-sm text-parchment-400">Loading live games…</p>
+                <>
+                  <SkeletonRows count={3} />
+                  <p className="mt-3 text-sm text-parchment-500">Finding live games…</p>
+                </>
               ) : lobby.games.length === 0 ? (
                 <p className="mt-3 text-sm text-parchment-400">
                   No games in play right now. Start one and someone can watch you.
@@ -259,7 +266,10 @@ export default function LobbyPage() {
               <div className="font-display text-xl text-parchment">Online now</div>
             </div>
             {!lobby ? (
-              <p className="mt-3 text-sm text-parchment-400">Loading…</p>
+              <>
+                <SkeletonPlayerRows count={5} />
+                <p className="mt-3 text-sm text-parchment-500">Seeing who&apos;s online…</p>
+              </>
             ) : (
               <>
                 {lobby.players.length === 0 && (
@@ -306,6 +316,42 @@ export default function LobbyPage() {
         </div>
       </section>
     </main>
+  );
+}
+
+// First-load placeholders. They mirror the real row structure (a two-line
+// text block on the left, an action chip on the right) so the panel keeps its
+// shape and nothing jumps when the first snapshot lands. Only shown while
+// `lobby` is still null; once a snapshot exists the last-good data stays up.
+function SkeletonRows({ count }: { count: number }) {
+  return (
+    <ul className="mt-3 divide-y divide-white/5" aria-hidden>
+      {Array.from({ length: count }).map((_, i) => (
+        <li key={i} className="flex items-center justify-between gap-3 py-2.5">
+          <div className="min-w-0 flex-1 space-y-2">
+            <span className="skeleton block h-3.5 w-1/2" />
+            <span className="skeleton block h-2.5 w-1/3" />
+          </div>
+          <span className="skeleton h-9 w-20 shrink-0" />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function SkeletonPlayerRows({ count }: { count: number }) {
+  return (
+    <ul className="mt-3 space-y-2" aria-hidden>
+      {Array.from({ length: count }).map((_, i) => (
+        <li key={i} className="flex items-center justify-between gap-2">
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <span className="skeleton h-[22px] w-[22px] shrink-0" />
+            <span className="skeleton block h-3 w-2/5" />
+          </div>
+          <span className="skeleton h-4 w-14 shrink-0" />
+        </li>
+      ))}
+    </ul>
   );
 }
 

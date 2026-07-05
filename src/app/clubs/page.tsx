@@ -4,7 +4,8 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { AccountUser, fetchMe } from "@/lib/authClient";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
+import { Search, Users } from "lucide-react";
 
 interface Club {
   id: string;
@@ -21,6 +22,7 @@ export default function ClubsPage() {
   const router = useRouter();
   const [user, setUser] = useState<AccountUser | null | undefined>(undefined);
   const [clubs, setClubs] = useState<Club[]>([]);
+  const [query, setQuery] = useState("");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [busy, setBusy] = useState(false);
@@ -63,11 +65,27 @@ export default function ClubsPage() {
     }
   };
 
+  // Client-side filter over the already-fetched list, lichess-teams-style:
+  // one search box narrows both "Your clubs" and the full directory. No new
+  // API call — we just re-slice what we already have.
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return clubs;
+    return clubs.filter(
+      (c) =>
+        c.name.toLowerCase().includes(q) ||
+        c.description.toLowerCase().includes(q) ||
+        c.owner_name.toLowerCase().includes(q),
+    );
+  }, [clubs, query]);
+
+  const yourClubs = useMemo(() => filtered.filter((c) => !!c.joined), [filtered]);
+
   return (
     <main className="min-h-screen pb-16">
       <SiteHeader active="/clubs" />
 
-      <section className="mx-auto max-w-5xl px-5 sm:px-6">
+      <section className="mx-auto max-w-6xl px-5 sm:px-6">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h1 className="font-display text-4xl sm:text-5xl text-parchment-50">Clubs</h1>
@@ -130,45 +148,105 @@ export default function ClubsPage() {
             )}
           </form>
 
-          <div className="plate overflow-hidden">
-            <div className="border-b border-white/10 px-5 py-3 smallcaps text-[10px] text-parchment-400">
-              {clubs.length} club{clubs.length === 1 ? "" : "s"}
+          <div className="min-w-0 space-y-4">
+            {/* Search: filters the whole directory in place, like lichess's
+                team search box at the top of the teams list. */}
+            <div className="plate flex items-center gap-2.5 px-4 py-2.5">
+              <Search size={16} className="shrink-0 text-parchment-400" />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search clubs by name, owner, or description"
+                aria-label="Search clubs"
+                className="w-full bg-transparent text-sm text-parchment placeholder:text-parchment-500 focus:outline-none"
+              />
+              {query && (
+                <button
+                  type="button"
+                  onClick={() => setQuery("")}
+                  className="shrink-0 smallcaps text-[10px] text-parchment-400 hover:text-parchment-100"
+                >
+                  Clear
+                </button>
+              )}
             </div>
-            {clubs.length === 0 ? (
-              <p className="px-5 py-8 text-sm text-parchment-400">No clubs yet.</p>
-            ) : (
-              <ul className="divide-y divide-white/5">
-                {clubs.map((club) => (
-                  <li key={club.id}>
-                    <Link
-                      href={`/clubs/${encodeURIComponent(club.slug)}`}
-                      className="block px-5 py-4 transition-colors hover:bg-white/5"
-                    >
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="truncate font-display text-xl text-parchment">{club.name}</span>
-                            {!!club.joined && (
-                              <span className="shrink-0 rounded-full border border-gold/40 px-2 py-0.5 smallcaps text-[8px] text-gold-leaf">
-                                Joined
-                              </span>
-                            )}
-                          </div>
-                          <div className="mt-0.5 smallcaps text-[9px] text-parchment-400">
-                            {club.members} member{club.members === 1 ? "" : "s"} - owner {club.owner_name}
-                          </div>
-                        </div>
-                        <span className="btn-ghost px-3 py-1.5 font-display text-xs">Visit →</span>
-                      </div>
-                      {club.description && <p className="mt-2 text-sm text-parchment-300">{club.description}</p>}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
+
+            {/* Your clubs: the memberships this account already holds, lifted
+                to the top the way lichess surfaces "Your teams". */}
+            {yourClubs.length > 0 && (
+              <div className="plate overflow-hidden">
+                <div className="border-b border-white/10 px-5 py-3 smallcaps text-[10px] text-parchment-400">
+                  Your clubs
+                </div>
+                <ul className="divide-y divide-white/5">
+                  {yourClubs.map((club) => (
+                    <ClubRow key={club.id} club={club} />
+                  ))}
+                </ul>
+              </div>
             )}
+
+            <div className="plate overflow-hidden">
+              <div className="border-b border-white/10 px-5 py-3 smallcaps text-[10px] text-parchment-400">
+                {query ? `${filtered.length} match${filtered.length === 1 ? "" : "es"}` : "All clubs"}
+              </div>
+              {filtered.length === 0 ? (
+                <p className="px-5 py-8 text-sm text-parchment-400">
+                  {clubs.length === 0
+                    ? "No clubs yet. Create the first one."
+                    : "No clubs match that search."}
+                </p>
+              ) : (
+                <ul className="divide-y divide-white/5">
+                  {filtered.map((club) => (
+                    <ClubRow key={club.id} club={club} />
+                  ))}
+                </ul>
+              )}
+            </div>
           </div>
         </div>
       </section>
     </main>
+  );
+}
+
+// One directory row, lichess-teams-style: a monogram tile, the club name with
+// its description on a second line, and the member count pinned to the right.
+function ClubRow({ club }: { club: Club }) {
+  return (
+    <li>
+      <Link
+        href={`/clubs/${encodeURIComponent(club.slug)}`}
+        className="flex items-center gap-4 px-5 py-4 transition-colors hover:bg-white/5"
+      >
+        <span
+          aria-hidden
+          className="grid h-11 w-11 shrink-0 place-items-center border border-white/10 bg-ink-900/60 font-display text-lg text-parchment-200"
+        >
+          {club.name.trim().charAt(0).toUpperCase() || "?"}
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <span className="truncate font-display text-lg text-parchment-50">{club.name}</span>
+            {!!club.joined && (
+              <span className="shrink-0 border border-gold/40 px-1.5 py-0.5 smallcaps text-[8px] text-gold-leaf">
+                Joined
+              </span>
+            )}
+          </div>
+          {club.description ? (
+            <p className="mt-0.5 truncate text-sm text-parchment-300">{club.description}</p>
+          ) : (
+            <p className="mt-0.5 truncate text-sm italic text-parchment-500">No description.</p>
+          )}
+          <div className="mt-0.5 smallcaps text-[9px] text-parchment-400">owner {club.owner_name}</div>
+        </div>
+        <span className="flex shrink-0 items-center gap-1.5 font-mono text-xs text-parchment-400">
+          <Users size={13} />
+          {club.members}
+        </span>
+      </Link>
+    </li>
   );
 }

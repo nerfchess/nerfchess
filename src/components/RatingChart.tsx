@@ -1,9 +1,12 @@
 "use client";
 
-// Rating-over-time line for profile pages (a la Lichess). Single series in
-// the site accent, recessive grid, crosshair + tooltip on hover.
+// Rating-over-time line for profile pages, styled after Lichess's Chart.js
+// rating history graph: a thin accent line over a soft translucent area, a
+// muted horizontal grid, y labels mirrored inside the right edge, and a small
+// translucent ink tooltip carrying the rating and date. Visual only; the data
+// and props are untouched.
 
-import { useMemo, useRef, useState } from "react";
+import { useId, useMemo, useRef, useState } from "react";
 
 export interface RatingPoint {
   at: number;
@@ -12,11 +15,15 @@ export interface RatingPoint {
 
 const W = 600;
 const H = 180;
-const PAD = { top: 12, right: 12, bottom: 22, left: 40 };
+// Left pad is tight: like Lichess, the y labels sit mirrored inside the right
+// edge rather than in a left gutter, so the line gets the full width.
+const PAD = { top: 14, right: 14, bottom: 22, left: 14 };
 
 export function RatingChart({ points }: { points: RatingPoint[] }) {
   const svgRef = useRef<SVGSVGElement>(null);
   const [hover, setHover] = useState<number | null>(null);
+  const gid = useId();
+  const fillId = `rc-fill-${gid}`;
 
   const { path, area, xs, ys, ticks, min, max } = useMemo(() => {
     const ratings = points.map((p) => p.rating);
@@ -43,7 +50,7 @@ export function RatingChart({ points }: { points: RatingPoint[] }) {
     const baseline = H - PAD.bottom;
     const area = `${path} L${xs[xs.length - 1].toFixed(1)},${baseline} L${xs[0].toFixed(1)},${baseline} Z`;
 
-    // Three round-numbered gridlines inside the range.
+    // Round-numbered gridlines inside the range (Lichess caps at ~7 ticks).
     const step = Math.max(25, Math.ceil((hi - lo) / 4 / 25) * 25);
     const ticks: { y: number; label: number }[] = [];
     for (let v = Math.ceil(lo / step) * step; v <= hi; v += step) {
@@ -75,22 +82,54 @@ export function RatingChart({ points }: { points: RatingPoint[] }) {
         <svg
           ref={svgRef}
           viewBox={`0 0 ${W} ${H}`}
-          className="w-full h-auto block touch-none"
+          className="block h-auto w-full touch-none"
           onPointerMove={onMove}
           onPointerLeave={() => setHover(null)}
           role="img"
           aria-label={`Rating history from ${Math.round(points[0].rating)} to ${Math.round(points[points.length - 1].rating)}`}
         >
+          <defs>
+            {/* Soft accent wash that fades to nothing before the baseline. */}
+            <linearGradient id={fillId} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="rgb(var(--accent-hi-rgb))" stopOpacity={0.18} />
+              <stop offset="100%" stopColor="rgb(var(--accent-hi-rgb))" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+
+          {/* Muted horizontal grid + mirrored y labels (Lichess right-axis). */}
           {ticks.map((t) => (
             <g key={t.label}>
-              <line x1={PAD.left} x2={W - PAD.right} y1={t.y} y2={t.y} stroke="rgba(255,255,255,0.07)" strokeWidth={1} />
-              <text x={PAD.left - 6} y={t.y + 3} textAnchor="end" fontSize={10} fill="#7f7d77">
+              <line
+                x1={PAD.left}
+                x2={W - PAD.right}
+                y1={t.y}
+                y2={t.y}
+                stroke="var(--paper-dim)"
+                strokeOpacity={0.22}
+                strokeWidth={1}
+              />
+              <text
+                x={W - PAD.right}
+                y={t.y - 4}
+                textAnchor="end"
+                fontSize={10}
+                fill="var(--paper-dim)"
+              >
                 {t.label}
               </text>
             </g>
           ))}
-          <path d={area} fill="rgb(var(--accent-rgb) / 0.08)" />
-          <path d={path} fill="none" stroke="rgb(var(--accent-hi-rgb))" strokeWidth={2} strokeLinejoin="round" />
+
+          <path d={area} fill={`url(#${fillId})`} />
+          <path
+            d={path}
+            fill="none"
+            stroke="rgb(var(--accent-hi-rgb))"
+            strokeWidth={1.5}
+            strokeLinejoin="round"
+            strokeLinecap="round"
+          />
+
           {hover != null && (
             <g>
               <line
@@ -98,27 +137,40 @@ export function RatingChart({ points }: { points: RatingPoint[] }) {
                 x2={xs[hover]}
                 y1={PAD.top}
                 y2={H - PAD.bottom}
-                stroke="rgba(255,255,255,0.25)"
+                stroke="var(--paper-dim)"
+                strokeOpacity={0.45}
                 strokeWidth={1}
               />
-              <circle cx={xs[hover]} cy={ys[hover]} r={4} fill="rgb(var(--accent-hi-rgb))" stroke="#1a1917" strokeWidth={2} />
+              {/* Accent node ringed in the surface tone, echoing Lichess's
+                  pale hover border. */}
+              <circle
+                cx={xs[hover]}
+                cy={ys[hover]}
+                r={4}
+                fill="rgb(var(--accent-hi-rgb))"
+                stroke="var(--paper)"
+                strokeOpacity={0.85}
+                strokeWidth={1.5}
+              />
             </g>
           )}
-          <text x={PAD.left} y={H - 6} fontSize={10} fill="#7f7d77">
+
+          <text x={PAD.left} y={H - 6} fontSize={10} fill="var(--paper-dim)">
             {new Date(points[0].at).toLocaleDateString()}
           </text>
-          <text x={W - PAD.right} y={H - 6} textAnchor="end" fontSize={10} fill="#7f7d77">
+          <text x={W - PAD.right} y={H - 6} textAnchor="end" fontSize={10} fill="var(--paper-dim)">
             {new Date(points[points.length - 1].at).toLocaleDateString()}
           </text>
         </svg>
         {/* not .plate: it forces position:relative, which would knock out `absolute` */}
         {h && (
           <div
-            className="absolute -translate-x-1/2 -top-1 pointer-events-none bg-[#262421] border border-white/10 px-2 py-1 text-xs whitespace-nowrap"
+            className="pointer-events-none absolute -top-1 flex -translate-x-1/2 items-center gap-1.5 border border-ink-500 bg-ink-900/90 px-2 py-1 text-xs whitespace-nowrap shadow-plate backdrop-blur-sm motion-safe:transition-opacity"
             style={{ left: `${(xs[hover!] / W) * 100}%` }}
           >
-            <span className="text-gold-leaf font-semibold">{Math.round(h.rating)}</span>
-            <span className="text-parchment-400"> · {new Date(h.at).toLocaleDateString()}</span>
+            <span className="h-2 w-2 shrink-0 rounded-full bg-gold-leaf" aria-hidden />
+            <span className="font-semibold text-parchment-100">{Math.round(h.rating)}</span>
+            <span className="text-parchment-400">{new Date(h.at).toLocaleDateString()}</span>
           </div>
         )}
       </div>

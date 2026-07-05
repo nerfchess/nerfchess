@@ -134,7 +134,7 @@ export default function ClubPage() {
   return (
     <main className="min-h-screen pb-16">
       <SiteHeader active="/clubs" />
-      <section className="mx-auto max-w-5xl px-5 sm:px-6">
+      <section className="mx-auto max-w-6xl px-5 sm:px-6">
         {!club ? (
           <p className="py-16 text-center text-sm text-parchment-400">Loading…</p>
         ) : (
@@ -198,8 +198,11 @@ export default function ClubPage() {
               <div className="flex flex-col gap-4">
                 {/* Members, sorted by rating — doubles as the club leaderboard. */}
                 <div className="plate overflow-hidden">
-                  <div className="border-b border-white/10 px-5 py-3 smallcaps text-[10px] text-parchment-400">
-                    Members
+                  <div className="flex items-center justify-between gap-2 border-b border-white/10 px-5 py-3">
+                    <span className="smallcaps text-[10px] text-parchment-400">Leaderboard</span>
+                    <span className="smallcaps text-[9px] text-parchment-500">
+                      {data.members.length} member{data.members.length === 1 ? "" : "s"}
+                    </span>
                   </div>
                   <ul className="max-h-96 divide-y divide-white/5 overflow-y-auto">
                     {data.members.map((m, i) => (

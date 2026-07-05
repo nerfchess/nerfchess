@@ -209,7 +209,7 @@ export const BATTLE_FATIGUE: Nerf = db({
 });
 
 export const SNIPERS: Nerf = db({
-  id: "snipers", name: "Snipers", tier: 2, implemented: true,
+  id: "snipers", name: "Snipers", tier: 3, implemented: true,
   description: "Bishops can only capture from distance ≥ 4.",
   filterMoves: (moves) =>
     moves.filter((m) => !(m.piece === "b" && m.captured && cheb(m.from, m.to) < 4)),
@@ -355,7 +355,7 @@ export const SHAPESHIFTER: Nerf = db({
 });
 
 export const HORSE_EATS_FIRST: Nerf = db({
-  id: "horse_eats_first", name: "Horse Eats First", tier: 4, implemented: true,
+  id: "horse_eats_first", name: "Horse Eats First", tier: 5, implemented: true,
   description: "As long as you have a knight, you can only capture with knights.",
   filterMoves: (moves, _s, ctx) => {
     const hasKnight = pieceSquares(ctx.board, ctx.me, "n").length > 0;
@@ -374,7 +374,7 @@ export const WINDUP_TOYS: Nerf = db({
 });
 
 export const ABSTINENCE: Nerf = db({
-  id: "abstinence", name: "Abstinence", tier: 6, implemented: true,
+  id: "abstinence", name: "Abstinence", tier: 7, implemented: true,
   description: "If opponent ever has two same-type non-pawns adjacent, you lose.",
   checkLoss: (_s, ctx) => {
     const opp = ctx.me === "w" ? "b" : "w";
@@ -771,7 +771,7 @@ export const SOCIAL_DISTANCING: Nerf = db({
 
 export const DRAG: Nerf = db({
   id: "drag", name: "Drag", tier: 5, implemented: true,
-  description: "Your queen IS a king. If captured, you lose.",
+  description: "Your queen is now royal: if it is captured, you lose.",
   checkLoss: (_s, ctx) => {
     if (ctx.moveNumber === 0) return null;
     return pieceSquares(ctx.board, ctx.me, "q").length === 0
@@ -871,13 +871,26 @@ export const MEDUSA: Nerf = db({
     const opp = ctx.me === "w" ? "b" : "w";
     const queens = pieceSquares(ctx.board, opp, "q");
     if (!queens.length) return moves;
-    // Build attack set of just queens by temporarily nulling everything else of opp
-    const fake = { ...ctx.board, pieces: ctx.board.pieces.map((p) => {
-      if (!p) return p;
-      if (p.color === opp && p.type !== "q") return null;
-      return p;
-    }) };
-    const stoned = attackedBy(fake, opp);
+    // Cast queen rays on the REAL board so the queen's own blockers stop each
+    // ray at the first occupied square (no x-raying through friendly pawns).
+    const QUEEN_DIRS = [
+      [1, 0], [-1, 0], [0, 1], [0, -1],
+      [1, 1], [1, -1], [-1, 1], [-1, -1],
+    ];
+    const stoned = new Set<number>();
+    for (const q of queens) {
+      const qf = FILE(q), qr = RANK(q);
+      for (const [df, dr] of QUEEN_DIRS) {
+        let f = qf + df, r = qr + dr;
+        while (f >= 0 && f < 8 && r >= 0 && r < 8) {
+          const sq = SQ(f, r);
+          stoned.add(sq);
+          if (ctx.board.pieces[sq]) break; // ray stops at the first occupied square
+          f += df;
+          r += dr;
+        }
+      }
+    }
     return moves.filter((m) => !stoned.has(m.from));
   },
 });
@@ -924,7 +937,7 @@ export const STAND_YOUR_GROUND: Nerf = db({
 });
 
 export const ALWAYS_CHECK_IT_MIGHT_BE_MATE: Nerf = db({
-  id: "always_check_it_might_be_mate", name: "Always Check, It Might Be Mate", tier: 6, implemented: true,
+  id: "always_check_it_might_be_mate", name: "Always Check, It Might Be Mate", tier: 7, implemented: true,
   description: "If you are checked, you lose.",
   checkLoss: (_s, ctx) => (isInCheck(ctx.board, ctx.me) ? { reason: "in check" } : null),
 });
@@ -1178,7 +1191,7 @@ export const EAT_YOUR_VEGETABLES: Nerf = db({
 
 export const BLOODTHIRSTY: Nerf = db({
   id: "bloodthirsty", name: "Bloodthirsty", tier: 6, implemented: true,
-  description: "After turn 3, if you go 2 turns without capturing, you must capture or lose.",
+  description: "After turn 3, if you go 2 turns without capturing, you must capture if able.",
   filterMoves: (moves, _s, ctx) => {
     if (ctx.moveNumber < 3) return moves;
     const mine = ctx.board.history.filter((m) => m.color === ctx.me);
@@ -1422,7 +1435,7 @@ export const FRIENDLY_FIRE: Nerf = db({
 
 export const GOING_THE_DISTANCE: Nerf = db({
   id: "going_the_distance", name: "Going the Distance", tier: 6, implemented: true,
-  description: "Must move at least as far as opponent's last move or lose.",
+  description: "Must move at least as far as opponent's last move, if able.",
   filterMoves: (moves, _s, ctx) => {
     const last = ctx.opponentLastMove;
     if (!last) return moves;
@@ -1698,16 +1711,24 @@ export const QUICKSAND: Nerf = db({
   id: "quicksand", name: "Quicksand", tier: 4, implemented: true,
   description: "Middle ranks are quicksand. A piece that ends on the same middle-rank square twice in a row is stuck.",
   filterMoves: (moves, _s, ctx) => {
-    // A piece at sq is stuck if its last two moves both ended on sq AND sq is on rank 3 or 4.
+    // A piece is stuck if that SAME piece has ended on this middle-rank square
+    // (rank 3 or 4) at least twice. Follow the current piece's own move chain
+    // backward so landings by earlier, different pieces don't count.
     const stuck = new Set<number>();
     const mine = ctx.board.history.filter((m) => m.color === ctx.me);
-    // For each piece (track by latest position), check if the last two destinations were the same middle-rank square.
-    // Build chains: piece at sq, find prior move that landed there.
     for (const sq of pieceSquares(ctx.board, ctx.me)) {
       const r = RANK(sq);
       if (r !== 3 && r !== 4) continue;
-      const landings = mine.filter((m) => m.to === sq);
-      if (landings.length >= 2) stuck.add(sq);
+      let pos = sq;
+      let landingsHere = 0;
+      for (let i = mine.length - 1; i >= 0; i--) {
+        const m = mine[i];
+        if (m.to === pos) {
+          if (m.to === sq) landingsHere++;
+          pos = m.from; // trace this same piece back to where it came from
+        }
+      }
+      if (landingsHere >= 2) stuck.add(sq);
     }
     return moves.filter((m) => !stuck.has(m.from));
   },

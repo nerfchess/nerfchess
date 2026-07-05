@@ -294,11 +294,12 @@ export function DraftOverlay({
               <motion.div
                 key={i}
                 className={
-                  selected === i && chosen == null
+                  "mx-auto w-full max-w-md sm:max-w-none " +
+                  (selected === i && chosen == null
                     ? "ring-2 ring-gold shadow-leaf"
                     : selected != null && chosen == null
                     ? "opacity-60"
-                    : ""
+                    : "")
                 }
                 animate={
                   chosen === i
@@ -312,7 +313,12 @@ export function DraftOverlay({
                   if (chosen === i) commit(i);
                 }}
               >
-                <BuffCard buff={def} tier={card.tier} onClick={chosen == null ? () => choose(i) : undefined} />
+                <BuffCard
+                  buff={def}
+                  tier={card.tier}
+                  enterDelayMs={i * 70}
+                  onClick={chosen == null ? () => choose(i) : undefined}
+                />
               </motion.div>
             );
           })}

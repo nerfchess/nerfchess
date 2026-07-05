@@ -293,7 +293,7 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards 
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.25 }}
         className={
-          "border border-white/10 bg-white/[0.02] px-2 py-1.5 " +
+          "dock-card border border-white/10 bg-white/[0.02] px-2 py-1.5 " +
           (dead ? "opacity-45 " : "") +
           (usable ? "border-gold/30 " : "")
         }
@@ -376,7 +376,7 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards 
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.25 }}
         className={
-          "w-full border border-white/10 bg-white/[0.02] px-2 py-1 " +
+          "dock-card w-full border border-white/10 bg-white/[0.02] px-2 py-1 " +
           (dead ? "opacity-45" : "")
         }
       >

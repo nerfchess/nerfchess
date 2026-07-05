@@ -5,14 +5,16 @@ import { useEffect, useState } from "react";
 import { HeroTv } from "@/components/HeroTv";
 import { SiteHeader } from "@/components/SiteHeader";
 import { ALL_NERFS, PLAYABLE_NERFS } from "@/engine/nerfs/library";
+import { ALL_BUFFS } from "@/engine/buffs/library";
 import type { Nerf } from "@/engine/nerf";
 import { useLobbySnapshot } from "@/lib/lobbyClient";
 import { ActiveGame, loadActiveGame } from "@/lib/multiplayer";
 import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
 
-// Real library count, computed once. Feeds the social proof strip so the
-// number stays honest and updates automatically as the rule set grows.
-const TOTAL_RULES = ALL_NERFS.length;
+// Real library counts, computed once. Feeds the social proof strip so the
+// numbers stay honest and update automatically as the library grows. The full
+// library is every nerf plus every buff, hex, boon, and item card.
+const TOTAL_RULES = ALL_NERFS.length + ALL_BUFFS.length;
 
 // A hand-picked spread across the difficulty tiers so a first visitor sees the
 // range of what a "secret rule" can be, from gentle to brutal.
@@ -40,7 +42,7 @@ export default function HomePage() {
     <main className="min-h-screen flex flex-col">
       <SiteHeader />
 
-      <section className="w-full max-w-6xl mx-auto px-5 sm:px-6 pt-2 pb-8 sm:pt-6 grid lg:grid-cols-[minmax(0,1fr)_380px] gap-8 lg:gap-14 items-center">
+      <section className="w-full max-w-7xl mx-auto px-5 sm:px-6 pt-2 pb-8 sm:pt-6 grid lg:grid-cols-[minmax(0,1fr)_380px] gap-8 lg:gap-14 items-center">
         <div className="order-1">
           <HeroTv />
         </div>
@@ -76,7 +78,7 @@ export default function HomePage() {
           <div className="mt-5 flex flex-col gap-3">
             <Link
               href="/lobby"
-              className="btn-leaf btn-cta w-full flex items-center justify-center gap-3 px-8 py-5 font-display text-xl sm:text-2xl font-semibold"
+              className="btn-leaf btn-cta w-full flex items-center justify-center gap-3 px-8 py-5 font-display text-xl sm:text-2xl font-semibold motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out motion-safe:hover:-translate-y-px motion-safe:active:scale-[0.98]"
             >
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
@@ -89,13 +91,13 @@ export default function HomePage() {
             <div className="grid grid-cols-2 gap-3">
               <Link
                 href="/friend"
-                className="btn-ghost flex items-center justify-center gap-2 px-4 py-3 font-display text-base font-medium"
+                className="btn-ghost flex items-center justify-center gap-2 px-4 py-3 font-display text-base font-medium motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out motion-safe:hover:-translate-y-px motion-safe:active:scale-[0.98]"
               >
                 Play a Friend
               </Link>
               <Link
                 href="/game?mode=ai"
-                className="btn-ghost flex items-center justify-center gap-2 px-4 py-3 font-display text-base font-medium"
+                className="btn-ghost flex items-center justify-center gap-2 px-4 py-3 font-display text-base font-medium motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out motion-safe:hover:-translate-y-px motion-safe:active:scale-[0.98]"
               >
                 Play vs Bot
               </Link>
@@ -187,11 +189,11 @@ function StatStrip() {
   }, []);
 
   const stats = [
-    { value: TOTAL_RULES.toString(), label: "secret rules" },
+    { value: TOTAL_RULES.toLocaleString(), label: "rules and cards" },
     { value: gamesPlayed === null ? "…" : gamesPlayed.toLocaleString(), label: "games played" },
   ];
   return (
-    <section className="w-full max-w-6xl mx-auto px-5 sm:px-6 py-4">
+    <section className="w-full max-w-7xl mx-auto px-5 sm:px-6 py-4">
       <div className="plate p-5 sm:p-6 grid grid-cols-2 divide-x divide-white/10">
         {stats.map((s) => (
           <div key={s.label} className="px-2 sm:px-4 text-center">
@@ -257,7 +259,7 @@ function HowItWorks() {
     },
   ];
   return (
-    <section className="w-full max-w-6xl mx-auto px-5 sm:px-6 py-8">
+    <section className="w-full max-w-7xl mx-auto px-5 sm:px-6 py-8">
       <div className="rule-ornament mb-6">
         <span className="font-display">How it works</span>
       </div>
@@ -292,7 +294,7 @@ function HowItWorks() {
 function ExampleRules() {
   const rules = exampleRules();
   return (
-    <section className="w-full max-w-6xl mx-auto px-5 sm:px-6 py-8">
+    <section className="w-full max-w-7xl mx-auto px-5 sm:px-6 py-8">
       <div className="flex items-end justify-between gap-4 mb-6">
         <div className="rule-ornament flex-1">
           <span className="font-display">A few of the rules</span>
@@ -341,7 +343,7 @@ function SiteFooter() {
   ];
 
   return (
-    <footer className="max-w-6xl mx-auto w-full px-6 py-8">
+    <footer className="max-w-7xl mx-auto w-full px-6 py-8">
       <nav
         aria-label="Footer"
         className="flex flex-wrap items-center justify-center sm:justify-end gap-y-2 text-xs text-parchment-400"

@@ -402,6 +402,16 @@ export function playCountdownTick() {
   tone({ freq: 988, dur: 0.09, type: "square", gain: 0.10, attack: 0.002, release: 0.09 });
 }
 
+// Urgent low-clock tick: a sharp, insistent two-note blip for the final
+// seconds of your own clock, pitched a step above the low-time warning so the
+// escalation is audible. Synthesized (no sample) and honours mute/enabled via
+// tone().
+export function playUrgentTick() {
+  if (!soundPrefs.enabled) return;
+  tone({ freq: 1245, dur: 0.06, type: "square", gain: 0.11, attack: 0.002, release: 0.06 });
+  tone({ freq: 1660, dur: 0.07, type: "square", gain: 0.08, attack: 0.002, release: 0.07, delay: 0.08 });
+}
+
 // Select: very brief, soft pickup tick.
 export function playSelect() {
   if (!soundPrefs.enabled || !uiSounds) return;
