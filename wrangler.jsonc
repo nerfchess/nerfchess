@@ -50,11 +50,17 @@
   // D1 only on error (see pg.ts), and finished-game archive writes go to PG only
   // (games.ts) — so a dead origin means lost archive rows, not a silent D1 write.
   //
-  // Local dev: set WRANGLER_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE instead.
+  // `localConnectionString` is a placeholder needed only at BUILD time: OpenNext
+  // runs getPlatformProxy during the build, which requires some local Hyperdrive
+  // string for this binding (else the build errors with "no local hyperdrive
+  // connection string"). It is never used in production — the deployed Worker
+  // talks to the real Hyperdrive config via `id`. For a real local Postgres,
+  // override it with WRANGLER_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE.
   "hyperdrive": [
     {
       "binding": "HYPERDRIVE",
-      "id": "2d8d6632c4e04f31be76fd291846d341"
+      "id": "2d8d6632c4e04f31be76fd291846d341",
+      "localConnectionString": "postgres://user:password@localhost:5432/nerfchess"
     }
   ],
   "durable_objects": {
