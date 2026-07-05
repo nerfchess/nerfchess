@@ -230,11 +230,11 @@ export function DraftOverlay({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-3 sm:px-4">
       <motion.div
         initial={{ opacity: 0, y: 16, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        className="plate w-full max-w-2xl max-h-[90dvh] overflow-y-auto p-6 sm:p-8 lg:max-w-3xl"
+        className="plate min-w-0 w-full max-w-2xl max-h-[90dvh] overflow-y-auto overflow-x-hidden p-5 sm:p-8 lg:max-w-3xl"
       >
         <div className="flex items-center justify-between gap-4">
           <div className="smallcaps text-[11px] text-parchment-400">{nounCap} draft #{offer.index}</div>
@@ -332,17 +332,17 @@ export function DraftOverlay({
           </div>
         )}
 
-        <div className="mt-4 flex items-center justify-between gap-3">
+        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <button
             onClick={chosen == null ? onBank : undefined}
             disabled={chosen != null}
-            className="px-4 py-2 border border-white/15 bg-white/[0.03] text-parchment-200 hover:border-gold/50 hover:text-gold-leaf transition text-xs font-display font-semibold tracking-wide disabled:opacity-40"
+            className="w-full sm:w-auto shrink-0 px-4 py-2 border border-white/15 bg-white/[0.03] text-parchment-200 hover:border-gold/50 hover:text-gold-leaf transition text-xs font-display font-semibold tracking-wide disabled:opacity-40"
             title="Skip this draft; your next one pulls from a tier higher"
           >
             Skip &amp; bank (+1 tier next draft)
           </button>
           {opponent && (
-            <div className="text-right text-[11px] text-parchment-400 leading-snug">
+            <div className="min-w-0 w-full break-words text-left sm:w-auto sm:text-right text-[11px] text-parchment-400 leading-snug">
               {oppOffer && opponent.showCards ? (
                 <span>
                   Opponent&apos;s draft:{" "}

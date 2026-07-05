@@ -180,12 +180,14 @@ export function QueueButton() {
               mode="nerf"
               rating={ratingFor("nerf")}
               selected={mode === "nerf"}
+              dimmed={mode != null && mode !== "nerf"}
               onClick={() => pickMode("nerf")}
             />
             <ModeCard
               mode="buff"
               rating={ratingFor("buff")}
               selected={mode === "buff"}
+              dimmed={mode != null && mode !== "buff"}
               onClick={() => pickMode("buff")}
             />
           </div>
@@ -258,32 +260,41 @@ function ModeCard({
   mode,
   rating,
   selected,
+  dimmed = false,
   onClick,
 }: {
   mode: DraftMode;
   rating: number | null;
   selected: boolean;
+  dimmed?: boolean;
   onClick: () => void;
 }) {
   const identity =
     mode === "nerf"
       ? {
+          // Selected pops: deeper fill, a bright ring, a mode glow, and a small
+          // lift + scale so the chosen mode reads at a glance before Play.
           card: selected
-            ? "border-mode-nerf bg-mode-nerf/15 shadow-nerf"
-            : "border-mode-nerf/30 bg-mode-nerf/5 hover:border-mode-nerf/60 hover:bg-mode-nerf/10",
+            ? "border-mode-nerf bg-mode-nerf/20 shadow-nerf ring-2 ring-mode-nerf/70 scale-[1.03] -translate-y-0.5"
+            : "border-mode-nerf/30 bg-mode-nerf/5 [@media(hover:hover)]:hover:border-mode-nerf/60 [@media(hover:hover)]:hover:bg-mode-nerf/10",
           title: "text-mode-nerfGlow",
         }
       : {
           card: selected
-            ? "border-mode-buff bg-mode-buff/15 shadow-buff"
-            : "border-mode-buff/30 bg-mode-buff/5 hover:border-mode-buff/60 hover:bg-mode-buff/10",
+            ? "border-mode-buff bg-mode-buff/20 shadow-buff ring-2 ring-mode-buff/70 scale-[1.03] -translate-y-0.5"
+            : "border-mode-buff/30 bg-mode-buff/5 [@media(hover:hover)]:hover:border-mode-buff/60 [@media(hover:hover)]:hover:bg-mode-buff/10",
           title: "text-mode-buffGlow",
         };
   return (
     <button
+      type="button"
       onClick={onClick}
       aria-pressed={selected}
-      className={"plate p-4 sm:p-5 text-left transition border " + identity.card}
+      className={
+        "plate p-4 sm:p-5 text-left border transition-all duration-200 touch-manipulation will-change-transform " +
+        identity.card +
+        (dimmed ? " opacity-55" : "")
+      }
     >
       <div className={"font-display text-2xl sm:text-3xl font-semibold " + identity.title}>
         {mode === "nerf" ? "Nerf" : "Buff"}
