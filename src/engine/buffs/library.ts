@@ -3153,7 +3153,7 @@ const HEXES: Buff[] = [
     },
   ),
   def(
-    { id: "flypaper_file", name: "Flypaper File", description: "Lime one file: for your next 4 turns, enemy pieces (kings excepted) that enter it are stuck for 2 of their turns.", tier: 4, category: "hex" },
+    { id: "flypaper_file", name: "Flypaper File", description: "Coat one file in flypaper: for your next 4 turns, enemy pieces (kings excepted) that enter it are stuck for 2 of their turns.", tier: 4, category: "hex" },
     {
       kind: "activated",
       spendOnUse: false,
