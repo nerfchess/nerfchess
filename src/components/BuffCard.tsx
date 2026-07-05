@@ -3,6 +3,7 @@
 import { Buff } from "@/engine/buff";
 import { Tier } from "@/engine/nerf";
 import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
+import { GlossaryText } from "@/components/GlossaryText";
 
 const CATEGORY_LABEL: Record<Buff["category"], string> = {
   movement: "Movement",
@@ -62,7 +63,7 @@ export function BuffCard({ buff, tier, status, spent, nullified, onClick, compac
         </span>
       </div>
       <p className={`mt-1.5 leading-snug text-parchment/90 ${compact ? "text-[11px]" : "text-[13px]"}`}>
-        {buff.description}
+        <GlossaryText text={buff.description} />
       </p>
       {status && !dead && (
         <div className="mt-1.5 smallcaps text-[10px] text-gold/80">{status}</div>
