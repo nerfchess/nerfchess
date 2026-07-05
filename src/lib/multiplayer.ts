@@ -408,6 +408,12 @@ function gameServerUrl(): string {
 
 export class MPSession {
   private socket: WebSocket | null = null;
+  // The in-flight connect promise, shared by every caller until the socket
+  // opens (or the attempt fails). Without this, a second connect() that lands
+  // while the socket is still CONNECTING would resolve instantly off the
+  // readyState check, then send its frame on a not-yet-open socket (silently
+  // dropped) and stall on the response timeout.
+  private connecting: Promise<void> | null = null;
   private listeners: Array<(e: MPEvent) => void> = [];
   private heartbeat: number | null = null;
   code = "";
@@ -528,9 +534,25 @@ export class MPSession {
   }
 
   private connect(): Promise<void> {
-    if (this.socket && this.socket.readyState <= WebSocket.OPEN) return Promise.resolve();
+    // Already open: nothing to do.
+    if (this.socket && this.socket.readyState === WebSocket.OPEN) return Promise.resolve();
+    // A connect is already in flight (socket still CONNECTING): hand back the
+    // same promise so concurrent callers await the real open rather than
+    // resolving early and firing frames at a socket that cannot yet send them.
+    if (this.connecting) return this.connecting;
 
-    return new Promise((resolve, reject) => {
+    this.connecting = new Promise<void>((resolve, reject) => {
+      // Clear the in-flight marker on every settle path so the next connect()
+      // starts a fresh attempt instead of reusing a dead promise.
+      const settleResolve = () => {
+        this.connecting = null;
+        resolve();
+      };
+      const settleReject = (err: Error) => {
+        this.connecting = null;
+        reject(err);
+      };
+
       const socket = new WebSocket(gameServerUrl());
       this.socket = socket;
       let opened = false;
@@ -552,7 +574,7 @@ export class MPSession {
           } catch {}
           this.socket = null;
         }
-        reject(new Error("Could not reach the game server."));
+        settleReject(new Error("Could not reach the game server."));
       }, 8000);
 
       socket.onopen = () => {
@@ -563,7 +585,7 @@ export class MPSession {
         // socket can die during a freeze without ever firing onclose, so the
         // foreground-return handlers must already be armed to detect the zombie.
         this.addWakeListeners();
-        resolve();
+        settleResolve();
       };
 
       socket.onmessage = (event) => this.handleFrame(event.data);
@@ -573,7 +595,7 @@ export class MPSession {
         this.emit({ type: "error", message });
         if (!opened) {
           window.clearTimeout(failTimer);
-          reject(new Error(message));
+          settleReject(new Error(message));
         }
       };
 
@@ -582,12 +604,16 @@ export class MPSession {
         if (this.heartbeat) window.clearInterval(this.heartbeat);
         this.heartbeat = null;
         this.socket = null;
+        // Closed before it ever opened: drop the in-flight marker so a retry
+        // isn't blocked behind a promise the failTimer will reject.
+        if (!opened) this.connecting = null;
         if (opened) {
           this.emit({ type: "disconnected" });
           this.scheduleReconnect();
         }
       };
     });
+    return this.connecting;
   }
 
   // Establish a connection, retrying a few times with exponential backoff
