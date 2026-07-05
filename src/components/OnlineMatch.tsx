@@ -1420,7 +1420,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         </div>
       </nav>
 
-      <div className="mx-auto flex w-full max-w-[1280px] flex-1 min-h-0 flex-col gap-2 overflow-hidden px-3 pb-14 sm:px-6 sm:pb-6">
+      <div className="mx-auto flex w-full max-w-[1280px] flex-1 min-h-0 flex-col gap-2 overflow-hidden px-3 pb-14 sm:px-6 sm:pb-6 xl:max-w-[1600px]">
         {hint && (
           <div
             role="status"
@@ -1445,10 +1445,10 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           </div>
         )}
         <div
-          className="grid min-h-0 flex-1 gap-y-2 lg:grid-cols-[280px_auto] lg:justify-center lg:gap-x-3"
+          className="grid min-h-0 flex-1 gap-y-2 lg:grid-cols-[340px_auto] lg:justify-center lg:gap-x-4 xl:grid-cols-[380px_auto]"
           style={railHeightStyle}
         >
-          <aside className="hidden min-h-0 gap-2 overflow-y-auto lg:grid lg:h-[var(--board-height)] lg:grid-rows-[auto_minmax(6rem,1fr)_auto] lg:self-start">
+          <aside className="hidden min-h-0 gap-2 overflow-y-auto lg:grid lg:min-h-[var(--board-height)] lg:max-h-full lg:grid-rows-[auto_minmax(6rem,1fr)_auto] lg:self-start">
             <PlayerNerfCard
               board={boardForDisplay}
               playerColor={oppColor}
