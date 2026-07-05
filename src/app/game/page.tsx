@@ -1380,6 +1380,7 @@ function GamePage() {
                           wardSquares: zone.ward,
                           strikeSquares: zone.strike,
                           walnutSquares: zone.walnut,
+                          lockedSquares: zone.locked,
                         }
                   }
                   lastMove={lastMoveForDisplay}
