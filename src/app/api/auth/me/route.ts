@@ -25,6 +25,7 @@ export async function GET(request: Request) {
       bio: user.bio,
       flair: user.flair,
       isGuest: !!user.is_guest,
+      email: user.email,
     },
   });
 }

@@ -16,6 +16,7 @@ export interface AccountUser {
   bio: string | null;
   flair: string | null;
   isGuest: boolean;
+  email: string | null;
 }
 
 async function post(path: string, body: unknown): Promise<Response> {
@@ -32,8 +33,8 @@ async function expectUser(res: Response): Promise<{ id: string; username: string
   return { id: data.id!, username: data.username! };
 }
 
-export async function register(username: string, password: string) {
-  return expectUser(await post("/api/auth/register", { username, password }));
+export async function register(username: string, password: string, email?: string) {
+  return expectUser(await post("/api/auth/register", { username, password, email: email || undefined }));
 }
 
 export async function login(username: string, password: string) {
