@@ -82,6 +82,9 @@ export function rollOffer(bs: BuffMatchState, color: Color, tiers: [Tier, Tier])
 
   const bonus = Math.min(1, ps.flags.bankBonus ?? 0);
   ps.flags.bankBonus = undefined;
+  // "Stacked draft" preset: a persistent lift on every offer (not consumed),
+  // so a surprised friend keeps drafting high-tier cards. Capped at +3.
+  const boost = Math.min(3, Math.max(0, ps.flags.stackBoost ?? 0));
   const forced = ps.flags.forceTier;
   ps.flags.forceTier = undefined;
   // Suppress: this offer carries no draft-manipulation cards.
@@ -107,9 +110,10 @@ export function rollOffer(bs: BuffMatchState, color: Color, tiers: [Tier, Tier])
     ps.buffs.filter((b) => !b.spent && !b.nullified).map((b) => b.id),
   );
   for (let i = 0; i < cardCount; i++) {
-    // A banked skip rolls exactly one tier above the shared roll (cap +1).
+    // A banked skip rolls exactly one tier above the shared roll (cap +1);
+    // the stacked-draft preset lifts every offer by a further fixed amount.
     const shared = tiers[Math.min(i, tiers.length - 1)];
-    const tier = forced ?? (Math.min(8, shared + bonus) as Tier);
+    const tier = forced ?? (Math.min(8, shared + bonus + boost) as Tier);
     let pool = BUFF_POOL_BY_TIER[tier].filter(
       (b) => inMode(b) && !used.has(b.id) && (!suppressed || b.category !== "draft"),
     );

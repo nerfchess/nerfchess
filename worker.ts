@@ -134,6 +134,10 @@ type StoredMatch = {
   mode?: DraftMode;
   // Friend-game setting: both seats see each other's pending offer cards.
   picksVisible?: boolean;
+  // "Surprise / Stacked draft" preset: the joining friend (black seat) drafts
+  // with a persistent tier lift on every offer, so they receive a strong,
+  // high-tier build. Casual only. Persisted so the boost replays identically.
+  stacked?: boolean;
   // Replay compatibility stamp (see REPLAY_VERSION). Absent = version 1.
   replayVersion?: number;
   // Draft cadence the game was created under, persisted so replays keep
@@ -189,7 +193,7 @@ type QueueEntry = {
   at: number;
 };
 type ClientFrame =
-  | { t: "create"; d?: { timeSec?: unknown; incrementSec?: unknown; draft?: unknown; mode?: unknown; picksVisible?: unknown; invite?: unknown } }
+  | { t: "create"; d?: { timeSec?: unknown; incrementSec?: unknown; draft?: unknown; mode?: unknown; picksVisible?: unknown; invite?: unknown; stacked?: unknown } }
   | { t: "join"; d?: { id?: unknown } }
   | { t: "reconnect"; d?: { id?: unknown; color?: unknown; token?: unknown } }
   | { t: "move"; d?: { u?: unknown; ply?: unknown } }
@@ -1074,6 +1078,9 @@ export class GameServer extends DurableObject<Env> {
       enableDraftMode(game, match.draftSeed ?? match.setup.seed, {
         mode: match.mode,
         ...(match.cadence ? { cadence: match.cadence } : {}),
+        // Stacked-draft preset: the joining friend (black) drafts +2 tiers on
+        // every offer. Re-applied on every rebuild so replays stay identical.
+        ...(match.stacked ? { stackFor: "b" as Color, stackBoost: 2 } : {}),
       });
       this.draftRebuild = { matchId: match.id, revealed: new Set(), acquired: new Map() };
     }
@@ -1280,7 +1287,7 @@ export class GameServer extends DurableObject<Env> {
     const session = this.session(ws);
     if (session.matchId) return error(ws, "already_joined", "This connection already belongs to a game.");
 
-    const requested = (data || {}) as { timeSec?: unknown; incrementSec?: unknown; draft?: unknown; mode?: unknown; picksVisible?: unknown; invite?: unknown };
+    const requested = (data || {}) as { timeSec?: unknown; incrementSec?: unknown; draft?: unknown; mode?: unknown; picksVisible?: unknown; invite?: unknown; stacked?: unknown };
     const timeSec = Number.isInteger(requested.timeSec) ? Number(requested.timeSec) : 600;
     const incrementSec = Number.isInteger(requested.incrementSec) ? Number(requested.incrementSec) : 0;
     if (timeSec < 0 || timeSec > 7200 || incrementSec < 0 || incrementSec > 60) {
@@ -1295,6 +1302,9 @@ export class GameServer extends DurableObject<Env> {
     const mode: DraftMode | undefined =
       draft && (requested.mode === "nerf" || requested.mode === "buff") ? requested.mode : undefined;
     const picksVisible = draft && requested.picksVisible === true;
+    // "Surprise / Stacked draft" preset: the joining friend drafts strong,
+    // high-tier cards. Casual only, and only meaningful in a draft game.
+    const stacked = draft && requested.stacked === true;
     // Direct challenge: reserve the black seat for the named player. Only a
     // signed-in host can address a challenge (the API notification requires
     // an account anyway).
@@ -1331,6 +1341,7 @@ export class GameServer extends DurableObject<Env> {
             draft: true,
             ...(mode ? { mode } : {}),
             picksVisible,
+            ...(stacked ? { stacked: true } : {}),
             cadence: mode === "nerf" ? NERF_MODE_CADENCE : DEFAULT_CADENCE,
             draftSeed: makeSeed(),
             draftActions: [],

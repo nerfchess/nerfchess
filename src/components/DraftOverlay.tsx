@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import { playDraftChime } from "@/lib/sounds";
 import { BuffCard } from "./BuffCard";
+import "./DraftOverlay.css";
 
 interface Props {
   offer: BuffOffer;
@@ -292,33 +293,49 @@ export function DraftOverlay({
             if (!def) return null;
             return (
               <motion.div
-                key={i}
+                // Key by the offer index so a fresh draft remounts the cards,
+                // replaying the entrance rise and the tier-scaled reveal sweep.
+                key={`${offer.index}-${i}`}
+                data-tier={card.tier}
+                // The reveal sweep waits for this card's own staggered entrance
+                // (the framer transition delay below) to settle before it
+                // glints across. --enter-delay feeds the CSS sheen keyframe.
+                style={{ ["--enter-delay" as string]: `${i * 70}ms` }}
                 className={
-                  "mx-auto w-full max-w-md sm:max-w-none " +
-                  (selected === i && chosen == null
-                    ? "ring-2 ring-gold shadow-leaf"
-                    : selected != null && chosen == null
-                    ? "opacity-60"
-                    : "")
+                  "draft-fx mx-auto w-full max-w-md sm:max-w-none " +
+                  (selected === i && chosen == null ? "ring-2 ring-gold shadow-leaf" : "")
                 }
+                // Higher-tier cards land with a touch more pop: a deeper rise
+                // and a longer settle scale the drama with the card's tier.
+                initial={{ opacity: 0, y: 10 + card.tier * 2, scale: 0.94 - card.tier * 0.006 }}
                 animate={
                   chosen === i
                     ? { x: -140, y: 180, scale: 0.35, opacity: 0 }
                     : chosen != null
                     ? { opacity: 0.15 }
-                    : {}
+                    : // Once a card is selected the others dim to focus it.
+                      { opacity: selected != null && selected !== i ? 0.55 : 1, y: 0, scale: 1 }
                 }
-                transition={{ duration: 0.3, ease: "easeIn" }}
+                transition={
+                  chosen != null
+                    ? { duration: 0.3, ease: "easeIn" }
+                    : {
+                        duration: 0.34 + card.tier * 0.03,
+                        delay: (i * 70) / 1000,
+                        ease: [0.2, 0.8, 0.2, 1],
+                      }
+                }
                 onAnimationComplete={() => {
                   if (chosen === i) commit(i);
                 }}
               >
+                <span aria-hidden className="draft-fx__glow" />
                 <BuffCard
                   buff={def}
                   tier={card.tier}
-                  enterDelayMs={i * 70}
                   onClick={chosen == null ? () => choose(i) : undefined}
                 />
+                <span aria-hidden className="draft-fx__sheen" />
               </motion.div>
             );
           })}

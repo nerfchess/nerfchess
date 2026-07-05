@@ -37,6 +37,10 @@ export default function FriendPage() {
   // handicaps revealed at game end). Buff mode is the default. Picks stay
   // hidden; everything reveals at game end.
   const [gameMode, setGameMode] = useState<"nerf" | "buff">("buff");
+  // "Surprise your friend" preset: when on, the friend who joins drafts a
+  // stacked, high-tier build (server boosts the black seat's offers). The
+  // preset also snaps the game to its recommended, easy-to-play config.
+  const [stacked, setStacked] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [start, setStart] = useState<MPStart | null>(null);
   // Direct challenge: ?challenge=NAME pre-addresses the game to that player;
@@ -208,6 +212,9 @@ export default function FriendPage() {
       const c = await sess.host(baseSec, incrementSec, {
         draft: true,
         mode: gameMode,
+        // Stacked-draft preset: the joining friend drafts strong, high-tier
+        // cards. Always casual (the server never rates friend games).
+        ...(stacked ? { stacked: true } : {}),
         // Direct challenge: the server reserves the opponent seat for them,
         // so a lobby stranger can never take it first.
         ...(challenging ? { invite: challenging } : {}),
@@ -355,6 +362,53 @@ export default function FriendPage() {
         )}
 
         <div className="mt-8 plate p-6 sm:p-7 space-y-6">
+          <div>
+            <div className="smallcaps text-[11px] text-parchment-400 mb-2">Quick setup</div>
+            <button
+              type="button"
+              aria-pressed={stacked}
+              onClick={() => {
+                const next = !stacked;
+                setStacked(next);
+                if (next) {
+                  // Snap to the recommended, easy-to-play config for a fun
+                  // surprise: pure buff drafting (no handicaps) at a relaxed
+                  // 10+5. The friend who joins gets the stacked, high-tier draft.
+                  setGameMode("buff");
+                  setBaseSec(600);
+                  setIncrementSec(5);
+                }
+              }}
+              className={
+                "w-full text-left px-4 py-3 border transition " +
+                (stacked
+                  ? "border-gold/60 bg-gold/10 shadow-leaf"
+                  : "border-white/15 bg-white/[0.03] hover:border-gold/40 hover:bg-white/[0.06]")
+              }
+            >
+              <div className="flex items-center justify-between gap-3">
+                <span className="font-display text-sm font-semibold tracking-wide text-gold-leaf">
+                  Surprise: Stacked draft
+                </span>
+                <span
+                  className={
+                    "shrink-0 rounded-full border px-2 py-0.5 font-display text-[10px] font-bold tracking-wide " +
+                    (stacked
+                      ? "border-gold/60 bg-gold/15 text-gold-leaf"
+                      : "border-white/20 text-parchment-400")
+                  }
+                >
+                  {stacked ? "ON" : "OFF"}
+                </span>
+              </div>
+              <p className="mt-1 text-[11px] leading-snug text-parchment-300">
+                Set up a game that surprises your friend: they join to a strong,
+                high-tier draft in pure Buff mode at a relaxed 10+5. Create it,
+                then share the code or challenge them directly.
+              </p>
+            </button>
+          </div>
+
           <div className="space-y-4">
             <TimeSlider
               label="Time per Side"
@@ -395,8 +449,17 @@ export default function FriendPage() {
             onClick={handleCreate}
             className="w-full py-3.5 rounded-sm btn-leaf font-body text-lg"
           >
-            {challenging ? `Send challenge to ${challenging}` : "Create game"}
+            {challenging
+              ? `Send ${stacked ? "stacked " : ""}challenge to ${challenging}`
+              : stacked
+              ? "Create stacked game"
+              : "Create game"}
           </button>
+          {stacked && (
+            <p className="-mt-3 text-center text-[11px] leading-snug text-gold/80">
+              Your friend joins to a stacked, high-tier draft. Always casual.
+            </p>
+          )}
 
           {!challenging && (
           <>
