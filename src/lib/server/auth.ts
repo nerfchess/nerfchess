@@ -150,6 +150,45 @@ export async function userForSession(db: D1Database, token: string | null): Prom
   return user;
 }
 
+// ---------- login throttling ----------
+
+// Failed sign-in attempts are counted per username and per client IP in a
+// rolling window, so passwords cannot be brute-forced. Successful sign-in
+// clears the username counter.
+const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+export const LOGIN_MAX_FAILURES_PER_USER = 10;
+export const LOGIN_MAX_FAILURES_PER_IP = 100;
+
+export async function loginThrottled(db: D1Database, key: string, limit: number): Promise<boolean> {
+  const row = await db
+    .prepare("SELECT count, first_at FROM login_attempts WHERE key = ?")
+    .bind(key)
+    .first<{ count: number; first_at: number }>();
+  if (!row) return false;
+  if (Date.now() - row.first_at > LOGIN_WINDOW_MS) {
+    await db.prepare("DELETE FROM login_attempts WHERE key = ?").bind(key).run();
+    return false;
+  }
+  return row.count >= limit;
+}
+
+export async function recordLoginFailure(db: D1Database, key: string): Promise<void> {
+  const now = Date.now();
+  await db
+    .prepare(
+      `INSERT INTO login_attempts (key, count, first_at) VALUES (?, 1, ?)
+       ON CONFLICT(key) DO UPDATE SET
+         count = CASE WHEN excluded.first_at - first_at > ${LOGIN_WINDOW_MS} THEN 1 ELSE count + 1 END,
+         first_at = CASE WHEN excluded.first_at - first_at > ${LOGIN_WINDOW_MS} THEN excluded.first_at ELSE first_at END`,
+    )
+    .bind(key, now)
+    .run();
+}
+
+export async function clearLoginFailures(db: D1Database, key: string): Promise<void> {
+  await db.prepare("DELETE FROM login_attempts WHERE key = ?").bind(key).run();
+}
+
 // ---------- cookies ----------
 
 export function sessionTokenFromCookieHeader(cookieHeader: string | null): string | null {

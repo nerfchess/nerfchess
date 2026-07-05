@@ -27,9 +27,12 @@ initOpenNextCloudflareForDev();
 // Vercel Analytics. Fonts come from Google Fonts (see src/app/layout.tsx).
 // 'unsafe-inline' for styles is needed because tailwind + next inject style tags;
 // 'unsafe-inline' for scripts is required by Next's hydration boot script.
+// 'unsafe-eval' is only needed by webpack's dev-mode source maps, so it is
+// kept out of production builds.
+const devEval = process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : "";
 const csp = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com",
+  `script-src 'self' 'unsafe-inline'${devEval} https://va.vercel-scripts.com`,
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "img-src 'self' data: blob:",
   "font-src 'self' data: https://fonts.gstatic.com",
