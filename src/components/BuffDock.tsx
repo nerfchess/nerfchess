@@ -273,7 +273,7 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards 
           {def.name}
         </span>
         {status && (
-          <span className="smallcaps hidden max-w-[5.5rem] shrink-0 truncate text-[8px] text-gold/80 xl:inline">
+          <span className="smallcaps hidden max-w-[7rem] shrink-0 truncate text-[8px] text-gold/80 lg:inline">
             {status}
           </span>
         )}

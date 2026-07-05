@@ -128,7 +128,7 @@ export function DraftOverlay({
       <motion.div
         initial={{ opacity: 0, y: 16, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        className="plate w-full max-w-2xl max-h-[90dvh] overflow-y-auto p-6 sm:p-8"
+        className="plate w-full max-w-2xl max-h-[90dvh] overflow-y-auto p-6 sm:p-8 lg:max-w-3xl"
       >
         <div className="flex items-center justify-between gap-4">
           <div className="smallcaps text-[11px] text-parchment-400">Buff draft #{offer.index}</div>
@@ -157,7 +157,7 @@ export function DraftOverlay({
           <LockInCountdown deadline={deadline} onExpire={onExpire} className="mt-3" />
         )}
 
-        <div className={`mt-5 grid gap-3 ${offer.cards.length >= 3 ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
+        <div className={`mt-5 grid gap-3 lg:gap-4 ${offer.cards.length >= 3 ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
           {offer.cards.map((card, i) => {
             const def = BUFF_BY_ID[card.id];
             if (!def) return null;
