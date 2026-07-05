@@ -50,7 +50,7 @@ export type ActiveEffect =
       turns: number | null;
     }
   | { kind: "barred"; squares: Square[]; against: Color; turns: number | null }
-  | { kind: "king_safe"; owner: Color; turns: number }
+  | { kind: "king_safe"; owner: Color; turns: number | null }
   | { kind: "no_pawn_advance"; against: Color; turns: number }
   | { kind: "king_only"; against: Color; turns: number }
   | { kind: "nerf_suspended"; owner: Color; turns: number | null };
