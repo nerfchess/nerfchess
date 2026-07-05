@@ -61,10 +61,14 @@ const sql = postgres({
 // Query D1 (remote) and return the row array. `--json` prints clean JSON to
 // stdout; slice from the first bracket in case a banner sneaks in.
 function d1Query(command) {
+  // Invoke wrangler's JS entry directly with `node` and shell:false so the SQL
+  // (which contains spaces) is passed as one argv element — a Windows shell
+  // would otherwise re-split it into separate arguments.
   const out = execFileSync(
-    "npx",
-    ["wrangler", "d1", "execute", D1_NAME, "--remote", "--json", "--command", command],
-    { encoding: "utf8", maxBuffer: 256 * 1024 * 1024, shell: process.platform === "win32" },
+    process.execPath,
+    ["node_modules/wrangler/bin/wrangler.js", "d1", "execute", D1_NAME,
+      "--remote", "--json", "--command", command],
+    { encoding: "utf8", maxBuffer: 256 * 1024 * 1024, shell: false },
   );
   const json = out.slice(out.indexOf("["));
   const parsed = JSON.parse(json);
