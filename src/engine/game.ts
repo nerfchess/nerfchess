@@ -731,11 +731,15 @@ function aiCollectPicks(
 /** Fire at most one of the bot's activated buffs, auto-picking targets.
  * Offensive cards wait for a target worth at least a minor piece so a
  * one-shot isn't wasted on a pawn; defensive/placement cards (no enemy piece
- * among the candidates) fire as soon as they are usable. Returns true when a
- * buff was activated (the board and effects may have changed). */
-export function aiActivateBuffs(game: NerfGame, color: Color): boolean {
+ * among the candidates) fire as soon as they are usable. Returns the used
+ * card when a buff was activated (the board and effects may have changed),
+ * so callers can tell the player what just hit the board. */
+export function aiActivateBuffs(
+  game: NerfGame,
+  color: Color,
+): { id: string; tier: Tier } | null {
   const bs = game.buffs;
-  if (!bs || game.result || game.board.turn !== color) return false;
+  if (!bs || game.result || game.board.turn !== color) return null;
   const ps = bs.players[color];
   const inDanger = isInCheck(game.board, color);
   for (let i = 0; i < ps.buffs.length; i++) {
@@ -765,9 +769,11 @@ export function aiActivateBuffs(game: NerfGame, color: Color): boolean {
     if (hitsEnemy && collected.value < 3) continue;
     // Protective cards wait for actual danger instead of firing blind.
     if (!hitsEnemy && def.category === "protection" && !inDanger) continue;
-    if (activateBuff(game, color, i, collected.picks)) return true;
+    if (activateBuff(game, color, i, collected.picks)) {
+      return { id: inst.id, tier: inst.tier };
+    }
   }
-  return false;
+  return null;
 }
 
 export function resign(game: NerfGame, color: Color): NerfGame {
