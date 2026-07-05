@@ -499,6 +499,395 @@ export function barLine(axis: "rank" | "file", turns: number | null, count = 1):
   );
 }
 
+/** Capture square of a move, if any (handles en passant). */
+export function captureSquare(m: Move): Square | null {
+  return m.capturedSquare ?? (m.captured ? m.to : null);
+}
+
+/** Permanent passive that filters the opponent's legal moves. */
+export function oppFilter(
+  filter: (moves: Move[], inst: BuffInstance, api: BuffApi) => Move[],
+): Mech {
+  return { kind: "passive", filterOpponentMoves: filter };
+}
+
+/** Timed opponent-move filter: active for the owner's next `turns` turns. */
+export function timedOppFilter(
+  turns: number,
+  filter: (moves: Move[], inst: BuffInstance, api: BuffApi) => Move[],
+): Mech {
+  return {
+    kind: "passive",
+    init: (inst) => {
+      inst.state.turns = turns;
+    },
+    filterOpponentMoves: (moves, inst, api) =>
+      turnsLeft(inst) > 0 ? filter(moves, inst, api) : moves,
+    onMovePlayed: (inst, move, api) => tickTurns(inst, move, api.me),
+    status: (inst) => `${turnsLeft(inst)} of your turns left`,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Explosions (the atomic-capture family).
+// ---------------------------------------------------------------------------
+
+/** Predicate: is this square protected for `owner` by an active shield? */
+function shieldedFor(api: BuffApi, owner: Color): (sq: Square) => boolean {
+  const zones: (Square[] | null)[] = [];
+  for (const e of api.bs.effects) {
+    if (e.kind === "shield" && e.owner === owner && (e.turns == null || e.turns > 0)) {
+      zones.push(e.squares);
+    }
+  }
+  return (sq) => zones.some((squares) => (squares ? squares.includes(sq) : true));
+}
+
+export interface ExplodeOpts {
+  /** Only the two squares horizontally beside the center. */
+  beside?: boolean;
+  /** Pawns survive the blast (classic atomic rule). */
+  sparePawns?: boolean;
+  /** Removed pieces detonate their own neighborhoods in turn. */
+  chain?: boolean;
+  /** Blast radius in squares (default 1). */
+  radius?: number;
+}
+
+/** Clear enemy pieces around `center`. Kings always survive; shielded enemy
+ * pieces resist the blast. */
+export function explodeAt(api: BuffApi, center: Square, opts: ExplodeOpts = {}) {
+  const isShielded = shieldedFor(api, api.opp);
+  const radius = opts.radius ?? 1;
+  const queue: Square[] = [center];
+  const seen = new Set<Square>([center]);
+  while (queue.length) {
+    const c = queue.shift()!;
+    for (let df = -radius; df <= radius; df++) {
+      for (let dr = -radius; dr <= radius; dr++) {
+        if (df === 0 && dr === 0) continue;
+        if (opts.beside && !(dr === 0 && Math.abs(df) === 1)) continue;
+        const f = FILE(c) + df, r = RANK(c) + dr;
+        if (!inBoard(f, r)) continue;
+        const sq = SQ(f, r);
+        const p = api.board.pieces[sq];
+        if (!p || p.color !== api.opp || p.type === "k") continue;
+        if (opts.sparePawns && p.type === "p") continue;
+        if (isShielded(sq)) continue;
+        api.removePiece(sq);
+        if (opts.chain && !seen.has(sq)) {
+          seen.add(sq);
+          queue.push(sq);
+        }
+      }
+    }
+  }
+}
+
+/** Passive: the owner's captures detonate around the captured square.
+ * `onMyLosses` also detonates when the opponent captures the owner's pieces
+ * (the blast still only clears enemy pieces). */
+export function captureExplosion(
+  opts: ExplodeOpts & { charges?: number; onMyLosses?: boolean } = {},
+): Mech {
+  return {
+    kind: "passive",
+    init: (inst) => {
+      if (opts.charges != null) inst.state.charges = opts.charges;
+    },
+    onMovePlayed: (inst, move, api) => {
+      if (!move.captured || move.captured === "k") return;
+      if (move.color !== api.me && !(opts.onMyLosses && move.color === api.opp)) return;
+      if (opts.charges != null) {
+        const left = (inst.state.charges as number) ?? 0;
+        if (left <= 0) return;
+        inst.state.charges = left - 1;
+        if (left - 1 <= 0) inst.spent = true;
+      }
+      explodeAt(api, captureSquare(move) ?? move.to, opts);
+    },
+    status:
+      opts.charges != null
+        ? (inst) => `${(inst.state.charges as number) ?? opts.charges} captures left`
+        : undefined,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Phasing movement and bound-piece upgrades.
+// ---------------------------------------------------------------------------
+
+/** Sliding moves that may pass through up to `maxThrough` friendly pieces
+ * (never capturing them). Unphased lines are covered by the base rules. */
+export function phasingSlideMoves(
+  board: BoardState,
+  from: Square,
+  dirs: readonly (readonly [number, number])[],
+  via: string,
+  maxThrough = 1,
+): Move[] {
+  const p = board.pieces[from];
+  if (!p) return [];
+  const out: Move[] = [];
+  for (const [df, dr] of dirs) {
+    let f = FILE(from) + df, r = RANK(from) + dr, passed = 0;
+    while (inBoard(f, r)) {
+      const to = SQ(f, r);
+      const t = board.pieces[to];
+      if (!t) {
+        if (passed > 0) out.push(moveFor(board, from, to, via));
+      } else if (t.color === p.color) {
+        passed++;
+        if (passed > maxThrough) break;
+      } else {
+        if (passed > 0) out.push(moveFor(board, from, to, via));
+        break;
+      }
+      f += df; r += dr;
+    }
+  }
+  return out;
+}
+
+/** Candidate squares for binding: my non-king pieces, optionally by type. */
+export function bindCandidates(types?: PieceType[]) {
+  return (api: BuffApi) =>
+    mySquares(api.board, api.me).filter((sq) => {
+      const t = api.board.pieces[sq]!.type;
+      return t !== "k" && (!types || types.includes(t));
+    });
+}
+
+/**
+ * Bound-piece upgrade: activation designates one of my pieces; while the buff
+ * lives (optionally `turns` of my turns) the piece gets extra moves from
+ * `gen`, protection via `filterOpp`, an optional shield effect, and an
+ * optional explosion whenever it captures.
+ */
+export function bindPiece(
+  label: string,
+  candidates: (api: BuffApi) => Square[],
+  opts: {
+    turns?: number;
+    /** Add a shield effect on the piece (null = permanent). */
+    shieldTurns?: number | null;
+    gen?: (board: BoardState, sq: Square, via: string) => Move[];
+    filterOpp?: (moves: Move[], sq: Square, api: BuffApi) => Move[];
+    explodeOnCapture?: boolean;
+  },
+): Mech {
+  const active = (inst: BuffInstance) => opts.turns == null || turnsLeft(inst) > 0;
+  return {
+    kind: "activated",
+    spendOnUse: false,
+    targets: (_inst, api, picks) =>
+      picks.length > 0 ? null : { kind: "square", label, squares: candidates(api) },
+    effect: (inst, api, picks) => {
+      const sq = picks[0]?.square;
+      if (sq == null) return;
+      inst.state.sq = sq;
+      if (opts.turns != null) inst.state.turns = opts.turns;
+      if (opts.shieldTurns !== undefined) {
+        addEffect(api, { kind: "shield", owner: api.me, squares: [sq], turns: opts.shieldTurns });
+      }
+    },
+    augmentMoves: opts.gen
+      ? (moves, inst, api) => {
+          const sq = inst.state.sq as Square | undefined;
+          if (sq == null || !active(inst)) return;
+          const p = api.board.pieces[sq];
+          if (!p || p.color !== api.me) return;
+          addNovel(moves, opts.gen!(api.board, sq, inst.id));
+        }
+      : undefined,
+    filterOpponentMoves: opts.filterOpp
+      ? (moves, inst, api) => {
+          const sq = inst.state.sq as Square | undefined;
+          if (sq == null || !active(inst)) return moves;
+          const p = api.board.pieces[sq];
+          if (!p || p.color !== api.me) return moves;
+          return opts.filterOpp!(moves, sq, api);
+        }
+      : undefined,
+    onMovePlayed: (inst, move, api) => {
+      const sq = inst.state.sq as Square | undefined;
+      if (sq == null) return;
+      if (
+        opts.explodeOnCapture &&
+        move.from === sq &&
+        move.color === api.me &&
+        move.captured &&
+        move.captured !== "k" &&
+        active(inst)
+      ) {
+        explodeAt(api, captureSquare(move) ?? move.to);
+      }
+      trackBoundPiece(inst, move);
+      if (opts.turns != null) tickTurns(inst, move, api.me);
+    },
+    status: (inst) => {
+      const sq = inst.state.sq as Square | undefined;
+      if (sq == null) return "activate to choose a piece";
+      const name = `${"abcdefgh"[FILE(sq)]}${RANK(sq) + 1}`;
+      return opts.turns != null
+        ? `bound to ${name}, ${turnsLeft(inst)} of your turns left`
+        : `bound to ${name}`;
+    },
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Multi-piece relocation, line sweeps, void squares.
+// ---------------------------------------------------------------------------
+
+/** Move `count` of my pieces via alternating piece / destination picks.
+ * `zone` lists raw candidate destinations for a piece; occupancy is checked
+ * here, accounting for earlier planned relocations. */
+export function relocateMany(
+  count: number,
+  zone: (api: BuffApi, from: Square) => Square[],
+): Mech {
+  return activated(
+    (_inst, api, picks) => {
+      if (picks.length >= count * 2) return null;
+      const froms = picks.filter((_, i) => i % 2 === 0).map((k) => k.square!);
+      const tos = picks.filter((_, i) => i % 2 === 1).map((k) => k.square!);
+      if (picks.length % 2 === 0) {
+        const squares = mySquares(api.board, api.me).filter(
+          (sq) =>
+            api.board.pieces[sq]!.type !== "k" && !froms.includes(sq) && !tos.includes(sq),
+        );
+        if (!squares.length && picks.length > 0) return null;
+        return {
+          kind: "square",
+          label: `Choose a piece to move (${froms.length + 1}/${count})`,
+          squares,
+        };
+      }
+      const from = froms[froms.length - 1];
+      const priorFroms = froms.slice(0, -1);
+      const squares = zone(api, from).filter((sq) => {
+        if (sq === from || tos.includes(sq)) return false;
+        if (priorFroms.includes(sq)) return true;
+        return !api.board.pieces[sq];
+      });
+      if (!squares.length) return null;
+      return { kind: "square", label: "Choose its destination", squares };
+    },
+    (_inst, api, picks) => {
+      for (let i = 0; i + 1 < picks.length; i += 2) {
+        const from = picks[i].square, to = picks[i + 1].square;
+        if (from == null || to == null) continue;
+        if (api.board.pieces[from] && !api.board.pieces[to]) api.relocate(from, to);
+      }
+    },
+  );
+}
+
+/** Activated: pick one of my `type` pieces, then a destination along a ray;
+ * every enemy piece on the way (destination included) is removed, up to
+ * `maxCaptures` (null = unlimited). Friendly pieces and kings block the ray. */
+export function lineSweep(
+  type: PieceType,
+  dirs: readonly (readonly [number, number])[],
+  maxCaptures: number | null,
+): Mech {
+  const dests = (api: BuffApi, from: Square): Square[] => {
+    const out: Square[] = [];
+    for (const [df, dr] of dirs) {
+      let f = FILE(from) + df, r = RANK(from) + dr, swept = 0;
+      while (inBoard(f, r)) {
+        const sq = SQ(f, r);
+        const p = api.board.pieces[sq];
+        if (!p) {
+          if (swept > 0) out.push(sq);
+        } else {
+          if (p.color === api.me || p.type === "k") break;
+          swept++;
+          if (maxCaptures != null && swept > maxCaptures) break;
+          out.push(sq);
+        }
+        f += df; r += dr;
+      }
+    }
+    return out;
+  };
+  return activated(
+    (_inst, api, picks) => {
+      if (picks.length >= 2) return null;
+      if (picks.length === 0) {
+        return {
+          kind: "square",
+          label: "Choose the attacking piece",
+          squares: mySquares(api.board, api.me, type).filter((sq) => dests(api, sq).length > 0),
+        };
+      }
+      return {
+        kind: "square",
+        label: "Choose where the sweep ends",
+        squares: dests(api, picks[0].square!),
+      };
+    },
+    (_inst, api, picks) => {
+      const from = picks[0]?.square, to = picks[1]?.square;
+      if (from == null || to == null || from === to) return;
+      const df = Math.sign(FILE(to) - FILE(from)), dr = Math.sign(RANK(to) - RANK(from));
+      let f = FILE(from) + df, r = RANK(from) + dr;
+      while (inBoard(f, r)) {
+        const sq = SQ(f, r);
+        const p = api.board.pieces[sq];
+        if (p && p.color === api.opp && p.type !== "k") api.removePiece(sq);
+        if (sq === to) break;
+        f += df; r += dr;
+      }
+      if (!api.board.pieces[to]) api.relocate(from, to);
+    },
+  );
+}
+
+/** Activated: mark `count` empty squares; any enemy piece except a king that
+ * moves onto one is removed. `turns` = owner's turns of lifetime, null =
+ * permanent. */
+export function voidSquares(count: number, turns: number | null): Mech {
+  return {
+    kind: "activated",
+    spendOnUse: false,
+    targets: (_inst, api, picks) =>
+      picks.length >= count
+        ? null
+        : {
+            kind: "square",
+            label:
+              count > 1
+                ? `Choose a void square (${picks.length + 1}/${count})`
+                : "Choose the void square",
+            squares: emptySquares(api.board).filter((sq) => !picks.some((k) => k.square === sq)),
+          },
+    effect: (inst, _api, picks) => {
+      inst.state.squares = picks.map((k) => k.square).filter((s): s is Square => s != null);
+      if (turns != null) inst.state.turns = turns;
+    },
+    onMovePlayed: (inst, move, api) => {
+      const squares = inst.state.squares as Square[] | undefined;
+      if (!squares?.length) return;
+      if (move.color === api.opp && squares.includes(move.to) && move.piece !== "k") {
+        api.removePiece(move.to);
+      }
+      if (turns != null) tickTurns(inst, move, api.me);
+    },
+    status: (inst) => {
+      const squares = inst.state.squares as Square[] | undefined;
+      if (!squares?.length) return "activate to place";
+      const names = squares
+        .map((sq) => `${"abcdefgh"[FILE(sq)]}${RANK(sq) + 1}`)
+        .join(", ");
+      return turns != null
+        ? `swallowing at ${names}, ${turnsLeft(inst)} of your turns left`
+        : `swallowing at ${names}`;
+    },
+  };
+}
+
 /** Steal up to `n` of the opponent's unspent buffs (targeted from a list). */
 export function stealBuffs(n: number, maxTier?: number): Mech {
   const stealable = (api: BuffApi, taken: number[]) =>
