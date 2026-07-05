@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Eye, Radio } from "lucide-react";
 import { Board } from "@/components/Board";
+import { ModeBadge } from "@/components/ModeBadge";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { SiteHeader } from "@/components/SiteHeader";
 import { replayUci } from "@/lib/gameReview";
@@ -155,6 +156,7 @@ export default function TvPage() {
                   }
                 />
                 {live ? (over ? "Just finished" : "Live") : recent ? "Latest game" : "Nerf TV"}
+                <ModeBadge mode={shownLobbyGame?.mode} compact />
                 {shownLobbyGame && shownLobbyGame.watchers > 0 && (
                   <span className="flex items-center gap-1 text-parchment-400">
                     <Eye size={11} /> {shownLobbyGame.watchers}
@@ -231,6 +233,7 @@ export default function TvPage() {
                           )}
                         </div>
                         <div className="mt-0.5 flex items-center gap-2 smallcaps text-[9px] text-parchment-400">
+                          <ModeBadge mode={g.mode} compact />
                           {clockLabel(g.timeSec, g.incrementSec)}
                           {g.rated ? " · rated" : " · casual"}
                           <span className="flex items-center gap-1">

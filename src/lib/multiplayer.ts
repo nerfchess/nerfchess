@@ -156,6 +156,9 @@ export type MPLobbyGame = {
   rated: boolean;
   // Optional so snapshots from an older server still parse.
   draft?: boolean;
+  // The game's section ("nerf" or "buff"); absent = legacy merged rules or an
+  // older server. Drives the mode badge on lobby listings.
+  mode?: DraftMode;
   timeSec: number;
   incrementSec: number;
   moves: number;
@@ -166,6 +169,7 @@ export type MPLobbyChallenge = {
   id: string;
   host: { name: string; rating: number | null };
   draft?: boolean;
+  mode?: DraftMode;
   timeSec: number;
   incrementSec: number;
   createdAt: number;
@@ -176,6 +180,9 @@ export type MPLobbySeek = {
   pool: string;
   name: string;
   rating: number | null;
+  // Always "buff" today (quick pairing runs Buff mode); optional so
+  // snapshots from an older server still parse.
+  mode?: DraftMode;
   timeSec: number;
   incrementSec: number;
   at: number;

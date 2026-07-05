@@ -53,6 +53,15 @@ export default {
           DEFAULT: "#8a88a8",
           glow: "#a7a5c4",
         },
+        // mode identities: Nerf mode reads slightly red (oxblood family),
+        // Buff mode reads blue (the site's azure). Fixed hex on purpose so
+        // the identity survives accent-color settings swaps.
+        mode: {
+          nerf: "#c0413b",
+          nerfGlow: "#dc5a54",
+          buff: "#3692e7",
+          buffGlow: "#4a9fee",
+        },
       },
       boxShadow: {
         leaf: "0 0 24px -10px rgba(54,146,231,0.4)",

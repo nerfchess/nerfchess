@@ -49,10 +49,12 @@ export default function HomePage() {
             taller than the board beside it. */}
         <div className="order-2">
           <p className="text-lg sm:text-xl leading-relaxed text-parchment-100">
-            You get a hidden restriction on how your pieces can move. So does
-            your opponent. Neither of you knows the other&apos;s rule. In Draft
-            games you also pick up buff cards as you play, both of you at once.
-            There is no checkmate: you win by capturing the king.
+            Chess with two modes. In{" "}
+            <span className="font-semibold text-mode-nerfGlow">Nerf</span> mode
+            you each carry a secret handicap, revealed only when the game ends.
+            In <span className="font-semibold text-mode-buffGlow">Buff</span>{" "}
+            mode nobody is handicapped: you both draft power-up cards as you
+            play. There is no checkmate: you win by capturing the king.
           </p>
 
           <ReturnToGameBanner />

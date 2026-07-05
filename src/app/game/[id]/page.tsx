@@ -407,18 +407,23 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
       blackMs={blackMs}
       activeColor={result ? null : board.turn}
       statusLabel={
-        (reconnecting
-          ? "Reconnecting… · "
-          : "") +
-        (isDraft
-          ? setup.mode === "buff"
-            ? "Buff mode · "
-            : setup.mode === "nerf"
-              ? "Nerf mode · "
-              : "Draft · "
-          : "") +
-        (result ? describeResult(result) : setup.started ? "Live game" : "Waiting for players") +
-        (watchers > 0 ? ` · ${watchers} watching` : "")
+        <>
+          {reconnecting ? "Reconnecting… · " : ""}
+          {isDraft && (
+            <>
+              {setup.mode === "buff" ? (
+                <span className="text-mode-buffGlow">Buff mode</span>
+              ) : setup.mode === "nerf" ? (
+                <span className="text-mode-nerfGlow">Nerf mode</span>
+              ) : (
+                "Draft"
+              )}
+              {" · "}
+            </>
+          )}
+          {result ? describeResult(result) : setup.started ? "Live game" : "Waiting for players"}
+          {watchers > 0 ? ` · ${watchers} watching` : ""}
+        </>
       }
       nerfs={nerfs}
       visual={
@@ -719,7 +724,7 @@ function GameShell({
   whiteMs: number;
   blackMs: number;
   activeColor: Color | null;
-  statusLabel: string;
+  statusLabel: React.ReactNode;
   nerfs: Partial<Record<Color, string>> | null;
   // Draft spectating: public zone effects painted on the board.
   visual?: React.ComponentProps<typeof Board>["visual"];
