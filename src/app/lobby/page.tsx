@@ -92,7 +92,15 @@ export default function LobbyPage() {
     session.persistFriendSession = false;
     try {
       const paired = await Promise.race([
-        session.queue(seek.pool, seek.mode ?? "buff"),
+        // Answer this exact seek: the server pairs only with this person (or
+        // house bot). If they already left it returns seek_gone rather than
+        // substituting a random opponent. Older servers omit seek.userId, so
+        // this falls back to plain quick pairing there.
+        session.queue(
+          seek.pool,
+          seek.mode ?? "buff",
+          seek.userId ? { userId: seek.userId } : undefined,
+        ),
         new Promise<never>((_, reject) =>
           window.setTimeout(() => reject(new Error("seek_gone")), 10000),
         ),
