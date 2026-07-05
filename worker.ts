@@ -2033,11 +2033,13 @@ export class GameServer extends DurableObject<Env> {
 
   // ---------------- draft mode (opening nerf draft) ----------------
 
-  // Deal the opening nerf draft for a Draft match. Difficulty is matched the
-  // same way pickNerfPair matches classic games: each seat's two options
-  // share a tier, and the two seats' tiers sit within one of each other. All
-  // four cards are distinct. The deal comes from the match seed RNG so a
-  // Durable Object restart re-deals the same options (never Math.random).
+  // Deal the opening nerf draft for a Draft match. Difficulty is always
+  // identical for the two seats: one tier pair is rolled for the whole deal
+  // (an anchor tier plus a partner tier within one of it, possibly the same
+  // tier), and BOTH seats get one card of the anchor tier and one card of
+  // the partner tier. All four cards are distinct. The deal comes from the
+  // match seed RNG so a Durable Object restart re-deals the same options
+  // (never Math.random).
   private dealNerfDraftOptions(match: StoredMatch): Record<Color, string[]> {
     const master = new RNG(match.setup.seed);
     master.fork(); // skip: white's nerf seed, already derived in startPayload
@@ -2045,36 +2047,37 @@ export class GameServer extends DurableObject<Env> {
     const rng = master.fork();
 
     const pool = PLAYABLE_NERFS.filter((nerf) => nerf.id !== "lucky");
-    const ofTier = (tier: number, exclude: ReadonlySet<string>) =>
-      pool.filter((nerf) => nerf.tier === tier && !exclude.has(nerf.id));
-    const takeTwo = (tier: number, exclude: ReadonlySet<string>): string[] => {
-      const candidates = ofTier(tier, exclude);
-      const first = candidates.splice(rng.int(candidates.length), 1)[0];
-      const second = candidates[rng.int(candidates.length)];
-      return [first.id, second.id];
+    const ofTier = (tier: number) => pool.filter((nerf) => nerf.tier === tier);
+    const takeOne = (tier: number, taken: Set<string>): string => {
+      const candidates = ofTier(tier).filter((nerf) => !taken.has(nerf.id));
+      const card = candidates[rng.int(candidates.length)];
+      taken.add(card.id);
+      return card.id;
     };
-    const none = new Set<string>();
+    // A tier pairing is feasible only if the pool supplies the four distinct
+    // cards: four of the anchor tier when the partner tier matches it,
+    // otherwise two of each.
+    const feasible = (anchor: number, partner: number) =>
+      partner === anchor
+        ? ofTier(anchor).length >= 4
+        : ofTier(anchor).length >= 2 && ofTier(partner).length >= 2;
     const tiers = [...new Set(pool.map((nerf) => nerf.tier))];
-    // A tier can anchor the deal if it holds two cards and a tier within one
-    // of it still holds two once the anchor's cards are gone.
-    const anchorTiers = tiers.filter((anchor) => {
-      if (ofTier(anchor, none).length < 2) return false;
-      return tiers.some(
-        (partner) =>
-          Math.abs(partner - anchor) <= 1 &&
-          ofTier(partner, none).length >= (partner === anchor ? 4 : 2),
-      );
-    });
-    const anchorTier = anchorTiers[rng.int(anchorTiers.length)];
-    const anchorCards = takeTwo(anchorTier, none);
-    const taken = new Set(anchorCards);
-    const partnerTiers = tiers.filter(
-      (partner) => Math.abs(partner - anchorTier) <= 1 && ofTier(partner, taken).length >= 2,
+    const anchorTiers = tiers.filter((anchor) =>
+      tiers.some((partner) => Math.abs(partner - anchor) <= 1 && feasible(anchor, partner)),
     );
-    const partnerCards = takeTwo(partnerTiers[rng.int(partnerTiers.length)], taken);
-    // Like pickNerfPair, randomize which color holds the anchor so tier-edge
-    // deals do not always land on the same side.
-    return rng.int(2) === 0 ? { w: anchorCards, b: partnerCards } : { w: partnerCards, b: anchorCards };
+    const anchorTier = anchorTiers[rng.int(anchorTiers.length)];
+    const partnerTiers = tiers.filter(
+      (partner) => Math.abs(partner - anchorTier) <= 1 && feasible(anchorTier, partner),
+    );
+    const partnerTier = partnerTiers[rng.int(partnerTiers.length)];
+    const taken = new Set<string>();
+    const first = [takeOne(anchorTier, taken), takeOne(partnerTier, taken)];
+    const second = [takeOne(anchorTier, taken), takeOne(partnerTier, taken)];
+    // Randomize each seat's card order and which seat gets which hand, so
+    // neither the anchor card nor a specific hand always lands on one side.
+    if (rng.int(2) === 1) first.reverse();
+    if (rng.int(2) === 1) second.reverse();
+    return rng.int(2) === 0 ? { w: first, b: second } : { w: second, b: first };
   }
 
   // Both seats of a Draft match are present: deal the opening nerf draft
