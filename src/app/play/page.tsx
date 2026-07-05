@@ -23,6 +23,14 @@ const TIME_STEPS_SEC = [
   ...range(35 * 60, 2 * 60 * 60, 5 * 60),
 ];
 
+// Rough Elo of each bot level, mirroring BOT_ELO in the game view so the
+// strength pills carry the same estimates the board header shows.
+const BOT_ELO: Record<"easy" | "medium" | "hard", number> = {
+  easy: 1100,
+  medium: 1500,
+  hard: 1900,
+};
+
 export default function PlayPage() {
   const router = useRouter();
   const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">("medium");
@@ -33,6 +41,10 @@ export default function PlayPage() {
   // The two sections of the game: Buff mode (no nerfs, pure buff drafting)
   // and Nerf mode (secret handicaps, revealed only when the game ends).
   const [gameMode, setGameMode] = useState<"nerf" | "buff">("buff");
+  // The bot game's ruleset. Mirrors the mode cards above (Buff / Nerf) but adds
+  // Plain chess (no nerfs, no buffs) which only exists against the bot: the
+  // online queue and friend games are always Buff or Nerf.
+  const [botMode, setBotMode] = useState<"nerf" | "buff" | "plain">("buff");
   const [rating, setRating] = useState<number | null>(null);
   const [games, setGames] = useState<number>(0);
   useEffect(() => {
@@ -41,17 +53,24 @@ export default function PlayPage() {
     setGames(r.games);
   }, []);
 
+  // Selecting a mode card sets the online identity (used by the friend link)
+  // and pre-selects the same ruleset for the bot game below.
+  const selectMode = (m: "nerf" | "buff") => {
+    setGameMode(m);
+    setBotMode(m);
+  };
+
   const start = () => {
     clearSavedAiGame();
     const params = new URLSearchParams({
       difficulty,
       color,
-      nerf: "random",
       t: String(baseSec),
       inc: String(incrementSec),
       // Bot games are casual; only queue games are rated (per mode).
       rated: "0",
-      mode: gameMode,
+      // buff | nerf | plain. Plain is a normal no-nerf, no-buff game vs the bot.
+      mode: botMode,
     });
     router.push(`/game?${params.toString()}`);
   };
@@ -93,7 +112,7 @@ export default function PlayPage() {
           <ModeCard
             mode="buff"
             selected={gameMode === "buff"}
-            onClick={() => setGameMode("buff")}
+            onClick={() => selectMode("buff")}
             title="Buff mode"
             tagline="Power-ups"
             body="No nerfs at all. Every few moves both players draft a buff; the strongest build wins."
@@ -101,7 +120,7 @@ export default function PlayPage() {
           <ModeCard
             mode="nerf"
             selected={gameMode === "nerf"}
-            onClick={() => setGameMode("nerf")}
+            onClick={() => selectMode("nerf")}
             title="Nerf mode"
             tagline="Handicaps"
             body="Pick a secret nerf your opponent never sees until the end. Rare drafts can soften or break it."
@@ -131,10 +150,26 @@ export default function PlayPage() {
         </div>
 
         <div className="mt-8 plate p-6 sm:p-7 space-y-6">
+          <div>
+            <Group label="Game type">
+              <Pill selected={botMode === "buff"} onClick={() => setBotMode("buff")}>Buff</Pill>
+              <Pill selected={botMode === "nerf"} onClick={() => setBotMode("nerf")}>Nerf</Pill>
+              <Pill selected={botMode === "plain"} onClick={() => setBotMode("plain")}>Plain chess</Pill>
+            </Group>
+            <p className="mt-2 text-[11px] text-parchment-400">
+              {botMode === "plain"
+                ? "Ordinary chess against the bot. No nerfs, no buffs on either side."
+                : botMode === "buff"
+                  ? "No handicaps. Draft buffs every few moves to outbuild the bot."
+                  : "Draft a secret nerf, revealed only when the game ends; draft cards to cope."}
+            </p>
+          </div>
+
           <Group label="Bot strength">
             {(["easy", "medium", "hard"] as const).map((d) => (
               <Pill key={d} selected={difficulty === d} onClick={() => setDifficulty(d)}>
                 {d[0].toUpperCase() + d.slice(1)}
+                <span className="ml-1.5 font-mono text-[10px] opacity-60">~{BOT_ELO[d]}</span>
               </Pill>
             ))}
           </Group>

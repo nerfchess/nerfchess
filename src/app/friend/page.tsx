@@ -30,17 +30,23 @@ export default function FriendPage() {
   const [view, setView] = useState<View>("setup");
   const [code, setCode] = useState("");
   const [joinCode, setJoinCode] = useState("");
-  const [baseSec, setBaseSec] = useState(600);
-  const [incrementSec, setIncrementSec] = useState(0);
-  // Friend games always run the Draft ruleset and are always casual. The
-  // host picks the section: Buff mode (no nerfs) or Nerf mode (secret
-  // handicaps revealed at game end). Buff mode is the default. Picks stay
-  // hidden; everything reveals at game end.
+  // Default custom-challenge clock: 3+2 (a brisk blitz control most players
+  // reach for). The stacked preset still snaps to its own relaxed 10+5.
+  const [baseSec, setBaseSec] = useState(180);
+  const [incrementSec, setIncrementSec] = useState(2);
+  // Friend games always run the Draft ruleset; the host picks the section:
+  // Buff mode (no nerfs) or Nerf mode (secret handicaps revealed at game end).
+  // Buff mode is the default. Picks stay hidden; everything reveals at game
+  // end. Stakes (casual or rated) are chosen separately below.
   const [gameMode, setGameMode] = useState<"nerf" | "buff">("buff");
   // "Surprise your friend" preset: when on, the friend who joins drafts a
   // stacked, high-tier build (server boosts the black seat's offers). The
   // preset also snaps the game to its recommended, easy-to-play config.
   const [stacked, setStacked] = useState(false);
+  // Rated custom challenge: the game moves both players' ratings when they are
+  // signed-in accounts (otherwise it plays out casual). Defaults to casual so a
+  // relaxed game with a friend never touches a rating by surprise.
+  const [rated, setRated] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [start, setStart] = useState<MPStart | null>(null);
   // Direct challenge: ?challenge=NAME pre-addresses the game to that player;
@@ -51,12 +57,18 @@ export default function FriendPage() {
   const expectedChallengeHostRef = useRef<string | null>(null);
 
   // Tell the target the game exists; failures degrade to a plain friend code.
-  const registerChallenge = async (to: string, gameCode: string, timeSec: number, incSec: number) => {
+  const registerChallenge = async (
+    to: string,
+    gameCode: string,
+    timeSec: number,
+    incSec: number,
+    isRated: boolean,
+  ) => {
     try {
       await fetch("/api/challenges", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ to, code: gameCode, timeSec, incrementSec: incSec }),
+        body: JSON.stringify({ to, code: gameCode, timeSec, incrementSec: incSec, rated: isRated }),
       });
     } catch {}
   };
@@ -212,8 +224,11 @@ export default function FriendPage() {
       const c = await sess.host(baseSec, incrementSec, {
         draft: true,
         mode: gameMode,
+        // Rated custom challenge (the server rates it only when both seats are
+        // signed-in accounts, else it plays out casual).
+        ...(rated ? { rated: true } : {}),
         // Stacked-draft preset: the joining friend drafts strong, high-tier
-        // cards. Always casual (the server never rates friend games).
+        // cards.
         ...(stacked ? { stacked: true } : {}),
         // Direct challenge: the server reserves the opponent seat for them,
         // so a lobby stranger can never take it first.
@@ -222,7 +237,7 @@ export default function FriendPage() {
       if (sessionRef.current !== sess) return;
       setCode(c);
       setView("lobby");
-      if (challenging) registerChallenge(challenging, c, baseSec, incrementSec);
+      if (challenging) registerChallenge(challenging, c, baseSec, incrementSec, rated);
     } catch (e) {
       if (sessionRef.current !== sess) return;
       setError(e instanceof Error ? e.message : String(e));
@@ -440,8 +455,25 @@ export default function FriendPage() {
             </div>
             <p className="mt-2 text-[11px] leading-snug text-parchment-400">
               {gameMode === "buff"
-                ? "No nerfs at all. Every few moves both players draft a buff; the strongest build wins. Always casual."
-                : "Both players pick a secret nerf that only reveals when the game ends. Boon drafts every six moves can soften or remove it. Always casual."}
+                ? "No nerfs at all. Every few moves both players draft a buff; the strongest build wins."
+                : "Both players pick a secret nerf that only reveals when the game ends. Boon drafts every six moves can soften or remove it."}
+            </p>
+          </div>
+
+          <div>
+            <div className="smallcaps text-[11px] text-parchment-400 mb-2">Stakes</div>
+            <div className="grid grid-cols-2 gap-2">
+              <StakeButton selected={!rated} onClick={() => setRated(false)}>
+                Casual
+              </StakeButton>
+              <StakeButton selected={rated} onClick={() => setRated(true)}>
+                Rated
+              </StakeButton>
+            </div>
+            <p className="mt-2 text-[11px] leading-snug text-parchment-400">
+              {rated
+                ? "Counts toward both players' ratings. Ratings move only when both players are signed in; a signed-out opponent makes it casual."
+                : "A friendly game. Neither player's rating changes."}
             </p>
           </div>
 
@@ -450,14 +482,16 @@ export default function FriendPage() {
             className="w-full py-3.5 rounded-sm btn-leaf font-body text-lg"
           >
             {challenging
-              ? `Send ${stacked ? "stacked " : ""}challenge to ${challenging}`
+              ? `Send ${rated ? "rated " : ""}${stacked ? "stacked " : ""}challenge to ${challenging}`
+              : rated
+              ? "Create rated game"
               : stacked
               ? "Create stacked game"
               : "Create game"}
           </button>
           {stacked && (
             <p className="-mt-3 text-center text-[11px] leading-snug text-gold/80">
-              Your friend joins to a stacked, high-tier draft. Always casual.
+              Your friend joins to a stacked, high-tier draft.
             </p>
           )}
 
@@ -518,6 +552,32 @@ function OptionButton({
         "px-3 py-2 border transition text-xs font-display font-semibold tracking-wide " +
         (selected
           ? selectedIdentity
+          : "border-white/15 bg-white/[0.03] text-parchment-200 hover:border-white/30 hover:bg-white/[0.06]")
+      }
+    >
+      {children}
+    </button>
+  );
+}
+
+// Rated / Casual segment. Rated wears the gold identity (it stakes something);
+// casual stays neutral.
+function StakeButton({
+  selected,
+  onClick,
+  children,
+}: {
+  selected: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={
+        "px-3 py-2 border transition text-xs font-display font-semibold tracking-wide " +
+        (selected
+          ? "border-gold/60 bg-gold/10 text-gold-leaf"
           : "border-white/15 bg-white/[0.03] text-parchment-200 hover:border-white/30 hover:bg-white/[0.06]")
       }
     >

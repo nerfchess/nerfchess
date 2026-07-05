@@ -453,7 +453,7 @@ function ChallengeRow({ challenge }: { challenge: MPLobbyChallenge }) {
           <ModeBadge mode={challenge.mode} compact />
           <span>
             {!challenge.mode && challenge.draft && <span className="text-gold-leaf">Draft · </span>}
-            Casual · {clock} · code {challenge.id}
+            {challenge.rated ? "Rated" : "Casual"} · {clock} · code {challenge.id}
           </span>
         </div>
       </div>
