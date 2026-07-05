@@ -58,26 +58,65 @@ export type HousePersona = {
   avatar: string;
 };
 
-// Lichess-style usernames: lowercase/CamelCase mixes, chess words, a few
-// numbers, nothing that says "bot". Skill mix: 6 near 1200, 5 near 1400,
-// 3 near 1600, 2 near 1750 (roughly 40/30/20/10).
+// Lichess-style usernames: lowercase/CamelCase mixes, chess words, meme and
+// teen-culture handles, a few numbers, nothing that says "bot". Roster of 50
+// for a busy lobby and a load test. Skill mix stays roughly 40/30/20/10:
+// 20 near 1200, 15 near 1400, 10 near 1600, 5 near 1750.
 const PERSONA_DEFS: Array<[name: string, skill: HouseSkill]> = [
+  // ~1200
   ["pawnstorm77", 1200],
   ["f6isfine", 1200],
   ["tempoLoss", 1200],
   ["premoveKing", 1200],
   ["eloFarmer2", 1200],
   ["backRankBlues", 1200],
+  ["waterbottle", 1200],
+  ["iloveproteinbars", 1200],
+  ["flower", 1200],
+  ["grade11isscary", 1200],
+  ["SIXSEVENHAHAHAH", 1200],
+  ["bongcloudbeliever", 1200],
+  ["enpassantforced", 1200],
+  ["hangingpawnhabit", 1200],
+  ["touchmovetim", 1200],
+  ["scholarsmate_l", 1200],
+  ["coffeehousechess", 1200],
+  ["blunderbuss77", 1200],
+  ["rookieroulette", 1200],
+  ["h4nginqueen", 1200],
+  // ~1400
   ["QuietMoveGuy", 1400],
   ["caroCannon", 1400],
   ["rookliftt", 1400],
   ["zugzwangg", 1400],
   ["LondonSystemFan", 1400],
+  ["bssfan", 1400],
+  ["timmychenbiggestfan", 1400],
+  ["fianchettofan", 1400],
+  ["prophylaxised", 1400],
+  ["timescramble", 1400],
+  ["isolanihater", 1400],
+  ["openingdeviation", 1400],
+  ["middlegamemaze", 1400],
+  ["knightoutpost", 1400],
+  ["positionalpush", 1400],
+  // ~1600
   ["kniveskniqht", 1600],
   ["endgameEnjoyer", 1600],
   ["berserkedd", 1600],
+  ["josephleungadmirer", 1600],
+  ["anarchychess", 1600],
+  ["zwischenzugzz", 1600],
+  ["calculationstn", 1600],
+  ["tacticstornado", 1600],
+  ["initiativegrab", 1600],
+  ["exchangesac", 1600],
+  // ~1750
   ["smotheredM8", 1750],
   ["outpostcrab", 1750],
+  ["kingcongo", 1750],
+  ["prophylaxispro", 1750],
+  ["conversionmachine", 1750],
 ];
 
 // Flowered avatar presets (see lib/avatars.ts): the ordinary piece-on-plate
