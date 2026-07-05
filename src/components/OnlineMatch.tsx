@@ -229,6 +229,8 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   const [draftDeadline, setDraftDeadline] = useState<number | null>(() => start.dtDeadline ?? null);
   // The opponent resolved their simultaneous draft while mine is still open.
   const [oppLockedIn, setOppLockedIn] = useState(false);
+  // Their resolution was a bank rather than a pick (refines the badge copy).
+  const [oppBanked, setOppBanked] = useState(false);
   // The free lock-in window has run out: the draft moves to a side panel,
   // the board comes back, and the clock runs — deliberating past the window
   // costs the straggler's own time (the server resumes the clock too).
@@ -596,6 +598,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         // A fresh round of simultaneous offers: restart the lock-in window.
         if (e.offer.deadline) setDraftDeadline(e.offer.deadline);
         setOppLockedIn(false);
+        setOppBanked(false);
         if (!g?.buffs) return;
         // Only frames the server addressed to us carry cards we may see: our
         // own offers always, the opponent's only under picksVisible.
@@ -629,6 +632,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           setOppDrafting(false);
           // "Opponent locked in": shown while my own pick is still open.
           setOppLockedIn(true);
+          setOppBanked(e.resolved.kind !== "picked");
           if (e.resolved.kind === "picked") {
             playNerf();
             // Instants reveal at pick because their effect already shows on
@@ -658,6 +662,10 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         applyGame({ ...g });
       } else if (e.type === "rematch-offer") {
         setRematchStatus(e.color === myColor ? "offered" : "incoming");
+        // An offer from the opponent is proof of life.
+        if (e.color !== myColor) setOpponentGone(false);
+      } else if (e.type === "rematch-cancelled") {
+        setRematchStatus("none");
       } else if (e.type === "rematched") {
         // Take the new seat and load the fresh game with a clean slate.
         saveOnlineSeat(e.id, { color: e.color, token: e.token });
@@ -1118,6 +1126,14 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
       return;
     }
     if (rematchStatus !== "incoming") setRematchStatus("offered");
+  };
+
+  // Withdraw a pending rematch offer (surfaced when the opponent has left, so
+  // the player is not stuck staring at a "waiting" button nobody will answer).
+  const handleCancelRematch = () => {
+    if (rematchStatus !== "offered") return;
+    if (session.cancelRematch()) setRematchStatus("none");
+    else setError("Disconnected from the game server.");
   };
 
   // Draft games: the opening nerf draft runs before the game exists. Same
@@ -1906,28 +1922,36 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
             </motion.div>
           </div>
         ) : (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4">
+          /* Deliberately translucent and compact: the pick is done, so the
+             player should see the board underneath while they wait. */
+          <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4">
             <motion.div
-              initial={{ opacity: 0, y: 16, scale: 0.98 }}
+              initial={{ opacity: 0, y: 12, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              className="plate w-full max-w-sm p-6 text-center"
+              className="plate pointer-events-auto w-full max-w-xs border-gold/30 p-4 text-center"
             >
-              <div className="smallcaps text-[11px] text-parchment-400">
+              <div className="smallcaps text-[10px] text-parchment-400">
                 {draftCardNoun(start.mode) === "boon" ? "Boon draft" : "Buff draft"}
               </div>
-              <h2 className="font-display text-2xl text-parchment mt-1">
-                Waiting for opponent&apos;s pick
+              <h2 className="font-display text-xl text-parchment mt-0.5">
+                Waiting for opponent
               </h2>
-              <p className="mt-2 text-sm text-parchment-300">
-                Your opponent is still selecting. Both clocks stay paused
-                until the pick window runs out.
-              </p>
-              <div role="status" aria-live="polite" className="mt-4 flex items-center justify-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-gold animate-flicker" aria-hidden />
+              <div role="status" aria-live="polite" className="mt-2 flex items-center justify-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-gold animate-flicker" aria-hidden />
                 <span className="font-display text-sm text-parchment-200">
-                  Opponent is choosing a {draftCardNoun(start.mode)}…
+                  {oppLockedIn
+                    ? oppBanked
+                      ? "Opponent banked their draft."
+                      : "Opponent locked in."
+                    : `Opponent is still choosing a ${draftCardNoun(start.mode)}…`}
                 </span>
               </div>
+              {draftDeadline != null && (
+                <LockInCountdown deadline={draftDeadline} className="mt-3" />
+              )}
+              <p className="mt-2 text-[10px] leading-snug text-parchment-400">
+                Both clocks stay paused until the pick window runs out.
+              </p>
             </motion.div>
           </div>
         ))}
@@ -1941,6 +1965,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           minimized={draftGraceOver}
           cardNoun={draftCardNoun(start.mode)}
           oppLockedIn={oppLockedIn && !oppDrafting}
+          oppBanked={oppBanked}
           onPick={(i) => {
             if (session.sendDraftPick(i)) setDraftSubmitted(true);
             else setError("Disconnected from the game server.");
@@ -1985,7 +2010,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           opponentHidden={uiSettings.hideOpponentReveal}
           ratingChange={ratingChange}
           rematchStatus={rematchStatus}
+          opponentLeft={opponentGone}
           onRematch={handleRematch}
+          onCancelRematch={handleCancelRematch}
           onNewGame={onExit}
           onReview={() => setHistoryPly(0)}
           moves={game.board.history}

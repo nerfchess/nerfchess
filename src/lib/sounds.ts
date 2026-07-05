@@ -328,13 +328,53 @@ export function playGameOver() {
   tone({ freq: 1318, dur: 0.30, type: "sine", gain: 0.06, attack: 0.005, release: 0.28, delay: 0.13 });
 }
 
-// Generic notification: something in the game needs your attention right now
-// (a draft offer just appeared). The lichess notify dong, softened a touch.
+// Generic notification: something in the game needs your attention right now.
+// The lichess notify dong, softened a touch.
 export function playNotify() {
   if (!soundPrefs.enabled) return;
   if (playSample("GenericNotify", 0.85)) return;
   tone({ freq: 880, dur: 0.18, type: "sine", gain: 0.16, attack: 0.005, release: 0.18 });
   tone({ freq: 1108, dur: 0.22, type: "sine", gain: 0.10, attack: 0.005, release: 0.20, delay: 0.09 });
+}
+
+// Draft offer: a soft glistening shimmer, deliberately gentler than the
+// notify dong. Synthesized on purpose (no sample, dependency-free): a small
+// arpeggio of high partials, each doubled with a slight detune so the beating
+// between the voices glistens, with a fast attack and a long decay.
+export function playDraftChime() {
+  if (!soundPrefs.enabled) return;
+  if (isMuted()) return;
+  const a = audio();
+  if (!a) return;
+  const t0 = a.currentTime;
+  const master = a.createGain();
+  master.gain.value = 0.9 * getVolume();
+  master.connect(a.destination);
+
+  // G6 - B6 - E7 - G7: an Em7-ish sparkle, staggered a few tens of ms apart.
+  const partials: { freq: number; gain: number; delay: number; type: OscillatorType }[] = [
+    { freq: 1568, gain: 0.09, delay: 0, type: "sine" },
+    { freq: 1976, gain: 0.07, delay: 0.04, type: "sine" },
+    { freq: 2637, gain: 0.045, delay: 0.08, type: "triangle" },
+    { freq: 3136, gain: 0.028, delay: 0.12, type: "sine" },
+  ];
+  for (const p of partials) {
+    for (const detune of [-7, 7]) {
+      const osc = a.createOscillator();
+      osc.type = p.type;
+      osc.frequency.value = p.freq;
+      osc.detune.value = detune;
+      const g = a.createGain();
+      const start = t0 + p.delay;
+      g.gain.setValueAtTime(0, start);
+      g.gain.linearRampToValueAtTime(p.gain, start + 0.012);
+      g.gain.exponentialRampToValueAtTime(0.0001, start + 1.1);
+      osc.connect(g);
+      g.connect(master);
+      osc.start(start);
+      osc.stop(start + 1.15);
+    }
+  }
 }
 
 // Incoming challenge: the lichess social notify (what lichess plays when a

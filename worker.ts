@@ -157,6 +157,7 @@ type ClientFrame =
   | { t: "watchLeave" }
   | { t: "lobby" }
   | { t: "rematch" }
+  | { t: "rematchCancel" }
   | { t: "chat"; d?: { text?: unknown } }
   | { t: "schat"; d?: { text?: unknown } }
   | { t: "reveal" }
@@ -397,6 +398,8 @@ export class GameServer extends DurableObject<Env> {
         return this.lobbySnapshot(ws);
       case "rematch":
         return this.rematchRequest(ws);
+      case "rematchCancel":
+        return this.rematchCancel(ws);
       case "chat":
         return this.chatMessage(ws, frame.d);
       case "schat":
@@ -1574,6 +1577,19 @@ export class GameServer extends DurableObject<Env> {
   }
 
   // ---------------- rematch ----------------
+
+  // Withdraw a pending rematch offer. Only the player who made the offer can
+  // cancel it, and only while no rematch game has been created yet.
+  private async rematchCancel(ws: WebSocket) {
+    const session = this.session(ws);
+    const match = session.matchId ? await this.loadMatch(session.matchId) : null;
+    if (!match || !session.color) return;
+    if (match.rematchedTo) return;
+    if (match.rematchOfferBy !== session.color) return;
+    match.rematchOfferBy = null;
+    await this.saveMatch(match, false);
+    this.broadcast(match, "rematchCancelled", { color: session.color });
+  }
 
   private async rematchRequest(ws: WebSocket) {
     const session = this.session(ws);

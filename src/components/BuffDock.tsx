@@ -299,6 +299,11 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards 
           <span className={`min-w-0 flex-1 truncate font-display text-[12px] font-semibold leading-tight tier-${inst.tier}`}>
             {def.name}
           </span>
+          {usable && (
+            <span className="smallcaps shrink-0 rounded-sm border border-verdigris-glow/50 bg-verdigris/15 px-1 py-px text-[8px] font-semibold text-verdigris-glow">
+              Usable
+            </span>
+          )}
           {status && (
             <span className="smallcaps hidden max-w-[7rem] shrink-0 truncate text-[8px] text-gold/80 lg:inline">
               {status}
@@ -416,6 +421,20 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards 
                   {BUFF_BY_ID[lastTheirs.id]?.name}
                 </motion.span>
               ))}
+          </div>
+        )}
+
+        {/* Pending take-both: the next offer is taken whole, and the player
+            should know before the draft opens, not discover it inside. */}
+        {(bs.players[myColor].flags.takeBoth ?? 0) > 0 && (
+          <div
+            role="status"
+            className="flex items-center gap-2 border border-gold/50 bg-gold/10 px-2 py-1.5"
+          >
+            <span aria-hidden className="h-1.5 w-1.5 shrink-0 bg-gold-leaf animate-flicker" />
+            <span className="font-display text-[11px] font-semibold text-gold-leaf">
+              Next draft: you take BOTH cards
+            </span>
           </div>
         )}
 

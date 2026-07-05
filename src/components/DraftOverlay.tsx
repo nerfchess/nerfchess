@@ -4,7 +4,7 @@ import { BuffOffer } from "@/engine/buff";
 import { BUFF_BY_ID } from "@/engine/buffs/library";
 import { motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
-import { playNotify } from "@/lib/sounds";
+import { playDraftChime } from "@/lib/sounds";
 import { BuffCard } from "./BuffCard";
 
 interface Props {
@@ -28,6 +28,8 @@ interface Props {
   cardNoun?: string;
   /** The opponent resolved their simultaneous draft while you are choosing. */
   oppLockedIn?: boolean;
+  /** The opponent's resolution was a bank, not a pick (refines the badge). */
+  oppBanked?: boolean;
   /** What we can legitimately show about the opponent's draft. */
   opponent?: {
     offer: BuffOffer | null;
@@ -106,6 +108,7 @@ export function DraftOverlay({
   minimized,
   cardNoun = "buff",
   oppLockedIn,
+  oppBanked,
   opponent,
 }: Props) {
   const noun = cardNoun;
@@ -124,7 +127,7 @@ export function DraftOverlay({
     setChosen(null);
     committedRef.current = false;
     // A fresh offer demands attention: the board is blocked until it resolves.
-    playNotify();
+    playDraftChime();
   }, [offer.index]);
 
   const choose = (i: number) => {
@@ -170,11 +173,15 @@ export function DraftOverlay({
             </span>
             <span className="smallcaps text-[9px] text-oxblood-glow">On your clock</span>
           </div>
-          <p className="mt-1 text-[11px] leading-snug text-parchment-300">
-            {takeBoth
-              ? "Picking any card takes the whole offer."
-              : `Still yours to pick — but the clock is running now.`}
-          </p>
+          {takeBoth ? (
+            <p className="mt-1 text-[11px] font-semibold leading-snug text-gold-leaf">
+              You take BOTH cards: picking any card takes the whole offer.
+            </p>
+          ) : (
+            <p className="mt-1 text-[11px] leading-snug text-parchment-300">
+              Still yours to pick, but the clock is running now.
+            </p>
+          )}
           <div className="mt-2 space-y-1.5">
             {offer.cards.map((card, i) => {
               const def = BUFF_BY_ID[card.id];
@@ -237,7 +244,7 @@ export function DraftOverlay({
             >
               <span aria-hidden className="text-[11px] text-verdigris-glow">✓</span>
               <span className="font-display text-[11px] font-semibold text-verdigris-glow">
-                Opponent locked in
+                {oppBanked ? "Opponent banked" : "Opponent locked in"}
               </span>
             </div>
           )}
@@ -245,6 +252,17 @@ export function DraftOverlay({
         <h2 className="font-display text-3xl text-parchment mt-1">
           {takeBoth ? "Take your cards" : `Choose a ${noun}`}
         </h2>
+        {takeBoth && (
+          <div
+            role="status"
+            className="mt-2 inline-flex items-center gap-2 border border-gold/60 bg-gold/15 px-3 py-1"
+          >
+            <span aria-hidden className="h-1.5 w-1.5 shrink-0 bg-gold-leaf animate-flicker" />
+            <span className="font-display text-xs font-bold tracking-wide text-gold-leaf">
+              You take BOTH cards this draft
+            </span>
+          </div>
+        )}
         <p className="mt-1 text-sm text-parchment-300">
           {takeBoth
             ? "A draft-manipulation card lets you take every card in this offer."
