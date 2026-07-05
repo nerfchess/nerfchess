@@ -81,7 +81,7 @@ const STEPS: Step[] = [
     goalText: "Move the white king to e2, even though the black rook attacks that square.",
     isComplete: (m) => m.piece === "k" && m.to === SQ(4, 1),
     closing:
-      "That move would be illegal in standard chess. Here, danger is allowed; capture is what ends the game.",
+      "That move would be illegal in standard chess. Here, danger is allowed; capture is what ends the game. When you want more chaos on top, Draft games deal out buff cards as you play.",
   },
 ];
 

@@ -9,7 +9,6 @@ import { getCategory, type RatingCategoryId } from "@/lib/ratingCategories";
 
 // Wire names must match QUEUE_POOLS in worker.ts.
 const QUEUE_POOL_OPTIONS: { pool: string; label: string; speed: RatingCategoryId }[] = [
-  { pool: "15s+0", label: "¼+0", speed: "ultrabullet" },
   { pool: "1+0", label: "1+0", speed: "bullet" },
   { pool: "2+1", label: "2+1", speed: "bullet" },
   { pool: "3+0", label: "3+0", speed: "blitz" },

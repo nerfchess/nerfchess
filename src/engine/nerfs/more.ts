@@ -1275,18 +1275,6 @@ export const CLOSED_BOOK: Nerf = db({
   },
 });
 
-export const FIXATION: Nerf = db({
-  id: "fixation", name: "Fixation", tier: 5, implemented: true,
-  description: "Pawn moves → pawn moves only; non-pawn → non-pawn only, until type switches.",
-  filterMoves: (moves, _s, ctx) => {
-    const last = ctx.myLastMove;
-    if (!last) return moves;
-    const wantPawn = last.piece === "p";
-    const filtered = moves.filter((m) => (m.piece === "p") === wantPawn);
-    return filtered.length ? filtered : moves;
-  },
-});
-
 export const COVERING_FIRE: Nerf = db({
   id: "covering_fire", name: "Covering Fire", tier: 5, implemented: true,
   description: "Can only capture a piece if you can capture it two different ways.",
@@ -1917,7 +1905,7 @@ export const MORE_NERFS: Nerf[] = [
   SIMON_SAYS, IRRESISTIBLE, BOASTFUL, WINDS_OF_FATE, MONKEY_SEE,
   TRUE_LOVE, SUPERSTITIOUS, EAT_YOUR_VEGETABLES, BLOODTHIRSTY, LEFT_FOR_DEAD,
   CRUSADE, FOG_OF_WAR_OLD, HEDONIC_TREADMILL, DEATH_WISH, CHECKERS,
-  CLOSED_BOOK, FIXATION, COVERING_FIRE, UNLUCKY, JUMPY,
+  CLOSED_BOOK, COVERING_FIRE, UNLUCKY, JUMPY,
   HOPSCOTCH, LEAPS_AND_BOUNDS, COLORBLIND, INCHING_FORWARD, ICHTHYOPHOBE,
   LEFT_TO_RIGHT, FRIENDLY_FIRE, GOING_THE_DISTANCE, HELICOPTER_PARENT, EXCLUSIVITY_CLAUSE,
   RELAY_RACE, DEVIL_ON_SHOULDER, REFLECTIVE, OBSESSION, BOXING_WITH_SHADOW,

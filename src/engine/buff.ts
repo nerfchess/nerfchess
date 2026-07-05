@@ -125,6 +125,10 @@ export interface PlayerBuffState {
 export interface BuffMatchState {
   /** Own moves between buff drafts. */
   cadence: number;
+  /** Shared draft trigger in total plies: both players draft at the same
+   * time when the game reaches this ply. Optional so saved games from the
+   * per-player cadence era still load; playMove backfills it. */
+  nextDraftAtPly?: number;
   rngState: number;
   effects: ActiveEffect[];
   extraMoves: { w: number; b: number };
@@ -222,6 +226,9 @@ export interface Buff {
   kind: "passive" | "instant" | "activated";
   /** Activated buffs default to being consumed on use. */
   spendOnUse?: boolean;
+  /** Activated buffs normally consume the activator's turn; free actions
+   * (the extra-move family) resolve within it instead. */
+  freeAction?: boolean;
   /** Called when the card is acquired (before any instant effect). */
   init?: (inst: BuffInstance, api: BuffApi) => void;
   /** Instant: runs on pick. Activated: runs on use with collected picks. */

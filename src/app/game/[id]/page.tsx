@@ -19,8 +19,11 @@ import {
   applyDraftAction,
   buildSpectatorDraftGame,
   draftZones,
+  mergeDraftState,
   playReplicaMove,
+  revealHeldBuffs,
 } from "@/lib/draftOnline";
+import { TIER_ROMAN } from "@/lib/tiers";
 import { boardAtPly, replayUci } from "@/lib/gameReview";
 import { timeControlLabel } from "@/lib/gameHistory";
 import { gameToPGN } from "@/lib/pgn";
@@ -28,11 +31,13 @@ import {
   clearActiveGame,
   clearOnlineSeat,
   loadOnlineSeat,
+  loadSavedFriendSession,
   MPPlayers,
   MPSession,
   MPSpectatorChatMessage,
   MPStart,
   MPWatchStart,
+  saveOnlineSeat,
 } from "@/lib/multiplayer";
 
 type Mode =
@@ -127,7 +132,12 @@ export default function OnlineGamePage() {
       }
     };
 
-    const seat = loadOnlineSeat(gameId);
+    // Friend games persist their credentials under the friend-session key;
+    // accept those too so a seat holder always reclaims their seat here.
+    const friendSaved = loadSavedFriendSession();
+    const seat =
+      loadOnlineSeat(gameId) ??
+      (friendSaved?.id === gameId ? { color: friendSaved.color, token: friendSaved.token } : null);
     if (seat) {
       const off = session.on((e) => {
         if (cancelled) return;
@@ -135,6 +145,12 @@ export default function OnlineGamePage() {
           setMode({ kind: "player", start: e.setup });
         } else if (e.type === "open") {
           setMode({ kind: "waiting" });
+        } else if (e.type === "rematched") {
+          // The server re-delivers the rematch seat on resume (e.g. after a
+          // refresh mid-rematch). Handle it here too: the frame can arrive
+          // before OnlineMatch has mounted and subscribed.
+          saveOnlineSeat(e.id, { color: e.color, token: e.token });
+          window.location.href = `/game/${e.id}`;
         }
       });
       // Resume the seat; transient connection failures retry with backoff,
@@ -285,6 +301,7 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
                   a: "use",
                   buffIndex: e.used.buffIndex,
                   picks: e.used.picks,
+                  card: e.used.card,
                 }
               : e.resolved.kind === "picked"
                 ? {
@@ -297,11 +314,24 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
           );
           setDraftGame({ ...g });
         }
+      } else if (e.type === "draft-state") {
+        // Spectator-filtered re-sync (identity reveals, effect timers).
+        const g = draftGameRef.current;
+        if (g?.buffs) {
+          mergeDraftState(g.buffs, e.state, null);
+          setDraftGame({ ...g });
+        }
       } else if (e.type === "end") {
         setResult(e.end.result);
         setWhiteMs(e.end.wc);
         setBlackMs(e.end.bc);
         if (e.end.nerfs) setNerfs(e.end.nerfs);
+        // Game over: both sides' held buffs go public, like the nerfs.
+        const g = draftGameRef.current;
+        if (g?.buffs && e.end.draftBuffs) {
+          revealHeldBuffs(g.buffs, e.end.draftBuffs);
+          setDraftGame({ ...g });
+        }
       } else if (e.type === "clocks") {
         setWhiteMs(e.wc);
         setBlackMs(e.bc);
@@ -409,13 +439,16 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
   );
 }
 
-// Held buffs are public in draft games, so spectators see both docks.
+// Spectators only learn THAT cards are held, never which, until a card's
+// identity shows on the table (instant effect, activation, a granted move)
+// or the game ends. Hidden cards render as face-down minis with their tier.
 // Pending offers and reveal snapshots never reach this view.
 function SpectatorBuffsPanel({ game, players }: { game: NerfGame; players: MPPlayers }) {
   const bs = game.buffs;
   if (!bs) return null;
   const side = (color: Color) => {
     const held = bs.players[color].buffs;
+    const hiddenOnes = held.filter((inst) => !BUFF_BY_ID[inst.id]);
     return (
       <div>
         <div className="smallcaps text-[9px] text-parchment-400">
@@ -425,6 +458,25 @@ function SpectatorBuffsPanel({ game, players }: { game: NerfGame; players: MPPla
           <p className="text-[11px] text-parchment-400">No buffs drafted yet.</p>
         ) : (
           <div className="mt-1 space-y-1">
+            {hiddenOnes.length > 0 && (
+              <div className="flex flex-wrap items-center gap-1">
+                {hiddenOnes.map((inst, i) => (
+                  <span
+                    key={i}
+                    title={`Hidden buff · tier ${inst.tier}`}
+                    className={
+                      "relative flex h-9 w-7 items-center justify-center rounded-[3px] border border-gold/35 " +
+                      "bg-[linear-gradient(135deg,rgba(216,181,110,0.14),rgba(14,12,9,0.95))] " +
+                      (inst.spent || inst.nullified ? "opacity-40" : "")
+                    }
+                  >
+                    <span className={`font-display text-[10px] font-bold tier-${inst.tier}`}>
+                      {TIER_ROMAN[inst.tier]}
+                    </span>
+                  </span>
+                ))}
+              </div>
+            )}
             {held.map((inst, i) => {
               const def = BUFF_BY_ID[inst.id];
               if (!def) return null;

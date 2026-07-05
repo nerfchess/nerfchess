@@ -5,7 +5,17 @@ export function boardAtPly(moves: Move[], ply: number): BoardState {
   let board = initialBoard();
   const clamped = Math.max(0, Math.min(ply, moves.length));
   for (let i = 0; i < clamped; i++) {
-    board = makeMove(board, moves[i]);
+    // Draft buffs can mutate the board outside move history (summons,
+    // removals, teleports), so a recorded move may reference a piece that
+    // doesn't exist on the replayed board. Callers should gate review on
+    // buffs.historyDiverged; if a bad move slips through anyway, return the
+    // last position that replayed cleanly rather than throwing.
+    if (!board.pieces[moves[i].from]) return board;
+    try {
+      board = makeMove(board, moves[i]);
+    } catch {
+      return board;
+    }
   }
   return board;
 }

@@ -21,10 +21,11 @@ body {
   --oxblood: #c0413b;
   --verdigris: #629924;
   --bruise: #8a88a8;
-  /* One clean sans for the whole site, Lichess-style: Inter for body and
-     display, weight (400/500/600) doing the hierarchy work. No serifs. */
+  /* Two clean sans faces, weight (400/500/600) doing the hierarchy work.
+     Headings keep Inter; body text is Noto Sans, the UI font Lichess ships.
+     next/font in layout.tsx self-hosts it and defines --font-body on <body>,
+     so there is no --font-body here. No serifs. */
   --font-display: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-mono: "Cascadia Mono", "JetBrains Mono", Consolas, monospace;
   --accent: #3692e7;
   --accent-hi: #4a9fee;

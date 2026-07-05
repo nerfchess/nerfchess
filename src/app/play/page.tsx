@@ -12,10 +12,6 @@ import { Logo } from "@/components/Logo";
 import { QueueButton } from "@/components/QueueButton";
 
 const TIME_STEPS_SEC = [
-  5,
-  10,
-  15,
-  20,
   30,
   45,
   60,
@@ -38,8 +34,9 @@ export default function PlayPage() {
   const [incrementSec, setIncrementSec] = useState<number>(0);
   // Bot games are casual by default; rated games update your rating + ladder.
   const [rated, setRated] = useState<boolean>(false);
-  // Draft ruleset: nerf draft at the start, buff drafts every few moves.
-  const [draft, setDraft] = useState<boolean>(false);
+  // Draft is the standard ruleset: nerf draft at the start, buff drafts
+  // every few moves. Classic is the buff-free variant.
+  const [draft, setDraft] = useState<boolean>(true);
   // Draft only: whether the opponent's draft picks are visible. Hidden is the
   // chaotic default; visible makes for a more strategic game.
   const [openPicks, setOpenPicks] = useState<boolean>(false);
@@ -96,7 +93,8 @@ export default function PlayPage() {
       <section className="max-w-2xl mx-auto px-6 py-8">
         <h1 className="font-display text-5xl">New game</h1>
         <p className="mt-3 text-parchment-200">
-          Pick how you want to play. You&apos;ll get a random secret rule (or pick one to practice).
+          Pick how you want to play. Draft your nerf and buffs as the game goes,
+          or switch to Classic for a buff-free game with a random secret rule.
         </p>
 
         <div className="mt-6">
@@ -144,6 +142,11 @@ export default function PlayPage() {
                 Draft mode: pick one of two nerfs at the start, then draft a buff every
                 few moves. Buffs grow stronger as the game goes on. Skip a draft to
                 bank a tier for the next one.
+              </p>
+            )}
+            {!draft && (
+              <p className="mt-2 text-[12px] text-parchment-300 leading-snug">
+                Classic: the buff-free variant. One secret rule each, no drafts.
               </p>
             )}
           </div>

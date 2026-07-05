@@ -14,10 +14,6 @@ import {
 type View = "setup" | "lobby" | "joining" | "game";
 
 const TIME_STEPS_SEC = [
-  5,
-  10,
-  15,
-  20,
   30,
   45,
   60,
@@ -36,10 +32,10 @@ export default function FriendPage() {
   const [joinCode, setJoinCode] = useState("");
   const [baseSec, setBaseSec] = useState(600);
   const [incrementSec, setIncrementSec] = useState(0);
-  // Ruleset: Classic (default) or Draft (buff drafts every few moves).
-  // Draft games are always casual, and the host chooses whether both seats
-  // can see each other's pending offer cards.
-  const [ruleset, setRuleset] = useState<"classic" | "draft">("classic");
+  // Ruleset: Draft (the standard mode, buff drafts every few moves) or
+  // Classic (the buff-free variant). Draft games are always casual, and the
+  // host chooses whether both seats can see each other's pending offer cards.
+  const [ruleset, setRuleset] = useState<"classic" | "draft">("draft");
   const [picksOpen, setPicksOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [start, setStart] = useState<MPStart | null>(null);
@@ -111,6 +107,7 @@ export default function FriendPage() {
           setError("That challenge no longer points to the player who sent it.");
           sess.destroy();
           if (sessionRef.current === sess) sessionRef.current = null;
+          expectedChallengeHostRef.current = null;
           clearSavedFriendSession();
           setView("setup");
           return;
@@ -143,17 +140,36 @@ export default function FriendPage() {
     }
     const saved = loadSavedFriendSession();
     if (!saved) return;
-    const sess = new MPSession();
-    sessionRef.current = sess;
-    wireSession(sess);
     setCode(saved.id);
     setView("joining");
-    sess.resume(saved).catch(() => {
-      if (sessionRef.current !== sess) return;
-      clearSavedFriendSession();
-      sessionRef.current = null;
-      setView("setup");
-    });
+    let cancelled = false;
+    const resumeSaved = async () => {
+      // A finished game must never re-capture this page: if the saved game
+      // is already archived, drop the stale session and show the setup form.
+      try {
+        const res = await fetch(`/api/games/${encodeURIComponent(saved.id)}`);
+        if (cancelled) return;
+        if (res.ok) {
+          clearSavedFriendSession();
+          setView("setup");
+          return;
+        }
+      } catch {}
+      if (cancelled || sessionRef.current) return;
+      const sess = new MPSession();
+      sessionRef.current = sess;
+      wireSession(sess);
+      sess.resume(saved).catch(() => {
+        if (sessionRef.current !== sess) return;
+        clearSavedFriendSession();
+        sessionRef.current = null;
+        setView("setup");
+      });
+    };
+    void resumeSaved();
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -164,11 +180,12 @@ export default function FriendPage() {
     sessionRef.current = sess;
     wireSession(sess);
     try {
-      const c = await sess.host(
-        baseSec,
-        incrementSec,
-        ruleset === "draft" ? { draft: true, picksVisible: picksOpen } : undefined,
-      );
+      const c = await sess.host(baseSec, incrementSec, {
+        ...(ruleset === "draft" ? { draft: true, picksVisible: picksOpen } : {}),
+        // Direct challenge: the server reserves the opponent seat for them,
+        // so a lobby stranger can never take it first.
+        ...(challenging ? { invite: challenging } : {}),
+      });
       if (sessionRef.current !== sess) return;
       setCode(c);
       setView("lobby");
@@ -182,6 +199,7 @@ export default function FriendPage() {
   const joinWithCode = async (trimmed: string) => {
     setError(null);
     clearSavedFriendSession();
+    expectedChallengeHostRef.current = null;
     if (!trimmed) {
       setError("Enter a code.");
       return;
@@ -197,6 +215,7 @@ export default function FriendPage() {
         if (sessionRef.current === sess) {
           sess.destroy();
           sessionRef.current = null;
+          expectedChallengeHostRef.current = null;
           setView("setup");
         }
         return;
@@ -204,7 +223,12 @@ export default function FriendPage() {
       await sess.join(trimmed);
       // The game starts on receipt of the server `start` frame.
     } catch (e) {
+      // Join refused (host left, seat taken, bad code): drop the session and
+      // all challenge expectations so the setup form starts clean.
       if (sessionRef.current !== sess) return;
+      sess.destroy();
+      sessionRef.current = null;
+      expectedChallengeHostRef.current = null;
       setError((e instanceof Error ? e.message : String(e)) || "Failed to connect. Check the code.");
       setView("setup");
     }
@@ -217,6 +241,7 @@ export default function FriendPage() {
     clearSavedFriendSession();
     sessionRef.current?.destroy();
     sessionRef.current = null;
+    expectedChallengeHostRef.current = null;
     setStart(null);
     setView("setup");
     setCode("");
@@ -294,7 +319,7 @@ export default function FriendPage() {
         <p className="mt-3 text-parchment-200">
           {challenging
             ? `Pick a time control and create the game. ${challenging} gets a notification and the game starts when they accept.`
-            : "Create a game and share the code, or join one with a code your friend sent you. Both players get a random secret rule."}
+            : "Create a game and share the code, or join one with a code your friend sent you. Both players get a random secret rule and draft buffs as the game goes; Classic is the buff-free variant."}
         </p>
 
         {error && (
@@ -350,6 +375,11 @@ export default function FriendPage() {
                   choosing between. Draft games are always casual.
                 </p>
               </div>
+            )}
+            {ruleset === "classic" && (
+              <p className="mt-2 text-[11px] leading-snug text-parchment-400">
+                Classic: the buff-free variant. One secret rule each, no drafts.
+              </p>
             )}
           </div>
 

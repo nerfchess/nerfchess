@@ -63,6 +63,11 @@ interface Props {
   // The checked king's square, tinted red when the check-highlight setting is
   // on (pages pass null/undefined when disabled or not in check).
   checkSquare?: Square | null;
+  // Buff targeting mode: while set, the board is a square picker. Candidate
+  // squares glow and clicking one calls onPickSquare; every other pointer
+  // interaction (moves, selection, premoves) is suspended.
+  pickSquares?: number[];
+  onPickSquare?: (sq: Square) => void;
 }
 
 function riskOf(moves: Move[], moveRisks: Map<string, MoveRisk> | undefined): MoveRisk {
@@ -242,7 +247,11 @@ export function Board({
   highlightLastMove = true,
   showLegalMoves = true,
   checkSquare = null,
+  pickSquares,
+  onPickSquare,
 }: Props) {
+  const pickSquareSet = useMemo(() => new Set(pickSquares ?? []), [pickSquares]);
+  const pickingSquares = !!onPickSquare;
   const premoveSquares = useMemo(() => {
     const s = new Set<Square>();
     for (const pm of premoves ?? []) {
@@ -432,6 +441,12 @@ export function Board({
     if (e.button !== undefined && e.button !== 0) return;
     setRightClickMarks((marks) => (Object.keys(marks).length ? {} : marks));
     setArrows((current) => (current.length ? [] : current));
+    // Targeting mode swallows the pointer entirely: a candidate square picks,
+    // anything else is a no-op (Escape or the cancel chip exits the mode).
+    if (pickingSquares) {
+      if (pickSquareSet.has(sq)) onPickSquare?.(sq);
+      return;
+    }
     if (disabled) return;
     if (tryPlay(sq)) return;
     const piece = board.pieces[sq];
@@ -650,6 +665,7 @@ export function Board({
             const isHover = hoverSq === sq && drag != null;
             const isDragging = drag?.from === sq;
             const isForced = highlightSquares.has(sq);
+            const isPickTarget = pickingSquares && pickSquareSet.has(sq);
             const isPremoveSquare = premoveSquares.has(sq);
             const rightClickMark = rightClickMarks[sq];
 
@@ -671,7 +687,15 @@ export function Board({
                 onContextMenu={handleSquareContextMenu}
                 onPointerDown={(e) => handleSquarePointerDown(e, sq)}
                 className={classes}
-                style={{ cursor: piece && piece.color === myColor && !disabled ? "grab" : "default" }}
+                style={{
+                  cursor: pickingSquares
+                    ? isPickTarget
+                      ? "pointer"
+                      : "default"
+                    : piece && piece.color === myColor && !disabled
+                    ? "grab"
+                    : "default",
+                }}
                 role="gridcell"
                 aria-label={`square ${"abcdefgh"[f]}${r + 1}`}
               >
@@ -703,6 +727,9 @@ export function Board({
                 )}
                 {isForced && !isDragging && (
                   <div className="absolute inset-0 pointer-events-none rounded-sm ring-2 ring-inset ring-gold-leaf/80 shadow-[inset_0_0_24px_-4px_rgba(230,191,106,0.55)] animate-flicker" />
+                )}
+                {isPickTarget && (
+                  <div className="absolute inset-0 pointer-events-none rounded-sm bg-gold/15 ring-2 ring-inset ring-gold-leaf/90 animate-flicker" />
                 )}
                 {fogHide ? (
                   <div className="absolute inset-0 bg-gradient-to-br from-stone-700/85 to-stone-900/95 backdrop-blur-sm pointer-events-none" />

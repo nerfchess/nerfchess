@@ -1,4 +1,4 @@
-import type { BuffMatchState } from "@/engine/buff";
+import type { BuffInstance, BuffMatchState } from "@/engine/buff";
 import { moveToUCI } from "@/engine/board";
 import {
   NerfGame,
@@ -12,7 +12,24 @@ import {
 } from "@/engine/game";
 import type { Nerf, Tier } from "@/engine/nerf";
 import type { Color, Move } from "@/engine/types";
-import type { MPDraftAction, MPDraftState } from "@/lib/multiplayer";
+import type { MPDraftAction, MPDraftCard, MPDraftState, MPHiddenCard } from "@/lib/multiplayer";
+
+// A masked card in the local replica: a BuffInstance-shaped placeholder with
+// an empty id. Every engine hook looks defs up by id and skips unknown ones,
+// so placeholders are inert; the dock renders them face-down (tier only).
+export function isHiddenBuff(inst: BuffInstance | MPHiddenCard): inst is MPHiddenCard {
+  return "hidden" in inst && inst.hidden === true;
+}
+
+export function hiddenPlaceholder(card: MPHiddenCard): BuffInstance {
+  return {
+    id: "",
+    tier: card.tier as Tier,
+    state: {},
+    ...(card.spent ? { spent: true } : {}),
+    ...(card.nullified ? { nullified: true } : {}),
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Client-side replica of a server-authoritative Draft game.
@@ -30,17 +47,38 @@ export function applyDraftAction(game: NerfGame, action: MPDraftAction) {
   if (!bs) return;
   const ps = bs.players[action.color];
   if (action.a === "pick") {
-    // Mirror pickDraftCard without needing the (possibly hidden) offer: the
-    // acquired cards are public, and acquireBuff runs the same init and
-    // instant effects the server ran.
+    // Mirror pickDraftCard without needing the (possibly hidden) offer:
+    // revealed cards run acquireBuff (the same init and instant effects the
+    // server ran); masked cards land as inert face-down placeholders so the
+    // buff-list indices stay aligned with the server's.
     ps.offer = null;
     if ((ps.flags.takeBoth ?? 0) > 0) ps.flags.takeBoth = (ps.flags.takeBoth ?? 0) - 1;
-    for (const card of action.cards) acquireBuff(game, action.color, card.id, card.tier as Tier);
+    for (const card of action.cards) {
+      if (isHiddenCard(card)) {
+        if ((ps.flags.nullifyIncoming ?? 0) > 0 && card.nullified) {
+          ps.flags.nullifyIncoming = (ps.flags.nullifyIncoming ?? 0) - 1;
+        }
+        ps.buffs.push(hiddenPlaceholder(card));
+      } else {
+        acquireBuff(game, action.color, card.id, card.tier as Tier);
+      }
+    }
   } else if (action.a === "bank") {
     bankDraft(game, action.color);
   } else {
+    // A use names the fired card: fill in a previously masked slot so the
+    // engine can apply the real effect.
+    const inst = ps.buffs[action.buffIndex];
+    if (inst && !inst.id && action.card) {
+      inst.id = action.card.id;
+      inst.tier = action.card.tier as Tier;
+    }
     activateBuff(game, action.color, action.buffIndex, action.picks);
   }
+}
+
+function isHiddenCard(card: MPDraftCard | MPHiddenCard): card is MPHiddenCard {
+  return "hidden" in card && card.hidden === true;
 }
 
 /** A server-accepted move applied to a replica. Placeholder offer rolls and
@@ -81,7 +119,7 @@ export function mergeDraftState(bs: BuffMatchState, state: MPDraftState, myColor
     const ps = bs.players[color];
     const ws = state.players[color];
     if (!ws) continue;
-    ps.buffs = ws.buffs;
+    ps.buffs = ws.buffs.map((b) => (isHiddenBuff(b) ? hiddenPlaceholder(b) : b));
     ps.draftsTaken = ws.draftsTaken;
     ps.nextDraftAt = ws.nextDraftAt;
     ps.offer = ws.offer ?? null;
@@ -91,6 +129,30 @@ export function mergeDraftState(bs: BuffMatchState, state: MPDraftState, myColor
     }
     if (ws.nerfRemoved) ps.nerfRemoved = true;
     if (ws.revived) ps.revived = ws.revived as typeof ps.revived;
+  }
+}
+
+/** Game over: the end frame carries every held buff with its real identity
+ * (the draft analogue of both nerfs going public). Swap the replica's lists,
+ * masked placeholders included, for the revealed record. */
+export function revealHeldBuffs(
+  bs: BuffMatchState,
+  draftBuffs: Record<Color, { id: string; tier: number; spent?: boolean; nullified?: boolean }[]>,
+) {
+  for (const color of ["w", "b"] as Color[]) {
+    const revealed = draftBuffs[color];
+    if (!revealed) continue;
+    bs.players[color].buffs = revealed.map((b, i) => {
+      const existing = bs.players[color].buffs[i];
+      if (existing && existing.id === b.id) return existing;
+      return {
+        id: b.id,
+        tier: b.tier as Tier,
+        state: {},
+        ...(b.spent ? { spent: true } : {}),
+        ...(b.nullified ? { nullified: true } : {}),
+      };
+    });
   }
 }
 

@@ -12,7 +12,7 @@ import {
   newBuffMatchState,
 } from "./buff";
 import { BUFF_BY_ID } from "./buffs/library";
-import { DEFAULT_CADENCE, bankOffer, rollOffer } from "./draft";
+import { DEFAULT_CADENCE, bankOffer, rollOffer, rollSharedTiers } from "./draft";
 import { Nerf, NerfState, GameContext, Tier } from "./nerf";
 import { RNG } from "./rng";
 import { BoardState, Color, FILE, Move, PieceType, RANK, SQ, Square } from "./types";
@@ -419,16 +419,28 @@ export function playMove(game: NerfGame, move: Move): NerfGame {
       game.board.epTarget = null;
       bs.chainKingGuard = move.color;
     }
-    // Buff draft cadence: the mover's own move count reaching the threshold
-    // rolls a fresh offer (unless a draft-block effect eats it).
-    const ps = bs.players[move.color];
-    const ownMoves = game.board.history.filter((m) => m.color === move.color).length;
-    if (!ps.offer && ownMoves >= ps.nextDraftAt) {
-      ps.nextDraftAt += bs.cadence;
-      if ((ps.flags.blockedDrafts ?? 0) > 0) {
-        ps.flags.blockedDrafts = (ps.flags.blockedDrafts ?? 0) - 1;
-      } else {
-        rollOffer(bs, move.color);
+    // Buff draft cadence: both players draft at the same time. The shared
+    // trigger runs on total plies (a full round is two plies), so neither
+    // side ever runs a draft ahead of the other. White rolls first for a
+    // stable RNG stream; draft-block effects eat offers individually.
+    if (bs.nextDraftAtPly == null) {
+      // Saved games from the per-player cadence era resume on the earlier
+      // of the two old thresholds.
+      bs.nextDraftAtPly = Math.min(bs.players.w.nextDraftAt, bs.players.b.nextDraftAt) * 2;
+    }
+    if (game.board.history.length >= bs.nextDraftAtPly) {
+      bs.nextDraftAtPly += bs.cadence * 2;
+      // One shared tier roll per round: both offers use the same pair.
+      const tiers = rollSharedTiers(bs);
+      for (const color of ["w", "b"] as Color[]) {
+        const ps = bs.players[color];
+        ps.nextDraftAt += bs.cadence;
+        if (ps.offer) continue;
+        if ((ps.flags.blockedDrafts ?? 0) > 0) {
+          ps.flags.blockedDrafts = (ps.flags.blockedDrafts ?? 0) - 1;
+        } else {
+          rollOffer(bs, color, tiers);
+        }
       }
     }
   }
@@ -550,8 +562,60 @@ export function activateBuff(
   if (!inst || !def || def.kind !== "activated" || inst.spent || inst.nullified) return false;
   def.effect?.(inst, makeBuffApi(game, color), picks);
   if (def.spendOnUse !== false) inst.spent = true;
+  // Any activated use can reshape the board, so the activator cannot capture
+  // the king until the opponent has replied (same guard as chained moves).
+  bs.chainKingGuard = color;
   settleAfterBuff(game);
+  // Using a buff consumes the turn unless the card is a free action (the
+  // extra-move family, which already acts within the activator's turn).
+  if (!game.result && !def.freeAction && game.board.turn === color) {
+    passTurnAfterBuff(game, color);
+  }
   return true;
+}
+
+/** A buff use that costs the turn runs the same handover bookkeeping
+ * playMove does after a regular move: tick the activator's effect timers,
+ * hand the move over (extra moves and pending skips still absorb it), start
+ * the new mover's turn, and apply the forced-pass / no-move rules. */
+function passTurnAfterBuff(game: NerfGame, color: Color) {
+  const bs = game.buffs!;
+  for (const e of bs.effects) {
+    if (e.turns != null && effectTickColor(e) === color) e.turns -= 1;
+  }
+  bs.effects = bs.effects.filter((e) => e.turns == null || e.turns > 0);
+  const opp: Color = color === "w" ? "b" : "w";
+  if (bs.extraMoves[color] > 0) {
+    bs.extraMoves[color] -= 1;
+  } else if (bs.skips[opp] > 0) {
+    bs.skips[opp] -= 1;
+  } else {
+    game.board.turn = opp;
+  }
+  game.board.epTarget = null;
+  applyTurnStart(game);
+  if (legalMoves(game).length === 0) {
+    if (generateMoves(game.board).length > 0) {
+      // Forced pass, exactly like playMove: locked down purely by buff
+      // effects is not a loss.
+      const stuck = game.board.turn;
+      for (const e of bs.effects) {
+        if (e.turns != null && effectTickColor(e) === stuck) e.turns -= 1;
+      }
+      bs.effects = bs.effects.filter((e) => e.turns == null || e.turns > 0);
+      game.board.turn = stuck === "w" ? "b" : "w";
+      game.board.epTarget = null;
+      applyTurnStart(game);
+      if (legalMoves(game).length === 0) {
+        game.result = { winner: "draw", reason: "mutual paralysis" };
+      }
+      return;
+    }
+    game.result = {
+      winner: game.board.turn === "w" ? "b" : "w",
+      reason: "no legal moves",
+    };
+  }
 }
 
 /** After a buff mutates the board, re-run loss checks (a removal or freeze can

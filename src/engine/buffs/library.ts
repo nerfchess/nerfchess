@@ -29,6 +29,7 @@ import {
   markRevived,
   mySquares,
   oppFilter,
+  pawnRankOk,
   permanentAugment,
   phasingSlideMoves,
   pieceBound,
@@ -179,9 +180,9 @@ function autoRevive(specs: PieceType[]): Mech {
     );
     for (const type of specs) {
       if (revivable(api, type) <= 0) continue;
-      const sq = spots.shift();
-      if (sq == null) return;
-      api.place(sq, type, api.me);
+      const at = spots.findIndex((sq) => type !== "p" || pawnRankOk(sq));
+      if (at < 0) return;
+      api.place(spots.splice(at, 1)[0], type, api.me);
       markRevived(api, type);
     }
   });
@@ -998,7 +999,7 @@ const TIER3: Buff[] = [
     ),
   ),
   def(
-    { id: "time_skip", name: "Time Skip", description: "Force your opponent to skip their next turn, once.", tier: 3, category: "tempo" },
+    { id: "time_skip", name: "Time Skip", description: "Your opponent skips their next turn. Takes effect immediately when picked.", tier: 3, category: "tempo" },
     skipOpponent(1),
   ),
   def(
@@ -1472,23 +1473,14 @@ const TIER4: Buff[] = [
     }),
   ),
   def(
-    { id: "mirror", name: "Mirror", description: "Copy one buff your opponent currently holds.", tier: 4, category: "draft" },
-    activated(
-      (_inst, api, picks) => {
-        if (picks.length > 0) return null;
-        const options = api.theirs.buffs
-          .map((b, index) => ({ b, index }))
-          .filter(({ b }) => !b.spent && !b.nullified)
-          .map(({ b, index }) => ({ index, name: b.id, tier: b.tier }));
-        return { kind: "enemy-buff", label: "Choose a buff to copy", options };
-      },
-      (_inst, api, picks) => {
-        const i = picks[0]?.buffIndex;
-        if (i == null || !api.theirs.buffs[i]) return;
-        const src = api.theirs.buffs[i];
-        api.mine.buffs.push({ id: src.id, tier: src.tier, state: JSON.parse(JSON.stringify(src.state)) });
-      },
-    ),
+    { id: "mirror", name: "Mirror", description: "Copy one random unspent buff your opponent holds.", tier: 4, category: "draft" },
+    // Opponent buffs are hidden, so the copy is random rather than chosen.
+    activatedSimple((_inst, api) => {
+      const options = api.theirs.buffs.filter((b) => !b.spent && !b.nullified);
+      if (options.length === 0) return;
+      const src = options[api.rng.int(options.length)];
+      api.mine.buffs.push({ id: src.id, tier: src.tier, state: JSON.parse(JSON.stringify(src.state)) });
+    }),
   ),
   def(
     { id: "warp_field", name: "Warp Field", description: "Move any two of your pieces one square each ignoring rules, once.", tier: 4, category: "movement" },
@@ -1974,12 +1966,14 @@ const TIER5: Buff[] = [
           : {
               kind: "square",
               label: `Place a rampart pawn (${picks.length + 1}/3)`,
-              squares: emptySquares(api.board, (sq) => inHalf(api.me, sq)).filter(
+              squares: emptySquares(api.board, (sq) => inHalf(api.me, sq) && pawnRankOk(sq)).filter(
                 (sq) => !picks.some((k) => k.square === sq),
               ),
             },
       (_inst, api, picks) => {
-        const squares = picks.map((k) => k.square).filter((s): s is Square => s != null);
+        const squares = picks
+          .map((k) => k.square)
+          .filter((s): s is Square => s != null && pawnRankOk(s));
         for (const sq of squares) api.place(sq, "p", api.me);
         if (squares.length) addEffect(api, { kind: "shield", owner: api.me, squares, turns: null });
       },
@@ -2586,8 +2580,10 @@ const TIER8: Buff[] = [
         (a, b) => relRank(api.me, a) - relRank(api.me, b),
       );
       for (const type of ["q", "r", "b", "n", "p"] as PieceType[]) {
-        while (revivable(api, type) > 0 && spots.length > 0) {
-          api.place(spots.shift()!, type, api.me);
+        while (revivable(api, type) > 0) {
+          const at = spots.findIndex((sq) => type !== "p" || pawnRankOk(sq));
+          if (at < 0) break;
+          api.place(spots.splice(at, 1)[0], type, api.me);
           markRevived(api, type);
         }
       }

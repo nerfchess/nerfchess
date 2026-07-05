@@ -4,8 +4,8 @@ Date: 2026-07-04. Implemented on branch claude/draft-multiplayer-protocol (stack
 
 ## Wire frames
 
-Client: dtPick { index }, dtBank, dtUse { buffIndex, picks }, dtTarget { buffIndex, picks }.
-Server: dtOffer (drafting seat only, plus opponent under picksVisible), dtResolved (public, broadcast + spectators), dtUsed (public, broadcast + spectators), dtState (per-seat filtered, never spectators), dtTargetReq (reply to dtTarget). start/wstart/end gained additive draft fields (draft, picksVisible, dtActions, dtState, draftBuffs).
+Client: dtPick { index }, dtBank, dtUse { buffIndex, picks }, dtTarget { buffIndex, picks }, dtNerfPick { index } (opening nerf draft; index 0 or 1 into the server-dealt options).
+Server: dtOffer (drafting seat only, plus opponent under picksVisible), dtResolved (public, broadcast + spectators), dtUsed (public, broadcast + spectators), dtState (per-seat filtered, never spectators), dtTargetReq (reply to dtTarget), dtNerfPicked { color } (both seats, progress only). start/wstart/end gained additive draft fields (draft, picksVisible, dtActions, dtState, draftBuffs); start also carries nerfDraft { options, myPick, oppPicked } while the opening nerf draft is unresolved.
 
 ## Key decisions
 
@@ -22,7 +22,10 @@ Server: dtOffer (drafting seat only, plus opponent under picksVisible), dtResolv
 
 - games table has no ruleset column; archived draft games replay as plain move lists (may diverge after buff board mutations). Needs a schema workstream: ruleset marker + persisted action log.
 - server/index.ts (standalone Node server) stays classic-only.
-- The engine's start-of-game nerf draft screen (pick 1 of 2 nerfs) remains bot-only; online draft games use the standard random nerf assignment.
 - GameOver does not yet render end.draftBuffs.
+
+## Opening nerf draft (added later the same day)
+
+Online Draft games now open with the same pick-1-of-2 nerf draft as bot games. When the second seat arrives, the worker deals two options per seat (all four distinct, dealt from the match seed RNG so restarts re-deal the same cards; each seat's pair shares a tier and the two seats' tiers sit within one of each other, mirroring pickNerfPair). The match stays un-started until both dtNerfPick frames land: clocks off, moves and buff frames rejected with nerf_pending, the code not joinable and not listed as a lobby challenge. Options are public to both seats; picks stay hidden under the usual reveal rules (picksVisible matches set match.revealed for both colors at finalize, so both rules are open from move one). Spectators and wstart never carry options or picks.
 
 Related: [[2026-07-04-draft-system-audit]]

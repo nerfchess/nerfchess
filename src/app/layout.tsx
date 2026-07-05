@@ -1,7 +1,18 @@
 import type { Metadata, Viewport } from "next";
+import { Noto_Sans } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
 import { SettingsBootstrap } from "@/components/SettingsBootstrap";
 import "./globals.css";
+
+// Body text is Noto Sans, the same UI font Lichess ships. next/font self-hosts
+// it at build time and exposes it as --font-body, which globals.css and the
+// Tailwind font-body family already read. Headings keep Inter (see below).
+const notoSans = Noto_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+  variable: "--font-body",
+});
 
 export const metadata: Metadata = {
   title: "Nerf Chess · chess with secret rules",
@@ -26,8 +37,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <head>
-        {/* Inter across the whole UI, Lichess-style. Loading at runtime keeps
-            the Cloudflare build free of a font-fetch step. */}
+        {/* Inter stays as the display face for headings (--font-display).
+            Body text is Noto Sans, wired up via next/font above. */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
@@ -35,7 +46,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           rel="stylesheet"
         />
       </head>
-      <body className="no-tap-highlight font-body">
+      <body className={`no-tap-highlight font-body ${notoSans.variable}`}>
         <SettingsBootstrap />
         {children}
         <Analytics />

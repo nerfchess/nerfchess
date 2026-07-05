@@ -28,9 +28,10 @@ import {
   playMove,
   resign,
 } from "@/engine/game";
-import { BuffDock } from "@/components/BuffDock";
+import { BuffDock, EnemyBuffModal, TargetingBanner, useBuffTargeting } from "@/components/BuffDock";
 import { MobileBuffDrawer } from "@/components/MobileBuffDrawer";
-import { DraftOverlay } from "@/components/DraftOverlay";
+import { DraftNotice } from "@/components/DraftNotice";
+import { DraftOverlay, LockInCountdown } from "@/components/DraftOverlay";
 import { NerfCard } from "@/components/NerfCard";
 import { makeSeed } from "@/engine/rng";
 import { BoardState, Color, Move } from "@/engine/types";
@@ -57,15 +58,27 @@ function pickRandomNerf(): Nerf {
   return playable[Math.floor(Math.random() * playable.length)];
 }
 
-/** Deal `count` distinct random nerfs for a draft. */
-function dealNerfOptions(count: number, exclude: Set<string>): Nerf[] {
+/** Deal the opening nerf draft: four distinct nerfs as two same-tier pairs
+ * (options 0-1 and 2-3), with the two pairs' tiers within one of each other
+ * (the fairness rule pickNerfPair uses for classic matchmaking). */
+function dealNerfOptions(exclude: Set<string>): Nerf[] {
   const pool = PLAYABLE_NERFS.filter((d) => d.id !== "lucky" && !exclude.has(d.id));
-  const out: Nerf[] = [];
-  while (out.length < count && pool.length > 0) {
-    const i = Math.floor(Math.random() * pool.length);
-    out.push(pool.splice(i, 1)[0]);
-  }
-  return out;
+  // Anchor on a random nerf whose tier still holds a partner, so tiers are
+  // weighted by how many nerfs they contain (the pickNerfPair convention).
+  const dealPair = (candidates: Nerf[]): Nerf[] => {
+    const anchors = candidates.filter((d) =>
+      candidates.some((o) => o.tier === d.tier && o.id !== d.id),
+    );
+    const first = anchors[Math.floor(Math.random() * anchors.length)];
+    const partners = candidates.filter((o) => o.tier === first.tier && o.id !== first.id);
+    return [first, partners[Math.floor(Math.random() * partners.length)]];
+  };
+  const pairA = dealPair(pool);
+  const rest = pool.filter((d) => !pairA.includes(d));
+  const pairB = dealPair(rest.filter((d) => Math.abs(d.tier - pairA[0].tier) <= 1));
+  // Randomize which side gets the anchor pair so tier-edge deals (1 and 8)
+  // don't always land on the same player.
+  return Math.random() < 0.5 ? [...pairA, ...pairB] : [...pairB, ...pairA];
 }
 
 const BOT_ELO: Record<AILevel, number> = {
@@ -137,6 +150,12 @@ function GamePage() {
   // Draft mode's opening nerf draft: both players see two nerf cards and pick
   // one. The game object isn't created until the player commits.
   const [nerfDraft, setNerfDraft] = useState<{ myOptions: Nerf[]; aiOptions: Nerf[] } | null>(null);
+  // Lock-in deadlines (15s), mirroring the online rules: the nerf pick and
+  // every buff offer auto-resolve when the timer runs out, and the game
+  // clock is paused while an offer is open.
+  const [nerfDeadline, setNerfDeadline] = useState<number | null>(null);
+  const [offerDeadline, setOfferDeadline] = useState<number | null>(null);
+  const [offerPausedAt, setOfferPausedAt] = useState<number | null>(null);
   const [, force] = useState(0);
   const [muted, setMutedState] = useState(false);
   const [premoves, setPremoves] = useState<QueuedPremove[]>([]);
@@ -175,9 +194,12 @@ function GamePage() {
     (color: Color) => {
       const base = color === "w" ? whiteMs : blackMs;
       if (!clockEnabled || !game || game.result || game.board.turn !== color) return base;
-      return Math.max(0, base - (Date.now() - turnStartedAtRef.current));
+      // Clock paused for a buff lock-in window: freeze the drain at the
+      // moment the offer opened (turnStartedAtRef is shifted on resolve).
+      const until = offerPausedAt ?? Date.now();
+      return Math.max(0, base - Math.max(0, until - turnStartedAtRef.current));
     },
-    [blackMs, clockEnabled, game, whiteMs]
+    [blackMs, clockEnabled, game, whiteMs, offerPausedAt]
   );
 
   // Bank the mover's clock at the moment their move is committed: subtract
@@ -240,9 +262,11 @@ function GamePage() {
     }
 
     if (draftMode) {
-      // Deal both players' nerf options; the game starts when the player picks.
-      const dealt = dealNerfOptions(4, new Set());
+      // Deal both players' nerf options; the game starts when the player
+      // picks, or when the 15s lock-in window auto-picks the first option.
+      const dealt = dealNerfOptions(new Set());
       setNerfDraft({ myOptions: dealt.slice(0, 2), aiOptions: dealt.slice(2, 4) });
+      setNerfDeadline(Date.now() + 15_000);
       return;
     }
 
@@ -286,6 +310,7 @@ function GamePage() {
     // Visible-picks setting: the opponent's nerf choice is open from move one.
     if (picksVisible) g.buffs!.players[myColor].oppNerfRevealed = true;
     setNerfDraft(null);
+    setNerfDeadline(null);
     setHistoryPly(null);
     setGame(g);
   };
@@ -299,6 +324,21 @@ function GamePage() {
       setGame({ ...game });
     }
   }, [game, myColor]);
+
+  // Lock-in window and clock pause for my buff offers: a fresh offer arms
+  // the 15s deadline and freezes the clock; resolving it shifts the turn
+  // start forward by the paused span so the pick cost no time.
+  useEffect(() => {
+    const offer = game?.buffs?.players[myColor].offer ?? null;
+    if (offer && offerPausedAt == null) {
+      setOfferPausedAt(Date.now());
+      setOfferDeadline(Date.now() + 15_000);
+    } else if (!offer && offerPausedAt != null) {
+      turnStartedAtRef.current += Date.now() - Math.max(offerPausedAt, turnStartedAtRef.current);
+      setOfferPausedAt(null);
+      setOfferDeadline(null);
+    }
+  }, [game, myColor, offerPausedAt]);
 
   useEffect(() => {
     if (!game) return;
@@ -328,6 +368,13 @@ function GamePage() {
 
   useEffect(() => {
     if (!game || historyPly == null) return;
+    // A buff mutated the board outside move history (summon, removal,
+    // teleport): replay can no longer reproduce the position, so snap any
+    // in-progress review back to the live board.
+    if (game.buffs?.historyDiverged) {
+      setHistoryPly(null);
+      return;
+    }
     if (historyPly > game.board.history.length) {
       setHistoryPly(game.board.history.length);
     }
@@ -536,6 +583,8 @@ function GamePage() {
   // whole game view every clock tick. ClockPill handles the visual countdown.
   useEffect(() => {
     if (!clockEnabled || !game || game.result) return;
+    // Clock paused for a buff lock-in window: no flag can fall due.
+    if (offerPausedAt != null) return;
     const active = game.board.turn;
     const remaining = remainingClock(active);
     if (remaining <= 0) {
@@ -575,6 +624,13 @@ function GamePage() {
         if (aiActivateBuffs(game, botColor)) {
           setGame({ ...game });
           if (game.result) {
+            aiThinking.current = false;
+            return;
+          }
+          // Buff use consumes the turn unless the card was a free action:
+          // bank the bot's clock and hand the move back to the player.
+          if (game.board.turn !== botColor) {
+            commitClock(botColor);
             aiThinking.current = false;
             return;
           }
@@ -702,12 +758,19 @@ function GamePage() {
   }, [game?.board.history.length, game?.board.turn, game?.result, myColor, difficulty]);
 
   const reviewBoard = useMemo(() => {
-    if (!game || historyPly == null) return null;
+    if (!game || historyPly == null || game.buffs?.historyDiverged) return null;
     return boardAtPly(game.board.history, historyPly);
   }, [game, historyPly]);
   const currentHistoryPly = historyPly ?? game?.board.history.length ?? 0;
   const isReviewingHistory = historyPly != null;
   const handleHistoryPlyChange = (ply: number) => {
+    // Once a buff has mutated the board outside history, stepping is
+    // disabled: arrow keys and move-list clicks stay clamped to the live
+    // board instead of replaying a history that can't be reproduced.
+    if (game?.buffs?.historyDiverged) {
+      setHistoryPly(null);
+      return;
+    }
     const max = game?.board.history.length ?? 0;
     if (ply >= max) {
       setHistoryPly(null);
@@ -716,6 +779,26 @@ function GamePage() {
       setPremoves([]);
     }
   };
+
+  // Activated buffs target on the real board: candidate squares highlight on
+  // the live position and clicking one advances the pick chain. Enemy-buff
+  // targets fall back to the modal list.
+  const buffTargeting = useBuffTargeting({
+    game,
+    myColor,
+    active:
+      !!game?.buffs &&
+      !game.result &&
+      game.board.turn === myColor &&
+      !game.buffs.players[myColor].offer &&
+      historyPly == null,
+    onChanged: () => {
+      if (!game) return;
+      // A buff use can consume the turn: bank my clock like a move.
+      if (game.board.turn !== myColor) commitClock(myColor);
+      setGame({ ...game });
+    },
+  });
 
   if (!game) {
     if (draftMode && nerfDraft) {
@@ -730,6 +813,15 @@ function GamePage() {
               Every game opens weak: pick one of two nerfs, then draft buffs every few
               moves to claw your way back to power.
             </p>
+            {nerfDeadline != null && (
+              <div className="mx-auto mt-4 max-w-sm">
+                {/* Lock-in window: the first option is picked automatically. */}
+                <LockInCountdown
+                  deadline={nerfDeadline}
+                  onExpire={() => startDraftGame(nerfDraft.myOptions[0])}
+                />
+              </div>
+            )}
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
               {nerfDraft.myOptions.map((n) => (
                 <button key={n.id} onClick={() => startDraftGame(n)} className="text-left transition hover:-translate-y-1">
@@ -902,6 +994,8 @@ function GamePage() {
     setMutedState(next);
   };
 
+  const reviewLocked = !!game.buffs?.historyDiverged;
+
   const historyActions = game.result ? null : confirmMovePending ? (
     <div className="space-y-2">
       <div className="smallcaps text-[10px] text-parchment-300">Play this move?</div>
@@ -983,6 +1077,18 @@ function GamePage() {
     </div>
   );
 
+  const moveListFooter =
+    reviewLocked || historyActions ? (
+      <div className="space-y-2">
+        {reviewLocked && (
+          <p className="text-[10px] leading-snug text-parchment-400">
+            Review is unavailable: a buff changed the board outside the move list.
+          </p>
+        )}
+        {historyActions}
+      </div>
+    ) : null;
+
   return (
     <main className="flex h-dvh min-h-0 flex-col overflow-hidden">
       <nav className="sticky top-0 z-20 flex w-full shrink-0 items-center justify-between px-5 py-3">
@@ -1049,7 +1155,7 @@ function GamePage() {
           className="grid min-h-0 flex-1 gap-y-2 lg:grid-cols-[280px_auto] lg:justify-center lg:gap-x-3"
           style={railHeightStyle}
         >
-          <aside className="hidden min-h-0 gap-3 overflow-hidden lg:grid lg:h-[var(--board-height)] lg:grid-rows-[auto_minmax(0,1fr)_auto] lg:self-start">
+          <aside className="hidden min-h-0 gap-3 overflow-hidden lg:grid lg:h-[var(--board-height)] lg:grid-rows-[auto_minmax(8rem,1fr)_auto] lg:self-start">
             <PlayerNerfCard
               board={boardForDisplay}
               playerColor={myColor === "w" ? "b" : "w"}
@@ -1059,6 +1165,7 @@ function GamePage() {
               nerf={opponentNerf}
               revealed={oppRevealed}
               ownerLabel=""
+              compact
               action={
                 !oppRevealed && !uiSettings.hideOpponentReveal ? (
                   <button
@@ -1077,7 +1184,8 @@ function GamePage() {
                 canAct={
                   !game.result && game.board.turn === myColor && !myOffer && !isReviewingHistory
                 }
-                onChanged={() => setGame({ ...game })}
+                onStartUse={buffTargeting.start}
+                hideOpponentCards={!picksVisible}
               />
             ) : (
               <div className="hidden lg:block" />
@@ -1090,6 +1198,7 @@ function GamePage() {
               elo={playerElo}
               nerf={myNerf}
               ownerLabel=""
+              compact
               progress={myNerf.progress?.(myState, myCtx) ?? null}
               action={
                 <button
@@ -1122,16 +1231,16 @@ function GamePage() {
                 {clockEnabled && (
                   <ClockPill
                     ms={myColor === "w" ? blackMs : whiteMs}
-                    active={!game.result && game.board.turn !== myColor}
+                    active={!game.result && offerPausedAt == null && game.board.turn !== myColor}
                     compact
                   />
                 )}
               </div>
-              <div data-board-measure className={`mx-auto sm:mx-0 ${boardFitClass}`}>
+              <div data-board-measure className={`relative mx-auto sm:mx-0 ${boardFitClass}`}>
                 <Board
                   board={boardForDisplay}
                   legalMoves={
-                    isReviewingHistory
+                    isReviewingHistory || buffTargeting.targeting
                       ? []
                       : game.board.turn === myColor && !premovePending
                       ? moves
@@ -1163,7 +1272,32 @@ function GamePage() {
                   highlightLastMove={uiSettings.highlightLastMove}
                   showLegalMoves={uiSettings.showLegalMoves}
                   checkSquare={isReviewingHistory ? null : checkSquare}
+                  pickSquares={
+                    buffTargeting.targeting?.target.kind === "square"
+                      ? buffTargeting.targeting.target.squares
+                      : undefined
+                  }
+                  onPickSquare={
+                    buffTargeting.targeting?.target.kind === "square"
+                      ? (sq) => buffTargeting.pick({ square: sq })
+                      : undefined
+                  }
                 />
+                {bsTheirs && (
+                  <DraftNotice
+                    buffs={bsTheirs.buffs}
+                    banked={!!bsTheirs.flags.bankBonus}
+                    hidden={!picksVisible}
+                  />
+                )}
+                {buffTargeting.targeting && buffTargeting.targeting.target.kind === "square" && (
+                  <TargetingBanner
+                    game={game}
+                    myColor={myColor}
+                    targeting={buffTargeting.targeting}
+                    onCancel={buffTargeting.cancel}
+                  />
+                )}
               </div>
               <div className="flex items-center justify-between gap-2 sm:hidden">
                 <BoardPlayerRow
@@ -1177,7 +1311,7 @@ function GamePage() {
                 {clockEnabled && (
                   <ClockPill
                     ms={myColor === "w" ? whiteMs : blackMs}
-                    active={!game.result && game.board.turn === myColor}
+                    active={!game.result && offerPausedAt == null && game.board.turn === myColor}
                     compact
                   />
                 )}
@@ -1212,7 +1346,7 @@ function GamePage() {
               {clockEnabled && (
                 <ClockPill
                   ms={myColor === "w" ? blackMs : whiteMs}
-                  active={!game.result && game.board.turn !== myColor}
+                  active={!game.result && offerPausedAt == null && game.board.turn !== myColor}
                 />
               )}
               <MoveList
@@ -1221,12 +1355,12 @@ function GamePage() {
                 onPlyChange={handleHistoryPlyChange}
                 compact
                 showHeader={false}
-                footer={historyActions}
+                footer={moveListFooter}
               />
               {clockEnabled && (
                 <ClockPill
                   ms={myColor === "w" ? whiteMs : blackMs}
-                  active={!game.result && game.board.turn === myColor}
+                  active={!game.result && offerPausedAt == null && game.board.turn === myColor}
                 />
               )}
             </div>
@@ -1238,7 +1372,7 @@ function GamePage() {
         moves={game.board.history}
         currentPly={currentHistoryPly}
         onPlyChange={handleHistoryPlyChange}
-        footer={historyActions}
+        footer={moveListFooter}
       />
 
       {game.buffs && (
@@ -1252,14 +1386,26 @@ function GamePage() {
                   return def?.kind === "activated" && !inst.spent && !inst.nullified;
                 }).length
           }
+          autoCloseWhen={!!buffTargeting.targeting}
         >
           <BuffDock
             game={game}
             myColor={myColor}
             canAct={!game.result && game.board.turn === myColor && !myOffer && !isReviewingHistory}
-            onChanged={() => setGame({ ...game })}
+            onStartUse={buffTargeting.start}
+            hideOpponentCards={!picksVisible}
           />
         </MobileBuffDrawer>
+      )}
+
+      {buffTargeting.targeting && buffTargeting.targeting.target.kind === "enemy-buff" && (
+        <EnemyBuffModal
+          game={game}
+          myColor={myColor}
+          targeting={buffTargeting.targeting}
+          onPick={buffTargeting.pick}
+          onCancel={buffTargeting.cancel}
+        />
       )}
 
       {myOffer && !game.result && (
@@ -1267,6 +1413,15 @@ function GamePage() {
           offer={myOffer}
           takeBoth={(bsMine?.flags.takeBoth ?? 0) > 0}
           bankedBonus={!!myOffer.banked}
+          deadline={offerDeadline}
+          onExpire={() => {
+            // Mirror the server's auto-resolve rule: take the first card,
+            // unless a pending nullify would kill any pick (then bank).
+            if (!game.buffs?.players[myColor].offer) return;
+            if ((bsMine?.flags.nullifyIncoming ?? 0) > 0) bankDraft(game, myColor);
+            else pickDraftCard(game, myColor, 0);
+            setGame({ ...game });
+          }}
           onPick={(i) => {
             pickDraftCard(game, myColor, i);
             setGame({ ...game });
@@ -1280,12 +1435,14 @@ function GamePage() {
             showCards: picksVisible || !!bsMine?.flags.seeOppCards,
             showTier: !!bsMine?.flags.seeOppTier,
             reveal: bsMine?.oppReveal ?? null,
-            lastPick: bsTheirs?.buffs.length
-              ? {
-                  id: bsTheirs.buffs[bsTheirs.buffs.length - 1].id,
-                  tier: bsTheirs.buffs[bsTheirs.buffs.length - 1].tier,
-                }
-              : null,
+            // Hidden model: never name the bot's held cards in the overlay.
+            lastPick:
+              picksVisible && bsTheirs?.buffs.length
+                ? {
+                    id: bsTheirs.buffs[bsTheirs.buffs.length - 1].id,
+                    tier: bsTheirs.buffs[bsTheirs.buffs.length - 1].tier,
+                  }
+                : null,
           }}
         />
       )}
@@ -1310,13 +1467,14 @@ function GamePage() {
           ratingChange={ratingChange}
           onRematch={handleRematch}
           onNewGame={handleRematch}
-          onReview={() => setHistoryPly(0)}
+          onReview={() => handleHistoryPlyChange(0)}
           moves={game.board.history}
           playerNames={{
             w: myColor === "w" ? "You" : `${difficulty[0].toUpperCase()}${difficulty.slice(1)} Bot`,
             b: myColor === "b" ? "You" : `${difficulty[0].toUpperCase()}${difficulty.slice(1)} Bot`,
           }}
           startedAt={game.startedAt}
+          myBuffs={game.buffs?.players[myColor].buffs}
         />
       )}
       <SettingsPanel

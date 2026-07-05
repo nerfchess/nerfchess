@@ -56,6 +56,11 @@ export function relRank(color: Color, sq: Square): number {
   return color === "w" ? RANK(sq) + 1 : 8 - RANK(sq);
 }
 
+/** Pawns may never stand on rank 1 or rank 8, whichever side owns them. */
+export function pawnRankOk(sq: Square): boolean {
+  return RANK(sq) >= 1 && RANK(sq) <= 6;
+}
+
 function moveFor(
   board: BoardState,
   from: Square,
@@ -349,12 +354,16 @@ export function placePieces(
             kind: "square",
             label: `Place your new ${names[specs[picks.length]]}`,
             squares: emptySquares(api.board, zone(api)).filter(
-              (sq) => !picks.some((k) => k.square === sq),
+              (sq) =>
+                (specs[picks.length] !== "p" || pawnRankOk(sq)) &&
+                !picks.some((k) => k.square === sq),
             ),
           },
     (_inst, api, picks) => {
       picks.forEach((k, i) => {
-        if (k.square != null) api.place(k.square, specs[i], api.me);
+        if (k.square != null && (specs[i] !== "p" || pawnRankOk(k.square))) {
+          api.place(k.square, specs[i], api.me);
+        }
       });
     },
   );
@@ -374,16 +383,22 @@ export function reviveOne(types: PieceType[], zone: (api: BuffApi) => (sq: Squar
   return activated(
     (_inst, api, picks) => {
       if (picks.length > 0) return null;
-      const available = types.some((t) => revivable(api, t) > 0);
+      const type = types.find((t) => revivable(api, t) > 0);
       return {
         kind: "square",
         label: "Choose where the revived piece returns",
-        squares: available ? emptySquares(api.board, zone(api)) : [],
+        squares:
+          type == null
+            ? []
+            : emptySquares(api.board, zone(api)).filter(
+                (sq) => type !== "p" || pawnRankOk(sq),
+              ),
       };
     },
     (_inst, api, picks) => {
       const type = types.find((t) => revivable(api, t) > 0);
       if (type == null || picks[0]?.square == null) return;
+      if (type === "p" && !pawnRankOk(picks[0].square)) return;
       api.place(picks[0].square, type, api.me);
       markRevived(api, type);
     },
@@ -397,11 +412,16 @@ export function skipOpponent(n: number): Mech {
   });
 }
 
-/** Activated (no target): take `n` extra moves starting now. */
+/** Activated (no target): take `n` extra moves starting now. Free action:
+ * the card grants moves within the activator's turn, so using it does not
+ * also cost that turn. */
 export function extraMovesNow(n: number): Mech {
-  return activatedSimple((_inst, api) => {
-    api.bs.extraMoves[api.me] += n;
-  });
+  return {
+    ...activatedSimple((_inst, api) => {
+      api.bs.extraMoves[api.me] += n;
+    }),
+    freeAction: true,
+  };
 }
 
 /** Instant: freeze all enemy non-king pieces for `turns` of their turns. */

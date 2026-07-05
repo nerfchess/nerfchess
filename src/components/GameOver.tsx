@@ -5,6 +5,8 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { GameResult } from "@/engine/game";
 import { Color, Move } from "@/engine/types";
 import { Nerf } from "@/engine/nerf";
+import { BuffInstance } from "@/engine/buff";
+import { BUFF_BY_ID } from "@/engine/buffs/library";
 import { gameToPGN } from "@/lib/pgn";
 import { playGameOver } from "@/lib/sounds";
 import { ThumbsDown, ThumbsUp } from "lucide-react";
@@ -35,6 +37,43 @@ interface Props {
   onDismiss?: () => void;
   // Server game id, attached to rule feedback votes.
   gameId?: string;
+  // Draft games: the buffs I held during the game, offered for balance votes.
+  myBuffs?: BuffInstance[];
+}
+
+// The shared compact thumbs pair. One vote per item; re-clicking replaces it
+// (optimistically here, INSERT OR REPLACE server side).
+function VoteThumbs({ vote, onVote }: { vote: 1 | -1 | null; onVote: (value: 1 | -1) => void }) {
+  return (
+    <span className="flex gap-1">
+      <button
+        type="button"
+        aria-label="Thumbs up"
+        onClick={() => onVote(1)}
+        className={
+          "grid h-7 w-7 place-items-center border transition " +
+          (vote === 1
+            ? "border-verdigris/60 bg-verdigris/20 text-verdigris-glow"
+            : "border-white/15 text-parchment-300 hover:border-verdigris/50 hover:text-verdigris-glow")
+        }
+      >
+        <ThumbsUp size={13} />
+      </button>
+      <button
+        type="button"
+        aria-label="Thumbs down"
+        onClick={() => onVote(-1)}
+        className={
+          "grid h-7 w-7 place-items-center border transition " +
+          (vote === -1
+            ? "border-oxblood-glow/60 bg-oxblood/20 text-oxblood-glow"
+            : "border-white/15 text-parchment-300 hover:border-oxblood-glow/50 hover:text-oxblood-glow")
+        }
+      >
+        <ThumbsDown size={13} />
+      </button>
+    </span>
+  );
 }
 
 // One-tap verdict on the rule you were dealt; lands in the moderators' rule
@@ -58,35 +97,45 @@ function RuleFeedback({ nerfId, gameId }: { nerfId: string; gameId?: string }) {
       <span className="text-[11px] text-parchment-400">
         {vote ? "Thanks for the feedback" : "Like this rule?"}
       </span>
-      <span className="flex gap-1">
-        <button
-          type="button"
-          aria-label="Thumbs up"
-          onClick={() => cast(1)}
-          className={
-            "grid h-7 w-7 place-items-center border transition " +
-            (vote === 1
-              ? "border-verdigris/60 bg-verdigris/20 text-verdigris-glow"
-              : "border-white/15 text-parchment-300 hover:border-verdigris/50 hover:text-verdigris-glow")
-          }
-        >
-          <ThumbsUp size={13} />
-        </button>
-        <button
-          type="button"
-          aria-label="Thumbs down"
-          onClick={() => cast(-1)}
-          className={
-            "grid h-7 w-7 place-items-center border transition " +
-            (vote === -1
-              ? "border-oxblood-glow/60 bg-oxblood/20 text-oxblood-glow"
-              : "border-white/15 text-parchment-300 hover:border-oxblood-glow/50 hover:text-oxblood-glow")
-          }
-        >
-          <ThumbsDown size={13} />
-        </button>
-      </span>
+      <VoteThumbs vote={vote} onVote={cast} />
     </div>
+  );
+}
+
+// Same one-tap verdict for a buff drafted during the game; lands in the
+// moderators' buff feedback queue.
+function BuffFeedbackRow({ buff, gameId }: { buff: BuffInstance; gameId?: string }) {
+  const def = BUFF_BY_ID[buff.id];
+  const [vote, setVote] = useState<1 | -1 | null>(null);
+
+  const cast = async (value: 1 | -1) => {
+    setVote(value);
+    try {
+      await fetch("/api/buff-feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ buffId: buff.id, vote: value, ...(gameId ? { gameId } : {}) }),
+      });
+    } catch {}
+  };
+
+  if (!def) return null;
+  return (
+    <li className="flex items-center justify-between gap-2 py-1">
+      <span className="flex min-w-0 items-center gap-2">
+        <span
+          className={`shrink-0 border px-1 font-display text-[10px] font-bold tier-bg-${buff.tier} tier-${buff.tier}`}
+          title={`Tier ${buff.tier}: ${TIER_LABEL[buff.tier]}`}
+          aria-hidden
+        >
+          {TIER_ROMAN[buff.tier]}
+        </span>
+        <span className="min-w-0 truncate text-xs text-parchment-200" title={def.description}>
+          {def.name}
+        </span>
+      </span>
+      <VoteThumbs vote={vote} onVote={cast} />
+    </li>
   );
 }
 
@@ -123,6 +172,11 @@ function splitReason(reason: string) {
   };
 }
 
+// The game-over chime fires once per finished game, not once per mount:
+// dismissing and reopening the result screen, or a reconnect replaying the
+// end frame, remounts this component and must stay silent.
+const playedGameOverKeys = new Set<string>();
+
 export function GameOver({
   result,
   myColor,
@@ -139,6 +193,7 @@ export function GameOver({
   startedAt,
   onDismiss,
   gameId,
+  myBuffs,
 }: Props) {
   const [dismissed, setDismissed] = useState(false);
   const dismiss = useCallback(() => {
@@ -168,6 +223,16 @@ export function GameOver({
     : "border-oxblood-glow/50 bg-oxblood/15 text-oxblood-glow";
   const { nerfName, cause } = useMemo(() => splitReason(result.reason), [result.reason]);
   const ratingDelta = ratingChange ? Math.round(ratingChange.after - ratingChange.before) : 0;
+  // One feedback row per buff id, even if copies were drafted (Mirror etc.);
+  // the server keys votes per player per buff anyway.
+  const ratableBuffs = useMemo(() => {
+    const seen = new Set<string>();
+    return (myBuffs ?? []).filter((b) => {
+      if (seen.has(b.id) || !BUFF_BY_ID[b.id]) return false;
+      seen.add(b.id);
+      return true;
+    });
+  }, [myBuffs]);
 
   // Share copies a short text summary of the game (result plus both rules) to
   // the clipboard. It works client side today; a hosted replay link can be
@@ -225,7 +290,14 @@ export function GameOver({
   };
 
   useEffect(() => {
+    const key = gameId ?? (startedAt != null ? `local:${startedAt}` : null);
+    if (key) {
+      if (playedGameOverKeys.has(key)) return;
+      playedGameOverKeys.add(key);
+    }
     playGameOver();
+    // Mount-only by design: the key identifies the game, not a render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -337,6 +409,20 @@ export function GameOver({
                   </span>
                 </button>
               ))}
+          </div>
+        )}
+
+        {ratableBuffs.length > 0 && (
+          <div className="mt-2 border border-white/10 bg-white/[0.02] p-3 text-left">
+            <div className="flex items-baseline justify-between gap-2">
+              <span className="smallcaps text-[9px] text-parchment-400">Was it balanced?</span>
+              <span className="text-[11px] text-parchment-400">Rate the buffs you drafted</span>
+            </div>
+            <ul className="mt-1 max-h-40 divide-y divide-white/5 overflow-y-auto">
+              {ratableBuffs.map((buff) => (
+                <BuffFeedbackRow key={buff.id} buff={buff} gameId={gameId} />
+              ))}
+            </ul>
           </div>
         )}
 
