@@ -462,11 +462,31 @@ function GamePage() {
     const shell = boardShellRef.current;
     const boardEl = shell?.querySelector("[data-board-measure]");
     if (!boardEl) return;
+    let raf = 0;
     const syncHeight = () => setBoardHeight(boardEl.getBoundingClientRect().height);
+    // Defer a frame before re-measuring: on fullscreen / orientation / viewport
+    // changes the board's dvh/vw-based size settles a tick after the event
+    // fires, so measuring immediately would cache a stale height and leave the
+    // side rails clipped or misaligned.
+    const syncDeferred = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(syncHeight);
+    };
     syncHeight();
     const observer = new ResizeObserver(syncHeight);
     observer.observe(boardEl);
-    return () => observer.disconnect();
+    window.addEventListener("resize", syncDeferred);
+    window.addEventListener("orientationchange", syncDeferred);
+    document.addEventListener("fullscreenchange", syncDeferred);
+    window.visualViewport?.addEventListener("resize", syncDeferred);
+    return () => {
+      cancelAnimationFrame(raf);
+      observer.disconnect();
+      window.removeEventListener("resize", syncDeferred);
+      window.removeEventListener("orientationchange", syncDeferred);
+      document.removeEventListener("fullscreenchange", syncDeferred);
+      window.visualViewport?.removeEventListener("resize", syncDeferred);
+    };
   }, [game]);
 
   // Build a "virtual" board that reflects the current actual board with every
