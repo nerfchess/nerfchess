@@ -45,7 +45,7 @@ const FAQS = [
   {
     question: "Are Draft games rated?",
     answer:
-      "Not yet. Ratings only move in Classic games while Draft is being balanced; a separate Draft rating may come later.",
+      "Not yet. All games are Draft and unrated for now while the mode is balanced; a separate Draft rating may come later.",
   },
   {
     question: "Can I play a friend?",

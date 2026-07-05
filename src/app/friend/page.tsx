@@ -32,10 +32,9 @@ export default function FriendPage() {
   const [joinCode, setJoinCode] = useState("");
   const [baseSec, setBaseSec] = useState(600);
   const [incrementSec, setIncrementSec] = useState(0);
-  // Ruleset: Draft (the standard mode, buff drafts every few moves) or
-  // Classic (the buff-free variant). Draft games are always casual, and the
-  // host chooses whether both seats can see each other's pending offer cards.
-  const [ruleset, setRuleset] = useState<"classic" | "draft">("draft");
+  // Friend games always run the Draft ruleset (buff drafts every few moves)
+  // and are always casual. The host chooses whether both seats can see each
+  // other's pending offer cards.
   const [picksOpen, setPicksOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [start, setStart] = useState<MPStart | null>(null);
@@ -181,7 +180,8 @@ export default function FriendPage() {
     wireSession(sess);
     try {
       const c = await sess.host(baseSec, incrementSec, {
-        ...(ruleset === "draft" ? { draft: true, picksVisible: picksOpen } : {}),
+        draft: true,
+        picksVisible: picksOpen,
         // Direct challenge: the server reserves the opponent seat for them,
         // so a lobby stranger can never take it first.
         ...(challenging ? { invite: challenging } : {}),
@@ -319,7 +319,7 @@ export default function FriendPage() {
         <p className="mt-3 text-parchment-200">
           {challenging
             ? `Pick a time control and create the game. ${challenging} gets a notification and the game starts when they accept.`
-            : "Create a game and share the code, or join one with a code your friend sent you. Both players get a random secret rule and draft buffs as the game goes; Classic is the buff-free variant."}
+            : "Create a game and share the code, or join one with a code your friend sent you. Both players pick a nerf at the start and draft buffs as the game goes."}
         </p>
 
         {error && (
@@ -349,38 +349,20 @@ export default function FriendPage() {
           </div>
 
           <div>
-            <div className="smallcaps text-[11px] text-parchment-400 mb-2">Ruleset</div>
+            <div className="smallcaps text-[11px] text-parchment-400 mb-2">Opponent picks</div>
             <div className="grid grid-cols-2 gap-2">
-              <OptionButton selected={ruleset === "classic"} onClick={() => setRuleset("classic")}>
-                Classic
+              <OptionButton selected={!picksOpen} onClick={() => setPicksOpen(false)}>
+                Hidden
               </OptionButton>
-              <OptionButton selected={ruleset === "draft"} onClick={() => setRuleset("draft")}>
-                Draft
+              <OptionButton selected={picksOpen} onClick={() => setPicksOpen(true)}>
+                Visible
               </OptionButton>
             </div>
-            {ruleset === "draft" && (
-              <div className="mt-3">
-                <div className="smallcaps text-[11px] text-parchment-400 mb-2">Opponent picks</div>
-                <div className="grid grid-cols-2 gap-2">
-                  <OptionButton selected={!picksOpen} onClick={() => setPicksOpen(false)}>
-                    Hidden
-                  </OptionButton>
-                  <OptionButton selected={picksOpen} onClick={() => setPicksOpen(true)}>
-                    Visible
-                  </OptionButton>
-                </div>
-                <p className="mt-2 text-[11px] leading-snug text-parchment-400">
-                  Every few moves each player drafts a buff. Held buffs are always public;
-                  this setting controls whether you also see the cards your opponent is
-                  choosing between. Draft games are always casual.
-                </p>
-              </div>
-            )}
-            {ruleset === "classic" && (
-              <p className="mt-2 text-[11px] leading-snug text-parchment-400">
-                Classic: the buff-free variant. One secret rule each, no drafts.
-              </p>
-            )}
+            <p className="mt-2 text-[11px] leading-snug text-parchment-400">
+              Every few moves each player drafts a buff. Held buffs are always public;
+              this setting controls whether you also see the cards your opponent is
+              choosing between. Draft games are always casual.
+            </p>
           </div>
 
           <button

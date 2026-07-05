@@ -22,8 +22,9 @@ const QUEUE_POOL_OPTIONS: { pool: string; label: string; speed: RatingCategoryId
 
 const LAST_POOL_KEY = "dc:last-pool";
 
-// Rated quick-pairing entry point. Signed-in players pick a time control and
-// are sent to the game URL when paired; signed-out visitors get a sign-in link.
+// Quick-pairing entry point for casual Draft games. Signed-in players pick a
+// time control and are sent to the game URL when paired; signed-out visitors
+// get a sign-in link.
 export function QueueButton() {
   const router = useRouter();
   const [user, setUser] = useState<AccountUser | null | undefined>(undefined);
@@ -93,7 +94,7 @@ export function QueueButton() {
         <div>
           <div className="font-display text-2xl text-parchment">Play online</div>
           <p className="mt-1 text-sm text-parchment-300">
-            Rated games against a real opponent. Both of you get a secret rule.
+            Draft games against a real opponent. Casual for now while Draft is balanced.
           </p>
           {user && (
             <p className="mt-1 text-xs text-parchment-400">
@@ -110,7 +111,7 @@ export function QueueButton() {
               href="/login?next=/play"
               className="inline-block px-6 py-3 rounded-full btn-leaf font-display text-base"
             >
-              Sign in to play rated
+              Sign in to play online
             </Link>
           ) : state === "searching" ? (
             <div className="flex items-center gap-3">

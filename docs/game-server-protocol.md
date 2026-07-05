@@ -30,7 +30,7 @@ References:
 | `drawOffer` / `drawAccept` / `drawDecline` | none | Draw negotiation. |
 | `takebackOffer` / `takebackAccept` / `takebackDecline` | none | Takeback negotiation (casual games only; rated games reject with `takeback_rated`). Accepting rewinds the offerer's last move, plus the reply if one was already played. |
 | `rematch` | none | Offer (or accept a pending) rematch once the game is over. |
-| `queue` | `{ "pool": "3+2" }` | Join the rated quick-pairing pool (signed-in sockets only). |
+| `queue` | `{ "pool": "3+2" }` | Join the quick-pairing pool (signed-in sockets only; paired games are casual Draft games). |
 | `queueCancel` | none | Leave the pairing pool. |
 | `chat` | `{ "text": "gg" }` | Send an in-game chat message (profanity is censored and flagged). |
 | `dtPick` | `{ "index": 0 }` | Draft games: take a card from my pending buff offer. |
@@ -92,7 +92,8 @@ Friend games created with `draft: true` run the Draft ruleset (buff drafts on
 a move cadence, see `docs/draft-system.md`). Server rules:
 
 - Draft games are always casual. The server never rates a draft match,
-  whatever the client asks, and the quick-pairing queue never creates one.
+  whatever the client asks. The quick-pairing queue only creates Draft
+  matches, so queue games are casual too.
 - When the second seat arrives, the server deals the opening nerf draft
   instead of starting the game: two nerf options per seat, all four distinct,
   drawn from the match seed RNG. Each seat's two options share a tier and the

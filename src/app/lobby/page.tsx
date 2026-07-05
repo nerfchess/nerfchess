@@ -184,7 +184,7 @@ export default function LobbyPage() {
                     href="/friend"
                     className="smallcaps text-[10px] text-gold-leaf hover:text-gold transition-colors"
                   >
-                    Create game: Classic or Draft
+                    Create a Draft game
                   </Link>
                   <span className="smallcaps text-[10px] text-parchment-400">
                     {lobby ? `${waitingCount} waiting` : "…"}
@@ -195,7 +195,7 @@ export default function LobbyPage() {
                 <p className="mt-3 text-sm text-parchment-400">Loading challenges…</p>
               ) : waitingCount === 0 ? (
                 <p className="mt-3 text-sm text-parchment-400">
-                  No one is waiting right now. Queue for a rated game or create a friend game
+                  No one is waiting right now. Queue for a game or create a friend game
                   above and it will show up here until someone accepts.
                 </p>
               ) : (
@@ -293,7 +293,7 @@ export default function LobbyPage() {
                     <Link href="/login?next=/lobby" className="text-gold-leaf hover:underline">
                       Sign in
                     </Link>{" "}
-                    to appear here and play rated games.
+                    to appear here and join the queue.
                   </p>
                 )}
               </>
@@ -353,7 +353,7 @@ function SeekRow({
           {name}
         </div>
         <div className="mt-0.5 smallcaps text-[9px] text-parchment-400">
-          Rated · {clock} · {category.label}
+          Draft · {clock} · {category.label}
         </div>
       </div>
       {isMine ? (
