@@ -888,9 +888,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         if (active === myColor) {
           const seconds = Math.ceil(graceLeft / 1000);
           setGraceSecondsLeft((prev) => (prev === seconds ? prev : seconds));
-          // The countdown itself is visual only: a single soft tick as the
-          // free-time window closes, never a per-second beep series.
-          if (seconds === 1 && lastGraceBeepRef.current !== seconds) {
+          // No visible countdown: a soft tick at 3, 2, and 1 is the only
+          // signal that the free-time window is closing.
+          if (seconds <= 3 && lastGraceBeepRef.current !== seconds) {
             lastGraceBeepRef.current = seconds;
             playCountdownTick();
           }
@@ -1421,28 +1421,6 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
       </nav>
 
       <div className="mx-auto flex w-full max-w-[1280px] flex-1 min-h-0 flex-col gap-2 overflow-hidden px-3 pb-14 sm:px-6 sm:pb-6">
-        {graceSecondsLeft != null && (
-          <div
-            role="status"
-            aria-live="polite"
-            className={
-              "plate shrink-0 flex items-center gap-2 p-2 px-3 " +
-              (graceSecondsLeft <= 5 ? "border-oxblood-glow/60 bg-oxblood/15" : "border-gold/40 bg-gold/10")
-            }
-          >
-            <span
-              className={
-                "font-mono text-lg font-bold tabular-nums " +
-                (graceSecondsLeft <= 5 ? "text-oxblood-glow" : "text-gold-leaf")
-              }
-            >
-              {graceSecondsLeft}
-            </span>
-            <span className="font-display text-sm text-parchment">
-              Free time. Your clock starts when this hits zero.
-            </span>
-          </div>
-        )}
         {hint && (
           <div
             role="status"
@@ -1632,12 +1610,23 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   className="min-w-0 flex-1 !px-0 !py-1"
                 />
                 {clockEnabled && (
-                  <ClockPill
-                    ms={myColor === "w" ? whiteMs : blackMs}
-                    active={!game.result && !draftClockPaused && game.board.turn === myColor}
-                    startDelayMs={clockStartDelay(myColor)}
-                    compact
-                  />
+                  <div className="relative shrink-0">
+                    <ClockPill
+                      ms={myColor === "w" ? whiteMs : blackMs}
+                      active={!game.result && !draftClockPaused && game.board.turn === myColor}
+                      startDelayMs={clockStartDelay(myColor)}
+                      compact
+                    />
+                    {graceSecondsLeft != null && (
+                      <div
+                        role="status"
+                        aria-live="polite"
+                        className="pointer-events-none absolute right-0 top-full z-30 mt-1 animate-rise whitespace-nowrap border border-gold/40 bg-ink-700/95 px-2 py-1 shadow-plate backdrop-blur-sm smallcaps text-[10px] text-gold-leaf"
+                      >
+                        Free time
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
               <div className="plate mt-1 p-2 px-3 sm:hidden">
@@ -1688,11 +1677,25 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                 footer={historyActions}
               />
               {clockEnabled && (
-                <ClockPill
-                  ms={myColor === "w" ? whiteMs : blackMs}
-                  active={!game.result && !draftClockPaused && game.board.turn === myColor}
-                  startDelayMs={clockStartDelay(myColor)}
-                />
+                <div className="relative">
+                  <ClockPill
+                    ms={myColor === "w" ? whiteMs : blackMs}
+                    active={!game.result && !draftClockPaused && game.board.turn === myColor}
+                    startDelayMs={clockStartDelay(myColor)}
+                  />
+                  {/* Overlay, never in flow: the rail clips overflow and this
+                      clock sits on its bottom edge, so the popup hugs the top
+                      of the pill instead of hanging below it. */}
+                  {graceSecondsLeft != null && (
+                    <div
+                      role="status"
+                      aria-live="polite"
+                      className="pointer-events-none absolute bottom-full left-1/2 z-30 mb-1 -translate-x-1/2 animate-rise whitespace-nowrap border border-gold/40 bg-ink-700/95 px-2 py-1 shadow-plate backdrop-blur-sm smallcaps text-[10px] text-gold-leaf"
+                    >
+                      Free time
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           </div>
