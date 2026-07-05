@@ -16,6 +16,7 @@ interface LeaderboardRow {
   losses: number;
   draws: number;
   avatar: string | null;
+  flair: string | null;
   guest: number;
 }
 
@@ -34,7 +35,7 @@ export async function GET(request: Request) {
   const db = await getDb();
   const rows = await db
     .prepare(
-      `SELECT u.username, r.rating, r.rd, r.games, r.wins, r.losses, r.draws, u.avatar, u.is_guest AS guest
+      `SELECT u.username, r.rating, r.rd, r.games, r.wins, r.losses, r.draws, u.avatar, u.flair, u.is_guest AS guest
        FROM user_ratings r JOIN users u ON u.id = r.user_id
        WHERE r.category = ? AND r.games > 0
          AND (u.banned_until IS NULL OR u.banned_until <= ?)
@@ -70,6 +71,7 @@ export async function GET(request: Request) {
         me = {
           username: viewer.username,
           avatar: viewer.avatar,
+          flair: viewer.flair,
           guest: !!viewer.is_guest,
           rank: (better?.n ?? 0) + 1,
           ...mine,

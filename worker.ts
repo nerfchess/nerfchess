@@ -277,7 +277,7 @@ const houseNextFillerKey = "hp:nextFillerAt";
 // runs pure human traffic while the backend is being worked on. Flip back to
 // true to resume. This is intentionally a single obvious constant so it is easy
 // to toggle and revert.
-const HOUSE_ENABLED = false;
+const HOUSE_ENABLED = true;
 const houseHeartbeatMs = 20 * 1000;
 // The full-table maintenance sweep (GC of expired games, flag enforcement,
 // live-index rebuild) is the heaviest thing the alarm does. Bot moves wake the
@@ -285,9 +285,10 @@ const houseHeartbeatMs = 20 * 1000;
 // the single-threaded DO past its CPU limit. Run it at most this often; the
 // cheap indexed reschedule keeps the alarm chain alive in between.
 const maintenanceMinIntervalMs = 8 * 1000;
-// Queue presence: keep 2-3 personas seeking across the two pools.
-const houseSeekMin = 2;
-const houseSeekMax = 3;
+// Queue presence: keep 8-12 personas seeking across the two pools (raised for
+// the 50-persona roster / load test so the lobby shows a busy queue).
+const houseSeekMin = 8;
+const houseSeekMax = 12;
 const houseSeekTtlMs = 8 * 60 * 1000;
 // Hard caps: at most this many simultaneous house-vs-house filler games, and
 // at most this many unfinished games with any house seat at all. Above the
@@ -296,13 +297,14 @@ const houseSeekTtlMs = 8 * 60 * 1000;
 // optics and are pure background engine work on the single-threaded DO. One
 // filler still keeps the lobby looking alive while halving that background
 // load. Bump back to 2 if the lobby looks too quiet.
-// Emergency CPU relief (#174): no pure bot-vs-bot filler games (they exist only
-// for lobby optics and are pure engine work on the single-threaded DO), and a
-// low total house-game cap. Fewer house games means the per-move alarm fires
-// far less often, which is what was driving the Durable Object past its CPU
-// limit.
-const houseVsHouseCap = 0;
-const houseTotalGamesCap = 3;
+// LOAD TEST config: with the backend hardened, run a big fleet of house-vs-house
+// games to stress the single-threaded DO with the 50-persona roster. Up to 25
+// filler games is ~50 bots playing at once. The per-alarm action ceiling below
+// still bounds how many engine searches run per tick, so this raises the
+// standing game count without letting one tick run a long batch. Dial both
+// back down (e.g. 0 and 3) if the server strains under real traffic.
+const houseVsHouseCap = 25;
+const houseTotalGamesCap = 28;
 // Per-alarm ceiling on house engine actions (moves and draft resolves), across
 // all live house games. Human-facing actions used to ALL run in one tick, so
 // after any stall every overdue game became due at once and one alarm ran a

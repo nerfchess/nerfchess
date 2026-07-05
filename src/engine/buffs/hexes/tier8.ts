@@ -69,10 +69,10 @@ export const HEXES_T8: Buff[] = [
     {
       id: "absolute_zero",
       name: "Absolute Zero",
-      description: "Freeze all of your opponent's pieces except their king for 2 of their turns, so only their king may move.",
+      description: "Freeze all of your opponent's pieces except their king for 3 of their turns, so only their king may move.",
       flavor: "The board drops below freezing and everything but the crown locks solid.",
     },
-    freezeAllEnemies(2),
+    freezeAllEnemies(3),
   ),
 
   // --- petrify all: every minor piece, knights and bishops, for 3 turns ----
@@ -80,19 +80,19 @@ export const HEXES_T8: Buff[] = [
     {
       id: "petrified_forest",
       name: "Petrified Forest",
-      description: "Your opponent's knights and bishops turn to walnuts and cannot move for 3 of their turns.",
+      description: "Your opponent's knights and bishops turn to walnuts and cannot move for 5 of their turns.",
       flavor: "Every horse and prelate grown into ancient stone timber.",
     },
-    walnutAll(["n", "b"], 3),
+    walnutAll(["n", "b"], 5),
   ),
 
   // --- petrify one targeted piece (any non-king) for 6 turns --------------
   H(
     {
       id: "medusa_stare",
-      name: "Medusa's Stare",
+      name: "Basilisk's Stare",
       description: "Turn one enemy piece you target into a walnut so it cannot move for 6 of their turns. Kings cannot be targeted.",
-      flavor: "Meet her eyes once and you are a garden ornament.",
+      flavor: "Meet its eyes once and you are a garden ornament.",
     },
     walnutTarget(6),
   ),
@@ -157,7 +157,7 @@ export const HEXES_T8: Buff[] = [
     {
       id: "leaden_limbs",
       name: "Leaden Limbs",
-      description: "Your opponent may move each piece at most one square (Chebyshev distance) for their next 3 turns.",
+      description: "Your opponent may move each piece at most one square in any direction for their next 3 turns.",
       flavor: "Every limb turns to lead; a single shuffling step is all anyone manages.",
     },
     curse(3, (moves) =>

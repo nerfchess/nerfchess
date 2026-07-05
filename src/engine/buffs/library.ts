@@ -241,6 +241,7 @@ function swapOwnPieces(types?: PieceType[], pairs = 1): Mech {
         const pa = api.board.pieces[a];
         api.board.pieces[a] = api.board.pieces[b];
         api.board.pieces[b] = pa;
+        api.bs.historyDiverged = true;
       }
     },
   );
@@ -465,7 +466,7 @@ const TIER1: Buff[] = [
     augment((_m, inst, api) =>
       mySquares(api.board, api.me, "p").flatMap((sq) => {
         const back = sq - fwdOf(api.me);
-        return back >= 0 && back < 64 && !api.board.pieces[back]
+        return back >= 0 && back < 64 && !api.board.pieces[back] && pawnRankOk(back)
           ? [pawnMove(api, sq, back, inst.id)]
           : [];
       }),
@@ -528,6 +529,7 @@ const TIER1: Buff[] = [
         const pawn = api.board.pieces[pawnSq];
         api.board.pieces[pawnSq] = api.board.pieces[kingSq];
         api.board.pieces[kingSq] = pawn;
+        api.bs.historyDiverged = true;
       },
     ),
   ),
@@ -621,14 +623,14 @@ const TIER1: Buff[] = [
               label: "Choose an enemy pawn to push back",
               squares: mySquares(api.board, api.opp, "p").filter((sq) => {
                 const back = sq + fwdOf(api.me);
-                return back >= 0 && back < 64 && !api.board.pieces[back];
+                return back >= 0 && back < 64 && !api.board.pieces[back] && pawnRankOk(back);
               }),
             },
       (_inst, api, picks) => {
         const sq = picks[0]?.square;
         if (sq == null) return;
         const back = sq + fwdOf(api.me);
-        if (!api.board.pieces[back]) api.relocate(sq, back);
+        if (!api.board.pieces[back] && pawnRankOk(back)) api.relocate(sq, back);
       },
     ),
   ),
@@ -1372,6 +1374,7 @@ const TIER3: Buff[] = [
         const rook = api.board.pieces[rookSq];
         api.board.pieces[rookSq] = api.board.pieces[kingSq];
         api.board.pieces[kingSq] = rook;
+        api.bs.historyDiverged = true;
       },
     ),
   ),
@@ -2241,7 +2244,7 @@ const TIER6: Buff[] = [
     timedAugment(2, (_m, inst, api) =>
       mySquares(api.board, api.me, "p").flatMap((sq) => {
         const back = sq - fwdOf(api.me);
-        return back >= 0 && back < 64 && !api.board.pieces[back]
+        return back >= 0 && back < 64 && !api.board.pieces[back] && pawnRankOk(back)
           ? [pawnMove(api, sq, back, inst.id)]
           : [];
       }),
@@ -3014,7 +3017,12 @@ const TIER8: Buff[] = [
       },
       onMovePlayed: (inst, move, api) => {
         if (!inst.state.active || move.color !== api.me) return;
-        if (move.captured) inst.spent = true;
+        const count = ((inst.state.count as number) ?? 0) + 1;
+        inst.state.count = count;
+        // End on a capture, or after a bounded run of quiet moves so an
+        // unreachable capture (e.g. only a lone enemy king left) cannot grant
+        // extra moves forever and hang the turn.
+        if (move.captured || count >= 16) inst.spent = true;
         else api.bs.extraMoves[api.me] += 1;
       },
       status: (inst) => (inst.state.active ? "moving until you capture" : null),
