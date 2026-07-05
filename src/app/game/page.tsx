@@ -1435,6 +1435,7 @@ function GamePage() {
                   <ClockPill
                     ms={myColor === "w" ? whiteMs : blackMs}
                     active={!game.result && offerPausedAt == null && game.board.turn === myColor}
+                    warnLowTime={uiSettings.lowTimeWarning}
                     compact
                   />
                 )}
@@ -1486,6 +1487,7 @@ function GamePage() {
                 <ClockPill
                   ms={myColor === "w" ? whiteMs : blackMs}
                   active={!game.result && offerPausedAt == null && game.board.turn === myColor}
+                  warnLowTime={uiSettings.lowTimeWarning}
                 />
               )}
             </div>

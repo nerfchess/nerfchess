@@ -76,7 +76,7 @@ export default function HomePage() {
           <div className="mt-5 flex flex-col gap-3">
             <Link
               href="/lobby"
-              className="btn-leaf btn-cta w-full flex items-center justify-center gap-3 px-8 py-5 font-display text-xl sm:text-2xl font-semibold"
+              className="btn-leaf btn-cta w-full flex items-center justify-center gap-3 px-8 py-5 font-display text-xl sm:text-2xl font-semibold motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out motion-safe:hover:-translate-y-px motion-safe:active:scale-[0.98]"
             >
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
@@ -89,13 +89,13 @@ export default function HomePage() {
             <div className="grid grid-cols-2 gap-3">
               <Link
                 href="/friend"
-                className="btn-ghost flex items-center justify-center gap-2 px-4 py-3 font-display text-base font-medium"
+                className="btn-ghost flex items-center justify-center gap-2 px-4 py-3 font-display text-base font-medium motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out motion-safe:hover:-translate-y-px motion-safe:active:scale-[0.98]"
               >
                 Play a Friend
               </Link>
               <Link
                 href="/game?mode=ai"
-                className="btn-ghost flex items-center justify-center gap-2 px-4 py-3 font-display text-base font-medium"
+                className="btn-ghost flex items-center justify-center gap-2 px-4 py-3 font-display text-base font-medium motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out motion-safe:hover:-translate-y-px motion-safe:active:scale-[0.98]"
               >
                 Play vs Bot
               </Link>
