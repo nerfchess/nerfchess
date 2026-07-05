@@ -241,6 +241,13 @@ export const SCHEMA_STATEMENTS: string[] = [
     PRIMARY KEY (tournament_id, user_id)
   )`,
   `CREATE INDEX IF NOT EXISTS idx_tournament_entries_user ON tournament_entries(user_id, joined_at DESC)`,
+  // Failed sign-in counters for brute-force throttling (see lib/server/auth.ts).
+  // Keys are "u:<username_lower>" or "ip:<client ip>".
+  `CREATE TABLE IF NOT EXISTS login_attempts (
+    key TEXT PRIMARY KEY,
+    count INTEGER NOT NULL DEFAULT 0,
+    first_at INTEGER NOT NULL
+  )`,
 ];
 
 // Columns added after launch. SQLite has no "ADD COLUMN IF NOT EXISTS", so
