@@ -53,7 +53,10 @@ export type ActiveEffect =
   | { kind: "king_safe"; owner: Color; turns: number | null }
   | { kind: "no_pawn_advance"; against: Color; turns: number }
   | { kind: "king_only"; against: Color; turns: number }
-  | { kind: "nerf_suspended"; owner: Color; turns: number | null };
+  | { kind: "nerf_suspended"; owner: Color; turns: number | null }
+  /** Purely visual: squares hit by Lightning Strike flash on the board until
+   * the opponent replies. No gameplay effect. */
+  | { kind: "strike"; squares: Square[]; owner: Color; turns: number };
 
 /** Which side's completed moves tick this effect's timer down. */
 export function effectTickColor(e: ActiveEffect): Color {
@@ -63,6 +66,7 @@ export function effectTickColor(e: ActiveEffect): Color {
       return e.owner;
     case "shield":
     case "king_safe":
+    case "strike":
       return e.owner === "w" ? "b" : "w";
     case "barred":
     case "no_pawn_advance":
@@ -86,6 +90,9 @@ export interface DraftFlags {
   nullifyIncoming?: number;
   /** Inflicted by the opponent: your next N drafts are skipped outright. */
   blockedDrafts?: number;
+  /** Inflicted by the opponent: your next N offers exclude draft-manipulation
+   * cards (Suppress). */
+  noDraftCards?: number;
   /** See the opponent's next offer's cards (Peek / Draft Insight). */
   seeOppCards?: boolean;
   /** See the tier of the opponent's next offer (Quick Glance). */

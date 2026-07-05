@@ -422,6 +422,7 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
               frozenSquares: zones.frozen,
               shieldedSquares: zones.shielded,
               wardSquares: zones.ward,
+              strikeSquares: zones.strike,
             }
           : undefined
       }

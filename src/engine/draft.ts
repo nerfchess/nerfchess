@@ -68,6 +68,9 @@ export function rollOffer(bs: BuffMatchState, color: Color, tiers: [Tier, Tier])
   ps.flags.bankBonus = undefined;
   const forced = ps.flags.forceTier;
   ps.flags.forceTier = undefined;
+  // Suppress: this offer carries no draft-manipulation cards.
+  const suppressed = (ps.flags.noDraftCards ?? 0) > 0;
+  if (suppressed) ps.flags.noDraftCards = (ps.flags.noDraftCards ?? 0) - 1;
 
   const cards: BuffOffer["cards"] = [];
   // Never offer a card the player already holds unspent.
@@ -78,14 +81,16 @@ export function rollOffer(bs: BuffMatchState, color: Color, tiers: [Tier, Tier])
     // A banked skip rolls exactly one tier above the shared roll (cap +1).
     const shared = tiers[Math.min(i, tiers.length - 1)];
     const tier = forced ?? (Math.min(8, shared + bonus) as Tier);
-    let pool = BUFF_POOL_BY_TIER[tier].filter((b) => !used.has(b.id));
+    let pool = BUFF_POOL_BY_TIER[tier].filter(
+      (b) => !used.has(b.id) && (!suppressed || b.category !== "draft"),
+    );
     // A tier's pool can run dry (few implemented cards, prep = 3 picks);
     // fall back to adjacent tiers rather than offering duplicates.
     for (let spread = 1; pool.length === 0 && spread < 8; spread++) {
       pool = [
         ...(BUFF_POOL_BY_TIER[tier - spread] ?? []),
         ...(BUFF_POOL_BY_TIER[tier + spread] ?? []),
-      ].filter((b) => !used.has(b.id));
+      ].filter((b) => !used.has(b.id) && (!suppressed || b.category !== "draft"));
     }
     if (pool.length === 0) break;
     const card = pool[rng.int(pool.length)];
