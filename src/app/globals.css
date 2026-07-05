@@ -488,6 +488,36 @@ html[data-piece-source="lichess"] .piece-asset {
 
 .no-tap-highlight { -webkit-tap-highlight-color: transparent; }
 
+/* --- Skeleton placeholders (first-load shimmer) ---
+   Flat, square blocks tinted onto the ink surface. A single light sweep passes
+   across them; under prefers-reduced-motion the sweep is dropped and the block
+   holds as a static muted placeholder. */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.055);
+  border-radius: 0;
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.07) 50%,
+    transparent 100%
+  );
+  animation: skeleton-sweep 1.6s ease-in-out infinite;
+}
+@keyframes skeleton-sweep {
+  100% { transform: translateX(100%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after { animation: none; content: none; }
+}
+
 main, footer { position: relative; z-index: 2; }
 /* Navs/headers host dropdown menus and the settings modal. They must paint
    above .plate cards (z-index 2, later in the DOM) and the codex sticky
