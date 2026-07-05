@@ -375,16 +375,43 @@ export class GameServer extends DurableObject<Env> {
     return (await this.dbReady) ? this.env.DB : null;
   }
 
+  // Top-level fetch: a thin guard around handleFetch so a transient storage
+  // or accept throw returns a clean degraded response instead of rejecting at
+  // the RPC boundary and 503-ing every request into this Durable Object.
   async fetch(request: Request): Promise<Response> {
+    try {
+      return await this.handleFetch(request);
+    } catch (err) {
+      console.error("game server fetch failed", err);
+      let pathname = "";
+      try {
+        pathname = new URL(request.url).pathname;
+      } catch {}
+      if (pathname === "/healthz") {
+        return Response.json(
+          { ok: false, version: buildVersion, error: err instanceof Error ? `${err.name}: ${err.message}` : String(err) },
+          { status: 200 },
+        );
+      }
+      return new Response("game server unavailable", { status: 503 });
+    }
+  }
+
+  private async handleFetch(request: Request): Promise<Response> {
     const url = new URL(request.url);
 
     if (url.pathname === "/healthz") {
       // Read-only diagnostics plus a cheap alarm-chain revival. Never run
       // orchestration here: driving engine searches from a request handler
       // blows the per-request CPU limit (learned the hard way, see the
-      // retired system's history).
-      await this.reviveAlarmChain();
-      await this.cleanupExpired();
+      // retired system's history). Best-effort: a storage hiccup in the
+      // revival or cleanup must not stop /healthz from returning diagnostics.
+      try {
+        await this.reviveAlarmChain();
+        await this.cleanupExpired();
+      } catch (err) {
+        console.error("healthz maintenance failed", err);
+      }
 
       const matches = [...(await this.ctx.storage.list<StoredMatch>({ prefix: "match:" })).values()];
       const alarmAt = await this.ctx.storage.getAlarm();
@@ -449,7 +476,16 @@ export class GameServer extends DurableObject<Env> {
     const [client, server] = Object.values(pair);
     server.serializeAttachment(attachment);
     this.sessions.set(server, attachment);
-    this.ctx.acceptWebSocket(server);
+    try {
+      this.ctx.acceptWebSocket(server);
+    } catch (err) {
+      // The accept itself failed (hibernation limit, transient platform
+      // error). Drop the half-registered session and fail this one upgrade
+      // cleanly instead of throwing out of fetch and 503-ing the isolate.
+      this.sessions.delete(server);
+      console.error("acceptWebSocket failed", err);
+      return new Response("game server unavailable", { status: 503 });
+    }
 
     // A connecting human revives a wedged alarm chain so the house roster
     // (and clock enforcement) always comes back after a bad deploy or crash.
@@ -729,6 +765,21 @@ export class GameServer extends DurableObject<Env> {
     if (!match) return;
     match.disconnectedAt[session.color] = Date.now();
     match.opponentGoneNotified[session.color] = false;
+    // House game: pause the game clock when the human seat disconnects, so a
+    // disconnected human never flags while the bot waits for them (the clock
+    // resumes on reconnect). Bank the time run so far first, exactly like a
+    // draft-offer pause does. Bots have no socket, so only the human's
+    // departure triggers this; the bot itself never "disconnects".
+    if (
+      match.bots &&
+      !match.bots[session.color] &&
+      match.startedAt &&
+      !match.result &&
+      match.runningSince !== null
+    ) {
+      match.clocks = this.currentClocks(match, Date.now());
+      match.runningSince = null;
+    }
     await this.saveMatch(match);
   }
 
@@ -976,7 +1027,10 @@ export class GameServer extends DurableObject<Env> {
   // constant means the replay is known-desynced (v2+), and an outright
   // replay failure catches v1 records from before the stamp existed (see
   // REPLAY_VERSION). The draw goes through the normal end flow, so the end
-  // frame reaches both seats and rated games are recorded, never deleted.
+  // frame reaches both seats and the game is recorded, never deleted. The
+  // draw is forced UNRATED: a game the server cut short with an update should
+  // not move either player's rating (the rating apply path skips unrated, and
+  // the end frame reports rated:false to the clients).
   private async gameForPlay(match: StoredMatch): Promise<NerfGame | null> {
     const stale =
       match.replayVersion != null && match.replayVersion !== REPLAY_VERSION && !match.result;
@@ -986,6 +1040,7 @@ export class GameServer extends DurableObject<Env> {
       match.runningSince = null;
       match.result = { winner: "draw", reason: "server update interrupted this game" };
       match.completedAt = Date.now();
+      match.rated = false;
       await this.endMatch(match);
     }
     return game;
@@ -1284,6 +1339,24 @@ export class GameServer extends DurableObject<Env> {
     // through gameForPlay's graceful draw, so the returning player gets the
     // end frame instead of a board that can never accept a move.
     if (match.draft && !match.result) await this.gameForPlay(match);
+    // House game: the clock was paused when this human seat disconnected;
+    // resume it now that they are back, unless a draft offer's lock-in window
+    // is still holding it paused. Re-arm the bot so it resumes acting on its
+    // turn (its timer may have been left armed while play was paused).
+    if (
+      match.bots &&
+      !match.bots[color] &&
+      match.startedAt &&
+      !match.result &&
+      match.runningSince === null
+    ) {
+      const offerHolding = !!match.dtDeadline && Date.now() < match.dtDeadline;
+      if (!offerHolding) {
+        match.runningSince = Date.now();
+        this.armBotAction(match, null, Date.now());
+        await this.saveMatch(match);
+      }
+    }
     this.sendStart(match, color);
     // A rematch was created while this seat was away (page refresh or dropped
     // socket mid-rematch): re-deliver the seat in the new game so the player
@@ -1770,6 +1843,10 @@ export class GameServer extends DurableObject<Env> {
 
   private houseTickError: string | null = null;
   private houseSeeded = false;
+  // Match ids whose retire (end/delete) itself failed while acting. Kept for
+  // the life of the isolate so neither the due loop nor the self-heal sweep
+  // re-arms a permanently failing match into a perpetual throw/re-arm loop.
+  private houseRetireFailed = new Set<string>();
 
   // Arm the humanlike think timer for the next pending house action: an
   // opening nerf pick, a buff-offer resolve, or a move. Never overwrites an
@@ -1834,8 +1911,11 @@ export class GameServer extends DurableObject<Env> {
         .map((color) => match.bots?.[color])
         .filter(Boolean) as string[];
       if (!ids.length || match.result) continue;
-      // A human paired with a house player but never arrived: free the seat.
-      if (!match.startedAt && !match.nerfOptions && now - match.createdAt > 2 * 60 * 1000) {
+      // A house match still unstarted long past pairing (the paired human never
+      // arrived at the board) frees the seat. Generous window so a slow client
+      // load or a backgrounded mobile tab is not dropped mid-arrival; the
+      // 30-minute maintenance sweep is the ultimate backstop.
+      if (!match.startedAt && !match.nerfOptions && now - match.createdAt > 8 * 60 * 1000) {
         try {
           await this.deleteMatch(match);
         } catch {}
@@ -1852,13 +1932,29 @@ export class GameServer extends DurableObject<Env> {
     // runs per tick — the rest re-fire on the next alarm — so the
     // single-threaded DO never runs a batch of engine searches back to back.
     const isFiller = (m: StoredMatch) => !!(m.bots?.w && m.bots?.b);
+    // The human seat of a mixed house match (undefined for house-vs-house
+    // filler, which has a bot on both sides).
+    const humanSeatOf = (m: StoredMatch): Color | undefined =>
+      (["w", "b"] as Color[]).find((c) => !m.bots?.[c]);
     const due = liveHouseMatches
       .filter((m) => m.botActAt && m.botActAt <= now)
       .sort((a, b) => Number(isFiller(a)) - Number(isFiller(b)) || (a.botActAt ?? 0) - (b.botActAt ?? 0));
     let fillerActed = 0;
     for (const match of due) {
+      // A match whose retire failed is left inert (see the catch below): never
+      // act on it again this isolate, so it cannot re-throw on every tick.
+      if (this.houseRetireFailed.has(match.id)) continue;
       const filler = isFiller(match);
       if (filler && fillerActed >= 1) continue;
+      // BUG #1: never advance a started house game while its human seat is
+      // disconnected — moving would run down their (paused) clock or end the
+      // game before they return. The bot's timer stays armed and fires on the
+      // first tick after they reconnect. Draft-deadline safety still runs in
+      // maintenance; pre-start nerf-draft picks are harmless (clocks off).
+      if (match.startedAt) {
+        const humanSeat = humanSeatOf(match);
+        if (humanSeat && !this.connectedSession(match.id, humanSeat)) continue;
+      }
       try {
         await this.playHouseAction(match, Date.now());
         if (filler) fillerActed++;
@@ -1870,7 +1966,7 @@ export class GameServer extends DurableObject<Env> {
         this.houseTickError = err instanceof Error ? err.message : String(err);
         console.error("house action failed, retiring match", match.id, err);
         try {
-          const humanSeat = (["w", "b"] as Color[]).find((c) => !match.bots?.[c]);
+          const humanSeat = humanSeatOf(match);
           if (humanSeat) {
             // A human is seated: deleting the record would close their
             // socket with "Game expired" and erase a rated game with no end
@@ -1887,13 +1983,23 @@ export class GameServer extends DurableObject<Env> {
             // House-vs-house filler: nobody is watching a rating, delete it.
             await this.deleteMatch(match);
           }
-        } catch {}
+        } catch (retireErr) {
+          // Retire itself failed (storage hiccup, corrupt record). Disable the
+          // match's timer and remember it so neither the due loop nor the
+          // self-heal sweep re-arms it into a perpetual throw/re-arm loop.
+          console.error("house retire failed, disabling match", match.id, retireErr);
+          this.houseRetireFailed.add(match.id);
+          try {
+            match.botActAt = null;
+            await this.saveMatch(match, false);
+          } catch {}
+        }
       }
     }
     // Self-heal: a live house game with no result and no pending action gets
     // its timer re-armed (covers records saved before a crash or deploy).
     for (const match of liveHouseMatches) {
-      if (match.result || match.botActAt) continue;
+      if (match.result || match.botActAt || this.houseRetireFailed.has(match.id)) continue;
       try {
         if (await this.finishOnFlag(match, now, false)) continue;
         this.armBotAction(match, null, now);
@@ -1993,6 +2099,16 @@ export class GameServer extends DurableObject<Env> {
       const persona = free.splice(randomInt(free.length), 1)[0];
       seeks.push(this.newHouseSeek(persona, now));
     }
+    // Per-mode floor: guarantee at least one seek in each pool so neither the
+    // Nerf nor the Buff lobby is ever left without a house seeker (the random
+    // per-seek mode roll alone can leave one mode empty). Forces the mode but
+    // keeps the random pool from newHouseSeek.
+    for (const mode of QUEUE_MODES) {
+      if (!free.length) break;
+      if (seeks.some((seek) => seek.mode === mode)) continue;
+      const persona = free.splice(randomInt(free.length), 1)[0];
+      seeks.push({ ...this.newHouseSeek(persona, now), mode });
+    }
     await this.ctx.storage.put(houseSeeksKey, seeks);
 
     // Occasional house-vs-house filler so the lobby and TV look alive,
@@ -2045,7 +2161,7 @@ export class GameServer extends DurableObject<Env> {
     if (await this.finishOnFlag(match, now, false)) return;
     // A stale or failed replay ends the game gracefully inside gameForPlay
     // (draw, end frame, recorded); nothing left for the house seat to do.
-    const game = await this.gameForPlay(match);
+    let game = await this.gameForPlay(match);
     if (!game) return;
     if (game.result) {
       // Derived but unrecorded result (should not happen): settle it.
@@ -2057,12 +2173,19 @@ export class GameServer extends DurableObject<Env> {
       return;
     }
 
-    // A pending buff offer resolves first (it may not even be our turn).
+    // A pending buff offer resolves first (it may not even be our turn). A
+    // card that throws while the AI evaluates or picks it must never wedge the
+    // bot: fall back to banking the offer, which is always a safe skip.
     for (const color of ["w", "b"] as Color[]) {
       if (!match.bots?.[color] || !game.buffs?.players[color].offer) continue;
-      const choice = aiDraftChoice(game, color);
-      if (choice?.action === "pick") await this.resolveDraftPick(match, game, color, choice.index);
-      else await this.resolveDraftBank(match, game, color);
+      try {
+        const choice = aiDraftChoice(game, color);
+        if (choice?.action === "pick") await this.resolveDraftPick(match, game, color, choice.index);
+        else await this.resolveDraftBank(match, game, color);
+      } catch (err) {
+        console.error("house draft resolve failed, banking offer", match.id, err);
+        await this.resolveDraftBank(match, game, color);
+      }
       return; // settleDraftAction armed the next action and saved
     }
 
@@ -2078,46 +2201,75 @@ export class GameServer extends DurableObject<Env> {
 
     // Sometimes fire a held buff instead of moving. aiChooseBuffActivation
     // applies its own worth-it gates; the extra coin keeps house players from
-    // dumping every card the moment it clears the bar.
+    // dumping every card the moment it clears the bar. A buff that throws
+    // mid-activation must not wedge the bot or corrupt the move it plays next.
     if (match.draft && game.buffs && randomInt(100) < 40) {
-      const activation = aiChooseBuffActivation(game, color);
-      if (activation) {
-        const ps = game.buffs.players[color];
-        const inst = ps.buffs[activation.buffIndex];
-        const theirs = game.buffs.players[color === "w" ? "b" : "w"];
-        const mineBefore = ps.buffs.length;
-        const theirsBefore = theirs.buffs.length;
-        if (activateBuff(game, color, activation.buffIndex, activation.picks)) {
-          this.markBuffRevealed(inst);
-          for (const added of ps.buffs.slice(mineBefore)) this.markBuffRevealed(added);
-          for (const added of theirs.buffs.slice(theirsBefore)) this.markBuffRevealed(added);
-          match.draftActions = [
-            ...(match.draftActions ?? []),
-            { ply: match.moves.length, color, a: "use", buffIndex: activation.buffIndex, picks: activation.picks },
-          ];
-          await this.settleDraftAction(match, game, null, {
-            color,
-            buffIndex: activation.buffIndex,
-            picks: activation.picks,
-            card: { id: inst.id, tier: inst.tier as number },
-          });
+      try {
+        const activation = aiChooseBuffActivation(game, color);
+        if (activation) {
+          const ps = game.buffs.players[color];
+          const inst = ps.buffs[activation.buffIndex];
+          const theirs = game.buffs.players[color === "w" ? "b" : "w"];
+          const mineBefore = ps.buffs.length;
+          const theirsBefore = theirs.buffs.length;
+          if (activateBuff(game, color, activation.buffIndex, activation.picks)) {
+            this.markBuffRevealed(inst);
+            for (const added of ps.buffs.slice(mineBefore)) this.markBuffRevealed(added);
+            for (const added of theirs.buffs.slice(theirsBefore)) this.markBuffRevealed(added);
+            match.draftActions = [
+              ...(match.draftActions ?? []),
+              { ply: match.moves.length, color, a: "use", buffIndex: activation.buffIndex, picks: activation.picks },
+            ];
+            await this.settleDraftAction(match, game, null, {
+              color,
+              buffIndex: activation.buffIndex,
+              picks: activation.picks,
+              card: { id: inst.id, tier: inst.tier as number },
+            });
+            return;
+          }
+        }
+      } catch (err) {
+        // Discard the possibly-mutated replica and rebuild a clean one from the
+        // stored record (the failed activation was never appended, so the
+        // rebuild is the pre-activation position), then fall through to a
+        // normal move so the bot still acts this turn.
+        console.error("house buff activation failed, skipping to a move", match.id, err);
+        const fresh = this.gameFromMatch(match);
+        if (!fresh || fresh.result) {
+          this.armBotAction(match, null, now);
+          await this.saveMatch(match, false);
           return;
         }
+        game = fresh;
       }
     }
 
-    // The move: engine-picked inside a hard-capped budget (see bots.ts).
+    // The move: engine-picked inside a hard-capped budget (see bots.ts). A
+    // throw or a null pick (an engine edge case) can never leave the bot idle:
+    // fall back to any legal move, and only end the game when there truly is
+    // no legal move at all.
     const clocks = this.currentClocks(match, now);
-    const move = pickHouseMove(game, persona.skill, randomInt, match.setup.timeSec ? clocks[color] : undefined);
+    let move: Move | null = null;
+    try {
+      move = pickHouseMove(game, persona.skill, randomInt, match.setup.timeSec ? clocks[color] : undefined);
+    } catch (err) {
+      console.error("house move pick failed, using a legal fallback", match.id, err);
+    }
     if (!move) {
-      // No legal move but no result — should be unreachable; resign rather
-      // than wedge the match.
-      match.clocks = clocks;
-      match.runningSince = null;
-      match.result = resign(game, color).result;
-      match.completedAt = now;
-      await this.endMatch(match);
-      return;
+      const legal = legalMoves(game);
+      if (legal.length) {
+        move = legal[randomInt(legal.length)];
+      } else {
+        // No legal move but no result — should be unreachable; end through the
+        // normal flow rather than wedge the match.
+        match.clocks = clocks;
+        match.runningSince = null;
+        match.result = resign(game, color).result;
+        match.completedAt = now;
+        await this.endMatch(match);
+        return;
+      }
     }
     await this.commitMove(match, game, color, move, moveToUCI(move));
   }
