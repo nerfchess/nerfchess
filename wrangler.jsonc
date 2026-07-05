@@ -22,7 +22,11 @@
   ],
   "vars": {
     // Promoted to admin on their next login (see docs/moderation.md).
-    "ADMIN_USERNAMES": "ilovenewjeans,ruylopezsolos"
+    "ADMIN_USERNAMES": "ilovenewjeans,ruylopezsolos",
+    // OAuth client id for "Continue with Google" (see docs/google-sign-in.md).
+    // The matching secret is set with: wrangler secret put GOOGLE_CLIENT_SECRET
+    // Leave empty to disable Google sign-in.
+    "GOOGLE_CLIENT_ID": ""
   },
   "d1_databases": [
     {
