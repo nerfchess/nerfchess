@@ -5,14 +5,16 @@ import { useEffect, useState } from "react";
 import { HeroTv } from "@/components/HeroTv";
 import { SiteHeader } from "@/components/SiteHeader";
 import { ALL_NERFS, PLAYABLE_NERFS } from "@/engine/nerfs/library";
+import { ALL_BUFFS } from "@/engine/buffs/library";
 import type { Nerf } from "@/engine/nerf";
 import { useLobbySnapshot } from "@/lib/lobbyClient";
 import { ActiveGame, loadActiveGame } from "@/lib/multiplayer";
 import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
 
-// Real library count, computed once. Feeds the social proof strip so the
-// number stays honest and updates automatically as the rule set grows.
-const TOTAL_RULES = ALL_NERFS.length;
+// Real library counts, computed once. Feeds the social proof strip so the
+// numbers stay honest and update automatically as the library grows. The full
+// library is every nerf plus every buff, hex, boon, and item card.
+const TOTAL_RULES = ALL_NERFS.length + ALL_BUFFS.length;
 
 // A hand-picked spread across the difficulty tiers so a first visitor sees the
 // range of what a "secret rule" can be, from gentle to brutal.
@@ -187,7 +189,7 @@ function StatStrip() {
   }, []);
 
   const stats = [
-    { value: TOTAL_RULES.toString(), label: "secret rules" },
+    { value: TOTAL_RULES.toLocaleString(), label: "rules and cards" },
     { value: gamesPlayed === null ? "…" : gamesPlayed.toLocaleString(), label: "games played" },
   ];
   return (

@@ -31,7 +31,17 @@ const NAV_LINKS: { href: string; label: string; className?: string }[] = [
  * culprit); this puts every destination plus the account entry behind one
  * fixed-width button instead.
  */
-export function MobileNavMenu() {
+export function MobileNavMenu({
+  align = "right",
+  hideAt = "sm",
+}: {
+  // Which edge the dropdown anchors to. Use "left" when the button sits at the
+  // far left of the bar (e.g. left of the logo) so the panel opens on-screen.
+  align?: "left" | "right";
+  // Hide the hamburger at and above this breakpoint. Match it to the sibling
+  // desktop nav's breakpoint so there is never a width with neither visible.
+  hideAt?: "sm" | "md";
+} = {}) {
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState<AccountUser | null | undefined>(undefined);
 
@@ -45,8 +55,12 @@ export function MobileNavMenu() {
     };
   }, []);
 
+  // Static class strings (Tailwind cannot see interpolated class names).
+  const hideClass = hideAt === "md" ? "md:hidden" : "sm:hidden";
+  const anchorClass = align === "left" ? "left-0" : "right-0";
+
   return (
-    <div className="relative sm:hidden">
+    <div className={"relative " + hideClass}>
       <button
         type="button"
         aria-expanded={open}
@@ -67,7 +81,7 @@ export function MobileNavMenu() {
           />
           {/* !absolute / !z-50: the .plate helper hard-codes position:relative
               and z-index:2 later in the cascade, so plain utilities lose. */}
-          <div className="!absolute right-0 top-full !z-50 mt-2 w-56 plate border border-white/10 py-1.5 shadow-xl">
+          <div className={"!absolute " + anchorClass + " top-full !z-50 mt-2 w-56 plate border border-white/10 py-1.5 shadow-xl"}>
             <Link
               href={user ? `/u/${user.username}` : "/login"}
               onClick={() => setOpen(false)}
