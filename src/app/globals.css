@@ -394,6 +394,20 @@ html[data-piece-source="lichess"] .piece-asset {
 }
 .sq-freeze-flake { animation: freeze-flake-in 0.45s ease-out; }
 
+/* Shackled (king-only / no-pawn-advance hex): a single grey clamp-down pulse
+   when the lock lands, then a calm persistent pall. Runs once on mount. */
+@keyframes locked-in {
+  0% { opacity: 0; }
+  40% { opacity: 1; box-shadow: inset 0 0 22px 3px rgba(30, 41, 59, 0.7); }
+  100% { opacity: 1; box-shadow: inset 0 0 8px 0 rgba(30, 41, 59, 0.25); }
+}
+.sq-locked { animation: locked-in 0.55s ease-out; }
+@keyframes locked-chain-in {
+  0% { opacity: 0; transform: scale(1.8) rotate(12deg); }
+  100% { opacity: 0.85; transform: scale(1) rotate(0deg); }
+}
+.sq-locked-chain { animation: locked-chain-in 0.45s ease-out; }
+
 /* Shield / sanctuary: one soft pulse when the protection appears. */
 @keyframes shield-in {
   0% { opacity: 0; transform: scale(1.12); }

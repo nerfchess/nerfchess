@@ -23,6 +23,8 @@ interface Visual {
   strikeSquares?: number[];
   /** Pieces hexed into walnuts: frozen solid, marked with the nut. */
   walnutSquares?: number[];
+  /** Pieces shackled by a king-only or no-pawn-advance hex: chained in place. */
+  lockedSquares?: number[];
 }
 
 export interface QueuedPremove {
@@ -381,6 +383,7 @@ export function Board({
   const wardSquares = useMemo(() => new Set(visual?.wardSquares ?? []), [visual?.wardSquares]);
   const strikeSquares = useMemo(() => new Set(visual?.strikeSquares ?? []), [visual?.strikeSquares]);
   const walnutSquares = useMemo(() => new Set(visual?.walnutSquares ?? []), [visual?.walnutSquares]);
+  const lockedSquares = useMemo(() => new Set(visual?.lockedSquares ?? []), [visual?.lockedSquares]);
   const highlightSquares = useMemo(
     () => new Set(visual?.highlightSquares ?? []),
     [visual?.highlightSquares],
@@ -757,6 +760,16 @@ export function Board({
                     <div className="absolute inset-0 bg-amber-700/30 pointer-events-none" />
                     <span className="absolute top-0.5 right-0.5 z-10 text-[12px] leading-none pointer-events-none drop-shadow">
                       🥜
+                    </span>
+                  </>
+                )}
+                {lockedSquares.has(sq) && (
+                  <>
+                    {/* Shackled by a king-only or no-pawn-advance hex: a grey
+                        pall plus a chain marker. One soft pulse on mount. */}
+                    <div className="absolute inset-0 bg-slate-800/35 pointer-events-none sq-locked" />
+                    <span className="absolute bottom-0.5 left-0.5 z-10 text-[11px] leading-none pointer-events-none drop-shadow sq-locked-chain">
+                      ⛓
                     </span>
                   </>
                 )}
