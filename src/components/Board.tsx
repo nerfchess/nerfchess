@@ -414,8 +414,17 @@ export function Board({
     return SQ(file, rank);
   };
 
+  // Wipe drawn arrows / square marks. Called whenever a move interaction
+  // begins so a rejected or illegal attempt can't leave them stuck on the
+  // board (the board.pieces effect only fires when a move actually lands).
+  const clearAnnotations = () => {
+    setArrows((a) => (a.length ? [] : a));
+    setRightClickMarks((m) => (Object.keys(m).length ? {} : m));
+  };
+
   const tryPlay = (sq: Square): boolean => {
     if (selected != null && targets[sq]) {
+      clearAnnotations();
       const candidates = targets[sq];
       if (candidates.length > 1 && candidates[0].promotion) {
         // premoves always auto-queen (the user can't be asked mid-opponent-turn);
@@ -457,9 +466,12 @@ export function Board({
       return;
     }
     if (e.button !== undefined && e.button !== 0) return;
-    // Drawn arrows and marks survive left clicks (including rejected/illegal
-    // move attempts); they are wiped only when a move actually lands on the
-    // board (the board.pieces effect below).
+    // Drawn arrows and marks are cleared the moment a move interaction begins
+    // (see onPointerDownPiece / tryPlay). Stray left clicks on empty squares
+    // keep them, but grabbing a piece — the first step of any move attempt,
+    // legal or not — wipes them, so annotations never stay stuck on the board
+    // after a rejected or illegal move. A move that actually lands also wipes
+    // them via the board.pieces effect below.
     // Targeting mode swallows the pointer entirely: a candidate square picks,
     // anything else is a no-op (Escape or the cancel chip exits the mode).
     if (pickingSquares) {
@@ -506,6 +518,7 @@ export function Board({
 
   // --- Drag & drop via pointer events ---
   const onPointerDownPiece = (e: React.PointerEvent, sq: Square) => {
+    clearAnnotations();
     const grid = boardRef.current?.querySelector("[data-board-grid]") as HTMLElement | null;
     if (!grid) return;
     const rect = grid.getBoundingClientRect();
@@ -624,11 +637,17 @@ export function Board({
     const ro = new ResizeObserver(refresh);
     ro.observe(grid);
     window.addEventListener("resize", refresh);
+    window.addEventListener("orientationchange", refresh);
     document.addEventListener("fullscreenchange", refresh);
+    // visualViewport tracks the on-screen viewport (mobile URL bar, pinch
+    // zoom, virtual keyboard) that a plain window "resize" can miss.
+    window.visualViewport?.addEventListener("resize", refresh);
     return () => {
       ro.disconnect();
       window.removeEventListener("resize", refresh);
+      window.removeEventListener("orientationchange", refresh);
       document.removeEventListener("fullscreenchange", refresh);
+      window.visualViewport?.removeEventListener("resize", refresh);
     };
   }, []);
 
@@ -690,14 +709,25 @@ export function Board({
         return [...rest, { from, to: drop, mark }];
       });
     };
+    // Tearing the gesture down on cancel / blur / Escape stops a half-drawn
+    // preview arrow from getting stuck when the pointerup never arrives (the
+    // window loses focus, another element captures the pointer, or the release
+    // reports a non-right button).
     const onCancel = () => setRightDrag(null);
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setRightDrag(null);
+    };
     window.addEventListener("pointermove", onMovePointer);
     window.addEventListener("pointerup", onUp);
     window.addEventListener("pointercancel", onCancel);
+    window.addEventListener("blur", onCancel);
+    window.addEventListener("keydown", onKeyDown);
     return () => {
       window.removeEventListener("pointermove", onMovePointer);
       window.removeEventListener("pointerup", onUp);
       window.removeEventListener("pointercancel", onCancel);
+      window.removeEventListener("blur", onCancel);
+      window.removeEventListener("keydown", onKeyDown);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rightDrag]);
