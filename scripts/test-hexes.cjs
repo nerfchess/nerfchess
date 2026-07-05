@@ -13,6 +13,7 @@ function load(mod) {
 }
 
 const { ALL_BUFFS, IMPLEMENTED_BUFFS, BUFF_BY_ID } = load("buffs/library.js");
+const { PLAYABLE_NERFS } = load("nerfs/library.js");
 const game = load("game.js");
 const {
   newGameAsColor,
@@ -22,6 +23,7 @@ const {
   activateBuff,
   legalMoves,
   playMove,
+  nerfDisabled,
   UNRESTRICTED_NERF,
 } = game;
 
@@ -128,6 +130,59 @@ for (const h of hexes) {
     errors.push(`hex "${h.id}" threw during probe: ${e && e.message ? e.message : e}`);
   }
 }
+
+// 6. BOONS (category "nerf"): relief cards for your OWN nerf. Structural + text
+//    checks, plus a dynamic probe: give the player a real nerf, apply the boon,
+//    and confirm it does not throw or soft-lock the holder. Instant relief must
+//    actually turn the holder's nerf off.
+const boons = ALL_BUFFS.filter((b) => b.category === "nerf" && b.implemented);
+for (const b of boons) {
+  for (const field of ["name", "description", "flavor"]) {
+    if (b[field] && EM_DASH.test(b[field]))
+      errors.push(`boon "${b.id}" has an em/en dash in ${field}`);
+  }
+}
+const testNerf = PLAYABLE_NERFS.find((n) => n.id !== "lucky") || PLAYABLE_NERFS[0];
+function probeBoon(b) {
+  let g = newGameAsColor(testNerf, "w", 5);
+  enableDraftMode(g, 5, { mode: "nerf" });
+  acquireBuff(g, "w", b.id, b.tier);
+  const ps = g.buffs.players.w;
+  const idx = ps.buffs.length - 1;
+  if (b.kind === "activated") {
+    const picks = [];
+    for (let step = 0; step < 4; step++) {
+      const t = buffNextTarget(g, "w", idx, picks);
+      if (!t) break;
+      if (t.kind === "square") {
+        if (!t.squares.length) break;
+        picks.push({ square: t.squares[0] });
+      } else break;
+    }
+    activateBuff(g, "w", idx, picks);
+  }
+  // Instant relief (suspend / break) must disable the holder's nerf right away.
+  if (b.kind === "instant" && nerfDisabled && !nerfDisabled(g, "w")) {
+    errors.push(`boon "${b.id}" (instant) did not disable the holder's nerf`);
+  }
+  for (let ply = 0; ply < 4; ply++) {
+    if (g.result) break;
+    const moves = legalMoves(g);
+    if (moves.length === 0) {
+      errors.push(`boon "${b.id}" left ${g.board.turn} with 0 legal moves`);
+      return;
+    }
+    g = playMove(g, moves[0]);
+  }
+}
+for (const b of boons) {
+  try {
+    probeBoon(b);
+  } catch (e) {
+    errors.push(`boon "${b.id}" threw during probe: ${e && e.message ? e.message : e}`);
+  }
+}
+console.log(`boons (nerf-relief): ${boons.length}`);
 
 console.log(`buffs total: ${ALL_BUFFS.length}, implemented: ${IMPLEMENTED_BUFFS.length}`);
 console.log(`hexes: ${hexes.length} -> by tier ${JSON.stringify(byTier)}`);
