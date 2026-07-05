@@ -278,6 +278,15 @@ const ADDITIVE_COLUMNS: string[] = [
   `ALTER TABLE users ADD COLUMN google_sub TEXT`,
   `CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email) WHERE email IS NOT NULL`,
   `CREATE UNIQUE INDEX IF NOT EXISTS idx_users_google_sub ON users(google_sub) WHERE google_sub IS NOT NULL`,
+  // Per-mode rating buckets ("nerf" and "buff") for rated queue games, seeded
+  // from the legacy shared users.rating like the speed buckets were. Idempotent
+  // (INSERT OR IGNORE) and additive; accounts created later are seeded lazily
+  // on first contact by seedCategoryRatings. Mirrors
+  // migrations/0013_mode_ratings.sql.
+  `INSERT OR IGNORE INTO user_ratings (user_id, category, rating, rd, vol, peak)
+     SELECT id, 'nerf', rating, rd, vol, rating FROM users`,
+  `INSERT OR IGNORE INTO user_ratings (user_id, category, rating, rd, vol, peak)
+     SELECT id, 'buff', rating, rd, vol, rating FROM users`,
 ];
 
 export async function ensureSchema(db: D1Database): Promise<void> {

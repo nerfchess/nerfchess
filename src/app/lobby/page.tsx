@@ -73,9 +73,10 @@ export default function LobbyPage() {
   const challenges = lobby?.challenges ?? [];
   const waitingCount = seeks.length + challenges.length;
 
-  // Answer a quick-pairing seek by queueing into the same pool: the server
-  // pairs with the first waiting player immediately. A timeout covers the
-  // race where the seeker left between the last poll and the click.
+  // Answer a quick-pairing seek by queueing into the same pool (same mode and
+  // time control): the server pairs with the first waiting player
+  // immediately. A timeout covers the race where the seeker left between the
+  // last poll and the click.
   const [joiningPool, setJoiningPool] = useState<string | null>(null);
   const joinSeek = async (seek: MPLobbySeek) => {
     if (!user) {
@@ -83,12 +84,14 @@ export default function LobbyPage() {
       return;
     }
     if (joiningPool) return;
-    setJoiningPool(seek.pool);
+    // The two modes share pool (time control) names, so key the in-flight
+    // marker on both.
+    setJoiningPool(`${seek.mode ?? "buff"}:${seek.pool}`);
     const session = new MPSession();
     session.persistFriendSession = false;
     try {
       const paired = await Promise.race([
-        session.queue(seek.pool),
+        session.queue(seek.pool, seek.mode ?? "buff"),
         new Promise<never>((_, reject) =>
           window.setTimeout(() => reject(new Error("seek_gone")), 10000),
         ),
@@ -203,10 +206,10 @@ export default function LobbyPage() {
                 <ul className="mt-3 divide-y divide-white/5">
                   {seeks.map((seek) => (
                     <SeekRow
-                      key={`${seek.pool}:${seek.name}:${seek.at}`}
+                      key={`${seek.mode ?? "buff"}:${seek.pool}:${seek.name}:${seek.at}`}
                       seek={seek}
                       isMine={!!user && user.username === seek.name}
-                      joining={joiningPool === seek.pool}
+                      joining={joiningPool === `${seek.mode ?? "buff"}:${seek.pool}`}
                       busy={joiningPool !== null}
                       onJoin={() => joinSeek(seek)}
                     />
@@ -356,7 +359,7 @@ function SeekRow({
         <div className="mt-0.5 flex items-center gap-1.5 smallcaps text-[9px] text-parchment-400">
           <ModeBadge mode={seek.mode} compact />
           <span>
-            {!seek.mode && "Draft · "}
+            {seek.mode ? "Rated · " : "Draft · "}
             {clock} · {category.label}
           </span>
         </div>

@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/server/db";
 import { sessionTokenFromCookieHeader, userForSession } from "@/lib/server/auth";
-import { isSpeedCategory, type SpeedCategory } from "@/lib/speed";
+import { isRatingCategory, type RatingCategory } from "@/lib/speed";
 
 export const dynamic = "force-dynamic";
 
-const DEFAULT_CATEGORY: SpeedCategory = "blitz";
+const DEFAULT_CATEGORY: RatingCategory = "blitz";
 
 interface LeaderboardRow {
   username: string;
@@ -19,7 +19,8 @@ interface LeaderboardRow {
   guest: number;
 }
 
-// One leaderboard per rating category (UltraBullet/Bullet/Blitz/Rapid); the
+// One leaderboard per rating category (the Nerf/Buff mode buckets plus the
+// legacy speed buckets); the
 // tab is selected with ?category=. Players appear once they have played a
 // rated game in that category. If the signed-in viewer is ranked but outside
 // the page, their own row (with true rank) is returned separately so the UI
@@ -27,7 +28,7 @@ interface LeaderboardRow {
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const requested = url.searchParams.get("category");
-  const category: SpeedCategory = isSpeedCategory(requested) ? requested : DEFAULT_CATEGORY;
+  const category: RatingCategory = isRatingCategory(requested) ? requested : DEFAULT_CATEGORY;
 
   const db = await getDb();
   const rows = await db

@@ -180,8 +180,9 @@ export type MPLobbySeek = {
   pool: string;
   name: string;
   rating: number | null;
-  // Always "buff" today (quick pairing runs Buff mode); optional so
-  // snapshots from an older server still parse.
+  // Which queue pool the seek waits in ("nerf" or "buff"); optional so
+  // snapshots from an older server still parse. Joining must pass the same
+  // mode back to `queue`, or the two players would sit in different pools.
   mode?: DraftMode;
   timeSec: number;
   incrementSec: number;
@@ -754,8 +755,10 @@ export class MPSession {
     return true;
   }
 
-  // Join the rated quick-pairing queue. Resolves with the paired game id.
-  async queue(pool: string): Promise<{ id: string; color: Color; token: string }> {
+  // Join the rated quick-pairing queue. The queue runs two pools ("nerf" and
+  // "buff"); omitting the mode lands in Buff, matching older servers.
+  // Resolves with the paired game id.
+  async queue(pool: string, mode?: DraftMode): Promise<{ id: string; color: Color; token: string }> {
     await this.connect();
     return new Promise((resolve, reject) => {
       const off = this.on((event) => {
@@ -770,7 +773,7 @@ export class MPSession {
           reject(new Error("Disconnected from the game server."));
         }
       });
-      this.sendFrame("queue", { pool });
+      this.sendFrame("queue", { pool, ...(mode ? { mode } : {}) });
     });
   }
 

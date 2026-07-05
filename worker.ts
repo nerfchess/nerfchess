@@ -26,7 +26,7 @@ import { Color } from "./src/engine/types";
 import { sessionTokenFromCookieHeader, userForSession } from "./src/lib/server/auth";
 import { ensureSchema } from "./src/lib/server/schema";
 import { loadCategoryRatings, recordFinishedGame, RatingChange } from "./src/lib/server/games";
-import { categoryForTimeControl, type SpeedCategory } from "./src/lib/speed";
+import { categoryForTimeControl, type RatingCategory } from "./src/lib/speed";
 import { censorText, findProfanity } from "./src/lib/profanity";
 import { glickoUpdatePair } from "./src/lib/glicko";
 
@@ -84,9 +84,9 @@ type StoredMatch = {
   spectatorChat?: SpectatorChatEntry[];
   // Colors that voluntarily revealed their rule to the table mid-game.
   revealed?: Partial<Record<Color, boolean>>;
-  // Draft ruleset games. Draft matches are always casual: createMatch never
-  // honors a rated request for them, and the queue only creates casual
-  // Draft matches.
+  // Draft ruleset games. Friend/challenge Draft matches are always casual:
+  // createMatch never honors a rated request. Queue Draft matches are rated
+  // under their mode's rating bucket (see queueJoin).
   draft?: boolean;
   // Which section the draft game runs under: "nerf" (opening nerf pick,
   // nerf-modifier buffs only, slow cadence) or "buff" (no nerfs at all,
@@ -151,7 +151,7 @@ type ClientFrame =
   | { t: "takebackOffer" }
   | { t: "takebackAccept" }
   | { t: "takebackDecline" }
-  | { t: "queue"; d?: { pool?: unknown } }
+  | { t: "queue"; d?: { pool?: unknown; mode?: unknown } }
   | { t: "queueCancel" }
   | { t: "watch"; d?: { id?: unknown } }
   | { t: "watchLeave" }
@@ -173,8 +173,11 @@ export interface Env {
   DB: D1Database;
 }
 
-// Quick-pairing pools for casual Draft matchmaking. Keys are the wire names clients
-// send; keep them in sync with QUEUE_POOL_OPTIONS in the QueueButton UI.
+// Quick-pairing time controls for rated Draft matchmaking. Keys are the wire
+// names clients send; keep them in sync with QUEUE_POOL_OPTIONS in the
+// QueueButton UI. Each time control exists once per mode: the queue runs two
+// separate pools, Nerf and Buff, and only players in the same mode (and time
+// control) ever pair.
 const QUEUE_POOLS: Record<string, { timeSec: number; incrementSec: number }> = {
   "1+0": { timeSec: 60, incrementSec: 0 },
   "2+1": { timeSec: 120, incrementSec: 1 },
@@ -186,6 +189,11 @@ const QUEUE_POOLS: Record<string, { timeSec: number; incrementSec: number }> = {
   "10+5": { timeSec: 600, incrementSec: 5 },
   "15+10": { timeSec: 900, incrementSec: 10 },
 };
+
+// The two queue pools. Every seek names one explicitly; a missing/unknown
+// mode from an older client falls back to Buff (the only pool that existed
+// before the split). Each pool stakes its own rating bucket.
+const QUEUE_MODES: DraftMode[] = ["nerf", "buff"];
 
 const socketPath = "/socket/v1";
 const globalServerName = "nerfchess-global";
@@ -199,7 +207,7 @@ const legacyBotKeys = ["bots:seeks", "bots:seeded:v1", "bots:nextGameAt"];
 // Bumped whenever the worker changes in a way we want to confirm shipped.
 // Surfaced at GET /healthz so a deploy can be verified without Cloudflare
 // dashboard access (compare the value there against this one).
-const buildVersion = "no-bots-1";
+const buildVersion = "mode-pools-1";
 // Lichess-style start-of-game grace: a player's clock only starts charging 10
 // seconds into their first move, so nobody loses time to a slow page load.
 const firstMoveGraceMs = 10 * 1000;
@@ -579,11 +587,7 @@ export class GameServer extends DurableObject<Env> {
       let avatar: string | null = null;
       const db = await this.db();
       if (db) {
-        const row = await this.seatCategoryRating(
-          db,
-          session.userId,
-          categoryForTimeControl(match.setup.timeSec, match.setup.incrementSec),
-        );
+        const row = await this.seatCategoryRating(db, session.userId, this.matchRatingCategory(match));
         if (row) {
           rating = row.rating;
           rd = row.rd;
@@ -624,12 +628,20 @@ export class GameServer extends DurableObject<Env> {
     return undefined;
   }
 
-  // Rating shown/staked for a seat, from the independent per-time-control
-  // buckets (seeded from the legacy shared rating on first contact).
+  // Which rating bucket a match plays for: mode games (Draft with a section)
+  // use their mode bucket ("nerf"/"buff"); everything else buckets by time
+  // control (legacy classic behavior).
+  private matchRatingCategory(match: StoredMatch): RatingCategory {
+    if (match.draft && match.mode) return match.mode;
+    return categoryForTimeControl(match.setup.timeSec, match.setup.incrementSec);
+  }
+
+  // Rating shown/staked for a seat, from the independent rating buckets
+  // (seeded from the legacy shared rating on first contact).
   private async seatCategoryRating(
     db: D1Database,
     userId: string,
-    category: SpeedCategory,
+    category: RatingCategory,
   ): Promise<{ rating: number; rd: number; vol: number; avatar: string | null } | null> {
     try {
       const ratings = await loadCategoryRatings(db, [userId], category);
@@ -933,6 +945,9 @@ export class GameServer extends DurableObject<Env> {
             reason: match.result.reason,
             rated: !!match.rated,
             ...(match.draft ? { ruleset: "draft" } : {}),
+            // Mode games count toward (and, when rated, move) the per-mode
+            // rating bucket instead of a speed bucket.
+            ...(match.draft && match.mode ? { ratingCategory: match.mode } : {}),
             startedAt: match.startedAt,
             completedAt: match.completedAt,
           });
@@ -991,9 +1006,9 @@ export class GameServer extends DurableObject<Env> {
     if (timeSec < 0 || timeSec > 7200 || incrementSec < 0 || incrementSec > 60) {
       return error(ws, "invalid_clock", "Unsupported time control.");
     }
-    // Optional Draft ruleset for friend games. Draft matches are always
+    // Optional Draft ruleset for friend games. Friend games are always
     // casual: `rated` is deliberately never set here, whatever the client
-    // asks, so a draft game can never touch ratings.
+    // asks. Only the matchmaking queue creates rated games.
     const draft = requested.draft === true;
     // The game's section: "nerf" or "buff". Older clients send neither and
     // get the legacy merged rules.
@@ -1423,8 +1438,8 @@ export class GameServer extends DurableObject<Env> {
 
   // ---------------- matchmaking queue ----------------
 
-  private queueKey(pool: string): string {
-    return `queue:${pool}`;
+  private queueKey(mode: DraftMode, pool: string): string {
+    return `queue:${mode}:${pool}`;
   }
 
   private async queueJoin(ws: WebSocket, data: unknown) {
@@ -1433,10 +1448,13 @@ export class GameServer extends DurableObject<Env> {
     if (!session.userId || !session.username) {
       return error(ws, "auth_required", "Sign in to use quick pairing.");
     }
-    const req = (data as { pool?: unknown } | undefined) ?? {};
+    const req = (data as { pool?: unknown; mode?: unknown } | undefined) ?? {};
     const poolName = String(req.pool || "3+2");
     const pool = QUEUE_POOLS[poolName];
     if (!pool) return error(ws, "bad_pool", "Unknown queue pool.");
+    // Which of the two pools (Nerf or Buff) this seek enters. Older clients
+    // send no mode and land in Buff, which is what the queue always ran.
+    const mode: DraftMode = req.mode === "nerf" ? "nerf" : "buff";
     const db = await this.db();
     if (!db) return error(ws, "server_unconfigured", "Matchmaking is unavailable right now.");
 
@@ -1445,13 +1463,10 @@ export class GameServer extends DurableObject<Env> {
     let vol = 0.06;
     let avatar: string | null = null;
     {
-      // Queueing reads the rating bucket for this pool's time control, shown
-      // beside names. Queue games are casual Draft games, so it never updates.
-      const row = await this.seatCategoryRating(
-        db,
-        session.userId,
-        categoryForTimeControl(pool.timeSec, pool.incrementSec),
-      );
+      // Queueing reads (and stakes) the rating bucket for this pool's mode,
+      // shown beside names and updated when the game ends: queue games are
+      // rated under the per-mode buckets.
+      const row = await this.seatCategoryRating(db, session.userId, mode);
       if (row) {
         rating = row.rating;
         rd = row.rd;
@@ -1460,7 +1475,7 @@ export class GameServer extends DurableObject<Env> {
       }
     }
 
-    const key = this.queueKey(poolName);
+    const key = this.queueKey(mode, poolName);
     let entries = (await this.ctx.storage.get<QueueEntry[]>(key)) ?? [];
     // Drop dead sockets and any previous entry by this same account.
     entries = entries.filter(
@@ -1480,7 +1495,7 @@ export class GameServer extends DurableObject<Env> {
         at: Date.now(),
       });
       await this.ctx.storage.put(key, entries);
-      return send(ws, "queued", { pool: poolName });
+      return send(ws, "queued", { pool: poolName, mode });
     }
     await this.ctx.storage.put(key, entries);
 
@@ -1499,9 +1514,12 @@ export class GameServer extends DurableObject<Env> {
     const match: StoredMatch = {
       id,
       setup: {
-        // Queue games run Buff mode: no nerfs, so no dealt rules either.
-        whiteNerfId: UNRESTRICTED_NERF.id,
-        blackNerfId: UNRESTRICTED_NERF.id,
+        // Buff mode has no nerfs, so no dealt rules either. Nerf mode deals
+        // an initial pair the same way friend games do; the opening nerf
+        // draft replaces both ids once the players pick.
+        ...(mode === "buff"
+          ? { whiteNerfId: UNRESTRICTED_NERF.id, blackNerfId: UNRESTRICTED_NERF.id }
+          : pickNerfIds()),
         seed: makeSeed(),
         timeSec: pool.timeSec,
         incrementSec: pool.incrementSec,
@@ -1517,13 +1535,13 @@ export class GameServer extends DurableObject<Env> {
       createdAt: Date.now(),
       startedAt: null,
       completedAt: null,
-      // Queue games run the Draft ruleset in Buff mode, and Draft matches
-      // are always casual: `rated` is deliberately never set, so pairing can
-      // never touch ratings.
+      // Queue games are rated under the pool's mode bucket ("nerf"/"buff").
+      // Friend and challenge games never set `rated`, so they stay casual.
+      rated: true,
       autoStart: true,
       users: { w: meWhite ? me : them, b: meWhite ? them : me },
       draft: true,
-      mode: "buff",
+      mode,
       picksVisible: false,
       draftSeed: makeSeed(),
       draftActions: [],
@@ -1534,18 +1552,19 @@ export class GameServer extends DurableObject<Env> {
     // the game starts once both have arrived.
     const myColor: Color = meWhite ? "w" : "b";
     const theirColor: Color = meWhite ? "b" : "w";
-    send(ws, "paired", { id, color: myColor, token: match.tokens[myColor], pool: poolName });
-    send(opponentWs, "paired", { id, color: theirColor, token: match.tokens[theirColor], pool: poolName });
+    send(ws, "paired", { id, color: myColor, token: match.tokens[myColor], pool: poolName, mode });
+    send(opponentWs, "paired", { id, color: theirColor, token: match.tokens[theirColor], pool: poolName, mode });
   }
 
   private async queueLeave(ws: WebSocket, notify: boolean) {
     const session = this.sessions.get(ws) ?? (ws.deserializeAttachment() as SessionAttachment | null);
     if (!session) return;
-    for (const poolName of Object.keys(QUEUE_POOLS)) {
-      const key = this.queueKey(poolName);
-      const entries = (await this.ctx.storage.get<QueueEntry[]>(key)) ?? [];
-      const next = entries.filter((entry) => entry.attachmentId !== session.id);
-      if (next.length !== entries.length) await this.ctx.storage.put(key, next);
+    // Every queue entry lives under a "queue:" storage key; listing by prefix
+    // also scrubs pre-split legacy keys ("queue:<pool>", no mode segment).
+    const stored = await this.ctx.storage.list<QueueEntry[]>({ prefix: "queue:" });
+    for (const [key, entries] of stored) {
+      const next = (entries ?? []).filter((entry) => entry.attachmentId !== session.id);
+      if (next.length !== (entries ?? []).length) await this.ctx.storage.put(key, next);
     }
     if (notify) send(ws, "queueCancelled");
   }
@@ -1580,11 +1599,7 @@ export class GameServer extends DurableObject<Env> {
       for (const color of ["w", "b"] as Color[]) {
         const seat = users[color];
         if (!seat) continue;
-        const row = await this.seatCategoryRating(
-          db,
-          seat.id,
-          categoryForTimeControl(match.setup.timeSec, match.setup.incrementSec),
-        );
+        const row = await this.seatCategoryRating(db, seat.id, this.matchRatingCategory(match));
         if (row) {
           seat.rating = row.rating;
           seat.rd = row.rd;
@@ -2393,21 +2408,23 @@ export class GameServer extends DurableObject<Env> {
       incrementSec: number;
       at: number;
     }> = [];
-    for (const [poolName, pool] of Object.entries(QUEUE_POOLS)) {
-      const entries = (await this.ctx.storage.get<QueueEntry[]>(this.queueKey(poolName))) ?? [];
-      for (const entry of entries) {
-        if (!this.socketForAttachment(entry.attachmentId)) continue;
-        queuedUserIds.add(entry.userId);
-        seeks.push({
-          pool: poolName,
-          name: entry.username,
-          rating: Math.round(entry.rating),
-          // Quick-pairing games always run Buff mode.
-          mode: "buff",
-          timeSec: pool.timeSec,
-          incrementSec: pool.incrementSec,
-          at: entry.at,
-        });
+    for (const mode of QUEUE_MODES) {
+      for (const [poolName, pool] of Object.entries(QUEUE_POOLS)) {
+        const entries = (await this.ctx.storage.get<QueueEntry[]>(this.queueKey(mode, poolName))) ?? [];
+        for (const entry of entries) {
+          if (!this.socketForAttachment(entry.attachmentId)) continue;
+          queuedUserIds.add(entry.userId);
+          seeks.push({
+            pool: poolName,
+            name: entry.username,
+            // The seeker's rating in this pool's mode bucket.
+            rating: Math.round(entry.rating),
+            mode,
+            timeSec: pool.timeSec,
+            incrementSec: pool.incrementSec,
+            at: entry.at,
+          });
+        }
       }
     }
     seeks.sort((a, b) => a.at - b.at);
