@@ -2192,7 +2192,15 @@ const TIER6: Buff[] = [
     { id: "rift_walker", name: "Rift Walker", description: "One piece teleports anywhere on the board, once.", tier: 6, category: "movement" },
     augment((_m, inst, api) =>
       mySquares(api.board, api.me).flatMap((sq) =>
-        teleportMoves(api.board, sq, emptySquares(api.board), inst.id),
+        // Pawns may teleport, but never onto rank 1 or rank 8.
+        teleportMoves(
+          api.board,
+          sq,
+          api.board.pieces[sq]?.type === "p"
+            ? emptySquares(api.board).filter(pawnRankOk)
+            : emptySquares(api.board),
+          inst.id,
+        ),
       ),
     ),
   ),

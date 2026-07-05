@@ -11,6 +11,7 @@ import {
   effectTickColor,
   newBuffMatchState,
 } from "./buff";
+import { pawnRankOk } from "./buffs/helpers";
 import { BUFF_BY_ID } from "./buffs/library";
 import { DEFAULT_CADENCE, bankOffer, rollOffer, rollSharedTiers } from "./draft";
 import { Nerf, NerfState, GameContext, Tier } from "./nerf";
@@ -206,6 +207,12 @@ export function makeBuffApi(game: NerfGame, me: Color): BuffApi {
           (b) => b.id === "anchor" && !b.spent && !b.nullified && b.state.sq === from,
         )
       ) {
+        return;
+      }
+      // Pawns can never stand on rank 1 or rank 8: refuse the relocation
+      // outright, whatever card asked for it (cards filter their destination
+      // zones too; this is the backstop).
+      if (p?.type === "p" && !pawnRankOk(to)) {
         return;
       }
       bs.historyDiverged = true;

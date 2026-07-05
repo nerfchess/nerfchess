@@ -747,15 +747,29 @@ export function relocateMany(
   count: number,
   zone: (api: BuffApi, from: Square) => Square[],
 ): Mech {
+  // Destinations for one picked piece: inside the zone, unused, empty (or
+  // vacated by an earlier pick), and never ranks 1/8 for a pawn.
+  const destsFor = (api: BuffApi, from: Square, tos: Square[], vacated: Square[]) =>
+    zone(api, from).filter((sq) => {
+      if (sq === from || tos.includes(sq)) return false;
+      if (api.board.pieces[from]!.type === "p" && !pawnRankOk(sq)) return false;
+      if (vacated.includes(sq)) return true;
+      return !api.board.pieces[sq];
+    });
   return activated(
     (_inst, api, picks) => {
       if (picks.length >= count * 2) return null;
       const froms = picks.filter((_, i) => i % 2 === 0).map((k) => k.square!);
       const tos = picks.filter((_, i) => i % 2 === 1).map((k) => k.square!);
       if (picks.length % 2 === 0) {
+        // Only offer pieces that have somewhere legal to go (a pawn has no
+        // destinations on a back-rank zone, for example).
         const squares = mySquares(api.board, api.me).filter(
           (sq) =>
-            api.board.pieces[sq]!.type !== "k" && !froms.includes(sq) && !tos.includes(sq),
+            api.board.pieces[sq]!.type !== "k" &&
+            !froms.includes(sq) &&
+            !tos.includes(sq) &&
+            destsFor(api, sq, tos, froms).length > 0,
         );
         if (!squares.length && picks.length > 0) return null;
         return {
@@ -766,11 +780,7 @@ export function relocateMany(
       }
       const from = froms[froms.length - 1];
       const priorFroms = froms.slice(0, -1);
-      const squares = zone(api, from).filter((sq) => {
-        if (sq === from || tos.includes(sq)) return false;
-        if (priorFroms.includes(sq)) return true;
-        return !api.board.pieces[sq];
-      });
+      const squares = destsFor(api, from, tos, priorFroms);
       if (!squares.length) return null;
       return { kind: "square", label: "Choose its destination", squares };
     },
