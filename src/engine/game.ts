@@ -210,15 +210,19 @@ export function makeBuffApi(game: NerfGame, me: Color): BuffApi {
       bs.historyDiverged = true;
       game.board.pieces[sq] = { type, color };
     },
-    removePiece: (sq) => {
+    removePiece: (sq, opts) => {
       const p = game.board.pieces[sq];
       bs.historyDiverged = true;
       game.board.pieces[sq] = null;
       // A piece destroyed by a buff is a real loss: count it as captured by
       // the other side so material counters and the owner's revivable pool
       // (Resurrect and friends) stay truthful. Kings are never removed by
-      // buffs; the guard is a backstop.
-      if (p && p.type !== "k") {
+      // buffs; the guard is a backstop. Whole-board rewrites (Perfect
+      // Rewind, Genesis) and effect-expiry removals of summoned pieces pass
+      // `uncounted` instead: those pieces were never lost to the opponent,
+      // so counting them would corrupt the revive pools and any
+      // capturedFromMe-based nerf conditions.
+      if (p && p.type !== "k" && !opts?.uncounted) {
         game.captured[p.color === "w" ? "b" : "w"][p.type] += 1;
       }
     },

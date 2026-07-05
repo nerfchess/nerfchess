@@ -34,6 +34,7 @@ import {
   pickHouseSeek,
 } from "./src/lib/server/bots";
 import type { BuffInstance, BuffPick, DraftMode } from "./src/engine/buff";
+import { DEFAULT_CADENCE, NERF_MODE_CADENCE } from "./src/engine/draft";
 import type { Move } from "./src/engine/types";
 import { RNG } from "./src/engine/rng";
 import { Color } from "./src/engine/types";
@@ -45,6 +46,26 @@ import { censorText, findProfanity } from "./src/lib/profanity";
 import { glickoUpdatePair } from "./src/lib/glicko";
 
 type Result = NerfGame["result"];
+
+// Replay compatibility version, stamped on every new match. Bump it whenever
+// an engine constant that feeds the deterministic replay changes (draft
+// cadence, boon/card pools, offer rolling): a stored game recorded under
+// different constants replays into a different stream of offers, so its
+// recorded picks no longer line up and moveByUci fails mid-replay. On load,
+// a started match whose stored replayVersion differs from this constant is
+// ended gracefully as a draw ("server update interrupted this game") through
+// the normal end flow: never silently deleted, never soft-locked.
+// Version history:
+//   1 (implicit) - matches stored before the field existed. They carry no
+//     version to compare, so replay FAILURE is their trigger: if their
+//     replay still succeeds under the current constants they play on
+//     untouched; if it fails they get the same graceful draw ending.
+//   2 - draft cadence moved from 10 to 6 and the nerf-mode boon pool
+//     changed. From here on, a version MISMATCH is the trigger for started
+//     draft games (their replay is known-desynced even when it happens not
+//     to throw).
+const REPLAY_VERSION = 2;
+
 type Setup = {
   whiteNerfId: string;
   blackNerfId: string;
@@ -109,6 +130,11 @@ type StoredMatch = {
   mode?: DraftMode;
   // Friend-game setting: both seats see each other's pending offer cards.
   picksVisible?: boolean;
+  // Replay compatibility stamp (see REPLAY_VERSION). Absent = version 1.
+  replayVersion?: number;
+  // Draft cadence the game was created under, persisted so replays keep
+  // using it even after the engine default changes.
+  cadence?: number;
   // Seed for the draft engine RNG (offer rolls). Never sent to any client:
   // it would let a client predict every future offer.
   draftSeed?: number;
@@ -573,13 +599,11 @@ export class GameServer extends DurableObject<Env> {
 
   // Revive the alarm chain when the stored alarm is missing or well overdue.
   // A chain wedged in the past returns a non-null getAlarm() value, so
-  // checking for "missing" alone never recovers a dead roster. Checked once
-  // per isolate; called from socket connects and /healthz.
-  private alarmRevivalChecked = false;
-
+  // checking for "missing" alone never recovers a dead roster. Runs on every
+  // socket connect and /healthz: getAlarm() is a cheap local read, and a
+  // chain can wedge at any point in an isolate's life, so a once-per-isolate
+  // latch would leave a later-wedged chain dead until the isolate recycles.
   private async reviveAlarmChain() {
-    if (this.alarmRevivalChecked) return;
-    this.alarmRevivalChecked = true;
     const existing = await this.ctx.storage.getAlarm();
     if (!existing || existing < Date.now() - houseHeartbeatMs) {
       await this.ctx.storage.setAlarm(Date.now() + 1000);
@@ -909,7 +933,12 @@ export class GameServer extends DurableObject<Env> {
 
     let game = newGame(white, black, match.setup.seed);
     if (match.draft) {
-      enableDraftMode(game, match.draftSeed ?? match.setup.seed, { mode: match.mode });
+      // Replay under the cadence the game was recorded with (older records
+      // carry none and fall back to the mode default).
+      enableDraftMode(game, match.draftSeed ?? match.setup.seed, {
+        mode: match.mode,
+        ...(match.cadence ? { cadence: match.cadence } : {}),
+      });
       this.draftRebuild = { matchId: match.id, revealed: new Set(), acquired: new Map() };
     }
     // Draft actions replay interleaved with moves: an action recorded at ply
@@ -933,6 +962,28 @@ export class GameServer extends DurableObject<Env> {
     }
     applyActionsUpTo(match.moves.length);
     if (match.result) game.result = match.result;
+    return game;
+  }
+
+  // Rebuild the live game for a play-path caller (moves, resigns, draft
+  // frames, house actions). A started, unfinished match whose replay can no
+  // longer be trusted is ended gracefully here instead of returning null
+  // into a soft-lock: a stamped replayVersion that differs from the current
+  // constant means the replay is known-desynced (v2+), and an outright
+  // replay failure catches v1 records from before the stamp existed (see
+  // REPLAY_VERSION). The draw goes through the normal end flow, so the end
+  // frame reaches both seats and rated games are recorded, never deleted.
+  private async gameForPlay(match: StoredMatch): Promise<NerfGame | null> {
+    const stale =
+      match.replayVersion != null && match.replayVersion !== REPLAY_VERSION && !match.result;
+    const game = stale ? null : this.gameFromMatch(match);
+    if (!game && match.startedAt && !match.result) {
+      match.clocks = this.currentClocks(match);
+      match.runningSince = null;
+      match.result = { winner: "draw", reason: "server update interrupted this game" };
+      match.completedAt = Date.now();
+      await this.endMatch(match);
+    }
     return game;
   }
 
@@ -1134,7 +1185,17 @@ export class GameServer extends DurableObject<Env> {
       createdAt: Date.now(),
       startedAt: null,
       completedAt: null,
-      ...(draft ? { draft: true, ...(mode ? { mode } : {}), picksVisible, draftSeed: makeSeed(), draftActions: [] } : {}),
+      replayVersion: REPLAY_VERSION,
+      ...(draft
+        ? {
+            draft: true,
+            ...(mode ? { mode } : {}),
+            picksVisible,
+            cadence: mode === "nerf" ? NERF_MODE_CADENCE : DEFAULT_CADENCE,
+            draftSeed: makeSeed(),
+            draftActions: [],
+          }
+        : {}),
       ...(invite ? { invitedUsername: invite } : {}),
     };
 
@@ -1215,6 +1276,10 @@ export class GameServer extends DurableObject<Env> {
       }
       return send(ws, "created", { id, color, token: match.tokens[color] });
     }
+    // A live draft game whose replay went stale across a deploy ends now,
+    // through gameForPlay's graceful draw, so the returning player gets the
+    // end frame instead of a board that can never accept a move.
+    if (match.draft && !match.result) await this.gameForPlay(match);
     this.sendStart(match, color);
     // A rematch was created while this seat was away (page refresh or dropped
     // socket mid-rematch): re-deliver the seat in the new game so the player
@@ -1241,8 +1306,11 @@ export class GameServer extends DurableObject<Env> {
       return error(ws, "nerf_pending", "Pick your nerf before the game starts.");
     }
 
-    const game = this.gameFromMatch(match);
-    if (!game) return error(ws, "no_game", "Join a game before sending moves.");
+    const game = await this.gameForPlay(match);
+    // gameForPlay already ended a match whose replay went stale (the end
+    // frame is on its way to this seat); only a genuinely unjoined game
+    // still warrants the error.
+    if (!game) return match.result ? undefined : error(ws, "no_game", "Join a game before sending moves.");
     if (game.board.turn !== session.color) return error(ws, "not_your_turn", "It is not your turn.");
     // Draft games: a pending buff offer blocks the seat's moves, mirroring
     // how the client blocks the board until the draft is resolved.
@@ -1362,8 +1430,8 @@ export class GameServer extends DurableObject<Env> {
     if (await this.finishOnFlag(match)) return;
     if (match.result) return;
 
-    const game = this.gameFromMatch(match);
-    if (!game) return error(ws, "no_game", "Join a game before resigning.");
+    const game = await this.gameForPlay(match);
+    if (!game) return match.result ? undefined : error(ws, "no_game", "Join a game before resigning.");
 
     match.clocks = this.currentClocks(match);
     match.runningSince = null;
@@ -1643,12 +1711,14 @@ export class GameServer extends DurableObject<Env> {
       completedAt: null,
       // Queue games are rated under the pool's mode bucket ("nerf"/"buff").
       // Friend and challenge games never set `rated`, so they stay casual.
+      replayVersion: REPLAY_VERSION,
       rated: true,
       autoStart: true,
       users: { w: meWhite ? me : them, b: meWhite ? them : me },
       draft: true,
       mode,
       picksVisible: false,
+      cadence: mode === "nerf" ? NERF_MODE_CADENCE : DEFAULT_CADENCE,
       draftSeed: makeSeed(),
       draftActions: [],
     };
@@ -1796,7 +1866,23 @@ export class GameServer extends DurableObject<Env> {
         this.houseTickError = err instanceof Error ? err.message : String(err);
         console.error("house action failed, retiring match", match.id, err);
         try {
-          await this.deleteMatch(match);
+          const humanSeat = (["w", "b"] as Color[]).find((c) => !match.bots?.[c]);
+          if (humanSeat) {
+            // A human is seated: deleting the record would close their
+            // socket with "Game expired" and erase a rated game with no end
+            // frame. The house seat resigns through the normal end flow
+            // instead, so the rating is recorded and the end frame goes out.
+            if (!match.result) {
+              match.clocks = this.currentClocks(match);
+              match.runningSince = null;
+              match.result = { winner: humanSeat, reason: "resignation" };
+              match.completedAt = Date.now();
+            }
+            await this.endMatch(match, false);
+          } else {
+            // House-vs-house filler: nobody is watching a rating, delete it.
+            await this.deleteMatch(match);
+          }
         } catch {}
       }
     }
@@ -1871,8 +1957,11 @@ export class GameServer extends DurableObject<Env> {
             busy.add(persona.userId);
             const humanWs = this.socketForAttachment(waiting.attachmentId);
             if (!humanWs) continue;
-            await this.ctx.storage.put(key, alive.slice(1));
+            // Pair first, drop the queue entry after: if pairing throws, the
+            // human stays queued for the next tick instead of silently
+            // sitting on "searching" forever.
             await this.pairHumanWithHouse(waiting, humanWs, poolName, mode, persona, db);
+            await this.ctx.storage.put(key, alive.slice(1));
             pickedUp = true;
             break outer;
           } catch (err) {
@@ -1950,8 +2039,10 @@ export class GameServer extends DurableObject<Env> {
     }
 
     if (await this.finishOnFlag(match, now, false)) return;
-    const game = this.gameFromMatch(match);
-    if (!game) throw new Error("house game replay failed");
+    // A stale or failed replay ends the game gracefully inside gameForPlay
+    // (draw, end frame, recorded); nothing left for the house seat to do.
+    const game = await this.gameForPlay(match);
+    if (!game) return;
     if (game.result) {
       // Derived but unrecorded result (should not happen): settle it.
       match.clocks = this.currentClocks(match, now);
@@ -2091,12 +2182,14 @@ export class GameServer extends DurableObject<Env> {
       createdAt: Date.now(),
       startedAt: null,
       completedAt: null,
+      replayVersion: REPLAY_VERSION,
       rated: true,
       autoStart: true,
       users: seats.users,
       draft: true,
       mode,
       picksVisible: false,
+      cadence: mode === "nerf" ? NERF_MODE_CADENCE : DEFAULT_CADENCE,
       draftSeed: makeSeed(),
       draftActions: [],
       bots: seats.bots,
@@ -2230,6 +2323,7 @@ export class GameServer extends DurableObject<Env> {
       createdAt: Date.now(),
       startedAt: null,
       completedAt: null,
+      replayVersion: REPLAY_VERSION,
       rated: match.rated,
       autoStart: true,
       users,
@@ -2238,6 +2332,7 @@ export class GameServer extends DurableObject<Env> {
             draft: true,
             ...(match.mode ? { mode: match.mode } : {}),
             picksVisible: !!match.picksVisible,
+            cadence: match.mode === "nerf" ? NERF_MODE_CADENCE : DEFAULT_CADENCE,
             draftSeed: makeSeed(),
             draftActions: [],
           }
@@ -2488,9 +2583,9 @@ export class GameServer extends DurableObject<Env> {
       error(ws, "nerf_pending", "Pick your nerf before the game starts.");
       return null;
     }
-    const game = this.gameFromMatch(match);
+    const game = await this.gameForPlay(match);
     if (!game?.buffs) {
-      error(ws, "no_game", "The game has not started yet.");
+      if (!match.result) error(ws, "no_game", "The game has not started yet.");
       return null;
     }
     return { session, match, game };

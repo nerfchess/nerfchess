@@ -235,7 +235,11 @@ export interface BuffApi {
   /** Piece counts I have captured from the opponent (their revivable pool). */
   capturedByMe: Record<PieceType, number>;
   place: (sq: Square, type: PieceType, color: Color) => void;
-  removePiece: (sq: Square) => void;
+  /** Clear a square. By default the piece counts as captured by the other
+   * side (a buff destroying a piece is a real loss). Pass `uncounted` for
+   * board rewrites and summoned-piece expiry, where nothing was actually
+   * lost and the revive pools must stay untouched. */
+  removePiece: (sq: Square, opts?: { uncounted?: boolean }) => void;
   relocate: (from: Square, to: Square) => void;
   setPieceType: (sq: Square, type: PieceType) => void;
   setPieceColor: (sq: Square, color: Color) => void;

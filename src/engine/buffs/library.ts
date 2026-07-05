@@ -1765,7 +1765,9 @@ const TIER4: Buff[] = [
         if (t <= 0) {
           const sq = inst.state.sq as Square;
           const p = api.board.pieces[sq];
-          if (p && p.color === api.me && p.type === "r") api.removePiece(sq);
+          // Expiry of a summoned piece, not a capture: never pollute the
+          // revive pools with a rook the opponent never took.
+          if (p && p.color === api.me && p.type === "r") api.removePiece(sq, { uncounted: true });
           inst.spent = true;
         }
       },
@@ -2745,8 +2747,10 @@ const TIER8: Buff[] = [
       effect: (inst, api) => {
         const snap = (inst.state.snaps as BoardState["pieces"][] | undefined)?.[0];
         if (!snap) return;
+        // Whole-board rewrite: the clears are bookkeeping, not captures, so
+        // they must not feed the revive pools or capture counters.
         for (let sq = 0; sq < 64; sq++) {
-          api.removePiece(sq);
+          api.removePiece(sq, { uncounted: true });
           const p = snap[sq];
           if (p) api.place(sq, p.type, p.color);
         }
@@ -3024,7 +3028,9 @@ const TIER8: Buff[] = [
     { id: "genesis", name: "Genesis", description: "Reset the entire board to the opening position with your nerf removed, once.", tier: 8, category: "pieces" },
     activatedSimple((_inst, api) => {
       const BACK: PieceType[] = ["r", "n", "b", "q", "k", "b", "n", "r"];
-      for (let sq = 0; sq < 64; sq++) api.removePiece(sq);
+      // Whole-board rewrite: uncounted, or the fresh armies would register
+      // as 32 captures and corrupt every revive pool and nerf condition.
+      for (let sq = 0; sq < 64; sq++) api.removePiece(sq, { uncounted: true });
       for (let f = 0; f < 8; f++) {
         api.place(SQ(f, 0), BACK[f], "w");
         api.place(SQ(f, 1), "p", "w");
