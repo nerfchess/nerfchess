@@ -20,10 +20,13 @@ const bigintAsNumber = {
   parse: (value: string) => Number(value),
 };
 
-let client: Sql | null = null;
-
-export function getPg(): Sql {
-  if (client) return client;
+// IMPORTANT: do NOT cache the postgres client across requests. Cloudflare
+// Workers forbid using a socket opened in one request's I/O context from a
+// different request — a reused client manifests as the Worker "hanging" and the
+// runtime cancelling the request. Hyperdrive already pools the *origin*
+// connections, so opening a fresh client per query is cheap (the Worker↔
+// Hyperdrive hop is local) and is the pattern Cloudflare documents.
+function makeClient(): Sql {
   const { env } = getCloudflareContext();
   const hyperdrive = (env as { HYPERDRIVE?: Hyperdrive }).HYPERDRIVE;
   if (!hyperdrive) {
@@ -31,12 +34,22 @@ export function getPg(): Sql {
       "Hyperdrive binding `HYPERDRIVE` is not configured. Check wrangler.jsonc `hyperdrive` and, for local dev, set WRANGLER_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE.",
     );
   }
-  client = postgres(hyperdrive.connectionString, {
-    max: 5,
+  return postgres(hyperdrive.connectionString, {
+    max: 1,
     fetch_types: false,
     types: { bigint: bigintAsNumber },
   });
-  return client;
+}
+
+// Close the per-request client after the response is sent (waitUntil) so socket
+// teardown never adds latency to the request; fall back to awaiting if no ctx.
+function closeSoon(sql: Sql): void {
+  const closing = sql.end({ timeout: 5 });
+  try {
+    getCloudflareContext().ctx.waitUntil(closing);
+  } catch {
+    void closing;
+  }
 }
 
 // Run a D1-style query (with `?` placeholders) against Postgres and return the
@@ -46,9 +59,13 @@ export async function pgAll<T = Record<string, unknown>>(
   text: string,
   params: unknown[] = [],
 ): Promise<T[]> {
-  const sql = getPg();
-  const rows = await sql.unsafe(toPositional(text), params as never[]);
-  return rows as unknown as T[];
+  const sql = makeClient();
+  try {
+    const rows = await sql.unsafe(toPositional(text), params as never[]);
+    return rows as unknown as T[];
+  } finally {
+    closeSoon(sql);
+  }
 }
 
 // Single-row helper mirroring D1's `.first()`.
