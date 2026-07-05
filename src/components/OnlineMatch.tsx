@@ -61,7 +61,7 @@ import {
   saveOnlineSeat,
 } from "@/lib/multiplayer";
 import { premoveOptionsFor } from "@/lib/premoves";
-import { isMuted, playCapture, playCheck, playError, playLowTime, playMove as playMoveSfx, playNerf, setMuted } from "@/lib/sounds";
+import { isMuted, playCapture, playCheck, playError, playMove as playMoveSfx, playNerf, setMuted } from "@/lib/sounds";
 
 // Mirrors the server's start-of-game grace: each side's first move gets this
 // many free milliseconds before their clock starts charging.
@@ -947,10 +947,6 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingLocalMove]);
 
-  // Low-time alarm: one warning sound the moment my clock first drops under
-  // 15 seconds. Re-arms if increment lifts the clock clearly back above it.
-  const lowTimeArmedRef = useRef(true);
-  const myMs = myColor === "w" ? whiteMs : blackMs;
   const turnStartedAtRef = useRef(Date.now());
   useEffect(() => {
     turnStartedAtRef.current = Date.now();
@@ -989,31 +985,14 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [game, whiteMs, blackMs, clockEnabled, session]);
 
-  // ClockPill owns the visible countdown, so the whole match surface does not
-  // re-render ten times a second during bullet games.
-  useEffect(() => {
-    if (!clockEnabled || !game || game.result || !uiSettings.lowTimeWarning) return;
-    // The clock is paused while a draft pick is inside its free window: no
-    // low-time warning should sound mid-selection. After the window the
-    // clock is live and the warning applies again.
-    if (isDraft && !draftGraceOver && (!!game.buffs?.players[myColor].offer || oppDrafting)) return;
-    if (myMs >= 20000) {
-      lowTimeArmedRef.current = true;
-    }
-    if (game.board.turn !== myColor || !lowTimeArmedRef.current) return;
-    const delay = clockStartDelay(myColor) + myMs - 15000;
-    if (delay <= 0) {
-      lowTimeArmedRef.current = false;
-      playLowTime();
-      return;
-    }
-    const id = window.setTimeout(() => {
-      lowTimeArmedRef.current = false;
-      playLowTime();
-    }, delay);
-    return () => window.clearTimeout(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [myMs, clockEnabled, game, myColor, oppDrafting, uiSettings.lowTimeWarning]);
+  // The low-time warning is owned by the local player's ClockPill (warnLowTime):
+  // it plays the lichess LowTime sample as the visible clock ticks under 10s and
+  // an urgent tick under 5s, once per crossing, deduped across the duplicated
+  // mobile/desktop copies. Tying it to the ClockPill keeps the alert in step with
+  // the countdown the player actually sees (a one-shot timer here drifted from
+  // the display and fired at a fixed 15s) and matches the local game exactly.
+  // Draft free-window pauses are handled for free: the ClockPill's `active`
+  // prop is gated on `draftClockPaused`, so no warning sounds mid-pick.
 
   // Surface the claim buttons once the opponent has stayed gone long enough
   // for the server to accept a claim; hide them the moment they return.
@@ -1784,6 +1763,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                     ms={myColor === "w" ? whiteMs : blackMs}
                     active={!game.result && !draftClockPaused && game.board.turn === myColor}
                     startDelayMs={clockStartDelay(myColor)}
+                    warnLowTime={uiSettings.lowTimeWarning}
                     compact
                   />
                 )}
@@ -1842,6 +1822,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   ms={myColor === "w" ? whiteMs : blackMs}
                   active={!game.result && !draftClockPaused && game.board.turn === myColor}
                   startDelayMs={clockStartDelay(myColor)}
+                  warnLowTime={uiSettings.lowTimeWarning}
                 />
               )}
             </div>
