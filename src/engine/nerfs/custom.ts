@@ -93,7 +93,10 @@ export function buildCustomNerf(spec: CustomNerf): Nerf {
         const caps = out.filter((m) => !!m.captured);
         if (caps.length) out = caps;
       }
-      return out;
+      // Combining several restrictions can filter every move away; never hand
+      // back an empty list (that would self-stalemate). Fall back to the full
+      // set so a custom nerf can restrict but never soft-lock.
+      return out.length ? out : moves;
     },
     checkLoss: (_s, ctx) => {
       for (const r of spec.rules) {

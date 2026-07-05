@@ -80,8 +80,10 @@ export const NERFS_T5: Nerf[] = [
   N(
     { id: "no_retreat_ever", name: "No Retreat Ever", description: "None of your pieces may move backward toward your own back rank.", flavor: "Forward or sideways, never home.", icon: "move" },
     {
-      filterMoves: (moves, _state, ctx) =>
-        moves.filter((m) => relRank(ctx.me, m.to) >= relRank(ctx.me, m.from)),
+      filterMoves: (moves, _state, ctx) => {
+        const fwd = moves.filter((m) => relRank(ctx.me, m.to) >= relRank(ctx.me, m.from));
+        return fwd.length ? fwd : moves;
+      },
     },
   ),
   N(
