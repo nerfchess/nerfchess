@@ -14,6 +14,7 @@ export interface AccountUser {
   role: "user" | "mod" | "admin";
   mutedUntil: number | null;
   bio: string | null;
+  flair: string | null;
   isGuest: boolean;
 }
 

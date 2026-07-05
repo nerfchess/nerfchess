@@ -261,6 +261,8 @@ const ADDITIVE_COLUMNS: string[] = [
   // Which rules variant the game was played under. Every live game today is
   // classic nerf chess; future variants record their own id here.
   `ALTER TABLE games ADD COLUMN ruleset TEXT NOT NULL DEFAULT 'classic'`,
+  // Emoji flair shown next to the username (see src/lib/flair.ts).
+  `ALTER TABLE users ADD COLUMN flair TEXT`,
 ];
 
 export async function ensureSchema(db: D1Database): Promise<void> {
