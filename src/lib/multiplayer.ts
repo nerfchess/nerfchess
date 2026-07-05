@@ -187,6 +187,11 @@ export type MPLobbySeek = {
   timeSec: number;
   incrementSec: number;
   at: number;
+  // Stable identity of the seeker, echoed back when answering the seek so the
+  // server pairs with exactly this person (or house bot) and never a random
+  // pool waiter. Optional so snapshots from an older server still parse.
+  userId?: string;
+  house?: boolean;
 };
 export type MPLobby = {
   players: MPLobbyPlayer[];
@@ -422,7 +427,7 @@ export class MPSession {
   // auto-reconnect and re-send the queue frame (the seat is not yet known, so
   // this keeps scheduleReconnect enabled during the search window).
   private searching = false;
-  private searchQueue: { pool: string; mode?: DraftMode } | null = null;
+  private searchQueue: { pool: string; mode?: DraftMode; target?: { userId: string } } | null = null;
   private destroyed = false;
   private reconnectTimer: number | null = null;
   private reconnectAttempt = 0;
@@ -495,6 +500,10 @@ export class MPSession {
         this.sendFrame("queue", {
           pool: this.searchQueue.pool,
           ...(this.searchQueue.mode ? { mode: this.searchQueue.mode } : {}),
+          // Keep a targeted seek answer targeted across a reconnect: if the
+          // seeker is gone the server returns seek_gone rather than pairing a
+          // stranger, preserving the "only this person" guarantee.
+          ...(this.searchQueue.target ? { target: this.searchQueue.target } : {}),
         });
     } catch {
       this.scheduleReconnect();
@@ -845,12 +854,21 @@ export class MPSession {
 
   // Join the rated quick-pairing queue. The queue runs two pools ("nerf" and
   // "buff"); omitting the mode lands in Buff, matching older servers.
+  // Passing `target` answers one specific lobby seek: the server pairs only
+  // with that seeker (or house bot) and returns "seek_gone" if they already
+  // left, instead of substituting a random opponent.
   // Resolves with the paired game id.
-  async queue(pool: string, mode?: DraftMode): Promise<{ id: string; color: Color; token: string }> {
-    // Remember the search so an auto-reconnect mid-search can re-send the queue
-    // frame, and keep scheduleReconnect enabled while we have no seat yet.
+  async queue(
+    pool: string,
+    mode?: DraftMode,
+    target?: { userId: string },
+  ): Promise<{ id: string; color: Color; token: string }> {
+    // Remember the search (target included) so an auto-reconnect mid-search
+    // re-sends the same queue frame, and keep scheduleReconnect enabled while
+    // we have no seat yet. Persisting the target keeps a targeted seek answer
+    // targeted across a drop instead of degrading to a random quick-pair.
     this.searching = true;
-    this.searchQueue = { pool, ...(mode ? { mode } : {}) };
+    this.searchQueue = { pool, ...(mode ? { mode } : {}), ...(target ? { target } : {}) };
     try {
       await this.connectWithRetry();
     } catch (e) {
@@ -866,7 +884,9 @@ export class MPSession {
         } else if (event.type === "error") {
           this.searching = false;
           off();
-          reject(new Error(event.message));
+          // Surface the authoritative "seeker left" as the same sentinel the
+          // lobby's client-side timeout uses, so it shows one clear message.
+          reject(new Error(event.code === "seek_gone" ? "seek_gone" : event.message));
         } else if (event.type === "disconnected") {
           // With auto-reconnect on, a transient drop mid-search is
           // recoverable: scheduleReconnect() re-sends the queue frame, so keep
@@ -879,7 +899,7 @@ export class MPSession {
           }
         }
       });
-      this.sendFrame("queue", { pool, ...(mode ? { mode } : {}) });
+      this.sendFrame("queue", { pool, ...(mode ? { mode } : {}), ...(target ? { target } : {}) });
     });
   }
 
