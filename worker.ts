@@ -194,7 +194,7 @@ type QueueEntry = {
   at: number;
 };
 type ClientFrame =
-  | { t: "create"; d?: { timeSec?: unknown; incrementSec?: unknown; draft?: unknown; mode?: unknown; picksVisible?: unknown; invite?: unknown; stacked?: unknown } }
+  | { t: "create"; d?: { timeSec?: unknown; incrementSec?: unknown; draft?: unknown; mode?: unknown; picksVisible?: unknown; invite?: unknown; stacked?: unknown; rated?: unknown } }
   | { t: "join"; d?: { id?: unknown } }
   | { t: "reconnect"; d?: { id?: unknown; color?: unknown; token?: unknown } }
   | { t: "move"; d?: { u?: unknown; ply?: unknown } }
@@ -1382,15 +1382,20 @@ export class GameServer extends DurableObject<Env> {
     const session = this.session(ws);
     if (session.matchId) return error(ws, "already_joined", "This connection already belongs to a game.");
 
-    const requested = (data || {}) as { timeSec?: unknown; incrementSec?: unknown; draft?: unknown; mode?: unknown; picksVisible?: unknown; invite?: unknown; stacked?: unknown };
+    const requested = (data || {}) as { timeSec?: unknown; incrementSec?: unknown; draft?: unknown; mode?: unknown; picksVisible?: unknown; invite?: unknown; stacked?: unknown; rated?: unknown };
     const timeSec = Number.isInteger(requested.timeSec) ? Number(requested.timeSec) : 600;
     const incrementSec = Number.isInteger(requested.incrementSec) ? Number(requested.incrementSec) : 0;
     if (timeSec < 0 || timeSec > 7200 || incrementSec < 0 || incrementSec > 60) {
       return error(ws, "invalid_clock", "Unsupported time control.");
     }
-    // Optional Draft ruleset for friend games. Friend games are always
-    // casual: `rated` is deliberately never set here, whatever the client
-    // asks. Only the matchmaking queue creates rated games.
+    // Custom challenges may opt into a rated game. Rating still only moves when
+    // both seats belong to accounts (attachSession fills match.users for signed
+    // -in seats, and recordFinishedGame no-ops the rating when either side is
+    // anonymous), so a rated flag on an anonymous game degrades to casual on
+    // its own. The category is the same bucket the queue uses (mode for Draft,
+    // else time control), so a rated custom game moves the normal rating.
+    const rated = requested.rated === true;
+    // Optional Draft ruleset for friend games.
     const draft = requested.draft === true;
     // The game's section: "nerf" or "buff". Older clients send neither and
     // get the legacy merged rules.
@@ -1431,6 +1436,7 @@ export class GameServer extends DurableObject<Env> {
       startedAt: null,
       completedAt: null,
       replayVersion: REPLAY_VERSION,
+      ...(rated ? { rated: true } : {}),
       ...(draft
         ? {
             draft: true,

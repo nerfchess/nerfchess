@@ -753,7 +753,7 @@ export class MPSession {
   async host(
     timeSec: number,
     incrementSec: number,
-    options?: { draft?: boolean; mode?: DraftMode; picksVisible?: boolean; invite?: string; stacked?: boolean },
+    options?: { draft?: boolean; mode?: DraftMode; picksVisible?: boolean; invite?: string; stacked?: boolean; rated?: boolean },
   ): Promise<string> {
     await this.connect();
     return new Promise((resolve, reject) => {
@@ -781,6 +781,9 @@ export class MPSession {
           : {}),
         // Direct challenge: reserve the opponent seat for this username.
         ...(options?.invite ? { invite: options.invite } : {}),
+        // Rated custom challenge: the server rates it when both seats are
+        // signed-in accounts, else it degrades to casual on its own.
+        ...(options?.rated ? { rated: true } : {}),
       });
     });
   }
