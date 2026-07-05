@@ -353,6 +353,14 @@ function moveByUci(game: NerfGame, uci: string) {
 export class GameServer extends DurableObject<Env> {
   private sessions = new Map<WebSocket, SessionAttachment>();
   private dbReady: Promise<boolean> | null = null;
+  // Short-lived in-memory cache of the assembled lobby snapshot. Every client
+  // polls the lobby roughly every 5s and each rebuild does a full match scan on
+  // this single-threaded DO, so concurrent polls serialize behind the scan.
+  // Caching the shared (public) snapshot for a couple of seconds collapses that
+  // burst into one scan. Cleared whenever the match set changes (saveMatch /
+  // deleteMatch); queue/seek changes are absorbed by the TTL.
+  private lobbyCache: { at: number; payload: unknown } | null = null;
+  private static readonly LOBBY_CACHE_TTL_MS = 2000;
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
@@ -679,11 +687,15 @@ export class GameServer extends DurableObject<Env> {
   }
 
   private async saveMatch(match: StoredMatch, schedule = true) {
+    // The match set changed (create / start / move / end), so the cached lobby
+    // snapshot is stale. Clearing it forces the next poll to rebuild.
+    this.lobbyCache = null;
     await this.ctx.storage.put(matchKey(match.id), match);
     if (schedule) await this.scheduleAlarmForMatch(match);
   }
 
   private async deleteMatch(match: StoredMatch) {
+    this.lobbyCache = null;
     for (const [ws, session] of this.sessions) {
       if (session.matchId === match.id) {
         this.sessions.delete(ws);
@@ -3192,8 +3204,16 @@ export class GameServer extends DurableObject<Env> {
   // One snapshot for the lobby page: who is online right now and which games
   // can be watched. Polled by the client every few seconds.
   private async lobbySnapshot(ws: WebSocket) {
-    const matches = [...(await this.ctx.storage.list<StoredMatch>({ prefix: "match:" })).values()];
     const now = Date.now();
+    // Serve the shared snapshot from cache when it is fresh. This skips the
+    // full match scan and every other await on the hot path (flag checks, the
+    // D1 rating lookup) for the burst of concurrent polls that land inside the
+    // TTL window. The snapshot is public and identical for every viewer, so a
+    // shared copy leaks no per-viewer private data.
+    if (this.lobbyCache && now - this.lobbyCache.at < GameServer.LOBBY_CACHE_TTL_MS) {
+      return send(ws, "lobby", this.lobbyCache.payload);
+    }
+    const matches = [...(await this.ctx.storage.list<StoredMatch>({ prefix: "match:" })).values()];
 
     const liveGames: Array<{
       id: string;
@@ -3394,13 +3414,18 @@ export class GameServer extends DurableObject<Env> {
     const players = [...seen.values()]
       .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0))
       .slice(0, 50);
-    send(ws, "lobby", {
+    const payload = {
       players,
       anonymous,
       games: liveGames.slice(0, 25),
       challenges: challenges.slice(0, 25),
       seeks: seeks.slice(0, 25),
-    });
+    };
+    // Refresh the shared cache so the rest of this poll burst is served without
+    // rescanning. Set last, after any finishOnFlag writes above, so the cached
+    // copy reflects the freshest state.
+    this.lobbyCache = { at: now, payload };
+    send(ws, "lobby", payload);
   }
 
   private async sendClocks(ws: WebSocket) {
