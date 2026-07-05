@@ -268,12 +268,12 @@ const houseNextFillerKey = "hp:nextFillerAt";
 // Slow heartbeat while at least one human socket is connected; with nobody
 // online there is no heartbeat and the DO goes idle between match deadlines.
 const houseHeartbeatMs = 20 * 1000;
-// The full-table maintenance sweep (GC of expired games, flag enforcement,
-// live-index rebuild) is the heaviest thing the alarm does. Bot moves wake the
-// alarm about once a second, and running the full sweep every time is what tips
-// the single-threaded DO past its CPU limit. Run it at most this often; the
-// cheap indexed reschedule keeps the alarm chain alive in between.
-const maintenanceMinIntervalMs = 8 * 1000;
+// Storage key holding the small set of live (unfinished) match ids. Persisting
+// it means a fresh isolate reads the live set with one cheap get instead of a
+// whole-table scan (deserializing every finished game's move history), which is
+// what was pushing the single-threaded DO past its CPU/storage limit and
+// resetting it in a loop. Not a "match:" key, so GC never touches it.
+const liveIdsKey = "live:ids";
 // Queue presence: keep 2-3 personas seeking across the two pools.
 const houseSeekMin = 2;
 const houseSeekMax = 3;
@@ -316,7 +316,7 @@ type HouseSeekEntry = {
 // Bump this on every deploy so /healthz identifies the running build. When it
 // is a static string that never changes, nobody can tell what code is live,
 // which is exactly how a shipped fix looks unfixed. Keep it short.
-const buildVersion = "server-cpu-fix-1";
+const buildVersion = "server-cpu-fix-2";
 // Lichess-style start-of-game grace: a player's clock only starts charging 10
 // seconds into their first move, so nobody loses time to a slow page load.
 const firstMoveGraceMs = 10 * 1000;
@@ -438,17 +438,17 @@ export class GameServer extends DurableObject<Env> {
       // blows the per-request CPU limit (learned the hard way, see the
       // retired system's history). Best-effort: a storage hiccup in the
       // revival or cleanup must not stop /healthz from returning diagnostics.
+      // Never scan the match table from a request handler: GC (a bounded sweep)
+      // runs only from the alarm now. Just make sure the alarm chain is alive.
       try {
         await this.reviveAlarmChain();
-        await this.cleanupExpired();
       } catch (err) {
         console.error("healthz maintenance failed", err);
       }
 
-      // cleanupExpired above already ran (and refreshed) a full scan for GC;
-      // reuse the live index for these counts via targeted reads instead of a
-      // second whole-table deserialize on the single thread. "games" now
-      // reports live (unfinished) games, which is the number that matters here.
+      // Counts come from the live index via targeted reads, never a whole-table
+      // scan. "games" reports live (unfinished) games, the number that matters
+      // here. On a fresh isolate the index loads from its persisted copy.
       const liveMatches = await this.loadLiveMatches();
       const alarmAt = await this.ctx.storage.getAlarm();
       let houseGames = 0;
@@ -469,6 +469,9 @@ export class GameServer extends DurableObject<Env> {
         games: liveMatches.length,
         alarmAt, // ms epoch of the next scheduled maintenance pass, if any
         alarmInMs: alarmAt ? alarmAt - Date.now() : null,
+        // True while the bounded GC is still draining the match table; useful
+        // for watching recovery after a deploy that inherited a bloated table.
+        draining: this.gcCursor != null,
         house: {
           roster: HOUSE_ROSTER.length,
           seeded,
@@ -666,26 +669,13 @@ export class GameServer extends DurableObject<Env> {
       this.houseTickError = err instanceof Error ? err.message : String(err);
       console.error("houseTick failed", err);
     }
-    // The full maintenance sweep is the CPU-heavy part (a whole-table scan plus
-    // per-match work). Bot moves wake this alarm about once a second; running
-    // the sweep every time is what pushed the DO past its CPU limit. Throttle
-    // it. On the in-between ticks do only the cheap indexed reschedule so the
-    // alarm chain stays alive and live house games keep moving; flag/deadline
-    // enforcement and GC still run on the next sweep, at most a few seconds out.
-    const now = Date.now();
-    if (now - this.lastMaintenanceAt >= maintenanceMinIntervalMs) {
-      this.lastMaintenanceAt = now;
-      try {
-        await this.maintenanceAll();
-      } catch (err) {
-        console.error("maintenanceAll failed", err);
-      }
-    } else {
-      try {
-        await this.scheduleNextAlarm(await this.loadLiveMatches());
-      } catch (err) {
-        console.error("alarm reschedule failed", err);
-      }
+    // maintenanceAll is now cheap: it enforces flags/deadlines on the live set
+    // (read off the persisted index, no scan) and drains expired records one
+    // bounded page at a time, so it is safe to run on every alarm.
+    try {
+      await this.maintenanceAll();
+    } catch (err) {
+      console.error("maintenanceAll failed", err);
     }
   }
 
@@ -735,7 +725,9 @@ export class GameServer extends DurableObject<Env> {
     // snapshot is stale. Clearing it forces the next poll to rebuild.
     this.lobbyCache = null;
     await this.ctx.storage.put(matchKey(match.id), match);
+    await this.ensureLiveIndex();
     this.trackLive(match);
+    await this.persistLiveIndex();
     if (schedule) await this.scheduleAlarmForMatch(match);
   }
 
@@ -751,36 +743,39 @@ export class GameServer extends DurableObject<Env> {
     await this.ctx.storage.delete(matchKey(match.id));
   }
 
-  // In-memory index of unfinished (live) match ids on this DO instance. The
-  // single global DO serializes ALL traffic, so the frequent paths (houseTick
-  // on every alarm, lobbySnapshot on every lobby load) must not deserialize
-  // the whole match table (finished games included) just to reach the handful
-  // of live ones. The index is kept exact by saveMatch/deleteMatch and is
-  // rebuilt from a full scan every GC sweep, so it self-heals after an isolate
-  // restart or any missed update.
+  // In-memory mirror of the persisted live-match id set (liveIdsKey). The
+  // single global DO serializes ALL traffic, so the frequent paths (houseTick,
+  // lobbySnapshot) must never deserialize the whole match table just to reach
+  // the handful of live games. Kept exact by saveMatch/deleteMatch (which also
+  // persist it) and reconciled by the bounded GC sweep.
   private liveMatchIndex: Set<string> | null = null;
 
-  // When the last full maintenance sweep ran. Gates the heavy sweep off the
-  // once-a-second bot-move alarm (see maintenanceMinIntervalMs).
-  private lastMaintenanceAt = 0;
+  // Cursor into the "match:" keyspace for the bounded GC sweep. Null means the
+  // next sweep starts from the beginning of the keyspace.
+  private gcCursor: string | null = null;
 
   // Keep the index in step with a write: a finished game leaves the live set,
-  // any other save is a live game. A no-op until the index has been built.
+  // any other save is a live game. Assumes the index is already loaded.
   private trackLive(match: StoredMatch) {
     if (!this.liveMatchIndex) return;
     if (match.result) this.liveMatchIndex.delete(match.id);
     else this.liveMatchIndex.add(match.id);
   }
 
+  // Persist the live-id set so a fresh isolate can load it without a scan.
+  private async persistLiveIndex() {
+    if (!this.liveMatchIndex) return;
+    await this.ctx.storage.put(liveIdsKey, [...this.liveMatchIndex]);
+  }
+
+  // Load the live-id set once per isolate from its persisted copy (one cheap
+  // get), never from a whole-table scan. The bounded GC sweep folds in any ids
+  // the persisted set missed (e.g. a write that raced an isolate restart).
   private async ensureLiveIndex(): Promise<Set<string>> {
     if (this.liveMatchIndex) return this.liveMatchIndex;
-    const index = new Set<string>();
-    const all = await this.ctx.storage.list<StoredMatch>({ prefix: "match:" });
-    for (const match of all.values()) {
-      if (!match.result) index.add(match.id);
-    }
-    this.liveMatchIndex = index;
-    return index;
+    const stored = (await this.ctx.storage.get<string[]>(liveIdsKey)) ?? [];
+    this.liveMatchIndex = new Set(stored);
+    return this.liveMatchIndex;
   }
 
   // Load only the unfinished matches, via batched point reads off the live
@@ -3633,36 +3628,60 @@ export class GameServer extends DurableObject<Env> {
     return n;
   }
 
-  private async cleanupExpired() {
-    const matches = [...(await this.ctx.storage.list<StoredMatch>({ prefix: "match:" })).values()];
-    const now = Date.now();
-    // GC is inherently a full scan (finished records are not in the live
-    // index). Rebuild the live index from the same pass so the cheap paths
-    // that run off it stay correct and self-heal after an isolate restart.
-    const index = new Set<string>();
-    for (const match of matches) {
-      if (match.completedAt && now - match.completedAt > finishedRetentionMs) {
-        await this.deleteMatch(match);
-        continue;
-      }
-      if (!match.startedAt && now - match.createdAt > 30 * 60 * 1000) {
-        await this.deleteMatch(match);
-        continue;
-      }
-      if (!match.result) index.add(match.id);
+  // Bounded GC sweep: walk the "match:" keyspace one page at a time (never the
+  // whole table at once, which on a bloated table blows the DO CPU/storage
+  // limit before it can delete anything). Deletes expired records and folds any
+  // live ids it sees into the persisted index. Returns true if more pages
+  // remain, so the caller can keep draining quickly until the table is clean.
+  private async sweepExpired(now = Date.now()): Promise<boolean> {
+    const pageSize = 100;
+    // start is inclusive; "match;" (';' is ':' + 1) bounds the "match:"
+    // keyspace without touching other keys (queue:, house:, live:).
+    const start = this.gcCursor ?? "match:";
+    const page = await this.ctx.storage.list<StoredMatch>({ start, end: "match;", limit: pageSize });
+    const entries = [...page.entries()];
+    if (!entries.length) {
+      this.gcCursor = null;
+      return false;
     }
-    this.liveMatchIndex = index;
+    await this.ensureLiveIndex();
+    let indexChanged = false;
+    for (const [key, match] of entries) {
+      // The inclusive start re-lists the previous page's last key; skip it.
+      if (key === this.gcCursor) continue;
+      if (this.isExpired(match, now)) {
+        await this.deleteMatch(match);
+        indexChanged = true;
+        continue;
+      }
+      if (!match.result && this.liveMatchIndex && !this.liveMatchIndex.has(match.id)) {
+        this.liveMatchIndex.add(match.id);
+        indexChanged = true;
+      }
+    }
+    const more = entries.length === pageSize;
+    this.gcCursor = more ? entries[entries.length - 1][0] : null;
+    if (indexChanged) await this.persistLiveIndex();
+    return more;
+  }
+
+  private isExpired(match: StoredMatch, now: number): boolean {
+    if (match.completedAt && now - match.completedAt > finishedRetentionMs) return true;
+    if (!match.startedAt && now - match.createdAt > 30 * 60 * 1000) return true;
+    if (match.startedAt && this.connectedSessions(match.id).length === 0) {
+      const latestDisconnect = Math.max(match.disconnectedAt.w ?? 0, match.disconnectedAt.b ?? 0);
+      if (latestDisconnect && now - latestDisconnect > 30 * 60 * 1000) return true;
+    }
+    return false;
   }
 
   private async maintenanceAll() {
-    const matches = [...(await this.ctx.storage.list<StoredMatch>({ prefix: "match:" })).values()];
     const now = Date.now();
-    const remaining: StoredMatch[] = [];
-    // Rebuild the live index from this GC scan (see cleanupExpired): the full
-    // pass we already pay for here keeps the cheap paths self-healing.
-    const index = new Set<string>();
-
-    for (const match of matches) {
+    // Flag/deadline enforcement runs on live games only, read cheaply off the
+    // persisted index (never a whole-table scan). Finished games need no
+    // enforcement; the bounded sweep below is what removes them.
+    const live = await this.loadLiveMatches();
+    for (const match of live) {
       // One bad match (corrupt record, transient storage error) must not stop
       // flag enforcement for every other live game or break the alarm chain.
       try {
@@ -3677,28 +3696,26 @@ export class GameServer extends DurableObject<Env> {
             changed = true;
           }
         }
-
-        const bothDisconnected = this.connectedSessions(match.id).length === 0;
-        const latestDisconnect = Math.max(match.disconnectedAt.w ?? 0, match.disconnectedAt.b ?? 0);
-        if (
-          (match.completedAt && now - match.completedAt > finishedRetentionMs) ||
-          (!match.startedAt && now - match.createdAt > 30 * 60 * 1000) ||
-          (match.startedAt && bothDisconnected && latestDisconnect && now - latestDisconnect > 30 * 60 * 1000)
-        ) {
+        if (this.isExpired(match, now)) {
           await this.deleteMatch(match);
           continue;
         }
-
         if (changed) await this.saveMatch(match, false);
       } catch (err) {
         console.error("maintenance failed for match", match.id, err);
       }
-      remaining.push(match);
-      if (!match.result) index.add(match.id);
     }
-
-    this.liveMatchIndex = index;
-    await this.scheduleNextAlarm(remaining);
+    // Drain expired/finished records a bounded page at a time. Keep draining
+    // fast (a quick follow-up alarm) until the table is clean, then fall back
+    // to the normal per-move cadence.
+    let more = false;
+    try {
+      more = await this.sweepExpired(now);
+    } catch (err) {
+      console.error("sweepExpired failed", err);
+    }
+    if (more) await this.armAlarmBy(Date.now() + 300);
+    await this.scheduleNextAlarm(await this.loadLiveMatches());
   }
 }
 
