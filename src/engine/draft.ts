@@ -22,8 +22,8 @@ import { Color } from "./types";
 // default arc, 7 slows the arc and delays high-tier cards.
 export const DEFAULT_CADENCE = 6;
 
-// Nerf mode drafts much less often: only the nerf-modifier cards are in its
-// pool, so a pick lands roughly every ten of your own moves.
+// Nerf mode drafts less often: the handicap is the star of that section, so
+// a boon pick lands roughly every ten of your own moves.
 export const NERF_MODE_CADENCE = 10;
 
 function drawRng(bs: BuffMatchState): RNG {
@@ -78,12 +78,12 @@ export function rollOffer(bs: BuffMatchState, color: Color, tiers: [Tier, Tier])
   const suppressed = (ps.flags.noDraftCards ?? 0) > 0;
   if (suppressed) ps.flags.noDraftCards = (ps.flags.noDraftCards ?? 0) - 1;
 
-  // Mode filter: buff mode never offers nerf-modifier cards, nerf mode
-  // offers ONLY nerf-modifier cards, and legacy merged games (no mode) keep
-  // the full pool. The adjacent-tier fallback below runs on the filtered
-  // pool too, so a mode can never leak the other section's cards.
-  const inMode = (b: Buff) =>
-    bs.mode === "buff" ? b.category !== "nerf" : bs.mode === "nerf" ? b.category === "nerf" : true;
+  // Mode filter: buff mode never offers nerf-modifier cards ("boons"); nerf
+  // mode draws from the FULL pool — the general cards plus the nerf-relief
+  // boons that only exist there — and legacy merged games (no mode) keep the
+  // full pool too. The adjacent-tier fallback below runs on the filtered
+  // pool as well, so buff mode can never leak a nerf-relief card.
+  const inMode = (b: Buff) => (bs.mode === "buff" ? b.category !== "nerf" : true);
 
   const cards: BuffOffer["cards"] = [];
   // Never offer a card the player already holds unspent.

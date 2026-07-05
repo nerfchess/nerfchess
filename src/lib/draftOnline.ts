@@ -1,5 +1,5 @@
 import type { BuffInstance, BuffMatchState, DraftMode } from "@/engine/buff";
-import { moveToUCI } from "@/engine/board";
+import { moveFromUCI, moveToUCI } from "@/engine/board";
 import {
   NerfGame,
   acquireBuff,
@@ -168,7 +168,13 @@ export function replayDraftGame(game: NerfGame, moves: string[], actions: MPDraf
   };
   for (let i = 0; i < moves.length; i++) {
     applyUpTo(i);
-    const move = legalMoves(game).find((candidate) => moveToUCI(candidate) === moves[i]);
+    // A server-accepted move the replica cannot regenerate (a hidden nerf or
+    // buff effect it does not know about) is applied raw instead of aborting
+    // the replay: the server already validated it, and stopping mid-replay
+    // would strand the board several plies behind for the rest of the game.
+    const move =
+      legalMoves(game).find((candidate) => moveToUCI(candidate) === moves[i]) ??
+      moveFromUCI(game.board, moves[i]);
     if (!move) return game;
     game = playReplicaMove(game, move);
   }
@@ -209,12 +215,42 @@ export type DraftZones = {
   strike: number[];
 };
 
+/** Squares held in place by an active Immobilizer: enemy non-king pieces
+ * adjacent to the bound piece. Painted with the frozen tint so the lockdown
+ * is visible on the board instead of silently pruning moves. */
+function immobilizedSquares(game: NerfGame): number[] {
+  const bs = game.buffs;
+  if (!bs) return [];
+  const out: number[] = [];
+  for (const color of ["w", "b"] as Color[]) {
+    for (const inst of bs.players[color].buffs) {
+      if (inst.id !== "immobilizer" || inst.spent || inst.nullified) continue;
+      const sq = inst.state.sq as number | undefined;
+      if (sq == null) continue;
+      const holder = game.board.pieces[sq];
+      if (!holder || holder.color !== color) continue;
+      for (let df = -1; df <= 1; df++) {
+        for (let dr = -1; dr <= 1; dr++) {
+          if (df === 0 && dr === 0) continue;
+          const f = (sq % 8) + df, r = (sq >> 3) + dr;
+          if (f < 0 || f > 7 || r < 0 || r > 7) continue;
+          const n = r * 8 + f;
+          const p = game.board.pieces[n];
+          if (p && p.color !== color && p.type !== "k") out.push(n);
+        }
+      }
+    }
+  }
+  return out;
+}
+
 /** Board paint for the public zone effects, matching the bot game's wiring:
  * frozen pieces, sanctuary squares, barred squares for each side, and the
  * lightning-struck squares' brief flash. */
 export function draftZones(game: NerfGame, myColor: Color): DraftZones {
   const zones: DraftZones = { frozen: [], shielded: [], ward: [], barred: [], strike: [] };
   if (!game.buffs) return zones;
+  zones.frozen.push(...immobilizedSquares(game));
   for (const e of game.buffs.effects) {
     if (e.turns != null && e.turns <= 0) continue;
     if (e.kind === "freeze") zones.frozen.push(e.sq);

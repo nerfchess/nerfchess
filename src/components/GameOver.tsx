@@ -121,20 +121,25 @@ function BuffFeedbackRow({ buff, gameId }: { buff: BuffInstance; gameId?: string
 
   if (!def) return null;
   return (
-    <li className="flex items-center justify-between gap-2 py-1">
-      <span className="flex min-w-0 items-center gap-2">
-        <span
-          className={`shrink-0 border px-1 font-display text-[10px] font-bold tier-bg-${buff.tier} tier-${buff.tier}`}
-          title={`Tier ${buff.tier}: ${TIER_LABEL[buff.tier]}`}
-          aria-hidden
-        >
-          {TIER_ROMAN[buff.tier]}
+    <li className="py-1">
+      <div className="flex items-center justify-between gap-2">
+        <span className="flex min-w-0 items-center gap-2">
+          <span
+            className={`shrink-0 border px-1 font-display text-[10px] font-bold tier-bg-${buff.tier} tier-${buff.tier}`}
+            title={`Tier ${buff.tier}: ${TIER_LABEL[buff.tier]}`}
+            aria-hidden
+          >
+            {TIER_ROMAN[buff.tier]}
+          </span>
+          <span className="min-w-0 truncate text-xs text-parchment-200">{def.name}</span>
         </span>
-        <span className="min-w-0 truncate text-xs text-parchment-200" title={def.description}>
-          {def.name}
-        </span>
-      </span>
-      <VoteThumbs vote={vote} onVote={cast} />
+        <VoteThumbs vote={vote} onVote={cast} />
+      </div>
+      {/* The rule text always shows — a card's effect should never hide
+          behind a hover tooltip. */}
+      <p className="mt-0.5 text-left text-[10px] leading-snug text-parchment-400">
+        {def.description}
+      </p>
     </li>
   );
 }

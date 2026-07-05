@@ -31,6 +31,8 @@ import {
   resign,
 } from "@/engine/game";
 import { BuffDock, EnemyBuffModal, TargetingBanner, useBuffTargeting } from "@/components/BuffDock";
+import { draftCardNoun } from "@/engine/buff";
+import { draftZones } from "@/lib/draftOnline";
 import { MobileBuffDrawer } from "@/components/MobileBuffDrawer";
 import { DraftNotice } from "@/components/DraftNotice";
 import { DraftOverlay, LockInCountdown } from "@/components/DraftOverlay";
@@ -182,6 +184,10 @@ function GamePage() {
   const [nerfDeadline, setNerfDeadline] = useState<number | null>(null);
   const [offerDeadline, setOfferDeadline] = useState<number | null>(null);
   const [offerPausedAt, setOfferPausedAt] = useState<number | null>(null);
+  // Offer index whose free lock-in window has expired: the draft panel moves
+  // aside, the board comes back into view, and the clock resumes — the rest
+  // of the deliberation costs the player's own time.
+  const [offerOnClockIndex, setOfferOnClockIndex] = useState<number | null>(null);
   const [, force] = useState(0);
   const [muted, setMutedState] = useState(false);
   const [premoves, setPremoves] = useState<QueuedPremove[]>([]);
@@ -372,7 +378,12 @@ function GamePage() {
       // what the card did, matching the online reveal-at-pick rule.
       const gained = game.buffs.players[botColor].buffs.slice(before);
       const instant = gained.find((b) => BUFF_BY_ID[b.id]?.kind === "instant" && !b.nullified);
-      if (instant) showOppUsedCard({ id: instant.id, tier: instant.tier }, "Bot played a buff");
+      if (instant) {
+        showOppUsedCard(
+          { id: instant.id, tier: instant.tier },
+          `Bot played a ${draftCardNoun(game.buffs.mode)}`,
+        );
+      }
       setGame({ ...game });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -380,10 +391,12 @@ function GamePage() {
 
   // Lock-in window and clock pause for my buff offers: a fresh offer arms
   // the 15s deadline and freezes the clock; resolving it shifts the turn
-  // start forward by the paused span so the pick cost no time.
+  // start forward by the paused span so the pick cost no time. Once the free
+  // window has expired for an offer (offerOnClockIndex), the clock stays
+  // live: the panel sits at the side and thinking runs on the player's time.
   useEffect(() => {
     const offer = game?.buffs?.players[myColor].offer ?? null;
-    if (offer && offerPausedAt == null) {
+    if (offer && offerPausedAt == null && offerOnClockIndex !== offer.index) {
       setOfferPausedAt(Date.now());
       setOfferDeadline(Date.now() + 15_000);
     } else if (!offer && offerPausedAt != null) {
@@ -391,7 +404,7 @@ function GamePage() {
       setOfferPausedAt(null);
       setOfferDeadline(null);
     }
-  }, [game, myColor, offerPausedAt]);
+  }, [game, myColor, offerPausedAt, offerOnClockIndex]);
 
   useEffect(() => {
     if (!game) return;
@@ -676,7 +689,7 @@ function GamePage() {
       try {
         const usedCard = aiActivateBuffs(game, botColor);
         if (usedCard) {
-          showOppUsedCard(usedCard, "Bot used a buff");
+          showOppUsedCard(usedCard, `Bot used a ${draftCardNoun(game.buffs.mode)}`);
           setGame({ ...game });
           if (game.result) {
             aiThinking.current = false;
@@ -866,7 +879,7 @@ function GamePage() {
             </h1>
             <p className="mt-2 text-sm text-parchment-300 text-center">
               {gameMode === "nerf"
-                ? "Pick one of two nerfs. About every ten moves you draft a card that softens or removes it."
+                ? "Pick one of two nerfs. About every ten moves you draft a boon — a card that helps you fight on, soften your rule, or remove it."
                 : "Every game opens weak: pick one of two nerfs, then draft buffs every few moves to claw your way back to power."}
             </p>
             {nerfDeadline != null && (
@@ -941,30 +954,10 @@ function GamePage() {
   const myState = myColor === "w" ? game.white.state : game.black.state;
   const myCtx = makeContext(game, myColor);
   const visual = myNerf.visual?.(myState, myCtx);
-  // Draft-mode zone effects are public information: paint frozen pieces,
-  // shielded (sanctuary) squares, and barred squares for both sides. Squares
-  // barred against me use the nerf's red "can't go there" wash; squares my
-  // buffs bar against the opponent get their own tint.
-  const zone = { frozen: [] as number[], shielded: [] as number[], ward: [] as number[], barred: [] as number[], strike: [] as number[] };
-  if (game.buffs) {
-    for (const e of game.buffs.effects) {
-      if (e.turns != null && e.turns <= 0) continue;
-      if (e.kind === "freeze") zone.frozen.push(e.sq);
-      else if (e.kind === "shield") {
-        if (e.squares) zone.shielded.push(...e.squares);
-        else {
-          for (let sq = 0; sq < 64; sq++) {
-            const p = game.board.pieces[sq];
-            if (p && p.color === e.owner) zone.shielded.push(sq);
-          }
-        }
-      } else if (e.kind === "barred") {
-        (e.against === myColor ? zone.barred : zone.ward).push(...e.squares);
-      } else if (e.kind === "strike") {
-        zone.strike.push(...e.squares);
-      }
-    }
-  }
+  // Draft-mode zone effects are public information: paint frozen pieces
+  // (Immobilizer auras included), shielded (sanctuary) squares, and barred
+  // squares for both sides — the same painting the online match uses.
+  const zone = draftZones(game, myColor);
   const opponentNerf = myColor === "w" ? game.black.nerf : game.white.nerf;
   const bsMine = game.buffs?.players[myColor];
   const bsTheirs = game.buffs?.players[myColor === "w" ? "b" : "w"];
@@ -1401,6 +1394,7 @@ function GamePage() {
                     buffs={bsTheirs.buffs}
                     banked={!!bsTheirs.flags.bankBonus}
                     hidden
+                    cardNoun={draftCardNoun(game.buffs?.mode)}
                   />
                 )}
                 {buffTargeting.targeting && buffTargeting.targeting.target.kind === "square" && (
@@ -1492,6 +1486,7 @@ function GamePage() {
 
       {game.buffs && (
         <MobileBuffDrawer
+          label={draftCardNoun(game.buffs.mode) === "boon" ? "Boons" : "Buffs"}
           held={game.buffs.players[myColor].buffs.length}
           usable={
             game.result || game.board.turn !== myColor || myOffer || isReviewingHistory
@@ -1531,13 +1526,20 @@ function GamePage() {
           takeBoth={(bsMine?.flags.takeBoth ?? 0) > 0}
           bankedBonus={!!myOffer.banked}
           deadline={offerDeadline}
+          minimized={offerOnClockIndex === myOffer.index}
+          cardNoun={draftCardNoun(game.buffs?.mode)}
           onExpire={() => {
-            // Mirror the server's auto-resolve rule: take the first card,
-            // unless a pending nullify would kill any pick (then bank).
-            if (!game.buffs?.players[myColor].offer) return;
-            if ((bsMine?.flags.nullifyIncoming ?? 0) > 0) bankDraft(game, myColor);
-            else pickDraftCard(game, myColor, 0);
-            setGame({ ...game });
+            // Free window over: keep the offer open, slide the panel aside,
+            // and resume the clock — the pick now costs the player's time.
+            const offer = game.buffs?.players[myColor].offer;
+            if (!offer) return;
+            if (offerPausedAt != null) {
+              turnStartedAtRef.current +=
+                Date.now() - Math.max(offerPausedAt, turnStartedAtRef.current);
+            }
+            setOfferPausedAt(null);
+            setOfferDeadline(null);
+            setOfferOnClockIndex(offer.index);
           }}
           onPick={(i) => {
             pickDraftCard(game, myColor, i);
