@@ -2,6 +2,7 @@
 
 import { Nerf } from "@/engine/nerf";
 import { motion } from "framer-motion";
+import { GlossaryText } from "@/components/GlossaryText";
 
 interface Props {
   nerf: Nerf;
@@ -57,7 +58,7 @@ export function NerfCard({ nerf, revealed = true, compact = false, ownerLabel, p
         <span className="font-display">{TIER_LABEL[nerf.tier]}</span>
       </div>
       <p className="text-[15px] leading-relaxed text-parchment/95">
-        {nerf.description}
+        <GlossaryText text={nerf.description} />
       </p>
       {progress && progress.max > 0 && (
         <div className="mt-3">

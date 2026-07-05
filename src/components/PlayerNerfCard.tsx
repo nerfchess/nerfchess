@@ -6,6 +6,7 @@ import { BoardState, Color } from "@/engine/types";
 import { Piece } from "@/components/Pieces";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { capturedPiecesFor, capturedValue, opponentOf } from "@/lib/material";
+import { GlossaryText } from "@/components/GlossaryText";
 
 import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
 
@@ -169,7 +170,7 @@ export function PlayerNerfCard({
                 : "text-[15px] leading-relaxed text-parchment/95"
             }
           >
-            {nerf.description}
+            <GlossaryText text={nerf.description} />
           </p>
           {progress && progress.max > 0 && (
             <div className="mt-3">

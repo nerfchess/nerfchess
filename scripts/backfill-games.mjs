@@ -11,7 +11,8 @@
 //        ssh -i "C:\Users\boda\Downloads\ssh-key-2026-07-04.key" -N \
 //            -L 15432:127.0.0.1:5432 ubuntu@64.181.205.2
 //   2) run this from the repo root (needs `postgres` from node_modules + wrangler auth):
-//        PGPASSWORD='Ilovecurtisli<3' node scripts/backfill-games.mjs
+//        PGPASSWORD='<nerfchess_app password>' node scripts/backfill-games.mjs
+//      Never hardcode the password here — pass it via the environment only.
 //
 // Env (all optional except PGPASSWORD):
 //   PGPASSWORD  required — nerfchess_app password

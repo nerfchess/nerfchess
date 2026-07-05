@@ -899,9 +899,10 @@ function GamePage() {
               {nerfDraft.myOptions.map((n, i) => (
                 <button
                   key={n.id}
+                  type="button"
                   onClick={() => (nerfSelected === i ? startDraftGame(n) : setNerfSelected(i))}
                   className={
-                    "mx-auto block w-full max-w-md sm:max-w-none text-left transition hover:-translate-y-1" +
+                    "mx-auto block w-full max-w-md sm:max-w-none text-left transition touch-manipulation [@media(hover:hover)]:hover:-translate-y-1" +
                     (nerfSelected === i
                       ? " -translate-y-1 ring-2 ring-gold shadow-leaf"
                       : nerfSelected != null
