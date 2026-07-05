@@ -3565,6 +3565,7 @@ export class GameServer extends DurableObject<Env> {
     const challenges: Array<{
       id: string;
       host: { name: string; rating: number | null };
+      rated: boolean;
       draft: boolean;
       mode?: DraftMode;
       timeSec: number;
@@ -3582,6 +3583,7 @@ export class GameServer extends DurableObject<Env> {
           challenges.push({
             id: match.id,
             host: host ? { name: host.name, rating: Math.round(host.rating) } : { name: "Anonymous", rating: null },
+            rated: !!match.rated,
             draft: !!match.draft,
             ...(match.mode ? { mode: match.mode } : {}),
             timeSec: match.setup.timeSec,

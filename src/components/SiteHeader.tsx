@@ -30,6 +30,7 @@ type HeaderChallenge = {
   from: string;
   timeSec: number;
   incrementSec: number;
+  rated?: boolean;
   at: number;
 };
 
@@ -308,7 +309,7 @@ export function SiteHeader({ active }: { active?: string }) {
                         <div className="min-w-0">
                           <div className="truncate text-sm text-parchment-100">{challenge.from}</div>
                           <div className="smallcaps text-[9px] text-parchment-400">
-                            Casual · {clockLabel(challenge.timeSec, challenge.incrementSec)} · {timeAgo(challenge.at)}
+                            {challenge.rated ? "Rated" : "Casual"} · {clockLabel(challenge.timeSec, challenge.incrementSec)} · {timeAgo(challenge.at)}
                           </div>
                         </div>
                         <div className="flex shrink-0 gap-1.5">

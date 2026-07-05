@@ -57,12 +57,18 @@ export default function FriendPage() {
   const expectedChallengeHostRef = useRef<string | null>(null);
 
   // Tell the target the game exists; failures degrade to a plain friend code.
-  const registerChallenge = async (to: string, gameCode: string, timeSec: number, incSec: number) => {
+  const registerChallenge = async (
+    to: string,
+    gameCode: string,
+    timeSec: number,
+    incSec: number,
+    isRated: boolean,
+  ) => {
     try {
       await fetch("/api/challenges", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ to, code: gameCode, timeSec, incrementSec: incSec }),
+        body: JSON.stringify({ to, code: gameCode, timeSec, incrementSec: incSec, rated: isRated }),
       });
     } catch {}
   };
@@ -231,7 +237,7 @@ export default function FriendPage() {
       if (sessionRef.current !== sess) return;
       setCode(c);
       setView("lobby");
-      if (challenging) registerChallenge(challenging, c, baseSec, incrementSec);
+      if (challenging) registerChallenge(challenging, c, baseSec, incrementSec, rated);
     } catch (e) {
       if (sessionRef.current !== sess) return;
       setError(e instanceof Error ? e.message : String(e));

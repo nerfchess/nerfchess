@@ -168,6 +168,9 @@ export type MPLobbyGame = {
 export type MPLobbyChallenge = {
   id: string;
   host: { name: string; rating: number | null };
+  // Optional so lobby snapshots from an older server still parse (absent =
+  // casual, the only kind of open challenge older servers made).
+  rated?: boolean;
   draft?: boolean;
   mode?: DraftMode;
   timeSec: number;
