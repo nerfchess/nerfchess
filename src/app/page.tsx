@@ -42,7 +42,8 @@ export default function HomePage() {
     <main className="min-h-screen flex flex-col">
       <SiteHeader />
 
-      <section className="w-full max-w-7xl mx-auto px-5 sm:px-6 pt-2 pb-8 sm:pt-6 grid lg:grid-cols-[minmax(0,1fr)_380px] gap-8 lg:gap-14 items-center">
+      <section className="relative w-full max-w-7xl mx-auto px-5 sm:px-6 pt-2 pb-8 sm:pt-6 grid lg:grid-cols-[minmax(0,1fr)_380px] gap-8 lg:gap-14 items-center">
+        <div aria-hidden className="hero-aura" />
         <div className="order-1">
           <HeroTv />
         </div>
@@ -50,7 +51,13 @@ export default function HomePage() {
         {/* The action column is kept short on purpose: it should never run
             taller than the board beside it. */}
         <div className="order-2">
-          <p className="text-lg sm:text-xl leading-relaxed text-parchment-100">
+          <p className="kicker smallcaps text-[10px] mb-3">Two modes, one board</p>
+          <h1 className="masthead text-4xl sm:text-5xl lg:text-[2.5rem] text-parchment-50">
+            <span className="text-mode-nerfGlow">Secret handicaps.</span>{" "}
+            <span className="text-mode-buffGlow">Drafted power-ups.</span>{" "}
+            <span className="text-gold-leaf">Capture the king.</span>
+          </h1>
+          <p className="mt-4 text-base sm:text-lg leading-relaxed text-parchment-200">
             Chess with two modes: choose{" "}
             <Link
               href="/lobby?mode=nerf"
@@ -194,17 +201,25 @@ function StatStrip() {
   ];
   return (
     <section className="w-full max-w-7xl mx-auto px-5 sm:px-6 py-4">
-      <div className="plate p-5 sm:p-6 grid grid-cols-2 divide-x divide-white/10">
-        {stats.map((s) => (
-          <div key={s.label} className="px-2 sm:px-4 text-center">
-            <div className="font-display text-2xl sm:text-4xl font-bold text-parchment-50 tabular-nums">
-              {s.value}
+      <div className="plate relative p-6 sm:p-7">
+        <span aria-hidden className="card-corner tl" />
+        <span aria-hidden className="card-corner tr" />
+        <span aria-hidden className="card-corner bl" />
+        <span aria-hidden className="card-corner br" />
+        <div className="kicker smallcaps text-[10px] mb-4">By the numbers</div>
+        <div className="grid grid-cols-2 divide-x divide-white/10">
+          {stats.map((s) => (
+            <div key={s.label} className="px-2 sm:px-6 text-center">
+              <div className="font-display text-3xl sm:text-5xl font-bold text-parchment-50 tabular-nums">
+                {s.value}
+              </div>
+              <span aria-hidden className="mx-auto mt-2.5 block h-px w-8 bg-gold/50" />
+              <div className="mt-2 smallcaps text-[9px] sm:text-[10px] text-parchment-400">
+                {s.label}
+              </div>
             </div>
-            <div className="mt-1 smallcaps text-[9px] sm:text-[10px] text-parchment-400">
-              {s.label}
-            </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -264,28 +279,50 @@ function HowItWorks() {
         <span className="font-display">How it works</span>
       </div>
       <div className="grid gap-4 sm:grid-cols-3">
-        {steps.map((step) => (
-          <div key={step.n} className="plate p-5 sm:p-6">
-            <div className="flex items-center gap-3">
-              <span className="grid h-9 w-9 shrink-0 place-items-center border border-gold/40 bg-gold/10 font-display text-base font-bold text-gold-leaf">
+        {steps.map((step) => {
+          // The payoff step carries the most weight: it gets the accent gilt
+          // edge so the three cards read as a sequence, not three clones.
+          const emphasized = step.n === "3";
+          return (
+            <div
+              key={step.n}
+              className={`plate relative overflow-hidden p-5 sm:p-6 ${emphasized ? "gilt" : ""}`}
+            >
+              {/* Oversized ghost numeral: editorial density behind each step. */}
+              <span
+                aria-hidden
+                className="pointer-events-none absolute -right-3 -top-7 select-none font-display text-[7rem] font-bold leading-none text-white/[0.035]"
+              >
                 {step.n}
               </span>
-              <svg
-                width="22" height="22" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"
-                strokeLinejoin="round" aria-hidden className="text-parchment-300"
-              >
-                {step.icon}
-              </svg>
+              <div className="relative flex items-center gap-3">
+                <span
+                  className={`grid h-9 w-9 shrink-0 place-items-center border font-display text-base font-bold ${
+                    emphasized
+                      ? "border-gold/70 bg-gold/15 text-gold-leaf"
+                      : "border-gold/40 bg-gold/10 text-gold-leaf"
+                  }`}
+                >
+                  {step.n}
+                </span>
+                <svg
+                  width="22" height="22" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"
+                  strokeLinejoin="round" aria-hidden
+                  className={emphasized ? "text-gold-leaf" : "text-parchment-300"}
+                >
+                  {step.icon}
+                </svg>
+              </div>
+              <h3 className="relative mt-4 font-display text-lg font-semibold text-parchment-50">
+                {step.title}
+              </h3>
+              <p className="relative mt-2 text-sm leading-relaxed text-parchment-300">
+                {step.body}
+              </p>
             </div>
-            <h3 className="mt-4 font-display text-lg font-semibold text-parchment-50">
-              {step.title}
-            </h3>
-            <p className="mt-2 text-sm leading-relaxed text-parchment-300">
-              {step.body}
-            </p>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </section>
   );
@@ -310,7 +347,7 @@ function ExampleRules() {
         {rules.map((rule) => (
           <li
             key={rule.id}
-            className={`plate p-4 border tier-bg-${rule.tier}`}
+            className={`plate p-4 border tier-bg-${rule.tier} motion-safe:transition-transform motion-safe:duration-150 motion-safe:hover:-translate-y-0.5`}
           >
             <div className="flex items-start justify-between gap-2">
               <span className={`font-display text-lg font-semibold leading-tight tier-${rule.tier}`}>

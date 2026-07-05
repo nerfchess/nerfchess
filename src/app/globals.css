@@ -313,6 +313,118 @@ select:focus-visible {
 /* Kept as an alias so any stale references stay on-brand (blue, not green). */
 .btn-lichess { }
 
+/* --- Editorial masthead ----------------------------------------------------
+   The distinctive risk: the hero headline is given the same PHYSICAL language
+   as the metal buttons. A faint dark drop below and a whisper of light above
+   strike the type into the warm ink, like letterpress into parchment, so the
+   page reads as crafted stock rather than a floating web headline. Fluid size
+   and tight tracking do the hierarchy work; it stays restrained and legible. */
+.masthead {
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-weight: 600;
+  line-height: 1.03;
+  letter-spacing: -0.018em;
+  text-wrap: balance;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.38), 0 -1px 0 rgba(255, 255, 255, 0.045);
+}
+html[data-theme="light"] .masthead {
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6), 0 -1px 0 rgba(0, 0, 0, 0.06);
+}
+
+/* Eyebrow/kicker: a smallcaps label led by a short accent rule, so section
+   openings share one editorial rhythm across home and lobby. */
+.kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--paper-dim);
+}
+.kicker::before {
+  content: "";
+  width: 1.6rem;
+  height: 1px;
+  flex: none;
+  background: rgb(var(--accent-hi-rgb));
+  opacity: 0.7;
+}
+
+/* Section title with a crisp accent spine on its left edge. Gives the dense
+   lobby cards a shared vertical rhythm without adding chrome. */
+.sec-title {
+  position: relative;
+  padding-left: 0.85rem;
+}
+.sec-title::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.16em;
+  bottom: 0.16em;
+  width: 3px;
+  background: rgb(var(--accent-hi-rgb));
+  opacity: 0.7;
+}
+
+/* Soft depth behind the hero: two barely-there radial washes (accent + a
+   whisper of Nerf terracotta) that lift the board and headline off the flat
+   ink. Sits behind the section's own content (negative z within the main
+   stacking context) and never intercepts pointers. */
+.hero-aura {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(46% 52% at 24% 28%, rgb(var(--accent-rgb) / 0.1), transparent 72%),
+    radial-gradient(38% 48% at 84% 74%, rgba(196, 120, 95, 0.06), transparent 70%);
+}
+
+/* --- Top-nav micro-interactions -------------------------------------------
+   The desktop nav links get a quiet, quality hover/press: a background wash
+   that eases in, a thin accent underline that grows from the center, and a
+   half-pixel press. Icon buttons lift a hair on hover and press in on active.
+   Deliberately subtle, never bouncy. Reduced motion is handled globally by the
+   `* { transition: none }` rule, so the states still appear, just without the
+   tween. */
+.nav-item {
+  position: relative;
+  transition: color 160ms ease, background-color 160ms ease, transform 120ms ease;
+}
+.nav-item::after {
+  content: "";
+  position: absolute;
+  left: 0.75rem;
+  right: 0.75rem;
+  bottom: 0.26rem;
+  height: 1.5px;
+  background: rgb(var(--accent-hi-rgb));
+  transform: scaleX(0);
+  transform-origin: center;
+  opacity: 0;
+  transition: transform 190ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 190ms ease;
+}
+.nav-item:hover::after,
+.nav-item:focus-visible::after {
+  transform: scaleX(1);
+  opacity: 0.9;
+}
+.nav-item[data-active="true"]::after {
+  transform: scaleX(1);
+  opacity: 0.5;
+}
+.nav-item:active {
+  transform: translateY(0.5px);
+}
+.nav-icon-btn {
+  transition: color 160ms ease, background-color 160ms ease, transform 130ms ease;
+}
+.nav-icon-btn:hover {
+  transform: translateY(-0.5px);
+}
+.nav-icon-btn:active {
+  transform: translateY(0.5px) scale(0.95);
+}
+
 /* --- Board treatments: warm wood-tone, less candy than chess.com green --- */
 :root {
   --sq-light: #e8dcc0;
