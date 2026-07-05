@@ -35,15 +35,31 @@
       "migrations_dir": "migrations"
     }
   ],
-  // OCI Postgres holding the finished-game archive (large, append-only), reached
-  // over a Cloudflare Tunnel. DISABLED: the id below was never a real Hyperdrive
-  // config on this account, and deploying with an unknown id makes every
-  // Workers Build fail (the site was stuck on an old build because of it).
-  // The code falls back to the D1 games table while this is off. To enable:
-  //   1. wrangler hyperdrive create nerfchess-pg --connection-string="postgres://nerfchess_app:PASSWORD@HOST:5432/nerfchess?sslmode=require"
-  //   2. Paste the REAL id it prints into the block below and uncomment it.
-  //   3. Re-run scripts/backfill-games.mjs to top up the Postgres archive.
-  // Local dev: set WRANGLER_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE instead.
+  // OCI Postgres holding the finished-game archive (large, append-only). It
+  // listens local-only on the box (127.0.0.1:5432), so Hyperdrive — which dials
+  // from Cloudflare's edge — has NO route to it directly. It must be reached
+  // over a Cloudflare Tunnel (TCP public hostname) guarded by an Access service
+  // token. DISABLED until that is set up: a real Hyperdrive id must exist on the
+  // account, and deploying with an unknown id makes every Workers Build fail
+  // (the site was once stuck on an old build because of it). The code falls back
+  // to the D1 games table while this is off. To enable:
+  //   1. In Zero Trust > Networks > Tunnels, add a TCP public hostname to the
+  //      existing box tunnel (e.g. pg.nerfchess.com) -> service tcp://127.0.0.1:5432.
+  //   2. Protect that hostname with a self-hosted Access app + a Non-expiring
+  //      Access service token (Zero Trust > Access > Service Tokens); copy the
+  //      Client ID and Client Secret.
+  //   3. Create the config (note: --host + Access creds, and OMIT --port; the
+  //      tunnel routes to 5432):
+  //        wrangler hyperdrive create nerfchess-pg \
+  //          --host=pg.nerfchess.com --user=nerfchess_app --password='<pw>' \
+  //          --database=nerfchess \
+  //          --access-client-id=<ID>.access --access-client-secret=<SECRET>
+  //   4. Paste the REAL id it prints into the block below and uncomment it.
+  //   5. Ensure the PG `games` schema exists, then run scripts/backfill-games.mjs
+  //      to copy D1 -> Postgres.
+  // Rotate the nerfchess_app password before exposing PG via the tunnel; the old
+  // one leaked in git history. Local dev: set
+  // WRANGLER_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE instead.
   // "hyperdrive": [
   //   {
   //     "binding": "HYPERDRIVE",
