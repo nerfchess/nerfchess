@@ -2,7 +2,12 @@
 // Pure aggregation over rows from the `games` table so it can run in the
 // stats API route and be exercised directly in tests.
 
-import { categoryForTimeControl, RATING_CATEGORY_IDS, type RatingCategoryId } from "./ratingCategories";
+import {
+  ALL_RATING_CATEGORY_IDS,
+  categoryForTimeControl,
+  isRatingCategoryId,
+  type RatingCategoryId,
+} from "./ratingCategories";
 
 export type StatsGameRow = {
   id: string;
@@ -21,6 +26,10 @@ export type StatsGameRow = {
   black_rating_after: number | null;
   time_sec: number;
   increment_sec: number;
+  /** Rated bucket the game was recorded under ("nerf"/"buff" for mode games,
+   *  a speed id for legacy games); null rows predate the column and fall back
+   *  to the time-control bucket. */
+  category?: string | null;
   /** Plies in the game, computed in SQL from the space-separated move list. */
   move_count: number;
   started_at: number;
@@ -82,6 +91,9 @@ export type PlayerStats = {
   daily: DailyBucket[];
   /** Play sessions: runs of games separated by less than an hour. */
   sessions: { count: number; longestGames: number; avgGames: number; recent: SessionInfo[] };
+  /** Record per rated bucket. The UI shows only the mode buckets (Nerf and
+   *  Buff); the retired speed buckets are still tallied here so old games
+   *  keep a home. */
   perSpeed: Record<RatingCategoryId, SpeedStats>;
   firstGameAt: number | null;
 };
@@ -109,7 +121,7 @@ function emptyStreak(): StreakInfo {
 /** Aggregate stats for `userId` from their games, oldest first. */
 export function computePlayerStats(userId: string, rows: StatsGameRow[]): PlayerStats {
   const perSpeed = {} as Record<RatingCategoryId, SpeedStats>;
-  for (const id of RATING_CATEGORY_IDS) perSpeed[id] = { games: 0, wins: 0, draws: 0, losses: 0 };
+  for (const id of ALL_RATING_CATEGORY_IDS) perSpeed[id] = { games: 0, wins: 0, draws: 0, losses: 0 };
 
   const stats: PlayerStats = {
     totalGames: 0,
@@ -157,7 +169,14 @@ export function computePlayerStats(userId: string, rows: StatsGameRow[]): Player
 
   for (const row of rows) {
     const color: "w" | "b" = row.white_user_id === userId ? "w" : "b";
-    const speed = perSpeed[categoryForTimeControl(row.time_sec, row.increment_sec)];
+    // File the game under its recorded bucket (mode games say "nerf"/"buff");
+    // rows without one (pre-column history) fall back to the speed bucket.
+    const speed =
+      perSpeed[
+        isRatingCategoryId(row.category)
+          ? row.category
+          : categoryForTimeControl(row.time_sec, row.increment_sec)
+      ];
 
     stats.totalGames++;
     speed.games++;

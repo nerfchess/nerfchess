@@ -91,7 +91,7 @@ export default function CommunityPage() {
   }, []);
 
   const onlineCount = lobby ? lobby.players.length + lobby.anonymous : null;
-  const blitz = getCategory(DEFAULT_CATEGORY);
+  const topBoard = getCategory(DEFAULT_CATEGORY);
 
   return (
     <main className="min-h-screen pb-16">
@@ -127,7 +127,7 @@ export default function CommunityPage() {
 
         <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
           <div className="space-y-4 min-w-0">
-            {/* The blitz top ten; the full ladder lives on /leaderboard. */}
+            {/* The Nerf top ten; both mode ladders live on /leaderboard. */}
             <div className="plate p-5 sm:p-6">
               <div className="flex items-center justify-between gap-3">
                 <div className="font-display text-2xl text-parchment">Top players</div>
@@ -139,7 +139,7 @@ export default function CommunityPage() {
                 <p className="mt-3 text-sm text-parchment-400">Loading…</p>
               ) : top.length === 0 ? (
                 <p className="mt-3 text-sm text-parchment-400">
-                  Nobody has a {blitz.label} rating yet. Play a rated game to claim the top spot.
+                  Nobody has a {topBoard.label} rating yet. Play a rated game to claim the top spot.
                 </p>
               ) : (
                 <ul className="mt-3 divide-y divide-white/5">

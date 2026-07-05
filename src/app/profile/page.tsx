@@ -9,6 +9,18 @@ import { AccountUser, fetchMe } from "@/lib/authClient";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { AVATAR_PICKER_IDS, avatarIdFor, CUSTOM_AVATAR_MAX_CHARS, isCustomAvatar } from "@/lib/avatars";
 import { FLAIR_EMOJI } from "@/lib/flair";
+import { MODE_RATING_CATEGORIES } from "@/lib/ratingCategories";
+
+// One user_ratings row (per mode bucket), as returned by /api/users/[username].
+interface CategoryRatingRow {
+  rating: number;
+  rd: number;
+  games: number;
+  wins: number;
+  losses: number;
+  draws: number;
+  peak: number;
+}
 
 // Center-crop to a square and downscale to 96px, returning a compact JPEG
 // data URL small enough to store inline in the avatar column.
@@ -51,6 +63,7 @@ async function fileToAvatarDataUrl(file: File): Promise<string> {
 
 export default function ProfilePage() {
   const [stats, setStats] = useState<PlayerStats | null>(null);
+  const [ratings, setRatings] = useState<Record<string, CategoryRatingRow> | null>(null);
   const [account, setAccount] = useState<AccountUser | null | undefined>(undefined);
   const [savingAvatar, setSavingAvatar] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
@@ -124,6 +137,15 @@ export default function ProfilePage() {
           .then((res) => (res.ok ? (res.json() as Promise<{ stats: PlayerStats }>) : null))
           .then((data) => {
             if (!cancelled && data) setStats(data.stats);
+          })
+          .catch(() => {});
+        // The two mode ratings (Nerf and Buff) live in per-category rows.
+        fetch(`/api/users/${encodeURIComponent(me.username)}`)
+          .then((res) =>
+            res.ok ? (res.json() as Promise<{ ratings?: Record<string, CategoryRatingRow> }>) : null,
+          )
+          .then((data) => {
+            if (!cancelled && data) setRatings(data.ratings ?? {});
           })
           .catch(() => {});
       });
@@ -287,36 +309,61 @@ export default function ProfilePage() {
           </div>
         )}
 
-        {/* Online (account) rating: the number that moves in rated games. */}
+        {/* The two online ratings, one per mode: Nerf and Buff. */}
         {account && (
           <div className="mt-8">
             <div className="rule-ornament mb-4">
-              <span className="font-display">Online rating</span>
+              <span className="font-display">Online ratings</span>
             </div>
-            <div className="plate gilt p-5 sm:p-6 flex flex-wrap items-center justify-between gap-4">
-              <div>
-                <div className="font-mono text-4xl text-parchment-50 tabular-nums">
-                  {Math.round(account.rating)}
-                </div>
-                <div className="mt-1 smallcaps text-[10px] text-parchment-400">
-                  {account.games} rated game{account.games === 1 ? "" : "s"}
-                  {stats?.highest && <span className="ml-2">peak {Math.round(stats.highest.rating)}</span>}
-                </div>
-              </div>
-              <div className="flex gap-5 text-center">
-                <div>
-                  <div className="font-mono text-xl text-verdigris-glow tabular-nums">{account.wins}</div>
-                  <div className="smallcaps text-[9px] text-parchment-400">Wins</div>
-                </div>
-                <div>
-                  <div className="font-mono text-xl text-parchment-200 tabular-nums">{account.draws}</div>
-                  <div className="smallcaps text-[9px] text-parchment-400">Draws</div>
-                </div>
-                <div>
-                  <div className="font-mono text-xl text-oxblood-glow tabular-nums">{account.losses}</div>
-                  <div className="smallcaps text-[9px] text-parchment-400">Losses</div>
-                </div>
-              </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {MODE_RATING_CATEGORIES.map((c) => {
+                const r = ratings?.[c.id];
+                const Icon = c.icon;
+                return (
+                  <div key={c.id} className="plate gilt p-5 flex flex-wrap items-center justify-between gap-4">
+                    <div>
+                      <div className="flex items-center gap-1.5 smallcaps text-[10px] text-parchment-400">
+                        <Icon className="h-3.5 w-3.5" style={{ color: c.accent }} strokeWidth={2.2} />
+                        {c.label}
+                      </div>
+                      <div className="mt-1 font-mono text-4xl text-parchment-50 tabular-nums">
+                        {r ? (
+                          <>
+                            {Math.round(r.rating)}
+                            {r.rd > 150 && <span className="text-parchment-400">?</span>}
+                          </>
+                        ) : (
+                          <span className="text-parchment-500">-</span>
+                        )}
+                      </div>
+                      <div className="mt-1 smallcaps text-[10px] text-parchment-400">
+                        {r ? (
+                          <>
+                            {r.games} rated game{r.games === 1 ? "" : "s"}
+                            <span className="ml-2">peak {Math.round(r.peak)}</span>
+                          </>
+                        ) : (
+                          "no rated games yet"
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex gap-4 text-center">
+                      <div>
+                        <div className="font-mono text-xl text-verdigris-glow tabular-nums">{r?.wins ?? 0}</div>
+                        <div className="smallcaps text-[9px] text-parchment-400">Wins</div>
+                      </div>
+                      <div>
+                        <div className="font-mono text-xl text-parchment-200 tabular-nums">{r?.draws ?? 0}</div>
+                        <div className="smallcaps text-[9px] text-parchment-400">Draws</div>
+                      </div>
+                      <div>
+                        <div className="font-mono text-xl text-oxblood-glow tabular-nums">{r?.losses ?? 0}</div>
+                        <div className="smallcaps text-[9px] text-parchment-400">Losses</div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}

@@ -290,15 +290,34 @@ const ADDITIVE_COLUMNS: string[] = [
   `ALTER TABLE users ADD COLUMN google_sub TEXT`,
   `CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email) WHERE email IS NOT NULL`,
   `CREATE UNIQUE INDEX IF NOT EXISTS idx_users_google_sub ON users(google_sub) WHERE google_sub IS NOT NULL`,
-  // Per-mode rating buckets ("nerf" and "buff") for rated queue games, seeded
-  // from the legacy shared users.rating like the speed buckets were. Idempotent
-  // (INSERT OR IGNORE) and additive; accounts created later are seeded lazily
-  // on first contact by seedCategoryRatings. Mirrors
-  // migrations/0013_mode_ratings.sql.
+  // Per-mode rating buckets ("nerf" and "buff") for rated queue games.
+  // Seeded from the games-weighted average of the account's legacy speed
+  // ratings (rating weighted by games in each speed bucket with games
+  // played), falling back to the legacy shared users.rating for accounts
+  // with no speed history. Idempotent (INSERT OR IGNORE) and additive:
+  // accounts whose mode rows already exist are never reseeded, so this
+  // formula only affects accounts seeded after it shipped. Accounts created
+  // later are seeded lazily on first contact by seedCategoryRatings, which
+  // uses the same formula. Supersedes migrations/0013_mode_ratings.sql
+  // (which seeded from the raw legacy rating).
   `INSERT OR IGNORE INTO user_ratings (user_id, category, rating, rd, vol, peak)
-     SELECT id, 'nerf', rating, rd, vol, rating FROM users`,
+     SELECT u.id, 'nerf', COALESCE(s.wavg, u.rating), u.rd, u.vol, COALESCE(s.wavg, u.rating)
+     FROM users u
+     LEFT JOIN (
+       SELECT user_id, SUM(rating * games) * 1.0 / SUM(games) AS wavg
+       FROM user_ratings
+       WHERE category IN ('ultrabullet','bullet','blitz','rapid') AND games > 0
+       GROUP BY user_id
+     ) s ON s.user_id = u.id`,
   `INSERT OR IGNORE INTO user_ratings (user_id, category, rating, rd, vol, peak)
-     SELECT id, 'buff', rating, rd, vol, rating FROM users`,
+     SELECT u.id, 'buff', COALESCE(s.wavg, u.rating), u.rd, u.vol, COALESCE(s.wavg, u.rating)
+     FROM users u
+     LEFT JOIN (
+       SELECT user_id, SUM(rating * games) * 1.0 / SUM(games) AS wavg
+       FROM user_ratings
+       WHERE category IN ('ultrabullet','bullet','blitz','rapid') AND games > 0
+       GROUP BY user_id
+     ) s ON s.user_id = u.id`,
 ];
 
 export async function ensureSchema(db: D1Database): Promise<void> {

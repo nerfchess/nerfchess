@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { getNerf } from "@/engine/nerfs/library";
-import { RATING_CATEGORIES } from "@/lib/ratingCategories";
+import { MODE_RATING_CATEGORIES } from "@/lib/ratingCategories";
 import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
 import type { DailyBucket, PlayerStats, StreakInfo } from "@/lib/playerStats";
 
@@ -424,13 +424,13 @@ export function PlayerStatsPanel({ stats }: { stats: PlayerStats }) {
         </div>
       )}
 
-      {/* Per-speed record. */}
+      {/* Per-mode record: Nerf and Buff, the only two rated buckets. */}
       <div className="plate p-4 sm:p-5 overflow-x-auto">
-        <div className="smallcaps text-[10px] text-parchment-400">By speed</div>
+        <div className="smallcaps text-[10px] text-parchment-400">By mode</div>
         <table className="mt-2 w-full text-sm">
           <thead>
             <tr className="smallcaps text-[9px] text-parchment-400">
-              <th className="py-1.5 text-left font-normal">Speed</th>
+              <th className="py-1.5 text-left font-normal">Mode</th>
               <th className="py-1.5 text-right font-normal">Games</th>
               <th className="py-1.5 text-right font-normal">Wins</th>
               <th className="py-1.5 text-right font-normal">Draws</th>
@@ -439,7 +439,7 @@ export function PlayerStatsPanel({ stats }: { stats: PlayerStats }) {
             </tr>
           </thead>
           <tbody className="divide-y divide-white/5">
-            {RATING_CATEGORIES.map((category) => {
+            {MODE_RATING_CATEGORIES.map((category) => {
               const s = stats.perSpeed[category.id];
               const speedDecided = s.wins + s.draws + s.losses;
               const Icon = category.icon;

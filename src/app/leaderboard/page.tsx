@@ -119,7 +119,7 @@ export default function LeaderboardPage() {
       <section className="max-w-3xl mx-auto px-6 py-8">
         <h1 className="font-display text-4xl sm:text-5xl text-parchment-50">Leaderboard</h1>
 
-        {/* One independent ladder per time control. */}
+        {/* Exactly two boards: the Nerf and Buff mode ladders. */}
         <CategoryTabs value={category} onChange={setCategory} className="mt-5" />
 
         <PlayerSearch className="mt-4 max-w-sm" />

@@ -6,7 +6,7 @@
 
 import postgres from "postgres";
 import { glickoUpdatePair, GlickoRating } from "../glicko";
-import { categoryForTimeControl, type RatingCategory } from "../speed";
+import { categoryForTimeControl, isModeCategory, SPEED_CATEGORIES, type RatingCategory } from "../speed";
 
 export interface FinishedGameRecord {
   id: string;
@@ -42,12 +42,36 @@ interface UserRatingRow {
 }
 
 // Every rated bucket is stored in user_ratings, one row per (user, category).
-// A user's first contact with a category seeds it from their legacy shared
-// rating (users.rating), which is how pre-split accounts migrate: the old
-// value becomes the starting point of every bucket, then each bucket moves
-// independently.
+// A user's first contact with a category seeds it lazily here (INSERT OR
+// IGNORE, so accounts that already have the row are never reseeded).
+//
+// Seeding a mode bucket ("nerf"/"buff") starts from the best evidence we have
+// of the player's strength: the games-weighted average of their legacy speed
+// ratings (sum of rating * games over the speed rows with games played,
+// divided by the total games). Accounts with no speed history fall back to
+// the legacy shared users.rating, the original seed rule. Speed buckets (only
+// reachable for legacy data paths now) keep the plain users.rating seed.
 export async function seedCategoryRatings(db: D1Database, userIds: string[], category: RatingCategory) {
   const placeholders = userIds.map(() => "?").join(",");
+  if (isModeCategory(category)) {
+    const speedPlaceholders = SPEED_CATEGORIES.map(() => "?").join(",");
+    await db
+      .prepare(
+        `INSERT OR IGNORE INTO user_ratings (user_id, category, rating, rd, vol, peak)
+         SELECT u.id, ?, COALESCE(s.wavg, u.rating), u.rd, u.vol, COALESCE(s.wavg, u.rating)
+         FROM users u
+         LEFT JOIN (
+           SELECT user_id, SUM(rating * games) * 1.0 / SUM(games) AS wavg
+           FROM user_ratings
+           WHERE category IN (${speedPlaceholders}) AND games > 0
+           GROUP BY user_id
+         ) s ON s.user_id = u.id
+         WHERE u.id IN (${placeholders})`,
+      )
+      .bind(category, ...SPEED_CATEGORIES, ...userIds)
+      .run();
+    return;
+  }
   await db
     .prepare(
       `INSERT OR IGNORE INTO user_ratings (user_id, category, rating, rd, vol, peak)
@@ -106,8 +130,10 @@ export async function recordFinishedGame(
 
   const rated = game.rated && !!game.whiteUserId && !!game.blackUserId && game.winner !== null;
   // Which independent rating bucket this game counts toward. Only that
-  // bucket's rating moves; every other bucket is untouched. Mode games pass
-  // their mode ("nerf"/"buff"); everything else buckets by time control.
+  // bucket's rating moves; every other bucket is untouched. Every rated game
+  // is a queue game and always passes its mode ("nerf"/"buff"), so the speed
+  // fallback below is only ever reached by casual (friend/challenge) games,
+  // where it just labels the archived row; no speed rating is written.
   const category = game.ratingCategory ?? categoryForTimeControl(game.timeSec, game.incrementSec);
 
   if (rated) {
