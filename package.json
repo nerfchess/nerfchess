@@ -11,6 +11,7 @@
     "server:start": "node dist-server/server/index.js",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
+    "test:rules": "npm run server:build && node scripts/test-hexes.cjs",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy"
   },
