@@ -4,6 +4,7 @@
 // Object (direct env.DB) and any API code. Rating updates are Glicko-2 and
 // only apply to rated games where both seats belong to accounts.
 
+import postgres from "postgres";
 import { glickoUpdatePair, GlickoRating } from "../glicko";
 import { categoryForTimeControl, type SpeedCategory } from "../speed";
 
@@ -85,6 +86,12 @@ export interface RatingChange {
 export async function recordFinishedGame(
   db: D1Database,
   game: FinishedGameRecord,
+  // Hyperdrive connection string for the OCI Postgres that holds the `games`
+  // archive. When provided, the finished-game row is written there instead of
+  // D1 (the hot rating/counter updates always stay on D1). When absent — e.g. a
+  // worker without the Hyperdrive binding — the row falls back into the D1
+  // batch so games are still recorded somewhere.
+  archiveConnectionString?: string,
 ): Promise<{ white: RatingChange | null; black: RatingChange | null }> {
   let whiteChange: RatingChange | null = null;
   let blackChange: RatingChange | null = null;
@@ -114,42 +121,52 @@ export async function recordFinishedGame(
     }
   }
 
-  const statements: D1PreparedStatement[] = [
-    db
-      .prepare(
-        `INSERT OR IGNORE INTO games (
-          id, white_user_id, black_user_id, white_name, black_name,
-          white_nerf_id, black_nerf_id, seed, time_sec, increment_sec,
-          moves, winner, reason, rated, category, ruleset,
-          white_rating_before, white_rating_after, black_rating_before, black_rating_after,
-          started_at, completed_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      )
-      .bind(
-        game.id,
-        game.whiteUserId,
-        game.blackUserId,
-        game.whiteName,
-        game.blackName,
-        game.whiteNerfId,
-        game.blackNerfId,
-        game.seed,
-        game.timeSec,
-        game.incrementSec,
-        game.moves.join(" "),
-        game.winner,
-        game.reason,
-        rated ? 1 : 0,
-        category,
-        game.ruleset ?? "classic",
-        whiteBefore?.rating ?? null,
-        whiteAfter?.rating ?? null,
-        blackBefore?.rating ?? null,
-        blackAfter?.rating ?? null,
-        game.startedAt,
-        game.completedAt,
-      ),
-  ];
+  const movesText = game.moves.join(" ");
+  const ruleset = game.ruleset ?? "classic";
+
+  // The hot rating/counter updates always run on D1. The archive `games` row
+  // goes to Postgres when a connection is supplied; otherwise it falls into
+  // this same D1 batch (dev/no-Hyperdrive fallback).
+  const statements: D1PreparedStatement[] = [];
+
+  if (!archiveConnectionString) {
+    statements.push(
+      db
+        .prepare(
+          `INSERT OR IGNORE INTO games (
+            id, white_user_id, black_user_id, white_name, black_name,
+            white_nerf_id, black_nerf_id, seed, time_sec, increment_sec,
+            moves, winner, reason, rated, category, ruleset,
+            white_rating_before, white_rating_after, black_rating_before, black_rating_after,
+            started_at, completed_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        )
+        .bind(
+          game.id,
+          game.whiteUserId,
+          game.blackUserId,
+          game.whiteName,
+          game.blackName,
+          game.whiteNerfId,
+          game.blackNerfId,
+          game.seed,
+          game.timeSec,
+          game.incrementSec,
+          movesText,
+          game.winner,
+          game.reason,
+          rated ? 1 : 0,
+          category,
+          ruleset,
+          whiteBefore?.rating ?? null,
+          whiteAfter?.rating ?? null,
+          blackBefore?.rating ?? null,
+          blackAfter?.rating ?? null,
+          game.startedAt,
+          game.completedAt,
+        ),
+    );
+  }
 
   if (rated && whiteAfter && blackAfter) {
     const winCol = (won: boolean, drew: boolean) =>
@@ -184,6 +201,44 @@ export async function recordFinishedGame(
     );
   }
 
-  await db.batch(statements);
+  if (statements.length) await db.batch(statements);
+
+  // Archive the finished game to Postgres (OCI, via Hyperdrive). Idempotent on
+  // the primary key so retries and the one-time D1 backfill can't duplicate.
+  if (archiveConnectionString) {
+    const sql = postgres(archiveConnectionString, { max: 1, fetch_types: false });
+    try {
+      await sql`
+        INSERT INTO games ${sql({
+          id: game.id,
+          white_user_id: game.whiteUserId,
+          black_user_id: game.blackUserId,
+          white_name: game.whiteName,
+          black_name: game.blackName,
+          white_nerf_id: game.whiteNerfId,
+          black_nerf_id: game.blackNerfId,
+          seed: game.seed,
+          time_sec: game.timeSec,
+          increment_sec: game.incrementSec,
+          moves: movesText,
+          winner: game.winner,
+          reason: game.reason,
+          rated: rated ? 1 : 0,
+          category,
+          ruleset,
+          white_rating_before: whiteBefore?.rating ?? null,
+          white_rating_after: whiteAfter?.rating ?? null,
+          black_rating_before: blackBefore?.rating ?? null,
+          black_rating_after: blackAfter?.rating ?? null,
+          started_at: game.startedAt,
+          completed_at: game.completedAt,
+        })}
+        ON CONFLICT (id) DO NOTHING
+      `;
+    } finally {
+      await sql.end();
+    }
+  }
+
   return { white: whiteChange, black: blackChange };
 }

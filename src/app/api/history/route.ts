@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/server/db";
+import { pgAll } from "@/lib/server/pg";
 import { sessionTokenFromCookieHeader, userForSession } from "@/lib/server/auth";
 
 export const dynamic = "force-dynamic";
@@ -10,6 +11,7 @@ export const dynamic = "force-dynamic";
 // account across devices. Anonymous callers get authenticated:false and the
 // client falls back to localStorage.
 export async function GET(request: Request) {
+  // Auth (session -> user) stays on D1; the game archive is read from Postgres.
   const db = await getDb();
   const user = await userForSession(
     db,
@@ -17,19 +19,17 @@ export async function GET(request: Request) {
   );
   if (!user) return NextResponse.json({ authenticated: false, games: [] });
 
-  const rows = await db
-    .prepare(
-      `SELECT id, white_name, black_name, white_user_id, black_user_id,
-              white_nerf_id, black_nerf_id, winner, reason, rated,
-              white_rating_before, white_rating_after,
-              black_rating_before, black_rating_after,
-              time_sec, increment_sec, moves, completed_at
-       FROM games
-       WHERE white_user_id = ? OR black_user_id = ?
-       ORDER BY completed_at DESC LIMIT 100`,
-    )
-    .bind(user.id, user.id)
-    .all();
+  const games = await pgAll(
+    `SELECT id, white_name, black_name, white_user_id, black_user_id,
+            white_nerf_id, black_nerf_id, winner, reason, rated,
+            white_rating_before, white_rating_after,
+            black_rating_before, black_rating_after,
+            time_sec, increment_sec, moves, completed_at
+     FROM games
+     WHERE white_user_id = ? OR black_user_id = ?
+     ORDER BY completed_at DESC LIMIT 100`,
+    [user.id, user.id],
+  );
 
-  return NextResponse.json({ authenticated: true, userId: user.id, games: rows.results });
+  return NextResponse.json({ authenticated: true, userId: user.id, games });
 }
