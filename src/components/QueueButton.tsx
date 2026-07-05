@@ -24,6 +24,7 @@ const QUEUE_POOL_OPTIONS: { pool: string; label: string; speed: RatingCategoryId
 ];
 
 const LAST_POOL_KEY = "dc:last-pool";
+const LAST_MODE_KEY = "dc:last-mode";
 
 // A few of the rules, previewed under the two queue buttons so a new player
 // knows what each pool plays like. Static picks of well-known implemented
@@ -33,15 +34,17 @@ const EXAMPLE_NERF_IDS = ["skittish", "horse_tranquilizer", "shadow_queen"];
 const EXAMPLE_BUFF_IDS = ["pawn_push", "ferz_king", "pawn_shield"];
 
 // Quick-pairing entry point: the two rated queue pools, Nerf and Buff. A
-// player queues into one explicitly and only pairs inside it; each pool
-// stakes its own rating. Signed-in players pick a time control and are sent
+// player picks a mode card (nothing queues yet), picks a time control, and
+// the Play button at the bottom starts the search; each pool stakes its own
+// rating. The last mode choice is remembered, and a `?mode=` query param
+// (e.g. from the home page links) preselects one. Signed-in players are sent
 // to the game URL when paired; signed-out visitors get a sign-in link.
 export function QueueButton() {
   const router = useRouter();
   const [user, setUser] = useState<AccountUser | null | undefined>(undefined);
   const [modeRatings, setModeRatings] = useState<Partial<Record<DraftMode, number>>>({});
   const [state, setState] = useState<"idle" | "searching" | "paired">("idle");
-  const [searchingMode, setSearchingMode] = useState<DraftMode>("buff");
+  const [mode, setMode] = useState<DraftMode | null>(null);
   const [pool, setPool] = useState("3+2");
   const [error, setError] = useState<string | null>(null);
   const sessionRef = useRef<MPSession | null>(null);
@@ -70,6 +73,14 @@ export function QueueButton() {
       const saved = window.localStorage.getItem(LAST_POOL_KEY);
       if (saved && QUEUE_POOL_OPTIONS.some((o) => o.pool === saved)) setPool(saved);
     } catch {}
+    // Preselect a mode: an explicit ?mode= query param (home page links)
+    // wins; otherwise the last choice this browser made.
+    try {
+      const fromQuery = new URLSearchParams(window.location.search).get("mode");
+      const saved = window.localStorage.getItem(LAST_MODE_KEY);
+      const preset = fromQuery === "nerf" || fromQuery === "buff" ? fromQuery : saved;
+      if (preset === "nerf" || preset === "buff") setMode(preset);
+    } catch {}
     return () => {
       cancelled = true;
       sessionRef.current?.destroy();
@@ -84,9 +95,15 @@ export function QueueButton() {
     } catch {}
   };
 
+  const pickMode = (m: DraftMode) => {
+    setMode(m);
+    try {
+      window.localStorage.setItem(LAST_MODE_KEY, m);
+    } catch {}
+  };
+
   const startSearch = async (mode: DraftMode) => {
     setError(null);
-    setSearchingMode(mode);
     setState("searching");
     const session = new MPSession();
     session.persistFriendSession = false;
@@ -121,12 +138,7 @@ export function QueueButton() {
 
   return (
     <div className="plate gilt p-5 sm:p-6">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <div className="font-display text-2xl text-parchment">Play online</div>
-        <p className="text-sm text-parchment-300">
-          Rated games against a real opponent. Two pools, one rating each.
-        </p>
-      </div>
+      <div className="font-display text-2xl text-parchment">Play online</div>
 
       {user === undefined ? (
         <div className="mt-4 px-2 py-6 text-center text-parchment-400 text-sm">…</div>
@@ -147,8 +159,8 @@ export function QueueButton() {
           <span className="flex items-center gap-2 text-sm text-parchment-200">
             <span className="w-2 h-2 rounded-full bg-verdigris animate-flicker" />
             Finding a{" "}
-            <span className={searchingMode === "nerf" ? "text-mode-nerfGlow" : "text-mode-buffGlow"}>
-              {searchingMode === "nerf" ? "Nerf" : "Buff"}
+            <span className={mode === "nerf" ? "text-mode-nerfGlow" : "text-mode-buffGlow"}>
+              {mode === "nerf" ? "Nerf" : "Buff"}
             </span>{" "}
             opponent… ({selected.label})
           </span>
@@ -160,19 +172,21 @@ export function QueueButton() {
         <div className="mt-4 text-sm text-gold-leaf">Opponent found. Starting…</div>
       ) : (
         <>
-          {/* The primary call to action: two big pool buttons, unmistakably
-              color-coded (Nerf red, Buff blue), each wearing the rating it
-              stakes. */}
+          {/* Step 1: pick a mode. The two cards are a selection, color-coded
+              (Nerf rose, Buff blue), each wearing the rating it stakes.
+              Nothing queues until the Play button below. */}
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            <ModeQueueButton
+            <ModeCard
               mode="nerf"
               rating={ratingFor("nerf")}
-              onClick={() => startSearch("nerf")}
+              selected={mode === "nerf"}
+              onClick={() => pickMode("nerf")}
             />
-            <ModeQueueButton
+            <ModeCard
               mode="buff"
               rating={ratingFor("buff")}
-              onClick={() => startSearch("buff")}
+              selected={mode === "buff"}
+              onClick={() => pickMode("buff")}
             />
           </div>
 
@@ -207,6 +221,23 @@ export function QueueButton() {
           </div>
 
           <RulePreviews />
+
+          {/* The one button that actually queues, at the bottom so the flow
+              reads mode, clock, play. Disabled until a mode is chosen. */}
+          <button
+            onClick={() => mode && startSearch(mode)}
+            disabled={!mode}
+            className={
+              "mt-4 w-full border px-8 py-4 font-display text-xl sm:text-2xl font-semibold transition " +
+              (mode === "nerf"
+                ? "border-mode-nerf/70 bg-mode-nerf/20 text-mode-nerfGlow shadow-nerf hover:border-mode-nerf hover:bg-mode-nerf/30"
+                : mode === "buff"
+                  ? "border-mode-buff/70 bg-mode-buff/20 text-mode-buffGlow shadow-buff hover:border-mode-buff hover:bg-mode-buff/30"
+                  : "cursor-not-allowed border-white/10 bg-white/5 text-parchment-400")
+            }
+          >
+            {mode === "nerf" ? "Play Nerf" : mode === "buff" ? "Play Buff" : "Pick a mode to play"}
+          </button>
         </>
       )}
 
@@ -219,39 +250,48 @@ export function QueueButton() {
   );
 }
 
-// One of the two big pool actions. Each pool wears its color identity at all
-// times (Nerf red, Buff blue) and shows the caller's rating in that pool.
-function ModeQueueButton({
+// One of the two mode selection cards. Each wears its color identity at all
+// times (Nerf rose, Buff blue), deepens when selected, and shows the
+// caller's rating in that pool. Selecting a card does not queue; the Play
+// button below does.
+function ModeCard({
   mode,
   rating,
+  selected,
   onClick,
 }: {
   mode: DraftMode;
   rating: number | null;
+  selected: boolean;
   onClick: () => void;
 }) {
   const identity =
     mode === "nerf"
       ? {
-          card: "border-mode-nerf/50 bg-mode-nerf/10 hover:border-mode-nerf hover:bg-mode-nerf/20 hover:shadow-oxblood",
+          card: selected
+            ? "border-mode-nerf bg-mode-nerf/15 shadow-nerf"
+            : "border-mode-nerf/30 bg-mode-nerf/5 hover:border-mode-nerf/60 hover:bg-mode-nerf/10",
           title: "text-mode-nerfGlow",
         }
       : {
-          card: "border-mode-buff/50 bg-mode-buff/10 hover:border-mode-buff hover:bg-mode-buff/20 hover:shadow-leaf",
+          card: selected
+            ? "border-mode-buff bg-mode-buff/15 shadow-buff"
+            : "border-mode-buff/30 bg-mode-buff/5 hover:border-mode-buff/60 hover:bg-mode-buff/10",
           title: "text-mode-buffGlow",
         };
   return (
     <button
       onClick={onClick}
+      aria-pressed={selected}
       className={"plate p-4 sm:p-5 text-left transition border " + identity.card}
     >
       <div className={"font-display text-2xl sm:text-3xl font-semibold " + identity.title}>
-        {mode === "nerf" ? "Play a Nerf game" : "Play a Buff game"}
+        {mode === "nerf" ? "Nerf" : "Buff"}
       </div>
       <p className="mt-1 text-[12px] leading-snug text-parchment-300">
         {mode === "nerf"
-          ? "Secret handicaps, revealed only when the game ends."
-          : "No nerfs. Draft buffs and outplay your opponent."}
+          ? "Secret handicaps, revealed when the game ends. Boon drafts soften yours."
+          : "No handicaps. Draft buffs and build the strongest army."}
       </p>
       <div className="mt-2.5 flex items-center gap-2">
         <span className="smallcaps text-[9px] text-parchment-400">

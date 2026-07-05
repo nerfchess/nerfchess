@@ -258,13 +258,13 @@ function ModeCard({
     mode === "nerf"
       ? {
           card: selected
-            ? "border-mode-nerf/70 bg-mode-nerf/10 shadow-oxblood"
+            ? "border-mode-nerf/70 bg-mode-nerf/10 shadow-nerf"
             : "border-mode-nerf/25 hover:border-mode-nerf/50 hover:bg-mode-nerf/5",
           title: "text-mode-nerfGlow",
         }
       : {
           card: selected
-            ? "border-mode-buff/70 bg-mode-buff/10 shadow-leaf"
+            ? "border-mode-buff/70 bg-mode-buff/10 shadow-buff"
             : "border-mode-buff/25 hover:border-mode-buff/50 hover:bg-mode-buff/5",
           title: "text-mode-buffGlow",
         };

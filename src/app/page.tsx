@@ -49,12 +49,24 @@ export default function HomePage() {
             taller than the board beside it. */}
         <div className="order-2">
           <p className="text-lg sm:text-xl leading-relaxed text-parchment-100">
-            Chess with two modes. In{" "}
-            <span className="font-semibold text-mode-nerfGlow">Nerf</span> mode
-            you each carry a secret handicap, revealed only when the game ends.
-            In <span className="font-semibold text-mode-buffGlow">Buff</span>{" "}
-            mode nobody is handicapped: you both draft power-up cards as you
-            play. There is no checkmate: you win by capturing the king.
+            Chess with two modes: choose{" "}
+            <Link
+              href="/lobby?mode=nerf"
+              className="font-semibold text-mode-nerfGlow underline decoration-mode-nerf/50 underline-offset-4 transition-colors hover:decoration-mode-nerfGlow"
+            >
+              Nerf
+            </Link>{" "}
+            or{" "}
+            <Link
+              href="/lobby?mode=buff"
+              className="font-semibold text-mode-buffGlow underline decoration-mode-buff/50 underline-offset-4 transition-colors hover:decoration-mode-buffGlow"
+            >
+              Buff
+            </Link>
+            . In Nerf mode you each carry a secret handicap, revealed only when
+            the game ends. In Buff mode nobody is handicapped: you both draft
+            power-up cards as you play. There is no checkmate: you win by
+            capturing the king.
           </p>
 
           <ReturnToGameBanner />
@@ -197,11 +209,18 @@ function StatStrip() {
 }
 
 function HowItWorks() {
-  const steps = [
+  const steps: { n: string; title: string; body: React.ReactNode; icon: React.ReactNode }[] = [
     {
       n: "1",
-      title: "Get a secret rule",
-      body: "At the start of every game you are dealt a hidden restriction, drawn from a deck of hundreds. In Draft games you are shown two and keep one.",
+      title: "Pick your mode",
+      body: (
+        <>
+          In <span className="font-semibold text-mode-nerfGlow">Nerf</span> mode you pick a
+          secret handicap from two cards; your opponent&apos;s stays hidden until the game
+          ends. In <span className="font-semibold text-mode-buffGlow">Buff</span> mode nobody
+          is handicapped.
+        </>
+      ),
       icon: (
         <>
           <rect x="3" y="4" width="18" height="16" rx="2" />
@@ -211,8 +230,15 @@ function HowItWorks() {
     },
     {
       n: "2",
-      title: "Play with your restriction",
-      body: "Move as normal, but your rule quietly limits your options. In Draft games a buff draft lands every few moves; skip one and the next offer rolls stronger.",
+      title: "Draft as you play",
+      body: (
+        <>
+          A draft lands every 6 moves. In <span className="font-semibold text-mode-nerfGlow">Nerf</span>{" "}
+          mode you pick boons that mostly soften your nerf. In{" "}
+          <span className="font-semibold text-mode-buffGlow">Buff</span> mode you draft buffs
+          and build the strongest army. Skip one and the next offer rolls stronger.
+        </>
+      ),
       icon: (
         <>
           <path d="M12 2l2.4 6.9H21l-5.6 4 2.1 7L12 15.8 6.5 19.9l2.1-7L3 8.9h6.6z" />
@@ -222,7 +248,7 @@ function HowItWorks() {
     {
       n: "3",
       title: "Capture the king to win",
-      body: "There is no checkmate here. Read your opponent, exploit their hidden rule, and take the king.",
+      body: "There is no checkmate here. Read your opponent, exploit what you learn, and take the king.",
       icon: (
         <>
           <path d="M12 3v4M9 7h6M6 21h12l-1-9-4 3-1-6-1 6-4-3z" />
@@ -330,7 +356,7 @@ function SiteFooter() {
         ))}
       </nav>
       <div className="mt-3 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-parchment-400">
-        <span>Nerf Chess: chess with secret rules and a buff draft.</span>
+        <span>Nerf Chess: chess with two modes, secret nerfs or drafted buffs.</span>
         <span className="font-mono text-[10px] opacity-70" title="Deployed version">
           made with &hearts;
           {process.env.NEXT_PUBLIC_BUILD_VERSION ? ` · ${process.env.NEXT_PUBLIC_BUILD_VERSION}` : ""}

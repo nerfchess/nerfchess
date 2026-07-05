@@ -7,11 +7,13 @@ import { AccountUser, fetchMe } from "@/lib/authClient";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 
 // Every top-level destination, so the mobile bar never needs inline links.
-const NAV_LINKS: { href: string; label: string }[] = [
+// The two TV entries wear their mode colors, matching the desktop dropdown.
+const NAV_LINKS: { href: string; label: string; className?: string }[] = [
   { href: "/play", label: "New game" },
   { href: "/friend", label: "Play a friend" },
   { href: "/lobby", label: "Lobby" },
-  { href: "/tv", label: "Watch TV" },
+  { href: "/tv?mode=nerf", label: "Nerf TV", className: "text-mode-nerfGlow" },
+  { href: "/tv?mode=buff", label: "Buff TV", className: "text-mode-buffGlow" },
   { href: "/analysis", label: "Analysis board" },
   { href: "/clubs", label: "Clubs" },
   { href: "/tournaments", label: "Tournaments" },
@@ -89,7 +91,10 @@ export function MobileNavMenu() {
                 key={link.href}
                 href={link.href}
                 onClick={() => setOpen(false)}
-                className="block px-4 py-2.5 text-sm font-medium text-parchment-100 hover:bg-white/5"
+                className={
+                  "block px-4 py-2.5 text-sm font-medium hover:bg-white/5 " +
+                  (link.className ?? "text-parchment-100")
+                }
               >
                 {link.label}
               </Link>
