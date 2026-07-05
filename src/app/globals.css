@@ -201,18 +201,29 @@ body {
 .tier-bg-7 { background: rgba(168,119,216,0.12); border-color: rgba(168,119,216,0.45); }
 .tier-bg-8 { background: rgba(224,82,82,0.14); border-color: rgba(224,82,82,0.50); }
 
-/* --- Buttons --- Lichess-flat: solid blue primary, quiet ghost secondary. */
+/* --- Buttons --- Lichess-style: primary carries a subtle two-stop "metal"
+   gradient (lighter top, base bottom) plus an inset top highlight and a soft
+   drop, so it reads as a pressable physical control rather than a flat fill.
+   Hover lifts the gradient a touch; active presses it in by a half pixel. */
 .btn-leaf {
-  background: var(--accent);
+  background: linear-gradient(to bottom, var(--accent-hi), var(--accent));
   color: #fff;
-  border: 1px solid rgba(0,0,0,0.22);
-  box-shadow: 0 1px 0 rgba(255,255,255,0.12) inset;
-  transition: background 160ms ease, filter 160ms ease, box-shadow 180ms ease;
+  border: 1px solid rgba(0,0,0,0.28);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.18) inset,
+    0 2px 6px -2px rgba(0,0,0,0.5);
+  transition: background 160ms ease, filter 160ms ease, box-shadow 180ms ease, transform 120ms ease;
   font-weight: 600;
   letter-spacing: 0.005em;
 }
-.btn-leaf:hover { background: var(--accent-hi); }
-.btn-leaf:active { filter: brightness(0.94); }
+.btn-leaf:hover { filter: brightness(1.05); }
+.btn-leaf:active {
+  filter: brightness(0.95);
+  transform: translateY(0.5px);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.1) inset,
+    0 1px 2px -1px rgba(0,0,0,0.5);
+}
 
 /* Hero CTA: primary button with a soft accent glow + border emphasis, for the
    single most important action on a screen (e.g. "Play a Friend"). */
@@ -230,15 +241,34 @@ body {
 }
 
 .btn-ghost {
-  background: rgba(255,255,255,0.04);
+  background: linear-gradient(to bottom, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
   color: var(--paper);
   border: 1px solid rgba(255,255,255,0.12);
-  transition: background 160ms ease, border-color 160ms ease;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.06) inset;
+  transition: background 160ms ease, border-color 160ms ease, transform 120ms ease;
   font-weight: 500;
   letter-spacing: 0.005em;
 }
 .btn-ghost:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.22); }
-.btn-ghost:active { background: rgba(255,255,255,0.12); }
+.btn-ghost:active { background: rgba(255,255,255,0.12); transform: translateY(0.5px); }
+
+/* Deliberate keyboard-focus state on every control: a visible accent ring for
+   :focus-visible only, so mouse users never see it but keyboard and screen
+   reader users always get a clear target. Designing this state (rather than
+   leaving the browser default or none) is both an accessibility floor and one
+   of the details that separates a crafted UI from a generated one. */
+a:focus-visible,
+button:focus-visible,
+[role="button"]:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--accent-hi);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .btn-leaf, .btn-ghost { transition: none; }
+}
 
 /* Kept as an alias so any stale references stay on-brand (blue, not green). */
 .btn-lichess { }
