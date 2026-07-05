@@ -58,27 +58,44 @@ function pickRandomNerf(): Nerf {
   return playable[Math.floor(Math.random() * playable.length)];
 }
 
-/** Deal the opening nerf draft: four distinct nerfs as two same-tier pairs
- * (options 0-1 and 2-3), with the two pairs' tiers within one of each other
- * (the fairness rule pickNerfPair uses for classic matchmaking). */
+/** Deal the opening nerf draft: four distinct nerfs sharing one tier pairing,
+ * the scheme the online worker uses (dealNerfDraftOptions). Pick an anchor
+ * tier and a partner tier within one of it (possibly the same), then give
+ * each side (options 0-1 and 2-3) one card of the anchor tier and one of the
+ * partner tier, so both players always draft from the same tier pair. */
 function dealNerfOptions(exclude: Set<string>): Nerf[] {
   const pool = PLAYABLE_NERFS.filter((d) => d.id !== "lucky" && !exclude.has(d.id));
-  // Anchor on a random nerf whose tier still holds a partner, so tiers are
-  // weighted by how many nerfs they contain (the pickNerfPair convention).
-  const dealPair = (candidates: Nerf[]): Nerf[] => {
-    const anchors = candidates.filter((d) =>
-      candidates.some((o) => o.tier === d.tier && o.id !== d.id),
-    );
-    const first = anchors[Math.floor(Math.random() * anchors.length)];
-    const partners = candidates.filter((o) => o.tier === first.tier && o.id !== first.id);
-    return [first, partners[Math.floor(Math.random() * partners.length)]];
+  const ofTier = (tier: number) => pool.filter((d) => d.tier === tier);
+  const takeOne = (tier: number, taken: Set<string>): Nerf => {
+    const candidates = ofTier(tier).filter((d) => !taken.has(d.id));
+    const card = candidates[Math.floor(Math.random() * candidates.length)];
+    taken.add(card.id);
+    return card;
   };
-  const pairA = dealPair(pool);
-  const rest = pool.filter((d) => !pairA.includes(d));
-  const pairB = dealPair(rest.filter((d) => Math.abs(d.tier - pairA[0].tier) <= 1));
-  // Randomize which side gets the anchor pair so tier-edge deals (1 and 8)
-  // don't always land on the same player.
-  return Math.random() < 0.5 ? [...pairA, ...pairB] : [...pairB, ...pairA];
+  // A tier pairing is feasible only if the pool supplies the four distinct
+  // cards: four of the anchor tier when the partner tier matches it,
+  // otherwise two of each.
+  const feasible = (anchor: number, partner: number) =>
+    partner === anchor
+      ? ofTier(anchor).length >= 4
+      : ofTier(anchor).length >= 2 && ofTier(partner).length >= 2;
+  const tiers = [...new Set(pool.map((d) => d.tier))];
+  const anchorTiers = tiers.filter((anchor) =>
+    tiers.some((partner) => Math.abs(partner - anchor) <= 1 && feasible(anchor, partner)),
+  );
+  const anchorTier = anchorTiers[Math.floor(Math.random() * anchorTiers.length)];
+  const partnerTiers = tiers.filter(
+    (partner) => Math.abs(partner - anchorTier) <= 1 && feasible(anchorTier, partner),
+  );
+  const partnerTier = partnerTiers[Math.floor(Math.random() * partnerTiers.length)];
+  const taken = new Set<string>();
+  const first = [takeOne(anchorTier, taken), takeOne(partnerTier, taken)];
+  const second = [takeOne(anchorTier, taken), takeOne(partnerTier, taken)];
+  // Randomize each side's card order and which side gets which hand, so
+  // neither the anchor card nor a specific hand always lands on one player.
+  if (Math.random() < 0.5) first.reverse();
+  if (Math.random() < 0.5) second.reverse();
+  return Math.random() < 0.5 ? [...first, ...second] : [...second, ...first];
 }
 
 const BOT_ELO: Record<AILevel, number> = {

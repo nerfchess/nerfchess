@@ -22,3 +22,6 @@ Decisions shipped in the `claude/draft-economy-rules` branch:
 - Worker draft matches track the real side to move in `StoredMatch.turnColor`
   because activations and tempo cards move the turn off move parity; clocks
   and flag checks read it through `activeColor`.
+- Bot games now deal the opening nerf draft with the worker's anchor/partner
+  matched-tier scheme (`dealNerfOptions` in `src/app/game/page.tsx` mirrors
+  `dealNerfDraftOptions`), so both players always see the same tier pair.
