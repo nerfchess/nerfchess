@@ -22,6 +22,12 @@ export function draftCardNoun(mode?: DraftMode): "boon" | "buff" {
   return mode === "nerf" ? "boon" : "buff";
 }
 
+/** True when a card belongs to nerf mode's boon pool: every nerf-relief card
+ * (category "nerf") plus the light general cards flagged `boon`. */
+export function isBoon(b: { category: BuffCategory; boon?: boolean }): boolean {
+  return b.category === "nerf" || !!b.boon;
+}
+
 export type BuffCategory =
   | "movement" // new ways for pieces to move
   | "pieces" // summons, revivals, promotions, conversions
@@ -246,6 +252,10 @@ export interface Buff {
   /** Library tier; drafts may roll the card at a nearby tier. */
   tier: Tier;
   category: BuffCategory;
+  /** Part of nerf mode's boon pool. Category "nerf" cards are boons
+   * implicitly (see isBoon); light general cards flagged here round the
+   * pool out to roughly half nerf-relief, half small supportive effects. */
+  boon?: boolean;
   implemented: boolean;
   /**
    * passive   — hooks run automatically while held

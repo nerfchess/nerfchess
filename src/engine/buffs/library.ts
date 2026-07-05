@@ -66,6 +66,9 @@ type Meta = {
   description: string;
   tier: Tier;
   category: BuffCategory;
+  /** Light general card that also joins nerf mode's boon pool. Category
+   * "nerf" cards are boons automatically and never need this flag. */
+  boon?: boolean;
 };
 
 type Mech = Partial<Buff> & Pick<Buff, "kind">;
@@ -431,12 +434,12 @@ const TIER1: Buff[] = [
     instant((_inst, api) => api.restoreCastling()),
   ),
   def(
-    { id: "pawn_shield", name: "Pawn Shield", description: "One pawn cannot be captured for 3 turns.", tier: 1, category: "protection" },
+    { id: "pawn_shield", name: "Pawn Shield", description: "One pawn cannot be captured for 3 turns.", tier: 1, category: "protection", boon: true },
     shieldTarget(3, ["p"]),
   ),
   def({ id: "free_retreat", name: "Free Retreat", description: "Undo your last move once, before your opponent replies.", tier: 1, category: "tempo" }),
   def(
-    { id: "peek", name: "Peek", description: "See your opponent's next buff options.", tier: 1, category: "info" },
+    { id: "peek", name: "Peek", description: "See your opponent's next buff options.", tier: 1, category: "info", boon: true },
     instant((_inst, api) => { api.mine.flags.seeOppCards = true; }),
   ),
   def(
@@ -602,7 +605,7 @@ const TIER1: Buff[] = [
     ),
   ),
   def(
-    { id: "quick_glance", name: "Quick Glance", description: "See the tier of your opponent's next draft.", tier: 1, category: "info" },
+    { id: "quick_glance", name: "Quick Glance", description: "See the tier of your opponent's next draft.", tier: 1, category: "info", boon: true },
     instant((_inst, api) => { api.mine.flags.seeOppTier = true; }),
   ),
   def(
@@ -685,12 +688,39 @@ const TIER1: Buff[] = [
       );
     }),
   ),
-  // Nerf-modifier (cross-cutting)
+  // Nerf-modifiers (cross-cutting)
   def(
     { id: "reprieve", name: "Reprieve", description: "Suspend your nerf for your next 2 turns.", tier: 1, category: "nerf" },
     instant((_inst, api) => {
       addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 2 });
     }),
+  ),
+  def(
+    { id: "deep_breath", name: "Deep Breath", description: "Free action: ignore your nerf for one move, used at the moment you choose.", tier: 1, category: "nerf" },
+    {
+      ...activatedSimple((_inst, api) => {
+        addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 1 });
+      }),
+      freeAction: true,
+    },
+  ),
+  def(
+    { id: "small_mercies", name: "Small Mercies", description: "The next 2 times your opponent captures one of your pieces, your nerf is suspended for your next turn.", tier: 1, category: "nerf" },
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.charges = 2;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.opp || !move.captured || move.captured === "k") return;
+        const left = (inst.state.charges as number) ?? 0;
+        if (left <= 0) return;
+        addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 1 });
+        inst.state.charges = left - 1;
+        if (left - 1 <= 0) inst.spent = true;
+      },
+      status: (inst) => `${(inst.state.charges as number) ?? 2} mercies left`,
+    },
   ),
 ];
 
@@ -776,7 +806,7 @@ const TIER2: Buff[] = [
     }),
   ),
   def(
-    { id: "reinforce", name: "Reinforce", description: "One of your pieces cannot be captured this turn and next.", tier: 2, category: "protection" },
+    { id: "reinforce", name: "Reinforce", description: "One of your pieces cannot be captured this turn and next.", tier: 2, category: "protection", boon: true },
     shieldTarget(2),
   ),
   def(
@@ -955,7 +985,7 @@ const TIER2: Buff[] = [
     ),
   ),
   def(
-    { id: "draft_insight", name: "Draft Insight", description: "See both of your opponent's next draft cards and their tiers.", tier: 2, category: "info" },
+    { id: "draft_insight", name: "Draft Insight", description: "See both of your opponent's next draft cards and their tiers.", tier: 2, category: "info", boon: true },
     instant((_inst, api) => {
       api.mine.flags.seeOppCards = true;
       api.mine.flags.seeOppTier = true;
@@ -1000,8 +1030,43 @@ const TIER2: Buff[] = [
       if (squares.length) addEffect(api, { kind: "shield", owner: api.me, squares, turns: 3 });
     }),
   ),
-  // Nerf-modifier (cross-cutting)
+  // Nerf-modifiers (cross-cutting)
   def({ id: "loosen_the_leash", name: "Loosen the Leash", description: "If your nerf caps you at a rank, raise the cap by one rank.", tier: 2, category: "nerf" }),
+  def(
+    { id: "slack_chain", name: "Slack in the Chain", description: "Suspend your nerf for your next 3 turns.", tier: 2, category: "nerf" },
+    instant((_inst, api) => {
+      addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 3 });
+    }),
+  ),
+  def(
+    { id: "held_breath", name: "Held Breath", description: "Free action: suspend your nerf for your next 2 turns, used at the moment you choose.", tier: 2, category: "nerf" },
+    {
+      ...activatedSimple((_inst, api) => {
+        addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 2 });
+      }),
+      freeAction: true,
+    },
+  ),
+  def(
+    { id: "hunters_relief", name: "Hunter's Relief", description: "Your next 2 captures each suspend your nerf for your next turn.", tier: 2, category: "nerf" },
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.charges = 2;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.me || !move.captured || move.captured === "k") return;
+        const left = (inst.state.charges as number) ?? 0;
+        if (left <= 0) return;
+        // Two ticks: this effect loses one tick to the capturing move itself
+        // (timers tick right after onMovePlayed), leaving the next turn free.
+        addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 2 });
+        inst.state.charges = left - 1;
+        if (left - 1 <= 0) inst.spent = true;
+      },
+      status: (inst) => `${(inst.state.charges as number) ?? 2} captures left`,
+    },
+  ),
 ];
 
 // ---------------------------------------------------------------------------
@@ -1022,7 +1087,7 @@ const TIER3: Buff[] = [
     pieceBound("r", "Choose the rook", (board, sq, via) => leapMoves(board, sq, KNIGHT_LEAPS, via)),
   ),
   def(
-    { id: "extra_move", name: "Extra Move", description: "Take two moves in a row, once.", tier: 3, category: "tempo" },
+    { id: "extra_move", name: "Extra Move", description: "Take two moves in a row, once.", tier: 3, category: "tempo", boon: true },
     extraMovesNow(1),
   ),
   def(
@@ -1175,7 +1240,7 @@ const TIER3: Buff[] = [
     ),
   ),
   def(
-    { id: "bunker", name: "Bunker", description: "Three squares in front of your king are barred to enemies for 4 turns.", tier: 3, category: "protection" },
+    { id: "bunker", name: "Bunker", description: "Three squares in front of your king are barred to enemies for 4 turns.", tier: 3, category: "protection", boon: true },
     instant((_inst, api) => {
       const k = mySquares(api.board, api.me, "k")[0];
       if (k == null) return;
@@ -1372,6 +1437,27 @@ const TIER3: Buff[] = [
     instant((_inst, api) => {
       addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 5 });
     }),
+  ),
+  def(
+    { id: "timely_lull", name: "Timely Lull", description: "Free action: suspend your nerf for your next 3 turns, used at the moment you choose.", tier: 3, category: "nerf" },
+    {
+      ...activatedSimple((_inst, api) => {
+        addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 3 });
+      }),
+      freeAction: true,
+    },
+  ),
+  def(
+    { id: "underdogs_grit", name: "Underdog's Grit", description: "While you have fewer pieces than your opponent, your nerf is suspended.", tier: 3, category: "nerf" },
+    {
+      kind: "passive",
+      onMovePlayed: (_inst, move, api) => {
+        if (move.color !== api.opp) return;
+        if (mySquares(api.board, api.me).length >= mySquares(api.board, api.opp).length) return;
+        addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 1 });
+      },
+      status: () => "watching the material count",
+    },
   ),
 ];
 
@@ -1580,7 +1666,7 @@ const TIER4: Buff[] = [
     }, 2),
   ),
   def(
-    { id: "snap_freeze", name: "Snap Freeze", description: "Freeze the piece that last moved for 2 of its turns.", tier: 4, category: "tempo" },
+    { id: "snap_freeze", name: "Snap Freeze", description: "Freeze the piece that last moved for 2 of its turns.", tier: 4, category: "tempo", boon: true },
     instant((_inst, api) => {
       const last = [...api.board.history].reverse().find((m) => m.color === api.opp);
       if (!last) return;
@@ -1645,7 +1731,7 @@ const TIER4: Buff[] = [
     }),
   ),
   def(
-    { id: "recast", name: "Recast", description: "Reroll your entire current draft into the next tier up, once.", tier: 4, category: "draft" },
+    { id: "recast", name: "Recast", description: "Reroll your entire current draft into the next tier up, once.", tier: 4, category: "draft", boon: true },
     instant((_inst, api) => {
       api.mine.flags.bankBonus = Math.min(1, (api.mine.flags.bankBonus ?? 0) + 1);
     }),
@@ -1764,12 +1850,24 @@ const TIER4: Buff[] = [
     { id: "fault_line", name: "Fault Line", description: "Split the board; enemy pieces cannot cross one file you pick, for 2 turns.", tier: 4, category: "protection" },
     barLine("file", 2),
   ),
-  // Nerf-modifier (cross-cutting)
+  // Nerf-modifiers (cross-cutting)
   def(
     { id: "grace_period", name: "Grace Period", description: "Suspend your nerf entirely for 4 turns.", tier: 4, category: "nerf" },
     instant((_inst, api) => {
       addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 4 });
     }),
+  ),
+  def(
+    { id: "adrenaline", name: "Adrenaline", description: "Whenever your king is in check, your nerf is suspended for your next turn.", tier: 4, category: "nerf" },
+    {
+      kind: "passive",
+      onMovePlayed: (_inst, move, api) => {
+        if (move.color !== api.opp) return;
+        if (!isInCheck(api.board, api.me)) return;
+        addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 1 });
+      },
+      status: () => "arms while your king is in check",
+    },
   ),
 ];
 
@@ -1810,7 +1908,7 @@ const TIER5: Buff[] = [
     pieceBound("n", "Choose the knight", (board, sq, via) => slideMoves(board, sq, ALL_DIRS, via)),
   ),
   def(
-    { id: "total_freeze", name: "Total Freeze", description: "Freeze every enemy piece adjacent to your pieces for 1 turn.", tier: 5, category: "tempo" },
+    { id: "total_freeze", name: "Total Freeze", description: "Freeze every enemy piece adjacent to your pieces for 1 turn.", tier: 5, category: "tempo", boon: true },
     instant((_inst, api) => {
       const mineSqs = mySquares(api.board, api.me);
       for (const sq of mySquares(api.board, api.opp)) {
@@ -1955,7 +2053,7 @@ const TIER5: Buff[] = [
     swapOwnPieces(),
   ),
   def(
-    { id: "iron_reign", name: "Iron Reign", description: "Your king cannot be checked for 2 full turns.", tier: 5, category: "protection" },
+    { id: "iron_reign", name: "Iron Reign", description: "Your king cannot be checked for 2 full turns.", tier: 5, category: "protection", boon: true },
     instant((_inst, api) => {
       addEffect(api, { kind: "king_safe", owner: api.me, turns: 2 });
     }),
@@ -2037,13 +2135,32 @@ const TIER5: Buff[] = [
     { id: "shatter", name: "Shatter", description: "Destroy one enemy rook, bishop, or knight of your choice.", tier: 5, category: "attack" },
     removeEnemies(1, ["r", "b", "n"]),
   ),
-  // Nerf-modifier (cross-cutting)
+  // Nerf-modifiers (cross-cutting)
   def({ id: "rehab", name: "Rehab", description: "Permanently downgrade your nerf to its weakest version.", tier: 5, category: "nerf" }),
   def(
     { id: "long_leash", name: "Long Leash", description: "Suspend your nerf for your next 7 turns.", tier: 5, category: "nerf" },
     instant((_inst, api) => {
       addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 7 });
     }),
+  ),
+  def(
+    { id: "parole", name: "Parole", description: "Your nerf is removed for good after your next 10 turns.", tier: 5, category: "nerf" },
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.turns = 10;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.me) return;
+        const t = ((inst.state.turns as number) ?? 0) - 1;
+        inst.state.turns = t;
+        if (t <= 0) {
+          api.removeMyNerf();
+          inst.spent = true;
+        }
+      },
+      status: (inst) => `${turnsLeft(inst)} of your turns until release`,
+    },
   ),
 ];
 
@@ -2064,7 +2181,7 @@ const TIER6: Buff[] = [
   ),
   def({ id: "time_rewind", name: "Time Rewind", description: "Undo the last three full moves, resetting to that position, once.", tier: 6, category: "tempo" }),
   def(
-    { id: "mass_resurrect", name: "Mass Resurrect", description: "Revive any three captured pawns to your half.", tier: 6, category: "pieces" },
+    { id: "mass_resurrect", name: "Mass Resurrect", description: "Revive any three captured pawns to your half.", tier: 6, category: "pieces", boon: true },
     revivePawnsToStart(3),
   ),
   def(
@@ -2127,7 +2244,7 @@ const TIER6: Buff[] = [
     ),
   ),
   def(
-    { id: "sanctuary_zone", name: "Sanctuary Zone", description: "A 2x2 area you pick makes your pieces uncapturable for 4 turns.", tier: 6, category: "protection" },
+    { id: "sanctuary_zone", name: "Sanctuary Zone", description: "A 2x2 area you pick makes your pieces uncapturable for 4 turns.", tier: 6, category: "protection", boon: true },
     activated(
       (_inst, _api, picks) =>
         picks.length > 0
@@ -2322,10 +2439,30 @@ const TIER6: Buff[] = [
       }
     }),
   ),
-  // Nerf-modifier (cross-cutting)
+  // Nerf-modifiers (cross-cutting)
   def(
     { id: "nerf_breaker", name: "Nerf Breaker", description: "Remove your nerf entirely for the rest of the game.", tier: 6, category: "nerf" },
     instant((_inst, api) => api.removeMyNerf()),
+  ),
+  def(
+    { id: "wardens_bribe", name: "Warden's Bribe", description: "Free action: suspend your nerf for your next 6 turns, used at the moment you choose.", tier: 6, category: "nerf" },
+    {
+      ...activatedSimple((_inst, api) => {
+        addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 6 });
+      }),
+      freeAction: true,
+    },
+  ),
+  def(
+    { id: "iron_will", name: "Iron Will", description: "Whenever your opponent captures one of your pieces, your nerf is suspended for your next 2 turns.", tier: 6, category: "nerf" },
+    {
+      kind: "passive",
+      onMovePlayed: (_inst, move, api) => {
+        if (move.color !== api.opp || !move.captured || move.captured === "k") return;
+        addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 2 });
+      },
+      status: () => "answers every loss with relief",
+    },
   ),
 ];
 
@@ -2399,7 +2536,7 @@ const TIER7: Buff[] = [
     skipOpponent(3),
   ),
   def(
-    { id: "fortress_realm", name: "Fortress Realm", description: "A 3x3 zone you pick makes your pieces uncapturable for 4 turns.", tier: 7, category: "protection" },
+    { id: "fortress_realm", name: "Fortress Realm", description: "A 3x3 zone you pick makes your pieces uncapturable for 4 turns.", tier: 7, category: "protection", boon: true },
     activated(
       (_inst, _api, picks) =>
         picks.length > 0
@@ -2525,7 +2662,7 @@ const TIER7: Buff[] = [
     ),
   ),
   def(
-    { id: "aegis", name: "Aegis", description: "Your entire army is uncapturable for 1 full turn.", tier: 7, category: "protection" },
+    { id: "aegis", name: "Aegis", description: "Your entire army is uncapturable for 1 full turn.", tier: 7, category: "protection", boon: true },
     shieldArmy(1),
   ),
   def(
@@ -2551,12 +2688,19 @@ const TIER7: Buff[] = [
       api.mine.flags.takeBoth = (api.mine.flags.takeBoth ?? 0) + 2;
     }),
   ),
-  // Nerf-modifier (cross-cutting)
+  // Nerf-modifiers (cross-cutting)
   def({ id: "nerf_reversal", name: "Nerf Reversal", description: "Flip your nerf into its inverse benefit where one exists.", tier: 7, category: "nerf" }),
   def(
     { id: "sabbatical", name: "Sabbatical", description: "Suspend your nerf for your next 10 turns.", tier: 7, category: "nerf" },
     instant((_inst, api) => {
       addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 10 });
+    }),
+  ),
+  def(
+    { id: "full_pardon", name: "Full Pardon", description: "Remove your nerf for good and take an extra move on your next turn.", tier: 7, category: "nerf" },
+    instant((_inst, api) => {
+      api.removeMyNerf();
+      api.bs.extraMoves[api.me] += 1;
     }),
   ),
 ];
@@ -2802,7 +2946,7 @@ const TIER8: Buff[] = [
     }),
   ),
   def(
-    { id: "absolute_aegis", name: "Absolute Aegis", description: "Your entire army is uncapturable for 2 full turns.", tier: 8, category: "protection" },
+    { id: "absolute_aegis", name: "Absolute Aegis", description: "Your entire army is uncapturable for 2 full turns.", tier: 8, category: "protection", boon: true },
     shieldArmy(2),
   ),
   def(
@@ -2871,7 +3015,7 @@ const TIER8: Buff[] = [
     },
   ),
   def(
-    { id: "checkmate_denial", name: "Checkmate Denial", description: "Your king cannot be captured for the next 5 turns.", tier: 8, category: "protection" },
+    { id: "checkmate_denial", name: "Checkmate Denial", description: "Your king cannot be captured for the next 5 turns.", tier: 8, category: "protection", boon: true },
     instant((_inst, api) => {
       addEffect(api, { kind: "king_safe", owner: api.me, turns: 5 });
     }),
@@ -2893,6 +3037,22 @@ const TIER8: Buff[] = [
       api.board.epTarget = null;
       api.board.halfmove = 0;
       api.removeMyNerf();
+    }),
+  ),
+  // Nerf-modifiers (cross-cutting)
+  def(
+    { id: "unshackled_wrath", name: "Unshackled Wrath", description: "Remove your nerf for good. Your opponent skips their next turn.", tier: 8, category: "nerf" },
+    instant((_inst, api) => {
+      api.removeMyNerf();
+      api.bs.skips[api.opp] += 1;
+    }),
+  ),
+  def(
+    { id: "transcendence", name: "Transcendence", description: "Remove your nerf for good. Your next draft shows three cards and rolls a tier higher.", tier: 8, category: "nerf" },
+    instant((_inst, api) => {
+      api.removeMyNerf();
+      api.mine.flags.prepThree = true;
+      api.mine.flags.bankBonus = Math.min(1, (api.mine.flags.bankBonus ?? 0) + 1);
     }),
   ),
 ];

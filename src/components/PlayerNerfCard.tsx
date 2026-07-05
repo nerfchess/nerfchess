@@ -1,13 +1,20 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Nerf } from "@/engine/nerf";
+import { Nerf, Tier } from "@/engine/nerf";
 import { BoardState, Color } from "@/engine/types";
 import { Piece } from "@/components/Pieces";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { capturedPiecesFor, capturedValue, opponentOf } from "@/lib/material";
 
 import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
+
+/** Compact row for a held boon shown in the corner card (nerf mode). */
+export interface HeldBoon {
+  name: string;
+  tier: Tier;
+  status: string | null;
+}
 
 interface Props {
   board: BoardState;
@@ -24,6 +31,9 @@ interface Props {
   hideNerf?: boolean;
   ownerLabel: string;
   progress?: { value: number; max: number; label: string } | null;
+  /** Nerf mode: the player's active boons, listed in the same corner card
+   * as the nerf so the handicap and its reliefs read together. */
+  boons?: HeldBoon[];
   action?: ReactNode;
   // Tighter paddings/typography for the in-game rail, so the whole rail fits
   // beside the board without scrolling.
@@ -42,6 +52,7 @@ export function PlayerNerfCard({
   hideNerf = false,
   ownerLabel,
   progress,
+  boons,
   action,
   compact = false,
 }: Props) {
@@ -195,6 +206,33 @@ export function PlayerNerfCard({
             You&apos;ll see their rule when the game ends.
           </p>
         </>
+      )}
+
+      {boons && boons.length > 0 && (
+        <div className={(compact ? "mt-2.5" : "mt-4") + " border-t border-white/10 pt-2"}>
+          <div className="smallcaps text-[10px] text-parchment-400">Your boons</div>
+          <ul className="mt-1 space-y-1">
+            {boons.map((b, i) => (
+              <li key={`${b.name}-${i}`} className="flex items-baseline gap-1.5">
+                <span
+                  className={`min-w-0 truncate font-display text-[12px] font-semibold leading-tight tier-${b.tier}`}
+                >
+                  {b.name}
+                </span>
+                {b.status && (
+                  <span className="smallcaps min-w-0 flex-1 truncate text-[8px] text-gold/80">
+                    {b.status}
+                  </span>
+                )}
+                <span
+                  className={`ml-auto shrink-0 rounded-full border px-1.5 py-px font-display text-[9px] font-bold tier-bg-${b.tier} tier-${b.tier}`}
+                >
+                  {TIER_ROMAN[b.tier]}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
 
       {action && <div className="mt-4">{action}</div>}

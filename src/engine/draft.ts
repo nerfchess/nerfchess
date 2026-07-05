@@ -1,4 +1,4 @@
-import { Buff, BuffMatchState, BuffOffer, PlayerBuffState } from "./buff";
+import { Buff, BuffMatchState, BuffOffer, PlayerBuffState, isBoon } from "./buff";
 import { BUFF_POOL_BY_TIER } from "./buffs/library";
 import { Tier } from "./nerf";
 import { RNG } from "./rng";
@@ -22,9 +22,9 @@ import { Color } from "./types";
 // default arc, 7 slows the arc and delays high-tier cards.
 export const DEFAULT_CADENCE = 6;
 
-// Nerf mode drafts less often: the handicap is the star of that section, so
-// a boon pick lands roughly every ten of your own moves.
-export const NERF_MODE_CADENCE = 10;
+// Nerf mode boon cadence: a boon pick lands every six of your own moves,
+// matching the buff-mode arc so relief from the handicap arrives steadily.
+export const NERF_MODE_CADENCE = 6;
 
 function drawRng(bs: BuffMatchState): RNG {
   return RNG.fromState(bs.rngState);
@@ -78,12 +78,13 @@ export function rollOffer(bs: BuffMatchState, color: Color, tiers: [Tier, Tier])
   const suppressed = (ps.flags.noDraftCards ?? 0) > 0;
   if (suppressed) ps.flags.noDraftCards = (ps.flags.noDraftCards ?? 0) - 1;
 
-  // Mode filter: buff mode never offers nerf-modifier cards ("boons"); nerf
-  // mode draws from the FULL pool — the general cards plus the nerf-relief
-  // boons that only exist there — and legacy merged games (no mode) keep the
-  // full pool too. The adjacent-tier fallback below runs on the filtered
-  // pool as well, so buff mode can never leak a nerf-relief card.
-  const inMode = (b: Buff) => (bs.mode === "buff" ? b.category !== "nerf" : true);
+  // Mode filter: buff mode never offers nerf-relief cards; nerf mode draws
+  // only from the boon pool (every nerf-relief card plus the light general
+  // cards flagged `boon`), and legacy merged games (no mode) keep the full
+  // pool. The adjacent-tier fallback below runs on the filtered pool as
+  // well, so neither mode can leak the other's cards.
+  const inMode = (b: Buff) =>
+    bs.mode === "buff" ? b.category !== "nerf" : bs.mode === "nerf" ? isBoon(b) : true;
 
   const cards: BuffOffer["cards"] = [];
   // Never offer a card the player already holds unspent.

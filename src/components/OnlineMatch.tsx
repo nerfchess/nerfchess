@@ -1148,7 +1148,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           </h1>
           <p className="mt-2 text-sm text-parchment-300 text-center">
             {isNerfMode
-              ? "Pick one of two nerfs. About every ten moves you draft a boon — a card that helps you fight on, soften your rule, or remove it."
+              ? "Pick one of two nerfs. Every six moves you draft a boon, a card that helps you fight on, soften your rule, or remove it."
               : "Every game opens weak: pick one of two nerfs, then draft buffs every few moves to claw your way back to power."}
           </p>
           {error && (
@@ -1276,6 +1276,17 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   // there once revealed (end of game or a voluntary reveal). Buff mode never
   // shows a rule section on either card, there are no nerfs at all.
   const hideOppNerfCard = isBuffMode || (isDraft && !oppNerfShown);
+  // Nerf mode: held boons ride in the same corner card as the nerf, so the
+  // handicap and its reliefs read together at a glance.
+  const myHeldBoons =
+    game.buffs?.mode === "nerf"
+      ? game.buffs.players[myColor].buffs
+          .filter((b) => !b.spent && !b.nullified)
+          .flatMap((b) => {
+            const def = BUFF_BY_ID[b.id];
+            return def ? [{ name: def.name, tier: b.tier, status: def.status?.(b) ?? null }] : [];
+          })
+      : undefined;
   const lastMove = game.board.history[game.board.history.length - 1] ?? null;
   // A held move (confirmation setting) previews on the board before sending.
   const confirmPreviewBoard = confirmMovePending
@@ -1631,6 +1642,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                 hideNerf={isBuffMode}
                 ownerLabel=""
                 progress={myNerf.progress?.(myState, myCtx) ?? null}
+                boons={myHeldBoons}
                 compact
               />
               {!isBuffMode && revealControl}
