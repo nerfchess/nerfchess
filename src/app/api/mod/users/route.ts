@@ -13,10 +13,18 @@ export async function GET(request: Request) {
   const q = (new URL(request.url).searchParams.get("q") ?? "").trim().toLowerCase();
   if (!q) return NextResponse.json({ users: [], history: [], reports: [] });
 
+  // Exclude the seeded leaderboard bots (id LIKE 'seed_%' AND/OR
+  // password_hash = 'unusable' per migrations/0014_seed_leaderboard.sql).
+  // Real registered members and guests keep real UUID ids and hashed
+  // passwords, so they are unaffected.
   const users = await db
     .prepare(
       `SELECT id, username, role, rating, games, created_at, muted_until, banned_until
-       FROM users WHERE username_lower LIKE ? ORDER BY username_lower LIMIT 10`,
+       FROM users
+       WHERE username_lower LIKE ?
+         AND id NOT LIKE 'seed\\_%' ESCAPE '\\'
+         AND password_hash <> 'unusable'
+       ORDER BY username_lower LIMIT 10`,
     )
     .bind(`${q.replace(/[%_]/g, "")}%`)
     .all();
