@@ -109,6 +109,11 @@ export interface DraftFlags {
   prepThree?: boolean;
   /** Banked a skipped draft: next offer rolls one tier higher. Caps at 1. */
   bankBonus?: number;
+  /** "Stacked draft" preset: a persistent tier lift applied to EVERY one of
+   * this player's offers (unlike bankBonus it is not consumed). Set once when
+   * the match is created so a friend receiving a surprise game drafts strong,
+   * high-tier cards throughout. Capped in rollOffer so tiers never exceed 8. */
+  stackBoost?: number;
   /** Recast / Draft Tyranny style: force the next offer's tier. */
   forceTier?: Tier;
   /** Take every card in your next N offers instead of just one. */

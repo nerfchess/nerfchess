@@ -1,0 +1,161 @@
+/* ============================================================================
+   Draft overlay effects (scoped) — glassy card treatment + tier-scaled reveal.
+
+   Owned by DraftOverlay.tsx; imported only there. Deliberately kept OUT of
+   globals.css (another lane owns that file). Everything here layers on top of
+   the existing `.draft-face` / `.tier-bg-N` treatment without redefining it:
+   the shells add a frosted rim, a one-shot reveal sweep, and a persistent glow
+   whose drama scales with the card's tier.
+
+   Drama scales with tier via two custom properties set per shell:
+     --fx        0..1 intensity (how strong the glow / sweep read)
+     --tier-rgb  the card's tier color, mirrored so the glow tints correctly
+
+   Performance: animation touches only `transform` and `opacity` (GPU-cheap),
+   never box-shadow or filter in a keyframe. Effects live on max ~3 cards at a
+   time, so this stays smooth on mobile. All motion is gated behind
+   prefers-reduced-motion: the glass + static glow survive, the motion does not.
+   ============================================================================ */
+
+.draft-fx {
+  position: relative;
+  isolation: isolate;
+  /* Higher tiers float a touch higher on hover; calm tiers barely move. */
+  transition: transform 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* Tier color + intensity table. Mirrors the tier palette used by tier-bg-N in
+   globals.css so the glow tints match the card face. --fx ramps the drama:
+   tiers 1-2 stay calm, 7-8 go dramatic. */
+.draft-fx[data-tier="1"] { --tier-rgb: 126 181 154; --fx: 0.00; }
+.draft-fx[data-tier="2"] { --tier-rgb: 139 169 196; --fx: 0.12; }
+.draft-fx[data-tier="3"] { --tier-rgb: 216 181 110; --fx: 0.30; }
+.draft-fx[data-tier="4"] { --tier-rgb: 199 148 104; --fx: 0.46; }
+.draft-fx[data-tier="5"] { --tier-rgb: 198 104 96;  --fx: 0.62; }
+.draft-fx[data-tier="6"] { --tier-rgb: 198 95 143;  --fx: 0.78; }
+.draft-fx[data-tier="7"] { --tier-rgb: 168 119 216; --fx: 0.92; }
+.draft-fx[data-tier="8"] { --tier-rgb: 224 82 82;   --fx: 1.00; }
+
+/* Persistent tier glow: a soft halo behind the card, opacity driven by --fx so
+   low tiers show almost nothing and top tiers bloom. Static box-shadow, only
+   opacity is ever animated (see the pulse below), which keeps it cheap. */
+.draft-fx__glow {
+  position: absolute;
+  inset: -2px;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  opacity: calc(0.25 + var(--fx, 0) * 0.75);
+  box-shadow:
+    0 0 0 1px rgb(var(--tier-rgb, 216 181 110) / calc(var(--fx, 0) * 0.55)),
+    0 10px 40px -14px rgb(var(--tier-rgb, 216 181 110) / calc(var(--fx, 0) * 0.85));
+}
+
+/* Top-tier ambient breathing: only tiers where --fx is high read the pulse,
+   and even then it is a slow, low-amplitude opacity drift (no layout, no
+   box-shadow animation). Calm tiers keep a flat glow. */
+@keyframes draft-fx-pulse {
+  0%, 100% { opacity: calc(0.25 + var(--fx, 0) * 0.55); }
+  50%      { opacity: calc(0.25 + var(--fx, 0) * 0.95); }
+}
+.draft-fx[data-tier="6"] .draft-fx__glow,
+.draft-fx[data-tier="7"] .draft-fx__glow,
+.draft-fx[data-tier="8"] .draft-fx__glow {
+  animation: draft-fx-pulse 3.2s ease-in-out infinite;
+}
+
+/* One-shot reveal sweep: a diagonal light band that crosses the card once when
+   it enters. Clipped to the card bounds by the shell's rounded overflow. The
+   band's brightness scales with --fx; low tiers get a faint pass, top tiers a
+   bright shimmer. Uses transform only. */
+.draft-fx__sheen {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: inherit;
+}
+.draft-fx__sheen::before {
+  content: "";
+  position: absolute;
+  top: -60%;
+  bottom: -60%;
+  left: -75%;
+  width: 55%;
+  transform: translateX(-40%) rotate(18deg);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgb(255 255 255 / calc(0.10 + var(--fx, 0) * 0.35)),
+    rgb(var(--tier-rgb, 216 181 110) / calc(var(--fx, 0) * 0.30)),
+    transparent
+  );
+  opacity: 0;
+}
+
+/* Sweep timing scales with drama: calm tiers get a slow, faint pass (or none),
+   dramatic tiers a quicker, brighter one. The delay lets the card's own
+   entrance settle first. Only tiers 3+ sweep at all. */
+@keyframes draft-fx-sheen {
+  0%   { transform: translateX(-40%) rotate(18deg); opacity: 0; }
+  12%  { opacity: 1; }
+  100% { transform: translateX(320%) rotate(18deg); opacity: 0; }
+}
+.draft-fx[data-tier="3"] .draft-fx__sheen::before,
+.draft-fx[data-tier="4"] .draft-fx__sheen::before,
+.draft-fx[data-tier="5"] .draft-fx__sheen::before,
+.draft-fx[data-tier="6"] .draft-fx__sheen::before,
+.draft-fx[data-tier="7"] .draft-fx__sheen::before,
+.draft-fx[data-tier="8"] .draft-fx__sheen::before {
+  animation: draft-fx-sheen 1.15s cubic-bezier(0.3, 0.7, 0.2, 1) both;
+  animation-delay: calc(var(--enter-delay, 0ms) + 260ms);
+}
+/* Top tiers sweep a second time, faster, for an extra glint. */
+.draft-fx[data-tier="7"] .draft-fx__sheen::before,
+.draft-fx[data-tier="8"] .draft-fx__sheen::before {
+  animation-iteration-count: 2;
+  animation-duration: 1.05s;
+}
+
+/* Keep the real card above the glow but below the sheen. */
+.draft-fx > :not(.draft-fx__glow):not(.draft-fx__sheen) {
+  position: relative;
+  z-index: 1;
+}
+
+/* Hover lift scales with tier: a heavier card rises more. Pointer-only so it
+   never fires as a sticky state on touch. */
+@media (hover: hover) {
+  .draft-fx:hover {
+    transform: translateY(calc(-2px - var(--fx, 0) * 4px));
+  }
+}
+
+/* Respect reduced motion: drop every sweep, pulse, and hover translate. The
+   frosted glass and a calm static glow remain so the cards still read as
+   premium, just still. */
+@media (prefers-reduced-motion: reduce) {
+  .draft-fx,
+  .draft-fx:hover {
+    transition: none;
+    transform: none;
+  }
+  .draft-fx__glow,
+  .draft-fx[data-tier="6"] .draft-fx__glow,
+  .draft-fx[data-tier="7"] .draft-fx__glow,
+  .draft-fx[data-tier="8"] .draft-fx__glow {
+    animation: none;
+    opacity: calc(0.25 + var(--fx, 0) * 0.6);
+  }
+  .draft-fx__sheen::before,
+  .draft-fx[data-tier="3"] .draft-fx__sheen::before,
+  .draft-fx[data-tier="4"] .draft-fx__sheen::before,
+  .draft-fx[data-tier="5"] .draft-fx__sheen::before,
+  .draft-fx[data-tier="6"] .draft-fx__sheen::before,
+  .draft-fx[data-tier="7"] .draft-fx__sheen::before,
+  .draft-fx[data-tier="8"] .draft-fx__sheen::before {
+    animation: none;
+    opacity: 0;
+  }
+}

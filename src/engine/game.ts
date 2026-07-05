@@ -110,10 +110,17 @@ export const UNRESTRICTED_NERF: Nerf = {
 export function enableDraftMode(
   game: NerfGame,
   seed: number,
-  opts?: { mode?: DraftMode; cadence?: number },
+  opts?: { mode?: DraftMode; cadence?: number; stackFor?: Color; stackBoost?: number },
 ) {
   const cadence = opts?.cadence ?? (opts?.mode === "nerf" ? NERF_MODE_CADENCE : DEFAULT_CADENCE);
   game.buffs = newBuffMatchState(seed, cadence, opts?.mode);
+  // "Stacked draft" preset: give one seat a persistent tier lift on every
+  // offer. Seeded here (not per-offer) so the boost is part of the match's
+  // deterministic setup and replays identically. Must be re-applied on every
+  // rebuild that recreates game.buffs, exactly like cadence/mode.
+  if (opts?.stackFor && opts.stackBoost && opts.stackBoost > 0) {
+    game.buffs.players[opts.stackFor].flags.stackBoost = opts.stackBoost;
+  }
 }
 
 export function newGameAsColor(myNerf: Nerf, myColor: Color, mySeed: number): NerfGame {

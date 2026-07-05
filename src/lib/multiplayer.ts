@@ -753,7 +753,7 @@ export class MPSession {
   async host(
     timeSec: number,
     incrementSec: number,
-    options?: { draft?: boolean; mode?: DraftMode; picksVisible?: boolean; invite?: string },
+    options?: { draft?: boolean; mode?: DraftMode; picksVisible?: boolean; invite?: string; stacked?: boolean },
   ): Promise<string> {
     await this.connect();
     return new Promise((resolve, reject) => {
@@ -774,6 +774,9 @@ export class MPSession {
               draft: true,
               ...(options.mode ? { mode: options.mode } : {}),
               picksVisible: !!options.picksVisible,
+              // "Surprise / Stacked draft" preset: strong high-tier draft for
+              // the friend who joins. Server ignores it on non-draft games.
+              ...(options.stacked ? { stacked: true } : {}),
             }
           : {}),
         // Direct challenge: reserve the opponent seat for this username.
