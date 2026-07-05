@@ -471,7 +471,7 @@ const TIER1: Buff[] = [
     ),
   ),
   def(
-    { id: "pawn_swap", name: "Pawn Swap", description: "Swap two of your own adjacent pawns, once.", tier: 1, category: "movement" },
+    { id: "pawn_swap", name: "Pawn Swap", description: "Swap two of your own pawns, once.", tier: 1, category: "movement" },
     swapOwnPieces(["p"]),
   ),
   def(
@@ -948,7 +948,7 @@ const TIER2: Buff[] = [
     ),
   ),
   def(
-    { id: "rally", name: "Rally", description: "Two of your knights can each move like kings for 1 turn.", tier: 2, category: "movement" },
+    { id: "rally", name: "Rally", description: "One of your knights may move like a king for 1 turn.", tier: 2, category: "movement" },
     timedAugment(1, (_m, inst, api) =>
       mySquares(api.board, api.me, "n").flatMap((sq) => slideMoves(api.board, sq, ALL_DIRS, inst.id, 1)),
     ),
@@ -1100,7 +1100,7 @@ const TIER3: Buff[] = [
     placePieces(["n"], anyHalfZone),
   ),
   def(
-    { id: "queens_echo", name: "Queen's Echo", description: "One rook moves like a queen for your next 2 turns.", tier: 3, category: "movement" },
+    { id: "queens_echo", name: "Queen's Echo", description: "Your rooks move like queens for your next 2 turns.", tier: 3, category: "movement" },
     timedAugment(2, (_m, inst, api) =>
       mySquares(api.board, api.me, "r").flatMap((sq) => slideMoves(api.board, sq, DIAG_DIRS, inst.id)),
     ),
@@ -1426,7 +1426,7 @@ const TIER3: Buff[] = [
     ),
   ),
   def(
-    { id: "vanguard", name: "Vanguard", description: "One pawn promotes to a knight on the 6th rank, once.", tier: 3, category: "pieces" },
+    { id: "vanguard", name: "Vanguard", description: "One pawn on the 6th rank or beyond promotes to a knight, once.", tier: 3, category: "pieces" },
     promotePawns(1, 6, "n"),
   ),
   def({ id: "rewind_one", name: "Rewind One", description: "Undo the last two half-moves of the game, once.", tier: 3, category: "tempo" }),
@@ -2056,7 +2056,7 @@ const TIER5: Buff[] = [
     swapOwnPieces(),
   ),
   def(
-    { id: "iron_reign", name: "Iron Reign", description: "Your king cannot be checked for 2 full turns.", tier: 5, category: "protection", boon: true },
+    { id: "iron_reign", name: "Iron Reign", description: "Your king cannot be captured for 2 full turns.", tier: 5, category: "protection", boon: true },
     instant((_inst, api) => {
       addEffect(api, { kind: "king_safe", owner: api.me, turns: 2 });
     }),
@@ -2177,7 +2177,7 @@ const TIER6: Buff[] = [
     captureExplosion({ chain: true }),
   ),
   def(
-    { id: "double_amazon", name: "Double Amazon", description: "Two of your knights become amazons for the game.", tier: 6, category: "movement" },
+    { id: "double_amazon", name: "Double Amazon", description: "All your knights become amazons for the game.", tier: 6, category: "movement" },
     permanentAugment((_m, inst, api) =>
       mySquares(api.board, api.me, "n").flatMap((sq) => slideMoves(api.board, sq, ALL_DIRS, inst.id)),
     ),
@@ -2592,7 +2592,7 @@ const TIER7: Buff[] = [
     autoRevive(["q", ["n", "b"]]),
   ),
   def(
-    { id: "world_lock", name: "World Lock", description: "Your opponent cannot draft or use buffs for 3 turns.", tier: 7, category: "draft" },
+    { id: "world_lock", name: "World Lock", description: "Skip your opponent's next draft.", tier: 7, category: "draft" },
     instant((_inst, api) => {
       api.theirs.flags.blockedDrafts = (api.theirs.flags.blockedDrafts ?? 0) + 1;
     }),
@@ -2796,7 +2796,7 @@ const TIER8: Buff[] = [
     }),
   ),
   def(
-    { id: "reality_warp", name: "Reality Warp", description: "Teleport any six of your pieces anywhere you like, once. Pawns stay off the first and last ranks.", tier: 8, category: "movement" },
+    { id: "reality_warp", name: "Reality Warp", description: "Teleport any six of your pieces except the king anywhere you like, once. Pawns stay off the first and last ranks.", tier: 8, category: "movement" },
     relocateMany(6, anyDestPawnSafe),
   ),
   def(
@@ -3304,7 +3304,7 @@ const ITEMS: Buff[] = [
     shieldTarget(2),
   ),
   def(
-    { id: "banana_peel", name: "Banana Peel", description: "Toss it on an empty square: the first enemy piece to step there slips one square back toward its home rank.", tier: 2, category: "item" },
+    { id: "banana_peel", name: "Banana Peel", description: "Toss it on an empty square: the first enemy piece other than the king to step there slips one square back toward its home rank.", tier: 2, category: "item" },
     {
       kind: "activated",
       spendOnUse: false,
