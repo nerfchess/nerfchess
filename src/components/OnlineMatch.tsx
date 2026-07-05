@@ -1403,7 +1403,18 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         <div className="flex items-center gap-4">
           <div className="smallcaps hidden text-[11px] text-parchment-400 sm:block">
             playing {myColor === "w" ? "White" : "Black"} ·{" "}
-            {isDraft ? (isBuffMode ? "buff mode · " : isNerfMode ? "nerf mode · " : "draft · ") : ""}
+            {isDraft && (
+              <>
+                {isBuffMode ? (
+                  <span className="text-mode-buffGlow">buff mode</span>
+                ) : isNerfMode ? (
+                  <span className="text-mode-nerfGlow">nerf mode</span>
+                ) : (
+                  "draft"
+                )}
+                {" · "}
+              </>
+            )}
             {subtitle}
           </div>
           <button

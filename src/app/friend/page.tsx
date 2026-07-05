@@ -355,10 +355,10 @@ export default function FriendPage() {
           <div>
             <div className="smallcaps text-[11px] text-parchment-400 mb-2">Game mode</div>
             <div className="grid grid-cols-2 gap-2">
-              <OptionButton selected={gameMode === "buff"} onClick={() => setGameMode("buff")}>
+              <OptionButton mode="buff" selected={gameMode === "buff"} onClick={() => setGameMode("buff")}>
                 Buff mode
               </OptionButton>
-              <OptionButton selected={gameMode === "nerf"} onClick={() => setGameMode("nerf")}>
+              <OptionButton mode="nerf" selected={gameMode === "nerf"} onClick={() => setGameMode("nerf")}>
                 Nerf mode
               </OptionButton>
             </div>
@@ -409,22 +409,30 @@ export default function FriendPage() {
   );
 }
 
+// When selected, each mode button wears its color identity: Nerf slightly
+// red, Buff blue.
 function OptionButton({
+  mode,
   selected,
   onClick,
   children,
 }: {
+  mode: "nerf" | "buff";
   selected: boolean;
   onClick: () => void;
   children: React.ReactNode;
 }) {
+  const selectedIdentity =
+    mode === "nerf"
+      ? "border-mode-nerf/50 bg-mode-nerf/10 text-mode-nerfGlow"
+      : "border-mode-buff/50 bg-mode-buff/10 text-mode-buffGlow";
   return (
     <button
       onClick={onClick}
       className={
         "px-3 py-2 border transition text-xs font-display font-semibold tracking-wide " +
         (selected
-          ? "border-gold/50 bg-gold/10 text-gold-leaf"
+          ? selectedIdentity
           : "border-white/15 bg-white/[0.03] text-parchment-200 hover:border-white/30 hover:bg-white/[0.06]")
       }
     >

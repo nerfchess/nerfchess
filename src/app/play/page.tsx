@@ -91,15 +91,19 @@ export default function PlayPage() {
 
         <div className="mt-6 grid gap-3 sm:grid-cols-2">
           <ModeCard
+            mode="buff"
             selected={gameMode === "buff"}
             onClick={() => setGameMode("buff")}
             title="Buff mode"
+            tagline="Power-ups"
             body="No nerfs at all. Every few moves both players draft a buff; the strongest build wins."
           />
           <ModeCard
+            mode="nerf"
             selected={gameMode === "nerf"}
             onClick={() => setGameMode("nerf")}
             title="Nerf mode"
+            tagline="Handicaps"
             body="Pick a secret nerf your opponent never sees until the end. Rare drafts can soften or break it."
           />
         </div>
@@ -107,7 +111,7 @@ export default function PlayPage() {
         <div className="mt-6">
           <QueueButton />
           <p className="mt-1.5 text-[11px] text-parchment-400">
-            Quick pairing runs Buff mode.
+            Quick pairing runs <span className="text-mode-buffGlow">Buff</span> mode.
           </p>
         </div>
 
@@ -236,32 +240,48 @@ function TimeSlider({
   );
 }
 
+// Each mode card wears its color identity (Nerf slightly red, Buff blue) at
+// all times; selecting it deepens the border, wash, and glow.
 function ModeCard({
+  mode,
   selected,
   onClick,
   title,
+  tagline,
   body,
 }: {
+  mode: "nerf" | "buff";
   selected: boolean;
   onClick: () => void;
   title: string;
+  tagline: string;
   body: string;
 }) {
+  const identity =
+    mode === "nerf"
+      ? {
+          card: selected
+            ? "border-mode-nerf/70 bg-mode-nerf/10 shadow-oxblood"
+            : "border-mode-nerf/25 hover:border-mode-nerf/50 hover:bg-mode-nerf/5",
+          title: "text-mode-nerfGlow",
+        }
+      : {
+          card: selected
+            ? "border-mode-buff/70 bg-mode-buff/10 shadow-leaf"
+            : "border-mode-buff/25 hover:border-mode-buff/50 hover:bg-mode-buff/5",
+          title: "text-mode-buffGlow",
+        };
   return (
     <button
       onClick={onClick}
       aria-pressed={selected}
-      className={
-        "plate p-4 text-left transition " +
-        (selected
-          ? "border-gold/60 bg-gold/10 shadow-leaf"
-          : "border-white/10 hover:border-white/25 hover:bg-white/[0.03]")
-      }
+      className={"plate p-4 text-left transition " + identity.card}
     >
-      <div className={"font-display text-xl font-semibold " + (selected ? "text-gold-leaf" : "text-parchment")}>
+      <div className={"font-display text-xl font-semibold " + identity.title}>
         {title}
       </div>
-      <p className="mt-1 text-[12px] leading-snug text-parchment-300">{body}</p>
+      <div className={"mt-0.5 smallcaps text-[9px] " + identity.title}>{tagline}</div>
+      <p className="mt-1.5 text-[12px] leading-snug text-parchment-300">{body}</p>
     </button>
   );
 }

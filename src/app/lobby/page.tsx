@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { QueueButton } from "@/components/QueueButton";
 import { AccountUser, fetchMe } from "@/lib/authClient";
 import { MPLobby, MPLobbyChallenge, MPLobbyGame, MPLobbySeek, MPSession, saveOnlineSeat } from "@/lib/multiplayer";
+import { ModeBadge } from "@/components/ModeBadge";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { categoryForTimeControl, getCategory } from "@/lib/ratingCategories";
 
@@ -352,8 +353,12 @@ function SeekRow({
           <Icon size={14} style={{ color: category.accent }} aria-hidden className="shrink-0" />
           {name}
         </div>
-        <div className="mt-0.5 smallcaps text-[9px] text-parchment-400">
-          Draft · {clock} · {category.label}
+        <div className="mt-0.5 flex items-center gap-1.5 smallcaps text-[9px] text-parchment-400">
+          <ModeBadge mode={seek.mode} compact />
+          <span>
+            {!seek.mode && "Draft · "}
+            {clock} · {category.label}
+          </span>
         </div>
       </div>
       {isMine ? (
@@ -386,9 +391,12 @@ function ChallengeRow({ challenge }: { challenge: MPLobbyChallenge }) {
     <li className="flex items-center justify-between gap-3 py-2.5">
       <div className="min-w-0">
         <div className="truncate text-sm text-parchment-100">{host}</div>
-        <div className="mt-0.5 smallcaps text-[9px] text-parchment-400">
-          {challenge.draft && <span className="text-gold-leaf">Draft · </span>}
-          Casual · {clock} · code {challenge.id}
+        <div className="mt-0.5 flex items-center gap-1.5 smallcaps text-[9px] text-parchment-400">
+          <ModeBadge mode={challenge.mode} compact />
+          <span>
+            {!challenge.mode && challenge.draft && <span className="text-gold-leaf">Draft · </span>}
+            Casual · {clock} · code {challenge.id}
+          </span>
         </div>
       </div>
       <Link
@@ -412,11 +420,14 @@ function LiveGameRow({ game }: { game: MPLobbyGame }) {
         <div className="truncate text-sm text-parchment-100">
           {name(game.players.w)} <span className="text-parchment-400">vs</span> {name(game.players.b)}
         </div>
-        <div className="mt-0.5 smallcaps text-[9px] text-parchment-400">
-          {game.draft && <span className="text-gold-leaf">Draft · </span>}
-          {game.rated ? "Rated · " : "Casual · "}
-          {clock} · move {Math.ceil(game.moves / 2)}
-          {game.watchers > 0 ? ` · ${game.watchers} watching` : ""}
+        <div className="mt-0.5 flex items-center gap-1.5 smallcaps text-[9px] text-parchment-400">
+          <ModeBadge mode={game.mode} compact />
+          <span>
+            {!game.mode && game.draft && <span className="text-gold-leaf">Draft · </span>}
+            {game.rated ? "Rated · " : "Casual · "}
+            {clock} · move {Math.ceil(game.moves / 2)}
+            {game.watchers > 0 ? ` · ${game.watchers} watching` : ""}
+          </span>
         </div>
       </div>
       <Link

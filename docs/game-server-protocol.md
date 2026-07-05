@@ -61,7 +61,7 @@ References:
 | `dtTargetReq` | `{ "buffIndex", "target" }` | Draft games: reply to `dtTarget` with the buff's next target request, or `null` when the pick chain is complete. |
 | `dtNerfPicked` | `{ "color" }` | Draft games: a seat locked in its opening nerf pick. Progress only, the pick's identity stays hidden. Sent to both seats, never to spectators. |
 | `watchers` | `{ "n" }` | Live spectator count, sent to players and watchers. |
-| `lobby` | `{ "players", "anonymous", "games" }` | Lobby snapshot reply. |
+| `lobby` | `{ "players", "anonymous", "games", "challenges", "seeks" }` | Lobby snapshot reply. Each live game and open challenge carries `draft` plus `mode` when the match runs a section (`"nerf"` or `"buff"`; omitted for legacy merged-rules matches). Seeks always carry `mode: "buff"`, since quick pairing only creates Buff mode games. Clients use `mode` to color-code listings (Nerf red, Buff blue) and render no badge when it is absent. |
 | `drawOffer` / `drawDeclined` / `rematchOffer` / `rematched` | negotiation events | |
 | `takebackOffer` / `takebackDeclined` | `{ "color" }` | Takeback negotiation events. Moving past an opponent's request declines it. |
 | `takeback` | `{ "by", "moves", "ply", "wc", "bc" }` | Accepted takeback: the authoritative rewound move list — rebuild the game from it (players and spectators). |

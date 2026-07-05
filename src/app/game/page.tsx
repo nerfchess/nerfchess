@@ -1142,7 +1142,15 @@ function GamePage() {
         <div className="flex items-center gap-4">
           <div className="smallcaps text-[11px] text-parchment-400 hidden sm:block">
             playing {myColor === "w" ? "White" : "Black"} ·{" "}
-            {gameMode ? `${gameMode} mode · ` : ""}bot on {difficulty} · {rated ? "rated" : "casual"}
+            {gameMode && (
+              <>
+                <span className={gameMode === "nerf" ? "text-mode-nerfGlow" : "text-mode-buffGlow"}>
+                  {gameMode} mode
+                </span>
+                {" · "}
+              </>
+            )}
+            bot on {difficulty} · {rated ? "rated" : "casual"}
           </div>
           <button
             onClick={toggleMute}

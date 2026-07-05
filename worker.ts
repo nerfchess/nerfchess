@@ -2319,6 +2319,7 @@ export class GameServer extends DurableObject<Env> {
       players: ReturnType<GameServer["playersPayload"]>;
       rated: boolean;
       draft: boolean;
+      mode?: DraftMode;
       timeSec: number;
       incrementSec: number;
       moves: number;
@@ -2332,6 +2333,7 @@ export class GameServer extends DurableObject<Env> {
       id: string;
       host: { name: string; rating: number | null };
       draft: boolean;
+      mode?: DraftMode;
       timeSec: number;
       incrementSec: number;
       createdAt: number;
@@ -2348,6 +2350,7 @@ export class GameServer extends DurableObject<Env> {
             id: match.id,
             host: host ? { name: host.name, rating: Math.round(host.rating) } : { name: "Anonymous", rating: null },
             draft: !!match.draft,
+            ...(match.mode ? { mode: match.mode } : {}),
             timeSec: match.setup.timeSec,
             incrementSec: match.setup.incrementSec,
             createdAt: match.createdAt,
@@ -2367,6 +2370,7 @@ export class GameServer extends DurableObject<Env> {
         players: this.playersPayload(match),
         rated: !!match.rated,
         draft: !!match.draft,
+        ...(match.mode ? { mode: match.mode } : {}),
         timeSec: match.setup.timeSec,
         incrementSec: match.setup.incrementSec,
         moves: match.moves.length,
@@ -2384,6 +2388,7 @@ export class GameServer extends DurableObject<Env> {
       pool: string;
       name: string;
       rating: number | null;
+      mode: DraftMode;
       timeSec: number;
       incrementSec: number;
       at: number;
@@ -2397,6 +2402,8 @@ export class GameServer extends DurableObject<Env> {
           pool: poolName,
           name: entry.username,
           rating: Math.round(entry.rating),
+          // Quick-pairing games always run Buff mode.
+          mode: "buff",
           timeSec: pool.timeSec,
           incrementSec: pool.incrementSec,
           at: entry.at,
