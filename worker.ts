@@ -275,11 +275,22 @@ const houseSeekTtlMs = 8 * 60 * 1000;
 // Hard caps: at most this many simultaneous house-vs-house filler games, and
 // at most this many unfinished games with any house seat at all. Above the
 // caps, personas leave the queue instead of pairing.
-const houseVsHouseCap = 2;
+// Lowered from 2 to 1: house-vs-house filler games exist only for lobby
+// optics and are pure background engine work on the single-threaded DO. One
+// filler still keeps the lobby looking alive while halving that background
+// load. Bump back to 2 if the lobby looks too quiet.
+const houseVsHouseCap = 1;
 const houseTotalGamesCap = 6;
 // How long a queued human waits for a human opponent before a house player
 // picks them up.
 const houseHumanPickupMs = 4500;
+// How long a finished game is kept in storage after it completes. Long enough
+// for both players to see the end frame and grab a rematch, short enough that
+// the match table stays small so the maintenance/GC scans stay cheap. Every
+// lingering finished record was being deserialized on each full-table scan
+// (healthz, houseTick, lobby, maintenance) on the single-threaded DO, which is
+// what bloated the connect path.
+const finishedRetentionMs = 5 * 60 * 1000;
 type HouseSeekEntry = {
   userId: string;
   name: string;
@@ -421,13 +432,17 @@ export class GameServer extends DurableObject<Env> {
         console.error("healthz maintenance failed", err);
       }
 
-      const matches = [...(await this.ctx.storage.list<StoredMatch>({ prefix: "match:" })).values()];
+      // cleanupExpired above already ran (and refreshed) a full scan for GC;
+      // reuse the live index for these counts via targeted reads instead of a
+      // second whole-table deserialize on the single thread. "games" now
+      // reports live (unfinished) games, which is the number that matters here.
+      const liveMatches = await this.loadLiveMatches();
       const alarmAt = await this.ctx.storage.getAlarm();
       let houseGames = 0;
       let houseVsHouse = 0;
-      for (const match of matches) {
+      for (const match of liveMatches) {
         const seats = (["w", "b"] as Color[]).filter((color) => match.bots?.[color]).length;
-        if (!seats || match.result) continue;
+        if (!seats) continue;
         houseGames++;
         if (seats === 2) houseVsHouse++;
       }
@@ -438,7 +453,7 @@ export class GameServer extends DurableObject<Env> {
         ok: true,
         version: buildVersion,
         sockets: this.sessions.size,
-        games: matches.length,
+        games: liveMatches.length,
         alarmAt, // ms epoch of the next scheduled maintenance pass, if any
         alarmInMs: alarmAt ? alarmAt - Date.now() : null,
         house: {
@@ -691,6 +706,7 @@ export class GameServer extends DurableObject<Env> {
     // snapshot is stale. Clearing it forces the next poll to rebuild.
     this.lobbyCache = null;
     await this.ctx.storage.put(matchKey(match.id), match);
+    this.trackLive(match);
     if (schedule) await this.scheduleAlarmForMatch(match);
   }
 
@@ -702,7 +718,60 @@ export class GameServer extends DurableObject<Env> {
         ws.close(1000, "Game expired");
       }
     }
+    this.liveMatchIndex?.delete(match.id);
     await this.ctx.storage.delete(matchKey(match.id));
+  }
+
+  // In-memory index of unfinished (live) match ids on this DO instance. The
+  // single global DO serializes ALL traffic, so the frequent paths (houseTick
+  // on every alarm, lobbySnapshot on every lobby load) must not deserialize
+  // the whole match table (finished games included) just to reach the handful
+  // of live ones. The index is kept exact by saveMatch/deleteMatch and is
+  // rebuilt from a full scan every GC sweep, so it self-heals after an isolate
+  // restart or any missed update.
+  private liveMatchIndex: Set<string> | null = null;
+
+  // Keep the index in step with a write: a finished game leaves the live set,
+  // any other save is a live game. A no-op until the index has been built.
+  private trackLive(match: StoredMatch) {
+    if (!this.liveMatchIndex) return;
+    if (match.result) this.liveMatchIndex.delete(match.id);
+    else this.liveMatchIndex.add(match.id);
+  }
+
+  private async ensureLiveIndex(): Promise<Set<string>> {
+    if (this.liveMatchIndex) return this.liveMatchIndex;
+    const index = new Set<string>();
+    const all = await this.ctx.storage.list<StoredMatch>({ prefix: "match:" });
+    for (const match of all.values()) {
+      if (!match.result) index.add(match.id);
+    }
+    this.liveMatchIndex = index;
+    return index;
+  }
+
+  // Load only the unfinished matches, via batched point reads off the live
+  // index instead of a full-table scan. A stale entry (record already gone, or
+  // finished since the index last updated) is pruned in passing so it stops
+  // showing up on the live paths.
+  private async loadLiveMatches(): Promise<StoredMatch[]> {
+    const index = await this.ensureLiveIndex();
+    const ids = [...index];
+    const matches: StoredMatch[] = [];
+    // storage.get accepts up to 128 keys per batched read.
+    for (let i = 0; i < ids.length; i += 128) {
+      const chunk = ids.slice(i, i + 128);
+      const found = await this.ctx.storage.get<StoredMatch>(chunk.map(matchKey));
+      for (const id of chunk) {
+        const match = found.get(matchKey(id));
+        if (!match || match.result) {
+          index.delete(id);
+          continue;
+        }
+        matches.push(match);
+      }
+    }
+    return matches;
   }
 
   private connectedSession(matchId: string, color: Color): WebSocket | undefined {
@@ -1911,7 +1980,10 @@ export class GameServer extends DurableObject<Env> {
   // One orchestration pass, run from the alarm before match maintenance.
   private async houseTick() {
     const now = Date.now();
-    const matches = [...(await this.ctx.storage.list<StoredMatch>({ prefix: "match:" })).values()];
+    // Live matches only, via the in-memory index and targeted reads. Finished
+    // games were skipped here anyway (see the match.result guard below), so
+    // this changes nothing but the cost: no whole-table deserialize per tick.
+    const matches = await this.loadLiveMatches();
 
     // Which personas are tied up, and the live house-game counts for the caps.
     const busy = new Set<string>();
@@ -1959,13 +2031,29 @@ export class GameServer extends DurableObject<Env> {
       const filler = isFiller(match);
       if (filler && fillerActed >= 1) continue;
       // BUG #1: never advance a started house game while its human seat is
-      // disconnected — moving would run down their (paused) clock or end the
-      // game before they return. The bot's timer stays armed and fires on the
-      // first tick after they reconnect. Draft-deadline safety still runs in
-      // maintenance; pre-start nerf-draft picks are harmless (clocks off).
+      // GENUINELY gone — moving would change the board (or even end the game)
+      // before they return. "Gone" is the persisted disconnect signal
+      // (disconnectedAt, set on detach and CLEARED on attach), never a bare
+      // in-memory socket lookup: an alarm can wake this Durable Object out of
+      // hibernation with the sessions map only just being rebuilt, and a
+      // just-paired human who has never disconnected must not be mistaken for
+      // absent — that made the bot skip its first move on every tick and never
+      // play (the reported "bot game never starts"). A fresh seat has no
+      // disconnectedAt entry, so the bot acts immediately; the socket lookup is
+      // only a secondary guard so a present human (live socket, stale
+      // timestamp) is never paused. The bot's timer stays armed across a skip
+      // and fires on the first tick after they reconnect (reconnectMatch
+      // re-arms it). Draft-deadline safety still runs in maintenance; pre-start
+      // nerf-draft picks are harmless (clocks off).
       if (match.startedAt) {
         const humanSeat = humanSeatOf(match);
-        if (humanSeat && !this.connectedSession(match.id, humanSeat)) continue;
+        if (
+          humanSeat &&
+          match.disconnectedAt[humanSeat] &&
+          !this.connectedSession(match.id, humanSeat)
+        ) {
+          continue;
+        }
       }
       try {
         await this.playHouseAction(match, Date.now());
@@ -3213,7 +3301,11 @@ export class GameServer extends DurableObject<Env> {
     if (this.lobbyCache && now - this.lobbyCache.at < GameServer.LOBBY_CACHE_TTL_MS) {
       return send(ws, "lobby", this.lobbyCache.payload);
     }
-    const matches = [...(await this.ctx.storage.list<StoredMatch>({ prefix: "match:" })).values()];
+    // Live matches only. The lobby only ever lists unfinished games (open
+    // challenges and in-progress games); finished records were filtered out
+    // below anyway. Reading them via the index avoids a full-table scan on
+    // every lobby poll, the most frequent human-driven path into the DO.
+    const matches = await this.loadLiveMatches();
 
     const liveGames: Array<{
       id: string;
@@ -3458,7 +3550,7 @@ export class GameServer extends DurableObject<Env> {
       if (disconnectedAt && !match.opponentGoneNotified[color]) candidates.push(disconnectedAt + disconnectGraceMs);
     }
     const expiry = match.completedAt ?? match.createdAt;
-    if (match.completedAt) candidates.push(expiry + 60 * 60 * 1000);
+    if (match.completedAt) candidates.push(expiry + finishedRetentionMs);
     else if (!match.startedAt) candidates.push(expiry + 30 * 60 * 1000);
     else if (this.connectedSessions(match.id).length === 0) {
       const latestDisconnect = Math.max(match.disconnectedAt.w ?? 0, match.disconnectedAt.b ?? 0);
@@ -3511,16 +3603,31 @@ export class GameServer extends DurableObject<Env> {
   private async cleanupExpired() {
     const matches = [...(await this.ctx.storage.list<StoredMatch>({ prefix: "match:" })).values()];
     const now = Date.now();
+    // GC is inherently a full scan (finished records are not in the live
+    // index). Rebuild the live index from the same pass so the cheap paths
+    // that run off it stay correct and self-heal after an isolate restart.
+    const index = new Set<string>();
     for (const match of matches) {
-      if (match.completedAt && now - match.completedAt > 60 * 60 * 1000) await this.deleteMatch(match);
-      else if (!match.startedAt && now - match.createdAt > 30 * 60 * 1000) await this.deleteMatch(match);
+      if (match.completedAt && now - match.completedAt > finishedRetentionMs) {
+        await this.deleteMatch(match);
+        continue;
+      }
+      if (!match.startedAt && now - match.createdAt > 30 * 60 * 1000) {
+        await this.deleteMatch(match);
+        continue;
+      }
+      if (!match.result) index.add(match.id);
     }
+    this.liveMatchIndex = index;
   }
 
   private async maintenanceAll() {
     const matches = [...(await this.ctx.storage.list<StoredMatch>({ prefix: "match:" })).values()];
     const now = Date.now();
     const remaining: StoredMatch[] = [];
+    // Rebuild the live index from this GC scan (see cleanupExpired): the full
+    // pass we already pay for here keeps the cheap paths self-healing.
+    const index = new Set<string>();
 
     for (const match of matches) {
       // One bad match (corrupt record, transient storage error) must not stop
@@ -3541,7 +3648,7 @@ export class GameServer extends DurableObject<Env> {
         const bothDisconnected = this.connectedSessions(match.id).length === 0;
         const latestDisconnect = Math.max(match.disconnectedAt.w ?? 0, match.disconnectedAt.b ?? 0);
         if (
-          (match.completedAt && now - match.completedAt > 60 * 60 * 1000) ||
+          (match.completedAt && now - match.completedAt > finishedRetentionMs) ||
           (!match.startedAt && now - match.createdAt > 30 * 60 * 1000) ||
           (match.startedAt && bothDisconnected && latestDisconnect && now - latestDisconnect > 30 * 60 * 1000)
         ) {
@@ -3554,8 +3661,10 @@ export class GameServer extends DurableObject<Env> {
         console.error("maintenance failed for match", match.id, err);
       }
       remaining.push(match);
+      if (!match.result) index.add(match.id);
     }
 
+    this.liveMatchIndex = index;
     await this.scheduleNextAlarm(remaining);
   }
 }
