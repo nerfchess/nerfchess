@@ -262,45 +262,48 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards 
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.25 }}
-        title={def.description}
         className={
-          "flex items-center gap-1.5 border border-white/10 bg-white/[0.02] px-2 py-1.5 " +
+          "border border-white/10 bg-white/[0.02] px-2 py-1.5 " +
           (dead ? "opacity-45 " : "") +
           (usable ? "border-gold/30 " : "")
         }
       >
-        <span className={`min-w-0 flex-1 truncate font-display text-[12px] font-semibold leading-tight tier-${inst.tier}`}>
-          {def.name}
-        </span>
-        {status && (
-          <span className="smallcaps hidden max-w-[7rem] shrink-0 truncate text-[8px] text-gold/80 lg:inline">
-            {status}
+        <div className="flex items-center gap-1.5">
+          <span className={`min-w-0 flex-1 truncate font-display text-[12px] font-semibold leading-tight tier-${inst.tier}`}>
+            {def.name}
           </span>
-        )}
-        {inst.nullified && <span className="smallcaps shrink-0 text-[8px] text-oxblood-glow">Nullified</span>}
-        {inst.spent && !inst.nullified && <span className="smallcaps shrink-0 text-[8px] text-parchment-400">Used</span>}
-        <span
-          className={`shrink-0 rounded-full border px-1.5 py-px font-display text-[9px] font-bold tier-bg-${inst.tier} tier-${inst.tier}`}
-        >
-          {TIER_ROMAN[inst.tier]}
-        </span>
-        {activatable &&
-          (usable ? (
-            <button
-              onClick={() => onStartUse(i)}
-              className="btn-leaf shadow-leaf shrink-0 px-2 py-1 font-display text-[10px] font-semibold tracking-wide"
-            >
-              Use
-            </button>
-          ) : (
-            <button
-              disabled
-              title="Your turn only"
-              className="shrink-0 cursor-not-allowed border border-white/10 bg-white/[0.03] px-2 py-1 font-display text-[10px] tracking-wide text-parchment-400"
-            >
-              Use
-            </button>
-          ))}
+          {status && (
+            <span className="smallcaps hidden max-w-[7rem] shrink-0 truncate text-[8px] text-gold/80 lg:inline">
+              {status}
+            </span>
+          )}
+          {inst.nullified && <span className="smallcaps shrink-0 text-[8px] text-oxblood-glow">Nullified</span>}
+          {inst.spent && !inst.nullified && <span className="smallcaps shrink-0 text-[8px] text-parchment-400">Used</span>}
+          <span
+            className={`shrink-0 rounded-full border px-1.5 py-px font-display text-[9px] font-bold tier-bg-${inst.tier} tier-${inst.tier}`}
+          >
+            {TIER_ROMAN[inst.tier]}
+          </span>
+          {activatable &&
+            (usable ? (
+              <button
+                onClick={() => onStartUse(i)}
+                className="btn-leaf shadow-leaf shrink-0 px-2 py-1 font-display text-[10px] font-semibold tracking-wide"
+              >
+                Use
+              </button>
+            ) : (
+              <button
+                disabled
+                title="Your turn only"
+                className="shrink-0 cursor-not-allowed border border-white/10 bg-white/[0.03] px-2 py-1 font-display text-[10px] tracking-wide text-parchment-400"
+              >
+                Use
+              </button>
+            ))}
+        </div>
+        {/* Full description, always readable without hovering. */}
+        <p className="mt-1 text-[10px] leading-snug text-parchment-300">{def.description}</p>
       </motion.div>
     );
   };

@@ -8,6 +8,7 @@ import { BUFF_BY_ID } from "./src/engine/buffs/library";
 import { PLAYABLE_NERFS, pickNerfPair } from "./src/engine/nerfs/library";
 import {
   NerfGame,
+  UNRESTRICTED_NERF,
   activateBuff,
   bankDraft,
   buffNextTarget,
@@ -18,7 +19,7 @@ import {
   playMove,
   resign,
 } from "./src/engine/game";
-import type { BuffInstance, BuffPick } from "./src/engine/buff";
+import type { BuffInstance, BuffPick, DraftMode } from "./src/engine/buff";
 import type { Move } from "./src/engine/types";
 import { RNG } from "./src/engine/rng";
 import { Color } from "./src/engine/types";
@@ -87,6 +88,11 @@ type StoredMatch = {
   // honors a rated request for them, and the queue only creates casual
   // Draft matches.
   draft?: boolean;
+  // Which section the draft game runs under: "nerf" (opening nerf pick,
+  // nerf-modifier buffs only, slow cadence) or "buff" (no nerfs at all,
+  // nerf-modifier buffs excluded). Absent = legacy merged rules, kept so
+  // stored games replay unchanged.
+  mode?: DraftMode;
   // Friend-game setting: both seats see each other's pending offer cards.
   picksVisible?: boolean;
   // Seed for the draft engine RNG (offer rolls). Never sent to any client:
@@ -132,7 +138,7 @@ type QueueEntry = {
   at: number;
 };
 type ClientFrame =
-  | { t: "create"; d?: { timeSec?: unknown; incrementSec?: unknown; draft?: unknown; picksVisible?: unknown; invite?: unknown } }
+  | { t: "create"; d?: { timeSec?: unknown; incrementSec?: unknown; draft?: unknown; mode?: unknown; picksVisible?: unknown; invite?: unknown } }
   | { t: "join"; d?: { id?: unknown } }
   | { t: "reconnect"; d?: { id?: unknown; color?: unknown; token?: unknown } }
   | { t: "move"; d?: { u?: unknown; ply?: unknown } }
@@ -698,6 +704,7 @@ export class GameServer extends DurableObject<Env> {
       const opp: Color = color === "w" ? "b" : "w";
       draftExtras = {
         draft: true,
+        ...(match.mode ? { mode: match.mode } : {}),
         picksVisible: !!match.picksVisible,
         dtActions: this.publicDraftActions(match, color),
         ...(game?.buffs ? { dtState: this.draftStateFor(game, match, color) } : {}),
@@ -792,13 +799,16 @@ export class GameServer extends DurableObject<Env> {
 
   private gameFromMatch(match: StoredMatch): NerfGame | null {
     if (!match.startedAt) return null;
-    const white = PLAYABLE_NERFS.find((nerf) => nerf.id === match.setup.whiteNerfId);
-    const black = PLAYABLE_NERFS.find((nerf) => nerf.id === match.setup.blackNerfId);
+    // Buff mode plays without handicaps: both seats run the unrestricted nerf.
+    const nerfById = (id: string) =>
+      match.mode === "buff" ? UNRESTRICTED_NERF : PLAYABLE_NERFS.find((nerf) => nerf.id === id);
+    const white = nerfById(match.setup.whiteNerfId);
+    const black = nerfById(match.setup.blackNerfId);
     if (!white || !black) return null;
 
     let game = newGame(white, black, match.setup.seed);
     if (match.draft) {
-      enableDraftMode(game, match.draftSeed ?? match.setup.seed);
+      enableDraftMode(game, match.draftSeed ?? match.setup.seed, { mode: match.mode });
       this.draftRebuild = { matchId: match.id, revealed: new Set(), acquired: new Map() };
     }
     // Draft actions replay interleaved with moves: an action recorded at ply
@@ -975,7 +985,7 @@ export class GameServer extends DurableObject<Env> {
     const session = this.session(ws);
     if (session.matchId) return error(ws, "already_joined", "This connection already belongs to a game.");
 
-    const requested = (data || {}) as { timeSec?: unknown; incrementSec?: unknown; draft?: unknown; picksVisible?: unknown; invite?: unknown };
+    const requested = (data || {}) as { timeSec?: unknown; incrementSec?: unknown; draft?: unknown; mode?: unknown; picksVisible?: unknown; invite?: unknown };
     const timeSec = Number.isInteger(requested.timeSec) ? Number(requested.timeSec) : 600;
     const incrementSec = Number.isInteger(requested.incrementSec) ? Number(requested.incrementSec) : 0;
     if (timeSec < 0 || timeSec > 7200 || incrementSec < 0 || incrementSec > 60) {
@@ -985,6 +995,10 @@ export class GameServer extends DurableObject<Env> {
     // casual: `rated` is deliberately never set here, whatever the client
     // asks, so a draft game can never touch ratings.
     const draft = requested.draft === true;
+    // The game's section: "nerf" or "buff". Older clients send neither and
+    // get the legacy merged rules.
+    const mode: DraftMode | undefined =
+      draft && (requested.mode === "nerf" || requested.mode === "buff") ? requested.mode : undefined;
     const picksVisible = draft && requested.picksVisible === true;
     // Direct challenge: reserve the black seat for the named player. Only a
     // signed-in host can address a challenge (the API notification requires
@@ -996,7 +1010,11 @@ export class GameServer extends DurableObject<Env> {
     const match: StoredMatch = {
       id,
       setup: {
-        ...pickNerfIds(),
+        // Buff mode has no handicaps: both seats carry the unrestricted
+        // "none" rule instead of dealt nerfs.
+        ...(mode === "buff"
+          ? { whiteNerfId: UNRESTRICTED_NERF.id, blackNerfId: UNRESTRICTED_NERF.id }
+          : pickNerfIds()),
         seed: makeSeed(),
         timeSec,
         incrementSec,
@@ -1012,7 +1030,7 @@ export class GameServer extends DurableObject<Env> {
       createdAt: Date.now(),
       startedAt: null,
       completedAt: null,
-      ...(draft ? { draft: true, picksVisible, draftSeed: makeSeed(), draftActions: [] } : {}),
+      ...(draft ? { draft: true, ...(mode ? { mode } : {}), picksVisible, draftSeed: makeSeed(), draftActions: [] } : {}),
       ...(invite ? { invitedUsername: invite } : {}),
     };
 
@@ -1048,7 +1066,8 @@ export class GameServer extends DurableObject<Env> {
 
     await this.attachSession(ws, match, "b");
     // Draft games open with the nerf draft instead of starting outright.
-    if (match.draft) return this.beginNerfDraft(match);
+    // Buff mode has no nerfs, so it starts like a classic game.
+    if (match.draft && match.mode !== "buff") return this.beginNerfDraft(match);
     match.startedAt = Date.now();
     match.runningSince = match.startedAt;
     await this.saveMatch(match);
@@ -1083,7 +1102,8 @@ export class GameServer extends DurableObject<Env> {
         this.connectedSession(match.id, "w") &&
         this.connectedSession(match.id, "b")
       ) {
-        if (match.draft) return this.beginNerfDraft(match);
+        // Buff mode skips the opening nerf draft entirely.
+        if (match.draft && match.mode !== "buff") return this.beginNerfDraft(match);
         match.startedAt = Date.now();
         match.runningSince = match.startedAt;
         await this.saveMatch(match);
@@ -1479,7 +1499,9 @@ export class GameServer extends DurableObject<Env> {
     const match: StoredMatch = {
       id,
       setup: {
-        ...pickNerfIds(),
+        // Queue games run Buff mode: no nerfs, so no dealt rules either.
+        whiteNerfId: UNRESTRICTED_NERF.id,
+        blackNerfId: UNRESTRICTED_NERF.id,
         seed: makeSeed(),
         timeSec: pool.timeSec,
         incrementSec: pool.incrementSec,
@@ -1495,12 +1517,13 @@ export class GameServer extends DurableObject<Env> {
       createdAt: Date.now(),
       startedAt: null,
       completedAt: null,
-      // Queue games run the Draft ruleset, and Draft matches are always
-      // casual: `rated` is deliberately never set, so pairing can never
-      // touch ratings.
+      // Queue games run the Draft ruleset in Buff mode, and Draft matches
+      // are always casual: `rated` is deliberately never set, so pairing can
+      // never touch ratings.
       autoStart: true,
       users: { w: meWhite ? me : them, b: meWhite ? them : me },
       draft: true,
+      mode: "buff",
       picksVisible: false,
       draftSeed: makeSeed(),
       draftActions: [],
@@ -1575,7 +1598,9 @@ export class GameServer extends DurableObject<Env> {
     const rematch: StoredMatch = {
       id,
       setup: {
-        ...pickNerfIds(),
+        ...(match.mode === "buff"
+          ? { whiteNerfId: UNRESTRICTED_NERF.id, blackNerfId: UNRESTRICTED_NERF.id }
+          : pickNerfIds()),
         seed: makeSeed(),
         timeSec: match.setup.timeSec,
         incrementSec: match.setup.incrementSec,
@@ -1595,7 +1620,13 @@ export class GameServer extends DurableObject<Env> {
       autoStart: true,
       users,
       ...(match.draft
-        ? { draft: true, picksVisible: !!match.picksVisible, draftSeed: makeSeed(), draftActions: [] }
+        ? {
+            draft: true,
+            ...(match.mode ? { mode: match.mode } : {}),
+            picksVisible: !!match.picksVisible,
+            draftSeed: makeSeed(),
+            draftActions: [],
+          }
         : {}),
     };
     await this.saveMatch(rematch);
@@ -2240,6 +2271,7 @@ export class GameServer extends DurableObject<Env> {
       const game = match.startedAt ? this.gameFromMatch(match) : null;
       draftExtras = {
         draft: true,
+        ...(match.mode ? { mode: match.mode } : {}),
         dtActions: this.publicDraftActions(match, "spectator"),
         ...(game?.buffs ? { dtState: this.draftStateFor(game, match, "spectator") } : {}),
       };

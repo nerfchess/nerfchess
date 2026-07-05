@@ -21,6 +21,7 @@ import {
   currentHint,
   enableDraftMode,
   NerfGame,
+  UNRESTRICTED_NERF,
   legalMoves,
   makeContext,
   newGame,
@@ -136,8 +137,14 @@ function GamePage() {
   const difficulty = (params.get("difficulty") ?? "medium") as AILevel;
   const myColorParam = params.get("color") ?? "random";
   const myNerfId = params.get("nerf") ?? "random";
-  // Draft mode: nerf draft at game start, buff drafts on a cadence after.
-  const draftMode = params.get("draft") === "1";
+  // Section split: mode=nerf (nerf pick, hidden until the end, nerf-modifier
+  // buffs every ~10 moves) or mode=buff (no nerfs, normal buff drafts).
+  // Old links with draft=1 and no mode keep the legacy merged rules.
+  const modeParam = params.get("mode");
+  const gameMode: "nerf" | "buff" | null =
+    modeParam === "nerf" || modeParam === "buff" ? modeParam : null;
+  // Draft mode: buff drafts on a cadence (plus a nerf draft outside buff mode).
+  const draftMode = params.get("draft") === "1" || gameMode != null;
   // Games vs bots are casual by default; only rated games touch your rating.
   // Draft games are always casual until a separate Draft rating exists.
   const rated = params.get("rated") === "1" && !draftMode;
@@ -277,6 +284,14 @@ function GamePage() {
     }
 
     if (draftMode) {
+      // Buff mode: no nerfs at all, so the game starts immediately.
+      if (gameMode === "buff") {
+        const g = newGame(UNRESTRICTED_NERF, UNRESTRICTED_NERF, makeSeed());
+        enableDraftMode(g, makeSeed(), { mode: "buff" });
+        setHistoryPly(null);
+        setGame(g);
+        return;
+      }
       // Deal both players' nerf options; the game starts when the player
       // picks, or when the 15s lock-in window auto-picks the first option.
       const dealt = dealNerfOptions(new Set());
@@ -319,7 +334,7 @@ function GamePage() {
     const wDb = myColor === "w" ? picked : aiDb;
     const bDb = myColor === "w" ? aiDb : picked;
     const g = newGame(wDb, bDb, makeSeed());
-    enableDraftMode(g, makeSeed());
+    enableDraftMode(g, makeSeed(), { mode: gameMode ?? undefined });
     g.buffs!.players[myColor].nerfOptions = nerfDraft.myOptions.map((n) => n.id);
     g.buffs!.players[myColor === "w" ? "b" : "w"].nerfOptions = nerfDraft.aiOptions.map((n) => n.id);
     setNerfDraft(null);
@@ -823,8 +838,9 @@ function GamePage() {
               Choose your handicap
             </h1>
             <p className="mt-2 text-sm text-parchment-300 text-center">
-              Every game opens weak: pick one of two nerfs, then draft buffs every few
-              moves to claw your way back to power.
+              {gameMode === "nerf"
+                ? "Pick one of two nerfs. About every ten moves you draft a card that softens or removes it."
+                : "Every game opens weak: pick one of two nerfs, then draft buffs every few moves to claw your way back to power."}
             </p>
             {nerfDeadline != null && (
               <div className="mx-auto mt-4 max-w-sm">
@@ -842,17 +858,25 @@ function GamePage() {
                 </button>
               ))}
             </div>
-            <div className="mt-5 plate p-3 text-center">
-              <span className="smallcaps text-[10px] text-parchment-400">
-                Your opponent is choosing between
-              </span>
-              <div className="mt-1 text-sm text-parchment-200 font-display">
-                {nerfDraft.aiOptions.map((n) => n.name).join("  ·  ")}
+            {/* Nerf mode: the opponent's rule is completely hidden until the
+                game ends, so their options never show either. */}
+            {gameMode === "nerf" ? (
+              <p className="mt-5 text-center text-[11px] text-parchment-400">
+                Your opponent picks a nerf too. You will see their rule when the game ends.
+              </p>
+            ) : (
+              <div className="mt-5 plate p-3 text-center">
+                <span className="smallcaps text-[10px] text-parchment-400">
+                  Your opponent is choosing between
+                </span>
+                <div className="mt-1 text-sm text-parchment-200 font-display">
+                  {nerfDraft.aiOptions.map((n) => n.name).join("  ·  ")}
+                </div>
+                <div className="mt-0.5 text-[11px] text-parchment-400">
+                  Which one they take stays hidden, unless you draft a reveal.
+                </div>
               </div>
-              <div className="mt-0.5 text-[11px] text-parchment-400">
-                Which one they take stays hidden, unless you draft a reveal.
-              </div>
-            </div>
+            )}
           </div>
         </main>
       );
@@ -896,6 +920,11 @@ function GamePage() {
   // reveal buff (Extra Glance / Watchtower) was drafted.
   const oppRevealed =
     (!uiSettings.hideOpponentReveal && (oppPeek || !!game.result)) || !!bsMine?.oppNerfRevealed;
+  // Section games never show a "hidden rule" placeholder: the opponent card
+  // carries only the player header until the rule reveals (game end). Buff
+  // mode hides both rule sections entirely, there are no nerfs at all.
+  const hideOppNerfCard = gameMode === "buff" || (draftMode && !oppRevealed);
+  const hideMyNerfCard = gameMode === "buff";
   const lastMove = game.board.history[game.board.history.length - 1] ?? null;
   // A held move (confirmation setting) previews on the board before playing.
   const confirmPreviewBoard = confirmMovePending
@@ -1112,7 +1141,8 @@ function GamePage() {
         </Link>
         <div className="flex items-center gap-4">
           <div className="smallcaps text-[11px] text-parchment-400 hidden sm:block">
-            playing {myColor === "w" ? "White" : "Black"} · bot on {difficulty} · {rated ? "rated" : "casual"}
+            playing {myColor === "w" ? "White" : "Black"} ·{" "}
+            {gameMode ? `${gameMode} mode · ` : ""}bot on {difficulty} · {rated ? "rated" : "casual"}
           </div>
           <button
             onClick={toggleMute}
@@ -1179,10 +1209,13 @@ function GamePage() {
               elo={BOT_ELO[difficulty]}
               nerf={opponentNerf}
               revealed={oppRevealed}
+              hideNerf={hideOppNerfCard}
               ownerLabel=""
               compact
               action={
-                !oppRevealed && !uiSettings.hideOpponentReveal ? (
+                // Section games: the opponent's rule stays fully hidden until
+                // the game ends, so there is no self-peek.
+                gameMode == null && !oppRevealed && !uiSettings.hideOpponentReveal ? (
                   <button
                     onClick={() => setOppPeek(true)}
                     className="w-full px-3 py-2 border border-white/15 bg-white/[0.03] text-parchment-200 hover:border-white/30 hover:bg-white/[0.06] transition text-xs font-semibold"
@@ -1212,21 +1245,24 @@ function GamePage() {
               name="You"
               elo={playerElo}
               nerf={myNerf}
+              hideNerf={hideMyNerfCard}
               ownerLabel=""
               compact
               progress={myNerf.progress?.(myState, myCtx) ?? null}
               action={
-                <button
-                  onClick={() => setSharedMine((v) => !v)}
-                  className={
-                    "w-full px-3 py-2 border transition text-xs font-semibold " +
-                    (sharedMine
-                      ? "border-gold/50 bg-gold/10 text-gold-leaf"
-                      : "border-white/15 bg-white/[0.03] text-parchment-200 hover:border-white/30 hover:bg-white/[0.06]")
-                  }
-                >
-                  {sharedMine ? "Rule shared with opponent" : "Reveal my rule to opponent"}
-                </button>
+                gameMode === "buff" ? null : (
+                  <button
+                    onClick={() => setSharedMine((v) => !v)}
+                    className={
+                      "w-full px-3 py-2 border transition text-xs font-semibold " +
+                      (sharedMine
+                        ? "border-gold/50 bg-gold/10 text-gold-leaf"
+                        : "border-white/15 bg-white/[0.03] text-parchment-200 hover:border-white/30 hover:bg-white/[0.06]")
+                    }
+                  >
+                    {sharedMine ? "Rule shared with opponent" : "Reveal my rule to opponent"}
+                  </button>
+                )
               }
             />
           </aside>
@@ -1332,20 +1368,22 @@ function GamePage() {
                   />
                 )}
               </div>
-              <div className="plate mt-1 p-2 px-3 sm:hidden">
-                <div className="flex items-center gap-2">
-                  <span className={`min-w-0 truncate font-display text-sm font-semibold tier-${myNerf.tier}`}>
-                    {myNerf.name}
-                  </span>
-                  <span
-                    className={`ml-auto shrink-0 rounded-full border px-2 py-0.5 font-display text-[10px] font-bold tier-bg-${myNerf.tier} tier-${myNerf.tier}`}
-                    title={`Tier ${myNerf.tier}: ${TIER_LABEL[myNerf.tier]}`}
-                  >
-                    {TIER_ROMAN[myNerf.tier]} · {TIER_LABEL[myNerf.tier]}
-                  </span>
+              {gameMode !== "buff" && (
+                <div className="plate mt-1 p-2 px-3 sm:hidden">
+                  <div className="flex items-center gap-2">
+                    <span className={`min-w-0 truncate font-display text-sm font-semibold tier-${myNerf.tier}`}>
+                      {myNerf.name}
+                    </span>
+                    <span
+                      className={`ml-auto shrink-0 rounded-full border px-2 py-0.5 font-display text-[10px] font-bold tier-bg-${myNerf.tier} tier-${myNerf.tier}`}
+                      title={`Tier ${myNerf.tier}: ${TIER_LABEL[myNerf.tier]}`}
+                    >
+                      {TIER_ROMAN[myNerf.tier]} · {TIER_LABEL[myNerf.tier]}
+                    </span>
+                  </div>
+                  <p className="mt-0.5 text-xs leading-snug text-parchment-300">{myNerf.description}</p>
                 </div>
-                <p className="mt-0.5 text-xs leading-snug text-parchment-300">{myNerf.description}</p>
-              </div>
+              )}
               {historyActions && (
                 <div className="mt-1 sm:hidden">
                   <MobileActionsMenu>{historyActions}</MobileActionsMenu>
@@ -1354,7 +1392,7 @@ function GamePage() {
             </div>
             <div
               className={
-                "hidden min-h-0 overflow-hidden gap-3 sm:grid sm:h-[var(--board-height)] sm:w-52 sm:shrink-0 " +
+                "hidden min-h-0 overflow-hidden gap-3 sm:grid sm:h-[var(--board-height)] sm:w-64 sm:shrink-0 " +
                 (clockEnabled ? "sm:grid-rows-[auto_minmax(0,1fr)_auto]" : "sm:grid-rows-[minmax(0,1fr)]")
               }
               style={railHeightStyle}
@@ -1471,8 +1509,8 @@ function GamePage() {
           onDismiss={() => setShowResult(false)}
           result={game.result}
           myColor={myColor}
-          myNerf={myNerf}
-          opponentNerf={opponentNerf}
+          myNerf={gameMode === "buff" ? undefined : myNerf}
+          opponentNerf={gameMode === "buff" ? undefined : opponentNerf}
           opponentHidden={uiSettings.hideOpponentReveal && !oppPeek}
           ratingChange={ratingChange}
           onRematch={handleRematch}
