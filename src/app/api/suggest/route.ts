@@ -30,8 +30,9 @@ export async function POST(request: Request) {
   const contact = typeof body.contact === "string" ? body.contact.trim().slice(0, 120) : "";
   // What kind of card the idea is. Legacy clients that send no kind are nerf
   // suggestions; the pool only means something for buff ideas ('buff' = Buff
-  // mode draft card, 'boon' = Nerf-mode relief boon).
-  const kind = body.kind === "buff" ? "buff" : "nerf";
+  // mode draft card, 'boon' = Nerf-mode relief boon). Hexes (Nerf-mode curses)
+  // are their own kind and carry no pool.
+  const kind = body.kind === "buff" ? "buff" : body.kind === "hex" ? "hex" : "nerf";
   const pool = kind === "buff" ? (body.pool === "boon" ? "boon" : "buff") : null;
   if (description.length < 10) {
     return NextResponse.json(
@@ -46,7 +47,14 @@ export async function POST(request: Request) {
   const db = await getDb();
   const user = await userForSession(db, sessionTokenFromCookieHeader(request.headers.get("Cookie")));
 
-  const fallbackName = kind === "buff" ? "Untitled buff" : "Untitled nerf";
+  const fallbackName =
+    kind === "buff"
+      ? pool === "boon"
+        ? "Untitled boon"
+        : "Untitled buff"
+      : kind === "hex"
+        ? "Untitled hex"
+        : "Untitled nerf";
   const id = crypto.randomUUID();
   await db
     .prepare(
@@ -75,8 +83,12 @@ export async function POST(request: Request) {
     if (apiKey && to) {
       const kindLabel =
         kind === "buff"
-          ? `Buff (${pool === "boon" ? "Nerf-mode boon" : "Buff mode card"})`
-          : "Nerf";
+          ? pool === "boon"
+            ? "Boon (Nerf-mode relief)"
+            : "Buff (Buff mode card)"
+          : kind === "hex"
+            ? "Hex (Nerf-mode curse)"
+            : "Nerf";
       const lines = [
         `${kindLabel}: ${name || fallbackName}`,
         "",
@@ -90,7 +102,9 @@ export async function POST(request: Request) {
         body: JSON.stringify({
           from: "NerfChess <onboarding@resend.dev>",
           to: [to],
-          subject: `${kind === "buff" ? "Buff" : "Nerf"} suggestion: ${name || fallbackName}`,
+          subject: `${
+            kind === "buff" ? (pool === "boon" ? "Boon" : "Buff") : kind === "hex" ? "Hex" : "Nerf"
+          } suggestion: ${name || fallbackName}`,
           text: lines.join("\n"),
         }),
       });

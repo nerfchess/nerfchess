@@ -66,7 +66,15 @@ export function BuffCard({ buff, tier, status, spent, nullified, onClick, compac
           {TIER_ROMAN[t]}
         </span>
       </div>
-      <p className={`mt-1.5 leading-snug text-parchment/90 ${compact ? "text-[11px]" : "text-[13px]"}`}>
+      {/* Difficulty ornament: the tier label between hairline rules, the same
+          severity treatment nerf cards wear, so both libraries read alike.
+          Dropped in the compact draft/dock cards where space is tight. */}
+      {!compact && (
+        <div className="rule-ornament my-2.5 text-[10px]">
+          <span className="font-display">{TIER_LABEL[t]}</span>
+        </div>
+      )}
+      <p className={`leading-snug text-parchment/90 ${compact ? "mt-1.5 text-[11px]" : "text-[13px]"}`}>
         {buff.description}
       </p>
       {status && !dead && (
