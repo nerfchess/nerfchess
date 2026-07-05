@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { HeroTv } from "@/components/HeroTv";
 import { SiteHeader } from "@/components/SiteHeader";
+import { WelcomeBanner } from "@/components/WelcomeBanner";
 import { ALL_NERFS, PLAYABLE_NERFS } from "@/engine/nerfs/library";
 import { ALL_BUFFS } from "@/engine/buffs/library";
 import type { Nerf } from "@/engine/nerf";
@@ -74,6 +75,8 @@ export default function HomePage() {
   return (
     <main className="min-h-screen flex flex-col">
       <SiteHeader />
+
+      <WelcomeBanner />
 
       <section className="mode-field w-full max-w-7xl mx-auto px-5 sm:px-6 pt-2 pb-10 sm:pt-6 grid lg:grid-cols-[minmax(0,1fr)_380px] gap-8 lg:gap-14 items-center">
         <div className="order-1">
@@ -323,7 +326,7 @@ function HowItWorks() {
         <span className="coord-index">c3</span>
         <h2 className="display-3 text-parchment-50">How it works</h2>
       </header>
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="stagger-in grid gap-4 sm:grid-cols-3">
         {steps.map((step) => {
           // The payoff step carries the most weight: it gets the accent gilt
           // edge so the three cards read as a sequence, not three clones.
@@ -389,7 +392,7 @@ function ExampleRules() {
           See all {TOTAL_RULES}
         </Link>
       </div>
-      <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <ul className="stagger-in grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {cards.map((card) => {
           const isNerf = card.kind === "nerf";
           return (

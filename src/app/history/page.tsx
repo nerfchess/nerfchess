@@ -1,6 +1,8 @@
 "use client";
 
+import { History } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
+import { EmptyState } from "@/components/EmptyState";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -92,29 +94,20 @@ export default function HistoryPage() {
         {games === null ? (
           <div className="mt-8 text-parchment-300/60">Loading…</div>
         ) : filtered.length === 0 ? (
-          <div className="mt-8 plate p-8 text-center">
-            <p className="text-parchment-200">
-              {games.length === 0
-                ? "No games yet. Your finished games will show up here."
-                : "No games match this filter."}
-            </p>
-            {games.length === 0 && (
-              <div className="mt-5 flex flex-col sm:flex-row justify-center gap-3">
-                <Link
-                  href="/friend"
-                  className="btn-leaf btn-cta px-6 py-3 font-display text-base font-semibold inline-flex items-center justify-center"
-                >
-                  Play a Friend
-                </Link>
-                <Link
-                  href="/play"
-                  className="btn-ghost px-6 py-3 font-display text-base inline-flex items-center justify-center"
-                >
-                  Play vs Bot
-                </Link>
-              </div>
-            )}
-          </div>
+          games.length === 0 ? (
+            <EmptyState
+              className="mt-8"
+              icon={History}
+              title="No games yet"
+              body="Your finished games show up here, every result with both secret rules finally revealed. Play your first one to start the record."
+              action={{ href: "/friend", label: "Play a Friend" }}
+              secondary={{ href: "/play", label: "Play vs Bot" }}
+            />
+          ) : (
+            <div className="mt-8 plate p-8 text-center">
+              <p className="text-parchment-200">No games match this filter.</p>
+            </div>
+          )
         ) : (
           <ul className="mt-6 max-h-[70dvh] overflow-y-auto pr-1 space-y-2">
             {filtered.map((g) => (
