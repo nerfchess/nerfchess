@@ -269,7 +269,7 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
   const draftGameRef = useRef<NerfGame | null>(null);
   const [draftGame, setDraftGame] = useState<NerfGame | null>(() => {
     if (!isDraft) return null;
-    const game = buildSpectatorDraftGame(setup.moves, setup.dtActions ?? [], setup.dtState);
+    const game = buildSpectatorDraftGame(setup.moves, setup.dtActions ?? [], setup.dtState, setup.mode);
     draftGameRef.current = game;
     return game;
   });
@@ -410,7 +410,13 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
         (reconnecting
           ? "Reconnecting… · "
           : "") +
-        (isDraft ? "Draft · " : "") +
+        (isDraft
+          ? setup.mode === "buff"
+            ? "Buff mode · "
+            : setup.mode === "nerf"
+              ? "Nerf mode · "
+              : "Draft · "
+          : "") +
         (result ? describeResult(result) : setup.started ? "Live game" : "Waiting for players") +
         (watchers > 0 ? ` · ${watchers} watching` : "")
       }
@@ -767,26 +773,13 @@ function GameShell({
               />
               {clockEnabled && <ClockPill ms={whiteMs} active={activeColor === "w"} compact />}
             </div>
-            {nerfs && (nerfs.w || nerfs.b) ? (
+            {/* Rules show only once known (end of game or a voluntary
+                reveal); until then no placeholder plates take up space.
+                Buff mode games carry the "none" rule, which never shows. */}
+            {nerfs && (IMPLEMENTED_BY_ID[nerfs.w ?? ""] || IMPLEMENTED_BY_ID[nerfs.b ?? ""]) && (
               <div className="mt-2 space-y-1.5">
-                {nerfs.w ? (
-                  <NerfLine label={`${players.w.name} (White)`} nerfId={nerfs.w} />
-                ) : (
-                  <div className="plate p-2 px-3 text-xs text-parchment-300">
-                    {players.w.name} (White) keeps their rule secret until the end.
-                  </div>
-                )}
-                {nerfs.b ? (
-                  <NerfLine label={`${players.b.name} (Black)`} nerfId={nerfs.b} />
-                ) : (
-                  <div className="plate p-2 px-3 text-xs text-parchment-300">
-                    {players.b.name} (Black) keeps their rule secret until the end.
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="plate mt-2 p-2 px-3 text-xs text-parchment-300">
-                Both players have secret rules, revealed when the game ends.
+                {nerfs.w && <NerfLine label={`${players.w.name} (White)`} nerfId={nerfs.w} />}
+                {nerfs.b && <NerfLine label={`${players.b.name} (Black)`} nerfId={nerfs.b} />}
               </div>
             )}
           </div>

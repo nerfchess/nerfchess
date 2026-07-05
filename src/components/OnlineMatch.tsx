@@ -28,6 +28,7 @@ import { IMPLEMENTED_BY_ID, PLAYABLE_NERFS } from "@/engine/nerfs/library";
 import {
   currentHint,
   NerfGame,
+  UNRESTRICTED_NERF,
   enableDraftMode,
   legalMoves,
   makeContext,
@@ -83,12 +84,17 @@ function pickRandomNerf(): Nerf {
 // Rebuild the authoritative game state from a server `start` payload. Used on
 // mount and again whenever a reconnect replays the game.
 function buildGameFromStart(start: MPStart): NerfGame {
-  const myNerf = IMPLEMENTED_BY_ID[start.nerfId] ?? pickRandomNerf();
+  // Buff mode has no handicaps: both sides run the unrestricted rule.
+  const myNerf =
+    start.mode === "buff"
+      ? UNRESTRICTED_NERF
+      : IMPLEMENTED_BY_ID[start.nerfId] ?? pickRandomNerf();
   let next = newGameAsColor(myNerf, start.color, start.nerfSeed);
   if (start.draft) {
     // Placeholder seed: replica offer rolls are discarded and the server's
-    // dtOffer / dtState frames carry the real cards.
-    enableDraftMode(next, 1);
+    // dtOffer / dtState frames carry the real cards. The mode still matters
+    // locally: it sets the draft cadence the dock displays.
+    enableDraftMode(next, 1, { mode: start.mode });
     next = replayDraftGame(next, start.moves ?? [], start.dtActions ?? []);
     if (next.buffs && start.dtState) mergeDraftState(next.buffs, start.dtState, start.color);
     return next;
@@ -137,6 +143,10 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   // Draft ruleset: the server owns offers and resolutions; this component
   // keeps a deterministic replica in the game object (see lib/draftOnline).
   const isDraft = !!start.draft;
+  // Section split: nerf mode (hidden nerfs, nerf-modifier buffs only) or
+  // buff mode (no nerfs at all). Absent = legacy merged draft games.
+  const isBuffMode = isDraft && start.mode === "buff";
+  const isNerfMode = isDraft && start.mode === "nerf";
   const picksVisible = !!start.picksVisible;
 
   // Draft games open with a nerf draft: pick one of two rules before the
@@ -1061,8 +1071,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
             Choose your handicap
           </h1>
           <p className="mt-2 text-sm text-parchment-300 text-center">
-            Every game opens weak: pick one of two nerfs, then draft buffs every few
-            moves to claw your way back to power.
+            {isNerfMode
+              ? "Pick one of two nerfs. About every ten moves you draft a card that softens or removes it."
+              : "Every game opens weak: pick one of two nerfs, then draft buffs every few moves to claw your way back to power."}
           </p>
           {error && (
             <p className="mt-2 text-center text-xs text-oxblood-glow">{error}</p>
@@ -1109,19 +1120,28 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               </div>
             </>
           )}
-          <div className="mt-5 plate p-3 text-center">
-            <span className="smallcaps text-[10px] text-parchment-400">
-              Your opponent is choosing between
-            </span>
-            <div className="mt-1 text-sm text-parchment-200 font-display">
-              {oppOptions.map((n) => n.name).join("  ·  ")}
+          {/* Nerf mode: the opponent's nerf is completely hidden; it only
+              reveals when the game ends, so their options never show. */}
+          {!isNerfMode && (
+            <div className="mt-5 plate p-3 text-center">
+              <span className="smallcaps text-[10px] text-parchment-400">
+                Your opponent is choosing between
+              </span>
+              <div className="mt-1 text-sm text-parchment-200 font-display">
+                {oppOptions.map((n) => n.name).join("  ·  ")}
+              </div>
+              <div className="mt-0.5 text-[11px] text-parchment-400">
+                {picksVisible
+                  ? "Their choice will be visible when the game starts."
+                  : "Which one they take stays hidden, unless you draft a reveal."}
+              </div>
             </div>
-            <div className="mt-0.5 text-[11px] text-parchment-400">
-              {picksVisible
-                ? "Their choice will be visible when the game starts."
-                : "Which one they take stays hidden, unless you draft a reveal."}
-            </div>
-          </div>
+          )}
+          {isNerfMode && (
+            <p className="mt-5 text-center text-[11px] text-parchment-400">
+              Your opponent picks a nerf too. You will see their rule when the game ends.
+            </p>
+          )}
         </div>
       </main>
     );
@@ -1143,6 +1163,12 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   // lock-in window is free time); freeze the local display the same way.
   const draftClockPaused = isDraft && !game.result && (!!myOffer || oppDrafting);
   const opponentNerf = revealedOppNerf ?? (myColor === "w" ? game.black.nerf : game.white.nerf);
+  const oppNerfShown = !!revealedOppNerf && (liveOppReveal || !uiSettings.hideOpponentReveal);
+  // Draft games have no "hidden rule" placeholder: while the opponent's rule
+  // is unknown their card shows only the player header, and the rule appears
+  // there once revealed (end of game or a voluntary reveal). Buff mode never
+  // shows a rule section on either card, there are no nerfs at all.
+  const hideOppNerfCard = isBuffMode || (isDraft && !oppNerfShown);
   const lastMove = game.board.history[game.board.history.length - 1] ?? null;
   // A held move (confirmation setting) previews on the board before sending.
   const confirmPreviewBoard = confirmMovePending
@@ -1376,7 +1402,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         </Link>
         <div className="flex items-center gap-4">
           <div className="smallcaps hidden text-[11px] text-parchment-400 sm:block">
-            playing {myColor === "w" ? "White" : "Black"} · {isDraft ? "draft · " : ""}{subtitle}
+            playing {myColor === "w" ? "White" : "Black"} ·{" "}
+            {isDraft ? (isBuffMode ? "buff mode · " : isNerfMode ? "nerf mode · " : "draft · ") : ""}
+            {subtitle}
           </div>
           <button
             onClick={toggleMute}
@@ -1449,7 +1477,8 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               elo={oppRating}
               avatar={start.players?.[oppColor]?.avatar}
               nerf={opponentNerf}
-              revealed={!!revealedOppNerf && (liveOppReveal || !uiSettings.hideOpponentReveal)}
+              revealed={oppNerfShown}
+              hideNerf={hideOppNerfCard}
               ownerLabel=""
               compact
             />
@@ -1457,7 +1486,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               className={
                 "hidden min-h-0 gap-2 lg:grid " +
                 (isDraft && game.buffs
-                  ? "grid-rows-[minmax(0,1.15fr)_minmax(0,1fr)]"
+                  ? "grid-rows-[minmax(0,1.6fr)_minmax(0,1fr)]"
                   : "grid-rows-[minmax(0,1fr)]")
               }
             >
@@ -1485,11 +1514,12 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                 elo={myRating}
                 avatar={start.players?.[myColor]?.avatar}
                 nerf={myNerf}
+                hideNerf={isBuffMode}
                 ownerLabel=""
                 progress={myNerf.progress?.(myState, myCtx) ?? null}
                 compact
               />
-              {revealControl}
+              {!isBuffMode && revealControl}
               {ratingStakes && <RatingStakes stakes={ratingStakes} />}
             </div>
           </aside>
@@ -1622,20 +1652,22 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   </div>
                 )}
               </div>
-              <div className="plate mt-1 p-2 px-3 sm:hidden">
-                <div className="flex items-center gap-2">
-                  <span className={`min-w-0 truncate font-display text-sm font-semibold tier-${myNerf.tier}`}>
-                    {myNerf.name}
-                  </span>
-                  <span
-                    className={`ml-auto shrink-0 rounded-full border px-2 py-0.5 font-display text-[10px] font-bold tier-bg-${myNerf.tier} tier-${myNerf.tier}`}
-                    title={`Tier ${myNerf.tier}: ${TIER_LABEL[myNerf.tier]}`}
-                  >
-                    {TIER_ROMAN[myNerf.tier]} · {TIER_LABEL[myNerf.tier]}
-                  </span>
+              {!isBuffMode && (
+                <div className="plate mt-1 p-2 px-3 sm:hidden">
+                  <div className="flex items-center gap-2">
+                    <span className={`min-w-0 truncate font-display text-sm font-semibold tier-${myNerf.tier}`}>
+                      {myNerf.name}
+                    </span>
+                    <span
+                      className={`ml-auto shrink-0 rounded-full border px-2 py-0.5 font-display text-[10px] font-bold tier-bg-${myNerf.tier} tier-${myNerf.tier}`}
+                      title={`Tier ${myNerf.tier}: ${TIER_LABEL[myNerf.tier]}`}
+                    >
+                      {TIER_ROMAN[myNerf.tier]} · {TIER_LABEL[myNerf.tier]}
+                    </span>
+                  </div>
+                  <p className="mt-0.5 text-xs leading-snug text-parchment-300">{myNerf.description}</p>
                 </div>
-                <p className="mt-0.5 text-xs leading-snug text-parchment-300">{myNerf.description}</p>
-              </div>
+              )}
               {ratingStakes && (
                 <div className="mt-1 sm:hidden">
                   <RatingStakes stakes={ratingStakes} />
@@ -1649,7 +1681,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
             </div>
             <div
               className={
-                "hidden min-h-0 overflow-hidden gap-3 sm:grid sm:h-[var(--board-height)] sm:w-52 sm:shrink-0 " +
+                "hidden min-h-0 overflow-hidden gap-3 sm:grid sm:h-[var(--board-height)] sm:w-64 sm:shrink-0 " +
                 (clockEnabled ? "sm:grid-rows-[auto_minmax(0,1fr)_auto]" : "sm:grid-rows-[minmax(0,1fr)]")
               }
               style={railHeightStyle}
@@ -1791,8 +1823,8 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           onDismiss={() => setShowResult(false)}
           result={game.result}
           myColor={myColor}
-          myNerf={myNerf}
-          opponentNerf={revealedOppNerf ?? undefined}
+          myNerf={isBuffMode ? undefined : myNerf}
+          opponentNerf={isBuffMode ? undefined : revealedOppNerf ?? undefined}
           opponentHidden={uiSettings.hideOpponentReveal}
           ratingChange={ratingChange}
           rematchStatus={rematchStatus}

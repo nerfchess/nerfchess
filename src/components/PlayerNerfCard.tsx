@@ -18,6 +18,10 @@ interface Props {
   avatar?: string | null;
   nerf: Nerf;
   revealed?: boolean;
+  // Nerf-and-Buff-mode games: render only the player header (name, rating,
+  // captures) with no rule section at all. Rules reveal at game end via the
+  // end screen, so there is no "hidden rule" placeholder to show mid-game.
+  hideNerf?: boolean;
   ownerLabel: string;
   progress?: { value: number; max: number; label: string } | null;
   action?: ReactNode;
@@ -35,6 +39,7 @@ export function PlayerNerfCard({
   avatar,
   nerf,
   revealed = true,
+  hideNerf = false,
   ownerLabel,
   progress,
   action,
@@ -56,7 +61,7 @@ export function PlayerNerfCard({
       className={
         "relative plate overflow-hidden border " +
         (compact ? "p-3 " : "p-4 ") +
-        (revealed ? `tier-bg-${nerf.tier}` : "border-white/10 bg-ink-900/45")
+        (revealed && !hideNerf ? `tier-bg-${nerf.tier}` : "border-white/10 bg-ink-900/45")
       }
     >
       <div className="flex items-start gap-3">
@@ -121,9 +126,9 @@ export function PlayerNerfCard({
         </div>
       </div>
 
-      <div className={(compact ? "my-2.5" : "my-4") + " h-px bg-white/10"} />
+      {!hideNerf && <div className={(compact ? "my-2.5" : "my-4") + " h-px bg-white/10"} />}
 
-      {revealed ? (
+      {hideNerf ? null : revealed ? (
         <>
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">

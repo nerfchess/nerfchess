@@ -1,4 +1,4 @@
-import type { BuffInstance, BuffMatchState } from "@/engine/buff";
+import type { BuffInstance, BuffMatchState, DraftMode } from "@/engine/buff";
 import { moveToUCI } from "@/engine/board";
 import {
   NerfGame,
@@ -192,9 +192,10 @@ export function buildSpectatorDraftGame(
   moves: string[],
   actions: MPDraftAction[],
   state?: MPDraftState,
+  mode?: DraftMode,
 ): NerfGame {
   const game = newGame(SPECTATOR_NERF, SPECTATOR_NERF, 1);
-  enableDraftMode(game, 1);
+  enableDraftMode(game, 1, { mode });
   const replayed = replayDraftGame(game, moves, actions);
   if (state && replayed.buffs) mergeDraftState(replayed.buffs, state, null);
   return replayed;

@@ -8,12 +8,13 @@ import {
   BuffMatchState,
   BuffPick,
   BuffTarget,
+  DraftMode,
   effectTickColor,
   newBuffMatchState,
 } from "./buff";
 import { pawnRankOk } from "./buffs/helpers";
 import { BUFF_BY_ID } from "./buffs/library";
-import { DEFAULT_CADENCE, bankOffer, rollOffer, rollSharedTiers } from "./draft";
+import { DEFAULT_CADENCE, NERF_MODE_CADENCE, bankOffer, rollOffer, rollSharedTiers } from "./draft";
 import { Nerf, NerfState, GameContext, Tier } from "./nerf";
 import { RNG } from "./rng";
 import { BoardState, Color, FILE, Move, PieceType, RANK, SQ, Square } from "./types";
@@ -93,9 +94,26 @@ const FREED_NERF: Nerf = {
   implemented: true,
 };
 
-/** Turn an ordinary game into a draft-mode game (nerf draft + buff drafts). */
-export function enableDraftMode(game: NerfGame, seed: number, cadence = DEFAULT_CADENCE) {
-  game.buffs = newBuffMatchState(seed, cadence);
+// Buff mode games have no handicaps at all: both players run this nerf.
+export const UNRESTRICTED_NERF: Nerf = {
+  id: "none",
+  name: "No nerf",
+  description: "Buff mode: no handicap. Win with the buffs you draft.",
+  tier: 1,
+  implemented: true,
+};
+
+/** Turn an ordinary game into a draft-mode game. The mode picks the section
+ * ruleset: "nerf" (opening nerf pick, nerf-modifier buffs on a slow cadence),
+ * "buff" (no nerfs, nerf-modifier buffs excluded), or absent for the legacy
+ * merged rules so saved games keep replaying unchanged. */
+export function enableDraftMode(
+  game: NerfGame,
+  seed: number,
+  opts?: { mode?: DraftMode; cadence?: number },
+) {
+  const cadence = opts?.cadence ?? (opts?.mode === "nerf" ? NERF_MODE_CADENCE : DEFAULT_CADENCE);
+  game.buffs = newBuffMatchState(seed, cadence, opts?.mode);
 }
 
 export function newGameAsColor(myNerf: Nerf, myColor: Color, mySeed: number): NerfGame {

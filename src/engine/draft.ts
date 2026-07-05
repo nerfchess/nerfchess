@@ -1,4 +1,4 @@
-import { BuffMatchState, BuffOffer, PlayerBuffState } from "./buff";
+import { Buff, BuffMatchState, BuffOffer, PlayerBuffState } from "./buff";
 import { BUFF_POOL_BY_TIER } from "./buffs/library";
 import { Tier } from "./nerf";
 import { RNG } from "./rng";
@@ -21,6 +21,10 @@ import { Color } from "./types";
 // Draft cadence in own moves. Tuning guide: 5 creates faster chaos, 6 is the
 // default arc, 7 slows the arc and delays high-tier cards.
 export const DEFAULT_CADENCE = 6;
+
+// Nerf mode drafts much less often: only the nerf-modifier cards are in its
+// pool, so a pick lands roughly every ten of your own moves.
+export const NERF_MODE_CADENCE = 10;
 
 function drawRng(bs: BuffMatchState): RNG {
   return RNG.fromState(bs.rngState);
@@ -56,8 +60,10 @@ export function rollSharedTiers(bs: BuffMatchState): [Tier, Tier] {
 }
 
 /** Roll a fresh offer for `color` at the round's shared tiers and attach it
- * to their draft state. */
-export function rollOffer(bs: BuffMatchState, color: Color, tiers: [Tier, Tier]): BuffOffer {
+ * to their draft state. Returns null (and attaches nothing) when the mode's
+ * card pool has run completely dry: the draft is skipped instead of blocking
+ * the player behind an empty offer. */
+export function rollOffer(bs: BuffMatchState, color: Color, tiers: [Tier, Tier]): BuffOffer | null {
   const ps = bs.players[color];
   const rng = drawRng(bs);
   const index = ps.draftsTaken + 1;
@@ -72,6 +78,13 @@ export function rollOffer(bs: BuffMatchState, color: Color, tiers: [Tier, Tier])
   const suppressed = (ps.flags.noDraftCards ?? 0) > 0;
   if (suppressed) ps.flags.noDraftCards = (ps.flags.noDraftCards ?? 0) - 1;
 
+  // Mode filter: buff mode never offers nerf-modifier cards, nerf mode
+  // offers ONLY nerf-modifier cards, and legacy merged games (no mode) keep
+  // the full pool. The adjacent-tier fallback below runs on the filtered
+  // pool too, so a mode can never leak the other section's cards.
+  const inMode = (b: Buff) =>
+    bs.mode === "buff" ? b.category !== "nerf" : bs.mode === "nerf" ? b.category === "nerf" : true;
+
   const cards: BuffOffer["cards"] = [];
   // Never offer a card the player already holds unspent.
   const used = new Set<string>(
@@ -82,7 +95,7 @@ export function rollOffer(bs: BuffMatchState, color: Color, tiers: [Tier, Tier])
     const shared = tiers[Math.min(i, tiers.length - 1)];
     const tier = forced ?? (Math.min(8, shared + bonus) as Tier);
     let pool = BUFF_POOL_BY_TIER[tier].filter(
-      (b) => !used.has(b.id) && (!suppressed || b.category !== "draft"),
+      (b) => inMode(b) && !used.has(b.id) && (!suppressed || b.category !== "draft"),
     );
     // A tier's pool can run dry (few implemented cards, prep = 3 picks);
     // fall back to adjacent tiers rather than offering duplicates.
@@ -90,7 +103,7 @@ export function rollOffer(bs: BuffMatchState, color: Color, tiers: [Tier, Tier])
       pool = [
         ...(BUFF_POOL_BY_TIER[tier - spread] ?? []),
         ...(BUFF_POOL_BY_TIER[tier + spread] ?? []),
-      ].filter((b) => !used.has(b.id) && (!suppressed || b.category !== "draft"));
+      ].filter((b) => inMode(b) && !used.has(b.id) && (!suppressed || b.category !== "draft"));
     }
     if (pool.length === 0) break;
     const card = pool[rng.int(pool.length)];
@@ -99,6 +112,9 @@ export function rollOffer(bs: BuffMatchState, color: Color, tiers: [Tier, Tier])
   }
 
   saveRng(bs, rng);
+  // Pool exhausted (possible in nerf mode's tiny card list): skip this draft
+  // entirely rather than presenting an empty, unresolvable offer.
+  if (cards.length === 0) return null;
   const offer: BuffOffer = { cards, index, ...(bonus > 0 ? { banked: true } : {}) };
   ps.offer = offer;
   ps.draftsTaken = index;

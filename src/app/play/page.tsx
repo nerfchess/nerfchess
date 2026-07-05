@@ -30,9 +30,9 @@ export default function PlayPage() {
   // Time control in seconds; base = 0 means unlimited (no clock).
   const [baseSec, setBaseSec] = useState<number>(10 * 60);
   const [incrementSec, setIncrementSec] = useState<number>(0);
-  // Whether the opponent's draft picks are visible. Hidden is the
-  // chaotic default; visible makes for a more strategic game.
-  const [openPicks, setOpenPicks] = useState<boolean>(false);
+  // The two sections of the game: Buff mode (no nerfs, pure buff drafting)
+  // and Nerf mode (secret handicaps, revealed only when the game ends).
+  const [gameMode, setGameMode] = useState<"nerf" | "buff">("buff");
   const [rating, setRating] = useState<number | null>(null);
   const [games, setGames] = useState<number>(0);
   useEffect(() => {
@@ -44,7 +44,6 @@ export default function PlayPage() {
   const start = () => {
     clearSavedAiGame();
     const params = new URLSearchParams({
-      mode: "ai",
       difficulty,
       color,
       nerf: "random",
@@ -52,8 +51,7 @@ export default function PlayPage() {
       inc: String(incrementSec),
       // Draft games are casual until a separate Draft rating exists.
       rated: "0",
-      draft: "1",
-      picks: openPicks ? "open" : "hidden",
+      mode: gameMode,
     });
     router.push(`/game?${params.toString()}`);
   };
@@ -86,17 +84,36 @@ export default function PlayPage() {
       <section className="max-w-2xl mx-auto px-6 py-8">
         <h1 className="font-display text-5xl">New game</h1>
         <p className="mt-3 text-parchment-200">
-          Pick how you want to play. Every game is Draft: pick one of two nerfs
-          at the start, then draft a buff every few moves.
+          Two ways to play. Buff mode: no handicaps, draft buffs and outplay your
+          opponent. Nerf mode: secret handicaps you draft cards to escape, revealed
+          only when the game ends.
         </p>
+
+        <div className="mt-6 grid gap-3 sm:grid-cols-2">
+          <ModeCard
+            selected={gameMode === "buff"}
+            onClick={() => setGameMode("buff")}
+            title="Buff mode"
+            body="No nerfs at all. Every few moves both players draft a buff; the strongest build wins."
+          />
+          <ModeCard
+            selected={gameMode === "nerf"}
+            onClick={() => setGameMode("nerf")}
+            title="Nerf mode"
+            body="Pick a secret nerf your opponent never sees until the end. Rare drafts can soften or break it."
+          />
+        </div>
 
         <div className="mt-6">
           <QueueButton />
+          <p className="mt-1.5 text-[11px] text-parchment-400">
+            Quick pairing runs Buff mode.
+          </p>
         </div>
 
         <div className="mt-4">
           <Link
-            href="/friend"
+            href={`/friend?mode=${gameMode}`}
             className="btn-leaf btn-cta w-full flex items-center justify-center gap-3 px-6 py-4 font-display text-lg font-semibold"
           >
             <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -113,17 +130,6 @@ export default function PlayPage() {
         </div>
 
         <div className="mt-8 plate p-6 sm:p-7 space-y-6">
-          <div>
-            <Group label="Opponent picks">
-              <Pill selected={!openPicks} onClick={() => setOpenPicks(false)}>Hidden</Pill>
-              <Pill selected={openPicks} onClick={() => setOpenPicks(true)}>Visible</Pill>
-            </Group>
-            <p className="mt-2 text-[12px] text-parchment-300 leading-snug">
-              Hidden keeps the chaos: you never see what your opponent is drafting.
-              Visible shows their nerf and draft options for a more strategic game.
-            </p>
-          </div>
-
           <Group label="Bot strength">
             {(["easy", "medium", "hard"] as const).map((d) => (
               <Pill key={d} selected={difficulty === d} onClick={() => setDifficulty(d)}>
@@ -227,6 +233,36 @@ function TimeSlider({
         <span>{formatEdgeLabel(values[values.length - 1])}</span>
       </div>
     </div>
+  );
+}
+
+function ModeCard({
+  selected,
+  onClick,
+  title,
+  body,
+}: {
+  selected: boolean;
+  onClick: () => void;
+  title: string;
+  body: string;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      aria-pressed={selected}
+      className={
+        "plate p-4 text-left transition " +
+        (selected
+          ? "border-gold/60 bg-gold/10 shadow-leaf"
+          : "border-white/10 hover:border-white/25 hover:bg-white/[0.03]")
+      }
+    >
+      <div className={"font-display text-xl font-semibold " + (selected ? "text-gold-leaf" : "text-parchment")}>
+        {title}
+      </div>
+      <p className="mt-1 text-[12px] leading-snug text-parchment-300">{body}</p>
+    </button>
   );
 }
 

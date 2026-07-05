@@ -1,4 +1,4 @@
-import type { ActiveEffect, BuffInstance, BuffOffer, BuffPick, BuffTarget, DraftFlags } from "@/engine/buff";
+import type { ActiveEffect, BuffInstance, BuffOffer, BuffPick, BuffTarget, DraftFlags, DraftMode } from "@/engine/buff";
 import type { Color } from "@/engine/types";
 
 export type MPPlayers = Record<Color, { name: string; rating: number | null; avatar?: string | null }>;
@@ -112,6 +112,8 @@ export type MPStart = {
   // Draft ruleset games (always casual): the public action record for exact
   // replay plus this seat's filtered view of the live draft state.
   draft?: boolean;
+  // The game's section: "nerf" or "buff". Absent = legacy merged rules.
+  mode?: DraftMode;
   picksVisible?: boolean;
   dtActions?: MPDraftAction[];
   dtState?: MPDraftState;
@@ -141,6 +143,7 @@ export type MPWatchStart = {
   // Draft ruleset games: spectator-safe payload (held buffs and board
   // effects only; offers and reveals are never sent to watchers).
   draft?: boolean;
+  mode?: DraftMode;
   dtActions?: MPDraftAction[];
   dtState?: MPDraftState;
 };
@@ -648,7 +651,7 @@ export class MPSession {
   async host(
     timeSec: number,
     incrementSec: number,
-    options?: { draft?: boolean; picksVisible?: boolean; invite?: string },
+    options?: { draft?: boolean; mode?: DraftMode; picksVisible?: boolean; invite?: string },
   ): Promise<string> {
     await this.connect();
     return new Promise((resolve, reject) => {
@@ -664,7 +667,13 @@ export class MPSession {
       this.sendFrame("create", {
         timeSec,
         incrementSec,
-        ...(options?.draft ? { draft: true, picksVisible: !!options.picksVisible } : {}),
+        ...(options?.draft
+          ? {
+              draft: true,
+              ...(options.mode ? { mode: options.mode } : {}),
+              picksVisible: !!options.picksVisible,
+            }
+          : {}),
         // Direct challenge: reserve the opponent seat for this username.
         ...(options?.invite ? { invite: options.invite } : {}),
       });

@@ -21,7 +21,7 @@ References:
 
 | Type | Data | Purpose |
 | --- | --- | --- |
-| `create` | `{ "timeSec": 600, "incrementSec": 5, "draft": true, "picksVisible": false, "invite": "name" }` | Create a waiting game as White. `draft` and `picksVisible` are optional and select the Draft ruleset (always casual). `invite` (optional, signed-in hosts only) reserves the Black seat for that username: the game is never listed as an open challenge and other joiners are rejected with `invite_only`. |
+| `create` | `{ "timeSec": 600, "incrementSec": 5, "draft": true, "mode": "buff", "picksVisible": false, "invite": "name" }` | Create a waiting game as White. `draft`, `mode`, and `picksVisible` are optional and select the Draft ruleset (always casual). `mode` picks the section: `"nerf"` (opening nerf pick, hidden until game end, nerf-modifier buffs only on a slow cadence) or `"buff"` (no nerfs at all, nerf-modifier buffs excluded); omitted = the legacy merged rules. `invite` (optional, signed-in hosts only) reserves the Black seat for that username: the game is never listed as an open challenge and other joiners are rejected with `invite_only`. |
 | `join` | `{ "id": "A2BCD" }` | Join an unstarted game as Black. |
 | `reconnect` | `{ "id": "A2BCD", "color": "w", "token": "..." }` | Resume a reserved seat after reload or a dropped socket. |
 | `move` | `{ "u": "e2e4", "ply": 0 }` | Submit a UCI move for server validation. |
@@ -48,12 +48,12 @@ References:
 | Type | Data | Purpose |
 | --- | --- | --- |
 | `created` | `{ "id": "A2BCD", "color": "w", "token": "..." }` | Game code assigned; store `token` privately for reconnect. |
-| `start` | setup, color, token, `wc`/`bc`, `moves`, `players`, `rated`, `chat`, optional `preview`, optional `draft`/`picksVisible`/`dtActions`/`dtState`/`nerfDraft` | Both seats are present, or a player reconnected; construct the same game and replay accepted UCI moves. `preview` carries the projected rating change per outcome for rated games. Draft games add the public draft action record (`dtActions`, interleaved with moves by ply for exact replay) and this seat's filtered draft state (`dtState`). While the opening nerf draft is unresolved they add `nerfDraft` instead: both sides' two options, this seat's own pick index (or `null`), and whether the opponent has picked. |
+| `start` | setup, color, token, `wc`/`bc`, `moves`, `players`, `rated`, `chat`, optional `preview`, optional `draft`/`mode`/`picksVisible`/`dtActions`/`dtState`/`nerfDraft` | Both seats are present, or a player reconnected; construct the same game and replay accepted UCI moves. `preview` carries the projected rating change per outcome for rated games. Draft games add the public draft action record (`dtActions`, interleaved with moves by ply for exact replay) and this seat's filtered draft state (`dtState`). While the opening nerf draft is unresolved they add `nerfDraft` instead: both sides' two options, this seat's own pick index (or `null`), and whether the opponent has picked. |
 | `move` | `{ "u", "ply", "wc", "bc" }` | Accepted move and authoritative clocks in milliseconds. |
 | `end` | `{ "result", "wc", "bc", "ratings?", "nerfs?", "draftBuffs?" }` | Authoritative terminal result; rating changes for rated games, and the revealed rules for spectators. Draft games add each side's held buffs (public all game, repeated for post-game screens). |
 | `queued` / `paired` / `queueCancelled` | pairing pool events | `paired` carries `{ id, color, token }` for the new game. |
 | `chat` | `{ "color", "name", "text", "at" }` | Relayed chat message (censored server-side when profane). |
-| `wstart` | watch payload | Spectator joined: game snapshot with `moves`, `players`, clocks, `watchers`, and `nerfs` once over. Draft games add `draft`, `dtActions`, and a spectator-safe `dtState` (held buffs and board effects only; never offers, pending markers, flags, or reveals). |
+| `wstart` | watch payload | Spectator joined: game snapshot with `moves`, `players`, clocks, `watchers`, and `nerfs` once over. Draft games add `draft`, `mode` (when the game runs a section), `dtActions`, and a spectator-safe `dtState` (held buffs and board effects only; never offers, pending markers, flags, or reveals). |
 | `dtOffer` | `{ "color", "cards", "index", "banked?" }` | Draft games: a buff offer rolled. Sent only to the drafting seat, plus the opposing seat when the match has `picksVisible`. Never sent to spectators. |
 | `dtResolved` | `{ "color", "kind": "picked" or "banked", "cards?" }` | Draft games: the public outcome of a draft. Picked cards become public the moment they are held; a bank reveals only that it happened. Broadcast to both seats and spectators. |
 | `dtUsed` | `{ "color", "buffIndex", "picks" }` | Draft games: a held buff was activated with these targets. Broadcast to both seats and spectators so replicas can reproduce the board mutation. |
@@ -94,6 +94,14 @@ a move cadence, see `docs/draft-system.md`). Server rules:
 - Draft games are always casual. The server never rates a draft match,
   whatever the client asks. The quick-pairing queue only creates Draft
   matches, so queue games are casual too.
+- `mode` splits Draft games into the site's two sections. Buff mode
+  (`"buff"`): no nerfs at all (both seats run the unrestricted `none` rule,
+  the opening nerf draft is skipped and the game starts like a classic one)
+  and the buff pool excludes the nerf-modifier category. Nerf mode
+  (`"nerf"`): the opening nerf pick stays, the pool contains ONLY
+  nerf-modifier cards, and the cadence stretches to 10 own moves. Queue
+  games always run Buff mode. Matches without a mode keep the legacy merged
+  rules so stored games replay unchanged, but no current UI creates them.
 - When the second seat arrives, the server deals the opening nerf draft
   instead of starting the game: two nerf options per seat, all four distinct,
   drawn from the match seed RNG. Each seat's two options share a tier and the

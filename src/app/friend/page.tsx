@@ -32,8 +32,11 @@ export default function FriendPage() {
   const [joinCode, setJoinCode] = useState("");
   const [baseSec, setBaseSec] = useState(600);
   const [incrementSec, setIncrementSec] = useState(0);
-  // Friend games always run the Draft ruleset (buff drafts every few moves)
-  // and are always casual. Picks stay hidden; everything reveals at game end.
+  // Friend games always run the Draft ruleset and are always casual. The
+  // host picks the section: Buff mode (no nerfs) or Nerf mode (secret
+  // handicaps revealed at game end). Buff mode is the default. Picks stay
+  // hidden; everything reveals at game end.
+  const [gameMode, setGameMode] = useState<"nerf" | "buff">("buff");
   const [error, setError] = useState<string | null>(null);
   const [start, setStart] = useState<MPStart | null>(null);
   // Direct challenge: ?challenge=NAME pre-addresses the game to that player;
@@ -130,6 +133,9 @@ export default function FriendPage() {
       joinWithCode(codeParam);
       return;
     }
+    // Mode preselected on the play page carries over (?mode=nerf|buff).
+    const modeParam = search.get("mode");
+    if (modeParam === "nerf" || modeParam === "buff") setGameMode(modeParam);
     const challengeParam = search.get("challenge")?.trim();
     if (challengeParam) {
       setChallenging(challengeParam);
@@ -179,6 +185,7 @@ export default function FriendPage() {
     try {
       const c = await sess.host(baseSec, incrementSec, {
         draft: true,
+        mode: gameMode,
         // Direct challenge: the server reserves the opponent seat for them,
         // so a lobby stranger can never take it first.
         ...(challenging ? { invite: challenging } : {}),
@@ -316,7 +323,7 @@ export default function FriendPage() {
         <p className="mt-3 text-parchment-200">
           {challenging
             ? `Pick a time control and create the game. ${challenging} gets a notification and the game starts when they accept.`
-            : "Create a game and share the code, or join one with a code your friend sent you. Both players pick a nerf at the start and draft buffs as the game goes."}
+            : "Create a game and share the code, or join one with a code your friend sent you. Choose Buff mode (no nerfs, pure buff drafting) or Nerf mode (secret handicaps, revealed at the end)."}
         </p>
 
         {error && (
@@ -345,10 +352,22 @@ export default function FriendPage() {
             />
           </div>
 
-          <p className="text-[11px] leading-snug text-parchment-400">
-            Every few moves each player drafts a buff. Your opponent's picks stay
-            hidden until the game ends. Draft games are always casual.
-          </p>
+          <div>
+            <div className="smallcaps text-[11px] text-parchment-400 mb-2">Game mode</div>
+            <div className="grid grid-cols-2 gap-2">
+              <OptionButton selected={gameMode === "buff"} onClick={() => setGameMode("buff")}>
+                Buff mode
+              </OptionButton>
+              <OptionButton selected={gameMode === "nerf"} onClick={() => setGameMode("nerf")}>
+                Nerf mode
+              </OptionButton>
+            </div>
+            <p className="mt-2 text-[11px] leading-snug text-parchment-400">
+              {gameMode === "buff"
+                ? "No nerfs at all. Every few moves both players draft a buff; the strongest build wins. Always casual."
+                : "Both players pick a secret nerf that only reveals when the game ends. Rare drafts, about every ten moves, can soften or remove it. Always casual."}
+            </p>
+          </div>
 
           <button
             onClick={handleCreate}

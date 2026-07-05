@@ -10,6 +10,12 @@ import { RNG } from "./rng";
 // buff. Buffs climb in tier as the game goes on. See docs/draft-system.md.
 // ---------------------------------------------------------------------------
 
+// Which section of the site a draft game belongs to.
+// - "nerf": opening nerf pick, slower cadence, only nerf-modifier buffs.
+// - "buff": no nerfs at all, normal cadence, nerf-modifier buffs excluded.
+// - absent: the legacy merged ruleset (kept so saved games still replay).
+export type DraftMode = "nerf" | "buff";
+
 export type BuffCategory =
   | "movement" // new ways for pieces to move
   | "pieces" // summons, revivals, promotions, conversions
@@ -130,6 +136,8 @@ export interface PlayerBuffState {
 }
 
 export interface BuffMatchState {
+  /** Game section this draft game runs under; absent = legacy merged rules. */
+  mode?: DraftMode;
   /** Own moves between buff drafts. */
   cadence: number;
   /** Shared draft trigger in total plies: both players draft at the same
@@ -164,8 +172,9 @@ export function newPlayerBuffState(cadence: number): PlayerBuffState {
   };
 }
 
-export function newBuffMatchState(seed: number, cadence: number): BuffMatchState {
+export function newBuffMatchState(seed: number, cadence: number, mode?: DraftMode): BuffMatchState {
   return {
+    ...(mode ? { mode } : {}),
     cadence,
     rngState: seed >>> 0 || 1,
     effects: [],
