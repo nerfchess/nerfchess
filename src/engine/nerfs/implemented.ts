@@ -332,7 +332,7 @@ export const UNTITLED_DUCK: Nerf = db({
 export const RISING_WATER: Nerf = db({
   id: "rising_water",
   name: "Rising Water",
-  description: "Every 10 of your turns, water rises one rank from rank 1. You can't move underwater pieces or to underwater squares.",
+  description: "Every 10 of your turns, water rises one rank from your back rank. You can't move underwater pieces or to underwater squares.",
   flavor: "The tide is rising.",
   tier: 7,
   icon: "waves",
@@ -346,8 +346,12 @@ export const RISING_WATER: Nerf = db({
   filterMoves: (moves, state, ctx) => {
     const s = state as { level: number };
     if (s.level <= 0) return moves;
-    // Water rises from white's side (rank 1, rank 2, ...) regardless of color; universal water layer
-    const underwater = (sq: number) => RANK(sq) < s.level;
+    // Water rises from the owner's own back rank, mirrored by color so the
+    // handicap is symmetric: white floods rank 1 upward, black floods rank 8 downward.
+    const underwater =
+      ctx.me === "w"
+        ? (sq: number) => RANK(sq) < s.level
+        : (sq: number) => RANK(sq) > 7 - s.level;
     return moves.filter((m) => !underwater(m.from) && !underwater(m.to));
   },
   visual: (state) => ({ waterRank: (state as { level: number }).level }),
