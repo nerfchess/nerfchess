@@ -28,3 +28,12 @@ Date: 2026-07-04. Follow-up to PR #105 and [[2026-07-04-draft-system-audit]]. Re
 - npm run typecheck clean on the rebased branch.
 - Smoke script (not committed): lightning_strike targets only knights/bishops/pawns, removes three, is spent and refuses reuse, sets chainKingGuard, and its flash effect expires on the opponent's reply; anchor blocks an enemy buff relocate but not friendly ones; scout's status names the revealed card; suppress filters draft cards from the opponent's next offer and consumes its flag; reality_warp and total_warp keep pawns off ranks 1/8; the AI fires titan_legion and endless_turn once and never re-fires them while online.
 - 20 randomized bot-vs-bot draft games (cadence 3, random buff activations) ran to completion with no exceptions.
+
+## Follow-up: pawn-rank rule centralized
+
+The "pawns never on rank 1 or 8" rule is now enforced in three layers instead
+of per-card zone filters: `relocateMany` filters every destination (fixing
+`rift_storm`, `mass_recall`, and the four `stepDest` push cards) and skips
+pieces with no legal destination, `rift_walker` filters its pawn teleport
+targets, and `makeBuffApi.relocate` refuses any pawn relocation onto those
+ranks as a backstop. `anyDestPawnSafe` is now redundant but harmless.
