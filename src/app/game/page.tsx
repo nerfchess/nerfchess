@@ -121,8 +121,6 @@ function GamePage() {
   const myNerfId = params.get("nerf") ?? "random";
   // Draft mode: nerf draft at game start, buff drafts on a cadence after.
   const draftMode = params.get("draft") === "1";
-  // Draft lobby setting: visible opponent picks (hidden is the default).
-  const picksVisible = draftMode && params.get("picks") === "open";
   // Games vs bots are casual by default; only rated games touch your rating.
   // Draft games are always casual until a separate Draft rating exists.
   const rated = params.get("rated") === "1" && !draftMode;
@@ -307,8 +305,6 @@ function GamePage() {
     enableDraftMode(g, makeSeed());
     g.buffs!.players[myColor].nerfOptions = nerfDraft.myOptions.map((n) => n.id);
     g.buffs!.players[myColor === "w" ? "b" : "w"].nerfOptions = nerfDraft.aiOptions.map((n) => n.id);
-    // Visible-picks setting: the opponent's nerf choice is open from move one.
-    if (picksVisible) g.buffs!.players[myColor].oppNerfRevealed = true;
     setNerfDraft(null);
     setNerfDeadline(null);
     setHistoryPly(null);
@@ -1185,7 +1181,7 @@ function GamePage() {
                   !game.result && game.board.turn === myColor && !myOffer && !isReviewingHistory
                 }
                 onStartUse={buffTargeting.start}
-                hideOpponentCards={!picksVisible}
+                hideOpponentCards
               />
             ) : (
               <div className="hidden lg:block" />
@@ -1287,7 +1283,7 @@ function GamePage() {
                   <DraftNotice
                     buffs={bsTheirs.buffs}
                     banked={!!bsTheirs.flags.bankBonus}
-                    hidden={!picksVisible}
+                    hidden
                   />
                 )}
                 {buffTargeting.targeting && buffTargeting.targeting.target.kind === "square" && (
@@ -1393,7 +1389,7 @@ function GamePage() {
             myColor={myColor}
             canAct={!game.result && game.board.turn === myColor && !myOffer && !isReviewingHistory}
             onStartUse={buffTargeting.start}
-            hideOpponentCards={!picksVisible}
+            hideOpponentCards
           />
         </MobileBuffDrawer>
       )}
@@ -1432,17 +1428,11 @@ function GamePage() {
           }}
           opponent={{
             offer: bsTheirs?.offer ?? null,
-            showCards: picksVisible || !!bsMine?.flags.seeOppCards,
+            showCards: !!bsMine?.flags.seeOppCards,
             showTier: !!bsMine?.flags.seeOppTier,
             reveal: bsMine?.oppReveal ?? null,
             // Hidden model: never name the bot's held cards in the overlay.
-            lastPick:
-              picksVisible && bsTheirs?.buffs.length
-                ? {
-                    id: bsTheirs.buffs[bsTheirs.buffs.length - 1].id,
-                    tier: bsTheirs.buffs[bsTheirs.buffs.length - 1].tier,
-                  }
-                : null,
+            lastPick: null,
           }}
         />
       )}

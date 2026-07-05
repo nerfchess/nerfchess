@@ -57,7 +57,7 @@ import {
   saveOnlineSeat,
 } from "@/lib/multiplayer";
 import { premoveOptionsFor } from "@/lib/premoves";
-import { isMuted, playCapture, playCheck, playCountdownTick, playError, playLowTime, playMove as playMoveSfx, playNerf, setMuted } from "@/lib/sounds";
+import { isMuted, playCapture, playCheck, playError, playLowTime, playMove as playMoveSfx, playNerf, setMuted } from "@/lib/sounds";
 
 // Mirrors the server's start-of-game grace: each side's first move gets this
 // many free milliseconds before their clock starts charging.
@@ -178,7 +178,6 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   const [claimReady, setClaimReady] = useState(false);
   // Seconds left on my first-move grace window (null = not in the window).
   const [graceSecondsLeft, setGraceSecondsLeft] = useState<number | null>(null);
-  const lastGraceBeepRef = useRef<number | null>(null);
   // Voluntary rule reveals: mine (button flow) and the opponent's (event).
   const [myRevealState, setMyRevealState] = useState<"hidden" | "confirm" | "revealed">(() =>
     start.revealed?.[start.color] ? "revealed" : "hidden",
@@ -888,19 +887,12 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         if (active === myColor) {
           const seconds = Math.ceil(graceLeft / 1000);
           setGraceSecondsLeft((prev) => (prev === seconds ? prev : seconds));
-          // No visible countdown: a soft tick at 3, 2, and 1 is the only
-          // signal that the free-time window is closing.
-          if (seconds <= 3 && lastGraceBeepRef.current !== seconds) {
-            lastGraceBeepRef.current = seconds;
-            playCountdownTick();
-          }
         } else {
           setGraceSecondsLeft(null);
         }
         return;
       }
       setGraceSecondsLeft(null);
-      lastGraceBeepRef.current = null;
     };
     syncGrace();
     const id = window.setInterval(syncGrace, 250);
@@ -1623,7 +1615,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                         aria-live="polite"
                         className="pointer-events-none absolute right-0 top-full z-30 mt-1 animate-rise whitespace-nowrap border border-gold/40 bg-ink-700/95 px-2 py-1 shadow-plate backdrop-blur-sm smallcaps text-[10px] text-gold-leaf"
                       >
-                        Free time
+                        Free time · {graceSecondsLeft}s until your clock starts
                       </div>
                     )}
                   </div>
@@ -1692,7 +1684,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                       aria-live="polite"
                       className="pointer-events-none absolute bottom-full left-1/2 z-30 mb-1 -translate-x-1/2 animate-rise whitespace-nowrap border border-gold/40 bg-ink-700/95 px-2 py-1 shadow-plate backdrop-blur-sm smallcaps text-[10px] text-gold-leaf"
                     >
-                      Free time
+                      Free time · {graceSecondsLeft}s until your clock starts
                     </div>
                   )}
                 </div>

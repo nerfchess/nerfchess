@@ -2,7 +2,6 @@
 
 import { BuffOffer } from "@/engine/buff";
 import { BUFF_BY_ID } from "@/engine/buffs/library";
-import { playCountdownTick } from "@/lib/sounds";
 import { motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import { BuffCard } from "./BuffCard";
@@ -33,7 +32,8 @@ interface Props {
   };
 }
 
-/** Thin lock-in countdown: bar plus seconds, ticking under 6 seconds. */
+/** Thin lock-in countdown: bar plus seconds. Silent by design: picking a
+ * card should not come with time-pressure noise. */
 export function LockInCountdown({
   deadline,
   onExpire,
@@ -46,18 +46,12 @@ export function LockInCountdown({
   const total = 15_000;
   const [leftMs, setLeftMs] = useState(() => Math.max(0, deadline - Date.now()));
   const expiredRef = useRef(false);
-  const lastTickRef = useRef<number | null>(null);
 
   useEffect(() => {
     expiredRef.current = false;
     const id = window.setInterval(() => {
       const left = Math.max(0, deadline - Date.now());
       setLeftMs(left);
-      const seconds = Math.ceil(left / 1000);
-      if (left > 0 && seconds <= 5 && lastTickRef.current !== seconds) {
-        lastTickRef.current = seconds;
-        playCountdownTick();
-      }
       if (left <= 0 && !expiredRef.current) {
         expiredRef.current = true;
         onExpire?.();

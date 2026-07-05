@@ -718,11 +718,6 @@ function GameShell({
   visual?: React.ComponentProps<typeof Board>["visual"];
   rail?: React.ReactNode;
 }) {
-  const nameOf = (color: Color) => {
-    const p = players[color];
-    return p.rating != null ? `${p.name} (${p.rating})` : p.name;
-  };
-
   return (
     <main className="min-h-screen">
       <SiteNav />
@@ -740,7 +735,8 @@ function GameShell({
                 board={board}
                 playerColor="b"
                 myColor="w"
-                name={nameOf("b")}
+                name={players.b.name}
+                elo={players.b.rating}
                 avatar={players.b.avatar}
                 className="min-w-0 flex-1 !px-0 !py-1"
               />
@@ -763,7 +759,8 @@ function GameShell({
                 board={board}
                 playerColor="w"
                 myColor="w"
-                name={nameOf("w")}
+                name={players.w.name}
+                elo={players.w.rating}
                 avatar={players.w.avatar}
                 className="min-w-0 flex-1 !px-0 !py-1"
               />

@@ -33,9 +33,7 @@ export default function FriendPage() {
   const [baseSec, setBaseSec] = useState(600);
   const [incrementSec, setIncrementSec] = useState(0);
   // Friend games always run the Draft ruleset (buff drafts every few moves)
-  // and are always casual. The host chooses whether both seats can see each
-  // other's pending offer cards.
-  const [picksOpen, setPicksOpen] = useState(false);
+  // and are always casual. Picks stay hidden; everything reveals at game end.
   const [error, setError] = useState<string | null>(null);
   const [start, setStart] = useState<MPStart | null>(null);
   // Direct challenge: ?challenge=NAME pre-addresses the game to that player;
@@ -181,7 +179,6 @@ export default function FriendPage() {
     try {
       const c = await sess.host(baseSec, incrementSec, {
         draft: true,
-        picksVisible: picksOpen,
         // Direct challenge: the server reserves the opponent seat for them,
         // so a lobby stranger can never take it first.
         ...(challenging ? { invite: challenging } : {}),
@@ -348,22 +345,10 @@ export default function FriendPage() {
             />
           </div>
 
-          <div>
-            <div className="smallcaps text-[11px] text-parchment-400 mb-2">Opponent picks</div>
-            <div className="grid grid-cols-2 gap-2">
-              <OptionButton selected={!picksOpen} onClick={() => setPicksOpen(false)}>
-                Hidden
-              </OptionButton>
-              <OptionButton selected={picksOpen} onClick={() => setPicksOpen(true)}>
-                Visible
-              </OptionButton>
-            </div>
-            <p className="mt-2 text-[11px] leading-snug text-parchment-400">
-              Every few moves each player drafts a buff. Held buffs are always public;
-              this setting controls whether you also see the cards your opponent is
-              choosing between. Draft games are always casual.
-            </p>
-          </div>
+          <p className="text-[11px] leading-snug text-parchment-400">
+            Every few moves each player drafts a buff. Your opponent's picks stay
+            hidden until the game ends. Draft games are always casual.
+          </p>
 
           <button
             onClick={handleCreate}
