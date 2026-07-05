@@ -105,8 +105,9 @@ export function RatingChart({ points }: { points: RatingPoint[] }) {
                 y1={t.y}
                 y2={t.y}
                 stroke="var(--paper-dim)"
-                strokeOpacity={0.22}
+                strokeOpacity={0.16}
                 strokeWidth={1}
+                vectorEffect="non-scaling-stroke"
               />
               <text
                 x={W - PAD.right}
@@ -125,9 +126,10 @@ export function RatingChart({ points }: { points: RatingPoint[] }) {
             d={path}
             fill="none"
             stroke="rgb(var(--accent-hi-rgb))"
-            strokeWidth={1.5}
+            strokeWidth={2}
             strokeLinejoin="round"
             strokeLinecap="round"
+            vectorEffect="non-scaling-stroke"
           />
 
           {hover != null && (
@@ -140,9 +142,17 @@ export function RatingChart({ points }: { points: RatingPoint[] }) {
                 stroke="var(--paper-dim)"
                 strokeOpacity={0.45}
                 strokeWidth={1}
+                vectorEffect="non-scaling-stroke"
               />
-              {/* Accent node ringed in the surface tone, echoing Lichess's
-                  pale hover border. */}
+              {/* Accent node with a soft halo + surface-toned ring, echoing
+                  Lichess's pale hover dot. */}
+              <circle
+                cx={xs[hover]}
+                cy={ys[hover]}
+                r={7}
+                fill="rgb(var(--accent-hi-rgb))"
+                fillOpacity={0.18}
+              />
               <circle
                 cx={xs[hover]}
                 cy={ys[hover]}

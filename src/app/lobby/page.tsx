@@ -127,7 +127,8 @@ export default function LobbyPage() {
       <section className="max-w-7xl mx-auto px-5 sm:px-6">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="font-display text-4xl sm:text-5xl">Lobby</h1>
+            <p className="kicker smallcaps text-[10px] mb-3">Find a game</p>
+            <h1 className="masthead text-4xl sm:text-5xl text-parchment-50">Lobby</h1>
             <p className="mt-2 text-parchment-200">
               Find an opponent, challenge a friend, or watch a live game.
             </p>
@@ -151,7 +152,7 @@ export default function LobbyPage() {
 
             {/* Step 2: play a specific person via a shared code. */}
             <div className="plate p-5 sm:p-6">
-              <div className="font-display text-2xl text-parchment">Play a friend</div>
+              <div className="sec-title font-display text-2xl text-parchment">Play a friend</div>
               <p className="mt-1 text-sm text-parchment-300">
                 Create a game and send them the code, or enter the code they sent you.
               </p>
@@ -191,7 +192,7 @@ export default function LobbyPage() {
                 friend games waiting for an opponent. */}
             <div className="plate p-5 sm:p-6">
               <div className="flex items-center justify-between gap-3">
-                <div className="font-display text-2xl text-parchment">Open challenges</div>
+                <div className="sec-title font-display text-2xl text-parchment">Open challenges</div>
                 <div className="flex items-center gap-3">
                   <Link
                     href="/friend"
@@ -236,7 +237,7 @@ export default function LobbyPage() {
             {/* Step 3 (optional): watch a game that's happening right now. */}
             <div className="plate p-5 sm:p-6">
               <div className="flex items-center justify-between gap-3">
-                <div className="font-display text-2xl text-parchment">Live games</div>
+                <div className="sec-title font-display text-2xl text-parchment">Live games</div>
                 <span className="smallcaps text-[10px] text-parchment-400">
                   {lobby ? `${lobby.games.length} in play` : "…"}
                 </span>
@@ -271,7 +272,7 @@ export default function LobbyPage() {
           {/* Who's here right now. */}
           <aside className="plate p-5 h-fit">
             <div className="flex items-center justify-between gap-3">
-              <div className="font-display text-xl text-parchment">Online now</div>
+              <div className="sec-title font-display text-xl text-parchment">Online now</div>
             </div>
             {!lobby ? (
               <>
