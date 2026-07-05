@@ -2454,12 +2454,20 @@ const TIER7: Buff[] = [
   def({ id: "nerf_reversal", name: "Nerf Reversal", description: "Flip your nerf into its inverse benefit where one exists.", tier: 7, category: "nerf" }),
 ];
 
+/** Copy of the board's piece placement (Perfect Rewind snapshots). */
+function snapshotPieces(board: BoardState): BoardState["pieces"] {
+  return board.pieces.map((p) => (p ? { ...p } : null));
+}
+
 // ---------------------------------------------------------------------------
 // TIER 8 — game-warping, rare
 // ---------------------------------------------------------------------------
 
 const TIER8: Buff[] = [
-  def({ id: "total_atomic", name: "Total Atomic", description: "Every capture by either of your pieces explodes and chains, for the game.", tier: 8, category: "attack" }),
+  def(
+    { id: "total_atomic", name: "Total Atomic", description: "Every capture by your pieces explodes and chains, for the game.", tier: 8, category: "attack" },
+    captureExplosion({ chain: true }),
+  ),
   def(
     { id: "amazon_army", name: "Amazon Army", description: "All your knights and bishops become amazons for the game.", tier: 8, category: "movement" },
     permanentAugment((_m, inst, api) =>
@@ -2471,7 +2479,33 @@ const TIER8: Buff[] = [
       ),
     ),
   ),
-  def({ id: "perfect_rewind", name: "Perfect Rewind", description: "Reset the board to any position from the last eight moves, once.", tier: 8, category: "tempo" }),
+  def(
+    { id: "perfect_rewind", name: "Perfect Rewind", description: "Rewind all pieces to where they stood eight half-moves ago, once.", tier: 8, category: "tempo" },
+    {
+      kind: "activated",
+      init: (inst, api) => {
+        inst.state.snaps = [snapshotPieces(api.board)];
+      },
+      onMovePlayed: (inst, _move, api) => {
+        const snaps = inst.state.snaps as BoardState["pieces"][];
+        snaps.push(snapshotPieces(api.board));
+        while (snaps.length > 9) snaps.shift();
+      },
+      effect: (inst, api) => {
+        const snap = (inst.state.snaps as BoardState["pieces"][] | undefined)?.[0];
+        if (!snap) return;
+        for (let sq = 0; sq < 64; sq++) {
+          api.removePiece(sq);
+          const p = snap[sq];
+          if (p) api.place(sq, p.type, p.color);
+        }
+      },
+      status: (inst) => {
+        const back = ((inst.state.snaps as unknown[])?.length ?? 1) - 1;
+        return back >= 8 ? "rewinds eight half-moves" : `rewinds ${back} half-moves so far`;
+      },
+    },
+  ),
   def(
     { id: "divine_legion", name: "Divine Legion", description: "Place a queen on any empty square in your half, once.", tier: 8, category: "pieces" },
     placePieces(["q"], anyHalfZone),
@@ -2484,7 +2518,12 @@ const TIER8: Buff[] = [
     { id: "total_annihilation", name: "Total Annihilation", description: "Remove any three enemy pieces below the queen from the board.", tier: 8, category: "attack" },
     removeEnemies(3, ["p", "n", "b", "r"]),
   ),
-  def({ id: "immortal_king", name: "Immortal King", description: "Your king cannot be checkmated for the rest of the game (only stalemate or resignation ends it).", tier: 8, category: "protection" }),
+  def(
+    { id: "immortal_king", name: "Immortal King", description: "Your king cannot be captured for the rest of the game. You can still lose by running out of moves.", tier: 8, category: "protection" },
+    instant((_inst, api) => {
+      addEffect(api, { kind: "king_safe", owner: api.me, turns: null });
+    }),
+  ),
   def(
     { id: "absolute_nullify", name: "Absolute Nullify", description: "Cancel your opponent's unused and temporary buffs and block their next draft. Locked-in upgrades resist.", tier: 8, category: "draft" },
     instant((_inst, api) => {
@@ -2500,12 +2539,33 @@ const TIER8: Buff[] = [
       }
     }),
   ),
-  def({ id: "reality_warp", name: "Reality Warp", description: "Teleport any six of your pieces anywhere you like, once.", tier: 8, category: "movement" }),
+  def(
+    { id: "reality_warp", name: "Reality Warp", description: "Teleport any six of your pieces anywhere you like, once.", tier: 8, category: "movement" },
+    relocateMany(6, anyDest),
+  ),
   def(
     { id: "sundering", name: "Sundering", description: "Three files become impassable to enemies for the rest of the game.", tier: 8, category: "protection" },
     barLine("file", null, 3),
   ),
-  def({ id: "queens_apocalypse", name: "Queen's Apocalypse", description: "Your queen captures every enemy piece on the board in one move, once (excluding the king).", tier: 8, category: "attack" }),
+  def(
+    { id: "queens_apocalypse", name: "Queen's Apocalypse", description: "Your queen wipes every enemy piece off the board except the king, once. Requires a queen.", tier: 8, category: "attack" },
+    activated(
+      (_inst, api, picks) =>
+        picks.length > 0
+          ? null
+          : {
+              kind: "square",
+              label: "Choose the queen who brings the apocalypse",
+              squares: mySquares(api.board, api.me, "q"),
+            },
+      (_inst, api, picks) => {
+        if (picks[0]?.square == null) return;
+        for (const sq of mySquares(api.board, api.opp)) {
+          if (api.board.pieces[sq]!.type !== "k") api.removePiece(sq);
+        }
+      },
+    ),
+  ),
   def(
     { id: "time_prison", name: "Time Prison", description: "Your opponent skips their next four turns, once.", tier: 8, category: "tempo" },
     skipOpponent(4),
@@ -2565,10 +2625,43 @@ const TIER8: Buff[] = [
       addEffect(api, { kind: "king_only", against: api.opp, turns: 2 });
     }),
   ),
-  def({ id: "living_god", name: "Living God", description: "One piece gains amazon movement, is uncapturable, and explodes on capture, for the game.", tier: 8, category: "movement" }),
-  def({ id: "void_realm", name: "The Void Realm", description: "Three squares you pick swallow any enemy piece that enters, for the game.", tier: 8, category: "attack" }),
-  def({ id: "grand_reset", name: "Grand Reset", description: "Restore your entire army to full starting strength, once.", tier: 8, category: "pieces" }),
-  def({ id: "draft_supremacy", name: "Draft Supremacy", description: "Choose every card in both players' next drafts.", tier: 8, category: "draft" }),
+  def(
+    { id: "living_god", name: "Living God", description: "One piece gains amazon movement, is uncapturable, and explodes on capture, for the game.", tier: 8, category: "movement" },
+    bindPiece("Choose your living god", bindCandidates(), {
+      shieldTurns: null,
+      gen: amazonGen,
+      explodeOnCapture: true,
+    }),
+  ),
+  def(
+    { id: "void_realm", name: "The Void Realm", description: "Three squares you pick swallow any enemy piece except a king that enters, for the game.", tier: 8, category: "attack" },
+    voidSquares(3, null),
+  ),
+  def(
+    { id: "grand_reset", name: "Grand Reset", description: "Summon replacements in your half until your army is back to full starting strength, once.", tier: 8, category: "pieces" },
+    instant((_inst, api) => {
+      const full: [PieceType, number][] = [["q", 1], ["r", 2], ["b", 2], ["n", 2], ["p", 8]];
+      const spots = emptySquares(api.board, (sq) => inHalf(api.me, sq)).sort(
+        (a, b) => relRank(api.me, a) - relRank(api.me, b),
+      );
+      for (const [type, want] of full) {
+        let missing = want - mySquares(api.board, api.me, type).length;
+        while (missing > 0) {
+          const at = spots.findIndex((sq) => type !== "p" || pawnRankOk(sq));
+          if (at < 0) return;
+          api.place(spots.splice(at, 1)[0], type, api.me);
+          missing--;
+        }
+      }
+    }),
+  ),
+  def(
+    { id: "draft_supremacy", name: "Draft Supremacy", description: "Take both cards in your next draft while your opponent's next draft is skipped.", tier: 8, category: "draft" },
+    instant((_inst, api) => {
+      api.mine.flags.takeBoth = (api.mine.flags.takeBoth ?? 0) + 1;
+      api.theirs.flags.blockedDrafts = (api.theirs.flags.blockedDrafts ?? 0) + 1;
+    }),
+  ),
   def(
     { id: "eternal_freeze", name: "Eternal Freeze", description: "Freeze all enemy pieces for 3 full turns.", tier: 8, category: "tempo" },
     freezeAllEnemies(3),
@@ -2589,7 +2682,10 @@ const TIER8: Buff[] = [
       }
     }),
   ),
-  def({ id: "total_warp", name: "Total Warp", description: "Teleport your whole army anywhere legal, once.", tier: 8, category: "movement" }),
+  def(
+    { id: "total_warp", name: "Total Warp", description: "Teleport your whole army except the king anywhere you like, once.", tier: 8, category: "movement" },
+    relocateMany(15, anyDest),
+  ),
   def(
     { id: "extinction", name: "Extinction", description: "Remove every enemy minor and pawn piece from the board.", tier: 8, category: "attack" },
     instant((_inst, api) => {
@@ -2602,10 +2698,96 @@ const TIER8: Buff[] = [
     { id: "absolute_aegis", name: "Absolute Aegis", description: "Your entire army is uncapturable for 2 full turns.", tier: 8, category: "protection" },
     shieldArmy(2),
   ),
-  def({ id: "titan_legion", name: "Titan Legion", description: "Three of your pieces become uncapturable amazons for the game.", tier: 8, category: "movement" }),
-  def({ id: "endless_turn", name: "Endless Turn", description: "Take moves until you make a capture, once (minimum one move).", tier: 8, category: "tempo" }),
-  def({ id: "checkmate_denial", name: "Checkmate Denial", description: "You cannot lose for the next 5 turns by any means short of resignation.", tier: 8, category: "protection" }),
-  def({ id: "genesis", name: "Genesis", description: "Reset the entire board to the opening position with your nerf removed, once.", tier: 8, category: "pieces" }),
+  def(
+    { id: "titan_legion", name: "Titan Legion", description: "Three of your pieces become uncapturable amazons for the game.", tier: 8, category: "movement" },
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (_inst, api, picks) =>
+        picks.length >= 3
+          ? null
+          : {
+              kind: "square",
+              label: `Choose a titan (${picks.length + 1}/3)`,
+              squares: bindCandidates()(api).filter((sq) => !picks.some((k) => k.square === sq)),
+            },
+      effect: (inst, api, picks) => {
+        const sqs = picks.map((k) => k.square).filter((s): s is Square => s != null);
+        if (!sqs.length) return;
+        inst.state.sqs = sqs;
+        addEffect(api, { kind: "shield", owner: api.me, squares: [...sqs], turns: null });
+      },
+      augmentMoves: (moves, inst, api) => {
+        const sqs = inst.state.sqs as Square[] | undefined;
+        if (!sqs?.length) return;
+        for (const sq of sqs) {
+          const p = api.board.pieces[sq];
+          if (p && p.color === api.me) addNovel(moves, amazonGen(api.board, sq, inst.id));
+        }
+      },
+      onMovePlayed: (inst, move) => {
+        const sqs = inst.state.sqs as Square[] | undefined;
+        if (!sqs?.length) return;
+        const next = sqs
+          .map((sq) => {
+            if (move.capturedSquare === sq && move.from !== sq) return null;
+            if (move.from === sq) return move.to;
+            if (move.to === sq && move.from !== sq) return null;
+            return sq;
+          })
+          .filter((s): s is Square => s != null);
+        inst.state.sqs = next;
+        if (!next.length) inst.spent = true;
+      },
+      status: (inst) => {
+        const sqs = inst.state.sqs as Square[] | undefined;
+        if (!sqs?.length) return "activate to choose three pieces";
+        return `titans at ${sqs.map((sq) => `${"abcdefgh"[FILE(sq)]}${RANK(sq) + 1}`).join(", ")}`;
+      },
+    },
+  ),
+  def(
+    { id: "endless_turn", name: "Endless Turn", description: "Take moves until you make a capture, once (minimum one move).", tier: 8, category: "tempo" },
+    {
+      kind: "activated",
+      freeAction: true,
+      spendOnUse: false,
+      effect: (inst) => {
+        inst.state.active = true;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (!inst.state.active || move.color !== api.me) return;
+        if (move.captured) inst.spent = true;
+        else api.bs.extraMoves[api.me] += 1;
+      },
+      status: (inst) => (inst.state.active ? "moving until you capture" : null),
+    },
+  ),
+  def(
+    { id: "checkmate_denial", name: "Checkmate Denial", description: "Your king cannot be captured for the next 5 turns.", tier: 8, category: "protection" },
+    instant((_inst, api) => {
+      addEffect(api, { kind: "king_safe", owner: api.me, turns: 5 });
+    }),
+  ),
+  def(
+    { id: "genesis", name: "Genesis", description: "Reset the entire board to the opening position with your nerf removed, once.", tier: 8, category: "pieces" },
+    activatedSimple((_inst, api) => {
+      const BACK: PieceType[] = ["r", "n", "b", "q", "k", "b", "n", "r"];
+      for (let sq = 0; sq < 64; sq++) api.removePiece(sq);
+      for (let f = 0; f < 8; f++) {
+        api.place(SQ(f, 0), BACK[f], "w");
+        api.place(SQ(f, 1), "p", "w");
+        api.place(SQ(f, 6), "p", "b");
+        api.place(SQ(f, 7), BACK[f], "b");
+      }
+      api.bs.effects = [];
+      api.board.castling.wk = api.board.castling.wq = true;
+      api.board.castling.bk = api.board.castling.bq = true;
+      api.board.epTarget = null;
+      api.board.halfmove = 0;
+      api.removeMyNerf();
+    }),
+  ),
 ];
 
 // ---------------------------------------------------------------------------
