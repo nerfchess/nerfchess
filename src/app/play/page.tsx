@@ -49,7 +49,7 @@ export default function PlayPage() {
       nerf: "random",
       t: String(baseSec),
       inc: String(incrementSec),
-      // Draft games are casual until a separate Draft rating exists.
+      // Bot games are casual; only queue games are rated (per mode).
       rated: "0",
       mode: gameMode,
     });
@@ -110,9 +110,6 @@ export default function PlayPage() {
 
         <div className="mt-6">
           <QueueButton />
-          <p className="mt-1.5 text-[11px] text-parchment-400">
-            Quick pairing runs <span className="text-mode-buffGlow">Buff</span> mode.
-          </p>
         </div>
 
         <div className="mt-4">

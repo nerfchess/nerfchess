@@ -5,7 +5,7 @@
 // only apply to rated games where both seats belong to accounts.
 
 import { glickoUpdatePair, GlickoRating } from "../glicko";
-import { categoryForTimeControl, type SpeedCategory } from "../speed";
+import { categoryForTimeControl, type RatingCategory } from "../speed";
 
 export interface FinishedGameRecord {
   id: string;
@@ -24,6 +24,10 @@ export interface FinishedGameRecord {
   rated: boolean;
   /** Rules variant the game was played under; omitted means classic. */
   ruleset?: string;
+  /** Which rating bucket the game counts toward. Mode games (Draft nerf/buff)
+   *  pass their mode here; omitted falls back to the speed bucket for the
+   *  time control (legacy classic behavior). */
+  ratingCategory?: RatingCategory;
   startedAt: number;
   completedAt: number;
 }
@@ -41,7 +45,7 @@ interface UserRatingRow {
 // rating (users.rating), which is how pre-split accounts migrate: the old
 // value becomes the starting point of every bucket, then each bucket moves
 // independently.
-export async function seedCategoryRatings(db: D1Database, userIds: string[], category: SpeedCategory) {
+export async function seedCategoryRatings(db: D1Database, userIds: string[], category: RatingCategory) {
   const placeholders = userIds.map(() => "?").join(",");
   await db
     .prepare(
@@ -58,7 +62,7 @@ export type CategoryRating = GlickoRating & { games: number };
 export async function loadCategoryRatings(
   db: D1Database,
   userIds: string[],
-  category: SpeedCategory,
+  category: RatingCategory,
 ): Promise<Map<string, CategoryRating>> {
   const out = new Map<string, CategoryRating>();
   if (!userIds.length) return out;
@@ -95,8 +99,9 @@ export async function recordFinishedGame(
 
   const rated = game.rated && !!game.whiteUserId && !!game.blackUserId && game.winner !== null;
   // Which independent rating bucket this game counts toward. Only that
-  // bucket's rating moves; the other time controls are untouched.
-  const category = categoryForTimeControl(game.timeSec, game.incrementSec);
+  // bucket's rating moves; every other bucket is untouched. Mode games pass
+  // their mode ("nerf"/"buff"); everything else buckets by time control.
+  const category = game.ratingCategory ?? categoryForTimeControl(game.timeSec, game.incrementSec);
 
   if (rated) {
     const ratings = await loadCategoryRatings(db, [game.whiteUserId!, game.blackUserId!], category);
