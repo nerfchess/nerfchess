@@ -20,12 +20,33 @@ export function MoveList({
   showHeader?: boolean;
   footer?: ReactNode;
 }) {
-  const rows: { w: string; b: string }[] = [];
-  for (let i = 0; i < moves.length; i += 2) {
-    rows.push({
-      w: moveToSAN(moves[i]),
-      b: moves[i + 1] ? moveToSAN(moves[i + 1]) : "",
-    });
+  // Build rows by ACTUAL move color, not index parity. This variant lets a
+  // player move twice in a row (extra-move buffs like Onslaught), so pairing
+  // moves[i]/moves[i+1] as white/black shifts every later move into the wrong
+  // column and desyncs the numbers. Rule: a black move always closes its row;
+  // a second white move opens a new one. Consecutive same-color moves each get
+  // their own row, and a row holding only a black move shows "..." where white
+  // would be. Plies are the real 1-based indices so navigation stays correct.
+  type Cell = { san: string; ply: number } | null;
+  const rows: { num: number; w: Cell; b: Cell }[] = [];
+  {
+    let num = 1;
+    let cur: { num: number; w: Cell; b: Cell } = { num, w: null, b: null };
+    for (let i = 0; i < moves.length; i++) {
+      const cell: Cell = { san: moveToSAN(moves[i]), ply: i + 1 };
+      if (moves[i].color === "w") {
+        if (cur.w) {
+          rows.push(cur);
+          cur = { num: ++num, w: null, b: null };
+        }
+        cur.w = cell;
+      } else {
+        cur.b = cell;
+        rows.push(cur);
+        cur = { num: ++num, w: null, b: null };
+      }
+    }
+    if (cur.w || cur.b) rows.push(cur);
   }
   const canBack = currentPly > 0;
   const canForward = currentPly < moves.length;
@@ -113,23 +134,31 @@ export function MoveList({
               (compact ? "grid-cols-[1.35rem_minmax(0,1fr)_minmax(0,1fr)]" : "grid-cols-[2.2rem_1fr_1fr]")
             }
           >
-            <span className="text-parchment-400/70">{i + 1}.</span>
-            <MoveCell
-              ply={i * 2 + 1}
-              selected={currentPly === i * 2 + 1}
-              onSelect={onPlyChange}
-              selectedRef={selectedMoveRef}
-            >
-              {row.w}
-            </MoveCell>
-            <MoveCell
-              ply={i * 2 + 2}
-              selected={currentPly === i * 2 + 2}
-              onSelect={onPlyChange}
-              selectedRef={selectedMoveRef}
-            >
-              {row.b}
-            </MoveCell>
+            <span className="text-parchment-400/70">{row.num}.</span>
+            {row.w ? (
+              <MoveCell
+                ply={row.w.ply}
+                selected={currentPly === row.w.ply}
+                onSelect={onPlyChange}
+                selectedRef={selectedMoveRef}
+              >
+                {row.w.san}
+              </MoveCell>
+            ) : (
+              <span className="px-1 py-0.5 text-parchment-400/50 select-none">...</span>
+            )}
+            {row.b ? (
+              <MoveCell
+                ply={row.b.ply}
+                selected={currentPly === row.b.ply}
+                onSelect={onPlyChange}
+                selectedRef={selectedMoveRef}
+              >
+                {row.b.san}
+              </MoveCell>
+            ) : (
+              <span />
+            )}
           </div>
         ))}
       </div>
