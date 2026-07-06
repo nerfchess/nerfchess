@@ -263,12 +263,34 @@ export interface BuffApi {
   removeMyNerf: () => void;
 }
 
+// Declarative board-visual hint for constraint cards whose mechanics are
+// opaque move filters: names WHICH pieces the curse touches and the motif the
+// board draws on them while it runs. Display metadata only; never consulted
+// by move generation, so it cannot desync anything.
+export interface CardFx {
+  /**
+   * jail      — piece cannot move (chains)
+   * muzzle    — piece cannot capture
+   * anchor    — movement range shortened
+   * blindfold — vision / targeting restricted, or square access barred
+   * slow      — tempo restrictions (delays, skips, cadence)
+   */
+  motif: "jail" | "muzzle" | "anchor" | "blindfold" | "slow";
+  /** Piece types the curse touches; "all" = the whole army (kings included
+   * only when the mechanic truly touches the king). Omit for effects that
+   * are not piece-scoped (draft locks etc.); those show no board motif. */
+  pieces?: PieceType[] | "all";
+}
+
 export interface Buff {
   id: string;
   name: string;
   description: string;
   /** One-line flavor text, shown quoted at the foot of the full card. */
   flavor?: string;
+  /** Board motif drawn on affected pieces while this card's constraint is
+   * active (see CardFx). Only meaningful for opponent-facing constraints. */
+  fx?: CardFx;
   /** Library tier; drafts may roll the card at a nearby tier. */
   tier: Tier;
   category: BuffCategory;
