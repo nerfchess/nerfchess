@@ -135,8 +135,13 @@ export default function ModPage() {
           <>
             <div className="flex items-end justify-between gap-4 flex-wrap">
               <h1 className="font-display text-4xl">Moderation</h1>
-              <span className="smallcaps text-xs text-parchment-400">
-                signed in as {me.username} · {me.role}
+              <span className="flex items-center gap-3">
+                <Link href="/mod/stats" className="text-sm text-gold-leaf hover:underline">
+                  Site stats
+                </Link>
+                <span className="smallcaps text-xs text-parchment-400">
+                  signed in as {me.username} · {me.role}
+                </span>
               </span>
             </div>
 

@@ -3,10 +3,12 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { FormEvent, useCallback, useEffect, useState } from "react";
-import { CalendarDays, Crown, LogIn, LogOut, Trash2, Trophy, Users } from "lucide-react";
+import { CalendarDays, Crown, LogIn, LogOut, Paintbrush, Trash2, Trophy, Users } from "lucide-react";
+import { ClubIcon } from "@/components/ClubIcon";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { SiteHeader } from "@/components/SiteHeader";
 import { AccountUser, fetchMe } from "@/lib/authClient";
+import { CLUB_ICON_COLORS, CLUB_ICON_EMOJI, encodeClubIcon, parseClubIcon } from "@/lib/clubIcons";
 import type { ClubMemberRow, ClubPostRow, ClubTournamentRow } from "@/app/api/clubs/[slug]/route";
 
 // Club home, lichess-teams-style: description and members on one side, the
@@ -18,6 +20,7 @@ type ClubDetail = {
     slug: string;
     name: string;
     description: string;
+    icon: string;
     owner_user_id: string;
     owner_name: string;
     created_at: number;
@@ -27,6 +30,121 @@ type ClubDetail = {
   tournaments: ClubTournamentRow[];
   myRole: string | null;
 };
+
+// Owner-only icon picker: a curated grid of emoji and a row of accent colors,
+// saved to the club as one "emoji|colorId" string via PATCH /api/clubs/[slug].
+function ClubIconPicker({
+  slug,
+  current,
+  clubName,
+  onSaved,
+  onClose,
+}: {
+  slug: string;
+  current: string;
+  clubName: string;
+  onSaved: (icon: string) => void;
+  onClose: () => void;
+}) {
+  const parsed = parseClubIcon(current);
+  const [emoji, setEmoji] = useState(parsed?.emoji ?? CLUB_ICON_EMOJI[0]);
+  const [colorId, setColorId] = useState(parsed?.color.id ?? CLUB_ICON_COLORS[1].id);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  const save = async (value: string) => {
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const res = await fetch(`/api/clubs/${encodeURIComponent(slug)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ icon: value }),
+      });
+      const body = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) throw new Error(body.error || "Could not save the icon.");
+      onSaved(value);
+      onClose();
+    } catch (e) {
+      setSaveError(e instanceof Error ? e.message : "Could not save the icon.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="plate mt-5 p-5">
+      <div className="flex items-center gap-4">
+        <ClubIcon icon={encodeClubIcon(emoji, colorId)} name={clubName} size={56} />
+        <div>
+          <div className="font-display text-xl text-parchment">Club icon</div>
+          <p className="mt-0.5 text-sm text-parchment-400">Pick an emblem and a color for {clubName}.</p>
+        </div>
+      </div>
+
+      <div className="mt-4 grid grid-cols-8 gap-1.5 sm:grid-cols-12">
+        {CLUB_ICON_EMOJI.map((e) => (
+          <button
+            key={e}
+            type="button"
+            onClick={() => setEmoji(e)}
+            aria-label={`Icon ${e}`}
+            aria-pressed={emoji === e}
+            className={`grid h-10 w-full cursor-pointer place-items-center rounded-[10px] border text-lg leading-none transition-colors ${
+              emoji === e
+                ? "border-gold/70 bg-gold/15"
+                : "border-white/10 bg-ink-900/40 hover:border-white/25 hover:bg-white/5"
+            }`}
+          >
+            {e}
+          </button>
+        ))}
+      </div>
+
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        {CLUB_ICON_COLORS.map((c) => (
+          <button
+            key={c.id}
+            type="button"
+            onClick={() => setColorId(c.id)}
+            aria-label={`Color ${c.label}`}
+            aria-pressed={colorId === c.id}
+            title={c.label}
+            className={`h-8 w-8 cursor-pointer rounded-full border-2 transition-transform hover:scale-110 ${
+              colorId === c.id ? "border-parchment-50" : "border-transparent"
+            }`}
+            style={{ background: c.hex }}
+          />
+        ))}
+      </div>
+
+      <div className="mt-5 flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={() => save(encodeClubIcon(emoji, colorId))}
+          disabled={saving}
+          className="btn-leaf px-4 py-2 font-display text-sm font-semibold disabled:opacity-50"
+        >
+          {saving ? "Saving..." : "Save icon"}
+        </button>
+        {parsed && (
+          <button
+            type="button"
+            onClick={() => save("")}
+            disabled={saving}
+            className="btn-ghost px-4 py-2 font-display text-sm disabled:opacity-50"
+          >
+            Remove icon
+          </button>
+        )}
+        <button type="button" onClick={onClose} className="btn-ghost px-4 py-2 font-display text-sm">
+          Cancel
+        </button>
+        {saveError && <span className="text-sm text-oxblood-glow">{saveError}</span>}
+      </div>
+    </div>
+  );
+}
 
 function timeAgo(at: number): string {
   const s = Math.max(1, Math.floor((Date.now() - at) / 1000));
@@ -47,6 +165,7 @@ export default function ClubPage() {
   const [busy, setBusy] = useState(false);
   const [postText, setPostText] = useState("");
   const [postError, setPostError] = useState<string | null>(null);
+  const [pickingIcon, setPickingIcon] = useState(false);
 
   const load = useCallback(async () => {
     const res = await fetch(`/api/clubs/${encodeURIComponent(slug)}`);
@@ -140,7 +259,9 @@ export default function ClubPage() {
         ) : (
           <>
             <div className="flex flex-wrap items-end justify-between gap-3">
-              <div className="min-w-0">
+              <div className="flex min-w-0 items-center gap-4">
+                <ClubIcon icon={club.icon} name={club.name} size={64} />
+                <div className="min-w-0">
                 <h1 className="truncate font-display text-4xl text-parchment-50 sm:text-5xl">{club.name}</h1>
                 <p className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-parchment-400">
                   <span className="flex items-center gap-1.5">
@@ -156,8 +277,17 @@ export default function ClubPage() {
                     <CalendarDays size={13} /> since {new Date(club.created_at).toLocaleDateString()}
                   </span>
                 </p>
+                </div>
               </div>
               <div className="flex gap-2">
+                {mayModerate && (
+                  <button
+                    onClick={() => setPickingIcon((v) => !v)}
+                    className="btn-ghost flex items-center gap-1.5 px-4 py-2 font-display text-sm"
+                  >
+                    <Paintbrush size={14} /> {parseClubIcon(club.icon) ? "Change icon" : "Pick an icon"}
+                  </button>
+                )}
                 {me && !isMember && (
                   <button
                     onClick={() => membership("join")}
@@ -186,6 +316,16 @@ export default function ClubPage() {
                 )}
               </div>
             </div>
+
+            {pickingIcon && (
+              <ClubIconPicker
+                slug={club.slug}
+                current={club.icon}
+                clubName={club.name}
+                onSaved={(icon) => setData((d) => (d ? { ...d, club: { ...d.club, icon } } : d))}
+                onClose={() => setPickingIcon(false)}
+              />
+            )}
 
             {error && (
               <div className="mt-5 plate border-oxblood-glow/60 bg-oxblood/15 px-4 py-3 text-sm text-parchment">

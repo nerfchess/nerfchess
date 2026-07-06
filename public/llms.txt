@@ -1,0 +1,32 @@
+# Nerf Chess
+
+> Nerf Chess (nerfchess.com) is a free online chess variant played in the browser. It has two modes: Nerf mode, where every player secretly carries a handicap rule ("nerf") revealed only when the game ends, and Buff mode, where nobody is handicapped and both players draft power-up cards every 5 moves. In both modes the game ends by capturing the king: there is no checkmate and no stalemate. The concept behind Nerf mode is often called "drawback chess".
+
+Key facts:
+
+- Free to play, browser-based, no download. Bot games and friend games (via a five-character code) need no account.
+- Nerf mode: each player picks one secret handicap from two cards before the first move. Every 5 of their own moves they draft a card: usually a hex (a curse cast on the opponent), sometimes a boon (relief from their own nerf) or a one-use item. The opponent's nerf and picks stay hidden until the game ends, so deduction is half the game.
+- Buff mode: no handicaps. Both players draft a buff every 5 moves and build the stronger army. Buffs are passive, instant, or activated; activating one usually costs your turn.
+- Cards and rules carry difficulty tiers I through VIII: Trivial, Easy, Common, Severe, Brutal, Cruel, Punishing, Unhinged. Offers grow stronger over the game; skipping a draft banks a one-tier-stronger next offer.
+- Win condition: physically capture the enemy king. Kings may move into attacked squares and castle through, into, or out of check.
+- Over 400 cards and rules are browsable in the codex.
+- Queue games are rated, with separate rating pools for Nerf and Buff mode. Friend games are casual.
+
+## Guide
+
+- [What is Nerf Chess?](https://nerfchess.com/guide): overview of the game and both modes
+- [How to play](https://nerfchess.com/guide/how-to-play): the five house rules and the five card types
+- [Nerf mode](https://nerfchess.com/guide/nerf-mode): secret handicaps and the hex draft
+- [Buff mode](https://nerfchess.com/guide/buff-mode): power-up drafting, tiers, and fairness rules
+- [Drawback chess](https://nerfchess.com/guide/drawback-chess): how Nerf Chess relates to the drawback chess concept
+- [Chess variants](https://nerfchess.com/guide/chess-variants): where Nerf Chess fits among popular variants
+- [Glossary](https://nerfchess.com/guide/glossary): definitions of nerf, buff, hex, boon, bank, tier, and more
+
+## Play
+
+- [Play vs the bot](https://nerfchess.com/play)
+- [Play online](https://nerfchess.com/lobby)
+- [Card and rule codex](https://nerfchess.com/codex)
+- [Tutorial](https://nerfchess.com/tutorial)
+- [FAQ](https://nerfchess.com/faq)
+- [About](https://nerfchess.com/about)

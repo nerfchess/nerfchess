@@ -103,8 +103,9 @@ export function LockInCountdown({
   );
 }
 
-/** The draft clock as its own floating glass window, pinned above the draft
- * panel: a ring that drains with the free window plus big tabular digits.
+/** The draft clock as its own glass chip, sitting centered immediately above
+ * the draft panel (they share a flex column, so the chip travels with the
+ * plate): a ring that drains with the free window plus big tabular digits.
  * Separate from the card panel so time pressure reads at a glance without
  * crowding the cards. */
 function DraftTimerWindow({ deadline, onExpire }: { deadline: number; onExpire?: () => void }) {
@@ -116,11 +117,7 @@ function DraftTimerWindow({ deadline, onExpire }: { deadline: number; onExpire?:
   // r=15.5 keeps the 2.5-width stroke inside the 36px viewBox.
   const CIRC = 2 * Math.PI * 15.5;
   return (
-    <div
-      role="timer"
-      aria-label="Draft lock-in timer"
-      className="pointer-events-none fixed left-1/2 top-3 z-[60] -translate-x-1/2"
-    >
+    <div role="timer" aria-label="Draft lock-in timer" className="pointer-events-none shrink-0">
       <div className={"draft-timer flex items-center gap-3 px-4 py-2 " + (urgent ? "draft-timer--urgent" : "")}>
         <svg width="36" height="36" viewBox="0 0 36 36" aria-hidden className="-rotate-90">
           <circle cx="18" cy="18" r="15.5" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="2.5" />
@@ -305,7 +302,7 @@ export function DraftOverlay({
             <button
               onClick={chosen == null ? onBank : undefined}
               disabled={chosen != null}
-              className="flex-1 border border-white/15 bg-white/[0.03] px-3 py-1.5 font-display text-[11px] font-semibold tracking-wide text-parchment-200 transition hover:border-gold/50 hover:text-gold-leaf disabled:opacity-40"
+              className="flex-1 rounded-lg border border-white/15 bg-white/[0.03] px-3 py-1.5 font-display text-[11px] font-semibold tracking-wide text-parchment-200 transition hover:border-gold/50 hover:text-gold-leaf disabled:opacity-40"
               title="Skip this draft; your next one pulls from a tier higher"
             >
               Skip &amp; bank
@@ -318,18 +315,22 @@ export function DraftOverlay({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-3 sm:px-4">
-      {deadline != null && <DraftTimerWindow deadline={deadline} onExpire={handleExpire} />}
-      <motion.div
-        initial={{ opacity: 0, y: 16, scale: 0.98 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        className="plate min-w-0 w-full max-w-2xl max-h-[86dvh] overflow-y-auto overflow-x-hidden p-5 sm:p-8 lg:max-w-3xl"
-      >
+      {/* Timer and panel share one column: the clock chip sits centered right
+          above the plate with a small gap and moves with it. */}
+      <div className="flex min-w-0 w-full max-w-2xl flex-col items-center gap-2.5 lg:max-w-3xl">
+        {deadline != null && <DraftTimerWindow deadline={deadline} onExpire={handleExpire} />}
+        <motion.div
+          initial={{ opacity: 0, y: 16, scale: 0.98 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          className="draft-frame min-w-0 w-full"
+        >
+          <div className="plate draft-panel max-h-[78dvh] w-full overflow-y-auto overflow-x-hidden p-5 sm:p-8">
         <div className="flex items-center justify-between gap-4">
           <div className="smallcaps text-[11px] text-parchment-400">{nounCap} draft #{offer.index}</div>
           {oppLockedIn && (
             <div
               role="status"
-              className="flex items-center gap-1.5 border border-verdigris-glow/50 bg-verdigris/10 px-2 py-0.5"
+              className="flex items-center gap-1.5 rounded-full border border-verdigris-glow/50 bg-verdigris/10 px-2.5 py-0.5"
             >
               <span aria-hidden className="text-[11px] text-verdigris-glow">✓</span>
               <span className="font-display text-[11px] font-semibold text-verdigris-glow">
@@ -350,7 +351,7 @@ export function DraftOverlay({
             {takeBoth && (
               <div
                 role="status"
-                className="inline-flex items-center gap-2 border border-gold/60 bg-gold/15 px-3 py-1"
+                className="inline-flex items-center gap-2 rounded-full border border-gold/60 bg-gold/15 px-3 py-1"
               >
                 <span aria-hidden className="h-1.5 w-1.5 shrink-0 bg-gold-leaf animate-flicker" />
                 <span className="font-display text-xs font-bold tracking-wide text-gold-leaf">
@@ -359,7 +360,7 @@ export function DraftOverlay({
               </div>
             )}
             {bankedBonus && (
-              <div className="inline-flex items-center gap-2 border border-white/20 bg-white/[0.05] px-3 py-1">
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/[0.05] px-3 py-1">
                 <span className="font-display text-xs font-semibold tracking-wide text-parchment-200">
                   +1 tier from your banked skip
                 </span>
@@ -368,7 +369,9 @@ export function DraftOverlay({
           </div>
         )}
 
-        <div className={`mt-5 grid gap-3 lg:gap-4 ${offer.cards.length >= 3 ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
+        <div
+          className={`mt-5 grid items-stretch gap-3 lg:gap-4 ${offer.cards.length >= 3 ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}
+        >
           {offer.cards.map((card, i) => {
             const def = BUFF_BY_ID[card.id];
             if (!def) return null;
@@ -386,7 +389,7 @@ export function DraftOverlay({
                 // glints across. --enter-delay feeds the CSS sheen keyframe.
                 style={{ ["--enter-delay" as string]: `${i * 70}ms` }}
                 className={
-                  "draft-fx mx-auto w-full max-w-md sm:max-w-none " +
+                  "draft-fx mx-auto h-full w-full max-w-md sm:max-w-none " +
                   (selected === i && chosen == null ? "draft-fx--selected" : "")
                 }
                 // Higher-tier cards land with a touch more pop: a deeper rise
@@ -489,7 +492,9 @@ export function DraftOverlay({
             )}
           </div>
         )}
-      </motion.div>
+          </div>
+        </motion.div>
+      </div>
     </div>
   );
 }

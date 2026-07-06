@@ -5,6 +5,7 @@ import { Trophy } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { AccountUser, fetchMe } from "@/lib/authClient";
+import { achievementIcon } from "@/lib/achievementIcons";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { PlayerStatsPanel } from "@/components/PlayerStatsPanel";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -236,15 +237,7 @@ export default function ProfilePage() {
               <StatCard label="Member since" value={new Date(profile.user.createdAt).toLocaleDateString()} />
             </div>
 
-            <Link
-              href={`/achievements?u=${encodeURIComponent(profile.user.username)}`}
-              className="mt-2 plate p-3 flex items-center justify-between gap-3 hover:border-gold/40 transition"
-            >
-              <span className="flex items-center gap-2 font-display text-parchment-100">
-                <Trophy className="h-4 w-4 text-gold-leaf" strokeWidth={2} /> Achievements
-              </span>
-              <span className="smallcaps text-[10px] text-gold-leaf">View</span>
-            </Link>
+            <AchievementsStrip username={profile.user.username} />
 
             {profile.ratingHistory.length > 0 && (
               <RatingHistorySection points={profile.ratingHistory} />
@@ -277,6 +270,96 @@ export default function ProfilePage() {
         )}
       </section>
     </main>
+  );
+}
+
+interface StripAchievement {
+  id: string;
+  name: string;
+  icon: string;
+  rarity: "common" | "rare" | "epic" | "legendary";
+  unlocked: boolean;
+  unlockedAt: number | null;
+}
+
+const STRIP_ACCENT: Record<StripAchievement["rarity"], string> = {
+  legendary: "#e0b256",
+  epic: "#b78fd6",
+  rare: "#4a9fee",
+  common: "#7eb59a",
+};
+
+// A one-row trophy shelf: the player's most recent (rarest-first on ties)
+// unlocks and their earned/total count, linking to the full wall.
+function AchievementsStrip({ username }: { username: string }) {
+  const [data, setData] = useState<{
+    unlockedCount: number;
+    total: number;
+    recent: StripAchievement[];
+  } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/users/${encodeURIComponent(username)}/achievements`)
+      .then((res) =>
+        res.ok
+          ? (res.json() as Promise<{
+              unlockedCount: number;
+              total: number;
+              achievements: StripAchievement[];
+            }>)
+          : null,
+      )
+      .then((body) => {
+        if (cancelled || !body) return;
+        const rank = { legendary: 3, epic: 2, rare: 1, common: 0 } as const;
+        const recent = body.achievements
+          .filter((a) => a.unlocked)
+          .sort(
+            (x, y) =>
+              (y.unlockedAt ?? 0) - (x.unlockedAt ?? 0) || rank[y.rarity] - rank[x.rarity],
+          )
+          .slice(0, 6);
+        setData({ unlockedCount: body.unlockedCount, total: body.total, recent });
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [username]);
+
+  return (
+    <Link
+      href={`/achievements?u=${encodeURIComponent(username)}`}
+      className="mt-2 plate p-3 flex flex-wrap items-center justify-between gap-3 hover:border-gold/40 transition"
+    >
+      <span className="flex items-center gap-2 font-display text-parchment-100">
+        <Trophy className="h-4 w-4 text-sun-glow" strokeWidth={2} /> Achievements
+        {data && (
+          <span className="font-mono text-sm tabular-nums text-parchment-300">
+            {data.unlockedCount}
+            <span className="text-parchment-500">/{data.total}</span>
+          </span>
+        )}
+      </span>
+      <span className="flex items-center gap-2">
+        {data?.recent.map((a) => {
+          const Icon = achievementIcon(a.icon);
+          const accent = STRIP_ACCENT[a.rarity];
+          return (
+            <span
+              key={a.id}
+              title={a.name}
+              className="grid h-8 w-8 place-items-center rounded-md border"
+              style={{ borderColor: `${accent}66`, background: `${accent}1a` }}
+            >
+              <Icon className="h-4 w-4" style={{ color: accent }} strokeWidth={2} />
+            </span>
+          );
+        })}
+        <span className="smallcaps text-[10px] text-gold-leaf">View all</span>
+      </span>
+    </Link>
   );
 }
 

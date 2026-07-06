@@ -11,7 +11,7 @@ export function ModeBadge({ mode, compact }: { mode: DraftMode | undefined; comp
       : "border-mode-buff/40 bg-mode-buff/10 text-mode-buffGlow";
   const size = compact ? "px-1.5 py-px text-[8px]" : "px-2 py-0.5 text-[9px]";
   return (
-    <span className={`shrink-0 inline-flex items-center border smallcaps ${size} ${identity}`}>
+    <span className={`shrink-0 inline-flex items-center rounded-full border smallcaps ${size} ${identity}`}>
       {mode === "nerf" ? "Nerf" : "Buff"}
     </span>
   );

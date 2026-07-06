@@ -74,11 +74,18 @@ export function BuffCard({ buff, tier, status, spent, nullified, onClick, compac
       className={
         `relative plate draft-face overflow-hidden border tier-bg-${t} ` +
         (enterDelayMs != null ? "draft-in " : "") +
-        (compact ? "p-3 " : "p-4 ") +
+        // Full-size cards fill their grid cell as a column so every card in
+        // one draft offer lands the same height (description stretches, tier
+        // rows and bottoms align). Compact rows keep their natural height.
+        (compact ? "p-3 " : "flex h-full flex-col p-4 ") +
         (dead ? "opacity-45 " : "") +
         (glow && !dead ? "ring-1 ring-gold/40 shadow-leaf " : "") +
         (onClick && !dead
-          ? "cursor-pointer hover:border-gold/60 hover:-translate-y-0.5"
+          ? compact
+            ? "cursor-pointer hover:border-gold/60 hover:-translate-y-0.5"
+            : // Pickable full-size cards are candy: pop on hover, squash on
+              // press, tier-colored ring (all from .card-juicy, 14px corners).
+              "card-juicy"
           : "")
       }
     >
@@ -100,14 +107,19 @@ export function BuffCard({ buff, tier, status, spent, nullified, onClick, compac
           </div>
           <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
             <span className="inline-flex items-center gap-1 smallcaps text-[10px] text-parchment-400">
-              <CatIcon aria-hidden size={11} strokeWidth={2} className="opacity-70" />
+              <CatIcon
+                aria-hidden
+                size={compact ? 11 : 12}
+                strokeWidth={compact ? 2 : 2.5}
+                className={compact ? "opacity-70" : "opacity-95"}
+              />
               {CATEGORY_LABEL[buff.category]}
             </span>
             <TurnCostBadge cost={turnCost(buff)} />
           </div>
         </div>
         <span
-          className={`shrink-0 font-display font-bold px-2 py-0.5 rounded-full border tier-bg-${t} tier-${t} ${compact ? "text-[10px]" : "text-xs"}`}
+          className={`shrink-0 font-display font-bold px-2 py-0.5 rounded-full tier-bg-${t} tier-${t} ${compact ? "border text-[10px]" : "border-[1.5px] text-[13px]"}`}
           title={`Tier ${t}: ${TIER_LABEL[t]}`}
         >
           {TIER_ROMAN[t]}
@@ -121,7 +133,9 @@ export function BuffCard({ buff, tier, status, spent, nullified, onClick, compac
           <span className="font-display">{TIER_LABEL[t]}</span>
         </div>
       )}
-      <p className={`leading-snug text-parchment/90 ${compact ? "mt-1.5 text-[11px]" : "text-[13px]"}`}>
+      {/* flex-1 on full cards: the description absorbs the height difference,
+          so flavor/status footers pin to the aligned card bottoms. */}
+      <p className={`leading-snug text-parchment/90 ${compact ? "mt-1.5 text-[11px]" : "flex-1 text-[13px]"}`}>
         <GlossaryText text={buff.description} />
       </p>
       {/* Flavor line: the card's voice, quoted and dim, TCG-style. Full cards
@@ -145,7 +159,7 @@ export function BuffCard({ buff, tier, status, spent, nullified, onClick, compac
 
   if (!onClick || dead) return body;
   return (
-    <button type="button" onClick={onClick} className="block w-full text-left">
+    <button type="button" onClick={onClick} className="block h-full w-full text-left">
       {body}
     </button>
   );

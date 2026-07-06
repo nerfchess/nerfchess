@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
+import { ArrowRight, ChevronRight, Trophy, Tv, Users } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { useLobbySnapshot } from "@/lib/lobbyClient";
@@ -36,10 +37,34 @@ interface RecentGame {
   completedAt: number;
 }
 
+// Doors to the social spaces. Each carries its own accent (coral / sun /
+// mint) for the icon chip and the card-juicy hover ring, so the cards read
+// as big friendly buttons instead of quiet text blocks.
 const HUB_LINKS = [
-  { href: "/clubs", title: "Clubs", blurb: "Join a club or start your own." },
-  { href: "/tournaments", title: "Tournaments", blurb: "Arena events, open to everyone." },
-  { href: "/tv", title: "Nerf TV", blurb: "Watch the best live game right now." },
+  {
+    href: "/clubs",
+    title: "Clubs",
+    blurb: "Join a club or start your own.",
+    icon: Users,
+    hex: "#ef8a5f",
+    rgb: "239 138 95",
+  },
+  {
+    href: "/tournaments",
+    title: "Tournaments",
+    blurb: "Arena events, open to everyone.",
+    icon: Trophy,
+    hex: "#eec25e",
+    rgb: "238 194 94",
+  },
+  {
+    href: "/tv",
+    title: "Nerf TV",
+    blurb: "Watch the best live game right now.",
+    icon: Tv,
+    hex: "#58c39a",
+    rgb: "88 195 154",
+  },
 ];
 
 function timeAgo(at: number): string {
@@ -108,18 +133,38 @@ export default function CommunityPage() {
           </div>
         </div>
 
-        {/* Doors to the social spaces. */}
+        {/* Doors to the social spaces: unmistakably clickable cards. */}
         <div className="mt-6 grid gap-3 sm:grid-cols-3">
-          {HUB_LINKS.map((card) => (
-            <Link
-              key={card.href}
-              href={card.href}
-              className="plate block p-4 no-underline transition-colors hover:border-gold/40"
-            >
-              <div className="font-display text-xl text-parchment">{card.title}</div>
-              <p className="mt-1 text-sm text-parchment-300">{card.blurb}</p>
-            </Link>
-          ))}
+          {HUB_LINKS.map((card) => {
+            const CardIcon = card.icon;
+            return (
+              <Link
+                key={card.href}
+                href={card.href}
+                className="plate plate-hover card-juicy group flex cursor-pointer items-center gap-3.5 p-4 no-underline"
+                style={{ "--tier-rgb": card.rgb } as CSSProperties}
+              >
+                <span
+                  aria-hidden
+                  className="grid h-11 w-11 shrink-0 place-items-center rounded-[10px] border"
+                  style={{ background: `${card.hex}24`, borderColor: `${card.hex}59`, color: card.hex }}
+                >
+                  <CardIcon size={20} />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block font-display text-xl text-parchment transition-colors group-hover:text-parchment-50">
+                    {card.title}
+                  </span>
+                  <span className="mt-0.5 block text-sm text-parchment-300">{card.blurb}</span>
+                </span>
+                <ArrowRight
+                  size={18}
+                  className="shrink-0 text-parchment-400 transition-all group-hover:translate-x-1 group-hover:text-parchment-100"
+                  aria-hidden
+                />
+              </Link>
+            );
+          })}
         </div>
 
         <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
@@ -128,8 +173,8 @@ export default function CommunityPage() {
             <div className="plate p-5 sm:p-6">
               <div className="flex items-center justify-between gap-3">
                 <div className="font-display text-2xl text-parchment">Top players</div>
-                <Link href="/leaderboard" className="text-xs text-parchment-400 hover:text-parchment-100 transition-colors">
-                  Full leaderboard →
+                <Link href="/leaderboard" className="btn-ghost flex items-center gap-1 px-3 py-1.5 text-xs">
+                  Full leaderboard <ChevronRight size={13} aria-hidden />
                 </Link>
               </div>
               {!top ? (
@@ -288,10 +333,18 @@ function PlayerLine({
     </>
   );
   const rowClass = "flex items-center gap-2 py-2";
-  if (guest) return <div className={rowClass}>{body}</div>;
+  if (guest) return <div className={`${rowClass} px-2 -mx-2`}>{body}</div>;
   return (
-    <Link href={`/u/${encodeURIComponent(username)}`} className={`${rowClass} hover:bg-white/[0.03] transition`}>
+    <Link
+      href={`/u/${encodeURIComponent(username)}`}
+      className={`${rowClass} group cursor-pointer rounded-[10px] px-2 -mx-2 transition hover:bg-white/[0.05]`}
+    >
       {body}
+      <ChevronRight
+        size={14}
+        className="shrink-0 text-parchment-500 opacity-0 transition-all group-hover:translate-x-0.5 group-hover:opacity-100"
+        aria-hidden
+      />
     </Link>
   );
 }
@@ -303,7 +356,7 @@ function RecentGameRow({ game }: { game: RecentGame }) {
     <li>
       <Link
         href={`/game/${game.id}`}
-        className="flex items-center justify-between gap-3 py-2.5 hover:bg-white/[0.03] transition"
+        className="group flex cursor-pointer items-center justify-between gap-3 rounded-[10px] px-2 -mx-2 py-2.5 transition hover:bg-white/[0.05]"
       >
         <span className="min-w-0">
           <span className="block truncate text-sm text-parchment-100">
@@ -314,8 +367,13 @@ function RecentGameRow({ game }: { game: RecentGame }) {
             {category.label} · {game.rated ? "Rated" : "Casual"} · {timeAgo(game.completedAt)}
           </span>
         </span>
-        <span className="shrink-0 font-mono text-sm tabular-nums text-parchment-200">
+        <span className="flex shrink-0 items-center gap-1.5 font-mono text-sm tabular-nums text-parchment-200">
           {resultLabel(game.winner)}
+          <ChevronRight
+            size={14}
+            className="text-parchment-500 opacity-0 transition-all group-hover:translate-x-0.5 group-hover:opacity-100"
+            aria-hidden
+          />
         </span>
       </Link>
     </li>

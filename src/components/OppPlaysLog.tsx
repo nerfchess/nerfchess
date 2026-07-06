@@ -3,6 +3,7 @@
 import { BUFF_BY_ID } from "@/engine/buffs/library";
 import { Tier } from "@/engine/nerf";
 import { TIER_ROMAN } from "@/lib/tiers";
+import { History } from "lucide-react";
 import { useEffect, useState } from "react";
 
 // The feed of cards/hexes the opponent has played.
@@ -56,7 +57,7 @@ export function OppPlaysLog({ plays }: { plays: OppPlay[] }) {
             role={newest ? "status" : undefined}
             aria-live={newest ? "polite" : undefined}
             className={
-              "border bg-ink-700/95 px-3 shadow-plate backdrop-blur-sm " +
+              "rounded-lg border bg-ink-700/95 px-3 shadow-plate backdrop-blur-sm " +
               (newest ? "border-gold/40 py-2.5 animate-rise" : "border-white/10 py-1.5 opacity-85")
             }
           >
@@ -93,9 +94,12 @@ export function OppPlaysDockSection({ plays }: { plays: OppPlay[] }) {
   const newestFirst = [...plays].reverse();
   return (
     <div className="border-t border-white/10 pt-2">
-      <div className="flex items-baseline justify-between gap-2">
-        <span className="smallcaps text-[10px] text-parchment-400">Opponent played</span>
-        <span className="font-mono text-[10px] tabular-nums text-parchment-400">{plays.length}</span>
+      <div className="flex items-center gap-1.5">
+        <History aria-hidden size={12} strokeWidth={2.2} className="shrink-0 text-parchment-400" />
+        <span className="smallcaps min-w-0 truncate text-[10px] text-parchment-400">Opponent played</span>
+        <span className="ml-auto shrink-0 rounded-full border border-white/15 bg-white/[0.05] px-1.5 py-px font-mono text-[9px] tabular-nums text-parchment-300">
+          {plays.length}
+        </span>
       </div>
       <ul className="mt-1 space-y-0.5">
         {newestFirst.map((p) => {
@@ -109,7 +113,7 @@ export function OppPlaysDockSection({ plays }: { plays: OppPlay[] }) {
                 type="button"
                 onClick={() => setOpen(expanded ? null : p.key)}
                 aria-expanded={expanded}
-                className="dock-card w-full border border-white/10 bg-white/[0.02] px-2 py-1 text-left transition hover:border-white/25"
+                className="dock-card w-full rounded-lg border border-white/10 bg-white/[0.02] px-2 py-1 text-left transition hover:border-white/25 active:translate-y-px"
               >
                 <span className="flex items-center gap-1.5">
                   <span className={`min-w-0 flex-1 truncate font-display text-[11px] font-semibold tier-${tier}`}>
