@@ -8,7 +8,7 @@ import { Color } from "@/engine/types";
 import { Tier } from "@/engine/nerf";
 import { TIER_ROMAN } from "@/lib/tiers";
 import { motion, useReducedMotion } from "framer-motion";
-import { Ban, Hourglass, Inbox, Layers, ShieldAlert, Swords, type LucideIcon } from "lucide-react";
+import { Ban, EyeOff, Hourglass, Inbox, Layers, ShieldAlert, Swords, type LucideIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { BuffCard } from "./BuffCard";
 import { OppPlaysDockSection, type OppPlay } from "./OppPlaysLog";
@@ -327,27 +327,6 @@ function againstYouRows(game: NerfGame, myColor: Color): AgainstRow[] {
   return rows;
 }
 
-/** Face-down mini card: all the opponent shows for a hidden buff is its
- * tier. Spent/nullified minis dim like used cards do. */
-function FaceDownMini({ tier, dead }: { tier: Tier; dead?: boolean }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.6, y: -6 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      transition={{ duration: 0.25 }}
-      title={`Hidden buff · tier ${tier}`}
-      className={
-        "relative flex h-11 w-8 shrink-0 items-center justify-center rounded-[1px] border border-gold/35 bg-ink-950 " +
-        (dead ? "opacity-40" : "")
-      }
-    >
-      <span aria-hidden className="absolute inset-[3px] rounded-[1px] border border-gold/20" />
-      <span className={`font-display text-[11px] font-bold tier-${tier}`}>{TIER_ROMAN[tier]}</span>
-      {dead && <span aria-hidden className="absolute inset-x-1 top-1/2 h-px bg-parchment-400/60" />}
-    </motion.div>
-  );
-}
-
 interface Props {
   game: NerfGame;
   myColor: Color;
@@ -382,6 +361,16 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
   const theirsActive = theirs.map((inst, i) => ({ inst, i })).filter(({ inst }) => !inst.spent && !inst.nullified);
   const theirsUsed = theirs.map((inst, i) => ({ inst, i })).filter(({ inst }) => inst.spent || inst.nullified);
   const usedCount = mineUsed.length + theirsUsed.length;
+
+  // Hidden opponent cards no longer render as face-down tier minis (owner
+  // call: the little tier tiles were noise). Revealed cards keep their full
+  // rows; everything hidden collapses into one small "N hidden" sign.
+  const isHiddenOpp = (inst: (typeof theirs)[number]) =>
+    !BUFF_BY_ID[inst.id] || (hideOpponentCards && !inst.spent && !inst.nullified);
+  const theirsShown = theirsActive.filter(({ inst }) => !isHiddenOpp(inst));
+  const theirsHiddenCount = theirsActive.length - theirsShown.length;
+  const theirsUsedShown = theirsUsed.filter(({ inst }) => !isHiddenOpp(inst));
+  const theirsUsedHiddenCount = theirsUsed.length - theirsUsedShown.length;
 
   const lastMine = mine[mine.length - 1] ?? null;
   const lastMineDef = lastMine ? BUFF_BY_ID[lastMine.id] : undefined;
@@ -498,11 +487,9 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
   const oppEntry = ({ inst, i }: { inst: (typeof theirs)[number]; i: number }) => {
     const def = BUFF_BY_ID[inst.id];
     const dead = inst.spent || inst.nullified;
-    // Face-down whenever the identity is hidden: masked placeholder online,
-    // or the bot-game blanket rule (revealed cards still show face-up).
-    if (!def || (hideOpponentCards && !dead)) {
-      return <FaceDownMini key={i} tier={inst.tier} dead={dead} />;
-    }
+    // Hidden identities render nothing here; the aggregate "N hidden" sign
+    // below the revealed rows carries them.
+    if (!def || (hideOpponentCards && !dead)) return null;
     return (
       <motion.div
         key={i}
@@ -616,13 +603,14 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
               (lastTheirsHidden ? (
                 <motion.span
                   key={`t${theirs.length}`}
-                  initial={{ opacity: 0, scale: 0.6 }}
+                  initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.3 }}
-                  title="Opponent's latest draft (hidden)"
-                  className={`flex h-6 w-[18px] shrink-0 items-center justify-center rounded-[1px] border border-gold/35 bg-ink-950 font-display text-[8px] font-bold tier-${lastTheirs.tier}`}
+                  title={`Opponent's latest draft (hidden, tier ${TIER_ROMAN[lastTheirs.tier]})`}
+                  className="flex shrink-0 items-center gap-1 smallcaps text-[9px] text-parchment-400"
                 >
-                  {TIER_ROMAN[lastTheirs.tier]}
+                  <EyeOff aria-hidden size={10} strokeWidth={2.2} />
+                  hidden
                 </motion.span>
               ) : (
                 <motion.span
@@ -704,7 +692,21 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
                 count={theirs.length}
               />
             </div>
-            <div className="flex flex-wrap items-start gap-1">{theirsActive.map(oppEntry)}</div>
+            <div className="flex flex-wrap items-start gap-1">{theirsShown.map(oppEntry)}</div>
+            {theirsHiddenCount > 0 && (
+              <div
+                className="flex items-center gap-1.5 rounded-[1px] border border-white/10 bg-white/[0.02] px-2 py-1"
+                title={`Tiers: ${theirsActive
+                  .filter(({ inst }) => isHiddenOpp(inst))
+                  .map(({ inst }) => TIER_ROMAN[inst.tier])
+                  .join(", ")}`}
+              >
+                <EyeOff aria-hidden size={11} strokeWidth={2.2} className="shrink-0 text-parchment-400" />
+                <span className="smallcaps text-[9px] text-parchment-400">
+                  {theirsHiddenCount} hidden card{theirsHiddenCount === 1 ? "" : "s"}
+                </span>
+              </div>
+            )}
           </>
         )}
 
@@ -754,7 +756,12 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
             {showUsed && (
               <div className="mt-1.5 space-y-1">
                 {mineUsed.map(myRow)}
-                <div className="flex flex-wrap items-start gap-1">{theirsUsed.map(oppEntry)}</div>
+                <div className="flex flex-wrap items-start gap-1">{theirsUsedShown.map(oppEntry)}</div>
+                {theirsUsedHiddenCount > 0 && (
+                  <p className="smallcaps text-[9px] text-parchment-400">
+                    +{theirsUsedHiddenCount} hidden used
+                  </p>
+                )}
               </div>
             )}
           </div>

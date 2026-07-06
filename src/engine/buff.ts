@@ -269,17 +269,30 @@ export interface BuffApi {
 // by move generation, so it cannot desync anything.
 export interface CardFx {
   /**
+   * Constraints (drawn on the CURSED side's pieces):
    * jail      — piece cannot move (chains)
    * muzzle    — piece cannot capture
    * anchor    — movement range shortened
    * blindfold — vision / targeting restricted, or square access barred
    * slow      — tempo restrictions (delays, skips, cadence)
+   * Empowerments (drawn on the CASTER's own pieces, visible to both sides):
+   * empower   — piece gained movement or powers (regalia badge; see moveAs)
+   * ward      — piece is protected (small ward ring; shields proper already
+   *             paint via the shield effect, use ward for subtler guards)
+   * rally     — tempo / extra-action boons on the army
    */
-  motif: "jail" | "muzzle" | "anchor" | "blindfold" | "slow";
-  /** Piece types the curse touches; "all" = the whole army (kings included
+  motif: "jail" | "muzzle" | "anchor" | "blindfold" | "slow" | "empower" | "ward" | "rally";
+  /** Piece types the card touches; "all" = the whole army (kings included
    * only when the mechanic truly touches the king). Omit for effects that
    * are not piece-scoped (draft locks etc.); those show no board motif. */
   pieces?: PieceType[] | "all";
+  /** empower only: the piece type whose movement was granted. The badge on
+   * the empowered piece draws THIS silhouette (a rook that moves like a king
+   * wears a small king mark; an amazon-style knight wears a crown-knight). */
+  moveAs?: PieceType;
+  /** The fx lands on the card OWNER's pieces (grants/wards), not the
+   * opponent's. Defaults to false: constraint motifs target the cursed side. */
+  self?: boolean;
 }
 
 export interface Buff {
