@@ -39,7 +39,7 @@ const CARD_TYPES = [
   {
     tag: "Buff",
     who: "helps you",
-    d: "A straight power-up, and the whole of Buff mode: both players draft one every 6 moves and build the stronger army. Some work quietly while you hold them, some fire the instant you pick them, and some wait until you spend them. Nobody is handicapped in Buff mode.",
+    d: "A straight power-up, and the whole of Buff mode: both players draft one every 5 moves and build the stronger army. Some work quietly while you hold them, some fire the instant you pick them, and some wait until you spend them. Nobody is handicapped in Buff mode.",
     example: null,
   },
   {
@@ -66,7 +66,7 @@ export default function TutorialPage() {
         <p className="mt-5 text-[16px] leading-[1.7] text-parchment-200">
           Nerf Chess is chess, until it isn&apos;t. The five rules below are everything you need to know.
           Everything else depends on your mode: in Nerf mode, your secret handicap and the hexes,
-          boons, and items you draft; in Buff mode, the buff cards both players draft every 6 moves.
+          boons, and items you draft; in Buff mode, the buff cards both players draft every 5 moves.
         </p>
         <div className="mt-9 space-y-3">
           {RULES.map((r) => (

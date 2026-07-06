@@ -15,7 +15,7 @@ const FAQS = [
   {
     question: "What are the two modes?",
     answer:
-      "Nerf mode and Buff mode. In Nerf mode you pick a secret handicap from two cards and your opponent's stays hidden until the game ends; every 6 moves you draft a card: usually a hex that curses your opponent, sometimes a boon or item that helps you. In Buff mode nobody is handicapped: every 6 moves both players draft a buff and build the strongest army.",
+      "Nerf mode and Buff mode. In Nerf mode you pick a secret handicap from two cards and your opponent's stays hidden until the game ends; every 5 moves you draft a card: usually a hex that curses your opponent, sometimes a boon or item that helps you. In Buff mode nobody is handicapped: every 5 moves both players draft a buff and build the strongest army.",
   },
   {
     question: "What is a nerf?",

@@ -8,7 +8,7 @@ import { Color } from "./types";
 // Draft mechanics: tier progression, card rolling, banking.
 //
 // Design decisions (see docs/draft-system.md):
-// - Buff cadence: a draft every 6 of your own moves.
+// - Buff cadence: a draft every 5 of your own moves.
 // - Natural tier curve: draft round k rolls one shared tier pair for BOTH
 //   players. The base follows TIER_CURVE (1, 2, 3, 5, 7; later rounds stay
 //   at 7), a single ±1 jitter applies to the whole round, and every level
@@ -19,12 +19,13 @@ import { Color } from "./types";
 // ---------------------------------------------------------------------------
 
 // Draft cadence in own moves. Tuning guide: 5 creates faster chaos, 6 is the
-// default arc, 7 slows the arc and delays high-tier cards.
-export const DEFAULT_CADENCE = 6;
+// slower arc, 7 slows it further and delays high-tier cards. Set to 5 so
+// drafts land more often and the game stays lively.
+export const DEFAULT_CADENCE = 5;
 
-// Nerf mode draft cadence: a hex-or-boon pick lands every six of your own
+// Nerf mode draft cadence: a hex-or-boon pick lands every five of your own
 // moves, matching the buff-mode arc so the curses arrive steadily.
-export const NERF_MODE_CADENCE = 6;
+export const NERF_MODE_CADENCE = 5;
 
 // Nerf mode pool composition: each card slot first rolls which bucket it
 // draws from. HEX_SHARE of draws prefer the hex bucket (curses cast on your
