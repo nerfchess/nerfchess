@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { Board } from "@/components/Board";
+import { SIGNATURES } from "@/components/effects/BoardEffects";
 import { BoardPlayerRow } from "@/components/BoardPlayerRow";
 import { ClockPill } from "@/components/ClockPill";
 // The end screen is never part of first paint; loading it on demand keeps it
@@ -397,6 +398,23 @@ function GamePage() {
     // Bounded but roomy: the dock keeps the whole game's plays readable.
     setOppLog((log) => [...log, { key: oppKeyRef.current++, card, label, at: Date.now() }].slice(-60));
   };
+  // Signature spectacles: a played card's id + a monotonic key handed to the
+  // Board, which dresses the resulting piece diff as that card's choreography.
+  // Fires for BOTH the bot's plays and my own. My own activations run inside
+  // the (un-owned) targeting hook, so the id is snapshotted at "Use" time
+  // (pendingSigIdRef) and fired from onChanged once the activation lands.
+  const [signatureCard, setSignatureCard] = useState<{ id: string; key: number } | null>(null);
+  const sigKeyRef = useRef(0);
+  const pendingSigIdRef = useRef<string | null>(null);
+  const fireSignature = (id: string) => {
+    if (SIGNATURES[id]) setSignatureCard({ id, key: ++sigKeyRef.current });
+  };
+  // Snapshot the id of a card I am about to use (dock "Use" entry point) so
+  // onChanged can fire its signature once the activation resolves.
+  const snapshotMySignature = (buffIndex: number) => {
+    const id = game?.buffs?.players[myColor].buffs[buffIndex]?.id;
+    pendingSigIdRef.current = id && SIGNATURES[id] ? id : null;
+  };
 
   // Shared reveal moment: once BOTH sides of a simultaneous draft round have
   // resolved (either order: the bot usually resolves first, but my pick can
@@ -459,6 +477,9 @@ function GamePage() {
           { id: instant.id, tier: instant.tier },
           `Bot played a ${draftCardNoun(game.buffs.mode)}`,
         );
+        // Instant attack spectacles (Cataclysm, Extinction) clear the board at
+        // pick time; dress that clear as the card's signature.
+        fireSignature(instant.id);
       }
       // Hold the bot's resolution for the shared reveal that fires once
       // both sides of the round are in (my pick may already be waiting).
@@ -806,6 +827,7 @@ function GamePage() {
         const usedCard = aiActivateBuffs(game, botColor);
         if (usedCard) {
           showOppUsedCard(usedCard, `Bot used a ${draftCardNoun(game.buffs.mode)}`);
+          fireSignature(usedCard.id);
           setGame({ ...game });
           if (game.result) {
             aiThinking.current = false;
@@ -980,6 +1002,11 @@ function GamePage() {
       if (!game) return;
       // A buff use can consume the turn: bank my clock like a move.
       if (game.board.turn !== myColor) commitClock(myColor);
+      // Fire the signature for the card I just activated (snapshotted at Use
+      // time), batched with the board update so the Board claims this diff.
+      const sigId = pendingSigIdRef.current;
+      pendingSigIdRef.current = null;
+      if (sigId) fireSignature(sigId);
       setGame({ ...game });
     },
   });
@@ -1418,7 +1445,10 @@ function GamePage() {
                 canAct={
                   !game.result && game.board.turn === myColor && !myOffer && !isReviewingHistory
                 }
-                onStartUse={buffTargeting.start}
+                onStartUse={(i) => {
+                  snapshotMySignature(i);
+                  buffTargeting.start(i);
+                }}
                 hideOpponentCards
                 plays={oppLog}
               />
@@ -1520,6 +1550,7 @@ function GamePage() {
                   highlightLastMove={uiSettings.highlightLastMove}
                   showLegalMoves={uiSettings.showLegalMoves}
                   checkSquare={isReviewingHistory ? null : checkSquare}
+                  signatureCard={isReviewingHistory ? null : signatureCard}
                   pickSquares={
                     buffTargeting.targeting?.target.kind === "square"
                       ? buffTargeting.targeting.target.squares
@@ -1647,7 +1678,10 @@ function GamePage() {
             game={game}
             myColor={myColor}
             canAct={!game.result && game.board.turn === myColor && !myOffer && !isReviewingHistory}
-            onStartUse={buffTargeting.start}
+            onStartUse={(i) => {
+              snapshotMySignature(i);
+              buffTargeting.start(i);
+            }}
             hideOpponentCards
             plays={oppLog}
           />
@@ -1708,6 +1742,10 @@ function GamePage() {
               banked: false,
               cards: gained.map((b) => ({ id: b.id, tier: b.tier })),
             });
+            // My own instant attack spectacle (Cataclysm, Extinction) clears
+            // the board at pick time; dress that clear as its signature.
+            const inst = gained.find((b) => BUFF_BY_ID[b.id]?.kind === "instant" && SIGNATURES[b.id]);
+            if (inst) fireSignature(inst.id);
             setGame({ ...game });
           }}
           onBank={() => {

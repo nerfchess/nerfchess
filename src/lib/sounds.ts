@@ -503,3 +503,108 @@ export function playBonk() {
   knock({ filterFreq: 620, filterQ: 4.5, dur: 0.07, gain: 0.5, bodyFreq: 190, bodyGain: 0.42, bodyDur: 0.1 });
   tone({ freq: 540, dur: 0.24, type: "triangle", gain: 0.1, sweep: 170, release: 0.12, delay: 0.02 });
 }
+
+// --- Signature-card voices --------------------------------------------------
+// One choreographed voice per marquee attack signature. Each is a short
+// timeline built from the same knock/tone primitives (Web Audio only, no
+// samples), staggered so the sound tracks the staggered visual: a lead cue
+// then a sequence of impacts. `count` scales the sequence to the number of
+// affected squares (clamped) so a two-target strike does not sound like an
+// eight-target one. All gated by the effects pref + mute via fx().
+
+/** Nova: a rising kettle-whistle winds up, then a run of deep staggered
+ * "fwoom" detonations rolls up the file, each a beat lower than the last. */
+export function playNova(count = 4) {
+  if (!fx()) return;
+  const n = Math.max(1, Math.min(count, 8));
+  // Rising kettle-whistle wind-up.
+  tone({ freq: 520, dur: 0.34, type: "sine", gain: 0.09, sweep: 1500, release: 0.06 });
+  tone({ freq: 780, dur: 0.34, type: "sine", gain: 0.05, sweep: 2100, release: 0.06, delay: 0.02 });
+  // The pop that seeds the shockwave.
+  knock({ filterFreq: 1200, filterQ: 2, dur: 0.06, gain: 0.3, delay: 0.32 });
+  // Staggered fwooms, each a touch lower and softer as it rolls away.
+  for (let i = 0; i < n; i++) {
+    const t = 0.4 + i * 0.13;
+    const body = 96 - i * 6;
+    knock({ filterFreq: 230, filterQ: 0.8, dur: 0.2, gain: 0.55 - i * 0.03, bodyFreq: body, bodyGain: 0.5, bodyDur: 0.18, delay: t });
+  }
+}
+
+/** Cataclysm: a deep earthquake groan, then a rapid popcorn-string of trapdoor
+ * thunks with a little falling-whistle tail. */
+export function playCataclysm(count = 6) {
+  if (!fx()) return;
+  const n = Math.max(1, Math.min(count, 8));
+  tone({ freq: 70, dur: 0.5, type: "sawtooth", gain: 0.12, sweep: 40, release: 0.2 });
+  for (let i = 0; i < n; i++) {
+    const t = 0.12 + i * 0.055;
+    knock({ filterFreq: 320, filterQ: 3, dur: 0.06, gain: 0.34, bodyFreq: 130, bodyGain: 0.3, bodyDur: 0.07, delay: t });
+  }
+  tone({ freq: 900, dur: 0.26, type: "sine", gain: 0.06, sweep: 300, release: 0.08, delay: 0.12 + n * 0.055 });
+}
+
+/** Extinction: an ominous wind-swell into a long gravelly crumble-cascade that
+ * settles into a dust hiss. */
+export function playExtinction(count = 8) {
+  if (!fx()) return;
+  const n = Math.max(1, Math.min(count, 12));
+  tone({ freq: 220, dur: 0.55, type: "sine", gain: 0.07, sweep: 620, release: 0.1 });
+  for (let i = 0; i < n; i++) {
+    const t = 0.2 + i * 0.06;
+    knock({ filterFreq: 520 - i * 12, filterQ: 1.4, dur: 0.09, gain: 0.28, bodyFreq: 110, bodyGain: 0.2, bodyDur: 0.08, delay: t });
+  }
+  knock({ filterFreq: 1600, filterQ: 0.6, dur: 0.22, gain: 0.12, delay: 0.2 + n * 0.06 });
+}
+
+/** Lightning Strike: a thunderclap rumble, then three sharp electric CRACK-zaps
+ * with a sizzle tail. */
+export function playLightning(count = 3) {
+  if (!fx()) return;
+  const n = Math.max(1, Math.min(count, 5));
+  // Thunderclap: a wide low body.
+  knock({ filterFreq: 200, filterQ: 0.7, dur: 0.3, gain: 0.5, bodyFreq: 70, bodyGain: 0.5, bodyDur: 0.28 });
+  for (let i = 0; i < n; i++) {
+    const t = 0.16 + i * 0.16;
+    // Bright, resonant crack + a short high sizzle.
+    knock({ filterFreq: 3200, filterQ: 8, dur: 0.05, gain: 0.4, delay: t });
+    tone({ freq: 5200, dur: 0.06, type: "square", gain: 0.05, sweep: 2600, release: 0.05, delay: t + 0.01 });
+  }
+}
+
+/** Atomic Captures: a punchy central THUMP wrapped in a ring of firecracker
+ * pops. */
+export function playAtomic(count = 8) {
+  if (!fx()) return;
+  const n = Math.max(1, Math.min(count, 8));
+  knock({ filterFreq: 180, filterQ: 0.8, dur: 0.16, gain: 0.6, bodyFreq: 80, bodyGain: 0.55, bodyDur: 0.16 });
+  for (let i = 0; i < n; i++) {
+    const t = 0.05 + i * 0.035;
+    knock({ filterFreq: 1500 + (i % 3) * 200, filterQ: 5, dur: 0.04, gain: 0.26, delay: t });
+  }
+}
+
+/** Queen's Rampage: a revving whoosh charge into a satisfying string of
+ * bowling-pin clatter-bonks. */
+export function playRampage(count = 3) {
+  if (!fx()) return;
+  const n = Math.max(1, Math.min(count, 6));
+  tone({ freq: 160, dur: 0.28, type: "sawtooth", gain: 0.1, sweep: 520, release: 0.06 });
+  for (let i = 0; i < n; i++) {
+    const t = 0.22 + i * 0.1;
+    knock({ filterFreq: 640, filterQ: 4, dur: 0.06, gain: 0.42, bodyFreq: 200, bodyGain: 0.36, bodyDur: 0.08, delay: t });
+    tone({ freq: 520, dur: 0.16, type: "triangle", gain: 0.06, sweep: 180, release: 0.1, delay: t + 0.01 });
+  }
+}
+
+/** Siege Rook: a booming cannon shot with a receding line of pancake-splat
+ * thuds down the rank. */
+export function playSiege(count = 3) {
+  if (!fx()) return;
+  const n = Math.max(1, Math.min(count, 6));
+  // Cannon boom.
+  knock({ filterFreq: 160, filterQ: 0.7, dur: 0.28, gain: 0.6, bodyFreq: 66, bodyGain: 0.55, bodyDur: 0.26 });
+  for (let i = 0; i < n; i++) {
+    const t = 0.1 + i * 0.08;
+    knock({ filterFreq: 420, filterQ: 1.6, dur: 0.07, gain: 0.36 - i * 0.03, bodyFreq: 120, bodyGain: 0.28, bodyDur: 0.08, delay: t });
+  }
+}

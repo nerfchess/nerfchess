@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 import { type CSSProperties, useEffect, useMemo, useRef, useState } from "react";
 import { Board, QueuedPremove } from "@/components/Board";
+import { SIGNATURES } from "@/components/effects/BoardEffects";
 import { BoardPlayerRow } from "@/components/BoardPlayerRow";
 import { OppPlaysLog, type OppPlay } from "@/components/OppPlaysLog";
 import { BuffDock, EnemyBuffModal, TargetingBanner, useBuffTargeting } from "@/components/BuffDock";
@@ -255,6 +256,16 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   const showOppUsedCard = (card: { id: string; tier: number }, label: string) => {
     // Bounded but roomy: the dock keeps the whole game's plays readable.
     setOppLog((log) => [...log, { key: oppKeyRef.current++, card, label, at: Date.now() }].slice(-60));
+  };
+  // Signature spectacles: a played card's id + a monotonic key handed to the
+  // Board, which dresses the resulting piece diff as that card's choreography.
+  // Fired for BOTH sides' plays (the server echoes every activation), so both
+  // players see the identical animation. Set alongside the board update so the
+  // two batch into one render and the signature claims exactly that diff.
+  const [signatureCard, setSignatureCard] = useState<{ id: string; key: number } | null>(null);
+  const sigKeyRef = useRef(0);
+  const fireSignature = (id: string) => {
+    if (SIGNATURES[id]) setSignatureCard({ id, key: ++sigKeyRef.current });
   };
   // Voluntary rule reveals: mine (button flow) and the opponent's (event).
   const [myRevealState, setMyRevealState] = useState<"hidden" | "confirm" | "revealed">(() =>
@@ -807,6 +818,16 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
             if (revealed) showOppUsedCard(revealed, `Opponent played a ${draftCardNoun(start.mode)}`);
           }
         }
+        // A signature card that resolves as a draft instant (rather than a
+        // later activation) fires here for whichever seat can see its id.
+        if (e.resolved.kind === "picked") {
+          for (const c of e.resolved.cards ?? []) {
+            if ("id" in c && SIGNATURES[c.id]) {
+              fireSignature(c.id);
+              break;
+            }
+          }
+        }
         applyGame({ ...g });
       } else if (e.type === "draft-used") {
         const g = gameRef.current;
@@ -823,6 +844,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           playNerf();
           if (e.used.card) showOppUsedCard(e.used.card, `Opponent used a ${draftCardNoun(start.mode)}`);
         }
+        // Signature spectacle for EITHER side's activation (the board update
+        // below batches with this so the Board claims exactly this diff).
+        if (e.used.card) fireSignature(e.used.card.id);
         applyGame({ ...g });
       } else if (e.type === "rematch-offer") {
         setRematchStatus(e.color === myColor ? "offered" : "incoming");
@@ -1925,6 +1949,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   highlightLastMove={uiSettings.highlightLastMove}
                   showLegalMoves={uiSettings.showLegalMoves}
                   checkSquare={isReviewingHistory ? null : checkSquare}
+                  signatureCard={isReviewingHistory ? null : signatureCard}
                   pickSquares={
                     buffTargeting.targeting?.target.kind === "square"
                       ? buffTargeting.targeting.target.squares

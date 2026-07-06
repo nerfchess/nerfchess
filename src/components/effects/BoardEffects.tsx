@@ -1007,3 +1007,313 @@ export const MotifBadge = React.memo(function MotifBadge({
     </>
   );
 });
+
+// --- 10. Signature animations (marquee attack-card spectacles) ---------------
+// A signature is a choreographed, staggered sequence played over the enemy
+// squares an attack card just cleared. Board.tsx derives those squares from
+// its own prev/next diff (the same detonation pass), orders them per the
+// card's ordering rule, and mounts ONE SignatureOverlay per affected square
+// with an animation-delay = order * stagger, so the effect rolls across the
+// board instead of firing all at once. Every piece is transform/opacity-only
+// and one-shot: like the other transient flourishes they are hidden entirely
+// under reduced motion (the static end state is simply the cleared squares).
+// The registry is keyed by card id; Board looks the card up when a played-card
+// event surfaces its id, and both players see the identical sequence.
+
+export type SigVisual = "nova" | "trapdoor" | "stone" | "strike" | "atomic" | "pin" | "siege";
+export type SigOrdering = "file" | "sweep" | "octagon" | "line";
+export type SigSoundKey =
+  | "nova"
+  | "cataclysm"
+  | "extinction"
+  | "lightning"
+  | "atomic"
+  | "rampage"
+  | "siege";
+
+export interface SignatureConfig {
+  /** How Board sorts the cleared squares into the detonation sequence. */
+  ordering: SigOrdering;
+  /** Milliseconds between successive squares in the sequence. */
+  staggerMs: number;
+  /** Which removed piece types this signature owns (others fall back to the
+   * plain detonation burst); "all" claims every cleared square. */
+  victims: PieceType[] | "all";
+  /** Line-based signatures (rook / queen charge) anchor their order on the
+   * origin square of the piece of this type that moved this turn. */
+  mover?: PieceType;
+  /** Per-square visual. */
+  visual: SigVisual;
+  /** True when the signature paints a lead flourish (nova's pop, atomic's
+   * central thump, the siege muzzle) as well as the per-target hits. */
+  hasLead: boolean;
+  /** Voice key (mapped to a sounds.ts function by Board). */
+  sound: SigSoundKey;
+}
+
+/** The shipped Batch 1 signatures. Every one derives its target squares purely
+ * from the board diff AND is played through a surfaced play event (an activated
+ * card or a draft instant), so no engine hook is needed. Nova / Siege Rook /
+ * Queen's Rampage / Queen's Wrath / Lightning Strike are activated; Cataclysm
+ * and Extinction are draft instants (fired at pick time on both surfaces).
+ *
+ * DEFERRED (HOOK): atomic_captures / atomic_captures_small are passive
+ * on-capture augments (captureExplosion in the engine): their octagon of
+ * cleared squares IS derivable from the diff, but a plain capture move emits
+ * NO card-play event to key the signature to, so they need a capture-trigger
+ * hook and belong in a later batch. The "octagon" ordering, AtomicBurst
+ * visual, and playAtomic voice below are left in place, ready for that hook. */
+export const SIGNATURES: Record<string, SignatureConfig> = {
+  nova: { ordering: "file", staggerMs: 130, victims: "all", visual: "nova", hasLead: true, sound: "nova" },
+  cataclysm: { ordering: "sweep", staggerMs: 55, victims: ["p"], visual: "trapdoor", hasLead: false, sound: "cataclysm" },
+  extinction: { ordering: "sweep", staggerMs: 65, victims: ["p", "n", "b"], visual: "stone", hasLead: false, sound: "extinction" },
+  lightning_strike: { ordering: "sweep", staggerMs: 165, victims: "all", visual: "strike", hasLead: false, sound: "lightning" },
+  queens_rampage: { ordering: "line", staggerMs: 105, victims: "all", mover: "q", visual: "pin", hasLead: false, sound: "rampage" },
+  queens_wrath: { ordering: "line", staggerMs: 110, victims: "all", mover: "q", visual: "pin", hasLead: false, sound: "rampage" },
+  siege_rook: { ordering: "line", staggerMs: 85, victims: "all", mover: "r", visual: "siege", hasLead: true, sound: "siege" },
+};
+
+/** A jagged lightning bolt that fills its wrapper (BoltGlyph is fixed-size). */
+function JagBolt() {
+  return (
+    <svg viewBox="0 0 24 40" className="h-full w-full" aria-hidden="true">
+      <polygon
+        points="14,0 5,20 11,20 8,40 20,16 13,16"
+        fill="#fff6c8"
+        stroke="#e6b800"
+        strokeWidth="1.2"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+const STONE_SHARDS = [
+  { left: "30%", top: "26%", w: "16%", c: "#9a9a9f", d: 0 },
+  { left: "54%", top: "30%", w: "13%", c: "#7f7f85", d: 40 },
+  { left: "38%", top: "46%", w: "18%", c: "#8c8c92", d: 70 },
+  { left: "26%", top: "40%", w: "11%", c: "#71717a", d: 30 },
+];
+
+const PIN_STARS = [
+  { dx: "210%", dy: "-150%", rot: "160deg", delay: 0 },
+  { dx: "-200%", dy: "-120%", rot: "-150deg", delay: 18 },
+  { dx: "180%", dy: "120%", rot: "190deg", delay: 10 },
+];
+
+function NovaBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      {lead && (
+        <span
+          className="fx-sig-shock absolute inset-[4%] block rounded-full"
+          style={{ border: "2px solid rgba(255,255,255,0.95)", animationDelay: `${delayMs}ms` }}
+        />
+      )}
+      <span
+        className="fx-sig-flash absolute inset-[24%] block rounded-full"
+        style={{
+          background:
+            "radial-gradient(circle, rgba(255,255,255,0.95), rgba(220,235,255,0.4) 60%, transparent 72%)",
+          animationDelay: `${delayMs}ms`,
+        }}
+      />
+      <span
+        className="fx-sig-ring absolute inset-[16%] block rounded-full"
+        style={{ border: "1px solid rgba(233,244,255,0.95)", animationDelay: `${delayMs}ms` }}
+      />
+      <span
+        className="fx-sig-ash absolute inset-[28%] block rounded-full"
+        style={{
+          background: "radial-gradient(circle, rgba(120,120,130,0.6), transparent 70%)",
+          animationDelay: `${delayMs + 90}ms`,
+        }}
+      />
+    </span>
+  );
+}
+
+function TrapdoorBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span
+        className="fx-sig-hole absolute inset-[26%] block rounded-[1px]"
+        style={{ background: "rgba(10,8,6,0.85)", animationDelay: `${delayMs}ms` }}
+      />
+      <span
+        className="fx-sig-flap-l absolute left-[20%] top-[24%] block h-[52%] w-[30%] rounded-[1px]"
+        style={{ background: "#5a3d22", border: "1px solid #2a1a0d", transformOrigin: "left center", animationDelay: `${delayMs}ms` }}
+      />
+      <span
+        className="fx-sig-flap-r absolute right-[20%] top-[24%] block h-[52%] w-[30%] rounded-[1px]"
+        style={{ background: "#5a3d22", border: "1px solid #2a1a0d", transformOrigin: "right center", animationDelay: `${delayMs}ms` }}
+      />
+      <span
+        className="fx-sig-ash absolute inset-[22%] block rounded-full"
+        style={{
+          background: "radial-gradient(circle, rgba(196,178,142,0.7), transparent 70%)",
+          animationDelay: `${delayMs + 70}ms`,
+        }}
+      />
+    </span>
+  );
+}
+
+function StoneBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span
+        className="fx-sig-flash absolute inset-[18%] block rounded-full"
+        style={{
+          background: "radial-gradient(circle, rgba(150,150,155,0.85), transparent 72%)",
+          animationDelay: `${delayMs}ms`,
+        }}
+      />
+      {STONE_SHARDS.map((s, i) => (
+        <span
+          key={i}
+          className="fx-sig-crumble absolute block rounded-[1px]"
+          style={{ left: s.left, top: s.top, width: s.w, height: s.w, background: s.c, animationDelay: `${delayMs + s.d}ms` }}
+        />
+      ))}
+      <span
+        className="fx-sig-ash absolute inset-x-[26%] bottom-[18%] block h-[16%] rounded-full"
+        style={{
+          background: "radial-gradient(circle, rgba(120,116,110,0.6), transparent 70%)",
+          animationDelay: `${delayMs + 130}ms`,
+        }}
+      />
+    </span>
+  );
+}
+
+function StrikeBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span
+        className="fx-sig-reticle absolute inset-[16%] block rounded-full"
+        style={{ border: "1.5px solid rgba(210,225,255,0.9)", animationDelay: `${delayMs}ms` }}
+      />
+      <span className="fx-sig-bolt absolute left-1/2 top-[1%] ml-[-16%] block h-[66%] w-[32%]" style={{ animationDelay: `${delayMs + 175}ms` }}>
+        <JagBolt />
+      </span>
+      <span
+        className="fx-sig-scorch absolute inset-[28%] block rounded-full"
+        style={{
+          background: "radial-gradient(circle, rgba(24,18,12,0.75), transparent 72%)",
+          animationDelay: `${delayMs + 200}ms`,
+        }}
+      />
+    </span>
+  );
+}
+
+function AtomicBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span
+        className="fx-sig-soot absolute block rounded-full"
+        style={{
+          inset: lead ? "6%" : "22%",
+          border: lead ? "3px solid rgba(30,24,20,0.7)" : "2px solid rgba(30,24,20,0.6)",
+          animationDelay: `${delayMs}ms`,
+        }}
+      />
+      <span
+        className="fx-sig-flash absolute inset-[26%] block rounded-full"
+        style={{
+          background: lead
+            ? "radial-gradient(circle, rgba(255,255,255,0.95), rgba(255,180,90,0.5) 55%, transparent 72%)"
+            : "radial-gradient(circle, rgba(255,210,140,0.9), transparent 70%)",
+          animationDelay: `${delayMs}ms`,
+        }}
+      />
+    </span>
+  );
+}
+
+function PinBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span
+        className="fx-sig-spin absolute inset-[28%] block rounded-full"
+        style={{
+          background: "radial-gradient(circle, rgba(230,191,106,0.5), transparent 70%)",
+          animationDelay: `${delayMs}ms`,
+        }}
+      />
+      {PIN_STARS.map((v, i) => (
+        <span
+          key={i}
+          className="fx-sig-star absolute left-1/2 top-1/2 ml-[-6%] mt-[-6%] block h-[12%] w-[12%]"
+          style={{ "--dx": v.dx, "--dy": v.dy, "--rot": v.rot, animationDelay: `${delayMs + v.delay}ms` } as React.CSSProperties}
+        >
+          <SparkStar />
+        </span>
+      ))}
+    </span>
+  );
+}
+
+function SiegeBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    // Muzzle flash at the cannon's mouth (the rook's origin square).
+    return (
+      <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+        <span
+          className="fx-sig-muzzle absolute left-[10%] top-[38%] block h-[24%] w-[80%] rounded-full"
+          style={{
+            background: "linear-gradient(90deg, rgba(255,244,200,0.95), rgba(255,170,70,0.5) 60%, transparent)",
+            animationDelay: `${delayMs}ms`,
+          }}
+        />
+      </span>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span
+        className="fx-sig-splat absolute inset-x-[12%] top-[36%] block h-[28%] rounded-full"
+        style={{ background: "radial-gradient(circle, rgba(150,146,140,0.85), transparent 72%)", animationDelay: `${delayMs}ms` }}
+      />
+      <span
+        className="fx-sig-ash absolute inset-[26%] block rounded-full"
+        style={{ background: "radial-gradient(circle, rgba(120,116,110,0.55), transparent 70%)", animationDelay: `${delayMs + 60}ms` }}
+      />
+    </span>
+  );
+}
+
+/** One square's slice of a signature sequence. `role` is "lead" for the single
+ * origin flourish (nova's pop, atomic's central thump, the siege muzzle) and
+ * "target" for every cleared enemy square; `delayMs` is the pre-computed
+ * stagger so the sequence rolls across the board. */
+export function SignatureOverlay({
+  visual,
+  role,
+  delayMs,
+}: {
+  visual: SigVisual;
+  role: "lead" | "target";
+  delayMs: number;
+}) {
+  const lead = role === "lead";
+  switch (visual) {
+    case "nova":
+      return <NovaBurst lead={lead} delayMs={delayMs} />;
+    case "trapdoor":
+      return <TrapdoorBurst delayMs={delayMs} />;
+    case "stone":
+      return <StoneBurst delayMs={delayMs} />;
+    case "strike":
+      return <StrikeBurst delayMs={delayMs} />;
+    case "atomic":
+      return <AtomicBurst lead={lead} delayMs={delayMs} />;
+    case "pin":
+      return <PinBurst delayMs={delayMs} />;
+    case "siege":
+      return <SiegeBurst lead={lead} delayMs={delayMs} />;
+    default:
+      return null;
+  }
+}

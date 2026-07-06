@@ -12,6 +12,8 @@ import {
   MotifBadge,
   PawnFence,
   ShieldMark,
+  SIGNATURES,
+  SignatureOverlay,
   SnowflakeGlyph,
   SquirrelGlyph,
   StunSwirl,
@@ -21,11 +23,18 @@ import {
 import type { MotifMark } from "./effects/fxZones";
 import { BoardState, Color, FILE, Move, PieceType, RANK, SQ, Square } from "@/engine/types";
 import {
+  playAtomic,
+  playCataclysm,
   playChains,
   playExplosion,
+  playExtinction,
   playFreeze,
+  playLightning,
+  playNova,
+  playRampage,
   playSelect,
   playShieldUp,
+  playSiege,
   playSlip,
   playStun,
   playSummon,
@@ -117,6 +126,35 @@ interface Props {
   // interaction (moves, selection, premoves) is suspended.
   pickSquares?: number[];
   onPickSquare?: (sq: Square) => void;
+  // A marquee attack card was just played: its id plus a monotonic key. When
+  // the key advances, the board's next piece diff is dressed as that card's
+  // signature choreography (derived entirely from which enemy squares cleared)
+  // instead of plain detonation bursts. Keyed so re-renders never replay it,
+  // and absent on the initial mount / a rejoined game (so nothing fires then).
+  signatureCard?: { id: string; key: number } | null;
+}
+
+// Map a signature's sound key to its sounds.ts voice, scaled to the number of
+// squares it cleared so a small strike does not sound like a full rank.
+function playSignature(id: string, count: number) {
+  switch (SIGNATURES[id]?.sound) {
+    case "nova":
+      return playNova(count);
+    case "cataclysm":
+      return playCataclysm(count);
+    case "extinction":
+      return playExtinction(count);
+    case "lightning":
+      return playLightning(count);
+    case "atomic":
+      return playAtomic(count);
+    case "rampage":
+      return playRampage(count);
+    case "siege":
+      return playSiege(count);
+    default:
+      return playExplosion();
+  }
 }
 
 function riskOf(moves: Move[], moveRisks: Map<string, MoveRisk> | undefined): MoveRisk {
@@ -322,6 +360,103 @@ interface BoardFx {
   kind: "morph" | "summon" | "detonate";
   crown?: boolean;
   key: number;
+  // Signature choreography: when a marquee attack card's id is known at play
+  // time, its cleared squares carry the card id, their order in the staggered
+  // sequence, and whether this square is the one-shot lead flourish. A plain
+  // detonation leaves these undefined and renders the generic burst.
+  sig?: string;
+  sigOrder?: number;
+  sigRole?: "lead" | "target";
+}
+
+// Order the squares an attack signature just cleared into a staggered
+// detonation sequence, purely from the board diff (no engine input). Returns
+// the ordered target squares plus an optional lead square (the origin
+// flourish) painted separately from the per-victim hits. Everything here is
+// derivable client-side: the victims are the removed pieces, the caster is
+// their opposite colour, and the mover (for line charges) is whichever
+// queen/rook vacated a square this turn.
+function orderSignature(
+  id: string,
+  dets: Square[],
+  prev: BoardState["pieces"],
+  movedFrom: Set<Square>,
+  capturedSquare: Square | null,
+  orientation: Color,
+): { targets: { sq: Square; order: number; role: "lead" | "target" }[]; leadSq: Square | null } {
+  const cfg = SIGNATURES[id];
+  if (!cfg) return { targets: [], leadSq: null };
+  // Claim only the victim types this signature owns; anything else stays a
+  // plain detonation (handled by the caller).
+  const victims =
+    cfg.victims === "all" ? dets.slice() : dets.filter((sq) => prev[sq] && cfg.victims.includes(prev[sq]!.type));
+  if (victims.length === 0) return { targets: [], leadSq: null };
+  // The enemy is whichever colour was removed most (Nova also sacrifices the
+  // caster's own pawn, so the first square is not reliable). The caster is the
+  // opposite; its home rank sets the direction the wave rolls.
+  let wCleared = 0;
+  let bCleared = 0;
+  for (const sq of victims) {
+    if (prev[sq]!.color === "w") wCleared++;
+    else bCleared++;
+  }
+  const victimColor: Color = bCleared >= wCleared ? "b" : "w";
+  const casterColor: Color = victimColor === "w" ? "b" : "w";
+  // White pushes toward rank 8, black toward rank 1: the wave rolls away from
+  // the caster's home rank.
+  const casterUp = casterColor === "w";
+
+  let ordered: Square[];
+  let leadSq: Square | null = null;
+  if (cfg.ordering === "octagon" && capturedSquare != null) {
+    // Radiate out from the capture: sort by angle so the ring pops around.
+    const cf = FILE(capturedSquare);
+    const cr = RANK(capturedSquare);
+    ordered = victims
+      .slice()
+      .sort((a, b) => Math.atan2(RANK(a) - cr, FILE(a) - cf) - Math.atan2(RANK(b) - cr, FILE(b) - cf));
+    if (cfg.hasLead) leadSq = capturedSquare;
+  } else if (cfg.ordering === "line" && cfg.mover) {
+    // Anchor on the charging piece's origin and sweep down the line it took.
+    let anchor: Square | null = null;
+    for (const sq of movedFrom) {
+      const p = prev[sq];
+      if (p && p.type === cfg.mover && p.color === casterColor) {
+        anchor = sq;
+        break;
+      }
+    }
+    if (anchor != null) {
+      const af = FILE(anchor);
+      const ar = RANK(anchor);
+      ordered = victims
+        .slice()
+        .sort(
+          (a, b) =>
+            (FILE(a) - af) ** 2 + (RANK(a) - ar) ** 2 - ((FILE(b) - af) ** 2 + (RANK(b) - ar) ** 2),
+        );
+      if (cfg.hasLead) leadSq = anchor;
+    } else {
+      ordered = victims.slice().sort((a, b) => a - b);
+    }
+  } else {
+    // "file" / "sweep": roll up the board away from the caster, rank first.
+    ordered = victims.slice().sort((a, b) => {
+      const dr = casterUp ? RANK(a) - RANK(b) : RANK(b) - RANK(a);
+      if (dr !== 0) return dr;
+      // Break ties left-to-right as the viewer sees the board.
+      return orientation === "w" ? FILE(a) - FILE(b) : FILE(b) - FILE(a);
+    });
+  }
+
+  const targets = ordered.map((sq, i) => ({
+    sq,
+    order: i,
+    // Nova's pop leads from the near end of its file; other visuals lead from
+    // a separate square (leadSq) or have no lead at all.
+    role: (cfg.hasLead && leadSq == null && i === 0 ? "lead" : "target") as "lead" | "target",
+  }));
+  return { targets, leadSq };
 }
 
 function computeBoardFx(
@@ -332,8 +467,11 @@ function computeBoardFx(
   skipSquare: Square | null,
   capturedSquare: Square | null,
   seq: { current: number },
+  signatureId: string | null,
+  orientation: Color,
 ): Map<Square, BoardFx> {
   const fx = new Map<Square, BoardFx>();
+  const sig = signatureId ? SIGNATURES[signatureId] : null;
   let appeared = 0;
   let vanishedCount = 0;
   const lostColor: Record<Color, boolean> = { w: false, b: false };
@@ -349,8 +487,10 @@ function computeBoardFx(
   // Same reset guard as computeAnims: a flood of changes is a new game or a
   // history jump, not a move, so play nothing. Unlike the slide matcher,
   // appeared can be zero here: an attack card can clear pieces without
-  // anything arriving (that is exactly the detonation case).
-  if (appeared > 6 || vanishedCount > 10) return fx;
+  // anything arriving (that is exactly the detonation case). A signature
+  // spectacle (Extinction, Cataclysm) can legitimately clear a whole rank of
+  // pieces at once, so the vanished cap is relaxed while one is known.
+  if (appeared > 6 || vanishedCount > (sig ? 20 : 10)) return fx;
   // Unexplained arrivals per color: a piece that appeared without a matched
   // slide is a transform-in-motion (promotion) or a summon; either way its
   // color's unmatched DEPARTURE is that same piece changing form, never a
@@ -378,7 +518,9 @@ function computeBoardFx(
   };
   let morphUsed = false; // one transform flourish per move, max
   let summons = 0;
-  let detonations = 0;
+  // Detonation squares collected first, then either dressed as a signature
+  // sequence (when the played card id is known) or emitted as plain bursts.
+  const detSquares: Square[] = [];
   for (let sq = 0 as Square; sq < 64; sq++) {
     const a = prev[sq];
     const b = next[sq];
@@ -394,11 +536,9 @@ function computeBoardFx(
         !movedFrom.has(sq) &&
         sq !== capturedSquare &&
         !gainedColor[a.color] &&
-        !(a.type === "p" && epStyleCapture(sq, a.color)) &&
-        detonations < 6
+        !(a.type === "p" && epStyleCapture(sq, a.color))
       ) {
-        fx.set(sq, { kind: "detonate", key: ++seq.current });
-        detonations++;
+        detSquares.push(sq);
       }
       continue;
     }
@@ -422,6 +562,48 @@ function computeBoardFx(
         summons++;
       }
     }
+  }
+  // Dress the detonations. When the played card's id is a known signature, its
+  // owned victim squares roll out as a staggered choreography (with an
+  // optional lead flourish); any leftover cleared squares, plus the whole set
+  // when no signature is known, fall back to the generic burst (capped so a
+  // freak clear never floods the board).
+  const claimed = new Set<Square>();
+  if (sig) {
+    const { targets, leadSq } = orderSignature(
+      signatureId!,
+      detSquares,
+      prev,
+      movedFrom,
+      capturedSquare,
+      orientation,
+    );
+    for (const t of targets) {
+      claimed.add(t.sq);
+      fx.set(t.sq, {
+        kind: "detonate",
+        key: ++seq.current,
+        sig: signatureId!,
+        sigOrder: t.order,
+        sigRole: t.role,
+      });
+    }
+    if (leadSq != null && !fx.has(leadSq)) {
+      fx.set(leadSq, {
+        kind: "detonate",
+        key: ++seq.current,
+        sig: signatureId!,
+        sigOrder: 0,
+        sigRole: "lead",
+      });
+    }
+  }
+  let plain = 0;
+  for (const sq of detSquares) {
+    if (claimed.has(sq)) continue;
+    if (plain >= 6) break;
+    fx.set(sq, { kind: "detonate", key: ++seq.current });
+    plain++;
   }
   return fx;
 }
@@ -454,6 +636,7 @@ export function Board({
   checkSquare = null,
   pickSquares,
   onPickSquare,
+  signatureCard,
 }: Props) {
   const pickSquareSet = useMemo(() => new Set(pickSquares ?? []), [pickSquares]);
   const pickingSquares = !!onPickSquare;
@@ -487,6 +670,11 @@ export function Board({
   // remounts them exactly once per detected change; see computeBoardFx.
   const fxSeqRef = useRef(0);
   const fxRef = useRef<Map<Square, BoardFx>>(new Map());
+  // Highest signature key already consumed. A signature is claimed by the very
+  // next piece diff after its key advances (the play event and the resulting
+  // board update batch into one render), so it fires exactly once and never on
+  // the initial mount (starts at 0, no card ever carries key 0).
+  const sigSeenKeyRef = useRef(0);
 
   // Diff against the previous position during render (reference equality
   // guards against re-runs) so animated squares can be tagged in this pass.
@@ -498,6 +686,11 @@ export function Board({
       dropSkipRef.current,
     );
     animsRef.current = anims;
+    const activeSig =
+      signatureCard && signatureCard.key > sigSeenKeyRef.current && SIGNATURES[signatureCard.id]
+        ? signatureCard.id
+        : null;
+    if (signatureCard) sigSeenKeyRef.current = signatureCard.key;
     fxRef.current = computeBoardFx(
       prevPiecesRef.current,
       board.pieces,
@@ -506,6 +699,8 @@ export function Board({
       dropSkipRef.current,
       lastMove?.capturedSquare ?? null,
       fxSeqRef,
+      activeSig,
+      orientation,
     );
     dropSkipRef.current = null;
   }
@@ -558,13 +753,26 @@ export function Board({
     let morph = false;
     let summon = false;
     let detonate = false;
+    let sigId: string | null = null;
+    let sigCount = 0;
     for (const fx of fxRef.current.values()) {
       if (fx.key <= fxSoundKeyRef.current) continue;
       if (fx.kind === "morph") morph = true;
       else if (fx.kind === "summon") summon = true;
-      else detonate = true;
+      else {
+        if (fx.sig) {
+          sigId = fx.sig;
+          if (fx.sigRole !== "lead") sigCount++;
+        } else {
+          detonate = true;
+        }
+      }
     }
     fxSoundKeyRef.current = fxSeqRef.current;
+    // A signature plays its own choreographed voice (scaled to how many
+    // squares it cleared) and suppresses the generic explosion for its own
+    // hits; any un-dressed detonation this turn still cracks normally.
+    if (sigId) playSignature(sigId, Math.max(1, sigCount));
     if (detonate) playExplosion();
     if (morph) playTransform();
     if (summon) playSummon();
@@ -1363,7 +1571,17 @@ export function Board({
                   <TransformFlourish key={`fx-${boardFx.key}`} crown={boardFx.crown} />
                 )}
                 {boardFx?.kind === "summon" && <SummonPoof key={`fx-${boardFx.key}`} />}
-                {boardFx?.kind === "detonate" && <DetonationBurst key={`fx-${boardFx.key}`} />}
+                {boardFx?.kind === "detonate" &&
+                  (boardFx.sig && SIGNATURES[boardFx.sig] ? (
+                    <SignatureOverlay
+                      key={`fx-${boardFx.key}`}
+                      visual={SIGNATURES[boardFx.sig].visual}
+                      role={boardFx.sigRole ?? "target"}
+                      delayMs={(boardFx.sigOrder ?? 0) * SIGNATURES[boardFx.sig].staggerMs}
+                    />
+                  ) : (
+                    <DetonationBurst key={`fx-${boardFx.key}`} />
+                  ))}
                 {isForced && !isDragging && (
                   <div className="absolute inset-0 pointer-events-none rounded-sm ring-2 ring-inset ring-gold-leaf/80 shadow-[inset_0_0_24px_-4px_rgba(230,191,106,0.55)] animate-flicker" />
                 )}
@@ -1374,10 +1592,16 @@ export function Board({
                   <div className="absolute inset-0 bg-gradient-to-br from-stone-700/85 to-stone-900/95 backdrop-blur-sm pointer-events-none" />
                 ) : piece ? (
                   <div
-                    // The fx key remounts the piece when a flourish fires so
+                    // The fx key remounts the piece when a morph/summon fires so
                     // the pop/drop entrance replays even on back-to-back
-                    // transforms of the same square.
-                    key={boardFx ? `piece-fx-${boardFx.key}` : undefined}
+                    // transforms of the same square. Detonations (including a
+                    // signature lead painted over a surviving capturer) never
+                    // touch the piece, so they must not remount it.
+                    key={
+                      boardFx && (boardFx.kind === "morph" || boardFx.kind === "summon")
+                        ? `piece-fx-${boardFx.key}`
+                        : undefined
+                    }
                     className={
                       "pointer-events-none " +
                       (isDragging ? "opacity-30 " : "") +
