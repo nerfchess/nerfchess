@@ -152,4 +152,4 @@ Notes:
 
 - The reveal when the opponent plays a card/hex used to be a single top-right toast that vanished after 7s, so if you looked away you missed what hit you. Replaced it with a persistent OppPlaysLog: the newest play still shows its full rule text with the entrance animation (so a hex cast on you is clear), and older plays collapse to a name+tier line but STAY (last 6). The on-board effect still animates (freeze flash, impact strike, etc.).
 - Wired in both OnlineMatch (online) and the bot game page; the old BuffUsedToast is no longer used. tsc clean.
-- Stacked on the funny-cards branch (#202). Branch claude/opp-plays-log. OPEN.
+- Stacked on the funny-cards branch (#202). PR #203. OPEN.
