@@ -90,3 +90,11 @@ Tooling / process:
 
 Notes:
 - Anything visual is typecheck-clean but needs a preview-deploy eyeball; the game board cannot be run in the build environment.
+
+---
+
+## 2026-07-05 20:50 ET (count-based cards no longer soft-lock with few targets)
+
+- Fix: cards that collect N targets (teleport N pieces, "three of your pieces become amazons" like Titan Legion, remove/freeze/promote/advance N, and the removeEnemies / placePieces / voidSquares factories) soft-locked when the board had fewer than N eligible targets: you picked the few that existed, then got stranded on an empty step you could neither complete nor skip, so the card did nothing. Now they resolve with as many targets as are available. Central one-line guard in buffNextTarget (src/engine/game.ts): once at least one target is picked, a non-finishable step with no remaining candidates ends collection, so the effect applies to the picks gathered so far. Safe for structured collectors (relocateMany, Warp Sovereign, stealBuffs, lineSweep) which already self-guard or ignore a dangling pick.
+- Test: scripts/test-hexes.cjs (npm run test:rules) now drives every activated card on two sparse boards and fails on any soft-lock or non-termination. Verified to fail without the fix (7 cards) and pass with it (149 activated cards clean). tsc clean; test:rules and test:nerfs green.
+- Design note: docs/2026-07-05-count-target-graceful-design.md. Branch claude/count-target-graceful. OPEN.
