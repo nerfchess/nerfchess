@@ -133,3 +133,15 @@ Notes:
 - Visual + animation: new BananaPeel component (splayed three-frond peel, warm yellow gradient, gloss, ground shadow for a pseudo-3D look) rendered centered on the peel square; it lands with a little bounce then does a jaunty periodic shimmy (globals.css banana-appear + banana-wobble; cut under prefers-reduced-motion).
 - No engine/mechanic change, so no balance impact; purely making the existing trap visible. tsc clean; test:rules green. Visual wants a preview-deploy eyeball.
 - Stacked on the walnut branch (#199) to share the Board/Pieces/globals changes and avoid conflicts. PR #201. OPEN.
+
+---
+
+## 2026-07-05 22:45 ET (funny content batch: Tung Tung Tung Sahur + fruit)
+
+- New cards, all built on the existing safety-railed primitives in crossref.ts (freeze never touches a king, instants resolve once) so none can soft-lock a game:
+  - Tung Tung Tung Sahur (hex, tier 5): bonk one enemy piece with the log; it is stunned (frozen) for its next 2 turns, with an impact flash. Kings cannot be bonked.
+  - Coconut Bonk (item, tier 2): a lighter bonk; one enemy piece stunned for its next turn.
+  - Durian (hex, tier 3): the stench pins the opponent's pawns (no advance) for their next 3 turns, with a flash on every enemy pawn.
+  - Watermelon Rind (boon/protection, tier 4): your whole army is uncapturable for the opponent's next 2 turns.
+- Library now 423 buffs (411 implemented), 128 hexes. tsc clean; test:rules green (unique ids, no em dashes, no soft-locks, king safety all pass).
+- Animations reuse the existing freeze / impact-flash / no-pawn-advance / shield visuals; richer per-card art can follow. Stacked on the banana branch (#201). Branch claude/funny-cards. OPEN.
