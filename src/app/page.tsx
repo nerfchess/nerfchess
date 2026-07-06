@@ -368,16 +368,12 @@ function HowItWorks() {
           return (
             <div
               key={step.n}
-              className={`plate relative overflow-hidden p-5 sm:p-6 ${emphasized ? "gilt" : ""}`}
+              className={`plate relative flex flex-col overflow-hidden p-5 sm:p-6 ${emphasized ? "gilt" : ""}`}
             >
-              {/* Oversized ghost numeral: editorial density behind each step. */}
-              <span
-                aria-hidden
-                className="pointer-events-none absolute -right-3 -top-7 select-none font-display text-[7rem] font-bold leading-none text-white/[0.035]"
-              >
-                {step.n}
-              </span>
-              <div className="relative flex items-center gap-3">
+              {/* One aligned header row per card: number chip, title, icon.
+                  Identical structure and spacing across all three so the
+                  1 / 2 / 3 line reads as a single rule across the grid. */}
+              <div className="flex items-center gap-3">
                 <span
                   className={`grid h-9 w-9 shrink-0 place-items-center border font-display text-base font-bold ${
                     emphasized
@@ -387,19 +383,19 @@ function HowItWorks() {
                 >
                   {step.n}
                 </span>
+                <h3 className="min-w-0 flex-1 font-display text-lg font-semibold leading-tight text-parchment-50">
+                  {step.title}
+                </h3>
                 <svg
                   width="22" height="22" viewBox="0 0 24 24" fill="none"
                   stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"
                   strokeLinejoin="round" aria-hidden
-                  className={emphasized ? "text-gold-leaf" : "text-parchment-300"}
+                  className={"shrink-0 " + (emphasized ? "text-gold-leaf" : "text-parchment-300")}
                 >
                   {step.icon}
                 </svg>
               </div>
-              <h3 className="relative mt-4 font-display text-lg font-semibold text-parchment-50">
-                {step.title}
-              </h3>
-              <p className="relative mt-2 text-sm leading-relaxed text-parchment-300">
+              <p className="mt-3 text-sm leading-relaxed text-parchment-300">
                 {step.body}
               </p>
             </div>

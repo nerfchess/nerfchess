@@ -387,7 +387,7 @@ type HouseSeekEntry = {
 // (deserializing every finished game's move history), which on a bloated table
 // blew the DO CPU limit before it could cache or GC anything: the crash loop.
 const liveIdsKey = "live:ids";
-const buildVersion = "transparency-1";
+const buildVersion = "presence-1";
 // How long the moderator card-overrides snapshot (the card_overrides table:
 // disabled cards and tier moves) is cached in the DO before re-reading D1.
 // Loaded lazily on match creation and the opening nerf deal, never on a
@@ -4495,9 +4495,8 @@ export class GameServer extends DurableObject<Env> {
     }
 
     // House players appear in the online list too: seeking ones from the
-    // seek rows, playing ones from their live matches. Ratings and avatars
-    // come from what is already in hand (seek entries and match seats), so
-    // this adds no D1 work.
+    // seek rows. Ratings and avatars come from what is already in hand (seek
+    // entries and match seats), so this adds no D1 work.
     try {
       for (const seek of houseSeeks) {
         if (!seen.has(seek.userId)) {
@@ -4509,17 +4508,25 @@ export class GameServer extends DurableObject<Env> {
           });
         }
       }
+      // EVERY seat of a live match counts as online-and-playing: humans too,
+      // not just house bots. A player mid-game may have no identified lobby
+      // socket at all (their game socket is a separate session), which used
+      // to drop them from the online list entirely while they played.
       for (const match of matches) {
         if (!match.startedAt || match.result) continue;
         for (const color of ["w", "b"] as Color[]) {
           const user = match.users?.[color];
-          if (user && match.bots?.[color] && !seen.has(user.id)) {
+          if (!user) continue;
+          const existing = seen.get(user.id);
+          if (!existing) {
             seen.set(user.id, {
               name: user.name,
               rating: Math.round(user.rating),
               status: "playing",
               avatar: user.avatar ?? null,
             });
+          } else if (existing.status !== "playing") {
+            existing.status = "playing";
           }
         }
       }
