@@ -144,4 +144,4 @@ Notes:
   - Durian (hex, tier 3): the stench pins the opponent's pawns (no advance) for their next 3 turns, with a flash on every enemy pawn.
   - Watermelon Rind (boon/protection, tier 4): your whole army is uncapturable for the opponent's next 2 turns.
 - Library now 423 buffs (411 implemented), 128 hexes. tsc clean; test:rules green (unique ids, no em dashes, no soft-locks, king safety all pass).
-- Animations reuse the existing freeze / impact-flash / no-pawn-advance / shield visuals; richer per-card art can follow. Stacked on the banana branch (#201). Branch claude/funny-cards. OPEN.
+- Animations reuse the existing freeze / impact-flash / no-pawn-advance / shield visuals; richer per-card art can follow. Stacked on the banana branch (#201). PR #202. OPEN.
