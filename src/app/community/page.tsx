@@ -101,9 +101,6 @@ export default function CommunityPage() {
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h1 className="font-display text-4xl sm:text-5xl">Community</h1>
-            <p className="mt-2 text-parchment-200">
-              The players of nerfchess: who is on top, who is around, and what was just played.
-            </p>
           </div>
           <div className="flex items-center gap-2 smallcaps text-[11px] text-parchment-300">
             <span className="w-2 h-2 rounded-full bg-verdigris animate-flicker" />
