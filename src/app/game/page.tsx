@@ -914,7 +914,7 @@ function GamePage() {
             </h1>
             <p className="mt-2 text-sm text-parchment-300 text-center">
               {gameMode === "nerf"
-                ? "Pick one of two nerfs. Every six moves you draft a card: a hex that curses your opponent, or a boon or item that helps you."
+                ? "Pick one of two nerfs. Every five moves you draft a card: a hex that curses your opponent, or a boon or item that helps you."
                 : "Every game opens weak: pick one of two nerfs, then draft buffs every few moves to claw your way back to power."}
             </p>
             {nerfDeadline != null && (

@@ -456,7 +456,7 @@ export default function FriendPage() {
             <p className="mt-2 text-[11px] leading-snug text-parchment-400">
               {gameMode === "buff"
                 ? "No nerfs at all. Every few moves both players draft a buff; the strongest build wins."
-                : "Both players pick a secret nerf that only reveals when the game ends. Boon drafts every six moves can soften or remove it."}
+                : "Both players pick a secret nerf that only reveals when the game ends. Boon drafts every five moves can soften or remove it."}
             </p>
           </div>
 

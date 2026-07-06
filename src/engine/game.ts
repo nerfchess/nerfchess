@@ -363,7 +363,14 @@ export function legalMoves(game: NerfGame): Move[] {
           }
           break;
         case "barred":
-          if (e.against === me) all = all.filter((m) => !e.squares.includes(m.to));
+          // A wall never seals the king away from capture. Winning is king
+          // capture (there is no checkmate), so a permanent barred file or rank
+          // sitting over the enemy king would otherwise soft-lock the game as
+          // unwinnable (the Sundering / Great Divide / Fissure trap). A move
+          // that captures the king ignores the wall; every other move into a
+          // barred square is still blocked.
+          if (e.against === me)
+            all = all.filter((m) => m.captured === "k" || !e.squares.includes(m.to));
           break;
         case "king_safe":
           if (e.owner === opp) all = all.filter((m) => m.captured !== "k");
