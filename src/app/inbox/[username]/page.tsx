@@ -36,28 +36,49 @@ export default function ThreadPage() {
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
+    let intervalId: number | undefined;
+    const stop = () => {
+      if (intervalId !== undefined) {
+        window.clearInterval(intervalId);
+        intervalId = undefined;
+      }
+    };
     const load = async () => {
+      // Do not re-hit a known-missing thread, and skip polls while the tab is
+      // hidden so a backgrounded conversation stops burning requests.
+      if (cancelled || (typeof document !== "undefined" && document.hidden)) return;
       try {
         const res = await fetch(`/api/messages/${encodeURIComponent(username)}`);
         if (cancelled) return;
         if (res.status === 404) {
           setMissing(true);
+          stop();
           return;
         }
         if (!res.ok) return;
         const data = (await res.json()) as Thread;
         setThread((prev) => {
-          // Skip state churn when nothing changed, so typing isn't disturbed.
-          if (prev && prev.messages.length === data.messages.length) return prev;
-          return data;
+          if (!prev) return data;
+          // Merge by id, not by length. A poll that started before a just-sent
+          // message was persisted returns the pre-send list; replacing state
+          // with it would drop the optimistic message for up to 5s. Keep any
+          // local message the server response does not yet include.
+          const serverIds = new Set(data.messages.map((m) => m.id));
+          const localExtra = prev.messages.filter((m) => !serverIds.has(m.id));
+          if (localExtra.length === 0 && prev.messages.length === data.messages.length) {
+            // Nothing new: keep the same object so typing is not disturbed.
+            return prev;
+          }
+          const merged = [...data.messages, ...localExtra].sort((a, b) => a.at - b.at);
+          return { ...data, messages: merged };
         });
       } catch {}
     };
     load();
-    const id = window.setInterval(load, 5000);
+    intervalId = window.setInterval(load, 5000);
     return () => {
       cancelled = true;
-      window.clearInterval(id);
+      stop();
     };
   }, [user, username]);
 
@@ -86,6 +107,10 @@ export default function ThreadPage() {
       setThread((prev) =>
         prev ? { ...prev, messages: [...prev.messages, data.message!] } : prev,
       );
+    } catch {
+      // fetch rejects when the network is down; surface it instead of leaving
+      // the send to fail silently as an unhandled rejection.
+      setError("Could not send that message. Check your connection and try again.");
     } finally {
       setSending(false);
     }
@@ -177,7 +202,7 @@ export default function ThreadPage() {
                 disabled={!draft.trim() || sending}
                 className="btn-leaf px-5 font-display text-sm font-semibold disabled:opacity-50"
               >
-                Send
+                {sending ? "Sending…" : "Send"}
               </button>
             </div>
             {error && <p className="mt-2 text-sm text-oxblood-glow">{error}</p>}

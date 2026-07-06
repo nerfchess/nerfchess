@@ -74,7 +74,17 @@ export default function InboxPage() {
             </div>
 
             {!conversations ? (
-              <p className="mt-6 text-sm text-parchment-400">Loading conversations…</p>
+              <ul className="mt-6 plate divide-y divide-white/5" aria-hidden>
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <li key={i} className="flex items-center gap-3 px-4 py-3">
+                    <div className="h-9 w-9 shrink-0 bg-white/[0.06] animate-pulse" />
+                    <div className="min-w-0 flex-1">
+                      <div className="h-3 w-28 bg-white/[0.07] animate-pulse" />
+                      <div className="mt-2 h-2.5 w-44 max-w-full bg-white/[0.05] animate-pulse" />
+                    </div>
+                  </li>
+                ))}
+              </ul>
             ) : conversations.length === 0 ? (
               <EmptyState
                 className="mt-6"
