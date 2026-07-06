@@ -123,6 +123,44 @@ export const WalnutPiece = React.memo(function WalnutPiece({
   );
 });
 
+// A tossed banana peel, sitting on its square as a slip trap (see the Banana
+// Peel item). Splayed three-frond peel with a warm yellow gradient, gloss and a
+// ground shadow for a plump pseudo-3D look; it does a jaunty little shimmy (see
+// .banana-peel in globals.css). Gradient ids are per-instance so several peels
+// on one board never collide.
+export const BananaPeel = React.memo(function BananaPeel() {
+  const uid = React.useId().replace(/[:]/g, "");
+  const g = `bp-${uid}`;
+  return (
+    <svg viewBox="0 0 45 45" width="100%" height="100%" aria-hidden="true" role="img">
+      <defs>
+        <linearGradient id={g} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#ffe86b" />
+          <stop offset="55%" stopColor="#f6c518" />
+          <stop offset="100%" stopColor="#c07f0d" />
+        </linearGradient>
+        <linearGradient id={`${g}-in`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#fff7da" />
+          <stop offset="100%" stopColor="#efdfa0" />
+        </linearGradient>
+      </defs>
+      {/* soft ground shadow */}
+      <ellipse cx="22.5" cy="37.5" rx="13" ry="3.1" fill="#000000" opacity="0.18" />
+      <g stroke="#8a5c0c" strokeWidth="1" strokeLinejoin="round">
+        {/* left + right outer fronds */}
+        <path d="M22.5 33C14 31 8 24 7 15C10.5 13.8 13.5 15.2 15.3 19C17.2 23.8 20 28.8 24 31.8Z" fill={`url(#${g})`} />
+        <path d="M22.5 33C31 31 37 24 38 15C34.5 13.8 31.5 15.2 29.7 19C27.8 23.8 25 28.8 21 31.8Z" fill={`url(#${g})`} />
+        {/* center frond, pale inner skin */}
+        <path d="M22.5 33C20 24 21 15 22.5 7C24 15 25 24 22.5 33Z" fill={`url(#${g}-in)`} />
+        {/* squashed base pulp */}
+        <ellipse cx="22.5" cy="33" rx="4.6" ry="3" fill="#a06a12" />
+      </g>
+      {/* gloss streak */}
+      <path d="M12 17C13 21 16 26 19 29" fill="none" stroke="#ffffff" strokeWidth="1.1" strokeLinecap="round" opacity="0.42" />
+    </svg>
+  );
+});
+
 // Simplified silhouettes; high-contrast white/black with outline for both.
 // Colors resolve through CSS variables so piece themes can recolor the whole
 // set at runtime (see PIECE_THEMES / applyPieceTheme in lib/settings).

@@ -1420,6 +1420,7 @@ function GamePage() {
                           wardSquares: zone.ward,
                           strikeSquares: zone.strike,
                           walnutSquares: zone.walnut,
+                          bananaSquares: zone.banana,
                           lockedSquares: zone.locked,
                         }
                   }

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Piece, WalnutPiece } from "./Pieces";
+import { Piece, WalnutPiece, BananaPeel } from "./Pieces";
 import { BoardState, Color, FILE, Move, PieceType, RANK, SQ, Square } from "@/engine/types";
 import { playSelect } from "@/lib/sounds";
 
@@ -25,6 +25,8 @@ interface Visual {
   walnutSquares?: number[];
   /** Pieces shackled by a king-only or no-pawn-advance hex: chained in place. */
   lockedSquares?: number[];
+  /** Squares where the viewer has tossed a banana peel (owner-only trap). */
+  bananaSquares?: number[];
 }
 
 export interface QueuedPremove {
@@ -393,6 +395,7 @@ export function Board({
   const strikeSquares = useMemo(() => new Set(visual?.strikeSquares ?? []), [visual?.strikeSquares]);
   const walnutSquares = useMemo(() => new Set(visual?.walnutSquares ?? []), [visual?.walnutSquares]);
   const lockedSquares = useMemo(() => new Set(visual?.lockedSquares ?? []), [visual?.lockedSquares]);
+  const bananaSquares = useMemo(() => new Set(visual?.bananaSquares ?? []), [visual?.bananaSquares]);
   const highlightSquares = useMemo(
     () => new Set(visual?.highlightSquares ?? []),
     [visual?.highlightSquares],
@@ -869,6 +872,16 @@ export function Board({
                   /* Hexed into a walnut: a faint amber wash marks the square; the
                      piece itself is rendered as the walnut (see WalnutPiece). */
                   <div className="absolute inset-0 bg-amber-700/15 pointer-events-none" />
+                )}
+                {bananaSquares.has(sq) && (
+                  /* A banana peel the viewer tossed here (owner-only trap). The
+                     peel sits on the empty square with a jaunty spin until an
+                     enemy piece slips on it. */
+                  <div className="absolute inset-0 z-10 grid place-items-center pointer-events-none">
+                    <div className="banana-peel" style={{ width: "60%", height: "60%" }}>
+                      <BananaPeel />
+                    </div>
+                  </div>
                 )}
                 {lockedSquares.has(sq) && (
                   <>
