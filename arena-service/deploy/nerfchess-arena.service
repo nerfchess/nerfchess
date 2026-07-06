@@ -1,0 +1,20 @@
+[Unit]
+Description=nerfchess arena service (Tier 2 M1 — bot-vs-bot in RAM)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/node /opt/nerfchess-arena/server.mjs
+EnvironmentFile=/etc/nerfchess-arena.env
+Restart=always
+RestartSec=3
+# Below the engine service (Nice=5) and Postgres — filler is lowest priority.
+Nice=10
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

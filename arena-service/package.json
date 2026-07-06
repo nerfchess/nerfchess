@@ -1,0 +1,14 @@
+{
+  "name": "nerfchess-arena-service",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Tier 2 · M1 — runs bot-vs-bot house games in RAM, isolated from the DO.",
+  "scripts": {
+    "build": "node build.mjs",
+    "start": "node dist/server.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0"
+  }
+}

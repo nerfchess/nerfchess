@@ -1,0 +1,22 @@
+[Unit]
+Description=nerfchess house-bot engine service (Tier 1)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# dist/server.mjs is the bundled output of `npm run build`, copied to /opt.
+ExecStart=/usr/bin/node /opt/nerfchess-engine/server.mjs
+EnvironmentFile=/etc/nerfchess-engine.env
+Restart=always
+RestartSec=2
+# Engine search is bursty CPU; keep it below Postgres/cloudflared under load.
+Nice=5
+# Light hardening: the service listens on a port and writes nothing.
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

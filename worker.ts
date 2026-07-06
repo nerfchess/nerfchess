@@ -24,6 +24,7 @@ import {
 import {
   HOUSE_ROSTER,
   HousePersona,
+  type HouseSkill,
   ensureHouseUsers,
   houseDraftThinkMs,
   houseNerfPickIndex,
@@ -34,6 +35,7 @@ import {
   pickHouseMove,
   pickHouseSeek,
 } from "./src/lib/server/bots";
+import { moveByUci, type EngineMatch } from "./src/engine/replay";
 import type { BuffInstance, BuffPick, DraftMode } from "./src/engine/buff";
 import { DEFAULT_CADENCE, NERF_MODE_CADENCE } from "./src/engine/draft";
 import type { Move } from "./src/engine/types";
@@ -231,6 +233,21 @@ export interface Env {
   // Postgres (OCI) holding the finished-game archive, reached via Hyperdrive.
   // Optional so a worker without it still runs (games just aren't archived).
   HYPERDRIVE?: Hyperdrive;
+  // House-bot engine offload (Tier 1). When "true", house move searches run on
+  // the OCI engine service at HOUSE_ENGINE_URL instead of on this DO. Unset or
+  // any other value keeps the search local. HOUSE_ENGINE_TOKEN is the shared
+  // bearer secret (set via `wrangler secret put`), sent as Authorization.
+  HOUSE_ENGINE_REMOTE?: string;
+  HOUSE_ENGINE_URL?: string;
+  HOUSE_ENGINE_TOKEN?: string;
+  // Arena offload (Tier 2 / M2). The OCI arena runs bot-vs-bot games and POSTs
+  // to /arena/* here. INGEST_ENABLED gates archive+rating of arena results;
+  // LOBBY_ENABLED gates whether arena games appear in the lobby/TV. Both off =
+  // the arena is inert (its POSTs no-op), so this ships dark and flips on live.
+  // ARENA_INGEST_TOKEN is the shared bearer secret (set via `wrangler secret put`).
+  ARENA_INGEST_TOKEN?: string;
+  ARENA_INGEST_ENABLED?: string;
+  ARENA_LOBBY_ENABLED?: string;
 }
 
 // Quick-pairing time controls for rated Draft matchmaking. Keys are the wire
@@ -407,8 +424,71 @@ function error(ws: WebSocket, code: string, message: string) {
   send(ws, "error", { code, message });
 }
 
-function moveByUci(game: NerfGame, uci: string) {
-  return legalMoves(game).find((candidate) => moveToUCI(candidate) === uci);
+// House-bot engine offload (see docs/bot-offload-tier1-engine-service.md).
+// When HOUSE_ENGINE_REMOTE === "true" the house move search runs on the OCI
+// box instead of this single-threaded DO. The fetch is hard-bounded so a slow
+// or unreachable box can never stall the alarm tick — on timeout/failure the
+// bot falls back to the local engine (full strength), never to nothing.
+const HOUSE_ENGINE_TIMEOUT_MS = 150;
+
+// Arena (Tier 2 / M2). One live bot-vs-bot game announced by the OCI arena. The
+// DO holds these only in memory and expires them if the arena stops syncing, so
+// a crashed/paused arena drops out of the lobby on its own.
+const EXTERNAL_GAME_TTL_MS = 20 * 1000;
+type ExternalSeat = { userId: string; name: string; rating: number };
+type ExternalGameMeta = {
+  id: string;
+  mode: DraftMode;
+  timeSec: number;
+  incrementSec: number;
+  moves: number;
+  seats: Record<Color, ExternalSeat>;
+};
+// The finished-game record the arena POSTs to /arena/end. A subset of the arena
+// service's ArenaFinishedRecord — only what recordFinishedGame needs.
+type ArenaEndRecord = {
+  id: string;
+  setup: { whiteNerfId: string; blackNerfId: string; seed: number; timeSec: number; incrementSec: number };
+  mode: DraftMode;
+  moves: string[];
+  bots: Record<Color, string>;
+  seats: Record<Color, { name: string }>;
+  result: { winner: Color | "draw" | null; reason: string };
+  startedAt: number;
+  completedAt: number;
+};
+
+// Move equality for validating a move returned by the remote engine against
+// our own legal-move set. UCI (from+to+promotion) is not enough: buff-generated
+// moves share a UCI with a normal move to the same square, so `via` is part of
+// the identity.
+function sameMove(a: Move, b: Move): boolean {
+  return (
+    a.from === b.from &&
+    a.to === b.to &&
+    (a.promotion ?? null) === (b.promotion ?? null) &&
+    (a.via ?? null) === (b.via ?? null)
+  );
+}
+
+// The StoredMatch subset the remote engine needs to replay the position.
+// Deliberately omits clocks, sessions, tokens, users — nothing but the record
+// the engine replays.
+function serializeMatchForEngine(match: StoredMatch): EngineMatch {
+  return {
+    setup: {
+      whiteNerfId: match.setup.whiteNerfId,
+      blackNerfId: match.setup.blackNerfId,
+      seed: match.setup.seed,
+    },
+    mode: match.mode,
+    draft: match.draft,
+    draftSeed: match.draftSeed,
+    cadence: match.cadence,
+    stacked: match.stacked,
+    moves: match.moves,
+    draftActions: match.draftActions,
+  };
 }
 
 export class GameServer extends DurableObject<Env> {
@@ -422,6 +502,14 @@ export class GameServer extends DurableObject<Env> {
   // deleteMatch); queue/seek changes are absorbed by the TTL.
   private lobbyCache: { at: number; payload: unknown } | null = null;
   private static readonly LOBBY_CACHE_TTL_MS = 2000;
+  // Arena (Tier 2 / M2): bot-vs-bot games simulated on the OCI arena, kept in
+  // memory only. Refreshed by /arena/games; entries older than the TTL are
+  // ignored (self-heals if the arena crashes or the DO loses this on eviction).
+  private externalGames = new Map<string, { meta: ExternalGameMeta; at: number }>();
+  // Arena game ids already archived, so a retried /arena/end never double-rates
+  // the house accounts. In-memory + bounded; the rare eviction-window dup is
+  // bot-only and low stakes.
+  private arenaArchived = new Set<string>();
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
@@ -551,6 +639,8 @@ export class GameServer extends DurableObject<Env> {
         },
       });
     }
+
+    if (url.pathname.startsWith("/arena/")) return this.handleArena(request, url);
 
     if (url.pathname !== socketPath) return new Response("Not found", { status: 404 });
     if (request.headers.get("Upgrade") !== "websocket") {
@@ -2496,6 +2586,47 @@ export class GameServer extends DurableObject<Env> {
   // The house player's pending action lands: an opening nerf pick, a buff
   // offer resolve, an occasional buff activation, or a move. Exactly one
   // action per invocation; every follow-up re-arms through armBotAction.
+  // Ask the OCI engine service for a house move. Returns null (never throws)
+  // whenever the feature is off, the box is slow/unreachable, the reply is bad,
+  // or the engine versions disagree — the caller then falls back to the local
+  // engine. The AbortController timeout is what keeps a stalled box from ever
+  // holding the alarm tick; the `await` itself yields the DO thread so live
+  // sockets are serviced while the remote search runs.
+  private async remoteHouseMove(
+    match: StoredMatch,
+    skill: HouseSkill,
+    remainingClockMs?: number,
+  ): Promise<Move | null> {
+    if (this.env.HOUSE_ENGINE_REMOTE !== "true" || !this.env.HOUSE_ENGINE_URL) return null;
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), HOUSE_ENGINE_TIMEOUT_MS);
+    try {
+      const res = await fetch(`${this.env.HOUSE_ENGINE_URL}/move`, {
+        method: "POST",
+        signal: ctl.signal,
+        headers: {
+          "content-type": "application/json",
+          ...(this.env.HOUSE_ENGINE_TOKEN
+            ? { authorization: `Bearer ${this.env.HOUSE_ENGINE_TOKEN}` }
+            : {}),
+        },
+        body: JSON.stringify({
+          match: serializeMatchForEngine(match),
+          skill,
+          remainingClockMs,
+          replayVersion: REPLAY_VERSION,
+        }),
+      });
+      if (!res.ok) return null; // 409 version mismatch / 5xx -> local fallback
+      const data = (await res.json()) as { move?: Move | null };
+      return data.move ?? null;
+    } catch {
+      return null; // timeout / network / parse -> local fallback
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
   private async playHouseAction(match: StoredMatch, now = Date.now()) {
     match.botActAt = null;
     if (match.result) return;
@@ -2615,11 +2746,24 @@ export class GameServer extends DurableObject<Env> {
     // fall back to any legal move, and only end the game when there truly is
     // no legal move at all.
     const clocks = this.currentClocks(match, now);
+    const remaining = match.setup.timeSec ? clocks[color] : undefined;
     let move: Move | null = null;
-    try {
-      move = pickHouseMove(game, persona.skill, randomInt, match.setup.timeSec ? clocks[color] : undefined);
-    } catch (err) {
-      console.error("house move pick failed, using a legal fallback", match.id, err);
+    if (this.env.HOUSE_ENGINE_REMOTE === "true") {
+      const remote = await this.remoteHouseMove(match, persona.skill, remaining);
+      // The await above yielded the DO thread; the match may have ended (resign,
+      // disconnect, flag) while the remote search ran. Bail if so.
+      if (match.result) return;
+      // Treat the OCI reply as untrusted: accept only a move that is legal in
+      // our own reconstruction, and commit our LOCAL instance (never the wire
+      // object). A desynced/tampered move simply isn't found -> local fallback.
+      if (remote) move = legalMoves(game).find((m) => sameMove(m, remote)) ?? null;
+    }
+    if (!move) {
+      try {
+        move = pickHouseMove(game, persona.skill, randomInt, remaining);
+      } catch (err) {
+        console.error("house move pick failed, using a legal fallback", match.id, err);
+      }
     }
     if (!move) {
       const legal = legalMoves(game);
@@ -2767,6 +2911,138 @@ export class GameServer extends DurableObject<Env> {
     match.runningSince = now;
     this.armBotAction(match, null, now);
     await this.saveMatch(match);
+  }
+
+  // ---- Arena ingestion (Tier 2 / M2) ----
+  // The OCI arena runs bot-vs-bot games and POSTs here: /arena/games (periodic
+  // registry of its live games, for lobby/TV) and /arena/end (a finished game,
+  // to archive + rate). Auth via ARENA_INGEST_TOKEN. Gated by ARENA_INGEST_ENABLED
+  // (archive+rating) and ARENA_LOBBY_ENABLED (visibility), so it ships dark.
+  private async handleArena(request: Request, url: URL): Promise<Response> {
+    if (request.method !== "POST") return new Response("method not allowed", { status: 405 });
+    const token = this.env.ARENA_INGEST_TOKEN;
+    if (!token || request.headers.get("authorization") !== `Bearer ${token}`) {
+      return new Response("unauthorized", { status: 401 });
+    }
+    const ingest = this.env.ARENA_INGEST_ENABLED === "true";
+    // The arena should spawn only when ingestion is on AND a human is present to
+    // see the lobby (mirror the DO's own stand-down). Told to the arena so it
+    // pauses otherwise.
+    const enabled = ingest && this.humanSocketCount() > 0;
+
+    if (url.pathname === "/arena/games") {
+      let body: { games?: ExternalGameMeta[] };
+      try {
+        body = (await request.json()) as { games?: ExternalGameMeta[] };
+      } catch {
+        return Response.json({ error: "bad_json" }, { status: 400 });
+      }
+      if (ingest) {
+        const now = Date.now();
+        const next = new Map<string, { meta: ExternalGameMeta; at: number }>();
+        for (const g of body.games ?? []) {
+          // Only house accounts may be projected — a forged id can never inject
+          // a fake game for a real user.
+          if (!g || !isHouseUserId(g.seats?.w?.userId) || !isHouseUserId(g.seats?.b?.userId)) continue;
+          next.set(g.id, { meta: g, at: now });
+        }
+        this.externalGames = next;
+      } else {
+        this.externalGames.clear();
+      }
+      return Response.json({ enabled, lobby: this.env.ARENA_LOBBY_ENABLED === "true" });
+    }
+
+    if (url.pathname === "/arena/end") {
+      if (!ingest) return Response.json({ ok: false, ingest: false });
+      let body: { record?: ArenaEndRecord };
+      try {
+        body = (await request.json()) as { record?: ArenaEndRecord };
+      } catch {
+        return Response.json({ error: "bad_json" }, { status: 400 });
+      }
+      const rec = body.record;
+      if (!rec || !isHouseUserId(rec.bots?.w) || !isHouseUserId(rec.bots?.b)) {
+        return Response.json({ error: "bad_record" }, { status: 400 });
+      }
+      this.externalGames.delete(rec.id);
+      if (this.arenaArchived.has(rec.id)) return Response.json({ ok: true, dup: true });
+      const db = await this.db();
+      if (!db) return Response.json({ ok: false, reason: "no_db" });
+      try {
+        // Same call endMatch uses — applies Glicko to both house accounts and
+        // writes the archive row (PG via Hyperdrive, else D1). Bot-only, so a
+        // bad arena can move house ratings but never a human's.
+        await recordFinishedGame(
+          db,
+          {
+            id: rec.id,
+            whiteUserId: rec.bots.w,
+            blackUserId: rec.bots.b,
+            whiteName: rec.seats.w.name,
+            blackName: rec.seats.b.name,
+            whiteNerfId: rec.setup.whiteNerfId,
+            blackNerfId: rec.setup.blackNerfId,
+            seed: rec.setup.seed,
+            timeSec: rec.setup.timeSec,
+            incrementSec: rec.setup.incrementSec,
+            moves: rec.moves,
+            winner: rec.result.winner,
+            reason: rec.result.reason,
+            rated: true,
+            ruleset: "draft",
+            ratingCategory: rec.mode,
+            startedAt: rec.startedAt,
+            completedAt: rec.completedAt,
+          },
+          this.env.HYPERDRIVE?.connectionString,
+        );
+        this.arenaArchived.add(rec.id);
+        if (this.arenaArchived.size > 2000) this.arenaArchived.clear();
+      } catch (err) {
+        console.error("arena game record failed", rec.id, err);
+        return Response.json({ ok: false, reason: "record_failed" });
+      }
+      return Response.json({ ok: true });
+    }
+
+    return new Response("not found", { status: 404 });
+  }
+
+  // Fresh (non-expired) arena games as lobby liveGames entries (Tier 2 / M2).
+  private externalLiveGames(now: number): Array<{
+    id: string;
+    players: ReturnType<GameServer["playersPayload"]>;
+    rated: boolean;
+    draft: boolean;
+    mode?: DraftMode;
+    timeSec: number;
+    incrementSec: number;
+    moves: number;
+    watchers: number;
+  }> {
+    if (this.env.ARENA_LOBBY_ENABLED !== "true") return [];
+    const games = [];
+    for (const { meta, at } of this.externalGames.values()) {
+      if (now - at > EXTERNAL_GAME_TTL_MS) continue;
+      const seat = (c: Color) => ({
+        name: meta.seats[c].name,
+        rating: Math.round(meta.seats[c].rating),
+        avatar: housePersona(meta.seats[c].userId)?.avatar ?? null,
+      });
+      games.push({
+        id: meta.id,
+        players: { w: seat("w"), b: seat("b") },
+        rated: true,
+        draft: true,
+        mode: meta.mode,
+        timeSec: meta.timeSec,
+        incrementSec: meta.incrementSec,
+        moves: meta.moves,
+        watchers: 0,
+      });
+    }
+    return games;
   }
 
   // ---------------- rematch ----------------
@@ -3647,6 +3923,9 @@ export class GameServer extends DurableObject<Env> {
         watchers: this.watcherCount(match.id),
       });
     }
+    // Bot-vs-bot games simulated on the OCI arena (Tier 2 / M2) show alongside
+    // real live games. Gated by ARENA_LOBBY_ENABLED; empty when off.
+    for (const g of this.externalLiveGames(now)) liveGames.push(g);
     liveGames.sort((a, b) => b.watchers - a.watchers || b.moves - a.moves);
     challenges.sort((a, b) => b.createdAt - a.createdAt);
 
@@ -4022,7 +4301,7 @@ export class GameServer extends DurableObject<Env> {
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
-    if (url.pathname === socketPath || url.pathname === "/healthz") {
+    if (url.pathname === socketPath || url.pathname === "/healthz" || url.pathname.startsWith("/arena/")) {
       try {
         const id = env.GAME_SERVER.idFromName(globalServerName);
         return await env.GAME_SERVER.get(id).fetch(request);
