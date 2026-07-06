@@ -86,6 +86,34 @@ export function premoveOptionsFor(
     }
   }
 
+  // Speculative pawn captures: offer a pawn's forward-diagonal squares as
+  // premove targets even when EMPTY, so a player can pre-capture a piece they
+  // expect to land there. Enemy-occupied diagonals are already legal in `base`
+  // and own-piece diagonals are the recapture case handled above; this fills
+  // in the empty squares. Re-validation at execution fires it only if a real
+  // capture exists then (a pawn cannot legally move diagonally onto an empty
+  // square), so an anticipated capture that never materializes just drops.
+  for (let sq = 0; sq < 64; sq++) {
+    const pawn = board.pieces[sq];
+    if (!pawn || pawn.color !== me || pawn.type !== "p") continue;
+    const dir = me === "w" ? 1 : -1;
+    const toRank = RANK(sq) + dir;
+    if (toRank < 0 || toRank > 7) continue;
+    const promoRank = me === "w" ? 7 : 0;
+    for (const df of [-1, 1]) {
+      const toFile = FILE(sq) + df;
+      if (!inBoard(toFile, toRank)) continue;
+      const to = SQ(toFile, toRank);
+      if (board.pieces[to]) continue; // enemy/own diagonals handled elsewhere
+      const mv: Move = { from: sq, to, piece: "p", color: me };
+      if (toRank === promoRank) {
+        for (const promotion of PROMOTIONS) pushUnique(extras, { ...mv, promotion });
+      } else {
+        pushUnique(extras, mv);
+      }
+    }
+  }
+
   // Buff-aware union: run the REAL move pipeline on a turn-flipped shallow
   // copy of the game so card-granted movement shows up as premovable. The
   // clone is never mutated (legalMoves only reads), and any engine hiccup
