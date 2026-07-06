@@ -38,7 +38,8 @@ import type { BuffInstance, BuffPick, DraftMode } from "./src/engine/buff";
 import { DEFAULT_CADENCE, NERF_MODE_CADENCE } from "./src/engine/draft";
 import type { Move } from "./src/engine/types";
 import { RNG } from "./src/engine/rng";
-import { Color } from "./src/engine/types";
+import { Color, PIECE_VALUE } from "./src/engine/types";
+import type { AchievementExtras } from "./src/lib/server/achievements";
 import { sessionTokenFromCookieHeader, userForSession } from "./src/lib/server/auth";
 import { ensureSchema } from "./src/lib/server/schema";
 import { loadCategoryRatings, recordFinishedGame, RatingChange } from "./src/lib/server/games";
@@ -353,7 +354,7 @@ type HouseSeekEntry = {
 // (deserializing every finished game's move history), which on a bloated table
 // blew the DO CPU limit before it could cache or GC anything: the crash loop.
 const liveIdsKey = "live:ids";
-const buildVersion = "nerf-draft-grace-1";
+const buildVersion = "achievements-1";
 // Lichess-style start-of-game grace: a player's clock only starts charging 10
 // seconds into their first move, so nobody loses time to a slow page load.
 const firstMoveGraceMs = 10 * 1000;
@@ -1340,6 +1341,33 @@ export class GameServer extends DurableObject<Env> {
     return true;
   }
 
+  // Final-board facts for achievement evaluation: material per side (kings
+  // excluded) and the highest-tier card each side drafted. Computed from the
+  // replayed end state, best-effort: a replay hiccup just yields nothing, which
+  // only means the material/draft achievements do not fire for this game.
+  private achievementExtras(match: StoredMatch): AchievementExtras {
+    try {
+      const game = match.startedAt ? this.gameFromMatch(match) : null;
+      if (!game) return {};
+      const material: Record<Color, number> = { w: 0, b: 0 };
+      for (const piece of game.board.pieces) {
+        if (piece && piece.type !== "k") material[piece.color] += PIECE_VALUE[piece.type];
+      }
+      const maxBuffTier: Record<Color, number> = { w: 0, b: 0 };
+      if (game.buffs) {
+        for (const color of ["w", "b"] as Color[]) {
+          for (const b of game.buffs.players[color].buffs) {
+            const tier = b.tier as number;
+            if (tier > maxBuffTier[color]) maxBuffTier[color] = tier;
+          }
+        }
+      }
+      return { material, maxBuffTier };
+    } catch {
+      return {};
+    }
+  }
+
   // Single exit point for a finished match: persist it to D1 (updating both
   // ratings when the game was rated), then notify players and spectators.
   private async endMatch(match: StoredMatch, schedule = true) {
@@ -1373,7 +1401,7 @@ export class GameServer extends DurableObject<Env> {
             ...(match.draft && match.mode ? { ratingCategory: match.mode } : {}),
             startedAt: match.startedAt,
             completedAt: match.completedAt,
-          }, this.env.HYPERDRIVE?.connectionString);
+          }, this.env.HYPERDRIVE?.connectionString, this.achievementExtras(match));
           if (recorded.white || recorded.black) {
             ratings = { w: recorded.white, b: recorded.black };
           }

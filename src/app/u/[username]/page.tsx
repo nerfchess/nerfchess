@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Trophy } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { AccountUser, fetchMe } from "@/lib/authClient";
@@ -234,6 +235,16 @@ export default function ProfilePage() {
               />
               <StatCard label="Member since" value={new Date(profile.user.createdAt).toLocaleDateString()} />
             </div>
+
+            <Link
+              href={`/achievements?u=${encodeURIComponent(profile.user.username)}`}
+              className="mt-2 plate p-3 flex items-center justify-between gap-3 hover:border-gold/40 transition"
+            >
+              <span className="flex items-center gap-2 font-display text-parchment-100">
+                <Trophy className="h-4 w-4 text-gold-leaf" strokeWidth={2} /> Achievements
+              </span>
+              <span className="smallcaps text-[10px] text-gold-leaf">View</span>
+            </Link>
 
             {profile.ratingHistory.length > 0 && (
               <RatingHistorySection points={profile.ratingHistory} />
