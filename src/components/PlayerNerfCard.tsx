@@ -7,6 +7,8 @@ import { Piece } from "@/components/Pieces";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { capturedPiecesFor, capturedValue, opponentOf } from "@/lib/material";
 import { GlossaryText } from "@/components/GlossaryText";
+import { NERF_TURN_COST, TurnCost } from "@/engine/buff";
+import { TurnCostBadge } from "@/components/TurnCostBadge";
 
 import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
 
@@ -15,6 +17,7 @@ export interface HeldBoon {
   name: string;
   tier: Tier;
   status: string | null;
+  cost: TurnCost;
 }
 
 interface Props {
@@ -144,9 +147,12 @@ export function PlayerNerfCard({
         <>
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              {ownerLabel && (
-                <div className="smallcaps text-[10px] text-parchment-400">{ownerLabel}</div>
-              )}
+              <div className="flex flex-wrap items-center gap-1.5">
+                {ownerLabel && (
+                  <span className="smallcaps text-[10px] text-parchment-400">{ownerLabel}</span>
+                )}
+                <TurnCostBadge cost={NERF_TURN_COST} />
+              </div>
               <div className={`font-display ${compact ? "text-lg" : "text-2xl"} leading-tight tier-${nerf.tier}`}>
                 {nerf.name}
               </div>
@@ -220,6 +226,7 @@ export function PlayerNerfCard({
                 >
                   {b.name}
                 </span>
+                <TurnCostBadge cost={b.cost} short className="self-center" />
                 {b.status && (
                   <span className="smallcaps min-w-0 flex-1 truncate text-[8px] text-gold/80">
                     {b.status}

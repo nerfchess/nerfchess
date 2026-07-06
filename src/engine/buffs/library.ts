@@ -1595,7 +1595,7 @@ const TIER4: Buff[] = [
     },
   ),
   def(
-    { id: "sanctuary", name: "Sanctuary", description: "Designate one square; your pieces there are uncapturable, for the game.", tier: 4, category: "protection" },
+    { id: "sanctuary", name: "Sanctuary", description: "Designate one square; your pieces there, the king aside, are uncapturable for the game.", tier: 4, category: "protection" },
     activated(
       (_inst, _api, picks) =>
         picks.length > 0

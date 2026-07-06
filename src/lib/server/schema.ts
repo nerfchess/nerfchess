@@ -213,7 +213,8 @@ export const SCHEMA_STATEMENTS: string[] = [
     description TEXT NOT NULL DEFAULT '',
     owner_user_id TEXT NOT NULL REFERENCES users(id),
     owner_name TEXT NOT NULL,
-    created_at INTEGER NOT NULL
+    created_at INTEGER NOT NULL,
+    icon TEXT NOT NULL DEFAULT ''
   )`,
   `CREATE INDEX IF NOT EXISTS idx_clubs_created ON clubs(created_at DESC)`,
   `CREATE TABLE IF NOT EXISTS club_members (
@@ -263,6 +264,20 @@ export const SCHEMA_STATEMENTS: string[] = [
     count INTEGER NOT NULL DEFAULT 0,
     first_at INTEGER NOT NULL
   )`,
+  // Unlockable achievements, one row per (user, achievement). A row appears the
+  // first time a finished game advances the achievement; progress climbs to the
+  // achievement's goal, then unlocked_at is stamped (and never rewritten).
+  // Locked achievements have no row, so the catalog's locked/unlocked state is a
+  // left join. Keyed by user_id so evaluation and reads stay bounded + indexed.
+  // Mirrors migrations/0017_achievements.sql.
+  `CREATE TABLE IF NOT EXISTS user_achievements (
+    user_id TEXT NOT NULL,
+    achievement_id TEXT NOT NULL,
+    progress INTEGER NOT NULL DEFAULT 0,
+    unlocked_at INTEGER,
+    PRIMARY KEY (user_id, achievement_id)
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_user_achievements_user ON user_achievements(user_id, unlocked_at)`,
 ];
 
 // Columns added after launch. SQLite has no "ADD COLUMN IF NOT EXISTS", so
@@ -348,6 +363,10 @@ const ADDITIVE_COLUMNS: string[] = [
   `ALTER TABLE tournament_entries ADD COLUMN games_played INTEGER NOT NULL DEFAULT 0`,
   `ALTER TABLE tournament_entries ADD COLUMN streak INTEGER NOT NULL DEFAULT 0`,
   `ALTER TABLE tournament_entries ADD COLUMN performance INTEGER`,
+  // Club identity icon, a curated "emoji|colorId" pair picked by the club
+  // owner (validated against src/lib/clubIcons.ts; '' = monogram fallback).
+  // Mirrors migrations/0018_club_icon.sql.
+  `ALTER TABLE clubs ADD COLUMN icon TEXT NOT NULL DEFAULT ''`,
 ];
 
 export async function ensureSchema(db: D1Database): Promise<void> {

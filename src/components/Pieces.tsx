@@ -45,6 +45,122 @@ export const Piece = React.memo(function Piece({ type, color, size = 60, classNa
   );
 });
 
+// A piece hexed into a walnut: the whole piece becomes a plump, glossy walnut
+// (the joke), with the original piece shrunk down and nestled in the shell so
+// you can still tell what got petrified. The shell wobbles like it is trying to
+// crack itself open (see .walnut-piece in globals.css). Gradient ids are
+// per-instance (useId) so many walnuts on one board never collide.
+export const WalnutPiece = React.memo(function WalnutPiece({
+  type,
+  color,
+  size = "100%",
+}: {
+  type: PieceType;
+  color: Color;
+  size?: number | string;
+}) {
+  const uid = React.useId().replace(/[:]/g, "");
+  const body = `wn-body-${uid}`;
+  const cav = `wn-cav-${uid}`;
+  return (
+    <span
+      className="walnut-piece relative inline-grid place-items-center select-none"
+      style={{ width: size, height: size }}
+      role="img"
+      aria-label={`${color === "w" ? "White" : "Black"} ${type} hexed into a walnut`}
+      title="Hexed into a walnut"
+    >
+      <svg viewBox="0 0 45 45" width="100%" height="100%" className="walnut-inline" aria-hidden="true">
+        <defs>
+          <radialGradient id={body} cx="38%" cy="28%" r="80%">
+            <stop offset="0%" stopColor="#f0cf9c" />
+            <stop offset="42%" stopColor="#cd944f" />
+            <stop offset="100%" stopColor="#754319" />
+          </radialGradient>
+          <radialGradient id={cav} cx="50%" cy="40%" r="70%">
+            <stop offset="0%" stopColor="#8a5a2c" />
+            <stop offset="100%" stopColor="#3d2410" />
+          </radialGradient>
+        </defs>
+        {/* shell */}
+        <path
+          d="M22.5 4.5C31.3 4.5 38.5 11.8 38.5 23C38.5 34.4 31.2 41.5 22.5 41.5C13.8 41.5 6.5 34.4 6.5 23C6.5 11.8 13.7 4.5 22.5 4.5Z"
+          fill={`url(#${body})`}
+          stroke="#4a2b10"
+          strokeWidth="1.3"
+        />
+        {/* central seam */}
+        <path
+          d="M22.5 6C20.8 12 24 18 22.5 23.5C21 29 24.2 35 22.5 40"
+          fill="none"
+          stroke="#5c3714"
+          strokeWidth="1.3"
+          strokeLinecap="round"
+          opacity="0.9"
+        />
+        {/* brain-like ridges, both halves */}
+        <g fill="none" stroke="#6d3f18" strokeWidth="1" strokeLinecap="round" opacity="0.72">
+          <path d="M21.8 10.5C15.5 11.5 11.5 15.5 10.5 20.5" />
+          <path d="M22 16.5C16 17.5 12.8 21.5 12 26.5" />
+          <path d="M22.2 23C17 24 14.2 28 14.5 33" />
+          <path d="M23.2 10.5C29.5 11.5 33.5 15.5 34.5 20.5" />
+          <path d="M23 16.5C29 17.5 32.2 21.5 33 26.5" />
+          <path d="M22.8 23C28 24 30.8 28 30.5 33" />
+        </g>
+        {/* gloss highlight */}
+        <ellipse cx="16" cy="13.5" rx="6" ry="3.8" fill="#ffffff" opacity="0.22" />
+        {/* cavity the piece sits in */}
+        <ellipse cx="22.5" cy="25.5" rx="8.2" ry="9" fill={`url(#${cav})`} stroke="#4a2b10" strokeWidth="0.8" opacity="0.95" />
+      </svg>
+      {/* the shrunken original piece, nestled in the shell */}
+      <span
+        className="pointer-events-none absolute"
+        style={{ left: "50%", top: "56%", width: "40%", height: "40%", transform: "translate(-50%, -50%)" }}
+      >
+        <Piece type={type} color={color} size="100%" />
+      </span>
+    </span>
+  );
+});
+
+// A tossed banana peel, sitting on its square as a slip trap (see the Banana
+// Peel item). Splayed three-frond peel with a warm yellow gradient, gloss and a
+// ground shadow for a plump pseudo-3D look; it does a jaunty little shimmy (see
+// .banana-peel in globals.css). Gradient ids are per-instance so several peels
+// on one board never collide.
+export const BananaPeel = React.memo(function BananaPeel() {
+  const uid = React.useId().replace(/[:]/g, "");
+  const g = `bp-${uid}`;
+  return (
+    <svg viewBox="0 0 45 45" width="100%" height="100%" aria-hidden="true" role="img">
+      <defs>
+        <linearGradient id={g} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#ffe86b" />
+          <stop offset="55%" stopColor="#f6c518" />
+          <stop offset="100%" stopColor="#c07f0d" />
+        </linearGradient>
+        <linearGradient id={`${g}-in`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#fff7da" />
+          <stop offset="100%" stopColor="#efdfa0" />
+        </linearGradient>
+      </defs>
+      {/* soft ground shadow */}
+      <ellipse cx="22.5" cy="37.5" rx="13" ry="3.1" fill="#000000" opacity="0.18" />
+      <g stroke="#8a5c0c" strokeWidth="1" strokeLinejoin="round">
+        {/* left + right outer fronds */}
+        <path d="M22.5 33C14 31 8 24 7 15C10.5 13.8 13.5 15.2 15.3 19C17.2 23.8 20 28.8 24 31.8Z" fill={`url(#${g})`} />
+        <path d="M22.5 33C31 31 37 24 38 15C34.5 13.8 31.5 15.2 29.7 19C27.8 23.8 25 28.8 21 31.8Z" fill={`url(#${g})`} />
+        {/* center frond, pale inner skin */}
+        <path d="M22.5 33C20 24 21 15 22.5 7C24 15 25 24 22.5 33Z" fill={`url(#${g}-in)`} />
+        {/* squashed base pulp */}
+        <ellipse cx="22.5" cy="33" rx="4.6" ry="3" fill="#a06a12" />
+      </g>
+      {/* gloss streak */}
+      <path d="M12 17C13 21 16 26 19 29" fill="none" stroke="#ffffff" strokeWidth="1.1" strokeLinecap="round" opacity="0.42" />
+    </svg>
+  );
+});
+
 // Simplified silhouettes; high-contrast white/black with outline for both.
 // Colors resolve through CSS variables so piece themes can recolor the whole
 // set at runtime (see PIECE_THEMES / applyPieceTheme in lib/settings).

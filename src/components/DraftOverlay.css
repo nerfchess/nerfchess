@@ -1,7 +1,8 @@
 /* ============================================================================
    Draft overlay effects (scoped) — glassy card treatment + tier-scaled reveal.
 
-   Owned by DraftOverlay.tsx; imported only there. Deliberately kept OUT of
+   Owned by DraftOverlay.tsx; imported there and by BuffDock.tsx (which uses
+   the dock pocket flash below). Deliberately kept OUT of
    globals.css (another lane owns that file). Everything here layers on top of
    the existing `.draft-face` / `.tier-bg-N` treatment without redefining it:
    the shells add a frosted rim, a one-shot reveal sweep, and a persistent glow
@@ -20,8 +21,140 @@
 .draft-fx {
   position: relative;
   isolation: isolate;
-  /* Higher tiers float a touch higher on hover; calm tiers barely move. */
+  /* Match the pickable card's 14px candy corners so the glow ring and the
+     sheen clip (both border-radius: inherit) hug the card exactly. */
+  border-radius: 14px;
   transition: transform 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* Draftable faces run a touch more saturated than the resting .draft-face in
+   globals: a stronger top-lit tier wash and a deeper inner bloom, so the offer
+   reads like candy while dock/codex cards keep the calmer base treatment. */
+.draft-fx .draft-face {
+  border-radius: 14px;
+  background-image:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0) 44%),
+    radial-gradient(135% 100% at 50% -8%, rgb(var(--tier-rgb, 216 181 110) / 0.22), transparent 66%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 0 48px -18px rgb(var(--tier-rgb, 216 181 110) / 0.75);
+}
+
+/* Selected-for-confirm state: a firm gold ring plus a slight permanent lift,
+   so the picked card visibly steps forward from its siblings. */
+.draft-fx--selected {
+  transform: translateY(-3px);
+}
+.draft-fx--selected .draft-fx__glow {
+  opacity: 1;
+  box-shadow:
+    0 0 0 2px rgb(216 181 110 / 0.9),
+    0 0 0 1px rgb(var(--tier-rgb, 216 181 110) / 0.55),
+    0 14px 44px -14px rgb(var(--tier-rgb, 216 181 110) / 0.9);
+}
+
+/* The floating draft timer: a frosted glass chip with a draining ring. Kept
+   separate from the card panel so time pressure reads at a glance. */
+.draft-timer {
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(48, 45, 41, 0.85), rgba(28, 26, 23, 0.85));
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 18px 50px -20px rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.draft-timer--urgent {
+  border-color: rgba(220, 90, 84, 0.55);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 0 26px -8px rgba(220, 90, 84, 0.55),
+    0 18px 50px -20px rgba(0, 0, 0, 0.85);
+  animation: draft-timer-urgent 1s ease-in-out infinite;
+}
+@keyframes draft-timer-urgent {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .draft-timer--urgent { animation: none; }
+}
+
+/* ---------------------------------------------------------------------------
+   Draft panel frame: the seam gradient (warm Nerf terracotta to cool Buff sky)
+   drawn as a hairline rim around the panel, plus a faint ambient halo, so the
+   draft moment reads as an event without shouting. The rim is painted with a
+   masked overlay (only the outer 1.5px survives), which stays correct over the
+   plate's translucent background in both themes. */
+.draft-frame {
+  position: relative;
+  border-radius: 16px;
+}
+.draft-frame::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border-radius: inherit;
+  padding: 1.5px;
+  pointer-events: none;
+  background: linear-gradient(
+    120deg,
+    rgb(var(--seam-warm-rgb) / 0.7),
+    rgba(216, 181, 110, 0.45) 48%,
+    rgb(var(--seam-cool-rgb) / 0.7)
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+}
+.draft-frame::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow:
+    0 0 64px -20px rgb(var(--seam-cool-rgb) / 0.35),
+    0 26px 80px -30px rgba(0, 0, 0, 0.85);
+}
+/* The scrolling plate inside the frame matches the frame's rounding so the
+   rim sits flush on the panel edge (a refined double border: the plate's own
+   hairline just inside the gradient rim). */
+.draft-panel {
+  border-radius: 16px;
+}
+
+/* ---------------------------------------------------------------------------
+   Dock pocket flash: the "Latest" slot in the buff dock blinks a brief
+   mint-to-sun glow when a fresh card lands in the pocket. Remounting the slot
+   (React key on the card counts) replays it. Opacity/box-shadow only, one
+   shot, and fully dropped under prefers-reduced-motion. */
+@keyframes dock-pocket-flash {
+  0% {
+    box-shadow: inset 0 0 0 1px rgb(125 220 183 / 0), 0 0 0 -6px rgb(125 220 183 / 0);
+    background-color: rgb(125 220 183 / 0);
+  }
+  18% {
+    box-shadow: inset 0 0 0 1px rgb(125 220 183 / 0.65), 0 0 20px -6px rgb(125 220 183 / 0.7);
+    background-color: rgb(125 220 183 / 0.1);
+  }
+  55% {
+    box-shadow: inset 0 0 0 1px rgb(255 217 126 / 0.4), 0 0 16px -8px rgb(255 217 126 / 0.5);
+    background-color: rgb(255 217 126 / 0.05);
+  }
+  100% {
+    box-shadow: inset 0 0 0 1px rgb(255 217 126 / 0), 0 0 0 -8px rgb(255 217 126 / 0);
+    background-color: rgb(255 217 126 / 0);
+  }
+}
+.dock-pocket-flash {
+  animation: dock-pocket-flash 1.4s var(--ease-out, ease-out) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .dock-pocket-flash { animation: none; }
 }
 
 /* Tier color + intensity table. Mirrors the tier palette used by tier-bg-N in
@@ -124,13 +257,9 @@
   z-index: 1;
 }
 
-/* Hover lift scales with tier: a heavier card rises more. Pointer-only so it
-   never fires as a sticky state on touch. */
-@media (hover: hover) {
-  .draft-fx:hover {
-    transform: translateY(calc(-2px - var(--fx, 0) * 4px));
-  }
-}
+/* Hover lift now belongs to the card itself (.card-juicy on the pickable
+   BuffCard): the shell no longer translates on hover, so the pop and the
+   tier ring travel together instead of the card sliding out of its glow. */
 
 /* Respect reduced motion: drop every sweep, pulse, and hover translate. The
    frosted glass and a calm static glow remain so the cards still read as

@@ -189,6 +189,21 @@ function effectActive(e: ActiveEffect): boolean {
   return e.turns == null || e.turns > 0;
 }
 
+/** Freeze and walnut bind to the piece standing on their square. Once that
+ * piece is gone (captured, or removed/relocated by another buff) the effect
+ * must go with it: a walnut or freeze marker can never linger on an empty
+ * square or transfer onto a capturing enemy piece. Called after every move and
+ * after every buff-driven board mutation. */
+function pruneOrphanedSquareEffects(game: NerfGame) {
+  const bs = game.buffs;
+  if (!bs) return;
+  bs.effects = bs.effects.filter((e) => {
+    if (e.kind !== "freeze" && e.kind !== "walnut") return true;
+    const p = game.board.pieces[e.sq];
+    return !!p && p.color === e.owner;
+  });
+}
+
 /** True while a nerf is suspended (Grace Period) or removed (Nerf Breaker). */
 export function nerfDisabled(game: NerfGame, color: Color): boolean {
   const bs = game.buffs;
@@ -330,7 +345,18 @@ export function legalMoves(game: NerfGame): Move[] {
 
   if (slot.nerf.filterMoves && !nerfDisabled(game, me)) {
     const ctx = makeContext(game, slot.color);
-    all = slot.nerf.filterMoves(all, slot.state, ctx);
+    const beforeNerf = all;
+    const filtered = slot.nerf.filterMoves(all, slot.state, ctx);
+    // Safety net: a move-restriction nerf must never zero out the mover's
+    // options. That is a self-stalemate / soft-lock, not an intended loss
+    // (loss conditions run separately via checkLoss). The rule harness only
+    // probes each nerf from the opening, so nerfs that empty the list in a
+    // mid or endgame position (statue_king, no_mans_land, scorched_earth,
+    // the no-backward family, etc.) slipped through. If a nerf empties the
+    // list while legal moves existed, relax it for this one turn. Every such
+    // nerf still shapes play on every turn where at least one legal move
+    // survives its filter, which is nearly all of them.
+    all = filtered.length > 0 ? filtered : beforeNerf;
   }
 
   if (bs) {
@@ -343,12 +369,25 @@ export function legalMoves(game: NerfGame): Move[] {
             all = all.filter((m) => {
               const cap = m.capturedSquare ?? (m.captured ? m.to : null);
               if (cap == null) return true;
+              // A shield never protects the king itself. King invulnerability
+              // is exclusively king_safe / Immortal King (documented, and it
+              // carries a drawback). Without this, a permanent square shield
+              // parked on the king (Sanctuary) or a whole-army shield would
+              // make the king uncapturable forever and the game unwinnable.
+              if (game.board.pieces[cap]?.type === "k") return true;
               return e.squares ? !e.squares.includes(cap) : false;
             });
           }
           break;
         case "barred":
-          if (e.against === me) all = all.filter((m) => !e.squares.includes(m.to));
+          // A wall never seals the king away from capture. Winning is king
+          // capture (there is no checkmate), so a permanent barred file or rank
+          // sitting over the enemy king would otherwise soft-lock the game as
+          // unwinnable (the Sundering / Great Divide / Fissure trap). A move
+          // that captures the king ignores the wall; every other move into a
+          // barred square is still blocked.
+          if (e.against === me)
+            all = all.filter((m) => m.captured === "k" || !e.squares.includes(m.to));
           break;
         case "king_safe":
           if (e.owner === opp) all = all.filter((m) => m.captured !== "k");
@@ -438,6 +477,9 @@ export function playMove(game: NerfGame, move: Move): NerfGame {
       if (e.turns != null && effectTickColor(e) === move.color) e.turns -= 1;
     }
     bs.effects = bs.effects.filter((e) => e.turns == null || e.turns > 0);
+    // A captured or buff-removed piece leaves its freeze/walnut behind; drop
+    // those orphaned markers so they never haunt an empty or enemy-held square.
+    pruneOrphanedSquareEffects(game);
   }
   // Check loss conditions
   const result = checkLossConditions(game);
@@ -608,7 +650,21 @@ export function buffNextTarget(
   const inst = bs.players[color].buffs[buffIndex];
   const def = inst && BUFF_BY_ID[inst.id];
   if (!inst || !def?.targets || inst.spent || inst.nullified) return null;
-  return def.targets(inst, makeBuffApi(game, color), picks);
+  const target = def.targets(inst, makeBuffApi(game, color), picks);
+  // Graceful termination for count-based cards ("teleport N", "N pieces become
+  // amazons", "remove N enemy pawns"...). Once at least one target is picked, a
+  // step that offers no remaining candidates means the board has fewer eligible
+  // targets than the card's nominal count. Rather than stranding the player on a
+  // step they can neither satisfy nor skip, end collection here so the effect
+  // resolves with the picks gathered so far (every such effect iterates over its
+  // picks, so it simply applies to as many as were available). Steps already
+  // marked finishable, and the very first step (picks.length === 0, a genuinely
+  // unusable card), keep their existing behavior.
+  if (target && picks.length > 0) {
+    if (target.kind === "square" && target.squares.length === 0 && !target.finishable) return null;
+    if (target.kind === "enemy-buff" && target.options.length === 0) return null;
+  }
+  return target;
 }
 
 /** Use an activated buff with the collected picks. Returns success. */
@@ -676,6 +732,9 @@ function passTurnAfterBuff(game: NerfGame, color: Color) {
  * decide the game on the spot). */
 function settleAfterBuff(game: NerfGame) {
   if (game.result) return;
+  // A buff that removed or relocated a walnutted/frozen piece must drop its
+  // now-orphaned marker before anything else reads the effect list.
+  pruneOrphanedSquareEffects(game);
   const result = checkLossConditions(game);
   if (result) {
     game.result = result;

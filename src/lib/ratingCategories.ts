@@ -6,7 +6,15 @@
 // NOTE: this only describes the *rating buckets*. Actual time controls and
 // matchmaking are intentionally out of scope for now.
 
-import { Flame, Rabbit, Rocket, ShieldOff, Sparkles, Zap, type LucideIcon } from "lucide-react";
+import { ShieldOff, Sparkles } from "lucide-react";
+import type { ComponentType } from "react";
+import {
+  BlitzIcon,
+  BulletIcon,
+  RapidIcon,
+  UltraBulletIcon,
+  type SpeedIconProps,
+} from "@/components/SpeedIcons";
 import {
   categoryForTimeControl as speedCategoryForTimeControl,
   type RatingCategory as RatingCategoryUnion,
@@ -18,23 +26,26 @@ export type RatingCategoryId = RatingCategoryUnion;
 export interface RatingCategory {
   id: RatingCategoryId;
   label: string;
-  /** Small icon shown beside the category everywhere it appears. */
-  icon: LucideIcon;
+  /** Small icon shown beside the category everywhere it appears. Accepts the
+   *  lucide contract (size, style, className, strokeWidth), so both lucide
+   *  icons and the hand-drawn SpeedIcons fit. */
+  icon: ComponentType<SpeedIconProps>;
   /** Accent colour (hex) used for highlights, selected tabs, sparklines, etc. */
   accent: string;
   /** One-line description of the intended pace — shown on cards/tooltips. */
   blurb: string;
 }
 
-// Lichess-style speed iconography: lightning for UltraBullet, a bullet-fast
-// rocket, fire for Blitz, and the rapid rabbit. These are the legacy speed
-// buckets: rated queue games moved to the per-mode buckets below, so speed
-// ratings only move for games recorded before the switch.
+// Lichess-style speed iconography, drawn in-house (src/components/SpeedIcons):
+// a flame for UltraBullet, a bullet for Bullet, a lightning bolt for Blitz,
+// and the rapid rabbit. These are the legacy speed buckets: rated queue games
+// moved to the per-mode buckets below, so speed ratings only move for games
+// recorded before the switch.
 export const RATING_CATEGORIES: RatingCategory[] = [
-  { id: "ultrabullet", label: "UltraBullet", icon: Zap,    accent: "#b78fd6", blurb: "Pure reflexes: 15 seconds" },
-  { id: "bullet",      label: "Bullet",      icon: Rocket, accent: "#c66860", blurb: "Lightning-fast games" },
-  { id: "blitz",       label: "Blitz",       icon: Flame,  accent: "#4a9fee", blurb: "Fast, tactical games" },
-  { id: "rapid",       label: "Rapid",       icon: Rabbit, accent: "#7eb59a", blurb: "Room to think it through" },
+  { id: "ultrabullet", label: "UltraBullet", icon: UltraBulletIcon, accent: "#b78fd6", blurb: "Pure reflexes: 15 seconds" },
+  { id: "bullet",      label: "Bullet",      icon: BulletIcon,      accent: "#c66860", blurb: "Lightning-fast games" },
+  { id: "blitz",       label: "Blitz",       icon: BlitzIcon,       accent: "#4a9fee", blurb: "Fast, tactical games" },
+  { id: "rapid",       label: "Rapid",       icon: RapidIcon,       accent: "#7eb59a", blurb: "Room to think it through" },
 ];
 
 // The two mode buckets. Queue games are rated here, one bucket per pool,

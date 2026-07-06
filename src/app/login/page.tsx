@@ -55,11 +55,11 @@ function LoginPage() {
         <h1 className="font-display text-4xl">
           {tab === "login" ? "Welcome back" : "Create your account"}
         </h1>
-        <p className="mt-2 text-parchment-200 text-sm">
-          {upgrading
-            ? "Pick a username and password. Your guest rating, games, and member date carry over."
-            : "An account gives you rated online games, a real rating, game history, and a spot on the leaderboard."}
-        </p>
+        {upgrading && (
+          <p className="mt-2 text-parchment-200 text-sm">
+            Your guest rating, games, and member date carry over.
+          </p>
+        )}
 
         <div className="mt-6 grid grid-cols-2 gap-1 plate p-1">
           {(["login", "register"] as const).map((t) => (

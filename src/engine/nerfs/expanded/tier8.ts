@@ -51,12 +51,16 @@ export const NERFS_T8: Nerf[] = [
     {
       id: "total_pacifism",
       name: "Total Pacifism",
-      description: "You can never capture an enemy piece. Not one.",
-      flavor: "A war fought entirely by dancing around each other.",
+      description: "You can never capture an enemy piece, except the king to win.",
+      flavor: "A war fought entirely by dancing around each other, right up to the last step.",
       icon: "heart",
     },
     {
-      filterMoves: filter((m) => !m.captured),
+      // Forbid every capture but the king itself. Winning is king capture, so
+      // banning that too would make the game literally unwinnable for you (best
+      // case a draw). The one lethal exception keeps the handicap brutal but
+      // still winnable.
+      filterMoves: filter((m) => !m.captured || m.captured === "k"),
     },
   ),
   N(

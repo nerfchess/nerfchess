@@ -218,6 +218,9 @@ export type DraftZones = {
   /** Pieces shackled by a king-only or no-pawn-advance hex: they cannot move
    * while the hex holds, so they are marked with a chain. */
   locked: number[];
+  /** Banana peels the VIEWER has tossed and not yet triggered. Shown only to
+   * the owner (a trap keeps its surprise), marked with the peel. */
+  banana: number[];
 };
 
 /** Squares held in place by an active Immobilizer: enemy non-king pieces
@@ -253,9 +256,17 @@ function immobilizedSquares(game: NerfGame): number[] {
  * frozen pieces, sanctuary squares, barred squares for each side, and the
  * lightning-struck squares' brief flash. */
 export function draftZones(game: NerfGame, myColor: Color): DraftZones {
-  const zones: DraftZones = { frozen: [], shielded: [], ward: [], barred: [], strike: [], walnut: [], locked: [] };
+  const zones: DraftZones = { frozen: [], shielded: [], ward: [], barred: [], strike: [], walnut: [], locked: [], banana: [] };
   if (!game.buffs) return zones;
   zones.frozen.push(...immobilizedSquares(game));
+  // Banana peels the viewer has tossed: a hidden trap stored on the buff
+  // instance (not in effects), shown only to its owner so the surprise
+  // survives, until an enemy piece slips on it and the peel is spent.
+  for (const inst of game.buffs.players[myColor].buffs) {
+    if (inst.id !== "banana_peel" || inst.spent || inst.nullified) continue;
+    const sq = inst.state.sq as number | undefined;
+    if (sq != null && !zones.banana.includes(sq)) zones.banana.push(sq);
+  }
   for (const e of game.buffs.effects) {
     if (e.turns != null && e.turns <= 0) continue;
     if (e.kind === "freeze") zones.frozen.push(e.sq);

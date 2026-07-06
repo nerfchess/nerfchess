@@ -1,17 +1,19 @@
 "use client";
 
+import { ClubIcon } from "@/components/ClubIcon";
 import { SiteHeader } from "@/components/SiteHeader";
 import { AccountUser, fetchMe } from "@/lib/authClient";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { Search, Users } from "lucide-react";
+import { ChevronRight, Search, Users } from "lucide-react";
 
 interface Club {
   id: string;
   slug: string;
   name: string;
   description: string;
+  icon?: string | null;
   owner_name: string;
   created_at: number;
   members: number;
@@ -211,26 +213,24 @@ export default function ClubsPage() {
   );
 }
 
-// One directory row, lichess-teams-style: a monogram tile, the club name with
-// its description on a second line, and the member count pinned to the right.
+// One directory row, lichess-teams-style: the club's icon tile, its name with
+// the description on a second line, the member count, and a chevron so the
+// whole row obviously opens the club.
 function ClubRow({ club }: { club: Club }) {
   return (
     <li>
       <Link
         href={`/clubs/${encodeURIComponent(club.slug)}`}
-        className="flex items-center gap-4 px-5 py-4 transition-colors hover:bg-white/5"
+        className="group flex cursor-pointer items-center gap-4 px-5 py-4 transition-colors hover:bg-white/5"
       >
-        <span
-          aria-hidden
-          className="grid h-11 w-11 shrink-0 place-items-center border border-white/10 bg-ink-900/60 font-display text-lg text-parchment-200"
-        >
-          {club.name.trim().charAt(0).toUpperCase() || "?"}
-        </span>
+        <ClubIcon icon={club.icon} name={club.name} size={44} />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span className="truncate font-display text-lg text-parchment-50">{club.name}</span>
+            <span className="truncate font-display text-lg text-parchment-50 transition-colors group-hover:text-gold-leaf">
+              {club.name}
+            </span>
             {!!club.joined && (
-              <span className="shrink-0 border border-gold/40 px-1.5 py-0.5 smallcaps text-[8px] text-gold-leaf">
+              <span className="shrink-0 rounded-md border border-gold/40 px-1.5 py-0.5 smallcaps text-[8px] text-gold-leaf">
                 Joined
               </span>
             )}
@@ -246,6 +246,11 @@ function ClubRow({ club }: { club: Club }) {
           <Users size={13} />
           {club.members}
         </span>
+        <ChevronRight
+          size={16}
+          className="shrink-0 text-parchment-500 transition-all group-hover:translate-x-0.5 group-hover:text-parchment-200"
+          aria-hidden
+        />
       </Link>
     </li>
   );

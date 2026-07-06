@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/server/db";
 import { sessionTokenFromCookieHeader, userForSession } from "@/lib/server/auth";
+import { isValidClubIcon } from "@/lib/clubIcons";
 
 export const dynamic = "force-dynamic";
 
@@ -31,7 +32,7 @@ export async function GET(request: Request) {
   const user = await userForSession(db, sessionTokenFromCookieHeader(request.headers.get("cookie")));
   const rows = await db
     .prepare(
-      `SELECT c.id, c.slug, c.name, c.description, c.owner_name, c.created_at,
+      `SELECT c.id, c.slug, c.name, c.description, c.icon, c.owner_name, c.created_at,
               COUNT(cm.user_id) AS members,
               MAX(CASE WHEN cm.user_id = ? THEN 1 ELSE 0 END) AS joined
        FROM clubs c
@@ -46,6 +47,7 @@ export async function GET(request: Request) {
       slug: string;
       name: string;
       description: string;
+      icon: string;
       owner_name: string;
       created_at: number;
       members: number;
@@ -59,7 +61,7 @@ export async function POST(request: Request) {
   const user = await userForSession(db, sessionTokenFromCookieHeader(request.headers.get("cookie")));
   if (!user) return NextResponse.json({ error: "Sign in to create a club." }, { status: 401 });
 
-  let body: { name?: unknown; description?: unknown };
+  let body: { name?: unknown; description?: unknown; icon?: unknown };
   try {
     body = (await request.json()) as typeof body;
   } catch {
@@ -68,6 +70,7 @@ export async function POST(request: Request) {
 
   const name = typeof body.name === "string" ? body.name.trim().slice(0, 60) : "";
   const description = typeof body.description === "string" ? body.description.trim().slice(0, 240) : "";
+  const icon = isValidClubIcon(body.icon) ? body.icon : "";
   if (name.length < 3) return NextResponse.json({ error: "Club name must be at least 3 characters." }, { status: 400 });
 
   const id = crypto.randomUUID();
@@ -76,16 +79,16 @@ export async function POST(request: Request) {
   await db.batch([
     db
       .prepare(
-        `INSERT INTO clubs (id, slug, name, description, owner_user_id, owner_name, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO clubs (id, slug, name, description, icon, owner_user_id, owner_name, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       )
-      .bind(id, slug, name, description, user.id, user.username, now),
+      .bind(id, slug, name, description, icon, user.id, user.username, now),
     db
       .prepare("INSERT INTO club_members (club_id, user_id, role, joined_at) VALUES (?, ?, 'owner', ?)")
       .bind(id, user.id, now),
   ]);
 
   return NextResponse.json({
-    club: { id, slug, name, description, owner_name: user.username, created_at: now, members: 1 },
+    club: { id, slug, name, description, icon, owner_name: user.username, created_at: now, members: 1 },
   });
 }

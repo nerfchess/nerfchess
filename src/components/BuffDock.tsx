@@ -1,14 +1,19 @@
 "use client";
 
-import { BuffPick, BuffTarget, draftCardNoun } from "@/engine/buff";
+import { BuffPick, BuffTarget, draftCardNoun, turnCost } from "@/engine/buff";
 import { BUFF_BY_ID } from "@/engine/buffs/library";
+import { TurnCostBadge } from "./TurnCostBadge";
 import { NerfGame, activateBuff, buffNextTarget } from "@/engine/game";
 import { Color } from "@/engine/types";
 import { Tier } from "@/engine/nerf";
 import { TIER_ROMAN } from "@/lib/tiers";
 import { motion } from "framer-motion";
+import { Inbox, Layers, Swords, type LucideIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { BuffCard } from "./BuffCard";
+import { OppPlaysDockSection, type OppPlay } from "./OppPlaysLog";
+// Shares the dock pocket flash keyframes (and nothing else) with the overlay.
+import "./DraftOverlay.css";
 
 // ---------------------------------------------------------------------------
 // Buff dock and targeting.
@@ -220,6 +225,20 @@ export function EnemyBuffModal({
   );
 }
 
+/** Dock section header: a small icon, the section label, and a count chip
+ * pushed to the right edge. One shared shape so every section reads alike. */
+function DockSectionHeader({ icon: Icon, label, count }: { icon: LucideIcon; label: string; count: number }) {
+  return (
+    <div className="flex items-center gap-1.5">
+      <Icon aria-hidden size={12} strokeWidth={2.2} className="shrink-0 text-parchment-400" />
+      <span className="smallcaps min-w-0 truncate text-[10px] text-parchment-400">{label}</span>
+      <span className="ml-auto shrink-0 rounded-full border border-white/15 bg-white/[0.05] px-1.5 py-px font-mono text-[9px] tabular-nums text-parchment-300">
+        {count}
+      </span>
+    </div>
+  );
+}
+
 /** Face-down mini card: all the opponent shows for a hidden buff is its
  * tier. Spent/nullified minis dim like used cards do. */
 function FaceDownMini({ tier, dead }: { tier: Tier; dead?: boolean }) {
@@ -252,9 +271,12 @@ interface Props {
   /** Bot games: mask the opponent's held cards locally (the online server
    * already sends them masked). Revealed instances still show face-up. */
   hideOpponentCards?: boolean;
+  /** Everything the opponent has played this game: after each play's 5-minute
+   * stay in the top-right feed, this dock section is its permanent home. */
+  plays?: OppPlay[];
 }
 
-export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards }: Props) {
+export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards, plays }: Props) {
   const [showUsed, setShowUsed] = useState(false);
 
   const bs = game.buffs;
@@ -293,11 +315,21 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards 
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.25 }}
         className={
-          "dock-card border border-white/10 bg-white/[0.02] px-2 py-1.5 " +
+          "dock-card relative overflow-hidden rounded-lg border px-2 py-1.5 transition-transform duration-100 " +
           (dead ? "opacity-45 " : "") +
-          (usable ? "border-gold/30 " : "")
+          (usable
+            ? "border-verdigris-glow/40 bg-verdigris/[0.06] pl-3 active:translate-y-px "
+            : "border-white/10 bg-white/[0.02] ")
         }
       >
+        {/* Usable accent: a soft glowing left edge marks the rows you can
+            act on right now. */}
+        {usable && (
+          <span
+            aria-hidden
+            className="absolute inset-y-1 left-0 w-[3px] rounded-r-full bg-verdigris-glow/80 shadow-[0_0_8px_1px_rgba(123,181,47,0.4)]"
+          />
+        )}
         <div
           // Second input path (additive): drag the usable chip onto a
           // highlighted board square to pick it. Native HTML5 drag is separate
@@ -320,6 +352,7 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards 
           <span className={`min-w-0 flex-1 truncate font-display text-[12px] font-semibold leading-tight tier-${inst.tier}`}>
             {def.name}
           </span>
+          <TurnCostBadge cost={turnCost(def)} short />
           {usable && (
             <span className="smallcaps shrink-0 rounded-sm border border-verdigris-glow/50 bg-verdigris/15 px-1 py-px text-[8px] font-semibold text-verdigris-glow">
               Usable
@@ -341,7 +374,7 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards 
             (usable ? (
               <button
                 onClick={() => onStartUse(i)}
-                className="btn-leaf shadow-leaf shrink-0 px-2 py-1 font-display text-[10px] font-semibold tracking-wide"
+                className="btn-glass btn-glass--primary shrink-0 px-2.5 py-1 font-display text-[10px] font-semibold tracking-wide"
               >
                 Use
               </button>
@@ -349,7 +382,7 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards 
               <button
                 disabled
                 title="Your turn only"
-                className="shrink-0 cursor-not-allowed border border-white/10 bg-white/[0.03] px-2 py-1 font-display text-[10px] tracking-wide text-parchment-400"
+                className="shrink-0 cursor-not-allowed rounded-lg border border-white/10 bg-white/[0.03] px-2.5 py-1 font-display text-[10px] tracking-wide text-parchment-400"
               >
                 Use
               </button>
@@ -376,7 +409,7 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards 
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.25 }}
         className={
-          "dock-card w-full border border-white/10 bg-white/[0.02] px-2 py-1 " +
+          "dock-card w-full rounded-lg border border-white/10 bg-white/[0.02] px-2 py-1 " +
           (dead ? "opacity-45" : "")
         }
       >
@@ -384,6 +417,7 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards 
           <span className={`min-w-0 flex-1 truncate font-display text-[11px] font-semibold tier-${inst.tier}`}>
             {def.name}
           </span>
+          <TurnCostBadge cost={turnCost(def)} short />
           {inst.nullified && <span className="smallcaps shrink-0 text-[8px] text-oxblood-glow">Nullified</span>}
           {inst.spent && !inst.nullified && <span className="smallcaps shrink-0 text-[8px] text-parchment-400">Used</span>}
           <span
@@ -400,13 +434,21 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards 
   };
 
   return (
-    <div className="plate flex h-full min-h-0 flex-col overflow-hidden">
+    <div data-buff-dock className="plate flex h-full min-h-0 flex-col overflow-hidden">
       <div className="min-h-0 flex-1 space-y-2 overflow-y-auto bg-inherit px-3 pb-2">
         {/* Latest pick slot: your newest card stays visible here; the
             opponent's side shows a face-down card while hidden. */}
         {(lastMine || lastTheirs) && (
-          <div className="sticky top-0 z-10 -mx-3 flex items-center gap-2 border-b border-white/10 bg-inherit px-3 pb-1.5 pt-2.5">
-            <span className="smallcaps shrink-0 text-[9px] text-parchment-400">Latest</span>
+          <div className="sticky top-0 z-10 -mx-3 border-b border-white/10 bg-inherit px-3 pb-2 pt-2">
+            {/* The pocket: a rounded slot that flashes a brief mint/sun glow
+                whenever a fresh card lands (keying by the card counts remounts
+                it, replaying the one-shot CSS animation). */}
+            <div
+              key={`pocket-${mine.length}-${theirs.length}`}
+              className="dock-pocket-flash flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-2 py-1.5"
+            >
+              <Inbox aria-hidden size={12} strokeWidth={2.2} className="shrink-0 text-parchment-400" />
+              <span className="smallcaps shrink-0 text-[9px] text-parchment-400">Latest</span>
             {lastMine && (
               <motion.span
                 key={`m${mine.length}`}
@@ -442,6 +484,7 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards 
                   {BUFF_BY_ID[lastTheirs.id]?.name}
                 </motion.span>
               ))}
+            </div>
           </div>
         )}
 
@@ -450,7 +493,7 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards 
         {(bs.players[myColor].flags.takeBoth ?? 0) > 0 && (
           <div
             role="status"
-            className="flex items-center gap-2 border border-gold/50 bg-gold/10 px-2 py-1.5"
+            className="flex items-center gap-2 rounded-lg border border-gold/50 bg-gold/10 px-2 py-1.5"
           >
             <span aria-hidden className="h-1.5 w-1.5 shrink-0 bg-gold-leaf animate-flicker" />
             <span className="font-display text-[11px] font-semibold text-gold-leaf">
@@ -459,10 +502,11 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards 
           </div>
         )}
 
-        <div className="flex items-baseline justify-between gap-2">
-          <span className="smallcaps text-[10px] text-parchment-400">Your {nounPlural}</span>
-          <span className="font-mono text-[10px] tabular-nums text-parchment-400">{mine.length}</span>
-        </div>
+        <DockSectionHeader
+          icon={Layers}
+          label={`Your ${nounPlural}`}
+          count={mine.length}
+        />
         {mine.length === 0 && (
           <p className="text-[11px] text-parchment-400">
             None yet. Your first draft arrives after {bs.players[myColor].nextDraftAt} moves.
@@ -472,13 +516,18 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards 
 
         {theirs.length > 0 && (
           <>
-            <div className="flex items-baseline justify-between gap-2 border-t border-white/10 pt-2">
-              <span className="smallcaps text-[10px] text-parchment-400">Opponent&apos;s {nounPlural}</span>
-              <span className="font-mono text-[10px] tabular-nums text-parchment-400">{theirs.length}</span>
+            <div className="border-t border-white/10 pt-2">
+              <DockSectionHeader
+                icon={Swords}
+                label={`Opponent's ${nounPlural}`}
+                count={theirs.length}
+              />
             </div>
             <div className="flex flex-wrap items-start gap-1">{theirsActive.map(oppEntry)}</div>
           </>
         )}
+
+        {plays && plays.length > 0 && <OppPlaysDockSection plays={plays} />}
 
         {usedCount > 0 && (
           <div className="border-t border-white/10 pt-1.5">

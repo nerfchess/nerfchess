@@ -4,17 +4,16 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { HeroTv } from "@/components/HeroTv";
 import { SiteHeader } from "@/components/SiteHeader";
-import { WelcomeBanner } from "@/components/WelcomeBanner";
 import { ALL_NERFS, PLAYABLE_NERFS } from "@/engine/nerfs/library";
 import { ALL_BUFFS } from "@/engine/buffs/library";
 import type { Nerf } from "@/engine/nerf";
 import type { Buff } from "@/engine/buff";
 import { useLobbySnapshot } from "@/lib/lobbyClient";
+import { AccountUser, fetchMe } from "@/lib/authClient";
 import { ActiveGame, loadActiveGame } from "@/lib/multiplayer";
 import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
 
-// Real library counts, computed once. Feeds the social proof strip so the
-// numbers stay honest and update automatically as the library grows. The full
+// Real library count, computed once, for the "See all N" codex link. The full
 // library is every nerf plus every buff, hex, boon, and item card.
 const TOTAL_RULES = ALL_NERFS.length + ALL_BUFFS.length;
 
@@ -76,8 +75,6 @@ export default function HomePage() {
     <main className="min-h-screen flex flex-col">
       <SiteHeader />
 
-      <WelcomeBanner />
-
       <section className="mode-field w-full max-w-7xl mx-auto px-5 sm:px-6 pt-2 pb-10 sm:pt-6 grid lg:grid-cols-[minmax(0,1fr)_380px] gap-8 lg:gap-14 items-center">
         <div className="order-1">
           <HeroTv />
@@ -88,36 +85,36 @@ export default function HomePage() {
         <div className="order-2">
           <span className="eyebrow">Two-mode chess</span>
           <h1 className="display-2 mt-2 text-parchment-50">
-            One game.{" "}
+            <span className="grad-seam-text">One game.</span>{" "}
             <span className="text-mode-nerfGlow">Nerf</span>{" "}
             <span className="text-parchment-400">or</span>{" "}
             <span className="text-mode-buffGlow">Buff</span>.
           </h1>
           <p className="lead mt-4 text-parchment-100">
-            Chess with two modes. In{" "}
+            In{" "}
             <Link
               href="/lobby?mode=nerf"
               className="font-semibold text-mode-nerfGlow underline decoration-mode-nerf/50 underline-offset-4 transition-colors hover:decoration-mode-nerfGlow"
             >
               Nerf
             </Link>{" "}
-            mode you each carry a secret handicap, revealed only when the game
-            ends. Either way, you draft cards as you play. In{" "}
+            mode you carry a secret handicap. In{" "}
             <Link
               href="/lobby?mode=buff"
               className="font-semibold text-mode-buffGlow underline decoration-mode-buff/50 underline-offset-4 transition-colors hover:decoration-mode-buffGlow"
             >
               Buff
             </Link>{" "}
-            mode nobody is nerfed, so you just draft power-ups. You win by
-            capturing the king.
+            mode you draft power-ups. Capture the king to win.
           </p>
 
           <ReturnToGameBanner />
 
           {/* Action hierarchy: playing a real person is THE flow. One big
-              glowing primary into the lobby, two quieter options below it. */}
-          <div className="mt-5 flex flex-col gap-3">
+              glowing primary into the lobby, two quieter glass options below
+              it, all sitting on a soft frosted panel so the column reads as
+              one friendly control cluster. */}
+          <div className="mt-5 flex flex-col gap-3 rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.06] to-white/[0.02] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_18px_44px_-28px_rgba(0,0,0,0.85)] backdrop-blur-md">
             <Link
               href="/lobby"
               className="btn-leaf btn-cta w-full flex items-center justify-center gap-3 px-8 py-5 font-display text-xl sm:text-2xl font-semibold motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out motion-safe:hover:-translate-y-px motion-safe:active:scale-[0.98]"
@@ -133,13 +130,13 @@ export default function HomePage() {
             <div className="grid grid-cols-2 gap-3">
               <Link
                 href="/friend"
-                className="btn-ghost flex items-center justify-center gap-2 px-4 py-3 font-display text-base font-medium motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out motion-safe:hover:-translate-y-px motion-safe:active:scale-[0.98]"
+                className="btn-glass flex items-center justify-center gap-2 px-4 py-3 font-display text-base font-medium motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out motion-safe:hover:-translate-y-px motion-safe:active:scale-[0.98]"
               >
                 Play a Friend
               </Link>
               <Link
                 href="/game?mode=ai"
-                className="btn-ghost flex items-center justify-center gap-2 px-4 py-3 font-display text-base font-medium motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out motion-safe:hover:-translate-y-px motion-safe:active:scale-[0.98]"
+                className="btn-glass flex items-center justify-center gap-2 px-4 py-3 font-display text-base font-medium motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out motion-safe:hover:-translate-y-px motion-safe:active:scale-[0.98]"
               >
                 Play vs Bot
               </Link>
@@ -225,26 +222,63 @@ function ReturnToGameBanner() {
   );
 }
 
-// Social proof strip. Rule counts are pulled from the library and the
-// games-played figure is the real total from the games table.
+// Your numbers, not the site's: a signed-in player sees their own ratings and
+// record here (site-wide totals live in the mod area now). Mode ratings come
+// from the profile API; games and win rate ride along on the session user.
+// Signed out, a single-line invite takes the strip's place.
 function StatStrip() {
-  const [gamesPlayed, setGamesPlayed] = useState<number | null>(null);
+  const [user, setUser] = useState<AccountUser | null | undefined>(undefined);
+  const [modeRatings, setModeRatings] = useState<Partial<Record<"nerf" | "buff", number>>>({});
+
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/stats")
-      .then((res) => (res.ok ? (res.json() as Promise<{ gamesPlayed: number }>) : null))
-      .then((data) => {
-        if (!cancelled && data) setGamesPlayed(data.gamesPlayed);
-      })
-      .catch(() => {});
+    fetchMe().then((me) => {
+      if (cancelled) return;
+      setUser(me);
+      if (!me) return;
+      fetch(`/api/users/${encodeURIComponent(me.username)}`)
+        .then((res) => (res.ok ? res.json() : null) as Promise<{ ratings?: Record<string, { rating: number }> } | null>)
+        .then((data) => {
+          if (cancelled || !data?.ratings) return;
+          setModeRatings({
+            nerf: data.ratings.nerf ? Math.round(data.ratings.nerf.rating) : undefined,
+            buff: data.ratings.buff ? Math.round(data.ratings.buff.rating) : undefined,
+          });
+        })
+        .catch(() => {});
+    });
     return () => {
       cancelled = true;
     };
   }, []);
 
+  if (user === undefined) return null;
+
+  if (!user) {
+    return (
+      <section className="w-full max-w-7xl mx-auto px-5 sm:px-6 py-4">
+        <div className="plate flex flex-wrap items-center justify-between gap-3 p-4 px-5">
+          <span className="text-sm text-parchment-200">
+            Play one game and your ratings will show up here.
+          </span>
+          <Link
+            href="/lobby"
+            className="btn-glass btn-glass--primary px-4 py-2 font-display text-sm font-semibold"
+          >
+            Find an opponent
+          </Link>
+        </div>
+      </section>
+    );
+  }
+
+  const fallback = Math.round(user.rating);
+  const winRate = user.games > 0 ? `${Math.round((user.wins / user.games) * 100)}%` : "-";
   const stats = [
-    { value: TOTAL_RULES.toLocaleString(), label: "rules and cards" },
-    { value: gamesPlayed === null ? "…" : gamesPlayed.toLocaleString(), label: "games played" },
+    { value: String(modeRatings.nerf ?? fallback), label: "Nerf rating", tone: "text-mode-nerfGlow", tick: "bg-mode-nerf/70" },
+    { value: String(modeRatings.buff ?? fallback), label: "Buff rating", tone: "text-mode-buffGlow", tick: "bg-mode-buff/70" },
+    { value: user.games.toLocaleString(), label: "games played", tone: "text-parchment-50", tick: "bg-sun/70" },
+    { value: winRate, label: "win rate", tone: "text-parchment-50", tick: "bg-mint/70" },
   ];
   return (
     <section className="w-full max-w-7xl mx-auto px-5 sm:px-6 py-4">
@@ -253,14 +287,22 @@ function StatStrip() {
         <span aria-hidden className="card-corner tr" />
         <span aria-hidden className="card-corner bl" />
         <span aria-hidden className="card-corner br" />
-        <div className="kicker smallcaps text-[10px] mb-4">By the numbers</div>
-        <div className="grid grid-cols-2 divide-x divide-white/10">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div className="kicker smallcaps text-[10px]">Your numbers</div>
+          <Link
+            href={`/u/${encodeURIComponent(user.username)}`}
+            className="smallcaps text-[10px] text-parchment-400 transition-colors hover:text-parchment-100"
+          >
+            Full profile →
+          </Link>
+        </div>
+        <div className="grid grid-cols-2 gap-y-5 sm:grid-cols-4 sm:divide-x sm:divide-white/10">
           {stats.map((s) => (
             <div key={s.label} className="px-2 sm:px-6 text-center">
-              <div className="font-display text-3xl sm:text-5xl font-bold text-parchment-50 tabular-nums">
+              <div className={`font-display text-3xl sm:text-4xl font-bold tabular-nums ${s.tone}`}>
                 {s.value}
               </div>
-              <span aria-hidden className="mx-auto mt-2.5 block h-px w-8 bg-gold/50" />
+              <span aria-hidden className={`mx-auto mt-2.5 block h-1 w-8 rounded-full ${s.tick}`} />
               <div className="mt-2 smallcaps text-[9px] sm:text-[10px] text-parchment-400">
                 {s.label}
               </div>
@@ -297,7 +339,7 @@ function HowItWorks() {
       title: "Draft as you play",
       body: (
         <>
-          A draft lands every 6 moves. In <span className="font-semibold text-mode-nerfGlow">Nerf</span>{" "}
+          A draft lands every 5 moves. In <span className="font-semibold text-mode-nerfGlow">Nerf</span>{" "}
           mode you pick hexes that curse your opponent, or boons for yourself. In{" "}
           <span className="font-semibold text-mode-buffGlow">Buff</span> mode you draft buffs
           and build the strongest army. Skip one and the next offer rolls stronger.
@@ -322,9 +364,10 @@ function HowItWorks() {
   ];
   return (
     <section className="section-rhythm w-full max-w-7xl mx-auto px-5 sm:px-6">
-      <header className="mb-7 flex items-baseline gap-3">
-        <span className="coord-index">c3</span>
+      <header className="mb-7 flex items-center gap-3">
+        <span aria-hidden className="h-6 w-1.5 shrink-0 rounded-full bg-mint" />
         <h2 className="display-3 text-parchment-50">How it works</h2>
+        <span className="coord-index">c3</span>
       </header>
       <div className="stagger-in grid gap-4 sm:grid-cols-3">
         {steps.map((step) => {
@@ -381,9 +424,10 @@ function ExampleRules() {
   return (
     <section className="section-rhythm w-full max-w-7xl mx-auto px-5 sm:px-6">
       <div className="flex items-end justify-between gap-4 mb-7">
-        <header className="flex items-baseline gap-3">
-          <span className="coord-index">e5</span>
+        <header className="flex items-center gap-3">
+          <span aria-hidden className="h-6 w-1.5 shrink-0 rounded-full bg-coral" />
           <h2 className="display-3 text-parchment-50">A few of the cards</h2>
+          <span className="coord-index">e5</span>
         </header>
         <Link
           href="/codex"
@@ -399,39 +443,42 @@ function ExampleRules() {
             <li key={`${card.kind}-${card.id}`}>
               <Link
                 href={`/codex?search=${encodeURIComponent(card.name)}`}
-                className={`plate group block h-full p-4 border tier-bg-${card.tier} no-underline motion-safe:transition-transform motion-safe:duration-150 hover:border-gold/50 motion-safe:hover:-translate-y-0.5`}
+                className={`plate card-juicy group flex h-full flex-col border p-4 no-underline tier-bg-${card.tier}`}
               >
                 <div className="flex items-start justify-between gap-2">
                   <span className={`font-display text-lg font-semibold leading-tight tier-${card.tier}`}>
                     {card.name}
                   </span>
                   <span
-                    className={`shrink-0 inline-flex items-center gap-1 border px-2 py-0.5 font-display text-xs font-bold tier-bg-${card.tier} tier-${card.tier}`}
+                    className={`grid h-7 w-7 shrink-0 place-items-center rounded-full border font-display text-xs font-bold tier-bg-${card.tier} tier-${card.tier}`}
                     title={`Difficulty ${card.tier}: ${TIER_LABEL[card.tier]}`}
                   >
-                    <span aria-hidden>{TIER_ROMAN[card.tier]}</span>
-                    <span>{TIER_LABEL[card.tier]}</span>
+                    {TIER_ROMAN[card.tier]}
                   </span>
                 </div>
-                <span
-                  className={`mt-1 inline-block smallcaps text-[10px] ${
-                    isNerf ? "text-mode-nerfGlow" : "text-mode-buffGlow"
-                  }`}
-                >
-                  {isNerf ? "Nerf · secret rule" : "Buff · power-up"}
-                </span>
-                <p className="mt-2 text-sm leading-relaxed text-parchment-200">
+                <p className="mt-1.5 text-sm leading-relaxed text-parchment-200 line-clamp-1">
                   {card.description}
                 </p>
-                <span className="mt-3 flex items-center gap-1 smallcaps text-[10px] text-gold-leaf">
-                  View in codex
+                <div className="mt-auto flex items-center justify-between gap-2 pt-3">
                   <span
-                    aria-hidden
-                    className="transition-transform motion-safe:group-hover:translate-x-0.5"
+                    className={`inline-flex items-center rounded-full border px-2 py-0.5 smallcaps text-[9px] ${
+                      isNerf
+                        ? "border-mode-nerf/40 bg-mode-nerf/10 text-mode-nerfGlow"
+                        : "border-mode-buff/40 bg-mode-buff/10 text-mode-buffGlow"
+                    }`}
                   >
-                    →
+                    {isNerf ? "Nerf · secret rule" : "Buff · power-up"}
                   </span>
-                </span>
+                  <span className="flex items-center gap-1 smallcaps text-[10px] text-parchment-400 transition-colors group-hover:text-gold-leaf">
+                    Codex
+                    <span
+                      aria-hidden
+                      className="transition-transform motion-safe:group-hover:translate-x-0.5"
+                    >
+                      →
+                    </span>
+                  </span>
+                </div>
               </Link>
             </li>
           );
@@ -465,7 +512,7 @@ function SiteFooter() {
         ))}
       </nav>
       <div className="mt-3 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-parchment-400">
-        <span>Nerf Chess: chess with two modes, secret nerfs or drafted buffs.</span>
+        <span className="opacity-70">Nerf Chess</span>
         <span className="font-mono text-[10px] opacity-70" title="Deployed version">
           made with &hearts;
           {process.env.NEXT_PUBLIC_BUILD_VERSION ? ` · ${process.env.NEXT_PUBLIC_BUILD_VERSION}` : ""}

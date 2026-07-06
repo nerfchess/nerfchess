@@ -2,7 +2,7 @@
 
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Piece } from "./Pieces";
+import { Piece, WalnutPiece, BananaPeel } from "./Pieces";
 import { BoardState, Color, FILE, Move, PieceType, RANK, SQ, Square } from "@/engine/types";
 import { playSelect } from "@/lib/sounds";
 
@@ -25,6 +25,8 @@ interface Visual {
   walnutSquares?: number[];
   /** Pieces shackled by a king-only or no-pawn-advance hex: chained in place. */
   lockedSquares?: number[];
+  /** Squares where the viewer has tossed a banana peel (owner-only trap). */
+  bananaSquares?: number[];
 }
 
 export interface QueuedPremove {
@@ -393,6 +395,7 @@ export function Board({
   const strikeSquares = useMemo(() => new Set(visual?.strikeSquares ?? []), [visual?.strikeSquares]);
   const walnutSquares = useMemo(() => new Set(visual?.walnutSquares ?? []), [visual?.walnutSquares]);
   const lockedSquares = useMemo(() => new Set(visual?.lockedSquares ?? []), [visual?.lockedSquares]);
+  const bananaSquares = useMemo(() => new Set(visual?.bananaSquares ?? []), [visual?.bananaSquares]);
   const highlightSquares = useMemo(
     () => new Set(visual?.highlightSquares ?? []),
     [visual?.highlightSquares],
@@ -790,6 +793,28 @@ export function Board({
             const isPremoveSquare = premoveSquares.has(sq);
             const rightClickMark = rightClickMarks[sq];
 
+            // Plain-language hover tooltip for any effect on this square, so a
+            // player can hover a walnut, freeze, shield, wall, or peel and read
+            // what it does instead of decoding an icon. Public information, so
+            // it is safe to spell out.
+            const effectTitle = [
+              walnutSquares.has(sq) &&
+                "Walnut: a squirrel buried this piece under a walnut. It is stuck solid and cannot move until the shell cracks.",
+              frozenSquares.has(sq) &&
+                "Frozen: this piece is iced in place and cannot move until it thaws.",
+              lockedSquares.has(sq) &&
+                "Shackled: a hex has chained this piece in place for now.",
+              shieldedSquares.has(sq) &&
+                "Sheltered: pieces here, the king aside, cannot be captured.",
+              wardSquares.has(sq) &&
+                "Warded: your opponent cannot move a piece onto this square.",
+              bananaSquares.has(sq) &&
+                "Banana peel: the next enemy piece to step here slips and skids off course.",
+              strikeSquares.has(sq) && "Lightning: this square was just struck.",
+            ]
+              .filter(Boolean)
+              .join(" ");
+
             const fogHide =
               !!visual?.fogged && piece && piece.color !== myColor && !lastTo;
 
@@ -845,6 +870,7 @@ export function Board({
                 }}
                 role="gridcell"
                 aria-label={`square ${"abcdefgh"[f]}${r + 1}`}
+                title={effectTitle || undefined}
               >
                 {underwater && (
                   <div className="absolute inset-0 bg-cyan-500/25 mix-blend-screen pointer-events-none" />
@@ -866,13 +892,29 @@ export function Board({
                   </>
                 )}
                 {walnutSquares.has(sq) && (
+                  /* Hexed into a walnut: a faint amber wash marks the square and
+                     the piece itself renders as the walnut (see WalnutPiece). A
+                     squirrel scurries in once to bury it when the hex first
+                     lands (one-shot on mount; hidden for reduced-motion). */
                   <>
-                    {/* Hexed into a walnut: amber tint plus the nut itself. */}
-                    <div className="absolute inset-0 bg-amber-700/30 pointer-events-none" />
-                    <span className="absolute top-0.5 right-0.5 z-10 text-[12px] leading-none pointer-events-none drop-shadow">
-                      🥜
+                    <div className="absolute inset-0 bg-amber-700/15 pointer-events-none sq-walnut" />
+                    <span
+                      aria-hidden
+                      className="absolute -top-1 left-1/2 z-20 -translate-x-1/2 text-base leading-none pointer-events-none walnut-squirrel"
+                    >
+                      🐿️
                     </span>
                   </>
+                )}
+                {bananaSquares.has(sq) && (
+                  /* A banana peel the viewer tossed here (owner-only trap). The
+                     peel sits on the empty square with a jaunty spin until an
+                     enemy piece slips on it. */
+                  <div className="absolute inset-0 z-10 grid place-items-center pointer-events-none">
+                    <div className="banana-peel" style={{ width: "60%", height: "60%" }}>
+                      <BananaPeel />
+                    </div>
+                  </div>
                 )}
                 {lockedSquares.has(sq) && (
                   <>
@@ -914,7 +956,11 @@ export function Board({
                     data-anim-piece={animsRef.current.has(sq) ? sq : undefined}
                     style={{ width: "var(--piece-fit, 88%)", height: "var(--piece-fit, 88%)" }}
                   >
-                    <Piece type={piece.type} color={piece.color} size="100%" />
+                    {walnutSquares.has(sq) ? (
+                      <WalnutPiece type={piece.type} color={piece.color} size="100%" />
+                    ) : (
+                      <Piece type={piece.type} color={piece.color} size="100%" />
+                    )}
                   </div>
                 ) : null}
 

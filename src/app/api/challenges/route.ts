@@ -62,6 +62,18 @@ export async function POST(request: Request) {
   if (!target) return NextResponse.json({ error: "Player not found." }, { status: 404 });
   if (target.id === user.id) return NextResponse.json({ error: "You cannot challenge yourself." }, { status: 400 });
 
+  // The challenge id is the client-supplied game code. INSERT OR REPLACE would
+  // otherwise let a caller overwrite someone else's pending challenge row by
+  // reusing their code (an IDOR clobber). Reject a code already owned by a
+  // different player; a surviving row can only be the caller's own to refresh.
+  const existing = await db
+    .prepare(`SELECT from_user_id FROM challenges WHERE id = ?`)
+    .bind(code)
+    .first<{ from_user_id: string }>();
+  if (existing && existing.from_user_id !== user.id) {
+    return NextResponse.json({ error: "That code is already in use." }, { status: 409 });
+  }
+
   await db
     .prepare(
       `INSERT OR REPLACE INTO challenges (id, from_user_id, from_name, to_user_id, time_sec, increment_sec, rated, status, created_at)

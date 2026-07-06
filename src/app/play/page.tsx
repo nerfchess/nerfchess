@@ -102,11 +102,6 @@ export default function PlayPage() {
 
       <section className="max-w-2xl mx-auto px-6 py-8">
         <h1 className="font-display text-5xl">New game</h1>
-        <p className="mt-3 text-parchment-200">
-          Two ways to play. Buff mode: no handicaps, draft buffs and outplay your
-          opponent. Nerf mode: secret handicaps you draft cards to escape, revealed
-          only when the game ends.
-        </p>
 
         <div className="mt-6 grid gap-3 sm:grid-cols-2">
           <ModeCard
@@ -158,10 +153,10 @@ export default function PlayPage() {
             </Group>
             <p className="mt-2 text-[11px] text-parchment-400">
               {botMode === "plain"
-                ? "Ordinary chess against the bot. No nerfs, no buffs on either side."
+                ? "Ordinary chess. No cards."
                 : botMode === "buff"
-                  ? "No handicaps. Draft buffs every few moves to outbuild the bot."
-                  : "Draft a secret nerf, revealed only when the game ends; draft cards to cope."}
+                  ? "Draft buffs to outbuild the bot."
+                  : "A secret nerf, revealed when the game ends."}
             </p>
           </div>
 

@@ -1,0 +1,4192 @@
+[
+  {
+    "id": "pawn_push",
+    "name": "Pawn Push",
+    "category": "movement",
+    "tier": 1,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "wazir_rook",
+    "name": "Wazir Rook",
+    "category": "movement",
+    "tier": 1,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "ferz_king",
+    "name": "Ferz King",
+    "category": "movement",
+    "tier": 1,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "extra_glance",
+    "name": "Extra Glance",
+    "category": "info",
+    "tier": 1,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "castle_early",
+    "name": "Castle Early",
+    "category": "movement",
+    "tier": 1,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "pawn_shield",
+    "name": "Pawn Shield",
+    "category": "protection",
+    "tier": 1,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "free_retreat",
+    "name": "Free Retreat",
+    "category": "tempo",
+    "tier": 1,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "peek",
+    "name": "Peek",
+    "category": "info",
+    "tier": 1,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "loyal_pawn",
+    "name": "Loyal Pawn",
+    "category": "pieces",
+    "tier": 1,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "quiet_march",
+    "name": "Quiet March",
+    "category": "movement",
+    "tier": 1,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "pawn_swap",
+    "name": "Pawn Swap",
+    "category": "movement",
+    "tier": 1,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "little_leap",
+    "name": "Little Leap",
+    "category": "movement",
+    "tier": 1,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "scout",
+    "name": "Scout",
+    "category": "info",
+    "tier": 1,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "steady_hand",
+    "name": "Steady Hand",
+    "category": "protection",
+    "tier": 1,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "escape_hatch",
+    "name": "Escape Hatch",
+    "category": "movement",
+    "tier": 1,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "second_wind",
+    "name": "Second Wind",
+    "category": "pieces",
+    "tier": 1,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "diagonal_step",
+    "name": "Diagonal Step",
+    "category": "movement",
+    "tier": 1,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "sidestep",
+    "name": "Sidestep",
+    "category": "protection",
+    "tier": 1,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "tempo_shuffle",
+    "name": "Tempo Shuffle",
+    "category": "movement",
+    "tier": 1,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "bishop_polish",
+    "name": "Bishop Polish",
+    "category": "movement",
+    "tier": 1,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "rook_slide",
+    "name": "Rook Slide",
+    "category": "movement",
+    "tier": 1,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "sentinel_pawn",
+    "name": "Sentinel Pawn",
+    "category": "attack",
+    "tier": 1,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "quick_glance",
+    "name": "Quick Glance",
+    "category": "info",
+    "tier": 1,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "nudge",
+    "name": "Nudge",
+    "category": "attack",
+    "tier": 1,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "firm_footing",
+    "name": "Firm Footing",
+    "category": "protection",
+    "tier": 1,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "cornerstone",
+    "name": "Cornerstone",
+    "category": "protection",
+    "tier": 1,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "half_step",
+    "name": "Half Step",
+    "category": "movement",
+    "tier": 1,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "prep",
+    "name": "Prep",
+    "category": "draft",
+    "tier": 1,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "loose_pawn",
+    "name": "Loose Pawn",
+    "category": "protection",
+    "tier": 1,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "watchtower",
+    "name": "Watchtower",
+    "category": "info",
+    "tier": 1,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "steady_march",
+    "name": "Steady March",
+    "category": "movement",
+    "tier": 1,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "guarded_king",
+    "name": "Guarded King",
+    "category": "protection",
+    "tier": 1,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "reprieve",
+    "name": "Reprieve",
+    "category": "nerf",
+    "tier": 1,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "deep_breath",
+    "name": "Deep Breath",
+    "category": "nerf",
+    "tier": 1,
+    "kind": "activated",
+    "freeAction": true,
+    "cost": "free",
+    "label": "Free action"
+  },
+  {
+    "id": "small_mercies",
+    "name": "Small Mercies",
+    "category": "nerf",
+    "tier": 1,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "ghost_pawn",
+    "name": "Ghost Pawn",
+    "category": "movement",
+    "tier": 2,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "double_step_army",
+    "name": "Double Step Army",
+    "category": "movement",
+    "tier": 2,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "kings_guard",
+    "name": "King's Guard",
+    "category": "pieces",
+    "tier": 2,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "phase_rook",
+    "name": "Phase Rook",
+    "category": "movement",
+    "tier": 2,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "wall",
+    "name": "Wall",
+    "category": "tempo",
+    "tier": 2,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "long_knight",
+    "name": "Long Knight",
+    "category": "movement",
+    "tier": 2,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "camel_knight",
+    "name": "Camel Knight",
+    "category": "movement",
+    "tier": 2,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "teleport_knight",
+    "name": "Teleport Knight",
+    "category": "movement",
+    "tier": 2,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "shielded_advance",
+    "name": "Shielded Advance",
+    "category": "protection",
+    "tier": 2,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "reinforce",
+    "name": "Reinforce",
+    "category": "protection",
+    "tier": 2,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "pawn_storm",
+    "name": "Pawn Storm",
+    "category": "movement",
+    "tier": 2,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "bodyguard",
+    "name": "Bodyguard",
+    "category": "pieces",
+    "tier": 3,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "recall",
+    "name": "Recall",
+    "category": "movement",
+    "tier": 2,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "trade_up",
+    "name": "Trade Up",
+    "category": "pieces",
+    "tier": 2,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "decoy",
+    "name": "Decoy",
+    "category": "protection",
+    "tier": 2,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "berolina_pawns",
+    "name": "Berolina Pawns",
+    "category": "movement",
+    "tier": 2,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "fork_guard",
+    "name": "Fork Guard",
+    "category": "protection",
+    "tier": 2,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "long_castle_anywhere",
+    "name": "Long Castle Anywhere",
+    "category": "movement",
+    "tier": 2,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "sidestep_king",
+    "name": "Sidestep King",
+    "category": "protection",
+    "tier": 2,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "piece_swap",
+    "name": "Piece Swap",
+    "category": "movement",
+    "tier": 2,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "wazir_bishop",
+    "name": "Wazir Bishop",
+    "category": "movement",
+    "tier": 2,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "spring_pawn",
+    "name": "Spring Pawn",
+    "category": "movement",
+    "tier": 2,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "rally",
+    "name": "Rally",
+    "category": "movement",
+    "tier": 2,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "anchor",
+    "name": "Anchor",
+    "category": "protection",
+    "tier": 2,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "shadow_step",
+    "name": "Shadow Step",
+    "category": "movement",
+    "tier": 2,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "vault",
+    "name": "Vault",
+    "category": "movement",
+    "tier": 2,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "reposition",
+    "name": "Reposition",
+    "category": "movement",
+    "tier": 2,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "draft_insight",
+    "name": "Draft Insight",
+    "category": "info",
+    "tier": 2,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "screen",
+    "name": "Screen",
+    "category": "protection",
+    "tier": 2,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "counterstep",
+    "name": "Counterstep",
+    "category": "tempo",
+    "tier": 2,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "minor_recall",
+    "name": "Minor Recall",
+    "category": "pieces",
+    "tier": 2,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "bulwark",
+    "name": "Bulwark",
+    "category": "protection",
+    "tier": 2,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "loosen_the_leash",
+    "name": "Loosen the Leash",
+    "category": "nerf",
+    "tier": 2,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "slack_chain",
+    "name": "Slack in the Chain",
+    "category": "nerf",
+    "tier": 2,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "held_breath",
+    "name": "Held Breath",
+    "category": "nerf",
+    "tier": 2,
+    "kind": "activated",
+    "freeAction": true,
+    "cost": "free",
+    "label": "Free action"
+  },
+  {
+    "id": "hunters_relief",
+    "name": "Hunter's Relief",
+    "category": "nerf",
+    "tier": 2,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "knight_nightrook",
+    "name": "Knight to Nightrook",
+    "category": "movement",
+    "tier": 3,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "bishop_archbishop",
+    "name": "Bishop to Archbishop",
+    "category": "movement",
+    "tier": 3,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "rook_chancellor",
+    "name": "Rook to Chancellor",
+    "category": "movement",
+    "tier": 3,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "extra_move",
+    "name": "Extra Move",
+    "category": "tempo",
+    "tier": 3,
+    "kind": "activated",
+    "freeAction": true,
+    "cost": "free",
+    "label": "Free action"
+  },
+  {
+    "id": "promote_now",
+    "name": "Promote Now",
+    "category": "pieces",
+    "tier": 3,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "summon_knight",
+    "name": "Summon Knight",
+    "category": "pieces",
+    "tier": 3,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "queens_echo",
+    "name": "Queen's Echo",
+    "category": "movement",
+    "tier": 3,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "time_skip",
+    "name": "Time Skip",
+    "category": "tempo",
+    "tier": 3,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "fortress",
+    "name": "Fortress",
+    "category": "protection",
+    "tier": 3,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "grasshopper",
+    "name": "Grasshopper",
+    "category": "movement",
+    "tier": 3,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "cannon",
+    "name": "Cannon",
+    "category": "movement",
+    "tier": 3,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "sliding_king",
+    "name": "Sliding King",
+    "category": "movement",
+    "tier": 3,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "dragon_pawn",
+    "name": "Dragon Pawn",
+    "category": "movement",
+    "tier": 3,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "pin_breaker",
+    "name": "Pin Breaker",
+    "category": "movement",
+    "tier": 3,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "rank_runner",
+    "name": "Rank Runner",
+    "category": "movement",
+    "tier": 3,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "board_quake",
+    "name": "Board Quake",
+    "category": "attack",
+    "tier": 3,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "resurrect",
+    "name": "Resurrect",
+    "category": "pieces",
+    "tier": 4,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "deflect",
+    "name": "Deflect",
+    "category": "protection",
+    "tier": 3,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "bunker",
+    "name": "Bunker",
+    "category": "protection",
+    "tier": 3,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "overclock",
+    "name": "Overclock",
+    "category": "movement",
+    "tier": 3,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "hunter_knight",
+    "name": "Hunter Knight",
+    "category": "attack",
+    "tier": 3,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "chain_mail",
+    "name": "Chain Mail",
+    "category": "protection",
+    "tier": 3,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "warp_step",
+    "name": "Warp Step",
+    "category": "movement",
+    "tier": 3,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "tidal_push",
+    "name": "Tidal Push",
+    "category": "attack",
+    "tier": 3,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "second_wind_major",
+    "name": "Second Wind Major",
+    "category": "pieces",
+    "tier": 3,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "split_march",
+    "name": "Split March",
+    "category": "movement",
+    "tier": 3,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "guard_rotation",
+    "name": "Guard Rotation",
+    "category": "movement",
+    "tier": 3,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "iron_bishop",
+    "name": "Iron Bishop",
+    "category": "protection",
+    "tier": 3,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "momentum",
+    "name": "Momentum",
+    "category": "tempo",
+    "tier": 3,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "frost",
+    "name": "Frost",
+    "category": "tempo",
+    "tier": 3,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "vanguard",
+    "name": "Vanguard",
+    "category": "pieces",
+    "tier": 3,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "rewind_one",
+    "name": "Rewind One",
+    "category": "tempo",
+    "tier": 3,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "piece_parole",
+    "name": "Piece Parole",
+    "category": "nerf",
+    "tier": 3,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "half_measure",
+    "name": "Half Measure",
+    "category": "nerf",
+    "tier": 3,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "respite",
+    "name": "Respite",
+    "category": "nerf",
+    "tier": 3,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "timely_lull",
+    "name": "Timely Lull",
+    "category": "nerf",
+    "tier": 3,
+    "kind": "activated",
+    "freeAction": true,
+    "cost": "free",
+    "label": "Free action"
+  },
+  {
+    "id": "underdogs_grit",
+    "name": "Underdog's Grit",
+    "category": "nerf",
+    "tier": 3,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "atomic_captures_small",
+    "name": "Atomic Captures (Small)",
+    "category": "attack",
+    "tier": 4,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "double_queen",
+    "name": "Double Queen",
+    "category": "pieces",
+    "tier": 5,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "piece_steal",
+    "name": "Piece Steal",
+    "category": "pieces",
+    "tier": 4,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "split_bishop",
+    "name": "Split Bishop",
+    "category": "pieces",
+    "tier": 4,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "twin_knights",
+    "name": "Twin Knights",
+    "category": "movement",
+    "tier": 4,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "warp_rook",
+    "name": "Warp Rook",
+    "category": "movement",
+    "tier": 4,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "mass_recall",
+    "name": "Mass Recall",
+    "category": "movement",
+    "tier": 4,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "immobilizer",
+    "name": "Immobilizer",
+    "category": "tempo",
+    "tier": 4,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "royal_decree",
+    "name": "Royal Decree",
+    "category": "movement",
+    "tier": 4,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "purge",
+    "name": "Purge",
+    "category": "attack",
+    "tier": 4,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "mind_nudge",
+    "name": "Mind Nudge",
+    "category": "attack",
+    "tier": 2,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "second_army",
+    "name": "Second Army",
+    "category": "pieces",
+    "tier": 4,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "cascade_freeze",
+    "name": "Cascade Freeze",
+    "category": "tempo",
+    "tier": 4,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "sanctuary",
+    "name": "Sanctuary",
+    "category": "protection",
+    "tier": 4,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "amazon_knight",
+    "name": "Amazon Knight",
+    "category": "movement",
+    "tier": 4,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "buff_thief_minor",
+    "name": "Buff Thief (Minor)",
+    "category": "draft",
+    "tier": 4,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "chain_nullify",
+    "name": "Chain Nullify",
+    "category": "draft",
+    "tier": 4,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "mirror",
+    "name": "Mirror",
+    "category": "draft",
+    "tier": 4,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "warp_field",
+    "name": "Warp Field",
+    "category": "movement",
+    "tier": 4,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "detonate",
+    "name": "Detonate",
+    "category": "attack",
+    "tier": 4,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "regroup",
+    "name": "Regroup",
+    "category": "movement",
+    "tier": 4,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "iron_wall",
+    "name": "Iron Wall",
+    "category": "protection",
+    "tier": 4,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "snap_freeze",
+    "name": "Snap Freeze",
+    "category": "tempo",
+    "tier": 4,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "duelist",
+    "name": "Duelist",
+    "category": "protection",
+    "tier": 4,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "overrun",
+    "name": "Overrun",
+    "category": "attack",
+    "tier": 4,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "recast",
+    "name": "Recast",
+    "category": "draft",
+    "tier": 4,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "phantom_rook",
+    "name": "Phantom Rook",
+    "category": "pieces",
+    "tier": 4,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "kingslide",
+    "name": "Kingslide",
+    "category": "movement",
+    "tier": 4,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "suppress",
+    "name": "Suppress",
+    "category": "draft",
+    "tier": 4,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "blink_army",
+    "name": "Blink Army",
+    "category": "movement",
+    "tier": 4,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "grand_recall",
+    "name": "Grand Recall",
+    "category": "movement",
+    "tier": 4,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "fault_line",
+    "name": "Fault Line",
+    "category": "protection",
+    "tier": 4,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "grace_period",
+    "name": "Grace Period",
+    "category": "nerf",
+    "tier": 3,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "adrenaline",
+    "name": "Adrenaline",
+    "category": "nerf",
+    "tier": 4,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "atomic_captures",
+    "name": "Atomic Captures",
+    "category": "attack",
+    "tier": 5,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "extra_move_repeat",
+    "name": "Extra Move (Repeat)",
+    "category": "tempo",
+    "tier": 5,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "god_knight",
+    "name": "God Knight",
+    "category": "movement",
+    "tier": 5,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "total_freeze",
+    "name": "Total Freeze",
+    "category": "tempo",
+    "tier": 5,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "annihilate",
+    "name": "Annihilate",
+    "category": "attack",
+    "tier": 5,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "buff_thief",
+    "name": "Buff Thief",
+    "category": "draft",
+    "tier": 5,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "promotion_storm",
+    "name": "Promotion Storm",
+    "category": "pieces",
+    "tier": 5,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "time_stop_short",
+    "name": "Time Stop (Short)",
+    "category": "tempo",
+    "tier": 6,
+    "kind": "activated",
+    "freeAction": true,
+    "cost": "free",
+    "label": "Free action"
+  },
+  {
+    "id": "resurrect_queen",
+    "name": "Resurrect Queen",
+    "category": "pieces",
+    "tier": 6,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "checkmate_immunity",
+    "name": "Checkmate Immunity",
+    "category": "protection",
+    "tier": 5,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "mind_control",
+    "name": "Mind Control",
+    "category": "pieces",
+    "tier": 5,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "board_lock",
+    "name": "Board Lock",
+    "category": "tempo",
+    "tier": 3,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "twin_queens",
+    "name": "Twin Queens",
+    "category": "pieces",
+    "tier": 5,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "warp_legion",
+    "name": "Warp Legion",
+    "category": "movement",
+    "tier": 5,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "purge_two",
+    "name": "Purge Two",
+    "category": "attack",
+    "tier": 5,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "nova",
+    "name": "Nova",
+    "category": "attack",
+    "tier": 5,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "great_wall",
+    "name": "Great Wall",
+    "category": "protection",
+    "tier": 5,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "siege_rook",
+    "name": "Siege Rook",
+    "category": "attack",
+    "tier": 5,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "phase_army",
+    "name": "Phase Army",
+    "category": "movement",
+    "tier": 5,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "regenerate",
+    "name": "Regenerate",
+    "category": "pieces",
+    "tier": 5,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "sever",
+    "name": "Sever",
+    "category": "draft",
+    "tier": 5,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "overclock_major",
+    "name": "Overclock Major",
+    "category": "movement",
+    "tier": 5,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "tempo_theft",
+    "name": "Tempo Theft",
+    "category": "tempo",
+    "tier": 5,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "blockade",
+    "name": "Blockade",
+    "category": "tempo",
+    "tier": 4,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "warp_home",
+    "name": "Warp Home",
+    "category": "movement",
+    "tier": 5,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "iron_reign",
+    "name": "Iron Reign",
+    "category": "protection",
+    "tier": 5,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "mass_promote_minor",
+    "name": "Mass Promote Minor",
+    "category": "pieces",
+    "tier": 5,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "collapse",
+    "name": "Collapse",
+    "category": "attack",
+    "tier": 5,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "ghost_legion",
+    "name": "Ghost Legion",
+    "category": "movement",
+    "tier": 5,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "draft_seize",
+    "name": "Draft Seize",
+    "category": "draft",
+    "tier": 5,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "rampart",
+    "name": "Rampart",
+    "category": "protection",
+    "tier": 5,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "shatter",
+    "name": "Shatter",
+    "category": "attack",
+    "tier": 5,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "rehab",
+    "name": "Rehab",
+    "category": "nerf",
+    "tier": 5,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "long_leash",
+    "name": "Long Leash",
+    "category": "nerf",
+    "tier": 5,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "parole",
+    "name": "Parole",
+    "category": "nerf",
+    "tier": 5,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "atomic_reaction",
+    "name": "Atomic Reaction",
+    "category": "attack",
+    "tier": 6,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "double_amazon",
+    "name": "Double Amazon",
+    "category": "movement",
+    "tier": 6,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "time_rewind",
+    "name": "Time Rewind",
+    "category": "tempo",
+    "tier": 6,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "mass_resurrect",
+    "name": "Mass Resurrect",
+    "category": "pieces",
+    "tier": 6,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "royal_ascension",
+    "name": "Royal Ascension",
+    "category": "movement",
+    "tier": 6,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "purge_line",
+    "name": "Purge Line",
+    "category": "attack",
+    "tier": 6,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "mind_dominion",
+    "name": "Mind Dominion",
+    "category": "pieces",
+    "tier": 6,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "total_nullify",
+    "name": "Total Nullify",
+    "category": "draft",
+    "tier": 6,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "second_king",
+    "name": "Second King",
+    "category": "pieces",
+    "tier": 6,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "warp_storm",
+    "name": "Warp Storm",
+    "category": "movement",
+    "tier": 6,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "fissure",
+    "name": "Fissure",
+    "category": "protection",
+    "tier": 6,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "queens_wrath",
+    "name": "Queen's Wrath",
+    "category": "attack",
+    "tier": 6,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "army_reversal",
+    "name": "Army Reversal",
+    "category": "movement",
+    "tier": 4,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "sanctuary_zone",
+    "name": "Sanctuary Zone",
+    "category": "protection",
+    "tier": 6,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "overwhelm",
+    "name": "Overwhelm",
+    "category": "tempo",
+    "tier": 6,
+    "kind": "activated",
+    "freeAction": true,
+    "cost": "free",
+    "label": "Free action"
+  },
+  {
+    "id": "buff_siphon",
+    "name": "Buff Siphon",
+    "category": "draft",
+    "tier": 6,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "detonation_field",
+    "name": "Detonation Field",
+    "category": "attack",
+    "tier": 6,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "grand_summon",
+    "name": "Grand Summon",
+    "category": "pieces",
+    "tier": 6,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "time_lock",
+    "name": "Time Lock",
+    "category": "tempo",
+    "tier": 6,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "colossus",
+    "name": "Colossus",
+    "category": "movement",
+    "tier": 6,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "cataclysm",
+    "name": "Cataclysm",
+    "category": "attack",
+    "tier": 6,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "draft_domination",
+    "name": "Draft Domination",
+    "category": "draft",
+    "tier": 6,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "warp_reign",
+    "name": "Warp Reign",
+    "category": "protection",
+    "tier": 6,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "mass_freeze",
+    "name": "Mass Freeze",
+    "category": "tempo",
+    "tier": 6,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "resurrect_major",
+    "name": "Resurrect Major",
+    "category": "pieces",
+    "tier": 6,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "phalanx",
+    "name": "Phalanx",
+    "category": "protection",
+    "tier": 6,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "rift_walker",
+    "name": "Rift Walker",
+    "category": "movement",
+    "tier": 6,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "purge_storm",
+    "name": "Purge Storm",
+    "category": "attack",
+    "tier": 6,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "ironclad",
+    "name": "Ironclad",
+    "category": "protection",
+    "tier": 6,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "ascendant_knight",
+    "name": "Ascendant Knight",
+    "category": "movement",
+    "tier": 6,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "void",
+    "name": "Void",
+    "category": "attack",
+    "tier": 6,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "lightning_strike",
+    "name": "Lightning Strike",
+    "category": "attack",
+    "tier": 6,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "total_recall",
+    "name": "Total Recall",
+    "category": "movement",
+    "tier": 6,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "nerf_breaker",
+    "name": "Nerf Breaker",
+    "category": "nerf",
+    "tier": 6,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "wardens_bribe",
+    "name": "Warden's Bribe",
+    "category": "nerf",
+    "tier": 6,
+    "kind": "activated",
+    "freeAction": true,
+    "cost": "free",
+    "label": "Free action"
+  },
+  {
+    "id": "iron_will",
+    "name": "Iron Will",
+    "category": "nerf",
+    "tier": 6,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "chain_atomic",
+    "name": "Chain Atomic",
+    "category": "attack",
+    "tier": 7,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "triple_amazon",
+    "name": "Triple Amazon",
+    "category": "movement",
+    "tier": 7,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "full_rewind",
+    "name": "Full Rewind",
+    "category": "tempo",
+    "tier": 7,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "kings_legion",
+    "name": "King's Legion",
+    "category": "pieces",
+    "tier": 7,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "mind_empire",
+    "name": "Mind Empire",
+    "category": "pieces",
+    "tier": 7,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "annihilation",
+    "name": "Annihilation",
+    "category": "attack",
+    "tier": 7,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "eternal_reign",
+    "name": "Eternal Reign",
+    "category": "movement",
+    "tier": 7,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "grand_nullify",
+    "name": "Grand Nullify",
+    "category": "draft",
+    "tier": 7,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "twin_queens_permanent",
+    "name": "Twin Queens Permanent",
+    "category": "pieces",
+    "tier": 7,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "warp_cataclysm",
+    "name": "Warp Cataclysm",
+    "category": "movement",
+    "tier": 7,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "great_divide",
+    "name": "Great Divide",
+    "category": "protection",
+    "tier": 7,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "queens_rampage",
+    "name": "Queen's Rampage",
+    "category": "attack",
+    "tier": 7,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "time_freeze",
+    "name": "Time Freeze",
+    "category": "tempo",
+    "tier": 7,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "fortress_realm",
+    "name": "Fortress Realm",
+    "category": "protection",
+    "tier": 7,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "onslaught",
+    "name": "Onslaught",
+    "category": "tempo",
+    "tier": 7,
+    "kind": "activated",
+    "freeAction": true,
+    "cost": "free",
+    "label": "Free action"
+  },
+  {
+    "id": "buff_plunder",
+    "name": "Buff Plunder",
+    "category": "draft",
+    "tier": 7,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "meteor",
+    "name": "Meteor",
+    "category": "attack",
+    "tier": 7,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "grand_resurrection",
+    "name": "Grand Resurrection",
+    "category": "pieces",
+    "tier": 7,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "world_lock",
+    "name": "World Lock",
+    "category": "draft",
+    "tier": 7,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "titan",
+    "name": "Titan",
+    "category": "movement",
+    "tier": 7,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "ruin",
+    "name": "Ruin",
+    "category": "attack",
+    "tier": 7,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "draft_tyranny",
+    "name": "Draft Tyranny",
+    "category": "draft",
+    "tier": 7,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "warp_sovereign",
+    "name": "Warp Sovereign",
+    "category": "movement",
+    "tier": 7,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "deep_freeze",
+    "name": "Deep Freeze",
+    "category": "tempo",
+    "tier": 7,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "phoenix_line",
+    "name": "Phoenix Line",
+    "category": "pieces",
+    "tier": 7,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "rift_storm",
+    "name": "Rift Storm",
+    "category": "movement",
+    "tier": 7,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "purge_realm",
+    "name": "Purge Realm",
+    "category": "attack",
+    "tier": 7,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "aegis",
+    "name": "Aegis",
+    "category": "protection",
+    "tier": 7,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "godslayer_knight",
+    "name": "Godslayer Knight",
+    "category": "movement",
+    "tier": 7,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "abyss",
+    "name": "Abyss",
+    "category": "attack",
+    "tier": 7,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "grand_retreat",
+    "name": "Grand Retreat",
+    "category": "movement",
+    "tier": 7,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "sovereign_draft",
+    "name": "Sovereign Draft",
+    "category": "draft",
+    "tier": 7,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "nerf_reversal",
+    "name": "Nerf Reversal",
+    "category": "nerf",
+    "tier": 7,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "sabbatical",
+    "name": "Sabbatical",
+    "category": "nerf",
+    "tier": 7,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "full_pardon",
+    "name": "Full Pardon",
+    "category": "nerf",
+    "tier": 7,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "total_atomic",
+    "name": "Total Atomic",
+    "category": "attack",
+    "tier": 8,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "amazon_army",
+    "name": "Amazon Army",
+    "category": "movement",
+    "tier": 8,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "perfect_rewind",
+    "name": "Perfect Rewind",
+    "category": "tempo",
+    "tier": 8,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "divine_legion",
+    "name": "Divine Legion",
+    "category": "pieces",
+    "tier": 7,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "mass_mind_control",
+    "name": "Mass Mind Control",
+    "category": "pieces",
+    "tier": 8,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "total_annihilation",
+    "name": "Total Annihilation",
+    "category": "attack",
+    "tier": 8,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "immortal_king",
+    "name": "Immortal King",
+    "category": "protection",
+    "tier": 8,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "absolute_nullify",
+    "name": "Absolute Nullify",
+    "category": "draft",
+    "tier": 8,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "queen_storm",
+    "name": "Queen Storm",
+    "category": "pieces",
+    "tier": 8,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "reality_warp",
+    "name": "Reality Warp",
+    "category": "movement",
+    "tier": 8,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "sundering",
+    "name": "Sundering",
+    "category": "protection",
+    "tier": 8,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "queens_apocalypse",
+    "name": "Queen's Apocalypse",
+    "category": "attack",
+    "tier": 8,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "time_prison",
+    "name": "Time Prison",
+    "category": "tempo",
+    "tier": 8,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "divine_fortress",
+    "name": "Divine Fortress",
+    "category": "protection",
+    "tier": 8,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "blitzkrieg",
+    "name": "Blitzkrieg",
+    "category": "tempo",
+    "tier": 8,
+    "kind": "activated",
+    "freeAction": true,
+    "cost": "free",
+    "label": "Free action"
+  },
+  {
+    "id": "total_plunder",
+    "name": "Total Plunder",
+    "category": "draft",
+    "tier": 8,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "cataclysmic_meteor",
+    "name": "Cataclysmic Meteor",
+    "category": "attack",
+    "tier": 8,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "full_resurrection",
+    "name": "Full Resurrection",
+    "category": "pieces",
+    "tier": 8,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "world_end",
+    "name": "World End",
+    "category": "tempo",
+    "tier": 8,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "living_god",
+    "name": "Living God",
+    "category": "movement",
+    "tier": 8,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "void_realm",
+    "name": "The Void Realm",
+    "category": "attack",
+    "tier": 8,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "grand_reset",
+    "name": "Grand Reset",
+    "category": "pieces",
+    "tier": 8,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "draft_supremacy",
+    "name": "Draft Supremacy",
+    "category": "draft",
+    "tier": 8,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "eternal_freeze",
+    "name": "Eternal Freeze",
+    "category": "tempo",
+    "tier": 8,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "phoenix_rebirth",
+    "name": "Phoenix Rebirth",
+    "category": "pieces",
+    "tier": 8,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "total_warp",
+    "name": "Total Warp",
+    "category": "movement",
+    "tier": 8,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "extinction",
+    "name": "Extinction",
+    "category": "attack",
+    "tier": 8,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "absolute_aegis",
+    "name": "Absolute Aegis",
+    "category": "protection",
+    "tier": 8,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "titan_legion",
+    "name": "Titan Legion",
+    "category": "movement",
+    "tier": 8,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "endless_turn",
+    "name": "Endless Turn",
+    "category": "tempo",
+    "tier": 8,
+    "kind": "activated",
+    "freeAction": true,
+    "cost": "free",
+    "label": "Free action"
+  },
+  {
+    "id": "checkmate_denial",
+    "name": "Checkmate Denial",
+    "category": "protection",
+    "tier": 8,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "genesis",
+    "name": "Genesis",
+    "category": "pieces",
+    "tier": 8,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "unshackled_wrath",
+    "name": "Unshackled Wrath",
+    "category": "nerf",
+    "tier": 7,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "transcendence",
+    "name": "Transcendence",
+    "category": "nerf",
+    "tier": 8,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "heavy_boots",
+    "name": "Heavy Boots",
+    "category": "hex",
+    "tier": 1,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "toll_gate",
+    "name": "Toll Gate",
+    "category": "hex",
+    "tier": 1,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "cold_snap",
+    "name": "Cold Snap",
+    "category": "hex",
+    "tier": 2,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "butter_bishops",
+    "name": "Butter Bishops",
+    "category": "hex",
+    "tier": 2,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "lame_horses",
+    "name": "Lame Horses",
+    "category": "hex",
+    "tier": 2,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "twist_the_knife",
+    "name": "Twist the Knife",
+    "category": "hex",
+    "tier": 3,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "flypaper_file",
+    "name": "Flypaper File",
+    "category": "hex",
+    "tier": 4,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "dead_letter",
+    "name": "Dead Letter",
+    "category": "hex",
+    "tier": 4,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "walnut_queen",
+    "name": "Walnut Queen",
+    "category": "hex",
+    "tier": 5,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "ball_and_chain",
+    "name": "Ball and Chain",
+    "category": "hex",
+    "tier": 5,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "royal_summons",
+    "name": "Royal Summons",
+    "category": "hex",
+    "tier": 5,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "creeping_frost",
+    "name": "Creeping Frost",
+    "category": "hex",
+    "tier": 6,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "walnut_court",
+    "name": "Walnut Court",
+    "category": "hex",
+    "tier": 7,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "grand_malediction",
+    "name": "Grand Malediction",
+    "category": "hex",
+    "tier": 7,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "cold_feet",
+    "name": "Cold Feet",
+    "category": "hex",
+    "tier": 1,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "slippery_grip",
+    "name": "Slippery Grip",
+    "category": "hex",
+    "tier": 1,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "foggy_glasses",
+    "name": "Foggy Glasses",
+    "category": "hex",
+    "tier": 1,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "knock_knees",
+    "name": "Knock Knees",
+    "category": "hex",
+    "tier": 1,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "molasses",
+    "name": "Molasses",
+    "category": "hex",
+    "tier": 1,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "drawbridge",
+    "name": "Drawbridge",
+    "category": "hex",
+    "tier": 1,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "stage_fright",
+    "name": "Stage Fright",
+    "category": "hex",
+    "tier": 1,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "butterfingers",
+    "name": "Butterfingers",
+    "category": "hex",
+    "tier": 1,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "stiff_joints",
+    "name": "Stiff Joints",
+    "category": "hex",
+    "tier": 1,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "crossed_wires",
+    "name": "Crossed Wires",
+    "category": "hex",
+    "tier": 1,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "cold_open",
+    "name": "Cold Open",
+    "category": "hex",
+    "tier": 1,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "royal_restraint",
+    "name": "Royal Restraint",
+    "category": "hex",
+    "tier": 1,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "short_leash",
+    "name": "Short Leash",
+    "category": "hex",
+    "tier": 2,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "seized_axles",
+    "name": "Seized Axles",
+    "category": "hex",
+    "tier": 2,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "rusted_hinges",
+    "name": "Rusted Hinges",
+    "category": "hex",
+    "tier": 2,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "blunted_lance",
+    "name": "Blunted Lance",
+    "category": "hex",
+    "tier": 2,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "safe_passage",
+    "name": "Safe Passage",
+    "category": "hex",
+    "tier": 2,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "stone_hooves",
+    "name": "Stone Hooves",
+    "category": "hex",
+    "tier": 2,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "gargoyles",
+    "name": "Gargoyles",
+    "category": "hex",
+    "tier": 2,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "pinned_down",
+    "name": "Pinned Down",
+    "category": "hex",
+    "tier": 2,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "cut_purse",
+    "name": "Cut Purse",
+    "category": "hex",
+    "tier": 2,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "timid_king",
+    "name": "Timid King",
+    "category": "hex",
+    "tier": 2,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "leaden_queen",
+    "name": "Leaden Queen",
+    "category": "hex",
+    "tier": 2,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "trench_line",
+    "name": "Trench Line",
+    "category": "hex",
+    "tier": 2,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "no_mans_land",
+    "name": "No Man's Land",
+    "category": "hex",
+    "tier": 2,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "sealed_orders",
+    "name": "Sealed Orders",
+    "category": "hex",
+    "tier": 2,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "frostbite",
+    "name": "Frostbite",
+    "category": "hex",
+    "tier": 3,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "gorgons_glance",
+    "name": "Gorgon's Glance",
+    "category": "hex",
+    "tier": 3,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "hobbled_cavalry",
+    "name": "Hobbled Cavalry",
+    "category": "hex",
+    "tier": 3,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "petrified_towers",
+    "name": "Petrified Towers",
+    "category": "hex",
+    "tier": 3,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "anchored_rooks",
+    "name": "Anchored Rooks",
+    "category": "hex",
+    "tier": 3,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "blinkered_bishops",
+    "name": "Blinkered Bishops",
+    "category": "hex",
+    "tier": 3,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "spooked_steeds",
+    "name": "Spooked Steeds",
+    "category": "hex",
+    "tier": 3,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "royal_duty",
+    "name": "Royal Duty",
+    "category": "hex",
+    "tier": 3,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "wasted_hour",
+    "name": "Wasted Hour",
+    "category": "hex",
+    "tier": 3,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "leaden_crown",
+    "name": "Leaden Crown",
+    "category": "hex",
+    "tier": 3,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "sown_salt",
+    "name": "Sown Salt",
+    "category": "hex",
+    "tier": 3,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "no_trespass",
+    "name": "No Trespass",
+    "category": "hex",
+    "tier": 3,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "granite_towers",
+    "name": "Granite Towers",
+    "category": "hex",
+    "tier": 4,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "stone_clergy",
+    "name": "Stone Clergy",
+    "category": "hex",
+    "tier": 4,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "statue_stable",
+    "name": "Statue Stable",
+    "category": "hex",
+    "tier": 4,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "medusas_stare",
+    "name": "Medusa's Stare",
+    "category": "hex",
+    "tier": 4,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "cryostasis",
+    "name": "Cryostasis",
+    "category": "hex",
+    "tier": 4,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "hard_frost",
+    "name": "Hard Frost",
+    "category": "hex",
+    "tier": 4,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "sealed_gate",
+    "name": "Sealed Gate",
+    "category": "hex",
+    "tier": 4,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "abandoned_post",
+    "name": "Abandoned Post",
+    "category": "hex",
+    "tier": 4,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "frozen_furrows",
+    "name": "Frozen Furrows",
+    "category": "hex",
+    "tier": 4,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "burned_dispatches",
+    "name": "Burned Dispatches",
+    "category": "hex",
+    "tier": 4,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "lost_weekend",
+    "name": "Lost Weekend",
+    "category": "hex",
+    "tier": 4,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "ironbound_rook",
+    "name": "Ironbound Rook",
+    "category": "hex",
+    "tier": 4,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "heavy_shackles",
+    "name": "Heavy Shackles",
+    "category": "hex",
+    "tier": 4,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "medusas_verdict",
+    "name": "Medusa's Verdict",
+    "category": "hex",
+    "tier": 5,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "granite_ramparts",
+    "name": "Granite Ramparts",
+    "category": "hex",
+    "tier": 5,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "stone_menagerie",
+    "name": "Stone Menagerie",
+    "category": "hex",
+    "tier": 5,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "stone_curse",
+    "name": "Stone Curse",
+    "category": "hex",
+    "tier": 5,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "the_big_chill",
+    "name": "The Big Chill",
+    "category": "hex",
+    "tier": 5,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "lone_sovereign",
+    "name": "Lone Sovereign",
+    "category": "hex",
+    "tier": 5,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "frozen_moment",
+    "name": "Frozen Moment",
+    "category": "hex",
+    "tier": 5,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "iron_furrow",
+    "name": "Iron Furrow",
+    "category": "hex",
+    "tier": 5,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "throne_bound",
+    "name": "Throne Bound",
+    "category": "hex",
+    "tier": 5,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "palsied_hands",
+    "name": "Palsied Hands",
+    "category": "hex",
+    "tier": 5,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "peasant_levy",
+    "name": "Peasant Levy",
+    "category": "hex",
+    "tier": 5,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "scorched_middle",
+    "name": "Scorched Middle",
+    "category": "hex",
+    "tier": 5,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "hexed_satchel",
+    "name": "Hexed Satchel",
+    "category": "hex",
+    "tier": 5,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "court_in_exile",
+    "name": "Court in Exile",
+    "category": "hex",
+    "tier": 6,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "stone_riders",
+    "name": "Stone Riders",
+    "category": "hex",
+    "tier": 6,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "stone_prelates",
+    "name": "Stone Prelates",
+    "category": "hex",
+    "tier": 6,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "stone_bastions",
+    "name": "Stone Bastions",
+    "category": "hex",
+    "tier": 6,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "queen_of_stone",
+    "name": "Queen of Stone",
+    "category": "hex",
+    "tier": 6,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "glacial_flanks",
+    "name": "Glacial Flanks",
+    "category": "hex",
+    "tier": 6,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "total_whiteout",
+    "name": "Total Whiteout",
+    "category": "hex",
+    "tier": 6,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "leaden_fields",
+    "name": "Leaden Fields",
+    "category": "hex",
+    "tier": 6,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "grounded_command",
+    "name": "Grounded Command",
+    "category": "hex",
+    "tier": 6,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "eternal_statue",
+    "name": "Eternal Statue",
+    "category": "hex",
+    "tier": 6,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "sealed_avenues",
+    "name": "Sealed Avenues",
+    "category": "hex",
+    "tier": 6,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "empty_handed",
+    "name": "Empty Handed",
+    "category": "hex",
+    "tier": 6,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "lost_days",
+    "name": "Lost Days",
+    "category": "hex",
+    "tier": 6,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "obsidian_bastions",
+    "name": "Obsidian Bastions",
+    "category": "hex",
+    "tier": 7,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "statue_garden",
+    "name": "Statue Garden",
+    "category": "hex",
+    "tier": 7,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "cockatrice_gaze",
+    "name": "Cockatrice Gaze",
+    "category": "hex",
+    "tier": 7,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "chisel_curse",
+    "name": "Chisel Curse",
+    "category": "hex",
+    "tier": 7,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "glacial_tomb",
+    "name": "Glacial Tomb",
+    "category": "hex",
+    "tier": 7,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "frozen_solid",
+    "name": "Frozen Solid",
+    "category": "hex",
+    "tier": 7,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "throne_and_silence",
+    "name": "Throne and Silence",
+    "category": "hex",
+    "tier": 7,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "salted_earth",
+    "name": "Salted Earth",
+    "category": "hex",
+    "tier": 7,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "molten_heart",
+    "name": "Molten Heart",
+    "category": "hex",
+    "tier": 7,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "sealed_archive",
+    "name": "Sealed Archive",
+    "category": "hex",
+    "tier": 7,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "lost_fortnight",
+    "name": "Lost Fortnight",
+    "category": "hex",
+    "tier": 7,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "noble_rout",
+    "name": "Noble Rout",
+    "category": "hex",
+    "tier": 7,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "withered_hands",
+    "name": "Withered Hands",
+    "category": "hex",
+    "tier": 7,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "endless_night",
+    "name": "Endless Night",
+    "category": "hex",
+    "tier": 8,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "crown_and_castle",
+    "name": "Crown and Castle",
+    "category": "hex",
+    "tier": 8,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "abdication_edict",
+    "name": "Abdication Edict",
+    "category": "hex",
+    "tier": 8,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "absolute_zero",
+    "name": "Absolute Zero",
+    "category": "hex",
+    "tier": 8,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "petrified_forest",
+    "name": "Petrified Forest",
+    "category": "hex",
+    "tier": 8,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "medusa_stare",
+    "name": "Basilisk's Stare",
+    "category": "hex",
+    "tier": 8,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "blighted_furrows",
+    "name": "Blighted Furrows",
+    "category": "hex",
+    "tier": 8,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "sacked_capital",
+    "name": "Sacked Capital",
+    "category": "hex",
+    "tier": 8,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "scorched_earth",
+    "name": "Scorched Earth",
+    "category": "hex",
+    "tier": 8,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "sealed_ramparts",
+    "name": "Sealed Ramparts",
+    "category": "hex",
+    "tier": 8,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "leaden_limbs",
+    "name": "Leaden Limbs",
+    "category": "hex",
+    "tier": 8,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "everfrost_shard",
+    "name": "Everfrost Shard",
+    "category": "hex",
+    "tier": 8,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "poisoned_counsel",
+    "name": "Poisoned Counsel",
+    "category": "hex",
+    "tier": 8,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "peace_of_the_grave",
+    "name": "Peace of the Grave",
+    "category": "hex",
+    "tier": 8,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "cast_a_nerf",
+    "name": "Cast a Nerf",
+    "category": "hex",
+    "tier": 5,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "pawn_nerf",
+    "name": "Pawn Nerf",
+    "category": "hex",
+    "tier": 3,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "royal_handicap",
+    "name": "Royal Handicap",
+    "category": "hex",
+    "tier": 5,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "hard_reset",
+    "name": "Hard Reset",
+    "category": "hex",
+    "tier": 4,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "queens_handicap",
+    "name": "Queen's Handicap",
+    "category": "hex",
+    "tier": 5,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "nerf_hammer",
+    "name": "Nerf Hammer",
+    "category": "hex",
+    "tier": 6,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "nerf_this",
+    "name": "Nerf This",
+    "category": "hex",
+    "tier": 6,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "patch_notes",
+    "name": "Patch Notes",
+    "category": "hex",
+    "tier": 4,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "break_the_nerf",
+    "name": "Break the Nerf",
+    "category": "nerf",
+    "tier": 3,
+    "kind": "instant",
+    "freeAction": false,
+    "cost": "instant",
+    "label": "Instant"
+  },
+  {
+    "id": "defiance",
+    "name": "Defiance",
+    "category": "nerf",
+    "tier": 2,
+    "kind": "activated",
+    "freeAction": true,
+    "cost": "free",
+    "label": "Free action"
+  },
+  {
+    "id": "counter_nerf",
+    "name": "Counter-Nerf",
+    "category": "nerf",
+    "tier": 4,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "holy_hell",
+    "name": "Holy Hell",
+    "category": "protection",
+    "tier": 1,
+    "kind": "passive",
+    "freeAction": false,
+    "cost": "passive",
+    "label": "Passive"
+  },
+  {
+    "id": "walnut_shell",
+    "name": "Walnut Shell",
+    "category": "item",
+    "tier": 1,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "apple",
+    "name": "Apple",
+    "category": "item",
+    "tier": 2,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "banana_peel",
+    "name": "Banana Peel",
+    "category": "item",
+    "tier": 2,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "trampoline",
+    "name": "Trampoline",
+    "category": "item",
+    "tier": 3,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "magnet",
+    "name": "Magnet",
+    "category": "item",
+    "tier": 3,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "firecracker",
+    "name": "Firecracker",
+    "category": "item",
+    "tier": 4,
+    "kind": "activated",
+    "freeAction": false,
+    "cost": "turn",
+    "label": "Uses your turn"
+  },
+  {
+    "id": "coffee",
+    "name": "Coffee",
+    "category": "item",
+    "tier": 4,
+    "kind": "activated",
+    "freeAction": true,
+    "cost": "free",
+    "label": "Free action"
+  }
+]

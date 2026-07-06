@@ -13,6 +13,7 @@
     "typecheck": "tsc --noEmit",
     "test:rules": "npm run server:build && node scripts/test-hexes.cjs",
     "test:nerfs": "npm run server:build && node scripts/test-nerfs.cjs",
+    "test:desync": "npm run server:build && node scripts/test-desync.cjs",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy"
   },

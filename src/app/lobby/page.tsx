@@ -4,6 +4,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { Eye, Swords, Users } from "lucide-react";
 import { QueueButton } from "@/components/QueueButton";
 import { AccountUser, fetchMe } from "@/lib/authClient";
 import { MPLobby, MPLobbyChallenge, MPLobbyGame, MPLobbySeek, MPSession, saveOnlineSeat } from "@/lib/multiplayer";
@@ -90,25 +91,42 @@ export default function LobbyPage() {
     setJoiningPool(`${seek.mode ?? "buff"}:${seek.pool}`);
     const session = new MPSession();
     session.persistFriendSession = false;
+    // Answer this exact seek: the server pairs only with this person (or house
+    // bot). If they already left it returns seek_gone rather than substituting
+    // a random opponent. Older servers omit seek.userId, so this falls back to
+    // plain quick pairing there. Hoisted so the timeout path can still honor a
+    // pairing that lands a moment after the 10s deadline.
+    const queuePromise = session.queue(
+      seek.pool,
+      seek.mode ?? "buff",
+      seek.userId ? { userId: seek.userId } : undefined,
+    );
+    const enterGame = (paired: { id: string; color: "w" | "b"; token: string }) => {
+      saveOnlineSeat(paired.id, { color: paired.color, token: paired.token });
+      session.destroy();
+      router.push(`/game/${paired.id}`);
+    };
     try {
       const paired = await Promise.race([
-        // Answer this exact seek: the server pairs only with this person (or
-        // house bot). If they already left it returns seek_gone rather than
-        // substituting a random opponent. Older servers omit seek.userId, so
-        // this falls back to plain quick pairing there.
-        session.queue(
-          seek.pool,
-          seek.mode ?? "buff",
-          seek.userId ? { userId: seek.userId } : undefined,
-        ),
+        queuePromise,
         new Promise<never>((_, reject) =>
           window.setTimeout(() => reject(new Error("seek_gone")), 10000),
         ),
       ]);
-      saveOnlineSeat(paired.id, { color: paired.color, token: paired.token });
-      session.destroy();
-      router.push(`/game/${paired.id}`);
+      enterGame(paired);
     } catch (e) {
+      // The single-threaded Durable Object can answer just after the timeout
+      // fires. Before tearing down the socket (which would strand an opponent
+      // the server has already paired us with and cost us the seat), give the
+      // pairing a brief grace window; if it completed, honor it.
+      const late = await Promise.race([
+        queuePromise.catch(() => null),
+        new Promise<null>((resolve) => window.setTimeout(() => resolve(null), 400)),
+      ]);
+      if (late) {
+        enterGame(late);
+        return;
+      }
       session.cancelQueue();
       session.destroy();
       setJoiningPool(null);
@@ -127,11 +145,7 @@ export default function LobbyPage() {
       <section className="max-w-7xl mx-auto px-5 sm:px-6">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <p className="kicker smallcaps text-[10px] mb-3">Find a game</p>
             <h1 className="masthead text-4xl sm:text-5xl text-parchment-50">Lobby</h1>
-            <p className="mt-2 text-parchment-200">
-              Find an opponent, challenge a friend, or watch a live game.
-            </p>
           </div>
           <div className="flex items-center gap-2 smallcaps text-[11px] text-parchment-300">
             <span className="w-2 h-2 rounded-full bg-verdigris animate-flicker" />
@@ -151,11 +165,10 @@ export default function LobbyPage() {
             <QueueButton />
 
             {/* Step 2: play a specific person via a shared code. */}
-            <div className="plate p-5 sm:p-6">
-              <div className="sec-title font-display text-2xl text-parchment">Play a friend</div>
-              <p className="mt-1 text-sm text-parchment-300">
-                Create a game and send them the code, or enter the code they sent you.
-              </p>
+            <div className="plate plate-hover p-5 sm:p-6">
+              <SectionTitle tint="mint" icon={<Users size={15} aria-hidden />}>
+                Play a friend
+              </SectionTitle>
               <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
                 <Link
                   href="/friend"
@@ -190,9 +203,11 @@ export default function LobbyPage() {
 
             {/* Open challenges: players waiting in a quick-pairing pool plus
                 friend games waiting for an opponent. */}
-            <div className="plate p-5 sm:p-6">
+            <div className="plate plate-hover p-5 sm:p-6">
               <div className="flex items-center justify-between gap-3">
-                <div className="sec-title font-display text-2xl text-parchment">Open challenges</div>
+                <SectionTitle tint="sun" icon={<Swords size={15} aria-hidden />}>
+                  Open challenges
+                </SectionTitle>
                 <div className="flex items-center gap-3">
                   <Link
                     href="/friend"
@@ -206,15 +221,9 @@ export default function LobbyPage() {
                 </div>
               </div>
               {!lobby ? (
-                <>
-                  <SkeletonRows count={3} />
-                  <p className="mt-3 text-sm text-parchment-500">Looking for open challenges…</p>
-                </>
+                <SkeletonRows count={3} />
               ) : waitingCount === 0 ? (
-                <p className="mt-3 text-sm text-parchment-400">
-                  No one is waiting right now. Queue for a game or create a friend game
-                  above and it will show up here until someone accepts.
-                </p>
+                <p className="mt-3 text-sm text-parchment-400">No one is waiting right now.</p>
               ) : (
                 <ul className="mt-3 divide-y divide-white/5">
                   {seeks.map((seek) => (
@@ -235,22 +244,19 @@ export default function LobbyPage() {
             </div>
 
             {/* Step 3 (optional): watch a game that's happening right now. */}
-            <div className="plate p-5 sm:p-6">
+            <div className="plate plate-hover p-5 sm:p-6">
               <div className="flex items-center justify-between gap-3">
-                <div className="sec-title font-display text-2xl text-parchment">Live games</div>
+                <SectionTitle tint="coral" icon={<Eye size={15} aria-hidden />}>
+                  Live games
+                </SectionTitle>
                 <span className="smallcaps text-[10px] text-parchment-400">
                   {lobby ? `${lobby.games.length} in play` : "…"}
                 </span>
               </div>
               {!lobby ? (
-                <>
-                  <SkeletonRows count={3} />
-                  <p className="mt-3 text-sm text-parchment-500">Finding live games…</p>
-                </>
+                <SkeletonRows count={3} />
               ) : lobby.games.length === 0 ? (
-                <p className="mt-3 text-sm text-parchment-400">
-                  No games in play right now. Start one and someone can watch you.
-                </p>
+                <p className="mt-3 text-sm text-parchment-400">No games in play right now.</p>
               ) : (
                 <ul className="mt-3 divide-y divide-white/5">
                   {lobby.games.map((game) => (
@@ -260,12 +266,10 @@ export default function LobbyPage() {
               )}
             </div>
 
-            <div className="text-sm text-parchment-400">
-              Prefer practicing solo?{" "}
-              <Link href="/play" className="text-parchment-200 underline decoration-white/20 hover:text-parchment-50">
-                Play against the bot
+            <div className="text-sm">
+              <Link href="/play" className="text-parchment-400 hover:text-parchment-100 transition-colors">
+                Play vs bot
               </Link>
-              .
             </div>
           </div>
 
@@ -325,6 +329,38 @@ export default function LobbyPage() {
         </div>
       </section>
     </main>
+  );
+}
+
+// Each lobby section wears a small color identity: an icon chip beside the
+// title (mint for friends, sun for open challenges, coral for live games; the
+// online queue keeps the core blue inside QueueButton). Color on the chip
+// only, never the whole panel, so the page stays quiet.
+const SECTION_TINTS = {
+  mint: "border-mint/30 bg-mint/10 text-mint-glow",
+  sun: "border-sun/30 bg-sun/10 text-sun-glow",
+  coral: "border-coral/30 bg-coral/10 text-coral-glow",
+} as const;
+
+function SectionTitle({
+  tint,
+  icon,
+  children,
+}: {
+  tint: keyof typeof SECTION_TINTS;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center gap-2.5">
+      <span
+        aria-hidden
+        className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg border ${SECTION_TINTS[tint]}`}
+      >
+        {icon}
+      </span>
+      <div className="font-display text-2xl text-parchment">{children}</div>
+    </div>
   );
 }
 
@@ -405,7 +441,7 @@ function SeekRow({
       : `${seek.timeSec}s+${seek.incrementSec}`;
   const name = seek.rating != null ? `${seek.name} (${seek.rating})` : seek.name;
   return (
-    <li className="flex items-center justify-between gap-3 py-2.5">
+    <li className="-mx-2 flex items-center justify-between gap-3 rounded-lg px-2 py-2.5 transition-colors hover:bg-white/[0.045]">
       <div className="min-w-0">
         <div className="flex items-center gap-2 truncate text-sm text-parchment-100">
           <Icon size={14} style={{ color: category.accent }} aria-hidden className="shrink-0" />
@@ -446,7 +482,7 @@ function ChallengeRow({ challenge }: { challenge: MPLobbyChallenge }) {
       ? `${challenge.host.name} (${challenge.host.rating})`
       : challenge.host.name;
   return (
-    <li className="flex items-center justify-between gap-3 py-2.5">
+    <li className="-mx-2 flex items-center justify-between gap-3 rounded-lg px-2 py-2.5 transition-colors hover:bg-white/[0.045]">
       <div className="min-w-0">
         <div className="truncate text-sm text-parchment-100">{host}</div>
         <div className="mt-0.5 flex items-center gap-1.5 smallcaps text-[9px] text-parchment-400">
@@ -473,7 +509,7 @@ function LiveGameRow({ game }: { game: MPLobbyGame }) {
   const clock =
     game.timeSec > 0 ? `${Math.round(game.timeSec / 60)}+${game.incrementSec}` : "No clock";
   return (
-    <li className="flex items-center justify-between gap-3 py-2.5">
+    <li className="-mx-2 flex items-center justify-between gap-3 rounded-lg px-2 py-2.5 transition-colors hover:bg-white/[0.045]">
       <div className="min-w-0">
         <div className="truncate text-sm text-parchment-100">
           {name(game.players.w)} <span className="text-parchment-400">vs</span> {name(game.players.b)}

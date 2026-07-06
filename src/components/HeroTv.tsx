@@ -144,12 +144,12 @@ export function HeroTv() {
     <Link href={`/game/${shownId}`} className="block w-full max-w-[560px] mx-auto no-underline group">
       <div className="flex items-center justify-between gap-2 pb-1.5">
         {seat("b")}
-        <span className="flex items-center gap-1.5 smallcaps text-[10px] text-parchment-300">
+        <span className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 smallcaps text-[10px] text-parchment-300">
           <span className={"h-2 w-2 rounded-full " + (live && !over ? "bg-oxblood-glow animate-flicker" : "bg-parchment-400")} />
           {live ? (over ? "Just finished" : "Live") : "Latest game"}
         </span>
       </div>
-      <div className="border border-black/50 shadow-[0_24px_70px_-30px_rgba(0,0,0,0.85)] transition group-hover:border-gold/40">
+      <div className="overflow-hidden rounded-lg border border-black/50 shadow-[0_24px_70px_-30px_rgba(0,0,0,0.85)] transition group-hover:border-gold/40">
         <Board
           board={board}
           legalMoves={[]}

@@ -12,13 +12,13 @@ export default {
       colors: {
         // ink = warm near-black surfaces, tuned to Lichess's default dark theme
         ink: {
-          950: "#100f0d",
-          900: "#161512", // page background
-          800: "#1c1a17",
-          700: "#262421", // panels / cards
-          600: "#302d29",
-          500: "#403d38",
-          400: "#6a665f",
+          950: "#12100e",
+          900: "#191713", // page background
+          800: "#221f1a",
+          700: "#2b2823", // panels / cards
+          600: "#363229",
+          500: "#453f36",
+          400: "#746e62",
         },
         // parchment = WARM light grays (foreground text). Red sits a touch above
         // blue at every step so type shares the temperature of the warm-ink
@@ -55,6 +55,19 @@ export default {
         bruise: {
           DEFAULT: "#8a88a8",
           glow: "#a7a5c4",
+        },
+        // The fun kit: playful accents beside the core blue (see globals.css).
+        coral: {
+          DEFAULT: "#ef8a5f",
+          glow: "#ffab84",
+        },
+        mint: {
+          DEFAULT: "#58c39a",
+          glow: "#7ddcb7",
+        },
+        sun: {
+          DEFAULT: "#eec25e",
+          glow: "#ffd97e",
         },
         // mode identities: Nerf mode reads warm rose/terracotta (welcoming,
         // deliberately softer than the oxblood alert red), Buff mode a gentle
