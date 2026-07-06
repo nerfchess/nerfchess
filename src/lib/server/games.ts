@@ -118,7 +118,7 @@ export async function recordFinishedGame(
   // Hyperdrive connection string for the OCI Postgres that holds the `games`
   // archive. When provided, the finished-game row is written there instead of
   // D1 (the hot rating/counter updates always stay on D1). When absent — e.g. a
-  // worker without the Hyperdrive binding — the row falls back into the D1
+  // worker without the Hyperdrive binding, the row falls back into the D1
   // batch so games are still recorded somewhere.
   archiveConnectionString?: string,
   // Extra per-game facts the recorded row can't carry (final-board material and
