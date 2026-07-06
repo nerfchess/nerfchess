@@ -123,4 +123,4 @@ Notes:
 - Visual: a walnutted piece now renders as the whole piece becoming a plump, glossy walnut (new WalnutPiece in Pieces.tsx: gradient shell, brain-like ridges, gloss, per-instance gradient ids) with the original piece shrunk down and nestled inside the shell so you can still tell what it was. Replaces the old amber-tint-plus-peanut-emoji marker; a faint amber square wash remains.
 - Animation: the walnut pops in with a comedic crunch, then gives a periodic little shudder as if the trapped piece is rattling to crack out (globals.css walnut-crunch + walnut-jiggle; cut under prefers-reduced-motion).
 - Test: scripts/test-hexes.cjs (npm run test:rules) now asserts a walnut is pruned when its piece is captured. Verified to fail without the fix and pass with it. tsc clean; test:rules green. The visual wants a preview-deploy eyeball.
-- Branch claude/walnut-lifetime-visual. OPEN.
+- PR #199. OPEN.
