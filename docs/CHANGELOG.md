@@ -132,3 +132,12 @@ Notes:
 - Animation: the walnut pops in with a comedic crunch, then gives a periodic little shudder as if the trapped piece is rattling to crack out (globals.css walnut-crunch + walnut-jiggle; cut under prefers-reduced-motion).
 - Test: scripts/test-hexes.cjs (npm run test:rules) now asserts a walnut is pruned when its piece is captured. Verified to fail without the fix and pass with it. tsc clean; test:rules green. The visual wants a preview-deploy eyeball.
 - PR #199. OPEN.
+
+---
+
+## 2026-07-05 22:03 ET (Banana Peel: make the invisible trap visible)
+
+- Fix: Banana Peel looked broken because it was invisible. The peel is stored on the buff instance (inst.state.sq), not in bs.effects, so draftZones never rendered it: you tossed it, saw nothing, then an enemy piece "randomly" slipped backward, which reads as a glitch. The engine mechanic is correct (verified by repro: an enemy stepping on the peel slips one rank back toward its home, then the peel is spent). Now draftZones exposes a banana zone for the VIEWER's own unspent peels (owner-only, so the trap keeps its surprise), and the board paints a banana peel on that square.
+- Visual + animation: new BananaPeel component (splayed three-frond peel, warm yellow gradient, gloss, ground shadow for a pseudo-3D look) rendered centered on the peel square; it lands with a little bounce then does a jaunty periodic shimmy (globals.css banana-appear + banana-wobble; cut under prefers-reduced-motion).
+- No engine/mechanic change, so no balance impact; purely making the existing trap visible. tsc clean; test:rules green. Visual wants a preview-deploy eyeball.
+- Stacked on the walnut branch (#199) to share the Board/Pieces/globals changes and avoid conflicts. PR #201. OPEN.
