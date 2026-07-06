@@ -864,6 +864,32 @@ html[data-piece-source="lichess"] .piece-asset {
 }
 .sq-shield-in { animation: shield-in 0.45s ease-out; }
 
+/* Hexed into a walnut (see WalnutPiece): the whole piece is now a walnut. It
+   pops in with a comedic crunch, then keeps giving a periodic little shudder,
+   as if the piece trapped inside is rattling around trying to crack out. */
+.walnut-piece {
+  transform-origin: 50% 82%;
+  animation:
+    walnut-crunch 0.5s var(--ease-spring, cubic-bezier(0.5, 1.6, 0.4, 1)) both,
+    walnut-jiggle 2.6s ease-in-out 0.6s infinite;
+  filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.45));
+}
+@keyframes walnut-crunch {
+  0% { opacity: 0; transform: scale(0.2) rotate(-28deg); }
+  55% { opacity: 1; transform: scale(1.24) rotate(12deg); }
+  72% { transform: scale(0.9) rotate(-6deg); }
+  88% { transform: scale(1.06) rotate(3deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+@keyframes walnut-jiggle {
+  0%, 58%, 100% { transform: rotate(0deg) scale(1); }
+  64% { transform: rotate(-8deg) scaleY(0.93) scaleX(1.05); }
+  72% { transform: rotate(7deg) scaleY(1.04) scaleX(0.97); }
+  80% { transform: rotate(-5deg); }
+  88% { transform: rotate(3deg); }
+  94% { transform: rotate(-1.5deg); }
+}
+
 .no-tap-highlight { -webkit-tap-highlight-color: transparent; }
 
 /* --- Skeleton placeholders (first-load shimmer) ---
@@ -916,7 +942,7 @@ nav, header { position: relative; z-index: 30; }
   .draft-in,
   .hero-aura, .mode-field::before,
   .stagger-in > *,
-  .sq-strike, .sq-freeze, .sq-freeze-flake, .sq-shield-in {
+  .sq-strike, .sq-freeze, .sq-freeze-flake, .sq-shield-in, .walnut-piece {
     animation: none !important;
   }
   .dc-orbit-ring.spin, .dc-orbit-ring.spin-r,

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Piece } from "./Pieces";
+import { Piece, WalnutPiece } from "./Pieces";
 import { BoardState, Color, FILE, Move, PieceType, RANK, SQ, Square } from "@/engine/types";
 import { playSelect } from "@/lib/sounds";
 
@@ -866,13 +866,9 @@ export function Board({
                   </>
                 )}
                 {walnutSquares.has(sq) && (
-                  <>
-                    {/* Hexed into a walnut: amber tint plus the nut itself. */}
-                    <div className="absolute inset-0 bg-amber-700/30 pointer-events-none" />
-                    <span className="absolute top-0.5 right-0.5 z-10 text-[12px] leading-none pointer-events-none drop-shadow">
-                      🥜
-                    </span>
-                  </>
+                  /* Hexed into a walnut: a faint amber wash marks the square; the
+                     piece itself is rendered as the walnut (see WalnutPiece). */
+                  <div className="absolute inset-0 bg-amber-700/15 pointer-events-none" />
                 )}
                 {lockedSquares.has(sq) && (
                   <>
@@ -914,7 +910,11 @@ export function Board({
                     data-anim-piece={animsRef.current.has(sq) ? sq : undefined}
                     style={{ width: "var(--piece-fit, 88%)", height: "var(--piece-fit, 88%)" }}
                   >
-                    <Piece type={piece.type} color={piece.color} size="100%" />
+                    {walnutSquares.has(sq) ? (
+                      <WalnutPiece type={piece.type} color={piece.color} size="100%" />
+                    ) : (
+                      <Piece type={piece.type} color={piece.color} size="100%" />
+                    )}
                   </div>
                 ) : null}
 

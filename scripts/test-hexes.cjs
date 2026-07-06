@@ -210,6 +210,36 @@ console.log(`count-target termination: checked ${countChecked} activated cards o
 
 console.log(`buffs total: ${ALL_BUFFS.length}, implemented: ${IMPLEMENTED_BUFFS.length}`);
 console.log(`hexes: ${hexes.length} -> by tier ${JSON.stringify(byTier)}`);
+
+// A walnut (and freeze) binds to the piece on its square. When that piece is
+// captured, the marker must be pruned, never lingering on the now empty square
+// or jumping onto the capturing enemy piece.
+(function walnutLifetime() {
+  const g = newGameAsColor(UNRESTRICTED_NERF, "w", 7);
+  enableDraftMode(g, 7, { mode: "buff" });
+  for (let sq = 0; sq < 64; sq++) g.board.pieces[sq] = null;
+  g.board.pieces[4] = { type: "k", color: "w" }; // e1
+  g.board.pieces[60] = { type: "k", color: "b" }; // e8
+  g.board.pieces[0] = { type: "r", color: "w" }; // a1
+  g.board.pieces[32] = { type: "n", color: "b" }; // a5: walnutted, then captured
+  g.board.turn = "w";
+  g.buffs.effects.push({ kind: "walnut", sq: 32, owner: "b", turns: 5 });
+  if (g.buffs.effects.filter((e) => e.kind === "walnut" && e.sq === 32).length !== 1) {
+    errors.push("walnut lifetime: setup failed (walnut not present before capture)");
+    return;
+  }
+  const cap = legalMoves(g).find((m) => m.from === 0 && m.to === 32 && m.captured);
+  if (!cap) {
+    errors.push("walnut lifetime: rook a1xa5 capture not available in setup");
+    return;
+  }
+  const g2 = playMove(g, cap);
+  const left = g2.buffs.effects.filter((e) => e.kind === "walnut" && e.sq === 32).length;
+  if (left !== 0) {
+    errors.push(`walnut lifetime: walnut survived the capture of its piece (${left} still on the square)`);
+  }
+})();
+
 if (warns.length) {
   console.log("\nWARNINGS:");
   for (const w of warns) console.log("  - " + w);
