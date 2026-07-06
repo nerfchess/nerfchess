@@ -40,19 +40,22 @@ export async function POST(request: Request, { params }: { params: { id: string 
       .bind(tournament.id, user.id)
       .first<{ present: number }>();
     if (!already) {
-      const count = await db
-        .prepare("SELECT COUNT(*) AS n FROM tournament_entries WHERE tournament_id = ?")
-        .bind(tournament.id)
-        .first<{ n: number }>();
-      if ((count?.n ?? 0) >= tournament.max_players) {
+      // Enforce the capacity cap atomically. A plain count-then-insert lets two
+      // players joining at the boundary both read count = max - 1, both pass,
+      // and both insert, overshooting max_players. SQLite serializes writers,
+      // so a conditional insert that re-counts inside the same statement cannot
+      // exceed the cap. OR IGNORE still guards against a duplicate user.
+      const result = await db
+        .prepare(
+          `INSERT OR IGNORE INTO tournament_entries (tournament_id, user_id, username, joined_at)
+           SELECT ?, ?, ?, ?
+           WHERE (SELECT COUNT(*) FROM tournament_entries WHERE tournament_id = ?) < ?`,
+        )
+        .bind(tournament.id, user.id, user.username, Date.now(), tournament.id, tournament.max_players)
+        .run();
+      if (result.meta.changes === 0) {
         return NextResponse.json({ error: "This tournament is full." }, { status: 400 });
       }
-      await db
-        .prepare(
-          "INSERT OR IGNORE INTO tournament_entries (tournament_id, user_id, username, joined_at) VALUES (?, ?, ?, ?)",
-        )
-        .bind(tournament.id, user.id, user.username, Date.now())
-        .run();
     }
     return NextResponse.json({ entered: true });
   }
