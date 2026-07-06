@@ -20,13 +20,16 @@ export default {
           500: "#403d38",
           400: "#6a665f",
         },
-        // parchment = neutral light grays (foreground text), Lichess-style
+        // parchment = WARM light grays (foreground text). Red sits a touch above
+        // blue at every step so type shares the temperature of the warm-ink
+        // surfaces instead of reading as cold neutral gray on top of them (the
+        // classic warm-bg / cool-text tell). Kept subtle to stay Lichess-quiet.
         parchment: {
-          DEFAULT: "#b8b8b8",
-          50: "#e9e7e3",
-          100: "#dedddb",
-          200: "#c7c5c1",
-          300: "#a3a09b",
+          DEFAULT: "#c2bcaf",
+          50: "#ece7dd",
+          100: "#e0dcd2",
+          200: "#cac6bd",
+          300: "#a7a297",
           400: "#7f7d77",
           500: "#5c5a55",
         },

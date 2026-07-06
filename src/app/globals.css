@@ -11,10 +11,24 @@ body {
 }
 
 :root {
-  --paper: #b8b8b8;
-  --paper-dim: #7f7d77;
+  /* Primary text is a WARM off-white, not neutral gray. A warm-ink surface
+     under R=G=B gray type is the classic "cold/bland" tell; nudging red above
+     blue makes the whole page read as one temperature. Stays AA on #161512
+     (contrast ~8:1). Never pure #fff (halation on warm dark). */
+  --paper: #cbc5b9;
+  --paper-dim: #8c867a;
   --ink-deep: #100f0d;
   --ink-warm: #1c1a17;
+  /* Elevation by lightness, not shadow: the ink ladder already exists in
+     tailwind.config; --surface-raise is the one rung up (ink-600) that floating
+     and hovered surfaces step onto so menus/modals/hover-rows read "closer". */
+  --surface-panel: #262421; /* ink-700, base card */
+  --surface-raise: #302d29; /* ink-600, floating / hovered */
+  --surface-hover: #2b2824; /* subtle row hover on a panel */
+  /* Warm hairline: a warm edge one step lighter than the panel, brightening on
+     hover. Replaces the cool white-alpha border that read generic/cold. */
+  --edge: #3a342c;
+  --edge-strong: #4a4238;
   /* accent = Lichess blue (Lichess has no signature green) */
   --gold: #3692e7;
   --gold-leaf: #4a9fee;
@@ -41,6 +55,30 @@ body {
      kept as rgb triples so seams can fade in and out at any opacity. */
   --seam-warm-rgb: 196 120 95;   /* Nerf terracotta */
   --seam-cool-rgb: 91 155 212;   /* Buff sky */
+
+  /* --- Governed status + celebration colors ----------------------------------
+     Warmth needs somewhere to LAND without adding a second brand accent. The
+     two mode hues are reclaimed here as a disciplined status pair, reusing the
+     seam triples so no new colors enter the system: blue --accent still means
+     "act here", while --pos (Buff sky) marks positive/good and --warm
+     (Nerf terracotta) marks celebration/your-turn/streak. Celebration proper
+     uses BOTH as the seam gradient, never a single loud hue. */
+  --pos-rgb: var(--seam-cool-rgb);
+  --warm-rgb: var(--seam-warm-rgb);
+  --pos: rgb(var(--pos-rgb));
+  --warm: rgb(var(--warm-rgb));
+
+  /* --- Motion vocabulary -----------------------------------------------------
+     One named set of curves and durations so every interaction feels
+     single-authored instead of the retyped-bezier AI-default. Scaled globally
+     by the data-anim override and cut by prefers-reduced-motion. Reserve
+     --ease-spring for reveal / seal / win, never for routine hovers. */
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-io: cubic-bezier(0.45, 0.03, 0.52, 0.96);
+  --ease-spring: cubic-bezier(0.2, 1.4, 0.4, 1);
+  --dur-1: 120ms;
+  --dur-2: 200ms;
+  --dur-3: 320ms;
 
   /* --- Fluid type scale ------------------------------------------------------
      One ratio, computed once, so every surface pulls headings from the same
@@ -94,8 +132,8 @@ html[data-theme="light"] .text-parchment-400 { color: #6b665c; }
 html[data-theme="light"] .text-parchment-500 { color: #86816f; }
 
 /* High contrast preference (Settings): brighter foregrounds, firmer borders. */
-html[data-contrast="high"] { --paper: #eceae6; --paper-dim: #b5b2ac; }
-html[data-contrast="high"] .plate { border-color: rgba(255, 255, 255, 0.28); }
+html[data-contrast="high"] { --paper: #efece4; --paper-dim: #bab5aa; }
+html[data-contrast="high"] .plate { border-color: #574e42; }
 html[data-contrast="high"] .text-parchment-300 { color: #c9c7c2; }
 html[data-contrast="high"] .text-parchment-400 { color: #b0ada7; }
 html[data-contrast="high"] .text-parchment-500 { color: #97948e; }
@@ -278,6 +316,51 @@ html[data-theme="light"] .mode-seam::after { background: #e4e0d6; }
   padding-block: var(--rhythm-section);
 }
 
+/* --- Shared interaction + figure utilities ---------------------------------
+   A small vocabulary applied across surfaces so interactions feel single-
+   authored rather than retyped per component. Every animation here is scaled by
+   the data-anim override and cut by prefers-reduced-motion (see the gates near
+   the foot of this file). */
+
+/* Tabular figures: stop Elo, deltas, clocks and ranks from jittering as digits
+   change width. Inter and the mono face both carry the feature. */
+.tabular { font-variant-numeric: tabular-nums; }
+
+/* Press physics: an instant scale-down on activation, easing back on release.
+   Complements the existing translateY presses on the metal buttons. */
+.press { transition: transform var(--dur-1) var(--ease-out); }
+.press:active { transform: scale(0.98); }
+
+/* Hover lift: a 1px rise with a WARM near-black shadow (never a colored glow),
+   only where a true pointer exists so touch devices get no sticky hover. */
+@media (hover: hover) {
+  .hover-lift {
+    transition: transform var(--dur-2) var(--ease-out), box-shadow var(--dur-2) var(--ease-out);
+  }
+  .hover-lift:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 26px -18px rgba(0, 0, 0, 0.75);
+  }
+}
+
+/* Capped staggered entrance: the first several children of a dense list fade
+   in with a beat; everything past the cap appears at once, so long lists never
+   cascade slowly. Opacity-only on purpose — a `both`-filled transform would
+   lock the element and break per-row :hover lifts. Collapsed when motion off. */
+@keyframes row-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.stagger-in > * { animation: row-in var(--dur-3) var(--ease-out) both; }
+.stagger-in > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-in > *:nth-child(2) { animation-delay: 24ms; }
+.stagger-in > *:nth-child(3) { animation-delay: 48ms; }
+.stagger-in > *:nth-child(4) { animation-delay: 72ms; }
+.stagger-in > *:nth-child(5) { animation-delay: 96ms; }
+.stagger-in > *:nth-child(6) { animation-delay: 120ms; }
+.stagger-in > *:nth-child(7) { animation-delay: 144ms; }
+.stagger-in > *:nth-child(8) { animation-delay: 168ms; }
+
 /* --- Ornament rules → hairline dividers --- */
 .rule-ornament {
   display: flex;
@@ -306,8 +389,8 @@ html[data-theme="light"] .mode-seam::after { background: #e4e0d6; }
 
 /* --- Card / plate --- */
 .plate {
-  background: #262421;
-  border: 1px solid rgba(255,255,255,0.07);
+  background: var(--surface-panel);
+  border: 1px solid var(--edge);
   box-shadow: 0 12px 40px -24px rgba(0,0,0,0.7);
   border-radius: 0;
   position: relative;
@@ -315,9 +398,31 @@ html[data-theme="light"] .mode-seam::after { background: #e4e0d6; }
 }
 /* A plate used as a floating menu must stay absolutely positioned; without
    this the base rule above beats the `absolute` utility, the menu joins the
-   layout flow, and opening it shoves the whole header around. */
+   layout flow, and opening it shoves the whole header around. Floating surfaces
+   also step ONE rung up the ink ladder (ink-600) so menus and modals read as
+   closer to the viewer — depth from lightness, not a heavier shadow. */
 .plate.dropdown {
   position: absolute;
+  background: var(--surface-raise);
+}
+/* Explicit "one rung up" surface for modals/dialogs (GameOver, settings) so the
+   emotional-peak surfaces sit above the page rather than on the same plane. */
+.plate-raised {
+  background: var(--surface-raise);
+}
+/* Opt-in warm hover for interactive cards that do NOT set their own border
+   color. Kept opt-in so per-card mode/tier borders are never clobbered, and
+   gated behind hover:hover so touch devices get no sticky hover. */
+.plate-hover {
+  transition: border-color var(--dur-2) var(--ease-out),
+    background-color var(--dur-2) var(--ease-out),
+    transform var(--dur-1) var(--ease-out);
+}
+@media (hover: hover) {
+  .plate-hover:hover {
+    border-color: var(--edge-strong);
+    background: var(--surface-hover);
+  }
 }
 .plate-warm {
   background: #2b2824;
@@ -387,7 +492,7 @@ html[data-theme="light"] .mode-seam::after { background: #e4e0d6; }
   0% { opacity: 0; transform: translateY(18px) scale(0.965); }
   100% { opacity: 1; transform: translateY(0) scale(1); }
 }
-.draft-in { animation: draft-in 0.44s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.draft-in { animation: draft-in 0.44s var(--ease-out) both; }
 
 /* --- Buttons --- Lichess-style: primary carries a subtle two-stop "metal"
    gradient (lighter top, base bottom) plus an inset top highlight and a soft
@@ -527,6 +632,19 @@ html[data-theme="light"] .masthead {
     radial-gradient(38% 48% at 84% 74%, rgba(196, 120, 95, 0.06), transparent 70%);
 }
 
+/* A very slow opacity pulse gives the ambient washes a sense of life without
+   competing with the live-TV board's real motion. Opacity only — never size,
+   position, or hue — so it stays calm. Frozen when animations are off or the
+   viewer prefers reduced motion (handled by the global gates below). */
+@keyframes aura-breathe {
+  0%, 100% { opacity: 0.82; }
+  50% { opacity: 1; }
+}
+.hero-aura,
+.mode-field::before {
+  animation: aura-breathe 14s ease-in-out infinite;
+}
+
 /* --- Top-nav micro-interactions -------------------------------------------
    The desktop nav links get a quiet, quality hover/press: a background wash
    that eases in, a thin accent underline that grows from the center, and a
@@ -549,7 +667,7 @@ html[data-theme="light"] .masthead {
   transform: scaleX(0);
   transform-origin: center;
   opacity: 0;
-  transition: transform 190ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 190ms ease;
+  transition: transform 190ms var(--ease-out), opacity 190ms ease;
 }
 .nav-item:hover::after,
 .nav-item:focus-visible::after {
@@ -687,7 +805,7 @@ html[data-piece-source="lichess"] .piece-asset {
   0% { opacity: 0; transform: translateY(20px) scale(0.96); }
   100% { opacity: 1; transform: translateY(0) scale(1); }
 }
-.animate-reveal { animation: nerf-reveal 0.55s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.animate-reveal { animation: nerf-reveal 0.55s var(--ease-out); }
 
 /* Lightning Strike: a one-shot flash on each struck square. The effect record
    lives until the opponent replies, but the overlay animates to transparent
@@ -796,6 +914,8 @@ nav, header { position: relative; z-index: 30; }
 @media (prefers-reduced-motion: reduce) {
   .animate-rise, .animate-seal, .animate-sigil, .animate-flicker, .animate-reveal, .animate-bob,
   .draft-in,
+  .hero-aura, .mode-field::before,
+  .stagger-in > *,
   .sq-strike, .sq-freeze, .sq-freeze-flake, .sq-shield-in {
     animation: none !important;
   }

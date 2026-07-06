@@ -11,13 +11,13 @@ export async function GET(request: Request) {
 
   const rows = await db
     .prepare(
-      `SELECT id, from_name, time_sec, increment_sec, created_at
+      `SELECT id, from_name, time_sec, increment_sec, rated, created_at
        FROM challenges
        WHERE to_user_id = ? AND status = 'pending' AND created_at > ?
        ORDER BY created_at DESC LIMIT 20`,
     )
     .bind(user.id, Date.now() - CHALLENGE_TTL_MS)
-    .all<{ id: string; from_name: string; time_sec: number; increment_sec: number; created_at: number }>();
+    .all<{ id: string; from_name: string; time_sec: number; increment_sec: number; rated: number; created_at: number }>();
 
   return NextResponse.json({
     challenges: rows.results.map((c) => ({
@@ -25,6 +25,7 @@ export async function GET(request: Request) {
       from: c.from_name,
       timeSec: c.time_sec,
       incrementSec: c.increment_sec,
+      rated: !!c.rated,
       at: c.created_at,
     })),
   });
@@ -38,7 +39,7 @@ export async function POST(request: Request) {
   if (guard instanceof NextResponse) return guard;
   const { db, user } = guard;
 
-  let body: { to?: unknown; code?: unknown; timeSec?: unknown; incrementSec?: unknown };
+  let body: { to?: unknown; code?: unknown; timeSec?: unknown; incrementSec?: unknown; rated?: unknown };
   try {
     body = await request.json();
   } catch {
@@ -49,6 +50,7 @@ export async function POST(request: Request) {
   const code = typeof body.code === "string" ? body.code.trim().toUpperCase() : "";
   const timeSec = Number.isInteger(body.timeSec) ? Number(body.timeSec) : 0;
   const incrementSec = Number.isInteger(body.incrementSec) ? Number(body.incrementSec) : 0;
+  const rated = body.rated === true;
   if (!to || !/^[A-Z0-9]{4,10}$/.test(code)) {
     return NextResponse.json({ error: "to and code are required." }, { status: 400 });
   }
@@ -62,10 +64,10 @@ export async function POST(request: Request) {
 
   await db
     .prepare(
-      `INSERT OR REPLACE INTO challenges (id, from_user_id, from_name, to_user_id, time_sec, increment_sec, status, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, 'pending', ?)`,
+      `INSERT OR REPLACE INTO challenges (id, from_user_id, from_name, to_user_id, time_sec, increment_sec, rated, status, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?)`,
     )
-    .bind(code, user.id, user.username, target.id, timeSec, incrementSec, Date.now())
+    .bind(code, user.id, user.username, target.id, timeSec, incrementSec, rated ? 1 : 0, Date.now())
     .run();
 
   const clock = timeSec > 0 ? `${Math.round(timeSec / 60)}+${incrementSec}` : "no clock";
@@ -73,7 +75,7 @@ export async function POST(request: Request) {
     userId: target.id,
     type: "challenge",
     actorName: user.username,
-    text: `${user.username} challenges you to a ${clock} game`,
+    text: `${user.username} challenges you to a ${rated ? "rated" : "casual"} ${clock} game`,
     href: `/friend?code=${encodeURIComponent(code)}`,
   });
 

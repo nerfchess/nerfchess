@@ -2,60 +2,80 @@
 
 import { SiteHeader } from "@/components/SiteHeader";
 import { AccountUser, fetchMe } from "@/lib/authClient";
+import type { TournamentListRow } from "@/app/api/tournaments/route";
+import {
+  clockLabel,
+  countdownLabel,
+  durationLabel,
+  formatLabel,
+  modeLabel,
+  TOURNAMENT_FORMATS,
+} from "@/lib/tournaments";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { Users } from "lucide-react";
 
 interface Club {
   id: string;
   name: string;
 }
 
-interface Tournament {
-  id: string;
-  name: string;
-  description: string;
-  creator_name: string;
-  club_id: string | null;
-  club_name: string | null;
-  format: string;
-  starts_at: number | null;
-  status: string;
-  max_players: number;
-  created_at: number;
-  players: number;
+// Common arena clocks, offered as chips so creating an event is a couple of
+// clicks rather than raw seconds entry.
+const CLOCK_PRESETS: { label: string; t: number; i: number }[] = [
+  { label: "1+0", t: 60, i: 0 },
+  { label: "2+1", t: 120, i: 1 },
+  { label: "3+0", t: 180, i: 0 },
+  { label: "3+2", t: 180, i: 2 },
+  { label: "5+0", t: 300, i: 0 },
+  { label: "5+3", t: 300, i: 3 },
+  { label: "10+0", t: 600, i: 0 },
+  { label: "15+10", t: 900, i: 10 },
+];
+const DURATION_PRESETS = [20, 30, 45, 60, 90, 120];
+
+const INPUT_CLASS =
+  "mt-1 w-full border border-white/15 bg-ink-900/60 px-3 py-2 text-sm text-parchment focus:border-gold/60 focus:outline-none";
+const LABEL_CLASS = "block smallcaps text-[10px] text-parchment-400";
+
+function ModeTag({ mode }: { mode: string }) {
+  const cls = mode === "buff" ? "border-mode-buff/40 text-mode-buffGlow" : "border-mode-nerf/40 text-mode-nerfGlow";
+  return (
+    <span className={"border px-1.5 py-0.5 smallcaps text-[8px] " + cls}>{modeLabel(mode)}</span>
+  );
 }
 
-const FORMAT_LABELS: Record<string, string> = {
-  swiss: "Swiss",
-  arena: "Arena",
-  "single-elim": "Single elimination",
-};
-
 export default function TournamentsPage() {
+  const router = useRouter();
   const [user, setUser] = useState<AccountUser | null | undefined>(undefined);
   const [clubs, setClubs] = useState<Club[]>([]);
-  const [tournaments, setTournaments] = useState<Tournament[]>([]);
+  const [tournaments, setTournaments] = useState<TournamentListRow[]>([]);
+  const [now, setNow] = useState(() => Date.now());
+
+  // Create form state
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [format, setFormat] = useState("swiss");
+  const [format, setFormat] = useState("arena");
+  const [mode, setMode] = useState("nerf");
+  const [rated, setRated] = useState(false);
+  const [clockIdx, setClockIdx] = useState(2);
+  const [durationMin, setDurationMin] = useState(60);
   const [clubId, setClubId] = useState("");
   const [startsAt, setStartsAt] = useState("");
   const [maxPlayers, setMaxPlayers] = useState(16);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const selectedClubName = useMemo(
-    () => clubs.find((club) => club.id === clubId)?.name ?? null,
-    [clubId, clubs],
-  );
-
   const load = async () => {
     const [tournamentRes, clubRes] = await Promise.all([fetch("/api/tournaments"), fetch("/api/clubs")]);
-    if (!tournamentRes.ok || !clubRes.ok) throw new Error("Could not load tournaments.");
-    const tournamentData = (await tournamentRes.json()) as { tournaments: Tournament[] };
-    const clubData = (await clubRes.json()) as { clubs: Club[] };
+    if (!tournamentRes.ok) throw new Error("Could not load tournaments.");
+    const tournamentData = (await tournamentRes.json()) as { tournaments: TournamentListRow[] };
     setTournaments(tournamentData.tournaments);
-    setClubs(clubData.clubs);
+    if (clubRes.ok) {
+      const clubData = (await clubRes.json()) as { clubs: Club[] };
+      setClubs(clubData.clubs);
+    }
   };
 
   useEffect(() => {
@@ -64,17 +84,45 @@ export default function TournamentsPage() {
     if (initialClub) setClubId(initialClub);
     fetchMe().then((me) => !cancelled && setUser(me));
     load().catch((e) => !cancelled && setError(e instanceof Error ? e.message : "Could not load tournaments."));
+    const tick = window.setInterval(() => setNow(Date.now()), 1000);
     return () => {
       cancelled = true;
+      window.clearInterval(tick);
     };
   }, []);
 
+  // Re-bucket on every tick so an event slides from "starting soon" into "in
+  // progress" and then "finished" on its own, without a reload.
+  const sections = useMemo(() => {
+    const ongoing: TournamentListRow[] = [];
+    const upcoming: TournamentListRow[] = [];
+    const finished: TournamentListRow[] = [];
+    for (const t of tournaments) {
+      const endsAt = t.starts_at == null ? null : t.starts_at + t.duration_min * 60_000;
+      if (t.starts_at != null && now >= t.starts_at && endsAt != null && now < endsAt) ongoing.push(t);
+      else if (endsAt != null && now >= endsAt) finished.push(t);
+      else upcoming.push(t);
+    }
+    const soonest = (a: TournamentListRow, b: TournamentListRow) =>
+      (a.starts_at ?? Number.MAX_SAFE_INTEGER) - (b.starts_at ?? Number.MAX_SAFE_INTEGER);
+    ongoing.sort(soonest);
+    upcoming.sort(soonest);
+    finished.sort((a, b) => (b.starts_at ?? b.created_at) - (a.starts_at ?? a.created_at));
+    return { ongoing, upcoming, finished };
+  }, [tournaments, now]);
+
+  const selectedClubName = useMemo(
+    () => clubs.find((club) => club.id === clubId)?.name ?? null,
+    [clubId, clubs],
+  );
+
   const createTournament = async (event: FormEvent) => {
     event.preventDefault();
-    if (!name.trim()) return;
+    if (name.trim().length < 3) return;
     setBusy(true);
     setError(null);
     try {
+      const preset = CLOCK_PRESETS[clockIdx] ?? CLOCK_PRESETS[2];
       const starts = startsAt ? new Date(startsAt).getTime() : null;
       const res = await fetch("/api/tournaments", {
         method: "POST",
@@ -83,25 +131,21 @@ export default function TournamentsPage() {
           name,
           description,
           format,
+          mode,
+          rated,
+          clockTimeSec: preset.t,
+          clockIncrementSec: preset.i,
+          durationMin,
           clubId: clubId || null,
-          startsAt: Number.isFinite(starts) ? starts : null,
+          startsAt: starts != null && Number.isFinite(starts) ? starts : null,
           maxPlayers,
         }),
       });
-      const data = (await res.json().catch(() => ({}))) as { tournament?: Tournament; error?: string };
+      const data = (await res.json().catch(() => ({}))) as { tournament?: TournamentListRow; error?: string };
       if (!res.ok || !data.tournament) throw new Error(data.error || "Could not create tournament.");
-      const created = {
-        ...data.tournament,
-        club_name: selectedClubName,
-      };
-      setTournaments((list) => [created, ...list]);
-      setName("");
-      setDescription("");
-      setStartsAt("");
-      setMaxPlayers(16);
+      router.push(`/tournaments/${encodeURIComponent(data.tournament.id)}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not create tournament.");
-    } finally {
       setBusy(false);
     }
   };
@@ -110,11 +154,11 @@ export default function TournamentsPage() {
     <main className="min-h-screen pb-16">
       <SiteHeader active="/tournaments" />
 
-      <section className="mx-auto max-w-5xl px-5 sm:px-6">
+      <section className="mx-auto max-w-6xl px-5 sm:px-6">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h1 className="font-display text-4xl sm:text-5xl text-parchment-50">Tournaments</h1>
-            <p className="mt-2 text-parchment-300">Scheduled events for the Nerfchess ladder.</p>
+            <p className="mt-2 text-parchment-300">Scheduled arenas for the Nerfchess ladder.</p>
           </div>
           <Link href="/clubs" className="btn-ghost px-4 py-2 font-display text-sm">
             Clubs
@@ -128,6 +172,7 @@ export default function TournamentsPage() {
         )}
 
         <div className="mt-6 grid gap-4 lg:grid-cols-[340px_minmax(0,1fr)]">
+          {/* Create panel */}
           <form onSubmit={createTournament} className="plate h-fit p-5">
             <div className="font-display text-2xl text-parchment">Create tournament</div>
             {user === undefined ? (
@@ -141,86 +186,136 @@ export default function TournamentsPage() {
               </p>
             ) : (
               <>
-                <label className="mt-4 block smallcaps text-[10px] text-parchment-400" htmlFor="tournament-name">
+                <label className="mt-4 block smallcaps text-[10px] text-parchment-400" htmlFor="t-name">
                   Name
                 </label>
-                <input
-                  id="tournament-name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  maxLength={70}
-                  className="mt-1 w-full border border-white/15 bg-ink-900/60 px-3 py-2 text-sm text-parchment focus:border-gold/60 focus:outline-none"
-                />
+                <input id="t-name" value={name} onChange={(e) => setName(e.target.value)} maxLength={70} className={INPUT_CLASS} />
+
                 <div className="mt-3 grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block smallcaps text-[10px] text-parchment-400" htmlFor="tournament-format">
+                    <label className={LABEL_CLASS} htmlFor="t-format">
                       Format
                     </label>
-                    <select
-                      id="tournament-format"
-                      value={format}
-                      onChange={(e) => setFormat(e.target.value)}
-                      className="mt-1 w-full border border-white/15 bg-ink-900/60 px-3 py-2 text-sm text-parchment focus:border-gold/60 focus:outline-none"
-                    >
-                      {Object.entries(FORMAT_LABELS).map(([value, label]) => (
+                    <select id="t-format" value={format} onChange={(e) => setFormat(e.target.value)} className={INPUT_CLASS}>
+                      {TOURNAMENT_FORMATS.map((value) => (
                         <option key={value} value={value}>
-                          {label}
+                          {formatLabel(value)}
                         </option>
                       ))}
                     </select>
                   </div>
                   <div>
-                    <label className="block smallcaps text-[10px] text-parchment-400" htmlFor="tournament-max">
+                    <label className={LABEL_CLASS} htmlFor="t-mode">
+                      Mode
+                    </label>
+                    <select id="t-mode" value={mode} onChange={(e) => setMode(e.target.value)} className={INPUT_CLASS}>
+                      <option value="nerf">Nerf</option>
+                      <option value="buff">Buff</option>
+                    </select>
+                  </div>
+                </div>
+
+                <label className="mt-3 block smallcaps text-[10px] text-parchment-400">Time control</label>
+                <div className="mt-1 flex flex-wrap gap-1.5">
+                  {CLOCK_PRESETS.map((preset, i) => (
+                    <button
+                      key={preset.label}
+                      type="button"
+                      onClick={() => setClockIdx(i)}
+                      aria-pressed={clockIdx === i}
+                      className={
+                        "border px-2.5 py-1 font-mono text-xs transition-colors " +
+                        (clockIdx === i
+                          ? "border-gold/60 bg-gold/15 text-gold-leaf"
+                          : "border-white/15 text-parchment-300 hover:border-white/30")
+                      }
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="mt-3 grid grid-cols-2 gap-3">
+                  <div>
+                    <label className={LABEL_CLASS} htmlFor="t-duration">
+                      Duration
+                    </label>
+                    <select
+                      id="t-duration"
+                      value={durationMin}
+                      onChange={(e) => setDurationMin(Number(e.target.value))}
+                      className={INPUT_CLASS}
+                    >
+                      {DURATION_PRESETS.map((min) => (
+                        <option key={min} value={min}>
+                          {durationLabel(min)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className={LABEL_CLASS} htmlFor="t-max">
                       Seats
                     </label>
                     <input
-                      id="tournament-max"
+                      id="t-max"
                       type="number"
                       min={2}
                       max={256}
                       value={maxPlayers}
                       onChange={(e) => setMaxPlayers(Number(e.target.value))}
-                      className="mt-1 w-full border border-white/15 bg-ink-900/60 px-3 py-2 text-sm text-parchment focus:border-gold/60 focus:outline-none"
+                      className={INPUT_CLASS}
                     />
                   </div>
                 </div>
-                <label className="mt-3 block smallcaps text-[10px] text-parchment-400" htmlFor="tournament-club">
-                  Club
-                </label>
-                <select
-                  id="tournament-club"
-                  value={clubId}
-                  onChange={(e) => setClubId(e.target.value)}
-                  className="mt-1 w-full border border-white/15 bg-ink-900/60 px-3 py-2 text-sm text-parchment focus:border-gold/60 focus:outline-none"
-                >
-                  <option value="">Open event</option>
-                  {clubs.map((club) => (
-                    <option key={club.id} value={club.id}>
-                      {club.name}
-                    </option>
-                  ))}
-                </select>
-                <label className="mt-3 block smallcaps text-[10px] text-parchment-400" htmlFor="tournament-start">
-                  Starts
+
+                <label className="mt-3 block smallcaps text-[10px] text-parchment-400" htmlFor="t-start">
+                  Starts (optional)
                 </label>
                 <input
-                  id="tournament-start"
+                  id="t-start"
                   type="datetime-local"
                   value={startsAt}
                   onChange={(e) => setStartsAt(e.target.value)}
-                  className="mt-1 w-full border border-white/15 bg-ink-900/60 px-3 py-2 text-sm text-parchment focus:border-gold/60 focus:outline-none"
+                  className={INPUT_CLASS}
                 />
-                <label className="mt-3 block smallcaps text-[10px] text-parchment-400" htmlFor="tournament-description">
+
+                {clubs.length > 0 && (
+                  <>
+                    <label className="mt-3 block smallcaps text-[10px] text-parchment-400" htmlFor="t-club">
+                      Club
+                    </label>
+                    <select id="t-club" value={clubId} onChange={(e) => setClubId(e.target.value)} className={INPUT_CLASS}>
+                      <option value="">Open event</option>
+                      {clubs.map((club) => (
+                        <option key={club.id} value={club.id}>
+                          {club.name}
+                        </option>
+                      ))}
+                    </select>
+                    {selectedClubName && (
+                      <p className="mt-1 text-[11px] text-parchment-500">Members of {selectedClubName} only.</p>
+                    )}
+                  </>
+                )}
+
+                <label className="mt-3 flex items-center gap-2 text-sm text-parchment-200">
+                  <input type="checkbox" checked={rated} onChange={(e) => setRated(e.target.checked)} className="h-4 w-4" />
+                  Rated
+                </label>
+
+                <label className="mt-3 block smallcaps text-[10px] text-parchment-400" htmlFor="t-desc">
                   Description
                 </label>
                 <textarea
-                  id="tournament-description"
+                  id="t-desc"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   maxLength={280}
                   rows={3}
-                  className="mt-1 w-full resize-none border border-white/15 bg-ink-900/60 px-3 py-2 text-sm text-parchment focus:border-gold/60 focus:outline-none"
+                  className={INPUT_CLASS + " resize-none"}
                 />
+
                 <button
                   type="submit"
                   disabled={busy || name.trim().length < 3}
@@ -232,42 +327,108 @@ export default function TournamentsPage() {
             )}
           </form>
 
-          <div className="plate overflow-hidden">
-            <div className="border-b border-white/10 px-5 py-3 smallcaps text-[10px] text-parchment-400">
-              {tournaments.length} event{tournaments.length === 1 ? "" : "s"}
-            </div>
-            {tournaments.length === 0 ? (
-              <p className="px-5 py-8 text-sm text-parchment-400">No tournaments yet.</p>
-            ) : (
-              <ul className="divide-y divide-white/5">
-                {tournaments.map((tournament) => (
-                  <li key={tournament.id} className="px-5 py-4">
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="truncate font-display text-xl text-parchment">{tournament.name}</div>
-                        <div className="mt-0.5 smallcaps text-[9px] text-parchment-400">
-                          {FORMAT_LABELS[tournament.format] ?? tournament.format} - {tournament.players}/{tournament.max_players} players
-                          {tournament.club_name ? ` - ${tournament.club_name}` : ""}
-                        </div>
-                      </div>
-                      <span className="border border-gold/30 bg-gold/10 px-2 py-1 smallcaps text-[9px] text-gold-leaf">
-                        {tournament.status}
-                      </span>
-                    </div>
-                    <div className="mt-2 text-sm text-parchment-400">
-                      {tournament.starts_at
-                        ? new Date(tournament.starts_at).toLocaleString()
-                        : "Start time not set"}{" "}
-                      - created by {tournament.creator_name}
-                    </div>
-                    {tournament.description && <p className="mt-2 text-sm text-parchment-300">{tournament.description}</p>}
-                  </li>
-                ))}
-              </ul>
-            )}
+          {/* Directory: in progress, starting soon, finished */}
+          <div className="min-w-0 space-y-4">
+            <Section title="In progress" accent tournaments={sections.ongoing} now={now} emptyText="No tournaments running right now." />
+            <Section title="Starting soon" tournaments={sections.upcoming} now={now} emptyText="Nothing scheduled yet. Create the first event." />
+            <Section title="Finished" tournaments={sections.finished} now={now} emptyText="No finished tournaments yet." muted />
           </div>
         </div>
       </section>
     </main>
+  );
+}
+
+function Section({
+  title,
+  tournaments,
+  now,
+  emptyText,
+  accent = false,
+  muted = false,
+}: {
+  title: string;
+  tournaments: TournamentListRow[];
+  now: number;
+  emptyText: string;
+  accent?: boolean;
+  muted?: boolean;
+}) {
+  // Hide the finished section entirely when empty to keep the page tight.
+  if (muted && tournaments.length === 0) return null;
+  return (
+    <div className="plate overflow-hidden">
+      <div className="flex items-center justify-between gap-2 border-b border-white/10 px-5 py-3">
+        <span className="flex items-center gap-2 smallcaps text-[10px] text-parchment-400">
+          {accent && <span className="inline-block h-2 w-2 shrink-0 animate-pulse bg-verdigris-glow" aria-hidden />}
+          {title}
+        </span>
+        <span className="smallcaps text-[9px] text-parchment-500">
+          {tournaments.length} event{tournaments.length === 1 ? "" : "s"}
+        </span>
+      </div>
+      {tournaments.length === 0 ? (
+        <p className="px-5 py-6 text-sm text-parchment-400">{emptyText}</p>
+      ) : (
+        <ul className="divide-y divide-white/5">
+          {tournaments.map((t) => (
+            <TournamentRow key={t.id} t={t} now={now} />
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function TournamentRow({ t, now }: { t: TournamentListRow; now: number }) {
+  const endsAt = t.starts_at == null ? null : t.starts_at + t.duration_min * 60_000;
+  let when: string;
+  let whenClass = "text-parchment-400";
+  if (t.starts_at == null) {
+    when = "Start TBA";
+  } else if (now < t.starts_at) {
+    when = `in ${countdownLabel(t.starts_at - now)}`;
+    whenClass = "text-gold-leaf";
+  } else if (endsAt != null && now < endsAt) {
+    when = `${countdownLabel(endsAt - now)} left`;
+    whenClass = "text-verdigris-glow";
+  } else {
+    when = "Finished";
+    whenClass = "text-parchment-500";
+  }
+
+  return (
+    <li>
+      <Link
+        href={`/tournaments/${encodeURIComponent(t.id)}`}
+        className="flex items-center gap-4 px-5 py-4 transition-colors hover:bg-white/5"
+      >
+        <span
+          aria-hidden
+          className="grid h-11 w-14 shrink-0 place-items-center border border-white/10 bg-ink-900/60 font-mono text-sm text-parchment-100"
+        >
+          {clockLabel(t.clock_time_sec, t.clock_increment_sec)}
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <span className="truncate font-display text-lg text-parchment-50">{t.name}</span>
+            <ModeTag mode={t.mode} />
+            {t.rated ? (
+              <span className="shrink-0 border border-gold/40 px-1.5 py-0.5 smallcaps text-[8px] text-gold-leaf">Rated</span>
+            ) : null}
+          </div>
+          <div className="mt-0.5 smallcaps text-[9px] text-parchment-400">
+            {formatLabel(t.format)} - {durationLabel(t.duration_min)}
+            {t.club_name ? ` - ${t.club_name}` : ""} - by {t.creator_name}
+          </div>
+        </div>
+        <div className="hidden shrink-0 flex-col items-end gap-1 text-right sm:flex">
+          <span className={"font-mono text-xs " + whenClass}>{when}</span>
+          <span className="flex items-center gap-1 font-mono text-[11px] text-parchment-500">
+            <Users size={12} /> {t.players}/{t.max_players}
+          </span>
+        </div>
+      </Link>
+    </li>
   );
 }

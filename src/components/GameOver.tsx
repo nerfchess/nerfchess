@@ -187,6 +187,31 @@ function splitReason(reason: string) {
 // end frame, remounts this component and must stay silent.
 const playedGameOverKeys = new Set<string>();
 
+// Count a figure from `from` up to `to` over a short beat, so the post-game
+// rating change reads as earned rather than snapping into place. Jumps straight
+// to the final value when motion is reduced. Pure requestAnimationFrame, no deps.
+function useCountUp(from: number, to: number, animate: boolean, durationMs = 700) {
+  const [value, setValue] = useState(animate ? from : to);
+  useEffect(() => {
+    if (!animate) {
+      setValue(to);
+      return;
+    }
+    let raf = 0;
+    let startTs: number | null = null;
+    const tick = (ts: number) => {
+      if (startTs === null) startTs = ts;
+      const t = Math.min(1, (ts - startTs) / durationMs);
+      const eased = 1 - Math.pow(1 - t, 3); // easeOutCubic
+      setValue(from + (to - from) * eased);
+      if (t < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [from, to, animate, durationMs]);
+  return value;
+}
+
 export function GameOver({
   result,
   myColor,
@@ -235,6 +260,11 @@ export function GameOver({
     : "border-oxblood-glow/50 bg-oxblood/15 text-oxblood-glow";
   const { nerfName, cause } = useMemo(() => splitReason(result.reason), [result.reason]);
   const ratingDelta = ratingChange ? Math.round(ratingChange.after - ratingChange.before) : 0;
+  const ratingNow = useCountUp(
+    ratingChange ? Math.round(ratingChange.before) : 0,
+    ratingChange ? Math.round(ratingChange.after) : 0,
+    !reduceMotion && !!ratingChange,
+  );
   // One feedback row per buff id, even if copies were drafted (Mirror etc.);
   // the server keys votes per player per buff anyway.
   const ratableBuffs = useMemo(() => {
@@ -335,14 +365,14 @@ export function GameOver({
       aria-describedby="game-over-reason"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="fixed inset-0 z-50 grid place-items-center bg-[#0a111e]/65 px-4 py-6 backdrop-blur-sm"
+      className="fixed inset-0 z-50 grid place-items-center bg-[#0f0d0a]/68 px-4 py-6 backdrop-blur-sm"
       onMouseDown={dismiss}
     >
       <motion.div
         initial={reduceMotion ? { opacity: 0 } : { y: 16, scale: 0.96, opacity: 0 }}
         animate={reduceMotion ? { opacity: 1 } : { y: 0, scale: 1, opacity: 1 }}
         transition={{ type: "spring", stiffness: 320, damping: 26 }}
-        className="plate gilt relative w-[min(92vw,28rem)] overflow-hidden p-6 text-center shadow-2xl sm:p-7"
+        className="plate plate-raised gilt relative w-[min(92vw,28rem)] overflow-hidden p-6 text-center shadow-2xl sm:p-7"
         onMouseDown={(event) => event.stopPropagation()}
       >
         <span className="card-corner tl" />
@@ -354,7 +384,13 @@ export function GameOver({
             aria-hidden="true"
             className={
               "pointer-events-none absolute inset-x-0 top-0 h-px " +
-              (draw ? "bg-bruise-glow/60" : won ? "bg-gold-leaf/80" : "bg-oxblood-glow/80")
+              (draw
+                ? "bg-bruise-glow/60"
+                : won
+                ? // The win beat is the site's signature: the Nerf→Buff seam
+                  // sweeps once across the top edge, warm into cool.
+                  "bg-gradient-to-r from-mode-nerf via-parchment-100/60 to-mode-buff"
+                : "bg-oxblood-glow/80")
             }
             initial={{ opacity: 0, scaleX: 0 }}
             animate={{ opacity: [0, 1, 0.45], scaleX: 1 }}
@@ -382,10 +418,10 @@ export function GameOver({
         {ratingChange && (
           <div className="mt-5 inline-flex items-center gap-2 rounded-sm border border-gold/25 bg-gold/5 px-3 py-2 font-mono text-sm">
             <span className="smallcaps text-[10px] text-parchment-400">Rating</span>
-            <span className="text-parchment">{Math.round(ratingChange.after)}</span>
+            <span className="text-parchment tabular">{Math.round(ratingNow)}</span>
             <span
               className={
-                ratingDelta >= 0 ? "text-gold-leaf" : "text-oxblood-glow"
+                "tabular " + (ratingDelta >= 0 ? "text-gold-leaf" : "text-oxblood-glow")
               }
             >
               {ratingDelta >= 0 ? "+" : ""}

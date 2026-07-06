@@ -2,7 +2,7 @@ import type { QueuedPremove } from "@/components/Board";
 import { Nerf } from "@/engine/nerf";
 import { buildCustomNerf, CustomNerf } from "@/engine/nerfs/custom";
 import { IMPLEMENTED_BY_ID } from "@/engine/nerfs/library";
-import { NerfGame, PlayerSlot } from "@/engine/game";
+import { NerfGame, PlayerSlot, UNRESTRICTED_NERF } from "@/engine/game";
 import { RNG } from "@/engine/rng";
 import { Color } from "@/engine/types";
 
@@ -40,12 +40,17 @@ export type SavedAiGame = {
 
 function nerfRef(nerf: Nerf, customSpec?: CustomNerf | null): SavedNerf | null {
   if (customSpec && customSpec.id === nerf.id) return { kind: "custom", spec: customSpec };
+  // The no-nerf sentinel (buff mode and plain chess) lives outside the nerf
+  // library, so round-trip it by id. Without this the snapshot fails, which
+  // disables the AI web worker and skips persistence for those games.
+  if (nerf.id === UNRESTRICTED_NERF.id) return { kind: "implemented", id: UNRESTRICTED_NERF.id };
   if (IMPLEMENTED_BY_ID[nerf.id]) return { kind: "implemented", id: nerf.id };
   return null;
 }
 
 function restoreNerf(saved: SavedNerf): Nerf | null {
   if (saved.kind === "custom") return buildCustomNerf(saved.spec);
+  if (saved.id === UNRESTRICTED_NERF.id) return UNRESTRICTED_NERF;
   return IMPLEMENTED_BY_ID[saved.id] ?? null;
 }
 

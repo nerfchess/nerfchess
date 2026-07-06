@@ -23,7 +23,7 @@ import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
 import type { BuffOffer } from "@/engine/buff";
 import { BUFF_BY_ID } from "@/engine/buffs/library";
 import { cloneBoard, findKing, isInCheck, makeMove, moveFromUCI, moveToUCI } from "@/engine/board";
-import { draftCardNoun } from "@/engine/buff";
+import { draftCardNoun, turnCost } from "@/engine/buff";
 import { computeMoveRisks } from "@/engine/moveSafety";
 import { loadSettings } from "@/lib/settings";
 import type { GameContext, Nerf } from "@/engine/nerf";
@@ -1301,7 +1301,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           .filter((b) => !b.spent && !b.nullified)
           .flatMap((b) => {
             const def = BUFF_BY_ID[b.id];
-            return def ? [{ name: def.name, tier: b.tier, status: def.status?.(b) ?? null }] : [];
+            return def
+              ? [{ name: def.name, tier: b.tier, status: def.status?.(b) ?? null, cost: turnCost(def) }]
+              : [];
           })
       : undefined;
   const lastMove = game.board.history[game.board.history.length - 1] ?? null;

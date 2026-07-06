@@ -165,6 +165,7 @@ export const SCHEMA_STATEMENTS: string[] = [
     to_user_id TEXT NOT NULL,
     time_sec INTEGER NOT NULL,
     increment_sec INTEGER NOT NULL,
+    rated INTEGER NOT NULL DEFAULT 0,
     status TEXT NOT NULL DEFAULT 'pending',
     created_at INTEGER NOT NULL
   )`,
@@ -173,6 +174,15 @@ export const SCHEMA_STATEMENTS: string[] = [
   `CREATE TABLE IF NOT EXISTS site_counters (
     key TEXT PRIMARY KEY,
     value INTEGER NOT NULL DEFAULT 0
+  )`,
+  // Site-wide key/value settings a moderator can flip at runtime (e.g.
+  // house_enabled = "1"/"0" to turn the house bots on or off). Read by the
+  // game-server Durable Object (cached) so a change takes effect without a
+  // redeploy.
+  `CREATE TABLE IF NOT EXISTS app_settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL,
+    updated_at INTEGER NOT NULL DEFAULT 0
   )`,
   // Post-game thumbs up / down on the secret rule a player was dealt.
   `CREATE TABLE IF NOT EXISTS nerf_feedback (
@@ -282,6 +292,9 @@ const ADDITIVE_COLUMNS: string[] = [
   // DEFAULT backfills every pre-existing suggestion as a nerf.
   `ALTER TABLE rule_suggestions ADD COLUMN kind TEXT NOT NULL DEFAULT 'nerf'`,
   `ALTER TABLE rule_suggestions ADD COLUMN pool TEXT`,
+  // Direct challenges can be rated (a custom challenge staked on rating).
+  // Backfills every pre-existing challenge as casual.
+  `ALTER TABLE challenges ADD COLUMN rated INTEGER NOT NULL DEFAULT 0`,
   // Optional sign-in email and linked Google account (google_sub is the
   // stable Google account id from the OAuth id_token). The unique indexes
   // live here rather than SCHEMA_STATEMENTS because they must run after the
@@ -318,6 +331,23 @@ const ADDITIVE_COLUMNS: string[] = [
        WHERE category IN ('ultrabullet','bullet','blitz','rapid') AND games > 0
        GROUP BY user_id
      ) s ON s.user_id = u.id`,
+  // Richer tournament settings so an event carries its game mode, time control,
+  // and arena length rather than only a name and format. Live phase
+  // (upcoming/ongoing/finished) is derived from starts_at + duration_min at read
+  // time, so no status scheduler is needed. Mirrors
+  // migrations/0015_tournament_details.sql.
+  `ALTER TABLE tournaments ADD COLUMN mode TEXT NOT NULL DEFAULT 'nerf'`,
+  `ALTER TABLE tournaments ADD COLUMN rated INTEGER NOT NULL DEFAULT 0`,
+  `ALTER TABLE tournaments ADD COLUMN clock_time_sec INTEGER NOT NULL DEFAULT 180`,
+  `ALTER TABLE tournaments ADD COLUMN clock_increment_sec INTEGER NOT NULL DEFAULT 0`,
+  `ALTER TABLE tournaments ADD COLUMN duration_min INTEGER NOT NULL DEFAULT 60`,
+  // Per-entrant standings. Scores are written by the pairing/scoring engine
+  // (not yet built for this first version) and default to zero, so the
+  // standings table renders real entrants seeded by rating until then.
+  `ALTER TABLE tournament_entries ADD COLUMN score INTEGER NOT NULL DEFAULT 0`,
+  `ALTER TABLE tournament_entries ADD COLUMN games_played INTEGER NOT NULL DEFAULT 0`,
+  `ALTER TABLE tournament_entries ADD COLUMN streak INTEGER NOT NULL DEFAULT 0`,
+  `ALTER TABLE tournament_entries ADD COLUMN performance INTEGER`,
 ];
 
 export async function ensureSchema(db: D1Database): Promise<void> {

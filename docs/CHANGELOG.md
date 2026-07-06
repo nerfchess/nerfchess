@@ -93,8 +93,32 @@ Notes:
 
 ---
 
+## 2026-07-05 night ET (UI warmth pass, PR conflict fixes, moderator controls)
+
+UI / design:
+- PR #194 approachability/warmth pass, grounded in a fresh multi-agent research sweep (Lichess, chess.com, top UI, the AI-generated-look tells, verified brand hexes). Warm the neutrals and structure, never the single accent: warm text ramp (--paper + tailwind parchment), ink-ladder elevation (--surface-panel/raise/hover) for menus/modals/hover rows, warm hover-reactive hairline (--edge/--edge-strong), governed --pos/--warm status pair reusing the mode-seam hues, motion vocabulary (--ease-*/--dur-*), breathing hero aura (opacity-only, gated), .tabular/.press/.hover-lift/.stagger-in utilities. GameOver victory beat recolored to the Nerf->Buff seam with a warm scrim and a rating count-up. Shared warm EmptyState (history + inbox), dismissible first-run welcome, and an anti-slop guardrail in docs/DESIGN.md. tsc + next build green. OPEN.
+- Merged current master into PR #194 and resolved the conflicts (page.tsx: kept master's clickable example cards, added the staggered entrance; history: kept the new EmptyState, adopted /play for Play vs Bot).
+
+Server / moderation:
+- Resolved PR #192 against current master (bounded-GC preserved; master's house-tune changes coexist in disjoint regions); tsc + server:build clean; pushed.
+- Moderator house-bots on/off toggle. New app_settings key/value table (migration 0016) flipped by mods via a guarded POST /api/mod/house; the game-server DO reads house_enabled (cached ~15s) in place of the HOUSE_ENABLED constant, which stays a hard code-level kill switch. A flip takes effect within a few seconds without a redeploy: bot seeks clear and any bot game winds down. buildVersion -> house-toggle-1.
+- Mod Players tab now opens on a default roster (the most recent non-guest members) instead of a blank box, and still searches on input.
+
+Notes:
+- The warmth changes are typecheck/build-clean but want a preview-deploy eyeball; the board and the Durable Object can't fully run in the build environment.
+
+---
+
 ## 2026-07-05 20:50 ET (count-based cards no longer soft-lock with few targets)
 
 - Fix: cards that collect N targets (teleport N pieces, "three of your pieces become amazons" like Titan Legion, remove/freeze/promote/advance N, and the removeEnemies / placePieces / voidSquares factories) soft-locked when the board had fewer than N eligible targets: you picked the few that existed, then got stranded on an empty step you could neither complete nor skip, so the card did nothing. Now they resolve with as many targets as are available. Central one-line guard in buffNextTarget (src/engine/game.ts): once at least one target is picked, a non-finishable step with no remaining candidates ends collection, so the effect applies to the picks gathered so far. Safe for structured collectors (relocateMany, Warp Sovereign, stealBuffs, lineSweep) which already self-guard or ignore a dangling pick.
 - Test: scripts/test-hexes.cjs (npm run test:rules) now drives every activated card on two sparse boards and fails on any soft-lock or non-termination. Verified to fail without the fix (7 cards) and pass with it (149 activated cards clean). tsc clean; test:rules and test:nerfs green.
 - Design note: docs/2026-07-05-count-target-graceful-design.md. PR #197. OPEN.
+
+---
+
+## 2026-07-05 21:02 ET (turn-cost labels on every card)
+
+- Feature: every draftable card now states whether using it uses up a turn, with a small badge in four states: Uses your turn (activated, playing it is your move), Free action (activated but resolves within your turn), Instant (applies the moment you draft it), Passive (always on while held). Nerfs are labeled Passive (secret handicaps, never activated). The label is derived from the same kind/freeAction fields the engine uses to pass the turn (game.ts), so it can never disagree with actual behavior. Shown on the shared BuffCard (draft picker, codex, in-game modal), the in-game BuffDock rows (own + revealed opponent cards; mobile drawer via the same rows), the boon corner list, and NerfCard/PlayerNerfCard. New src/engine/buff.ts turnCost()/NERF_TURN_COST and src/components/TurnCostBadge.tsx.
+- Audit: swept all 419 cards for turn-cost mislabels. Deterministic pass (scripts/audit-turn-cost.cjs, table in docs/turn-cost-table.json): zero description-vs-behavior contradictions. Semantic pass (multi-agent, all cards, adversarially verified) flagged 12; all checked against source and found to be false positives (the flagged passive->turn cards are passive move-augments or unimplemented placeholders, correctly zero-turn) or design/balance calls left for the owner (pieceBound upgrades that intentionally spend a turn to designate a piece, which the badge now makes visible). No flags changed: the derived badge is correct by construction. Distribution: 155 Uses your turn, 12 Free action, 129 Instant, 123 Passive.
+- Design note: docs/2026-07-05-turn-cost-labels-design.md. PR #198. Typecheck-clean; test:rules green; visuals want a preview-deploy eyeball. MERGED.

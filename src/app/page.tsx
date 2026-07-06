@@ -4,9 +4,11 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { HeroTv } from "@/components/HeroTv";
 import { SiteHeader } from "@/components/SiteHeader";
+import { WelcomeBanner } from "@/components/WelcomeBanner";
 import { ALL_NERFS, PLAYABLE_NERFS } from "@/engine/nerfs/library";
 import { ALL_BUFFS } from "@/engine/buffs/library";
 import type { Nerf } from "@/engine/nerf";
+import type { Buff } from "@/engine/buff";
 import { useLobbySnapshot } from "@/lib/lobbyClient";
 import { ActiveGame, loadActiveGame } from "@/lib/multiplayer";
 import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
@@ -16,31 +18,65 @@ import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
 // library is every nerf plus every buff, hex, boon, and item card.
 const TOTAL_RULES = ALL_NERFS.length + ALL_BUFFS.length;
 
-// A hand-picked spread across the difficulty tiers so a first visitor sees the
-// range of what a "secret rule" can be, from gentle to brutal.
-const EXAMPLE_RULE_IDS = [
-  "horse_tranquilizer",
-  "shadow_queen",
-  "no_shuffling",
-  "get_down_mr_president",
-  "respectful",
-  "abstinence",
-];
+// A hand-picked spread of cards, three from each mode and across a range of
+// tiers, so a first visitor sees what a card can be: from a mild secret rule
+// to a flashy power-up. Each one deep-links into the codex, searched to that
+// card by name.
+const EXAMPLE_NERF_IDS = ["shadow_queen", "get_down_mr_president", "abstinence"];
+const EXAMPLE_BUFF_IDS = ["time_skip", "god_knight", "mass_freeze"];
 
-function exampleRules(): Nerf[] {
-  const byId = new Map(ALL_NERFS.map((n) => [n.id, n]));
-  const picked = EXAMPLE_RULE_IDS.map((id) => byId.get(id)).filter(
+type ExampleCard = {
+  id: string;
+  name: string;
+  description: string;
+  tier: number;
+  kind: "nerf" | "buff";
+};
+
+function exampleCards(): ExampleCard[] {
+  const nerfById = new Map(ALL_NERFS.map((n) => [n.id, n]));
+  const buffById = new Map(ALL_BUFFS.map((b) => [b.id, b]));
+
+  const nerfs = EXAMPLE_NERF_IDS.map((id) => nerfById.get(id)).filter(
     (n): n is Nerf => !!n
   );
-  // Fall back to the first few playable rules if any id drifts out of the library.
-  if (picked.length >= 3) return picked;
-  return PLAYABLE_NERFS.slice(0, 6);
+  const buffs = EXAMPLE_BUFF_IDS.map((id) => buffById.get(id)).filter(
+    (b): b is Buff => !!b
+  );
+
+  // Fall back to library order if an id ever drifts, so the section never
+  // renders short of its three-and-three.
+  const nerfPicks = nerfs.length >= 3 ? nerfs : PLAYABLE_NERFS.slice(0, 3);
+  const buffPicks = buffs.length >= 3 ? buffs : ALL_BUFFS.slice(0, 3);
+
+  return [
+    ...nerfPicks.slice(0, 3).map(
+      (n): ExampleCard => ({
+        id: n.id,
+        name: n.name,
+        description: n.description,
+        tier: n.tier,
+        kind: "nerf",
+      })
+    ),
+    ...buffPicks.slice(0, 3).map(
+      (b): ExampleCard => ({
+        id: b.id,
+        name: b.name,
+        description: b.description,
+        tier: b.tier,
+        kind: "buff",
+      })
+    ),
+  ];
 }
 
 export default function HomePage() {
   return (
     <main className="min-h-screen flex flex-col">
       <SiteHeader />
+
+      <WelcomeBanner />
 
       <section className="mode-field w-full max-w-7xl mx-auto px-5 sm:px-6 pt-2 pb-10 sm:pt-6 grid lg:grid-cols-[minmax(0,1fr)_380px] gap-8 lg:gap-14 items-center">
         <div className="order-1">
@@ -58,23 +94,22 @@ export default function HomePage() {
             <span className="text-mode-buffGlow">Buff</span>.
           </h1>
           <p className="lead mt-4 text-parchment-100">
-            Chess with two modes: choose{" "}
+            Chess with two modes. In{" "}
             <Link
               href="/lobby?mode=nerf"
               className="font-semibold text-mode-nerfGlow underline decoration-mode-nerf/50 underline-offset-4 transition-colors hover:decoration-mode-nerfGlow"
             >
               Nerf
             </Link>{" "}
-            or{" "}
+            mode you each carry a secret handicap, revealed only when the game
+            ends. Either way, you draft cards as you play. In{" "}
             <Link
               href="/lobby?mode=buff"
               className="font-semibold text-mode-buffGlow underline decoration-mode-buff/50 underline-offset-4 transition-colors hover:decoration-mode-buffGlow"
             >
               Buff
-            </Link>
-            . In Nerf mode you each carry a secret handicap, revealed only when
-            the game ends. In Buff mode nobody is handicapped: you both draft
-            power-up cards as you play. There is no checkmate: you win by
+            </Link>{" "}
+            mode nobody is nerfed, so you just draft power-ups. You win by
             capturing the king.
           </p>
 
@@ -291,7 +326,7 @@ function HowItWorks() {
         <span className="coord-index">c3</span>
         <h2 className="display-3 text-parchment-50">How it works</h2>
       </header>
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="stagger-in grid gap-4 sm:grid-cols-3">
         {steps.map((step) => {
           // The payoff step carries the most weight: it gets the accent gilt
           // edge so the three cards read as a sequence, not three clones.
@@ -342,13 +377,13 @@ function HowItWorks() {
 }
 
 function ExampleRules() {
-  const rules = exampleRules();
+  const cards = exampleCards();
   return (
     <section className="section-rhythm w-full max-w-7xl mx-auto px-5 sm:px-6">
       <div className="flex items-end justify-between gap-4 mb-7">
         <header className="flex items-baseline gap-3">
           <span className="coord-index">e5</span>
-          <h2 className="display-3 text-parchment-50">A few of the rules</h2>
+          <h2 className="display-3 text-parchment-50">A few of the cards</h2>
         </header>
         <Link
           href="/codex"
@@ -357,29 +392,50 @@ function ExampleRules() {
           See all {TOTAL_RULES}
         </Link>
       </div>
-      <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {rules.map((rule) => (
-          <li
-            key={rule.id}
-            className={`plate p-4 border tier-bg-${rule.tier} motion-safe:transition-transform motion-safe:duration-150 motion-safe:hover:-translate-y-0.5`}
-          >
-            <div className="flex items-start justify-between gap-2">
-              <span className={`font-display text-lg font-semibold leading-tight tier-${rule.tier}`}>
-                {rule.name}
-              </span>
-              <span
-                className={`shrink-0 inline-flex items-center gap-1 border px-2 py-0.5 font-display text-xs font-bold tier-bg-${rule.tier} tier-${rule.tier}`}
-                title={`Difficulty ${rule.tier}: ${TIER_LABEL[rule.tier]}`}
+      <ul className="stagger-in grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {cards.map((card) => {
+          const isNerf = card.kind === "nerf";
+          return (
+            <li key={`${card.kind}-${card.id}`}>
+              <Link
+                href={`/codex?search=${encodeURIComponent(card.name)}`}
+                className={`plate group block h-full p-4 border tier-bg-${card.tier} no-underline motion-safe:transition-transform motion-safe:duration-150 hover:border-gold/50 motion-safe:hover:-translate-y-0.5`}
               >
-                <span aria-hidden>{TIER_ROMAN[rule.tier]}</span>
-                <span>{TIER_LABEL[rule.tier]}</span>
-              </span>
-            </div>
-            <p className="mt-2 text-sm leading-relaxed text-parchment-200">
-              {rule.description}
-            </p>
-          </li>
-        ))}
+                <div className="flex items-start justify-between gap-2">
+                  <span className={`font-display text-lg font-semibold leading-tight tier-${card.tier}`}>
+                    {card.name}
+                  </span>
+                  <span
+                    className={`shrink-0 inline-flex items-center gap-1 border px-2 py-0.5 font-display text-xs font-bold tier-bg-${card.tier} tier-${card.tier}`}
+                    title={`Difficulty ${card.tier}: ${TIER_LABEL[card.tier]}`}
+                  >
+                    <span aria-hidden>{TIER_ROMAN[card.tier]}</span>
+                    <span>{TIER_LABEL[card.tier]}</span>
+                  </span>
+                </div>
+                <span
+                  className={`mt-1 inline-block smallcaps text-[10px] ${
+                    isNerf ? "text-mode-nerfGlow" : "text-mode-buffGlow"
+                  }`}
+                >
+                  {isNerf ? "Nerf · secret rule" : "Buff · power-up"}
+                </span>
+                <p className="mt-2 text-sm leading-relaxed text-parchment-200">
+                  {card.description}
+                </p>
+                <span className="mt-3 flex items-center gap-1 smallcaps text-[10px] text-gold-leaf">
+                  View in codex
+                  <span
+                    aria-hidden
+                    className="transition-transform motion-safe:group-hover:translate-x-0.5"
+                  >
+                    →
+                  </span>
+                </span>
+              </Link>
+            </li>
+          );
+        })}
       </ul>
     </section>
   );
