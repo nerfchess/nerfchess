@@ -189,6 +189,21 @@ function effectActive(e: ActiveEffect): boolean {
   return e.turns == null || e.turns > 0;
 }
 
+/** Freeze and walnut bind to the piece standing on their square. Once that
+ * piece is gone (captured, or removed/relocated by another buff) the effect
+ * must go with it: a walnut or freeze marker can never linger on an empty
+ * square or transfer onto a capturing enemy piece. Called after every move and
+ * after every buff-driven board mutation. */
+function pruneOrphanedSquareEffects(game: NerfGame) {
+  const bs = game.buffs;
+  if (!bs) return;
+  bs.effects = bs.effects.filter((e) => {
+    if (e.kind !== "freeze" && e.kind !== "walnut") return true;
+    const p = game.board.pieces[e.sq];
+    return !!p && p.color === e.owner;
+  });
+}
+
 /** True while a nerf is suspended (Grace Period) or removed (Nerf Breaker). */
 export function nerfDisabled(game: NerfGame, color: Color): boolean {
   const bs = game.buffs;
@@ -438,6 +453,9 @@ export function playMove(game: NerfGame, move: Move): NerfGame {
       if (e.turns != null && effectTickColor(e) === move.color) e.turns -= 1;
     }
     bs.effects = bs.effects.filter((e) => e.turns == null || e.turns > 0);
+    // A captured or buff-removed piece leaves its freeze/walnut behind; drop
+    // those orphaned markers so they never haunt an empty or enemy-held square.
+    pruneOrphanedSquareEffects(game);
   }
   // Check loss conditions
   const result = checkLossConditions(game);
@@ -676,6 +694,9 @@ function passTurnAfterBuff(game: NerfGame, color: Color) {
  * decide the game on the spot). */
 function settleAfterBuff(game: NerfGame) {
   if (game.result) return;
+  // A buff that removed or relocated a walnutted/frozen piece must drop its
+  // now-orphaned marker before anything else reads the effect list.
+  pruneOrphanedSquareEffects(game);
   const result = checkLossConditions(game);
   if (result) {
     game.result = result;
