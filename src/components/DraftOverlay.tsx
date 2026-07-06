@@ -79,7 +79,7 @@ export function LockInCountdown({
   onExpire?: () => void;
   className?: string;
 }) {
-  const total = 15_000;
+  const total = 20_000;
   const leftMs = useCountdown(deadline, onExpire);
   const seconds = Math.ceil(leftMs / 1000);
   const fraction = Math.max(0, Math.min(1, leftMs / total));
@@ -110,7 +110,7 @@ export function LockInCountdown({
  * Separate from the card panel so time pressure reads at a glance without
  * crowding the cards. */
 function DraftTimerWindow({ deadline, onExpire }: { deadline: number; onExpire?: () => void }) {
-  const total = 15_000;
+  const total = 20_000;
   const leftMs = useCountdown(deadline, onExpire);
   const seconds = Math.ceil(leftMs / 1000);
   const fraction = Math.max(0, Math.min(1, leftMs / total));

@@ -388,7 +388,7 @@ type HouseSeekEntry = {
 // (deserializing every finished game's move history), which on a bloated table
 // blew the DO CPU limit before it could cache or GC anything: the crash loop.
 const liveIdsKey = "live:ids";
-const buildVersion = "desync-fix-1";
+const buildVersion = "draft-20s-1";
 // How long the moderator card-overrides snapshot (the card_overrides table:
 // disabled cards and tier moves) is cached in the DO before re-reading D1.
 // Loaded lazily on match creation and the opening nerf deal, never on a
@@ -414,7 +414,7 @@ const firstMoveGraceMs = 10 * 1000;
 // offer) must resolve within this window while the game clock is paused.
 // The server auto-resolves overdue picks so a stalling player cannot freeze
 // the game.
-const draftLockInMs = 15 * 1000;
+const draftLockInMs = 20 * 1000;
 // Grace after a lock-in deadline before the server force-resolves it. A pick
 // the player clicked right at the deadline arrives a network hop later; without
 // this the auto-resolve fires first (defaulting the opening nerf pick to option

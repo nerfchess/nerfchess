@@ -331,7 +331,7 @@ function GamePage() {
       // picks, or when the 15s lock-in window auto-picks the first option.
       const dealt = dealNerfOptions(new Set());
       setNerfDraft({ myOptions: dealt.slice(0, 2), aiOptions: dealt.slice(2, 4) });
-      setNerfDeadline(Date.now() + 15_000);
+      setNerfDeadline(Date.now() + 20_000);
       return;
     }
 
@@ -489,7 +489,7 @@ function GamePage() {
     const offer = game?.buffs?.players[myColor].offer ?? null;
     if (offer && offerPausedAt == null && offerOnClockIndex !== offer.index) {
       setOfferPausedAt(Date.now());
-      setOfferDeadline(Date.now() + 15_000);
+      setOfferDeadline(Date.now() + 20_000);
     } else if (!offer && offerPausedAt != null) {
       turnStartedAtRef.current += Date.now() - Math.max(offerPausedAt, turnStartedAtRef.current);
       setOfferPausedAt(null);
