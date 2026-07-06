@@ -676,11 +676,9 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
           label={`Your ${nounPlural}`}
           count={mine.length}
         />
-        {mine.length === 0 && (
-          <p className="text-[11px] text-parchment-400">
-            None yet. Your first draft arrives after {bs.players[myColor].nextDraftAt} moves.
-          </p>
-        )}
+        {/* The next-draft chip above already says when cards arrive; repeating
+            it here went stale after banks ("your first draft" forever). */}
+        {mine.length === 0 && <p className="text-[11px] text-parchment-400">None yet.</p>}
         <div className="space-y-1">{mineActive.map(myRow)}</div>
 
         {theirs.length > 0 && (
