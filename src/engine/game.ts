@@ -608,7 +608,21 @@ export function buffNextTarget(
   const inst = bs.players[color].buffs[buffIndex];
   const def = inst && BUFF_BY_ID[inst.id];
   if (!inst || !def?.targets || inst.spent || inst.nullified) return null;
-  return def.targets(inst, makeBuffApi(game, color), picks);
+  const target = def.targets(inst, makeBuffApi(game, color), picks);
+  // Graceful termination for count-based cards ("teleport N", "N pieces become
+  // amazons", "remove N enemy pawns"...). Once at least one target is picked, a
+  // step that offers no remaining candidates means the board has fewer eligible
+  // targets than the card's nominal count. Rather than stranding the player on a
+  // step they can neither satisfy nor skip, end collection here so the effect
+  // resolves with the picks gathered so far (every such effect iterates over its
+  // picks, so it simply applies to as many as were available). Steps already
+  // marked finishable, and the very first step (picks.length === 0, a genuinely
+  // unusable card), keep their existing behavior.
+  if (target && picks.length > 0) {
+    if (target.kind === "square" && target.squares.length === 0 && !target.finishable) return null;
+    if (target.kind === "enemy-buff" && target.options.length === 0) return null;
+  }
+  return target;
 }
 
 /** Use an activated buff with the collected picks. Returns success. */
