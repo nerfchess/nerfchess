@@ -1,5 +1,5 @@
 import { Buff, BuffMatchState, BuffOffer, PlayerBuffState, isBoon } from "./buff";
-import { BUFF_POOL_BY_TIER } from "./buffs/library";
+import { BUFF_BY_ID, BUFF_POOL_BY_TIER } from "./buffs/library";
 import { Tier } from "./nerf";
 import { RNG } from "./rng";
 import { Color } from "./types";
@@ -36,6 +36,65 @@ export const NERF_MODE_CADENCE = 5;
 // runs through the same draft RNG stream as the card pick, so offers stay
 // deterministic for a given seed.
 export const HEX_SHARE = 0.6;
+
+// ---------------------------------------------------------------------------
+// Card overrides (server side): the game server can install a snapshot of
+// moderator card overrides (card_overrides in D1) before rolling offers, so a
+// disabled card leaves every draft pool and a tier-overridden card rolls in
+// its new tier's pool, all without a code deploy. The snapshot a match uses is
+// FIXED at match creation (the worker stamps it on the match record): rebuilds
+// replay recorded pick indexes against re-rolled offers, so a pool that
+// shifted mid-match would desync them. Clients never install a snapshot, so
+// local games, live client mirrors, and saved replays keep the code-defined
+// pools unchanged; overrides apply only where offers are rolled server side.
+// ---------------------------------------------------------------------------
+
+export type DraftPoolOverrides = {
+  /** Card ids removed from every draft pool (enabled = 0). */
+  off?: string[];
+  /** Card id -> overridden tier (1-8): the card rolls in that tier's pool. */
+  tier?: Record<string, number>;
+};
+
+let poolOverrides: { off: Set<string>; tier: Map<string, Tier> } | null = null;
+
+/** Install (or clear, with null) the active overrides snapshot. Callers must
+ * clear it again once their rolls are done so no other game's rolls see it. */
+export function setDraftPoolOverrides(next: DraftPoolOverrides | null | undefined): void {
+  const off = next?.off ?? [];
+  const tiers = Object.entries(next?.tier ?? {}).filter(
+    ([, t]) => Number.isInteger(t) && t >= 1 && t <= 8,
+  );
+  if (off.length === 0 && tiers.length === 0) {
+    poolOverrides = null;
+    return;
+  }
+  poolOverrides = {
+    off: new Set(off),
+    tier: new Map(tiers.map(([id, t]) => [id, t as Tier])),
+  };
+}
+
+/** A card's tier under the active overrides (its code tier when none). */
+function overriddenTier(b: Buff): Tier {
+  return poolOverrides?.tier.get(b.id) ?? b.tier;
+}
+
+/** The draftable pool at a tier under the active overrides: disabled cards
+ * leave every pool and a tier-overridden card moves to its new tier's pool.
+ * With no snapshot installed this is exactly BUFF_POOL_BY_TIER[tier]. */
+function poolAtTier(tier: number): Buff[] {
+  const base = BUFF_POOL_BY_TIER[tier] ?? [];
+  const o = poolOverrides;
+  if (!o) return base;
+  const pool = base.filter((b) => !o.off.has(b.id) && overriddenTier(b) === tier);
+  for (const [id, t] of o.tier) {
+    if (t !== tier || o.off.has(id)) continue;
+    const b = BUFF_BY_ID[id];
+    if (b && b.implemented && b.tier !== tier) pool.push(b);
+  }
+  return pool;
+}
 
 function drawRng(bs: BuffMatchState): RNG {
   return RNG.fromState(bs.rngState);
@@ -115,15 +174,15 @@ export function rollOffer(bs: BuffMatchState, color: Color, tiers: [Tier, Tier])
     // the stacked-draft preset lifts every offer by a further fixed amount.
     const shared = tiers[Math.min(i, tiers.length - 1)];
     const tier = forced ?? (Math.min(8, shared + bonus + boost) as Tier);
-    let pool = BUFF_POOL_BY_TIER[tier].filter(
+    let pool = poolAtTier(tier).filter(
       (b) => inMode(b) && !used.has(b.id) && (!suppressed || b.category !== "draft"),
     );
     // A tier's pool can run dry (few implemented cards, prep = 3 picks);
     // fall back to adjacent tiers rather than offering duplicates.
     for (let spread = 1; pool.length === 0 && spread < 8; spread++) {
       pool = [
-        ...(BUFF_POOL_BY_TIER[tier - spread] ?? []),
-        ...(BUFF_POOL_BY_TIER[tier + spread] ?? []),
+        ...poolAtTier(tier - spread),
+        ...poolAtTier(tier + spread),
       ].filter((b) => inMode(b) && !used.has(b.id) && (!suppressed || b.category !== "draft"));
     }
     if (pool.length === 0) break;
@@ -137,7 +196,7 @@ export function rollOffer(bs: BuffMatchState, color: Color, tiers: [Tier, Tier])
     }
     const card = pool[rng.int(pool.length)];
     used.add(card.id);
-    cards.push({ id: card.id, tier: card.tier });
+    cards.push({ id: card.id, tier: overriddenTier(card) });
   }
 
   saveRng(bs, rng);

@@ -11,7 +11,12 @@ import { BuffDock, EnemyBuffModal, TargetingBanner, useBuffTargeting } from "@/c
 import { ChatPanel } from "@/components/ChatPanel";
 import { ClockPill } from "@/components/ClockPill";
 import { DraftNotice } from "@/components/DraftNotice";
-import { DraftOverlay, LockInCountdown } from "@/components/DraftOverlay";
+import {
+  DraftOverlay,
+  DraftRevealBanner,
+  LockInCountdown,
+  type DraftRevealSide,
+} from "@/components/DraftOverlay";
 // The end screen is never part of first paint; loading it on demand keeps it
 // out of the page's initial bundle.
 const GameOver = dynamic(() => import("@/components/GameOver").then((m) => m.GameOver), {
@@ -52,6 +57,7 @@ import {
   replayDraftGame,
   revealHeldBuffs,
 } from "@/lib/draftOnline";
+import { computeFxVisual } from "@/components/effects/fxZones";
 import { nerfSummary, outcomeFor, recordCompletedGame } from "@/lib/gameHistory";
 import { boardAtPly } from "@/lib/gameReview";
 import {
@@ -59,6 +65,7 @@ import {
   clearOnlineSeat,
   MPChatMessage,
   MPDraftAction,
+  MPDraftResolved,
   MPNerfDraft,
   MPSession,
   MPStart,
@@ -205,8 +212,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   const [opponentGone, setOpponentGone] = useState(false);
   const [claimReady, setClaimReady] = useState(false);
   // Feed of the cards/hexes the opponent has played. Each play shows in the
-  // top-right for 5 minutes (OppPlaysLog TTL), then lives permanently in the
-  // dock's "Opponent played" ledger, so nothing they did is ever unreadable.
+  // top-right for 10 seconds (OppPlaysLog TTL), then flies down into the
+  // dock's permanent "Opponent played" ledger, so nothing they did is ever
+  // unreadable.
   const [oppLog, setOppLog] = useState<OppPlay[]>([]);
   const oppKeyRef = useRef(0);
   const showOppUsedCard = (card: { id: string; tier: number }, label: string) => {
@@ -234,6 +242,48 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   const [oppLockedIn, setOppLockedIn] = useState(false);
   // Their resolution was a bank rather than a pick (refines the badge copy).
   const [oppBanked, setOppBanked] = useState(false);
+  // Shared reveal moment: once BOTH sides of a draft round have resolved, a
+  // brief banner pairs my pick with whatever is legitimately visible of the
+  // opponent's. The refs hold each side's resolution until the other lands
+  // (either order), then the banner fires once and the refs reset.
+  const [draftReveal, setDraftReveal] = useState<{
+    mine: DraftRevealSide;
+    theirs: DraftRevealSide;
+  } | null>(null);
+  const myResolvedRef = useRef<DraftRevealSide | null>(null);
+  const oppResolvedRef = useRef<DraftRevealSide | null>(null);
+  const recordDraftResolution = (resolved: MPDraftResolved) => {
+    const side: DraftRevealSide =
+      resolved.kind === "picked"
+        ? {
+            banked: false,
+            // Server-filtered already: masked entries carry only a tier and
+            // render face-down; never anything the seat may not see.
+            cards: (resolved.cards ?? []).map((c) =>
+              "id" in c ? { id: c.id, tier: c.tier } : { tier: c.tier },
+            ),
+          }
+        : { banked: true, cards: [] };
+    if (resolved.color === myColor) myResolvedRef.current = side;
+    else oppResolvedRef.current = side;
+    if (myResolvedRef.current && oppResolvedRef.current) {
+      setDraftReveal({ mine: myResolvedRef.current, theirs: oppResolvedRef.current });
+      myResolvedRef.current = null;
+      oppResolvedRef.current = null;
+    }
+  };
+  // The reveal banner is a moment, not a fixture: it dismisses itself.
+  useEffect(() => {
+    if (!draftReveal) return;
+    const id = window.setTimeout(() => setDraftReveal(null), 2500);
+    return () => window.clearTimeout(id);
+  }, [draftReveal]);
+  // Bumped on every `start` replay (reconnect/resync): keys the draft
+  // overlay so a rebuilt game always gets a fresh overlay instance. Without
+  // it, a pick whose send was lost to a disconnect would leave the overlay's
+  // committed flag set with no way back (the offer index alone does not
+  // change across a replay of the same round).
+  const [replayEpoch, setReplayEpoch] = useState(0);
   // The free lock-in window has run out: the draft moves to a side panel,
   // the board comes back, and the clock runs — deliberating past the window
   // costs the straggler's own time (the server resumes the clock too).
@@ -430,6 +480,11 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         setOppDrafting(!!oppState?.offerPending || !!oppState?.offer);
         setDraftDeadline(e.setup.dtDeadline ?? null);
         setOppLockedIn(false);
+        // A replay is a clean slate for the shared reveal moment too.
+        myResolvedRef.current = null;
+        oppResolvedRef.current = null;
+        setDraftReveal(null);
+        setReplayEpoch((n) => n + 1);
         // Nerf draft still unresolved: (re)enter the pick screen with the
         // server's authoritative options and pick state. Otherwise build the
         // game as usual (this is also how the draft screen hands over once
@@ -602,6 +657,11 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         if (e.offer.deadline) setDraftDeadline(e.offer.deadline);
         setOppLockedIn(false);
         setOppBanked(false);
+        // New round: any half-collected reveal from the last one is stale.
+        if (e.offer.color === myColor) {
+          myResolvedRef.current = null;
+          oppResolvedRef.current = null;
+        }
         if (!g?.buffs) return;
         // Only frames the server addressed to us carry cards we may see: our
         // own offers always, the opponent's only under picksVisible.
@@ -629,6 +689,11 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
             ? { ply: g.board.history.length, color: e.resolved.color, a: "pick", cards: e.resolved.cards ?? [] }
             : { ply: g.board.history.length, color: e.resolved.color, a: "bank" };
         applyDraftAction(g, action);
+        // Shared reveal moment: hold this side's resolution; once both sides
+        // of the round are in (either order), fire the banner. The server
+        // already filtered `cards` for this seat (masked entries carry only a
+        // tier), so nothing hidden can surface.
+        recordDraftResolution(e.resolved);
         if (e.resolved.color === myColor) {
           setDraftSubmitted(false);
         } else {
@@ -825,8 +890,11 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           capturedByMe: game.captured[myColor],
           capturedFromMe: game.captured[myColor === "w" ? "b" : "w"],
         };
-        const strictOptions = premoveOptionsFor(board, myColor, myNerfForPremove, myStateForPremove, ctx);
-        const fallbackOptions = premoveOptionsFor(board, myColor, null, null, null);
+        // Passing the game unions buff-granted movement into both sets, so a
+        // piece a card transformed/upgraded can be premoved with its real
+        // moves and still matches when the premove fires.
+        const strictOptions = premoveOptionsFor(board, myColor, myNerfForPremove, myStateForPremove, ctx, game);
+        const fallbackOptions = premoveOptionsFor(board, myColor, null, null, null, game);
         const options = [
           ...strictOptions,
           ...fallbackOptions.filter((m) => !strictOptions.some((s) => moveKey(s) === moveKey(m))),
@@ -858,7 +926,8 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     // opponent's turn already reflect where your rule forbids you to move.
     // Queued premoves are still re-validated with a lenient fallback when the
     // turn actually arrives (context-dependent rules can change by then).
-    return premoveOptionsFor(virtualBoard, myColor, myNerfForPremove, myStateForPremove, ctx);
+    // The game argument unions buff-granted movement into the option set.
+    return premoveOptionsFor(virtualBoard, myColor, myNerfForPremove, myStateForPremove, ctx, game);
   }, [virtualBoard, myColor, game, myNerfForPremove, myStateForPremove]);
 
   // Any time it is not strictly "my turn with nothing in flight" — opponent
@@ -1280,6 +1349,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   const bsTheirs = isDraft ? game.buffs?.players[oppColor] : undefined;
   const myOffer = bsMine?.offer ?? null;
   const zone = isDraft && game.buffs ? draftZones(game, myColor) : null;
+  // Effect kinds draftZones does not paint (king_safe shields, pawn-clamp
+  // fences, pending-skip stuns): shared derivation, same as the bot game.
+  const fxZone = zone ? computeFxVisual(game) : null;
   // The server pauses the match clock while any buff offer is inside its
   // free lock-in window; freeze the local display the same way. Past the
   // window the server resumes the clock, so the display runs again.
@@ -1629,7 +1701,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               className={
                 "hidden min-h-0 gap-2 lg:grid " +
                 (isDraft && game.buffs
-                  ? "grid-rows-[minmax(0,1.6fr)_minmax(0,1fr)]"
+                  ? // The dock owns the column; chat rests as a compact strip
+                    // (auto row) and expands in place on demand.
+                    "grid-rows-[minmax(0,1fr)_auto]"
                   : "grid-rows-[minmax(0,1fr)]")
               }
             >
@@ -1646,7 +1720,8 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                 messages={chatMessages}
                 myColor={myColor}
                 onSend={handleSendChat}
-                className="h-full"
+                collapsible={isDraft && !!game.buffs}
+                className={isDraft && game.buffs ? "" : "h-full"}
               />
             </div>
             <div className="space-y-2">
@@ -1721,6 +1796,17 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                                 strikeSquares: zone.strike,
                                 walnutSquares: zone.walnut,
                                 bananaSquares: zone.banana,
+                                // Previously missing online: king-only /
+                                // no-pawn-advance shackles now paint here too.
+                                lockedSquares: zone.locked,
+                                barredSquares: zone.barred,
+                                ...(fxZone
+                                  ? {
+                                      kingSafeSquares: fxZone.kingSafeSquares,
+                                      pawnClampSquares: fxZone.pawnClampSquares,
+                                      stunSquares: fxZone.stunSquares,
+                                    }
+                                  : {}),
                               }
                             : {}),
                         }
@@ -1855,6 +1941,17 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
 
       <OppPlaysLog plays={oppLog} />
 
+      {/* Shared reveal moment: both sides of the draft round resolved, show
+          the outcome briefly. Non-blocking, click to dismiss, auto-dismisses
+          after 2.5s. */}
+      {isDraft && draftReveal && !game.result && (
+        <DraftRevealBanner
+          mine={draftReveal.mine}
+          theirs={draftReveal.theirs}
+          onDismiss={() => setDraftReveal(null)}
+        />
+      )}
+
       <MobileMoveDrawer
         moves={game.board.history}
         currentPly={currentHistoryPly}
@@ -1867,7 +1964,8 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               messages={chatMessages}
               myColor={myColor}
               onSend={handleSendChat}
-              className="h-40"
+              collapsible
+              expandedClassName="h-40"
             />
           </div>
         }
@@ -1966,6 +2064,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
 
       {isDraft && myOffer && !draftSubmitted && !game.result && (
         <DraftOverlay
+          key={`draft-${replayEpoch}-${myOffer.index}`}
           offer={myOffer}
           takeBoth={(bsMine?.flags.takeBoth ?? 0) > 0}
           bankedBonus={!!myOffer.banked}

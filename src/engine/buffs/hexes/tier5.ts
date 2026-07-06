@@ -129,7 +129,7 @@ export const HEXES_T5: Buff[] = [
     {
       id: "iron_furrow",
       name: "Iron Furrow",
-      description: "Your opponent's pawns cannot advance for their next 5 turns.",
+      description: "Your opponent's pawns cannot advance for their next 5 turns. They may still capture diagonally.",
       flavor: "The whole front rank is spiked into the earth.",
     },
     instant((_inst, api) => {

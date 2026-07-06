@@ -86,8 +86,9 @@ export const CROSSREF_CARDS: Buff[] = [
         const kept = moves.filter((m) => !m.captured);
         return kept.length > 0 ? kept : moves;
       },
-      onMovePlayed: (inst, move, api) => tickTurns(inst, move, api.me),
-      status: (inst) => `${turnsLeft(inst)} of your turns left`,
+      // Ticks on the cursed side's moves so "their next 2 turns" is exact.
+      onMovePlayed: (inst, move, api) => tickTurns(inst, move, api.opp),
+      status: (inst) => `${turnsLeft(inst)} of their turns left`,
     },
   ),
 
@@ -97,7 +98,7 @@ export const CROSSREF_CARDS: Buff[] = [
     {
       id: "pawn_nerf",
       name: "Pawn Nerf",
-      description: "Nerf your opponent's pawns: they cannot advance for their next 3 turns.",
+      description: "Nerf your opponent's pawns: they cannot advance for their next 3 turns. Their pawns may still capture diagonally.",
       tier: 3,
       flavor: "Patch notes: enemy pawns no longer function.",
     },
@@ -397,7 +398,7 @@ export const CROSSREF_CARDS: Buff[] = [
     {
       id: "durian",
       name: "Durian",
-      description: "Lob the king of fruits: the stench pins your opponent's pawns, which cannot advance for their next 3 turns.",
+      description: "Lob the king of fruits: the stench pins your opponent's pawns, which cannot advance for their next 3 turns. They may still capture diagonally.",
       tier: 3,
       flavor: "Banned on public transit for a reason.",
     },

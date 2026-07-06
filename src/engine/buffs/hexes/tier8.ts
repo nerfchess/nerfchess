@@ -21,7 +21,7 @@ import {
   nullifyDrafts,
   instant,
   addEffect,
-  SQ,
+  relRank,
   FILE,
   RANK,
 } from "./shared";
@@ -75,26 +75,26 @@ export const HEXES_T8: Buff[] = [
     freezeAllEnemies(3),
   ),
 
-  // --- petrify all: every minor piece, knights and bishops, for 3 turns ----
+  // --- petrify all: every minor piece, knights and bishops, for 4 turns ----
   H(
     {
       id: "petrified_forest",
       name: "Petrified Forest",
-      description: "Your opponent's knights and bishops turn to walnuts and cannot move for 5 of their turns.",
+      description: "Your opponent's knights and bishops turn to walnuts and cannot move for 4 of their turns.",
       flavor: "Every horse and prelate grown into ancient stone timber.",
     },
-    walnutAll(["n", "b"], 5),
+    walnutAll(["n", "b"], 4),
   ),
 
-  // --- petrify one targeted piece (any non-king) for 6 turns --------------
+  // --- petrify one targeted piece (any non-king) for 5 turns --------------
   H(
     {
       id: "medusa_stare",
       name: "Basilisk's Stare",
-      description: "Turn one enemy piece you target into a walnut so it cannot move for 6 of their turns. Kings cannot be targeted.",
+      description: "Turn one enemy piece you target into a walnut so it cannot move for 5 of their turns. Kings cannot be targeted.",
       flavor: "Meet its eyes once and you are a garden ornament.",
     },
-    walnutTarget(6),
+    walnutTarget(5),
   ),
 
   // --- no_pawn_advance: pawns nailed down for 8 turns (near-permanent) -----
@@ -102,7 +102,7 @@ export const HEXES_T8: Buff[] = [
     {
       id: "blighted_furrows",
       name: "Blighted Furrows",
-      description: "Your opponent's pawns cannot advance for their next 8 turns.",
+      description: "Your opponent's pawns cannot advance for their next 8 turns. They may still capture diagonally.",
       flavor: "The fields are poisoned; not one seed dares push upward.",
     },
     instant((_inst, api) => {
@@ -124,18 +124,22 @@ export const HEXES_T8: Buff[] = [
     }),
   ),
 
-  // --- barred: seal ranks 4, 5 and 6 so nothing can advance for 3 turns ----
+  // --- barred: seal the victim's 4th, 5th and 6th ranks for 3 turns --------
+  // Side-relative fix: the old version barred absolute ranks 4-6, which cut
+  // three ranks out of a black victim's own half but only one of white's.
+  // Now the sealed band is always the victim's OWN 4th to 6th ranks.
   H(
     {
       id: "scorched_earth",
       name: "Scorched Earth",
-      description: "Your opponent cannot move any piece onto the 4th, 5th, or 6th ranks for their next 3 turns.",
+      description: "Your opponent cannot move any piece onto their own 4th, 5th, or 6th ranks for their next 3 turns.",
       flavor: "A cratered killing field where no army dares set foot.",
     },
     instant((_inst, api) => {
       const squares: number[] = [];
-      for (let f = 0; f < 8; f++) {
-        squares.push(SQ(f, 3), SQ(f, 4), SQ(f, 5));
+      for (let sq = 0; sq < 64; sq++) {
+        const r = relRank(api.opp, sq);
+        if (r >= 4 && r <= 6) squares.push(sq);
       }
       addEffect(api, { kind: "barred", squares, against: api.opp, turns: 3 });
     }),
@@ -171,15 +175,15 @@ export const HEXES_T8: Buff[] = [
     ),
   ),
 
-  // --- freeze one targeted piece for 6 turns ------------------------------
+  // --- freeze one targeted piece for 5 turns ------------------------------
   H(
     {
       id: "everfrost_shard",
       name: "Everfrost Shard",
-      description: "Freeze one enemy piece you target so it cannot move for 6 of their turns. Kings cannot be targeted.",
+      description: "Freeze one enemy piece you target so it cannot move for 5 of their turns. Kings cannot be targeted.",
       flavor: "A splinter of unmelting winter driven straight through it.",
     },
-    freezeTarget(6),
+    freezeTarget(5),
   ),
 
   // --- draft denial: opponent's next 3 drafts arrive nullified ------------

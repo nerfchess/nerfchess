@@ -70,7 +70,7 @@ export const HEXES_T2: Buff[] = [
     curse(3, (moves) => moves.filter((m) => m.piece !== "q" || dist(m.from, m.to) <= 2)),
   ),
   H(
-    { id: "trench_line", name: "Trench Line", description: "Your opponent's pawns cannot advance for their next 3 turns.", flavor: "The infantry are pinned in the mud." },
+    { id: "trench_line", name: "Trench Line", description: "Your opponent's pawns cannot advance for their next 3 turns. They may still capture diagonally.", flavor: "The infantry are pinned in the mud." },
     instant((_inst, api) => {
       addEffect(api, { kind: "no_pawn_advance", against: api.opp, turns: 3 });
     }),

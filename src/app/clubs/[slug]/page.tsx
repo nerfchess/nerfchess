@@ -4,11 +4,11 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { CalendarDays, Crown, LogIn, LogOut, Paintbrush, Trash2, Trophy, Users } from "lucide-react";
-import { ClubIcon } from "@/components/ClubIcon";
+import { ClubIcon, renderClubIconGlyph } from "@/components/ClubIcon";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { SiteHeader } from "@/components/SiteHeader";
 import { AccountUser, fetchMe } from "@/lib/authClient";
-import { CLUB_ICON_COLORS, CLUB_ICON_EMOJI, encodeClubIcon, parseClubIcon } from "@/lib/clubIcons";
+import { CLUB_ICON_COLORS, CLUB_ICON_NAMES, encodeClubIcon, parseClubIcon } from "@/lib/clubIcons";
 import type { ClubMemberRow, ClubPostRow, ClubTournamentRow } from "@/app/api/clubs/[slug]/route";
 
 // Club home, lichess-teams-style: description and members on one side, the
@@ -31,8 +31,9 @@ type ClubDetail = {
   myRole: string | null;
 };
 
-// Owner-only icon picker: a curated grid of emoji and a row of accent colors,
-// saved to the club as one "emoji|colorId" string via PATCH /api/clubs/[slug].
+// Owner-only icon picker: a curated grid of emblem glyphs and a row of accent
+// colors, saved to the club as one "iconName|colorId" string via
+// PATCH /api/clubs/[slug].
 function ClubIconPicker({
   slug,
   current,
@@ -47,7 +48,7 @@ function ClubIconPicker({
   onClose: () => void;
 }) {
   const parsed = parseClubIcon(current);
-  const [emoji, setEmoji] = useState(parsed?.emoji ?? CLUB_ICON_EMOJI[0]);
+  const [iconName, setIconName] = useState(parsed?.name ?? CLUB_ICON_NAMES[0]);
   const [colorId, setColorId] = useState(parsed?.color.id ?? CLUB_ICON_COLORS[1].id);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -75,7 +76,7 @@ function ClubIconPicker({
   return (
     <div className="plate mt-5 p-5">
       <div className="flex items-center gap-4">
-        <ClubIcon icon={encodeClubIcon(emoji, colorId)} name={clubName} size={56} />
+        <ClubIcon icon={encodeClubIcon(iconName, colorId)} name={clubName} size={56} />
         <div>
           <div className="font-display text-xl text-parchment">Club icon</div>
           <p className="mt-0.5 text-sm text-parchment-400">Pick an emblem and a color for {clubName}.</p>
@@ -83,20 +84,20 @@ function ClubIconPicker({
       </div>
 
       <div className="mt-4 grid grid-cols-8 gap-1.5 sm:grid-cols-12">
-        {CLUB_ICON_EMOJI.map((e) => (
+        {CLUB_ICON_NAMES.map((e) => (
           <button
             key={e}
             type="button"
-            onClick={() => setEmoji(e)}
+            onClick={() => setIconName(e)}
             aria-label={`Icon ${e}`}
-            aria-pressed={emoji === e}
-            className={`grid h-10 w-full cursor-pointer place-items-center rounded-[10px] border text-lg leading-none transition-colors ${
-              emoji === e
-                ? "border-gold/70 bg-gold/15"
-                : "border-white/10 bg-ink-900/40 hover:border-white/25 hover:bg-white/5"
+            aria-pressed={iconName === e}
+            className={`grid h-10 w-full cursor-pointer place-items-center border transition-colors ${
+              iconName === e
+                ? "border-gold/70 bg-gold/15 text-gold-leaf"
+                : "border-white/10 bg-ink-900/40 text-parchment-200 hover:border-white/25 hover:bg-white/5"
             }`}
           >
-            {e}
+            {renderClubIconGlyph(e, 18)}
           </button>
         ))}
       </div>
@@ -121,7 +122,7 @@ function ClubIconPicker({
       <div className="mt-5 flex flex-wrap items-center gap-2">
         <button
           type="button"
-          onClick={() => save(encodeClubIcon(emoji, colorId))}
+          onClick={() => save(encodeClubIcon(iconName, colorId))}
           disabled={saving}
           className="btn-leaf px-4 py-2 font-display text-sm font-semibold disabled:opacity-50"
         >
@@ -253,7 +254,7 @@ export default function ClubPage() {
   return (
     <main className="min-h-screen pb-16">
       <SiteHeader active="/clubs" />
-      <section className="mx-auto max-w-6xl px-5 sm:px-6">
+      <section className="mx-auto max-w-6xl px-5 pt-6 sm:px-6 sm:pt-8">
         {!club ? (
           <p className="py-16 text-center text-sm text-parchment-400">Loading…</p>
         ) : (

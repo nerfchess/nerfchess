@@ -83,13 +83,7 @@ export default function HomePage() {
         {/* The action column is kept short on purpose: it should never run
             taller than the board beside it. */}
         <div className="order-2">
-          <span className="eyebrow">Two-mode chess</span>
-          <h1 className="display-2 mt-2 text-parchment-50">
-            <span className="grad-seam-text">One game.</span>{" "}
-            <span className="text-mode-nerfGlow">Nerf</span>{" "}
-            <span className="text-parchment-400">or</span>{" "}
-            <span className="text-mode-buffGlow">Buff</span>.
-          </h1>
+          <span className="eyebrow">Nerf Chess</span>
           <p className="lead mt-4 text-parchment-100">
             In{" "}
             <Link
@@ -111,10 +105,9 @@ export default function HomePage() {
           <ReturnToGameBanner />
 
           {/* Action hierarchy: playing a real person is THE flow. One big
-              glowing primary into the lobby, two quieter glass options below
-              it, all sitting on a soft frosted panel so the column reads as
-              one friendly control cluster. */}
-          <div className="mt-5 flex flex-col gap-3 rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.06] to-white/[0.02] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_18px_44px_-28px_rgba(0,0,0,0.85)] backdrop-blur-md">
+              primary into the lobby, two quieter options below it, all on a
+              flat bordered panel so the column reads as one control cluster. */}
+          <div className="mt-5 flex flex-col gap-3 border border-white/10 bg-white/[0.04] p-4">
             <Link
               href="/lobby"
               className="btn-leaf btn-cta w-full flex items-center justify-center gap-3 px-8 py-5 font-display text-xl sm:text-2xl font-semibold motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out motion-safe:hover:-translate-y-px motion-safe:active:scale-[0.98]"
@@ -188,7 +181,7 @@ function LiveNowStrip() {
       className="plate mt-3 flex items-center justify-between gap-3 border border-white/10 p-3 px-4 no-underline transition-colors hover:border-gold/40"
     >
       <span className="flex items-center gap-2 text-sm text-parchment-200">
-        <span className="w-2 h-2 rounded-full bg-verdigris animate-flicker" />
+        <span className="w-2 h-2 bg-verdigris animate-flicker" />
         {online} player{online === 1 ? "" : "s"} online
         {lobby.games.length > 0 && (
           <span className="text-parchment-400">
@@ -214,7 +207,7 @@ function ReturnToGameBanner() {
       className="plate mt-4 flex items-center justify-between gap-3 border border-gold/40 bg-gold/10 p-3 px-4 no-underline transition-colors hover:border-gold/70"
     >
       <span className="flex items-center gap-2 text-sm text-parchment-100">
-        <span className="w-2 h-2 rounded-full bg-gold-leaf animate-flicker" />
+        <span className="w-2 h-2 bg-gold-leaf animate-flicker" />
         You have a game in progress.
       </span>
       <span className="smallcaps text-[10px] text-gold-leaf">Rejoin →</span>
@@ -222,9 +215,8 @@ function ReturnToGameBanner() {
   );
 }
 
-// Your numbers, not the site's: a signed-in player sees their own ratings and
-// record here (site-wide totals live in the mod area now). Mode ratings come
-// from the profile API; games and win rate ride along on the session user.
+// A signed-in player sees their two mode ratings next to the size of the card
+// library (buff and nerf counts come straight from the engine constants).
 // Signed out, a single-line invite takes the strip's place.
 function StatStrip() {
   const [user, setUser] = useState<AccountUser | null | undefined>(undefined);
@@ -273,12 +265,11 @@ function StatStrip() {
   }
 
   const fallback = Math.round(user.rating);
-  const winRate = user.games > 0 ? `${Math.round((user.wins / user.games) * 100)}%` : "-";
   const stats = [
     { value: String(modeRatings.nerf ?? fallback), label: "Nerf rating", tone: "text-mode-nerfGlow", tick: "bg-mode-nerf/70" },
     { value: String(modeRatings.buff ?? fallback), label: "Buff rating", tone: "text-mode-buffGlow", tick: "bg-mode-buff/70" },
-    { value: user.games.toLocaleString(), label: "games played", tone: "text-parchment-50", tick: "bg-sun/70" },
-    { value: winRate, label: "win rate", tone: "text-parchment-50", tick: "bg-mint/70" },
+    { value: ALL_BUFFS.length.toLocaleString(), label: "buffs in the deck", tone: "text-parchment-50", tick: "bg-sun/70" },
+    { value: ALL_NERFS.length.toLocaleString(), label: "nerfs in the deck", tone: "text-parchment-50", tick: "bg-mint/70" },
   ];
   return (
     <section className="w-full max-w-7xl mx-auto px-5 sm:px-6 py-4">
@@ -288,7 +279,7 @@ function StatStrip() {
         <span aria-hidden className="card-corner bl" />
         <span aria-hidden className="card-corner br" />
         <div className="mb-4 flex items-center justify-between gap-3">
-          <div className="kicker smallcaps text-[10px]">Your numbers</div>
+          <div className="kicker smallcaps text-[10px]">At a glance</div>
           <Link
             href={`/u/${encodeURIComponent(user.username)}`}
             className="smallcaps text-[10px] text-parchment-400 transition-colors hover:text-parchment-100"
@@ -302,7 +293,7 @@ function StatStrip() {
               <div className={`font-display text-3xl sm:text-4xl font-bold tabular-nums ${s.tone}`}>
                 {s.value}
               </div>
-              <span aria-hidden className={`mx-auto mt-2.5 block h-1 w-8 rounded-full ${s.tick}`} />
+              <span aria-hidden className={`mx-auto mt-2.5 block h-1 w-8 ${s.tick}`} />
               <div className="mt-2 smallcaps text-[9px] sm:text-[10px] text-parchment-400">
                 {s.label}
               </div>
@@ -365,7 +356,7 @@ function HowItWorks() {
   return (
     <section className="section-rhythm w-full max-w-7xl mx-auto px-5 sm:px-6">
       <header className="mb-7 flex items-center gap-3">
-        <span aria-hidden className="h-6 w-1.5 shrink-0 rounded-full bg-mint" />
+        <span aria-hidden className="h-6 w-1.5 shrink-0 bg-mint" />
         <h2 className="display-3 text-parchment-50">How it works</h2>
         <span className="coord-index">c3</span>
       </header>
@@ -425,7 +416,7 @@ function ExampleRules() {
     <section className="section-rhythm w-full max-w-7xl mx-auto px-5 sm:px-6">
       <div className="flex items-end justify-between gap-4 mb-7">
         <header className="flex items-center gap-3">
-          <span aria-hidden className="h-6 w-1.5 shrink-0 rounded-full bg-coral" />
+          <span aria-hidden className="h-6 w-1.5 shrink-0 bg-coral" />
           <h2 className="display-3 text-parchment-50">A few of the cards</h2>
           <span className="coord-index">e5</span>
         </header>
@@ -450,7 +441,7 @@ function ExampleRules() {
                     {card.name}
                   </span>
                   <span
-                    className={`grid h-7 w-7 shrink-0 place-items-center rounded-full border font-display text-xs font-bold tier-bg-${card.tier} tier-${card.tier}`}
+                    className={`grid h-7 w-7 shrink-0 place-items-center border font-display text-xs font-bold tier-bg-${card.tier} tier-${card.tier}`}
                     title={`Difficulty ${card.tier}: ${TIER_LABEL[card.tier]}`}
                   >
                     {TIER_ROMAN[card.tier]}
@@ -461,7 +452,7 @@ function ExampleRules() {
                 </p>
                 <div className="mt-auto flex items-center justify-between gap-2 pt-3">
                   <span
-                    className={`inline-flex items-center rounded-full border px-2 py-0.5 smallcaps text-[9px] ${
+                    className={`inline-flex items-center border px-2 py-0.5 smallcaps text-[9px] ${
                       isNerf
                         ? "border-mode-nerf/40 bg-mode-nerf/10 text-mode-nerfGlow"
                         : "border-mode-buff/40 bg-mode-buff/10 text-mode-buffGlow"
@@ -514,8 +505,7 @@ function SiteFooter() {
       <div className="mt-3 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-parchment-400">
         <span className="opacity-70">Nerf Chess</span>
         <span className="font-mono text-[10px] opacity-70" title="Deployed version">
-          made with &hearts;
-          {process.env.NEXT_PUBLIC_BUILD_VERSION ? ` · ${process.env.NEXT_PUBLIC_BUILD_VERSION}` : ""}
+          {process.env.NEXT_PUBLIC_BUILD_VERSION ?? ""}
         </span>
       </div>
     </footer>

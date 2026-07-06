@@ -1,9 +1,30 @@
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
+import {
+  Anchor, Bird, Castle, Cat, Crown, Dice5, Dog, Fish, Flame, Gem, Ghost,
+  Moon, Mountain, Rabbit, Rocket, Shield, Skull, Star, Sun, Swords, Trees,
+  Trophy, Turtle, Zap, type LucideIcon,
+} from "lucide-react";
 import { parseClubIcon } from "@/lib/clubIcons";
 
-// The club's identity tile: its curated emoji on an accent-tinted plate, or a
-// warm monogram of the club name when no icon has been chosen yet. Used on
+// The club's identity tile: its curated lucide icon on an accent-tinted
+// plate, or a warm monogram of the club name when no icon has been chosen
+// yet (including any legacy emoji value, which no longer parses). Used on
 // the clubs directory, the club page header, and anywhere a club is listed.
+
+const ICON_COMPONENTS: Record<string, LucideIcon> = {
+  Swords, Crown, Castle, Shield, Rocket, Flame,
+  Anchor, Star, Zap, Trophy, Gem, Skull,
+  Cat, Dog, Bird, Fish, Rabbit, Turtle,
+  Ghost, Sun, Moon, Mountain, Trees, Dice5,
+};
+
+/** Render a curated club icon glyph by name (for the picker grid and any
+ *  other place that shows the catalog outside the tinted tile). Returns null
+ *  for names outside the curated set. */
+export function renderClubIconGlyph(name: string, size = 18): ReactNode {
+  const Icon = ICON_COMPONENTS[name];
+  return Icon ? <Icon size={size} aria-hidden /> : null;
+}
 
 export function ClubIcon({
   icon,
@@ -17,11 +38,12 @@ export function ClubIcon({
   className?: string;
 }) {
   const parsed = parseClubIcon(icon);
+  const Icon = parsed ? ICON_COMPONENTS[parsed.name] : undefined;
   const style: CSSProperties = parsed
     ? {
         width: size,
         height: size,
-        fontSize: Math.round(size * 0.52),
+        color: parsed.color.hex,
         background: `${parsed.color.hex}24`,
         borderColor: `${parsed.color.hex}59`,
       }
@@ -29,12 +51,16 @@ export function ClubIcon({
   return (
     <span
       aria-hidden
-      className={`grid shrink-0 select-none place-items-center rounded-[10px] border leading-none ${
-        parsed ? "" : "border-white/10 bg-ink-900/60 font-display text-parchment-200"
+      className={`grid shrink-0 select-none place-items-center border leading-none ${
+        Icon ? "" : "border-white/10 bg-ink-900/60 font-display text-parchment-200"
       } ${className}`}
       style={style}
     >
-      {parsed ? parsed.emoji : name.trim().charAt(0).toUpperCase() || "?"}
+      {Icon ? (
+        <Icon size={Math.round(size * 0.5)} />
+      ) : (
+        name.trim().charAt(0).toUpperCase() || "?"
+      )}
     </span>
   );
 }

@@ -3,6 +3,19 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Piece, WalnutPiece, BananaPeel } from "./Pieces";
+import {
+  BarrierStakes,
+  BoltGlyph,
+  ChainJail,
+  DuckGlyph,
+  PawnFence,
+  ShieldMark,
+  SnowflakeGlyph,
+  SquirrelGlyph,
+  StunSwirl,
+  SummonPoof,
+  TransformFlourish,
+} from "./effects/BoardEffects";
 import { BoardState, Color, FILE, Move, PieceType, RANK, SQ, Square } from "@/engine/types";
 import { playSelect } from "@/lib/sounds";
 
@@ -27,6 +40,17 @@ interface Visual {
   lockedSquares?: number[];
   /** Squares where the viewer has tossed a banana peel (owner-only trap). */
   bananaSquares?: number[];
+  /** Squares the opponent's buffs bar YOU from entering (stakes + rope; the
+   * same squares also flow into bannedSquares for the flat tint). */
+  barredSquares?: number[];
+  /** Kings guarded by a king_safe ward: a heater shield leans on the square. */
+  kingSafeSquares?: number[];
+  /** Pawns halted by a no_pawn_advance hex: a fence hairline boards up their
+   * forward edge (these squares get the fence instead of the chain jail). */
+  pawnClampSquares?: number[];
+  /** Kings of players with pending turn skips; `n` is the remaining count so
+   * each new application or consumed skip replays the one-shot stun swirl. */
+  stunSquares?: { sq: number; n: number }[];
 }
 
 export interface QueuedPremove {
@@ -238,6 +262,69 @@ function computeAnims(
   return anims;
 }
 
+// --- One-shot square flourishes (transform / summon) ---
+// Diffed from the same prev/next pieces pass that drives the slide animation:
+// a piece whose TYPE changed plays the transform flourish (shard burst + pop,
+// crown flash for queen-class), and a piece that appeared on a previously
+// empty square with no matching slide plays the summon dust-poof. Both are
+// pure-CSS one-shots keyed by a monotonic counter, so re-renders never replay
+// them and no per-frame JS runs.
+
+interface BoardFx {
+  kind: "morph" | "summon";
+  crown?: boolean;
+  key: number;
+}
+
+function computeBoardFx(
+  prev: BoardState["pieces"],
+  next: BoardState["pieces"],
+  anims: Map<Square, PieceAnim>,
+  skipSquare: Square | null,
+  seq: { current: number },
+): Map<Square, BoardFx> {
+  const fx = new Map<Square, BoardFx>();
+  let appeared = 0;
+  const lostColor: Record<Color, boolean> = { w: false, b: false };
+  for (let sq = 0; sq < 64; sq++) {
+    const a = prev[sq];
+    const b = next[sq];
+    if (b && (!a || a.type !== b.type || a.color !== b.color)) appeared++;
+    if (a && (!b || a.type !== b.type || a.color !== b.color)) lostColor[a.color] = true;
+  }
+  // Same reset guard as computeAnims: a flood of changes is a new game or a
+  // history jump, not a move, so play nothing.
+  if (appeared === 0 || appeared > 6) return fx;
+  let morphUsed = false; // one transform flourish per move, max
+  let summons = 0;
+  for (let sq = 0 as Square; sq < 64; sq++) {
+    const a = prev[sq];
+    const b = next[sq];
+    if (!b) continue;
+    if (a && a.color === b.color && a.type !== b.type) {
+      // In-place type change (setPieceType buffs: Amazon-style upgrades).
+      if (!morphUsed) {
+        fx.set(sq, { kind: "morph", crown: b.type === "q", key: ++seq.current });
+        morphUsed = true;
+      }
+    } else if (!a && !anims.has(sq) && sq !== skipSquare) {
+      if (lostColor[b.color]) {
+        // A same-colour piece vanished elsewhere: this is a piece that moved
+        // while changing type (promotion-style), not a summon.
+        if (!morphUsed) {
+          fx.set(sq, { kind: "morph", crown: b.type === "q", key: ++seq.current });
+          morphUsed = true;
+        }
+      } else if (summons < 4) {
+        // Nothing of this colour left the board: a genuine summon.
+        fx.set(sq, { kind: "summon", key: ++seq.current });
+        summons++;
+      }
+    }
+  }
+  return fx;
+}
+
 const ORDERED_SQUARES_WHITE: Square[] = [];
 for (let r = 7; r >= 0; r--) {
   for (let f = 0; f < 8; f++) {
@@ -295,6 +382,10 @@ export function Board({
   const dropSkipRef = useRef<Square | null>(null);
   const prevPiecesRef = useRef<BoardState["pieces"] | null>(null);
   const animsRef = useRef<Map<Square, PieceAnim>>(new Map());
+  // One-shot flourishes (transform / summon) keyed monotonically so React
+  // remounts them exactly once per detected change; see computeBoardFx.
+  const fxSeqRef = useRef(0);
+  const fxRef = useRef<Map<Square, BoardFx>>(new Map());
 
   // Diff against the previous position during render (reference equality
   // guards against re-runs) so animated squares can be tagged in this pass.
@@ -304,6 +395,13 @@ export function Board({
       board.pieces,
       orientation,
       dropSkipRef.current,
+    );
+    fxRef.current = computeBoardFx(
+      prevPiecesRef.current,
+      board.pieces,
+      animsRef.current,
+      dropSkipRef.current,
+      fxSeqRef,
     );
     dropSkipRef.current = null;
   }
@@ -396,6 +494,36 @@ export function Board({
   const walnutSquares = useMemo(() => new Set(visual?.walnutSquares ?? []), [visual?.walnutSquares]);
   const lockedSquares = useMemo(() => new Set(visual?.lockedSquares ?? []), [visual?.lockedSquares]);
   const bananaSquares = useMemo(() => new Set(visual?.bananaSquares ?? []), [visual?.bananaSquares]);
+  const barredSquares = useMemo(() => new Set(visual?.barredSquares ?? []), [visual?.barredSquares]);
+  const kingSafeSquares = useMemo(
+    () => new Set(visual?.kingSafeSquares ?? []),
+    [visual?.kingSafeSquares],
+  );
+  const pawnClampSquares = useMemo(
+    () => new Set(visual?.pawnClampSquares ?? []),
+    [visual?.pawnClampSquares],
+  );
+  // Pending-skip stun markers by king square (n = remaining skips, part of
+  // the overlay key so each application/consumption replays the one-shot).
+  const stunBySquare = useMemo(() => {
+    const m = new Map<number, number>();
+    for (const s of visual?.stunSquares ?? []) m.set(s.sq, s.n);
+    return m;
+  }, [visual?.stunSquares]);
+  // Chain-jailed squares: shackled pieces minus the pawn-clamp family (those
+  // get the fence instead). Sorted order drives the clamp-in stagger so the
+  // links read as dropping in one after another.
+  const jailSquares = useMemo(() => {
+    const s = new Set<number>();
+    for (const sq of lockedSquares) if (!pawnClampSquares.has(sq)) s.add(sq);
+    return s;
+  }, [lockedSquares, pawnClampSquares]);
+  const jailDelays = useMemo(() => {
+    const m = new Map<number, number>();
+    let i = 0;
+    for (const sq of [...jailSquares].sort((a, b) => a - b)) m.set(sq, Math.min(i++, 7) * 55);
+    return m;
+  }, [jailSquares]);
   const highlightSquares = useMemo(
     () => new Set(visual?.highlightSquares ?? []),
     [visual?.highlightSquares],
@@ -792,6 +920,23 @@ export function Board({
             const isPickTarget = pickingSquares && pickSquareSet.has(sq);
             const isPremoveSquare = premoveSquares.has(sq);
             const rightClickMark = rightClickMarks[sq];
+            const boardFx = fxRef.current.get(sq);
+            // Chain jail: link into the visually-right / visually-below
+            // neighbour when it is jailed too, so adjacent shackled pieces
+            // read as one interlinked lockdown (each pair drawn once).
+            const jailed = jailSquares.has(sq);
+            let jailLinkRight = false;
+            let jailLinkDown = false;
+            if (jailed) {
+              const visRight = orientation === "w" ? (f < 7 ? sq + 1 : null) : f > 0 ? sq - 1 : null;
+              const visDown = orientation === "w" ? (r > 0 ? sq - 8 : null) : r < 7 ? sq + 8 : null;
+              jailLinkRight = visRight != null && jailSquares.has(visRight);
+              jailLinkDown = visDown != null && jailSquares.has(visDown);
+            }
+            // The pawn-clamp fence sits on the pawn's forward edge: visually
+            // the top edge when the pawn advances up the screen.
+            const fenceEdge: "top" | "bottom" =
+              piece && (piece.color === "w") === (orientation === "w") ? "top" : "bottom";
 
             // Plain-language hover tooltip for any effect on this square, so a
             // player can hover a walnut, freeze, shield, wall, or peel and read
@@ -802,10 +947,14 @@ export function Board({
                 "Walnut: a squirrel buried this piece under a walnut. It is stuck solid and cannot move until the shell cracks.",
               frozenSquares.has(sq) &&
                 "Frozen: this piece is iced in place and cannot move until it thaws.",
-              lockedSquares.has(sq) &&
+              pawnClampSquares.has(sq) &&
+                "Halted: a hex has fenced this pawn's path; it cannot advance for now.",
+              lockedSquares.has(sq) && !pawnClampSquares.has(sq) &&
                 "Shackled: a hex has chained this piece in place for now.",
               shieldedSquares.has(sq) &&
                 "Sheltered: pieces here, the king aside, cannot be captured.",
+              kingSafeSquares.has(sq) &&
+                "Royal guard: this king cannot be captured while the ward holds.",
               wardSquares.has(sq) &&
                 "Warded: your opponent cannot move a piece onto this square.",
               bananaSquares.has(sq) &&
@@ -879,15 +1028,19 @@ export function Board({
                   <div className="absolute inset-0 bg-red-900/45 pointer-events-none" />
                 )}
                 {wardSquares.has(sq) && (
-                  <div className="absolute inset-0 bg-verdigris/20 pointer-events-none" />
+                  <>
+                    <div className="absolute inset-0 bg-verdigris/20 pointer-events-none" />
+                    <BarrierStakes tone="ward" />
+                  </>
                 )}
+                {barredSquares.has(sq) && <BarrierStakes tone="hostile" />}
                 {frozenSquares.has(sq) && (
                   <>
                     {/* One-shot icy flash when the freeze lands, then a calm
                         persistent tint while it holds. */}
                     <div className="absolute inset-0 bg-cyan-300/25 pointer-events-none sq-freeze" />
-                    <span className="absolute top-0.5 right-0.5 z-10 text-[11px] leading-none pointer-events-none drop-shadow sq-freeze-flake">
-                      ❄
+                    <span className="absolute top-0.5 right-0.5 z-10 leading-none pointer-events-none drop-shadow sq-freeze-flake">
+                      <SnowflakeGlyph />
                     </span>
                   </>
                 )}
@@ -900,9 +1053,9 @@ export function Board({
                     <div className="absolute inset-0 bg-amber-700/15 pointer-events-none sq-walnut" />
                     <span
                       aria-hidden
-                      className="absolute -top-1 left-1/2 z-20 -translate-x-1/2 text-base leading-none pointer-events-none walnut-squirrel"
+                      className="absolute -top-1 left-1/2 z-20 -translate-x-1/2 leading-none pointer-events-none walnut-squirrel"
                     >
-                      🐿️
+                      <SquirrelGlyph />
                     </span>
                   </>
                 )}
@@ -917,22 +1070,39 @@ export function Board({
                   </div>
                 )}
                 {lockedSquares.has(sq) && (
-                  <>
-                    {/* Shackled by a king-only or no-pawn-advance hex: a grey
-                        pall plus a chain marker. One soft pulse on mount. */}
-                    <div className="absolute inset-0 bg-slate-800/35 pointer-events-none sq-locked" />
-                    <span className="absolute bottom-0.5 left-0.5 z-10 text-[11px] leading-none pointer-events-none drop-shadow sq-locked-chain">
-                      ⛓
-                    </span>
-                  </>
+                  /* Shackled by a king-only or no-pawn-advance hex: a grey
+                     pall (one soft pulse on mount), then either the chain
+                     jail (piece lockdowns) or the pawn fence below. */
+                  <div className="absolute inset-0 bg-slate-800/35 pointer-events-none sq-locked" />
                 )}
-                {shieldedSquares.has(sq) && (
-                  <div className="absolute inset-0 pointer-events-none ring-2 ring-inset ring-verdigris-glow/80 shadow-[inset_0_0_18px_-4px_rgba(123,181,47,0.6)] sq-shield-in" />
+                {jailed && (
+                  /* Chain jail: links clamp down across the piece and hook
+                     into adjacent jailed squares, staggered square by square. */
+                  <ChainJail
+                    linkRight={jailLinkRight}
+                    linkDown={jailLinkDown}
+                    delayMs={jailDelays.get(sq) ?? 0}
+                  />
+                )}
+                {pawnClampSquares.has(sq) && piece && (
+                  /* Pawn clamp: a low fence hairline boards up the forward
+                     edge; the path ahead is closed. */
+                  <PawnFence edge={fenceEdge} />
+                )}
+                {(shieldedSquares.has(sq) || kingSafeSquares.has(sq)) && (
+                  <>
+                    <div className="absolute inset-0 pointer-events-none ring-2 ring-inset ring-verdigris-glow/80 shadow-[inset_0_0_18px_-4px_rgba(123,181,47,0.6)] sq-shield-in" />
+                    {/* Shield bearer: a heater shield leans against the
+                        king's square-front; other pieces get a buckler. */}
+                    <ShieldMark
+                      variant={piece?.type === "k" || kingSafeSquares.has(sq) ? "heater" : "buckler"}
+                    />
+                  </>
                 )}
                 {strikeSquares.has(sq) && (
                   <div className="absolute inset-0 pointer-events-none z-10 sq-strike">
-                    <span className="absolute inset-0 flex items-center justify-center text-2xl drop-shadow">
-                      ⚡
+                    <span className="absolute inset-0 flex items-center justify-center drop-shadow">
+                      <BoltGlyph />
                     </span>
                   </div>
                 )}
@@ -940,8 +1110,20 @@ export function Board({
                   <div className={`absolute inset-0 pointer-events-none sq-rmb-mark sq-rmb-mark-${rightClickMark}`} />
                 )}
                 {isDuck && (
-                  <div className="absolute inset-0 flex items-center justify-center text-3xl pointer-events-none">🦆</div>
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <DuckGlyph />
+                  </div>
                 )}
+                {stunBySquare.has(sq) && (
+                  /* One-shot stun: a dazed swirl + Zs rise over the skipped
+                     player's king, then fade. Keyed by the remaining skip
+                     count so every application/consumption replays it. */
+                  <StunSwirl key={`stun-${sq}-${stunBySquare.get(sq)}`} />
+                )}
+                {boardFx?.kind === "morph" && (
+                  <TransformFlourish key={`fx-${boardFx.key}`} crown={boardFx.crown} />
+                )}
+                {boardFx?.kind === "summon" && <SummonPoof key={`fx-${boardFx.key}`} />}
                 {isForced && !isDragging && (
                   <div className="absolute inset-0 pointer-events-none rounded-sm ring-2 ring-inset ring-gold-leaf/80 shadow-[inset_0_0_24px_-4px_rgba(230,191,106,0.55)] animate-flicker" />
                 )}
@@ -952,7 +1134,19 @@ export function Board({
                   <div className="absolute inset-0 bg-gradient-to-br from-stone-700/85 to-stone-900/95 backdrop-blur-sm pointer-events-none" />
                 ) : piece ? (
                   <div
-                    className={"pointer-events-none " + (isDragging ? "opacity-30" : "")}
+                    // The fx key remounts the piece when a flourish fires so
+                    // the pop/drop entrance replays even on back-to-back
+                    // transforms of the same square.
+                    key={boardFx ? `piece-fx-${boardFx.key}` : undefined}
+                    className={
+                      "pointer-events-none " +
+                      (isDragging ? "opacity-30 " : "") +
+                      (boardFx?.kind === "morph"
+                        ? "fx-piece-pop"
+                        : boardFx?.kind === "summon"
+                        ? "fx-piece-drop"
+                        : "")
+                    }
                     data-anim-piece={animsRef.current.has(sq) ? sq : undefined}
                     style={{ width: "var(--piece-fit, 88%)", height: "var(--piece-fit, 88%)" }}
                   >

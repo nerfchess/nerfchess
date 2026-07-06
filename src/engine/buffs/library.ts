@@ -452,7 +452,7 @@ const TIER1: Buff[] = [
     instant((_inst, api) => api.restoreCastling()),
   ),
   def(
-    { id: "pawn_shield", name: "Pawn Shield", description: "One pawn cannot be captured for 3 turns.", tier: 1, category: "protection", boon: true },
+    { id: "pawn_shield", name: "Pawn Shield", description: "One pawn cannot be captured for your opponent's next 4 turns.", tier: 1, category: "protection", boon: true },
     shieldTarget(3, ["p"]),
   ),
   def({ id: "free_retreat", name: "Free Retreat", description: "Undo your last move once, before your opponent replies.", tier: 1, category: "tempo" }),
@@ -461,7 +461,7 @@ const TIER1: Buff[] = [
     instant((_inst, api) => { api.mine.flags.seeOppCards = true; }),
   ),
   def(
-    { id: "loyal_pawn", name: "Loyal Pawn", description: "One pawn promotes on the 7th rank instead of the 8th.", tier: 1, category: "pieces" },
+    { id: "loyal_pawn", name: "Loyal Pawn", description: "One pawn promotes on your 7th rank instead of your 8th.", tier: 1, category: "pieces" },
     augment((_m, inst, api) => {
       const out: Move[] = [];
       const fwd = fwdOf(api.me);
@@ -519,7 +519,7 @@ const TIER1: Buff[] = [
     },
   ),
   def(
-    { id: "steady_hand", name: "Steady Hand", description: "Enemy knights cannot move to squares that attack your king for 3 turns.", tier: 1, category: "protection" },
+    { id: "steady_hand", name: "Steady Hand", description: "Enemy knights cannot move to squares that attack your king for your opponent's next 3 turns.", tier: 1, category: "protection" },
     timedOppFilter(3, (moves, _inst, api) => {
       const k = mySquares(api.board, api.me, "k")[0];
       if (k == null) return moves;
@@ -549,7 +549,7 @@ const TIER1: Buff[] = [
     ),
   ),
   def(
-    { id: "second_wind", name: "Second Wind", description: "One captured pawn returns to its start square, once.", tier: 1, category: "pieces" },
+    { id: "second_wind", name: "Second Wind", description: "One captured pawn returns to an empty square on your 2nd rank, once.", tier: 1, category: "pieces" },
     reviveOne(["p"], (api) => (sq) => RANK(sq) === (api.me === "w" ? 1 : 6)),
   ),
   def(
@@ -559,7 +559,7 @@ const TIER1: Buff[] = [
     ),
   ),
   def(
-    { id: "sidestep", name: "Sidestep", description: "One of your pieces cannot be captured this turn.", tier: 1, category: "protection" },
+    { id: "sidestep", name: "Sidestep", description: "One of your pieces cannot be captured for your opponent's next 2 turns.", tier: 1, category: "protection" },
     shieldTarget(1),
   ),
   def(
@@ -650,7 +650,7 @@ const TIER1: Buff[] = [
     ),
   ),
   def(
-    { id: "firm_footing", name: "Firm Footing", description: "One piece cannot be captured this turn.", tier: 1, category: "protection" },
+    { id: "firm_footing", name: "Firm Footing", description: "One piece cannot be captured for your opponent's next 2 turns.", tier: 1, category: "protection" },
     shieldTarget(1),
   ),
   def(
@@ -698,7 +698,7 @@ const TIER1: Buff[] = [
     advancePawns(2),
   ),
   def(
-    { id: "guarded_king", name: "Guarded King", description: "Enemy pieces cannot move to the squares diagonally adjacent to your king for 2 turns.", tier: 1, category: "protection" },
+    { id: "guarded_king", name: "Guarded King", description: "Enemy pieces cannot move to the squares diagonally adjacent to your king for your opponent's next 2 turns.", tier: 1, category: "protection" },
     timedOppFilter(2, (moves, _inst, api) => {
       const k = mySquares(api.board, api.me, "k")[0];
       if (k == null) return moves;
@@ -825,7 +825,7 @@ const TIER2: Buff[] = [
     }),
   ),
   def(
-    { id: "reinforce", name: "Reinforce", description: "One of your pieces cannot be captured this turn and next.", tier: 2, category: "protection", boon: true },
+    { id: "reinforce", name: "Reinforce", description: "One of your pieces cannot be captured for your opponent's next 3 turns.", tier: 2, category: "protection", boon: true },
     shieldTarget(2),
   ),
   def(
@@ -1110,7 +1110,7 @@ const TIER3: Buff[] = [
     extraMovesNow(1),
   ),
   def(
-    { id: "promote_now", name: "Promote Now", description: "Instantly promote one pawn on the 6th rank or beyond.", tier: 3, category: "pieces" },
+    { id: "promote_now", name: "Promote Now", description: "Instantly promote one pawn on your 6th rank or beyond.", tier: 3, category: "pieces" },
     promotePawns(1, 6, "q"),
   ),
   def(
@@ -1128,7 +1128,7 @@ const TIER3: Buff[] = [
     skipOpponent(1),
   ),
   def(
-    { id: "fortress", name: "Fortress", description: "Your king and one adjacent piece are uncapturable for 3 turns.", tier: 3, category: "protection" },
+    { id: "fortress", name: "Fortress", description: "Your king and one adjacent piece are uncapturable for your opponent's next 4 turns.", tier: 3, category: "protection" },
     activated(
       (_inst, api, picks) => {
         if (picks.length > 0) return null;
@@ -1212,7 +1212,7 @@ const TIER3: Buff[] = [
   ),
   def({ id: "pin_breaker", name: "Pin Breaker", description: "One pinned piece moves freely this turn, ignoring the pin.", tier: 3, category: "movement" }),
   def(
-    { id: "rank_runner", name: "Rank Runner", description: "One pawn advances to any empty square on its file up to rank 5, once.", tier: 3, category: "movement" },
+    { id: "rank_runner", name: "Rank Runner", description: "One pawn advances to any empty square on its file up to your 5th rank, once.", tier: 3, category: "movement" },
     augment((_m, inst, api) => {
       const out: Move[] = [];
       for (const sq of mySquares(api.board, api.me, "p")) {
@@ -1245,7 +1245,7 @@ const TIER3: Buff[] = [
     reviveOne(["q", "r", "b", "n", "p"], anyHalfZone),
   ),
   def(
-    { id: "deflect", name: "Deflect", description: "Your queen cannot be captured for 2 turns.", tier: 3, category: "protection" },
+    { id: "deflect", name: "Deflect", description: "Your queen cannot be captured for your opponent's next 3 turns.", tier: 3, category: "protection" },
     activated(
       (_inst, api, picks) =>
         picks.length > 0
@@ -1445,7 +1445,7 @@ const TIER3: Buff[] = [
     ),
   ),
   def(
-    { id: "vanguard", name: "Vanguard", description: "One pawn on the 6th rank or beyond promotes to a knight, once.", tier: 3, category: "pieces" },
+    { id: "vanguard", name: "Vanguard", description: "One pawn on your 6th rank or beyond promotes to a knight, once.", tier: 3, category: "pieces" },
     promotePawns(1, 6, "n"),
   ),
   def({ id: "rewind_one", name: "Rewind One", description: "Undo the last two half-moves of the game, once.", tier: 3, category: "tempo" }),
@@ -1701,8 +1701,9 @@ const TIER4: Buff[] = [
     {
       kind: "activated",
       spendOnUse: false,
-      targets: (_inst, api, picks) =>
-        picks.length > 0
+      // One activation only: the duelist is chosen once and never re-aimed.
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null
           ? null
           : {
               kind: "square",
@@ -1712,6 +1713,7 @@ const TIER4: Buff[] = [
               ),
             },
       effect: (inst, _api, picks) => {
+        if (inst.state.sq != null) return;
         inst.state.sq = picks[0]?.square;
       },
       onMovePlayed: (inst, move, api) => {
@@ -1738,7 +1740,7 @@ const TIER4: Buff[] = [
     },
   ),
   def(
-    { id: "overrun", name: "Overrun", description: "Your pawns can capture straight ahead this turn.", tier: 4, category: "attack" },
+    { id: "overrun", name: "Overrun", description: "Your pawns can capture straight ahead on your next turn.", tier: 4, category: "attack" },
     timedAugment(1, (_m, inst, api) => {
       const out: Move[] = [];
       for (const sq of mySquares(api.board, api.me, "p")) {
@@ -1951,7 +1953,7 @@ const TIER5: Buff[] = [
     stealBuffs(1, undefined, notLockedIn),
   ),
   def(
-    { id: "promotion_storm", name: "Promotion Storm", description: "All pawns on rank 5 or beyond promote to knights.", tier: 5, category: "pieces" },
+    { id: "promotion_storm", name: "Promotion Storm", description: "All pawns on your 5th rank or beyond promote to knights.", tier: 5, category: "pieces" },
     instant((_inst, api) => {
       for (const sq of mySquares(api.board, api.me, "p")) {
         if (relRank(api.me, sq) >= 5) api.setPieceType(sq, "n");
@@ -1987,11 +1989,11 @@ const TIER5: Buff[] = [
     convertEnemies(1, ["n", "b"]),
   ),
   def(
-    { id: "board_lock", name: "Board Lock", description: "Your opponent cannot castle for 3 turns.", tier: 3, category: "tempo" },
+    { id: "board_lock", name: "Board Lock", description: "Your opponent cannot castle for their next 3 turns.", tier: 3, category: "tempo" },
     timedOppFilter(3, (moves) => moves.filter((m) => !m.castle)),
   ),
   def(
-    { id: "twin_queens", name: "Twin Queens", description: "Promote two pawns to queens instantly if both are on rank 5+.", tier: 5, category: "pieces" },
+    { id: "twin_queens", name: "Twin Queens", description: "Promote two pawns to queens instantly if both are on your 5th rank or beyond.", tier: 5, category: "pieces" },
     promotePawns(2, 5, "q"),
   ),
   def(
@@ -2047,7 +2049,7 @@ const TIER5: Buff[] = [
     }),
   ),
   def(
-    { id: "regenerate", name: "Regenerate", description: "Revive your last two captured pawns to their start squares.", tier: 5, category: "pieces" },
+    { id: "regenerate", name: "Regenerate", description: "Revive two of your captured pawns to empty squares on your 2nd rank.", tier: 5, category: "pieces" },
     revivePawnsToStart(2),
   ),
   def(
@@ -2065,7 +2067,7 @@ const TIER5: Buff[] = [
     skipOpponent(1),
   ),
   def(
-    { id: "blockade", name: "Blockade", description: "Enemy pawns cannot advance for 3 turns.", tier: 4, category: "tempo" },
+    { id: "blockade", name: "Blockade", description: "Enemy pawns cannot advance for your opponent's next 3 turns. They may still capture diagonally.", tier: 4, category: "tempo" },
     instant((_inst, api) => {
       addEffect(api, { kind: "no_pawn_advance", against: api.opp, turns: 3 });
     }),
@@ -2081,7 +2083,7 @@ const TIER5: Buff[] = [
     }),
   ),
   def(
-    { id: "mass_promote_minor", name: "Mass Promote Minor", description: "Two pawns on rank 4+ become knights instantly.", tier: 5, category: "pieces" },
+    { id: "mass_promote_minor", name: "Mass Promote Minor", description: "Two pawns on your 4th rank or beyond become knights instantly.", tier: 5, category: "pieces" },
     promotePawns(2, 4, "n"),
   ),
   def(
@@ -2203,7 +2205,7 @@ const TIER6: Buff[] = [
   ),
   def({ id: "time_rewind", name: "Time Rewind", description: "Undo the last three full moves, resetting to that position, once.", tier: 6, category: "tempo" }),
   def(
-    { id: "mass_resurrect", name: "Mass Resurrect", description: "Revive any three captured pawns to your half.", tier: 6, category: "pieces", boon: true },
+    { id: "mass_resurrect", name: "Mass Resurrect", description: "Revive any three captured pawns to empty squares on your 2nd rank.", tier: 6, category: "pieces", boon: true },
     revivePawnsToStart(3),
   ),
   def(
@@ -2266,7 +2268,7 @@ const TIER6: Buff[] = [
     ),
   ),
   def(
-    { id: "sanctuary_zone", name: "Sanctuary Zone", description: "A 2x2 area you pick makes your pieces uncapturable for 4 turns.", tier: 6, category: "protection", boon: true },
+    { id: "sanctuary_zone", name: "Sanctuary Zone", description: "A 2x2 area you pick makes your pieces there uncapturable for your opponent's next 5 turns.", tier: 6, category: "protection", boon: true },
     activated(
       (_inst, _api, picks) =>
         picks.length > 0
@@ -2331,7 +2333,7 @@ const TIER6: Buff[] = [
     }),
   ),
   def(
-    { id: "warp_reign", name: "Warp Reign", description: "Swap the positions of your king and queen and shield both for 2 turns.", tier: 6, category: "protection" },
+    { id: "warp_reign", name: "Warp Reign", description: "Swap the positions of your king and queen and shield both for your opponent's next 3 turns.", tier: 6, category: "protection" },
     activated(
       (_inst, api, picks) =>
         picks.length > 0
@@ -2451,7 +2453,7 @@ const TIER6: Buff[] = [
     ),
   ),
   def(
-    { id: "total_recall", name: "Total Recall", description: "Pull each of your pieces past rank 4 back to your third rank where empty, once.", tier: 6, category: "movement" },
+    { id: "total_recall", name: "Total Recall", description: "Pull each of your pieces past your 4th rank back to your 3rd rank where empty, once.", tier: 6, category: "movement" },
     activatedSimple((_inst, api) => {
       const third = api.me === "w" ? 2 : 5;
       for (const sq of mySquares(api.board, api.me)) {
@@ -2476,7 +2478,9 @@ const TIER6: Buff[] = [
     },
   ),
   def(
-    { id: "iron_will", name: "Iron Will", description: "Whenever your opponent captures one of your pieces, your nerf is suspended for your next 2 turns.", tier: 6, category: "nerf" },
+    // Owner call: reactive relief was underwhelming at tier 6, so it now
+    // rolls one tier lower (nerf-mode boon pool, tier 5).
+    { id: "iron_will", name: "Iron Will", description: "Whenever your opponent captures one of your pieces, your nerf is suspended for your next 2 turns.", tier: 5, category: "nerf" },
     {
       kind: "passive",
       onMovePlayed: (_inst, move, api) => {
@@ -2554,11 +2558,11 @@ const TIER7: Buff[] = [
     lineSweep("q", ALL_DIRS, null),
   ),
   def(
-    { id: "time_freeze", name: "Time Freeze", description: "Your opponent skips their next three turns, once.", tier: 7, category: "tempo" },
-    skipOpponent(3),
+    { id: "time_freeze", name: "Time Freeze", description: "Your opponent skips their next two turns, once.", tier: 7, category: "tempo" },
+    skipOpponent(2),
   ),
   def(
-    { id: "fortress_realm", name: "Fortress Realm", description: "A 3x3 zone you pick makes your pieces uncapturable for 4 turns.", tier: 7, category: "protection", boon: true },
+    { id: "fortress_realm", name: "Fortress Realm", description: "A 3x3 zone you pick makes your pieces there uncapturable for your opponent's next 5 turns.", tier: 7, category: "protection", boon: true },
     activated(
       (_inst, _api, picks) =>
         picks.length > 0
@@ -2580,8 +2584,8 @@ const TIER7: Buff[] = [
     ),
   ),
   def(
-    { id: "onslaught", name: "Onslaught", description: "Take four consecutive moves, once.", tier: 7, category: "tempo" },
-    extraMovesNow(3),
+    { id: "onslaught", name: "Onslaught", description: "Take three consecutive moves, once.", tier: 7, category: "tempo" },
+    extraMovesNow(2),
   ),
   def(
     { id: "buff_plunder", name: "Buff Plunder", description: "Steal three active buffs from your opponent. Locked-in upgrades stay put.", tier: 7, category: "draft" },
@@ -2654,7 +2658,7 @@ const TIER7: Buff[] = [
     freezeAllEnemies(2),
   ),
   def(
-    { id: "phoenix_line", name: "Phoenix Line", description: "Revive all your captured pawns to rank 2, once.", tier: 7, category: "pieces" },
+    { id: "phoenix_line", name: "Phoenix Line", description: "Revive all your captured pawns to your 2nd rank, once.", tier: 7, category: "pieces" },
     revivePawnsToStart(8),
   ),
   def(
@@ -2807,7 +2811,7 @@ const TIER8: Buff[] = [
     }),
   ),
   def(
-    { id: "queen_storm", name: "Queen Storm", description: "Promote all your pawns on rank 4 or beyond to queens.", tier: 8, category: "pieces" },
+    { id: "queen_storm", name: "Queen Storm", description: "Promote all your pawns on your 4th rank or beyond to queens.", tier: 8, category: "pieces" },
     instant((_inst, api) => {
       for (const sq of mySquares(api.board, api.me, "p")) {
         if (relRank(api.me, sq) >= 4) api.setPieceType(sq, "q");
@@ -2823,7 +2827,7 @@ const TIER8: Buff[] = [
     barLine("file", null, 3),
   ),
   def(
-    { id: "queens_apocalypse", name: "Queen's Apocalypse", description: "Your queen wipes every enemy piece off the board except the king, once. Requires a queen.", tier: 8, category: "attack" },
+    { id: "queens_apocalypse", name: "Queen's Apocalypse", description: "Your queen wipes every enemy piece off the board except their king and queen, once. Requires a queen.", tier: 8, category: "attack" },
     activated(
       (_inst, api, picks) =>
         picks.length > 0
@@ -2836,14 +2840,15 @@ const TIER8: Buff[] = [
       (_inst, api, picks) => {
         if (picks[0]?.square == null) return;
         for (const sq of mySquares(api.board, api.opp)) {
-          if (api.board.pieces[sq]!.type !== "k") api.removePiece(sq);
+          const t = api.board.pieces[sq]!.type;
+          if (t !== "k" && t !== "q") api.removePiece(sq);
         }
       },
     ),
   ),
   def(
-    { id: "time_prison", name: "Time Prison", description: "Your opponent skips their next four turns, once.", tier: 8, category: "tempo" },
-    skipOpponent(4),
+    { id: "time_prison", name: "Time Prison", description: "Your opponent skips their next three turns, once.", tier: 8, category: "tempo" },
+    skipOpponent(3),
   ),
   def(
     { id: "divine_fortress", name: "Divine Fortress", description: "Your entire half of the board makes your pieces uncapturable for 3 turns.", tier: 8, category: "protection" },
@@ -2853,8 +2858,8 @@ const TIER8: Buff[] = [
     ),
   ),
   def(
-    { id: "blitzkrieg", name: "Blitzkrieg", description: "Take five consecutive moves, once.", tier: 8, category: "tempo" },
-    extraMovesNow(4),
+    { id: "blitzkrieg", name: "Blitzkrieg", description: "Take four consecutive moves, once.", tier: 8, category: "tempo" },
+    extraMovesNow(3),
   ),
   def(
     { id: "total_plunder", name: "Total Plunder", description: "Steal all your opponent's active buffs except locked-in upgrades.", tier: 8, category: "draft" },
@@ -2978,8 +2983,10 @@ const TIER8: Buff[] = [
     {
       kind: "activated",
       spendOnUse: false,
-      targets: (_inst, api, picks) =>
-        picks.length >= 3
+      // One activation only: the titans are chosen once (re-activating would
+      // also stack extra permanent shield effects).
+      targets: (inst, api, picks) =>
+        picks.length >= 3 || inst.state.sqs != null
           ? null
           : {
               kind: "square",
@@ -2987,6 +2994,7 @@ const TIER8: Buff[] = [
               squares: bindCandidates()(api).filter((sq) => !picks.some((k) => k.square === sq)),
             },
       effect: (inst, api, picks) => {
+        if (inst.state.sqs != null) return;
         const sqs = picks.map((k) => k.square).filter((s): s is Square => s != null);
         if (!sqs.length) return;
         inst.state.sqs = sqs;
@@ -3172,18 +3180,26 @@ const HEXES: Buff[] = [
         if (left <= 0) return;
         inst.state.charges = left - 1;
         if (left - 1 <= 0) inst.spent = true;
-        addEffect(api, { kind: "freeze", sq: move.to, owner: api.opp, turns: 1 });
+        // Two ticks: this effect loses one tick to the capturing move itself
+        // (timers tick right after onMovePlayed), leaving the promised one
+        // frozen turn. With a single tick the freeze evaporated immediately.
+        addEffect(api, { kind: "freeze", sq: move.to, owner: api.opp, turns: 2 });
       },
       status: (inst) => `${(inst.state.charges as number) ?? 3} enemy captures left`,
     },
   ),
   def(
-    { id: "flypaper_file", name: "Flypaper File", description: "Coat one file in flypaper: for your next 4 turns, enemy pieces (kings excepted) that enter it are stuck for 2 of their turns.", tier: 4, category: "hex" },
+    // Trap-family buff (owner call): visible to both players now, so the
+    // window grew from 4 to 6 of your turns, and the freeze really delivers
+    // the promised 2 turns (the old 2-tick timer lost one tick to the
+    // triggering move itself).
+    { id: "flypaper_file", name: "Flypaper File", description: "Coat one file in flypaper, visible to both players: for your next 6 turns, enemy pieces (kings excepted) that enter that file are stuck and cannot move for 2 of their turns.", tier: 4, category: "hex" },
     {
       kind: "activated",
       spendOnUse: false,
-      targets: (_inst, api, picks) =>
-        picks.length > 0
+      // One activation only: once a file is limed it stays limed.
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null
           ? null
           : {
               kind: "square",
@@ -3191,16 +3207,20 @@ const HEXES: Buff[] = [
               squares: Array.from({ length: 64 }, (_, i) => i),
             },
       effect: (inst, _api, picks) => {
+        if (inst.state.sq != null) return;
         if (picks[0]?.square != null) {
           inst.state.sq = picks[0].square;
-          inst.state.turns = 4;
+          inst.state.turns = 6;
         }
       },
       onMovePlayed: (inst, move, api) => {
         const sq = inst.state.sq as Square | undefined;
         if (sq == null) return;
         if (move.color === api.opp && move.piece !== "k" && FILE(move.to) === FILE(sq)) {
-          addEffect(api, { kind: "freeze", sq: move.to, owner: api.opp, turns: 2 });
+          // Three ticks: this effect loses one tick to the triggering move
+          // itself (timers tick right after onMovePlayed), leaving the
+          // promised 2 stuck turns.
+          addEffect(api, { kind: "freeze", sq: move.to, owner: api.opp, turns: 3 });
         }
         tickTurns(inst, move, api.me);
       },
@@ -3324,40 +3344,62 @@ const ITEMS: Buff[] = [
     ),
   ),
   def(
-    { id: "apple", name: "Apple", description: "Feed one of your pieces: it digests for 2 turns and cannot be captured while it does.", tier: 2, category: "item" },
+    { id: "apple", name: "Apple", description: "Feed one of your pieces: it digests and cannot be captured for your opponent's next 3 turns.", tier: 2, category: "item" },
     shieldTarget(2),
   ),
   def(
-    { id: "banana_peel", name: "Banana Peel", description: "Toss it on an empty square: the first enemy piece other than the king to step there slips one square back toward its home rank.", tier: 2, category: "item" },
+    // Trap-family buff (owner call): peels are visible to both players now, so
+    // the card trades surprise for board control: TWO peels per card, and a
+    // slipped piece is also dazed (frozen) for one of its owner's turns.
+    { id: "banana_peel", name: "Banana Peel", description: "Toss peels on two empty squares, visible to both players. The first enemy piece other than the king to step on each slips one square back toward its home rank and is too dazed to move on its owner's next turn.", tier: 2, category: "item" },
     {
       kind: "activated",
       spendOnUse: false,
-      targets: (_inst, api, picks) =>
-        picks.length > 0
-          ? null
-          : {
-              kind: "square",
-              label: "Toss the peel on an empty square",
-              squares: emptySquares(api.board),
-            },
+      // One activation only: once tossed, the peels stay where they landed.
+      targets: (inst, api, picks) => {
+        if (picks.length >= 2 || inst.state.sqs != null || inst.state.sq != null) return null;
+        return {
+          kind: "square",
+          label: `Toss a peel on an empty square (${picks.length + 1}/2)`,
+          squares: emptySquares(api.board).filter((sq) => !picks.some((k) => k.square === sq)),
+          // A single peel is already a complete effect; the second is optional.
+          ...(picks.length > 0 ? { finishable: true } : {}),
+        };
+      },
       effect: (inst, _api, picks) => {
-        inst.state.sq = picks[0]?.square;
+        if (inst.state.sqs != null || inst.state.sq != null) return;
+        const sqs = picks.map((k) => k.square).filter((s): s is Square => s != null);
+        if (sqs.length) inst.state.sqs = sqs;
       },
       onMovePlayed: (inst, move, api) => {
-        const sq = inst.state.sq as Square | undefined;
-        if (sq == null) return;
-        if (move.color !== api.opp || move.to !== sq || move.piece === "k") return;
-        inst.spent = true;
+        // Legacy saved games stored a single peel in state.sq; read both.
+        const sqs =
+          (inst.state.sqs as Square[] | undefined) ??
+          (inst.state.sq != null ? [inst.state.sq as Square] : undefined);
+        if (!sqs?.length) return;
+        if (move.color !== api.opp || move.piece === "k" || !sqs.includes(move.to)) return;
+        const sq = move.to;
+        const rest = sqs.filter((s) => s !== sq);
+        inst.state.sqs = rest;
+        inst.state.sq = undefined;
+        if (rest.length === 0) inst.spent = true;
         const back = homeStep(sq, move.color);
         // The slip fizzles when the square behind is occupied or off-board
         // (and the relocate backstop refuses pawns slipping onto rank 1/8).
-        if (back != null && !api.board.pieces[back]) api.relocate(sq, back);
+        const slipped = back != null && !api.board.pieces[back];
+        if (slipped) api.relocate(sq, back!);
+        // Dazed: the piece skips its owner's next turn. Two ticks, because
+        // this effect loses one tick to the triggering move itself (timers
+        // tick right after onMovePlayed).
+        addEffect(api, { kind: "freeze", sq: slipped ? back! : sq, owner: api.opp, turns: 2 });
       },
       status: (inst) => {
-        const sq = inst.state.sq as Square | undefined;
-        return sq == null
-          ? "activate to toss the peel"
-          : `peel waiting on ${"abcdefgh"[FILE(sq)]}${RANK(sq) + 1}`;
+        const sqs =
+          (inst.state.sqs as Square[] | undefined) ??
+          (inst.state.sq != null ? [inst.state.sq as Square] : undefined);
+        if (!sqs?.length) return "activate to toss the peels";
+        const names = sqs.map((sq) => `${"abcdefgh"[FILE(sq)]}${RANK(sq) + 1}`).join(", ");
+        return `peels waiting on ${names}`;
       },
     },
   ),

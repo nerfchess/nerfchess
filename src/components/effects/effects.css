@@ -1,0 +1,213 @@
+/* ---------------------------------------------------------------------------
+   Board effect overlays (src/components/effects).
+
+   Motion rules honoured here:
+   - transform / opacity only inside keyframes (never box-shadow, never layout)
+   - one-shot entrances with `both` fill; persistent overlays end at their
+     resting pose so reduced-motion can simply drop the animation and show
+     the static end state
+   - global speed control comes free from the html[data-anim] overrides in
+     globals.css (they clamp animation-duration on every element)
+   - prefers-reduced-motion: persistent props (chains, shields, stakes,
+     fences) render static; transient flourishes (stun, shards, poofs) are
+     hidden outright, matching the walnut-squirrel precedent
+--------------------------------------------------------------------------- */
+
+/* --- 1. Chain jail (king_only lockdowns) ----------------------------------
+   Links drop in from above, clamp shut with a small overshoot, then settle
+   with a one-shot rattle. Connector links between adjacent jailed squares
+   fade in once their two ends have landed. Staggered per square via
+   animation-delay set inline. */
+@keyframes fx-chain-drop {
+  0% { opacity: 0; transform: translateY(-40%) scale(1.05); }
+  45% { opacity: 1; transform: translateY(0) scale(1); }
+  58% { transform: translateY(-3%) rotate(-1.8deg); }
+  70% { transform: translateY(0) rotate(1.2deg); }
+  82% { transform: rotate(-0.7deg); }
+  100% { opacity: 1; transform: none; }
+}
+.fx-chain {
+  animation: fx-chain-drop 0.6s var(--ease-out, cubic-bezier(0.2, 0.8, 0.2, 1)) both;
+  transform-origin: 50% 0%;
+}
+@keyframes fx-chain-connect {
+  0% { opacity: 0; transform: scale(0.35); }
+  70% { opacity: 1; transform: scale(1.12); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.fx-chain-connector {
+  animation: fx-chain-connect 0.3s var(--ease-out, ease-out) both;
+}
+
+/* --- 2. Shield bearer (shield / king_safe) --------------------------------
+   The shield hups up from the square's front edge with a quick overshoot,
+   then leans at rest for as long as the protection holds. */
+@keyframes fx-shield-hup {
+  0% { opacity: 0; transform: translateY(50%) scale(0.65) rotate(-14deg); }
+  65% { opacity: 1; transform: translateY(-6%) scale(1.06) rotate(-8deg); }
+  100% { opacity: 1; transform: translateY(0) scale(1) rotate(-9deg); }
+}
+.fx-shield {
+  animation: fx-shield-hup 0.42s var(--ease-spring, cubic-bezier(0.2, 1.4, 0.4, 1)) both;
+  transform-origin: 50% 100%;
+  transform: rotate(-9deg);
+}
+
+/* --- 3. Barred ground (barred zones) ---------------------------------------
+   Four corner stakes thunk into the ground one by one (stagger set inline),
+   then the rope hairline strings between them. */
+@keyframes fx-stake-thunk {
+  0% { opacity: 0; transform: translateY(-70%) scaleY(1.35); }
+  55% { opacity: 1; transform: translateY(5%) scaleY(0.85); }
+  100% { opacity: 1; transform: none; }
+}
+.fx-stake {
+  animation: fx-stake-thunk 0.26s var(--ease-out, ease-out) both;
+  transform-origin: 50% 100%;
+}
+@keyframes fx-rope-in {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+.fx-rope {
+  animation: fx-rope-in 0.35s ease-out 0.32s both;
+}
+
+/* --- 4. Pawn clamp (no_pawn_advance) ---------------------------------------
+   A low fence hairline drops onto the pawn's forward edge: the path ahead is
+   boarded up. Chosen over a per-pawn boot mark because the fence reads
+   directionally ("this way is blocked") and adds only one quiet hairline to
+   a square that already carries the shackle tint. */
+@keyframes fx-fence-in {
+  0% { opacity: 0; transform: translateY(-35%); }
+  60% { opacity: 1; transform: translateY(8%); }
+  100% { opacity: 1; transform: none; }
+}
+.fx-fence {
+  animation: fx-fence-in 0.32s var(--ease-out, ease-out) both;
+}
+
+/* --- 5. Skip / stun (pending turn skips) ------------------------------------
+   One-shot: a dazed swirl spins over the skipped player's king while three
+   Zs rise and drift off. The whole group fades out and stays gone. */
+@keyframes fx-stun-rise {
+  0% { opacity: 0; transform: translateY(16%) scale(0.7); }
+  16% { opacity: 1; transform: translateY(0) scale(1); }
+  72% { opacity: 1; transform: translateY(-40%) scale(1.04); }
+  100% { opacity: 0; transform: translateY(-60%) scale(1.04); }
+}
+.fx-stun {
+  animation: fx-stun-rise 1.6s ease-out both;
+}
+@keyframes fx-stun-spin {
+  100% { transform: rotate(360deg); }
+}
+.fx-stun-swirl {
+  animation: fx-stun-spin 1.2s linear both;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+@keyframes fx-stun-z {
+  0% { opacity: 0; transform: translate(0, 30%) scale(0.6); }
+  30% { opacity: 1; }
+  100% { opacity: 0; transform: translate(24%, -55%) scale(1.15); }
+}
+.fx-stun-z {
+  animation: fx-stun-z 1.3s ease-out both;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* --- 6. Transform flourish (setPieceType / promotion) -----------------------
+   The old piece bursts into shards that scatter outward while the new piece
+   pops in; queen-class arrivals add a crown flash with a restrained radial
+   glow (a sanctioned magic moment). Per-shard scatter vectors come in via
+   --dx / --dy / --rot inline custom properties. */
+@keyframes fx-shard-fly {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.4) rotate(0deg); }
+  12% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--dx, 0px), var(--dy, 0px)) scale(1) rotate(var(--rot, 0deg)); }
+}
+.fx-shard {
+  animation: fx-shard-fly 0.7s var(--ease-out, ease-out) both;
+}
+@keyframes fx-crown-flash {
+  0% { opacity: 0; transform: translateY(20%) scale(0.45); }
+  30% { opacity: 1; transform: translateY(-10%) scale(1.18); }
+  55% { opacity: 1; transform: translateY(-16%) scale(1); }
+  100% { opacity: 0; transform: translateY(-34%) scale(1); }
+}
+.fx-crown {
+  animation: fx-crown-flash 1.05s var(--ease-spring, cubic-bezier(0.2, 1.4, 0.4, 1)) both;
+}
+@keyframes fx-glow-pulse {
+  0% { opacity: 0; transform: scale(0.5); }
+  35% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.25); }
+}
+.fx-glow {
+  animation: fx-glow-pulse 0.9s ease-out both;
+}
+/* The arriving piece itself: hidden for a beat while the shards burst, then
+   pops in with a wobble (morph) or drops in through the dust (summon).
+   Applied to the piece wrapper in Board.tsx. */
+@keyframes fx-piece-pop-in {
+  0% { opacity: 0; transform: scale(0.3) rotate(-14deg); }
+  60% { opacity: 1; transform: scale(1.14) rotate(4deg); }
+  100% { opacity: 1; transform: none; }
+}
+.fx-piece-pop {
+  animation: fx-piece-pop-in 0.5s var(--ease-spring, cubic-bezier(0.2, 1.4, 0.4, 1)) 0.16s both;
+}
+@keyframes fx-piece-drop-in {
+  0% { opacity: 0; transform: translateY(-34%) scale(1.03); }
+  55% { opacity: 1; transform: translateY(4%) scale(0.97); }
+  100% { opacity: 1; transform: none; }
+}
+.fx-piece-drop {
+  animation: fx-piece-drop-in 0.4s var(--ease-out, ease-out) 0.08s both;
+}
+
+/* --- 7. Summon (piece appearing on an empty square) -------------------------
+   A dust ring puffs outward with a few motes while the piece drops in. */
+@keyframes fx-poof-ring {
+  0% { opacity: 0.9; transform: scale(0.25); }
+  100% { opacity: 0; transform: scale(1.18); }
+}
+.fx-poof-ring {
+  animation: fx-poof-ring 0.55s ease-out both;
+}
+@keyframes fx-poof-dot {
+  0% { opacity: 0.9; transform: translate(0, 0) scale(1); }
+  100% { opacity: 0; transform: translate(var(--dx, 0px), var(--dy, 0px)) scale(0.4); }
+}
+.fx-poof-dot {
+  animation: fx-poof-dot 0.6s ease-out both;
+}
+
+/* --- Reduced motion ----------------------------------------------------------
+   Persistent props hold their static end state; one-shot flourishes vanish
+   (same treatment globals.css gives the walnut squirrel). */
+@media (prefers-reduced-motion: reduce) {
+  .fx-chain,
+  .fx-chain-connector,
+  .fx-shield,
+  .fx-stake,
+  .fx-rope,
+  .fx-fence,
+  .fx-piece-pop,
+  .fx-piece-drop {
+    animation: none !important;
+  }
+  .fx-stun,
+  .fx-stun-swirl,
+  .fx-stun-z,
+  .fx-shard,
+  .fx-crown,
+  .fx-glow,
+  .fx-poof-ring,
+  .fx-poof-dot {
+    animation: none !important;
+    opacity: 0 !important;
+  }
+}

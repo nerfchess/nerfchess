@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { Eye, Swords, Users } from "lucide-react";
 import { QueueButton } from "@/components/QueueButton";
 import { AccountUser, fetchMe } from "@/lib/authClient";
+import { readSnapshot, writeSnapshot } from "@/lib/snapshotCache";
 import { MPLobby, MPLobbyChallenge, MPLobbyGame, MPLobbySeek, MPSession, saveOnlineSeat } from "@/lib/multiplayer";
 import { ModeBadge } from "@/components/ModeBadge";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
@@ -35,6 +36,10 @@ export default function LobbyPage() {
   // Poll the lobby snapshot over one long-lived socket.
   useEffect(() => {
     let cancelled = false;
+    // Instant paint: the last snapshot this tab saw renders immediately
+    // (seeks/games a few seconds stale), and the first live poll replaces it.
+    const cached = readSnapshot<MPLobby>("nerfchess:lobby-snapshot");
+    if (cached) setLobby(cached);
     const session = new MPSession();
     session.persistFriendSession = false;
     session.autoReconnect = false; // fetchLobby reconnects on demand
@@ -52,6 +57,7 @@ export default function LobbyPage() {
           failures = 0;
           setLobby(data);
           setLobbyError(null);
+          writeSnapshot("nerfchess:lobby-snapshot", data);
         }
       } catch {
         if (!cancelled) {
@@ -148,7 +154,7 @@ export default function LobbyPage() {
             <h1 className="masthead text-4xl sm:text-5xl text-parchment-50">Lobby</h1>
           </div>
           <div className="flex items-center gap-2 smallcaps text-[11px] text-parchment-300">
-            <span className="w-2 h-2 rounded-full bg-verdigris animate-flicker" />
+            <span className="w-2 h-2 bg-verdigris animate-flicker" />
             {onlineCount === null ? "Connecting…" : `${onlineCount} player${onlineCount === 1 ? "" : "s"} online`}
           </div>
         </div>
@@ -161,7 +167,7 @@ export default function LobbyPage() {
 
         <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
           <div className="space-y-4 min-w-0">
-            {/* Step 1: the main action — get matched with a real opponent. */}
+            {/* Step 1: the main action: get matched with a real opponent. */}
             <QueueButton />
 
             {/* Step 2: play a specific person via a shared code. */}
@@ -188,12 +194,12 @@ export default function LobbyPage() {
                     placeholder="Enter a code, e.g. ABCDE"
                     maxLength={8}
                     aria-label="Friend game code"
-                    className="min-w-0 flex-1 bg-ink-900/60 border border-white/15 rounded-sm px-4 py-3 font-mono tracking-widest uppercase focus:outline-none focus:border-gold/60 text-parchment placeholder:text-parchment-400/40 placeholder:tracking-normal placeholder:normal-case"
+                    className="min-w-0 flex-1 bg-ink-900/60 border border-white/15 px-4 py-3 font-mono tracking-widest uppercase focus:outline-none focus:border-gold/60 text-parchment placeholder:text-parchment-400/40 placeholder:tracking-normal placeholder:normal-case"
                   />
                   <button
                     onClick={() => router.push(`/friend?code=${encodeURIComponent(joinCode.trim())}`)}
                     disabled={!joinCode.trim()}
-                    className="px-5 rounded-sm btn-ghost font-display disabled:opacity-50"
+                    className="px-5 btn-ghost font-display disabled:opacity-50"
                   >
                     Join
                   </button>
@@ -355,7 +361,7 @@ function SectionTitle({
     <div className="flex items-center gap-2.5">
       <span
         aria-hidden
-        className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg border ${SECTION_TINTS[tint]}`}
+        className={`grid h-8 w-8 shrink-0 place-items-center border ${SECTION_TINTS[tint]}`}
       >
         {icon}
       </span>
@@ -441,7 +447,7 @@ function SeekRow({
       : `${seek.timeSec}s+${seek.incrementSec}`;
   const name = seek.rating != null ? `${seek.name} (${seek.rating})` : seek.name;
   return (
-    <li className="-mx-2 flex items-center justify-between gap-3 rounded-lg px-2 py-2.5 transition-colors hover:bg-white/[0.045]">
+    <li className="-mx-2 flex items-center justify-between gap-3 px-2 py-2.5 transition-colors hover:bg-white/[0.045]">
       <div className="min-w-0">
         <div className="flex items-center gap-2 truncate text-sm text-parchment-100">
           <Icon size={14} style={{ color: category.accent }} aria-hidden className="shrink-0" />
@@ -482,7 +488,7 @@ function ChallengeRow({ challenge }: { challenge: MPLobbyChallenge }) {
       ? `${challenge.host.name} (${challenge.host.rating})`
       : challenge.host.name;
   return (
-    <li className="-mx-2 flex items-center justify-between gap-3 rounded-lg px-2 py-2.5 transition-colors hover:bg-white/[0.045]">
+    <li className="-mx-2 flex items-center justify-between gap-3 px-2 py-2.5 transition-colors hover:bg-white/[0.045]">
       <div className="min-w-0">
         <div className="truncate text-sm text-parchment-100">{host}</div>
         <div className="mt-0.5 flex items-center gap-1.5 smallcaps text-[9px] text-parchment-400">
@@ -509,7 +515,7 @@ function LiveGameRow({ game }: { game: MPLobbyGame }) {
   const clock =
     game.timeSec > 0 ? `${Math.round(game.timeSec / 60)}+${game.incrementSec}` : "No clock";
   return (
-    <li className="-mx-2 flex items-center justify-between gap-3 rounded-lg px-2 py-2.5 transition-colors hover:bg-white/[0.045]">
+    <li className="-mx-2 flex items-center justify-between gap-3 px-2 py-2.5 transition-colors hover:bg-white/[0.045]">
       <div className="min-w-0">
         <div className="truncate text-sm text-parchment-100">
           {name(game.players.w)} <span className="text-parchment-400">vs</span> {name(game.players.b)}

@@ -121,7 +121,7 @@ export const HEXES_T6: Buff[] = [
     {
       id: "leaden_fields",
       name: "Leaden Fields",
-      description: "Your opponent's pawns cannot advance for their next 6 turns.",
+      description: "Your opponent's pawns cannot advance straight forward for their next 6 turns. They may still capture diagonally, including en passant.",
       flavor: "Every furrow is poured full of lead.",
     },
     instant((_inst, api) => {

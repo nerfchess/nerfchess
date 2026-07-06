@@ -4,6 +4,7 @@
 
 import { Nerf } from "./shared";
 import { NERFS_T1 } from "./tier1";
+export { FOOTSOLDIERS_ONLY } from "./tier8";
 import { NERFS_T2 } from "./tier2";
 import { NERFS_T3 } from "./tier3";
 import { NERFS_T4 } from "./tier4";

@@ -38,9 +38,15 @@ import {
 import { BuffDock, EnemyBuffModal, TargetingBanner, useBuffTargeting } from "@/components/BuffDock";
 import { draftCardNoun, turnCost } from "@/engine/buff";
 import { draftZones } from "@/lib/draftOnline";
+import { computeFxVisual } from "@/components/effects/fxZones";
 import { MobileBuffDrawer } from "@/components/MobileBuffDrawer";
 import { DraftNotice } from "@/components/DraftNotice";
-import { DraftOverlay, LockInCountdown } from "@/components/DraftOverlay";
+import {
+  DraftOverlay,
+  DraftRevealBanner,
+  LockInCountdown,
+  type DraftRevealSide,
+} from "@/components/DraftOverlay";
 import { NerfCard } from "@/components/NerfCard";
 import { makeSeed } from "@/engine/rng";
 import { BoardState, Color, Move } from "@/engine/types";
@@ -375,14 +381,36 @@ function GamePage() {
   };
 
   // Feed of the cards the opponent (bot) has played. Each play shows in the
-  // top-right for 5 minutes (OppPlaysLog TTL), then lives permanently in the
-  // dock's "Opponent played" ledger, so nothing it did is ever unreadable.
+  // top-right for 10 seconds (OppPlaysLog TTL), then flies down into the
+  // dock's permanent "Opponent played" ledger, so nothing it did is ever
+  // unreadable.
   const [oppLog, setOppLog] = useState<OppPlay[]>([]);
   const oppKeyRef = useRef(0);
   const showOppUsedCard = (card: { id: string; tier: number }, label: string) => {
     // Bounded but roomy: the dock keeps the whole game's plays readable.
     setOppLog((log) => [...log, { key: oppKeyRef.current++, card, label, at: Date.now() }].slice(-60));
   };
+
+  // Shared reveal moment: when my pick commits and the bot's simultaneous
+  // resolution is known, show both briefly. The bot side follows the same
+  // visibility rules as the rest of the UI: instants are public at pick,
+  // everything else renders as a face-down back with its tier numeral.
+  const [draftReveal, setDraftReveal] = useState<{
+    mine: DraftRevealSide;
+    theirs: DraftRevealSide;
+  } | null>(null);
+  const botResolvedRef = useRef<DraftRevealSide | null>(null);
+  const maybeShowDraftReveal = (mine: DraftRevealSide) => {
+    const theirs = botResolvedRef.current;
+    if (!theirs) return;
+    botResolvedRef.current = null;
+    setDraftReveal({ mine, theirs });
+  };
+  useEffect(() => {
+    if (!draftReveal) return;
+    const id = window.setTimeout(() => setDraftReveal(null), 2500);
+    return () => window.clearTimeout(id);
+  }, [draftReveal]);
 
   // Draft mode: the bot resolves its pending buff drafts immediately.
   useEffect(() => {
@@ -401,6 +429,19 @@ function GamePage() {
           `Bot played a ${draftCardNoun(game.buffs.mode)}`,
         );
       }
+      // Hold the bot's resolution for the shared reveal that fires once my
+      // own pick commits. Identity shows only where the current rules
+      // already make it public (instants); other picks reveal tier alone.
+      botResolvedRef.current = gained.length
+        ? {
+            banked: false,
+            cards: gained.map((b) =>
+              BUFF_BY_ID[b.id]?.kind === "instant" && !b.nullified
+                ? { id: b.id, tier: b.tier }
+                : { tier: b.tier },
+            ),
+          }
+        : { banked: true, cards: [] };
       setGame({ ...game });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -535,7 +576,9 @@ function GamePage() {
         capturedByMe: game.captured[myColor],
         capturedFromMe: game.captured[myColor === "w" ? "b" : "w"],
       };
-      const options = premoveOptionsFor(board, myColor, myNerfForPremove, myStateForPremove, ctx);
+      // Passing the game unions buff-granted movement in, so a piece a card
+      // transformed/upgraded can be premoved with its real moves.
+      const options = premoveOptionsFor(board, myColor, myNerfForPremove, myStateForPremove, ctx, game);
       const match = options.find(
         (c) =>
           c.from === pm.from &&
@@ -563,7 +606,8 @@ function GamePage() {
       capturedByMe: game.captured[myColor],
       capturedFromMe: game.captured[myColor === "w" ? "b" : "w"],
     };
-    return premoveOptionsFor(virtualBoard, myColor, myNerfForPremove, myStateForPremove, ctx);
+    // The game argument unions buff-granted movement into the option set.
+    return premoveOptionsFor(virtualBoard, myColor, myNerfForPremove, myStateForPremove, ctx, game);
   }, [virtualBoard, myColor, game, myNerfForPremove, myStateForPremove]);
 
   // The board is in true premove mode only when it's the opponent's turn. When
@@ -995,6 +1039,9 @@ function GamePage() {
   // (Immobilizer auras included), shielded (sanctuary) squares, and barred
   // squares for both sides — the same painting the online match uses.
   const zone = draftZones(game, myColor);
+  // Effect kinds draftZones does not paint (king_safe shields, pawn-clamp
+  // fences, pending-skip stuns): shared derivation, same as OnlineMatch.
+  const fxZone = computeFxVisual(game);
   const opponentNerf = myColor === "w" ? game.black.nerf : game.white.nerf;
   const bsMine = game.buffs?.players[myColor];
   const bsTheirs = game.buffs?.players[myColor === "w" ? "b" : "w"];
@@ -1422,6 +1469,10 @@ function GamePage() {
                           walnutSquares: zone.walnut,
                           bananaSquares: zone.banana,
                           lockedSquares: zone.locked,
+                          barredSquares: zone.barred,
+                          kingSafeSquares: fxZone.kingSafeSquares,
+                          pawnClampSquares: fxZone.pawnClampSquares,
+                          stunSquares: fxZone.stunSquares,
                         }
                   }
                   lastMove={lastMoveForDisplay}
@@ -1581,6 +1632,17 @@ function GamePage() {
 
       <OppPlaysLog plays={oppLog} />
 
+      {/* Shared reveal moment: my pick committed and the bot's simultaneous
+          resolution is known. Non-blocking, click to dismiss, auto-dismisses
+          after 2.5s. */}
+      {draftReveal && !game.result && (
+        <DraftRevealBanner
+          mine={draftReveal.mine}
+          theirs={draftReveal.theirs}
+          onDismiss={() => setDraftReveal(null)}
+        />
+      )}
+
       {myOffer && !game.result && (
         <DraftOverlay
           offer={myOffer}
@@ -1603,11 +1665,20 @@ function GamePage() {
             setOfferOnClockIndex(offer.index);
           }}
           onPick={(i) => {
+            const before = game.buffs?.players[myColor].buffs.length ?? 0;
             pickDraftCard(game, myColor, i);
+            // My own cards are mine to see: the reveal names them all
+            // (take-both offers can land more than one).
+            const gained = game.buffs?.players[myColor].buffs.slice(before) ?? [];
+            maybeShowDraftReveal({
+              banked: false,
+              cards: gained.map((b) => ({ id: b.id, tier: b.tier })),
+            });
             setGame({ ...game });
           }}
           onBank={() => {
             bankDraft(game, myColor);
+            maybeShowDraftReveal({ banked: true, cards: [] });
             setGame({ ...game });
           }}
           opponent={{

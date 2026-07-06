@@ -128,7 +128,7 @@ export default function CommunityPage() {
             <h1 className="font-display text-4xl sm:text-5xl">Community</h1>
           </div>
           <div className="flex items-center gap-2 smallcaps text-[11px] text-parchment-300">
-            <span className="w-2 h-2 rounded-full bg-verdigris animate-flicker" />
+            <span className="w-2 h-2 bg-verdigris animate-flicker" />
             {onlineCount === null ? "Connecting…" : `${onlineCount} player${onlineCount === 1 ? "" : "s"} online`}
           </div>
         </div>
@@ -141,12 +141,12 @@ export default function CommunityPage() {
               <Link
                 key={card.href}
                 href={card.href}
-                className="plate plate-hover card-juicy group flex cursor-pointer items-center gap-3.5 p-4 no-underline"
+                className="plate corner-cut plate-hover card-juicy group flex cursor-pointer items-center gap-3.5 p-4 no-underline"
                 style={{ "--tier-rgb": card.rgb } as CSSProperties}
               >
                 <span
                   aria-hidden
-                  className="grid h-11 w-11 shrink-0 place-items-center rounded-[10px] border"
+                  className="grid h-11 w-11 shrink-0 place-items-center border"
                   style={{ background: `${card.hex}24`, borderColor: `${card.hex}59`, color: card.hex }}
                 >
                   <CardIcon size={20} />
@@ -337,7 +337,7 @@ function PlayerLine({
   return (
     <Link
       href={`/u/${encodeURIComponent(username)}`}
-      className={`${rowClass} group cursor-pointer rounded-[10px] px-2 -mx-2 transition hover:bg-white/[0.05]`}
+      className={`${rowClass} group cursor-pointer px-2 -mx-2 transition hover:bg-white/[0.05]`}
     >
       {body}
       <ChevronRight
@@ -356,7 +356,7 @@ function RecentGameRow({ game }: { game: RecentGame }) {
     <li>
       <Link
         href={`/game/${game.id}`}
-        className="group flex cursor-pointer items-center justify-between gap-3 rounded-[10px] px-2 -mx-2 py-2.5 transition hover:bg-white/[0.05]"
+        className="group flex cursor-pointer items-center justify-between gap-3 px-2 -mx-2 py-2.5 transition hover:bg-white/[0.05]"
       >
         <span className="min-w-0">
           <span className="block truncate text-sm text-parchment-100">

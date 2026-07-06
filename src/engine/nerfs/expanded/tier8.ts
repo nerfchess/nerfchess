@@ -9,6 +9,23 @@ import { tierNerf, filter, relRank, FILE, cheb, isInCheck } from "./shared";
 
 const N = tierNerf(8);
 
+// Retired duplicate: "Foot Soldiers Only" was mechanically identical to
+// Serf Labor (pawns and king only). It is kept OUT of the tier 8 pool and
+// the Codex, but stays resolvable by id (via RETIRED_NERFS in
+// implemented.ts) so replays and histories of old games still render.
+export const FOOTSOLDIERS_ONLY: Nerf = N(
+  {
+    id: "footsoldiers_only",
+    name: "Foot Soldiers Only",
+    description: "You can only move pawns and your king. Every other piece is rooted in place.",
+    flavor: "The generals have all deserted.",
+    icon: "users",
+  },
+  {
+    filterMoves: filter((m) => m.piece === "p" || m.piece === "k"),
+  },
+);
+
 export const NERFS_T8: Nerf[] = [
   N(
     {
@@ -17,18 +34,6 @@ export const NERFS_T8: Nerf[] = [
       description: "You can only move your pawns and your king. No other piece may ever move.",
       flavor: "The nobles sit idle while the peasants toil.",
       icon: "flag",
-    },
-    {
-      filterMoves: filter((m) => m.piece === "p" || m.piece === "k"),
-    },
-  ),
-  N(
-    {
-      id: "footsoldiers_only",
-      name: "Foot Soldiers Only",
-      description: "You can only move pawns and your king. Every other piece is rooted in place.",
-      flavor: "The generals have all deserted.",
-      icon: "users",
     },
     {
       filterMoves: filter((m) => m.piece === "p" || m.piece === "k"),

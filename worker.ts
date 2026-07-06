@@ -37,7 +37,13 @@ import {
 } from "./src/lib/server/bots";
 import { moveByUci, type EngineMatch } from "./src/engine/replay";
 import type { BuffInstance, BuffPick, DraftMode } from "./src/engine/buff";
-import { DEFAULT_CADENCE, NERF_MODE_CADENCE } from "./src/engine/draft";
+import {
+  DEFAULT_CADENCE,
+  NERF_MODE_CADENCE,
+  setDraftPoolOverrides,
+  type DraftPoolOverrides,
+} from "./src/engine/draft";
+import type { Nerf } from "./src/engine/nerf";
 import type { Move } from "./src/engine/types";
 import { RNG } from "./src/engine/rng";
 import { Color, PIECE_VALUE } from "./src/engine/types";
@@ -150,6 +156,11 @@ type StoredMatch = {
   // Seed for the draft engine RNG (offer rolls). Never sent to any client:
   // it would let a client predict every future offer.
   draftSeed?: number;
+  // Moderator card overrides that shape this game's draft pools (disabled
+  // buff ids and tier moves), frozen at match creation. Replays re-roll
+  // offers and resolve recorded pick indexes against them, so the snapshot
+  // must never change over the life of a match. Absent = no overrides.
+  cardOverrides?: DraftPoolOverrides;
   draftActions?: StoredDraftAction[];
   // Opening nerf draft (Draft games only). Dealt when the second seat
   // arrives; the match stays un-started (clocks off, moves rejected) until
@@ -376,7 +387,25 @@ type HouseSeekEntry = {
 // (deserializing every finished game's move history), which on a bloated table
 // blew the DO CPU limit before it could cache or GC anything: the crash loop.
 const liveIdsKey = "live:ids";
-const buildVersion = "achievements-2";
+const buildVersion = "transparency-1";
+// How long the moderator card-overrides snapshot (the card_overrides table:
+// disabled cards and tier moves) is cached in the DO before re-reading D1.
+// Loaded lazily on match creation and the opening nerf deal, never on a
+// per-message or per-alarm hot path. A card edit reaches NEW matches within
+// this long; a match keeps the snapshot it was created with for its whole
+// life, because recorded draft picks replay against re-rolled offers and a
+// pool that shifted mid-match would desync them.
+const cardOverridesTtlMs = 5 * 60 * 1000;
+// The DO-side digest of card_overrides: only the fields that shape pools.
+// Name/description/flavor overrides are display-only and never reach here.
+type CardOverridesSnapshot = {
+  /** Buff-card ids removed from draft pools (enabled = 0). */
+  buffOff?: string[];
+  /** Buff-card id -> overridden tier (1-8, differs from the code tier). */
+  buffTier?: Record<string, number>;
+  /** Nerf ids removed from opening deals (dealt pairs and the nerf draft). */
+  nerfOff?: string[];
+};
 // Lichess-style start-of-game grace: a player's clock only starts charging 10
 // seconds into their first move, so nobody loses time to a slow page load.
 const firstMoveGraceMs = 10 * 1000;
@@ -415,7 +444,15 @@ function makeSeed(): number {
   return randomInt(2 ** 31);
 }
 
-function pickNerfIds(): { whiteNerfId: string; blackNerfId: string } {
+// Deal the two secret rules for a new match, honoring moderator-disabled
+// nerfs (card_overrides). When the disable list would leave a degenerate pool
+// the full opening pool deals instead: a playable game beats the filter.
+function pickNerfIds(disabledNerfIds?: string[]): { whiteNerfId: string; blackNerfId: string } {
+  if (disabledNerfIds && disabledNerfIds.length > 0) {
+    const off = new Set(disabledNerfIds);
+    const pool = openingNerfPool().filter((nerf) => !off.has(nerf.id));
+    if (pool.length >= 2) return pickNerfPair(randomInt, pool);
+  }
   return pickNerfPair(randomInt);
 }
 
@@ -605,6 +642,67 @@ export class GameServer extends DurableObject<Env> {
     } catch {}
     this.houseEnabledCache = { value, at: now };
     return value;
+  }
+
+  // Moderator card overrides (the card_overrides table), digested down to the
+  // fields that shape pools: disabled buff/nerf ids and buff tier moves. One
+  // bounded SELECT (the table holds at most one row per card), cached for
+  // cardOverridesTtlMs and refreshed only from match creation and the opening
+  // nerf deal: never per message or per alarm tick. Any read error keeps the
+  // previous snapshot (or none), so a D1 blip can never block games.
+  private cardOverridesCache: { value: CardOverridesSnapshot; at: number } | null = null;
+  private async cardOverridesSnapshot(): Promise<CardOverridesSnapshot> {
+    const now = Date.now();
+    if (this.cardOverridesCache && now - this.cardOverridesCache.at < cardOverridesTtlMs) {
+      return this.cardOverridesCache.value;
+    }
+    let value: CardOverridesSnapshot = this.cardOverridesCache?.value ?? {};
+    try {
+      const db = await this.db();
+      if (db) {
+        const { results } = await db
+          .prepare(
+            "SELECT id, kind, tier, enabled FROM card_overrides WHERE enabled = 0 OR tier IS NOT NULL",
+          )
+          .all<{ id: string; kind: string; tier: number | null; enabled: number }>();
+        const next: CardOverridesSnapshot = {};
+        for (const row of results ?? []) {
+          if (row.kind === "buff") {
+            const def = BUFF_BY_ID[row.id];
+            if (!def) continue;
+            if (!row.enabled) {
+              (next.buffOff ??= []).push(row.id);
+            } else if (
+              row.tier != null &&
+              Number.isInteger(row.tier) &&
+              row.tier >= 1 &&
+              row.tier <= 8 &&
+              row.tier !== def.tier
+            ) {
+              (next.buffTier ??= {})[row.id] = row.tier;
+            }
+          } else if (row.kind === "nerf" && !row.enabled) {
+            (next.nerfOff ??= []).push(row.id);
+          }
+        }
+        value = next;
+      }
+    } catch {}
+    this.cardOverridesCache = { value, at: now };
+    return value;
+  }
+
+  // The buff-pool slice of the snapshot, in the shape stamped onto new draft
+  // matches (StoredMatch.cardOverrides). Undefined when there is nothing to
+  // apply, so untouched deployments keep byte-identical match records.
+  private draftPoolStamp(snap: CardOverridesSnapshot): DraftPoolOverrides | undefined {
+    const off = snap.buffOff ?? [];
+    const tier = snap.buffTier ?? {};
+    if (off.length === 0 && Object.keys(tier).length === 0) return undefined;
+    return {
+      ...(off.length > 0 ? { off: [...off] } : {}),
+      ...(Object.keys(tier).length > 0 ? { tier: { ...tier } } : {}),
+    };
   }
 
   // Top-level fetch: a thin guard around handleFetch so a transient storage
@@ -1357,24 +1455,32 @@ export class GameServer extends DurableObject<Env> {
     // N happened after N accepted moves, so replaying both streams through
     // the engine reproduces the RNG stream, offers, and board mutations
     // exactly. Classic matches carry no actions and take the same path.
-    const actions = match.draftActions ?? [];
-    let cursor = 0;
-    const applyActionsUpTo = (ply: number) => {
-      while (cursor < actions.length && actions[cursor].ply <= ply) {
-        this.applyStoredDraftAction(game, actions[cursor], cursor);
-        cursor += 1;
+    // The match's frozen card-overrides snapshot is installed for the whole
+    // replay so offers re-roll from exactly the pools they first rolled from,
+    // and cleared in the finally so no other game's rolls ever see it.
+    setDraftPoolOverrides(match.draft ? match.cardOverrides ?? null : null);
+    try {
+      const actions = match.draftActions ?? [];
+      let cursor = 0;
+      const applyActionsUpTo = (ply: number) => {
+        while (cursor < actions.length && actions[cursor].ply <= ply) {
+          this.applyStoredDraftAction(game, actions[cursor], cursor);
+          cursor += 1;
+        }
+      };
+      for (let i = 0; i < match.moves.length; i++) {
+        applyActionsUpTo(i);
+        const move = moveByUci(game, match.moves[i]);
+        if (!move) return null;
+        if (match.draft) this.markViaRevealed(game, move);
+        game = playMove(game, move);
       }
-    };
-    for (let i = 0; i < match.moves.length; i++) {
-      applyActionsUpTo(i);
-      const move = moveByUci(game, match.moves[i]);
-      if (!move) return null;
-      if (match.draft) this.markViaRevealed(game, move);
-      game = playMove(game, move);
+      applyActionsUpTo(match.moves.length);
+      if (match.result) game.result = match.result;
+      return game;
+    } finally {
+      setDraftPoolOverrides(null);
     }
-    applyActionsUpTo(match.moves.length);
-    if (match.result) game.result = match.result;
-    return game;
   }
 
   // Rebuild the live game for a play-path caller (moves, resigns, draft
@@ -1613,6 +1719,10 @@ export class GameServer extends DurableObject<Env> {
       session.userId && typeof requested.invite === "string" ? requested.invite.trim().slice(0, 30) : "";
 
     const id = await this.newCode();
+    // Moderator card overrides: disabled nerfs leave the dealt pair, and the
+    // draft-pool slice is frozen onto the match record (see cardOverrides).
+    const cardSnap = await this.cardOverridesSnapshot();
+    const cardOverrides = draft ? this.draftPoolStamp(cardSnap) : undefined;
     const match: StoredMatch = {
       id,
       setup: {
@@ -1620,7 +1730,7 @@ export class GameServer extends DurableObject<Env> {
         // "none" rule instead of dealt nerfs.
         ...(mode === "buff"
           ? { whiteNerfId: UNRESTRICTED_NERF.id, blackNerfId: UNRESTRICTED_NERF.id }
-          : pickNerfIds()),
+          : pickNerfIds(cardSnap.nerfOff)),
         seed: makeSeed(),
         timeSec,
         incrementSec,
@@ -1646,6 +1756,7 @@ export class GameServer extends DurableObject<Env> {
             ...(stacked ? { stacked: true } : {}),
             cadence: mode === "nerf" ? NERF_MODE_CADENCE : DEFAULT_CADENCE,
             draftSeed: makeSeed(),
+            ...(cardOverrides ? { cardOverrides } : {}),
             draftActions: [],
           }
         : {}),
@@ -1831,7 +1942,15 @@ export class GameServer extends DurableObject<Env> {
       this.sendDraftState(match, game);
       this.sendWatcherDraftState(match, game);
     }
-    const nextGame = playMove(game, move);
+    // Live moves roll offers under the same frozen overrides snapshot the
+    // rebuild path uses; cleared right after so nothing else inherits it.
+    setDraftPoolOverrides(match.draft ? match.cardOverrides ?? null : null);
+    let nextGame: NerfGame;
+    try {
+      nextGame = playMove(game, move);
+    } finally {
+      setDraftPoolOverrides(null);
+    }
     match.moves.push(uci);
     // Draft games: extra moves and skips can leave the turn off parity.
     if (match.draft) match.turnColor = nextGame.board.turn;
@@ -2225,6 +2344,8 @@ export class GameServer extends DurableObject<Env> {
       avatar: opponent.avatar ?? null,
     };
     const id = await this.newCode(8);
+    const cardSnap = await this.cardOverridesSnapshot();
+    const cardOverrides = this.draftPoolStamp(cardSnap);
     const match: StoredMatch = {
       id,
       setup: {
@@ -2233,7 +2354,7 @@ export class GameServer extends DurableObject<Env> {
         // draft replaces both ids once the players pick.
         ...(mode === "buff"
           ? { whiteNerfId: UNRESTRICTED_NERF.id, blackNerfId: UNRESTRICTED_NERF.id }
-          : pickNerfIds()),
+          : pickNerfIds(cardSnap.nerfOff)),
         seed: makeSeed(),
         timeSec: pool.timeSec,
         incrementSec: pool.incrementSec,
@@ -2260,6 +2381,7 @@ export class GameServer extends DurableObject<Env> {
       picksVisible: false,
       cadence: mode === "nerf" ? NERF_MODE_CADENCE : DEFAULT_CADENCE,
       draftSeed: makeSeed(),
+      ...(cardOverrides ? { cardOverrides } : {}),
       draftActions: [],
     };
     await this.saveMatch(match);
@@ -2908,12 +3030,14 @@ export class GameServer extends DurableObject<Env> {
   ): Promise<StoredMatch> {
     const pool = QUEUE_POOLS[poolName];
     const id = await this.newCode(8);
+    const cardSnap = await this.cardOverridesSnapshot();
+    const cardOverrides = this.draftPoolStamp(cardSnap);
     return {
       id,
       setup: {
         ...(mode === "buff"
           ? { whiteNerfId: UNRESTRICTED_NERF.id, blackNerfId: UNRESTRICTED_NERF.id }
-          : pickNerfIds()),
+          : pickNerfIds(cardSnap.nerfOff)),
         seed: makeSeed(),
         timeSec: pool.timeSec,
         incrementSec: pool.incrementSec,
@@ -2938,6 +3062,7 @@ export class GameServer extends DurableObject<Env> {
       picksVisible: false,
       cadence: mode === "nerf" ? NERF_MODE_CADENCE : DEFAULT_CADENCE,
       draftSeed: makeSeed(),
+      ...(cardOverrides ? { cardOverrides } : {}),
       draftActions: [],
       bots: seats.bots,
     };
@@ -3437,12 +3562,16 @@ export class GameServer extends DurableObject<Env> {
     }
 
     const id = await this.newCode(match.rated ? 8 : 5);
+    // A rematch is a NEW match: it takes the current overrides snapshot, not
+    // the finished game's, so fresh card edits reach rematches too.
+    const cardSnap = await this.cardOverridesSnapshot();
+    const cardOverrides = match.draft ? this.draftPoolStamp(cardSnap) : undefined;
     const rematch: StoredMatch = {
       id,
       setup: {
         ...(match.mode === "buff"
           ? { whiteNerfId: UNRESTRICTED_NERF.id, blackNerfId: UNRESTRICTED_NERF.id }
-          : pickNerfIds()),
+          : pickNerfIds(cardSnap.nerfOff)),
         seed: makeSeed(),
         timeSec: match.setup.timeSec,
         incrementSec: match.setup.incrementSec,
@@ -3469,6 +3598,7 @@ export class GameServer extends DurableObject<Env> {
             picksVisible: !!match.picksVisible,
             cadence: match.mode === "nerf" ? NERF_MODE_CADENCE : DEFAULT_CADENCE,
             draftSeed: makeSeed(),
+            ...(cardOverrides ? { cardOverrides } : {}),
             draftActions: [],
           }
         : {}),
@@ -3929,9 +4059,13 @@ export class GameServer extends DurableObject<Env> {
     master.fork(); // skip: black's nerf seed
     const rng = master.fork();
 
-    // The deal draws from the capped opening pool: tiers 1-2 only for now
-    // (see MAX_OPENING_NERF_TIER in the nerf library).
-    const pool = openingNerfPool();
+    // The deal draws from the capped opening pool (see MAX_OPENING_NERF_TIER
+    // in the nerf library), minus any moderator-disabled nerfs
+    // (card_overrides; beginNerfDraft warms the cached snapshot first). When
+    // the disable list leaves no feasible tier pairing, the unfiltered pool
+    // deals instead: a playable deal beats honoring the filter.
+    const off = new Set(this.cardOverridesCache?.value.nerfOff ?? []);
+    let pool: Nerf[] = openingNerfPool().filter((nerf) => !off.has(nerf.id));
     const ofTier = (tier: number) => pool.filter((nerf) => nerf.tier === tier);
     const takeOne = (tier: number, taken: Set<string>): string => {
       const candidates = ofTier(tier).filter((nerf) => !taken.has(nerf.id));
@@ -3946,10 +4080,18 @@ export class GameServer extends DurableObject<Env> {
       partner === anchor
         ? ofTier(anchor).length >= 4
         : ofTier(anchor).length >= 2 && ofTier(partner).length >= 2;
-    const tiers = [...new Set(pool.map((nerf) => nerf.tier))];
-    const anchorTiers = tiers.filter((anchor) =>
-      tiers.some((partner) => Math.abs(partner - anchor) <= 1 && feasible(anchor, partner)),
-    );
+    const tiersOf = () => [...new Set(pool.map((nerf) => nerf.tier))];
+    const anchorsOf = (candidates: number[]) =>
+      candidates.filter((anchor) =>
+        candidates.some((partner) => Math.abs(partner - anchor) <= 1 && feasible(anchor, partner)),
+      );
+    let tiers = tiersOf();
+    let anchorTiers = anchorsOf(tiers);
+    if (anchorTiers.length === 0) {
+      pool = openingNerfPool();
+      tiers = tiersOf();
+      anchorTiers = anchorsOf(tiers);
+    }
     const anchorTier = anchorTiers[rng.int(anchorTiers.length)];
     const partnerTiers = tiers.filter(
       (partner) => Math.abs(partner - anchorTier) <= 1 && feasible(anchorTier, partner),
@@ -3970,6 +4112,10 @@ export class GameServer extends DurableObject<Env> {
   // moves and buff frames rejected with nerf_pending) until both picks land.
   private async beginNerfDraft(match: StoredMatch) {
     if (!match.nerfOptions) {
+      // Warm the card-overrides snapshot so the (synchronous) deal below can
+      // read the disabled-nerf list from the cache. The dealt options are
+      // persisted, so a later snapshot refresh can never re-deal them.
+      await this.cardOverridesSnapshot();
       match.nerfOptions = this.dealNerfDraftOptions(match);
       // 15 second lock-in: the pick auto-resolves at the deadline so a
       // stalling (or vanished) player cannot hold the table hostage.

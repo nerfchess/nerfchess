@@ -143,7 +143,7 @@ export const HEXES_T4: Buff[] = [
     {
       id: "frozen_furrows",
       name: "Frozen Furrows",
-      description: "Your opponent's pawns cannot advance for their next 3 turns.",
+      description: "Your opponent's pawns cannot advance for their next 3 turns. They may still capture diagonally.",
       flavor: "The fields freeze over and nothing moves forward.",
     },
     instant((_inst, api) => {

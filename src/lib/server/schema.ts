@@ -278,6 +278,21 @@ export const SCHEMA_STATEMENTS: string[] = [
     PRIMARY KEY (user_id, achievement_id)
   )`,
   `CREATE INDEX IF NOT EXISTS idx_user_achievements_user ON user_achievements(user_id, unlocked_at)`,
+  // Buff/nerf card metadata overrides a moderator edits at runtime (name,
+  // description, flavor, tier, enabled) so card copy and draft availability
+  // change without a deploy. At most one row per card id; NULL column = no
+  // override, fall through to the code definition. Card logic stays in code.
+  // kind is 'buff' or 'nerf'. Mirrors migrations/0019_card_overrides.sql.
+  `CREATE TABLE IF NOT EXISTS card_overrides (
+    id TEXT PRIMARY KEY,
+    kind TEXT NOT NULL,
+    name TEXT,
+    description TEXT,
+    flavor TEXT,
+    tier INTEGER,
+    enabled INTEGER NOT NULL DEFAULT 1,
+    updated_at INTEGER
+  )`,
 ];
 
 // Columns added after launch. SQLite has no "ADD COLUMN IF NOT EXISTS", so
