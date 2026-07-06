@@ -521,8 +521,14 @@ export function timedOppFilter(
     init: (inst) => {
       inst.state.turns = turns;
     },
-    filterOpponentMoves: (moves, inst, api) =>
-      turnsLeft(inst) > 0 ? filter(moves, inst, api) : moves,
+    filterOpponentMoves: (moves, inst, api) => {
+      if (turnsLeft(inst) <= 0) return moves;
+      const filtered = filter(moves, inst, api);
+      // Safety net: a timed opponent filter must never strand the opponent
+      // with zero moves. Every current caller is a partial filter, but this
+      // guard means no future caller can hard-lock a turn either.
+      return filtered.length > 0 ? filtered : moves;
+    },
     onMovePlayed: (inst, move, api) => tickTurns(inst, move, api.me),
     status: (inst) => `${turnsLeft(inst)} of your turns left`,
   };
