@@ -26,6 +26,8 @@ const soundPrefs = {
   capture: true,
   check: true,
   gameEnd: true,
+  /** Card/board effect sounds (explosions, chains, shields, poofs...). */
+  effects: true,
   theme: "lichess" as SoundTheme,
 };
 
@@ -424,4 +426,70 @@ export function playError() {
   if (!soundPrefs.enabled) return;
   if (playSample("Error", 0.7)) return;
   tone({ freq: 330, dur: 0.14, type: "square", gain: 0.10, attack: 0.003, release: 0.10 });
+}
+
+// --- Card / board effect sounds ---------------------------------------------
+// One short synthesized voice per effect family, matching the board's motif
+// animations (chains clamp, shields raise, pieces detonate...). All gated by
+// the `effects` pref plus mute, all Web Audio (no samples to load), all under
+// half a second so stacked effects never turn into noise soup.
+
+const fx = () => soundPrefs.enabled && soundPrefs.effects && !isMuted();
+
+/** Detonation: a piece removed by an attack card blows up. A deep body thump
+ * under a wide noise burst, with a fast downward rumble tail. */
+export function playExplosion() {
+  if (!fx()) return;
+  knock({ filterFreq: 240, filterQ: 0.8, dur: 0.22, gain: 0.7, bodyFreq: 90, bodyGain: 0.6, bodyDur: 0.2 });
+  knock({ filterFreq: 1400, filterQ: 0.7, dur: 0.1, gain: 0.3, delay: 0.012 });
+  tone({ freq: 130, dur: 0.28, type: "sawtooth", gain: 0.1, sweep: 46, release: 0.2, delay: 0.02 });
+}
+
+/** Chains clamp onto a jailed piece: two metallic clanks, second lower. */
+export function playChains() {
+  if (!fx()) return;
+  knock({ filterFreq: 2600, filterQ: 9, dur: 0.06, gain: 0.34, bodyFreq: 300, bodyGain: 0.14, bodyDur: 0.05 });
+  knock({ filterFreq: 1900, filterQ: 9, dur: 0.08, gain: 0.3, bodyFreq: 210, bodyGain: 0.18, bodyDur: 0.07, delay: 0.09 });
+}
+
+/** Shield raised: a short metallic "shing" that rises and rings briefly. */
+export function playShieldUp() {
+  if (!fx()) return;
+  tone({ freq: 880, dur: 0.1, type: "triangle", gain: 0.12, sweep: 1320, release: 0.12 });
+  tone({ freq: 2640, dur: 0.16, type: "sine", gain: 0.05, attack: 0.01, release: 0.2, delay: 0.05 });
+}
+
+/** Freeze lands: a thin icy shimmer sliding downward. */
+export function playFreeze() {
+  if (!fx()) return;
+  tone({ freq: 2800, dur: 0.2, type: "sine", gain: 0.06, sweep: 1900, release: 0.18 });
+  tone({ freq: 3600, dur: 0.14, type: "sine", gain: 0.035, sweep: 2600, release: 0.16, delay: 0.04 });
+}
+
+/** Transform / promotion flourish: quick rising sweep with a sparkle top. */
+export function playTransform() {
+  if (!fx()) return;
+  tone({ freq: 520, dur: 0.16, type: "triangle", gain: 0.12, sweep: 1040, release: 0.12 });
+  tone({ freq: 1560, dur: 0.12, type: "sine", gain: 0.07, attack: 0.008, release: 0.18, delay: 0.12 });
+  tone({ freq: 2080, dur: 0.12, type: "sine", gain: 0.05, attack: 0.008, release: 0.18, delay: 0.17 });
+}
+
+/** Summon poof: a soft air puff with a low whoomp underneath. */
+export function playSummon() {
+  if (!fx()) return;
+  knock({ filterFreq: 900, filterQ: 0.9, dur: 0.14, gain: 0.28, bodyFreq: 150, bodyGain: 0.22, bodyDur: 0.12 });
+}
+
+/** Banana slip: a comedic falling whistle ending in a soft plop. */
+export function playSlip() {
+  if (!fx()) return;
+  tone({ freq: 1200, dur: 0.28, type: "sine", gain: 0.1, sweep: 350, release: 0.08 });
+  knock({ filterFreq: 500, filterQ: 2, dur: 0.06, gain: 0.3, bodyFreq: 120, bodyGain: 0.2, bodyDur: 0.07, delay: 0.3 });
+}
+
+/** Skip / stun: a dazed two-note wobble. */
+export function playStun() {
+  if (!fx()) return;
+  tone({ freq: 440, dur: 0.12, type: "triangle", gain: 0.1, sweep: 392, release: 0.1 });
+  tone({ freq: 392, dur: 0.18, type: "triangle", gain: 0.09, sweep: 330, release: 0.14, delay: 0.14 });
 }
