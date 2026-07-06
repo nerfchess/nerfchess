@@ -43,22 +43,11 @@ interface Props {
   };
 }
 
-/** Thin lock-in countdown: bar plus seconds. Silent by design: picking a
- * card should not come with time-pressure noise. */
-export function LockInCountdown({
-  deadline,
-  onExpire,
-  className = "",
-}: {
-  deadline: number;
-  onExpire?: () => void;
-  className?: string;
-}) {
-  const total = 15_000;
+/** Shared countdown tick: milliseconds left plus a one-shot expiry callback
+ * that always sees the latest closure. */
+function useCountdown(deadline: number, onExpire?: () => void) {
   const [leftMs, setLeftMs] = useState(() => Math.max(0, deadline - Date.now()));
   const expiredRef = useRef(false);
-  // The interval closure survives re-renders; always call the latest
-  // onExpire so it sees current selection state, not a stale snapshot.
   const onExpireRef = useRef(onExpire);
   onExpireRef.current = onExpire;
 
@@ -73,9 +62,24 @@ export function LockInCountdown({
       }
     }, 100);
     return () => window.clearInterval(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deadline]);
 
+  return leftMs;
+}
+
+/** Thin lock-in countdown: bar plus seconds. Silent by design: picking a
+ * card should not come with time-pressure noise. */
+export function LockInCountdown({
+  deadline,
+  onExpire,
+  className = "",
+}: {
+  deadline: number;
+  onExpire?: () => void;
+  className?: string;
+}) {
+  const total = 15_000;
+  const leftMs = useCountdown(deadline, onExpire);
   const seconds = Math.ceil(leftMs / 1000);
   const fraction = Math.max(0, Math.min(1, leftMs / total));
   const urgent = leftMs <= 5000;
@@ -99,6 +103,81 @@ export function LockInCountdown({
   );
 }
 
+/** The draft clock as its own floating glass window, pinned above the draft
+ * panel: a ring that drains with the free window plus big tabular digits.
+ * Separate from the card panel so time pressure reads at a glance without
+ * crowding the cards. */
+function DraftTimerWindow({ deadline, onExpire }: { deadline: number; onExpire?: () => void }) {
+  const total = 15_000;
+  const leftMs = useCountdown(deadline, onExpire);
+  const seconds = Math.ceil(leftMs / 1000);
+  const fraction = Math.max(0, Math.min(1, leftMs / total));
+  const urgent = leftMs <= 5000;
+  // r=15.5 keeps the 2.5-width stroke inside the 36px viewBox.
+  const CIRC = 2 * Math.PI * 15.5;
+  return (
+    <div
+      role="timer"
+      aria-label="Draft lock-in timer"
+      className="pointer-events-none fixed left-1/2 top-3 z-[60] -translate-x-1/2"
+    >
+      <div className={"draft-timer flex items-center gap-3 px-4 py-2 " + (urgent ? "draft-timer--urgent" : "")}>
+        <svg width="36" height="36" viewBox="0 0 36 36" aria-hidden className="-rotate-90">
+          <circle cx="18" cy="18" r="15.5" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="2.5" />
+          <circle
+            cx="18"
+            cy="18"
+            r="15.5"
+            fill="none"
+            stroke={urgent ? "#dc5a54" : "#4a9fee"}
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeDasharray={CIRC}
+            strokeDashoffset={CIRC * (1 - fraction)}
+            style={{ transition: "stroke-dashoffset 100ms linear, stroke 300ms ease" }}
+          />
+        </svg>
+        <div className="leading-none">
+          <div className="smallcaps text-[9px] text-parchment-400">Lock in</div>
+          <div
+            className={
+              "mt-1 font-mono text-2xl font-bold tabular-nums " +
+              (urgent ? "text-oxblood-glow" : "text-parchment-50")
+            }
+          >
+            {seconds}
+            <span className="ml-0.5 text-sm font-semibold text-parchment-400">s</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Where the confirmed card flies: the buff dock ("your pocket") if it is
+ * visible, otherwise off toward the bottom-left where the mobile drawer
+ * lives. Returns the translation from the card's current center. */
+function pocketDelta(cardEl: HTMLElement | null): { dx: number; dy: number } {
+  const fallback = { dx: -180, dy: 220 };
+  if (!cardEl) return fallback;
+  const c = cardEl.getBoundingClientRect();
+  const cx = c.left + c.width / 2;
+  const cy = c.top + c.height / 2;
+  const dock = document.querySelector("[data-buff-dock]");
+  if (dock) {
+    const d = (dock as HTMLElement).getBoundingClientRect();
+    // A hidden dock (mobile: it lives in a closed drawer) measures ~0.
+    if (d.width > 40 && d.height > 40) {
+      return {
+        dx: d.left + d.width / 2 - cx,
+        dy: d.top + Math.min(d.height / 2, 140) - cy,
+      };
+    }
+  }
+  // Mobile: the buff drawer handle sits along the bottom edge.
+  return { dx: -cx + 48, dy: window.innerHeight - cy - 24 };
+}
+
 export function DraftOverlay({
   offer,
   takeBoth,
@@ -118,25 +197,36 @@ export function DraftOverlay({
   const oppOffer = opponent?.offer ?? null;
   // Two-step pick: the first click only selects (highlight); the Confirm
   // button (or a second click on the same card) locks it in. `chosen` is the
-  // confirmed card sliding toward the dock before the pick is committed:
-  // fast and subtle, well under half a second.
+  // confirmed card sliding into the pocket (the buff dock) before the pick
+  // commits.
   const [selected, setSelected] = useState<number | null>(null);
   const [chosen, setChosen] = useState<number | null>(null);
+  // Measured flight path from the chosen card to the dock, captured at
+  // confirm time (measuring during render would thrash layout).
+  const [pocket, setPocket] = useState<{ dx: number; dy: number } | null>(null);
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const committedRef = useRef(false);
 
   useEffect(() => {
     setSelected(null);
     setChosen(null);
+    setPocket(null);
     committedRef.current = false;
     // A fresh offer demands attention: the board is blocked until it resolves.
     playDraftChime();
   }, [offer.index]);
 
+  const confirmCard = (i: number) => {
+    if (chosen != null) return;
+    setPocket(pocketDelta(cardRefs.current[i]));
+    setChosen(i);
+  };
+
   const choose = (i: number) => {
     if (chosen != null) return;
     if (selected === i) {
       // Second click on the selected card confirms it.
-      setChosen(i);
+      confirmCard(i);
       return;
     }
     setSelected(i);
@@ -144,7 +234,7 @@ export function DraftOverlay({
 
   const confirmSelection = () => {
     if (chosen != null || selected == null) return;
-    setChosen(selected);
+    confirmCard(selected);
   };
 
   const commit = (i: number) => {
@@ -175,13 +265,9 @@ export function DraftOverlay({
             </span>
             <span className="smallcaps text-[9px] text-oxblood-glow">On your clock</span>
           </div>
-          {takeBoth ? (
+          {takeBoth && (
             <p className="mt-1 text-[11px] font-semibold leading-snug text-gold-leaf">
-              You take BOTH cards: picking any card takes the whole offer.
-            </p>
-          ) : (
-            <p className="mt-1 text-[11px] leading-snug text-parchment-300">
-              Still yours to pick, but the clock is running now.
+              Picking any card takes the whole offer.
             </p>
           )}
           <div className="mt-2 space-y-1.5">
@@ -232,10 +318,11 @@ export function DraftOverlay({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-3 sm:px-4">
+      {deadline != null && <DraftTimerWindow deadline={deadline} onExpire={handleExpire} />}
       <motion.div
         initial={{ opacity: 0, y: 16, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        className="plate min-w-0 w-full max-w-2xl max-h-[90dvh] overflow-y-auto overflow-x-hidden p-5 sm:p-8 lg:max-w-3xl"
+        className="plate min-w-0 w-full max-w-2xl max-h-[86dvh] overflow-y-auto overflow-x-hidden p-5 sm:p-8 lg:max-w-3xl"
       >
         <div className="flex items-center justify-between gap-4">
           <div className="smallcaps text-[11px] text-parchment-400">{nounCap} draft #{offer.index}</div>
@@ -258,33 +345,27 @@ export function DraftOverlay({
             ? "Choose a hex or a boon"
             : `Choose a ${noun}`}
         </h2>
-        {takeBoth && (
-          <div
-            role="status"
-            className="mt-2 inline-flex items-center gap-2 border border-gold/60 bg-gold/15 px-3 py-1"
-          >
-            <span aria-hidden className="h-1.5 w-1.5 shrink-0 bg-gold-leaf animate-flicker" />
-            <span className="font-display text-xs font-bold tracking-wide text-gold-leaf">
-              You take BOTH cards this draft
-            </span>
+        {(takeBoth || bankedBonus) && (
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            {takeBoth && (
+              <div
+                role="status"
+                className="inline-flex items-center gap-2 border border-gold/60 bg-gold/15 px-3 py-1"
+              >
+                <span aria-hidden className="h-1.5 w-1.5 shrink-0 bg-gold-leaf animate-flicker" />
+                <span className="font-display text-xs font-bold tracking-wide text-gold-leaf">
+                  You take BOTH cards this draft
+                </span>
+              </div>
+            )}
+            {bankedBonus && (
+              <div className="inline-flex items-center gap-2 border border-white/20 bg-white/[0.05] px-3 py-1">
+                <span className="font-display text-xs font-semibold tracking-wide text-parchment-200">
+                  +1 tier from your banked skip
+                </span>
+              </div>
+            )}
           </div>
-        )}
-        <p className="mt-1 text-sm text-parchment-300">
-          {takeBoth
-            ? "A draft-manipulation card lets you take every card in this offer."
-            : "Pick one card, or skip and bank the draft to pull from one tier higher next time."}
-          {!takeBoth &&
-            noun === "hex" &&
-            " Hexes curse your opponent; boons and items help you."}
-          {bankedBonus && " This draft rolled a tier higher thanks to your banked skip."}
-        </p>
-        {deadline != null && (
-          <>
-            <LockInCountdown deadline={deadline} onExpire={handleExpire} className="mt-3" />
-            <p className="mt-1 text-[10px] text-parchment-400">
-              When the timer runs out this panel moves aside and further thinking costs your own time.
-            </p>
-          </>
         )}
 
         <div className={`mt-5 grid gap-3 lg:gap-4 ${offer.cards.length >= 3 ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
@@ -296,6 +377,9 @@ export function DraftOverlay({
                 // Key by the offer index so a fresh draft remounts the cards,
                 // replaying the entrance rise and the tier-scaled reveal sweep.
                 key={`${offer.index}-${i}`}
+                ref={(el) => {
+                  cardRefs.current[i] = el;
+                }}
                 data-tier={card.tier}
                 // The reveal sweep waits for this card's own staggered entrance
                 // (the framer transition delay below) to settle before it
@@ -303,21 +387,32 @@ export function DraftOverlay({
                 style={{ ["--enter-delay" as string]: `${i * 70}ms` }}
                 className={
                   "draft-fx mx-auto w-full max-w-md sm:max-w-none " +
-                  (selected === i && chosen == null ? "ring-2 ring-gold shadow-leaf" : "")
+                  (selected === i && chosen == null ? "draft-fx--selected" : "")
                 }
                 // Higher-tier cards land with a touch more pop: a deeper rise
                 // and a longer settle scale the drama with the card's tier.
                 initial={{ opacity: 0, y: 10 + card.tier * 2, scale: 0.94 - card.tier * 0.006 }}
                 animate={
                   chosen === i
-                    ? { x: -140, y: 180, scale: 0.35, opacity: 0 }
+                    ? {
+                        // Into the pocket: the confirmed card arcs toward the
+                        // dock (measured at confirm time), shrinking as it
+                        // goes, and fades just before it lands.
+                        x: pocket?.dx ?? -180,
+                        y: pocket?.dy ?? 220,
+                        scale: 0.18,
+                        rotate: -5,
+                        opacity: [1, 1, 0.85, 0],
+                      }
                     : chosen != null
-                    ? { opacity: 0.15 }
+                    ? { opacity: 0.12 }
                     : // Once a card is selected the others dim to focus it.
                       { opacity: selected != null && selected !== i ? 0.55 : 1, y: 0, scale: 1 }
                 }
                 transition={
-                  chosen != null
+                  chosen === i
+                    ? { duration: 0.55, ease: [0.3, 0.05, 0.2, 1], opacity: { times: [0, 0.6, 0.85, 1] } }
+                    : chosen != null
                     ? { duration: 0.3, ease: "easeIn" }
                     : {
                         duration: 0.34 + card.tier * 0.03,
@@ -341,65 +436,59 @@ export function DraftOverlay({
           })}
         </div>
 
-        {selected != null && chosen == null && (
-          <div className="mt-4 flex items-center justify-center gap-3">
-            <button
-              onClick={confirmSelection}
-              className="btn-leaf px-6 py-2.5 font-display text-sm font-semibold tracking-wide"
-            >
-              Confirm pick
-            </button>
-            <span className="text-[11px] text-parchment-400">
-              Clicking the card again also confirms.
-            </span>
-          </div>
-        )}
-
-        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-center">
+          <button
+            onClick={confirmSelection}
+            disabled={selected == null || chosen != null}
+            className="btn-glass btn-glass--primary w-full px-8 py-3 font-display text-base font-semibold tracking-wide sm:w-auto"
+          >
+            {selected != null ? "Confirm pick" : "Pick a card"}
+          </button>
           <button
             onClick={chosen == null ? onBank : undefined}
             disabled={chosen != null}
-            className="w-full sm:w-auto shrink-0 px-4 py-2 border border-white/15 bg-white/[0.03] text-parchment-200 hover:border-gold/50 hover:text-gold-leaf transition text-xs font-display font-semibold tracking-wide disabled:opacity-40"
+            className="btn-glass w-full px-6 py-3 font-display text-sm font-semibold tracking-wide sm:w-auto"
             title="Skip this draft; your next one pulls from a tier higher"
           >
-            Skip &amp; bank (+1 tier next draft)
+            Skip &amp; bank <span className="ml-1 text-parchment-400">+1 tier next draft</span>
           </button>
-          {opponent && (
-            <div className="min-w-0 w-full break-words text-left sm:w-auto sm:text-right text-[11px] text-parchment-400 leading-snug">
-              {oppOffer && opponent.showCards ? (
-                <span>
-                  Opponent&apos;s draft:{" "}
-                  {oppOffer.cards
-                    .map((c) => `${BUFF_BY_ID[c.id]?.name ?? c.id} (T${c.tier})`)
-                    .join(" · ")}
-                </span>
-              ) : oppOffer && opponent.showTier ? (
-                <span>
-                  Opponent is drafting at tier{" "}
-                  {Math.max(...oppOffer.cards.map((c) => c.tier))}
-                </span>
-              ) : opponent.reveal?.cards ? (
-                <span>
-                  Revealed draft #{opponent.reveal.index}:{" "}
-                  {opponent.reveal.cards
-                    .map((c) => `${BUFF_BY_ID[c.id]?.name ?? c.id} (T${c.tier})`)
-                    .join(" · ")}
-                </span>
-              ) : opponent.reveal?.tier != null ? (
-                <span>
-                  Revealed draft #{opponent.reveal.index} rolled tier {opponent.reveal.tier}
-                </span>
-              ) : opponent.lastPick && BUFF_BY_ID[opponent.lastPick.id] ? (
-                <span>
-                  Opponent last drafted:{" "}
-                  {BUFF_BY_ID[opponent.lastPick.id]?.name}
-                </span>
-              ) : (
-                <span>Opponent&apos;s draft is hidden</span>
-              )}
-            </div>
-          )}
         </div>
+
+        {opponent && (
+          <div className="mt-4 border-t border-white/10 pt-3 text-center text-[11px] leading-snug text-parchment-400">
+            {oppOffer && opponent.showCards ? (
+              <span>
+                Opponent&apos;s draft:{" "}
+                {oppOffer.cards
+                  .map((c) => `${BUFF_BY_ID[c.id]?.name ?? c.id} (T${c.tier})`)
+                  .join(" · ")}
+              </span>
+            ) : oppOffer && opponent.showTier ? (
+              <span>
+                Opponent is drafting at tier{" "}
+                {Math.max(...oppOffer.cards.map((c) => c.tier))}
+              </span>
+            ) : opponent.reveal?.cards ? (
+              <span>
+                Revealed draft #{opponent.reveal.index}:{" "}
+                {opponent.reveal.cards
+                  .map((c) => `${BUFF_BY_ID[c.id]?.name ?? c.id} (T${c.tier})`)
+                  .join(" · ")}
+              </span>
+            ) : opponent.reveal?.tier != null ? (
+              <span>
+                Revealed draft #{opponent.reveal.index} rolled tier {opponent.reveal.tier}
+              </span>
+            ) : opponent.lastPick && BUFF_BY_ID[opponent.lastPick.id] ? (
+              <span>
+                Opponent last drafted:{" "}
+                {BUFF_BY_ID[opponent.lastPick.id]?.name}
+              </span>
+            ) : (
+              <span>Opponent&apos;s draft is hidden</span>
+            )}
+          </div>
+        )}
       </motion.div>
     </div>
   );

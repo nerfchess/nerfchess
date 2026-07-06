@@ -267,6 +267,8 @@ export interface Buff {
   id: string;
   name: string;
   description: string;
+  /** One-line flavor text, shown quoted at the foot of the full card. */
+  flavor?: string;
   /** Library tier; drafts may roll the card at a nearby tier. */
   tier: Tier;
   category: BuffCategory;

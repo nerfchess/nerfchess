@@ -276,9 +276,6 @@ export function SiteHeader({ active }: { active?: string }) {
         {menu === "search" && (
           <div className="absolute right-0 top-full z-40 mt-3 w-72 plate dropdown p-3 shadow-2xl">
             <PlayerSearch autoFocus />
-            <p className="mt-2 text-[11px] text-parchment-400">
-              Open a player&apos;s page to message or challenge them.
-            </p>
           </div>
         )}
 

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 import { type CSSProperties, useEffect, useMemo, useRef, useState } from "react";
 import { Board, QueuedPremove } from "@/components/Board";
@@ -11,7 +12,11 @@ import { ChatPanel } from "@/components/ChatPanel";
 import { ClockPill } from "@/components/ClockPill";
 import { DraftNotice } from "@/components/DraftNotice";
 import { DraftOverlay, LockInCountdown } from "@/components/DraftOverlay";
-import { GameOver } from "@/components/GameOver";
+// The end screen is never part of first paint; loading it on demand keeps it
+// out of the page's initial bundle.
+const GameOver = dynamic(() => import("@/components/GameOver").then((m) => m.GameOver), {
+  ssr: false,
+});
 import { MobileActionsMenu } from "@/components/MobileActionsMenu";
 import { MobileBuffDrawer } from "@/components/MobileBuffDrawer";
 import { MobileMoveDrawer } from "@/components/MobileMoveDrawer";
@@ -199,15 +204,14 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   // CLAIM_DELAY_AFTER_GONE_MS the claim buttons appear (server re-checks).
   const [opponentGone, setOpponentGone] = useState(false);
   const [claimReady, setClaimReady] = useState(false);
-  // Transient toast naming and explaining a card the opponent just played,
-  // so its effect on the board is never a mystery.
-  // Persistent feed of the cards/hexes the opponent has played (newest keeps its
-  // full rule text; older collapse but stay), so a hex cast on you never
-  // vanishes before you read it.
+  // Feed of the cards/hexes the opponent has played. Each play shows in the
+  // top-right for 5 minutes (OppPlaysLog TTL), then lives permanently in the
+  // dock's "Opponent played" ledger, so nothing they did is ever unreadable.
   const [oppLog, setOppLog] = useState<OppPlay[]>([]);
   const oppKeyRef = useRef(0);
   const showOppUsedCard = (card: { id: string; tier: number }, label: string) => {
-    setOppLog((log) => [...log, { key: oppKeyRef.current++, card, label }].slice(-6));
+    // Bounded but roomy: the dock keeps the whole game's plays readable.
+    setOppLog((log) => [...log, { key: oppKeyRef.current++, card, label, at: Date.now() }].slice(-60));
   };
   // Voluntary rule reveals: mine (button flow) and the opponent's (event).
   const [myRevealState, setMyRevealState] = useState<"hidden" | "confirm" | "revealed">(() =>
@@ -1162,8 +1166,8 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           </h1>
           <p className="mt-2 text-sm text-parchment-300 text-center">
             {isNerfMode
-              ? "Pick one of two nerfs. Every five moves you draft a card: a hex that curses your opponent, or a boon or item that helps you."
-              : "Every game opens weak: pick one of two nerfs, then draft buffs every few moves to claw your way back to power."}
+              ? "It stays secret until the game ends."
+              : "Draft buffs as you play to claw back power."}
           </p>
           {error && (
             <p className="mt-2 text-center text-xs text-oxblood-glow">{error}</p>
@@ -1229,13 +1233,10 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                 <div className="mt-4 text-center">
                   <button
                     onClick={() => sendPick(nerfSelected)}
-                    className="btn-leaf px-6 py-2.5 font-display text-sm font-semibold tracking-wide"
+                    className="btn-glass btn-glass--primary px-8 py-3 font-display text-base font-semibold tracking-wide"
                   >
                     Confirm pick
                   </button>
-                  <p className="mt-1.5 text-[11px] text-parchment-400">
-                    Clicking the card again also confirms.
-                  </p>
                 </div>
               )}
             </>
@@ -1638,6 +1639,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   myColor={myColor}
                   canAct={draftCanAct}
                   onStartUse={buffTargeting.start}
+                  plays={oppLog}
                 />
               )}
               <ChatPanel
@@ -1890,6 +1892,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
             myColor={myColor}
             canAct={draftCanAct}
             onStartUse={buffTargeting.start}
+            plays={oppLog}
           />
         </MobileBuffDrawer>
       )}

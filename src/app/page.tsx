@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { HeroTv } from "@/components/HeroTv";
 import { SiteHeader } from "@/components/SiteHeader";
-import { WelcomeBanner } from "@/components/WelcomeBanner";
 import { ALL_NERFS, PLAYABLE_NERFS } from "@/engine/nerfs/library";
 import { ALL_BUFFS } from "@/engine/buffs/library";
 import type { Nerf } from "@/engine/nerf";
@@ -76,8 +75,6 @@ export default function HomePage() {
     <main className="min-h-screen flex flex-col">
       <SiteHeader />
 
-      <WelcomeBanner />
-
       <section className="mode-field w-full max-w-7xl mx-auto px-5 sm:px-6 pt-2 pb-10 sm:pt-6 grid lg:grid-cols-[minmax(0,1fr)_380px] gap-8 lg:gap-14 items-center">
         <div className="order-1">
           <HeroTv />
@@ -94,23 +91,21 @@ export default function HomePage() {
             <span className="text-mode-buffGlow">Buff</span>.
           </h1>
           <p className="lead mt-4 text-parchment-100">
-            Chess with two modes. In{" "}
+            In{" "}
             <Link
               href="/lobby?mode=nerf"
               className="font-semibold text-mode-nerfGlow underline decoration-mode-nerf/50 underline-offset-4 transition-colors hover:decoration-mode-nerfGlow"
             >
               Nerf
             </Link>{" "}
-            mode you each carry a secret handicap, revealed only when the game
-            ends. Either way, you draft cards as you play. In{" "}
+            mode you carry a secret handicap. In{" "}
             <Link
               href="/lobby?mode=buff"
               className="font-semibold text-mode-buffGlow underline decoration-mode-buff/50 underline-offset-4 transition-colors hover:decoration-mode-buffGlow"
             >
               Buff
             </Link>{" "}
-            mode nobody is nerfed, so you just draft power-ups. You win by
-            capturing the king.
+            mode you draft power-ups. Capture the king to win.
           </p>
 
           <ReturnToGameBanner />
@@ -465,7 +460,7 @@ function SiteFooter() {
         ))}
       </nav>
       <div className="mt-3 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-parchment-400">
-        <span>Nerf Chess: chess with two modes, secret nerfs or drafted buffs.</span>
+        <span className="opacity-70">Nerf Chess</span>
         <span className="font-mono text-[10px] opacity-70" title="Deployed version">
           made with &hearts;
           {process.env.NEXT_PUBLIC_BUILD_VERSION ? ` · ${process.env.NEXT_PUBLIC_BUILD_VERSION}` : ""}

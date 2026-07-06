@@ -319,8 +319,8 @@ export default function FriendPage() {
           <div className="mt-3 font-mono text-5xl tracking-[0.2em] text-gold-leaf">{code}</div>
           <p className="mt-6 text-parchment-200">
             {challenging
-              ? `${challenging} has been notified. The game starts as soon as they accept.`
-              : "Send the code to your friend. They open this page and tap “Join”."}
+              ? `${challenging} has been notified.`
+              : "Send this code to your friend."}
           </p>
           <div className="mt-8 flex items-center justify-center gap-2 smallcaps text-[11px] text-parchment-400">
             <span className="w-1.5 h-1.5 rounded-full bg-verdigris animate-flicker" />
@@ -364,11 +364,11 @@ export default function FriendPage() {
       <SiteNav />
       <section className="max-w-2xl mx-auto px-6 py-8">
         <h1 className="font-display text-5xl">{challenging ? `Challenge ${challenging}` : "Play a Friend"}</h1>
-        <p className="mt-3 text-parchment-200">
-          {challenging
-            ? `Pick a time control and create the game. ${challenging} gets a notification and the game starts when they accept.`
-            : "Create a game and share the code, or join one with a code your friend sent you. Choose Buff mode (no nerfs, pure buff drafting) or Nerf mode (secret handicaps, revealed at the end)."}
-        </p>
+        {challenging && (
+          <p className="mt-3 text-parchment-200">
+            {challenging} gets a notification and the game starts when they accept.
+          </p>
+        )}
 
         {error && (
           <div className="mt-5 plate p-3 px-4 border-oxblood-glow/60 bg-oxblood/15 text-parchment">
@@ -417,9 +417,7 @@ export default function FriendPage() {
                 </span>
               </div>
               <p className="mt-1 text-[11px] leading-snug text-parchment-300">
-                Set up a game that surprises your friend: they join to a strong,
-                high-tier draft in pure Buff mode at a relaxed 10+5. Create it,
-                then share the code or challenge them directly.
+                Your friend joins to a strong, high-tier Buff draft at 10+5.
               </p>
             </button>
           </div>
@@ -455,8 +453,8 @@ export default function FriendPage() {
             </div>
             <p className="mt-2 text-[11px] leading-snug text-parchment-400">
               {gameMode === "buff"
-                ? "No nerfs at all. Every few moves both players draft a buff; the strongest build wins."
-                : "Both players pick a secret nerf that only reveals when the game ends. Boon drafts every five moves can soften or remove it."}
+                ? "Draft buffs; the strongest build wins."
+                : "Secret nerfs, revealed when the game ends."}
             </p>
           </div>
 
@@ -472,8 +470,8 @@ export default function FriendPage() {
             </div>
             <p className="mt-2 text-[11px] leading-snug text-parchment-400">
               {rated
-                ? "Counts toward both players' ratings. Ratings move only when both players are signed in; a signed-out opponent makes it casual."
-                : "A friendly game. Neither player's rating changes."}
+                ? "Rated when both players are signed in."
+                : "No rating change."}
             </p>
           </div>
 
@@ -489,12 +487,6 @@ export default function FriendPage() {
               ? "Create stacked game"
               : "Create game"}
           </button>
-          {stacked && (
-            <p className="-mt-3 text-center text-[11px] leading-snug text-gold/80">
-              Your friend joins to a stacked, high-tier draft.
-            </p>
-          )}
-
           {!challenging && (
           <>
           <div className="rule-ornament">
