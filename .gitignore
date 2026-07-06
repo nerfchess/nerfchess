@@ -16,7 +16,6 @@ agent*.jsonl
 dist-server
 
 # Linting files
-.eslintrc.json
 .eslintcache
 
 # Stray scratch / stderr-redirect artifacts
