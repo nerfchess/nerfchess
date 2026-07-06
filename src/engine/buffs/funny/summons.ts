@@ -1,0 +1,135 @@
+// Funny set: SUMMONS & REINFORCEMENTS. Each reuses placePieces (summon onto a
+// zone), summonTemp (a rental that expires), lineSweep (a charging piece), or a
+// conditional passive modeled on the library's trade_up / insurance pattern.
+// placePieces already refuses to drop a pawn on an illegal rank, so pawns are
+// summoned into the owner's half (never onto the back rank).
+
+import { Buff } from "./shared";
+import {
+  card,
+  placePieces,
+  summonTemp,
+  lineSweep,
+  activated,
+  mySquares,
+  myHalfZone,
+  anyEmptyZone,
+  ORTHO_DIRS,
+  SQ,
+} from "./shared";
+
+export const FUNNY_SUMMONS: Buff[] = [
+  card(
+    {
+      id: "summon_intern",
+      name: "Summon Intern",
+      description: "A nervous extra pawn shows up for work: place a new pawn on any empty square in your half, once.",
+      tier: 3,
+      category: "pieces",
+      flavor: "It brought its own lanyard.",
+    },
+    placePieces(["p"], myHalfZone),
+  ),
+  card(
+    {
+      id: "pizza_delivery",
+      name: "Pizza Delivery",
+      description: "A knight zips in on a scooter delivering pizza: place a new knight on any empty square, once.",
+      tier: 4,
+      category: "pieces",
+      flavor: "Thirty minutes or the fork is free.",
+    },
+    placePieces(["n"], anyEmptyZone),
+  ),
+  card(
+    {
+      id: "reinforcements",
+      name: "Reinforcements",
+      description: "Two pawns parachute in: place them on empty squares in your half, once.",
+      tier: 5,
+      category: "pieces",
+      flavor: "Geronimo.",
+    },
+    placePieces(["p", "p"], myHalfZone),
+  ),
+  card(
+    {
+      id: "clone_army",
+      name: "Clone Army",
+      description: "Three photocopier flashes in a row: place three new pawns on empty squares in your half, once.",
+      tier: 8,
+      category: "pieces",
+      flavor: "Roll call is going to take a while.",
+    },
+    placePieces(["p", "p", "p"], myHalfZone),
+  ),
+  card(
+    {
+      id: "rent_a_rook",
+      name: "Rent-a-Rook",
+      description: "A rook arrives on loan: place it on an empty square in your half, then it drives off after 4 of your turns.",
+      tier: 4,
+      category: "pieces",
+      flavor: "Please return it with a full tank.",
+    },
+    summonTemp("r", 4, myHalfZone),
+  ),
+  card(
+    {
+      id: "cavalry_charge",
+      name: "Cavalry Charge",
+      description: "One of your knights gallops in a straight line, capturing the first enemy piece in its path and landing just beyond, once.",
+      tier: 6,
+      category: "attack",
+      flavor: "Sound the bugle.",
+    },
+    lineSweep("n", ORTHO_DIRS, 1),
+  ),
+  card(
+    {
+      id: "insurance",
+      name: "Insurance",
+      description: "You took out a policy: the first time your queen is captured, a new knight spawns on her home square.",
+      tier: 5,
+      category: "pieces",
+      flavor: "Read the fine print, they always do.",
+    },
+    {
+      kind: "passive",
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.opp || move.captured !== "q") return;
+        const home = SQ(3, api.me === "w" ? 0 : 7);
+        if (!api.board.pieces[home]) api.place(home, "n", api.me);
+        inst.spent = true;
+      },
+      status: () => "policy active",
+    },
+  ),
+  card(
+    {
+      id: "blood_pact",
+      name: "Blood Pact",
+      description: "Sign in blood: promote one of your pawns to a queen at once, but a random other pawn of yours bursts and is lost.",
+      tier: 7,
+      category: "pieces",
+      flavor: "The wax seal is still warm.",
+    },
+    activated(
+      (_inst, api, picks) =>
+        picks.length > 0
+          ? null
+          : {
+              kind: "square",
+              label: "Choose the pawn to promote",
+              squares: mySquares(api.board, api.me, "p"),
+            },
+      (_inst, api, picks) => {
+        const sq = picks[0]?.square;
+        if (sq == null) return;
+        api.setPieceType(sq, "q");
+        const others = mySquares(api.board, api.me, "p").filter((s) => s !== sq);
+        if (others.length) api.removePiece(others[api.rng.int(others.length)]);
+      },
+    ),
+  ),
+];
