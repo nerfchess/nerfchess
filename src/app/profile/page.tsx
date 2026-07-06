@@ -10,6 +10,7 @@ import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { AVATAR_PICKER_IDS, avatarIdFor, CUSTOM_AVATAR_MAX_CHARS, isCustomAvatar } from "@/lib/avatars";
 import { FLAIR_EMOJI } from "@/lib/flair";
 import { MODE_RATING_CATEGORIES } from "@/lib/ratingCategories";
+import { Trophy } from "lucide-react";
 
 // One user_ratings row (per mode bucket), as returned by /api/users/[username].
 interface CategoryRatingRow {
@@ -396,6 +397,29 @@ export default function ProfilePage() {
           <div className="mt-6 plate p-4 text-sm text-parchment-300">
             <Link href="/login?next=/profile" className="text-gold-leaf hover:underline">Sign in</Link>{" "}
             to get an online rating that follows you across devices.
+          </div>
+        )}
+
+        {/* Quick link into the achievements gallery. */}
+        {account && (
+          <div className="mt-8">
+            <Link
+              href="/achievements"
+              className="plate p-4 flex items-center justify-between gap-3 hover:border-gold/40 transition"
+            >
+              <div className="flex items-center gap-3">
+                <span className="grid h-10 w-10 place-items-center rounded-lg border border-gold/40 bg-gold/10">
+                  <Trophy className="h-5 w-5 text-gold-leaf" strokeWidth={2} />
+                </span>
+                <div>
+                  <div className="font-display text-lg text-parchment-50">Achievements</div>
+                  <div className="smallcaps text-[10px] text-parchment-400">
+                    Feats you have unlocked across Nerf and Buff
+                  </div>
+                </div>
+              </div>
+              <span className="smallcaps text-[10px] text-gold-leaf">View</span>
+            </Link>
           </div>
         )}
 

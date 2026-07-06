@@ -7,6 +7,7 @@
 import postgres from "postgres";
 import { glickoUpdatePair, GlickoRating } from "../glicko";
 import { categoryForTimeControl, isModeCategory, SPEED_CATEGORIES, type RatingCategory } from "../speed";
+import { awardAchievementsForFinishedGame, type AchievementExtras } from "./achievements";
 
 export interface FinishedGameRecord {
   id: string;
@@ -120,6 +121,11 @@ export async function recordFinishedGame(
   // worker without the Hyperdrive binding — the row falls back into the D1
   // batch so games are still recorded somewhere.
   archiveConnectionString?: string,
+  // Extra per-game facts the recorded row can't carry (final-board material and
+  // the highest card each side drafted), supplied by the game server so
+  // achievement evaluation can see them. Optional: absent means those
+  // material/draft achievements simply do not trigger for this game.
+  achievementExtras: AchievementExtras = {},
 ): Promise<{ white: RatingChange | null; black: RatingChange | null }> {
   let whiteChange: RatingChange | null = null;
   let blackChange: RatingChange | null = null;
@@ -233,6 +239,20 @@ export async function recordFinishedGame(
   }
 
   if (statements.length) await db.batch(statements);
+
+  // Evaluate achievements for both seated accounts off the same D1, keyed by
+  // user_id (no table scan). Runs for every finished game, rated or not, so
+  // casual and Buff games unlock their achievements too. Awarding must never
+  // block the game from ending, so any failure is logged and swallowed.
+  try {
+    await awardAchievementsForFinishedGame(db, game, {
+      ...achievementExtras,
+      whiteRatingBefore: whiteBefore?.rating ?? null,
+      blackRatingBefore: blackBefore?.rating ?? null,
+    });
+  } catch (err) {
+    console.error("failed to award achievements", game.id, err);
+  }
 
   // Archive the finished game to Postgres (OCI, via Hyperdrive). Idempotent on
   // the primary key so retries and the one-time D1 backfill can't duplicate.
