@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { Eye, Swords, Users } from "lucide-react";
 import { QueueButton } from "@/components/QueueButton";
 import { AccountUser, fetchMe } from "@/lib/authClient";
+import { readSnapshot, writeSnapshot } from "@/lib/snapshotCache";
 import { MPLobby, MPLobbyChallenge, MPLobbyGame, MPLobbySeek, MPSession, saveOnlineSeat } from "@/lib/multiplayer";
 import { ModeBadge } from "@/components/ModeBadge";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
@@ -35,6 +36,10 @@ export default function LobbyPage() {
   // Poll the lobby snapshot over one long-lived socket.
   useEffect(() => {
     let cancelled = false;
+    // Instant paint: the last snapshot this tab saw renders immediately
+    // (seeks/games a few seconds stale), and the first live poll replaces it.
+    const cached = readSnapshot<MPLobby>("nerfchess:lobby-snapshot");
+    if (cached) setLobby(cached);
     const session = new MPSession();
     session.persistFriendSession = false;
     session.autoReconnect = false; // fetchLobby reconnects on demand
@@ -52,6 +57,7 @@ export default function LobbyPage() {
           failures = 0;
           setLobby(data);
           setLobbyError(null);
+          writeSnapshot("nerfchess:lobby-snapshot", data);
         }
       } catch {
         if (!cancelled) {

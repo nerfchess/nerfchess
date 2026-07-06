@@ -207,6 +207,58 @@ const FLIP_MS = 300;
 const DEAL_TOTAL_MS = 900;
 const flipDelayMs = (i: number, tier: number) => i * DEAL_STAGGER_MS + DEAL_MS + 40 + tier * 12;
 
+// Accidental-double-click guard: a click on the already-selected card only
+// confirms once this much time has passed since it was selected. The explicit
+// Confirm button is exempt (it sits elsewhere, so a double-click cannot land
+// on it by accident).
+const CONFIRM_GUARD_MS = 400;
+
+// Hard ceiling on the pocket-flight before the pick force-commits. The flight
+// itself runs 550ms; if onAnimationComplete never fires (branch switch,
+// background-tab rAF stall, anything) this timer commits the pick anyway.
+const COMMIT_FALLBACK_MS = 900;
+
+/** Small inline eye icon for the hide/peek control (no emoji). */
+function EyeIcon({ off = false, className = "" }: { off?: boolean; className?: string }) {
+  return (
+    <svg
+      aria-hidden
+      viewBox="0 0 24 24"
+      width="13"
+      height="13"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={"shrink-0 " + className}
+    >
+      <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z" />
+      <circle cx="12" cy="12" r="2.5" />
+      {off && <line x1="4" y1="20" x2="20" y2="4" />}
+    </svg>
+  );
+}
+
+/** Seconds readout for the "Draft open" chip while the overlay is hidden.
+ * Display only: the expiry callback stays with the (still-mounted, merely
+ * invisible) DraftTimerWindow so it can never fire twice. */
+function ChipCountdown({ deadline }: { deadline: number }) {
+  const leftMs = useCountdown(deadline);
+  const seconds = Math.ceil(leftMs / 1000);
+  const urgent = leftMs <= 5000;
+  return (
+    <span
+      className={
+        "font-mono text-sm font-bold tabular-nums " +
+        (urgent ? "text-oxblood-glow" : "text-gold-leaf")
+      }
+    >
+      {seconds}s
+    </span>
+  );
+}
+
 export function DraftOverlay({
   offer,
   takeBoth,
@@ -238,6 +290,10 @@ export function DraftOverlay({
   // True once the deal has settled: later animations (dim, select) run
   // without the deal's stagger delays.
   const [dealt, setDealt] = useState(false);
+  // Peek at the board: the full-screen overlay can be temporarily hidden
+  // behind a slim "Draft open" chip. Purely visual (visibility, not unmount),
+  // so the pick state, timers, and any in-flight animation are untouched.
+  const [hidden, setHidden] = useState(false);
   // Measured flight path from the chosen card to the dock, captured at
   // confirm time (measuring during render would thrash layout).
   const [pocket, setPocket] = useState<{ dx: number; dy: number } | null>(null);
@@ -245,6 +301,9 @@ export function DraftOverlay({
   const bankBtnRef = useRef<HTMLButtonElement | null>(null);
   const bankTimer = useRef<number | null>(null);
   const committedRef = useRef(false);
+  // When the current selection happened: a second click on the same card
+  // only confirms after CONFIRM_GUARD_MS (accidental double-click guard).
+  const selectedAtRef = useRef(0);
 
   useEffect(() => {
     setSelected(null);
@@ -252,7 +311,9 @@ export function DraftOverlay({
     setPocket(null);
     setBanking(false);
     setBankDeltas(null);
+    setHidden(false);
     committedRef.current = false;
+    selectedAtRef.current = 0;
     setDealt(!!reduceMotion);
     // A fresh offer demands attention: the board is blocked until it resolves.
     playDraftChime();
@@ -269,8 +330,27 @@ export function DraftOverlay({
     [],
   );
 
+  const commit = (i: number) => {
+    if (committedRef.current) return;
+    committedRef.current = true;
+    onPick(i);
+  };
+
+  const selectCard = (i: number) => {
+    setSelected(i);
+    selectedAtRef.current = Date.now();
+  };
+
   const confirmCard = (i: number) => {
-    if (chosen != null || banking) return;
+    if (chosen != null || banking || committedRef.current) return;
+    if (reduceMotion) {
+      // No pocket flight to wait for: commit on the spot. Relying on framer's
+      // animate-complete under reduced motion would leave the commit hostage
+      // to an animation the user never sees.
+      setChosen(i);
+      commit(i);
+      return;
+    }
     setPocket(pocketDelta(cardRefs.current[i]));
     setChosen(i);
   };
@@ -278,11 +358,13 @@ export function DraftOverlay({
   const choose = (i: number) => {
     if (chosen != null || banking) return;
     if (selected === i) {
-      // Second click on the selected card confirms it.
+      // Second click on the selected card confirms it, but only after the
+      // guard window: an accidental double-click must not lock the pick in.
+      if (Date.now() - selectedAtRef.current < CONFIRM_GUARD_MS) return;
       confirmCard(i);
       return;
     }
-    setSelected(i);
+    selectCard(i);
   };
 
   const confirmSelection = () => {
@@ -290,11 +372,31 @@ export function DraftOverlay({
     confirmCard(selected);
   };
 
-  const commit = (i: number) => {
-    if (committedRef.current) return;
-    committedRef.current = true;
-    onPick(i);
-  };
+  // RACE PROOFING for the pocket flight. The parent can flip `minimized` on
+  // its own timer (OnlineMatch's draftGraceOver) at any moment, including the
+  // instant between setChosen and the flight's onAnimationComplete. Switching
+  // to the minimized branch unmounts the full-screen card mid-flight, the
+  // completion callback never fires, and without this the pick would be lost
+  // (the panel then sits dead in the corner until a refresh). Whenever a
+  // confirmed-but-uncommitted pick exists while minimized, commit it now.
+  useEffect(() => {
+    if (minimized && chosen != null && !committedRef.current) {
+      commit(chosen);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [minimized, chosen]);
+
+  // Belt and braces: a confirmed pick always commits within a fixed budget,
+  // even if the flight's completion callback is lost some other way (rAF
+  // stalls in a backgrounded tab, a dropped animation frame). Committing
+  // twice is impossible (committedRef), so firing after a normal completion
+  // is a no-op.
+  useEffect(() => {
+    if (chosen == null) return;
+    const id = window.setTimeout(() => commit(chosen), COMMIT_FALLBACK_MS);
+    return () => window.clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chosen]);
 
   // Skip and bank with feedback: the offer flips face-down and slides into
   // the bank (the Skip button) before the overlay closes. Reduced motion
@@ -319,6 +421,21 @@ export function DraftOverlay({
   };
 
   if (minimized) {
+    // A committed pick renders the panel inert while the server (or engine)
+    // resolves it; `chosen` alone is not enough because the commit-on-minimize
+    // effect can have fired without an animation ever setting `chosen` late.
+    const settled = chosen != null || banking || committedRef.current;
+    const chooseMinimized = (i: number) => {
+      if (settled) return;
+      if (selected === i) {
+        // Same double-click guard as the full overlay.
+        if (Date.now() - selectedAtRef.current < CONFIRM_GUARD_MS) return;
+        setChosen(i);
+        commit(i);
+        return;
+      }
+      selectCard(i);
+    };
     return (
       <div className="fixed bottom-16 right-3 z-40 w-[min(92vw,19rem)] sm:bottom-4">
         <motion.div
@@ -348,18 +465,14 @@ export function DraftOverlay({
                     buff={def}
                     tier={card.tier}
                     compact
-                    onClick={
-                      chosen == null
-                        ? () => (selected === i ? (setChosen(i), commit(i)) : setSelected(i))
-                        : undefined
-                    }
+                    onClick={!settled ? () => chooseMinimized(i) : undefined}
                   />
                 </div>
               );
             })}
           </div>
           <div className="mt-2 flex items-center gap-2">
-            {selected != null && chosen == null && (
+            {selected != null && !settled && (
               <button
                 onClick={() => {
                   setChosen(selected);
@@ -371,8 +484,8 @@ export function DraftOverlay({
               </button>
             )}
             <button
-              onClick={chosen == null ? onBank : undefined}
-              disabled={chosen != null}
+              onClick={!settled ? onBank : undefined}
+              disabled={settled}
               className="flex-1 rounded-[1px] border border-white/15 bg-white/[0.03] px-3 py-1.5 font-display text-[11px] font-semibold tracking-wide text-parchment-200 transition hover:border-gold/50 hover:text-gold-leaf disabled:opacity-40"
               title="Skip this draft; your next one pulls from a tier higher"
             >
@@ -387,7 +500,34 @@ export function DraftOverlay({
   const mid = (offer.cards.length - 1) / 2;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-3 sm:px-4">
+    <>
+      {/* Peek at the board: while hidden, a slim chip keeps the draft (and
+          its running lock-in timer) one click away. The overlay itself stays
+          mounted underneath (visibility only), so timers, the pick state,
+          and any in-flight animation carry on unaffected. */}
+      {hidden && (
+        <div className="fixed bottom-16 right-3 z-50 sm:bottom-4">
+          <button
+            type="button"
+            onClick={() => setHidden(false)}
+            aria-label="Show the draft"
+            className="plate flex items-center gap-2 border-gold/40 px-3 py-2 shadow-plate transition hover:border-gold/70"
+          >
+            <EyeIcon className="text-gold-leaf" />
+            <span className="font-display text-xs font-semibold tracking-wide text-parchment-100">
+              Draft open
+            </span>
+            {deadline != null && <ChipCountdown deadline={deadline} />}
+          </button>
+        </div>
+      )}
+      <div
+        aria-hidden={hidden || undefined}
+        className={
+          "fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-3 sm:px-4" +
+          (hidden ? " invisible" : "")
+        }
+      >
       {/* Timer and panel share one column: the clock chip sits centered right
           above the plate with a small gap and moves with it. */}
       <div className="flex min-w-0 w-full max-w-2xl flex-col items-center gap-2.5 lg:max-w-3xl">
@@ -400,17 +540,30 @@ export function DraftOverlay({
           <div className="plate draft-panel max-h-[78dvh] w-full overflow-y-auto overflow-x-hidden p-5 sm:p-8">
         <div className="flex items-center justify-between gap-4">
           <div className="smallcaps text-[11px] text-parchment-400">{nounCap} draft #{offer.index}</div>
-          {oppLockedIn && (
-            <div
-              role="status"
-              className="flex items-center gap-1.5 rounded-[1px] border border-verdigris-glow/50 bg-verdigris/10 px-2.5 py-0.5"
+          <div className="flex items-center gap-2">
+            {oppLockedIn && (
+              <div
+                role="status"
+                className="flex items-center gap-1.5 rounded-[1px] border border-verdigris-glow/50 bg-verdigris/10 px-2.5 py-0.5"
+              >
+                <CheckIcon className="text-verdigris-glow" />
+                <span className="font-display text-[11px] font-semibold text-verdigris-glow">
+                  {oppBanked ? "Opponent banked" : "Opponent locked in"}
+                </span>
+              </div>
+            )}
+            {/* Peek control: hide the overlay to study the board; the timer
+                keeps running and the pick state is untouched. */}
+            <button
+              type="button"
+              onClick={() => setHidden(true)}
+              title="Hide the draft and peek at the board"
+              className="flex items-center gap-1.5 rounded-[1px] border border-white/15 bg-white/[0.03] px-2 py-0.5 text-parchment-300 transition hover:border-gold/50 hover:text-gold-leaf"
             >
-              <CheckIcon className="text-verdigris-glow" />
-              <span className="font-display text-[11px] font-semibold text-verdigris-glow">
-                {oppBanked ? "Opponent banked" : "Opponent locked in"}
-              </span>
-            </div>
-          )}
+              <EyeIcon off />
+              <span className="font-display text-[11px] font-semibold tracking-wide">Hide</span>
+            </button>
+          </div>
         </div>
         <h2 className="font-display text-3xl text-parchment mt-1">
           {takeBoth
@@ -645,6 +798,124 @@ export function DraftOverlay({
           </div>
         </motion.div>
       </div>
+      </div>
+    </>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Shared reveal moment: once BOTH sides of a simultaneous draft round have
+// resolved, the match page shows this brief, non-blocking banner pairing your
+// pick with whatever is legitimately visible of the opponent's (their card
+// when its identity is public, a face-down back with the tier numeral when
+// hidden, or a "Banked" tag). Click dismisses; the page auto-dismisses on a
+// short timer. Rendering is purely presentational: the caller passes only
+// data it already holds, so nothing hidden can leak here.
+// ---------------------------------------------------------------------------
+
+export interface DraftRevealCard {
+  /** Absent (or unknown to BUFF_BY_ID) = identity hidden: render face-down. */
+  id?: string;
+  tier: number;
+}
+
+export interface DraftRevealSide {
+  banked: boolean;
+  cards: DraftRevealCard[];
+}
+
+function RevealColumn({ label, side }: { label: string; side: DraftRevealSide }) {
+  return (
+    <span className="flex min-w-0 flex-1 flex-col gap-1">
+      <span className="smallcaps text-[9px] text-parchment-400">{label}</span>
+      {side.banked ? (
+        <span className="inline-flex w-fit items-center rounded-[1px] border border-white/20 bg-white/[0.05] px-1.5 py-px font-display text-[10px] font-semibold tracking-wide text-parchment-200">
+          Banked
+        </span>
+      ) : side.cards.length === 0 ? (
+        <span className="text-[11px] text-parchment-400">Picked</span>
+      ) : (
+        side.cards.map((c, i) => {
+          const def = c.id ? BUFF_BY_ID[c.id] : undefined;
+          const roman = TIER_ROMAN[c.tier] ?? "";
+          if (def) {
+            return (
+              <span key={i} className="flex items-center gap-1.5">
+                <span className={`min-w-0 truncate font-display text-[13px] font-semibold tier-${c.tier}`}>
+                  {def.name}
+                </span>
+                <span
+                  className={`shrink-0 rounded-[1px] border px-1.5 py-px font-display text-[9px] font-bold tier-bg-${c.tier} tier-${c.tier}`}
+                >
+                  {roman}
+                </span>
+              </span>
+            );
+          }
+          return (
+            <span key={i} className="flex items-center gap-1.5">
+              {/* Face-down card back: an ink mini with the tier numeral, the
+                  same treatment the dock gives hidden cards. */}
+              <span
+                aria-hidden
+                className="relative flex h-7 w-5 shrink-0 items-center justify-center rounded-[1px] border border-gold/35 bg-ink-950"
+              >
+                <span aria-hidden className="absolute inset-[2px] rounded-[1px] border border-gold/20" />
+                <span className={`font-display text-[9px] font-bold tier-${c.tier}`}>{roman}</span>
+              </span>
+              <span className="text-[11px] text-parchment-400">Hidden · tier {c.tier}</span>
+            </span>
+          );
+        })
+      )}
+    </span>
+  );
+}
+
+export function DraftRevealBanner({
+  mine,
+  theirs,
+  onDismiss,
+}: {
+  mine: DraftRevealSide;
+  theirs: DraftRevealSide;
+  onDismiss: () => void;
+}) {
+  const reduceMotion = useReducedMotion();
+  return (
+    <div className="pointer-events-none fixed inset-x-0 top-14 z-40 flex justify-center px-3">
+      <motion.button
+        type="button"
+        onClick={onDismiss}
+        title="Dismiss"
+        initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -14 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
+        className="plate pointer-events-auto w-full max-w-[min(94vw,32rem)] border-gold/40 p-3 text-left shadow-plate"
+      >
+        <span className="smallcaps block text-[9px] text-parchment-400">Draft resolved</span>
+        <span className="mt-1.5 flex items-stretch gap-3">
+          {/* My card slides in from the left, theirs from the right, meeting
+              in the middle (a single container fade under reduced motion). */}
+          <motion.span
+            className="flex min-w-0 flex-1"
+            initial={reduceMotion ? false : { opacity: 0, x: -18 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.35, ease: "easeOut", delay: 0.05 }}
+          >
+            <RevealColumn label="You drafted" side={mine} />
+          </motion.span>
+          <span aria-hidden className="w-px shrink-0 self-stretch bg-white/15" />
+          <motion.span
+            className="flex min-w-0 flex-1"
+            initial={reduceMotion ? false : { opacity: 0, x: 18 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.35, ease: "easeOut", delay: 0.05 }}
+          >
+            <RevealColumn label="Opponent" side={theirs} />
+          </motion.span>
+        </span>
+      </motion.button>
     </div>
   );
 }

@@ -110,7 +110,7 @@ export const HEXES_T7: Buff[] = [
     {
       id: "salted_earth",
       name: "Salted Earth",
-      description: "Your opponent's pawns cannot advance for their next 6 turns.",
+      description: "Your opponent's pawns cannot advance for their next 6 turns. They may still capture diagonally.",
       flavor: "Nothing grows and nothing marches on ground sown with salt.",
     },
     instant((_inst, api) => {

@@ -135,7 +135,7 @@ export const HEXES_T3: Buff[] = [
 
   // --- no_pawn_advance: pawns frozen forward ------------------------------
   H(
-    { id: "sown_salt", name: "Sown Salt", description: "Your opponent's pawns cannot advance for their next 4 turns.", flavor: "Nothing grows in salted fields." },
+    { id: "sown_salt", name: "Sown Salt", description: "Your opponent's pawns cannot advance for their next 4 turns. They may still capture diagonally.", flavor: "Nothing grows in salted fields." },
     instant((_inst, api) => {
       addEffect(api, { kind: "no_pawn_advance", against: api.opp, turns: 4 });
     }),

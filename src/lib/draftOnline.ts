@@ -218,8 +218,9 @@ export type DraftZones = {
   /** Pieces shackled by a king-only or no-pawn-advance hex: they cannot move
    * while the hex holds, so they are marked with a chain. */
   locked: number[];
-  /** Banana peels the VIEWER has tossed and not yet triggered. Shown only to
-   * the owner (a trap keeps its surprise), marked with the peel. */
+  /** Untriggered banana peels from EITHER player, marked with the peel.
+   * Placed traps are public the moment they land (owner rule: full
+   * visibility), so both players see every peel. */
   banana: number[];
 };
 
@@ -259,13 +260,35 @@ export function draftZones(game: NerfGame, myColor: Color): DraftZones {
   const zones: DraftZones = { frozen: [], shielded: [], ward: [], barred: [], strike: [], walnut: [], locked: [], banana: [] };
   if (!game.buffs) return zones;
   zones.frozen.push(...immobilizedSquares(game));
-  // Banana peels the viewer has tossed: a hidden trap stored on the buff
-  // instance (not in effects), shown only to its owner so the surprise
-  // survives, until an enemy piece slips on it and the peel is spent.
-  for (const inst of game.buffs.players[myColor].buffs) {
-    if (inst.id !== "banana_peel" || inst.spent || inst.nullified) continue;
-    const sq = inst.state.sq as number | undefined;
-    if (sq != null && !zones.banana.includes(sq)) zones.banana.push(sq);
+  // Placed traps are stored on their buff instance (not in effects) and are
+  // PUBLIC from the moment they land: every activation is broadcast with its
+  // targets (dtUsed / the public action record), so both replicas hold the
+  // squares. Paint them for BOTH players; nothing placed stays hidden.
+  for (const color of ["w", "b"] as Color[]) {
+    for (const inst of game.buffs.players[color].buffs) {
+      if (inst.spent || inst.nullified) continue;
+      if (inst.id === "banana_peel") {
+        // Current cards store a list in state.sqs; older saves a single sq.
+        const sqs =
+          (inst.state.sqs as number[] | undefined) ??
+          (inst.state.sq != null ? [inst.state.sq as number] : []);
+        for (const sq of sqs) if (!zones.banana.includes(sq)) zones.banana.push(sq);
+      } else if (inst.id === "void" || inst.id === "abyss" || inst.id === "void_realm") {
+        // Void squares swallow enemy pieces that enter: painted as a hostile
+        // barrier for the threatened side and as the owner's ward.
+        const sqs = (inst.state.squares as number[] | undefined) ?? [];
+        (color === myColor ? zones.ward : zones.barred).push(...sqs);
+      } else if (inst.id === "flypaper_file") {
+        // A limed file, while its window is open: same hostile/ward split.
+        const sq = inst.state.sq as number | undefined;
+        const turns = (inst.state.turns as number | undefined) ?? 0;
+        if (sq != null && turns > 0) {
+          const file = sq % 8;
+          const squares = Array.from({ length: 8 }, (_, r) => r * 8 + file);
+          (color === myColor ? zones.ward : zones.barred).push(...squares);
+        }
+      }
+    }
   }
   for (const e of game.buffs.effects) {
     if (e.turns != null && e.turns <= 0) continue;

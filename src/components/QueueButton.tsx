@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Swords } from "lucide-react";
 import { AccountUser, fetchMe } from "@/lib/authClient";
+import { clearSnapshot, readSnapshot, writeSnapshot } from "@/lib/snapshotCache";
 import { MPSession, saveOnlineSeat } from "@/lib/multiplayer";
 import { getCategory, type RatingCategoryId } from "@/lib/ratingCategories";
 import { getNerf } from "@/engine/nerfs/library";
@@ -53,10 +54,23 @@ export function QueueButton() {
 
   useEffect(() => {
     let cancelled = false;
+    // Instant paint: hydrate the last known account + ratings from the
+    // session cache so the card renders its real controls immediately; the
+    // live fetches below correct it a beat later (including sign-out).
+    const cached = readSnapshot<{ user: AccountUser | null; ratings: Partial<Record<DraftMode, number>> }>(
+      "nerfchess:queue-card",
+    );
+    if (cached) {
+      setUser(cached.user);
+      setModeRatings(cached.ratings ?? {});
+    }
     fetchMe().then((me) => {
       if (cancelled) return;
       setUser(me);
-      if (!me) return;
+      if (!me) {
+        clearSnapshot("nerfchess:queue-card");
+        return;
+      }
       // Each pool shows the rating it stakes. The profile API returns every
       // rating bucket; a bucket the account has never touched falls back to
       // the legacy shared rating, which is exactly what would seed it.
@@ -64,10 +78,12 @@ export function QueueButton() {
         .then((res) => (res.ok ? res.json() : null) as Promise<{ ratings?: Record<string, { rating: number }> } | null>)
         .then((data) => {
           if (cancelled || !data?.ratings) return;
-          setModeRatings({
+          const ratings = {
             nerf: data.ratings.nerf ? Math.round(data.ratings.nerf.rating) : undefined,
             buff: data.ratings.buff ? Math.round(data.ratings.buff.rating) : undefined,
-          });
+          };
+          setModeRatings(ratings);
+          writeSnapshot("nerfchess:queue-card", { user: me, ratings });
         })
         .catch(() => {});
     });

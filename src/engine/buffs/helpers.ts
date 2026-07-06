@@ -290,11 +290,14 @@ export function pieceBound(
   return {
     kind: "activated",
     spendOnUse: false,
-    targets: (_inst, api, picks) =>
-      picks.length > 0
+    // One activation only: once bound, the card is a permanent passive on
+    // that piece and can never be re-aimed at another one.
+    targets: (inst, api, picks) =>
+      picks.length > 0 || inst.state.sq != null
         ? null
         : { kind: "square", label, squares: mySquares(api.board, api.me, type) },
     effect: (inst, _api, picks) => {
+      if (inst.state.sq != null) return;
       inst.state.sq = picks[0]?.square;
     },
     augmentMoves: (moves, inst, api) => {
@@ -511,7 +514,11 @@ export function oppFilter(
   return { kind: "passive", filterOpponentMoves: filter };
 }
 
-/** Timed opponent-move filter: active for the owner's next `turns` turns. */
+/** Timed opponent-move filter: active for the OPPONENT'S next `turns` turns.
+ * The timer ticks on the restricted side's moves (matching effectTickColor's
+ * convention for barred / no_pawn_advance / king_only), so a card that says
+ * "for their next N turns" restricts exactly N of their turns even when
+ * skips or extra moves disturb the usual alternation. */
 export function timedOppFilter(
   turns: number,
   filter: (moves: Move[], inst: BuffInstance, api: BuffApi) => Move[],
@@ -529,8 +536,8 @@ export function timedOppFilter(
       // guard means no future caller can hard-lock a turn either.
       return filtered.length > 0 ? filtered : moves;
     },
-    onMovePlayed: (inst, move, api) => tickTurns(inst, move, api.me),
-    status: (inst) => `${turnsLeft(inst)} of your turns left`,
+    onMovePlayed: (inst, move, api) => tickTurns(inst, move, api.opp),
+    status: (inst) => `${turnsLeft(inst)} of their turns left`,
   };
 }
 
@@ -686,11 +693,15 @@ export function bindPiece(
   return {
     kind: "activated",
     spendOnUse: false,
-    targets: (_inst, api, picks) =>
-      picks.length > 0 ? null : { kind: "square", label, squares: candidates(api) },
+    // One activation only: once bound, the upgrade can never be re-aimed
+    // (re-activating would also stack fresh shield effects and reset timers).
+    targets: (inst, api, picks) =>
+      picks.length > 0 || inst.state.sq != null
+        ? null
+        : { kind: "square", label, squares: candidates(api) },
     effect: (inst, api, picks) => {
       const sq = picks[0]?.square;
-      if (sq == null) return;
+      if (sq == null || inst.state.sq != null) return;
       inst.state.sq = sq;
       if (opts.turns != null) inst.state.turns = opts.turns;
       if (opts.shieldTurns !== undefined) {
@@ -871,8 +882,9 @@ export function voidSquares(count: number, turns: number | null): Mech {
   return {
     kind: "activated",
     spendOnUse: false,
-    targets: (_inst, api, picks) =>
-      picks.length >= count
+    // One activation only: once the voids are placed they never move.
+    targets: (inst, api, picks) =>
+      picks.length >= count || inst.state.squares != null
         ? null
         : {
             kind: "square",
@@ -883,6 +895,7 @@ export function voidSquares(count: number, turns: number | null): Mech {
             squares: emptySquares(api.board).filter((sq) => !picks.some((k) => k.square === sq)),
           },
     effect: (inst, _api, picks) => {
+      if (inst.state.squares != null) return;
       inst.state.squares = picks.map((k) => k.square).filter((s): s is Square => s != null);
       if (turns != null) inst.state.turns = turns;
     },

@@ -3,7 +3,7 @@ import { attackedBy, findKing, isInCheck, makeMove } from "../board";
 import { FILE, Move, PieceType, RANK, SQ, Square } from "../types";
 import { HAND_AND_GIGABRAIN, MORE_NERFS } from "./more";
 import { EXTRA_NERFS } from "./extras";
-import { EXPANDED_NERFS } from "./expanded";
+import { EXPANDED_NERFS, FOOTSOLDIERS_ONLY } from "./expanded";
 
 const cheb = (a: Square, b: Square) =>
   Math.max(Math.abs(FILE(a) - FILE(b)), Math.abs(RANK(a) - RANK(b)));
@@ -936,7 +936,9 @@ export const ALL_IMPLEMENTED: Nerf[] = [
 
 // Retired rules: no longer dealt or shown in the Codex, but kept resolvable by
 // id so replays and histories of old games still render correctly.
-export const RETIRED_NERFS: Nerf[] = [NUMBER_OF_THE_BEAST, HAND_AND_GIGABRAIN];
+// FOOTSOLDIERS_ONLY: retired as an exact mechanical duplicate of Serf Labor
+// (tier 8, pawns and king only).
+export const RETIRED_NERFS: Nerf[] = [NUMBER_OF_THE_BEAST, HAND_AND_GIGABRAIN, FOOTSOLDIERS_ONLY];
 
 export const IMPLEMENTED_BY_ID: Record<string, Nerf> = Object.fromEntries(
   [...ALL_IMPLEMENTED, ...RETIRED_NERFS].map((d) => [d.id, d])

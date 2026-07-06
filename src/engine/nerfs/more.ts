@@ -799,7 +799,7 @@ export const STIR_CRAZY: Nerf = db({
 
 export const ROOK_ON_SEVENTH: Nerf = db({
   id: "rook_on_seventh", name: "Rook on the Seventh", tier: 5, implemented: true,
-  description: "By move 15, you must have a rook on rank 7.",
+  description: "By move 15, you must have a rook on your 7th rank.",
   checkLoss: (_s, ctx) => {
     if (ctx.moveNumber < 15) return null;
     const targetR = ctx.me === "w" ? 6 : 1;
@@ -855,7 +855,7 @@ export const SCOUTING_AHEAD: Nerf = db({
 
 export const WARLORD: Nerf = db({
   id: "warlord", name: "Warlord", tier: 4, implemented: true,
-  description: "From turn 12 onward, your king can't be on the first two ranks.",
+  description: "From turn 12 onward, your king can't be on your first two ranks.",
   checkLoss: (_s, ctx) => {
     if (ctx.moveNumber < 12) return null;
     const ks = findKing(ctx.board, ctx.me);
