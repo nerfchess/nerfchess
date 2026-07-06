@@ -3,6 +3,8 @@
 import { Nerf } from "@/engine/nerf";
 import { motion } from "framer-motion";
 import { GlossaryText } from "@/components/GlossaryText";
+import { NERF_TURN_COST } from "@/engine/buff";
+import { TurnCostBadge } from "@/components/TurnCostBadge";
 
 interface Props {
   nerf: Nerf;
@@ -40,8 +42,11 @@ export function NerfCard({ nerf, revealed = true, compact = false, ownerLabel, p
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="smallcaps text-[11px] text-parchment-400">
-            {ownerLabel ?? "Your nerf"}
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="smallcaps text-[11px] text-parchment-400">
+              {ownerLabel ?? "Your nerf"}
+            </span>
+            <TurnCostBadge cost={NERF_TURN_COST} />
           </div>
           <div className={`font-display text-2xl leading-tight tier-${nerf.tier}`}>
             {nerf.name}
