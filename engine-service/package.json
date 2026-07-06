@@ -1,0 +1,14 @@
+{
+  "name": "nerfchess-engine-service",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Off-DO house-bot engine service (Tier 1). Replays a stored-match subset and returns a house move.",
+  "scripts": {
+    "build": "node build.mjs",
+    "start": "node dist/server.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0"
+  }
+}

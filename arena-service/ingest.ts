@@ -1,0 +1,95 @@
+// Talks to the DO's /arena/* endpoints (Tier 2 / M2). All calls fail soft: a
+// slow or unreachable DO never blocks a game, and syncGames reporting
+// enabled=false makes the arena stand down (stop spawning) until the DO is back
+// and a human is present.
+import type { ArenaFinishedRecord, ArenaFrame, ExternalGameMeta } from "./types";
+
+export class IngestClient {
+  // Game ids the DO currently has a spectator on (Tier 2 / M3). Refreshed from
+  // every /arena/games response.
+  private watched = new Set<string>();
+  // Watched games we've already sent a bootstrap snapshot for. The sink streams
+  // move/draft frames only for THESE, so a move can never reach the DO before
+  // the snapshot that builds its replica (the DO would otherwise drop it).
+  private streaming = new Set<string>();
+
+  constructor(
+    private readonly doUrl: string,
+    private readonly token: string,
+  ) {}
+
+  isWatched(id: string): boolean {
+    return this.watched.has(id);
+  }
+
+  isStreaming(id: string): boolean {
+    return this.streaming.has(id);
+  }
+
+  // Called once the snapshot for a newly-watched game has been posted, opening
+  // the per-move stream for it.
+  beginStreaming(id: string): void {
+    this.streaming.add(id);
+  }
+
+  private async post(path: string, body: unknown, timeoutMs = 4000): Promise<Response | null> {
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), timeoutMs);
+    try {
+      return await fetch(`${this.doUrl}${path}`, {
+        method: "POST",
+        signal: ctl.signal,
+        headers: { "content-type": "application/json", authorization: `Bearer ${this.token}` },
+        body: JSON.stringify(body),
+      });
+    } catch {
+      return null;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  /** Push the current live-games registry; returns whether the arena should be
+   *  spawning (DO ingest on AND a human present) plus the set of games a human
+   *  is spectating (Tier 2 / M3). Any failure => stand down, watch nothing. */
+  async syncGames(games: ExternalGameMeta[]): Promise<{ enabled: boolean; watch: string[] }> {
+    const res = await this.post("/arena/games", { games });
+    if (!res || !res.ok) {
+      this.setWatched([]);
+      return { enabled: false, watch: [] };
+    }
+    try {
+      const j = (await res.json()) as { enabled?: boolean; watch?: string[] };
+      const watch = Array.isArray(j.watch) ? j.watch.filter((x): x is string => typeof x === "string") : [];
+      this.setWatched(watch);
+      return { enabled: !!j.enabled, watch };
+    } catch {
+      this.setWatched([]);
+      return { enabled: false, watch: [] };
+    }
+  }
+
+  private setWatched(watch: string[]): void {
+    this.watched = new Set(watch);
+    // A game no longer watched stops streaming and must re-snapshot on re-watch.
+    for (const id of [...this.streaming]) if (!this.watched.has(id)) this.streaming.delete(id);
+  }
+
+  /** Push one spectator frame for a watched game (Tier 2 / M3). Fail-soft and
+   *  fire-and-forget: a dropped frame just means one spectator misses one move,
+   *  self-healing on the next snapshot. No retry (latency matters more here). */
+  async postFrame(frame: ArenaFrame): Promise<void> {
+    await this.post("/arena/frame", { frame }, 3000);
+  }
+
+  /** Report a finished game for archive + rating. One retry, then give up (a
+   *  lost filler archive is acceptable). */
+  async reportEnd(record: ArenaFinishedRecord): Promise<void> {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const res = await this.post("/arena/end", { record });
+      if (res && res.ok) return;
+    }
+    // eslint-disable-next-line no-console
+    console.error(JSON.stringify({ event: "arena_end_report_failed", id: record.id }));
+  }
+}

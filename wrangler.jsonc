@@ -26,7 +26,25 @@
     // OAuth client id for "Continue with Google" (see docs/google-sign-in.md).
     // The matching secret is set with: wrangler secret put GOOGLE_CLIENT_SECRET
     // Leave empty to disable Google sign-in.
-    "GOOGLE_CLIENT_ID": ""
+    "GOOGLE_CLIENT_ID": "343334519895-r527ild34r71bb23fggt4c9ab2g1vvvr.apps.googleusercontent.com",
+    // House-bot engine offload (Tier 1, see docs/bot-offload-tier1-engine-service.md).
+    // "true" routes house move searches to the OCI engine service; anything else
+    // keeps them local. Flip to "true" only after the service is deployed and
+    // /healthz is green. The bearer secret is set separately:
+    //   wrangler secret put HOUSE_ENGINE_TOKEN
+    "HOUSE_ENGINE_REMOTE": "true",
+    "HOUSE_ENGINE_URL": "https://engine.nerfchess.com",
+    // Arena offload (Tier 2 / M2, see docs/bot-offload-tier2-arena.md). Both
+    // ship "false" so the DO accepts the arena's POSTs but no-ops them until you
+    // flip these live. INGEST = archive+rate arena results; LOBBY = show arena
+    // games in the lobby/TV. Secret: wrangler secret put ARENA_INGEST_TOKEN
+    "ARENA_INGEST_ENABLED": "true",
+    "ARENA_LOBBY_ENABLED": "true",
+    // Tier 2 / M4 cutover (reversible). "true" (with INGEST on) stops the DO
+    // spawning its own house-vs-house filler so the arena owns bot-vs-bot;
+    // bot-vs-human pickup + house seeks stay on the DO. Flip back off and the
+    // DO resumes filler next tick — the arena being down never empties the lobby.
+    "ARENA_OWNS_FILLER": "false"
   },
   "d1_databases": [
     {
