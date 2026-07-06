@@ -32,7 +32,8 @@ import { SettingsPanel } from "@/components/SettingsPanel";
 import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
 import type { BuffOffer } from "@/engine/buff";
 import { BUFF_BY_ID } from "@/engine/buffs/library";
-import { cloneBoard, findKing, isInCheck, makeMove, moveFromUCI, moveToUCI } from "@/engine/board";
+import { cloneBoard, findKing, isInCheck, makeMove, moveFromUCI, moveToUCI, positionKey } from "@/engine/board";
+import { activeRuleIds, fnv1a } from "@/engine/desync";
 import { draftCardNoun, turnCost } from "@/engine/buff";
 import { computeMoveRisks } from "@/engine/moveSafety";
 import { loadSettings } from "@/lib/settings";
@@ -95,6 +96,34 @@ type PendingLocalMove = { uci: string; ply: number; move: Move };
 
 function moveKey(move: Move): string {
   return `${move.from}:${move.to}:${move.promotion ?? ""}:${move.captured ?? ""}`;
+}
+
+// Report a detected turn/board divergence to the telemetry sink so real
+// traffic names the culprit rule instead of us hunting blind (see
+// src/engine/desync.ts and /api/desync). Best-effort and fire-and-forget: a
+// failed beacon must never disturb the resync that actually fixes the game.
+function beaconTurnDesync(
+  gameId: string,
+  clientHash: string,
+  serverHash: string,
+  rules: string[],
+) {
+  try {
+    void fetch("/api/desync", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        gameId,
+        clientHash,
+        serverHash,
+        // The whose-turn / board drift this guard catches is always a
+        // position divergence (side to move is part of positionKey).
+        diverged: { pos: true, moves: false, rules: false },
+        rules,
+      }),
+      keepalive: true,
+    }).catch(() => {});
+  } catch {}
 }
 
 function pickRandomNerf(): Nerf {
@@ -540,15 +569,32 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         setOpponentGone(false);
         const g = gameRef.current;
         if (!g) return;
+        // Turn/ply authority: the server stamps every accepted move with its
+        // post-move ply (its authoritative move count). A replica that is not
+        // exactly one ply behind has missed or duplicated a frame, so its
+        // board.turn has drifted from the server — whoever's turn it thinks it
+        // is no longer matches. Never apply a move on top of that gap (the
+        // incoming UCI can be coincidentally legal in the stale position and
+        // advance the board onto a permanently wrong turn): force a full
+        // resync from the authoritative snapshot instead. This is the fix for
+        // two clients disagreeing on whose turn it is after a dropped frame.
+        if (e.move.ply !== g.board.history.length + 1) {
+          setWhiteMs(e.move.wc);
+          setBlackMs(e.move.bc);
+          resyncFromServer(
+            `move ply ${e.move.ply} does not follow local ply ${g.board.history.length} (missed/duplicated frame)`,
+          );
+          return;
+        }
         // The server already validated this move. If the replica cannot
         // regenerate it (a hidden nerf or buff effect it does not know
         // about), apply it raw instead of freezing the board — a raw apply
         // keeps the position, turn, and clocks in sync, where the old
         // resync-only path could dead-end forever if the rebuilt replay hit
-        // the same blind spot. The ply guard keeps a raw apply from running
-        // on top of missed frames (then a full resync is the right tool).
+        // the same blind spot. The ply guard above already proved this frame
+        // lands exactly one ply ahead, so a raw apply never runs on a gap.
         let lm = legalMoves(g).find((x) => moveToUCI(x) === e.move.u);
-        if (!lm && e.move.ply === g.board.history.length + 1) {
+        if (!lm) {
           const raw = moveFromUCI(g.board, e.move.u);
           if (raw) {
             console.warn(
@@ -580,6 +626,27 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         // Draft replicas discard the placeholder offer rolls playMove makes
         // locally; the server's dtOffer / dtState frames carry the real ones.
         const next = isDraft ? playReplicaMove(g, lm) : playMove(g, lm);
+        // Authoritative position/turn check: the server ships fnv1a(positionKey)
+        // of its post-move board (side to move included). Even at the right ply,
+        // a raw apply can land on a different position than the server (a hidden
+        // nerf side-effect the replica cannot reproduce), which would silently
+        // flip whose turn each client shows. Compare our post-move hash against
+        // the server's; on a mismatch, trust the server, beacon the drift, and
+        // resync rather than playing on from a diverged board. dtState frames
+        // never carry the board, so a position mismatch can only be repaired by
+        // a full resync.
+        if (e.move.f) {
+          const clientHash = fnv1a(positionKey(next.board));
+          if (clientHash !== e.move.f) {
+            setWhiteMs(e.move.wc);
+            setBlackMs(e.move.bc);
+            beaconTurnDesync(start.id, clientHash, e.move.f, activeRuleIds(next));
+            resyncFromServer(
+              `post-move position hash ${clientHash} != server ${e.move.f} at ply ${e.move.ply}`,
+            );
+            return;
+          }
+        }
         applyGame({ ...next });
         setConfirmMovePending(null);
         setWhiteMs(e.move.wc);

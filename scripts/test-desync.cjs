@@ -379,6 +379,179 @@ function assertConverged(env, label) {
   );
 }
 
+// ---------------------------------------------------------------------------
+// Part 3: turn/ply authority — a dropped or same-ply-diverged move frame must
+// never leave the two clients disagreeing on whose turn it is. This mirrors
+// OnlineMatch's move-frame guards:
+//   (a) a ply that does not follow the local ply forces a resync (the server
+//       stamps each move with its post-move ply);
+//   (b) a post-move position hash that differs from the server's forces a
+//       resync (positionKey includes the side to move, so this also catches a
+//       turn that drifted at the same ply — e.g. a draft off-parity turn).
+// In both cases the fix is to rebuild from the server's authoritative move
+// list, which restores the correct side to move.
+// ---------------------------------------------------------------------------
+
+// The server's per-move wire frame: post-move ply plus the authoritative
+// position fingerprint (fnv1a(positionKey)), exactly as commitMove ships them.
+function serverMoveFrame(server, uci) {
+  const mv = legalMoves(server).find((m) => moveToUCI(m) === uci);
+  if (!mv) throw new Error(`server move not legal: ${uci}`);
+  playMove(server, mv);
+  return { u: uci, ply: server.board.history.length, f: fnv1a(positionKey(server.board)) };
+}
+
+// The component's move-frame handler distilled to the sync-relevant path.
+// Returns { resync: reason|null }. The fingerprint compare runs on a clone so a
+// rejected frame leaves the replica untouched (the component returns before
+// applyGame), then the accepted case commits to the real replica.
+function handleMoveFrame(replica, frame) {
+  // Guard 1 (ply): the frame must be exactly one ahead of us. Otherwise a
+  // frame was missed or duplicated and board.turn has drifted from the server.
+  if (frame.ply !== replica.board.history.length + 1) {
+    return { resync: `ply ${frame.ply} != local ${replica.board.history.length + 1}` };
+  }
+  const trial = clone(replica);
+  let lm =
+    legalMoves(trial).find((m) => moveToUCI(m) === frame.u) || moveFromUCI(trial.board, frame.u);
+  if (!lm) return { resync: `unreproducible ${frame.u}` };
+  playMove(trial, lm);
+  // Guard 2 (position/turn hash): our post-move position must match the
+  // server's authoritative hash, side-to-move included.
+  if (frame.f && fnv1a(positionKey(trial.board)) !== frame.f) {
+    return { resync: `hash mismatch at ply ${frame.ply}` };
+  }
+  const move =
+    legalMoves(replica).find((m) => moveToUCI(m) === frame.u) || moveFromUCI(replica.board, frame.u);
+  playMove(replica, move);
+  return { resync: null };
+}
+
+// A resync: the server replays the full move list into a fresh start frame and
+// the client rebuilds from it (buildGameFromStart). Modelled by replaying the
+// server's authoritative move history from the initial position.
+function resyncReplica(server, seed) {
+  const rebuilt = newGame(UNRESTRICTED_NERF, UNRESTRICTED_NERF, seed);
+  for (const uci of server.board.history.map(moveToUCI)) {
+    const m = legalMoves(rebuilt).find((x) => moveToUCI(x) === uci) || moveFromUCI(rebuilt.board, uci);
+    if (!m) throw new Error(`resync cannot replay ${uci}`);
+    playMove(rebuilt, m);
+  }
+  return rebuilt;
+}
+
+// 3a: a dropped move frame leaves the replica behind the server. The next
+// frame's ply guard must catch the gap and, crucially, must NOT silently apply
+// the incoming move onto the stale board (the pre-fix path could, landing the
+// replica on a wrong turn). A resync then converges turn and position.
+{
+  const seed = 555;
+  const server = newGame(UNRESTRICTED_NERF, UNRESTRICTED_NERF, seed);
+  let replica = newGame(UNRESTRICTED_NERF, UNRESTRICTED_NERF, seed);
+
+  // Move 1 (white e2e4): the replica DROPS this frame (never applies it).
+  serverMoveFrame(server, "e2e4");
+  check(
+    positionKey(replica.board) !== positionKey(server.board),
+    "turn-sync 3a: replica should be behind the server after dropping a frame",
+  );
+
+  // Move 2 (black e7e5): the frame arrives, now a ply ahead of the replica.
+  const f2 = serverMoveFrame(server, "e7e5");
+  const r2 = handleMoveFrame(replica, f2);
+  check(r2.resync !== null, "turn-sync 3a: ply guard missed the dropped-frame gap");
+  // The rejected frame must leave the replica untouched — no silent mis-apply
+  // onto the stale board (which is how a wrong turn used to stick).
+  check(
+    replica.board.history.length === 0,
+    "turn-sync 3a: a resync-triggering frame must not advance the replica",
+  );
+
+  // The resync restores the authoritative side to move (and position).
+  replica = resyncReplica(server, seed);
+  check(
+    replica.board.turn === server.board.turn,
+    "turn-sync 3a: resync did not restore the server's side to move",
+  );
+  check(
+    positionKey(replica.board) === positionKey(server.board),
+    "turn-sync 3a: resync did not restore the server's position",
+  );
+}
+
+// 3b: a replica that silently diverged earlier sits at the RIGHT ply but a
+// wrong position. The ply guard cannot see it; the fingerprint guard must.
+{
+  const seed = 666;
+  const server = newGame(UNRESTRICTED_NERF, UNRESTRICTED_NERF, seed);
+  let replica = newGame(UNRESTRICTED_NERF, UNRESTRICTED_NERF, seed);
+
+  // Server plays e2e4 (ply 1). The replica already drifted: it holds d2d4
+  // instead (a prior silent divergence), same ply, same side to move.
+  serverMoveFrame(server, "e2e4");
+  playMove(replica, legalMoves(replica).find((m) => moveToUCI(m) === "d2d4"));
+  check(replica.board.history.length === 1, "turn-sync 3b: replica should be at ply 1");
+  check(replica.board.turn === server.board.turn, "turn-sync 3b: ply-1 turns should match by parity");
+
+  // Server plays e7e5 (ply 2). Its fingerprint describes an e4/e5 board; the
+  // replica applying e7e5 onto its d4/e5 board hashes differently.
+  const f2 = serverMoveFrame(server, "e7e5");
+  const r = handleMoveFrame(replica, f2);
+  check(r.resync !== null, "turn-sync 3b: fingerprint guard missed the same-ply board drift");
+  check(/hash/.test(r.resync), `turn-sync 3b: expected a hash-mismatch resync, got ${r.resync}`);
+
+  // The resync converges the replica back onto the server's board.
+  replica = resyncReplica(server, seed);
+  check(
+    positionKey(replica.board) === positionKey(server.board),
+    "turn-sync 3b: resync did not converge the position",
+  );
+}
+
+// 3d: the pure whose-turn case. Two replicas at the SAME position but with a
+// different side to move (a draft turnColor drift can produce this at equal
+// ply) must hash differently, so the server's per-move fingerprint can never
+// certify a client that is on the wrong turn. This is the invariant the
+// fingerprint guard leans on to keep both clients agreeing on whose turn it is.
+{
+  const seed = 888;
+  const a = newGame(UNRESTRICTED_NERF, UNRESTRICTED_NERF, seed);
+  for (const uci of ["e2e4", "e7e5"]) {
+    const m = legalMoves(a).find((x) => moveToUCI(x) === uci);
+    playMove(a, m);
+  }
+  const b = clone(a);
+  b.board.turn = b.board.turn === "w" ? "b" : "w"; // same pieces, wrong turn
+  check(
+    positionKey(a.board) !== positionKey(b.board),
+    "turn-sync 3d: side to move must be part of positionKey",
+  );
+  check(
+    fnv1a(positionKey(a.board)) !== fnv1a(positionKey(b.board)),
+    "turn-sync 3d: the move fingerprint must distinguish whose turn it is",
+  );
+}
+
+// 3c: a clean lockstep frame must NOT resync (the guards do not false-fire).
+{
+  const seed = 777;
+  const server = newGame(UNRESTRICTED_NERF, UNRESTRICTED_NERF, seed);
+  const replica = newGame(UNRESTRICTED_NERF, UNRESTRICTED_NERF, seed);
+  for (const uci of ["e2e4", "e7e5", "g1f3", "b8c6"]) {
+    const frame = serverMoveFrame(server, uci);
+    const r = handleMoveFrame(replica, frame);
+    check(r.resync === null, `turn-sync 3c: lockstep frame ${uci} spuriously resynced (${r.resync})`);
+    check(
+      replica.board.turn === server.board.turn,
+      `turn-sync 3c: turns diverged after lockstep ${uci}`,
+    );
+  }
+  check(
+    positionKey(replica.board) === positionKey(server.board),
+    "turn-sync 3c: lockstep replay diverged from the server",
+  );
+}
+
 if (errors.length) {
   console.error("desync harness FAILED:");
   for (const e of errors) console.error("  - " + e);
@@ -386,5 +559,5 @@ if (errors.length) {
 }
 console.log(
   `OK: desync harness passed (fingerprint core, sample hash ${fpA.hash}, ${rules.length} rule ids; ` +
-    `4 server-vs-replica scenarios + legacy divergence control + no-op guard)`,
+    `4 server-vs-replica scenarios + legacy divergence control + no-op guard + 4 turn/ply guards)`,
 );
