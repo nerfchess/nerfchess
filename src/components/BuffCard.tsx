@@ -1,9 +1,10 @@
 "use client";
 
-import { Buff } from "@/engine/buff";
+import { Buff, turnCost } from "@/engine/buff";
 import { Tier } from "@/engine/nerf";
 import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
 import { GlossaryText } from "@/components/GlossaryText";
+import { TurnCostBadge } from "@/components/TurnCostBadge";
 
 const CATEGORY_LABEL: Record<Buff["category"], string> = {
   movement: "Movement",
@@ -56,8 +57,11 @@ export function BuffCard({ buff, tier, status, spent, nullified, onClick, compac
           <div className={`font-display leading-tight tier-${t} ${compact ? "text-sm" : "text-lg"}`}>
             {buff.name}
           </div>
-          <div className="smallcaps text-[10px] text-parchment-400">
-            {CATEGORY_LABEL[buff.category]}
+          <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
+            <span className="smallcaps text-[10px] text-parchment-400">
+              {CATEGORY_LABEL[buff.category]}
+            </span>
+            <TurnCostBadge cost={turnCost(buff)} />
           </div>
         </div>
         <span

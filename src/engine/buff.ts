@@ -310,3 +310,23 @@ export interface Buff {
 export function aiCanUse(def: Buff): boolean {
   return def.implemented && (def.kind === "passive" || (def.kind === "instant" && !def.targets));
 }
+
+// --- Turn cost ---------------------------------------------------------------
+// Whether playing a card spends the holder's turn. Every card falls into one of
+// four buckets, derived from the SAME fields the engine uses to decide whether
+// to pass the turn (see game.ts passTurnAfterBuff and Buff.freeAction), so the
+// label a player sees can never disagree with what the game actually does.
+//   turn    - activated: using the card IS your move this turn
+//   free    - activated but a free action: resolves within your turn
+//   instant - applies the moment you draft it; nothing to activate
+//   passive - always on while held; nothing to activate
+export type TurnCost = "turn" | "free" | "instant" | "passive";
+
+export function turnCost(b: Pick<Buff, "kind" | "freeAction">): TurnCost {
+  if (b.kind === "activated") return b.freeAction ? "free" : "turn";
+  if (b.kind === "instant") return "instant";
+  return "passive";
+}
+
+/** Nerfs are secret passive handicaps: never activated, so always passive. */
+export const NERF_TURN_COST: TurnCost = "passive";

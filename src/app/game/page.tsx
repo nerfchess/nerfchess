@@ -31,7 +31,7 @@ import {
   resign,
 } from "@/engine/game";
 import { BuffDock, EnemyBuffModal, TargetingBanner, useBuffTargeting } from "@/components/BuffDock";
-import { draftCardNoun } from "@/engine/buff";
+import { draftCardNoun, turnCost } from "@/engine/buff";
 import { draftZones } from "@/lib/draftOnline";
 import { MobileBuffDrawer } from "@/components/MobileBuffDrawer";
 import { DraftNotice } from "@/components/DraftNotice";
@@ -1017,7 +1017,9 @@ function GamePage() {
           .filter((b) => !b.spent && !b.nullified)
           .flatMap((b) => {
             const def = BUFF_BY_ID[b.id];
-            return def ? [{ name: def.name, tier: b.tier, status: def.status?.(b) ?? null }] : [];
+            return def
+              ? [{ name: def.name, tier: b.tier, status: def.status?.(b) ?? null, cost: turnCost(def) }]
+              : [];
           })
       : undefined;
   const lastMove = game.board.history[game.board.history.length - 1] ?? null;

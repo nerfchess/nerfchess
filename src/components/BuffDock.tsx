@@ -1,7 +1,8 @@
 "use client";
 
-import { BuffPick, BuffTarget, draftCardNoun } from "@/engine/buff";
+import { BuffPick, BuffTarget, draftCardNoun, turnCost } from "@/engine/buff";
 import { BUFF_BY_ID } from "@/engine/buffs/library";
+import { TurnCostBadge } from "./TurnCostBadge";
 import { NerfGame, activateBuff, buffNextTarget } from "@/engine/game";
 import { Color } from "@/engine/types";
 import { Tier } from "@/engine/nerf";
@@ -320,6 +321,7 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards 
           <span className={`min-w-0 flex-1 truncate font-display text-[12px] font-semibold leading-tight tier-${inst.tier}`}>
             {def.name}
           </span>
+          <TurnCostBadge cost={turnCost(def)} short />
           {usable && (
             <span className="smallcaps shrink-0 rounded-sm border border-verdigris-glow/50 bg-verdigris/15 px-1 py-px text-[8px] font-semibold text-verdigris-glow">
               Usable
@@ -384,6 +386,7 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards 
           <span className={`min-w-0 flex-1 truncate font-display text-[11px] font-semibold tier-${inst.tier}`}>
             {def.name}
           </span>
+          <TurnCostBadge cost={turnCost(def)} short />
           {inst.nullified && <span className="smallcaps shrink-0 text-[8px] text-oxblood-glow">Nullified</span>}
           {inst.spent && !inst.nullified && <span className="smallcaps shrink-0 text-[8px] text-parchment-400">Used</span>}
           <span
