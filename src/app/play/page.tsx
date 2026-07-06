@@ -110,7 +110,7 @@ export default function PlayPage() {
             onClick={() => selectMode("buff")}
             title="Buff mode"
             tagline="Power-ups"
-            body="No nerfs at all. Every few moves both players draft a buff; the strongest build wins."
+            body="Draft buffs and cook your opponent."
           />
           <ModeCard
             mode="nerf"
@@ -118,7 +118,7 @@ export default function PlayPage() {
             onClick={() => selectMode("nerf")}
             title="Nerf mode"
             tagline="Handicaps"
-            body="Pick a secret nerf your opponent never sees until the end. Rare drafts can soften or break it."
+            body="You start nerfed, then draft cards to cook your opponent even harder."
           />
         </div>
 
