@@ -109,11 +109,19 @@ Notes:
 
 ---
 
+## 2026-07-05 20:50 ET (count-based cards no longer soft-lock with few targets)
+
+- Fix: cards that collect N targets (teleport N pieces, "three of your pieces become amazons" like Titan Legion, remove/freeze/promote/advance N, and the removeEnemies / placePieces / voidSquares factories) soft-locked when the board had fewer than N eligible targets: you picked the few that existed, then got stranded on an empty step you could neither complete nor skip, so the card did nothing. Now they resolve with as many targets as are available. Central one-line guard in buffNextTarget (src/engine/game.ts): once at least one target is picked, a non-finishable step with no remaining candidates ends collection, so the effect applies to the picks gathered so far. Safe for structured collectors (relocateMany, Warp Sovereign, stealBuffs, lineSweep) which already self-guard or ignore a dangling pick.
+- Test: scripts/test-hexes.cjs (npm run test:rules) now drives every activated card on two sparse boards and fails on any soft-lock or non-termination. Verified to fail without the fix (7 cards) and pass with it (149 activated cards clean). tsc clean; test:rules and test:nerfs green.
+- Design note: docs/2026-07-05-count-target-graceful-design.md. PR #197. OPEN.
+
+---
+
 ## 2026-07-05 21:02 ET (turn-cost labels on every card)
 
 - Feature: every draftable card now states whether using it uses up a turn, with a small badge in four states: Uses your turn (activated, playing it is your move), Free action (activated but resolves within your turn), Instant (applies the moment you draft it), Passive (always on while held). Nerfs are labeled Passive (secret handicaps, never activated). The label is derived from the same kind/freeAction fields the engine uses to pass the turn (game.ts), so it can never disagree with actual behavior. Shown on the shared BuffCard (draft picker, codex, in-game modal), the in-game BuffDock rows (own + revealed opponent cards; mobile drawer via the same rows), the boon corner list, and NerfCard/PlayerNerfCard. New src/engine/buff.ts turnCost()/NERF_TURN_COST and src/components/TurnCostBadge.tsx.
 - Audit: swept all 419 cards for turn-cost mislabels. Deterministic pass (scripts/audit-turn-cost.cjs, table in docs/turn-cost-table.json): zero description-vs-behavior contradictions. Semantic pass (multi-agent, all cards, adversarially verified) flagged 12; all checked against source and found to be false positives (the flagged passive->turn cards are passive move-augments or unimplemented placeholders, correctly zero-turn) or design/balance calls left for the owner (pieceBound upgrades that intentionally spend a turn to designate a piece, which the badge now makes visible). No flags changed: the derived badge is correct by construction. Distribution: 155 Uses your turn, 12 Free action, 129 Instant, 123 Passive.
-- Design note: docs/2026-07-05-turn-cost-labels-design.md. PR #198. Typecheck-clean; test:rules green; visuals want a preview-deploy eyeball. OPEN.
+- Design note: docs/2026-07-05-turn-cost-labels-design.md. PR #198. Typecheck-clean; test:rules green; visuals want a preview-deploy eyeball. MERGED.
 
 ---
 
@@ -124,32 +132,3 @@ Notes:
 - Animation: the walnut pops in with a comedic crunch, then gives a periodic little shudder as if the trapped piece is rattling to crack out (globals.css walnut-crunch + walnut-jiggle; cut under prefers-reduced-motion).
 - Test: scripts/test-hexes.cjs (npm run test:rules) now asserts a walnut is pruned when its piece is captured. Verified to fail without the fix and pass with it. tsc clean; test:rules green. The visual wants a preview-deploy eyeball.
 - PR #199. OPEN.
-
----
-
-## 2026-07-05 22:03 ET (Banana Peel: make the invisible trap visible)
-
-- Fix: Banana Peel looked broken because it was invisible. The peel is stored on the buff instance (inst.state.sq), not in bs.effects, so draftZones never rendered it: you tossed it, saw nothing, then an enemy piece "randomly" slipped backward, which reads as a glitch. The engine mechanic is correct (verified by repro: an enemy stepping on the peel slips one rank back toward its home, then the peel is spent). Now draftZones exposes a banana zone for the VIEWER's own unspent peels (owner-only, so the trap keeps its surprise), and the board paints a banana peel on that square.
-- Visual + animation: new BananaPeel component (splayed three-frond peel, warm yellow gradient, gloss, ground shadow for a pseudo-3D look) rendered centered on the peel square; it lands with a little bounce then does a jaunty periodic shimmy (globals.css banana-appear + banana-wobble; cut under prefers-reduced-motion).
-- No engine/mechanic change, so no balance impact; purely making the existing trap visible. tsc clean; test:rules green. Visual wants a preview-deploy eyeball.
-- Stacked on the walnut branch (#199) to share the Board/Pieces/globals changes and avoid conflicts. PR #201. OPEN.
-
----
-
-## 2026-07-05 22:45 ET (funny content batch: Tung Tung Tung Sahur + fruit)
-
-- New cards, all built on the existing safety-railed primitives in crossref.ts (freeze never touches a king, instants resolve once) so none can soft-lock a game:
-  - Tung Tung Tung Sahur (hex, tier 5): bonk one enemy piece with the log; it is stunned (frozen) for its next 2 turns, with an impact flash. Kings cannot be bonked.
-  - Coconut Bonk (item, tier 2): a lighter bonk; one enemy piece stunned for its next turn.
-  - Durian (hex, tier 3): the stench pins the opponent's pawns (no advance) for their next 3 turns, with a flash on every enemy pawn.
-  - Watermelon Rind (boon/protection, tier 4): your whole army is uncapturable for the opponent's next 2 turns.
-- Library now 423 buffs (411 implemented), 128 hexes. tsc clean; test:rules green (unique ids, no em dashes, no soft-locks, king safety all pass).
-- Animations reuse the existing freeze / impact-flash / no-pawn-advance / shield visuals; richer per-card art can follow. Stacked on the banana branch (#201). PR #202. OPEN.
-
----
-
-## 2026-07-05 22:52 ET (opponent plays persist: no more missing a hex)
-
-- The reveal when the opponent plays a card/hex used to be a single top-right toast that vanished after 7s, so if you looked away you missed what hit you. Replaced it with a persistent OppPlaysLog: the newest play still shows its full rule text with the entrance animation (so a hex cast on you is clear), and older plays collapse to a name+tier line but STAY (last 6). The on-board effect still animates (freeze flash, impact strike, etc.).
-- Wired in both OnlineMatch (online) and the bot game page; the old BuffUsedToast is no longer used. tsc clean.
-- Stacked on the funny-cards branch (#202). PR #203. OPEN.
