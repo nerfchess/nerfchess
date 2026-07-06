@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 
 interface Hit {
@@ -12,7 +11,6 @@ interface Hit {
 // Debounced prefix search over account usernames; picking a result opens the
 // player's profile.
 export function PlayerSearch({ className = "", autoFocus = false }: { className?: string; autoFocus?: boolean }) {
-  const router = useRouter();
   const [query, setQuery] = useState("");
   const [hits, setHits] = useState<Hit[]>([]);
   const [open, setOpen] = useState(false);
@@ -141,8 +139,10 @@ export function PlayerSearch({ className = "", autoFocus = false }: { className?
               type="button"
               onMouseEnter={() => setActive(i)}
               onClick={() => {
-                router.push(`/u/${hit.username}`);
+                // Reuse the same hard navigation the keyboard path uses: plain
+                // router.push proved unreliable in the packaged worker build.
                 setOpen(false);
+                go(hit);
               }}
               className={
                 "flex w-full items-center justify-between px-4 py-2.5 text-left text-sm transition-colors " +

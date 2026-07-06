@@ -90,25 +90,42 @@ export default function LobbyPage() {
     setJoiningPool(`${seek.mode ?? "buff"}:${seek.pool}`);
     const session = new MPSession();
     session.persistFriendSession = false;
+    // Answer this exact seek: the server pairs only with this person (or house
+    // bot). If they already left it returns seek_gone rather than substituting
+    // a random opponent. Older servers omit seek.userId, so this falls back to
+    // plain quick pairing there. Hoisted so the timeout path can still honor a
+    // pairing that lands a moment after the 10s deadline.
+    const queuePromise = session.queue(
+      seek.pool,
+      seek.mode ?? "buff",
+      seek.userId ? { userId: seek.userId } : undefined,
+    );
+    const enterGame = (paired: { id: string; color: "w" | "b"; token: string }) => {
+      saveOnlineSeat(paired.id, { color: paired.color, token: paired.token });
+      session.destroy();
+      router.push(`/game/${paired.id}`);
+    };
     try {
       const paired = await Promise.race([
-        // Answer this exact seek: the server pairs only with this person (or
-        // house bot). If they already left it returns seek_gone rather than
-        // substituting a random opponent. Older servers omit seek.userId, so
-        // this falls back to plain quick pairing there.
-        session.queue(
-          seek.pool,
-          seek.mode ?? "buff",
-          seek.userId ? { userId: seek.userId } : undefined,
-        ),
+        queuePromise,
         new Promise<never>((_, reject) =>
           window.setTimeout(() => reject(new Error("seek_gone")), 10000),
         ),
       ]);
-      saveOnlineSeat(paired.id, { color: paired.color, token: paired.token });
-      session.destroy();
-      router.push(`/game/${paired.id}`);
+      enterGame(paired);
     } catch (e) {
+      // The single-threaded Durable Object can answer just after the timeout
+      // fires. Before tearing down the socket (which would strand an opponent
+      // the server has already paired us with and cost us the seat), give the
+      // pairing a brief grace window; if it completed, honor it.
+      const late = await Promise.race([
+        queuePromise.catch(() => null),
+        new Promise<null>((resolve) => window.setTimeout(() => resolve(null), 400)),
+      ]);
+      if (late) {
+        enterGame(late);
+        return;
+      }
       session.cancelQueue();
       session.destroy();
       setJoiningPool(null);
