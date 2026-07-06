@@ -83,6 +83,12 @@ export async function applyModAction(
   if (target.role === "admin") return "Admins cannot be moderated.";
   if (target.role === "mod" && mod.role !== "admin") return "Only an admin can moderate a moderator.";
 
+  // A null duration means a permanent sanction (the UI's "Permanent" option).
+  // A provided but non-positive duration is a bad request, not a request for a
+  // permanent ban: reject it instead of silently making the sanction permanent.
+  if ((action === "mute" || action === "ban") && durationMs !== null && durationMs <= 0) {
+    return "Duration must be a positive number of milliseconds, or omit it for a permanent action.";
+  }
   const until = durationMs && durationMs > 0 ? Date.now() + durationMs : PERMANENT_MS;
 
   switch (action) {

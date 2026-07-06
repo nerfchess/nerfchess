@@ -47,6 +47,26 @@ export async function POST(request: Request) {
   const db = await getDb();
   const user = await userForSession(db, sessionTokenFromCookieHeader(request.headers.get("Cookie")));
 
+  // Throttle: without this the endpoint can be flooded, spamming the
+  // rule_suggestions table and burning the outbound email quota (unlike
+  // /api/report, which caps 5/day). Cap any session-bearing submitter at a
+  // sane daily rate. Anonymous submissions are still accepted and saved, but
+  // (below) they do not trigger an outbound email, so the Resend quota cannot
+  // be burned by a loop of anonymous POSTs.
+  if (user) {
+    const dayAgo = Date.now() - 24 * 60 * 60 * 1000;
+    const recent = await db
+      .prepare("SELECT COUNT(*) AS n FROM rule_suggestions WHERE user_id = ? AND created_at > ?")
+      .bind(user.id, dayAgo)
+      .first<{ n: number }>();
+    if ((recent?.n ?? 0) >= 12) {
+      return NextResponse.json(
+        { error: "You have sent a lot of suggestions today. Please try again tomorrow." },
+        { status: 429 },
+      );
+    }
+  }
+
   const fallbackName =
     kind === "buff"
       ? pool === "boon"
@@ -80,7 +100,10 @@ export async function POST(request: Request) {
     const { env } = getCloudflareContext();
     const apiKey = (env as { RESEND_API_KEY?: string }).RESEND_API_KEY;
     const to = (env as { SUGGESTIONS_EMAIL?: string }).SUGGESTIONS_EMAIL;
-    if (apiKey && to) {
+    // Only email for session-bearing submitters (throttled above). Anonymous
+    // submissions are saved to the table but never trigger outbound email, so a
+    // loop of anonymous POSTs cannot burn the Resend quota.
+    if (apiKey && to && user) {
       const kindLabel =
         kind === "buff"
           ? pool === "boon"

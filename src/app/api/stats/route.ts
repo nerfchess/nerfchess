@@ -29,7 +29,7 @@ export async function GET() {
             SUM(CASE WHEN winner = 'w' THEN 1 ELSE 0 END)::int AS white_wins,
             SUM(CASE WHEN winner = 'b' THEN 1 ELSE 0 END)::int AS black_wins,
             SUM(CASE WHEN winner = 'draw' THEN 1 ELSE 0 END)::int AS draws,
-            AVG(LENGTH(moves) - LENGTH(REPLACE(moves, ' ', '')) + 1)::float8 AS avg_plies
+            AVG(CASE WHEN moves = '' THEN 0 ELSE LENGTH(moves) - LENGTH(REPLACE(moves, ' ', '')) + 1 END)::float8 AS avg_plies
      FROM games`,
     [dayAgo],
   );
