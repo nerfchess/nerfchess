@@ -793,6 +793,28 @@ export function Board({
             const isPremoveSquare = premoveSquares.has(sq);
             const rightClickMark = rightClickMarks[sq];
 
+            // Plain-language hover tooltip for any effect on this square, so a
+            // player can hover a walnut, freeze, shield, wall, or peel and read
+            // what it does instead of decoding an icon. Public information, so
+            // it is safe to spell out.
+            const effectTitle = [
+              walnutSquares.has(sq) &&
+                "Walnut: a squirrel buried this piece under a walnut. It is stuck solid and cannot move until the shell cracks.",
+              frozenSquares.has(sq) &&
+                "Frozen: this piece is iced in place and cannot move until it thaws.",
+              lockedSquares.has(sq) &&
+                "Shackled: a hex has chained this piece in place for now.",
+              shieldedSquares.has(sq) &&
+                "Sheltered: pieces here, the king aside, cannot be captured.",
+              wardSquares.has(sq) &&
+                "Warded: your opponent cannot move a piece onto this square.",
+              bananaSquares.has(sq) &&
+                "Banana peel: the next enemy piece to step here slips and skids off course.",
+              strikeSquares.has(sq) && "Lightning: this square was just struck.",
+            ]
+              .filter(Boolean)
+              .join(" ");
+
             const fogHide =
               !!visual?.fogged && piece && piece.color !== myColor && !lastTo;
 
@@ -848,6 +870,7 @@ export function Board({
                 }}
                 role="gridcell"
                 aria-label={`square ${"abcdefgh"[f]}${r + 1}`}
+                title={effectTitle || undefined}
               >
                 {underwater && (
                   <div className="absolute inset-0 bg-cyan-500/25 mix-blend-screen pointer-events-none" />
@@ -869,9 +892,19 @@ export function Board({
                   </>
                 )}
                 {walnutSquares.has(sq) && (
-                  /* Hexed into a walnut: a faint amber wash marks the square; the
-                     piece itself is rendered as the walnut (see WalnutPiece). */
-                  <div className="absolute inset-0 bg-amber-700/15 pointer-events-none" />
+                  /* Hexed into a walnut: a faint amber wash marks the square and
+                     the piece itself renders as the walnut (see WalnutPiece). A
+                     squirrel scurries in once to bury it when the hex first
+                     lands (one-shot on mount; hidden for reduced-motion). */
+                  <>
+                    <div className="absolute inset-0 bg-amber-700/15 pointer-events-none sq-walnut" />
+                    <span
+                      aria-hidden
+                      className="absolute -top-1 left-1/2 z-20 -translate-x-1/2 text-base leading-none pointer-events-none walnut-squirrel"
+                    >
+                      🐿️
+                    </span>
+                  </>
                 )}
                 {bananaSquares.has(sq) && (
                   /* A banana peel the viewer tossed here (owner-only trap). The
