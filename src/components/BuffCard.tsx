@@ -5,6 +5,19 @@ import { Tier } from "@/engine/nerf";
 import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
 import { GlossaryText } from "@/components/GlossaryText";
 import { TurnCostBadge } from "@/components/TurnCostBadge";
+import {
+  Castle,
+  Eye,
+  Layers,
+  type LucideIcon,
+  Package,
+  Shield,
+  Skull,
+  Swords,
+  Timer,
+  Unlink,
+  Wind,
+} from "lucide-react";
 
 const CATEGORY_LABEL: Record<Buff["category"], string> = {
   movement: "Movement",
@@ -17,6 +30,22 @@ const CATEGORY_LABEL: Record<Buff["category"], string> = {
   nerf: "Nerf-breaker",
   hex: "Hex",
   item: "Item",
+};
+
+// One glyph per category: it labels the small chip AND repeats as a large,
+// barely-there watermark on the card face, so a hand of cards can be told
+// apart at a glance the way suits are.
+const CATEGORY_ICON: Record<Buff["category"], LucideIcon> = {
+  movement: Wind,
+  pieces: Castle,
+  tempo: Timer,
+  protection: Shield,
+  attack: Swords,
+  info: Eye,
+  draft: Layers,
+  nerf: Unlink,
+  hex: Skull,
+  item: Package,
 };
 
 interface Props {
@@ -38,6 +67,7 @@ interface Props {
 export function BuffCard({ buff, tier, status, spent, nullified, onClick, compact, glow, enterDelayMs }: Props) {
   const t = tier ?? buff.tier;
   const dead = spent || nullified;
+  const CatIcon = CATEGORY_ICON[buff.category];
   const body = (
     <div
       style={enterDelayMs != null ? { animationDelay: `${enterDelayMs}ms` } : undefined}
@@ -52,13 +82,25 @@ export function BuffCard({ buff, tier, status, spent, nullified, onClick, compac
           : "")
       }
     >
-      <div className="flex items-start justify-between gap-2">
+      {/* Category watermark: a large, faint suit glyph anchored bottom-right,
+          behind the text. Skipped on compact rows where it would just smear. */}
+      {!compact && (
+        <CatIcon
+          aria-hidden
+          className={`pointer-events-none absolute -bottom-3 -right-2 tier-${t}`}
+          size={84}
+          strokeWidth={1.2}
+          style={{ opacity: 0.08 }}
+        />
+      )}
+      <div className="relative flex items-start justify-between gap-2">
         <div className="min-w-0">
           <div className={`font-display leading-tight tier-${t} ${compact ? "text-sm" : "text-lg"}`}>
             {buff.name}
           </div>
           <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
-            <span className="smallcaps text-[10px] text-parchment-400">
+            <span className="inline-flex items-center gap-1 smallcaps text-[10px] text-parchment-400">
+              <CatIcon aria-hidden size={11} strokeWidth={2} className="opacity-70" />
               {CATEGORY_LABEL[buff.category]}
             </span>
             <TurnCostBadge cost={turnCost(buff)} />
@@ -82,6 +124,13 @@ export function BuffCard({ buff, tier, status, spent, nullified, onClick, compac
       <p className={`leading-snug text-parchment/90 ${compact ? "mt-1.5 text-[11px]" : "text-[13px]"}`}>
         <GlossaryText text={buff.description} />
       </p>
+      {/* Flavor line: the card's voice, quoted and dim, TCG-style. Full cards
+          only; dock rows and compact picks stay all-business. */}
+      {!compact && buff.flavor && (
+        <p className="relative mt-2 text-[11px] italic leading-snug text-parchment-400">
+          &ldquo;{buff.flavor}&rdquo;
+        </p>
+      )}
       {status && !dead && (
         <div className="mt-1.5 smallcaps text-[10px] text-gold/80">{status}</div>
       )}

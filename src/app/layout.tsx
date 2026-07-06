@@ -1,16 +1,25 @@
 import type { Metadata, Viewport } from "next";
-import { Noto_Sans } from "next/font/google";
+import { Inter, Noto_Sans } from "next/font/google";
 import { SettingsBootstrap } from "@/components/SettingsBootstrap";
 import "./globals.css";
 
 // Body text is Noto Sans, the same UI font Lichess ships. next/font self-hosts
 // it at build time and exposes it as --font-body, which globals.css and the
-// Tailwind font-body family already read. Headings keep Inter (see below).
+// Tailwind font-body family already read.
 const notoSans = Noto_Sans({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   display: "swap",
   variable: "--font-body",
+});
+
+// Headings use Inter, also self-hosted via next/font: the old external
+// Google Fonts stylesheet was a render-blocking request on every first paint.
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+  variable: "--font-display",
 });
 
 export const metadata: Metadata = {
@@ -64,20 +73,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <head>
-        {/* Inter stays as the display face for headings (--font-display).
-            Body text is Noto Sans, wired up via next/font above. */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
-          rel="stylesheet"
-        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
         />
       </head>
-      <body className={`no-tap-highlight font-body ${notoSans.variable}`}>
+      <body className={`no-tap-highlight font-body ${notoSans.variable} ${inter.variable}`}>
         <SettingsBootstrap />
         {children}
       </body>

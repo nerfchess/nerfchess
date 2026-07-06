@@ -261,13 +261,7 @@ export default function ProfilePage() {
 
             <h2 className="mt-10 font-display text-2xl">Recent games</h2>
             {profile.games.length === 0 ? (
-              <p className="mt-3 text-parchment-300">
-                No online games yet.{" "}
-                <Link href="/play" className="text-gold-leaf hover:underline">
-                  Find an opponent
-                </Link>{" "}
-                to start your history.
-              </p>
+              <p className="mt-3 text-parchment-300">No online games yet.</p>
             ) : (
               <div className="mt-3 plate divide-y divide-white/5">
                 {profile.games.map((game) => (

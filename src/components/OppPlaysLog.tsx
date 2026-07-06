@@ -3,24 +3,45 @@
 import { BUFF_BY_ID } from "@/engine/buffs/library";
 import { Tier } from "@/engine/nerf";
 import { TIER_ROMAN } from "@/lib/tiers";
+import { useEffect, useState } from "react";
 
-// A persistent feed of the cards/hexes the opponent has played, docked to the
-// top-right edge so it never covers the board. Replaces the old single toast
-// that vanished after a few seconds: the newest play shows its full rule text
-// (with an entrance animation) so a hex cast on you is never a mystery, and
-// older plays collapse to a name+tier line but STAY, so you can still read what
-// hit you if you looked away when it landed.
+// The feed of cards/hexes the opponent has played.
+//
+// Two homes, one record:
+//  - Top-right feed (OppPlaysLog): every play lands here with its full rule
+//    text and stays for FEED_TTL_MS (5 minutes), so a hex cast while you
+//    looked away is still readable a long while later.
+//  - Left dock (OppPlaysDockSection): the same plays live there permanently
+//    for the rest of the game, so the opponent's whole line of play is always
+//    reviewable at a glance.
 
 export interface OppPlay {
   /** Stable, monotonic key for React (a counter, not the card id). */
   key: number;
   card: { id: string; tier: number };
   label: string;
+  /** When the play landed (ms epoch). Drives the top-right 5-minute TTL. */
+  at: number;
 }
 
+/** How long a play stays in the top-right feed before it retires to the
+ * dock's permanent list. */
+const FEED_TTL_MS = 5 * 60_000;
+/** The feed never shows more than this many plays at once. */
+const FEED_MAX = 5;
+
 export function OppPlaysLog({ plays }: { plays: OppPlay[] }) {
-  // Newest first; keep the last handful so the feed never grows without bound.
-  const shown = plays.slice(-6).reverse();
+  // Re-render on a slow tick so entries age out of the feed without any
+  // parent state change. 10s granularity is plenty for a 5-minute TTL.
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const id = window.setInterval(() => setTick((t) => t + 1), 10_000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  const now = Date.now();
+  const fresh = plays.filter((p) => now - p.at < FEED_TTL_MS);
+  const shown = fresh.slice(-FEED_MAX).reverse();
   if (!shown.length) return null;
   return (
     <div className="pointer-events-none fixed right-3 top-16 z-40 flex w-[min(80vw,20rem)] flex-col gap-1">
@@ -58,6 +79,61 @@ export function OppPlaysLog({ plays }: { plays: OppPlay[] }) {
           </div>
         );
       })}
+    </div>
+  );
+}
+
+/** The permanent home of the same plays, rendered inside the left dock:
+ * a compact, newest-first ledger of everything the opponent has played this
+ * game. A row expands on click to show the full rule text, so nothing the
+ * opponent did is ever more than one tap away. */
+export function OppPlaysDockSection({ plays }: { plays: OppPlay[] }) {
+  const [open, setOpen] = useState<number | null>(null);
+  if (!plays.length) return null;
+  const newestFirst = [...plays].reverse();
+  return (
+    <div className="border-t border-white/10 pt-2">
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="smallcaps text-[10px] text-parchment-400">Opponent played</span>
+        <span className="font-mono text-[10px] tabular-nums text-parchment-400">{plays.length}</span>
+      </div>
+      <ul className="mt-1 space-y-0.5">
+        {newestFirst.map((p) => {
+          const def = BUFF_BY_ID[p.card.id];
+          if (!def) return null;
+          const tier = p.card.tier as Tier;
+          const expanded = open === p.key;
+          return (
+            <li key={p.key}>
+              <button
+                type="button"
+                onClick={() => setOpen(expanded ? null : p.key)}
+                aria-expanded={expanded}
+                className="dock-card w-full border border-white/10 bg-white/[0.02] px-2 py-1 text-left transition hover:border-white/25"
+              >
+                <span className="flex items-center gap-1.5">
+                  <span className={`min-w-0 flex-1 truncate font-display text-[11px] font-semibold tier-${tier}`}>
+                    {def.name}
+                  </span>
+                  <span
+                    className={`shrink-0 rounded-full border px-1.5 py-px font-display text-[9px] font-bold tier-bg-${tier} tier-${tier}`}
+                  >
+                    {TIER_ROMAN[tier]}
+                  </span>
+                </span>
+                {expanded && (
+                  <>
+                    <span className="smallcaps mt-0.5 block text-[9px] text-parchment-400">{p.label}</span>
+                    <span className="mt-0.5 block text-[10px] leading-snug text-parchment-300">
+                      {def.description}
+                    </span>
+                  </>
+                )}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }

@@ -156,9 +156,7 @@ export default function ThreadPage() {
               {!thread ? (
                 <p className="text-sm text-parchment-400">Loading messages…</p>
               ) : thread.messages.length === 0 ? (
-                <p className="text-sm text-parchment-400">
-                  No messages yet. Say hello, or send a challenge from their profile.
-                </p>
+                <p className="text-sm text-parchment-400">No messages yet.</p>
               ) : (
                 <ul className="space-y-2">
                   {thread.messages.map((m) => (

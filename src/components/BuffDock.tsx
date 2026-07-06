@@ -10,6 +10,7 @@ import { TIER_ROMAN } from "@/lib/tiers";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { BuffCard } from "./BuffCard";
+import { OppPlaysDockSection, type OppPlay } from "./OppPlaysLog";
 
 // ---------------------------------------------------------------------------
 // Buff dock and targeting.
@@ -253,9 +254,12 @@ interface Props {
   /** Bot games: mask the opponent's held cards locally (the online server
    * already sends them masked). Revealed instances still show face-up. */
   hideOpponentCards?: boolean;
+  /** Everything the opponent has played this game: after each play's 5-minute
+   * stay in the top-right feed, this dock section is its permanent home. */
+  plays?: OppPlay[];
 }
 
-export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards }: Props) {
+export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards, plays }: Props) {
   const [showUsed, setShowUsed] = useState(false);
 
   const bs = game.buffs;
@@ -403,7 +407,7 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards 
   };
 
   return (
-    <div className="plate flex h-full min-h-0 flex-col overflow-hidden">
+    <div data-buff-dock className="plate flex h-full min-h-0 flex-col overflow-hidden">
       <div className="min-h-0 flex-1 space-y-2 overflow-y-auto bg-inherit px-3 pb-2">
         {/* Latest pick slot: your newest card stays visible here; the
             opponent's side shows a face-down card while hidden. */}
@@ -482,6 +486,8 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards 
             <div className="flex flex-wrap items-start gap-1">{theirsActive.map(oppEntry)}</div>
           </>
         )}
+
+        {plays && plays.length > 0 && <OppPlaysDockSection plays={plays} />}
 
         {usedCount > 0 && (
           <div className="border-t border-white/10 pt-1.5">

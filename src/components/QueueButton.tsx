@@ -150,9 +150,7 @@ export function QueueButton() {
           >
             Sign in to play online
           </Link>
-          <p className="text-xs text-parchment-400">
-            Queue games are rated: Nerf and Buff each keep their own rating.
-          </p>
+          <p className="text-xs text-parchment-400">Queue games are rated.</p>
         </div>
       ) : state === "searching" ? (
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3">

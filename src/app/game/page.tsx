@@ -1,9 +1,14 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { Board } from "@/components/Board";
 import { BoardPlayerRow } from "@/components/BoardPlayerRow";
 import { ClockPill } from "@/components/ClockPill";
-import { GameOver } from "@/components/GameOver";
+// The end screen is never part of first paint; loading it on demand keeps it
+// out of the page's initial bundle.
+const GameOver = dynamic(() => import("@/components/GameOver").then((m) => m.GameOver), {
+  ssr: false,
+});
 import { MobileActionsMenu } from "@/components/MobileActionsMenu";
 import { MobileMoveDrawer } from "@/components/MobileMoveDrawer";
 import { MoveList } from "@/components/MoveList";
@@ -369,15 +374,14 @@ function GamePage() {
     setGame(g);
   };
 
-  // Transient toast naming and explaining a card the bot just played, so its
-  // effect on the board is never a mystery.
-  // Persistent feed of the cards the opponent (bot) has played; the newest keeps
-  // its full rule text, older ones collapse but stay, so a card played against
-  // you never vanishes before you read it.
+  // Feed of the cards the opponent (bot) has played. Each play shows in the
+  // top-right for 5 minutes (OppPlaysLog TTL), then lives permanently in the
+  // dock's "Opponent played" ledger, so nothing it did is ever unreadable.
   const [oppLog, setOppLog] = useState<OppPlay[]>([]);
   const oppKeyRef = useRef(0);
   const showOppUsedCard = (card: { id: string; tier: number }, label: string) => {
-    setOppLog((log) => [...log, { key: oppKeyRef.current++, card, label }].slice(-6));
+    // Bounded but roomy: the dock keeps the whole game's plays readable.
+    setOppLog((log) => [...log, { key: oppKeyRef.current++, card, label, at: Date.now() }].slice(-60));
   };
 
   // Draft mode: the bot resolves its pending buff drafts immediately.
@@ -914,8 +918,8 @@ function GamePage() {
             </h1>
             <p className="mt-2 text-sm text-parchment-300 text-center">
               {gameMode === "nerf"
-                ? "Pick one of two nerfs. Every five moves you draft a card: a hex that curses your opponent, or a boon or item that helps you."
-                : "Every game opens weak: pick one of two nerfs, then draft buffs every few moves to claw your way back to power."}
+                ? "It stays secret until the game ends."
+                : "Draft buffs as you play to claw back power."}
             </p>
             {nerfDeadline != null && (
               <div className="mx-auto mt-4 max-w-sm">
@@ -951,13 +955,10 @@ function GamePage() {
               <div className="mt-4 text-center">
                 <button
                   onClick={() => startDraftGame(nerfDraft.myOptions[nerfSelected])}
-                  className="btn-leaf px-6 py-2.5 font-display text-sm font-semibold tracking-wide"
+                  className="btn-glass btn-glass--primary px-8 py-3 font-display text-base font-semibold tracking-wide"
                 >
                   Confirm pick
                 </button>
-                <p className="mt-1.5 text-[11px] text-parchment-400">
-                  Clicking the card again also confirms.
-                </p>
               </div>
             )}
             {/* Nerf mode: the opponent's rule is completely hidden until the
@@ -1339,6 +1340,7 @@ function GamePage() {
                 }
                 onStartUse={buffTargeting.start}
                 hideOpponentCards
+                plays={oppLog}
               />
             ) : (
               <div className="hidden lg:block" />
@@ -1562,6 +1564,7 @@ function GamePage() {
             canAct={!game.result && game.board.turn === myColor && !myOffer && !isReviewingHistory}
             onStartUse={buffTargeting.start}
             hideOpponentCards
+            plays={oppLog}
           />
         </MobileBuffDrawer>
       )}

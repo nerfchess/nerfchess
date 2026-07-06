@@ -144,11 +144,7 @@ export default function LobbyPage() {
       <section className="max-w-7xl mx-auto px-5 sm:px-6">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <p className="kicker smallcaps text-[10px] mb-3">Find a game</p>
             <h1 className="masthead text-4xl sm:text-5xl text-parchment-50">Lobby</h1>
-            <p className="mt-2 text-parchment-200">
-              Find an opponent, challenge a friend, or watch a live game.
-            </p>
           </div>
           <div className="flex items-center gap-2 smallcaps text-[11px] text-parchment-300">
             <span className="w-2 h-2 rounded-full bg-verdigris animate-flicker" />
@@ -168,11 +164,8 @@ export default function LobbyPage() {
             <QueueButton />
 
             {/* Step 2: play a specific person via a shared code. */}
-            <div className="plate p-5 sm:p-6">
+            <div className="plate plate-hover p-5 sm:p-6">
               <div className="sec-title font-display text-2xl text-parchment">Play a friend</div>
-              <p className="mt-1 text-sm text-parchment-300">
-                Create a game and send them the code, or enter the code they sent you.
-              </p>
               <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
                 <Link
                   href="/friend"
@@ -207,7 +200,7 @@ export default function LobbyPage() {
 
             {/* Open challenges: players waiting in a quick-pairing pool plus
                 friend games waiting for an opponent. */}
-            <div className="plate p-5 sm:p-6">
+            <div className="plate plate-hover p-5 sm:p-6">
               <div className="flex items-center justify-between gap-3">
                 <div className="sec-title font-display text-2xl text-parchment">Open challenges</div>
                 <div className="flex items-center gap-3">
@@ -223,15 +216,9 @@ export default function LobbyPage() {
                 </div>
               </div>
               {!lobby ? (
-                <>
-                  <SkeletonRows count={3} />
-                  <p className="mt-3 text-sm text-parchment-500">Looking for open challenges…</p>
-                </>
+                <SkeletonRows count={3} />
               ) : waitingCount === 0 ? (
-                <p className="mt-3 text-sm text-parchment-400">
-                  No one is waiting right now. Queue for a game or create a friend game
-                  above and it will show up here until someone accepts.
-                </p>
+                <p className="mt-3 text-sm text-parchment-400">No one is waiting right now.</p>
               ) : (
                 <ul className="mt-3 divide-y divide-white/5">
                   {seeks.map((seek) => (
@@ -252,7 +239,7 @@ export default function LobbyPage() {
             </div>
 
             {/* Step 3 (optional): watch a game that's happening right now. */}
-            <div className="plate p-5 sm:p-6">
+            <div className="plate plate-hover p-5 sm:p-6">
               <div className="flex items-center justify-between gap-3">
                 <div className="sec-title font-display text-2xl text-parchment">Live games</div>
                 <span className="smallcaps text-[10px] text-parchment-400">
@@ -260,14 +247,9 @@ export default function LobbyPage() {
                 </span>
               </div>
               {!lobby ? (
-                <>
-                  <SkeletonRows count={3} />
-                  <p className="mt-3 text-sm text-parchment-500">Finding live games…</p>
-                </>
+                <SkeletonRows count={3} />
               ) : lobby.games.length === 0 ? (
-                <p className="mt-3 text-sm text-parchment-400">
-                  No games in play right now. Start one and someone can watch you.
-                </p>
+                <p className="mt-3 text-sm text-parchment-400">No games in play right now.</p>
               ) : (
                 <ul className="mt-3 divide-y divide-white/5">
                   {lobby.games.map((game) => (
@@ -277,12 +259,10 @@ export default function LobbyPage() {
               )}
             </div>
 
-            <div className="text-sm text-parchment-400">
-              Prefer practicing solo?{" "}
-              <Link href="/play" className="text-parchment-200 underline decoration-white/20 hover:text-parchment-50">
-                Play against the bot
+            <div className="text-sm">
+              <Link href="/play" className="text-parchment-400 hover:text-parchment-100 transition-colors">
+                Play vs bot
               </Link>
-              .
             </div>
           </div>
 
