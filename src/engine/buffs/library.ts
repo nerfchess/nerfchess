@@ -1,7 +1,7 @@
 import { isInCheck } from "../board";
 import { NEW_HEXES } from "./hexes";
 import { CROSSREF_CARDS } from "./crossref";
-import { Buff, BuffApi, BuffCategory, BuffInstance, BuffPick, CardFx } from "../buff";
+import { Buff, BuffApi, BuffCategory, BuffInstance, CardFx } from "../buff";
 import { Tier } from "../nerf";
 import { BoardState, Color, FILE, Move, PieceType, RANK, SQ, Square, inBoard } from "../types";
 import {
