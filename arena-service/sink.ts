@@ -7,7 +7,9 @@ import type { ArenaFinishedRecord, ArenaGameSummary, Color, StoredDraftAction } 
 export interface ArenaSink {
   gameOpen(summary: ArenaGameSummary): void;
   move(gameId: string, ply: number, uci: string, clocks: Record<Color, number>): void;
-  draft(gameId: string, action: StoredDraftAction): void;
+  /** `card` is the fired buff's face on a `use`, streamed to spectators so the
+   *  effect renders on their replica (public once fired). Absent for pick/bank. */
+  draft(gameId: string, action: StoredDraftAction, card?: { id: string; tier: number }): void;
   /** replayOk = did the finished record round-trip through replayToPosition
    *  back to the in-RAM board? M2 can ignore it; M1 gates on it. */
   gameEnd(record: ArenaFinishedRecord, replayOk: boolean): void;
@@ -80,8 +82,15 @@ export class LogSink implements ArenaSink {
 export class IngestSink implements ArenaSink {
   constructor(private readonly ingest: IngestClient) {}
   gameOpen(): void {}
-  move(): void {}
-  draft(): void {}
+  // Stream per-move/draft frames ONLY for games a human is watching (Tier 2 /
+  // M3). The DO tells us which via each /arena/games response; unwatched games
+  // (the vast majority) stay silent, so the DO pays nothing per move for them.
+  move(gameId: string, ply: number, uci: string, clocks: Record<Color, number>): void {
+    if (this.ingest.isStreaming(gameId)) void this.ingest.postFrame({ kind: "move", id: gameId, ply, u: uci, clocks });
+  }
+  draft(gameId: string, action: StoredDraftAction, card?: { id: string; tier: number }): void {
+    if (this.ingest.isStreaming(gameId)) void this.ingest.postFrame({ kind: "draft", id: gameId, action, ...(card ? { card } : {}) });
+  }
   gameEnd(record: ArenaFinishedRecord, replayOk: boolean): void {
     if (replayOk) void this.ingest.reportEnd(record);
   }
@@ -96,8 +105,8 @@ export class CompositeSink implements ArenaSink {
   move(gameId: string, ply: number, uci: string, clocks: Record<Color, number>): void {
     for (const k of this.sinks) k.move(gameId, ply, uci, clocks);
   }
-  draft(gameId: string, action: StoredDraftAction): void {
-    for (const k of this.sinks) k.draft(gameId, action);
+  draft(gameId: string, action: StoredDraftAction, card?: { id: string; tier: number }): void {
+    for (const k of this.sinks) k.draft(gameId, action, card);
   }
   gameEnd(record: ArenaFinishedRecord, replayOk: boolean): void {
     for (const k of this.sinks) k.gameEnd(record, replayOk);

@@ -1,5 +1,12 @@
 # Tier 2 — House-vs-house arena (full bot-vs-bot offload)
 
+> **Milestone status.** M1 (arena runs games in RAM) → `bot-offload-tier2-m1-arena-service.md`.
+> M2 (DO ingest: archive + rating + lobby) → this doc §B/§D. M3 (spectating) →
+> `bot-offload-tier2-m3-spectating.md`. M4 (reversible filler cutover) →
+> `bot-offload-tier2-m4-cutover.md`. All ship behind flags (`ARENA_INGEST_ENABLED`,
+> `ARENA_LOBBY_ENABLED`, `ARENA_OWNS_FILLER`), default off.
+
+
 **Goal:** move the *entire* bot-vs-bot simulation to a long-lived OCI "arena" process —
 orchestration, play, clocks, and state held in RAM. The Durable Object is reduced to
 **lobby/TV display** and **rating/archive persistence**. Per-move DO cost for filler games

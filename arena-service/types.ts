@@ -53,4 +53,31 @@ export interface ArenaGameSummary {
   startedAt: number;
 }
 
+/** Bootstrap state the DO turns into a spectator `wstart` (Tier 2 / M3). Only
+ *  posted for a WATCHED, STARTED game — the DO holds no replica until then, so
+ *  a spectator waits (a few seconds) rather than see a nerf-draft-pending board
+ *  it cannot reconstruct (hidden nerfs). */
+export interface ArenaSnapshot {
+  id: string;
+  setup: { whiteNerfId: string; blackNerfId: string; seed: number; timeSec: number; incrementSec: number };
+  mode: "nerf" | "buff";
+  draft: true;
+  draftSeed: number;
+  cadence: number;
+  moves: string[];
+  draftActions: StoredDraftAction[];
+  clocks: Record<Color, number>;
+  startedAt: number; // 0 until the game leaves the opening nerf draft
+  seats: Record<Color, { userId: string; name: string; rating: number }>;
+}
+
+/** One spectator event the arena pushes to the DO for a watched game (Tier 2 /
+ *  M3). The DO advances its ephemeral replica and relays the matching frame to
+ *  the sockets watching this game. `card` rides a `use` so the effect renders on
+ *  spectator replicas (a fired buff's face is public anyway). */
+export type ArenaFrame =
+  | ({ kind: "snapshot" } & ArenaSnapshot)
+  | { kind: "move"; id: string; ply: number; u: string; clocks: Record<Color, number> }
+  | { kind: "draft"; id: string; action: StoredDraftAction; card?: { id: string; tier: number } };
+
 export const other = (c: Color): Color => (c === "w" ? "b" : "w");

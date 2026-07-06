@@ -18,6 +18,11 @@ export class Arena {
   // With the DO wired, don't spawn until it confirms (ingest on + human present).
   // Standalone (M1, no ingest) follows the local enabled flag.
   private spawning: boolean;
+  // Games we've already sent a started-snapshot for this watch episode (Tier 2 /
+  // M3): a spectator gets exactly one bootstrap snapshot (the DO turns it into
+  // wstart) and then incremental move/draft frames. Cleared when the game leaves
+  // the watch set or ends, so a re-watch re-bootstraps.
+  private snapshotSent = new Set<string>();
 
   constructor(
     private readonly config: ArenaConfig,
@@ -61,6 +66,7 @@ export class Arena {
         .syncGames(this.liveMeta())
         .then((r) => {
           this.spawning = r.enabled;
+          this.reconcileWatch(r.watch);
         })
         .catch(() => {
           this.spawning = false;
@@ -90,10 +96,31 @@ export class Arena {
     game.start();
   }
 
+  // Post a one-shot bootstrap snapshot for each game a human just started
+  // watching (Tier 2 / M3). A game watched before it leaves the opening nerf
+  // draft is skipped until it starts (the DO can't reconstruct hidden nerfs), so
+  // the spectator waits a beat rather than see an unbuildable board.
+  private reconcileWatch(watch: string[]): void {
+    if (!this.ingest) return;
+    const set = new Set(watch);
+    for (const id of [...this.snapshotSent]) if (!set.has(id)) this.snapshotSent.delete(id);
+    for (const id of watch) {
+      if (this.snapshotSent.has(id)) continue;
+      const g = this.games.get(id);
+      if (!g || !g.started()) continue;
+      this.snapshotSent.add(id);
+      // Snapshot first, THEN open the per-move stream — so no move frame can
+      // reach the DO before the replica it needs exists.
+      void this.ingest.postFrame({ kind: "snapshot", ...g.spectatorSnapshot() });
+      this.ingest.beginStreaming(id);
+    }
+  }
+
   private onDone(g: ArenaGame): void {
     this.games.delete(g.id);
     this.busy.delete(g.seats.w.userId);
     this.busy.delete(g.seats.b.userId);
+    this.snapshotSent.delete(g.id);
   }
 
   liveCount(): number {

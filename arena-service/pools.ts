@@ -24,4 +24,6 @@ export const MAX_PLIES = 800;
 
 export const randomInt = (max: number): number => Math.floor(Math.random() * max);
 export const makeSeed = (): number => randomInt(2 ** 31);
-export const newId = (n = 8): string => randomBytes(n).toString("hex").slice(0, n);
+// Uppercase to match the DO's game-code convention (watchMatch upper-cases the
+// id a spectator sends, so the lobby/watch/archive id must already be upper).
+export const newId = (n = 8): string => randomBytes(n).toString("hex").slice(0, n).toUpperCase();

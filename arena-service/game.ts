@@ -19,7 +19,7 @@ import {
 import type { Move } from "../src/engine/types";
 import { QUEUE_POOLS, firstMoveGraceMs, MAX_PLIES, randomInt, makeSeed, newId } from "./pools";
 import type { ArenaSink } from "./sink";
-import type { ArenaFinishedRecord, ArenaGameSummary, Color, ExternalGameMeta, StoredDraftAction } from "./types";
+import type { ArenaFinishedRecord, ArenaGameSummary, ArenaSnapshot, Color, ExternalGameMeta, StoredDraftAction } from "./types";
 import { other } from "./types";
 
 type Result = { winner: Color | "draw" | null; reason: string };
@@ -109,6 +109,37 @@ export class ArenaGame {
       clocks: { ...this.clocks },
       startedAt: this.startedAt,
     };
+  }
+
+  // Bootstrap state for a spectator's wstart (Tier 2 / M3). Only meaningful for
+  // a started game (the DO waits for startedAt > 0 before opening a spectator).
+  spectatorSnapshot(): ArenaSnapshot {
+    return {
+      id: this.id,
+      setup: {
+        whiteNerfId: this.nerf?.w ?? UNRESTRICTED_NERF.id,
+        blackNerfId: this.nerf?.b ?? UNRESTRICTED_NERF.id,
+        seed: this.seed,
+        timeSec: this.timeSec,
+        incrementSec: this.incrementSec,
+      },
+      mode: this.mode,
+      draft: true,
+      draftSeed: this.draftSeed,
+      cadence: this.cadence,
+      moves: [...this.moves],
+      draftActions: [...this.draftActions],
+      clocks: { ...this.clocks },
+      startedAt: this.startedAt,
+      seats: {
+        w: { userId: this.seats.w.userId, name: this.seats.w.name, rating: this.ratings.w },
+        b: { userId: this.seats.b.userId, name: this.seats.b.name, rating: this.ratings.b },
+      },
+    };
+  }
+
+  started(): boolean {
+    return this.startedAt > 0 && !this.done;
   }
 
   // Registry entry the DO shows in the lobby/TV (Tier 2 / M2).
@@ -217,10 +248,16 @@ export class ArenaGame {
     if (g.buffs && randomInt(100) < 40) {
       try {
         const act = aiChooseBuffActivation(g, turn);
-        if (act && activateBuff(g, turn, act.buffIndex, act.picks)) {
-          this.record({ ply: this.moves.length, color: turn, a: "use", buffIndex: act.buffIndex, picks: act.picks });
-          if (this.endIfTerminal()) return;
-          return this.schedule();
+        if (act) {
+          // Capture the card face BEFORE activation mutates/spends it — a fired
+          // buff is public, so spectators get its identity to render the effect.
+          const held = g.buffs.players[turn].buffs[act.buffIndex];
+          const card = held ? { id: held.id, tier: held.tier as number } : undefined;
+          if (activateBuff(g, turn, act.buffIndex, act.picks)) {
+            this.record({ ply: this.moves.length, color: turn, a: "use", buffIndex: act.buffIndex, picks: act.picks }, card);
+            if (this.endIfTerminal()) return;
+            return this.schedule();
+          }
         }
       } catch {
         // A card that threw mid-activation may have half-mutated the live game.
@@ -302,9 +339,9 @@ export class ArenaGame {
     return false;
   }
 
-  private record(action: StoredDraftAction): void {
+  private record(action: StoredDraftAction, card?: { id: string; tier: number }): void {
     this.draftActions.push(action);
-    this.sink.draft(this.id, action);
+    this.sink.draft(this.id, action, card);
   }
 
   private toEngineMatch(): EngineMatch {

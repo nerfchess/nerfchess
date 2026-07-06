@@ -248,6 +248,11 @@ export interface Env {
   ARENA_INGEST_TOKEN?: string;
   ARENA_INGEST_ENABLED?: string;
   ARENA_LOBBY_ENABLED?: string;
+  // Tier 2 / M4 cutover, reversible. When "true", the DO stops spawning its own
+  // house-vs-house filler (the arena owns bot-vs-bot); bot-vs-human pickup and
+  // house seeks stay on the DO. Off = the DO runs filler itself, as before, so
+  // there is always bot-vs-bot even if the arena is down. Flip, don't delete.
+  ARENA_OWNS_FILLER?: string;
 }
 
 // Quick-pairing time controls for rated Draft matchmaking. Keys are the wire
@@ -445,7 +450,8 @@ type ExternalGameMeta = {
   seats: Record<Color, ExternalSeat>;
 };
 // The finished-game record the arena POSTs to /arena/end. A subset of the arena
-// service's ArenaFinishedRecord — only what recordFinishedGame needs.
+// service's ArenaFinishedRecord — recordFinishedGame needs the top fields; the
+// draft fields (M3) let a spectated game's `end` frame carry held buffs.
 type ArenaEndRecord = {
   id: string;
   setup: { whiteNerfId: string; blackNerfId: string; seed: number; timeSec: number; incrementSec: number };
@@ -456,7 +462,36 @@ type ArenaEndRecord = {
   result: { winner: Color | "draw" | null; reason: string };
   startedAt: number;
   completedAt: number;
+  // M3 (spectating): present on arena records, used to rebuild the game for the
+  // end frame's held-buff reveal. Optional so an older arena still archives.
+  draftSeed?: number;
+  cadence?: number;
+  draftActions?: StoredDraftAction[];
 };
+
+// Bootstrap state for a spectator's wstart, pushed by the arena for a watched,
+// started game (Tier 2 / M3). Mirrors arena-service ArenaSnapshot.
+type ArenaSnapshot = {
+  id: string;
+  setup: { whiteNerfId: string; blackNerfId: string; seed: number; timeSec: number; incrementSec: number };
+  mode: DraftMode;
+  draft: true;
+  draftSeed: number;
+  cadence: number;
+  moves: string[];
+  draftActions: StoredDraftAction[];
+  clocks: Record<Color, number>;
+  startedAt: number;
+  seats: Record<Color, ExternalSeat>;
+};
+
+// One spectator event the arena pushes for a watched game (Tier 2 / M3). The DO
+// advances its ephemeral replica and relays the matching frame to that game's
+// watchers. Mirrors arena-service ArenaFrame.
+type ArenaFrame =
+  | ({ kind: "snapshot" } & ArenaSnapshot)
+  | { kind: "move"; id: string; ply: number; u: string; clocks: Record<Color, number> }
+  | { kind: "draft"; id: string; action: StoredDraftAction; card?: { id: string; tier: number } };
 
 // Move equality for validating a move returned by the remote engine against
 // our own legal-move set. UCI (from+to+promotion) is not enough: buff-generated
@@ -510,6 +545,12 @@ export class GameServer extends DurableObject<Env> {
   // the house accounts. In-memory + bounded; the rare eviction-window dup is
   // bot-only and low stakes.
   private arenaArchived = new Set<string>();
+  // Tier 2 / M3 (spectating): an ephemeral StoredMatch replica for each arena
+  // game a human is watching, built from the arena's snapshot and advanced by
+  // its move/draft frames. Never persisted. Present only while watched, so the
+  // per-move replay cost the DO pays for a bot game exists only when someone is
+  // looking — dropped when the last spectator leaves or the game ends.
+  private externalMatches = new Map<string, StoredMatch>();
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
@@ -786,6 +827,7 @@ export class GameServer extends DurableObject<Env> {
     const id = session.watching;
     this.sessions.delete(ws);
     this.broadcastWatchers(id);
+    this.dropExternalIfUnwatched(id);
   }
 
   private watcherCount(matchId: string): number {
@@ -2568,7 +2610,13 @@ export class GameServer extends DurableObject<Env> {
 
     // Occasional house-vs-house filler so the lobby and TV look alive,
     // capped and spaced out so games never start (or end) in lockstep.
-    if (houseVsHouse < houseVsHouseCap && houseGames + 1 < houseTotalGamesCap && free.length >= 2) {
+    // Tier 2 / M4 cutover (reversible): when the arena owns bot-vs-bot, the DO
+    // stops spawning its own filler and lets the arena supply it (streamed in
+    // via /arena). Flip ARENA_OWNS_FILLER back off and the DO resumes filler on
+    // the next tick — no code change, so the arena being down never means an
+    // empty lobby. Bot-vs-human pickup + house seeks above are unaffected.
+    const arenaOwnsFiller = this.env.ARENA_OWNS_FILLER === "true" && this.env.ARENA_INGEST_ENABLED === "true";
+    if (!arenaOwnsFiller && houseVsHouse < houseVsHouseCap && houseGames + 1 < houseTotalGamesCap && free.length >= 2) {
       try {
         const nextAt = (await this.ctx.storage.get<number>(houseNextFillerKey)) ?? 0;
         if (now >= nextAt) {
@@ -2950,7 +2998,36 @@ export class GameServer extends DurableObject<Env> {
       } else {
         this.externalGames.clear();
       }
-      return Response.json({ enabled, lobby: this.env.ARENA_LOBBY_ENABLED === "true" });
+      const lobby = this.env.ARENA_LOBBY_ENABLED === "true";
+      // Tell the arena which of its games a human is spectating so it streams
+      // per-move frames for those only (Tier 2 / M3). Empty unless the lobby is
+      // on (you can only watch a game the lobby surfaced).
+      const watch = ingest && lobby ? this.externalWatchedIds() : [];
+      return Response.json({ enabled, lobby, watch });
+    }
+
+    if (url.pathname === "/arena/frame") {
+      // Spectator relay (Tier 2 / M3). Advance the watched game's replica and
+      // fan the event out to its watchers. Gated by ingest + lobby; a frame for
+      // an unknown/unwatched game is a harmless no-op.
+      if (!ingest || this.env.ARENA_LOBBY_ENABLED !== "true") return Response.json({ ok: false, ingest: false });
+      let body: { frame?: ArenaFrame };
+      try {
+        body = (await request.json()) as { frame?: ArenaFrame };
+      } catch {
+        return Response.json({ error: "bad_json" }, { status: 400 });
+      }
+      const frame = body.frame;
+      if (!frame || typeof frame.id !== "string") return Response.json({ error: "bad_frame" }, { status: 400 });
+      try {
+        if (frame.kind === "snapshot") this.ingestExternalSnapshot(frame);
+        else if (frame.kind === "move") this.applyExternalMove(frame.id, frame.ply, frame.u, frame.clocks);
+        else if (frame.kind === "draft") this.applyExternalDraft(frame.id, frame.action, frame.card);
+      } catch (err) {
+        console.error("arena frame failed", frame.id, err);
+        return Response.json({ ok: false, reason: "frame_failed" });
+      }
+      return Response.json({ ok: true });
     }
 
     if (url.pathname === "/arena/end") {
@@ -2966,6 +3043,10 @@ export class GameServer extends DurableObject<Env> {
         return Response.json({ error: "bad_record" }, { status: 400 });
       }
       this.externalGames.delete(rec.id);
+      // Spectators (if any) see the game end with the revealed nerfs + held
+      // buffs, then the replica is dropped (Tier 2 / M3). Independent of the
+      // archive write below so a DB hiccup never strands a watched game "live".
+      this.endExternalForWatchers(rec);
       if (this.arenaArchived.has(rec.id)) return Response.json({ ok: true, dup: true });
       const db = await this.db();
       if (!db) return Response.json({ ok: false, reason: "no_db" });
@@ -3009,6 +3090,229 @@ export class GameServer extends DurableObject<Env> {
     return new Response("not found", { status: 404 });
   }
 
+  // ---- Arena spectating (Tier 2 / M3) ----
+
+  // Distinct arena game ids a human is currently watching. Told to the arena so
+  // it streams per-move frames for these only.
+  private externalWatchedIds(): string[] {
+    const ids = new Set<string>();
+    for (const [ws, s] of this.sessions) {
+      if (ws.readyState === WebSocket.OPEN && s.watching && this.externalGames.has(s.watching)) ids.add(s.watching);
+    }
+    return [...ids];
+  }
+
+  // Relay a frame to every socket watching a given game id (the by-id twin of
+  // sendWatchers, which keys off a StoredMatch).
+  private sendWatchersById(id: string, t: string, d?: unknown) {
+    for (const [ws, session] of this.sessions) {
+      if (session.watching === id && ws.readyState === WebSocket.OPEN) send(ws, t, d);
+    }
+  }
+
+  // Build the ephemeral replica StoredMatch for a watched arena game from the
+  // arena's snapshot. Shaped exactly like a house-vs-house match so every
+  // existing spectator helper (gameFromMatch, draftStateFor, publicDraftActions,
+  // playersPayload, currentClocks) works on it unchanged. Never persisted.
+  private buildExternalMatch(snap: ArenaSnapshot): StoredMatch {
+    const seatUser = (s: ExternalSeat): SeatUser => ({
+      id: s.userId,
+      name: s.name,
+      rating: s.rating,
+      rd: 150,
+      vol: 0.06,
+      avatar: housePersona(s.userId)?.avatar ?? null,
+    });
+    const now = Date.now();
+    return {
+      id: snap.id,
+      setup: {
+        whiteNerfId: snap.setup.whiteNerfId,
+        blackNerfId: snap.setup.blackNerfId,
+        seed: snap.setup.seed,
+        timeSec: snap.setup.timeSec,
+        incrementSec: snap.setup.incrementSec,
+      },
+      tokens: { w: "", b: "" },
+      disconnectedAt: {},
+      opponentGoneNotified: {},
+      moves: [...snap.moves],
+      result: null,
+      clocks: { w: snap.clocks.w, b: snap.clocks.b },
+      runningSince: snap.startedAt ? now : null,
+      drawOfferBy: null,
+      createdAt: snap.startedAt || now,
+      startedAt: snap.startedAt || null,
+      completedAt: null,
+      replayVersion: REPLAY_VERSION,
+      rated: true,
+      autoStart: true,
+      users: { w: seatUser(snap.seats.w), b: seatUser(snap.seats.b) },
+      draft: true,
+      mode: snap.mode,
+      picksVisible: false,
+      cadence: snap.cadence,
+      draftSeed: snap.draftSeed,
+      draftActions: [...snap.draftActions],
+      bots: { w: snap.seats.w.userId, b: snap.seats.b.userId },
+    };
+  }
+
+  // A started snapshot arrived: (re)build the replica and bootstrap every socket
+  // already waiting on this game with a wstart (they watched before the arena
+  // began streaming). Ignored for pre-start games — the DO can't reconstruct a
+  // board whose nerfs are still hidden, so those spectators keep waiting.
+  private ingestExternalSnapshot(snap: ArenaSnapshot) {
+    if (!isHouseUserId(snap.seats?.w?.userId) || !isHouseUserId(snap.seats?.b?.userId)) return;
+    if (!snap.startedAt) return;
+    const match = this.buildExternalMatch(snap);
+    this.externalMatches.set(snap.id, match);
+    for (const [ws, session] of this.sessions) {
+      if (session.watching === snap.id && ws.readyState === WebSocket.OPEN) this.sendWstart(ws, match);
+    }
+  }
+
+  // Advance a watched game's replica by one move and relay it. gameFromMatch
+  // re-derives turn + spectator reveals from the full record (the same replay
+  // the DO does for its own games), so a freshly revealed passive reaches
+  // watchers via dtState. No `end` here — /arena/end sends it with the ratings.
+  private applyExternalMove(id: string, ply: number, uci: string, clocks: Record<Color, number>) {
+    const match = this.externalMatches.get(id);
+    if (!match || match.result) return;
+    // Apply only the next expected move (mirrors the client's own ply check): a
+    // stale/duplicate frame that raced the bootstrap snapshot is dropped, not
+    // double-applied. A gap (frame lost) leaves the replica where it is.
+    if (typeof ply === "number" && ply !== match.moves.length + 1) return;
+    match.moves.push(uci);
+    if (clocks && typeof clocks.w === "number" && typeof clocks.b === "number") {
+      match.clocks = { w: clocks.w, b: clocks.b };
+    }
+    let game: NerfGame | null = null;
+    try {
+      game = this.gameFromMatch(match);
+    } catch {}
+    if (game) {
+      match.turnColor = game.board.turn;
+      if (game.result) match.result = game.result;
+    }
+    match.runningSince = match.result ? null : Date.now();
+    this.sendWatchersById(id, "move", {
+      u: uci,
+      ply: match.moves.length,
+      wc: Math.round(match.clocks.w),
+      bc: Math.round(match.clocks.b),
+    });
+    if (game?.buffs) {
+      const state = this.draftStateFor(game, match, "spectator");
+      if (state) this.sendWatchersById(id, "dtState", { state });
+    }
+  }
+
+  // Advance a watched game's replica by one draft action and relay the
+  // spectator-filtered frame, reusing the exact masking the native path uses
+  // (publicDraftActions for a pick, the fired card for a use).
+  private applyExternalDraft(id: string, action: StoredDraftAction, card?: { id: string; tier: number }) {
+    const match = this.externalMatches.get(id);
+    if (!match || match.result) return;
+    match.draftActions = [...(match.draftActions ?? []), action];
+    let game: NerfGame | null = null;
+    try {
+      game = this.gameFromMatch(match);
+    } catch {}
+    if (game) {
+      match.turnColor = game.board.turn;
+      if (game.result) match.result = game.result;
+    }
+    if (action.a === "use") {
+      this.sendWatchersById(id, "dtUsed", {
+        color: action.color,
+        buffIndex: action.buffIndex,
+        picks: action.picks,
+        ...(card ? { card } : {}),
+      });
+    } else if (action.a === "pick") {
+      const masked = this.publicDraftActions(match, "spectator");
+      const last = masked[masked.length - 1];
+      const cards = last && last.a === "pick" ? last.cards : [];
+      this.sendWatchersById(id, "dtResolved", { color: action.color, kind: "picked", cards });
+    } else {
+      this.sendWatchersById(id, "dtResolved", { color: action.color, kind: "banked" });
+    }
+    if (game?.buffs) {
+      const state = this.draftStateFor(game, match, "spectator");
+      if (state) this.sendWatchersById(id, "dtState", { state });
+    }
+  }
+
+  // Send one spectator their opening wstart from a (replica or native) match.
+  // Factored out of watchMatch so an external snapshot can flush it to sockets
+  // that were waiting for the arena to start streaming.
+  private sendWstart(ws: WebSocket, match: StoredMatch) {
+    const id = match.id;
+    const clocks = this.currentClocks(match);
+    let draftExtras: Record<string, unknown> | null = null;
+    if (match.draft) {
+      const game = match.startedAt ? this.gameFromMatch(match) : null;
+      draftExtras = {
+        draft: true,
+        ...(match.mode ? { mode: match.mode } : {}),
+        dtActions: this.publicDraftActions(match, "spectator"),
+        ...(game?.buffs ? { dtState: this.draftStateFor(game, match, "spectator") } : {}),
+      };
+    }
+    send(ws, "wstart", {
+      id,
+      timeSec: match.setup.timeSec,
+      incrementSec: match.setup.incrementSec,
+      wc: Math.round(clocks.w),
+      bc: Math.round(clocks.b),
+      moves: match.moves,
+      players: this.playersPayload(match),
+      rated: !!match.rated,
+      started: !!match.startedAt,
+      result: match.result,
+      watchers: this.watcherCount(id),
+      watcherNames: this.watcherInfo(id).names,
+      spectatorChat: match.spectatorChat ?? [],
+      ...(match.result ? { nerfs: { w: match.setup.whiteNerfId, b: match.setup.blackNerfId } } : {}),
+      ...(draftExtras ?? {}),
+    });
+  }
+
+  // A watched arena game finished: reveal nerfs + held buffs to its spectators
+  // with the result, then drop the replica. Rebuilds the game from the
+  // authoritative end record so held buffs are exact even if a mid-game frame
+  // was dropped.
+  private endExternalForWatchers(rec: ArenaEndRecord) {
+    const match = this.externalMatches.get(rec.id);
+    this.externalMatches.delete(rec.id);
+    if (!match) return; // nobody was watching
+    match.moves = [...rec.moves];
+    if (rec.draftActions) match.draftActions = [...rec.draftActions];
+    match.result = rec.result;
+    let draftBuffs: Record<Color, { id: string; tier: number; spent?: boolean; nullified?: boolean }[]> | null = null;
+    try {
+      const game = this.gameFromMatch(match);
+      if (game?.buffs) {
+        const held = (color: Color) =>
+          game.buffs!.players[color].buffs.map((b) => ({
+            id: b.id,
+            tier: b.tier as number,
+            ...(b.spent ? { spent: true } : {}),
+            ...(b.nullified ? { nullified: true } : {}),
+          }));
+        draftBuffs = { w: held("w"), b: held("b") };
+      }
+    } catch {}
+    this.sendWatchersById(rec.id, "end", {
+      result: rec.result,
+      wc: Math.round(match.clocks.w),
+      bc: Math.round(match.clocks.b),
+      nerfs: { w: rec.setup.whiteNerfId, b: rec.setup.blackNerfId },
+      ...(draftBuffs ? { draftBuffs } : {}),
+    });
+  }
+
   // Fresh (non-expired) arena games as lobby liveGames entries (Tier 2 / M2).
   private externalLiveGames(now: number): Array<{
     id: string;
@@ -3039,7 +3343,7 @@ export class GameServer extends DurableObject<Env> {
         timeSec: meta.timeSec,
         incrementSec: meta.incrementSec,
         moves: meta.moves,
-        watchers: 0,
+        watchers: this.watcherCount(meta.id),
       });
     }
     return games;
@@ -3787,6 +4091,21 @@ export class GameServer extends DurableObject<Env> {
     const session = this.session(ws);
     if (session.matchId) return error(ws, "already_joined", "This connection already belongs to a game.");
     const id = String((data as { id?: unknown } | undefined)?.id || "").trim().toUpperCase();
+
+    // Arena (external) game (Tier 2 / M3): spectate via the replica if the arena
+    // is already streaming it; otherwise register the watch and wait — the next
+    // /arena/games sync puts this id in the watch set, the arena pushes a started
+    // snapshot, and ingestExternalSnapshot flushes the wstart to this socket.
+    if (this.externalGames.has(id) || this.externalMatches.has(id)) {
+      const next = { ...session, watching: id };
+      this.sessions.set(ws, next);
+      ws.serializeAttachment(next);
+      const replica = this.externalMatches.get(id);
+      if (replica) this.sendWstart(ws, replica);
+      this.broadcastWatchers(id);
+      return;
+    }
+
     const match = await this.loadMatch(id);
     if (!match) return error(ws, "not_found", "No live game with that id.");
     await this.finishOnFlag(match);
@@ -3795,37 +4114,7 @@ export class GameServer extends DurableObject<Env> {
     this.sessions.set(ws, next);
     ws.serializeAttachment(next);
 
-    const clocks = this.currentClocks(match);
-    // Spectator-safe draft payload: the public action record and a filtered
-    // state carrying held buffs and board effects only, never offers.
-    let draftExtras: Record<string, unknown> | null = null;
-    if (match.draft) {
-      const game = match.startedAt ? this.gameFromMatch(match) : null;
-      draftExtras = {
-        draft: true,
-        ...(match.mode ? { mode: match.mode } : {}),
-        dtActions: this.publicDraftActions(match, "spectator"),
-        ...(game?.buffs ? { dtState: this.draftStateFor(game, match, "spectator") } : {}),
-      };
-    }
-    send(ws, "wstart", {
-      id,
-      timeSec: match.setup.timeSec,
-      incrementSec: match.setup.incrementSec,
-      wc: Math.round(clocks.w),
-      bc: Math.round(clocks.b),
-      moves: match.moves,
-      players: this.playersPayload(match),
-      rated: !!match.rated,
-      started: !!match.startedAt,
-      result: match.result,
-      watchers: this.watcherCount(id),
-      watcherNames: this.watcherInfo(id).names,
-      spectatorChat: match.spectatorChat ?? [],
-      // Hidden rules are only revealed to spectators once the game is over.
-      ...(match.result ? { nerfs: { w: match.setup.whiteNerfId, b: match.setup.blackNerfId } } : {}),
-      ...(draftExtras ?? {}),
-    });
+    this.sendWstart(ws, match);
     this.broadcastWatchers(id);
   }
 
@@ -3838,6 +4127,15 @@ export class GameServer extends DurableObject<Env> {
     this.sessions.set(ws, next);
     ws.serializeAttachment(next);
     this.broadcastWatchers(id);
+    this.dropExternalIfUnwatched(id);
+  }
+
+  // Drop a watched arena game's replica once its last spectator leaves — the
+  // arena stops streaming it (it drops out of the watch set), so keeping the
+  // replica would only let it go stale. A later re-watch rebuilds it from a
+  // fresh snapshot.
+  private dropExternalIfUnwatched(id: string) {
+    if (this.externalMatches.has(id) && this.watcherCount(id) === 0) this.externalMatches.delete(id);
   }
 
   // One snapshot for the lobby page: who is online right now and which games
