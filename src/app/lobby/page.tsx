@@ -4,6 +4,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { Eye, Swords, Users } from "lucide-react";
 import { QueueButton } from "@/components/QueueButton";
 import { AccountUser, fetchMe } from "@/lib/authClient";
 import { MPLobby, MPLobbyChallenge, MPLobbyGame, MPLobbySeek, MPSession, saveOnlineSeat } from "@/lib/multiplayer";
@@ -165,7 +166,9 @@ export default function LobbyPage() {
 
             {/* Step 2: play a specific person via a shared code. */}
             <div className="plate plate-hover p-5 sm:p-6">
-              <div className="sec-title font-display text-2xl text-parchment">Play a friend</div>
+              <SectionTitle tint="mint" icon={<Users size={15} aria-hidden />}>
+                Play a friend
+              </SectionTitle>
               <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
                 <Link
                   href="/friend"
@@ -202,7 +205,9 @@ export default function LobbyPage() {
                 friend games waiting for an opponent. */}
             <div className="plate plate-hover p-5 sm:p-6">
               <div className="flex items-center justify-between gap-3">
-                <div className="sec-title font-display text-2xl text-parchment">Open challenges</div>
+                <SectionTitle tint="sun" icon={<Swords size={15} aria-hidden />}>
+                  Open challenges
+                </SectionTitle>
                 <div className="flex items-center gap-3">
                   <Link
                     href="/friend"
@@ -241,7 +246,9 @@ export default function LobbyPage() {
             {/* Step 3 (optional): watch a game that's happening right now. */}
             <div className="plate plate-hover p-5 sm:p-6">
               <div className="flex items-center justify-between gap-3">
-                <div className="sec-title font-display text-2xl text-parchment">Live games</div>
+                <SectionTitle tint="coral" icon={<Eye size={15} aria-hidden />}>
+                  Live games
+                </SectionTitle>
                 <span className="smallcaps text-[10px] text-parchment-400">
                   {lobby ? `${lobby.games.length} in play` : "…"}
                 </span>
@@ -325,6 +332,38 @@ export default function LobbyPage() {
   );
 }
 
+// Each lobby section wears a small color identity: an icon chip beside the
+// title (mint for friends, sun for open challenges, coral for live games; the
+// online queue keeps the core blue inside QueueButton). Color on the chip
+// only, never the whole panel, so the page stays quiet.
+const SECTION_TINTS = {
+  mint: "border-mint/30 bg-mint/10 text-mint-glow",
+  sun: "border-sun/30 bg-sun/10 text-sun-glow",
+  coral: "border-coral/30 bg-coral/10 text-coral-glow",
+} as const;
+
+function SectionTitle({
+  tint,
+  icon,
+  children,
+}: {
+  tint: keyof typeof SECTION_TINTS;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center gap-2.5">
+      <span
+        aria-hidden
+        className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg border ${SECTION_TINTS[tint]}`}
+      >
+        {icon}
+      </span>
+      <div className="font-display text-2xl text-parchment">{children}</div>
+    </div>
+  );
+}
+
 // First-load placeholders. They mirror the real row structure (a two-line
 // text block on the left, an action chip on the right) so the panel keeps its
 // shape and nothing jumps when the first snapshot lands. Only shown while
@@ -402,7 +441,7 @@ function SeekRow({
       : `${seek.timeSec}s+${seek.incrementSec}`;
   const name = seek.rating != null ? `${seek.name} (${seek.rating})` : seek.name;
   return (
-    <li className="flex items-center justify-between gap-3 py-2.5">
+    <li className="-mx-2 flex items-center justify-between gap-3 rounded-lg px-2 py-2.5 transition-colors hover:bg-white/[0.045]">
       <div className="min-w-0">
         <div className="flex items-center gap-2 truncate text-sm text-parchment-100">
           <Icon size={14} style={{ color: category.accent }} aria-hidden className="shrink-0" />
@@ -443,7 +482,7 @@ function ChallengeRow({ challenge }: { challenge: MPLobbyChallenge }) {
       ? `${challenge.host.name} (${challenge.host.rating})`
       : challenge.host.name;
   return (
-    <li className="flex items-center justify-between gap-3 py-2.5">
+    <li className="-mx-2 flex items-center justify-between gap-3 rounded-lg px-2 py-2.5 transition-colors hover:bg-white/[0.045]">
       <div className="min-w-0">
         <div className="truncate text-sm text-parchment-100">{host}</div>
         <div className="mt-0.5 flex items-center gap-1.5 smallcaps text-[9px] text-parchment-400">
@@ -470,7 +509,7 @@ function LiveGameRow({ game }: { game: MPLobbyGame }) {
   const clock =
     game.timeSec > 0 ? `${Math.round(game.timeSec / 60)}+${game.incrementSec}` : "No clock";
   return (
-    <li className="flex items-center justify-between gap-3 py-2.5">
+    <li className="-mx-2 flex items-center justify-between gap-3 rounded-lg px-2 py-2.5 transition-colors hover:bg-white/[0.045]">
       <div className="min-w-0">
         <div className="truncate text-sm text-parchment-100">
           {name(game.players.w)} <span className="text-parchment-400">vs</span> {name(game.players.b)}

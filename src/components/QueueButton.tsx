@@ -3,11 +3,13 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { Swords } from "lucide-react";
 import { AccountUser, fetchMe } from "@/lib/authClient";
 import { MPSession, saveOnlineSeat } from "@/lib/multiplayer";
 import { getCategory, type RatingCategoryId } from "@/lib/ratingCategories";
 import { getNerf } from "@/engine/nerfs/library";
 import { BUFF_BY_ID } from "@/engine/buffs/library";
+import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
 import type { DraftMode } from "@/engine/buff";
 
 // Wire names must match QUEUE_POOLS in worker.ts.
@@ -138,7 +140,15 @@ export function QueueButton() {
 
   return (
     <div className="plate gilt p-5 sm:p-6">
-      <div className="font-display text-2xl text-parchment">Play online</div>
+      <div className="flex items-center gap-2.5">
+        <span
+          aria-hidden
+          className="grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-gold/40 bg-gold/10 text-gold-leaf"
+        >
+          <Swords size={15} />
+        </span>
+        <div className="font-display text-2xl text-parchment">Play online</div>
+      </div>
 
       {user === undefined ? (
         <div className="mt-4 px-2 py-6 text-center text-parchment-400 text-sm">…</div>
@@ -205,7 +215,7 @@ export function QueueButton() {
                     title={`${category.label} · ${option.label}`}
                     aria-pressed={isSelected}
                     className={
-                      "flex flex-col items-center gap-0.5 border px-1 py-2 transition " +
+                      "flex flex-col items-center gap-0.5 rounded-lg border px-1 py-2 transition " +
                       (isSelected
                         ? "border-gold bg-gold/15 text-gold-leaf"
                         : "border-white/10 text-parchment-200 hover:border-white/30 hover:bg-white/5")
@@ -228,7 +238,7 @@ export function QueueButton() {
             onClick={() => mode && startSearch(mode)}
             disabled={!mode}
             className={
-              "mt-4 w-full border px-8 py-4 font-display text-xl sm:text-2xl font-semibold transition " +
+              "mt-4 w-full rounded-xl border px-8 py-4 font-display text-xl sm:text-2xl font-semibold transition-all duration-150 motion-safe:enabled:hover:-translate-y-0.5 motion-safe:enabled:active:scale-[0.98] " +
               (mode === "nerf"
                 ? "border-mode-nerf/70 bg-mode-nerf/20 text-mode-nerfGlow shadow-nerf hover:border-mode-nerf hover:bg-mode-nerf/30"
                 : mode === "buff"
@@ -270,18 +280,21 @@ function ModeCard({
   const identity =
     mode === "nerf"
       ? {
-          // Selected pops: deeper fill, a bright ring, a mode glow, and a small
-          // lift + scale so the chosen mode reads at a glance before Play.
+          // Selected pops HARD: a thick mode-colored ring around the whole
+          // card, a deeper fill, the mode glow, a lift, and a check badge in
+          // the corner, so the chosen mode is unmistakable before Play.
           card: selected
-            ? "border-mode-nerf bg-mode-nerf/20 shadow-nerf ring-2 ring-mode-nerf/70 scale-[1.03] -translate-y-0.5"
+            ? "border-mode-nerf bg-mode-nerf/20 shadow-nerf ring-[3px] ring-mode-nerf scale-[1.03] -translate-y-0.5"
             : "border-mode-nerf/30 bg-mode-nerf/5 [@media(hover:hover)]:hover:border-mode-nerf/60 [@media(hover:hover)]:hover:bg-mode-nerf/10",
           title: "text-mode-nerfGlow",
+          badge: "bg-mode-nerf",
         }
       : {
           card: selected
-            ? "border-mode-buff bg-mode-buff/20 shadow-buff ring-2 ring-mode-buff/70 scale-[1.03] -translate-y-0.5"
+            ? "border-mode-buff bg-mode-buff/20 shadow-buff ring-[3px] ring-mode-buff scale-[1.03] -translate-y-0.5"
             : "border-mode-buff/30 bg-mode-buff/5 [@media(hover:hover)]:hover:border-mode-buff/60 [@media(hover:hover)]:hover:bg-mode-buff/10",
           title: "text-mode-buffGlow",
+          badge: "bg-mode-buff",
         };
   return (
     <button
@@ -289,11 +302,24 @@ function ModeCard({
       onClick={onClick}
       aria-pressed={selected}
       className={
-        "plate p-4 sm:p-5 text-left border transition-all duration-200 touch-manipulation will-change-transform " +
+        "plate relative p-4 sm:p-5 text-left border transition-all duration-200 touch-manipulation will-change-transform " +
         identity.card +
-        (dimmed ? " opacity-55" : "")
+        (dimmed ? " opacity-55 saturate-[0.85]" : "")
       }
     >
+      {selected && (
+        <span
+          aria-hidden
+          className={
+            "absolute -right-2 -top-2 grid h-6 w-6 place-items-center rounded-full text-white shadow-lg " +
+            identity.badge
+          }
+        >
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M20 6 9 17l-5-5" />
+          </svg>
+        </span>
+      )}
       <div className={"font-display text-2xl sm:text-3xl font-semibold " + identity.title}>
         {mode === "nerf" ? "Nerf" : "Buff"}
       </div>
@@ -314,8 +340,9 @@ function ModeCard({
   );
 }
 
-// "A few of the rules": three example nerfs and three example buffs, tinted
-// with their pool's color, so the two buttons above explain themselves.
+// "A few of the rules": three example nerfs and three example buffs as tiny
+// tier-tinted cards, a little hand of cards under each mode, so the two
+// buttons above explain themselves. Each deep-links into the codex.
 function RulePreviews() {
   const nerfs = EXAMPLE_NERF_IDS.map((id) => getNerf(id)).filter(
     (n): n is NonNullable<ReturnType<typeof getNerf>> => !!n,
@@ -323,28 +350,47 @@ function RulePreviews() {
   const buffs = EXAMPLE_BUFF_IDS.map((id) => BUFF_BY_ID[id]).filter(Boolean);
   return (
     <div className="mt-4 grid gap-3 sm:grid-cols-2">
-      <div className="border border-mode-nerf/25 bg-mode-nerf/5 p-3">
+      <div>
         <div className="smallcaps text-[9px] text-mode-nerfGlow">A few of the nerfs</div>
-        <ul className="mt-1.5 space-y-1.5">
+        <div className="mt-1.5 space-y-2">
           {nerfs.map((nerf) => (
-            <li key={nerf.id} className="text-[11px] leading-snug text-parchment-300">
-              <span className="font-semibold text-parchment-100">{nerf.name}.</span>{" "}
-              {nerf.description}
-            </li>
+            <MiniRuleCard key={nerf.id} name={nerf.name} description={nerf.description} tier={nerf.tier} />
           ))}
-        </ul>
+        </div>
       </div>
-      <div className="border border-mode-buff/25 bg-mode-buff/5 p-3">
+      <div>
         <div className="smallcaps text-[9px] text-mode-buffGlow">A few of the buffs</div>
-        <ul className="mt-1.5 space-y-1.5">
+        <div className="mt-1.5 space-y-2">
           {buffs.map((buff) => (
-            <li key={buff.id} className="text-[11px] leading-snug text-parchment-300">
-              <span className="font-semibold text-parchment-100">{buff.name}.</span>{" "}
-              {buff.description}
-            </li>
+            <MiniRuleCard key={buff.id} name={buff.name} description={buff.description} tier={buff.tier} />
           ))}
-        </ul>
+        </div>
       </div>
     </div>
+  );
+}
+
+// One tiny rule card: rounded, tinted and ringed by its tier, name beside the
+// tier numeral, description clamped to two lines. Matches the home page's
+// example-card treatment at a smaller size.
+function MiniRuleCard({ name, description, tier }: { name: string; description: string; tier: number }) {
+  return (
+    <Link
+      href={`/codex?search=${encodeURIComponent(name)}`}
+      className={`plate card-juicy block border p-2.5 no-underline tier-bg-${tier}`}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <span className={`font-display text-[13px] font-semibold leading-tight tier-${tier}`}>
+          {name}
+        </span>
+        <span
+          className={`shrink-0 font-display text-[10px] font-bold tier-${tier}`}
+          title={`Difficulty ${tier}: ${TIER_LABEL[tier]}`}
+        >
+          {TIER_ROMAN[tier]}
+        </span>
+      </div>
+      <p className="mt-1 text-[11px] leading-snug text-parchment-300 line-clamp-2">{description}</p>
+    </Link>
   );
 }

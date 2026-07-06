@@ -1,36 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import {
-  Award,
-  Castle,
-  Crown,
-  Flame,
-  Footprints,
-  Gem,
-  Handshake,
-  Hourglass,
-  Lock,
-  Medal,
-  Milestone,
-  Rocket,
-  Scale,
-  Shield,
-  ShieldOff,
-  Skull,
-  Sparkles,
-  Star,
-  Sword,
-  Swords,
-  Target,
-  Trophy,
-  type LucideIcon,
-} from "lucide-react";
+import { Lock, Trophy } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { fetchMe } from "@/lib/authClient";
-import { RARITY_LABEL, RARITY_ORDER, type AchievementRarity } from "@/lib/achievements";
+import { achievementIcon } from "@/lib/achievementIcons";
+import {
+  ACHIEVEMENTS,
+  CATEGORY_LABEL,
+  CATEGORY_ORDER,
+  CATEGORY_TAGLINE,
+  RARITY_LABEL,
+  type AchievementRarity,
+} from "@/lib/achievements";
 
 interface AchievementView {
   id: string;
@@ -51,32 +35,6 @@ interface AchievementsResponse {
   achievements: AchievementView[];
 }
 
-// The catalog's icon names resolved to real components. Unknown names fall back
-// to a medal so a future achievement never renders blank.
-const ICONS: Record<string, LucideIcon> = {
-  Award,
-  Castle,
-  Crown,
-  Flame,
-  Footprints,
-  Gem,
-  Handshake,
-  Hourglass,
-  Medal,
-  Milestone,
-  Rocket,
-  Scale,
-  Shield,
-  ShieldOff,
-  Skull,
-  Sparkles,
-  Star,
-  Sword,
-  Swords,
-  Target,
-  Trophy,
-};
-
 // Accent per rarity, reused for the icon, the ring, and the rarity label.
 const RARITY_ACCENT: Record<AchievementRarity, string> = {
   legendary: "#e0b256",
@@ -86,18 +44,25 @@ const RARITY_ACCENT: Record<AchievementRarity, string> = {
 };
 
 function AchievementCard({ a }: { a: AchievementView }) {
-  const Icon = ICONS[a.icon] ?? Medal;
+  const Icon = achievementIcon(a.icon);
   const accent = RARITY_ACCENT[a.rarity];
   const showProgress = !a.unlocked && a.goal > 1 && a.progress > 0;
   return (
     <div
       className={
         "relative plate p-4 overflow-hidden transition " +
-        (a.unlocked ? "gilt" : "opacity-70")
+        (a.unlocked ? "card-juicy gilt" : "opacity-60")
       }
       style={a.unlocked ? { borderColor: `${accent}66` } : undefined}
     >
-      <div className="flex items-start gap-3">
+      {a.unlocked && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-0 h-16"
+          style={{ background: `linear-gradient(180deg, ${accent}1f, transparent)` }}
+        />
+      )}
+      <div className="relative flex items-start gap-3">
         <div
           className="grid h-11 w-11 shrink-0 place-items-center rounded-lg border"
           style={{
@@ -123,16 +88,16 @@ function AchievementCard({ a }: { a: AchievementView }) {
           </div>
         </div>
       </div>
-      <p className={"mt-3 text-[13px] leading-relaxed " + (a.unlocked ? "text-parchment/90" : "text-parchment-400")}>
+      <p className={"relative mt-3 text-[13px] leading-relaxed " + (a.unlocked ? "text-parchment/90" : "text-parchment-400")}>
         {a.description}
       </p>
       {a.unlocked && a.unlockedAt != null && (
-        <div className="mt-3 smallcaps text-[10px] text-parchment-400">
+        <div className="relative mt-3 smallcaps text-[10px] text-sun-glow/80">
           Unlocked {new Date(a.unlockedAt).toLocaleDateString()}
         </div>
       )}
       {showProgress && (
-        <div className="mt-3">
+        <div className="relative mt-3">
           <div className="mb-1 flex items-center justify-between">
             <span className="smallcaps text-[10px] text-parchment-400">Progress</span>
             <span className="font-mono text-[10px] text-parchment-300">
@@ -149,6 +114,22 @@ function AchievementCard({ a }: { a: AchievementView }) {
       )}
     </div>
   );
+}
+
+// The full catalog with everything locked: what signed-out visitors (and error
+// states) see, so the trophy wall is always browsable.
+function lockedWall(): AchievementView[] {
+  return ACHIEVEMENTS.map((a) => ({
+    id: a.id,
+    name: a.name,
+    description: a.description,
+    icon: a.icon,
+    rarity: a.rarity,
+    goal: a.goal,
+    progress: 0,
+    unlocked: false,
+    unlockedAt: null,
+  }));
 }
 
 function AchievementsContent() {
@@ -190,6 +171,32 @@ function AchievementsContent() {
     };
   }, [requested]);
 
+  // The wall always renders the whole catalog in catalog order; signed-in data
+  // overlays progress and unlocks by id.
+  const wall = useMemo(() => {
+    if (state !== "ready" || !data) return lockedWall();
+    const byId = new Map(data.achievements.map((a) => [a.id, a]));
+    return ACHIEVEMENTS.map((a) => {
+      const fetched = byId.get(a.id);
+      return (
+        fetched ?? {
+          id: a.id,
+          name: a.name,
+          description: a.description,
+          icon: a.icon,
+          rarity: a.rarity,
+          goal: a.goal,
+          progress: 0,
+          unlocked: false,
+          unlockedAt: null,
+        }
+      );
+    });
+  }, [state, data]);
+
+  const unlockedCount = data?.unlockedCount ?? 0;
+  const total = ACHIEVEMENTS.length;
+
   return (
     <main className="min-h-screen pb-16">
       <SiteHeader />
@@ -198,56 +205,69 @@ function AchievementsContent() {
           <div>
             <h1 className="font-display text-4xl sm:text-5xl">Achievements</h1>
             <p className="mt-3 text-parchment-200">
-              {data
+              {state === "ready" && data
                 ? requested
                   ? `What ${data.username} has unlocked across the board.`
                   : "Feats you have unlocked, and the ones still waiting."
                 : "Feats to unlock across Nerf and Buff."}
             </p>
           </div>
-          {data && (
-            <div className="plate px-4 py-2 text-right">
-              <div className="font-mono text-2xl text-parchment-50 tabular-nums">
-                {data.unlockedCount}
-                <span className="text-sm text-parchment-400">/{data.total}</span>
-              </div>
-              <div className="smallcaps text-[10px] text-parchment-400">Unlocked</div>
+          <div className="plate px-4 py-2 text-right">
+            <div className="flex items-center justify-end gap-2 font-mono text-2xl text-parchment-50 tabular-nums">
+              <Trophy className="h-5 w-5 text-sun-glow" strokeWidth={2} />
+              {state === "ready" ? unlockedCount : 0}
+              <span className="text-sm text-parchment-400">/{total}</span>
             </div>
-          )}
+            <div className="smallcaps text-[10px] text-parchment-400">Unlocked</div>
+          </div>
         </div>
 
-        {state === "loading" && <div className="mt-8 text-parchment-300/60">Loading…</div>}
-        {state === "error" && (
-          <div className="mt-8 plate p-6 text-parchment-300">
-            Achievements are unavailable right now. Try again in a minute.
-          </div>
-        )}
         {state === "signin" && (
-          <div className="mt-8 plate p-6 text-sm text-parchment-300">
+          <div className="mt-6 plate p-4 text-sm text-parchment-300">
             <Link href="/login?next=/achievements" className="text-gold-leaf hover:underline">
               Sign in
             </Link>{" "}
-            to start unlocking achievements that follow your account everywhere.
+            to start unlocking these. Every trophy below is waiting for you.
+          </div>
+        )}
+        {state === "error" && (
+          <div className="mt-6 plate p-4 text-sm text-parchment-300">
+            Your progress is unavailable right now, so the wall shows everything locked. Try
+            again in a minute.
           </div>
         )}
 
-        {state === "ready" && data && (
-          <div className="mt-8 space-y-10">
-            {RARITY_ORDER.map((rarity) => {
-              const group = data.achievements.filter((a) => a.rarity === rarity);
-              if (!group.length) return null;
-              // Unlocked first within each tier so earned feats lead.
-              const sorted = [...group].sort(
-                (x, y) => Number(y.unlocked) - Number(x.unlocked) || x.name.localeCompare(y.name),
+        {state === "loading" ? (
+          <div className="mt-8 text-parchment-300/60">Loading…</div>
+        ) : (
+          <div className="mt-8 space-y-12">
+            {CATEGORY_ORDER.map((category) => {
+              const ids = new Set(
+                ACHIEVEMENTS.filter((a) => a.category === category).map((a) => a.id),
               );
+              const group = wall.filter((a) => ids.has(a.id));
+              if (!group.length) return null;
+              // Unlocked first within each section so earned trophies lead;
+              // catalog order (easy to hard) is preserved otherwise.
+              const sorted = [...group].sort((x, y) => Number(y.unlocked) - Number(x.unlocked));
+              const earned = group.filter((a) => a.unlocked).length;
               return (
-                <div key={rarity}>
-                  <div className="rule-ornament mb-4">
-                    <span className="font-display" style={{ color: RARITY_ACCENT[rarity] }}>
-                      {RARITY_LABEL[rarity]}
+                <div key={category}>
+                  <div className="flex flex-wrap items-baseline justify-between gap-2">
+                    <div>
+                      <h2 className="font-display text-2xl text-parchment-50">
+                        {CATEGORY_LABEL[category]}
+                      </h2>
+                      <p className="mt-0.5 text-xs text-parchment-400">
+                        {CATEGORY_TAGLINE[category]}
+                      </p>
+                    </div>
+                    <span className="font-mono text-sm tabular-nums text-parchment-300">
+                      <span className={earned > 0 ? "text-sun-glow" : ""}>{earned}</span>
+                      <span className="text-parchment-500">/{group.length}</span>
                     </span>
                   </div>
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     {sorted.map((a) => (
                       <AchievementCard key={a.id} a={a} />
                     ))}

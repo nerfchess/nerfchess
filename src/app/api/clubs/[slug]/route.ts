@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/server/db";
-import { sessionTokenFromCookieHeader, userForSession } from "@/lib/server/auth";
+import { isModerator, sessionTokenFromCookieHeader, userForSession } from "@/lib/server/auth";
+import { isValidClubIcon } from "@/lib/clubIcons";
 
 export const dynamic = "force-dynamic";
 
@@ -36,7 +37,7 @@ export async function GET(request: Request, { params }: { params: { slug: string
   const db = await getDb();
   const club = await db
     .prepare(
-      `SELECT id, slug, name, description, owner_user_id, owner_name, created_at
+      `SELECT id, slug, name, description, icon, owner_user_id, owner_name, created_at
        FROM clubs WHERE slug = ?`,
     )
     .bind(params.slug)
@@ -45,6 +46,7 @@ export async function GET(request: Request, { params }: { params: { slug: string
       slug: string;
       name: string;
       description: string;
+      icon: string;
       owner_user_id: string;
       owner_name: string;
       created_at: number;
@@ -104,4 +106,36 @@ export async function GET(request: Request, { params }: { params: { slug: string
     tournaments: tournaments.results,
     myRole,
   });
+}
+
+// Club settings: today just the identity icon, a curated "emoji|colorId"
+// pair (see src/lib/clubIcons.ts). Owner-only, with the same moderator
+// override the post-delete path uses.
+export async function PATCH(request: Request, { params }: { params: { slug: string } }) {
+  const db = await getDb();
+  const user = await userForSession(db, sessionTokenFromCookieHeader(request.headers.get("cookie")));
+  if (!user) return NextResponse.json({ error: "Sign in first." }, { status: 401 });
+
+  const club = await db
+    .prepare("SELECT id, owner_user_id FROM clubs WHERE slug = ?")
+    .bind(params.slug)
+    .first<{ id: string; owner_user_id: string }>();
+  if (!club) return NextResponse.json({ error: "Club not found." }, { status: 404 });
+
+  const mayEdit = club.owner_user_id === user.id || isModerator(user);
+  if (!mayEdit) return NextResponse.json({ error: "Only the club owner can change the club's icon." }, { status: 403 });
+
+  let body: { icon?: unknown };
+  try {
+    body = (await request.json()) as typeof body;
+  } catch {
+    return NextResponse.json({ error: "Bad JSON." }, { status: 400 });
+  }
+  if (body.icon === undefined) return NextResponse.json({ error: "Nothing to update." }, { status: 400 });
+  if (!isValidClubIcon(body.icon)) {
+    return NextResponse.json({ error: "Pick an icon and color from the set." }, { status: 400 });
+  }
+
+  await db.prepare("UPDATE clubs SET icon = ? WHERE id = ?").bind(body.icon, club.id).run();
+  return NextResponse.json({ ok: true, icon: body.icon });
 }

@@ -50,7 +50,6 @@ const PLAY_MENU_LINKS: NavMenuItem[] = [
 const WATCH_MENU_LINKS: NavMenuItem[] = [
   { href: "/tv?mode=nerf", label: "Nerf TV", className: "text-mode-nerfGlow" },
   { href: "/tv?mode=buff", label: "Buff TV", className: "text-mode-buffGlow" },
-  { href: "/analysis", label: "Analysis board" },
 ];
 
 const NAV_LINKS: NavLink[] = [
@@ -62,7 +61,7 @@ const NAV_LINKS: NavLink[] = [
   { href: "/tournaments", label: "Tournaments" },
   { href: "/history", label: "History" },
   { href: "/codex", label: "Rules" },
-  { href: "/stats", label: "Stats" },
+  { href: "/achievements", label: "Achievements" },
 ];
 
 function clockLabel(timeSec: number, incrementSec: number): string {
@@ -209,7 +208,7 @@ export function SiteHeader({ active }: { active?: string }) {
   };
 
   const iconButton =
-    "nav-icon-btn relative grid h-9 w-9 place-items-center text-parchment-300 hover:bg-white/5 hover:text-parchment-50";
+    "nav-icon-btn relative grid h-10 w-10 place-items-center rounded-lg text-parchment-300 hover:bg-white/5 hover:text-parchment-50";
 
   return (
     <nav className="seam-edge-b flex items-center justify-between gap-3 bg-gradient-to-b from-ink-900/70 to-transparent px-5 sm:px-10 py-5 sm:py-6">
@@ -226,13 +225,20 @@ export function SiteHeader({ active }: { active?: string }) {
               <div key={link.href} className="group relative">
                 <Link
                   href={link.href}
-                  data-active={active === link.href}
                   className={
                     "nav-item block px-3 py-1.5 group-hover:bg-white/5 " +
                     (active === link.href ? "text-gold-leaf" : "text-parchment-100")
                   }
                 >
                   {link.label}
+                  {/* Active page underline: the warm-to-cool mode seam instead
+                      of the flat accent, so the current stop feels alive. */}
+                  {active === link.href && (
+                    <span
+                      aria-hidden
+                      className="absolute inset-x-3 bottom-[0.26rem] h-[2px] rounded-full bg-gradient-to-r from-coral-glow to-mode-buff"
+                    />
+                  )}
                 </Link>
                 <div className="invisible absolute left-0 top-full z-40 w-52 opacity-0 transition-opacity group-focus-within:visible group-focus-within:opacity-100 group-hover:visible group-hover:opacity-100">
                   <div className="plate dropdown py-1 shadow-2xl">
@@ -255,13 +261,18 @@ export function SiteHeader({ active }: { active?: string }) {
               <Link
                 key={link.href}
                 href={link.href}
-                data-active={active === link.href}
                 className={
                   "nav-item px-3 py-1.5 hover:bg-white/5 " +
                   (active === link.href ? "text-gold-leaf" : "text-parchment-100")
                 }
               >
                 {link.label}
+                {active === link.href && (
+                  <span
+                    aria-hidden
+                    className="absolute inset-x-3 bottom-[0.26rem] h-[2px] rounded-full bg-gradient-to-r from-coral-glow to-mode-buff"
+                  />
+                )}
               </Link>
             )
           )}
