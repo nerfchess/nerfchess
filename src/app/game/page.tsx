@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { Board } from "@/components/Board";
+import { SIGNATURES } from "@/components/effects/BoardEffects";
 import { BoardPlayerRow } from "@/components/BoardPlayerRow";
 import { ClockPill } from "@/components/ClockPill";
 // The end screen is never part of first paint; loading it on demand keeps it
@@ -120,6 +121,13 @@ const BOT_ELO: Record<AILevel, number> = {
   medium: 1500,
   hard: 1900,
 };
+
+// Shared draft reveal timing, mirroring the online match: the banner eases
+// in a short beat after the SECOND side resolves (so the picked card's
+// pocket-flight and dock landing finish first, never mid-choice), then
+// holds about four seconds.
+const DRAFT_REVEAL_EASE_MS = 450;
+const DRAFT_REVEAL_HOLD_MS = 4000;
 
 export default function GamePageWrapper() {
   return (
@@ -324,7 +332,7 @@ function GamePage() {
       // picks, or when the 15s lock-in window auto-picks the first option.
       const dealt = dealNerfOptions(new Set());
       setNerfDraft({ myOptions: dealt.slice(0, 2), aiOptions: dealt.slice(2, 4) });
-      setNerfDeadline(Date.now() + 15_000);
+      setNerfDeadline(Date.now() + 20_000);
       return;
     }
 
@@ -390,27 +398,68 @@ function GamePage() {
     // Bounded but roomy: the dock keeps the whole game's plays readable.
     setOppLog((log) => [...log, { key: oppKeyRef.current++, card, label, at: Date.now() }].slice(-60));
   };
+  // Signature spectacles: a played card's id + a monotonic key handed to the
+  // Board, which dresses the resulting piece diff as that card's choreography.
+  // Fires for BOTH the bot's plays and my own. My own activations run inside
+  // the (un-owned) targeting hook, so the id is snapshotted at "Use" time
+  // (pendingSigIdRef) and fired from onChanged once the activation lands.
+  const [signatureCard, setSignatureCard] = useState<{ id: string; key: number } | null>(null);
+  const sigKeyRef = useRef(0);
+  const pendingSigIdRef = useRef<string | null>(null);
+  const fireSignature = (id: string) => {
+    if (SIGNATURES[id]) setSignatureCard({ id, key: ++sigKeyRef.current });
+  };
+  // Snapshot the id of a card I am about to use (dock "Use" entry point) so
+  // onChanged can fire its signature once the activation resolves.
+  const snapshotMySignature = (buffIndex: number) => {
+    const id = game?.buffs?.players[myColor].buffs[buffIndex]?.id;
+    pendingSigIdRef.current = id && SIGNATURES[id] ? id : null;
+  };
 
-  // Shared reveal moment: when my pick commits and the bot's simultaneous
-  // resolution is known, show both briefly. The bot side follows the same
-  // visibility rules as the rest of the UI: instants are public at pick,
-  // everything else renders as a face-down back with its tier numeral.
+  // Shared reveal moment: once BOTH sides of a simultaneous draft round have
+  // resolved (either order: the bot usually resolves first, but my pick can
+  // land before its effect runs), show both briefly. The bot side follows
+  // the same visibility rules as the rest of the UI: instants are public at
+  // pick, everything else renders as a face-down back with its tier numeral.
   const [draftReveal, setDraftReveal] = useState<{
     mine: DraftRevealSide;
     theirs: DraftRevealSide;
   } | null>(null);
+  const myResolvedRef = useRef<DraftRevealSide | null>(null);
   const botResolvedRef = useRef<DraftRevealSide | null>(null);
-  const maybeShowDraftReveal = (mine: DraftRevealSide) => {
+  const draftRevealTimerRef = useRef<number | null>(null);
+  const tryFireDraftReveal = () => {
+    const mine = myResolvedRef.current;
     const theirs = botResolvedRef.current;
-    if (!theirs) return;
+    if (!mine || !theirs) return;
+    myResolvedRef.current = null;
     botResolvedRef.current = null;
-    setDraftReveal({ mine, theirs });
+    // Both sides have resolved by definition here, so the banner can never
+    // appear while the player is still choosing. The short ease-in beat
+    // lets the picked card's pocket-flight and dock landing play out before
+    // the banner arrives instead of being stomped by the overlay teardown.
+    if (draftRevealTimerRef.current != null) window.clearTimeout(draftRevealTimerRef.current);
+    draftRevealTimerRef.current = window.setTimeout(
+      () => setDraftReveal({ mine, theirs }),
+      DRAFT_REVEAL_EASE_MS,
+    );
   };
+  const recordMyDraftResolution = (mine: DraftRevealSide) => {
+    myResolvedRef.current = mine;
+    tryFireDraftReveal();
+  };
+  // Hold the banner about four seconds, then dismiss it.
   useEffect(() => {
     if (!draftReveal) return;
-    const id = window.setTimeout(() => setDraftReveal(null), 2500);
+    const id = window.setTimeout(() => setDraftReveal(null), DRAFT_REVEAL_HOLD_MS);
     return () => window.clearTimeout(id);
   }, [draftReveal]);
+  useEffect(
+    () => () => {
+      if (draftRevealTimerRef.current != null) window.clearTimeout(draftRevealTimerRef.current);
+    },
+    [],
+  );
 
   // Draft mode: the bot resolves its pending buff drafts immediately.
   useEffect(() => {
@@ -428,10 +477,14 @@ function GamePage() {
           { id: instant.id, tier: instant.tier },
           `Bot played a ${draftCardNoun(game.buffs.mode)}`,
         );
+        // Instant attack spectacles (Cataclysm, Extinction) clear the board at
+        // pick time; dress that clear as the card's signature.
+        fireSignature(instant.id);
       }
-      // Hold the bot's resolution for the shared reveal that fires once my
-      // own pick commits. Identity shows only where the current rules
-      // already make it public (instants); other picks reveal tier alone.
+      // Hold the bot's resolution for the shared reveal that fires once
+      // both sides of the round are in (my pick may already be waiting).
+      // Identity shows only where the current rules already make it public
+      // (instants); other picks reveal tier alone.
       botResolvedRef.current = gained.length
         ? {
             banked: false,
@@ -442,6 +495,7 @@ function GamePage() {
             ),
           }
         : { banked: true, cards: [] };
+      tryFireDraftReveal();
       setGame({ ...game });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -456,7 +510,7 @@ function GamePage() {
     const offer = game?.buffs?.players[myColor].offer ?? null;
     if (offer && offerPausedAt == null && offerOnClockIndex !== offer.index) {
       setOfferPausedAt(Date.now());
-      setOfferDeadline(Date.now() + 15_000);
+      setOfferDeadline(Date.now() + 20_000);
     } else if (!offer && offerPausedAt != null) {
       turnStartedAtRef.current += Date.now() - Math.max(offerPausedAt, turnStartedAtRef.current);
       setOfferPausedAt(null);
@@ -773,6 +827,7 @@ function GamePage() {
         const usedCard = aiActivateBuffs(game, botColor);
         if (usedCard) {
           showOppUsedCard(usedCard, `Bot used a ${draftCardNoun(game.buffs.mode)}`);
+          fireSignature(usedCard.id);
           setGame({ ...game });
           if (game.result) {
             aiThinking.current = false;
@@ -947,6 +1002,11 @@ function GamePage() {
       if (!game) return;
       // A buff use can consume the turn: bank my clock like a move.
       if (game.board.turn !== myColor) commitClock(myColor);
+      // Fire the signature for the card I just activated (snapshotted at Use
+      // time), batched with the board update so the Board claims this diff.
+      const sigId = pendingSigIdRef.current;
+      pendingSigIdRef.current = null;
+      if (sigId) fireSignature(sigId);
       setGame({ ...game });
     },
   });
@@ -1385,7 +1445,10 @@ function GamePage() {
                 canAct={
                   !game.result && game.board.turn === myColor && !myOffer && !isReviewingHistory
                 }
-                onStartUse={buffTargeting.start}
+                onStartUse={(i) => {
+                  snapshotMySignature(i);
+                  buffTargeting.start(i);
+                }}
                 hideOpponentCards
                 plays={oppLog}
               />
@@ -1473,6 +1536,7 @@ function GamePage() {
                           kingSafeSquares: fxZone.kingSafeSquares,
                           pawnClampSquares: fxZone.pawnClampSquares,
                           stunSquares: fxZone.stunSquares,
+                          motifSquares: fxZone.motifs,
                         }
                   }
                   lastMove={lastMoveForDisplay}
@@ -1486,6 +1550,7 @@ function GamePage() {
                   highlightLastMove={uiSettings.highlightLastMove}
                   showLegalMoves={uiSettings.showLegalMoves}
                   checkSquare={isReviewingHistory ? null : checkSquare}
+                  signatureCard={isReviewingHistory ? null : signatureCard}
                   pickSquares={
                     buffTargeting.targeting?.target.kind === "square"
                       ? buffTargeting.targeting.target.squares
@@ -1613,7 +1678,10 @@ function GamePage() {
             game={game}
             myColor={myColor}
             canAct={!game.result && game.board.turn === myColor && !myOffer && !isReviewingHistory}
-            onStartUse={buffTargeting.start}
+            onStartUse={(i) => {
+              snapshotMySignature(i);
+              buffTargeting.start(i);
+            }}
             hideOpponentCards
             plays={oppLog}
           />
@@ -1632,9 +1700,9 @@ function GamePage() {
 
       <OppPlaysLog plays={oppLog} />
 
-      {/* Shared reveal moment: my pick committed and the bot's simultaneous
-          resolution is known. Non-blocking, click to dismiss, auto-dismisses
-          after 2.5s. */}
+      {/* Shared reveal moment: both sides of the simultaneous draft round
+          resolved. Non-blocking, click to dismiss, auto-dismisses after
+          about four seconds. */}
       {draftReveal && !game.result && (
         <DraftRevealBanner
           mine={draftReveal.mine}
@@ -1670,15 +1738,19 @@ function GamePage() {
             // My own cards are mine to see: the reveal names them all
             // (take-both offers can land more than one).
             const gained = game.buffs?.players[myColor].buffs.slice(before) ?? [];
-            maybeShowDraftReveal({
+            recordMyDraftResolution({
               banked: false,
               cards: gained.map((b) => ({ id: b.id, tier: b.tier })),
             });
+            // My own instant attack spectacle (Cataclysm, Extinction) clears
+            // the board at pick time; dress that clear as its signature.
+            const inst = gained.find((b) => BUFF_BY_ID[b.id]?.kind === "instant" && SIGNATURES[b.id]);
+            if (inst) fireSignature(inst.id);
             setGame({ ...game });
           }}
           onBank={() => {
             bankDraft(game, myColor);
-            maybeShowDraftReveal({ banked: true, cards: [] });
+            recordMyDraftResolution({ banked: true, cards: [] });
             setGame({ ...game });
           }}
           opponent={{

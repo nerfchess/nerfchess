@@ -453,8 +453,8 @@ export default function FriendPage() {
             </div>
             <p className="mt-2 text-[11px] leading-snug text-parchment-400">
               {gameMode === "buff"
-                ? "Draft buffs; the strongest build wins."
-                : "Secret nerfs, revealed when the game ends."}
+                ? "Draft buffs and cook your opponent."
+                : "You start nerfed, then draft to cook your opponent even harder."}
             </p>
           </div>
 

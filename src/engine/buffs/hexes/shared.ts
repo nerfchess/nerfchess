@@ -13,6 +13,7 @@ import {
   BuffInstance,
   BuffPick,
   BuffTarget,
+  CardFx,
 } from "../../buff";
 import { Tier } from "../../nerf";
 import {
@@ -79,6 +80,7 @@ export type {
   BuffPick,
   BuffTarget,
   BoardState,
+  CardFx,
   Color,
   Move,
   PieceType,
@@ -93,6 +95,9 @@ export type HexMeta = {
   description: string;
   tier: Tier;
   flavor?: string;
+  /** Board motif drawn on the cursed pieces while the constraint runs.
+   * Display metadata only; never consulted by move generation. */
+  fx?: CardFx;
 };
 
 /** Build a fully implemented hex from metadata + mechanics. Mirrors the `def`

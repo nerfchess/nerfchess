@@ -341,8 +341,8 @@ function ModeCard({
       </div>
       <p className="mt-1 text-[12px] leading-snug text-parchment-300">
         {mode === "nerf"
-          ? "Secret handicaps, revealed when the game ends. Boon drafts soften yours."
-          : "No handicaps. Draft buffs and build the strongest army."}
+          ? "You start nerfed. Draft to cook your opponent even harder."
+          : "Draft buffs and cook your opponent."}
       </p>
       <div className="mt-2.5 flex items-center gap-2">
         <span className="smallcaps text-[9px] text-parchment-400">

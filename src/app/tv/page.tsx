@@ -176,13 +176,17 @@ function TvView() {
     if (!shownPlayers) return null;
     const p = shownPlayers[color];
     return (
-      <div className="flex min-w-0 items-center gap-2 py-1.5">
+      <Link
+        href={`/u/${encodeURIComponent(p.name)}`}
+        className="group flex min-w-0 items-center gap-2 py-1.5"
+        title={`View ${p.name}'s profile`}
+      >
         <PlayerAvatar name={p.name} avatar={p.avatar} size={26} />
-        <span className="truncate font-display text-parchment-100">
+        <span className="truncate font-display text-parchment-100 transition-colors group-hover:text-gold-leaf">
           {p.name}
           {p.rating != null && <span className="text-parchment-400"> ({p.rating})</span>}
         </span>
-      </div>
+      </Link>
     );
   };
 

@@ -32,6 +32,8 @@ export const HEXES_T5: Buff[] = [
       name: "Medusa's Verdict",
       description: "Your opponent's queen turns to a walnut for 3 of their turns.",
       flavor: "The lady meets a colder gaze than her own.",
+      // Board already paints walnuts; fx carried for consistency.
+      fx: { motif: "jail", pieces: ["q"] },
     },
     walnutAll(["q"], 3),
   ),
@@ -43,6 +45,8 @@ export const HEXES_T5: Buff[] = [
       name: "Granite Ramparts",
       description: "Your opponent's rooks turn to walnuts for 3 of their turns.",
       flavor: "The towers set into bedrock.",
+      // Board already paints walnuts; fx carried for consistency.
+      fx: { motif: "jail", pieces: ["r"] },
     },
     walnutAll(["r"], 3),
   ),
@@ -96,6 +100,8 @@ export const HEXES_T5: Buff[] = [
       name: "The Big Chill",
       description: "Freeze all of your opponent's pieces except their king for 2 of their turns.",
       flavor: "The whole board glazes over in a single night.",
+      // Board already paints freezes; fx carried for consistency.
+      fx: { motif: "jail", pieces: ["p", "n", "b", "r", "q"] },
     },
     freezeAllEnemies(2),
   ),
@@ -107,6 +113,8 @@ export const HEXES_T5: Buff[] = [
       name: "Lone Sovereign",
       description: "On your opponent's next turn they may move only their king.",
       flavor: "The court abandons the crown to fend for itself.",
+      // Board already paints king_only; fx carried for consistency.
+      fx: { motif: "jail", pieces: ["p", "n", "b", "r", "q"] },
     },
     instant((_inst, api) => {
       addEffect(api, { kind: "king_only", against: api.opp, turns: 1 });
@@ -120,6 +128,7 @@ export const HEXES_T5: Buff[] = [
       name: "Frozen Moment",
       description: "Your opponent skips their next turn entirely.",
       flavor: "Time simply forgets to move them.",
+      fx: { motif: "slow", pieces: "all" },
     },
     skipOpponent(1),
   ),
@@ -131,6 +140,8 @@ export const HEXES_T5: Buff[] = [
       name: "Iron Furrow",
       description: "Your opponent's pawns cannot advance for their next 5 turns. They may still capture diagonally.",
       flavor: "The whole front rank is spiked into the earth.",
+      // Board already paints no_pawn_advance; fx carried for consistency.
+      fx: { motif: "anchor", pieces: ["p"] },
     },
     instant((_inst, api) => {
       addEffect(api, { kind: "no_pawn_advance", against: api.opp, turns: 5 });
@@ -144,6 +155,7 @@ export const HEXES_T5: Buff[] = [
       name: "Throne Bound",
       description: "Your opponent cannot move their queen for their next 3 turns.",
       flavor: "The queen is chained to her own throne.",
+      fx: { motif: "jail", pieces: ["q"] },
     },
     curse(3, (moves) => moves.filter((m) => m.piece !== "q")),
   ),
@@ -155,6 +167,7 @@ export const HEXES_T5: Buff[] = [
       name: "Palsied Hands",
       description: "Your opponent cannot capture with any piece for their next 2 turns.",
       flavor: "Every hand in the army has gone numb.",
+      fx: { motif: "muzzle", pieces: "all" },
     },
     curse(2, (moves) => moves.filter((m) => !m.captured)),
   ),
@@ -166,6 +179,7 @@ export const HEXES_T5: Buff[] = [
       name: "Peasant Levy",
       description: "Your opponent may move only their pawns and their king for their next 2 turns.",
       flavor: "The nobles have all fled; only the levy remains.",
+      fx: { motif: "jail", pieces: ["n", "b", "r", "q"] },
     },
     curse(2, (moves) => moves.filter((m) => m.piece === "p" || m.piece === "k")),
   ),
@@ -177,6 +191,8 @@ export const HEXES_T5: Buff[] = [
       name: "Scorched Middle",
       description: "Your opponent cannot enter any square on the 4th or 5th ranks for their next 3 turns.",
       flavor: "The heart of the board is a wall of fire.",
+      // Board already paints barred squares; square-scoped, no pieces field.
+      fx: { motif: "blindfold" },
     },
     instant((_inst, api) => {
       const squares: number[] = [];

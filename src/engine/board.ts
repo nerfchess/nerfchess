@@ -179,17 +179,26 @@ export function generateMoves(board: BoardState): Move[] {
             } else {
               add(tsq);
             }
-          } else if (board.epTarget === tsq) {
+          } else if (board.epTarget === tsq && !tp) {
+            // En passant is only real while the double-stepped enemy pawn is
+            // still standing beside us and the target square is empty. Buffs
+            // can remove or teleport that pawn (or drop a piece onto the
+            // target square) with the ep target still set; generating a
+            // phantom capture then would corrupt the capture pools and, on a
+            // friendly-occupied target, delete the mover's own piece.
             const capSq = SQ(nf, r);
-            moves.push({
-              from: sq,
-              to: tsq,
-              piece: "p",
-              color: me,
-              captured: "p",
-              capturedSquare: capSq,
-              isEnPassant: true,
-            });
+            const capPiece = board.pieces[capSq];
+            if (capPiece && capPiece.type === "p" && capPiece.color === opp) {
+              moves.push({
+                from: sq,
+                to: tsq,
+                piece: "p",
+                color: me,
+                captured: "p",
+                capturedSquare: capSq,
+                isEnPassant: true,
+              });
+            }
           }
         }
         break;
@@ -412,10 +421,12 @@ export function moveFromUCI(board: BoardState, uci: string): Move | null {
     move.captured = target.type;
     move.capturedSquare = to;
   } else if (piece.type === "p" && FILE(from) !== FILE(to) && !target) {
-    // Diagonal pawn move to an empty square: en passant.
+    // Diagonal pawn move to an empty square: en passant. Only a real enemy
+    // pawn beside us qualifies (matching generateMoves): after a buff has
+    // rewritten that square, the raw fallback must not invent a capture.
     const capSq = SQ(FILE(to), RANK(from));
     const capPiece = board.pieces[capSq];
-    if (capPiece && capPiece.color !== piece.color) {
+    if (capPiece && capPiece.type === "p" && capPiece.color !== piece.color) {
       move.captured = capPiece.type;
       move.capturedSquare = capSq;
       move.isEnPassant = true;

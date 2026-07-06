@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 import { type CSSProperties, useEffect, useMemo, useRef, useState } from "react";
 import { Board, QueuedPremove } from "@/components/Board";
+import { SIGNATURES } from "@/components/effects/BoardEffects";
 import { BoardPlayerRow } from "@/components/BoardPlayerRow";
 import { OppPlaysLog, type OppPlay } from "@/components/OppPlaysLog";
 import { BuffDock, EnemyBuffModal, TargetingBanner, useBuffTargeting } from "@/components/BuffDock";
@@ -32,7 +33,8 @@ import { SettingsPanel } from "@/components/SettingsPanel";
 import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
 import type { BuffOffer } from "@/engine/buff";
 import { BUFF_BY_ID } from "@/engine/buffs/library";
-import { cloneBoard, findKing, isInCheck, makeMove, moveFromUCI, moveToUCI } from "@/engine/board";
+import { cloneBoard, findKing, isInCheck, makeMove, moveFromUCI, moveToUCI, positionKey } from "@/engine/board";
+import { activeRuleIds, fnv1a } from "@/engine/desync";
 import { draftCardNoun, turnCost } from "@/engine/buff";
 import { computeMoveRisks } from "@/engine/moveSafety";
 import { loadSettings } from "@/lib/settings";
@@ -84,11 +86,45 @@ const FIRST_MOVE_GRACE_MS = 10_000;
 // remainder before surfacing the claim buttons.
 const CLAIM_DELAY_AFTER_GONE_MS = 15_000;
 
+// Shared draft reveal timing: the banner eases in a short beat after the
+// SECOND side resolves (so the picked card's pocket-flight and dock landing
+// finish first, never mid-choice), then holds about four seconds.
+const DRAFT_REVEAL_EASE_MS = 450;
+const DRAFT_REVEAL_HOLD_MS = 4000;
+
 type PendingPremoveSend = { uci: string; ply: number };
 type PendingLocalMove = { uci: string; ply: number; move: Move };
 
 function moveKey(move: Move): string {
   return `${move.from}:${move.to}:${move.promotion ?? ""}:${move.captured ?? ""}`;
+}
+
+// Report a detected turn/board divergence to the telemetry sink so real
+// traffic names the culprit rule instead of us hunting blind (see
+// src/engine/desync.ts and /api/desync). Best-effort and fire-and-forget: a
+// failed beacon must never disturb the resync that actually fixes the game.
+function beaconTurnDesync(
+  gameId: string,
+  clientHash: string,
+  serverHash: string,
+  rules: string[],
+) {
+  try {
+    void fetch("/api/desync", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        gameId,
+        clientHash,
+        serverHash,
+        // The whose-turn / board drift this guard catches is always a
+        // position divergence (side to move is part of positionKey).
+        diverged: { pos: true, moves: false, rules: false },
+        rules,
+      }),
+      keepalive: true,
+    }).catch(() => {});
+  } catch {}
 }
 
 function pickRandomNerf(): Nerf {
@@ -221,6 +257,16 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     // Bounded but roomy: the dock keeps the whole game's plays readable.
     setOppLog((log) => [...log, { key: oppKeyRef.current++, card, label, at: Date.now() }].slice(-60));
   };
+  // Signature spectacles: a played card's id + a monotonic key handed to the
+  // Board, which dresses the resulting piece diff as that card's choreography.
+  // Fired for BOTH sides' plays (the server echoes every activation), so both
+  // players see the identical animation. Set alongside the board update so the
+  // two batch into one render and the signature claims exactly that diff.
+  const [signatureCard, setSignatureCard] = useState<{ id: string; key: number } | null>(null);
+  const sigKeyRef = useRef(0);
+  const fireSignature = (id: string) => {
+    if (SIGNATURES[id]) setSignatureCard({ id, key: ++sigKeyRef.current });
+  };
   // Voluntary rule reveals: mine (button flow) and the opponent's (event).
   const [myRevealState, setMyRevealState] = useState<"hidden" | "confirm" | "revealed">(() =>
     start.revealed?.[start.color] ? "revealed" : "hidden",
@@ -252,6 +298,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   } | null>(null);
   const myResolvedRef = useRef<DraftRevealSide | null>(null);
   const oppResolvedRef = useRef<DraftRevealSide | null>(null);
+  const draftRevealTimerRef = useRef<number | null>(null);
   const recordDraftResolution = (resolved: MPDraftResolved) => {
     const side: DraftRevealSide =
       resolved.kind === "picked"
@@ -267,17 +314,34 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     if (resolved.color === myColor) myResolvedRef.current = side;
     else oppResolvedRef.current = side;
     if (myResolvedRef.current && oppResolvedRef.current) {
-      setDraftReveal({ mine: myResolvedRef.current, theirs: oppResolvedRef.current });
+      const pair = { mine: myResolvedRef.current, theirs: oppResolvedRef.current };
       myResolvedRef.current = null;
       oppResolvedRef.current = null;
+      // Both sides have resolved by definition here (either order), so the
+      // banner can never appear while a player is still choosing. The short
+      // ease-in beat lets the picked card's pocket-flight and dock landing
+      // play out before the banner arrives instead of being stomped by the
+      // overlay teardown.
+      if (draftRevealTimerRef.current != null) window.clearTimeout(draftRevealTimerRef.current);
+      draftRevealTimerRef.current = window.setTimeout(
+        () => setDraftReveal(pair),
+        DRAFT_REVEAL_EASE_MS,
+      );
     }
   };
-  // The reveal banner is a moment, not a fixture: it dismisses itself.
+  // The reveal banner is a moment, not a fixture: it holds about four
+  // seconds, then dismisses itself.
   useEffect(() => {
     if (!draftReveal) return;
-    const id = window.setTimeout(() => setDraftReveal(null), 2500);
+    const id = window.setTimeout(() => setDraftReveal(null), DRAFT_REVEAL_HOLD_MS);
     return () => window.clearTimeout(id);
   }, [draftReveal]);
+  useEffect(
+    () => () => {
+      if (draftRevealTimerRef.current != null) window.clearTimeout(draftRevealTimerRef.current);
+    },
+    [],
+  );
   // Bumped on every `start` replay (reconnect/resync): keys the draft
   // overlay so a rebuilt game always gets a fresh overlay instance. Without
   // it, a pick whose send was lost to a disconnect would leave the overlay's
@@ -480,9 +544,14 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         setOppDrafting(!!oppState?.offerPending || !!oppState?.offer);
         setDraftDeadline(e.setup.dtDeadline ?? null);
         setOppLockedIn(false);
-        // A replay is a clean slate for the shared reveal moment too.
+        // A replay is a clean slate for the shared reveal moment too (a
+        // queued ease-in from before the disconnect must not fire late).
         myResolvedRef.current = null;
         oppResolvedRef.current = null;
+        if (draftRevealTimerRef.current != null) {
+          window.clearTimeout(draftRevealTimerRef.current);
+          draftRevealTimerRef.current = null;
+        }
         setDraftReveal(null);
         setReplayEpoch((n) => n + 1);
         // Nerf draft still unresolved: (re)enter the pick screen with the
@@ -511,15 +580,32 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         setOpponentGone(false);
         const g = gameRef.current;
         if (!g) return;
+        // Turn/ply authority: the server stamps every accepted move with its
+        // post-move ply (its authoritative move count). A replica that is not
+        // exactly one ply behind has missed or duplicated a frame, so its
+        // board.turn has drifted from the server — whoever's turn it thinks it
+        // is no longer matches. Never apply a move on top of that gap (the
+        // incoming UCI can be coincidentally legal in the stale position and
+        // advance the board onto a permanently wrong turn): force a full
+        // resync from the authoritative snapshot instead. This is the fix for
+        // two clients disagreeing on whose turn it is after a dropped frame.
+        if (e.move.ply !== g.board.history.length + 1) {
+          setWhiteMs(e.move.wc);
+          setBlackMs(e.move.bc);
+          resyncFromServer(
+            `move ply ${e.move.ply} does not follow local ply ${g.board.history.length} (missed/duplicated frame)`,
+          );
+          return;
+        }
         // The server already validated this move. If the replica cannot
         // regenerate it (a hidden nerf or buff effect it does not know
         // about), apply it raw instead of freezing the board — a raw apply
         // keeps the position, turn, and clocks in sync, where the old
         // resync-only path could dead-end forever if the rebuilt replay hit
-        // the same blind spot. The ply guard keeps a raw apply from running
-        // on top of missed frames (then a full resync is the right tool).
+        // the same blind spot. The ply guard above already proved this frame
+        // lands exactly one ply ahead, so a raw apply never runs on a gap.
         let lm = legalMoves(g).find((x) => moveToUCI(x) === e.move.u);
-        if (!lm && e.move.ply === g.board.history.length + 1) {
+        if (!lm) {
           const raw = moveFromUCI(g.board, e.move.u);
           if (raw) {
             console.warn(
@@ -551,6 +637,27 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         // Draft replicas discard the placeholder offer rolls playMove makes
         // locally; the server's dtOffer / dtState frames carry the real ones.
         const next = isDraft ? playReplicaMove(g, lm) : playMove(g, lm);
+        // Authoritative position/turn check: the server ships fnv1a(positionKey)
+        // of its post-move board (side to move included). Even at the right ply,
+        // a raw apply can land on a different position than the server (a hidden
+        // nerf side-effect the replica cannot reproduce), which would silently
+        // flip whose turn each client shows. Compare our post-move hash against
+        // the server's; on a mismatch, trust the server, beacon the drift, and
+        // resync rather than playing on from a diverged board. dtState frames
+        // never carry the board, so a position mismatch can only be repaired by
+        // a full resync.
+        if (e.move.f) {
+          const clientHash = fnv1a(positionKey(next.board));
+          if (clientHash !== e.move.f) {
+            setWhiteMs(e.move.wc);
+            setBlackMs(e.move.bc);
+            beaconTurnDesync(start.id, clientHash, e.move.f, activeRuleIds(next));
+            resyncFromServer(
+              `post-move position hash ${clientHash} != server ${e.move.f} at ply ${e.move.ply}`,
+            );
+            return;
+          }
+        }
         applyGame({ ...next });
         setConfirmMovePending(null);
         setWhiteMs(e.move.wc);
@@ -711,6 +818,16 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
             if (revealed) showOppUsedCard(revealed, `Opponent played a ${draftCardNoun(start.mode)}`);
           }
         }
+        // A signature card that resolves as a draft instant (rather than a
+        // later activation) fires here for whichever seat can see its id.
+        if (e.resolved.kind === "picked") {
+          for (const c of e.resolved.cards ?? []) {
+            if ("id" in c && SIGNATURES[c.id]) {
+              fireSignature(c.id);
+              break;
+            }
+          }
+        }
         applyGame({ ...g });
       } else if (e.type === "draft-used") {
         const g = gameRef.current;
@@ -727,6 +844,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           playNerf();
           if (e.used.card) showOppUsedCard(e.used.card, `Opponent used a ${draftCardNoun(start.mode)}`);
         }
+        // Signature spectacle for EITHER side's activation (the board update
+        // below batches with this so the Board claims exactly this diff).
+        if (e.used.card) fireSignature(e.used.card.id);
         applyGame({ ...g });
       } else if (e.type === "rematch-offer") {
         setRematchStatus(e.color === myColor ? "offered" : "incoming");
@@ -1805,6 +1925,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                                       kingSafeSquares: fxZone.kingSafeSquares,
                                       pawnClampSquares: fxZone.pawnClampSquares,
                                       stunSquares: fxZone.stunSquares,
+                                      motifSquares: fxZone.motifs,
                                     }
                                   : {}),
                               }
@@ -1828,6 +1949,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   highlightLastMove={uiSettings.highlightLastMove}
                   showLegalMoves={uiSettings.showLegalMoves}
                   checkSquare={isReviewingHistory ? null : checkSquare}
+                  signatureCard={isReviewingHistory ? null : signatureCard}
                   pickSquares={
                     buffTargeting.targeting?.target.kind === "square"
                       ? buffTargeting.targeting.target.squares
@@ -1943,7 +2065,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
 
       {/* Shared reveal moment: both sides of the draft round resolved, show
           the outcome briefly. Non-blocking, click to dismiss, auto-dismisses
-          after 2.5s. */}
+          after about four seconds. */}
       {isDraft && draftReveal && !game.result && (
         <DraftRevealBanner
           mine={draftReveal.mine}
@@ -2023,7 +2145,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
             >
               <span className="h-1.5 w-1.5 rounded-full bg-gold animate-flicker" aria-hidden />
               <span className="font-display text-xs text-parchment-200">
-                Opponent is still choosing, on their clock now.
+                {!myOffer && !draftSubmitted
+                  ? "Your draft was skipped. Opponent is choosing, on their clock now."
+                  : "Opponent is still choosing, on their clock now."}
               </span>
             </motion.div>
           </div>
@@ -2037,11 +2161,20 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               className="plate pointer-events-auto w-full max-w-xs border-gold/30 p-4 text-center"
             >
               <div className="smallcaps text-[10px] text-parchment-400">
-                {draftCardNoun(start.mode) === "hex" ? "Hex draft" : "Buff draft"}
+                {!myOffer && !draftSubmitted
+                  ? "Draft skipped"
+                  : draftCardNoun(start.mode) === "hex"
+                  ? "Hex draft"
+                  : "Buff draft"}
               </div>
               <h2 className="font-display text-xl text-parchment mt-0.5">
-                Waiting for opponent
+                {!myOffer && !draftSubmitted ? "Your draft was skipped" : "Waiting for opponent"}
               </h2>
+              {!myOffer && !draftSubmitted && (
+                <p className="mt-1 text-[11px] leading-snug text-parchment-300">
+                  A card your opponent played skipped your draft this round.
+                </p>
+              )}
               <div role="status" aria-live="polite" className="mt-2 flex items-center justify-center gap-2">
                 <span className="h-1.5 w-1.5 rounded-full bg-gold animate-flicker" aria-hidden />
                 <span className="font-display text-sm text-parchment-200">

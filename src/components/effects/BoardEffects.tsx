@@ -6,6 +6,21 @@
 // a static end state under prefers-reduced-motion; one-shot flourishes hide.
 
 import React from "react";
+import {
+  Castle,
+  Eye,
+  Layers,
+  type LucideIcon,
+  Package,
+  Shield,
+  Skull,
+  Swords,
+  Timer,
+  Unlink,
+  Wind,
+} from "lucide-react";
+import type { BuffCategory, CardFx } from "@/engine/buff";
+import type { PieceType } from "@/engine/types";
 import "./effects.css";
 
 // --- Small inline glyphs (replacements for emoji/dingbat markers) -----------
@@ -341,6 +356,153 @@ export function StunSwirl() {
   );
 }
 
+// --- 5b. Bonk impact + injured overlay ---------------------------------------
+// The reusable comedic-impact primitive (Coconut Bonk, Tung Tung Tung Sahur,
+// and the batch of funny cards to follow). A dropped object bonks a piece:
+// BonkImpact is the one-shot flash (drop, squash, star-burst, impact lines, a
+// light tile jolt); InjuredOverlay is the persistent "dazed" look worn while
+// the paired stun holds (dizzy stars circling the piece). BonkImpact must be
+// mounted with a key that changes per application (square + count) so a
+// re-render never replays it; InjuredOverlay simply mounts while the square
+// carries both a freeze and a recent bonk.
+
+/** A coconut: a fibrous brown husk with three germination pores. Sized to fill
+ * its wrapper (pass a sizing className). */
+export const CoconutGlyph = React.memo(function CoconutGlyph({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
+      <circle cx="12" cy="12" r="10.6" fill="#6f4a2f" stroke="#33210f" strokeWidth="1.1" />
+      {/* fibrous streaks */}
+      <g stroke="#4b3018" strokeWidth="0.7" fill="none" opacity="0.6" strokeLinecap="round">
+        <path d="M8 4.5 Q10 12 9 19.5" />
+        <path d="M12 3.6 Q13 12 12.4 20.4" />
+        <path d="M16 4.5 Q15 12 16 19.5" />
+      </g>
+      {/* top-left highlight */}
+      <path d="M5.6 9 A8.6 8.6 0 0 1 13.5 3.9" stroke="#a97c52" strokeWidth="1.5" fill="none" strokeLinecap="round" opacity="0.7" />
+      {/* three pores */}
+      <circle cx="9.5" cy="15" r="1" fill="#241609" />
+      <circle cx="14.5" cy="15" r="1" fill="#241609" />
+      <circle cx="12" cy="18" r="1" fill="#241609" />
+    </svg>
+  );
+});
+
+/** A small four-point spark star, the bonk burst and the dizzy injury mark. */
+function SparkStar() {
+  return (
+    <svg viewBox="0 0 10 10" className="h-full w-full">
+      <path d="M5 0 L6 4 L10 5 L6 6 L5 10 L4 6 L0 5 L4 4 Z" fill="#e6bf6a" stroke="#7a5b23" strokeWidth="0.5" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+// Impact sparks fly out from the landing point. Delay puts them a beat after
+// the coconut lands (~38% of the 0.72s drop), so the burst reads as the hit.
+const BONK_STARS = [
+  { dx: "175%", dy: "-155%", rot: "150deg", delay: 0 },
+  { dx: "-185%", dy: "-140%", rot: "-140deg", delay: 22 },
+  { dx: "205%", dy: "70%", rot: "180deg", delay: 10 },
+  { dx: "-195%", dy: "95%", rot: "-160deg", delay: 30 },
+  { dx: "25%", dy: "-225%", rot: "70deg", delay: 6 },
+];
+const BONK_IMPACT_DELAY = 270;
+
+/**
+ * One-shot bonk impact: a coconut drops from above onto the piece, squashes on
+ * landing and rebounds before fading, throwing a burst of spark stars and a
+ * "pow" of short impact lines while the tile takes a light jolt. Pure CSS
+ * (see effects.css); hidden entirely under reduced motion like the other
+ * transient flourishes, the persistent injured mark carries the readable state.
+ */
+export function BonkImpact() {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      {/* the tile takes the hit: a short jolt with a faint impact bloom */}
+      <span
+        className="fx-bonk-jolt absolute inset-0 block"
+        style={{ background: "radial-gradient(circle at 50% 60%, rgba(120,80,40,0.28), transparent 60%)" }}
+      />
+      {/* the dropped coconut, squashing on landing */}
+      <span className="fx-bonk-drop absolute left-[32%] top-[3%] block h-[44%] w-[36%]">
+        <CoconutGlyph className="h-full w-full" />
+      </span>
+      {/* "pow" impact lines radiating from the landing point */}
+      <span
+        className="fx-bonk-lines absolute left-[26%] top-[26%] block h-[48%] w-[48%]"
+        style={{ animationDelay: `${BONK_IMPACT_DELAY}ms` }}
+      >
+        <svg viewBox="0 0 40 40" className="h-full w-full">
+          <g stroke="#efdcae" strokeWidth="2.6" strokeLinecap="round" fill="none">
+            <path d="M20 20 L20 3.5" />
+            <path d="M20 20 L34 9" />
+            <path d="M20 20 L36.5 22" />
+            <path d="M20 20 L6 9" />
+            <path d="M20 20 L3.5 22" />
+          </g>
+        </svg>
+      </span>
+      {/* spark-star burst */}
+      {BONK_STARS.map((v, i) => (
+        <span
+          key={i}
+          className="fx-bonk-star absolute left-1/2 top-[48%] ml-[-5%] mt-[-5%] block h-[11%] w-[11%]"
+          style={
+            {
+              "--dx": v.dx,
+              "--dy": v.dy,
+              "--rot": v.rot,
+              animationDelay: `${BONK_IMPACT_DELAY + v.delay}ms`,
+            } as React.CSSProperties
+          }
+        >
+          <SparkStar />
+        </span>
+      ))}
+    </span>
+  );
+}
+
+// Three dizzy stars sitting in an arc over the piece's head, spun slowly by
+// the orbit group. Placed roughly symmetric around the group's box centre so
+// the spin reads as circling rather than lurching.
+const INJURED_STARS = [
+  { x: 22.5, y: 5.5, r: 2.6 },
+  { x: 16.8, y: 13.5, r: 2.1 },
+  { x: 28.2, y: 13.5, r: 2.1 },
+];
+
+/**
+ * Persistent injured overlay: worn while a piece is stunned FROM a bonk (a
+ * square carrying both a freeze and a recent bonk). Dizzy stars circle over
+ * the piece with a slight wobble; a companion `fx-injured-tilt` class (in
+ * effects.css) can be added to the piece itself for the drunken tilt. Under
+ * reduced motion the stars hold still as a static dazed mark. All CSS, no
+ * per-frame JS: cheap enough to sit on every affected square for the duration.
+ */
+export const InjuredOverlay = React.memo(function InjuredOverlay() {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-injured absolute inset-0 block">
+        <svg viewBox="0 0 45 45" className="h-full w-full">
+          <g className="fx-injured-orbit">
+            {INJURED_STARS.map((s, i) => (
+              <path
+                key={i}
+                d={`M${s.x} ${s.y - s.r} L${s.x + s.r * 0.32} ${s.y - s.r * 0.32} L${s.x + s.r} ${s.y} L${s.x + s.r * 0.32} ${s.y + s.r * 0.32} L${s.x} ${s.y + s.r} L${s.x - s.r * 0.32} ${s.y + s.r * 0.32} L${s.x - s.r} ${s.y} L${s.x - s.r * 0.32} ${s.y - s.r * 0.32} Z`}
+                fill="#e6bf6a"
+                stroke="#7a5b23"
+                strokeWidth="0.5"
+                strokeLinejoin="round"
+              />
+            ))}
+          </g>
+        </svg>
+      </span>
+    </span>
+  );
+});
+
 // --- 6. Transform flourish ---------------------------------------------------
 
 const SHARD_VECTORS = [
@@ -451,4 +613,707 @@ export function SummonPoof() {
       ))}
     </span>
   );
+}
+
+// --- 8. Detonation (attack-card removals) ------------------------------------
+
+const EMBER_FILL = "#d98a4a";
+const EMBER_EDGE = "#3a2013";
+const DET_VECTORS = [
+  { dx: "300%", dy: "-160%", rot: "150deg", delay: 0 },
+  { dx: "-280%", dy: "-220%", rot: "-140deg", delay: 20 },
+  { dx: "340%", dy: "120%", rot: "190deg", delay: 10 },
+  { dx: "-320%", dy: "180%", rot: "-170deg", delay: 30 },
+  { dx: "90%", dy: "-330%", rot: "80deg", delay: 5 },
+  { dx: "-120%", dy: "300%", rot: "-100deg", delay: 25 },
+  { dx: "220%", dy: "260%", rot: "120deg", delay: 15 },
+];
+
+/**
+ * A piece removed outright by an attack card (nothing landed on its square,
+ * it did not move away): an expanding blast ring, a burst of ember shards,
+ * and a scorch mark that lingers a beat before fading. Pure one-shot CSS;
+ * hidden entirely under reduced motion like the other transient flourishes.
+ */
+export function DetonationBurst() {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-scorch absolute inset-[12%] block">
+        <svg viewBox="0 0 40 40" className="h-full w-full">
+          <path
+            d="M20 6 C26 5 33 9 34 16 C36 22 32 30 25 33 C18 36 9 33 6.5 26 C4 19 7 11 13 8 C15 6.8 17.5 6.3 20 6 Z"
+            fill="rgba(16, 12, 8, 0.5)"
+          />
+          <path
+            d="M12 14 C15 12 24 11.4 28 15 C30.6 18 30 25 25.5 27.6 C20 30.4 13 28 11 22.6 C9.8 19.4 10.4 16 12 14 Z"
+            fill="rgba(10, 7, 4, 0.55)"
+          />
+        </svg>
+      </span>
+      <span
+        className="fx-det-ring absolute inset-[14%] block rounded-full"
+        style={{ border: "1px solid rgba(230, 168, 92, 0.95)" }}
+      />
+      {DET_VECTORS.map((v, i) => (
+        <span
+          key={i}
+          className="fx-shard absolute left-1/2 top-1/2 ml-[-5%] mt-[-5%] block h-[10%] w-[10%]"
+          style={
+            {
+              "--dx": v.dx,
+              "--dy": v.dy,
+              "--rot": v.rot,
+              animationDelay: `${v.delay}ms`,
+            } as React.CSSProperties
+          }
+        >
+          <svg viewBox="0 0 10 10" className="h-full w-full">
+            <polygon
+              points={i % 2 === 0 ? "5,0 10,8 0,8" : "0,2 10,0 6,10"}
+              fill={EMBER_FILL}
+              stroke={EMBER_EDGE}
+              strokeWidth="0.6"
+            />
+          </svg>
+        </span>
+      ))}
+    </span>
+  );
+}
+
+// --- 9. Card-fx motifs (CardFx: constraints and empowerments) ----------------
+// One badge per affected square, painted by Board.tsx from fxZones' motif
+// marks. Every badge is tinted by the CARD's tier color and stamped with the
+// card's category glyph, so two different cards sharing a motif still read
+// differently at a glance; the square's hover tooltip carries the exact card
+// name and remaining turns. Entrances are one-shot CSS (mount-only), then a
+// calm static pose; the transient rally banner ends fully transparent.
+
+const MOTIF_DARK = "#141e2b";
+
+/** Mirror of globals.css's .tier-N palette, for SVG strokes/fills. */
+const TIER_COLOR: Record<number, string> = {
+  1: "#7eb59a",
+  2: "#8ba9c4",
+  3: "#d8b56e",
+  4: "#c79468",
+  5: "#c66860",
+  6: "#c65f8f",
+  7: "#a877d8",
+  8: "#e05252",
+};
+
+// Same suit glyphs BuffCard stamps on card faces, shrunk to a micro-chip.
+const CATEGORY_ICON: Record<BuffCategory, LucideIcon> = {
+  movement: Wind,
+  pieces: Castle,
+  tempo: Timer,
+  protection: Shield,
+  attack: Swords,
+  info: Eye,
+  draft: Layers,
+  nerf: Unlink,
+  hex: Skull,
+  item: Package,
+};
+
+/** The card's suit as a micro-chip beside the motif (per-card distinctness:
+ * tier tint + suit + motif together identify the card at a glance). */
+function CategoryChip({
+  category,
+  color,
+  className,
+}: {
+  category: BuffCategory;
+  color: string;
+  className: string;
+}) {
+  const Icon = CATEGORY_ICON[category];
+  return (
+    <span
+      aria-hidden="true"
+      className={
+        "fx-motif-chip pointer-events-none absolute z-10 flex items-center justify-center rounded-[1px] border " +
+        className
+      }
+      style={{ background: "rgba(20,30,43,0.92)", borderColor: color, color }}
+    >
+      <Icon size="72%" strokeWidth={2.6} aria-hidden />
+    </span>
+  );
+}
+
+/** Two-pass stroke: a dark understroke for contrast on both square colors,
+ * then the tier-tinted line (currentColor) on top. */
+function DualStroke({ d, dark = 2.3, light = 1 }: { d: string; dark?: number; light?: number }) {
+  return (
+    <>
+      <path d={d} fill="none" stroke={MOTIF_DARK} strokeWidth={dark} strokeLinecap="round" strokeLinejoin="round" />
+      <path d={d} fill="none" stroke="currentColor" strokeWidth={light} strokeLinecap="round" strokeLinejoin="round" />
+    </>
+  );
+}
+
+/** jail: a short run of chain links, the corner-badge cousin of ChainJail. */
+function JailGlyph() {
+  const links = [
+    { x: 5.4, y: 5.6, a: 46, edge: false },
+    { x: 10, y: 10.2, a: 44, edge: true },
+    { x: 14.6, y: 14.8, a: 41, edge: false },
+  ];
+  return (
+    <>
+      {links.map((p, i) => (
+        <g key={i} transform={`rotate(${p.a} ${p.x} ${p.y})`}>
+          <ellipse cx={p.x} cy={p.y} rx={2.9} ry={p.edge ? 1.1 : 2} fill="none" stroke={MOTIF_DARK} strokeWidth={2.3} />
+          <ellipse cx={p.x} cy={p.y} rx={2.9} ry={p.edge ? 1.1 : 2} fill="none" stroke="currentColor" strokeWidth={1} />
+        </g>
+      ))}
+    </>
+  );
+}
+
+/** muzzle: a padlock clamped over the jaw, harness straps to both sides. */
+function MuzzleGlyph() {
+  return (
+    <>
+      <DualStroke d="M0.8 11.5 H4.4 M15.6 11.5 H19.2" dark={2.1} light={0.9} />
+      <DualStroke d="M6.8 8.8 V6.6 a3.2 3.2 0 0 1 6.4 0 V8.8" dark={2.4} light={1} />
+      <rect x="4.8" y="8.8" width="10.4" height="8" rx="0.5" fill={MOTIF_DARK} stroke="currentColor" strokeWidth="1" />
+      <circle cx="10" cy="12" r="1.15" fill="currentColor" />
+      <path d="M10 12.6 V14.7" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
+    </>
+  );
+}
+
+/** anchor: ring, shaft, crossbar, and curved flukes with barbs. */
+function AnchorGlyph() {
+  return (
+    <>
+      <circle cx="10" cy="3.6" r="1.7" fill="none" stroke={MOTIF_DARK} strokeWidth={2.2} />
+      <circle cx="10" cy="3.6" r="1.7" fill="none" stroke="currentColor" strokeWidth={0.9} />
+      <DualStroke d="M10 5.3 V15.8" />
+      <DualStroke d="M6.4 8.2 H13.6" dark={2.1} light={1} />
+      <DualStroke d="M3.6 11.6 C4.2 15.4 6.8 17.2 10 17.4 C13.2 17.2 15.8 15.4 16.4 11.6" />
+      <DualStroke d="M3.6 11.6 L5.7 12.9 M16.4 11.6 L14.3 12.9" dark={2} light={0.9} />
+    </>
+  );
+}
+
+/** slow: an hourglass mid-pour, the sand tinted by the card's tier. */
+function SlowGlyph() {
+  return (
+    <>
+      <polygon points="10,12.8 12.6,16.4 7.4,16.4" fill="currentColor" />
+      <path d="M10 10.4 V12.2" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
+      <DualStroke d="M5.4 3 H14.6 M5.4 17 H14.6" dark={2.4} light={1} />
+      <DualStroke d="M6.4 3.4 C6.4 7.4 9.4 8.4 9.4 10 C9.4 11.6 6.4 12.6 6.4 16.6" />
+      <DualStroke d="M13.6 3.4 C13.6 7.4 10.6 8.4 10.6 10 C10.6 11.6 13.6 12.6 13.6 16.6" />
+    </>
+  );
+}
+
+/** empower: the granted movement's silhouette on the regalia roundel. A
+ * rook that moves like a king wears the king mark, amazon-style upgrades a
+ * crown; no moveAs falls back to a four-point regalia star. */
+function RegaliaSilhouette({ type }: { type?: PieceType }) {
+  const outline = { stroke: MOTIF_DARK, strokeWidth: 0.9, strokeLinejoin: "round" as const };
+  switch (type) {
+    case "k":
+      return (
+        <>
+          <path d="M6.6 16.5 C5.2 12.4 7 9.2 10 9.2 C13 9.2 14.8 12.4 13.4 16.5 Z" fill="currentColor" {...outline} />
+          <DualStroke d="M10 3 V7.6 M8.2 4.9 H11.8" dark={2.2} light={1} />
+        </>
+      );
+    case "q":
+      return (
+        <path
+          d="M4.6 15.5 L5.5 7.6 L8.3 10.8 L10 5.4 L11.7 10.8 L14.5 7.6 L15.4 15.5 Z"
+          fill="currentColor"
+          {...outline}
+        />
+      );
+    case "r":
+      return (
+        <path
+          d="M5.4 16 V10 L4.7 9.2 V4.5 H7.2 V6.4 H8.9 V4.5 H11.1 V6.4 H12.8 V4.5 H15.3 V9.2 L14.6 10 V16 Z"
+          fill="currentColor"
+          {...outline}
+        />
+      );
+    case "b":
+      return (
+        <>
+          <path
+            d="M10 3.6 C12.8 5.8 14 8.4 14 10.8 C14 13.4 12.4 15.6 10 15.6 C7.6 15.6 6 13.4 6 10.8 C6 8.4 7.2 5.8 10 3.6 Z"
+            fill="currentColor"
+            {...outline}
+          />
+          <path d="M8.4 9.4 L11.4 6.2" stroke={MOTIF_DARK} strokeWidth="1.1" strokeLinecap="round" fill="none" />
+        </>
+      );
+    case "n":
+      return (
+        <>
+          <path
+            d="M5.8 16.4 C5.8 10.8 7.4 8.4 10.4 7 L9.9 3.8 L13.2 6.4 C15.6 8 16.2 11 15.7 16.4 Z"
+            fill="currentColor"
+            {...outline}
+          />
+          <circle cx="11.9" cy="7.6" r="0.7" fill={MOTIF_DARK} />
+        </>
+      );
+    case "p":
+      return (
+        <>
+          <circle cx="10" cy="7" r="2.7" fill="currentColor" {...outline} />
+          <path d="M6.6 16.4 C7.1 12.6 8.1 11 10 11 C11.9 11 12.9 12.6 13.4 16.4 Z" fill="currentColor" {...outline} />
+        </>
+      );
+    default:
+      return (
+        <path
+          d="M10 3.2 L11.8 8.2 L16.8 10 L11.8 11.8 L10 16.8 L8.2 11.8 L3.2 10 L8.2 8.2 Z"
+          fill="currentColor"
+          {...outline}
+        />
+      );
+  }
+}
+
+/**
+ * Card-fx motif for one square. Constraints (jail / muzzle / anchor / slow)
+ * are small badges in the square's top-right corner; blindfold is a band
+ * across the piece base; empower is a regalia roundel bestowed with a
+ * knighting rise; ward is a thin ring at the piece base; rally is a one-shot
+ * banner flourish over the rallied army's king. All persistent variants end
+ * in a calm static pose (reduced motion shows that state directly); rally is
+ * transient and hides under reduced motion, matching the stun precedent.
+ */
+export const MotifBadge = React.memo(function MotifBadge({
+  motif,
+  tier,
+  category,
+  moveAs,
+}: {
+  motif: CardFx["motif"];
+  tier: number;
+  category: BuffCategory;
+  moveAs?: PieceType;
+}) {
+  const color = TIER_COLOR[tier] ?? TIER_COLOR[3];
+  if (motif === "rally") {
+    return (
+      <span
+        aria-hidden="true"
+        className="fx-rally pointer-events-none absolute left-[24%] top-[-8%] z-20 h-[56%] w-[52%]"
+        style={{ color }}
+      >
+        <svg viewBox="0 0 20 24" className="h-full w-full">
+          <path d="M6 22 V3" stroke={MOTIF_DARK} strokeWidth="2.4" strokeLinecap="round" fill="none" />
+          <path d="M6 22 V3" stroke="currentColor" strokeWidth="1" strokeLinecap="round" fill="none" />
+          <path
+            d="M6 3.5 H17 L14.2 6.8 L17 10 H6 Z"
+            fill="currentColor"
+            stroke={MOTIF_DARK}
+            strokeWidth="1"
+            strokeLinejoin="round"
+          />
+        </svg>
+        <CategoryChip category={category} color={color} className="bottom-[6%] left-0 h-[26%] w-[24%]" />
+      </span>
+    );
+  }
+  if (motif === "blindfold") {
+    return (
+      <>
+        <span
+          aria-hidden="true"
+          className="fx-blindfold pointer-events-none absolute bottom-[22%] left-[8%] right-[8%] z-10 h-[15%]"
+          style={{ color }}
+        >
+          <svg viewBox="0 0 60 12" preserveAspectRatio="none" className="h-full w-full">
+            <rect x="1" y="2" width="58" height="8" rx="0.6" fill={MOTIF_DARK} stroke="currentColor" strokeWidth="1" />
+            <path
+              d="M5 6 H55"
+              stroke="currentColor"
+              strokeWidth="0.8"
+              strokeDasharray="3 2.6"
+              opacity="0.65"
+              fill="none"
+              vectorEffect="non-scaling-stroke"
+            />
+          </svg>
+        </span>
+        <CategoryChip category={category} color={color} className="bottom-[40%] right-[3%] h-[15%] w-[15%]" />
+      </>
+    );
+  }
+  if (motif === "ward") {
+    return (
+      <>
+        <span
+          aria-hidden="true"
+          className="fx-ward pointer-events-none absolute bottom-[3%] left-[10%] right-[10%] z-10 h-[16%]"
+          style={{ color }}
+        >
+          <svg viewBox="0 0 60 12" preserveAspectRatio="none" className="h-full w-full">
+            <ellipse cx="30" cy="6" rx="27.5" ry="4.4" fill="none" stroke={MOTIF_DARK} strokeWidth="2.2" vectorEffect="non-scaling-stroke" />
+            <ellipse cx="30" cy="6" rx="27.5" ry="4.4" fill="none" stroke="currentColor" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+          </svg>
+        </span>
+        <CategoryChip category={category} color={color} className="bottom-[22%] right-[3%] h-[15%] w-[15%]" />
+      </>
+    );
+  }
+  if (motif === "empower") {
+    return (
+      <>
+        <span
+          aria-hidden="true"
+          className="fx-bestow pointer-events-none absolute right-[2%] top-[2%] z-10 h-[32%] w-[32%]"
+          style={{ color }}
+        >
+          <svg viewBox="0 0 20 20" className="h-full w-full">
+            <circle cx="10" cy="10" r="8.8" fill="rgba(20,30,43,0.9)" stroke="currentColor" strokeWidth="1" />
+            <RegaliaSilhouette type={moveAs} />
+          </svg>
+        </span>
+        <CategoryChip category={category} color={color} className="right-[2%] top-[34%] h-[15%] w-[15%]" />
+      </>
+    );
+  }
+  return (
+    <>
+      <span
+        aria-hidden="true"
+        className="fx-motif pointer-events-none absolute right-[3%] top-[3%] z-10 h-[30%] w-[30%]"
+        style={{ color }}
+      >
+        <svg viewBox="0 0 20 20" className="h-full w-full opacity-90">
+          {motif === "jail" ? (
+            <JailGlyph />
+          ) : motif === "muzzle" ? (
+            <MuzzleGlyph />
+          ) : motif === "anchor" ? (
+            <AnchorGlyph />
+          ) : (
+            <SlowGlyph />
+          )}
+        </svg>
+      </span>
+      <CategoryChip category={category} color={color} className="right-[3%] top-[33%] h-[15%] w-[15%]" />
+    </>
+  );
+});
+
+// --- 10. Signature animations (marquee attack-card spectacles) ---------------
+// A signature is a choreographed, staggered sequence played over the enemy
+// squares an attack card just cleared. Board.tsx derives those squares from
+// its own prev/next diff (the same detonation pass), orders them per the
+// card's ordering rule, and mounts ONE SignatureOverlay per affected square
+// with an animation-delay = order * stagger, so the effect rolls across the
+// board instead of firing all at once. Every piece is transform/opacity-only
+// and one-shot: like the other transient flourishes they are hidden entirely
+// under reduced motion (the static end state is simply the cleared squares).
+// The registry is keyed by card id; Board looks the card up when a played-card
+// event surfaces its id, and both players see the identical sequence.
+
+export type SigVisual = "nova" | "trapdoor" | "stone" | "strike" | "atomic" | "pin" | "siege";
+export type SigOrdering = "file" | "sweep" | "octagon" | "line";
+export type SigSoundKey =
+  | "nova"
+  | "cataclysm"
+  | "extinction"
+  | "lightning"
+  | "atomic"
+  | "rampage"
+  | "siege";
+
+export interface SignatureConfig {
+  /** How Board sorts the cleared squares into the detonation sequence. */
+  ordering: SigOrdering;
+  /** Milliseconds between successive squares in the sequence. */
+  staggerMs: number;
+  /** Which removed piece types this signature owns (others fall back to the
+   * plain detonation burst); "all" claims every cleared square. */
+  victims: PieceType[] | "all";
+  /** Line-based signatures (rook / queen charge) anchor their order on the
+   * origin square of the piece of this type that moved this turn. */
+  mover?: PieceType;
+  /** Per-square visual. */
+  visual: SigVisual;
+  /** True when the signature paints a lead flourish (nova's pop, atomic's
+   * central thump, the siege muzzle) as well as the per-target hits. */
+  hasLead: boolean;
+  /** Voice key (mapped to a sounds.ts function by Board). */
+  sound: SigSoundKey;
+}
+
+/** The shipped Batch 1 signatures. Every one derives its target squares purely
+ * from the board diff AND is played through a surfaced play event (an activated
+ * card or a draft instant), so no engine hook is needed. Nova / Siege Rook /
+ * Queen's Rampage / Queen's Wrath / Lightning Strike are activated; Cataclysm
+ * and Extinction are draft instants (fired at pick time on both surfaces).
+ *
+ * DEFERRED (HOOK): atomic_captures / atomic_captures_small are passive
+ * on-capture augments (captureExplosion in the engine): their octagon of
+ * cleared squares IS derivable from the diff, but a plain capture move emits
+ * NO card-play event to key the signature to, so they need a capture-trigger
+ * hook and belong in a later batch. The "octagon" ordering, AtomicBurst
+ * visual, and playAtomic voice below are left in place, ready for that hook. */
+export const SIGNATURES: Record<string, SignatureConfig> = {
+  nova: { ordering: "file", staggerMs: 130, victims: "all", visual: "nova", hasLead: true, sound: "nova" },
+  cataclysm: { ordering: "sweep", staggerMs: 55, victims: ["p"], visual: "trapdoor", hasLead: false, sound: "cataclysm" },
+  extinction: { ordering: "sweep", staggerMs: 65, victims: ["p", "n", "b"], visual: "stone", hasLead: false, sound: "extinction" },
+  lightning_strike: { ordering: "sweep", staggerMs: 165, victims: "all", visual: "strike", hasLead: false, sound: "lightning" },
+  queens_rampage: { ordering: "line", staggerMs: 105, victims: "all", mover: "q", visual: "pin", hasLead: false, sound: "rampage" },
+  queens_wrath: { ordering: "line", staggerMs: 110, victims: "all", mover: "q", visual: "pin", hasLead: false, sound: "rampage" },
+  siege_rook: { ordering: "line", staggerMs: 85, victims: "all", mover: "r", visual: "siege", hasLead: true, sound: "siege" },
+};
+
+/** A jagged lightning bolt that fills its wrapper (BoltGlyph is fixed-size). */
+function JagBolt() {
+  return (
+    <svg viewBox="0 0 24 40" className="h-full w-full" aria-hidden="true">
+      <polygon
+        points="14,0 5,20 11,20 8,40 20,16 13,16"
+        fill="#fff6c8"
+        stroke="#e6b800"
+        strokeWidth="1.2"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+const STONE_SHARDS = [
+  { left: "30%", top: "26%", w: "16%", c: "#9a9a9f", d: 0 },
+  { left: "54%", top: "30%", w: "13%", c: "#7f7f85", d: 40 },
+  { left: "38%", top: "46%", w: "18%", c: "#8c8c92", d: 70 },
+  { left: "26%", top: "40%", w: "11%", c: "#71717a", d: 30 },
+];
+
+const PIN_STARS = [
+  { dx: "210%", dy: "-150%", rot: "160deg", delay: 0 },
+  { dx: "-200%", dy: "-120%", rot: "-150deg", delay: 18 },
+  { dx: "180%", dy: "120%", rot: "190deg", delay: 10 },
+];
+
+function NovaBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      {lead && (
+        <span
+          className="fx-sig-shock absolute inset-[4%] block rounded-full"
+          style={{ border: "2px solid rgba(255,255,255,0.95)", animationDelay: `${delayMs}ms` }}
+        />
+      )}
+      <span
+        className="fx-sig-flash absolute inset-[24%] block rounded-full"
+        style={{
+          background:
+            "radial-gradient(circle, rgba(255,255,255,0.95), rgba(220,235,255,0.4) 60%, transparent 72%)",
+          animationDelay: `${delayMs}ms`,
+        }}
+      />
+      <span
+        className="fx-sig-ring absolute inset-[16%] block rounded-full"
+        style={{ border: "1px solid rgba(233,244,255,0.95)", animationDelay: `${delayMs}ms` }}
+      />
+      <span
+        className="fx-sig-ash absolute inset-[28%] block rounded-full"
+        style={{
+          background: "radial-gradient(circle, rgba(120,120,130,0.6), transparent 70%)",
+          animationDelay: `${delayMs + 90}ms`,
+        }}
+      />
+    </span>
+  );
+}
+
+function TrapdoorBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span
+        className="fx-sig-hole absolute inset-[26%] block rounded-[1px]"
+        style={{ background: "rgba(10,8,6,0.85)", animationDelay: `${delayMs}ms` }}
+      />
+      <span
+        className="fx-sig-flap-l absolute left-[20%] top-[24%] block h-[52%] w-[30%] rounded-[1px]"
+        style={{ background: "#5a3d22", border: "1px solid #2a1a0d", transformOrigin: "left center", animationDelay: `${delayMs}ms` }}
+      />
+      <span
+        className="fx-sig-flap-r absolute right-[20%] top-[24%] block h-[52%] w-[30%] rounded-[1px]"
+        style={{ background: "#5a3d22", border: "1px solid #2a1a0d", transformOrigin: "right center", animationDelay: `${delayMs}ms` }}
+      />
+      <span
+        className="fx-sig-ash absolute inset-[22%] block rounded-full"
+        style={{
+          background: "radial-gradient(circle, rgba(196,178,142,0.7), transparent 70%)",
+          animationDelay: `${delayMs + 70}ms`,
+        }}
+      />
+    </span>
+  );
+}
+
+function StoneBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span
+        className="fx-sig-flash absolute inset-[18%] block rounded-full"
+        style={{
+          background: "radial-gradient(circle, rgba(150,150,155,0.85), transparent 72%)",
+          animationDelay: `${delayMs}ms`,
+        }}
+      />
+      {STONE_SHARDS.map((s, i) => (
+        <span
+          key={i}
+          className="fx-sig-crumble absolute block rounded-[1px]"
+          style={{ left: s.left, top: s.top, width: s.w, height: s.w, background: s.c, animationDelay: `${delayMs + s.d}ms` }}
+        />
+      ))}
+      <span
+        className="fx-sig-ash absolute inset-x-[26%] bottom-[18%] block h-[16%] rounded-full"
+        style={{
+          background: "radial-gradient(circle, rgba(120,116,110,0.6), transparent 70%)",
+          animationDelay: `${delayMs + 130}ms`,
+        }}
+      />
+    </span>
+  );
+}
+
+function StrikeBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span
+        className="fx-sig-reticle absolute inset-[16%] block rounded-full"
+        style={{ border: "1.5px solid rgba(210,225,255,0.9)", animationDelay: `${delayMs}ms` }}
+      />
+      <span className="fx-sig-bolt absolute left-1/2 top-[1%] ml-[-16%] block h-[66%] w-[32%]" style={{ animationDelay: `${delayMs + 175}ms` }}>
+        <JagBolt />
+      </span>
+      <span
+        className="fx-sig-scorch absolute inset-[28%] block rounded-full"
+        style={{
+          background: "radial-gradient(circle, rgba(24,18,12,0.75), transparent 72%)",
+          animationDelay: `${delayMs + 200}ms`,
+        }}
+      />
+    </span>
+  );
+}
+
+function AtomicBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span
+        className="fx-sig-soot absolute block rounded-full"
+        style={{
+          inset: lead ? "6%" : "22%",
+          border: lead ? "3px solid rgba(30,24,20,0.7)" : "2px solid rgba(30,24,20,0.6)",
+          animationDelay: `${delayMs}ms`,
+        }}
+      />
+      <span
+        className="fx-sig-flash absolute inset-[26%] block rounded-full"
+        style={{
+          background: lead
+            ? "radial-gradient(circle, rgba(255,255,255,0.95), rgba(255,180,90,0.5) 55%, transparent 72%)"
+            : "radial-gradient(circle, rgba(255,210,140,0.9), transparent 70%)",
+          animationDelay: `${delayMs}ms`,
+        }}
+      />
+    </span>
+  );
+}
+
+function PinBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span
+        className="fx-sig-spin absolute inset-[28%] block rounded-full"
+        style={{
+          background: "radial-gradient(circle, rgba(230,191,106,0.5), transparent 70%)",
+          animationDelay: `${delayMs}ms`,
+        }}
+      />
+      {PIN_STARS.map((v, i) => (
+        <span
+          key={i}
+          className="fx-sig-star absolute left-1/2 top-1/2 ml-[-6%] mt-[-6%] block h-[12%] w-[12%]"
+          style={{ "--dx": v.dx, "--dy": v.dy, "--rot": v.rot, animationDelay: `${delayMs + v.delay}ms` } as React.CSSProperties}
+        >
+          <SparkStar />
+        </span>
+      ))}
+    </span>
+  );
+}
+
+function SiegeBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    // Muzzle flash at the cannon's mouth (the rook's origin square).
+    return (
+      <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+        <span
+          className="fx-sig-muzzle absolute left-[10%] top-[38%] block h-[24%] w-[80%] rounded-full"
+          style={{
+            background: "linear-gradient(90deg, rgba(255,244,200,0.95), rgba(255,170,70,0.5) 60%, transparent)",
+            animationDelay: `${delayMs}ms`,
+          }}
+        />
+      </span>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span
+        className="fx-sig-splat absolute inset-x-[12%] top-[36%] block h-[28%] rounded-full"
+        style={{ background: "radial-gradient(circle, rgba(150,146,140,0.85), transparent 72%)", animationDelay: `${delayMs}ms` }}
+      />
+      <span
+        className="fx-sig-ash absolute inset-[26%] block rounded-full"
+        style={{ background: "radial-gradient(circle, rgba(120,116,110,0.55), transparent 70%)", animationDelay: `${delayMs + 60}ms` }}
+      />
+    </span>
+  );
+}
+
+/** One square's slice of a signature sequence. `role` is "lead" for the single
+ * origin flourish (nova's pop, atomic's central thump, the siege muzzle) and
+ * "target" for every cleared enemy square; `delayMs` is the pre-computed
+ * stagger so the sequence rolls across the board. */
+export function SignatureOverlay({
+  visual,
+  role,
+  delayMs,
+}: {
+  visual: SigVisual;
+  role: "lead" | "target";
+  delayMs: number;
+}) {
+  const lead = role === "lead";
+  switch (visual) {
+    case "nova":
+      return <NovaBurst lead={lead} delayMs={delayMs} />;
+    case "trapdoor":
+      return <TrapdoorBurst delayMs={delayMs} />;
+    case "stone":
+      return <StoneBurst delayMs={delayMs} />;
+    case "strike":
+      return <StrikeBurst delayMs={delayMs} />;
+    case "atomic":
+      return <AtomicBurst lead={lead} delayMs={delayMs} />;
+    case "pin":
+      return <PinBurst delayMs={delayMs} />;
+    case "siege":
+      return <SiegeBurst lead={lead} delayMs={delayMs} />;
+    default:
+      return null;
+  }
 }

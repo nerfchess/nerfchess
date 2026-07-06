@@ -92,14 +92,14 @@ export default function HomePage() {
             >
               Nerf
             </Link>{" "}
-            mode you carry a secret handicap. In{" "}
+            mode you start nerfed, then draft to cook your opponent even harder. In{" "}
             <Link
               href="/lobby?mode=buff"
               className="font-semibold text-mode-buffGlow underline decoration-mode-buff/50 underline-offset-4 transition-colors hover:decoration-mode-buffGlow"
             >
               Buff
             </Link>{" "}
-            mode you draft power-ups. Capture the king to win.
+            mode you draft buffs and cook them. Capture the king to win.
           </p>
 
           <ReturnToGameBanner />

@@ -79,6 +79,12 @@ export type ActiveEffect =
   /** Purely visual: squares hit by Lightning Strike flash on the board until
    * the opponent replies. No gameplay effect. */
   | { kind: "strike"; squares: Square[]; owner: Color; turns: number }
+  /** Purely visual, the comedic twin of `strike`: squares a bonk card just
+   * conked (Coconut Bonk, Tung Tung Tung Sahur) show a dropped coconut/log
+   * impact until the opponent replies. No gameplay effect of its own; the
+   * actual stun is a paired `freeze` on the same square. Kept a separate kind
+   * from `strike` so a dropped coconut never renders as a lightning bolt. */
+  | { kind: "bonk"; squares: Square[]; owner: Color; turns: number }
   /** Hexed into a walnut (Walnut Queen and friends): mechanically a freeze
    * (the piece cannot move at all) with its own board marker so the flavor
    * lands. Kings are never turned into walnuts. */
@@ -94,6 +100,7 @@ export function effectTickColor(e: ActiveEffect): Color {
     case "shield":
     case "king_safe":
     case "strike":
+    case "bonk":
       return e.owner === "w" ? "b" : "w";
     case "barred":
     case "no_pawn_advance":
@@ -185,6 +192,22 @@ export interface BuffMatchState {
    * replay-based checks (threefold repetition) must be skipped.
    */
   historyDiverged?: boolean;
+  /**
+   * Transient bookkeeping (never persisted, never sent to clients: the match
+   * store keeps only moves + actions, and draftStateFor picks its fields by
+   * hand). Bumped by every direct board mutation made through the BuffApi, so
+   * apply paths can tell whether a hook observably changed the board.
+   */
+  mutations?: number;
+  /**
+   * Transient: the held buffs whose onMovePlayed hook observably fired
+   * (mutated the board or added an effect) during the most recent playMove,
+   * as (owner color, index into that player's buff list). The game server
+   * reveals those cards to every replica: a replica that does not know a
+   * card's identity cannot replay its hook, and a board mutation it skips is
+   * a permanent desync (dtState never carries the board).
+   */
+  lastHookMutations?: { color: Color; index: number }[];
 }
 
 export function newPlayerBuffState(cadence: number): PlayerBuffState {
