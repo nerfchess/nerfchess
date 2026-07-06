@@ -842,6 +842,23 @@ html[data-piece-source="lichess"] .piece-asset {
 }
 .sq-freeze-flake { animation: freeze-flake-in 0.45s ease-out; }
 
+/* Walnut hex: an amber wash fades in, and a squirrel scurries down once to
+   bury the piece under a walnut. One-shot on mount, purely decorative. */
+@keyframes walnut-wash-in {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+.sq-walnut { animation: walnut-wash-in 0.4s ease-out both; }
+@keyframes walnut-squirrel-drop {
+  0% { transform: translate(-50%, -150%) scale(0.55) rotate(-8deg); opacity: 0; }
+  22% { transform: translate(-50%, -8%) scale(1) rotate(0deg); opacity: 1; }
+  30% { transform: translate(-50%, 2%) scale(1.05) rotate(0deg); }
+  38% { transform: translate(-50%, -8%) scale(1) rotate(0deg); }
+  60% { transform: translate(-50%, -8%) scale(1) rotate(6deg); opacity: 1; }
+  100% { transform: translate(-50%, -170%) scale(0.6) rotate(10deg); opacity: 0; }
+}
+.walnut-squirrel { animation: walnut-squirrel-drop 1.7s ease-in-out both; }
+
 /* Shackled (king-only / no-pawn-advance hex): a single grey clamp-down pulse
    when the lock lands, then a calm persistent pall. Runs once on mount. */
 @keyframes locked-in {
@@ -962,9 +979,11 @@ nav, header { position: relative; z-index: 30; }
   .draft-in,
   .hero-aura, .mode-field::before,
   .stagger-in > *,
-  .sq-strike, .sq-freeze, .sq-freeze-flake, .sq-shield-in, .walnut-piece, .banana-peel {
+  .sq-strike, .sq-freeze, .sq-freeze-flake, .sq-shield-in, .walnut-piece, .banana-peel,
+  .sq-walnut {
     animation: none !important;
   }
+  .walnut-squirrel { animation: none !important; opacity: 0 !important; }
   .dc-orbit-ring.spin, .dc-orbit-ring.spin-r,
   .dc-orbit-counter.spin, .dc-orbit-counter.spin-r {
     animation: none !important;
