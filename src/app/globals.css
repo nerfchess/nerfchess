@@ -890,6 +890,26 @@ html[data-piece-source="lichess"] .piece-asset {
   94% { transform: rotate(-1.5deg); }
 }
 
+/* A tossed banana peel (see BananaPeel): it lands with a little bounce, then
+   sits doing a jaunty periodic shimmy, telegraphing the slip hazard. */
+.banana-peel {
+  transform-origin: 50% 78%;
+  animation:
+    banana-appear 0.42s var(--ease-spring, cubic-bezier(0.5, 1.6, 0.4, 1)) both,
+    banana-wobble 2.8s ease-in-out 0.5s infinite;
+}
+@keyframes banana-appear {
+  0% { opacity: 0; transform: scale(0.3) rotate(-40deg); }
+  60% { opacity: 1; transform: scale(1.15) rotate(8deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+@keyframes banana-wobble {
+  0%, 70%, 100% { transform: rotate(0deg); }
+  78% { transform: rotate(-11deg); }
+  86% { transform: rotate(8deg); }
+  93% { transform: rotate(-4deg); }
+}
+
 .no-tap-highlight { -webkit-tap-highlight-color: transparent; }
 
 /* --- Skeleton placeholders (first-load shimmer) ---
@@ -942,7 +962,7 @@ nav, header { position: relative; z-index: 30; }
   .draft-in,
   .hero-aura, .mode-field::before,
   .stagger-in > *,
-  .sq-strike, .sq-freeze, .sq-freeze-flake, .sq-shield-in, .walnut-piece {
+  .sq-strike, .sq-freeze, .sq-freeze-flake, .sq-shield-in, .walnut-piece, .banana-peel {
     animation: none !important;
   }
   .dc-orbit-ring.spin, .dc-orbit-ring.spin-r,

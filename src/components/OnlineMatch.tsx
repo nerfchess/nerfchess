@@ -1720,6 +1720,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                                 wardSquares: zone.ward,
                                 strikeSquares: zone.strike,
                                 walnutSquares: zone.walnut,
+                                bananaSquares: zone.banana,
                               }
                             : {}),
                         }
