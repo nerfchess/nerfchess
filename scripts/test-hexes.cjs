@@ -129,6 +129,85 @@ for (const h of hexes) {
   }
 }
 
+// --- Count-based targeting must never soft-lock -----------------------------
+// A card that asks for N targets ("teleport N", "N pieces become amazons",
+// "remove N enemy pawns"...) must still resolve when fewer than N eligible
+// targets exist: buffNextTarget ends collection once candidates run out. Drive
+// every activated card on deliberately sparse boards and assert it never
+// strands the player on a step they can neither satisfy nor skip, and always
+// terminates. Two boards cover both failure axes: "few of a given type" (one of
+// each type per side, so any type-count >= 2 runs short) and "few pieces total"
+// (two non-kings per side, so any-piece counts like Titan Legion's three run
+// short with the user's exact "three pieces but I have two" case).
+function put(g, sq, type, color) {
+  g.board.pieces[sq] = { type, color };
+}
+function boardOneOfEach(g) {
+  for (let sq = 0; sq < 64; sq++) g.board.pieces[sq] = null;
+  put(g, 4, "k", "w"); put(g, 60, "k", "b");
+  put(g, 1, "n", "w"); put(g, 2, "b", "w"); put(g, 0, "r", "w"); put(g, 3, "q", "w"); put(g, 8, "p", "w");
+  put(g, 57, "n", "b"); put(g, 58, "b", "b"); put(g, 56, "r", "b"); put(g, 59, "q", "b"); put(g, 48, "p", "b");
+}
+function boardTwoTotal(g) {
+  for (let sq = 0; sq < 64; sq++) g.board.pieces[sq] = null;
+  put(g, 4, "k", "w"); put(g, 60, "k", "b");
+  put(g, 1, "n", "w"); put(g, 8, "p", "w");
+  put(g, 57, "n", "b"); put(g, 48, "p", "b");
+}
+const COUNT_BOARDS = [boardOneOfEach, boardTwoTotal];
+let countChecked = 0;
+for (const def of IMPLEMENTED_BUFFS) {
+  if (def.kind !== "activated" || !def.targets) continue;
+  countChecked++;
+  for (const setBoard of COUNT_BOARDS) {
+    let g = newGameAsColor(UNRESTRICTED_NERF, "w", 7);
+    enableDraftMode(g, 7, { mode: "buff" });
+    setBoard(g);
+    acquireBuff(g, "w", def.id, def.tier);
+    const idx = g.buffs.players.w.buffs.length - 1;
+    const picks = [];
+    let ok = true;
+    for (let step = 0; step <= 40; step++) {
+      if (step === 40) {
+        errors.push(`card "${def.id}" targeting did not terminate within 40 steps`);
+        ok = false;
+        break;
+      }
+      let t;
+      try {
+        t = buffNextTarget(g, "w", idx, picks);
+      } catch (e) {
+        errors.push(`card "${def.id}" threw in targeting: ${e && e.message ? e.message : e}`);
+        ok = false;
+        break;
+      }
+      if (!t) break; // collection finished cleanly
+      if (t.kind === "square") {
+        if (t.squares.length === 0) {
+          // Stoppable (finishable) or genuinely unusable from the start is fine;
+          // an empty step after >= 1 pick with no way to finish is the soft-lock.
+          if (t.finishable || picks.length === 0) break;
+          errors.push(`card "${def.id}" soft-locked: empty non-finishable step after ${picks.length} pick(s)`);
+          ok = false;
+          break;
+        }
+        picks.push({ square: t.squares[0] });
+      } else if (t.kind === "enemy-buff") {
+        if (t.options.length === 0) break;
+        picks.push({ buffIndex: t.options[0].index });
+      } else break;
+    }
+    if (ok) {
+      try {
+        activateBuff(g, "w", idx, picks);
+      } catch (e) {
+        errors.push(`card "${def.id}" threw on activate with ${picks.length} pick(s): ${e && e.message ? e.message : e}`);
+      }
+    }
+  }
+}
+console.log(`count-target termination: checked ${countChecked} activated cards on ${COUNT_BOARDS.length} sparse boards`);
+
 console.log(`buffs total: ${ALL_BUFFS.length}, implemented: ${IMPLEMENTED_BUFFS.length}`);
 console.log(`hexes: ${hexes.length} -> by tier ${JSON.stringify(byTier)}`);
 
