@@ -353,7 +353,7 @@ type HouseSeekEntry = {
 // (deserializing every finished game's move history), which on a bloated table
 // blew the DO CPU limit before it could cache or GC anything: the crash loop.
 const liveIdsKey = "live:ids";
-const buildVersion = "house-toggle-1";
+const buildVersion = "nerf-draft-grace-1";
 // Lichess-style start-of-game grace: a player's clock only starts charging 10
 // seconds into their first move, so nobody loses time to a slow page load.
 const firstMoveGraceMs = 10 * 1000;
@@ -362,6 +362,12 @@ const firstMoveGraceMs = 10 * 1000;
 // The server auto-resolves overdue picks so a stalling player cannot freeze
 // the game.
 const draftLockInMs = 15 * 1000;
+// Grace after a lock-in deadline before the server force-resolves it. A pick
+// the player clicked right at the deadline arrives a network hop later; without
+// this the auto-resolve fires first (defaulting the opening nerf pick to option
+// 0) and the real pick is then rejected as "no nerf draft". Clocks are paused
+// during the nerf draft, so this grace costs neither player any time.
+const draftPickGraceMs = 2 * 1000;
 
 function randomInt(max: number): number {
   const values = new Uint32Array(1);
@@ -3441,7 +3447,7 @@ export class GameServer extends DurableObject<Env> {
   private async enforceDraftDeadlines(match: StoredMatch, now: number): Promise<boolean> {
     if (!match.draft || match.result) return false;
     if (match.nerfOptions && !match.startedAt) {
-      if (!match.nerfDeadline || now < match.nerfDeadline) return false;
+      if (!match.nerfDeadline || now < match.nerfDeadline + draftPickGraceMs) return false;
       match.nerfPicks = { ...(match.nerfPicks ?? {}) };
       for (const color of ["w", "b"] as Color[]) {
         if (match.nerfPicks[color] == null) match.nerfPicks[color] = 0;
@@ -3836,7 +3842,7 @@ export class GameServer extends DurableObject<Env> {
     }
     // Draft lock-in deadlines: overdue picks auto-resolve from the alarm.
     if (!match.result) {
-      if (match.nerfDeadline && match.nerfOptions && !match.startedAt) candidates.push(match.nerfDeadline);
+      if (match.nerfDeadline && match.nerfOptions && !match.startedAt) candidates.push(match.nerfDeadline + draftPickGraceMs);
       if (match.dtDeadline && match.startedAt) candidates.push(match.dtDeadline);
       // Pending house action (move or draft pick). An overdue timer clamps to
       // just past now so a missed alarm re-fires immediately instead of never —
