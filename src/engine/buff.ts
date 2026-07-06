@@ -79,6 +79,12 @@ export type ActiveEffect =
   /** Purely visual: squares hit by Lightning Strike flash on the board until
    * the opponent replies. No gameplay effect. */
   | { kind: "strike"; squares: Square[]; owner: Color; turns: number }
+  /** Purely visual, the comedic twin of `strike`: squares a bonk card just
+   * conked (Coconut Bonk, Tung Tung Tung Sahur) show a dropped coconut/log
+   * impact until the opponent replies. No gameplay effect of its own; the
+   * actual stun is a paired `freeze` on the same square. Kept a separate kind
+   * from `strike` so a dropped coconut never renders as a lightning bolt. */
+  | { kind: "bonk"; squares: Square[]; owner: Color; turns: number }
   /** Hexed into a walnut (Walnut Queen and friends): mechanically a freeze
    * (the piece cannot move at all) with its own board marker so the flavor
    * lands. Kings are never turned into walnuts. */
@@ -94,6 +100,7 @@ export function effectTickColor(e: ActiveEffect): Color {
     case "shield":
     case "king_safe":
     case "strike":
+    case "bonk":
       return e.owner === "w" ? "b" : "w";
     case "barred":
     case "no_pawn_advance":

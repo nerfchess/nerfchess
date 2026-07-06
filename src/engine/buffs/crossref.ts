@@ -366,7 +366,10 @@ export const CROSSREF_CARDS: Buff[] = [
         const p = api.board.pieces[sq];
         if (!p || p.color !== api.opp || p.type === "k") return;
         addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2 });
-        addEffect(api, { kind: "strike", squares: [sq], owner: api.me, turns: 1 });
+        // Impact flash: the log's bonk, NOT Lightning Strike. A `bonk` effect
+        // on the same square the freeze lands on, so the injured overlay can
+        // pair the two (freeze + recent bonk = a stunned, dazed piece).
+        addEffect(api, { kind: "bonk", squares: [sq], owner: api.me, turns: 1 });
       },
     ),
   ),
@@ -399,7 +402,10 @@ export const CROSSREF_CARDS: Buff[] = [
         const p = api.board.pieces[sq];
         if (!p || p.color !== api.opp || p.type === "k") return;
         addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 1 });
-        addEffect(api, { kind: "strike", squares: [sq], owner: api.me, turns: 1 });
+        // Impact flash: the dropped coconut's bonk, NOT Lightning Strike. A
+        // `bonk` effect on the same square the freeze lands on, so the injured
+        // overlay can pair the two (freeze + recent bonk = a dazed piece).
+        addEffect(api, { kind: "bonk", squares: [sq], owner: api.me, turns: 1 });
       },
     ),
   ),

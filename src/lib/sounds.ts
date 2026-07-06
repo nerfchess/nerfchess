@@ -493,3 +493,13 @@ export function playStun() {
   tone({ freq: 440, dur: 0.12, type: "triangle", gain: 0.1, sweep: 392, release: 0.1 });
   tone({ freq: 392, dur: 0.18, type: "triangle", gain: 0.09, sweep: 330, release: 0.14, delay: 0.14 });
 }
+
+/** Bonk: a dropped coconut or Sahur's log conks a piece. A hard, hollow wooden
+ * thonk (low-Q knock with a body thump) with a short comedic descending
+ * "boing" sliding down beneath it, so the impact reads funny rather than
+ * violent. One shot, well under half a second like the other effect voices. */
+export function playBonk() {
+  if (!fx()) return;
+  knock({ filterFreq: 620, filterQ: 4.5, dur: 0.07, gain: 0.5, bodyFreq: 190, bodyGain: 0.42, bodyDur: 0.1 });
+  tone({ freq: 540, dur: 0.24, type: "triangle", gain: 0.1, sweep: 170, release: 0.12, delay: 0.02 });
+}

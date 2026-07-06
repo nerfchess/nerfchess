@@ -118,6 +118,83 @@
   transform-origin: center;
 }
 
+/* --- 5b. Bonk impact + injured overlay -------------------------------------
+   The reusable comedic-impact primitive. BonkImpact is one-shot: a coconut
+   drops from above, squashes on landing and rebounds before fading, while a
+   burst of spark stars and a "pow" of impact lines fire a beat later (inline
+   animation-delay) and the tile takes a light jolt. InjuredOverlay is
+   persistent: dizzy stars circle the piece with a slow wobble for as long as
+   the paired stun holds, plus an optional drunken tilt on the piece itself.
+   All transform/opacity only. Under reduced motion the one-shot flourish
+   vanishes (like stun/detonation) and the injured stars freeze into a static
+   dazed mark so the state still reads. */
+@keyframes fx-bonk-drop {
+  0% { opacity: 0; transform: translateY(-140%) scale(0.92); }
+  38% { opacity: 1; transform: translateY(0) scale(1); }
+  50% { transform: translateY(0) scaleX(1.34) scaleY(0.64); }
+  64% { transform: translateY(-16%) scaleX(0.92) scaleY(1.12); }
+  78% { transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-6%) scale(0.98); }
+}
+.fx-bonk-drop {
+  animation: fx-bonk-drop 0.72s var(--ease-out, cubic-bezier(0.2, 0.8, 0.2, 1)) both;
+  transform-origin: 50% 100%;
+}
+@keyframes fx-bonk-jolt {
+  0%, 34% { opacity: 0; transform: translate(0, 0) rotate(0deg); }
+  38% { opacity: 1; transform: translate(-3%, 1%) rotate(-1.2deg); }
+  46% { transform: translate(3%, -1%) rotate(1.2deg); }
+  54% { transform: translate(-2%, 1%) rotate(-0.7deg); }
+  62% { transform: translate(1%, 0) rotate(0.3deg); }
+  70% { opacity: 0.55; transform: none; }
+  100% { opacity: 0; transform: none; }
+}
+.fx-bonk-jolt {
+  animation: fx-bonk-jolt 0.72s ease-out both;
+}
+@keyframes fx-bonk-star {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.3) rotate(0deg); }
+  22% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--dx, 0), var(--dy, 0)) scale(1) rotate(var(--rot, 0deg)); }
+}
+.fx-bonk-star {
+  animation: fx-bonk-star 0.5s var(--ease-out, ease-out) both;
+}
+@keyframes fx-bonk-lines {
+  0% { opacity: 0; transform: scale(0.35); }
+  30% { opacity: 0.95; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.3); }
+}
+.fx-bonk-lines {
+  animation: fx-bonk-lines 0.4s ease-out both;
+}
+/* Injured: dizzy stars circle the piece head with a gentle wobble. */
+@keyframes fx-injured-spin {
+  100% { transform: rotate(360deg); }
+}
+.fx-injured-orbit {
+  animation: fx-injured-spin 2.4s linear infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+@keyframes fx-injured-bob {
+  0%, 100% { transform: translateY(0) rotate(-2.5deg); }
+  50% { transform: translateY(-3%) rotate(2.5deg); }
+}
+.fx-injured {
+  animation: fx-injured-bob 1.6s ease-in-out infinite;
+}
+/* Optional drunken tilt for the injured piece itself (mounted by the board on
+   the piece wrapper); a slow lean side to side. */
+@keyframes fx-injured-tilt {
+  0%, 100% { transform: rotate(-4deg); }
+  50% { transform: rotate(4deg); }
+}
+.fx-injured-tilt {
+  animation: fx-injured-tilt 1.4s ease-in-out infinite;
+  transform-origin: 50% 90%;
+}
+
 /* --- 6. Transform flourish (setPieceType / promotion) -----------------------
    The old piece bursts into shards that scatter outward while the new piece
    pops in; queen-class arrivals add a crown flash with a restrained radial
@@ -292,7 +369,12 @@
   .fx-ward,
   .fx-motif-chip,
   .fx-piece-pop,
-  .fx-piece-drop {
+  .fx-piece-drop,
+  /* Injured: hold the dizzy stars still as a static dazed mark; drop the
+     circling wobble and the piece tilt. */
+  .fx-injured,
+  .fx-injured-orbit,
+  .fx-injured-tilt {
     animation: none !important;
   }
   .fx-stun,
@@ -305,7 +387,12 @@
   .fx-poof-dot,
   .fx-det-ring,
   .fx-scorch,
-  .fx-rally {
+  .fx-rally,
+  /* Bonk impact is a one-shot flourish: hide the drop/jolt/burst outright. */
+  .fx-bonk-drop,
+  .fx-bonk-jolt,
+  .fx-bonk-star,
+  .fx-bonk-lines {
     animation: none !important;
     opacity: 0 !important;
   }

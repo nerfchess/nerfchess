@@ -356,6 +356,153 @@ export function StunSwirl() {
   );
 }
 
+// --- 5b. Bonk impact + injured overlay ---------------------------------------
+// The reusable comedic-impact primitive (Coconut Bonk, Tung Tung Tung Sahur,
+// and the batch of funny cards to follow). A dropped object bonks a piece:
+// BonkImpact is the one-shot flash (drop, squash, star-burst, impact lines, a
+// light tile jolt); InjuredOverlay is the persistent "dazed" look worn while
+// the paired stun holds (dizzy stars circling the piece). BonkImpact must be
+// mounted with a key that changes per application (square + count) so a
+// re-render never replays it; InjuredOverlay simply mounts while the square
+// carries both a freeze and a recent bonk.
+
+/** A coconut: a fibrous brown husk with three germination pores. Sized to fill
+ * its wrapper (pass a sizing className). */
+export const CoconutGlyph = React.memo(function CoconutGlyph({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
+      <circle cx="12" cy="12" r="10.6" fill="#6f4a2f" stroke="#33210f" strokeWidth="1.1" />
+      {/* fibrous streaks */}
+      <g stroke="#4b3018" strokeWidth="0.7" fill="none" opacity="0.6" strokeLinecap="round">
+        <path d="M8 4.5 Q10 12 9 19.5" />
+        <path d="M12 3.6 Q13 12 12.4 20.4" />
+        <path d="M16 4.5 Q15 12 16 19.5" />
+      </g>
+      {/* top-left highlight */}
+      <path d="M5.6 9 A8.6 8.6 0 0 1 13.5 3.9" stroke="#a97c52" strokeWidth="1.5" fill="none" strokeLinecap="round" opacity="0.7" />
+      {/* three pores */}
+      <circle cx="9.5" cy="15" r="1" fill="#241609" />
+      <circle cx="14.5" cy="15" r="1" fill="#241609" />
+      <circle cx="12" cy="18" r="1" fill="#241609" />
+    </svg>
+  );
+});
+
+/** A small four-point spark star, the bonk burst and the dizzy injury mark. */
+function SparkStar() {
+  return (
+    <svg viewBox="0 0 10 10" className="h-full w-full">
+      <path d="M5 0 L6 4 L10 5 L6 6 L5 10 L4 6 L0 5 L4 4 Z" fill="#e6bf6a" stroke="#7a5b23" strokeWidth="0.5" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+// Impact sparks fly out from the landing point. Delay puts them a beat after
+// the coconut lands (~38% of the 0.72s drop), so the burst reads as the hit.
+const BONK_STARS = [
+  { dx: "175%", dy: "-155%", rot: "150deg", delay: 0 },
+  { dx: "-185%", dy: "-140%", rot: "-140deg", delay: 22 },
+  { dx: "205%", dy: "70%", rot: "180deg", delay: 10 },
+  { dx: "-195%", dy: "95%", rot: "-160deg", delay: 30 },
+  { dx: "25%", dy: "-225%", rot: "70deg", delay: 6 },
+];
+const BONK_IMPACT_DELAY = 270;
+
+/**
+ * One-shot bonk impact: a coconut drops from above onto the piece, squashes on
+ * landing and rebounds before fading, throwing a burst of spark stars and a
+ * "pow" of short impact lines while the tile takes a light jolt. Pure CSS
+ * (see effects.css); hidden entirely under reduced motion like the other
+ * transient flourishes, the persistent injured mark carries the readable state.
+ */
+export function BonkImpact() {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      {/* the tile takes the hit: a short jolt with a faint impact bloom */}
+      <span
+        className="fx-bonk-jolt absolute inset-0 block"
+        style={{ background: "radial-gradient(circle at 50% 60%, rgba(120,80,40,0.28), transparent 60%)" }}
+      />
+      {/* the dropped coconut, squashing on landing */}
+      <span className="fx-bonk-drop absolute left-[32%] top-[3%] block h-[44%] w-[36%]">
+        <CoconutGlyph className="h-full w-full" />
+      </span>
+      {/* "pow" impact lines radiating from the landing point */}
+      <span
+        className="fx-bonk-lines absolute left-[26%] top-[26%] block h-[48%] w-[48%]"
+        style={{ animationDelay: `${BONK_IMPACT_DELAY}ms` }}
+      >
+        <svg viewBox="0 0 40 40" className="h-full w-full">
+          <g stroke="#efdcae" strokeWidth="2.6" strokeLinecap="round" fill="none">
+            <path d="M20 20 L20 3.5" />
+            <path d="M20 20 L34 9" />
+            <path d="M20 20 L36.5 22" />
+            <path d="M20 20 L6 9" />
+            <path d="M20 20 L3.5 22" />
+          </g>
+        </svg>
+      </span>
+      {/* spark-star burst */}
+      {BONK_STARS.map((v, i) => (
+        <span
+          key={i}
+          className="fx-bonk-star absolute left-1/2 top-[48%] ml-[-5%] mt-[-5%] block h-[11%] w-[11%]"
+          style={
+            {
+              "--dx": v.dx,
+              "--dy": v.dy,
+              "--rot": v.rot,
+              animationDelay: `${BONK_IMPACT_DELAY + v.delay}ms`,
+            } as React.CSSProperties
+          }
+        >
+          <SparkStar />
+        </span>
+      ))}
+    </span>
+  );
+}
+
+// Three dizzy stars sitting in an arc over the piece's head, spun slowly by
+// the orbit group. Placed roughly symmetric around the group's box centre so
+// the spin reads as circling rather than lurching.
+const INJURED_STARS = [
+  { x: 22.5, y: 5.5, r: 2.6 },
+  { x: 16.8, y: 13.5, r: 2.1 },
+  { x: 28.2, y: 13.5, r: 2.1 },
+];
+
+/**
+ * Persistent injured overlay: worn while a piece is stunned FROM a bonk (a
+ * square carrying both a freeze and a recent bonk). Dizzy stars circle over
+ * the piece with a slight wobble; a companion `fx-injured-tilt` class (in
+ * effects.css) can be added to the piece itself for the drunken tilt. Under
+ * reduced motion the stars hold still as a static dazed mark. All CSS, no
+ * per-frame JS: cheap enough to sit on every affected square for the duration.
+ */
+export const InjuredOverlay = React.memo(function InjuredOverlay() {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-injured absolute inset-0 block">
+        <svg viewBox="0 0 45 45" className="h-full w-full">
+          <g className="fx-injured-orbit">
+            {INJURED_STARS.map((s, i) => (
+              <path
+                key={i}
+                d={`M${s.x} ${s.y - s.r} L${s.x + s.r * 0.32} ${s.y - s.r * 0.32} L${s.x + s.r} ${s.y} L${s.x + s.r * 0.32} ${s.y + s.r * 0.32} L${s.x} ${s.y + s.r} L${s.x - s.r * 0.32} ${s.y + s.r * 0.32} L${s.x - s.r} ${s.y} L${s.x - s.r * 0.32} ${s.y - s.r * 0.32} Z`}
+                fill="#e6bf6a"
+                stroke="#7a5b23"
+                strokeWidth="0.5"
+                strokeLinejoin="round"
+              />
+            ))}
+          </g>
+        </svg>
+      </span>
+    </span>
+  );
+});
+
 // --- 6. Transform flourish ---------------------------------------------------
 
 const SHARD_VECTORS = [
