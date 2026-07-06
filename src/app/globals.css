@@ -15,20 +15,20 @@ body {
      under R=G=B gray type is the classic "cold/bland" tell; nudging red above
      blue makes the whole page read as one temperature. Stays AA on #161512
      (contrast ~8:1). Never pure #fff (halation on warm dark). */
-  --paper: #cbc5b9;
-  --paper-dim: #8c867a;
-  --ink-deep: #100f0d;
-  --ink-warm: #1c1a17;
+  --paper: #d6d0c3;
+  --paper-dim: #98917f;
+  --ink-deep: #12100e;
+  --ink-warm: #201d19;
   /* Elevation by lightness, not shadow: the ink ladder already exists in
      tailwind.config; --surface-raise is the one rung up (ink-600) that floating
      and hovered surfaces step onto so menus/modals/hover-rows read "closer". */
-  --surface-panel: #262421; /* ink-700, base card */
-  --surface-raise: #302d29; /* ink-600, floating / hovered */
-  --surface-hover: #2b2824; /* subtle row hover on a panel */
+  --surface-panel: #2b2823; /* base card, one warm step up from the page */
+  --surface-raise: #363229; /* floating / hovered */
+  --surface-hover: #322e27; /* subtle row hover on a panel */
   /* Warm hairline: a warm edge one step lighter than the panel, brightening on
      hover. Replaces the cool white-alpha border that read generic/cold. */
-  --edge: #3a342c;
-  --edge-strong: #4a4238;
+  --edge: #443c31;
+  --edge-strong: #574b3d;
   /* accent = Lichess blue (Lichess has no signature green) */
   --gold: #3692e7;
   --gold-leaf: #4a9fee;
@@ -54,6 +54,18 @@ body {
      kept as rgb triples so seams can fade in and out at any opacity. */
   --seam-warm-rgb: 196 120 95;   /* Nerf terracotta */
   --seam-cool-rgb: 91 155 212;   /* Buff sky */
+
+  /* --- Fun kit: the playful accent trio ---------------------------------------
+     Three saturated, kid-friendly accents that live BESIDE the core blue:
+     coral for warmth/celebration, mint for success/growth, sun for shine and
+     achievement gold. Use them for chips, rings, icons, and gradients; the
+     blue accent still owns "act here". */
+  --coral: #ef8a5f;
+  --coral-glow: #ffab84;
+  --mint: #58c39a;
+  --mint-glow: #7ddcb7;
+  --sun: #eec25e;
+  --sun-glow: #ffd97e;
 
   /* --- Governed status + celebration colors ----------------------------------
      Warmth needs somewhere to LAND without adding a second brand accent. The
@@ -140,20 +152,22 @@ html[data-contrast="high"] .text-parchment-500 { color: #97948e; }
 /* A solid dark background-color must sit behind the gradient: during fast
    scrolls (and rubber-band overscroll) mobile browsers reveal areas the
    fixed-attachment gradient hasn't painted yet, which otherwise flash the
-   default white. */
+   default white. Lifted and warmed a step: dark, but never dim, with a faint
+   color wash (warm top-left, cool bottom-right) so the page has weather. */
 html, body {
-  background-color: #121110;
+  background-color: #191713;
   background-image:
-    linear-gradient(180deg, #201e1b 0%, #161512 46%, #121110 100%);
+    radial-gradient(120% 90% at 8% 0%, rgba(232, 138, 93, 0.05), transparent 55%),
+    radial-gradient(120% 90% at 100% 100%, rgba(91, 155, 212, 0.06), transparent 55%),
+    linear-gradient(180deg, #282420 0%, #1e1b17 46%, #191713 100%);
   background-attachment: fixed;
   color: var(--paper);
   min-height: 100vh;
 }
 
-/* No round corners anywhere — square, Lichess-flat. Board move-hint dots are
-   driven by dedicated CSS classes (.dot-*), not these utilities, so they stay
-   circular where the game needs them. */
-[class*="rounded"] { border-radius: 0 !important; }
+/* Friendly geometry: soft corners are back. Cards and controls carry a small
+   shared radius (see .plate / .btn-* below) so the site reads warm and
+   playful rather than severe; Tailwind rounded-* utilities work normally. */
 
 body {
   font-family: var(--font-body), system-ui, sans-serif;
@@ -391,7 +405,7 @@ html[data-theme="light"] .mode-seam::after { background: #e4e0d6; }
   background: var(--surface-panel);
   border: 1px solid var(--edge);
   box-shadow: 0 12px 40px -24px rgba(0,0,0,0.7);
-  border-radius: 0;
+  border-radius: 10px;
   position: relative;
   z-index: 2;
 }
@@ -501,6 +515,7 @@ html[data-theme="light"] .mode-seam::after { background: #e4e0d6; }
   background: linear-gradient(to bottom, var(--accent-hi), var(--accent));
   color: #fff;
   border: 1px solid rgba(0,0,0,0.28);
+  border-radius: 10px;
   box-shadow:
     0 1px 0 rgba(255,255,255,0.18) inset,
     0 2px 6px -2px rgba(0,0,0,0.5);
@@ -539,6 +554,7 @@ html[data-theme="light"] .mode-seam::after { background: #e4e0d6; }
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.035) 55%, rgba(255, 255, 255, 0.02));
   color: var(--paper);
   border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 12px;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.16),
     0 10px 30px -16px rgba(0, 0, 0, 0.8);
@@ -570,6 +586,7 @@ html[data-theme="light"] .mode-seam::after { background: #e4e0d6; }
   background: linear-gradient(to bottom, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
   color: var(--paper);
   border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 10px;
   box-shadow: 0 1px 0 rgba(255,255,255,0.06) inset;
   transition: background 160ms ease, border-color 160ms ease, transform 120ms ease;
   font-weight: 500;
@@ -1033,6 +1050,59 @@ nav, header { position: relative; z-index: 30; }
 ::-webkit-scrollbar-thumb { background: rgba(236,231,214,0.10); border-radius: 6px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(236,231,214,0.22); }
 ::-webkit-scrollbar-track { background: transparent; }
+
+/* --- Juicy cards -------------------------------------------------------------
+   The pickable-card treatment: a glass card that visibly WANTS to be clicked.
+   Rounded, top-lit, with a saturated tier ring on hover, a scale pop, and a
+   pressed squash. Layer over .plate/.draft-face on draft cards and mini rule
+   cards. Uses --tier-rgb when the tier classes set it; falls back to accent. */
+.card-juicy {
+  border-radius: 14px;
+  cursor: pointer;
+  transition:
+    transform 160ms var(--ease-spring),
+    box-shadow 200ms var(--ease-out),
+    border-color 160ms var(--ease-out);
+}
+@media (hover: hover) {
+  .card-juicy:hover {
+    transform: translateY(-4px) scale(1.025);
+    box-shadow:
+      0 0 0 2px rgb(var(--tier-rgb, var(--accent-hi-rgb)) / 0.65),
+      0 18px 44px -16px rgb(var(--tier-rgb, var(--accent-hi-rgb)) / 0.5),
+      0 20px 50px -24px rgba(0, 0, 0, 0.85);
+  }
+}
+.card-juicy:active {
+  transform: translateY(-1px) scale(0.985);
+}
+@media (prefers-reduced-motion: reduce) {
+  .card-juicy, .card-juicy:hover, .card-juicy:active {
+    transition: none;
+    transform: none;
+  }
+}
+
+/* Seam gradient text/border helpers: the two mode colors as one warm-to-cool
+   sweep, for headings, rings, and section accents that should feel alive. */
+.grad-seam-text {
+  background: linear-gradient(90deg, var(--coral-glow), rgb(var(--seam-cool-rgb)));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.grad-seam-ring {
+  position: relative;
+  border-radius: 14px;
+}
+.grad-seam-ring::before {
+  content: "";
+  position: absolute;
+  inset: -1.5px;
+  z-index: -1;
+  border-radius: inherit;
+  background: linear-gradient(120deg, rgb(var(--seam-warm-rgb) / 0.75), rgb(var(--seam-cool-rgb) / 0.75));
+}
 
 /* Decorative corners — subtle brass tick marks for editorial framing */
 .card-corner {
