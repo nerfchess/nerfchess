@@ -319,4 +319,111 @@ export const CROSSREF_CARDS: Buff[] = [
     },
     oppFilter((moves) => moves.filter((m) => !m.isEnPassant)),
   ),
+
+  // -------------------------------------------------------------------------
+  // Brainrot and funny fruit: a small themed run of meme cards, built on the
+  // same safety-railed primitives as everything else (freeze never touches a
+  // king, instants resolve once), so none can soft-lock a game.
+  // -------------------------------------------------------------------------
+
+  // Italian brainrot: the log-man with the bat. Bonk one enemy piece and it is
+  // stunned (frozen) for 2 of its turns, with an impact flash on the square.
+  hex(
+    {
+      id: "sahur",
+      name: "Tung Tung Tung Sahur",
+      description: "Bonk one enemy piece with the log: it is stunned and cannot move for its next 2 turns. Kings are too stubborn to bonk.",
+      tier: 5,
+      flavor: "Tung tung tung tung tung tung tung tung tung sahur.",
+    },
+    activated(
+      (_inst, api, picks) =>
+        picks.length > 0
+          ? null
+          : {
+              kind: "square",
+              label: "Choose an enemy piece to bonk",
+              squares: mySquares(api.board, api.opp).filter(
+                (sq) => api.board.pieces[sq]!.type !== "k",
+              ),
+            },
+      (_inst, api, picks) => {
+        const sq = picks[0]?.square;
+        if (sq == null) return;
+        const p = api.board.pieces[sq];
+        if (!p || p.color !== api.opp || p.type === "k") return;
+        addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2 });
+        addEffect(api, { kind: "strike", squares: [sq], owner: api.me, turns: 1 });
+      },
+    ),
+  ),
+
+  // Fruit: a dropped coconut. A lighter bonk: one enemy piece is stunned for
+  // its next turn. A playful item, drafted in both modes.
+  card(
+    {
+      id: "coconut_bonk",
+      name: "Coconut Bonk",
+      description: "Drop a coconut on one enemy piece: it is stunned and cannot move for its next turn. Kings are too hard-headed.",
+      tier: 2,
+      category: "item",
+      flavor: "Bonk.",
+    },
+    activated(
+      (_inst, api, picks) =>
+        picks.length > 0
+          ? null
+          : {
+              kind: "square",
+              label: "Choose an enemy piece to bonk",
+              squares: mySquares(api.board, api.opp).filter(
+                (sq) => api.board.pieces[sq]!.type !== "k",
+              ),
+            },
+      (_inst, api, picks) => {
+        const sq = picks[0]?.square;
+        if (sq == null) return;
+        const p = api.board.pieces[sq];
+        if (!p || p.color !== api.opp || p.type === "k") return;
+        addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 1 });
+        addEffect(api, { kind: "strike", squares: [sq], owner: api.me, turns: 1 });
+      },
+    ),
+  ),
+
+  // Fruit: the king of fruits. Its stench pins the enemy infantry: their pawns
+  // cannot advance for 3 of their turns. Lightning flashes on every enemy pawn.
+  hex(
+    {
+      id: "durian",
+      name: "Durian",
+      description: "Lob the king of fruits: the stench pins your opponent's pawns, which cannot advance for their next 3 turns.",
+      tier: 3,
+      flavor: "Banned on public transit for a reason.",
+    },
+    instant((_inst, api) => {
+      addEffect(api, { kind: "no_pawn_advance", against: api.opp, turns: 3 });
+      const pawns = mySquares(api.board, api.opp, "p");
+      if (pawns.length) {
+        addEffect(api, { kind: "strike", squares: pawns, owner: api.me, turns: 1 });
+      }
+    }),
+  ),
+
+  // Fruit boon: hide behind the rind. Your whole army cannot be captured for
+  // the opponent's next 2 turns. A light supportive card, so it joins the boons.
+  card(
+    {
+      id: "watermelon_rind",
+      name: "Watermelon Rind",
+      description: "Duck behind the rind: your whole army cannot be captured for your opponent's next 2 turns.",
+      tier: 4,
+      category: "protection",
+      boon: true,
+      flavor: "Nature's armor, mostly water.",
+    },
+    instant((_inst, api) => {
+      addEffect(api, { kind: "shield", owner: api.me, squares: null, turns: 2 });
+    }),
+  ),
 ];
