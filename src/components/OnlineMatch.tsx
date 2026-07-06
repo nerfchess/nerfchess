@@ -52,6 +52,7 @@ import {
   replayDraftGame,
   revealHeldBuffs,
 } from "@/lib/draftOnline";
+import { computeFxVisual } from "@/components/effects/fxZones";
 import { nerfSummary, outcomeFor, recordCompletedGame } from "@/lib/gameHistory";
 import { boardAtPly } from "@/lib/gameReview";
 import {
@@ -1280,6 +1281,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   const bsTheirs = isDraft ? game.buffs?.players[oppColor] : undefined;
   const myOffer = bsMine?.offer ?? null;
   const zone = isDraft && game.buffs ? draftZones(game, myColor) : null;
+  // Effect kinds draftZones does not paint (king_safe shields, pawn-clamp
+  // fences, pending-skip stuns): shared derivation, same as the bot game.
+  const fxZone = zone ? computeFxVisual(game) : null;
   // The server pauses the match clock while any buff offer is inside its
   // free lock-in window; freeze the local display the same way. Past the
   // window the server resumes the clock, so the display runs again.
@@ -1721,6 +1725,17 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                                 strikeSquares: zone.strike,
                                 walnutSquares: zone.walnut,
                                 bananaSquares: zone.banana,
+                                // Previously missing online: king-only /
+                                // no-pawn-advance shackles now paint here too.
+                                lockedSquares: zone.locked,
+                                barredSquares: zone.barred,
+                                ...(fxZone
+                                  ? {
+                                      kingSafeSquares: fxZone.kingSafeSquares,
+                                      pawnClampSquares: fxZone.pawnClampSquares,
+                                      stunSquares: fxZone.stunSquares,
+                                    }
+                                  : {}),
                               }
                             : {}),
                         }

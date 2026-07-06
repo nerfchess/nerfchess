@@ -95,12 +95,12 @@ export function DraftNotice({
         <div
           key={n.key}
           className={
-            "animate-rise rounded-full border border-gold/40 bg-ink-700/95 px-3.5 py-1.5 shadow-plate backdrop-blur-sm " +
+            "animate-rise rounded-[1px] border border-gold/40 bg-ink-700/95 px-3.5 py-1.5 shadow-plate backdrop-blur-sm " +
             "font-display text-xs font-semibold text-parchment transition-opacity duration-300 " +
             (n.leaving ? "opacity-0" : "opacity-100")
           }
         >
-          <span aria-hidden className="mr-2 inline-block h-1.5 w-1.5 rounded-full bg-gold-leaf align-middle" />
+          <span aria-hidden className="mr-2 inline-block h-1.5 w-1.5 bg-gold-leaf align-middle" />
           {n.text}
         </div>
       ))}

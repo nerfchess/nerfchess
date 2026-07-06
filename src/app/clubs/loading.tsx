@@ -8,7 +8,7 @@ export default function Loading() {
         <img src="/logo.svg" alt="Loading" width={26} height={26} className="animate-pulse" />
         <div className="skeleton h-8 w-28 rounded-[10px]" style={{ borderRadius: 10 }} />
       </div>
-      <section className="mx-auto max-w-6xl px-5 py-8 sm:px-6">
+      <section className="mx-auto max-w-6xl px-5 pt-6 sm:px-6 sm:pt-8">
         <div className="skeleton h-10 w-36 rounded-[10px]" style={{ borderRadius: 10 }} />
         <div className="skeleton mt-2 h-4 w-80 max-w-full rounded-[10px]" style={{ borderRadius: 10 }} />
         <div className="mt-6 grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">

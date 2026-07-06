@@ -76,6 +76,8 @@ export interface Settings {
   highContrast: boolean;
   reducedMotion: boolean;
   fpsCounter: boolean;
+  customBgUrl: string; // full-page background image URL; empty string = none
+  customBgDim: number; // 0..0.6 dark overlay over the custom background
 }
 
 export const SETTINGS_CHANGED_EVENT = "nerfchess:settings-changed";
@@ -116,6 +118,8 @@ export const DEFAULT_SETTINGS: Settings = {
   highContrast: false,
   reducedMotion: false,
   fpsCounter: false,
+  customBgUrl: "",
+  customBgDim: 0.3,
 };
 const DEFAULT = DEFAULT_SETTINGS;
 
@@ -169,6 +173,24 @@ export const PIECE_THEMES: Record<
 
 function bool(v: unknown, fallback: boolean): boolean {
   return typeof v === "boolean" ? v : fallback;
+}
+
+export const CUSTOM_BG_URL_MAX = 400;
+
+/** Validate a user-supplied background image URL. Returns the cleaned URL, or
+ *  "" when the value is missing, not http(s), too long, or contains characters
+ *  that could break out of a CSS url() (quotes, backslashes, whitespace). */
+export function sanitizeCustomBgUrl(v: unknown): string {
+  if (typeof v !== "string") return "";
+  const url = v.trim();
+  if (!url || url.length > CUSTOM_BG_URL_MAX) return "";
+  if (!/^https?:\/\//i.test(url)) return "";
+  if (/[\s"'\\<>()]/.test(url)) return "";
+  return url;
+}
+
+function clampDim(v: unknown, fallback: number): number {
+  return typeof v === "number" && Number.isFinite(v) ? Math.max(0, Math.min(0.6, v)) : fallback;
 }
 
 export function loadSettings(): Settings {
@@ -236,6 +258,8 @@ export function loadSettings(): Settings {
       highContrast: bool(parsed.highContrast, DEFAULT.highContrast),
       reducedMotion: bool(parsed.reducedMotion, DEFAULT.reducedMotion),
       fpsCounter: bool(parsed.fpsCounter, DEFAULT.fpsCounter),
+      customBgUrl: sanitizeCustomBgUrl(parsed.customBgUrl),
+      customBgDim: clampDim(parsed.customBgDim, DEFAULT.customBgDim),
     };
   } catch {}
   return { ...DEFAULT };
@@ -339,6 +363,18 @@ export function applyUiPrefs(s: Settings) {
   html.style.setProperty("--accent-dim-rgb", accent.rgbDim);
   html.dataset.anim = s.reducedMotion ? "off" : s.animationSpeed;
   html.dataset.contrast = s.highContrast ? "high" : "normal";
+  // Custom background (lichess-style): the image lands on <body> through a CSS
+  // variable; the appended globals.css block adds a dim overlay for legibility.
+  const bgUrl = sanitizeCustomBgUrl(s.customBgUrl);
+  if (bgUrl) {
+    html.dataset.customBg = "on";
+    html.style.setProperty("--custom-bg-url", `url("${bgUrl}")`);
+    html.style.setProperty("--custom-bg-dim", String(clampDim(s.customBgDim, DEFAULT.customBgDim)));
+  } else {
+    delete html.dataset.customBg;
+    html.style.removeProperty("--custom-bg-url");
+    html.style.removeProperty("--custom-bg-dim");
+  }
 }
 
 export function applyBoardTheme(theme: BoardTheme) {

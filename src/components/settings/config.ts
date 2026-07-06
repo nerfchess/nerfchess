@@ -28,6 +28,7 @@ export type Control =
   | { kind: "siteTheme"; options: Array<{ value: SiteTheme; label: string }> }
   | { kind: "soundTheme"; options: Array<{ value: SoundTheme; label: string }> }
   | { kind: "accentColor" }
+  | { kind: "customBg" }
   | { kind: "boardTheme" }
   | { kind: "pieceTheme" }
   | { kind: "account" }
@@ -256,6 +257,12 @@ export const SECTIONS: SectionConfig[] = [
         id: "accentColor",
         label: "Accent color",
         control: { kind: "accentColor" },
+      },
+      {
+        id: "customBg",
+        label: "Custom background",
+        hint: "Full-page background image (http(s) URL) with an adjustable dim",
+        control: { kind: "customBg" },
       },
       {
         id: "uiScale",

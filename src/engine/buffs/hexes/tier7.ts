@@ -36,37 +36,37 @@ export const HEXES_T7: Buff[] = [
     walnutAll(["r"], 4),
   ),
 
-  // --- petrify all: the entire minor line (knights and bishops) 4 turns ---
+  // --- petrify all: the entire minor line (knights and bishops) 3 turns ---
   H(
     {
       id: "statue_garden",
       name: "Statue Garden",
-      description: "Your opponent's knights and bishops turn to walnuts and cannot move for 4 of their turns.",
+      description: "Your opponent's knights and bishops turn to walnuts and cannot move for 3 of their turns.",
       flavor: "Every horse and prelate set among the topiary.",
     },
-    walnutAll(["n", "b"], 4),
+    walnutAll(["n", "b"], 3),
   ),
 
-  // --- petrify all: the queen frozen in stone for 4 turns -----------------
+  // --- petrify all: the queen frozen in stone for 3 turns -----------------
   H(
     {
       id: "cockatrice_gaze",
       name: "Cockatrice Gaze",
-      description: "Your opponent's queen turns to a walnut and cannot move for 4 of their turns.",
+      description: "Your opponent's queen turns to a walnut and cannot move for 3 of their turns.",
       flavor: "One glance and the lady is limestone.",
     },
-    walnutAll(["q"], 4),
+    walnutAll(["q"], 3),
   ),
 
-  // --- petrify one targeted piece (any non-king) for 5 turns --------------
+  // --- petrify one targeted piece (any non-king) for 4 turns --------------
   H(
     {
       id: "chisel_curse",
       name: "Chisel Curse",
-      description: "Turn one enemy piece you target into a walnut so it cannot move for 5 of their turns. Kings cannot be targeted.",
+      description: "Turn one enemy piece you target into a walnut so it cannot move for 4 of their turns. Kings cannot be targeted.",
       flavor: "Marked, struck, and left as monument.",
     },
-    walnutTarget(5),
+    walnutTarget(4),
   ),
 
   // --- freeze all: whole army but the king iced for 2 turns ---------------
@@ -80,27 +80,27 @@ export const HEXES_T7: Buff[] = [
     freezeAllEnemies(2),
   ),
 
-  // --- freeze one targeted piece for 5 turns ------------------------------
+  // --- freeze one targeted piece for 4 turns ------------------------------
   H(
     {
       id: "frozen_solid",
       name: "Frozen Solid",
-      description: "Freeze one enemy piece you target so it cannot move for 5 of their turns. Kings cannot be targeted.",
+      description: "Freeze one enemy piece you target so it cannot move for 4 of their turns. Kings cannot be targeted.",
       flavor: "Encased so deep the thaw never comes.",
     },
-    freezeTarget(5),
+    freezeTarget(4),
   ),
 
-  // --- king_only 2 turns AND block their next draft -----------------------
+  // --- king_only 1 turn AND block their next draft -------------------------
   H(
     {
       id: "throne_and_silence",
       name: "Throne and Silence",
-      description: "For your opponent's next 2 turns they may move only their king, and their next draft is skipped entirely.",
+      description: "For your opponent's next turn they may move only their king, and their next draft is skipped entirely.",
       flavor: "The whole court scatters and the messengers with it.",
     },
     instant((_inst, api) => {
-      addEffect(api, { kind: "king_only", against: api.opp, turns: 2 });
+      addEffect(api, { kind: "king_only", against: api.opp, turns: 1 });
       api.theirs.flags.blockedDrafts = (api.theirs.flags.blockedDrafts ?? 0) + 1;
     }),
   ),
@@ -118,12 +118,12 @@ export const HEXES_T7: Buff[] = [
     }),
   ),
 
-  // --- barred: seal the entire center (4th and 5th ranks) for 4 turns -----
+  // --- barred: seal the entire center (4th and 5th ranks) for 3 turns -----
   H(
     {
       id: "molten_heart",
       name: "Molten Heart",
-      description: "Your opponent cannot move any piece onto the 4th or 5th ranks for their next 4 turns.",
+      description: "Your opponent cannot move any piece onto the 4th or 5th ranks for their next 3 turns.",
       flavor: "The middle of the board runs with lava.",
     },
     instant((_inst, api) => {
@@ -131,7 +131,7 @@ export const HEXES_T7: Buff[] = [
       for (let f = 0; f < 8; f++) {
         squares.push(SQ(f, 3), SQ(f, 4));
       }
-      addEffect(api, { kind: "barred", squares, against: api.opp, turns: 4 });
+      addEffect(api, { kind: "barred", squares, against: api.opp, turns: 3 });
     }),
   ),
 

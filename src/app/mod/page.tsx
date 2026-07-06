@@ -136,6 +136,9 @@ export default function ModPage() {
             <div className="flex items-end justify-between gap-4 flex-wrap">
               <h1 className="font-display text-4xl">Moderation</h1>
               <span className="flex items-center gap-3">
+                <Link href="/mod/cards" className="text-sm text-gold-leaf hover:underline">
+                  Card editor
+                </Link>
                 <Link href="/mod/stats" className="text-sm text-gold-leaf hover:underline">
                   Site stats
                 </Link>

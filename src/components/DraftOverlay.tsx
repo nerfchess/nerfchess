@@ -2,9 +2,10 @@
 
 import { BuffOffer } from "@/engine/buff";
 import { BUFF_BY_ID } from "@/engine/buffs/library";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import { playDraftChime } from "@/lib/sounds";
+import { TIER_ROMAN } from "@/lib/tiers";
 import { BuffCard } from "./BuffCard";
 import "./DraftOverlay.css";
 
@@ -85,7 +86,7 @@ export function LockInCountdown({
   const urgent = leftMs <= 5000;
   return (
     <div className={"flex items-center gap-2 " + className} role="timer" aria-label="Lock-in timer">
-      <div className="h-1 flex-1 overflow-hidden rounded-full bg-white/10">
+      <div className="h-1 flex-1 overflow-hidden rounded-[1px] bg-white/10">
         <div
           className={"h-full transition-[width] duration-100 " + (urgent ? "bg-oxblood-glow" : "bg-gold-leaf")}
           style={{ width: `${fraction * 100}%` }}
@@ -103,7 +104,7 @@ export function LockInCountdown({
   );
 }
 
-/** The draft clock as its own glass chip, sitting centered immediately above
+/** The draft clock as its own chip, sitting centered immediately above
  * the draft panel (they share a flex column, so the chip travels with the
  * plate): a ring that drains with the free window plus big tabular digits.
  * Separate from the card panel so time pressure reads at a glance without
@@ -151,6 +152,15 @@ function DraftTimerWindow({ deadline, onExpire }: { deadline: number; onExpire?:
   );
 }
 
+/** Small inline check mark (no text glyphs, no emoji). */
+function CheckIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg aria-hidden viewBox="0 0 12 12" width="10" height="10" className={"shrink-0 " + className}>
+      <path d="M2 6.5 4.8 9.3 10 2.9" fill="none" stroke="currentColor" strokeWidth="1.8" />
+    </svg>
+  );
+}
+
 /** Where the confirmed card flies: the buff dock ("your pocket") if it is
  * visible, otherwise off toward the bottom-left where the mobile drawer
  * lives. Returns the translation from the card's current center. */
@@ -175,6 +185,28 @@ function pocketDelta(cardEl: HTMLElement | null): { dx: number; dy: number } {
   return { dx: -cx + 48, dy: window.innerHeight - cy - 24 };
 }
 
+/** Translation from a card's center to the Skip button ("the bank"). */
+function bankDelta(cardEl: HTMLElement | null, bankEl: HTMLElement | null): { dx: number; dy: number } {
+  const fallback = { dx: 0, dy: 240 };
+  if (!cardEl || !bankEl) return fallback;
+  const c = cardEl.getBoundingClientRect();
+  const b = bankEl.getBoundingClientRect();
+  return {
+    dx: b.left + b.width / 2 - (c.left + c.width / 2),
+    dy: b.top + b.height / 2 - (c.top + c.height / 2),
+  };
+}
+
+// Deal choreography budget: three cards fully dealt and flipped in under
+// ~900ms. Cards fly from a face-down stack at the bottom center of the
+// panel to their slots with a stagger, then flip face-up; higher tiers flip
+// a touch later so the best card is the last reveal.
+const DEAL_STAGGER_MS = 80;
+const DEAL_MS = 280;
+const FLIP_MS = 300;
+const DEAL_TOTAL_MS = 900;
+const flipDelayMs = (i: number, tier: number) => i * DEAL_STAGGER_MS + DEAL_MS + 40 + tier * 12;
+
 export function DraftOverlay({
   offer,
   takeBoth,
@@ -192,35 +224,59 @@ export function DraftOverlay({
   const noun = cardNoun;
   const nounCap = noun.charAt(0).toUpperCase() + noun.slice(1);
   const oppOffer = opponent?.offer ?? null;
+  const reduceMotion = useReducedMotion();
   // Two-step pick: the first click only selects (highlight); the Confirm
   // button (or a second click on the same card) locks it in. `chosen` is the
   // confirmed card sliding into the pocket (the buff dock) before the pick
   // commits.
   const [selected, setSelected] = useState<number | null>(null);
   const [chosen, setChosen] = useState<number | null>(null);
+  // Skip and bank: the cards flip back face-down and slide into a bank stack
+  // (toward the Skip button) before the overlay closes.
+  const [banking, setBanking] = useState(false);
+  const [bankDeltas, setBankDeltas] = useState<{ dx: number; dy: number }[] | null>(null);
+  // True once the deal has settled: later animations (dim, select) run
+  // without the deal's stagger delays.
+  const [dealt, setDealt] = useState(false);
   // Measured flight path from the chosen card to the dock, captured at
   // confirm time (measuring during render would thrash layout).
   const [pocket, setPocket] = useState<{ dx: number; dy: number } | null>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const bankBtnRef = useRef<HTMLButtonElement | null>(null);
+  const bankTimer = useRef<number | null>(null);
   const committedRef = useRef(false);
 
   useEffect(() => {
     setSelected(null);
     setChosen(null);
     setPocket(null);
+    setBanking(false);
+    setBankDeltas(null);
     committedRef.current = false;
+    setDealt(!!reduceMotion);
     // A fresh offer demands attention: the board is blocked until it resolves.
     playDraftChime();
+    if (reduceMotion) return;
+    const t = window.setTimeout(() => setDealt(true), DEAL_TOTAL_MS);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [offer.index]);
 
+  useEffect(
+    () => () => {
+      if (bankTimer.current != null) window.clearTimeout(bankTimer.current);
+    },
+    [],
+  );
+
   const confirmCard = (i: number) => {
-    if (chosen != null) return;
+    if (chosen != null || banking) return;
     setPocket(pocketDelta(cardRefs.current[i]));
     setChosen(i);
   };
 
   const choose = (i: number) => {
-    if (chosen != null) return;
+    if (chosen != null || banking) return;
     if (selected === i) {
       // Second click on the selected card confirms it.
       confirmCard(i);
@@ -230,7 +286,7 @@ export function DraftOverlay({
   };
 
   const confirmSelection = () => {
-    if (chosen != null || selected == null) return;
+    if (chosen != null || banking || selected == null) return;
     confirmCard(selected);
   };
 
@@ -240,10 +296,25 @@ export function DraftOverlay({
     onPick(i);
   };
 
+  // Skip and bank with feedback: the offer flips face-down and slides into
+  // the bank (the Skip button) before the overlay closes. Reduced motion
+  // banks immediately.
+  const handleBank = () => {
+    if (chosen != null || banking || committedRef.current) return;
+    committedRef.current = true;
+    if (reduceMotion) {
+      onBank();
+      return;
+    }
+    setBankDeltas(offer.cards.map((_, i) => bankDelta(cardRefs.current[i], bankBtnRef.current)));
+    setBanking(true);
+    bankTimer.current = window.setTimeout(() => onBank(), 750);
+  };
+
   // Free window over: the pick stays open, but from here on it runs on the
   // player's own clock. The parent minimizes the overlay to the side.
   const handleExpire = () => {
-    if (committedRef.current || chosen != null) return;
+    if (committedRef.current || chosen != null || banking) return;
     onExpire?.();
   };
 
@@ -302,7 +373,7 @@ export function DraftOverlay({
             <button
               onClick={chosen == null ? onBank : undefined}
               disabled={chosen != null}
-              className="flex-1 rounded-lg border border-white/15 bg-white/[0.03] px-3 py-1.5 font-display text-[11px] font-semibold tracking-wide text-parchment-200 transition hover:border-gold/50 hover:text-gold-leaf disabled:opacity-40"
+              className="flex-1 rounded-[1px] border border-white/15 bg-white/[0.03] px-3 py-1.5 font-display text-[11px] font-semibold tracking-wide text-parchment-200 transition hover:border-gold/50 hover:text-gold-leaf disabled:opacity-40"
               title="Skip this draft; your next one pulls from a tier higher"
             >
               Skip &amp; bank
@@ -313,6 +384,8 @@ export function DraftOverlay({
     );
   }
 
+  const mid = (offer.cards.length - 1) / 2;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-3 sm:px-4">
       {/* Timer and panel share one column: the clock chip sits centered right
@@ -322,7 +395,7 @@ export function DraftOverlay({
         <motion.div
           initial={{ opacity: 0, y: 16, scale: 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          className="draft-frame min-w-0 w-full"
+          className="draft-frame corner-cut min-w-0 w-full"
         >
           <div className="plate draft-panel max-h-[78dvh] w-full overflow-y-auto overflow-x-hidden p-5 sm:p-8">
         <div className="flex items-center justify-between gap-4">
@@ -330,9 +403,9 @@ export function DraftOverlay({
           {oppLockedIn && (
             <div
               role="status"
-              className="flex items-center gap-1.5 rounded-full border border-verdigris-glow/50 bg-verdigris/10 px-2.5 py-0.5"
+              className="flex items-center gap-1.5 rounded-[1px] border border-verdigris-glow/50 bg-verdigris/10 px-2.5 py-0.5"
             >
-              <span aria-hidden className="text-[11px] text-verdigris-glow">✓</span>
+              <CheckIcon className="text-verdigris-glow" />
               <span className="font-display text-[11px] font-semibold text-verdigris-glow">
                 {oppBanked ? "Opponent banked" : "Opponent locked in"}
               </span>
@@ -351,7 +424,7 @@ export function DraftOverlay({
             {takeBoth && (
               <div
                 role="status"
-                className="inline-flex items-center gap-2 rounded-full border border-gold/60 bg-gold/15 px-3 py-1"
+                className="inline-flex items-center gap-2 rounded-[1px] border border-gold/60 bg-gold/15 px-3 py-1"
               >
                 <span aria-hidden className="h-1.5 w-1.5 shrink-0 bg-gold-leaf animate-flicker" />
                 <span className="font-display text-xs font-bold tracking-wide text-gold-leaf">
@@ -360,7 +433,7 @@ export function DraftOverlay({
               </div>
             )}
             {bankedBonus && (
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/[0.05] px-3 py-1">
+              <div className="inline-flex items-center gap-2 rounded-[1px] border border-white/20 bg-white/[0.05] px-3 py-1">
                 <span className="font-display text-xs font-semibold tracking-wide text-parchment-200">
                   +1 tier from your banked skip
                 </span>
@@ -370,31 +443,42 @@ export function DraftOverlay({
         )}
 
         <div
-          className={`mt-5 grid items-stretch gap-3 lg:gap-4 ${offer.cards.length >= 3 ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}
+          className={`draft-deal-grid mt-5 grid items-stretch gap-3 lg:gap-4 ${offer.cards.length >= 3 ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}
         >
           {offer.cards.map((card, i) => {
             const def = BUFF_BY_ID[card.id];
             if (!def) return null;
+            const flipDelay = flipDelayMs(i, card.tier);
             return (
               <motion.div
                 // Key by the offer index so a fresh draft remounts the cards,
-                // replaying the entrance rise and the tier-scaled reveal sweep.
+                // replaying the deal from the deck and the flip reveal.
                 key={`${offer.index}-${i}`}
                 ref={(el) => {
                   cardRefs.current[i] = el;
                 }}
                 data-tier={card.tier}
-                // The reveal sweep waits for this card's own staggered entrance
-                // (the framer transition delay below) to settle before it
-                // glints across. --enter-delay feeds the CSS sheen keyframe.
-                style={{ ["--enter-delay" as string]: `${i * 70}ms` }}
+                data-cat={def.category}
+                // The one-shot shine pass (CSS) waits for this card's own flip
+                // to finish before it crosses.
+                style={{ ["--reveal-delay" as string]: `${flipDelay + FLIP_MS + 80}ms` }}
                 className={
                   "draft-fx mx-auto h-full w-full max-w-md sm:max-w-none " +
-                  (selected === i && chosen == null ? "draft-fx--selected" : "")
+                  (selected === i && chosen == null && !banking ? "draft-fx--selected" : "")
                 }
-                // Higher-tier cards land with a touch more pop: a deeper rise
-                // and a longer settle scale the drama with the card's tier.
-                initial={{ opacity: 0, y: 10 + card.tier * 2, scale: 0.94 - card.tier * 0.006 }}
+                // Deal from the deck: the card starts face-down on a stack at
+                // the bottom center of the panel, then flies to its slot.
+                initial={
+                  reduceMotion
+                    ? { opacity: 0 }
+                    : {
+                        x: `${(mid - i) * 104}%`,
+                        y: "56%",
+                        rotate: (i - mid) * 2,
+                        scale: 0.62,
+                        opacity: 1,
+                      }
+                }
                 animate={
                   chosen === i
                     ? {
@@ -409,17 +493,42 @@ export function DraftOverlay({
                       }
                     : chosen != null
                     ? { opacity: 0.12 }
+                    : banking
+                    ? {
+                        // Into the bank: face-down again (the inner flip) and
+                        // off toward the Skip button as a stack.
+                        x: bankDeltas?.[i]?.dx ?? 0,
+                        y: bankDeltas?.[i]?.dy ?? 240,
+                        scale: 0.22,
+                        rotate: 4,
+                        opacity: [1, 1, 0.9, 0],
+                      }
                     : // Once a card is selected the others dim to focus it.
-                      { opacity: selected != null && selected !== i ? 0.55 : 1, y: 0, scale: 1 }
+                      {
+                        opacity: selected != null && selected !== i ? 0.55 : 1,
+                        x: 0,
+                        y: selected === i ? -3 : 0,
+                        rotate: 0,
+                        scale: 1,
+                      }
                 }
                 transition={
                   chosen === i
                     ? { duration: 0.55, ease: [0.3, 0.05, 0.2, 1], opacity: { times: [0, 0.6, 0.85, 1] } }
                     : chosen != null
                     ? { duration: 0.3, ease: "easeIn" }
+                    : banking
+                    ? {
+                        delay: 0.14 + i * 0.06,
+                        duration: 0.4,
+                        ease: [0.3, 0.05, 0.2, 1],
+                        opacity: { times: [0, 0.5, 0.8, 1] },
+                      }
+                    : dealt
+                    ? { duration: 0.18, ease: "easeOut" }
                     : {
-                        duration: 0.34 + card.tier * 0.03,
-                        delay: (i * 70) / 1000,
+                        delay: (i * DEAL_STAGGER_MS) / 1000,
+                        duration: DEAL_MS / 1000,
                         ease: [0.2, 0.8, 0.2, 1],
                       }
                 }
@@ -428,11 +537,38 @@ export function DraftOverlay({
                 }}
               >
                 <span aria-hidden className="draft-fx__glow" />
-                <BuffCard
-                  buff={def}
-                  tier={card.tier}
-                  onClick={chosen == null ? () => choose(i) : undefined}
-                />
+                {/* 3D flip: the back faces the viewer while dealing, then the
+                    wrapper rotates to reveal the face (higher tier flips a
+                    touch later). Banking rotates it face-down again. */}
+                <motion.div
+                  className="draft-flip"
+                  initial={reduceMotion ? false : { rotateY: 180 }}
+                  animate={{ rotateY: banking && !reduceMotion ? 180 : 0 }}
+                  transition={
+                    banking
+                      ? { duration: 0.22, ease: "easeIn" }
+                      : {
+                          delay: reduceMotion || dealt ? 0 : flipDelay / 1000,
+                          duration: FLIP_MS / 1000,
+                          ease: [0.3, 0.1, 0.3, 1],
+                        }
+                  }
+                >
+                  <div className="draft-card-front">
+                    <BuffCard
+                      buff={def}
+                      tier={card.tier}
+                      onClick={chosen == null && !banking ? () => choose(i) : undefined}
+                    />
+                  </div>
+                  {/* Card back: an ink panel with a hairline frame and the
+                      tier numeral as a quiet watermark. */}
+                  <div aria-hidden className="draft-card-back">
+                    <span className={`draft-card-back__numeral font-display tier-${card.tier}`}>
+                      {TIER_ROMAN[card.tier]}
+                    </span>
+                  </div>
+                </motion.div>
                 <span aria-hidden className="draft-fx__sheen" />
               </motion.div>
             );
@@ -442,19 +578,33 @@ export function DraftOverlay({
         <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-center">
           <button
             onClick={confirmSelection}
-            disabled={selected == null || chosen != null}
+            disabled={selected == null || chosen != null || banking}
             className="btn-glass btn-glass--primary w-full px-8 py-3 font-display text-base font-semibold tracking-wide sm:w-auto"
           >
             {selected != null ? "Confirm pick" : "Pick a card"}
           </button>
-          <button
-            onClick={chosen == null ? onBank : undefined}
-            disabled={chosen != null}
-            className="btn-glass w-full px-6 py-3 font-display text-sm font-semibold tracking-wide sm:w-auto"
-            title="Skip this draft; your next one pulls from a tier higher"
-          >
-            Skip &amp; bank <span className="ml-1 text-parchment-400">+1 tier next draft</span>
-          </button>
+          <div className="relative w-full sm:w-auto">
+            <button
+              ref={bankBtnRef}
+              onClick={handleBank}
+              disabled={chosen != null || banking}
+              className="btn-glass w-full px-6 py-3 font-display text-sm font-semibold tracking-wide sm:w-auto"
+              title="Skip this draft; your next one pulls from a tier higher"
+            >
+              Skip &amp; bank <span className="ml-1 text-parchment-400">+1 tier next draft</span>
+            </button>
+            {banking && (
+              <motion.span
+                aria-hidden
+                initial={{ opacity: 0, y: 6, x: "-50%" }}
+                animate={{ opacity: [0, 1, 1, 0], y: -22, x: "-50%" }}
+                transition={{ duration: 0.6, delay: 0.15 }}
+                className="pointer-events-none absolute -top-1 left-1/2 font-display text-xs font-semibold text-gold-leaf"
+              >
+                +1 tier
+              </motion.span>
+            )}
+          </div>
         </div>
 
         {opponent && (

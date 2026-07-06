@@ -83,7 +83,7 @@ function timeAgo(at: number): string {
 function Badge({ n }: { n: number }) {
   if (n <= 0) return null;
   return (
-    <span className="absolute -right-0.5 -top-0.5 grid min-w-[15px] place-items-center rounded-full bg-oxblood-glow px-1 font-mono text-[9px] leading-[15px] text-white">
+    <span className="absolute -right-0.5 -top-0.5 grid min-w-[15px] place-items-center bg-oxblood-glow px-1 font-mono text-[9px] leading-[15px] text-white">
       {n > 9 ? "9+" : n}
     </span>
   );
@@ -208,10 +208,10 @@ export function SiteHeader({ active }: { active?: string }) {
   };
 
   const iconButton =
-    "nav-icon-btn relative grid h-10 w-10 place-items-center rounded-lg text-parchment-300 hover:bg-white/5 hover:text-parchment-50";
+    "nav-icon-btn relative grid h-10 w-10 place-items-center text-parchment-300 hover:bg-white/5 hover:text-parchment-50";
 
   return (
-    <nav className="seam-edge-b flex items-center justify-between gap-3 bg-gradient-to-b from-ink-900/70 to-transparent px-5 sm:px-10 py-5 sm:py-6">
+    <nav className="seam-edge-b flex items-center justify-between gap-3 bg-ink-900/70 px-5 sm:px-10 py-5 sm:py-6">
       <div className="flex min-w-0 items-center gap-2 sm:gap-5">
         {/* Mobile hamburger, left of the wordmark: opens every destination on
             phones and tablets, where the inline nav below is hidden. */}
@@ -231,12 +231,11 @@ export function SiteHeader({ active }: { active?: string }) {
                   }
                 >
                   {link.label}
-                  {/* Active page underline: the warm-to-cool mode seam instead
-                      of the flat accent, so the current stop feels alive. */}
+                  {/* Active page underline: a flat accent bar. */}
                   {active === link.href && (
                     <span
                       aria-hidden
-                      className="absolute inset-x-3 bottom-[0.26rem] h-[2px] rounded-full bg-gradient-to-r from-coral-glow to-mode-buff"
+                      className="absolute inset-x-3 bottom-[0.26rem] h-[2px] bg-gold-leaf"
                     />
                   )}
                 </Link>
@@ -270,7 +269,7 @@ export function SiteHeader({ active }: { active?: string }) {
                 {active === link.href && (
                   <span
                     aria-hidden
-                    className="absolute inset-x-3 bottom-[0.26rem] h-[2px] rounded-full bg-gradient-to-r from-coral-glow to-mode-buff"
+                    className="absolute inset-x-3 bottom-[0.26rem] h-[2px] bg-gold-leaf"
                   />
                 )}
               </Link>
@@ -387,7 +386,7 @@ export function SiteHeader({ active }: { active?: string }) {
         ) : !user ? (
           <Link
             href="/login"
-            className="ml-1 rounded-full border border-gold/40 px-3 py-1.5 font-display text-sm text-gold-leaf transition hover:bg-gold/10"
+            className="ml-1 border border-gold/40 px-3 py-1.5 font-display text-sm text-gold-leaf transition hover:bg-gold/10"
           >
             Sign in
           </Link>
@@ -403,7 +402,7 @@ export function SiteHeader({ active }: { active?: string }) {
               {/* The name is dead weight at phone widths and can collide with
                   the wordmark; the avatar alone opens the menu there. */}
               <span className="hidden sm:inline">{user.username}</span>
-              <PlayerAvatar name={user.username} avatar={user.avatar} size={24} className="rounded-full" />
+              <PlayerAvatar name={user.username} avatar={user.avatar} size={24} />
             </button>
             {menu === "profile" && (
               <div className="absolute right-0 top-full z-40 mt-3 w-56 plate dropdown py-1 shadow-2xl">

@@ -38,6 +38,7 @@ import {
 import { BuffDock, EnemyBuffModal, TargetingBanner, useBuffTargeting } from "@/components/BuffDock";
 import { draftCardNoun, turnCost } from "@/engine/buff";
 import { draftZones } from "@/lib/draftOnline";
+import { computeFxVisual } from "@/components/effects/fxZones";
 import { MobileBuffDrawer } from "@/components/MobileBuffDrawer";
 import { DraftNotice } from "@/components/DraftNotice";
 import { DraftOverlay, LockInCountdown } from "@/components/DraftOverlay";
@@ -995,6 +996,9 @@ function GamePage() {
   // (Immobilizer auras included), shielded (sanctuary) squares, and barred
   // squares for both sides — the same painting the online match uses.
   const zone = draftZones(game, myColor);
+  // Effect kinds draftZones does not paint (king_safe shields, pawn-clamp
+  // fences, pending-skip stuns): shared derivation, same as OnlineMatch.
+  const fxZone = computeFxVisual(game);
   const opponentNerf = myColor === "w" ? game.black.nerf : game.white.nerf;
   const bsMine = game.buffs?.players[myColor];
   const bsTheirs = game.buffs?.players[myColor === "w" ? "b" : "w"];
@@ -1422,6 +1426,10 @@ function GamePage() {
                           walnutSquares: zone.walnut,
                           bananaSquares: zone.banana,
                           lockedSquares: zone.locked,
+                          barredSquares: zone.barred,
+                          kingSafeSquares: fxZone.kingSafeSquares,
+                          pawnClampSquares: fxZone.pawnClampSquares,
+                          stunSquares: fxZone.stunSquares,
                         }
                   }
                   lastMove={lastMoveForDisplay}

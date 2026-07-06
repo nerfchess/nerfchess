@@ -2554,8 +2554,8 @@ const TIER7: Buff[] = [
     lineSweep("q", ALL_DIRS, null),
   ),
   def(
-    { id: "time_freeze", name: "Time Freeze", description: "Your opponent skips their next three turns, once.", tier: 7, category: "tempo" },
-    skipOpponent(3),
+    { id: "time_freeze", name: "Time Freeze", description: "Your opponent skips their next two turns, once.", tier: 7, category: "tempo" },
+    skipOpponent(2),
   ),
   def(
     { id: "fortress_realm", name: "Fortress Realm", description: "A 3x3 zone you pick makes your pieces uncapturable for 4 turns.", tier: 7, category: "protection", boon: true },
@@ -2580,8 +2580,8 @@ const TIER7: Buff[] = [
     ),
   ),
   def(
-    { id: "onslaught", name: "Onslaught", description: "Take four consecutive moves, once.", tier: 7, category: "tempo" },
-    extraMovesNow(3),
+    { id: "onslaught", name: "Onslaught", description: "Take three consecutive moves, once.", tier: 7, category: "tempo" },
+    extraMovesNow(2),
   ),
   def(
     { id: "buff_plunder", name: "Buff Plunder", description: "Steal three active buffs from your opponent. Locked-in upgrades stay put.", tier: 7, category: "draft" },
@@ -2823,7 +2823,7 @@ const TIER8: Buff[] = [
     barLine("file", null, 3),
   ),
   def(
-    { id: "queens_apocalypse", name: "Queen's Apocalypse", description: "Your queen wipes every enemy piece off the board except the king, once. Requires a queen.", tier: 8, category: "attack" },
+    { id: "queens_apocalypse", name: "Queen's Apocalypse", description: "Your queen wipes every enemy piece off the board except their king and queen, once. Requires a queen.", tier: 8, category: "attack" },
     activated(
       (_inst, api, picks) =>
         picks.length > 0
@@ -2836,14 +2836,15 @@ const TIER8: Buff[] = [
       (_inst, api, picks) => {
         if (picks[0]?.square == null) return;
         for (const sq of mySquares(api.board, api.opp)) {
-          if (api.board.pieces[sq]!.type !== "k") api.removePiece(sq);
+          const t = api.board.pieces[sq]!.type;
+          if (t !== "k" && t !== "q") api.removePiece(sq);
         }
       },
     ),
   ),
   def(
-    { id: "time_prison", name: "Time Prison", description: "Your opponent skips their next four turns, once.", tier: 8, category: "tempo" },
-    skipOpponent(4),
+    { id: "time_prison", name: "Time Prison", description: "Your opponent skips their next three turns, once.", tier: 8, category: "tempo" },
+    skipOpponent(3),
   ),
   def(
     { id: "divine_fortress", name: "Divine Fortress", description: "Your entire half of the board makes your pieces uncapturable for 3 turns.", tier: 8, category: "protection" },
@@ -2853,8 +2854,8 @@ const TIER8: Buff[] = [
     ),
   ),
   def(
-    { id: "blitzkrieg", name: "Blitzkrieg", description: "Take five consecutive moves, once.", tier: 8, category: "tempo" },
-    extraMovesNow(4),
+    { id: "blitzkrieg", name: "Blitzkrieg", description: "Take four consecutive moves, once.", tier: 8, category: "tempo" },
+    extraMovesNow(3),
   ),
   def(
     { id: "total_plunder", name: "Total Plunder", description: "Steal all your opponent's active buffs except locked-in upgrades.", tier: 8, category: "draft" },

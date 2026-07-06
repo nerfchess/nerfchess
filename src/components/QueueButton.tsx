@@ -143,7 +143,7 @@ export function QueueButton() {
       <div className="flex items-center gap-2.5">
         <span
           aria-hidden
-          className="grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-gold/40 bg-gold/10 text-gold-leaf"
+          className="grid h-8 w-8 shrink-0 place-items-center border border-gold/40 bg-gold/10 text-gold-leaf"
         >
           <Swords size={15} />
         </span>
@@ -156,7 +156,7 @@ export function QueueButton() {
         <div className="mt-4 flex flex-col items-start gap-2">
           <Link
             href="/login?next=/lobby"
-            className="inline-block px-6 py-3 rounded-full btn-leaf font-display text-base"
+            className="inline-block px-6 py-3 btn-leaf font-display text-base"
           >
             Sign in to play online
           </Link>
@@ -165,14 +165,14 @@ export function QueueButton() {
       ) : state === "searching" ? (
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
           <span className="flex items-center gap-2 text-sm text-parchment-200">
-            <span className="w-2 h-2 rounded-full bg-verdigris animate-flicker" />
+            <span className="w-2 h-2 bg-verdigris animate-flicker" />
             Finding a{" "}
             <span className={mode === "nerf" ? "text-mode-nerfGlow" : "text-mode-buffGlow"}>
               {mode === "nerf" ? "Nerf" : "Buff"}
             </span>{" "}
             opponent… ({selected.label})
           </span>
-          <button onClick={cancelSearch} className="px-4 py-2 rounded-full btn-ghost text-sm font-display">
+          <button onClick={cancelSearch} className="px-4 py-2 btn-ghost text-sm font-display">
             Cancel
           </button>
         </div>
@@ -215,7 +215,7 @@ export function QueueButton() {
                     title={`${category.label} · ${option.label}`}
                     aria-pressed={isSelected}
                     className={
-                      "flex flex-col items-center gap-0.5 rounded-lg border px-1 py-2 transition " +
+                      "flex flex-col items-center gap-0.5 border px-1 py-2 transition " +
                       (isSelected
                         ? "border-gold bg-gold/15 text-gold-leaf"
                         : "border-white/10 text-parchment-200 hover:border-white/30 hover:bg-white/5")
@@ -238,11 +238,11 @@ export function QueueButton() {
             onClick={() => mode && startSearch(mode)}
             disabled={!mode}
             className={
-              "mt-4 w-full rounded-xl border px-8 py-4 font-display text-xl sm:text-2xl font-semibold transition-all duration-150 motion-safe:enabled:hover:-translate-y-0.5 motion-safe:enabled:active:scale-[0.98] " +
+              "mt-4 w-full border px-8 py-4 font-display text-xl sm:text-2xl font-semibold transition-all duration-150 motion-safe:enabled:hover:-translate-y-0.5 motion-safe:enabled:active:scale-[0.98] " +
               (mode === "nerf"
-                ? "border-mode-nerf/70 bg-mode-nerf/20 text-mode-nerfGlow shadow-nerf hover:border-mode-nerf hover:bg-mode-nerf/30"
+                ? "border-mode-nerf bg-mode-nerf/20 text-mode-nerfGlow hover:bg-mode-nerf/30"
                 : mode === "buff"
-                  ? "border-mode-buff/70 bg-mode-buff/20 text-mode-buffGlow shadow-buff hover:border-mode-buff hover:bg-mode-buff/30"
+                  ? "border-mode-buff bg-mode-buff/20 text-mode-buffGlow hover:bg-mode-buff/30"
                   : "cursor-not-allowed border-white/10 bg-white/5 text-parchment-400")
             }
           >
@@ -280,18 +280,18 @@ function ModeCard({
   const identity =
     mode === "nerf"
       ? {
-          // Selected pops HARD: a thick mode-colored ring around the whole
-          // card, a deeper fill, the mode glow, a lift, and a check badge in
-          // the corner, so the chosen mode is unmistakable before Play.
+          // Selected reads as border emphasis: the full mode-colored border,
+          // an inset ring doubling it, a deeper fill, and a check badge, so
+          // the chosen mode is unmistakable before Play.
           card: selected
-            ? "border-mode-nerf bg-mode-nerf/20 shadow-nerf ring-[3px] ring-mode-nerf scale-[1.03] -translate-y-0.5"
+            ? "border-mode-nerf bg-mode-nerf/20 ring-2 ring-inset ring-mode-nerf"
             : "border-mode-nerf/30 bg-mode-nerf/5 [@media(hover:hover)]:hover:border-mode-nerf/60 [@media(hover:hover)]:hover:bg-mode-nerf/10",
           title: "text-mode-nerfGlow",
           badge: "bg-mode-nerf",
         }
       : {
           card: selected
-            ? "border-mode-buff bg-mode-buff/20 shadow-buff ring-[3px] ring-mode-buff scale-[1.03] -translate-y-0.5"
+            ? "border-mode-buff bg-mode-buff/20 ring-2 ring-inset ring-mode-buff"
             : "border-mode-buff/30 bg-mode-buff/5 [@media(hover:hover)]:hover:border-mode-buff/60 [@media(hover:hover)]:hover:bg-mode-buff/10",
           title: "text-mode-buffGlow",
           badge: "bg-mode-buff",
@@ -302,7 +302,7 @@ function ModeCard({
       onClick={onClick}
       aria-pressed={selected}
       className={
-        "plate relative p-4 sm:p-5 text-left border transition-all duration-200 touch-manipulation will-change-transform " +
+        "plate corner-cut relative p-4 sm:p-5 text-left border transition-all duration-200 touch-manipulation " +
         identity.card +
         (dimmed ? " opacity-55 saturate-[0.85]" : "")
       }
@@ -311,7 +311,7 @@ function ModeCard({
         <span
           aria-hidden
           className={
-            "absolute -right-2 -top-2 grid h-6 w-6 place-items-center rounded-full text-white shadow-lg " +
+            "absolute right-2 top-2 grid h-6 w-6 place-items-center text-white " +
             identity.badge
           }
         >
@@ -370,7 +370,7 @@ function RulePreviews() {
   );
 }
 
-// One tiny rule card: rounded, tinted and ringed by its tier, name beside the
+// One tiny rule card: tinted and ringed by its tier, name beside the
 // tier numeral, description clamped to two lines. Matches the home page's
 // example-card treatment at a smaller size.
 function MiniRuleCard({ name, description, tier }: { name: string; description: string; tier: number }) {

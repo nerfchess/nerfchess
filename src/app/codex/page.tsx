@@ -18,6 +18,7 @@ import {
   hasActiveFilters,
   type CodexFilters,
 } from "@/lib/nerfFilter";
+import { cardText, hydrateCardText } from "@/lib/cardText";
 
 import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
 
@@ -84,6 +85,27 @@ export default function CodexPage() {
   const [library, setLibrary] = useState<Library>("rules");
   const hydrated = useRef(false);
   const initialSearch = useRef<string | null>(null);
+  // Moderator card overrides (name/description/flavor/tier), fetched once
+  // from /api/cards. Until (or unless) they land, the code libraries render
+  // as-is, so the codex never waits on the network.
+  const [nerfSource, setNerfSource] = useState(ALL_NERFS);
+  const [buffLists, setBuffLists] = useState(BUFF_LIST);
+
+  useEffect(() => {
+    let alive = true;
+    hydrateCardText().then((any) => {
+      if (!alive || !any) return;
+      setNerfSource(ALL_NERFS.map((d) => cardText("nerf", d)));
+      setBuffLists({
+        buffs: PLAIN_BUFFS.map((b) => cardText("buff", b)),
+        hexes: HEX_CARDS.map((b) => cardText("buff", b)),
+        boons: BOON_CARDS.map((b) => cardText("buff", b)),
+      });
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   // Initialise from the URL on mount so links / refreshes restore filters.
   // The search string is cached because the mirror effect below may rewrite
@@ -101,11 +123,11 @@ export default function CodexPage() {
     window.history.replaceState(null, "", qs ? `?${qs}` : window.location.pathname);
   }, [filters]);
 
-  const filtered = useMemo(() => filterAndSortNerfs(ALL_NERFS, filters), [filters]);
+  const filtered = useMemo(() => filterAndSortNerfs(nerfSource, filters), [filters, nerfSource]);
 
   // The buff-family libraries reuse the same search, tier filter, and sort
   // ids so every library reads the same way: easy/brutal map to tier order.
-  const buffSource = library === "rules" ? PLAIN_BUFFS : BUFF_LIST[library];
+  const buffSource = library === "rules" ? buffLists.buffs : buffLists[library];
   const buffFiltered = useMemo(() => {
     const q = filters.search.trim().toLowerCase();
     const list = buffSource.filter(

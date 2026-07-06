@@ -75,26 +75,26 @@ export const HEXES_T8: Buff[] = [
     freezeAllEnemies(3),
   ),
 
-  // --- petrify all: every minor piece, knights and bishops, for 3 turns ----
+  // --- petrify all: every minor piece, knights and bishops, for 4 turns ----
   H(
     {
       id: "petrified_forest",
       name: "Petrified Forest",
-      description: "Your opponent's knights and bishops turn to walnuts and cannot move for 5 of their turns.",
+      description: "Your opponent's knights and bishops turn to walnuts and cannot move for 4 of their turns.",
       flavor: "Every horse and prelate grown into ancient stone timber.",
     },
-    walnutAll(["n", "b"], 5),
+    walnutAll(["n", "b"], 4),
   ),
 
-  // --- petrify one targeted piece (any non-king) for 6 turns --------------
+  // --- petrify one targeted piece (any non-king) for 5 turns --------------
   H(
     {
       id: "medusa_stare",
       name: "Basilisk's Stare",
-      description: "Turn one enemy piece you target into a walnut so it cannot move for 6 of their turns. Kings cannot be targeted.",
+      description: "Turn one enemy piece you target into a walnut so it cannot move for 5 of their turns. Kings cannot be targeted.",
       flavor: "Meet its eyes once and you are a garden ornament.",
     },
-    walnutTarget(6),
+    walnutTarget(5),
   ),
 
   // --- no_pawn_advance: pawns nailed down for 8 turns (near-permanent) -----
@@ -171,15 +171,15 @@ export const HEXES_T8: Buff[] = [
     ),
   ),
 
-  // --- freeze one targeted piece for 6 turns ------------------------------
+  // --- freeze one targeted piece for 5 turns ------------------------------
   H(
     {
       id: "everfrost_shard",
       name: "Everfrost Shard",
-      description: "Freeze one enemy piece you target so it cannot move for 6 of their turns. Kings cannot be targeted.",
+      description: "Freeze one enemy piece you target so it cannot move for 5 of their turns. Kings cannot be targeted.",
       flavor: "A splinter of unmelting winter driven straight through it.",
     },
-    freezeTarget(6),
+    freezeTarget(5),
   ),
 
   // --- draft denial: opponent's next 3 drafts arrive nullified ------------

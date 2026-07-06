@@ -8,10 +8,12 @@ import {
   AccentColor,
   BOARD_THEMES,
   BoardTheme,
+  CUSTOM_BG_URL_MAX,
   DEFAULT_SETTINGS,
   PIECE_THEMES,
   PieceTheme,
   loadSettings,
+  sanitizeCustomBgUrl,
   saveSettings,
   Settings,
 } from "@/lib/settings";
@@ -135,6 +137,14 @@ export function SettingsPanel({ open, onClose }: Props) {
             onSelect={(id) => update({ accentColor: id as AccentColor })}
           />
         );
+      case "customBg":
+        return (
+          <CustomBackgroundControl
+            url={settings.customBgUrl}
+            dim={settings.customBgDim}
+            onApply={(patch) => update(patch)}
+          />
+        );
       case "boardTheme":
         return <BoardThemePicker value={settings.boardTheme} onChange={(t) => update({ boardTheme: t })} />;
       case "pieceTheme":
@@ -155,7 +165,10 @@ export function SettingsPanel({ open, onClose }: Props) {
 
   // Pickers span a full row; simple controls sit inline on the right.
   const isStacked = (control: Control) =>
-    control.kind === "boardTheme" || control.kind === "pieceTheme" || control.kind === "account";
+    control.kind === "boardTheme" ||
+    control.kind === "pieceTheme" ||
+    control.kind === "account" ||
+    control.kind === "customBg";
 
   const activeSection = SECTIONS.find((s) => s.id === activeTab) ?? SECTIONS[0];
 
@@ -223,6 +236,87 @@ export function SettingsPanel({ open, onClose }: Props) {
             ))}
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+/** Custom background: URL field with Apply/Clear plus a dim slider. The URL is
+ *  validated (http(s), length-capped) before it is persisted; a bad value is
+ *  never written, so the page background always degrades to the theme default. */
+function CustomBackgroundControl({
+  url,
+  dim,
+  onApply,
+}: {
+  url: string;
+  dim: number;
+  onApply: (patch: Partial<Settings>) => void;
+}) {
+  const [draft, setDraft] = useState(url);
+  const [invalid, setInvalid] = useState(false);
+
+  // Track external changes (reset, server sync) while the panel is open.
+  useEffect(() => {
+    setDraft(url);
+    setInvalid(false);
+  }, [url]);
+
+  const apply = () => {
+    const clean = sanitizeCustomBgUrl(draft);
+    if (draft.trim() && !clean) {
+      setInvalid(true);
+      return;
+    }
+    setInvalid(false);
+    onApply({ customBgUrl: clean });
+  };
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-2">
+        <input
+          type="url"
+          value={draft}
+          maxLength={CUSTOM_BG_URL_MAX}
+          placeholder="https://example.com/image.jpg"
+          aria-label="Background image URL"
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              apply();
+            }
+          }}
+          className="w-full rounded border border-white/15 bg-ink-900/60 px-2.5 py-1.5 text-[12px] text-parchment placeholder:text-parchment-500 focus:border-gold/60 focus:outline-none"
+        />
+        <GhostButton label="Apply" onClick={apply} />
+        {url && (
+          <GhostButton
+            label="Clear"
+            onClick={() => {
+              setDraft("");
+              setInvalid(false);
+              onApply({ customBgUrl: "" });
+            }}
+          />
+        )}
+      </div>
+      {invalid && (
+        <p className="text-[11px] text-oxblood-glow">Use a direct http(s) image link.</p>
+      )}
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-[11px] text-parchment-500">Dim</span>
+        <Slider
+          label="Background dim"
+          value={dim}
+          min={0}
+          max={0.6}
+          step={0.05}
+          disabled={!url}
+          format={(v) => `${Math.round(v * 100)}%`}
+          onChange={(v) => onApply({ customBgDim: v })}
+        />
       </div>
     </div>
   );

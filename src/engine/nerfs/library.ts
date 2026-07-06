@@ -221,11 +221,13 @@ export function getNerfsByTier(tier: Tier): Nerf[] {
 // players' nerfs must sit within one difficulty tier of each other, so one
 // side is never stuck with "Unhinged" while the other plays "Trivial".
 // `rand(max)` returns an int in [0, max); callers supply their own RNG
-// (crypto on the worker, Math.random on the dev server).
+// (crypto on the worker, Math.random on the dev server). `pool` lets the
+// game server draw from a narrowed pool (moderator-disabled nerfs removed);
+// it must be non-empty and defaults to the full opening pool.
 export function pickNerfPair(
   rand: (max: number) => number = (max) => Math.floor(Math.random() * max),
+  pool: Nerf[] = openingNerfPool(),
 ): { whiteNerfId: string; blackNerfId: string } {
-  const pool = openingNerfPool();
   const first = pool[rand(pool.length)];
   const partners = pool.filter((nerf) => Math.abs(nerf.tier - first.tier) <= 1);
   const second = partners[rand(partners.length)];

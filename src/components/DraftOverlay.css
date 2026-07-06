@@ -1,66 +1,145 @@
 /* ============================================================================
-   Draft overlay effects (scoped) — glassy card treatment + tier-scaled reveal.
+   Draft overlay effects (scoped) - deal/flip machinery + quiet tier accents.
 
    Owned by DraftOverlay.tsx; imported there and by BuffDock.tsx (which uses
-   the dock pocket flash below). Deliberately kept OUT of
-   globals.css (another lane owns that file). Everything here layers on top of
-   the existing `.draft-face` / `.tier-bg-N` treatment without redefining it:
-   the shells add a frosted rim, a one-shot reveal sweep, and a persistent glow
-   whose drama scales with the card's tier.
+   the dock pocket flash below). Deliberately kept OUT of globals.css (another
+   lane owns that file). Everything layers on top of the existing `.draft-face`
+   / `.tier-bg-N` treatment without redefining it.
 
-   Drama scales with tier via two custom properties set per shell:
-     --fx        0..1 intensity (how strong the glow / sweep read)
-     --tier-rgb  the card's tier color, mirrored so the glow tints correctly
+   Design law (deslop): 1px radii everywhere, structure over glow. Cards read
+   through edges: a solid tier-colored outline on hover/select plus a hard dark
+   drop, no colored bloom. Tier drama scales two custom properties per shell:
+     --fx        0..1 intensity (how strong the accents read)
+     --tier-rgb  the card's tier color
 
    Performance: animation touches only `transform` and `opacity` (GPU-cheap),
    never box-shadow or filter in a keyframe. Effects live on max ~3 cards at a
-   time, so this stays smooth on mobile. All motion is gated behind
-   prefers-reduced-motion: the glass + static glow survive, the motion does not.
+   time. All motion is gated behind prefers-reduced-motion.
    ============================================================================ */
 
 .draft-fx {
   position: relative;
   isolation: isolate;
-  /* Match the pickable card's 14px candy corners so the glow ring and the
-     sheen clip (both border-radius: inherit) hug the card exactly. */
-  border-radius: 14px;
-  transition: transform 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  border-radius: 1px;
 }
 
-/* Draftable faces run a touch more saturated than the resting .draft-face in
-   globals: a stronger top-lit tier wash and a deeper inner bloom, so the offer
-   reads like candy while dock/codex cards keep the calmer base treatment. */
+/* Draft faces keep the calm base .draft-face treatment from globals; only the
+   corners are squared here. */
 .draft-fx .draft-face {
-  border-radius: 14px;
-  background-image:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0) 44%),
-    radial-gradient(135% 100% at 50% -8%, rgb(var(--tier-rgb, 216 181 110) / 0.22), transparent 66%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    inset 0 0 48px -18px rgb(var(--tier-rgb, 216 181 110) / 0.75);
+  border-radius: 1px;
 }
 
-/* Selected-for-confirm state: a firm gold ring plus a slight permanent lift,
-   so the picked card visibly steps forward from its siblings. */
-.draft-fx--selected {
-  transform: translateY(-3px);
+/* Border-first hover: a solid tier-colored outline and a hard dark drop.
+   Overrides the colored bloom `.draft-face:hover` would otherwise add. */
+@media (hover: hover) {
+  .draft-fx .draft-face:hover {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.12),
+      0 0 0 2px rgb(var(--tier-rgb, 216 181 110) / 0.9),
+      0 14px 28px -14px rgba(0, 0, 0, 0.85);
+  }
 }
+
+/* Selected-for-confirm state: a firm gold outline over a thin tier line, and
+   a hard dark drop. The lift itself is animated by the shell (framer). */
 .draft-fx--selected .draft-fx__glow {
   opacity: 1;
   box-shadow:
-    0 0 0 2px rgb(216 181 110 / 0.9),
-    0 0 0 1px rgb(var(--tier-rgb, 216 181 110) / 0.55),
-    0 14px 44px -14px rgb(var(--tier-rgb, 216 181 110) / 0.9);
+    0 0 0 2px rgb(var(--accent-hi-rgb, 216 181 110) / 0.95),
+    0 0 0 3px rgb(var(--tier-rgb, 216 181 110) / 0.4),
+    0 12px 26px -14px rgba(0, 0, 0, 0.85);
 }
 
-/* The floating draft timer: a frosted glass chip with a draining ring. Kept
-   separate from the card panel so time pressure reads at a glance. */
+/* ---------------------------------------------------------------------------
+   3D deal-and-flip: the shell (framer) flies the card from the deck stack to
+   its slot; this inner wrapper rotates on Y to reveal the face. The back is a
+   quiet ink panel: thin gold border, hairline inner frame, tier numeral
+   watermark. No gradients. */
+.draft-deal-grid {
+  perspective: 1200px;
+}
+.draft-flip {
+  position: relative;
+  height: 100%;
+  transform-style: preserve-3d;
+}
+.draft-card-front {
+  height: 100%;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.draft-card-back {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: rotateY(180deg);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border-radius: 1px;
+  border: 1px solid rgb(216 181 110 / 0.3);
+  background: #16130f;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.5);
+}
+.draft-card-back::before {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border: 1px solid rgb(216 181 110 / 0.14);
+}
+.draft-card-back__numeral {
+  font-size: 46px;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  opacity: 0.3;
+}
+
+/* ---------------------------------------------------------------------------
+   Category silhouettes: a subtle per-category top-edge cut (4-8px geometry)
+   so a hand of cards can be told apart by shape as well as icon. Applied to
+   both faces so the back matches the front during the flip. Cuts stay well
+   inside the card's 16px text padding. */
+.draft-fx[data-cat="hex"] .draft-face,
+.draft-fx[data-cat="hex"] .draft-card-back {
+  /* Shallow inverted-V notch at the top center. */
+  clip-path: polygon(
+    0 0, calc(50% - 14px) 0, 50% 7px, calc(50% + 14px) 0,
+    100% 0, 100% 100%, 0 100%
+  );
+}
+.draft-fx[data-cat="protection"] .draft-face,
+.draft-fx[data-cat="protection"] .draft-card-back {
+  /* Shield taper: both top corners eased at 45 degrees. */
+  clip-path: polygon(
+    0 7px, 7px 0, calc(100% - 7px) 0, 100% 7px,
+    100% 100%, 0 100%
+  );
+}
+.draft-fx[data-cat="item"] .draft-face,
+.draft-fx[data-cat="item"] .draft-card-back {
+  /* Chamfer: the signature corner-cut, top-left and bottom-right. */
+  clip-path: polygon(
+    8px 0, 100% 0, 100% calc(100% - 8px),
+    calc(100% - 8px) 100%, 0 100%, 0 8px
+  );
+}
+.draft-fx[data-cat="attack"] .draft-face,
+.draft-fx[data-cat="attack"] .draft-card-back {
+  /* Sharp diagonal strike off the top-right corner. */
+  clip-path: polygon(
+    0 0, calc(100% - 16px) 0, 100% 10px,
+    100% 100%, 0 100%
+  );
+}
+
+/* The floating draft timer: a flat ink chip, hard edges, quiet urgency. */
 .draft-timer {
-  border-radius: 14px;
-  background: linear-gradient(180deg, rgba(48, 45, 41, 0.85), rgba(28, 26, 23, 0.85));
+  border-radius: 1px;
+  background: rgba(32, 30, 26, 0.88);
   border: 1px solid rgba(255, 255, 255, 0.14);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
     0 18px 50px -20px rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
@@ -69,7 +148,7 @@
   border-color: rgba(220, 90, 84, 0.55);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    0 0 26px -8px rgba(220, 90, 84, 0.55),
+    0 0 18px -10px rgba(220, 90, 84, 0.3),
     0 18px 50px -20px rgba(0, 0, 0, 0.85);
   animation: draft-timer-urgent 1s ease-in-out infinite;
 }
@@ -83,13 +162,14 @@
 
 /* ---------------------------------------------------------------------------
    Draft panel frame: the seam gradient (warm Nerf terracotta to cool Buff sky)
-   drawn as a hairline rim around the panel, plus a faint ambient halo, so the
-   draft moment reads as an event without shouting. The rim is painted with a
-   masked overlay (only the outer 1.5px survives), which stays correct over the
-   plate's translucent background in both themes. */
+   drawn as a 1px hairline rim around the panel, thin and quiet. The rim is
+   painted with a masked overlay (only the outer 1px survives), which stays
+   correct over the plate's translucent background in both themes. The frame
+   also wears the chamfered corner-cut (globals), so the rim vanishes along the
+   cut corners and the plate's inset hairline carries the edge there. */
 .draft-frame {
   position: relative;
-  border-radius: 16px;
+  border-radius: 1px;
 }
 .draft-frame::before {
   content: "";
@@ -97,53 +177,41 @@
   inset: 0;
   z-index: 3;
   border-radius: inherit;
-  padding: 1.5px;
+  padding: 1px;
   pointer-events: none;
   background: linear-gradient(
     120deg,
-    rgb(var(--seam-warm-rgb) / 0.7),
-    rgba(216, 181, 110, 0.45) 48%,
-    rgb(var(--seam-cool-rgb) / 0.7)
+    rgb(var(--seam-warm-rgb) / 0.45),
+    rgba(216, 181, 110, 0.28) 48%,
+    rgb(var(--seam-cool-rgb) / 0.45)
   );
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   mask-composite: exclude;
 }
-.draft-frame::after {
-  content: "";
-  position: absolute;
-  inset: -1px;
-  border-radius: inherit;
-  pointer-events: none;
-  box-shadow:
-    0 0 64px -20px rgb(var(--seam-cool-rgb) / 0.35),
-    0 26px 80px -30px rgba(0, 0, 0, 0.85);
-}
-/* The scrolling plate inside the frame matches the frame's rounding so the
-   rim sits flush on the panel edge (a refined double border: the plate's own
-   hairline just inside the gradient rim). */
+/* The scrolling plate inside the frame: hard 1px corners to match. */
 .draft-panel {
-  border-radius: 16px;
+  border-radius: 1px;
 }
 
 /* ---------------------------------------------------------------------------
-   Dock pocket flash: the "Latest" slot in the buff dock blinks a brief
-   mint-to-sun glow when a fresh card lands in the pocket. Remounting the slot
-   (React key on the card counts) replays it. Opacity/box-shadow only, one
-   shot, and fully dropped under prefers-reduced-motion. */
+   Dock pocket flash: the "Latest" slot in the buff dock blinks briefly when a
+   fresh card lands in the pocket. Remounting the slot (React key on the card
+   counts) replays it. Opacity/box-shadow only, one shot, and fully dropped
+   under prefers-reduced-motion. Amplitude halved per the deslop pass. */
 @keyframes dock-pocket-flash {
   0% {
     box-shadow: inset 0 0 0 1px rgb(125 220 183 / 0), 0 0 0 -6px rgb(125 220 183 / 0);
     background-color: rgb(125 220 183 / 0);
   }
   18% {
-    box-shadow: inset 0 0 0 1px rgb(125 220 183 / 0.65), 0 0 20px -6px rgb(125 220 183 / 0.7);
-    background-color: rgb(125 220 183 / 0.1);
+    box-shadow: inset 0 0 0 1px rgb(125 220 183 / 0.35), 0 0 12px -6px rgb(125 220 183 / 0.35);
+    background-color: rgb(125 220 183 / 0.06);
   }
   55% {
-    box-shadow: inset 0 0 0 1px rgb(255 217 126 / 0.4), 0 0 16px -8px rgb(255 217 126 / 0.5);
-    background-color: rgb(255 217 126 / 0.05);
+    box-shadow: inset 0 0 0 1px rgb(255 217 126 / 0.2), 0 0 10px -8px rgb(255 217 126 / 0.25);
+    background-color: rgb(255 217 126 / 0.03);
   }
   100% {
     box-shadow: inset 0 0 0 1px rgb(255 217 126 / 0), 0 0 0 -8px rgb(255 217 126 / 0);
@@ -158,8 +226,8 @@
 }
 
 /* Tier color + intensity table. Mirrors the tier palette used by tier-bg-N in
-   globals.css so the glow tints match the card face. --fx ramps the drama:
-   tiers 1-2 stay calm, 7-8 go dramatic. */
+   globals.css so the edge accents match the card face. --fx ramps the drama:
+   tiers 1-2 stay calm, 7-8 firm up. */
 .draft-fx[data-tier="1"] { --tier-rgb: 126 181 154; --fx: 0.00; }
 .draft-fx[data-tier="2"] { --tier-rgb: 139 169 196; --fx: 0.12; }
 .draft-fx[data-tier="3"] { --tier-rgb: 216 181 110; --fx: 0.30; }
@@ -169,27 +237,27 @@
 .draft-fx[data-tier="7"] { --tier-rgb: 168 119 216; --fx: 0.92; }
 .draft-fx[data-tier="8"] { --tier-rgb: 224 82 82;   --fx: 1.00; }
 
-/* Persistent tier glow: a soft halo behind the card, opacity driven by --fx so
-   low tiers show almost nothing and top tiers bloom. Static box-shadow, only
-   opacity is ever animated (see the pulse below), which keeps it cheap. */
+/* Persistent tier edge: a thin tier-colored line plus a modest dark-tinted
+   drop behind the card, opacity driven by --fx. Amplitude roughly halved from
+   the pre-deslop bloom; the color lives on the edge, not in the air. */
 .draft-fx__glow {
   position: absolute;
   inset: -2px;
   z-index: 0;
   pointer-events: none;
   border-radius: inherit;
-  opacity: calc(0.25 + var(--fx, 0) * 0.75);
+  opacity: calc(0.12 + var(--fx, 0) * 0.38);
   box-shadow:
-    0 0 0 1px rgb(var(--tier-rgb, 216 181 110) / calc(var(--fx, 0) * 0.55)),
-    0 10px 40px -14px rgb(var(--tier-rgb, 216 181 110) / calc(var(--fx, 0) * 0.85));
+    0 0 0 1px rgb(var(--tier-rgb, 216 181 110) / calc(var(--fx, 0) * 0.3)),
+    0 10px 32px -16px rgb(var(--tier-rgb, 216 181 110) / calc(var(--fx, 0) * 0.42));
 }
 
 /* Top-tier ambient breathing: only tiers where --fx is high read the pulse,
    and even then it is a slow, low-amplitude opacity drift (no layout, no
-   box-shadow animation). Calm tiers keep a flat glow. */
+   box-shadow animation). Calm tiers keep a flat edge. */
 @keyframes draft-fx-pulse {
-  0%, 100% { opacity: calc(0.25 + var(--fx, 0) * 0.55); }
-  50%      { opacity: calc(0.25 + var(--fx, 0) * 0.95); }
+  0%, 100% { opacity: calc(0.12 + var(--fx, 0) * 0.28); }
+  50%      { opacity: calc(0.12 + var(--fx, 0) * 0.48); }
 }
 .draft-fx[data-tier="6"] .draft-fx__glow,
 .draft-fx[data-tier="7"] .draft-fx__glow,
@@ -197,10 +265,10 @@
   animation: draft-fx-pulse 3.2s ease-in-out infinite;
 }
 
-/* One-shot reveal sweep: a diagonal light band that crosses the card once when
-   it enters. Clipped to the card bounds by the shell's rounded overflow. The
-   band's brightness scales with --fx; low tiers get a faint pass, top tiers a
-   bright shimmer. Uses transform only. */
+/* One-shot shine pass: a single diagonal light band that crosses the card
+   once, right after its flip reveal (--reveal-delay is set per card by the
+   overlay from the deal choreography). Subtle by design: brightness scales
+   with --fx at half the pre-deslop amplitude. Uses transform only. */
 .draft-fx__sheen {
   position: absolute;
   inset: 0;
@@ -220,16 +288,14 @@
   background: linear-gradient(
     90deg,
     transparent,
-    rgb(255 255 255 / calc(0.10 + var(--fx, 0) * 0.35)),
-    rgb(var(--tier-rgb, 216 181 110) / calc(var(--fx, 0) * 0.30)),
+    rgb(255 255 255 / calc(0.05 + var(--fx, 0) * 0.18)),
+    rgb(var(--tier-rgb, 216 181 110) / calc(var(--fx, 0) * 0.15)),
     transparent
   );
   opacity: 0;
 }
 
-/* Sweep timing scales with drama: calm tiers get a slow, faint pass (or none),
-   dramatic tiers a quicker, brighter one. The delay lets the card's own
-   entrance settle first. Only tiers 3+ sweep at all. */
+/* Only tiers 3+ shine at all, and only once. */
 @keyframes draft-fx-sheen {
   0%   { transform: translateX(-40%) rotate(18deg); opacity: 0; }
   12%  { opacity: 1; }
@@ -241,41 +307,27 @@
 .draft-fx[data-tier="6"] .draft-fx__sheen::before,
 .draft-fx[data-tier="7"] .draft-fx__sheen::before,
 .draft-fx[data-tier="8"] .draft-fx__sheen::before {
-  animation: draft-fx-sheen 1.15s cubic-bezier(0.3, 0.7, 0.2, 1) both;
-  animation-delay: calc(var(--enter-delay, 0ms) + 260ms);
-}
-/* Top tiers sweep a second time, faster, for an extra glint. */
-.draft-fx[data-tier="7"] .draft-fx__sheen::before,
-.draft-fx[data-tier="8"] .draft-fx__sheen::before {
-  animation-iteration-count: 2;
-  animation-duration: 1.05s;
+  animation: draft-fx-sheen 0.9s cubic-bezier(0.3, 0.7, 0.2, 1) both;
+  animation-delay: var(--reveal-delay, 700ms);
 }
 
-/* Keep the real card above the glow but below the sheen. */
+/* Keep the real card above the tier edge but below the shine. */
 .draft-fx > :not(.draft-fx__glow):not(.draft-fx__sheen) {
   position: relative;
   z-index: 1;
 }
 
-/* Hover lift now belongs to the card itself (.card-juicy on the pickable
-   BuffCard): the shell no longer translates on hover, so the pop and the
-   tier ring travel together instead of the card sliding out of its glow. */
-
-/* Respect reduced motion: drop every sweep, pulse, and hover translate. The
-   frosted glass and a calm static glow remain so the cards still read as
-   premium, just still. */
+/* Respect reduced motion: drop every shine and pulse. The structure (edges,
+   the static tier line) remains so the cards still read, just still. The
+   deal/flip/bank choreography is skipped in the component itself via
+   useReducedMotion. */
 @media (prefers-reduced-motion: reduce) {
-  .draft-fx,
-  .draft-fx:hover {
-    transition: none;
-    transform: none;
-  }
   .draft-fx__glow,
   .draft-fx[data-tier="6"] .draft-fx__glow,
   .draft-fx[data-tier="7"] .draft-fx__glow,
   .draft-fx[data-tier="8"] .draft-fx__glow {
     animation: none;
-    opacity: calc(0.25 + var(--fx, 0) * 0.6);
+    opacity: calc(0.12 + var(--fx, 0) * 0.3);
   }
   .draft-fx__sheen::before,
   .draft-fx[data-tier="3"] .draft-fx__sheen::before,

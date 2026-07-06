@@ -87,7 +87,7 @@ export default function ClubsPage() {
     <main className="min-h-screen pb-16">
       <SiteHeader active="/clubs" />
 
-      <section className="mx-auto max-w-6xl px-5 sm:px-6">
+      <section className="mx-auto max-w-6xl px-5 pt-6 sm:px-6 sm:pt-8">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h1 className="font-display text-4xl sm:text-5xl text-parchment-50">Clubs</h1>

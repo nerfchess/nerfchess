@@ -1,13 +1,15 @@
-// Curated club identity icons: one emoji from a fixed set plus one of the
-// site's accent colors, stored on clubs.icon as "emoji|colorId" (empty string
-// means "no icon yet": the UI falls back to a monogram of the club name).
-// Keeping the set curated means every icon renders consistently everywhere
-// and nothing unpleasant can be smuggled into a club's identity.
+// Curated club identity icons: one lucide icon name from a fixed set plus one
+// of the site's accent colors, stored on clubs.icon as "iconName|colorId"
+// (empty string means "no icon yet": the UI falls back to a monogram of the
+// club name). Keeping the set curated means every icon renders consistently
+// everywhere and nothing unpleasant can be smuggled into a club's identity.
+// Legacy emoji values no longer parse; they fall back to the monogram.
 
-export const CLUB_ICON_EMOJI: readonly string[] = [
-  "♟️", "👑", "🛡️", "⚔️", "🏰", "🎯", "🎲", "🧠",
-  "⚡", "🔥", "⭐", "🌙", "🌊", "🍀", "🌸", "🎉",
-  "🐴", "🐇", "🐢", "🦊", "🐼", "🦉", "🐙", "🐉",
+export const CLUB_ICON_NAMES: readonly string[] = [
+  "Swords", "Crown", "Castle", "Shield", "Rocket", "Flame",
+  "Anchor", "Star", "Zap", "Trophy", "Gem", "Skull",
+  "Cat", "Dog", "Bird", "Fish", "Rabbit", "Turtle",
+  "Ghost", "Sun", "Moon", "Mountain", "Trees", "Dice5",
 ];
 
 export interface ClubIconColor {
@@ -29,24 +31,27 @@ export const CLUB_ICON_COLORS: readonly ClubIconColor[] = [
   { id: "rose",  label: "Rose",  hex: "#c4785f" },
 ];
 
-export function encodeClubIcon(emoji: string, colorId: string): string {
-  return `${emoji}|${colorId}`;
+export function encodeClubIcon(name: string, colorId: string): string {
+  return `${name}|${colorId}`;
 }
 
+// Parsed icon. `name` is the lucide icon name. Old stored emoji values fail
+// the CLUB_ICON_NAMES check and return null, so every consumer gracefully
+// falls back to the monogram.
 export function parseClubIcon(
   raw: string | null | undefined,
-): { emoji: string; color: ClubIconColor } | null {
+): { name: string; color: ClubIconColor } | null {
   if (!raw) return null;
   const sep = raw.indexOf("|");
   if (sep < 0) return null;
-  const emoji = raw.slice(0, sep);
+  const name = raw.slice(0, sep);
   const color = CLUB_ICON_COLORS.find((c) => c.id === raw.slice(sep + 1));
-  if (!color || !CLUB_ICON_EMOJI.includes(emoji)) return null;
-  return { emoji, color };
+  if (!color || !CLUB_ICON_NAMES.includes(name)) return null;
+  return { name, color };
 }
 
 /** Server-side validation: "" clears the icon, anything else must be a
- *  curated "emoji|colorId" pair. */
+ *  curated "iconName|colorId" pair. */
 export function isValidClubIcon(value: unknown): value is string {
   return typeof value === "string" && (value === "" || parseClubIcon(value) !== null);
 }
