@@ -145,3 +145,11 @@ Notes:
   - Watermelon Rind (boon/protection, tier 4): your whole army is uncapturable for the opponent's next 2 turns.
 - Library now 423 buffs (411 implemented), 128 hexes. tsc clean; test:rules green (unique ids, no em dashes, no soft-locks, king safety all pass).
 - Animations reuse the existing freeze / impact-flash / no-pawn-advance / shield visuals; richer per-card art can follow. Stacked on the banana branch (#201). PR #202. OPEN.
+
+---
+
+## 2026-07-05 22:52 ET (opponent plays persist: no more missing a hex)
+
+- The reveal when the opponent plays a card/hex used to be a single top-right toast that vanished after 7s, so if you looked away you missed what hit you. Replaced it with a persistent OppPlaysLog: the newest play still shows its full rule text with the entrance animation (so a hex cast on you is clear), and older plays collapse to a name+tier line but STAY (last 6). The on-board effect still animates (freeze flash, impact strike, etc.).
+- Wired in both OnlineMatch (online) and the bot game page; the old BuffUsedToast is no longer used. tsc clean.
+- Stacked on the funny-cards branch (#202). Branch claude/opp-plays-log. OPEN.
