@@ -1,7 +1,7 @@
 import { isInCheck } from "../board";
 import { NEW_HEXES } from "./hexes";
 import { CROSSREF_CARDS } from "./crossref";
-import { Buff, BuffApi, BuffCategory, BuffInstance, BuffPick } from "../buff";
+import { Buff, BuffApi, BuffCategory, BuffInstance, BuffPick, CardFx } from "../buff";
 import { Tier } from "../nerf";
 import { BoardState, Color, FILE, Move, PieceType, RANK, SQ, Square, inBoard } from "../types";
 import {
@@ -71,6 +71,9 @@ type Meta = {
   /** Light general card that also joins nerf mode's boon pool. Category
    * "nerf" cards are boons automatically and never need this flag. */
   boon?: boolean;
+  /** Board motif drawn on the affected pieces while the constraint runs.
+   * Display metadata only; never consulted by move generation. */
+  fx?: CardFx;
 };
 
 type Mech = Partial<Buff> & Pick<Buff, "kind">;
@@ -428,15 +431,15 @@ const kingAdjacentZone = (api: BuffApi) => {
 
 const TIER1: Buff[] = [
   def(
-    { id: "pawn_push", name: "Pawn Push", description: "One pawn can move two squares forward on any turn.", tier: 1, category: "movement" },
+    { id: "pawn_push", name: "Pawn Push", description: "One pawn can move two squares forward on any turn.", tier: 1, category: "movement", fx: { motif: "empower", pieces: ["p"], self: true } },
     permanentAugment(doubleStepGen),
   ),
   def(
-    { id: "wazir_rook", name: "Wazir Rook", description: "One rook may also step one square diagonally.", tier: 1, category: "movement" },
+    { id: "wazir_rook", name: "Wazir Rook", description: "One rook may also step one square diagonally.", tier: 1, category: "movement", fx: { motif: "empower", pieces: ["r"], moveAs: "k", self: true } },
     pieceBound("r", "Choose the rook", (board, sq, via) => slideMoves(board, sq, DIAG_DIRS, via, 1)),
   ),
   def(
-    { id: "ferz_king", name: "Ferz King", description: "Your king may move two squares diagonally, once per game.", tier: 1, category: "movement" },
+    { id: "ferz_king", name: "Ferz King", description: "Your king may move two squares diagonally, once per game.", tier: 1, category: "movement", fx: { motif: "empower", pieces: ["k"], moveAs: "b", self: true } },
     augment((_m, inst, api) =>
       mySquares(api.board, api.me, "k").flatMap((sq) =>
         leapMoves(api.board, sq, [[2, 2], [2, -2], [-2, 2], [-2, -2]], inst.id),
@@ -477,7 +480,7 @@ const TIER1: Buff[] = [
     }),
   ),
   def(
-    { id: "quiet_march", name: "Quiet March", description: "One pawn can move backward one square, once.", tier: 1, category: "movement" },
+    { id: "quiet_march", name: "Quiet March", description: "One pawn can move backward one square, once.", tier: 1, category: "movement", fx: { motif: "empower", pieces: ["p"], self: true } },
     augment((_m, inst, api) =>
       mySquares(api.board, api.me, "p").flatMap((sq) => {
         const back = sq - fwdOf(api.me);
@@ -492,7 +495,7 @@ const TIER1: Buff[] = [
     swapOwnPieces(["p"]),
   ),
   def(
-    { id: "little_leap", name: "Little Leap", description: "One pawn jumps a single blocking piece directly ahead, once.", tier: 1, category: "movement" },
+    { id: "little_leap", name: "Little Leap", description: "One pawn jumps a single blocking piece directly ahead, once.", tier: 1, category: "movement", fx: { motif: "empower", pieces: ["p"], self: true } },
     augment((_m, inst, api) =>
       mySquares(api.board, api.me, "p").flatMap((sq) => {
         const one = sq + fwdOf(api.me), two = sq + 2 * fwdOf(api.me);
@@ -519,7 +522,9 @@ const TIER1: Buff[] = [
     },
   ),
   def(
-    { id: "steady_hand", name: "Steady Hand", description: "Enemy knights cannot move to squares that attack your king for your opponent's next 3 turns.", tier: 1, category: "protection" },
+    // Guards the king without a shield effect, so the ward motif is the only
+    // board paint it gets.
+    { id: "steady_hand", name: "Steady Hand", description: "Enemy knights cannot move to squares that attack your king for your opponent's next 3 turns.", tier: 1, category: "protection", fx: { motif: "ward", pieces: ["k"], self: true } },
     timedOppFilter(3, (moves, _inst, api) => {
       const k = mySquares(api.board, api.me, "k")[0];
       if (k == null) return moves;
@@ -553,7 +558,7 @@ const TIER1: Buff[] = [
     reviveOne(["p"], (api) => (sq) => RANK(sq) === (api.me === "w" ? 1 : 6)),
   ),
   def(
-    { id: "diagonal_step", name: "Diagonal Step", description: "Your king moves like a bishop for one move.", tier: 1, category: "movement" },
+    { id: "diagonal_step", name: "Diagonal Step", description: "Your king moves like a bishop for one move.", tier: 1, category: "movement", fx: { motif: "empower", pieces: ["k"], moveAs: "b", self: true } },
     augment((_m, inst, api) =>
       mySquares(api.board, api.me, "k").flatMap((sq) => slideMoves(api.board, sq, DIAG_DIRS, inst.id)),
     ),
@@ -563,7 +568,7 @@ const TIER1: Buff[] = [
     shieldTarget(1),
   ),
   def(
-    { id: "tempo_shuffle", name: "Tempo Shuffle", description: "Move one pawn sideways one square, once.", tier: 1, category: "movement" },
+    { id: "tempo_shuffle", name: "Tempo Shuffle", description: "Move one pawn sideways one square, once.", tier: 1, category: "movement", fx: { motif: "empower", pieces: ["p"], self: true } },
     augment((_m, inst, api) =>
       mySquares(api.board, api.me, "p").flatMap((sq) =>
         [-1, 1].flatMap((df) => {
@@ -576,7 +581,7 @@ const TIER1: Buff[] = [
     ),
   ),
   def(
-    { id: "bishop_polish", name: "Bishop Polish", description: "One bishop can jump exactly one piece, once.", tier: 1, category: "movement" },
+    { id: "bishop_polish", name: "Bishop Polish", description: "One bishop can jump exactly one piece, once.", tier: 1, category: "movement", fx: { motif: "empower", pieces: ["b"], self: true } },
     augment((_m, inst, api) => {
       const out: Move[] = [];
       for (const sq of mySquares(api.board, api.me, "b")) {
@@ -604,7 +609,7 @@ const TIER1: Buff[] = [
     }),
   ),
   def(
-    { id: "rook_slide", name: "Rook Slide", description: "One rook moves one square diagonally, once.", tier: 1, category: "movement" },
+    { id: "rook_slide", name: "Rook Slide", description: "One rook moves one square diagonally, once.", tier: 1, category: "movement", fx: { motif: "empower", pieces: ["r"], moveAs: "k", self: true } },
     augment((_m, inst, api) =>
       mySquares(api.board, api.me, "r").flatMap((sq) => slideMoves(api.board, sq, DIAG_DIRS, inst.id, 1)),
     ),
@@ -654,7 +659,9 @@ const TIER1: Buff[] = [
     shieldTarget(1),
   ),
   def(
-    { id: "cornerstone", name: "Cornerstone", description: "Your rooks cannot be captured while on their starting squares.", tier: 1, category: "protection" },
+    // Guards the rooks without a shield effect, so the ward motif is the only
+    // board paint it gets.
+    { id: "cornerstone", name: "Cornerstone", description: "Your rooks cannot be captured while on their starting squares.", tier: 1, category: "protection", fx: { motif: "ward", pieces: ["r"], self: true } },
     oppFilter((moves, _inst, api) => {
       const hr = api.me === "w" ? 0 : 7;
       const corners = [SQ(0, hr), SQ(7, hr)].filter((sq) => {
@@ -669,7 +676,7 @@ const TIER1: Buff[] = [
     }),
   ),
   def(
-    { id: "half_step", name: "Half Step", description: "One pawn moves diagonally forward without capturing, once.", tier: 1, category: "movement" },
+    { id: "half_step", name: "Half Step", description: "One pawn moves diagonally forward without capturing, once.", tier: 1, category: "movement", fx: { motif: "empower", pieces: ["p"], self: true } },
     augment((_m, inst, api) =>
       mySquares(api.board, api.me, "p").flatMap((sq) =>
         [-1, 1].flatMap((df) => {
@@ -686,7 +693,9 @@ const TIER1: Buff[] = [
     instant((_inst, api) => { api.mine.flags.prepThree = true; }),
   ),
   def(
-    { id: "loose_pawn", name: "Loose Pawn", description: "Your pawns cannot be captured en passant, for the game.", tier: 1, category: "protection" },
+    // Guards the pawns without a shield effect, so the ward motif is the only
+    // board paint it gets.
+    { id: "loose_pawn", name: "Loose Pawn", description: "Your pawns cannot be captured en passant, for the game.", tier: 1, category: "protection", fx: { motif: "ward", pieces: ["p"], self: true } },
     oppFilter((moves) => moves.filter((m) => !m.isEnPassant)),
   ),
   def(
@@ -698,7 +707,9 @@ const TIER1: Buff[] = [
     advancePawns(2),
   ),
   def(
-    { id: "guarded_king", name: "Guarded King", description: "Enemy pieces cannot move to the squares diagonally adjacent to your king for your opponent's next 2 turns.", tier: 1, category: "protection" },
+    // Guards the king without a shield effect, so the ward motif is the only
+    // board paint it gets.
+    { id: "guarded_king", name: "Guarded King", description: "Enemy pieces cannot move to the squares diagonally adjacent to your king for your opponent's next 2 turns.", tier: 1, category: "protection", fx: { motif: "ward", pieces: ["k"], self: true } },
     timedOppFilter(2, (moves, _inst, api) => {
       const k = mySquares(api.board, api.me, "k")[0];
       if (k == null) return moves;
@@ -749,7 +760,7 @@ const TIER1: Buff[] = [
 
 const TIER2: Buff[] = [
   def(
-    { id: "ghost_pawn", name: "Ghost Pawn", description: "One pawn passes through enemy pieces without capturing, once.", tier: 2, category: "movement" },
+    { id: "ghost_pawn", name: "Ghost Pawn", description: "One pawn passes through enemy pieces without capturing, once.", tier: 2, category: "movement", fx: { motif: "empower", pieces: ["p"], self: true } },
     augment((_m, inst, api) =>
       mySquares(api.board, api.me, "p").flatMap((sq) => {
         const one = sq + fwdOf(api.me), two = sq + 2 * fwdOf(api.me);
@@ -761,7 +772,7 @@ const TIER2: Buff[] = [
     ),
   ),
   def(
-    { id: "double_step_army", name: "Double Step Army", description: "All pawns can move two squares forward for 2 turns.", tier: 2, category: "movement" },
+    { id: "double_step_army", name: "Double Step Army", description: "All pawns can move two squares forward for 2 turns.", tier: 2, category: "movement", fx: { motif: "empower", pieces: ["p"], self: true } },
     timedAugment(2, doubleStepGen),
   ),
   def(
@@ -769,7 +780,7 @@ const TIER2: Buff[] = [
     placePieces(["p"], kingAdjacentZone),
   ),
   def(
-    { id: "phase_rook", name: "Phase Rook", description: "One rook passes through exactly one friendly piece per move.", tier: 2, category: "movement" },
+    { id: "phase_rook", name: "Phase Rook", description: "One rook passes through exactly one friendly piece per move.", tier: 2, category: "movement", fx: { motif: "empower", pieces: ["r"], self: true } },
     pieceBound("r", "Choose the rook", (board, sq, via) =>
       phasingSlideMoves(board, sq, ORTHO_DIRS, via, 1),
     ),
@@ -779,7 +790,7 @@ const TIER2: Buff[] = [
     freezeTarget(2),
   ),
   def(
-    { id: "long_knight", name: "Long Knight", description: "One knight makes two knight-leaps in a single move, once.", tier: 2, category: "movement" },
+    { id: "long_knight", name: "Long Knight", description: "One knight makes two knight-leaps in a single move, once.", tier: 2, category: "movement", fx: { motif: "empower", pieces: ["n"], moveAs: "n", self: true } },
     augment((_m, inst, api) => {
       const out: Move[] = [];
       for (const sq of mySquares(api.board, api.me, "n")) {
@@ -805,11 +816,11 @@ const TIER2: Buff[] = [
     }),
   ),
   def(
-    { id: "camel_knight", name: "Camel Knight", description: "One knight also moves as a camel (3-1 leap), for the game.", tier: 2, category: "movement" },
+    { id: "camel_knight", name: "Camel Knight", description: "One knight also moves as a camel (3-1 leap), for the game.", tier: 2, category: "movement", fx: { motif: "empower", pieces: ["n"], moveAs: "n", self: true } },
     pieceBound("n", "Choose the knight", (board, sq, via) => leapMoves(board, sq, CAMEL_LEAPS, via)),
   ),
   def(
-    { id: "teleport_knight", name: "Teleport Knight", description: "Move one knight anywhere within a 3x3 box around it, once.", tier: 2, category: "movement" },
+    { id: "teleport_knight", name: "Teleport Knight", description: "Move one knight anywhere within a 3x3 box around it, once.", tier: 2, category: "movement", fx: { motif: "empower", pieces: ["n"], moveAs: "k", self: true } },
     augment((_m, inst, api) =>
       mySquares(api.board, api.me, "n").flatMap((sq) =>
         slideMoves(api.board, sq, ALL_DIRS, inst.id, 1).filter((m) => !m.captured),
@@ -817,7 +828,8 @@ const TIER2: Buff[] = [
     ),
   ),
   def(
-    { id: "shielded_advance", name: "Shielded Advance", description: "One pawn is uncapturable on the enemy half for 3 turns.", tier: 2, category: "protection" },
+    // Bound-piece guard with no shield effect; ward is its only board paint.
+    { id: "shielded_advance", name: "Shielded Advance", description: "One pawn is uncapturable on the enemy half for 3 turns.", tier: 2, category: "protection", fx: { motif: "ward", pieces: ["p"], self: true } },
     bindPiece("Choose the pawn", bindCandidates(["p"]), {
       turns: 3,
       filterOpp: (moves, sq, api) =>
@@ -882,7 +894,7 @@ const TIER2: Buff[] = [
   ),
   def({ id: "decoy", name: "Decoy", description: "A fake king must be checked before your real king can, for 3 turns.", tier: 2, category: "protection" }),
   def(
-    { id: "berolina_pawns", name: "Berolina Pawns", description: "Your pawns may also step diagonally forward to empty squares and capture straight ahead, for the game.", tier: 2, category: "movement" },
+    { id: "berolina_pawns", name: "Berolina Pawns", description: "Your pawns may also step diagonally forward to empty squares and capture straight ahead, for the game.", tier: 2, category: "movement", fx: { motif: "empower", pieces: ["p"], self: true } },
     permanentAugment((_m, inst, api) => {
       const out: Move[] = [];
       for (const sq of mySquares(api.board, api.me, "p")) {
@@ -902,7 +914,9 @@ const TIER2: Buff[] = [
     }),
   ),
   def(
-    { id: "fork_guard", name: "Fork Guard", description: "Whenever one of your knights gives check, it cannot be captured on the reply turn.", tier: 2, category: "protection" },
+    // Standing conditional guard; the shields it triggers are painted, the
+    // waiting state is not, so it carries the ward motif.
+    { id: "fork_guard", name: "Fork Guard", description: "Whenever one of your knights gives check, it cannot be captured on the reply turn.", tier: 2, category: "protection", fx: { motif: "ward", pieces: ["n"], self: true } },
     {
       kind: "passive",
       onMovePlayed: (_inst, move, api) => {
@@ -915,7 +929,7 @@ const TIER2: Buff[] = [
     },
   ),
   def(
-    { id: "long_castle_anywhere", name: "Long Castle Anywhere", description: "Regain castling rights, and queenside castling ignores the b-file square.", tier: 2, category: "movement" },
+    { id: "long_castle_anywhere", name: "Long Castle Anywhere", description: "Regain castling rights, and queenside castling ignores the b-file square.", tier: 2, category: "movement", fx: { motif: "empower", pieces: ["k", "r"], self: true } },
     {
       kind: "passive",
       init: (_inst, api) => api.restoreCastling(),
@@ -941,7 +955,8 @@ const TIER2: Buff[] = [
     },
   ),
   def(
-    { id: "sidestep_king", name: "Sidestep King", description: "Your king cannot be captured for 1 turn.", tier: 2, category: "protection" },
+    // king_safe has no square paint of its own; ward marks the king.
+    { id: "sidestep_king", name: "Sidestep King", description: "Your king cannot be captured for 1 turn.", tier: 2, category: "protection", fx: { motif: "ward", pieces: ["k"], self: true } },
     instant((_inst, api) => {
       addEffect(api, { kind: "king_safe", owner: api.me, turns: 1 });
     }),
@@ -951,11 +966,11 @@ const TIER2: Buff[] = [
     swapOwnPieces(),
   ),
   def(
-    { id: "wazir_bishop", name: "Wazir Bishop", description: "One bishop may also step one square straight.", tier: 2, category: "movement" },
+    { id: "wazir_bishop", name: "Wazir Bishop", description: "One bishop may also step one square straight.", tier: 2, category: "movement", fx: { motif: "empower", pieces: ["b"], moveAs: "k", self: true } },
     pieceBound("b", "Choose the bishop", (board, sq, via) => slideMoves(board, sq, ORTHO_DIRS, via, 1)),
   ),
   def(
-    { id: "spring_pawn", name: "Spring Pawn", description: "One pawn can leap two squares even when blocked one ahead, once.", tier: 2, category: "movement" },
+    { id: "spring_pawn", name: "Spring Pawn", description: "One pawn can leap two squares even when blocked one ahead, once.", tier: 2, category: "movement", fx: { motif: "empower", pieces: ["p"], self: true } },
     augment((_m, inst, api) =>
       mySquares(api.board, api.me, "p").flatMap((sq) => {
         const one = sq + fwdOf(api.me), two = sq + 2 * fwdOf(api.me);
@@ -966,19 +981,20 @@ const TIER2: Buff[] = [
     ),
   ),
   def(
-    { id: "rally", name: "Rally", description: "One of your knights may move like a king for 1 turn.", tier: 2, category: "movement" },
+    { id: "rally", name: "Rally", description: "One of your knights may move like a king for 1 turn.", tier: 2, category: "movement", fx: { motif: "empower", pieces: ["n"], moveAs: "k", self: true } },
     timedAugment(1, (_m, inst, api) =>
       mySquares(api.board, api.me, "n").flatMap((sq) => slideMoves(api.board, sq, ALL_DIRS, inst.id, 1)),
     ),
   ),
   def(
-    { id: "anchor", name: "Anchor", description: "One piece cannot be pushed or swapped by enemy buffs, for the game.", tier: 2, category: "protection" },
+    // Bound-piece guard with no shield effect; ward is its only board paint.
+    { id: "anchor", name: "Anchor", description: "One piece cannot be pushed or swapped by enemy buffs, for the game.", tier: 2, category: "protection", fx: { motif: "ward", pieces: ["p", "n", "b", "r", "q"], self: true } },
     // The engine's relocate hook refuses enemy-buff pushes of the bound piece.
     bindPiece("Choose the piece to anchor", bindCandidates(), {}),
   ),
   def({ id: "shadow_step", name: "Shadow Step", description: "One piece moves without revealing its destination until next turn.", tier: 2, category: "movement" }),
   def(
-    { id: "vault", name: "Vault", description: "One rook jumps its own pawn to the far side, once.", tier: 2, category: "movement" },
+    { id: "vault", name: "Vault", description: "One rook jumps its own pawn to the far side, once.", tier: 2, category: "movement", fx: { motif: "empower", pieces: ["r"], self: true } },
     augment((_m, inst, api) => {
       const out: Move[] = [];
       for (const sq of mySquares(api.board, api.me, "r")) {
@@ -996,7 +1012,8 @@ const TIER2: Buff[] = [
     }),
   ),
   def(
-    { id: "reposition", name: "Reposition", description: "Slide one piece one square in any direction ignoring normal rules, once.", tier: 2, category: "movement" },
+    // The augment offers the step to every piece, king included.
+    { id: "reposition", name: "Reposition", description: "Slide one piece one square in any direction ignoring normal rules, once.", tier: 2, category: "movement", fx: { motif: "empower", pieces: "all", moveAs: "k", self: true } },
     augment((_m, inst, api) =>
       mySquares(api.board, api.me).flatMap((sq) =>
         slideMoves(api.board, sq, ALL_DIRS, inst.id, 1).filter((m) => !m.captured),
@@ -1022,7 +1039,7 @@ const TIER2: Buff[] = [
     }),
   ),
   def(
-    { id: "counterstep", name: "Counterstep", description: "After your opponent's next capture, you take two moves in reply, once.", tier: 2, category: "tempo" },
+    { id: "counterstep", name: "Counterstep", description: "After your opponent's next capture, you take two moves in reply, once.", tier: 2, category: "tempo", fx: { motif: "rally", pieces: "all", self: true } },
     {
       kind: "passive",
       onMovePlayed: (inst, move, api) => {
@@ -1094,19 +1111,19 @@ const TIER2: Buff[] = [
 
 const TIER3: Buff[] = [
   def(
-    { id: "knight_nightrook", name: "Knight to Nightrook", description: "One knight also moves like a rook, for the game.", tier: 3, category: "movement" },
+    { id: "knight_nightrook", name: "Knight to Nightrook", description: "One knight also moves like a rook, for the game.", tier: 3, category: "movement", fx: { motif: "empower", pieces: ["n"], moveAs: "r", self: true } },
     pieceBound("n", "Choose the knight", (board, sq, via) => slideMoves(board, sq, ORTHO_DIRS, via)),
   ),
   def(
-    { id: "bishop_archbishop", name: "Bishop to Archbishop", description: "One bishop also moves like a knight, for the game.", tier: 3, category: "movement" },
+    { id: "bishop_archbishop", name: "Bishop to Archbishop", description: "One bishop also moves like a knight, for the game.", tier: 3, category: "movement", fx: { motif: "empower", pieces: ["b"], moveAs: "n", self: true } },
     pieceBound("b", "Choose the bishop", (board, sq, via) => leapMoves(board, sq, KNIGHT_LEAPS, via)),
   ),
   def(
-    { id: "rook_chancellor", name: "Rook to Chancellor", description: "One rook also moves like a knight, for the game.", tier: 3, category: "movement" },
+    { id: "rook_chancellor", name: "Rook to Chancellor", description: "One rook also moves like a knight, for the game.", tier: 3, category: "movement", fx: { motif: "empower", pieces: ["r"], moveAs: "n", self: true } },
     pieceBound("r", "Choose the rook", (board, sq, via) => leapMoves(board, sq, KNIGHT_LEAPS, via)),
   ),
   def(
-    { id: "extra_move", name: "Extra Move", description: "Take two moves in a row, once.", tier: 3, category: "tempo", boon: true },
+    { id: "extra_move", name: "Extra Move", description: "Take two moves in a row, once.", tier: 3, category: "tempo", boon: true, fx: { motif: "rally", pieces: "all", self: true } },
     extraMovesNow(1),
   ),
   def(
@@ -1118,13 +1135,13 @@ const TIER3: Buff[] = [
     placePieces(["n"], anyHalfZone),
   ),
   def(
-    { id: "queens_echo", name: "Queen's Echo", description: "Your rooks move like queens for your next 2 turns.", tier: 3, category: "movement" },
+    { id: "queens_echo", name: "Queen's Echo", description: "Your rooks move like queens for your next 2 turns.", tier: 3, category: "movement", fx: { motif: "empower", pieces: ["r"], moveAs: "q", self: true } },
     timedAugment(2, (_m, inst, api) =>
       mySquares(api.board, api.me, "r").flatMap((sq) => slideMoves(api.board, sq, DIAG_DIRS, inst.id)),
     ),
   ),
   def(
-    { id: "time_skip", name: "Time Skip", description: "Your opponent skips their next turn. Takes effect immediately when picked.", tier: 3, category: "tempo" },
+    { id: "time_skip", name: "Time Skip", description: "Your opponent skips their next turn. Takes effect immediately when picked.", tier: 3, category: "tempo", fx: { motif: "slow", pieces: "all" } },
     skipOpponent(1),
   ),
   def(
@@ -1148,7 +1165,9 @@ const TIER3: Buff[] = [
     ),
   ),
   def(
-    { id: "grasshopper", name: "Grasshopper", description: "One piece lands just past a hopped piece, for the game.", tier: 3, category: "movement" },
+    // Fairy hop with no chess analogue, so no moveAs; any non-king piece can
+    // be bound.
+    { id: "grasshopper", name: "Grasshopper", description: "One piece lands just past a hopped piece, for the game.", tier: 3, category: "movement", fx: { motif: "empower", pieces: ["p", "n", "b", "r", "q"], self: true } },
     bindPiece("Choose the piece", bindCandidates(), {
       gen: (board, sq, via) => {
         const p = board.pieces[sq]!;
@@ -1174,7 +1193,7 @@ const TIER3: Buff[] = [
     }),
   ),
   def(
-    { id: "cannon", name: "Cannon", description: "One rook captures cannon-style (jump one screen), plus normal moves.", tier: 3, category: "movement" },
+    { id: "cannon", name: "Cannon", description: "One rook captures cannon-style (jump one screen), plus normal moves.", tier: 3, category: "movement", fx: { motif: "empower", pieces: ["r"], self: true } },
     pieceBound("r", "Choose the rook", (board, sq, via) => {
       const p = board.pieces[sq]!;
       const out: Move[] = [];
@@ -1201,18 +1220,18 @@ const TIER3: Buff[] = [
     }),
   ),
   def(
-    { id: "sliding_king", name: "Sliding King", description: "Your king moves like a king or bishop for 3 turns.", tier: 3, category: "movement" },
+    { id: "sliding_king", name: "Sliding King", description: "Your king moves like a king or bishop for 3 turns.", tier: 3, category: "movement", fx: { motif: "empower", pieces: ["k"], moveAs: "b", self: true } },
     timedAugment(3, (_m, inst, api) =>
       mySquares(api.board, api.me, "k").flatMap((sq) => slideMoves(api.board, sq, DIAG_DIRS, inst.id)),
     ),
   ),
   def(
-    { id: "dragon_pawn", name: "Dragon Pawn", description: "One pawn moves as a pawn or knight until it promotes.", tier: 3, category: "movement" },
+    { id: "dragon_pawn", name: "Dragon Pawn", description: "One pawn moves as a pawn or knight until it promotes.", tier: 3, category: "movement", fx: { motif: "empower", pieces: ["p"], moveAs: "n", self: true } },
     pieceBound("p", "Choose the pawn", (board, sq, via) => leapMoves(board, sq, KNIGHT_LEAPS, via)),
   ),
   def({ id: "pin_breaker", name: "Pin Breaker", description: "One pinned piece moves freely this turn, ignoring the pin.", tier: 3, category: "movement" }),
   def(
-    { id: "rank_runner", name: "Rank Runner", description: "One pawn advances to any empty square on its file up to your 5th rank, once.", tier: 3, category: "movement" },
+    { id: "rank_runner", name: "Rank Runner", description: "One pawn advances to any empty square on its file up to your 5th rank, once.", tier: 3, category: "movement", fx: { motif: "empower", pieces: ["p"], self: true } },
     augment((_m, inst, api) => {
       const out: Move[] = [];
       for (const sq of mySquares(api.board, api.me, "p")) {
@@ -1259,7 +1278,8 @@ const TIER3: Buff[] = [
     ),
   ),
   def(
-    { id: "bunker", name: "Bunker", description: "Three squares in front of your king are barred to enemies for 4 turns.", tier: 3, category: "protection", boon: true },
+    // Board already paints barred squares; square-scoped, no pieces field.
+    { id: "bunker", name: "Bunker", description: "Three squares in front of your king are barred to enemies for 4 turns.", tier: 3, category: "protection", boon: true, fx: { motif: "blindfold" } },
     instant((_inst, api) => {
       const k = mySquares(api.board, api.me, "k")[0];
       if (k == null) return;
@@ -1273,7 +1293,7 @@ const TIER3: Buff[] = [
     }),
   ),
   def(
-    { id: "overclock", name: "Overclock", description: "Your knights move like knights or kings for 3 turns.", tier: 3, category: "movement" },
+    { id: "overclock", name: "Overclock", description: "Your knights move like knights or kings for 3 turns.", tier: 3, category: "movement", fx: { motif: "empower", pieces: ["n"], moveAs: "k", self: true } },
     timedAugment(3, (_m, inst, api) =>
       mySquares(api.board, api.me, "n").flatMap((sq) => slideMoves(api.board, sq, ALL_DIRS, inst.id, 1)),
     ),
@@ -1401,7 +1421,7 @@ const TIER3: Buff[] = [
     }),
   ),
   def(
-    { id: "momentum", name: "Momentum", description: "After your next capture, immediately take a second move, once.", tier: 3, category: "tempo" },
+    { id: "momentum", name: "Momentum", description: "After your next capture, immediately take a second move, once.", tier: 3, category: "tempo", fx: { motif: "rally", pieces: "all", self: true } },
     {
       kind: "passive",
       onMovePlayed: (inst, move, api) => {
@@ -1503,7 +1523,7 @@ const TIER4: Buff[] = [
     placePieces(["b"], anyHalfZone),
   ),
   def(
-    { id: "twin_knights", name: "Twin Knights", description: "Both knights become nightrooks, for the game.", tier: 4, category: "movement" },
+    { id: "twin_knights", name: "Twin Knights", description: "Both knights become nightrooks, for the game.", tier: 4, category: "movement", fx: { motif: "empower", pieces: ["n"], moveAs: "r", self: true } },
     permanentAugment((_m, inst, api) =>
       mySquares(api.board, api.me, "n").flatMap((sq) => slideMoves(api.board, sq, ORTHO_DIRS, inst.id)),
     ),
@@ -1528,7 +1548,7 @@ const TIER4: Buff[] = [
     }),
   ),
   def(
-    { id: "royal_decree", name: "Royal Decree", description: "Your king gains queen movement for 2 turns (still loses on capture).", tier: 4, category: "movement" },
+    { id: "royal_decree", name: "Royal Decree", description: "Your king gains queen movement for 2 turns (still loses on capture).", tier: 4, category: "movement", fx: { motif: "empower", pieces: ["k"], moveAs: "q", self: true } },
     timedAugment(2, (_m, inst, api) =>
       mySquares(api.board, api.me, "k").flatMap((sq) => slideMoves(api.board, sq, ALL_DIRS, inst.id)),
     ),
@@ -1609,7 +1629,7 @@ const TIER4: Buff[] = [
     ),
   ),
   def(
-    { id: "amazon_knight", name: "Amazon Knight", description: "One knight becomes a knight plus queen for 2 turns.", tier: 4, category: "movement" },
+    { id: "amazon_knight", name: "Amazon Knight", description: "One knight becomes a knight plus queen for 2 turns.", tier: 4, category: "movement", fx: { motif: "empower", pieces: ["n"], moveAs: "q", self: true } },
     bindPiece("Choose the knight", bindCandidates(["n"]), {
       turns: 2,
       gen: (board, sq, via) => slideMoves(board, sq, ALL_DIRS, via),
@@ -1800,7 +1820,7 @@ const TIER4: Buff[] = [
     },
   ),
   def(
-    { id: "kingslide", name: "Kingslide", description: "Your king moves any distance in a straight line, once.", tier: 4, category: "movement" },
+    { id: "kingslide", name: "Kingslide", description: "Your king moves any distance in a straight line, once.", tier: 4, category: "movement", fx: { motif: "empower", pieces: ["k"], moveAs: "q", self: true } },
     augment((_m, inst, api) =>
       mySquares(api.board, api.me, "k").flatMap((sq) => slideMoves(api.board, sq, ALL_DIRS, inst.id)),
     ),
@@ -1871,7 +1891,8 @@ const TIER4: Buff[] = [
     ),
   ),
   def(
-    { id: "fault_line", name: "Fault Line", description: "Split the board; enemy pieces cannot cross one file you pick, for 2 turns.", tier: 4, category: "protection" },
+    // Board already paints barred squares; square-scoped, no pieces field.
+    { id: "fault_line", name: "Fault Line", description: "Split the board; enemy pieces cannot cross one file you pick, for 2 turns.", tier: 4, category: "protection", fx: { motif: "blindfold" } },
     barLine("file", 2),
   ),
   // Nerf-modifiers (cross-cutting)
@@ -1905,7 +1926,7 @@ const TIER5: Buff[] = [
     captureExplosion({ sparePawns: true }),
   ),
   def(
-    { id: "extra_move_repeat", name: "Extra Move (Repeat)", description: "Take two moves in a row every turn for 2 full turns.", tier: 5, category: "tempo" },
+    { id: "extra_move_repeat", name: "Extra Move (Repeat)", description: "Take two moves in a row every turn for 2 full turns.", tier: 5, category: "tempo", fx: { motif: "rally", pieces: "all", self: true } },
     {
       kind: "passive",
       init: (inst) => {
@@ -1928,7 +1949,7 @@ const TIER5: Buff[] = [
     },
   ),
   def(
-    { id: "god_knight", name: "God Knight", description: "One knight becomes an amazon (queen plus knight), for the game.", tier: 5, category: "movement" },
+    { id: "god_knight", name: "God Knight", description: "One knight becomes an amazon (queen plus knight), for the game.", tier: 5, category: "movement", fx: { motif: "empower", pieces: ["n"], moveAs: "q", self: true } },
     pieceBound("n", "Choose the knight", (board, sq, via) => slideMoves(board, sq, ALL_DIRS, via)),
   ),
   def(
@@ -1961,7 +1982,7 @@ const TIER5: Buff[] = [
     }),
   ),
   def(
-    { id: "time_stop_short", name: "Time Stop (Short)", description: "Take three consecutive moves right now, once.", tier: 6, category: "tempo" },
+    { id: "time_stop_short", name: "Time Stop (Short)", description: "Take three consecutive moves right now, once.", tier: 6, category: "tempo", fx: { motif: "rally", pieces: "all", self: true } },
     extraMovesNow(2),
   ),
   def(
@@ -1969,7 +1990,8 @@ const TIER5: Buff[] = [
     reviveOne(["q"], anyHalfZone),
   ),
   def(
-    { id: "checkmate_immunity", name: "Checkmate Immunity", description: "The first time your king is checked, it cannot be captured on the following turn, once.", tier: 5, category: "protection" },
+    // Conditional king guard (king_safe has no square paint); ward marks it.
+    { id: "checkmate_immunity", name: "Checkmate Immunity", description: "The first time your king is checked, it cannot be captured on the following turn, once.", tier: 5, category: "protection", fx: { motif: "ward", pieces: ["k"], self: true } },
     {
       kind: "passive",
       onMovePlayed: (inst, move, api) => {
@@ -1989,7 +2011,7 @@ const TIER5: Buff[] = [
     convertEnemies(1, ["n", "b"]),
   ),
   def(
-    { id: "board_lock", name: "Board Lock", description: "Your opponent cannot castle for their next 3 turns.", tier: 3, category: "tempo" },
+    { id: "board_lock", name: "Board Lock", description: "Your opponent cannot castle for their next 3 turns.", tier: 3, category: "tempo", fx: { motif: "slow", pieces: ["k", "r"] } },
     timedOppFilter(3, (moves) => moves.filter((m) => !m.castle)),
   ),
   def(
@@ -2028,7 +2050,8 @@ const TIER5: Buff[] = [
     ),
   ),
   def(
-    { id: "great_wall", name: "Great Wall", description: "One full rank you pick is impassable to enemies for 3 turns.", tier: 5, category: "protection" },
+    // Board already paints barred squares; square-scoped, no pieces field.
+    { id: "great_wall", name: "Great Wall", description: "One full rank you pick is impassable to enemies for 3 turns.", tier: 5, category: "protection", fx: { motif: "blindfold" } },
     barLine("rank", 3),
   ),
   def(
@@ -2036,7 +2059,7 @@ const TIER5: Buff[] = [
     lineSweep("r", ORTHO_DIRS, null),
   ),
   def(
-    { id: "phase_army", name: "Phase Army", description: "Your bishops, rooks, and queen pass through one friendly piece per move for 2 turns.", tier: 5, category: "movement" },
+    { id: "phase_army", name: "Phase Army", description: "Your bishops, rooks, and queen pass through one friendly piece per move for 2 turns.", tier: 5, category: "movement", fx: { motif: "empower", pieces: ["b", "r", "q"], self: true } },
     timedAugment(2, (_m, inst, api) => {
       const out: Move[] = [];
       for (const sq of mySquares(api.board, api.me)) {
@@ -2057,17 +2080,19 @@ const TIER5: Buff[] = [
     severBuffs(1),
   ),
   def(
-    { id: "overclock_major", name: "Overclock Major", description: "All your pieces may move like kings as an alternative, for 1 turn.", tier: 5, category: "movement" },
+    // The augment offers the king-step to every piece, king included.
+    { id: "overclock_major", name: "Overclock Major", description: "All your pieces may move like kings as an alternative, for 1 turn.", tier: 5, category: "movement", fx: { motif: "empower", pieces: "all", moveAs: "k", self: true } },
     timedAugment(1, (_m, inst, api) =>
       mySquares(api.board, api.me).flatMap((sq) => slideMoves(api.board, sq, ALL_DIRS, inst.id, 1)),
     ),
   ),
   def(
-    { id: "tempo_theft", name: "Tempo Theft", description: "Steal your opponent's next turn (you move twice, they wait), once.", tier: 5, category: "tempo" },
+    { id: "tempo_theft", name: "Tempo Theft", description: "Steal your opponent's next turn (you move twice, they wait), once.", tier: 5, category: "tempo", fx: { motif: "slow", pieces: "all" } },
     skipOpponent(1),
   ),
   def(
-    { id: "blockade", name: "Blockade", description: "Enemy pawns cannot advance for your opponent's next 3 turns. They may still capture diagonally.", tier: 4, category: "tempo" },
+    // Board already paints no_pawn_advance; fx carried for consistency.
+    { id: "blockade", name: "Blockade", description: "Enemy pawns cannot advance for your opponent's next 3 turns. They may still capture diagonally.", tier: 4, category: "tempo", fx: { motif: "anchor", pieces: ["p"] } },
     instant((_inst, api) => {
       addEffect(api, { kind: "no_pawn_advance", against: api.opp, turns: 3 });
     }),
@@ -2077,7 +2102,8 @@ const TIER5: Buff[] = [
     swapOwnPieces(),
   ),
   def(
-    { id: "iron_reign", name: "Iron Reign", description: "Your king cannot be captured for 2 full turns.", tier: 5, category: "protection", boon: true },
+    // king_safe has no square paint of its own; ward marks the king.
+    { id: "iron_reign", name: "Iron Reign", description: "Your king cannot be captured for 2 full turns.", tier: 5, category: "protection", boon: true, fx: { motif: "ward", pieces: ["k"], self: true } },
     instant((_inst, api) => {
       addEffect(api, { kind: "king_safe", owner: api.me, turns: 2 });
     }),
@@ -2113,7 +2139,7 @@ const TIER5: Buff[] = [
     ),
   ),
   def(
-    { id: "ghost_legion", name: "Ghost Legion", description: "All your pawns may jump over a blocker one square ahead, landing two ahead where empty, for 2 turns.", tier: 5, category: "movement" },
+    { id: "ghost_legion", name: "Ghost Legion", description: "All your pawns may jump over a blocker one square ahead, landing two ahead where empty, for 2 turns.", tier: 5, category: "movement", fx: { motif: "empower", pieces: ["p"], self: true } },
     timedAugment(2, (_m, inst, api) => {
       const out: Move[] = [];
       for (const sq of mySquares(api.board, api.me, "p")) {
@@ -2198,7 +2224,7 @@ const TIER6: Buff[] = [
     captureExplosion({ chain: true }),
   ),
   def(
-    { id: "double_amazon", name: "Double Amazon", description: "All your knights become amazons for the game.", tier: 6, category: "movement" },
+    { id: "double_amazon", name: "Double Amazon", description: "All your knights become amazons for the game.", tier: 6, category: "movement", fx: { motif: "empower", pieces: ["n"], moveAs: "q", self: true } },
     permanentAugment((_m, inst, api) =>
       mySquares(api.board, api.me, "n").flatMap((sq) => slideMoves(api.board, sq, ALL_DIRS, inst.id)),
     ),
@@ -2209,7 +2235,7 @@ const TIER6: Buff[] = [
     revivePawnsToStart(3),
   ),
   def(
-    { id: "royal_ascension", name: "Royal Ascension", description: "Your king gains queen movement permanently (still loses on capture).", tier: 6, category: "movement" },
+    { id: "royal_ascension", name: "Royal Ascension", description: "Your king gains queen movement permanently (still loses on capture).", tier: 6, category: "movement", fx: { motif: "empower", pieces: ["k"], moveAs: "q", self: true } },
     permanentAugment((_m, inst, api) =>
       mySquares(api.board, api.me, "k").flatMap((sq) => slideMoves(api.board, sq, ALL_DIRS, inst.id)),
     ),
@@ -2249,7 +2275,8 @@ const TIER6: Buff[] = [
     relocateMany(4, stepDest),
   ),
   def(
-    { id: "fissure", name: "Fissure", description: "One file becomes impassable to enemies for the rest of the game.", tier: 6, category: "protection" },
+    // Board already paints barred squares; square-scoped, no pieces field.
+    { id: "fissure", name: "Fissure", description: "One file becomes impassable to enemies for the rest of the game.", tier: 6, category: "protection", fx: { motif: "blindfold" } },
     barLine("file", null),
   ),
   def(
@@ -2257,7 +2284,7 @@ const TIER6: Buff[] = [
     lineSweep("q", ALL_DIRS, 2),
   ),
   def(
-    { id: "army_reversal", name: "Army Reversal", description: "All your pawns may move backward freely for 2 turns.", tier: 4, category: "movement" },
+    { id: "army_reversal", name: "Army Reversal", description: "All your pawns may move backward freely for 2 turns.", tier: 4, category: "movement", fx: { motif: "empower", pieces: ["p"], self: true } },
     timedAugment(2, (_m, inst, api) =>
       mySquares(api.board, api.me, "p").flatMap((sq) => {
         const back = sq - fwdOf(api.me);
@@ -2293,7 +2320,7 @@ const TIER6: Buff[] = [
     ),
   ),
   def(
-    { id: "overwhelm", name: "Overwhelm", description: "Take three consecutive moves, once.", tier: 6, category: "tempo" },
+    { id: "overwhelm", name: "Overwhelm", description: "Take three consecutive moves, once.", tier: 6, category: "tempo", fx: { motif: "rally", pieces: "all", self: true } },
     extraMovesNow(2),
   ),
   def(
@@ -2309,11 +2336,11 @@ const TIER6: Buff[] = [
     placePieces(["n", "b"], anyHalfZone),
   ),
   def(
-    { id: "time_lock", name: "Time Lock", description: "Your opponent skips their next two turns, once.", tier: 6, category: "tempo" },
+    { id: "time_lock", name: "Time Lock", description: "Your opponent skips their next two turns, once.", tier: 6, category: "tempo", fx: { motif: "slow", pieces: "all" } },
     skipOpponent(2),
   ),
   def(
-    { id: "colossus", name: "Colossus", description: "One piece becomes uncapturable and gains queen movement for 3 turns.", tier: 6, category: "movement" },
+    { id: "colossus", name: "Colossus", description: "One piece becomes uncapturable and gains queen movement for 3 turns.", tier: 6, category: "movement", fx: { motif: "empower", pieces: ["p", "n", "b", "r", "q"], moveAs: "q", self: true } },
     bindPiece("Choose the colossus", bindCandidates(), {
       turns: 3,
       shieldTurns: 3,
@@ -2352,7 +2379,8 @@ const TIER6: Buff[] = [
     ),
   ),
   def(
-    { id: "mass_freeze", name: "Mass Freeze", description: "Freeze all enemy pieces for 1 full turn.", tier: 6, category: "tempo" },
+    // freezeAllEnemies spares the king; the freezes are painted by the board.
+    { id: "mass_freeze", name: "Mass Freeze", description: "Freeze all enemy pieces for 1 full turn.", tier: 6, category: "tempo", fx: { motif: "jail", pieces: ["p", "n", "b", "r", "q"] } },
     freezeAllEnemies(1),
   ),
   def(
@@ -2408,7 +2436,7 @@ const TIER6: Buff[] = [
     }, 2),
   ),
   def(
-    { id: "ascendant_knight", name: "Ascendant Knight", description: "One knight moves as an amazon and cannot be captured, for 2 turns.", tier: 6, category: "movement" },
+    { id: "ascendant_knight", name: "Ascendant Knight", description: "One knight moves as an amazon and cannot be captured, for 2 turns.", tier: 6, category: "movement", fx: { motif: "empower", pieces: ["n"], moveAs: "q", self: true } },
     bindPiece("Choose the knight", bindCandidates(["n"]), {
       turns: 2,
       shieldTurns: 2,
@@ -2502,7 +2530,7 @@ const TIER7: Buff[] = [
     captureExplosion({ chain: true, onMyLosses: true }),
   ),
   def(
-    { id: "triple_amazon", name: "Triple Amazon", description: "All your knights become amazons for the game.", tier: 7, category: "movement" },
+    { id: "triple_amazon", name: "Triple Amazon", description: "All your knights become amazons for the game.", tier: 7, category: "movement", fx: { motif: "empower", pieces: ["n"], moveAs: "q", self: true } },
     permanentAugment((_m, inst, api) =>
       mySquares(api.board, api.me, "n").flatMap((sq) => slideMoves(api.board, sq, ALL_DIRS, inst.id)),
     ),
@@ -2521,7 +2549,7 @@ const TIER7: Buff[] = [
     removeEnemies(2, ["p", "n", "b", "r"]),
   ),
   def(
-    { id: "eternal_reign", name: "Eternal Reign", description: "Your king gains permanent queen movement and cannot be captured for 3 turns.", tier: 7, category: "movement" },
+    { id: "eternal_reign", name: "Eternal Reign", description: "Your king gains permanent queen movement and cannot be captured for 3 turns.", tier: 7, category: "movement", fx: { motif: "empower", pieces: ["k"], moveAs: "q", self: true } },
     {
       kind: "passive",
       init: (_inst, api) => addEffect(api, { kind: "king_safe", owner: api.me, turns: 3 }),
@@ -2550,7 +2578,8 @@ const TIER7: Buff[] = [
     relocateMany(5, stepDest),
   ),
   def(
-    { id: "great_divide", name: "Great Divide", description: "Two files become impassable to enemies for the rest of the game.", tier: 7, category: "protection" },
+    // Board already paints barred squares; square-scoped, no pieces field.
+    { id: "great_divide", name: "Great Divide", description: "Two files become impassable to enemies for the rest of the game.", tier: 7, category: "protection", fx: { motif: "blindfold" } },
     barLine("file", null, 2),
   ),
   def(
@@ -2558,7 +2587,7 @@ const TIER7: Buff[] = [
     lineSweep("q", ALL_DIRS, null),
   ),
   def(
-    { id: "time_freeze", name: "Time Freeze", description: "Your opponent skips their next two turns, once.", tier: 7, category: "tempo" },
+    { id: "time_freeze", name: "Time Freeze", description: "Your opponent skips their next two turns, once.", tier: 7, category: "tempo", fx: { motif: "slow", pieces: "all" } },
     skipOpponent(2),
   ),
   def(
@@ -2584,7 +2613,7 @@ const TIER7: Buff[] = [
     ),
   ),
   def(
-    { id: "onslaught", name: "Onslaught", description: "Take three consecutive moves, once.", tier: 7, category: "tempo" },
+    { id: "onslaught", name: "Onslaught", description: "Take three consecutive moves, once.", tier: 7, category: "tempo", fx: { motif: "rally", pieces: "all", self: true } },
     extraMovesNow(2),
   ),
   def(
@@ -2621,7 +2650,7 @@ const TIER7: Buff[] = [
     }),
   ),
   def(
-    { id: "titan", name: "Titan", description: "One piece becomes uncapturable with amazon movement for the rest of the game.", tier: 7, category: "movement" },
+    { id: "titan", name: "Titan", description: "One piece becomes uncapturable with amazon movement for the rest of the game.", tier: 7, category: "movement", fx: { motif: "empower", pieces: ["p", "n", "b", "r", "q"], moveAs: "q", self: true } },
     bindPiece("Choose the titan", bindCandidates(), { shieldTurns: null, gen: amazonGen }),
   ),
   def(
@@ -2654,7 +2683,8 @@ const TIER7: Buff[] = [
     swapOwnPieces(undefined, 3),
   ),
   def(
-    { id: "deep_freeze", name: "Deep Freeze", description: "Freeze all enemy pieces for 2 full turns.", tier: 7, category: "tempo" },
+    // freezeAllEnemies spares the king; the freezes are painted by the board.
+    { id: "deep_freeze", name: "Deep Freeze", description: "Freeze all enemy pieces for 2 full turns.", tier: 7, category: "tempo", fx: { motif: "jail", pieces: ["p", "n", "b", "r", "q"] } },
     freezeAllEnemies(2),
   ),
   def(
@@ -2692,7 +2722,7 @@ const TIER7: Buff[] = [
     shieldArmy(1),
   ),
   def(
-    { id: "godslayer_knight", name: "Godslayer Knight", description: "One knight moves as an amazon, is uncapturable, and explodes on capture, for 3 turns.", tier: 7, category: "movement" },
+    { id: "godslayer_knight", name: "Godslayer Knight", description: "One knight moves as an amazon, is uncapturable, and explodes on capture, for 3 turns.", tier: 7, category: "movement", fx: { motif: "empower", pieces: ["n"], moveAs: "q", self: true } },
     bindPiece("Choose the knight", bindCandidates(["n"]), {
       turns: 3,
       shieldTurns: 3,
@@ -2746,7 +2776,7 @@ const TIER8: Buff[] = [
     captureExplosion({ chain: true }),
   ),
   def(
-    { id: "amazon_army", name: "Amazon Army", description: "All your knights and bishops become amazons for the game.", tier: 8, category: "movement" },
+    { id: "amazon_army", name: "Amazon Army", description: "All your knights and bishops become amazons for the game.", tier: 8, category: "movement", fx: { motif: "empower", pieces: ["n", "b"], moveAs: "q", self: true } },
     permanentAugment((_m, inst, api) =>
       ["n", "b"].flatMap((t) =>
         mySquares(api.board, api.me, t as PieceType).flatMap((sq) => [
@@ -2823,7 +2853,8 @@ const TIER8: Buff[] = [
     relocateMany(6, anyDestPawnSafe),
   ),
   def(
-    { id: "sundering", name: "Sundering", description: "Three files become impassable to enemies for the rest of the game.", tier: 8, category: "protection" },
+    // Board already paints barred squares; square-scoped, no pieces field.
+    { id: "sundering", name: "Sundering", description: "Three files become impassable to enemies for the rest of the game.", tier: 8, category: "protection", fx: { motif: "blindfold" } },
     barLine("file", null, 3),
   ),
   def(
@@ -2847,7 +2878,7 @@ const TIER8: Buff[] = [
     ),
   ),
   def(
-    { id: "time_prison", name: "Time Prison", description: "Your opponent skips their next three turns, once.", tier: 8, category: "tempo" },
+    { id: "time_prison", name: "Time Prison", description: "Your opponent skips their next three turns, once.", tier: 8, category: "tempo", fx: { motif: "slow", pieces: "all" } },
     skipOpponent(3),
   ),
   def(
@@ -2858,7 +2889,7 @@ const TIER8: Buff[] = [
     ),
   ),
   def(
-    { id: "blitzkrieg", name: "Blitzkrieg", description: "Take four consecutive moves, once.", tier: 8, category: "tempo" },
+    { id: "blitzkrieg", name: "Blitzkrieg", description: "Take four consecutive moves, once.", tier: 8, category: "tempo", fx: { motif: "rally", pieces: "all", self: true } },
     extraMovesNow(3),
   ),
   def(
@@ -2900,13 +2931,14 @@ const TIER8: Buff[] = [
     autoRevive(["q", "r", "r", ["n", "b"]]),
   ),
   def(
-    { id: "world_end", name: "World End", description: "Your opponent cannot move any piece except the king for 2 turns.", tier: 8, category: "tempo" },
+    // Board already paints king_only; fx carried for consistency.
+    { id: "world_end", name: "World End", description: "Your opponent cannot move any piece except the king for 2 turns.", tier: 8, category: "tempo", fx: { motif: "jail", pieces: ["p", "n", "b", "r", "q"] } },
     instant((_inst, api) => {
       addEffect(api, { kind: "king_only", against: api.opp, turns: 2 });
     }),
   ),
   def(
-    { id: "living_god", name: "Living God", description: "One piece gains amazon movement, is uncapturable, and explodes on capture, for the game.", tier: 8, category: "movement" },
+    { id: "living_god", name: "Living God", description: "One piece gains amazon movement, is uncapturable, and explodes on capture, for the game.", tier: 8, category: "movement", fx: { motif: "empower", pieces: ["p", "n", "b", "r", "q"], moveAs: "q", self: true } },
     bindPiece("Choose your living god", bindCandidates(), {
       shieldTurns: null,
       gen: amazonGen,
@@ -2943,7 +2975,8 @@ const TIER8: Buff[] = [
     }),
   ),
   def(
-    { id: "eternal_freeze", name: "Eternal Freeze", description: "Freeze all enemy pieces for 3 full turns.", tier: 8, category: "tempo" },
+    // freezeAllEnemies spares the king; the freezes are painted by the board.
+    { id: "eternal_freeze", name: "Eternal Freeze", description: "Freeze all enemy pieces for 3 full turns.", tier: 8, category: "tempo", fx: { motif: "jail", pieces: ["p", "n", "b", "r", "q"] } },
     freezeAllEnemies(3),
   ),
   def(
@@ -2979,7 +3012,7 @@ const TIER8: Buff[] = [
     shieldArmy(2),
   ),
   def(
-    { id: "titan_legion", name: "Titan Legion", description: "Three of your pieces become uncapturable amazons for the game.", tier: 8, category: "movement" },
+    { id: "titan_legion", name: "Titan Legion", description: "Three of your pieces become uncapturable amazons for the game.", tier: 8, category: "movement", fx: { motif: "empower", pieces: ["p", "n", "b", "r", "q"], moveAs: "q", self: true } },
     {
       kind: "activated",
       spendOnUse: false,
@@ -3030,7 +3063,7 @@ const TIER8: Buff[] = [
     },
   ),
   def(
-    { id: "endless_turn", name: "Endless Turn", description: "Take moves until you make a capture, once (minimum one move).", tier: 8, category: "tempo" },
+    { id: "endless_turn", name: "Endless Turn", description: "Take moves until you make a capture, once (minimum one move).", tier: 8, category: "tempo", fx: { motif: "rally", pieces: "all", self: true } },
     {
       kind: "activated",
       freeAction: true,
@@ -3134,13 +3167,13 @@ function homeStep(sq: Square, color: Color): Square | null {
 
 const HEXES: Buff[] = [
   def(
-    { id: "heavy_boots", name: "Heavy Boots", description: "Your opponent's pawns cannot double-step for their next 4 turns.", tier: 1, category: "hex" },
+    { id: "heavy_boots", name: "Heavy Boots", description: "Your opponent's pawns cannot double-step for their next 4 turns.", tier: 1, category: "hex", fx: { motif: "anchor", pieces: ["p"] } },
     timedOppFilter(4, (moves) =>
       moves.filter((m) => !(m.piece === "p" && Math.abs(RANK(m.to) - RANK(m.from)) === 2)),
     ),
   ),
   def(
-    { id: "toll_gate", name: "Toll Gate", description: "Your opponent cannot capture en passant for their next 6 turns.", tier: 1, category: "hex" },
+    { id: "toll_gate", name: "Toll Gate", description: "Your opponent cannot capture en passant for their next 6 turns.", tier: 1, category: "hex", fx: { motif: "muzzle", pieces: ["p"] } },
     timedOppFilter(6, (moves) =>
       moves.filter(
         (m) => !(m.piece === "p" && m.capturedSquare != null && m.capturedSquare !== m.to),
@@ -3152,7 +3185,7 @@ const HEXES: Buff[] = [
     freezeTarget(2),
   ),
   def(
-    { id: "butter_bishops", name: "Butter Bishops", description: "Your opponent's bishops slide at most 2 squares for their next 4 turns.", tier: 2, category: "hex" },
+    { id: "butter_bishops", name: "Butter Bishops", description: "Your opponent's bishops slide at most 2 squares for their next 4 turns.", tier: 2, category: "hex", fx: { motif: "anchor", pieces: ["b"] } },
     timedOppFilter(4, (moves) =>
       moves.filter(
         (m) =>
@@ -3162,11 +3195,12 @@ const HEXES: Buff[] = [
     ),
   ),
   def(
-    { id: "lame_horses", name: "Lame Horses", description: "Your opponent's knights cannot capture for their next 4 turns.", tier: 2, category: "hex" },
+    { id: "lame_horses", name: "Lame Horses", description: "Your opponent's knights cannot capture for their next 4 turns.", tier: 2, category: "hex", fx: { motif: "muzzle", pieces: ["n"] } },
     timedOppFilter(4, (moves) => moves.filter((m) => !(m.piece === "n" && m.captured))),
   ),
   def(
-    { id: "twist_the_knife", name: "Twist the Knife", description: "Their drawback bites back: for your opponent's next 3 captures, the capturing piece is frozen for 1 of their turns.", tier: 3, category: "hex" },
+    // Tempo tax on captures; kings are exempt from the freeze, so no "all".
+    { id: "twist_the_knife", name: "Twist the Knife", description: "Their drawback bites back: for your opponent's next 3 captures, the capturing piece is frozen for 1 of their turns.", tier: 3, category: "hex", fx: { motif: "slow", pieces: ["p", "n", "b", "r", "q"] } },
     {
       kind: "passive",
       init: (inst) => {
@@ -3193,7 +3227,9 @@ const HEXES: Buff[] = [
     // window grew from 4 to 6 of your turns, and the freeze really delivers
     // the promised 2 turns (the old 2-tick timer lost one tick to the
     // triggering move itself).
-    { id: "flypaper_file", name: "Flypaper File", description: "Coat one file in flypaper, visible to both players: for your next 6 turns, enemy pieces (kings excepted) that enter that file are stuck and cannot move for 2 of their turns.", tier: 4, category: "hex" },
+    // Square-scoped trap zone, so no pieces field; the freezes it lands are
+    // painted by the board.
+    { id: "flypaper_file", name: "Flypaper File", description: "Coat one file in flypaper, visible to both players: for your next 6 turns, enemy pieces (kings excepted) that enter that file are stuck and cannot move for 2 of their turns.", tier: 4, category: "hex", fx: { motif: "blindfold" } },
     {
       kind: "activated",
       spendOnUse: false,
@@ -3238,11 +3274,13 @@ const HEXES: Buff[] = [
     }),
   ),
   def(
-    { id: "walnut_queen", name: "Walnut Queen", description: "Your opponent's queen turns into a walnut for 3 of their turns. A walnut cannot move at all.", tier: 5, category: "hex" },
+    // Board already paints walnuts; fx carried for consistency.
+    { id: "walnut_queen", name: "Walnut Queen", description: "Your opponent's queen turns into a walnut for 3 of their turns. A walnut cannot move at all.", tier: 5, category: "hex", fx: { motif: "jail", pieces: ["q"] } },
     walnutAll(["q"], 3),
   ),
   def(
-    { id: "ball_and_chain", name: "Ball and Chain", description: "Their drawback grows teeth: for your opponent's next 5 turns, the piece they just moved must rest a turn before moving again.", tier: 5, category: "hex" },
+    // Rest-a-turn tempo tax; the filter can touch any piece, king included.
+    { id: "ball_and_chain", name: "Ball and Chain", description: "Their drawback grows teeth: for your opponent's next 5 turns, the piece they just moved must rest a turn before moving again.", tier: 5, category: "hex", fx: { motif: "slow", pieces: "all" } },
     {
       kind: "passive",
       init: (inst) => {
@@ -3265,7 +3303,9 @@ const HEXES: Buff[] = [
     },
   ),
   def(
-    { id: "royal_summons", name: "Royal Summons", description: "For your opponent's next 2 turns, they must move their king if it has a legal move.", tier: 5, category: "hex" },
+    // Mechanically king-only while the king can move: the rest of the army
+    // is jailed.
+    { id: "royal_summons", name: "Royal Summons", description: "For your opponent's next 2 turns, they must move their king if it has a legal move.", tier: 5, category: "hex", fx: { motif: "jail", pieces: ["p", "n", "b", "r", "q"] } },
     timedOppFilter(2, (moves) => {
       const kingMoves = moves.filter((m) => m.piece === "k");
       // A boxed-in king waives the summons instead of soft-locking the game.
@@ -3296,11 +3336,13 @@ const HEXES: Buff[] = [
     ),
   ),
   def(
-    { id: "walnut_court", name: "Walnut Court", description: "Every enemy rook turns into a walnut for 2 of their owner's turns.", tier: 7, category: "hex" },
+    // Board already paints walnuts; fx carried for consistency.
+    { id: "walnut_court", name: "Walnut Court", description: "Every enemy rook turns into a walnut for 2 of their owner's turns.", tier: 7, category: "hex", fx: { motif: "jail", pieces: ["r"] } },
     walnutAll(["r"], 2),
   ),
   def(
-    { id: "grand_malediction", name: "Grand Malediction", description: "Your opponent skips their next turn and their next draft is skipped.", tier: 7, category: "hex" },
+    // fx covers the turn skip; the draft denial half shows no board motif.
+    { id: "grand_malediction", name: "Grand Malediction", description: "Your opponent skips their next turn and their next draft is skipped.", tier: 7, category: "hex", fx: { motif: "slow", pieces: "all" } },
     instant((_inst, api) => {
       api.bs.skips[api.opp] += 1;
       api.theirs.flags.blockedDrafts = (api.theirs.flags.blockedDrafts ?? 0) + 1;

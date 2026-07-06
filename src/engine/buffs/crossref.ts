@@ -29,6 +29,7 @@ import type {
   Buff,
   BuffApi,
   BuffInstance,
+  CardFx,
   Move,
   Square,
   Tier,
@@ -50,6 +51,9 @@ type XMeta = {
   category: BuffCategory;
   boon?: boolean;
   flavor?: string;
+  /** Board motif drawn on the affected pieces while the constraint runs.
+   * Display metadata only; never consulted by move generation. */
+  fx?: CardFx;
 };
 function card(meta: XMeta, mech: Mech): Buff {
   return { ...meta, implemented: true, ...mech };
@@ -69,6 +73,7 @@ export const CROSSREF_CARDS: Buff[] = [
       description: "Cast a nerf on your opponent: they cannot capture for their next 2 turns.",
       tier: 5,
       flavor: "If you cannot beat them, nerf them.",
+      fx: { motif: "muzzle", pieces: "all" },
     },
     {
       kind: "passive",
@@ -101,6 +106,8 @@ export const CROSSREF_CARDS: Buff[] = [
       description: "Nerf your opponent's pawns: they cannot advance for their next 3 turns. Their pawns may still capture diagonally.",
       tier: 3,
       flavor: "Patch notes: enemy pawns no longer function.",
+      // Board already paints no_pawn_advance; fx carried for consistency.
+      fx: { motif: "anchor", pieces: ["p"] },
     },
     instant((_inst, api) => {
       addEffect(api, { kind: "no_pawn_advance", against: api.opp, turns: 3 });
@@ -120,6 +127,8 @@ export const CROSSREF_CARDS: Buff[] = [
       description: "Nerf your opponent to a king-only game: on their next turn they may move only their king.",
       tier: 5,
       flavor: "Everyone else has been benched.",
+      // Board already paints king_only; fx carried for consistency.
+      fx: { motif: "jail", pieces: ["p", "n", "b", "r", "q"] },
     },
     instant((_inst, api) => {
       addEffect(api, { kind: "king_only", against: api.opp, turns: 1 });
@@ -152,6 +161,7 @@ export const CROSSREF_CARDS: Buff[] = [
       description: "Nerf your opponent's queen: she slides at most 3 squares for their next 3 turns.",
       tier: 5,
       flavor: "Her range stat took a hit this patch.",
+      fx: { motif: "anchor", pieces: ["q"] },
     },
     curse(3, (moves) => moves.filter((m) => m.piece !== "q" || dist(m.from, m.to) <= 3)),
   ),
@@ -317,6 +327,8 @@ export const CROSSREF_CARDS: Buff[] = [
       category: "protection",
       boon: true,
       flavor: "New response just dropped.",
+      // Guards the pawns without a shield effect; ward is its only paint.
+      fx: { motif: "ward", pieces: ["p"], self: true },
     },
     oppFilter((moves) => moves.filter((m) => !m.isEnPassant)),
   ),
@@ -401,6 +413,8 @@ export const CROSSREF_CARDS: Buff[] = [
       description: "Lob the king of fruits: the stench pins your opponent's pawns, which cannot advance for their next 3 turns. They may still capture diagonally.",
       tier: 3,
       flavor: "Banned on public transit for a reason.",
+      // Board already paints no_pawn_advance; fx carried for consistency.
+      fx: { motif: "anchor", pieces: ["p"] },
     },
     instant((_inst, api) => {
       addEffect(api, { kind: "no_pawn_advance", against: api.opp, turns: 3 });

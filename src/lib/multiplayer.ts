@@ -210,6 +210,12 @@ export type MPAcceptedMove = {
   ply: number;
   wc: number;
   bc: number;
+  // Desync telemetry (optional so frames from older servers still parse):
+  // fnv1a(positionKey(board)) of the server's authoritative post-move
+  // position. After applying the move, a replica whose own position hashes
+  // differently has silently diverged: it should resync() and beacon the pair
+  // of hashes to /api/desync (see src/engine/desync.ts).
+  f?: string;
 };
 
 export type MPRatingChange = { userId: string; before: number; after: number };

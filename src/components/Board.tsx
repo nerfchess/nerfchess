@@ -7,7 +7,9 @@ import {
   BarrierStakes,
   BoltGlyph,
   ChainJail,
+  DetonationBurst,
   DuckGlyph,
+  MotifBadge,
   PawnFence,
   ShieldMark,
   SnowflakeGlyph,
@@ -16,8 +18,19 @@ import {
   SummonPoof,
   TransformFlourish,
 } from "./effects/BoardEffects";
+import type { MotifMark } from "./effects/fxZones";
 import { BoardState, Color, FILE, Move, PieceType, RANK, SQ, Square } from "@/engine/types";
-import { playSelect } from "@/lib/sounds";
+import {
+  playChains,
+  playExplosion,
+  playFreeze,
+  playSelect,
+  playShieldUp,
+  playSlip,
+  playStun,
+  playSummon,
+  playTransform,
+} from "@/lib/sounds";
 
 interface Visual {
   fogged?: boolean;
@@ -51,6 +64,10 @@ interface Visual {
   /** Kings of players with pending turn skips; `n` is the remaining count so
    * each new application or consumed skip replays the one-shot stun swirl. */
   stunSquares?: { sq: number; n: number }[];
+  /** Card-fx motifs (CardFx): per-card constraint badges on cursed pieces
+   * and empowerment marks on the owner's pieces, one mark per square with
+   * the strongest motif already chosen upstream (see fxZones). */
+  motifSquares?: MotifMark[];
 }
 
 export interface QueuedPremove {
@@ -137,6 +154,34 @@ const MARK_COLORS: Record<RightClickMark, string> = {
   4: "rgb(181,70,65)",
 };
 
+// Plain-language tooltip fragments for the card-fx motifs (the square title
+// pairs them with the exact card name and remaining turns).
+const MOTIF_DESC: Record<MotifMark["motif"], string> = {
+  jail: "is locked down and cannot move",
+  muzzle: "cannot capture",
+  anchor: "has its movement shortened",
+  blindfold: "has its sight restricted",
+  slow: "is slowed",
+  empower: "is empowered",
+  ward: "is warded from harm",
+  rally: "is rallied",
+};
+
+const PIECE_NAME: Record<string, string> = {
+  p: "pawn",
+  n: "knight",
+  b: "bishop",
+  r: "rook",
+  q: "queen",
+  k: "king",
+};
+
+// Empowerment marks paint on the owner's pieces; everything else is a
+// constraint on the cursed side.
+function isEmpowerMotif(motif: MotifMark["motif"]): boolean {
+  return motif === "empower" || motif === "ward" || motif === "rally";
+}
+
 function ArrowShape({
   from,
   to,
@@ -221,8 +266,12 @@ function computeAnims(
   next: BoardState["pieces"],
   orientation: Color,
   skipSquare: Square | null,
-): Map<Square, PieceAnim> {
+): { anims: Map<Square, PieceAnim>; movedFrom: Set<Square> } {
   const anims = new Map<Square, PieceAnim>();
+  // Every vanished square matched to an arrival: these pieces MOVED (slide,
+  // castle, drag drop), so the detonation pass below must never mistake
+  // their empty origin squares for card removals.
+  const movedFrom = new Set<Square>();
   const vanished: Square[] = [];
   const appeared: Square[] = [];
   for (let sq = 0 as Square; sq < 64; sq++) {
@@ -232,15 +281,13 @@ function computeAnims(
     if (b && (!a || a.type !== b.type || a.color !== b.color)) appeared.push(sq);
   }
   // A flood of changes is a reset (new game, history jump), not a move.
-  if (appeared.length === 0 || appeared.length > 6) return anims;
-  const used = new Set<Square>();
+  if (appeared.length === 0 || appeared.length > 6) return { anims, movedFrom };
   for (const to of appeared) {
-    if (to === skipSquare) continue; // drag drops land instantly
     const piece = next[to]!;
     let best: Square | null = null;
     let bestDist = Infinity;
     for (const from of vanished) {
-      if (used.has(from)) continue;
+      if (movedFrom.has(from)) continue;
       const q = prev[from]!;
       if (q.type !== piece.type || q.color !== piece.color) continue;
       const d = (FILE(from) - FILE(to)) ** 2 + (RANK(from) - RANK(to)) ** 2;
@@ -250,7 +297,8 @@ function computeAnims(
       }
     }
     if (best == null) continue;
-    used.add(best);
+    movedFrom.add(best);
+    if (to === skipSquare) continue; // drag drops land instantly (still a move)
     let dxCells = FILE(best) - FILE(to);
     let dyCells = RANK(to) - RANK(best);
     if (orientation === "b") {
@@ -259,7 +307,7 @@ function computeAnims(
     }
     anims.set(to, { dxCells, dyCells });
   }
-  return anims;
+  return { anims, movedFrom };
 }
 
 // --- One-shot square flourishes (transform / summon) ---
@@ -271,7 +319,7 @@ function computeAnims(
 // them and no per-frame JS runs.
 
 interface BoardFx {
-  kind: "morph" | "summon";
+  kind: "morph" | "summon" | "detonate";
   crown?: boolean;
   key: number;
 }
@@ -280,27 +328,80 @@ function computeBoardFx(
   prev: BoardState["pieces"],
   next: BoardState["pieces"],
   anims: Map<Square, PieceAnim>,
+  movedFrom: Set<Square>,
   skipSquare: Square | null,
+  capturedSquare: Square | null,
   seq: { current: number },
 ): Map<Square, BoardFx> {
   const fx = new Map<Square, BoardFx>();
   let appeared = 0;
+  let vanishedCount = 0;
   const lostColor: Record<Color, boolean> = { w: false, b: false };
   for (let sq = 0; sq < 64; sq++) {
     const a = prev[sq];
     const b = next[sq];
     if (b && (!a || a.type !== b.type || a.color !== b.color)) appeared++;
-    if (a && (!b || a.type !== b.type || a.color !== b.color)) lostColor[a.color] = true;
+    if (a && (!b || a.type !== b.type || a.color !== b.color)) {
+      lostColor[a.color] = true;
+      vanishedCount++;
+    }
   }
   // Same reset guard as computeAnims: a flood of changes is a new game or a
-  // history jump, not a move, so play nothing.
-  if (appeared === 0 || appeared > 6) return fx;
-  let morphUsed = false; // one transform flourish per move, max
-  let summons = 0;
+  // history jump, not a move, so play nothing. Unlike the slide matcher,
+  // appeared can be zero here: an attack card can clear pieces without
+  // anything arriving (that is exactly the detonation case).
+  if (appeared > 6 || vanishedCount > 10) return fx;
+  // Unexplained arrivals per color: a piece that appeared without a matched
+  // slide is a transform-in-motion (promotion) or a summon; either way its
+  // color's unmatched DEPARTURE is that same piece changing form, never a
+  // detonation.
+  const gainedColor: Record<Color, boolean> = { w: false, b: false };
   for (let sq = 0 as Square; sq < 64; sq++) {
     const a = prev[sq];
     const b = next[sq];
-    if (!b) continue;
+    if (b && (!a || a.type !== b.type || a.color !== b.color) && !anims.has(sq) && sq !== skipSquare) {
+      gainedColor[b.color] = true;
+    }
+  }
+  // An enemy pawn that just landed directly beside the file-forward edge of
+  // a vanished pawn is an en-passant-style capture, not a card removal.
+  // Real games already exclude these via capturedSquare; this covers the
+  // premove preview boards, whose lastMove is still the opponent's.
+  const epStyleCapture = (sq: Square, victimColor: Color): boolean => {
+    for (const d of [-8, 8]) {
+      const n = sq + d;
+      if (n < 0 || n > 63) continue;
+      const q = next[n];
+      if (q && q.type === "p" && q.color !== victimColor && prev[n]?.type !== "p") return true;
+    }
+    return false;
+  };
+  let morphUsed = false; // one transform flourish per move, max
+  let summons = 0;
+  let detonations = 0;
+  for (let sq = 0 as Square; sq < 64; sq++) {
+    const a = prev[sq];
+    const b = next[sq];
+    if (!b) {
+      // Detonation: a piece vanished with nothing landing on its square, no
+      // matched move away (movedFrom), no capture recorded there (en
+      // passant and skid captures clear a square besides the destination),
+      // and no unexplained same-color arrival elsewhere (promotion-style
+      // form changes): an attack card removed it outright, so it goes out
+      // with a bang instead of silently blinking away.
+      if (
+        a &&
+        !movedFrom.has(sq) &&
+        sq !== capturedSquare &&
+        !gainedColor[a.color] &&
+        !(a.type === "p" && epStyleCapture(sq, a.color)) &&
+        detonations < 6
+      ) {
+        fx.set(sq, { kind: "detonate", key: ++seq.current });
+        detonations++;
+      }
+      continue;
+    }
     if (a && a.color === b.color && a.type !== b.type) {
       // In-place type change (setPieceType buffs: Amazon-style upgrades).
       if (!morphUsed) {
@@ -390,17 +491,20 @@ export function Board({
   // Diff against the previous position during render (reference equality
   // guards against re-runs) so animated squares can be tagged in this pass.
   if (prevPiecesRef.current && prevPiecesRef.current !== board.pieces) {
-    animsRef.current = computeAnims(
+    const { anims, movedFrom } = computeAnims(
       prevPiecesRef.current,
       board.pieces,
       orientation,
       dropSkipRef.current,
     );
+    animsRef.current = anims;
     fxRef.current = computeBoardFx(
       prevPiecesRef.current,
       board.pieces,
-      animsRef.current,
+      anims,
+      movedFrom,
       dropSkipRef.current,
+      lastMove?.capturedSquare ?? null,
       fxSeqRef,
     );
     dropSkipRef.current = null;
@@ -444,6 +548,27 @@ export function Board({
       );
     }
   }, [board.pieces, orientation]);
+
+  // Effect voices for the board flourishes diffed above (transform, summon,
+  // detonation). Keyed by the same monotonic fx counter as the visuals, so
+  // re-renders can never replay a sound, and the first render computes no fx
+  // at all, so a restored or rejoined game mounts silently.
+  const fxSoundKeyRef = useRef(0);
+  useEffect(() => {
+    let morph = false;
+    let summon = false;
+    let detonate = false;
+    for (const fx of fxRef.current.values()) {
+      if (fx.key <= fxSoundKeyRef.current) continue;
+      if (fx.kind === "morph") morph = true;
+      else if (fx.kind === "summon") summon = true;
+      else detonate = true;
+    }
+    fxSoundKeyRef.current = fxSeqRef.current;
+    if (detonate) playExplosion();
+    if (morph) playTransform();
+    if (summon) playSummon();
+  }, [board.pieces]);
 
   const movesFrom = useMemo(() => {
     const m = new Map<Square, Move[]>();
@@ -510,6 +635,12 @@ export function Board({
     for (const s of visual?.stunSquares ?? []) m.set(s.sq, s.n);
     return m;
   }, [visual?.stunSquares]);
+  // Card-fx motif per square (fxZones already resolved strongest-wins).
+  const motifBySquare = useMemo(() => {
+    const m = new Map<number, MotifMark>();
+    for (const mk of visual?.motifSquares ?? []) m.set(mk.sq, mk);
+    return m;
+  }, [visual?.motifSquares]);
   // Chain-jailed squares: shackled pieces minus the pawn-clamp family (those
   // get the fence instead). Sorted order drives the clamp-in stagger so the
   // links read as dropping in one after another.
@@ -528,6 +659,70 @@ export function Board({
     () => new Set(visual?.highlightSquares ?? []),
     [visual?.highlightSquares],
   );
+
+  // Entrance voices for the persistent square effects: each family sounds
+  // exactly once, when a square first gains the effect, matching the visual
+  // one-shot entrances. Diffed against the previous sets; a null visual
+  // (initial mount, restored game, history review) resets the baseline
+  // SILENTLY, so only effects appearing after the first live render ever
+  // sound, and leaving review never replays a wall of entrances.
+  const prevZoneSoundsRef = useRef<{
+    jail: Set<number>;
+    shield: Set<number>;
+    freeze: Set<number>;
+    banana: Set<number>;
+    stun: Map<number, number>;
+  } | null>(null);
+  useEffect(() => {
+    if (!visual) {
+      prevZoneSoundsRef.current = null;
+      return;
+    }
+    const jail = new Set<number>(jailSquares);
+    const shield = new Set<number>([...shieldedSquares, ...kingSafeSquares]);
+    const freeze = new Set<number>([...frozenSquares, ...walnutSquares]);
+    for (const mk of visual.motifSquares ?? []) {
+      if (mk.motif === "jail") jail.add(mk.sq);
+      else if (mk.motif === "ward") shield.add(mk.sq);
+    }
+    const banana = new Set<number>(bananaSquares);
+    const stun = new Map(stunBySquare);
+    const prev = prevZoneSoundsRef.current;
+    prevZoneSoundsRef.current = { jail, shield, freeze, banana, stun };
+    if (!prev) return; // baseline snapshot: pre-existing effects stay silent
+    const gained = (now: Set<number>, before: Set<number>) => {
+      for (const sq of now) if (!before.has(sq)) return true;
+      return false;
+    };
+    if (gained(jail, prev.jail)) playChains();
+    if (gained(shield, prev.shield)) playShieldUp();
+    if (gained(freeze, prev.freeze)) playFreeze();
+    // A peel vanishing mid-game means the trap fired: somebody slipped.
+    for (const sq of prev.banana) {
+      if (!banana.has(sq)) {
+        playSlip();
+        break;
+      }
+    }
+    // The stun swirl replays on every application AND every consumed skip
+    // (the visual keys on the remaining count); the voice matches it.
+    for (const [sq, n] of stun) {
+      const before = prev.stun.get(sq);
+      if (before == null || n !== before) {
+        playStun();
+        break;
+      }
+    }
+  }, [
+    visual,
+    jailSquares,
+    shieldedSquares,
+    kingSafeSquares,
+    frozenSquares,
+    walnutSquares,
+    bananaSquares,
+    stunBySquare,
+  ]);
 
   const squareAtClient = (clientX: number, clientY: number): Square | null => {
     const rect = gridRectRef.current ?? (() => {
@@ -938,6 +1133,21 @@ export function Board({
             const fenceEdge: "top" | "bottom" =
               piece && (piece.color === "w") === (orientation === "w") ? "top" : "bottom";
 
+            // Card-fx motif for this square. Same-concept dedupe: a square
+            // that already carries the full-square treatment of the same
+            // idea keeps it and skips the badge. Chain jail and pawn fence
+            // outrank constraint badges, freeze and walnut silence every
+            // motif (the piece is out of action), and the buckler/heater
+            // shield covers what a ward ring would say.
+            const motifMark = motifBySquare.get(sq);
+            const motifShown =
+              !!motifMark &&
+              !!piece &&
+              !walnutSquares.has(sq) &&
+              !frozenSquares.has(sq) &&
+              (isEmpowerMotif(motifMark.motif) || (!jailSquares.has(sq) && !pawnClampSquares.has(sq))) &&
+              !(motifMark.motif === "ward" && (shieldedSquares.has(sq) || kingSafeSquares.has(sq)));
+
             // Plain-language hover tooltip for any effect on this square, so a
             // player can hover a walnut, freeze, shield, wall, or peel and read
             // what it does instead of decoding an icon. Public information, so
@@ -960,6 +1170,22 @@ export function Board({
               bananaSquares.has(sq) &&
                 "Banana peel: the next enemy piece to step here slips and skids off course.",
               strikeSquares.has(sq) && "Lightning: this square was just struck.",
+              // Card-fx motif: always the exact card name plus turns left.
+              motifShown &&
+                motifMark &&
+                `${motifMark.name}: ${
+                  motifMark.motif === "rally"
+                    ? "this army " + MOTIF_DESC.rally
+                    : "this piece " +
+                      MOTIF_DESC[motifMark.motif] +
+                      (motifMark.motif === "empower" && motifMark.moveAs
+                        ? ` and moves like a ${PIECE_NAME[motifMark.moveAs]}`
+                        : "")
+                }${
+                  motifMark.turns != null
+                    ? ` (${motifMark.turns} turn${motifMark.turns === 1 ? "" : "s"} left)`
+                    : ""
+                }.`,
             ]
               .filter(Boolean)
               .join(" ");
@@ -1089,6 +1315,19 @@ export function Board({
                      edge; the path ahead is closed. */
                   <PawnFence edge={fenceEdge} />
                 )}
+                {motifShown && motifMark && (
+                  /* Card-fx motif badge, tinted by the card's tier and
+                     stamped with its category glyph. Keyed by motif + card
+                     name so re-renders never replay the entrance; only a
+                     genuinely different card (or motif) remounts it. */
+                  <MotifBadge
+                    key={`motif-${motifMark.motif}-${motifMark.name}`}
+                    motif={motifMark.motif}
+                    tier={motifMark.tier}
+                    category={motifMark.category}
+                    moveAs={motifMark.moveAs}
+                  />
+                )}
                 {(shieldedSquares.has(sq) || kingSafeSquares.has(sq)) && (
                   <>
                     <div className="absolute inset-0 pointer-events-none ring-2 ring-inset ring-verdigris-glow/80 shadow-[inset_0_0_18px_-4px_rgba(123,181,47,0.6)] sq-shield-in" />
@@ -1124,6 +1363,7 @@ export function Board({
                   <TransformFlourish key={`fx-${boardFx.key}`} crown={boardFx.crown} />
                 )}
                 {boardFx?.kind === "summon" && <SummonPoof key={`fx-${boardFx.key}`} />}
+                {boardFx?.kind === "detonate" && <DetonationBurst key={`fx-${boardFx.key}`} />}
                 {isForced && !isDragging && (
                   <div className="absolute inset-0 pointer-events-none rounded-sm ring-2 ring-inset ring-gold-leaf/80 shadow-[inset_0_0_24px_-4px_rgba(230,191,106,0.55)] animate-flicker" />
                 )}

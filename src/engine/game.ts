@@ -218,6 +218,14 @@ export function makeBuffApi(game: NerfGame, me: Color): BuffApi {
   const bs = game.buffs!;
   const opp: Color = me === "w" ? "b" : "w";
   const slot = me === "w" ? game.white : game.black;
+  // Every direct board mutation bumps the transient counter so apply paths
+  // (playMove's hook loop, the game server's pick handling) can tell whether
+  // a hook or init observably changed the board. Only counted when the board
+  // actually changes, so a refused relocation or a no-op removal never
+  // reveals a card that did nothing visible.
+  const mutated = () => {
+    bs.mutations = (bs.mutations ?? 0) + 1;
+  };
   return {
     board: game.board,
     me,
@@ -230,11 +238,14 @@ export function makeBuffApi(game: NerfGame, me: Color): BuffApi {
     capturedByMe: game.captured[me],
     place: (sq, type, color) => {
       bs.historyDiverged = true;
+      mutated();
       game.board.pieces[sq] = { type, color };
     },
     removePiece: (sq, opts) => {
       const p = game.board.pieces[sq];
+      if (!p) return;
       bs.historyDiverged = true;
+      mutated();
       game.board.pieces[sq] = null;
       // A piece destroyed by a buff is a real loss: count it as captured by
       // the other side so material counters and the owner's revivable pool
@@ -250,6 +261,9 @@ export function makeBuffApi(game: NerfGame, me: Color): BuffApi {
     },
     relocate: (from, to) => {
       const p = game.board.pieces[from];
+      // Nothing to relocate: bail before the write below could null out a
+      // piece already standing on `to`.
+      if (!p) return;
       // Anchor: an enemy piece bound by its owner's Anchor buff cannot be
       // pushed or swapped by my buffs (its own moves are unaffected).
       if (
@@ -268,18 +282,25 @@ export function makeBuffApi(game: NerfGame, me: Color): BuffApi {
         return;
       }
       bs.historyDiverged = true;
+      mutated();
       game.board.pieces[from] = null;
       game.board.pieces[to] = p;
     },
     setPieceType: (sq, type) => {
       bs.historyDiverged = true;
       const p = game.board.pieces[sq];
-      if (p) game.board.pieces[sq] = { ...p, type };
+      if (p) {
+        mutated();
+        game.board.pieces[sq] = { ...p, type };
+      }
     },
     setPieceColor: (sq, color) => {
       bs.historyDiverged = true;
       const p = game.board.pieces[sq];
-      if (p) game.board.pieces[sq] = { ...p, color };
+      if (p) {
+        mutated();
+        game.board.pieces[sq] = { ...p, color };
+      }
     },
     restoreCastling: () => {
       const homeR = me === "w" ? 0 : 7;
@@ -450,21 +471,40 @@ export function checkLossConditions(game: NerfGame): GameResult | null {
 
 export function playMove(game: NerfGame, move: Move): NerfGame {
   if (game.result) return game;
+  const nextBoard = makeMove(game.board, move);
+  // makeMove refused the move (empty origin square or the self-capture
+  // backstop): treat the whole ply as a no-op. Counting the capture or
+  // ticking effect timers against a board that did not change would desync
+  // the capture pools (revives) and effect clocks from the board itself.
+  if (nextBoard === game.board) return game;
   if (move.captured) {
     game.captured[move.color][move.captured] += 1;
   }
-  game.board = makeMove(game.board, move);
+  game.board = nextBoard;
   const bs = game.buffs;
   if (bs) {
     // A reply move from the other side lifts the chained-move king guard.
     if (bs.chainKingGuard && bs.chainKingGuard !== move.color) bs.chainKingGuard = undefined;
     // Buff bookkeeping: piece tracking, charge consumption, timed passives.
+    // Record which hooks observably fired (a board mutation or a new board
+    // effect): the game server reveals those cards to the table, because a
+    // replica that does not know a card's identity cannot replay its hook,
+    // and a skipped board mutation is a permanent desync. State-only changes
+    // (charge counters) stay private; dtState frames resync those.
+    const fired: { color: Color; index: number }[] = [];
     for (const color of ["w", "b"] as Color[]) {
       const api = makeBuffApi(game, color);
       for (const { inst, def } of heldBuffs(game, color)) {
-        def.onMovePlayed?.(inst, move, api);
+        if (!def.onMovePlayed) continue;
+        const effectsBefore = bs.effects.length;
+        const mutationsBefore = bs.mutations ?? 0;
+        def.onMovePlayed(inst, move, api);
+        if (bs.effects.length !== effectsBefore || (bs.mutations ?? 0) !== mutationsBefore) {
+          fired.push({ color, index: bs.players[color].buffs.indexOf(inst) });
+        }
       }
     }
+    bs.lastHookMutations = fired.length > 0 ? fired : undefined;
     // Shielded squares follow the shielded piece when its owner moves it.
     for (const e of bs.effects) {
       if (e.kind === "shield" && e.squares && move.color === e.owner) {

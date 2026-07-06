@@ -55,6 +55,8 @@ export const HEXES_T3: Buff[] = [
       name: "Hobbled Cavalry",
       description: "Your opponent's knights turn to walnuts for 2 of their turns.",
       flavor: "The horses will not stir.",
+      // Board already paints walnuts; fx carried for consistency.
+      fx: { motif: "jail", pieces: ["n"] },
     },
     walnutAll(["n"], 2),
   ),
@@ -77,6 +79,7 @@ export const HEXES_T3: Buff[] = [
       name: "Anchored Rooks",
       description: "Your opponent cannot move their rooks for their next 2 turns.",
       flavor: "Chains bolt the towers to the floor.",
+      fx: { motif: "jail", pieces: ["r"] },
     },
     curse(2, (moves) => moves.filter((m) => m.piece !== "r")),
   ),
@@ -88,6 +91,7 @@ export const HEXES_T3: Buff[] = [
       name: "Blinkered Bishops",
       description: "Your opponent cannot move their bishops for their next 2 turns.",
       flavor: "The clergy are shut in the vestry.",
+      fx: { motif: "jail", pieces: ["b"] },
     },
     curse(2, (moves) => moves.filter((m) => m.piece !== "b")),
   ),
@@ -99,6 +103,7 @@ export const HEXES_T3: Buff[] = [
       name: "Spooked Steeds",
       description: "Your opponent cannot move their knights for their next 2 turns.",
       flavor: "The horses shy at every shadow.",
+      fx: { motif: "jail", pieces: ["n"] },
     },
     curse(2, (moves) => moves.filter((m) => m.piece !== "n")),
   ),
@@ -110,6 +115,8 @@ export const HEXES_T3: Buff[] = [
       name: "Royal Duty",
       description: "On your opponent's next turn they may move only their king.",
       flavor: "The crown must answer the summons alone.",
+      // Board already paints king_only; fx carried for consistency.
+      fx: { motif: "jail", pieces: ["p", "n", "b", "r", "q"] },
     },
     instant((_inst, api) => {
       addEffect(api, { kind: "king_only", against: api.opp, turns: 1 });
@@ -123,19 +130,21 @@ export const HEXES_T3: Buff[] = [
       name: "Wasted Hour",
       description: "Your opponent skips their next turn.",
       flavor: "The whole camp oversleeps.",
+      fx: { motif: "slow", pieces: "all" },
     },
     skipOpponent(1),
   ),
 
   // --- timed filter: queen short range ------------------------------------
   H(
-    { id: "leaden_crown", name: "Leaden Crown", description: "Your opponent's queen slides at most 2 squares for their next 4 turns.", flavor: "The crown weighs heavy." },
+    { id: "leaden_crown", name: "Leaden Crown", description: "Your opponent's queen slides at most 2 squares for their next 4 turns.", flavor: "The crown weighs heavy.", fx: { motif: "anchor", pieces: ["q"] } },
     curse(4, (moves) => moves.filter((m) => m.piece !== "q" || dist(m.from, m.to) <= 2)),
   ),
 
   // --- no_pawn_advance: pawns frozen forward ------------------------------
   H(
-    { id: "sown_salt", name: "Sown Salt", description: "Your opponent's pawns cannot advance for their next 4 turns. They may still capture diagonally.", flavor: "Nothing grows in salted fields." },
+    // Board already paints no_pawn_advance; fx carried for consistency.
+    { id: "sown_salt", name: "Sown Salt", description: "Your opponent's pawns cannot advance for their next 4 turns. They may still capture diagonally.", flavor: "Nothing grows in salted fields.", fx: { motif: "anchor", pieces: ["p"] } },
     instant((_inst, api) => {
       addEffect(api, { kind: "no_pawn_advance", against: api.opp, turns: 4 });
     }),
@@ -143,7 +152,9 @@ export const HEXES_T3: Buff[] = [
 
   // --- barred: seal the four center squares -------------------------------
   H(
-    { id: "no_trespass", name: "No Trespass", description: "Your opponent cannot move any piece onto the four center squares (d4, e4, d5, e5) for their next 4 turns." },
+    // Board already paints barred squares; fx carried for consistency
+    // (square-scoped, so no pieces field).
+    { id: "no_trespass", name: "No Trespass", description: "Your opponent cannot move any piece onto the four center squares (d4, e4, d5, e5) for their next 4 turns.", fx: { motif: "blindfold" } },
     instant((_inst, api) => {
       addEffect(api, {
         kind: "barred",

@@ -6,6 +6,21 @@
 // a static end state under prefers-reduced-motion; one-shot flourishes hide.
 
 import React from "react";
+import {
+  Castle,
+  Eye,
+  Layers,
+  type LucideIcon,
+  Package,
+  Shield,
+  Skull,
+  Swords,
+  Timer,
+  Unlink,
+  Wind,
+} from "lucide-react";
+import type { BuffCategory, CardFx } from "@/engine/buff";
+import type { PieceType } from "@/engine/types";
 import "./effects.css";
 
 // --- Small inline glyphs (replacements for emoji/dingbat markers) -----------
@@ -452,3 +467,396 @@ export function SummonPoof() {
     </span>
   );
 }
+
+// --- 8. Detonation (attack-card removals) ------------------------------------
+
+const EMBER_FILL = "#d98a4a";
+const EMBER_EDGE = "#3a2013";
+const DET_VECTORS = [
+  { dx: "300%", dy: "-160%", rot: "150deg", delay: 0 },
+  { dx: "-280%", dy: "-220%", rot: "-140deg", delay: 20 },
+  { dx: "340%", dy: "120%", rot: "190deg", delay: 10 },
+  { dx: "-320%", dy: "180%", rot: "-170deg", delay: 30 },
+  { dx: "90%", dy: "-330%", rot: "80deg", delay: 5 },
+  { dx: "-120%", dy: "300%", rot: "-100deg", delay: 25 },
+  { dx: "220%", dy: "260%", rot: "120deg", delay: 15 },
+];
+
+/**
+ * A piece removed outright by an attack card (nothing landed on its square,
+ * it did not move away): an expanding blast ring, a burst of ember shards,
+ * and a scorch mark that lingers a beat before fading. Pure one-shot CSS;
+ * hidden entirely under reduced motion like the other transient flourishes.
+ */
+export function DetonationBurst() {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-scorch absolute inset-[12%] block">
+        <svg viewBox="0 0 40 40" className="h-full w-full">
+          <path
+            d="M20 6 C26 5 33 9 34 16 C36 22 32 30 25 33 C18 36 9 33 6.5 26 C4 19 7 11 13 8 C15 6.8 17.5 6.3 20 6 Z"
+            fill="rgba(16, 12, 8, 0.5)"
+          />
+          <path
+            d="M12 14 C15 12 24 11.4 28 15 C30.6 18 30 25 25.5 27.6 C20 30.4 13 28 11 22.6 C9.8 19.4 10.4 16 12 14 Z"
+            fill="rgba(10, 7, 4, 0.55)"
+          />
+        </svg>
+      </span>
+      <span
+        className="fx-det-ring absolute inset-[14%] block rounded-full"
+        style={{ border: "1px solid rgba(230, 168, 92, 0.95)" }}
+      />
+      {DET_VECTORS.map((v, i) => (
+        <span
+          key={i}
+          className="fx-shard absolute left-1/2 top-1/2 ml-[-5%] mt-[-5%] block h-[10%] w-[10%]"
+          style={
+            {
+              "--dx": v.dx,
+              "--dy": v.dy,
+              "--rot": v.rot,
+              animationDelay: `${v.delay}ms`,
+            } as React.CSSProperties
+          }
+        >
+          <svg viewBox="0 0 10 10" className="h-full w-full">
+            <polygon
+              points={i % 2 === 0 ? "5,0 10,8 0,8" : "0,2 10,0 6,10"}
+              fill={EMBER_FILL}
+              stroke={EMBER_EDGE}
+              strokeWidth="0.6"
+            />
+          </svg>
+        </span>
+      ))}
+    </span>
+  );
+}
+
+// --- 9. Card-fx motifs (CardFx: constraints and empowerments) ----------------
+// One badge per affected square, painted by Board.tsx from fxZones' motif
+// marks. Every badge is tinted by the CARD's tier color and stamped with the
+// card's category glyph, so two different cards sharing a motif still read
+// differently at a glance; the square's hover tooltip carries the exact card
+// name and remaining turns. Entrances are one-shot CSS (mount-only), then a
+// calm static pose; the transient rally banner ends fully transparent.
+
+const MOTIF_DARK = "#141e2b";
+
+/** Mirror of globals.css's .tier-N palette, for SVG strokes/fills. */
+const TIER_COLOR: Record<number, string> = {
+  1: "#7eb59a",
+  2: "#8ba9c4",
+  3: "#d8b56e",
+  4: "#c79468",
+  5: "#c66860",
+  6: "#c65f8f",
+  7: "#a877d8",
+  8: "#e05252",
+};
+
+// Same suit glyphs BuffCard stamps on card faces, shrunk to a micro-chip.
+const CATEGORY_ICON: Record<BuffCategory, LucideIcon> = {
+  movement: Wind,
+  pieces: Castle,
+  tempo: Timer,
+  protection: Shield,
+  attack: Swords,
+  info: Eye,
+  draft: Layers,
+  nerf: Unlink,
+  hex: Skull,
+  item: Package,
+};
+
+/** The card's suit as a micro-chip beside the motif (per-card distinctness:
+ * tier tint + suit + motif together identify the card at a glance). */
+function CategoryChip({
+  category,
+  color,
+  className,
+}: {
+  category: BuffCategory;
+  color: string;
+  className: string;
+}) {
+  const Icon = CATEGORY_ICON[category];
+  return (
+    <span
+      aria-hidden="true"
+      className={
+        "fx-motif-chip pointer-events-none absolute z-10 flex items-center justify-center rounded-[1px] border " +
+        className
+      }
+      style={{ background: "rgba(20,30,43,0.92)", borderColor: color, color }}
+    >
+      <Icon size="72%" strokeWidth={2.6} aria-hidden />
+    </span>
+  );
+}
+
+/** Two-pass stroke: a dark understroke for contrast on both square colors,
+ * then the tier-tinted line (currentColor) on top. */
+function DualStroke({ d, dark = 2.3, light = 1 }: { d: string; dark?: number; light?: number }) {
+  return (
+    <>
+      <path d={d} fill="none" stroke={MOTIF_DARK} strokeWidth={dark} strokeLinecap="round" strokeLinejoin="round" />
+      <path d={d} fill="none" stroke="currentColor" strokeWidth={light} strokeLinecap="round" strokeLinejoin="round" />
+    </>
+  );
+}
+
+/** jail: a short run of chain links, the corner-badge cousin of ChainJail. */
+function JailGlyph() {
+  const links = [
+    { x: 5.4, y: 5.6, a: 46, edge: false },
+    { x: 10, y: 10.2, a: 44, edge: true },
+    { x: 14.6, y: 14.8, a: 41, edge: false },
+  ];
+  return (
+    <>
+      {links.map((p, i) => (
+        <g key={i} transform={`rotate(${p.a} ${p.x} ${p.y})`}>
+          <ellipse cx={p.x} cy={p.y} rx={2.9} ry={p.edge ? 1.1 : 2} fill="none" stroke={MOTIF_DARK} strokeWidth={2.3} />
+          <ellipse cx={p.x} cy={p.y} rx={2.9} ry={p.edge ? 1.1 : 2} fill="none" stroke="currentColor" strokeWidth={1} />
+        </g>
+      ))}
+    </>
+  );
+}
+
+/** muzzle: a padlock clamped over the jaw, harness straps to both sides. */
+function MuzzleGlyph() {
+  return (
+    <>
+      <DualStroke d="M0.8 11.5 H4.4 M15.6 11.5 H19.2" dark={2.1} light={0.9} />
+      <DualStroke d="M6.8 8.8 V6.6 a3.2 3.2 0 0 1 6.4 0 V8.8" dark={2.4} light={1} />
+      <rect x="4.8" y="8.8" width="10.4" height="8" rx="0.5" fill={MOTIF_DARK} stroke="currentColor" strokeWidth="1" />
+      <circle cx="10" cy="12" r="1.15" fill="currentColor" />
+      <path d="M10 12.6 V14.7" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
+    </>
+  );
+}
+
+/** anchor: ring, shaft, crossbar, and curved flukes with barbs. */
+function AnchorGlyph() {
+  return (
+    <>
+      <circle cx="10" cy="3.6" r="1.7" fill="none" stroke={MOTIF_DARK} strokeWidth={2.2} />
+      <circle cx="10" cy="3.6" r="1.7" fill="none" stroke="currentColor" strokeWidth={0.9} />
+      <DualStroke d="M10 5.3 V15.8" />
+      <DualStroke d="M6.4 8.2 H13.6" dark={2.1} light={1} />
+      <DualStroke d="M3.6 11.6 C4.2 15.4 6.8 17.2 10 17.4 C13.2 17.2 15.8 15.4 16.4 11.6" />
+      <DualStroke d="M3.6 11.6 L5.7 12.9 M16.4 11.6 L14.3 12.9" dark={2} light={0.9} />
+    </>
+  );
+}
+
+/** slow: an hourglass mid-pour, the sand tinted by the card's tier. */
+function SlowGlyph() {
+  return (
+    <>
+      <polygon points="10,12.8 12.6,16.4 7.4,16.4" fill="currentColor" />
+      <path d="M10 10.4 V12.2" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
+      <DualStroke d="M5.4 3 H14.6 M5.4 17 H14.6" dark={2.4} light={1} />
+      <DualStroke d="M6.4 3.4 C6.4 7.4 9.4 8.4 9.4 10 C9.4 11.6 6.4 12.6 6.4 16.6" />
+      <DualStroke d="M13.6 3.4 C13.6 7.4 10.6 8.4 10.6 10 C10.6 11.6 13.6 12.6 13.6 16.6" />
+    </>
+  );
+}
+
+/** empower: the granted movement's silhouette on the regalia roundel. A
+ * rook that moves like a king wears the king mark, amazon-style upgrades a
+ * crown; no moveAs falls back to a four-point regalia star. */
+function RegaliaSilhouette({ type }: { type?: PieceType }) {
+  const outline = { stroke: MOTIF_DARK, strokeWidth: 0.9, strokeLinejoin: "round" as const };
+  switch (type) {
+    case "k":
+      return (
+        <>
+          <path d="M6.6 16.5 C5.2 12.4 7 9.2 10 9.2 C13 9.2 14.8 12.4 13.4 16.5 Z" fill="currentColor" {...outline} />
+          <DualStroke d="M10 3 V7.6 M8.2 4.9 H11.8" dark={2.2} light={1} />
+        </>
+      );
+    case "q":
+      return (
+        <path
+          d="M4.6 15.5 L5.5 7.6 L8.3 10.8 L10 5.4 L11.7 10.8 L14.5 7.6 L15.4 15.5 Z"
+          fill="currentColor"
+          {...outline}
+        />
+      );
+    case "r":
+      return (
+        <path
+          d="M5.4 16 V10 L4.7 9.2 V4.5 H7.2 V6.4 H8.9 V4.5 H11.1 V6.4 H12.8 V4.5 H15.3 V9.2 L14.6 10 V16 Z"
+          fill="currentColor"
+          {...outline}
+        />
+      );
+    case "b":
+      return (
+        <>
+          <path
+            d="M10 3.6 C12.8 5.8 14 8.4 14 10.8 C14 13.4 12.4 15.6 10 15.6 C7.6 15.6 6 13.4 6 10.8 C6 8.4 7.2 5.8 10 3.6 Z"
+            fill="currentColor"
+            {...outline}
+          />
+          <path d="M8.4 9.4 L11.4 6.2" stroke={MOTIF_DARK} strokeWidth="1.1" strokeLinecap="round" fill="none" />
+        </>
+      );
+    case "n":
+      return (
+        <>
+          <path
+            d="M5.8 16.4 C5.8 10.8 7.4 8.4 10.4 7 L9.9 3.8 L13.2 6.4 C15.6 8 16.2 11 15.7 16.4 Z"
+            fill="currentColor"
+            {...outline}
+          />
+          <circle cx="11.9" cy="7.6" r="0.7" fill={MOTIF_DARK} />
+        </>
+      );
+    case "p":
+      return (
+        <>
+          <circle cx="10" cy="7" r="2.7" fill="currentColor" {...outline} />
+          <path d="M6.6 16.4 C7.1 12.6 8.1 11 10 11 C11.9 11 12.9 12.6 13.4 16.4 Z" fill="currentColor" {...outline} />
+        </>
+      );
+    default:
+      return (
+        <path
+          d="M10 3.2 L11.8 8.2 L16.8 10 L11.8 11.8 L10 16.8 L8.2 11.8 L3.2 10 L8.2 8.2 Z"
+          fill="currentColor"
+          {...outline}
+        />
+      );
+  }
+}
+
+/**
+ * Card-fx motif for one square. Constraints (jail / muzzle / anchor / slow)
+ * are small badges in the square's top-right corner; blindfold is a band
+ * across the piece base; empower is a regalia roundel bestowed with a
+ * knighting rise; ward is a thin ring at the piece base; rally is a one-shot
+ * banner flourish over the rallied army's king. All persistent variants end
+ * in a calm static pose (reduced motion shows that state directly); rally is
+ * transient and hides under reduced motion, matching the stun precedent.
+ */
+export const MotifBadge = React.memo(function MotifBadge({
+  motif,
+  tier,
+  category,
+  moveAs,
+}: {
+  motif: CardFx["motif"];
+  tier: number;
+  category: BuffCategory;
+  moveAs?: PieceType;
+}) {
+  const color = TIER_COLOR[tier] ?? TIER_COLOR[3];
+  if (motif === "rally") {
+    return (
+      <span
+        aria-hidden="true"
+        className="fx-rally pointer-events-none absolute left-[24%] top-[-8%] z-20 h-[56%] w-[52%]"
+        style={{ color }}
+      >
+        <svg viewBox="0 0 20 24" className="h-full w-full">
+          <path d="M6 22 V3" stroke={MOTIF_DARK} strokeWidth="2.4" strokeLinecap="round" fill="none" />
+          <path d="M6 22 V3" stroke="currentColor" strokeWidth="1" strokeLinecap="round" fill="none" />
+          <path
+            d="M6 3.5 H17 L14.2 6.8 L17 10 H6 Z"
+            fill="currentColor"
+            stroke={MOTIF_DARK}
+            strokeWidth="1"
+            strokeLinejoin="round"
+          />
+        </svg>
+        <CategoryChip category={category} color={color} className="bottom-[6%] left-0 h-[26%] w-[24%]" />
+      </span>
+    );
+  }
+  if (motif === "blindfold") {
+    return (
+      <>
+        <span
+          aria-hidden="true"
+          className="fx-blindfold pointer-events-none absolute bottom-[22%] left-[8%] right-[8%] z-10 h-[15%]"
+          style={{ color }}
+        >
+          <svg viewBox="0 0 60 12" preserveAspectRatio="none" className="h-full w-full">
+            <rect x="1" y="2" width="58" height="8" rx="0.6" fill={MOTIF_DARK} stroke="currentColor" strokeWidth="1" />
+            <path
+              d="M5 6 H55"
+              stroke="currentColor"
+              strokeWidth="0.8"
+              strokeDasharray="3 2.6"
+              opacity="0.65"
+              fill="none"
+              vectorEffect="non-scaling-stroke"
+            />
+          </svg>
+        </span>
+        <CategoryChip category={category} color={color} className="bottom-[40%] right-[3%] h-[15%] w-[15%]" />
+      </>
+    );
+  }
+  if (motif === "ward") {
+    return (
+      <>
+        <span
+          aria-hidden="true"
+          className="fx-ward pointer-events-none absolute bottom-[3%] left-[10%] right-[10%] z-10 h-[16%]"
+          style={{ color }}
+        >
+          <svg viewBox="0 0 60 12" preserveAspectRatio="none" className="h-full w-full">
+            <ellipse cx="30" cy="6" rx="27.5" ry="4.4" fill="none" stroke={MOTIF_DARK} strokeWidth="2.2" vectorEffect="non-scaling-stroke" />
+            <ellipse cx="30" cy="6" rx="27.5" ry="4.4" fill="none" stroke="currentColor" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+          </svg>
+        </span>
+        <CategoryChip category={category} color={color} className="bottom-[22%] right-[3%] h-[15%] w-[15%]" />
+      </>
+    );
+  }
+  if (motif === "empower") {
+    return (
+      <>
+        <span
+          aria-hidden="true"
+          className="fx-bestow pointer-events-none absolute right-[2%] top-[2%] z-10 h-[32%] w-[32%]"
+          style={{ color }}
+        >
+          <svg viewBox="0 0 20 20" className="h-full w-full">
+            <circle cx="10" cy="10" r="8.8" fill="rgba(20,30,43,0.9)" stroke="currentColor" strokeWidth="1" />
+            <RegaliaSilhouette type={moveAs} />
+          </svg>
+        </span>
+        <CategoryChip category={category} color={color} className="right-[2%] top-[34%] h-[15%] w-[15%]" />
+      </>
+    );
+  }
+  return (
+    <>
+      <span
+        aria-hidden="true"
+        className="fx-motif pointer-events-none absolute right-[3%] top-[3%] z-10 h-[30%] w-[30%]"
+        style={{ color }}
+      >
+        <svg viewBox="0 0 20 20" className="h-full w-full opacity-90">
+          {motif === "jail" ? (
+            <JailGlyph />
+          ) : motif === "muzzle" ? (
+            <MuzzleGlyph />
+          ) : motif === "anchor" ? (
+            <AnchorGlyph />
+          ) : (
+            <SlowGlyph />
+          )}
+        </svg>
+      </span>
+      <CategoryChip category={category} color={color} className="right-[3%] top-[33%] h-[15%] w-[15%]" />
+    </>
+  );
+});

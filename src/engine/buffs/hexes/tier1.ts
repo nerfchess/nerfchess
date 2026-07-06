@@ -19,39 +19,39 @@ const onRim = (sq: number) =>
 
 export const HEXES_T1: Buff[] = [
   H(
-    { id: "cold_feet", name: "Cold Feet", description: "Your opponent's pawns cannot capture for their next 3 turns.", flavor: "The infantry lose their nerve." },
+    { id: "cold_feet", name: "Cold Feet", description: "Your opponent's pawns cannot capture for their next 3 turns.", flavor: "The infantry lose their nerve.", fx: { motif: "muzzle", pieces: ["p"] } },
     curse(3, (moves) => moves.filter((m) => !(m.piece === "p" && m.captured))),
   ),
   H(
-    { id: "slippery_grip", name: "Slippery Grip", description: "Your opponent's rooks slide at most 3 squares for their next 4 turns.", flavor: "Buttered the tower floors." },
+    { id: "slippery_grip", name: "Slippery Grip", description: "Your opponent's rooks slide at most 3 squares for their next 4 turns.", flavor: "Buttered the tower floors.", fx: { motif: "anchor", pieces: ["r"] } },
     curse(4, (moves) => moves.filter((m) => m.piece !== "r" || dist(m.from, m.to) <= 3)),
   ),
   H(
-    { id: "foggy_glasses", name: "Foggy Glasses", description: "Your opponent's bishops cannot capture for their next 3 turns.", flavor: "Can't hit what you can't see." },
+    { id: "foggy_glasses", name: "Foggy Glasses", description: "Your opponent's bishops cannot capture for their next 3 turns.", flavor: "Can't hit what you can't see.", fx: { motif: "muzzle", pieces: ["b"] } },
     curse(3, (moves) => moves.filter((m) => !(m.piece === "b" && m.captured))),
   ),
   H(
-    { id: "knock_knees", name: "Knock Knees", description: "Your opponent's knights cannot land on the rim for their next 4 turns.", flavor: "The horses fear the edge of the world." },
+    { id: "knock_knees", name: "Knock Knees", description: "Your opponent's knights cannot land on the rim for their next 4 turns.", flavor: "The horses fear the edge of the world.", fx: { motif: "anchor", pieces: ["n"] } },
     curse(4, (moves) => moves.filter((m) => !(m.piece === "n" && onRim(m.to)))),
   ),
   H(
-    { id: "molasses", name: "Molasses", description: "Your opponent's queen slides at most 3 squares for their next 3 turns.", flavor: "Slow going, your majesty." },
+    { id: "molasses", name: "Molasses", description: "Your opponent's queen slides at most 3 squares for their next 3 turns.", flavor: "Slow going, your majesty.", fx: { motif: "anchor", pieces: ["q"] } },
     curse(3, (moves) => moves.filter((m) => m.piece !== "q" || dist(m.from, m.to) <= 3)),
   ),
   H(
-    { id: "drawbridge", name: "Drawbridge", description: "Your opponent cannot castle for their next 6 turns.", flavor: "Someone raised it and lost the crank." },
+    { id: "drawbridge", name: "Drawbridge", description: "Your opponent cannot castle for their next 6 turns.", flavor: "Someone raised it and lost the crank.", fx: { motif: "slow", pieces: ["k", "r"] } },
     curse(6, (moves) => moves.filter((m) => !m.castle)),
   ),
   H(
-    { id: "stage_fright", name: "Stage Fright", description: "Your opponent cannot promote a pawn for their next 4 turns.", flavor: "The understudy freezes at the footlights." },
+    { id: "stage_fright", name: "Stage Fright", description: "Your opponent cannot promote a pawn for their next 4 turns.", flavor: "The understudy freezes at the footlights.", fx: { motif: "slow", pieces: ["p"] } },
     curse(4, (moves) => moves.filter((m) => !m.promotion)),
   ),
   H(
-    { id: "butterfingers", name: "Butterfingers", description: "Your opponent's queen cannot capture for their next 3 turns.", flavor: "Everything she grabs squirts free." },
+    { id: "butterfingers", name: "Butterfingers", description: "Your opponent's queen cannot capture for their next 3 turns.", flavor: "Everything she grabs squirts free.", fx: { motif: "muzzle", pieces: ["q"] } },
     curse(3, (moves) => moves.filter((m) => !(m.piece === "q" && m.captured))),
   ),
   H(
-    { id: "stiff_joints", name: "Stiff Joints", description: "Your opponent's queen cannot move diagonally for their next 2 turns.", flavor: "Sideways or forward. Pick one." },
+    { id: "stiff_joints", name: "Stiff Joints", description: "Your opponent's queen cannot move diagonally for their next 2 turns.", flavor: "Sideways or forward. Pick one.", fx: { motif: "anchor", pieces: ["q"] } },
     curse(2, (moves) =>
       moves.filter(
         (m) =>
@@ -62,15 +62,15 @@ export const HEXES_T1: Buff[] = [
     ),
   ),
   H(
-    { id: "crossed_wires", name: "Crossed Wires", description: "Your opponent's knights cannot capture for their next 2 turns.", flavor: "The cavalry charges the wrong hill." },
+    { id: "crossed_wires", name: "Crossed Wires", description: "Your opponent's knights cannot capture for their next 2 turns.", flavor: "The cavalry charges the wrong hill.", fx: { motif: "muzzle", pieces: ["n"] } },
     curse(2, (moves) => moves.filter((m) => !(m.piece === "n" && m.captured))),
   ),
   H(
-    { id: "cold_open", name: "Cold Open", description: "Your opponent cannot move their queen for their next 2 turns.", flavor: "The lady sits this one out." },
+    { id: "cold_open", name: "Cold Open", description: "Your opponent cannot move their queen for their next 2 turns.", flavor: "The lady sits this one out.", fx: { motif: "jail", pieces: ["q"] } },
     curse(2, (moves) => moves.filter((m) => m.piece !== "q")),
   ),
   H(
-    { id: "royal_restraint", name: "Royal Restraint", description: "Your opponent's king cannot capture for their next 4 turns.", flavor: "The crown does not stoop to brawling." },
+    { id: "royal_restraint", name: "Royal Restraint", description: "Your opponent's king cannot capture for their next 4 turns.", flavor: "The crown does not stoop to brawling.", fx: { motif: "muzzle", pieces: ["k"] } },
     curse(4, (moves) => moves.filter((m) => !(m.piece === "k" && m.captured))),
   ),
 ];

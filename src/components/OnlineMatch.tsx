@@ -84,6 +84,12 @@ const FIRST_MOVE_GRACE_MS = 10_000;
 // remainder before surfacing the claim buttons.
 const CLAIM_DELAY_AFTER_GONE_MS = 15_000;
 
+// Shared draft reveal timing: the banner eases in a short beat after the
+// SECOND side resolves (so the picked card's pocket-flight and dock landing
+// finish first, never mid-choice), then holds about four seconds.
+const DRAFT_REVEAL_EASE_MS = 450;
+const DRAFT_REVEAL_HOLD_MS = 4000;
+
 type PendingPremoveSend = { uci: string; ply: number };
 type PendingLocalMove = { uci: string; ply: number; move: Move };
 
@@ -252,6 +258,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   } | null>(null);
   const myResolvedRef = useRef<DraftRevealSide | null>(null);
   const oppResolvedRef = useRef<DraftRevealSide | null>(null);
+  const draftRevealTimerRef = useRef<number | null>(null);
   const recordDraftResolution = (resolved: MPDraftResolved) => {
     const side: DraftRevealSide =
       resolved.kind === "picked"
@@ -267,17 +274,34 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     if (resolved.color === myColor) myResolvedRef.current = side;
     else oppResolvedRef.current = side;
     if (myResolvedRef.current && oppResolvedRef.current) {
-      setDraftReveal({ mine: myResolvedRef.current, theirs: oppResolvedRef.current });
+      const pair = { mine: myResolvedRef.current, theirs: oppResolvedRef.current };
       myResolvedRef.current = null;
       oppResolvedRef.current = null;
+      // Both sides have resolved by definition here (either order), so the
+      // banner can never appear while a player is still choosing. The short
+      // ease-in beat lets the picked card's pocket-flight and dock landing
+      // play out before the banner arrives instead of being stomped by the
+      // overlay teardown.
+      if (draftRevealTimerRef.current != null) window.clearTimeout(draftRevealTimerRef.current);
+      draftRevealTimerRef.current = window.setTimeout(
+        () => setDraftReveal(pair),
+        DRAFT_REVEAL_EASE_MS,
+      );
     }
   };
-  // The reveal banner is a moment, not a fixture: it dismisses itself.
+  // The reveal banner is a moment, not a fixture: it holds about four
+  // seconds, then dismisses itself.
   useEffect(() => {
     if (!draftReveal) return;
-    const id = window.setTimeout(() => setDraftReveal(null), 2500);
+    const id = window.setTimeout(() => setDraftReveal(null), DRAFT_REVEAL_HOLD_MS);
     return () => window.clearTimeout(id);
   }, [draftReveal]);
+  useEffect(
+    () => () => {
+      if (draftRevealTimerRef.current != null) window.clearTimeout(draftRevealTimerRef.current);
+    },
+    [],
+  );
   // Bumped on every `start` replay (reconnect/resync): keys the draft
   // overlay so a rebuilt game always gets a fresh overlay instance. Without
   // it, a pick whose send was lost to a disconnect would leave the overlay's
@@ -480,9 +504,14 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         setOppDrafting(!!oppState?.offerPending || !!oppState?.offer);
         setDraftDeadline(e.setup.dtDeadline ?? null);
         setOppLockedIn(false);
-        // A replay is a clean slate for the shared reveal moment too.
+        // A replay is a clean slate for the shared reveal moment too (a
+        // queued ease-in from before the disconnect must not fire late).
         myResolvedRef.current = null;
         oppResolvedRef.current = null;
+        if (draftRevealTimerRef.current != null) {
+          window.clearTimeout(draftRevealTimerRef.current);
+          draftRevealTimerRef.current = null;
+        }
         setDraftReveal(null);
         setReplayEpoch((n) => n + 1);
         // Nerf draft still unresolved: (re)enter the pick screen with the
@@ -1805,6 +1834,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                                       kingSafeSquares: fxZone.kingSafeSquares,
                                       pawnClampSquares: fxZone.pawnClampSquares,
                                       stunSquares: fxZone.stunSquares,
+                                      motifSquares: fxZone.motifs,
                                     }
                                   : {}),
                               }
@@ -1943,7 +1973,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
 
       {/* Shared reveal moment: both sides of the draft round resolved, show
           the outcome briefly. Non-blocking, click to dismiss, auto-dismisses
-          after 2.5s. */}
+          after about four seconds. */}
       {isDraft && draftReveal && !game.result && (
         <DraftRevealBanner
           mine={draftReveal.mine}
@@ -2023,7 +2053,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
             >
               <span className="h-1.5 w-1.5 rounded-full bg-gold animate-flicker" aria-hidden />
               <span className="font-display text-xs text-parchment-200">
-                Opponent is still choosing, on their clock now.
+                {!myOffer && !draftSubmitted
+                  ? "Your draft was skipped. Opponent is choosing, on their clock now."
+                  : "Opponent is still choosing, on their clock now."}
               </span>
             </motion.div>
           </div>
@@ -2037,11 +2069,20 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               className="plate pointer-events-auto w-full max-w-xs border-gold/30 p-4 text-center"
             >
               <div className="smallcaps text-[10px] text-parchment-400">
-                {draftCardNoun(start.mode) === "hex" ? "Hex draft" : "Buff draft"}
+                {!myOffer && !draftSubmitted
+                  ? "Draft skipped"
+                  : draftCardNoun(start.mode) === "hex"
+                  ? "Hex draft"
+                  : "Buff draft"}
               </div>
               <h2 className="font-display text-xl text-parchment mt-0.5">
-                Waiting for opponent
+                {!myOffer && !draftSubmitted ? "Your draft was skipped" : "Waiting for opponent"}
               </h2>
+              {!myOffer && !draftSubmitted && (
+                <p className="mt-1 text-[11px] leading-snug text-parchment-300">
+                  A card your opponent played skipped your draft this round.
+                </p>
+              )}
               <div role="status" aria-live="polite" className="mt-2 flex items-center justify-center gap-2">
                 <span className="h-1.5 w-1.5 rounded-full bg-gold animate-flicker" aria-hidden />
                 <span className="font-display text-sm text-parchment-200">

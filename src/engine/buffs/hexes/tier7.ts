@@ -32,6 +32,8 @@ export const HEXES_T7: Buff[] = [
       name: "Obsidian Bastions",
       description: "Your opponent's rooks turn to walnuts and cannot move for 4 of their turns.",
       flavor: "The towers cool into black glass.",
+      // Board already paints walnuts; fx carried for consistency.
+      fx: { motif: "jail", pieces: ["r"] },
     },
     walnutAll(["r"], 4),
   ),
@@ -43,6 +45,8 @@ export const HEXES_T7: Buff[] = [
       name: "Statue Garden",
       description: "Your opponent's knights and bishops turn to walnuts and cannot move for 3 of their turns.",
       flavor: "Every horse and prelate set among the topiary.",
+      // Board already paints walnuts; fx carried for consistency.
+      fx: { motif: "jail", pieces: ["n", "b"] },
     },
     walnutAll(["n", "b"], 3),
   ),
@@ -54,6 +58,8 @@ export const HEXES_T7: Buff[] = [
       name: "Cockatrice Gaze",
       description: "Your opponent's queen turns to a walnut and cannot move for 3 of their turns.",
       flavor: "One glance and the lady is limestone.",
+      // Board already paints walnuts; fx carried for consistency.
+      fx: { motif: "jail", pieces: ["q"] },
     },
     walnutAll(["q"], 3),
   ),
@@ -76,6 +82,8 @@ export const HEXES_T7: Buff[] = [
       name: "Glacial Tomb",
       description: "Freeze all of your opponent's pieces except their king for 2 of their turns, so only their king may move.",
       flavor: "The army sealed under a sheet of blue ice.",
+      // Board already paints freezes; fx carried for consistency.
+      fx: { motif: "jail", pieces: ["p", "n", "b", "r", "q"] },
     },
     freezeAllEnemies(2),
   ),
@@ -98,6 +106,9 @@ export const HEXES_T7: Buff[] = [
       name: "Throne and Silence",
       description: "For your opponent's next turn they may move only their king, and their next draft is skipped entirely.",
       flavor: "The whole court scatters and the messengers with it.",
+      // fx covers the king_only half (board paints it too); the draft
+      // denial half shows no board motif.
+      fx: { motif: "jail", pieces: ["p", "n", "b", "r", "q"] },
     },
     instant((_inst, api) => {
       addEffect(api, { kind: "king_only", against: api.opp, turns: 1 });
@@ -112,6 +123,8 @@ export const HEXES_T7: Buff[] = [
       name: "Salted Earth",
       description: "Your opponent's pawns cannot advance for their next 6 turns. They may still capture diagonally.",
       flavor: "Nothing grows and nothing marches on ground sown with salt.",
+      // Board already paints no_pawn_advance; fx carried for consistency.
+      fx: { motif: "anchor", pieces: ["p"] },
     },
     instant((_inst, api) => {
       addEffect(api, { kind: "no_pawn_advance", against: api.opp, turns: 6 });
@@ -125,6 +138,8 @@ export const HEXES_T7: Buff[] = [
       name: "Molten Heart",
       description: "Your opponent cannot move any piece onto the 4th or 5th ranks for their next 3 turns.",
       flavor: "The middle of the board runs with lava.",
+      // Board already paints barred squares; square-scoped, no pieces field.
+      fx: { motif: "blindfold" },
     },
     instant((_inst, api) => {
       const squares: number[] = [];
@@ -153,6 +168,7 @@ export const HEXES_T7: Buff[] = [
       name: "Lost Fortnight",
       description: "Your opponent skips their next 2 turns entirely.",
       flavor: "Two weeks vanish and no one can say where.",
+      fx: { motif: "slow", pieces: "all" },
     },
     skipOpponent(2),
   ),
@@ -164,6 +180,7 @@ export const HEXES_T7: Buff[] = [
       name: "Noble Rout",
       description: "Your opponent may move only their pawns and their king for their next 3 turns.",
       flavor: "Every noble has fled the field; only the levy holds.",
+      fx: { motif: "jail", pieces: ["n", "b", "r", "q"] },
     },
     curse(3, (moves) => moves.filter((m) => m.piece === "p" || m.piece === "k")),
   ),
@@ -175,6 +192,7 @@ export const HEXES_T7: Buff[] = [
       name: "Withered Hands",
       description: "Your opponent cannot capture with any piece for their next 3 turns.",
       flavor: "Every grip in the army has gone to rot.",
+      fx: { motif: "muzzle", pieces: "all" },
     },
     curse(3, (moves) => moves.filter((m) => !m.captured)),
   ),

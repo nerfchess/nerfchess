@@ -26,23 +26,23 @@ const dist = (from: number, to: number) =>
 
 export const HEXES_T2: Buff[] = [
   H(
-    { id: "short_leash", name: "Short Leash", description: "Your opponent's bishops slide at most 2 squares for their next 4 turns.", flavor: "Kept close to home." },
+    { id: "short_leash", name: "Short Leash", description: "Your opponent's bishops slide at most 2 squares for their next 4 turns.", flavor: "Kept close to home.", fx: { motif: "anchor", pieces: ["b"] } },
     curse(4, (moves) => moves.filter((m) => m.piece !== "b" || dist(m.from, m.to) <= 2)),
   ),
   H(
-    { id: "seized_axles", name: "Seized Axles", description: "Your opponent's rooks slide at most 2 squares for their next 4 turns." },
+    { id: "seized_axles", name: "Seized Axles", description: "Your opponent's rooks slide at most 2 squares for their next 4 turns.", fx: { motif: "anchor", pieces: ["r"] } },
     curse(4, (moves) => moves.filter((m) => m.piece !== "r" || dist(m.from, m.to) <= 2)),
   ),
   H(
-    { id: "rusted_hinges", name: "Rusted Hinges", description: "Your opponent's rooks cannot capture for their next 4 turns." },
+    { id: "rusted_hinges", name: "Rusted Hinges", description: "Your opponent's rooks cannot capture for their next 4 turns.", fx: { motif: "muzzle", pieces: ["r"] } },
     curse(4, (moves) => moves.filter((m) => !(m.piece === "r" && m.captured))),
   ),
   H(
-    { id: "blunted_lance", name: "Blunted Lance", description: "Your opponent's knights cannot capture for their next 4 turns.", flavor: "A lance with no point." },
+    { id: "blunted_lance", name: "Blunted Lance", description: "Your opponent's knights cannot capture for their next 4 turns.", flavor: "A lance with no point.", fx: { motif: "muzzle", pieces: ["n"] } },
     curse(4, (moves) => moves.filter((m) => !(m.piece === "n" && m.captured))),
   ),
   H(
-    { id: "safe_passage", name: "Safe Passage", description: "Your opponent's pawns cannot capture for their next 4 turns." },
+    { id: "safe_passage", name: "Safe Passage", description: "Your opponent's pawns cannot capture for their next 4 turns.", fx: { motif: "muzzle", pieces: ["p"] } },
     curse(4, (moves) => moves.filter((m) => !(m.piece === "p" && m.captured))),
   ),
   H(
@@ -62,21 +62,24 @@ export const HEXES_T2: Buff[] = [
     blockDrafts(1),
   ),
   H(
-    { id: "timid_king", name: "Timid King", description: "Your opponent's king cannot capture for their next 4 turns.", flavor: "Beneath the dignity of the crown." },
+    { id: "timid_king", name: "Timid King", description: "Your opponent's king cannot capture for their next 4 turns.", flavor: "Beneath the dignity of the crown.", fx: { motif: "muzzle", pieces: ["k"] } },
     curse(4, (moves) => moves.filter((m) => !(m.piece === "k" && m.captured))),
   ),
   H(
-    { id: "leaden_queen", name: "Leaden Queen", description: "Your opponent's queen slides at most 2 squares for their next 3 turns.", flavor: "Her gown is sewn with lead." },
+    { id: "leaden_queen", name: "Leaden Queen", description: "Your opponent's queen slides at most 2 squares for their next 3 turns.", flavor: "Her gown is sewn with lead.", fx: { motif: "anchor", pieces: ["q"] } },
     curse(3, (moves) => moves.filter((m) => m.piece !== "q" || dist(m.from, m.to) <= 2)),
   ),
   H(
-    { id: "trench_line", name: "Trench Line", description: "Your opponent's pawns cannot advance for their next 3 turns. They may still capture diagonally.", flavor: "The infantry are pinned in the mud." },
+    // Board already paints no_pawn_advance; fx carried for consistency.
+    { id: "trench_line", name: "Trench Line", description: "Your opponent's pawns cannot advance for their next 3 turns. They may still capture diagonally.", flavor: "The infantry are pinned in the mud.", fx: { motif: "anchor", pieces: ["p"] } },
     instant((_inst, api) => {
       addEffect(api, { kind: "no_pawn_advance", against: api.opp, turns: 3 });
     }),
   ),
   H(
-    { id: "no_mans_land", name: "No Man's Land", description: "Your opponent cannot enter the four center squares (d4, e4, d5, e5) for their next 3 turns.", flavor: "The middle of the board is scorched ground." },
+    // Board already paints barred squares; fx carried for consistency
+    // (square-scoped, so no pieces field).
+    { id: "no_mans_land", name: "No Man's Land", description: "Your opponent cannot enter the four center squares (d4, e4, d5, e5) for their next 3 turns.", flavor: "The middle of the board is scorched ground.", fx: { motif: "blindfold" } },
     instant((_inst, api) => {
       const squares = [SQ(3, 3), SQ(4, 3), SQ(3, 4), SQ(4, 4)];
       addEffect(api, { kind: "barred", squares, against: api.opp, turns: 3 });

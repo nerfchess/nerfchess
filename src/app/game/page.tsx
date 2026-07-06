@@ -121,6 +121,13 @@ const BOT_ELO: Record<AILevel, number> = {
   hard: 1900,
 };
 
+// Shared draft reveal timing, mirroring the online match: the banner eases
+// in a short beat after the SECOND side resolves (so the picked card's
+// pocket-flight and dock landing finish first, never mid-choice), then
+// holds about four seconds.
+const DRAFT_REVEAL_EASE_MS = 450;
+const DRAFT_REVEAL_HOLD_MS = 4000;
+
 export default function GamePageWrapper() {
   return (
     <Suspense fallback={<LoadingPanel />}>
@@ -391,26 +398,50 @@ function GamePage() {
     setOppLog((log) => [...log, { key: oppKeyRef.current++, card, label, at: Date.now() }].slice(-60));
   };
 
-  // Shared reveal moment: when my pick commits and the bot's simultaneous
-  // resolution is known, show both briefly. The bot side follows the same
-  // visibility rules as the rest of the UI: instants are public at pick,
-  // everything else renders as a face-down back with its tier numeral.
+  // Shared reveal moment: once BOTH sides of a simultaneous draft round have
+  // resolved (either order: the bot usually resolves first, but my pick can
+  // land before its effect runs), show both briefly. The bot side follows
+  // the same visibility rules as the rest of the UI: instants are public at
+  // pick, everything else renders as a face-down back with its tier numeral.
   const [draftReveal, setDraftReveal] = useState<{
     mine: DraftRevealSide;
     theirs: DraftRevealSide;
   } | null>(null);
+  const myResolvedRef = useRef<DraftRevealSide | null>(null);
   const botResolvedRef = useRef<DraftRevealSide | null>(null);
-  const maybeShowDraftReveal = (mine: DraftRevealSide) => {
+  const draftRevealTimerRef = useRef<number | null>(null);
+  const tryFireDraftReveal = () => {
+    const mine = myResolvedRef.current;
     const theirs = botResolvedRef.current;
-    if (!theirs) return;
+    if (!mine || !theirs) return;
+    myResolvedRef.current = null;
     botResolvedRef.current = null;
-    setDraftReveal({ mine, theirs });
+    // Both sides have resolved by definition here, so the banner can never
+    // appear while the player is still choosing. The short ease-in beat
+    // lets the picked card's pocket-flight and dock landing play out before
+    // the banner arrives instead of being stomped by the overlay teardown.
+    if (draftRevealTimerRef.current != null) window.clearTimeout(draftRevealTimerRef.current);
+    draftRevealTimerRef.current = window.setTimeout(
+      () => setDraftReveal({ mine, theirs }),
+      DRAFT_REVEAL_EASE_MS,
+    );
   };
+  const recordMyDraftResolution = (mine: DraftRevealSide) => {
+    myResolvedRef.current = mine;
+    tryFireDraftReveal();
+  };
+  // Hold the banner about four seconds, then dismiss it.
   useEffect(() => {
     if (!draftReveal) return;
-    const id = window.setTimeout(() => setDraftReveal(null), 2500);
+    const id = window.setTimeout(() => setDraftReveal(null), DRAFT_REVEAL_HOLD_MS);
     return () => window.clearTimeout(id);
   }, [draftReveal]);
+  useEffect(
+    () => () => {
+      if (draftRevealTimerRef.current != null) window.clearTimeout(draftRevealTimerRef.current);
+    },
+    [],
+  );
 
   // Draft mode: the bot resolves its pending buff drafts immediately.
   useEffect(() => {
@@ -429,9 +460,10 @@ function GamePage() {
           `Bot played a ${draftCardNoun(game.buffs.mode)}`,
         );
       }
-      // Hold the bot's resolution for the shared reveal that fires once my
-      // own pick commits. Identity shows only where the current rules
-      // already make it public (instants); other picks reveal tier alone.
+      // Hold the bot's resolution for the shared reveal that fires once
+      // both sides of the round are in (my pick may already be waiting).
+      // Identity shows only where the current rules already make it public
+      // (instants); other picks reveal tier alone.
       botResolvedRef.current = gained.length
         ? {
             banked: false,
@@ -442,6 +474,7 @@ function GamePage() {
             ),
           }
         : { banked: true, cards: [] };
+      tryFireDraftReveal();
       setGame({ ...game });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1473,6 +1506,7 @@ function GamePage() {
                           kingSafeSquares: fxZone.kingSafeSquares,
                           pawnClampSquares: fxZone.pawnClampSquares,
                           stunSquares: fxZone.stunSquares,
+                          motifSquares: fxZone.motifs,
                         }
                   }
                   lastMove={lastMoveForDisplay}
@@ -1632,9 +1666,9 @@ function GamePage() {
 
       <OppPlaysLog plays={oppLog} />
 
-      {/* Shared reveal moment: my pick committed and the bot's simultaneous
-          resolution is known. Non-blocking, click to dismiss, auto-dismisses
-          after 2.5s. */}
+      {/* Shared reveal moment: both sides of the simultaneous draft round
+          resolved. Non-blocking, click to dismiss, auto-dismisses after
+          about four seconds. */}
       {draftReveal && !game.result && (
         <DraftRevealBanner
           mine={draftReveal.mine}
@@ -1670,7 +1704,7 @@ function GamePage() {
             // My own cards are mine to see: the reveal names them all
             // (take-both offers can land more than one).
             const gained = game.buffs?.players[myColor].buffs.slice(before) ?? [];
-            maybeShowDraftReveal({
+            recordMyDraftResolution({
               banked: false,
               cards: gained.map((b) => ({ id: b.id, tier: b.tier })),
             });
@@ -1678,7 +1712,7 @@ function GamePage() {
           }}
           onBank={() => {
             bankDraft(game, myColor);
-            maybeShowDraftReveal({ banked: true, cards: [] });
+            recordMyDraftResolution({ banked: true, cards: [] });
             setGame({ ...game });
           }}
           opponent={{

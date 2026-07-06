@@ -36,6 +36,7 @@ export const HEXES_T8: Buff[] = [
       name: "Endless Night",
       description: "Your opponent skips their next 2 turns entirely.",
       flavor: "The sun forgets to rise, and no one moves in the dark.",
+      fx: { motif: "slow", pieces: "all" },
     },
     skipOpponent(2),
   ),
@@ -47,6 +48,8 @@ export const HEXES_T8: Buff[] = [
       name: "Crown and Castle",
       description: "Your opponent's queen and rooks turn to walnuts and cannot move for 2 of their turns.",
       flavor: "The heaviest pieces set like mortar overnight.",
+      // Board already paints walnuts; fx carried for consistency.
+      fx: { motif: "jail", pieces: ["q", "r"] },
     },
     walnutAll(["q", "r"], 2),
   ),
@@ -58,6 +61,8 @@ export const HEXES_T8: Buff[] = [
       name: "Abdication Edict",
       description: "For your opponent's next 3 turns they may move only their king. Every other piece is stuck fast.",
       flavor: "The crown rules alone, and the court simply stops answering.",
+      // Board already paints king_only; fx carried for consistency.
+      fx: { motif: "jail", pieces: ["p", "n", "b", "r", "q"] },
     },
     instant((_inst, api) => {
       addEffect(api, { kind: "king_only", against: api.opp, turns: 3 });
@@ -71,6 +76,8 @@ export const HEXES_T8: Buff[] = [
       name: "Absolute Zero",
       description: "Freeze all of your opponent's pieces except their king for 3 of their turns, so only their king may move.",
       flavor: "The board drops below freezing and everything but the crown locks solid.",
+      // Board already paints freezes; fx carried for consistency.
+      fx: { motif: "jail", pieces: ["p", "n", "b", "r", "q"] },
     },
     freezeAllEnemies(3),
   ),
@@ -82,6 +89,8 @@ export const HEXES_T8: Buff[] = [
       name: "Petrified Forest",
       description: "Your opponent's knights and bishops turn to walnuts and cannot move for 4 of their turns.",
       flavor: "Every horse and prelate grown into ancient stone timber.",
+      // Board already paints walnuts; fx carried for consistency.
+      fx: { motif: "jail", pieces: ["n", "b"] },
     },
     walnutAll(["n", "b"], 4),
   ),
@@ -104,6 +113,8 @@ export const HEXES_T8: Buff[] = [
       name: "Blighted Furrows",
       description: "Your opponent's pawns cannot advance for their next 8 turns. They may still capture diagonally.",
       flavor: "The fields are poisoned; not one seed dares push upward.",
+      // Board already paints no_pawn_advance; fx carried for consistency.
+      fx: { motif: "anchor", pieces: ["p"] },
     },
     instant((_inst, api) => {
       addEffect(api, { kind: "no_pawn_advance", against: api.opp, turns: 8 });
@@ -117,6 +128,8 @@ export const HEXES_T8: Buff[] = [
       name: "Sacked Capital",
       description: "Your opponent skips their next turn entirely, and their next 2 drafts are skipped as well.",
       flavor: "The capital burns, the messengers scatter, and no orders reach the field.",
+      // fx covers the turn skip; the draft denial half shows no board motif.
+      fx: { motif: "slow", pieces: "all" },
     },
     instant((_inst, api) => {
       api.bs.skips[api.opp] += 1;
@@ -134,6 +147,8 @@ export const HEXES_T8: Buff[] = [
       name: "Scorched Earth",
       description: "Your opponent cannot move any piece onto their own 4th, 5th, or 6th ranks for their next 3 turns.",
       flavor: "A cratered killing field where no army dares set foot.",
+      // Board already paints barred squares; square-scoped, no pieces field.
+      fx: { motif: "blindfold" },
     },
     instant((_inst, api) => {
       const squares: number[] = [];
@@ -152,6 +167,7 @@ export const HEXES_T8: Buff[] = [
       name: "Sealed Ramparts",
       description: "Your opponent's rooks can never move again for the rest of the game. Their other pieces are unaffected.",
       flavor: "The gates are bricked over for good; the towers will never open.",
+      fx: { motif: "jail", pieces: ["r"] },
     },
     permaOppFilter((moves) => moves.filter((m) => m.piece !== "r")),
   ),
@@ -163,6 +179,8 @@ export const HEXES_T8: Buff[] = [
       name: "Leaden Limbs",
       description: "Your opponent may move each piece at most one square in any direction for their next 3 turns.",
       flavor: "Every limb turns to lead; a single shuffling step is all anyone manages.",
+      // "all" is right: the filter also strips castling off the king.
+      fx: { motif: "anchor", pieces: "all" },
     },
     curse(3, (moves) =>
       moves.filter(
@@ -204,6 +222,7 @@ export const HEXES_T8: Buff[] = [
       name: "Peace of the Grave",
       description: "Your opponent cannot capture with any piece for their next 3 turns.",
       flavor: "A forced truce enforced by the dead; no blade may be drawn.",
+      fx: { motif: "muzzle", pieces: "all" },
     },
     curse(3, (moves) => moves.filter((m) => !m.captured)),
   ),

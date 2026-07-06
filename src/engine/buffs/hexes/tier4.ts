@@ -30,6 +30,8 @@ export const HEXES_T4: Buff[] = [
       name: "Granite Towers",
       description: "Your opponent's rooks turn to walnuts and cannot move for 3 of their turns.",
       flavor: "The towers set hard as granite.",
+      // Board already paints walnuts; fx carried for consistency.
+      fx: { motif: "jail", pieces: ["r"] },
     },
     walnutAll(["r"], 3),
   ),
@@ -41,6 +43,8 @@ export const HEXES_T4: Buff[] = [
       name: "Stone Clergy",
       description: "Your opponent's bishops turn to walnuts and cannot move for 3 of their turns.",
       flavor: "The clergy are carved into the pews.",
+      // Board already paints walnuts; fx carried for consistency.
+      fx: { motif: "jail", pieces: ["b"] },
     },
     walnutAll(["b"], 3),
   ),
@@ -52,6 +56,8 @@ export const HEXES_T4: Buff[] = [
       name: "Statue Stable",
       description: "Your opponent's knights turn to walnuts and cannot move for 3 of their turns.",
       flavor: "Bronze horses, bolted to their plinths.",
+      // Board already paints walnuts; fx carried for consistency.
+      fx: { motif: "jail", pieces: ["n"] },
     },
     walnutAll(["n"], 3),
   ),
@@ -115,6 +121,8 @@ export const HEXES_T4: Buff[] = [
       name: "Sealed Gate",
       description: "Your opponent cannot move any piece onto the entire e-file for their next 3 turns.",
       flavor: "The central gate is bricked shut.",
+      // Board already paints barred squares; square-scoped, no pieces field.
+      fx: { motif: "blindfold" },
     },
     instant((_inst, api) => {
       const squares = [
@@ -132,6 +140,8 @@ export const HEXES_T4: Buff[] = [
       name: "Abandoned Post",
       description: "On your opponent's next turn they may move only their king.",
       flavor: "The ranks desert and leave the crown alone.",
+      // Board already paints king_only; fx carried for consistency.
+      fx: { motif: "jail", pieces: ["p", "n", "b", "r", "q"] },
     },
     instant((_inst, api) => {
       addEffect(api, { kind: "king_only", against: api.opp, turns: 1 });
@@ -145,6 +155,8 @@ export const HEXES_T4: Buff[] = [
       name: "Frozen Furrows",
       description: "Your opponent's pawns cannot advance for their next 3 turns. They may still capture diagonally.",
       flavor: "The fields freeze over and nothing moves forward.",
+      // Board already paints no_pawn_advance; fx carried for consistency.
+      fx: { motif: "anchor", pieces: ["p"] },
     },
     instant((_inst, api) => {
       addEffect(api, { kind: "no_pawn_advance", against: api.opp, turns: 3 });
@@ -172,6 +184,7 @@ export const HEXES_T4: Buff[] = [
       name: "Lost Weekend",
       description: "Your opponent skips their next turn.",
       flavor: "A whole day gone and no one recalls it.",
+      fx: { motif: "slow", pieces: "all" },
     },
     skipOpponent(1),
   ),
@@ -194,6 +207,7 @@ export const HEXES_T4: Buff[] = [
       name: "Heavy Shackles",
       description: "Your opponent cannot move their queen or their rooks for their next 2 turns.",
       flavor: "The heavy pieces are all in irons.",
+      fx: { motif: "jail", pieces: ["q", "r"] },
     },
     curse(2, (moves) => moves.filter((m) => m.piece !== "q" && m.piece !== "r")),
   ),

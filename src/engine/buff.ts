@@ -185,6 +185,22 @@ export interface BuffMatchState {
    * replay-based checks (threefold repetition) must be skipped.
    */
   historyDiverged?: boolean;
+  /**
+   * Transient bookkeeping (never persisted, never sent to clients: the match
+   * store keeps only moves + actions, and draftStateFor picks its fields by
+   * hand). Bumped by every direct board mutation made through the BuffApi, so
+   * apply paths can tell whether a hook observably changed the board.
+   */
+  mutations?: number;
+  /**
+   * Transient: the held buffs whose onMovePlayed hook observably fired
+   * (mutated the board or added an effect) during the most recent playMove,
+   * as (owner color, index into that player's buff list). The game server
+   * reveals those cards to every replica: a replica that does not know a
+   * card's identity cannot replay its hook, and a board mutation it skips is
+   * a permanent desync (dtState never carries the board).
+   */
+  lastHookMutations?: { color: Color; index: number }[];
 }
 
 export function newPlayerBuffState(cadence: number): PlayerBuffState {

@@ -185,6 +185,97 @@
   animation: fx-poof-dot 0.6s ease-out both;
 }
 
+/* --- 8. Detonation (attack-card removals) -----------------------------------
+   A piece removed outright by a card: the blast ring expands and fades, the
+   ember shards fly on the shared fx-shard keyframes, and the scorch mark
+   holds for a beat before fading to nothing. */
+@keyframes fx-det-ring {
+  0% { opacity: 0.95; transform: scale(0.2); }
+  100% { opacity: 0; transform: scale(1.4); }
+}
+.fx-det-ring {
+  animation: fx-det-ring 0.5s ease-out both;
+}
+@keyframes fx-scorch-fade {
+  0% { opacity: 0; transform: scale(0.6); }
+  10% { opacity: 1; transform: scale(1); }
+  60% { opacity: 0.8; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1); }
+}
+.fx-scorch {
+  animation: fx-scorch-fade 1.6s ease-out both;
+}
+
+/* --- 9. Card-fx motifs (CardFx constraint and empowerment badges) -----------
+   Per-card badges Board.tsx mounts on affected squares (see MotifBadge).
+   Constraint badges clamp down from above and settle, the blindfold band
+   wraps across the piece base, the empower regalia rises with a knighting
+   overshoot, the ward ring sets softly, and the rally banner is a one-shot
+   wave that ends fully transparent (no persistent clutter). The category
+   micro-chip fades in once its motif has landed. All mount-only: re-renders
+   never replay an entrance. */
+@keyframes fx-motif-clamp {
+  0% { opacity: 0; transform: translateY(-55%) scale(1.12); }
+  55% { opacity: 1; transform: translateY(5%) scale(0.96); }
+  75% { transform: translateY(-2%) scale(1.02); }
+  100% { opacity: 1; transform: none; }
+}
+.fx-motif {
+  animation: fx-motif-clamp 0.45s var(--ease-out, cubic-bezier(0.2, 0.8, 0.2, 1)) both;
+  transform-origin: 50% 0%;
+}
+@keyframes fx-blindfold-wrap {
+  0% { opacity: 0; transform: scaleX(0.3); }
+  70% { opacity: 1; transform: scaleX(1.06); }
+  100% { opacity: 1; transform: none; }
+}
+.fx-blindfold {
+  animation: fx-blindfold-wrap 0.4s var(--ease-out, ease-out) both;
+  transform-origin: 50% 50%;
+}
+@keyframes fx-bestow-rise {
+  0% { opacity: 0; transform: translateY(60%) scale(0.5); }
+  60% { opacity: 1; transform: translateY(-10%) scale(1.12); }
+  80% { transform: translateY(3%) scale(0.98); }
+  100% { opacity: 1; transform: none; }
+}
+.fx-bestow {
+  animation: fx-bestow-rise 0.5s var(--ease-spring, cubic-bezier(0.2, 1.4, 0.4, 1)) both;
+  transform-origin: 50% 100%;
+}
+@keyframes fx-ward-set {
+  0% { opacity: 0; transform: scale(0.55); }
+  70% { opacity: 1; transform: scale(1.08); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.fx-ward {
+  animation: fx-ward-set 0.4s var(--ease-out, ease-out) both;
+  transform-origin: 50% 100%;
+}
+@keyframes fx-rally-wave {
+  0% { opacity: 0; transform: translateY(45%) scale(0.6) rotate(-6deg); }
+  18% { opacity: 1; transform: translateY(0) scale(1) rotate(0deg); }
+  40% { transform: translateY(-6%) scale(1) rotate(3deg); }
+  62% { transform: translateY(-10%) scale(1) rotate(-2.5deg); }
+  100% { opacity: 0; transform: translateY(-26%) scale(1) rotate(0deg); }
+}
+.fx-rally {
+  animation: fx-rally-wave 1.8s ease-out both;
+  transform-origin: 30% 100%;
+}
+@keyframes fx-chip-in {
+  0% { opacity: 0; transform: scale(0.6); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.fx-motif-chip {
+  animation: fx-chip-in 0.25s var(--ease-out, ease-out) 0.35s both;
+}
+/* The rally banner's chip fades out with its banner: it inherits the banner
+   wrapper's one-shot opacity, so it needs no delay of its own. */
+.fx-rally .fx-motif-chip {
+  animation-delay: 0.2s;
+}
+
 /* --- Reduced motion ----------------------------------------------------------
    Persistent props hold their static end state; one-shot flourishes vanish
    (same treatment globals.css gives the walnut squirrel). */
@@ -195,6 +286,11 @@
   .fx-stake,
   .fx-rope,
   .fx-fence,
+  .fx-motif,
+  .fx-blindfold,
+  .fx-bestow,
+  .fx-ward,
+  .fx-motif-chip,
   .fx-piece-pop,
   .fx-piece-drop {
     animation: none !important;
@@ -206,7 +302,10 @@
   .fx-crown,
   .fx-glow,
   .fx-poof-ring,
-  .fx-poof-dot {
+  .fx-poof-dot,
+  .fx-det-ring,
+  .fx-scorch,
+  .fx-rally {
     animation: none !important;
     opacity: 0 !important;
   }
