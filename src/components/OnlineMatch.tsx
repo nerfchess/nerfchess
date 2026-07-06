@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { type CSSProperties, useEffect, useMemo, useRef, useState } from "react";
 import { Board, QueuedPremove } from "@/components/Board";
 import { BoardPlayerRow } from "@/components/BoardPlayerRow";
-import { BuffUsedToast } from "@/components/BuffUsedToast";
+import { OppPlaysLog, type OppPlay } from "@/components/OppPlaysLog";
 import { BuffDock, EnemyBuffModal, TargetingBanner, useBuffTargeting } from "@/components/BuffDock";
 import { ChatPanel } from "@/components/ChatPanel";
 import { ClockPill } from "@/components/ClockPill";
@@ -201,15 +201,13 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   const [claimReady, setClaimReady] = useState(false);
   // Transient toast naming and explaining a card the opponent just played,
   // so its effect on the board is never a mystery.
-  const [oppUsedCard, setOppUsedCard] = useState<{
-    card: { id: string; tier: number };
-    label: string;
-  } | null>(null);
-  const oppUsedTimerRef = useRef<number | null>(null);
+  // Persistent feed of the cards/hexes the opponent has played (newest keeps its
+  // full rule text; older collapse but stay), so a hex cast on you never
+  // vanishes before you read it.
+  const [oppLog, setOppLog] = useState<OppPlay[]>([]);
+  const oppKeyRef = useRef(0);
   const showOppUsedCard = (card: { id: string; tier: number }, label: string) => {
-    setOppUsedCard({ card, label });
-    if (oppUsedTimerRef.current) window.clearTimeout(oppUsedTimerRef.current);
-    oppUsedTimerRef.current = window.setTimeout(() => setOppUsedCard(null), 7000);
+    setOppLog((log) => [...log, { key: oppKeyRef.current++, card, label }].slice(-6));
   };
   // Voluntary rule reveals: mine (button flow) and the opponent's (event).
   const [myRevealState, setMyRevealState] = useState<"hidden" | "confirm" | "revealed">(() =>
@@ -1853,7 +1851,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         </div>
       </div>
 
-      {oppUsedCard && <BuffUsedToast card={oppUsedCard.card} label={oppUsedCard.label} />}
+      <OppPlaysLog plays={oppLog} />
 
       <MobileMoveDrawer
         moves={game.board.history}
