@@ -35,7 +35,14 @@ export const HOUSE_SEARCH_CEILING_MS = 80;
 // Skill tiers. Strength comes from search budget and blunder probability, not
 // deep search: the budgets are far below the client bot's (700-2000ms), which
 // is exactly the point.
-export type HouseSkill = 1200 | 1400 | 1600 | 1750;
+//
+// The advertised RATINGS were lifted by ~150 across the roster (1200->1350,
+// 1400->1550, 1600->1750, 1750->1900) with a handful of personas spread up
+// into the 1900-2100 band. The DO's 80ms search ceiling caps real strength, so
+// every high tier (1750 and up) maps to the SAME strongest sensible profile:
+// the extra rating is presentation, not stronger search. Never let a profile's
+// budgetMs exceed HOUSE_SEARCH_CEILING_MS.
+export type HouseSkill = 1350 | 1550 | 1750 | 1900 | 1950 | 2000 | 2050 | 2100;
 
 type SkillProfile = {
   level: AILevel;
@@ -44,11 +51,20 @@ type SkillProfile = {
   blunderChance: number;
 };
 
+// The strongest profile the 80ms ceiling allows: full-depth-for-the-budget
+// hard search, minimal blundering. Every 1750+ tier shares it (higher rating,
+// same capped strength, as intended).
+const TOP_PROFILE: SkillProfile = { level: "hard", budgetMs: HOUSE_SEARCH_CEILING_MS, blunderChance: 0.005 };
+
 export const HOUSE_SKILL_PROFILES: Record<HouseSkill, SkillProfile> = {
-  1200: { level: "medium", budgetMs: 25, blunderChance: 0.1 },
-  1400: { level: "medium", budgetMs: 40, blunderChance: 0.05 },
-  1600: { level: "hard", budgetMs: 60, blunderChance: 0.02 },
-  1750: { level: "hard", budgetMs: 80, blunderChance: 0.005 },
+  1350: { level: "medium", budgetMs: 25, blunderChance: 0.1 },
+  1550: { level: "medium", budgetMs: 40, blunderChance: 0.05 },
+  1750: TOP_PROFILE,
+  1900: TOP_PROFILE,
+  1950: TOP_PROFILE,
+  2000: TOP_PROFILE,
+  2050: TOP_PROFILE,
+  2100: TOP_PROFILE,
 };
 
 export type HousePersona = {
@@ -61,62 +77,65 @@ export type HousePersona = {
 // Lichess-style usernames: lowercase/CamelCase mixes, chess words, meme and
 // teen-culture handles, a few numbers, nothing that says "bot". Roster of 50
 // for a busy lobby and a load test. Skill mix stays roughly 40/30/20/10:
-// 20 near 1200, 15 near 1400, 10 near 1600, 5 near 1750.
+// 20 near 1350, 15 near 1550, 10 near 1750, and 5 spread across the 1900-2100
+// band. (Ratings were lifted ~150 across the board; the 80ms search ceiling
+// still caps real strength, so the top band is presentation.)
 const PERSONA_DEFS: Array<[name: string, skill: HouseSkill]> = [
-  // ~1200
-  ["pawnstorm77", 1200],
-  ["f6isfine", 1200],
-  ["tempoLoss", 1200],
-  ["premoveKing", 1200],
-  ["eloFarmer2", 1200],
-  ["backRankBlues", 1200],
-  ["waterbottle", 1200],
-  ["iloveproteinbars", 1200],
-  ["flower", 1200],
-  ["grade11isscary", 1200],
-  ["SIXSEVENHAHAHAH", 1200],
-  ["bongcloudbeliever", 1200],
-  ["enpassantforced", 1200],
-  ["hangingpawnhabit", 1200],
-  ["touchmovetim", 1200],
-  ["scholarsmate_l", 1200],
-  ["coffeehousechess", 1200],
-  ["blunderbuss77", 1200],
-  ["rookieroulette", 1200],
-  ["h4nginqueen", 1200],
-  // ~1400
-  ["QuietMoveGuy", 1400],
-  ["caroCannon", 1400],
-  ["rookliftt", 1400],
-  ["zugzwangg", 1400],
-  ["LondonSystemFan", 1400],
-  ["bssfan", 1400],
-  ["timmychenbiggestfan", 1400],
-  ["fianchettofan", 1400],
-  ["prophylaxised", 1400],
-  ["timescramble", 1400],
-  ["isolanihater", 1400],
-  ["openingdeviation", 1400],
-  ["middlegamemaze", 1400],
-  ["knightoutpost", 1400],
-  ["positionalpush", 1400],
-  // ~1600
-  ["kniveskniqht", 1600],
-  ["endgameEnjoyer", 1600],
-  ["berserkedd", 1600],
-  ["josephleungadmirer", 1600],
-  ["anarchychess", 1600],
-  ["zwischenzugzz", 1600],
-  ["calculationstn", 1600],
-  ["tacticstornado", 1600],
-  ["initiativegrab", 1600],
-  ["exchangesac", 1600],
+  // ~1350
+  ["pawnstorm77", 1350],
+  ["f6isfine", 1350],
+  ["tempoLoss", 1350],
+  ["premoveKing", 1350],
+  ["eloFarmer2", 1350],
+  ["backRankBlues", 1350],
+  ["waterbottle", 1350],
+  ["iloveproteinbars", 1350],
+  ["flower", 1350],
+  ["grade11isscary", 1350],
+  ["SIXSEVENHAHAHAH", 1350],
+  ["bongcloudbeliever", 1350],
+  ["enpassantforced", 1350],
+  ["hangingpawnhabit", 1350],
+  ["touchmovetim", 1350],
+  ["scholarsmate_l", 1350],
+  ["coffeehousechess", 1350],
+  ["blunderbuss77", 1350],
+  ["rookieroulette", 1350],
+  ["h4nginqueen", 1350],
+  // ~1550
+  ["QuietMoveGuy", 1550],
+  ["caroCannon", 1550],
+  ["rookliftt", 1550],
+  ["zugzwangg", 1550],
+  ["LondonSystemFan", 1550],
+  ["bssfan", 1550],
+  ["timmychenbiggestfan", 1550],
+  ["fianchettofan", 1550],
+  ["prophylaxised", 1550],
+  ["timescramble", 1550],
+  ["isolanihater", 1550],
+  ["openingdeviation", 1550],
+  ["middlegamemaze", 1550],
+  ["knightoutpost", 1550],
+  ["positionalpush", 1550],
   // ~1750
-  ["smotheredM8", 1750],
-  ["outpostcrab", 1750],
-  ["kingcongo", 1750],
-  ["prophylaxispro", 1750],
-  ["conversionmachine", 1750],
+  ["kniveskniqht", 1750],
+  ["endgameEnjoyer", 1750],
+  ["berserkedd", 1750],
+  ["josephleungadmirer", 1750],
+  ["anarchychess", 1750],
+  ["zwischenzugzz", 1750],
+  ["calculationstn", 1750],
+  ["tacticstornado", 1750],
+  ["initiativegrab", 1750],
+  ["exchangesac", 1750],
+  // 1900-2100 band, spread so the top of the leaderboard is not a block of
+  // identical numbers (the jitter in houseSeedRating still applies on top).
+  ["smotheredM8", 1900],
+  ["outpostcrab", 1950],
+  ["kingcongo", 2000],
+  ["prophylaxispro", 2050],
+  ["conversionmachine", 2100],
 ];
 
 // Flowered avatar presets (see lib/avatars.ts): the ordinary piece-on-plate
@@ -196,6 +215,31 @@ export async function ensureHouseUsers(db: D1Database): Promise<void> {
              VALUES (?, ?, ?, 150, 0.06, ?)`,
           )
           .bind(persona.userId, mode, rating, rating),
+      ),
+    ];
+  });
+  await db.batch(statements);
+}
+
+// Re-point every EXISTING house account's rating (and its per-mode buckets) at
+// the current houseSeedRating. ensureHouseUsers only ever INSERTs (OR IGNORE),
+// so once an account exists a skill/rating revision never reaches it; this
+// bounded UPDATE is what actually circulates a new rating. House users only
+// (every id comes from HOUSE_ROSTER), and idempotent: it writes the same
+// deterministic value every time, and peak only ever ratchets up (MAX), never
+// down. The caller gates it behind a versioned cold-start key so it runs once
+// per revision rather than every tick.
+export async function syncHouseRatings(db: D1Database): Promise<void> {
+  const statements = HOUSE_ROSTER.flatMap((persona) => {
+    const rating = houseSeedRating(persona);
+    return [
+      db.prepare(`UPDATE users SET rating = ? WHERE id = ?`).bind(rating, persona.userId),
+      ...(["nerf", "buff"] as const).map((mode) =>
+        db
+          .prepare(
+            `UPDATE user_ratings SET rating = ?, peak = MAX(peak, ?) WHERE user_id = ? AND category = ?`,
+          )
+          .bind(rating, rating, persona.userId, mode),
       ),
     ];
   });
