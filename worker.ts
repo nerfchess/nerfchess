@@ -478,7 +478,15 @@ function error(ws: WebSocket, code: string, message: string) {
 // box instead of this single-threaded DO. The fetch is hard-bounded so a slow
 // or unreachable box can never stall the alarm tick — on timeout/failure the
 // bot falls back to the local engine (full strength), never to nothing.
-const HOUSE_ENGINE_TIMEOUT_MS = 150;
+//
+// This is a WALL-clock bound on an awaited fetch, so it costs the DO no CPU
+// while waiting — it must clear the real round-trip to the engine or the
+// offload silently no-ops and every bot move runs its search locally on the DO
+// (the CPU spike this offload exists to avoid). The engine lives in Tokyo behind
+// Cloudflare; the observed round-trip is ~500ms, so 150ms aborted every call.
+// 3000ms comfortably clears RTT + engine search; bots are meant to pace their
+// moves, so the extra latency is harmless.
+const HOUSE_ENGINE_TIMEOUT_MS = 3000;
 
 // Arena (Tier 2 / M2). One live bot-vs-bot game announced by the OCI arena. The
 // DO holds these only in memory and expires them if the arena stops syncing, so
