@@ -19,6 +19,7 @@ import {
   type CodexFilters,
 } from "@/lib/nerfFilter";
 import { cardText, hydrateCardText } from "@/lib/cardText";
+import { BUFF_COLLECTIONS, NERF_COLLECTIONS, buffCollection } from "@/lib/cardCollections";
 
 import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
 
@@ -134,6 +135,7 @@ export default function CodexPage() {
       (b) =>
         (filters.tier === null || b.tier === filters.tier) &&
         (filters.categories.length === 0 || filters.categories.includes(b.category)) &&
+        (filters.collection === null || buffCollection(b) === filters.collection) &&
         (q === "" ||
           b.name.toLowerCase().includes(q) ||
           b.description.toLowerCase().includes(q) ||
@@ -152,9 +154,9 @@ export default function CodexPage() {
   const clearAll = () => setFilters({ ...EMPTY_FILTERS });
   const switchLibrary = (lib: Library) => {
     setLibrary(lib);
-    // Category ids differ between libraries; a stale one would silently filter
-    // everything out.
-    setFilters((f) => ({ ...f, categories: [] }));
+    // Category ids and collections differ between libraries; a stale one would
+    // silently filter everything out.
+    setFilters((f) => ({ ...f, categories: [], collection: null }));
   };
 
   const active = hasActiveFilters(filters);
@@ -260,6 +262,19 @@ export default function CodexPage() {
               ))}
             </FilterSelect>
           )}
+
+          <FilterSelect
+            label="Collection"
+            value={filters.collection ?? ""}
+            onChange={(v) => patch({ collection: v === "" ? null : v })}
+          >
+            <option value="" className="bg-ink-900 text-parchment">All collections</option>
+            {(isRules ? NERF_COLLECTIONS : BUFF_COLLECTIONS).map((c) => (
+              <option key={c.id} value={c.id} className="bg-ink-900 text-parchment">
+                {c.label}
+              </option>
+            ))}
+          </FilterSelect>
 
           <FilterSelect
             label="Sort"

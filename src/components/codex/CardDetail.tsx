@@ -17,6 +17,7 @@ import {
   tierName,
   turnCostMeaning,
 } from "@/lib/cardCodex";
+import { buffCollection, nerfCollection } from "@/lib/cardCollections";
 
 // Server-rendered detail page for a single card, shared by /codex/buff/[id]
 // and /codex/nerf/[id]. Everything here is plain HTML (no client component),
@@ -129,6 +130,7 @@ export function BuffDetail({ buff }: { buff: Buff }) {
             <span className="mt-0.5 block text-[13px] text-parchment-400">{tierMeaning(buff.tier)}</span>
           </GlanceRow>
           <GlanceRow label="Category">{cat.label}</GlanceRow>
+          <GlanceRow label="Collection">{buffCollection(buff)}</GlanceRow>
           <GlanceRow label="Appears in">{where}</GlanceRow>
         </dl>
       </InfoSection>
@@ -168,6 +170,7 @@ export function NerfDetail({ nerf }: { nerf: Nerf }) {
             <span className="mt-0.5 block text-[13px] text-parchment-400">{tierMeaning(nerf.tier)}</span>
           </GlanceRow>
           {cats.length > 0 && <GlanceRow label="Focus">{cats.join(", ")}</GlanceRow>}
+          <GlanceRow label="Collection">{nerfCollection(nerf)}</GlanceRow>
           <GlanceRow label="Appears in">Nerf mode</GlanceRow>
           <GlanceRow label="How it works">Passive and secret: it is always on, and your opponent cannot see it.</GlanceRow>
         </dl>
