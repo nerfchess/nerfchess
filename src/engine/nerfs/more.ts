@@ -271,9 +271,14 @@ export const UNSPOOLING: Nerf = db({
     const remaining = 100 - s.used;
     return moves.filter((m) => cheb(m.from, m.to) <= remaining);
   },
-  checkLoss: (state) => {
-    const s = state as { used: number };
-    return s.used >= 100 ? { reason: "out of distance" } : null;
+  checkLoss: (_state, ctx) => {
+    // Recompute the spent distance fresh from history rather than reading the
+    // onTurnStart-maintained state, which is one move stale at loss-check time
+    // and would let the player keep moving (and even steal a king capture) for
+    // an extra move after the budget is spent. Mirrors onTurnStart's tally.
+    let used = 0;
+    for (const m of ctx.board.history) if (m.color === ctx.me) used += cheb(m.from, m.to);
+    return used >= 100 ? { reason: "out of distance" } : null;
   },
 });
 

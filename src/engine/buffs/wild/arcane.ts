@@ -1,0 +1,948 @@
+// Wild set: ARCANE, TIME & META. Spellcasters bending the board and the draft
+// itself: blinks and teleports, transmutation and conjuring, time-stops and
+// stolen clock, plus the meta layer (buff theft, reveals, draft manipulation).
+// Every card reuses a primitive that already ships in the engine (helpers.ts)
+// or an existing board-effect kind (freeze / walnut / shield / barred / void),
+// draft flag, or clock request. No card invents an engine primitive.
+//
+// Like wild/elemental.ts this is a single self-contained file: it imports the
+// shared primitives straight from ../helpers and keeps LOCAL copies of the few
+// composite helpers that live in a sibling shared.ts there (curse, walnutAll,
+// petrifyTarget, summonTemp, convertEnemies, transformOwn, swapOwnPieces,
+// shieldTarget) so it needs no barrel of its own. Safety rails come from the
+// wrapped helpers: kings are never frozen, petrified, converted, or targeted,
+// and every opponent-move filter keeps a non-empty fallback (via `curse`) so no
+// card can ever soft-lock a turn.
+
+import { Buff, BuffApi, BuffCategory, CardFx } from "../../buff";
+import { Tier } from "../../nerf";
+import { Move, PieceType, RANK, Square } from "../../types";
+import {
+  DIAG_DIRS,
+  ORTHO_DIRS,
+  activated,
+  addEffect,
+  barLine,
+  emptySquares,
+  extraMovesNow,
+  freezeTarget,
+  inHalf,
+  instant,
+  leapMoves,
+  lineSweep,
+  mySquares,
+  pieceBound,
+  placePieces,
+  relocateMany,
+  removeEnemies,
+  slideMoves,
+  stealBuffs,
+  timedOppFilter,
+  voidSquares,
+} from "../helpers";
+
+type Mech = Partial<Buff> & Pick<Buff, "kind">;
+
+type WildMeta = {
+  id: string;
+  name: string;
+  description: string;
+  tier: Tier;
+  category: BuffCategory;
+  flavor?: string;
+  boon?: boolean;
+  fx?: CardFx;
+};
+
+/** Build a fully implemented card from metadata + mechanics. Mirrors the `def`
+ * factory in library.ts and the `card` factories in funny/ and fantasy/. */
+function card(meta: WildMeta, mech: Mech): Buff {
+  return { ...meta, implemented: true, ...mech };
+}
+
+// --- Placement / summon zones ( (api) => (sq) => boolean ) -------------------
+const myHalfZone = (api: BuffApi) => (sq: Square) => inHalf(api.me, sq);
+const backRankZone = (api: BuffApi) => (sq: Square) =>
+  RANK(sq) === (api.me === "w" ? 0 : 7);
+
+// --- Teleport destination candidates ( (api, from) => Square[] ) -------------
+// relocateMany filters occupancy and the pawn never-on-rank-1/8 rule itself, so
+// these need only list the raw squares the current piece may consider.
+const anyEmptyDest = (_api: BuffApi, _from: Square): Square[] =>
+  Array.from({ length: 64 }, (_, i) => i);
+const myHalfDest = (api: BuffApi, _from: Square): Square[] =>
+  Array.from({ length: 64 }, (_, i) => i).filter((sq) => inHalf(api.me, sq));
+
+// A 3-1 "camel" leap set, reused by Camel Rider.
+const CAMEL_LEAPS = [
+  [1, 3], [3, 1], [-1, 3], [-3, 1], [1, -3], [3, -1], [-1, -3], [-3, -1],
+] as const;
+
+// A bound upgrade that has already latched onto its owner's square(s) cannot be
+// carried cleanly by a steal (its effects are keyed to the victim's board), so
+// buff-theft only offers cards that have never been activated / bound.
+const unboundOnly = (b: { state: Record<string, unknown> }): boolean =>
+  b.state.sq == null && b.state.sqs == null && b.state.squares == null;
+
+// ---------------------------------------------------------------------------
+// Local composite helpers (copies of the sibling shared.ts surfaces).
+// ---------------------------------------------------------------------------
+
+/** Opponent-move filter with the non-empty safety guarantee: the filter is
+ * always partial, so it can never strand the opponent with zero moves. */
+function curse(
+  turns: number,
+  filter: (moves: Move[], api: BuffApi) => Move[],
+): Mech {
+  return timedOppFilter(turns, (moves, _inst, api) => {
+    if (moves.length === 0) return moves;
+    const kept = filter(moves, api);
+    return kept.length > 0 ? kept : moves;
+  });
+}
+
+/** Instant: every enemy piece of the given types turns to stone (walnut: it
+ * cannot move at all) for `turns` of their turns. Kings are never petrified. */
+function walnutAll(types: PieceType[], turns: number): Mech {
+  return instant((_inst, api) => {
+    for (const sq of mySquares(api.board, api.opp)) {
+      const t = api.board.pieces[sq]!.type;
+      if (t === "k" || !types.includes(t)) continue;
+      addEffect(api, { kind: "walnut", sq, owner: api.opp, turns });
+    }
+  });
+}
+
+/** Activated: one targeted enemy piece (never a king) is petrified for `turns`
+ * of their turns. */
+function petrifyTarget(turns: number, label: string): Mech {
+  return activated(
+    (_inst, api, picks) =>
+      picks.length > 0
+        ? null
+        : {
+            kind: "square",
+            label,
+            squares: mySquares(api.board, api.opp).filter(
+              (sq) => api.board.pieces[sq]!.type !== "k",
+            ),
+          },
+    (_inst, api, picks) => {
+      if (picks[0]?.square != null) {
+        addEffect(api, { kind: "walnut", sq: picks[0].square, owner: api.opp, turns });
+      }
+    },
+  );
+}
+
+/** Activated: pick one of your pieces; its square is shielded (uncapturable)
+ * for `turns` of the opponent's turns. Optionally restricted to piece types. */
+function shieldTarget(turns: number, types?: PieceType[]): Mech {
+  return activated(
+    (_inst, api, picks) =>
+      picks.length > 0
+        ? null
+        : {
+            kind: "square",
+            label: "Choose a piece to protect",
+            squares: mySquares(api.board, api.me).filter((sq) => {
+              const t = api.board.pieces[sq]!.type;
+              return t !== "k" && (!types || types.includes(t));
+            }),
+          },
+    (_inst, api, picks) => {
+      if (picks[0]?.square != null) {
+        addEffect(api, { kind: "shield", owner: api.me, squares: [picks[0].square], turns });
+      }
+    },
+  );
+}
+
+/** A temporary summon: place a fresh piece, then remove it after `turns` of the
+ * owner's own turns. Copied from wild/elemental.ts's summonTemp: it ticks its
+ * own timer, follows the piece, and retires it via an uncounted removePiece so
+ * nothing enters the revive pool. Non-pawns only, so there is never a promotion
+ * edge to track. */
+function summonTemp(
+  type: Exclude<PieceType, "p" | "k">,
+  turns: number,
+  zone: (api: BuffApi) => (sq: Square) => boolean,
+): Mech {
+  return {
+    kind: "activated",
+    spendOnUse: false,
+    targets: (inst, api, picks) =>
+      picks.length > 0 || inst.state.sq != null
+        ? null
+        : {
+            kind: "square",
+            label: "Choose where your conjured piece appears",
+            squares: emptySquares(api.board, zone(api)),
+          },
+    effect: (inst, api, picks) => {
+      const sq = picks[0]?.square;
+      if (sq == null || inst.state.sq != null) return;
+      api.place(sq, type, api.me);
+      inst.state.sq = sq;
+      inst.state.turns = turns;
+    },
+    onMovePlayed: (inst, move, api) => {
+      const sq = inst.state.sq as Square | undefined;
+      if (sq == null) return;
+      if (move.capturedSquare === sq && move.from !== sq) {
+        inst.spent = true;
+        inst.state.sq = undefined;
+        return;
+      }
+      if (move.from === sq) {
+        inst.state.sq = move.to;
+      } else if (move.to === sq && move.from !== sq) {
+        inst.spent = true;
+        inst.state.sq = undefined;
+        return;
+      }
+      if (move.color !== api.me) return;
+      const left = ((inst.state.turns as number) ?? 0) - 1;
+      inst.state.turns = left;
+      if (left <= 0) {
+        const cur = inst.state.sq as Square | undefined;
+        if (cur != null && api.board.pieces[cur]) api.removePiece(cur, { uncounted: true });
+        inst.spent = true;
+        inst.state.sq = undefined;
+      }
+    },
+    status: (inst) =>
+      inst.state.sq == null
+        ? "activate to summon"
+        : `conjured piece fades in ${(inst.state.turns as number) ?? 0} of your turns`,
+  };
+}
+
+/** Activated: convert `count` enemy pieces of the given types to your color.
+ * A local copy of library.ts's convertEnemies; kings are never eligible. */
+function convertEnemies(count: number, types: PieceType[], label: string): Mech {
+  return activated(
+    (_inst, api, picks) =>
+      picks.length >= count
+        ? null
+        : {
+            kind: "square",
+            label: count > 1 ? `${label} (${picks.length + 1}/${count})` : label,
+            squares: mySquares(api.board, api.opp).filter((sq) => {
+              const p = api.board.pieces[sq]!;
+              return types.includes(p.type) && !picks.some((k) => k.square === sq);
+            }),
+          },
+    (_inst, api, picks) => {
+      for (const k of picks) if (k.square != null) api.setPieceColor(k.square, api.me);
+    },
+  );
+}
+
+/** Activated: transmute `count` of your own pieces of `fromTypes` into `to`
+ * (never a king). Copied from fantasy/shared.ts; uses setPieceType. */
+function transformOwn(
+  count: number,
+  fromTypes: PieceType[],
+  to: Exclude<PieceType, "k">,
+  label: string,
+): Mech {
+  return activated(
+    (_inst, api, picks) =>
+      picks.length >= count
+        ? null
+        : {
+            kind: "square",
+            label: count > 1 ? `${label} (${picks.length + 1}/${count})` : label,
+            squares: mySquares(api.board, api.me).filter((sq) => {
+              const t = api.board.pieces[sq]!.type;
+              return fromTypes.includes(t) && !picks.some((k) => k.square === sq);
+            }),
+          },
+    (_inst, api, picks) => {
+      for (const k of picks) if (k.square != null) api.setPieceType(k.square, to);
+    },
+  );
+}
+
+/** Activated: swap up to `pairs` pairs of your own pieces. Copied from
+ * library.ts's swapOwnPieces: every completed pair is a full effect, so after
+ * the first the next pair's opening pick is finishable. */
+function swapOwnPieces(types?: PieceType[], pairs = 1): Mech {
+  const candidates = (api: BuffApi) =>
+    mySquares(api.board, api.me).filter(
+      (sq) => !types || types.includes(api.board.pieces[sq]!.type),
+    );
+  return activated(
+    (_inst, api, picks) =>
+      picks.length >= pairs * 2
+        ? null
+        : {
+            kind: "square",
+            label:
+              picks.length % 2 === 0
+                ? pairs > 1
+                  ? `Choose a piece to swap (pair ${Math.floor(picks.length / 2) + 1}/${pairs})`
+                  : "Choose the first piece"
+                : "Choose the piece to swap with",
+            squares: candidates(api).filter((sq) => !picks.some((k) => k.square === sq)),
+            ...(picks.length > 0 && picks.length % 2 === 0 ? { finishable: true } : {}),
+          },
+    (_inst, api, picks) => {
+      for (let i = 0; i + 1 < picks.length; i += 2) {
+        const a = picks[i]?.square, b = picks[i + 1]?.square;
+        if (a == null || b == null) continue;
+        const pa = api.board.pieces[a];
+        api.board.pieces[a] = api.board.pieces[b];
+        api.board.pieces[b] = pa;
+        api.bs.historyDiverged = true;
+      }
+    },
+  );
+}
+
+// ---------------------------------------------------------------------------
+
+export const WILD_ARCANE: Buff[] = [
+  // ===================== TELEPORTATION =====================
+  card(
+    {
+      id: "wa_blink",
+      name: "Blink",
+      description:
+        "Teleport one of your pieces (not the king) to any empty square in your half of the board, once.",
+      tier: 3,
+      category: "movement",
+      flavor: "Here, then not.",
+    },
+    relocateMany(1, myHalfDest),
+  ),
+  card(
+    {
+      id: "wa_far_step",
+      name: "Far Step",
+      description:
+        "Teleport one of your pieces (not the king) to any empty square on the board, once.",
+      tier: 4,
+      category: "movement",
+      flavor: "Distance is a suggestion.",
+    },
+    relocateMany(1, anyEmptyDest),
+  ),
+  card(
+    {
+      id: "wa_twin_blink",
+      name: "Twin Blink",
+      description:
+        "Teleport up to two of your pieces (not the king), each to any empty square on the board, once.",
+      tier: 5,
+      category: "movement",
+      flavor: "Two knots in the world at once.",
+    },
+    relocateMany(2, anyEmptyDest),
+  ),
+  card(
+    {
+      id: "wa_swap_flanks",
+      name: "Fold Space",
+      description:
+        "Swap the squares of up to two pairs of your own pieces, once.",
+      tier: 4,
+      category: "movement",
+      flavor: "Two folds and the map is redrawn.",
+    },
+    swapOwnPieces(undefined, 2),
+  ),
+
+  // ===================== PHASE / MOVEMENT GRANTS =====================
+  card(
+    {
+      id: "wa_ghostwalk_bishop",
+      name: "Ghostwalk",
+      description:
+        "One of your bishops may also step one square straight, like a rook, for the rest of the game.",
+      tier: 3,
+      category: "movement",
+      flavor: "It slips off its color.",
+      fx: { motif: "empower", pieces: ["b"], moveAs: "r", self: true },
+    },
+    pieceBound("b", "Choose the bishop to teach the ghostwalk", (board, sq, via) =>
+      slideMoves(board, sq, ORTHO_DIRS, via, 1),
+    ),
+  ),
+  card(
+    {
+      id: "wa_camel_rider",
+      name: "Camel Rider",
+      description:
+        "One of your knights may also make a longer 3-by-1 leap for the rest of the game.",
+      tier: 4,
+      category: "movement",
+      flavor: "A wider gait across the sand.",
+      fx: { motif: "empower", pieces: ["n"], moveAs: "n", self: true },
+    },
+    pieceBound("n", "Choose the knight to mount the camel", (board, sq, via) =>
+      leapMoves(board, sq, CAMEL_LEAPS, via),
+    ),
+  ),
+  card(
+    {
+      id: "wa_arcane_conduit",
+      name: "Arcane Conduit",
+      description:
+        "One of your rooks may also move up to two squares diagonally for the rest of the game.",
+      tier: 4,
+      category: "movement",
+      flavor: "Power leaks out at the corners.",
+      fx: { motif: "empower", pieces: ["r"], moveAs: "b", self: true },
+    },
+    pieceBound("r", "Choose the rook to channel the conduit", (board, sq, via) =>
+      slideMoves(board, sq, DIAG_DIRS, via, 2),
+    ),
+  ),
+
+  // ===================== CONJURATION =====================
+  card(
+    {
+      id: "wa_conjure_scout",
+      name: "Conjured Scout",
+      description:
+        "Conjure a knight on an empty square on your back rank. It fights for 2 of your turns, then fades.",
+      tier: 3,
+      category: "pieces",
+      flavor: "Borrowed from somewhere quieter.",
+    },
+    summonTemp("n", 2, backRankZone),
+  ),
+  card(
+    {
+      id: "wa_conjure_bishop",
+      name: "Conjured Bishop",
+      description:
+        "Conjure a bishop on an empty square in your half. It fights for 3 of your turns, then fades.",
+      tier: 4,
+      category: "pieces",
+      flavor: "Faith, on loan.",
+    },
+    summonTemp("b", 3, myHalfZone),
+  ),
+  card(
+    {
+      id: "wa_conjure_rook",
+      name: "Conjured Rook",
+      description:
+        "Conjure a rook on an empty square in your half. It fights for 4 of your turns, then fades.",
+      tier: 5,
+      category: "pieces",
+      flavor: "A tower that was never built.",
+    },
+    summonTemp("r", 4, myHalfZone),
+  ),
+  card(
+    {
+      id: "wa_spectral_minors",
+      name: "Spectral Retinue",
+      description:
+        "Conjure a knight and a bishop, permanently, on empty squares in your half, once.",
+      tier: 5,
+      category: "pieces",
+      flavor: "They stay as long as you do.",
+    },
+    placePieces(["n", "b"], myHalfZone),
+  ),
+  card(
+    {
+      id: "wa_twin_familiars",
+      name: "Twin Familiars",
+      description:
+        "Conjure two bishops, permanently, on empty squares in your half, once.",
+      tier: 5,
+      category: "pieces",
+      flavor: "One for each shoulder.",
+    },
+    placePieces(["b", "b"], myHalfZone),
+  ),
+
+  // ===================== TRANSMUTATION =====================
+  card(
+    {
+      id: "wa_transmute",
+      name: "Transmute",
+      description: "Turn one of your pawns into a knight, once.",
+      tier: 3,
+      category: "pieces",
+      flavor: "A little more shape to it now.",
+    },
+    transformOwn(1, ["p"], "n", "Choose a pawn to transmute into a knight"),
+  ),
+  card(
+    {
+      id: "wa_leaden_crown",
+      name: "Leaden Crown",
+      description: "Turn one of your pawns into a queen, once.",
+      tier: 6,
+      category: "pieces",
+      flavor: "Base metal, crowned early.",
+    },
+    transformOwn(1, ["p"], "q", "Choose a pawn to crown"),
+  ),
+  card(
+    {
+      id: "wa_dominate_minor",
+      name: "Dominate",
+      description: "Take control of one enemy knight or bishop: it becomes yours, once.",
+      tier: 4,
+      category: "pieces",
+      flavor: "Its allegiance was always negotiable.",
+    },
+    convertEnemies(1, ["n", "b"], "Choose an enemy knight or bishop to dominate"),
+  ),
+  card(
+    {
+      id: "wa_dominate_major",
+      name: "Grand Dominion",
+      description: "Take control of one enemy rook or queen: it becomes yours, once.",
+      tier: 7,
+      category: "pieces",
+      flavor: "The bigger the will, the sweeter the break.",
+    },
+    convertEnemies(1, ["r", "q"], "Choose an enemy rook or queen to dominate"),
+  ),
+
+  // ===================== TIME: FREEZE & STOP =====================
+  card(
+    {
+      id: "wa_stasis_field",
+      name: "Stasis Field",
+      description: "Freeze one enemy piece (never a king) for 2 of their turns.",
+      tier: 3,
+      category: "tempo",
+      flavor: "Held between one second and the next.",
+      fx: { motif: "jail" },
+    },
+    freezeTarget(2),
+  ),
+  card(
+    {
+      id: "wa_time_stop",
+      name: "Time Stop",
+      description:
+        "Stop one enemy piece (never a king) in time: it cannot move for 3 of their turns.",
+      tier: 4,
+      category: "tempo",
+      flavor: "For it, the clock simply stopped.",
+      fx: { motif: "jail" },
+    },
+    petrifyTarget(3, "Choose an enemy piece to stop in time"),
+  ),
+  card(
+    {
+      id: "wa_arrest_time",
+      name: "Arrest the Hour",
+      description:
+        "Freeze one enemy rook or queen for 3 of their turns.",
+      tier: 5,
+      category: "tempo",
+      flavor: "The heavy hand of the clock, stayed.",
+      fx: { motif: "jail", pieces: ["r", "q"] },
+    },
+    activated(
+      (_inst, api, picks) =>
+        picks.length > 0
+          ? null
+          : {
+              kind: "square",
+              label: "Choose an enemy rook or queen to freeze",
+              squares: mySquares(api.board, api.opp).filter((sq) => {
+                const t = api.board.pieces[sq]!.type;
+                return t === "r" || t === "q";
+              }),
+            },
+      (_inst, api, picks) => {
+        if (picks[0]?.square != null) {
+          addEffect(api, { kind: "freeze", sq: picks[0].square, owner: api.opp, turns: 3 });
+        }
+      },
+    ),
+  ),
+  card(
+    {
+      id: "wa_frozen_moment",
+      name: "Frozen Moment",
+      description:
+        "Freeze every one of your opponent's rooks and queens for their next 2 turns.",
+      tier: 5,
+      category: "tempo",
+      flavor: "The powerful ones stand still first.",
+      fx: { motif: "jail", pieces: ["r", "q"] },
+    },
+    instant((_inst, api) => {
+      for (const sq of mySquares(api.board, api.opp)) {
+        const t = api.board.pieces[sq]!.type;
+        if (t === "r" || t === "q") {
+          addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2 });
+        }
+      }
+    }),
+  ),
+  card(
+    {
+      id: "wa_stone_pawns",
+      name: "Stone the Pawns",
+      description:
+        "Turn every one of your opponent's pawns to stone: they cannot move for their next 2 turns.",
+      tier: 4,
+      category: "tempo",
+      flavor: "The whole front row, set in grey.",
+      fx: { motif: "jail", pieces: ["p"] },
+    },
+    walnutAll(["p"], 2),
+  ),
+
+  // ===================== TIME: TEMPO & CLOCK =====================
+  card(
+    {
+      id: "wa_quicken",
+      name: "Quicken",
+      description: "Take two extra moves this turn.",
+      tier: 6,
+      category: "tempo",
+      flavor: "Two heartbeats in one.",
+      fx: { motif: "rally", self: true },
+    },
+    extraMovesNow(2),
+  ),
+  card(
+    {
+      id: "wa_stolen_hours",
+      name: "Stolen Hours",
+      description:
+        "Steal 25 seconds from your opponent's clock and add them to your own.",
+      tier: 5,
+      category: "tempo",
+      flavor: "You will not miss what you cannot count.",
+    },
+    instant((_inst, api) => {
+      api.adjustClock({ stealFlatSec: 25 });
+    }),
+  ),
+  card(
+    {
+      id: "wa_borrowed_minute",
+      name: "Borrowed Minute",
+      description:
+        "Add 30 seconds to your own clock and remove 10 seconds from your opponent's.",
+      tier: 4,
+      category: "tempo",
+      flavor: "A minute here, a minute there.",
+    },
+    instant((_inst, api) => {
+      api.adjustClock({ addSelfSec: 30, subOppSec: 10 });
+    }),
+  ),
+  card(
+    {
+      id: "wa_chrono_siphon",
+      name: "Chrono Siphon",
+      description:
+        "Steal a quarter of the time left on your opponent's clock (up to 30 seconds) and add it to your own.",
+      tier: 4,
+      category: "tempo",
+      flavor: "Draw it off slowly, like heat.",
+    },
+    instant((_inst, api) => {
+      api.adjustClock({ stealFractionOfOpp: 0.25, stealCapSec: 30 });
+    }),
+  ),
+
+  // ===================== ARCANE WARDS & RIFTS =====================
+  card(
+    {
+      id: "wa_sigil_ward",
+      name: "Sigil Ward",
+      description:
+        "One of your pieces cannot be captured for your opponent's next 3 turns.",
+      tier: 3,
+      category: "protection",
+      flavor: "A drawn circle it may not cross.",
+      fx: { motif: "ward", self: true },
+    },
+    shieldTarget(3),
+  ),
+  card(
+    {
+      id: "wa_royal_aegis",
+      name: "Royal Aegis",
+      description:
+        "Your king and your queen cannot be captured for your opponent's next 2 turns.",
+      tier: 5,
+      category: "protection",
+      flavor: "The crown and the sword, both under glass.",
+      fx: { motif: "ward", pieces: ["k", "q"], self: true },
+    },
+    instant((_inst, api) => {
+      // A square shield never protects the king (engine rule that keeps the
+      // game winnable), so protect the king with king_safe and shield the queen.
+      // Together the card's "king and queen" promise is actually true.
+      addEffect(api, { kind: "king_safe", owner: api.me, turns: 2 });
+      const q = mySquares(api.board, api.me).filter(
+        (sq) => api.board.pieces[sq]!.type === "q",
+      );
+      if (q.length) {
+        addEffect(api, { kind: "shield", owner: api.me, squares: q, turns: 2 });
+      }
+    }),
+  ),
+  card(
+    {
+      id: "wa_glyph_seal",
+      name: "Glyph Seal",
+      description:
+        "Seal one file: pick any square and its whole file becomes impassable to your opponent for their next 2 turns.",
+      tier: 4,
+      category: "protection",
+      flavor: "A line of warding runes down the board.",
+      fx: { motif: "blindfold" },
+    },
+    barLine("file", 2, 1),
+  ),
+  card(
+    {
+      id: "wa_void_rift",
+      name: "Void Rift",
+      description:
+        "Tear a permanent rift on an empty square: any enemy piece that steps onto it (never a king) is pulled out of the game.",
+      tier: 4,
+      category: "attack",
+      flavor: "It does not close on its own.",
+    },
+    voidSquares(1, null),
+  ),
+  card(
+    {
+      id: "wa_border_ward",
+      name: "Border Ward",
+      description:
+        "A warded frontier: your opponent may not move any piece into your half of the board for their next 2 turns.",
+      tier: 5,
+      category: "protection",
+      flavor: "The far side of the board is closed for repairs.",
+      fx: { motif: "blindfold" },
+    },
+    curse(2, (moves, api) => moves.filter((m) => !inHalf(api.me, m.to))),
+  ),
+  card(
+    {
+      id: "wa_bind_the_queen",
+      name: "Bind the Queen",
+      description:
+        "Arcane chains hold the enemy queen: your opponent's queen cannot move for their next 2 turns.",
+      tier: 4,
+      category: "protection",
+      flavor: "The strongest piece, and the stillest.",
+      fx: { motif: "jail", pieces: ["q"] },
+    },
+    curse(2, (moves) => moves.filter((m) => m.piece !== "q")),
+  ),
+
+  // ===================== ARCANE DISINTEGRATION =====================
+  card(
+    {
+      id: "wa_banish",
+      name: "Banish",
+      description:
+        "Banish one enemy pawn, knight, or bishop from the board, once.",
+      tier: 3,
+      category: "attack",
+      flavor: "Sent somewhere with no squares at all.",
+    },
+    removeEnemies(1, ["p", "n", "b"]),
+  ),
+  card(
+    {
+      id: "wa_unmake",
+      name: "Unmake",
+      description:
+        "One bishop unmakes a diagonal: it removes up to two enemy pieces in its path (never a king) and lands beyond them, once.",
+      tier: 5,
+      category: "attack",
+      flavor: "A line of the board, uncreated.",
+    },
+    lineSweep("b", DIAG_DIRS, 2),
+  ),
+
+  // ===================== META: BUFF THEFT =====================
+  card(
+    {
+      id: "wa_spelltheft",
+      name: "Spelltheft",
+      description: "Steal one of your opponent's unused buffs and hold it as your own.",
+      tier: 5,
+      category: "draft",
+      flavor: "Nice card. Mine now.",
+    },
+    stealBuffs(1, undefined, unboundOnly),
+  ),
+  card(
+    {
+      id: "wa_disjunction",
+      name: "Disjunction",
+      description:
+        "Steal one of your opponent's unused buffs of tier 3 or lower and hold it as your own.",
+      tier: 4,
+      category: "draft",
+      flavor: "Pickpocketing the small stuff.",
+    },
+    stealBuffs(1, 3, unboundOnly),
+  ),
+
+  // ===================== META: DRAFT MANIPULATION =====================
+  card(
+    {
+      id: "wa_arcane_reroll",
+      name: "Arcane Reroll",
+      description: "Gain two draft rerolls.",
+      tier: 3,
+      category: "draft",
+      flavor: "Do not like these? Ask again.",
+    },
+    instant((_inst, api) => {
+      api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 2;
+    }),
+  ),
+  card(
+    {
+      id: "wa_suppress_magic",
+      name: "Suppress Magic",
+      description:
+        "Your opponent's next two draft offers contain no draft-manipulation cards.",
+      tier: 3,
+      category: "draft",
+      flavor: "No meta for you.",
+    },
+    instant((_inst, api) => {
+      api.theirs.flags.noDraftCards = (api.theirs.flags.noDraftCards ?? 0) + 2;
+    }),
+  ),
+  card(
+    {
+      id: "wa_disrupt_ritual",
+      name: "Disrupt Ritual",
+      description:
+        "Your opponent's next draft is skipped, and your next draft offer shows three cards instead of two.",
+      tier: 4,
+      category: "draft",
+      flavor: "You break their circle and widen yours.",
+    },
+    instant((_inst, api) => {
+      api.theirs.flags.blockedDrafts = (api.theirs.flags.blockedDrafts ?? 0) + 1;
+      api.mine.flags.prepThree = true;
+    }),
+  ),
+  card(
+    {
+      id: "wa_greed",
+      name: "Greed",
+      description:
+        "Your next draft offer shows three cards, and you take all of them instead of one.",
+      tier: 5,
+      category: "draft",
+      flavor: "Why choose?",
+    },
+    instant((_inst, api) => {
+      api.mine.flags.takeBoth = (api.mine.flags.takeBoth ?? 0) + 1;
+      api.mine.flags.prepThree = true;
+    }),
+  ),
+  card(
+    {
+      id: "wa_high_roll",
+      name: "High Roll",
+      description: "Force your next draft offer to roll at tier 5.",
+      tier: 4,
+      category: "draft",
+      flavor: "Load the dice, then roll them.",
+    },
+    instant((_inst, api) => {
+      api.mine.flags.forceTier = 5;
+    }),
+  ),
+  card(
+    {
+      id: "wa_jinx",
+      name: "Jinx",
+      description: "Your opponent's next two drafted buffs arrive already nullified.",
+      tier: 4,
+      category: "draft",
+      flavor: "Whatever they pick, it was dead on arrival.",
+    },
+    instant((_inst, api) => {
+      api.theirs.flags.nullifyIncoming = (api.theirs.flags.nullifyIncoming ?? 0) + 2;
+    }),
+  ),
+  card(
+    {
+      id: "wa_sabotage",
+      name: "Sabotage",
+      description:
+        "Your opponent's next draft is skipped, and the buff they draft after that arrives nullified.",
+      tier: 5,
+      category: "draft",
+      flavor: "Trip them going in and coming out.",
+    },
+    instant((_inst, api) => {
+      api.theirs.flags.blockedDrafts = (api.theirs.flags.blockedDrafts ?? 0) + 1;
+      api.theirs.flags.nullifyIncoming = (api.theirs.flags.nullifyIncoming ?? 0) + 1;
+    }),
+  ),
+
+  // ===================== META: REVEALS (real effects attached) =====================
+  card(
+    {
+      id: "wa_foresight",
+      name: "Foresight",
+      description:
+        "See the tier of your opponent's next draft, and reveal their nerf for the rest of the game.",
+      tier: 3,
+      category: "info",
+      boon: true,
+      flavor: "You read the next page before they turn it.",
+    },
+    instant((_inst, api) => {
+      api.mine.flags.seeOppTier = true;
+      api.mine.oppNerfRevealed = true;
+    }),
+  ),
+  card(
+    {
+      id: "wa_mind_read",
+      name: "Mind Read",
+      description:
+        "See your opponent's next buff options, and their next drafted buff arrives nullified.",
+      tier: 4,
+      category: "info",
+      flavor: "You know what they want, so you spoil it.",
+    },
+    instant((_inst, api) => {
+      api.mine.flags.seeOppCards = true;
+      api.theirs.flags.nullifyIncoming = (api.theirs.flags.nullifyIncoming ?? 0) + 1;
+    }),
+  ),
+  card(
+    {
+      id: "wa_omniscience",
+      name: "Omniscience",
+      description:
+        "See your opponent's next buff options and its tier, and reveal their nerf for the rest of the game.",
+      tier: 4,
+      category: "info",
+      boon: true,
+      flavor: "Nothing about them is hidden now.",
+    },
+    instant((_inst, api) => {
+      api.mine.flags.seeOppCards = true;
+      api.mine.flags.seeOppTier = true;
+      api.mine.oppNerfRevealed = true;
+    }),
+  ),
+];

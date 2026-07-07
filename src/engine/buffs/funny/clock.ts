@@ -78,4 +78,32 @@ export const FUNNY_CLOCK: Buff[] = [
       api.adjustClock({ stealFlatSec: 15 });
     }),
   ),
+  card(
+    {
+      id: "computer_virus",
+      name: "Computer Virus",
+      description:
+        "Upload a virus to your opponent's clock. At the end of each of their next 4 turns it drains 8 seconds from their time. The clock floor still stops it from flagging them instantly.",
+      tier: 4,
+      category: "tempo",
+      flavor: "Your files are encrypted. Also your clock.",
+    },
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.ticks = 4;
+      },
+      onMovePlayed: (inst, move, api) => {
+        // Tick only at the end of the opponent's turn (the virus eats THEIR
+        // time), never on the owner's own moves.
+        if (move.color !== api.opp) return;
+        const left = (inst.state.ticks as number) ?? 0;
+        if (left <= 0) return;
+        api.adjustClock({ subOppSec: 8 });
+        inst.state.ticks = left - 1;
+        if (left - 1 <= 0) inst.spent = true;
+      },
+      status: (inst) => `virus draining: ${(inst.state.ticks as number) ?? 0} ticks left`,
+    },
+  ),
 ];
