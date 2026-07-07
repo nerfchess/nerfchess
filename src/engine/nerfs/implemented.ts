@@ -1,5 +1,5 @@
 import { Nerf } from "../nerf";
-import { attackedBy, findKing, isInCheck, makeMove } from "../board";
+import { attackedBy, findKing, initialBoard, isInCheck, makeMove } from "../board";
 import { FILE, Move, PieceType, RANK, SQ, Square } from "../types";
 import { HAND_AND_GIGABRAIN, MORE_NERFS } from "./more";
 import { EXTRA_NERFS } from "./extras";
@@ -131,9 +131,20 @@ export const THREE_CHECK: Nerf = db({
     }
     return s;
   },
-  checkLoss: (state) => {
-    const s = state as { checks: number };
-    return s.checks >= 3 ? { reason: "checked 3 times" } : null;
+  checkLoss: (_state, ctx) => {
+    // Recompute the check tally fresh from history rather than reading the
+    // onTurnStart-maintained state, which is one move stale at loss-check time:
+    // when the opponent lands the 3rd check the stale count still reads 2, so
+    // the checked side could otherwise survive (and even steal a king capture)
+    // on its own next move. Mirrors onTurnStart: count how many of my turns
+    // began with me in check.
+    let board = initialBoard();
+    let checks = 0;
+    for (const m of ctx.board.history) {
+      board = makeMove(board, m);
+      if (m.color !== ctx.me && isInCheck(board, ctx.me)) checks += 1;
+    }
+    return checks >= 3 ? { reason: "checked 3 times" } : null;
   },
 });
 
