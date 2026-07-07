@@ -22,16 +22,18 @@ import {
   ORTHO_DIRS,
   activated,
   addEffect,
+  addNovel,
   augment,
-  barLine,
   bindCandidates,
   bindPiece,
   captureSquare,
   emptySquares,
+  explodeAt,
   inHalf,
   instant,
   leapMoves,
   lineSweep,
+  markRevived,
   mySquares,
   permanentAugment,
   phasingSlideMoves,
@@ -39,11 +41,12 @@ import {
   placePieces,
   relRank,
   removeEnemies,
+  revivable,
   reviveOne,
   shieldArmy,
   slideMoves,
   timedAugment,
-  voidSquares,
+  trackBoundPiece,
 } from "../helpers";
 
 type Mech = Partial<Buff> & Pick<Buff, "kind">;
@@ -233,6 +236,112 @@ function forwardCaptureGen(inst: BuffInstance, api: BuffApi): Move[] {
   return out;
 }
 
+/** lineSweep, but the squares the ray CLEARS stay barred to the opponent for
+ * `barTurns` of their turns: a breakthrough that holds the lane. Same ray rules
+ * as helpers.lineSweep (friendly pieces and kings block it). */
+function sweepThenBar(
+  type: PieceType,
+  dirs: readonly (readonly [number, number])[],
+  maxCaptures: number | null,
+  barTurns: number,
+): Mech {
+  const dests = (api: BuffApi, from: Square): Square[] => {
+    const out: Square[] = [];
+    for (const [df, dr] of dirs) {
+      let f = FILE(from) + df, r = RANK(from) + dr, swept = 0;
+      while (inBoard(f, r)) {
+        const sq = SQ(f, r);
+        const p = api.board.pieces[sq];
+        if (!p) {
+          if (swept > 0) out.push(sq);
+        } else {
+          if (p.color === api.me || p.type === "k") break;
+          swept++;
+          if (maxCaptures != null && swept > maxCaptures) break;
+          out.push(sq);
+        }
+        f += df; r += dr;
+      }
+    }
+    return out;
+  };
+  return activated(
+    (_inst, api, picks) => {
+      if (picks.length >= 2) return null;
+      if (picks.length === 0) {
+        return {
+          kind: "square",
+          label: "Choose the attacking rook",
+          squares: mySquares(api.board, api.me, type).filter((sq) => dests(api, sq).length > 0),
+        };
+      }
+      return { kind: "square", label: "Choose where the drive ends", squares: dests(api, picks[0].square!) };
+    },
+    (_inst, api, picks) => {
+      const from = picks[0]?.square, to = picks[1]?.square;
+      if (from == null || to == null || from === to) return;
+      const df = Math.sign(FILE(to) - FILE(from)), dr = Math.sign(RANK(to) - RANK(from));
+      let f = FILE(from) + df, r = RANK(from) + dr;
+      const cleared: Square[] = [];
+      while (inBoard(f, r)) {
+        const sq = SQ(f, r);
+        const p = api.board.pieces[sq];
+        if (p && p.color === api.opp && p.type !== "k") {
+          api.removePiece(sq);
+          cleared.push(sq);
+        }
+        if (sq === to) break;
+        f += df; r += dr;
+      }
+      if (!api.board.pieces[to]) api.relocate(from, to);
+      // Bar the squares the drive punched through (the rook's own landing is
+      // occupied, so barring it would be a no-op; drop it from the trail).
+      const trail = cleared.filter((sq) => sq !== to);
+      if (trail.length) {
+        addEffect(api, { kind: "barred", squares: trail, against: api.opp, turns: barTurns });
+      }
+    },
+  );
+}
+
+/** Like voidSquares, but the first enemy piece (never a king) to step onto a
+ * mine is destroyed ALONG WITH every enemy piece on the squares around it (a
+ * claymore blast; kings and shielded pieces survive). Mines stay armed for the
+ * game. */
+function claymoreSquares(count: number): Mech {
+  return {
+    kind: "activated",
+    spendOnUse: false,
+    targets: (inst, api, picks) =>
+      picks.length >= count || inst.state.squares != null
+        ? null
+        : {
+            kind: "square",
+            label:
+              count > 1 ? `Choose a mine square (${picks.length + 1}/${count})` : "Choose the mine square",
+            squares: emptySquares(api.board).filter((sq) => !picks.some((k) => k.square === sq)),
+          },
+    effect: (inst, _api, picks) => {
+      if (inst.state.squares != null) return;
+      inst.state.squares = picks.map((k) => k.square).filter((s): s is Square => s != null);
+    },
+    onMovePlayed: (inst, move, api) => {
+      const squares = inst.state.squares as Square[] | undefined;
+      if (!squares?.length) return;
+      if (move.color === api.opp && squares.includes(move.to) && move.piece !== "k") {
+        explodeAt(api, move.to);
+        api.removePiece(move.to);
+      }
+    },
+    status: (inst) => {
+      const squares = inst.state.squares as Square[] | undefined;
+      if (!squares?.length) return "activate to place";
+      const names = squares.map((sq) => `${"abcdefgh"[FILE(sq)]}${RANK(sq) + 1}`).join(", ");
+      return `mines armed at ${names}`;
+    },
+  };
+}
+
 export const WILD_WARFARE: Buff[] = [
   // -------------------------------------------------------------------------
   // REINFORCEMENTS: bring more soldiers to the field.
@@ -263,23 +372,85 @@ export const WILD_WARFARE: Buff[] = [
     {
       id: "ww_recommission",
       name: "Recommission",
-      description: "Return one of your captured rooks to an empty square on your back rank, once.",
+      description: "Return one of your captured rooks to an empty square on your back rank. For the rest of the game the refitted rook may pass through one friendly piece on each move.",
       tier: 4,
       category: "pieces",
-      flavor: "Back into service, same old siege.",
+      flavor: "Back into service, and it phases through its own ranks now.",
     },
-    reviveOne(["r"], backRankZone),
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) => {
+        if (picks.length > 0 || inst.state.sq != null) return null;
+        if (revivable(api, "r") <= 0) return { kind: "square", label: "No rook to recommission", squares: [] };
+        return { kind: "square", label: "Choose where the rook returns", squares: emptySquares(api.board, backRankZone(api)) };
+      },
+      effect: (inst, api, picks) => {
+        if (inst.state.sq != null) return;
+        const sq = picks[0]?.square;
+        if (sq == null || revivable(api, "r") <= 0 || api.board.pieces[sq]) return;
+        api.place(sq, "r", api.me);
+        markRevived(api, "r");
+        inst.state.sq = sq;
+      },
+      augmentMoves: (moves, inst, api) => {
+        const sq = inst.state.sq as Square | undefined;
+        if (sq == null) return;
+        const p = api.board.pieces[sq];
+        if (!p || p.color !== api.me || p.type !== "r") return;
+        addNovel(moves, phasingSlideMoves(api.board, sq, ORTHO_DIRS, inst.id, 1));
+      },
+      onMovePlayed: (inst, move) => trackBoundPiece(inst, move),
+      status: (inst) => {
+        const sq = inst.state.sq as Square | undefined;
+        return sq == null
+          ? "activate to recommission a rook"
+          : `refitted rook at ${"abcdefgh"[FILE(sq)]}${RANK(sq) + 1}`;
+      },
+    },
   ),
   card(
     {
       id: "ww_outriders",
       name: "Outriders",
-      description: "Place a new knight on any empty square in your half, once.",
+      description: "Place a new knight on any empty square in your half, then advance one of your pawns one square.",
       tier: 3,
       category: "pieces",
-      flavor: "Scouts ride ahead of the column.",
+      flavor: "Cavalry ahead, infantry a step behind.",
     },
-    placePieces(["n"], myHalfZone),
+    {
+      kind: "activated",
+      spendOnUse: true,
+      targets: (_inst, api, picks) => {
+        if (picks.length === 0) {
+          return { kind: "square", label: "Place your new knight", squares: emptySquares(api.board, myHalfZone(api)) };
+        }
+        if (picks.length === 1) {
+          const fwd = api.me === "w" ? 8 : -8;
+          const advancers = mySquares(api.board, api.me, "p").filter((sq) => {
+            const to = sq + fwd;
+            return to >= 0 && to < 64 && !api.board.pieces[to] && pawnRankOk(to) && to !== picks[0].square;
+          });
+          if (advancers.length === 0) return null;
+          return { kind: "square", label: "Advance one of your pawns one square", squares: advancers, finishable: true };
+        }
+        return null;
+      },
+      effect: (_inst, api, picks) => {
+        const knightSq = picks[0]?.square;
+        if (knightSq != null && !api.board.pieces[knightSq]) api.place(knightSq, "n", api.me);
+        const pawnSq = picks[1]?.square;
+        if (
+          pawnSq != null &&
+          api.board.pieces[pawnSq]?.type === "p" &&
+          api.board.pieces[pawnSq]?.color === api.me
+        ) {
+          const fwd = api.me === "w" ? 8 : -8;
+          const to = pawnSq + fwd;
+          if (to >= 0 && to < 64 && !api.board.pieces[to] && pawnRankOk(to)) api.relocate(pawnSq, to);
+        }
+      },
+    },
   ),
   card(
     {
@@ -436,13 +607,14 @@ export const WILD_WARFARE: Buff[] = [
     {
       id: "ww_spearhead",
       name: "Spearhead",
-      description: "One of your rooks drives in a straight line, capturing up to two enemy pieces in its path and stopping, once.",
+      description: "One of your rooks drives in a straight line, capturing up to two enemy pieces in its path and stopping. The squares it punches through stay barred to your opponent for their next 2 turns.",
       tier: 5,
       category: "attack",
       requires: ["r"],
-      flavor: "Punch a hole and widen it.",
+      flavor: "Punch a hole and hold it open.",
+      fx: { motif: "blindfold" },
     },
-    lineSweep("r", ORTHO_DIRS, 2),
+    sweepThenBar("r", ORTHO_DIRS, 2, 2),
   ),
   card(
     {
@@ -781,14 +953,25 @@ export const WILD_WARFARE: Buff[] = [
     {
       id: "ww_iron_bulwark",
       name: "Iron Bulwark",
-      description: "Choose one of your pieces, your king aside: it cannot be captured for the rest of the game.",
+      description: "Choose one of your pieces, your king aside: while it stands in your half it cannot be captured, and enemy pieces standing next to it cannot capture at all.",
       tier: 6,
       category: "protection",
-      flavor: "Some walls simply do not fall.",
+      flavor: "Hold your own ground and nobody gets a swing in.",
       fx: { motif: "ward", self: true },
     },
     bindPiece("Choose the piece to make a bulwark", bindCandidates(), {
-      filterOpp: (moves, sq) => moves.filter((m) => captureSquare(m) !== sq),
+      filterOpp: (moves, sq, api) => {
+        if (!inHalf(api.me, sq)) return moves;
+        const kept = moves.filter((m) => {
+          if (captureSquare(m) === sq) return false;
+          if (m.captured) {
+            const d = Math.max(Math.abs(FILE(m.from) - FILE(sq)), Math.abs(RANK(m.from) - RANK(sq)));
+            if (d === 1) return false;
+          }
+          return true;
+        });
+        return kept.length > 0 ? kept : moves;
+      },
     }),
   ),
   card(
@@ -830,25 +1013,68 @@ export const WILD_WARFARE: Buff[] = [
     {
       id: "ww_double_trench",
       name: "Double Trench",
-      description: "Pick two files: your opponent cannot move onto either file for their next 2 turns.",
+      description: "Pick two files: your opponent cannot move onto either file for their next 2 turns, and any enemy piece standing on those files cannot capture in that time.",
       tier: 6,
       category: "protection",
-      flavor: "Two lines of wire, no way across.",
+      flavor: "Two lines of wire, and the guns behind them jam.",
       fx: { motif: "blindfold" },
     },
-    barLine("file", 2, 2),
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length >= 2 || inst.state.files != null
+          ? null
+          : {
+              kind: "square",
+              label: `Pick any square on a file to trench (${picks.length + 1}/2)`,
+              squares: Array.from({ length: 64 }, (_, i) => i).filter(
+                (sq) => !picks.some((k) => k.square != null && FILE(k.square) === FILE(sq)),
+              ),
+            },
+      effect: (inst, api, picks) => {
+        if (inst.state.files != null) return;
+        const files = picks
+          .map((k) => k.square)
+          .filter((s): s is Square => s != null)
+          .map((sq) => FILE(sq));
+        inst.state.files = files;
+        inst.state.turns = 2;
+        for (const file of files) {
+          const squares: Square[] = [];
+          for (let r = 0; r < 8; r++) squares.push(SQ(file, r));
+          addEffect(api, { kind: "barred", squares, against: api.opp, turns: 2 });
+        }
+      },
+      filterOpponentMoves: (moves, inst) => {
+        const files = inst.state.files as number[] | undefined;
+        if (!files?.length || ((inst.state.turns as number) ?? 0) <= 0) return moves;
+        const kept = moves.filter((m) => !(m.captured && files.includes(FILE(m.from))));
+        return kept.length > 0 ? kept : moves;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.state.files == null || move.color !== api.opp) return;
+        const left = ((inst.state.turns as number) ?? 0) - 1;
+        inst.state.turns = left;
+        if (left <= 0) inst.spent = true;
+      },
+      status: (inst) =>
+        inst.state.files == null
+          ? "activate to dig the trenches"
+          : `trenches hold, ${(inst.state.turns as number) ?? 0} of their turns left`,
+    },
   ),
   card(
     {
       id: "ww_claymore_line",
       name: "Claymore Line",
-      description: "Mark two empty squares: the first enemy piece to step onto either one, a king aside, is destroyed. The mines stay armed for the game.",
+      description: "Mark two empty squares: the first enemy piece to step onto either one, a king aside, is destroyed along with every enemy piece on the squares around it. The mines stay armed for the game.",
       tier: 5,
       category: "protection",
       flavor: "Front toward enemy.",
       fx: { motif: "blindfold" },
     },
-    voidSquares(2, null),
+    claymoreSquares(2),
   ),
 
   // -------------------------------------------------------------------------
@@ -858,13 +1084,32 @@ export const WILD_WARFARE: Buff[] = [
     {
       id: "ww_suppressive_fire",
       name: "Suppressive Fire",
-      description: "Every one of your opponent's knights is pinned down and cannot move for their next 2 turns.",
+      description: "Every one of your opponent's knights is pinned down for their next 2 turns, and so is every enemy pawn standing directly beside one.",
       tier: 4,
       category: "tempo",
-      flavor: "Keep their heads down.",
-      fx: { motif: "jail", pieces: ["n"] },
+      flavor: "Keep their heads down, and their diggers too.",
+      fx: { motif: "jail", pieces: ["n", "p"] },
     },
-    freezeTypedAll(["n"], 2),
+    instant((_inst, api) => {
+      const knights = mySquares(api.board, api.opp, "n");
+      const frozen = new Set<Square>();
+      for (const sq of knights) {
+        addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2 });
+        frozen.add(sq);
+      }
+      for (const ksq of knights) {
+        for (const [df, dr] of ORTHO_DIRS) {
+          const f = FILE(ksq) + df, r = RANK(ksq) + dr;
+          if (!inBoard(f, r)) continue;
+          const asq = SQ(f, r);
+          const p = api.board.pieces[asq];
+          if (p && p.color === api.opp && p.type === "p" && !frozen.has(asq)) {
+            addEffect(api, { kind: "freeze", sq: asq, owner: api.opp, turns: 2 });
+            frozen.add(asq);
+          }
+        }
+      }
+    }),
   ),
   card(
     {

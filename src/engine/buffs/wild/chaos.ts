@@ -18,7 +18,7 @@
 
 import { Buff, BuffApi, BuffInstance, BuffCategory, CardFx, FreezeSkin } from "../../buff";
 import { Tier } from "../../nerf";
-import { FILE, Move, PieceType, RANK, Square } from "../../types";
+import { FILE, inBoard, Move, PieceType, RANK, SQ, Square } from "../../types";
 import {
   ALL_DIRS,
   ORTHO_DIRS,
@@ -26,7 +26,6 @@ import {
   activatedSimple,
   addEffect,
   augment,
-  barLine,
   captureExplosion,
   emptySquares,
   inHalf,
@@ -328,13 +327,56 @@ export const WILD_CHAOS: Buff[] = [
     {
       id: "wc_concrete_shoes",
       name: "Concrete Shoes",
-      description: "Fit one of your opponent's rooks or queens with concrete shoes: it cannot move for their next 3 turns. Kings cannot be targeted.",
+      description: "Fit one of your opponent's rooks or queens with concrete shoes: it cannot move at all for their next 3 turns, then it hardens into a walnut that can only shuffle one square at a time for the rest of the game. Kings cannot be targeted.",
       tier: 5,
       category: "tempo",
-      flavor: "It is not going for a swim, it is going to stand here.",
+      flavor: "It is not going for a swim, it is going to stand here. Forever.",
       fx: { motif: "jail", pieces: ["r", "q"] },
     },
-    petrifyTarget(3, "Choose an enemy rook or queen to set in concrete", ["r", "q"]),
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null
+          ? null
+          : {
+              kind: "square",
+              label: "Choose an enemy rook or queen to set in concrete",
+              squares: mySquares(api.board, api.opp).filter((sq) => {
+                const t = api.board.pieces[sq]!.type;
+                return t === "r" || t === "q";
+              }),
+            },
+      effect: (inst, api, picks) => {
+        const sq = picks[0]?.square;
+        if (sq == null || inst.state.sq != null) return;
+        inst.state.sq = sq;
+        inst.state.turns = 3;
+        addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 3, skin: "cement" });
+      },
+      onMovePlayed: (inst, move, api) => {
+        const sq = inst.state.sq as Square | undefined;
+        if (sq == null) return;
+        if (move.capturedSquare === sq && move.from !== sq) { inst.spent = true; inst.state.sq = undefined; return; }
+        if (move.to === sq && move.from !== sq) { inst.spent = true; inst.state.sq = undefined; return; }
+        if (move.from === sq) inst.state.sq = move.to;
+        if (move.color !== api.opp) return;
+        const left = ((inst.state.turns as number) ?? 0) - 1;
+        inst.state.turns = left;
+        if (left <= 0) {
+          const cur = inst.state.sq as Square | undefined;
+          if (cur != null && api.board.pieces[cur]?.color === api.opp) {
+            addEffect(api, { kind: "walnut", sq: cur, owner: api.opp, turns: 999 });
+          }
+          inst.spent = true;
+          inst.state.sq = undefined;
+        }
+      },
+      status: (inst) =>
+        inst.state.sq == null
+          ? "activate to set concrete"
+          : `setting, ${(inst.state.turns as number) ?? 0} of their turns left`,
+    },
   ),
   card(
     {
@@ -461,15 +503,13 @@ export const WILD_CHAOS: Buff[] = [
     {
       id: "wc_hot_seat",
       name: "Hot Seat",
-      description: "The spotlight swings to their king and stays there: on your opponent's next turn they may only move their king.",
+      description: "The spotlight swings to their king and queen: on your opponent's next turn they may move only their king or their queen.",
       tier: 5,
       category: "tempo",
-      flavor: "Everyone else suddenly has nothing to say.",
-      fx: { motif: "jail", pieces: ["p", "n", "b", "r", "q"] },
+      flavor: "Two chairs left under the lights, everyone else in the dark.",
+      fx: { motif: "jail", pieces: ["p", "n", "b", "r"] },
     },
-    instant((_inst, api) => {
-      addEffect(api, { kind: "king_only", against: api.opp, turns: 1 });
-    }),
+    curse(1, (moves) => moves.filter((m) => m.piece === "k" || m.piece === "q")),
   ),
 
   // =========================================================================
@@ -976,13 +1016,53 @@ export const WILD_CHAOS: Buff[] = [
       id: "wc_banana_peel_trail",
       icon: "Banana",
       name: "Banana Peel Trail",
-      description: "Lay a trail of banana peels down one file: pick any square and its entire file becomes impassable to your opponent for their next 2 turns.",
+      description: "Grease one file with banana peels: pieces may still enter it, but the first enemy piece to do so slips one square back toward its own home rank and is too dazed to move on its next turn.",
       tier: 4,
-      category: "protection",
+      category: "tempo",
       flavor: "Whoops. Whoops. Whoops.",
-      fx: { motif: "blindfold" },
+      fx: { motif: "anchor", pieces: "all" },
     },
-    barLine("file", 2, 1),
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.file != null
+          ? null
+          : {
+              kind: "square",
+              label: "Pick any square on the file to grease",
+              squares: Array.from({ length: 64 }, (_, i) => i),
+            },
+      effect: (inst, _api, picks) => {
+        if (inst.state.file != null) return;
+        const sq = picks[0]?.square;
+        if (sq == null) return;
+        inst.state.file = FILE(sq);
+      },
+      onMovePlayed: (inst, move, api) => {
+        const file = inst.state.file as number | undefined;
+        if (file == null) return;
+        if (move.color !== api.opp || move.piece === "k" || FILE(move.to) !== file) return;
+        const p = api.board.pieces[move.to];
+        if (!p || p.color !== api.opp) { inst.spent = true; return; }
+        // The first enemy onto the greased file slips one rank back toward its
+        // own home rank; if there is no room, it is just dazed where it stands.
+        const homeDir = api.opp === "w" ? -1 : 1;
+        const r = RANK(move.to) + homeDir;
+        let land = move.to;
+        if (inBoard(FILE(move.to), r)) {
+          const back = SQ(FILE(move.to), r);
+          if (!api.board.pieces[back] && (p.type !== "p" || pawnRankOk(back))) {
+            api.relocate(move.to, back);
+            land = back;
+          }
+        }
+        addEffect(api, { kind: "freeze", sq: land, owner: api.opp, turns: 1, skin: "slime" });
+        addEffect(api, { kind: "bonk", squares: [land], owner: api.me, turns: 1 });
+        inst.spent = true;
+      },
+      status: (inst) => (inst.state.file == null ? "activate to lay the peels" : "peels laid"),
+    },
   ),
   card(
     {

@@ -15,10 +15,82 @@ import {
   backRankZone,
   DIAG_DIRS,
   SQ,
+  FILE,
+  RANK,
+  inBoard,
+  emptySquares,
+  pawnRankOk,
+  relRank,
   activated,
   addEffect,
   mySquares,
+  type Mech,
+  type BuffInstance,
+  type BuffApi,
+  type BuffPick,
 } from "./shared";
+
+// Soul Harvest reuses the queen's diagonal capture sweep (lineSweep, exactly
+// like Hellfire Beam and Queen's Rampage) and then reaps those deaths into
+// life: for each enemy piece the sweep removes, a fresh friendly pawn rises on
+// an empty pawn-legal square in your half, filled from your back rank outward.
+// The count is read before the board is cleared and the placement order is
+// deterministic, so both clients raise the same pawns on the same squares.
+function soulHarvestSweep(): Mech {
+  const base = lineSweep("q", DIAG_DIRS, null);
+  return {
+    ...base,
+    effect: (inst: BuffInstance, api: BuffApi, picks: BuffPick[]) => {
+      const from = picks[0]?.square;
+      const to = picks[1]?.square;
+      let reaped = 0;
+      if (from != null && to != null && from !== to) {
+        const df = Math.sign(FILE(to) - FILE(from));
+        const dr = Math.sign(RANK(to) - RANK(from));
+        let f = FILE(from) + df;
+        let r = RANK(from) + dr;
+        while (inBoard(f, r)) {
+          const sq = SQ(f, r);
+          const p = api.board.pieces[sq];
+          if (p && p.color === api.opp && p.type !== "k") reaped++;
+          if (sq === to) break;
+          f += df;
+          r += dr;
+        }
+      }
+      base.effect?.(inst, api, picks);
+      if (reaped <= 0) return;
+      const spots = emptySquares(api.board, myHalfZone(api))
+        .filter((sq) => pawnRankOk(sq))
+        .sort((a, b) => relRank(api.me, a) - relRank(api.me, b) || a - b);
+      for (let i = 0; i < reaped && i < spots.length; i++) {
+        api.place(spots[i], "p", api.me);
+      }
+    },
+  };
+}
+
+// Undying Thrall reuses the back-rank revive (reviveOne, like Minor Recall) but
+// binds a timed_loss to the raised piece so it fights for 4 of your turns and
+// then crumbles to dust. That temporary lifespan is what distinguishes it from
+// the permanent recall it used to duplicate.
+function undyingThrallRevive(): Mech {
+  const base = reviveOne(["n", "b"], backRankZone);
+  return {
+    ...base,
+    effect: (inst: BuffInstance, api: BuffApi, picks: BuffPick[]) => {
+      base.effect?.(inst, api, picks);
+      const sq = picks[0]?.square;
+      if (sq == null) return;
+      const p = api.board.pieces[sq];
+      // Only when a thrall was actually raised on this square (a captured minor
+      // was available): a timed_loss removes it after 4 of your own turns.
+      if (p && p.color === api.me && p.type !== "k") {
+        addEffect(api, { kind: "timed_loss", owner: api.me, sq, turns: 4, then: "remove" });
+      }
+    },
+  };
+}
 
 export const FANTASY_NECROMANCY: Buff[] = [
   card(
@@ -27,12 +99,12 @@ export const FANTASY_NECROMANCY: Buff[] = [
       icon: "Bone",
       name: "Undying Thrall",
       description:
-        "Bind a restless spirit into service: one of your captured knights or bishops claws its way back onto an empty square of your back rank, once.",
+        "Bind a restless spirit into service: one of your captured knights or bishops claws back onto an empty square of your back rank and fights for 4 of your turns, then crumbles to dust, once.",
       tier: 2,
       category: "pieces",
       flavor: "It does not remember dying, only serving.",
     },
-    reviveOne(["n", "b"], backRankZone),
+    undyingThrallRevive(),
   ),
   card(
     {
@@ -87,13 +159,13 @@ export const FANTASY_NECROMANCY: Buff[] = [
       icon: "Wheat",
       name: "Soul Harvest",
       description:
-        "Your queen captures every enemy piece along one diagonal in a single move, once.",
+        "Your queen captures every enemy piece along one diagonal in a single move; for each piece reaped, a friendly pawn rises on an empty square in your half, once.",
       tier: 7,
       category: "attack",
       requires: ["q"],
-      flavor: "One long, patient stroke.",
+      flavor: "One long, patient stroke; the fallen answer for you now.",
     },
-    lineSweep("q", DIAG_DIRS, null),
+    soulHarvestSweep(),
   ),
   card(
     {

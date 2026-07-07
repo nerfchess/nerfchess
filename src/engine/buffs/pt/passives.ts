@@ -404,24 +404,54 @@ export const PT_PASSIVE_CARDS: Buff[] = [
     },
   ),
 
-  // #54 Fan Club (cosmetic only) --------------------------------------------
+  // #54 Fan Club -------------------------------------------------------------
   card(
     {
       id: "fan_club",
       icon: "Megaphone",
       name: "Fan Club",
       description:
-        "A crowd of tiny supporters lines your edge of the board and cheers your army on. Purely cosmetic morale (and a stat brag): no effect on the rules.",
-      tier: 3,
-      category: "item",
+        "The home crowd guards your bench: while you have as many or more pieces as your opponent, your pawns on your back two ranks cannot be captured. Fall behind on material and the cheering stops.",
+      tier: 4,
+      category: "protection",
+      requires: ["p"],
       flavor: "Row after row of very small foam fingers.",
-      fx: { motif: "rally", pieces: "all", self: true },
+      fx: { motif: "rally", pieces: ["p"], self: true },
     },
     {
-      // Intentionally inert: a held cosmetic aura with a live status line and a
-      // morale motif, but no hook that touches moves, effects, or the board.
+      // Conditional shield: a morale save that only holds while you are level on
+      // material or ahead. The filter recomputes both piece counts straight from
+      // the board (a pure function of state, so it replays identically), and
+      // stays partial with a non-empty fallback so the opponent is never stranded
+      // with zero legal moves. onMovePlayed only mirrors the live condition into
+      // state so the status line can read it (status has no api).
       kind: "passive",
-      status: () => "the crowd goes wild",
+      onMovePlayed: (inst, _move, api) => {
+        inst.state.holding =
+          mySquares(api.board, api.me).length >= mySquares(api.board, api.opp).length;
+      },
+      filterOpponentMoves: (moves, _inst, api) => {
+        if (mySquares(api.board, api.me).length < mySquares(api.board, api.opp).length) {
+          return moves; // outnumbered: the crowd cannot protect anyone
+        }
+        const kept = moves.filter((m) => {
+          const capSq = m.capturedSquare ?? m.to;
+          const victim = api.board.pieces[capSq];
+          // Block only captures of your OWN pawns sitting on your back two ranks.
+          return !(
+            m.captured != null &&
+            victim != null &&
+            victim.color === api.me &&
+            victim.type === "p" &&
+            relRank(api.me, capSq) <= 2
+          );
+        });
+        return kept.length > 0 ? kept : moves;
+      },
+      status: (inst) =>
+        inst.state.holding === false
+          ? "outnumbered: the crowd falls quiet"
+          : "the crowd shields your back ranks",
     },
   ),
 ];

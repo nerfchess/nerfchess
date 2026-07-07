@@ -6,7 +6,7 @@
 // pattern. The engine's drop generator already refuses to drop a pawn on rank
 // 1 or 8, and a king is never bankable.
 
-import { Buff } from "./shared";
+import { Buff, Mech, Square } from "./shared";
 import {
   card,
   summonTemp,
@@ -16,9 +16,58 @@ import {
   instant,
   mySquares,
   myHalfZone,
+  addEffect,
+  pawnRankOk,
+  KNIGHT_LEAPS,
   ORTHO_DIRS,
+  FILE,
+  RANK,
   SQ,
+  inBoard,
 } from "./shared";
+
+/** Cavalry Charge: the ortho line-sweep charge, then a landing shockwave. After
+ * the knight lands, every enemy piece (never a king) a knight-leap from the
+ * landing square is bonked one square back toward that piece's home rank; a
+ * piece that cannot be pushed (edge, blocked, or an illegal pawn square) still
+ * takes the impact flash. Pure function of state (fixed leap order, no RNG), so
+ * it replays identically on both clients. */
+function cavalryCharge(): Mech {
+  const base = lineSweep("n", ORTHO_DIRS, 1);
+  const charged: Mech = {
+    ...base,
+    effect: (inst, api, picks) => {
+      base.effect?.(inst, api, picks);
+      const to = picks[1]?.square;
+      if (to == null) return;
+      const knight = api.board.pieces[to];
+      if (!knight || knight.color !== api.me || knight.type !== "n") return;
+      const back = api.opp === "w" ? -8 : 8;
+      const hit: Square[] = [];
+      for (const [df, dr] of KNIGHT_LEAPS) {
+        const f = FILE(to) + df, r = RANK(to) + dr;
+        if (!inBoard(f, r)) continue;
+        const sq = SQ(f, r);
+        const p = api.board.pieces[sq];
+        if (!p || p.color !== api.opp || p.type === "k") continue;
+        const dest = sq + back;
+        if (
+          dest >= 0 &&
+          dest < 64 &&
+          !api.board.pieces[dest] &&
+          (p.type !== "p" || pawnRankOk(dest))
+        ) {
+          api.relocate(sq, dest);
+          hit.push(dest);
+        } else {
+          hit.push(sq);
+        }
+      }
+      if (hit.length) addEffect(api, { kind: "bonk", squares: hit, owner: api.me, turns: 1 });
+    },
+  };
+  return charged;
+}
 
 export const FUNNY_SUMMONS: Buff[] = [
   card(
@@ -88,25 +137,25 @@ export const FUNNY_SUMMONS: Buff[] = [
       id: "rent_a_rook",
       icon: "Building2",
       name: "Rent-a-Rook",
-      description: "A rook arrives on loan: place it on an empty square in your half, then it drives off after 4 of your turns.",
-      tier: 4,
+      description: "A rook arrives on loan: place it on an empty square in your half. It cannot be captured while it is on loan (it is not yours to lose), then it drives off after 4 of your turns.",
+      tier: 5,
       category: "pieces",
       flavor: "Please return it with a full tank.",
     },
-    summonTemp("r", 4, myHalfZone),
+    summonTemp("r", 4, myHalfZone, { shield: true }),
   ),
   card(
     {
       id: "cavalry_charge",
       icon: "Rabbit",
       name: "Cavalry Charge",
-      description: "Choose one of your knights. It charges in one horizontal or vertical direction, removes the first enemy piece (not a king) in that line, and lands on that square or on an empty square beyond it, stopping before the next piece or the board edge. A friendly piece or an enemy king in the path blocks the charge. Once.",
+      description: "Choose one of your knights. It charges in one horizontal or vertical direction, removes the first enemy piece (not a king) in that line, and lands on that square or on an empty square beyond it, stopping before the next piece or the board edge. As it lands, the shock bonks every enemy piece a knight's leap from the landing square one square back toward that piece's home rank. A friendly piece or an enemy king in the path blocks the charge. Once.",
       tier: 5,
       category: "attack",
       requires: ["n"],
       flavor: "Sound the bugle.",
     },
-    lineSweep("n", ORTHO_DIRS, 1),
+    cavalryCharge(),
   ),
   card(
     {

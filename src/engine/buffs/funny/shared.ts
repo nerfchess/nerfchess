@@ -246,6 +246,7 @@ export function summonTemp(
   type: Exclude<PieceType, "p" | "k">,
   turns: number,
   zone: (api: BuffApi) => (sq: Square) => boolean,
+  opts: { shield?: boolean } = {},
 ): Mech {
   return {
     kind: "activated",
@@ -264,6 +265,13 @@ export function summonTemp(
       api.place(sq, type, api.me);
       inst.state.sq = sq;
       inst.state.turns = turns;
+      // Optional: the rental cannot be lost. A permanent (turns:null) square
+      // shield rides the piece (game.ts moves shield squares with the piece)
+      // and is orphan-pruned the instant the rental is removed on expiry, so
+      // nothing protective ever lingers on an empty square.
+      if (opts.shield) {
+        addEffect(api, { kind: "shield", owner: api.me, squares: [sq], turns: null });
+      }
     },
     onMovePlayed: (inst, move, api) => {
       const sq = inst.state.sq as Square | undefined;
