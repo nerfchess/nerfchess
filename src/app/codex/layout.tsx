@@ -7,7 +7,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Codex: every Nerf Chess card and rule",
   description:
-    "Browse the full Nerf Chess library: 400+ power-up cards, secret handicap nerfs, hexes, boons, and items, each with a difficulty tier from Trivial to Unhinged. Search and filter the complete card and rule list.",
+    "Browse the full Nerf Chess library: 1,000+ power-up cards, secret handicap nerfs, hexes, boons, and items, each with a difficulty tier from Trivial to Unhinged. Search and filter the complete card and rule list.",
   keywords: [
     "nerf chess cards",
     "chess power up list",
