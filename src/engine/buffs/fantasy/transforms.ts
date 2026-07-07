@@ -26,7 +26,7 @@ export const FANTASY_TRANSFORMS: Buff[] = [
       name: "Metamorphosis",
       description:
         "Force a violent change of form on one of your own knights or bishops: it reshapes itself into a rook, once.",
-      tier: 5,
+      tier: 4,
       category: "pieces",
       flavor: "Bones crack, and settle into something taller.",
     },
@@ -38,7 +38,7 @@ export const FANTASY_TRANSFORMS: Buff[] = [
       name: "Dragon Form",
       description:
         "One of your rooks unfurls a pair of dragon wings: for the game it also moves diagonally, ranging the board like a queen.",
-      tier: 6,
+      tier: 5,
       category: "movement",
       flavor: "The tower learns to fly.",
       fx: { motif: "empower", pieces: ["r"], moveAs: "q", self: true },
@@ -53,7 +53,7 @@ export const FANTASY_TRANSFORMS: Buff[] = [
       name: "Apotheosis",
       description:
         "Raise one of your knights, bishops, or rooks to godhood: it ascends on the spot into a queen, once.",
-      tier: 7,
+      tier: 5,
       category: "pieces",
       flavor: "Mortal one moment, divine the next.",
     },
@@ -64,8 +64,8 @@ export const FANTASY_TRANSFORMS: Buff[] = [
       id: "god_king",
       name: "God-King",
       description:
-        "Your king is crowned a living god: for the game he moves any distance in any direction, with all the reach of a queen.",
-      tier: 7,
+        "Your king moves like a queen for the rest of the game.",
+      tier: 6,
       category: "movement",
       flavor: "The throne walks where it pleases now.",
       fx: { motif: "empower", pieces: ["k"], moveAs: "q", self: true },
@@ -80,7 +80,7 @@ export const FANTASY_TRANSFORMS: Buff[] = [
       name: "Celestial Ascension",
       description:
         "Your bishops ascend to a higher plane: for the game every one of them also moves in straight lines like a rook, wielding a queen's full reach.",
-      tier: 7,
+      tier: 6,
       category: "movement",
       flavor: "The whole clergy takes wing at once.",
       fx: { motif: "empower", pieces: ["b"], moveAs: "q", self: true },
@@ -97,7 +97,7 @@ export const FANTASY_TRANSFORMS: Buff[] = [
       name: "Philosopher's Stone",
       description:
         "Press the fabled stone to your ranks and transmute base metal to gold: two of your pawns become queens, once.",
-      tier: 8,
+      tier: 7,
       category: "pieces",
       flavor: "The final work of a thousand alchemists.",
     },

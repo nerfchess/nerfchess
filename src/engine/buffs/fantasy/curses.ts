@@ -20,8 +20,8 @@ export const FANTASY_CURSES: Buff[] = [
       id: "evil_eye",
       name: "Evil Eye",
       description:
-        "Fix the evil eye on one enemy piece: it is rooted where it stands and cannot move for 2 of their turns. Kings cannot be targeted.",
-      tier: 3,
+        "One enemy piece cannot move for 2 of their turns. Kings cannot be targeted. (Personality already lives in the separate flavor field.)",
+      tier: 2,
       category: "item",
       flavor: "It feels the stare and dares not move.",
     },
@@ -74,7 +74,7 @@ export const FANTASY_CURSES: Buff[] = [
       name: "Chains of Binding",
       description:
         "Spectral chains lock the enemy's towers: both of your opponent's rooks turn to dead stone and cannot move for 3 of their turns.",
-      tier: 6,
+      tier: 5,
       category: "hex",
       flavor: "The clank of iron, then perfect stillness.",
       fx: { motif: "jail", pieces: ["r"] },

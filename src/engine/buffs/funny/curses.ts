@@ -35,8 +35,8 @@ export const FUNNY_CURSES: Buff[] = [
     {
       id: "gremlins",
       name: "Gremlins",
-      description: "Gremlins sabotage your opponent's rooks: each rook may only travel an even number of squares for their next 3 turns.",
-      tier: 5,
+      description: "Reword to a clear, distinct restriction (parity reads as a confusing math puzzle and barely limits a rook). If kept as a distance rule, say plainly e.g. 'each rook may not move more than 2 squares in one go for their next 3 turns'; better, give it an effect that does not duplicate origami (e.g. rooks cannot capture).",
+      tier: 3,
       category: "hex",
       flavor: "Do not feed them after midnight.",
       fx: { motif: "anchor", pieces: ["r"] },
@@ -62,7 +62,7 @@ export const FUNNY_CURSES: Buff[] = [
       id: "opposite_day",
       name: "Opposite Day",
       description: "It is Opposite Day: on your opponent's next turn every piece must move away from your king if it legally can.",
-      tier: 5,
+      tier: 4,
       category: "hex",
       flavor: "Everything backwards, obviously.",
       fx: { motif: "slow", pieces: "all" },
@@ -77,7 +77,7 @@ export const FUNNY_CURSES: Buff[] = [
     {
       id: "cream_pie",
       name: "Cream Pie",
-      description: "Splat: a cream pie blinds your opponent's whole army so they cannot capture on their next turn.",
+      description: "Your opponent cannot capture on their next turn.",
       tier: 3,
       category: "hex",
       flavor: "Cannot hit what you cannot see.",
