@@ -21,8 +21,8 @@ export const FANTASY_SUMMONS: Buff[] = [
       id: "imp_familiar",
       name: "Imp Familiar",
       description:
-        "A little imp familiar scurries in to serve you: place a new pawn on any empty square in your half, once.",
-      tier: 3,
+        "Place a new pawn on any empty square in your half, once.",
+      tier: 2,
       category: "pieces",
       flavor: "It is mostly loyal and entirely smug.",
     },
@@ -34,7 +34,7 @@ export const FANTASY_SUMMONS: Buff[] = [
       name: "Phantom Guardian",
       description:
         "Call up a phantom guardian that fights beside you as a bishop for 4 of your turns, then dissolves back into the aether.",
-      tier: 5,
+      tier: 4,
       category: "pieces",
       flavor: "Half here, half somewhere colder.",
     },
@@ -59,7 +59,7 @@ export const FANTASY_SUMMONS: Buff[] = [
       name: "Stone Golem",
       description:
         "Bind a spirit into rock and stone: a lumbering golem serves as a rook for 5 of your turns, then crumbles back to rubble.",
-      tier: 6,
+      tier: 5,
       category: "pieces",
       flavor: "Slow, patient, and extremely heavy.",
     },
@@ -82,8 +82,8 @@ export const FANTASY_SUMMONS: Buff[] = [
       id: "summon_dragon",
       name: "Summon Dragon",
       description:
-        "Speak the true name of an elder dragon: it descends and coils into your ranks as a queen, on any empty square in your half, once.",
-      tier: 8,
+        "Place a new queen on any empty square in your half, once.",
+      tier: 7,
       category: "pieces",
       flavor: "The oldest thing on the board, and the hungriest.",
     },

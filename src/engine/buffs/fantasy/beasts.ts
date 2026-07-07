@@ -25,8 +25,8 @@ export const FANTASY_BEASTS: Buff[] = [
       id: "dragons_breath",
       name: "Dragon's Breath",
       description:
-        "One of your rooks draws a deep breath and exhales dragonfire down a rank or file, incinerating every enemy piece in its path and landing at the far end, once.",
-      tier: 7,
+        "One rook captures every enemy piece in a straight line in a single move, once.",
+      tier: 5,
       category: "attack",
       flavor: "Everything in the corridor turns to ash.",
     },
@@ -38,7 +38,7 @@ export const FANTASY_BEASTS: Buff[] = [
       name: "Wyvern's Dive",
       description:
         "A wyvern folds its wings and dives: one of your knights streaks in a straight line, snatches the first enemy piece it reaches, and lands just beyond, once.",
-      tier: 5,
+      tier: 4,
       category: "attack",
       flavor: "The shriek comes a heartbeat before the talons.",
     },
@@ -49,8 +49,8 @@ export const FANTASY_BEASTS: Buff[] = [
       id: "basilisk_stare",
       name: "Basilisk's Stare",
       description:
-        "Meet the basilisk's eyes: one enemy piece you target turns to solid stone and cannot move for 3 of their turns. Kings cannot be targeted.",
-      tier: 4,
+        "Freeze one enemy piece for 3 of their turns. Kings cannot be targeted.",
+      tier: 3,
       category: "hex",
       flavor: "Do not, under any circumstance, look back.",
       fx: { motif: "jail" },
@@ -63,7 +63,7 @@ export const FANTASY_BEASTS: Buff[] = [
       name: "Serpent Brood",
       description:
         "A brood of stone serpents coils around the enemy clergy: every one of your opponent's bishops turns to a statue for 3 of their turns.",
-      tier: 5,
+      tier: 4,
       category: "hex",
       flavor: "Marble scales, and not a single blink.",
       fx: { motif: "jail", pieces: ["b"] },
@@ -75,7 +75,7 @@ export const FANTASY_BEASTS: Buff[] = [
       id: "griffon_rider",
       name: "Griffon Rider",
       description:
-        "A great griffon stoops from the clouds, lifts one of your pieces in its claws, and sets it gently down on any empty square, once.",
+        "Move one of your pieces to any empty square, once.",
       tier: 5,
       category: "movement",
       flavor: "Hold on tight and mind the updraft.",
@@ -91,7 +91,7 @@ export const FANTASY_BEASTS: Buff[] = [
       name: "Direwolf Pack",
       description:
         "A spectral direwolf answers your howl and hunts at your side as a knight for 5 of your turns, then melts back into the mist.",
-      tier: 5,
+      tier: 4,
       category: "pieces",
       flavor: "The pack always returns to the wild.",
     },
@@ -103,7 +103,7 @@ export const FANTASY_BEASTS: Buff[] = [
       name: "Roost of Rocs",
       description:
         "Two titanic rocs descend from the mountain roost and settle into your ranks as knights: place them on empty squares in your half, once.",
-      tier: 7,
+      tier: 6,
       category: "pieces",
       flavor: "Their shadows blot out the board.",
     },

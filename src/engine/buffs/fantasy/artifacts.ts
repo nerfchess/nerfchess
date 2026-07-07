@@ -28,8 +28,8 @@ export const FANTASY_ARTIFACTS: Buff[] = [
       id: "excalibur",
       name: "Excalibur",
       description:
-        "You draw the sword from the stone and set it in a bishop's hand: for the game that bishop also moves in straight lines like a rook, cutting as a queen would.",
-      tier: 6,
+        "One of your bishops also moves like a rook for the game, giving it full queen movement.",
+      tier: 5,
       category: "movement",
       flavor: "The lake gives up its blade only once.",
       fx: { motif: "empower", pieces: ["b"], moveAs: "q", self: true },
@@ -43,7 +43,7 @@ export const FANTASY_ARTIFACTS: Buff[] = [
       id: "horn_of_summoning",
       name: "Horn of Summoning",
       description:
-        "Sound the great war-horn and answer echoes across the field: place a new knight and a new bishop on empty squares in your half, once.",
+        "Place a new knight and a new bishop on empty squares in your half, once.",
       tier: 6,
       category: "pieces",
       flavor: "One long note, and the hills empty toward you.",
@@ -55,7 +55,7 @@ export const FANTASY_ARTIFACTS: Buff[] = [
       id: "orb_of_dominion",
       name: "Orb of Dominion",
       description:
-        "Raise the Orb and bend a champion to your will: one enemy rook or queen abandons your opponent and fights for you, once. Kings cannot be dominated.",
+        "Take control of one enemy rook or queen for the rest of the game, once. Kings cannot be taken.",
       tier: 7,
       category: "pieces",
       flavor: "Its light pours in through the eyes.",
@@ -68,7 +68,7 @@ export const FANTASY_ARTIFACTS: Buff[] = [
       name: "Staff of Stasis",
       description:
         "Tap the Staff of Stasis and lock one enemy piece inside a bubble of frozen time: it cannot move for 3 of their turns. Kings cannot be targeted.",
-      tier: 6,
+      tier: 4,
       category: "tempo",
       flavor: "For it, a heartbeat lasts an age.",
     },
@@ -93,7 +93,7 @@ export const FANTASY_ARTIFACTS: Buff[] = [
       name: "Banner of War",
       description:
         "Raise the banner and your cavalry surges: for your next 2 turns each of your knights may also step one square in any direction like a king.",
-      tier: 5,
+      tier: 3,
       category: "movement",
       flavor: "Follow the colors and do not look back.",
       fx: { motif: "empower", pieces: ["n"], moveAs: "k", self: true },
