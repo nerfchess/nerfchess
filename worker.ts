@@ -3085,6 +3085,35 @@ export class GameServer extends DurableObject<Env> {
     // (draw, end frame, recorded); nothing left for the house seat to do.
     let game = await this.gameForPlay(match);
     if (!game) return;
+    // Self-heal a drifted turn cache. The clock, flag enforcement and bot
+    // arming all read match.turnColor (via activeColor), but the move dispatch
+    // below reads the replayed position (game.board.turn). When they disagree
+    // the bot's clock bleeds on the cached side while the real turn is the
+    // other, so it never moves and eventually flags — a wedge that survives a
+    // reconnect because it lives in the record, not the alarm chain. The replay
+    // is authoritative for move legality, so reconcile the cache to it; bank the
+    // elapsed time to the previously-charged side first (mirrors
+    // settleDraftAction's turn handover) so no clock is retroactively
+    // double-charged. Logged so the draft action that replays differently can be
+    // found and fixed at the source.
+    const cachedTurn = this.activeColor(match);
+    if (match.draft && cachedTurn !== game.board.turn) {
+      console.error(
+        "house turn desync",
+        match.id,
+        "cachedTurn=",
+        cachedTurn,
+        "replayTurn=",
+        game.board.turn,
+        "moves=",
+        match.moves.length,
+        "draftActions=",
+        JSON.stringify(match.draftActions ?? []),
+      );
+      match.clocks = this.currentClocks(match, now);
+      if (match.runningSince !== null) match.runningSince = now;
+      match.turnColor = game.board.turn;
+    }
     if (game.result) {
       // Derived but unrecorded result (should not happen): settle it.
       match.clocks = this.currentClocks(match, now);
