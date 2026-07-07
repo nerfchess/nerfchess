@@ -23,6 +23,7 @@ const TIER_ACCENT: Record<number, string> = {
   6: "#c65f8f",
   7: "#a877d8",
   8: "#e05252",
+  9: "#f4c430",
 };
 
 export interface EffectPopoverContent {

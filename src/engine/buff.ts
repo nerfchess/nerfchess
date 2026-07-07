@@ -445,6 +445,10 @@ export interface Buff {
   fx?: CardFx;
   /** Library tier; drafts may roll the card at a nearby tier. */
   tier: Tier;
+  /** Apex cards (all of tier 9) are flagged special: they are NEVER offered by
+   * the normal draft roll and can only be obtained through a dedicated grant
+   * (the gambling Jackpot card or banking at the top tier). */
+  special?: boolean;
   category: BuffCategory;
   /** Part of nerf mode's boon pool. Category "nerf" cards are boons
    * implicitly (see isBoon); light general cards flagged here round the

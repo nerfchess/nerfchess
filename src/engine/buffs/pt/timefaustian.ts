@@ -39,6 +39,7 @@ import {
   pawnRankOk,
   dist,
 } from "../funny/shared";
+import { grantRandomTier9 } from "../helpers";
 
 /** King "reaching out" to devour: one capture move onto every enemy piece
  * (never a king) standing exactly two king-steps away, leaping whatever sits
@@ -124,7 +125,7 @@ export const PT_TIME_CARDS: Buff[] = [
       name: "All In",
       description:
         "Push everything to the center. Your next two draft offers are skipped. The offer after that shows three cards one tier higher, and you take all three.",
-      tier: 8,
+      tier: 6,
       category: "draft",
       flavor: "Three sevens or nothing.",
     },
@@ -313,22 +314,88 @@ export const PT_TIME_CARDS: Buff[] = [
   ),
 
   // #118 Gamble ------------------------------------------------------------
+  // Reworked so it is never pure downside: heads is a clean upside (take every
+  // card from your next two offers), and tails still costs you a draft but drags
+  // the opponent down with you (you both skip your next draft), so the coin is
+  // "win big or trade evenly" rather than "win or just lose".
   card(
     {
       id: "gamble",
       icon: "Spade",
       name: "Gamble",
       description:
-        "Flip a coin. Heads: for your next two draft offers you take every card instead of one. Tails: your next draft is skipped entirely.",
-      tier: 6,
+        "Flip a coin. Heads: for your next two draft offers you take every card instead of one. Tails: both you and your opponent skip your next draft.",
+      tier: 4,
       category: "draft",
-      flavor: "Heads you win, tails you learn.",
+      flavor: "Heads you win, tails you both sit out.",
     },
     instant((_inst, api) => {
       if (api.rng.int(2) === 0) {
         api.mine.flags.takeBoth = (api.mine.flags.takeBoth ?? 0) + 2;
       } else {
         api.mine.flags.blockedDrafts = (api.mine.flags.blockedDrafts ?? 0) + 1;
+        api.theirs.flags.blockedDrafts = (api.theirs.flags.blockedDrafts ?? 0) + 1;
+      }
+    }),
+  ),
+
+  // #119 Jackpot -----------------------------------------------------------
+  // The tier-9 gateway from the gambling side: a long shot (one in three) at a
+  // genuinely game-winning apex card. On a miss you get a small consolation
+  // (your next offer rolls one tier higher) so the pull is never a dead loss.
+  card(
+    {
+      id: "jackpot",
+      icon: "Dices",
+      name: "Jackpot",
+      description:
+        "Pull the lever for a one-in-three shot at a random apex card, one of the game's most powerful. Miss, and you take a consolation: your next draft rolls one tier higher.",
+      tier: 7,
+      category: "draft",
+      flavor: "Cherry, cherry, and please, cherry.",
+    },
+    instant((_inst, api) => {
+      if (api.rng.int(3) === 0) {
+        grantRandomTier9(api);
+      } else {
+        api.mine.flags.bankBonus = Math.min(1, (api.mine.flags.bankBonus ?? 0) + 1);
+      }
+    }),
+  ),
+
+  // #120 Double or Nothing -------------------------------------------------
+  // Risk a card you already hold: heads it is upgraded a tier (capped at 8, so
+  // it never becomes a tier-9 special), tails it is spent for nothing. A random
+  // eligible held card is chosen deterministically off the seeded RNG; bound
+  // upgrades are excluded (their state points at a board square). Does nothing
+  // if you hold no other riskable card.
+  card(
+    {
+      id: "double_or_nothing",
+      icon: "Coins",
+      name: "Double or Nothing",
+      description:
+        "Bet one of your other held cards on a coin flip. Heads: it is upgraded one tier. Tails: it is spent and lost.",
+      tier: 4,
+      category: "draft",
+      flavor: "Let it ride.",
+    },
+    instant((inst, api) => {
+      const eligible = api.mine.buffs.filter(
+        (b) =>
+          b !== inst &&
+          !b.spent &&
+          !b.nullified &&
+          b.state.sq == null &&
+          b.state.sqs == null &&
+          b.state.squares == null,
+      );
+      if (eligible.length === 0) return;
+      const stake = eligible[api.rng.int(eligible.length)];
+      if (api.rng.int(2) === 0) {
+        stake.tier = Math.min(8, stake.tier + 1) as Tier;
+      } else {
+        stake.spent = true;
       }
     }),
   ),

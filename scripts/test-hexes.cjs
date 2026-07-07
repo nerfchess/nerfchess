@@ -41,7 +41,10 @@ for (const b of ALL_BUFFS) {
 const hexes = ALL_BUFFS.filter((b) => b.category === "hex");
 for (const h of hexes) {
   if (!h.implemented) errors.push(`hex "${h.id}" is not implemented`);
-  if (!(Number.isInteger(h.tier) && h.tier >= 1 && h.tier <= 8))
+  // Apex hexes (special / tier 9) are never in the normal draft pool; every
+  // other hex stays in the 1 to 8 band.
+  const tierCap = h.special ? 9 : 8;
+  if (!(Number.isInteger(h.tier) && h.tier >= 1 && h.tier <= tierCap))
     errors.push(`hex "${h.id}" has bad tier ${h.tier}`);
   if (!h.name || !h.description) errors.push(`hex "${h.id}" missing name/description`);
   for (const field of ["name", "description", "flavor"]) {
@@ -54,7 +57,7 @@ for (const h of hexes) {
 
 // 3. Tier coverage: the design target is 10 to 15 hexes per tier.
 const byTier = {};
-for (let t = 1; t <= 8; t++) byTier[t] = 0;
+for (let t = 1; t <= 9; t++) byTier[t] = 0;
 for (const h of hexes) byTier[h.tier]++;
 for (let t = 1; t <= 8; t++) {
   if (byTier[t] < 10) warns.push(`tier ${t} has only ${byTier[t]} hexes (<10)`);

@@ -8,6 +8,10 @@ import {
   FreezeSkin,
 } from "../buff";
 import { BoardState, Color, FILE, Move, PieceType, RANK, SQ, Square, inBoard } from "../types";
+// Circular by design: tier9.ts imports the movement/effect factories below, and
+// this only reads TIER9 at call time (grantRandomTier9), never at module eval,
+// so the cycle resolves cleanly (tier9's array is built from hoisted functions).
+import { TIER9 } from "./tier9";
 
 // ---------------------------------------------------------------------------
 // Move-generation helpers for buff-granted movement. All of these produce
@@ -390,6 +394,20 @@ export function grantInventory(api: BuffApi, type: PieceType, n = 1) {
   if (type === "k" || n <= 0) return;
   const pocket = (api.mine.inventory ??= {});
   pocket[type] = (pocket[type] ?? 0) + n;
+}
+
+/** Grant the holder a random tier-9 apex card as an unspent, usable card added
+ * to their hand (modeled on how acquireBuff seats a card: fresh instance, run
+ * init, push). The pick runs on the seeded api.rng only, so it advances the
+ * same RNG state on every replica and replays identically (desync-safe). The
+ * apex pool is excluded from every normal draft, so this grant (and banking at
+ * the top tier) is the only way one reaches a hand. */
+export function grantRandomTier9(api: BuffApi) {
+  if (TIER9.length === 0) return;
+  const def = TIER9[api.rng.int(TIER9.length)];
+  const inst: BuffInstance = { id: def.id, tier: 9, state: {} };
+  def.init?.(inst, api);
+  api.mine.buffs.push(inst);
 }
 
 /** Revive one captured piece of the given types onto a targeted empty square. */

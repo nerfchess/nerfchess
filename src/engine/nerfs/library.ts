@@ -189,17 +189,15 @@ export const ALL_NERFS: Nerf[] = (() => {
 
 export const PLAYABLE_NERFS = ALL_IMPLEMENTED;
 
-// TEMPORARY cap on rolled drawbacks: opening nerf picks (and any random nerf
-// roll) draws from the tier 3 to 5 band: tiers 1 and 2 are too mild to be
-// interesting and tiers 6 to 8 too brutal for an opening handicap. Adjust these
-// two constants to reshape the band; every roll site funnels through
-// openingNerfPool().
-export const MIN_OPENING_NERF_TIER: Tier = 3;
-export const MAX_OPENING_NERF_TIER: Tier = 5;
+// The opening nerf pick (and any random nerf roll) can now be any tier: the
+// full 1 to 8 range is open, so a dealt opening handicap is as likely to be a
+// gentle tier 1 as an unhinged tier 8. Adjust these two constants to reshape
+// the band; every roll site funnels through openingNerfPool().
+export const MIN_OPENING_NERF_TIER: Tier = 1;
+export const MAX_OPENING_NERF_TIER: Tier = 8;
 
-/** The pool every opening nerf roll draws from: implemented nerfs in the
- * tier 3 to 5 band, minus "lucky" (its reroll semantics do not fit a dealt
- * pick). */
+/** The pool every opening nerf roll draws from: implemented nerfs of any tier,
+ * minus "lucky" (its reroll semantics do not fit a dealt pick). */
 export function openingNerfPool(): Nerf[] {
   return PLAYABLE_NERFS.filter(
     (nerf) =>
