@@ -3,7 +3,18 @@ import Link from "next/link";
 import { InfoPageLayout, InfoSection } from "@/components/InfoPageLayout";
 
 export const metadata: Metadata = {
-  title: "FAQ | Nerf Chess",
+  title: "Nerf Chess FAQ: how the chess variant works",
+  description:
+    "Answers to common questions about Nerf Chess: the two modes (Nerf and Buff), what a nerf and a buff are, how card drafting and banking work, ratings, and playing a friend with no account.",
+  keywords: [
+    "nerf chess faq",
+    "how does nerf chess work",
+    "chess with power ups faq",
+    "buff chess rules",
+    "chess variant questions",
+    "is nerf chess free",
+  ],
+  alternates: { canonical: "/faq" },
 };
 
 const FAQS = [
@@ -64,6 +75,19 @@ const FAQS = [
   },
 ];
 
+// FAQPage structured data backed by the same questions rendered below, so the
+// marked-up Q&A is visible on the page as Google requires. Lets search and AI
+// answer engines lift these answers directly.
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: FAQS.map((f) => ({
+    "@type": "Question",
+    name: f.question,
+    acceptedAnswer: { "@type": "Answer", text: f.answer },
+  })),
+};
+
 export default function FAQPage() {
   return (
     <InfoPageLayout
@@ -71,6 +95,10 @@ export default function FAQPage() {
       title="Frequently asked"
       intro="The short version: two modes, one board. Nerf mode is chess until your secret rule says otherwise; Buff mode is chess until the cards arrive. Here are the questions players usually ask first."
     >
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
       {FAQS.map((faq) => (
         <InfoSection key={faq.question} title={faq.question}>
           <p>{faq.answer}</p>

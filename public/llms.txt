@@ -1,28 +1,61 @@
 # Nerf Chess
 
-> Nerf Chess (nerfchess.com) is a free online chess variant played in the browser. It has two modes: Nerf mode, where every player secretly carries a handicap rule ("nerf") revealed only when the game ends, and Buff mode, where nobody is handicapped and both players draft power-up cards every 5 moves. In both modes the game ends by capturing the king: there is no checkmate and no stalemate. The concept behind Nerf mode is often called "drawback chess".
+> Nerf Chess (nerfchess.com) is a free online chess variant played in the browser, with no download and no account required for bot or friend games. It keeps the standard chess board, pieces, and moves, then changes two things: the game ends by capturing the king (there is no checkmate and no stalemate), and every 5 moves each player drafts a card. It has two modes. In Nerf mode every player secretly carries a handicap rule (a "nerf") revealed only when the game ends, which is the idea commonly called "drawback chess". In Buff mode nobody is handicapped and both players draft power-up cards, which makes it a "chess with power-ups" game. It is often searched for as: chess with power-ups, power-up chess, buff chess, chess with cards, capture-the-king chess, chess without checkmate, chess roguelike, or a chess card / drafting game.
 
-Key facts:
+## What Nerf Chess is
 
-- Free to play, browser-based, no download. Bot games and friend games (via a five-character code) need no account.
-- Nerf mode: each player picks one secret handicap from two cards before the first move. Every 5 of their own moves they draft a card: usually a hex (a curse cast on the opponent), sometimes a boon (relief from their own nerf) or a one-use item. The opponent's nerf and picks stay hidden until the game ends, so deduction is half the game.
-- Buff mode: no handicaps. Both players draft a buff every 5 moves and build the stronger army. Buffs are passive, instant, or activated; activating one usually costs your turn.
-- Cards and rules carry difficulty tiers I through VIII: Trivial, Easy, Common, Severe, Brutal, Cruel, Punishing, Unhinged. Offers grow stronger over the game; skipping a draft banks a one-tier-stronger next offer.
-- Win condition: physically capture the enemy king. Kings may move into attacked squares and castle through, into, or out of check.
-- Over 400 cards and rules are browsable in the codex.
-- Queue games are rated, with separate rating pools for Nerf and Buff mode. Friend games are casual.
+- A free, browser-based, two-player chess variant. Play a computer bot, a matched online opponent, or a friend via a five-character code. Bot and friend games need no account; an account adds ratings, history, and a profile.
+- Standard chess board and piece movement. The two departures from normal chess: (1) you win by physically capturing the enemy king, not by checkmate; (2) a card draft fires every 5 of a player's own moves.
+- Two modes that share those rules but feel different: Nerf mode (hidden-information, secret handicaps) and Buff mode (open-information, drafted power-ups).
 
-## Guide
+## Win condition (capture the king)
+
+- The game ends when a king is physically captured, when a nerf's lose condition fires, or when a player resigns. There is no checkmate and no stalemate.
+- Because only capture ends the game, the king is a normal, capturable piece: it may move into attacked squares and castle through, into, or out of check. Legal, but usually fatal.
+- If effects ever leave a player with no legal move, their turn passes automatically instead of losing; mutual paralysis is a draw.
+
+## Nerf mode (secret handicaps / drawback chess)
+
+- Before the first move, each player is shown two nerf cards and secretly picks one. A nerf is a handicap: it restricts how you may play (for example "you can't capture queens") or invents a new way for you to lose.
+- You always see your own nerf; you never see your opponent's until the game ends, so deduction (reading which moves they avoid) is half the game. The board pre-filters your own moves so you cannot break your nerf by accident.
+- The draft in Nerf mode deals mostly hexes (curses cast on the opponent, such as "Cold Feet": the opponent's pawns cannot capture for 3 turns), plus occasional boons (relief that softens or suspends your own nerf) and one-use items.
+
+## Buff mode (power-up chess)
+
+- No handicaps at all. Every 5 moves both players are offered two power-up cards (buffs) and keep one, building the stronger army.
+- Buffs are passive (work while held, e.g. a piece gains a new move), instant (fire when picked, e.g. a freeze), or activated (spent on your turn, which usually costs the turn).
+- Fairness rules keep it a chess game: freezes and walnut hexes never affect kings, and buff-granted moves can only race toward capturing the king, never dodge that goal.
+
+## Cards, tiers, and banking
+
+- Over 400 cards and rules total: nerfs, buffs, hexes, boons, and items. All are browsable at https://nerfchess.com/codex.
+- Every card has a difficulty tier from I to VIII: Trivial, Easy, Common, Severe, Brutal, Cruel, Punishing, Unhinged. Draft offers start mild and climb the tier curve as the game goes on; the highest tiers are deliberately rare.
+- Skipping a draft "banks" it: your next offer rolls one tier stronger. Banking never stacks past one tier, so the skill is timing.
+
+## Ratings
+
+- Queue (matchmaking) games are rated, with separate rating pools for Nerf mode and Buff mode. Friend games and bot games are casual and unrated.
+
+## How to start playing
+
+1. Go to https://nerfchess.com.
+2. Pick a mode: Buff for power-ups with no handicaps, Nerf for secret handicaps plus a hex draft.
+3. Play the bot at https://nerfchess.com/play, get matched online at https://nerfchess.com/lobby, or send a friend a five-character code.
+
+## Guide (evergreen explainer pages)
 
 - [What is Nerf Chess?](https://nerfchess.com/guide): overview of the game and both modes
-- [How to play](https://nerfchess.com/guide/how-to-play): the five house rules and the five card types
+- [How to play](https://nerfchess.com/guide/how-to-play): the five house rules and the card types
 - [Nerf mode](https://nerfchess.com/guide/nerf-mode): secret handicaps and the hex draft
 - [Buff mode](https://nerfchess.com/guide/buff-mode): power-up drafting, tiers, and fairness rules
-- [Drawback chess](https://nerfchess.com/guide/drawback-chess): how Nerf Chess relates to the drawback chess concept
+- [Chess with power-ups](https://nerfchess.com/guide/chess-with-power-ups): how the power-up cards work
+- [Capture the king](https://nerfchess.com/guide/capture-the-king): the no-checkmate win condition
+- [Chess roguelike / chess card game](https://nerfchess.com/guide/chess-roguelike): the tiered card draft
+- [Drawback chess](https://nerfchess.com/guide/drawback-chess): how Nerf Chess relates to the drawback-chess concept
 - [Chess variants](https://nerfchess.com/guide/chess-variants): where Nerf Chess fits among popular variants
 - [Glossary](https://nerfchess.com/guide/glossary): definitions of nerf, buff, hex, boon, bank, tier, and more
 
-## Play
+## Play and reference
 
 - [Play vs the bot](https://nerfchess.com/play)
 - [Play online](https://nerfchess.com/lobby)
