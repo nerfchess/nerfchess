@@ -16,6 +16,7 @@ import { Tier } from "../../nerf";
 import { FILE, Move, PieceType, RANK, SQ, Square, inBoard } from "../../types";
 import {
   ALL_DIRS,
+  pawnRankOk,
   DIAG_DIRS,
   KNIGHT_LEAPS,
   ORTHO_DIRS,
@@ -646,7 +647,10 @@ export const WILD_WARFARE: Buff[] = [
             kind: "square",
             label: "Choose the piece to pull back",
             squares: mySquares(api.board, api.me).filter(
-              (sq) => api.board.pieces[sq]!.type !== "k" && dests(sq).length > 0,
+              (sq) =>
+                api.board.pieces[sq]!.type !== "k" &&
+                api.board.pieces[sq]!.type !== "p" &&
+                dests(sq).length > 0,
             ),
           };
         }
@@ -681,7 +685,10 @@ export const WILD_WARFARE: Buff[] = [
         const f = FILE(sq) + df, r = RANK(sq) + dr;
         if (!inBoard(f, r)) return null;
         const to = SQ(f, r);
-        return api.board.pieces[to] ? null : to;
+        if (api.board.pieces[to]) return null;
+        // Never push an enemy pawn onto a rank a pawn may not stand on.
+        if (api.board.pieces[sq]?.type === "p" && !pawnRankOk(to)) return null;
+        return to;
       };
       return activated(
         (_inst, api, picks) =>
@@ -867,7 +874,7 @@ export const WILD_WARFARE: Buff[] = [
         const at = move.to;
         const p = api.board.pieces[at];
         if (p && p.color === api.opp && p.type !== "k") {
-          addEffect(api, { kind: "freeze", sq: at, owner: api.opp, turns: 2 });
+          addEffect(api, { kind: "freeze", sq: at, owner: api.opp, turns: 3 });
         }
         inst.spent = true;
       },

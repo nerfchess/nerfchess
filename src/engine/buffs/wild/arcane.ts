@@ -681,12 +681,15 @@ export const WILD_ARCANE: Buff[] = [
       fx: { motif: "ward", pieces: ["k", "q"], self: true },
     },
     instant((_inst, api) => {
-      const sqs = mySquares(api.board, api.me).filter((sq) => {
-        const t = api.board.pieces[sq]!.type;
-        return t === "k" || t === "q";
-      });
-      if (sqs.length) {
-        addEffect(api, { kind: "shield", owner: api.me, squares: sqs, turns: 2 });
+      // A square shield never protects the king (engine rule that keeps the
+      // game winnable), so protect the king with king_safe and shield the queen.
+      // Together the card's "king and queen" promise is actually true.
+      addEffect(api, { kind: "king_safe", owner: api.me, turns: 2 });
+      const q = mySquares(api.board, api.me).filter(
+        (sq) => api.board.pieces[sq]!.type === "q",
+      );
+      if (q.length) {
+        addEffect(api, { kind: "shield", owner: api.me, squares: q, turns: 2 });
       }
     }),
   ),
@@ -708,7 +711,7 @@ export const WILD_ARCANE: Buff[] = [
       id: "wa_void_rift",
       name: "Void Rift",
       description:
-        "Tear a permanent rift on an empty square: the first enemy piece to step onto it (never a king) is pulled out of the game.",
+        "Tear a permanent rift on an empty square: any enemy piece that steps onto it (never a king) is pulled out of the game.",
       tier: 4,
       category: "attack",
       flavor: "It does not close on its own.",

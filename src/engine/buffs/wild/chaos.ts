@@ -937,7 +937,7 @@ export const WILD_CHAOS: Buff[] = [
     {
       id: "wc_black_hole",
       name: "Black Hole",
-      description: "Open a black hole on one empty square: the first enemy piece to step onto it, never a king, is swallowed off the board. It stays open for the rest of the game.",
+      description: "Open a black hole on one empty square: any enemy piece that steps onto it, never a king, is swallowed off the board. It stays open for the rest of the game.",
       tier: 4,
       category: "attack",
       flavor: "Do not look directly into it.",
@@ -949,7 +949,7 @@ export const WILD_CHAOS: Buff[] = [
     {
       id: "wc_haunted_house",
       name: "Haunted House",
-      description: "Two rooms turn haunted: mark two empty squares and the first enemy piece to enter each one, never a king, vanishes. The haunting lasts 4 of your turns.",
+      description: "Two rooms turn haunted: mark two empty squares and any enemy piece that enters one, never a king, vanishes. The haunting lasts 4 of your turns.",
       tier: 5,
       category: "attack",
       flavor: "It was the butler. It is always the butler.",

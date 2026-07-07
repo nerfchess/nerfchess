@@ -845,7 +845,7 @@ export const WILD_ELEMENTAL: Buff[] = [
         const sq = picks[0]?.square;
         if (sq == null) return;
         api.setPieceType(sq, "q");
-        addEffect(api, { kind: "timed_loss", owner: api.me, sq, turns: 3, then: "demote", into: "p" });
+        addEffect(api, { kind: "timed_loss", owner: api.me, sq, turns: 4, then: "demote", into: "p" });
       },
     ),
   ),
