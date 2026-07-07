@@ -1,11 +1,14 @@
 import type { MetadataRoute } from "next";
+import { ALL_BUFFS } from "@/engine/buffs/library";
+import { ALL_NERFS } from "@/engine/nerfs/library";
 
 const BASE = "https://nerfchess.com";
 
-// Served at /sitemap.xml. Static public routes only: per-user pages (profile,
-// history, inbox) and the thousands of possible codex filter/query URLs are
-// deliberately not enumerated; /codex itself is listed and crawlers can reach
-// individual cards through it and the guide pages.
+// Served at /sitemap.xml. Static public routes plus one entry per drafted card:
+// per-user pages (profile, history, inbox) and the thousands of possible codex
+// filter/query URLs are still left out, but every implemented buff and nerf has
+// its own crawlable detail page (/codex/buff/[id], /codex/nerf/[id]) and is
+// listed here so crawlers find all of them without executing the client codex.
 export default function sitemap(): MetadataRoute.Sitemap {
   const entry = (
     path: string,
@@ -17,6 +20,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
     changeFrequency,
     priority,
   });
+
+  // Only cards that actually appear in drafts are indexed; unimplemented cards
+  // render (so internal links never 404) but carry a noindex and stay out here.
+  const cardEntries: MetadataRoute.Sitemap = [
+    ...ALL_BUFFS.filter((b) => b.implemented).map((b) => entry(`/codex/buff/${b.id}`, 0.4, "monthly")),
+    ...ALL_NERFS.filter((n) => n.implemented).map((n) => entry(`/codex/nerf/${n.id}`, 0.4, "monthly")),
+  ];
 
   return [
     entry("/", 1, "weekly"),
@@ -49,5 +59,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     entry("/codex/suggest", 0.4, "yearly"),
     entry("/contact", 0.3, "yearly"),
     entry("/privacy-policy", 0.2, "yearly"),
+    ...cardEntries,
   ];
 }
