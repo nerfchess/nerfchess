@@ -69,6 +69,9 @@ type WildMeta = {
   fx?: CardFx;
   /** Per-card lucide-react icon name; overrides the category glyph. */
   icon?: string;
+  /** Piece types the caster must own on the board for this card to be offered
+   * (dead-draft guard). Omit for cards that work regardless of your pieces. */
+  requires?: PieceType[];
 };
 
 /** Build a fully implemented card from metadata + mechanics. Mirrors the `def`
@@ -355,6 +358,7 @@ export const WILD_ELEMENTAL: Buff[] = [
         "One rook shoots a jet of fire along a rank or file, removing up to two enemy pieces in its path (never a king) and landing beyond them, once.",
       tier: 5,
       category: "attack",
+      requires: ["r"],
       flavor: "A straight line of ash.",
     },
     lineSweep("r", ORTHO_DIRS, 2),
@@ -367,6 +371,7 @@ export const WILD_ELEMENTAL: Buff[] = [
         "One queen burns down a full diagonal, removing every enemy piece on it (never a king) and landing at the end, once.",
       tier: 6,
       category: "attack",
+      requires: ["q"],
       flavor: "The whole diagonal, cleared.",
     },
     lineSweep("q", DIAG_DIRS, null),
@@ -614,6 +619,7 @@ export const WILD_ELEMENTAL: Buff[] = [
         "One queen looses a bolt down a diagonal, removing the first enemy piece it hits (never a king) and landing beyond it, once.",
       tier: 4,
       category: "attack",
+      requires: ["q"],
       flavor: "One target, struck clean.",
     },
     lineSweep("q", DIAG_DIRS, 1),
@@ -626,6 +632,7 @@ export const WILD_ELEMENTAL: Buff[] = [
         "One rook arcs lightning along a diagonal, removing up to two enemy pieces in its path (never a king) and landing beyond them, once.",
       tier: 5,
       category: "attack",
+      requires: ["r"],
       flavor: "It jumps where it likes.",
     },
     lineSweep("r", DIAG_DIRS, 2),
@@ -663,6 +670,7 @@ export const WILD_ELEMENTAL: Buff[] = [
         "A driving wind opens gaps: for your next 2 turns your bishops may each slip through one friendly piece in their way.",
       tier: 3,
       category: "movement",
+      requires: ["b"],
       flavor: "The wind holds the door.",
       fx: { motif: "empower", pieces: ["b"], self: true },
     },
@@ -675,6 +683,7 @@ export const WILD_ELEMENTAL: Buff[] = [
       description: "One rook may move up to two squares diagonally, once.",
       tier: 2,
       category: "movement",
+      requires: ["r"],
       flavor: "A short crack of speed.",
       fx: { motif: "empower", pieces: ["r"], moveAs: "b", self: true },
     },
@@ -687,6 +696,7 @@ export const WILD_ELEMENTAL: Buff[] = [
       description: "One knight may make a longer 3-by-1 leap, once.",
       tier: 2,
       category: "movement",
+      requires: ["n"],
       flavor: "Caught on a thermal.",
       fx: { motif: "empower", pieces: ["n"], moveAs: "n", self: true },
     },
@@ -750,6 +760,7 @@ export const WILD_ELEMENTAL: Buff[] = [
         "The board runs like water: for your next 2 turns your rooks may each slip through one friendly piece in their way.",
       tier: 3,
       category: "movement",
+      requires: ["r"],
       flavor: "Water goes around nothing, it goes through.",
       fx: { motif: "empower", pieces: ["r"], self: true },
     },
@@ -843,6 +854,7 @@ export const WILD_ELEMENTAL: Buff[] = [
         "One of your pawns blooms into a queen for your next 3 turns, then withers back into a pawn.",
       tier: 5,
       category: "pieces",
+      requires: ["p"],
       flavor: "A season of glory.",
       fx: { motif: "empower", pieces: ["p"], moveAs: "q", self: true },
     },

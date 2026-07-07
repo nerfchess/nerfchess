@@ -2,7 +2,7 @@ import { Buff, BuffMatchState, BuffOffer, PlayerBuffState, isBoon } from "./buff
 import { BUFF_BY_ID, BUFF_POOL_BY_TIER } from "./buffs/library";
 import { Tier } from "./nerf";
 import { RNG } from "./rng";
-import { Color } from "./types";
+import { BoardState, Color, PieceType } from "./types";
 
 // ---------------------------------------------------------------------------
 // Draft mechanics: tier progression, card rolling, banking.
@@ -120,6 +120,19 @@ function saveRng(bs: BuffMatchState, rng: RNG) {
   bs.rngState = rng.getState();
 }
 
+/** The set of piece types `color` currently has ON THE BOARD. Used by the
+ * draft pool's piece-eligibility guard (Buff.requires): a card whose whole
+ * effect targets the caster's own pieces of some type is a DEAD DRAFT when
+ * the caster owns none of it, so it leaves the pool. A pure read of the same
+ * synced, authoritative board every effect and legal-move check operates on
+ * (game.board, threaded in from playMove / rerollDraft), so the filter is
+ * identical on both clients and the server: it can never desync. */
+function ownedPieceTypes(board: BoardState, color: Color): Set<PieceType> {
+  const set = new Set<PieceType>();
+  for (const p of board.pieces) if (p && p.color === color) set.add(p.type);
+  return set;
+}
+
 // Base tier per draft round (1-based); later rounds stay at the cap.
 const TIER_CURVE = [1, 2, 3, 5, 7];
 
@@ -155,6 +168,7 @@ function rollCards(
   color: Color,
   slotTiers: Tier[],
   suppressed: boolean,
+  board?: BoardState,
 ): BuffOffer["cards"] {
   const ps = bs.players[color];
   const rng = drawRng(bs);
@@ -173,8 +187,16 @@ function rollCards(
   // their pool entirely: the draft must not offer an upgrade that eases a nerf
   // that is not in effect. Pure pool filter, computed once per roll.
   const reliefIsDead = nerfIsOff(bs, color);
+  // Piece-eligibility guard: a card whose whole effect needs the caster to own
+  // a specific piece type (Buff.requires) is a DEAD DRAFT when they have none
+  // of it, so it leaves the pool. Computed once per roll from the synced board
+  // (same source as effects/legalMoves), so both sides filter identically. The
+  // board is always threaded in during real play; when absent (offline pool
+  // sims) the guard is skipped and requires-cards stay eligible.
+  const owned = board ? ownedPieceTypes(board, color) : null;
   const inMode = (b: Buff) => {
     if (reliefIsDead && b.category === "nerf") return false;
+    if (owned && b.requires && !b.requires.some((t) => owned.has(t))) return false;
     return bs.mode === "buff"
       ? b.category !== "nerf" && b.category !== "hex" && !NERF_REVEAL.has(b.id)
       : bs.mode === "nerf"
@@ -221,7 +243,12 @@ function rollCards(
  * to their draft state. Returns null (and attaches nothing) when the mode's
  * card pool has run completely dry: the draft is skipped instead of blocking
  * the player behind an empty offer. */
-export function rollOffer(bs: BuffMatchState, color: Color, tiers: [Tier, Tier]): BuffOffer | null {
+export function rollOffer(
+  bs: BuffMatchState,
+  color: Color,
+  tiers: [Tier, Tier],
+  board?: BoardState,
+): BuffOffer | null {
   const ps = bs.players[color];
   const index = ps.draftsTaken + 1;
   const cardCount = ps.flags.prepThree ? 3 : 2;
@@ -247,7 +274,7 @@ export function rollOffer(bs: BuffMatchState, color: Color, tiers: [Tier, Tier])
     const shared = tiers[Math.min(i, tiers.length - 1)];
     slotTiers.push(forced ?? (Math.min(8, shared + bonus + boost) as Tier));
   }
-  const cards = rollCards(bs, color, slotTiers, suppressed);
+  const cards = rollCards(bs, color, slotTiers, suppressed, board);
 
   // Pool exhausted (possible in nerf mode's tiny card list): skip this draft
   // entirely rather than presenting an empty, unresolvable offer.
@@ -289,14 +316,14 @@ export function bankOffer(ps: PlayerBuffState) {
  * offer, no reroll left, or the reroll somehow rolls empty. Server-owned and
  * broadcast in online games, so it is replay-safe exactly like a normal offer.
  */
-export function rerollOffer(bs: BuffMatchState, color: Color): boolean {
+export function rerollOffer(bs: BuffMatchState, color: Color, board?: BoardState): boolean {
   const ps = bs.players[color];
   const offer = ps.offer;
   if (!offer || (ps.rerollsLeft ?? 0) <= 0) return false;
   const slotTiers = (ps.offerTiers?.length ? ps.offerTiers : offer.cards.map((c) => c.tier)) as Tier[];
   // Suppression was already consumed at the first roll; honor whatever remains.
   const suppressed = (ps.flags.noDraftCards ?? 0) > 0;
-  const cards = rollCards(bs, color, slotTiers, suppressed);
+  const cards = rollCards(bs, color, slotTiers, suppressed, board);
   if (cards.length === 0) return false;
   ps.rerollsLeft = (ps.rerollsLeft ?? 0) - 1;
   offer.cards = cards;

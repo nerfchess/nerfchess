@@ -69,6 +69,7 @@ export const FANTASY_ELEMENTS: Buff[] = [
         "One bishop captures up to two enemy pieces down a diagonal and lands beyond them, once.",
       tier: 5,
       category: "attack",
+      requires: ["b"],
       flavor: "It leaps from soul to soul.",
     },
     lineSweep("b", DIAG_DIRS, 2),

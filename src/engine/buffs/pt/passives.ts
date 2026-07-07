@@ -53,6 +53,7 @@ export const PT_PASSIVE_CARDS: Buff[] = [
         "Home advantage: while standing in your own half of the board, each of your knights, bishops, and rooks may also step one square in any direction.",
       tier: 5,
       category: "movement",
+      requires: ["n", "b", "r"],
       flavor: "The crowd, the turf, the extra step.",
       fx: { motif: "empower", pieces: ["n", "b", "r"], moveAs: "k", self: true },
     },

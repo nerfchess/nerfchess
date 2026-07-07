@@ -68,6 +68,7 @@ export const FANTASY_NECROMANCY: Buff[] = [
         "Your queen captures every enemy piece along one diagonal in a single move, once.",
       tier: 7,
       category: "attack",
+      requires: ["q"],
       flavor: "One long, patient stroke.",
     },
     lineSweep("q", DIAG_DIRS, null),

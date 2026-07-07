@@ -54,6 +54,9 @@ type WildMeta = {
   fx?: CardFx;
   /** Per-card lucide-react icon name; overrides the category glyph. */
   icon?: string;
+  /** Piece types the caster must own on the board for this card to be offered
+   * (dead-draft guard). Omit for cards that work regardless of your pieces. */
+  requires?: PieceType[];
 };
 
 /** Build a fully implemented card from metadata + mechanics. Mirrors the `def`
@@ -366,6 +369,7 @@ export const WILD_ARCANE: Buff[] = [
         "One of your bishops may also step one square straight, like a rook, for the rest of the game.",
       tier: 3,
       category: "movement",
+      requires: ["b"],
       flavor: "It slips off its color.",
       fx: { motif: "empower", pieces: ["b"], moveAs: "r", self: true },
     },
@@ -381,6 +385,7 @@ export const WILD_ARCANE: Buff[] = [
         "One of your knights may also make a longer 3-by-1 leap for the rest of the game.",
       tier: 4,
       category: "movement",
+      requires: ["n"],
       flavor: "A wider gait across the sand.",
       fx: { motif: "empower", pieces: ["n"], moveAs: "n", self: true },
     },
@@ -396,6 +401,7 @@ export const WILD_ARCANE: Buff[] = [
         "One of your rooks may also move up to two squares diagonally for the rest of the game.",
       tier: 4,
       category: "movement",
+      requires: ["r"],
       flavor: "Power leaks out at the corners.",
       fx: { motif: "empower", pieces: ["r"], moveAs: "b", self: true },
     },
@@ -475,6 +481,7 @@ export const WILD_ARCANE: Buff[] = [
       description: "Turn one of your pawns into a knight, once.",
       tier: 3,
       category: "pieces",
+      requires: ["p"],
       flavor: "A little more shape to it now.",
     },
     transformOwn(1, ["p"], "n", "Choose a pawn to transmute into a knight"),
@@ -486,6 +493,7 @@ export const WILD_ARCANE: Buff[] = [
       description: "Turn one of your pawns into a queen, once.",
       tier: 6,
       category: "pieces",
+      requires: ["p"],
       flavor: "Base metal, crowned early.",
     },
     transformOwn(1, ["p"], "q", "Choose a pawn to crown"),
@@ -771,6 +779,7 @@ export const WILD_ARCANE: Buff[] = [
         "One bishop unmakes a diagonal: it removes up to two enemy pieces in its path (never a king) and lands beyond them, once.",
       tier: 5,
       category: "attack",
+      requires: ["b"],
       flavor: "A line of the board, uncreated.",
     },
     lineSweep("b", DIAG_DIRS, 2),

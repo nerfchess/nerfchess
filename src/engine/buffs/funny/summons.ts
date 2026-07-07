@@ -103,6 +103,7 @@ export const FUNNY_SUMMONS: Buff[] = [
       description: "Choose one of your knights. It charges in one horizontal or vertical direction, removes the first enemy piece (not a king) in that line, and lands on that square or on an empty square beyond it, stopping before the next piece or the board edge. A friendly piece or an enemy king in the path blocks the charge. Once.",
       tier: 5,
       category: "attack",
+      requires: ["n"],
       flavor: "Sound the bugle.",
     },
     lineSweep("n", ORTHO_DIRS, 1),
@@ -136,6 +137,7 @@ export const FUNNY_SUMMONS: Buff[] = [
       description: "Sign in blood: promote one of your pawns to a queen at once, but a random other pawn of yours bursts and is lost.",
       tier: 7,
       category: "pieces",
+      requires: ["p"],
       flavor: "The wax seal is still warm.",
     },
     activated(
