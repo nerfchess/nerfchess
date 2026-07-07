@@ -54,7 +54,7 @@ export default function ChessVariantsPage() {
           Fog of War hides the <em>board</em>; Nerf Chess hides the <em>rules</em>. In{" "}
           <Link href="/guide/nerf-mode" className="underline">Nerf mode</Link> each player
           carries a secret handicap (the{" "}
-          <Link href="/guide/drawback-chess" className="underline">drawback chess</Link>{" "}
+          drawback chess{" "}
           idea), so you see the whole board perfectly and still have to reason under
           uncertainty about what your opponent is allowed to do.
         </p>

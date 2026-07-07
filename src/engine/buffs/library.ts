@@ -4,6 +4,7 @@ import { FUNNY_CARDS } from "./funny";
 import { FANTASY_CARDS } from "./fantasy";
 import { WILD_CARDS } from "./wild";
 import { CROSSREF_CARDS } from "./crossref";
+import { PT_CARDS } from "./pt";
 import { Buff, BuffApi, BuffCategory, BuffInstance, CardFx } from "../buff";
 import { Tier } from "../nerf";
 import { BoardState, Color, FILE, Move, PieceType, RANK, SQ, Square, inBoard } from "../types";
@@ -3663,6 +3664,7 @@ export const ALL_BUFFS: Buff[] = [
   ...FANTASY_CARDS,
   ...WILD_CARDS,
   ...CROSSREF_CARDS,
+  ...PT_CARDS,
   ...ITEMS,
 ];
 

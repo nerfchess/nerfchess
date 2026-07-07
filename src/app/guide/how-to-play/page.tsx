@@ -15,11 +15,11 @@ export default function HowToPlayPage() {
     <InfoPageLayout
       eyebrow="guide"
       title="How to play Nerf Chess"
-      intro="If you know how the chess pieces move, you already know 90% of Nerf Chess. This page covers the rest: the five house rules every game follows, and the card types that make each game unique."
+      intro="If you know how the chess pieces move, you already know 90% of Nerf Chess. This page covers the rest: the house rules every game follows, and the card types that make each game unique."
     >
       <BreadcrumbJsonLd title="How to play" path="/guide/how-to-play" />
 
-      <InfoSection title="The five house rules">
+      <InfoSection title="The house rules">
         <p>
           <strong>1. No checkmate, no stalemate.</strong> A game ends only when a king is
           physically captured, a nerf triggers a loss condition, or a player resigns. There is
@@ -44,6 +44,12 @@ export default function HowToPlayPage() {
           <strong>5. Distances are Chebyshev.</strong> When a card talks about distance, count
           the larger of the file difference and the rank difference, the way a king walks, not
           straight-line Euclidean distance.
+        </p>
+        <p>
+          <strong>6. No king capture on a free move.</strong> Some buffs hand you an extra move
+          or make your opponent skip a turn. You can chain those, but you cannot capture the
+          enemy king on a bonus move: your opponent always gets one reply first, so a king is
+          never snatched while they have no chance to answer.
         </p>
       </InfoSection>
 

@@ -44,7 +44,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     entry("/guide/chess-with-power-ups", 0.7, "monthly"),
     entry("/guide/capture-the-king", 0.7, "monthly"),
     entry("/guide/chess-roguelike", 0.7, "monthly"),
-    entry("/guide/drawback-chess", 0.7, "monthly"),
     entry("/guide/chess-variants", 0.7, "monthly"),
     entry("/guide/glossary", 0.6, "monthly"),
     // Info and community surfaces.
