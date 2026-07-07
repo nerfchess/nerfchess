@@ -452,10 +452,22 @@ export const REGICIDE_CLOCK: Nerf = db({
     const checks = moves.filter((m) => isInCheck(makeMove(ctx.board, m), opp));
     return checks.length ? checks : moves;
   },
-  checkLoss: (state, ctx) => {
+  checkLoss: (_state, ctx) => {
     if (ctx.moveNumber < 8) return null;
-    const s = state as { sinceCheck: number };
-    return s.sinceCheck >= 8 ? { reason: "the pressure lapsed for too long" } : null;
+    // Recompute the streak fresh from history rather than reading the
+    // onTurnStart-maintained state, which is one move stale at loss-check time
+    // and would let the player dodge the loss (and steal a king capture) for an
+    // extra move.
+    const opp = other(ctx.me);
+    let board = initialBoard();
+    let streak = 0;
+    for (const m of ctx.board.history) {
+      board = makeMove(board, m);
+      if (m.color === ctx.me) {
+        streak = isInCheck(board, opp) ? 0 : streak + 1;
+      }
+    }
+    return streak >= 8 ? { reason: "the pressure lapsed for too long" } : null;
   },
   progress: (state) => {
     const s = state as { sinceCheck: number };
