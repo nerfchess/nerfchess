@@ -34,6 +34,7 @@ import {
   newGame,
   pickDraftCard,
   playMove,
+  rerollDraft,
   resign,
 } from "@/engine/game";
 import { BuffDock, EnemyBuffModal, TargetingBanner, useBuffTargeting } from "@/components/BuffDock";
@@ -1787,6 +1788,13 @@ function GamePage() {
           onBank={() => {
             bankDraft(game, myColor);
             recordMyDraftResolution({ banked: true, cards: [] });
+            setGame({ ...game });
+          }}
+          rerollsLeft={bsMine?.rerollsLeft ?? 0}
+          onReroll={() => {
+            // Local game: reroll on the real engine, fresh cards at the same
+            // tiers. The bumped `rerolled` counter replays the deal animation.
+            rerollDraft(game, myColor);
             setGame({ ...game });
           }}
           opponent={{

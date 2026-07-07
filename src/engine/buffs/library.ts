@@ -1,6 +1,7 @@
 import { isInCheck } from "../board";
 import { NEW_HEXES } from "./hexes";
 import { FUNNY_CARDS } from "./funny";
+import { FANTASY_CARDS } from "./fantasy";
 import { CROSSREF_CARDS } from "./crossref";
 import { Buff, BuffApi, BuffCategory, BuffInstance, CardFx } from "../buff";
 import { Tier } from "../nerf";
@@ -1146,7 +1147,7 @@ const TIER3: Buff[] = [
     skipOpponent(1),
   ),
   def(
-    { id: "fortress", name: "Fortress", description: "Your king and one adjacent piece are uncapturable for your opponent's next 4 turns.", tier: 3, category: "protection" },
+    { id: "fortress", name: "Fortress", description: "One piece standing next to your king becomes uncapturable for your opponent's next 4 turns. Your king itself is not shielded.", tier: 3, category: "protection" },
     activated(
       (_inst, api, picks) => {
         if (picks.length > 0) return null;
@@ -1327,12 +1328,12 @@ const TIER3: Buff[] = [
     }),
   ),
   def(
-    { id: "chain_mail", name: "Chain Mail", description: "All your minor pieces are uncapturable for 1 full turn.", tier: 3, category: "protection" },
+    { id: "chain_mail", name: "Chain Mail", description: "All your minor pieces are uncapturable for 2 full turns.", tier: 3, category: "protection" },
     instant((_inst, api) => {
       const squares = mySquares(api.board, api.me).filter((sq) =>
         ["n", "b"].includes(api.board.pieces[sq]!.type),
       );
-      if (squares.length) addEffect(api, { kind: "shield", owner: api.me, squares, turns: 1 });
+      if (squares.length) addEffect(api, { kind: "shield", owner: api.me, squares, turns: 2 });
     }),
   ),
   def(
@@ -1700,7 +1701,7 @@ const TIER4: Buff[] = [
     }),
   ),
   def(
-    { id: "iron_wall", name: "Iron Wall", description: "Your entire back rank is uncapturable for 2 turns.", tier: 4, category: "protection" },
+    { id: "iron_wall", name: "Iron Wall", description: "Every piece on your back rank, your king aside, is uncapturable for 2 turns.", tier: 4, category: "protection" },
     shieldZone((api) => {
       const r = api.me === "w" ? 0 : 7;
       return Array.from({ length: 8 }, (_, f) => SQ(f, r));
@@ -2296,25 +2297,46 @@ const TIER6: Buff[] = [
     ),
   ),
   def(
-    { id: "sanctuary_zone", name: "Sanctuary Zone", description: "A 2x2 area you pick makes your pieces there uncapturable for your opponent's next 5 turns.", tier: 6, category: "protection", boon: true },
+    { id: "sanctuary_zone", name: "Sanctuary Zone", description: "Pick any 2x2 area: your pieces standing there, your king aside, cannot be captured for your opponent's next 5 turns.", tier: 6, category: "protection", boon: true },
     activated(
-      (_inst, _api, picks) =>
-        picks.length > 0
-          ? null
-          : {
-              kind: "square",
-              label: "Pick the bottom-left corner of the 2x2 zone",
-              squares: Array.from({ length: 64 }, (_, i) => i).filter(
-                (sq) => FILE(sq) < 7 && RANK(sq) < 7,
-              ),
-            },
+      (_inst, _api, picks) => {
+        // Two picks place the 2x2 precisely: the first is any corner, the
+        // second is a diagonal neighbour of it, so the two picks are opposite
+        // corners and the player aims the box in whatever direction they want
+        // (no fixed up-and-right auto-extend that felt random).
+        if (picks.length === 0) {
+          return {
+            kind: "square",
+            label: "Pick one corner of your 2x2 sanctuary",
+            squares: Array.from({ length: 64 }, (_, i) => i),
+          };
+        }
+        if (picks.length === 1) {
+          const a = picks[0].square!;
+          return {
+            kind: "square",
+            label: "Pick the opposite corner to place the 2x2",
+            squares: [a - 9, a - 7, a + 7, a + 9].filter(
+              (b) =>
+                b >= 0 &&
+                b < 64 &&
+                Math.abs(FILE(b) - FILE(a)) === 1 &&
+                Math.abs(RANK(b) - RANK(a)) === 1,
+            ),
+          };
+        }
+        return null;
+      },
       (_inst, api, picks) => {
-        const sq = picks[0]?.square;
-        if (sq == null) return;
+        const a = picks[0]?.square;
+        const b = picks[1]?.square;
+        if (a == null || b == null) return;
+        const f0 = Math.min(FILE(a), FILE(b));
+        const r0 = Math.min(RANK(a), RANK(b));
         addEffect(api, {
           kind: "shield",
           owner: api.me,
-          squares: [sq, sq + 1, sq + 8, sq + 9],
+          squares: [SQ(f0, r0), SQ(f0 + 1, r0), SQ(f0, r0 + 1), SQ(f0 + 1, r0 + 1)],
           turns: 4,
         });
       },
@@ -2592,7 +2614,7 @@ const TIER7: Buff[] = [
     skipOpponent(2),
   ),
   def(
-    { id: "fortress_realm", name: "Fortress Realm", description: "A 3x3 zone you pick makes your pieces there uncapturable for your opponent's next 5 turns.", tier: 7, category: "protection", boon: true },
+    { id: "fortress_realm", name: "Fortress Realm", description: "A 3x3 zone you pick makes your pieces there, your king aside, uncapturable for your opponent's next 5 turns.", tier: 7, category: "protection", boon: true },
     activated(
       (_inst, _api, picks) =>
         picks.length > 0
@@ -2894,7 +2916,7 @@ const TIER8: Buff[] = [
     skipOpponent(3),
   ),
   def(
-    { id: "divine_fortress", name: "Divine Fortress", description: "Your entire half of the board makes your pieces uncapturable for 3 turns.", tier: 8, category: "protection" },
+    { id: "divine_fortress", name: "Divine Fortress", description: "Every piece on your half of the board, your king aside, is uncapturable for 3 turns.", tier: 8, category: "protection" },
     shieldZone(
       (api) => Array.from({ length: 64 }, (_, i) => i).filter((sq) => inHalf(api.me, sq)),
       3,
@@ -3572,6 +3594,7 @@ export const ALL_BUFFS: Buff[] = [
   ...HEXES,
   ...NEW_HEXES,
   ...FUNNY_CARDS,
+  ...FANTASY_CARDS,
   ...CROSSREF_CARDS,
   ...ITEMS,
 ];

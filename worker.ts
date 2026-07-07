@@ -20,6 +20,7 @@ import {
   newGame,
   pickDraftCard,
   playMove,
+  rerollDraft,
   resign,
 } from "./src/engine/game";
 import {
@@ -101,6 +102,7 @@ type SpectatorChatEntry = { name: string; text: string; at: number };
 type StoredDraftAction =
   | { ply: number; color: Color; a: "pick"; index: number; cards: { id: string; tier: number }[] }
   | { ply: number; color: Color; a: "bank" }
+  | { ply: number; color: Color; a: "reroll" }
   | { ply: number; color: Color; a: "use"; buffIndex: number; picks: BuffPick[] };
 type StoredMatch = {
   id: string;
@@ -236,6 +238,7 @@ type ClientFrame =
   | { t: "reveal" }
   | { t: "dtPick"; d?: { index?: unknown } }
   | { t: "dtBank" }
+  | { t: "dtReroll" }
   | { t: "dtUse"; d?: { buffIndex?: unknown; picks?: unknown } }
   | { t: "dtTarget"; d?: { buffIndex?: unknown; picks?: unknown } }
   | { t: "dtNerfPick"; d?: { index?: unknown } }
@@ -396,7 +399,7 @@ type HouseSeekEntry = {
 // (deserializing every finished game's move history), which on a bloated table
 // blew the DO CPU limit before it could cache or GC anything: the crash loop.
 const liveIdsKey = "live:ids";
-const buildVersion = "clock-tradeoff-cards-1";
+const buildVersion = "draft-reroll-1";
 // How long the moderator card-overrides snapshot (the card_overrides table:
 // disabled cards and tier moves) is cached in the DO before re-reading D1.
 // Loaded lazily on match creation and the opening nerf deal, never on a
@@ -579,7 +582,14 @@ function serializeMatchForEngine(match: StoredMatch): EngineMatch {
     cadence: match.cadence,
     stacked: match.stacked,
     moves: match.moves,
-    draftActions: match.draftActions,
+    // The remote engine (replay.ts) has no reroll opcode; drop rerolls. A
+    // reroll only changes which cards were OFFERED, never the board, and the
+    // worker re-validates any returned move against its own legal set (falling
+    // back to the local engine on a mismatch), so a stale offer stream on the
+    // remote side can only cost a fallback, never a desync.
+    draftActions: match.draftActions?.filter(
+      (a): a is Exclude<StoredDraftAction, { a: "reroll" }> => a.a !== "reroll",
+    ),
   };
 }
 
@@ -912,6 +922,8 @@ export class GameServer extends DurableObject<Env> {
         return this.draftPick(ws, frame.d);
       case "dtBank":
         return this.draftBank(ws);
+      case "dtReroll":
+        return this.draftReroll(ws);
       case "dtUse":
         return this.draftUse(ws, frame.d);
       case "dtTarget":
@@ -1604,6 +1616,11 @@ export class GameServer extends DurableObject<Env> {
       this.draftRebuild?.acquired.set(index, acquired);
     } else if (action.a === "bank") {
       bankDraft(game, action.color);
+    } else if (action.a === "reroll") {
+      // Re-roll the offer off the (replayed) RNG at the same tiers. Never
+      // reaches clients (filtered from publicDraftActions), so only the
+      // server's own rebuild replays it.
+      rerollDraft(game, action.color);
     } else {
       const bs = game.buffs;
       const mine = bs?.players[action.color];
@@ -3602,9 +3619,11 @@ export class GameServer extends DurableObject<Env> {
       const last = masked[masked.length - 1];
       const cards = last && last.a === "pick" ? last.cards : [];
       this.sendWatchersById(id, "dtResolved", { color: action.color, kind: "picked", cards });
-    } else {
+    } else if (action.a === "bank") {
       this.sendWatchersById(id, "dtResolved", { color: action.color, kind: "banked" });
     }
+    // A reroll (native games only) sends no dtResolved: the dtState resync
+    // below carries the fresh offer. Arena games never reroll.
     if (game?.buffs) {
       const state = this.draftStateFor(game, match, "spectator");
       if (state) this.sendWatchersById(id, "dtState", { state });
@@ -3973,6 +3992,7 @@ export class GameServer extends DurableObject<Env> {
         buffs: open ? ps.buffs : ps.buffs.map((b) => (this.isBuffRevealed(b) ? b : this.maskBuff(b))),
         draftsTaken: ps.draftsTaken,
         nextDraftAt: ps.nextDraftAt,
+        rerollsLeft: ps.rerollsLeft,
         offer: open ? ps.offer : null,
         ...(seat !== "spectator" && !open && ps.offer ? { offerPending: true } : {}),
         ...(open ? { flags: ps.flags } : {}),
@@ -4017,8 +4037,16 @@ export class GameServer extends DurableObject<Env> {
   // index stays private with the rest of the offer.
   private publicDraftActions(match: StoredMatch, viewer: Color | "spectator") {
     const rebuild = this.draftRebuild?.matchId === match.id ? this.draftRebuild : null;
-    return (match.draftActions ?? []).map((action, i) => {
-      if (action.a !== "pick") return action;
+    type PublicDraftAction =
+      | { ply: number; color: Color; a: "pick"; cards: ({ id: string; tier: number } | { hidden: true; tier: number })[] }
+      | { ply: number; color: Color; a: "bank" }
+      | { ply: number; color: Color; a: "use"; buffIndex: number; picks: BuffPick[] };
+    return (match.draftActions ?? []).flatMap<PublicDraftAction>((action, i) => {
+      // Rerolls are a server-only RNG detail (the client never rolls offers);
+      // drop them so the replica's applyDraftAction never sees one. Indexing
+      // stays correct because flatMap still passes the original `i`.
+      if (action.a === "reroll") return [];
+      if (action.a !== "pick") return [action];
       const open = !!match.picksVisible || viewer === action.color;
       const acquired = rebuild?.acquired.get(i);
       const cards = action.cards.map((card, j) => {
@@ -4027,7 +4055,7 @@ export class GameServer extends DurableObject<Env> {
           open || BUFF_BY_ID[card.id]?.kind === "instant" || (inst ? this.isBuffRevealed(inst) : false);
         return revealed ? card : { hidden: true as const, tier: card.tier };
       });
-      return { ply: action.ply, color: action.color, a: "pick" as const, cards };
+      return [{ ply: action.ply, color: action.color, a: "pick" as const, cards }];
     });
   }
 
@@ -4212,6 +4240,32 @@ export class GameServer extends DurableObject<Env> {
       return error(ws, "no_offer", "You have no pending buff draft.");
     }
     await this.resolveDraftBank(match, game, color);
+  }
+
+  // Reroll the seat's pending offer: fresh cards at the same tiers, spending
+  // one reroll. Server-authoritative and broadcast (the offer never leaves the
+  // DO's RNG), so no client can desync it. No dtResolved and no clock/turn
+  // change: the offer stays open, so a plain draft-state resync carries the
+  // new cards and the decremented reroll count to the seat.
+  private async draftReroll(ws: WebSocket) {
+    const ctx = await this.draftContext(ws);
+    if (!ctx) return;
+    const { session, match, game } = ctx;
+    const color = session.color!;
+    const ps = game.buffs!.players[color];
+    if (!ps.offer) return error(ws, "no_offer", "You have no pending buff draft.");
+    if ((ps.rerollsLeft ?? 0) <= 0) return error(ws, "no_reroll", "You have no rerolls left.");
+    if (!rerollDraft(game, color)) return error(ws, "no_reroll", "That draft cannot be rerolled.");
+    match.draftActions = [
+      ...(match.draftActions ?? []),
+      { ply: match.moves.length, color, a: "reroll" },
+    ];
+    // A house seat can hold the offer; a reroll leaves whose-turn-it-is
+    // untouched, so just refresh any pending house action off the new state.
+    this.armBotAction(match, game, Date.now());
+    await this.saveMatch(match);
+    this.sendDraftState(match, game);
+    this.sendWatcherDraftState(match, game);
   }
 
   private async draftUse(ws: WebSocket, data: unknown) {

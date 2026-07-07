@@ -1,6 +1,6 @@
 // Game sounds, in two themes (Settings > Sound):
 //  - "lichess": the standard sound set from lichess.org, vendored under
-//    /public/sound/lichess (lila is AGPL — see the README in that directory).
+//    /public/sound/lichess (lila is AGPL - see the README in that directory).
 //  - "classic": the original synthesized wood-knock clicks (Web Audio only).
 // Sample playback always falls back to the synth while a file is still
 // loading or failed to load, so a sound never silently goes missing.
@@ -166,9 +166,9 @@ export function isMuted(): boolean {
 }
 
 interface KnockOpts {
-  /** Bandpass center for the noise burst — higher = crisper, sharper. */
+  /** Bandpass center for the noise burst: higher = crisper, sharper. */
   filterFreq: number;
-  /** Bandpass Q — higher = more tonal/resonant. */
+  /** Bandpass Q: higher = more tonal/resonant. */
   filterQ?: number;
   /** Duration of the noise transient in seconds. */
   dur: number;
@@ -606,5 +606,142 @@ export function playSiege(count = 3) {
   for (let i = 0; i < n; i++) {
     const t = 0.1 + i * 0.08;
     knock({ filterFreq: 420, filterQ: 1.6, dur: 0.07, gain: 0.36 - i * 0.03, bodyFreq: 120, bodyGain: 0.28, bodyDur: 0.08, delay: t });
+  }
+}
+
+// --- Batch 2 signature voices -----------------------------------------------
+// One choreographed voice per Batch 2 spectacle (coronations, freezes,
+// petrifies, time locks, shields, wall builds). Same rules as the Batch 1
+// voices: Web Audio only, gated by fx(), staggered to track the visual, scaled
+// by `count` where the spectacle rolls across several squares. Wired to the
+// board once Board.tsx's playSignature switch gains a case per key (these cards
+// carry no removal diff, so both the square-derivation and the switch case live
+// outside this file; see the SIGNATURES note in BoardEffects.tsx).
+
+/** Coronation (Amazon / God Knight): a bright choir hit rising to a sparkle. */
+export function playCoronation() {
+  if (!fx()) return;
+  tone({ freq: 523, dur: 0.22, type: "triangle", gain: 0.12, sweep: 784, release: 0.2 });
+  tone({ freq: 659, dur: 0.22, type: "sine", gain: 0.08, release: 0.22, delay: 0.05 });
+  tone({ freq: 1046, dur: 0.2, type: "sine", gain: 0.05, attack: 0.01, release: 0.24, delay: 0.12 });
+}
+
+/** Crown rain (Double / Triple Amazon, Amazon Army): a brass swell under a
+ * cascade of crown chimes. */
+export function playCrownRain(count = 3) {
+  if (!fx()) return;
+  const n = Math.max(1, Math.min(count, 6));
+  tone({ freq: 330, dur: 0.4, type: "sawtooth", gain: 0.06, sweep: 494, release: 0.2 });
+  for (let i = 0; i < n; i++) {
+    tone({ freq: 1046 + i * 90, dur: 0.18, type: "sine", gain: 0.07, attack: 0.005, release: 0.2, delay: i * 0.1 });
+  }
+}
+
+/** Colossus / Titan: a size-up boing, a heavy stomp, and a shield clang. */
+export function playColossus() {
+  if (!fx()) return;
+  tone({ freq: 300, dur: 0.22, type: "sine", gain: 0.1, sweep: 720, release: 0.1 });
+  knock({ filterFreq: 150, filterQ: 0.7, dur: 0.2, gain: 0.6, bodyFreq: 60, bodyGain: 0.55, bodyDur: 0.2, delay: 0.18 });
+  tone({ freq: 2200, dur: 0.16, type: "triangle", gain: 0.05, sweep: 1600, release: 0.16, delay: 0.2 });
+}
+
+/** Time Skip: an alarm brring cut short by a snooze thunk, then a snore. */
+export function playSnooze() {
+  if (!fx()) return;
+  tone({ freq: 880, dur: 0.05, type: "square", gain: 0.08, release: 0.02 });
+  tone({ freq: 880, dur: 0.05, type: "square", gain: 0.08, release: 0.02, delay: 0.06 });
+  knock({ filterFreq: 300, filterQ: 2, dur: 0.08, gain: 0.4, bodyFreq: 120, bodyGain: 0.3, bodyDur: 0.08, delay: 0.14 });
+  tone({ freq: 200, dur: 0.3, type: "sawtooth", gain: 0.06, sweep: 140, release: 0.12, delay: 0.24 });
+}
+
+/** Time Prison: a clanging cell-door slam and slow ominous clock ticking. */
+export function playClockCage() {
+  if (!fx()) return;
+  knock({ filterFreq: 220, filterQ: 1, dur: 0.16, gain: 0.55, bodyFreq: 80, bodyGain: 0.5, bodyDur: 0.16 });
+  knock({ filterFreq: 2200, filterQ: 9, dur: 0.05, gain: 0.2, delay: 0.16 });
+  tone({ freq: 1000, dur: 0.04, type: "square", gain: 0.05, release: 0.03, delay: 0.24 });
+  tone({ freq: 1000, dur: 0.04, type: "square", gain: 0.05, release: 0.03, delay: 0.4 });
+}
+
+/** Time Freeze: a clock chime cut off by a glassy freeze-shatter. */
+export function playClockIce() {
+  if (!fx()) return;
+  tone({ freq: 1568, dur: 0.14, type: "sine", gain: 0.09, release: 0.1 });
+  tone({ freq: 2800, dur: 0.2, type: "sine", gain: 0.06, sweep: 1900, release: 0.18, delay: 0.1 });
+  knock({ filterFreq: 3200, filterQ: 6, dur: 0.06, gain: 0.24, delay: 0.12 });
+}
+
+/** Blitzkrieg: a thunderclap, then four escalating sonic booms. */
+export function playBlitz(count = 4) {
+  if (!fx()) return;
+  const n = Math.max(1, Math.min(count, 5));
+  knock({ filterFreq: 200, filterQ: 0.7, dur: 0.28, gain: 0.5, bodyFreq: 70, bodyGain: 0.5, bodyDur: 0.26 });
+  for (let i = 0; i < n; i++) {
+    const t = 0.1 + i * 0.09;
+    knock({ filterFreq: 2600 + i * 300, filterQ: 7, dur: 0.05, gain: 0.34, delay: t });
+    tone({ freq: 4000 + i * 400, dur: 0.05, type: "square", gain: 0.04, sweep: 2200, release: 0.04, delay: t + 0.01 });
+  }
+}
+
+/** Mass / Deep / Eternal Freeze: a whiteout blizzard howl and a mass krsshh. */
+export function playMassFreeze(count = 8) {
+  if (!fx()) return;
+  const n = Math.max(1, Math.min(count, 12));
+  tone({ freq: 320, dur: 0.5, type: "sine", gain: 0.07, sweep: 900, release: 0.12 });
+  for (let i = 0; i < n; i++) {
+    knock({ filterFreq: 3200 - i * 40, filterQ: 5, dur: 0.05, gain: 0.2, delay: 0.05 + i * 0.045 });
+  }
+  tone({ freq: 3400, dur: 0.22, type: "sine", gain: 0.05, sweep: 2400, release: 0.2, delay: 0.06 });
+}
+
+/** Medusa / Basilisk: a stony grind rising into a hiss-crack and a stone plop. */
+export function playPetrify() {
+  if (!fx()) return;
+  tone({ freq: 120, dur: 0.3, type: "sawtooth", gain: 0.08, sweep: 260, release: 0.12 });
+  tone({ freq: 3000, dur: 0.1, type: "sine", gain: 0.04, sweep: 1800, release: 0.08, delay: 0.16 });
+  knock({ filterFreq: 260, filterQ: 2, dur: 0.09, gain: 0.4, bodyFreq: 110, bodyGain: 0.3, bodyDur: 0.09, delay: 0.24 });
+}
+
+/** Petrified Forest: a run of groaning creaks resolving into a deadpan owl
+ * hoot. */
+export function playPetrifiedForest(count = 4) {
+  if (!fx()) return;
+  const n = Math.max(1, Math.min(count, 6));
+  for (let i = 0; i < n; i++) {
+    tone({ freq: 180 - i * 10, dur: 0.18, type: "sawtooth", gain: 0.06, sweep: 120, release: 0.1, delay: i * 0.08 });
+  }
+  tone({ freq: 420, dur: 0.16, type: "sine", gain: 0.06, sweep: 360, release: 0.14, delay: n * 0.08 });
+  tone({ freq: 360, dur: 0.16, type: "sine", gain: 0.05, sweep: 320, release: 0.14, delay: n * 0.08 + 0.14 });
+}
+
+/** Aegis: a shing rising into a booming board-wide shield seal. */
+export function playAegis() {
+  if (!fx()) return;
+  tone({ freq: 660, dur: 0.14, type: "triangle", gain: 0.12, sweep: 990, release: 0.12 });
+  knock({ filterFreq: 200, filterQ: 0.9, dur: 0.16, gain: 0.4, bodyFreq: 90, bodyGain: 0.4, bodyDur: 0.16, delay: 0.06 });
+  tone({ freq: 2640, dur: 0.2, type: "sine", gain: 0.05, attack: 0.01, release: 0.24, delay: 0.08 });
+}
+
+/** Divine Fortress: a cathedral organ swell (root, fifth, octave). */
+export function playCathedral() {
+  if (!fx()) return;
+  tone({ freq: 262, dur: 0.5, type: "sawtooth", gain: 0.06, release: 0.3 });
+  tone({ freq: 392, dur: 0.5, type: "sawtooth", gain: 0.05, release: 0.3, delay: 0.03 });
+  tone({ freq: 523, dur: 0.5, type: "triangle", gain: 0.05, release: 0.32, delay: 0.06 });
+}
+
+/** Immortal King: a ghostly rising wail as the king returns in shades. */
+export function playShades() {
+  if (!fx()) return;
+  tone({ freq: 440, dur: 0.4, type: "sine", gain: 0.07, sweep: 660, release: 0.3 });
+  tone({ freq: 660, dur: 0.3, type: "sine", gain: 0.04, sweep: 520, release: 0.28, delay: 0.12 });
+}
+
+/** Rampart / Great Wall: a run of brick thuds as the wall builds up. */
+export function playWall(count = 5) {
+  if (!fx()) return;
+  const n = Math.max(1, Math.min(count, 6));
+  for (let i = 0; i < n; i++) {
+    knock({ filterFreq: 360, filterQ: 2, dur: 0.06, gain: 0.34, bodyFreq: 120 + i * 6, bodyGain: 0.28, bodyDur: 0.07, delay: i * 0.075 });
   }
 }

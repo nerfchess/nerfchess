@@ -314,7 +314,7 @@ export default function LobbyPage() {
                     <li key={p.name} className="flex items-center justify-between gap-2 text-sm">
                       <Link
                         href={`/u/${encodeURIComponent(p.name)}`}
-                        className="flex min-w-0 items-center gap-2 truncate text-parchment-100 hover:text-gold-leaf transition-colors"
+                        className="flex min-h-[44px] min-w-0 items-center gap-2 truncate sm:min-h-0 text-parchment-100 hover:text-gold-leaf transition-colors"
                       >
                         <PlayerAvatar name={p.name} avatar={p.avatar} size={22} />
                         {p.name}
@@ -434,6 +434,33 @@ function StatusBadge({ status }: { status: "online" | "searching" | "playing" })
   );
 }
 
+// A player's name linking to their profile, with the rating in muted text.
+// Used in every lobby row (seeks, challenges, live games) so any name is
+// clickable, house bots included (they have real seeded accounts). The tap
+// target is a comfortable 44px on phones and stays compact on desktop.
+function PlayerNameLink({
+  name,
+  rating,
+  className = "",
+}: {
+  name: string;
+  rating?: number | null;
+  className?: string;
+}) {
+  return (
+    <Link
+      href={`/u/${encodeURIComponent(name)}`}
+      className={
+        "inline-flex min-h-[44px] min-w-0 items-center sm:min-h-0 hover:text-gold-leaf hover:underline transition-colors " +
+        className
+      }
+    >
+      <span className="truncate">{name}</span>
+      {rating != null && <span className="ml-1 shrink-0 text-parchment-400">({rating})</span>}
+    </Link>
+  );
+}
+
 // A player waiting in a quick-pairing pool. Joining queues into the same
 // pool, which pairs the two immediately.
 function SeekRow({
@@ -455,13 +482,12 @@ function SeekRow({
     seek.timeSec >= 60
       ? `${Math.round(seek.timeSec / 60)}+${seek.incrementSec}`
       : `${seek.timeSec}s+${seek.incrementSec}`;
-  const name = seek.rating != null ? `${seek.name} (${seek.rating})` : seek.name;
   return (
     <li className="-mx-2 flex items-center justify-between gap-3 px-2 py-2.5 transition-colors hover:bg-white/[0.045]">
       <div className="min-w-0">
-        <div className="flex items-center gap-2 truncate text-sm text-parchment-100">
+        <div className="flex min-w-0 items-center gap-2 text-sm text-parchment-100">
           <Icon size={14} style={{ color: category.accent }} aria-hidden className="shrink-0" />
-          {name}
+          <PlayerNameLink name={seek.name} rating={seek.rating} />
         </div>
         <div className="mt-0.5 flex items-center gap-1.5 smallcaps text-[9px] text-parchment-400">
           <ModeBadge mode={seek.mode} compact />
@@ -493,14 +519,12 @@ function ChallengeRow({ challenge }: { challenge: MPLobbyChallenge }) {
     challenge.timeSec > 0
       ? `${Math.round(challenge.timeSec / 60)}+${challenge.incrementSec}`
       : "No clock";
-  const host =
-    challenge.host.rating != null
-      ? `${challenge.host.name} (${challenge.host.rating})`
-      : challenge.host.name;
   return (
     <li className="-mx-2 flex items-center justify-between gap-3 px-2 py-2.5 transition-colors hover:bg-white/[0.045]">
       <div className="min-w-0">
-        <div className="truncate text-sm text-parchment-100">{host}</div>
+        <div className="flex min-w-0 text-sm text-parchment-100">
+          <PlayerNameLink name={challenge.host.name} rating={challenge.host.rating} />
+        </div>
         <div className="mt-0.5 flex items-center gap-1.5 smallcaps text-[9px] text-parchment-400">
           <ModeBadge mode={challenge.mode} compact />
           <span>
@@ -520,15 +544,15 @@ function ChallengeRow({ challenge }: { challenge: MPLobbyChallenge }) {
 }
 
 function LiveGameRow({ game }: { game: MPLobbyGame }) {
-  const name = (p: { name: string; rating: number | null }) =>
-    p.rating != null ? `${p.name} (${p.rating})` : p.name;
   const clock =
     game.timeSec > 0 ? `${Math.round(game.timeSec / 60)}+${game.incrementSec}` : "No clock";
   return (
     <li className="-mx-2 flex items-center justify-between gap-3 px-2 py-2.5 transition-colors hover:bg-white/[0.045]">
       <div className="min-w-0">
-        <div className="truncate text-sm text-parchment-100">
-          {name(game.players.w)} <span className="text-parchment-400">vs</span> {name(game.players.b)}
+        <div className="flex min-w-0 items-center gap-1.5 text-sm text-parchment-100">
+          <PlayerNameLink name={game.players.w.name} rating={game.players.w.rating} className="max-w-[45%]" />
+          <span className="shrink-0 text-parchment-400">vs</span>
+          <PlayerNameLink name={game.players.b.name} rating={game.players.b.rating} className="max-w-[45%]" />
         </div>
         <div className="mt-0.5 flex items-center gap-1.5 smallcaps text-[9px] text-parchment-400">
           <ModeBadge mode={game.mode} compact />

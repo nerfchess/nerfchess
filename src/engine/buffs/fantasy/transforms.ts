@@ -1,0 +1,106 @@
+// Fantasy set: LEGENDARY TRANSFORMATIONS. Pieces reforged into something
+// greater: a champion raised to godhood as a queen (setPieceType), a king who
+// moves with a queen's reach (pieceBound), a rook that unfurls dragon wings
+// (pieceBound), a minor piece grown into a tower (setPieceType), a whole rank
+// of bishops ascending to queen-lines (permanentAugment), and pawns transmuted
+// to gold (setPieceType). Movement grants only widen a piece's move list and
+// setPieceType never targets a king, so nothing here can soft-lock.
+
+import { Buff } from "./shared";
+import {
+  card,
+  transformOwn,
+  pieceBound,
+  permanentAugment,
+  slideMoves,
+  mySquares,
+  ALL_DIRS,
+  DIAG_DIRS,
+  ORTHO_DIRS,
+} from "./shared";
+
+export const FANTASY_TRANSFORMS: Buff[] = [
+  card(
+    {
+      id: "metamorphosis",
+      name: "Metamorphosis",
+      description:
+        "Force a violent change of form on one of your own knights or bishops: it reshapes itself into a rook, once.",
+      tier: 5,
+      category: "pieces",
+      flavor: "Bones crack, and settle into something taller.",
+    },
+    transformOwn(1, ["n", "b"], "r", "Choose the piece to reshape into a rook"),
+  ),
+  card(
+    {
+      id: "dragon_form",
+      name: "Dragon Form",
+      description:
+        "One of your rooks unfurls a pair of dragon wings: for the game it also moves diagonally, ranging the board like a queen.",
+      tier: 6,
+      category: "movement",
+      flavor: "The tower learns to fly.",
+      fx: { motif: "empower", pieces: ["r"], moveAs: "q", self: true },
+    },
+    pieceBound("r", "Choose the rook to take Dragon Form", (board, sq, via) =>
+      slideMoves(board, sq, DIAG_DIRS, via),
+    ),
+  ),
+  card(
+    {
+      id: "apotheosis",
+      name: "Apotheosis",
+      description:
+        "Raise one of your knights, bishops, or rooks to godhood: it ascends on the spot into a queen, once.",
+      tier: 7,
+      category: "pieces",
+      flavor: "Mortal one moment, divine the next.",
+    },
+    transformOwn(1, ["n", "b", "r"], "q", "Choose the piece to raise to godhood"),
+  ),
+  card(
+    {
+      id: "god_king",
+      name: "God-King",
+      description:
+        "Your king is crowned a living god: for the game he moves any distance in any direction, with all the reach of a queen.",
+      tier: 7,
+      category: "movement",
+      flavor: "The throne walks where it pleases now.",
+      fx: { motif: "empower", pieces: ["k"], moveAs: "q", self: true },
+    },
+    pieceBound("k", "Crown your king a living god", (board, sq, via) =>
+      slideMoves(board, sq, ALL_DIRS, via),
+    ),
+  ),
+  card(
+    {
+      id: "celestial_ascension",
+      name: "Celestial Ascension",
+      description:
+        "Your bishops ascend to a higher plane: for the game every one of them also moves in straight lines like a rook, wielding a queen's full reach.",
+      tier: 7,
+      category: "movement",
+      flavor: "The whole clergy takes wing at once.",
+      fx: { motif: "empower", pieces: ["b"], moveAs: "q", self: true },
+    },
+    permanentAugment((_m, inst, api) =>
+      mySquares(api.board, api.me, "b").flatMap((sq) =>
+        slideMoves(api.board, sq, ORTHO_DIRS, inst.id),
+      ),
+    ),
+  ),
+  card(
+    {
+      id: "philosophers_stone",
+      name: "Philosopher's Stone",
+      description:
+        "Press the fabled stone to your ranks and transmute base metal to gold: two of your pawns become queens, once.",
+      tier: 8,
+      category: "pieces",
+      flavor: "The final work of a thousand alchemists.",
+    },
+    transformOwn(2, ["p"], "q", "Choose a pawn to transmute to gold"),
+  ),
+];

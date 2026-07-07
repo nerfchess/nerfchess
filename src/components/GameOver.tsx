@@ -44,6 +44,9 @@ interface Props {
   gameId?: string;
   // Draft games: the buffs I held during the game, offered for balance votes.
   myBuffs?: BuffInstance[];
+  // Draft games: the cards my opponent drafted, revealed once the game is over
+  // (the same "the secret finally pays off" beat as the nerf reveal).
+  opponentBuffs?: BuffInstance[];
 }
 
 // The shared compact thumbs pair. One vote per item; re-clicking replaces it
@@ -149,6 +152,30 @@ function BuffFeedbackRow({ buff, gameId }: { buff: BuffInstance; gameId?: string
   );
 }
 
+// A read-only row for one of the opponent's drafted cards, shown post-game.
+// No vote thumbs (those are only for cards you drafted yourself).
+function BuffReveal({ buff }: { buff: BuffInstance }) {
+  const def = BUFF_BY_ID[buff.id];
+  if (!def) return null;
+  return (
+    <li className="py-1">
+      <div className="flex items-center gap-2">
+        <span
+          className={`shrink-0 border px-1 font-display text-[10px] font-bold tier-bg-${buff.tier} tier-${buff.tier}`}
+          title={`Tier ${buff.tier}: ${TIER_LABEL[buff.tier]}`}
+          aria-hidden
+        >
+          {TIER_ROMAN[buff.tier]}
+        </span>
+        <span className="min-w-0 truncate text-xs text-parchment-200">{def.name}</span>
+      </div>
+      <p className="mt-0.5 text-left text-[10px] leading-snug text-parchment-400">
+        {def.description}
+      </p>
+    </li>
+  );
+}
+
 // A single revealed rule row for the post game summary. Both players' rules are
 // shown once the game is over, so the "secret" finally pays off.
 function RuleReveal({ label, nerf, children }: { label: string; nerf: Nerf; children?: ReactNode }) {
@@ -231,6 +258,7 @@ export function GameOver({
   onDismiss,
   gameId,
   myBuffs,
+  opponentBuffs,
 }: Props) {
   const [dismissed, setDismissed] = useState(false);
   const dismiss = useCallback(() => {
@@ -275,6 +303,16 @@ export function GameOver({
       return true;
     });
   }, [myBuffs]);
+  // The opponent's drafted cards, deduped and dropping any that stayed masked
+  // (an empty id the server never revealed), shown as a plain reveal list.
+  const revealedOppBuffs = useMemo(() => {
+    const seen = new Set<string>();
+    return (opponentBuffs ?? []).filter((b) => {
+      if (seen.has(b.id) || !BUFF_BY_ID[b.id]) return false;
+      seen.add(b.id);
+      return true;
+    });
+  }, [opponentBuffs]);
 
   // Share copies a short text summary of the game (result plus both rules) to
   // the clipboard. It works client side today; a hosted replay link can be
@@ -457,6 +495,17 @@ export function GameOver({
                   </span>
                 </button>
               ))}
+          </div>
+        )}
+
+        {revealedOppBuffs.length > 0 && (
+          <div className="mt-5 border border-white/10 bg-white/[0.02] p-3 text-left">
+            <span className="smallcaps text-[9px] text-parchment-400">Opponent&apos;s cards</span>
+            <ul className="mt-1 max-h-40 divide-y divide-white/5 overflow-y-auto">
+              {revealedOppBuffs.map((buff, i) => (
+                <BuffReveal key={`${buff.id}-${i}`} buff={buff} />
+              ))}
+            </ul>
           </div>
         )}
 

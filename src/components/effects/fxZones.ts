@@ -27,6 +27,9 @@ export interface MotifMark {
   motif: MotifKind;
   /** Card name, for the hover tooltip. */
   name: string;
+  /** The card's own rule text, so the hover explains exactly what this card
+   * does instead of a generic motif label ("moves like a knight"). */
+  description: string;
   /** Rolled tier of the card instance: tints the badge (tier palette). */
   tier: number;
   /** Card category: the micro-glyph stamped beside the motif. */
@@ -159,6 +162,7 @@ export function computeFxVisual(game: { board: BoardState; buffs?: BuffMatchStat
       const mark: Omit<MotifMark, "sq"> = {
         motif: fx.motif,
         name: def.name,
+        description: def.description,
         tier: inst.tier,
         category: def.category,
         ...(fx.moveAs ? { moveAs: fx.moveAs } : {}),

@@ -153,7 +153,16 @@ function buildGameFromStart(start: MPStart): NerfGame {
     // locally: it sets the draft cadence the dock displays.
     enableDraftMode(next, 1, { mode: start.mode });
     next = replayDraftGame(next, start.moves ?? [], start.dtActions ?? []);
-    if (next.buffs && start.dtState) mergeDraftState(next.buffs, start.dtState, start.color);
+    if (next.buffs && start.dtState) {
+      mergeDraftState(next.buffs, start.dtState, start.color);
+      // rerollsLeft is not part of mergeDraftState (rerolls are filtered from
+      // the replayed action record), so carry the server's authoritative count
+      // over by hand. Keeps the reroll control correct across a reconnect.
+      for (const c of ["w", "b"] as Color[]) {
+        const rl = start.dtState.players[c]?.rerollsLeft;
+        if (rl != null) next.buffs.players[c].rerollsLeft = rl;
+      }
+    }
     return next;
   }
   for (const uci of start.moves ?? []) {
@@ -851,6 +860,11 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         const g = gameRef.current;
         if (!g?.buffs) return;
         mergeDraftState(g.buffs, e.state, myColor);
+        // Server-authoritative reroll counts (not carried by mergeDraftState).
+        for (const c of ["w", "b"] as Color[]) {
+          const rl = e.state.players[c]?.rerollsLeft;
+          if (rl != null) g.buffs.players[c].rerollsLeft = rl;
+        }
         const opp = e.state.players[oppColor];
         setOppDrafting(!!opp?.offerPending || !!opp?.offer);
         applyGame({ ...g });
@@ -2300,6 +2314,19 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               setMyDraftResolved(true);
             } else setError("Disconnected from the game server.");
           }}
+          rerollsLeft={bsMine?.rerollsLeft ?? 0}
+          onReroll={() => {
+            if (session.sendDraftReroll()) {
+              // The server owns the roll and answers with a fresh draft-state
+              // (new cards + bumped rerolled counter). Decrement locally too so
+              // the control reflects the spend at once: the replica's
+              // mergeDraftState does not carry rerollsLeft back.
+              if (bsMine) {
+                bsMine.rerollsLeft = Math.max(0, (bsMine.rerollsLeft ?? 0) - 1);
+                applyGame({ ...game });
+              }
+            } else setError("Disconnected from the game server.");
+          }}
           opponent={{
             // Replica opponent offers only ever hold cards the server sent
             // us (picksVisible matches); otherwise they stay null.
@@ -2349,6 +2376,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           startedAt={game.startedAt}
           gameId={start.id}
           myBuffs={game.buffs?.players[myColor].buffs}
+          opponentBuffs={isBuffMode ? game.buffs?.players[oppColor].buffs : undefined}
         />
       )}
       <SettingsPanel

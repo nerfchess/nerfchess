@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { AccountUser, fetchMe } from "@/lib/authClient";
 import { achievementIcon } from "@/lib/achievementIcons";
+import { AVATARS } from "@/lib/avatars";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { PlayerStatsPanel } from "@/components/PlayerStatsPanel";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -106,6 +107,13 @@ export default function ProfilePage() {
   }, [username]);
 
   const isMe = !!me && !!profile && me.username.toLowerCase() === profile.user.username.toLowerCase();
+  // House bots carry a "_flower" preset avatar that real accounts can never
+  // claim (isAvatarId rejects it), so it is a reliable house/bot marker. When
+  // the profile belongs to one, label it so visitors know it is a house bot.
+  const isHouseBot =
+    !!profile &&
+    typeof profile.user.avatar === "string" &&
+    AVATARS[profile.user.avatar]?.flower === true;
 
   return (
     <main className="min-h-screen">
@@ -147,6 +155,11 @@ export default function ProfilePage() {
                         </span>
                       )}
                     </h1>
+                    {isHouseBot && (
+                      <span className="smallcaps text-[10px] px-2 py-0.5 border border-verdigris/40 bg-verdigris/10 text-verdigris-glow">
+                        Bot
+                      </span>
+                    )}
                     {profile.user.role !== "user" && (
                       <span className="smallcaps text-[10px] px-2 py-0.5 rounded-full border border-gold/40 text-gold-leaf">
                         {profile.user.role === "admin" ? "Admin" : "Moderator"}
