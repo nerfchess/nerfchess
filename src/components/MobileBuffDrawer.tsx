@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, Layers } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
 
 /**
@@ -62,9 +62,17 @@ export function MobileBuffDrawer({
           className="flex h-11 w-full items-center justify-between px-4 transition-colors duration-150 hover:bg-white/[0.04] active:bg-white/[0.07]"
         >
           <span className="flex items-center gap-2 smallcaps text-[10px] text-parchment-400">
+            {/* Mint icon chip echoes the desktop dock's "your buffs" hero so the
+                drawer reads as the same colored surface. */}
+            <span
+              aria-hidden
+              className="grid h-[18px] w-[18px] shrink-0 place-items-center rounded-[1px] border border-mint/45 bg-mint/10 text-mint-glow"
+            >
+              <Layers size={11} strokeWidth={2.4} />
+            </span>
             {label}
             {usable > 0 && (
-              <span className="grid h-4 min-w-[1rem] place-items-center rounded-full bg-gold px-1 font-mono text-[9px] font-bold text-ink-950">
+              <span className="grid h-4 min-w-[1rem] place-items-center rounded-[1px] bg-gold px-1 font-mono text-[9px] font-bold text-ink-950">
                 {usable}
               </span>
             )}
