@@ -60,7 +60,7 @@ export default function ChessVariantsPage() {
         </p>
         <p>
           It also borrows from card games: every 5 moves both players draft from a tiered pool
-          of over 400 cards, hexes, boons, and buffs, which puts{" "}
+          of over 1,000 cards, hexes, boons, and buffs, which puts{" "}
           <Link href="/guide/buff-mode" className="underline">Buff mode</Link> closer to a
           deck-drafting game played with chess pieces. And like several modern variants it
           drops checkmate entirely: you win by{" "}

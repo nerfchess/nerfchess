@@ -50,7 +50,7 @@ export default function GuideIndexPage() {
         <p>
           Buff mode keeps perfect information about the board but adds drafting, the kind of
           decision you would find in a card game: take the safe card now, or skip the draft to
-          bank a stronger offer later. Over 400 cards and rules live in the{" "}
+          bank a stronger offer later. Over 1,000 cards and rules live in the{" "}
           <Link href="/codex" className="underline">codex</Link>, each with a difficulty tier
           from I (Trivial) to VIII (Unhinged).
         </p>

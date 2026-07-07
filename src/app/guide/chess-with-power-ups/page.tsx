@@ -53,7 +53,7 @@ export default function ChessWithPowerUpsPage() {
           <Link href="/guide/glossary" className="underline">tier</Link> from I (Trivial) to VIII
           (Unhinged), and the draft climbs that ladder over the course of a game. You can also
           skip a draft to bank it, so your next offer rolls one tier higher: a small gamble on
-          timing. The whole power-up library, 400+ cards and rules, lives in the{" "}
+          timing. The whole power-up library, 1,000+ cards and rules, lives in the{" "}
           <Link href="/codex" className="underline">codex</Link>.
         </p>
       </InfoSection>
@@ -91,7 +91,7 @@ export default function ChessWithPowerUpsPage() {
           {
             question: "What kind of power-ups are in Nerf Chess?",
             answer:
-              "Power-ups (called buffs) can be passive, instant, or activated. They do things like give a piece a new way to move, freeze an enemy piece, grant an extra move, or shield a piece from capture. There are over 400 cards and rules in total.",
+              "Power-ups (called buffs) can be passive, instant, or activated. They do things like give a piece a new way to move, freeze an enemy piece, grant an extra move, or shield a piece from capture. There are over 1,000 cards and rules in total.",
           },
           {
             question: "Is power-up chess free to play?",

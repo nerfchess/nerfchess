@@ -292,15 +292,28 @@ export default function CodexPage() {
           <div className="mt-4 grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {isRules
               ? filtered.map((d) => (
-                  <NerfCard key={d.id} nerf={d} ownerLabel={`${TIER_ROMAN[d.tier]} · ${TIER_LABEL[d.tier]}`} />
+                  <Link
+                    key={d.id}
+                    href={`/codex/nerf/${d.id}`}
+                    className="block h-full rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-gold/60"
+                    title={`Read the ${d.name} card page`}
+                  >
+                    <NerfCard nerf={d} ownerLabel={`${TIER_ROMAN[d.tier]} · ${TIER_LABEL[d.tier]}`} />
+                  </Link>
                 ))
               : buffFiltered.map((b) => (
-                  <BuffCard
+                  <Link
                     key={b.id}
-                    buff={b}
-                    tier={b.tier}
-                    status={b.implemented ? null : "Not yet appearing in drafts"}
-                  />
+                    href={`/codex/buff/${b.id}`}
+                    className="block h-full rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-gold/60"
+                    title={`Read the ${b.name} card page`}
+                  >
+                    <BuffCard
+                      buff={b}
+                      tier={b.tier}
+                      status={b.implemented ? null : "Not yet appearing in drafts"}
+                    />
+                  </Link>
                 ))}
           </div>
         ) : (

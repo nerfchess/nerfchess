@@ -59,7 +59,7 @@ export default function DrawbackChessPage() {
         </p>
         <p>
           <strong>A tiered library.</strong> The <Link href="/codex" className="underline">
-          codex</Link> holds over 400 cards and rules, each graded from tier I (Trivial) to
+          codex</Link> holds over 1,000 cards and rules, each graded from tier I (Trivial) to
           tier VIII (Unhinged), so games can be as mild or as absurd as the draft decides.
         </p>
         <p>

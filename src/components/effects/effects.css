@@ -712,6 +712,35 @@
 }
 .fx-sig-glitch { animation: fx-sig-glitch 0.7s steps(2, end) both; }
 
+/* --- 10e. Batch 5 signature spectacles --------------------------------------
+   The library-core + wild + funny second pass. Everything composes the Batch
+   1-4 classes above (fx-sig-ring / -shock / -flash / -ash / -crumble / -star /
+   -grow / -brick / -rise / -wing-l/-r / -swirl / -arc / -streak / -splat /
+   -muzzle / -ice / -crownfall) so it inherits the same transform/opacity +
+   reduced-motion behaviour. Only two motions are genuinely new: a clock hand
+   spun backward (chrono theft) and a vortex that pulls everything to a point. */
+
+/* Chrono theft: the clock's hands sweep backward as time is siphoned off. */
+@keyframes fx-sig-rewind {
+  0% { opacity: 0; transform: rotate(40deg); }
+  20% { opacity: 1; transform: rotate(0deg); }
+  100% { opacity: 0; transform: rotate(-320deg); }
+}
+.fx-sig-rewind {
+  animation: fx-sig-rewind 0.9s ease-out both;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* Vortex: shards (and the dark core) are pulled from their outer start point in
+   to the centre and collapse to a point. Inward twin of fx-sig-star. */
+@keyframes fx-sig-implode {
+  0% { opacity: 0; transform: translate(var(--dx, 0), var(--dy, 0)) scale(1) rotate(0deg); }
+  20% { opacity: 1; }
+  100% { opacity: 0; transform: translate(0, 0) scale(0.2) rotate(var(--rot, 0deg)); }
+}
+.fx-sig-implode { animation: fx-sig-implode 0.6s ease-in both; }
+
 /* --- 11. Bound-buff marker + effect popover ---------------------------------
    The Duelist-style corner sigil pops in once on mount (a piece just gained a
    bound buff), then holds. The effect-explanation popover fades and rises a
@@ -821,7 +850,11 @@
   .fx-sig-arc,
   /* Batch 4 spectacles: only the glitch adds a new class; the rest reuse the
      classes already listed above. */
-  .fx-sig-glitch {
+  .fx-sig-glitch,
+  /* Batch 5 spectacles: only the backward clock and the vortex implosion add
+     new classes; the rest reuse the classes already listed above. */
+  .fx-sig-rewind,
+  .fx-sig-implode {
     animation: none !important;
     opacity: 0 !important;
   }
