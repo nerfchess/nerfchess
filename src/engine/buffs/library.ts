@@ -3356,7 +3356,7 @@ const HEXES: Buff[] = [
           // Three ticks: this effect loses one tick to the triggering move
           // itself (timers tick right after onMovePlayed), leaving the
           // promised 2 stuck turns.
-          addEffect(api, { kind: "freeze", sq: move.to, owner: api.opp, turns: 3 });
+          addEffect(api, { kind: "freeze", sq: move.to, owner: api.opp, turns: 3, skin: "glue" });
         }
         tickTurns(inst, move, api.me);
       },
@@ -3533,7 +3533,7 @@ const ITEMS: Buff[] = [
         // Dazed: the piece skips its owner's next turn. Two ticks, because
         // this effect loses one tick to the triggering move itself (timers
         // tick right after onMovePlayed).
-        addEffect(api, { kind: "freeze", sq: slipped ? back! : sq, owner: api.opp, turns: 2 });
+        addEffect(api, { kind: "freeze", sq: slipped ? back! : sq, owner: api.opp, turns: 2, skin: "stun" });
       },
       status: (inst) => {
         const sqs =

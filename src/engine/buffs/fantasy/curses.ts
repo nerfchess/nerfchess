@@ -25,7 +25,7 @@ export const FANTASY_CURSES: Buff[] = [
       category: "item",
       flavor: "It feels the stare and dares not move.",
     },
-    freezeTarget(2),
+    freezeTarget(2, "charm"),
   ),
   card(
     {
