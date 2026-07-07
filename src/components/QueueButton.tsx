@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Swords } from "lucide-react";
-import { AccountUser, fetchMe } from "@/lib/authClient";
+import { AccountUser, ensureAccount, fetchMe } from "@/lib/authClient";
 import { clearSnapshot, readSnapshot, writeSnapshot } from "@/lib/snapshotCache";
 import { MPSession, saveOnlineSeat } from "@/lib/multiplayer";
 import { getCategory, type RatingCategoryId } from "@/lib/ratingCategories";
@@ -40,8 +40,9 @@ const EXAMPLE_BUFF_IDS = ["pawn_push", "ferz_king", "pawn_shield"];
 // player picks a mode card (nothing queues yet), picks a time control, and
 // the Play button at the bottom starts the search; each pool stakes its own
 // rating. The last mode choice is remembered, and a `?mode=` query param
-// (e.g. from the home page links) preselects one. Signed-in players are sent
-// to the game URL when paired; signed-out visitors get a sign-in link.
+// (e.g. from the home page links) preselects one. Both are sent to the game
+// URL when paired; signed-out visitors queue as a guest (no login wall), with
+// a small nudge to register so their rating sticks.
 export function QueueButton() {
   const router = useRouter();
   const [user, setUser] = useState<AccountUser | null | undefined>(undefined);
@@ -122,6 +123,20 @@ export function QueueButton() {
 
   const startSearch = async (mode: DraftMode) => {
     setError(null);
+    // Signed-out players queue as a guest (a throwaway account) so the server
+    // can pair them: quick pairing needs an identity, but there is no login
+    // wall. A guest's rating is throwaway until they register, so the game
+    // plays out casual for them. Mint the guest before entering the searching
+    // state so a cancel during the search can never strand a half-open queue.
+    let me = user;
+    if (!me) {
+      me = await ensureAccount();
+      if (me) setUser(me);
+    }
+    if (!me) {
+      setError("Could not start a guest session. Please try again.");
+      return;
+    }
     setState("searching");
     const session = new MPSession();
     session.persistFriendSession = false;
@@ -168,16 +183,6 @@ export function QueueButton() {
 
       {user === undefined ? (
         <div className="mt-4 px-2 py-6 text-center text-parchment-400 text-sm">…</div>
-      ) : !user ? (
-        <div className="mt-4 flex flex-col items-start gap-2">
-          <Link
-            href="/login?next=/lobby"
-            className="inline-block px-6 py-3 btn-leaf font-display text-base"
-          >
-            Sign in to play online
-          </Link>
-          <p className="text-xs text-parchment-400">Queue games are rated.</p>
-        </div>
       ) : state === "searching" ? (
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
           <span className="flex items-center gap-2 text-sm text-parchment-200">
@@ -264,6 +269,19 @@ export function QueueButton() {
           >
             {mode === "nerf" ? "Play Nerf" : mode === "buff" ? "Play Buff" : "Pick a mode to play"}
           </button>
+
+          {/* Signed-out or guest players can queue and play right away; this
+              is a nudge, never a gate. Their rating is throwaway until they
+              register. */}
+          {(!user || user.isGuest) && (
+            <p className="mt-3 text-center text-xs text-parchment-400">
+              Playing as a guest.{" "}
+              <Link href="/login?next=/lobby" className="text-gold-leaf hover:underline">
+                Sign in
+              </Link>{" "}
+              to keep your rating.
+            </p>
+          )}
         </>
       )}
 
