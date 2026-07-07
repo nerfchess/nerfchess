@@ -522,6 +522,28 @@ export function legalMoves(game: NerfGame): Move[] {
     if (bs.chainKingGuard === me || bs.extraMoves[me] > 0 || bs.skips[opp] > 0) {
       all = all.filter((m) => m.captured !== "k");
     }
+    // Invulnerability must not also deliver the win. A piece that cannot be
+    // captured this turn (shielded by my own shield, or my king under a
+    // king_safe ward) may not be the one to capture the enemy king: an
+    // untouchable attacker would be a riskless, uncounterable finish, which is
+    // exactly the "too strong" case. You have to expose a piece to end the
+    // game. Any capturable piece may still take the king, so the position is
+    // never made unwinnable; the guard below relaxes if it would empty the list.
+    {
+      const myShieldZones = bs.effects
+        .filter((e) => e.kind === "shield" && e.owner === me && effectActive(e))
+        .map((e) => (e.kind === "shield" ? e.squares : null));
+      const myKingSafe = bs.effects.some(
+        (e) => e.kind === "king_safe" && e.owner === me && effectActive(e),
+      );
+      if (myShieldZones.length > 0 || myKingSafe) {
+        const untouchable = (sq: Square) =>
+          myShieldZones.some((squares) => (squares ? squares.includes(sq) : true)) ||
+          (myKingSafe && game.board.pieces[sq]?.type === "k");
+        const guarded = all.filter((m) => m.captured !== "k" || !untouchable(m.from));
+        if (guarded.length > 0) all = guarded;
+      }
+    }
     // Panic step: while mass freeze (3 or more of my pieces frozen) is
     // active, my king keeps its plain one-square quiet steps regardless of
     // zone effects, so a freeze plus extra-move stack can never leave a side
