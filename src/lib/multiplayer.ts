@@ -43,6 +43,9 @@ export type MPDraftPlayerState = {
   oppReveal?: { index: number; cards?: MPDraftCard[]; tier?: number } | null;
   nerfRemoved?: boolean;
   revived?: Record<string, number>;
+  // Crazyhouse-style pocket: pieces this seat may drop onto an empty square.
+  // Public (drops are public moves), synced so a drop replays identically.
+  inventory?: Record<string, number>;
 };
 
 export type MPDraftState = {

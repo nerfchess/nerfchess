@@ -8,7 +8,7 @@ import { Color } from "@/engine/types";
 import { Tier } from "@/engine/nerf";
 import { TIER_ROMAN } from "@/lib/tiers";
 import { motion, useReducedMotion } from "framer-motion";
-import { Ban, EyeOff, Hourglass, Inbox, Layers, ShieldAlert, Swords, type LucideIcon } from "lucide-react";
+import { Ban, ChevronRight, EyeOff, Hourglass, Inbox, Layers, ShieldAlert, Swords, type LucideIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { BuffCard } from "./BuffCard";
 import { OppPlaysDockSection, type OppPlay } from "./OppPlaysLog";
@@ -400,7 +400,14 @@ interface Props {
 }
 
 export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards, plays }: Props) {
-  const [showUsed, setShowUsed] = useState(false);
+  // Per-card expand/collapse, remembered for the whole game. A missing key
+  // falls back to the default: your own cards start expanded, the opponent's
+  // start collapsed (see defaultOpen). Keyed by owner + index, both stable
+  // (used cards are marked spent, never removed, so indices never shift).
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const defaultOpen = (key: string) => key.startsWith("mine-");
+  const toggle = (key: string) =>
+    setExpanded((prev) => ({ ...prev, [key]: !(prev[key] ?? defaultOpen(key)) }));
   const reduceMotion = useReducedMotion();
 
   const bs = game.buffs;
@@ -413,21 +420,19 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
   const mine = bs.players[myColor].buffs;
   const theirs = bs.players[oppColor].buffs;
 
-  const mineActive = mine.map((inst, i) => ({ inst, i })).filter(({ inst }) => !inst.spent && !inst.nullified);
-  const mineUsed = mine.map((inst, i) => ({ inst, i })).filter(({ inst }) => inst.spent || inst.nullified);
-  const theirsActive = theirs.map((inst, i) => ({ inst, i })).filter(({ inst }) => !inst.spent && !inst.nullified);
-  const theirsUsed = theirs.map((inst, i) => ({ inst, i })).filter(({ inst }) => inst.spent || inst.nullified);
-  const usedCount = mineUsed.length + theirsUsed.length;
+  // Every drafted card stays in the dock for the whole game, used or not, so
+  // nothing a player spent silently disappears. Each entry collapses to a
+  // name + tier header and expands to the full card on click.
+  const mineAll = mine.map((inst, i) => ({ inst, i }));
+  const theirsAll = theirs.map((inst, i) => ({ inst, i }));
 
-  // Hidden opponent cards no longer render as face-down tier minis (owner
-  // call: the little tier tiles were noise). Revealed cards keep their full
-  // rows; everything hidden collapses into one small "N hidden" sign.
+  // Hidden opponent cards do not render as face-down tier minis (owner call:
+  // the little tier tiles were noise). Revealed and used cards keep their full
+  // rows; everything still hidden collapses into one small "N hidden" sign.
   const isHiddenOpp = (inst: (typeof theirs)[number]) =>
     !BUFF_BY_ID[inst.id] || (hideOpponentCards && !inst.spent && !inst.nullified);
-  const theirsShown = theirsActive.filter(({ inst }) => !isHiddenOpp(inst));
-  const theirsHiddenCount = theirsActive.length - theirsShown.length;
-  const theirsUsedShown = theirsUsed.filter(({ inst }) => !isHiddenOpp(inst));
-  const theirsUsedHiddenCount = theirsUsed.length - theirsUsedShown.length;
+  const theirsShown = theirsAll.filter(({ inst }) => !isHiddenOpp(inst));
+  const theirsHiddenCount = theirsAll.length - theirsShown.length;
 
   const lastMine = mine[mine.length - 1] ?? null;
   const lastMineDef = lastMine ? BUFF_BY_ID[lastMine.id] : undefined;
@@ -458,6 +463,9 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
     const activatable = def.kind === "activated" && !dead;
     const usable = canAct && activatable;
     const status = dead ? null : def.status?.(inst) ?? null;
+    const key = `mine-${i}`;
+    // Your own cards start expanded; collapse is a per-card choice.
+    const open = expanded[key] ?? true;
     return (
       <motion.div
         key={i}
@@ -465,11 +473,11 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.25 }}
         className={
-          "dock-card relative overflow-hidden rounded-[1px] border px-2 py-1.5 transition-transform duration-100 " +
+          "dock-card relative overflow-hidden rounded-[1px] border transition-transform duration-100 " +
           (dead
             ? "border-white/10 bg-white/[0.012] "
             : usable
-            ? "border-verdigris-glow/40 bg-verdigris/[0.06] pl-3 active:translate-y-px "
+            ? "border-verdigris-glow/40 bg-verdigris/[0.06] "
             : "border-white/10 bg-white/[0.02] ")
         }
       >
@@ -480,25 +488,21 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
           <span aria-hidden className="absolute inset-y-1 left-0 w-[3px] bg-verdigris-glow/80" />
         )}
         {dead && <span aria-hidden className="absolute inset-y-1 left-0 w-[3px] bg-white/15" />}
-        <div
-          // Second input path (additive): drag the usable chip onto a
-          // highlighted board square to pick it. Native HTML5 drag is separate
-          // from the board's pointer-drag, so the click flow is untouched. The
-          // custom dataTransfer type lets the Board react to card drags only.
-          draggable={usable || undefined}
-          onDragStart={
-            usable
-              ? (e) => {
-                  e.dataTransfer.setData("application/x-nerf-card", String(i));
-                  e.dataTransfer.effectAllowed = "move";
-                  // Same handler the Use button calls: engage target-select
-                  // mode so candidate squares light up as drop targets.
-                  onStartUse(i);
-                }
-              : undefined
-          }
-          className={"flex items-center gap-1.5 " + (usable ? "cursor-grab active:cursor-grabbing" : "")}
+        {/* Collapsed header: name + tier only, click to toggle. The Use button
+            and description live in the expanded body, so a button never nests
+            inside this toggle button. */}
+        <button
+          type="button"
+          onClick={() => toggle(key)}
+          aria-expanded={open}
+          className={"flex w-full items-center gap-1.5 px-2 py-1.5 text-left " + (usable ? "pl-3" : "")}
         >
+          <ChevronRight
+            aria-hidden
+            size={12}
+            strokeWidth={2.4}
+            className={"shrink-0 text-parchment-400 transition-transform duration-150 " + (open ? "rotate-90" : "")}
+          />
           <span
             className={
               "min-w-0 flex-1 truncate font-display text-[12px] font-semibold leading-tight " +
@@ -515,40 +519,55 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
               Usable
             </span>
           )}
-          {status && (
-            <span className="smallcaps hidden max-w-[7rem] shrink-0 truncate text-[8px] text-gold/80 lg:inline">
-              {status}
-            </span>
-          )}
           {dead && <UsedBadge nullified={!!inst.nullified} />}
           <span
             className={`shrink-0 rounded-[1px] border px-1.5 py-px font-display text-[9px] font-bold tier-bg-${inst.tier} tier-${inst.tier}`}
           >
             {TIER_ROMAN[inst.tier]}
           </span>
-          {activatable &&
-            (usable ? (
-              <button
-                onClick={() => onStartUse(i)}
-                className="btn-glass btn-glass--primary shrink-0 px-2.5 py-1 font-display text-[10px] font-semibold tracking-wide"
-              >
-                Use
-              </button>
-            ) : (
-              <button
-                disabled
-                title="Your turn only"
-                className="shrink-0 cursor-not-allowed rounded-[1px] border border-white/10 bg-white/[0.03] px-2.5 py-1 font-display text-[10px] tracking-wide text-parchment-400"
-              >
-                Use
-              </button>
-            ))}
-        </div>
-        {/* Full description, always readable without hovering; spent cards
-            fade their copy so the live rows carry the eye. */}
-        <p className={"mt-1 text-[10px] leading-snug " + (dead ? "text-parchment-500" : "text-parchment-300")}>
-          {def.description}
-        </p>
+        </button>
+        {open && (
+          <div className="px-2 pb-1.5">
+            {status && (
+              <div className="smallcaps mb-1 truncate text-[8px] text-gold/80">{status}</div>
+            )}
+            {/* Full description, always readable without hovering; spent cards
+                fade their copy so the live rows carry the eye. */}
+            <p className={"text-[10px] leading-snug " + (dead ? "text-parchment-500" : "text-parchment-300")}>
+              {def.description}
+            </p>
+            {activatable &&
+              (usable ? (
+                <button
+                  type="button"
+                  // Second input path (additive): drag the usable card onto a
+                  // highlighted board square to pick it. Native HTML5 drag is
+                  // separate from the board's pointer-drag, so the click flow is
+                  // untouched. The custom dataTransfer type lets the Board react
+                  // to card drags only.
+                  draggable
+                  onDragStart={(e) => {
+                    e.dataTransfer.setData("application/x-nerf-card", String(i));
+                    e.dataTransfer.effectAllowed = "move";
+                    onStartUse(i);
+                  }}
+                  onClick={() => onStartUse(i)}
+                  className="btn-glass btn-glass--primary mt-1.5 cursor-grab px-2.5 py-1 font-display text-[10px] font-semibold tracking-wide active:cursor-grabbing"
+                >
+                  Use
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  disabled
+                  title="Your turn only"
+                  className="mt-1.5 cursor-not-allowed rounded-[1px] border border-white/10 bg-white/[0.03] px-2.5 py-1 font-display text-[10px] tracking-wide text-parchment-400"
+                >
+                  Use
+                </button>
+              ))}
+          </div>
+        )}
       </motion.div>
     );
   };
@@ -559,6 +578,9 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
     // Hidden identities render nothing here; the aggregate "N hidden" sign
     // below the revealed rows carries them.
     if (!def || (hideOpponentCards && !dead)) return null;
+    const key = `opp-${i}`;
+    // The opponent's cards start collapsed; click to reveal the rule text.
+    const open = expanded[key] ?? false;
     return (
       <motion.div
         key={i}
@@ -566,11 +588,22 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.25 }}
         className={
-          "dock-card w-full rounded-[1px] border border-white/10 px-2 py-1 " +
+          "dock-card w-full rounded-[1px] border border-white/10 " +
           (dead ? "bg-white/[0.012]" : "bg-white/[0.02]")
         }
       >
-        <div className="flex items-center gap-1.5">
+        <button
+          type="button"
+          onClick={() => toggle(key)}
+          aria-expanded={open}
+          className="flex w-full items-center gap-1.5 px-2 py-1 text-left"
+        >
+          <ChevronRight
+            aria-hidden
+            size={12}
+            strokeWidth={2.4}
+            className={"shrink-0 text-parchment-400 transition-transform duration-150 " + (open ? "rotate-90" : "")}
+          />
           <span
             className={
               "min-w-0 flex-1 truncate font-display text-[11px] font-semibold " +
@@ -588,12 +621,13 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
           >
             {TIER_ROMAN[inst.tier]}
           </span>
-        </div>
-        {/* Rule text always visible, matching your own rows: what a revealed
-            card does must never require a hover. */}
-        <p className={"mt-0.5 text-[10px] leading-snug " + (dead ? "text-parchment-500" : "text-parchment-300")}>
-          {def.description}
-        </p>
+        </button>
+        {open && (
+          /* Rule text on demand: what a revealed card does is one click away. */
+          <p className={"px-2 pb-1 text-[10px] leading-snug " + (dead ? "text-parchment-500" : "text-parchment-300")}>
+            {def.description}
+          </p>
+        )}
       </motion.div>
     );
   };
@@ -786,10 +820,11 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
         {/* The next-draft chip above already says when cards arrive; repeating
             it here went stale after banks ("your first draft" forever). */}
         {mine.length === 0 && <p className="text-[11px] text-parchment-400">None yet.</p>}
-        {/* A thin mint spine brackets your live arsenal so "these are mine" is
-            unmistakable next to the opponent's coral rows. */}
-        {mineActive.length > 0 && (
-          <div className="space-y-1 border-l border-mint/30 pl-2">{mineActive.map(myRow)}</div>
+        {/* A thin mint spine brackets your arsenal so "these are mine" is
+            unmistakable next to the opponent's coral rows. Every card you have
+            drafted stays here, used ones included. */}
+        {mine.length > 0 && (
+          <div className="space-y-1 border-l border-mint/30 pl-2">{mineAll.map(myRow)}</div>
         )}
 
         {theirs.length > 0 && (
@@ -802,11 +837,11 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
                 accent="opponent"
               />
             </div>
-            <div className="flex flex-wrap items-start gap-1">{theirsShown.map(oppEntry)}</div>
+            <div className="space-y-1">{theirsShown.map(oppEntry)}</div>
             {theirsHiddenCount > 0 && (
               <div
                 className="flex items-center gap-1.5 rounded-[1px] border border-white/10 bg-white/[0.02] px-2 py-1"
-                title={`Tiers: ${theirsActive
+                title={`Tiers: ${theirsAll
                   .filter(({ inst }) => isHiddenOpp(inst))
                   .map(({ inst }) => TIER_ROMAN[inst.tier])
                   .join(", ")}`}
@@ -854,28 +889,6 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
         )}
 
         {plays && plays.length > 0 && <OppPlaysDockSection plays={plays} />}
-
-        {usedCount > 0 && (
-          <div className="border-t border-white/10 pt-1.5">
-            <button
-              onClick={() => setShowUsed((v) => !v)}
-              className="smallcaps w-full text-left text-[9px] text-parchment-400 transition hover:text-parchment-200"
-            >
-              {showUsed ? "Hide used" : `Show used (${usedCount})`}
-            </button>
-            {showUsed && (
-              <div className="mt-1.5 space-y-1">
-                {mineUsed.map(myRow)}
-                <div className="flex flex-wrap items-start gap-1">{theirsUsedShown.map(oppEntry)}</div>
-                {theirsUsedHiddenCount > 0 && (
-                  <p className="smallcaps text-[9px] text-parchment-400">
-                    +{theirsUsedHiddenCount} hidden used
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
-        )}
       </div>
     </div>
   );

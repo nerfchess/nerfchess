@@ -1,4 +1,4 @@
-import { countRepetitions, generateMoves, initialBoard, isInCheck, kingCaptured, makeMove } from "./board";
+import { cloneBoard, countRepetitions, generateMoves, initialBoard, isInCheck, kingCaptured, makeMove } from "./board";
 import {
   ActiveEffect,
   aiCanUse,
@@ -582,6 +582,28 @@ export function legalMoves(game: NerfGame): Move[] {
         if (!all.some((x) => x.from === m.from && x.to === m.to)) all.push(m);
       }
     }
+
+    // Crazyhouse-style inventory drops. Purely ADDITIVE and appended last, after
+    // every nerf/effect filter and relax rule, so a drop never displaces a piece
+    // move nor gets swept up by the "relax when the list would empty" guards: a
+    // player who can only drop is still not stalemated (drops count as legal
+    // moves in resolveNoMoves). A drop lands on an EMPTY square only, so it can
+    // never capture anything (the enemy king included), which is exactly why the
+    // chainKingGuard / shield king-capture guards above leave drops untouched.
+    // Pawns may never be dropped onto rank 1 or 8, and a king is never in a
+    // pocket.
+    const inv = bs.players[me].inventory;
+    if (inv) {
+      for (const key of Object.keys(inv) as PieceType[]) {
+        const count = inv[key] ?? 0;
+        if (count <= 0 || key === "k") continue;
+        for (let sq = 0; sq < 64; sq++) {
+          if (game.board.pieces[sq]) continue;
+          if (key === "p" && !pawnRankOk(sq)) continue;
+          all.push({ from: sq, to: sq, piece: key, color: me, drop: key });
+        }
+      }
+    }
   }
   return all;
 }
@@ -604,19 +626,58 @@ export function checkLossConditions(game: NerfGame): GameResult | null {
   return null;
 }
 
+/** Apply a crazyhouse-style inventory drop onto a fresh board copy: place the
+ * dropped piece on the (empty) target square, clear any stale en passant, hand
+ * the turn to the opponent, and record the move in history so the ply count and
+ * the move stream stay in lockstep with normal moves. The board is mutated
+ * outside makeMove (a drop's origin square is empty, so a history replay through
+ * makeMove could not reproduce it), so playMove sets bs.historyDiverged. */
+function applyDrop(board: BoardState, move: Move): BoardState {
+  const nb = cloneBoard(board);
+  nb.pieces[move.to] = { type: move.drop!, color: move.color };
+  nb.epTarget = null;
+  nb.turn = move.color === "w" ? "b" : "w";
+  if (move.color === "b") nb.fullmove++;
+  // A drop is neither a pawn push nor a capture; it counts toward the fifty-move
+  // clock like any other quiet move.
+  nb.halfmove = nb.halfmove + 1;
+  nb.history.push(move);
+  return nb;
+}
+
 export function playMove(game: NerfGame, move: Move): NerfGame {
   if (game.result) return game;
-  const nextBoard = makeMove(game.board, move);
-  // makeMove refused the move (empty origin square or the self-capture
-  // backstop): treat the whole ply as a no-op. Counting the capture or
-  // ticking effect timers against a board that did not change would desync
-  // the capture pools (revives) and effect clocks from the board itself.
-  if (nextBoard === game.board) return game;
+  let nextBoard: BoardState;
+  if (move.drop) {
+    nextBoard = applyDrop(game.board, move);
+  } else {
+    nextBoard = makeMove(game.board, move);
+    // makeMove refused the move (empty origin square or the self-capture
+    // backstop): treat the whole ply as a no-op. Counting the capture or
+    // ticking effect timers against a board that did not change would desync
+    // the capture pools (revives) and effect clocks from the board itself.
+    if (nextBoard === game.board) return game;
+  }
   if (move.captured) {
     game.captured[move.color][move.captured] += 1;
   }
   game.board = nextBoard;
   const bs = game.buffs;
+  if (move.drop && bs) {
+    // The board changed outside history-replayable makeMove: suspend the
+    // replay-based repetition check and spend one piece from the pocket. Bump
+    // mutations so apply paths see the direct board change, exactly like the
+    // BuffApi's place()/removePiece() do. Both clients replay the same drop
+    // move from the shared move stream, so the pocket stays in lockstep; the
+    // synced inventory (draftStateFor / mergeDraftState) is the safety net.
+    bs.historyDiverged = true;
+    bs.mutations = (bs.mutations ?? 0) + 1;
+    const pocket = bs.players[move.color].inventory;
+    if (pocket && (pocket[move.drop] ?? 0) > 0) {
+      pocket[move.drop] = (pocket[move.drop] ?? 0) - 1;
+      if ((pocket[move.drop] ?? 0) <= 0) delete pocket[move.drop];
+    }
+  }
   if (bs) {
     // A reply move from the other side lifts the chained-move king guard.
     if (bs.chainKingGuard && bs.chainKingGuard !== move.color) bs.chainKingGuard = undefined;

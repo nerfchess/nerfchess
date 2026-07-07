@@ -82,7 +82,10 @@ type Result = NerfGame["result"];
 //     hexes (60/40 weighted bucket roll inside rollOffer consumes an extra
 //     RNG draw per card), items joined both modes, and the opening nerf
 //     deal is capped at tier 2.
-const REPLAY_VERSION = 3;
+//   4 - crazyhouse-style inventory: a new tier-3 pooled card (Supply Drop)
+//     grants a piece to a pocket that is dropped on a later turn. The new
+//     card shifts the tier-3 pool, so in-flight offers roll differently.
+const REPLAY_VERSION = 4;
 
 type Setup = {
   whiteNerfId: string;
@@ -399,7 +402,7 @@ type HouseSeekEntry = {
 // (deserializing every finished game's move history), which on a bloated table
 // blew the DO CPU limit before it could cache or GC anything: the crash loop.
 const liveIdsKey = "live:ids";
-const buildVersion = "walnut-freeze-skins-1";
+const buildVersion = "crazyhouse-inventory-1";
 // How long the moderator card-overrides snapshot (the card_overrides table:
 // disabled cards and tier moves) is cached in the DO before re-reading D1.
 // Loaded lazily on match creation and the opening nerf deal, never on a
@@ -4015,6 +4018,10 @@ export class GameServer extends DurableObject<Env> {
         ...(self ? { oppReveal: ps.oppReveal ?? null } : {}),
         ...(ps.nerfRemoved ? { nerfRemoved: true } : {}),
         revived: ps.revived,
+        // Crazyhouse-style pocket: sent for both seats (drops are public moves,
+        // so the count is not hidden info) so an inventory drop replays
+        // identically on every replica even if a grant's replay path drifts.
+        ...(ps.inventory ? { inventory: ps.inventory } : {}),
       };
     };
     return {

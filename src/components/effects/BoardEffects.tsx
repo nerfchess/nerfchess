@@ -1198,7 +1198,10 @@ export type SigVisual =
   | "borderward"
   | "banana"
   | "minefield"
-  | "vortex";
+  | "vortex"
+  // --- Batch 6 (marquee dragon + wizard spectacles for the top tier) ---
+  | "dragonlord"
+  | "archmage";
 export type SigOrdering = "file" | "sweep" | "octagon" | "line" | "radial";
 export type SigSoundKey =
   | "nova"
@@ -1558,6 +1561,15 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   wc_black_hole: { ordering: "radial", staggerMs: 0, victims: "all", visual: "vortex", hasLead: true, sound: "wall", source: "blindfold" },
   wc_haunted_house: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "vortex", hasLead: false, sound: "wall", source: "blindfold" },
   wa_void_rift: { ordering: "radial", staggerMs: 0, victims: "all", visual: "vortex", hasLead: true, sound: "wall", source: "blindfold" },
+
+  // --- Batch 6: MARQUEE spectacles for the top-tier (tier-8) cards. A dragon
+  // that sweeps the board breathing fire (removal diff, like Nova), and an
+  // archmage who rises and casts (summon / void zones). Every entry reuses an
+  // existing SigSoundKey and an already-wired source. ---
+  total_annihilation: { ordering: "sweep", staggerMs: 95, victims: ["p", "n", "b", "r"], visual: "dragonlord", hasLead: true, sound: "atomic" },
+  queens_apocalypse: { ordering: "sweep", staggerMs: 85, victims: "all", visual: "dragonlord", hasLead: true, sound: "atomic" },
+  grand_reset: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "archmage", hasLead: true, sound: "coronation", source: "summon" },
+  void_realm: { ordering: "radial", staggerMs: 55, victims: "all", visual: "archmage", hasLead: true, sound: "shades", source: "blindfold" },
 };
 
 /** A jagged lightning bolt that fills its wrapper (BoltGlyph is fixed-size). */
@@ -3723,6 +3735,149 @@ function VortexBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   );
 }
 
+// --- Batch 6: marquee DRAGON + WIZARD spectacles (top-tier cards) ------------
+// Two board-wide signatures for the highest-tier marquee cards, wired like Nova.
+// Solid fills only (no gradients / glow / box-shadow), transform/opacity
+// animation, one-shot, hidden entirely under reduced motion. New motions
+// (dragon fly / wingbeat / fire breath / wizard rise) live in effects.css; the
+// per-square hits reuse the shared fx-sig-flash / -rise / -swirl / -scorch /
+// -star classes.
+
+/** Marquee DRAGON (Total Annihilation / Queen's Apocalypse): on the lead square
+ * a great wyrm sweeps across the board, banking and beating its wing as it
+ * breathes a cone of fire; every cleared square erupts in a fireball, a rising
+ * flame lick, an ember shatter, and a scorch. */
+function DragonLordBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <span className="pointer-events-none absolute inset-0 z-30" aria-hidden="true">
+        <span
+          className="fx-sig-dragon-fly absolute left-[-42%] top-[2%] block h-[62%] w-[150%]"
+          style={{ animationDelay: `${delayMs}ms` }}
+        >
+          <svg viewBox="0 0 96 40" className="h-full w-full" aria-hidden="true">
+            {/* tail + serpentine body */}
+            <path
+              d="M4 30 C14 25 20 31 28 26 C36 21 42 25 52 19 C58 15 64 17 70 15 L73 20 C67 22 61 22 55 26 C47 31 41 28 33 33 C25 38 14 36 6 34 Z"
+              fill="#7a2f28"
+              stroke="#3a1512"
+              strokeWidth="1.1"
+              strokeLinejoin="round"
+            />
+            {/* belly ridges */}
+            <path d="M20 30 L24 30 M30 28 L34 28 M42 26 L46 26" stroke="#e0776b" strokeWidth="1.2" strokeLinecap="round" />
+            {/* beating wing */}
+            <g className="fx-sig-wingbeat" style={{ animationDelay: `${delayMs}ms` }}>
+              <path d="M40 24 L30 4 L36 12 L42 3 L46 13 L54 6 L50 20 Z" fill="#5a1f1a" stroke="#2a0f0c" strokeWidth="1.1" strokeLinejoin="round" />
+              <path d="M40 22 L36 11 M42 20 L44 9 M46 18 L50 10" stroke="#2a0f0c" strokeWidth="0.7" />
+            </g>
+            {/* head + jaw */}
+            <path d="M68 14 L84 10 L78 16 L88 17 L77 21 L70 20 Z" fill="#8a3630" stroke="#3a1512" strokeWidth="1.1" strokeLinejoin="round" />
+            {/* horn */}
+            <path d="M72 12 L69 6 L75 11 Z" fill="#e6bf6a" stroke="#7a5b23" strokeWidth="0.6" strokeLinejoin="round" />
+            {/* eye */}
+            <circle cx="75" cy="14.5" r="1" fill="#e6bf6a" />
+          </svg>
+          {/* fire breath from the jaws */}
+          <span
+            className="fx-sig-firebreath absolute right-[-2%] top-[24%] block h-[40%] w-[34%]"
+            style={{ animationDelay: `${delayMs + 120}ms` }}
+          >
+            <svg viewBox="0 0 48 24" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
+              <path d="M0 12 C14 3 30 4 48 1 C40 8 42 16 48 23 C30 20 14 21 0 12 Z" fill="rgba(224,119,107,0.9)" />
+              <path d="M2 12 C14 7 26 8 40 6 C34 10 35 14 40 18 C26 16 14 17 2 12 Z" fill="rgba(230,191,106,0.95)" />
+            </svg>
+          </span>
+        </span>
+      </span>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span
+        className="fx-sig-flash absolute inset-[14%] block rounded-full"
+        style={{ background: "rgba(255,168,80,0.85)", animationDelay: `${delayMs}ms` }}
+      />
+      <span
+        className="fx-sig-rise absolute inset-x-[28%] bottom-[8%] block h-[66%]"
+        style={{ animationDelay: `${delayMs + 70}ms` }}
+      >
+        <svg viewBox="0 0 40 40" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
+          <path d="M20 40 C9 31 12 20 19 13 C18 21 24 21 23 27 C28 23 27 16 25 10 C33 18 34 30 26 38 Z" fill="rgba(224,119,107,0.92)" stroke="#7a2f28" strokeWidth="0.8" strokeLinejoin="round" />
+          <path d="M20 40 C15 33 16 25 21 20 C21 25 25 25 24 30 C27 26 26 22 25 18 C30 24 29 33 24 39 Z" fill="rgba(230,191,106,0.95)" />
+        </svg>
+      </span>
+      <ShardBurst vectors={BURST_BIG} fill="#e0776b" stroke="#7a2f28" delayMs={delayMs} sizePct={12} />
+      <span
+        className="fx-sig-scorch absolute inset-[28%] block rounded-full"
+        style={{ background: "rgba(26,16,8,0.72)", animationDelay: `${delayMs + 190}ms` }}
+      />
+    </span>
+  );
+}
+
+/** Marquee WIZARD (Grand Reset / The Void Realm): on the lead square an archmage
+ * rises out of the board and casts - his staff-orb flares while twin arcane
+ * rings spin out and sparks scatter; every affected square gets an arcane ring,
+ * a rising rune sigil, and a spark burst. */
+function ArchmageBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <span className="pointer-events-none absolute inset-0 z-30" aria-hidden="true">
+        {/* arcane rings cast outward */}
+        <span className="fx-sig-swirl absolute inset-[8%] block" style={{ animationDelay: `${delayMs + 220}ms` }}>
+          <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+            <circle cx="20" cy="20" r="17" fill="none" stroke="#a877d8" strokeWidth="1.6" strokeDasharray="5 4" />
+            <circle cx="20" cy="20" r="11" fill="none" stroke="#7eb59a" strokeWidth="1" strokeDasharray="3 3" />
+          </svg>
+        </span>
+        {/* the rising archmage */}
+        <span className="fx-sig-wizard-rise absolute left-[26%] bottom-[2%] block h-[92%] w-[48%]" style={{ animationDelay: `${delayMs}ms` }}>
+          <svg viewBox="0 0 40 48" className="h-full w-full" aria-hidden="true">
+            {/* staff */}
+            <path d="M31 12 L28 47" stroke="#6b4a2a" strokeWidth="1.8" strokeLinecap="round" />
+            {/* robe */}
+            <path d="M20 17 L32 47 L8 47 Z" fill="#7a5cc0" stroke="#3a2a63" strokeWidth="1.1" strokeLinejoin="round" />
+            <path d="M12 41 H28" stroke="#a877d8" strokeWidth="1" />
+            {/* head */}
+            <circle cx="20" cy="15" r="4" fill="#e8d3b0" stroke="#3a2a63" strokeWidth="0.8" />
+            {/* beard */}
+            <path d="M16 16 C17 25 23 25 24 16 C23 20 17 20 16 16 Z" fill="#e6e6ee" stroke="#8a8aa0" strokeWidth="0.5" strokeLinejoin="round" />
+            {/* pointed hat */}
+            <path d="M20 1 L28 14 L12 14 Z" fill="#5a3fa0" stroke="#3a2a63" strokeWidth="1.1" strokeLinejoin="round" />
+            {/* hat star */}
+            <path d="M20 4.5 L21 7 L23.5 7 L21.5 8.6 L22.3 11 L20 9.5 L17.7 11 L18.5 8.6 L16.5 7 L19 7 Z" fill="#e6bf6a" />
+            {/* staff orb */}
+            <circle cx="31.5" cy="10" r="3.2" fill="#7eb59a" stroke="#2e5f4a" strokeWidth="0.8" />
+          </svg>
+        </span>
+        {/* orb flare */}
+        <span
+          className="fx-sig-flash absolute left-[62%] top-[10%] block h-[22%] w-[22%] rounded-full"
+          style={{ background: "rgba(126,181,154,0.85)", animationDelay: `${delayMs + 180}ms` }}
+        />
+        <ShardBurst vectors={BURST_MED} fill="#a877d8" stroke="#4a3070" delayMs={delayMs + 220} sizePct={10} />
+      </span>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-swirl absolute inset-[16%] block" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <circle cx="20" cy="20" r="16" fill="none" stroke="#a877d8" strokeWidth="1.6" strokeDasharray="5 4" />
+        </svg>
+      </span>
+      <span className="fx-sig-rise absolute left-[30%] bottom-[16%] block h-[46%] w-[40%]" style={{ animationDelay: `${delayMs + 90}ms` }}>
+        <svg viewBox="0 0 24 24" className="h-full w-full" aria-hidden="true">
+          <circle cx="12" cy="12" r="9" fill="none" stroke="#a877d8" strokeWidth="1.3" strokeDasharray="3 2.4" />
+          <path d="M12 4 L13.6 10.4 L20 11 L14.6 14.4 L16.4 21 L12 16.8 L7.6 21 L9.4 14.4 L4 11 L10.4 10.4 Z" fill="none" stroke="#7eb59a" strokeWidth="1" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <ShardBurst vectors={BURST_MED} fill="#a877d8" stroke="#4a3070" delayMs={delayMs} sizePct={10} />
+    </span>
+  );
+}
+
 /** One square's slice of a signature sequence. `role` is "lead" for the single
  * origin flourish (nova's pop, atomic's central thump, the siege muzzle) and
  * "target" for every cleared enemy square; `delayMs` is the pre-computed
@@ -3904,6 +4059,11 @@ export function SignatureOverlay({
       return <MinefieldBurst delayMs={delayMs} />;
     case "vortex":
       return <VortexBurst lead={lead} delayMs={delayMs} />;
+    // --- Batch 6 (marquee dragon + wizard) ---
+    case "dragonlord":
+      return <DragonLordBurst lead={lead} delayMs={delayMs} />;
+    case "archmage":
+      return <ArchmageBurst lead={lead} delayMs={delayMs} />;
     default:
       return null;
   }
