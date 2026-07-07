@@ -35,7 +35,7 @@ export const FUNNY_CURSES: Buff[] = [
     {
       id: "gremlins",
       name: "Gremlins",
-      description: "Reword to a clear, distinct restriction (parity reads as a confusing math puzzle and barely limits a rook). If kept as a distance rule, say plainly e.g. 'each rook may not move more than 2 squares in one go for their next 3 turns'; better, give it an effect that does not duplicate origami (e.g. rooks cannot capture).",
+      description: "For their next 3 turns, your opponent's rooks can only move an even number of squares.",
       tier: 3,
       category: "hex",
       flavor: "Do not feed them after midnight.",

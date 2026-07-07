@@ -54,7 +54,7 @@ export const FUNNY_CHAOS: Buff[] = [
     {
       id: "minefield",
       name: "Minefield",
-      description: "Drop 'hidden' unless the void squares are genuinely concealed from the opponent (board-mutating effects must be shown to both players per the visibility rule). If they are visible, say 'Seed three mines on empty squares' to avoid implying information the opponent does not get.",
+      description: "Seed three mines on empty squares. The first enemy piece, never the king, to step on a mine is destroyed.",
       tier: 6,
       category: "attack",
       flavor: "Click... uh oh.",

@@ -449,7 +449,7 @@ const TIER1: Buff[] = [
     ),
   ),
   def(
-    { id: "extra_glance", name: "Extra Glance", description: "See your opponent's nerf for the rest of the game.", tier: 1, category: "info" },
+    { id: "extra_glance", name: "Extra Glance", description: "See your opponent's nerf for the rest of the game.", tier: 1, category: "info", boon: true },
     instant((_inst, api) => { api.mine.oppNerfRevealed = true; }),
   ),
   def(
@@ -508,7 +508,7 @@ const TIER1: Buff[] = [
     ),
   ),
   def(
-    { id: "scout", name: "Scout", description: "Reveal one random buff your opponent holds.", tier: 1, category: "info" },
+    { id: "scout", name: "Scout", description: "Reveal one random buff your opponent holds.", tier: 1, category: "info", boon: true },
     {
       kind: "passive",
       init: (inst, api) => {
@@ -701,7 +701,7 @@ const TIER1: Buff[] = [
     oppFilter((moves) => moves.filter((m) => !m.isEnPassant)),
   ),
   def(
-    { id: "watchtower", name: "Watchtower", description: "Reveal your opponent's nerf choice if it was hidden.", tier: 1, category: "info" },
+    { id: "watchtower", name: "Watchtower", description: "Reveal your opponent's nerf choice if it was hidden.", tier: 1, category: "info", boon: true },
     instant((_inst, api) => { api.mine.oppNerfRevealed = true; }),
   ),
   def(
