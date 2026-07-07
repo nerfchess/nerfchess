@@ -1873,7 +1873,7 @@ function GamePage() {
         <button
           type="button"
           onClick={() => setShowResult(true)}
-          className="btn-leaf fixed bottom-14 right-3 z-40 px-4 py-2 font-display text-sm font-semibold shadow-xl sm:bottom-4"
+          className="btn-leaf fixed bottom-24 right-3 z-40 px-4 py-2 font-display text-sm font-semibold shadow-xl sm:bottom-16 lg:bottom-4"
         >
           Show result
         </button>
