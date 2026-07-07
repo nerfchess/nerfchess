@@ -16,7 +16,6 @@ import {
   walnutAll,
   freezeAllEnemies,
   freezeTarget,
-  skipOpponent,
   nullifyDrafts,
   instant,
   activated,
@@ -39,16 +38,26 @@ const H = tierHexes(8);
 const STATUE_TURNS = 999;
 
 export const HEXES_T8: Buff[] = [
-  // --- skip: opponent loses two whole turns in a row ----------------------
+  // --- skip 2 turns, then a delayed mass freeze the moment they return ----
+  // The skip and the freeze are queued together, but a freeze only ticks on
+  // the owner's OWN completed moves. The opponent completes none during the
+  // two skips, so the 1-turn freeze survives untouched and bites on exactly
+  // the turn they finally move again: that turn only their king is free.
   H(
     {
       id: "endless_night",
       name: "Endless Night",
-      description: "Your opponent skips their next 2 turns entirely.",
-      flavor: "The sun forgets to rise, and no one moves in the dark.",
+      description: "Your opponent skips their next 2 turns. On the turn they finally return, every enemy piece except their king is frozen for that one turn, so only their king may move.",
+      flavor: "The sun forgets to rise, and the whole court is still asleep when the dark lifts.",
       fx: { motif: "slow", pieces: "all" },
     },
-    skipOpponent(2),
+    instant((_inst, api) => {
+      api.bs.skips[api.opp] += 2;
+      for (const sq of mySquares(api.board, api.opp)) {
+        if (api.board.pieces[sq]!.type === "k") continue;
+        addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 1, skin: "sleep" });
+      }
+    }),
   ),
 
   // --- petrify all: the whole royal battery, queen AND both rooks ----------

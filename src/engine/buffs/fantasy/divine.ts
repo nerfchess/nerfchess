@@ -1,9 +1,11 @@
 // Fantasy set: GODS & THE DIVINE. Interventions of higher powers: a warding of
 // the crown (king_safe), a bolt of judgment that smites enemy pieces
-// (removeEnemies), a resurrection of the fallen (reviveOne), a divine command
-// that turns a foe to your side (convertEnemies), and a decree that pins the
-// enemy court in place (king_only). Every effect reuses an existing primitive
-// and respects the rails: kings are never removed, frozen, or converted.
+// (removeEnemies) and petrifies the nearest survivor (walnut), a resurrection of
+// the fallen (reviveOne), a divine command that turns a foe to your side and
+// shields the defection (setPieceColor + shield), and a decree that pins the
+// enemy court in place and nullifies their next draft (king_only +
+// nullifyIncoming). Every effect reuses an existing primitive and respects the
+// rails: kings are never removed, frozen, petrified, or converted.
 
 import { Buff } from "./shared";
 import {
@@ -11,7 +13,7 @@ import {
   addEffect,
   removeEnemies,
   reviveOne,
-  convertEnemies,
+  activated,
   instant,
   backRankZone,
   mySquares,
@@ -104,12 +106,50 @@ export const FANTASY_DIVINE: Buff[] = [
       icon: "Scale",
       name: "Judgment Day",
       description:
-        "A pillar of holy light falls from a clear sky and smites one enemy knight, bishop, rook, or queen you name from the board.",
+        "A pillar of holy light smites one enemy knight, bishop, rook, or queen you name, then petrifies the enemy piece nearest the impact into stone for the rest of the game. Kings are never petrified.",
       tier: 6,
       category: "attack",
-      flavor: "Weighed, measured, and found wanting.",
+      flavor: "Weighed, measured, and found wanting; the stone is left to mark the spot.",
     },
-    removeEnemies(1, ["n", "b", "r", "q"]),
+    activated(
+      (_inst, api, picks) =>
+        picks.length > 0
+          ? null
+          : {
+              kind: "square",
+              label: "Choose an enemy knight, bishop, rook, or queen to smite",
+              squares: mySquares(api.board, api.opp).filter((sq) => {
+                const t = api.board.pieces[sq]!.type;
+                return t === "n" || t === "b" || t === "r" || t === "q";
+              }),
+            },
+      (_inst, api, picks) => {
+        const target = picks[0]?.square;
+        if (target == null) return;
+        api.removePiece(target);
+        // The pillar leaves a monument: the nearest surviving enemy piece is
+        // petrified to a walnut for the rest of the game (never a king). Nearest
+        // is Chebyshev distance; mySquares yields ascending squares and we only
+        // replace on a strictly smaller distance, so the lowest-index square
+        // wins ties. A pure read of the board, so it replays identically.
+        let best: Square | null = null;
+        let bestD = Infinity;
+        for (const sq of mySquares(api.board, api.opp)) {
+          if (api.board.pieces[sq]!.type === "k") continue;
+          const d = Math.max(
+            Math.abs(FILE(sq) - FILE(target)),
+            Math.abs(RANK(sq) - RANK(target)),
+          );
+          if (best == null || d < bestD) {
+            best = sq;
+            bestD = d;
+          }
+        }
+        if (best != null) {
+          addEffect(api, { kind: "walnut", sq: best, owner: api.opp, turns: 99 });
+        }
+      },
+    ),
   ),
   card(
     {
@@ -130,12 +170,32 @@ export const FANTASY_DIVINE: Buff[] = [
       icon: "ScrollText",
       name: "Divine Mandate",
       description:
-        "You speak with the authority of heaven: one enemy knight, bishop, or rook lays down its old allegiance and joins your army, once. Kings cannot be swayed.",
+        "You speak with the authority of heaven: one enemy knight, bishop, or rook joins your army, and heaven shields the defection so it cannot be recaptured for your opponent's next 2 turns. Kings cannot be swayed.",
       tier: 6,
       category: "pieces",
       flavor: "Kneel, and rise ours.",
     },
-    convertEnemies(1, ["n", "b", "r"], "Choose an enemy piece to command to your side"),
+    activated(
+      (_inst, api, picks) =>
+        picks.length > 0
+          ? null
+          : {
+              kind: "square",
+              label: "Choose an enemy knight, bishop, or rook to command to your side",
+              squares: mySquares(api.board, api.opp).filter((sq) => {
+                const t = api.board.pieces[sq]!.type;
+                return t === "n" || t === "b" || t === "r";
+              }),
+            },
+      (_inst, api, picks) => {
+        const sq = picks[0]?.square;
+        if (sq == null) return;
+        api.setPieceColor(sq, api.me);
+        // Heaven shields the defector: a square-scoped shield that follows the
+        // piece keeps it uncapturable for the opponent's next 2 turns.
+        addEffect(api, { kind: "shield", owner: api.me, squares: [sq], turns: 2 });
+      },
+    ),
   ),
   card(
     {
@@ -143,7 +203,7 @@ export const FANTASY_DIVINE: Buff[] = [
       icon: "Gavel",
       name: "Divine Reckoning",
       description:
-        "Judgment falls on the whole court: on your opponent's next turn they may move only their king.",
+        "Judgment falls on the whole court: on your opponent's next turn they may move only their king, and their next drafted card arrives nullified.",
       tier: 5,
       category: "hex",
       flavor: "Every courtier is called to account at once.",
@@ -151,6 +211,10 @@ export const FANTASY_DIVINE: Buff[] = [
     },
     instant((_inst, api) => {
       addEffect(api, { kind: "king_only", against: api.opp, turns: 1 });
+      // The reckoning reaches their hand too: their next drafted buff arrives
+      // nullified (spent before it can be used), reusing the engine's existing
+      // draft-nullify flag so judgment strikes their army and their draft.
+      api.theirs.flags.nullifyIncoming = (api.theirs.flags.nullifyIncoming ?? 0) + 1;
     }),
   ),
   card(

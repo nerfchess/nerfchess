@@ -12,8 +12,6 @@ import {
   tierHexes,
   curse,
   walnutAll,
-  skipOpponent,
-  blockDrafts,
   instant,
   activated,
   addEffect,
@@ -262,27 +260,39 @@ export const HEXES_T7: Buff[] = [
     }),
   ),
 
-  // --- draft denial: opponent's next 2 drafts skipped outright ------------
+  // --- draft denial that DECAYS: skip the next draft outright, then let the
+  // two after it arrive nullified (drafted but inert) rather than a flat
+  // double skip (that is empty_handed in tier 6) ---------------------------
   H(
     {
       id: "sealed_archive",
       name: "Sealed Archive",
-      description: "Your opponent's next 2 drafts are skipped entirely and they draft no cards.",
-      flavor: "The vault is bricked over; no orders get out.",
+      description: "Your opponent's next draft is skipped entirely; the two drafts after that still arrive, but nullified and doing nothing.",
+      flavor: "The vault is bricked over, and what little seeps out afterwards is worthless.",
     },
-    blockDrafts(2),
+    instant((_inst, api) => {
+      api.theirs.flags.blockedDrafts = (api.theirs.flags.blockedDrafts ?? 0) + 1;
+      api.theirs.flags.nullifyIncoming = (api.theirs.flags.nullifyIncoming ?? 0) + 2;
+    }),
   ),
 
-  // --- skip: opponent loses two whole turns -------------------------------
+  // --- combo: skip one turn, skip their next draft, and burn their clock --
+  // Retuned off the old plain skip-2 (that is lost_days in tier 6) to tier
+  // 7's draft/tempo theme: one turn, one draft, and 20 seconds all gone.
   H(
     {
       id: "lost_fortnight",
       name: "Lost Fortnight",
-      description: "Your opponent skips their next 2 turns entirely.",
-      flavor: "Two weeks vanish and no one can say where.",
+      description: "Your opponent skips their next turn, their next draft is skipped, and 20 seconds are struck off their clock.",
+      flavor: "Two weeks torn from the ledger: a move, a draft, and time all gone at once.",
+      // fx covers the turn skip; the draft and clock halves show no board motif.
       fx: { motif: "slow", pieces: "all" },
     },
-    skipOpponent(2),
+    instant((_inst, api) => {
+      api.bs.skips[api.opp] += 1;
+      api.theirs.flags.blockedDrafts = (api.theirs.flags.blockedDrafts ?? 0) + 1;
+      api.adjustClock({ subOppSec: 20 });
+    }),
   ),
 
   // --- timed filter: only pawns and the king may move for 3 turns ---------

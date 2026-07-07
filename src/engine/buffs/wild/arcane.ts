@@ -16,13 +16,13 @@
 
 import { Buff, BuffApi, BuffCategory, CardFx } from "../../buff";
 import { Tier } from "../../nerf";
-import { Move, PieceType, RANK, Square } from "../../types";
+import { FILE, inBoard, Move, PieceType, RANK, SQ, Square } from "../../types";
 import {
+  ALL_DIRS,
   DIAG_DIRS,
   ORTHO_DIRS,
   activated,
   addEffect,
-  barLine,
   emptySquares,
   extraMovesNow,
   freezeTarget,
@@ -38,7 +38,6 @@ import {
   slideMoves,
   stealBuffs,
   timedOppFilter,
-  voidSquares,
 } from "../helpers";
 
 type Mech = Partial<Buff> & Pick<Buff, "kind">;
@@ -428,12 +427,12 @@ export const WILD_ARCANE: Buff[] = [
       id: "wa_conjure_bishop",
       name: "Conjured Bishop",
       description:
-        "Conjure a bishop on an empty square in your half. It fights for 3 of your turns, then fades.",
+        "Conjure a permanent spectral bishop on an empty square of your back rank, a defensive blocker that stays as long as you do.",
       tier: 4,
       category: "pieces",
-      flavor: "Faith, on loan.",
+      flavor: "Faith, made solid, and it does not fade.",
     },
-    summonTemp("b", 3, myHalfZone),
+    placePieces(["b"], backRankZone),
   ),
   card(
     {
@@ -502,12 +501,53 @@ export const WILD_ARCANE: Buff[] = [
     {
       id: "wa_dominate_minor",
       name: "Dominate",
-      description: "Take control of one enemy knight or bishop: it becomes yours, once.",
+      description: "Take control of one enemy knight or bishop for your next 3 turns. When the time is up it reverts to your opponent.",
       tier: 4,
       category: "pieces",
-      flavor: "Its allegiance was always negotiable.",
+      flavor: "Its allegiance was always negotiable, and only ever a loan.",
     },
-    convertEnemies(1, ["n", "b"], "Choose an enemy knight or bishop to dominate"),
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null
+          ? null
+          : {
+              kind: "square",
+              label: "Choose an enemy knight or bishop to dominate",
+              squares: mySquares(api.board, api.opp).filter((sq) => {
+                const t = api.board.pieces[sq]!.type;
+                return t === "n" || t === "b";
+              }),
+            },
+      effect: (inst, api, picks) => {
+        const sq = picks[0]?.square;
+        if (sq == null || inst.state.sq != null) return;
+        api.setPieceColor(sq, api.me);
+        inst.state.sq = sq;
+        inst.state.turns = 3;
+      },
+      onMovePlayed: (inst, move, api) => {
+        let sq = inst.state.sq as Square | undefined;
+        if (sq == null) return;
+        if (move.capturedSquare === sq && move.from !== sq) { inst.spent = true; inst.state.sq = undefined; return; }
+        if (move.from === sq) { inst.state.sq = move.to; sq = move.to; }
+        else if (move.to === sq && move.from !== sq) { inst.spent = true; inst.state.sq = undefined; return; }
+        if (move.color !== api.me) return;
+        const left = ((inst.state.turns as number) ?? 0) - 1;
+        inst.state.turns = left;
+        if (left <= 0) {
+          const cur = inst.state.sq as Square | undefined;
+          if (cur != null && api.board.pieces[cur]?.color === api.me) api.setPieceColor(cur, api.opp);
+          inst.spent = true;
+          inst.state.sq = undefined;
+        }
+      },
+      status: (inst) =>
+        inst.state.sq == null
+          ? "activate to dominate a minor"
+          : `dominated, ${(inst.state.turns as number) ?? 0} of your turns left`,
+    },
   ),
   card(
     {
@@ -602,13 +642,13 @@ export const WILD_ARCANE: Buff[] = [
       id: "wa_stone_pawns",
       name: "Stone the Pawns",
       description:
-        "Turn every one of your opponent's pawns to stone: they cannot move for their next 2 turns.",
+        "Turn every one of your opponent's pawns to stone for their next 3 turns: each may only shuffle one square at a time and cannot break into a full stride.",
       tier: 4,
       category: "tempo",
-      flavor: "The whole front row, set in grey.",
+      flavor: "The whole front row, set in grey, for a good long while.",
       fx: { motif: "jail", pieces: ["p"] },
     },
-    walnutAll(["p"], 2),
+    walnutAll(["p"], 3),
   ),
 
   // ===================== TIME: TEMPO & CLOCK =====================
@@ -629,13 +669,15 @@ export const WILD_ARCANE: Buff[] = [
       id: "wa_stolen_hours",
       name: "Stolen Hours",
       description:
-        "Steal 25 seconds from your opponent's clock and add them to your own.",
+        "Steal 20 seconds from your opponent's clock and take one extra move this turn. You cannot capture the king on the bonus move.",
       tier: 5,
       category: "tempo",
-      flavor: "You will not miss what you cannot count.",
+      flavor: "Turn their spent minutes into one more of your moves.",
+      fx: { motif: "rally", self: true },
     },
     instant((_inst, api) => {
-      api.adjustClock({ stealFlatSec: 25 });
+      api.adjustClock({ stealFlatSec: 20, stealCapSec: 20 });
+      api.bs.extraMoves[api.me] += 1;
     }),
   ),
   card(
@@ -657,14 +699,28 @@ export const WILD_ARCANE: Buff[] = [
       id: "wa_chrono_siphon",
       name: "Chrono Siphon",
       description:
-        "Steal a quarter of the time left on your opponent's clock (up to 30 seconds) and add it to your own.",
+        "Steal up to 20 seconds from your opponent's clock and freeze one enemy piece for its next 2 turns.",
       tier: 4,
       category: "tempo",
-      flavor: "Draw it off slowly, like heat.",
+      flavor: "Draw the time off a single piece, slowly, like heat.",
+      fx: { motif: "jail" },
     },
-    instant((_inst, api) => {
-      api.adjustClock({ stealFractionOfOpp: 0.25, stealCapSec: 30 });
-    }),
+    activated(
+      (_inst, api, picks) =>
+        picks.length > 0
+          ? null
+          : {
+              kind: "square",
+              label: "Choose an enemy piece to siphon and freeze",
+              squares: mySquares(api.board, api.opp).filter((sq) => api.board.pieces[sq]!.type !== "k"),
+            },
+      (_inst, api, picks) => {
+        if (picks[0]?.square != null) {
+          addEffect(api, { kind: "freeze", sq: picks[0].square, owner: api.opp, turns: 2 });
+        }
+        api.adjustClock({ stealFlatSec: 20, stealCapSec: 20 });
+      },
+    ),
   ),
 
   // ===================== ARCANE WARDS & RIFTS =====================
@@ -673,13 +729,55 @@ export const WILD_ARCANE: Buff[] = [
       id: "wa_sigil_ward",
       name: "Sigil Ward",
       description:
-        "One of your pieces cannot be captured for your opponent's next 3 turns.",
+        "Choose one of your pieces: it cannot be captured for your opponent's next 3 turns, and the first enemy piece to move up next to it in that time is frozen for its next 2 turns.",
       tier: 3,
       category: "protection",
-      flavor: "A drawn circle it may not cross.",
+      flavor: "A drawn circle it may not cross, and it stings the first hand that reaches in.",
       fx: { motif: "ward", self: true },
     },
-    shieldTarget(3),
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null
+          ? null
+          : {
+              kind: "square",
+              label: "Choose a piece to ward",
+              squares: mySquares(api.board, api.me).filter((sq) => api.board.pieces[sq]!.type !== "k"),
+            },
+      effect: (inst, api, picks) => {
+        const sq = picks[0]?.square;
+        if (sq == null || inst.state.sq != null) return;
+        inst.state.sq = sq;
+        inst.state.turns = 3;
+        inst.state.retaliated = false;
+        addEffect(api, { kind: "shield", owner: api.me, squares: [sq], turns: 3 });
+      },
+      onMovePlayed: (inst, move, api) => {
+        const sq = inst.state.sq as Square | undefined;
+        if (sq == null) return;
+        if (move.from === sq) inst.state.sq = move.to;
+        const cur = inst.state.sq as Square;
+        if (move.color !== api.opp || ((inst.state.turns as number) ?? 0) <= 0) return;
+        if (
+          inst.state.retaliated !== true &&
+          move.piece !== "k" &&
+          api.board.pieces[move.to]?.color === api.opp &&
+          Math.max(Math.abs(FILE(move.to) - FILE(cur)), Math.abs(RANK(move.to) - RANK(cur))) === 1
+        ) {
+          addEffect(api, { kind: "freeze", sq: move.to, owner: api.opp, turns: 2, skin: "shock" });
+          inst.state.retaliated = true;
+        }
+        const left = ((inst.state.turns as number) ?? 0) - 1;
+        inst.state.turns = left;
+        if (left <= 0) inst.spent = true;
+      },
+      status: (inst) =>
+        inst.state.sq == null
+          ? "activate to ward a piece"
+          : `warded, ${(inst.state.turns as number) ?? 0} of their turns left`,
+    },
   ),
   card(
     {
@@ -710,25 +808,81 @@ export const WILD_ARCANE: Buff[] = [
       id: "wa_glyph_seal",
       name: "Glyph Seal",
       description:
-        "Seal one file: pick any square and its whole file becomes impassable to your opponent for their next 2 turns.",
+        "Seal one file: pick any square and its whole file becomes impassable to your opponent for their next 2 turns, and every enemy piece already standing on it is bound in place for its next 2 turns.",
       tier: 4,
       category: "protection",
-      flavor: "A line of warding runes down the board.",
+      flavor: "A line of warding runes down the board, and nothing crosses it or leaves it.",
       fx: { motif: "blindfold" },
     },
-    barLine("file", 2, 1),
+    {
+      kind: "activated",
+      spendOnUse: true,
+      targets: (_inst, api, picks) =>
+        picks.length > 0
+          ? null
+          : {
+              kind: "square",
+              label: "Pick any square on the file to seal",
+              squares: Array.from({ length: 64 }, (_, i) => i),
+            },
+      effect: (_inst, api, picks) => {
+        const c = picks[0]?.square;
+        if (c == null) return;
+        const file = FILE(c);
+        const squares: Square[] = [];
+        for (let r = 0; r < 8; r++) squares.push(SQ(file, r));
+        addEffect(api, { kind: "barred", squares, against: api.opp, turns: 2 });
+        for (const sq of squares) {
+          const p = api.board.pieces[sq];
+          if (p && p.color === api.opp && p.type !== "k") {
+            addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2, skin: "chains" });
+          }
+        }
+      },
+    },
   ),
   card(
     {
       id: "wa_void_rift",
       name: "Void Rift",
       description:
-        "Tear a permanent rift on an empty square: any enemy piece that steps onto it (never a king) is pulled out of the game.",
+        "Tear a permanent rift on an empty square: any enemy piece that steps onto it (never a king) is pulled out of the game, and any enemy piece that ends its move on a square next to the rift is frozen for its next turn.",
       tier: 4,
       category: "attack",
-      flavor: "It does not close on its own.",
+      flavor: "It does not close on its own, and it pulls at whatever passes.",
     },
-    voidSquares(1, null),
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null
+          ? null
+          : { kind: "square", label: "Choose the square the rift opens on", squares: emptySquares(api.board) },
+      effect: (inst, _api, picks) => {
+        if (inst.state.sq != null) return;
+        const sq = picks[0]?.square;
+        if (sq != null) inst.state.sq = sq;
+      },
+      onMovePlayed: (inst, move, api) => {
+        const rift = inst.state.sq as Square | undefined;
+        if (rift == null || move.color !== api.opp) return;
+        if (move.to === rift && move.piece !== "k") {
+          api.removePiece(move.to);
+          return;
+        }
+        const p = api.board.pieces[move.to];
+        if (
+          p && p.color === api.opp && p.type !== "k" &&
+          Math.max(Math.abs(FILE(move.to) - FILE(rift)), Math.abs(RANK(move.to) - RANK(rift))) === 1
+        ) {
+          addEffect(api, { kind: "freeze", sq: move.to, owner: api.opp, turns: 1 });
+        }
+      },
+      status: (inst) => {
+        const sq = inst.state.sq as Square | undefined;
+        return sq == null ? "activate to open the rift" : `rift open at ${"abcdefgh"[FILE(sq)]}${RANK(sq) + 1}`;
+      },
+    },
   ),
   card(
     {
@@ -748,13 +902,26 @@ export const WILD_ARCANE: Buff[] = [
       id: "wa_bind_the_queen",
       name: "Bind the Queen",
       description:
-        "Arcane chains hold the enemy queen: your opponent's queen cannot move for their next 2 turns.",
+        "Arcane chains seize the enemy queen and every piece standing next to her: they cannot move for their next 2 turns.",
       tier: 4,
       category: "protection",
-      flavor: "The strongest piece, and the stillest.",
+      flavor: "The strongest piece, and the stillest, and her whole guard with her.",
       fx: { motif: "jail", pieces: ["q"] },
     },
-    curse(2, (moves) => moves.filter((m) => m.piece !== "q")),
+    instant((_inst, api) => {
+      const q = mySquares(api.board, api.opp, "q")[0];
+      if (q == null) return;
+      addEffect(api, { kind: "freeze", sq: q, owner: api.opp, turns: 2, skin: "chains" });
+      for (const [df, dr] of ALL_DIRS) {
+        const f = FILE(q) + df, r = RANK(q) + dr;
+        if (!inBoard(f, r)) continue;
+        const asq = SQ(f, r);
+        const p = api.board.pieces[asq];
+        if (p && p.color === api.opp && p.type !== "k") {
+          addEffect(api, { kind: "freeze", sq: asq, owner: api.opp, turns: 2, skin: "chains" });
+        }
+      }
+    }),
   ),
 
   // ===================== ARCANE DISINTEGRATION =====================
@@ -831,13 +998,14 @@ export const WILD_ARCANE: Buff[] = [
       id: "wa_suppress_magic",
       name: "Suppress Magic",
       description:
-        "Your opponent's next two draft offers contain no draft-manipulation cards.",
+        "Your opponent's next two draft offers contain no draft-manipulation cards, and the next buff they draft arrives nullified.",
       tier: 3,
       category: "draft",
-      flavor: "No meta for you.",
+      flavor: "No meta for you, and the next trick fizzles too.",
     },
     instant((_inst, api) => {
       api.theirs.flags.noDraftCards = (api.theirs.flags.noDraftCards ?? 0) + 2;
+      api.theirs.flags.nullifyIncoming = (api.theirs.flags.nullifyIncoming ?? 0) + 1;
     }),
   ),
   card(

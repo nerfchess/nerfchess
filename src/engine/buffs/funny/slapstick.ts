@@ -73,12 +73,44 @@ export const FUNNY_SLAPSTICK: Buff[] = [
       id: "anvil_drop",
       icon: "Anvil",
       name: "Anvil Drop",
-      description: "Drop an ACME anvil on one enemy piece: it is flattened and cannot move for 2 of their turns. Kings cannot be targeted.",
+      description: "Drop an ACME anvil on one enemy piece: it is flattened and cannot move for 2 of their turns, and the impact knocks it one square back toward its home rank. Kings cannot be targeted.",
       tier: 3,
       category: "item",
       flavor: "That whistling sound is never good.",
     },
-    freezeTarget(2),
+    // A cartoon flatten: the freeze pile's stun PLUS a one-square knockback
+    // toward the target's home rank (the boxing_glove shove, but the anvil
+    // still lands and stuns even a piece with nowhere to be pushed).
+    activated(
+      (_inst, api, picks) =>
+        picks.length > 0
+          ? null
+          : {
+              kind: "square",
+              label: "Choose an enemy piece to flatten with the anvil",
+              squares: mySquares(api.board, api.opp).filter(
+                (sq) => api.board.pieces[sq]!.type !== "k",
+              ),
+            },
+      (_inst, api, picks) => {
+        const sq = picks[0]?.square;
+        if (sq == null) return;
+        const p = api.board.pieces[sq];
+        if (!p || p.color !== api.opp || p.type === "k") return;
+        const back = api.opp === "w" ? -8 : 8;
+        const dest = sq + back;
+        const land =
+          dest >= 0 &&
+          dest < 64 &&
+          !api.board.pieces[dest] &&
+          (p.type !== "p" || pawnRankOk(dest))
+            ? dest
+            : sq;
+        if (land !== sq) api.relocate(sq, land);
+        addEffect(api, { kind: "freeze", sq: land, owner: api.opp, turns: 2, skin: "stun" });
+        addEffect(api, { kind: "bonk", squares: [land], owner: api.me, turns: 1 });
+      },
+    ),
   ),
   card(
     {

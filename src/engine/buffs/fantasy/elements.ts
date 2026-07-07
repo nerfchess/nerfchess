@@ -17,7 +17,50 @@ import {
   instant,
   anyEmptyZone,
   DIAG_DIRS,
+  FILE,
+  RANK,
+  SQ,
+  inBoard,
+  type Mech,
+  type BuffInstance,
+  type BuffApi,
+  type BuffPick,
 } from "./shared";
+
+// Chain Lightning reuses lineSweep's diagonal capture sweep (so it never
+// reimplements ray logic), then adds its signature: after the bishop lands, the
+// bolt jumps past it to the next enemy piece on the SAME diagonal and freezes it
+// for 2 turns. That chained freeze is what sets it apart from the plain diagonal
+// sweeps (Unmake, Arc Lightning). Every step is a pure read of the post-sweep
+// board, so it replays identically on both clients.
+function chainLightningSweep(): Mech {
+  const base = lineSweep("b", DIAG_DIRS, 2);
+  return {
+    ...base,
+    effect: (inst: BuffInstance, api: BuffApi, picks: BuffPick[]) => {
+      base.effect?.(inst, api, picks);
+      const from = picks[0]?.square;
+      const to = picks[1]?.square;
+      if (from == null || to == null || from === to) return;
+      const df = Math.sign(FILE(to) - FILE(from));
+      const dr = Math.sign(RANK(to) - RANK(from));
+      let f = FILE(to) + df;
+      let r = RANK(to) + dr;
+      while (inBoard(f, r)) {
+        const sq = SQ(f, r);
+        const p = api.board.pieces[sq];
+        if (p) {
+          if (p.color === api.opp && p.type !== "k") {
+            addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2, skin: "shock" });
+          }
+          break;
+        }
+        f += df;
+        r += dr;
+      }
+    },
+  };
+}
 
 export const FANTASY_ELEMENTS: Buff[] = [
   card(
@@ -66,13 +109,13 @@ export const FANTASY_ELEMENTS: Buff[] = [
       icon: "Zap",
       name: "Chain Lightning",
       description:
-        "One bishop captures up to two enemy pieces down a diagonal and lands beyond them, once.",
+        "One bishop captures up to two enemy pieces down a diagonal and lands beyond them; the bolt then jumps on to freeze the next enemy piece further along that diagonal for 2 of their turns, once.",
       tier: 5,
       category: "attack",
       requires: ["b"],
       flavor: "It leaps from soul to soul.",
     },
-    lineSweep("b", DIAG_DIRS, 2),
+    chainLightningSweep(),
   ),
   card(
     {

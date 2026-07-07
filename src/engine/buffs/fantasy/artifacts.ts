@@ -1,6 +1,7 @@
 // Fantasy set: MYTHIC ARTIFACTS. Relics of a lost age: a blade that lets a
 // bishop cut like a queen (pieceBound), a war-horn that calls reinforcements
-// (placePieces), an orb that dominates an enemy champion (convertEnemies), a
+// (placePieces), an orb that dominates an enemy champion and muzzles the enemy
+// queen while you hold it (setPieceColor + a queen no-capture filter), a
 // staff that freezes a foe in time (freeze), an ancient aegis that wards your
 // whole army and its king from capture (shield + king_safe), and a battle-banner
 // that quickens your cavalry (timedAugment). Movement grants only ever widen a
@@ -11,7 +12,6 @@ import {
   card,
   pieceBound,
   placePieces,
-  convertEnemies,
   freezeTarget,
   timedAugment,
   slideMoves,
@@ -60,12 +60,64 @@ export const FANTASY_ARTIFACTS: Buff[] = [
       icon: "Orbit",
       name: "Orb of Dominion",
       description:
-        "Take control of one enemy rook or queen for the rest of the game, once. Kings cannot be taken.",
+        "Take control of one enemy rook or queen for the rest of the game, once. While you still hold the dominated piece, the enemy queen cannot capture. Kings cannot be taken.",
       tier: 7,
       category: "pieces",
       flavor: "Its light pours in through the eyes.",
     },
-    convertEnemies(1, ["q", "r"], "Choose an enemy champion to dominate"),
+    {
+      kind: "activated",
+      // Stays in hand after use (like Excalibur) so its aura keeps running while
+      // the dominated piece lives; it is never re-aimed once a piece is taken.
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null
+          ? null
+          : {
+              kind: "square",
+              label: "Choose an enemy rook or queen to dominate",
+              squares: mySquares(api.board, api.opp).filter((sq) => {
+                const t = api.board.pieces[sq]!.type;
+                return t === "q" || t === "r";
+              }),
+            },
+      effect: (inst, api, picks) => {
+        const sq = picks[0]?.square;
+        if (sq == null || inst.state.sq != null) return;
+        api.setPieceColor(sq, api.me);
+        inst.state.sq = sq;
+      },
+      // The orb's aura muzzles the enemy queen while you hold the dominated
+      // piece: strip the queen's capturing moves. A partial filter with the
+      // standard never-strand guard, so the opponent always keeps a move.
+      filterOpponentMoves: (moves, inst, api) => {
+        const sq = inst.state.sq as number | undefined;
+        if (sq == null) return moves;
+        const held = api.board.pieces[sq];
+        if (!held || held.color !== api.me) return moves;
+        const kept = moves.filter((m) => !(m.piece === "q" && m.captured));
+        return kept.length > 0 ? kept : moves;
+      },
+      onMovePlayed: (inst, move, api) => {
+        const sq = inst.state.sq as number | undefined;
+        if (sq == null) return;
+        // Follow the dominated piece; if it is captured or overrun the orb goes
+        // dark, ending the aura and spending the card.
+        if (move.capturedSquare === sq && move.from !== sq) {
+          inst.spent = true;
+          inst.state.sq = undefined;
+          return;
+        }
+        if (move.from === sq) {
+          inst.state.sq = move.to;
+        } else if (move.to === sq && move.from !== sq) {
+          inst.spent = true;
+          inst.state.sq = undefined;
+        }
+      },
+      status: (inst) =>
+        inst.state.sq == null ? "activate to dominate" : "the orb holds a champion",
+    },
   ),
   card(
     {

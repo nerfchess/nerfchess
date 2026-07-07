@@ -14,7 +14,6 @@ import {
   activated,
   activatedSimple,
   addEffect,
-  blockDrafts,
   curse,
   freezeTarget,
   instant,
@@ -72,7 +71,7 @@ export const CROSSREF_CARDS: Buff[] = [
     {
       id: "cast_a_nerf",
       name: "Cast a Nerf",
-      description: "Cast a nerf on your opponent: they cannot capture for their next 2 turns.",
+      description: "Cast a nerf on your opponent: they cannot capture for their next 2 turns, and their next drafted card arrives nullified.",
       tier: 5,
       flavor: "If you cannot beat them, nerf them.",
       fx: { motif: "muzzle", pieces: "all" },
@@ -81,6 +80,9 @@ export const CROSSREF_CARDS: Buff[] = [
       kind: "passive",
       init: (inst, api) => {
         inst.state.turns = 2;
+        // Nerf their hand as well as their army: the next card they draft
+        // arrives inert.
+        api.theirs.flags.nullifyIncoming = (api.theirs.flags.nullifyIncoming ?? 0) + 1;
         const squares = mySquares(api.board, api.opp).filter(
           (sq) => api.board.pieces[sq]!.type !== "k",
         );
@@ -250,11 +252,14 @@ export const CROSSREF_CARDS: Buff[] = [
     {
       id: "patch_notes",
       name: "Patch Notes",
-      description: "The balance patch lands: your opponent's next draft is skipped outright, giving them no new card.",
+      description: "The balance patch lands: your opponent's next draft is skipped, and you gain one draft reroll.",
       tier: 4,
       flavor: "See the changelog. You were the change.",
     },
-    blockDrafts(1),
+    instant((_inst, api) => {
+      api.theirs.flags.blockedDrafts = (api.theirs.flags.blockedDrafts ?? 0) + 1;
+      api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+    }),
   ),
 
   // -------------------------------------------------------------------------
@@ -265,30 +270,56 @@ export const CROSSREF_CARDS: Buff[] = [
     {
       id: "break_the_nerf",
       name: "Break the Nerf",
-      description: "Shrug off your nerf: suspend it for your next 3 turns.",
+      description: "Free action: break your nerf, suspending it for your next 3 turns, and take one extra move the moment it breaks.",
       tier: 3,
       category: "nerf",
       flavor: "The handicap was a suggestion. You declined.",
     },
-    instant((_inst, api) => {
-      addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 3 });
-    }),
+    {
+      ...activatedSimple((_inst, api) => {
+        addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 3 });
+        api.bs.extraMoves[api.me] += 1;
+      }),
+      freeAction: true,
+    },
   ),
 
   card(
     {
       id: "defiance",
       name: "Defiance",
-      description: "Free action: suspend your nerf for your next 2 turns, used at the moment you choose.",
+      description: "Free action: suspend your nerf until your opponent's next capture, used at the moment you choose.",
       tier: 2,
       category: "nerf",
       flavor: "Not today.",
     },
     {
-      ...activatedSimple((_inst, api) => {
-        addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 2 });
-      }),
+      // No-target free action that arms a triggered suspension: the nerf stays
+      // off (permanent nerf_suspended) until the opponent's next capture, then
+      // the effect is lifted and the card is spent. spendOnUse:false keeps the
+      // instance alive to run onMovePlayed; state.active guards re-activation.
+      kind: "activated",
+      spendOnUse: false,
       freeAction: true,
+      effect: (inst, api) => {
+        if (inst.state.active) return;
+        inst.state.active = true;
+        addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: null });
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (!inst.state.active) return;
+        if (move.color === api.opp && move.captured && move.captured !== "k") {
+          const idx = api.bs.effects.findIndex(
+            (e) => e.kind === "nerf_suspended" && e.owner === api.me && e.turns == null,
+          );
+          if (idx >= 0) api.bs.effects.splice(idx, 1);
+          inst.spent = true;
+        }
+      },
+      status: (inst) =>
+        inst.state.active
+          ? "suspended until your opponent's next capture"
+          : "free action: suspend your nerf",
     },
   ),
 
