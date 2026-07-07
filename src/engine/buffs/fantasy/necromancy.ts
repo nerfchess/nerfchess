@@ -11,11 +11,13 @@ import {
   reviveOne,
   placePieces,
   lineSweep,
-  petrifyTarget,
   myHalfZone,
   backRankZone,
   DIAG_DIRS,
   SQ,
+  activated,
+  addEffect,
+  mySquares,
 } from "./shared";
 
 export const FANTASY_NECROMANCY: Buff[] = [
@@ -51,13 +53,33 @@ export const FANTASY_NECROMANCY: Buff[] = [
       icon: "HeartCrack",
       name: "Withering Touch",
       description:
-        "One enemy piece cannot move for 4 of their turns, once. Kings cannot be targeted.",
+        "One enemy piece freezes solid for 2 of their turns, then withers to a walnut that can only shuffle one square at a time for the rest of the game. Kings cannot be targeted.",
       tier: 5,
       category: "hex",
       flavor: "Flesh remembers how to be dust.",
       fx: { motif: "jail" },
     },
-    petrifyTarget(4, "Choose an enemy piece to wither"),
+    activated(
+      (_inst, api, picks) =>
+        picks.length > 0
+          ? null
+          : {
+              kind: "square",
+              label: "Choose an enemy piece to wither",
+              squares: mySquares(api.board, api.opp).filter(
+                (sq) => api.board.pieces[sq]!.type !== "k",
+              ),
+            },
+      (_inst, api, picks) => {
+        const sq = picks[0]?.square;
+        if (sq == null) return;
+        // Two decay stages: hold it frozen for 2 turns, then leave it a heavy
+        // walnut (a one-square shuffle) for the rest of the game. The long
+        // walnut timer stands in for "permanent"; a walnut has no null option.
+        addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2, skin: "stone" });
+        addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 99 });
+      },
+    ),
   ),
   card(
     {

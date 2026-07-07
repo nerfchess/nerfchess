@@ -12,11 +12,12 @@ import {
   walnutAll,
   walnutTarget,
   freezeTarget,
-  skipOpponent,
   instant,
   activated,
   addEffect,
   mySquares,
+  FILE,
+  RANK,
   SQ,
 } from "./shared";
 
@@ -133,19 +134,22 @@ export const HEXES_T4: Buff[] = [
     }),
   ),
 
-  // --- king_only: only the king may move for one turn ---------------------
+  // --- mobility clamp: every piece may move at most 2 squares for 2 turns --
   H(
     {
       id: "abandoned_post",
       name: "Abandoned Post",
-      description: "On your opponent's next turn they may move only their king.",
-      flavor: "The ranks desert and leave the crown alone.",
-      // Board already paints king_only; fx carried for consistency.
-      fx: { motif: "jail", pieces: ["p", "n", "b", "r", "q"] },
+      description: "For your opponent's next 2 turns every piece may move at most 2 squares in any direction.",
+      flavor: "The ranks hold their ground and refuse to march far.",
+      // Board already paints the slowed pieces; fx carried for consistency.
+      fx: { motif: "anchor", pieces: "all" },
     },
-    instant((_inst, api) => {
-      addEffect(api, { kind: "king_only", against: api.opp, turns: 1 });
-    }),
+    curse(2, (moves) =>
+      moves.filter(
+        (m) =>
+          Math.max(Math.abs(FILE(m.to) - FILE(m.from)), Math.abs(RANK(m.to) - RANK(m.from))) <= 2,
+      ),
+    ),
   ),
 
   // --- no_pawn_advance: pawns pinned for 3 turns --------------------------
@@ -177,16 +181,19 @@ export const HEXES_T4: Buff[] = [
     }),
   ),
 
-  // --- skip: opponent loses two turns -------------------------------------
+  // --- skip plus a hangover: lose a turn AND 20 seconds off the clock ------
   H(
     {
       id: "lost_weekend",
       name: "Lost Weekend",
-      description: "Your opponent skips their next turn.",
-      flavor: "A whole day gone and no one recalls it.",
+      description: "Your opponent skips their next turn, and their clock loses 20 seconds.",
+      flavor: "A whole day gone, and the headache eats into the next one.",
       fx: { motif: "slow", pieces: "all" },
     },
-    skipOpponent(1),
+    instant((_inst, api) => {
+      api.bs.skips[api.opp] += 1;
+      api.adjustClock({ subOppSec: 20 });
+    }),
   ),
 
   // --- petrify: one targeted rook for 3 turns -----------------------------

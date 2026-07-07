@@ -412,25 +412,53 @@ export const CROSSREF_CARDS: Buff[] = [
     ),
   ),
 
-  // Fruit: the king of fruits. Its stench pins the enemy infantry: their pawns
-  // cannot advance for 3 of their turns. Lightning flashes on every enemy pawn.
+  // Fruit: the king of fruits. Not a pawn clone (Pawn Nerf owns that): the
+  // durian is a stench field. Lob it onto a square and for 3 of the opponent's
+  // turns no enemy piece may step into the ring around it. Reuses the same
+  // no-approach filter as pt's Stinky, with the standard non-empty fallback so
+  // it can never soft-lock a turn (dist === 1 is the king-step ring).
   hex(
     {
       id: "durian",
       name: "Durian",
-      description: "Lob the king of fruits: the stench pins your opponent's pawns, which cannot advance for their next 3 turns. They may still capture diagonally.",
+      description: "Lob the king of fruits onto an empty square: for your opponent's next 3 turns no enemy piece may move onto a square next to it. The stench clears after that.",
       tier: 3,
       flavor: "Banned on public transit for a reason.",
-      // Board already paints no_pawn_advance; fx carried for consistency.
-      fx: { motif: "anchor", pieces: ["p"] },
+      fx: { motif: "blindfold" },
     },
-    instant((_inst, api) => {
-      addEffect(api, { kind: "no_pawn_advance", against: api.opp, turns: 3 });
-      const pawns = mySquares(api.board, api.opp, "p");
-      if (pawns.length) {
-        addEffect(api, { kind: "strike", squares: pawns, owner: api.me, turns: 1 });
-      }
-    }),
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null
+          ? null
+          : {
+              kind: "square",
+              label: "Choose an empty square to lob the durian onto",
+              squares: Array.from({ length: 64 }, (_, i) => i).filter(
+                (sq) => !api.board.pieces[sq],
+              ),
+            },
+      effect: (inst, _api, picks) => {
+        if (inst.state.sq != null) return;
+        const sq = picks[0]?.square;
+        if (sq == null) return;
+        inst.state.sq = sq;
+        inst.state.turns = 3;
+      },
+      filterOpponentMoves: (moves, inst) => {
+        if (turnsLeft(inst) <= 0 || moves.length === 0) return moves;
+        const sq = inst.state.sq as Square | undefined;
+        if (sq == null) return moves;
+        const kept = moves.filter((m) => dist(sq, m.to) !== 1);
+        return kept.length > 0 ? kept : moves;
+      },
+      onMovePlayed: (inst, move, api) => tickTurns(inst, move, api.opp),
+      status: (inst) =>
+        inst.state.sq == null
+          ? "activate to lob the durian"
+          : `stench: ${turnsLeft(inst)} of their turns left`,
+    },
   ),
 
   // Fruit boon: hide behind the rind. Your whole army cannot be captured for

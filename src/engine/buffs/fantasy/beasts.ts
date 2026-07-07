@@ -9,14 +9,16 @@ import { Buff } from "./shared";
 import {
   card,
   lineSweep,
-  petrifyTarget,
-  walnutAll,
   relocateAnywhere,
   summonTemp,
   placePieces,
   myHalfZone,
+  mySquares,
+  addEffect,
+  turnsLeft,
   ORTHO_DIRS,
   ALL_DIRS,
+  type Square,
 } from "./shared";
 
 export const FANTASY_BEASTS: Buff[] = [
@@ -52,15 +54,67 @@ export const FANTASY_BEASTS: Buff[] = [
     {
       id: "basilisk_stare",
       icon: "Eye",
-      name: "Basilisk's Stare",
+      name: "Basilisk's Gaze",
       description:
-        "Freeze one enemy piece for 3 of their turns. Kings cannot be targeted.",
+        "Turn one enemy piece to stone: it becomes a walnut that can only shuffle one square at a time for 3 of their turns, and while petrified it cannot capture. Kings cannot be targeted.",
       tier: 3,
       category: "hex",
       flavor: "Do not, under any circumstance, look back.",
       fx: { motif: "jail" },
     },
-    petrifyTarget(3, "Choose an enemy piece to turn to stone"),
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null
+          ? null
+          : {
+              kind: "square",
+              label: "Choose an enemy piece to turn to stone",
+              squares: mySquares(api.board, api.opp).filter(
+                (sq) => api.board.pieces[sq]!.type !== "k",
+              ),
+            },
+      effect: (inst, api, picks) => {
+        const sq = picks[0]?.square;
+        if (sq == null || inst.state.sq != null) return;
+        inst.state.sq = sq;
+        inst.state.turns = 3;
+        addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 3 });
+      },
+      // While petrified the stone piece may still take its one-square shuffle,
+      // but never as a capture: strip its captures from the cursed side's moves.
+      filterOpponentMoves: (moves, inst) => {
+        const sq = inst.state.sq as Square | undefined;
+        if (sq == null || turnsLeft(inst) <= 0) return moves;
+        const kept = moves.filter((m) => !(m.from === sq && m.captured));
+        return kept.length > 0 ? kept : moves;
+      },
+      onMovePlayed: (inst, move, api) => {
+        const sq = inst.state.sq as Square | undefined;
+        if (sq == null) return;
+        // The petrified piece was captured or overrun: the gaze ends.
+        if (move.to === sq && move.from !== sq) {
+          inst.spent = true;
+          inst.state.sq = undefined;
+          return;
+        }
+        // Follow it if its owner manages to shuffle it one square.
+        if (move.from === sq) inst.state.sq = move.to;
+        // Tick on the petrified side's own turns, in step with the walnut.
+        if (move.color !== api.opp) return;
+        const left = turnsLeft(inst) - 1;
+        inst.state.turns = left;
+        if (left <= 0) {
+          inst.spent = true;
+          inst.state.sq = undefined;
+        }
+      },
+      status: (inst) =>
+        inst.state.sq == null
+          ? "activate to petrify"
+          : `petrified, ${turnsLeft(inst)} of their turns left`,
+    },
   ),
   card(
     {
@@ -68,13 +122,29 @@ export const FANTASY_BEASTS: Buff[] = [
       icon: "Worm",
       name: "Serpent Brood",
       description:
-        "A brood of stone serpents coils around the enemy clergy: every one of your opponent's bishops turns to a statue for 3 of their turns.",
+        "Venomous stone serpents coil around the enemy clergy: every one of your opponent's bishops turns to a walnut for 3 of their turns, and the venom lingers so no enemy bishop may capture for the rest of the game.",
       tier: 4,
       category: "hex",
       flavor: "Marble scales, and not a single blink.",
-      fx: { motif: "jail", pieces: ["b"] },
+      fx: { motif: "muzzle", pieces: ["b"] },
     },
-    walnutAll(["b"], 3),
+    {
+      kind: "passive",
+      // Petrify every enemy bishop for 3 turns, once, on the draft.
+      init: (_inst, api) => {
+        for (const sq of mySquares(api.board, api.opp)) {
+          if (api.board.pieces[sq]!.type === "b") {
+            addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 3 });
+          }
+        }
+      },
+      // The lingering venom: enemy bishops can never capture again.
+      filterOpponentMoves: (moves) => {
+        const kept = moves.filter((m) => !(m.piece === "b" && m.captured));
+        return kept.length > 0 ? kept : moves;
+      },
+      status: () => "enemy bishops cannot capture",
+    },
   ),
   card(
     {

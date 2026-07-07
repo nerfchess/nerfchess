@@ -469,15 +469,46 @@ export const WILD_ELEMENTAL: Buff[] = [
       id: "we_frost_ward",
       icon: "ShieldCheck",
       name: "Frost Ward",
-      description: "Your king cannot be captured for your opponent's next 2 turns.",
+      description:
+        "Your king cannot be captured for your opponent's next 2 turns. Any enemy piece that moves onto a square next to your king in that time is frozen for 1 turn.",
       tier: 5,
       category: "protection",
-      flavor: "A rime of protection.",
+      flavor: "A rime of protection, and it bites back.",
       fx: { motif: "ward", pieces: ["k"], self: true },
     },
-    instant((_inst, api) => {
-      addEffect(api, { kind: "king_safe", owner: api.me, turns: 2 });
-    }),
+    // Distinct from library/core iron_reign's plain king shield: the ward is a
+    // frozen moat. King uncapturable for 2 turns, and an enemy that steps next
+    // to the king in that window is frozen for 1 turn. A passive so the instance
+    // lives to run the counter-freeze rider; it self-spends when the moat melts.
+    {
+      kind: "passive",
+      init: (inst, api) => {
+        addEffect(api, { kind: "king_safe", owner: api.me, turns: 2 });
+        inst.state.turns = 2;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (((inst.state.turns as number) ?? 0) <= 0) return;
+        if (move.color === api.opp && move.piece !== "k") {
+          const king = mySquares(api.board, api.me, "k")[0];
+          if (
+            king != null &&
+            api.board.pieces[move.to]?.color === api.opp &&
+            ALL_DIRS.some(([df, dr]) => {
+              const f = FILE(king) + df, r = RANK(king) + dr;
+              return inBoard(f, r) && SQ(f, r) === move.to;
+            })
+          ) {
+            addEffect(api, { kind: "freeze", sq: move.to, owner: api.opp, turns: 1, skin: "ice" });
+          }
+        }
+        if (move.color === api.opp) {
+          const left = ((inst.state.turns as number) ?? 0) - 1;
+          inst.state.turns = left;
+          if (left <= 0) inst.spent = true;
+        }
+      },
+      status: (inst) => `moat frozen, ${(inst.state.turns as number) ?? 0} of their turns left`,
+    },
   ),
   card(
     {
@@ -514,13 +545,64 @@ export const WILD_ELEMENTAL: Buff[] = [
     {
       id: "we_stone_grip",
       name: "Stone Grip",
-      description: "Turn one enemy piece (never a king) to stone: it cannot move for 2 of their turns.",
+      description:
+        "Turn one enemy piece (never a king) to a walnut for 3 of their turns: it can only shuffle one square at a time. The enemy pieces directly beside it (up, down, left, or right) cannot capture for their next 2 turns.",
       tier: 3,
       category: "tempo",
-      flavor: "The ground closes over its feet.",
+      flavor: "The ground closes over its feet, and the rock spreads.",
       fx: { motif: "jail" },
     },
-    petrifyTarget(2, "Choose an enemy piece to petrify"),
+    // Distinct from wa_stasis_field's plain 2-turn freeze: the target becomes a
+    // walnut (it may still shuffle one square) for 3 turns, and the petrification
+    // spreads to its orthogonal neighbours, who are struck too numb to capture
+    // for 2 of their turns. spendOnUse:false keeps the instance alive to run the
+    // no-capture filter; it self-spends once that rider expires.
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.active === true
+          ? null
+          : {
+              kind: "square",
+              label: "Choose an enemy piece to petrify",
+              squares: mySquares(api.board, api.opp).filter(
+                (sq) => api.board.pieces[sq]!.type !== "k",
+              ),
+            },
+      effect: (inst, api, picks) => {
+        const sq = picks[0]?.square;
+        if (sq == null || inst.state.active === true) return;
+        addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 3 });
+        const beside: Square[] = [];
+        for (const [df, dr] of ORTHO_DIRS) {
+          const f = FILE(sq) + df, r = RANK(sq) + dr;
+          if (!inBoard(f, r)) continue;
+          const asq = SQ(f, r);
+          const p = api.board.pieces[asq];
+          if (p && p.color === api.opp && p.type !== "k") beside.push(asq);
+        }
+        inst.state.beside = beside;
+        inst.state.turns = 2;
+        inst.state.active = true;
+      },
+      filterOpponentMoves: (moves, inst) => {
+        const beside = inst.state.beside as Square[] | undefined;
+        if (!beside?.length || ((inst.state.turns as number) ?? 0) <= 0) return moves;
+        const kept = moves.filter((m) => !(m.captured && beside.includes(m.from)));
+        return kept.length > 0 ? kept : moves;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.state.active !== true || move.color !== api.opp) return;
+        const left = ((inst.state.turns as number) ?? 0) - 1;
+        inst.state.turns = left;
+        if (left <= 0) inst.spent = true;
+      },
+      status: (inst) =>
+        inst.state.active === true
+          ? `spread numb, ${(inst.state.turns as number) ?? 0} of their turns left`
+          : "activate to petrify",
+    },
   ),
   card(
     {
@@ -893,12 +975,30 @@ export const WILD_ELEMENTAL: Buff[] = [
       id: "we_verdant_shield",
       icon: "Flower2",
       name: "Verdant Shield",
-      description: "A canopy of bark: all of your pawns cannot be captured for your opponent's next 2 turns.",
+      description:
+        "A canopy of bark: all of your pawns cannot be captured for your opponent's next 2 turns. Any enemy pawn directly in front of one of your pawns is rooted and cannot move for 1 turn.",
       tier: 4,
       category: "protection",
-      flavor: "Wrapped in living wood.",
+      requires: ["p"],
+      flavor: "Wrapped in living wood, and the roots reach out.",
       fx: { motif: "ward", pieces: ["p"], self: true },
     },
-    shieldZone((api) => mySquares(api.board, api.me, "p"), 2),
+    // Distinct from library/core phalanx's plain pawn shield: a bramble that
+    // also entangles. Pawns uncapturable for 2 turns, and every enemy pawn
+    // standing directly in front of one of yours is rooted (frozen) for 1 turn.
+    instant((_inst, api) => {
+      const pawns = mySquares(api.board, api.me, "p");
+      addEffect(api, { kind: "shield", owner: api.me, squares: pawns, turns: 2 });
+      const fwd = api.me === "w" ? 1 : -1;
+      for (const sq of pawns) {
+        const f = FILE(sq), r = RANK(sq) + fwd;
+        if (!inBoard(f, r)) continue;
+        const front = SQ(f, r);
+        const p = api.board.pieces[front];
+        if (p && p.color === api.opp && p.type === "p") {
+          addEffect(api, { kind: "freeze", sq: front, owner: api.opp, turns: 1, skin: "roots" });
+        }
+      }
+    }),
   ),
 ];

@@ -14,7 +14,48 @@ import {
   convertEnemies,
   instant,
   backRankZone,
+  mySquares,
+  slideMoves,
+  leapMoves,
+  ALL_DIRS,
+  ORTHO_DIRS,
+  DIAG_DIRS,
+  KNIGHT_LEAPS,
+  FILE,
+  RANK,
+  SQ,
+  inBoard,
+  type BoardState,
+  type Square,
 } from "./shared";
+
+// Does the piece on `from` attack `kingSq` from where it now stands? Divine
+// Intervention uses it to freeze the first enemy piece to strike at the warded
+// king. It reuses the very move generators the engine uses, so a hit it sees is
+// exactly a move that could capture the king (a check).
+function attacksKing(board: BoardState, from: Square, kingSq: Square): boolean {
+  const p = board.pieces[from];
+  if (!p) return false;
+  switch (p.type) {
+    case "q":
+      return slideMoves(board, from, ALL_DIRS, "x").some((m) => m.to === kingSq);
+    case "r":
+      return slideMoves(board, from, ORTHO_DIRS, "x").some((m) => m.to === kingSq);
+    case "b":
+      return slideMoves(board, from, DIAG_DIRS, "x").some((m) => m.to === kingSq);
+    case "n":
+      return leapMoves(board, from, KNIGHT_LEAPS, "x").some((m) => m.to === kingSq);
+    case "k":
+      return slideMoves(board, from, ALL_DIRS, "x", 1).some((m) => m.to === kingSq);
+    case "p": {
+      const r = RANK(from) + (p.color === "w" ? 1 : -1);
+      return [FILE(from) - 1, FILE(from) + 1].some(
+        (f) => inBoard(f, r) && SQ(f, r) === kingSq,
+      );
+    }
+  }
+  return false;
+}
 
 export const FANTASY_DIVINE: Buff[] = [
   card(
@@ -23,15 +64,39 @@ export const FANTASY_DIVINE: Buff[] = [
       icon: "Sun",
       name: "Divine Intervention",
       description:
-        "Your king cannot be captured for your opponent's next 2 turns.",
+        "Your king cannot be captured for your opponent's next 2 turns, and the first enemy piece to strike at your king in that time is frozen where it stands for 2 of their turns.",
       tier: 5,
       category: "protection",
       flavor: "Not today, the heavens say.",
       fx: { motif: "ward", pieces: ["k"], self: true },
     },
-    instant((_inst, api) => {
-      addEffect(api, { kind: "king_safe", owner: api.me, turns: 2 });
-    }),
+    {
+      kind: "passive",
+      init: (inst, api) => {
+        inst.state.turns = 2;
+        addEffect(api, { kind: "king_safe", owner: api.me, turns: 2 });
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.opp) return;
+        const kingSq = mySquares(api.board, api.me, "k")[0];
+        if (
+          kingSq != null &&
+          move.to !== kingSq &&
+          attacksKing(api.board, move.to, kingSq)
+        ) {
+          // The lunge is answered: the striker is frozen where it stands, and
+          // the miracle is spent. The ward itself lives out its own timer.
+          addEffect(api, { kind: "freeze", sq: move.to, owner: api.opp, turns: 2, skin: "shock" });
+          inst.spent = true;
+          return;
+        }
+        const left = ((inst.state.turns as number) ?? 0) - 1;
+        inst.state.turns = left;
+        if (left <= 0) inst.spent = true;
+      },
+      status: (inst) =>
+        ((inst.state.turns as number) ?? 0) > 0 ? "the crown strikes back" : null,
+    },
   ),
   card(
     {

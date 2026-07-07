@@ -14,19 +14,29 @@ import {
   curse,
   permaOppFilter,
   walnutAll,
-  walnutTarget,
   freezeAllEnemies,
   freezeTarget,
   skipOpponent,
   nullifyDrafts,
   instant,
+  activated,
   addEffect,
+  mySquares,
+  turnsLeft,
+  tickTurns,
   relRank,
   FILE,
   RANK,
+  SQ,
+  inBoard,
 } from "./shared";
 
 const H = tierHexes(8);
+
+// Basilisk's Stare petrifies for the rest of the game. Walnut effects tick on
+// the victim's turns, so a large count outlasts any real game; the effect is
+// also re-applied whenever the statue shuffles (see below), so it never lapses.
+const STATUE_TURNS = 999;
 
 export const HEXES_T8: Buff[] = [
   // --- skip: opponent loses two whole turns in a row ----------------------
@@ -95,15 +105,74 @@ export const HEXES_T8: Buff[] = [
     walnutAll(["n", "b"], 4),
   ),
 
-  // --- petrify one targeted piece (any non-king) for 5 turns --------------
+  // --- MARQUEE: petrify one piece for the rest of the game, and its gaze
+  // freezes any enemy piece that ends a move next to the statue -------------
   H(
     {
       id: "medusa_stare",
       name: "Basilisk's Stare",
-      description: "Turn one enemy piece you target into a walnut for 5 of their turns: a walnut is so heavy it can only shuffle one square at a time. Kings cannot be targeted.",
-      flavor: "Meet its eyes once and you are a garden ornament.",
+      description: "Turn one enemy piece you target into a walnut for the rest of the game: it can only ever shuffle one square at a time. Its gaze lingers, so any enemy piece that ends a move next to the statue is frozen for 1 of their turns. Kings cannot be targeted.",
+      flavor: "Meet its eyes once and you are a garden ornament, and so is anyone who comes to help.",
     },
-    walnutTarget(5),
+    activated(
+      (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null
+          ? null
+          : {
+              kind: "square",
+              label: "Choose an enemy piece to petrify forever",
+              squares: mySquares(api.board, api.opp).filter(
+                (sq) => api.board.pieces[sq]!.type !== "k",
+              ),
+            },
+      (inst, api, picks) => {
+        if (inst.state.sq != null) return;
+        const sq = picks[0]?.square;
+        if (sq == null) return;
+        inst.state.sq = sq;
+        addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: STATUE_TURNS });
+      },
+      {
+        // One activation, then it lives on as a permanent passive watching the
+        // board; it only ends if the statue is captured.
+        spendOnUse: false,
+        onMovePlayed: (inst, move, api) => {
+          const sq = inst.state.sq as number | undefined;
+          if (sq == null) return;
+          // The statue was captured (only I can take it): the gaze dies too.
+          if (move.capturedSquare === sq) {
+            inst.spent = true;
+            inst.state.sq = undefined;
+            return;
+          }
+          // The statue shuffled its one square: follow it and re-petrify, so
+          // the walnut is never pruned off the vacated square and stays for good.
+          if (move.from === sq && move.color === api.opp) {
+            inst.state.sq = move.to;
+            addEffect(api, { kind: "walnut", sq: move.to, owner: api.opp, turns: STATUE_TURNS });
+            return;
+          }
+          // One of their pieces ended its move beside the statue: the gaze
+          // freezes it. Added on their move, so 2 leaves 1 of their turns.
+          if (move.color === api.opp && move.to !== sq) {
+            const step = Math.max(
+              Math.abs(FILE(move.to) - FILE(sq)),
+              Math.abs(RANK(move.to) - RANK(sq)),
+            );
+            const p = api.board.pieces[move.to];
+            if (step === 1 && p && p.color === api.opp && p.type !== "k") {
+              addEffect(api, { kind: "freeze", sq: move.to, owner: api.opp, turns: 2 });
+            }
+          }
+        },
+        status: (inst) => {
+          const sq = inst.state.sq as number | undefined;
+          return sq == null
+            ? "activate to choose the statue"
+            : `statue at ${"abcdefgh"[FILE(sq)]}${RANK(sq) + 1}`;
+        },
+      },
+    ),
   ),
 
   // --- no_pawn_advance: pawns nailed down for 8 turns (near-permanent) -----
@@ -215,15 +284,42 @@ export const HEXES_T8: Buff[] = [
     nullifyDrafts(3),
   ),
 
-  // --- timed filter: no captures with any piece for 3 turns ---------------
+  // --- no captures for 3 turns AND a sealed ring around your own king ------
   H(
     {
       id: "peace_of_the_grave",
       name: "Peace of the Grave",
-      description: "Your opponent cannot capture with any piece for their next 3 turns.",
-      flavor: "A forced truce enforced by the dead; no blade may be drawn.",
+      description: "Your opponent cannot capture with any piece for their next 3 turns, and for those turns they cannot move any piece onto a square next to your king.",
+      flavor: "A forced truce enforced by the dead, with a cordon drawn around the crown.",
       fx: { motif: "muzzle", pieces: "all" },
     },
-    curse(3, (moves) => moves.filter((m) => !m.captured)),
+    {
+      kind: "passive",
+      init: (inst, api) => {
+        const ksq = mySquares(api.board, api.me, "k")[0];
+        if (ksq != null) {
+          const squares: number[] = [];
+          for (let df = -1; df <= 1; df++) {
+            for (let dr = -1; dr <= 1; dr++) {
+              if (df === 0 && dr === 0) continue;
+              const f = FILE(ksq) + df;
+              const r = RANK(ksq) + dr;
+              if (inBoard(f, r)) squares.push(SQ(f, r));
+            }
+          }
+          if (squares.length > 0) {
+            addEffect(api, { kind: "barred", squares, against: api.opp, turns: 3 });
+          }
+        }
+        inst.state.turns = 3;
+      },
+      filterOpponentMoves: (moves, inst) => {
+        if (turnsLeft(inst) <= 0 || moves.length === 0) return moves;
+        const kept = moves.filter((m) => !m.captured);
+        return kept.length > 0 ? kept : moves;
+      },
+      onMovePlayed: (inst, move, api) => tickTurns(inst, move, api.opp),
+      status: (inst) => `${turnsLeft(inst)} of their turns left`,
+    },
   ),
 ];

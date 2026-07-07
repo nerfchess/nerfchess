@@ -615,8 +615,49 @@ const TIER1: Buff[] = [
     ),
   ),
   def(
-    { id: "sidestep", name: "Sidestep", description: "One of your pieces cannot be captured for your opponent's next 2 turns.", tier: 1, category: "protection" },
-    shieldTarget(1),
+    // An actual dodge, not a flat shield: the chosen piece slips one square to
+    // an empty neighbour and is uncapturable on the reply. Only pieces that
+    // have an empty adjacent square are offered, so the second pick is never
+    // empty. king_safe is a separate card, so the king is not offered here.
+    { id: "sidestep", name: "Sidestep", description: "Choose one piece: it steps one square to an empty square beside it and cannot be captured for your opponent's next turn.", tier: 1, category: "protection", fx: { motif: "empower", pieces: "all", moveAs: "k", self: true } },
+    activated(
+      (_inst, api, picks) => {
+        // An empty neighbour the piece on `from` may legally step onto. A pawn
+        // may never land on rank 1/8 (api.relocate refuses it), so those are
+        // filtered here to keep the second pick honest.
+        const openSteps = (from: Square) =>
+          stepDest(api, from).filter(
+            (d) => !api.board.pieces[d] && (api.board.pieces[from]?.type !== "p" || pawnRankOk(d)),
+          );
+        if (picks.length === 0) {
+          return {
+            kind: "square",
+            label: "Choose the piece to sidestep",
+            squares: mySquares(api.board, api.me).filter(
+              (sq) => api.board.pieces[sq]!.type !== "k" && openSteps(sq).length > 0,
+            ),
+          };
+        }
+        if (picks.length === 1 && picks[0].square != null) {
+          return {
+            kind: "square",
+            label: "Step to an empty square beside it",
+            squares: openSteps(picks[0].square),
+          };
+        }
+        return null;
+      },
+      (_inst, api, picks) => {
+        const from = picks[0]?.square;
+        const to = picks[1]?.square;
+        if (from == null || to == null) return;
+        const p = api.board.pieces[from];
+        if (!p || p.type === "k" || api.board.pieces[to]) return;
+        if (p.type === "p" && !pawnRankOk(to)) return;
+        api.relocate(from, to);
+        addEffect(api, { kind: "shield", owner: api.me, squares: [to], turns: 1 });
+      },
+    ),
   ),
   def(
     { id: "tempo_shuffle", requires: ["p"], name: "Tempo Shuffle", description: "Move one pawn sideways one square, once.", tier: 1, category: "movement", fx: { motif: "empower", pieces: ["p"], self: true } },
@@ -708,8 +749,31 @@ const TIER1: Buff[] = [
     ),
   ),
   def(
-    { id: "firm_footing", name: "Firm Footing", description: "One piece cannot be captured for your opponent's next 2 turns.", tier: 1, category: "protection" },
-    shieldTarget(1),
+    // The stability card, distinct from Sidestep's dodge: it braces a piece
+    // together with the friendly pawns standing beside it, a whole planted
+    // cluster rather than a single shielded piece. (The literal "cannot be
+    // pushed or swapped by enemy buffs" anchor half is not wired here: the
+    // engine's relocate hook only spares pieces bound by the card whose id is
+    // "anchor" (game.ts), which this file cannot broaden.)
+    { id: "firm_footing", name: "Firm Footing", description: "Choose one piece: it and your pawns on the squares beside it cannot be captured for your opponent's next 2 turns.", tier: 1, category: "protection", fx: { motif: "ward", pieces: "all", self: true } },
+    activated(
+      (_inst, api, picks) =>
+        picks.length > 0
+          ? null
+          : {
+              kind: "square",
+              label: "Choose the piece to steady",
+              squares: mySquares(api.board, api.me).filter(
+                (sq) => api.board.pieces[sq]!.type !== "k",
+              ),
+            },
+      (_inst, api, picks) => {
+        const sq = picks[0]?.square;
+        if (sq == null) return;
+        const bracing = mySquares(api.board, api.me, "p").filter((p) => adjacent(p, sq));
+        addEffect(api, { kind: "shield", owner: api.me, squares: [sq, ...bracing], turns: 1 });
+      },
+    ),
   ),
   def(
     // Guards the rooks without a shield effect, so the ward motif is the only
@@ -2688,8 +2752,19 @@ const TIER7: Buff[] = [
     lineSweep("q", ALL_DIRS, null),
   ),
   def(
-    { id: "time_freeze", name: "Time Freeze", description: "Your opponent skips their next two turns, once.", tier: 7, category: "tempo", fx: { motif: "slow", pieces: "all" } },
-    skipOpponent(2),
+    // Not a second Time Lock (that is the double skip): a literal freeze. The
+    // opponent loses their next turn to a skip, then on their following turn
+    // every piece but the king is frozen. skips[opp] absorbs the next handover
+    // so the freeze (which only ticks on the opponent's completed turns) is
+    // still live when they finally get to move.
+    { id: "time_freeze", name: "Time Freeze", description: "Your opponent skips their next turn, then on their following turn every enemy piece except the king is frozen.", tier: 7, category: "tempo", fx: { motif: "slow", pieces: "all" } },
+    instant((_inst, api) => {
+      api.bs.skips[api.opp] += 1;
+      for (const sq of mySquares(api.board, api.opp)) {
+        if (api.board.pieces[sq]!.type === "k") continue;
+        addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 1, skin: "ice" });
+      }
+    }),
   ),
   def(
     { id: "fortress_realm", name: "Fortress Realm", description: "A 3x3 zone you pick makes your pieces there, your king aside, uncapturable for your opponent's next 5 turns.", tier: 7, category: "protection", boon: true },
