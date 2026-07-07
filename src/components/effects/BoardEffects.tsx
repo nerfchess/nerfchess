@@ -1008,6 +1008,35 @@ export const MotifBadge = React.memo(function MotifBadge({
   );
 });
 
+// --- 9b. Bound-buff marker (Duelist-style piece markers) ---------------------
+// A small, subtle corner sigil for a piece carrying a piece-bound ongoing buff
+// that declares no CardFx motif (Duelist, a placed phantom rook, and the like).
+// Board.tsx derives the marked squares from the public game.buffs and mounts one
+// per marked piece, visible to BOTH players, tinted by the card's tier and
+// stamped with its category suit so two different bound cards read differently.
+// The full card name + rule text live in the hover/focus popover, not here.
+
+export const BoundBuffMark = React.memo(function BoundBuffMark({
+  tier,
+  category,
+}: {
+  tier: number;
+  category: BuffCategory;
+}) {
+  const color = TIER_COLOR[tier] ?? TIER_COLOR[3];
+  const Icon = CATEGORY_ICON[category];
+  return (
+    <span aria-hidden="true" className="fx-bound block h-full w-full" style={{ color }}>
+      <span
+        className="flex h-full w-full items-center justify-center rounded-full border"
+        style={{ background: "rgba(20,30,43,0.92)", borderColor: color }}
+      >
+        <Icon size="60%" strokeWidth={2.4} aria-hidden />
+      </span>
+    </span>
+  );
+});
+
 // --- 10. Signature animations (marquee attack-card spectacles) ---------------
 // A signature is a choreographed, staggered sequence played over the enemy
 // squares an attack card just cleared. Board.tsx derives those squares from

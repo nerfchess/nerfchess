@@ -394,6 +394,13 @@ function GamePage() {
   // unreadable.
   const [oppLog, setOppLog] = useState<OppPlay[]>([]);
   const oppKeyRef = useRef(0);
+  // Which held-buff hook mutations have already been announced to the feed,
+  // keyed by owner:index (buff slots are append-only), so a passive that fires
+  // once is never re-announced on a later re-render.
+  const reportedHooksRef = useRef(new Set<string>());
+  // Ply at which lastHookMutations was last inspected, so the reporter reacts
+  // only to real new moves (lastHookMutations is transient per playMove).
+  const lastHookPlyRef = useRef(0);
   const showOppUsedCard = (card: { id: string; tier: number }, label: string) => {
     // Bounded but roomy: the dock keeps the whole game's plays readable.
     setOppLog((log) => [...log, { key: oppKeyRef.current++, card, label, at: Date.now() }].slice(-60));
@@ -688,6 +695,35 @@ function GamePage() {
     }
     lastSeenMoveCount.current = hist.length;
   }, [game]);
+
+  // Board-mutating self-buffs (the bot's summon/transform/revive/removal that
+  // reacts to a move) mutate the board with no draft frame to hang a play on.
+  // The engine records which held buffs observably changed the board on the
+  // last move (lastHookMutations); surface the bot's to the play feed and fire
+  // every fired card's signature, so a board-changing buff is never silent.
+  useEffect(() => {
+    const bs = game?.buffs;
+    const histLen = game?.board.history.length ?? 0;
+    if (!bs || histLen === lastHookPlyRef.current) {
+      lastHookPlyRef.current = histLen;
+      return;
+    }
+    lastHookPlyRef.current = histLen;
+    const fired = bs.lastHookMutations;
+    if (!fired) return;
+    const botColor: Color = myColor === "w" ? "b" : "w";
+    for (const { color, index } of fired) {
+      const inst = bs.players[color].buffs[index];
+      if (!inst || !inst.id || !BUFF_BY_ID[inst.id]) continue;
+      fireSignature(inst.id);
+      if (color !== botColor) continue;
+      const key = `${color}:${index}`;
+      if (reportedHooksRef.current.has(key)) continue;
+      reportedHooksRef.current.add(key);
+      showOppUsedCard({ id: inst.id, tier: inst.tier }, `Bot's ${draftCardNoun(bs.mode)} triggered`);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [game, myColor]);
 
   // Game-ended hook: play the nerf sound, apply the rating, and record the
   // finished game into the local history. Runs exactly once per game;
@@ -1409,7 +1445,7 @@ function GamePage() {
           </div>
         )}
         <div
-          className="grid min-h-0 flex-1 gap-y-2 lg:grid-cols-[380px_auto] lg:justify-center lg:gap-x-4 xl:grid-cols-[420px_auto]"
+          className="grid min-h-0 flex-1 gap-y-2 lg:grid-cols-[440px_auto] lg:justify-center lg:gap-x-4 xl:grid-cols-[500px_auto]"
           style={railHeightStyle}
         >
           <aside className="hidden min-h-0 gap-3 overflow-hidden lg:grid lg:min-h-[var(--board-height)] lg:max-h-full lg:grid-rows-[auto_minmax(8rem,1fr)_auto] lg:self-start">

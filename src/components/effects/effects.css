@@ -480,6 +480,29 @@
 }
 .fx-sig-splat { animation: fx-sig-splat 0.5s ease-out both; transform-origin: 50% 100%; }
 
+/* --- 11. Bound-buff marker + effect popover ---------------------------------
+   The Duelist-style corner sigil pops in once on mount (a piece just gained a
+   bound buff), then holds. The effect-explanation popover fades and rises a
+   touch when it opens; its placement transform lives on the wrapper, so this
+   entrance only animates the inner card (opacity + a small self-relative
+   nudge) and never fights the positioning. Both transform/opacity only. */
+@keyframes fx-bound-in {
+  0% { opacity: 0; transform: scale(0.4); }
+  60% { opacity: 1; transform: scale(1.12); }
+  100% { opacity: 1; transform: none; }
+}
+.fx-bound {
+  animation: fx-bound-in 0.32s var(--ease-spring, cubic-bezier(0.2, 1.4, 0.4, 1)) both;
+  transform-origin: 50% 50%;
+}
+@keyframes fx-popover-in {
+  0% { opacity: 0; transform: translateY(4%) scale(0.98); }
+  100% { opacity: 1; transform: none; }
+}
+.fx-effect-popover-anim {
+  animation: fx-popover-in 0.14s ease-out both;
+}
+
 /* --- Reduced motion ----------------------------------------------------------
    Persistent props hold their static end state; one-shot flourishes vanish
    (same treatment globals.css gives the walnut squirrel). */
@@ -495,6 +518,8 @@
   .fx-bestow,
   .fx-ward,
   .fx-motif-chip,
+  .fx-bound,
+  .fx-effect-popover-anim,
   .fx-piece-pop,
   .fx-piece-drop,
   /* Injured: hold the dizzy stars still as a static dazed mark; drop the

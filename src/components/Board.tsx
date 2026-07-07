@@ -6,6 +6,7 @@ import { Piece, WalnutPiece, BananaPeel } from "./Pieces";
 import {
   BarrierStakes,
   BoltGlyph,
+  BoundBuffMark,
   ChainJail,
   DetonationBurst,
   DuckGlyph,
@@ -21,6 +22,9 @@ import {
   TransformFlourish,
 } from "./effects/BoardEffects";
 import type { MotifMark } from "./effects/fxZones";
+import { EffectPopover, type EffectPopoverContent } from "./EffectPopover";
+import type { BuffCategory, BuffMatchState } from "@/engine/buff";
+import { BUFF_BY_ID } from "@/engine/buffs/library";
 import { BoardState, Color, FILE, Move, PieceType, RANK, SQ, Square } from "@/engine/types";
 import {
   playAtomic,
@@ -132,6 +136,25 @@ interface Props {
   // instead of plain detonation bursts. Keyed so re-renders never replay it,
   // and absent on the initial mount / a rejoined game (so nothing fires then).
   signatureCard?: { id: string; key: number } | null;
+  // The public buff state both surfaces already hold (game.buffs). Used only
+  // to derive Duelist-style piece-bound buff markers: a small corner sigil on
+  // any piece carrying an active bound buff that draws no CardFx motif, with
+  // the full card explanation surfaced through the hover/focus popover.
+  // Optional and null-safe: absent (nerf mode, history review) simply paints
+  // no markers.
+  buffs?: BuffMatchState | null;
+}
+
+/** One derived piece-bound buff marker: everything the corner sigil and its
+ * popover need, resolved from the public buff instance + its library def. */
+interface BoundMark {
+  name: string;
+  description: string;
+  status: string | null;
+  flavor: string | null;
+  tier: number;
+  category: BuffCategory;
+  tone: "buff" | "hex";
 }
 
 // Map a signature's sound key to its sounds.ts voice, scaled to the number of
@@ -548,6 +571,18 @@ function computeBoardFx(
         fx.set(sq, { kind: "morph", crown: b.type === "q", key: ++seq.current });
         morphUsed = true;
       }
+    } else if (a && a.color !== b.color && !anims.has(sq) && sq !== skipSquare) {
+      // In-place COLOUR change (setPieceColor buffs: conversion / mind-control):
+      // the piece stayed put but switched sides without any slide landing on
+      // it. Left alone this is a silent ownership flip; dress it with the same
+      // transform flourish + piece pop so the board never quietly re-colours a
+      // piece. Guarded by !anims.has(sq): an ordinary capture lands via a slide
+      // (that square is in anims), so this never misfires on a normal take. No
+      // crown: a conversion is not a promotion.
+      if (!morphUsed) {
+        fx.set(sq, { kind: "morph", crown: false, key: ++seq.current });
+        morphUsed = true;
+      }
     } else if (!a && !anims.has(sq) && sq !== skipSquare) {
       if (lostColor[b.color]) {
         // A same-colour piece vanished elsewhere: this is a piece that moved
@@ -637,6 +672,7 @@ export function Board({
   pickSquares,
   onPickSquare,
   signatureCard,
+  buffs,
 }: Props) {
   const pickSquareSet = useMemo(() => new Set(pickSquares ?? []), [pickSquares]);
   const pickingSquares = !!onPickSquare;
@@ -652,6 +688,10 @@ export function Board({
   const [promotionMove, setPromotionMove] = useState<Move[] | null>(null);
   const [drag, setDrag] = useState<DragState | null>(null);
   const [hoverSq, setHoverSq] = useState<Square | null>(null);
+  // Square whose effect-explanation popover is currently open (hover, focus,
+  // or tap). One at a time; the Board owns open/close, EffectPopover just
+  // renders the card. Null = nothing open.
+  const [effectPopoverSq, setEffectPopoverSq] = useState<Square | null>(null);
   const [rightClickMarks, setRightClickMarks] = useState<Record<number, RightClickMark>>({});
   const [arrows, setArrows] = useState<BoardArrow[]>([]);
   const [rightDrag, setRightDrag] = useState<{ from: Square; mark: RightClickMark; hover: Square } | null>(null);
@@ -849,6 +889,54 @@ export function Board({
     for (const mk of visual?.motifSquares ?? []) m.set(mk.sq, mk);
     return m;
   }, [visual?.motifSquares]);
+  // Duelist-style piece-bound buff markers, derived from the public game.buffs.
+  // A card counts when it is held (not spent / nullified), is a genuinely
+  // BOUND upgrade (the engine's own rule: an activated, spend-on-use:false card
+  // whose state points at the owner's square(s); see library.ts boundUpgrade),
+  // declares NO CardFx motif (fx cards already paint a motif badge), and its
+  // bound square currently holds one of the owner's own pieces. That is the set
+  // of ongoing piece marks the board otherwise shows nothing for (Duelist, a
+  // placed phantom rook, bound upgrades without fx). A recorded countdown /
+  // charge pool that reached zero leaves the card inert, so it is skipped, and
+  // masked opponent instances carry an empty id so nothing hidden can surface.
+  // First live mark wins a square.
+  const boundMarks = useMemo(() => {
+    const m = new Map<number, BoundMark>();
+    if (!buffs) return m;
+    for (const color of ["w", "b"] as Color[]) {
+      for (const inst of buffs.players[color].buffs) {
+        if (!inst.id || inst.spent || inst.nullified) continue;
+        const def = BUFF_BY_ID[inst.id];
+        if (!def) continue;
+        if (def.kind !== "activated" || def.spendOnUse !== false) continue; // bound upgrades only
+        if (def.fx?.pieces) continue; // fx cards already draw a motif badge
+        const turns = typeof inst.state.turns === "number" ? inst.state.turns : null;
+        if (turns != null && turns <= 0) continue;
+        const charges = typeof inst.state.charges === "number" ? inst.state.charges : null;
+        if (charges != null && charges <= 0) continue;
+        const sqs: number[] = [];
+        if (typeof inst.state.sq === "number") sqs.push(inst.state.sq);
+        if (Array.isArray(inst.state.sqs)) {
+          for (const s of inst.state.sqs) if (typeof s === "number") sqs.push(s);
+        }
+        for (const sq of sqs) {
+          if (sq < 0 || sq > 63 || m.has(sq)) continue;
+          const p = board.pieces[sq];
+          if (!p || p.color !== color) continue; // must mark the owner's own piece
+          m.set(sq, {
+            name: def.name,
+            description: def.description,
+            status: def.status ? def.status(inst) : null,
+            flavor: def.flavor ?? null,
+            tier: inst.tier,
+            category: def.category,
+            tone: def.category === "hex" ? "hex" : "buff",
+          });
+        }
+      }
+    }
+    return m;
+  }, [buffs, board.pieces]);
   // Chain-jailed squares: shackled pieces minus the pawn-clamp family (those
   // get the fence instead). Sorted order drives the clamp-in stagger so the
   // links read as dropping in one after another.
@@ -1292,6 +1380,113 @@ export function Board({
     setRightDrag({ from: sq, mark: markFromModifiers(e), hover: sq });
   };
 
+  // Whether the strongest card-fx motif on a square is actually shown there
+  // (same rule the render uses to decide the MotifBadge). Factored out so the
+  // popover text below reports exactly what the board paints, never drifting.
+  const motifShownFor = (sq: Square): boolean => {
+    const mark = motifBySquare.get(sq);
+    if (!mark) return false;
+    const p = board.pieces[sq];
+    if (!p) return false;
+    if (walnutSquares.has(sq) || frozenSquares.has(sq)) return false;
+    if (!isEmpowerMotif(mark.motif) && (jailSquares.has(sq) || pawnClampSquares.has(sq))) return false;
+    if (mark.motif === "ward" && (shieldedSquares.has(sq) || kingSafeSquares.has(sq))) return false;
+    return true;
+  };
+
+  // Plain-language explanation for every persistent zone effect on a square
+  // (walnut, freeze, shackle, shield, ward, peel, strike, motif). Public
+  // information, so it is safe to spell out. Formerly the browser `title`;
+  // now the body of the styled popover so every active-effect explanation
+  // uses one clean UI.
+  const buildEffectText = (sq: Square): string => {
+    const motifMark = motifBySquare.get(sq);
+    const motifShown = motifShownFor(sq);
+    return [
+      walnutSquares.has(sq) &&
+        "Walnut: a squirrel buried this piece under a walnut. It is stuck solid and cannot move until the shell cracks.",
+      frozenSquares.has(sq) &&
+        "Frozen: this piece is iced in place and cannot move until it thaws.",
+      pawnClampSquares.has(sq) &&
+        "Halted: a hex has fenced this pawn's path; it cannot advance for now.",
+      lockedSquares.has(sq) && !pawnClampSquares.has(sq) &&
+        "Shackled: a hex has chained this piece in place for now.",
+      shieldedSquares.has(sq) &&
+        "Sheltered: pieces here, the king aside, cannot be captured.",
+      kingSafeSquares.has(sq) &&
+        "Royal guard: this king cannot be captured while the ward holds.",
+      wardSquares.has(sq) &&
+        "Warded: your opponent cannot move a piece onto this square.",
+      bananaSquares.has(sq) &&
+        "Banana peel: the next enemy piece to step here slips and skids off course.",
+      strikeSquares.has(sq) && "Lightning: this square was just struck.",
+      motifShown &&
+        motifMark &&
+        `${motifMark.name}: ${
+          motifMark.motif === "rally"
+            ? "this army " + MOTIF_DESC.rally
+            : "this piece " +
+              MOTIF_DESC[motifMark.motif] +
+              (motifMark.motif === "empower" && motifMark.moveAs
+                ? ` and moves like a ${PIECE_NAME[motifMark.moveAs]}`
+                : "")
+        }${
+          motifMark.turns != null
+            ? ` (${motifMark.turns} turn${motifMark.turns === 1 ? "" : "s"} left)`
+            : ""
+        }.`,
+    ]
+      .filter(Boolean)
+      .join(" ");
+  };
+
+  // Resolve a square's popover content: a bound buff (Duelist and friends)
+  // names its card and rule text; otherwise the zone-effect explanation. Null
+  // when the square carries neither, so hovering a plain square opens nothing.
+  const effectInfoFor = (sq: Square): EffectPopoverContent | null => {
+    // The bound-buff sigil is suppressed where a motif badge already stamps
+    // the piece; keep the popover in step so hover reports what is drawn.
+    const bound = motifShownFor(sq) ? undefined : boundMarks.get(sq);
+    if (bound) {
+      return {
+        title: bound.name,
+        body: bound.description,
+        status: bound.status,
+        flavor: bound.flavor,
+        tier: bound.tier,
+        tone: bound.tone,
+      };
+    }
+    const text = buildEffectText(sq);
+    if (text) return { title: "Active effect", body: text, tone: "neutral" };
+    return null;
+  };
+
+  // Open the popover for a square only when it actually explains something and
+  // no drag is in flight (a drag over a square must not raise cards).
+  const openEffectPopover = (sq: Square) => {
+    if (drag) return;
+    if (effectInfoFor(sq)) setEffectPopoverSq(sq);
+  };
+  const closeEffectPopover = (sq: Square) => {
+    setEffectPopoverSq((cur) => (cur === sq ? null : cur));
+  };
+
+  // Tap-away / interaction dismiss: once a popover is open, the next pointer
+  // press anywhere that is not a bound-buff trigger closes it (the trigger's
+  // own handler stops propagation, so tapping it keeps it open). Covers touch,
+  // where there is no pointer-leave, and closes on any board interaction.
+  useEffect(() => {
+    if (effectPopoverSq == null) return;
+    const onDown = (e: PointerEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (t && typeof t.closest === "function" && t.closest("[data-effect-keep]")) return;
+      setEffectPopoverSq(null);
+    };
+    window.addEventListener("pointerdown", onDown);
+    return () => window.removeEventListener("pointerdown", onDown);
+  }, [effectPopoverSq]);
+
   return (
     <div ref={boardRef} className="relative w-full max-w-[min(92vw,720px)] aspect-square mx-auto">
       <div className="absolute inset-2 sm:inset-3 rounded-sm overflow-hidden border border-black/40">
@@ -1348,55 +1543,13 @@ export function Board({
             // motif (the piece is out of action), and the buckler/heater
             // shield covers what a ward ring would say.
             const motifMark = motifBySquare.get(sq);
-            const motifShown =
-              !!motifMark &&
-              !!piece &&
-              !walnutSquares.has(sq) &&
-              !frozenSquares.has(sq) &&
-              (isEmpowerMotif(motifMark.motif) || (!jailSquares.has(sq) && !pawnClampSquares.has(sq))) &&
-              !(motifMark.motif === "ward" && (shieldedSquares.has(sq) || kingSafeSquares.has(sq)));
-
-            // Plain-language hover tooltip for any effect on this square, so a
-            // player can hover a walnut, freeze, shield, wall, or peel and read
-            // what it does instead of decoding an icon. Public information, so
-            // it is safe to spell out.
-            const effectTitle = [
-              walnutSquares.has(sq) &&
-                "Walnut: a squirrel buried this piece under a walnut. It is stuck solid and cannot move until the shell cracks.",
-              frozenSquares.has(sq) &&
-                "Frozen: this piece is iced in place and cannot move until it thaws.",
-              pawnClampSquares.has(sq) &&
-                "Halted: a hex has fenced this pawn's path; it cannot advance for now.",
-              lockedSquares.has(sq) && !pawnClampSquares.has(sq) &&
-                "Shackled: a hex has chained this piece in place for now.",
-              shieldedSquares.has(sq) &&
-                "Sheltered: pieces here, the king aside, cannot be captured.",
-              kingSafeSquares.has(sq) &&
-                "Royal guard: this king cannot be captured while the ward holds.",
-              wardSquares.has(sq) &&
-                "Warded: your opponent cannot move a piece onto this square.",
-              bananaSquares.has(sq) &&
-                "Banana peel: the next enemy piece to step here slips and skids off course.",
-              strikeSquares.has(sq) && "Lightning: this square was just struck.",
-              // Card-fx motif: always the exact card name plus turns left.
-              motifShown &&
-                motifMark &&
-                `${motifMark.name}: ${
-                  motifMark.motif === "rally"
-                    ? "this army " + MOTIF_DESC.rally
-                    : "this piece " +
-                      MOTIF_DESC[motifMark.motif] +
-                      (motifMark.motif === "empower" && motifMark.moveAs
-                        ? ` and moves like a ${PIECE_NAME[motifMark.moveAs]}`
-                        : "")
-                }${
-                  motifMark.turns != null
-                    ? ` (${motifMark.turns} turn${motifMark.turns === 1 ? "" : "s"} left)`
-                    : ""
-                }.`,
-            ]
-              .filter(Boolean)
-              .join(" ");
+            const motifShown = motifShownFor(sq);
+            // Duelist-style bound-buff marker for this square (skipped where a
+            // motif badge already stamps the piece, so the two never stack).
+            const boundMark = !motifShown ? boundMarks.get(sq) : undefined;
+            // Whether this square explains anything on hover / focus (drives
+            // the popover triggers below): a bound buff or any zone effect.
+            const hasEffectInfo = !!effectInfoFor(sq);
 
             const fogHide =
               !!visual?.fogged && piece && piece.color !== myColor && !lastTo;
@@ -1453,7 +1606,12 @@ export function Board({
                 }}
                 role="gridcell"
                 aria-label={`square ${"abcdefgh"[f]}${r + 1}`}
-                title={effectTitle || undefined}
+                // Desktop hover raises the styled effect popover in place of the
+                // old browser title (only when the square explains something and
+                // no drag is in flight). Pointer-leave dismisses it; pointerdown
+                // move handling is untouched.
+                onPointerEnter={hasEffectInfo ? () => openEffectPopover(sq) : undefined}
+                onPointerLeave={hasEffectInfo ? () => closeEffectPopover(sq) : undefined}
               >
                 {underwater && (
                   <div className="absolute inset-0 bg-cyan-500/25 mix-blend-screen pointer-events-none" />
@@ -1535,6 +1693,32 @@ export function Board({
                     category={motifMark.category}
                     moveAs={motifMark.moveAs}
                   />
+                )}
+                {boundMark && (
+                  /* Duelist-style bound-buff sigil: a small tinted corner glyph
+                     on a piece carrying an active piece-bound buff, visible to
+                     both players. A real focusable button so hover, keyboard
+                     focus, and tap all raise the card popover; its pointerdown
+                     is swallowed (data-effect-keep + stopPropagation) so tapping
+                     the glyph never grabs the piece or triggers a move. Keyed by
+                     name so a genuinely different card replays the entrance. */
+                  <button
+                    key={`bound-${boundMark.name}`}
+                    type="button"
+                    data-effect-keep
+                    aria-label={`${boundMark.name}: ${boundMark.description}`}
+                    className="absolute left-[3%] top-[3%] z-30 h-[26%] w-[26%] rounded-full p-0 leading-none focus:outline-none focus-visible:ring-2 focus-visible:ring-gold/70"
+                    onPointerEnter={() => openEffectPopover(sq)}
+                    onPointerDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      openEffectPopover(sq);
+                    }}
+                    onFocus={() => setEffectPopoverSq(sq)}
+                    onBlur={() => closeEffectPopover(sq)}
+                  >
+                    <BoundBuffMark tier={boundMark.tier} category={boundMark.category} />
+                  </button>
                 )}
                 {(shieldedSquares.has(sq) || kingSafeSquares.has(sq)) && (
                   <>
@@ -1689,6 +1873,21 @@ export function Board({
           </svg>
         )}
       </div>
+
+      {/* Effect-explanation popover: one styled card for any active-effect
+          square (bound buffs and zone effects). Mounted on the outer board
+          box (outside the inner overflow-hidden crop) so it is never clipped,
+          positioned in board-percent coordinates by EffectPopover, and
+          suppressed under the promotion picker. */}
+      {effectPopoverSq != null &&
+        !promotionMove &&
+        (() => {
+          const info = effectInfoFor(effectPopoverSq);
+          if (!info) return null;
+          return (
+            <EffectPopover sq={effectPopoverSq} orientation={orientation} content={info} />
+          );
+        })()}
 
       {/* Floating drag ghost — position is written directly via ref to avoid React re-renders */}
       {drag && draggedPiece && (
