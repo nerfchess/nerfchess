@@ -23,6 +23,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     entry("/play", 0.9, "monthly"),
     entry("/lobby", 0.9, "monthly"),
     entry("/codex", 0.9, "weekly"),
+    entry("/updates", 0.7, "weekly"),
     entry("/tutorial", 0.8, "monthly"),
     entry("/tutorial/walkthrough", 0.6, "monthly"),
     // The guide: evergreen explainer pages written for search and AI answers.
