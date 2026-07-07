@@ -28,6 +28,7 @@ import { MobileBuffDrawer } from "@/components/MobileBuffDrawer";
 import { MobileMoveDrawer } from "@/components/MobileMoveDrawer";
 import { MoveList } from "@/components/MoveList";
 import { NerfCard } from "@/components/NerfCard";
+import { Pocket } from "@/components/Pocket";
 import { PlayerNerfCard } from "@/components/PlayerNerfCard";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { SpectatorPill } from "@/components/SpectatorPill";
@@ -51,7 +52,7 @@ import {
   newGameAsColor,
   playMove,
 } from "@/engine/game";
-import { BoardState, Color, Move } from "@/engine/types";
+import { BoardState, Color, Move, PieceType, Square } from "@/engine/types";
 import {
   applyDraftAction,
   draftZones,
@@ -247,6 +248,10 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   const [whiteMs, setWhiteMs] = useState(start.wc);
   const [blackMs, setBlackMs] = useState(start.bc);
   const [premoves, setPremoves] = useState<QueuedPremove[]>([]);
+  // Crazyhouse drop mode: the pocket piece type currently armed for a drop, or
+  // null. While set, the board highlights every legal drop square (via the
+  // shared pickSquares plumbing) and clicking one plays the drop.
+  const [dropType, setDropType] = useState<PieceType | null>(null);
   const [pendingLocalMove, setPendingLocalMoveState] = useState<PendingLocalMove | null>(null);
   const [awaitingPremoveAck, setAwaitingPremoveAckState] = useState(false);
   const [historyPly, setHistoryPly] = useState<number | null>(null);
@@ -1244,8 +1249,15 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     }
     if (game.board.turn !== myColor) return;
     if (awaitingPremoveAck || pendingLocalMove) return;
+    // Match on drop too: a crazyhouse drop has from === to, so two pocket
+    // pieces droppable onto the same square would otherwise be indistinguishable
+    // by from/to/promotion alone.
     const lm = moves.find(
-      (x) => x.from === m.from && x.to === m.to && (x.promotion ?? null) === (m.promotion ?? null),
+      (x) =>
+        x.from === m.from &&
+        x.to === m.to &&
+        (x.promotion ?? null) === (m.promotion ?? null) &&
+        (x.drop ?? null) === (m.drop ?? null),
     );
     if (!lm) return;
     if (uiSettings.confirmMove) {
@@ -1276,6 +1288,23 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     setConfirmMovePending(null);
     if (held) sendMoveNow(held);
   };
+
+  // Drop mode: Escape disarms the pocket piece, matching the buff-targeting
+  // cancel gesture.
+  useEffect(() => {
+    if (!dropType) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setDropType(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [dropType]);
+
+  // Losing the turn (or any pending/offer state) auto-disarms drop mode so the
+  // board never stays in a pick state the player can no longer act on.
+  useEffect(() => {
+    if (dropType && !draftCanAct) setDropType(null);
+  }, [dropType, draftCanAct]);
 
   // Execute queued premove when our turn comes
   useEffect(() => {
@@ -1653,6 +1682,35 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     max: game.board.history.length,
     nav: handleHistoryPlyChange,
   };
+  // Crazyhouse pocket (viewer's own): banked piece types with a positive count.
+  // Kings are never bankable. Empty pocket renders no tray.
+  const myInventory = game.buffs?.players[myColor].inventory ?? null;
+  const pocketEntries = myInventory
+    ? (Object.keys(myInventory) as PieceType[])
+        .filter((t) => t !== "k" && (myInventory[t] ?? 0) > 0)
+        .map((t) => ({ type: t, count: myInventory[t]! }))
+    : [];
+  // Squares where the armed pocket piece may legally drop: the engine already
+  // generated these as drop moves in the live legal-move list.
+  const dropSquares = dropType ? moves.filter((m) => m.drop === dropType).map((m) => m.to) : [];
+  // Play the armed drop onto a picked square: find the exact drop move (type +
+  // target) and submit it through the same path a normal move uses.
+  const submitDrop = (sq: Square) => {
+    const dm = moves.find((m) => m.drop === dropType && m.to === sq);
+    setDropType(null);
+    if (dm) handleLocalMove(dm);
+  };
+  // Arming a pocket piece cancels any in-progress buff targeting (both drive the
+  // board's pickSquares plumbing); clicking the same piece again disarms.
+  const handlePocketSelect = (type: PieceType) => {
+    buffTargeting.cancel();
+    setDropType((prev) => (prev === type ? null : type));
+  };
+  // Starting a buff activation disarms drop mode for the same reason.
+  const startBuffUse = (index: number) => {
+    setDropType(null);
+    buffTargeting.start(index);
+  };
   const zone = isDraft && game.buffs ? draftZones(game, myColor) : null;
   // Effect kinds draftZones does not paint (king_safe shields, pawn-clamp
   // fences, pending-skip stuns): shared derivation, same as the bot game.
@@ -2018,7 +2076,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   game={game}
                   myColor={myColor}
                   canAct={draftCanAct}
-                  onStartUse={buffTargeting.start}
+                  onStartUse={startBuffUse}
                   plays={oppLog}
                 />
               )}
@@ -2141,11 +2199,15 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   pickSquares={
                     buffTargeting.targeting?.target.kind === "square"
                       ? buffTargeting.targeting.target.squares
+                      : dropType
+                      ? dropSquares
                       : undefined
                   }
                   onPickSquare={
                     buffTargeting.targeting?.target.kind === "square"
                       ? (sq) => buffTargeting.pick({ square: sq })
+                      : dropType
+                      ? submitDrop
                       : undefined
                   }
                 />
@@ -2167,6 +2229,21 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   />
                 )}
               </div>
+              {/* Crazyhouse pocket: the viewer's banked pieces sit in a tray
+                  directly under the board. Click one to arm a drop; the board
+                  then highlights every legal drop square. Hidden while reviewing
+                  history and when the pocket is empty. */}
+              {isDraft && game.buffs && !isReviewingHistory && pocketEntries.length > 0 && (
+                <div className={`mx-auto mt-1 sm:mx-0 ${boardFitClass}`}>
+                  <Pocket
+                    entries={pocketEntries}
+                    color={myColor}
+                    activeType={dropType}
+                    canDrop={draftCanAct}
+                    onSelect={handlePocketSelect}
+                  />
+                </div>
+              )}
               <div className="flex items-center justify-between gap-2 sm:hidden">
                 <BoardPlayerRow
                   board={boardForDisplay}

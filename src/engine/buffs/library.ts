@@ -28,6 +28,7 @@ import {
   extraMovesNow,
   freezeAllEnemies,
   freezeTarget,
+  grantInventory,
   inHalf,
   instant,
   leapMoves,
@@ -1574,8 +1575,8 @@ const TIER4: Buff[] = [
     convertEnemies(1, ["p"]),
   ),
   def(
-    { id: "split_bishop", name: "Split Bishop", description: "Place a new bishop on any empty square in your half, once.", tier: 3, category: "pieces" },
-    placePieces(["b"], anyHalfZone),
+    { id: "split_bishop", name: "Split Bishop", description: "Add a new bishop to your pocket, then spend a later turn to drop it onto any empty square.", tier: 3, category: "pieces" },
+    instant((_inst, api) => grantInventory(api, "b", 1)),
   ),
   def(
     { id: "twin_knights", name: "Twin Knights", description: "Both knights become nightrooks, for the game.", tier: 4, category: "movement", fx: { motif: "empower", pieces: ["n"], moveAs: "r", self: true } },
@@ -1637,8 +1638,8 @@ const TIER4: Buff[] = [
     ),
   ),
   def(
-    { id: "second_army", name: "Second Army", description: "Place two pawns on any empty squares in your half, once.", tier: 4, category: "pieces" },
-    placePieces(["p", "p"], anyHalfZone),
+    { id: "second_army", name: "Second Army", description: "Add two pawns to your pocket, then drop them onto empty squares on later turns.", tier: 4, category: "pieces" },
+    instant((_inst, api) => grantInventory(api, "p", 2)),
   ),
   def(
     { id: "cascade_freeze", name: "Cascade Freeze", description: "For 3 turns, each capture you make freezes the nearest enemy piece 1 turn.", tier: 4, category: "tempo" },
@@ -2412,8 +2413,11 @@ const TIER6: Buff[] = [
     captureExplosion({ charges: 3 }),
   ),
   def(
-    { id: "grand_summon", name: "Grand Summon", description: "Place a knight and a bishop on empty squares in your half, once.", tier: 6, category: "pieces" },
-    placePieces(["n", "b"], anyHalfZone),
+    { id: "grand_summon", name: "Grand Summon", description: "Add a knight and a bishop to your pocket, then drop them onto empty squares on later turns.", tier: 6, category: "pieces" },
+    instant((_inst, api) => {
+      grantInventory(api, "n", 1);
+      grantInventory(api, "b", 1);
+    }),
   ),
   def(
     { id: "time_lock", name: "Time Lock", description: "Your opponent skips their next two turns, once.", tier: 6, category: "tempo", fx: { motif: "slow", pieces: "all" } },
@@ -2627,8 +2631,12 @@ const TIER7: Buff[] = [
   ),
   def({ id: "full_rewind", name: "Full Rewind", description: "Undo the last five full moves, once.", tier: 7, category: "tempo" }),
   def(
-    { id: "kings_legion", name: "King's Legion", description: "Place a knight, bishop, and pawn on empty squares in your half, once.", tier: 7, category: "pieces" },
-    placePieces(["n", "b", "p"], anyHalfZone),
+    { id: "kings_legion", name: "King's Legion", description: "Add a knight, a bishop, and a pawn to your pocket, then drop them onto empty squares on later turns.", tier: 7, category: "pieces" },
+    instant((_inst, api) => {
+      grantInventory(api, "n", 1);
+      grantInventory(api, "b", 1);
+      grantInventory(api, "p", 1);
+    }),
   ),
   def(
     { id: "mind_empire", name: "Mind Empire", description: "Take control of one enemy piece of any type below queen for the game.", tier: 7, category: "pieces" },
@@ -2919,8 +2927,8 @@ const TIER8: Buff[] = [
     },
   ),
   def(
-    { id: "divine_legion", name: "Divine Legion", description: "Place a queen on any empty square in your half, once.", tier: 7, category: "pieces" },
-    placePieces(["q"], anyHalfZone),
+    { id: "divine_legion", name: "Divine Legion", description: "Add a queen to your pocket, then spend a later turn to drop it onto any empty square.", tier: 7, category: "pieces" },
+    instant((_inst, api) => grantInventory(api, "q", 1)),
   ),
   def(
     { id: "mass_mind_control", name: "Mass Mind Control", description: "Take control of two enemy pieces of any type below queen, for the game.", tier: 8, category: "pieces" },
@@ -3053,20 +3061,12 @@ const TIER8: Buff[] = [
     voidSquares(3, null),
   ),
   def(
-    { id: "grand_reset", name: "Grand Reset", description: "Summon replacements in your half until your army is back to full starting strength, once.", tier: 8, category: "pieces" },
+    { id: "grand_reset", name: "Grand Reset", description: "Add replacements to your pocket until your army would be back to full starting strength, then drop them onto empty squares on later turns.", tier: 8, category: "pieces" },
     instant((_inst, api) => {
       const full: [PieceType, number][] = [["q", 1], ["r", 2], ["b", 2], ["n", 2], ["p", 8]];
-      const spots = emptySquares(api.board, (sq) => inHalf(api.me, sq)).sort(
-        (a, b) => relRank(api.me, a) - relRank(api.me, b),
-      );
       for (const [type, want] of full) {
-        let missing = want - mySquares(api.board, api.me, type).length;
-        while (missing > 0) {
-          const at = spots.findIndex((sq) => type !== "p" || pawnRankOk(sq));
-          if (at < 0) return;
-          api.place(spots.splice(at, 1)[0], type, api.me);
-          missing--;
-        }
+        const missing = want - mySquares(api.board, api.me, type).length;
+        if (missing > 0) grantInventory(api, type, missing);
       }
     }),
   ),

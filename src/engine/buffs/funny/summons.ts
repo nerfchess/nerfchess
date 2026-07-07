@@ -1,13 +1,14 @@
-// Funny set: SUMMONS & REINFORCEMENTS. Each reuses placePieces (summon onto a
-// zone), summonTemp (a rental that expires), lineSweep (a charging piece), or a
-// conditional passive modeled on the library's trade_up / insurance pattern.
-// placePieces already refuses to drop a pawn on an illegal rank, so pawns are
-// summoned into the owner's half (never onto the back rank).
+// Funny set: SUMMONS & REINFORCEMENTS. Most cards grant a piece to your
+// crazyhouse-style pocket (grantInventory, a free instant): you draft it now
+// and spend a later turn to DROP it, so the summon itself costs no move. The
+// rest reuse summonTemp (a rental that expires), lineSweep (a charging piece),
+// or a conditional passive modeled on the library's trade_up / insurance
+// pattern. The engine's drop generator already refuses to drop a pawn on rank
+// 1 or 8, and a king is never bankable.
 
 import { Buff } from "./shared";
 import {
   card,
-  placePieces,
   summonTemp,
   lineSweep,
   activated,
@@ -15,7 +16,6 @@ import {
   instant,
   mySquares,
   myHalfZone,
-  anyEmptyZone,
   ORTHO_DIRS,
   SQ,
 } from "./shared";
@@ -26,36 +26,36 @@ export const FUNNY_SUMMONS: Buff[] = [
       id: "summon_intern",
       icon: "UserPlus",
       name: "Summon Intern",
-      description: "Place a new pawn on any empty square in your half, once.",
+      description: "A new pawn joins your pocket. Later, spend a turn to drop it onto any empty square.",
       tier: 2,
       category: "pieces",
       flavor: "It brought its own lanyard.",
     },
-    placePieces(["p"], myHalfZone),
+    instant((_inst, api) => grantInventory(api, "p", 1)),
   ),
   card(
     {
       id: "pizza_delivery",
       icon: "Pizza",
       name: "Pizza Delivery",
-      description: "A knight zips in on a scooter delivering pizza: place a new knight on any empty square, once.",
+      description: "A knight zips in on a scooter delivering pizza: it parks in your pocket, ready to drop onto any empty square on a later turn.",
       tier: 4,
       category: "pieces",
       flavor: "Thirty minutes or the fork is free.",
     },
-    placePieces(["n"], anyEmptyZone),
+    instant((_inst, api) => grantInventory(api, "n", 1)),
   ),
   card(
     {
       id: "reinforcements",
       icon: "Users",
       name: "Reinforcements",
-      description: "Two pawns parachute in: place them on empty squares in your half, once.",
+      description: "Two pawns parachute into your pocket: drop them onto empty squares on later turns.",
       tier: 4,
       category: "pieces",
       flavor: "Geronimo.",
     },
-    placePieces(["p", "p"], myHalfZone),
+    instant((_inst, api) => grantInventory(api, "p", 2)),
   ),
   card(
     {
@@ -76,12 +76,12 @@ export const FUNNY_SUMMONS: Buff[] = [
       id: "clone_army",
       icon: "CopyPlus",
       name: "Clone Army",
-      description: "Three photocopier flashes in a row: place three new pawns on empty squares in your half, once.",
+      description: "Three photocopier flashes in a row: three new pawns land in your pocket, ready to drop onto empty squares on later turns.",
       tier: 5,
       category: "pieces",
       flavor: "Roll call is going to take a while.",
     },
-    placePieces(["p", "p", "p"], myHalfZone),
+    instant((_inst, api) => grantInventory(api, "p", 3)),
   ),
   card(
     {
