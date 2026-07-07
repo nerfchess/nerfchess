@@ -42,16 +42,19 @@ export const ROOK_BUDDIES: Nerf = db({
   filterMoves: (moves, _s, ctx) => {
     const homeR = ctx.me === "w" ? 0 : 7;
     const rooks = pieceSquares(ctx.board, ctx.me, "r").filter((sq) => RANK(sq) === homeR);
-    let connected = false;
-    if (rooks.length >= 2) {
-      rooks.sort((a, b) => FILE(a) - FILE(b));
-      const [a, b] = [rooks[0], rooks[rooks.length - 1]];
-      connected = true;
-      for (let f = FILE(a) + 1; f < FILE(b); f++) {
-        if (ctx.board.pieces[SQ(f, homeR)]) { connected = false; break; }
-      }
+    // The lock only bites while two rooks still sit on the home rank with a
+    // piece between them. A lone rook, or one already developed off the home
+    // rank, is always free: freezing it would strand that rook for the rest of
+    // the game (the earlier version blanket-froze every rook whenever fewer
+    // than two sat home).
+    if (rooks.length < 2) return moves;
+    rooks.sort((a, b) => FILE(a) - FILE(b));
+    const [a, b] = [rooks[0], rooks[rooks.length - 1]];
+    let blocked = false;
+    for (let f = FILE(a) + 1; f < FILE(b); f++) {
+      if (ctx.board.pieces[SQ(f, homeR)]) { blocked = true; break; }
     }
-    return connected ? moves : moves.filter((m) => m.piece !== "r");
+    return blocked ? moves.filter((m) => m.piece !== "r") : moves;
   },
 });
 

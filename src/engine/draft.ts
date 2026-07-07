@@ -104,6 +104,18 @@ function drawRng(bs: BuffMatchState): RNG {
   return RNG.fromState(bs.rngState);
 }
 
+/** True while `color`'s nerf is currently off: removed for good (Nerf Breaker)
+ * or suspended (Grace Period / Reprieve). Nerf-relief cards have nothing to
+ * ease then, so they leave that player's pool. A pure read of buff match state
+ * (the same fields nerfDisabled checks), no board scan, so it stays
+ * replay-safe. */
+function nerfIsOff(bs: BuffMatchState, color: Color): boolean {
+  if (bs.players[color].nerfRemoved) return true;
+  return bs.effects.some(
+    (e) => e.kind === "nerf_suspended" && e.owner === color && (e.turns == null || e.turns > 0),
+  );
+}
+
 function saveRng(bs: BuffMatchState, rng: RNG) {
   bs.rngState = rng.getState();
 }
@@ -156,12 +168,19 @@ function rollCards(
   // Buff mode has no nerfs, so info cards that read the opponent's NERF are
   // dead there: they can never do anything. Keep them out of buff drafts.
   // (Info cards that reveal buffs or upcoming draft cards stay valid in both.)
-  const inMode = (b: Buff) =>
-    bs.mode === "buff"
+  // When this player's nerf is off (suspended or removed) there is nothing to
+  // relieve, so nerf-relief / nerf-referencing cards (category "nerf") leave
+  // their pool entirely: the draft must not offer an upgrade that eases a nerf
+  // that is not in effect. Pure pool filter, computed once per roll.
+  const reliefIsDead = nerfIsOff(bs, color);
+  const inMode = (b: Buff) => {
+    if (reliefIsDead && b.category === "nerf") return false;
+    return bs.mode === "buff"
       ? b.category !== "nerf" && b.category !== "hex" && !NERF_REVEAL.has(b.id)
       : bs.mode === "nerf"
         ? isBoon(b) || b.category === "hex" || b.category === "item"
         : true;
+  };
 
   const cards: BuffOffer["cards"] = [];
   // Never offer a card the player already holds unspent.

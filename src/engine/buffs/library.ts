@@ -114,7 +114,10 @@ function doubleStepGen(moves: Move[], inst: BuffInstance, api: BuffApi): Move[] 
     const one = sq + fwd, two = sq + 2 * fwd;
     if (two < 0 || two > 63) continue;
     if (!api.board.pieces[one] && !api.board.pieces[two]) {
-      out.push({ ...pawnMove(api, sq, two, inst.id), isDoublePawn: true });
+      // A double step that reaches the last rank promotes instead of leaving a
+      // stranded pawn. A promoting push is never an en passant target.
+      if (relRank(api.me, two) === 8) pushPawnMoves(out, api, sq, two, inst.id);
+      else out.push({ ...pawnMove(api, sq, two, inst.id), isDoublePawn: true });
     }
   }
   return out;
@@ -297,9 +300,29 @@ function severBuffs(n: number): Mech {
     },
     (_inst, api, picks) => {
       for (const k of picks) {
-        if (k.buffIndex != null && api.theirs.buffs[k.buffIndex]) {
-          api.theirs.buffs[k.buffIndex].nullified = true;
-        }
+        if (k.buffIndex == null) continue;
+        const target = api.theirs.buffs[k.buffIndex];
+        if (!target) continue;
+        target.nullified = true;
+        // A bound upgrade (Titan, Living God, Titan Legion...) parked a
+        // permanent shield on its piece(s). Nullifying the card alone leaves
+        // that ward on the board, so the severed piece would stay
+        // uncapturable forever (legalMoves still honors the shield). Drop the
+        // shields keyed to this instance's bound square(s): Sever is the
+        // targeted counter that removes what broadNullify deliberately spares.
+        if (!boundUpgrade(target)) continue;
+        const held = boundSquaresOf(target);
+        if (!held.length) continue;
+        api.bs.effects = api.bs.effects.filter(
+          (e) =>
+            !(
+              e.kind === "shield" &&
+              e.owner === api.opp &&
+              e.squares != null &&
+              e.squares.length > 0 &&
+              e.squares.every((sq) => held.includes(sq))
+            ),
+        );
       }
     },
   );
@@ -321,6 +344,22 @@ function boundUpgrade(b: BuffInstance): boolean {
     d.spendOnUse === false &&
     (b.state.sq != null || b.state.sqs != null || b.state.squares != null)
   );
+}
+
+/** The board squares a bound upgrade currently keys its effects to: its single
+ * bound piece (state.sq) or the several pieces of a legion / placed zone
+ * (state.sqs / state.squares). Used to strip the ward it left behind when the
+ * card is severed. */
+function boundSquaresOf(b: BuffInstance): Square[] {
+  const out: Square[] = [];
+  if (typeof b.state.sq === "number") out.push(b.state.sq as Square);
+  for (const key of ["sqs", "squares"] as const) {
+    const v = b.state[key];
+    if (Array.isArray(v)) {
+      for (const s of v) if (typeof s === "number") out.push(s as Square);
+    }
+  }
+  return out;
 }
 
 /** True when a held buff is an already-online permanent: a bound piece upgrade
@@ -498,14 +537,16 @@ const TIER1: Buff[] = [
   ),
   def(
     { id: "little_leap", name: "Little Leap", description: "One pawn jumps a single blocking piece directly ahead, once.", tier: 1, category: "movement", fx: { motif: "empower", pieces: ["p"], self: true } },
-    augment((_m, inst, api) =>
-      mySquares(api.board, api.me, "p").flatMap((sq) => {
+    augment((_m, inst, api) => {
+      const out: Move[] = [];
+      for (const sq of mySquares(api.board, api.me, "p")) {
         const one = sq + fwdOf(api.me), two = sq + 2 * fwdOf(api.me);
-        return two >= 0 && two < 64 && api.board.pieces[one] && !api.board.pieces[two]
-          ? [pawnMove(api, sq, two, inst.id)]
-          : [];
-      }),
-    ),
+        if (two >= 0 && two < 64 && api.board.pieces[one] && !api.board.pieces[two]) {
+          pushPawnMoves(out, api, sq, two, inst.id);
+        }
+      }
+      return out;
+    }),
   ),
   def(
     { id: "scout", name: "Scout", description: "Reveal one random buff your opponent holds.", tier: 1, category: "info", boon: true },
@@ -618,17 +659,19 @@ const TIER1: Buff[] = [
   ),
   def(
     { id: "sentinel_pawn", name: "Sentinel Pawn", description: "One pawn may capture an enemy piece two squares diagonally ahead, once.", tier: 1, category: "attack" },
-    augment((_m, inst, api) =>
-      mySquares(api.board, api.me, "p").flatMap((sq) =>
-        [-2, 2].flatMap((df) => {
+    augment((_m, inst, api) => {
+      const out: Move[] = [];
+      for (const sq of mySquares(api.board, api.me, "p")) {
+        for (const df of [-2, 2]) {
           const f = FILE(sq) + df, r = RANK(sq) + (api.me === "w" ? 2 : -2);
-          if (!inBoard(f, r)) return [];
+          if (!inBoard(f, r)) continue;
           const to = SQ(f, r);
           const t = api.board.pieces[to];
-          return t && t.color === api.opp ? [pawnMove(api, sq, to, inst.id)] : [];
-        }),
-      ),
-    ),
+          if (t && t.color === api.opp) pushPawnMoves(out, api, sq, to, inst.id);
+        }
+      }
+      return out;
+    }),
   ),
   def(
     { id: "quick_glance", name: "Quick Glance", description: "See the tier of your opponent's next draft.", tier: 1, category: "info", boon: true },
@@ -679,16 +722,18 @@ const TIER1: Buff[] = [
   ),
   def(
     { id: "half_step", name: "Half Step", description: "One pawn moves diagonally forward without capturing, once.", tier: 1, category: "movement", fx: { motif: "empower", pieces: ["p"], self: true } },
-    augment((_m, inst, api) =>
-      mySquares(api.board, api.me, "p").flatMap((sq) =>
-        [-1, 1].flatMap((df) => {
+    augment((_m, inst, api) => {
+      const out: Move[] = [];
+      for (const sq of mySquares(api.board, api.me, "p")) {
+        for (const df of [-1, 1]) {
           const f = FILE(sq) + df, r = RANK(sq) + (api.me === "w" ? 1 : -1);
-          if (!inBoard(f, r)) return [];
+          if (!inBoard(f, r)) continue;
           const to = SQ(f, r);
-          return api.board.pieces[to] ? [] : [pawnMove(api, sq, to, inst.id)];
-        }),
-      ),
-    ),
+          if (!api.board.pieces[to]) pushPawnMoves(out, api, sq, to, inst.id);
+        }
+      }
+      return out;
+    }),
   ),
   def(
     { id: "prep", name: "Prep", description: "Your next buff draft shows three cards to pick from instead of two, once.", tier: 1, category: "draft" },
@@ -763,15 +808,17 @@ const TIER1: Buff[] = [
 const TIER2: Buff[] = [
   def(
     { id: "ghost_pawn", name: "Ghost Pawn", description: "One pawn passes through enemy pieces without capturing, once.", tier: 2, category: "movement", fx: { motif: "empower", pieces: ["p"], self: true } },
-    augment((_m, inst, api) =>
-      mySquares(api.board, api.me, "p").flatMap((sq) => {
+    augment((_m, inst, api) => {
+      const out: Move[] = [];
+      for (const sq of mySquares(api.board, api.me, "p")) {
         const one = sq + fwdOf(api.me), two = sq + 2 * fwdOf(api.me);
         const blocker = one >= 0 && one < 64 ? api.board.pieces[one] : null;
-        return blocker && blocker.color !== api.me && two >= 0 && two < 64 && !api.board.pieces[two]
-          ? [pawnMove(api, sq, two, inst.id)]
-          : [];
-      }),
-    ),
+        if (blocker && blocker.color !== api.me && two >= 0 && two < 64 && !api.board.pieces[two]) {
+          pushPawnMoves(out, api, sq, two, inst.id);
+        }
+      }
+      return out;
+    }),
   ),
   def(
     { id: "double_step_army", name: "Double Step Army", description: "All pawns can move two squares forward for 2 turns.", tier: 2, category: "movement", fx: { motif: "empower", pieces: ["p"], self: true } },
@@ -973,14 +1020,16 @@ const TIER2: Buff[] = [
   ),
   def(
     { id: "spring_pawn", name: "Spring Pawn", description: "One pawn can leap two squares even when blocked one ahead, once.", tier: 2, category: "movement", fx: { motif: "empower", pieces: ["p"], self: true } },
-    augment((_m, inst, api) =>
-      mySquares(api.board, api.me, "p").flatMap((sq) => {
+    augment((_m, inst, api) => {
+      const out: Move[] = [];
+      for (const sq of mySquares(api.board, api.me, "p")) {
         const one = sq + fwdOf(api.me), two = sq + 2 * fwdOf(api.me);
-        return two >= 0 && two < 64 && api.board.pieces[one] && !api.board.pieces[two]
-          ? [pawnMove(api, sq, two, inst.id)]
-          : [];
-      }),
-    ),
+        if (two >= 0 && two < 64 && api.board.pieces[one] && !api.board.pieces[two]) {
+          pushPawnMoves(out, api, sq, two, inst.id);
+        }
+      }
+      return out;
+    }),
   ),
   def(
     { id: "rally", name: "Rally", description: "One of your knights may move like a king for 1 turn.", tier: 2, category: "movement", fx: { motif: "empower", pieces: ["n"], moveAs: "k", self: true } },
@@ -1775,8 +1824,12 @@ const TIER4: Buff[] = [
     }),
   ),
   def(
-    { id: "recast", name: "Recast", description: "Reroll your entire current draft into the next tier up, once.", tier: 4, category: "draft", boon: true },
+    { id: "recast", name: "Recast", description: "Gain an extra draft reroll, and your next draft rolls one tier higher.", tier: 4, category: "draft", boon: true },
     instant((_inst, api) => {
+      // A real reroll token (the reroll system supports these: rerollsLeft
+      // starts at 1 and draft cards grant more) plus the one-tier lift on the
+      // next offer, so the card is no longer a silent duplicate of banking.
+      api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
       api.mine.flags.bankBonus = Math.min(1, (api.mine.flags.bankBonus ?? 0) + 1);
     }),
   ),
@@ -2366,7 +2419,9 @@ const TIER6: Buff[] = [
     { id: "colossus", name: "Colossus", description: "One piece becomes uncapturable and gains queen movement for 3 turns.", tier: 6, category: "movement", fx: { motif: "empower", pieces: ["p", "n", "b", "r", "q"], moveAs: "q", self: true } },
     bindPiece("Choose the colossus", bindCandidates(), {
       turns: 3,
-      shieldTurns: 3,
+      // turns - 1: the +1 activation bump lifts the shield back to 3, so the
+      // ward co-terminates with the movement grant instead of outlasting it.
+      shieldTurns: 2,
       gen: (board, sq, via) => slideMoves(board, sq, ALL_DIRS, via),
     }),
   ),
@@ -2397,7 +2452,13 @@ const TIER6: Buff[] = [
         api.board.pieces[qSq] = api.board.pieces[kSq];
         api.board.pieces[kSq] = q;
         api.bs.historyDiverged = true;
-        addEffect(api, { kind: "shield", owner: api.me, squares: [qSq, kSq], turns: 2 });
+        // After the swap the king stands on qSq and the queen on kSq. A square
+        // shield never protects the king (legalMoves), so ward the king with
+        // king_safe and shield the queen's square. Both are made during a
+        // turn-costing activation, so the +1 bump lifts each to the promised 3
+        // of the opponent's turns.
+        addEffect(api, { kind: "shield", owner: api.me, squares: [kSq], turns: 2 });
+        addEffect(api, { kind: "king_safe", owner: api.me, turns: 2 });
       },
     ),
   ),
@@ -2462,7 +2523,9 @@ const TIER6: Buff[] = [
     { id: "ascendant_knight", name: "Ascendant Knight", description: "One knight moves as an amazon and cannot be captured, for 2 turns.", tier: 6, category: "movement", fx: { motif: "empower", pieces: ["n"], moveAs: "q", self: true } },
     bindPiece("Choose the knight", bindCandidates(["n"]), {
       turns: 2,
-      shieldTurns: 2,
+      // turns - 1: the +1 activation bump restores the shield to 2, matching
+      // the movement grant so it does not outlast the stated duration.
+      shieldTurns: 1,
       gen: (board, sq, via) => slideMoves(board, sq, ALL_DIRS, via),
     }),
   ),
@@ -2759,7 +2822,9 @@ const TIER7: Buff[] = [
     { id: "godslayer_knight", name: "Godslayer Knight", description: "One knight moves as an amazon, is uncapturable, and explodes on capture, for 3 turns.", tier: 7, category: "movement", fx: { motif: "empower", pieces: ["n"], moveAs: "q", self: true } },
     bindPiece("Choose the knight", bindCandidates(["n"]), {
       turns: 3,
-      shieldTurns: 3,
+      // turns - 1: the +1 activation bump restores the shield to 3, so it
+      // co-terminates with the movement grant rather than outlasting it.
+      shieldTurns: 2,
       gen: (board, sq, via) => slideMoves(board, sq, ALL_DIRS, via),
       explodeOnCapture: true,
     }),
