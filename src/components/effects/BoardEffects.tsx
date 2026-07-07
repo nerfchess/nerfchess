@@ -1201,7 +1201,15 @@ export type SigVisual =
   | "vortex"
   // --- Batch 6 (marquee dragon + wizard spectacles for the top tier) ---
   | "dragonlord"
-  | "archmage";
+  | "archmage"
+  // --- Batch 7 (marquee sea / monster + top-tier boardwide spectacles) ---
+  | "kraken"
+  | "abyss"
+  | "whirlpool"
+  | "flood"
+  | "frozenmoat"
+  | "meteorstorm"
+  | "phoenixrise";
 export type SigOrdering = "file" | "sweep" | "octagon" | "line" | "radial";
 export type SigSoundKey =
   | "nova"
@@ -1509,7 +1517,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   borrowed_time: { ordering: "radial", staggerMs: 0, victims: ["q"], visual: "wardpulse", hasLead: false, sound: "aegis", source: "shield" },
 
   // King wards (kingSafe zone).
-  we_frost_ward: { ordering: "radial", staggerMs: 0, victims: ["k"], visual: "wardpulse", hasLead: true, sound: "shades", source: "kingSafe" },
+  we_frost_ward: { ordering: "radial", staggerMs: 0, victims: ["k"], visual: "frozenmoat", hasLead: true, sound: "shades", source: "kingSafe" },
   wc_panic_button: { ordering: "radial", staggerMs: 0, victims: ["k"], visual: "wardpulse", hasLead: true, sound: "shades", source: "kingSafe" },
 
   // Skips + clock theft (stun zone: opponent's stalled ranks / clock area).
@@ -1570,6 +1578,22 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   queens_apocalypse: { ordering: "sweep", staggerMs: 85, victims: "all", visual: "dragonlord", hasLead: true, sound: "atomic" },
   grand_reset: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "archmage", hasLead: true, sound: "coronation", source: "summon" },
   void_realm: { ordering: "radial", staggerMs: 55, victims: "all", visual: "archmage", hasLead: true, sound: "shades", source: "blindfold" },
+
+  // --- Batch 7: MARQUEE sea / monster cards + two more top-tier boardwide
+  // spectacles. The sea beasts get bespoke reads so no two look alike: a kraken
+  // tentacle rears up (summon zone), a dark abyss maw swallows (void -> blindfold
+  // zone), a whirlpool spirals a pawn under (convert), a flood wave washes across
+  // the trap squares (void -> blindfold zone), and the Frost Ward's frozen moat
+  // rings the king (kingSafe zone, was the generic ward pulse). Cataclysmic
+  // Meteor and the resurrection cards join the dragon / wizard family with a
+  // colossal meteor streak (removal diff) and a rising phoenix (summon zone).
+  kraken: { ordering: "radial", staggerMs: 60, victims: "all", visual: "kraken", hasLead: true, sound: "wall", source: "summon" },
+  abyss: { ordering: "radial", staggerMs: 0, victims: "all", visual: "abyss", hasLead: true, sound: "wall", source: "blindfold" },
+  we_whirlpool: { ordering: "radial", staggerMs: 0, victims: ["p"], visual: "whirlpool", hasLead: false, sound: "wall", source: "summon" },
+  we_flood: { ordering: "sweep", staggerMs: 70, victims: "all", visual: "flood", hasLead: false, sound: "wall", source: "blindfold" },
+  cataclysmic_meteor: { ordering: "sweep", staggerMs: 80, victims: ["p", "n", "b", "r", "q"], visual: "meteorstorm", hasLead: true, sound: "atomic" },
+  phoenix_rebirth: { ordering: "sweep", staggerMs: 85, victims: "all", visual: "phoenixrise", hasLead: true, sound: "wall", source: "summon" },
+  full_resurrection: { ordering: "sweep", staggerMs: 90, victims: "all", visual: "phoenixrise", hasLead: true, sound: "wall", source: "summon" },
 };
 
 /** A jagged lightning bolt that fills its wrapper (BoltGlyph is fixed-size). */
@@ -3878,6 +3902,291 @@ function ArchmageBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   );
 }
 
+// --- Batch 7: marquee sea / monster + top-tier boardwide spectacles ----------
+// Bespoke reads for the big sea beasts (Kraken, Abyss, Whirlpool, Flood, the
+// Frost Ward frozen moat) and two more end-game boardwide spectacles in the
+// dragon / wizard family (a colossal meteor, a rising phoenix). Solid fills
+// only (no gradients / glow / box-shadow), transform/opacity animation, one-
+// shot, hidden entirely under reduced motion. New motions (tentacle / maw /
+// whirl / wave / moat / meteor / phoenix) live in effects.css; the per-square
+// hits reuse the shared fx-sig-flash / -ring / -rise / -scorch / -star /
+// -implode / -wingbeat classes and the ShardBurst helper.
+
+const KRAKEN_WATER = "#4f7d68";
+const KRAKEN_SUCKER = "#a3d196";
+
+/** Kraken: a suckered tentacle rears up out of the square and sways; the lead
+ * square raises a second coil with a green splash flash. Sea-green (mint). */
+function KrakenBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span
+        className="fx-sig-ring absolute inset-x-[14%] bottom-[8%] block h-[26%] rounded-full"
+        style={{ border: "1.5px solid rgba(126,181,154,0.9)", animationDelay: `${delayMs}ms` }}
+      />
+      <span
+        className="fx-sig-tentacle absolute left-[34%] bottom-[4%] block h-[88%] w-[34%]"
+        style={{ animationDelay: `${delayMs}ms` }}
+      >
+        <svg viewBox="0 0 24 60" className="h-full w-full" aria-hidden="true">
+          <path
+            d="M8 60 C6 46 4 38 10 28 C14 20 12 12 18 6 C15 12 18 18 15 24 C12 30 14 40 12 60 Z"
+            fill={KRAKEN_WATER}
+            stroke="#2f4a3c"
+            strokeWidth="1.1"
+            strokeLinejoin="round"
+          />
+          <g fill={KRAKEN_SUCKER}>
+            <circle cx="10.5" cy="30" r="1.3" />
+            <circle cx="12.5" cy="22" r="1.2" />
+            <circle cx="14.5" cy="15" r="1.1" />
+            <circle cx="16" cy="9.5" r="1" />
+          </g>
+        </svg>
+      </span>
+      {lead && (
+        <>
+          <span
+            className="fx-sig-tentacle absolute left-[54%] bottom-[6%] block h-[70%] w-[26%]"
+            style={{ animationDelay: `${delayMs + 90}ms` }}
+          >
+            <svg viewBox="0 0 20 48" className="h-full w-full" aria-hidden="true">
+              <path
+                d="M7 48 C5 34 10 28 6 18 C4 12 8 6 12 2 C10 8 13 12 10 20 C7 28 11 36 10 48 Z"
+                fill="#3f6a58"
+                stroke="#274035"
+                strokeWidth="1"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </span>
+          <span
+            className="fx-sig-flash absolute inset-x-[24%] bottom-[6%] block h-[22%] rounded-full"
+            style={{ background: "rgba(163,209,150,0.6)", animationDelay: `${delayMs}ms` }}
+          />
+        </>
+      )}
+      <ShardBurst vectors={BURST_MED} fill={KRAKEN_SUCKER} stroke="#2f4a3c" delayMs={delayMs + 120} sizePct={9} />
+    </span>
+  );
+}
+
+/** Abyss / Void: a dark maw yawns open and pieces are pulled down into it; the
+ * lead square adds an event-horizon ring. Reuses VORTEX_VEC for the in-pull. */
+function AbyssBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-maw absolute inset-[16%] block" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <circle cx="20" cy="20" r="18" fill="rgba(12,16,22,0.92)" stroke="rgba(126,181,154,0.85)" strokeWidth="1.6" />
+          <circle cx="20" cy="20" r="11" fill="rgba(6,9,13,0.95)" stroke="rgba(90,140,120,0.7)" strokeWidth="1" />
+        </svg>
+      </span>
+      {VORTEX_VEC.map((v, i) => (
+        <span
+          key={i}
+          className="fx-sig-implode absolute left-1/2 top-1/2 ml-[-5%] mt-[-5%] block h-[10%] w-[10%]"
+          style={{ "--dx": v.dx, "--dy": v.dy, "--rot": v.rot, animationDelay: `${delayMs + v.d}ms` } as React.CSSProperties}
+        >
+          <SigShard fill="#5a8c78" stroke="#243a30" variant={i} />
+        </span>
+      ))}
+      {lead && (
+        <span
+          className="fx-sig-ring absolute inset-[10%] block rounded-full"
+          style={{ border: "1.5px solid rgba(126,181,154,0.85)", animationDelay: `${delayMs}ms` }}
+        />
+      )}
+    </span>
+  );
+}
+
+/** Whirlpool: concentric water spirals inward and drags a mote down with it. */
+function WhirlpoolBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-whirl absolute inset-[14%] block" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <path
+            d="M20 3 C31 3 37 12 37 20 C37 29 30 34 22 34 C15 34 11 29 11 23 C11 18 15 14 20 14 C24 14 27 17 27 21 C27 24 25 26 22 26"
+            fill="none"
+            stroke="rgba(126,181,154,0.9)"
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+          <path
+            d="M20 8 C28 8 32 14 32 20 C32 26 27 29 22 29"
+            fill="none"
+            stroke="rgba(163,209,150,0.7)"
+            strokeWidth="1.2"
+            strokeLinecap="round"
+          />
+        </svg>
+      </span>
+      <ShardBurst vectors={BURST_MED} fill={KRAKEN_SUCKER} stroke="#2f4a3c" delayMs={delayMs + 80} sizePct={8} />
+    </span>
+  );
+}
+
+/** Flood: a crested wave washes across the trap square and drains off, throwing
+ * a couple of foam flecks. */
+function FloodBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-wave absolute inset-x-[2%] bottom-[10%] block h-[52%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 48 24" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
+          <path
+            d="M0 12 C8 4 14 4 22 10 C30 16 38 16 48 8 L48 24 L0 24 Z"
+            fill="rgba(126,181,154,0.55)"
+            stroke="rgba(163,209,150,0.85)"
+            strokeWidth="1.2"
+            strokeLinejoin="round"
+          />
+          <path d="M0 16 C10 10 16 12 24 16 C32 20 40 18 48 14" fill="none" stroke="rgba(230,246,255,0.8)" strokeWidth="1" />
+        </svg>
+      </span>
+      <span
+        className="fx-sig-star absolute left-[30%] top-[46%] block h-[7%] w-[7%]"
+        style={{ "--dx": "60%", "--dy": "-120%", "--rot": "120deg", animationDelay: `${delayMs + 140}ms` } as React.CSSProperties}
+      >
+        <SigShard fill="#e6f6ff" stroke="#7fb8dd" variant={0} />
+      </span>
+      <span
+        className="fx-sig-star absolute left-[60%] top-[42%] block h-[7%] w-[7%]"
+        style={{ "--dx": "-50%", "--dy": "-140%", "--rot": "-100deg", animationDelay: `${delayMs + 180}ms` } as React.CSSProperties}
+      >
+        <SigShard fill="#e6f6ff" stroke="#7fb8dd" variant={1} />
+      </span>
+    </span>
+  );
+}
+
+/** Frost Ward frozen moat: a spiked ring of ice locks in around the king; lead
+ * adds a frost flash. Ice palette, distinct from the generic ward pulse. */
+function FrozenMoatBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-moat absolute inset-[8%] block" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <circle cx="20" cy="20" r="17" fill="none" stroke="rgba(224,246,255,0.9)" strokeWidth="2" />
+          <circle cx="20" cy="20" r="13" fill="none" stroke="rgba(127,184,221,0.8)" strokeWidth="1" />
+          <g fill="rgba(230,246,255,0.9)" stroke="#7fb8dd" strokeWidth="0.6" strokeLinejoin="round">
+            <path d="M20 1 L22 6 L18 6 Z" />
+            <path d="M39 20 L34 22 L34 18 Z" />
+            <path d="M20 39 L18 34 L22 34 Z" />
+            <path d="M1 20 L6 18 L6 22 Z" />
+            <path d="M33 7 L31 11 L28 8 Z" />
+            <path d="M7 33 L9 29 L12 32 Z" />
+            <path d="M33 33 L29 31 L32 28 Z" />
+            <path d="M7 7 L11 9 L8 12 Z" />
+          </g>
+        </svg>
+      </span>
+      {lead && (
+        <span
+          className="fx-sig-flash absolute inset-[28%] block rounded-full"
+          style={{ background: "rgba(224,246,255,0.7)", animationDelay: `${delayMs}ms` }}
+        />
+      )}
+      <ShardBurst vectors={BURST_MED} fill="#e6f6ff" stroke="#7fb8dd" delayMs={delayMs + 120} sizePct={9} />
+    </span>
+  );
+}
+
+/** Cataclysmic Meteor: on the lead square a colossal meteor streaks in from the
+ * corner trailing fire; every cleared square erupts in a fireball, a flame lick,
+ * an ember shatter, and a scorch. A nova-class boardwide (removal diff). */
+function MeteorStormBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <span className="pointer-events-none absolute inset-0 z-30" aria-hidden="true">
+        <span
+          className="fx-sig-meteor absolute left-[-30%] top-[-30%] block h-[150%] w-[150%]"
+          style={{ animationDelay: `${delayMs}ms` }}
+        >
+          <svg viewBox="0 0 80 80" className="h-full w-full" aria-hidden="true">
+            <path d="M2 2 L46 46" stroke="#e6bf6a" strokeWidth="4" strokeLinecap="round" />
+            <path d="M10 4 L46 40" stroke="#ffd95e" strokeWidth="2" strokeLinecap="round" />
+            <path d="M4 10 L40 46" stroke="#e0776b" strokeWidth="2" strokeLinecap="round" />
+            <circle cx="50" cy="50" r="9" fill="#c66860" stroke="#7a2410" strokeWidth="1.4" />
+            <circle cx="50" cy="50" r="4.5" fill="#ffd95e" />
+          </svg>
+        </span>
+      </span>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span
+        className="fx-sig-flash absolute inset-[14%] block rounded-full"
+        style={{ background: "rgba(255,168,80,0.85)", animationDelay: `${delayMs}ms` }}
+      />
+      <span className="fx-sig-rise absolute inset-x-[28%] bottom-[8%] block h-[64%]" style={{ animationDelay: `${delayMs + 60}ms` }}>
+        <svg viewBox="0 0 40 40" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
+          <path
+            d="M20 40 C10 31 13 20 20 13 C19 21 25 21 24 27 C29 23 28 16 26 10 C34 18 34 30 26 38 Z"
+            fill="rgba(224,119,107,0.92)"
+            stroke="#7a2f28"
+            strokeWidth="0.8"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </span>
+      <ShardBurst vectors={BURST_BIG} fill="#e6a85c" stroke="#7a3a12" delayMs={delayMs} sizePct={12} />
+      <span
+        className="fx-sig-scorch absolute inset-[26%] block rounded-full"
+        style={{ background: "rgba(26,16,8,0.72)", animationDelay: `${delayMs + 190}ms` }}
+      />
+    </span>
+  );
+}
+
+/** Phoenix Rebirth / Full Resurrection: on the lead square a great firebird
+ * heaves up out of the board with beating wings and a fiery crest; every
+ * affected square sends up a rising ember feather and a spark burst. A dragon /
+ * wizard-family boardwide (summon zone). */
+function PhoenixRiseBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <span className="pointer-events-none absolute inset-0 z-30" aria-hidden="true">
+        <span className="fx-sig-phoenix absolute left-[6%] bottom-[2%] block h-[96%] w-[88%]" style={{ animationDelay: `${delayMs}ms` }}>
+          <svg viewBox="0 0 64 48" className="h-full w-full" aria-hidden="true">
+            <path d="M32 46 C28 38 30 30 32 22 C34 30 36 38 32 46 Z" fill="#c66860" stroke="#7a2410" strokeWidth="1" strokeLinejoin="round" />
+            <g className="fx-sig-wingbeat" style={{ animationDelay: `${delayMs}ms` }}>
+              <path d="M32 22 C22 10 12 8 2 12 C10 14 12 20 8 26 C16 22 24 24 32 26 Z" fill="#e0776b" stroke="#7a2f28" strokeWidth="1" strokeLinejoin="round" />
+            </g>
+            <g className="fx-sig-wingbeat" style={{ animationDelay: `${delayMs + 40}ms` }}>
+              <path d="M32 22 C42 10 52 8 62 12 C54 14 52 20 56 26 C48 22 40 24 32 26 Z" fill="#e0776b" stroke="#7a2f28" strokeWidth="1" strokeLinejoin="round" />
+            </g>
+            <circle cx="32" cy="18" r="3.4" fill="#e6bf6a" stroke="#7a5b23" strokeWidth="0.8" />
+            <path d="M32 14 L34 9 L35 14 Z" fill="#ffd95e" stroke="#8a6414" strokeWidth="0.5" strokeLinejoin="round" />
+          </svg>
+        </span>
+        <span
+          className="fx-sig-flash absolute inset-x-[34%] bottom-[10%] block h-[24%] rounded-full"
+          style={{ background: "rgba(255,168,80,0.7)", animationDelay: `${delayMs + 120}ms` }}
+        />
+        <ShardBurst vectors={BURST_MED} fill="#e6bf6a" stroke="#7a5b23" delayMs={delayMs + 200} sizePct={10} />
+      </span>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-rise absolute inset-x-[30%] bottom-[10%] block h-[58%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 24 32" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
+          <path d="M12 32 C7 24 9 14 12 4 C15 14 17 24 12 32 Z" fill="rgba(224,119,107,0.9)" stroke="#7a2f28" strokeWidth="0.8" strokeLinejoin="round" />
+          <path d="M12 26 C10 20 11 14 12 9 C13 14 14 20 12 26 Z" fill="rgba(230,191,106,0.95)" />
+        </svg>
+      </span>
+      <span
+        className="fx-sig-flash absolute inset-[32%] block rounded-full"
+        style={{ background: "rgba(255,168,80,0.6)", animationDelay: `${delayMs + 60}ms` }}
+      />
+      <ShardBurst vectors={BURST_MED} fill="#e6bf6a" stroke="#7a5b23" delayMs={delayMs + 60} sizePct={9} />
+    </span>
+  );
+}
+
 /** One square's slice of a signature sequence. `role` is "lead" for the single
  * origin flourish (nova's pop, atomic's central thump, the siege muzzle) and
  * "target" for every cleared enemy square; `delayMs` is the pre-computed
@@ -4064,6 +4373,21 @@ export function SignatureOverlay({
       return <DragonLordBurst lead={lead} delayMs={delayMs} />;
     case "archmage":
       return <ArchmageBurst lead={lead} delayMs={delayMs} />;
+    // --- Batch 7 (marquee sea / monster + top-tier boardwide) ---
+    case "kraken":
+      return <KrakenBurst lead={lead} delayMs={delayMs} />;
+    case "abyss":
+      return <AbyssBurst lead={lead} delayMs={delayMs} />;
+    case "whirlpool":
+      return <WhirlpoolBurst delayMs={delayMs} />;
+    case "flood":
+      return <FloodBurst delayMs={delayMs} />;
+    case "frozenmoat":
+      return <FrozenMoatBurst lead={lead} delayMs={delayMs} />;
+    case "meteorstorm":
+      return <MeteorStormBurst lead={lead} delayMs={delayMs} />;
+    case "phoenixrise":
+      return <PhoenixRiseBurst lead={lead} delayMs={delayMs} />;
     default:
       return null;
   }

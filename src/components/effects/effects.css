@@ -794,6 +794,86 @@
   transform-origin: 50% 100%;
 }
 
+/* --- 10g. Batch 7 marquee sea / monster + top-tier boardwide spectacles ------
+   Bespoke signatures for the big sea / monster cards (Kraken, Abyss, Whirlpool,
+   Flood, the Frost Ward frozen moat) and two more end-game boardwide spectacles
+   in the dragon / wizard family (a colossal meteor streak, a rising phoenix).
+   Same rules as every signature: transform / opacity only, `both` fill so the
+   inline animation-delay staggers cleanly, all hidden outright under reduced
+   motion (added to the block below). Per-square hits reuse the shared fx-sig-
+   flash / -ring / -rise / -scorch / -star / -implode / -wingbeat classes; only
+   the motions below are genuinely new. */
+
+/* Kraken: a tentacle rears up out of the square and sways before sinking. */
+@keyframes fx-sig-tentacle {
+  0% { opacity: 0; transform: translateY(64%) scaleY(0.5) rotate(-8deg); }
+  34% { opacity: 1; transform: translateY(-4%) scaleY(1.05) rotate(4deg); }
+  52% { transform: translateY(0) scaleY(1) rotate(-5deg); }
+  68% { transform: translateY(-2%) rotate(6deg); }
+  84% { opacity: 1; transform: translateY(0) rotate(-3deg); }
+  100% { opacity: 0; transform: translateY(6%) rotate(2deg); }
+}
+.fx-sig-tentacle { animation: fx-sig-tentacle 1.05s var(--ease-out, cubic-bezier(0.2, 0.8, 0.2, 1)) both; transform-origin: 50% 100%; }
+
+/* Abyss: a dark maw yawns open, holds, and dilates shut. */
+@keyframes fx-sig-maw {
+  0% { opacity: 0; transform: scale(0.2) rotate(-14deg); }
+  36% { opacity: 1; transform: scale(1.06) rotate(4deg); }
+  58% { transform: scale(0.98) rotate(0deg); }
+  82% { opacity: 1; transform: scale(1.02); }
+  100% { opacity: 0; transform: scale(1.08); }
+}
+.fx-sig-maw { animation: fx-sig-maw 0.9s ease-out both; transform-box: fill-box; transform-origin: center; }
+
+/* Whirlpool: concentric water spins and spirals inward to a point. */
+@keyframes fx-sig-whirl {
+  0% { opacity: 0; transform: scale(1.18) rotate(0deg); }
+  28% { opacity: 1; transform: scale(1) rotate(160deg); }
+  62% { transform: scale(0.7) rotate(360deg); }
+  100% { opacity: 0; transform: scale(0.3) rotate(520deg); }
+}
+.fx-sig-whirl { animation: fx-sig-whirl 0.95s ease-in both; transform-box: fill-box; transform-origin: center; }
+
+/* Flood: a wave washes across the square left to right and drains off. */
+@keyframes fx-sig-wave {
+  0% { opacity: 0; transform: translateX(-64%) scaleY(0.7); }
+  28% { opacity: 0.95; transform: translateX(-14%) scaleY(1.1); }
+  56% { opacity: 0.9; transform: translateX(12%) scaleY(0.94); }
+  100% { opacity: 0; transform: translateX(62%) scaleY(1); }
+}
+.fx-sig-wave { animation: fx-sig-wave 0.85s var(--ease-out, ease-out) both; transform-origin: 50% 100%; }
+
+/* Frozen moat: an ice ring locks in around the king with a shivered settle. */
+@keyframes fx-sig-moat {
+  0% { opacity: 0; transform: scale(0.45) rotate(-10deg); }
+  40% { opacity: 1; transform: scale(1.08) rotate(3deg); }
+  58% { transform: scale(0.98) rotate(0deg); }
+  80% { opacity: 1; transform: scale(1.02); }
+  100% { opacity: 0; transform: scale(1); }
+}
+.fx-sig-moat { animation: fx-sig-moat 0.95s var(--ease-out, ease-out) both; transform-box: fill-box; transform-origin: center; }
+
+/* Meteor storm: a colossal meteor streaks in from a corner and slams past. */
+@keyframes fx-sig-meteor {
+  0% { opacity: 0; transform: translate(-120%, -120%) scale(0.5) rotate(-6deg); }
+  22% { opacity: 1; transform: translate(-58%, -58%) scale(0.95) rotate(-4deg); }
+  56% { opacity: 1; transform: translate(0, 0) scale(1.12) rotate(0deg); }
+  80% { opacity: 1; transform: translate(30%, 30%) scale(1) rotate(3deg); }
+  100% { opacity: 0; transform: translate(66%, 66%) scale(0.9) rotate(5deg); }
+}
+.fx-sig-meteor { animation: fx-sig-meteor 1.05s ease-in both; }
+
+/* Phoenix: the firebird heaves up out of the board, hovers, then settles. */
+@keyframes fx-sig-phoenix {
+  0% { opacity: 0; transform: translateY(58%) scale(0.6); }
+  32% { opacity: 1; transform: translateY(-6%) scale(1.06); }
+  50% { transform: translateY(2%) scale(0.99); }
+  66% { transform: translateY(-3%) scale(1.02); }
+  84% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-16%) scale(0.98); }
+}
+.fx-sig-phoenix { animation: fx-sig-phoenix 1.15s var(--ease-out, cubic-bezier(0.2, 0.8, 0.2, 1)) both; transform-origin: 50% 100%; }
+
 /* --- 11. Bound-buff marker + effect popover ---------------------------------
    The Duelist-style corner sigil pops in once on mount (a piece just gained a
    bound buff), then holds. The effect-explanation popover fades and rises a
@@ -913,7 +993,17 @@
   .fx-sig-dragon-fly,
   .fx-sig-wingbeat,
   .fx-sig-firebreath,
-  .fx-sig-wizard-rise {
+  .fx-sig-wizard-rise,
+  /* Batch 7 marquee sea / monster + top-tier boardwide: the tentacle, maw,
+     whirl, wave, moat ring, meteor streak, and phoenix rise add new classes;
+     the rest reuse the classes already listed above. */
+  .fx-sig-tentacle,
+  .fx-sig-maw,
+  .fx-sig-whirl,
+  .fx-sig-wave,
+  .fx-sig-moat,
+  .fx-sig-meteor,
+  .fx-sig-phoenix {
     animation: none !important;
     opacity: 0 !important;
   }
