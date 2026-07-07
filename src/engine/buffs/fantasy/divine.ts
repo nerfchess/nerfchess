@@ -22,8 +22,8 @@ export const FANTASY_DIVINE: Buff[] = [
       id: "divine_intervention",
       name: "Divine Intervention",
       description:
-        "A god cups a hand over your crown: your king cannot be captured for your opponent's next 2 turns.",
-      tier: 6,
+        "Your king cannot be captured for your opponent's next 2 turns.",
+      tier: 5,
       category: "protection",
       flavor: "Not today, the heavens say.",
       fx: { motif: "ward", pieces: ["k"], self: true },
@@ -50,7 +50,7 @@ export const FANTASY_DIVINE: Buff[] = [
       name: "Hallowed Return",
       description:
         "A prayer is answered: one of your captured knights, bishops, or rooks is restored to life on an empty square of your back rank, once.",
-      tier: 5,
+      tier: 3,
       category: "pieces",
       flavor: "Called back from the far shore.",
     },
@@ -74,7 +74,7 @@ export const FANTASY_DIVINE: Buff[] = [
       name: "Divine Reckoning",
       description:
         "Judgment falls on the whole court: on your opponent's next turn they may move only their king.",
-      tier: 6,
+      tier: 5,
       category: "hex",
       flavor: "Every courtier is called to account at once.",
       fx: { motif: "jail", pieces: ["p", "n", "b", "r", "q"] },

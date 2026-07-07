@@ -25,7 +25,7 @@ export const FANTASY_NECROMANCY: Buff[] = [
       name: "Undying Thrall",
       description:
         "Bind a restless spirit into service: one of your captured knights or bishops claws its way back onto an empty square of your back rank, once.",
-      tier: 4,
+      tier: 2,
       category: "pieces",
       flavor: "It does not remember dying, only serving.",
     },
@@ -37,7 +37,7 @@ export const FANTASY_NECROMANCY: Buff[] = [
       name: "Raise Dead",
       description:
         "Speak the words of unmaking: one of your fallen pawns, knights, or bishops rises again on an empty square in your half, once.",
-      tier: 5,
+      tier: 3,
       category: "pieces",
       flavor: "The grave was only ever a suggestion.",
     },
@@ -48,8 +48,8 @@ export const FANTASY_NECROMANCY: Buff[] = [
       id: "withering_touch",
       name: "Withering Touch",
       description:
-        "Lay a rotting hand on one enemy piece: it withers into a brittle husk and cannot move for 4 of their turns. Kings cannot be targeted.",
-      tier: 6,
+        "One enemy piece cannot move for 4 of their turns, once. Kings cannot be targeted.",
+      tier: 5,
       category: "hex",
       flavor: "Flesh remembers how to be dust.",
       fx: { motif: "jail" },
@@ -61,7 +61,7 @@ export const FANTASY_NECROMANCY: Buff[] = [
       id: "soul_harvest",
       name: "Soul Harvest",
       description:
-        "Your queen lifts a reaper's scythe and swings it down a diagonal, harvesting the soul of every enemy piece in the row and coming to rest at the end, once.",
+        "Your queen captures every enemy piece along one diagonal in a single move, once.",
       tier: 7,
       category: "attack",
       flavor: "One long, patient stroke.",
@@ -73,8 +73,8 @@ export const FANTASY_NECROMANCY: Buff[] = [
       id: "lich_phylactery",
       name: "Lich Phylactery",
       description:
-        "You have hidden your queen's soul in a phylactery: the first time she is captured, she reforms as a new queen on her home square if it is empty.",
-      tier: 7,
+        "The first time your queen is captured, a new queen appears on her home square if it is empty.",
+      tier: 6,
       category: "pieces",
       flavor: "You cannot kill what refuses to stay dead.",
     },
@@ -94,8 +94,8 @@ export const FANTASY_NECROMANCY: Buff[] = [
       id: "army_of_the_dead",
       name: "Army of the Dead",
       description:
-        "The earth cracks and the buried answer your call: raise three skeletal pawns onto empty squares in your half, once.",
-      tier: 8,
+        "Place three new pawns on empty squares in your half, once.",
+      tier: 6,
       category: "pieces",
       flavor: "Roll call is a very long list of names.",
     },

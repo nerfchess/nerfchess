@@ -2248,13 +2248,14 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
             </motion.div>
           </div>
         ) : (
-          /* Deliberately translucent and compact: the pick is done, so the
-             player should see the board underneath while they wait. */
-          <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4">
+          /* The pick is done, so this waiting card must never cover the board:
+             it sits as a compact panel at the bottom edge, no dark backdrop,
+             with the whole board visible above it. */
+          <div className="pointer-events-none fixed inset-x-0 bottom-4 z-40 flex justify-center px-4 sm:bottom-6">
             <motion.div
               initial={{ opacity: 0, y: 12, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              className="plate pointer-events-auto w-full max-w-xs border-gold/30 p-4 text-center"
+              className="plate pointer-events-auto w-full max-w-xs border-gold/30 p-4 text-center shadow-plate"
             >
               <div className="smallcaps text-[10px] text-parchment-400">
                 {genuinelySkipped

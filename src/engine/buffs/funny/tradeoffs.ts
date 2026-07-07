@@ -197,7 +197,7 @@ export const FUNNY_TRADEOFFS: Buff[] = [
       name: "Sugar Rush",
       description:
         "Slam a sugar rush: take two extra moves right now. Then comes the sugar crash and you skip your next turn.",
-      tier: 6,
+      tier: 4,
       category: "tempo",
       flavor: "Wheee... zzz.",
       fx: { motif: "rally", pieces: "all", self: true },

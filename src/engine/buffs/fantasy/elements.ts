@@ -25,8 +25,8 @@ export const FANTASY_ELEMENTS: Buff[] = [
       id: "starfall",
       name: "Starfall",
       description:
-        "A falling star screams down out of the dark and slams into any empty square, where it cools into a battle-ready rook, once.",
-      tier: 6,
+        "Place a new rook on any empty square, once.",
+      tier: 5,
       category: "pieces",
       flavor: "The crater is still glowing.",
     },
@@ -62,8 +62,8 @@ export const FANTASY_ELEMENTS: Buff[] = [
       id: "chain_lightning",
       name: "Chain Lightning",
       description:
-        "One of your bishops crackles with stormfire and arcs down a diagonal, blasting up to two enemy pieces from the board and landing beyond them, once.",
-      tier: 6,
+        "One bishop captures up to two enemy pieces down a diagonal and lands beyond them, once.",
+      tier: 5,
       category: "attack",
       flavor: "It leaps from soul to soul.",
     },
@@ -75,7 +75,7 @@ export const FANTASY_ELEMENTS: Buff[] = [
       name: "Fissure Field",
       description:
         "The ground splits into a lattice of fissures across the enemy front: your opponent's pawns cannot advance for their next 4 turns. They may still capture diagonally.",
-      tier: 6,
+      tier: 4,
       category: "hex",
       flavor: "Every furrow becomes a chasm.",
       fx: { motif: "anchor", pieces: ["p"] },
