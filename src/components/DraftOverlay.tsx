@@ -3,7 +3,7 @@
 import { BuffOffer } from "@/engine/buff";
 import { BUFF_BY_ID } from "@/engine/buffs/library";
 import { motion, useReducedMotion } from "framer-motion";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { playDraftChime } from "@/lib/sounds";
 import { TIER_ROMAN } from "@/lib/tiers";
 import { BuffCard } from "./BuffCard";
@@ -17,6 +17,11 @@ interface Props {
   bankedBonus?: boolean;
   onPick: (index: number) => void;
   onBank: () => void;
+  /** Draft rerolls left. When > 0 (and no card is chosen yet) the Reroll
+   * control shows; at 0 it is hidden. */
+  rerollsLeft?: number;
+  /** Discard the current offer and roll a fresh one at the same tiers. */
+  onReroll?: () => void;
   /** Lock-in deadline (ms epoch). The countdown renders while set. */
   deadline?: number | null;
   /** Called once when the free lock-in window ends. The offer stays open:
@@ -161,6 +166,53 @@ function CheckIcon({ className = "" }: { className?: string }) {
   );
 }
 
+/** Session-persisted position (top-left px) of the dragged minimized panel. */
+const DRAFT_PANEL_POS_KEY = "nerfchess.draftPanelPos.v1";
+
+/** Small six-dot drag grip (no emoji). Signals the header is grabbable. */
+function GripIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg aria-hidden viewBox="0 0 10 16" width="10" height="14" fill="currentColor" className={"shrink-0 " + className}>
+      <circle cx="2.5" cy="3" r="1.3" />
+      <circle cx="7.5" cy="3" r="1.3" />
+      <circle cx="2.5" cy="8" r="1.3" />
+      <circle cx="7.5" cy="8" r="1.3" />
+      <circle cx="2.5" cy="13" r="1.3" />
+      <circle cx="7.5" cy="13" r="1.3" />
+    </svg>
+  );
+}
+
+/** Clamp a top-left position so the whole `w`x`h` panel stays on screen. */
+function clampPanelPos(x: number, y: number, w: number, h: number): { x: number; y: number } {
+  const maxX = Math.max(0, window.innerWidth - w);
+  const maxY = Math.max(0, window.innerHeight - h);
+  return { x: Math.min(Math.max(0, x), maxX), y: Math.min(Math.max(0, y), maxY) };
+}
+
+/** Static circular-arrow mark for the reroll control (no motion, no emoji). */
+function RerollIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg
+      aria-hidden
+      viewBox="0 0 24 24"
+      width="13"
+      height="13"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={"shrink-0 " + className}
+    >
+      <path d="M3 12a9 9 0 0 1 15-6.7L21 8" />
+      <path d="M21 3v5h-5" />
+      <path d="M21 12a9 9 0 0 1-15 6.7L3 16" />
+      <path d="M3 21v-5h5" />
+    </svg>
+  );
+}
+
 /** Where the confirmed card flies: the buff dock ("your pocket") if it is
  * visible, otherwise off toward the bottom-left where the mobile drawer
  * lives. Returns the translation from the card's current center. */
@@ -265,6 +317,8 @@ export function DraftOverlay({
   bankedBonus,
   onPick,
   onBank,
+  rerollsLeft = 0,
+  onReroll,
   deadline,
   onExpire,
   minimized,
@@ -290,6 +344,10 @@ export function DraftOverlay({
   // True once the deal has settled: later animations (dim, select) run
   // without the deal's stagger delays.
   const [dealt, setDealt] = useState(false);
+  // A reroll request is in flight (online: awaiting the server's fresh offer):
+  // disables the reroll control until the new cards deal in. Reset by the deal
+  // effect whenever the offer changes.
+  const [rerolling, setRerolling] = useState(false);
   // Peek at the board: the full-screen overlay can be temporarily hidden
   // behind a slim "Draft open" chip. Purely visual (visibility, not unmount),
   // so the pick state, timers, and any in-flight animation are untouched.
@@ -305,6 +363,87 @@ export function DraftOverlay({
   // only confirms after CONFIRM_GUARD_MS (accidental double-click guard).
   const selectedAtRef = useRef(0);
 
+  // Draggable minimized panel. When the free window expires the overlay
+  // shrinks to a compact side panel that runs on the player's own clock; its
+  // default corner can sit on top of the clock, so the header is a drag handle
+  // (pointer AND touch) and the chosen spot is remembered for the session.
+  // `dragPos` null = use the default bottom-right CSS anchor.
+  const [dragPos, setDragPos] = useState<{ x: number; y: number } | null>(null);
+  const [dragging, setDragging] = useState(false);
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const dragOffset = useRef<{ dx: number; dy: number } | null>(null);
+  const dragPosRef = useRef<{ x: number; y: number } | null>(null);
+  dragPosRef.current = dragPos;
+
+  // Restore any remembered position once, clamped to the current viewport
+  // (a generous size estimate; the real size re-clamps once the panel mounts).
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(DRAFT_PANEL_POS_KEY);
+      if (!raw) return;
+      const p = JSON.parse(raw) as { x?: unknown; y?: unknown };
+      if (typeof p?.x === "number" && typeof p?.y === "number") {
+        setDragPos(clampPanelPos(p.x, p.y, 304, 360));
+      }
+    } catch {}
+  }, []);
+
+  // Once the compact panel actually mounts, re-clamp any restored position with
+  // its real measured size so it can never sit partly off a short screen.
+  useEffect(() => {
+    if (!minimized) return;
+    const rect = panelRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    setDragPos((prev) => (prev ? clampPanelPos(prev.x, prev.y, rect.width, rect.height) : prev));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [minimized]);
+
+  // Keep the panel on screen if the viewport shrinks (rotate, keyboard open).
+  useEffect(() => {
+    if (!dragPos) return;
+    const onResize = () => {
+      const rect = panelRef.current?.getBoundingClientRect();
+      setDragPos((prev) =>
+        prev ? clampPanelPos(prev.x, prev.y, rect?.width ?? 304, rect?.height ?? 220) : prev,
+      );
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [dragPos]);
+
+  const onGripPointerDown = (e: ReactPointerEvent) => {
+    const rect = panelRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    dragOffset.current = { dx: e.clientX - rect.left, dy: e.clientY - rect.top };
+    setDragging(true);
+    try {
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    } catch {}
+    e.preventDefault();
+  };
+  const onGripPointerMove = (e: ReactPointerEvent) => {
+    const off = dragOffset.current;
+    const rect = panelRef.current?.getBoundingClientRect();
+    if (!off || !rect) return;
+    setDragPos(clampPanelPos(e.clientX - off.dx, e.clientY - off.dy, rect.width, rect.height));
+  };
+  const endGripDrag = (e: ReactPointerEvent) => {
+    if (!dragOffset.current) return;
+    dragOffset.current = null;
+    setDragging(false);
+    try {
+      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+    } catch {}
+    try {
+      if (dragPosRef.current) {
+        window.localStorage.setItem(DRAFT_PANEL_POS_KEY, JSON.stringify(dragPosRef.current));
+      }
+    } catch {}
+  };
+
+  // A reroll keeps the same offer index but swaps the cards, so key the deal
+  // on both: bumping `rerolled` replays the deal (and chime) for fresh cards.
+  const dealKey = `${offer.index}:${offer.rerolled ?? 0}`;
   useEffect(() => {
     setSelected(null);
     setChosen(null);
@@ -312,6 +451,7 @@ export function DraftOverlay({
     setBanking(false);
     setBankDeltas(null);
     setHidden(false);
+    setRerolling(false);
     committedRef.current = false;
     selectedAtRef.current = 0;
     setDealt(!!reduceMotion);
@@ -321,7 +461,7 @@ export function DraftOverlay({
     const t = window.setTimeout(() => setDealt(true), DEAL_TOTAL_MS);
     return () => window.clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [offer.index]);
+  }, [dealKey]);
 
   useEffect(
     () => () => {
@@ -413,6 +553,16 @@ export function DraftOverlay({
     bankTimer.current = window.setTimeout(() => onBank(), 750);
   };
 
+  // Reroll: discard the current offer, roll fresh cards at the same tiers. The
+  // offer stays open (no commit), so this never touches committedRef. The
+  // `rerolling` guard blocks a double-fire until the new cards deal in.
+  const canReroll = rerollsLeft > 0 && !!onReroll && chosen == null && !banking && !committedRef.current;
+  const handleReroll = () => {
+    if (!canReroll || rerolling) return;
+    setRerolling(true);
+    onReroll?.();
+  };
+
   // Free window over: the pick stays open, but from here on it runs on the
   // player's own clock. The parent minimizes the overlay to the side.
   const handleExpire = () => {
@@ -437,18 +587,40 @@ export function DraftOverlay({
       selectCard(i);
     };
     return (
-      <div className="fixed bottom-16 right-3 z-40 w-[min(92vw,19rem)] sm:bottom-4">
+      <div
+        ref={panelRef}
+        style={dragPos ? { left: dragPos.x, top: dragPos.y } : undefined}
+        className={
+          "fixed z-40 w-[min(92vw,19rem)] " + (dragPos ? "" : "bottom-16 right-3 sm:bottom-4")
+        }
+      >
         <motion.div
-          initial={{ opacity: 0, x: 80, scale: 0.9 }}
+          initial={dragging ? false : { opacity: 0, x: 80, scale: 0.9 }}
           animate={{ opacity: 1, x: 0, scale: 1 }}
           transition={{ duration: 0.35, ease: "easeOut" }}
           className="plate border-gold/40 p-3 shadow-plate"
         >
-          <div className="flex items-center justify-between gap-2">
-            <span className="smallcaps text-[10px] text-parchment-400">
-              {nounCap} draft #{offer.index}
+          {/* Drag handle: grab the header (mouse or touch) to move the panel so
+              it never covers the clock. touch-none stops the page scrolling
+              under a touch-drag; the spot is remembered for the session. */}
+          <div
+            onPointerDown={onGripPointerDown}
+            onPointerMove={onGripPointerMove}
+            onPointerUp={endGripDrag}
+            onPointerCancel={endGripDrag}
+            title="Drag to move this panel"
+            className={
+              "-mx-3 -mt-3 mb-2 flex touch-none select-none items-center justify-between gap-2 px-3 py-2.5 " +
+              (dragging ? "cursor-grabbing" : "cursor-grab")
+            }
+          >
+            <span className="flex min-w-0 items-center gap-1.5">
+              <GripIcon className="text-parchment-500" />
+              <span className="smallcaps truncate text-[10px] text-parchment-400">
+                {nounCap} draft #{offer.index}
+              </span>
             </span>
-            <span className="smallcaps text-[9px] text-oxblood-glow">On your clock</span>
+            <span className="smallcaps shrink-0 text-[9px] text-oxblood-glow">On your clock</span>
           </div>
           {takeBoth && (
             <p className="mt-1 text-[11px] font-semibold leading-snug text-gold-leaf">
@@ -471,22 +643,32 @@ export function DraftOverlay({
               );
             })}
           </div>
-          <div className="mt-2 flex items-center gap-2">
+          <div className="mt-2 flex flex-wrap items-center gap-2">
             {selected != null && !settled && (
               <button
                 onClick={() => {
                   setChosen(selected);
                   commit(selected);
                 }}
-                className="btn-leaf flex-1 px-3 py-1.5 font-display text-xs font-semibold tracking-wide"
+                className="btn-leaf min-w-[7rem] flex-1 touch-manipulation px-3 py-2 font-display text-xs font-semibold tracking-wide"
               >
                 Confirm pick
+              </button>
+            )}
+            {canReroll && (
+              <button
+                onClick={handleReroll}
+                disabled={rerolling}
+                className="flex min-w-[7rem] flex-1 touch-manipulation items-center justify-center gap-1 rounded-[1px] border border-white/15 bg-white/[0.03] px-3 py-2 font-display text-[11px] font-semibold tracking-wide text-parchment-200 transition hover:border-gold/50 hover:text-gold-leaf disabled:opacity-40"
+                title="Roll fresh cards at the same tier"
+              >
+                <RerollIcon className="text-gold-leaf" /> Reroll ({rerollsLeft})
               </button>
             )}
             <button
               onClick={!settled ? onBank : undefined}
               disabled={settled}
-              className="flex-1 rounded-[1px] border border-white/15 bg-white/[0.03] px-3 py-1.5 font-display text-[11px] font-semibold tracking-wide text-parchment-200 transition hover:border-gold/50 hover:text-gold-leaf disabled:opacity-40"
+              className="min-w-[7rem] flex-1 touch-manipulation rounded-[1px] border border-white/15 bg-white/[0.03] px-3 py-2 font-display text-[11px] font-semibold tracking-wide text-parchment-200 transition hover:border-gold/50 hover:text-gold-leaf disabled:opacity-40"
               title="Skip this draft; your next one pulls from a tier higher"
             >
               Skip &amp; bank
@@ -604,9 +786,10 @@ export function DraftOverlay({
             const flipDelay = flipDelayMs(i, card.tier);
             return (
               <motion.div
-                // Key by the offer index so a fresh draft remounts the cards,
-                // replaying the deal from the deck and the flip reveal.
-                key={`${offer.index}-${i}`}
+                // Key by the offer index AND reroll count so a fresh draft (or
+                // a reroll of the same draft) remounts the cards, replaying the
+                // deal from the deck and the flip reveal.
+                key={`${dealKey}-${i}`}
                 ref={(el) => {
                   cardRefs.current[i] = el;
                 }}
@@ -732,16 +915,27 @@ export function DraftOverlay({
           <button
             onClick={confirmSelection}
             disabled={selected == null || chosen != null || banking}
-            className="btn-glass btn-glass--primary w-full px-8 py-3 font-display text-base font-semibold tracking-wide sm:w-auto"
+            className="btn-glass btn-glass--primary w-full touch-manipulation px-8 py-3 font-display text-base font-semibold tracking-wide sm:w-auto"
           >
             {selected != null ? "Confirm pick" : "Pick a card"}
           </button>
+          {canReroll && (
+            <button
+              onClick={handleReroll}
+              disabled={rerolling}
+              className="btn-glass flex w-full touch-manipulation items-center justify-center gap-1.5 px-6 py-3 font-display text-sm font-semibold tracking-wide disabled:opacity-40 sm:w-auto"
+              title="Discard this offer and roll fresh cards at the same tier"
+            >
+              <RerollIcon className="text-gold-leaf" />
+              Reroll <span className="text-parchment-400">({rerollsLeft})</span>
+            </button>
+          )}
           <div className="relative w-full sm:w-auto">
             <button
               ref={bankBtnRef}
               onClick={handleBank}
               disabled={chosen != null || banking}
-              className="btn-glass w-full px-6 py-3 font-display text-sm font-semibold tracking-wide sm:w-auto"
+              className="btn-glass w-full touch-manipulation px-6 py-3 font-display text-sm font-semibold tracking-wide sm:w-auto"
               title="Skip this draft; your next one pulls from a tier higher"
             >
               Skip &amp; bank <span className="ml-1 text-parchment-400">+1 tier next draft</span>

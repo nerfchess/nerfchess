@@ -178,7 +178,7 @@ function TvView() {
     return (
       <Link
         href={`/u/${encodeURIComponent(p.name)}`}
-        className="group flex min-w-0 items-center gap-2 py-1.5"
+        className="group flex min-h-[44px] min-w-0 items-center gap-2 py-1.5"
         title={`View ${p.name}'s profile`}
       >
         <PlayerAvatar name={p.name} avatar={p.avatar} size={26} />

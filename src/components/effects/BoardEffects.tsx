@@ -882,6 +882,35 @@ function RegaliaSilhouette({ type }: { type?: PieceType }) {
   }
 }
 
+// A deterministic per-card accent. The constraint / empower / ward / blindfold
+// glyphs are SHARED by many cards, so two cards with the same tier + category +
+// motif (+ moveAs) would otherwise render an identical badge on a piece (e.g.
+// two tier-6 movement "moves like a queen" empowers, double_amazon vs
+// colossus). A small pip placed at an angle hashed from the card NAME breaks
+// that tie, so no two DIFFERENT active cards paint the same icon. The tier tint
+// and category chip already separate cards of different tier / suit; this only
+// distinguishes the residual same-tier + same-category collisions.
+function nameHash(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (Math.imul(h, 31) + s.charCodeAt(i)) | 0;
+  return Math.abs(h);
+}
+
+/** A two-pass tinted pip on a ring at `angleDeg` (dark understroke for contrast
+ * on both square colors, then the tier-tinted dot): the per-card accent stamped
+ * into a shared motif glyph. */
+function AccentPip({ cx, cy, r, angleDeg }: { cx: number; cy: number; r: number; angleDeg: number }) {
+  const a = (angleDeg * Math.PI) / 180;
+  const x = cx + r * Math.cos(a);
+  const y = cy + r * Math.sin(a);
+  return (
+    <>
+      <circle cx={x} cy={y} r={1.9} fill={MOTIF_DARK} />
+      <circle cx={x} cy={y} r={1.15} fill="currentColor" />
+    </>
+  );
+}
+
 /**
  * Card-fx motif for one square. Constraints (jail / muzzle / anchor / slow)
  * are small badges in the square's top-right corner; blindfold is a band
@@ -890,19 +919,33 @@ function RegaliaSilhouette({ type }: { type?: PieceType }) {
  * banner flourish over the rallied army's king. All persistent variants end
  * in a calm static pose (reduced motion shows that state directly); rally is
  * transient and hides under reduced motion, matching the stun precedent.
+ *
+ * Per-card distinctness: every badge is tinted by the card's TIER color and
+ * co-stamped with its CATEGORY glyph (CategoryChip), and a NAME-seeded accent
+ * pip (see nameHash / AccentPip) breaks ties between cards that also share tier
+ * and category, so no two different active cards ever look identical.
  */
 export const MotifBadge = React.memo(function MotifBadge({
   motif,
   tier,
   category,
   moveAs,
+  name,
 }: {
   motif: CardFx["motif"];
   tier: number;
   category: BuffCategory;
   moveAs?: PieceType;
+  /** Card name: seeds the deterministic per-card accent pip. Optional and
+   * backward compatible: when Board does not forward it the badge simply omits
+   * the accent (the tier tint + category glyph still apply). Board has it in
+   * hand at the MotifBadge call site (motifMark.name, already used for the
+   * React key), so wiring it through is a one-line change. */
+  name?: string;
 }) {
   const color = TIER_COLOR[tier] ?? TIER_COLOR[3];
+  const accent = name ? nameHash(name) : null;
+  const accentAngle = accent != null ? accent % 360 : null;
   if (motif === "rally") {
     return (
       <span
@@ -944,6 +987,7 @@ export const MotifBadge = React.memo(function MotifBadge({
               fill="none"
               vectorEffect="non-scaling-stroke"
             />
+            {accent != null && <AccentPip cx={6 + (accent % 48)} cy={6} r={0} angleDeg={0} />}
           </svg>
         </span>
         <CategoryChip category={category} color={color} className="bottom-[40%] right-[3%] h-[15%] w-[15%]" />
@@ -961,6 +1005,7 @@ export const MotifBadge = React.memo(function MotifBadge({
           <svg viewBox="0 0 60 12" preserveAspectRatio="none" className="h-full w-full">
             <ellipse cx="30" cy="6" rx="27.5" ry="4.4" fill="none" stroke={MOTIF_DARK} strokeWidth="2.2" vectorEffect="non-scaling-stroke" />
             <ellipse cx="30" cy="6" rx="27.5" ry="4.4" fill="none" stroke="currentColor" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+            {accent != null && <AccentPip cx={6 + (accent % 48)} cy={6} r={0} angleDeg={0} />}
           </svg>
         </span>
         <CategoryChip category={category} color={color} className="bottom-[22%] right-[3%] h-[15%] w-[15%]" />
@@ -978,6 +1023,7 @@ export const MotifBadge = React.memo(function MotifBadge({
           <svg viewBox="0 0 20 20" className="h-full w-full">
             <circle cx="10" cy="10" r="8.8" fill="rgba(20,30,43,0.9)" stroke="currentColor" strokeWidth="1" />
             <RegaliaSilhouette type={moveAs} />
+            {accentAngle != null && <AccentPip cx={10} cy={10} r={8.8} angleDeg={accentAngle} />}
           </svg>
         </span>
         <CategoryChip category={category} color={color} className="right-[2%] top-[34%] h-[15%] w-[15%]" />
@@ -1001,6 +1047,7 @@ export const MotifBadge = React.memo(function MotifBadge({
           ) : (
             <SlowGlyph />
           )}
+          {accentAngle != null && <AccentPip cx={10} cy={10} r={9} angleDeg={accentAngle} />}
         </svg>
       </span>
       <CategoryChip category={category} color={color} className="right-[3%] top-[33%] h-[15%] w-[15%]" />
@@ -1049,8 +1096,30 @@ export const BoundBuffMark = React.memo(function BoundBuffMark({
 // The registry is keyed by card id; Board looks the card up when a played-card
 // event surfaces its id, and both players see the identical sequence.
 
-export type SigVisual = "nova" | "trapdoor" | "stone" | "strike" | "atomic" | "pin" | "siege";
-export type SigOrdering = "file" | "sweep" | "octagon" | "line";
+export type SigVisual =
+  | "nova"
+  | "trapdoor"
+  | "stone"
+  | "strike"
+  | "atomic"
+  | "pin"
+  | "siege"
+  // --- Batch 2 (effect-data sourced; see SIGNATURES note) ---
+  | "coronation"
+  | "crownrain"
+  | "colossus"
+  | "snooze"
+  | "clockcage"
+  | "clockice"
+  | "blitz"
+  | "frostsweep"
+  | "petrify"
+  | "petrifiedforest"
+  | "aegis"
+  | "cathedral"
+  | "shades"
+  | "wallbuild";
+export type SigOrdering = "file" | "sweep" | "octagon" | "line" | "radial";
 export type SigSoundKey =
   | "nova"
   | "cataclysm"
@@ -1058,7 +1127,53 @@ export type SigSoundKey =
   | "lightning"
   | "atomic"
   | "rampage"
-  | "siege";
+  | "siege"
+  // --- Batch 2 voices ---
+  | "coronation"
+  | "crownrain"
+  | "colossus"
+  | "snooze"
+  | "clockcage"
+  | "clockice"
+  | "blitz"
+  | "massfreeze"
+  | "petrify"
+  | "petrifiedforest"
+  | "aegis"
+  | "cathedral"
+  | "shades"
+  | "wall";
+
+/**
+ * Where Board derives a signature's target squares. Batch 1 signatures read
+ * the removal (detonation) diff ("removal", the default). Batch 2 spectacles
+ * decorate pieces that STAY on the board (coronations, freezes, petrifies,
+ * shields, skips), so their squares come from the fx-effect zones that
+ * computeFxVisual/draftZones already paint. Each value below names the zone
+ * Board should feed the signature instead of the removal diff:
+ *   frozen   -> visual.frozenSquares          (mass/deep/eternal freeze)
+ *   walnut   -> visual.walnutSquares          (medusa / basilisk / petrified forest)
+ *   shield   -> visual.shieldedSquares        (aegis / divine fortress)
+ *   kingSafe -> visual.kingSafeSquares        (immortal king)
+ *   stun     -> visual.stunSquares            (time skip / freeze / prison)
+ *   empower  -> motifSquares (motif "empower") (amazon / god knight / colossus / titan / army)
+ *   slow     -> motifSquares (motif "slow")
+ *   blindfold-> motifSquares (motif "blindfold") (great wall)
+ *   rally    -> motifSquares (motif "rally")   (blitzkrieg)
+ *   summon   -> squares that just gained a piece (rampart wall)
+ */
+export type SigZone =
+  | "removal"
+  | "frozen"
+  | "walnut"
+  | "shield"
+  | "kingSafe"
+  | "stun"
+  | "empower"
+  | "slow"
+  | "blindfold"
+  | "rally"
+  | "summon";
 
 export interface SignatureConfig {
   /** How Board sorts the cleared squares into the detonation sequence. */
@@ -1066,7 +1181,10 @@ export interface SignatureConfig {
   /** Milliseconds between successive squares in the sequence. */
   staggerMs: number;
   /** Which removed piece types this signature owns (others fall back to the
-   * plain detonation burst); "all" claims every cleared square. */
+   * plain detonation burst); "all" claims every cleared square. For an
+   * effect-data signature (source !== "removal") this is advisory: Board takes
+   * the squares from the named zone, but the list still documents which pieces
+   * the card touches. */
   victims: PieceType[] | "all";
   /** Line-based signatures (rook / queen charge) anchor their order on the
    * origin square of the piece of this type that moved this turn. */
@@ -1078,6 +1196,9 @@ export interface SignatureConfig {
   hasLead: boolean;
   /** Voice key (mapped to a sounds.ts function by Board). */
   sound: SigSoundKey;
+  /** Target-square source. Omitted / "removal" = the detonation diff (Batch 1).
+   * Any other value routes Board to the named fx-effect zone (Batch 2). */
+  source?: SigZone;
 }
 
 /** The shipped Batch 1 signatures. Every one derives its target squares purely
@@ -1091,7 +1212,20 @@ export interface SignatureConfig {
  * cleared squares IS derivable from the diff, but a plain capture move emits
  * NO card-play event to key the signature to, so they need a capture-trigger
  * hook and belong in a later batch. The "octagon" ordering, AtomicBurst
- * visual, and playAtomic voice below are left in place, ready for that hook. */
+ * visual, and playAtomic voice below are left in place, ready for that hook.
+ *
+ * BATCH 2 (source !== "removal"): the entries below decorate pieces that STAY
+ * on the board, so they carry NO detonation diff for orderSignature to key on.
+ * Their art (SignatureOverlay cases), config, and voices (sounds.ts) are
+ * complete here; two small wiring steps remain in Board.tsx / fxZones.ts (both
+ * outside this file), documented per entry via `source`:
+ *   1. Feed target squares from the named fx zone instead of the removal diff
+ *      (computeBoardFx currently only paints signatures over detSquares).
+ *   2. Add one `playSignature` switch case per new SigSoundKey (the switch
+ *      lives in Board.tsx; unknown keys fall back to playExplosion today).
+ * Registering them here is inert until then (fireSignature marks them active,
+ * but with no detSquares nothing renders and no signature voice plays), so it
+ * is safe to ship the dispatcher layer ahead of the board wiring. */
 export const SIGNATURES: Record<string, SignatureConfig> = {
   nova: { ordering: "file", staggerMs: 130, victims: "all", visual: "nova", hasLead: true, sound: "nova" },
   cataclysm: { ordering: "sweep", staggerMs: 55, victims: ["p"], visual: "trapdoor", hasLead: false, sound: "cataclysm" },
@@ -1100,6 +1234,38 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   queens_rampage: { ordering: "line", staggerMs: 105, victims: "all", mover: "q", visual: "pin", hasLead: false, sound: "rampage" },
   queens_wrath: { ordering: "line", staggerMs: 110, victims: "all", mover: "q", visual: "pin", hasLead: false, sound: "rampage" },
   siege_rook: { ordering: "line", staggerMs: 85, victims: "all", mover: "r", visual: "siege", hasLead: true, sound: "siege" },
+
+  // --- Batch 2: movement / coronation grants (empower motif zone) ---
+  amazon_knight: { ordering: "radial", staggerMs: 0, victims: ["n"], visual: "coronation", hasLead: true, sound: "coronation", source: "empower" },
+  god_knight: { ordering: "radial", staggerMs: 0, victims: ["n"], visual: "coronation", hasLead: true, sound: "coronation", source: "empower" },
+  double_amazon: { ordering: "sweep", staggerMs: 110, victims: ["n"], visual: "crownrain", hasLead: false, sound: "crownrain", source: "empower" },
+  triple_amazon: { ordering: "sweep", staggerMs: 100, victims: ["n"], visual: "crownrain", hasLead: false, sound: "crownrain", source: "empower" },
+  amazon_army: { ordering: "sweep", staggerMs: 90, victims: ["n", "b"], visual: "crownrain", hasLead: false, sound: "crownrain", source: "empower" },
+  colossus: { ordering: "radial", staggerMs: 0, victims: ["p", "n", "b", "r", "q"], visual: "colossus", hasLead: true, sound: "colossus", source: "empower" },
+  titan: { ordering: "radial", staggerMs: 0, victims: ["p", "n", "b", "r", "q"], visual: "colossus", hasLead: true, sound: "colossus", source: "empower" },
+
+  // --- Batch 2: time / tempo (skip -> stun zone; blitz -> rally zone) ---
+  time_skip: { ordering: "radial", staggerMs: 0, victims: "all", visual: "snooze", hasLead: true, sound: "snooze", source: "stun" },
+  time_prison: { ordering: "radial", staggerMs: 0, victims: "all", visual: "clockcage", hasLead: true, sound: "clockcage", source: "stun" },
+  time_freeze: { ordering: "radial", staggerMs: 0, victims: "all", visual: "clockice", hasLead: true, sound: "clockice", source: "stun" },
+  blitzkrieg: { ordering: "radial", staggerMs: 70, victims: "all", visual: "blitz", hasLead: true, sound: "blitz", source: "rally" },
+
+  // --- Batch 2: freeze spectacles (frozen zone) ---
+  mass_freeze: { ordering: "radial", staggerMs: 45, victims: ["p", "n", "b", "r", "q"], visual: "frostsweep", hasLead: false, sound: "massfreeze", source: "frozen" },
+  deep_freeze: { ordering: "radial", staggerMs: 55, victims: ["p", "n", "b", "r", "q"], visual: "frostsweep", hasLead: false, sound: "massfreeze", source: "frozen" },
+  eternal_freeze: { ordering: "radial", staggerMs: 65, victims: ["p", "n", "b", "r", "q"], visual: "frostsweep", hasLead: false, sound: "massfreeze", source: "frozen" },
+
+  // --- Batch 2: petrify / curse (walnut zone) ---
+  medusas_stare: { ordering: "radial", staggerMs: 0, victims: ["q"], visual: "petrify", hasLead: true, sound: "petrify", source: "walnut" },
+  medusa_stare: { ordering: "radial", staggerMs: 0, victims: "all", visual: "petrify", hasLead: true, sound: "petrify", source: "walnut" },
+  petrified_forest: { ordering: "sweep", staggerMs: 70, victims: ["n", "b"], visual: "petrifiedforest", hasLead: false, sound: "petrifiedforest", source: "walnut" },
+
+  // --- Batch 2: protection ---
+  aegis: { ordering: "radial", staggerMs: 35, victims: "all", visual: "aegis", hasLead: true, sound: "aegis", source: "shield" },
+  immortal_king: { ordering: "radial", staggerMs: 0, victims: ["k"], visual: "shades", hasLead: true, sound: "shades", source: "kingSafe" },
+  divine_fortress: { ordering: "radial", staggerMs: 40, victims: "all", visual: "cathedral", hasLead: true, sound: "cathedral", source: "shield" },
+  rampart: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "wallbuild", hasLead: false, sound: "wall", source: "summon" },
+  great_wall: { ordering: "sweep", staggerMs: 70, victims: "all", visual: "wallbuild", hasLead: false, sound: "wall", source: "blindfold" },
 };
 
 /** A jagged lightning bolt that fills its wrapper (BoltGlyph is fixed-size). */
@@ -1313,6 +1479,418 @@ function SiegeBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   );
 }
 
+// --- 10b. Batch 2 signature visuals (effect-data sourced) --------------------
+// Each is one square's slice of a Batch 2 spectacle: a keyed one-shot mounted
+// only on an affected square, transform/opacity only, hidden under reduced
+// motion (see effects.css). All decorate pieces that STAY on the board, so
+// Board feeds them squares from an fx zone rather than the removal diff (see
+// the SIGNATURES note). A shared crown glyph backs the coronation family.
+
+/** The jeweled crown that descends in the coronation / regalia spectacles. */
+function SigCrown() {
+  return (
+    <svg viewBox="0 0 24 14" className="h-full w-full" aria-hidden="true">
+      <path
+        d="M2 12 L2 4.5 L7 8 L12 1.5 L17 8 L22 4.5 L22 12 Z"
+        fill="#e6bf6a"
+        stroke="#7a5b23"
+        strokeWidth="1"
+        strokeLinejoin="round"
+      />
+      <circle cx="7" cy="10.5" r="0.9" fill="#7a5b23" />
+      <circle cx="12" cy="10.5" r="0.9" fill="#7a5b23" />
+      <circle cx="17" cy="10.5" r="0.9" fill="#7a5b23" />
+    </svg>
+  );
+}
+
+/** Amazon Knight / God Knight: a shaft of light drops, a crown lowers onto the
+ * piece, and a coronation flash blooms (lead). */
+function CoronationBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span
+        className="fx-sig-shaft absolute left-[38%] top-0 block h-[72%] w-[24%]"
+        style={{
+          background:
+            "linear-gradient(180deg, rgba(255,244,200,0.85), rgba(255,220,130,0.15) 70%, transparent)",
+          animationDelay: `${delayMs}ms`,
+        }}
+      />
+      {lead && (
+        <span
+          className="fx-sig-flash absolute inset-[22%] block rounded-full"
+          style={{
+            background:
+              "radial-gradient(circle, rgba(255,240,190,0.9), rgba(230,191,106,0.4) 55%, transparent 72%)",
+            animationDelay: `${delayMs + 180}ms`,
+          }}
+        />
+      )}
+      <span
+        className="fx-sig-crown absolute left-[27%] top-[8%] block h-[30%] w-[46%]"
+        style={{ animationDelay: `${delayMs}ms` }}
+      >
+        <SigCrown />
+      </span>
+    </span>
+  );
+}
+
+const CROWN_RAIN = [
+  { left: "14%", w: "30%", d: 0 },
+  { left: "50%", w: "26%", d: 90 },
+  { left: "32%", w: "34%", d: 180 },
+];
+
+/** Double / Triple Amazon, Amazon Army: crowns rain down onto the piece. */
+function CrownRainBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      {CROWN_RAIN.map((c, i) => (
+        <span
+          key={i}
+          className="fx-sig-crownfall absolute top-0 block h-[26%]"
+          style={{ left: c.left, width: c.w, animationDelay: `${delayMs + c.d}ms` }}
+        >
+          <SigCrown />
+        </span>
+      ))}
+    </span>
+  );
+}
+
+/** Colossus / Titan: a stone shell grows over the piece and it stomps a ring
+ * (lead). */
+function ColossusBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span
+        className="fx-sig-grow absolute inset-[16%] block rounded-full"
+        style={{
+          border: "2px solid rgba(150,150,158,0.85)",
+          background: "radial-gradient(circle, rgba(120,120,128,0.28), transparent 70%)",
+          animationDelay: `${delayMs}ms`,
+        }}
+      />
+      {lead && (
+        <span
+          className="fx-sig-shock absolute inset-[10%] block rounded-full"
+          style={{ border: "2px solid rgba(230,191,106,0.8)", animationDelay: `${delayMs + 220}ms` }}
+        />
+      )}
+    </span>
+  );
+}
+
+/** Time Skip: a SNOOZE button slams down over the king (lead) and a Z drifts
+ * up. */
+function SnoozeBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      {lead && (
+        <span
+          className="fx-sig-snooze absolute left-[16%] top-[32%] block h-[34%] w-[68%] rounded-[1px]"
+          style={{
+            background: "rgba(60,72,92,0.92)",
+            border: "1px solid rgba(190,205,225,0.8)",
+            animationDelay: `${delayMs}ms`,
+          }}
+        >
+          <svg viewBox="0 0 40 20" className="h-full w-full" aria-hidden="true">
+            <path d="M12 6 h9 l-9 8 h9" fill="none" stroke="#e8eef6" strokeWidth="2.4" strokeLinejoin="round" strokeLinecap="round" />
+            <path d="M23 8 h5 l-5 5 h5" fill="none" stroke="#e8eef6" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" />
+          </svg>
+        </span>
+      )}
+      <span
+        className="fx-sig-zzz absolute left-[54%] top-[4%] block h-[34%] w-[34%]"
+        style={{ animationDelay: `${delayMs + 160}ms` }}
+      >
+        <svg viewBox="0 0 20 20" className="h-full w-full" aria-hidden="true">
+          <path d="M4 5 h9 l-9 9 h9" fill="none" stroke="#cdd8e6" strokeWidth="2.2" strokeLinejoin="round" strokeLinecap="round" />
+        </svg>
+      </span>
+    </span>
+  );
+}
+
+/** Time Prison: iron clock-hand bars drop into a cage around the king, a clock
+ * face stamped on the front (lead). */
+function ClockCageBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-cage absolute inset-[12%] block" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 32 32" className="h-full w-full" aria-hidden="true">
+          <g stroke="#b9c4d6" strokeWidth="2" strokeLinecap="round">
+            <path d="M6 3 V29 M13 3 V29 M19 3 V29 M26 3 V29" />
+          </g>
+          <g stroke="#8a97ab" strokeWidth="2.2" strokeLinecap="round">
+            <path d="M4 4 H28 M4 28 H28" />
+          </g>
+        </svg>
+      </span>
+      {lead && (
+        <span
+          className="fx-sig-flash absolute left-[34%] top-[36%] block h-[28%] w-[32%]"
+          style={{ animationDelay: `${delayMs + 200}ms` }}
+        >
+          <svg viewBox="0 0 20 20" className="h-full w-full" aria-hidden="true">
+            <circle cx="10" cy="10" r="8.4" fill="rgba(20,30,43,0.85)" stroke="#cdd8e6" strokeWidth="1.4" />
+            <path d="M10 10 V4 M10 10 L14 12" stroke="#cdd8e6" strokeWidth="1.4" strokeLinecap="round" fill="none" />
+          </svg>
+        </span>
+      )}
+    </span>
+  );
+}
+
+/** Time Freeze: a frost-rimmed clock crashes down and entombs the king in an
+ * ice block, its face cracked (lead). */
+function ClockIceBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span
+        className="fx-sig-ice absolute inset-[14%] block rounded-[1px]"
+        style={{
+          background: "linear-gradient(135deg, rgba(200,235,255,0.45), rgba(150,205,240,0.32))",
+          border: "1px solid rgba(220,245,255,0.8)",
+          animationDelay: `${delayMs}ms`,
+        }}
+      >
+        <svg viewBox="0 0 32 32" className="h-full w-full" aria-hidden="true">
+          <path d="M8 4 L14 14 L9 20 L16 30" fill="none" stroke="rgba(235,250,255,0.75)" strokeWidth="1" strokeLinejoin="round" />
+        </svg>
+      </span>
+      {lead && (
+        <span
+          className="fx-sig-flash absolute left-[34%] top-[34%] block h-[30%] w-[32%]"
+          style={{ animationDelay: `${delayMs + 120}ms` }}
+        >
+          <svg viewBox="0 0 20 20" className="h-full w-full" aria-hidden="true">
+            <circle cx="10" cy="10" r="8.4" fill="rgba(30,48,66,0.7)" stroke="#dff2ff" strokeWidth="1.4" />
+            <path d="M10 10 V4 M10 10 L13.5 12" stroke="#dff2ff" strokeWidth="1.4" strokeLinecap="round" fill="none" />
+          </svg>
+        </span>
+      )}
+    </span>
+  );
+}
+
+const BLITZ_IMGS = [
+  { left: "18%", d: 0 },
+  { left: "36%", d: 55 },
+  { left: "50%", d: 110 },
+  { left: "64%", d: 165 },
+];
+
+/** Blitzkrieg: four forked-lightning after-images streak across in sequence,
+ * with a combo flash on the lead square. */
+function BlitzBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      {BLITZ_IMGS.map((b, i) => (
+        <span
+          key={i}
+          className="fx-sig-afterimage absolute top-[6%] block h-[70%] w-[22%]"
+          style={{ left: b.left, animationDelay: `${delayMs + b.d}ms` }}
+        >
+          <JagBolt />
+        </span>
+      ))}
+      {lead && (
+        <span
+          className="fx-sig-flash absolute inset-[26%] block rounded-full"
+          style={{
+            background: "radial-gradient(circle, rgba(255,246,200,0.9), rgba(255,200,90,0.4) 55%, transparent 72%)",
+            animationDelay: `${delayMs + 200}ms`,
+          }}
+        />
+      )}
+    </span>
+  );
+}
+
+/** Mass / Deep / Eternal Freeze: a flash-frost sweep glazes the square, a rime
+ * pop at its heart. */
+function FrostSweepBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span
+        className="fx-sig-frost absolute inset-[6%] block rounded-[1px]"
+        style={{
+          background: "linear-gradient(90deg, rgba(210,240,255,0.7), rgba(170,215,245,0.4))",
+          animationDelay: `${delayMs}ms`,
+        }}
+      />
+      <span
+        className="fx-sig-flash absolute inset-[26%] block rounded-full"
+        style={{
+          background: "radial-gradient(circle, rgba(230,248,255,0.85), transparent 70%)",
+          animationDelay: `${delayMs}ms`,
+        }}
+      />
+    </span>
+  );
+}
+
+/** Medusa / Basilisk: a grey stone wave washes foot-to-head over the piece,
+ * with a green stare glint (lead). */
+function PetrifyBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span
+        className="fx-sig-petrify absolute bottom-[8%] left-[18%] right-[18%] top-[8%] block rounded-[1px]"
+        style={{
+          background: "linear-gradient(0deg, rgba(140,140,146,0.78), rgba(170,170,176,0.32))",
+          animationDelay: `${delayMs}ms`,
+        }}
+      />
+      {lead && (
+        <span
+          className="fx-sig-flash absolute left-[30%] top-[24%] block h-[18%] w-[40%] rounded-full"
+          style={{
+            background: "radial-gradient(circle, rgba(150,220,150,0.85), transparent 70%)",
+            animationDelay: `${delayMs + 90}ms`,
+          }}
+        />
+      )}
+    </span>
+  );
+}
+
+/** Petrified Forest: bark creeps up the piece and a stone leaf drifts off. */
+function PetrifiedForestBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span
+        className="fx-sig-petrify absolute bottom-[6%] left-[22%] right-[22%] top-[10%] block rounded-[1px]"
+        style={{
+          background: "linear-gradient(0deg, rgba(96,72,44,0.82), rgba(130,102,66,0.4))",
+          animationDelay: `${delayMs}ms`,
+        }}
+      />
+      <span
+        className="fx-sig-ash absolute left-[52%] top-[14%] block h-[18%] w-[18%]"
+        style={{ animationDelay: `${delayMs + 120}ms` }}
+      >
+        <svg viewBox="0 0 12 12" className="h-full w-full" aria-hidden="true">
+          <path d="M6 1 C9 3 9 8 6 11 C3 8 3 3 6 1 Z" fill="#8a8a80" stroke="#4a4a44" strokeWidth="0.6" />
+        </svg>
+      </span>
+    </span>
+  );
+}
+
+/** Aegis: a board-wide shield flash rings the piece, a shield glyph settling on
+ * the lead square. */
+function AegisBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span
+        className="fx-sig-ring absolute inset-[12%] block rounded-full"
+        style={{ border: "1.5px solid rgba(123,181,47,0.9)", animationDelay: `${delayMs}ms` }}
+      />
+      <span
+        className="fx-sig-flash absolute inset-[24%] block rounded-full"
+        style={{ background: "radial-gradient(circle, rgba(163,209,96,0.65), transparent 70%)", animationDelay: `${delayMs}ms` }}
+      />
+      {lead && (
+        <span
+          className="fx-sig-crown absolute left-[32%] top-[20%] block h-[54%] w-[36%]"
+          style={{ animationDelay: `${delayMs}ms` }}
+        >
+          <svg viewBox="0 0 24 28" className="h-full w-full" aria-hidden="true">
+            <path
+              d="M12 1 L22 5 V13 C22 20 17.5 25.2 12 27 C6.5 25.2 2 20 2 13 V5 Z"
+              fill="rgba(22,30,22,0.85)"
+              stroke="#7bb52f"
+              strokeWidth="1.6"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </span>
+      )}
+    </span>
+  );
+}
+
+/** Divine Fortress: a cathedral dome descends over the square, a bright apex
+ * glint (lead). */
+function CathedralBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-dome absolute left-[14%] right-[14%] top-[10%] block h-[64%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 40 40" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
+          <path d="M20 3 C31 3 36 14 36 26 V38 H4 V26 C4 14 9 3 20 3 Z" fill="rgba(30,40,55,0.35)" stroke="rgba(200,215,235,0.85)" strokeWidth="1.4" />
+          <path d="M20 3 V38 M12 8 V38 M28 8 V38" stroke="rgba(200,215,235,0.5)" strokeWidth="0.8" fill="none" />
+        </svg>
+      </span>
+      {lead && (
+        <span
+          className="fx-sig-flash absolute left-[42%] top-[4%] block h-[16%] w-[16%] rounded-full"
+          style={{ background: "radial-gradient(circle, rgba(255,244,210,0.95), transparent 70%)", animationDelay: `${delayMs + 220}ms` }}
+        />
+      )}
+    </span>
+  );
+}
+
+/** Immortal King: the king returns wreathed in translucent shades. */
+function ShadesBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-shade absolute left-[24%] top-[14%] block h-[66%] w-[44%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 20 26" className="h-full w-full" aria-hidden="true">
+          <path
+            d="M10 1 L10 5 M8 3 H12 M6.5 22 C4.5 15 7 10 10 10 C13 10 15.5 15 13.5 22 Z"
+            fill="rgba(210,225,255,0.5)"
+            stroke="rgba(180,205,255,0.85)"
+            strokeWidth="1"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </span>
+      {lead && (
+        <span
+          className="fx-sig-ring absolute inset-[16%] block rounded-full"
+          style={{ border: "1px solid rgba(200,220,255,0.85)", animationDelay: `${delayMs + 80}ms` }}
+        />
+      )}
+    </span>
+  );
+}
+
+const WALL_BRICKS = [
+  { left: "12%", bottom: "10%", d: 0 },
+  { left: "40%", bottom: "10%", d: 60 },
+  { left: "66%", bottom: "10%", d: 120 },
+  { left: "26%", bottom: "34%", d: 180 },
+  { left: "54%", bottom: "34%", d: 240 },
+];
+
+/** Rampart / Great Wall: an uncapturable wall builds brick by brick from the
+ * ground up. */
+function WallBuildBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      {WALL_BRICKS.map((b, i) => (
+        <span
+          key={i}
+          className="fx-sig-brick absolute block h-[22%] w-[24%] rounded-[1px]"
+          style={{
+            left: b.left,
+            bottom: b.bottom,
+            background: "rgba(120,86,58,0.9)",
+            border: "1px solid rgba(60,40,24,0.8)",
+            animationDelay: `${delayMs + b.d}ms`,
+          }}
+        />
+      ))}
+    </span>
+  );
+}
+
 /** One square's slice of a signature sequence. `role` is "lead" for the single
  * origin flourish (nova's pop, atomic's central thump, the siege muzzle) and
  * "target" for every cleared enemy square; `delayMs` is the pre-computed
@@ -1342,6 +1920,35 @@ export function SignatureOverlay({
       return <PinBurst delayMs={delayMs} />;
     case "siege":
       return <SiegeBurst lead={lead} delayMs={delayMs} />;
+    // --- Batch 2 (effect-data sourced) ---
+    case "coronation":
+      return <CoronationBurst lead={lead} delayMs={delayMs} />;
+    case "crownrain":
+      return <CrownRainBurst delayMs={delayMs} />;
+    case "colossus":
+      return <ColossusBurst lead={lead} delayMs={delayMs} />;
+    case "snooze":
+      return <SnoozeBurst lead={lead} delayMs={delayMs} />;
+    case "clockcage":
+      return <ClockCageBurst lead={lead} delayMs={delayMs} />;
+    case "clockice":
+      return <ClockIceBurst lead={lead} delayMs={delayMs} />;
+    case "blitz":
+      return <BlitzBurst lead={lead} delayMs={delayMs} />;
+    case "frostsweep":
+      return <FrostSweepBurst delayMs={delayMs} />;
+    case "petrify":
+      return <PetrifyBurst lead={lead} delayMs={delayMs} />;
+    case "petrifiedforest":
+      return <PetrifiedForestBurst delayMs={delayMs} />;
+    case "aegis":
+      return <AegisBurst lead={lead} delayMs={delayMs} />;
+    case "cathedral":
+      return <CathedralBurst lead={lead} delayMs={delayMs} />;
+    case "shades":
+      return <ShadesBurst lead={lead} delayMs={delayMs} />;
+    case "wallbuild":
+      return <WallBuildBurst delayMs={delayMs} />;
     default:
       return null;
   }

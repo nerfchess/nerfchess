@@ -34,6 +34,8 @@ export type MPDraftPlayerState = {
   buffs: (BuffInstance | MPHiddenCard)[];
   draftsTaken: number;
   nextDraftAt: number;
+  // Draft rerolls this seat has left (the own seat drives the reroll button).
+  rerollsLeft?: number;
   offer: BuffOffer | null;
   // The opponent has an unresolved offer whose cards are hidden from you.
   offerPending?: boolean;
@@ -1063,6 +1065,12 @@ export class MPSession {
   // Skip my pending offer, banking +1 tier for the next draft.
   sendDraftBank(): boolean {
     return this.sendFrame("dtBank");
+  }
+
+  // Reroll my pending offer: fresh cards at the same tiers, spending one
+  // reroll. The server owns the roll and answers with a fresh draft-state.
+  sendDraftReroll(): boolean {
+    return this.sendFrame("dtReroll");
   }
 
   // Activate a held buff with its collected targets.

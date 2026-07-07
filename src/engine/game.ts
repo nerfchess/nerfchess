@@ -14,7 +14,7 @@ import {
 } from "./buff";
 import { pawnRankOk } from "./buffs/helpers";
 import { BUFF_BY_ID } from "./buffs/library";
-import { DEFAULT_CADENCE, NERF_MODE_CADENCE, bankOffer, rollOffer, rollSharedTiers } from "./draft";
+import { DEFAULT_CADENCE, NERF_MODE_CADENCE, bankOffer, rerollOffer, rollOffer, rollSharedTiers } from "./draft";
 import { Nerf, NerfState, GameContext, Tier } from "./nerf";
 import { RNG } from "./rng";
 import { BoardState, Color, FILE, Move, PieceType, RANK, SQ, Square } from "./types";
@@ -773,6 +773,14 @@ export function bankDraft(game: NerfGame, color: Color) {
   const bs = game.buffs;
   if (!bs) return;
   bankOffer(bs.players[color]);
+}
+
+/** Reroll the pending offer (spending one reroll): fresh cards at the same
+ * tiers off the deterministic RNG. Returns whether a reroll happened. */
+export function rerollDraft(game: NerfGame, color: Color): boolean {
+  const bs = game.buffs;
+  if (!bs) return false;
+  return rerollOffer(bs, color);
 }
 
 /** Next target request for an activated buff, or null when picks are complete. */

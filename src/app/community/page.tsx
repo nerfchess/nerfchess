@@ -271,7 +271,7 @@ export default function CommunityPage() {
                     <li key={player.name} className="flex items-center justify-between gap-2 text-sm">
                       <Link
                         href={`/u/${encodeURIComponent(player.name)}`}
-                        className="flex min-w-0 items-center gap-2 truncate text-parchment-100 hover:text-gold-leaf transition-colors"
+                        className="flex min-h-[44px] min-w-0 items-center gap-2 truncate sm:min-h-0 text-parchment-100 hover:text-gold-leaf transition-colors"
                       >
                         <PlayerAvatar name={player.name} avatar={player.avatar} size={22} />
                         {player.name}
@@ -337,7 +337,7 @@ function PlayerLine({
   return (
     <Link
       href={`/u/${encodeURIComponent(username)}`}
-      className={`${rowClass} group cursor-pointer px-2 -mx-2 transition hover:bg-white/[0.05]`}
+      className={`${rowClass} group min-h-[44px] cursor-pointer px-2 -mx-2 transition hover:bg-white/[0.05]`}
     >
       {body}
       <ChevronRight

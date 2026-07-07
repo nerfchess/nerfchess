@@ -215,28 +215,6 @@ const MARK_COLORS: Record<RightClickMark, string> = {
   4: "rgb(181,70,65)",
 };
 
-// Plain-language tooltip fragments for the card-fx motifs (the square title
-// pairs them with the exact card name and remaining turns).
-const MOTIF_DESC: Record<MotifMark["motif"], string> = {
-  jail: "is locked down and cannot move",
-  muzzle: "cannot capture",
-  anchor: "has its movement shortened",
-  blindfold: "has its sight restricted",
-  slow: "is slowed",
-  empower: "is empowered",
-  ward: "is warded from harm",
-  rally: "is rallied",
-};
-
-const PIECE_NAME: Record<string, string> = {
-  p: "pawn",
-  n: "knight",
-  b: "bishop",
-  r: "rook",
-  q: "queen",
-  k: "king",
-};
-
 // Empowerment marks paint on the owner's pieces; everything else is a
 // constraint on the cursed side.
 function isEmpowerMotif(motif: MotifMark["motif"]): boolean {
@@ -1422,19 +1400,11 @@ export function Board({
       strikeSquares.has(sq) && "Lightning: this square was just struck.",
       motifShown &&
         motifMark &&
-        `${motifMark.name}: ${
-          motifMark.motif === "rally"
-            ? "this army " + MOTIF_DESC.rally
-            : "this piece " +
-              MOTIF_DESC[motifMark.motif] +
-              (motifMark.motif === "empower" && motifMark.moveAs
-                ? ` and moves like a ${PIECE_NAME[motifMark.moveAs]}`
-                : "")
-        }${
+        `${motifMark.name}: ${motifMark.description}${
           motifMark.turns != null
             ? ` (${motifMark.turns} turn${motifMark.turns === 1 ? "" : "s"} left)`
             : ""
-        }.`,
+        }`,
     ]
       .filter(Boolean)
       .join(" ");

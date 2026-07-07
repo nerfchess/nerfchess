@@ -1,0 +1,112 @@
+// Fantasy set: DRAGONS & BEASTS. Great monsters that either tear a line through
+// the enemy (lineSweep, the same primitive as Cavalry Charge), turn a foe to
+// stone (petrify/walnut), carry your own pieces across the board (relocate), or
+// arrive as reinforcements (placePieces / summonTemp). Nothing here touches a
+// king's move legality in a way that could soft-lock; the petrify helpers never
+// target a king.
+
+import { Buff } from "./shared";
+import {
+  card,
+  lineSweep,
+  petrifyTarget,
+  walnutAll,
+  relocateAnywhere,
+  summonTemp,
+  placePieces,
+  myHalfZone,
+  ORTHO_DIRS,
+  ALL_DIRS,
+} from "./shared";
+
+export const FANTASY_BEASTS: Buff[] = [
+  card(
+    {
+      id: "dragons_breath",
+      name: "Dragon's Breath",
+      description:
+        "One of your rooks draws a deep breath and exhales dragonfire down a rank or file, incinerating every enemy piece in its path and landing at the far end, once.",
+      tier: 7,
+      category: "attack",
+      flavor: "Everything in the corridor turns to ash.",
+    },
+    lineSweep("r", ORTHO_DIRS, null),
+  ),
+  card(
+    {
+      id: "wyverns_dive",
+      name: "Wyvern's Dive",
+      description:
+        "A wyvern folds its wings and dives: one of your knights streaks in a straight line, snatches the first enemy piece it reaches, and lands just beyond, once.",
+      tier: 5,
+      category: "attack",
+      flavor: "The shriek comes a heartbeat before the talons.",
+    },
+    lineSweep("n", ALL_DIRS, 1),
+  ),
+  card(
+    {
+      id: "basilisk_stare",
+      name: "Basilisk's Stare",
+      description:
+        "Meet the basilisk's eyes: one enemy piece you target turns to solid stone and cannot move for 3 of their turns. Kings cannot be targeted.",
+      tier: 4,
+      category: "hex",
+      flavor: "Do not, under any circumstance, look back.",
+      fx: { motif: "jail" },
+    },
+    petrifyTarget(3, "Choose an enemy piece to turn to stone"),
+  ),
+  card(
+    {
+      id: "serpent_brood",
+      name: "Serpent Brood",
+      description:
+        "A brood of stone serpents coils around the enemy clergy: every one of your opponent's bishops turns to a statue for 3 of their turns.",
+      tier: 5,
+      category: "hex",
+      flavor: "Marble scales, and not a single blink.",
+      fx: { motif: "jail", pieces: ["b"] },
+    },
+    walnutAll(["b"], 3),
+  ),
+  card(
+    {
+      id: "griffon_rider",
+      name: "Griffon Rider",
+      description:
+        "A great griffon stoops from the clouds, lifts one of your pieces in its claws, and sets it gently down on any empty square, once.",
+      tier: 5,
+      category: "movement",
+      flavor: "Hold on tight and mind the updraft.",
+    },
+    relocateAnywhere(
+      "Choose the piece the griffon lifts",
+      "Choose the empty square it is carried to",
+    ),
+  ),
+  card(
+    {
+      id: "direwolf_pack",
+      name: "Direwolf Pack",
+      description:
+        "A spectral direwolf answers your howl and hunts at your side as a knight for 5 of your turns, then melts back into the mist.",
+      tier: 5,
+      category: "pieces",
+      flavor: "The pack always returns to the wild.",
+    },
+    summonTemp("n", 5, myHalfZone),
+  ),
+  card(
+    {
+      id: "roost_of_rocs",
+      name: "Roost of Rocs",
+      description:
+        "Two titanic rocs descend from the mountain roost and settle into your ranks as knights: place them on empty squares in your half, once.",
+      tier: 7,
+      category: "pieces",
+      flavor: "Their shadows blot out the board.",
+    },
+    placePieces(["n", "n"], myHalfZone),
+  ),
+];

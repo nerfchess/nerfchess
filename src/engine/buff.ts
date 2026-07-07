@@ -193,6 +193,11 @@ export interface BuffOffer {
   index: number;
   /** This offer rolled a tier higher thanks to a banked skip. */
   banked?: boolean;
+  /** How many times this same offer has been rerolled (fresh cards at the
+   * same tiers). Starts absent; a reroll bumps it. Its only job is to give the
+   * client a value that changes so the deal animation replays even though the
+   * offer index stays put. */
+  rerolled?: number;
 }
 
 export interface PlayerBuffState {
@@ -215,6 +220,16 @@ export interface PlayerBuffState {
   nerfRemoved?: boolean;
   /** Pieces this player has revived, deducted from the revivable pool. */
   revived: Partial<Record<PieceType, number>>;
+  /** Draft rerolls left: each one discards the current offer and rolls a
+   * fresh one at the SAME tiers off the deterministic RNG. Starts at 1; draft
+   * cards grant more. Server-authoritative in online games (the DO owns the
+   * reroll and broadcasts the new offer), so it can never desync. */
+  rerollsLeft: number;
+  /** The resolved pool tier of each card slot in the current offer, kept so a
+   * reroll rolls fresh cards at exactly the same tiers (banked/boosted lifts
+   * were already folded in and their flags consumed at the first roll). Not
+   * sent to clients; rebuilt on replay when the offer is rolled. */
+  offerTiers?: Tier[];
 }
 
 export interface BuffMatchState {
@@ -275,6 +290,7 @@ export function newPlayerBuffState(cadence: number): PlayerBuffState {
     offer: null,
     flags: {},
     revived: {},
+    rerollsLeft: 1,
   };
 }
 

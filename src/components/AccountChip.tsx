@@ -33,6 +33,28 @@ export function AccountChip() {
     );
   }
 
+  // A guest is a throwaway account: it has a name and a live rating but no way
+  // to sign back in, so the chip must never behave like a real account. It
+  // never offers "sign out" (which would silently discard the identity):
+  // instead it marks the name as a guest and leads to registration, which
+  // upgrades this same account and keeps the name and rating.
+  if (user.isGuest) {
+    return (
+      <Link
+        href="/login?upgrade=1"
+        title="Sign in or register to keep this name and rating"
+        className="inline-flex min-h-[40px] max-w-full items-center gap-2 px-2 py-1 pr-3 rounded-full text-sm font-display border border-gold/40 text-parchment hover:bg-gold/10 hover:border-gold/60 hover:text-gold-leaf transition"
+      >
+        <PlayerAvatar name={user.username} avatar={user.avatar} size={22} className="rounded-full" />
+        <span className="max-w-[6.5rem] truncate">{user.username}</span>
+        <span className="shrink-0 border border-white/20 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-parchment-400">
+          guest
+        </span>
+        <span className="shrink-0 text-gold-leaf">Save rating</span>
+      </Link>
+    );
+  }
+
   return (
     <Link
       href={`/u/${user.username}`}

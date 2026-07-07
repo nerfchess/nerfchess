@@ -53,7 +53,7 @@ export function BoardPlayerRow({ board, playerColor, myColor, name, elo, avatar,
                   href={`/u/${encodeURIComponent(name)}`}
                   target="_blank"
                   rel="noopener"
-                  className="hover:text-gold-leaf hover:underline transition-colors"
+                  className="inline-flex min-h-[44px] items-center align-middle sm:min-h-0 hover:text-gold-leaf hover:underline transition-colors"
                 >
                   {name}
                 </a>
