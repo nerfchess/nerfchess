@@ -506,12 +506,14 @@ export const InjuredOverlay = React.memo(function InjuredOverlay() {
 // --- 6. Transform flourish ---------------------------------------------------
 
 const SHARD_VECTORS = [
-  { dx: "260%", dy: "-180%", rot: "140deg", delay: 0 },
-  { dx: "-240%", dy: "-230%", rot: "-160deg", delay: 30 },
-  { dx: "300%", dy: "90%", rot: "200deg", delay: 15 },
-  { dx: "-280%", dy: "150%", rot: "-120deg", delay: 45 },
-  { dx: "60%", dy: "-310%", rot: "90deg", delay: 10 },
-  { dx: "-90%", dy: "280%", rot: "-90deg", delay: 40 },
+  { dx: "360%", dy: "-250%", rot: "220deg", delay: 0 },
+  { dx: "-330%", dy: "-300%", rot: "-260deg", delay: 24 },
+  { dx: "410%", dy: "130%", rot: "300deg", delay: 12 },
+  { dx: "-380%", dy: "210%", rot: "-200deg", delay: 36 },
+  { dx: "90%", dy: "-430%", rot: "150deg", delay: 8 },
+  { dx: "-130%", dy: "390%", rot: "-150deg", delay: 32 },
+  { dx: "300%", dy: "340%", rot: "180deg", delay: 18 },
+  { dx: "-300%", dy: "-360%", rot: "-190deg", delay: 44 },
 ];
 
 /**
@@ -620,13 +622,16 @@ export function SummonPoof() {
 const EMBER_FILL = "#d98a4a";
 const EMBER_EDGE = "#3a2013";
 const DET_VECTORS = [
-  { dx: "300%", dy: "-160%", rot: "150deg", delay: 0 },
-  { dx: "-280%", dy: "-220%", rot: "-140deg", delay: 20 },
-  { dx: "340%", dy: "120%", rot: "190deg", delay: 10 },
-  { dx: "-320%", dy: "180%", rot: "-170deg", delay: 30 },
-  { dx: "90%", dy: "-330%", rot: "80deg", delay: 5 },
-  { dx: "-120%", dy: "300%", rot: "-100deg", delay: 25 },
-  { dx: "220%", dy: "260%", rot: "120deg", delay: 15 },
+  { dx: "420%", dy: "-230%", rot: "230deg", delay: 0 },
+  { dx: "-390%", dy: "-300%", rot: "-220deg", delay: 16 },
+  { dx: "470%", dy: "170%", rot: "280deg", delay: 8 },
+  { dx: "-440%", dy: "250%", rot: "-260deg", delay: 24 },
+  { dx: "120%", dy: "-460%", rot: "140deg", delay: 4 },
+  { dx: "-160%", dy: "420%", rot: "-160deg", delay: 20 },
+  { dx: "310%", dy: "370%", rot: "190deg", delay: 12 },
+  { dx: "-300%", dy: "-380%", rot: "-200deg", delay: 28 },
+  { dx: "-470%", dy: "-40%", rot: "120deg", delay: 6 },
+  { dx: "470%", dy: "-30%", rot: "-120deg", delay: 22 },
 ];
 
 /**
@@ -1118,7 +1123,41 @@ export type SigVisual =
   | "aegis"
   | "cathedral"
   | "shades"
-  | "wallbuild";
+  | "wallbuild"
+  // --- Batch 3 (distinctness split + fantasy coverage) ---
+  // Freeze family (was all "frostsweep"): each ice card its own read.
+  | "snapfrost"
+  | "deepglacier"
+  | "iceshatter"
+  | "chainfreeze"
+  // Petrify / stone family (was all "petrify").
+  | "gorgonstare"
+  | "medusagaze"
+  | "serpentstone"
+  | "wither"
+  | "stonechain"
+  | "greyhex"
+  // Walls / summons / graves.
+  | "greatwall"
+  | "summonrift"
+  | "dragonrise"
+  | "meteor"
+  | "gravehands"
+  | "holylight"
+  | "icewall"
+  | "thornwall"
+  // Empower / regalia grants.
+  | "bladegift"
+  | "wings"
+  | "warhorn"
+  // Fantasy removals (marquee attack cards).
+  | "dragonfire"
+  | "scythe"
+  | "arclight"
+  | "dive"
+  | "smite"
+  // Court decree (skip).
+  | "decree";
 export type SigOrdering = "file" | "sweep" | "octagon" | "line" | "radial";
 export type SigSoundKey =
   | "nova"
@@ -1250,14 +1289,16 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   time_freeze: { ordering: "radial", staggerMs: 0, victims: "all", visual: "clockice", hasLead: true, sound: "clockice", source: "stun" },
   blitzkrieg: { ordering: "radial", staggerMs: 70, victims: "all", visual: "blitz", hasLead: true, sound: "blitz", source: "rally" },
 
-  // --- Batch 2: freeze spectacles (frozen zone) ---
-  mass_freeze: { ordering: "radial", staggerMs: 45, victims: ["p", "n", "b", "r", "q"], visual: "frostsweep", hasLead: false, sound: "massfreeze", source: "frozen" },
-  deep_freeze: { ordering: "radial", staggerMs: 55, victims: ["p", "n", "b", "r", "q"], visual: "frostsweep", hasLead: false, sound: "massfreeze", source: "frozen" },
-  eternal_freeze: { ordering: "radial", staggerMs: 65, victims: ["p", "n", "b", "r", "q"], visual: "frostsweep", hasLead: false, sound: "massfreeze", source: "frozen" },
+  // --- Batch 2: freeze spectacles (frozen zone) --- now each its own read:
+  // a quick spike-frost snap, a slab of deep glacier, an eternal ice shatter.
+  mass_freeze: { ordering: "radial", staggerMs: 45, victims: ["p", "n", "b", "r", "q"], visual: "snapfrost", hasLead: false, sound: "massfreeze", source: "frozen" },
+  deep_freeze: { ordering: "radial", staggerMs: 55, victims: ["p", "n", "b", "r", "q"], visual: "deepglacier", hasLead: true, sound: "massfreeze", source: "frozen" },
+  eternal_freeze: { ordering: "radial", staggerMs: 65, victims: ["p", "n", "b", "r", "q"], visual: "iceshatter", hasLead: true, sound: "massfreeze", source: "frozen" },
 
-  // --- Batch 2: petrify / curse (walnut zone) ---
-  medusas_stare: { ordering: "radial", staggerMs: 0, victims: ["q"], visual: "petrify", hasLead: true, sound: "petrify", source: "walnut" },
-  medusa_stare: { ordering: "radial", staggerMs: 0, victims: "all", visual: "petrify", hasLead: true, sound: "petrify", source: "walnut" },
+  // --- Batch 2: petrify / curse (walnut zone) --- gorgon beam vs snake-hair
+  // wash, so the two Medusa cards no longer read the same.
+  medusas_stare: { ordering: "radial", staggerMs: 0, victims: ["q"], visual: "gorgonstare", hasLead: true, sound: "petrify", source: "walnut" },
+  medusa_stare: { ordering: "radial", staggerMs: 40, victims: "all", visual: "medusagaze", hasLead: true, sound: "petrify", source: "walnut" },
   petrified_forest: { ordering: "sweep", staggerMs: 70, victims: ["n", "b"], visual: "petrifiedforest", hasLead: false, sound: "petrifiedforest", source: "walnut" },
 
   // --- Batch 2: protection ---
@@ -1265,7 +1306,63 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   immortal_king: { ordering: "radial", staggerMs: 0, victims: ["k"], visual: "shades", hasLead: true, sound: "shades", source: "kingSafe" },
   divine_fortress: { ordering: "radial", staggerMs: 40, victims: "all", visual: "cathedral", hasLead: true, sound: "cathedral", source: "shield" },
   rampart: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "wallbuild", hasLead: false, sound: "wall", source: "summon" },
-  great_wall: { ordering: "sweep", staggerMs: 70, victims: "all", visual: "wallbuild", hasLead: false, sound: "wall", source: "blindfold" },
+  great_wall: { ordering: "sweep", staggerMs: 70, victims: "all", visual: "greatwall", hasLead: false, sound: "wall", source: "blindfold" },
+
+  // --- Batch 3: FANTASY set (src/engine/buffs/fantasy/*). Each entry reuses an
+  // existing SigSoundKey and an already-wired source zone; the visual is a new
+  // key matched to the card's actual effect so every one reads distinctly. ---
+
+  // Beasts / attack line sweeps + smites (removal diff, the default source).
+  dragons_breath: { ordering: "line", staggerMs: 80, victims: "all", mover: "r", visual: "dragonfire", hasLead: true, sound: "atomic" },
+  wyverns_dive: { ordering: "line", staggerMs: 90, victims: "all", mover: "n", visual: "dive", hasLead: false, sound: "rampage" },
+  soul_harvest: { ordering: "line", staggerMs: 95, victims: "all", mover: "q", visual: "scythe", hasLead: false, sound: "rampage" },
+  chain_lightning: { ordering: "line", staggerMs: 110, victims: "all", mover: "b", visual: "arclight", hasLead: false, sound: "lightning" },
+  judgment_day: { ordering: "radial", staggerMs: 0, victims: ["n", "b", "r", "q"], visual: "smite", hasLead: true, sound: "lightning" },
+  heavens_wrath: { ordering: "sweep", staggerMs: 150, victims: ["n", "b", "r", "q"], visual: "smite", hasLead: true, sound: "lightning" },
+
+  // Freeze / stasis (frozen zone).
+  staff_of_stasis: { ordering: "radial", staggerMs: 0, victims: "all", visual: "chainfreeze", hasLead: true, sound: "massfreeze", source: "frozen" },
+  evil_eye: { ordering: "radial", staggerMs: 0, victims: "all", visual: "frostsweep", hasLead: false, sound: "massfreeze", source: "frozen" },
+
+  // Petrify / stone (walnut zone).
+  basilisk_stare: { ordering: "radial", staggerMs: 0, victims: "all", visual: "gorgonstare", hasLead: true, sound: "petrify", source: "walnut" },
+  serpent_brood: { ordering: "sweep", staggerMs: 60, victims: ["b"], visual: "serpentstone", hasLead: false, sound: "petrify", source: "walnut" },
+  withering_touch: { ordering: "radial", staggerMs: 0, victims: "all", visual: "wither", hasLead: true, sound: "petrify", source: "walnut" },
+  chains_of_binding: { ordering: "sweep", staggerMs: 70, victims: ["r"], visual: "stonechain", hasLead: false, sound: "petrify", source: "walnut" },
+  hex_of_stone: { ordering: "sweep", staggerMs: 55, victims: ["n", "b"], visual: "greyhex", hasLead: false, sound: "petrify", source: "walnut" },
+
+  // Divine / protection (shield + kingSafe zones).
+  aegis_of_ages: { ordering: "radial", staggerMs: 35, victims: "all", visual: "aegis", hasLead: true, sound: "aegis", source: "shield" },
+  divine_intervention: { ordering: "radial", staggerMs: 0, victims: ["k"], visual: "holylight", hasLead: true, sound: "shades", source: "kingSafe" },
+
+  // Court decree (stun zone).
+  divine_reckoning: { ordering: "radial", staggerMs: 0, victims: "all", visual: "decree", hasLead: true, sound: "snooze", source: "stun" },
+
+  // Regalia / movement grants (empower zone).
+  excalibur: { ordering: "radial", staggerMs: 0, victims: ["b"], visual: "bladegift", hasLead: true, sound: "coronation", source: "empower" },
+  dragon_form: { ordering: "radial", staggerMs: 0, victims: ["r"], visual: "wings", hasLead: true, sound: "colossus", source: "empower" },
+  celestial_ascension: { ordering: "sweep", staggerMs: 80, victims: ["b"], visual: "wings", hasLead: false, sound: "colossus", source: "empower" },
+  god_king: { ordering: "radial", staggerMs: 0, victims: ["k"], visual: "coronation", hasLead: true, sound: "coronation", source: "empower" },
+  banner_of_war: { ordering: "radial", staggerMs: 60, victims: ["n"], visual: "warhorn", hasLead: true, sound: "blitz", source: "empower" },
+
+  // Barred walls (blindfold zone).
+  frost_wall: { ordering: "sweep", staggerMs: 60, victims: "all", visual: "icewall", hasLead: false, sound: "wall", source: "blindfold" },
+  wall_of_thorns: { ordering: "sweep", staggerMs: 60, victims: "all", visual: "thornwall", hasLead: false, sound: "wall", source: "blindfold" },
+
+  // Summons / reinforcements / graves (summon zone).
+  summon_dragon: { ordering: "radial", staggerMs: 0, victims: "all", visual: "dragonrise", hasLead: true, sound: "wall", source: "summon" },
+  starfall: { ordering: "radial", staggerMs: 0, victims: "all", visual: "meteor", hasLead: true, sound: "wall", source: "summon" },
+  army_of_the_dead: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "gravehands", hasLead: false, sound: "wall", source: "summon" },
+  raise_dead: { ordering: "sweep", staggerMs: 90, victims: "all", visual: "gravehands", hasLead: false, sound: "wall", source: "summon" },
+  undying_thrall: { ordering: "radial", staggerMs: 0, victims: "all", visual: "gravehands", hasLead: false, sound: "wall", source: "summon" },
+  hallowed_return: { ordering: "radial", staggerMs: 0, victims: "all", visual: "holylight", hasLead: true, sound: "wall", source: "summon" },
+  imp_familiar: { ordering: "radial", staggerMs: 0, victims: "all", visual: "summonrift", hasLead: false, sound: "wall", source: "summon" },
+  summoning_circle: { ordering: "sweep", staggerMs: 90, victims: "all", visual: "summonrift", hasLead: false, sound: "wall", source: "summon" },
+  horn_of_summoning: { ordering: "sweep", staggerMs: 100, victims: "all", visual: "summonrift", hasLead: false, sound: "wall", source: "summon" },
+  roost_of_rocs: { ordering: "sweep", staggerMs: 100, victims: "all", visual: "summonrift", hasLead: false, sound: "wall", source: "summon" },
+  phantom_guardian: { ordering: "radial", staggerMs: 0, victims: "all", visual: "summonrift", hasLead: false, sound: "wall", source: "summon" },
+  stone_golem: { ordering: "radial", staggerMs: 0, victims: "all", visual: "summonrift", hasLead: false, sound: "wall", source: "summon" },
+  direwolf_pack: { ordering: "radial", staggerMs: 0, victims: "all", visual: "summonrift", hasLead: false, sound: "wall", source: "summon" },
 };
 
 /** A jagged lightning bolt that fills its wrapper (BoltGlyph is fixed-size). */
@@ -1284,16 +1381,20 @@ function JagBolt() {
 }
 
 const STONE_SHARDS = [
-  { left: "30%", top: "26%", w: "16%", c: "#9a9a9f", d: 0 },
-  { left: "54%", top: "30%", w: "13%", c: "#7f7f85", d: 40 },
-  { left: "38%", top: "46%", w: "18%", c: "#8c8c92", d: 70 },
-  { left: "26%", top: "40%", w: "11%", c: "#71717a", d: 30 },
+  { left: "28%", top: "22%", w: "20%", c: "#9a9a9f", d: 0 },
+  { left: "56%", top: "28%", w: "16%", c: "#7f7f85", d: 40 },
+  { left: "36%", top: "48%", w: "22%", c: "#8c8c92", d: 70 },
+  { left: "22%", top: "38%", w: "14%", c: "#71717a", d: 30 },
+  { left: "62%", top: "52%", w: "15%", c: "#86868c", d: 55 },
+  { left: "44%", top: "18%", w: "12%", c: "#6b6b73", d: 22 },
 ];
 
 const PIN_STARS = [
-  { dx: "210%", dy: "-150%", rot: "160deg", delay: 0 },
-  { dx: "-200%", dy: "-120%", rot: "-150deg", delay: 18 },
-  { dx: "180%", dy: "120%", rot: "190deg", delay: 10 },
+  { dx: "300%", dy: "-210%", rot: "230deg", delay: 0 },
+  { dx: "-280%", dy: "-170%", rot: "-220deg", delay: 14 },
+  { dx: "260%", dy: "180%", rot: "270deg", delay: 8 },
+  { dx: "-250%", dy: "210%", rot: "-190deg", delay: 22 },
+  { dx: "20%", dy: "-320%", rot: "120deg", delay: 5 },
 ];
 
 function NovaBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
@@ -1891,6 +1992,741 @@ function WallBuildBurst({ delayMs }: { delayMs: number }) {
   );
 }
 
+// --- 10c. Batch 3 signature visuals (distinctness split + fantasy set) -------
+// Same rules as Batch 1/2: keyed one-shots, transform/opacity only, hidden
+// under reduced motion (added to the effects.css block). These split apart the
+// families that used to share one visual (freeze, petrify, walls) and cover the
+// FANTASY card set, matching each card's real effect. Flat SVG fills and solid
+// discs only: no gradients, no glow halos, bolder MOTION and MORE shapes.
+
+/** A single flat shard (three silhouettes) that fills its wrapper. */
+function SigShard({ fill, stroke, variant }: { fill: string; stroke: string; variant: number }) {
+  return (
+    <svg viewBox="0 0 10 10" className="h-full w-full" aria-hidden="true">
+      <polygon
+        points={variant % 3 === 0 ? "5,0 9,9 1,7" : variant % 3 === 1 ? "1,1 9,3 6,10" : "0,4 8,0 9,9"}
+        fill={fill}
+        stroke={stroke}
+        strokeWidth="0.6"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+type BurstVec = { dx: string; dy: string; rot: string; delay: number };
+
+// A big, wide scatter of shards (freeze shatter, ember blast, meteor debris).
+const BURST_BIG: BurstVec[] = [
+  { dx: "360%", dy: "-250%", rot: "220deg", delay: 0 },
+  { dx: "-340%", dy: "-290%", rot: "-240deg", delay: 16 },
+  { dx: "420%", dy: "150%", rot: "300deg", delay: 8 },
+  { dx: "-400%", dy: "220%", rot: "-200deg", delay: 24 },
+  { dx: "90%", dy: "-440%", rot: "150deg", delay: 4 },
+  { dx: "-130%", dy: "400%", rot: "-150deg", delay: 20 },
+  { dx: "300%", dy: "350%", rot: "180deg", delay: 12 },
+  { dx: "-300%", dy: "-360%", rot: "-190deg", delay: 28 },
+];
+// A tighter spark burst (sparkle rises, small debris).
+const BURST_MED: BurstVec[] = [
+  { dx: "230%", dy: "-260%", rot: "160deg", delay: 0 },
+  { dx: "-210%", dy: "-230%", rot: "-150deg", delay: 14 },
+  { dx: "260%", dy: "-90%", rot: "200deg", delay: 8 },
+  { dx: "-240%", dy: "-120%", rot: "-190deg", delay: 22 },
+  { dx: "40%", dy: "-320%", rot: "120deg", delay: 5 },
+];
+
+/** A burst of flat shards flying out on the shared fx-sig-star keyframes. */
+function ShardBurst({
+  vectors,
+  fill,
+  stroke,
+  delayMs,
+  sizePct = 12,
+}: {
+  vectors: BurstVec[];
+  fill: string;
+  stroke: string;
+  delayMs: number;
+  sizePct?: number;
+}) {
+  return (
+    <>
+      {vectors.map((v, i) => (
+        <span
+          key={i}
+          className="fx-sig-star absolute left-1/2 top-1/2 block"
+          style={
+            {
+              height: `${sizePct}%`,
+              width: `${sizePct}%`,
+              marginLeft: `${-sizePct / 2}%`,
+              marginTop: `${-sizePct / 2}%`,
+              "--dx": v.dx,
+              "--dy": v.dy,
+              "--rot": v.rot,
+              animationDelay: `${delayMs + v.delay}ms`,
+            } as React.CSSProperties
+          }
+        >
+          <SigShard fill={fill} stroke={stroke} variant={i} />
+        </span>
+      ))}
+    </>
+  );
+}
+
+// --- Freeze family (each ice card its own read) ------------------------------
+
+/** Mass Freeze: a quick spike-frost SNAP, shards flick outward, rime flashes. */
+function SnapFrostBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span
+        className="fx-sig-frost absolute inset-[4%] block rounded-[1px]"
+        style={{ background: "rgba(198,234,255,0.5)", border: "1px solid rgba(224,246,255,0.85)", animationDelay: `${delayMs}ms` }}
+      />
+      <ShardBurst vectors={BURST_MED} fill="#e6f6ff" stroke="#7fb8dd" delayMs={delayMs} sizePct={13} />
+      <span
+        className="fx-sig-flash absolute inset-[30%] block rounded-full"
+        style={{ background: "rgba(234,248,255,0.8)", animationDelay: `${delayMs}ms` }}
+      />
+    </span>
+  );
+}
+
+/** Deep Freeze: a heavy glacier slab heaves up and slams over the piece, its
+ * face veined with cracks; a rime crack flash on the lead square. */
+function DeepGlacierBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span
+        className="fx-sig-slab absolute inset-x-[8%] bottom-[6%] top-[8%] block rounded-[1px]"
+        style={{ background: "rgba(176,220,245,0.5)", border: "1.5px solid rgba(224,246,255,0.85)", animationDelay: `${delayMs}ms` }}
+      >
+        <svg viewBox="0 0 32 32" className="h-full w-full" aria-hidden="true">
+          <path
+            d="M8 2 L13 12 L7 18 L14 30 M23 3 L18 11 L25 17 L20 31"
+            fill="none"
+            stroke="rgba(235,250,255,0.7)"
+            strokeWidth="1.2"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </span>
+      {lead && (
+        <span
+          className="fx-sig-flash absolute inset-[24%] block rounded-full"
+          style={{ background: "rgba(224,246,255,0.75)", animationDelay: `${delayMs + 120}ms` }}
+        />
+      )}
+    </span>
+  );
+}
+
+/** Eternal Freeze: an ice block sets, then EXPLODES into a wide shard shatter
+ * with a shockwave ring: the most violent of the three. */
+function IceShatterBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span
+        className="fx-sig-ice absolute inset-[10%] block rounded-[1px]"
+        style={{ background: "rgba(190,230,250,0.42)", border: "1px solid rgba(224,246,255,0.8)", animationDelay: `${delayMs}ms` }}
+      >
+        <svg viewBox="0 0 32 32" className="h-full w-full" aria-hidden="true">
+          <path d="M16 2 L11 14 L18 18 L13 30 M4 12 L14 16 M28 12 L18 16" fill="none" stroke="rgba(235,250,255,0.7)" strokeWidth="1" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <ShardBurst vectors={BURST_BIG} fill="#e6f6ff" stroke="#82bcdf" delayMs={delayMs + 220} sizePct={13} />
+      {lead && (
+        <span
+          className="fx-sig-shock absolute inset-[8%] block rounded-full"
+          style={{ border: "2px solid rgba(210,240,255,0.85)", animationDelay: `${delayMs + 220}ms` }}
+        />
+      )}
+    </span>
+  );
+}
+
+/** Staff of Stasis: iced chain-links drape and freeze solid over the piece. */
+function ChainFreezeBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span
+        className="fx-sig-ice absolute inset-[12%] block rounded-[1px]"
+        style={{ background: "rgba(190,230,250,0.4)", border: "1px solid rgba(224,246,255,0.8)", animationDelay: `${delayMs}ms` }}
+      />
+      <span className="fx-sig-cage absolute inset-[10%] block" style={{ animationDelay: `${delayMs + 60}ms` }}>
+        <svg viewBox="0 0 32 32" className="h-full w-full" aria-hidden="true">
+          <g stroke="#cfe9fa" strokeWidth="2.4" fill="none">
+            <ellipse cx="9" cy="9" rx="3.6" ry="2.4" transform="rotate(45 9 9)" />
+            <ellipse cx="16" cy="16" rx="3.6" ry="2.4" transform="rotate(45 16 16)" />
+            <ellipse cx="23" cy="23" rx="3.6" ry="2.4" transform="rotate(45 23 23)" />
+          </g>
+        </svg>
+      </span>
+      {lead && (
+        <span
+          className="fx-sig-flash absolute inset-[30%] block rounded-full"
+          style={{ background: "rgba(224,246,255,0.72)", animationDelay: `${delayMs}ms` }}
+        />
+      )}
+    </span>
+  );
+}
+
+// --- Petrify / stone family --------------------------------------------------
+
+/** Gorgon Stare (single champion / basilisk): a green petrifying beam bores in
+ * as grey stone climbs the piece; a slit-pupil eye glares on the lead square. */
+function GorgonStareBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span
+        className="fx-sig-petrify absolute inset-x-[16%] bottom-[8%] top-[8%] block rounded-[1px]"
+        style={{ background: "rgba(150,150,156,0.7)", animationDelay: `${delayMs}ms` }}
+      />
+      <span
+        className="fx-sig-shaft absolute left-[40%] top-0 block h-[70%] w-[20%]"
+        style={{ background: "rgba(126,181,154,0.5)", animationDelay: `${delayMs}ms` }}
+      />
+      {lead && (
+        <span className="fx-sig-flash absolute left-[28%] top-[30%] block h-[24%] w-[44%]" style={{ animationDelay: `${delayMs + 80}ms` }}>
+          <svg viewBox="0 0 24 12" className="h-full w-full" aria-hidden="true">
+            <ellipse cx="12" cy="6" rx="11" ry="5" fill="rgba(20,30,24,0.85)" stroke="#8fd694" strokeWidth="1.2" />
+            <ellipse cx="12" cy="6" rx="1.7" ry="4.2" fill="#b6f0b8" />
+          </svg>
+        </span>
+      )}
+    </span>
+  );
+}
+
+/** Medusa's full gaze: grey stone washes up as snake-hair tendrils whip round
+ * a gaze ring; a green glint on the lead square. */
+function MedusaGazeBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span
+        className="fx-sig-petrify absolute inset-x-[18%] bottom-[8%] top-[8%] block rounded-[1px]"
+        style={{ background: "rgba(146,146,152,0.72)", animationDelay: `${delayMs}ms` }}
+      />
+      <span className="fx-sig-gaze absolute inset-[14%] block" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <g stroke="#8fb59a" strokeWidth="1.6" fill="none" strokeLinecap="round">
+            <path d="M20 6 q4 3 2 8 M34 20 q-3 4 -8 2 M20 34 q-4 -3 -2 -8 M6 20 q3 -4 8 -2" />
+            <path d="M30 10 q1 4 -3 6 M30 30 q-4 1 -6 -3 M10 30 q-1 -4 3 -6 M10 10 q4 -1 6 3" />
+          </g>
+          <circle cx="20" cy="20" r="5.5" fill="none" stroke="#b6f0b8" strokeWidth="1.4" />
+        </svg>
+      </span>
+      {lead && (
+        <span
+          className="fx-sig-flash absolute inset-[34%] block rounded-full"
+          style={{ background: "rgba(150,220,150,0.8)", animationDelay: `${delayMs + 90}ms` }}
+        />
+      )}
+    </span>
+  );
+}
+
+/** Serpent Brood: stone-scaled serpents coil round the clergy and set solid. */
+function SerpentStoneBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span
+        className="fx-sig-petrify absolute inset-x-[20%] bottom-[8%] top-[10%] block rounded-[1px]"
+        style={{ background: "rgba(138,138,146,0.72)", animationDelay: `${delayMs}ms` }}
+      />
+      <span className="fx-sig-gaze absolute inset-[16%] block" style={{ animationDelay: `${delayMs + 40}ms` }}>
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <path d="M8 30 C8 20 20 24 20 16 C20 8 30 12 32 8" fill="none" stroke="#a6a6ac" strokeWidth="3" strokeLinecap="round" />
+          <path d="M8 30 C8 20 20 24 20 16 C20 8 30 12 32 8" fill="none" stroke="#6e6e76" strokeWidth="1.2" strokeLinecap="round" />
+          <circle cx="32" cy="8" r="1.1" fill="#3a3a40" />
+        </svg>
+      </span>
+    </span>
+  );
+}
+
+const WITHER_MOTES = [
+  { left: "30%", top: "24%", w: "13%", c: "#5f584e", d: 0 },
+  { left: "52%", top: "30%", w: "11%", c: "#6b6358", d: 40 },
+  { left: "38%", top: "48%", w: "15%", c: "#544e46", d: 70 },
+  { left: "58%", top: "50%", w: "10%", c: "#726a5e", d: 55 },
+];
+
+/** Withering Touch: a grey pall drains up the piece as flesh crumbles to dust. */
+function WitherBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span
+        className="fx-sig-petrify absolute inset-x-[18%] bottom-[8%] top-[8%] block rounded-[1px]"
+        style={{ background: "rgba(108,102,92,0.7)", animationDelay: `${delayMs}ms` }}
+      />
+      {WITHER_MOTES.map((m, i) => (
+        <span
+          key={i}
+          className="fx-sig-crumble absolute block rounded-[1px]"
+          style={{ left: m.left, top: m.top, width: m.w, height: m.w, background: m.c, animationDelay: `${delayMs + m.d}ms` }}
+        />
+      ))}
+      {lead && (
+        <span
+          className="fx-sig-flash absolute inset-[30%] block rounded-full"
+          style={{ background: "rgba(96,110,90,0.7)", animationDelay: `${delayMs + 60}ms` }}
+        />
+      )}
+    </span>
+  );
+}
+
+/** Chains of Binding: spectral chain-bars drop over the towers as they turn to
+ * dead stone. */
+function StoneChainBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span
+        className="fx-sig-petrify absolute inset-x-[18%] bottom-[8%] top-[8%] block rounded-[1px]"
+        style={{ background: "rgba(140,140,146,0.7)", animationDelay: `${delayMs}ms` }}
+      />
+      <span className="fx-sig-cage absolute inset-[12%] block" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 32 32" className="h-full w-full" aria-hidden="true">
+          <g stroke="#141e2b" strokeWidth="3" fill="none">
+            <ellipse cx="11" cy="7" rx="2.4" ry="4" />
+            <ellipse cx="11" cy="16" rx="2.4" ry="4" />
+            <ellipse cx="11" cy="25" rx="2.4" ry="4" />
+            <ellipse cx="21" cy="7" rx="2.4" ry="4" />
+            <ellipse cx="21" cy="16" rx="2.4" ry="4" />
+            <ellipse cx="21" cy="25" rx="2.4" ry="4" />
+          </g>
+          <g stroke="#b9c4d6" strokeWidth="1.2" fill="none">
+            <ellipse cx="11" cy="7" rx="2.4" ry="4" />
+            <ellipse cx="11" cy="16" rx="2.4" ry="4" />
+            <ellipse cx="11" cy="25" rx="2.4" ry="4" />
+            <ellipse cx="21" cy="7" rx="2.4" ry="4" />
+            <ellipse cx="21" cy="16" rx="2.4" ry="4" />
+            <ellipse cx="21" cy="25" rx="2.4" ry="4" />
+          </g>
+        </svg>
+      </span>
+    </span>
+  );
+}
+
+/** Hex of Stone: a creeping grey hex crawls a stone hexagon over the flanks. */
+function GreyHexBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span
+        className="fx-sig-petrify absolute inset-x-[20%] bottom-[8%] top-[10%] block rounded-[1px]"
+        style={{ background: "rgba(134,134,140,0.68)", animationDelay: `${delayMs}ms` }}
+      />
+      <span className="fx-sig-grow absolute inset-[18%] block" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <polygon points="20,4 34,12 34,28 20,36 6,28 6,12" fill="rgba(120,120,128,0.28)" stroke="rgba(168,168,176,0.9)" strokeWidth="1.6" strokeLinejoin="round" />
+          <polygon points="20,12 28,16 28,24 20,28 12,24 12,16" fill="none" stroke="rgba(150,150,158,0.7)" strokeWidth="0.9" strokeLinejoin="round" />
+        </svg>
+      </span>
+    </span>
+  );
+}
+
+// --- Walls / summons / graves ------------------------------------------------
+
+const GREATWALL_MERLONS = [
+  { left: "8%", d: 0 },
+  { left: "30%", d: 70 },
+  { left: "52%", d: 140 },
+  { left: "74%", d: 210 },
+];
+
+/** Great Wall: a battlement course rises across the square and merlons rise on
+ * top of it. */
+function GreatWallBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span
+        className="fx-sig-brick absolute inset-x-[4%] bottom-[22%] block h-[26%] rounded-[1px]"
+        style={{ background: "rgba(120,86,58,0.92)", border: "1px solid rgba(60,40,24,0.85)", animationDelay: `${delayMs}ms` }}
+      />
+      {GREATWALL_MERLONS.map((m, i) => (
+        <span
+          key={i}
+          className="fx-sig-brick absolute bottom-[46%] block h-[16%] w-[16%] rounded-[1px]"
+          style={{ left: m.left, background: "rgba(132,96,64,0.92)", border: "1px solid rgba(60,40,24,0.85)", animationDelay: `${delayMs + m.d}ms` }}
+        />
+      ))}
+    </span>
+  );
+}
+
+/** Generic conjuring: an arcane summoning circle draws and spins as a shaft of
+ * light rises from its centre (imps, guardians, golems, warbands). */
+function SummonRiftBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-swirl absolute inset-[12%] block" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <circle cx="20" cy="20" r="17" fill="none" stroke="#7eb59a" strokeWidth="1.4" />
+          <circle cx="20" cy="20" r="11" fill="none" stroke="#e6bf6a" strokeWidth="1" strokeDasharray="3 3" />
+          <polygon points="20,6 32,27 8,27" fill="none" stroke="#7eb59a" strokeWidth="1" />
+          <polygon points="20,34 8,13 32,13" fill="none" stroke="#7eb59a" strokeWidth="1" />
+        </svg>
+      </span>
+      <span
+        className="fx-sig-rise absolute left-[40%] bottom-[16%] block h-[54%] w-[20%] rounded-[1px]"
+        style={{ background: "rgba(180,224,204,0.5)", animationDelay: `${delayMs + 90}ms` }}
+      />
+    </span>
+  );
+}
+
+/** Wings unfurling from the piece: dragon membrane (dragon tone) or celestial
+ * feathers (feather tone). */
+function WingsBurst({ tone, lead, delayMs }: { tone: "dragon" | "feather"; lead: boolean; delayMs: number }) {
+  const fill = tone === "dragon" ? "rgba(120,86,58,0.85)" : "rgba(206,226,240,0.7)";
+  const stroke = tone === "dragon" ? "#3c2818" : "#8fb7d6";
+  const path =
+    tone === "dragon"
+      ? "M22 20 L4 6 L8 14 L2 13 L9 20 L3 22 L11 24 L7 30 Z"
+      : "M22 20 C12 6 4 8 3 20 C7 16 12 17 15 21 C10 20 7 23 6 28 C11 23 16 22 22 22 Z";
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-wing-l absolute left-[4%] top-[22%] block h-[50%] w-[46%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 24 34" className="h-full w-full" aria-hidden="true">
+          <path d={path} fill={fill} stroke={stroke} strokeWidth="1" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <span className="fx-sig-wing-r absolute right-[4%] top-[22%] block h-[50%] w-[46%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 24 34" className="h-full w-full" aria-hidden="true" style={{ transform: "scaleX(-1)" }}>
+          <path d={path} fill={fill} stroke={stroke} strokeWidth="1" strokeLinejoin="round" />
+        </svg>
+      </span>
+      {lead && (
+        <span
+          className="fx-sig-flash absolute inset-[32%] block rounded-full"
+          style={{ background: tone === "dragon" ? "rgba(230,168,92,0.6)" : "rgba(214,232,246,0.7)", animationDelay: `${delayMs + 140}ms` }}
+        />
+      )}
+    </span>
+  );
+}
+
+/** Summon Dragon: dragon wings sweep open with a burst of scale-shards. */
+function DragonRiseBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <>
+      <WingsBurst tone="dragon" lead={lead} delayMs={delayMs} />
+      <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+        <ShardBurst vectors={BURST_MED} fill="#8a5a38" stroke="#3c2818" delayMs={delayMs + 120} sizePct={11} />
+      </span>
+    </>
+  );
+}
+
+/** Starfall: a meteor streaks in from the corner, cracks down, throws embers. */
+function MeteorBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-streak absolute left-[-6%] top-[-6%] block h-[68%] w-[68%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <path d="M2 2 L26 26" stroke="#e6a85c" strokeWidth="3" strokeLinecap="round" />
+          <path d="M8 4 L26 22" stroke="#ffd95e" strokeWidth="1.4" strokeLinecap="round" />
+          <circle cx="28" cy="28" r="5" fill="#d98a4a" stroke="#7a3a12" strokeWidth="1.2" />
+        </svg>
+      </span>
+      <ShardBurst vectors={BURST_MED} fill="#e6a85c" stroke="#7a3a12" delayMs={delayMs + 260} sizePct={11} />
+      {lead && (
+        <span
+          className="fx-sig-ring absolute inset-[18%] block rounded-full"
+          style={{ border: "1.5px solid rgba(230,168,92,0.9)", animationDelay: `${delayMs + 260}ms` }}
+        />
+      )}
+    </span>
+  );
+}
+
+/** Raise Dead / Army of the Dead: bony hands and grave dirt heave up. */
+function GraveHandsBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-rise absolute left-[22%] bottom-[6%] block h-[56%] w-[56%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <g fill="rgba(206,216,200,0.85)" stroke="#5a6155" strokeWidth="0.8" strokeLinejoin="round">
+            <path d="M10 40 L10 22 L8 22 L8 30 M13 40 L13 18 L11 18 L11 28 M16 40 L16 20 L14 20 L14 30" />
+            <path d="M26 40 L26 20 L24 20 L24 30 M29 40 L29 22 L27 22 L27 30 M32 40 L32 24 L30 24 L30 32" />
+          </g>
+        </svg>
+      </span>
+      <span className="fx-sig-ash absolute inset-x-[24%] bottom-[8%] block h-[16%] rounded-full" style={{ background: "rgba(90,84,72,0.55)", animationDelay: `${delayMs + 100}ms` }} />
+    </span>
+  );
+}
+
+/** Hallowed Return / Divine Intervention: a shaft of holy light and a halo. */
+function HolyLightBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span
+        className="fx-sig-shaft absolute left-[36%] top-0 block h-[82%] w-[28%]"
+        style={{ background: "rgba(255,242,192,0.5)", animationDelay: `${delayMs}ms` }}
+      />
+      {lead && (
+        <span
+          className="fx-sig-ring absolute inset-[20%] block rounded-full"
+          style={{ border: "1.5px solid rgba(255,224,140,0.9)", animationDelay: `${delayMs + 120}ms` }}
+        />
+      )}
+      <ShardBurst vectors={BURST_MED} fill="#fff2c0" stroke="#c9a244" delayMs={delayMs + 120} sizePct={10} />
+    </span>
+  );
+}
+
+const ICEWALL_BLOCKS = [
+  { bottom: "8%", d: 0 },
+  { bottom: "30%", d: 70 },
+  { bottom: "52%", d: 140 },
+  { bottom: "74%", d: 210 },
+];
+
+/** Frost Wall: a column of blue ice blocks erupts up the file. */
+function IceWallBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      {ICEWALL_BLOCKS.map((b, i) => (
+        <span
+          key={i}
+          className="fx-sig-brick absolute inset-x-[24%] block h-[22%] rounded-[1px]"
+          style={{ bottom: b.bottom, background: "rgba(176,220,245,0.5)", border: "1px solid rgba(224,246,255,0.85)", animationDelay: `${delayMs + b.d}ms` }}
+        />
+      ))}
+    </span>
+  );
+}
+
+/** Wall of Thorns: a bramble of barbed thorns bursts up from the ground. */
+function ThornWallBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-rise absolute inset-x-[12%] bottom-[6%] block h-[66%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 40 40" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
+          <g stroke="#4a6b3a" strokeWidth="2.4" fill="none" strokeLinecap="round">
+            <path d="M8 40 L12 6 M20 40 L18 4 M32 40 L28 8" />
+          </g>
+          <g fill="#6b8a4a" stroke="#33481f" strokeWidth="0.6" strokeLinejoin="round">
+            <polygon points="12,10 8,14 14,14" />
+            <polygon points="18,8 14,12 22,12" />
+            <polygon points="28,12 24,16 31,15" />
+            <polygon points="12,20 7,23 14,24" />
+            <polygon points="18,18 22,22 15,23" />
+          </g>
+        </svg>
+      </span>
+    </span>
+  );
+}
+
+// --- Regalia / movement grants -----------------------------------------------
+
+/** Excalibur: a radiant blade descends point-down and plants on the bishop. */
+function BladeGiftBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span
+        className="fx-sig-shaft absolute left-[42%] top-0 block h-[62%] w-[16%]"
+        style={{ background: "rgba(200,224,240,0.5)", animationDelay: `${delayMs}ms` }}
+      />
+      <span className="fx-sig-cage absolute left-[38%] top-[8%] block h-[64%] w-[24%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 12 34" className="h-full w-full" aria-hidden="true">
+          <polygon points="6,0 8,20 6,26 4,20" fill="#e3edf5" stroke="#7a8b98" strokeWidth="0.8" strokeLinejoin="round" />
+          <rect x="1" y="19.5" width="10" height="2.4" rx="0.5" fill="#c79a48" stroke="#7a5b23" strokeWidth="0.6" />
+          <rect x="5" y="22" width="2" height="8" fill="#8a6a3a" />
+          <circle cx="6" cy="31" r="1.6" fill="#c79a48" stroke="#7a5b23" strokeWidth="0.6" />
+        </svg>
+      </span>
+      {lead && (
+        <span
+          className="fx-sig-flash absolute inset-[30%] block rounded-full"
+          style={{ background: "rgba(214,232,246,0.7)", animationDelay: `${delayMs + 160}ms` }}
+        />
+      )}
+    </span>
+  );
+}
+
+const WARHORN_DASHES = [
+  { top: "34%", d: 0 },
+  { top: "50%", d: 70 },
+  { top: "66%", d: 140 },
+];
+
+/** Banner of War: the war banner runs up its pole with speed-dashes trailing. */
+function WarhornBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-crown absolute left-[34%] top-[4%] block h-[68%] w-[40%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 24 32" className="h-full w-full" aria-hidden="true">
+          <path d="M6 32 V2" stroke="#7a5b23" strokeWidth="2.2" strokeLinecap="round" fill="none" />
+          <path d="M6 3 H21 L17 8 L21 13 H6 Z" fill="#e0776b" stroke="#7a2f28" strokeWidth="1" strokeLinejoin="round" />
+        </svg>
+      </span>
+      {WARHORN_DASHES.map((s, i) => (
+        <span
+          key={i}
+          className="fx-sig-afterimage absolute left-[10%] block h-[6%] w-[36%] rounded-[1px]"
+          style={{ top: s.top, background: "rgba(224,119,107,0.8)", animationDelay: `${delayMs + s.d}ms` }}
+        />
+      ))}
+      {lead && (
+        <span
+          className="fx-sig-flash absolute inset-[36%] block rounded-full"
+          style={{ background: "rgba(224,119,107,0.55)", animationDelay: `${delayMs + 120}ms` }}
+        />
+      )}
+    </span>
+  );
+}
+
+// --- Fantasy removals (marquee attack cards) ---------------------------------
+
+/** Dragon's Breath: a corridor of flame. Lead flashes at the rook's mouth; each
+ * victim is a fireball flash, ember shatter, and scorch. */
+function DragonFireBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+        <span
+          className="fx-sig-muzzle absolute left-[8%] top-[34%] block h-[32%] w-[84%] rounded-full"
+          style={{ background: "rgba(255,150,60,0.9)", animationDelay: `${delayMs}ms` }}
+        />
+        <span
+          className="fx-sig-muzzle absolute left-[14%] top-[42%] block h-[16%] w-[70%] rounded-full"
+          style={{ background: "rgba(255,224,150,0.95)", animationDelay: `${delayMs + 30}ms` }}
+        />
+      </span>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span
+        className="fx-sig-flash absolute inset-[14%] block rounded-full"
+        style={{ background: "rgba(255,168,80,0.85)", animationDelay: `${delayMs}ms` }}
+      />
+      <ShardBurst vectors={BURST_BIG} fill="#ffb454" stroke="#7a3a12" delayMs={delayMs} sizePct={12} />
+      <span
+        className="fx-sig-scorch absolute inset-[26%] block rounded-full"
+        style={{ background: "rgba(26,16,8,0.72)", animationDelay: `${delayMs + 180}ms` }}
+      />
+    </span>
+  );
+}
+
+/** Soul Harvest: a great scythe blade sweeps the diagonal; each reaped square
+ * gives up a rising soul wisp. */
+function ScytheBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-arc absolute inset-[2%] block" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <path d="M6 34 C6 14 22 4 36 8 C24 10 14 20 14 34 Z" fill="#c9d2dc" stroke="#5b6672" strokeWidth="1.2" strokeLinejoin="round" />
+          <path d="M12 34 L12 30" stroke="#5b6672" strokeWidth="2.4" strokeLinecap="round" />
+        </svg>
+      </span>
+      <span
+        className="fx-sig-ash absolute left-[40%] top-[22%] block h-[26%] w-[20%] rounded-full"
+        style={{ background: "rgba(168,119,216,0.5)", animationDelay: `${delayMs + 120}ms` }}
+      />
+    </span>
+  );
+}
+
+/** Chain Lightning: a forked bolt leaps down the diagonal in strobed
+ * after-images, throwing sparks at each arc point. */
+function ArcLightBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-afterimage absolute left-[8%] top-[6%] block h-[80%] w-[80%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <polygon points="6,4 18,14 12,16 26,26 20,26 34,38 22,30 27,29 13,19 19,18 6,8" fill="#fff6c8" stroke="#e6b800" strokeWidth="1" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <ShardBurst vectors={BURST_MED} fill="#ffe98a" stroke="#8a6414" delayMs={delayMs + 120} sizePct={10} />
+    </span>
+  );
+}
+
+/** Wyvern's Dive: a talon strike streaks in from above with slash lines. */
+function DiveBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-streak absolute left-[-6%] top-[-8%] block h-[70%] w-[70%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <path d="M2 2 C16 8 24 16 30 30 L26 24 L28 30 L22 27" fill="none" stroke="#5a4636" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <span className="fx-sig-afterimage absolute left-[26%] top-[26%] block h-[46%] w-[46%]" style={{ animationDelay: `${delayMs + 120}ms` }}>
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <g stroke="#e3ecf4" strokeWidth="2" strokeLinecap="round">
+            <path d="M6 12 L30 20 M4 22 L26 32 M14 6 L26 28" />
+          </g>
+        </svg>
+      </span>
+      <ShardBurst vectors={BURST_MED} fill="#c9d2dc" stroke="#5b6672" delayMs={delayMs + 180} sizePct={10} />
+    </span>
+  );
+}
+
+/** Judgment Day / Heaven's Wrath: a pillar of holy light slams a named piece
+ * off the board with a radiant shock and scorch. */
+function SmiteBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span
+        className="fx-sig-shaft absolute left-[34%] top-0 block h-[94%] w-[32%]"
+        style={{ background: "rgba(255,246,200,0.68)", animationDelay: `${delayMs}ms` }}
+      />
+      <span
+        className="fx-sig-ring absolute inset-[22%] block rounded-full"
+        style={{ border: "1.5px solid rgba(255,232,150,0.9)", animationDelay: `${delayMs + 120}ms` }}
+      />
+      <span
+        className="fx-sig-scorch absolute inset-[30%] block rounded-full"
+        style={{ background: "rgba(30,22,10,0.6)", animationDelay: `${delayMs + 180}ms` }}
+      />
+      {lead && (
+        <span
+          className="fx-sig-shock absolute inset-[10%] block rounded-full"
+          style={{ border: "2px solid rgba(255,244,200,0.85)", animationDelay: `${delayMs + 120}ms` }}
+        />
+      )}
+    </span>
+  );
+}
+
+/** Divine Reckoning: a gilded court decree stamps down over the enemy ranks. */
+function DecreeBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span
+        className="fx-sig-snooze absolute left-[18%] top-[22%] block h-[54%] w-[64%] rounded-full"
+        style={{ background: "rgba(40,52,72,0.9)", border: "1.5px solid rgba(226,196,106,0.9)", animationDelay: `${delayMs}ms` }}
+      >
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <path d="M20 8 V32 M12 14 H28 M14 32 H26" stroke="#e6bf6a" strokeWidth="2.2" strokeLinecap="round" fill="none" />
+          <path d="M12 14 L9 22 H15 Z M28 14 L25 22 H31 Z" fill="rgba(226,196,106,0.5)" stroke="#e6bf6a" strokeWidth="1" strokeLinejoin="round" />
+        </svg>
+      </span>
+      {lead && (
+        <span
+          className="fx-sig-ring absolute inset-[14%] block rounded-full"
+          style={{ border: "1.5px solid rgba(226,196,106,0.85)", animationDelay: `${delayMs + 120}ms` }}
+        />
+      )}
+    </span>
+  );
+}
+
 /** One square's slice of a signature sequence. `role` is "lead" for the single
  * origin flourish (nova's pop, atomic's central thump, the siege muzzle) and
  * "target" for every cleared enemy square; `delayMs` is the pre-computed
@@ -1949,6 +2785,61 @@ export function SignatureOverlay({
       return <ShadesBurst lead={lead} delayMs={delayMs} />;
     case "wallbuild":
       return <WallBuildBurst delayMs={delayMs} />;
+    // --- Batch 3 (distinctness split + fantasy set) ---
+    case "snapfrost":
+      return <SnapFrostBurst delayMs={delayMs} />;
+    case "deepglacier":
+      return <DeepGlacierBurst lead={lead} delayMs={delayMs} />;
+    case "iceshatter":
+      return <IceShatterBurst lead={lead} delayMs={delayMs} />;
+    case "chainfreeze":
+      return <ChainFreezeBurst lead={lead} delayMs={delayMs} />;
+    case "gorgonstare":
+      return <GorgonStareBurst lead={lead} delayMs={delayMs} />;
+    case "medusagaze":
+      return <MedusaGazeBurst lead={lead} delayMs={delayMs} />;
+    case "serpentstone":
+      return <SerpentStoneBurst delayMs={delayMs} />;
+    case "wither":
+      return <WitherBurst lead={lead} delayMs={delayMs} />;
+    case "stonechain":
+      return <StoneChainBurst delayMs={delayMs} />;
+    case "greyhex":
+      return <GreyHexBurst delayMs={delayMs} />;
+    case "greatwall":
+      return <GreatWallBurst delayMs={delayMs} />;
+    case "summonrift":
+      return <SummonRiftBurst delayMs={delayMs} />;
+    case "dragonrise":
+      return <DragonRiseBurst lead={lead} delayMs={delayMs} />;
+    case "meteor":
+      return <MeteorBurst lead={lead} delayMs={delayMs} />;
+    case "gravehands":
+      return <GraveHandsBurst delayMs={delayMs} />;
+    case "holylight":
+      return <HolyLightBurst lead={lead} delayMs={delayMs} />;
+    case "icewall":
+      return <IceWallBurst delayMs={delayMs} />;
+    case "thornwall":
+      return <ThornWallBurst delayMs={delayMs} />;
+    case "bladegift":
+      return <BladeGiftBurst lead={lead} delayMs={delayMs} />;
+    case "wings":
+      return <WingsBurst tone="feather" lead={lead} delayMs={delayMs} />;
+    case "warhorn":
+      return <WarhornBurst lead={lead} delayMs={delayMs} />;
+    case "dragonfire":
+      return <DragonFireBurst lead={lead} delayMs={delayMs} />;
+    case "scythe":
+      return <ScytheBurst delayMs={delayMs} />;
+    case "arclight":
+      return <ArcLightBurst delayMs={delayMs} />;
+    case "dive":
+      return <DiveBurst delayMs={delayMs} />;
+    case "smite":
+      return <SmiteBurst lead={lead} delayMs={delayMs} />;
+    case "decree":
+      return <DecreeBurst lead={lead} delayMs={delayMs} />;
     default:
       return null;
   }
