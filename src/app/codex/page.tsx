@@ -186,6 +186,12 @@ export default function CodexPage() {
             : `${totalCount} ${nounPlural} in the library, ordered by the same tiers as the nerfs. Search by name, effect, or category.`}
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-2">
+          <Link
+            href="/guide/how-to-play"
+            className="inline-flex items-center gap-2 rounded-sm btn-leaf px-4 py-2 font-display text-sm"
+          >
+            How to play
+          </Link>
           {LIBRARY_TABS.map((lib) => (
             <button
               key={lib}

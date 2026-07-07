@@ -13,6 +13,7 @@
 
 import {
   ActiveEffect,
+  FreezeSkin,
   Buff,
   BuffApi,
   BuffInstance,
@@ -167,8 +168,9 @@ export function curse(
 // ---------------------------------------------------------------------------
 export function freezeTargetTyped(
   turns: number,
-  types: PieceType[],
+  types: PieceType[] | undefined,
   label: string,
+  skin?: FreezeSkin,
 ): Mech {
   return activated(
     (_inst, api, picks) =>
@@ -179,12 +181,18 @@ export function freezeTargetTyped(
             label,
             squares: mySquares(api.board, api.opp).filter((sq) => {
               const t = api.board.pieces[sq]!.type;
-              return t !== "k" && types.includes(t);
+              return t !== "k" && (!types || types.includes(t));
             }),
           },
     (_inst, api, picks) => {
       if (picks[0]?.square != null) {
-        addEffect(api, { kind: "freeze", sq: picks[0].square, owner: api.opp, turns });
+        addEffect(api, {
+          kind: "freeze",
+          sq: picks[0].square,
+          owner: api.opp,
+          turns,
+          ...(skin ? { skin } : {}),
+        });
       }
     },
   );

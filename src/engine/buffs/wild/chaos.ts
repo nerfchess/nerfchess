@@ -16,7 +16,7 @@
 // keeps a non-empty fallback (via `curse`), and every movement grant only ever
 // widens a move list, so nothing here can soft-lock a turn.
 
-import { Buff, BuffApi, BuffInstance, BuffCategory, CardFx } from "../../buff";
+import { Buff, BuffApi, BuffInstance, BuffCategory, CardFx, FreezeSkin } from "../../buff";
 import { Tier } from "../../nerf";
 import { FILE, Move, PieceType, RANK, Square } from "../../types";
 import {
@@ -147,12 +147,12 @@ function walnutAll(types: PieceType[], turns: number): Mech {
 
 /** Instant: freeze every enemy piece of the given types for `turns` of their
  * turns. Kings are never frozen. */
-function freezeTypedAll(types: PieceType[], turns: number): Mech {
+function freezeTypedAll(types: PieceType[], turns: number, skin?: FreezeSkin): Mech {
   return instant((_inst, api) => {
     for (const sq of mySquares(api.board, api.opp)) {
       const t = api.board.pieces[sq]!.type;
       if (t === "k" || !types.includes(t)) continue;
-      addEffect(api, { kind: "freeze", sq, owner: api.opp, turns });
+      addEffect(api, { kind: "freeze", sq, owner: api.opp, turns, ...(skin ? { skin } : {}) });
     }
   });
 }
@@ -317,7 +317,7 @@ export const WILD_CHAOS: Buff[] = [
       flavor: "The diagonals go nowhere today.",
       fx: { motif: "jail", pieces: ["b"] },
     },
-    freezeTypedAll(["b"], 2),
+    freezeTypedAll(["b"], 2, "tar"),
   ),
   card(
     {

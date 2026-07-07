@@ -42,7 +42,7 @@ export const HEXES_T3: Buff[] = [
     {
       id: "gorgons_glance",
       name: "Gorgon's Glance",
-      description: "Turn one enemy knight or bishop you target into a walnut for 2 of their turns.",
+      description: "Turn one enemy knight or bishop you target into a walnut for 2 of their turns: it can only shuffle one square at a time.",
       flavor: "One look and the minor turns to stone.",
     },
     walnutTarget(2, ["n", "b"]),
@@ -53,7 +53,7 @@ export const HEXES_T3: Buff[] = [
     {
       id: "hobbled_cavalry",
       name: "Hobbled Cavalry",
-      description: "Your opponent's knights turn to walnuts for 2 of their turns.",
+      description: "Your opponent's knights turn to walnuts for 2 of their turns: a walnut can only shuffle one square at a time.",
       flavor: "The horses will not stir.",
       // Board already paints walnuts; fx carried for consistency.
       fx: { motif: "jail", pieces: ["n"] },
@@ -66,7 +66,7 @@ export const HEXES_T3: Buff[] = [
     {
       id: "petrified_towers",
       name: "Petrified Towers",
-      description: "Turn one enemy rook you target into a walnut for 2 of their turns.",
+      description: "Turn one enemy rook you target into a walnut for 2 of their turns: it can only shuffle one square at a time.",
       flavor: "Stone towers do not roll.",
     },
     walnutTarget(2, ["r"]),

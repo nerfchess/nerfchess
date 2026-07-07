@@ -3356,7 +3356,7 @@ const HEXES: Buff[] = [
           // Three ticks: this effect loses one tick to the triggering move
           // itself (timers tick right after onMovePlayed), leaving the
           // promised 2 stuck turns.
-          addEffect(api, { kind: "freeze", sq: move.to, owner: api.opp, turns: 3 });
+          addEffect(api, { kind: "freeze", sq: move.to, owner: api.opp, turns: 3, skin: "glue" });
         }
         tickTurns(inst, move, api.me);
       },
@@ -3375,7 +3375,7 @@ const HEXES: Buff[] = [
   ),
   def(
     // Board already paints walnuts; fx carried for consistency.
-    { id: "walnut_queen", name: "Walnut Queen", description: "Your opponent's queen turns into a walnut for 3 of their turns. A walnut cannot move at all.", tier: 5, category: "hex", fx: { motif: "jail", pieces: ["q"] } },
+    { id: "walnut_queen", name: "Walnut Queen", description: "Your opponent's queen turns into a walnut for 3 of their turns: a walnut is so heavy it can only shuffle one square at a time.", tier: 5, category: "hex", fx: { motif: "jail", pieces: ["q"] } },
     walnutAll(["q"], 3),
   ),
   def(
@@ -3437,7 +3437,7 @@ const HEXES: Buff[] = [
   ),
   def(
     // Board already paints walnuts; fx carried for consistency.
-    { id: "walnut_court", name: "Walnut Court", description: "Every enemy rook turns into a walnut for 2 of their owner's turns.", tier: 7, category: "hex", fx: { motif: "jail", pieces: ["r"] } },
+    { id: "walnut_court", name: "Walnut Court", description: "Every enemy rook turns into a walnut for 2 of their owner's turns: it can only shuffle one square at a time.", tier: 7, category: "hex", fx: { motif: "jail", pieces: ["r"] } },
     walnutAll(["r"], 2),
   ),
   def(
@@ -3533,7 +3533,7 @@ const ITEMS: Buff[] = [
         // Dazed: the piece skips its owner's next turn. Two ticks, because
         // this effect loses one tick to the triggering move itself (timers
         // tick right after onMovePlayed).
-        addEffect(api, { kind: "freeze", sq: slipped ? back! : sq, owner: api.opp, turns: 2 });
+        addEffect(api, { kind: "freeze", sq: slipped ? back! : sq, owner: api.opp, turns: 2, skin: "stun" });
       },
       status: (inst) => {
         const sqs =

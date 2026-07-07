@@ -213,8 +213,15 @@ export type DraftZones = {
   ward: number[];
   barred: number[];
   strike: number[];
-  /** Pieces hexed into walnuts: frozen, but painted with the nut marker. */
+  /** Pieces hexed into walnuts: a heavy nut that can only shuffle one square. */
   walnut: number[];
+  /** Per-frozen-square visual theme (glue, stun, sleep, tar...): the mechanic
+   * is identical, only the paint differs so two "stuck" cards never look the
+   * same. Missing entry = the default "ice" frost. */
+  frozenSkin: Record<number, string>;
+  /** Per-square remaining turns for the effect on it (freeze/walnut/shield/
+   * ward/barred/locked/strike). null = permanent. Powers the hover duration. */
+  turns: Record<number, number | null>;
   /** Pieces shackled by a king-only or no-pawn-advance hex: they cannot move
    * while the hex holds, so they are marked with a chain. */
   locked: number[];
@@ -257,7 +264,7 @@ function immobilizedSquares(game: NerfGame): number[] {
  * frozen pieces, sanctuary squares, barred squares for each side, and the
  * lightning-struck squares' brief flash. */
 export function draftZones(game: NerfGame, myColor: Color): DraftZones {
-  const zones: DraftZones = { frozen: [], shielded: [], ward: [], barred: [], strike: [], walnut: [], locked: [], banana: [] };
+  const zones: DraftZones = { frozen: [], shielded: [], ward: [], barred: [], strike: [], walnut: [], frozenSkin: {}, turns: {}, locked: [], banana: [] };
   if (!game.buffs) return zones;
   zones.frozen.push(...immobilizedSquares(game));
   // Placed traps are stored on their buff instance (not in effects) and are
@@ -290,33 +297,55 @@ export function draftZones(game: NerfGame, myColor: Color): DraftZones {
       }
     }
   }
+  const noteTurns = (sq: number, turns: number | null) => {
+    // Keep the shortest remaining timer if two effects overlap a square.
+    const cur = zones.turns[sq];
+    if (cur === undefined || (turns != null && (cur == null || turns < cur))) zones.turns[sq] = turns;
+  };
   for (const e of game.buffs.effects) {
     if (e.turns != null && e.turns <= 0) continue;
-    if (e.kind === "freeze") zones.frozen.push(e.sq);
-    else if (e.kind === "walnut") zones.walnut.push(e.sq);
-    else if (e.kind === "shield") {
-      if (e.squares) zones.shielded.push(...e.squares);
-      else {
+    if (e.kind === "freeze") {
+      zones.frozen.push(e.sq);
+      zones.frozenSkin[e.sq] = e.skin ?? "ice";
+      noteTurns(e.sq, e.turns);
+    } else if (e.kind === "walnut") {
+      zones.walnut.push(e.sq);
+      noteTurns(e.sq, e.turns);
+    } else if (e.kind === "shield") {
+      if (e.squares) {
+        zones.shielded.push(...e.squares);
+        for (const sq of e.squares) noteTurns(sq, e.turns);
+      } else {
         for (let sq = 0; sq < 64; sq++) {
           const p = game.board.pieces[sq];
-          if (p && p.color === e.owner) zones.shielded.push(sq);
+          if (p && p.color === e.owner) {
+            zones.shielded.push(sq);
+            noteTurns(sq, e.turns);
+          }
         }
       }
     } else if (e.kind === "barred") {
       (e.against === myColor ? zones.barred : zones.ward).push(...e.squares);
+      for (const sq of e.squares) noteTurns(sq, e.turns);
     } else if (e.kind === "strike") {
       zones.strike.push(...e.squares);
     } else if (e.kind === "king_only") {
       // Only the king may move: every other friendly piece is shackled.
       for (let sq = 0; sq < 64; sq++) {
         const p = game.board.pieces[sq];
-        if (p && p.color === e.against && p.type !== "k") zones.locked.push(sq);
+        if (p && p.color === e.against && p.type !== "k") {
+          zones.locked.push(sq);
+          noteTurns(sq, e.turns);
+        }
       }
     } else if (e.kind === "no_pawn_advance") {
       // Pawns can't advance: mark them as shackled.
       for (let sq = 0; sq < 64; sq++) {
         const p = game.board.pieces[sq];
-        if (p && p.color === e.against && p.type === "p") zones.locked.push(sq);
+        if (p && p.color === e.against && p.type === "p") {
+          zones.locked.push(sq);
+          noteTurns(sq, e.turns);
+        }
       }
     }
   }

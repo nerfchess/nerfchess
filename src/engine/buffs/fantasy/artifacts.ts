@@ -72,7 +72,7 @@ export const FANTASY_ARTIFACTS: Buff[] = [
       category: "tempo",
       flavor: "For it, a heartbeat lasts an age.",
     },
-    freezeTarget(3),
+    freezeTarget(3, "bubble"),
   ),
   card(
     {
