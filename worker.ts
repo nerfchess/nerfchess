@@ -626,6 +626,22 @@ export class GameServer extends DurableObject<Env> {
   // per-move replay cost the DO pays for a bot game exists only when someone is
   // looking — dropped when the last spectator leaves or the game ends.
   private externalMatches = new Map<string, StoredMatch>();
+  // Live replay state for a watched arena replica (Tier 2 / M3): the
+  // reconstructed game advanced one frame at a time. Without it, every
+  // move/draft frame re-ran a full gameFromMatch replay from ply 1, making a
+  // spectated N-move bot game O(N^2) engine work on the single DO thread — the
+  // spike that tripped CPU limits and reset the isolate (killing every in-flight
+  // request, /arena/games included). Continuing the same game object is
+  // determinism-safe by construction: identical primitives, RNG state, and
+  // buff-instance identities as a full replay, just not thrown away between
+  // frames. `moves`/`cursor` track how far the game has been advanced; `rebuild`
+  // is the draftRebuild reveal/acquire state this game's buff instances belong
+  // to. Rebuilt from scratch on any inconsistency, so it self-heals like the
+  // full-replay path it replaces. Dropped alongside the replica.
+  private externalReplay = new Map<
+    string,
+    { game: NerfGame; moves: number; cursor: number; rebuild: { revealed: Set<BuffInstance>; acquired: Map<number, BuffInstance[]> } }
+  >();
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
@@ -3528,15 +3544,80 @@ export class GameServer extends DurableObject<Env> {
     if (!snap.startedAt) return;
     const match = this.buildExternalMatch(snap);
     this.externalMatches.set(snap.id, match);
+    // A fresh snapshot replaces the move/action arrays, so any cached replay is
+    // stale — drop it and let the next frame rebuild from this snapshot.
+    this.externalReplay.delete(snap.id);
     for (const [ws, session] of this.sessions) {
       if (session.watching === snap.id && ws.readyState === WebSocket.OPEN) this.sendWstart(ws, match);
     }
   }
 
-  // Advance a watched game's replica by one move and relay it. gameFromMatch
-  // re-derives turn + spectator reveals from the full record (the same replay
-  // the DO does for its own games), so a freshly revealed passive reaches
-  // watchers via dtState. No `end` here — /arena/end sends it with the ratings.
+  // The watched replica's game, advanced to match its current move/action
+  // arrays. Reuses the cached replay and steps it forward by only the new
+  // frames (O(1) per frame in steady state); rebuilds fully from ply 1 on a
+  // cache miss or any inconsistency, so it produces exactly what a full
+  // gameFromMatch replay would. Leaves this.draftRebuild pointed at the cached
+  // reveal/acquire state so draftStateFor/publicDraftActions see the right
+  // spectator reveals for this game's buff instances.
+  private syncExternalGame(match: StoredMatch): NerfGame | null {
+    if (!match.startedAt) return null;
+    const actions = match.draftActions ?? [];
+    let entry = this.externalReplay.get(match.id);
+    // Cache is unusable if absent or somehow ahead of the record (a re-snapshot
+    // rewound the arrays): rebuild from scratch via the shared replay.
+    if (!entry || entry.moves > match.moves.length || entry.cursor > actions.length) {
+      const game = this.gameFromMatch(match); // full replay; sets this.draftRebuild
+      if (!game) {
+        this.externalReplay.delete(match.id);
+        return null;
+      }
+      const rebuild =
+        this.draftRebuild?.matchId === match.id
+          ? { revealed: this.draftRebuild.revealed, acquired: this.draftRebuild.acquired }
+          : { revealed: new Set<BuffInstance>(), acquired: new Map<number, BuffInstance[]>() };
+      // gameFromMatch applied every action with ply <= moves.length.
+      const cursor = actions.reduce((n, a) => (a.ply <= match.moves.length ? n + 1 : n), 0);
+      entry = { game, moves: match.moves.length, cursor, rebuild };
+      this.externalReplay.set(match.id, entry);
+      return entry.game;
+    }
+    // Install the cached reveal state for the incremental step and for the
+    // draftStateFor/publicDraftActions the caller runs right after.
+    this.draftRebuild = { matchId: match.id, revealed: entry.rebuild.revealed, acquired: entry.rebuild.acquired };
+    setDraftPoolOverrides(match.draft ? match.cardOverrides ?? null : null);
+    try {
+      const applyActionsUpTo = (ply: number) => {
+        while (entry!.cursor < actions.length && actions[entry!.cursor].ply <= ply) {
+          this.applyStoredDraftAction(entry!.game, actions[entry!.cursor], entry!.cursor);
+          entry!.cursor += 1;
+        }
+      };
+      for (let i = entry.moves; i < match.moves.length; i++) {
+        applyActionsUpTo(i);
+        const move = moveByUci(entry.game, match.moves[i]);
+        if (!move) {
+          // Desync (a lost or reordered frame): drop the cache and rebuild from
+          // the authoritative arrays, exactly what full replay would do.
+          this.externalReplay.delete(match.id);
+          return this.syncExternalGame(match);
+        }
+        if (match.draft) this.markViaRevealed(entry.game, move);
+        entry.game = playMove(entry.game, move);
+      }
+      applyActionsUpTo(match.moves.length);
+      entry.moves = match.moves.length;
+      if (match.result) entry.game.result = match.result;
+      return entry.game;
+    } finally {
+      setDraftPoolOverrides(null);
+    }
+  }
+
+  // Advance a watched game's replica by one move and relay it. syncExternalGame
+  // advances the cached replay so turn + spectator reveals stay exact (the same
+  // result a full replay gives, without the per-frame O(n) cost), so a freshly
+  // revealed passive reaches watchers via dtState. No `end` here — /arena/end
+  // sends it with the ratings.
   private applyExternalMove(id: string, ply: number, uci: string, clocks: Record<Color, number>) {
     const match = this.externalMatches.get(id);
     if (!match || match.result) return;
@@ -3552,7 +3633,7 @@ export class GameServer extends DurableObject<Env> {
     // board. The rebuild count is unchanged (pre-move instead of post-move).
     let game: NerfGame | null = null;
     try {
-      game = this.gameFromMatch(match);
+      game = this.syncExternalGame(match);
     } catch {}
     if (game && !game.result) {
       const move = moveByUci(game, uci);
@@ -3609,7 +3690,7 @@ export class GameServer extends DurableObject<Env> {
     match.draftActions = [...(match.draftActions ?? []), action];
     let game: NerfGame | null = null;
     try {
-      game = this.gameFromMatch(match);
+      game = this.syncExternalGame(match);
     } catch {}
     if (game) {
       match.turnColor = game.board.turn;
@@ -3680,6 +3761,7 @@ export class GameServer extends DurableObject<Env> {
   private endExternalForWatchers(rec: ArenaEndRecord) {
     const match = this.externalMatches.get(rec.id);
     this.externalMatches.delete(rec.id);
+    this.externalReplay.delete(rec.id);
     if (!match) return; // nobody was watching
     match.moves = [...rec.moves];
     if (rec.draftActions) match.draftActions = [...rec.draftActions];
@@ -4604,7 +4686,10 @@ export class GameServer extends DurableObject<Env> {
   // replica would only let it go stale. A later re-watch rebuilds it from a
   // fresh snapshot.
   private dropExternalIfUnwatched(id: string) {
-    if (this.externalMatches.has(id) && this.watcherCount(id) === 0) this.externalMatches.delete(id);
+    if (this.externalMatches.has(id) && this.watcherCount(id) === 0) {
+      this.externalMatches.delete(id);
+      this.externalReplay.delete(id);
+    }
   }
 
   // One snapshot for the lobby page: who is online right now and which games
