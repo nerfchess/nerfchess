@@ -172,7 +172,7 @@ export const CROSSREF_CARDS: Buff[] = [
     {
       id: "nerf_hammer",
       name: "Nerf Hammer",
-      description: "Bring down the nerf hammer: turn one enemy knight, bishop, or rook you target into a walnut for 2 of their turns.",
+      description: "Bring down the nerf hammer: turn one enemy knight, bishop, or rook you target into a walnut for 2 of their turns. It can only shuffle one square at a time.",
       tier: 6,
       flavor: "The devs have spoken.",
     },

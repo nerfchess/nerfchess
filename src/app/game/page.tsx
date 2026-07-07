@@ -1563,6 +1563,8 @@ function GamePage() {
                           highlightSquares: forcedSquares,
                           bannedSquares: [...(visual?.bannedSquares ?? []), ...zone.barred],
                           frozenSquares: zone.frozen,
+                          frozenSkins: zone.frozenSkin,
+                          effectTurns: zone.turns,
                           shieldedSquares: zone.shielded,
                           wardSquares: zone.ward,
                           strikeSquares: zone.strike,

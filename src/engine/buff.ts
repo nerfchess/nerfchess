@@ -61,8 +61,35 @@ export interface BuffInstance {
 // affected player's own turns and is decremented after each of their moves;
 // `null` means permanent.
 
+/** The visual theme a freeze wears. The MECHANIC is identical for all of them
+ * (the piece cannot move while the timer runs); the skin only changes how the
+ * square paints and what the hover says, so two "stuck" cards never look the
+ * same. "ice" is the default (frost). Add freely: each new skin needs a matching
+ * entry in the board's FREEZE_SKINS table. */
+export type FreezeSkin =
+  | "ice"
+  | "glue"
+  | "stun"
+  | "sleep"
+  | "tar"
+  | "web"
+  | "honey"
+  | "vines"
+  | "chains"
+  | "cement"
+  | "slime"
+  | "quicksand"
+  | "shock"
+  | "charm"
+  | "roots"
+  | "bubble"
+  | "petal"
+  | "rust"
+  | "gum"
+  | "stone";
+
 export type ActiveEffect =
-  | { kind: "freeze"; sq: Square; owner: Color; turns: number }
+  | { kind: "freeze"; sq: Square; owner: Color; turns: number; skin?: FreezeSkin }
   | {
       kind: "shield";
       owner: Color;
@@ -85,9 +112,10 @@ export type ActiveEffect =
    * actual stun is a paired `freeze` on the same square. Kept a separate kind
    * from `strike` so a dropped coconut never renders as a lightning bolt. */
   | { kind: "bonk"; squares: Square[]; owner: Color; turns: number }
-  /** Hexed into a walnut (Walnut Queen and friends): mechanically a freeze
-   * (the piece cannot move at all) with its own board marker so the flavor
-   * lands. Kings are never turned into walnuts. */
+  /** Hexed into a walnut (Walnut Queen and friends): a heavy nut that can only
+   * shuffle ONE square at a time (a king-step), so it is distinct from a freeze
+   * (which cannot move at all) rather than a reskin of it. Paints as a walnut
+   * that sinks into the board. Kings are never turned into walnuts. */
   | { kind: "walnut"; sq: Square; owner: Color; turns: number }
   /** Trade-off timer (Borrowed Time and friends): "do X now, pay Y after N of
    * your turns". Ticks on the owner's completed turns; when it reaches zero the

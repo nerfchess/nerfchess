@@ -54,6 +54,13 @@ interface Visual {
   // Draft-mode zone effects (all public information):
   /** Squares holding a frozen piece (icy tint + snowflake). */
   frozenSquares?: number[];
+  /** Per-frozen-square visual theme (glue, stun, sleep, tar...). The mechanic
+   * is identical; only the paint and hover text change so two "stuck" cards
+   * never look the same. Missing = the default "ice" frost. */
+  frozenSkins?: Record<number, string>;
+  /** Per-square remaining turns for the active effect there (null = permanent).
+   * Shown in the hover so a player can read how long an effect lasts. */
+  effectTurns?: Record<number, number | null>;
   /** Shielded / sanctuary squares — pieces there can't be captured. */
   shieldedSquares?: number[];
   /** Squares your buffs bar the opponent from entering. */
@@ -81,6 +88,71 @@ interface Visual {
    * and empowerment marks on the owner's pieces, one mark per square with
    * the strongest motif already chosen upstream (see fxZones). */
   motifSquares?: MotifMark[];
+}
+
+// The look each freeze skin wears. The MECHANIC is identical for all of them
+// (the piece cannot move while the timer runs); the skin only changes the tint,
+// the little corner marker, and the hover label, so two "stuck" cards never
+// look the same. Add a skin here and in engine/buff.ts FreezeSkin together.
+type FreezeGlyphKind = "frost" | "drip" | "stars" | "zzz" | "web" | "chain" | "cracks";
+const FREEZE_SKINS: Record<string, { tint: string; glyph: FreezeGlyphKind; label: string }> = {
+  ice: { tint: "bg-cyan-300/25", glyph: "frost", label: "Frozen: iced in place" },
+  glue: { tint: "bg-amber-300/30", glyph: "drip", label: "Glued down: stuck fast" },
+  gum: { tint: "bg-pink-300/30", glyph: "drip", label: "Gummed up: stuck in bubblegum" },
+  honey: { tint: "bg-yellow-400/25", glyph: "drip", label: "Honeyed: mired in syrup" },
+  tar: { tint: "bg-neutral-700/40", glyph: "drip", label: "Tarred: sunk in pitch" },
+  slime: { tint: "bg-lime-400/25", glyph: "drip", label: "Slimed: held in ooze" },
+  stun: { tint: "bg-yellow-300/30", glyph: "stars", label: "Stunned: seeing stars" },
+  shock: { tint: "bg-sky-400/30", glyph: "stars", label: "Shocked: jolted stiff" },
+  sleep: { tint: "bg-indigo-400/25", glyph: "zzz", label: "Asleep: out cold" },
+  charm: { tint: "bg-pink-400/25", glyph: "zzz", label: "Charmed: lost in a daze" },
+  petal: { tint: "bg-rose-300/25", glyph: "zzz", label: "Becalmed: drifting in petals" },
+  web: { tint: "bg-slate-200/25", glyph: "web", label: "Webbed: bound in silk" },
+  vines: { tint: "bg-green-500/25", glyph: "web", label: "Entangled: gripped by vines" },
+  roots: { tint: "bg-emerald-700/30", glyph: "web", label: "Rooted: pinned by roots" },
+  chains: { tint: "bg-zinc-400/25", glyph: "chain", label: "Chained: shackled in place" },
+  rust: { tint: "bg-orange-800/30", glyph: "chain", label: "Rusted: seized solid" },
+  cement: { tint: "bg-stone-400/35", glyph: "cracks", label: "Set in cement" },
+  stone: { tint: "bg-stone-500/35", glyph: "cracks", label: "Petrified: turned to stone" },
+  quicksand: { tint: "bg-amber-600/30", glyph: "cracks", label: "Sinking: caught in quicksand" },
+  bubble: { tint: "bg-sky-200/30", glyph: "frost", label: "Wrapped: sealed in bubble wrap" },
+};
+function freezeSkinOf(skin: string | undefined) {
+  return FREEZE_SKINS[skin ?? "ice"] ?? FREEZE_SKINS.ice;
+}
+// Stable empty refs so a board with no skin/turn data does not churn renders.
+const EMPTY_SKINS: Record<string, string> = {};
+const EMPTY_TURNS: Record<number, number | null> = {};
+
+/** Tiny corner marker for a frozen square, chosen by the skin's glyph kind.
+ * Strokes only (no gradients/glow/emoji), sized to sit unobtrusively. */
+function FreezeGlyph({ kind }: { kind: FreezeGlyphKind }) {
+  if (kind === "frost") return <SnowflakeGlyph />;
+  const common = { width: 13, height: 13, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round" as const, strokeLinejoin: "round" as const, "aria-hidden": true };
+  if (kind === "drip")
+    return (
+      <svg {...common}><path d="M12 3c3 4 5 7 5 10a5 5 0 0 1-10 0c0-3 2-6 5-10Z" /></svg>
+    );
+  if (kind === "stars")
+    return (
+      <svg {...common}><path d="M12 3l1.3 3.2L16.5 7l-2.6 2 1 3.3L12 10.6 9.1 12.3l1-3.3L7.5 7l3.2-.8L12 3Z" /><circle cx="18" cy="17" r="1" /><circle cx="6" cy="16" r="1" /></svg>
+    );
+  if (kind === "zzz")
+    return (
+      <svg {...common}><path d="M6 8h5l-5 6h5" /><path d="M14 5h4l-4 4h4" /></svg>
+    );
+  if (kind === "web")
+    return (
+      <svg {...common}><path d="M12 3v18M3 12h18M6 6l12 12M18 6L6 18" /></svg>
+    );
+  if (kind === "chain")
+    return (
+      <svg {...common}><rect x="4" y="9" width="7" height="6" rx="3" /><rect x="13" y="9" width="7" height="6" rx="3" /></svg>
+    );
+  // cracks
+  return (
+    <svg {...common}><path d="M12 3l-2 6 3 3-2 4 2 5M12 9l4-2M11 15l-4 2" /></svg>
+  );
 }
 
 export interface QueuedPremove {
@@ -843,6 +915,14 @@ export function Board({
   const wardSquares = useMemo(() => new Set(visual?.wardSquares ?? []), [visual?.wardSquares]);
   const strikeSquares = useMemo(() => new Set(visual?.strikeSquares ?? []), [visual?.strikeSquares]);
   const walnutSquares = useMemo(() => new Set(visual?.walnutSquares ?? []), [visual?.walnutSquares]);
+  const frozenSkins = visual?.frozenSkins ?? EMPTY_SKINS;
+  const effectTurns = visual?.effectTurns ?? EMPTY_TURNS;
+  // Human phrase for "N turns left" appended to a hover; null/absent stays blank.
+  const turnsPhrase = (sq: number): string => {
+    const t = effectTurns[sq];
+    if (t == null) return "";
+    return ` (${t} turn${t === 1 ? "" : "s"} left)`;
+  };
   const lockedSquares = useMemo(() => new Set(visual?.lockedSquares ?? []), [visual?.lockedSquares]);
   const bananaSquares = useMemo(() => new Set(visual?.bananaSquares ?? []), [visual?.bananaSquares]);
   const barredSquares = useMemo(() => new Set(visual?.barredSquares ?? []), [visual?.barredSquares]);
@@ -1382,19 +1462,19 @@ export function Board({
     const motifShown = motifShownFor(sq);
     return [
       walnutSquares.has(sq) &&
-        "Walnut: a squirrel buried this piece under a walnut. It is stuck solid and cannot move until the shell cracks.",
+        `Walnut: a squirrel buried this piece under a heavy nut, so it can only shuffle one square at a time until the shell cracks${turnsPhrase(sq)}.`,
       frozenSquares.has(sq) &&
-        "Frozen: this piece is iced in place and cannot move until it thaws.",
+        `${freezeSkinOf(frozenSkins[sq]).label}: it cannot move while this holds${turnsPhrase(sq)}.`,
       pawnClampSquares.has(sq) &&
-        "Halted: a hex has fenced this pawn's path; it cannot advance for now.",
+        `Halted: a hex has fenced this pawn's path; it cannot advance${turnsPhrase(sq)}.`,
       lockedSquares.has(sq) && !pawnClampSquares.has(sq) &&
-        "Shackled: a hex has chained this piece in place for now.",
+        `Shackled: a hex has chained this piece in place${turnsPhrase(sq)}.`,
       shieldedSquares.has(sq) &&
-        "Sheltered: pieces here, the king aside, cannot be captured.",
+        `Sheltered: pieces here, the king aside, cannot be captured${turnsPhrase(sq)}.`,
       kingSafeSquares.has(sq) &&
         "Royal guard: this king cannot be captured while the ward holds.",
       wardSquares.has(sq) &&
-        "Warded: your opponent cannot move a piece onto this square.",
+        `Warded: your opponent cannot move a piece onto this square${turnsPhrase(sq)}.`,
       bananaSquares.has(sq) &&
         "Banana peel: the next enemy piece to step here slips and skids off course.",
       strikeSquares.has(sq) && "Lightning: this square was just struck.",
@@ -1597,27 +1677,30 @@ export function Board({
                 )}
                 {barredSquares.has(sq) && <BarrierStakes tone="hostile" />}
                 {frozenSquares.has(sq) && (
+                  /* Immobilized: the MECHANIC is always the same (the piece
+                     cannot move), but the skin picks the tint + corner marker so
+                     glue, stun, sleep, web... never look like plain ice. */
                   <>
-                    {/* One-shot icy flash when the freeze lands, then a calm
-                        persistent tint while it holds. */}
-                    <div className="absolute inset-0 bg-cyan-300/25 pointer-events-none sq-freeze" />
+                    <div
+                      className={`absolute inset-0 pointer-events-none sq-freeze ${freezeSkinOf(frozenSkins[sq]).tint}`}
+                    />
                     <span className="absolute top-0.5 right-0.5 z-10 leading-none pointer-events-none drop-shadow sq-freeze-flake">
-                      <SnowflakeGlyph />
+                      <FreezeGlyph kind={freezeSkinOf(frozenSkins[sq]).glyph} />
                     </span>
                   </>
                 )}
                 {walnutSquares.has(sq) && (
-                  /* Hexed into a walnut: a faint amber wash marks the square and
-                     the piece itself renders as the walnut (see WalnutPiece). A
-                     squirrel scurries in once to bury it when the hex first
-                     lands (one-shot on mount; hidden for reduced-motion). */
+                  /* Hexed into a walnut: a heavy nut that can only shuffle one
+                     square. It sinks into the board (sq-walnut-sink) and a big
+                     squirrel scurries in once to bury it (one-shot on mount;
+                     hidden for reduced-motion). */
                   <>
-                    <div className="absolute inset-0 bg-amber-700/15 pointer-events-none sq-walnut" />
+                    <div className="absolute inset-0 bg-amber-700/20 pointer-events-none sq-walnut" />
                     <span
                       aria-hidden
-                      className="absolute -top-1 left-1/2 z-20 -translate-x-1/2 leading-none pointer-events-none walnut-squirrel"
+                      className="absolute -top-2 left-1/2 z-20 -translate-x-1/2 leading-none pointer-events-none walnut-squirrel"
                     >
-                      <SquirrelGlyph />
+                      <SquirrelGlyph size={28} />
                     </span>
                   </>
                 )}

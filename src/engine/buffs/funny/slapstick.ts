@@ -8,7 +8,6 @@ import {
   card,
   freezeTarget,
   freezeTargetTyped,
-  petrifyTarget,
   activated,
   addEffect,
   mySquares,
@@ -80,7 +79,7 @@ export const FUNNY_SLAPSTICK: Buff[] = [
       category: "item",
       flavor: "Read the label next time.",
     },
-    petrifyTarget(2, "Choose an enemy piece to glue down"),
+    freezeTargetTyped(2, undefined, "Choose an enemy piece to glue down", "glue"),
   ),
   card(
     {
@@ -91,7 +90,7 @@ export const FUNNY_SLAPSTICK: Buff[] = [
       category: "item",
       flavor: "It hops on one foot now.",
     },
-    petrifyTarget(3, "Choose an enemy piece to trap"),
+    freezeTargetTyped(3, undefined, "Choose an enemy piece to trap", "chains"),
   ),
   card(
     {
@@ -163,7 +162,7 @@ export const FUNNY_SLAPSTICK: Buff[] = [
         const to = sq + back;
         if (to >= 0 && to < 64 && !api.board.pieces[to]) {
           api.relocate(sq, to);
-          addEffect(api, { kind: "freeze", sq: to, owner: api.opp, turns: 1 });
+          addEffect(api, { kind: "freeze", sq: to, owner: api.opp, turns: 1, skin: "stun" });
         }
       },
     ),
