@@ -2655,18 +2655,29 @@ const TIER7: Buff[] = [
     bindPiece("Choose the titan", bindCandidates(), { shieldTurns: null, gen: amazonGen }),
   ),
   def(
-    { id: "ruin", name: "Ruin", description: "Clear all enemy pawns and one minor piece.", tier: 7, category: "attack" },
+    { id: "ruin", name: "Ruin", description: "Clear all enemy pawns, and destroy one enemy minor piece (or a rook if they have no minor).", tier: 7, category: "attack" },
     activated(
-      (_inst, api, picks) =>
-        picks.length > 0
-          ? null
-          : {
-              kind: "square",
-              label: "Choose the enemy minor piece to destroy",
-              squares: mySquares(api.board, api.opp).filter((sq) =>
-                ["n", "b"].includes(api.board.pieces[sq]!.type),
-              ),
-            },
+      (_inst, api, picks) => {
+        if (picks.length > 0) return null;
+        // Prefer a minor piece to destroy. If the enemy has none, degrade to a
+        // rook so Ruin is never a dead pick. If they have neither (only pawns
+        // and the king remain) the step is finishable, so the pawn sweep still
+        // fires on its own; when a target does exist the pick stays required.
+        const minors = mySquares(api.board, api.opp).filter((sq) =>
+          ["n", "b"].includes(api.board.pieces[sq]!.type),
+        );
+        const squares = minors.length
+          ? minors
+          : mySquares(api.board, api.opp).filter((sq) => api.board.pieces[sq]!.type === "r");
+        return {
+          kind: "square",
+          label: squares.length
+            ? "Choose the enemy piece to destroy"
+            : "Confirm to clear every enemy pawn",
+          squares,
+          ...(squares.length ? {} : { finishable: true }),
+        };
+      },
       (_inst, api, picks) => {
         if (picks[0]?.square != null) api.removePiece(picks[0].square);
         for (const sq of mySquares(api.board, api.opp, "p")) api.removePiece(sq);

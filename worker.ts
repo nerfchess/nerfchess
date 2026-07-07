@@ -310,8 +310,8 @@ const houseSeededKey = "hp:seeded:v1";
 // houseSeedRating (see syncHouseRatings). Bump the suffix whenever the roster's
 // ratings change so existing accounts (seeded with INSERT OR IGNORE at the old
 // numbers) get UPDATEd to the new ones on the next cold start. This bump goes
-// with the ~150 elo lift and the new 1900-2100 band.
-const houseRatingsSyncedKey = "hp:ratings-synced:elo-2100";
+// with the roster-wide raise (1550 floor) and the new 2100-2200 top band.
+const houseRatingsSyncedKey = "hp:ratings-synced:elo-2200";
 const houseNextFillerKey = "hp:nextFillerAt";
 // Slow heartbeat while at least one human socket is connected; with nobody
 // online there is no heartbeat and the DO goes idle between match deadlines.
@@ -396,7 +396,7 @@ type HouseSeekEntry = {
 // (deserializing every finished game's move history), which on a bloated table
 // blew the DO CPU limit before it could cache or GC anything: the crash loop.
 const liveIdsKey = "live:ids";
-const buildVersion = "botfix-elo-1";
+const buildVersion = "clock-tradeoff-cards-1";
 // How long the moderator card-overrides snapshot (the card_overrides table:
 // disabled cards and tier moves) is cached in the DO before re-reading D1.
 // Loaded lazily on match creation and the opening nerf deal, never on a
@@ -418,6 +418,10 @@ type CardOverridesSnapshot = {
 // Lichess-style start-of-game grace: a player's clock only starts charging 10
 // seconds into their first move, so nobody loses time to a slow page load.
 const firstMoveGraceMs = 10 * 1000;
+// Floor a clock-manipulation buff (Time Thief, Deadline, Jet Lag...) can never
+// push a clock below. A card pressures the opponent's time but must never
+// instantly flag them: a drained clock always keeps at least this much.
+const clockFxFloorMs = 3 * 1000;
 // Draft lock-in window: every pick (the opening nerf pick and each buff
 // offer) must resolve within this window while the game clock is paused.
 // The server auto-resolves overdue picks so a stalling player cannot freeze
@@ -1555,6 +1559,10 @@ export class GameServer extends DurableObject<Env> {
       }
       applyActionsUpTo(match.moves.length);
       if (match.result) game.result = match.result;
+      // Clock adjustments requested by the replayed picks were already applied
+      // to the persisted clocks in their own live cycle; drop the regenerated
+      // requests so the live apply path only ever sees the new action's.
+      if (game.buffs) game.buffs.clockFx = undefined;
       return game;
     } finally {
       setDraftPoolOverrides(null);
@@ -1663,6 +1671,56 @@ export class GameServer extends DurableObject<Env> {
     match.completedAt = now;
     await this.endMatch(match, schedule);
     return true;
+  }
+
+  // Drain the buff system's pending clock adjustments (Time Thief, Deadline,
+  // Overtime Whistle...) and apply them authoritatively to the match clocks, so
+  // both clients stay in sync through the normal clock frames. Deltas land on
+  // the BANKED clock values, which leaves runningSince/elapsed untouched, while
+  // every removal is floored against each color's CURRENT clock so a running
+  // clock is respected and no clock is ever pushed below clockFxFloorMs (a card
+  // can squeeze the opponent but never instantly flag them). A steal removes
+  // from the opponent and gives the exact amount removed to the caster. The
+  // request list is transient engine state, so it is cleared here whether or not
+  // the match is timed; in an untimed game the requests simply resolve to no-ops.
+  // Returns true when any clock changed. Only ever called on the live apply path
+  // (never during a rebuild), so historical requests are never re-applied.
+  private applyClockFx(match: StoredMatch, game: NerfGame, now = Date.now()): boolean {
+    const bs = game.buffs;
+    const reqs = bs?.clockFx;
+    if (bs) bs.clockFx = undefined;
+    if (!reqs || reqs.length === 0 || !match.setup.timeSec) return false;
+    const cur = this.currentClocks(match, now);
+    let changed = false;
+    const give = (color: Color, ms: number) => {
+      if (ms <= 0) return;
+      match.clocks[color] += ms;
+      cur[color] += ms;
+      changed = true;
+    };
+    const take = (color: Color, ms: number): number => {
+      const room = Math.max(0, cur[color] - clockFxFloorMs);
+      const taken = Math.min(Math.max(0, ms), room);
+      if (taken <= 0) return 0;
+      match.clocks[color] -= taken;
+      cur[color] -= taken;
+      changed = true;
+      return taken;
+    };
+    for (const req of reqs) {
+      const caster = req.caster;
+      const opp: Color = caster === "w" ? "b" : "w";
+      if (req.addSelfSec) give(caster, Math.round(req.addSelfSec * 1000));
+      if (req.subOppSec) take(opp, Math.round(req.subOppSec * 1000));
+      if (req.stealFractionOfOpp || req.stealFlatSec) {
+        let want = 0;
+        if (req.stealFractionOfOpp) want = Math.max(want, cur[opp] * req.stealFractionOfOpp);
+        if (req.stealFlatSec) want = Math.max(want, req.stealFlatSec * 1000);
+        if (req.stealCapSec != null) want = Math.min(want, req.stealCapSec * 1000);
+        give(caster, take(opp, Math.round(want)));
+      }
+    }
+    return changed;
   }
 
   // Final-board facts for achievement evaluation: material per side (kings
@@ -2072,6 +2130,9 @@ export class GameServer extends DurableObject<Env> {
     match.runningSince = nextGame.result || (offersPending && match.dtDeadline) ? null : now;
     match.result = nextGame.result;
     if (nextGame.result) match.completedAt = now;
+    // A clock-manipulation buff whose onMovePlayed hook fired this move adjusts
+    // the clocks now, so the move frame below carries the updated values.
+    this.applyClockFx(match, nextGame, now);
     // House seats: arm the next pending house action (a reply move, or a
     // freshly rolled offer on the house side). No-op for purely human games.
     this.armBotAction(match, nextGame, now);
@@ -4059,10 +4120,20 @@ export class GameServer extends DurableObject<Env> {
     ) {
       match.runningSince = Date.now();
     }
+    // A clock-manipulation buff picked or used this action (Time Thief, Jet
+    // Lag, Overtime Whistle...) adjusts the authoritative clocks now, after the
+    // turn-handover banking above so the delta lands on up-to-date values.
+    const clockChanged = this.applyClockFx(match, game);
     // House seats: a resolved action can hand the turn (or a fresh offer) to
     // the house side. No-op for purely human games.
     this.armBotAction(match, game, Date.now());
     await this.saveMatch(match);
+    if (clockChanged) {
+      const c = this.currentClocks(match);
+      const clockFrame = { wc: Math.round(c.w), bc: Math.round(c.b) };
+      this.broadcast(match, "n", clockFrame);
+      this.sendWatchers(match, "n", clockFrame);
+    }
     if (resolved) {
       const publicFrame = { color: resolved.color, kind: resolved.kind };
       const ownFrame = resolved.cards ? { ...publicFrame, cards: resolved.cards } : publicFrame;
@@ -4694,17 +4765,35 @@ export class GameServer extends DurableObject<Env> {
           }
         }
       }
+      // Display presence: the ENTIRE house roster shows as online so the lobby
+      // always looks busy (35+ players), even when most personas are neither
+      // seeking nor in a live game. A persona already added above keeps its
+      // richer status ("playing" or "searching"); the rest show plain "online".
+      // Rating and avatar come straight from the persona (houseSeedRating + the
+      // flower avatar), so this adds NO D1 work and spawns no real games/seeks.
+      for (const persona of HOUSE_ROSTER) {
+        if (seen.has(persona.userId)) continue;
+        seen.set(persona.userId, {
+          name: persona.name,
+          rating: houseSeedRating(persona),
+          status: "online",
+          avatar: persona.avatar,
+        });
+      }
     } catch {}
 
-    // Attach ratings for the online list in one query.
+    // Attach ratings for the online list in one query. House ids are excluded:
+    // every persona already carries its rating/avatar from HOUSE_ROSTER above,
+    // so leaving them out keeps this query human-only (no D1 work for the whole
+    // roster now that all 50 appear online) and its IN list bounded.
     const db = await this.db();
-    if (db && seen.size > 0) {
+    const humanIds = [...seen.keys()].filter((id) => !isHouseUserId(id));
+    if (db && humanIds.length > 0) {
       try {
-        const ids = [...seen.keys()];
-        const placeholders = ids.map(() => "?").join(",");
+        const placeholders = humanIds.map(() => "?").join(",");
         const rows = await db
           .prepare(`SELECT id, username, rating, avatar FROM users WHERE id IN (${placeholders})`)
-          .bind(...ids)
+          .bind(...humanIds)
           .all<{ id: string; username: string; rating: number; avatar: string | null }>();
         for (const row of rows.results) {
           const entry = seen.get(row.id);
@@ -4716,9 +4805,13 @@ export class GameServer extends DurableObject<Env> {
       } catch {}
     }
 
+    // Cap high enough to never clip the full house roster (50) plus the humans
+    // online alongside it; the old cap of 50 would have hidden real players
+    // behind the bots. Sorted by rating so the strongest personas and humans
+    // lead the list.
     const players = [...seen.values()]
       .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0))
-      .slice(0, 50);
+      .slice(0, 120);
     const payload = {
       players,
       anonymous,

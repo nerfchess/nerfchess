@@ -9,6 +9,8 @@ import { FUNNY_CURSES } from "./curses";
 import { FUNNY_TRANSFORMS } from "./transforms";
 import { FUNNY_SUMMONS } from "./summons";
 import { FUNNY_CHAOS } from "./chaos";
+import { FUNNY_CLOCK } from "./clock";
+import { FUNNY_TRADEOFFS } from "./tradeoffs";
 
 export const FUNNY_CARDS: Buff[] = [
   ...FUNNY_SLAPSTICK,
@@ -16,4 +18,6 @@ export const FUNNY_CARDS: Buff[] = [
   ...FUNNY_TRANSFORMS,
   ...FUNNY_SUMMONS,
   ...FUNNY_CHAOS,
+  ...FUNNY_CLOCK,
+  ...FUNNY_TRADEOFFS,
 ];

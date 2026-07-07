@@ -225,17 +225,69 @@ export function EnemyBuffModal({
   );
 }
 
-/** Dock section header: a small icon, the section label, and a count chip
- * pushed to the right edge. One shared shape so every section reads alike. */
-function DockSectionHeader({ icon: Icon, label, count }: { icon: LucideIcon; label: string; count: number }) {
+// Each dock section carries its own colour identity so the eye sorts them
+// without reading: your arsenal is mint (yours, positive), the opponent's is
+// coral (theirs), and the "against you" constraints stay in the oxblood alert
+// family. The tint rides a small icon chip and the label; the count chip stays
+// neutral so it never competes for attention. Class strings are literal (not
+// built from variables) so Tailwind's JIT keeps them.
+type SectionAccent = "mine" | "opponent" | "against";
+
+const SECTION_ACCENT: Record<SectionAccent, { chip: string; label: string }> = {
+  mine: { chip: "border-mint/45 bg-mint/10 text-mint-glow", label: "text-mint-glow" },
+  opponent: { chip: "border-coral/45 bg-coral/10 text-coral-glow", label: "text-coral-glow" },
+  against: { chip: "border-oxblood-glow/45 bg-oxblood/15 text-oxblood-glow", label: "text-oxblood-glow" },
+};
+
+/** Dock section header: a small colored icon chip, the section label in that
+ * section's accent, and a neutral count chip pushed to the right edge. One
+ * shared shape so every section reads alike while each keeps its own hue. */
+function DockSectionHeader({
+  icon: Icon,
+  label,
+  count,
+  accent,
+}: {
+  icon: LucideIcon;
+  label: string;
+  count: number;
+  accent?: SectionAccent;
+}) {
+  const a = accent ? SECTION_ACCENT[accent] : null;
   return (
     <div className="flex items-center gap-1.5">
-      <Icon aria-hidden size={12} strokeWidth={2.2} className="shrink-0 text-parchment-400" />
-      <span className="smallcaps min-w-0 truncate text-[10px] text-parchment-400">{label}</span>
+      <span
+        aria-hidden
+        className={
+          "grid h-[18px] w-[18px] shrink-0 place-items-center rounded-[1px] border " +
+          (a ? a.chip : "border-white/15 bg-white/[0.05] text-parchment-400")
+        }
+      >
+        <Icon size={11} strokeWidth={2.4} />
+      </span>
+      <span className={"smallcaps min-w-0 truncate text-[10px] " + (a ? a.label : "text-parchment-400")}>
+        {label}
+      </span>
       <span className="ml-auto shrink-0 rounded-[1px] border border-white/15 bg-white/[0.05] px-1.5 py-px font-mono text-[9px] tabular-nums text-parchment-300">
         {count}
       </span>
     </div>
+  );
+}
+
+/** Unmistakable state stamp for a spent or nullified card, sized to read
+ * without a hover. Nullified wears the oxblood alert colour; a plain "Used"
+ * stays quiet but crisp. Kept at full strength (the row dims its name and
+ * copy instead) so the mark always beats the dimming. */
+function UsedBadge({ nullified }: { nullified: boolean }) {
+  return nullified ? (
+    <span className="smallcaps shrink-0 rounded-[1px] border border-oxblood-glow/50 bg-oxblood/15 px-1 py-px text-[8px] font-semibold text-oxblood-glow">
+      Nullified
+    </span>
+  ) : (
+    <span className="smallcaps shrink-0 rounded-[1px] border border-parchment-500/50 bg-white/[0.06] px-1 py-px text-[8px] font-semibold text-parchment-200">
+      Used
+    </span>
   );
 }
 
@@ -253,6 +305,11 @@ interface AgainstRow {
   name: string;
   detail: string;
   left: string;
+  /** The source card's difficulty tier, when the constraint is a face-up
+   * opponent curse. Board-derived constraints (freeze, barred, halted pawns...)
+   * keep no tier: the serialized effect record does not retain which card and
+   * tier produced them, so those rows stay on the neutral alert accent. */
+  tier?: Tier;
 }
 
 const sqName = (sq: number) => "abcdefgh"[sq % 8] + (Math.floor(sq / 8) + 1);
@@ -322,7 +379,7 @@ function againstYouRows(game: NerfGame, myColor: Color): AgainstRow[] {
     if (!def || def.category !== "hex") return;
     const status = def.status?.(inst);
     if (!status) return;
-    rows.push({ key: `hex-${inst.id}-${i}`, name: def.name, detail: def.description, left: status });
+    rows.push({ key: `hex-${inst.id}-${i}`, name: def.name, detail: def.description, left: status, tier: inst.tier });
   });
   return rows;
 }
@@ -409,17 +466,20 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
         transition={{ duration: 0.25 }}
         className={
           "dock-card relative overflow-hidden rounded-[1px] border px-2 py-1.5 transition-transform duration-100 " +
-          (dead ? "opacity-45 " : "") +
-          (usable
+          (dead
+            ? "border-white/10 bg-white/[0.012] "
+            : usable
             ? "border-verdigris-glow/40 bg-verdigris/[0.06] pl-3 active:translate-y-px "
             : "border-white/10 bg-white/[0.02] ")
         }
       >
         {/* Usable accent: a solid left edge marks the rows you can act on
-            right now (edge, not glow). */}
+            right now (edge, not glow). Spent rows get a muted grey edge in the
+            same spot so "used" reads from the same anchor as "usable". */}
         {usable && (
           <span aria-hidden className="absolute inset-y-1 left-0 w-[3px] bg-verdigris-glow/80" />
         )}
+        {dead && <span aria-hidden className="absolute inset-y-1 left-0 w-[3px] bg-white/15" />}
         <div
           // Second input path (additive): drag the usable chip onto a
           // highlighted board square to pick it. Native HTML5 drag is separate
@@ -439,7 +499,14 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
           }
           className={"flex items-center gap-1.5 " + (usable ? "cursor-grab active:cursor-grabbing" : "")}
         >
-          <span className={`min-w-0 flex-1 truncate font-display text-[12px] font-semibold leading-tight tier-${inst.tier}`}>
+          <span
+            className={
+              "min-w-0 flex-1 truncate font-display text-[12px] font-semibold leading-tight " +
+              (dead
+                ? "text-parchment-400 line-through decoration-1 decoration-parchment-500/60"
+                : `tier-${inst.tier}`)
+            }
+          >
             {def.name}
           </span>
           <TurnCostBadge cost={turnCost(def)} short />
@@ -453,8 +520,7 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
               {status}
             </span>
           )}
-          {inst.nullified && <span className="smallcaps shrink-0 text-[8px] text-oxblood-glow">Nullified</span>}
-          {inst.spent && !inst.nullified && <span className="smallcaps shrink-0 text-[8px] text-parchment-400">Used</span>}
+          {dead && <UsedBadge nullified={!!inst.nullified} />}
           <span
             className={`shrink-0 rounded-[1px] border px-1.5 py-px font-display text-[9px] font-bold tier-bg-${inst.tier} tier-${inst.tier}`}
           >
@@ -478,8 +544,11 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
               </button>
             ))}
         </div>
-        {/* Full description, always readable without hovering. */}
-        <p className="mt-1 text-[10px] leading-snug text-parchment-300">{def.description}</p>
+        {/* Full description, always readable without hovering; spent cards
+            fade their copy so the live rows carry the eye. */}
+        <p className={"mt-1 text-[10px] leading-snug " + (dead ? "text-parchment-500" : "text-parchment-300")}>
+          {def.description}
+        </p>
       </motion.div>
     );
   };
@@ -497,17 +566,23 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.25 }}
         className={
-          "dock-card w-full rounded-[1px] border border-white/10 bg-white/[0.02] px-2 py-1 " +
-          (dead ? "opacity-45" : "")
+          "dock-card w-full rounded-[1px] border border-white/10 px-2 py-1 " +
+          (dead ? "bg-white/[0.012]" : "bg-white/[0.02]")
         }
       >
         <div className="flex items-center gap-1.5">
-          <span className={`min-w-0 flex-1 truncate font-display text-[11px] font-semibold tier-${inst.tier}`}>
+          <span
+            className={
+              "min-w-0 flex-1 truncate font-display text-[11px] font-semibold " +
+              (dead
+                ? "text-parchment-400 line-through decoration-1 decoration-parchment-500/60"
+                : `tier-${inst.tier}`)
+            }
+          >
             {def.name}
           </span>
           <TurnCostBadge cost={turnCost(def)} short />
-          {inst.nullified && <span className="smallcaps shrink-0 text-[8px] text-oxblood-glow">Nullified</span>}
-          {inst.spent && !inst.nullified && <span className="smallcaps shrink-0 text-[8px] text-parchment-400">Used</span>}
+          {dead && <UsedBadge nullified={!!inst.nullified} />}
           <span
             className={`shrink-0 rounded-[1px] border px-1.5 py-px font-display text-[9px] font-bold tier-bg-${inst.tier} tier-${inst.tier}`}
           >
@@ -516,7 +591,9 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
         </div>
         {/* Rule text always visible, matching your own rows: what a revealed
             card does must never require a hover. */}
-        <p className="mt-0.5 text-[10px] leading-snug text-parchment-300">{def.description}</p>
+        <p className={"mt-0.5 text-[10px] leading-snug " + (dead ? "text-parchment-500" : "text-parchment-300")}>
+          {def.description}
+        </p>
       </motion.div>
     );
   };
@@ -585,8 +662,8 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
               key={`pocket-${mine.length}-${theirs.length}`}
               className="dock-pocket-flash flex items-center gap-2 rounded-[1px] border border-white/10 bg-white/[0.03] px-2 py-1.5"
             >
-              <Inbox aria-hidden size={12} strokeWidth={2.2} className="shrink-0 text-parchment-400" />
-              <span className="smallcaps shrink-0 text-[9px] text-parchment-400">Latest</span>
+              <Inbox aria-hidden size={12} strokeWidth={2.2} className="shrink-0 text-sun" />
+              <span className="smallcaps shrink-0 text-[9px] text-sun/90">Latest</span>
             {lastMine && (
               <motion.span
                 key={`m${mine.length}`}
@@ -646,27 +723,56 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
             lands (row keys are stable while an effect holds). */}
         {againstRows.length > 0 && (
           <>
-            <DockSectionHeader icon={ShieldAlert} label="Against you" count={againstRows.length} />
+            <DockSectionHeader icon={ShieldAlert} label="Against you" count={againstRows.length} accent="against" />
             <div className="space-y-1">
-              {againstRows.map((row) => (
-                <motion.div
-                  key={row.key}
-                  initial={reduceMotion ? false : { opacity: 0, x: -14 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.25 }}
-                  className="dock-card dock-pocket-flash rounded-[1px] border border-oxblood-glow/35 bg-oxblood/[0.07] px-2 py-1.5"
-                >
-                  <div className="flex items-center gap-1.5">
-                    <span className="min-w-0 flex-1 truncate font-display text-[12px] font-semibold leading-tight text-oxblood-glow">
-                      {row.name}
-                    </span>
-                    <span className="smallcaps shrink-0 rounded-[1px] border border-oxblood-glow/40 bg-oxblood/15 px-1.5 py-px text-[8px] font-semibold text-oxblood-glow">
-                      {row.left}
-                    </span>
-                  </div>
-                  <p className="mt-0.5 text-[10px] leading-snug text-parchment-300">{row.detail}</p>
-                </motion.div>
-              ))}
+              {againstRows.map((row) => {
+                // A constraint from a face-up opponent curse is painted in that
+                // card's difficulty colour (the same tier scale used everywhere
+                // else) with its tier numeral, so a tier-8 curse reads hot and a
+                // tier-1 mild at a glance. Anonymous board constraints have no
+                // source tier and stay on the neutral oxblood alert accent.
+                const t = row.tier;
+                return (
+                  <motion.div
+                    key={row.key}
+                    initial={reduceMotion ? false : { opacity: 0, x: -14 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.25 }}
+                    className={
+                      "dock-card dock-pocket-flash rounded-[1px] border px-2 py-1.5 " +
+                      (t ? `tier-bg-${t}` : "border-oxblood-glow/35 bg-oxblood/[0.07]")
+                    }
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span
+                        className={
+                          "min-w-0 flex-1 truncate font-display text-[12px] font-semibold leading-tight " +
+                          (t ? `tier-${t}` : "text-oxblood-glow")
+                        }
+                      >
+                        {row.name}
+                      </span>
+                      {t ? (
+                        <span className="smallcaps shrink-0 rounded-[1px] border border-white/15 bg-white/[0.05] px-1.5 py-px text-[8px] font-semibold text-parchment-300">
+                          {row.left}
+                        </span>
+                      ) : (
+                        <span className="smallcaps shrink-0 rounded-[1px] border border-oxblood-glow/40 bg-oxblood/15 px-1.5 py-px text-[8px] font-semibold text-oxblood-glow">
+                          {row.left}
+                        </span>
+                      )}
+                      {t && (
+                        <span
+                          className={`shrink-0 rounded-[1px] border px-1.5 py-px font-display text-[9px] font-bold tier-bg-${t} tier-${t}`}
+                        >
+                          {TIER_ROMAN[t]}
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-0.5 text-[10px] leading-snug text-parchment-300">{row.detail}</p>
+                  </motion.div>
+                );
+              })}
             </div>
           </>
         )}
@@ -675,11 +781,16 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
           icon={Layers}
           label={`Your ${nounPlural}`}
           count={mine.length}
+          accent="mine"
         />
         {/* The next-draft chip above already says when cards arrive; repeating
             it here went stale after banks ("your first draft" forever). */}
         {mine.length === 0 && <p className="text-[11px] text-parchment-400">None yet.</p>}
-        <div className="space-y-1">{mineActive.map(myRow)}</div>
+        {/* A thin mint spine brackets your live arsenal so "these are mine" is
+            unmistakable next to the opponent's coral rows. */}
+        {mineActive.length > 0 && (
+          <div className="space-y-1 border-l border-mint/30 pl-2">{mineActive.map(myRow)}</div>
+        )}
 
         {theirs.length > 0 && (
           <>
@@ -688,6 +799,7 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
                 icon={Swords}
                 label={`Opponent's ${nounPlural}`}
                 count={theirs.length}
+                accent="opponent"
               />
             </div>
             <div className="flex flex-wrap items-start gap-1">{theirsShown.map(oppEntry)}</div>

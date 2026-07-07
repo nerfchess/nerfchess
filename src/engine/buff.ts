@@ -88,7 +88,26 @@ export type ActiveEffect =
   /** Hexed into a walnut (Walnut Queen and friends): mechanically a freeze
    * (the piece cannot move at all) with its own board marker so the flavor
    * lands. Kings are never turned into walnuts. */
-  | { kind: "walnut"; sq: Square; owner: Color; turns: number };
+  | { kind: "walnut"; sq: Square; owner: Color; turns: number }
+  /** Trade-off timer (Borrowed Time and friends): "do X now, pay Y after N of
+   * your turns". Ticks on the owner's completed turns; when it reaches zero the
+   * piece on `sq` is either removed ("remove") or reverted to `into`
+   * ("demote", so a temporary grant can be taken back). `sq` follows the piece
+   * as its owner moves it, and the effect is pruned if the piece is captured
+   * first. Kings are never touched. */
+  | {
+      kind: "timed_loss";
+      owner: Color;
+      sq: Square;
+      turns: number;
+      then: "remove" | "demote";
+      into?: PieceType;
+    }
+  /** Berserker's hangover: the owner may only make one-square (king-step) moves
+   * for `turns` of their own turns. King captures stay exempt (winning is king
+   * capture) and legalMoves relaxes it rather than ever leaving the owner with
+   * zero moves. */
+  | { kind: "short_leash"; owner: Color; turns: number };
 
 /** Which side's completed moves tick this effect's timer down. */
 export function effectTickColor(e: ActiveEffect): Color {
@@ -96,6 +115,8 @@ export function effectTickColor(e: ActiveEffect): Color {
     case "freeze":
     case "walnut":
     case "nerf_suspended":
+    case "timed_loss":
+    case "short_leash":
       return e.owner;
     case "shield":
     case "king_safe":
@@ -107,6 +128,34 @@ export function effectTickColor(e: ActiveEffect): Color {
     case "king_only":
       return e.against;
   }
+}
+
+// --- Clock manipulation ------------------------------------------------------
+// A match-clock adjustment a buff asks the game server to make (Time Thief,
+// Deadline, Overtime Whistle...). All times are in SECONDS. These are pure
+// intent: the authoritative clocks live on the match record in the Durable
+// Object, not on the engine state, so the DO resolves each request against the
+// real clocks and clamps so no clock is ever driven below a small floor (a card
+// pressures the opponent's time but never instantly flags them). The list is
+// transient bookkeeping on BuffMatchState: never persisted, never sent to
+// clients, regenerated and discarded on every rebuild (the DO only drains it on
+// the live apply path). The clock change then reaches both clients through the
+// existing clock frames, so no client change is needed.
+
+export interface ClockRequest {
+  /** The card holder: gains time from `addSelfSec` and from any steal. */
+  caster: Color;
+  /** Seconds added to the caster's own clock. */
+  addSelfSec?: number;
+  /** Seconds removed from the opponent's clock (clamped to the floor). */
+  subOppSec?: number;
+  /** Steal a fraction (0..1) of the opponent's remaining clock... */
+  stealFractionOfOpp?: number;
+  /** ...and/or a flat number of seconds; whichever is larger is taken. */
+  stealFlatSec?: number;
+  /** Cap on the stolen amount, in seconds. Whatever is actually removed from
+   * the opponent (after flooring) is added to the caster. */
+  stealCapSec?: number;
 }
 
 // --- Draft state -------------------------------------------------------------
@@ -208,6 +257,14 @@ export interface BuffMatchState {
    * a permanent desync (dtState never carries the board).
    */
   lastHookMutations?: { color: Color; index: number }[];
+  /**
+   * Transient: match-clock adjustments buffs requested during the current
+   * apply cycle (see ClockRequest). Never persisted and never sent to clients;
+   * the game server drains it on the live apply path, applies the clamped
+   * deltas to the authoritative match clocks, and clears it. A rebuild
+   * regenerates these from the replayed picks and simply discards them.
+   */
+  clockFx?: ClockRequest[];
 }
 
 export function newPlayerBuffState(cadence: number): PlayerBuffState {
@@ -284,6 +341,11 @@ export interface BuffApi {
   restoreCastling: () => void;
   /** Permanently remove my nerf (Nerf Breaker). */
   removeMyNerf: () => void;
+  /** Ask the game server to adjust the match clocks (Time Thief, Deadline,
+   * Overtime Whistle...). Times are in seconds; the caster is filled in as the
+   * card holder, and the DO clamps so no clock drops below a small floor. A
+   * no-op in an untimed game. */
+  adjustClock: (req: Omit<ClockRequest, "caster">) => void;
 }
 
 // Declarative board-visual hint for constraint cards whose mechanics are

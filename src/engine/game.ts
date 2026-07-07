@@ -198,10 +198,35 @@ function pruneOrphanedSquareEffects(game: NerfGame) {
   const bs = game.buffs;
   if (!bs) return;
   bs.effects = bs.effects.filter((e) => {
-    if (e.kind !== "freeze" && e.kind !== "walnut") return true;
+    // A trade-off timer whose piece was captured (or otherwise vanished)
+    // before it expired has nothing left to reclaim: drop it like a freeze.
+    if (e.kind !== "freeze" && e.kind !== "walnut" && e.kind !== "timed_loss") return true;
     const p = game.board.pieces[e.sq];
     return !!p && p.color === e.owner;
   });
+}
+
+/** Fire trade-off timers (timed_loss) that have counted down to zero: the owner
+ * pays the delayed price on their tracked piece before the expired effect is
+ * filtered out. The piece is either removed or reverted to another type (a
+ * temporary grant taken back). Never touches a king, and the loss is uncounted:
+ * the piece is reclaimed by its own owner's bargain, not captured by the
+ * opponent, so revive pools and material counters stay truthful. */
+function fireExpiredTradeOffs(game: NerfGame) {
+  const bs = game.buffs;
+  if (!bs) return;
+  for (const e of bs.effects) {
+    if (e.kind !== "timed_loss" || e.turns == null || e.turns > 0) continue;
+    const p = game.board.pieces[e.sq];
+    if (!p || p.color !== e.owner || p.type === "k") continue;
+    bs.historyDiverged = true;
+    bs.mutations = (bs.mutations ?? 0) + 1;
+    if (e.then === "demote" && e.into && e.into !== "k") {
+      game.board.pieces[e.sq] = { ...p, type: e.into };
+    } else {
+      game.board.pieces[e.sq] = null;
+    }
+  }
 }
 
 /** True while a nerf is suspended (Grace Period) or removed (Nerf Breaker). */
@@ -322,6 +347,9 @@ export function makeBuffApi(game: NerfGame, me: Color): BuffApi {
       slot.state = {};
       bs.players[me].nerfRemoved = true;
     },
+    adjustClock: (req) => {
+      (bs.clockFx ??= []).push({ caster: me, ...req });
+    },
   };
 }
 
@@ -332,6 +360,31 @@ function heldBuffs(game: NerfGame, color: Color): { inst: BuffInstance; def: Buf
     .filter((b) => !b.spent && !b.nullified)
     .map((inst) => ({ inst, def: BUFF_BY_ID[inst.id] }))
     .filter((x): x is { inst: BuffInstance; def: Buff } => !!x.def);
+}
+
+/** A barred effect whose squares form exactly one complete file or rank is a
+ * board-splitting WALL, not just a no-landing zone (Fault Line, Great Wall,
+ * Great Divide, Sundering, and the whole-file / whole-rank hexes all build one
+ * such line per pick). Blocking only the landing square lets a piece jump the
+ * wall: a knight leaps clean over the barred squares, and a slider glides
+ * through the empty ones. Detecting this shape lets legalMoves also reject any
+ * move that CROSSES the line. Returns the wall's axis and line index, or null
+ * for partial barred zones (Bunker, the Kraken 3x3 seal, a multi-rank scorched
+ * band) which only block landing. A thick band (two or more adjacent ranks or
+ * files) needs no crossing rule: a knight cannot leap a two-wide barrier, so
+ * its landing square always falls inside the band and the landing filter alone
+ * stops it. */
+function wallLine(squares: Square[]): { axis: "file" | "rank"; line: number } | null {
+  if (squares.length !== 8) return null;
+  const f0 = FILE(squares[0]);
+  if (squares.every((s) => FILE(s) === f0) && new Set(squares.map((s) => RANK(s))).size === 8) {
+    return { axis: "file", line: f0 };
+  }
+  const r0 = RANK(squares[0]);
+  if (squares.every((s) => RANK(s) === r0) && new Set(squares.map((s) => FILE(s))).size === 8) {
+    return { axis: "rank", line: r0 };
+  }
+  return null;
 }
 
 export function legalMoves(game: NerfGame): Move[] {
@@ -400,16 +453,37 @@ export function legalMoves(game: NerfGame): Move[] {
             });
           }
           break;
-        case "barred":
+        case "barred": {
           // A wall never seals the king away from capture. Winning is king
           // capture (there is no checkmate), so a permanent barred file or rank
           // sitting over the enemy king would otherwise soft-lock the game as
           // unwinnable (the Sundering / Great Divide / Fissure trap). A move
           // that captures the king ignores the wall; every other move into a
           // barred square is still blocked.
-          if (e.against === me)
+          if (e.against === me) {
             all = all.filter((m) => m.captured === "k" || !e.squares.includes(m.to));
+            // Board-split walls (a full barred file or rank) must also block any
+            // move that CROSSES the line, not merely one that lands on it: a
+            // knight leaps over the barred squares and a slider glides through
+            // the empty ones, so the landing filter above lets both jump the
+            // wall. Reject moves whose from/to sit on opposite sides of the
+            // line. King captures stay exempt (same unwinnability guard as
+            // above). Non-soft-lock: never strand the mover. If blocking
+            // crossings would empty the list (every remaining piece is across
+            // the wall from where it must go), relax this wall for the turn so
+            // the mover keeps its moves on its own side.
+            const wall = wallLine(e.squares);
+            if (wall) {
+              const side = (sq: Square) =>
+                (wall.axis === "file" ? FILE(sq) : RANK(sq)) - wall.line;
+              const kept = all.filter(
+                (m) => m.captured === "k" || side(m.from) * side(m.to) >= 0,
+              );
+              if (kept.length > 0) all = kept;
+            }
+          }
           break;
+        }
         case "king_safe":
           if (e.owner === opp) all = all.filter((m) => m.captured !== "k");
           break;
@@ -420,6 +494,20 @@ export function legalMoves(game: NerfGame): Move[] {
           break;
         case "king_only":
           if (e.against === me) all = all.filter((m) => m.piece === "k");
+          break;
+        case "short_leash":
+          // Berserker's hangover: the owner may only step one square (king
+          // distance) with any piece. King captures stay exempt so the game
+          // is always winnable, and if the leash would strand the mover with
+          // no move it is relaxed for the turn rather than soft-locking.
+          if (e.owner === me) {
+            const kept = all.filter(
+              (m) =>
+                m.captured === "k" ||
+                Math.max(Math.abs(FILE(m.to) - FILE(m.from)), Math.abs(RANK(m.to) - RANK(m.from))) <= 1,
+            );
+            if (kept.length > 0) all = kept;
+          }
           break;
       }
     }
@@ -511,11 +599,18 @@ export function playMove(game: NerfGame, move: Move): NerfGame {
         const idx = e.squares.indexOf(move.from);
         if (idx >= 0) e.squares[idx] = move.to;
       }
+      // A trade-off timer tracks its piece the same way, so the delayed loss
+      // still lands on the right square after the piece moves.
+      if (e.kind === "timed_loss" && e.owner === move.color && e.sq === move.from) {
+        e.sq = move.to;
+      }
     }
     // Tick down effects whose timer runs on the mover's turns.
     for (const e of bs.effects) {
       if (e.turns != null && effectTickColor(e) === move.color) e.turns -= 1;
     }
+    // Pay any trade-off timer that just reached zero before it is filtered out.
+    fireExpiredTradeOffs(game);
     bs.effects = bs.effects.filter((e) => e.turns == null || e.turns > 0);
     // A captured or buff-removed piece leaves its freeze/walnut behind; drop
     // those orphaned markers so they never haunt an empty or enemy-held square.
@@ -605,7 +700,9 @@ function resolveNoMoves(game: NerfGame) {
     for (const e of bs.effects) {
       if (e.turns != null && effectTickColor(e) === stuck) e.turns -= 1;
     }
+    fireExpiredTradeOffs(game);
     bs.effects = bs.effects.filter((e) => e.turns == null || e.turns > 0);
+    pruneOrphanedSquareEffects(game);
     game.board.turn = stuck === "w" ? "b" : "w";
     game.board.epTarget = null;
     applyTurnStart(game);
@@ -754,7 +851,9 @@ function passTurnAfterBuff(game: NerfGame, color: Color) {
   for (const e of bs.effects) {
     if (e.turns != null && effectTickColor(e) === color) e.turns -= 1;
   }
+  fireExpiredTradeOffs(game);
   bs.effects = bs.effects.filter((e) => e.turns == null || e.turns > 0);
+  pruneOrphanedSquareEffects(game);
   const opp: Color = color === "w" ? "b" : "w";
   if (bs.extraMoves[color] > 0) {
     bs.extraMoves[color] -= 1;

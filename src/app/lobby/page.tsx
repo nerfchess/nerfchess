@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Eye, Swords, Users } from "lucide-react";
 import { QueueButton } from "@/components/QueueButton";
-import { AccountUser, fetchMe } from "@/lib/authClient";
+import { AccountUser, ensureAccount, fetchMe } from "@/lib/authClient";
 import { readSnapshot, writeSnapshot } from "@/lib/snapshotCache";
 import { MPLobby, MPLobbyChallenge, MPLobbyGame, MPLobbySeek, MPSession, saveOnlineSeat } from "@/lib/multiplayer";
 import { ModeBadge } from "@/components/ModeBadge";
@@ -87,14 +87,24 @@ export default function LobbyPage() {
   // last poll and the click.
   const [joiningPool, setJoiningPool] = useState<string | null>(null);
   const joinSeek = async (seek: MPLobbySeek) => {
-    if (!user) {
-      router.push("/login?next=/lobby");
-      return;
-    }
     if (joiningPool) return;
     // The two modes share pool (time control) names, so key the in-flight
     // marker on both.
     setJoiningPool(`${seek.mode ?? "buff"}:${seek.pool}`);
+    // Signed-out players join as a guest (a throwaway account) so the server
+    // can seat them: quick pairing needs an identity, but there is no login
+    // wall. Ratings only move between registered accounts, so a guest plays
+    // out casual; registering later keeps the name and rating.
+    let me = user;
+    if (!me) {
+      me = await ensureAccount();
+      if (me) setUser(me);
+    }
+    if (!me) {
+      setJoiningPool(null);
+      setLobbyError("Could not start a guest session. Please try again.");
+      return;
+    }
     const session = new MPSession();
     session.persistFriendSession = false;
     // Answer this exact seek: the server pairs only with this person (or house
@@ -321,12 +331,12 @@ export default function LobbyPage() {
                     + {lobby.anonymous} anonymous player{lobby.anonymous === 1 ? "" : "s"}
                   </p>
                 )}
-                {user === null && (
+                {(user === null || user?.isGuest) && (
                   <p className="mt-4 border-t border-white/10 pt-3 text-xs text-parchment-400">
                     <Link href="/login?next=/lobby" className="text-gold-leaf hover:underline">
                       Sign in
                     </Link>{" "}
-                    to appear here and join the queue.
+                    to keep your rating.
                   </p>
                 )}
               </>

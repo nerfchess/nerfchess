@@ -92,6 +92,11 @@ const CLAIM_DELAY_AFTER_GONE_MS = 15_000;
 const DRAFT_REVEAL_EASE_MS = 450;
 const DRAFT_REVEAL_HOLD_MS = 4000;
 
+// The post-draft "waiting for opponent" overlay must never linger: after this
+// long the full-screen version collapses to the non-blocking corner pill so
+// the board stays fully usable while the straggler decides.
+const WAITING_OVERLAY_AUTO_HIDE_MS = 4500;
+
 type PendingPremoveSend = { uci: string; ply: number };
 type PendingLocalMove = { uci: string; ply: number; move: Move };
 
@@ -267,6 +272,32 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   const fireSignature = (id: string) => {
     if (SIGNATURES[id]) setSignatureCard({ id, key: ++sigKeyRef.current });
   };
+  // A held/passive buff whose onMovePlayed hook observably changed the board
+  // (a summon, relocate, transform, revive, pawn-push, or a fresh board
+  // effect) is a play the table must see too, exactly like an instant pick or
+  // an activation. The server reveals every hook-fired card before the move
+  // frame, so the id is known here: surface the opponent's to the play feed
+  // and fire the signature for either side's, so the whole board-changing
+  // archetype is announced, not only captures and hexes.
+  const reportHookMutations = (next: NerfGame) => {
+    const fired = next.buffs?.lastHookMutations;
+    if (!fired) return;
+    let firedSignature = false;
+    for (const { color, index } of fired) {
+      const inst = next.buffs?.players[color].buffs[index];
+      if (!inst?.id) continue;
+      if (color !== myColor) {
+        showOppUsedCard(
+          { id: inst.id, tier: inst.tier },
+          `Opponent's ${draftCardNoun(start.mode)} triggered`,
+        );
+      }
+      if (!firedSignature && SIGNATURES[inst.id]) {
+        fireSignature(inst.id);
+        firedSignature = true;
+      }
+    }
+  };
   // Voluntary rule reveals: mine (button flow) and the opponent's (event).
   const [myRevealState, setMyRevealState] = useState<"hidden" | "confirm" | "revealed">(() =>
     start.revealed?.[start.color] ? "revealed" : "hidden",
@@ -277,6 +308,14 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   // Draft ruleset UI state: hide the overlay after sending a pick/bank (the
   // server's dtResolved confirms it), and surface the opponent's drafting.
   const [draftSubmitted, setDraftSubmitted] = useState(false);
+  // Did I actually pick/bank in the CURRENT shared draft round? Distinguishes
+  // "I already resolved, opponent still choosing" from "my draft was genuinely
+  // skipped", so the waiting overlay never falsely claims a skip. Set on
+  // pick/bank and on my dtResolved; reset when any new round is dealt.
+  const [myDraftResolved, setMyDraftResolved] = useState(false);
+  // The full-screen waiting overlay has out-stayed its welcome: collapse it to
+  // the non-blocking corner pill (see WAITING_OVERLAY_AUTO_HIDE_MS).
+  const [waitTimedOut, setWaitTimedOut] = useState(false);
   const [oppDrafting, setOppDrafting] = useState(() => {
     const opp = start.dtState?.players?.[start.color === "w" ? "b" : "w"];
     return !!opp?.offerPending || !!opp?.offer;
@@ -366,6 +405,21 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     const id = window.setTimeout(() => setDraftGraceOver(true), left + 50);
     return () => window.clearTimeout(id);
   }, [draftDeadline]);
+
+  // Auto-dismiss the full-screen "waiting for opponent" overlay: while it is
+  // up, start a short timer that collapses it to the non-blocking corner pill.
+  // The board is click-through underneath either way, but the dim never
+  // lingers, so a slow or vanished opponent cannot hold the screen hostage.
+  const myOfferOpen = !!game?.buffs?.players[myColor].offer;
+  useEffect(() => {
+    const waiting = isDraft && !game?.result && oppDrafting && (draftSubmitted || !myOfferOpen);
+    if (!waiting) {
+      setWaitTimedOut(false);
+      return;
+    }
+    const id = window.setTimeout(() => setWaitTimedOut(true), WAITING_OVERLAY_AUTO_HIDE_MS);
+    return () => window.clearTimeout(id);
+  }, [isDraft, oppDrafting, draftSubmitted, myOfferOpen, game?.result]);
 
   const boardShellRef = useRef<HTMLDivElement | null>(null);
   const recordedResult = useRef(false);
@@ -540,6 +594,10 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         }
         if (e.setup.revealed?.[myColor]) setMyRevealState("revealed");
         setDraftSubmitted(false);
+        // A replay cannot prove whether I resolved the in-flight round; clear
+        // the mark and lean on the blockedDrafts evidence gate so an uncertain
+        // reconnect shows the neutral "waiting", never a false skip.
+        setMyDraftResolved(false);
         const oppState = e.setup.dtState?.players?.[oppColor];
         setOppDrafting(!!oppState?.offerPending || !!oppState?.offer);
         setDraftDeadline(e.setup.dtDeadline ?? null);
@@ -659,6 +717,10 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           }
         }
         applyGame({ ...next });
+        // A held buff whose onMovePlayed hook mutated the board this move (a
+        // self-buff summon/transform/revive/removal reacting to the move) has
+        // no play frame of its own: surface it from the recorded mutations.
+        reportHookMutations(next);
         setConfirmMovePending(null);
         setWhiteMs(e.move.wc);
         setBlackMs(e.move.bc);
@@ -764,6 +826,10 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         if (e.offer.deadline) setDraftDeadline(e.offer.deadline);
         setOppLockedIn(false);
         setOppBanked(false);
+        // A new shared round is being dealt (both offers arrive together, and
+        // before either side resolves): clear the "resolved this round" mark so
+        // the waiting overlay can tell a real skip from a just-finished pick.
+        setMyDraftResolved(false);
         // New round: any half-collected reveal from the last one is stale.
         if (e.offer.color === myColor) {
           myResolvedRef.current = null;
@@ -803,6 +869,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         recordDraftResolution(e.resolved);
         if (e.resolved.color === myColor) {
           setDraftSubmitted(false);
+          // I picked or banked this round: never let the waiting overlay call
+          // it a skip while the opponent is still deciding.
+          setMyDraftResolved(true);
         } else {
           setOppDrafting(false);
           // "Opponent locked in": shown while my own pick is still open.
@@ -1468,6 +1537,19 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   const bsMine = isDraft ? game.buffs?.players[myColor] : undefined;
   const bsTheirs = isDraft ? game.buffs?.players[oppColor] : undefined;
   const myOffer = bsMine?.offer ?? null;
+  // The post-draft waiting overlay shows whenever the opponent is still
+  // drafting and I have nothing to resolve.
+  const showWaitingOverlay = isDraft && !game.result && oppDrafting && (draftSubmitted || !myOffer);
+  // Only call it a genuine skip with hard evidence: I have no offer, did not
+  // submit, did not resolve this round, AND a draft-block is still pending on
+  // me. A normal pick/bank never satisfies blockedDrafts (I got an offer), so
+  // this can no longer fire in the window right after I resolve. Anything short
+  // of that evidence falls through to a neutral "waiting for opponent".
+  const genuinelySkipped =
+    !myOffer &&
+    !draftSubmitted &&
+    !myDraftResolved &&
+    (bsMine?.flags.blockedDrafts ?? 0) > 0;
   const zone = isDraft && game.buffs ? draftZones(game, myColor) : null;
   // Effect kinds draftZones does not paint (king_safe shields, pawn-clamp
   // fences, pending-skip stuns): shared derivation, same as the bot game.
@@ -1800,7 +1882,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         {/* The opponent-drafting status lives in the waiting overlay below
             (and inside the draft overlay while my own pick is open). */}
         <div
-          className="grid min-h-0 flex-1 gap-y-2 lg:grid-cols-[380px_auto] lg:justify-center lg:gap-x-4 xl:grid-cols-[420px_auto]"
+          className="grid min-h-0 flex-1 gap-y-2 lg:grid-cols-[440px_auto] lg:justify-center lg:gap-x-4 xl:grid-cols-[500px_auto]"
           style={railHeightStyle}
         >
           <aside className="hidden min-h-0 gap-2 overflow-y-auto lg:grid lg:min-h-[var(--board-height)] lg:max-h-full lg:grid-rows-[auto_minmax(6rem,1fr)_auto] lg:self-start">
@@ -2133,8 +2215,8 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           pill — the board stays usable and the dawdler burns their own
           clock, so a straggling (or vanished) opponent can never lock this
           player out of the game. */}
-      {isDraft && !game.result && oppDrafting && (draftSubmitted || !myOffer) &&
-        (draftGraceOver ? (
+      {showWaitingOverlay &&
+        (draftGraceOver || waitTimedOut ? (
           <div className="pointer-events-none fixed bottom-16 right-3 z-40 sm:bottom-4">
             <motion.div
               initial={{ opacity: 0, x: 40 }}
@@ -2145,7 +2227,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
             >
               <span className="h-1.5 w-1.5 rounded-full bg-gold animate-flicker" aria-hidden />
               <span className="font-display text-xs text-parchment-200">
-                {!myOffer && !draftSubmitted
+                {genuinelySkipped
                   ? "Your draft was skipped. Opponent is choosing, on their clock now."
                   : "Opponent is still choosing, on their clock now."}
               </span>
@@ -2161,16 +2243,16 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               className="plate pointer-events-auto w-full max-w-xs border-gold/30 p-4 text-center"
             >
               <div className="smallcaps text-[10px] text-parchment-400">
-                {!myOffer && !draftSubmitted
+                {genuinelySkipped
                   ? "Draft skipped"
                   : draftCardNoun(start.mode) === "hex"
                   ? "Hex draft"
                   : "Buff draft"}
               </div>
               <h2 className="font-display text-xl text-parchment mt-0.5">
-                {!myOffer && !draftSubmitted ? "Your draft was skipped" : "Waiting for opponent"}
+                {genuinelySkipped ? "Your draft was skipped" : "Waiting for opponent"}
               </h2>
-              {!myOffer && !draftSubmitted && (
+              {genuinelySkipped && (
                 <p className="mt-1 text-[11px] leading-snug text-parchment-300">
                   A card your opponent played skipped your draft this round.
                 </p>
@@ -2207,12 +2289,16 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           oppLockedIn={oppLockedIn && !oppDrafting}
           oppBanked={oppBanked}
           onPick={(i) => {
-            if (session.sendDraftPick(i)) setDraftSubmitted(true);
-            else setError("Disconnected from the game server.");
+            if (session.sendDraftPick(i)) {
+              setDraftSubmitted(true);
+              setMyDraftResolved(true);
+            } else setError("Disconnected from the game server.");
           }}
           onBank={() => {
-            if (session.sendDraftBank()) setDraftSubmitted(true);
-            else setError("Disconnected from the game server.");
+            if (session.sendDraftBank()) {
+              setDraftSubmitted(true);
+              setMyDraftResolved(true);
+            } else setError("Disconnected from the game server.");
           }}
           opponent={{
             // Replica opponent offers only ever hold cards the server sent

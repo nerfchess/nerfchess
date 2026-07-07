@@ -36,13 +36,13 @@ export const HOUSE_SEARCH_CEILING_MS = 80;
 // deep search: the budgets are far below the client bot's (700-2000ms), which
 // is exactly the point.
 //
-// The advertised RATINGS were lifted by ~150 across the roster (1200->1350,
-// 1400->1550, 1600->1750, 1750->1900) with a handful of personas spread up
-// into the 1900-2100 band. The DO's 80ms search ceiling caps real strength, so
-// every high tier (1750 and up) maps to the SAME strongest sensible profile:
-// the extra rating is presentation, not stronger search. Never let a profile's
-// budgetMs exceed HOUSE_SEARCH_CEILING_MS.
-export type HouseSkill = 1350 | 1550 | 1750 | 1900 | 1950 | 2000 | 2050 | 2100;
+// The advertised RATINGS were lifted again: the roster floor is now 1550 (no
+// persona sits below it) and a new top band reaches 2200. A big chunk of the
+// roster sits in the 2100-2200 band. The DO's 80ms search ceiling caps real
+// strength, so every high tier (1750 and up) maps to the SAME strongest
+// sensible profile: the extra rating is presentation, not stronger search.
+// Never let a profile's budgetMs exceed HOUSE_SEARCH_CEILING_MS.
+export type HouseSkill = 1350 | 1550 | 1750 | 1900 | 1950 | 2000 | 2050 | 2100 | 2150 | 2200;
 
 type SkillProfile = {
   level: AILevel;
@@ -65,6 +65,8 @@ export const HOUSE_SKILL_PROFILES: Record<HouseSkill, SkillProfile> = {
   2000: TOP_PROFILE,
   2050: TOP_PROFILE,
   2100: TOP_PROFILE,
+  2150: TOP_PROFILE,
+  2200: TOP_PROFILE,
 };
 
 export type HousePersona = {
@@ -75,67 +77,74 @@ export type HousePersona = {
 };
 
 // Lichess-style usernames: lowercase/CamelCase mixes, chess words, meme and
-// teen-culture handles, a few numbers, nothing that says "bot". Roster of 50
-// for a busy lobby and a load test. Skill mix stays roughly 40/30/20/10:
-// 20 near 1350, 15 near 1550, 10 near 1750, and 5 spread across the 1900-2100
-// band. (Ratings were lifted ~150 across the board; the 80ms search ceiling
-// still caps real strength, so the top band is presentation.)
+// teen-culture handles (varied capitalization, some ALLCAPS, a few numbers),
+// nothing that says "bot". Roster of 50 for a busy lobby and a load test.
+// Ratings were lifted again: the floor is 1550 and a new top band reaches 2200,
+// with several personas seated in the 2100-2200 range so the top of the
+// leaderboard is a spread of numbers, not a single tier. The 80ms search
+// ceiling still caps real strength, so every tier from 1750 up is presentation.
+// Rough mix: 10 near 1550, 10 near 1750, 8 near 1900, 6 near 1950, 5 near 2000,
+// 4 near 2050, and 7 spread across the 2100-2200 top band. (The +-40 jitter in
+// houseSeedRating still applies on top of each tier.)
 const PERSONA_DEFS: Array<[name: string, skill: HouseSkill]> = [
-  // ~1350
-  ["pawnstorm77", 1350],
-  ["f6isfine", 1350],
-  ["tempoLoss", 1350],
-  ["premoveKing", 1350],
-  ["eloFarmer2", 1350],
-  ["backRankBlues", 1350],
-  ["waterbottle", 1350],
-  ["iloveproteinbars", 1350],
-  ["flower", 1350],
-  ["grade11isscary", 1350],
-  ["SIXSEVENHAHAHAH", 1350],
-  ["bongcloudbeliever", 1350],
-  ["enpassantforced", 1350],
-  ["hangingpawnhabit", 1350],
-  ["touchmovetim", 1350],
-  ["scholarsmate_l", 1350],
-  ["coffeehousechess", 1350],
-  ["blunderbuss77", 1350],
-  ["rookieroulette", 1350],
-  ["h4nginqueen", 1350],
   // ~1550
-  ["QuietMoveGuy", 1550],
-  ["caroCannon", 1550],
-  ["rookliftt", 1550],
-  ["zugzwangg", 1550],
-  ["LondonSystemFan", 1550],
-  ["bssfan", 1550],
-  ["timmychenbiggestfan", 1550],
-  ["fianchettofan", 1550],
-  ["prophylaxised", 1550],
-  ["timescramble", 1550],
-  ["isolanihater", 1550],
-  ["openingdeviation", 1550],
-  ["middlegamemaze", 1550],
-  ["knightoutpost", 1550],
-  ["positionalpush", 1550],
+  ["pawnstorm77", 1550],
+  ["f6isfine", 1550],
+  ["waterbottle", 1550],
+  ["iloveproteinbars", 1550],
+  ["blunderbuss77", 1550],
+  ["h4nginqueen", 1550],
+  ["skibidiOhio", 1550],
+  ["touchgrass404", 1550],
+  ["delulu_dan", 1550],
+  ["noCapFr123", 1550],
   // ~1750
-  ["kniveskniqht", 1750],
-  ["endgameEnjoyer", 1750],
-  ["berserkedd", 1750],
-  ["josephleungadmirer", 1750],
-  ["anarchychess", 1750],
-  ["zwischenzugzz", 1750],
-  ["calculationstn", 1750],
-  ["tacticstornado", 1750],
-  ["initiativegrab", 1750],
-  ["exchangesac", 1750],
-  // 1900-2100 band, spread so the top of the leaderboard is not a block of
+  ["grade11isscary", 1750],
+  ["SIXSEVENHAHAHAH", 1750],
+  ["bongcloudbeliever", 1750],
+  ["enpassantforced", 1750],
+  ["caroCannon", 1750],
+  ["zugzwangg", 1750],
+  ["rizzler2000", 1750],
+  ["yeetusdeletus", 1750],
+  ["vibeCheck99", 1750],
+  ["fianchettofan", 1750],
+  // ~1900
+  ["LondonSystemFan", 1900],
+  ["bssfan", 1900],
+  ["timmychenbiggestfan", 1900],
+  ["isolanihater", 1900],
+  ["GYATTlord", 1900],
+  ["amongusImposter", 1900],
+  ["griddyGandalf", 1900],
+  ["mewingMaxxer", 1900],
+  // ~1950
+  ["kniveskniqht", 1950],
+  ["endgameEnjoyer", 1950],
+  ["exchangesac", 1950],
+  ["sigmaGrindset", 1950],
+  ["quandaledingle", 1950],
+  ["brainrotBishop", 1950],
+  // ~2000
+  ["berserkedd", 2000],
+  ["josephleungadmirer", 2000],
+  ["anarchychess", 2000],
+  ["fanumtaxer", 2000],
+  ["L_plus_ratio", 2000],
+  // ~2050
+  ["zwischenzugzz", 2050],
+  ["tacticstornado", 2050],
+  ["outpostcrab", 2050],
+  ["OHIOFINALBOSS", 2050],
+  // 2100-2200 top band, spread so the leaderboard head is not a block of
   // identical numbers (the jitter in houseSeedRating still applies on top).
-  ["smotheredM8", 1900],
-  ["outpostcrab", 1950],
-  ["kingcongo", 2000],
-  ["prophylaxispro", 2050],
-  ["conversionmachine", 2100],
+  ["smotheredM8", 2100],
+  ["kingcongo", 2100],
+  ["Stickygamer123", 2100],
+  ["prophylaxispro", 2150],
+  ["ilovewhitestickystuff", 2150],
+  ["conversionmachine", 2200],
+  ["ilovemysister", 2200],
 ];
 
 // Flowered avatar presets (see lib/avatars.ts): the ordinary piece-on-plate
