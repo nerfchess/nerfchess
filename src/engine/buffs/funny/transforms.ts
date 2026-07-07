@@ -58,7 +58,7 @@ export const FUNNY_TRANSFORMS: Buff[] = [
     {
       id: "understudy",
       name: "Understudy",
-      description: "The show must go on: if your queen is ever captured, one of your bishops is promoted to a queen in her place.",
+      description: "The first time your queen is captured, one of your bishops immediately turns into a queen on its own square. If you have no bishop, nothing happens. Triggers once.",
       tier: 5,
       category: "pieces",
       flavor: "Spotlight, and a bow.",

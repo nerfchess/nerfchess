@@ -6,7 +6,7 @@ import { BreadcrumbJsonLd, FaqSection, GuideFooter } from "../shared";
 export const metadata: Metadata = {
   title: "Chess roguelike and chess card game: Nerf Chess",
   description:
-    "Nerf Chess is chess crossed with a card game: draft from a tiered deck of 400+ cards every 5 moves, with escalating power like a roguelike. Learn how the drafting works and play free in your browser.",
+    "Nerf Chess is chess crossed with a card game: draft from a tiered deck of 1,000+ cards every 5 moves, with escalating power like a roguelike. Learn how the drafting works and play free in your browser.",
   keywords: [
     "chess roguelike",
     "chess card game",
@@ -53,9 +53,9 @@ export default function ChessRoguelikePage() {
         </p>
       </InfoSection>
 
-      <InfoSection title="A 400-card deck to draft from">
+      <InfoSection title="A thousand-card deck to draft from">
         <p>
-          The card pool is large and browsable. Over 400 cards and rules, power-up buffs, secret
+          The card pool is large and browsable. Over 1,000 cards and rules, power-up buffs, secret
           nerfs, offensive hexes, and relieving boons, live in the{" "}
           <Link href="/codex" className="underline">codex</Link>, each with its tier and full
           text. If you like deckbuilders and drafting games, the draft is the part of Nerf Chess
@@ -85,12 +85,12 @@ export default function ChessRoguelikePage() {
           {
             question: "Is Nerf Chess a chess roguelike?",
             answer:
-              "It borrows the roguelike and deckbuilder feel: you draft from a tiered deck of 400+ cards, and the power of the offers escalates as the game goes on. Unlike a single-player roguelike, it is a two-player chess variant where both players draft.",
+              "It borrows the roguelike and deckbuilder feel: you draft from a tiered deck of 1,000+ cards, and the power of the offers escalates as the game goes on. Unlike a single-player roguelike, it is a two-player chess variant where both players draft.",
           },
           {
             question: "Is there a chess card game?",
             answer:
-              "Nerf Chess is one. It plays on a standard chess board, but every 5 moves you draft a card, buffs, hexes, or boons, and those cards shape the match. There are over 400 cards in the library.",
+              "Nerf Chess is one. It plays on a standard chess board, but every 5 moves you draft a card, buffs, hexes, or boons, and those cards shape the match. There are over 1,000 cards in the library.",
           },
           {
             question: "Do I build a deck before the game?",

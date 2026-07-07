@@ -30,7 +30,7 @@ export const HEXES_T7: Buff[] = [
     {
       id: "obsidian_bastions",
       name: "Obsidian Bastions",
-      description: "Your opponent's rooks turn to walnuts and cannot move for 4 of their turns.",
+      description: "Your opponent's rooks turn to walnuts for 4 of their turns: a walnut is so heavy it can only shuffle one square at a time.",
       flavor: "The towers cool into black glass.",
       // Board already paints walnuts; fx carried for consistency.
       fx: { motif: "jail", pieces: ["r"] },
@@ -43,7 +43,7 @@ export const HEXES_T7: Buff[] = [
     {
       id: "statue_garden",
       name: "Statue Garden",
-      description: "Your opponent's knights and bishops turn to walnuts and cannot move for 3 of their turns.",
+      description: "Your opponent's knights and bishops turn to walnuts for 3 of their turns: a walnut is so heavy it can only shuffle one square at a time.",
       flavor: "Every horse and prelate set among the topiary.",
       // Board already paints walnuts; fx carried for consistency.
       fx: { motif: "jail", pieces: ["n", "b"] },
@@ -56,7 +56,7 @@ export const HEXES_T7: Buff[] = [
     {
       id: "cockatrice_gaze",
       name: "Cockatrice Gaze",
-      description: "Your opponent's queen turns to a walnut and cannot move for 3 of their turns.",
+      description: "Your opponent's queen turns to a walnut for 3 of their turns: a walnut is so heavy it can only shuffle one square at a time.",
       flavor: "One glance and the lady is limestone.",
       // Board already paints walnuts; fx carried for consistency.
       fx: { motif: "jail", pieces: ["q"] },
@@ -69,7 +69,7 @@ export const HEXES_T7: Buff[] = [
     {
       id: "chisel_curse",
       name: "Chisel Curse",
-      description: "Turn one enemy piece you target into a walnut so it cannot move for 4 of their turns. Kings cannot be targeted.",
+      description: "Turn one enemy piece you target into a walnut for 4 of their turns: a walnut is so heavy it can only shuffle one square at a time. Kings cannot be targeted.",
       flavor: "Marked, struck, and left as monument.",
     },
     walnutTarget(4),

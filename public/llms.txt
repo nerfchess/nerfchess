@@ -28,7 +28,7 @@
 
 ## Cards, tiers, and banking
 
-- Over 400 cards and rules total: nerfs, buffs, hexes, boons, and items. All are browsable at https://nerfchess.com/codex.
+- Over 1,000 cards and rules total: nerfs, buffs, hexes, boons, and items. All are browsable at https://nerfchess.com/codex, and every card has its own reference page (for example https://nerfchess.com/codex/buff/pawn_push) listing its tier, mode, and full effect.
 - Every card has a difficulty tier from I to VIII: Trivial, Easy, Common, Severe, Brutal, Cruel, Punishing, Unhinged. Draft offers start mild and climb the tier curve as the game goes on; the highest tiers are deliberately rare.
 - Skipping a draft "banks" it: your next offer rolls one tier stronger. Banking never stacks past one tier, so the skill is timing.
 

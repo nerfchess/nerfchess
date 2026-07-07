@@ -61,7 +61,7 @@ export const FUNNY_CURSES: Buff[] = [
     {
       id: "opposite_day",
       name: "Opposite Day",
-      description: "It is Opposite Day: on your opponent's next turn every piece must move away from your king if it legally can.",
+      description: "On your opponent's next turn (1 turn), they cannot move any piece closer to your king. Moves that keep the same distance are allowed. If that would leave them with no legal move, the restriction is lifted for that turn.",
       tier: 4,
       category: "hex",
       flavor: "Everything backwards, obviously.",

@@ -28,7 +28,7 @@ export const HEXES_T4: Buff[] = [
     {
       id: "granite_towers",
       name: "Granite Towers",
-      description: "Your opponent's rooks turn to walnuts and cannot move for 3 of their turns.",
+      description: "Your opponent's rooks turn to walnuts for 3 of their turns: a walnut is so heavy it can only shuffle one square at a time.",
       flavor: "The towers set hard as granite.",
       // Board already paints walnuts; fx carried for consistency.
       fx: { motif: "jail", pieces: ["r"] },
@@ -41,7 +41,7 @@ export const HEXES_T4: Buff[] = [
     {
       id: "stone_clergy",
       name: "Stone Clergy",
-      description: "Your opponent's bishops turn to walnuts and cannot move for 3 of their turns.",
+      description: "Your opponent's bishops turn to walnuts for 3 of their turns: a walnut is so heavy it can only shuffle one square at a time.",
       flavor: "The clergy are carved into the pews.",
       // Board already paints walnuts; fx carried for consistency.
       fx: { motif: "jail", pieces: ["b"] },
@@ -54,7 +54,7 @@ export const HEXES_T4: Buff[] = [
     {
       id: "statue_stable",
       name: "Statue Stable",
-      description: "Your opponent's knights turn to walnuts and cannot move for 3 of their turns.",
+      description: "Your opponent's knights turn to walnuts for 3 of their turns: a walnut is so heavy it can only shuffle one square at a time.",
       flavor: "Bronze horses, bolted to their plinths.",
       // Board already paints walnuts; fx carried for consistency.
       fx: { motif: "jail", pieces: ["n"] },
@@ -67,7 +67,7 @@ export const HEXES_T4: Buff[] = [
     {
       id: "medusas_stare",
       name: "Medusa's Stare",
-      description: "Turn one enemy queen you target into a walnut so it cannot move for 3 of their turns.",
+      description: "Turn one enemy queen you target into a walnut for 3 of their turns: a walnut is so heavy it can only shuffle one square at a time.",
       flavor: "Even majesty turns to stone under that gaze.",
     },
     walnutTarget(3, ["q"]),
@@ -194,7 +194,7 @@ export const HEXES_T4: Buff[] = [
     {
       id: "ironbound_rook",
       name: "Ironbound Rook",
-      description: "Turn one enemy rook you target into a walnut so it cannot move for 3 of their turns.",
+      description: "Turn one enemy rook you target into a walnut for 3 of their turns: a walnut is so heavy it can only shuffle one square at a time.",
       flavor: "Banded and bolted, the tower will not budge.",
     },
     walnutTarget(3, ["r"]),

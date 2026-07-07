@@ -172,7 +172,7 @@ export const CROSSREF_CARDS: Buff[] = [
     {
       id: "nerf_hammer",
       name: "Nerf Hammer",
-      description: "Bring down the nerf hammer: turn one enemy knight, bishop, or rook you target into a walnut for 2 of their turns.",
+      description: "Bring down the nerf hammer: turn one enemy knight, bishop, or rook you target into a walnut for 2 of their turns. It can only shuffle one square at a time.",
       tier: 6,
       flavor: "The devs have spoken.",
     },
@@ -365,7 +365,7 @@ export const CROSSREF_CARDS: Buff[] = [
         if (sq == null) return;
         const p = api.board.pieces[sq];
         if (!p || p.color !== api.opp || p.type === "k") return;
-        addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2 });
+        addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2, skin: "stun" });
         // Impact flash: the log's bonk, NOT Lightning Strike. A `bonk` effect
         // on the same square the freeze lands on, so the injured overlay can
         // pair the two (freeze + recent bonk = a stunned, dazed piece).
@@ -401,7 +401,7 @@ export const CROSSREF_CARDS: Buff[] = [
         if (sq == null) return;
         const p = api.board.pieces[sq];
         if (!p || p.color !== api.opp || p.type === "k") return;
-        addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 1 });
+        addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 1, skin: "stun" });
         // Impact flash: the dropped coconut's bonk, NOT Lightning Strike. A
         // `bonk` effect on the same square the freeze lands on, so the injured
         // overlay can pair the two (freeze + recent bonk = a dazed piece).

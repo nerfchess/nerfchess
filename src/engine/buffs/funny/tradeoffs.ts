@@ -76,7 +76,7 @@ export const FUNNY_TRADEOFFS: Buff[] = [
       id: "berserker",
       name: "Berserker",
       description:
-        "Fly into a rage: for your next 2 turns every one of your pieces moves like a queen. Then the crash: for the 2 turns after that your pieces can only move one square.",
+        "For your next 2 turns, all your pieces except your king also move like a queen. For the 2 turns after that, all your pieces can move only one square.",
       tier: 6,
       category: "movement",
       flavor: "Blood first, thinking later.",
@@ -125,7 +125,7 @@ export const FUNNY_TRADEOFFS: Buff[] = [
       id: "glass_cannon",
       name: "Glass Cannon",
       description:
-        "Overcharge one of your bishops: for your next 3 turns it can capture any enemy piece on its diagonals straight through the pieces in between. But it is brittle: if that bishop is ever captured, two of your pawns shatter with it.",
+        "Choose one of your bishops. For your next 3 turns it can capture any enemy piece except the king along its diagonals, passing through any pieces in between. While it is overcharged, if that bishop is captured, two of your pawns are removed as well.",
       tier: 6,
       category: "attack",
       flavor: "All power, no armor.",

@@ -412,17 +412,27 @@ export function legalMoves(game: NerfGame): Move[] {
   let frozenOwnCount = 0;
 
   if (bs) {
-    // Frozen pieces cannot move. Walnuts (hexed pieces) are freezes with a
-    // different board marker, so they share the lockdown path.
+    // Frozen pieces cannot move at all. Walnuts are a lighter, distinct
+    // lockdown: a heavy nut can still shuffle ONE square (a king-step), so it
+    // plays differently from a freeze instead of being a reskin of it.
     const frozen = new Set(
       bs.effects
-        .filter(
-          (e) => (e.kind === "freeze" || e.kind === "walnut") && e.owner === me && effectActive(e),
-        )
-        .map((e) => (e.kind === "freeze" || e.kind === "walnut" ? e.sq : -1)),
+        .filter((e) => e.kind === "freeze" && e.owner === me && effectActive(e))
+        .map((e) => (e.kind === "freeze" ? e.sq : -1)),
     );
-    frozenOwnCount = frozen.size;
+    const walnut = new Set(
+      bs.effects
+        .filter((e) => e.kind === "walnut" && e.owner === me && effectActive(e))
+        .map((e) => (e.kind === "walnut" ? e.sq : -1)),
+    );
+    frozenOwnCount = frozen.size + walnut.size;
     if (frozen.size) all = all.filter((m) => !frozen.has(m.from));
+    if (walnut.size)
+      all = all.filter(
+        (m) =>
+          !walnut.has(m.from) ||
+          (Math.abs(FILE(m.to) - FILE(m.from)) <= 1 && Math.abs(RANK(m.to) - RANK(m.from)) <= 1),
+      );
 
     // My buffs may add moves. Nerf constraints are applied afterwards, so a
     // handicap still governs buff-granted movement.

@@ -31,7 +31,7 @@ function pieceSquares(
 export const TIMID: Nerf = db({
   id: "timid",
   name: "Timid",
-  description: "Your pieces can't capture anything worth more than themselves... unless attacked.",
+  description: "Your pieces can't capture an enemy worth more than the capturing piece, unless that capturing piece is itself under enemy attack.",
   flavor: "Punch up? Only when cornered.",
   tier: 3,
   icon: "rabbit",
@@ -73,7 +73,7 @@ export const KINGFISHER: Nerf = db({
 export const MAGNETIC_KINGS: Nerf = db({
   id: "magnetic_kings",
   name: "Magnetic Kings",
-  description: "Each turn, your king must end closer to (or as close as) the enemy king.",
+  description: "When you move your king, it must not end up farther from the enemy king than it started (equal distance is allowed). Moving any other piece is unrestricted.",
   flavor: "An inexorable pull.",
   tier: 5,
   icon: "magnet",
@@ -201,7 +201,7 @@ export const RUSTY_KNIGHTS: Nerf = db({
 export const CLERGY: Nerf = db({
   id: "clergy",
   name: "Clergy",
-  description: "Your bishops never retreat.",
+  description: "Your bishops can't move backward toward your own side; each bishop move must stay level or advance toward the enemy.",
   flavor: "The faith does not waver.",
   tier: 2,
   icon: "cross",
@@ -277,7 +277,7 @@ export const PAWN_STORM: Nerf = db({
 export const ROYAL_GUARD: Nerf = db({
   id: "royal_guard",
   name: "Royal Guard",
-  description: "Pieces adjacent to your king at turn start can't move.",
+  description: "Your non-king pieces that are adjacent to your king at the start of your turn can't move. The king itself may still move.",
   flavor: "Don't leave his side.",
   tier: 3,
   icon: "shield-check",
@@ -292,7 +292,7 @@ export const ROYAL_GUARD: Nerf = db({
 export const HONEY_TRAP: Nerf = db({
   id: "honey_trap",
   name: "Honey Trap",
-  description: "Your queen can't move unless attacked.",
+  description: "Your queen can't move unless she is currently under attack by an enemy piece.",
   flavor: "She waits, smiling.",
   tier: 4,
   icon: "honey",
@@ -583,7 +583,7 @@ export const HALL_OF_MIRRORS: Nerf = db({
 export const QUARANTINE: Nerf = db({
   id: "quarantine",
   name: "Quarantine",
-  description: "If your king is checked, only the king may move that turn. You can't move back to your first two ranks.",
+  description: "You can't move a piece into your own first two ranks from outside them (pieces already on those ranks may still move within them). Separately, while your king is in check, only your king may move.",
   flavor: "Lock down.",
   tier: 4,
   icon: "biohazard",

@@ -562,6 +562,8 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
           ? {
               bannedSquares: zones.barred,
               frozenSquares: zones.frozen,
+              frozenSkins: zones.frozenSkin,
+              effectTurns: zones.turns,
               shieldedSquares: zones.shielded,
               wardSquares: zones.ward,
               strikeSquares: zones.strike,

@@ -46,7 +46,7 @@ export const HEXES_T8: Buff[] = [
     {
       id: "crown_and_castle",
       name: "Crown and Castle",
-      description: "Your opponent's queen and rooks turn to walnuts and cannot move for 2 of their turns.",
+      description: "Your opponent's queen and rooks turn to walnuts for 2 of their turns: a walnut is so heavy it can only shuffle one square at a time.",
       flavor: "The heaviest pieces set like mortar overnight.",
       // Board already paints walnuts; fx carried for consistency.
       fx: { motif: "jail", pieces: ["q", "r"] },
@@ -87,7 +87,7 @@ export const HEXES_T8: Buff[] = [
     {
       id: "petrified_forest",
       name: "Petrified Forest",
-      description: "Your opponent's knights and bishops turn to walnuts and cannot move for 4 of their turns.",
+      description: "Your opponent's knights and bishops turn to walnuts for 4 of their turns: a walnut is so heavy it can only shuffle one square at a time.",
       flavor: "Every horse and prelate grown into ancient stone timber.",
       // Board already paints walnuts; fx carried for consistency.
       fx: { motif: "jail", pieces: ["n", "b"] },
@@ -100,7 +100,7 @@ export const HEXES_T8: Buff[] = [
     {
       id: "medusa_stare",
       name: "Basilisk's Stare",
-      description: "Turn one enemy piece you target into a walnut so it cannot move for 5 of their turns. Kings cannot be targeted.",
+      description: "Turn one enemy piece you target into a walnut for 5 of their turns: a walnut is so heavy it can only shuffle one square at a time. Kings cannot be targeted.",
       flavor: "Meet its eyes once and you are a garden ornament.",
     },
     walnutTarget(5),

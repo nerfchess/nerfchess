@@ -78,7 +78,7 @@ export const FUNNY_SUMMONS: Buff[] = [
     {
       id: "cavalry_charge",
       name: "Cavalry Charge",
-      description: "One of your knights gallops in a straight line, capturing the first enemy piece in its path and landing just beyond, once.",
+      description: "Choose one of your knights. It charges in one horizontal or vertical direction, removes the first enemy piece (not a king) in that line, and lands on that square or on an empty square beyond it, stopping before the next piece or the board edge. A friendly piece or an enemy king in the path blocks the charge. Once.",
       tier: 5,
       category: "attack",
       flavor: "Sound the bugle.",
@@ -89,7 +89,7 @@ export const FUNNY_SUMMONS: Buff[] = [
     {
       id: "insurance",
       name: "Insurance",
-      description: "You took out a policy: the first time your queen is captured, a new knight spawns on her home square.",
+      description: "The first time your queen is captured, a new knight appears on your queen's starting square (d1 for White, d8 for Black), but only if that square is empty. Triggers once.",
       tier: 4,
       category: "pieces",
       flavor: "Read the fine print, they always do.",

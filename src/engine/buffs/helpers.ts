@@ -5,6 +5,7 @@ import {
   BuffInstance,
   BuffPick,
   BuffTarget,
+  FreezeSkin,
 } from "../buff";
 import { BoardState, Color, FILE, Move, PieceType, RANK, SQ, Square, inBoard } from "../types";
 
@@ -428,17 +429,17 @@ export function extraMovesNow(n: number): Mech {
 }
 
 /** Instant: freeze all enemy non-king pieces for `turns` of their turns. */
-export function freezeAllEnemies(turns: number): Mech {
+export function freezeAllEnemies(turns: number, skin?: FreezeSkin): Mech {
   return instant((_inst, api) => {
     for (const sq of mySquares(api.board, api.opp)) {
       if (api.board.pieces[sq]!.type === "k") continue;
-      addEffect(api, { kind: "freeze", sq, owner: api.opp, turns });
+      addEffect(api, { kind: "freeze", sq, owner: api.opp, turns, ...(skin ? { skin } : {}) });
     }
   });
 }
 
 /** Activated: freeze one targeted enemy non-king piece. */
-export function freezeTarget(turns: number): Mech {
+export function freezeTarget(turns: number, skin?: FreezeSkin): Mech {
   return activated(
     (_inst, api, picks) =>
       picks.length > 0
@@ -452,7 +453,13 @@ export function freezeTarget(turns: number): Mech {
           },
     (_inst, api, picks) => {
       if (picks[0]?.square != null) {
-        addEffect(api, { kind: "freeze", sq: picks[0].square, owner: api.opp, turns });
+        addEffect(api, {
+          kind: "freeze",
+          sq: picks[0].square,
+          owner: api.opp,
+          turns,
+          ...(skin ? { skin } : {}),
+        });
       }
     },
   );

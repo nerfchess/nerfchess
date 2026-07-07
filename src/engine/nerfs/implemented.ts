@@ -1,9 +1,10 @@
 import { Nerf } from "../nerf";
-import { attackedBy, findKing, isInCheck, makeMove } from "../board";
+import { attackedBy, findKing, initialBoard, isInCheck, makeMove } from "../board";
 import { FILE, Move, PieceType, RANK, SQ, Square } from "../types";
 import { HAND_AND_GIGABRAIN, MORE_NERFS } from "./more";
 import { EXTRA_NERFS } from "./extras";
 import { EXPANDED_NERFS, FOOTSOLDIERS_ONLY } from "./expanded";
+import { WILD_NERFS } from "./wild";
 
 const cheb = (a: Square, b: Square) =>
   Math.max(Math.abs(FILE(a) - FILE(b)), Math.abs(RANK(a) - RANK(b)));
@@ -130,9 +131,20 @@ export const THREE_CHECK: Nerf = db({
     }
     return s;
   },
-  checkLoss: (state) => {
-    const s = state as { checks: number };
-    return s.checks >= 3 ? { reason: "checked 3 times" } : null;
+  checkLoss: (_state, ctx) => {
+    // Recompute the check tally fresh from history rather than reading the
+    // onTurnStart-maintained state, which is one move stale at loss-check time:
+    // when the opponent lands the 3rd check the stale count still reads 2, so
+    // the checked side could otherwise survive (and even steal a king capture)
+    // on its own next move. Mirrors onTurnStart: count how many of my turns
+    // began with me in check.
+    let board = initialBoard();
+    let checks = 0;
+    for (const m of ctx.board.history) {
+      board = makeMove(board, m);
+      if (m.color !== ctx.me && isInCheck(board, ctx.me)) checks += 1;
+    }
+    return checks >= 3 ? { reason: "checked 3 times" } : null;
   },
 });
 
@@ -300,7 +312,7 @@ export const CHAMPING_AT_THE_BIT: Nerf = db({
 export const UNTITLED_DUCK: Nerf = db({
   id: "untitled_duck",
   name: "Untitled duck nerf",
-  description: "A duck sits on a random square at game start. You can't pass through it or land on it.",
+  description: "A duck occupies one random square (shown on the board) all game. No piece may land on it and sliding pieces can't pass through it, but knights may still leap over it.",
   flavor: "Quack.",
   tier: 1,
   icon: "bird",
@@ -872,7 +884,7 @@ export const SIEGE: Nerf = db({
 export const SCENT_OF_BLOOD: Nerf = db({
   id: "scent_of_blood",
   name: "The Scent of Blood",
-  description: "If one of your pieces can capture, it must: that piece, this turn.",
+  description: "Any of your pieces that has a capture available can't make a non-capturing move; if you move that piece, it must capture. You may still move a different piece that has no capture.",
   flavor: "Once they smell it, nothing else matters.",
   tier: 6,
   icon: "droplet",
@@ -948,6 +960,7 @@ export const ALL_IMPLEMENTED: Nerf[] = [
   ...MORE_NERFS,
   ...EXTRA_NERFS,
   ...EXPANDED_NERFS,
+  ...WILD_NERFS,
 ];
 
 // Retired rules: no longer dealt or shown in the Codex, but kept resolvable by

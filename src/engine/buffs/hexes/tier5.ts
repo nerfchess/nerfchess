@@ -30,7 +30,7 @@ export const HEXES_T5: Buff[] = [
     {
       id: "medusas_verdict",
       name: "Medusa's Verdict",
-      description: "Your opponent's queen turns to a walnut for 3 of their turns.",
+      description: "Your opponent's queen turns to a walnut for 3 of their turns: it can only shuffle one square at a time.",
       flavor: "The lady meets a colder gaze than her own.",
       // Board already paints walnuts; fx carried for consistency.
       fx: { motif: "jail", pieces: ["q"] },
@@ -43,7 +43,7 @@ export const HEXES_T5: Buff[] = [
     {
       id: "granite_ramparts",
       name: "Granite Ramparts",
-      description: "Your opponent's rooks turn to walnuts for 3 of their turns.",
+      description: "Your opponent's rooks turn to walnuts for 3 of their turns: a walnut can only shuffle one square at a time.",
       flavor: "The towers set into bedrock.",
       // Board already paints walnuts; fx carried for consistency.
       fx: { motif: "jail", pieces: ["r"] },
@@ -87,7 +87,7 @@ export const HEXES_T5: Buff[] = [
     {
       id: "stone_curse",
       name: "Stone Curse",
-      description: "Turn one enemy piece you target into a walnut for 4 of their turns. Kings cannot be targeted.",
+      description: "Turn one enemy piece you target into a walnut for 4 of their turns: it can only shuffle one square at a time. Kings cannot be targeted.",
       flavor: "Chosen, cursed, and set in stone.",
     },
     walnutTarget(4),

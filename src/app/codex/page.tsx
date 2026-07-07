@@ -19,6 +19,7 @@ import {
   type CodexFilters,
 } from "@/lib/nerfFilter";
 import { cardText, hydrateCardText } from "@/lib/cardText";
+import { BUFF_COLLECTIONS, NERF_COLLECTIONS, buffCollection } from "@/lib/cardCollections";
 
 import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
 
@@ -134,6 +135,7 @@ export default function CodexPage() {
       (b) =>
         (filters.tier === null || b.tier === filters.tier) &&
         (filters.categories.length === 0 || filters.categories.includes(b.category)) &&
+        (filters.collection === null || buffCollection(b) === filters.collection) &&
         (q === "" ||
           b.name.toLowerCase().includes(q) ||
           b.description.toLowerCase().includes(q) ||
@@ -152,9 +154,9 @@ export default function CodexPage() {
   const clearAll = () => setFilters({ ...EMPTY_FILTERS });
   const switchLibrary = (lib: Library) => {
     setLibrary(lib);
-    // Category ids differ between libraries; a stale one would silently filter
-    // everything out.
-    setFilters((f) => ({ ...f, categories: [] }));
+    // Category ids and collections differ between libraries; a stale one would
+    // silently filter everything out.
+    setFilters((f) => ({ ...f, categories: [], collection: null }));
   };
 
   const active = hasActiveFilters(filters);
@@ -184,6 +186,12 @@ export default function CodexPage() {
             : `${totalCount} ${nounPlural} in the library, ordered by the same tiers as the nerfs. Search by name, effect, or category.`}
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-2">
+          <Link
+            href="/guide/how-to-play"
+            className="inline-flex items-center gap-2 rounded-sm btn-leaf px-4 py-2 font-display text-sm"
+          >
+            How to play
+          </Link>
           {LIBRARY_TABS.map((lib) => (
             <button
               key={lib}
@@ -262,6 +270,19 @@ export default function CodexPage() {
           )}
 
           <FilterSelect
+            label="Collection"
+            value={filters.collection ?? ""}
+            onChange={(v) => patch({ collection: v === "" ? null : v })}
+          >
+            <option value="" className="bg-ink-900 text-parchment">All collections</option>
+            {(isRules ? NERF_COLLECTIONS : BUFF_COLLECTIONS).map((c) => (
+              <option key={c.id} value={c.id} className="bg-ink-900 text-parchment">
+                {c.label}
+              </option>
+            ))}
+          </FilterSelect>
+
+          <FilterSelect
             label="Sort"
             value={filters.sort}
             onChange={(v) => patch({ sort: v as CodexFilters["sort"] })}
@@ -292,15 +313,28 @@ export default function CodexPage() {
           <div className="mt-4 grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {isRules
               ? filtered.map((d) => (
-                  <NerfCard key={d.id} nerf={d} ownerLabel={`${TIER_ROMAN[d.tier]} · ${TIER_LABEL[d.tier]}`} />
+                  <Link
+                    key={d.id}
+                    href={`/codex/nerf/${d.id}`}
+                    className="block h-full rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-gold/60"
+                    title={`Read the ${d.name} card page`}
+                  >
+                    <NerfCard nerf={d} ownerLabel={`${TIER_ROMAN[d.tier]} · ${TIER_LABEL[d.tier]}`} />
+                  </Link>
                 ))
               : buffFiltered.map((b) => (
-                  <BuffCard
+                  <Link
                     key={b.id}
-                    buff={b}
-                    tier={b.tier}
-                    status={b.implemented ? null : "Not yet appearing in drafts"}
-                  />
+                    href={`/codex/buff/${b.id}`}
+                    className="block h-full rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-gold/60"
+                    title={`Read the ${b.name} card page`}
+                  >
+                    <BuffCard
+                      buff={b}
+                      tier={b.tier}
+                      status={b.implemented ? null : "Not yet appearing in drafts"}
+                    />
+                  </Link>
                 ))}
           </div>
         ) : (

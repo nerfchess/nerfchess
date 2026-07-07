@@ -4,6 +4,7 @@
 
 import type { Nerf } from "@/engine/nerf";
 import { CATEGORY_IDS, categoriesOf, getCategoryLabel } from "@/lib/nerfCategories";
+import { COLLECTION_IDS, nerfCollection } from "@/lib/cardCollections";
 
 import { TIER_ROMAN } from "./tiers";
 const SORT_IDS: SortId[] = ["az", "za", "easy", "brutal"];
@@ -21,6 +22,7 @@ export interface CodexFilters {
   search: string;
   tier: number | null; // 1..8 or null for all
   categories: string[]; // category ids; a nerf must match ALL selected (AND)
+  collection: string | null; // thematic set (Fantasy, Wild, Funny...) or null for all
   playableOnly: boolean;
   sort: SortId;
 }
@@ -29,12 +31,19 @@ export const EMPTY_FILTERS: CodexFilters = {
   search: "",
   tier: null,
   categories: [],
+  collection: null,
   playableOnly: false,
   sort: "az",
 };
 
 export function hasActiveFilters(f: CodexFilters): boolean {
-  return f.search.trim() !== "" || f.tier !== null || f.categories.length > 0 || f.playableOnly;
+  return (
+    f.search.trim() !== "" ||
+    f.tier !== null ||
+    f.categories.length > 0 ||
+    f.collection !== null ||
+    f.playableOnly
+  );
 }
 
 // --- URL state -------------------------------------------------------------
@@ -46,6 +55,7 @@ export function filtersToQueryString(f: CodexFilters): string {
   if (f.search.trim()) p.set("search", f.search.trim());
   if (f.tier !== null) p.set("tier", TIER_ROMAN[f.tier]);
   if (f.categories.length > 0) p.set("category", f.categories.join(","));
+  if (f.collection) p.set("collection", f.collection);
   if (f.playableOnly) p.set("playable", "1");
   if (f.sort !== "az") p.set("sort", f.sort);
   return p.toString();
@@ -60,10 +70,12 @@ export function filtersFromQueryString(qs: string): CodexFilters {
     .map((s) => s.trim())
     .filter((c) => CATEGORY_IDS.includes(c));
   const sort = p.get("sort") as SortId | null;
+  const collection = p.get("collection");
   return {
     search: p.get("search") ?? "",
     tier: tierIdx > 0 ? tierIdx : null,
     categories: cats,
+    collection: collection && COLLECTION_IDS.includes(collection) ? collection : null,
     playableOnly: p.get("playable") === "1",
     sort: sort && SORT_IDS.includes(sort) ? sort : "az",
   };
@@ -99,6 +111,7 @@ export function filterAndSortNerfs(nerfs: Nerf[], f: CodexFilters): Nerf[] {
   const query = f.search.trim();
   const out = nerfs.filter((n) => {
     if (f.tier !== null && n.tier !== f.tier) return false;
+    if (f.collection && nerfCollection(n) !== f.collection) return false;
     if (f.playableOnly && !n.implemented) return false;
     if (f.categories.length > 0) {
       const cats = categoriesOf(n.id);

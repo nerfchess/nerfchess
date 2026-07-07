@@ -45,7 +45,7 @@ export const HEXES_T6: Buff[] = [
     {
       id: "stone_riders",
       name: "Stone Riders",
-      description: "Your opponent's knights turn to walnuts for 4 of their turns.",
+      description: "Your opponent's knights turn to walnuts for 4 of their turns: a walnut can only shuffle one square at a time.",
       flavor: "Horse and rider both set hard in the saddle.",
       // Board already paints walnuts; fx carried for consistency.
       fx: { motif: "jail", pieces: ["n"] },
@@ -58,7 +58,7 @@ export const HEXES_T6: Buff[] = [
     {
       id: "stone_prelates",
       name: "Stone Prelates",
-      description: "Your opponent's bishops turn to walnuts for 4 of their turns.",
+      description: "Your opponent's bishops turn to walnuts for 4 of their turns: a walnut can only shuffle one square at a time.",
       flavor: "The clergy is carved into the transept wall.",
       // Board already paints walnuts; fx carried for consistency.
       fx: { motif: "jail", pieces: ["b"] },
@@ -71,7 +71,7 @@ export const HEXES_T6: Buff[] = [
     {
       id: "stone_bastions",
       name: "Stone Bastions",
-      description: "Your opponent's rooks turn to walnuts for 4 of their turns.",
+      description: "Your opponent's rooks turn to walnuts for 4 of their turns: a walnut can only shuffle one square at a time.",
       flavor: "The towers forget how to roll.",
       // Board already paints walnuts; fx carried for consistency.
       fx: { motif: "jail", pieces: ["r"] },
@@ -84,7 +84,7 @@ export const HEXES_T6: Buff[] = [
     {
       id: "queen_of_stone",
       name: "Queen of Stone",
-      description: "Your opponent's queen turns to a walnut for 4 of their turns.",
+      description: "Your opponent's queen turns to a walnut for 4 of their turns: it can only shuffle one square at a time.",
       flavor: "Her majesty holds court as a statue.",
       // Board already paints walnuts; fx carried for consistency.
       fx: { motif: "jail", pieces: ["q"] },
@@ -162,7 +162,7 @@ export const HEXES_T6: Buff[] = [
     {
       id: "eternal_statue",
       name: "Eternal Statue",
-      description: "Turn one enemy piece you target into a walnut for 5 of their turns. Kings cannot be targeted.",
+      description: "Turn one enemy piece you target into a walnut for 5 of their turns: it can only shuffle one square at a time. Kings cannot be targeted.",
       flavor: "Chosen once, still for an age.",
     },
     walnutTarget(5),

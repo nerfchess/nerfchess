@@ -1157,7 +1157,48 @@ export type SigVisual =
   | "dive"
   | "smite"
   // Court decree (skip).
-  | "decree";
+  | "decree"
+  // --- Batch 4 (WILD set + Computer Virus) ---
+  // Fire / earth / storm removals (detonation diff).
+  | "inferno"
+  | "hellfire"
+  | "rockfall"
+  | "unmake"
+  | "wreckingball"
+  | "pinata"
+  | "artillery"
+  | "spearcharge"
+  | "tankroll"
+  // Ice / storm / weather.
+  | "hailstorm"
+  | "blizzard"
+  | "stormcloud"
+  // Earth / fortification builds.
+  | "stonerise"
+  | "mountainwall"
+  | "trench"
+  // Reinforcements.
+  | "reinforce"
+  | "paradrop"
+  | "geniepoof"
+  // Suppression / time / corruption.
+  | "suppress"
+  | "timestop"
+  | "glitch"
+  // --- Batch 5 (library core + wild + funny second pass) ---
+  // Removals, wards, clock theft, teleports, more walls / voids / summons.
+  | "disintegrate"
+  | "cavalrycharge"
+  | "stonehide"
+  | "wardpulse"
+  | "canopy"
+  | "chronosteal"
+  | "blink"
+  | "portal"
+  | "borderward"
+  | "banana"
+  | "minefield"
+  | "vortex";
 export type SigOrdering = "file" | "sweep" | "octagon" | "line" | "radial";
 export type SigSoundKey =
   | "nova"
@@ -1363,6 +1404,160 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   phantom_guardian: { ordering: "radial", staggerMs: 0, victims: "all", visual: "summonrift", hasLead: false, sound: "wall", source: "summon" },
   stone_golem: { ordering: "radial", staggerMs: 0, victims: "all", visual: "summonrift", hasLead: false, sound: "wall", source: "summon" },
   direwolf_pack: { ordering: "radial", staggerMs: 0, victims: "all", visual: "summonrift", hasLead: false, sound: "wall", source: "summon" },
+
+  // --- Batch 4: WILD set (wild/elemental|warfare|arcane|chaos) + Computer
+  // Virus. Removal-sourced entries (fire / storm / siege charges /
+  // disintegration / wrecking ball) render off the detonation diff today; the
+  // effect-data-sourced ones (freeze / walnut / wall / summon / shield / stun
+  // zones) join the inert-until-wired Batch 2/3 set. Every entry reuses an
+  // existing SigSoundKey and SigZone; transforms are left to the crown morph
+  // flourish (they carry no detonation and already read as a coronation). ---
+
+  // FIRE (wild/elemental): big removals and a queen's hellfire beam.
+  we_immolation: { ordering: "radial", staggerMs: 0, victims: ["r", "q"], visual: "inferno", hasLead: false, sound: "atomic" },
+  we_conflagration: { ordering: "sweep", staggerMs: 120, victims: ["p", "n", "b"], visual: "inferno", hasLead: false, sound: "cataclysm" },
+  we_flame_lance: { ordering: "line", staggerMs: 95, victims: "all", mover: "r", visual: "dragonfire", hasLead: true, sound: "atomic" },
+  we_hellfire_beam: { ordering: "line", staggerMs: 70, victims: "all", mover: "q", visual: "hellfire", hasLead: true, sound: "cataclysm" },
+
+  // ICE (wild/elemental): mass freezes, an ice wall, a whiteout blizzard.
+  we_hailstorm: { ordering: "sweep", staggerMs: 55, victims: ["p"], visual: "hailstorm", hasLead: false, sound: "massfreeze", source: "frozen" },
+  we_flash_freeze: { ordering: "radial", staggerMs: 40, victims: "all", visual: "iceshatter", hasLead: true, sound: "massfreeze", source: "frozen" },
+  we_glacier_wall: { ordering: "sweep", staggerMs: 50, victims: "all", visual: "icewall", hasLead: false, sound: "wall", source: "blindfold" },
+  we_whiteout: { ordering: "radial", staggerMs: 0, victims: "all", visual: "blizzard", hasLead: true, sound: "clockice", source: "stun" },
+
+  // EARTH (wild/elemental): petrify, summon, rock walls, a landslide.
+  we_petrify_ranks: { ordering: "sweep", staggerMs: 60, victims: ["n", "b"], visual: "greyhex", hasLead: false, sound: "petrify", source: "walnut" },
+  we_stone_soldiers: { ordering: "sweep", staggerMs: 90, victims: "all", visual: "stonerise", hasLead: false, sound: "wall", source: "summon" },
+  we_mountain_range: { ordering: "sweep", staggerMs: 65, victims: "all", visual: "mountainwall", hasLead: false, sound: "wall", source: "blindfold" },
+  we_landslide: { ordering: "sweep", staggerMs: 100, victims: ["r", "q"], visual: "rockfall", hasLead: false, sound: "cataclysm" },
+  we_thorn_barrier: { ordering: "sweep", staggerMs: 55, victims: "all", visual: "thornwall", hasLead: false, sound: "wall", source: "blindfold" },
+
+  // STORM (wild/elemental): targeted bolts and a summoned thunderhead.
+  we_lightning_bolt: { ordering: "line", staggerMs: 0, victims: "all", mover: "q", visual: "strike", hasLead: false, sound: "lightning" },
+  we_arc_lightning: { ordering: "line", staggerMs: 100, victims: "all", mover: "r", visual: "arclight", hasLead: false, sound: "lightning" },
+  we_thunderhead: { ordering: "radial", staggerMs: 0, victims: "all", visual: "stormcloud", hasLead: false, sound: "wall", source: "summon" },
+
+  // WARFARE (wild/warfare): charges, bombardment, reinforcement, siege lines.
+  ww_bayonet_charge: { ordering: "line", staggerMs: 85, victims: "all", mover: "b", visual: "spearcharge", hasLead: false, sound: "rampage" },
+  ww_spearhead: { ordering: "line", staggerMs: 90, victims: "all", mover: "r", visual: "spearcharge", hasLead: true, sound: "siege" },
+  ww_armored_breakthrough: { ordering: "line", staggerMs: 80, victims: "all", mover: "q", visual: "tankroll", hasLead: false, sound: "rampage" },
+  ww_bombardment: { ordering: "sweep", staggerMs: 110, victims: ["p"], visual: "artillery", hasLead: false, sound: "siege" },
+  ww_counter_battery: { ordering: "radial", staggerMs: 0, victims: ["r", "b"], visual: "artillery", hasLead: false, sound: "siege" },
+  ww_combined_arms: { ordering: "sweep", staggerMs: 90, victims: "all", visual: "reinforce", hasLead: false, sound: "wall", source: "summon" },
+  ww_muster_the_ranks: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "reinforce", hasLead: false, sound: "wall", source: "summon" },
+  ww_forward_outpost: { ordering: "radial", staggerMs: 0, victims: "all", visual: "reinforce", hasLead: false, sound: "wall", source: "summon" },
+  ww_paratroopers: { ordering: "sweep", staggerMs: 100, victims: "all", visual: "paradrop", hasLead: false, sound: "wall", source: "summon" },
+  ww_suppressive_fire: { ordering: "radial", staggerMs: 45, victims: ["n"], visual: "suppress", hasLead: false, sound: "massfreeze", source: "frozen" },
+  ww_double_trench: { ordering: "sweep", staggerMs: 60, victims: "all", visual: "trench", hasLead: false, sound: "wall", source: "blindfold" },
+  ww_dug_in_defense: { ordering: "radial", staggerMs: 30, victims: "all", visual: "aegis", hasLead: true, sound: "aegis", source: "shield" },
+
+  // ARCANE (wild/arcane): time stop, mass freeze/petrify, disintegration, conjure.
+  wa_time_stop: { ordering: "radial", staggerMs: 0, victims: "all", visual: "timestop", hasLead: true, sound: "clockcage", source: "walnut" },
+  wa_frozen_moment: { ordering: "radial", staggerMs: 50, victims: ["r", "q"], visual: "chainfreeze", hasLead: true, sound: "massfreeze", source: "frozen" },
+  wa_stone_pawns: { ordering: "sweep", staggerMs: 55, victims: ["p"], visual: "greyhex", hasLead: false, sound: "petrify", source: "walnut" },
+  wa_unmake: { ordering: "line", staggerMs: 90, victims: "all", mover: "b", visual: "unmake", hasLead: false, sound: "extinction" },
+  wa_banish: { ordering: "radial", staggerMs: 0, victims: ["p", "n", "b"], visual: "unmake", hasLead: false, sound: "extinction" },
+  wa_spectral_minors: { ordering: "sweep", staggerMs: 85, victims: "all", visual: "summonrift", hasLead: false, sound: "wall", source: "summon" },
+
+  // CHAOS (wild/chaos): wrecking ball, pinata, genie, hot seat.
+  wc_wrecking_ball: { ordering: "line", staggerMs: 85, victims: "all", mover: "q", visual: "wreckingball", hasLead: true, sound: "rampage" },
+  wc_pinata: { ordering: "radial", staggerMs: 0, victims: "all", visual: "pinata", hasLead: true, sound: "rampage" },
+  wc_genie_wish: { ordering: "radial", staggerMs: 0, victims: "all", visual: "geniepoof", hasLead: false, sound: "wall", source: "summon" },
+  wc_hot_seat: { ordering: "radial", staggerMs: 0, victims: "all", visual: "decree", hasLead: true, sound: "snooze", source: "stun" },
+
+  // FUNNY (funny/clock): the Computer Virus corrupts the opponent's clock. No
+  // board removal / zone effect, so like the Batch 2/3 stun-zone entries it is
+  // registered here and renders once Board feeds it the opponent clock-area
+  // squares; the glitch art + voice are complete.
+  computer_virus: { ordering: "radial", staggerMs: 0, victims: "all", visual: "glitch", hasLead: true, sound: "clockcage", source: "stun" },
+
+  // --- Batch 5: SECOND SPECTACLE PASS (library core + wild + funny). The next
+  // tier of impactful cards that still fell back to the generic family effect.
+  // Removal-sourced entries render off the detonation diff; the effect-data
+  // ones join the inert-until-wired zone set (frozen / walnut / shield /
+  // kingSafe / stun / empower / summon / blindfold / rally). Every entry reuses
+  // an existing SigSoundKey and SigZone; the new visuals are flat-SVG one-shots
+  // added with the Batch 5 art below (coral / mint / sun + tier colours). ---
+
+  // Core removals (detonation diff): a piece is unmade in a crumble of motes.
+  purge: { ordering: "radial", staggerMs: 0, victims: ["p", "n", "b", "r"], visual: "disintegrate", hasLead: false, sound: "extinction" },
+  annihilate: { ordering: "radial", staggerMs: 40, victims: ["p", "n", "b", "r"], visual: "disintegrate", hasLead: false, sound: "extinction" },
+  shatter: { ordering: "radial", staggerMs: 55, victims: ["r", "b", "n"], visual: "disintegrate", hasLead: true, sound: "rampage" },
+  purge_two: { ordering: "sweep", staggerMs: 90, victims: ["p"], visual: "disintegrate", hasLead: false, sound: "cataclysm" },
+  we_scorch: { ordering: "radial", staggerMs: 0, victims: ["n", "b"], visual: "inferno", hasLead: false, sound: "atomic" },
+  wc_sacrificial_bishop: { ordering: "radial", staggerMs: 0, victims: ["n", "b"], visual: "inferno", hasLead: false, sound: "atomic" },
+  cavalry_charge: { ordering: "line", staggerMs: 95, victims: "all", mover: "n", visual: "cavalrycharge", hasLead: true, sound: "rampage" },
+
+  // Freezes (frozen zone): each ice card its own read, varied stagger.
+  wc_tar_pit: { ordering: "radial", staggerMs: 55, victims: ["b"], visual: "chainfreeze", hasLead: false, sound: "massfreeze", source: "frozen" },
+  wc_double_trouble: { ordering: "radial", staggerMs: 60, victims: "all", visual: "iceshatter", hasLead: true, sound: "massfreeze", source: "frozen" },
+  ww_pincer_movement: { ordering: "radial", staggerMs: 50, victims: "all", visual: "snapfrost", hasLead: false, sound: "massfreeze", source: "frozen" },
+  wa_arrest_time: { ordering: "radial", staggerMs: 50, victims: ["r", "q"], visual: "deepglacier", hasLead: true, sound: "massfreeze", source: "frozen" },
+
+  // Petrify (walnut zone): concrete shoes clamp the heavy pieces.
+  wc_concrete_shoes: { ordering: "radial", staggerMs: 40, victims: ["r", "q"], visual: "stonechain", hasLead: false, sound: "petrify", source: "walnut" },
+  we_stone_grip: { ordering: "radial", staggerMs: 0, victims: "all", visual: "greyhex", hasLead: false, sound: "petrify", source: "walnut" },
+
+  // Shields / wards (shield zone): stone shells, bark canopies, rune pulses.
+  we_stoneskin: { ordering: "radial", staggerMs: 45, victims: "all", visual: "stonehide", hasLead: true, sound: "aegis", source: "shield" },
+  ww_form_square: { ordering: "sweep", staggerMs: 60, victims: "all", visual: "wardpulse", hasLead: true, sound: "aegis", source: "shield" },
+  we_verdant_shield: { ordering: "sweep", staggerMs: 70, victims: ["p"], visual: "canopy", hasLead: false, sound: "aegis", source: "shield" },
+  wa_royal_aegis: { ordering: "radial", staggerMs: 0, victims: ["k", "q"], visual: "wardpulse", hasLead: true, sound: "aegis", source: "shield" },
+  borrowed_time: { ordering: "radial", staggerMs: 0, victims: ["q"], visual: "wardpulse", hasLead: false, sound: "aegis", source: "shield" },
+
+  // King wards (kingSafe zone).
+  we_frost_ward: { ordering: "radial", staggerMs: 0, victims: ["k"], visual: "wardpulse", hasLead: true, sound: "shades", source: "kingSafe" },
+  wc_panic_button: { ordering: "radial", staggerMs: 0, victims: ["k"], visual: "wardpulse", hasLead: true, sound: "shades", source: "kingSafe" },
+
+  // Skips + clock theft (stun zone: opponent's stalled ranks / clock area).
+  tempo_theft: { ordering: "radial", staggerMs: 0, victims: "all", visual: "snooze", hasLead: true, sound: "snooze", source: "stun" },
+  time_lock: { ordering: "radial", staggerMs: 0, victims: "all", visual: "clockcage", hasLead: true, sound: "clockcage", source: "stun" },
+  time_thief: { ordering: "radial", staggerMs: 0, victims: "all", visual: "chronosteal", hasLead: true, sound: "clockcage", source: "stun" },
+  wa_chrono_siphon: { ordering: "radial", staggerMs: 0, victims: "all", visual: "chronosteal", hasLead: true, sound: "clockcage", source: "stun" },
+
+  // Extra-move rallies (rally zone): lightning strobes and war-banner surges.
+  extra_move: { ordering: "radial", staggerMs: 0, victims: "all", visual: "blitz", hasLead: true, sound: "blitz", source: "rally" },
+  overwhelm: { ordering: "radial", staggerMs: 70, victims: "all", visual: "blitz", hasLead: true, sound: "blitz", source: "rally" },
+  wa_quicken: { ordering: "radial", staggerMs: 60, victims: "all", visual: "blitz", hasLead: true, sound: "blitz", source: "rally" },
+  ww_relentless_assault: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "blitz", hasLead: false, sound: "blitz", source: "rally" },
+  wc_juggling_act: { ordering: "sweep", staggerMs: 70, victims: "all", visual: "warhorn", hasLead: true, sound: "blitz", source: "rally" },
+  berserker: { ordering: "sweep", staggerMs: 75, victims: "all", visual: "warhorn", hasLead: true, sound: "blitz", source: "rally" },
+
+  // Movement grants / veteran upgrades (empower zone).
+  ww_command_tent: { ordering: "radial", staggerMs: 0, victims: ["k"], visual: "coronation", hasLead: true, sound: "coronation", source: "empower" },
+  ww_flanking_knights: { ordering: "sweep", staggerMs: 100, victims: ["n"], visual: "warhorn", hasLead: true, sound: "blitz", source: "empower" },
+  ww_dragoons: { ordering: "radial", staggerMs: 0, victims: ["n"], visual: "warhorn", hasLead: true, sound: "coronation", source: "empower" },
+  glass_cannon: { ordering: "radial", staggerMs: 0, victims: ["b"], visual: "bladegift", hasLead: true, sound: "coronation", source: "empower" },
+
+  // Summons / reinforcements (summon zone).
+  grand_summon: { ordering: "sweep", staggerMs: 90, victims: "all", visual: "summonrift", hasLead: false, sound: "wall", source: "summon" },
+  kings_legion: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "summonrift", hasLead: false, sound: "wall", source: "summon" },
+  ww_mercenary_queen: { ordering: "radial", staggerMs: 0, victims: "all", visual: "summonrift", hasLead: false, sound: "wall", source: "summon" },
+  second_army: { ordering: "sweep", staggerMs: 85, victims: "all", visual: "reinforce", hasLead: false, sound: "wall", source: "summon" },
+  clone_army: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "reinforce", hasLead: false, sound: "wall", source: "summon" },
+  wc_conga_line: { ordering: "sweep", staggerMs: 90, victims: "all", visual: "paradrop", hasLead: false, sound: "wall", source: "summon" },
+  pizza_delivery: { ordering: "radial", staggerMs: 0, victims: "all", visual: "portal", hasLead: false, sound: "wall", source: "summon" },
+  wc_clown_car: { ordering: "radial", staggerMs: 60, victims: "all", visual: "portal", hasLead: false, sound: "wall", source: "summon" },
+  wc_rubber_duck_squad: { ordering: "radial", staggerMs: 60, victims: "all", visual: "portal", hasLead: false, sound: "wall", source: "summon" },
+  wc_attack_goose: { ordering: "radial", staggerMs: 0, victims: "all", visual: "portal", hasLead: false, sound: "wall", source: "summon" },
+
+  // Teleports / relocations (summon zone: the landing squares gain a piece).
+  wa_far_step: { ordering: "radial", staggerMs: 0, victims: "all", visual: "blink", hasLead: false, sound: "wall", source: "summon" },
+  wa_twin_blink: { ordering: "sweep", staggerMs: 90, victims: "all", visual: "blink", hasLead: false, sound: "wall", source: "summon" },
+  wc_yeet: { ordering: "radial", staggerMs: 0, victims: "all", visual: "blink", hasLead: false, sound: "wall", source: "summon" },
+  warp_legion: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "blink", hasLead: false, sound: "wall", source: "summon" },
+  warp_storm: { ordering: "sweep", staggerMs: 75, victims: "all", visual: "blink", hasLead: false, sound: "wall", source: "summon" },
+
+  // Walls / voids / traps (blindfold zone).
+  fault_line: { ordering: "sweep", staggerMs: 60, victims: "all", visual: "trench", hasLead: false, sound: "wall", source: "blindfold" },
+  fissure: { ordering: "sweep", staggerMs: 55, victims: "all", visual: "trench", hasLead: false, sound: "wall", source: "blindfold" },
+  wa_glyph_seal: { ordering: "sweep", staggerMs: 60, victims: "all", visual: "borderward", hasLead: false, sound: "wall", source: "blindfold" },
+  wa_border_ward: { ordering: "sweep", staggerMs: 50, victims: "all", visual: "borderward", hasLead: false, sound: "wall", source: "blindfold" },
+  wc_banana_peel_trail: { ordering: "sweep", staggerMs: 55, victims: "all", visual: "banana", hasLead: false, sound: "wall", source: "blindfold" },
+  ww_claymore_line: { ordering: "sweep", staggerMs: 60, victims: "all", visual: "minefield", hasLead: false, sound: "siege", source: "blindfold" },
+  wc_black_hole: { ordering: "radial", staggerMs: 0, victims: "all", visual: "vortex", hasLead: true, sound: "wall", source: "blindfold" },
+  wc_haunted_house: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "vortex", hasLead: false, sound: "wall", source: "blindfold" },
+  wa_void_rift: { ordering: "radial", staggerMs: 0, victims: "all", visual: "vortex", hasLead: true, sound: "wall", source: "blindfold" },
 };
 
 /** A jagged lightning bolt that fills its wrapper (BoltGlyph is fixed-size). */
@@ -2727,6 +2922,807 @@ function DecreeBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   );
 }
 
+// --- 10d. Batch 4 signature visuals (WILD set + Computer Virus) --------------
+// Same rules as Batch 1-3: keyed one-shots, transform/opacity only, FLAT SVG
+// fills and solid discs (no gradients, no glow halos, 1px corners), hidden
+// under reduced motion. Removal-sourced spectacles render off the detonation
+// diff; the effect-data-sourced ones join the inert-until-wired Batch 2/3 set.
+// Almost everything composes existing fx-sig-* classes; only fx-sig-glitch is
+// genuinely new. Coral / mint / sun accents plus theme colours.
+
+/** Immolation / Conflagration: flame tongues leap up, an ember shatter, scorch. */
+function InfernoBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-rise absolute inset-x-[16%] bottom-[6%] top-[12%] block" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 40 40" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
+          <path d="M20 40 C9 30 15 22 12 11 C18 17 17 7 20 2 C23 9 25 16 28 11 C25 22 31 30 20 40 Z" fill="rgba(230,110,60,0.85)" stroke="#7a3a12" strokeWidth="1" strokeLinejoin="round" />
+          <path d="M20 40 C15 32 18 24 20 15 C22 24 25 32 20 40 Z" fill="rgba(255,214,120,0.9)" />
+        </svg>
+      </span>
+      <span className="fx-sig-flash absolute inset-[24%] block rounded-full" style={{ background: "rgba(255,168,80,0.8)", animationDelay: `${delayMs}ms` }} />
+      <ShardBurst vectors={BURST_MED} fill="#e6a85c" stroke="#7a3a12" delayMs={delayMs} sizePct={11} />
+      <span className="fx-sig-scorch absolute inset-[28%] block rounded-full" style={{ background: "rgba(26,16,8,0.7)", animationDelay: `${delayMs + 160}ms` }} />
+    </span>
+  );
+}
+
+/** Hellfire Beam: the fiercest fire spectacle. Lead double-flashes at the
+ * queen's mouth; each victim is a red-gold fireball, a wide ember shatter, and
+ * a deep scorch. */
+function HellfireBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+        <span className="fx-sig-flash absolute inset-[16%] block rounded-full" style={{ background: "rgba(226,60,40,0.85)", animationDelay: `${delayMs}ms` }} />
+        <span className="fx-sig-ring absolute inset-[10%] block rounded-full" style={{ border: "2px solid rgba(255,150,60,0.9)", animationDelay: `${delayMs}ms` }} />
+      </span>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-flash absolute inset-[12%] block rounded-full" style={{ background: "rgba(226,72,44,0.85)", animationDelay: `${delayMs}ms` }} />
+      <span className="fx-sig-flash absolute inset-[26%] block rounded-full" style={{ background: "rgba(255,214,120,0.9)", animationDelay: `${delayMs + 40}ms` }} />
+      <ShardBurst vectors={BURST_BIG} fill="#ff8a3c" stroke="#7a2410" delayMs={delayMs} sizePct={13} />
+      <span className="fx-sig-scorch absolute inset-[24%] block rounded-full" style={{ background: "rgba(24,10,6,0.75)", animationDelay: `${delayMs + 180}ms` }} />
+    </span>
+  );
+}
+
+const HAIL_DROPS = [
+  { left: "18%", w: "16%", d: 0 },
+  { left: "44%", w: "13%", d: 80 },
+  { left: "64%", w: "15%", d: 150 },
+  { left: "34%", w: "12%", d: 210 },
+];
+
+/** Hailstorm: ice pellets rain down through the square and a frost glaze sets. */
+function HailstormBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      {HAIL_DROPS.map((h, i) => (
+        <span key={i} className="fx-sig-crownfall absolute top-0 block h-[22%]" style={{ left: h.left, width: h.w, animationDelay: `${delayMs + h.d}ms` }}>
+          <svg viewBox="0 0 12 16" className="h-full w-full" aria-hidden="true">
+            <polygon points="6,0 11,7 6,16 1,7" fill="rgba(224,246,255,0.85)" stroke="#7fb8dd" strokeWidth="0.8" strokeLinejoin="round" />
+          </svg>
+        </span>
+      ))}
+      <span className="fx-sig-frost absolute inset-x-[8%] bottom-[8%] block h-[26%] rounded-[1px]" style={{ background: "rgba(198,234,255,0.5)", animationDelay: `${delayMs + 60}ms` }} />
+    </span>
+  );
+}
+
+const BLIZ_FLAKES = [
+  { left: "16%", w: "12%", d: 0 },
+  { left: "40%", w: "10%", d: 70 },
+  { left: "60%", w: "13%", d: 40 },
+  { left: "30%", w: "9%", d: 130 },
+  { left: "70%", w: "10%", d: 100 },
+];
+
+/** Whiteout: a blizzard swirls and whites out the king, snow driving past. */
+function BlizzardBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-swirl absolute inset-[10%] block" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <path d="M20 4 C30 8 32 20 20 24 C10 27 8 16 18 14 C24 13 25 19 20 20" fill="none" stroke="rgba(224,244,255,0.8)" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+      </span>
+      {BLIZ_FLAKES.map((f, i) => (
+        <span key={i} className="fx-sig-crownfall absolute top-0 block h-[16%]" style={{ left: f.left, width: f.w, animationDelay: `${delayMs + f.d}ms` }}>
+          <svg viewBox="0 0 10 10" className="h-full w-full" aria-hidden="true">
+            <circle cx="5" cy="5" r="3.4" fill="rgba(234,248,255,0.9)" />
+          </svg>
+        </span>
+      ))}
+      {lead && (
+        <span className="fx-sig-flash absolute inset-[20%] block rounded-full" style={{ background: "rgba(240,250,255,0.8)", animationDelay: `${delayMs}ms` }} />
+      )}
+    </span>
+  );
+}
+
+/** Stone Soldiers: a carved stone figure heaves up out of the bedrock. */
+function StoneRiseBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-rise absolute left-[26%] bottom-[6%] block h-[64%] w-[48%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 24 32" className="h-full w-full" aria-hidden="true">
+          <g fill="rgba(140,140,146,0.9)" stroke="#5a5a60" strokeWidth="0.8" strokeLinejoin="round">
+            <rect x="8" y="2" width="8" height="8" rx="0.5" />
+            <rect x="5" y="11" width="14" height="12" rx="0.5" />
+            <rect x="6" y="24" width="5" height="8" rx="0.5" />
+            <rect x="13" y="24" width="5" height="8" rx="0.5" />
+          </g>
+        </svg>
+      </span>
+      <span className="fx-sig-ash absolute inset-x-[20%] bottom-[6%] block h-[16%] rounded-full" style={{ background: "rgba(120,116,110,0.55)", animationDelay: `${delayMs + 90}ms` }} />
+    </span>
+  );
+}
+
+/** Mountain Range: a ridge of jagged, snow-capped rock heaves up. */
+function MountainWallBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-rise absolute inset-x-[4%] bottom-[8%] block h-[66%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 40 30" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
+          <polygon points="0,30 8,10 14,18 22,4 30,16 40,8 40,30" fill="rgba(120,110,98,0.9)" stroke="#4a443c" strokeWidth="1" strokeLinejoin="round" />
+          <polygon points="22,4 18,12 26,12" fill="rgba(224,236,240,0.7)" />
+          <polygon points="8,10 5,16 12,16" fill="rgba(224,236,240,0.6)" />
+        </svg>
+      </span>
+    </span>
+  );
+}
+
+const ROCK_DROPS = [
+  { left: "22%", w: "26%", d: 0 },
+  { left: "52%", w: "20%", d: 90 },
+  { left: "38%", w: "16%", d: 170 },
+];
+
+/** Landslide: boulders crash down and burst into rubble with a dust cloud. */
+function RockfallBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      {ROCK_DROPS.map((r, i) => (
+        <span key={i} className="fx-sig-crownfall absolute top-0 block h-[28%]" style={{ left: r.left, width: r.w, animationDelay: `${delayMs + r.d}ms` }}>
+          <svg viewBox="0 0 12 12" className="h-full w-full" aria-hidden="true">
+            <polygon points="6,0 11,3 10,9 4,11 1,6 2,2" fill="rgba(128,122,112,0.9)" stroke="#4a443c" strokeWidth="0.7" strokeLinejoin="round" />
+          </svg>
+        </span>
+      ))}
+      <ShardBurst vectors={BURST_MED} fill="#8a8478" stroke="#4a443c" delayMs={delayMs + 120} sizePct={10} />
+      <span className="fx-sig-ash absolute inset-x-[20%] bottom-[8%] block h-[18%] rounded-full" style={{ background: "rgba(120,112,102,0.55)", animationDelay: `${delayMs + 200}ms` }} />
+    </span>
+  );
+}
+
+/** Thunderhead: a charged storm cloud forms and cracks a small bolt. */
+function StormCloudBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-rise absolute inset-x-[10%] top-[16%] block h-[46%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 40 24" className="h-full w-full" aria-hidden="true">
+          <path d="M8 20 C2 20 2 12 9 12 C9 5 20 4 22 10 C30 6 38 12 33 18 C36 22 30 20 28 20 Z" fill="rgba(90,96,110,0.9)" stroke="#2f3540" strokeWidth="1" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <span className="fx-sig-afterimage absolute left-[42%] top-[46%] block h-[42%] w-[24%]" style={{ animationDelay: `${delayMs + 120}ms` }}>
+        <JagBolt />
+      </span>
+      <span className="fx-sig-flash absolute inset-[34%] block rounded-full" style={{ background: "rgba(255,246,200,0.7)", animationDelay: `${delayMs + 140}ms` }} />
+    </span>
+  );
+}
+
+/** Bayonet Charge / Spearhead: a lance drives in with an impact splat. Lead
+ * cries out with a war-shout muzzle flash. */
+function SpearChargeBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+        <span className="fx-sig-muzzle absolute left-[10%] top-[38%] block h-[24%] w-[80%] rounded-full" style={{ background: "rgba(226,196,106,0.9)", animationDelay: `${delayMs}ms` }} />
+      </span>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-streak absolute left-[-4%] top-[-4%] block h-[72%] w-[72%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <path d="M2 2 L28 28" stroke="#8a7048" strokeWidth="2.6" strokeLinecap="round" />
+          <polygon points="24,20 34,34 20,24" fill="#c9d2dc" stroke="#5b6672" strokeWidth="0.8" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <ShardBurst vectors={BURST_MED} fill="#c9d2dc" stroke="#5b6672" delayMs={delayMs + 120} sizePct={10} />
+      <span className="fx-sig-splat absolute inset-x-[24%] top-[40%] block h-[26%] rounded-full" style={{ background: "rgba(150,146,140,0.8)", animationDelay: `${delayMs + 120}ms` }} />
+    </span>
+  );
+}
+
+/** Armored Breakthrough: an armored hull rolls through with treads and debris. */
+function TankRollBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-afterimage absolute left-[6%] top-[26%] block h-[48%] w-[84%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 40 20" className="h-full w-full" aria-hidden="true">
+          <rect x="4" y="8" width="30" height="7" rx="1" fill="rgba(96,104,88,0.9)" stroke="#33402b" strokeWidth="1" />
+          <rect x="12" y="3" width="14" height="5" rx="1" fill="rgba(112,120,100,0.9)" stroke="#33402b" strokeWidth="1" />
+          <rect x="24" y="4" width="14" height="2" rx="1" fill="rgba(112,120,100,0.9)" />
+          <g fill="#2a3323">
+            <circle cx="9" cy="16" r="2.4" />
+            <circle cx="17" cy="16" r="2.4" />
+            <circle cx="25" cy="16" r="2.4" />
+            <circle cx="32" cy="16" r="2.4" />
+          </g>
+        </svg>
+      </span>
+      <ShardBurst vectors={BURST_MED} fill="#8a8478" stroke="#33402b" delayMs={delayMs + 120} sizePct={10} />
+      <span className="fx-sig-scorch absolute inset-x-[16%] bottom-[16%] block h-[16%] rounded-[1px]" style={{ background: "rgba(30,26,18,0.6)", animationDelay: `${delayMs + 160}ms` }} />
+    </span>
+  );
+}
+
+const SHELL_DROPS = [
+  { left: "30%", w: "16%", d: 0 },
+  { left: "54%", w: "13%", d: 120 },
+];
+
+/** Bombardment / Counter Battery: a shell whistles down and cracks a crater. */
+function ArtilleryBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      {SHELL_DROPS.map((s, i) => (
+        <span key={i} className="fx-sig-crownfall absolute top-0 block h-[24%]" style={{ left: s.left, width: s.w, animationDelay: `${delayMs + s.d}ms` }}>
+          <svg viewBox="0 0 10 16" className="h-full w-full" aria-hidden="true">
+            <path d="M5 0 C8 3 8 6 8 10 L8 14 L2 14 L2 10 C2 6 2 3 5 0 Z" fill="rgba(90,96,88,0.9)" stroke="#2f3530" strokeWidth="0.7" strokeLinejoin="round" />
+          </svg>
+        </span>
+      ))}
+      <span className="fx-sig-flash absolute inset-[26%] block rounded-full" style={{ background: "rgba(255,200,120,0.8)", animationDelay: `${delayMs + 130}ms` }} />
+      <ShardBurst vectors={BURST_MED} fill="#9a948a" stroke="#3a352c" delayMs={delayMs + 150} sizePct={10} />
+      <span className="fx-sig-scorch absolute inset-[30%] block rounded-full" style={{ background: "rgba(24,18,12,0.65)", animationDelay: `${delayMs + 210}ms` }} />
+    </span>
+  );
+}
+
+/** Combined Arms / Muster / Forward Outpost: a war banner plants with dust as
+ * fresh troops arrive. */
+function ReinforceBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-rise absolute left-[32%] bottom-[8%] block h-[70%] w-[40%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 24 32" className="h-full w-full" aria-hidden="true">
+          <path d="M6 32 V2" stroke="#5a4a2a" strokeWidth="2.2" strokeLinecap="round" fill="none" />
+          <path d="M6 3 H21 L17 8 L21 13 H6 Z" fill="rgba(126,181,154,0.9)" stroke="#2f4a3c" strokeWidth="1" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <span className="fx-sig-ash absolute inset-x-[22%] bottom-[6%] block h-[16%] rounded-full" style={{ background: "rgba(120,116,110,0.5)", animationDelay: `${delayMs + 90}ms` }} />
+    </span>
+  );
+}
+
+const CHUTE_DROPS = [
+  { left: "20%", w: "30%", d: 0 },
+  { left: "50%", w: "26%", d: 120 },
+];
+
+/** Paratroopers: parachutes descend behind the lines. */
+function ParadropBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      {CHUTE_DROPS.map((c, i) => (
+        <span key={i} className="fx-sig-crownfall absolute top-0 block h-[40%]" style={{ left: c.left, width: c.w, animationDelay: `${delayMs + c.d}ms` }}>
+          <svg viewBox="0 0 20 24" className="h-full w-full" aria-hidden="true">
+            <path d="M1 9 A9 9 0 0 1 19 9 Z" fill="rgba(126,181,154,0.85)" stroke="#2f4a3c" strokeWidth="0.9" strokeLinejoin="round" />
+            <path d="M1 9 L10 16 L19 9 M7 9 L10 16 M13 9 L10 16" stroke="#2f4a3c" strokeWidth="0.7" fill="none" />
+            <circle cx="10" cy="19" r="2.2" fill="rgba(96,104,88,0.95)" stroke="#2f3530" strokeWidth="0.6" />
+          </svg>
+        </span>
+      ))}
+    </span>
+  );
+}
+
+const SUPPRESS_TRACERS = [
+  { top: "30%", d: 0 },
+  { top: "50%", d: 60 },
+  { top: "68%", d: 120 },
+];
+
+/** Suppressive Fire: tracer streaks rake across and pin the target down. */
+function SuppressBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      {SUPPRESS_TRACERS.map((t, i) => (
+        <span key={i} className="fx-sig-afterimage absolute left-[6%] block h-[5%] w-[80%] rounded-[1px]" style={{ top: t.top, background: "rgba(226,196,106,0.85)", animationDelay: `${delayMs + t.d}ms` }} />
+      ))}
+      <span className="fx-sig-flash absolute left-[4%] top-[42%] block h-[18%] w-[22%] rounded-full" style={{ background: "rgba(255,214,120,0.8)", animationDelay: `${delayMs}ms` }} />
+    </span>
+  );
+}
+
+/** Double Trench: a sandbag parapet stacks up and barbed wire strings across. */
+function TrenchBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-brick absolute inset-x-[8%] bottom-[16%] block h-[24%] rounded-[1px]" style={{ background: "rgba(150,132,90,0.9)", border: "1px solid rgba(80,66,38,0.85)", animationDelay: `${delayMs}ms` }} />
+      <span className="fx-sig-rise absolute inset-x-[6%] bottom-[36%] block h-[26%]" style={{ animationDelay: `${delayMs + 80}ms` }}>
+        <svg viewBox="0 0 40 16" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
+          <path d="M0 8 L40 8 M8 4 L12 12 M20 4 L24 12 M32 4 L36 12" stroke="#8a8478" strokeWidth="1.2" fill="none" strokeLinecap="round" />
+          <g fill="#8a8478">
+            <polygon points="6,8 8,6 10,8 8,10" />
+            <polygon points="18,8 20,6 22,8 20,10" />
+            <polygon points="30,8 32,6 34,8 32,10" />
+          </g>
+        </svg>
+      </span>
+    </span>
+  );
+}
+
+/** Time Stop: a clock entombs the piece, its hands halted, a temporal ripple. */
+function TimeStopBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-ice absolute inset-[16%] block" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 32 32" className="h-full w-full" aria-hidden="true">
+          <circle cx="16" cy="16" r="13" fill="rgba(40,52,72,0.55)" stroke="#b9c4d6" strokeWidth="1.6" />
+          <path d="M16 16 V6 M16 16 L23 19" stroke="#e8eef6" strokeWidth="1.6" strokeLinecap="round" fill="none" />
+          <circle cx="16" cy="16" r="1.4" fill="#e8eef6" />
+        </svg>
+      </span>
+      <span className="fx-sig-ring absolute inset-[10%] block rounded-full" style={{ border: "1.5px solid rgba(185,196,214,0.85)", animationDelay: `${delayMs + 120}ms` }} />
+      {lead && (
+        <span className="fx-sig-flash absolute inset-[30%] block rounded-full" style={{ background: "rgba(210,224,244,0.7)", animationDelay: `${delayMs}ms` }} />
+      )}
+    </span>
+  );
+}
+
+const UNMAKE_VOXELS = [
+  { left: "30%", top: "24%", w: "13%", c: "rgba(168,119,216,0.85)", d: 0 },
+  { left: "54%", top: "30%", w: "11%", c: "rgba(140,96,200,0.8)", d: 50 },
+  { left: "36%", top: "50%", w: "14%", c: "rgba(150,110,205,0.82)", d: 90 },
+  { left: "56%", top: "52%", w: "10%", c: "rgba(120,86,180,0.8)", d: 40 },
+  { left: "44%", top: "20%", w: "9%", c: "rgba(180,140,224,0.8)", d: 70 },
+];
+
+/** Unmake / Banish: reality unravels: the square dissolves into voxels that
+ * scatter apart with an arcane flash. */
+function UnmakeBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-flash absolute inset-[24%] block rounded-full" style={{ background: "rgba(168,119,216,0.7)", animationDelay: `${delayMs}ms` }} />
+      {UNMAKE_VOXELS.map((v, i) => (
+        <span key={i} className="fx-sig-crumble absolute block rounded-[1px]" style={{ left: v.left, top: v.top, width: v.w, height: v.w, background: v.c, animationDelay: `${delayMs + v.d}ms` }} />
+      ))}
+      <ShardBurst vectors={BURST_MED} fill="#b48ce0" stroke="#5a3a86" delayMs={delayMs + 60} sizePct={10} />
+    </span>
+  );
+}
+
+/** Wrecking Ball: a great iron ball swings across on its chain, smashing the
+ * piece to rubble. Lead is the impact flash. */
+function WreckingBallBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-arc absolute inset-[2%] block" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <path d="M20 2 L20 22" stroke="#5b6672" strokeWidth="1.6" strokeDasharray="2 2" fill="none" />
+          <circle cx="20" cy="28" r="8" fill="rgba(70,76,86,0.92)" stroke="#23282f" strokeWidth="1.2" />
+          <circle cx="17" cy="25" r="2" fill="rgba(150,158,168,0.6)" />
+        </svg>
+      </span>
+      <ShardBurst vectors={BURST_MED} fill="#8a8478" stroke="#3a352c" delayMs={delayMs + 140} sizePct={11} />
+      {lead && (
+        <span className="fx-sig-flash absolute inset-[26%] block rounded-full" style={{ background: "rgba(150,146,140,0.7)", animationDelay: `${delayMs + 160}ms` }} />
+      )}
+    </span>
+  );
+}
+
+/** Pinata: a burst of confetti and candy in coral, mint, and sun. */
+function PinataBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-flash absolute inset-[26%] block rounded-full" style={{ background: "rgba(255,246,200,0.75)", animationDelay: `${delayMs}ms` }} />
+      <ShardBurst vectors={BURST_BIG} fill="#e0776b" stroke="#7a2f28" delayMs={delayMs} sizePct={11} />
+      <ShardBurst vectors={BURST_MED} fill="#7eb59a" stroke="#2f4a3c" delayMs={delayMs + 40} sizePct={10} />
+      {lead && (
+        <span
+          className="fx-sig-star absolute left-1/2 top-1/2 block h-[16%] w-[16%]"
+          style={{ marginLeft: "-8%", marginTop: "-8%", "--dx": "0%", "--dy": "-40%", "--rot": "40deg", animationDelay: `${delayMs}ms` } as React.CSSProperties}
+        >
+          <SparkStar />
+        </span>
+      )}
+    </span>
+  );
+}
+
+/** Genie Wish: a plume of smoke swirls up and a wish-sparkle pops as the queen
+ * appears. */
+function GeniePoofBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-swirl absolute inset-[14%] block" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <path d="M20 36 C12 34 14 26 20 26 C26 26 24 20 18 20 C12 20 14 12 22 12 C30 12 30 6 24 4" fill="none" stroke="rgba(168,180,196,0.7)" strokeWidth="3" strokeLinecap="round" />
+        </svg>
+      </span>
+      <ShardBurst vectors={BURST_MED} fill="#ffd95e" stroke="#8a6414" delayMs={delayMs + 120} sizePct={9} />
+      <span className="fx-sig-ash absolute inset-x-[26%] bottom-[10%] block h-[16%] rounded-full" style={{ background: "rgba(150,158,170,0.5)", animationDelay: `${delayMs + 60}ms` }} />
+    </span>
+  );
+}
+
+const GLITCH_BLOCKS = [
+  { left: "14%", top: "28%", w: "34%", h: "10%", c: "rgba(126,181,154,0.85)", d: 0 },
+  { left: "40%", top: "44%", w: "44%", h: "9%", c: "rgba(224,119,107,0.85)", d: 60 },
+  { left: "20%", top: "58%", w: "30%", h: "8%", c: "rgba(230,191,106,0.85)", d: 120 },
+  { left: "50%", top: "20%", w: "24%", h: "8%", c: "rgba(139,169,196,0.8)", d: 30 },
+];
+
+/** Computer Virus: the opponent's clock corrupts: glitch bars jitter and
+ * flicker over scanlines, with a corruption flash on the lead square. */
+function GlitchBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      {GLITCH_BLOCKS.map((g, i) => (
+        <span key={i} className="fx-sig-glitch absolute block rounded-[1px]" style={{ left: g.left, top: g.top, width: g.w, height: g.h, background: g.c, animationDelay: `${delayMs + g.d}ms` }} />
+      ))}
+      <span className="fx-sig-glitch absolute left-[10%] top-[10%] block h-[80%] w-[80%]" style={{ animationDelay: `${delayMs + 20}ms` }}>
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <g stroke="rgba(126,181,154,0.7)" strokeWidth="1" fill="none">
+            <path d="M2 12 H38 M2 20 H38 M2 28 H38" />
+          </g>
+        </svg>
+      </span>
+      {lead && (
+        <span className="fx-sig-flash absolute inset-[22%] block rounded-[1px]" style={{ background: "rgba(224,119,107,0.55)", animationDelay: `${delayMs}ms` }} />
+      )}
+    </span>
+  );
+}
+
+// --- 10e. Batch 5 signature visuals (library core + wild + funny 2nd pass) ---
+// Same rules as Batch 1-4: keyed one-shots, transform/opacity only, FLAT SVG
+// fills and solid discs (no gradients, no glow halos, 1px corners), hidden
+// under reduced motion. Removal-sourced ones render off the detonation diff;
+// the effect-data ones join the inert-until-wired zone set. Everything composes
+// existing fx-sig-* classes except the two genuinely new motions (fx-sig-rewind
+// for the backward clock, fx-sig-implode for the collapsing vortex).
+
+/** Purge / Annihilate / Shatter: a doomed piece is unmade in a puff of grey
+ * motes and a thin dissolve ring; lead adds a wider shock. */
+function DisintegrateBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span
+        className="fx-sig-ring absolute inset-[16%] block rounded-full"
+        style={{ border: "1px solid rgba(150,146,158,0.85)", animationDelay: `${delayMs}ms` }}
+      />
+      {STONE_SHARDS.map((s, i) => (
+        <span
+          key={i}
+          className="fx-sig-crumble absolute block rounded-[1px]"
+          style={{ left: s.left, top: s.top, width: s.w, height: s.w, background: s.c, animationDelay: `${delayMs + s.d}ms` }}
+        />
+      ))}
+      <ShardBurst vectors={BURST_MED} fill="#b6b0be" stroke="#5a5560" delayMs={delayMs} sizePct={10} />
+      <span
+        className="fx-sig-ash absolute inset-x-[26%] bottom-[18%] block h-[16%] rounded-full"
+        style={{ background: "rgba(120,116,124,0.55)", animationDelay: `${delayMs + 130}ms` }}
+      />
+      {lead && (
+        <span
+          className="fx-sig-shock absolute inset-[10%] block rounded-full"
+          style={{ border: "2px solid rgba(170,166,178,0.8)", animationDelay: `${delayMs}ms` }}
+        />
+      )}
+    </span>
+  );
+}
+
+/** Cavalry Charge: a knight thunders down a line. Lead kicks up a dust burst at
+ * the origin; each cleared square takes a hoof-slash and a dust splat. */
+function CavalryChargeBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+        <span
+          className="fx-sig-ash absolute inset-[18%] block rounded-full"
+          style={{ background: "rgba(150,132,98,0.6)", animationDelay: `${delayMs}ms` }}
+        />
+        <span
+          className="fx-sig-muzzle absolute left-[12%] top-[40%] block h-[20%] w-[76%] rounded-full"
+          style={{ background: "rgba(180,160,120,0.7)", animationDelay: `${delayMs}ms` }}
+        />
+      </span>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-streak absolute left-[-6%] top-[6%] block h-[64%] w-[76%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <path d="M2 26 C10 18 16 20 22 12 L18 20 L26 16 L20 26 L30 24" fill="none" stroke="#8a7048" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <span className="fx-sig-arc absolute inset-[10%] block" style={{ animationDelay: `${delayMs + 90}ms` }}>
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <path d="M6 34 C10 18 24 8 36 10 C24 14 16 22 16 34 Z" fill="rgba(201,210,220,0.6)" stroke="#5b6672" strokeWidth="1" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <span
+        className="fx-sig-splat absolute inset-x-[22%] bottom-[16%] block h-[22%] rounded-full"
+        style={{ background: "rgba(150,132,98,0.6)", animationDelay: `${delayMs + 120}ms` }}
+      />
+    </span>
+  );
+}
+
+const STONEHIDE_PLATES = [
+  { left: "10%", bottom: "12%", d: 0 },
+  { left: "56%", bottom: "12%", d: 60 },
+  { left: "32%", bottom: "44%", d: 120 },
+];
+
+/** Stoneskin / Form Square: slate plates lock over the piece as a stone shell
+ * grows; lead thumps a stone ring. */
+function StonehideBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-grow absolute inset-[16%] block rounded-[2px]" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <path d="M8 36 C4 22 8 6 20 4 C32 6 36 22 32 36 Z" fill="rgba(140,140,146,0.32)" stroke="rgba(168,168,176,0.9)" strokeWidth="1.6" strokeLinejoin="round" />
+          <path d="M20 5 V35 M9 20 H31" stroke="rgba(150,150,158,0.7)" strokeWidth="0.9" fill="none" />
+        </svg>
+      </span>
+      {STONEHIDE_PLATES.map((p, i) => (
+        <span
+          key={i}
+          className="fx-sig-brick absolute block h-[26%] w-[28%] rounded-[1px]"
+          style={{ left: p.left, bottom: p.bottom, background: "rgba(128,128,134,0.9)", border: "1px solid rgba(70,70,76,0.85)", animationDelay: `${delayMs + p.d}ms` }}
+        />
+      ))}
+      {lead && (
+        <span
+          className="fx-sig-ring absolute inset-[10%] block rounded-full"
+          style={{ border: "1.5px solid rgba(168,168,176,0.85)", animationDelay: `${delayMs + 160}ms` }}
+        />
+      )}
+    </span>
+  );
+}
+
+/** Royal Aegis / Frost Ward / Panic Button / Borrowed Time: a rune ward ring
+ * snaps in and pulses; lead stamps a sigil hexagon at its heart. */
+function WardPulseBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span
+        className="fx-sig-ring absolute inset-[12%] block rounded-full"
+        style={{ border: "1.5px solid rgba(126,181,154,0.9)", animationDelay: `${delayMs}ms` }}
+      />
+      <span
+        className="fx-sig-flash absolute inset-[26%] block rounded-full"
+        style={{ background: "rgba(126,181,154,0.45)", animationDelay: `${delayMs}ms` }}
+      />
+      {lead && (
+        <span className="fx-sig-grow absolute inset-[24%] block" style={{ animationDelay: `${delayMs + 60}ms` }}>
+          <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+            <polygon points="20,4 34,12 34,28 20,36 6,28 6,12" fill="rgba(20,30,26,0.6)" stroke="rgba(163,209,150,0.9)" strokeWidth="1.6" strokeLinejoin="round" />
+            <path d="M20 12 V28 M13 16 H27 M13 24 H27" stroke="rgba(163,209,150,0.8)" strokeWidth="1" fill="none" strokeLinecap="round" />
+          </svg>
+        </span>
+      )}
+    </span>
+  );
+}
+
+/** Verdant Shield: a canopy of bark and leaves unfurls over the pawns. */
+function CanopyBurst({ delayMs }: { delayMs: number }) {
+  const leaf = "M22 20 C12 6 4 8 3 20 C7 16 12 17 15 21 C10 20 7 23 6 28 C11 23 16 22 22 22 Z";
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-rise absolute left-[44%] bottom-[8%] block h-[54%] w-[12%] rounded-[1px]" style={{ background: "rgba(90,68,44,0.85)", animationDelay: `${delayMs}ms` }} />
+      <span className="fx-sig-wing-l absolute left-[6%] top-[16%] block h-[46%] w-[46%]" style={{ animationDelay: `${delayMs + 60}ms` }}>
+        <svg viewBox="0 0 24 34" className="h-full w-full" aria-hidden="true">
+          <path d={leaf} fill="rgba(126,181,154,0.75)" stroke="#2f4a3c" strokeWidth="1" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <span className="fx-sig-wing-r absolute right-[6%] top-[16%] block h-[46%] w-[46%]" style={{ animationDelay: `${delayMs + 60}ms` }}>
+        <svg viewBox="0 0 24 34" className="h-full w-full" aria-hidden="true" style={{ transform: "scaleX(-1)" }}>
+          <path d={leaf} fill="rgba(126,181,154,0.75)" stroke="#2f4a3c" strokeWidth="1" strokeLinejoin="round" />
+        </svg>
+      </span>
+    </span>
+  );
+}
+
+/** Time Thief / Chrono Siphon: a clock face spins its hands backward while
+ * stolen seconds bleed off to the side; lead flashes as time is siphoned. */
+function ChronoStealBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-ice absolute inset-[18%] block" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 32 32" className="h-full w-full" aria-hidden="true">
+          <circle cx="16" cy="16" r="13" fill="rgba(40,44,58,0.5)" stroke="#d8b56e" strokeWidth="1.6" />
+          <g className="fx-sig-rewind">
+            <path d="M16 16 V6 M16 16 L22 20" stroke="#f0dca8" strokeWidth="1.8" strokeLinecap="round" fill="none" />
+          </g>
+          <circle cx="16" cy="16" r="1.5" fill="#f0dca8" />
+        </svg>
+      </span>
+      <span
+        className="fx-sig-ash absolute right-[14%] top-[16%] block h-[24%] w-[22%] rounded-full"
+        style={{ background: "rgba(216,181,110,0.5)", animationDelay: `${delayMs + 120}ms` }}
+      />
+      {lead && (
+        <span
+          className="fx-sig-flash absolute inset-[30%] block rounded-full"
+          style={{ background: "rgba(240,220,168,0.7)", animationDelay: `${delayMs}ms` }}
+        />
+      )}
+    </span>
+  );
+}
+
+/** Blink / Far Step / Yeet / Warp: a piece teleports in on a rune ring with a
+ * pop of arcane light and a scatter of sparks. */
+function BlinkBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-swirl absolute inset-[16%] block" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <circle cx="20" cy="20" r="16" fill="none" stroke="rgba(168,119,216,0.85)" strokeWidth="1.4" strokeDasharray="4 3" />
+          <polygon points="20,7 31,26 9,26" fill="none" stroke="rgba(190,150,230,0.8)" strokeWidth="1" />
+        </svg>
+      </span>
+      <span
+        className="fx-sig-flash absolute inset-[30%] block rounded-full"
+        style={{ background: "rgba(190,150,230,0.6)", animationDelay: `${delayMs}ms` }}
+      />
+      <span
+        className="fx-sig-ring absolute inset-[18%] block rounded-full"
+        style={{ border: "1px solid rgba(168,119,216,0.85)", animationDelay: `${delayMs + 60}ms` }}
+      />
+      <ShardBurst vectors={BURST_MED} fill="#c9a6ec" stroke="#5a3a86" delayMs={delayMs + 60} sizePct={9} />
+    </span>
+  );
+}
+
+/** Pizza / Clown Car / Ducks / Goose: a coral summoning portal swirls open and
+ * a shaft of light lifts the new arrival in, sparks popping. */
+function PortalBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-swirl absolute inset-[12%] block" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <circle cx="20" cy="20" r="17" fill="none" stroke="#e0776b" strokeWidth="1.6" />
+          <circle cx="20" cy="20" r="11" fill="none" stroke="#f0b0a6" strokeWidth="1" strokeDasharray="3 3" />
+          <circle cx="20" cy="20" r="5" fill="none" stroke="#e0776b" strokeWidth="1" />
+        </svg>
+      </span>
+      <span
+        className="fx-sig-rise absolute left-[40%] bottom-[16%] block h-[52%] w-[20%] rounded-[1px]"
+        style={{ background: "rgba(240,176,166,0.5)", animationDelay: `${delayMs + 90}ms` }}
+      />
+      <ShardBurst vectors={BURST_MED} fill="#f0b0a6" stroke="#7a2f28" delayMs={delayMs + 120} sizePct={9} />
+    </span>
+  );
+}
+
+const BORDERWARD_RUNES = [
+  { left: "16%", d: 0 },
+  { left: "44%", d: 70 },
+  { left: "70%", d: 140 },
+];
+
+/** Glyph Seal / Border Ward: a translucent curtain of warding runes rises to
+ * seal the ground. */
+function BorderWardBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span
+        className="fx-sig-brick absolute inset-x-[8%] bottom-[8%] block h-[74%] rounded-[1px]"
+        style={{ background: "rgba(126,181,154,0.22)", border: "1px solid rgba(163,209,150,0.7)", animationDelay: `${delayMs}ms` }}
+      />
+      {BORDERWARD_RUNES.map((r, i) => (
+        <span
+          key={i}
+          className="fx-sig-rise absolute bottom-[24%] block h-[30%] w-[18%]"
+          style={{ left: r.left, animationDelay: `${delayMs + 120 + r.d}ms` }}
+        >
+          <svg viewBox="0 0 20 20" className="h-full w-full" aria-hidden="true">
+            <path d="M10 2 V18 M4 7 H16 M4 13 H16" stroke="rgba(163,209,150,0.8)" strokeWidth="1.4" strokeLinecap="round" fill="none" />
+          </svg>
+        </span>
+      ))}
+    </span>
+  );
+}
+
+const BANANA_PEELS = [
+  { left: "12%", w: "30%", rot: -18, d: 0 },
+  { left: "46%", w: "26%", rot: 22, d: 90 },
+  { left: "30%", w: "32%", rot: -8, d: 180 },
+];
+
+/** Banana Peel Trail: a scatter of banana peels drops and slides across the
+ * file. Flat SVG peels, no emoji. */
+function BananaBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      {BANANA_PEELS.map((p, i) => (
+        <span
+          key={i}
+          className="fx-sig-crownfall absolute top-0 block h-[26%]"
+          style={{ left: p.left, width: p.w, transform: `rotate(${p.rot}deg)`, animationDelay: `${delayMs + p.d}ms` }}
+        >
+          <svg viewBox="0 0 24 16" className="h-full w-full" aria-hidden="true">
+            <path d="M2 4 C6 14 18 15 22 6 C20 9 12 10 8 4 C7 2 4 2 2 4 Z" fill="#f2c94c" stroke="#8a6414" strokeWidth="1" strokeLinejoin="round" />
+            <path d="M8 4 C10 8 16 9 20 6" fill="none" stroke="#c79a3a" strokeWidth="0.7" />
+          </svg>
+        </span>
+      ))}
+    </span>
+  );
+}
+
+const MINE_POS = [
+  { left: "16%", d: 0 },
+  { left: "44%", d: 90 },
+  { left: "70%", d: 180 },
+];
+
+/** Claymore Line: a row of mines clicks up out of the ground and arms. */
+function MinefieldBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      {MINE_POS.map((m, i) => (
+        <span
+          key={i}
+          className="fx-sig-brick absolute bottom-[16%] block h-[24%] w-[18%]"
+          style={{ left: m.left, animationDelay: `${delayMs + m.d}ms` }}
+        >
+          <svg viewBox="0 0 20 20" className="h-full w-full" aria-hidden="true">
+            <path d="M3 16 C3 10 17 10 17 16 Z" fill="rgba(96,104,72,0.92)" stroke="#33402b" strokeWidth="1" strokeLinejoin="round" />
+            <path d="M6 20 L6 15 M14 20 L14 15" stroke="#33402b" strokeWidth="1.2" strokeLinecap="round" />
+            <path d="M10 10 V4" stroke="#8a8478" strokeWidth="1" strokeLinecap="round" />
+            <circle cx="10" cy="3.5" r="1.4" fill="#e0776b" />
+          </svg>
+        </span>
+      ))}
+      <span
+        className="fx-sig-ash absolute inset-x-[20%] bottom-[12%] block h-[14%] rounded-full"
+        style={{ background: "rgba(110,104,84,0.5)", animationDelay: `${delayMs + 120}ms` }}
+      />
+    </span>
+  );
+}
+
+// Shards fly IN toward the centre of the collapsing vortex (fx-sig-implode
+// starts them out at --dx/--dy and pulls them to the core).
+const VORTEX_VEC = [
+  { dx: "300%", dy: "-230%", rot: "220deg", d: 0 },
+  { dx: "-280%", dy: "-250%", rot: "-210deg", d: 20 },
+  { dx: "320%", dy: "170%", rot: "260deg", d: 10 },
+  { dx: "-300%", dy: "200%", rot: "-190deg", d: 26 },
+  { dx: "40%", dy: "-320%", rot: "150deg", d: 6 },
+  { dx: "-60%", dy: "300%", rot: "-150deg", d: 30 },
+];
+
+/** Void Rift / Black Hole / Haunted House: a dark maw opens and everything is
+ * pulled inward as it collapses to a point; lead adds an event-horizon ring. */
+function VortexBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span
+        className="fx-sig-implode absolute left-1/2 top-1/2 ml-[-24%] mt-[-24%] block h-[48%] w-[48%] rounded-full"
+        style={{ background: "rgba(18,14,24,0.92)", border: "1.5px solid rgba(122,91,154,0.9)", "--dx": "0%", "--dy": "0%", "--rot": "0deg", animationDelay: `${delayMs}ms` } as React.CSSProperties}
+      />
+      {VORTEX_VEC.map((v, i) => (
+        <span
+          key={i}
+          className="fx-sig-implode absolute left-1/2 top-1/2 ml-[-5%] mt-[-5%] block h-[10%] w-[10%]"
+          style={{ "--dx": v.dx, "--dy": v.dy, "--rot": v.rot, animationDelay: `${delayMs + v.d}ms` } as React.CSSProperties}
+        >
+          <SigShard fill="#a48cc4" stroke="#463357" variant={i} />
+        </span>
+      ))}
+      {lead && (
+        <span
+          className="fx-sig-ring absolute inset-[14%] block rounded-full"
+          style={{ border: "1.5px solid rgba(150,120,186,0.85)", animationDelay: `${delayMs}ms` }}
+        />
+      )}
+    </span>
+  );
+}
+
 /** One square's slice of a signature sequence. `role` is "lead" for the single
  * origin flourish (nova's pop, atomic's central thump, the siege muzzle) and
  * "target" for every cleared enemy square; `delayMs` is the pre-computed
@@ -2840,6 +3836,74 @@ export function SignatureOverlay({
       return <SmiteBurst lead={lead} delayMs={delayMs} />;
     case "decree":
       return <DecreeBurst lead={lead} delayMs={delayMs} />;
+    // --- Batch 4 (WILD set + Computer Virus) ---
+    case "inferno":
+      return <InfernoBurst delayMs={delayMs} />;
+    case "hellfire":
+      return <HellfireBurst lead={lead} delayMs={delayMs} />;
+    case "rockfall":
+      return <RockfallBurst delayMs={delayMs} />;
+    case "unmake":
+      return <UnmakeBurst delayMs={delayMs} />;
+    case "wreckingball":
+      return <WreckingBallBurst lead={lead} delayMs={delayMs} />;
+    case "pinata":
+      return <PinataBurst lead={lead} delayMs={delayMs} />;
+    case "artillery":
+      return <ArtilleryBurst delayMs={delayMs} />;
+    case "spearcharge":
+      return <SpearChargeBurst lead={lead} delayMs={delayMs} />;
+    case "tankroll":
+      return <TankRollBurst delayMs={delayMs} />;
+    case "hailstorm":
+      return <HailstormBurst delayMs={delayMs} />;
+    case "blizzard":
+      return <BlizzardBurst lead={lead} delayMs={delayMs} />;
+    case "stormcloud":
+      return <StormCloudBurst delayMs={delayMs} />;
+    case "stonerise":
+      return <StoneRiseBurst delayMs={delayMs} />;
+    case "mountainwall":
+      return <MountainWallBurst delayMs={delayMs} />;
+    case "trench":
+      return <TrenchBurst delayMs={delayMs} />;
+    case "reinforce":
+      return <ReinforceBurst delayMs={delayMs} />;
+    case "paradrop":
+      return <ParadropBurst delayMs={delayMs} />;
+    case "geniepoof":
+      return <GeniePoofBurst delayMs={delayMs} />;
+    case "suppress":
+      return <SuppressBurst delayMs={delayMs} />;
+    case "timestop":
+      return <TimeStopBurst lead={lead} delayMs={delayMs} />;
+    case "glitch":
+      return <GlitchBurst lead={lead} delayMs={delayMs} />;
+    // --- Batch 5 (library core + wild + funny second pass) ---
+    case "disintegrate":
+      return <DisintegrateBurst lead={lead} delayMs={delayMs} />;
+    case "cavalrycharge":
+      return <CavalryChargeBurst lead={lead} delayMs={delayMs} />;
+    case "stonehide":
+      return <StonehideBurst lead={lead} delayMs={delayMs} />;
+    case "wardpulse":
+      return <WardPulseBurst lead={lead} delayMs={delayMs} />;
+    case "canopy":
+      return <CanopyBurst delayMs={delayMs} />;
+    case "chronosteal":
+      return <ChronoStealBurst lead={lead} delayMs={delayMs} />;
+    case "blink":
+      return <BlinkBurst delayMs={delayMs} />;
+    case "portal":
+      return <PortalBurst delayMs={delayMs} />;
+    case "borderward":
+      return <BorderWardBurst delayMs={delayMs} />;
+    case "banana":
+      return <BananaBurst delayMs={delayMs} />;
+    case "minefield":
+      return <MinefieldBurst delayMs={delayMs} />;
+    case "vortex":
+      return <VortexBurst lead={lead} delayMs={delayMs} />;
     default:
       return null;
   }

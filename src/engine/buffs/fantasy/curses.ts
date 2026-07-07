@@ -20,12 +20,12 @@ export const FANTASY_CURSES: Buff[] = [
       id: "evil_eye",
       name: "Evil Eye",
       description:
-        "One enemy piece cannot move for 2 of their turns. Kings cannot be targeted. (Personality already lives in the separate flavor field.)",
+        "One enemy piece you choose cannot move for 2 of their turns. Kings cannot be targeted.",
       tier: 2,
       category: "item",
       flavor: "It feels the stare and dares not move.",
     },
-    freezeTarget(2),
+    freezeTarget(2, "charm"),
   ),
   card(
     {

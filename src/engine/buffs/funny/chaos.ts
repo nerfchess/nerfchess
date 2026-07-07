@@ -43,7 +43,7 @@ export const FUNNY_CHAOS: Buff[] = [
     {
       id: "trapdoor",
       name: "Trapdoor",
-      description: "Open a trapdoor on an empty square: the next enemy piece to step onto it (never a king) drops out of the game. It stays open for 3 of your turns.",
+      description: "Open a trapdoor on an empty square. For your next 3 turns, any enemy piece except a king that moves onto that square is removed from the game.",
       tier: 4,
       category: "attack",
       flavor: "Mind the gap.",
