@@ -198,11 +198,26 @@ function pruneOrphanedSquareEffects(game: NerfGame) {
   const bs = game.buffs;
   if (!bs) return;
   bs.effects = bs.effects.filter((e) => {
-    // A trade-off timer whose piece was captured (or otherwise vanished)
-    // before it expired has nothing left to reclaim: drop it like a freeze.
-    if (e.kind !== "freeze" && e.kind !== "walnut" && e.kind !== "timed_loss") return true;
-    const p = game.board.pieces[e.sq];
-    return !!p && p.color === e.owner;
+    if (e.kind === "freeze" || e.kind === "walnut" || e.kind === "timed_loss") {
+      // A trade-off timer whose piece was captured (or otherwise vanished)
+      // before it expired has nothing left to reclaim: drop it like a freeze.
+      const p = game.board.pieces[e.sq];
+      return !!p && p.color === e.owner;
+    }
+    // A square-list shield only protects pieces standing on its squares. When
+    // a shielded piece moves away (without the shield-follow keeping up, e.g.
+    // a buff relocated or removed it) or is captured, its square must drop
+    // from the list, or the shield would later protect whatever owner piece
+    // next steps onto that square. A whole-army shield (squares null) is
+    // unbounded and never pruned; a shield whose list empties is gone.
+    if (e.kind === "shield" && e.squares) {
+      e.squares = e.squares.filter((sq) => {
+        const p = game.board.pieces[sq];
+        return !!p && p.color === e.owner;
+      });
+      return e.squares.length > 0;
+    }
+    return true;
   });
 }
 

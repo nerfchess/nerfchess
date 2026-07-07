@@ -3,7 +3,17 @@ import Link from "next/link";
 import { InfoPageLayout, InfoSection } from "@/components/InfoPageLayout";
 
 export const metadata: Metadata = {
-  title: "About | Nerf Chess",
+  title: "About Nerf Chess: the chess variant with secrets and power-ups",
+  description:
+    "Nerf Chess is a free online chess variant with two modes: Nerf mode gives every player a secret handicap, and Buff mode lets both players draft power-up cards. Win by capturing the king. Learn what it is and why it plays differently.",
+  keywords: [
+    "about nerf chess",
+    "what is nerf chess",
+    "chess variant with power ups",
+    "chess with secret rules",
+    "capture the king chess",
+  ],
+  alternates: { canonical: "/about" },
 };
 
 export default function AboutPage() {

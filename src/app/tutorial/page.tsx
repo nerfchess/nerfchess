@@ -1,5 +1,63 @@
+import type { Metadata } from "next";
 import { SiteHeader } from "@/components/SiteHeader";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Nerf Chess tutorial: the five house rules and card types",
+  description:
+    "Learn to play Nerf Chess in minutes. The five house rules (win by capturing the king, no checkmate, secret nerfs) and the four card types: nerf, buff, hex, and boon. Then jump into a game.",
+  keywords: [
+    "how to play nerf chess",
+    "nerf chess rules",
+    "nerf chess tutorial",
+    "chess with power ups how to play",
+    "capture the king chess rules",
+    "chess variant rules",
+  ],
+  alternates: { canonical: "/tutorial" },
+};
+
+// HowTo structured data: a short, honest step list for onboarding a new
+// player. Google can surface it as a how-to result and AI engines can cite
+// the steps directly.
+const howToJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  name: "How to play Nerf Chess",
+  description:
+    "Nerf Chess is a chess variant with two modes. Win by capturing the king; there is no checkmate. Draft cards every 5 moves.",
+  totalTime: "PT5M",
+  step: [
+    {
+      "@type": "HowToStep",
+      position: 1,
+      name: "Pick a mode",
+      text: "Choose Buff mode to draft power-up cards with no handicaps, or Nerf mode to carry a secret handicap you pick from two cards.",
+      url: "https://nerfchess.com/tutorial#modes",
+    },
+    {
+      "@type": "HowToStep",
+      position: 2,
+      name: "Play chess, with two changes",
+      text: "Pieces move as in normal chess, but there is no checkmate or stalemate and the king is a capturable piece that may move into attacked squares.",
+      url: "https://nerfchess.com/tutorial#rules",
+    },
+    {
+      "@type": "HowToStep",
+      position: 3,
+      name: "Draft a card every 5 moves",
+      text: "Every 5 of your own moves you are offered two cards and pick one: a buff for yourself, a hex to curse your opponent, or a boon to soften your nerf. Skip to bank a stronger offer.",
+      url: "https://nerfchess.com/tutorial#cards",
+    },
+    {
+      "@type": "HowToStep",
+      position: 4,
+      name: "Capture the king to win",
+      text: "The game ends when a king is physically captured, a nerf's lose condition fires, or a player resigns. Read your opponent and take the king.",
+      url: "https://nerfchess.com/tutorial#win",
+    },
+  ],
+};
 
 const RULES = [
   {
@@ -59,6 +117,10 @@ const CARD_TYPES = [
 export default function TutorialPage() {
   return (
     <main className="min-h-screen pb-20">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(howToJsonLd) }}
+      />
       <SiteHeader />
       <section className="max-w-3xl mx-auto px-6 pt-4">
         <div className="smallcaps text-[11px] text-parchment-400">how to play</div>

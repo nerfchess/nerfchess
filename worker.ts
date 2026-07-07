@@ -399,7 +399,7 @@ type HouseSeekEntry = {
 // (deserializing every finished game's move history), which on a bloated table
 // blew the DO CPU limit before it could cache or GC anything: the crash loop.
 const liveIdsKey = "live:ids";
-const buildVersion = "draft-reroll-1";
+const buildVersion = "house-roster-30-1";
 // How long the moderator card-overrides snapshot (the card_overrides table:
 // disabled cards and tier moves) is cached in the DO before re-reading D1.
 // Loaded lazily on match creation and the opening nerf deal, never on a
@@ -1446,6 +1446,14 @@ export class GameServer extends DurableObject<Env> {
         bc: Math.round(clocks.b),
         nerfs: { w: match.setup.whiteNerfId, b: match.setup.blackNerfId },
       });
+    }
+    // Seed this seat's spectator display with the current watcher list, so a
+    // player who joins (or reconnects) while people are already watching sees
+    // them right away, not only after the next watch/leave broadcast. Cheap:
+    // watcherInfo is an in-memory pass over the sessions map, no storage.
+    if (ws) {
+      const { n, names } = this.watcherInfo(match.id);
+      if (n > 0) send(ws, "watchers", { n, names });
     }
   }
 
@@ -2813,13 +2821,21 @@ export class GameServer extends DurableObject<Env> {
           if (humanSeat) {
             // A human is seated: deleting the record would close their
             // socket with "Game expired" and erase a rated game with no end
-            // frame. The house seat resigns through the normal end flow
-            // instead, so the rating is recorded and the end frame goes out.
+            // frame. End it gracefully as an UNRATED DRAW instead. The old
+            // code resigned the house seat here (handing the human a win),
+            // which is the "bot randomly resigned for no reason" report: a
+            // single transient action failure (engine hiccup, a stale bot id
+            // after a roster rename, a storage blip) is NOT a lost position,
+            // so the bot must not concede it. A draw settles the record and
+            // sends the end frame without a bogus result or rating movement.
+            // Bots only ever resign through the normal move path, and only
+            // when the position is genuinely lost (no legal move at all).
             if (!match.result) {
               match.clocks = this.currentClocks(match);
               match.runningSince = null;
-              match.result = { winner: humanSeat, reason: "resignation" };
+              match.result = { winner: "draw", reason: "game interrupted" };
               match.completedAt = Date.now();
+              match.rated = false;
             }
             await this.endMatch(match, false);
           } else {
@@ -4904,18 +4920,34 @@ export class GameServer extends DurableObject<Env> {
           }
         }
       }
-      // Display presence: the ENTIRE house roster shows as online so the lobby
-      // always looks busy (35+ players), even when most personas are neither
-      // seeking nor in a live game. A persona already added above keeps its
-      // richer status ("playing" or "searching"); the rest show plain "online".
-      // Rating and avatar come straight from the persona (houseSeedRating + the
-      // flower avatar), so this adds NO D1 work and spawns no real games/seeks.
-      for (const persona of HOUSE_ROSTER) {
-        if (seen.has(persona.userId)) continue;
+      // Display presence: the house roster fills out the lobby so it never
+      // looks dead. Personas already added above keep their REAL status
+      // ("playing" from a live game, "searching" from a seek); those are never
+      // touched here. The rest are otherwise idle. Rather than parking every one
+      // of them on "online" (which made the whole roster read as idle, the
+      // reported "everyone shows online" bug), show a rotating share of the idle
+      // personas as bot-vs-bot "playing" so the lobby reads as busy with games.
+      // This is display only: it spawns no real games, does no D1 work, and
+      // touches no storage. The rotation is a pure function of the persona id
+      // and a coarse ~45s time bucket, so it is stable across a poll burst and
+      // drifts slowly (different bots appear in games over time). Rating and
+      // avatar come straight from the persona (houseSeedRating + flower avatar).
+      const idlePersonas = HOUSE_ROSTER.filter((p) => !seen.has(p.userId));
+      // Rank the idle personas by a time-bucketed hash for a stable, slowly
+      // rotating order, then mark the leading share "playing" (rounded to whole
+      // pairs so they read as paired-off bot-vs-bot games) and the rest online.
+      const rotationBucket = Math.floor(now / 45_000);
+      const rankedIdle = idlePersonas
+        .map((p) => ({ p, key: fnv1a(`${p.userId}:${rotationBucket}`) }))
+        .sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0))
+        .map((x) => x.p);
+      const idlePlayingCount = Math.floor((rankedIdle.length * 0.5) / 2) * 2;
+      for (let i = 0; i < rankedIdle.length; i++) {
+        const persona = rankedIdle[i];
         seen.set(persona.userId, {
           name: persona.name,
           rating: houseSeedRating(persona),
-          status: "online",
+          status: i < idlePlayingCount ? "playing" : "online",
           avatar: persona.avatar,
         });
       }

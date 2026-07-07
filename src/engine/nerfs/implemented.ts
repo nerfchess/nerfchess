@@ -385,6 +385,22 @@ export const COWARDLY: Nerf = db({
     const backward = moves.filter((m) => (RANK(m.to) - RANK(m.from)) * (dir > 0 ? 1 : -1) > 0);
     return backward;
   },
+  checkLoss: (_s, ctx) => {
+    // Mirror EYE_FOR_AN_EYE: judged right after my move. If the opponent's move
+    // just before it was a capture, mine had to be a retreat (a strictly
+    // backward step). filterMoves already forces backward moves whenever one
+    // exists, so this only fires when no backward move was available and the
+    // empty-filter safety net let me move otherwise: that is the promised loss,
+    // not a soft-lock.
+    const h = ctx.board.history;
+    const last = h[h.length - 1];
+    if (!last || last.color !== ctx.me) return null;
+    const prev = h[h.length - 2];
+    if (!prev || prev.color === ctx.me || !prev.captured) return null;
+    const dir = ctx.me === "w" ? -1 : 1;
+    const retreated = (RANK(last.to) - RANK(last.from)) * dir > 0;
+    return retreated ? null : { reason: "did not retreat after a capture" };
+  },
   hint: (_s, ctx, legal) => {
     if (!ctx.opponentLastMove?.captured) return null;
     return {

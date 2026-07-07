@@ -76,74 +76,55 @@ export type HousePersona = {
   avatar: string;
 };
 
-// Lichess-style usernames: lowercase/CamelCase mixes, chess words, meme and
-// teen-culture handles (varied capitalization, some ALLCAPS, a few numbers),
-// nothing that says "bot". Roster of 50 for a busy lobby and a load test.
-// Ratings were lifted again: the floor is 1550 and a new top band reaches 2200,
-// with several personas seated in the 2100-2200 range so the top of the
-// leaderboard is a spread of numbers, not a single tier. The 80ms search
-// ceiling still caps real strength, so every tier from 1750 up is presentation.
+// Natural, realistic chess-site handles: a believable mix of casual gamertags,
+// chess-themed handles, first-name-plus-number styles, lowercase handles, and a
+// few ALLCAPS, nothing that says "bot". Roster of 50 for a busy lobby and a load
+// test. A handful of owner-chosen meme names are kept verbatim in the roster.
+// Ratings: the floor is 1550 and a top band reaches 2200, with several personas
+// seated in the 2100-2200 range so the top of the leaderboard is a spread of
+// numbers, not a single tier. The 80ms search ceiling still caps real strength,
+// so every tier from 1750 up is presentation.
 // Rough mix: 10 near 1550, 10 near 1750, 8 near 1900, 6 near 1950, 5 near 2000,
 // 4 near 2050, and 7 spread across the 2100-2200 top band. (The +-40 jitter in
 // houseSeedRating still applies on top of each tier.)
 const PERSONA_DEFS: Array<[name: string, skill: HouseSkill]> = [
   // ~1550
-  ["pawnstorm77", 1550],
-  ["f6isfine", 1550],
-  ["waterbottle", 1550],
-  ["iloveproteinbars", 1550],
-  ["blunderbuss77", 1550],
-  ["h4nginqueen", 1550],
-  ["skibidiOhio", 1550],
-  ["touchgrass404", 1550],
-  ["delulu_dan", 1550],
-  ["noCapFr123", 1550],
+  ["rook_ranger", 1550],
+  ["coffeeknight", 1550],
+  ["blitzbrain", 1550],
+  ["night0wl", 1550],
+  ["sarah92", 1550],
   // ~1750
-  ["grade11isscary", 1750],
-  ["SIXSEVENHAHAHAH", 1750],
-  ["bongcloudbeliever", 1750],
-  ["enpassantforced", 1750],
-  ["caroCannon", 1750],
-  ["zugzwangg", 1750],
-  ["rizzler2000", 1750],
-  ["yeetusdeletus", 1750],
-  ["vibeCheck99", 1750],
-  ["fianchettofan", 1750],
+  ["kev_in99", 1750],
+  ["frostbyte", 1750],
+  ["sleepyknight", 1750],
+  ["omar_23", 1750],
+  ["CHECKMATE99", 1750],
+  ["discocheck", 1750],
   // ~1900
-  ["LondonSystemFan", 1900],
-  ["bssfan", 1900],
-  ["timmychenbiggestfan", 1900],
-  ["isolanihater", 1900],
-  ["GYATTlord", 1900],
-  ["amongusImposter", 1900],
-  ["griddyGandalf", 1900],
-  ["mewingMaxxer", 1900],
+  ["sicilian_sam", 1900],
+  ["natalie88", 1900],
+  ["forkmaster", 1900],
+  ["backrankbetty", 1900],
+  ["capitals", 1900],
   // ~1950
-  ["kniveskniqht", 1950],
-  ["endgameEnjoyer", 1950],
-  ["exchangesac", 1950],
-  ["sigmaGrindset", 1950],
-  ["quandaledingle", 1950],
-  ["brainrotBishop", 1950],
+  ["matt_b44", 1950],
+  ["najdorf_nate", 1950],
+  ["priya_r", 1950],
   // ~2000
-  ["berserkedd", 2000],
-  ["josephleungadmirer", 2000],
-  ["anarchychess", 2000],
-  ["fanumtaxer", 2000],
-  ["L_plus_ratio", 2000],
+  ["tom_lee23", 2000],
+  ["endgamegrace", 2000],
+  ["petrosianfan", 2000],
   // ~2050
-  ["zwischenzugzz", 2050],
-  ["tacticstornado", 2050],
-  ["outpostcrab", 2050],
-  ["OHIOFINALBOSS", 2050],
+  ["riptide", 2050],
+  ["KINGSLAYER", 2050],
   // 2100-2200 top band, spread so the leaderboard head is not a block of
   // identical numbers (the jitter in houseSeedRating still applies on top).
-  ["smotheredM8", 2100],
-  ["kingcongo", 2100],
+  ["passed_pawn", 2100],
   ["Stickygamer123", 2100],
-  ["prophylaxispro", 2150],
+  ["mellowmove", 2150],
   ["ilovewhitestickystuff", 2150],
-  ["conversionmachine", 2200],
+  ["cobrakai", 2200],
   ["ilovemysister", 2200],
 ];
 

@@ -118,8 +118,12 @@ export const FUNNY_SLAPSTICK: Buff[] = [
       (_inst, api, picks) => {
         const sq = picks[0]?.square;
         if (sq == null) return;
-        addEffect(api, { kind: "shield", owner: api.me, squares: [sq], turns: 2 });
-        addEffect(api, { kind: "freeze", sq, owner: api.me, turns: 2 });
+        // "2 turns" for both halves. The shield gets the +1 activation bump, so
+        // turns:1 becomes 2 of the opponent's turns. The freeze gets no bump
+        // and self-ticks once on this activation turn, so turns:3 nets 2 of
+        // your own turns wrapped.
+        addEffect(api, { kind: "shield", owner: api.me, squares: [sq], turns: 1 });
+        addEffect(api, { kind: "freeze", sq, owner: api.me, turns: 3 });
       },
     ),
   ),
