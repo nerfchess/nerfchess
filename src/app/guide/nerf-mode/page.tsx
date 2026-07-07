@@ -39,9 +39,11 @@ export default function NerfModePage() {
         <p>
           Nerf mode is not only about the opening handicaps. Every 5 of your own moves you
           draft a card. Most offers are <strong>hexes</strong>: curses cast on your opponent,
-          like Cold Feet (their pawns cannot capture for 3 turns) or a walnut hex that seals
-          one of their pieces in place. The rest are <strong>boons</strong> that soften your
-          own nerf (Reprieve suspends it for two turns) and one-use <strong>items</strong>.
+          like <Link href="/codex/buff/cold_feet" className="underline">Cold Feet</Link> (their
+          pawns cannot capture for 3 turns) or a walnut hex that seals one of their pieces in
+          place. The rest are <strong>boons</strong> that soften your own nerf (
+          <Link href="/codex/buff/reprieve" className="underline">Reprieve</Link> suspends it for
+          two turns) and one-use <strong>items</strong>.
         </p>
         <p>
           Your opponent&apos;s picks stay hidden while the game runs: you learn that they

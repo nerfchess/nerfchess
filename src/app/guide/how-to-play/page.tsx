@@ -60,13 +60,16 @@ export default function HowToPlayPage() {
         </p>
         <p>
           <strong>Hex</strong>: a curse you cast on your opponent, the most common card in
-          Nerf mode&apos;s draft. Example: Cold Feet stops your opponent&apos;s pawns from
-          capturing for their next 3 turns.
+          Nerf mode&apos;s draft. Example:{" "}
+          <Link href="/codex/buff/cold_feet" className="underline">Cold Feet</Link> stops your
+          opponent&apos;s pawns from capturing for their next 3 turns.
         </p>
         <p>
-          <strong>Boon</strong>: relief from your own nerf. Reprieve suspends your handicap
-          for two turns; Small Mercies waits until you lose pieces, then lifts your rule while
-          you recover.
+          <strong>Boon</strong>: relief from your own nerf.{" "}
+          <Link href="/codex/buff/reprieve" className="underline">Reprieve</Link> suspends your
+          handicap for two turns;{" "}
+          <Link href="/codex/buff/small_mercies" className="underline">Small Mercies</Link> waits
+          until you lose pieces, then lifts your rule while you recover.
         </p>
         <p>
           <strong>Item</strong>: a playful one-use consumable that appears in both modes.
