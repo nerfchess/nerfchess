@@ -35,7 +35,7 @@ const {
   deserializeGame,
   GAME_SNAPSHOT_VERSION,
 } = load("game.js");
-const { moveFromUCI, moveToUCI, positionKey } = load("board.js");
+const { moveFromUCI, moveToUCI } = load("board.js");
 const { desyncFingerprint, compareFingerprints } = load("desync.js");
 const { PLAYABLE_NERFS } = load("nerfs/library.js");
 
