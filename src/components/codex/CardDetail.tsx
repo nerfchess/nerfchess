@@ -128,12 +128,8 @@ export function BuffDetail({ buff }: { buff: Buff }) {
             {tierName(buff.tier)}
             <span className="mt-0.5 block text-[13px] text-parchment-400">{tierMeaning(buff.tier)}</span>
           </GlanceRow>
-          <GlanceRow label="Category">
-            {cat.label}
-            <span className="mt-0.5 block text-[13px] text-parchment-400">It {cat.blurb}</span>
-          </GlanceRow>
+          <GlanceRow label="Category">{cat.label}</GlanceRow>
           <GlanceRow label="Appears in">{where}</GlanceRow>
-          <GlanceRow label="How you play it">{turnCostMeaning(buff)}</GlanceRow>
         </dl>
       </InfoSection>
 
@@ -141,10 +137,7 @@ export function BuffDetail({ buff }: { buff: Buff }) {
         <p>
           {draftLine} {turnCostMeaning(buff)}
         </p>
-        <p>
-          As a {cat.label.toLowerCase()} card, it {cat.blurb} Cards climb in tier as a game goes on, and
-          this one sits at {tierName(buff.tier)}.
-        </p>
+        <p>As a {cat.label.toLowerCase()} card, it {cat.blurb}</p>
         {buff.flavor && <p className="border-l border-gold/40 pl-4 italic text-parchment-300">&ldquo;{buff.flavor}&rdquo;</p>}
       </InfoSection>
 
