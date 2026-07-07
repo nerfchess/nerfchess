@@ -51,6 +51,8 @@ type XMeta = {
   category: BuffCategory;
   boon?: boolean;
   flavor?: string;
+  /** Per-card lucide-react icon name; overrides the category glyph. */
+  icon?: string;
   /** Board motif drawn on the affected pieces while the constraint runs.
    * Display metadata only; never consulted by move generation. */
   fx?: CardFx;

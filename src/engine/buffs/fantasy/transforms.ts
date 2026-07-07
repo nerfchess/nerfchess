@@ -23,6 +23,7 @@ export const FANTASY_TRANSFORMS: Buff[] = [
   card(
     {
       id: "metamorphosis",
+      icon: "RefreshCw",
       name: "Metamorphosis",
       description:
         "Force a violent change of form on one of your own knights or bishops: it reshapes itself into a rook, once.",
@@ -35,6 +36,7 @@ export const FANTASY_TRANSFORMS: Buff[] = [
   card(
     {
       id: "dragon_form",
+      icon: "PlaneTakeoff",
       name: "Dragon Form",
       description:
         "One of your rooks unfurls a pair of dragon wings: for the game it also moves diagonally, ranging the board like a queen.",
@@ -50,6 +52,7 @@ export const FANTASY_TRANSFORMS: Buff[] = [
   card(
     {
       id: "apotheosis",
+      icon: "Trophy",
       name: "Apotheosis",
       description:
         "Raise one of your knights, bishops, or rooks to godhood: it ascends on the spot into a queen, once.",
@@ -62,6 +65,7 @@ export const FANTASY_TRANSFORMS: Buff[] = [
   card(
     {
       id: "god_king",
+      icon: "Church",
       name: "God-King",
       description:
         "Your king moves like a queen for the rest of the game.",
@@ -77,6 +81,7 @@ export const FANTASY_TRANSFORMS: Buff[] = [
   card(
     {
       id: "celestial_ascension",
+      icon: "Sunrise",
       name: "Celestial Ascension",
       description:
         "Your bishops ascend to a higher plane: for the game every one of them also moves in straight lines like a rook, wielding a queen's full reach.",
@@ -94,6 +99,7 @@ export const FANTASY_TRANSFORMS: Buff[] = [
   card(
     {
       id: "philosophers_stone",
+      icon: "FlaskConical",
       name: "Philosopher's Stone",
       description:
         "Press the fabled stone to your ranks and transmute base metal to gold: two of your pawns become queens, once.",

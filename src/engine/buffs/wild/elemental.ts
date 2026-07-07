@@ -67,6 +67,8 @@ type WildMeta = {
   flavor?: string;
   boon?: boolean;
   fx?: CardFx;
+  /** Per-card lucide-react icon name; overrides the category glyph. */
+  icon?: string;
 };
 
 /** Build a fully implemented card from metadata + mechanics. Mirrors the `def`
@@ -420,6 +422,7 @@ export const WILD_ELEMENTAL: Buff[] = [
   card(
     {
       id: "we_hailstorm",
+      icon: "CloudRain",
       name: "Hailstorm",
       description: "Freeze every one of your opponent's pawns for their next 2 turns.",
       tier: 4,
@@ -459,6 +462,7 @@ export const WILD_ELEMENTAL: Buff[] = [
   card(
     {
       id: "we_frost_ward",
+      icon: "ShieldCheck",
       name: "Frost Ward",
       description: "Your king cannot be captured for your opponent's next 2 turns.",
       tier: 5,
@@ -486,6 +490,7 @@ export const WILD_ELEMENTAL: Buff[] = [
   card(
     {
       id: "we_whiteout",
+      icon: "CloudFog",
       name: "Whiteout",
       description:
         "A blinding blizzard: your opponent may only move their king for their next 2 turns.",
@@ -551,6 +556,7 @@ export const WILD_ELEMENTAL: Buff[] = [
   card(
     {
       id: "we_stoneskin",
+      icon: "ShieldAlert",
       name: "Stoneskin",
       description: "Your whole army cannot be captured for your opponent's next 2 turns.",
       tier: 8,
@@ -563,6 +569,7 @@ export const WILD_ELEMENTAL: Buff[] = [
   card(
     {
       id: "we_mountain_range",
+      icon: "MountainSnow",
       name: "Mountain Range",
       description:
         "Two ridges heave up: pick any two squares and each of their ranks becomes impassable to your opponent for their next 2 turns.",
@@ -688,6 +695,7 @@ export const WILD_ELEMENTAL: Buff[] = [
   card(
     {
       id: "we_thunderhead",
+      icon: "Cloud",
       name: "Thunderhead",
       description:
         "A charged cloud takes shape as a knight on an empty square in your half. It fights for 3 of your turns, then rolls away.",
@@ -702,6 +710,7 @@ export const WILD_ELEMENTAL: Buff[] = [
   card(
     {
       id: "we_undertow",
+      icon: "Sailboat",
       name: "Undertow",
       description: "A current drags one of your pieces to any empty square, once.",
       tier: 4,
@@ -713,6 +722,7 @@ export const WILD_ELEMENTAL: Buff[] = [
   card(
     {
       id: "we_riptide",
+      icon: "Waves",
       name: "Riptide",
       description: "Slide two of your pieces one square each in any direction, once.",
       tier: 4,
@@ -773,6 +783,7 @@ export const WILD_ELEMENTAL: Buff[] = [
   card(
     {
       id: "we_ancient_grove",
+      icon: "TreePine",
       name: "Ancient Grove",
       description:
         "Old roots give one piece back: return a captured rook, knight, or bishop to an empty square on your back rank, once.",
@@ -785,6 +796,7 @@ export const WILD_ELEMENTAL: Buff[] = [
   card(
     {
       id: "we_seedlings",
+      icon: "Sprout",
       name: "Seedlings",
       description: "Sprout two new pawns on empty squares in your half, once.",
       tier: 3,
@@ -811,6 +823,7 @@ export const WILD_ELEMENTAL: Buff[] = [
   card(
     {
       id: "we_bramble_wall",
+      icon: "Trees",
       name: "Bramble Wall",
       description:
         "Thickets snare the clergy: your opponent's bishops cannot move for their next 2 turns.",
@@ -824,6 +837,7 @@ export const WILD_ELEMENTAL: Buff[] = [
   card(
     {
       id: "we_overgrowth",
+      icon: "Leaf",
       name: "Overgrowth",
       description:
         "One of your pawns blooms into a queen for your next 3 turns, then withers back into a pawn.",
@@ -865,6 +879,7 @@ export const WILD_ELEMENTAL: Buff[] = [
   card(
     {
       id: "we_verdant_shield",
+      icon: "Flower2",
       name: "Verdant Shield",
       description: "A canopy of bark: all of your pawns cannot be captured for your opponent's next 2 turns.",
       tier: 4,

@@ -26,6 +26,7 @@ export const FANTASY_ARTIFACTS: Buff[] = [
   card(
     {
       id: "excalibur",
+      icon: "Sword",
       name: "Excalibur",
       description:
         "One of your bishops also moves like a rook for the game, giving it full queen movement.",
@@ -41,6 +42,7 @@ export const FANTASY_ARTIFACTS: Buff[] = [
   card(
     {
       id: "horn_of_summoning",
+      icon: "Music",
       name: "Horn of Summoning",
       description:
         "Place a new knight and a new bishop on empty squares in your half, once.",
@@ -53,6 +55,7 @@ export const FANTASY_ARTIFACTS: Buff[] = [
   card(
     {
       id: "orb_of_dominion",
+      icon: "Orbit",
       name: "Orb of Dominion",
       description:
         "Take control of one enemy rook or queen for the rest of the game, once. Kings cannot be taken.",
@@ -65,6 +68,7 @@ export const FANTASY_ARTIFACTS: Buff[] = [
   card(
     {
       id: "staff_of_stasis",
+      icon: "Wand",
       name: "Staff of Stasis",
       description:
         "Tap the Staff of Stasis and lock one enemy piece inside a bubble of frozen time: it cannot move for 3 of their turns. Kings cannot be targeted.",
@@ -77,6 +81,7 @@ export const FANTASY_ARTIFACTS: Buff[] = [
   card(
     {
       id: "aegis_of_ages",
+      icon: "ShieldPlus",
       name: "Aegis of the Ages",
       description:
         "Lift the ancient aegis and its ward falls over your whole host: none of your pieces can be captured for your opponent's next 2 turns.",
@@ -90,6 +95,7 @@ export const FANTASY_ARTIFACTS: Buff[] = [
   card(
     {
       id: "banner_of_war",
+      icon: "FlagTriangleRight",
       name: "Banner of War",
       description:
         "Raise the banner and your cavalry surges: for your next 2 turns each of your knights may also step one square in any direction like a king.",

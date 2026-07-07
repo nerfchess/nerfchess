@@ -14,6 +14,7 @@ export const FUNNY_CLOCK: Buff[] = [
   card(
     {
       id: "time_thief",
+      icon: "Watch",
       name: "Time Thief",
       description:
         "Pick your opponent's pocket: steal half of the time left on their clock (up to 60 seconds) and add it to your own.",
@@ -28,6 +29,7 @@ export const FUNNY_CLOCK: Buff[] = [
   card(
     {
       id: "deadline",
+      icon: "AlarmClock",
       name: "Deadline",
       description: "Move the deadline up: your opponent's clock loses 30 seconds.",
       tier: 4,
@@ -41,6 +43,7 @@ export const FUNNY_CLOCK: Buff[] = [
   card(
     {
       id: "jet_lag",
+      icon: "Plane",
       name: "Jet Lag",
       description: "Book your opponent a red-eye: their clock loses 20 seconds.",
       tier: 3,
@@ -54,6 +57,7 @@ export const FUNNY_CLOCK: Buff[] = [
   card(
     {
       id: "overtime_whistle",
+      icon: "Bell",
       name: "Overtime Whistle",
       description: "Blow the whistle for overtime: add 20 seconds to your own clock.",
       tier: 3,
@@ -67,6 +71,7 @@ export const FUNNY_CLOCK: Buff[] = [
   card(
     {
       id: "buzzer_beater",
+      icon: "TimerReset",
       name: "Buzzer Beater",
       description:
         "Steal a buzzer-beating 15 seconds off your opponent's clock and put it on yours.",
@@ -81,6 +86,7 @@ export const FUNNY_CLOCK: Buff[] = [
   card(
     {
       id: "computer_virus",
+      icon: "Cpu",
       name: "Computer Virus",
       description:
         "Upload a virus to your opponent's clock. At the end of each of their next 4 turns it drains 8 seconds from their time. The clock floor still stops it from flagging them instantly.",

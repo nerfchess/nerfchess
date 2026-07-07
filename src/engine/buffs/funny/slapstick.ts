@@ -18,6 +18,7 @@ export const FUNNY_SLAPSTICK: Buff[] = [
   card(
     {
       id: "rake",
+      icon: "Shovel",
       name: "Rake",
       description: "One enemy piece cannot move for 1 of their turns. Kings cannot be targeted.",
       tier: 2,
@@ -29,6 +30,7 @@ export const FUNNY_SLAPSTICK: Buff[] = [
   card(
     {
       id: "snowball",
+      icon: "CloudSnow",
       name: "Snowball",
       description: "One enemy pawn is frozen for 2 of their turns.",
       tier: 2,
@@ -40,6 +42,7 @@ export const FUNNY_SLAPSTICK: Buff[] = [
   card(
     {
       id: "fly_swatter",
+      icon: "Bug",
       name: "Fly Swatter",
       description: "One enemy knight is stunned for 1 of their turns. Kings cannot be targeted.",
       tier: 2,
@@ -51,6 +54,7 @@ export const FUNNY_SLAPSTICK: Buff[] = [
   card(
     {
       id: "napping",
+      icon: "Moon",
       name: "Napping",
       description: "One enemy knight falls fast asleep for 2 of their turns. Kings cannot be targeted.",
       tier: 3,
@@ -62,6 +66,7 @@ export const FUNNY_SLAPSTICK: Buff[] = [
   card(
     {
       id: "anvil_drop",
+      icon: "Anvil",
       name: "Anvil Drop",
       description: "Drop an ACME anvil on one enemy piece: it is flattened and cannot move for 2 of their turns. Kings cannot be targeted.",
       tier: 3,
@@ -73,6 +78,7 @@ export const FUNNY_SLAPSTICK: Buff[] = [
   card(
     {
       id: "super_glue",
+      icon: "Droplet",
       name: "Super Glue",
       description: "Glue one enemy piece to its square: it is stuck fast and cannot move for 2 of their turns. Kings cannot be targeted.",
       tier: 3,
@@ -84,6 +90,7 @@ export const FUNNY_SLAPSTICK: Buff[] = [
   card(
     {
       id: "bear_trap",
+      icon: "Scissors",
       name: "Bear Trap",
       description: "Snap a bear trap shut on one enemy piece: it is held in place and cannot move for 3 of their turns. Kings cannot be targeted.",
       tier: 4,
@@ -95,6 +102,7 @@ export const FUNNY_SLAPSTICK: Buff[] = [
   card(
     {
       id: "bubble_wrap",
+      icon: "Grip",
       name: "Bubble Wrap",
       description: "Shrink-wrap one of your own pieces: it cannot be captured for 2 turns, but it also cannot move while wrapped. Your king cannot be chosen.",
       tier: 2,
@@ -129,6 +137,7 @@ export const FUNNY_SLAPSTICK: Buff[] = [
   card(
     {
       id: "boxing_glove",
+      icon: "Hand",
       name: "Boxing Glove",
       description: "A spring-loaded glove punches one enemy piece one square back toward its own side and stuns it for 1 of their turns. Kings cannot be targeted.",
       tier: 3,

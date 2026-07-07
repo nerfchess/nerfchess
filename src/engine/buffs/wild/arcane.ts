@@ -52,6 +52,8 @@ type WildMeta = {
   flavor?: string;
   boon?: boolean;
   fx?: CardFx;
+  /** Per-card lucide-react icon name; overrides the category glyph. */
+  icon?: string;
 };
 
 /** Build a fully implemented card from metadata + mechanics. Mirrors the `def`
@@ -320,6 +322,7 @@ export const WILD_ARCANE: Buff[] = [
   card(
     {
       id: "wa_far_step",
+      icon: "Compass",
       name: "Far Step",
       description:
         "Teleport one of your pieces (not the king) to any empty square on the board, once.",
@@ -467,6 +470,7 @@ export const WILD_ARCANE: Buff[] = [
   card(
     {
       id: "wa_transmute",
+      icon: "TestTube",
       name: "Transmute",
       description: "Turn one of your pawns into a knight, once.",
       tier: 3,
@@ -749,6 +753,7 @@ export const WILD_ARCANE: Buff[] = [
   card(
     {
       id: "wa_banish",
+      icon: "Ban",
       name: "Banish",
       description:
         "Banish one enemy pawn, knight, or bishop from the board, once.",
@@ -775,6 +780,7 @@ export const WILD_ARCANE: Buff[] = [
   card(
     {
       id: "wa_spelltheft",
+      icon: "WandSparkles",
       name: "Spelltheft",
       description: "Steal one of your opponent's unused buffs and hold it as your own.",
       tier: 5,
@@ -800,6 +806,7 @@ export const WILD_ARCANE: Buff[] = [
   card(
     {
       id: "wa_arcane_reroll",
+      icon: "Dice5",
       name: "Arcane Reroll",
       description: "Gain two draft rerolls.",
       tier: 3,
@@ -857,6 +864,7 @@ export const WILD_ARCANE: Buff[] = [
   card(
     {
       id: "wa_high_roll",
+      icon: "Dice6",
       name: "High Roll",
       description: "Force your next draft offer to roll at tier 5.",
       tier: 4,
@@ -931,6 +939,7 @@ export const WILD_ARCANE: Buff[] = [
   card(
     {
       id: "wa_omniscience",
+      icon: "Telescope",
       name: "Omniscience",
       description:
         "See your opponent's next buff options and its tier, and reveal their nerf for the rest of the game.",

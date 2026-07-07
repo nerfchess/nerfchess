@@ -57,6 +57,8 @@ type WarfareMeta = {
   flavor?: string;
   boon?: boolean;
   fx?: CardFx;
+  /** Per-card lucide-react icon name; overrides the category glyph. */
+  icon?: string;
 };
 
 /** Build a fully implemented card. Mirrors library.ts's private `def`. */
@@ -323,6 +325,7 @@ export const WILD_WARFARE: Buff[] = [
   card(
     {
       id: "ww_paratroopers",
+      icon: "Send",
       name: "Paratroopers",
       description: "Place two new pawns on empty squares in your opponent's half, once.",
       tier: 5,
@@ -389,6 +392,7 @@ export const WILD_WARFARE: Buff[] = [
   card(
     {
       id: "ww_field_hospital",
+      icon: "Cross",
       name: "Field Hospital",
       description: "The first time your opponent captures one of your knights, a new pawn is raised on an empty square of your back rank.",
       tier: 2,
@@ -449,6 +453,7 @@ export const WILD_WARFARE: Buff[] = [
   card(
     {
       id: "ww_bombardment",
+      icon: "Crosshair",
       name: "Bombardment",
       description: "Remove two enemy pawns you name from the board, once.",
       tier: 3,
@@ -460,6 +465,7 @@ export const WILD_WARFARE: Buff[] = [
   card(
     {
       id: "ww_counter_battery",
+      icon: "Target",
       name: "Counter Battery Fire",
       description: "Remove one enemy rook or bishop you name from the board, once.",
       tier: 5,
@@ -530,6 +536,7 @@ export const WILD_WARFARE: Buff[] = [
   card(
     {
       id: "ww_command_tent",
+      icon: "Tent",
       name: "Command Tent",
       description: "Your king may also move like a knight, for the game.",
       tier: 4,

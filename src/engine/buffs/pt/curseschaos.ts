@@ -127,6 +127,7 @@ export const PT_CURSE_CARDS: Buff[] = [
   card(
     {
       id: "snooze_button",
+      icon: "AlarmClockOff",
       name: "Snooze Button",
       description:
         "Hit snooze on the whole enemy army: every one of your opponent's pieces except the king falls asleep and cannot move for their next turn.",
@@ -145,6 +146,7 @@ export const PT_CURSE_CARDS: Buff[] = [
   card(
     {
       id: "groundhog_day",
+      icon: "Repeat",
       name: "Groundhog Day",
       description:
         "The board hits a VHS rewind on your opponent: whichever piece they move on their next turn, they must move that same piece again on the turn after. If that piece can no longer move, the loop is skipped.",
@@ -248,6 +250,7 @@ export const PT_CURSE_CARDS: Buff[] = [
   card(
     {
       id: "werewolf",
+      icon: "Dog",
       name: "Werewolf",
       description:
         "Curse one of your pawns with lycanthropy: every 6 of your turns it transforms into a knight, and 6 turns later back into a pawn, for the game. If it promotes or is captured the curse lifts.",
@@ -326,6 +329,7 @@ export const PT_CURSE_CARDS: Buff[] = [
   card(
     {
       id: "slowpoke",
+      icon: "Snail",
       name: "Slowpoke",
       description:
         "A famously bad card. Your whole army goes sluggish: for your next 2 turns every piece can move only one square. It shrugs, apologetically.",
@@ -346,6 +350,7 @@ export const PT_CURSE_CARDS: Buff[] = [
   card(
     {
       id: "pinocchio",
+      icon: "Ruler",
       name: "Pinocchio",
       description:
         "One pawn's nose grows: each of your turns it does not capture, its reach grows by one square, up to plus three. It may capture the first enemy piece other than a king directly ahead of it within that reach. Capturing shrinks the nose back to zero.",
@@ -641,6 +646,7 @@ export const PT_CURSE_CARDS: Buff[] = [
   card(
     {
       id: "sea_monkeys",
+      icon: "FishSymbol",
       name: "Sea Monkeys",
       description:
         "Just add water: three tiny pawns hatch on random empty squares in your half and grow into real pawns.",
@@ -682,6 +688,7 @@ export const PT_CURSE_CARDS: Buff[] = [
   card(
     {
       id: "greenhouse",
+      icon: "Flower",
       name: "Greenhouse",
       description:
         "Raise a glass dome over one file. For the game, your pawns on that file may promote one rank early, on your 7th rank instead of your 8th, whether they advance or capture into it.",
@@ -725,6 +732,7 @@ export const PT_CURSE_CARDS: Buff[] = [
   card(
     {
       id: "chaos_theory",
+      icon: "Shuffle",
       name: "Chaos Theory",
       description:
         "A tornado sweeps the board: every pawn, yours and your opponent's, is randomly reshuffled among the squares pawns currently stand on. Happens once.",
@@ -758,6 +766,7 @@ export const PT_CURSE_CARDS: Buff[] = [
   card(
     {
       id: "wheel_of_fortune",
+      icon: "Ticket",
       name: "Wheel of Fortune",
       description:
         "Spin the wheel for one of six random effects: plus 20 seconds to your clock, minus 20 seconds off your opponent's, your army uncapturable for their next turn, a new pawn in your half, every enemy piece asleep for a turn, or a random enemy piece other than the king removed.",

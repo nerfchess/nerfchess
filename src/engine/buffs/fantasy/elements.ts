@@ -23,6 +23,7 @@ export const FANTASY_ELEMENTS: Buff[] = [
   card(
     {
       id: "starfall",
+      icon: "Star",
       name: "Starfall",
       description:
         "Place a new rook on any empty square, once.",
@@ -35,6 +36,7 @@ export const FANTASY_ELEMENTS: Buff[] = [
   card(
     {
       id: "frost_wall",
+      icon: "Snowflake",
       name: "Frost Wall",
       description:
         "A wall of blue ice erupts from the board: pick any square and its entire file becomes impassable to your opponent for their next 3 turns.",
@@ -48,6 +50,7 @@ export const FANTASY_ELEMENTS: Buff[] = [
   card(
     {
       id: "sinkhole",
+      icon: "ArrowDownToLine",
       name: "Sinkhole",
       description:
         "Open two yawning sinkholes on empty squares: the first enemy piece to step onto each one (never a king) plunges out of the game. They stay open the rest of the match.",
@@ -60,6 +63,7 @@ export const FANTASY_ELEMENTS: Buff[] = [
   card(
     {
       id: "chain_lightning",
+      icon: "Zap",
       name: "Chain Lightning",
       description:
         "One bishop captures up to two enemy pieces down a diagonal and lands beyond them, once.",
@@ -72,6 +76,7 @@ export const FANTASY_ELEMENTS: Buff[] = [
   card(
     {
       id: "fissure_field",
+      icon: "Split",
       name: "Fissure Field",
       description:
         "The ground splits into a lattice of fissures across the enemy front: your opponent's pawns cannot advance for their next 4 turns. They may still capture diagonally.",

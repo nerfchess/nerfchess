@@ -134,6 +134,8 @@ export type FunnyMeta = {
   flavor?: string;
   boon?: boolean;
   fx?: CardFx;
+  /** Per-card lucide-react icon name; overrides the category glyph. */
+  icon?: string;
 };
 
 /** Build a fully implemented card from metadata + mechanics. Mirrors the `def`

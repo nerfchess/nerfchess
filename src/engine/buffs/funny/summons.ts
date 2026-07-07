@@ -24,6 +24,7 @@ export const FUNNY_SUMMONS: Buff[] = [
   card(
     {
       id: "summon_intern",
+      icon: "UserPlus",
       name: "Summon Intern",
       description: "Place a new pawn on any empty square in your half, once.",
       tier: 2,
@@ -35,6 +36,7 @@ export const FUNNY_SUMMONS: Buff[] = [
   card(
     {
       id: "pizza_delivery",
+      icon: "Pizza",
       name: "Pizza Delivery",
       description: "A knight zips in on a scooter delivering pizza: place a new knight on any empty square, once.",
       tier: 4,
@@ -46,6 +48,7 @@ export const FUNNY_SUMMONS: Buff[] = [
   card(
     {
       id: "reinforcements",
+      icon: "Users",
       name: "Reinforcements",
       description: "Two pawns parachute in: place them on empty squares in your half, once.",
       tier: 4,
@@ -57,6 +60,7 @@ export const FUNNY_SUMMONS: Buff[] = [
   card(
     {
       id: "supply_drop",
+      icon: "Package",
       name: "Supply Drop",
       description: "A knight is airlifted into your reserves. Later, spend a turn to drop it onto any empty square.",
       tier: 3,
@@ -70,6 +74,7 @@ export const FUNNY_SUMMONS: Buff[] = [
   card(
     {
       id: "clone_army",
+      icon: "CopyPlus",
       name: "Clone Army",
       description: "Three photocopier flashes in a row: place three new pawns on empty squares in your half, once.",
       tier: 5,
@@ -81,6 +86,7 @@ export const FUNNY_SUMMONS: Buff[] = [
   card(
     {
       id: "rent_a_rook",
+      icon: "Building2",
       name: "Rent-a-Rook",
       description: "A rook arrives on loan: place it on an empty square in your half, then it drives off after 4 of your turns.",
       tier: 4,
@@ -92,6 +98,7 @@ export const FUNNY_SUMMONS: Buff[] = [
   card(
     {
       id: "cavalry_charge",
+      icon: "Rabbit",
       name: "Cavalry Charge",
       description: "Choose one of your knights. It charges in one horizontal or vertical direction, removes the first enemy piece (not a king) in that line, and lands on that square or on an empty square beyond it, stopping before the next piece or the board edge. A friendly piece or an enemy king in the path blocks the charge. Once.",
       tier: 5,
@@ -103,6 +110,7 @@ export const FUNNY_SUMMONS: Buff[] = [
   card(
     {
       id: "insurance",
+      icon: "Umbrella",
       name: "Insurance",
       description: "The first time your queen is captured, a new knight appears on your queen's starting square (d1 for White, d8 for Black), but only if that square is empty. Triggers once.",
       tier: 4,
@@ -123,6 +131,7 @@ export const FUNNY_SUMMONS: Buff[] = [
   card(
     {
       id: "blood_pact",
+      icon: "Droplets",
       name: "Blood Pact",
       description: "Sign in blood: promote one of your pawns to a queen at once, but a random other pawn of yours bursts and is lost.",
       tier: 7,

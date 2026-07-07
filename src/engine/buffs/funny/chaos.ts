@@ -26,6 +26,7 @@ export const FUNNY_CHAOS: Buff[] = [
   card(
     {
       id: "roulette",
+      icon: "Dices",
       name: "Roulette",
       description: "Spin the wheel: one random enemy piece other than the king is removed from the board.",
       tier: 5,
@@ -42,6 +43,7 @@ export const FUNNY_CHAOS: Buff[] = [
   card(
     {
       id: "trapdoor",
+      icon: "DoorOpen",
       name: "Trapdoor",
       description: "Open a trapdoor on an empty square. For your next 3 turns, any enemy piece except a king that moves onto that square is removed from the game.",
       tier: 4,
@@ -53,6 +55,7 @@ export const FUNNY_CHAOS: Buff[] = [
   card(
     {
       id: "minefield",
+      icon: "Bomb",
       name: "Minefield",
       description: "Seed three mines on empty squares. The first enemy piece, never the king, to step on a mine is destroyed.",
       tier: 6,
@@ -64,6 +67,7 @@ export const FUNNY_CHAOS: Buff[] = [
   card(
     {
       id: "kraken",
+      icon: "Fish",
       name: "Kraken",
       description: "A kraken surfaces on an empty square: your opponent cannot enter any of the 8 squares around it for their next 2 turns.",
       tier: 6,
@@ -97,6 +101,7 @@ export const FUNNY_CHAOS: Buff[] = [
   card(
     {
       id: "lava_floor",
+      icon: "Flame",
       name: "Lava Floor",
       description: "A whole rank erupts into lava: pick any square and its entire rank becomes impassable to your opponent for their next 3 turns.",
       tier: 5,
