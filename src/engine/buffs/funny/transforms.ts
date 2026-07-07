@@ -32,6 +32,7 @@ export const FUNNY_TRANSFORMS: Buff[] = [
       description: "Your queen is crowned an Amazon: for the game she also moves like a knight.",
       tier: 7,
       category: "movement",
+      requires: ["q"],
       flavor: "Queen was not scary enough already.",
       fx: { motif: "empower", pieces: ["q"], moveAs: "n", self: true },
     },
@@ -85,6 +86,7 @@ export const FUNNY_TRANSFORMS: Buff[] = [
       description: "Run one of your pawns through the photocopier: place an exact copy on an empty square beside it, once.",
       tier: 3,
       category: "pieces",
+      requires: ["p"],
       flavor: "Flash. Now there are two.",
     },
     activated(

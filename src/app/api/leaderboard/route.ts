@@ -27,6 +27,15 @@ interface LeaderboardRow {
 // played a rated game in that category. If the signed-in viewer is ranked but
 // outside the page, their own row (with true rank) is returned separately so
 // the UI can pin it.
+//
+// House players (the engine-driven roster in lib/server/bots.ts) are always
+// included with their seeded rating, even before they have finished a rated
+// game, so every active house bot shows on the board (they were being dropped
+// by the `games > 0` filter while they sat at 0 games). Their user ids are all
+// prefixed "hp_"; real accounts use random hex ids (no 'p'/'_'), so the prefix
+// match is collision-free. The underscore is escaped because it is a LIKE
+// wildcard. Keep this prefix in sync with bots.ts (HOUSE_ROSTER userId shape).
+const HOUSE_ID_MATCH = "hp\\_%";
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const requested = url.searchParams.get("category");
@@ -37,11 +46,11 @@ export async function GET(request: Request) {
     .prepare(
       `SELECT u.username, r.rating, r.rd, r.games, r.wins, r.losses, r.draws, u.avatar, u.flair, u.is_guest AS guest
        FROM user_ratings r JOIN users u ON u.id = r.user_id
-       WHERE r.category = ? AND r.games > 0
+       WHERE r.category = ? AND (r.games > 0 OR r.user_id LIKE ? ESCAPE '\\')
          AND (u.banned_until IS NULL OR u.banned_until <= ?)
        ORDER BY r.rating DESC, r.games DESC LIMIT 100`,
     )
-    .bind(category, Date.now())
+    .bind(category, HOUSE_ID_MATCH, Date.now())
     .all<LeaderboardRow>();
 
   const players = rows.results.map((row) => ({ ...row, guest: !!row.guest }));
@@ -63,10 +72,11 @@ export async function GET(request: Request) {
         const better = await db
           .prepare(
             `SELECT COUNT(*) AS n FROM user_ratings r JOIN users u ON u.id = r.user_id
-             WHERE r.category = ? AND r.games > 0 AND (u.banned_until IS NULL OR u.banned_until <= ?)
+             WHERE r.category = ? AND (r.games > 0 OR r.user_id LIKE ? ESCAPE '\\')
+               AND (u.banned_until IS NULL OR u.banned_until <= ?)
                AND (r.rating > ? OR (r.rating = ? AND r.games > ?))`,
           )
-          .bind(category, Date.now(), mine.rating, mine.rating, mine.games)
+          .bind(category, HOUSE_ID_MATCH, Date.now(), mine.rating, mine.rating, mine.games)
           .first<{ n: number }>();
         me = {
           username: viewer.username,

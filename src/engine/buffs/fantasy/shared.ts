@@ -48,6 +48,7 @@ import {
   extraMovesNow,
   freezeAllEnemies,
   freezeTarget,
+  grantInventory,
   inHalf,
   instant,
   leapMoves,
@@ -86,6 +87,7 @@ export {
   extraMovesNow,
   freezeAllEnemies,
   freezeTarget,
+  grantInventory,
   inHalf,
   instant,
   leapMoves,
@@ -140,6 +142,9 @@ export type FantasyMeta = {
   fx?: CardFx;
   /** Per-card lucide-react icon name; overrides the category glyph. */
   icon?: string;
+  /** Piece types the caster must own on the board for this card to be offered
+   * (dead-draft guard). Omit for cards that work regardless of your pieces. */
+  requires?: PieceType[];
 };
 
 /** Build a fully implemented card from metadata + mechanics. Mirrors the `def`

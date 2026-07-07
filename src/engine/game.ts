@@ -885,7 +885,7 @@ export function playMove(game: NerfGame, move: Move): NerfGame {
         if ((ps.flags.blockedDrafts ?? 0) > 0) {
           ps.flags.blockedDrafts = (ps.flags.blockedDrafts ?? 0) - 1;
         } else {
-          rollOffer(bs, color, tiers);
+          rollOffer(bs, color, tiers, game.board);
         }
       }
     }
@@ -991,7 +991,7 @@ export function bankDraft(game: NerfGame, color: Color) {
 export function rerollDraft(game: NerfGame, color: Color): boolean {
   const bs = game.buffs;
   if (!bs) return false;
-  return rerollOffer(bs, color);
+  return rerollOffer(bs, color, game.board);
 }
 
 /** Next target request for an activated buff, or null when picks are complete. */

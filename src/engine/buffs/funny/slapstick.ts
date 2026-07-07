@@ -12,6 +12,11 @@ import {
   addEffect,
   mySquares,
   pawnRankOk,
+  ORTHO_DIRS,
+  FILE,
+  RANK,
+  SQ,
+  inBoard,
 } from "./shared";
 
 export const FUNNY_SLAPSTICK: Buff[] = [
@@ -80,12 +85,40 @@ export const FUNNY_SLAPSTICK: Buff[] = [
       id: "super_glue",
       icon: "Droplet",
       name: "Super Glue",
-      description: "Glue one enemy piece to its square: it is stuck fast and cannot move for 2 of their turns. Kings cannot be targeted.",
+      description:
+        "Empty the tube on one enemy piece: it and every enemy piece orthogonally next to it are stuck fast and cannot move for 1 of their turns. Kings cannot be targeted or stuck.",
       tier: 3,
       category: "item",
       flavor: "Read the label next time.",
     },
-    freezeTargetTyped(2, undefined, "Choose an enemy piece to glue down", "glue"),
+    activated(
+      (_inst, api, picks) =>
+        picks.length > 0
+          ? null
+          : {
+              kind: "square",
+              label: "Choose the enemy piece to glue down",
+              squares: mySquares(api.board, api.opp).filter(
+                (sq) => api.board.pieces[sq]!.type !== "k",
+              ),
+            },
+      (_inst, api, picks) => {
+        const c = picks[0]?.square;
+        if (c == null) return;
+        // Same freeze primitive as Anvil Drop, but a wider, shorter footprint:
+        // the target plus its orthogonal enemy neighbours, each for 1 turn.
+        const glue = (sq: number) => {
+          const p = api.board.pieces[sq];
+          if (!p || p.color !== api.opp || p.type === "k") return;
+          addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 1, skin: "glue" });
+        };
+        glue(c);
+        for (const [df, dr] of ORTHO_DIRS) {
+          const f = FILE(c) + df, r = RANK(c) + dr;
+          if (inBoard(f, r)) glue(SQ(f, r));
+        }
+      },
+    ),
   ),
   card(
     {

@@ -316,8 +316,18 @@ export function draftZones(game: NerfGame, myColor: Color): DraftZones {
       noteTurns(e.sq, e.turns);
     } else if (e.kind === "shield") {
       if (e.squares) {
-        zones.shielded.push(...e.squares);
-        for (const sq of e.squares) noteTurns(sq, e.turns);
+        // Only paint a shield square that still holds the owner's piece. A
+        // square-bound shield whose piece moved off or was captured leaves a
+        // stale entry in e.squares, which would otherwise keep the green tint
+        // lit forever. Mirrors the whole-army branch's piece-presence check,
+        // and both clients read the same synced board so it stays in sync.
+        for (const sq of e.squares) {
+          const p = game.board.pieces[sq];
+          if (p && p.color === e.owner) {
+            zones.shielded.push(sq);
+            noteTurns(sq, e.turns);
+          }
+        }
       } else {
         for (let sq = 0; sq < 64; sq++) {
           const p = game.board.pieces[sq];

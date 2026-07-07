@@ -591,7 +591,7 @@ export function DraftOverlay({
         ref={panelRef}
         style={dragPos ? { left: dragPos.x, top: dragPos.y } : undefined}
         className={
-          "fixed z-40 w-[min(92vw,19rem)] " + (dragPos ? "" : "bottom-16 right-3 sm:bottom-4")
+          "fixed z-40 w-[min(92vw,19rem)] " + (dragPos ? "" : "bottom-24 right-3 sm:bottom-16 lg:bottom-4")
         }
       >
         <motion.div
@@ -688,7 +688,7 @@ export function DraftOverlay({
           mounted underneath (visibility only), so timers, the pick state,
           and any in-flight animation carry on unaffected. */}
       {hidden && (
-        <div className="fixed bottom-16 right-3 z-50 sm:bottom-4">
+        <div className="fixed bottom-24 right-3 z-50 sm:bottom-16 lg:bottom-4">
           <button
             type="button"
             onClick={() => setHidden(false)}

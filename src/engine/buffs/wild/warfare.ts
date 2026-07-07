@@ -59,6 +59,9 @@ type WarfareMeta = {
   fx?: CardFx;
   /** Per-card lucide-react icon name; overrides the category glyph. */
   icon?: string;
+  /** Piece types the caster must own on the board for this card to be offered
+   * (dead-draft guard). Omit for cards that work regardless of your pieces. */
+  requires?: PieceType[];
 };
 
 /** Build a fully implemented card. Mirrors library.ts's private `def`. */
@@ -424,6 +427,7 @@ export const WILD_WARFARE: Buff[] = [
       description: "One of your bishops charges diagonally, capturing the first enemy piece in its path and landing just beyond, once.",
       tier: 4,
       category: "attack",
+      requires: ["b"],
       flavor: "Fix bayonets and do not stop.",
     },
     lineSweep("b", DIAG_DIRS, 1),
@@ -435,6 +439,7 @@ export const WILD_WARFARE: Buff[] = [
       description: "One of your rooks drives in a straight line, capturing up to two enemy pieces in its path and stopping, once.",
       tier: 5,
       category: "attack",
+      requires: ["r"],
       flavor: "Punch a hole and widen it.",
     },
     lineSweep("r", ORTHO_DIRS, 2),
@@ -446,6 +451,7 @@ export const WILD_WARFARE: Buff[] = [
       description: "One of your queens rolls in a straight line, capturing up to two enemy pieces in its path and stopping, once.",
       tier: 6,
       category: "attack",
+      requires: ["q"],
       flavor: "Nothing in this lane survives the advance.",
     },
     lineSweep("q", ALL_DIRS, 2),
@@ -498,6 +504,7 @@ export const WILD_WARFARE: Buff[] = [
       description: "One of your knights may also step one square in any direction like a king, for the game.",
       tier: 3,
       category: "movement",
+      requires: ["n"],
       flavor: "Ride to the fight, dismount to win it.",
       fx: { motif: "empower", pieces: ["n"], moveAs: "k", self: true },
     },
@@ -512,6 +519,7 @@ export const WILD_WARFARE: Buff[] = [
       description: "One of your pawns may also move and capture one square sideways, for the game.",
       tier: 2,
       category: "movement",
+      requires: ["p"],
       flavor: "The hedge of pikes points every way at once.",
       fx: { motif: "empower", pieces: ["p"], self: true },
     },
@@ -526,6 +534,7 @@ export const WILD_WARFARE: Buff[] = [
       description: "One of your bishops may also move up to two squares straight in any direction, for the game.",
       tier: 3,
       category: "movement",
+      requires: ["b"],
       flavor: "A rolling fort with a blade on top.",
       fx: { motif: "empower", pieces: ["b"], moveAs: "r", self: true },
     },
@@ -555,6 +564,7 @@ export const WILD_WARFARE: Buff[] = [
       description: "One of your rooks may pass through up to two of your own pieces on its move, for the game.",
       tier: 3,
       category: "movement",
+      requires: ["r"],
       flavor: "Shields locked, the whole line moves together.",
       fx: { motif: "empower", pieces: ["r"], self: true },
     },
@@ -573,6 +583,7 @@ export const WILD_WARFARE: Buff[] = [
       description: "Both of your knights may also step one square in any direction like a king, for the game.",
       tier: 4,
       category: "movement",
+      requires: ["n"],
       flavor: "Hit them from two sides at once.",
       fx: { motif: "empower", pieces: ["n"], moveAs: "k", self: true },
     },
@@ -589,6 +600,7 @@ export const WILD_WARFARE: Buff[] = [
       description: "Your pawns may also capture the enemy piece directly ahead of them, for the game.",
       tier: 4,
       category: "movement",
+      requires: ["p"],
       flavor: "Dug in and biting back.",
       fx: { motif: "empower", pieces: ["p"], self: true },
     },
@@ -601,6 +613,7 @@ export const WILD_WARFARE: Buff[] = [
       description: "For your next 3 turns, each of your bishops may also step one square straight in any direction.",
       tier: 3,
       category: "movement",
+      requires: ["b"],
       flavor: "Off the diagonal and around the wing.",
       fx: { motif: "empower", pieces: ["b"], moveAs: "k", self: true },
     },
@@ -617,6 +630,7 @@ export const WILD_WARFARE: Buff[] = [
       description: "One of your rooks, bishops, or queens may pass through up to two of your own pieces on its move, once.",
       tier: 3,
       category: "movement",
+      requires: ["r", "b", "q"],
       flavor: "Lay the planks, cross your own crowd.",
       fx: { motif: "empower", pieces: ["r", "b", "q"], self: true },
     },

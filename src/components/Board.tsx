@@ -911,7 +911,38 @@ export function Board({
   const orderedSquares = orientation === "w" ? ORDERED_SQUARES_WHITE : ORDERED_SQUARES_BLACK;
   const bannedSquares = useMemo(() => new Set(visual?.bannedSquares ?? []), [visual?.bannedSquares]);
   const frozenSquares = useMemo(() => new Set(visual?.frozenSquares ?? []), [visual?.frozenSquares]);
-  const shieldedSquares = useMemo(() => new Set(visual?.shieldedSquares ?? []), [visual?.shieldedSquares]);
+  // Green shield tint squares. Recompute from the LIVE effect state every
+  // render so a stale square can never keep the tint lit: a shield square is
+  // painted only while its effect is live (its timer has not run out) AND the
+  // owner's own piece still stands on it, so the instant the shielded piece
+  // moves off, is captured, or the effect expires the square drops. A
+  // whole-army shield (squares null) tracks every current owner piece. This
+  // reads only the shared board and the public effect list, so both players
+  // resolve the identical set. Falls back to the parent-provided list when the
+  // live buff state is not in hand (history review, nerf mode, or a surface
+  // that omits buffs) so nothing regresses there.
+  const shieldedSquares = useMemo(() => {
+    if (visual && buffs) {
+      const s = new Set<number>();
+      for (const e of buffs.effects) {
+        if (e.kind !== "shield") continue;
+        if (e.turns != null && e.turns <= 0) continue;
+        if (e.squares) {
+          for (const sq of e.squares) {
+            const p = board.pieces[sq];
+            if (p && p.color === e.owner) s.add(sq);
+          }
+        } else {
+          for (let sq = 0; sq < 64; sq++) {
+            const p = board.pieces[sq];
+            if (p && p.color === e.owner) s.add(sq);
+          }
+        }
+      }
+      return s;
+    }
+    return new Set(visual?.shieldedSquares ?? []);
+  }, [visual, buffs, board.pieces]);
   const wardSquares = useMemo(() => new Set(visual?.wardSquares ?? []), [visual?.wardSquares]);
   const strikeSquares = useMemo(() => new Set(visual?.strikeSquares ?? []), [visual?.strikeSquares]);
   const walnutSquares = useMemo(() => new Set(visual?.walnutSquares ?? []), [visual?.walnutSquares]);
@@ -926,10 +957,30 @@ export function Board({
   const lockedSquares = useMemo(() => new Set(visual?.lockedSquares ?? []), [visual?.lockedSquares]);
   const bananaSquares = useMemo(() => new Set(visual?.bananaSquares ?? []), [visual?.bananaSquares]);
   const barredSquares = useMemo(() => new Set(visual?.barredSquares ?? []), [visual?.barredSquares]);
-  const kingSafeSquares = useMemo(
-    () => new Set(visual?.kingSafeSquares ?? []),
-    [visual?.kingSafeSquares],
-  );
+  // Royal-guard (king_safe) tint. Recompute from live state as well: it always
+  // sits on the owner's CURRENT king square and clears the instant the ward
+  // expires, so the tint can never stick to a square the king has left behind.
+  const kingSafeSquares = useMemo(() => {
+    if (visual && buffs) {
+      const s = new Set<number>();
+      let wKing = -1;
+      let bKing = -1;
+      for (let sq = 0; sq < 64; sq++) {
+        const p = board.pieces[sq];
+        if (!p || p.type !== "k") continue;
+        if (p.color === "w") wKing = sq;
+        else bKing = sq;
+      }
+      for (const e of buffs.effects) {
+        if (e.kind !== "king_safe") continue;
+        if (e.turns != null && e.turns <= 0) continue;
+        const k = e.owner === "w" ? wKing : bKing;
+        if (k >= 0) s.add(k);
+      }
+      return s;
+    }
+    return new Set(visual?.kingSafeSquares ?? []);
+  }, [visual, buffs, board.pieces]);
   const pawnClampSquares = useMemo(
     () => new Set(visual?.pawnClampSquares ?? []),
     [visual?.pawnClampSquares],
@@ -1773,7 +1824,7 @@ export function Board({
                     <BoundBuffMark tier={boundMark.tier} category={boundMark.category} />
                   </button>
                 )}
-                {(shieldedSquares.has(sq) || kingSafeSquares.has(sq)) && (
+                {piece && (shieldedSquares.has(sq) || kingSafeSquares.has(sq)) && (
                   <>
                     <div className="absolute inset-0 pointer-events-none ring-2 ring-inset ring-verdigris-glow/80 shadow-[inset_0_0_18px_-4px_rgba(123,181,47,0.6)] sq-shield-in" />
                     {/* Shield bearer: a heater shield leans against the

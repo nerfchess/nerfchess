@@ -63,7 +63,7 @@ export default function LeaderboardPage() {
   const renderRow = (row: Row, rank: number, key: string) => {
     const mine = isMeName(row.username);
     const rowClass =
-      "grid grid-cols-[3rem_1fr_5rem_4rem_6rem] items-center px-4 py-2.5 border-b border-white/5 text-sm transition hover:bg-white/[0.04] " +
+      "grid grid-cols-[2rem_1fr_4.5rem_5.25rem] sm:grid-cols-[3rem_1fr_5rem_4rem_6rem] items-center px-3 sm:px-4 py-2.5 border-b border-white/5 text-sm transition hover:bg-white/[0.04] " +
       (mine ? "bg-gold/10" : rank % 2 === 0 ? "bg-white/[0.015]" : "");
     const content = (
       <>
@@ -92,7 +92,7 @@ export default function LeaderboardPage() {
             </span>
           )}
         </span>
-        <span className="text-right font-mono text-parchment-400 tabular-nums">{row.games}</span>
+        <span className="hidden text-right font-mono text-parchment-400 tabular-nums sm:block">{row.games}</span>
         <span className="text-right font-mono text-parchment-400 tabular-nums">
           {row.wins}/{row.losses}/{row.draws}
         </span>
@@ -117,7 +117,7 @@ export default function LeaderboardPage() {
     <main className="min-h-screen">
       <SiteHeader active="/leaderboard" />
 
-      <section className="max-w-3xl mx-auto px-6 py-8">
+      <section className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
         <h1 className="font-display text-4xl sm:text-5xl text-parchment-50">Leaderboard</h1>
 
         {/* Exactly two boards: the Nerf and Buff mode ladders. */}
@@ -145,11 +145,11 @@ export default function LeaderboardPage() {
 
         {rows && rows.length > 0 && (
           <div className="mt-6 plate overflow-hidden">
-            <div className="grid grid-cols-[3rem_1fr_5rem_4rem_6rem] items-center px-4 py-3 border-b border-white/8 smallcaps text-[10px] text-parchment-400">
+            <div className="grid grid-cols-[2rem_1fr_4.5rem_5.25rem] sm:grid-cols-[3rem_1fr_5rem_4rem_6rem] items-center px-3 sm:px-4 py-3 border-b border-white/8 smallcaps text-[10px] text-parchment-400">
               <span>#</span>
               <span>Player</span>
               <span className="text-right">{active.label} rating</span>
-              <span className="text-right">Games</span>
+              <span className="hidden text-right sm:block">Games</span>
               <span className="text-right">W / L / D</span>
             </div>
             {rows.map((row, i) => renderRow(row, i + 1, row.guest ? `guest:${row.username}` : row.username))}

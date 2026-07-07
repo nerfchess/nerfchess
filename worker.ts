@@ -373,18 +373,25 @@ const houseSeekTtlMs = 8 * 60 * 1000;
 // Hard caps: at most this many simultaneous house-vs-house filler games, and
 // at most this many unfinished games with any house seat at all. Above the
 // caps, personas leave the queue instead of pairing.
-// Lowered from 2 to 1: house-vs-house filler games exist only for lobby
-// optics and are pure background engine work on the single-threaded DO. One
-// filler still keeps the lobby looking alive while halving that background
-// load. Bump back to 2 if the lobby looks too quiet.
-// Bots should mostly be PLAYING each other, not queueing. Up to 18 house-vs-house
-// games (~36 bots in games) plus a couple of seekers. Paired with the faster
-// filler spawn cadence below so the freed personas actually start games quickly
-// instead of trickling in one per minute. The per-alarm action ceiling still
-// bounds engine searches per tick. Dial these (and the cadence below) back down
-// if the server strains under real traffic.
-const houseVsHouseCap = 18;
-const houseTotalGamesCap = 20;
+//
+// These caps are sized off the LIVE roster so filler can never drain the whole
+// roster into games and leave zero seekers (the reported "no bots seeking" bug).
+// The old fixed caps (18 house-vs-house games = 36 bots, 20 total) assumed the
+// original ~50-persona roster; the roster is now HOUSE_ROSTER.length personas,
+// so those caps over-subscribed it and every free persona ended up in a filler
+// game with none left to seek. Deriving from the roster means a future roster
+// change can never re-starve the queue.
+//
+// Reserve a block of personas that are NEVER committed to a house game, kept
+// free for the live seek floor (houseSeekMin..houseSeekMax) plus a little churn
+// for human pickups. The remaining "game seats" are split so that, worst case
+// (filler at its cap AND the rest of the total cap taken by 1-bot pickups),
+// bots in games stay within the seat budget and the reserve survives:
+//   worst-case bots = houseVsHouseCap + houseTotalGamesCap <= houseGameSeats.
+const houseSeekReserve = houseSeekMax + 2;
+const houseGameSeats = Math.max(4, HOUSE_ROSTER.length - houseSeekReserve);
+const houseVsHouseCap = Math.max(1, Math.floor(houseGameSeats / 3));
+const houseTotalGamesCap = houseGameSeats - houseVsHouseCap;
 // Per-alarm ceiling on house engine actions (moves and draft resolves), across
 // all live house games. Human-facing actions used to ALL run in one tick, so
 // after any stall every overdue game became due at once and one alarm ran a
@@ -429,7 +436,7 @@ type HouseSeekEntry = {
 // (deserializing every finished game's move history), which on a bloated table
 // blew the DO CPU limit before it could cache or GC anything: the crash loop.
 const liveIdsKey = "live:ids";
-const buildVersion = "crazyhouse-inventory-1";
+const buildVersion = "bot-presence-1";
 // How long the moderator card-overrides snapshot (the card_overrides table:
 // disabled cards and tier moves) is cached in the DO before re-reading D1.
 // Loaded lazily on match creation and the opening nerf deal, never on a
@@ -3123,7 +3130,17 @@ export class GameServer extends DurableObject<Env> {
     // the next tick — no code change, so the arena being down never means an
     // empty lobby. Bot-vs-human pickup + house seeks above are unaffected.
     const arenaOwnsFiller = this.env.ARENA_OWNS_FILLER === "true" && this.env.ARENA_INGEST_ENABLED === "true";
-    if (!arenaOwnsFiller && houseVsHouse < houseVsHouseCap && houseGames + 1 < houseTotalGamesCap && free.length >= 2) {
+    // Never let a filler spawn dip into the seek reserve: after taking its two
+    // personas the roster must still hold enough free personas to top the seek
+    // floor back up on the next tick. Together with the roster-sized caps above
+    // this guarantees a steady 2-3 seekers are always maintained.
+    const freeAfterFiller = free.length - 2;
+    if (
+      !arenaOwnsFiller &&
+      houseVsHouse < houseVsHouseCap &&
+      houseGames + 1 < houseTotalGamesCap &&
+      freeAfterFiller >= houseSeekMin
+    ) {
       try {
         const nextAt = (await this.ctx.storage.get<number>(houseNextFillerKey)) ?? 0;
         if (now >= nextAt) {
@@ -5087,31 +5104,24 @@ export class GameServer extends DurableObject<Env> {
       // Display presence: the house roster fills out the lobby so it never
       // looks dead. Personas already added above keep their REAL status
       // ("playing" from a live game, "searching" from a seek); those are never
-      // touched here. The rest are otherwise idle. Rather than parking every one
-      // of them on "online" (which made the whole roster read as idle, the
-      // reported "everyone shows online" bug), show a rotating share of the idle
-      // personas as bot-vs-bot "playing" so the lobby reads as busy with games.
-      // This is display only: it spawns no real games, does no D1 work, and
-      // touches no storage. The rotation is a pure function of the persona id
-      // and a coarse ~45s time bucket, so it is stable across a poll burst and
-      // drifts slowly (different bots appear in games over time). Rating and
-      // avatar come straight from the persona (houseSeedRating + flower avatar).
+      // touched here. Every remaining persona is genuinely idle and shows
+      // "online" (never a fabricated "playing").
+      //
+      // We used to mark a rotating ~half of the idle personas "playing" for
+      // optics, but that is exactly the reported "in game but not in live games"
+      // bug: those personas were in NO real match, so they showed as playing in
+      // the online list yet never appeared in the live-games / TV list (which is
+      // built from real matches in the live index). A bot must only ever read as
+      // "playing" when it is actually in a live house game, so its game is
+      // always discoverable. The lobby still reads as busy because real
+      // house-vs-house filler games run up to houseVsHouseCap (each puts two
+      // personas on genuine "playing" AND lists a watchable game above).
       const idlePersonas = HOUSE_ROSTER.filter((p) => !seen.has(p.userId));
-      // Rank the idle personas by a time-bucketed hash for a stable, slowly
-      // rotating order, then mark the leading share "playing" (rounded to whole
-      // pairs so they read as paired-off bot-vs-bot games) and the rest online.
-      const rotationBucket = Math.floor(now / 45_000);
-      const rankedIdle = idlePersonas
-        .map((p) => ({ p, key: fnv1a(`${p.userId}:${rotationBucket}`) }))
-        .sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0))
-        .map((x) => x.p);
-      const idlePlayingCount = Math.floor((rankedIdle.length * 0.5) / 2) * 2;
-      for (let i = 0; i < rankedIdle.length; i++) {
-        const persona = rankedIdle[i];
+      for (const persona of idlePersonas) {
         seen.set(persona.userId, {
           name: persona.name,
           rating: houseSeedRating(persona),
-          status: i < idlePlayingCount ? "playing" : "online",
+          status: "online",
           avatar: persona.avatar,
         });
       }

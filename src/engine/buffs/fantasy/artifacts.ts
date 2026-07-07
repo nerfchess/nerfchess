@@ -1,10 +1,10 @@
 // Fantasy set: MYTHIC ARTIFACTS. Relics of a lost age: a blade that lets a
 // bishop cut like a queen (pieceBound), a war-horn that calls reinforcements
 // (placePieces), an orb that dominates an enemy champion (convertEnemies), a
-// staff that freezes a foe in time (freeze), an ancient aegis that turns your
-// whole army invulnerable (shieldArmy), and a battle-banner that quickens your
-// cavalry (timedAugment). Movement grants only ever widen a piece's move list,
-// so none of these can soft-lock a turn.
+// staff that freezes a foe in time (freeze), an ancient aegis that wards your
+// whole army and its king from capture (shield + king_safe), and a battle-banner
+// that quickens your cavalry (timedAugment). Movement grants only ever widen a
+// piece's move list, so none of these can soft-lock a turn.
 
 import { Buff } from "./shared";
 import {
@@ -13,11 +13,12 @@ import {
   placePieces,
   convertEnemies,
   freezeTarget,
-  shieldArmy,
   timedAugment,
   slideMoves,
   mySquares,
   myHalfZone,
+  addEffect,
+  instant,
   ORTHO_DIRS,
   ALL_DIRS,
 } from "./shared";
@@ -32,6 +33,7 @@ export const FANTASY_ARTIFACTS: Buff[] = [
         "One of your bishops also moves like a rook for the game, giving it full queen movement.",
       tier: 5,
       category: "movement",
+      requires: ["b"],
       flavor: "The lake gives up its blade only once.",
       fx: { motif: "empower", pieces: ["b"], moveAs: "q", self: true },
     },
@@ -84,13 +86,18 @@ export const FANTASY_ARTIFACTS: Buff[] = [
       icon: "ShieldPlus",
       name: "Aegis of the Ages",
       description:
-        "Lift the ancient aegis and its ward falls over your whole host: none of your pieces can be captured for your opponent's next 2 turns.",
+        "Lift the ancient aegis and its ward falls over your whole host, your king included: nothing you own can be captured for your opponent's next 2 turns.",
       tier: 7,
       category: "protection",
       flavor: "Forged before the first war, unbroken since.",
       fx: { motif: "ward", pieces: "all", self: true },
     },
-    shieldArmy(2),
+    // An unbroken bulwark: the army shield AND a king ward, so unlike the plain
+    // army aegis the crown cannot be taken either while it holds.
+    instant((_inst, api) => {
+      addEffect(api, { kind: "shield", owner: api.me, squares: null, turns: 2 });
+      addEffect(api, { kind: "king_safe", owner: api.me, turns: 2 });
+    }),
   ),
   card(
     {
@@ -101,6 +108,7 @@ export const FANTASY_ARTIFACTS: Buff[] = [
         "Raise the banner and your cavalry surges: for your next 2 turns each of your knights may also step one square in any direction like a king.",
       tier: 3,
       category: "movement",
+      requires: ["n"],
       flavor: "Follow the colors and do not look back.",
       fx: { motif: "empower", pieces: ["n"], moveAs: "k", self: true },
     },

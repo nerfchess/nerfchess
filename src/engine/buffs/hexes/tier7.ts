@@ -12,30 +12,48 @@ import {
   tierHexes,
   curse,
   walnutAll,
-  walnutTarget,
-  freezeAllEnemies,
-  freezeTarget,
   skipOpponent,
   blockDrafts,
   instant,
+  activated,
   addEffect,
+  mySquares,
+  relRank,
+  FILE,
+  RANK,
   SQ,
+  inBoard,
 } from "./shared";
 
 const H = tierHexes(7);
 
 export const HEXES_T7: Buff[] = [
-  // --- petrify all: both rooks locked for 4 turns -------------------------
+  // --- petrify all: both rooks walnutted 4 turns AND barred from capturing
+  // for the rest of the game (tier-7 capstone rider over stone_bastions) ----
   H(
     {
       id: "obsidian_bastions",
       name: "Obsidian Bastions",
-      description: "Your opponent's rooks turn to walnuts for 4 of their turns: a walnut is so heavy it can only shuffle one square at a time.",
-      flavor: "The towers cool into black glass.",
-      // Board already paints walnuts; fx carried for consistency.
+      description: "Your opponent's rooks turn to walnuts for 4 of their turns, and from then on those rooks can never capture again for the rest of the game.",
+      flavor: "The towers cool into black glass and forget how to strike.",
+      // Board paints the walnuts; the permanent no-capture rider has no motif.
       fx: { motif: "jail", pieces: ["r"] },
     },
-    walnutAll(["r"], 4),
+    {
+      kind: "passive",
+      init: (_inst, api) => {
+        for (const sq of mySquares(api.board, api.opp)) {
+          if (api.board.pieces[sq]!.type === "r") {
+            addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 4 });
+          }
+        }
+      },
+      filterOpponentMoves: (moves) => {
+        if (moves.length === 0) return moves;
+        const kept = moves.filter((m) => !(m.piece === "r" && m.captured));
+        return kept.length > 0 ? kept : moves;
+      },
+    },
   ),
 
   // --- petrify all: the entire minor line (knights and bishops) 3 turns ---
@@ -51,52 +69,132 @@ export const HEXES_T7: Buff[] = [
     walnutAll(["n", "b"], 3),
   ),
 
-  // --- petrify all: the queen frozen in stone for 3 turns -----------------
+  // --- petrify the two heaviest enemy minors (repointed off the queen) -----
   H(
     {
       id: "cockatrice_gaze",
       name: "Cockatrice Gaze",
-      description: "Your opponent's queen turns to a walnut for 3 of their turns: a walnut is so heavy it can only shuffle one square at a time.",
-      flavor: "One glance and the lady is limestone.",
+      description: "Your opponent's two heaviest minor pieces (bishops before knights) turn to walnuts for 3 of their turns: a walnut is so heavy it can only shuffle one square at a time.",
+      flavor: "One glance and the horses and prelates are limestone.",
       // Board already paints walnuts; fx carried for consistency.
-      fx: { motif: "jail", pieces: ["q"] },
+      fx: { motif: "jail", pieces: ["n", "b"] },
     },
-    walnutAll(["q"], 3),
+    instant((_inst, api) => {
+      const minorWeight = (sq: number) => (api.board.pieces[sq]!.type === "b" ? 1 : 0);
+      const minors = mySquares(api.board, api.opp)
+        .filter((sq) => {
+          const t = api.board.pieces[sq]!.type;
+          return t === "n" || t === "b";
+        })
+        .sort((a, b) => minorWeight(b) - minorWeight(a));
+      for (const sq of minors.slice(0, 2)) {
+        addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 3 });
+      }
+    }),
   ),
 
-  // --- petrify one targeted piece (any non-king) for 4 turns --------------
+  // --- petrify one targeted piece 4 turns AND its two flankers 2 turns -----
   H(
     {
       id: "chisel_curse",
       name: "Chisel Curse",
-      description: "Turn one enemy piece you target into a walnut for 4 of their turns: a walnut is so heavy it can only shuffle one square at a time. Kings cannot be targeted.",
-      flavor: "Marked, struck, and left as monument.",
+      description: "Turn one enemy piece you target into a walnut for 4 of their turns, and the enemy pieces directly to its left and right into walnuts for 2 of their turns each. Kings are never affected.",
+      flavor: "The chisel bites, and the stone spreads to its neighbours.",
     },
-    walnutTarget(4),
+    activated(
+      (_inst, api, picks) =>
+        picks.length > 0
+          ? null
+          : {
+              kind: "square",
+              label: "Choose an enemy piece to petrify",
+              squares: mySquares(api.board, api.opp).filter(
+                (sq) => api.board.pieces[sq]!.type !== "k",
+              ),
+            },
+      (_inst, api, picks) => {
+        const sq = picks[0]?.square;
+        if (sq == null) return;
+        addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 4 });
+        for (const df of [-1, 1]) {
+          const f = FILE(sq) + df;
+          const r = RANK(sq);
+          if (!inBoard(f, r)) continue;
+          const nsq = SQ(f, r);
+          const p = api.board.pieces[nsq];
+          if (p && p.color === api.opp && p.type !== "k") {
+            addEffect(api, { kind: "walnut", sq: nsq, owner: api.opp, turns: 2 });
+          }
+        }
+      },
+    ),
   ),
 
-  // --- freeze all: whole army but the king iced for 2 turns ---------------
+  // --- freeze the whole army 2 turns, then each thawed piece is a walnut 2 -
   H(
     {
       id: "glacial_tomb",
       name: "Glacial Tomb",
-      description: "Freeze all of your opponent's pieces except their king for 2 of their turns, so only their king may move.",
-      flavor: "The army sealed under a sheet of blue ice.",
-      // Board already paints freezes; fx carried for consistency.
+      description: "Freeze all of your opponent's pieces except their king for 2 of their turns. As the ice melts each one becomes a walnut for 2 more turns, able to shuffle only one square at a time.",
+      flavor: "The army sealed in blue ice that hardens to stone as it cracks.",
+      // Board already paints freezes and walnuts; fx carried for consistency.
       fx: { motif: "jail", pieces: ["p", "n", "b", "r", "q"] },
     },
-    freezeAllEnemies(2),
+    instant((_inst, api) => {
+      for (const sq of mySquares(api.board, api.opp)) {
+        if (api.board.pieces[sq]!.type === "k") continue;
+        // Freeze runs first (2 turns); the walnut (4) keeps ticking under it,
+        // so when the freeze lifts exactly 2 turns of walnut shuffle remain.
+        addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2 });
+        addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 4 });
+      }
+    }),
   ),
 
-  // --- freeze one targeted piece for 4 turns ------------------------------
+  // --- freeze one targeted piece AND one enemy piece next to it, 3 each ----
   H(
     {
       id: "frozen_solid",
       name: "Frozen Solid",
-      description: "Freeze one enemy piece you target so it cannot move for 4 of their turns. Kings cannot be targeted.",
-      flavor: "Encased so deep the thaw never comes.",
+      description: "Freeze one enemy piece you target and one enemy piece standing next to it for 3 of their turns each. Kings cannot be chosen.",
+      flavor: "The frost jumps from one body to the next.",
     },
-    freezeTarget(4),
+    activated(
+      (_inst, api, picks) => {
+        if (picks.length >= 2) return null;
+        if (picks.length === 0) {
+          return {
+            kind: "square",
+            label: "Choose an enemy piece to freeze",
+            squares: mySquares(api.board, api.opp).filter(
+              (sq) => api.board.pieces[sq]!.type !== "k",
+            ),
+          };
+        }
+        const first = picks[0].square!;
+        const adjacent = mySquares(api.board, api.opp).filter((sq) => {
+          const t = api.board.pieces[sq]!.type;
+          return (
+            t !== "k" &&
+            sq !== first &&
+            Math.max(Math.abs(FILE(sq) - FILE(first)), Math.abs(RANK(sq) - RANK(first))) === 1
+          );
+        });
+        if (adjacent.length === 0) return null;
+        return {
+          kind: "square",
+          label: "Choose an adjacent enemy piece to freeze too",
+          squares: adjacent,
+        };
+      },
+      (_inst, api, picks) => {
+        for (const pick of picks) {
+          if (pick.square != null) {
+            addEffect(api, { kind: "freeze", sq: pick.square, owner: api.opp, turns: 3 });
+          }
+        }
+      },
+    ),
   ),
 
   // --- king_only 1 turn AND block their next draft -------------------------
@@ -116,19 +214,33 @@ export const HEXES_T7: Buff[] = [
     }),
   ),
 
-  // --- no_pawn_advance: pawns nailed down for 6 turns (near-permanent) -----
+  // --- perma pawn lock for the rest of the game AND bar their own 4th rank -
   H(
     {
       id: "salted_earth",
       name: "Salted Earth",
-      description: "Your opponent's pawns cannot advance for their next 6 turns. They may still capture diagonally.",
-      flavor: "Nothing grows and nothing marches on ground sown with salt.",
-      // Board already paints no_pawn_advance; fx carried for consistency.
+      description: "Your opponent's pawns can never advance again for the rest of the game; they may still capture diagonally. On top of that, for their next 3 turns they cannot move any piece onto their own 4th rank.",
+      flavor: "Ground sown with salt: nothing marches forward on it ever again.",
+      // Board paints the barred rank; the permanent pawn lock has no motif.
       fx: { motif: "anchor", pieces: ["p"] },
     },
-    instant((_inst, api) => {
-      addEffect(api, { kind: "no_pawn_advance", against: api.opp, turns: 6 });
-    }),
+    {
+      kind: "passive",
+      init: (_inst, api) => {
+        const squares: number[] = [];
+        for (let sq = 0; sq < 64; sq++) {
+          if (relRank(api.opp, sq) === 4) squares.push(sq);
+        }
+        addEffect(api, { kind: "barred", squares, against: api.opp, turns: 3 });
+      },
+      filterOpponentMoves: (moves) => {
+        if (moves.length === 0) return moves;
+        // A straight pawn advance keeps the same file; a diagonal capture
+        // changes it, so captures (including en passant) are untouched.
+        const kept = moves.filter((m) => !(m.piece === "p" && FILE(m.from) === FILE(m.to)));
+        return kept.length > 0 ? kept : moves;
+      },
+    },
   ),
 
   // --- barred: seal the entire center (4th and 5th ranks) for 3 turns -----

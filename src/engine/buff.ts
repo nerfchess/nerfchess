@@ -450,6 +450,17 @@ export interface Buff {
    * implicitly (see isBoon); light general cards flagged here round the
    * pool out to roughly half nerf-relief, half small supportive effects. */
   boon?: boolean;
+  /**
+   * Piece-type eligibility for the DRAFT POOL: the caster must own at least
+   * one piece of one of these types (on the board) for this card to be
+   * offered. Cards whose whole effect targets the caster's own pieces of a
+   * specific type ("your knights become amazons", "your rooks strike first")
+   * are DEAD DRAFTS when the caster has none of that piece, so the draft roll
+   * drops them from the pool (see rollCards / inMode in draft.ts). A pure,
+   * deterministic read of the synced board, so it can never desync. Leave
+   * unset for cards that work regardless of your pieces (global effects,
+   * pocket grants, king-only cards, enemy-targeting cards). */
+  requires?: PieceType[];
   implemented: boolean;
   /**
    * passive   — hooks run automatically while held

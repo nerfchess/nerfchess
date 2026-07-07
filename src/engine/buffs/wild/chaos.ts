@@ -56,6 +56,9 @@ type ChaosMeta = {
   fx?: CardFx;
   /** Per-card lucide-react icon name; overrides the category glyph. */
   icon?: string;
+  /** Piece types the caster must own on the board for this card to be offered
+   * (dead-draft guard). Omit for cards that work regardless of your pieces. */
+  requires?: PieceType[];
 };
 
 /** Build a fully implemented card from metadata + mechanics. Mirrors the `def`
@@ -572,6 +575,7 @@ export const WILD_CHAOS: Buff[] = [
       description: "Sign here: promote one of your pawns to a queen at once, but the devil collects and you skip your next 2 turns.",
       tier: 5,
       category: "pieces",
+      requires: ["p"],
       flavor: "The ink is still smoking.",
       fx: { motif: "empower", pieces: ["p"], moveAs: "q", self: true },
     },
@@ -599,6 +603,7 @@ export const WILD_CHAOS: Buff[] = [
       description: "One of your pawns flies into a frenzy: for your next 3 turns it also moves like a queen, then it burns out and is removed from the board.",
       tier: 5,
       category: "movement",
+      requires: ["p"],
       flavor: "Glorious, brief.",
       fx: { motif: "empower", pieces: ["p"], moveAs: "q", self: true },
     },
@@ -922,6 +927,7 @@ export const WILD_CHAOS: Buff[] = [
       description: "Teach your pawns to moonwalk: for your next 3 turns each of your pawns may also step one square straight backward onto an empty square.",
       tier: 3,
       category: "movement",
+      requires: ["p"],
       flavor: "Smooth. Wrong direction, but smooth.",
       fx: { motif: "empower", pieces: ["p"], self: true },
     },
@@ -934,6 +940,7 @@ export const WILD_CHAOS: Buff[] = [
       description: "One of your knights takes a little kangaroo hop: it may also step one square in any direction, once.",
       tier: 2,
       category: "movement",
+      requires: ["n"],
       flavor: "Boing.",
       fx: { motif: "empower", pieces: ["n"], moveAs: "k", self: true },
     },
@@ -1011,6 +1018,7 @@ export const WILD_CHAOS: Buff[] = [
       description: "One of your queens swings a wrecking ball down a rank or file, removing every enemy piece in its path, never a king, and stopping at the end, once.",
       tier: 6,
       category: "attack",
+      requires: ["q"],
       flavor: "Structural integrity was more of a suggestion.",
     },
     lineSweep("q", ORTHO_DIRS, null),

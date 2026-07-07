@@ -12,6 +12,12 @@ import {
   walnutAll,
   freezeTarget,
   relRank,
+  mySquares,
+  addEffect,
+  turnsLeft,
+  tickTurns,
+  FILE,
+  RANK,
 } from "./shared";
 
 export const FANTASY_CURSES: Buff[] = [
@@ -48,13 +54,22 @@ export const FANTASY_CURSES: Buff[] = [
       icon: "HeartPulse",
       name: "Curse of Frailty",
       description:
-        "A wasting curse saps the enemy's strength: no piece of your opponent's may capture for their next 2 turns.",
+        "A wasting curse saps the enemy's strength: for their next 2 turns your opponent cannot capture, and no piece of theirs may slide more than two squares.",
       tier: 5,
       category: "hex",
       flavor: "Every sword arm goes soft as wax.",
-      fx: { motif: "muzzle", pieces: "all" },
+      fx: { motif: "anchor", pieces: "all" },
     },
-    curse(2, (moves) => moves.filter((m) => !m.captured)),
+    curse(2, (moves) =>
+      moves.filter((m) => {
+        if (m.captured) return false;
+        const dist = Math.max(
+          Math.abs(FILE(m.to) - FILE(m.from)),
+          Math.abs(RANK(m.to) - RANK(m.from)),
+        );
+        return dist <= 2;
+      }),
+    ),
   ),
   card(
     {
@@ -92,12 +107,40 @@ export const FANTASY_CURSES: Buff[] = [
       icon: "Mountain",
       name: "Hex of Stone",
       description:
-        "A creeping grey hex hardens the enemy's flanks: every one of your opponent's knights and bishops turns to stone for 3 of their turns.",
+        "A creeping grey hex hardens the enemy's flanks: every one of your opponent's knights and bishops turns to a walnut for 3 of their turns, and for those 3 turns their rooks and queen may slide no more than two squares.",
       tier: 7,
       category: "hex",
       flavor: "The cavalry and the clergy, all one quarry now.",
       fx: { motif: "jail", pieces: ["n", "b"] },
     },
-    walnutAll(["n", "b"], 3),
+    {
+      kind: "passive",
+      // Petrify the minors for 3 turns, once, and open a 3-turn clamp window.
+      init: (inst, api) => {
+        inst.state.turns = 3;
+        for (const sq of mySquares(api.board, api.opp)) {
+          const t = api.board.pieces[sq]!.type;
+          if (t === "n" || t === "b") {
+            addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 3 });
+          }
+        }
+      },
+      // While the window runs, heavy pieces move like leaden things: a rook or
+      // queen may cover at most two squares. Never empties the move list.
+      filterOpponentMoves: (moves, inst) => {
+        if (turnsLeft(inst) <= 0) return moves;
+        const kept = moves.filter((m) => {
+          if (m.piece !== "r" && m.piece !== "q") return true;
+          const dist = Math.max(
+            Math.abs(FILE(m.to) - FILE(m.from)),
+            Math.abs(RANK(m.to) - RANK(m.from)),
+          );
+          return dist <= 2;
+        });
+        return kept.length > 0 ? kept : moves;
+      },
+      onMovePlayed: (inst, move, api) => tickTurns(inst, move, api.opp),
+      status: (inst) => `${turnsLeft(inst)} of their turns left`,
+    },
   ),
 ];
