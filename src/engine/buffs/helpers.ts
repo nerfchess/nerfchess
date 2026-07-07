@@ -382,6 +382,16 @@ export function markRevived(api: BuffApi, type: PieceType, n = 1) {
   api.mine.revived[type] = (api.mine.revived[type] ?? 0) + n;
 }
 
+/** Grant `n` pieces of `type` into my crazyhouse-style pocket. I may DROP them
+ * onto an empty square on a later turn (see legalMoves / playMove), spending
+ * that turn. Kings are never bankable. This is the grant half of the inventory
+ * loop; the drop half is engine-generated, so a card only ever calls this. */
+export function grantInventory(api: BuffApi, type: PieceType, n = 1) {
+  if (type === "k" || n <= 0) return;
+  const pocket = (api.mine.inventory ??= {});
+  pocket[type] = (pocket[type] ?? 0) + n;
+}
+
 /** Revive one captured piece of the given types onto a targeted empty square. */
 export function reviveOne(types: PieceType[], zone: (api: BuffApi) => (sq: Square) => boolean): Mech {
   return activated(

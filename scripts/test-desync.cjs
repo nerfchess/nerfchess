@@ -162,6 +162,9 @@ function syncDraftState(env) {
     if (color === env.viewer) rps.flags = clone(sps.flags);
     if (sps.nerfRemoved) rps.nerfRemoved = true;
     rps.revived = clone(sps.revived);
+    // Crazyhouse-style pocket rides the dtState round-trip for both seats,
+    // exactly like draftStateFor sends it, so a drop can never desync.
+    rps.inventory = clone(sps.inventory);
   }
 }
 
@@ -363,6 +366,64 @@ function assertConverged(env, label) {
   check(env2.server.board.epTarget === null, "ep: server kept a stale ep target after the buff turn");
   check(env2.replica.board.epTarget === null, "ep: replica kept a stale ep target after the buff turn");
   assertConverged(env2, "ep-warp");
+}
+
+// --- Scenario 5: crazyhouse inventory grant + drop --------------------------
+// A card grants a piece to the pocket; on a later turn the holder DROPS it onto
+// an empty square. The drop spends the turn, mutates the board outside makeMove,
+// and must replay byte-identically on the replica (the board is what no dtState
+// frame can repair).
+{
+  const env = newDuel(505);
+  opPick(env, "w", "supply_drop", 3); // instant grant: knight into white's pocket
+  check(env.server.buffs.players.w.inventory.n === 1, "drop: server pocket missing the knight");
+  check(
+    env.replica.buffs.players.w.inventory.n === 1,
+    "drop: replica pocket missing the knight (grant did not sync)",
+  );
+  // The grant did not consume the turn: white is still to move and drops now.
+  check(env.server.board.turn === "w", "drop: instant grant consumed the turn");
+  check(
+    legalMoves(env.server).some((m) => moveToUCI(m) === "n@e3"),
+    "drop: n@e3 not offered as a legal drop",
+  );
+  opMove(env, "n@e3");
+  check(env.server.board.pieces[sq("e3")]?.type === "n", "drop: server knight not placed on e3");
+  check(env.server.board.turn === "b", "drop: the drop did not consume white's turn");
+  check((env.server.buffs.players.w.inventory.n ?? 0) === 0, "drop: server pocket not decremented");
+  check((env.replica.buffs.players.w.inventory.n ?? 0) === 0, "drop: replica pocket not decremented");
+  check(env.server.buffs.historyDiverged === true, "drop: historyDiverged not set on the server");
+  check(env.replica.buffs.historyDiverged === true, "drop: historyDiverged not set on the replica");
+  assertConverged(env, "inventory-drop");
+
+  // Black replies and white drops a SECOND grant, proving repeated drops (and
+  // the pocket's grow/shrink) stay in lockstep across the dtState round-trip.
+  opMove(env, "e7e5");
+  opPick(env, "w", "supply_drop", 3);
+  check(env.server.buffs.players.w.inventory.n === 1, "drop2: server pocket missing the regrant");
+  opMove(env, "n@d3");
+  check(env.server.board.pieces[sq("d3")]?.type === "n", "drop2: server knight not placed on d3");
+  assertConverged(env, "inventory-drop-2");
+}
+
+// --- Drop legality rails: pawns never on rank 1/8, kings never droppable -----
+{
+  const g = newGame(UNRESTRICTED_NERF, UNRESTRICTED_NERF, 606);
+  enableDraftMode(g, 606, { mode: "buff" });
+  g.buffs.players.w.inventory = { p: 1 };
+  const pawnDrops = legalMoves(g).filter((m) => m.drop === "p");
+  check(pawnDrops.length > 0, "pawn drop: no pawn drops generated from a stocked pocket");
+  check(
+    pawnDrops.every((m) => {
+      const r = m.to >> 3;
+      return r >= 1 && r <= 6;
+    }),
+    "pawn drop: a pawn drop targeted rank 1 or 8",
+  );
+  const g2 = newGame(UNRESTRICTED_NERF, UNRESTRICTED_NERF, 607);
+  enableDraftMode(g2, 607, { mode: "buff" });
+  g2.buffs.players.w.inventory = { k: 1 };
+  check(!legalMoves(g2).some((m) => m.drop === "k"), "king drop: a king was droppable from the pocket");
 }
 
 // --- makeMove no-op guard: refused moves must not tick anything -------------
@@ -722,5 +783,5 @@ if (errors.length) {
 }
 console.log(
   `OK: desync harness passed (fingerprint core, sample hash ${fpA.hash}, ${rules.length} rule ids; ` +
-    `4 server-vs-replica scenarios + legacy divergence control + no-op guard + 4 turn/ply guards + bot-alarm robustness + 2 wall-crossing guards)`,
+    `5 server-vs-replica scenarios (incl. crazyhouse inventory drop) + legacy divergence control + drop legality rails + no-op guard + 4 turn/ply guards + bot-alarm robustness + 2 wall-crossing guards)`,
 );

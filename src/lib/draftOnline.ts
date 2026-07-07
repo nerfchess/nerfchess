@@ -129,6 +129,9 @@ export function mergeDraftState(bs: BuffMatchState, state: MPDraftState, myColor
     }
     if (ws.nerfRemoved) ps.nerfRemoved = true;
     if (ws.revived) ps.revived = ws.revived as typeof ps.revived;
+    // Crazyhouse-style pocket: authoritative from the server so a drop never
+    // desyncs. Legacy frames omit it; the replica then keeps its replayed value.
+    if (ws.inventory) ps.inventory = ws.inventory as typeof ps.inventory;
   }
 }
 

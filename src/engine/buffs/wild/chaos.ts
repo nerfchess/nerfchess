@@ -54,6 +54,8 @@ type ChaosMeta = {
   flavor?: string;
   boon?: boolean;
   fx?: CardFx;
+  /** Per-card lucide-react icon name; overrides the category glyph. */
+  icon?: string;
 };
 
 /** Build a fully implemented card from metadata + mechanics. Mirrors the `def`
@@ -495,6 +497,7 @@ export const WILD_CHAOS: Buff[] = [
   card(
     {
       id: "wc_clown_car",
+      icon: "Car",
       name: "Clown Car",
       description: "Two knights pile out of one tiny car: place both on empty squares in your half, once.",
       tier: 5,
@@ -737,6 +740,7 @@ export const WILD_CHAOS: Buff[] = [
   card(
     {
       id: "wc_pinata",
+      icon: "PartyPopper",
       name: "Pinata",
       description: "Swing wildly and hope: one random enemy piece other than the king is knocked off the board, but one of your own pawns bursts in the mess and is lost too.",
       tier: 4,
@@ -789,6 +793,7 @@ export const WILD_CHAOS: Buff[] = [
   card(
     {
       id: "wc_voodoo_doll",
+      icon: "Pin",
       name: "Voodoo Doll",
       description: "Stitch a little doll of the enemy army: the first time your opponent captures one of your pieces, a random enemy piece of the very same type is destroyed in sympathy. Kings are never harmed.",
       tier: 5,
@@ -857,6 +862,7 @@ export const WILD_CHAOS: Buff[] = [
   card(
     {
       id: "wc_musical_chairs",
+      icon: "Armchair",
       name: "Musical Chairs",
       description: "The music stops: swap the squares of one of your pieces and one of your opponent's pieces, once. Neither may be a king.",
       tier: 5,
@@ -936,6 +942,7 @@ export const WILD_CHAOS: Buff[] = [
   card(
     {
       id: "wc_black_hole",
+      icon: "Atom",
       name: "Black Hole",
       description: "Open a black hole on one empty square: any enemy piece that steps onto it, never a king, is swallowed off the board. It stays open for the rest of the game.",
       tier: 4,
@@ -960,6 +967,7 @@ export const WILD_CHAOS: Buff[] = [
   card(
     {
       id: "wc_banana_peel_trail",
+      icon: "Banana",
       name: "Banana Peel Trail",
       description: "Lay a trail of banana peels down one file: pick any square and its entire file becomes impassable to your opponent for their next 2 turns.",
       tier: 4,
@@ -998,6 +1006,7 @@ export const WILD_CHAOS: Buff[] = [
   card(
     {
       id: "wc_wrecking_ball",
+      icon: "Hammer",
       name: "Wrecking Ball",
       description: "One of your queens swings a wrecking ball down a rank or file, removing every enemy piece in its path, never a king, and stopping at the end, once.",
       tier: 6,

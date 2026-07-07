@@ -8,6 +8,7 @@ import { TurnCostBadge } from "@/components/TurnCostBadge";
 import {
   Castle,
   Eye,
+  icons as LucideIcons,
   Layers,
   type LucideIcon,
   Package,
@@ -31,6 +32,21 @@ const CATEGORY_LABEL: Record<Buff["category"], string> = {
   hex: "Hex",
   item: "Item",
 };
+
+/** Resolve a per-card lucide icon NAME to its component. Accepts both the
+ * PascalCase export key ("Bomb") and lucide's kebab-case id ("shield-alert"),
+ * so buff (PascalCase) and nerf (kebab) naming both resolve. Unknown or
+ * misspelled names return undefined, so the caller falls back to a glyph and
+ * a bad name can never crash the card. */
+function resolveLucideIcon(name: string | undefined): LucideIcon | undefined {
+  if (!name) return undefined;
+  const direct = LucideIcons[name as keyof typeof LucideIcons];
+  if (direct) return direct as LucideIcon;
+  const pascal = name.replace(/(^|[-_ ])(\w)/g, (_m: string, _s: string, c: string) =>
+    c.toUpperCase(),
+  );
+  return LucideIcons[pascal as keyof typeof LucideIcons] as LucideIcon | undefined;
+}
 
 // One glyph per category: it labels the small chip AND repeats as a large,
 // barely-there watermark on the card face, so a hand of cards can be told
@@ -67,7 +83,10 @@ interface Props {
 export function BuffCard({ buff, tier, status, spent, nullified, onClick, compact, glow, enterDelayMs }: Props) {
   const t = tier ?? buff.tier;
   const dead = spent || nullified;
-  const CatIcon = CATEGORY_ICON[buff.category];
+  // Per-card icon (a lucide-react name on the buff) wins over the shared
+  // category glyph, so cards that share a category can each look distinct.
+  // Unknown / misspelled names fall back to the category glyph, never crash.
+  const CatIcon = resolveLucideIcon(buff.icon) ?? CATEGORY_ICON[buff.category];
   const body = (
     <div
       style={enterDelayMs != null ? { animationDelay: `${enterDelayMs}ms` } : undefined}

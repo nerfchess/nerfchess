@@ -436,6 +436,16 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   }, [isDraft, oppDrafting, draftSubmitted, myOfferOpen, game?.result]);
 
   const boardShellRef = useRef<HTMLDivElement | null>(null);
+  // Mouse-wheel move navigation (lichess-style): a stable, non-passive wheel
+  // listener on the board reads the latest nav state from this ref, so the
+  // handler never needs re-binding as the game advances.
+  const wheelNavRef = useRef<{
+    blocked: boolean;
+    ply: number | null;
+    max: number;
+    nav: (ply: number) => void;
+  }>({ blocked: false, ply: null, max: 0, nav: () => {} });
+  const lastWheelNavRef = useRef(0);
   const recordedResult = useRef(false);
   // The authoritative game, mirrored in a ref so websocket events can read
   // and advance it synchronously (several frames can arrive in one tick).
@@ -443,6 +453,13 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   // may invoke updaters more than once, which would double-fire side effects
   // like shifting the premove queue.
   const gameRef = useRef<NerfGame | null>(game);
+  // Per-ply board snapshots, captured as the game advances. History review
+  // otherwise reconstructs a position by replaying moves from the initial
+  // board, which cannot reproduce the position once a buff mutated the board
+  // directly (a summon/removal/teleport sets buffs.historyDiverged). These
+  // snapshots hold the exact board shown at each ply, so navigation keeps
+  // working across such events.
+  const boardSnapshotsRef = useRef<Map<number, BoardState>>(new Map());
   const awaitingPremoveAckRef = useRef(false);
   const pendingPremoveRef = useRef<PendingPremoveSend | null>(null);
   const pendingLocalMoveRef = useRef<PendingLocalMove | null>(null);
@@ -995,14 +1012,54 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     };
   }, [game]);
 
+  // Scroll over the board to step through the game (wheel up = back, wheel
+  // down = forward), mirroring the arrow-key navigation. The listener lives on
+  // the board shell only, so scrolling the move list or chat still scrolls
+  // them; it stands down while a modal/overlay owns the screen, and leaves the
+  // event alone at either end so the page can still scroll normally.
+  useEffect(() => {
+    const el = boardShellRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      const st = wheelNavRef.current;
+      if (st.blocked || st.max === 0) return;
+      // Ignore mostly-horizontal scrolls (trackpad side-swipes).
+      if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+      const cur = st.ply ?? st.max;
+      const next = cur + (e.deltaY < 0 ? -1 : 1);
+      if (next < 0 || next > st.max) return;
+      e.preventDefault();
+      // Throttle to one step per gesture beat, so inertia scrolling does not
+      // rocket through the whole game in a single flick.
+      const now = Date.now();
+      if (now - lastWheelNavRef.current < 60) return;
+      lastWheelNavRef.current = now;
+      st.nav(next);
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, [game]);
+
+  // Record the live board at each ply so history review can reconstruct
+  // positions even after a board-mutating buff diverged from move history.
+  useEffect(() => {
+    if (!game) return;
+    const ply = game.board.history.length;
+    // cloneBoard only slices the pieces array (the Piece objects stay shared),
+    // so also copy each Piece: a persisted snapshot must never be rewritten by
+    // a later in-place mutation (a promotion or a transform buff).
+    const snap = cloneBoard(game.board);
+    snap.pieces = snap.pieces.map((p) => (p ? { ...p } : null));
+    boardSnapshotsRef.current.set(ply, snap);
+    // Drop snapshots past the current head so a takeback/rewind never leaves
+    // stale future positions behind.
+    for (const key of boardSnapshotsRef.current.keys()) {
+      if (key > ply) boardSnapshotsRef.current.delete(key);
+    }
+  }, [game]);
+
   useEffect(() => {
     if (!game || historyPly == null) return;
-    // A buff mutated the board outside move history: replay can no longer
-    // reproduce the position, so snap any review back to the live board.
-    if (game.buffs?.historyDiverged) {
-      setHistoryPly(null);
-      return;
-    }
     if (historyPly > game.board.history.length) {
       setHistoryPly(game.board.history.length);
     }
@@ -1038,8 +1095,17 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   }, [game, myColor, oppName, ratingChange, revealedOppNerf, start]);
 
   const reviewBoard = useMemo(() => {
-    if (!game || historyPly == null || game.buffs?.historyDiverged) return null;
+    if (!game || historyPly == null) return null;
+    // Prefer the exact board we witnessed live at this ply: a snapshot taken
+    // as the game advanced includes any buff mutations (summons, removals,
+    // teleports) that a pure move replay cannot reproduce. Fall back to a clean
+    // replay only for plies never seen live (e.g. a reconnect rebuild), and
+    // only while the board has not diverged from move history.
+    const snap = boardSnapshotsRef.current.get(historyPly);
+    if (snap) return snap;
+    if (game.buffs?.historyDiverged) return null;
     return boardAtPly(game.board.history, historyPly);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [game, historyPly]);
   const pendingLocalBoard = useMemo(() => {
     if (!game || !pendingLocalMove || pendingLocalMove.ply !== game.board.history.length) return null;
@@ -1048,12 +1114,6 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   const currentHistoryPly = historyPly ?? game?.board.history.length ?? 0;
   const isReviewingHistory = historyPly != null;
   const handleHistoryPlyChange = (ply: number) => {
-    // Stepping is disabled once a buff has mutated the board outside
-    // history: stay clamped to the live board instead of replaying.
-    if (game?.buffs?.historyDiverged) {
-      setHistoryPly(null);
-      return;
-    }
     const max = game?.board.history.length ?? 0;
     if (ply >= max) {
       setHistoryPly(null);
@@ -1578,6 +1638,21 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     !game.result &&
     oppDrafting &&
     (draftSubmitted || myDraftResolved || genuinelySkipped);
+  // Wheel-nav stands down whenever a modal/overlay owns the screen: the
+  // settings sheet, the end screen, on-board buff targeting, an open draft
+  // offer, or the post-draft waiting overlay.
+  const wheelNavBlocked =
+    settingsOpen ||
+    (!!game.result && showResult) ||
+    !!buffTargeting.targeting ||
+    (isDraft && !!myOffer && !draftSubmitted && !game.result) ||
+    showWaitingOverlay;
+  wheelNavRef.current = {
+    blocked: wheelNavBlocked,
+    ply: historyPly,
+    max: game.board.history.length,
+    nav: handleHistoryPlyChange,
+  };
   const zone = isDraft && game.buffs ? draftZones(game, myColor) : null;
   // Effect kinds draftZones does not paint (king_safe shields, pawn-clamp
   // fences, pending-skip stuns): shared derivation, same as the bot game.

@@ -394,6 +394,12 @@ export function countRepetitions(board: BoardState): number {
 
 export function moveToUCI(m: Move): string {
   const files = "abcdefgh";
+  // Crazyhouse-style inventory drop, e.g. "n@e4". Lowercase so it survives the
+  // worker's toLowerCase() on inbound client moves (piece letters p/n/b/r/q are
+  // distinct from square notation, and the "@" disambiguates from a real move).
+  if (m.drop) {
+    return m.drop + "@" + files[FILE(m.to)] + (RANK(m.to) + 1);
+  }
   const a = files[FILE(m.from)] + (RANK(m.from) + 1);
   const b = files[FILE(m.to)] + (RANK(m.to) + 1);
   return a + b + (m.promotion ?? "");
@@ -408,6 +414,17 @@ export function moveToUCI(m: Move): string {
  * Returns null when the origin square is empty or the string is malformed.
  */
 export function moveFromUCI(board: BoardState, uci: string): Move | null {
+  // Crazyhouse-style inventory drop, e.g. "n@e4" (see moveToUCI). The mover is
+  // the side to move; the target must be empty and never rank 1/8 for a pawn.
+  const drop = /^([pnbrq])@([a-h])([1-8])$/i.exec(uci);
+  if (drop) {
+    const type = drop[1].toLowerCase() as PieceType;
+    if (type === "k") return null;
+    const to = SQ(drop[2].charCodeAt(0) - 97, drop[3].charCodeAt(0) - 49);
+    if (board.pieces[to]) return null;
+    if (type === "p" && (RANK(to) < 1 || RANK(to) > 6)) return null;
+    return { from: to, to, piece: type, color: board.turn, drop: type };
+  }
   if (!/^[a-h][1-8][a-h][1-8][qrbnk]?$/.test(uci)) return null;
   const from = SQ(uci.charCodeAt(0) - 97, uci.charCodeAt(1) - 49);
   const to = SQ(uci.charCodeAt(2) - 97, uci.charCodeAt(3) - 49);
@@ -444,6 +461,7 @@ export function moveFromUCI(board: BoardState, uci: string): Move | null {
 export function moveToSAN(m: Move): string {
   const files = "abcdefgh";
   const dest = files[FILE(m.to)] + (RANK(m.to) + 1);
+  if (m.drop) return m.drop.toUpperCase() + "@" + dest;
   if (m.castle === "k") return "O-O";
   if (m.castle === "q") return "O-O-O";
   let s = "";

@@ -21,6 +21,14 @@ export interface Move {
   isEnPassant?: boolean;
   /** Id of the buff that generated this extra move (consumes its charge). */
   via?: string;
+  /**
+   * Crazyhouse-style inventory drop: this move places a fresh `drop` piece from
+   * the mover's inventory onto an empty square. `to` is that square, `piece` is
+   * the dropped type, `color` is the mover, and `from` carries no real origin
+   * (it is set equal to `to`). A drop never captures and spends the turn like a
+   * normal move. See legalMoves / playMove in game.ts.
+   */
+  drop?: PieceType;
 }
 
 export interface BoardState {

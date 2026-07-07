@@ -240,6 +240,23 @@ function GamePage() {
   const aiWorkerRef = useRef<Worker | null>(null);
   const aiRequestId = useRef(0);
   const boardShellRef = useRef<HTMLDivElement | null>(null);
+  // Per-ply board snapshots, captured as the game advances. History review
+  // otherwise reconstructs a position by replaying moves from the initial
+  // board, which cannot reproduce the position once a buff mutated the board
+  // directly (a summon/removal/teleport sets buffs.historyDiverged). These
+  // snapshots hold the exact board shown at each ply, so navigation (arrow
+  // keys, move-list clicks, mouse wheel) keeps working across such events.
+  const boardSnapshotsRef = useRef<Map<number, BoardState>>(new Map());
+  // Mouse-wheel move navigation (lichess-style): a stable, non-passive wheel
+  // listener on the board reads the latest nav state from this ref, so the
+  // handler never needs re-binding as the game advances.
+  const wheelNavRef = useRef<{
+    blocked: boolean;
+    ply: number | null;
+    max: number;
+    nav: (ply: number) => void;
+  }>({ blocked: false, ply: null, max: 0, nav: () => {} });
+  const lastWheelNavRef = useRef(0);
   const whiteCustomSpec = useRef<CustomNerf | null>(null);
   const blackCustomSpec = useRef<CustomNerf | null>(null);
   const turnStartedAtRef = useRef(Date.now());
@@ -552,15 +569,26 @@ function GamePage() {
     };
   }, [game, querySignature, myColor, premoves, remainingClock, clockEnabled]);
 
+  // Record the live board at each ply so history review can reconstruct
+  // positions even after a board-mutating buff diverged from move history.
+  useEffect(() => {
+    if (!game) return;
+    const ply = game.board.history.length;
+    // cloneBoard only slices the pieces array (the Piece objects stay shared),
+    // so also copy each Piece: a persisted snapshot must never be rewritten by
+    // a later in-place mutation (a promotion or a transform buff).
+    const snap = cloneBoard(game.board);
+    snap.pieces = snap.pieces.map((p) => (p ? { ...p } : null));
+    boardSnapshotsRef.current.set(ply, snap);
+    // Drop snapshots past the current head so a takeback/rewind never leaves
+    // stale future positions behind.
+    for (const key of boardSnapshotsRef.current.keys()) {
+      if (key > ply) boardSnapshotsRef.current.delete(key);
+    }
+  }, [game]);
+
   useEffect(() => {
     if (!game || historyPly == null) return;
-    // A buff mutated the board outside move history (summon, removal,
-    // teleport): replay can no longer reproduce the position, so snap any
-    // in-progress review back to the live board.
-    if (game.buffs?.historyDiverged) {
-      setHistoryPly(null);
-      return;
-    }
     if (historyPly > game.board.history.length) {
       setHistoryPly(game.board.history.length);
     }
@@ -605,6 +633,34 @@ function GamePage() {
       document.removeEventListener("fullscreenchange", syncDeferred);
       window.visualViewport?.removeEventListener("resize", syncDeferred);
     };
+  }, [game]);
+
+  // Scroll over the board to step through the game (wheel up = back, wheel
+  // down = forward), mirroring the arrow-key navigation. The listener lives on
+  // the board shell only, so scrolling the move list still scrolls it; it
+  // stands down while a modal/overlay owns the screen, and leaves the event
+  // alone at either end so the page can still scroll normally.
+  useEffect(() => {
+    const el = boardShellRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      const st = wheelNavRef.current;
+      if (st.blocked || st.max === 0) return;
+      // Ignore mostly-horizontal scrolls (trackpad side-swipes).
+      if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+      const cur = st.ply ?? st.max;
+      const next = cur + (e.deltaY < 0 ? -1 : 1);
+      if (next < 0 || next > st.max) return;
+      e.preventDefault();
+      // Throttle to one step per gesture beat, so inertia scrolling does not
+      // rocket through the whole game in a single flick.
+      const now = Date.now();
+      if (now - lastWheelNavRef.current < 60) return;
+      lastWheelNavRef.current = now;
+      st.nav(next);
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
   }, [game]);
 
   // Build a "virtual" board that reflects the current actual board with every
@@ -1001,19 +1057,21 @@ function GamePage() {
   }, [game?.board.history.length, game?.board.turn, game?.result, myColor, difficulty]);
 
   const reviewBoard = useMemo(() => {
-    if (!game || historyPly == null || game.buffs?.historyDiverged) return null;
+    if (!game || historyPly == null) return null;
+    // Prefer the exact board we witnessed live at this ply: a snapshot taken
+    // as the game advanced includes any buff mutations (summons, removals,
+    // teleports) that a pure move replay cannot reproduce. Fall back to a clean
+    // replay only for plies never seen live (e.g. a restored game), and only
+    // while the board has not diverged from move history.
+    const snap = boardSnapshotsRef.current.get(historyPly);
+    if (snap) return snap;
+    if (game.buffs?.historyDiverged) return null;
     return boardAtPly(game.board.history, historyPly);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [game, historyPly]);
   const currentHistoryPly = historyPly ?? game?.board.history.length ?? 0;
   const isReviewingHistory = historyPly != null;
   const handleHistoryPlyChange = (ply: number) => {
-    // Once a buff has mutated the board outside history, stepping is
-    // disabled: arrow keys and move-list clicks stay clamped to the live
-    // board instead of replaying a history that can't be reproduced.
-    if (game?.buffs?.historyDiverged) {
-      setHistoryPly(null);
-      return;
-    }
     const max = game?.board.history.length ?? 0;
     if (ply >= max) {
       setHistoryPly(null);
@@ -1278,7 +1336,18 @@ function GamePage() {
     setMutedState(next);
   };
 
-  const reviewLocked = !!game.buffs?.historyDiverged;
+  // Wheel navigation stands down while an overlay owns the screen.
+  const wheelNavBlocked =
+    settingsOpen ||
+    (!!game.result && showResult) ||
+    !!buffTargeting.targeting ||
+    !!myOffer;
+  wheelNavRef.current = {
+    blocked: wheelNavBlocked,
+    ply: historyPly,
+    max: game.board.history.length,
+    nav: handleHistoryPlyChange,
+  };
 
   const historyActions = game.result ? null : confirmMovePending ? (
     <div className="space-y-2">
@@ -1361,17 +1430,7 @@ function GamePage() {
     </div>
   );
 
-  const moveListFooter =
-    reviewLocked || historyActions ? (
-      <div className="space-y-2">
-        {reviewLocked && (
-          <p className="text-[10px] leading-snug text-parchment-400">
-            Review is unavailable: a buff changed the board outside the move list.
-          </p>
-        )}
-        {historyActions}
-      </div>
-    ) : null;
+  const moveListFooter = historyActions;
 
   return (
     <main className="flex h-dvh min-h-0 flex-col overflow-hidden">

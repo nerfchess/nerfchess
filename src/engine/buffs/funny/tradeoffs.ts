@@ -56,6 +56,7 @@ export const FUNNY_TRADEOFFS: Buff[] = [
   card(
     {
       id: "borrowed_time",
+      icon: "Hourglass",
       name: "Borrowed Time",
       description:
         "Your queen becomes uncapturable for your next 3 moves, and then her time runs out: she is removed from the board.",
@@ -74,6 +75,7 @@ export const FUNNY_TRADEOFFS: Buff[] = [
   card(
     {
       id: "berserker",
+      icon: "Axe",
       name: "Berserker",
       description:
         "For your next 2 turns, all your pieces except your king also move like a queen. For the 2 turns after that, all your pieces can move only one square.",
@@ -123,6 +125,7 @@ export const FUNNY_TRADEOFFS: Buff[] = [
   card(
     {
       id: "glass_cannon",
+      icon: "Gem",
       name: "Glass Cannon",
       description:
         "Choose one of your bishops. For your next 3 turns it can capture any enemy piece except the king along its diagonals, passing through any pieces in between. While it is overcharged, if that bishop is captured, two of your pawns are removed as well.",
@@ -194,6 +197,7 @@ export const FUNNY_TRADEOFFS: Buff[] = [
   card(
     {
       id: "sugar_rush",
+      icon: "Candy",
       name: "Sugar Rush",
       description:
         "Slam a sugar rush: take two extra moves right now. Then comes the sugar crash and you skip your next turn.",

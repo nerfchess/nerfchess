@@ -27,6 +27,7 @@ export const FUNNY_TRANSFORMS: Buff[] = [
   card(
     {
       id: "amazon",
+      icon: "Crown",
       name: "Amazon",
       description: "Your queen is crowned an Amazon: for the game she also moves like a knight.",
       tier: 7,
@@ -41,6 +42,7 @@ export const FUNNY_TRANSFORMS: Buff[] = [
   card(
     {
       id: "king_of_the_hill",
+      icon: "Flag",
       name: "King of the Hill",
       description: "Your king rules the hill: while it stands on one of the four center squares it may move like a queen.",
       tier: 4,
@@ -57,6 +59,7 @@ export const FUNNY_TRANSFORMS: Buff[] = [
   card(
     {
       id: "understudy",
+      icon: "Drama",
       name: "Understudy",
       description: "The first time your queen is captured, one of your bishops immediately turns into a queen on its own square. If you have no bishop, nothing happens. Triggers once.",
       tier: 5,
@@ -77,6 +80,7 @@ export const FUNNY_TRANSFORMS: Buff[] = [
   card(
     {
       id: "clone",
+      icon: "Copy",
       name: "Clone",
       description: "Run one of your pawns through the photocopier: place an exact copy on an empty square beside it, once.",
       tier: 3,

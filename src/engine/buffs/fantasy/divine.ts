@@ -20,6 +20,7 @@ export const FANTASY_DIVINE: Buff[] = [
   card(
     {
       id: "divine_intervention",
+      icon: "Sun",
       name: "Divine Intervention",
       description:
         "Your king cannot be captured for your opponent's next 2 turns.",
@@ -35,6 +36,7 @@ export const FANTASY_DIVINE: Buff[] = [
   card(
     {
       id: "judgment_day",
+      icon: "Scale",
       name: "Judgment Day",
       description:
         "A pillar of holy light falls from a clear sky and smites one enemy knight, bishop, rook, or queen you name from the board.",
@@ -47,6 +49,7 @@ export const FANTASY_DIVINE: Buff[] = [
   card(
     {
       id: "hallowed_return",
+      icon: "Sparkles",
       name: "Hallowed Return",
       description:
         "A prayer is answered: one of your captured knights, bishops, or rooks is restored to life on an empty square of your back rank, once.",
@@ -59,6 +62,7 @@ export const FANTASY_DIVINE: Buff[] = [
   card(
     {
       id: "divine_mandate",
+      icon: "ScrollText",
       name: "Divine Mandate",
       description:
         "You speak with the authority of heaven: one enemy knight, bishop, or rook lays down its old allegiance and joins your army, once. Kings cannot be swayed.",
@@ -71,6 +75,7 @@ export const FANTASY_DIVINE: Buff[] = [
   card(
     {
       id: "divine_reckoning",
+      icon: "Gavel",
       name: "Divine Reckoning",
       description:
         "Judgment falls on the whole court: on your opponent's next turn they may move only their king.",
@@ -86,6 +91,7 @@ export const FANTASY_DIVINE: Buff[] = [
   card(
     {
       id: "heavens_wrath",
+      icon: "CloudLightning",
       name: "Heaven's Wrath",
       description:
         "The sky splits and twin bolts of wrath descend: smite two enemy knights, bishops, rooks, or queens you name from the board.",

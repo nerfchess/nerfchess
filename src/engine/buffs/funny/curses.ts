@@ -10,6 +10,7 @@ export const FUNNY_CURSES: Buff[] = [
   card(
     {
       id: "vertigo",
+      icon: "Tornado",
       name: "Vertigo",
       description: "Your opponent's queen is afraid of heights: she cannot move more than 2 squares for their next 3 turns.",
       tier: 4,
@@ -22,6 +23,7 @@ export const FUNNY_CURSES: Buff[] = [
   card(
     {
       id: "origami",
+      icon: "Origami",
       name: "Origami",
       description: "Your opponent's rooks are folded into paper cranes: they may move at most 1 square for their next 3 turns.",
       tier: 4,
@@ -34,6 +36,7 @@ export const FUNNY_CURSES: Buff[] = [
   card(
     {
       id: "gremlins",
+      icon: "Rat",
       name: "Gremlins",
       description: "For their next 3 turns, your opponent's rooks can only move an even number of squares.",
       tier: 3,
@@ -46,6 +49,7 @@ export const FUNNY_CURSES: Buff[] = [
   card(
     {
       id: "homesick",
+      icon: "House",
       name: "Homesick",
       description: "Your opponent's army is homesick: every piece may only move toward or along its own back rank for their next 3 turns.",
       tier: 5,
@@ -60,6 +64,7 @@ export const FUNNY_CURSES: Buff[] = [
   card(
     {
       id: "opposite_day",
+      icon: "FlipHorizontal2",
       name: "Opposite Day",
       description: "On your opponent's next turn (1 turn), they cannot move any piece closer to your king. Moves that keep the same distance are allowed. If that would leave them with no legal move, the restriction is lifted for that turn.",
       tier: 4,
@@ -76,6 +81,7 @@ export const FUNNY_CURSES: Buff[] = [
   card(
     {
       id: "cream_pie",
+      icon: "CakeSlice",
       name: "Cream Pie",
       description: "Your opponent cannot capture on their next turn.",
       tier: 3,

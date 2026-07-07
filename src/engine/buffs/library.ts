@@ -72,6 +72,8 @@ type Meta = {
   description: string;
   tier: Tier;
   category: BuffCategory;
+  /** Per-card lucide-react icon name; overrides the category glyph. */
+  icon?: string;
   /** Light general card that also joins nerf mode's boon pool. Category
    * "nerf" cards are boons automatically and never need this flag. */
   boon?: boolean;

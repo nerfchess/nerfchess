@@ -76,6 +76,7 @@ export const PT_TIME_CARDS: Buff[] = [
   card(
     {
       id: "golden_touch",
+      icon: "Coins",
       name: "Golden Touch",
       description:
         "The next enemy piece you capture (other than a king) is reforged as your own and added to your army on an empty square in your half. The price of greed: one of your pawns turns to gold and is lost.",
@@ -119,6 +120,7 @@ export const PT_TIME_CARDS: Buff[] = [
   card(
     {
       id: "all_in",
+      icon: "Club",
       name: "All In",
       description:
         "Push everything to the center. Your next two draft offers are skipped. The offer after that shows three cards one tier higher, and you take all three.",
@@ -138,6 +140,7 @@ export const PT_TIME_CARDS: Buff[] = [
   card(
     {
       id: "mortgage",
+      icon: "Banknote",
       name: "Mortgage",
       description:
         "Take out a loan against your home: summon a rook on any empty square. The bank keeps the deed, so you can never castle again for the rest of the game.",
@@ -173,6 +176,7 @@ export const PT_TIME_CARDS: Buff[] = [
   card(
     {
       id: "overclocked",
+      icon: "Gauge",
       name: "Overclocked",
       description:
         "Crank the clock speed: add 60 seconds to your own clock. Then everything runs hot and has to cool down, so for your next 3 turns all your pieces can move only one square.",
@@ -195,6 +199,7 @@ export const PT_TIME_CARDS: Buff[] = [
   card(
     {
       id: "last_meal",
+      icon: "Drumstick",
       name: "Last Meal",
       description:
         "Your king ties on a napkin. For your next 2 turns it may capture any enemy piece (other than a king) up to two squares away, leaping over anything in between.",
@@ -210,6 +215,7 @@ export const PT_TIME_CARDS: Buff[] = [
   card(
     {
       id: "time_out",
+      icon: "TimerOff",
       name: "Time Out",
       description:
         "The referee throws a flag on your opponent: their next draft is skipped and their clock loses 10 seconds.",
@@ -232,6 +238,7 @@ export const PT_TIME_CARDS: Buff[] = [
   card(
     {
       id: "overtime_pay",
+      icon: "PiggyBank",
       name: "Overtime Pay",
       description:
         "You bill for every hour worked: each time you capture an enemy piece (other than a king), 3 seconds are added to your own clock.",
@@ -253,6 +260,7 @@ export const PT_TIME_CARDS: Buff[] = [
   card(
     {
       id: "mystery_box",
+      icon: "Gift",
       name: "Mystery Box",
       description:
         "Rattle the crate and pop the lid: your next draft offer rolls at a completely random tier, anywhere from 1 to 8.",
@@ -273,6 +281,7 @@ export const PT_TIME_CARDS: Buff[] = [
   card(
     {
       id: "swap_meet",
+      icon: "ArrowLeftRight",
       name: "Swap Meet",
       description:
         "Set up a stall and shake on a deal: one of your held cards and one of your opponent's held cards are picked at random and swapped between you.",
@@ -307,6 +316,7 @@ export const PT_TIME_CARDS: Buff[] = [
   card(
     {
       id: "gamble",
+      icon: "Spade",
       name: "Gamble",
       description:
         "Flip a coin. Heads: for your next two draft offers you take every card instead of one. Tails: your next draft is skipped entirely.",

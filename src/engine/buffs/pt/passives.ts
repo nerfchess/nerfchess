@@ -206,6 +206,7 @@ export const PT_PASSIVE_CARDS: Buff[] = [
   card(
     {
       id: "landlord",
+      icon: "Building",
       name: "Landlord",
       description:
         "Claim three empty squares as your property. Any enemy piece (never a king) that ends its move on one of them owes rent: it is stuck fast for 1 of their turns.",
@@ -251,6 +252,7 @@ export const PT_PASSIVE_CARDS: Buff[] = [
   card(
     {
       id: "magnetism",
+      icon: "Magnet",
       name: "Magnetism",
       description:
         "Your knights are magnetized: after each knight move, the nearest enemy piece (never a king) is dragged one square toward that knight, if the square between them is empty.",
@@ -292,6 +294,7 @@ export const PT_PASSIVE_CARDS: Buff[] = [
   card(
     {
       id: "contagion",
+      icon: "Radiation",
       name: "Contagion",
       description:
         "Freezes are catching: whenever one of your opponent's pieces is newly frozen, one adjacent enemy piece (never a king) catches it and is frozen for 1 of their turns. Each fresh freeze spreads at most one square, so it never runs away.",
@@ -339,6 +342,7 @@ export const PT_PASSIVE_CARDS: Buff[] = [
   card(
     {
       id: "guardian_angel",
+      icon: "HandHeart",
       name: "Guardian Angel",
       description:
         "Once per game, the first time your opponent captures one of your pieces (not your king), that piece is spirited to safety instead: an identical piece reappears on an empty square deep in your own half.",
@@ -403,6 +407,7 @@ export const PT_PASSIVE_CARDS: Buff[] = [
   card(
     {
       id: "fan_club",
+      icon: "Megaphone",
       name: "Fan Club",
       description:
         "A crowd of tiny supporters lines your edge of the board and cheers your army on. Purely cosmetic morale (and a stat brag): no effect on the rules.",

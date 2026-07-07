@@ -18,6 +18,7 @@ export const FANTASY_CURSES: Buff[] = [
   card(
     {
       id: "evil_eye",
+      icon: "EyeOff",
       name: "Evil Eye",
       description:
         "One enemy piece you choose cannot move for 2 of their turns. Kings cannot be targeted.",
@@ -30,6 +31,7 @@ export const FANTASY_CURSES: Buff[] = [
   card(
     {
       id: "shackle_the_queen",
+      icon: "Lock",
       name: "Shackle the Queen",
       description:
         "Bind the enemy queen in cursed iron: your opponent cannot move their queen for their next 3 turns.",
@@ -43,6 +45,7 @@ export const FANTASY_CURSES: Buff[] = [
   card(
     {
       id: "curse_of_frailty",
+      icon: "HeartPulse",
       name: "Curse of Frailty",
       description:
         "A wasting curse saps the enemy's strength: no piece of your opponent's may capture for their next 2 turns.",
@@ -56,6 +59,7 @@ export const FANTASY_CURSES: Buff[] = [
   card(
     {
       id: "doom_march",
+      icon: "Footprints",
       name: "Doom March",
       description:
         "A dread compulsion drives the enemy backward: for their next 3 turns every one of your opponent's pieces may only move toward or along its own back rank.",
@@ -71,6 +75,7 @@ export const FANTASY_CURSES: Buff[] = [
   card(
     {
       id: "chains_of_binding",
+      icon: "Anchor",
       name: "Chains of Binding",
       description:
         "Spectral chains lock the enemy's towers: both of your opponent's rooks turn to dead stone and cannot move for 3 of their turns.",
@@ -84,6 +89,7 @@ export const FANTASY_CURSES: Buff[] = [
   card(
     {
       id: "hex_of_stone",
+      icon: "Mountain",
       name: "Hex of Stone",
       description:
         "A creeping grey hex hardens the enemy's flanks: every one of your opponent's knights and bishops turns to stone for 3 of their turns.",

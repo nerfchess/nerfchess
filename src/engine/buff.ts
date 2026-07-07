@@ -248,6 +248,11 @@ export interface PlayerBuffState {
   nerfRemoved?: boolean;
   /** Pieces this player has revived, deducted from the revivable pool. */
   revived: Partial<Record<PieceType, number>>;
+  /** Crazyhouse-style pocket: pieces granted by cards (grantInventory) that
+   * this player may DROP onto an empty square on a later turn, spending that
+   * turn. Never holds a king. Part of the synced draft state so a drop replays
+   * identically on both clients (see draftStateFor / mergeDraftState). */
+  inventory?: Partial<Record<PieceType, number>>;
   /** Draft rerolls left: each one discards the current offer and rolls a
    * fresh one at the SAME tiers off the deterministic RNG. Starts at 1; draft
    * cards grant more. Server-authoritative in online games (the DO owns the
@@ -318,6 +323,7 @@ export function newPlayerBuffState(cadence: number): PlayerBuffState {
     offer: null,
     flags: {},
     revived: {},
+    inventory: {},
     rerollsLeft: 1,
   };
 }
@@ -430,6 +436,10 @@ export interface Buff {
   description: string;
   /** One-line flavor text, shown quoted at the foot of the full card. */
   flavor?: string;
+  /** Optional per-card icon (a lucide-react icon name, e.g. "Bomb", "Snail").
+   * When set it overrides the category glyph on the card face, so cards that
+   * share a category can still each look distinct. */
+  icon?: string;
   /** Board motif drawn on affected pieces while this card's constraint is
    * active (see CardFx). Only meaningful for opponent-facing constraints. */
   fx?: CardFx;

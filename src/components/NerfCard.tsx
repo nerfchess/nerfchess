@@ -5,6 +5,21 @@ import { motion } from "framer-motion";
 import { GlossaryText } from "@/components/GlossaryText";
 import { NERF_TURN_COST } from "@/engine/buff";
 import { TurnCostBadge } from "@/components/TurnCostBadge";
+import { icons as LucideIcons, type LucideIcon, Unlink } from "lucide-react";
+
+/** Resolve a nerf's per-card lucide icon NAME to its component. Accepts both
+ * the PascalCase export key ("Skull") and lucide's kebab-case id ("shield-alert",
+ * "cloud-fog"), which is the form the nerf library uses. Unknown or misspelled
+ * names return undefined so the caller falls back to a glyph, never crashing. */
+function resolveLucideIcon(name: string | undefined): LucideIcon | undefined {
+  if (!name) return undefined;
+  const direct = LucideIcons[name as keyof typeof LucideIcons];
+  if (direct) return direct as LucideIcon;
+  const pascal = name.replace(/(^|[-_ ])(\w)/g, (_m: string, _s: string, c: string) =>
+    c.toUpperCase(),
+  );
+  return LucideIcons[pascal as keyof typeof LucideIcons] as LucideIcon | undefined;
+}
 
 interface Props {
   nerf: Nerf;
@@ -34,13 +49,25 @@ export function NerfCard({ nerf, revealed = true, compact = false, ownerLabel, p
     );
   }
 
+  // Per-card icon (a lucide-react name on the nerf) draws a faint watermark so
+  // each rule reads distinct. Unknown / misspelled names fall back to the
+  // shared nerf glyph, so a bad name can never crash the card.
+  const FaceIcon: LucideIcon = resolveLucideIcon(nerf.icon) ?? Unlink;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       className={`relative plate draft-face p-5 overflow-hidden tier-bg-${nerf.tier} border`}
     >
-      <div className="flex items-start justify-between gap-3">
+      <FaceIcon
+        aria-hidden
+        className={`pointer-events-none absolute -bottom-3 -right-2 tier-${nerf.tier}`}
+        size={92}
+        strokeWidth={1.2}
+        style={{ opacity: 0.08 }}
+      />
+      <div className="relative flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="smallcaps text-[11px] text-parchment-400">

@@ -19,6 +19,7 @@ export const FANTASY_SUMMONS: Buff[] = [
   card(
     {
       id: "imp_familiar",
+      icon: "Cat",
       name: "Imp Familiar",
       description:
         "Place a new pawn on any empty square in your half, once.",
@@ -31,6 +32,7 @@ export const FANTASY_SUMMONS: Buff[] = [
   card(
     {
       id: "phantom_guardian",
+      icon: "ShieldHalf",
       name: "Phantom Guardian",
       description:
         "Call up a phantom guardian that fights beside you as a bishop for 4 of your turns, then dissolves back into the aether.",
@@ -43,6 +45,7 @@ export const FANTASY_SUMMONS: Buff[] = [
   card(
     {
       id: "wall_of_thorns",
+      icon: "Fence",
       name: "Wall of Thorns",
       description:
         "A thicket of living thorns bursts up around an empty square: your opponent cannot enter any of the 8 squares around it for their next 3 turns.",
@@ -56,6 +59,7 @@ export const FANTASY_SUMMONS: Buff[] = [
   card(
     {
       id: "stone_golem",
+      icon: "Blocks",
       name: "Stone Golem",
       description:
         "Bind a spirit into rock and stone: a lumbering golem serves as a rook for 5 of your turns, then crumbles back to rubble.",
@@ -68,6 +72,7 @@ export const FANTASY_SUMMONS: Buff[] = [
   card(
     {
       id: "summoning_circle",
+      icon: "Hexagon",
       name: "Summoning Circle",
       description:
         "Chalk a summoning circle and a whole warband answers: place a new knight, a new bishop, and a new pawn on empty squares in your half, once.",
@@ -80,6 +85,7 @@ export const FANTASY_SUMMONS: Buff[] = [
   card(
     {
       id: "summon_dragon",
+      icon: "Sparkle",
       name: "Summon Dragon",
       description:
         "Place a new queen on any empty square in your half, once.",

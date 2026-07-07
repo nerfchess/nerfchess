@@ -94,6 +94,8 @@ export type HexMeta = {
   name: string;
   description: string;
   tier: Tier;
+  /** Per-card lucide-react icon name; overrides the category glyph. */
+  icon?: string;
   flavor?: string;
   /** Board motif drawn on the cursed pieces while the constraint runs.
    * Display metadata only; never consulted by move generation. */
