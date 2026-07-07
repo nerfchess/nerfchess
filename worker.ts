@@ -35,8 +35,10 @@ import {
   isHouseUserId,
   pickHouseMove,
   pickHouseSeek,
+  syncHouseRatings,
 } from "./src/lib/server/bots";
 import { moveByUci, type EngineMatch } from "./src/engine/replay";
+import { triggersOwnNerfLoss } from "./src/engine/moveSafety";
 import type { BuffInstance, BuffMatchState, BuffPick, DraftMode } from "./src/engine/buff";
 import {
   DEFAULT_CADENCE,
@@ -304,6 +306,12 @@ const abandonmentClaimMs = 30 * 1000;
 // action runs per alarm tick, and games above the caps simply do not start.
 const houseSeeksKey = "hp:seeks";
 const houseSeededKey = "hp:seeded:v1";
+// One-time-per-revision sync of every house account's rating to the current
+// houseSeedRating (see syncHouseRatings). Bump the suffix whenever the roster's
+// ratings change so existing accounts (seeded with INSERT OR IGNORE at the old
+// numbers) get UPDATEd to the new ones on the next cold start. This bump goes
+// with the ~150 elo lift and the new 1900-2100 band.
+const houseRatingsSyncedKey = "hp:ratings-synced:elo-2100";
 const houseNextFillerKey = "hp:nextFillerAt";
 // Slow heartbeat while at least one human socket is connected; with nobody
 // online there is no heartbeat and the DO goes idle between match deadlines.
@@ -388,7 +396,7 @@ type HouseSeekEntry = {
 // (deserializing every finished game's move history), which on a bloated table
 // blew the DO CPU limit before it could cache or GC anything: the crash loop.
 const liveIdsKey = "live:ids";
-const buildVersion = "draft-20s-1";
+const buildVersion = "botfix-elo-1";
 // How long the moderator card-overrides snapshot (the card_overrides table:
 // disabled cards and tier moves) is cached in the DO before re-reading D1.
 // Loaded lazily on match creation and the opening nerf deal, never on a
@@ -1226,17 +1234,28 @@ export class GameServer extends DurableObject<Env> {
     if (!match) return;
     match.disconnectedAt[session.color] = Date.now();
     match.opponentGoneNotified[session.color] = false;
-    // House game: pause the game clock when the human seat disconnects, so a
-    // disconnected human never flags while the bot waits for them (the clock
-    // resumes on reconnect). Bank the time run so far first, exactly like a
-    // draft-offer pause does. Bots have no socket, so only the human's
-    // departure triggers this; the bot itself never "disconnects".
+    // House game: pause the game clock when the human seat disconnects DURING
+    // THEIR OWN TURN, so a disconnected human never flags while it is their
+    // move (the clock resumes on reconnect). Bank the time run so far first,
+    // exactly like a draft-offer pause does. Bots have no socket, so only the
+    // human's departure triggers this; the bot itself never "disconnects".
+    //
+    // Crucially, the pause is gated on it being the human's turn. When it is
+    // the BOT's turn the clock keeps running: the bot's own time must keep
+    // draining so a stuck bot game still flags through the normal timeout path
+    // (finishOnFlag in maintenanceAll). The old code paused regardless of whose
+    // turn it was, so a human who kept refreshing (e.g. because a desync left
+    // the board visibly stuck) repeatedly re-paused the bot's clock on the
+    // bot's turn and it never timed out — the "bot gets all its time back, the
+    // game hangs forever" report. Only the mover ever risks an unfair flag, so
+    // pausing on the mover's own turn is all the human protection this needs.
     if (
       match.bots &&
       !match.bots[session.color] &&
       match.startedAt &&
       !match.result &&
-      match.runningSince !== null
+      match.runningSince !== null &&
+      this.activeColor(match) === session.color
     ) {
       match.clocks = this.currentClocks(match, Date.now());
       match.runningSince = null;
@@ -2767,6 +2786,13 @@ export class GameServer extends DurableObject<Env> {
           await ensureHouseUsers(db);
           await this.ctx.storage.put(houseSeededKey, now);
         }
+        // Circulate a roster rating revision to already-seeded accounts. Gated
+        // by its own versioned key so it runs once per revision (not per tick),
+        // and only after ensureHouseUsers has guaranteed the rows exist.
+        if (!(await this.ctx.storage.get<number>(houseRatingsSyncedKey))) {
+          await syncHouseRatings(db);
+          await this.ctx.storage.put(houseRatingsSyncedKey, now);
+        }
         this.houseSeeded = true;
       } catch (err) {
         console.error("house seeding failed", err);
@@ -3058,7 +3084,19 @@ export class GameServer extends DurableObject<Env> {
     if (!move) {
       const legal = legalMoves(game);
       if (legal.length) {
-        move = legal[randomInt(legal.length)];
+        // Prefer a random move that does not immediately trip the bot's own
+        // nerf loss (mirrors the blunder path in pickHouseMove); fall back to
+        // any legal move. triggersOwnNerfLoss is best-effort here: a throw must
+        // never leave the bot without a move, so any failure just widens the
+        // pool back to every legal move.
+        let pool = legal;
+        try {
+          const safe = legal.filter((m) => !triggersOwnNerfLoss(game, m));
+          if (safe.length) pool = safe;
+        } catch (err) {
+          console.error("house nerf-safety filter failed, using any legal move", match.id, err);
+        }
+        move = pool[randomInt(pool.length)];
       } else {
         // No legal move but no result — should be unreachable; end through the
         // normal flow rather than wedge the match.

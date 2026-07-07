@@ -1,5 +1,6 @@
 import { isInCheck } from "../board";
 import { NEW_HEXES } from "./hexes";
+import { FUNNY_CARDS } from "./funny";
 import { CROSSREF_CARDS } from "./crossref";
 import { Buff, BuffApi, BuffCategory, BuffInstance, CardFx } from "../buff";
 import { Tier } from "../nerf";
@@ -1039,7 +1040,7 @@ const TIER2: Buff[] = [
     }),
   ),
   def(
-    { id: "counterstep", name: "Counterstep", description: "After your opponent's next capture, you take two moves in reply, once.", tier: 2, category: "tempo", fx: { motif: "rally", pieces: "all", self: true } },
+    { id: "counterstep", name: "Counterstep", description: "After your opponent's next capture, you take two moves in reply, once. You cannot capture the king on the bonus move: your opponent replies first.", tier: 2, category: "tempo", fx: { motif: "rally", pieces: "all", self: true } },
     {
       kind: "passive",
       onMovePlayed: (inst, move, api) => {
@@ -1123,7 +1124,7 @@ const TIER3: Buff[] = [
     pieceBound("r", "Choose the rook", (board, sq, via) => leapMoves(board, sq, KNIGHT_LEAPS, via)),
   ),
   def(
-    { id: "extra_move", name: "Extra Move", description: "Take two moves in a row, once.", tier: 3, category: "tempo", boon: true, fx: { motif: "rally", pieces: "all", self: true } },
+    { id: "extra_move", name: "Extra Move", description: "Take two moves in a row, once. You cannot capture the king on the bonus move: your opponent replies first.", tier: 3, category: "tempo", boon: true, fx: { motif: "rally", pieces: "all", self: true } },
     extraMovesNow(1),
   ),
   def(
@@ -1926,7 +1927,7 @@ const TIER5: Buff[] = [
     captureExplosion({ sparePawns: true }),
   ),
   def(
-    { id: "extra_move_repeat", name: "Extra Move (Repeat)", description: "Take two moves in a row every turn for 2 full turns.", tier: 5, category: "tempo", fx: { motif: "rally", pieces: "all", self: true } },
+    { id: "extra_move_repeat", name: "Extra Move (Repeat)", description: "Take two moves in a row every turn for 2 full turns. You cannot capture the king on the bonus moves: your opponent replies first.", tier: 5, category: "tempo", fx: { motif: "rally", pieces: "all", self: true } },
     {
       kind: "passive",
       init: (inst) => {
@@ -1982,7 +1983,7 @@ const TIER5: Buff[] = [
     }),
   ),
   def(
-    { id: "time_stop_short", name: "Time Stop (Short)", description: "Take three consecutive moves right now, once.", tier: 6, category: "tempo", fx: { motif: "rally", pieces: "all", self: true } },
+    { id: "time_stop_short", name: "Time Stop (Short)", description: "Take three moves in a row on your turn, once. You cannot capture the king during these bonus moves: your opponent replies first.", tier: 6, category: "tempo", fx: { motif: "rally", pieces: "all", self: true } },
     extraMovesNow(2),
   ),
   def(
@@ -2320,7 +2321,7 @@ const TIER6: Buff[] = [
     ),
   ),
   def(
-    { id: "overwhelm", name: "Overwhelm", description: "Take three consecutive moves, once.", tier: 6, category: "tempo", fx: { motif: "rally", pieces: "all", self: true } },
+    { id: "overwhelm", name: "Overwhelm", description: "Take three moves in a row, once. You cannot capture the king during these bonus moves: your opponent replies first.", tier: 6, category: "tempo", fx: { motif: "rally", pieces: "all", self: true } },
     extraMovesNow(2),
   ),
   def(
@@ -2613,7 +2614,7 @@ const TIER7: Buff[] = [
     ),
   ),
   def(
-    { id: "onslaught", name: "Onslaught", description: "Take three consecutive moves, once.", tier: 7, category: "tempo", fx: { motif: "rally", pieces: "all", self: true } },
+    { id: "onslaught", name: "Onslaught", description: "Take three moves in a row, once. You cannot capture the king during these bonus moves: your opponent replies first.", tier: 7, category: "tempo", fx: { motif: "rally", pieces: "all", self: true } },
     extraMovesNow(2),
   ),
   def(
@@ -2753,7 +2754,7 @@ const TIER7: Buff[] = [
     }),
   ),
   def(
-    { id: "full_pardon", name: "Full Pardon", description: "Remove your nerf for good and take an extra move on your next turn.", tier: 7, category: "nerf" },
+    { id: "full_pardon", name: "Full Pardon", description: "Remove your nerf for good and take an extra move on your next turn. You cannot capture the king on the bonus move: your opponent replies first.", tier: 7, category: "nerf" },
     instant((_inst, api) => {
       api.removeMyNerf();
       api.bs.extraMoves[api.me] += 1;
@@ -2889,7 +2890,7 @@ const TIER8: Buff[] = [
     ),
   ),
   def(
-    { id: "blitzkrieg", name: "Blitzkrieg", description: "Take four consecutive moves, once.", tier: 8, category: "tempo", fx: { motif: "rally", pieces: "all", self: true } },
+    { id: "blitzkrieg", name: "Blitzkrieg", description: "Take four moves in a row, once. You cannot capture the king during these bonus moves: your opponent replies first.", tier: 8, category: "tempo", fx: { motif: "rally", pieces: "all", self: true } },
     extraMovesNow(3),
   ),
   def(
@@ -3559,6 +3560,7 @@ export const ALL_BUFFS: Buff[] = [
   ...TIER8,
   ...HEXES,
   ...NEW_HEXES,
+  ...FUNNY_CARDS,
   ...CROSSREF_CARDS,
   ...ITEMS,
 ];

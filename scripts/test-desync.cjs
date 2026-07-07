@@ -37,6 +37,7 @@ const {
   playMove,
 } = load("game.js");
 const { moveFromUCI, moveToUCI, positionKey } = load("board.js");
+const { triggersOwnNerfLoss } = load("moveSafety.js");
 const { BUFF_BY_ID } = load("buffs/library.js");
 const { ALL_NERFS } = load("nerfs/library.js");
 const {
@@ -552,6 +553,86 @@ function resyncReplica(server, seed) {
   );
 }
 
+// ---------------------------------------------------------------------------
+// Part 4: house-bot alarm robustness — an active bot game must never hang. The
+// worker (a Cloudflare Durable Object) cannot be imported here, so the two
+// sync-relevant decisions are distilled to plain JS exactly as Part 3 distils
+// OnlineMatch's move-frame handler:
+//   (a) playHouseAction's move selection: a throwing/null engine pick still
+//       yields a legal fallback move, and only a genuinely empty legal-move
+//       set ends the game (never a pending, unscheduled turn);
+//   (b) detachSession's clock-pause gate: a human disconnect pauses the clock
+//       only on the human's OWN turn — on the bot's turn the clock keeps
+//       running so a stuck bot game still flags through the timeout path.
+// ---------------------------------------------------------------------------
+
+function botMoveStep(game, pickMove, movesFn = legalMoves) {
+  let move = null;
+  try {
+    move = pickMove(game);
+  } catch {
+    move = null;
+  }
+  if (!move) {
+    const legal = movesFn(game);
+    if (legal.length) {
+      let pool = legal;
+      try {
+        const safe = legal.filter((m) => !triggersOwnNerfLoss(game, m));
+        if (safe.length) pool = safe;
+      } catch {}
+      move = pool[0]; // deterministic here; the worker randomises the pick
+    } else {
+      return { end: true };
+    }
+  }
+  return { move };
+}
+
+// detachSession's pause gate: pause only when the disconnecting human is the
+// side to move.
+function pausesClockOnDisconnect(humanColor, activeColor) {
+  return activeColor === humanColor;
+}
+
+{
+  const game = newGame(UNRESTRICTED_NERF, UNRESTRICTED_NERF, 4242);
+
+  // A move search that THROWS must still fall back to a legal move.
+  const thrown = botMoveStep(game, () => {
+    throw new Error("engine boom");
+  });
+  check(!thrown.end && !!thrown.move, "bot-alarm: a throwing move search did not fall back to a legal move");
+  check(
+    legalMoves(game).some((m) => moveToUCI(m) === moveToUCI(thrown.move)),
+    "bot-alarm: the fallback move is not legal in the position",
+  );
+  const before = positionKey(game.board);
+  playMove(game, legalMoves(game).find((m) => moveToUCI(m) === moveToUCI(thrown.move)));
+  check(positionKey(game.board) !== before, "bot-alarm: the fallback move did not advance the board");
+
+  // A null pick (engine edge case) with legal moves available also falls back.
+  const g2 = newGame(UNRESTRICTED_NERF, UNRESTRICTED_NERF, 99);
+  const nullPick = botMoveStep(g2, () => null);
+  check(!nullPick.end && !!nullPick.move, "bot-alarm: a null move pick did not fall back to a legal move");
+
+  // No legal move at all must END the game, never leave it pending/unscheduled.
+  const g3 = newGame(UNRESTRICTED_NERF, UNRESTRICTED_NERF, 7);
+  const noMove = botMoveStep(g3, () => null, () => []);
+  check(noMove.end === true, "bot-alarm: an empty legal-move set did not resolve the game");
+
+  // Clock-pause gating: on the human's own turn a disconnect pauses the clock;
+  // on the BOT's turn it must NOT (or a stuck bot game would never flag).
+  check(
+    pausesClockOnDisconnect("w", "w") === true,
+    "bot-alarm: a human disconnect on the human's own turn must pause the clock",
+  );
+  check(
+    pausesClockOnDisconnect("w", "b") === false,
+    "bot-alarm: a human disconnect on the BOT's turn must NOT pause the clock (stuck game would never flag)",
+  );
+}
+
 if (errors.length) {
   console.error("desync harness FAILED:");
   for (const e of errors) console.error("  - " + e);
@@ -559,5 +640,5 @@ if (errors.length) {
 }
 console.log(
   `OK: desync harness passed (fingerprint core, sample hash ${fpA.hash}, ${rules.length} rule ids; ` +
-    `4 server-vs-replica scenarios + legacy divergence control + no-op guard + 4 turn/ply guards)`,
+    `4 server-vs-replica scenarios + legacy divergence control + no-op guard + 4 turn/ply guards + bot-alarm robustness)`,
 );

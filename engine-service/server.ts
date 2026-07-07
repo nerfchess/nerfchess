@@ -11,12 +11,16 @@
 
 import { createServer, type IncomingMessage } from "node:http";
 import { replayToPosition, type EngineMatch } from "../src/engine/replay";
-import { pickHouseMove, type HouseSkill } from "../src/lib/server/bots";
+import { HOUSE_SKILL_PROFILES, pickHouseMove, type HouseSkill } from "../src/lib/server/bots";
 
 const TOKEN = process.env.HOUSE_ENGINE_TOKEN ?? "";
 const REPLAY_VERSION = Number(process.env.ENGINE_REPLAY_VERSION ?? "0");
 const PORT = Number(process.env.PORT ?? "8787");
-const VALID_SKILLS = new Set<HouseSkill>([1200, 1400, 1600, 1750]);
+// Derived from the roster's profile map so the accepted tiers never drift out
+// of sync with bots.ts when the skill tiers change.
+const VALID_SKILLS = new Set<HouseSkill>(
+  (Object.keys(HOUSE_SKILL_PROFILES) as unknown[]).map(Number) as HouseSkill[],
+);
 
 // The blunder branch inside pickHouseMove is nondeterministic by design, so a
 // local RNG is correct here — only the replayed BOARD must match the DO's, and
