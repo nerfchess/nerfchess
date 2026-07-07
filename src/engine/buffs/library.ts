@@ -2,6 +2,7 @@ import { isInCheck } from "../board";
 import { NEW_HEXES } from "./hexes";
 import { FUNNY_CARDS } from "./funny";
 import { FANTASY_CARDS } from "./fantasy";
+import { WILD_CARDS } from "./wild";
 import { CROSSREF_CARDS } from "./crossref";
 import { Buff, BuffApi, BuffCategory, BuffInstance, CardFx } from "../buff";
 import { Tier } from "../nerf";
@@ -3660,6 +3661,7 @@ export const ALL_BUFFS: Buff[] = [
   ...NEW_HEXES,
   ...FUNNY_CARDS,
   ...FANTASY_CARDS,
+  ...WILD_CARDS,
   ...CROSSREF_CARDS,
   ...ITEMS,
 ];
