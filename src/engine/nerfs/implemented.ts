@@ -300,7 +300,7 @@ export const CHAMPING_AT_THE_BIT: Nerf = db({
 export const UNTITLED_DUCK: Nerf = db({
   id: "untitled_duck",
   name: "Untitled duck nerf",
-  description: "A duck sits on a random square at game start. You can't pass through it or land on it.",
+  description: "A duck occupies one random square (shown on the board) all game. No piece may land on it and sliding pieces can't pass through it, but knights may still leap over it.",
   flavor: "Quack.",
   tier: 1,
   icon: "bird",
@@ -872,7 +872,7 @@ export const SIEGE: Nerf = db({
 export const SCENT_OF_BLOOD: Nerf = db({
   id: "scent_of_blood",
   name: "The Scent of Blood",
-  description: "If one of your pieces can capture, it must: that piece, this turn.",
+  description: "Any of your pieces that has a capture available can't make a non-capturing move; if you move that piece, it must capture. You may still move a different piece that has no capture.",
   flavor: "Once they smell it, nothing else matters.",
   tier: 6,
   icon: "droplet",
