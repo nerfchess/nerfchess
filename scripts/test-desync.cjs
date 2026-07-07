@@ -633,6 +633,88 @@ function pausesClockOnDisconnect(humanColor, activeColor) {
   );
 }
 
+// ---------------------------------------------------------------------------
+// Part 5: board-split walls block piece CROSSING, not just landing. A barred
+// full file/rank (Fault Line, Great Wall, Great Divide, Sundering) splits the
+// board. The landing filter alone let a knight leap clean over the wall and a
+// slider glide through the empty barred squares; legalMoves must reject any
+// move whose from/to straddle the wall line, while never stranding the mover.
+// ---------------------------------------------------------------------------
+function bareBoard(seed) {
+  const g = newGame(UNRESTRICTED_NERF, UNRESTRICTED_NERF, seed);
+  enableDraftMode(g, seed, { mode: "buff" });
+  for (let i = 0; i < 64; i++) g.board.pieces[i] = null;
+  g.board.pieces[sq("e1")] = { type: "k", color: "w" };
+  g.board.pieces[sq("e8")] = { type: "k", color: "b" };
+  return g;
+}
+
+// 5a: a FILE wall (Fault Line on the d-file) stops a black knight on c4 from
+// leaping across to the e-file, but leaves its near-side hops intact.
+{
+  // Control: with no wall the knight can leap c4 -> e5 across the d-file.
+  const ctrl = bareBoard(909);
+  ctrl.board.pieces[sq("c4")] = { type: "n", color: "b" };
+  ctrl.board.turn = "b";
+  check(
+    legalMoves(ctrl).some((m) => m.from === sq("c4") && m.to === sq("e5")),
+    "wall 5a control: knight should reach e5 with no wall present",
+  );
+
+  const g = bareBoard(909);
+  g.board.pieces[sq("c4")] = { type: "n", color: "b" };
+  g.board.turn = "w";
+  acquireBuff(g, "w", "fault_line", 4); // barLine("file", 2), against black
+  const idx = g.buffs.players.w.buffs.length - 1;
+  check(
+    activateBuff(g, "w", idx, [{ square: sq("d4") }]),
+    "wall 5a: fault_line activation failed",
+  );
+  check(g.board.turn === "b", "wall 5a: fault_line did not hand the turn to black");
+  const knight = legalMoves(g).filter((m) => m.from === sq("c4"));
+  const crossed = knight.filter((m) => m.to % 8 > 3); // landed on the far (e+) side of the d-file
+  check(crossed.length === 0, `wall 5a: knight leapt across the barred d-file (${crossed.map((m) => m.to).join(",")})`);
+  check(!knight.some((m) => m.to === sq("e5")), "wall 5a: knight crossed to e5 over the wall");
+  check(!knight.some((m) => m.to === sq("e3")), "wall 5a: knight crossed to e3 over the wall");
+  check(
+    knight.some((m) => m.to % 8 < 3),
+    "wall 5a: knight lost all its near-side moves (wall over-blocked)",
+  );
+}
+
+// 5b: a RANK wall (Great Wall on the 4th rank) stops a black knight on d3 from
+// leaping up over rank 4 to rank 5, and a rook cannot glide through the empty
+// barred rank either.
+{
+  const g = bareBoard(910);
+  g.board.pieces[sq("d3")] = { type: "n", color: "b" };
+  g.board.pieces[sq("h3")] = { type: "r", color: "b" };
+  g.board.turn = "w";
+  acquireBuff(g, "w", "great_wall", 5); // barLine("rank", 3), against black
+  const idx = g.buffs.players.w.buffs.length - 1;
+  check(
+    activateBuff(g, "w", idx, [{ square: sq("a4") }]),
+    "wall 5b: great_wall activation failed",
+  );
+  check(g.board.turn === "b", "wall 5b: great_wall did not hand the turn to black");
+  const rowOf = (s) => (s - (s % 8)) / 8;
+  const knight = legalMoves(g).filter((m) => m.from === sq("d3"));
+  const leapt = knight.filter((m) => rowOf(m.to) > 3); // crossed the 4th rank upward
+  check(leapt.length === 0, `wall 5b: knight leapt over the barred 4th rank (${leapt.map((m) => m.to).join(",")})`);
+  check(!knight.some((m) => m.to === sq("e5")), "wall 5b: knight crossed to e5 over the rank wall");
+  check(!knight.some((m) => m.to === sq("c5")), "wall 5b: knight crossed to c5 over the rank wall");
+  check(
+    knight.some((m) => rowOf(m.to) < 3),
+    "wall 5b: knight lost all its near-side moves (rank wall over-blocked)",
+  );
+  // The rook on h3 must not slide up its file through the empty barred h4.
+  const rook = legalMoves(g).filter((m) => m.from === sq("h3"));
+  check(
+    !rook.some((m) => rowOf(m.to) > 3),
+    "wall 5b: rook glided through the empty barred rank to the far side",
+  );
+}
+
 if (errors.length) {
   console.error("desync harness FAILED:");
   for (const e of errors) console.error("  - " + e);
@@ -640,5 +722,5 @@ if (errors.length) {
 }
 console.log(
   `OK: desync harness passed (fingerprint core, sample hash ${fpA.hash}, ${rules.length} rule ids; ` +
-    `4 server-vs-replica scenarios + legacy divergence control + no-op guard + 4 turn/ply guards + bot-alarm robustness)`,
+    `4 server-vs-replica scenarios + legacy divergence control + no-op guard + 4 turn/ply guards + bot-alarm robustness + 2 wall-crossing guards)`,
 );
