@@ -30,6 +30,7 @@ import { MoveList } from "@/components/MoveList";
 import { NerfCard } from "@/components/NerfCard";
 import { PlayerNerfCard } from "@/components/PlayerNerfCard";
 import { SettingsPanel } from "@/components/SettingsPanel";
+import { SpectatorPill } from "@/components/SpectatorPill";
 import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
 import type { BuffOffer } from "@/engine/buff";
 import { BUFF_BY_ID } from "@/engine/buffs/library";
@@ -261,6 +262,10 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   // CLAIM_DELAY_AFTER_GONE_MS the claim buttons appear (server re-checks).
   const [opponentGone, setOpponentGone] = useState(false);
   const [claimReady, setClaimReady] = useState(false);
+  // Who is spectating this game right now, pushed by the server's `watchers`
+  // frame (seeded on connect, refreshed on every watch/leave). Names are the
+  // signed-in watchers only; `n` includes anonymous viewers.
+  const [spectators, setSpectators] = useState<{ n: number; names: string[] }>({ n: 0, names: [] });
   // Feed of the cards/hexes the opponent has played. Each play shows in the
   // top-right for 10 seconds (OppPlaysLog TTL), then flies down into the
   // dock's permanent "Opponent played" ledger, so nothing they did is ever
@@ -640,6 +645,8 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
       } else if (e.type === "clocks") {
         setWhiteMs(e.wc);
         setBlackMs(e.bc);
+      } else if (e.type === "watchers") {
+        setSpectators({ n: e.n, names: e.names ?? [] });
       } else if (e.type === "move") {
         setDrawOfferBy(null);
         setDrawOfferStatus("idle");
@@ -1848,6 +1855,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
             )}
             {subtitle}
           </div>
+          <SpectatorPill n={spectators.n} names={spectators.names} />
           <button
             onClick={toggleMute}
             aria-label={muted ? "Unmute" : "Mute"}
