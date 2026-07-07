@@ -77,6 +77,10 @@ function withResponseTimeout<T>(promise: Promise<T>, message: string, ms = 10000
   return Promise.race([promise, timeout]).finally(() => window.clearTimeout(timeoutId));
 }
 
+// How long a viewer lingers on the "this game is over" screen before being
+// eased back to the lobby automatically.
+const REDIRECT_SECONDS = 6;
+
 // Lichess-style game URL: the player who owns a seat token plays here; anyone
 // else watches live, or gets the stored replay once the game has been archived.
 export default function OnlineGamePage() {
@@ -86,6 +90,9 @@ export default function OnlineGamePage() {
   // Bumped whenever a reconnect replays the spectator state, so the viewer
   // remounts with the fresh payload.
   const [watchGen, setWatchGen] = useState(0);
+  // Seconds left before a viewer stranded on a game that has ended / gone dark
+  // is eased back to the lobby (see the `missing` effect + view below).
+  const [redirectIn, setRedirectIn] = useState(REDIRECT_SECONDS);
   const sessionRef = useRef<MPSession | null>(null);
 
   useEffect(() => {
@@ -109,8 +116,18 @@ export default function OnlineGamePage() {
     // Render the stored replay, reusing a fetch already in flight when one was
     // started in parallel with the watch attempt.
     const showReplay = async (pending?: Promise<ReplayGame | null>) => {
-      const game = await (pending ?? fetchReplay());
+      let game = await (pending ?? fetchReplay());
       if (cancelled) return;
+      // A game that has only just ended (the common reason a live watch drops
+      // to "not_found") may not be archived for a second or two. Rather than
+      // flash "not found" at the viewer, give the write a brief beat and look
+      // once more before deciding the game is truly gone.
+      if (!game) {
+        await new Promise((r) => window.setTimeout(r, 2500));
+        if (cancelled) return;
+        game = await fetchReplay();
+        if (cancelled) return;
+      }
       setMode(game ? { kind: "replay", game } : { kind: "missing" });
     };
 
@@ -216,6 +233,26 @@ export default function OnlineGamePage() {
     };
   }, [gameId]);
 
+  // When a spectated game turns out to be over (or its live broadcast dropped
+  // and it was never saved), don't leave the viewer staring at a dead end —
+  // count down and gently send them to the lobby, with manual buttons meanwhile
+  // for anyone who wants to go home or jump straight to another game.
+  useEffect(() => {
+    if (mode.kind !== "missing") return;
+    setRedirectIn(REDIRECT_SECONDS);
+    const tick = window.setInterval(() => {
+      setRedirectIn((s) => {
+        if (s <= 1) {
+          window.clearInterval(tick);
+          window.location.href = "/play";
+          return 0;
+        }
+        return s - 1;
+      });
+    }, 1000);
+    return () => window.clearInterval(tick);
+  }, [mode.kind]);
+
   if (mode.kind === "player" && sessionRef.current) {
     return (
       <OnlineMatch
@@ -281,18 +318,45 @@ export default function OnlineGamePage() {
     );
   }
 
+  if (mode.kind === "missing") {
+    return (
+      <main className="min-h-screen">
+        <SiteNav />
+        <section className="max-w-xl mx-auto px-6 py-16 text-center">
+          <h1 className="font-display text-4xl">That game has wrapped up</h1>
+          <p className="mt-3 text-parchment-200">
+            It&apos;s no longer live and we couldn&apos;t find a saved copy — the
+            match likely just finished, or the broadcast ended. Taking you back
+            to the lobby in {redirectIn}s&hellip;
+          </p>
+          <div className="mt-8 flex items-center justify-center gap-3">
+            <Link href="/play" className="inline-block px-5 py-2 rounded-sm btn-leaf font-body">
+              Watch another game
+            </Link>
+            <Link
+              href="/"
+              className="inline-block px-5 py-2 rounded-sm border border-parchment-700 font-body text-parchment-200 hover:text-parchment-50"
+            >
+              Home
+            </Link>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen">
       <SiteNav />
       <section className="max-w-xl mx-auto px-6 py-16 text-center">
-        <h1 className="font-display text-4xl">Game not found</h1>
+        <h1 className="font-display text-4xl">Something interrupted the game</h1>
         <p className="mt-3 text-parchment-200">
           {mode.kind === "error"
             ? mode.message
             : "This game doesn't exist, or it hasn't been played yet."}
         </p>
         <Link href="/play" className="inline-block mt-8 px-5 py-2 rounded-sm btn-leaf font-body">
-          Play a game
+          Back to the lobby
         </Link>
       </section>
     </main>
