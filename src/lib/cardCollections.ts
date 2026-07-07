@@ -9,6 +9,7 @@
 import { FANTASY_CARDS } from "@/engine/buffs/fantasy";
 import { WILD_CARDS } from "@/engine/buffs/wild";
 import { FUNNY_CARDS } from "@/engine/buffs/funny";
+import { PT_CARDS } from "@/engine/buffs/pt";
 import { WILD_NERFS } from "@/engine/nerfs/wild";
 import type { Buff } from "@/engine/buff";
 import type { Nerf } from "@/engine/nerf";
@@ -18,7 +19,7 @@ export type NerfCollection = "Core" | "Wild";
 
 const FANTASY = new Set(FANTASY_CARDS.map((c) => c.id));
 const WILD = new Set(WILD_CARDS.map((c) => c.id));
-const FUNNY = new Set(FUNNY_CARDS.map((c) => c.id));
+const FUNNY = new Set([...FUNNY_CARDS, ...PT_CARDS].map((c) => c.id));
 const WILD_N = new Set(WILD_NERFS.map((c) => c.id));
 
 /** Which collection a buff (including hexes, boons, items) belongs to. The

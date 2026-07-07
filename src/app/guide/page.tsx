@@ -30,7 +30,7 @@ export default function GuideIndexPage() {
           your own rule; you never see your opponent&apos;s until the game ends. Every few moves
           a draft deals extra cards: usually a hex that curses your opponent, sometimes a boon
           or item that helps you. If you have heard of{" "}
-          <Link href="/guide/drawback-chess" className="underline">drawback chess</Link>, this
+          drawback chess, this
           is that idea, extended with a card draft.
         </p>
         <p>

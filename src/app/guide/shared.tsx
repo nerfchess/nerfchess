@@ -14,7 +14,6 @@ export const GUIDE_PAGES = [
   { href: "/guide/chess-with-power-ups", label: "Chess with power-ups" },
   { href: "/guide/capture-the-king", label: "Capture the king" },
   { href: "/guide/chess-roguelike", label: "Chess roguelike" },
-  { href: "/guide/drawback-chess", label: "Drawback chess" },
   { href: "/guide/chess-variants", label: "Chess variants" },
   { href: "/guide/glossary", label: "Glossary" },
 ] as const;
