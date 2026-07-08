@@ -738,7 +738,7 @@ export function DraftOverlay({
               <button
                 onClick={handleReroll}
                 disabled={rerolling}
-                className="flex min-w-[6rem] flex-1 touch-manipulation items-center justify-center gap-1 rounded-[1px] border border-white/15 bg-white/[0.03] px-3 py-2 font-display text-[11px] font-semibold tracking-wide text-parchment-200 transition hover:border-gold/50 hover:text-gold-leaf disabled:opacity-40"
+                className="flex min-w-[6rem] min-h-[44px] flex-1 touch-manipulation items-center justify-center gap-1 rounded-[1px] border border-white/15 bg-white/[0.03] px-3 py-2 font-display text-[11px] font-semibold tracking-wide text-parchment-200 transition hover:border-gold/50 hover:text-gold-leaf disabled:opacity-40"
                 title="Roll fresh cards at the same tier"
               >
                 <RerollIcon className="text-gold-leaf" /> Reroll ({rerollsLeft})
@@ -748,7 +748,7 @@ export function DraftOverlay({
               onClick={settled ? undefined : bankArmed ? onBank : () => setBankArmed(true)}
               disabled={settled}
               className={
-                "min-w-[6rem] flex-1 touch-manipulation rounded-[1px] border px-3 py-2 font-display text-[11px] font-semibold tracking-wide transition disabled:opacity-40 " +
+                "min-w-[6rem] min-h-[44px] flex-1 touch-manipulation rounded-[1px] border px-3 py-2 font-display text-[11px] font-semibold tracking-wide transition disabled:opacity-40 " +
                 (bankArmed
                   ? "border-coral/50 bg-coral/10 text-coral-glow hover:bg-coral/20"
                   : "border-white/15 bg-white/[0.03] text-parchment-200 hover:border-gold/50 hover:text-gold-leaf")
@@ -832,7 +832,7 @@ export function DraftOverlay({
               type="button"
               onClick={() => setHidden(true)}
               title="Hide the draft and peek at the board"
-              className="flex items-center gap-1.5 rounded-[1px] border border-white/15 bg-white/[0.03] px-2 py-0.5 text-parchment-300 transition hover:border-gold/50 hover:text-gold-leaf"
+              className="flex items-center gap-1.5 min-h-[44px] touch-manipulation rounded-[1px] border border-white/15 bg-white/[0.03] px-3 py-0.5 text-parchment-300 transition hover:border-gold/50 hover:text-gold-leaf"
             >
               <EyeIcon off />
               <span className="font-display text-[11px] font-semibold tracking-wide">Hide</span>

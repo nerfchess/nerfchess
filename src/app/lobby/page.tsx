@@ -227,7 +227,7 @@ export default function LobbyPage() {
                 <div className="flex items-center gap-3">
                   <Link
                     href="/friend"
-                    className="smallcaps text-[10px] text-gold-leaf hover:text-gold transition-colors"
+                    className="inline-flex min-h-[44px] items-center sm:min-h-0 smallcaps text-[10px] text-gold-leaf hover:text-gold transition-colors"
                   >
                     Create a friend game
                   </Link>

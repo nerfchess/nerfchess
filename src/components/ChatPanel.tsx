@@ -157,7 +157,7 @@ export function ChatPanel({
           <button
             type="button"
             onClick={toggleMute}
-            className="smallcaps text-[9px] text-parchment-400 hover:text-parchment-100 transition-colors"
+            className="inline-flex items-center -mx-1 -my-1 min-h-[44px] px-2 py-2 smallcaps text-[9px] text-parchment-400 hover:text-parchment-100 transition-colors"
             title={muted ? "Show chat messages" : "Hide chat messages"}
           >
             {muted ? "Unmute" : "Mute"}
@@ -168,7 +168,7 @@ export function ChatPanel({
               onClick={() => setExpanded(false)}
               aria-label="Collapse chat"
               title="Collapse chat"
-              className="smallcaps text-[9px] text-parchment-400 hover:text-parchment-100 transition-colors"
+              className="inline-flex items-center -mx-1 -my-1 min-h-[44px] px-2 py-2 smallcaps text-[9px] text-parchment-400 hover:text-parchment-100 transition-colors"
             >
               Collapse
             </button>

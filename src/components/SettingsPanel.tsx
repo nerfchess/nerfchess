@@ -186,7 +186,7 @@ export function SettingsPanel({ open, onClose }: Props) {
           <div className="font-display text-xl text-parchment">Settings</div>
           <button
             onClick={onClose}
-            className="rounded p-1 text-parchment-400 transition-colors hover:bg-white/5 hover:text-parchment"
+            className="grid min-h-[44px] min-w-[44px] place-items-center rounded text-parchment-400 transition-colors hover:bg-white/5 hover:text-parchment"
             aria-label="Close"
           >
             <X className="h-4 w-4" />

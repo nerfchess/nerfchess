@@ -208,7 +208,7 @@ export function SiteHeader({ active }: { active?: string }) {
   };
 
   const iconButton =
-    "nav-icon-btn relative grid h-10 w-10 place-items-center text-parchment-300 hover:bg-white/5 hover:text-parchment-50";
+    "nav-icon-btn relative grid h-11 w-11 sm:h-10 sm:w-10 place-items-center text-parchment-300 hover:bg-white/5 hover:text-parchment-50";
 
   return (
     <nav className="seam-edge-b flex items-center justify-between gap-3 bg-ink-900/70 px-5 sm:px-10 py-5 sm:py-6">
@@ -386,7 +386,7 @@ export function SiteHeader({ active }: { active?: string }) {
         ) : !user ? (
           <Link
             href="/login"
-            className="ml-1 border border-gold/40 px-3 py-1.5 font-display text-sm text-gold-leaf transition hover:bg-gold/10"
+            className="ml-1 inline-flex items-center min-h-[44px] border border-gold/40 px-3 py-2 font-display text-sm text-gold-leaf transition hover:bg-gold/10"
           >
             Sign in
           </Link>

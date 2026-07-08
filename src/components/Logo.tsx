@@ -19,7 +19,7 @@ export function Logo({
   return (
     <Link href={href} className={`group inline-flex items-center gap-2.5 ${className}`}>
       <LogoMark size={size} className="shrink-0 transition-transform duration-200 group-hover:-rotate-6" />
-      <span className="font-display text-xl sm:text-2xl tracking-tight font-bold leading-none">
+      <span className="hidden sm:inline font-display text-xl sm:text-2xl tracking-tight font-bold leading-none">
         nerf<span className="text-gold-leaf">chess</span>
       </span>
     </Link>

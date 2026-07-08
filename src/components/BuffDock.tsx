@@ -197,8 +197,8 @@ export function EnemyBuffModal({
   const inst = game.buffs?.players[myColor].buffs[targeting.buffIndex];
   const buffName = (inst && BUFF_BY_ID[inst.id]?.name) ?? "Buff";
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4">
-      <div className="plate w-full max-w-md p-5">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto overscroll-contain bg-black/70 backdrop-blur-sm px-4 py-6">
+      <div className="plate w-full max-w-md p-5 max-h-[90dvh] overflow-y-auto">
         <div className="smallcaps text-[11px] text-parchment-400">{buffName}</div>
         <div className="font-display text-lg text-parchment mt-0.5">{target.label}</div>
 

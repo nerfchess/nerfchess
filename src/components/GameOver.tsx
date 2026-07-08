@@ -53,13 +53,13 @@ interface Props {
 // (optimistically here, INSERT OR REPLACE server side).
 function VoteThumbs({ vote, onVote }: { vote: 1 | -1 | null; onVote: (value: 1 | -1) => void }) {
   return (
-    <span className="flex gap-1">
+    <span className="flex gap-1.5">
       <button
         type="button"
         aria-label="Thumbs up"
         onClick={() => onVote(1)}
         className={
-          "grid h-7 w-7 place-items-center border transition " +
+          "grid h-9 w-9 place-items-center border transition " +
           (vote === 1
             ? "border-verdigris/60 bg-verdigris/20 text-verdigris-glow"
             : "border-white/15 text-parchment-300 hover:border-verdigris/50 hover:text-verdigris-glow")
@@ -72,7 +72,7 @@ function VoteThumbs({ vote, onVote }: { vote: 1 | -1 | null; onVote: (value: 1 |
         aria-label="Thumbs down"
         onClick={() => onVote(-1)}
         className={
-          "grid h-7 w-7 place-items-center border transition " +
+          "grid h-9 w-9 place-items-center border transition " +
           (vote === -1
             ? "border-oxblood-glow/60 bg-oxblood/20 text-oxblood-glow"
             : "border-white/15 text-parchment-300 hover:border-oxblood-glow/50 hover:text-oxblood-glow")
@@ -410,7 +410,7 @@ export function GameOver({
         initial={reduceMotion ? { opacity: 0 } : { y: 16, scale: 0.96, opacity: 0 }}
         animate={reduceMotion ? { opacity: 1 } : { y: 0, scale: 1, opacity: 1 }}
         transition={{ type: "spring", stiffness: 320, damping: 26 }}
-        className="plate plate-raised gilt relative w-[min(92vw,28rem)] overflow-hidden p-6 text-center shadow-2xl sm:p-7"
+        className="plate plate-raised gilt relative w-[min(92vw,28rem)] max-h-[calc(100dvh-3rem)] overflow-y-auto p-6 text-center shadow-2xl sm:p-7"
         onMouseDown={(event) => event.stopPropagation()}
       >
         <span className="card-corner tl" />
