@@ -37,6 +37,7 @@ import {
   emptySquares,
   freezeAllEnemies,
   freezeTarget,
+  grantInventory,
   inHalf,
   instant,
   leapMoves,
@@ -44,7 +45,6 @@ import {
   mySquares,
   pawnRankOk,
   phasingSlideMoves,
-  placePieces,
   markRevived,
   relRank,
   relocateMany,
@@ -895,12 +895,15 @@ export const WILD_ELEMENTAL: Buff[] = [
     {
       id: "we_stone_soldiers",
       name: "Stone Soldiers",
-      description: "Carve a new knight and a new pawn onto empty squares in your half, once.",
+      description: "Carve a knight and a pawn into your pocket, then drop them onto empty squares on later turns.",
       tier: 4,
       category: "pieces",
       flavor: "Cut from the bedrock.",
     },
-    placePieces(["n", "p"], myHalfZone),
+    instant((_inst, api) => {
+      grantInventory(api, "n", 1);
+      grantInventory(api, "p", 1);
+    }),
   ),
   card(
     {
@@ -1224,12 +1227,12 @@ export const WILD_ELEMENTAL: Buff[] = [
       id: "we_seedlings",
       icon: "Sprout",
       name: "Seedlings",
-      description: "Sprout two new pawns on empty squares in your half, once.",
+      description: "Sprout two pawns into your pocket, then drop them onto empty squares on later turns.",
       tier: 3,
       category: "pieces",
       flavor: "Give it a season.",
     },
-    placePieces(["p", "p"], myHalfZone),
+    instant((_inst, api) => grantInventory(api, "p", 2)),
   ),
   card(
     {

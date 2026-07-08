@@ -955,8 +955,8 @@ const TIER2: Buff[] = [
     timedAugment(2, doubleStepGen),
   ),
   def(
-    { id: "kings_guard", name: "King's Guard", description: "Place a pawn on any empty square adjacent to your king, once.", tier: 2, category: "pieces" },
-    placePieces(["p"], kingAdjacentZone),
+    { id: "kings_guard", name: "King's Guard", description: "Add a pawn to your pocket, then spend a later turn to drop it onto any empty square.", tier: 2, category: "pieces" },
+    instant((_inst, api) => grantInventory(api, "p", 1)),
   ),
   def(
     { id: "phase_rook", requires: ["r"], name: "Phase Rook", description: "Choose one rook. For the game it may pass through one friendly piece per move; it still cannot capture friendly pieces or phase through two.", tier: 2, category: "movement", fx: { motif: "empower", pieces: ["r"], self: true } },
@@ -1024,8 +1024,8 @@ const TIER2: Buff[] = [
     advancePawns(3),
   ),
   def(
-    { id: "bodyguard", name: "Bodyguard", description: "Spawn a knight adjacent to your king, once.", tier: 3, category: "pieces" },
-    placePieces(["n"], kingAdjacentZone),
+    { id: "bodyguard", name: "Bodyguard", description: "Add a knight to your pocket, then spend a later turn to drop it onto any empty square.", tier: 3, category: "pieces" },
+    instant((_inst, api) => grantInventory(api, "n", 1)),
   ),
   def(
     { id: "recall", name: "Recall", description: "Return one piece to any empty square in your back two ranks, once.", tier: 2, category: "movement" },

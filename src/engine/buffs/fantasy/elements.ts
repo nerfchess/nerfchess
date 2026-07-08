@@ -9,13 +9,12 @@
 import { Buff } from "./shared";
 import {
   card,
-  placePieces,
+  grantInventory,
   barLine,
   voidSquares,
   lineSweep,
   addEffect,
   instant,
-  anyEmptyZone,
   DIAG_DIRS,
   FILE,
   RANK,
@@ -69,12 +68,12 @@ export const FANTASY_ELEMENTS: Buff[] = [
       icon: "Star",
       name: "Starfall",
       description:
-        "Place a new rook on any empty square, once.",
+        "A rook crashes down into your pocket, then spend a later turn to drop it onto any empty square.",
       tier: 5,
       category: "pieces",
       flavor: "The crater is still glowing.",
     },
-    placePieces(["r"], anyEmptyZone),
+    instant((_inst, api) => grantInventory(api, "r", 1)),
   ),
   card(
     {

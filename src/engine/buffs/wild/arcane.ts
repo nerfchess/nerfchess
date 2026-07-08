@@ -26,13 +26,13 @@ import {
   emptySquares,
   extraMovesNow,
   freezeTarget,
+  grantInventory,
   inHalf,
   instant,
   leapMoves,
   lineSweep,
   mySquares,
   pieceBound,
-  placePieces,
   relocateMany,
   removeEnemies,
   slideMoves,
@@ -427,12 +427,12 @@ export const WILD_ARCANE: Buff[] = [
       id: "wa_conjure_bishop",
       name: "Conjured Bishop",
       description:
-        "Conjure a permanent spectral bishop on an empty square of your back rank, a defensive blocker that stays as long as you do.",
+        "Conjure a spectral bishop into your pocket, then spend a later turn to drop it onto any empty square. It stays as long as you do.",
       tier: 4,
       category: "pieces",
       flavor: "Faith, made solid, and it does not fade.",
     },
-    placePieces(["b"], backRankZone),
+    instant((_inst, api) => grantInventory(api, "b", 1)),
   ),
   card(
     {
@@ -451,24 +451,27 @@ export const WILD_ARCANE: Buff[] = [
       id: "wa_spectral_minors",
       name: "Spectral Retinue",
       description:
-        "Conjure a knight and a bishop, permanently, on empty squares in your half, once.",
+        "Conjure a knight and a bishop into your pocket, then drop them onto empty squares on later turns. They stay as long as you do.",
       tier: 5,
       category: "pieces",
       flavor: "They stay as long as you do.",
     },
-    placePieces(["n", "b"], myHalfZone),
+    instant((_inst, api) => {
+      grantInventory(api, "n", 1);
+      grantInventory(api, "b", 1);
+    }),
   ),
   card(
     {
       id: "wa_twin_familiars",
       name: "Twin Familiars",
       description:
-        "Conjure two bishops, permanently, on empty squares in your half, once.",
+        "Conjure two bishops into your pocket, then drop them onto empty squares on later turns. They stay as long as you do.",
       tier: 5,
       category: "pieces",
       flavor: "One for each shoulder.",
     },
-    placePieces(["b", "b"], myHalfZone),
+    instant((_inst, api) => grantInventory(api, "b", 2)),
   ),
 
   // ===================== TRANSMUTATION =====================

@@ -11,7 +11,8 @@ import {
   lineSweep,
   relocateAnywhere,
   summonTemp,
-  placePieces,
+  grantInventory,
+  instant,
   myHalfZone,
   mySquares,
   addEffect,
@@ -181,11 +182,11 @@ export const FANTASY_BEASTS: Buff[] = [
       icon: "Egg",
       name: "Roost of Rocs",
       description:
-        "Two titanic rocs descend from the mountain roost and settle into your ranks as knights: place them on empty squares in your half, once.",
+        "Two titanic rocs descend from the mountain roost and settle into your pocket as knights, then drop them onto empty squares on later turns.",
       tier: 6,
       category: "pieces",
       flavor: "Their shadows blot out the board.",
     },
-    placePieces(["n", "n"], myHalfZone),
+    instant((_inst, api) => grantInventory(api, "n", 2)),
   ),
 ];

@@ -29,6 +29,7 @@ import {
   captureSquare,
   emptySquares,
   explodeAt,
+  grantInventory,
   inHalf,
   instant,
   leapMoves,
@@ -456,45 +457,51 @@ export const WILD_WARFARE: Buff[] = [
     {
       id: "ww_sapper_team",
       name: "Sapper Team",
-      description: "Place a new bishop on any empty square in your half, once.",
+      description: "A bishop reports to your pocket, then spend a later turn to drop it onto any empty square.",
       tier: 3,
       category: "pieces",
       flavor: "They dig the tunnels no one else will.",
     },
-    placePieces(["b"], myHalfZone),
+    instant((_inst, api) => grantInventory(api, "b", 1)),
   ),
   card(
     {
       id: "ww_muster_the_ranks",
       name: "Muster the Ranks",
-      description: "Place a new knight and two new pawns on empty squares in your half, once.",
+      description: "A knight and two pawns muster into your pocket, then drop them onto empty squares on later turns.",
       tier: 5,
       category: "pieces",
       flavor: "The muster roll fills out fast.",
     },
-    placePieces(["n", "p", "p"], myHalfZone),
+    instant((_inst, api) => {
+      grantInventory(api, "n", 1);
+      grantInventory(api, "p", 2);
+    }),
   ),
   card(
     {
       id: "ww_combined_arms",
       name: "Combined Arms",
-      description: "Place a new rook and a new knight on empty squares in your half, once.",
+      description: "A rook and a knight report to your pocket, then drop them onto empty squares on later turns.",
       tier: 6,
       category: "pieces",
       flavor: "Armor and cavalry, moving as one.",
     },
-    placePieces(["r", "n"], myHalfZone),
+    instant((_inst, api) => {
+      grantInventory(api, "r", 1);
+      grantInventory(api, "n", 1);
+    }),
   ),
   card(
     {
       id: "ww_shieldbearers",
       name: "Shieldbearers",
-      description: "Place two new pawns on empty squares adjacent to your king, once.",
+      description: "Two pawns fall in to your pocket, then drop them onto empty squares on later turns.",
       tier: 4,
       category: "pieces",
       flavor: "Close ranks around the crown.",
     },
-    placePieces(["p", "p"], kingAdjacentZone),
+    instant((_inst, api) => grantInventory(api, "p", 2)),
   ),
   card(
     {
