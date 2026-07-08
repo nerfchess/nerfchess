@@ -28,12 +28,14 @@ import { Buff, BuffApi, BuffCategory, CardFx } from "../buff";
 import { FILE, Move, PieceType, RANK, Square } from "../types";
 import {
   ALL_DIRS,
+  KNIGHT_LEAPS,
   activated,
   activatedSimple,
   addEffect,
   addNovel,
   emptySquares,
   inHalf,
+  leapMoves,
   markRevived,
   mySquares,
   pawnRankOk,
@@ -376,13 +378,17 @@ function mythic(meta: Meta, mech: Mech): Buff {
   return { ...meta, tier: 10, special: true, implemented: true, ...mech };
 }
 
-/** Queen movement for one of my pieces. A pawn empowered to a queen still
- * promotes on the last rank (its slide there expands into promotion moves), so
- * Ascendancy never strands a pawn on the back rank. */
-function queenlikeMoves(api: BuffApi, sq: Square, via: string): Move[] {
+/** Amazon movement (queen slides plus knight leaps) for one of my pieces. A pawn
+ * empowered this way still promotes on the last rank -- both its slides and its
+ * leaps to rank 8 expand into promotion moves -- so Ascendancy never strands a
+ * pawn on the back rank. */
+function amazonMoves(api: BuffApi, sq: Square, via: string): Move[] {
   const p = api.board.pieces[sq];
   if (!p) return [];
-  const raw = slideMoves(api.board, sq, ALL_DIRS, via);
+  const raw = [
+    ...slideMoves(api.board, sq, ALL_DIRS, via),
+    ...leapMoves(api.board, sq, KNIGHT_LEAPS, via),
+  ];
   if (p.type !== "p") return raw;
   const out: Move[] = [];
   for (const m of raw) {
@@ -408,15 +414,40 @@ export const TIER10: Buff[] = [
       icon: "Skull",
       name: "Oblivion",
       description:
-        "Every one of your opponent's pieces except the king is destroyed. Only their lone king is left standing.",
+        "Every one of your opponent's pieces except the king is destroyed, every piece you have ever lost returns to your half, and your whole army cannot be captured for your opponent's next 3 turns. Only their lone king is left standing against your full force.",
       category: "attack",
-      flavor: "Nothing left to defend.",
+      flavor: "Nothing left to defend. Everything left to lose.",
+      fx: { motif: "ward", pieces: "all", self: true },
     },
     activatedSimple((_inst, api) => {
+      // Wipe the enemy army (never the king: removing pieces only frees squares
+      // around their king, so it is never stranded).
       for (const sq of mySquares(api.board, api.opp)) {
         if (api.board.pieces[sq]!.type === "k") continue;
         api.removePiece(sq);
       }
+      // Raise your entire graveyard back onto the board, filling your half from
+      // the back rank outward and spilling across the board if it overflows.
+      const spots = backfillSpots(api);
+      spots.push(
+        ...emptySquares(api.board, (sq) => !inHalf(api.me, sq)).sort(
+          (a, b) => relRank(api.me, a) - relRank(api.me, b) || a - b,
+        ),
+      );
+      const order: PieceType[] = ["q", "r", "b", "n", "p"];
+      for (const type of order) {
+        let left = revivable(api, type);
+        while (left > 0 && spots.length > 0) {
+          const at = spots.findIndex((sq) => type !== "p" || pawnRankOk(sq));
+          if (at < 0) break;
+          const sq = spots.splice(at, 1)[0];
+          api.place(sq, type, api.me);
+          markRevived(api, type);
+          left--;
+        }
+      }
+      // And nothing can touch you while you close it out.
+      addEffect(api, { kind: "shield", owner: api.me, squares: null, turns: 3 });
     }),
   ),
 
@@ -430,9 +461,9 @@ export const TIER10: Buff[] = [
       icon: "Castle",
       name: "Grand Army",
       description:
-        "A full fresh force answers your call: a new queen, two rooks, two bishops and two knights appear on empty squares in your half, spilling onto the rest of the board only if your half runs out of room.",
+        "A whole fresh army answers your call: two new queens, two rooks, two bishops and two knights appear on empty squares in your half, and every remaining empty square in your half fills with a new pawn. It spills onto the rest of the board only if your half runs out of room.",
       category: "pieces",
-      flavor: "Rank upon rank, out of nowhere.",
+      flavor: "Rank upon rank upon rank, out of nowhere.",
     },
     activatedSimple((_inst, api) => {
       const spots = backfillSpots(api);
@@ -441,12 +472,16 @@ export const TIER10: Buff[] = [
           (a, b) => relRank(api.me, a) - relRank(api.me, b) || a - b,
         ),
       );
-      // No pawns in the force, so no rank-1/8 guard is needed.
-      const force: PieceType[] = ["q", "r", "r", "b", "b", "n", "n"];
+      // Seat the heavy force first (no pawn-rank guard needed for these).
+      const force: PieceType[] = ["q", "q", "r", "r", "b", "b", "n", "n"];
       for (const type of force) {
         const sq = spots.shift();
         if (sq == null) break;
         api.place(sq, type, api.me);
+      }
+      // Then flood every remaining legal square with fresh pawns.
+      for (const sq of spots) {
+        if (pawnRankOk(sq)) api.place(sq, "p", api.me);
       }
     }),
   ),
@@ -463,7 +498,7 @@ export const TIER10: Buff[] = [
       icon: "Crown",
       name: "Ascendancy",
       description:
-        "For your next 3 turns every one of your pieces except the king moves and captures as a queen.",
+        "For your next 4 turns every one of your pieces except the king moves and captures as an amazon (a queen that also leaps like a knight), and your king cannot be captured.",
       category: "movement",
       flavor: "Ascend, all of you.",
       fx: { motif: "empower", pieces: "all", moveAs: "q", self: true },
@@ -471,16 +506,17 @@ export const TIER10: Buff[] = [
     {
       kind: "activated",
       spendOnUse: false,
-      effect: (inst) => {
+      effect: (inst, api) => {
         // One activation only; re-use is a guarded no-op.
         if (inst.state.turns != null) return;
-        inst.state.turns = 3;
+        inst.state.turns = 4;
+        addEffect(api, { kind: "king_safe", owner: api.me, turns: 4 });
       },
       augmentMoves: (moves, inst, api) => {
         if (turnsLeft(inst) <= 0) return;
         for (const sq of mySquares(api.board, api.me)) {
           if (api.board.pieces[sq]!.type === "k") continue;
-          addNovel(moves, queenlikeMoves(api, sq, inst.id));
+          addNovel(moves, amazonMoves(api, sq, inst.id));
         }
       },
       onMovePlayed: (inst, move, api) => {
@@ -489,8 +525,46 @@ export const TIER10: Buff[] = [
       },
       status: (inst) =>
         inst.state.turns == null
-          ? "activate: your whole army moves as queens"
+          ? "activate: your whole army moves as amazons"
           : `ascendant: ${turnsLeft(inst)} of your turns left`,
     },
+  ),
+
+  // Total War: the single most decisive card in the game. The enemy army is
+  // wiped to a lone king, a whole fresh force materializes on your side, and
+  // nothing you own can be captured for three turns. Same rails as the rest of
+  // the mythic band: the enemy king is never removed (clearing pieces only opens
+  // squares around it) and no opponent-move filter is used, so it can never be
+  // stranded with zero legal moves.
+  mythic(
+    {
+      id: "total_war",
+      icon: "Swords",
+      name: "Total War",
+      description:
+        "Every enemy piece except the king is destroyed, a fresh force of a queen, two rooks, two bishops and two knights lands in your half, and your whole army cannot be captured for your opponent's next 3 turns.",
+      category: "attack",
+      flavor: "Everything, everywhere, all at once.",
+      fx: { motif: "ward", pieces: "all", self: true },
+    },
+    activatedSimple((_inst, api) => {
+      for (const sq of mySquares(api.board, api.opp)) {
+        if (api.board.pieces[sq]!.type === "k") continue;
+        api.removePiece(sq);
+      }
+      const spots = backfillSpots(api);
+      spots.push(
+        ...emptySquares(api.board, (sq) => !inHalf(api.me, sq)).sort(
+          (a, b) => relRank(api.me, a) - relRank(api.me, b) || a - b,
+        ),
+      );
+      const force: PieceType[] = ["q", "r", "r", "b", "b", "n", "n"];
+      for (const type of force) {
+        const sq = spots.shift();
+        if (sq == null) break;
+        api.place(sq, type, api.me);
+      }
+      addEffect(api, { kind: "shield", owner: api.me, squares: null, turns: 3 });
+    }),
   ),
 ];

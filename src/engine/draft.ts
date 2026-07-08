@@ -81,6 +81,17 @@ const BOOSTED_COLLECTION_IDS = new Set<string>(
   [...FUNNY_CARDS, ...PT_CARDS, ...FANTASY_CARDS].map((c) => c.id),
 );
 
+// Per-card appearance multipliers (owner request): these cards are offered at a
+// flat multiple of the normal rate, in BOTH sections (buff and nerf). Like the
+// collection boost above, this is deterministic draw multiplicity rather than a
+// float weight -- a listed card enters the draw pool this many extra times, so
+// every replica builds the identical weighted pool and the single seeded draw
+// stays byte-identical (desync-safe). Chess Diff shows up twice as often for
+// now; drop an id from this map (or set it to 1) to revert.
+const APPEARANCE_MULT = new Map<string, number>([
+  ["chess_diff", 2],
+]);
+
 // ---------------------------------------------------------------------------
 // Card overrides (server side): the game server can install a snapshot of
 // moderator card overrides (card_overrides in D1) before rolling offers, so a
@@ -287,11 +298,23 @@ function rollCards(
     // replicas construct the same pool in the same order, the draw is identical
     // (desync-safe). Buff mode only, so it never touches the nerf-mode buckets
     // or hex/item odds. Revert by equalizing the two multipliers.
+    // Fold in the per-card appearance multipliers (APPEARANCE_MULT, e.g. Chess
+    // Diff at 2x) on top of the buff-mode collection boost. Both are plain draw
+    // multiplicity, so the weighted pool is identical on every replica and the
+    // single seeded draw below stays byte-equal (desync-safe). The buff-mode
+    // boost is skipped in nerf/legacy drafts, but the appearance multiplier
+    // still applies there, so a 2x card is 2x in every section.
     let drawPool = pool;
-    if (bs.mode === "buff" && DRAFT_BOOST_MULT !== DRAFT_BASE_MULT) {
+    const boostBuff = bs.mode === "buff" && DRAFT_BOOST_MULT !== DRAFT_BASE_MULT;
+    if (boostBuff || pool.some((b) => APPEARANCE_MULT.has(b.id))) {
       const weighted: Buff[] = [];
       for (const b of pool) {
-        const reps = BOOSTED_COLLECTION_IDS.has(b.id) ? DRAFT_BOOST_MULT : DRAFT_BASE_MULT;
+        let reps = boostBuff
+          ? BOOSTED_COLLECTION_IDS.has(b.id)
+            ? DRAFT_BOOST_MULT
+            : DRAFT_BASE_MULT
+          : 1;
+        reps *= APPEARANCE_MULT.get(b.id) ?? 1;
         for (let r = 0; r < reps; r++) weighted.push(b);
       }
       drawPool = weighted;
