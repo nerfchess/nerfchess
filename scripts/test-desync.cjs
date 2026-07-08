@@ -30,6 +30,7 @@ const {
   UNRESTRICTED_NERF,
   acquireBuff,
   activateBuff,
+  buffNextTarget,
   enableDraftMode,
   legalMoves,
   newGame,
@@ -847,6 +848,90 @@ function bareBoard(seed) {
   );
 }
 
+// ---------------------------------------------------------------------------
+// Part 6: piece-REMOVAL replication. The live report: many cards that remove a
+// piece desync the board (one client removes it, the other does not). Removals
+// reach replicas ONLY through the action stream: activated effects replay via
+// the "use" action, and hook removals reveal via lastHookMutations so the
+// replica replays the same onMovePlayed. These drive a targeted removal, a mass
+// removal, and a REMOVAL INSIDE A RIDER hook, asserting the replica board (which
+// no dtState frame can repair) and the capture pools match after each, plus that
+// the used-activation flag replicates and the card never re-fires.
+// ---------------------------------------------------------------------------
+
+// 6a: targeted single removal (Banish), masked at pick, revealed on use.
+{
+  const env = newDuel(1201);
+  opPick(env, "w", "wa_banish", 3); // activated targeted removal, masked at pick
+  opMove(env, "e2e4");
+  opMove(env, "b8c6"); // a black knight to banish
+  check(opUse(env, "w", 0, [{ square: sq("c6") }]), "banish: activation failed");
+  check(!env.server.board.pieces[sq("c6")], "banish: server knight survived the removal");
+  check(
+    !env.replica.board.pieces[sq("c6")],
+    "banish: replica knight survived (targeted removal did not replicate)",
+  );
+  check(env.server.captured.w.n === 1, "banish: server capture pool missed the knight");
+  check(env.replica.captured.w.n === 1, "banish: replica capture pool missed the knight");
+  assertConverged(env, "banish-targeted");
+}
+
+// 6b: mass removal (Purge Realm) wipes every enemy minor in one half of the board.
+{
+  const env = newDuel(1202);
+  opPick(env, "w", "purge_realm", 7); // activated mass removal, masked at pick
+  opMove(env, "g1f3");
+  opMove(env, "b8c6");
+  opMove(env, "b1c3");
+  opMove(env, "g8f6"); // black knights on c6 and f6 (both top half, rank >= 4)
+  check(opUse(env, "w", 0, [{ square: sq("e5") }]), "purge_realm: activation failed");
+  check(!env.server.board.pieces[sq("c6")], "purge_realm: server c6 knight survived");
+  check(!env.server.board.pieces[sq("f6")], "purge_realm: server f6 knight survived");
+  check(
+    !env.replica.board.pieces[sq("c6")] && !env.replica.board.pieces[sq("f6")],
+    "purge_realm: replica minors survived (mass removal did not replicate)",
+  );
+  assertConverged(env, "purge_realm-mass");
+}
+
+// 6c: a REMOVAL INSIDE A RIDER hook (Void Rift). Activated to open the rift
+// (spendOnUse:false), then its onMovePlayed pulls off the board any enemy piece
+// that steps onto the rift. Also proves the used-activation flag replicates and
+// the used card can no longer be re-activated.
+{
+  const env = newDuel(1203);
+  opPick(env, "w", "wa_void_rift", 4); // activated placement + rider, masked at pick
+  check(opUse(env, "w", 0, [{ square: sq("a6") }]), "void_rift: activation failed");
+  // Used-activation must replicate: both sides mark the card used (no re-fire)
+  // while the instance stays alive (spendOnUse:false) to run its rider.
+  check(
+    env.server.buffs.players.w.buffs[0].usedActivation === true,
+    "void_rift: server did not mark usedActivation",
+  );
+  check(
+    env.replica.buffs.players.w.buffs[0].usedActivation === true,
+    "void_rift: replica did not mark usedActivation (used-flag desync)",
+  );
+  check(
+    env.server.buffs.players.w.buffs[0].spent !== true,
+    "void_rift: a spendOnUse:false card was wrongly spent (rider would be pruned)",
+  );
+  // The used card no longer offers a target (cannot be re-activated).
+  check(
+    buffNextTarget(env.server, "w", 0, []) === null,
+    "void_rift: used card still offers a target (re-activatable)",
+  );
+  opMove(env, "a7a6"); // black pawn steps onto the rift; the rider removes it
+  check(!env.server.board.pieces[sq("a6")], "void_rift: server pawn survived the rift");
+  check(
+    !env.replica.board.pieces[sq("a6")],
+    "void_rift: replica pawn survived (rider removal did not replicate)",
+  );
+  check(env.server.captured.w.p === 1, "void_rift: server capture pool missed the pawn");
+  check(env.replica.captured.w.p === 1, "void_rift: replica capture pool missed the pawn");
+  assertConverged(env, "void_rift-rider");
+}
+
 if (errors.length) {
   console.error("desync harness FAILED:");
   for (const e of errors) console.error("  - " + e);
@@ -854,5 +939,5 @@ if (errors.length) {
 }
 console.log(
   `OK: desync harness passed (fingerprint core, sample hash ${fpA.hash}, ${rules.length} rule ids; ` +
-    `7 server-vs-replica scenarios (incl. crazyhouse inventory drop, Oblivion mass removal, The Culling rng-in-hook removal) + legacy divergence control + drop legality rails + no-op guard + 4 turn/ply guards + bot-alarm robustness + 2 wall-crossing guards)`,
+    `7 server-vs-replica scenarios (incl. crazyhouse inventory drop, Oblivion mass removal, The Culling rng-in-hook removal) + 3 removal-replication scenarios (targeted Banish, mass Purge Realm, Void Rift rider removal + used-activation flag) + legacy divergence control + drop legality rails + no-op guard + 4 turn/ply guards + bot-alarm robustness + 2 wall-crossing guards)`,
 );
