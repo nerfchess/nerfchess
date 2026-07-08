@@ -1763,9 +1763,18 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   const railHeightStyle = boardHeight
     ? ({ "--board-height": `${boardHeight}px` } as CSSProperties)
     : undefined;
+  // Board sizing. Below lg there is no side rail, so the board may use up to
+  // 92vw. From lg up the 440px (xl: 500px) rail sits beside it in a centered
+  // grid; without ALSO capping the board by the width left after the rail, a
+  // tall viewport lets the board reach its 720px cap and the rail + board
+  // overflow the row, which the centered grid then clips on BOTH sides - the
+  // left rail (the buff dock and its Use button included) slides off-screen.
+  // The extra lg/xl width term keeps the whole row on screen at every size,
+  // while the wide-desktop look (where 720px stays the smaller term) is
+  // untouched.
   const boardFitClass = hint
-    ? "w-[min(92vw,var(--board-cap,720px),calc(100dvh-11rem))] max-w-full"
-    : "w-[min(92vw,var(--board-cap,720px),calc(100dvh-8rem))] max-w-full";
+    ? "w-[min(92vw,var(--board-cap,720px),calc(100dvh-11rem))] lg:w-[min(var(--board-cap,720px),calc(100dvh-11rem),calc(100vw-32rem))] xl:w-[min(var(--board-cap,720px),calc(100dvh-11rem),calc(100vw-36rem))] max-w-full"
+    : "w-[min(92vw,var(--board-cap,720px),calc(100dvh-8rem))] lg:w-[min(var(--board-cap,720px),calc(100dvh-8rem),calc(100vw-32rem))] xl:w-[min(var(--board-cap,720px),calc(100dvh-8rem),calc(100vw-36rem))] max-w-full";
   // Takebacks are casual-only (and off in Draft games, whose rolled offers
   // and applied buffs cannot rewind) and need a move of mine on the board.
   const takebackAvailable =
@@ -2145,6 +2154,13 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   orientation={orientation}
                   onMove={handleLocalMove}
                   myColor={myColor}
+                  // Public buff state, so the board can paint BOTH sides'
+                  // persistent buff markers (bound-buff sigils, and the live
+                  // shield / royal-guard recompute) for the viewer, not just the
+                  // caster. Masked opponent cards carry an empty id, so nothing
+                  // still-secret can surface here; history review passes null so
+                  // no live marker bleeds onto a past position.
+                  buffs={isReviewingHistory ? null : game.buffs}
                   visual={
                     isReviewingHistory
                       ? undefined

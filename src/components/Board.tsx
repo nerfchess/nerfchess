@@ -948,11 +948,12 @@ export function Board({
   const walnutSquares = useMemo(() => new Set(visual?.walnutSquares ?? []), [visual?.walnutSquares]);
   const frozenSkins = visual?.frozenSkins ?? EMPTY_SKINS;
   const effectTurns = visual?.effectTurns ?? EMPTY_TURNS;
-  // Human phrase for "N turns left" appended to a hover; null/absent stays blank.
-  const turnsPhrase = (sq: number): string => {
+  // "N turns left" status line for a square's active effect (null = permanent
+  // or none). Shown as the popover's own status row per effect.
+  const effectStatusLine = (sq: number): string | null => {
     const t = effectTurns[sq];
-    if (t == null) return "";
-    return ` (${t} turn${t === 1 ? "" : "s"} left)`;
+    if (t == null) return null;
+    return `${t} turn${t === 1 ? "" : "s"} left`;
   };
   const lockedSquares = useMemo(() => new Set(visual?.lockedSquares ?? []), [visual?.lockedSquares]);
   const bananaSquares = useMemo(() => new Set(visual?.bananaSquares ?? []), [visual?.bananaSquares]);
@@ -1503,42 +1504,108 @@ export function Board({
     return true;
   };
 
-  // Plain-language explanation for every persistent zone effect on a square
-  // (walnut, freeze, shackle, shield, ward, peel, strike, motif). Public
-  // information, so it is safe to spell out. Formerly the browser `title`;
-  // now the body of the styled popover so every active-effect explanation
-  // uses one clean UI.
-  const buildEffectText = (sq: Square): string => {
-    const motifMark = motifBySquare.get(sq);
-    const motifShown = motifShownFor(sq);
-    return [
-      walnutSquares.has(sq) &&
-        `Walnut: a squirrel buried this piece under a heavy nut, so it can only shuffle one square at a time until the shell cracks${turnsPhrase(sq)}.`,
-      frozenSquares.has(sq) &&
-        `${freezeSkinOf(frozenSkins[sq]).label}: it cannot move while this holds${turnsPhrase(sq)}.`,
-      pawnClampSquares.has(sq) &&
-        `Halted: a hex has fenced this pawn's path; it cannot advance${turnsPhrase(sq)}.`,
-      lockedSquares.has(sq) && !pawnClampSquares.has(sq) &&
-        `Shackled: a hex has chained this piece in place${turnsPhrase(sq)}.`,
-      shieldedSquares.has(sq) &&
-        `Sheltered: pieces here, the king aside, cannot be captured${turnsPhrase(sq)}.`,
-      kingSafeSquares.has(sq) &&
-        "Royal guard: this king cannot be captured while the ward holds.",
-      wardSquares.has(sq) &&
-        `Warded: your opponent cannot move a piece onto this square${turnsPhrase(sq)}.`,
-      bananaSquares.has(sq) &&
-        "Banana peel: the next enemy piece to step here slips and skids off course.",
-      strikeSquares.has(sq) && "Lightning: this square was just struck.",
-      motifShown &&
-        motifMark &&
-        `${motifMark.name}: ${motifMark.description}${
-          motifMark.turns != null
-            ? ` (${motifMark.turns} turn${motifMark.turns === 1 ? "" : "s"} left)`
-            : ""
-        }`,
-    ]
-      .filter(Boolean)
-      .join(" ");
+  // Every active effect on a square, each as its OWN individualized entry: a
+  // specific title (Walnut / Frozen / Sanctuary / Warded / the card's name...),
+  // its own tone (buff boon, hex curse, or a neutral board effect), its own
+  // body, and its own remaining-turns status. Replaces a single generic
+  // "Active effect" label that read identically for every effect. Public
+  // information, so it is safe to spell out.
+  type ZoneEffectEntry = {
+    title: string;
+    body: string;
+    status: string | null;
+    tone: "buff" | "hex" | "neutral";
+  };
+  const zoneEffectsFor = (sq: Square): ZoneEffectEntry[] => {
+    const out: ZoneEffectEntry[] = [];
+    const status = effectStatusLine(sq);
+    if (walnutSquares.has(sq))
+      out.push({
+        title: "Walnut",
+        tone: "hex",
+        status,
+        body: "A squirrel buried this piece under a heavy nut, so it can only shuffle one square at a time until the shell cracks.",
+      });
+    if (frozenSquares.has(sq)) {
+      // The skin label reads "Frozen: iced in place": split into a specific
+      // title (the state) and a body, so glue, stun, sleep and ice each read
+      // as their own effect instead of one shared "frozen" line.
+      const label = freezeSkinOf(frozenSkins[sq]).label;
+      const ci = label.indexOf(":");
+      const title = ci >= 0 ? label.slice(0, ci).trim() : label;
+      const detail = ci >= 0 ? label.slice(ci + 1).trim() : "";
+      out.push({
+        title,
+        tone: "hex",
+        status,
+        body: detail
+          ? `${detail.charAt(0).toUpperCase()}${detail.slice(1)}: this piece cannot move while it holds.`
+          : "This piece cannot move while it holds.",
+      });
+    }
+    if (pawnClampSquares.has(sq))
+      out.push({
+        title: "Pawn halted",
+        tone: "hex",
+        status,
+        body: "A hex has fenced this pawn's path; it cannot advance.",
+      });
+    if (lockedSquares.has(sq) && !pawnClampSquares.has(sq))
+      out.push({
+        title: "Shackled",
+        tone: "hex",
+        status,
+        body: "A hex has chained this piece in place.",
+      });
+    if (shieldedSquares.has(sq))
+      out.push({
+        title: "Sanctuary",
+        tone: "buff",
+        status,
+        body: "This piece cannot be captured while the shield holds. Kings are never shielded.",
+      });
+    if (kingSafeSquares.has(sq))
+      out.push({
+        title: "Royal guard",
+        tone: "buff",
+        status,
+        body: "This king cannot be captured while the ward holds.",
+      });
+    if (wardSquares.has(sq))
+      out.push({
+        title: "Warded",
+        tone: "buff",
+        status,
+        body: "Your opponent cannot move a piece onto this square.",
+      });
+    if (bananaSquares.has(sq))
+      out.push({
+        title: "Banana peel",
+        tone: "neutral",
+        status: null,
+        body: "The next enemy piece to step here slips and skids off course.",
+      });
+    if (strikeSquares.has(sq))
+      out.push({
+        title: "Lightning",
+        tone: "neutral",
+        status: null,
+        body: "This square was just struck.",
+      });
+    if (motifShownFor(sq)) {
+      const motifMark = motifBySquare.get(sq);
+      if (motifMark)
+        out.push({
+          title: motifMark.name,
+          tone: isEmpowerMotif(motifMark.motif) ? "buff" : "hex",
+          status:
+            motifMark.turns != null
+              ? `${motifMark.turns} turn${motifMark.turns === 1 ? "" : "s"} left`
+              : null,
+          body: motifMark.description,
+        });
+    }
+    return out;
   };
 
   // Resolve a square's popover content: a bound buff (Duelist and friends)
@@ -1558,9 +1625,19 @@ export function Board({
         tone: bound.tone,
       };
     }
-    const text = buildEffectText(sq);
-    if (text) return { title: "Active effect", body: text, tone: "neutral" };
-    return null;
+    const effects = zoneEffectsFor(sq);
+    if (effects.length === 0) return null;
+    // The most salient effect (list order) names the popover and sets its
+    // tone/status; any others on the same square append their sentence so a
+    // stacked square loses nothing, but the header is now the effect's own
+    // name instead of the old generic "Active effect" shared by everything.
+    const primary = effects[0];
+    return {
+      title: primary.title,
+      body: effects.map((e) => e.body).join(" "),
+      status: primary.status,
+      tone: primary.tone,
+    };
   };
 
   // Open the popover for a square only when it actually explains something and
