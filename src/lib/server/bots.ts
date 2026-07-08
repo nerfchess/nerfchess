@@ -185,6 +185,33 @@ export function housePersona(userId: string): HousePersona | undefined {
   return HOUSE_BY_ID.get(userId);
 }
 
+export type BotDifficulty = "easy" | "medium" | "hard";
+
+// The "Play vs bot" difficulty picker maps onto the house roster by advertised
+// rating band, so a harder choice stakes more of your rating (the roster's real
+// strength is capped by the DO search ceiling, but the rating on the line is
+// what a rated game turns on). Easy takes the 1550 floor, hard the 1950+ top;
+// medium the middle. Picks a persona NOT already seated in a live game (busy),
+// falling back to any free persona when the band is fully committed, and null
+// only when the entire roster is busy. Pure: the caller supplies both the busy
+// set and the RNG so it stays deterministic and DO-state-free.
+export function pickHouseBotByDifficulty(
+  difficulty: BotDifficulty,
+  busy: ReadonlySet<string>,
+  rand: (n: number) => number,
+): HousePersona | null {
+  const inBand: Record<BotDifficulty, (skill: HouseSkill) => boolean> = {
+    easy: (skill) => skill <= 1550,
+    medium: (skill) => skill >= 1750 && skill <= 1900,
+    hard: (skill) => skill >= 1950,
+  };
+  const free = HOUSE_ROSTER.filter((persona) => !busy.has(persona.userId));
+  if (!free.length) return null;
+  const banded = free.filter((persona) => inBand[difficulty](persona.skill));
+  const pool = banded.length ? banded : free;
+  return pool[rand(pool.length)];
+}
+
 /** Seeded rating: the skill tier plus a stable +-40 jitter from the name so
  * the roster doesn't debut as blocks of identical numbers. */
 export function houseSeedRating(persona: HousePersona): number {

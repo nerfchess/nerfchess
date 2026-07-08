@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { clearSavedAiGame } from "@/lib/gamePersistence";
 import { loadRating } from "@/lib/rating";
+import { fetchMe, type AccountUser } from "@/lib/authClient";
+import { MPSession, saveOnlineSeat } from "@/lib/multiplayer";
 import { AccountChip } from "@/components/AccountChip";
 import { MobileNavMenu } from "@/components/MobileNavMenu";
 import { Logo } from "@/components/Logo";
@@ -47,10 +49,18 @@ export default function PlayPage() {
   const [botMode, setBotMode] = useState<"nerf" | "buff" | "plain">("buff");
   const [rating, setRating] = useState<number | null>(null);
   const [games, setGames] = useState<number>(0);
+  // Signed-in account (null while unknown / signed out). Buff and Nerf bot
+  // games route to a REAL rated house bot for a signed-in account so wins move
+  // the account/leaderboard rating; everything else stays a local casual game.
+  const [account, setAccount] = useState<AccountUser | null>(null);
+  const [starting, setStarting] = useState(false);
   useEffect(() => {
     const r = loadRating();
     setRating(Math.round(r.rating));
     setGames(r.games);
+    fetchMe()
+      .then((me) => setAccount(me ?? null))
+      .catch(() => {});
   }, []);
 
   // Selecting a mode card sets the online identity (used by the friend link)
@@ -60,19 +70,47 @@ export default function PlayPage() {
     setBotMode(m);
   };
 
-  const start = () => {
-    clearSavedAiGame();
+  // Local, offline AI game (Plain chess, signed-out play, or a fallback when
+  // the bot server is unreachable). Casual: local games can't be cheat-proof,
+  // so they never touch the account/leaderboard rating.
+  const startLocal = () => {
     const params = new URLSearchParams({
       difficulty,
       color,
       t: String(baseSec),
       inc: String(incrementSec),
-      // Bot games are casual; only queue games are rated (per mode).
       rated: "0",
       // buff | nerf | plain. Plain is a normal no-nerf, no-buff game vs the bot.
       mode: botMode,
     });
     router.push(`/game?${params.toString()}`);
+  };
+
+  const start = async () => {
+    clearSavedAiGame();
+    // Plain chess has no ranked bucket, and rating only moves for real
+    // accounts, so those stay local + casual. A signed-in Buff/Nerf game plays
+    // a REAL house bot on the server so a win moves the account rating, exactly
+    // like a queue game.
+    if (botMode === "plain" || !account || account.isGuest) {
+      startLocal();
+      return;
+    }
+    setStarting(true);
+    const session = new MPSession();
+    session.persistFriendSession = false;
+    try {
+      const paired = await session.playBot(difficulty, botMode, baseSec, incrementSec, color);
+      saveOnlineSeat(paired.id, { color: paired.color, token: paired.token });
+      session.destroy();
+      router.push(`/game/${paired.id}`);
+    } catch {
+      // Bots busy/paused or the server is unreachable: fall back to a local
+      // casual game so Start always does something.
+      session.destroy();
+      setStarting(false);
+      startLocal();
+    }
   };
 
   return (
@@ -196,14 +234,24 @@ export default function PlayPage() {
 
           <button
             onClick={start}
-            className="w-full py-3.5 rounded-full btn-leaf font-display text-lg flex items-center justify-center gap-2"
+            disabled={starting}
+            className="w-full py-3.5 rounded-full btn-leaf font-display text-lg flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-wait"
           >
-            Start game
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <line x1="5" y1="12" x2="19" y2="12" />
-              <polyline points="12 5 19 12 12 19" />
-            </svg>
+            {starting ? "Finding a bot…" : "Start game"}
+            {!starting && (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <line x1="5" y1="12" x2="19" y2="12" />
+                <polyline points="12 5 19 12 12 19" />
+              </svg>
+            )}
           </button>
+          {botMode !== "plain" && (
+            <p className="mt-2 text-center text-[11px] text-parchment-400">
+              {account && !account.isGuest
+                ? "Rated: a win moves your account rating."
+                : "Casual. Sign in to play rated bot games."}
+            </p>
+          )}
         </div>
       </section>
     </main>
