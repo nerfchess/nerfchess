@@ -301,9 +301,17 @@ export function draftZones(game: NerfGame, myColor: Color): DraftZones {
     }
   }
   const noteTurns = (sq: number, turns: number | null) => {
-    // Keep the shortest remaining timer if two effects overlap a square.
+    // Keep the LONGEST remaining timer when two effects overlap a square: the
+    // piece stays affected until the last one lifts, so the shorter timer would
+    // undercount how many turns it is truly stuck (the "says 1 turn left but it
+    // is really more" bug). null means permanent, which always wins.
     const cur = zones.turns[sq];
-    if (cur === undefined || (turns != null && (cur == null || turns < cur))) zones.turns[sq] = turns;
+    if (cur === undefined) {
+      zones.turns[sq] = turns;
+      return;
+    }
+    if (cur == null) return; // already permanent: the longest possible
+    if (turns == null || turns > cur) zones.turns[sq] = turns;
   };
   for (const e of game.buffs.effects) {
     if (e.turns != null && e.turns <= 0) continue;

@@ -7,6 +7,9 @@ import { useEffect, useRef, useState } from "react";
 interface Notice {
   key: number;
   text: string;
+  /** The picked card's rule text, shown under the headline when the card's
+   * identity is public (picks-visible games). Absent for masked drafts. */
+  detail?: string;
   leaving: boolean;
 }
 
@@ -49,26 +52,32 @@ export function DraftNotice({
   }, []);
 
   useEffect(() => {
-    const texts: string[] = [];
+    const items: { text: string; detail?: string }[] = [];
     let arrivedSpent = 0;
     if (count > prevCount.current) {
       for (const inst of buffs.slice(prevCount.current)) {
         if (inst.spent) arrivedSpent += 1;
-        const name = !hidden ? BUFF_BY_ID[inst.id]?.name : undefined;
-        texts.push(name ? `Opponent drafted ${name}` : `Opponent drafted a ${cardNoun}`);
+        // Only name the card (and spell out what it does) when its identity is
+        // public; a masked draft keeps the generic line so nothing leaks.
+        const def = !hidden ? BUFF_BY_ID[inst.id] : undefined;
+        if (def) {
+          items.push({ text: `Opponent drafted ${def.name}`, detail: def.description });
+        } else {
+          items.push({ text: `Opponent drafted a ${cardNoun}` });
+        }
       }
     }
     prevCount.current = count;
-    if (banked && !prevBanked.current) texts.push("Opponent banked their draft");
+    if (banked && !prevBanked.current) items.push({ text: "Opponent banked their draft" });
     prevBanked.current = banked;
     // A held card flipping to spent (beyond instants that arrive spent) means
     // the opponent fired an activated buff.
     if (spentCount - prevSpent.current - arrivedSpent > 0) {
-      texts.push(`Opponent used a ${cardNoun}`);
+      items.push({ text: `Opponent used a ${cardNoun}` });
     }
     prevSpent.current = spentCount;
-    if (texts.length === 0) return;
-    const fresh = texts.map((text) => ({ key: nextKey.current++, text, leaving: false }));
+    if (items.length === 0) return;
+    const fresh = items.map(({ text, detail }) => ({ key: nextKey.current++, text, detail, leaving: false }));
     const keys = new Set(fresh.map((n) => n.key));
     setNotices((cur) => [...cur, ...fresh]);
     timers.current.push(
@@ -95,13 +104,18 @@ export function DraftNotice({
         <div
           key={n.key}
           className={
-            "animate-rise rounded-[1px] border border-gold/40 bg-ink-700/95 px-3.5 py-1.5 shadow-plate backdrop-blur-sm " +
-            "font-display text-xs font-semibold text-parchment transition-opacity duration-300 " +
+            "animate-rise max-w-[18rem] rounded-[1px] border border-gold/40 bg-ink-700/95 px-3.5 py-1.5 shadow-plate backdrop-blur-sm " +
+            "transition-opacity duration-300 " +
             (n.leaving ? "opacity-0" : "opacity-100")
           }
         >
-          <span aria-hidden className="mr-2 inline-block h-1.5 w-1.5 bg-gold-leaf align-middle" />
-          {n.text}
+          <div className="font-display text-xs font-semibold text-parchment">
+            <span aria-hidden className="mr-2 inline-block h-1.5 w-1.5 bg-gold-leaf align-middle" />
+            {n.text}
+          </div>
+          {n.detail && (
+            <p className="mt-0.5 text-[11px] font-normal leading-snug text-parchment-300">{n.detail}</p>
+          )}
         </div>
       ))}
     </div>
