@@ -42,10 +42,16 @@ export const NERFS_T3: Nerf[] = [
     },
   ),
   N(
-    { id: "one_bite_at_a_time", name: "One Bite at a Time", description: "You can't capture on two consecutive turns.", flavor: "Chew before you swallow.", icon: "timer" },
+    { id: "one_bite_at_a_time", name: "One Bite at a Time", description: "After a capture, you can't capture again for two of your turns.", flavor: "Chew before you swallow.", icon: "timer" },
     {
-      filterMoves: (moves, _state, ctx) =>
-        ctx.myLastMove?.captured ? moves.filter((m) => !m.captured) : moves,
+      // Distinct from remorseful (a single-turn cooldown) and battle_fatigue (a
+      // per-piece cooldown): here ANY capture in your last two turns blocks all
+      // captures this turn, a two-turn whole-army cooldown.
+      filterMoves: (moves, _state, ctx) => {
+        const mine = ctx.board.history.filter((m) => m.color === ctx.me);
+        const recentCapture = mine.slice(-2).some((m) => m.captured);
+        return recentCapture ? moves.filter((m) => !m.captured) : moves;
+      },
     },
   ),
   N(
@@ -71,20 +77,31 @@ export const NERFS_T3: Nerf[] = [
     },
   ),
   N(
-    { id: "one_way_bishops", name: "One Way Bishops", description: "Your bishops can only move toward the enemy side, never back toward your own.", flavor: "Faith moves forward.", icon: "church" },
+    { id: "one_way_bishops", name: "One Way Bishops", description: "Your bishops can't retreat on a quiet move, but they may still strike backward: a bishop may only lose rank when the move is a capture.", flavor: "Faith advances, and draws blood where it must.", icon: "church" },
     {
+      // Distinct from clergy (no bishop move may lose rank at all, captures
+      // included) and advancing_faith (bishops must strictly advance): here a
+      // bishop may retreat, but only to capture.
       filterMoves: (moves, _state, ctx) =>
         moves.filter(
-          (m) => !(m.piece === "b" && relRank(ctx.me, m.to) < relRank(ctx.me, m.from)),
+          (m) =>
+            !(
+              m.piece === "b" &&
+              !m.captured &&
+              relRank(ctx.me, m.to) < relRank(ctx.me, m.from)
+            ),
         ),
     },
   ),
   N(
-    { id: "no_free_lunch", name: "No Free Lunch", description: "You can't capture a piece worth more than the piece making the capture.", flavor: "No favorable trades, ever.", icon: "ban" },
+    { id: "no_free_lunch", name: "No Free Lunch", description: "No even trades: you can't capture a piece worth exactly as much as the piece making the capture.", flavor: "An even swap is no bargain.", icon: "ban" },
     {
+      // Distinct from punching_down (bans capturing higher value) and fair_fight
+      // (bans capturing lower value): No Free Lunch bans only EQUAL-value
+      // captures, so no clean even trades.
       filterMoves: filter((m) => {
         if (!m.captured || m.captured === "k") return true;
-        return PIECE_VALUE[m.captured] <= PIECE_VALUE[m.piece];
+        return PIECE_VALUE[m.captured] !== PIECE_VALUE[m.piece];
       }),
     },
   ),

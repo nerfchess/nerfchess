@@ -602,10 +602,6 @@ const TIER1: Buff[] = [
     ),
   ),
   def(
-    { id: "pawn_swap", requires: ["p"], name: "Pawn Swap", description: "Swap two of your own pawns, once.", tier: 1, category: "movement" },
-    swapOwnPieces(["p"]),
-  ),
-  def(
     { id: "little_leap", requires: ["p"], name: "Little Leap", description: "One pawn jumps a single blocking piece directly ahead, once.", tier: 1, category: "movement", fx: { motif: "empower", pieces: ["p"], self: true } },
     augment((_m, inst, api) => {
       const out: Move[] = [];
@@ -959,8 +955,8 @@ const TIER2: Buff[] = [
     timedAugment(2, doubleStepGen),
   ),
   def(
-    { id: "kings_guard", name: "King's Guard", description: "Place a pawn on any empty square adjacent to your king, once.", tier: 2, category: "pieces" },
-    placePieces(["p"], kingAdjacentZone),
+    { id: "kings_guard", name: "King's Guard", description: "Add a pawn to your pocket, then spend a later turn to drop it onto any empty square.", tier: 2, category: "pieces" },
+    instant((_inst, api) => grantInventory(api, "p", 1)),
   ),
   def(
     { id: "phase_rook", requires: ["r"], name: "Phase Rook", description: "Choose one rook. For the game it may pass through one friendly piece per move; it still cannot capture friendly pieces or phase through two.", tier: 2, category: "movement", fx: { motif: "empower", pieces: ["r"], self: true } },
@@ -1028,8 +1024,8 @@ const TIER2: Buff[] = [
     advancePawns(3),
   ),
   def(
-    { id: "bodyguard", name: "Bodyguard", description: "Spawn a knight adjacent to your king, once.", tier: 3, category: "pieces" },
-    placePieces(["n"], kingAdjacentZone),
+    { id: "bodyguard", name: "Bodyguard", description: "Add a knight to your pocket, then spend a later turn to drop it onto any empty square.", tier: 3, category: "pieces" },
+    instant((_inst, api) => grantInventory(api, "n", 1)),
   ),
   def(
     { id: "recall", name: "Recall", description: "Return one piece to any empty square in your back two ranks, once.", tier: 2, category: "movement" },
@@ -2431,30 +2427,22 @@ const TIER5: Buff[] = [
     promotePawns(2, 4, "n"),
   ),
   def(
-    { id: "collapse", name: "Collapse", description: "Pull every enemy piece except the king on one file one square toward their back rank, once.", tier: 3, category: "attack" },
-    activated(
-      (_inst, _api, picks) =>
-        picks.length > 0
-          ? null
-          : {
-              kind: "square",
-              label: "Pick any square on the file to collapse",
-              squares: Array.from({ length: 64 }, (_, i) => i),
-            },
-      (_inst, api, picks) => {
-        if (picks[0]?.square == null) return;
-        const f = FILE(picks[0].square);
-        const back = -fwdOf(api.opp);
-        const targets = mySquares(api.board, api.opp).filter(
-          (sq) => FILE(sq) === f && api.board.pieces[sq]!.type !== "k",
-        );
-        targets.sort((a, b) => (api.opp === "w" ? a - b : b - a));
-        for (const sq of targets) {
-          const dest = sq + back;
-          if (dest >= 0 && dest < 64 && !api.board.pieces[dest]) api.relocate(sq, dest);
-        }
-      },
-    ),
+    { id: "collapse", name: "Collapse", description: "Pull every enemy piece except the king one square toward their back rank across the whole board, once.", tier: 5, category: "attack" },
+    instant((_inst, api) => {
+      const back = -fwdOf(api.opp);
+      // Every non-king enemy piece is pulled one square toward its own back
+      // rank. Pieces only ever move within their file (dest = sq + back), so
+      // sorting the whole board by proximity to the back rank makes each file
+      // resolve from the back outward with no self-collisions.
+      const targets = mySquares(api.board, api.opp).filter(
+        (sq) => api.board.pieces[sq]!.type !== "k",
+      );
+      targets.sort((a, b) => (api.opp === "w" ? a - b : b - a));
+      for (const sq of targets) {
+        const dest = sq + back;
+        if (dest >= 0 && dest < 64 && !api.board.pieces[dest]) api.relocate(sq, dest);
+      }
+    }),
   ),
   def(
     { id: "ghost_legion", requires: ["p"], name: "Ghost Legion", description: "All your pawns may jump over a blocker one square ahead, landing two ahead where empty, for 2 turns.", tier: 5, category: "movement", fx: { motif: "empower", pieces: ["p"], self: true } },
@@ -2962,10 +2950,6 @@ const TIER7: Buff[] = [
       broadNullify(api);
       api.theirs.flags.nullifyIncoming = (api.theirs.flags.nullifyIncoming ?? 0) + 1;
     }),
-  ),
-  def(
-    { id: "twin_queens_permanent", requires: ["p"], name: "Twin Queens Permanent", description: "Promote two pawns to queens anywhere on the board.", tier: 8, category: "pieces" },
-    promotePawns(2, 1, "q"),
   ),
   def(
     { id: "warp_cataclysm", name: "Warp Cataclysm", description: "Move up to five of your pieces, your king aside, one square each in any direction onto an empty square, once.", tier: 7, category: "movement" },

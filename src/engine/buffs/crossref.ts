@@ -150,7 +150,7 @@ export const CROSSREF_CARDS: Buff[] = [
       id: "hard_reset",
       name: "Hard Reset",
       description: "Freeze one enemy piece you target for 2 of their turns. Kings cannot be targeted.",
-      tier: 4,
+      tier: 2,
       flavor: "Have you tried turning it off and on again?",
     },
     freezeTarget(2),

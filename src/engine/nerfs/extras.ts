@@ -50,20 +50,24 @@ export const TIMID: Nerf = db({
 export const KINGFISHER: Nerf = db({
   id: "kingfisher",
   name: "Kingfisher",
-  description: "Your king must capture if it can.",
-  flavor: "A taste for blood.",
+  description: "When your king can capture, it must dive for the richest prize: it has to take the most valuable enemy piece within its reach.",
+  flavor: "The kingfisher always dives for the biggest fish.",
   tier: 4,
   icon: "crown",
   implemented: true,
+  // Distinct from escort_mission (king must take, any target): the kingfisher
+  // is forced onto the HIGHEST-value king capture available.
   filterMoves: (moves) => {
     const kingCaps = moves.filter((m) => m.piece === "k" && m.captured);
-    return kingCaps.length ? kingCaps : moves;
+    if (!kingCaps.length) return moves;
+    const best = Math.max(...kingCaps.map((m) => (m.captured ? PIECE_VAL[m.captured] : 0)));
+    return kingCaps.filter((m) => (m.captured ? PIECE_VAL[m.captured] : 0) === best);
   },
   hint: (_s, _c, legal) => {
     const kc = legal.filter((m) => m.piece === "k" && m.captured);
     if (!kc.length) return null;
     return {
-      text: "Your king hungers. It must take.",
+      text: "Your king dives for the richest prize.",
       squares: Array.from(new Set(kc.map((m) => m.from))),
       tone: "warn",
     };
@@ -391,15 +395,18 @@ export const SUNRISE: Nerf = db({
 export const WAGON_TRAIN: Nerf = db({
   id: "wagon_train",
   name: "Wagon Train",
-  description: "All your moves must be to a square adjacent to your most recent move's destination.",
+  description: "Keep the column in its lane: each move must land on the same file as your previous move's destination or a file right next to it.",
   flavor: "Keep the column tight.",
   tier: 8,
   icon: "route",
   implemented: true,
+  // Distinct from domino (full king-adjacency of the two destinations): wagon
+  // train only constrains the file, so the column stays within a three-file
+  // lane while the rank stays free.
   filterMoves: (moves, _s, ctx) => {
     const last = ctx.myLastMove;
     if (!last) return moves;
-    const near = moves.filter((m) => adj(m.to, last.to) || m.to === last.to);
+    const near = moves.filter((m) => Math.abs(FILE(m.to) - FILE(last.to)) <= 1);
     return near.length ? near : moves;
   },
 });

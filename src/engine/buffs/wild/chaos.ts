@@ -28,6 +28,7 @@ import {
   augment,
   captureExplosion,
   emptySquares,
+  grantInventory,
   inHalf,
   instant,
   lineSweep,
@@ -542,12 +543,12 @@ export const WILD_CHAOS: Buff[] = [
       id: "wc_clown_car",
       icon: "Car",
       name: "Clown Car",
-      description: "Two knights pile out of one tiny car: place both on empty squares in your half, once.",
+      description: "Two knights pile out of one tiny car straight into your pocket, then drop them onto empty squares on later turns.",
       tier: 5,
       category: "pieces",
       flavor: "How were they all in there.",
     },
-    placePieces(["n", "n"], myHalfZone),
+    instant((_inst, api) => grantInventory(api, "n", 2)),
   ),
   card(
     {
@@ -564,12 +565,12 @@ export const WILD_CHAOS: Buff[] = [
     {
       id: "wc_rubber_duck_squad",
       name: "Rubber Duck Squad",
-      description: "Two rubber ducks waddle in as bishops: place both on empty squares in your half, once.",
+      description: "Two rubber ducks waddle into your pocket as bishops, then drop them onto empty squares on later turns.",
       tier: 5,
       category: "pieces",
       flavor: "Squeak. Squeak.",
     },
-    placePieces(["b", "b"], myHalfZone),
+    instant((_inst, api) => grantInventory(api, "b", 2)),
   ),
   card(
     {
@@ -597,12 +598,12 @@ export const WILD_CHAOS: Buff[] = [
     {
       id: "wc_genie_wish",
       name: "Genie Wish",
-      description: "You get one wish and you wished for a queen: place a new queen on any empty square in your half, once.",
+      description: "You get one wish and you wished for a queen: a new queen appears in your pocket, then spend a later turn to drop it onto any empty square.",
       tier: 7,
       category: "pieces",
       flavor: "Should have read the terms.",
     },
-    placePieces(["q"], myHalfZone),
+    instant((_inst, api) => grantInventory(api, "q", 1)),
   ),
 
   // =========================================================================

@@ -11,12 +11,11 @@ import { Buff } from "./shared";
 import {
   card,
   pieceBound,
-  placePieces,
+  grantInventory,
   freezeTarget,
   timedAugment,
   slideMoves,
   mySquares,
-  myHalfZone,
   addEffect,
   instant,
   ORTHO_DIRS,
@@ -47,12 +46,15 @@ export const FANTASY_ARTIFACTS: Buff[] = [
       icon: "Music",
       name: "Horn of Summoning",
       description:
-        "Place a new knight and a new bishop on empty squares in your half, once.",
+        "One long note fills your pocket with a knight and a bishop, then drop them onto empty squares on later turns.",
       tier: 6,
       category: "pieces",
       flavor: "One long note, and the hills empty toward you.",
     },
-    placePieces(["n", "b"], myHalfZone),
+    instant((_inst, api) => {
+      grantInventory(api, "n", 1);
+      grantInventory(api, "b", 1);
+    }),
   ),
   card(
     {

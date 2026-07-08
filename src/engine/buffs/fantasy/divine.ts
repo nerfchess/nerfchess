@@ -32,9 +32,9 @@ import {
 } from "./shared";
 
 // Does the piece on `from` attack `kingSq` from where it now stands? Divine
-// Intervention uses it to freeze the first enemy piece to strike at the warded
-// king. It reuses the very move generators the engine uses, so a hit it sees is
-// exactly a move that could capture the king (a check).
+// Intervention uses it to reflect the first enemy piece to strike at the warded
+// king clean off the board. It reuses the very move generators the engine uses,
+// so a hit it sees is exactly a move that could capture the king (a check).
 function attacksKing(board: BoardState, from: Square, kingSq: Square): boolean {
   const p = board.pieces[from];
   if (!p) return false;
@@ -66,7 +66,7 @@ export const FANTASY_DIVINE: Buff[] = [
       icon: "Sun",
       name: "Divine Intervention",
       description:
-        "Your king cannot be captured for your opponent's next 2 turns, and the first enemy piece to strike at your king in that time is frozen where it stands for 2 of their turns.",
+        "Your king cannot be captured for your opponent's next 2 turns, and the first enemy piece to strike at your king in that time is hurled clean off the board. Kings are never banished.",
       tier: 5,
       category: "protection",
       flavor: "Not today, the heavens say.",
@@ -81,14 +81,19 @@ export const FANTASY_DIVINE: Buff[] = [
       onMovePlayed: (inst, move, api) => {
         if (move.color !== api.opp) return;
         const kingSq = mySquares(api.board, api.me, "k")[0];
+        const striker = api.board.pieces[move.to];
         if (
           kingSq != null &&
           move.to !== kingSq &&
+          striker != null &&
+          striker.type !== "k" &&
           attacksKing(api.board, move.to, kingSq)
         ) {
-          // The lunge is answered: the striker is frozen where it stands, and
-          // the miracle is spent. The ward itself lives out its own timer.
-          addEffect(api, { kind: "freeze", sq: move.to, owner: api.opp, turns: 2, skin: "shock" });
+          // The strike is turned back on its author: the first enemy piece to
+          // threaten the warded king is reflected clean off the board, and the
+          // miracle is spent. Kings are never banished (they simply find the
+          // crown uncapturable); the ward then lives out its own timer.
+          api.removePiece(move.to);
           inst.spent = true;
           return;
         }
@@ -97,7 +102,7 @@ export const FANTASY_DIVINE: Buff[] = [
         if (left <= 0) inst.spent = true;
       },
       status: (inst) =>
-        ((inst.state.turns as number) ?? 0) > 0 ? "the crown strikes back" : null,
+        ((inst.state.turns as number) ?? 0) > 0 ? "the heavens turn them away" : null,
     },
   ),
   card(

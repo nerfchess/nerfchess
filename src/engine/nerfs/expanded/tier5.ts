@@ -56,10 +56,14 @@ export const NERFS_T5: Nerf[] = [
     },
   ),
   N(
-    { id: "homebound_pawns", name: "Homebound Pawns", description: "Your pawns can't move past the halfway line into the enemy half.", flavor: "Foot soldiers who never leave home soil.", icon: "flag" },
+    { id: "homebound_pawns", name: "Homebound Pawns", description: "Your pawns can't advance past the halfway line unless the move is a capture; only by force can they cross into enemy soil.", flavor: "They only leave home soil to seize ground by force.", icon: "flag" },
     {
+      // Distinct from pawn_ceiling (a hard wall at midfield for every pawn
+      // move): a capturing pawn move may still cross the halfway line here.
       filterMoves: (moves, _state, ctx) =>
-        moves.filter((m) => !(m.piece === "p" && relRank(ctx.me, m.to) > 4)),
+        moves.filter(
+          (m) => !(m.piece === "p" && !m.captured && relRank(ctx.me, m.to) > 4),
+        ),
     },
   ),
   N(
@@ -78,11 +82,14 @@ export const NERFS_T5: Nerf[] = [
     },
   ),
   N(
-    { id: "no_retreat_ever", name: "No Retreat Ever", description: "None of your pieces may move backward toward your own back rank.", flavor: "Forward or sideways, never home.", icon: "move" },
+    { id: "no_retreat_ever", name: "No Retreat Ever", description: "Every move you make must advance toward the enemy; no piece may move backward or even hold its rank.", flavor: "Only ever forward, never a step wasted.", icon: "move" },
     {
+      // Distinct from forward_march (allows level and sideways moves) and
+      // onward_only (delayed, allows level moves): here every move must strictly
+      // gain rank toward the enemy.
       filterMoves: (moves, _state, ctx) => {
-        const fwd = moves.filter((m) => relRank(ctx.me, m.to) >= relRank(ctx.me, m.from));
-        return fwd.length ? fwd : moves;
+        const adv = moves.filter((m) => relRank(ctx.me, m.to) > relRank(ctx.me, m.from));
+        return adv.length ? adv : moves;
       },
     },
   ),

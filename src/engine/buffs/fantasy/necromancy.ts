@@ -9,7 +9,8 @@ import { Buff } from "./shared";
 import {
   card,
   reviveOne,
-  placePieces,
+  grantInventory,
+  instant,
   lineSweep,
   myHalfZone,
   backRankZone,
@@ -195,11 +196,11 @@ export const FANTASY_NECROMANCY: Buff[] = [
       icon: "Skull",
       name: "Army of the Dead",
       description:
-        "Place three new pawns on empty squares in your half, once.",
+        "Three fresh pawns muster into your pocket, then drop them onto empty squares on later turns.",
       tier: 6,
       category: "pieces",
       flavor: "Roll call is a very long list of names.",
     },
-    placePieces(["p", "p", "p"], myHalfZone),
+    instant((_inst, api) => grantInventory(api, "p", 3)),
   ),
 ];

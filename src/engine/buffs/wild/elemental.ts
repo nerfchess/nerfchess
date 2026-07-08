@@ -37,6 +37,7 @@ import {
   emptySquares,
   freezeAllEnemies,
   freezeTarget,
+  grantInventory,
   inHalf,
   instant,
   leapMoves,
@@ -44,7 +45,6 @@ import {
   mySquares,
   pawnRankOk,
   phasingSlideMoves,
-  placePieces,
   markRevived,
   relRank,
   relocateMany,
@@ -638,12 +638,43 @@ export const WILD_ELEMENTAL: Buff[] = [
     {
       id: "we_glaciate",
       name: "Glaciate",
-      description: "Freeze one enemy piece (never a king) for 3 of their turns.",
+      description:
+        "Freeze one enemy piece (never a king) for 3 of their turns, and the frost spreads: every enemy piece directly beside it (up, down, left, or right) is frozen for 1 of their turns.",
       tier: 4,
       category: "tempo",
-      flavor: "Encased solid.",
+      flavor: "The cold does not stop at one. It creeps outward.",
+      fx: { motif: "jail" },
     },
-    freezeTarget(3),
+    // Distinct from wild/arcane's wa_time_stop (a single-target 3-turn lock): the
+    // ice spreads. The chosen piece is frozen for 3 turns, and every enemy piece
+    // orthogonally adjacent (never a king) is chilled for 1 turn. Reuses the same
+    // ORTHO_DIRS adjacency + addEffect(freeze) pattern as Stone Grip.
+    activated(
+      (_inst, api, picks) =>
+        picks.length > 0
+          ? null
+          : {
+              kind: "square",
+              label: "Choose an enemy piece to encase in ice",
+              squares: mySquares(api.board, api.opp).filter(
+                (sq) => api.board.pieces[sq]!.type !== "k",
+              ),
+            },
+      (_inst, api, picks) => {
+        const sq = picks[0]?.square;
+        if (sq == null) return;
+        addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 3, skin: "ice" });
+        for (const [df, dr] of ORTHO_DIRS) {
+          const f = FILE(sq) + df, r = RANK(sq) + dr;
+          if (!inBoard(f, r)) continue;
+          const asq = SQ(f, r);
+          const p = api.board.pieces[asq];
+          if (p && p.color === api.opp && p.type !== "k") {
+            addEffect(api, { kind: "freeze", sq: asq, owner: api.opp, turns: 1, skin: "ice" });
+          }
+        }
+      },
+    ),
   ),
   card(
     {
@@ -864,12 +895,15 @@ export const WILD_ELEMENTAL: Buff[] = [
     {
       id: "we_stone_soldiers",
       name: "Stone Soldiers",
-      description: "Carve a new knight and a new pawn onto empty squares in your half, once.",
+      description: "Carve a knight and a pawn into your pocket, then drop them onto empty squares on later turns.",
       tier: 4,
       category: "pieces",
       flavor: "Cut from the bedrock.",
     },
-    placePieces(["n", "p"], myHalfZone),
+    instant((_inst, api) => {
+      grantInventory(api, "n", 1);
+      grantInventory(api, "p", 1);
+    }),
   ),
   card(
     {
@@ -1193,12 +1227,12 @@ export const WILD_ELEMENTAL: Buff[] = [
       id: "we_seedlings",
       icon: "Sprout",
       name: "Seedlings",
-      description: "Sprout two new pawns on empty squares in your half, once.",
+      description: "Sprout two pawns into your pocket, then drop them onto empty squares on later turns.",
       tier: 3,
       category: "pieces",
       flavor: "Give it a season.",
     },
-    placePieces(["p", "p"], myHalfZone),
+    instant((_inst, api) => grantInventory(api, "p", 2)),
   ),
   card(
     {

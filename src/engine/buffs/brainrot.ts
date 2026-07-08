@@ -32,10 +32,9 @@ import {
   dist,
   mySquares,
   pawnRankOk,
+  permanentAugment,
   slideMoves,
-  timedAugment,
   ALL_DIRS,
-  DIAG_DIRS,
   FILE,
   RANK,
   SQ,
@@ -44,11 +43,12 @@ import {
 
 // --- Local geometry ---------------------------------------------------------
 
-/** A center square plus its (up to) 8 neighbours, clipped to the board. */
-function blastAt(center: Square): Square[] {
+/** A center square plus every square within Chebyshev `radius` (clipped). At
+ * the default radius 1 this is the 3x3 neighbourhood; radius 2 is a 5x5. */
+function blastAt(center: Square, radius = 1): Square[] {
   const out: Square[] = [];
-  for (let df = -1; df <= 1; df++) {
-    for (let dr = -1; dr <= 1; dr++) {
+  for (let df = -radius; df <= radius; df++) {
+    for (let dr = -radius; dr <= radius; dr++) {
       const f = FILE(center) + df, r = RANK(center) + dr;
       if (inBoard(f, r)) out.push(SQ(f, r));
     }
@@ -57,11 +57,25 @@ function blastAt(center: Square): Square[] {
 }
 
 /** True when the blast around `center` catches at least one enemy non-king. */
-function blastHitsEnemy(api: BuffApi, center: Square): boolean {
-  return blastAt(center).some((sq) => {
+function blastHitsEnemy(api: BuffApi, center: Square, radius = 1): boolean {
+  return blastAt(center, radius).some((sq) => {
     const p = api.board.pieces[sq];
     return !!p && p.color === api.opp && p.type !== "k";
   });
+}
+
+/** The `count` enemy non-kings nearest their own king, ties broken by lowest
+ * square index, so the pick is a pure function of the synced board. */
+function nearestPreyToKing(api: BuffApi, count: number): Square[] {
+  const prey = mySquares(api.board, api.opp).filter(
+    (sq) => api.board.pieces[sq]!.type !== "k",
+  );
+  const k = mySquares(api.board, api.opp, "k")[0];
+  return prey
+    .map((sq) => ({ sq, d: k != null ? dist(sq, k) : 0 }))
+    .sort((a, b) => a.d - b.d || a.sq - b.sq)
+    .slice(0, count)
+    .map((x) => x.sq);
 }
 
 /** Every empty square reachable from `from` along a straight line, sprinting
@@ -87,42 +101,31 @@ export const BRAINROT: Buff[] = [
       icon: "Drum",
       name: "Tung Tung Tung Sahur",
       description:
-        "The drum-man marches on your opponent's king. On each of your next 3 turns, the enemy piece nearest their king is bonked and cannot move on its next turn. Kings are too stubborn to bonk.",
+        "The drum-man marches on your opponent's king. On each of your next 5 turns, the two enemy pieces nearest their king are bonked and cannot move for their next 2 turns. Kings are too stubborn to bonk.",
       tier: 5,
       category: "tempo",
       flavor: "Tung tung tung tung tung tung tung tung tung sahur.",
     },
     // A relentless drumbeat: a passive that fires on the caster's own turns, so
     // the owner:opp stun it lays is not ticked away this cycle and holds through
-    // the opponent's very next turn. Deterministic target (nearest to the enemy
-    // king, ties broken by lowest square index), so it replays identically.
+    // the opponent's next two turns. Deterministic target (the two nearest to
+    // the enemy king, ties broken by lowest square index), so it replays
+    // identically on both clients.
     {
       kind: "passive",
       init: (inst) => {
-        inst.state.beats = 3;
+        inst.state.beats = 5;
       },
       onMovePlayed: (inst, move, api) => {
         if (move.color !== api.me) return;
         const left = (inst.state.beats as number) ?? 0;
         if (left <= 0) return;
-        const prey = mySquares(api.board, api.opp).filter(
-          (sq) => api.board.pieces[sq]!.type !== "k",
-        );
-        if (prey.length) {
-          const k = mySquares(api.board, api.opp, "k")[0];
-          let best = prey[0];
-          if (k != null) {
-            let bestD = Infinity;
-            for (const sq of prey) {
-              const d = dist(sq, k);
-              if (d < bestD || (d === bestD && sq < best)) {
-                bestD = d;
-                best = sq;
-              }
-            }
+        const hit = nearestPreyToKing(api, 2);
+        if (hit.length) {
+          for (const sq of hit) {
+            addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2, skin: "stun" });
           }
-          addEffect(api, { kind: "freeze", sq: best, owner: api.opp, turns: 1, skin: "stun" });
-          addEffect(api, { kind: "bonk", squares: [best], owner: api.me, turns: 1 });
+          addEffect(api, { kind: "bonk", squares: hit, owner: api.me, turns: 1 });
         }
         inst.state.beats = left - 1;
         if (left - 1 <= 0) inst.spent = true;
@@ -137,7 +140,7 @@ export const BRAINROT: Buff[] = [
       icon: "Footprints",
       name: "Tralalero Tralala",
       description:
-        "The shark in sneakers sprints: choose one of your pieces except the king and dash it to any empty square along its rank, file, or diagonal, blurring straight past anything in the way. Once.",
+        "The shark in sneakers sprints: choose one of your pieces except the king and dash it to any empty square along its rank, file, or diagonal, blurring straight past anything in the way. It is still moving so fast it cannot be captured for your opponent's next 2 turns. Once.",
       tier: 4,
       category: "movement",
       flavor: "Nike Air, straight through the traffic.",
@@ -171,6 +174,10 @@ export const BRAINROT: Buff[] = [
         const p = api.board.pieces[from];
         if (p && !api.board.pieces[to] && (p.type !== "p" || pawnRankOk(to))) {
           api.relocate(from, to);
+          // The landing square is shielded: the square-shield rides the piece as
+          // it moves (game.ts moves shield squares with the piece) and is
+          // orphan-pruned if the piece is ever removed, so nothing lingers.
+          addEffect(api, { kind: "shield", owner: api.me, squares: [to], turns: 2 });
         }
       },
     ),
@@ -182,7 +189,7 @@ export const BRAINROT: Buff[] = [
       icon: "Bomb",
       name: "Bombardiro Crocodilo",
       description:
-        "The bomber-croc drops its payload on a square: every enemy piece except a king on that square and the eight around it is destroyed.",
+        "The bomber-croc drops its payload on a square: every enemy piece except a king in the 5 by 5 area centred on it (that square and the 24 around it) is destroyed.",
       tier: 6,
       category: "attack",
       flavor: "Cleared for the run, no survivors below.",
@@ -195,14 +202,14 @@ export const BRAINROT: Buff[] = [
               kind: "square",
               label: "Choose the square to bomb",
               squares: Array.from({ length: 64 }, (_, i) => i).filter((sq) =>
-                blastHitsEnemy(api, sq),
+                blastHitsEnemy(api, sq, 2),
               ),
             },
       (_inst, api, picks) => {
         const c = picks[0]?.square;
         if (c == null) return;
         const struck: Square[] = [];
-        for (const sq of blastAt(c)) {
+        for (const sq of blastAt(c, 2)) {
           const p = api.board.pieces[sq];
           if (p && p.color === api.opp && p.type !== "k") {
             api.removePiece(sq);
@@ -222,7 +229,7 @@ export const BRAINROT: Buff[] = [
       icon: "Bird",
       name: "Bombombini Gusini",
       description:
-        "The bomber-goose lobs a stun grenade on a square: every enemy piece except a king on that square and the eight around it is bonked and cannot move on its next turn. Nobody is removed.",
+        "The bomber-goose lobs a stun grenade on a square: every enemy piece except a king in the 5 by 5 area centred on it (that square and the 24 around it) is bonked and cannot move for their next 2 turns. Nobody is removed.",
       tier: 5,
       category: "tempo",
       flavor: "HONK. Everyone hits the deck.",
@@ -235,17 +242,17 @@ export const BRAINROT: Buff[] = [
               kind: "square",
               label: "Choose the square to concuss",
               squares: Array.from({ length: 64 }, (_, i) => i).filter((sq) =>
-                blastHitsEnemy(api, sq),
+                blastHitsEnemy(api, sq, 2),
               ),
             },
       (_inst, api, picks) => {
         const c = picks[0]?.square;
         if (c == null) return;
         const hit: Square[] = [];
-        for (const sq of blastAt(c)) {
+        for (const sq of blastAt(c, 2)) {
           const p = api.board.pieces[sq];
           if (p && p.color === api.opp && p.type !== "k") {
-            addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 1, skin: "stun" });
+            addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2, skin: "stun" });
             hit.push(sq);
           }
         }
@@ -262,7 +269,7 @@ export const BRAINROT: Buff[] = [
       icon: "Clock",
       name: "Lirili Larila",
       description:
-        "The cactus-elephant checks its clock and stops time: your opponent skips their next turn, and their clock loses 20 seconds.",
+        "The cactus-elephant checks its clock and stops time: your opponent skips their next 2 turns, and their clock loses 40 seconds.",
       tier: 4,
       category: "tempo",
       flavor: "Is it later already? For you it is.",
@@ -270,8 +277,8 @@ export const BRAINROT: Buff[] = [
     // The skip reuses the same skip counter skipOpponent writes; the clock hit
     // is a no-op in an untimed game (the server clamps it above the floor).
     instant((_inst, api) => {
-      api.bs.skips[api.opp] += 1;
-      api.adjustClock({ subOppSec: 20 });
+      api.bs.skips[api.opp] += 2;
+      api.adjustClock({ subOppSec: 40 });
     }),
   ),
 
@@ -281,13 +288,13 @@ export const BRAINROT: Buff[] = [
       icon: "Snowflake",
       name: "Brr Brr Patapim",
       description:
-        "A sudden cold snap: every enemy piece except the king freezes solid and cannot move on its next turn.",
+        "A sudden deep freeze: every enemy piece except the king freezes solid and cannot move for their next 2 turns.",
       tier: 6,
       category: "tempo",
       flavor: "Brr brr. Someone left the window open.",
       fx: { motif: "jail", pieces: ["p", "n", "b", "r", "q"] },
     },
-    freezeAllEnemies(1, "ice"),
+    freezeAllEnemies(2, "ice"),
   ),
 
   card(
@@ -296,16 +303,16 @@ export const BRAINROT: Buff[] = [
       icon: "Banana",
       name: "Chimpanzini Bananini",
       description:
-        "The banana-monkey goes ape: for your next 2 turns every one of your knights may also slide like a bishop.",
-      tier: 5,
+        "The banana-monkey goes ape: for the game every one of your knights may also slide like a queen, keeping its knight leap on top.",
+      tier: 3,
       category: "movement",
       requires: ["n"],
       flavor: "Peel, then unpeel the whole board.",
-      fx: { motif: "empower", pieces: ["n"], moveAs: "b", self: true },
+      fx: { motif: "empower", pieces: ["n"], moveAs: "q", self: true },
     },
-    timedAugment(2, (_m, inst, api) =>
+    permanentAugment((_m, inst, api) =>
       mySquares(api.board, api.me, "n").flatMap((sq) =>
-        slideMoves(api.board, sq, DIAG_DIRS, inst.id),
+        slideMoves(api.board, sq, ALL_DIRS, inst.id),
       ),
     ),
   ),
@@ -316,14 +323,15 @@ export const BRAINROT: Buff[] = [
       icon: "LifeBuoy",
       name: "Boneca Ambalabu",
       description:
-        "The tire-frog drags your opponent down: for their next 2 turns none of their pieces may move more than 2 squares in a single move.",
+        "The tire-frog drags your opponent down: for their next 4 turns none of their pieces may move more than 1 square in a single move.",
       tier: 3,
       category: "hex",
       flavor: "Heavy is the tread that bears the frog.",
       fx: { motif: "anchor", pieces: "all" },
     },
-    // curse() keeps the standard non-empty fallback, and king/pawn steps are
-    // always within 2 squares, so the opponent can never be stranded.
-    curse(2, (moves) => moves.filter((m) => dist(m.from, m.to) <= 2)),
+    // curse() keeps the standard non-empty fallback (if every move is longer
+    // than one square it lets them all through), and a king step is always
+    // within one square, so the opponent can never be stranded.
+    curse(4, (moves) => moves.filter((m) => dist(m.from, m.to) <= 1)),
   ),
 ];

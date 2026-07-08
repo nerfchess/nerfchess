@@ -9,7 +9,8 @@ import {
   tierHexes,
   curse,
   walnutTarget,
-  freezeTarget,
+  activated,
+  mySquares,
   instant,
   addEffect,
   blockDrafts,
@@ -54,8 +55,31 @@ export const HEXES_T2: Buff[] = [
     walnutTarget(3, ["b"]),
   ),
   H(
-    { id: "pinned_down", name: "Pinned Down", description: "Freeze one targeted enemy piece, never the king, so it cannot move for 2 of their turns." },
-    freezeTarget(2),
+    // Distinct from the plain 2-turn single freezes (evil_eye is the canonical
+    // one): this stakes the target down first, then leaves it a heavy walnut as
+    // it thaws. Freeze (cannot move at all) for 2 turns overlaps a walnut (can
+    // only shuffle one square) that outlasts it by a turn, so on the third turn
+    // the piece can crawl a single step but no further. A staggered 3-turn
+    // lockdown that eases into a shuffle, not another bare freeze.
+    { id: "pinned_down", name: "Pinned Down", description: "Freeze one targeted enemy piece, never the king, for 2 of their turns. As it thaws it stays a heavy walnut for 1 more turn, able only to shuffle a single square.", flavor: "Staked to the ground, then too heavy to lift." },
+    activated(
+      (_inst, api, picks) =>
+        picks.length > 0
+          ? null
+          : {
+              kind: "square",
+              label: "Choose an enemy piece to pin down",
+              squares: mySquares(api.board, api.opp).filter(
+                (sq) => api.board.pieces[sq]!.type !== "k",
+              ),
+            },
+      (_inst, api, picks) => {
+        const sq = picks[0]?.square;
+        if (sq == null) return;
+        addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2 });
+        addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 3 });
+      },
+    ),
   ),
   H(
     { id: "cut_purse", name: "Cut Purse", description: "Your opponent's next draft is skipped.", flavor: "A hand in every pocket." },

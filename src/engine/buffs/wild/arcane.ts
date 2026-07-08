@@ -26,13 +26,13 @@ import {
   emptySquares,
   extraMovesNow,
   freezeTarget,
+  grantInventory,
   inHalf,
   instant,
   leapMoves,
   lineSweep,
   mySquares,
   pieceBound,
-  placePieces,
   relocateMany,
   removeEnemies,
   slideMoves,
@@ -427,12 +427,12 @@ export const WILD_ARCANE: Buff[] = [
       id: "wa_conjure_bishop",
       name: "Conjured Bishop",
       description:
-        "Conjure a permanent spectral bishop on an empty square of your back rank, a defensive blocker that stays as long as you do.",
+        "Conjure a spectral bishop into your pocket, then spend a later turn to drop it onto any empty square. It stays as long as you do.",
       tier: 4,
       category: "pieces",
       flavor: "Faith, made solid, and it does not fade.",
     },
-    placePieces(["b"], backRankZone),
+    instant((_inst, api) => grantInventory(api, "b", 1)),
   ),
   card(
     {
@@ -451,24 +451,27 @@ export const WILD_ARCANE: Buff[] = [
       id: "wa_spectral_minors",
       name: "Spectral Retinue",
       description:
-        "Conjure a knight and a bishop, permanently, on empty squares in your half, once.",
+        "Conjure a knight and a bishop into your pocket, then drop them onto empty squares on later turns. They stay as long as you do.",
       tier: 5,
       category: "pieces",
       flavor: "They stay as long as you do.",
     },
-    placePieces(["n", "b"], myHalfZone),
+    instant((_inst, api) => {
+      grantInventory(api, "n", 1);
+      grantInventory(api, "b", 1);
+    }),
   ),
   card(
     {
       id: "wa_twin_familiars",
       name: "Twin Familiars",
       description:
-        "Conjure two bishops, permanently, on empty squares in your half, once.",
+        "Conjure two bishops into your pocket, then drop them onto empty squares on later turns. They stay as long as you do.",
       tier: 5,
       category: "pieces",
       flavor: "One for each shoulder.",
     },
-    placePieces(["b", "b"], myHalfZone),
+    instant((_inst, api) => grantInventory(api, "b", 2)),
   ),
 
   // ===================== TRANSMUTATION =====================
@@ -489,13 +492,34 @@ export const WILD_ARCANE: Buff[] = [
     {
       id: "wa_leaden_crown",
       name: "Leaden Crown",
-      description: "Turn one of your pawns into a queen, once.",
+      description:
+        "Turn one of your pawns into a queen, and the leaden crown guards it: that new queen cannot be captured for your opponent's next 2 turns.",
       tier: 6,
       category: "pieces",
       requires: ["p"],
-      flavor: "Base metal, crowned early.",
+      flavor: "Base metal, crowned early, heavy enough to turn a blade.",
+      fx: { motif: "ward", pieces: ["q"], self: true },
     },
-    transformOwn(1, ["p"], "q", "Choose a pawn to crown"),
+    // Distinct from library's double_queen (a plain pawn-to-queen promotion): the
+    // crown is leaden, so the fresh queen is also shielded from capture for the
+    // opponent's next 2 turns. Reuses setPieceType + the shield board-effect that
+    // Royal Aegis already lays on a queen's square.
+    activated(
+      (_inst, api, picks) =>
+        picks.length > 0
+          ? null
+          : {
+              kind: "square",
+              label: "Choose a pawn to crown",
+              squares: mySquares(api.board, api.me, "p"),
+            },
+      (_inst, api, picks) => {
+        const sq = picks[0]?.square;
+        if (sq == null) return;
+        api.setPieceType(sq, "q");
+        addEffect(api, { kind: "shield", owner: api.me, squares: [sq], turns: 2 });
+      },
+    ),
   ),
   card(
     {
