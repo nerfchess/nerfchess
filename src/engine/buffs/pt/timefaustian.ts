@@ -236,25 +236,26 @@ export const PT_TIME_CARDS: Buff[] = [
   // a new draft). See the report for details.
 
   // #51 Overtime Pay -------------------------------------------------------
+  // Reworked (owner): the old version was a passive that dripped 3 seconds
+  // onto your clock per capture, so PLAYING the card did nothing visible and
+  // it only paid out if you happened to trade. Now it pays the moment you
+  // clock in: a lump sum straight onto your own clock, no strings. Time and a
+  // half literally reads as ninety seconds (a minute and a half), which is the
+  // payout. Instant and deterministic (no RNG), and tier drops to 2.
   card(
     {
       id: "overtime_pay",
       icon: "PiggyBank",
       name: "Overtime Pay",
       description:
-        "You bill for every hour worked: each time you capture an enemy piece (other than a king), 3 seconds are added to your own clock.",
-      tier: 4,
+        "You clock in and cash out on the spot: 90 seconds go straight onto your own clock the moment you play this. Time and a half, paid in full.",
+      tier: 2,
       category: "tempo",
       flavor: "Time and a half, in your favor.",
     },
-    {
-      kind: "passive",
-      onMovePlayed: (_inst, move, api) => {
-        if (move.color !== api.me) return;
-        if (!move.captured || move.captured === "k") return;
-        api.adjustClock({ addSelfSec: 3 });
-      },
-    },
+    instant((_inst, api) => {
+      api.adjustClock({ addSelfSec: 90 });
+    }),
   ),
 
   // #116 Mystery Box -------------------------------------------------------
