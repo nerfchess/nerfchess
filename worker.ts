@@ -390,8 +390,20 @@ const houseSeekTtlMs = 8 * 60 * 1000;
 //   worst-case bots = houseVsHouseCap + houseTotalGamesCap <= houseGameSeats.
 const houseSeekReserve = houseSeekMax + 2;
 const houseGameSeats = Math.max(4, HOUSE_ROSTER.length - houseSeekReserve);
-const houseVsHouseCap = Math.max(1, Math.floor(houseGameSeats / 3));
-const houseTotalGamesCap = houseGameSeats - houseVsHouseCap;
+// Hard ABSOLUTE ceilings, independent of roster size. PR #242 sized these purely
+// off the roster (30 personas -> up to 8 concurrent house-vs-house games = 16
+// bots each grinding an 80ms engine search roughly every second), which
+// oversubscribed the single-threaded DO: the per-tick CPU budget was spent on
+// filler, so a human's freshly accepted bot game could not get its move
+// processed in time. The bot never moved and, once the isolate was CPU-evicted
+// mid-tick, the socket upgrade stopped being answered and the client fell back to
+// "cant connect to game servers". A few live filler games are plenty to keep the
+// lobby and TV looking busy; correctness (humans' bot games always move) beats
+// lobby optics, so these stay small no matter how large the roster grows.
+const houseVsHouseCapMax = 3;
+const houseTotalGamesCapMax = 8;
+const houseVsHouseCap = Math.min(houseVsHouseCapMax, Math.max(1, Math.floor(houseGameSeats / 3)));
+const houseTotalGamesCap = Math.min(houseTotalGamesCapMax, houseGameSeats - houseVsHouseCap);
 // Per-alarm ceiling on house engine actions (moves and draft resolves), across
 // all live house games. Human-facing actions used to ALL run in one tick, so
 // after any stall every overdue game became due at once and one alarm ran a
@@ -436,7 +448,7 @@ type HouseSeekEntry = {
 // (deserializing every finished game's move history), which on a bloated table
 // blew the DO CPU limit before it could cache or GC anything: the crash loop.
 const liveIdsKey = "live:ids";
-const buildVersion = "bot-presence-1";
+const buildVersion = "bot-overload-fix-1";
 // How long the moderator card-overrides snapshot (the card_overrides table:
 // disabled cards and tier moves) is cached in the DO before re-reading D1.
 // Loaded lazily on match creation and the opening nerf deal, never on a
@@ -702,10 +714,22 @@ export class GameServer extends DurableObject<Env> {
   }
 
   // Runtime on/off for the house bots. Read from the shared app_settings table
-  // (a moderator flips it via POST /api/mod/house) and cached briefly so the
-  // alarm/seek paths do no per-tick D1 work. The HOUSE_ENABLED constant stays a
-  // hard code-level kill switch that wins over the stored value. Missing row or
-  // any read error defaults to ON, so the bots never vanish on a transient blip.
+  // (a moderator flips it via POST /api/mod/house, which stores "1"/"0") and
+  // cached briefly so the alarm/seek paths do no per-tick D1 work. The
+  // HOUSE_ENABLED constant stays a hard code-level kill switch that wins over the
+  // stored value. This is the SINGLE gate for every bit of house-bot activity:
+  // houseTick() calls it first and, when off, stands the roster down and returns
+  // before enqueuing any seek, spawning any filler game, or running any engine
+  // move; the only other bot entry point (a human accepting a house seek in
+  // queueJoin) checks it too. So OFF means zero new seeks, zero new filler, zero
+  // engine moves.
+  //
+  // A SUCCESSFUL read with no row means ON (absent row = enabled by default). But
+  // a read ERROR (D1 blip, missing binding) must NOT force ON: that used to flip
+  // the bots back on for a cache window right after a moderator turned them off,
+  // which is the reported "the off switch does not turn off all the bots". On any
+  // failure we keep the last known state instead (defaulting ON only when the
+  // flag has never once been read successfully).
   private houseEnabledCache: { value: boolean; at: number } | null = null;
   private async houseEnabled(): Promise<boolean> {
     if (!HOUSE_ENABLED) return false;
@@ -713,7 +737,8 @@ export class GameServer extends DurableObject<Env> {
     if (this.houseEnabledCache && now - this.houseEnabledCache.at < houseEnabledTtlMs) {
       return this.houseEnabledCache.value;
     }
-    let value = true;
+    // Fall back to the last known value on any failure, never a hard ON.
+    let value = this.houseEnabledCache?.value ?? true;
     try {
       const db = await this.db();
       if (db) {
@@ -721,7 +746,14 @@ export class GameServer extends DurableObject<Env> {
           .prepare("SELECT value FROM app_settings WHERE key = ?")
           .bind("house_enabled")
           .first<{ value: string }>();
-        if (row) value = row.value !== "0" && row.value !== "false";
+        // Successful query: an absent row is ON; a present row is OFF for any
+        // recognised "off" spelling (the moderator writes "0"), else ON.
+        if (!row) {
+          value = true;
+        } else {
+          const raw = String(row.value ?? "").trim().toLowerCase();
+          value = !(raw === "0" || raw === "false" || raw === "off" || raw === "no" || raw === "disabled");
+        }
       }
     } catch {}
     this.houseEnabledCache = { value, at: now };
@@ -2824,6 +2856,39 @@ export class GameServer extends DurableObject<Env> {
     match.botActAt = now + houseThinkMs(randomInt, clocks[turn] + grace, match.setup.timeSec > 0);
   }
 
+  // A house match threw while acting (engine edge case, corrupt record, storage
+  // hiccup). It must never wedge the roster, so retire it here instead of
+  // letting it re-throw on every later tick. A mixed human game ends as an
+  // UNRATED DRAW (never a bogus resign/result: a transient action failure is not
+  // a lost position, so the bot must not concede it); house-vs-house filler,
+  // which nobody is watching for a rating, is deleted. If the retire ITSELF
+  // fails, disable the match's timer and remember it so neither the due loop nor
+  // the self-heal sweep re-arms it into a perpetual throw/re-arm loop.
+  private async retireFailedHouseMatch(match: StoredMatch): Promise<void> {
+    try {
+      const humanSeat = (["w", "b"] as Color[]).find((c) => !match.bots?.[c]);
+      if (humanSeat) {
+        if (!match.result) {
+          match.clocks = this.currentClocks(match);
+          match.runningSince = null;
+          match.result = { winner: "draw", reason: "game interrupted" };
+          match.completedAt = Date.now();
+          match.rated = false;
+        }
+        await this.endMatch(match, false);
+      } else {
+        await this.deleteMatch(match);
+      }
+    } catch (retireErr) {
+      console.error("house retire failed, disabling match", match.id, retireErr);
+      this.houseRetireFailed.add(match.id);
+      try {
+        match.botActAt = null;
+        await this.saveMatch(match, false);
+      } catch {}
+    }
+  }
+
   // One orchestration pass, run from the alarm before match maintenance.
   private async houseTick() {
     const now = Date.now();
@@ -2881,11 +2946,18 @@ export class GameServer extends DurableObject<Env> {
       if (ids.length === 2) houseVsHouse++;
     }
 
-    // Due house actions, capped per tick (houseMaxActionsPerTick + a wall-clock
-    // budget) so one alarm never runs a long batch of engine searches back to
-    // back on the single thread — the CPU spike that reset the DO. Human-facing
-    // actions are ordered first (filler last) and drained across follow-up
-    // ticks; at most ONE house-vs-house filler action runs per tick.
+    // Due house actions. A human waiting on their bot's move is the single most
+    // latency-critical thing in this whole method (the reported "accepted a bot
+    // game, the bot never moves, then cant connect to game servers"), so
+    // human-facing bot actions are drained FIRST, every tick, in a dedicated
+    // pass; house-vs-house filler engine work runs only AFTER them, at most one
+    // action per tick, and never at all on a tick where a human action had to be
+    // deferred. Filler is pure lobby decoration, so it always yields the single
+    // thread to a human who is waiting on a move. Everything is bounded per tick
+    // (houseMaxActionsPerTick + a wall-clock budget) so one alarm never runs a
+    // long batch of 80ms engine searches back to back on the single thread (the
+    // CPU spike that evicted the isolate and re-wedged the alarm chain); the
+    // remainder drains on a prompt follow-up alarm.
     const isFiller = (m: StoredMatch) => !!(m.bots?.w && m.bots?.b);
     // The human seat of a mixed house match (undefined for house-vs-house
     // filler, which has a bot on both sides).
@@ -2893,36 +2965,39 @@ export class GameServer extends DurableObject<Env> {
       (["w", "b"] as Color[]).find((c) => !m.bots?.[c]);
     const due = liveHouseMatches
       .filter((m) => m.botActAt && m.botActAt <= now)
-      .sort((a, b) => Number(isFiller(a)) - Number(isFiller(b)) || (a.botActAt ?? 0) - (b.botActAt ?? 0));
-    let fillerActed = 0;
+      .sort((a, b) => (a.botActAt ?? 0) - (b.botActAt ?? 0));
+    const dueHuman = due.filter((m) => !isFiller(m));
+    const dueFiller = due.filter((m) => isFiller(m));
     // Bound the engine work this tick can do (see houseMaxActionsPerTick): a
     // stall used to make every game due at once and one alarm ran the whole
-    // batch back to back, spiking CPU. Count real actions only (the cheap skip
-    // below does not count); defer the rest to a prompt follow-up alarm.
+    // batch back to back, spiking CPU. Count real actions only (a cheap skip
+    // does not count); defer the rest to a prompt follow-up alarm.
     let actionsActed = 0;
+    let fillerActed = 0;
     const tickStart = Date.now();
     let deferredDueWork = false;
-    for (const match of due) {
-      // A match whose retire failed is left inert (see the catch below): never
-      // act on it again this isolate, so it cannot re-throw on every tick.
+    const budgetSpent = () =>
+      actionsActed >= houseMaxActionsPerTick || Date.now() - tickStart > houseTickBudgetMs;
+
+    // Pass 1: human-facing bot actions (top priority, ahead of all filler).
+    for (const match of dueHuman) {
+      // A match whose retire failed is left inert (see retireFailedHouseMatch):
+      // never act on it again this isolate, so it cannot re-throw on every tick.
       if (this.houseRetireFailed.has(match.id)) continue;
-      const filler = isFiller(match);
-      if (filler && fillerActed >= 1) continue;
-      // BUG #1: never advance a started house game while its human seat is
-      // GENUINELY gone — moving would change the board (or even end the game)
-      // before they return. "Gone" is the persisted disconnect signal
-      // (disconnectedAt, set on detach and CLEARED on attach), never a bare
-      // in-memory socket lookup: an alarm can wake this Durable Object out of
-      // hibernation with the sessions map only just being rebuilt, and a
-      // just-paired human who has never disconnected must not be mistaken for
-      // absent — that made the bot skip its first move on every tick and never
-      // play (the reported "bot game never starts"). A fresh seat has no
-      // disconnectedAt entry, so the bot acts immediately; the socket lookup is
-      // only a secondary guard so a present human (live socket, stale
-      // timestamp) is never paused. The bot's timer stays armed across a skip
-      // and fires on the first tick after they reconnect (reconnectMatch
-      // re-arms it). Draft-deadline safety still runs in maintenance; pre-start
-      // nerf-draft picks are harmless (clocks off).
+      // Never advance a started house game while its human seat is GENUINELY
+      // gone — moving would change the board (or even end the game) before they
+      // return. "Gone" is the persisted disconnect signal (disconnectedAt, set
+      // on detach and CLEARED on attach), never a bare in-memory socket lookup:
+      // an alarm can wake this Durable Object out of hibernation with the
+      // sessions map only just being rebuilt, and a just-paired human who has
+      // never disconnected must not be mistaken for absent — that made the bot
+      // skip its first move on every tick and never play (the reported "bot game
+      // never starts"). A fresh seat has no disconnectedAt entry, so the bot
+      // acts immediately; the socket lookup is only a secondary guard so a
+      // present human (live socket, stale timestamp) is never paused. The bot's
+      // timer stays armed across a skip and fires on the first tick after they
+      // reconnect (reconnectMatch re-arms it). Draft-deadline safety still runs
+      // in maintenance; pre-start nerf-draft picks are harmless (clocks off).
       if (match.startedAt) {
         const humanSeat = humanSeatOf(match);
         if (
@@ -2934,68 +3009,46 @@ export class GameServer extends DurableObject<Env> {
         }
       }
       // Per-tick budget: this match would run a real engine action, but we have
-      // already spent the tick's action/CPU budget. Leave it (and everything
-      // after it) for an immediate follow-up alarm so one tick never blocks the
-      // single thread with a long batch of searches.
-      if (actionsActed >= houseMaxActionsPerTick || Date.now() - tickStart > houseTickBudgetMs) {
+      // already spent the tick's action/CPU budget. Leave it (and every human
+      // action after it) for an immediate follow-up alarm so one tick never
+      // blocks the single thread with a long batch of searches.
+      if (budgetSpent()) {
         deferredDueWork = true;
         break;
       }
       try {
         await this.playHouseAction(match, Date.now());
         actionsActed++;
-        if (filler) fillerActed++;
       } catch (err) {
-        // A match that throws while acting (engine edge case, corrupt record,
-        // storage hiccup) must never wedge the roster: retire it so its seats
-        // free up and it drops out of the due list, instead of re-throwing on
-        // every later tick.
         this.houseTickError = err instanceof Error ? err.message : String(err);
         console.error("house action failed, retiring match", match.id, err);
+        await this.retireFailedHouseMatch(match);
+      }
+    }
+
+    // Pass 2: at most ONE house-vs-house filler action, and only once every due
+    // human-facing action this tick has been served (deferredDueWork is false)
+    // and there is CPU budget left. A human never waits behind a filler search.
+    if (!deferredDueWork && dueFiller.length && !budgetSpent()) {
+      const match = dueFiller[0];
+      if (!this.houseRetireFailed.has(match.id)) {
         try {
-          const humanSeat = humanSeatOf(match);
-          if (humanSeat) {
-            // A human is seated: deleting the record would close their
-            // socket with "Game expired" and erase a rated game with no end
-            // frame. End it gracefully as an UNRATED DRAW instead. The old
-            // code resigned the house seat here (handing the human a win),
-            // which is the "bot randomly resigned for no reason" report: a
-            // single transient action failure (engine hiccup, a stale bot id
-            // after a roster rename, a storage blip) is NOT a lost position,
-            // so the bot must not concede it. A draw settles the record and
-            // sends the end frame without a bogus result or rating movement.
-            // Bots only ever resign through the normal move path, and only
-            // when the position is genuinely lost (no legal move at all).
-            if (!match.result) {
-              match.clocks = this.currentClocks(match);
-              match.runningSince = null;
-              match.result = { winner: "draw", reason: "game interrupted" };
-              match.completedAt = Date.now();
-              match.rated = false;
-            }
-            await this.endMatch(match, false);
-          } else {
-            // House-vs-house filler: nobody is watching a rating, delete it.
-            await this.deleteMatch(match);
-          }
-        } catch (retireErr) {
-          // Retire itself failed (storage hiccup, corrupt record). Disable the
-          // match's timer and remember it so neither the due loop nor the
-          // self-heal sweep re-arms it into a perpetual throw/re-arm loop.
-          console.error("house retire failed, disabling match", match.id, retireErr);
-          this.houseRetireFailed.add(match.id);
-          try {
-            match.botActAt = null;
-            await this.saveMatch(match, false);
-          } catch {}
+          await this.playHouseAction(match, Date.now());
+          actionsActed++;
+          fillerActed++;
+        } catch (err) {
+          this.houseTickError = err instanceof Error ? err.message : String(err);
+          console.error("house filler action failed, retiring match", match.id, err);
+          await this.retireFailedHouseMatch(match);
         }
       }
     }
-    // Deferred due actions (the per-tick budget was hit) fire on an immediate
-    // follow-up rather than waiting out the full heartbeat. Their botActAt is
-    // still in the past, so maintenanceAll's scheduleNextAlarm would catch them
-    // anyway; this just makes the drain prompt.
-    if (deferredDueWork) {
+    // Deferred work (a human action past the budget, or filler we did not reach
+    // this tick) fires on an immediate follow-up rather than waiting out the
+    // full heartbeat. Those botActAt values are still in the past, so
+    // maintenanceAll's scheduleNextAlarm would catch them anyway; this just
+    // makes the drain prompt.
+    if (deferredDueWork || dueFiller.length > fillerActed) {
       try {
         await this.armAlarmBy(Date.now() + 300);
       } catch {}
