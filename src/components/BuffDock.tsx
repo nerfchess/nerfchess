@@ -459,10 +459,15 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
   const myRow = ({ inst, i }: { inst: (typeof mine)[number]; i: number }) => {
     const def = BUFF_BY_ID[inst.id];
     if (!def) return null;
-    const dead = inst.spent || inst.nullified;
+    // usedActivation retires an activated card the same as spent for the Use
+    // button and the "Used" stamp, but a spendOnUse:false card is NOT spent, so
+    // it stays in the list running its rider. Keep its live status line visible
+    // (only spent/nullified cards truly go silent) so "Used" + "bound to e4" /
+    // "fades in 3 of your turns" both read at once.
+    const dead = inst.spent || inst.nullified || inst.usedActivation;
     const activatable = def.kind === "activated" && !dead;
     const usable = canAct && activatable;
-    const status = dead ? null : def.status?.(inst) ?? null;
+    const status = inst.spent || inst.nullified ? null : def.status?.(inst) ?? null;
     const key = `mine-${i}`;
     // Your own cards start expanded; collapse is a per-card choice.
     const open = expanded[key] ?? true;
@@ -574,7 +579,7 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
 
   const oppEntry = ({ inst, i }: { inst: (typeof theirs)[number]; i: number }) => {
     const def = BUFF_BY_ID[inst.id];
-    const dead = inst.spent || inst.nullified;
+    const dead = inst.spent || inst.nullified || inst.usedActivation;
     // Hidden identities render nothing here; the aggregate "N hidden" sign
     // below the revealed rows carries them.
     if (!def || (hideOpponentCards && !dead)) return null;

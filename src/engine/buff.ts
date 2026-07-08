@@ -53,6 +53,17 @@ export interface BuffInstance {
   spent?: boolean;
   /** Cancelled by an opponent's nullify effect before it could be used. */
   nullified?: boolean;
+  /**
+   * An activated card whose effect has fully resolved once. Set by activateBuff
+   * for EVERY activated card the moment its effect fires (picks are already
+   * complete by then), so a card can never be activated a second time. Unlike
+   * `spent` it does NOT prune the instance: a spendOnUse:false card stays alive
+   * to run its lingering rider (a despawn timer, a landed-on trigger, a per-turn
+   * effect) while the dock renders it as Used and targets() reports no more
+   * work. Set inside activateBuff, which replicas replay through the "use" draft
+   * action, so both clients reach the same used state (no desync).
+   */
+  usedActivation?: boolean;
 }
 
 // --- Board-level effects owned by the buff system ---------------------------

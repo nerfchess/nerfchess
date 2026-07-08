@@ -748,6 +748,26 @@ function applyDrop(board: BoardState, move: Move): BoardState {
   return nb;
 }
 
+/** A cheap fingerprint of the 64 board squares (piece type + color per square,
+ * position implicit in the loop order). The onMovePlayed reveal-detection uses
+ * it to notice ANY board change a hook makes, including a direct `pieces[]`
+ * write that never went through the BuffApi (only the BuffApi bumps
+ * bs.mutations). A hook that removes, summons, or moves a piece MUST be revealed
+ * to replicas, or they cannot replay the mutation and the boards desync
+ * permanently (dtState never carries the board). Keying the detection on this
+ * signature instead of trusting every hook to route through the api closes that
+ * gap systemically, so no removal (or any board mutation) inside a hook can be
+ * skipped by the reveal. */
+function boardSignature(board: BoardState): number {
+  let h = 2166136261;
+  for (let sq = 0; sq < 64; sq++) {
+    const p = board.pieces[sq];
+    const code = p ? (p.color === "w" ? 1 : 7) + "pnbrqk".indexOf(p.type) : 0;
+    h = Math.imul(h ^ code, 16777619);
+  }
+  return h >>> 0;
+}
+
 export function playMove(game: NerfGame, move: Move): NerfGame {
   if (game.result) return game;
   let nextBoard: BoardState;
@@ -797,8 +817,19 @@ export function playMove(game: NerfGame, move: Move): NerfGame {
         if (!def.onMovePlayed) continue;
         const effectsBefore = bs.effects.length;
         const mutationsBefore = bs.mutations ?? 0;
+        const sigBefore = boardSignature(game.board);
         def.onMovePlayed(inst, move, api);
-        if (bs.effects.length !== effectsBefore || (bs.mutations ?? 0) !== mutationsBefore) {
+        // Reveal the card to replicas when its hook did anything observable: a
+        // new/removed board effect, a BuffApi mutation-counter bump, OR a raw
+        // board change the signature catches (a direct pieces[] write that never
+        // touched the counter). The signature is the systemic backstop that
+        // guarantees no removal (or any board mutation) inside a hook can be
+        // skipped by the reveal, which would desync the replica's board.
+        if (
+          bs.effects.length !== effectsBefore ||
+          (bs.mutations ?? 0) !== mutationsBefore ||
+          boardSignature(game.board) !== sigBefore
+        ) {
           fired.push({ color, index: bs.players[color].buffs.indexOf(inst) });
         }
       }
@@ -1005,7 +1036,7 @@ export function buffNextTarget(
   if (!bs) return null;
   const inst = bs.players[color].buffs[buffIndex];
   const def = inst && BUFF_BY_ID[inst.id];
-  if (!inst || !def?.targets || inst.spent || inst.nullified) return null;
+  if (!inst || !def?.targets || inst.spent || inst.nullified || inst.usedActivation) return null;
   const target = def.targets(inst, makeBuffApi(game, color), picks);
   // Graceful termination for count-based cards ("teleport N", "N pieces become
   // amazons", "remove N enemy pawns"...). Once at least one target is picked, a
@@ -1034,7 +1065,16 @@ export function activateBuff(
   if (!bs || game.result) return false;
   const inst = bs.players[color].buffs[buffIndex];
   const def = inst && BUFF_BY_ID[inst.id];
-  if (!inst || !def || def.kind !== "activated" || inst.spent || inst.nullified) return false;
+  if (
+    !inst ||
+    !def ||
+    def.kind !== "activated" ||
+    inst.spent ||
+    inst.nullified ||
+    inst.usedActivation
+  ) {
+    return false;
+  }
   const effectsBefore = bs.effects.length;
   def.effect?.(inst, makeBuffApi(game, color), picks);
   // A turn-consuming activation costs the activator this turn, so protective
@@ -1049,6 +1089,16 @@ export function activateBuff(
     }
   }
   if (def.spendOnUse !== false) inst.spent = true;
+  // Consume the ACTIVATION for every activated card once its effect has fully
+  // resolved (picks are complete before we reach here). This is the systemic
+  // one-use guard: it blocks re-activation (targets() reports done, the dock
+  // shows Used) WITHOUT setting `spent`, so a spendOnUse:false card is not
+  // pruned and its lingering rider (onMovePlayed despawn timer, landed-on
+  // trigger, per-turn effect) keeps running. Replaces the per-card ad-hoc
+  // re-activation guards (which may stay as harmless belt-and-suspenders).
+  // Set inside activateBuff so replicas replaying the "use" action reach the
+  // same used state, keeping both clients in sync.
+  inst.usedActivation = true;
   // Any activated use can reshape the board, so the activator cannot capture
   // the king until the opponent has replied (same guard as chained moves).
   bs.chainKingGuard = color;
@@ -1242,10 +1292,20 @@ export function aiChooseBuffActivation(
   for (let i = 0; i < ps.buffs.length; i++) {
     const inst = ps.buffs[i];
     const def = BUFF_BY_ID[inst.id];
-    if (!def?.implemented || def.kind !== "activated" || inst.spent || inst.nullified) continue;
-    // Reusable cards (spendOnUse: false) stay activatable forever; once one
-    // is online (bound to a piece or zone, or running) the bot must not burn
-    // its turns re-activating it.
+    if (
+      !def?.implemented ||
+      def.kind !== "activated" ||
+      inst.spent ||
+      inst.nullified ||
+      inst.usedActivation
+    ) {
+      continue;
+    }
+    // Belt-and-suspenders: usedActivation above already retires a fired card,
+    // but the older state-based online check stays for clarity. Reusable cards
+    // (spendOnUse: false) stay activatable until fired; once one is online
+    // (bound to a piece or zone, or running) the bot must not burn its turns
+    // re-activating it.
     if (
       def.spendOnUse === false &&
       (inst.state.sq != null ||
