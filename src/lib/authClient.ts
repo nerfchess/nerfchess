@@ -33,8 +33,15 @@ async function expectUser(res: Response): Promise<{ id: string; username: string
   return { id: data.id!, username: data.username! };
 }
 
-export async function register(username: string, password: string, email?: string) {
-  return expectUser(await post("/api/auth/register", { username, password, email: email || undefined }));
+export async function register(username: string, password: string, email?: string, turnstileToken?: string) {
+  return expectUser(
+    await post("/api/auth/register", {
+      username,
+      password,
+      email: email || undefined,
+      turnstileToken: turnstileToken || undefined,
+    }),
+  );
 }
 
 export async function login(username: string, password: string) {

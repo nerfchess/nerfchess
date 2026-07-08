@@ -49,6 +49,10 @@
     // lobby/TV. Letting the DO own filler is the always-works path; flip back to
     // "true" only once the arena is live and confirmed POSTing to /arena/games.
     "ARENA_OWNS_FILLER": "false"
+    // Cloudflare Turnstile on the signup form. The public sitekey is a build-time
+    // var (NEXT_PUBLIC_TURNSTILE_SITEKEY) set in the build environment, not here.
+    // The secret is set with: wrangler secret put TURNSTILE_SECRET_KEY
+    // Leave the secret unset to disable the bot check (see src/lib/server/turnstile.ts).
   },
   "d1_databases": [
     {

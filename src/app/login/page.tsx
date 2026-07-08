@@ -1,9 +1,23 @@
 "use client";
 
 import Link from "next/link";
+import Script from "next/script";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { login, register } from "@/lib/authClient";
+
+// Public sitekey; when unset the widget is skipped and signup works as before.
+const TURNSTILE_SITEKEY = process.env.NEXT_PUBLIC_TURNSTILE_SITEKEY;
+
+declare global {
+  interface Window {
+    turnstile?: {
+      render: (el: HTMLElement, opts: Record<string, unknown>) => string;
+      reset: (id?: string) => void;
+      remove: (id: string) => void;
+    };
+  }
+}
 
 export default function LoginPageWrapper() {
   return (
@@ -28,24 +42,80 @@ function LoginPage() {
   // Google sign-in failures arrive back here as a query param.
   const [error, setError] = useState<string | null>(params.get("oauthError"));
 
+  // Turnstile: only rendered on the register tab when a sitekey is configured.
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const [turnstileReady, setTurnstileReady] = useState(false);
+  const turnstileRef = useRef<HTMLDivElement>(null);
+  const widgetIdRef = useRef<string | null>(null);
+
+  // The api.js script may already be present after a client navigation.
+  useEffect(() => {
+    if (window.turnstile) setTurnstileReady(true);
+  }, []);
+
+  // Render (and clean up) the widget whenever the register tab is active.
+  useEffect(() => {
+    if (tab !== "register" || !TURNSTILE_SITEKEY || !turnstileReady) return;
+    const el = turnstileRef.current;
+    const turnstile = window.turnstile;
+    if (!el || !turnstile) return;
+    const id = turnstile.render(el, {
+      sitekey: TURNSTILE_SITEKEY,
+      action: "turnstile-spin-v1",
+      callback: (token: string) => setTurnstileToken(token),
+      "expired-callback": () => setTurnstileToken(""),
+      "error-callback": () => setTurnstileToken(""),
+    });
+    widgetIdRef.current = id;
+    return () => {
+      try {
+        turnstile.remove(id);
+      } catch {
+        /* widget already gone */
+      }
+      widgetIdRef.current = null;
+      setTurnstileToken("");
+    };
+  }, [tab, turnstileReady]);
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (busy) return;
+    if (tab === "register" && TURNSTILE_SITEKEY && !turnstileToken) {
+      setError("Please complete the captcha.");
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
       if (tab === "login") await login(username, password);
-      else await register(username, password, email.trim());
+      else await register(username, password, email.trim(), turnstileToken);
       router.push(next);
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
       setBusy(false);
+      // Tokens are single-use; reset so the user can retry.
+      if (widgetIdRef.current && window.turnstile) {
+        try {
+          window.turnstile.reset(widgetIdRef.current);
+        } catch {
+          /* nothing to reset */
+        }
+        setTurnstileToken("");
+      }
     }
   };
 
   return (
     <main className="min-h-screen">
+      {TURNSTILE_SITEKEY && (
+        <Script
+          src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+          strategy="afterInteractive"
+          onLoad={() => setTurnstileReady(true)}
+        />
+      )}
       <nav className="flex items-center justify-between px-5 sm:px-10 py-6">
         <Link href="/" className="font-display text-2xl tracking-tight">
           nerf<span className="text-gold-leaf">chess</span>
@@ -138,9 +208,17 @@ function LoginPage() {
               placeholder={tab === "register" ? "at least 8 characters" : ""}
             />
           </div>
+          {tab === "register" && TURNSTILE_SITEKEY && (
+            <div ref={turnstileRef} className="flex justify-center" />
+          )}
           <button
             type="submit"
-            disabled={busy || !username.trim() || !password}
+            disabled={
+              busy ||
+              !username.trim() ||
+              !password ||
+              (tab === "register" && !!TURNSTILE_SITEKEY && !turnstileToken)
+            }
             className="w-full py-3 rounded-sm btn-leaf font-body text-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {busy ? "One moment…" : tab === "login" ? "Sign in" : "Create account"}

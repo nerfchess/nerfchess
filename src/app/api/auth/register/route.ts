@@ -12,15 +12,22 @@ import {
   validUsername,
 } from "@/lib/server/auth";
 import { containsProfanity } from "@/lib/profanity";
+import { verifyTurnstile } from "@/lib/server/turnstile";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
-  let body: { username?: unknown; password?: unknown; email?: unknown };
+  let body: { username?: unknown; password?: unknown; email?: unknown; turnstileToken?: unknown };
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
+  }
+  // Bot check: no-op unless TURNSTILE_SECRET_KEY is configured.
+  const turnstileToken = typeof body.turnstileToken === "string" ? body.turnstileToken : "";
+  const humanOk = await verifyTurnstile(turnstileToken, request.headers.get("CF-Connecting-IP"));
+  if (!humanOk) {
+    return NextResponse.json({ error: "Captcha verification failed. Please try again." }, { status: 400 });
   }
   const username = typeof body.username === "string" ? body.username.trim() : "";
   const password = typeof body.password === "string" ? body.password : "";

@@ -952,6 +952,36 @@ export class MPSession {
     return this.sendFrame("queueCancel");
   }
 
+  // "Play vs bot": start a RATED house-bot game at the chosen difficulty, mode,
+  // and time control (the /play page). Resolves with the paired game id, the
+  // same shape as queue(). A one-shot request, not a persistent search, so it
+  // does not touch the reconnect/searching machinery; the caller falls back to
+  // a local casual bot game if it rejects (bots busy/paused, or offline).
+  async playBot(
+    difficulty: "easy" | "medium" | "hard",
+    mode: DraftMode,
+    timeSec: number,
+    incrementSec: number,
+    color: "w" | "b" | "random",
+  ): Promise<{ id: string; color: Color; token: string }> {
+    await this.connect();
+    return new Promise((resolve, reject) => {
+      const off = this.on((event) => {
+        if (event.type === "paired") {
+          off();
+          resolve({ id: event.id, color: event.color, token: event.token });
+        } else if (event.type === "error") {
+          off();
+          reject(new Error(event.message));
+        } else if (event.type === "disconnected") {
+          off();
+          reject(new Error("Disconnected from the game server."));
+        }
+      });
+      this.sendFrame("playbot", { difficulty, mode, timeSec, incrementSec, color });
+    });
+  }
+
   // Spectate a live game. Resolves with the watch payload.
   async watch(id: string): Promise<MPWatchStart> {
     this.code = id;
