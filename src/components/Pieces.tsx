@@ -8,6 +8,10 @@ interface Props {
   color: Color;
   size?: number | string;
   className?: string;
+  /** Render the merged queen+knight Amazon sprite instead of a plain queen.
+   * Only honoured for queens (the Amazon card crowns a queen so she also moves
+   * like a knight); ignored for every other piece. */
+  amazon?: boolean;
 }
 
 const SHEETS: Record<string, string> = {
@@ -17,16 +21,17 @@ const SHEETS: Record<string, string> = {
 // Memoized so identical (type, color, size, className) props skip re-rendering.
 // Without this, every premove update reflows every piece's SVG via
 // dangerouslySetInnerHTML and the textures visibly flicker.
-export const Piece = React.memo(function Piece({ type, color, size = 60, className = "" }: Props) {
+export const Piece = React.memo(function Piece({ type, color, size = 60, className = "", amazon = false }: Props) {
+  const isAmazon = amazon && type === "q";
   const key = `${color}${type}`;
-  const path = PATHS[key];
+  const path = isAmazon ? AMAZON_PATHS[color] : PATHS[key];
   const style: CSSProperties = { width: size, height: size };
   return (
     <span
       className={"piece-shell inline-grid place-items-center select-none " + className}
       style={style}
       role="img"
-      aria-label={`${color === "w" ? "White" : "Black"} ${type}`}
+      aria-label={`${color === "w" ? "White" : "Black"} ${isAmazon ? "amazon" : type}`}
     >
       <svg
         viewBox="0 0 45 45"
@@ -34,13 +39,22 @@ export const Piece = React.memo(function Piece({ type, color, size = 60, classNa
         height="100%"
         className="piece-inline"
         aria-hidden="true"
+        // Image piece skins (data-piece-source="lichess") hide .piece-inline and
+        // show the asset span instead. The Amazon has no themed asset, so force
+        // its inline sprite visible even under those skins.
+        style={isAmazon ? { display: "block" } : undefined}
         dangerouslySetInnerHTML={{ __html: path }}
       />
-      <span
-        className="piece-asset"
-        aria-hidden="true"
-        style={{ backgroundImage: `var(--piece-${key}-image)` }}
-      />
+      {/* Piece-theme image skins map to the base piece art; the Amazon is a
+          bespoke fairy sprite with no themed asset, so it renders the inline
+          SVG alone (a queen skin must not paint over it). */}
+      {!isAmazon && (
+        <span
+          className="piece-asset"
+          aria-hidden="true"
+          style={{ backgroundImage: `var(--piece-${key}-image)` }}
+        />
+      )}
     </span>
   );
 });
@@ -275,4 +289,28 @@ const PATHS: Record<string, string> = {
     <g fill="${fill("b")}" stroke="${stroke("b")}" stroke-width="1.5" stroke-linejoin="round">
       <path d="M22.5 9c-2.21 0-4 1.79-4 4 0 .89.29 1.71.78 2.38C17.33 16.5 16 18.59 16 21c0 2.03.94 3.84 2.41 5.03-3 1.06-7.41 5.55-7.41 13.47h23c0-7.92-4.41-12.41-7.41-13.47C28.06 24.84 29 23.03 29 21c0-2.41-1.33-4.5-3.28-5.62.49-.67.78-1.49.78-2.38 0-2.21-1.79-4-4-4z"/>
     </g>`),
+};
+
+// Amazon: the queen + knight fairy piece. A single fused silhouette so it reads
+// as its OWN piece, not a queen: a left-facing horse-head (the knight) rising
+// from a queen's base collar and wearing a queen's jeweled coronet. Same weight
+// as the rest of the set (1.5 stroke, round joins, fill/stroke through the same
+// CSS variables) so it themes and recolours with every other piece. The eye
+// uses the stroke colour so it stays visible on both the light and dark bodies.
+const amazon = (c: Color) => make(`
+    <g fill="${fill(c)}" stroke="${stroke(c)}" stroke-width="1.5" stroke-linejoin="round">
+      <path d="M 11,30.5 C 11,32.5 9.5,32.5 9.5,34.5 C 9.5,36 11,36.5 11,38.5 C 17.5,39.5 27.5,39.5 34,38.5 C 34,36.5 35.5,36 35.5,34.5 C 35.5,32.5 34,32.5 34,30.5 C 27,28.8 18,28.8 11,30.5 z" stroke-linecap="butt"/>
+      <path d="M 22,15 C 29.5,15.2 32,20 31.5,31 L 15,31 C 15,25.5 20.5,26 20,20.5 C 19.4,24 15.5,27 12.2,28.2 C 10,29 7.8,28.6 7.2,26.8 C 6.6,25 8.2,22 10.6,19.8 C 12.4,18.2 14,16.8 15.6,16 C 17.4,15.2 19.8,15 22,15 z" stroke-linecap="butt"/>
+      <path d="M 11,16 L 12.5,9.5 L 17,13.5 L 22.5,7.5 L 28,13.5 L 32.5,9.5 L 34,16 C 27,14.3 18,14.3 11,16 z" stroke-linecap="butt"/>
+      <circle cx="12.5" cy="9.5" r="1.9"/>
+      <circle cx="22.5" cy="7.5" r="2.1"/>
+      <circle cx="32.5" cy="9.5" r="1.9"/>
+      <path d="M 11,24 A 0.65,0.65 0 1,1 9.7,24 A 0.65,0.65 0 1,1 11,24 z" fill="${stroke(c)}"/>
+      <path d="M 12,33.5 A 28,28 1 0 0 33,33.5" fill="none"/>
+      <path d="M 11.5,36.2 A 28,28 1 0 0 33.5,36.2" fill="none"/>
+    </g>`);
+
+const AMAZON_PATHS: Record<Color, string> = {
+  w: amazon("w"),
+  b: amazon("b"),
 };

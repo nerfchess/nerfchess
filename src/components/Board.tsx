@@ -31,6 +31,7 @@ import {
   playAtomic,
   playCataclysm,
   playChains,
+  playDrop,
   playExplosion,
   playExtinction,
   playFreeze,
@@ -1003,7 +1004,70 @@ export function Board({
     }
     return new Set(visual?.shieldedSquares ?? []);
   }, [visual, buffs, board.pieces]);
-  const wardSquares = useMemo(() => new Set(visual?.wardSquares ?? []), [visual?.wardSquares]);
+  // Green ward tint squares. Like the shield / royal-guard tints above,
+  // recompute from the LIVE buff state every render instead of trusting the
+  // parent-provided list, so a ward whose backing effect has ENDED can never
+  // keep the green tint lit: a void / flypaper trap you own drops the instant
+  // the card is spent or its window closes, and a barred zone you cast against
+  // the opponent drops the instant its timer runs out. Mirrors draftZones'
+  // ward derivation with the same owner/against split and the same turns /
+  // spent liveness guards, reading only the shared board and the public buff
+  // state so both players resolve the identical set. Falls back to the
+  // parent-provided list when the live buff state is not in hand.
+  const wardSquares = useMemo(() => {
+    if (visual && buffs) {
+      const s = new Set<number>();
+      // Traps you own paint as YOUR ward (the same squares read as a hostile
+      // barrier to the opponent). Guard on the live instance state so a spent
+      // void or a closed flypaper window drops the tint at once.
+      for (const inst of buffs.players[myColor].buffs) {
+        if (inst.spent || inst.nullified) continue;
+        if (inst.id === "void" || inst.id === "abyss" || inst.id === "void_realm") {
+          for (const sq of (inst.state.squares as number[] | undefined) ?? []) s.add(sq);
+        } else if (inst.id === "flypaper_file") {
+          const sq = inst.state.sq as number | undefined;
+          const turns = (inst.state.turns as number | undefined) ?? 0;
+          if (sq != null && turns > 0) {
+            const file = sq % 8;
+            for (let r = 0; r < 8; r++) s.add(r * 8 + file);
+          }
+        }
+      }
+      // A barred zone you cast against the opponent also reads as your ward; its
+      // turns guard clears it the instant it expires.
+      for (const e of buffs.effects) {
+        if (e.kind !== "barred" || e.against === myColor) continue;
+        if (e.turns != null && e.turns <= 0) continue;
+        for (const sq of e.squares) s.add(sq);
+      }
+      return s;
+    }
+    return new Set(visual?.wardSquares ?? []);
+  }, [visual, buffs, myColor]);
+  // Amazon queens: the "Amazon" card crowns one of your queens so she also moves
+  // like a knight (the queen + knight fairy piece). It is a piece-bound upgrade,
+  // so the crowned queen's square rides on the card instance's state.sq and
+  // follows her as she moves; she stops being an amazon the moment she is
+  // captured or promotes (the card is spent). Collect those squares from the
+  // public buff state (both sides; masked opponent cards carry an empty id, so
+  // nothing hidden surfaces, and the square must still hold that owner's queen)
+  // so the board can render the merged queen+knight sprite there. Only the
+  // queen-based "amazon" card is marked: knight / bishop amazons keep their own
+  // base silhouette.
+  const amazonSquares = useMemo(() => {
+    const s = new Set<number>();
+    if (!buffs) return s;
+    for (const color of ["w", "b"] as Color[]) {
+      for (const inst of buffs.players[color].buffs) {
+        if (inst.id !== "amazon" || inst.spent || inst.nullified) continue;
+        const sq = inst.state.sq as number | undefined;
+        if (typeof sq !== "number" || sq < 0 || sq > 63) continue;
+        const p = board.pieces[sq];
+        if (p && p.color === color && p.type === "q") s.add(sq);
+      }
+    }
+    return s;
+  }, [buffs, board.pieces]);
   const strikeSquares = useMemo(() => new Set(visual?.strikeSquares ?? []), [visual?.strikeSquares]);
   const walnutSquares = useMemo(() => new Set(visual?.walnutSquares ?? []), [visual?.walnutSquares]);
   const frozenSkins = visual?.frozenSkins ?? EMPTY_SKINS;
@@ -1332,7 +1396,15 @@ export function Board({
     // Targeting mode swallows the pointer entirely: a candidate square picks,
     // anything else is a no-op (Escape or the cancel chip exits the mode).
     if (pickingSquares) {
-      if (pickSquareSet.has(sq)) onPickSquare?.(sq);
+      if (pickSquareSet.has(sq)) {
+        // A crazyhouse pocket drop lands through this same pick path: the parent
+        // arms a pocket piece and feeds the legal drop squares in as pickSquares.
+        // Give placing a banked piece its own set-down voice. Buff-target picks
+        // (no drop move to this square) stay silent here and sound when their
+        // effect actually lands. One shot per drop.
+        if (legalMoves.some((m) => m.drop != null && m.to === sq)) playDrop();
+        onPickSquare?.(sq);
+      }
       return;
     }
     if (disabled) return;
@@ -2143,7 +2215,12 @@ export function Board({
                     {walnutSquares.has(sq) ? (
                       <WalnutPiece type={piece.type} color={piece.color} size="100%" />
                     ) : (
-                      <Piece type={piece.type} color={piece.color} size="100%" />
+                      <Piece
+                        type={piece.type}
+                        color={piece.color}
+                        size="100%"
+                        amazon={amazonSquares.has(sq)}
+                      />
                     )}
                   </div>
                 ) : null}
