@@ -16,6 +16,11 @@ import { HOUSE_SKILL_PROFILES, pickHouseMove, type HouseSkill } from "../src/lib
 const TOKEN = process.env.HOUSE_ENGINE_TOKEN ?? "";
 const REPLAY_VERSION = Number(process.env.ENGINE_REPLAY_VERSION ?? "0");
 const PORT = Number(process.env.PORT ?? "8787");
+// Unlike the DO, this box has no shared thread to protect — search here costs
+// nothing else. Cap comfortably under the Worker's HOUSE_ENGINE_TIMEOUT_MS
+// (3000ms) so the slowest tier (2200: 1800ms budget) always has room for
+// network + JSON overhead before the Worker gives up and falls back local.
+const REMOTE_SEARCH_CEILING_MS = 2500;
 // Derived from the roster's profile map so the accepted tiers never drift out
 // of sync with bots.ts when the skill tiers change.
 const VALID_SKILLS = new Set<HouseSkill>(
@@ -87,7 +92,9 @@ const server = createServer(async (req, res) => {
     }
 
     const game = replayToPosition(body.match);
-    const move = game ? pickHouseMove(game, body.skill, randomInt, body.remainingClockMs) : null;
+    const move = game
+      ? pickHouseMove(game, body.skill, randomInt, body.remainingClockMs, REMOTE_SEARCH_CEILING_MS)
+      : null;
 
     res.writeHead(200, { "content-type": "application/json" });
     res.end(JSON.stringify({ move }));
