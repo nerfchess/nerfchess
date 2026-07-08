@@ -650,7 +650,7 @@ export function DraftOverlay({
                   setChosen(selected);
                   commit(selected);
                 }}
-                className="btn-leaf min-w-[7rem] flex-1 touch-manipulation px-3 py-2 font-display text-xs font-semibold tracking-wide"
+                className="btn-leaf min-w-[6rem] flex-1 touch-manipulation px-3 py-2 font-display text-xs font-semibold tracking-wide"
               >
                 Confirm pick
               </button>
@@ -659,7 +659,7 @@ export function DraftOverlay({
               <button
                 onClick={handleReroll}
                 disabled={rerolling}
-                className="flex min-w-[7rem] flex-1 touch-manipulation items-center justify-center gap-1 rounded-[1px] border border-white/15 bg-white/[0.03] px-3 py-2 font-display text-[11px] font-semibold tracking-wide text-parchment-200 transition hover:border-gold/50 hover:text-gold-leaf disabled:opacity-40"
+                className="flex min-w-[6rem] flex-1 touch-manipulation items-center justify-center gap-1 rounded-[1px] border border-white/15 bg-white/[0.03] px-3 py-2 font-display text-[11px] font-semibold tracking-wide text-parchment-200 transition hover:border-gold/50 hover:text-gold-leaf disabled:opacity-40"
                 title="Roll fresh cards at the same tier"
               >
                 <RerollIcon className="text-gold-leaf" /> Reroll ({rerollsLeft})
@@ -668,7 +668,7 @@ export function DraftOverlay({
             <button
               onClick={!settled ? onBank : undefined}
               disabled={settled}
-              className="min-w-[7rem] flex-1 touch-manipulation rounded-[1px] border border-white/15 bg-white/[0.03] px-3 py-2 font-display text-[11px] font-semibold tracking-wide text-parchment-200 transition hover:border-gold/50 hover:text-gold-leaf disabled:opacity-40"
+              className="min-w-[6rem] flex-1 touch-manipulation rounded-[1px] border border-white/15 bg-white/[0.03] px-3 py-2 font-display text-[11px] font-semibold tracking-wide text-parchment-200 transition hover:border-gold/50 hover:text-gold-leaf disabled:opacity-40"
               title="Skip this draft; your next one pulls from a tier higher"
             >
               Skip &amp; bank
@@ -706,10 +706,14 @@ export function DraftOverlay({
       <div
         aria-hidden={hidden || undefined}
         className={
-          "fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-3 sm:px-4" +
+          "fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-black/70 backdrop-blur-sm" +
           (hidden ? " invisible" : "")
         }
       >
+      {/* A min-height flex wrapper centers the panel when it fits and lets the
+          whole thing scroll on short or zoomed viewports, instead of the outer
+          flex clipping the Skip/Confirm buttons off the top and bottom. */}
+      <div className="flex min-h-full items-center justify-center px-3 py-4 sm:px-4">
       {/* Timer and panel share one column: the clock chip sits centered right
           above the plate with a small gap and moves with it. */}
       <div className="flex min-w-0 w-full max-w-2xl flex-col items-center gap-2.5 lg:max-w-3xl">
@@ -991,6 +995,7 @@ export function DraftOverlay({
         )}
           </div>
         </motion.div>
+      </div>
       </div>
       </div>
     </>
