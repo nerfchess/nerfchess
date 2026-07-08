@@ -1308,7 +1308,7 @@ const TIER3: Buff[] = [
     pieceBound("r", "Choose the rook", (board, sq, via) => leapMoves(board, sq, KNIGHT_LEAPS, via)),
   ),
   def(
-    { id: "extra_move", name: "Extra Move", description: "Take two moves in a row, once. You cannot capture the king on the bonus move: your opponent replies first.", tier: 3, category: "tempo", boon: true, fx: { motif: "rally", pieces: "all", self: true } },
+    { id: "extra_move", name: "Extra Move", description: "Take two moves in a row, once. You cannot capture the king on the bonus move: your opponent replies first.", tier: 4, category: "tempo", boon: true, fx: { motif: "rally", pieces: "all", self: true } },
     extraMovesNow(1),
   ),
   def(
@@ -1464,7 +1464,7 @@ const TIER3: Buff[] = [
     reviveOne(["q", "r", "b", "n", "p"], anyHalfZone),
   ),
   def(
-    { id: "deflect", requires: ["q"], name: "Deflect", description: "Your queen cannot be captured for your opponent's next 3 turns.", tier: 3, category: "protection" },
+    { id: "deflect", requires: ["q"], name: "Deflect", description: "Your queen cannot be captured for your opponent's next 4 turns.", tier: 3, category: "protection" },
     activated(
       (_inst, api, picks) =>
         picks.length > 0
@@ -1472,7 +1472,7 @@ const TIER3: Buff[] = [
           : { kind: "square", label: "Confirm your queen", squares: mySquares(api.board, api.me, "q") },
       (_inst, api, picks) => {
         if (picks[0]?.square != null) {
-          addEffect(api, { kind: "shield", owner: api.me, squares: [picks[0].square], turns: 2 });
+          addEffect(api, { kind: "shield", owner: api.me, squares: [picks[0].square], turns: 3 });
         }
       },
     ),
@@ -1673,7 +1673,7 @@ const TIER3: Buff[] = [
   def({ id: "piece_parole", name: "Piece Parole", description: "If your nerf disables a piece type, re-enable one piece of that type.", tier: 3, category: "nerf" }),
   def({ id: "half_measure", name: "Half Measure", description: "Cut any \"every turn\" nerf penalty to \"every other turn\".", tier: 3, category: "nerf" }),
   def(
-    { id: "respite", name: "Respite", description: "Suspend your nerf for your next 5 turns.", tier: 3, category: "nerf" },
+    { id: "respite", name: "Respite", description: "Suspend your nerf for your next 5 turns.", tier: 4, category: "nerf" },
     instant((_inst, api) => {
       addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 5 });
     }),
@@ -2884,7 +2884,7 @@ const TIER6: Buff[] = [
     instant((_inst, api) => api.removeMyNerf()),
   ),
   def(
-    { id: "wardens_bribe", name: "Warden's Bribe", description: "Free action: suspend your nerf for your next 6 turns, used at the moment you choose.", tier: 6, category: "nerf" },
+    { id: "wardens_bribe", name: "Warden's Bribe", description: "Free action: suspend your nerf for your next 6 turns, used at the moment you choose.", tier: 5, category: "nerf" },
     {
       ...activatedSimple((_inst, api) => {
         addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 6 });
@@ -3565,7 +3565,7 @@ const TIER8: Buff[] = [
     },
   ),
   def(
-    { id: "checkmate_denial", name: "Checkmate Denial", description: "Your king cannot be captured for the next 5 turns.", tier: 8, category: "protection", boon: true },
+    { id: "checkmate_denial", name: "Checkmate Denial", description: "Your king cannot be captured for the next 5 turns.", tier: 7, category: "protection", boon: true },
     instant((_inst, api) => {
       addEffect(api, { kind: "king_safe", owner: api.me, turns: 5 });
     }),
@@ -3661,8 +3661,8 @@ const HEXES: Buff[] = [
     ),
   ),
   def(
-    { id: "cold_snap", name: "Cold Snap", description: "Freeze one enemy piece (not the king) for 2 of its owner's turns.", tier: 2, category: "hex" },
-    freezeTarget(2),
+    { id: "cold_snap", name: "Cold Snap", description: "Freeze one enemy piece (not the king) for 1 of its owner's turns.", tier: 1, category: "hex" },
+    freezeTarget(1),
   ),
   def(
     { id: "butter_bishops", name: "Butter Bishops", description: "Your opponent's bishops slide at most 2 squares for their next 4 turns.", tier: 2, category: "hex", fx: { motif: "anchor", pieces: ["b"] } },

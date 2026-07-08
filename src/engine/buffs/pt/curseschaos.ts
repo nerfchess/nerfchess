@@ -208,7 +208,14 @@ export const PT_CURSE_CARDS: Buff[] = [
       effect: (inst, _api, picks) => {
         if (inst.state.cushion != null) return;
         const sq = picks[0]?.square;
-        if (sq != null) inst.state.cushion = sq;
+        if (sq != null) {
+          inst.state.cushion = sq;
+          // Mark the placed cushion as an "online" running card so the bot's
+          // reusable-card guard (state.active) stops re-activating it every
+          // turn (it stored its square only in state.cushion before, which the
+          // guard does not recognize, so the bot wasted its activations).
+          inst.state.active = true;
+        }
       },
       filterOpponentMoves: (moves, inst, api) => {
         const armed = inst.state.armed as Square | undefined;
@@ -229,9 +236,16 @@ export const PT_CURSE_CARDS: Buff[] = [
           }
           return;
         }
-        // Arm the cushion when a non-king enemy piece lands on it.
+        // Arm the cushion when a non-king enemy piece lands on it. The strike
+        // is an OBSERVABLE board effect on purpose: arming was previously a
+        // state-only change, so the reveal machinery (which only flags hooks
+        // that add an effect or mutate the board) never revealed the hidden
+        // cushion, and a replica that never learns the card cannot replay the
+        // forced move, risking a desync. Emitting the strike reveals the trap
+        // (the PFFFT) at the moment it triggers and keeps both clients in sync.
         if (move.color === api.opp && move.to === cushion && move.piece !== "k") {
           inst.state.armed = cushion;
+          addEffect(api, { kind: "strike", squares: [cushion], owner: api.me, turns: 1 });
         }
       },
       status: (inst) =>

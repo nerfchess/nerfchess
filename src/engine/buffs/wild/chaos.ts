@@ -435,7 +435,7 @@ export const WILD_CHAOS: Buff[] = [
       id: "wc_shy_pieces",
       name: "Shy Pieces",
       description: "Your opponent's pieces are too shy to approach the crown: for their next 2 turns none of them may move onto a square touching your king.",
-      tier: 4,
+      tier: 2,
       category: "hex",
       flavor: "They will wave from over here, thanks.",
       fx: { motif: "blindfold", pieces: "all" },

@@ -9,6 +9,19 @@ const N = tierNerf(4);
 
 export const NERFS_T4: Nerf[] = [
   N(
+    { id: "rooks_charge", name: "Rooks Charge", description: "Your rooks can only move straight forward toward the enemy, never sideways or backward.", flavor: "The towers only know one command: advance.", icon: "castle" },
+    {
+      filterMoves: (moves, _state, ctx) =>
+        moves.filter(
+          (m) =>
+            !(
+              m.piece === "r" &&
+              !(FILE(m.to) === FILE(m.from) && relRank(ctx.me, m.to) > relRank(ctx.me, m.from))
+            ),
+        ),
+    },
+  ),
+  N(
     { id: "frozen_cavalry", name: "Frozen Cavalry", description: "From your 18th move on, you can't move your knights.", flavor: "The horses seize up mid campaign.", icon: "snowflake" },
     {
       filterMoves: (moves, _state, ctx) =>

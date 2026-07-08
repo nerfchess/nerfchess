@@ -563,23 +563,6 @@ export const ICY_SQUARES: Nerf = db({
   },
 });
 
-export const HALL_OF_MIRRORS: Nerf = db({
-  id: "hall_of_mirrors",
-  name: "Hall of Mirrors",
-  description: "Your pieces can't move to a square whose file mirror (h-a) is empty.",
-  flavor: "Reflection required.",
-  tier: 5,
-  icon: "split",
-  implemented: true,
-  filterMoves: (moves, _s, ctx) => {
-    const legal = moves.filter((m) => {
-      const mirror = SQ(7 - FILE(m.to), RANK(m.to));
-      return !!ctx.board.pieces[mirror];
-    });
-    return legal.length ? legal : moves;
-  },
-});
-
 export const QUARANTINE: Nerf = db({
   id: "quarantine",
   name: "Quarantine",
@@ -946,7 +929,6 @@ export const EXTRA_NERFS: Nerf[] = [
   KNIGHT_PARADE,
   RHYTHM_MASTER,
   ICY_SQUARES,
-  HALL_OF_MIRRORS,
   QUARANTINE,
   FRESH_FACES,
   BURNING_BRIDGES,

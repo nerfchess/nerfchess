@@ -141,13 +141,15 @@ export const HEXES_T3: Buff[] = [
     curse(4, (moves) => moves.filter((m) => m.piece !== "q" || dist(m.from, m.to) <= 2)),
   ),
 
-  // --- no_pawn_advance: pawns frozen forward ------------------------------
+  // --- full pawn lock: salted ground roots the infantry in place ----------
   H(
-    // Board already paints no_pawn_advance; fx carried for consistency.
-    { id: "sown_salt", name: "Sown Salt", description: "Your opponent's pawns cannot advance for their next 4 turns. They may still capture diagonally.", flavor: "Nothing grows in salted fields.", fx: { motif: "anchor", pieces: ["p"] } },
-    instant((_inst, api) => {
-      addEffect(api, { kind: "no_pawn_advance", against: api.opp, turns: 4 });
-    }),
+    // Distinct from Pawn Nerf (crossref), which only blocks the pawn ADVANCE
+    // and still lets pawns capture, for 3 turns. Salt is the heavier-per-turn
+    // but shorter version: it freezes the enemy pawns COMPLETELY (no advance
+    // and no capture) for 2 turns. curse() keeps the non-empty fallback so it
+    // never soft-locks and ticks exactly the opponent's next 2 turns.
+    { id: "sown_salt", name: "Sown Salt", description: "Your opponent's pawns are rooted in salted ground and cannot move at all, not even to capture, for their next 2 turns.", flavor: "Nothing grows in salted fields.", fx: { motif: "anchor", pieces: ["p"] } },
+    curse(2, (moves) => moves.filter((m) => m.piece !== "p")),
   ),
 
   // --- barred: seal the four center squares -------------------------------
