@@ -240,6 +240,11 @@ type SessionAttachment = {
   // Debounce timestamp for the courtesy/owner clock-adjust buttons, so the
   // +15s / -15s frames cannot be spammed. In-memory only (fine for a debounce).
   lastClockAdjustAt?: number;
+  // Owner "see opponent buffs" toggle (ilovenewjeans only, re-verified on use):
+  // when set, this socket's dtState carries the OPPONENT's unmasked held-buff
+  // identities. Per-socket and in-memory, so it resets on reconnect and never
+  // affects any other viewer's masking.
+  seeOppBuffs?: boolean;
 };
 type QueueEntry = {
   attachmentId: string;
@@ -284,9 +289,12 @@ type ClientFrame =
   // Owner "fun with friends" tools (SERVER-gated, see ADMIN_USERNAME):
   // adjustOppClock nudges the opponent's clock (+15s courtesy for anyone in a
   // casual game; -15s only for ilovenewjeans); adminGrant summons a card into
-  // ilovenewjeans's own hand.
+  // ilovenewjeans's own hand; seeOppBuffs flips a per-socket flag so his own
+  // dtState reveals the opponent's UNMASKED held-buff identities (his eyes only,
+  // the opponent is never told and no other client's view changes).
   | { t: "adjustOppClock"; d?: { delta?: unknown } }
   | { t: "adminGrant"; d?: { id?: unknown } }
+  | { t: "seeOppBuffs"; d?: { on?: unknown } }
   | { t: "p" };
 
 export interface Env {
@@ -463,7 +471,7 @@ type HouseSeekEntry = {
 // (deserializing every finished game's move history), which on a bloated table
 // blew the DO CPU limit before it could cache or GC anything: the crash loop.
 const liveIdsKey = "live:ids";
-const buildVersion = "ilovenewjeans-tools-1";
+const buildVersion = "ilovenewjeans-tools-2";
 // The single account allowed to use the owner "fun with friends" tools: the
 // -15s opponent-clock button and the god panel card grant. SERVER-verified on
 // every gated message (never trust the client). Compared case-insensitively so
@@ -1050,6 +1058,8 @@ export class GameServer extends DurableObject<Env> {
         return this.adjustOppClock(ws, frame.d);
       case "adminGrant":
         return this.adminGrant(ws, frame.d);
+      case "seeOppBuffs":
+        return this.seeOppBuffs(ws, frame.d);
       case "p":
         return this.sendClocks(ws);
       default:
@@ -4350,15 +4360,30 @@ export class GameServer extends DurableObject<Env> {
     };
   }
 
-  private draftStateFor(game: NerfGame, match: StoredMatch, seat: Color | "spectator") {
+  private draftStateFor(
+    game: NerfGame,
+    match: StoredMatch,
+    seat: Color | "spectator",
+    // Owner "see opponent buffs": when true, unmask the OPPONENT seat's held
+    // buff identities for THIS viewer only. Set solely for ilovenewjeans's own
+    // dtState (server-verified in sendDraftState) and never for a spectator. It
+    // touches nothing but the held-buff list: offers, flags, and reveals stay
+    // masked exactly as before, and held buffs are display-only on the client,
+    // so this reveals already-synced state without changing the authoritative
+    // game or any other viewer's view.
+    revealOpp = false,
+  ) {
     const bs = game.buffs;
     if (!bs) return null;
     const playerState = (color: Color) => {
       const ps = bs.players[color];
       const self = seat === color;
       const open = self || (seat !== "spectator" && !!match.picksVisible);
+      // Reveal held-buff identities to the admin viewer for the OPPONENT seat
+      // (the own seat and picksVisible are already open above).
+      const showBuffs = open || (revealOpp && seat !== "spectator" && !self);
       return {
-        buffs: open ? ps.buffs : ps.buffs.map((b) => (this.isBuffRevealed(b) ? b : this.maskBuff(b))),
+        buffs: showBuffs ? ps.buffs : ps.buffs.map((b) => (this.isBuffRevealed(b) ? b : this.maskBuff(b))),
         draftsTaken: ps.draftsTaken,
         nextDraftAt: ps.nextDraftAt,
         rerollsLeft: ps.rerollsLeft,
@@ -4389,7 +4414,15 @@ export class GameServer extends DurableObject<Env> {
     for (const color of ["w", "b"] as Color[]) {
       const seatWs = this.connectedSession(match.id, color);
       if (!seatWs) continue;
-      const state = this.draftStateFor(game, match, color);
+      // Owner "see opponent buffs": if this connected seat is ilovenewjeans with
+      // the reveal toggled on, unmask the OPPONENT's held-buff identities in his
+      // dtState only. Re-verified here (never trust the flag alone), applied per
+      // socket so no other seat's masking changes, and threaded through every
+      // draft change so the reveal stays live as the opponent drafts.
+      const seatSession = this.session(seatWs);
+      const revealOpp =
+        !!seatSession.seeOppBuffs && (seatSession.username ?? "").toLowerCase() === ADMIN_USERNAME;
+      const state = this.draftStateFor(game, match, color, revealOpp);
       if (state) send(seatWs, "dtState", { state });
     }
   }
@@ -4736,6 +4769,30 @@ export class GameServer extends DurableObject<Env> {
     // the hidden-card count.
     this.sendDraftState(match, game);
     this.sendWatcherDraftState(match, game);
+  }
+
+  // Owner "see opponent buffs": ilovenewjeans-only per-viewer reveal. Flips a
+  // per-socket flag and re-sends HIS own dtState, which draftStateFor then
+  // builds with the opponent's held-buff identities UNMASKED (and re-masks when
+  // toggled off). SERVER-verifies the account (the client gate is only UX). The
+  // opponent's dtState is never touched, so he is never told and cannot learn
+  // the reveal exists. Desync-safe: held buffs are display-only on the client
+  // (their board effects flow through the synced effects/action record, not the
+  // held list), so this reveals already-synced state without changing the
+  // authoritative game or any other viewer's view.
+  private async seeOppBuffs(ws: WebSocket, data: unknown) {
+    const ctx = await this.draftContext(ws);
+    if (!ctx) return;
+    const { session, match, game } = ctx;
+    if ((session.username ?? "").toLowerCase() !== ADMIN_USERNAME) {
+      return error(ws, "forbidden", "That tool is not available on this account.");
+    }
+    session.seeOppBuffs = Boolean((data as { on?: unknown } | undefined)?.on);
+    // Refresh only this socket's dtState; draftStateFor unmasks the opponent's
+    // held buffs when the flag is on and re-masks them when off. No other seat's
+    // view changes, so the opponent never learns of the reveal.
+    const state = this.draftStateFor(game, match, session.color!, session.seeOppBuffs);
+    if (state) send(ws, "dtState", { state });
   }
 
   private async draftUse(ws: WebSocket, data: unknown) {
