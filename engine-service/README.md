@@ -97,10 +97,11 @@ Deployed on the box alongside the engine (files in `deploy/`):
   `/etc/nerfchess-engine-updater.env` = the same `HOUSE_ENGINE_TOKEN`).
   `POST /update {replayVersion}` starts a rebuild; `GET /update` reports the
   last run. Per-version cooldown (5 min) so a lagging master isn't hammered.
-- `update.sh` — unprivileged: `git fetch origin master` in
-  `/opt/nerfchess-engine/repo` (read-only GitHub deploy key,
-  `~ubuntu/.ssh/github-deploy`), refuses unless master's `REPLAY_VERSION`
-  equals the requested one, builds, then hands off to…
+- `update.sh` — unprivileged: fetches master into `/opt/nerfchess-engine/repo`
+  over HTTPS with a short-lived GitHub App installation token (org policy: no
+  deploy keys; `github-app-token.mjs` mints it — RS256 JWT via `node:crypto`,
+  no deps), refuses unless master's `REPLAY_VERSION` equals the requested one,
+  builds, then hands off to…
 - `nerfchess-engine-apply` (root, `/usr/local/sbin`, the only sudoers grant):
   swaps `/opt/nerfchess-engine/server.mjs`, stamps `ENGINE_REPLAY_VERSION`,
   restarts, health-checks. Keeps the last five bundle backups.
@@ -108,6 +109,15 @@ Deployed on the box alongside the engine (files in `deploy/`):
 The tunnel routes `engine.nerfchess.com` path `^/update$` to `:8789` (rule
 above the engine catch-all in `/etc/cloudflared/config.yml`); everything else
 still hits the engine on `:8787`.
+
+GitHub App setup (one-time): create an org App with **Contents: Read-only**
+as its only permission, install it on the nerfchess repo only, generate a
+private key, then on the box put the PEM at
+`/home/ubuntu/.secrets/nerfchess-github-app.pem` (chmod 600) and fill
+`GITHUB_APP_ID` + `GITHUB_APP_INSTALLATION_ID` in
+`/etc/nerfchess-engine-updater.env` (the installation id is the number in the
+URL of the App's "Configure" page, or `GET /app/installations` with an App
+JWT). Restart `nerfchess-engine-updater` after editing the env.
 
 The Worker side (`pingEngineUpdate` in `worker.ts`) fires this webhook —
 throttled, fire-and-forget — whenever `/move` answers 409. Net effect: deploy
