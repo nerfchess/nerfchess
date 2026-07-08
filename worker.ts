@@ -31,6 +31,7 @@ import {
   HOUSE_ROSTER,
   HousePersona,
   type HouseSkill,
+  type BotDifficulty,
   ensureHouseUsers,
   houseDraftThinkMs,
   houseNerfPickIndex,
@@ -38,6 +39,7 @@ import {
   houseSeedRating,
   houseThinkMs,
   isHouseUserId,
+  pickHouseBotByDifficulty,
   pickHouseMove,
   pickHouseSeek,
   syncHouseRatings,
@@ -271,6 +273,7 @@ type ClientFrame =
   | { t: "takebackAccept" }
   | { t: "takebackDecline" }
   | { t: "queue"; d?: { pool?: unknown; mode?: unknown; target?: { userId?: unknown } } }
+  | { t: "playbot"; d?: { difficulty?: unknown; mode?: unknown; timeSec?: unknown; incrementSec?: unknown; color?: unknown } }
   | { t: "queueCancel" }
   | { t: "watch"; d?: { id?: unknown } }
   | { t: "watchLeave" }
@@ -471,7 +474,7 @@ type HouseSeekEntry = {
 // (deserializing every finished game's move history), which on a bloated table
 // blew the DO CPU limit before it could cache or GC anything: the crash loop.
 const liveIdsKey = "live:ids";
-const buildVersion = "ilovenewjeans-tools-2";
+const buildVersion = "rated-bot-games-1";
 // The single account allowed to use the owner "fun with friends" tools: the
 // -15s opponent-clock button and the god panel card grant. SERVER-verified on
 // every gated message (never trust the client). Compared case-insensitively so
@@ -1024,6 +1027,8 @@ export class GameServer extends DurableObject<Env> {
         return this.declineTakeback(ws);
       case "queue":
         return this.queueJoin(ws, frame.d);
+      case "playbot":
+        return this.playHouseBot(ws, frame.d);
       case "queueCancel":
         return this.queueLeave(ws, true);
       case "watch":
@@ -3531,11 +3536,10 @@ export class GameServer extends DurableObject<Env> {
   // A rated queue match against a house player, identical to a human-vs-human
   // queue match except for the house seat markers.
   private async newHouseMatchRecord(
-    poolName: string,
+    tc: { timeSec: number; incrementSec: number },
     mode: DraftMode,
     seats: { users: Partial<Record<Color, SeatUser>>; bots: Partial<Record<Color, string>> },
   ): Promise<StoredMatch> {
-    const pool = QUEUE_POOLS[poolName];
     const id = await this.newCode(8);
     const cardSnap = await this.cardOverridesSnapshot();
     const cardOverrides = this.draftPoolStamp(cardSnap);
@@ -3546,15 +3550,15 @@ export class GameServer extends DurableObject<Env> {
           ? { whiteNerfId: UNRESTRICTED_NERF.id, blackNerfId: UNRESTRICTED_NERF.id }
           : pickNerfIds(cardSnap.nerfOff)),
         seed: makeSeed(),
-        timeSec: pool.timeSec,
-        incrementSec: pool.incrementSec,
+        timeSec: tc.timeSec,
+        incrementSec: tc.incrementSec,
       },
       tokens: { w: newToken(), b: newToken() },
       disconnectedAt: {},
       opponentGoneNotified: {},
       moves: [],
       result: null,
-      clocks: { w: pool.timeSec * 1000, b: pool.timeSec * 1000 },
+      clocks: { w: tc.timeSec * 1000, b: tc.timeSec * 1000 },
       runningSince: null,
       drawOfferBy: null,
       createdAt: Date.now(),
@@ -3597,23 +3601,109 @@ export class GameServer extends DurableObject<Env> {
     };
     const house = await this.houseSeatUser(db, persona, mode);
     const humanWhite = randomInt(2) === 0;
-    const match = await this.newHouseMatchRecord(poolName, mode, {
-      users: { w: humanWhite ? human : house, b: humanWhite ? house : human },
-      bots: humanWhite ? { b: persona.userId } : { w: persona.userId },
-    });
+    const pool = QUEUE_POOLS[poolName];
+    const match = await this.newHouseMatchRecord(
+      { timeSec: pool.timeSec, incrementSec: pool.incrementSec },
+      mode,
+      {
+        users: { w: humanWhite ? human : house, b: humanWhite ? house : human },
+        bots: humanWhite ? { b: persona.userId } : { w: persona.userId },
+      },
+    );
     await this.saveMatch(match);
     const color: Color = humanWhite ? "w" : "b";
     send(humanWs, "paired", { id: match.id, color, token: match.tokens[color], pool: poolName, mode });
+  }
+
+  // "Play vs bot" (the /play page), for signed-in Buff/Nerf games: create a
+  // RATED house-bot game on demand so a win moves the account rating, exactly
+  // like a queue pickup does. This is the same machinery as pairHumanWithHouse
+  // (both seats are accounts, rated:true, mode bucket), differing only in that
+  // the human chose the opponent's difficulty and the time control directly
+  // instead of a queue pool. A human explicitly asked for THIS game, so it is
+  // honoured past the background house caps (like a targeted seek answer). Any
+  // failure surfaces an error frame; the client then falls back to a local
+  // casual bot game, so the button always starts something.
+  private async playHouseBot(ws: WebSocket, data: unknown) {
+    const session = this.session(ws);
+    if (session.matchId) return error(ws, "already_joined", "This connection already belongs to a game.");
+    if (!session.userId || !session.username) {
+      return error(ws, "auth_required", "Sign in to play a rated bot game.");
+    }
+    const req = (data as
+      | { difficulty?: unknown; mode?: unknown; timeSec?: unknown; incrementSec?: unknown; color?: unknown }
+      | undefined) ?? {};
+    const difficulty: BotDifficulty =
+      req.difficulty === "easy" ? "easy" : req.difficulty === "hard" ? "hard" : "medium";
+    // The player's colour choice ("w"/"b"), or a coin flip when they picked
+    // "random" (or an old client sent nothing).
+    const wantColor: Color | null = req.color === "w" ? "w" : req.color === "b" ? "b" : null;
+    // Only the two rated draft modes exist as house games (Plain chess has no
+    // ranked bucket and stays a local casual game on the client).
+    const mode: DraftMode = req.mode === "nerf" ? "nerf" : "buff";
+    const timeSec = Number.isInteger(req.timeSec) ? Number(req.timeSec) : 600;
+    const incrementSec = Number.isInteger(req.incrementSec) ? Number(req.incrementSec) : 0;
+    if (timeSec < 0 || timeSec > 7200 || incrementSec < 0 || incrementSec > 60) {
+      return error(ws, "invalid_clock", "Unsupported time control.");
+    }
+    if (!(await this.houseEnabled())) {
+      return error(ws, "house_paused", "Bots are resting right now. Try again shortly.");
+    }
+    const db = await this.db();
+    if (!db) return error(ws, "server_unconfigured", "Bot games are unavailable right now.");
+    // Personas already seated in a live game are unavailable; pick a free one in
+    // the chosen difficulty band. loadLiveMatches is the bounded live-index read
+    // the house tick already uses (never a match-table scan).
+    const busy = new Set<string>();
+    for (const m of await this.loadLiveMatches()) {
+      if (m.result) continue;
+      for (const c of ["w", "b"] as Color[]) {
+        const id = m.bots?.[c];
+        if (id) busy.add(id);
+      }
+    }
+    const persona = pickHouseBotByDifficulty(difficulty, busy, randomInt);
+    if (!persona) return error(ws, "no_bot", "Every bot is busy right now. Try again shortly.");
+    let rating = 1500;
+    let rd = 350;
+    let vol = 0.06;
+    let avatar: string | null = null;
+    const row = await this.seatCategoryRating(db, session.userId, mode);
+    if (row) {
+      rating = row.rating;
+      rd = row.rd;
+      vol = row.vol;
+      avatar = row.avatar;
+    }
+    const human: SeatUser = { id: session.userId, name: session.username, rating, rd, vol, avatar };
+    const house = await this.houseSeatUser(db, persona, mode);
+    const humanWhite = wantColor ? wantColor === "w" : randomInt(2) === 0;
+    const match = await this.newHouseMatchRecord(
+      { timeSec, incrementSec },
+      mode,
+      {
+        users: { w: humanWhite ? human : house, b: humanWhite ? house : human },
+        bots: humanWhite ? { b: persona.userId } : { w: persona.userId },
+      },
+    );
+    await this.saveMatch(match);
+    const color: Color = humanWhite ? "w" : "b";
+    send(ws, "paired", { id: match.id, color, token: match.tokens[color], pool: "bot", mode });
   }
 
   private async startHouseVsHouseGame(a: HousePersona, b: HousePersona, db: D1Database) {
     const { pool, mode } = pickHouseSeek(randomInt);
     const aWhite = randomInt(2) === 0;
     const [white, black] = aWhite ? [a, b] : [b, a];
-    const match = await this.newHouseMatchRecord(pool, mode, {
-      users: { w: await this.houseSeatUser(db, white, mode), b: await this.houseSeatUser(db, black, mode) },
-      bots: { w: white.userId, b: black.userId },
-    });
+    const tc = QUEUE_POOLS[pool];
+    const match = await this.newHouseMatchRecord(
+      { timeSec: tc.timeSec, incrementSec: tc.incrementSec },
+      mode,
+      {
+        users: { w: await this.houseSeatUser(db, white, mode), b: await this.houseSeatUser(db, black, mode) },
+        bots: { w: white.userId, b: black.userId },
+      },
+    );
     // Nerf mode opens with the nerf draft (the house seats pick like anyone
     // else); Buff mode starts outright.
     if (mode !== "buff") {
