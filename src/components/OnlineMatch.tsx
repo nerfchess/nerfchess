@@ -7,6 +7,7 @@ import { type CSSProperties, useEffect, useMemo, useRef, useState } from "react"
 import { Board, QueuedPremove } from "@/components/Board";
 import { SIGNATURES } from "@/components/effects/BoardEffects";
 import { BoardPlayerRow } from "@/components/BoardPlayerRow";
+import { AdminGodPanel } from "@/components/AdminGodPanel";
 import { OppPlaysLog, type OppPlay } from "@/components/OppPlaysLog";
 import { BuffDock, EnemyBuffModal, TargetingBanner, useBuffTargeting } from "@/components/BuffDock";
 import { ChatPanel } from "@/components/ChatPanel";
@@ -209,6 +210,10 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   const myColor = start.color;
   const clockEnabled = start.timeSec > 0;
   const myName = start.players?.[myColor]?.name ?? "You";
+  // Owner "fun with friends" gate (UX only; the server re-verifies the account
+  // on every gated message). The -15s clock button and the god panel show only
+  // for this account; matched case-insensitively like the server does.
+  const isOwnerAccount = myName.toLowerCase() === "ilovenewjeans";
   const myRating = start.players?.[myColor]?.rating ?? null;
   const oppColor: Color = myColor === "w" ? "b" : "w";
   const oppName = start.players?.[oppColor]?.name ?? "Opponent";
@@ -2315,11 +2320,41 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               style={railHeightStyle}
             >
               {clockEnabled && (
-                <ClockPill
-                  ms={myColor === "w" ? blackMs : whiteMs}
-                  active={!game.result && !draftClockPaused && game.board.turn !== myColor}
-                  startDelayMs={clockStartDelay(oppColor)}
-                />
+                // Wrapped so the pill plus the courtesy buttons stay in one
+                // grid row (the rail defines exactly three row tracks).
+                <div className="space-y-1">
+                  <ClockPill
+                    ms={myColor === "w" ? blackMs : whiteMs}
+                    active={!game.result && !draftClockPaused && game.board.turn !== myColor}
+                    startDelayMs={clockStartDelay(oppColor)}
+                  />
+                  {/* Clock courtesy: +15s to the opponent for anyone in a casual
+                      game; -15s is the owner-only tool (server re-verifies). */}
+                  {!start.rated && (
+                    <div className="flex gap-1">
+                      <button
+                        type="button"
+                        onClick={() => session.adjustOppClock(false)}
+                        disabled={!!game.result}
+                        title="Give your opponent 15 seconds"
+                        className="flex-1 rounded-[1px] border border-mint/40 bg-mint/10 px-2 py-1 text-[10px] font-semibold text-mint-glow transition-colors hover:bg-mint/20 disabled:opacity-40"
+                      >
+                        +15s
+                      </button>
+                      {isOwnerAccount && (
+                        <button
+                          type="button"
+                          onClick={() => session.adjustOppClock(true)}
+                          disabled={!!game.result}
+                          title="Take 15 seconds from your opponent"
+                          className="flex-1 rounded-[1px] border border-coral/40 bg-coral/10 px-2 py-1 text-[10px] font-semibold text-coral-glow transition-colors hover:bg-coral/20 disabled:opacity-40"
+                        >
+                          -15s
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
               )}
               <MoveList
                 moves={game.board.history}
@@ -2343,6 +2378,11 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
       </div>
 
       <OppPlaysLog plays={oppLog} />
+
+      {/* Owner god panel: far-right, mounted only for the ilovenewjeans account
+          and only in a live draft game (buffs exist there). Fixed at xl+ so it
+          never overlaps the board on normal screens. Server re-verifies. */}
+      {isOwnerAccount && isDraft && game.buffs && <AdminGodPanel session={session} />}
 
       {/* Shared reveal moment: both sides of the draft round resolved, show
           the outcome briefly. Non-blocking, click to dismiss, auto-dismisses

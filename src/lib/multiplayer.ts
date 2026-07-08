@@ -1086,6 +1086,23 @@ export class MPSession {
     return this.sendFrame("dtTarget", { buffIndex, picks });
   }
 
+  // ---------------- owner "fun with friends" tools ----------------
+
+  // Nudge the opponent's clock by 15 seconds. `subtract` false adds time (the
+  // courtesy +15s any player may send in a casual game); true subtracts it (the
+  // owner-only -15s). The server owns the magnitude and re-verifies the account
+  // for the subtract path: only the sign is sent here.
+  adjustOppClock(subtract: boolean): boolean {
+    return this.sendFrame("adjustOppClock", { delta: subtract ? -1 : 1 });
+  }
+
+  // Owner god panel: summon a card straight into my own hand. The server
+  // verifies the account before granting and answers with a refreshed
+  // draft-state carrying the new card (no draft, no opponent notice).
+  adminGrant(cardId: string): boolean {
+    return this.sendFrame("adminGrant", { id: cardId });
+  }
+
   offerDraw(): boolean {
     return this.sendFrame("drawOffer");
   }
