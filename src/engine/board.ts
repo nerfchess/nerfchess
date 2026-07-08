@@ -50,8 +50,15 @@ const BISHOP_DIRS = [[1, 1], [1, -1], [-1, 1], [-1, -1]];
 const ROOK_DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
 const KING_DIRS = [...BISHOP_DIRS, ...ROOK_DIRS];
 
-// Squares attacked by `color`; used for detecting check and rule-specific constraints.
-export function attackedBy(board: BoardState, color: Color): Set<Square> {
+// Squares attacked by `color`; used for detecting check and rule-specific
+// constraints. `extra` supplies additional squares `color` can strike through
+// BUFF-granted augmented moves (a rook that also steps diagonally, a camel
+// knight, an amazon...). Standard piece movement lives here in board.ts, but
+// the augmented move set is owned by the buff pipeline in game.ts, so a caller
+// with game context passes those squares in (see buffAugmentedAttacks /
+// gameInCheck in game.ts). Callers without buff context omit `extra` and get
+// the standard-move attack set unchanged.
+export function attackedBy(board: BoardState, color: Color, extra?: Iterable<Square>): Set<Square> {
   const attacked = new Set<Square>();
   for (let sq = 0; sq < 64; sq++) {
     const p = board.pieces[sq];
@@ -95,6 +102,7 @@ export function attackedBy(board: BoardState, color: Color): Set<Square> {
       }
     }
   }
+  if (extra) for (const s of extra) attacked.add(s);
   return attacked;
 }
 
@@ -106,10 +114,17 @@ export function findKing(board: BoardState, color: Color): Square | null {
   return null;
 }
 
-export function isInCheck(board: BoardState, color: Color): boolean {
+// `extraOppAttacks` are squares the OPPONENT can strike via buff-granted
+// augmented moves (supplied by a game-aware caller). Omit it and check
+// detection considers only standard piece movement, exactly as before.
+export function isInCheck(
+  board: BoardState,
+  color: Color,
+  extraOppAttacks?: Iterable<Square>,
+): boolean {
   const ks = findKing(board, color);
   if (ks == null) return false;
-  return attackedBy(board, color === "w" ? "b" : "w").has(ks);
+  return attackedBy(board, color === "w" ? "b" : "w", extraOppAttacks).has(ks);
 }
 
 /**

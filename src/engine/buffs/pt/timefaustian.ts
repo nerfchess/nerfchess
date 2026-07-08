@@ -117,7 +117,12 @@ export const PT_TIME_CARDS: Buff[] = [
   // Engine order (game.ts): a blockedDrafts round is skipped WITHOUT consuming
   // prepThree / bankBonus / takeBoth, so the two skips resolve first and the
   // banked three-card, tier-up, take-all offer lands on the draft after them.
-  // Same net as pt.txt's "three from the next tier up, skip your next two".
+  // rollOffer (draft.ts) guards the prepThree offer against the apex-bank
+  // collapse: a banked skip that would otherwise fold into a single top-tier
+  // apex card stays a three-card, one-tier-higher offer here, so All In always
+  // pays out three cards (not one) even when it banks into the top of the curve.
+  // takeBoth then auto-takes all three. Same net as pt.txt's "three from the
+  // next tier up, skip your next two".
   card(
     {
       id: "all_in",
