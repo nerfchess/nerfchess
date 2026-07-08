@@ -1,5 +1,8 @@
 import { Buff, BuffMatchState, BuffOffer, PlayerBuffState, isBoon } from "./buff";
 import { BUFF_BY_ID, BUFF_POOL_BY_TIER } from "./buffs/library";
+import { FANTASY_CARDS } from "./buffs/fantasy";
+import { FUNNY_CARDS } from "./buffs/funny";
+import { PT_CARDS } from "./buffs/pt";
 import { TIER9 } from "./buffs/tier9";
 import { Tier } from "./nerf";
 import { RNG } from "./rng";
@@ -41,6 +44,33 @@ export const NERF_MODE_CADENCE = 5;
 // runs through the same draft RNG stream as the card pick, so offers stay
 // deterministic for a given seed.
 export const HEX_SHARE = 0.6;
+
+// ---------------------------------------------------------------------------
+// TEMPORARY draft weighting (owner request, pending a moderator panel).
+// The Funny, Fantasy, and "meta" collections should be offered about 50% more
+// often in the Buff draft. There is no separate "meta" collection: the
+// meta/deception cards (Computer Virus and friends) live in the Funny / meta
+// collection (see src/lib/cardCollections.ts), so boosting Funny covers both
+// funny and meta. Fantasy is its own collection.
+//
+// Implemented as deterministic draw multiplicity, NOT a float weight: a boosted
+// card enters the draw pool DRAFT_BOOST_MULT times and every other card
+// DRAFT_BASE_MULT times, so the odds ratio is exactly 3:2 = 1.5x. The pick is
+// still a single seeded rng.int(pool.length) draw, and both clients and the
+// server build the identical weighted pool from the same id set, so offers stay
+// byte-identical across replicas (desync-critical). To revert when the mod panel
+// lands: set DRAFT_BOOST_MULT === DRAFT_BASE_MULT (or delete the weighting block
+// in rollCards). Single knob, easy to flip.
+const DRAFT_BASE_MULT: number = 2;
+const DRAFT_BOOST_MULT: number = 3; // 3 / 2 = 1.5x more likely than a base card.
+
+// The boosted-collection card ids, built from the same source barrels
+// cardCollections resolves Funny (FUNNY + PT) and Fantasy membership from, so
+// this engine-side draft stays self-contained (no @/lib import) and cannot
+// drift in which cards each collection holds.
+const BOOSTED_COLLECTION_IDS = new Set<string>(
+  [...FUNNY_CARDS, ...PT_CARDS, ...FANTASY_CARDS].map((c) => c.id),
+);
 
 // ---------------------------------------------------------------------------
 // Card overrides (server side): the game server can install a snapshot of
@@ -234,7 +264,24 @@ function rollCards(
       const bucket = pool.filter((b) => (b.category === "hex") === wantHex);
       if (bucket.length > 0) pool = bucket;
     }
-    const card = pool[rng.int(pool.length)];
+    // TEMPORARY: bias the Buff draft toward the Funny / Fantasy / meta
+    // collections (see BOOSTED_COLLECTION_IDS above). Build a weighted draw
+    // pool by adding each boosted card DRAFT_BOOST_MULT times and every other
+    // card DRAFT_BASE_MULT times (a 3:2 = 1.5x odds ratio), then draw once. The
+    // single rng.int() below picks from this weighted pool, and because both
+    // replicas construct the same pool in the same order, the draw is identical
+    // (desync-safe). Buff mode only, so it never touches the nerf-mode buckets
+    // or hex/item odds. Revert by equalizing the two multipliers.
+    let drawPool = pool;
+    if (bs.mode === "buff" && DRAFT_BOOST_MULT !== DRAFT_BASE_MULT) {
+      const weighted: Buff[] = [];
+      for (const b of pool) {
+        const reps = BOOSTED_COLLECTION_IDS.has(b.id) ? DRAFT_BOOST_MULT : DRAFT_BASE_MULT;
+        for (let r = 0; r < reps; r++) weighted.push(b);
+      }
+      drawPool = weighted;
+    }
+    const card = drawPool[rng.int(drawPool.length)];
     used.add(card.id);
     cards.push({ id: card.id, tier: overriddenTier(card) });
   }
