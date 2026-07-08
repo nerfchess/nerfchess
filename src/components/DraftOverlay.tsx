@@ -1039,15 +1039,20 @@ function RevealColumn({ label, side }: { label: string; side: DraftRevealSide })
           const roman = TIER_ROMAN[c.tier] ?? "";
           if (def) {
             return (
-              <span key={i} className="flex items-center gap-1.5">
-                <span className={`min-w-0 truncate font-display text-[13px] font-semibold tier-${c.tier}`}>
-                  {def.name}
+              <span key={i} className="flex flex-col gap-0.5">
+                <span className="flex items-center gap-1.5">
+                  <span className={`min-w-0 truncate font-display text-[13px] font-semibold tier-${c.tier}`}>
+                    {def.name}
+                  </span>
+                  <span
+                    className={`shrink-0 rounded-[1px] border px-1.5 py-px font-display text-[9px] font-bold tier-bg-${c.tier} tier-${c.tier}`}
+                  >
+                    {roman}
+                  </span>
                 </span>
-                <span
-                  className={`shrink-0 rounded-[1px] border px-1.5 py-px font-display text-[9px] font-bold tier-bg-${c.tier} tier-${c.tier}`}
-                >
-                  {roman}
-                </span>
+                {/* What the card does: shown only for a revealed pick, so a
+                    masked draft (below) never leaks its effect. */}
+                <span className="block text-[10px] leading-snug text-parchment-300">{def.description}</span>
               </span>
             );
           }
