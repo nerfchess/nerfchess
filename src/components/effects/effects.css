@@ -874,6 +874,41 @@
 }
 .fx-sig-phoenix { animation: fx-sig-phoenix 1.15s var(--ease-out, cubic-bezier(0.2, 0.8, 0.2, 1)) both; transform-origin: 50% 100%; }
 
+/* --- 10h. Batch 8 signature spectacles (flavor pass) ------------------------
+   Removals (detonate / cinder / purge line-storm-realm / call-down lightning /
+   annihilation / meteor cross / ruin) plus effect-data spectacles (banner of
+   war, ice age, world end, rust, mass petrify, walnut queen, amazon, titan
+   legion, living god, eternal reign, godslayer, onslaught, resurrections, iron
+   legion, second coming, lava floor, necromancer, werewolf, last meal). All of
+   them compose the Batch 1-7 classes above (fx-sig-flash / -ring / -shock /
+   -scorch / -ash / -frost / -swirl / -spin / -reticle / -bolt / -implode /
+   -streak / -crumble / -crown / -crownfall / -slab / -petrify / -grow / -arc /
+   -shaft / -rise / -afterimage / -star), so they inherit the same
+   transform/opacity + reduced-motion behaviour. Only two motions are genuinely
+   new: a cavalry lunge and a ground shudder. */
+
+/* Gallop: a charging horse (or war-charge dash) lunges forward and past. */
+@keyframes fx-sig-gallop {
+  0% { opacity: 0; transform: translateX(-30%) translateY(6%) scale(0.85); }
+  30% { opacity: 1; transform: translateX(0) translateY(0) scale(1); }
+  55% { transform: translateX(10%) translateY(-4%) scale(1.03); }
+  75% { transform: translateX(18%) translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateX(34%) translateY(4%) scale(0.98); }
+}
+.fx-sig-gallop { animation: fx-sig-gallop 0.7s var(--ease-out, cubic-bezier(0.2, 0.8, 0.2, 1)) both; }
+
+/* Quake: an apocalyptic slab heaves in, shudders the ground, and fades. */
+@keyframes fx-sig-quake {
+  0% { opacity: 0; transform: translateY(8%) scaleY(1.1); }
+  24% { opacity: 1; transform: translateY(0) scaleY(1); }
+  38% { transform: translateX(-2%) translateY(1%); }
+  52% { transform: translateX(2%) translateY(-1%); }
+  66% { transform: translateX(-1.4%) translateY(0.6%); }
+  80% { opacity: 1; transform: none; }
+  100% { opacity: 0; transform: none; }
+}
+.fx-sig-quake { animation: fx-sig-quake 0.9s var(--ease-out, ease-out) both; transform-origin: 50% 100%; }
+
 /* --- 11. Bound-buff marker + effect popover ---------------------------------
    The Duelist-style corner sigil pops in once on mount (a piece just gained a
    bound buff), then holds. The effect-explanation popover fades and rises a
@@ -1003,7 +1038,12 @@
   .fx-sig-wave,
   .fx-sig-moat,
   .fx-sig-meteor,
-  .fx-sig-phoenix {
+  .fx-sig-phoenix,
+  /* Batch 8 flavor pass: the cavalry lunge and the ground shudder are the only
+     new classes; every other Batch 8 visual reuses the classes already listed
+     above. */
+  .fx-sig-gallop,
+  .fx-sig-quake {
     animation: none !important;
     opacity: 0 !important;
   }

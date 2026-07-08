@@ -1210,7 +1210,42 @@ export type SigVisual =
   | "flood"
   | "frozenmoat"
   | "meteorstorm"
-  | "phoenixrise";
+  | "phoenixrise"
+  // --- Batch 8 (flavor pass): unregistered removals that render off the
+  // detonation diff, plus a set of effect-data spectacles keyed like their
+  // shipped peers (empower / frozen / walnut / rally / summon / blindfold).
+  // Removal-sourced visuals fire today; the effect-data ones join the same
+  // inert-until-wired zone set as banner_of_war and the rest of Batch 2-7. ---
+  | "detonate"
+  | "cinderstrike"
+  | "purgestorm"
+  | "roulette"
+  | "purgeline"
+  | "calldown"
+  | "annihilation"
+  | "meteorcross"
+  | "purgerealm"
+  | "ruin"
+  | "bannerwar"
+  | "iceage"
+  | "masspetrify"
+  | "walnutcurse"
+  | "amazoncrown"
+  | "titanlegion"
+  | "livinggod"
+  | "eternalreign"
+  | "godslayer"
+  | "onslaught"
+  | "resurrection"
+  | "ironlegion"
+  | "secondcoming"
+  | "worldend"
+  | "lavafloor"
+  | "necromancer"
+  | "werewolf"
+  | "rustlock"
+  | "grandrevive"
+  | "lastmeal";
 export type SigOrdering = "file" | "sweep" | "octagon" | "line" | "radial";
 export type SigSoundKey =
   | "nova"
@@ -1396,7 +1431,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   dragon_form: { ordering: "radial", staggerMs: 0, victims: ["r"], visual: "wings", hasLead: true, sound: "colossus", source: "empower" },
   celestial_ascension: { ordering: "sweep", staggerMs: 80, victims: ["b"], visual: "wings", hasLead: false, sound: "colossus", source: "empower" },
   god_king: { ordering: "radial", staggerMs: 0, victims: ["k"], visual: "coronation", hasLead: true, sound: "coronation", source: "empower" },
-  banner_of_war: { ordering: "radial", staggerMs: 60, victims: ["n"], visual: "warhorn", hasLead: true, sound: "blitz", source: "empower" },
+  banner_of_war: { ordering: "radial", staggerMs: 60, victims: ["n"], visual: "bannerwar", hasLead: true, sound: "blitz", source: "empower" },
 
   // Barred walls (blindfold zone).
   frost_wall: { ordering: "sweep", staggerMs: 60, victims: "all", visual: "icewall", hasLead: false, sound: "wall", source: "blindfold" },
@@ -1595,6 +1630,49 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   cataclysmic_meteor: { ordering: "sweep", staggerMs: 80, victims: ["p", "n", "b", "r", "q"], visual: "meteorstorm", hasLead: true, sound: "atomic" },
   phoenix_rebirth: { ordering: "sweep", staggerMs: 85, victims: "all", visual: "phoenixrise", hasLead: true, sound: "wall", source: "summon" },
   full_resurrection: { ordering: "sweep", staggerMs: 90, victims: "all", visual: "phoenixrise", hasLead: true, sound: "wall", source: "summon" },
+
+  // --- Batch 8: flavor pass. A round of dramatically-named cards that still
+  // fell back to the plain detonation burst or a shared motif. The REMOVAL
+  // entries (source omitted) fire today off the detonation diff; the effect-
+  // data entries reuse an already-shipped SigZone + SigSoundKey and join the
+  // same inert-until-wired set as the rest of Batch 2-7 (they light up once
+  // Board feeds signatures from the named fx zone, the pending wiring shared
+  // by every source !== "removal" entry above). Each visual is a new flat-SVG
+  // one-shot (coral / mint / sun / gold, no gradients) added with the Batch 8
+  // art below and hidden under reduced motion. ---
+
+  // Removals (detonation diff, render today).
+  detonate: { ordering: "radial", staggerMs: 40, victims: "all", visual: "detonate", hasLead: true, sound: "atomic" },
+  we_cinder_strike: { ordering: "radial", staggerMs: 0, victims: ["p"], visual: "cinderstrike", hasLead: false, sound: "atomic" },
+  purge_storm: { ordering: "sweep", staggerMs: 60, victims: ["p"], visual: "purgestorm", hasLead: false, sound: "extinction" },
+  roulette: { ordering: "radial", staggerMs: 0, victims: "all", visual: "roulette", hasLead: true, sound: "rampage" },
+  purge_line: { ordering: "sweep", staggerMs: 55, victims: ["p", "n", "b", "r"], visual: "purgeline", hasLead: false, sound: "extinction" },
+  nerf_this: { ordering: "radial", staggerMs: 90, victims: ["p", "n", "b"], visual: "calldown", hasLead: true, sound: "lightning" },
+  annihilation: { ordering: "radial", staggerMs: 45, victims: ["p", "n", "b", "r"], visual: "annihilation", hasLead: true, sound: "extinction" },
+  meteor: { ordering: "radial", staggerMs: 35, victims: "all", visual: "meteorcross", hasLead: true, sound: "atomic" },
+  purge_realm: { ordering: "sweep", staggerMs: 40, victims: ["n", "b"], visual: "purgerealm", hasLead: false, sound: "extinction" },
+  ruin: { ordering: "sweep", staggerMs: 60, victims: ["p", "n"], visual: "ruin", hasLead: true, sound: "cataclysm" },
+
+  // Effect-data spectacles (inert-until-wired, like their shipped peers).
+  ice_age: { ordering: "radial", staggerMs: 50, victims: "all", visual: "iceage", hasLead: true, sound: "massfreeze", source: "frozen" },
+  world_end: { ordering: "radial", staggerMs: 55, victims: "all", visual: "worldend", hasLead: true, sound: "massfreeze", source: "frozen" },
+  rust: { ordering: "radial", staggerMs: 45, victims: "all", visual: "rustlock", hasLead: false, sound: "massfreeze", source: "frozen" },
+  mass_petrify: { ordering: "sweep", staggerMs: 55, victims: ["n", "b"], visual: "masspetrify", hasLead: false, sound: "petrify", source: "walnut" },
+  walnut_queen: { ordering: "radial", staggerMs: 0, victims: ["q"], visual: "walnutcurse", hasLead: true, sound: "petrify", source: "walnut" },
+  amazon: { ordering: "radial", staggerMs: 0, victims: ["q"], visual: "amazoncrown", hasLead: true, sound: "coronation", source: "empower" },
+  titan_legion: { ordering: "radial", staggerMs: 0, victims: "all", visual: "titanlegion", hasLead: true, sound: "colossus", source: "empower" },
+  living_god: { ordering: "radial", staggerMs: 0, victims: "all", visual: "livinggod", hasLead: true, sound: "colossus", source: "empower" },
+  eternal_reign: { ordering: "radial", staggerMs: 0, victims: ["k"], visual: "eternalreign", hasLead: true, sound: "coronation", source: "empower" },
+  godslayer_knight: { ordering: "radial", staggerMs: 0, victims: ["n"], visual: "godslayer", hasLead: true, sound: "coronation", source: "empower" },
+  werewolf: { ordering: "radial", staggerMs: 0, victims: "all", visual: "werewolf", hasLead: true, sound: "colossus", source: "empower" },
+  last_meal: { ordering: "radial", staggerMs: 0, victims: ["k"], visual: "lastmeal", hasLead: false, sound: "coronation", source: "empower" },
+  onslaught: { ordering: "radial", staggerMs: 60, victims: "all", visual: "onslaught", hasLead: true, sound: "blitz", source: "rally" },
+  resurrection: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "resurrection", hasLead: true, sound: "wall", source: "summon" },
+  grand_resurrection: { ordering: "sweep", staggerMs: 85, victims: "all", visual: "grandrevive", hasLead: true, sound: "wall", source: "summon" },
+  iron_legion: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "ironlegion", hasLead: false, sound: "wall", source: "summon" },
+  second_coming: { ordering: "radial", staggerMs: 0, victims: "all", visual: "secondcoming", hasLead: true, sound: "wall", source: "summon" },
+  necromancer: { ordering: "radial", staggerMs: 0, victims: "all", visual: "necromancer", hasLead: true, sound: "wall", source: "summon" },
+  lava_floor: { ordering: "sweep", staggerMs: 55, victims: "all", visual: "lavafloor", hasLead: false, sound: "wall", source: "blindfold" },
 };
 
 /** A jagged lightning bolt that fills its wrapper (BoltGlyph is fixed-size). */
@@ -4188,6 +4266,495 @@ function PhoenixRiseBurst({ lead, delayMs }: { lead: boolean; delayMs: number })
   );
 }
 
+// --- 10h. Batch 8 signature visuals (flavor pass) ---------------------------
+// Same rules as Batch 1-7: keyed one-shots, transform/opacity only, FLAT SVG
+// fills and solid discs (no gradients, no glow), 1px corners, coral / mint /
+// sun / gold accents, hidden under reduced motion. Everything composes the
+// shared fx-sig-* classes; only fx-sig-gallop (a cavalry lunge) and fx-sig-quake
+// (a ground shudder) are genuinely new. Removal visuals render off the
+// detonation diff; the effect-data ones join the inert-until-wired zone set.
+
+// -- Removals (render off the detonation diff) --
+
+/** Detonate: a sacrificed pawn goes off like a bomb, blasting its neighbours.
+ * Lead is the central thump; each cleared square gets a fireball and scorch. */
+function DetonateBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-flash absolute inset-[18%] block rounded-full" style={{ background: "rgba(255,196,120,0.85)", animationDelay: `${delayMs}ms` }} />
+      <span className="fx-sig-ring absolute inset-[14%] block rounded-full" style={{ border: "1.5px solid rgba(255,168,80,0.95)", animationDelay: `${delayMs}ms` }} />
+      <ShardBurst vectors={BURST_BIG} fill="#e6a85c" stroke="#7a3a12" delayMs={delayMs} sizePct={12} />
+      <span className="fx-sig-scorch absolute inset-[26%] block rounded-full" style={{ background: "rgba(24,14,8,0.72)", animationDelay: `${delayMs + 180}ms` }} />
+      {lead && <span className="fx-sig-shock absolute inset-[8%] block rounded-full" style={{ border: "2px solid rgba(255,214,120,0.9)", animationDelay: `${delayMs}ms` }} />}
+    </span>
+  );
+}
+
+/** Cinder Strike: a single ember slams one pawn to ash. */
+function CinderStrikeBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-flash absolute inset-[24%] block rounded-full" style={{ background: "rgba(255,150,60,0.8)", animationDelay: `${delayMs}ms` }} />
+      <ShardBurst vectors={BURST_MED} fill="#ff8a3c" stroke="#7a3a12" delayMs={delayMs} sizePct={10} />
+      <span className="fx-sig-ash absolute left-[40%] top-[16%] block h-[24%] w-[20%] rounded-full" style={{ background: "rgba(230,110,60,0.5)", animationDelay: `${delayMs + 120}ms` }} />
+      <span className="fx-sig-scorch absolute inset-[30%] block rounded-full" style={{ background: "rgba(26,16,8,0.68)", animationDelay: `${delayMs + 160}ms` }} />
+    </span>
+  );
+}
+
+/** Purge Storm: pawns disintegrate into motes while a rime line glazes the
+ * survivors that freeze. */
+function PurgeStormBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-frost absolute inset-x-[6%] top-[44%] block h-[10%] rounded-[1px]" style={{ background: "rgba(198,234,255,0.55)", animationDelay: `${delayMs}ms` }} />
+      <ShardBurst vectors={BURST_MED} fill="#dbe7f2" stroke="#8aa0b4" delayMs={delayMs} sizePct={9} />
+      <span className="fx-sig-ash absolute inset-[26%] block rounded-full" style={{ background: "rgba(210,224,236,0.5)", animationDelay: `${delayMs + 80}ms` }} />
+    </span>
+  );
+}
+
+/** Roulette: a wheel spins and a piece is flicked off with a shower of chips. */
+function RouletteBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-swirl absolute inset-[14%] block" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <circle cx="20" cy="20" r="17" fill="none" stroke="#e0776b" strokeWidth="2" />
+          <g stroke="#7a2f28" strokeWidth="1.4" fill="none"><path d="M20 3 V37 M3 20 H37 M8 8 L32 32 M32 8 L8 32" /></g>
+          <circle cx="20" cy="20" r="3" fill="#e6bf6a" stroke="#7a5b23" strokeWidth="1" />
+        </svg>
+      </span>
+      <span className="fx-sig-spin absolute inset-[32%] block" style={{ animationDelay: `${delayMs + 200}ms` }}>
+        <SigShard fill="#e6bf6a" stroke="#7a5b23" variant={1} />
+      </span>
+      {lead && <ShardBurst vectors={PIN_STARS} fill="#ffd95e" stroke="#8a6414" delayMs={delayMs + 200} sizePct={9} />}
+    </span>
+  );
+}
+
+/** Purge Line: a rank-wide bar of light sweeps across, unmaking the pieces. */
+function PurgeLineBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-frost absolute inset-x-[2%] top-[40%] block h-[18%] rounded-[1px]" style={{ background: "rgba(255,244,200,0.6)", animationDelay: `${delayMs}ms` }} />
+      <ShardBurst vectors={BURST_MED} fill="#f0e2b0" stroke="#a88a3a" delayMs={delayMs + 60} sizePct={9} />
+      <span className="fx-sig-flash absolute inset-[30%] block rounded-full" style={{ background: "rgba(255,240,190,0.7)", animationDelay: `${delayMs + 40}ms` }} />
+    </span>
+  );
+}
+
+/** Nerf This: lightning is called down onto the marked pieces. Reticle locks,
+ * the bolt cracks, a scorch flashes; lead adds a shock ring. */
+function CalldownBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-reticle absolute inset-[16%] block rounded-full" style={{ border: "1.5px solid rgba(255,214,94,0.9)", animationDelay: `${delayMs}ms` }} />
+      <span className="fx-sig-bolt absolute left-[38%] top-[-4%] block h-[74%] w-[24%]" style={{ animationDelay: `${delayMs + 80}ms` }}><JagBolt /></span>
+      <span className="fx-sig-scorch absolute inset-[30%] block rounded-full" style={{ background: "rgba(30,22,10,0.6)", animationDelay: `${delayMs + 200}ms` }} />
+      {lead && <span className="fx-sig-shock absolute inset-[10%] block rounded-full" style={{ border: "2px solid rgba(255,232,150,0.85)", animationDelay: `${delayMs + 120}ms` }} />}
+    </span>
+  );
+}
+
+/** Annihilation: pieces are pulled into a void core and collapse to nothing. */
+function AnnihilationBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span
+        className="fx-sig-implode absolute left-1/2 top-1/2 ml-[-20%] mt-[-20%] block h-[40%] w-[40%] rounded-full"
+        style={{ background: "rgba(16,12,20,0.9)", border: "1.5px solid rgba(160,140,196,0.9)", "--dx": "0%", "--dy": "0%", "--rot": "0deg", animationDelay: `${delayMs}ms` } as React.CSSProperties}
+      />
+      {BURST_BIG.map((v, i) => (
+        <span
+          key={i}
+          className="fx-sig-implode absolute left-1/2 top-1/2 ml-[-5%] mt-[-5%] block h-[10%] w-[10%]"
+          style={{ "--dx": v.dx, "--dy": v.dy, "--rot": v.rot, animationDelay: `${delayMs + v.delay}ms` } as React.CSSProperties}
+        >
+          <SigShard fill="#a48cc4" stroke="#463357" variant={i} />
+        </span>
+      ))}
+      {lead && <span className="fx-sig-flash absolute inset-[28%] block rounded-full" style={{ background: "rgba(180,160,214,0.6)", animationDelay: `${delayMs + 260}ms` }} />}
+    </span>
+  );
+}
+
+/** Meteor: a meteor slams the crossing square and a plus-shaped shock rolls
+ * out along the struck rank and file. */
+function MeteorCrossBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-streak absolute left-[-6%] top-[-6%] block h-[64%] w-[64%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <path d="M2 2 L26 26" stroke="#e6a85c" strokeWidth="3" strokeLinecap="round" />
+          <circle cx="28" cy="28" r="5" fill="#d98a4a" stroke="#7a3a12" strokeWidth="1.2" />
+        </svg>
+      </span>
+      <span className="fx-sig-shock absolute inset-[6%] block" style={{ animationDelay: `${delayMs + 160}ms` }}>
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <path d="M20 2 V38 M2 20 H38" stroke="rgba(255,168,80,0.9)" strokeWidth="2.4" strokeLinecap="round" fill="none" />
+        </svg>
+      </span>
+      <ShardBurst vectors={BURST_MED} fill="#e6a85c" stroke="#7a3a12" delayMs={delayMs + 160} sizePct={11} />
+      {lead && <span className="fx-sig-scorch absolute inset-[26%] block rounded-full" style={{ background: "rgba(24,14,8,0.7)", animationDelay: `${delayMs + 220}ms` }} />}
+    </span>
+  );
+}
+
+/** Purge Realm: enemy minors are banished in a purple arcane shimmer. */
+function PurgeRealmBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-swirl absolute inset-[20%] block" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <circle cx="20" cy="20" r="16" fill="none" stroke="#a48cc4" strokeWidth="1.4" strokeDasharray="4 4" />
+          <circle cx="20" cy="20" r="9" fill="none" stroke="#c9b6e0" strokeWidth="1" />
+        </svg>
+      </span>
+      <ShardBurst vectors={BURST_MED} fill="#c9b6e0" stroke="#463357" delayMs={delayMs + 80} sizePct={9} />
+      <span className="fx-sig-flash absolute inset-[30%] block rounded-full" style={{ background: "rgba(180,160,214,0.55)", animationDelay: `${delayMs}ms` }} />
+    </span>
+  );
+}
+
+const RUIN_CHUNKS = [
+  { left: "30%", top: "26%", w: "20%", c: "#8c8c92", d: 0 },
+  { left: "52%", top: "32%", w: "16%", c: "#71717a", d: 50 },
+  { left: "36%", top: "46%", w: "22%", c: "#9a9a9f", d: 90 },
+];
+
+/** Ruin: the piece crumbles into a heap of rubble with a puff of dust. */
+function RuinBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      {RUIN_CHUNKS.map((s, i) => (
+        <span
+          key={i}
+          className="fx-sig-crumble absolute block rounded-[1px]"
+          style={{ left: s.left, top: s.top, width: s.w, height: s.w, background: s.c, border: "1px solid rgba(40,40,46,0.8)", animationDelay: `${delayMs + s.d}ms` }}
+        />
+      ))}
+      <span className="fx-sig-ash absolute inset-x-[24%] bottom-[10%] block h-[20%] rounded-full" style={{ background: "rgba(120,116,110,0.5)", animationDelay: `${delayMs + 120}ms` }} />
+      {lead && <span className="fx-sig-scorch absolute inset-[28%] block rounded-full" style={{ background: "rgba(30,26,20,0.5)", animationDelay: `${delayMs + 180}ms` }} />}
+    </span>
+  );
+}
+
+// -- Effect-data spectacles (inert-until-wired, keyed like their peers) --
+
+const CAVALRY_DASHES = [
+  { top: "58%", d: 0 },
+  { top: "70%", d: 80 },
+  { top: "82%", d: 160 },
+];
+
+/** Banner of War: the war banner runs up its pole and the cavalry surges past,
+ * a charging horse lunging forward under a trail of speed-dashes. */
+function BannerWarBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-crown absolute left-[36%] top-[2%] block h-[54%] w-[34%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 24 34" className="h-full w-full" aria-hidden="true">
+          <path d="M6 34 V2" stroke="#7a5b23" strokeWidth="2.2" strokeLinecap="round" fill="none" />
+          <path d="M6 3 H21 L17 8 L21 13 H6 Z" fill="#e0776b" stroke="#7a2f28" strokeWidth="1" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <span className="fx-sig-gallop absolute left-[8%] bottom-[10%] block h-[36%] w-[46%]" style={{ animationDelay: `${delayMs + 120}ms` }}>
+        <svg viewBox="0 0 40 28" className="h-full w-full" aria-hidden="true">
+          <path d="M2 26 C6 18 10 16 16 16 L20 10 L24 12 L22 16 C30 16 36 20 38 26 L30 24 L32 27 L26 25 L20 26 L14 24 L16 27 L10 25 Z" fill="#c66860" stroke="#7a2f28" strokeWidth="1" strokeLinejoin="round" />
+        </svg>
+      </span>
+      {CAVALRY_DASHES.map((s, i) => (
+        <span
+          key={i}
+          className="fx-sig-afterimage absolute left-[8%] block h-[5%] w-[40%] rounded-[1px]"
+          style={{ top: s.top, background: "rgba(224,119,107,0.75)", animationDelay: `${delayMs + 120 + s.d}ms` }}
+        />
+      ))}
+      {lead && <span className="fx-sig-flash absolute inset-[34%] block rounded-full" style={{ background: "rgba(224,119,107,0.5)", animationDelay: `${delayMs + 160}ms` }} />}
+    </span>
+  );
+}
+
+/** Ice Age: a heavy glacier slab heaves up and slams the square, shedding
+ * frost shards; lead flashes a boardwide rime. */
+function IceAgeBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-slab absolute inset-x-[10%] bottom-[8%] top-[16%] block rounded-[1px]" style={{ background: "rgba(198,234,255,0.42)", border: "1.5px solid rgba(224,246,255,0.85)", animationDelay: `${delayMs}ms` }} />
+      <ShardBurst vectors={BURST_MED} fill="#e6f6ff" stroke="#7fb8dd" delayMs={delayMs + 80} sizePct={11} />
+      {lead && <span className="fx-sig-flash absolute inset-[26%] block rounded-full" style={{ background: "rgba(234,248,255,0.75)", animationDelay: `${delayMs}ms` }} />}
+    </span>
+  );
+}
+
+/** World End: the whole army seizes under an apocalyptic frost that shudders
+ * the ground; lead flashes the wave. */
+function WorldEndBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-quake absolute inset-[8%] block rounded-[1px]" style={{ background: "rgba(198,220,240,0.4)", border: "1.5px solid rgba(210,232,248,0.85)", animationDelay: `${delayMs}ms` }} />
+      <ShardBurst vectors={BURST_MED} fill="#dbe9f5" stroke="#7f93a8" delayMs={delayMs + 80} sizePct={10} />
+      {lead && <span className="fx-sig-flash absolute inset-[28%] block rounded-full" style={{ background: "rgba(228,240,250,0.7)", animationDelay: `${delayMs}ms` }} />}
+    </span>
+  );
+}
+
+/** Rust: idle pieces seize up under a bloom of corrosion. */
+function RustLockBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-frost absolute inset-[16%] block rounded-[1px]" style={{ background: "rgba(150,90,50,0.42)", border: "1px solid rgba(120,70,40,0.8)", animationDelay: `${delayMs}ms` }} />
+      <ShardBurst vectors={BURST_MED} fill="#a86a3a" stroke="#5a3418" delayMs={delayMs + 60} sizePct={9} />
+    </span>
+  );
+}
+
+/** Mass Petrify: a wave of stone climbs the minors, shedding grey chips. */
+function MassPetrifyBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-petrify absolute bottom-[8%] left-[18%] right-[18%] top-[10%] block rounded-[1px]" style={{ background: "rgba(150,150,158,0.66)", border: "1px solid rgba(120,120,128,0.7)", animationDelay: `${delayMs}ms` }} />
+      <ShardBurst vectors={BURST_MED} fill="#9a9a9f" stroke="#5b6672" delayMs={delayMs + 100} sizePct={9} />
+    </span>
+  );
+}
+
+/** Walnut Queen: a walnut shell closes over the queen, a stone leaf drifting
+ * off; lead is a small settle. */
+function WalnutCurseBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-grow absolute inset-[16%] block" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <path d="M20 4 C31 4 36 13 36 22 C36 32 29 38 20 38 C11 38 4 32 4 22 C4 13 9 4 20 4 Z" fill="rgba(150,110,66,0.85)" stroke="#5d3a1e" strokeWidth="1.4" strokeLinejoin="round" />
+          <path d="M20 5 V37 M8 16 C16 20 24 20 32 16 M8 28 C16 24 24 24 32 28" stroke="#5d3a1e" strokeWidth="1" fill="none" />
+        </svg>
+      </span>
+      {lead && (
+        <span className="fx-sig-ash absolute left-[54%] top-[12%] block h-[16%] w-[16%]" style={{ animationDelay: `${delayMs + 140}ms` }}>
+          <svg viewBox="0 0 12 12" className="h-full w-full" aria-hidden="true">
+            <path d="M6 1 C9 3 9 8 6 11 C3 8 3 3 6 1 Z" fill="#8a5230" stroke="#4a2e18" strokeWidth="0.6" />
+          </svg>
+        </span>
+      )}
+    </span>
+  );
+}
+
+/** Amazon: the queen is crowned an Amazon, a knight-jump arc tracing over the
+ * lowered crown. */
+function AmazonCrownBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-crown absolute left-[28%] top-[8%] block h-[30%] w-[44%]" style={{ animationDelay: `${delayMs}ms` }}><SigCrown /></span>
+      <span className="fx-sig-arc absolute inset-[18%] block" style={{ animationDelay: `${delayMs + 120}ms` }}>
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <path d="M10 32 C10 18 18 12 26 12 L24 8 L30 10 L28 16" fill="none" stroke="#a877d8" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </span>
+      {lead && <span className="fx-sig-flash absolute inset-[30%] block rounded-full" style={{ background: "rgba(230,191,106,0.55)", animationDelay: `${delayMs + 160}ms` }} />}
+    </span>
+  );
+}
+
+/** Titan Legion: stone shells grow over the chosen pieces, each stomping a
+ * ring; lead adds a gold shock. */
+function TitanLegionBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  const rings = [
+    { i: "26%", d: 0 },
+    { i: "16%", d: 80 },
+    { i: "8%", d: 160 },
+  ];
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      {rings.map((r, k) => (
+        <span key={k} className="fx-sig-grow absolute block rounded-full" style={{ top: r.i, left: r.i, right: r.i, bottom: r.i, border: "2px solid rgba(150,150,158,0.85)", animationDelay: `${delayMs + r.d}ms` }} />
+      ))}
+      {lead && <span className="fx-sig-shock absolute inset-[6%] block rounded-full" style={{ border: "2px solid rgba(230,191,106,0.8)", animationDelay: `${delayMs + 220}ms` }} />}
+    </span>
+  );
+}
+
+/** Living God: a shaft of light, a lowered crown, and a divine shock ring. */
+function LivingGodBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-shaft absolute left-[36%] top-0 block h-[80%] w-[28%]" style={{ background: "rgba(255,244,200,0.55)", animationDelay: `${delayMs}ms` }} />
+      <span className="fx-sig-crown absolute left-[30%] top-[10%] block h-[26%] w-[40%]" style={{ animationDelay: `${delayMs + 120}ms` }}><SigCrown /></span>
+      {lead && <span className="fx-sig-shock absolute inset-[10%] block rounded-full" style={{ border: "2px solid rgba(255,232,150,0.85)", animationDelay: `${delayMs + 200}ms` }} />}
+    </span>
+  );
+}
+
+/** Eternal Reign: a crown lowers inside an enduring ward ring; lead glints. */
+function EternalReignBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-ring absolute inset-[14%] block rounded-full" style={{ border: "1.5px solid rgba(230,191,106,0.9)", animationDelay: `${delayMs}ms` }} />
+      <span className="fx-sig-crown absolute left-[28%] top-[8%] block h-[30%] w-[44%]" style={{ animationDelay: `${delayMs + 80}ms` }}><SigCrown /></span>
+      {lead && <span className="fx-sig-flash absolute inset-[28%] block rounded-full" style={{ background: "rgba(255,240,190,0.6)", animationDelay: `${delayMs + 120}ms` }} />}
+    </span>
+  );
+}
+
+/** Godslayer Knight: a great smiting blade drops through the knight, throwing
+ * gilded sparks; lead flashes silver. */
+function GodslayerBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-arc absolute inset-[6%] block" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <path d="M20 36 L18 12 L20 4 L22 12 Z" fill="#e3ecf4" stroke="#5b6672" strokeWidth="1" strokeLinejoin="round" />
+          <path d="M14 14 H26" stroke="#7a5b23" strokeWidth="2.2" strokeLinecap="round" />
+        </svg>
+      </span>
+      <ShardBurst vectors={BURST_MED} fill="#e6bf6a" stroke="#7a5b23" delayMs={delayMs + 140} sizePct={9} />
+      {lead && <span className="fx-sig-flash absolute inset-[30%] block rounded-full" style={{ background: "rgba(214,232,246,0.6)", animationDelay: `${delayMs + 120}ms` }} />}
+    </span>
+  );
+}
+
+/** Onslaught: three war-charge lunges roll forward in sequence; lead flashes. */
+function OnslaughtBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  const dashes = [
+    { top: "32%", d: 0 },
+    { top: "50%", d: 70 },
+    { top: "68%", d: 140 },
+  ];
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      {dashes.map((s, i) => (
+        <span key={i} className="fx-sig-gallop absolute left-[6%] block h-[8%] w-[52%] rounded-[1px]" style={{ top: s.top, background: "rgba(224,119,107,0.8)", animationDelay: `${delayMs + s.d}ms` }} />
+      ))}
+      {lead && <span className="fx-sig-flash absolute inset-[34%] block rounded-full" style={{ background: "rgba(224,119,107,0.5)", animationDelay: `${delayMs + 140}ms` }} />}
+    </span>
+  );
+}
+
+/** Resurrection: a shaft of holy light and the fallen rise back in glory; lead
+ * rings the halo. */
+function ResurrectionBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-shaft absolute left-[36%] top-0 block h-[80%] w-[28%]" style={{ background: "rgba(255,242,192,0.5)", animationDelay: `${delayMs}ms` }} />
+      <span className="fx-sig-rise absolute left-[32%] bottom-[10%] block h-[54%] w-[36%]" style={{ animationDelay: `${delayMs + 80}ms` }}>
+        <svg viewBox="0 0 24 32" className="h-full w-full" aria-hidden="true">
+          <circle cx="12" cy="8" r="4.4" fill="rgba(255,246,210,0.85)" stroke="#c9a244" strokeWidth="1" />
+          <path d="M5 30 C6 20 8 15 12 15 C16 15 18 20 19 30 Z" fill="rgba(255,246,210,0.85)" stroke="#c9a244" strokeWidth="1" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <ShardBurst vectors={BURST_MED} fill="#fff2c0" stroke="#c9a244" delayMs={delayMs + 140} sizePct={9} />
+      {lead && <span className="fx-sig-ring absolute inset-[18%] block rounded-full" style={{ border: "1.5px solid rgba(255,224,140,0.9)", animationDelay: `${delayMs + 120}ms` }} />}
+    </span>
+  );
+}
+
+/** Grand Resurrection: twin light shafts and a crown descend as the queen and a
+ * minor return; lead rings. */
+function GrandReviveBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-shaft absolute left-[26%] top-0 block h-[76%] w-[20%]" style={{ background: "rgba(255,242,192,0.5)", animationDelay: `${delayMs}ms` }} />
+      <span className="fx-sig-shaft absolute left-[54%] top-0 block h-[76%] w-[20%]" style={{ background: "rgba(255,242,192,0.5)", animationDelay: `${delayMs + 90}ms` }} />
+      <span className="fx-sig-crownfall absolute top-0 left-[34%] block h-[26%] w-[32%]" style={{ animationDelay: `${delayMs + 60}ms` }}><SigCrown /></span>
+      {lead && <span className="fx-sig-ring absolute inset-[20%] block rounded-full" style={{ border: "1.5px solid rgba(255,224,140,0.85)", animationDelay: `${delayMs + 160}ms` }} />}
+    </span>
+  );
+}
+
+/** Iron Legion: a relief force rises from the ground in a haze of dust. */
+function IronLegionBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-rise absolute left-[30%] bottom-[10%] block h-[56%] w-[40%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 24 32" className="h-full w-full" aria-hidden="true">
+          <path d="M5 30 V14 L4 13 V7 H8 V9 H11 V7 H13 V9 H16 V7 H20 V13 L19 14 V30 Z" fill="rgba(140,150,160,0.9)" stroke="#4a525c" strokeWidth="1" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <span className="fx-sig-ash absolute inset-x-[26%] bottom-[8%] block h-[16%] rounded-full" style={{ background: "rgba(120,124,130,0.5)", animationDelay: `${delayMs + 100}ms` }} />
+    </span>
+  );
+}
+
+/** Second Coming: a crown of light descends inside a protective ward ring;
+ * lead flashes mint. */
+function SecondComingBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-ring absolute inset-[14%] block rounded-full" style={{ border: "1.5px solid rgba(126,181,154,0.9)", animationDelay: `${delayMs}ms` }} />
+      <span className="fx-sig-crownfall absolute top-0 left-[32%] block h-[28%] w-[36%]" style={{ animationDelay: `${delayMs}ms` }}><SigCrown /></span>
+      {lead && <span className="fx-sig-flash absolute inset-[28%] block rounded-full" style={{ background: "rgba(163,209,150,0.55)", animationDelay: `${delayMs + 140}ms` }} />}
+    </span>
+  );
+}
+
+/** Lava Floor: a rank erupts, tongues of flame licking up from the ground. */
+function LavaFloorBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-rise absolute inset-x-[14%] bottom-[6%] top-[16%] block" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 40 40" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
+          <path d="M20 40 C10 30 15 22 12 12 C18 18 17 8 20 3 C23 9 25 16 28 12 C25 22 30 30 20 40 Z" fill="rgba(230,110,60,0.82)" stroke="#7a3a12" strokeWidth="1" strokeLinejoin="round" />
+          <path d="M20 40 C16 32 18 24 20 16 C22 24 24 32 20 40 Z" fill="rgba(255,214,120,0.9)" />
+        </svg>
+      </span>
+      <ShardBurst vectors={BURST_MED} fill="#e6a85c" stroke="#7a3a12" delayMs={delayMs + 120} sizePct={9} />
+    </span>
+  );
+}
+
+/** Necromancer: a spectre heaves up out of the grave in a wisp of soul-fire;
+ * lead flashes pale violet. */
+function NecromancerBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-rise absolute left-[26%] bottom-[8%] block h-[58%] w-[48%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 24 30" className="h-full w-full" aria-hidden="true">
+          <path d="M6 30 C4 20 8 10 12 10 C16 10 20 20 18 30 C15 26 9 26 6 30 Z" fill="rgba(180,160,200,0.55)" stroke="rgba(150,120,180,0.85)" strokeWidth="1" strokeLinejoin="round" />
+          <circle cx="12" cy="9" r="3.2" fill="rgba(200,186,224,0.6)" stroke="rgba(150,120,180,0.85)" strokeWidth="1" />
+        </svg>
+      </span>
+      <span className="fx-sig-ash absolute left-[44%] top-[12%] block h-[22%] w-[18%] rounded-full" style={{ background: "rgba(150,120,180,0.5)", animationDelay: `${delayMs + 120}ms` }} />
+      {lead && <span className="fx-sig-flash absolute inset-[32%] block rounded-full" style={{ background: "rgba(180,160,200,0.5)", animationDelay: `${delayMs + 140}ms` }} />}
+    </span>
+  );
+}
+
+/** Werewolf: a raking claw-slash and a feral beast lunge; lead flashes. */
+function WerewolfBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-afterimage absolute left-[16%] top-[14%] block h-[60%] w-[60%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <g stroke="#c9d2dc" strokeWidth="2.4" strokeLinecap="round" fill="none"><path d="M6 8 L30 22 M4 18 L26 30 M12 4 L30 26" /></g>
+        </svg>
+      </span>
+      <span className="fx-sig-gallop absolute left-[10%] bottom-[12%] block h-[34%] w-[46%]" style={{ animationDelay: `${delayMs + 100}ms` }}>
+        <svg viewBox="0 0 40 28" className="h-full w-full" aria-hidden="true">
+          <path d="M2 24 C8 18 12 10 18 8 L22 2 L24 8 C30 10 36 16 38 24 L30 22 L26 25 L20 22 L12 25 Z" fill="#8a7a6a" stroke="#3c3228" strokeWidth="1" strokeLinejoin="round" />
+        </svg>
+      </span>
+      {lead && <span className="fx-sig-flash absolute inset-[32%] block rounded-full" style={{ background: "rgba(200,190,180,0.5)", animationDelay: `${delayMs + 140}ms` }} />}
+    </span>
+  );
+}
+
+/** Last Meal: the king ties on a napkin and a fork and plate clatter down. */
+function LastMealBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-grow absolute inset-[18%] block" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <path d="M12 6 V16 M12 6 V13 M16 6 V16 M12 16 V34" stroke="#e6bf6a" strokeWidth="2" strokeLinecap="round" fill="none" />
+          <circle cx="26" cy="20" r="8" fill="none" stroke="#e0776b" strokeWidth="2.2" />
+        </svg>
+      </span>
+      <span className="fx-sig-flash absolute inset-[30%] block rounded-full" style={{ background: "rgba(230,191,106,0.5)", animationDelay: `${delayMs + 100}ms` }} />
+    </span>
+  );
+}
+
 /** One square's slice of a signature sequence. `role` is "lead" for the single
  * origin flourish (nova's pop, atomic's central thump, the siege muzzle) and
  * "target" for every cleared enemy square; `delayMs` is the pre-computed
@@ -4389,6 +4956,67 @@ export function SignatureOverlay({
       return <MeteorStormBurst lead={lead} delayMs={delayMs} />;
     case "phoenixrise":
       return <PhoenixRiseBurst lead={lead} delayMs={delayMs} />;
+    // --- Batch 8 (flavor pass) ---
+    case "detonate":
+      return <DetonateBurst lead={lead} delayMs={delayMs} />;
+    case "cinderstrike":
+      return <CinderStrikeBurst delayMs={delayMs} />;
+    case "purgestorm":
+      return <PurgeStormBurst delayMs={delayMs} />;
+    case "roulette":
+      return <RouletteBurst lead={lead} delayMs={delayMs} />;
+    case "purgeline":
+      return <PurgeLineBurst delayMs={delayMs} />;
+    case "calldown":
+      return <CalldownBurst lead={lead} delayMs={delayMs} />;
+    case "annihilation":
+      return <AnnihilationBurst lead={lead} delayMs={delayMs} />;
+    case "meteorcross":
+      return <MeteorCrossBurst lead={lead} delayMs={delayMs} />;
+    case "purgerealm":
+      return <PurgeRealmBurst delayMs={delayMs} />;
+    case "ruin":
+      return <RuinBurst lead={lead} delayMs={delayMs} />;
+    case "bannerwar":
+      return <BannerWarBurst lead={lead} delayMs={delayMs} />;
+    case "iceage":
+      return <IceAgeBurst lead={lead} delayMs={delayMs} />;
+    case "worldend":
+      return <WorldEndBurst lead={lead} delayMs={delayMs} />;
+    case "rustlock":
+      return <RustLockBurst delayMs={delayMs} />;
+    case "masspetrify":
+      return <MassPetrifyBurst delayMs={delayMs} />;
+    case "walnutcurse":
+      return <WalnutCurseBurst lead={lead} delayMs={delayMs} />;
+    case "amazoncrown":
+      return <AmazonCrownBurst lead={lead} delayMs={delayMs} />;
+    case "titanlegion":
+      return <TitanLegionBurst lead={lead} delayMs={delayMs} />;
+    case "livinggod":
+      return <LivingGodBurst lead={lead} delayMs={delayMs} />;
+    case "eternalreign":
+      return <EternalReignBurst lead={lead} delayMs={delayMs} />;
+    case "godslayer":
+      return <GodslayerBurst lead={lead} delayMs={delayMs} />;
+    case "onslaught":
+      return <OnslaughtBurst lead={lead} delayMs={delayMs} />;
+    case "resurrection":
+      return <ResurrectionBurst lead={lead} delayMs={delayMs} />;
+    case "grandrevive":
+      return <GrandReviveBurst lead={lead} delayMs={delayMs} />;
+    case "ironlegion":
+      return <IronLegionBurst delayMs={delayMs} />;
+    case "secondcoming":
+      return <SecondComingBurst lead={lead} delayMs={delayMs} />;
+    case "lavafloor":
+      return <LavaFloorBurst delayMs={delayMs} />;
+    case "necromancer":
+      return <NecromancerBurst lead={lead} delayMs={delayMs} />;
+    case "werewolf":
+      return <WerewolfBurst lead={lead} delayMs={delayMs} />;
+    case "lastmeal":
+      return <LastMealBurst delayMs={delayMs} />;
     default:
       return null;
   }
