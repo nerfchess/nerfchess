@@ -357,6 +357,16 @@ export function DraftOverlay({
   // behind a slim "Draft open" chip. Purely visual (visibility, not unmount),
   // so the pick state, timers, and any in-flight animation are untouched.
   const [hidden, setHidden] = useState(false);
+  // Banking routes your next draft toward the top-tier apex, so it is a
+  // deliberate choice: the Bank control arms on the first click, then a second
+  // click (or the explicit confirm) actually banks. Auto-disarms so it never
+  // sticks after an accidental tap.
+  const [bankArmed, setBankArmed] = useState(false);
+  // The minimized panel is the persistent "resolve your draft" reminder. It
+  // must not sit on the board forever: after a few seconds it tucks into a slim
+  // chip (still one click from the cards), and a fresh offer / reroll pops it
+  // back so an unresolved draft keeps re-announcing itself.
+  const [tucked, setTucked] = useState(false);
   // Measured flight path from the chosen card to the dock, captured at
   // confirm time (measuring during render would thrash layout).
   const [pocket, setPocket] = useState<{ dx: number; dy: number } | null>(null);
@@ -456,6 +466,8 @@ export function DraftOverlay({
     setBanking(false);
     setBankDeltas(null);
     setHidden(false);
+    setBankArmed(false);
+    setTucked(false);
     setRerolling(false);
     committedRef.current = false;
     selectedAtRef.current = 0;
@@ -484,7 +496,27 @@ export function DraftOverlay({
   const selectCard = (i: number) => {
     setSelected(i);
     selectedAtRef.current = Date.now();
+    // Reaching for a card means you are not banking after all.
+    setBankArmed(false);
   };
+
+  // An armed Bank button disarms itself after a few seconds so a stray first
+  // click never leaves it primed to bank on the next accidental tap.
+  useEffect(() => {
+    if (!bankArmed) return;
+    const id = window.setTimeout(() => setBankArmed(false), 4000);
+    return () => window.clearTimeout(id);
+  }, [bankArmed]);
+
+  // Auto-tuck the minimized panel into its slim chip after a few seconds so it
+  // stops hogging the corner; any interaction (dragging, un-tucking, resolving)
+  // holds it open, and a fresh offer re-shows it via the deal effect above.
+  useEffect(() => {
+    if (!minimized || tucked || dragging) return;
+    if (chosen != null || banking || committedRef.current) return;
+    const id = window.setTimeout(() => setTucked(true), 5000);
+    return () => window.clearTimeout(id);
+  }, [minimized, tucked, dragging, chosen, banking]);
 
   const confirmCard = (i: number) => {
     if (chosen != null || banking || committedRef.current) return;
@@ -591,6 +623,31 @@ export function DraftOverlay({
       }
       selectCard(i);
     };
+    // Tucked: the panel has stepped aside to a slim chip so it does not sit on
+    // the board forever. It stays one tap from the cards (click re-opens) and a
+    // new offer / reroll re-shows it automatically (deal effect clears tucked).
+    if (tucked && !settled) {
+      return (
+        <div
+          ref={panelRef}
+          style={dragPos ? { left: dragPos.x, top: dragPos.y } : undefined}
+          className={"fixed z-40 " + (dragPos ? "" : "bottom-24 right-3 sm:bottom-16 lg:bottom-4")}
+        >
+          <button
+            type="button"
+            onClick={() => setTucked(false)}
+            aria-label={`Resolve your ${noun} draft`}
+            className="plate flex items-center gap-2 rounded-[1px] border-gold/40 px-3 py-2 shadow-plate transition hover:border-gold/70"
+          >
+            <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-[1px] bg-oxblood-glow animate-flicker" />
+            <span className="font-display text-xs font-semibold tracking-wide text-parchment-100">
+              Resolve {noun} draft #{offer.index}
+            </span>
+            <span className="smallcaps shrink-0 text-[9px] text-oxblood-glow">On your clock</span>
+          </button>
+        </div>
+      );
+    }
     return (
       <div
         ref={panelRef}
@@ -671,12 +728,21 @@ export function DraftOverlay({
               </button>
             )}
             <button
-              onClick={!settled ? onBank : undefined}
+              onClick={settled ? undefined : bankArmed ? onBank : () => setBankArmed(true)}
               disabled={settled}
-              className="min-w-[6rem] flex-1 touch-manipulation rounded-[1px] border border-white/15 bg-white/[0.03] px-3 py-2 font-display text-[11px] font-semibold tracking-wide text-parchment-200 transition hover:border-gold/50 hover:text-gold-leaf disabled:opacity-40"
-              title="Skip this draft; your next one pulls from a tier higher"
+              className={
+                "min-w-[6rem] flex-1 touch-manipulation rounded-[1px] border px-3 py-2 font-display text-[11px] font-semibold tracking-wide transition disabled:opacity-40 " +
+                (bankArmed
+                  ? "border-coral/50 bg-coral/10 text-coral-glow hover:bg-coral/20"
+                  : "border-white/15 bg-white/[0.03] text-parchment-200 hover:border-gold/50 hover:text-gold-leaf")
+              }
+              title={
+                bankArmed
+                  ? "Click again to confirm banking (routes your next draft a tier higher)"
+                  : "Skip this draft; your next one pulls from a tier higher"
+              }
             >
-              Skip &amp; bank
+              {bankArmed ? "Confirm bank" : "Skip & bank"}
             </button>
           </div>
         </motion.div>
@@ -939,16 +1005,39 @@ export function DraftOverlay({
               Reroll <span className="text-parchment-400">({rerollsLeft})</span>
             </button>
           )}
-          <div className="relative w-full sm:w-auto">
-            <button
-              ref={bankBtnRef}
-              onClick={handleBank}
-              disabled={chosen != null || banking}
-              className="btn-glass w-full touch-manipulation px-6 py-3 font-display text-sm font-semibold tracking-wide sm:w-auto"
-              title="Skip this draft; your next one pulls from a tier higher"
-            >
-              Skip &amp; bank <span className="ml-1 text-parchment-400">+1 tier next draft</span>
-            </button>
+          <div className="relative flex w-full items-center gap-2 sm:w-auto">
+            {bankArmed ? (
+              <>
+                {/* Second step: banking sends this draft to the bank and rolls
+                    your next one a tier higher, so it asks before committing. */}
+                <button
+                  ref={bankBtnRef}
+                  onClick={handleBank}
+                  disabled={chosen != null || banking}
+                  className="btn-glass w-full touch-manipulation rounded-[1px] border border-coral/50 px-6 py-3 font-display text-sm font-semibold tracking-wide text-coral-glow sm:w-auto"
+                  title="Bank this draft and roll a tier higher next time"
+                >
+                  Bank this draft?
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBankArmed(false)}
+                  disabled={banking}
+                  className="shrink-0 touch-manipulation rounded-[1px] border border-white/15 bg-white/[0.03] px-3 py-3 font-display text-xs font-semibold tracking-wide text-parchment-200 transition hover:border-white/30 hover:text-parchment-100 disabled:opacity-40"
+                >
+                  Keep looking
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => setBankArmed(true)}
+                disabled={chosen != null || banking}
+                className="btn-glass w-full touch-manipulation px-6 py-3 font-display text-sm font-semibold tracking-wide sm:w-auto"
+                title="Skip this draft; your next one pulls from a tier higher"
+              >
+                Skip &amp; bank <span className="ml-1 text-parchment-400">+1 tier next draft</span>
+              </button>
+            )}
             {banking && (
               <motion.span
                 aria-hidden

@@ -1368,6 +1368,26 @@ export function Board({
     return () => window.removeEventListener("pointerdown", onPointerDown);
   }, [selected]);
 
+  // Back out of the promotion picker instead of being forced to complete a
+  // promotion. The move is committed only when a promotion piece is chosen, so
+  // canceling just drops the pending picker and clears the selection: no move
+  // was played yet, nothing to undo.
+  const cancelPromotion = () => {
+    setPromotionMove(null);
+    setSelected(null);
+  };
+  useEffect(() => {
+    if (!promotionMove) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        cancelPromotion();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [promotionMove]);
+
   // --- Drag & drop via pointer events ---
   const onPointerDownPiece = (e: React.PointerEvent, sq: Square) => {
     clearAnnotations();
@@ -2234,22 +2254,40 @@ export function Board({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            // Click the dark backdrop (outside the picker) to cancel. The inner
+            // panel stops propagation so choosing a piece never counts as a
+            // click-away.
+            onClick={cancelPromotion}
+            role="dialog"
+            aria-label="Choose a promotion piece"
             className="absolute inset-0 bg-black/70 flex items-center justify-center rounded-md z-20"
           >
-            <div className="plate gilt p-4 flex gap-2">
-              {promotionMove.map((m) => (
-                <button
-                  key={m.promotion}
-                  onClick={() => {
-                    onMove(m);
-                    setPromotionMove(null);
-                    setSelected(null);
-                  }}
-                  className="w-16 h-16 rounded-sm bg-ink-800 hover:bg-ink-700 flex items-center justify-center border border-gold/30"
-                >
-                  <Piece type={m.promotion!} color={m.color} size={56} />
-                </button>
-              ))}
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="plate gilt flex flex-col items-center gap-2 p-4"
+            >
+              <div className="flex gap-2">
+                {promotionMove.map((m) => (
+                  <button
+                    key={m.promotion}
+                    onClick={() => {
+                      onMove(m);
+                      setPromotionMove(null);
+                      setSelected(null);
+                    }}
+                    className="w-16 h-16 rounded-sm bg-ink-800 hover:bg-ink-700 flex items-center justify-center border border-gold/30"
+                  >
+                    <Piece type={m.promotion!} color={m.color} size={56} />
+                  </button>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={cancelPromotion}
+                className="rounded-[1px] border border-coral/40 bg-coral/10 px-3 py-1 font-display text-[11px] font-semibold tracking-wide text-coral-glow transition hover:bg-coral/20"
+              >
+                Cancel <span className="text-coral-glow/60">Esc</span>
+              </button>
             </div>
           </motion.div>
         )}
