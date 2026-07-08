@@ -45,6 +45,10 @@
     // bot-vs-human pickup + house seeks stay on the DO. Flip back off and the
     // DO resumes filler next tick — the arena being down never empties the lobby.
     "ARENA_OWNS_FILLER": "true"
+    // Cloudflare Turnstile on the signup form. The public sitekey is a build-time
+    // var (NEXT_PUBLIC_TURNSTILE_SITEKEY) set in the build environment, not here.
+    // The secret is set with: wrangler secret put TURNSTILE_SECRET_KEY
+    // Leave the secret unset to disable the bot check (see src/lib/server/turnstile.ts).
   },
   "d1_databases": [
     {

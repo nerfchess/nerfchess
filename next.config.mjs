@@ -30,7 +30,9 @@ if (process.env.NODE_ENV === "development") {
   initOpenNextCloudflareForDev();
 }
 
-// Content Security Policy — nerf chess loads no third-party scripts.
+// Content Security Policy. The only third-party origin is Cloudflare Turnstile
+// (challenges.cloudflare.com) on the signup form: its api.js script, its widget
+// iframe, and the XHRs it makes each need to be allow-listed below.
 // Fonts come from Google Fonts (see src/app/layout.tsx).
 // 'unsafe-inline' for styles is needed because tailwind + next inject style tags;
 // 'unsafe-inline' for scripts is required by Next's hydration boot script.
@@ -39,11 +41,12 @@ if (process.env.NODE_ENV === "development") {
 const devEval = process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : "";
 const csp = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${devEval}`,
+  `script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com${devEval}`,
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "img-src 'self' data: blob:",
   "font-src 'self' data: https://fonts.gstatic.com",
-  "connect-src 'self' ws: wss:",
+  "connect-src 'self' ws: wss: https://challenges.cloudflare.com",
+  "frame-src https://challenges.cloudflare.com",
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",
@@ -63,6 +66,11 @@ const nextConfig = {
   reactStrictMode: true,
   env: {
     NEXT_PUBLIC_BUILD_VERSION: buildVersion(),
+    // Public Turnstile sitekey for the signup widget. Override per-environment
+    // via NEXT_PUBLIC_TURNSTILE_SITEKEY at build time; the secret lives only as
+    // the TURNSTILE_SECRET_KEY Worker secret.
+    NEXT_PUBLIC_TURNSTILE_SITEKEY:
+      process.env.NEXT_PUBLIC_TURNSTILE_SITEKEY ?? "0x4AAAAAADyLZ_9QP6JEhhkU",
   },
   async headers() {
     return [
