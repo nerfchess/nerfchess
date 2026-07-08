@@ -119,7 +119,12 @@ function DraftTimerWindow({ deadline, onExpire }: { deadline: number; onExpire?:
   const leftMs = useCountdown(deadline, onExpire);
   const seconds = Math.ceil(leftMs / 1000);
   const fraction = Math.max(0, Math.min(1, leftMs / total));
-  const urgent = leftMs <= 5000;
+  // The whole window is paused free time: you only go on your clock when it
+  // fully runs out (the panel then minimizes to the red "On your clock" chip).
+  // So this timer must not flash the on-your-clock red while free seconds
+  // remain. Firing at 5s-left showed it at 15s into the 20s window, 5 seconds
+  // too early; tie it to the window end instead.
+  const urgent = leftMs <= 0;
   // r=15.5 keeps the 2.5-width stroke inside the 36px viewBox.
   const CIRC = 2 * Math.PI * 15.5;
   return (

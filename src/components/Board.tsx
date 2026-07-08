@@ -14,6 +14,7 @@ import {
   PawnFence,
   ShieldMark,
   SIGNATURES,
+  type SignatureConfig,
   SignatureOverlay,
   SnowflakeGlyph,
   SquirrelGlyph,
@@ -532,6 +533,54 @@ function orderSignature(
   return { targets, leadSq };
 }
 
+// Order a ZONE-sourced signature's target squares (source !== "removal") into
+// its staggered sequence. Unlike orderSignature these squares hold pieces that
+// STAY on the board (the frozen / empowered / shielded / summoned squares Board
+// already tracks), so there is no removal diff to key on: the order is derived
+// purely from the squares' geometry, identically for both players. "radial"
+// pops outward from the group's centroid (with an optional central lead);
+// everything else rolls up the board rank-first, breaking ties left-to-right as
+// the viewer sees it (a cosmetic tie-break only).
+function orderZoneSignature(
+  cfg: SignatureConfig,
+  squares: number[],
+  orientation: Color,
+): { sq: Square; order: number; role: "lead" | "target" }[] {
+  if (squares.length === 0) return [];
+  let ordered: number[];
+  if (cfg.ordering === "radial") {
+    let cf = 0;
+    let cr = 0;
+    for (const sq of squares) {
+      cf += FILE(sq as Square);
+      cr += RANK(sq as Square);
+    }
+    cf /= squares.length;
+    cr /= squares.length;
+    ordered = squares
+      .slice()
+      .sort(
+        (a, b) =>
+          (FILE(a as Square) - cf) ** 2 +
+          (RANK(a as Square) - cr) ** 2 -
+          ((FILE(b as Square) - cf) ** 2 + (RANK(b as Square) - cr) ** 2),
+      );
+  } else {
+    ordered = squares.slice().sort((a, b) => {
+      const dr = RANK(a as Square) - RANK(b as Square);
+      if (dr !== 0) return dr;
+      return orientation === "w"
+        ? FILE(a as Square) - FILE(b as Square)
+        : FILE(b as Square) - FILE(a as Square);
+    });
+  }
+  return ordered.map((sq, i) => ({
+    sq: sq as Square,
+    order: i,
+    role: (cfg.hasLead && i === 0 ? "lead" : "target") as "lead" | "target",
+  }));
+}
+
 function computeBoardFx(
   prev: BoardState["pieces"],
   next: BoardState["pieces"],
@@ -765,6 +814,17 @@ export function Board({
   // board update batch into one render), so it fires exactly once and never on
   // the initial mount (starts at 0, no card ever carries key 0).
   const sigSeenKeyRef = useRef(0);
+  // The same one-shot play-key guard for ZONE-sourced signatures (source !==
+  // "removal") wired below: coronations, freezes, petrifies, shields, stuns,
+  // summons and the rest that decorate pieces which STAY on the board. Kept
+  // separate from sigSeenKeyRef so the removal path and the zone path each
+  // consume the play key independently. zoneSigRef holds the staged overlays,
+  // one per affected square, and persists (invisible after they play) exactly
+  // like fxRef so an unrelated re-render never remounts and replays them.
+  const zoneSigSeenKeyRef = useRef(0);
+  const zoneSigRef = useRef<
+    Map<number, { sig: string; order: number; role: "lead" | "target"; key: number }>
+  >(new Map());
 
   // Diff against the previous position during render (reference equality
   // guards against re-runs) so animated squares can be tagged in this pass.
@@ -1065,6 +1125,72 @@ export function Board({
     () => new Set(visual?.highlightSquares ?? []),
     [visual?.highlightSquares],
   );
+
+  // --- Zone-sourced signatures (source !== "removal") ------------------------
+  // computeBoardFx above dresses ONLY squares a piece was REMOVED from, so a
+  // signature whose art decorates a piece that STAYS on the board (an empower
+  // coronation, a mass-freeze, a walnut petrify, an aegis shield, a summon
+  // rise, a stun snooze, a rally banner...) had its registry entry but never
+  // rendered. Fire those here from the very fx-effect zones Board already
+  // computes for its tints: when the played-card key advances, read the target
+  // squares from the zone the card's `source` names, order them, and stage one
+  // SignatureOverlay per square. Both the play key and the zone squares are
+  // public, so both players build the identical sequence (never gated on the
+  // viewer), and it is keyed to the play key via zoneSigSeenKeyRef so it fires
+  // exactly once and an unrelated re-render (hover, resize) never replays it.
+  if (signatureCard && signatureCard.key > zoneSigSeenKeyRef.current) {
+    zoneSigSeenKeyRef.current = signatureCard.key;
+    const cfg = SIGNATURES[signatureCard.id];
+    const marks = new Map<
+      number,
+      { sig: string; order: number; role: "lead" | "target"; key: number }
+    >();
+    if (cfg && cfg.source && cfg.source !== "removal") {
+      let squares: number[] = [];
+      switch (cfg.source) {
+        case "frozen":
+          squares = [...frozenSquares];
+          break;
+        case "walnut":
+          squares = [...walnutSquares];
+          break;
+        case "shield":
+          squares = [...shieldedSquares];
+          break;
+        case "kingSafe":
+          squares = [...kingSafeSquares];
+          break;
+        case "stun":
+          squares = [...stunBySquare.keys()];
+          break;
+        case "empower":
+        case "rally":
+        case "slow":
+        case "blindfold":
+          // Motif marks whose motif matches the source name (fxZones already
+          // resolved strongest-wins, one mark per square).
+          for (const [sq, mk] of motifBySquare) if (mk.motif === cfg.source) squares.push(sq);
+          break;
+        case "summon":
+          // Squares that just gained a piece this play, already detected by
+          // computeBoardFx and tagged as summon flourishes.
+          for (const [sq, fx] of fxRef.current) if (fx.kind === "summon") squares.push(sq);
+          break;
+      }
+      for (const t of orderZoneSignature(cfg, squares, orientation)) {
+        marks.set(t.sq, {
+          sig: signatureCard.id,
+          order: t.order,
+          role: t.role,
+          key: signatureCard.key,
+        });
+      }
+    }
+    // Replace (even when empty: a removal signature or a card with no zone
+    // source clears here) so the previous zone signature's overlays drop the
+    // instant the next card is played.
+    zoneSigRef.current = marks;
+  }
 
   // Entrance voices for the persistent square effects: each family sounds
   // exactly once, when a square first gains the effect, matching the visual
@@ -1691,6 +1817,10 @@ export function Board({
             const isPremoveSquare = premoveSquares.has(sq);
             const rightClickMark = rightClickMarks[sq];
             const boardFx = fxRef.current.get(sq);
+            // A zone-sourced signature staged for this square (empower / freeze
+            // / walnut / shield / stun / summon...), one-shot per play. It plays
+            // over the piece that stays, unlike a removal detonation.
+            const zoneSig = zoneSigRef.current.get(sq);
             // Chain jail: link into the visually-right / visually-below
             // neighbour when it is jailed too, so adjacent shackled pieces
             // read as one interlinked lockdown (each pair drawn once).
@@ -1905,7 +2035,11 @@ export function Board({
                     />
                   </>
                 )}
-                {strikeSquares.has(sq) && (
+                {strikeSquares.has(sq) && !boardFx?.sig && !zoneSig && (
+                  /* The plain lightning bolt is suppressed on any square already
+                     showing a signature this tick (bombardiro_croc's strike
+                     effect otherwise double-draws under the croc-bomber
+                     signature; the same guard de-dupes lightning_strike). */
                   <div className="absolute inset-0 pointer-events-none z-10 sq-strike">
                     <span className="absolute inset-0 flex items-center justify-center drop-shadow">
                       <BoltGlyph />
@@ -1941,6 +2075,19 @@ export function Board({
                   ) : (
                     <DetonationBurst key={`fx-${boardFx.key}`} />
                   ))}
+                {zoneSig && SIGNATURES[zoneSig.sig] && (
+                  /* Zone-sourced signature (source !== "removal"): the same
+                     SignatureOverlay art, but staged over a piece that STAYS on
+                     the board and sourced from the fx-effect zone the card
+                     names, not the removal diff. Keyed by the play key so it
+                     mounts and plays exactly once per play. */
+                  <SignatureOverlay
+                    key={`zsig-${zoneSig.key}`}
+                    visual={SIGNATURES[zoneSig.sig].visual}
+                    role={zoneSig.role}
+                    delayMs={zoneSig.order * SIGNATURES[zoneSig.sig].staggerMs}
+                  />
+                )}
                 {isForced && !isDragging && (
                   <div className="absolute inset-0 pointer-events-none rounded-sm ring-2 ring-inset ring-gold-leaf/80 shadow-[inset_0_0_24px_-4px_rgba(230,191,106,0.55)] animate-flicker" />
                 )}

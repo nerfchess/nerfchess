@@ -84,6 +84,13 @@ import { isMuted, playCapture, playCheck, playError, playMove as playMoveSfx, pl
 // many free milliseconds before their clock starts charging.
 const FIRST_MOVE_GRACE_MS = 10_000;
 
+// Mirrors the server's draftLockInMs: the free lock-in window a buff/nerf
+// offer gets before the game clock resumes. Used only as a fallback deadline
+// for a seat whose own draft was skipped this round (it gets no dtOffer frame,
+// so it never learns the real deadline; the server's value stays authoritative
+// on reconnect via start.dtDeadline).
+const DRAFT_LOCK_IN_MS = 20_000;
+
 // The server allows abandonment claims 30s after the opponent disconnected,
 // and its opponentGone frame already arrives after a 15s grace: wait out the
 // remainder before surfacing the claim buttons.
@@ -444,6 +451,37 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     const id = window.setTimeout(() => setWaitTimedOut(true), WAITING_OVERLAY_AUTO_HIDE_MS);
     return () => window.clearTimeout(id);
   }, [isDraft, oppDrafting, draftSubmitted, myOfferOpen, game?.result]);
+
+  // Skip-pause: when a card the opponent played SKIPS my draft this round, the
+  // server still opens the shared lock-in window and pauses BOTH clocks, but I
+  // get no dtOffer frame (no offer was rolled for me), so I never learn the
+  // window deadline. Without it draftGraceOver stays true (my last deadline is
+  // stale/past), the clock is treated as live, and my screen ticks the mover's
+  // time while the server has it paused: on my board the opponent's clock runs
+  // and mine sits frozen, out of step with the opponent's screen. Adopt the
+  // same window locally so both clocks freeze for the free window and resume
+  // together when it ends. A real future deadline (my own dtOffer, or the start
+  // frame on reconnect) is always trusted over this approximation.
+  const skipPauseArmedRef = useRef(false);
+  useEffect(() => {
+    if (!isDraft || game?.result) {
+      skipPauseArmedRef.current = false;
+      return;
+    }
+    // Opponent is drafting while I hold no offer: either my draft was skipped,
+    // or their offer simply landed a beat before mine. Arm once per window so a
+    // deadline that later expires (opponent still deliberating) is not re-armed.
+    const windowOpen = oppDrafting && !myOfferOpen;
+    if (!windowOpen) {
+      skipPauseArmedRef.current = false;
+      return;
+    }
+    if (skipPauseArmedRef.current) return;
+    skipPauseArmedRef.current = true;
+    if (draftDeadline == null || draftDeadline - Date.now() <= 0) {
+      setDraftDeadline(Date.now() + DRAFT_LOCK_IN_MS);
+    }
+  }, [isDraft, oppDrafting, myOfferOpen, game?.result, draftDeadline]);
 
   const boardShellRef = useRef<HTMLDivElement | null>(null);
   // Mouse-wheel move navigation (lichess-style): a stable, non-passive wheel
