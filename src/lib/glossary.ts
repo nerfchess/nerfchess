@@ -43,10 +43,16 @@ export const GLOSSARY: Record<string, string> = {
     "A hexed piece that is sealed and cannot move for a set number of turns, then frees itself.",
   freeze: "An effect that locks a piece in place so it cannot move for a time.",
   shield: "A protection that blocks one of your pieces from being captured.",
+  ward: "A lighter protective charm that guards a piece, a subtler form of shield.",
   barred: "Blocked from doing something, such as a square or move being off-limits.",
   suspend: "To temporarily pause a nerf's effect (suspend nerf).",
   "king-only": "A restriction where you may only move your king.",
   "no-pawn-advance": "A restriction that stops your pawns from moving forward.",
+  amazon: "A powerful fairy piece that moves as a queen and a knight combined.",
+  strike: "A card effect that hits one or more squares, clearing or capturing what stands there.",
+  bonk: "A comedy hit that conks the pieces on the struck squares, the goofy cousin of a strike.",
+  pocket: "Your reserve of pieces earned from cards, ready to drop onto the board on a later turn.",
+  drop: "Placing a piece from your pocket onto an empty square, which spends your turn.",
 };
 
 // Build a single case-insensitive regex that matches any glossary term as a

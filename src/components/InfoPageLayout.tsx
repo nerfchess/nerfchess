@@ -4,7 +4,9 @@ import type { ReactNode } from "react";
 type InfoPageLayoutProps = {
   eyebrow: string;
   title: string;
-  intro: string;
+  // ReactNode (not just string) so a page can pass a glossary-wrapped intro;
+  // plain strings, which every other caller passes, remain valid.
+  intro: ReactNode;
   children: ReactNode;
 };
 

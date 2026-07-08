@@ -4,71 +4,11 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { HeroTv } from "@/components/HeroTv";
 import { SiteHeader } from "@/components/SiteHeader";
-import { ALL_NERFS, PLAYABLE_NERFS } from "@/engine/nerfs/library";
+import { ALL_NERFS } from "@/engine/nerfs/library";
 import { ALL_BUFFS } from "@/engine/buffs/library";
-import type { Nerf } from "@/engine/nerf";
-import type { Buff } from "@/engine/buff";
 import { useLobbySnapshot } from "@/lib/lobbyClient";
 import { AccountUser, fetchMe } from "@/lib/authClient";
 import { ActiveGame, loadActiveGame } from "@/lib/multiplayer";
-import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
-
-// Real library count, computed once, for the "See all N" codex link. The full
-// library is every nerf plus every buff, hex, boon, and item card.
-const TOTAL_RULES = ALL_NERFS.length + ALL_BUFFS.length;
-
-// A hand-picked spread of cards, three from each mode and across a range of
-// tiers, so a first visitor sees what a card can be: from a mild secret rule
-// to a flashy power-up. Each one deep-links into the codex, searched to that
-// card by name.
-const EXAMPLE_NERF_IDS = ["shadow_queen", "get_down_mr_president", "abstinence"];
-const EXAMPLE_BUFF_IDS = ["time_skip", "god_knight", "mass_freeze"];
-
-type ExampleCard = {
-  id: string;
-  name: string;
-  description: string;
-  tier: number;
-  kind: "nerf" | "buff";
-};
-
-function exampleCards(): ExampleCard[] {
-  const nerfById = new Map(ALL_NERFS.map((n) => [n.id, n]));
-  const buffById = new Map(ALL_BUFFS.map((b) => [b.id, b]));
-
-  const nerfs = EXAMPLE_NERF_IDS.map((id) => nerfById.get(id)).filter(
-    (n): n is Nerf => !!n
-  );
-  const buffs = EXAMPLE_BUFF_IDS.map((id) => buffById.get(id)).filter(
-    (b): b is Buff => !!b
-  );
-
-  // Fall back to library order if an id ever drifts, so the section never
-  // renders short of its three-and-three.
-  const nerfPicks = nerfs.length >= 3 ? nerfs : PLAYABLE_NERFS.slice(0, 3);
-  const buffPicks = buffs.length >= 3 ? buffs : ALL_BUFFS.slice(0, 3);
-
-  return [
-    ...nerfPicks.slice(0, 3).map(
-      (n): ExampleCard => ({
-        id: n.id,
-        name: n.name,
-        description: n.description,
-        tier: n.tier,
-        kind: "nerf",
-      })
-    ),
-    ...buffPicks.slice(0, 3).map(
-      (b): ExampleCard => ({
-        id: b.id,
-        name: b.name,
-        description: b.description,
-        tier: b.tier,
-        kind: "buff",
-      })
-    ),
-  ];
-}
 
 export default function HomePage() {
   return (
@@ -151,8 +91,6 @@ export default function HomePage() {
       <StatStrip />
       <SeamDivider />
       <HowItWorks />
-      <SeamDivider />
-      <ExampleRules />
 
       <SiteFooter />
     </main>
@@ -402,75 +340,6 @@ function HowItWorks() {
           );
         })}
       </div>
-    </section>
-  );
-}
-
-function ExampleRules() {
-  const cards = exampleCards();
-  return (
-    <section className="section-rhythm w-full max-w-7xl mx-auto px-5 sm:px-6">
-      <div className="flex items-end justify-between gap-4 mb-7">
-        <header className="flex items-center gap-3">
-          <span aria-hidden className="h-6 w-1.5 shrink-0 bg-coral" />
-          <h2 className="display-3 text-parchment-50">A few of the cards</h2>
-          <span className="coord-index">e5</span>
-        </header>
-        <Link
-          href="/codex"
-          className="shrink-0 smallcaps text-[10px] text-parchment-400 hover:text-parchment-100 transition-colors"
-        >
-          See all {TOTAL_RULES}
-        </Link>
-      </div>
-      <ul className="stagger-in grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {cards.map((card) => {
-          const isNerf = card.kind === "nerf";
-          return (
-            <li key={`${card.kind}-${card.id}`}>
-              <Link
-                href={`/codex?search=${encodeURIComponent(card.name)}`}
-                className={`plate card-juicy group flex h-full flex-col border p-4 no-underline tier-bg-${card.tier}`}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <span className={`font-display text-lg font-semibold leading-tight tier-${card.tier}`}>
-                    {card.name}
-                  </span>
-                  <span
-                    className={`grid h-7 w-7 shrink-0 place-items-center border font-display text-xs font-bold tier-bg-${card.tier} tier-${card.tier}`}
-                    title={`Difficulty ${card.tier}: ${TIER_LABEL[card.tier]}`}
-                  >
-                    {TIER_ROMAN[card.tier]}
-                  </span>
-                </div>
-                <p className="mt-1.5 text-sm leading-relaxed text-parchment-200 line-clamp-1">
-                  {card.description}
-                </p>
-                <div className="mt-auto flex items-center justify-between gap-2 pt-3">
-                  <span
-                    className={`inline-flex items-center border px-2 py-0.5 smallcaps text-[9px] ${
-                      isNerf
-                        ? "border-mode-nerf/40 bg-mode-nerf/10 text-mode-nerfGlow"
-                        : "border-mode-buff/40 bg-mode-buff/10 text-mode-buffGlow"
-                    }`}
-                  >
-                    {isNerf ? "Nerf · secret rule" : "Buff · power-up"}
-                  </span>
-                  <span className="flex items-center gap-1 smallcaps text-[10px] text-parchment-400 transition-colors group-hover:text-gold-leaf">
-                    Codex
-                    <span
-                      aria-hidden
-                      className="transition-transform motion-safe:group-hover:translate-x-0.5"
-                    >
-                      →
-                    </span>
-                  </span>
-                </div>
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
     </section>
   );
 }
