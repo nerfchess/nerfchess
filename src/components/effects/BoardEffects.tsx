@@ -1273,7 +1273,32 @@ export type SigVisual =
   | "encase"
   | "snowballsplat"
   | "galephase"
-  | "oppositeday";
+  | "oppositeday"
+  // --- Batch 10 (board-wide virus + gambling wheels + brainrot drum-man + a
+  // slapstick funny batch). computer_virus is upgraded from the single-square
+  // "glitch" to a board-wide corruption spread; the gambling cards get spinning
+  // wheels / a slot machine / a coin flip; tung_tung_sahur finally gets its own
+  // drum-man bonk; and a spread of comedic library cards each get a bespoke gag.
+  | "virusspread"
+  | "fortunewheel"
+  | "slotmachine"
+  | "coinflip"
+  | "drumbonk"
+  | "rakebonk"
+  | "flyswat"
+  | "sleepcap"
+  | "superglue"
+  | "beartrap"
+  | "anvildrop"
+  | "boxingglove"
+  | "bubblewrap"
+  | "vertigo"
+  | "origami"
+  | "gremlins"
+  | "homesick"
+  | "jetlag"
+  | "hillflag"
+  | "sugarrush";
 export type SigOrdering = "file" | "sweep" | "octagon" | "line" | "radial";
 export type SigSoundKey =
   | "nova"
@@ -1544,7 +1569,12 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   // board removal / zone effect, so like the Batch 2/3 stun-zone entries it is
   // registered here and renders once Board feeds it the opponent clock-area
   // squares; the glitch art + voice are complete.
-  computer_virus: { ordering: "radial", staggerMs: 0, victims: "all", visual: "glitch", hasLead: true, sound: "clockcage", source: "stun" },
+  // Upgraded to a BOARD-WIDE spectacle: a spreading digital corruption (cascading
+  // green code columns, glitch bars sweeping across the whole board crop, a
+  // corruption wipe) instead of the old single-square glitch. Rendered from the
+  // lead flourish (oversized + clipped by the board crop), like the dragon /
+  // wizard marquee spectacles.
+  computer_virus: { ordering: "radial", staggerMs: 0, victims: "all", visual: "virusspread", hasLead: true, sound: "clockcage", source: "stun" },
 
   // --- Batch 5: SECOND SPECTACLE PASS (library core + wild + funny). The next
   // tier of impactful cards that still fell back to the generic family effect.
@@ -1751,6 +1781,53 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   snowball: { ordering: "radial", staggerMs: 0, victims: ["p"], visual: "snowballsplat", hasLead: true, sound: "massfreeze", source: "frozen" },
   we_gale: { ordering: "sweep", staggerMs: 50, victims: ["b"], visual: "galephase", hasLead: false, sound: "blitz", source: "empower" },
   opposite_day: { ordering: "radial", staggerMs: 45, victims: "all", visual: "oppositeday", hasLead: false, sound: "snooze", source: "slow" },
+
+  // --- Batch 10: gambling wheels, the drum-man, and a slapstick funny batch.
+  // The gambling cards (Wheel of Fortune / Jackpot / Gamble) join roulette with
+  // their own spin-to-a-pointer wheel, a slot machine, and a coin flip; every
+  // one reuses an already-shipped SigZone + SigSoundKey. tung_tung_sahur finally
+  // gets its own drum-man bonk (it was the one brainrot card with no signature).
+  // The rest are comedic library cards that used to fall back to a generic zone
+  // overlay; each gets a bespoke gag. Every source !== "removal" entry rides the
+  // same zone wiring as the rest of Batch 2-9.
+
+  // Gambling (spin a wheel / pull the lever / flip a coin).
+  wheel_of_fortune: { ordering: "radial", staggerMs: 0, victims: "all", visual: "fortunewheel", hasLead: true, sound: "snooze", source: "stun" },
+  jackpot: { ordering: "radial", staggerMs: 0, victims: "all", visual: "slotmachine", hasLead: true, sound: "coronation", source: "summon" },
+  gamble: { ordering: "radial", staggerMs: 0, victims: "all", visual: "coinflip", hasLead: true, sound: "snooze", source: "stun" },
+
+  // The one brainrot card still without a signature: the drum-man marches and
+  // bonks the nearest enemy (freeze skin "stun" + bonk), so it reads off the
+  // stun zone like Bombombini.
+  tung_tung_sahur: { ordering: "radial", staggerMs: 60, victims: ["p", "n", "b", "r", "q"], visual: "drumbonk", hasLead: true, sound: "siege", source: "stun" },
+
+  // Slapstick freezes (frozen zone, the snowball precedent): a rake to the face,
+  // a fly swatter, a nap, a glue trap, a bear trap.
+  rake: { ordering: "radial", staggerMs: 0, victims: ["p", "n", "b", "r", "q"], visual: "rakebonk", hasLead: false, sound: "siege", source: "frozen" },
+  fly_swatter: { ordering: "radial", staggerMs: 0, victims: ["n"], visual: "flyswat", hasLead: false, sound: "massfreeze", source: "frozen" },
+  napping: { ordering: "radial", staggerMs: 0, victims: ["n"], visual: "sleepcap", hasLead: false, sound: "snooze", source: "frozen" },
+  super_glue: { ordering: "radial", staggerMs: 45, victims: "all", visual: "superglue", hasLead: true, sound: "massfreeze", source: "frozen" },
+  bear_trap: { ordering: "radial", staggerMs: 0, victims: ["p", "n", "b", "r", "q"], visual: "beartrap", hasLead: false, sound: "siege", source: "frozen" },
+
+  // Slapstick knockbacks (stun zone: a bonked / stunned piece): the ACME anvil
+  // flattens, the spring glove punches back.
+  anvil_drop: { ordering: "radial", staggerMs: 0, victims: ["p", "n", "b", "r", "q"], visual: "anvildrop", hasLead: true, sound: "atomic", source: "stun" },
+  boxing_glove: { ordering: "radial", staggerMs: 0, victims: ["p", "n", "b", "r", "q"], visual: "boxingglove", hasLead: false, sound: "rampage", source: "stun" },
+
+  // Ward (shield zone): the bubble-wrapped piece.
+  bubble_wrap: { ordering: "radial", staggerMs: 0, victims: ["p", "n", "b", "r", "q"], visual: "bubblewrap", hasLead: true, sound: "aegis", source: "shield" },
+
+  // Movement curses (slow zone: the anchored / hexed enemy pieces): dizzy
+  // vertigo, a paper-crane fold, scurrying gremlins, a homeward pull, jet lag.
+  vertigo: { ordering: "radial", staggerMs: 0, victims: ["q"], visual: "vertigo", hasLead: true, sound: "snooze", source: "slow" },
+  origami: { ordering: "radial", staggerMs: 40, victims: ["r"], visual: "origami", hasLead: false, sound: "snooze", source: "slow" },
+  gremlins: { ordering: "radial", staggerMs: 40, victims: ["r"], visual: "gremlins", hasLead: false, sound: "snooze", source: "slow" },
+  homesick: { ordering: "radial", staggerMs: 45, victims: "all", visual: "homesick", hasLead: false, sound: "snooze", source: "slow" },
+  jet_lag: { ordering: "radial", staggerMs: 0, victims: "all", visual: "jetlag", hasLead: true, sound: "clockcage", source: "slow" },
+
+  // Self grants: the king climbs the hill (empower zone), a sugar rush (rally).
+  king_of_the_hill: { ordering: "radial", staggerMs: 0, victims: ["k"], visual: "hillflag", hasLead: true, sound: "coronation", source: "empower" },
+  sugar_rush: { ordering: "radial", staggerMs: 60, victims: "all", visual: "sugarrush", hasLead: true, sound: "blitz", source: "rally" },
 };
 
 /** A jagged lightning bolt that fills its wrapper (BoltGlyph is fixed-size). */
@@ -4878,8 +4955,12 @@ function CrocBomberBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) 
     return (
       <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
         <span className="fx-sig-dragon-fly absolute left-[1%] top-[14%] block h-[48%] w-[74%]" style={{ animationDelay: `${delayMs}ms` }}>
-          <span className="fx-sig-wingbeat block h-full w-full">
-            <CrocPlane />
+          <span className="fx-sig-hop block h-full w-full">
+            <span className="fx-sig-wingbeat block h-full w-full">
+              <span className="fx-sig-chomp block h-full w-full">
+                <CrocPlane />
+              </span>
+            </span>
           </span>
         </span>
       </span>
@@ -4890,9 +4971,18 @@ function CrocBomberBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) 
       <span className="fx-sig-bombdrop absolute left-[39%] top-[1%] block h-[42%] w-[22%]" style={{ animationDelay: `${delayMs}ms` }}>
         <AeroBomb className="h-full w-full" />
       </span>
+      {/* a bouncier carpet run: two cluster bomblets whistle down alongside */}
+      {[{ l: "15%", d: 110 }, { l: "66%", d: 50 }].map((b, i) => (
+        <span key={i} className="fx-sig-bombdrop absolute top-[4%] block h-[27%] w-[13%]" style={{ left: b.l, animationDelay: `${delayMs + b.d}ms` }}>
+          <AeroBomb className="h-full w-full" />
+        </span>
+      ))}
       <span className="fx-sig-flash absolute inset-[20%] block rounded-full" style={{ background: "rgba(255,196,120,0.85)", animationDelay: `${delayMs + 380}ms` }} />
       <span className="fx-sig-ring absolute inset-[16%] block rounded-full" style={{ border: "1.5px solid rgba(255,168,80,0.95)", animationDelay: `${delayMs + 380}ms` }} />
       <ShardBurst vectors={BURST_BIG} fill="#e6a85c" stroke="#7a3a12" delayMs={delayMs + 380} sizePct={11} />
+      {[{ l: "16%", d: 470 }, { l: "64%", d: 430 }].map((b, i) => (
+        <span key={`p${i}`} className="fx-sig-flash absolute top-[40%] block h-[16%] w-[16%] rounded-full" style={{ left: b.l, background: "rgba(255,196,120,0.7)", animationDelay: `${delayMs + b.d}ms` }} />
+      ))}
       <span className="fx-sig-scorch absolute inset-[28%] block rounded-full" style={{ background: "rgba(24,14,8,0.7)", animationDelay: `${delayMs + 540}ms` }} />
     </span>
   );
@@ -4920,8 +5010,14 @@ function SharkDashBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   if (lead) {
     return (
       <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
-        <span className="fx-sig-dart absolute left-[2%] top-[30%] block h-[42%] w-[80%]" style={{ animationDelay: `${delayMs}ms` }}>
+        {/* a speed-trail after-image blurs behind the lead dash */}
+        <span className="fx-sig-dart absolute left-[2%] top-[18%] block h-[40%] w-[72%]" style={{ animationDelay: `${delayMs + 90}ms` }}>
           <SharkSneaker />
+        </span>
+        <span className="fx-sig-dart absolute left-[2%] top-[30%] block h-[42%] w-[80%]" style={{ animationDelay: `${delayMs}ms` }}>
+          <span className="fx-sig-wiggle block h-full w-full">
+            <SharkSneaker />
+          </span>
         </span>
       </span>
     );
@@ -4929,6 +5025,7 @@ function SharkDashBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-wave absolute inset-x-[8%] bottom-[24%] block h-[26%] rounded-full" style={{ background: "rgba(150,196,224,0.55)", animationDelay: `${delayMs}ms` }} />
+      <span className="fx-sig-wave absolute inset-x-[16%] bottom-[40%] block h-[16%] rounded-full" style={{ background: "rgba(198,234,255,0.45)", animationDelay: `${delayMs + 130}ms` }} />
       <ShardBurst vectors={BURST_MED} fill="#c9eaff" stroke="#5b7d94" delayMs={delayMs + 60} sizePct={8} />
     </span>
   );
@@ -4951,7 +5048,9 @@ function GooseBombBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
     return (
       <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
         <span className="fx-sig-gallop absolute left-[8%] bottom-[14%] block h-[52%] w-[42%]" style={{ animationDelay: `${delayMs}ms` }}>
-          <HonkGoose />
+          <span className="fx-sig-hop block h-full w-full">
+            <HonkGoose />
+          </span>
         </span>
       </span>
     );
@@ -4965,6 +5064,7 @@ function GooseBombBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
         </svg>
       </span>
       <span className="fx-sig-shock absolute inset-[12%] block rounded-full" style={{ border: "2px solid rgba(230,191,106,0.85)", animationDelay: `${delayMs + 260}ms` }} />
+      <span className="fx-sig-shock absolute inset-[24%] block rounded-full" style={{ border: "1.5px solid rgba(126,181,154,0.8)", animationDelay: `${delayMs + 340}ms` }} />
       <ShardBurst vectors={PIN_STARS} fill="#ffd95e" stroke="#8a6414" delayMs={delayMs + 260} sizePct={10} />
     </span>
   );
@@ -4987,7 +5087,9 @@ function ClockElephantBurst({ lead, delayMs }: { lead: boolean; delayMs: number 
     return (
       <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
         <span className="fx-sig-grow absolute left-[16%] bottom-[10%] block h-[64%] w-[64%]" style={{ animationDelay: `${delayMs}ms` }}>
-          <ClockElephant />
+          <span className="fx-sig-wiggle block h-full w-full">
+            <ClockElephant />
+          </span>
         </span>
       </span>
     );
@@ -5008,6 +5110,11 @@ function ClockElephantBurst({ lead, delayMs }: { lead: boolean; delayMs: number 
           <path d="M4 4 H12 L4 14 H12" fill="none" stroke="#8aa0b4" strokeWidth="2.4" strokeLinejoin="round" strokeLinecap="round" />
         </svg>
       </span>
+      <span className="fx-sig-zzz absolute left-[64%] top-[4%] block h-[18%] w-[18%]" style={{ animationDelay: `${delayMs + 380}ms` }}>
+        <svg viewBox="0 0 20 20" className="h-full w-full" aria-hidden="true">
+          <path d="M4 4 H12 L4 14 H12" fill="none" stroke="#8aa0b4" strokeWidth="2.4" strokeLinejoin="round" strokeLinecap="round" />
+        </svg>
+      </span>
     </span>
   );
 }
@@ -5018,9 +5125,10 @@ function ColdSnapBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-frost absolute inset-x-[6%] top-[10%] block h-[20%] rounded-[1px]" style={{ background: "rgba(198,234,255,0.5)", animationDelay: `${delayMs}ms` }} />
-      {[{ l: "22%", d: 0 }, { l: "44%", d: 60 }, { l: "66%", d: 30 }].map((s, i) => (
-        <span key={i} className="fx-sig-crownfall absolute top-[6%] block h-[34%] w-[10%]" style={{ left: s.l, animationDelay: `${delayMs + s.d}ms` }}>
-          <svg viewBox="0 0 8 24" className="h-full w-full" aria-hidden="true">
+      <span className="fx-sig-frost absolute inset-x-[10%] top-[70%] block h-[14%] rounded-[1px]" style={{ background: "rgba(198,234,255,0.4)", animationDelay: `${delayMs + 140}ms` }} />
+      {[{ l: "14%", d: 0, h: "34%" }, { l: "30%", d: 80, h: "28%" }, { l: "46%", d: 40, h: "38%" }, { l: "62%", d: 120, h: "26%" }, { l: "78%", d: 20, h: "32%" }].map((s, i) => (
+        <span key={i} className="fx-sig-crownfall absolute top-[6%] block w-[9%]" style={{ left: s.l, height: s.h, animationDelay: `${delayMs + s.d}ms` }}>
+          <svg viewBox="0 0 8 24" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
             <path d="M1 0 H7 L4 24 Z" fill="#dbe7f2" stroke="#8aa0b4" strokeWidth="0.8" strokeLinejoin="round" />
           </svg>
         </span>
@@ -5050,7 +5158,11 @@ function BananApeBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
     return (
       <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
         <span className="fx-sig-gallop absolute left-[18%] bottom-[10%] block h-[62%] w-[56%]" style={{ animationDelay: `${delayMs}ms` }}>
-          <ChestApe />
+          <span className="fx-sig-hop block h-full w-full">
+            <span className="fx-sig-chomp block h-full w-full">
+              <ChestApe />
+            </span>
+          </span>
         </span>
       </span>
     );
@@ -5064,6 +5176,7 @@ function BananApeBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           </svg>
         </span>
       ))}
+      <span className="fx-sig-shock absolute inset-[18%] block rounded-full" style={{ border: "2px solid rgba(242,201,76,0.7)", animationDelay: `${delayMs + 40}ms` }} />
       <span className="fx-sig-flash absolute inset-[30%] block rounded-full" style={{ background: "rgba(242,201,76,0.5)", animationDelay: `${delayMs + 80}ms` }} />
     </span>
   );
@@ -5085,6 +5198,11 @@ function TireFrogBurst({ delayMs }: { delayMs: number }) {
           <circle cx="24" cy="20" r="0.9" fill="#141e2b" />
         </svg>
       </span>
+      {/* a heavier landing: a settle ring and dust kicked out both sides */}
+      <span className="fx-sig-shock absolute inset-x-[10%] bottom-[8%] block h-[22%] rounded-full" style={{ border: "2px solid rgba(120,116,110,0.6)", animationDelay: `${delayMs + 260}ms` }} />
+      {[{ l: "8%" }, { l: "82%" }].map((s, i) => (
+        <span key={i} className="fx-sig-ash absolute bottom-[12%] block h-[16%] w-[16%] rounded-full" style={{ left: s.l, background: "rgba(120,116,110,0.5)", animationDelay: `${delayMs + 300}ms` }} />
+      ))}
       <span className="fx-sig-ash absolute inset-x-[18%] bottom-[12%] block h-[16%] rounded-full" style={{ background: "rgba(120,116,110,0.5)", animationDelay: `${delayMs + 180}ms` }} />
     </span>
   );
@@ -5428,6 +5546,592 @@ function OppositeDayBurst({ delayMs }: { delayMs: number }) {
   );
 }
 
+// --- 10j. Batch 10 visuals (board-wide virus + gambling wheels + a livelier
+// brainrot drum-man + a slapstick funny batch) -------------------------------
+// Same rules as every signature: flat SVG fills / solid discs (no gradients /
+// glow / box-shadow / blur), 1px corners, coral / mint / sun / gold, transform +
+// opacity only, one-shot, hidden entirely under reduced motion. Most compose the
+// shared fx-sig-* classes; the genuinely new motions (codefall / sweepbar /
+// wheelspin / tick / reel / coinflip / punch, plus the hop / wiggle / chomp
+// personality loops) live in effects.css.
+
+// COMPUTER VIRUS: a spreading digital corruption over the WHOLE board. The lead
+// paints an oversized layer (clipped by the board crop, like the dragon / wizard
+// marquee leads) with cascading green code columns, sweeping glitch bars, and a
+// corruption flash; every target square gets a compact code / glitch hit.
+const VIRUS_COLS = [
+  { left: "2%", d: 0 }, { left: "9%", d: 150 }, { left: "16%", d: 70 },
+  { left: "23%", d: 240 }, { left: "30%", d: 30 }, { left: "37%", d: 180 },
+  { left: "44%", d: 100 }, { left: "51%", d: 300 }, { left: "58%", d: 50 },
+  { left: "65%", d: 210 }, { left: "72%", d: 130 }, { left: "79%", d: 20 },
+  { left: "86%", d: 260 }, { left: "93%", d: 90 },
+];
+const VIRUS_BARS = [
+  { top: "12%", d: 0, c: "rgba(126,181,154,0.55)" },
+  { top: "30%", d: 160, c: "rgba(224,119,107,0.5)" },
+  { top: "48%", d: 60, c: "rgba(126,181,154,0.5)" },
+  { top: "64%", d: 220, c: "rgba(230,191,106,0.45)" },
+  { top: "82%", d: 120, c: "rgba(224,119,107,0.45)" },
+];
+function CodeColumn() {
+  return (
+    <svg viewBox="0 0 10 64" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
+      <g fill="#7eb59a">
+        <rect x="2" y="1" width="6" height="2.4" opacity="0.3" />
+        <rect x="1" y="7" width="7" height="2.4" opacity="0.45" />
+        <rect x="3" y="13" width="5" height="2.4" opacity="0.35" />
+        <rect x="1" y="19" width="6" height="2.4" opacity="0.5" />
+        <rect x="2" y="25" width="7" height="2.4" opacity="0.4" />
+        <rect x="1" y="31" width="5" height="2.4" opacity="0.55" />
+        <rect x="3" y="37" width="6" height="2.4" opacity="0.6" />
+        <rect x="1" y="43" width="7" height="2.4" opacity="0.7" />
+        <rect x="2" y="49" width="6" height="2.4" opacity="0.85" />
+      </g>
+      <rect x="1" y="55" width="8" height="4" fill="#cfe8d8" />
+    </svg>
+  );
+}
+function VirusSpreadBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <span className="pointer-events-none absolute inset-0 z-30" aria-hidden="true">
+        <span className="absolute left-[-750%] top-[-750%] block h-[1600%] w-[1600%]">
+          <span className="fx-sig-glitch absolute inset-0 block" style={{ background: "rgba(126,181,154,0.12)", animationDelay: `${delayMs}ms` }} />
+          {VIRUS_COLS.map((c, i) => (
+            <span key={i} className="fx-sig-codefall absolute top-[-28%] block h-[64%] w-[2.4%]" style={{ left: c.left, animationDelay: `${delayMs + c.d}ms` }}>
+              <CodeColumn />
+            </span>
+          ))}
+          {VIRUS_BARS.map((b, i) => (
+            <span key={`b${i}`} className="fx-sig-sweepbar absolute left-[-30%] block h-[2.6%] w-[160%] rounded-[1px]" style={{ top: b.top, background: b.c, animationDelay: `${delayMs + b.d}ms` }} />
+          ))}
+          <span className="fx-sig-flash absolute inset-[42%] block rounded-[1px]" style={{ background: "rgba(224,119,107,0.4)", animationDelay: `${delayMs + 120}ms` }} />
+        </span>
+      </span>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-codefall absolute left-[38%] top-[-10%] block h-[70%] w-[12%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <CodeColumn />
+      </span>
+      <span className="fx-sig-glitch absolute left-[10%] top-[42%] block h-[10%] w-[80%] rounded-[1px]" style={{ background: "rgba(224,119,107,0.7)", animationDelay: `${delayMs + 40}ms` }} />
+      <span className="fx-sig-flash absolute inset-[30%] block rounded-[1px]" style={{ background: "rgba(126,181,154,0.5)", animationDelay: `${delayMs + 60}ms` }} />
+    </span>
+  );
+}
+
+// GAMBLING: a spinning segmented wheel (Wheel of Fortune), a slot machine
+// (Jackpot), and a coin flip (Gamble). Roulette keeps its own wheel.
+const WHEEL_WEDGES = [
+  { d: "M20 20 L20 2 A18 18 0 0 1 32.73 7.27 Z", c: "#e0776b" },
+  { d: "M20 20 L32.73 7.27 A18 18 0 0 1 38 20 Z", c: "#f4c430" },
+  { d: "M20 20 L38 20 A18 18 0 0 1 32.73 32.73 Z", c: "#7eb59a" },
+  { d: "M20 20 L32.73 32.73 A18 18 0 0 1 20 38 Z", c: "#e6bf6a" },
+  { d: "M20 20 L20 38 A18 18 0 0 1 7.27 32.73 Z", c: "#e0776b" },
+  { d: "M20 20 L7.27 32.73 A18 18 0 0 1 2 20 Z", c: "#f4c430" },
+  { d: "M20 20 L2 20 A18 18 0 0 1 7.27 7.27 Z", c: "#7eb59a" },
+  { d: "M20 20 L7.27 7.27 A18 18 0 0 1 20 2 Z", c: "#e6bf6a" },
+];
+function SegmentedWheel() {
+  return (
+    <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+      {WHEEL_WEDGES.map((w, i) => (
+        <path key={i} d={w.d} fill={w.c} stroke="#3a2a1a" strokeWidth="0.7" strokeLinejoin="round" />
+      ))}
+      <circle cx="20" cy="20" r="18" fill="none" stroke="#3a2a1a" strokeWidth="1.4" />
+      <circle cx="20" cy="20" r="3" fill="#e6bf6a" stroke="#7a5b23" strokeWidth="1" />
+    </svg>
+  );
+}
+function FortuneWheelBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+        <span className="fx-sig-wheelspin absolute inset-[10%] block" style={{ animationDelay: `${delayMs}ms` }}>
+          <SegmentedWheel />
+        </span>
+        <span className="fx-sig-tick absolute left-[44%] top-[2%] block h-[18%] w-[12%]" style={{ animationDelay: `${delayMs}ms` }}>
+          <svg viewBox="0 0 12 18" className="h-full w-full" aria-hidden="true">
+            <path d="M1 1 H11 L6 16 Z" fill="#f4f7f2" stroke="#4a5560" strokeWidth="1" strokeLinejoin="round" />
+          </svg>
+        </span>
+        <ShardBurst vectors={PIN_STARS} fill="#ffd95e" stroke="#8a6414" delayMs={delayMs + 900} sizePct={9} />
+      </span>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-wheelspin absolute inset-[22%] block" style={{ animationDelay: `${delayMs}ms` }}>
+        <SegmentedWheel />
+      </span>
+    </span>
+  );
+}
+function SlotSymbol({ variant }: { variant: number }) {
+  if (variant % 4 === 0)
+    return (
+      <svg viewBox="0 0 20 20" className="h-full w-full" aria-hidden="true">
+        <path d="M10 3 C12 6 15 7 15 7 M10 3 C8 6 6 8 6 8" fill="none" stroke="#5f927a" strokeWidth="1.2" strokeLinecap="round" />
+        <circle cx="6" cy="12" r="4" fill="#e0776b" stroke="#7a2f28" strokeWidth="1" />
+        <circle cx="14" cy="13" r="4" fill="#c25248" stroke="#7a2f28" strokeWidth="1" />
+      </svg>
+    );
+  if (variant % 4 === 1)
+    return (
+      <svg viewBox="0 0 20 20" className="h-full w-full" aria-hidden="true">
+        <path d="M5 4 H15 L9 18 H12" fill="none" stroke="#e0776b" strokeWidth="2.6" strokeLinejoin="round" strokeLinecap="round" />
+      </svg>
+    );
+  if (variant % 4 === 2)
+    return (
+      <svg viewBox="0 0 20 20" className="h-full w-full" aria-hidden="true">
+        <rect x="3" y="8" width="14" height="5" rx="1" fill="#e6bf6a" stroke="#7a5b23" strokeWidth="1" />
+      </svg>
+    );
+  return (
+    <svg viewBox="0 0 20 20" className="h-full w-full" aria-hidden="true">
+      <path d="M6 14 C6 8 8 5 10 5 C12 5 14 8 14 14 Z" fill="#e6bf6a" stroke="#7a5b23" strokeWidth="1" strokeLinejoin="round" />
+      <circle cx="10" cy="16" r="1.4" fill="#7a5b23" />
+    </svg>
+  );
+}
+function SlotReel({ delayMs, start }: { delayMs: number; start: number }) {
+  return (
+    <span className="absolute inset-0 block overflow-hidden">
+      <span className="fx-sig-reel absolute left-0 top-0 block w-full" style={{ height: "400%", animationDelay: `${delayMs}ms` }}>
+        {[0, 1, 2, 3, 4].map((k) => (
+          <span key={k} className="block h-[20%] w-full p-[8%]">
+            <SlotSymbol variant={start + k} />
+          </span>
+        ))}
+      </span>
+    </span>
+  );
+}
+function SlotMachineBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+        <span className="fx-sig-grow absolute inset-[8%] block" style={{ animationDelay: `${delayMs}ms` }}>
+          <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+            <rect x="4" y="4" width="32" height="32" rx="2" fill="#7a2f28" stroke="#3a1512" strokeWidth="1.4" />
+            <rect x="7" y="8" width="26" height="14" rx="1" fill="#141e2b" />
+            <rect x="9" y="26" width="22" height="6" rx="1" fill="#e6bf6a" stroke="#7a5b23" strokeWidth="0.8" />
+          </svg>
+        </span>
+        <span className="absolute left-[20%] top-[22%] block h-[30%] w-[18%]"><SlotReel delayMs={delayMs} start={1} /></span>
+        <span className="absolute left-[41%] top-[22%] block h-[30%] w-[18%]"><SlotReel delayMs={delayMs + 140} start={0} /></span>
+        <span className="absolute left-[62%] top-[22%] block h-[30%] w-[18%]"><SlotReel delayMs={delayMs + 280} start={1} /></span>
+        <span className="fx-sig-snooze absolute right-[4%] top-[20%] block h-[26%] w-[10%]" style={{ animationDelay: `${delayMs}ms` }}>
+          <svg viewBox="0 0 8 26" className="h-full w-full" aria-hidden="true">
+            <path d="M4 26 V6" stroke="#8aa0b4" strokeWidth="2" strokeLinecap="round" />
+            <circle cx="4" cy="4" r="3" fill="#e0776b" stroke="#7a2f28" strokeWidth="1" />
+          </svg>
+        </span>
+        <ShardBurst vectors={PIN_STARS} fill="#ffd95e" stroke="#8a6414" delayMs={delayMs + 620} sizePct={9} />
+      </span>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="absolute left-[30%] top-[24%] block h-[42%] w-[40%]">
+        <span className="absolute inset-0 block rounded-[1px]" style={{ border: "1.5px solid #7a5b23", background: "#141e2b" }} />
+        <span className="absolute inset-[10%] block"><SlotReel delayMs={delayMs} start={1} /></span>
+      </span>
+    </span>
+  );
+}
+function GambleCoin() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-full w-full" aria-hidden="true">
+      <circle cx="12" cy="12" r="10" fill="#f4c430" stroke="#8a6414" strokeWidth="1.4" />
+      <circle cx="12" cy="12" r="7.5" fill="none" stroke="#c79a2a" strokeWidth="0.8" />
+      <path d="M12 6 C15 9 16 12 12 17 C8 12 9 9 12 6 Z" fill="#e0776b" stroke="#7a2f28" strokeWidth="0.8" strokeLinejoin="round" />
+      <path d="M12 15 L12 19 M9.5 19 H14.5" stroke="#7a2f28" strokeWidth="0.9" strokeLinecap="round" />
+    </svg>
+  );
+}
+function CoinFlipBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  const size = lead ? "58%" : "40%";
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-coinflip absolute left-1/2 bottom-[14%] block" style={{ height: size, width: size, marginLeft: lead ? "-29%" : "-20%", animationDelay: `${delayMs}ms` }}>
+        <GambleCoin />
+      </span>
+      {lead && <ShardBurst vectors={PIN_STARS} fill="#ffd95e" stroke="#8a6414" delayMs={delayMs + 820} sizePct={8} />}
+    </span>
+  );
+}
+
+// BRAINROT: the drum-man (tung_tung_sahur) finally gets his own signature: he
+// marches in bobbing (lead), then a drumstick bonks each nearest enemy.
+function DrumMan() {
+  return (
+    <svg viewBox="0 0 34 34" className="h-full w-full" aria-hidden="true">
+      <rect x="6" y="14" width="22" height="16" rx="2" fill="#e0776b" stroke="#7a2f28" strokeWidth="1.2" />
+      <path d="M6 18 H28 M6 26 H28" stroke="#f4f7f2" strokeWidth="1" />
+      <path d="M8 14 L12 30 M26 14 L22 30" stroke="#e6bf6a" strokeWidth="1" />
+      <circle cx="17" cy="8" r="4" fill="#caa580" stroke="#6b4a34" strokeWidth="1" />
+      <path d="M10 11 L2 4 M24 11 L32 4" stroke="#6b4a34" strokeWidth="1.4" strokeLinecap="round" />
+      <circle cx="2" cy="4" r="1.6" fill="#8a6a4a" />
+      <circle cx="32" cy="4" r="1.6" fill="#8a6a4a" />
+    </svg>
+  );
+}
+function DrumBonkBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+        <span className="fx-sig-gallop absolute left-[14%] bottom-[8%] block h-[68%] w-[64%]" style={{ animationDelay: `${delayMs}ms` }}>
+          <span className="fx-sig-hop block h-full w-full">
+            <DrumMan />
+          </span>
+        </span>
+      </span>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-snooze absolute left-[40%] top-[2%] block h-[46%] w-[20%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 12 28" className="h-full w-full" aria-hidden="true">
+          <path d="M6 27 L6 8" stroke="#6b4a34" strokeWidth="2.2" strokeLinecap="round" />
+          <circle cx="6" cy="6" r="4.5" fill="#8a6a4a" stroke="#4a3320" strokeWidth="1" />
+        </svg>
+      </span>
+      <span className="fx-sig-shock absolute inset-[16%] block rounded-full" style={{ border: "2px solid rgba(224,119,107,0.85)", animationDelay: `${delayMs + 300}ms` }} />
+      <ShardBurst vectors={PIN_STARS} fill="#ffd95e" stroke="#8a6414" delayMs={delayMs + 300} sizePct={9} />
+    </span>
+  );
+}
+
+// SLAPSTICK FUNNY BATCH: a rake, a fly swatter, a nap, super glue, a bear trap,
+// an anvil, a boxing glove, bubble wrap, vertigo, origami, gremlins, homesick,
+// jet lag, king-of-the-hill, and a sugar rush.
+function RakeBonkBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-arc absolute left-[30%] bottom-[6%] block h-[80%] w-[40%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 20 40" className="h-full w-full" aria-hidden="true">
+          <path d="M10 40 L10 12" stroke="#8a6a4a" strokeWidth="2.2" strokeLinecap="round" />
+          <path d="M3 12 H17" stroke="#6b4a34" strokeWidth="2.4" strokeLinecap="round" />
+          <path d="M4 12 L4 6 M8 12 L8 6 M12 12 L12 6 M16 12 L16 6" stroke="#6b4a34" strokeWidth="1.6" strokeLinecap="round" />
+        </svg>
+      </span>
+      <span className="fx-sig-shock absolute inset-[18%] block rounded-full" style={{ border: "2px solid rgba(230,191,106,0.8)", animationDelay: `${delayMs + 260}ms` }} />
+      <ShardBurst vectors={PIN_STARS} fill="#ffd95e" stroke="#8a6414" delayMs={delayMs + 260} sizePct={9} />
+    </span>
+  );
+}
+function FlySwatBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-star absolute left-1/2 top-1/2 ml-[-8%] mt-[-8%] block h-[16%] w-[16%]" style={{ "--dx": "40%", "--dy": "-30%", "--rot": "40deg", animationDelay: `${delayMs}ms` } as React.CSSProperties}>
+        <svg viewBox="0 0 20 16" className="h-full w-full" aria-hidden="true">
+          <ellipse cx="10" cy="9" rx="3.4" ry="4.4" fill="#2b2b2f" stroke="#141416" strokeWidth="0.8" />
+          <path d="M8 6 C2 2 1 7 6 8 Z M12 6 C18 2 19 7 14 8 Z" fill="rgba(126,181,154,0.55)" stroke="#5f927a" strokeWidth="0.7" />
+        </svg>
+      </span>
+      <span className="fx-sig-snooze absolute left-[26%] top-[2%] block h-[70%] w-[48%]" style={{ animationDelay: `${delayMs + 120}ms` }}>
+        <svg viewBox="0 0 40 56" className="h-full w-full" aria-hidden="true">
+          <path d="M20 56 L20 26" stroke="#4a5560" strokeWidth="2.4" strokeLinecap="round" />
+          <rect x="6" y="4" width="28" height="24" rx="4" fill="#e0776b" stroke="#7a2f28" strokeWidth="1.4" />
+          <path d="M12 8 V24 M20 6 V26 M28 8 V24 M8 12 H32 M8 18 H32" stroke="#7a2f28" strokeWidth="0.9" />
+        </svg>
+      </span>
+      <span className="fx-sig-splat absolute inset-x-[30%] top-[52%] block h-[16%] rounded-full" style={{ background: "rgba(74,85,96,0.5)", animationDelay: `${delayMs + 360}ms` }} />
+    </span>
+  );
+}
+function SleepCapBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-grow absolute left-[20%] top-[16%] block h-[52%] w-[60%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 40 30" className="h-full w-full" aria-hidden="true">
+          <path d="M4 28 C6 12 20 6 34 10 C30 16 30 22 32 28 Z" fill="#7eb59a" stroke="#2c473a" strokeWidth="1.2" strokeLinejoin="round" />
+          <path d="M4 28 H34" stroke="#cfe8d8" strokeWidth="2" strokeLinecap="round" />
+          <circle cx="33" cy="9" r="3" fill="#f4f7f2" stroke="#8aa0b4" strokeWidth="1" />
+        </svg>
+      </span>
+      {[{ l: "56%", t: "10%", d: 0 }, { l: "66%", t: "2%", d: 220 }].map((z, i) => (
+        <span key={i} className="fx-sig-zzz absolute block h-[22%] w-[22%]" style={{ left: z.l, top: z.t, animationDelay: `${delayMs + z.d}ms` }}>
+          <svg viewBox="0 0 20 20" className="h-full w-full" aria-hidden="true">
+            <path d="M4 4 H12 L4 14 H12" fill="none" stroke="#8aa0b4" strokeWidth="2.4" strokeLinejoin="round" strokeLinecap="round" />
+          </svg>
+        </span>
+      ))}
+    </span>
+  );
+}
+function SuperGlueBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-crownfall absolute left-[52%] top-[-2%] block h-[36%] w-[18%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 12 24" className="h-full w-full" aria-hidden="true">
+          <rect x="3" y="4" width="6" height="16" rx="2" fill="#e6bf6a" stroke="#7a5b23" strokeWidth="1" />
+          <path d="M5 4 L5 1 H7 L7 4 Z" fill="#4a5560" />
+        </svg>
+      </span>
+      <span className="fx-sig-grow absolute left-[24%] top-[28%] block h-[52%] w-[52%]" style={{ animationDelay: `${delayMs + 160}ms` }}>
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <path d="M8 18 C8 10 16 8 20 10 C24 6 34 10 32 18 C36 22 34 32 26 32 C22 38 12 36 12 30 C6 28 4 20 8 18 Z" fill="rgba(126,181,154,0.6)" stroke="#5f927a" strokeWidth="1.2" strokeLinejoin="round" />
+          <path d="M14 20 C16 22 16 26 14 28 M26 20 C24 24 26 28 28 30" stroke="rgba(244,250,242,0.7)" strokeWidth="1" strokeLinecap="round" fill="none" />
+        </svg>
+      </span>
+      {[{ l: "30%", d: 220 }, { l: "60%", d: 320 }].map((s, i) => (
+        <span key={i} className="fx-sig-crownfall absolute top-[60%] block h-[24%] w-[8%]" style={{ left: s.l, animationDelay: `${delayMs + s.d}ms` }}>
+          <svg viewBox="0 0 8 24" className="h-full w-full" aria-hidden="true">
+            <path d="M4 0 C1 10 1 16 4 20 C7 16 7 10 4 0 Z" fill="rgba(126,181,154,0.6)" stroke="#5f927a" strokeWidth="0.8" strokeLinejoin="round" />
+          </svg>
+        </span>
+      ))}
+      {lead && <span className="fx-sig-flash absolute inset-[32%] block rounded-full" style={{ background: "rgba(126,181,154,0.4)", animationDelay: `${delayMs + 180}ms` }} />}
+    </span>
+  );
+}
+function BearTrapBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-snooze absolute left-[16%] top-[24%] block h-[52%] w-[68%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 48 30" className="h-full w-full" aria-hidden="true">
+          <ellipse cx="24" cy="24" rx="18" ry="5" fill="#5b6672" stroke="#2f3640" strokeWidth="1.2" />
+          <path d="M8 24 C10 8 20 6 24 6 C28 6 38 8 40 24" fill="none" stroke="#8aa0b4" strokeWidth="2.2" />
+          <path d="M8 24 L11 18 L14 24 L17 18 L20 24 L24 18 L28 24 L31 18 L34 24 L37 18 L40 24 Z" fill="#c9d2dc" stroke="#4a5560" strokeWidth="0.8" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <span className="fx-sig-star absolute left-[6%] top-[62%] block h-[10%] w-[10%]" style={{ "--dx": "-120%", "--dy": "40%", "--rot": "20deg", animationDelay: `${delayMs}ms` } as React.CSSProperties}>
+        <svg viewBox="0 0 12 12" className="h-full w-full" aria-hidden="true"><circle cx="6" cy="6" r="4" fill="none" stroke="#5b6672" strokeWidth="1.6" /></svg>
+      </span>
+      <ShardBurst vectors={BURST_MED} fill="#c9d2dc" stroke="#4a5560" delayMs={delayMs + 180} sizePct={8} />
+    </span>
+  );
+}
+function AcmeAnvil() {
+  return (
+    <svg viewBox="0 0 32 26" className="h-full w-full" aria-hidden="true">
+      <path d="M2 8 H30 L26 14 H14 L12 18 H24 L22 24 H8 L10 14 H4 Z" fill="#3a4450" stroke="#141e2b" strokeWidth="1.2" strokeLinejoin="round" />
+      <path d="M2 8 H12 L10 12 H4 Z" fill="#4a5560" />
+      <path d="M9 4 H23" stroke="#c25248" strokeWidth="2.4" strokeLinecap="round" />
+    </svg>
+  );
+}
+function AnvilDropBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+        <span className="fx-sig-bombdrop absolute left-[24%] top-[-4%] block h-[54%] w-[52%]" style={{ animationDelay: `${delayMs}ms` }}>
+          <AcmeAnvil />
+        </span>
+      </span>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-snooze absolute left-[24%] top-[6%] block h-[48%] w-[52%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <AcmeAnvil />
+      </span>
+      <span className="fx-sig-splat absolute inset-x-[20%] top-[58%] block h-[16%] rounded-full" style={{ background: "rgba(20,30,43,0.5)", animationDelay: `${delayMs + 300}ms` }} />
+      <span className="fx-sig-shock absolute inset-[18%] block rounded-full" style={{ border: "2px solid rgba(140,160,180,0.7)", animationDelay: `${delayMs + 300}ms` }} />
+      <ShardBurst vectors={PIN_STARS} fill="#ffd95e" stroke="#8a6414" delayMs={delayMs + 300} sizePct={9} />
+    </span>
+  );
+}
+function BoxingGloveBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-punch absolute left-[2%] top-[30%] block h-[40%] w-[76%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 48 24" className="h-full w-full" aria-hidden="true">
+          <path d="M2 12 L8 6 L12 18 L18 6 L22 18 L28 8" fill="none" stroke="#8aa0b4" strokeWidth="2" strokeLinejoin="round" />
+          <path d="M28 4 C40 2 46 8 46 12 C46 16 40 22 28 20 C24 19 24 16 26 15 C22 15 22 9 26 9 C24 8 24 5 28 4 Z" fill="#e0776b" stroke="#7a2f28" strokeWidth="1.2" strokeLinejoin="round" />
+          <path d="M30 12 H42" stroke="#7a2f28" strokeWidth="0.9" />
+        </svg>
+      </span>
+      <ShardBurst vectors={PIN_STARS} fill="#ffd95e" stroke="#8a6414" delayMs={delayMs + 300} sizePct={9} />
+    </span>
+  );
+}
+const WRAP_BUBBLES = [
+  { l: "22%", t: "26%", d: 120 }, { l: "44%", t: "20%", d: 260 },
+  { l: "62%", t: "30%", d: 60 }, { l: "30%", t: "52%", d: 320 },
+  { l: "56%", t: "56%", d: 200 },
+];
+function BubbleWrapBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-ward absolute inset-[14%] block rounded-[2px]" style={{ border: "1.5px solid rgba(126,181,154,0.7)", background: "rgba(126,181,154,0.14)", animationDelay: `${delayMs}ms` }} />
+      {WRAP_BUBBLES.map((b, i) => (
+        <span key={i} className="fx-sig-flash absolute block h-[14%] w-[14%] rounded-full" style={{ left: b.l, top: b.t, border: "1px solid rgba(126,181,154,0.8)", background: "rgba(207,232,216,0.5)", animationDelay: `${delayMs + b.d}ms` }} />
+      ))}
+      {lead && <span className="fx-sig-shock absolute inset-[10%] block rounded-full" style={{ border: "2px solid rgba(126,181,154,0.7)", animationDelay: `${delayMs}ms` }} />}
+    </span>
+  );
+}
+function VertigoBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-swirl absolute inset-[16%] block" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <path d="M20 20 C20 14 26 14 26 20 C26 28 16 28 16 20 C16 10 28 10 28 20 C28 32 12 32 12 20 C12 8 30 8 30 20" fill="none" stroke="#e0776b" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+      </span>
+      {PIN_STARS.slice(0, 4).map((v, i) => (
+        <span key={i} className="fx-sig-star absolute left-1/2 top-[20%] ml-[-6%] block h-[12%] w-[12%]" style={{ "--dx": v.dx, "--dy": v.dy, "--rot": v.rot, animationDelay: `${delayMs + v.delay}ms` } as React.CSSProperties}>
+          <svg viewBox="0 0 12 12" className="h-full w-full" aria-hidden="true">
+            <path d="M6 1 L7.4 4.6 L11 6 L7.4 7.4 L6 11 L4.6 7.4 L1 6 L4.6 4.6 Z" fill="#e6bf6a" stroke="#8a6414" strokeWidth="0.6" strokeLinejoin="round" />
+          </svg>
+        </span>
+      ))}
+      {lead && <span className="fx-sig-flash absolute inset-[34%] block rounded-full" style={{ background: "rgba(224,119,107,0.4)", animationDelay: `${delayMs + 80}ms` }} />}
+    </span>
+  );
+}
+function OrigamiBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-grow absolute inset-[18%] block" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <path d="M8 26 L24 20 L20 30 Z" fill="#e0776b" stroke="#7a2f28" strokeWidth="1" strokeLinejoin="round" />
+          <path d="M24 20 L34 8 L30 22 Z" fill="#f2a79c" stroke="#7a2f28" strokeWidth="1" strokeLinejoin="round" />
+          <path d="M6 12 L24 20 L10 22 Z" fill="#c25248" stroke="#7a2f28" strokeWidth="1" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <span className="fx-sig-wing-l absolute left-[14%] top-[24%] block h-[30%] w-[34%]" style={{ animationDelay: `${delayMs + 120}ms` }}>
+        <svg viewBox="0 0 34 24" className="h-full w-full" aria-hidden="true"><path d="M34 20 L2 4 L14 22 Z" fill="#f2a79c" stroke="#7a2f28" strokeWidth="1" strokeLinejoin="round" /></svg>
+      </span>
+      <span className="fx-sig-wing-r absolute right-[14%] top-[24%] block h-[30%] w-[34%]" style={{ animationDelay: `${delayMs + 120}ms` }}>
+        <svg viewBox="0 0 34 24" className="h-full w-full" aria-hidden="true"><path d="M0 20 L32 4 L20 22 Z" fill="#f2a79c" stroke="#7a2f28" strokeWidth="1" strokeLinejoin="round" /></svg>
+      </span>
+    </span>
+  );
+}
+function Gremlin() {
+  return (
+    <svg viewBox="0 0 18 18" className="h-full w-full" aria-hidden="true">
+      <path d="M9 16 C4 16 3 10 5 7 C4 3 7 4 8 6 C8 3 10 3 10 6 C11 4 14 3 13 7 C15 10 14 16 9 16 Z" fill="#7eb59a" stroke="#2c473a" strokeWidth="1" strokeLinejoin="round" />
+      <circle cx="7" cy="9" r="1.2" fill="#141e2b" />
+      <circle cx="11" cy="9" r="1.2" fill="#141e2b" />
+      <path d="M6.5 12 H11.5" stroke="#2c473a" strokeWidth="0.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+const GREMLIN_POS = [
+  { dx: "-230%", dy: "-120%", rot: "-30deg", delay: 0 },
+  { dx: "220%", dy: "-150%", rot: "30deg", delay: 90 },
+  { dx: "-190%", dy: "150%", rot: "-20deg", delay: 160 },
+  { dx: "240%", dy: "120%", rot: "24deg", delay: 60 },
+];
+function GremlinsBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      {GREMLIN_POS.map((v, i) => (
+        <span key={i} className="fx-sig-star absolute left-1/2 top-1/2 ml-[-11%] mt-[-11%] block h-[22%] w-[22%]" style={{ "--dx": v.dx, "--dy": v.dy, "--rot": v.rot, animationDelay: `${delayMs + v.delay}ms` } as React.CSSProperties}>
+          <span className="fx-sig-hop block h-full w-full"><Gremlin /></span>
+        </span>
+      ))}
+      <span className="fx-sig-flash absolute inset-[34%] block rounded-full" style={{ background: "rgba(126,181,154,0.4)", animationDelay: `${delayMs + 60}ms` }} />
+    </span>
+  );
+}
+function HomesickBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-grow absolute left-[26%] top-[24%] block h-[50%] w-[48%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <path d="M6 20 L20 8 L34 20 Z" fill="#e0776b" stroke="#7a2f28" strokeWidth="1.2" strokeLinejoin="round" />
+          <rect x="10" y="20" width="20" height="14" fill="#e6bf6a" stroke="#7a5b23" strokeWidth="1.2" />
+          <rect x="17" y="26" width="6" height="8" fill="#7a2f28" />
+        </svg>
+      </span>
+      <span className="fx-sig-crownfall absolute left-[46%] top-[6%] block h-[22%] w-[20%]" style={{ animationDelay: `${delayMs + 160}ms` }}>
+        <svg viewBox="0 0 20 20" className="h-full w-full" aria-hidden="true">
+          <path d="M10 18 C2 12 3 4 8 5 C9.5 5.4 10 7 10 7 C10 7 10.5 5.4 12 5 C17 4 18 12 10 18 Z" fill="#c25248" stroke="#7a2f28" strokeWidth="1" strokeLinejoin="round" />
+        </svg>
+      </span>
+    </span>
+  );
+}
+function JetLagBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+        <span className="fx-sig-streak absolute left-[-6%] top-[2%] block h-[46%] w-[56%]" style={{ animationDelay: `${delayMs}ms` }}>
+          <svg viewBox="0 0 40 24" className="h-full w-full" aria-hidden="true">
+            <path d="M2 14 L26 10 L38 6 L30 14 L38 15 L24 16 L14 22 L16 15 Z" fill="#c9d2dc" stroke="#4a5560" strokeWidth="1" strokeLinejoin="round" />
+          </svg>
+        </span>
+        <span className="fx-sig-grow absolute left-[30%] bottom-[10%] block h-[44%] w-[40%]" style={{ animationDelay: `${delayMs + 160}ms` }}>
+          <svg viewBox="0 0 30 30" className="h-full w-full" aria-hidden="true">
+            <rect x="6" y="10" width="18" height="16" rx="2" fill="#7a2f28" stroke="#3a1512" strokeWidth="1.2" />
+            <path d="M12 10 V6 H18 V10" fill="none" stroke="#3a1512" strokeWidth="1.4" />
+            <path d="M15 12 V24 M9 18 H21" stroke="#e6bf6a" strokeWidth="1" />
+          </svg>
+        </span>
+      </span>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="absolute left-[28%] top-[22%] block h-[42%] w-[42%]">
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <circle cx="20" cy="20" r="16" fill="#f4f7f2" stroke="#8a6414" strokeWidth="2" />
+          <g className="fx-sig-rewind" style={{ animationDelay: `${delayMs}ms` }}>
+            <path d="M20 20 L20 9" stroke="#7a2f28" strokeWidth="2" strokeLinecap="round" />
+            <path d="M20 20 L27 20" stroke="#c25248" strokeWidth="2" strokeLinecap="round" />
+          </g>
+        </svg>
+      </span>
+      <span className="fx-sig-zzz absolute left-[54%] top-[12%] block h-[24%] w-[24%]" style={{ animationDelay: `${delayMs + 200}ms` }}>
+        <svg viewBox="0 0 20 20" className="h-full w-full" aria-hidden="true">
+          <path d="M4 4 H12 L4 14 H12" fill="none" stroke="#8aa0b4" strokeWidth="2.4" strokeLinejoin="round" strokeLinecap="round" />
+        </svg>
+      </span>
+    </span>
+  );
+}
+function HillFlagBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-rise absolute inset-x-[10%] bottom-[6%] block h-[40%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 40 20" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
+          <path d="M0 20 C10 6 30 6 40 20 Z" fill="#7eb59a" stroke="#2c473a" strokeWidth="1" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <span className="fx-sig-brick absolute left-[46%] bottom-[24%] block h-[54%] w-[8%]" style={{ animationDelay: `${delayMs + 120}ms` }}>
+        <svg viewBox="0 0 6 40" className="h-full w-full" aria-hidden="true"><path d="M3 40 V2" stroke="#8a6a4a" strokeWidth="2" strokeLinecap="round" /></svg>
+      </span>
+      <span className="fx-sig-wave absolute left-[50%] top-[14%] block h-[20%] w-[26%]" style={{ animationDelay: `${delayMs + 220}ms` }}>
+        <svg viewBox="0 0 26 16" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
+          <path d="M0 1 H24 L20 8 L24 15 H0 Z" fill="#e0776b" stroke="#7a2f28" strokeWidth="1" strokeLinejoin="round" />
+        </svg>
+      </span>
+      {lead && <span className="fx-sig-flash absolute left-[40%] top-[2%] block h-[18%] w-[20%] rounded-full" style={{ background: "rgba(244,196,64,0.55)", animationDelay: `${delayMs + 200}ms` }} />}
+    </span>
+  );
+}
+function SugarRushBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-afterimage absolute left-[26%] top-[14%] block h-[54%] w-[48%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <span className="fx-sig-hop block h-full w-full">
+          <svg viewBox="0 0 30 40" className="h-full w-full" aria-hidden="true">
+            <path d="M15 40 V16" stroke="#f4f7f2" strokeWidth="2.4" strokeLinecap="round" />
+            <circle cx="15" cy="12" r="10" fill="#e0776b" stroke="#7a2f28" strokeWidth="1.2" />
+            <path d="M15 12 C15 8 19 8 19 12 C19 17 11 17 11 12 C11 6 23 6 23 12" fill="none" stroke="#f4f7f2" strokeWidth="1.6" strokeLinecap="round" />
+          </svg>
+        </span>
+      </span>
+      {lead && (
+        <span className="fx-sig-zzz absolute left-[56%] top-[8%] block h-[24%] w-[24%]" style={{ animationDelay: `${delayMs + 520}ms` }}>
+          <svg viewBox="0 0 20 20" className="h-full w-full" aria-hidden="true">
+            <path d="M4 4 H12 L4 14 H12" fill="none" stroke="#8aa0b4" strokeWidth="2.4" strokeLinejoin="round" strokeLinecap="round" />
+          </svg>
+        </span>
+      )}
+      <ShardBurst vectors={PIN_STARS} fill="#f4c430" stroke="#8a6414" delayMs={delayMs + 60} sizePct={8} />
+    </span>
+  );
+}
+
 /** One square's slice of a signature sequence. `role` is "lead" for the single
  * origin flourish (nova's pop, atomic's central thump, the siege muzzle) and
  * "target" for every cleared enemy square; `delayMs` is the pre-computed
@@ -5741,6 +6445,47 @@ export function SignatureOverlay({
       return <GalePhaseBurst delayMs={delayMs} />;
     case "oppositeday":
       return <OppositeDayBurst delayMs={delayMs} />;
+    // --- Batch 10 (board-wide virus + gambling wheels + drum-man + funnies) ---
+    case "virusspread":
+      return <VirusSpreadBurst lead={lead} delayMs={delayMs} />;
+    case "fortunewheel":
+      return <FortuneWheelBurst lead={lead} delayMs={delayMs} />;
+    case "slotmachine":
+      return <SlotMachineBurst lead={lead} delayMs={delayMs} />;
+    case "coinflip":
+      return <CoinFlipBurst lead={lead} delayMs={delayMs} />;
+    case "drumbonk":
+      return <DrumBonkBurst lead={lead} delayMs={delayMs} />;
+    case "rakebonk":
+      return <RakeBonkBurst delayMs={delayMs} />;
+    case "flyswat":
+      return <FlySwatBurst delayMs={delayMs} />;
+    case "sleepcap":
+      return <SleepCapBurst delayMs={delayMs} />;
+    case "superglue":
+      return <SuperGlueBurst lead={lead} delayMs={delayMs} />;
+    case "beartrap":
+      return <BearTrapBurst delayMs={delayMs} />;
+    case "anvildrop":
+      return <AnvilDropBurst lead={lead} delayMs={delayMs} />;
+    case "boxingglove":
+      return <BoxingGloveBurst delayMs={delayMs} />;
+    case "bubblewrap":
+      return <BubbleWrapBurst lead={lead} delayMs={delayMs} />;
+    case "vertigo":
+      return <VertigoBurst lead={lead} delayMs={delayMs} />;
+    case "origami":
+      return <OrigamiBurst delayMs={delayMs} />;
+    case "gremlins":
+      return <GremlinsBurst delayMs={delayMs} />;
+    case "homesick":
+      return <HomesickBurst delayMs={delayMs} />;
+    case "jetlag":
+      return <JetLagBurst lead={lead} delayMs={delayMs} />;
+    case "hillflag":
+      return <HillFlagBurst lead={lead} delayMs={delayMs} />;
+    case "sugarrush":
+      return <SugarRushBurst lead={lead} delayMs={delayMs} />;
     default:
       return null;
   }

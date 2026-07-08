@@ -7,9 +7,10 @@ import { useEffect, useId, useRef, useState } from "react";
  * reveals a one-line definition on hover, keyboard focus, or tap.
  *
  * Design law: 1px corners, no gradient / glow / shadow, a hairline border, and
- * a sun-accent underline on hover. The only motion is a colour transition on
- * the trigger, gated behind motion-safe so reduced-motion users get a still,
- * instant reveal. Accessible: the trigger is focusable, exposes the definition
+ * a coral-accent colour on hover (the term itself tints coral, plus its
+ * underline) so it clearly reads as interactive. The only motion is a colour
+ * transition on the trigger, gated behind motion-safe so reduced-motion users
+ * get a still, instant reveal. Accessible: the trigger is focusable, exposes the definition
  * through aria-describedby while open and a title as the no-JS fallback, and
  * closes on outside tap or Escape (touch has no mouse-leave).
  */
@@ -57,7 +58,7 @@ export function GlossaryTerm({ term, definition }: { term: string; definition: s
             setOpen((o) => !o);
           }
         }}
-        className="cursor-help underline decoration-dotted decoration-parchment-400/60 underline-offset-2 outline-none hover:decoration-sun/80 focus-visible:decoration-sun/80 motion-safe:transition-colors motion-safe:duration-150"
+        className="cursor-help underline decoration-dotted decoration-parchment-400/60 underline-offset-2 outline-none hover:text-coral hover:decoration-coral/80 focus-visible:text-coral focus-visible:decoration-coral/80 motion-safe:transition-colors motion-safe:duration-150"
       >
         {term}
       </span>

@@ -8,7 +8,7 @@ import { Color } from "@/engine/types";
 import { Tier } from "@/engine/nerf";
 import { TIER_ROMAN } from "@/lib/tiers";
 import { motion, useReducedMotion } from "framer-motion";
-import { Ban, ChevronRight, Hourglass, Inbox, Layers, ShieldAlert, Swords, type LucideIcon } from "lucide-react";
+import { Ban, ChevronRight, Clock, Hourglass, Inbox, Layers, ShieldAlert, Swords, type LucideIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { BuffCard } from "./BuffCard";
 import { OppPlaysDockSection, type OppPlay } from "./OppPlaysLog";
@@ -137,24 +137,28 @@ export function TargetingBanner({
   const finishable = targeting.target.kind === "square" && !!targeting.target.finishable;
   return (
     <div className="pointer-events-none absolute inset-x-0 bottom-2 z-30 flex justify-center px-2">
-      <div className="pointer-events-auto flex max-w-full items-center gap-2 border border-gold/50 bg-ink-900/95 px-3 py-1.5 shadow-plate backdrop-blur-sm">
-        <span aria-hidden className="h-1.5 w-1.5 shrink-0 bg-gold-leaf animate-flicker" />
+      {/* Your card is mid-use: mint marks the active card (yours), coral the
+          back-out. 1px corners, no glow, clear labels (design law). */}
+      <div className="pointer-events-auto flex max-w-full items-center gap-2.5 rounded-[1px] border border-mint/45 bg-ink-900/95 px-3 py-2 shadow-plate backdrop-blur-sm">
+        <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-[1px] bg-mint-glow animate-flicker" />
         <span className="min-w-0 truncate font-display text-xs font-semibold text-parchment">
-          {name}: {empty ? "no valid targets right now" : targeting.target.label}
+          <span className="text-mint-glow">{name}</span>
+          <span className="text-parchment-400"> · </span>
+          {empty ? "no valid targets right now" : targeting.target.label}
         </span>
         {finishable && onFinish && (
           <button
             onClick={onFinish}
-            className="btn-leaf shadow-leaf shrink-0 px-2 py-0.5 font-display text-[10px] font-semibold tracking-wide"
+            className="shrink-0 rounded-[1px] border border-mint/50 bg-mint/15 px-2.5 py-1 font-display text-[10px] font-semibold tracking-wide text-mint-glow transition hover:bg-mint/25"
           >
             Done
           </button>
         )}
         <button
           onClick={onCancel}
-          className="btn-ghost shrink-0 px-2 py-0.5 font-display text-[10px] tracking-wide"
+          className="shrink-0 rounded-[1px] border border-coral/40 bg-coral/10 px-2.5 py-1 font-display text-[10px] font-semibold tracking-wide text-coral-glow transition hover:bg-coral/20"
         >
-          Cancel · Esc
+          Cancel <span className="text-coral-glow/60">Esc</span>
         </button>
       </div>
     </div>
@@ -216,7 +220,7 @@ export function EnemyBuffModal({
 
         <button
           onClick={onCancel}
-          className="mt-4 w-full px-3 py-2 btn-ghost text-xs font-display tracking-wide"
+          className="mt-4 w-full rounded-[1px] border border-coral/40 bg-coral/10 px-3 py-2 font-display text-xs font-semibold tracking-wide text-coral-glow transition hover:bg-coral/20"
         >
           Cancel
         </button>
@@ -305,6 +309,10 @@ interface AgainstRow {
   name: string;
   detail: string;
   left: string;
+  /** True when the effect is time-limited (a finite countdown or a pending
+   * skip), so the row carries the small "temporary" clock. Permanent effects
+   * ("until it ends") do not. */
+  temporary: boolean;
   /** The source card's difficulty tier, when the constraint is a face-up
    * opponent curse. Board-derived constraints (freeze, barred, halted pawns...)
    * keep no tier: the serialized effect record does not retain which card and
@@ -328,6 +336,7 @@ function againstYouRows(game: NerfGame, myColor: Color): AgainstRow[] {
         name: "Frozen piece",
         detail: `Your piece on ${sqName(e.sq)} cannot move.`,
         left: turnsLeft(e.turns),
+        temporary: e.turns != null,
       });
     } else if (e.kind === "walnut" && e.owner === myColor) {
       rows.push({
@@ -335,6 +344,7 @@ function againstYouRows(game: NerfGame, myColor: Color): AgainstRow[] {
         name: "Walnut hex",
         detail: `Your piece on ${sqName(e.sq)} is a walnut and cannot move.`,
         left: turnsLeft(e.turns),
+        temporary: e.turns != null,
       });
     } else if (e.kind === "barred" && e.against === myColor) {
       rows.push({
@@ -342,6 +352,7 @@ function againstYouRows(game: NerfGame, myColor: Color): AgainstRow[] {
         name: "Barred squares",
         detail: `You cannot move onto ${e.squares.map(sqName).join(", ")}.`,
         left: turnsLeft(e.turns),
+        temporary: e.turns != null,
       });
     } else if (e.kind === "no_pawn_advance" && e.against === myColor) {
       rows.push({
@@ -349,6 +360,7 @@ function againstYouRows(game: NerfGame, myColor: Color): AgainstRow[] {
         name: "Pawns halted",
         detail: "Your pawns cannot advance.",
         left: turnsLeft(e.turns),
+        temporary: e.turns != null,
       });
     } else if (e.kind === "king_only" && e.against === myColor) {
       rows.push({
@@ -356,6 +368,7 @@ function againstYouRows(game: NerfGame, myColor: Color): AgainstRow[] {
         name: "King only",
         detail: "Only your king may move.",
         left: turnsLeft(e.turns),
+        temporary: e.turns != null,
       });
     }
   });
@@ -366,6 +379,8 @@ function againstYouRows(game: NerfGame, myColor: Color): AgainstRow[] {
       name: skips === 1 ? "Turn skip" : "Turn skips",
       detail: skips === 1 ? "Your next turn is skipped." : `Your next ${skips} turns are skipped.`,
       left: "Pending",
+      // A pending skip clears once it is consumed, so it is time-limited too.
+      temporary: true,
     });
   }
   // Opponent-held curses running against you: only face-up cards (masked
@@ -379,7 +394,17 @@ function againstYouRows(game: NerfGame, myColor: Color): AgainstRow[] {
     if (!def || def.category !== "hex") return;
     const status = def.status?.(inst);
     if (!status) return;
-    rows.push({ key: `hex-${inst.id}-${i}`, name: def.name, detail: def.description, left: status, tier: inst.tier });
+    // Face-up curse: its status line reads "N turns left" while it is timed,
+    // so a turns mention is a reliable "temporary" tell; a curse that runs for
+    // the rest of the game says no such thing and stays permanent.
+    rows.push({
+      key: `hex-${inst.id}-${i}`,
+      name: def.name,
+      detail: def.description,
+      left: status,
+      tier: inst.tier,
+      temporary: /turn/i.test(status),
+    });
   });
   return rows;
 }
@@ -777,6 +802,18 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
                       >
                         {row.name}
                       </span>
+                      {/* Time-limited effect: a small hoverable clock so
+                          "this wears off" reads at a glance. Permanent
+                          constraints carry no clock. */}
+                      {row.temporary && (
+                        <span
+                          title="temporary effect"
+                          aria-label="temporary effect"
+                          className="shrink-0 text-parchment-400"
+                        >
+                          <Clock aria-hidden size={11} strokeWidth={2.2} />
+                        </span>
+                      )}
                       {t ? (
                         <span className="smallcaps shrink-0 rounded-[1px] border border-white/15 bg-white/[0.05] px-1.5 py-px text-[8px] font-semibold text-parchment-300">
                           {row.left}

@@ -965,6 +965,124 @@
   animation: fx-sig-dart 0.62s var(--ease-out, ease-out) both;
 }
 
+/* --- 10j. Batch 10 signatures (board-wide virus + gambling wheels + brainrot
+   liveliness + slapstick funnies) --------------------------------------------
+   Same law as every signature: transform / opacity ONLY, `both` fill so the
+   inline animation-delay staggers cleanly, all hidden outright under reduced
+   motion (added to the block below). Solid fills / 1px corners, coral / mint /
+   sun / gold. Most Batch 10 visuals compose the fx-sig-* classes already above;
+   the genuinely new motions are the ones defined here. */
+
+/* Computer Virus: a Matrix-style code column cascades top to bottom of the
+   board crop. Paired with the existing fx-sig-glitch jitter and a sweep bar. */
+@keyframes fx-sig-codefall {
+  0% { opacity: 0; transform: translateY(-46%); }
+  16% { opacity: 1; transform: translateY(-20%); }
+  84% { opacity: 1; transform: translateY(86%); }
+  100% { opacity: 0; transform: translateY(120%); }
+}
+.fx-sig-codefall { animation: fx-sig-codefall 1s linear both; }
+
+/* Virus sweep: a corruption bar slides across the whole board crop. */
+@keyframes fx-sig-sweepbar {
+  0% { opacity: 0; transform: translateX(-70%); }
+  18% { opacity: 0.9; transform: translateX(-30%); }
+  70% { opacity: 0.7; transform: translateX(40%); }
+  100% { opacity: 0; transform: translateX(80%); }
+}
+.fx-sig-sweepbar { animation: fx-sig-sweepbar 0.95s steps(5, end) both; }
+
+/* Wheel of Fortune: the wheel spins hard and decelerates to rest (front-loaded
+   rotation + ease-out reads as a real spin-down). */
+@keyframes fx-sig-wheelspin {
+  0% { transform: rotate(0deg); }
+  55% { transform: rotate(872deg); }
+  82% { transform: rotate(1052deg); }
+  93% { transform: rotate(1038deg); }
+  100% { transform: rotate(1044deg); }
+}
+.fx-sig-wheelspin {
+  animation: fx-sig-wheelspin 1.2s cubic-bezier(0.16, 0.7, 0.2, 1) both;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+/* The pointer flicks off the pegs, the kicks shrinking as the wheel slows. */
+@keyframes fx-sig-tick {
+  0% { transform: rotate(0deg); }
+  12% { transform: rotate(-17deg); }
+  24% { transform: rotate(0deg); }
+  44% { transform: rotate(-11deg); }
+  56% { transform: rotate(0deg); }
+  74% { transform: rotate(-6deg); }
+  86% { transform: rotate(0deg); }
+  100% { transform: rotate(0deg); }
+}
+.fx-sig-tick {
+  animation: fx-sig-tick 1.2s ease-out both;
+  transform-box: fill-box;
+  transform-origin: 50% 22%;
+}
+
+/* Jackpot: a slot reel scrolls fast then snaps to its stop with a little bounce.
+   The reel strip is taller than its window, which crops it. */
+@keyframes fx-sig-reel {
+  0% { transform: translateY(-320%); }
+  70% { transform: translateY(0%); }
+  82% { transform: translateY(6%); }
+  92% { transform: translateY(-2%); }
+  100% { transform: translateY(0%); }
+}
+.fx-sig-reel { animation: fx-sig-reel 0.95s cubic-bezier(0.2, 0.75, 0.25, 1) both; }
+
+/* Gamble: a coin tumbles down flipping (scaleY fakes the edge-on flip) and
+   lands, then fades. */
+@keyframes fx-sig-coinflip {
+  0% { opacity: 0; transform: translateY(-72%) scaleY(1); }
+  12% { opacity: 1; transform: translateY(-52%) scaleY(0.9); }
+  22% { transform: translateY(-38%) scaleY(0.12); }
+  34% { transform: translateY(-20%) scaleY(1); }
+  46% { transform: translateY(-8%) scaleY(0.12); }
+  58% { transform: translateY(-4%) scaleY(1); }
+  70% { transform: translateY(0) scaleY(0.12); }
+  82% { opacity: 1; transform: translateY(0) scaleY(1); }
+  100% { opacity: 0; transform: translateY(0) scaleY(1); }
+}
+.fx-sig-coinflip { animation: fx-sig-coinflip 1s ease-out both; transform-origin: 50% 100%; }
+
+/* Boxing Glove: the glove springs out on its arm, overshoots the punch, then
+   retracts. transform-origin at the arm root. */
+@keyframes fx-sig-punch {
+  0% { opacity: 0; transform: translateX(-58%) scaleX(0.7); }
+  22% { opacity: 1; transform: translateX(-30%) scaleX(0.9); }
+  46% { transform: translateX(10%) scaleX(1.12); }
+  60% { transform: translateX(2%) scaleX(1); }
+  78% { transform: translateX(-22%) scaleX(0.9); }
+  100% { opacity: 0; transform: translateX(-42%) scaleX(0.8); }
+}
+.fx-sig-punch { animation: fx-sig-punch 0.6s var(--ease-out, cubic-bezier(0.2, 0.8, 0.2, 1)) both; transform-origin: 0% 50%; }
+
+/* Brainrot liveliness: three short looping "personality" motions nested inside
+   the character entrances (the fx-sig-wingbeat precedent). A springy hop with
+   squash, a side-to-side wiggle, and a jaw chomp. They loop a few beats then
+   hold, so the reduced-motion drop still leaves a clean static pose. */
+@keyframes fx-sig-hop {
+  0%, 100% { transform: translateY(0) scaleY(1) scaleX(1); }
+  32% { transform: translateY(-24%) scaleY(1.07) scaleX(0.95); }
+  55% { transform: translateY(0) scaleY(0.83) scaleX(1.09); }
+  74% { transform: translateY(-6%) scaleY(1.02) scaleX(0.99); }
+}
+.fx-sig-hop { animation: fx-sig-hop 0.36s ease-in-out 3 both; transform-origin: 50% 100%; }
+@keyframes fx-sig-wiggle {
+  0%, 100% { transform: rotate(-8deg); }
+  50% { transform: rotate(8deg); }
+}
+.fx-sig-wiggle { animation: fx-sig-wiggle 0.4s ease-in-out 3 both; transform-origin: 50% 92%; }
+@keyframes fx-sig-chomp {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(0.78); }
+}
+.fx-sig-chomp { animation: fx-sig-chomp 0.26s ease-in-out 4 both; transform-box: fill-box; transform-origin: 50% 40%; }
+
 /* --- Reduced motion ----------------------------------------------------------
    Persistent props hold their static end state; one-shot flourishes vanish
    (same treatment globals.css gives the walnut squirrel). */
@@ -1080,7 +1198,21 @@
   /* Batch 9 thematic set: the bomb whistle-drop and the horizontal dart are the
      only new classes; every other Batch 9 visual reuses classes listed above. */
   .fx-sig-bombdrop,
-  .fx-sig-dart {
+  .fx-sig-dart,
+  /* Batch 10: the board-wide virus cascade / sweep, the gambling wheel-spin /
+     pointer tick / slot reel / coin flip, the boxing-glove punch, and the three
+     brainrot personality loops (hop / wiggle / chomp). Every other Batch 10
+     visual reuses classes already listed above. */
+  .fx-sig-codefall,
+  .fx-sig-sweepbar,
+  .fx-sig-wheelspin,
+  .fx-sig-tick,
+  .fx-sig-reel,
+  .fx-sig-coinflip,
+  .fx-sig-punch,
+  .fx-sig-hop,
+  .fx-sig-wiggle,
+  .fx-sig-chomp {
     animation: none !important;
     opacity: 0 !important;
   }
