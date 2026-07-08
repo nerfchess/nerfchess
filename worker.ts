@@ -420,10 +420,13 @@ const houseGameSeats = Math.max(4, HOUSE_ROSTER.length - houseSeekReserve);
 // filler, so a human's freshly accepted bot game could not get its move
 // processed in time. The bot never moved and, once the isolate was CPU-evicted
 // mid-tick, the socket upgrade stopped being answered and the client fell back to
-// "cant connect to game servers". A few live filler games are plenty to keep the
-// lobby and TV looking busy; correctness (humans' bot games always move) beats
-// lobby optics, so these stay small no matter how large the roster grows.
-const houseVsHouseCapMax = 3;
+// "cant connect to game servers". One or two live filler games are plenty to keep
+// the lobby and TV looking busy; correctness (humans' bot games always move) beats
+// lobby optics, so these stay small no matter how large the roster grows. Kept at
+// 2 so at most one-to-two bot-vs-bot games ever run at once; the spaced filler
+// timer starts a fresh one whenever one ends, giving a steady, ongoing one-to-two
+// rather than a crowd.
+const houseVsHouseCapMax = 2;
 const houseTotalGamesCapMax = 8;
 const houseVsHouseCap = Math.min(houseVsHouseCapMax, Math.max(1, Math.floor(houseGameSeats / 3)));
 const houseTotalGamesCap = Math.min(houseTotalGamesCapMax, houseGameSeats - houseVsHouseCap);

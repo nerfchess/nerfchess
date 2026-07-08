@@ -21,7 +21,11 @@ export function loadConfig(): ArenaConfig {
   return {
     token: process.env.ARENA_TOKEN ?? "",
     replayVersion: Number(process.env.ARENA_REPLAY_VERSION ?? "0"),
-    maxGames: Number(process.env.ARENA_MAX_GAMES ?? "18"),
+    // One-to-two ongoing bot-vs-bot games, matching the DO's houseVsHouseCapMax.
+    // The spaced filler timer starts a fresh game whenever one ends, so the arena
+    // keeps a steady one-to-two running rather than a crowd. Override with
+    // ARENA_MAX_GAMES if a load test needs more.
+    maxGames: Number(process.env.ARENA_MAX_GAMES ?? "2"),
     enabled: (process.env.ARENA_ENABLED ?? "true") !== "false",
     port: Number(process.env.PORT ?? "8788"),
     verboseMoves: process.env.ARENA_VERBOSE_MOVES === "true",
