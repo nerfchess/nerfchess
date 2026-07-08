@@ -43,6 +43,18 @@ export const HOUSE_SEARCH_CEILING_MS = 80;
 // remote outage degrades to the old capped strength rather than stalling the
 // DO. Roughly geometric growth: each rating step needs increasingly more
 // search time for the same strength gain (diminishing Elo per ply).
+//
+// IMPORTANT: negamax's own timeout check only fires once elapsed time exceeds
+// `budget * 2` (see ai.ts's TIMEOUT_SENTINEL check) -- it's a per-node safety
+// net, not a tight deadline. Measured against engine.nerfchess.com/move (the
+// real public path -- localhost-on-the-box measurements alone understated
+// this by ~600ms of tunnel/network overhead), actual wall time runs
+// 1.5-2.5x the nominal budgetMs. These numbers are sized so the slowest tier
+// (2200) lands around ~2.2-2.4s over the public path, leaving real margin
+// below the Worker's 3000ms HOUSE_ENGINE_TIMEOUT_MS. Re-measure against the
+// public URL (not just localhost:8787 on the box) before raising any of
+// these -- don't trust the nominal number, and don't trust a localhost-only
+// measurement either.
 export type HouseSkill = 1350 | 1550 | 1750 | 1900 | 1950 | 2000 | 2050 | 2100 | 2150 | 2200;
 
 type SkillProfile = {
@@ -56,13 +68,13 @@ export const HOUSE_SKILL_PROFILES: Record<HouseSkill, SkillProfile> = {
   1350: { level: "medium", budgetMs: 25, blunderChance: 0.1 },
   1550: { level: "medium", budgetMs: 60, blunderChance: 0.05 },
   1750: { level: "hard", budgetMs: 150, blunderChance: 0.005 },
-  1900: { level: "hard", budgetMs: 300, blunderChance: 0.005 },
-  1950: { level: "hard", budgetMs: 450, blunderChance: 0.005 },
-  2000: { level: "hard", budgetMs: 650, blunderChance: 0.005 },
-  2050: { level: "hard", budgetMs: 900, blunderChance: 0.005 },
-  2100: { level: "hard", budgetMs: 1200, blunderChance: 0.005 },
-  2150: { level: "hard", budgetMs: 1500, blunderChance: 0.005 },
-  2200: { level: "hard", budgetMs: 1800, blunderChance: 0.005 },
+  1900: { level: "hard", budgetMs: 180, blunderChance: 0.005 },
+  1950: { level: "hard", budgetMs: 250, blunderChance: 0.005 },
+  2000: { level: "hard", budgetMs: 350, blunderChance: 0.005 },
+  2050: { level: "hard", budgetMs: 450, blunderChance: 0.005 },
+  2100: { level: "hard", budgetMs: 550, blunderChance: 0.005 },
+  2150: { level: "hard", budgetMs: 650, blunderChance: 0.005 },
+  2200: { level: "hard", budgetMs: 800, blunderChance: 0.005 },
 };
 
 export type HousePersona = {

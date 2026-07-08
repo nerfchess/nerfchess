@@ -17,10 +17,14 @@ const TOKEN = process.env.HOUSE_ENGINE_TOKEN ?? "";
 const REPLAY_VERSION = Number(process.env.ENGINE_REPLAY_VERSION ?? "0");
 const PORT = Number(process.env.PORT ?? "8787");
 // Unlike the DO, this box has no shared thread to protect — search here costs
-// nothing else. Cap comfortably under the Worker's HOUSE_ENGINE_TIMEOUT_MS
-// (3000ms) so the slowest tier (2200: 1800ms budget) always has room for
-// network + JSON overhead before the Worker gives up and falls back local.
-const REMOTE_SEARCH_CEILING_MS = 2500;
+// nothing else. This is a non-binding safety cap (today's tiers top out at
+// 800ms, see bots.ts); actual wall time can run to ~2x nominal budgetMs
+// (negamax's own timeout check fires at budget*2) plus ~600ms of tunnel/
+// network overhead over the public path, so the real ceiling on worst-case
+// latency is the per-tier budgetMs values, sized (and measured against the
+// public URL) to leave margin under the Worker's HOUSE_ENGINE_TIMEOUT_MS
+// (3000ms).
+const REMOTE_SEARCH_CEILING_MS = 900;
 // Derived from the roster's profile map so the accepted tiers never drift out
 // of sync with bots.ts when the skill tiers change.
 const VALID_SKILLS = new Set<HouseSkill>(
