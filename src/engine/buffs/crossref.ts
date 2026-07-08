@@ -372,15 +372,15 @@ export const CROSSREF_CARDS: Buff[] = [
   // king, instants resolve once), so none can soft-lock a game.
   // -------------------------------------------------------------------------
 
-  // Italian brainrot: the log-man with the bat. Bonk one enemy piece and it is
-  // stunned (frozen) for 2 of its turns, with an impact flash on the square.
+  // Italian brainrot: the beaver bandit swings his log. Bonk one enemy piece
+  // and it is stunned (frozen) for 2 of its turns, with an impact flash.
   hex(
     {
       id: "sahur",
-      name: "Tung Tung Tung Sahur",
+      name: "Bobrito Bandito",
       description: "Bonk one enemy piece with the log: it is stunned and cannot move for its next 2 turns. Kings are too stubborn to bonk.",
       tier: 5,
-      flavor: "Tung tung tung tung tung tung tung tung tung sahur.",
+      flavor: "The beaver bandit collects his toll, one bonk at a time.",
     },
     activated(
       (_inst, api, picks) =>

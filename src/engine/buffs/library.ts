@@ -6,6 +6,7 @@ import { WILD_CARDS } from "./wild";
 import { CROSSREF_CARDS } from "./crossref";
 import { PT_CARDS } from "./pt";
 import { TIER9 } from "./tier9";
+import { BRAINROT } from "./brainrot";
 import { Buff, BuffApi, BuffCategory, BuffInstance, CardFx } from "../buff";
 import { Tier } from "../nerf";
 import { BoardState, Color, FILE, Move, PieceType, RANK, SQ, Square, inBoard } from "../types";
@@ -2376,25 +2377,35 @@ const TIER5: Buff[] = [
     },
   ),
   def(
-    { id: "warp_home", name: "Warp Home", description: "Recall one of your pieces to any empty square in your back two ranks, once.", tier: 3, category: "movement" },
+    // Distinct from Recall (which drops a piece on any empty back-two-ranks
+    // square): Warp Home teleports a piece to a vacant STARTING square of its
+    // own type, a precise return-to-post rather than a free relocation.
+    { id: "warp_home", name: "Warp Home", description: "Teleport one of your pieces back to a vacant starting square of its own type, once. A rook warps to an empty a1 or h1, a knight to b1 or g1, a pawn to any open square on its second rank, and so on.", tier: 3, category: "movement" },
     activated(
       (_inst, api, picks) => {
+        const homesFor = (type: PieceType) =>
+          homeSquares(api.me)
+            .filter(([sq, t]) => t === type && !api.board.pieces[sq])
+            .map(([sq]) => sq);
         if (picks.length === 0) {
           return {
             kind: "square",
             label: "Choose the piece to warp home",
-            squares: mySquares(api.board, api.me).filter((sq) => api.board.pieces[sq]!.type !== "k"),
+            squares: mySquares(api.board, api.me).filter((sq) => {
+              const t = api.board.pieces[sq]!.type;
+              return t !== "k" && homesFor(t).length > 0;
+            }),
           };
         }
         if (picks.length === 1) {
-          const isPawn = api.board.pieces[picks[0].square!]?.type === "p";
+          const from = picks[0].square;
+          if (from == null) return null;
+          const t = api.board.pieces[from]?.type;
+          if (t == null) return null;
           return {
             kind: "square",
-            label: "Choose an empty square in your back two ranks",
-            squares: emptySquares(
-              api.board,
-              (sq) => (api.me === "w" ? RANK(sq) < 2 : RANK(sq) >= 6) && (!isPawn || pawnRankOk(sq)),
-            ),
+            label: "Choose a vacant starting square of that type",
+            squares: homesFor(t),
           };
         }
         return null;
@@ -2403,7 +2414,8 @@ const TIER5: Buff[] = [
         const from = picks[0]?.square, to = picks[1]?.square;
         if (from == null || to == null) return;
         const p = api.board.pieces[from];
-        if (p && (p.type !== "p" || pawnRankOk(to))) api.relocate(from, to);
+        const home = homeSquares(api.me).some(([sq, t]) => sq === to && t === p?.type);
+        if (p && home && !api.board.pieces[to]) api.relocate(from, to);
       },
     ),
   ),
@@ -4075,6 +4087,7 @@ export const ALL_BUFFS: Buff[] = [
   ...WILD_CARDS,
   ...CROSSREF_CARDS,
   ...PT_CARDS,
+  ...BRAINROT,
   ...ITEMS,
   ...TIER9,
 ];
