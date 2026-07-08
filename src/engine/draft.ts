@@ -45,6 +45,15 @@ export const NERF_MODE_CADENCE = 5;
 // deterministic for a given seed.
 export const HEX_SHARE = 0.6;
 
+// Nerf-relief decline suppression (owner request): once a player has been
+// OFFERED this many nerf-relief / nerf-referencing cards (category "nerf")
+// without ever picking one, the category is dropped from that player's future
+// offers for the rest of the game. Mirrors the reliefIsDead / nerfRemoved
+// suppression already applied in inMode; a pure read of synced draft state, so
+// it stays deterministic and replay-safe. Buff mode never offers nerf cards, so
+// this only bites in nerf mode (and legacy merged games).
+export const NERF_DECLINE_LIMIT = 2;
+
 // ---------------------------------------------------------------------------
 // TEMPORARY draft weighting (owner request, pending a moderator panel).
 // The Funny, Fantasy, and "meta" collections should be offered about 50% more
@@ -218,6 +227,10 @@ function rollCards(
   // their pool entirely: the draft must not offer an upgrade that eases a nerf
   // that is not in effect. Pure pool filter, computed once per roll.
   const reliefIsDead = nerfIsOff(bs, color);
+  // Decline suppression: after NERF_DECLINE_LIMIT unpicked nerf-relief offers
+  // this player never sees the category again. A pure read of the running
+  // counter maintained in rollOffer (see below), so it stays replay-safe.
+  const nerfDeclinesMaxed = (ps.nerfDeclines ?? 0) >= NERF_DECLINE_LIMIT;
   // Piece-eligibility guard: a card whose whole effect needs the caster to own
   // a specific piece type (Buff.requires) is a DEAD DRAFT when they have none
   // of it, so it leaves the pool. Computed once per roll from the synced board
@@ -227,10 +240,11 @@ function rollCards(
   const owned = board ? ownedPieceTypes(board, color) : null;
   const inMode = (b: Buff) => {
     // Apex cards (special / tier 9 apex / tier 10 mythic) are never in the
-    // normal pool: they are only obtainable through the dedicated grants
-    // (Jackpot, banking at tier 8), which roll a tier-10 card ~10% of the time.
+    // normal pool: they are only obtainable through the dedicated grants.
+    // Banking at the top tier now GUARANTEES a tier-10 apex; Jackpot is the
+    // gamble path and rolls a tier-10 card ~10% of the time (tier-9 otherwise).
     if (b.special || b.tier === 9 || b.tier === 10) return false;
-    if (reliefIsDead && b.category === "nerf") return false;
+    if ((reliefIsDead || nerfDeclinesMaxed) && b.category === "nerf") return false;
     if (owned && b.requires && !b.requires.some((t) => owned.has(t))) return false;
     return bs.mode === "buff"
       ? b.category !== "nerf" && b.category !== "hex" && !NERF_REVEAL.has(b.id)
@@ -302,8 +316,24 @@ export function rollOffer(
   board?: BoardState,
 ): BuffOffer | null {
   const ps = bs.players[color];
+
+  // Reconcile the previous offer's nerf-relief declines before rolling the next
+  // one. The prior offer has already resolved (picked or banked) by now, so we
+  // read which of its nerf-relief cards the player never ended up holding: each
+  // such card is a decline. A pure read of the held-buff list, so both server
+  // and replica reach the same count. Past NERF_DECLINE_LIMIT declines inMode
+  // drops the category (owner request). See lastNerfOffered / nerfDeclines.
+  if (ps.lastNerfOffered && ps.lastNerfOffered.length) {
+    const held = new Set(ps.buffs.map((b) => b.id));
+    for (const id of ps.lastNerfOffered) {
+      if (!held.has(id)) ps.nerfDeclines = (ps.nerfDeclines ?? 0) + 1;
+    }
+  }
+  ps.lastNerfOffered = undefined;
+
   const index = ps.draftsTaken + 1;
-  const cardCount = ps.flags.prepThree ? 3 : 2;
+  const prepping = ps.flags.prepThree === true;
+  const cardCount = prepping ? 3 : 2;
   ps.flags.prepThree = undefined;
 
   const bonus = Math.min(1, ps.flags.bankBonus ?? 0);
@@ -320,15 +350,23 @@ export function rollOffer(
   // Apex bank: banking a draft while already at the top tier promotes it past
   // tier 8 into a single apex offer. Triggered only when this is a banked offer
   // (bonus > 0, an unforced roll) whose resolved tier would hit 8. Everywhere
-  // else tiers 9 and 10 stay out of the pool. Deterministic: a first seeded RNG
-  // draw is the 10% tier-10 gate and a second picks the card, so the branch,
-  // the tier, and the pick all replay identically. The gate is drawn
-  // unconditionally so the RNG stream advances the same way regardless of pool.
+  // else tiers 9 and 10 stay out of the pool. Banking to the top now GUARANTEES
+  // a tier-10 apex (falling back to tier-9 only if TIER10 is empty); the ~10%
+  // mythic gamble lives solely on the Jackpot path. Deterministic: one seeded
+  // RNG draw picks the card, so the tier and pick replay identically.
+  //
+  // A prepThree offer (All In) is never collapsed into a single apex card: it
+  // owes the player THREE cards one tier higher, so it must keep going down the
+  // normal multi-card path even when its banked tier would otherwise hit 8.
   const bankedToTop =
-    bonus > 0 && forced == null && tiers[0] + bonus + boost >= 8 && TIER9.length > 0;
+    !prepping &&
+    bonus > 0 &&
+    forced == null &&
+    tiers[0] + bonus + boost >= 8 &&
+    TIER9.length > 0;
   if (bankedToTop) {
     const rng = drawRng(bs);
-    const mythic = rng.next() < 0.1 && TIER10.length > 0;
+    const mythic = TIER10.length > 0;
     const pool = mythic ? TIER10 : TIER9;
     const apexTier: Tier = mythic ? 10 : 9;
     const pick = pool[rng.int(pool.length)];
@@ -369,6 +407,11 @@ export function rollOffer(
   // reroll rolls the same number of cards at the same tiers.
   ps.offerTiers = slotTiers.slice(0, cards.length);
   ps.draftsTaken = index;
+  // Remember which nerf-relief cards this offer showed so the next roll can
+  // count any that go unpicked (see the reconciliation at the top).
+  ps.lastNerfOffered = cards
+    .filter((c) => BUFF_BY_ID[c.id]?.category === "nerf")
+    .map((c) => c.id);
 
   // One-shot reveals (Peek, Quick Glance, Draft Insight): the holder gets a
   // snapshot of this single offer, then the reveal expires.
@@ -408,12 +451,13 @@ export function rerollOffer(bs: BuffMatchState, color: Color, board?: BoardState
   // An apex offer (from banking at the top tier) is a single tier-9 or tier-10
   // card and never rolls off the normal pool. Rerolling it draws a FRESH apex
   // card off the seeded RNG rather than collapsing it into an ordinary tier-8
-  // card, re-rolling the same 10% tier-10 gate as the original grant.
+  // card. A banked apex is a GUARANTEED tier-10, so the reroll stays tier-10
+  // (falling back to tier-9 only if TIER10 is empty) and never downgrades.
   const isApexOffer = slotTiers.length === 1 && (slotTiers[0] === 9 || slotTiers[0] === 10);
   if (isApexOffer) {
     if (TIER9.length === 0) return false;
     const rng = drawRng(bs);
-    const mythic = rng.next() < 0.1 && TIER10.length > 0;
+    const mythic = TIER10.length > 0;
     const pool = mythic ? TIER10 : TIER9;
     const apexTier: Tier = mythic ? 10 : 9;
     const pick = pool[rng.int(pool.length)];
@@ -438,6 +482,12 @@ export function rerollOffer(bs: BuffMatchState, color: Color, board?: BoardState
   ps.rerollsLeft = (ps.rerollsLeft ?? 0) - 1;
   offer.cards = cards;
   offer.rerolled = (offer.rerolled ?? 0) + 1;
+  // Track the finally-shown nerf-relief cards (a reroll can add or drop them) so
+  // decline counting reflects what the player actually saw, not the pre-reroll
+  // cards.
+  ps.lastNerfOffered = cards
+    .filter((c) => BUFF_BY_ID[c.id]?.category === "nerf")
+    .map((c) => c.id);
   // Keep a still-pending opponent reveal (Peek / Quick Glance) honest: it
   // snapshotted this same offer index, so refresh it to the new cards/tier.
   const watcher = bs.players[color === "w" ? "b" : "w"];

@@ -471,6 +471,43 @@ export function makeBuffApi(game: NerfGame, me: Color): BuffApi {
   };
 }
 
+/**
+ * Squares `color` can strike through BUFF-granted augmented moves (a rook that
+ * also steps diagonally, a camel knight, an amazon, the king's extended reach,
+ * ...). Runs exactly the augmentMoves hooks legalMoves uses, but on a read-only
+ * clone of the board with `color` to move, then returns only the target squares
+ * of the moves those hooks ADDED beyond standard movement. Pure: it clones the
+ * board and never mutates the live board, effects, or the draft RNG (augment
+ * generators only read the board), so it is safe to call from anywhere and can
+ * never desync. Feeds board.ts's attack test so a king attacked solely by an
+ * augmented enemy piece is still detected (see gameInCheck / isInCheck).
+ */
+export function buffAugmentedAttacks(game: NerfGame, color: Color): Square[] {
+  const bs = game.buffs;
+  if (!bs) return [];
+  const held = heldBuffs(game, color);
+  if (held.length === 0) return [];
+  const board = cloneBoard(game.board);
+  board.turn = color;
+  const view: NerfGame = { ...game, board };
+  const api = makeBuffApi(view, color);
+  const base = generateMoves(board);
+  const augmented = base.slice();
+  for (const { inst, def } of held) def.augmentMoves?.(augmented, inst, api);
+  const squares: Square[] = [];
+  for (let i = base.length; i < augmented.length; i++) squares.push(augmented[i].to);
+  return squares;
+}
+
+/** Check detection that also honors buff-granted augmented moves: a king
+ * attacked only via an augmented enemy piece is flagged in check, which plain
+ * board.ts isInCheck (standard movement only) misses. Use this wherever game
+ * (buff) context is available. */
+export function gameInCheck(game: NerfGame, color: Color): boolean {
+  const opp: Color = color === "w" ? "b" : "w";
+  return isInCheck(game.board, color, buffAugmentedAttacks(game, opp));
+}
+
 function heldBuffs(game: NerfGame, color: Color): { inst: BuffInstance; def: Buff }[] {
   const bs = game.buffs;
   if (!bs) return [];
@@ -1288,7 +1325,7 @@ export function aiChooseBuffActivation(
   const bs = game.buffs;
   if (!bs || game.result || game.board.turn !== color) return null;
   const ps = bs.players[color];
-  const inDanger = isInCheck(game.board, color);
+  const inDanger = gameInCheck(game, color);
   for (let i = 0; i < ps.buffs.length; i++) {
     const inst = ps.buffs[i];
     const def = BUFF_BY_ID[inst.id];
