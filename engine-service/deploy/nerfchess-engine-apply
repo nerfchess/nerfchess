@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# Root half of the engine self-update: swap the bundle, stamp the env version,
+# restart, health-check. The only shape sudoers lets ubuntu run is this script;
+# it accepts nothing but an integer version and the one fixed bundle path.
+set -euo pipefail
+VER="${1:?}"
+BUNDLE="${2:?}"
+case "$VER" in '' | *[!0-9]*) echo "bad version" >&2; exit 2 ;; esac
+[ "$BUNDLE" = "/opt/nerfchess-engine/repo/engine-service/dist/server.mjs" ] || { echo "bad bundle path" >&2; exit 2; }
+[ -s "$BUNDLE" ] || { echo "empty bundle" >&2; exit 2; }
+
+cp /opt/nerfchess-engine/server.mjs "/opt/nerfchess-engine/server.mjs.bak-$(date +%Y%m%d-%H%M%S)"
+install -o root -g root -m 644 "$BUNDLE" /opt/nerfchess-engine/server.mjs
+sed -i "s/^ENGINE_REPLAY_VERSION=.*/ENGINE_REPLAY_VERSION=$VER/" /etc/nerfchess-engine.env
+systemctl restart nerfchess-engine
+for _ in 1 2 3 4 5; do
+  sleep 1
+  if curl -sf -m 3 localhost:8787/healthz >/dev/null; then
+    echo "applied REPLAY_VERSION=$VER"
+    # keep the five most recent backups
+    ls -t /opt/nerfchess-engine/server.mjs.bak-* 2>/dev/null | tail -n +6 | xargs -r rm --
+    exit 0
+  fi
+done
+echo "engine failed health check after restart" >&2
+exit 4

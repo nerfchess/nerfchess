@@ -88,6 +88,34 @@ path is off or unreachable.
 stale box degrades safely rather than desyncing — but rebuild + redeploy this
 service whenever `REPLAY_VERSION` bumps.
 
+## Self-update webhook (drift heals itself)
+
+Deployed on the box alongside the engine (files in `deploy/`):
+
+- `updater.mjs` — HTTP service on `127.0.0.1:8789` (systemd:
+  `nerfchess-engine-updater.service`, runs as `ubuntu`, token in
+  `/etc/nerfchess-engine-updater.env` = the same `HOUSE_ENGINE_TOKEN`).
+  `POST /update {replayVersion}` starts a rebuild; `GET /update` reports the
+  last run. Per-version cooldown (5 min) so a lagging master isn't hammered.
+- `update.sh` — unprivileged: `git fetch origin master` in
+  `/opt/nerfchess-engine/repo` (read-only GitHub deploy key,
+  `~ubuntu/.ssh/github-deploy`), refuses unless master's `REPLAY_VERSION`
+  equals the requested one, builds, then hands off to…
+- `nerfchess-engine-apply` (root, `/usr/local/sbin`, the only sudoers grant):
+  swaps `/opt/nerfchess-engine/server.mjs`, stamps `ENGINE_REPLAY_VERSION`,
+  restarts, health-checks. Keeps the last five bundle backups.
+
+The tunnel routes `engine.nerfchess.com` path `^/update$` to `:8789` (rule
+above the engine catch-all in `/etc/cloudflared/config.yml`); everything else
+still hits the engine on `:8787`.
+
+The Worker side (`pingEngineUpdate` in `worker.ts`) fires this webhook —
+throttled, fire-and-forget — whenever `/move` answers 409. Net effect: deploy
+the worker from origin/master and the box catches up on its own within
+seconds of the first bot move; a worker deployed from unpushed code just keeps
+falling back to local compute (and, until the frozen-clock search abort lands,
+that fallback can still blow the DO CPU limit — push master first).
+
 ## Note on the repo typecheck
 
 `server.ts` uses `node:http` and imports from `../src`. It builds standalone via
