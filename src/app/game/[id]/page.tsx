@@ -7,6 +7,7 @@ import { Board } from "@/components/Board";
 import { BoardPlayerRow } from "@/components/BoardPlayerRow";
 import { BuffCard } from "@/components/BuffCard";
 import { ClockPill } from "@/components/ClockPill";
+import { GameOver } from "@/components/GameOver";
 import { MoveList } from "@/components/MoveList";
 import { OnlineMatch } from "@/components/OnlineMatch";
 import { moveToUCI } from "@/engine/board";
@@ -393,6 +394,10 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
   const [spectatorChat, setSpectatorChat] = useState<MPSpectatorChatMessage[]>(setup.spectatorChat ?? []);
   const [reconnecting, setReconnecting] = useState(false);
   const [historyPly, setHistoryPly] = useState<number | null>(null);
+  // Once the game is over, watchers get the same result panel the players do
+  // (in neutral spectator mode); dismissing it drops back to the live board,
+  // with a "Show result" button to bring it back.
+  const [showResult, setShowResult] = useState(true);
   // Draft games keep an engine replica so buff board mutations (summons,
   // removals) and zone effects render correctly. The wstart payload is
   // spectator-safe: held buffs and effects only, never pending offers.
@@ -520,7 +525,13 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
   const lastMove = displayBoard.history[displayBoard.history.length - 1] ?? null;
   const zones = isDraft && draftGame ? draftZones(draftGame, "w") : null;
 
+  // The result panel wants Nerf objects and both sides' cards. Rules only exist
+  // in nerf/nerf-buff modes; the draft replica holds the (now-revealed) buffs.
+  const whiteNerf = nerfs?.w ? IMPLEMENTED_BY_ID[nerfs.w] : undefined;
+  const blackNerf = nerfs?.b ? IMPLEMENTED_BY_ID[nerfs.b] : undefined;
+
   return (
+    <>
     <GameShell
       players={setup.players}
       rated={setup.rated}
@@ -584,6 +595,34 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
         </div>
       }
     />
+    {result && showResult && (
+      <GameOver
+        spectator
+        result={result}
+        myColor="w"
+        myNerf={whiteNerf}
+        opponentNerf={blackNerf}
+        playerNames={{ w: setup.players.w.name, b: setup.players.b.name }}
+        moves={history}
+        myBuffs={draftGame?.buffs?.players.w.buffs}
+        opponentBuffs={draftGame?.buffs?.players.b.buffs}
+        onRematch={() => {}}
+        onNewGame={() => {
+          window.location.href = "/play";
+        }}
+        onDismiss={() => setShowResult(false)}
+      />
+    )}
+    {result && !showResult && (
+      <button
+        type="button"
+        onClick={() => setShowResult(true)}
+        className="btn-leaf fixed bottom-14 right-3 z-40 px-4 py-2 font-display text-sm font-semibold shadow-xl sm:bottom-4"
+      >
+        Show result
+      </button>
+    )}
+    </>
   );
 }
 
@@ -748,6 +787,8 @@ function ReplayView({ game }: { game: ReplayGame }) {
   const { history } = useMemo(() => replayUci(uciMoves), [uciMoves]);
   const [historyPly, setHistoryPly] = useState<number>(history.length);
   const [pgnCopied, setPgnCopied] = useState(false);
+  // Same neutral result panel as the live spectator, shown over the replay.
+  const [showResult, setShowResult] = useState(true);
   const displayBoard = useMemo(() => boardAtPly(history, historyPly), [history, historyPly]);
   const lastMove = displayBoard.history[displayBoard.history.length - 1] ?? null;
 
@@ -755,6 +796,8 @@ function ReplayView({ game }: { game: ReplayGame }) {
     w: { name: game.white_name, rating: game.white_rating_before ? Math.round(game.white_rating_before) : null },
     b: { name: game.black_name, rating: game.black_rating_before ? Math.round(game.black_rating_before) : null },
   };
+  const whiteNerf = IMPLEMENTED_BY_ID[game.white_nerf_id];
+  const blackNerf = IMPLEMENTED_BY_ID[game.black_nerf_id];
 
   // Same export as the post-game screen; the archive already has both rules
   // revealed, so they always go into the tags.
@@ -778,6 +821,7 @@ function ReplayView({ game }: { game: ReplayGame }) {
   };
 
   return (
+    <>
     <GameShell
       players={players}
       rated={!!game.rated}
@@ -807,6 +851,34 @@ function ReplayView({ game }: { game: ReplayGame }) {
         </button>
       }
     />
+    {game.winner != null && showResult && (
+      <GameOver
+        spectator
+        result={{ winner: game.winner, reason: game.reason }}
+        myColor="w"
+        myNerf={whiteNerf}
+        opponentNerf={blackNerf}
+        playerNames={{ w: game.white_name, b: game.black_name }}
+        moves={history}
+        startedAt={game.started_at}
+        gameId={game.id}
+        onRematch={() => {}}
+        onNewGame={() => {
+          window.location.href = "/play";
+        }}
+        onDismiss={() => setShowResult(false)}
+      />
+    )}
+    {game.winner != null && !showResult && (
+      <button
+        type="button"
+        onClick={() => setShowResult(true)}
+        className="btn-leaf fixed bottom-14 right-3 z-40 px-4 py-2 font-display text-sm font-semibold shadow-xl sm:bottom-4"
+      >
+        Show result
+      </button>
+    )}
+    </>
   );
 }
 
