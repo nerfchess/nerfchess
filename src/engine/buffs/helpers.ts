@@ -416,6 +416,21 @@ export function grantRandomTier9(api: BuffApi) {
   api.mine.buffs.push(inst);
 }
 
+/** Grant the holder a GUARANTEED tier-10 mythic card as an unspent, usable card
+ * added to their hand (same seating as grantRandomTier9, but never a tier-9
+ * fallback unless TIER10 is somehow empty). Used by Chess Diff, whose whole
+ * premise is that winning the diff hands you a mythic. A single seeded api.rng
+ * draw picks the card, so it advances the RNG state identically on every replica
+ * and replays deterministically (desync-safe). */
+export function grantRandomTier10(api: BuffApi) {
+  const pool = TIER10.length > 0 ? TIER10 : TIER9;
+  if (pool.length === 0) return;
+  const def = pool[api.rng.int(pool.length)];
+  const inst: BuffInstance = { id: def.id, tier: def.tier, state: {} };
+  def.init?.(inst, api);
+  api.mine.buffs.push(inst);
+}
+
 /** Revive one captured piece of the given types onto a targeted empty square. */
 export function reviveOne(types: PieceType[], zone: (api: BuffApi) => (sq: Square) => boolean): Mech {
   return activated(

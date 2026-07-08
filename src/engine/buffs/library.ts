@@ -31,6 +31,7 @@ import {
   freezeAllEnemies,
   freezeTarget,
   grantInventory,
+  grantRandomTier10,
   inHalf,
   instant,
   leapMoves,
@@ -77,6 +78,8 @@ type Meta = {
   category: BuffCategory;
   /** Per-card lucide-react icon name; overrides the category glyph. */
   icon?: string;
+  /** One-line flavor text, shown quoted at the foot of the full card. */
+  flavor?: string;
   /** Light general card that also joins nerf mode's boon pool. Category
    * "nerf" cards are boons automatically and never need this flag. */
   boon?: boolean;
@@ -2546,6 +2549,51 @@ const TIER5: Buff[] = [
 // ---------------------------------------------------------------------------
 
 const TIER6: Buff[] = [
+  def(
+    // Chess Diff: the card that reaches BOTH sections at once. `boon: true` with
+    // a non-nerf, non-hex category seats it in buff-mode drafts (a general card)
+    // AND in nerf-mode drafts (nerf mode's pool is boons + hexes + items), so it
+    // is the rare card offered as both a nerf and a buff. It forces the whole
+    // board into a fresh 1+0 sprint: every piece is wiped and both armies snap
+    // back to a standard opening (a real, deterministic board transform), and the
+    // player who called the diff draws first blood -- a GUARANTEED mythic
+    // (tier-10) card in hand for the restart. Deliberately game-breaking. Given a
+    // 2x appearance rate via DOUBLE_CHANCE_IDS in draft.ts.
+    {
+      id: "chess_diff",
+      name: "Chess Diff",
+      description:
+        "Chess diff! The whole board is wiped and both armies snap back to a fresh starting position for a sudden 1+0 sprint. You called the diff, so you draw first blood: seize a mythic (tier 10) buff to bring into the restart.",
+      tier: 6,
+      category: "pieces",
+      boon: true,
+      icon: "Swords",
+      flavor: "Bet. Let's just diff.",
+    },
+    instant((_inst, api) => {
+      // Wipe every square (uncounted: a board rewrite loses nothing, so the
+      // revive pools must stay untouched).
+      for (let sq = 0; sq < 64; sq++) {
+        if (api.board.pieces[sq]) api.removePiece(sq, { uncounted: true });
+      }
+      // Re-seat both armies on their home squares: a fresh 1+0 opening.
+      const back: PieceType[] = ["r", "n", "b", "q", "k", "b", "n", "r"];
+      for (let f = 0; f < 8; f++) {
+        api.place(SQ(f, 0), back[f], "w");
+        api.place(SQ(f, 1), "p", "w");
+        api.place(SQ(f, 6), "p", "b");
+        api.place(SQ(f, 7), back[f], "b");
+      }
+      // Fresh position: both sides regain full castling and no en passant is
+      // pending. The board can no longer be reproduced from move history, so
+      // repetition checks are switched off.
+      api.board.castling = { wk: true, wq: true, bk: true, bq: true };
+      api.board.epTarget = null;
+      api.bs.historyDiverged = true;
+      // Winner of the diff walks away with a mythic.
+      grantRandomTier10(api);
+    }),
+  ),
   def(
     { id: "atomic_reaction", name: "Atomic Reaction", description: "Whenever one of your pieces captures, every enemy piece except a king on the 8 squares around the captured square is removed, and each removed piece sets off the same blast around itself. Lasts the whole game.", tier: 6, category: "attack" },
     captureExplosion({ chain: true }),
