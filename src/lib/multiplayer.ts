@@ -1088,6 +1088,21 @@ export class MPSession {
 
   // ---------------- owner "fun with friends" tools ----------------
 
+  // The seat color this session currently holds, or null before a seat is
+  // claimed. Read-only convenience for owner-tool UI that needs to know which
+  // side is the opponent; the server's frames remain the source of truth.
+  get color(): Color | null {
+    return this.seat?.color ?? null;
+  }
+
+  // Owner "see opponent buffs": toggle the per-viewer reveal of the opponent's
+  // hidden held cards. The server verifies the account and answers with a fresh
+  // dtState carrying the opponent's real card identities to this socket only; no
+  // other client's view changes and the opponent is never told.
+  seeOppBuffs(on: boolean): boolean {
+    return this.sendFrame("seeOppBuffs", { on });
+  }
+
   // Nudge the opponent's clock by 15 seconds. `subtract` false adds time (the
   // courtesy +15s any player may send in a casual game); true subtracts it (the
   // owner-only -15s). The server owns the magnitude and re-verifies the account

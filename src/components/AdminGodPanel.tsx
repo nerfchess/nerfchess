@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import type { MPSession } from "@/lib/multiplayer";
+import { useEffect, useMemo, useState } from "react";
+import type { MPDraftState, MPSession } from "@/lib/multiplayer";
 import { ALL_BUFFS } from "@/engine/buffs/library";
 
 // The owner "god panel": a far-right column, mounted ONLY for the ilovenewjeans
@@ -23,6 +23,14 @@ const GRANTABLE = ALL_BUFFS.filter(
   (b) => b.implemented && b.kind !== "instant" && !(b.kind === "passive" && b.filterOpponentMoves),
 );
 
+// Card id -> display name, for rendering the opponent's now-revealed hand.
+const BUFF_NAME = new Map(ALL_BUFFS.map((b) => [b.id, b.name] as const));
+
+// One held card in a draft-state frame: either a real card (has `id`) or a
+// masked entry (tier only). When "see opponent buffs" is on the server sends
+// the opponent's real cards here to this socket only.
+type HeldBuff = MPDraftState["players"]["w"]["buffs"][number];
+
 type Props = {
   session: MPSession;
 };
@@ -33,6 +41,35 @@ export function AdminGodPanel({ session }: Props) {
   // on load; the owner clicks the tab to open it.
   const [collapsed, setCollapsed] = useState(true);
   const [lastGranted, setLastGranted] = useState<string | null>(null);
+
+  // Owner "see opponent buffs": a per-viewer reveal toggle. When on, the server
+  // sends THIS socket a dtState carrying the opponent's real held cards (his
+  // eyes only); we capture them off the draft-state stream and list them below.
+  // Nothing here is authoritative: the server re-verifies the account and stays
+  // silent to the opponent, so this is a browse-only mirror of already-synced
+  // state.
+  const [seeOpp, setSeeOpp] = useState(false);
+  const [oppBuffs, setOppBuffs] = useState<HeldBuff[]>([]);
+
+  useEffect(() => {
+    const off = session.on((e) => {
+      if (e.type !== "draft-state") return;
+      const mine = session.color;
+      if (!mine) return;
+      const opp = mine === "w" ? "b" : "w";
+      setOppBuffs(e.state.players[opp]?.buffs ?? []);
+    });
+    return off;
+  }, [session]);
+
+  function toggleSeeOpp() {
+    const next = !seeOpp;
+    session.seeOppBuffs(next);
+    setSeeOpp(next);
+    // Clear immediately when hiding; the re-masked dtState follows from the
+    // server but the list should vanish on click.
+    if (!next) setOppBuffs([]);
+  }
 
   const cards = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -65,6 +102,10 @@ export function AdminGodPanel({ session }: Props) {
     );
   }
 
+  // Only real cards (masked entries carry a tier but no id) are nameable; when
+  // the reveal is off the opponent's cards arrive masked and this stays empty.
+  const revealedOpp = oppBuffs.filter((b) => "id" in b) as Array<{ id: string; tier: number }>;
+
   return (
     <aside className="fixed right-0 top-0 z-30 hidden h-dvh w-[248px] flex-col border-l border-white/10 bg-ink-950 xl:flex">
       <div className="flex items-center gap-2 border-b border-white/10 px-3 py-2">
@@ -79,6 +120,56 @@ export function AdminGodPanel({ session }: Props) {
         >
           ×
         </button>
+      </div>
+
+      {/* Owner tools: reveal the opponent's hidden hand (to you only) and the
+          -15s clock cheat. Both are server-verified; the client gate is UX. */}
+      <div className="space-y-1.5 border-b border-white/10 px-3 py-2">
+        <div className="flex gap-1">
+          <button
+            type="button"
+            onClick={toggleSeeOpp}
+            aria-pressed={seeOpp}
+            title="Reveal the opponent's hidden cards to you only"
+            className={
+              "flex-1 rounded-[1px] border px-2 py-1 text-[10px] font-semibold transition-colors " +
+              (seeOpp
+                ? "border-mint/60 bg-mint/15 text-mint-glow"
+                : "border-white/12 text-parchment-400 hover:border-mint/45 hover:text-mint-glow")
+            }
+          >
+            {seeOpp ? "hiding opp buffs" : "see opp buffs"}
+          </button>
+          <button
+            type="button"
+            onClick={() => session.adjustOppClock(true)}
+            title="Take 15 seconds from your opponent's clock"
+            className="flex-1 rounded-[1px] border border-coral/40 bg-coral/10 px-2 py-1 text-[10px] font-semibold text-coral-glow transition-colors hover:bg-coral/20"
+          >
+            -15s clock
+          </button>
+        </div>
+        {seeOpp && (
+          <div className="space-y-1 pt-0.5">
+            {revealedOpp.length === 0 ? (
+              <p className="text-[10px] text-parchment-500">opponent holds no revealed cards yet.</p>
+            ) : (
+              revealedOpp.map((b, i) => (
+                <div
+                  key={`${b.id}-${i}`}
+                  className="flex items-center gap-2 rounded-[1px] border border-mint/25 bg-mint/[0.06] px-2 py-1"
+                >
+                  <span className="min-w-0 flex-1 truncate text-[11px] text-parchment">
+                    {BUFF_NAME.get(b.id) ?? b.id}
+                  </span>
+                  <span className="shrink-0 rounded-[1px] border border-sun/40 px-1 text-[9px] font-semibold tabular-nums text-sun-glow">
+                    T{b.tier}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        )}
       </div>
 
       <div className="px-3 py-2">
