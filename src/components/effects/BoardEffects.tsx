@@ -706,6 +706,7 @@ const TIER_COLOR: Record<number, string> = {
   6: "#c65f8f",
   7: "#a877d8",
   8: "#e05252",
+  9: "#f4c430",
 };
 
 // Same suit glyphs BuffCard stamps on card faces, shrunk to a micro-chip.

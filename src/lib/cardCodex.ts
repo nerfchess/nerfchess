@@ -89,6 +89,7 @@ const TIER_MEANING: Record<number, string> = {
   6: "Cruel: a rare, powerful card from the late draft.",
   7: "Punishing: a top-band blowout, kept rare on purpose.",
   8: "Unhinged: the highest tier, a game-defining moment.",
+  9: "Apex: a near-game-winning card, never drafted normally and only won through a gamble or a top-tier bank.",
 };
 export function tierMeaning(tier: Tier): string {
   return TIER_MEANING[tier] ?? "";

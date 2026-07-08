@@ -471,6 +471,7 @@ html[data-theme="light"] .mode-seam::after { background: #e4e0d6; }
 .tier-6 { color: #c65f8f; }   /* rose */
 .tier-7 { color: #a877d8; }   /* violet */
 .tier-8 { color: #e05252; }   /* blood */
+.tier-9 { color: #f4c430; }   /* apex gold: a single solid accent, no gradient or glow */
 
 /* Each tier carries its color as an rgb triple too, so glass/glow layers on a
    card face can tint themselves by severity (a tier-8 reads hotter than a
@@ -483,6 +484,7 @@ html[data-theme="light"] .mode-seam::after { background: #e4e0d6; }
 .tier-bg-6 { background: rgba(198,95,143,0.12); border-color: rgba(198,95,143,0.45); --tier-rgb: 198 95 143; }
 .tier-bg-7 { background: rgba(168,119,216,0.12); border-color: rgba(168,119,216,0.45); --tier-rgb: 168 119 216; }
 .tier-bg-8 { background: rgba(224,82,82,0.14); border-color: rgba(224,82,82,0.50); --tier-rgb: 224 82 82; }
+.tier-bg-9 { background: rgba(244,196,48,0.16); border-color: rgba(244,196,48,0.60); --tier-rgb: 244 196 48; }
 
 /* --- Draft card face --------------------------------------------------------
    A restrained frosted layer for draftable cards: a translucent top-lit sheen,

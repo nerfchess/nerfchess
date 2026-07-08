@@ -5,6 +5,7 @@ import { FANTASY_CARDS } from "./fantasy";
 import { WILD_CARDS } from "./wild";
 import { CROSSREF_CARDS } from "./crossref";
 import { PT_CARDS } from "./pt";
+import { TIER9 } from "./tier9";
 import { Buff, BuffApi, BuffCategory, BuffInstance, CardFx } from "../buff";
 import { Tier } from "../nerf";
 import { BoardState, Color, FILE, Move, PieceType, RANK, SQ, Square, inBoard } from "../types";
@@ -4075,6 +4076,7 @@ export const ALL_BUFFS: Buff[] = [
   ...CROSSREF_CARDS,
   ...PT_CARDS,
   ...ITEMS,
+  ...TIER9,
 ];
 
 export const BUFF_BY_ID: Record<string, Buff> = Object.fromEntries(

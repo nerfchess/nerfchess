@@ -1,7 +1,7 @@
 import { BoardState, Color, Move } from "./types";
 import { RNG } from "./rng";
 
-export type Tier = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8; // 1 = trivial, 8 = unhinged
+export type Tier = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9; // 1 = trivial, 8 = unhinged, 9 = apex (never in the normal draft)
 
 export interface GameContext {
   board: BoardState;
