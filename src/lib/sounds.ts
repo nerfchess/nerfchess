@@ -480,6 +480,26 @@ export function playSummon() {
   knock({ filterFreq: 900, filterQ: 0.9, dur: 0.14, gain: 0.28, bodyFreq: 150, bodyGain: 0.22, bodyDur: 0.12 });
 }
 
+/** Pocket drop (crazyhouse): a fresh piece is planted from your reserve onto an
+ * empty square. A firm wooden set-down, chunkier and lower than a plain move
+ * click and drier than the airy summon poof, so placing a banked piece reads as
+ * its own deliberate action. */
+export function playDrop() {
+  if (!fx()) return;
+  knock({ filterFreq: 780, filterQ: 3, dur: 0.06, gain: 0.5, bodyFreq: 155, bodyGain: 0.42, bodyDur: 0.12 });
+}
+
+/** Card used: a short, crisp "played" flick when you activate a buff/card. A
+ * quick rising tick capped with a soft high confirm, deliberately lighter than
+ * the effect voices (shields, freezes, explosions) that follow when the card's
+ * effect actually lands, so "I played a card" and "the effect hit" stay
+ * distinct. One shot per activation. */
+export function playCardUse() {
+  if (!fx()) return;
+  tone({ freq: 620, dur: 0.05, type: "triangle", gain: 0.1, sweep: 990, release: 0.05 });
+  tone({ freq: 1320, dur: 0.08, type: "sine", gain: 0.06, attack: 0.004, release: 0.1, delay: 0.04 });
+}
+
 /** Banana slip: a comedic falling whistle ending in a soft plop. */
 export function playSlip() {
   if (!fx()) return;

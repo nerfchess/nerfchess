@@ -7,6 +7,7 @@ import { NerfGame, activateBuff, buffNextTarget } from "@/engine/game";
 import { Color } from "@/engine/types";
 import { Tier } from "@/engine/nerf";
 import { TIER_ROMAN } from "@/lib/tiers";
+import { playCardUse } from "@/lib/sounds";
 import { motion, useReducedMotion } from "framer-motion";
 import { Ban, ChevronRight, Clock, Hourglass, Inbox, Layers, ShieldAlert, Swords, type LucideIcon } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -72,9 +73,16 @@ export function useBuffTargeting({
     if (!game) return;
     const target = buffNextTarget(game, myColor, index, []);
     if (!target) {
-      // No targeting needed: fire immediately.
-      if (onUse) onUse(index, []);
-      else if (activateBuff(game, myColor, index, [])) onChanged?.();
+      // No targeting needed: fire immediately. The card-used voice marks the
+      // activation itself; the effect's own voice (shield, freeze, explosion...)
+      // follows separately when it lands.
+      if (onUse) {
+        onUse(index, []);
+        playCardUse();
+      } else if (activateBuff(game, myColor, index, [])) {
+        onChanged?.();
+        playCardUse();
+      }
       return;
     }
     setTargeting({ buffIndex: index, picks: [], target });
@@ -90,6 +98,8 @@ export function useBuffTargeting({
         activateBuff(game, myColor, targeting.buffIndex, picks);
         onChanged?.();
       }
+      // Last target picked: the card is now cast. One card-used voice per use.
+      playCardUse();
       setTargeting(null);
     } else {
       setTargeting({ ...targeting, picks, target: next });
@@ -106,6 +116,8 @@ export function useBuffTargeting({
       activateBuff(game, myColor, targeting.buffIndex, targeting.picks);
       onChanged?.();
     }
+    // Finished early on a finishable step: the picks so far are cast now.
+    playCardUse();
     setTargeting(null);
   };
 

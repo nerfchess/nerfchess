@@ -456,6 +456,13 @@ export function DraftOverlay({
     } catch {}
   };
 
+  // Once the player MANUALLY re-opens the tucked chip we keep this offer's panel
+  // open. Without it, re-opening re-armed the auto-tuck and the panel minimized
+  // itself again 5s later, so every open snapped shut on the player ("keeps on
+  // minimizing"). Reset per offer by the deal effect below, so a genuinely new
+  // offer still auto-tucks after its grace.
+  const userPinnedRef = useRef(false);
+
   // A reroll keeps the same offer index but swaps the cards, so key the deal
   // on both: bumping `rerolled` replays the deal (and chime) for fresh cards.
   const dealKey = `${offer.index}:${offer.rerolled ?? 0}`;
@@ -469,6 +476,9 @@ export function DraftOverlay({
     setBankArmed(false);
     setTucked(false);
     setRerolling(false);
+    // A genuinely new offer (or reroll) starts unpinned so it can auto-tuck
+    // after its grace; only a manual re-open pins the CURRENT offer.
+    userPinnedRef.current = false;
     committedRef.current = false;
     selectedAtRef.current = 0;
     setDealt(!!reduceMotion);
@@ -511,7 +521,9 @@ export function DraftOverlay({
   // Auto-tuck the minimized panel into its slim chip after a few seconds so it
   // stops hogging the corner; any interaction (dragging, un-tucking, resolving)
   // holds it open, and a fresh offer re-shows it via the deal effect above.
+  // Skip entirely once the user has pinned it open by re-opening the chip.
   useEffect(() => {
+    if (userPinnedRef.current) return;
     if (!minimized || tucked || dragging) return;
     if (chosen != null || banking || committedRef.current) return;
     const id = window.setTimeout(() => setTucked(true), 5000);
@@ -635,7 +647,12 @@ export function DraftOverlay({
         >
           <button
             type="button"
-            onClick={() => setTucked(false)}
+            onClick={() => {
+              // Manual re-open pins this offer open so the auto-tuck effect
+              // stops re-minimizing it out from under the player.
+              userPinnedRef.current = true;
+              setTucked(false);
+            }}
             aria-label={`Resolve your ${noun} draft`}
             className="plate flex items-center gap-2 rounded-[1px] border-gold/40 px-3 py-2 shadow-plate transition hover:border-gold/70"
           >
