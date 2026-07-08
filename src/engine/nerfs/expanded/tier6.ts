@@ -65,16 +65,21 @@ export const NERFS_T6: Nerf[] = [
     },
   ),
   N(
-    { id: "statue_king", name: "Statue King", description: "Your king can never move, not even to castle.", flavor: "The monarch is carved in stone.", icon: "crown" },
+    { id: "statue_king", name: "Statue King", description: "Your king can only move to capture; he can never take a quiet, non-capturing step.", flavor: "The stone king stirs only to crush.", icon: "crown" },
     {
-      filterMoves: filter((m) => m.piece !== "k"),
+      // Distinct from lame_duck (king fully frozen), sleepy_king (moves only in
+      // check) and out_of_breath (moves once): the statue king may move, but
+      // only when the move captures an enemy piece.
+      filterMoves: filter((m) => m.piece !== "k" || !!m.captured),
     },
   ),
   N(
-    { id: "caged_queen", name: "Caged Queen", description: "Your queen may never leave your own first two ranks.", flavor: "She rules only from the balcony.", icon: "crown" },
+    { id: "caged_queen", name: "Caged Queen", description: "Your queen may never leave your own back rank.", flavor: "She rules from the throne room and nowhere else.", icon: "crown" },
     {
+      // Distinct from stay_at_home_mom and cloistered_queen: this confines the
+      // queen to a single rank (her back rank), not the home two ranks.
       filterMoves: (moves, _state, ctx) =>
-        moves.filter((m) => !(m.piece === "q" && relRank(ctx.me, m.to) > 2)),
+        moves.filter((m) => !(m.piece === "q" && relRank(ctx.me, m.to) > 1)),
     },
   ),
   N(

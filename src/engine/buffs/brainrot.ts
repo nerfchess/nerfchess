@@ -32,8 +32,8 @@ import {
   dist,
   mySquares,
   pawnRankOk,
+  permanentAugment,
   slideMoves,
-  timedAugment,
   ALL_DIRS,
   DIAG_DIRS,
   FILE,
@@ -296,14 +296,14 @@ export const BRAINROT: Buff[] = [
       icon: "Banana",
       name: "Chimpanzini Bananini",
       description:
-        "The banana-monkey goes ape: for your next 2 turns every one of your knights may also slide like a bishop.",
-      tier: 5,
+        "The banana-monkey goes ape: for the game every one of your knights may also slide like a bishop.",
+      tier: 3,
       category: "movement",
       requires: ["n"],
       flavor: "Peel, then unpeel the whole board.",
       fx: { motif: "empower", pieces: ["n"], moveAs: "b", self: true },
     },
-    timedAugment(2, (_m, inst, api) =>
+    permanentAugment((_m, inst, api) =>
       mySquares(api.board, api.me, "n").flatMap((sq) =>
         slideMoves(api.board, sq, DIAG_DIRS, inst.id),
       ),

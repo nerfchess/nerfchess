@@ -489,13 +489,34 @@ export const WILD_ARCANE: Buff[] = [
     {
       id: "wa_leaden_crown",
       name: "Leaden Crown",
-      description: "Turn one of your pawns into a queen, once.",
+      description:
+        "Turn one of your pawns into a queen, and the leaden crown guards it: that new queen cannot be captured for your opponent's next 2 turns.",
       tier: 6,
       category: "pieces",
       requires: ["p"],
-      flavor: "Base metal, crowned early.",
+      flavor: "Base metal, crowned early, heavy enough to turn a blade.",
+      fx: { motif: "ward", pieces: ["q"], self: true },
     },
-    transformOwn(1, ["p"], "q", "Choose a pawn to crown"),
+    // Distinct from library's double_queen (a plain pawn-to-queen promotion): the
+    // crown is leaden, so the fresh queen is also shielded from capture for the
+    // opponent's next 2 turns. Reuses setPieceType + the shield board-effect that
+    // Royal Aegis already lays on a queen's square.
+    activated(
+      (_inst, api, picks) =>
+        picks.length > 0
+          ? null
+          : {
+              kind: "square",
+              label: "Choose a pawn to crown",
+              squares: mySquares(api.board, api.me, "p"),
+            },
+      (_inst, api, picks) => {
+        const sq = picks[0]?.square;
+        if (sq == null) return;
+        api.setPieceType(sq, "q");
+        addEffect(api, { kind: "shield", owner: api.me, squares: [sq], turns: 2 });
+      },
+    ),
   ),
   card(
     {

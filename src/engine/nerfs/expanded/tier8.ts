@@ -111,13 +111,29 @@ export const NERFS_T8: Nerf[] = [
     {
       id: "glass_king",
       name: "Glass King",
-      description: "You lose the instant your king is put in check even once.",
-      flavor: "One touch and the throne shatters.",
+      description: "Your king is made of glass: you lose the instant he is checked while standing beyond your own first two ranks. Kept at home, he can weather a check.",
+      flavor: "Safe in his chambers, shattered in the open.",
       icon: "shield-alert",
     },
     {
-      checkLoss: (_state, ctx) =>
-        isInCheck(ctx.board, ctx.me) ? { reason: "your glass king was checked" } : null,
+      // Distinct from always_check (any check loses) and three_check (three
+      // checks lose): the glass king only shatters when he is checked while
+      // advanced past his home two ranks. Stateless, reads the live board only.
+      checkLoss: (_state, ctx) => {
+        if (!isInCheck(ctx.board, ctx.me)) return null;
+        let ks = -1;
+        for (let sq = 0; sq < 64; sq++) {
+          const p = ctx.board.pieces[sq];
+          if (p && p.color === ctx.me && p.type === "k") {
+            ks = sq;
+            break;
+          }
+        }
+        if (ks < 0) return null;
+        return relRank(ctx.me, ks) > 2
+          ? { reason: "your glass king shattered in the open" }
+          : null;
+      },
     },
   ),
   N(

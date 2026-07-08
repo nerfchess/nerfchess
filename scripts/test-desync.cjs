@@ -932,6 +932,136 @@ function bareBoard(seed) {
   assertConverged(env, "void_rift-rider");
 }
 
+// ---------------------------------------------------------------------------
+// Part 7: EXPLOSION replication. The live report: things go out of sync WHEN
+// THINGS EXPLODE. A single explosion removes SEVERAL pieces at once around a
+// square (the atomic-capture / detonation family). The reveal is per-CARD (a
+// blown-up hook is revealed once via lastHookMutations, then the replica
+// re-runs the WHOLE explodeAt), not per-square, and every removed square goes
+// through api.removePiece (which bumps the mutation counter), so the whole
+// blast is flagged for reveal. These drive a big multi-piece CHAIN explosion and
+// the onMyLosses variant (card owner is NOT the mover), asserting every blown-up
+// square matches on the replica, not just the primary captured square.
+// ---------------------------------------------------------------------------
+
+// 7a: a multi-piece CHAIN explosion (Atomic Reaction). A white rook captures the
+// centre of a dense black cluster; the capture detonates the whole ring in ONE
+// action. The captured square is removed by the MOVE, the five neighbours by the
+// hook: every one must replay on the replica or the survivors desync the board.
+{
+  const env = newDuel(1301);
+  const setup = (g) => {
+    for (let i = 0; i < 64; i++) g.board.pieces[i] = null;
+    g.board.pieces[sq("e1")] = { type: "k", color: "w" };
+    g.board.pieces[sq("a8")] = { type: "k", color: "b" };
+    g.board.pieces[sq("d1")] = { type: "r", color: "w" };
+    const ring = [["d5", "n"], ["c5", "b"], ["e5", "n"], ["c6", "n"], ["d6", "b"], ["e6", "b"]];
+    for (const [name, t] of ring) g.board.pieces[sq(name)] = { type: t, color: "b" };
+    g.board.turn = "w";
+    g.board.castling = { wk: false, wq: false, bk: false, bq: false };
+    g.board.epTarget = null;
+  };
+  setup(env.server);
+  setup(env.replica);
+  opPick(env, "w", "atomic_reaction", 6); // passive chain explosion, masked at pick
+  opMove(env, "d1d5"); // Rxd5: detonates the whole ring in one action
+  for (const s of ["c5", "e5", "c6", "d6", "e6"]) {
+    check(!env.server.board.pieces[sq(s)], `atomic_reaction: server ${s} survived the blast`);
+    check(
+      !env.replica.board.pieces[sq(s)],
+      `atomic_reaction: replica ${s} survived (multi-piece explosion not fully replicated)`,
+    );
+  }
+  check(!!env.server.board.pieces[sq("a8")], "atomic_reaction: black king must survive the blast");
+  assertConverged(env, "atomic_reaction-chain");
+}
+
+// 7b: onMyLosses explosion (Backdraft). The card owner is WHITE but the
+// triggering capture is BLACK'S move: black captures a white piece ringed by
+// black's own minors, and white's explosion (revealed to the black viewer via
+// the fired-hook path, card owner != mover) clears the whole black ring around
+// the captured square. Non-chain, so the capturing rook itself survives.
+{
+  const env = newDuel(1302);
+  const setup = (g) => {
+    for (let i = 0; i < 64; i++) g.board.pieces[i] = null;
+    g.board.pieces[sq("e1")] = { type: "k", color: "w" };
+    g.board.pieces[sq("a8")] = { type: "k", color: "b" };
+    g.board.pieces[sq("d8")] = { type: "r", color: "b" }; // captures down the d-file
+    g.board.pieces[sq("d4")] = { type: "n", color: "w" }; // white's loss
+    const ring = [["c3", "n"], ["c4", "b"], ["c5", "n"], ["e3", "n"], ["e4", "b"], ["e5", "n"]];
+    for (const [name, t] of ring) g.board.pieces[sq(name)] = { type: t, color: "b" };
+    g.board.turn = "b";
+    g.board.castling = { wk: false, wq: false, bk: false, bq: false };
+    g.board.epTarget = null;
+  };
+  setup(env.server);
+  setup(env.replica);
+  opPick(env, "w", "we_backdraft", 4); // passive onMyLosses explosion, masked at pick
+  opMove(env, "d8d4"); // Rxd4: black's capture triggers white's explosion on black's own ring
+  for (const s of ["c3", "c4", "c5", "e3", "e4", "e5"]) {
+    check(!env.server.board.pieces[sq(s)], `backdraft: server ${s} survived the blast`);
+    check(
+      !env.replica.board.pieces[sq(s)],
+      `backdraft: replica ${s} survived (onMyLosses explosion not fully replicated)`,
+    );
+  }
+  check(env.server.board.pieces[sq("d4")]?.type === "r", "backdraft: the capturing black rook must survive");
+  check(
+    env.replica.board.pieces[sq("d4")]?.type === "r",
+    "backdraft: replica lost the capturing rook (explosion over-removed)",
+  );
+  assertConverged(env, "backdraft-onMyLosses");
+}
+
+// 7c: a CHARGED explosion (Detonation Field) whose FIRST trigger is a NO-OP (a
+// capture with no adjacent enemies): it silently decrements a charge WITHOUT any
+// board change, so nothing is revealed and the replica never learns the card.
+// A later real explosion then reveals it and carries the PRE-move charge count,
+// so the replica must land on the same charge and the same blast. This is the
+// subtlest explosion path: a hidden per-card state (charges) that diverges on the
+// no-op and must re-sync purely through the reveal, without any full state sync.
+{
+  const env = newDuel(1303);
+  const setup = (g) => {
+    for (let i = 0; i < 64; i++) g.board.pieces[i] = null;
+    g.board.pieces[sq("e1")] = { type: "k", color: "w" };
+    g.board.pieces[sq("a8")] = { type: "k", color: "b" };
+    g.board.pieces[sq("d1")] = { type: "q", color: "w" };
+    g.board.pieces[sq("d3")] = { type: "p", color: "b" }; // isolated: no-op blast
+    g.board.pieces[sq("f5")] = { type: "n", color: "b" }; // ringed: real blast
+    for (const [name, t] of [["e5", "n"], ["g5", "b"], ["f6", "b"]]) {
+      g.board.pieces[sq(name)] = { type: t, color: "b" };
+    }
+    g.board.turn = "w";
+    g.board.castling = { wk: false, wq: false, bk: false, bq: false };
+    g.board.epTarget = null;
+  };
+  setup(env.server);
+  setup(env.replica);
+  opPick(env, "w", "detonation_field", 6); // captureExplosion charges:3, masked at pick
+  opMove(env, "d1d3"); // Qxd3: isolated capture, no-op blast, charge 3 -> 2, NOT revealed
+  check(
+    env.replica.buffs.players.w.buffs[0].id === "",
+    "charge-sync: a no-op explosion wrongly revealed the card (info leak / early reveal)",
+  );
+  opMove(env, "a8b7"); // black tempo move
+  opMove(env, "d3f5"); // Qxf5: real blast, charge 2 -> 1, revealed with pre-move charge
+  for (const s of ["e5", "g5", "f6"]) {
+    check(!env.server.board.pieces[sq(s)], `charge-sync: server ${s} survived the blast`);
+    check(
+      !env.replica.board.pieces[sq(s)],
+      `charge-sync: replica ${s} survived (charged explosion did not re-sync via the reveal)`,
+    );
+  }
+  check(
+    (env.server.buffs.players.w.buffs[0].state.charges ?? null) ===
+      (env.replica.buffs.players.w.buffs[0].state.charges ?? null),
+    "charge-sync: charge count diverged between server and replica",
+  );
+  assertConverged(env, "detonation_field-charge-resync");
+}
+
 if (errors.length) {
   console.error("desync harness FAILED:");
   for (const e of errors) console.error("  - " + e);
@@ -939,5 +1069,5 @@ if (errors.length) {
 }
 console.log(
   `OK: desync harness passed (fingerprint core, sample hash ${fpA.hash}, ${rules.length} rule ids; ` +
-    `7 server-vs-replica scenarios (incl. crazyhouse inventory drop, Oblivion mass removal, The Culling rng-in-hook removal) + 3 removal-replication scenarios (targeted Banish, mass Purge Realm, Void Rift rider removal + used-activation flag) + legacy divergence control + drop legality rails + no-op guard + 4 turn/ply guards + bot-alarm robustness + 2 wall-crossing guards)`,
+    `7 server-vs-replica scenarios (incl. crazyhouse inventory drop, Oblivion mass removal, The Culling rng-in-hook removal) + 3 removal-replication scenarios (targeted Banish, mass Purge Realm, Void Rift rider removal + used-activation flag) + 3 explosion scenarios (Atomic Reaction chain, Backdraft onMyLosses, Detonation Field charge re-sync) + legacy divergence control + drop legality rails + no-op guard + 4 turn/ply guards + bot-alarm robustness + 2 wall-crossing guards)`,
 );

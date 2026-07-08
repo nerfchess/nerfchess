@@ -45,11 +45,15 @@ export const NERFS_T4: Nerf[] = [
     },
   ),
   N(
-    { id: "royal_bloodlust", name: "Royal Bloodlust", description: "Whenever your king can capture, it must capture.", flavor: "His majesty cannot resist a fresh kill.", icon: "crown" },
+    { id: "royal_bloodlust", name: "Royal Bloodlust", description: "The turn after your king captures, you must make a capture with any piece if you can.", flavor: "One royal kill and the whole court bays for blood.", icon: "crown" },
     {
-      filterMoves: (moves) => {
-        const kingCaps = moves.filter((m) => m.piece === "k" && m.captured);
-        return kingCaps.length ? kingCaps : moves;
+      // Distinct from escort_mission/kingfisher (king must capture) and
+      // barbarian_rage (ANY capture triggers the follow-up): only a KING
+      // capture last turn forces a capture this turn.
+      filterMoves: (moves, _state, ctx) => {
+        if (!(ctx.myLastMove?.piece === "k" && ctx.myLastMove?.captured)) return moves;
+        const caps = moves.filter((m) => m.captured);
+        return caps.length ? caps : moves;
       },
     },
   ),
@@ -119,13 +123,16 @@ export const NERFS_T4: Nerf[] = [
     },
   ),
   N(
-    { id: "fair_fight", name: "Fair Fight", description: "You can't capture a piece worth more than the piece making the capture.", flavor: "Honor forbids punching above your weight.", icon: "scale" },
+    { id: "fair_fight", name: "Fair Fight", description: "You can't capture a piece worth less than the piece making the capture; no bullying weaker pieces, only equal or stronger prey.", flavor: "Pick on someone your own size, or bigger.", icon: "scale" },
     {
+      // Mirror of punching_down (which bans capturing HIGHER-value pieces):
+      // Fair Fight bans capturing LOWER-value pieces, so a rook may not snap up
+      // a lone pawn. A distinct rule, not the old no_free_lunch text.
       filterMoves: filter(
         (m) =>
           !m.captured ||
           m.captured === "k" ||
-          PIECE_VALUE[m.captured] <= PIECE_VALUE[m.piece],
+          PIECE_VALUE[m.captured] >= PIECE_VALUE[m.piece],
       ),
     },
   ),

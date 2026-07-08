@@ -638,12 +638,43 @@ export const WILD_ELEMENTAL: Buff[] = [
     {
       id: "we_glaciate",
       name: "Glaciate",
-      description: "Freeze one enemy piece (never a king) for 3 of their turns.",
+      description:
+        "Freeze one enemy piece (never a king) for 3 of their turns, and the frost spreads: every enemy piece directly beside it (up, down, left, or right) is frozen for 1 of their turns.",
       tier: 4,
       category: "tempo",
-      flavor: "Encased solid.",
+      flavor: "The cold does not stop at one. It creeps outward.",
+      fx: { motif: "jail" },
     },
-    freezeTarget(3),
+    // Distinct from wild/arcane's wa_time_stop (a single-target 3-turn lock): the
+    // ice spreads. The chosen piece is frozen for 3 turns, and every enemy piece
+    // orthogonally adjacent (never a king) is chilled for 1 turn. Reuses the same
+    // ORTHO_DIRS adjacency + addEffect(freeze) pattern as Stone Grip.
+    activated(
+      (_inst, api, picks) =>
+        picks.length > 0
+          ? null
+          : {
+              kind: "square",
+              label: "Choose an enemy piece to encase in ice",
+              squares: mySquares(api.board, api.opp).filter(
+                (sq) => api.board.pieces[sq]!.type !== "k",
+              ),
+            },
+      (_inst, api, picks) => {
+        const sq = picks[0]?.square;
+        if (sq == null) return;
+        addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 3, skin: "ice" });
+        for (const [df, dr] of ORTHO_DIRS) {
+          const f = FILE(sq) + df, r = RANK(sq) + dr;
+          if (!inBoard(f, r)) continue;
+          const asq = SQ(f, r);
+          const p = api.board.pieces[asq];
+          if (p && p.color === api.opp && p.type !== "k") {
+            addEffect(api, { kind: "freeze", sq: asq, owner: api.opp, turns: 1, skin: "ice" });
+          }
+        }
+      },
+    ),
   ),
   card(
     {
