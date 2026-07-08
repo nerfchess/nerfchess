@@ -25,23 +25,36 @@ import { triggersOwnNerfLoss } from "../../engine/moveSafety";
 import type { DraftMode } from "../../engine/buff";
 import type { Move } from "../../engine/types";
 
-// Absolute ceiling for any house-player engine search, server-side. The
+// Absolute ceiling for a house-player search running ON THE DO ITSELF (local
+// fallback, when the OCI engine is off/unreachable/version-mismatched). The
 // Durable Object is single-threaded: while a search runs, no socket upgrade,
 // move, or lobby poll is answered. 80ms per action, paced 1-4s apart and
 // serialized (never two searches in one tick), keeps the thread effectively
-// free. Never raise this without load-testing the DO.
+// free. Never raise this without load-testing the DO — it's the default
+// ceiling every caller gets unless it explicitly passes a higher one (only
+// the OCI engine service does, since search there costs the DO nothing).
 export const HOUSE_SEARCH_CEILING_MS = 80;
 
-// Skill tiers. Strength comes from search budget and blunder probability, not
-// deep search: the budgets are far below the client bot's (700-2000ms), which
-// is exactly the point.
+// Skill tiers. Below 1750, strength comes from search budget and blunder
+// probability, not deep search. At 1750+ the budgets below are what the OCI
+// engine service actually searches with (idle box CPU, no DO thread at
+// stake); a local DO fallback still clamps every one of them down to
+// HOUSE_SEARCH_CEILING_MS via houseMoveBudgetMs's default ceiling, so a
+// remote outage degrades to the old capped strength rather than stalling the
+// DO. Roughly geometric growth: each rating step needs increasingly more
+// search time for the same strength gain (diminishing Elo per ply).
 //
-// The advertised RATINGS were lifted again: the roster floor is now 1550 (no
-// persona sits below it) and a new top band reaches 2200. A big chunk of the
-// roster sits in the 2100-2200 band. The DO's 80ms search ceiling caps real
-// strength, so every high tier (1750 and up) maps to the SAME strongest
-// sensible profile: the extra rating is presentation, not stronger search.
-// Never let a profile's budgetMs exceed HOUSE_SEARCH_CEILING_MS.
+// IMPORTANT: negamax's own timeout check only fires once elapsed time exceeds
+// `budget * 2` (see ai.ts's TIMEOUT_SENTINEL check) -- it's a per-node safety
+// net, not a tight deadline. Measured against engine.nerfchess.com/move (the
+// real public path -- localhost-on-the-box measurements alone understated
+// this by ~600ms of tunnel/network overhead), actual wall time runs
+// 1.5-2.5x the nominal budgetMs. These numbers are sized so the slowest tier
+// (2200) lands around ~2.2-2.4s over the public path, leaving real margin
+// below the Worker's 3000ms HOUSE_ENGINE_TIMEOUT_MS. Re-measure against the
+// public URL (not just localhost:8787 on the box) before raising any of
+// these -- don't trust the nominal number, and don't trust a localhost-only
+// measurement either.
 export type HouseSkill = 1350 | 1550 | 1750 | 1900 | 1950 | 2000 | 2050 | 2100 | 2150 | 2200;
 
 type SkillProfile = {
@@ -51,22 +64,17 @@ type SkillProfile = {
   blunderChance: number;
 };
 
-// The strongest profile the 80ms ceiling allows: full-depth-for-the-budget
-// hard search, minimal blundering. Every 1750+ tier shares it (higher rating,
-// same capped strength, as intended).
-const TOP_PROFILE: SkillProfile = { level: "hard", budgetMs: HOUSE_SEARCH_CEILING_MS, blunderChance: 0.005 };
-
 export const HOUSE_SKILL_PROFILES: Record<HouseSkill, SkillProfile> = {
   1350: { level: "medium", budgetMs: 25, blunderChance: 0.1 },
-  1550: { level: "medium", budgetMs: 40, blunderChance: 0.05 },
-  1750: TOP_PROFILE,
-  1900: TOP_PROFILE,
-  1950: TOP_PROFILE,
-  2000: TOP_PROFILE,
-  2050: TOP_PROFILE,
-  2100: TOP_PROFILE,
-  2150: TOP_PROFILE,
-  2200: TOP_PROFILE,
+  1550: { level: "medium", budgetMs: 60, blunderChance: 0.05 },
+  1750: { level: "hard", budgetMs: 150, blunderChance: 0.005 },
+  1900: { level: "hard", budgetMs: 180, blunderChance: 0.005 },
+  1950: { level: "hard", budgetMs: 250, blunderChance: 0.005 },
+  2000: { level: "hard", budgetMs: 350, blunderChance: 0.005 },
+  2050: { level: "hard", budgetMs: 450, blunderChance: 0.005 },
+  2100: { level: "hard", budgetMs: 550, blunderChance: 0.005 },
+  2150: { level: "hard", budgetMs: 650, blunderChance: 0.005 },
+  2200: { level: "hard", budgetMs: 800, blunderChance: 0.005 },
 };
 
 export type HousePersona = {
@@ -298,22 +306,31 @@ export function houseDraftThinkMs(random: (max: number) => number): number {
 // ---------------------------------------------------------------------------
 
 /** Search budget for one house move: the skill profile's budget, shrunk when
- * the clock runs low, and never above the hard ceiling. */
-export function houseMoveBudgetMs(skill: HouseSkill, remainingClockMs?: number): number {
-  let budget = Math.min(HOUSE_SKILL_PROFILES[skill].budgetMs, HOUSE_SEARCH_CEILING_MS);
+ * the clock runs low, and never above `ceilingMs` (default: the DO-safe
+ * ceiling — pass a higher one only where the search can't stall a shared
+ * thread, i.e. the OCI engine service). */
+export function houseMoveBudgetMs(
+  skill: HouseSkill,
+  remainingClockMs?: number,
+  ceilingMs: number = HOUSE_SEARCH_CEILING_MS,
+): number {
+  let budget = Math.min(HOUSE_SKILL_PROFILES[skill].budgetMs, ceilingMs);
   if (remainingClockMs != null && remainingClockMs < 30_000) budget = Math.min(budget, 25);
   return Math.max(10, budget);
 }
 
 /** Pick the house player's move. Strength differences come from the skill
- * profile's budget and blunder probability, never from deep search: the
- * budget is hard-capped so a single move can never stall the game server.
+ * profile's budget and blunder probability. `ceilingMs` defaults to the
+ * DO-safe cap so every existing caller (the DO's local fallback, the arena
+ * service, the sim script) is unaffected; only the OCI engine service passes
+ * a higher one, since search there costs the DO nothing.
  * Returns null only when the position has no legal move at all. */
 export function pickHouseMove(
   game: NerfGame,
   skill: HouseSkill,
   random: (max: number) => number,
   remainingClockMs?: number,
+  ceilingMs?: number,
 ): Move | null {
   const profile = HOUSE_SKILL_PROFILES[skill];
   const all = legalMoves(game);
@@ -323,7 +340,7 @@ export function pickHouseMove(
     const moves = safe.length ? safe : all;
     return moves[random(moves.length)];
   }
-  return pickAIMove(game, profile.level, houseMoveBudgetMs(skill, remainingClockMs));
+  return pickAIMove(game, profile.level, houseMoveBudgetMs(skill, remainingClockMs, ceilingMs));
 }
 
 /** Opening nerf pick: between the two dealt options, prefer the lower tier
