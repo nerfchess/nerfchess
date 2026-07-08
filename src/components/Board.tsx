@@ -1198,11 +1198,10 @@ export function Board({
     }
     if (e.button !== undefined && e.button !== 0) return;
     // Drawn arrows and marks are cleared the moment a move interaction begins
-    // (see onPointerDownPiece / tryPlay). Stray left clicks on empty squares
-    // keep them, but grabbing a piece — the first step of any move attempt,
-    // legal or not — wipes them, so annotations never stay stuck on the board
-    // after a rejected or illegal move. A move that actually lands also wipes
-    // them via the board.pieces effect below.
+    // (see onPointerDownPiece / tryPlay) and also by a plain left-click that
+    // plays no move and grabs no piece (handled at the end of this function):
+    // lichess-style "click the board to clear your shapes". A move that
+    // actually lands also wipes them via the board.pieces effect below.
     // Targeting mode swallows the pointer entirely: a candidate square picks,
     // anything else is a no-op (Escape or the cancel chip exits the mode).
     if (pickingSquares) {
@@ -1217,18 +1216,13 @@ export function Board({
       onPointerDownPiece(e, sq);
       return;
     }
-    // Touch has no right-click, so a plain tap that neither queues a new premove
-    // (tryPlay above) nor picks up a piece (branch above) doubles as the
-    // premove-cancel gesture: while it is the opponent's turn with premoves
-    // queued, tapping an empty or non-premove square clears the whole queue,
-    // mirroring the desktop right-click cancel. This runs only in premoveMode
-    // (opponent's turn), so it never touches a legal move on your own turn, and
-    // it also clears any dangling selection so normal tap-to-deselect still works.
-    if (premoveMode && (premoves?.length ?? 0) > 0 && onCancelPremove) {
-      onCancelPremove();
-      setSelected(null);
-      return;
-    }
+    // A plain left-click / tap on the board that neither plays a move nor picks
+    // up a piece wipes every drawn arrow and square mark, lichess-style ("click
+    // the board to clear your shapes"). It must NOT cancel a queued premove:
+    // clearing shapes and canceling a premove are separate concerns. A premove
+    // is still canceled the normal way (a different premove, the right-click
+    // context menu, or the dedicated cancel control), never by a stray click.
+    clearAnnotations();
     if (selected != null) {
       setSelected(null);
     }
