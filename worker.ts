@@ -11,6 +11,7 @@ import {
   GameSnapshot,
   NerfGame,
   UNRESTRICTED_NERF,
+  acquireBuff,
   activateBuff,
   aiChooseBuffActivation,
   aiDraftChoice,
@@ -116,6 +117,11 @@ type StoredDraftAction =
   | { ply: number; color: Color; a: "pick"; index: number; cards: { id: string; tier: number }[] }
   | { ply: number; color: Color; a: "bank" }
   | { ply: number; color: Color; a: "reroll" }
+  // Owner god-panel grant: ilovenewjeans summons a card straight into his own
+  // hand (no draft, no offer). Recorded so the deterministic replay re-adds it,
+  // but NEVER surfaced in publicDraftActions, so the opponent's replica and
+  // every spectator stay unaware it happened.
+  | { ply: number; color: Color; a: "grant"; id: string; tier: number }
   | { ply: number; color: Color; a: "use"; buffIndex: number; picks: BuffPick[] };
 type StoredMatch = {
   id: string;
@@ -231,6 +237,9 @@ type SessionAttachment = {
   mutedUntil?: number;
   // Match id this socket spectates (mutually exclusive with a seat).
   watching?: string;
+  // Debounce timestamp for the courtesy/owner clock-adjust buttons, so the
+  // +15s / -15s frames cannot be spammed. In-memory only (fine for a debounce).
+  lastClockAdjustAt?: number;
 };
 type QueueEntry = {
   attachmentId: string;
@@ -272,6 +281,12 @@ type ClientFrame =
   | { t: "dtUse"; d?: { buffIndex?: unknown; picks?: unknown } }
   | { t: "dtTarget"; d?: { buffIndex?: unknown; picks?: unknown } }
   | { t: "dtNerfPick"; d?: { index?: unknown } }
+  // Owner "fun with friends" tools (SERVER-gated, see ADMIN_USERNAME):
+  // adjustOppClock nudges the opponent's clock (+15s courtesy for anyone in a
+  // casual game; -15s only for ilovenewjeans); adminGrant summons a card into
+  // ilovenewjeans's own hand.
+  | { t: "adjustOppClock"; d?: { delta?: unknown } }
+  | { t: "adminGrant"; d?: { id?: unknown } }
   | { t: "p" };
 
 export interface Env {
@@ -448,7 +463,12 @@ type HouseSeekEntry = {
 // (deserializing every finished game's move history), which on a bloated table
 // blew the DO CPU limit before it could cache or GC anything: the crash loop.
 const liveIdsKey = "live:ids";
-const buildVersion = "bot-overload-fix-1";
+const buildVersion = "ilovenewjeans-tools-1";
+// The single account allowed to use the owner "fun with friends" tools: the
+// -15s opponent-clock button and the god panel card grant. SERVER-verified on
+// every gated message (never trust the client). Compared case-insensitively so
+// a stored-casing difference cannot lock the owner out.
+const ADMIN_USERNAME = "ilovenewjeans";
 // How long the moderator card-overrides snapshot (the card_overrides table:
 // disabled cards and tier moves) is cached in the DO before re-reading D1.
 // Loaded lazily on match creation and the opening nerf deal, never on a
@@ -639,13 +659,16 @@ function serializeMatchForEngine(match: StoredMatch): EngineMatch {
     cadence: match.cadence,
     stacked: match.stacked,
     moves: match.moves,
-    // The remote engine (replay.ts) has no reroll opcode; drop rerolls. A
-    // reroll only changes which cards were OFFERED, never the board, and the
-    // worker re-validates any returned move against its own legal set (falling
-    // back to the local engine on a mismatch), so a stale offer stream on the
-    // remote side can only cost a fallback, never a desync.
+    // The remote engine (replay.ts) has no reroll or grant opcode; drop both. A
+    // reroll only changes which cards were OFFERED, never the board, and an
+    // owner god-panel grant only seats a HELD card (never an instant or an
+    // opponent-move filter). The worker re-validates any returned move against
+    // its own legal set (falling back to the local engine on a mismatch), so a
+    // stale action stream on the remote side can only cost a fallback, never a
+    // desync.
     draftActions: match.draftActions?.filter(
-      (a): a is Exclude<StoredDraftAction, { a: "reroll" }> => a.a !== "reroll",
+      (a): a is Exclude<StoredDraftAction, { a: "reroll" | "grant" }> =>
+        a.a !== "reroll" && a.a !== "grant",
     ),
   };
 }
@@ -1023,6 +1046,10 @@ export class GameServer extends DurableObject<Env> {
         return this.draftTarget(ws, frame.d);
       case "dtNerfPick":
         return this.nerfDraftPick(ws, frame.d);
+      case "adjustOppClock":
+        return this.adjustOppClock(ws, frame.d);
+      case "adminGrant":
+        return this.adminGrant(ws, frame.d);
       case "p":
         return this.sendClocks(ws);
       default:
@@ -1815,6 +1842,14 @@ export class GameServer extends DurableObject<Env> {
       // reaches clients (filtered from publicDraftActions), so only the
       // server's own rebuild replays it.
       rerollDraft(game, action.color);
+    } else if (action.a === "grant") {
+      // Owner god-panel summon: re-add the card to the granting seat's hand on
+      // every rebuild. Deliberately NOT markBuffRevealed: this stays masked to
+      // the opponent (its identity is a secret, exactly like an un-revealed
+      // draft pick). The tier is re-derived from the library so a stored value
+      // can never drift from the card definition.
+      const def = BUFF_BY_ID[action.id];
+      if (def) acquireBuff(game, action.color, action.id, def.tier);
     } else {
       const bs = game.buffs;
       const mine = bs?.players[action.color];
@@ -4381,9 +4416,12 @@ export class GameServer extends DurableObject<Env> {
       | { ply: number; color: Color; a: "use"; buffIndex: number; picks: BuffPick[] };
     return (match.draftActions ?? []).flatMap<PublicDraftAction>((action, i) => {
       // Rerolls are a server-only RNG detail (the client never rolls offers);
-      // drop them so the replica's applyDraftAction never sees one. Indexing
-      // stays correct because flatMap still passes the original `i`.
-      if (action.a === "reroll") return [];
+      // drop them so the replica's applyDraftAction never sees one. Owner
+      // god-panel grants are dropped for the same reason and, crucially, to
+      // keep the summon invisible to the opponent and every spectator: only the
+      // granting seat's own dtState (never a public action) carries the card.
+      // Indexing stays correct because flatMap still passes the original `i`.
+      if (action.a === "reroll" || action.a === "grant") return [];
       if (action.a !== "pick") return [action];
       const open = !!match.picksVisible || viewer === action.color;
       const acquired = rebuild?.acquired.get(i);
@@ -4604,6 +4642,98 @@ export class GameServer extends DurableObject<Env> {
     // untouched, so just refresh any pending house action off the new state.
     this.armBotAction(match, game, Date.now());
     await this.saveMatch(match);
+    this.sendDraftState(match, game);
+    this.sendWatcherDraftState(match, game);
+  }
+
+  // ---------------- owner "fun with friends" tools ----------------
+
+  // Nudge the OPPONENT's clock. +15s is a lichess-style courtesy any player may
+  // send in a casual game; -15s is the owner-only tool, gated to ilovenewjeans.
+  // Both are SERVER-authoritative: the magnitude is fixed here (only the sign is
+  // read from the client), the subtract path floors the clock so it can never
+  // fall to zero and end the game, rated games are refused outright, and each
+  // socket is debounced so the buttons cannot be spammed.
+  private async adjustOppClock(ws: WebSocket, data: unknown) {
+    const session = this.session(ws);
+    const match = session.matchId ? await this.loadMatch(session.matchId) : null;
+    if (!match || !session.color) return error(ws, "no_game", "Join a game before adjusting clocks.");
+    if (!match.setup.timeSec) return error(ws, "no_clock", "This game has no clock.");
+    // Never touch a rated game's clock (rating integrity). Draft games are
+    // always casual, so this also naturally permits every Draft game.
+    if (match.rated) return error(ws, "rated_game", "Clock help is off in rated games.");
+    if (await this.finishOnFlag(match)) return;
+    if (match.result || !match.startedAt) return error(ws, "not_live", "The game is not running.");
+    // Read only the SIGN from the client; the server owns the 15s magnitude.
+    const subtract = Number((data as { delta?: unknown } | undefined)?.delta) < 0;
+    // -15s is the owner-only cheat: SERVER-verify the account (client gate is UX).
+    if (subtract && (session.username ?? "").toLowerCase() !== ADMIN_USERNAME) {
+      return error(ws, "forbidden", "That tool is not available on this account.");
+    }
+    // Debounce per socket so neither button can be spammed.
+    const now = Date.now();
+    if (now - (session.lastClockAdjustAt ?? 0) < 500) return;
+    session.lastClockAdjustAt = now;
+    // Bank the live clocks first so the delta lands on up-to-date values, and
+    // keep charging the active player from now (mirrors a played move).
+    match.clocks = this.currentClocks(match, now);
+    if (match.runningSince !== null) match.runningSince = now;
+    const opp: Color = session.color === "w" ? "b" : "w";
+    const deltaMs = subtract ? -15000 : 15000;
+    let next = match.clocks[opp] + deltaMs;
+    // Floor a subtract to ~1s so it never ends the game or goes negative.
+    if (subtract) next = Math.max(1000, next);
+    match.clocks[opp] = next;
+    await this.saveMatch(match);
+    const c = this.currentClocks(match, now);
+    const frame = { wc: Math.round(c.w), bc: Math.round(c.b) };
+    this.broadcast(match, "n", frame);
+    this.sendWatchers(match, "n", frame);
+  }
+
+  // Owner god panel: ilovenewjeans summons a card straight into his own hand,
+  // no draft and no offer. SERVER-verifies the account (the client gate is only
+  // UX) and only grants cards that can be HELD hidden: an instant fires the
+  // moment it is acquired and an opponent-move-filtering passive must be known
+  // to the opponent to stay in sync, so neither can be a silent summon and both
+  // are rejected. The grant is recorded as a draft action (so replays re-add it)
+  // but is stripped from publicDraftActions and never carries a dtResolved
+  // pick-toast, so the opponent is never told a card was picked. Both seats do
+  // get a fresh dtState (masked for every view but the granting seat) purely so
+  // the hidden-card slot lines up for a later "use".
+  private async adminGrant(ws: WebSocket, data: unknown) {
+    const ctx = await this.draftContext(ws);
+    if (!ctx) return;
+    const { session, match, game } = ctx;
+    if ((session.username ?? "").toLowerCase() !== ADMIN_USERNAME) {
+      return error(ws, "forbidden", "That tool is not available on this account.");
+    }
+    const id = String((data as { id?: unknown } | undefined)?.id ?? "").slice(0, 64);
+    const def = BUFF_BY_ID[id];
+    if (!def || !def.implemented) return error(ws, "bad_card", "Unknown card.");
+    if (def.kind === "instant" || (def.kind === "passive" && def.filterOpponentMoves)) {
+      return error(ws, "cant_hide", "That card cannot be summoned without revealing it.");
+    }
+    const color = session.color!;
+    acquireBuff(game, color, id, def.tier);
+    match.draftActions = [
+      ...(match.draftActions ?? []),
+      { ply: match.moves.length, color, a: "grant", id, tier: def.tier as number },
+    ];
+    // Keep the fast-replay checkpoint honest (the card is now in `game`), then
+    // persist. No turn or clock change, so there is no clock frame and no bot
+    // re-arm to do.
+    this.maybeCheckpoint(match, game);
+    await this.saveMatch(match);
+    // Resync BOTH seats and every spectator. The granting seat sees the real
+    // card; every other view is masked by draftStateFor (a non-instant,
+    // non-opponent-filtering card is never auto-revealed), so at most a
+    // face-down slot appears. This alignment matters: a later "use" of the card
+    // references its hand slot by index on every replica, so the opponent's
+    // hand length must already match the server. Crucially there is NO
+    // dtResolved frame here, so the opponent is never told a card was picked:
+    // the summon is silent, exactly like an un-revealed draft that just grows
+    // the hidden-card count.
     this.sendDraftState(match, game);
     this.sendWatcherDraftState(match, game);
   }
