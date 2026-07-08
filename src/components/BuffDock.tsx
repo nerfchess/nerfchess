@@ -8,7 +8,7 @@ import { Color } from "@/engine/types";
 import { Tier } from "@/engine/nerf";
 import { TIER_ROMAN } from "@/lib/tiers";
 import { motion, useReducedMotion } from "framer-motion";
-import { Ban, ChevronRight, EyeOff, Hourglass, Inbox, Layers, ShieldAlert, Swords, type LucideIcon } from "lucide-react";
+import { Ban, ChevronRight, Hourglass, Inbox, Layers, ShieldAlert, Swords, type LucideIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { BuffCard } from "./BuffCard";
 import { OppPlaysDockSection, type OppPlay } from "./OppPlaysLog";
@@ -432,7 +432,6 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
   const isHiddenOpp = (inst: (typeof theirs)[number]) =>
     !BUFF_BY_ID[inst.id] || (hideOpponentCards && !inst.spent && !inst.nullified);
   const theirsShown = theirsAll.filter(({ inst }) => !isHiddenOpp(inst));
-  const theirsHiddenCount = theirsAll.length - theirsShown.length;
 
   const lastMine = mine[mine.length - 1] ?? null;
   const lastMineDef = lastMine ? BUFF_BY_ID[lastMine.id] : undefined;
@@ -715,30 +714,17 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
               </motion.span>
             )}
             {!lastMine && <span className="min-w-0 flex-1" />}
-            {lastTheirs &&
-              (lastTheirsHidden ? (
-                <motion.span
-                  key={`t${theirs.length}`}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.3 }}
-                  title={`Opponent's latest draft (hidden, tier ${TIER_ROMAN[lastTheirs.tier]})`}
-                  className="flex shrink-0 items-center gap-1 smallcaps text-[9px] text-parchment-400"
-                >
-                  <EyeOff aria-hidden size={10} strokeWidth={2.2} />
-                  hidden
-                </motion.span>
-              ) : (
-                <motion.span
-                  key={`t${theirs.length}`}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.3 }}
-                  className={`max-w-[45%] shrink-0 truncate font-display text-[11px] tier-${lastTheirs.tier}`}
-                >
-                  {BUFF_BY_ID[lastTheirs.id]?.name}
-                </motion.span>
-              ))}
+            {lastTheirs && !lastTheirsHidden && (
+              <motion.span
+                key={`t${theirs.length}`}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3 }}
+                className={`max-w-[45%] shrink-0 truncate font-display text-[11px] tier-${lastTheirs.tier}`}
+              >
+                {BUFF_BY_ID[lastTheirs.id]?.name}
+              </motion.span>
+            )}
             </div>
           </div>
         )}
@@ -843,20 +829,10 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
               />
             </div>
             <div className="space-y-1">{theirsShown.map(oppEntry)}</div>
-            {theirsHiddenCount > 0 && (
-              <div
-                className="flex items-center gap-1.5 rounded-[1px] border border-white/10 bg-white/[0.02] px-2 py-1"
-                title={`Tiers: ${theirsAll
-                  .filter(({ inst }) => isHiddenOpp(inst))
-                  .map(({ inst }) => TIER_ROMAN[inst.tier])
-                  .join(", ")}`}
-              >
-                <EyeOff aria-hidden size={11} strokeWidth={2.2} className="shrink-0 text-parchment-400" />
-                <span className="smallcaps text-[9px] text-parchment-400">
-                  {theirsHiddenCount} hidden card{theirsHiddenCount === 1 ? "" : "s"}
-                </span>
-              </div>
-            )}
+            {/* Opponent hidden cards render nothing at all: no face-down minis
+                and no "N hidden" count. Cards summoned via the owner god panel
+                (and any still-masked card) stay fully invisible to the
+                opponent, on the left side included. */}
           </>
         )}
 
