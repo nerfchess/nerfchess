@@ -90,6 +90,7 @@ const TIER_MEANING: Record<number, string> = {
   7: "Punishing: a top-band blowout, kept rare on purpose.",
   8: "Unhinged: the highest tier, a game-defining moment.",
   9: "Apex: a near-game-winning card, never drafted normally and only won through a gamble or a top-tier bank.",
+  10: "Mythic: the rarest band of all, an apex-of-apex card that can end the game outright, won only through a gamble or a top-tier bank and roughly one time in ten in place of an apex card.",
 };
 export function tierMeaning(tier: Tier): string {
   return TIER_MEANING[tier] ?? "";

@@ -3,7 +3,7 @@ import { BUFF_BY_ID, BUFF_POOL_BY_TIER } from "./buffs/library";
 import { FANTASY_CARDS } from "./buffs/fantasy";
 import { FUNNY_CARDS } from "./buffs/funny";
 import { PT_CARDS } from "./buffs/pt";
-import { TIER9 } from "./buffs/tier9";
+import { TIER9, TIER10 } from "./buffs/tier9";
 import { Tier } from "./nerf";
 import { RNG } from "./rng";
 import { BoardState, Color, PieceType } from "./types";
@@ -226,9 +226,10 @@ function rollCards(
   // sims) the guard is skipped and requires-cards stay eligible.
   const owned = board ? ownedPieceTypes(board, color) : null;
   const inMode = (b: Buff) => {
-    // Apex cards (special / tier 9) are never in the normal pool: they are
-    // only obtainable through the dedicated grants (Jackpot, banking at tier 8).
-    if (b.special || b.tier === 9) return false;
+    // Apex cards (special / tier 9 apex / tier 10 mythic) are never in the
+    // normal pool: they are only obtainable through the dedicated grants
+    // (Jackpot, banking at tier 8), which roll a tier-10 card ~10% of the time.
+    if (b.special || b.tier === 9 || b.tier === 10) return false;
     if (reliefIsDead && b.category === "nerf") return false;
     if (owned && b.requires && !b.requires.some((t) => owned.has(t))) return false;
     return bs.mode === "buff"
@@ -317,19 +318,24 @@ export function rollOffer(
   if (suppressed) ps.flags.noDraftCards = (ps.flags.noDraftCards ?? 0) - 1;
 
   // Apex bank: banking a draft while already at the top tier promotes it past
-  // tier 8 into a single tier-9 apex offer. Triggered only when this is a
-  // banked offer (bonus > 0, an unforced roll) whose resolved tier would hit 8.
-  // Everywhere else tier 9 stays out of the pool. Deterministic: one seeded RNG
-  // draw picks the card, so the branch and the pick replay identically.
+  // tier 8 into a single apex offer. Triggered only when this is a banked offer
+  // (bonus > 0, an unforced roll) whose resolved tier would hit 8. Everywhere
+  // else tiers 9 and 10 stay out of the pool. Deterministic: a first seeded RNG
+  // draw is the 10% tier-10 gate and a second picks the card, so the branch,
+  // the tier, and the pick all replay identically. The gate is drawn
+  // unconditionally so the RNG stream advances the same way regardless of pool.
   const bankedToTop =
     bonus > 0 && forced == null && tiers[0] + bonus + boost >= 8 && TIER9.length > 0;
   if (bankedToTop) {
     const rng = drawRng(bs);
-    const pick = TIER9[rng.int(TIER9.length)];
+    const mythic = rng.next() < 0.1 && TIER10.length > 0;
+    const pool = mythic ? TIER10 : TIER9;
+    const apexTier: Tier = mythic ? 10 : 9;
+    const pick = pool[rng.int(pool.length)];
     saveRng(bs, rng);
-    const apexOffer: BuffOffer = { cards: [{ id: pick.id, tier: 9 }], index, banked: true };
+    const apexOffer: BuffOffer = { cards: [{ id: pick.id, tier: apexTier }], index, banked: true };
     ps.offer = apexOffer;
-    ps.offerTiers = [9];
+    ps.offerTiers = [apexTier];
     ps.draftsTaken = index;
     const apexWatcher = bs.players[color === "w" ? "b" : "w"];
     if (apexWatcher.flags.seeOppCards) {
@@ -337,7 +343,7 @@ export function rollOffer(
       apexWatcher.flags.seeOppCards = undefined;
       apexWatcher.flags.seeOppTier = undefined;
     } else if (apexWatcher.flags.seeOppTier) {
-      apexWatcher.oppReveal = { index, tier: 9 };
+      apexWatcher.oppReveal = { index, tier: apexTier };
       apexWatcher.flags.seeOppTier = undefined;
     }
     return apexOffer;
@@ -399,22 +405,29 @@ export function rerollOffer(bs: BuffMatchState, color: Color, board?: BoardState
   const offer = ps.offer;
   if (!offer || (ps.rerollsLeft ?? 0) <= 0) return false;
   const slotTiers = (ps.offerTiers?.length ? ps.offerTiers : offer.cards.map((c) => c.tier)) as Tier[];
-  // An apex offer (from banking at the top tier) is a single tier-9 card and
-  // never rolls off the normal pool. Rerolling it draws a FRESH apex card off
-  // the seeded RNG rather than collapsing it into an ordinary tier-8 card.
-  const isApexOffer = slotTiers.length === 1 && slotTiers[0] === 9;
+  // An apex offer (from banking at the top tier) is a single tier-9 or tier-10
+  // card and never rolls off the normal pool. Rerolling it draws a FRESH apex
+  // card off the seeded RNG rather than collapsing it into an ordinary tier-8
+  // card, re-rolling the same 10% tier-10 gate as the original grant.
+  const isApexOffer = slotTiers.length === 1 && (slotTiers[0] === 9 || slotTiers[0] === 10);
   if (isApexOffer) {
     if (TIER9.length === 0) return false;
     const rng = drawRng(bs);
-    const pick = TIER9[rng.int(TIER9.length)];
+    const mythic = rng.next() < 0.1 && TIER10.length > 0;
+    const pool = mythic ? TIER10 : TIER9;
+    const apexTier: Tier = mythic ? 10 : 9;
+    const pick = pool[rng.int(pool.length)];
     saveRng(bs, rng);
     ps.rerollsLeft = (ps.rerollsLeft ?? 0) - 1;
-    offer.cards = [{ id: pick.id, tier: 9 }];
+    offer.cards = [{ id: pick.id, tier: apexTier }];
+    // Keep the stored slot tier in step with the rerolled card so a further
+    // reroll still detects this as an apex offer.
+    ps.offerTiers = [apexTier];
     offer.rerolled = (offer.rerolled ?? 0) + 1;
     const w = bs.players[color === "w" ? "b" : "w"];
     if (w.oppReveal && w.oppReveal.index === offer.index) {
       if (w.oppReveal.cards) w.oppReveal.cards = offer.cards.map((c) => ({ ...c }));
-      else if (w.oppReveal.tier != null) w.oppReveal.tier = 9;
+      else if (w.oppReveal.tier != null) w.oppReveal.tier = apexTier;
     }
     return true;
   }
