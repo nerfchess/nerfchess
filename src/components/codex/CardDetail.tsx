@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { GlossaryText } from "@/components/GlossaryText";
 import { InfoPageLayout, InfoSection } from "@/components/InfoPageLayout";
 import type { Buff } from "@/engine/buff";
 import type { Nerf } from "@/engine/nerf";
@@ -118,7 +119,7 @@ export function BuffDetail({ buff }: { buff: Buff }) {
     : `You draft ${buff.name} in ${where === "Buff mode and Nerf mode" ? "either mode" : where}.`;
 
   return (
-    <InfoPageLayout eyebrow={`codex · ${type.toLowerCase()}`} title={buff.name} intro={buff.description}>
+    <InfoPageLayout eyebrow={`codex · ${type.toLowerCase()}`} title={buff.name} intro={<GlossaryText text={buff.description} />}>
       <CardBreadcrumbJsonLd section="Buffs" name={buff.name} path={path} />
       {!buff.implemented && <NotDraftedNote />}
 
@@ -158,7 +159,7 @@ export function NerfDetail({ nerf }: { nerf: Nerf }) {
   const cats = nerfCategoryLabels(nerf);
 
   return (
-    <InfoPageLayout eyebrow="codex · nerf" title={nerf.name} intro={nerf.description}>
+    <InfoPageLayout eyebrow="codex · nerf" title={nerf.name} intro={<GlossaryText text={nerf.description} />}>
       <CardBreadcrumbJsonLd section="Nerfs" name={nerf.name} path={path} />
       {!nerf.implemented && <NotDraftedNote />}
 

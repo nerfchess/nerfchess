@@ -1,7 +1,8 @@
 "use client";
 
-import { Fragment, useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { Fragment, type ReactNode } from "react";
 import { GLOSSARY_REGEX, lookupTerm } from "@/lib/glossary";
+import { GlossaryTerm } from "@/components/GlossaryTerm";
 
 interface Props {
   /** A plain description string. Glossary terms inside it get a hover/tap gloss. */
@@ -11,10 +12,14 @@ interface Props {
 }
 
 /**
- * Renders a description string, underlining the first occurrence of each known
- * glossary term with a subtle dotted underline and a hover (desktop) / tap
- * (mobile) definition. Degrades to plain text when no terms are found, and
- * never alters the surrounding text or its wrapping.
+ * The term-wrapping helper: renders a description string with the first
+ * occurrence of each known glossary term wrapped in <GlossaryTerm> (a subtle
+ * dotted underline plus a hover / focus / tap definition). Degrades to plain
+ * text when no terms are found, and never alters the surrounding copy.
+ *
+ * Used as a component (not a bare function) so it is safe to drop inside Server
+ * Components: <GlossaryText text={card.description} />. The term rendering lives
+ * in GlossaryTerm; this file only does the scan.
  */
 export function GlossaryText({ text, className }: Props) {
   const nodes: ReactNode[] = [];
@@ -41,71 +46,8 @@ export function GlossaryText({ text, className }: Props) {
     if (GLOSSARY_REGEX.lastIndex === m.index) GLOSSARY_REGEX.lastIndex++;
   }
 
-  if (last === 0) return <>{text}</>;
+  if (last === 0) return className ? <span className={className}>{text}</span> : <>{text}</>;
   if (last < text.length) nodes.push(<Fragment key={key++}>{text.slice(last)}</Fragment>);
 
   return className ? <span className={className}>{nodes}</span> : <>{nodes}</>;
-}
-
-function GlossaryTerm({ term, definition }: { term: string; definition: string }) {
-  const [open, setOpen] = useState(false);
-  const id = useId();
-  const ref = useRef<HTMLSpanElement>(null);
-
-  // Close the tap-popover on outside tap or Escape (desktop hover closes on
-  // mouse-leave, which does not fire on touch).
-  useEffect(() => {
-    if (!open) return;
-    const onDown = (e: PointerEvent | MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
-    };
-    document.addEventListener("pointerdown", onDown);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("pointerdown", onDown);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
-
-  return (
-    <span ref={ref} className="relative inline">
-      <span
-        tabIndex={0}
-        aria-describedby={open ? id : undefined}
-        // title is the graceful fallback if JS/styling is unavailable, but does
-        // not work on touch, hence the tap popover below.
-        title={definition}
-        onMouseEnter={() => setOpen(true)}
-        onMouseLeave={() => setOpen(false)}
-        onFocus={() => setOpen(true)}
-        onBlur={() => setOpen(false)}
-        onClick={(e) => {
-          // Do not let a tap on the term also click through to a card button.
-          e.stopPropagation();
-          setOpen((o) => !o);
-        }}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            setOpen((o) => !o);
-          }
-        }}
-        className="cursor-help underline decoration-dotted decoration-parchment-400/60 underline-offset-2 transition-colors hover:decoration-gold/70"
-      >
-        {term}
-      </span>
-      {open && (
-        <span
-          id={id}
-          role="tooltip"
-          className="absolute left-0 top-full z-50 mt-1 block w-56 max-w-[min(16rem,80vw)] rounded-md border border-white/15 bg-ink-800 px-3 py-2 text-left text-[12px] font-body font-normal normal-case leading-snug text-parchment-100 shadow-lg"
-        >
-          {definition}
-        </span>
-      )}
-    </span>
-  );
 }

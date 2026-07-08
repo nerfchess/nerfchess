@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { GlossaryText } from "@/components/GlossaryText";
 import { InfoPageLayout, InfoSection } from "@/components/InfoPageLayout";
 import { BreadcrumbJsonLd, FaqSection, GuideFooter } from "../shared";
 
@@ -21,35 +22,28 @@ export default function HowToPlayPage() {
 
       <InfoSection title="The house rules">
         <p>
-          <strong>1. No checkmate, no stalemate.</strong> A game ends only when a king is
-          physically captured, a nerf triggers a loss condition, or a player resigns. There is
-          no obligation to answer check.
+          <strong>1. No checkmate, no stalemate.</strong>{" "}
+          <GlossaryText text="A game ends only when a king is physically captured, a nerf triggers a loss condition, or a player resigns. There is no obligation to answer check." />
         </p>
         <p>
-          <strong>2. The king is a real piece.</strong> It can be captured like anything else,
-          it can move into attacked squares, and it can castle through, into, or out of check.
-          Leaving your king en prise loses on the spot, so vigilance replaces the check rule.
+          <strong>2. The king is a real piece.</strong>{" "}
+          <GlossaryText text="It can be captured like anything else, it can move into attacked squares, and it can castle through, into, or out of check. Leaving your king en prise loses on the spot, so vigilance replaces the check rule." />
         </p>
         <p>
-          <strong>3. Nerfs are secret.</strong> In Nerf mode you always see your own handicap
-          but never your opponent&apos;s; you infer it from how they play. Buff mode has no
-          nerfs at all.
+          <strong>3. Nerfs are secret.</strong>{" "}
+          <GlossaryText text="In Nerf mode you always see your own handicap but never your opponent's; you infer it from how they play. Buff mode has no nerfs at all." />
         </p>
         <p>
-          <strong>4. Illegal-by-nerf moves are pre-filtered.</strong> The board only offers
-          moves your rule actually allows, so you cannot accidentally break your own nerf.
-          Lose-condition nerfs still trigger on their own terms.
+          <strong>4. Illegal-by-nerf moves are pre-filtered.</strong>{" "}
+          <GlossaryText text="The board only offers moves your rule actually allows, so you cannot accidentally break your own nerf. Lose-condition nerfs still trigger on their own terms." />
         </p>
         <p>
-          <strong>5. Distances are Chebyshev.</strong> When a card talks about distance, count
-          the larger of the file difference and the rank difference, the way a king walks, not
-          straight-line Euclidean distance.
+          <strong>5. Distances are Chebyshev.</strong>{" "}
+          <GlossaryText text="When a card talks about distance, count the larger of the file difference and the rank difference, the way a king walks, not straight-line Euclidean distance." />
         </p>
         <p>
-          <strong>6. No king capture on a free move.</strong> Some buffs hand you an extra move
-          or make your opponent skip a turn. You can chain those, but you cannot capture the
-          enemy king on a bonus move: your opponent always gets one reply first, so a king is
-          never snatched while they have no chance to answer.
+          <strong>6. No king capture on a free move.</strong>{" "}
+          <GlossaryText text="Some buffs hand you an extra move or make your opponent skip a turn. You can chain those, but you cannot capture the enemy king on a bonus move: your opponent always gets one reply first, so a king is never snatched while they have no chance to answer." />
         </p>
       </InfoSection>
 
@@ -86,10 +80,8 @@ export default function HowToPlayPage() {
         <p>
           Every 5 of your own moves, the game deals you a draft: two cards, pick one. Offers
           grow stronger over time through the card{" "}
-          <Link href="/guide/glossary" className="underline">tier system</Link>, which runs
-          from tier I (Trivial) to tier VIII (Unhinged). You can also skip a draft to bank it:
-          your next offer then rolls one tier higher. Banking does not stack, so the skill is
-          picking the right moment to be patient.
+          <Link href="/guide/glossary" className="underline">tier system</Link>
+          <GlossaryText text=", which runs from tier I (Trivial) to tier VIII (Unhinged). You can also skip a draft to bank it: your next offer then rolls one tier higher. Banking does not stack, so the skill is picking the right moment to be patient." />
         </p>
         <p>
           For mode-specific strategy, read the{" "}
