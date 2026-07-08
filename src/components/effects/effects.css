@@ -932,6 +932,39 @@
   animation: fx-popover-in 0.14s ease-out both;
 }
 
+/* --- 10i. Batch 9 thematic character-matched signatures ---------------------
+   The Italian-brainrot meme cards (Bombardiro croc-bomber, Tralalero shark,
+   Bombombini goose, Lirili clock-elephant, Patapim cold snap, Chimpanzini ape,
+   Boneca tire-frog) plus a spread of high-flavor library cards (Oblivion,
+   Blood Pact, Regicide, Divine Right, Ascendancy, Divine Mandate, Blackout,
+   Griffon Rider, Grand Army, Mortgage, Repo Rook, Musical Chairs, Devil's Deal,
+   Berserk Pawn, Glaciate, Snowball, Gale, Opposite Day) that used to fire a
+   reused motif. Nearly all compose the Batch 1-8 fx-sig-* classes above, so
+   they inherit the same transform/opacity + reduced-motion behaviour; only two
+   motions are genuinely new here: a bomb that whistles down with a wobble (the
+   Bombardiro payload) and a fast horizontal dart (the Tralalero shark). Both
+   transform / opacity only, hidden under reduced motion below. */
+@keyframes fx-sig-bombdrop {
+  0% { opacity: 0; transform: translateY(-120%) rotate(-8deg); }
+  22% { opacity: 1; transform: translateY(-40%) rotate(-4deg); }
+  60% { opacity: 1; transform: translateY(0) rotate(4deg); }
+  74% { transform: translateY(-8%) rotate(0deg); }
+  100% { opacity: 0; transform: translateY(2%) rotate(0deg); }
+}
+.fx-sig-bombdrop {
+  animation: fx-sig-bombdrop 0.7s var(--ease-out, cubic-bezier(0.2, 0.8, 0.2, 1)) both;
+  transform-origin: 50% 100%;
+}
+@keyframes fx-sig-dart {
+  0% { opacity: 0; transform: translateX(-72%) scaleX(0.8); }
+  30% { opacity: 1; transform: translateX(-12%) scaleX(1.06); }
+  62% { opacity: 1; transform: translateX(16%) scaleX(1); }
+  100% { opacity: 0; transform: translateX(64%) scaleX(0.94); }
+}
+.fx-sig-dart {
+  animation: fx-sig-dart 0.62s var(--ease-out, ease-out) both;
+}
+
 /* --- Reduced motion ----------------------------------------------------------
    Persistent props hold their static end state; one-shot flourishes vanish
    (same treatment globals.css gives the walnut squirrel). */
@@ -1043,7 +1076,11 @@
      new classes; every other Batch 8 visual reuses the classes already listed
      above. */
   .fx-sig-gallop,
-  .fx-sig-quake {
+  .fx-sig-quake,
+  /* Batch 9 thematic set: the bomb whistle-drop and the horizontal dart are the
+     only new classes; every other Batch 9 visual reuses classes listed above. */
+  .fx-sig-bombdrop,
+  .fx-sig-dart {
     animation: none !important;
     opacity: 0 !important;
   }
