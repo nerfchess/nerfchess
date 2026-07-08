@@ -1083,6 +1083,56 @@
 }
 .fx-sig-chomp { animation: fx-sig-chomp 0.26s ease-in-out 4 both; transform-box: fill-box; transform-origin: 50% 40%; }
 
+/* --- Board-wide brainrot takeovers ------------------------------------------
+   The Italian-brainrot lead flourishes escape their square: painted inside an
+   oversized, board-blanketing canvas (the computer-virus trick), the character
+   sweeps / rises / rains / booms across the whole board before the per-square
+   bursts land. Transform/opacity only; every class here is hidden under reduced
+   motion below. Four new motions; the rest reuse the fx-sig-* classes above. */
+
+/* A full-board colour wash that floods in and drains away. Colour + how dark
+   comes from inline background; this is opacity + a faint breathing scale so a
+   freeze glaze / time-grey / banana-gold / honk-flash reads as "the whole board
+   just changed". */
+@keyframes fx-sig-bwash {
+  0% { opacity: 0; transform: scale(1.04); }
+  16% { opacity: 0.9; transform: scale(1); }
+  70% { opacity: 0.55; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.02); }
+}
+.fx-sig-bwash { animation: fx-sig-bwash 1.15s var(--ease-out, ease-out) both; transform-origin: 50% 50%; }
+
+/* A giant character / object charging the full width of the board and off it,
+   with a little vertical bob so it never reads as a flat slide. */
+@keyframes fx-sig-cross {
+  0% { opacity: 0; transform: translate(-88%, 3%) scale(0.9); }
+  14% { opacity: 1; transform: translate(-58%, 0) scale(1); }
+  50% { transform: translate(0, -3%) scale(1.04); }
+  86% { opacity: 1; transform: translate(58%, 0) scale(1); }
+  100% { opacity: 0; transform: translate(90%, 3%) scale(0.92); }
+}
+.fx-sig-cross { animation: fx-sig-cross 1.2s var(--ease-out, cubic-bezier(0.3, 0.7, 0.4, 1)) both; }
+
+/* Board-wide rain: a peel / bomb / icicle / feather / ember tumbling from above
+   the board down past the bottom, spinning as it falls (--spin per element). */
+@keyframes fx-sig-rain {
+  0% { opacity: 0; transform: translateY(-160%) rotate(0deg); }
+  12% { opacity: 1; }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(1000%) rotate(var(--spin, 360deg)); }
+}
+.fx-sig-rain { animation: fx-sig-rain 1.2s linear both; }
+
+/* A colossal shockwave ring that expands from the board centre to well past its
+   edges (the goose HONK, the ape chest-thump), overshooting so it feels like it
+   shoves the whole board. */
+@keyframes fx-sig-boom {
+  0% { opacity: 0; transform: scale(0.05); }
+  20% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.15); }
+}
+.fx-sig-boom { animation: fx-sig-boom 0.95s var(--ease-out, cubic-bezier(0.15, 0.7, 0.2, 1)) both; transform-origin: 50% 50%; }
+
 /* --- Reduced motion ----------------------------------------------------------
    Persistent props hold their static end state; one-shot flourishes vanish
    (same treatment globals.css gives the walnut squirrel). */
@@ -1212,7 +1262,14 @@
   .fx-sig-punch,
   .fx-sig-hop,
   .fx-sig-wiggle,
-  .fx-sig-chomp {
+  .fx-sig-chomp,
+  /* Board-wide brainrot takeovers: the full-board wash, cross-board charge,
+     board-wide rain, and the colossal shockwave. Transient, hidden like the
+     rest (the per-square end state is enough). */
+  .fx-sig-bwash,
+  .fx-sig-cross,
+  .fx-sig-rain,
+  .fx-sig-boom {
     animation: none !important;
     opacity: 0 !important;
   }
