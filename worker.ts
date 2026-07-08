@@ -195,6 +195,13 @@ type StoredMatch = {
   // house seat counts as connected for game start; the alarm plays its moves
   // and draft picks. Absent on every purely human game.
   bots?: Partial<Record<Color, string>>;
+  // Each house seat's skill tier, captured at creation. The bot's move search
+  // reads this instead of looking the persona up in HOUSE_ROSTER mid-game, so a
+  // game that outlives a roster change (a persona renamed or removed by a
+  // deploy) keeps playing at its original strength instead of throwing
+  // "unknown house persona" and dying as an interrupted draw. Absent on records
+  // written before this field existed; the move path falls back to the roster.
+  botSkills?: Partial<Record<Color, HouseSkill>>;
   // When the next pending house action (move, opening nerf pick, or buff
   // offer resolve) lands. Null/absent when no house action is pending.
   botActAt?: number | null;
@@ -3273,8 +3280,12 @@ export class GameServer extends DurableObject<Env> {
       await this.saveMatch(match, false);
       return;
     }
-    const persona = housePersona(personaId);
-    if (!persona) throw new Error(`unknown house persona ${personaId}`);
+    // Skill drives the move search. Prefer the tier captured on the match at
+    // creation; fall back to the live roster, then a sane mid default. Never
+    // throw on an unknown id: a persona renamed or removed by a deploy must not
+    // kill a live game (it used to end as an interrupted draw + spam the tick
+    // error). The seat's name/avatar are already stored on the record.
+    const skill: HouseSkill = match.botSkills?.[color] ?? housePersona(personaId)?.skill ?? 1550;
 
     // Sometimes fire a held buff instead of moving. aiChooseBuffActivation
     // applies its own worth-it gates; the extra coin keeps house players from
@@ -3330,7 +3341,7 @@ export class GameServer extends DurableObject<Env> {
     const remaining = match.setup.timeSec ? clocks[color] : undefined;
     let move: Move | null = null;
     if (this.env.HOUSE_ENGINE_REMOTE === "true") {
-      const remote = await this.remoteHouseMove(match, persona.skill, remaining);
+      const remote = await this.remoteHouseMove(match, skill, remaining);
       // The await above yielded the DO thread; the match may have ended (resign,
       // disconnect, flag) while the remote search ran. Bail if so.
       if (match.result) return;
@@ -3341,7 +3352,7 @@ export class GameServer extends DurableObject<Env> {
     }
     if (!move) {
       try {
-        move = pickHouseMove(game, persona.skill, randomInt, remaining);
+        move = pickHouseMove(game, skill, randomInt, remaining);
       } catch (err) {
         console.error("house move pick failed, using a legal fallback", match.id, err);
       }
@@ -3415,7 +3426,11 @@ export class GameServer extends DurableObject<Env> {
   private async newHouseMatchRecord(
     poolName: string,
     mode: DraftMode,
-    seats: { users: Partial<Record<Color, SeatUser>>; bots: Partial<Record<Color, string>> },
+    seats: {
+      users: Partial<Record<Color, SeatUser>>;
+      bots: Partial<Record<Color, string>>;
+      skills?: Partial<Record<Color, HouseSkill>>;
+    },
   ): Promise<StoredMatch> {
     const pool = QUEUE_POOLS[poolName];
     const id = await this.newCode(8);
@@ -3454,6 +3469,7 @@ export class GameServer extends DurableObject<Env> {
       ...(cardOverrides ? { cardOverrides } : {}),
       draftActions: [],
       bots: seats.bots,
+      ...(seats.skills ? { botSkills: seats.skills } : {}),
     };
   }
 
@@ -3482,6 +3498,7 @@ export class GameServer extends DurableObject<Env> {
     const match = await this.newHouseMatchRecord(poolName, mode, {
       users: { w: humanWhite ? human : house, b: humanWhite ? house : human },
       bots: humanWhite ? { b: persona.userId } : { w: persona.userId },
+      skills: humanWhite ? { b: persona.skill } : { w: persona.skill },
     });
     await this.saveMatch(match);
     const color: Color = humanWhite ? "w" : "b";
@@ -3495,6 +3512,7 @@ export class GameServer extends DurableObject<Env> {
     const match = await this.newHouseMatchRecord(pool, mode, {
       users: { w: await this.houseSeatUser(db, white, mode), b: await this.houseSeatUser(db, black, mode) },
       bots: { w: white.userId, b: black.userId },
+      skills: { w: white.skill, b: black.skill },
     });
     // Nerf mode opens with the nerf draft (the house seats pick like anyone
     // else); Buff mode starts outright.
