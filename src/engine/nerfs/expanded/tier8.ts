@@ -5,7 +5,7 @@
 // Import only from ./shared, one nerf per N(...).
 
 import { Nerf } from "./shared";
-import { tierNerf, filter, relRank, FILE, cheb, isInCheck } from "./shared";
+import { tierNerf, filter, relRank, cheb, isInCheck } from "./shared";
 
 const N = tierNerf(8);
 
@@ -93,25 +93,6 @@ export const NERFS_T8: Nerf[] = [
     },
     {
       filterMoves: filter((m) => !(m.piece === "b" && cheb(m.from, m.to) > 1)),
-    },
-  ),
-  N(
-    {
-      id: "rooks_charge",
-      name: "Rooks Charge",
-      description: "Your rooks can only move straight forward toward the enemy, never sideways or backward.",
-      flavor: "The towers only know one command: advance.",
-      icon: "castle",
-    },
-    {
-      filterMoves: (moves, _state, ctx) =>
-        moves.filter(
-          (m) =>
-            !(
-              m.piece === "r" &&
-              !(FILE(m.to) === FILE(m.from) && relRank(ctx.me, m.to) > relRank(ctx.me, m.from))
-            ),
-        ),
     },
   ),
   N(

@@ -46,12 +46,12 @@ export const HEXES_T2: Buff[] = [
     curse(4, (moves) => moves.filter((m) => !(m.piece === "p" && m.captured))),
   ),
   H(
-    { id: "stone_hooves", name: "Stone Hooves", description: "Petrify one of your opponent's knights for 2 of their turns. Kings cannot be targeted.", flavor: "The cavalry sets like plaster." },
-    walnutTarget(2, ["n"]),
+    { id: "stone_hooves", name: "Stone Hooves", description: "Petrify one of your opponent's knights for 3 of their turns: it can only shuffle one square at a time. Kings cannot be targeted.", flavor: "The cavalry sets like plaster." },
+    walnutTarget(3, ["n"]),
   ),
   H(
-    { id: "gargoyles", name: "Gargoyles", description: "Petrify one of your opponent's bishops for 2 of their turns.", flavor: "Perched, and quite forgotten." },
-    walnutTarget(2, ["b"]),
+    { id: "gargoyles", name: "Gargoyles", description: "Petrify one of your opponent's bishops for 3 of their turns: it can only shuffle one square at a time.", flavor: "Perched, and quite forgotten." },
+    walnutTarget(3, ["b"]),
   ),
   H(
     { id: "pinned_down", name: "Pinned Down", description: "Freeze one targeted enemy piece, never the king, so it cannot move for 2 of their turns." },
