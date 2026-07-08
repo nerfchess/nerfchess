@@ -474,7 +474,7 @@ type HouseSeekEntry = {
 // (deserializing every finished game's move history), which on a bloated table
 // blew the DO CPU limit before it could cache or GC anything: the crash loop.
 const liveIdsKey = "live:ids";
-const buildVersion = "rated-bot-games-1";
+const buildVersion = "house-bot-fixes-1";
 // The single account allowed to use the owner "fun with friends" tools: the
 // -15s opponent-clock button and the god panel card grant. SERVER-verified on
 // every gated message (never trust the client). Compared case-insensitively so
@@ -932,6 +932,7 @@ export class GameServer extends DurableObject<Env> {
           games: houseGames,
           houseVsHouse,
           tickError: this.houseTickError,
+          lastDesync: this.houseLastDesync,
         },
       });
     }
@@ -2852,6 +2853,10 @@ export class GameServer extends DurableObject<Env> {
   }
 
   private houseTickError: string | null = null;
+  // Last house-game turn-desync the self-heal repaired (cached turn != replay
+  // turn), surfaced on /healthz so a reproducing owner can report the exact
+  // card + move sequence that drifted the turn without needing the DO logs.
+  private houseLastDesync: string | null = null;
   private houseSeeded = false;
   // Match ids whose retire (end/delete) itself failed while acting. Kept for
   // the life of the isolate so neither the due loop nor the self-heal sweep
@@ -3105,10 +3110,37 @@ export class GameServer extends DurableObject<Env> {
     }
     // Self-heal: a live house game with no result and no pending action gets
     // its timer re-armed (covers records saved before a crash or deploy).
+    //
+    // Un-armed turn-desync recovery: a mixed (human-vs-bot) game whose human is
+    // present but has no bot action pending is the one place a drifted turn
+    // cache is FATAL. armBotAction reads the cached turnColor; if that says it
+    // is the human's turn when the replay (authoritative) says it is the bot's
+    // - the extra-move / tempo desync the playHouseAction self-heal repairs -
+    // the bot is never armed, so playHouseAction (where that self-heal lives)
+    // never runs, and the game sits frozen forever ("used a power-up, took two
+    // moves, the bot glitched out and stopped moving"). Rebuild once, reconcile
+    // the cache to the real turn, THEN arm off it, so the bot can never be
+    // permanently stranded. In the normal case cache == replay, so this only
+    // adds one cheap checkpoint-based rebuild while a human is on the clock in a
+    // bot game (a handful at most, at the heartbeat cadence); it changes nothing.
     for (const match of liveHouseMatches) {
       if (match.result || match.botActAt || this.houseRetireFailed.has(match.id)) continue;
       try {
         if (await this.finishOnFlag(match, now, false)) continue;
+        const humanSeat = humanSeatOf(match);
+        if (match.startedAt && humanSeat && this.connectedSession(match.id, humanSeat)) {
+          const game = await this.gameForPlay(match);
+          if (game && !game.result && this.activeColor(match) !== game.board.turn) {
+            this.houseLastDesync = `unarmed ${match.id} cached=${this.activeColor(match)} replay=${game.board.turn} moves=${match.moves.length} actions=${JSON.stringify(match.draftActions ?? [])}`;
+            console.error("house un-armed turn desync (self-healed)", this.houseLastDesync);
+            match.clocks = this.currentClocks(match, now);
+            if (match.runningSince !== null) match.runningSince = now;
+            match.turnColor = game.board.turn;
+          }
+          this.armBotAction(match, game, now);
+          if (match.botActAt) await this.saveMatch(match, false);
+          continue;
+        }
         this.armBotAction(match, null, now);
         if (match.botActAt) await this.saveMatch(match, false);
       } catch (err) {
@@ -3347,18 +3379,8 @@ export class GameServer extends DurableObject<Env> {
     // found and fixed at the source.
     const cachedTurn = this.activeColor(match);
     if (match.draft && cachedTurn !== game.board.turn) {
-      console.error(
-        "house turn desync",
-        match.id,
-        "cachedTurn=",
-        cachedTurn,
-        "replayTurn=",
-        game.board.turn,
-        "moves=",
-        match.moves.length,
-        "draftActions=",
-        JSON.stringify(match.draftActions ?? []),
-      );
+      this.houseLastDesync = `armed ${match.id} cached=${cachedTurn} replay=${game.board.turn} moves=${match.moves.length} actions=${JSON.stringify(match.draftActions ?? [])}`;
+      console.error("house turn desync", this.houseLastDesync);
       match.clocks = this.currentClocks(match, now);
       if (match.runningSince !== null) match.runningSince = now;
       match.turnColor = game.board.turn;
