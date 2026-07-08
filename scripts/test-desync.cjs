@@ -406,6 +406,77 @@ function assertConverged(env, label) {
   assertConverged(env, "inventory-drop-2");
 }
 
+// --- Scenario 6: mythic mass removal (Oblivion) -----------------------------
+// A tier-10 activated card wipes every enemy piece except the king in one use.
+// Masked at pick (activated), revealed on use; both sides then run the same
+// activateBuff, so the mass removal must land byte-identically, the lone king
+// must survive, and the opponent must keep at least one legal move.
+{
+  const env = newDuel(606);
+  opPick(env, "w", "oblivion", 10); // masked at pick (activated)
+  opMove(env, "e2e4");
+  opMove(env, "e7e5");
+  check(opUse(env, "w", 0, []), "oblivion: activation failed");
+  const blackLeft = [];
+  for (let i = 0; i < 64; i++) {
+    const p = env.server.board.pieces[i];
+    if (p && p.color === "b") blackLeft.push(p.type);
+  }
+  check(
+    blackLeft.length === 1 && blackLeft[0] === "k",
+    `oblivion: server left ${blackLeft.join(",") || "nothing"} (expected a lone king)`,
+  );
+  check(!!env.server.board.pieces[sq("e8")], "oblivion: the black king must survive");
+  check(env.server.buffs.historyDiverged === true, "oblivion: historyDiverged not set");
+  check(env.replica.buffs.historyDiverged === true, "oblivion: replica historyDiverged not set");
+  check(legalMoves(env.server).length > 0, "oblivion: opponent stranded with zero legal moves");
+  assertConverged(env, "oblivion");
+}
+
+// --- Scenario 7: rng-in-hook removal over time (The Culling) -----------------
+// An apex card that, once armed, captures a random enemy piece (never the king)
+// at the start of each of the holder's next turns. The removal runs inside
+// onMovePlayed on the seeded per-color rng: the identity is revealed on use, so
+// BOTH replicas must fire the hook and draw the SAME victim from their rng, or
+// the boards (and capture pools) desync. This is the rng-in-hook path the live
+// report implicated, exercised end to end across two ticks.
+{
+  const env = newDuel(707);
+  const countBlack = (g) => {
+    let n = 0;
+    for (let i = 0; i < 64; i++) {
+      const p = g.board.pieces[i];
+      if (p && p.color === "b") n++;
+    }
+    return n;
+  };
+  opPick(env, "w", "culling", 9); // masked at pick (activated)
+  check(opUse(env, "w", 0, []), "culling: activation failed (arming)");
+  const before = countBlack(env.server);
+  opMove(env, "e7e5"); // black moves; white's culling hook removes a black piece
+  check(
+    countBlack(env.server) === before - 1,
+    "culling: server did not remove a black piece on the first tick",
+  );
+  check(
+    countBlack(env.replica) === before - 1,
+    "culling: replica did not remove the same black piece (rng-in-hook desync)",
+  );
+  check(!!env.server.board.pieces[sq("e8")], "culling: the black king must never be the victim");
+  assertConverged(env, "culling-1");
+  opMove(env, "a2a3"); // white reply: no hook (it only fires on black moves)
+  opMove(env, "d7d5"); // black moves again; the second charge fires
+  check(
+    countBlack(env.server) === before - 2,
+    "culling: server did not remove a second black piece on the next tick",
+  );
+  check(
+    countBlack(env.replica) === before - 2,
+    "culling: replica second removal diverged",
+  );
+  assertConverged(env, "culling-2");
+}
+
 // --- Drop legality rails: pawns never on rank 1/8, kings never droppable -----
 {
   const g = newGame(UNRESTRICTED_NERF, UNRESTRICTED_NERF, 606);
@@ -783,5 +854,5 @@ if (errors.length) {
 }
 console.log(
   `OK: desync harness passed (fingerprint core, sample hash ${fpA.hash}, ${rules.length} rule ids; ` +
-    `5 server-vs-replica scenarios (incl. crazyhouse inventory drop) + legacy divergence control + drop legality rails + no-op guard + 4 turn/ply guards + bot-alarm robustness + 2 wall-crossing guards)`,
+    `7 server-vs-replica scenarios (incl. crazyhouse inventory drop, Oblivion mass removal, The Culling rng-in-hook removal) + legacy divergence control + drop legality rails + no-op guard + 4 turn/ply guards + bot-alarm robustness + 2 wall-crossing guards)`,
 );

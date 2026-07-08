@@ -11,7 +11,7 @@ import { BoardState, Color, FILE, Move, PieceType, RANK, SQ, Square, inBoard } f
 // Circular by design: tier9.ts imports the movement/effect factories below, and
 // this only reads TIER9 at call time (grantRandomTier9), never at module eval,
 // so the cycle resolves cleanly (tier9's array is built from hoisted functions).
-import { TIER9 } from "./tier9";
+import { TIER9, TIER10 } from "./tier9";
 
 // ---------------------------------------------------------------------------
 // Move-generation helpers for buff-granted movement. All of these produce
@@ -396,16 +396,22 @@ export function grantInventory(api: BuffApi, type: PieceType, n = 1) {
   pocket[type] = (pocket[type] ?? 0) + n;
 }
 
-/** Grant the holder a random tier-9 apex card as an unspent, usable card added
- * to their hand (modeled on how acquireBuff seats a card: fresh instance, run
- * init, push). The pick runs on the seeded api.rng only, so it advances the
- * same RNG state on every replica and replays identically (desync-safe). The
- * apex pool is excluded from every normal draft, so this grant (and banking at
- * the top tier) is the only way one reaches a hand. */
+/** Grant the holder a random apex card as an unspent, usable card added to
+ * their hand (modeled on how acquireBuff seats a card: fresh instance, run
+ * init, push). Rolls a tier-9 apex card most of the time and, roughly one time
+ * in ten, a tier-10 mythic card instead. Every draw runs on the seeded api.rng
+ * only (first the 10% gate, then the pick), so it advances the same RNG state
+ * on every replica and replays identically (desync-safe). Both apex pools are
+ * excluded from every normal draft, so this grant (and banking at the top tier)
+ * is the only way one reaches a hand. */
 export function grantRandomTier9(api: BuffApi) {
-  if (TIER9.length === 0) return;
-  const def = TIER9[api.rng.int(TIER9.length)];
-  const inst: BuffInstance = { id: def.id, tier: 9, state: {} };
+  // The 10% gate is drawn first and unconditionally, so the RNG stream advances
+  // the same way on every replica regardless of which pool is chosen.
+  const mythic = api.rng.next() < 0.1 && TIER10.length > 0;
+  const pool = mythic ? TIER10 : TIER9;
+  if (pool.length === 0) return;
+  const def = pool[api.rng.int(pool.length)];
+  const inst: BuffInstance = { id: def.id, tier: def.tier, state: {} };
   def.init?.(inst, api);
   api.mine.buffs.push(inst);
 }
