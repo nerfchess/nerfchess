@@ -3287,7 +3287,14 @@ export class GameServer extends DurableObject<Env> {
           replayVersion: REPLAY_VERSION,
         }),
       });
-      if (!res.ok) return null; // 409 version mismatch / 5xx -> local fallback
+      if (res.status === 409) {
+        // Version drift: this worker was deployed without an engine redeploy.
+        // Ask the box to rebuild itself from origin/master; keep falling back
+        // to local compute until it catches up.
+        this.pingEngineUpdate();
+        return null;
+      }
+      if (!res.ok) return null; // 401 / 5xx -> local fallback
       const data = (await res.json()) as { move?: Move | null };
       return data.move ?? null;
     } catch {
@@ -3295,6 +3302,30 @@ export class GameServer extends DurableObject<Env> {
     } finally {
       clearTimeout(timer);
     }
+  }
+
+  // Heal engine version drift: POST the box's self-updater (see
+  // engine-service/deploy/updater.mjs), which rebuilds from origin/master only
+  // when master's REPLAY_VERSION matches ours, so a worker deployed from
+  // unpushed code degrades to local fallback, never a desync. Fire-and-forget
+  // and throttled here; the updater has its own cooldown + version guard, so
+  // duplicate pings (or several DOs pinging at once) are harmless.
+  private lastEngineUpdatePingAt = 0;
+  private pingEngineUpdate() {
+    if (!this.env.HOUSE_ENGINE_URL) return;
+    const now = Date.now();
+    if (now - this.lastEngineUpdatePingAt < 5 * 60_000) return;
+    this.lastEngineUpdatePingAt = now;
+    void fetch(`${this.env.HOUSE_ENGINE_URL}/update`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        ...(this.env.HOUSE_ENGINE_TOKEN
+          ? { authorization: `Bearer ${this.env.HOUSE_ENGINE_TOKEN}` }
+          : {}),
+      },
+      body: JSON.stringify({ replayVersion: REPLAY_VERSION }),
+    }).catch(() => {});
   }
 
   private async playHouseAction(match: StoredMatch, now = Date.now()) {

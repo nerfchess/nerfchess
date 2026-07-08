@@ -1,0 +1,16 @@
+[Unit]
+Description=nerfchess engine self-updater (webhook target)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+ExecStart=/usr/bin/node /opt/nerfchess-engine/updater.mjs
+EnvironmentFile=/etc/nerfchess-engine-updater.env
+Restart=always
+RestartSec=2
+NoNewPrivileges=false
+
+[Install]
+WantedBy=multi-user.target
