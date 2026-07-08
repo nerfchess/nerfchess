@@ -47,6 +47,13 @@ interface Props {
   // Draft games: the cards my opponent drafted, revealed once the game is over
   // (the same "the secret finally pays off" beat as the nerf reveal).
   opponentBuffs?: BuffInstance[];
+  // Spectator view: the watcher holds no seat, so present a neutral result
+  // (winner named by side), reveal both rules and both sides' cards read-only,
+  // and drop the seat-only bits (Victory/Defeat wording, rating, rematch, and
+  // rule/buff voting). Otherwise it's the exact same panel the players see.
+  // In this mode `myColor` is the reference side (pass "w"): `myNerf`/`myBuffs`
+  // are white's, `opponentNerf`/`opponentBuffs` are black's.
+  spectator?: boolean;
 }
 
 // The shared compact thumbs pair. One vote per item; re-clicking replaces it
@@ -259,6 +266,7 @@ export function GameOver({
   gameId,
   myBuffs,
   opponentBuffs,
+  spectator = false,
 }: Props) {
   const [dismissed, setDismissed] = useState(false);
   const dismiss = useCallback(() => {
@@ -272,18 +280,41 @@ export function GameOver({
   const reduceMotion = useReducedMotion();
   const draw = result.winner === "draw";
   const won = result.winner === myColor;
-  const outcome = draw ? "Draw" : won ? "Victory" : "Defeat";
+  const oppColor: Color = myColor === "w" ? "b" : "w";
+  const names = playerNames ?? { w: "White", b: "Black" };
+  const sideLabel = (c: Color) => (c === "w" ? "White" : "Black");
+  const winnerColor = draw ? null : (result.winner as Color);
+  // A spectator has no seat, so the headline is neutral: name the winning side
+  // rather than reading it as the viewer's Victory/Defeat. Players keep the
+  // seat-relative wording.
+  const outcome = spectator
+    ? draw
+      ? "Draw"
+      : `${sideLabel(winnerColor as Color)} wins`
+    : draw
+    ? "Draw"
+    : won
+    ? "Victory"
+    : "Defeat";
   // Draws carry their cause in the reason ("draw by agreement", "draw by
   // threefold repetition", ...); surface it instead of assuming agreement.
-  const headline = draw
+  const headline = spectator
+    ? draw
+      ? `${names.w} (White) and ${names.b} (Black) share the point`
+      : `${names[winnerColor as Color]} (${sideLabel(winnerColor as Color)}) defeated ${
+          names[winnerColor === "w" ? "b" : "w"]
+        } (${sideLabel(winnerColor === "w" ? "b" : "w")})`
+    : draw
     ? result.reason.charAt(0).toUpperCase() + result.reason.slice(1)
     : result.winner === "w"
     ? "White wins"
     : "Black wins";
-  const tone = draw ? "text-bruise-glow" : won ? "text-gold-leaf" : "text-oxblood-glow";
+  // The winner's side always reads celebratory (gold); the losing tone only
+  // applies to a seated player who actually lost.
+  const tone = draw ? "text-bruise-glow" : spectator || won ? "text-gold-leaf" : "text-oxblood-glow";
   const accent = draw
     ? "border-bruise-glow/40 bg-bruise/10 text-bruise-glow"
-    : won
+    : spectator || won
     ? "border-gold/50 bg-gold/10 text-gold-leaf"
     : "border-oxblood-glow/50 bg-oxblood/15 text-oxblood-glow";
   const { nerfName, cause } = useMemo(() => splitReason(result.reason), [result.reason]);
@@ -313,6 +344,16 @@ export function GameOver({
       return true;
     });
   }, [opponentBuffs]);
+  // Spectators see both sides' cards read-only, so the reference side needs the
+  // same dedupe as the opponent's (players get the votable list instead).
+  const revealedMyBuffs = useMemo(() => {
+    const seen = new Set<string>();
+    return (myBuffs ?? []).filter((b) => {
+      if (seen.has(b.id) || !BUFF_BY_ID[b.id]) return false;
+      seen.add(b.id);
+      return true;
+    });
+  }, [myBuffs]);
 
   // Share copies a short text summary of the game (result plus both rules) to
   // the clipboard. It works client side today; a hosted replay link can be
@@ -424,7 +465,7 @@ export function GameOver({
               "pointer-events-none absolute inset-x-0 top-0 h-px " +
               (draw
                 ? "bg-bruise-glow/60"
-                : won
+                : spectator || won
                 ? // The win beat is the site's signature: the Nerf→Buff seam
                   // sweeps once across the top edge, warm into cool.
                   "bg-gradient-to-r from-mode-nerf via-parchment-100/60 to-mode-buff"
@@ -449,7 +490,13 @@ export function GameOver({
             </span>
           )}
           <p className="max-w-sm text-balance text-base leading-relaxed text-parchment">
-            {nerfName ? `Lost: ${cause}.` : cause}
+            {spectator
+              ? nerfName
+                ? `${cause.charAt(0).toUpperCase() + cause.slice(1)}.`
+                : cause.charAt(0).toUpperCase() + cause.slice(1)
+              : nerfName
+              ? `Lost: ${cause}.`
+              : cause}
           </p>
         </div>
 
@@ -471,13 +518,19 @@ export function GameOver({
         {(myNerf || opponentNerf) && (
           <div className="mt-5 grid gap-2 sm:grid-cols-2">
             {myNerf && (
-              <RuleReveal label="Your rule" nerf={myNerf}>
-                <RuleFeedback nerfId={myNerf.id} gameId={gameId} />
+              <RuleReveal
+                label={spectator ? `${names[myColor]} (${sideLabel(myColor)})` : "Your rule"}
+                nerf={myNerf}
+              >
+                {!spectator && <RuleFeedback nerfId={myNerf.id} gameId={gameId} />}
               </RuleReveal>
             )}
             {opponentNerf &&
-              (oppRevealed ? (
-                <RuleReveal label="Opponent rule" nerf={opponentNerf} />
+              (spectator || oppRevealed ? (
+                <RuleReveal
+                  label={spectator ? `${names[oppColor]} (${sideLabel(oppColor)})` : "Opponent rule"}
+                  nerf={opponentNerf}
+                />
               ) : (
                 <button
                   type="button"
@@ -498,7 +551,37 @@ export function GameOver({
           </div>
         )}
 
-        {revealedOppBuffs.length > 0 && (
+        {/* Spectators: both sides' cards, read-only and labeled by player. */}
+        {spectator && (revealedMyBuffs.length > 0 || revealedOppBuffs.length > 0) && (
+          <div className="mt-5 grid gap-2 sm:grid-cols-2">
+            {revealedMyBuffs.length > 0 && (
+              <div className="border border-white/10 bg-white/[0.02] p-3 text-left">
+                <span className="smallcaps text-[9px] text-parchment-400">
+                  {names[myColor]} ({sideLabel(myColor)})
+                </span>
+                <ul className="mt-1 max-h-40 divide-y divide-white/5 overflow-y-auto">
+                  {revealedMyBuffs.map((buff, i) => (
+                    <BuffReveal key={`${buff.id}-${i}`} buff={buff} />
+                  ))}
+                </ul>
+              </div>
+            )}
+            {revealedOppBuffs.length > 0 && (
+              <div className="border border-white/10 bg-white/[0.02] p-3 text-left">
+                <span className="smallcaps text-[9px] text-parchment-400">
+                  {names[oppColor]} ({sideLabel(oppColor)})
+                </span>
+                <ul className="mt-1 max-h-40 divide-y divide-white/5 overflow-y-auto">
+                  {revealedOppBuffs.map((buff, i) => (
+                    <BuffReveal key={`${buff.id}-${i}`} buff={buff} />
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
+
+        {!spectator && revealedOppBuffs.length > 0 && (
           <div className="mt-5 border border-white/10 bg-white/[0.02] p-3 text-left">
             <span className="smallcaps text-[9px] text-parchment-400">Opponent&apos;s cards</span>
             <ul className="mt-1 max-h-40 divide-y divide-white/5 overflow-y-auto">
@@ -509,7 +592,7 @@ export function GameOver({
           </div>
         )}
 
-        {ratableBuffs.length > 0 && (
+        {!spectator && ratableBuffs.length > 0 && (
           <div className="mt-2 border border-white/10 bg-white/[0.02] p-3 text-left">
             <div className="flex items-baseline justify-between gap-2">
               <span className="smallcaps text-[9px] text-parchment-400">Was it balanced?</span>
@@ -534,6 +617,48 @@ export function GameOver({
           </p>
         )}
 
+        {spectator ? (
+          // No seat, so no rematch or "new game": just let the watcher dismiss
+          // the panel (the board stays behind it) or copy/share the game.
+          <div className={`mt-6 grid gap-2 ${moves ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
+            <button
+              ref={primaryRef}
+              type="button"
+              onClick={dismiss}
+              className="rounded-sm px-5 py-2.5 btn-leaf font-display"
+            >
+              Close
+            </button>
+            <button
+              type="button"
+              onClick={handleShare}
+              className="rounded-sm px-5 py-2.5 btn-ghost font-display text-sm inline-flex items-center justify-center gap-2"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <circle cx="18" cy="5" r="3" />
+                <circle cx="6" cy="12" r="3" />
+                <circle cx="18" cy="19" r="3" />
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+              </svg>
+              {shared ? "Copied" : "Share game"}
+            </button>
+            {moves && (
+              <button
+                type="button"
+                onClick={handleCopyPGN}
+                className="rounded-sm px-5 py-2.5 btn-ghost font-display text-sm inline-flex items-center justify-center gap-2"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                </svg>
+                {pgnCopied ? "Copied" : "Copy PGN"}
+              </button>
+            )}
+          </div>
+        ) : (
+        <>
         <div className="mt-6 grid gap-2 sm:grid-cols-2">
           {rematchStatus === "offered" && opponentLeft && onCancelRematch ? (
             // The opponent is gone, so "waiting" is a dead end: offer the way
@@ -614,6 +739,8 @@ export function GameOver({
             Replay
           </button>
         </div>
+        </>
+        )}
       </motion.div>
     </motion.div>
   );
