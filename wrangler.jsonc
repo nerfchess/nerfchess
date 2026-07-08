@@ -44,7 +44,11 @@
     // spawning its own house-vs-house filler so the arena owns bot-vs-bot;
     // bot-vs-human pickup + house seeks stay on the DO. Flip back off and the
     // DO resumes filler next tick — the arena being down never empties the lobby.
-    "ARENA_OWNS_FILLER": "true"
+    // Kept "false": the arena service is not producing games, so with this "true"
+    // no bot-vs-bot filler was spawned anywhere and none ever showed in the
+    // lobby/TV. Letting the DO own filler is the always-works path; flip back to
+    // "true" only once the arena is live and confirmed POSTing to /arena/games.
+    "ARENA_OWNS_FILLER": "false"
   },
   "d1_databases": [
     {
