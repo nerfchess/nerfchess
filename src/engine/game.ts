@@ -1,4 +1,4 @@
-import { cloneBoard, countRepetitions, findKing, generateMoves, initialBoard, isInCheck, kingCaptured, makeMove } from "./board";
+import { attackedBy, cloneBoard, countRepetitions, findKing, generateMoves, initialBoard, isInCheck, kingCaptured, makeMove } from "./board";
 import {
   ActiveEffect,
   aiCanUse,
@@ -547,9 +547,31 @@ function wallLine(squares: Square[]): { axis: "file" | "rank"; line: number } | 
 export function legalMoves(game: NerfGame): Move[] {
   if (game.result) return [];
   let all = generateMoves(game.board);
-  // Chess Diff sub-game: a plain game of chess. No nerf filters, no buff
-  // augments, no zone effects (stashed empty anyway), no pocket drops.
-  if (game.buffs?.diff) return all;
+  // Chess Diff sub-game: a plain game of chess under STANDARD rules. No nerf
+  // filters, no buff augments, no zone effects (stashed empty anyway), and no
+  // pocket drops - but, unlike the rest of the site (decided by king capture),
+  // you may not leave your own king in check. Filter the pseudo-legal moves
+  // down to the ones that keep the mover's king safe, so the diff is won by
+  // checkmate and drawn by stalemate (see resolveNoMoves), never by a king
+  // walking into capture.
+  if (game.buffs?.diff) {
+    const mover = game.board.turn;
+    const opp: Color = mover === "w" ? "b" : "w";
+    // Opponent's attack map on the pre-move board, reused for the castling test.
+    const attacked = attackedBy(game.board, opp);
+    return all.filter((m) => {
+      if (m.castle) {
+        // Standard castling: the king may not castle out of, through, or into
+        // check, so all three king-path squares (from, transit, destination)
+        // must be unattacked. generateMoves deliberately allows nerf-chess
+        // castling through check, so the diff has to re-impose the real rule.
+        const transit = m.castle === "k" ? SQ(5, RANK(m.from)) : SQ(3, RANK(m.from));
+        return !attacked.has(m.from) && !attacked.has(transit) && !attacked.has(m.to);
+      }
+      // Any other move is legal iff it does not leave the mover's king in check.
+      return !isInCheck(makeMove(game.board, m), mover);
+    });
+  }
   const me = game.board.turn;
   const opp: Color = me === "w" ? "b" : "w";
   const slot = me === "w" ? game.white : game.black;
@@ -773,6 +795,10 @@ function endChessDiff(game: NerfGame, winner: Color | "draw") {
   // The move record keeps counting through the diff, so the restored board
   // carries the live (pre-diff + diff) history, not the stale stashed one.
   const fullHistory = game.board.history;
+  // How many plies the sub-game added: the live history minus the pre-diff
+  // snapshot stashed on the saved board. Read before the saved board is
+  // re-adopted below (after which savedBoard.history IS fullHistory).
+  const diffPlies = fullHistory.length - diff.savedBoard.history.length;
   game.board = diff.savedBoard;
   game.board.history = fullHistory;
   bs.effects = diff.savedEffects;
@@ -780,6 +806,15 @@ function endChessDiff(game: NerfGame, winner: Color | "draw") {
   bs.skips = diff.savedSkips;
   bs.chainKingGuard = diff.savedChainKingGuard;
   bs.diff = undefined;
+  // The buff-draft cadence is frozen for the whole diff (no drafts run during
+  // it), but the diff's own plies still inflate the shared history. Shift the
+  // draft threshold forward by exactly those plies so the resumed game keeps
+  // its pre-diff distance to the next draft, instead of firing a backlog of
+  // offers, one per move, until the frozen counter catches up to the now
+  // longer history.
+  if (bs.nextDraftAtPly != null && diffPlies > 0) {
+    bs.nextDraftAtPly += diffPlies;
+  }
   // The board was rewritten twice (into and out of the diff): history can no
   // longer reproduce it, so replay-based checks stay off.
   bs.historyDiverged = true;
@@ -1020,8 +1055,10 @@ export function playMove(game: NerfGame, move: Move): NerfGame {
     // trigger runs on total plies (a full round is two plies), so neither
     // side ever runs a draft ahead of the other. White rolls first for a
     // stable RNG stream; draft-block effects eat offers individually.
-    // Suspended entirely while a Chess Diff runs: no drafts during the diff
-    // (the trigger stays put; the restored game's shorter history re-arms it).
+    // Suspended entirely while a Chess Diff runs: no drafts during the diff.
+    // The trigger stays put while it runs; endChessDiff shifts it past the
+    // diff's plies on resume so the longer restored history does not fire a
+    // backlog of offers.
     if (bs.diff) {
       applyTurnStart(game);
       resolveNoMoves(game);
@@ -1064,11 +1101,15 @@ function resolveNoMoves(game: NerfGame) {
   if (game.result) return;
   if (legalMoves(game).length > 0) return;
   const bs = game.buffs;
-  // Chess Diff sub-game: no moves loses the DIFF (the same king-capture rule
-  // the whole site plays under), never the match. The winner takes the mythic
-  // and the paused game resumes.
+  // Chess Diff sub-game: STANDARD chess endings, never the match. With no legal
+  // move the mover is either checkmated (in check: the opponent wins the diff
+  // and its mythic) or stalemated (not in check: the diff is a draw and nobody
+  // is rewarded). Legal moves are check-filtered (see legalMoves), so "no moves"
+  // here is a true mate or stalemate, not a king simply left hanging.
   if (bs?.diff) {
-    endChessDiff(game, game.board.turn === "w" ? "b" : "w");
+    const mover = game.board.turn;
+    const winner: Color = mover === "w" ? "b" : "w";
+    endChessDiff(game, isInCheck(game.board, mover) ? winner : "draw");
     return;
   }
   if (bs && generateMoves(game.board).length > 0) {
