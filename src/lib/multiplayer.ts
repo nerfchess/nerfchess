@@ -117,6 +117,10 @@ export type MPStart = {
   // Draft ruleset games (always casual): the public action record for exact
   // replay plus this seat's filtered view of the live draft state.
   draft?: boolean;
+  // The real draft RNG seed, so the client's reconnect replay rolls the same
+  // stream the server did (random card effects reproduce identically). Absent
+  // on older servers, where the replica falls back to a placeholder seed.
+  draftSeed?: number;
   // The game's section: "nerf" or "buff". Absent = legacy merged rules.
   mode?: DraftMode;
   picksVisible?: boolean;

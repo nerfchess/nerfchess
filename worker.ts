@@ -477,7 +477,7 @@ type HouseSeekEntry = {
 // (deserializing every finished game's move history), which on a bloated table
 // blew the DO CPU limit before it could cache or GC anything: the crash loop.
 const liveIdsKey = "live:ids";
-const buildVersion = "house-bot-fixes-1";
+const buildVersion = "reconnect-rng-seed-1";
 // The single account allowed to use the owner "fun with friends" tools: the
 // -15s opponent-clock button and the god panel card grant. SERVER-verified on
 // every gated message (never trust the client). Compared case-insensitively so
@@ -1512,6 +1512,14 @@ export class GameServer extends DurableObject<Env> {
       draftExtras = {
         draft: true,
         ...(match.mode ? { mode: match.mode } : {}),
+        // The real draft RNG seed, so the client's own reconnect replay rolls
+        // the SAME stream the server did. Card effects that consume the draft
+        // RNG (random removals / spectacles) otherwise land differently on a
+        // rebuild than on the authoritative server, and the reconstructed board
+        // diverges (removed pieces reappear, then the opponent's real moves get
+        // rejected as out of sync). Offers are still server-provided; matching
+        // the seed only keeps effect randomness identical.
+        draftSeed: match.draftSeed ?? match.setup.seed,
         picksVisible: !!match.picksVisible,
         dtActions: this.publicDraftActions(match, color),
         ...(game?.buffs ? { dtState: this.draftStateFor(game, match, color) } : {}),

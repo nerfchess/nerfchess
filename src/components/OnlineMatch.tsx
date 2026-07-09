@@ -158,10 +158,14 @@ function buildGameFromStart(start: MPStart): NerfGame {
       : IMPLEMENTED_BY_ID[start.nerfId] ?? pickRandomNerf();
   let next = newGameAsColor(myNerf, start.color, start.nerfSeed);
   if (start.draft) {
-    // Placeholder seed: replica offer rolls are discarded and the server's
-    // dtOffer / dtState frames carry the real cards. The mode still matters
-    // locally: it sets the draft cadence the dock displays.
-    enableDraftMode(next, 1, { mode: start.mode });
+    // The REAL draft seed (older servers omit it: fall back to 1). Offer rolls
+    // are still discarded (the server's dtOffer / dtState frames carry the real
+    // cards), but a card whose EFFECT consumes the draft RNG (a random removal
+    // or spectacle) must roll the same stream the server did, or the rebuilt
+    // board diverges (removed pieces reappear) and the opponent's real moves
+    // then get rejected as out of sync. The mode sets the draft cadence the
+    // dock displays.
+    enableDraftMode(next, start.draftSeed ?? 1, { mode: start.mode });
     next = replayDraftGame(next, start.moves ?? [], start.dtActions ?? []);
     if (next.buffs && start.dtState) {
       mergeDraftState(next.buffs, start.dtState, start.color);
