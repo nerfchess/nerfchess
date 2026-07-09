@@ -10,16 +10,16 @@ export function LogoMark({ size = 34, className = "" }: { size?: number; classNa
 export function Logo({
   href = "/",
   className = "",
-  size = 34,
+  size = 44,
 }: {
   href?: string;
   className?: string;
   size?: number;
 }) {
   return (
-    <Link href={href} className={`group inline-flex items-center gap-2.5 ${className}`}>
+    <Link href={href} className={`group inline-flex items-center gap-3 ${className}`}>
       <LogoMark size={size} className="shrink-0 transition-transform duration-200 group-hover:-rotate-6" />
-      <span className="hidden sm:inline font-display text-xl sm:text-2xl tracking-tight font-bold leading-none">
+      <span className="hidden sm:inline font-display text-2xl sm:text-3xl tracking-tight font-bold leading-none">
         nerf<span className="text-gold-leaf">chess</span>
       </span>
     </Link>
