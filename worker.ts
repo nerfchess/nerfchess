@@ -369,7 +369,13 @@ const abandonmentClaimMs = 30 * 1000;
 // completely when no human socket is connected, at most one house-vs-house
 // action runs per alarm tick, and games above the caps simply do not start.
 const houseSeeksKey = "hp:seeks";
-const houseSeededKey = "hp:seeded:v1";
+// v2: the v1 seed created an EARLIER roster; the live roster was later replaced
+// and expanded to 60, so the current personas never got a users/user_ratings
+// row - their profiles 404'd and beating them moved no rating (recordFinishedGame
+// needs BOTH seats' rows). v2 re-runs ensureHouseUsers over the full current
+// roster on the next cold start. Bump the suffix again if the roster identities
+// change. (Old orphaned bot accounts stay on the leaderboard; harmless.)
+const houseSeededKey = "hp:seeded:v2";
 // One-time-per-revision sync of every house account's rating to the current
 // houseSeedRating (see syncHouseRatings). Bump the suffix whenever the roster's
 // ratings change so existing accounts (seeded with INSERT OR IGNORE at the old
@@ -3778,7 +3784,7 @@ export class GameServer extends DurableObject<Env> {
         if (id) busy.add(id);
       }
     }
-    const persona = pickHouseBotByDifficulty(difficulty, busy, randomInt);
+    const persona = pickHouseBotByDifficulty(difficulty, busy, randomInt, activeHouseRoster(await this.houseCount()));
     if (!persona) return error(ws, "no_bot", "Every bot is busy right now. Try again shortly.");
     let rating = 1500;
     let rd = 350;
@@ -5562,7 +5568,7 @@ export class GameServer extends DurableObject<Env> {
       // always discoverable. The lobby still reads as busy because real
       // house-vs-house filler games run up to houseVsHouseCap (each puts two
       // personas on genuine "playing" AND lists a watchable game above).
-      const idlePersonas = HOUSE_ROSTER.filter((p) => !seen.has(p.userId));
+      const idlePersonas = activeHouseRoster(await this.houseCount()).filter((p) => !seen.has(p.userId));
       for (const persona of idlePersonas) {
         seen.set(persona.userId, {
           name: persona.name,
