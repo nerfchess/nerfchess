@@ -91,7 +91,10 @@ type Result = NerfGame["result"];
 //   4 - crazyhouse-style inventory: a new tier-3 pooled card (Supply Drop)
 //     grants a piece to a pocket that is dropped on a later turn. The new
 //     card shifts the tier-3 pool, so in-flight offers roll differently.
-const REPLAY_VERSION = 4;
+//   5 - mutual king capture is now a DRAW (checkLossConditions): a king-capture
+//     where the winner's king is also hanging replays as a draw, not a win, so
+//     an in-flight game decided pre-bump must not resume post-bump.
+const REPLAY_VERSION = 5;
 
 // Refresh a match's replay checkpoint (see StoredMatch.checkpoint) at most once
 // per this many committed events (moves + draft actions), so gameForPlay never
@@ -477,7 +480,7 @@ type HouseSeekEntry = {
 // (deserializing every finished game's move history), which on a bloated table
 // blew the DO CPU limit before it could cache or GC anything: the crash loop.
 const liveIdsKey = "live:ids";
-const buildVersion = "house-bot-fixes-1";
+const buildVersion = "mutual-king-draw-1";
 // The single account allowed to use the owner "fun with friends" tools: the
 // -15s opponent-clock button and the god panel card grant. SERVER-verified on
 // every gated message (never trust the client). Compared case-insensitively so

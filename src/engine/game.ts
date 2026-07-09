@@ -1,4 +1,4 @@
-import { cloneBoard, countRepetitions, generateMoves, initialBoard, isInCheck, kingCaptured, makeMove } from "./board";
+import { cloneBoard, countRepetitions, findKing, generateMoves, initialBoard, isInCheck, kingCaptured, makeMove } from "./board";
 import {
   ActiveEffect,
   aiCanUse,
@@ -752,7 +752,19 @@ export function checkLossConditions(game: NerfGame): GameResult | null {
   // King capture check first
   const captured = kingCaptured(game.board);
   if (captured) {
-    return { winner: captured === "w" ? "b" : "w", reason: "king captured" };
+    const winner: Color = captured === "w" ? "b" : "w";
+    // Mutual king capture is a DRAW, not an insta-loss. If the side that just
+    // lost its king could capture the winner's king in immediate reply (the
+    // winner's king is hanging too), or both kings are already gone, neither
+    // side really survived. This stops a chained or guarded capture (extra
+    // moves, chainKingGuard) from stealing a game where both kings were equally
+    // exposed: your king getting taken the move before you would have taken
+    // theirs is a draw, not a loss. isInCheck is false when the winner's king is
+    // itself missing, so the findKing check covers the both-kings-gone case.
+    if (findKing(game.board, winner) == null || isInCheck(game.board, winner)) {
+      return { winner: "draw", reason: "mutual king capture" };
+    }
+    return { winner, reason: "king captured" };
   }
   for (const color of ["w", "b"] as Color[]) {
     const slot = color === "w" ? game.white : game.black;
