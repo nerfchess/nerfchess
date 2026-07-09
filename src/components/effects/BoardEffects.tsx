@@ -5005,20 +5005,6 @@ function AeroBomb({ className }: { className?: string }) {
 
 /** The bomber-croc: a stubby crocodile fitted with little plane wings, jaws
  * open over its payload. */
-function CrocPlane() {
-  return (
-    <svg viewBox="0 0 48 26" className="h-full w-full" aria-hidden="true">
-      <path d="M2 13 L10 8.5 L10 17.5 Z" fill="#4f7a5e" stroke="#2c473a" strokeWidth="1" strokeLinejoin="round" />
-      <path d="M8 10 C16 6.6 30 6.6 40 11 C44 12.5 44 14 40 15.5 C30 19.4 16 19.4 8 16 Z" fill="#7eb59a" stroke="#2c473a" strokeWidth="1" strokeLinejoin="round" />
-      <path d="M12 15.6 C22 17.8 34 17.4 40.5 15.2 C34 16.4 22 16.4 12 15.6 Z" fill="#cfe8d8" />
-      <path d="M40 11 L47.5 9.6 L44.4 13 L47.5 15.8 L40 15.5 Z" fill="#7eb59a" stroke="#2c473a" strokeWidth="1" strokeLinejoin="round" />
-      <path d="M41 12 L42.6 13 L44.2 12 M41 14.4 L42.6 13.4 L44.2 14.4" stroke="#f4f7f2" strokeWidth="0.8" fill="none" strokeLinejoin="round" strokeLinecap="round" />
-      <path d="M22 8.5 L28 1.5 L30.5 10 Z" fill="#5f927a" stroke="#2c473a" strokeWidth="1" strokeLinejoin="round" />
-      <circle cx="38" cy="10.6" r="1" fill="#141e2b" />
-      <path d="M16 8.2 L21 7.8 M25 7.9 L30 8.4" stroke="#4f7a5e" strokeWidth="0.8" strokeLinecap="round" />
-    </svg>
-  );
-}
 
 /** Bombardiro Crocodilo: the bomber-croc banks across the board (lead), then on
  * each struck square a bomb whistles down and detonates in a burst of embers. A
@@ -5032,9 +5018,9 @@ function CrocBomberBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) 
       <BoardWideStage>
         <BoardWash color="rgba(18,24,18,0.36)" delayMs={delayMs} />
         <BoardRain delayMs={delayMs + 120} render={() => <AeroBomb className="h-full w-full" />} />
-        <span className="fx-sig-cross absolute left-[37%] top-[40%] block h-[15%] w-[26%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <span className="fx-sig-cross absolute left-[37%] top-[36%] block h-[24%] w-[24%]" style={{ animationDelay: `${delayMs}ms` }}>
           <span className="fx-sig-wingbeat block h-full w-full">
-            <CrocPlane />
+            <BrainrotFigure id="bombardiro_croc" />
           </span>
         </span>
         <span className="fx-sig-flash absolute left-[35%] top-[40%] block h-[30%] w-[30%] rounded-full" style={{ background: "rgba(255,178,84,0.45)", animationDelay: `${delayMs + 640}ms` }} />
@@ -5066,22 +5052,6 @@ function CrocBomberBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) 
 
 /** Tralalero Tralala: the shark in Nike sneakers blurs across the board (lead),
  * throwing a spray of water on the square it dashed through. */
-function SharkSneaker() {
-  return (
-    <svg viewBox="0 0 48 22" className="h-full w-full" aria-hidden="true">
-      <path d="M4 11 C11 4.5 30 3.6 42 8.6 C46 10.4 46 11.6 42 13.2 C34 16.4 13 17 4 11 Z" fill="#8aa0b4" stroke="#3f4b57" strokeWidth="1" strokeLinejoin="round" />
-      <path d="M9 12 C19 15 32 14.4 40 12 C32 13.4 19 13.6 9 12 Z" fill="#dbe7f2" />
-      <path d="M19 6 L26 0 L28.5 7 Z" fill="#6f8496" stroke="#3f4b57" strokeWidth="1" strokeLinejoin="round" />
-      <path d="M2 11 L9 6.5 L9 15.5 Z" fill="#6f8496" stroke="#3f4b57" strokeWidth="1" strokeLinejoin="round" />
-      <circle cx="37" cy="9.6" r="1" fill="#141e2b" />
-      <path d="M40 11.4 L45.4 10.6 M40 12.6 L44.6 13.2" stroke="#3f4b57" strokeWidth="0.8" strokeLinecap="round" />
-      <path d="M30 8.4 L30 13 M27 8.4 L27 13 M24 9 L24 13" stroke="#3f4b57" strokeWidth="0.7" />
-      <rect x="13" y="15" width="8" height="4" rx="1.6" fill="#f4f7f2" stroke="#e0776b" strokeWidth="0.9" />
-      <rect x="25" y="15" width="8" height="4" rx="1.6" fill="#f4f7f2" stroke="#e0776b" strokeWidth="0.9" />
-      <path d="M14 17 L19.6 16 M26 17 L31.6 16" stroke="#e0776b" strokeWidth="0.7" strokeLinecap="round" />
-    </svg>
-  );
-}
 function SharkDashBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   if (lead) {
     // BOARD-WIDE: the shark sprints the full length of the board, a speed-blur
@@ -5090,12 +5060,12 @@ function SharkDashBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
     return (
       <BoardWideStage>
         <BoardWash color="rgba(150,196,224,0.22)" delayMs={delayMs} />
-        <span className="fx-sig-cross absolute left-[36%] top-[46%] block h-[13%] w-[30%]" style={{ animationDelay: `${delayMs + 90}ms`, opacity: 0.5 }}>
-          <SharkSneaker />
+        <span className="fx-sig-cross absolute left-[36%] top-[44%] block h-[18%] w-[18%]" style={{ animationDelay: `${delayMs + 90}ms`, opacity: 0.45 }}>
+          <BrainrotFigure id="tralalero_dash" />
         </span>
-        <span className="fx-sig-cross absolute left-[36%] top-[42%] block h-[15%] w-[32%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <span className="fx-sig-cross absolute left-[35%] top-[38%] block h-[22%] w-[22%]" style={{ animationDelay: `${delayMs}ms` }}>
           <span className="fx-sig-wiggle block h-full w-full">
-            <SharkSneaker />
+            <BrainrotFigure id="tralalero_dash" />
           </span>
         </span>
         <BoardRain
@@ -5121,16 +5091,6 @@ function SharkDashBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 
 /** Bombombini Gusini: the bomber-goose waddles in (lead) and lobs a stun grenade
  * that pops with a HONK ring of stars. */
-function HonkGoose() {
-  return (
-    <svg viewBox="0 0 34 30" className="h-full w-full" aria-hidden="true">
-      <path d="M8 28 C4 22 6 14 12 13 L12 7 C12 3 18 3 18 7 L18 13 C24 15 26 22 22 28 Z" fill="#f4f7f2" stroke="#4a5560" strokeWidth="1" strokeLinejoin="round" />
-      <path d="M18 8 L26 9 L18 11 Z" fill="#e8912d" stroke="#8a5311" strokeWidth="0.8" strokeLinejoin="round" />
-      <circle cx="15" cy="8" r="1" fill="#141e2b" />
-      <path d="M11 6.6 a6 6 0 0 1 8 0 L18 4.4 H12 Z" fill="#7eb59a" stroke="#2c473a" strokeWidth="0.8" strokeLinejoin="round" />
-    </svg>
-  );
-}
 function GooseBombBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   if (lead) {
     // BOARD-WIDE: a giant HONK. The goose thumps down centre-board and a
@@ -5139,9 +5099,9 @@ function GooseBombBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
     return (
       <BoardWideStage>
         <BoardWash color="rgba(230,191,106,0.2)" delayMs={delayMs + 220} />
-        <span className="fx-sig-grow absolute left-[38%] top-[34%] block h-[28%] w-[24%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <span className="fx-sig-grow absolute left-[38%] top-[32%] block h-[28%] w-[24%]" style={{ animationDelay: `${delayMs}ms` }}>
           <span className="fx-sig-hop block h-full w-full">
-            <HonkGoose />
+            <BrainrotFigure id="bombombini_gusini" />
           </span>
         </span>
         <BoardBoom delayMs={delayMs + 240} color="rgba(230,191,106,0.9)" thickness={4} />
@@ -5175,16 +5135,6 @@ function GooseBombBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 
 /** Lirili Larila: the clock-elephant plants its clock (lead); on the struck
  * squares the hands sweep backward and a Z of stopped time drifts off. */
-function ClockElephant() {
-  return (
-    <svg viewBox="0 0 34 30" className="h-full w-full" aria-hidden="true">
-      <path d="M6 28 C2 22 3 12 10 10 C11 6 20 6 22 10 C29 12 30 22 26 28 L22 28 L21 20 L20 28 L14 28 L13 20 L12 28 Z" fill="#9aa6b0" stroke="#4a5560" strokeWidth="1" strokeLinejoin="round" />
-      <path d="M22 12 C27 12 28 18 24 22 C22 24 20 22 20 19 C20 15 21 12 22 12 Z" fill="#9aa6b0" stroke="#4a5560" strokeWidth="1" strokeLinejoin="round" />
-      <circle cx="14" cy="16" r="6.4" fill="#f4f7f2" stroke="#8a6414" strokeWidth="1.2" />
-      <circle cx="8" cy="9" r="1" fill="#141e2b" />
-    </svg>
-  );
-}
 function ClockElephantBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   if (lead) {
     // BOARD-WIDE: time stops. The whole board greys out, a giant ghost clock
@@ -5202,9 +5152,9 @@ function ClockElephantBurst({ lead, delayMs }: { lead: boolean; delayMs: number 
             </g>
           </svg>
         </span>
-        <span className="fx-sig-grow absolute left-[40%] top-[42%] block h-[24%] w-[22%]" style={{ animationDelay: `${delayMs + 120}ms` }}>
+        <span className="fx-sig-grow absolute left-[39%] top-[40%] block h-[26%] w-[24%]" style={{ animationDelay: `${delayMs + 120}ms` }}>
           <span className="fx-sig-wiggle block h-full w-full">
-            <ClockElephant />
+            <BrainrotFigure id="lirili_larila" />
           </span>
         </span>
         {[{ l: "26%", t: "30%", d: 220 }, { l: "66%", t: "36%", d: 360 }, { l: "46%", t: "22%", d: 480 }].map((z, i) => (
@@ -5251,6 +5201,9 @@ function ColdSnapBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
     return (
       <BoardWideStage>
         <BoardWash color="rgba(150,200,235,0.34)" delayMs={delayMs} />
+        <span className="fx-sig-grow absolute left-[39%] top-[36%] block h-[26%] w-[22%]" style={{ animationDelay: `${delayMs + 80}ms` }}>
+          <BrainrotFigure id="brr_brr_patapim" />
+        </span>
         <span className="fx-sig-frost absolute inset-x-[24%] top-[26%] block h-[8%] rounded-[1px]" style={{ background: "rgba(198,234,255,0.6)", animationDelay: `${delayMs}ms` }} />
         <span className="fx-sig-frost absolute inset-x-[24%] top-[64%] block h-[8%] rounded-[1px]" style={{ background: "rgba(198,234,255,0.5)", animationDelay: `${delayMs + 160}ms` }} />
         <BoardRain
@@ -5284,18 +5237,6 @@ function ColdSnapBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 
 /** Chimpanzini Bananini: the banana-monkey thumps in (lead) and banana peels
  * spin off the empowered knight. */
-function ChestApe() {
-  return (
-    <svg viewBox="0 0 30 28" className="h-full w-full" aria-hidden="true">
-      <path d="M4 26 C1 18 4 10 9 9 C10 4 20 4 21 9 C26 10 29 18 26 26 Z" fill="#6b4a34" stroke="#33210f" strokeWidth="1" strokeLinejoin="round" />
-      <path d="M9 24 C8 18 10 15 15 15 C20 15 22 18 21 24 Z" fill="#caa580" />
-      <circle cx="15" cy="9" r="6" fill="#6b4a34" stroke="#33210f" strokeWidth="1" />
-      <ellipse cx="15" cy="10" rx="4" ry="3.4" fill="#caa580" />
-      <circle cx="13" cy="9" r="0.9" fill="#141e2b" />
-      <circle cx="17" cy="9" r="0.9" fill="#141e2b" />
-    </svg>
-  );
-}
 function BananApeBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   if (lead) {
     // BOARD-WIDE: the ape goes King-Kong. A colossal ape heaves up over the
@@ -5306,7 +5247,7 @@ function BananApeBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
         <BoardWash color="rgba(242,201,76,0.2)" delayMs={delayMs + 280} />
         <span className="fx-sig-phoenix absolute left-1/2 top-[20%] block h-[62%] w-[56%]" style={{ marginLeft: "-28%", animationDelay: `${delayMs}ms` }}>
           <span className="fx-sig-chomp block h-full w-full">
-            <ChestApe />
+            <BrainrotFigure id="chimpanzini_bananini" />
           </span>
         </span>
         <BoardBoom delayMs={delayMs + 320} color="rgba(242,201,76,0.85)" thickness={4} />
@@ -5346,16 +5287,8 @@ function TireFrogBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
     return (
       <BoardWideStage>
         <BoardWash color="rgba(43,43,47,0.26)" delayMs={delayMs} />
-        <span className="fx-sig-cross absolute left-[36%] top-[34%] block h-[30%] w-[30%]" style={{ animationDelay: `${delayMs}ms` }}>
-          <span className="fx-sig-spin block h-full w-full">
-            <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
-              <circle cx="20" cy="20" r="18" fill="#2b2b2f" stroke="#141416" strokeWidth="1.6" />
-              <circle cx="20" cy="20" r="8.5" fill="#3d5a48" stroke="#141416" strokeWidth="1.4" />
-              <g stroke="#4a4a50" strokeWidth="1.8"><path d="M20 3 V8 M20 32 V37 M3 20 H8 M32 20 H37 M8 8 L12 12 M32 8 L28 12 M8 32 L12 28 M32 32 L28 28" /></g>
-              <circle cx="16" cy="17" r="3" fill="#7eb59a" stroke="#2c473a" strokeWidth="1" />
-              <circle cx="24" cy="17" r="3" fill="#7eb59a" stroke="#2c473a" strokeWidth="1" />
-            </svg>
-          </span>
+        <span className="fx-sig-cross absolute left-[36%] top-[32%] block h-[32%] w-[28%]" style={{ animationDelay: `${delayMs}ms` }}>
+          <BrainrotFigure id="boneca_ambalabu" />
         </span>
         <span className="fx-sig-wave absolute inset-x-[22%] top-[62%] block h-[6%] rounded-[1px]" style={{ background: "rgba(74,74,80,0.7)", animationDelay: `${delayMs + 120}ms` }} />
         {[{ l: "12%" }, { l: "82%" }].map((s, i) => (
@@ -5963,21 +5896,39 @@ function CoinFlipBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   );
 }
 
-// BRAINROT: the drum-man (tung_tung_sahur) finally gets his own signature: he
-// marches in bobbing (lead), then a drumstick bonks each nearest enemy.
-function DrumMan() {
+// --- Brainrot character figures ----------------------------------------------
+// Each brainrot card's board-wide takeover stars the character itself as a
+// looping animated image (owner request: "include a GIF"). The images live in
+// public/brainrot/<cardId>.<ext>: the component tries `.gif` FIRST — drop a
+// real downloaded GIF in that folder under the card's id and it is picked up
+// automatically with no code change — and falls back to the bundled looping
+// animated SVG (drawn in-repo; it plays exactly like a GIF inside an <img>).
+// The resolved extension is remembered per id so the 404 probe for a missing
+// GIF happens once per session, not once per cast.
+const brainrotExt = new Map<string, "gif" | "svg">();
+
+export function BrainrotFigure({ id, className = "" }: { id: string; className?: string }) {
+  const [ext, setExt] = React.useState<"gif" | "svg">(brainrotExt.get(id) ?? "gif");
   return (
-    <svg viewBox="0 0 34 34" className="h-full w-full" aria-hidden="true">
-      <rect x="6" y="14" width="22" height="16" rx="2" fill="#e0776b" stroke="#7a2f28" strokeWidth="1.2" />
-      <path d="M6 18 H28 M6 26 H28" stroke="#f4f7f2" strokeWidth="1" />
-      <path d="M8 14 L12 30 M26 14 L22 30" stroke="#e6bf6a" strokeWidth="1" />
-      <circle cx="17" cy="8" r="4" fill="#caa580" stroke="#6b4a34" strokeWidth="1" />
-      <path d="M10 11 L2 4 M24 11 L32 4" stroke="#6b4a34" strokeWidth="1.4" strokeLinecap="round" />
-      <circle cx="2" cy="4" r="1.6" fill="#8a6a4a" />
-      <circle cx="32" cy="4" r="1.6" fill="#8a6a4a" />
-    </svg>
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={`/brainrot/${id}.${ext}`}
+      alt=""
+      aria-hidden="true"
+      draggable={false}
+      className={"pointer-events-none h-full w-full select-none object-contain " + className}
+      onError={() => {
+        if (ext === "gif") {
+          brainrotExt.set(id, "svg");
+          setExt("svg");
+        }
+      }}
+    />
   );
 }
+
+// BRAINROT: the drum-man (tung_tung_sahur) finally gets his own signature: he
+// marches in bobbing (lead), then a drumstick bonks each nearest enemy.
 function DrumBonkBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   if (lead) {
     // BOARD-WIDE: the drum-man marches the full width of the board, three
@@ -5988,7 +5939,7 @@ function DrumBonkBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
         <BoardWash color="rgba(224,119,107,0.16)" delayMs={delayMs + 220} />
         <span className="fx-sig-cross absolute left-[36%] top-[34%] block h-[30%] w-[26%]" style={{ animationDelay: `${delayMs}ms` }}>
           <span className="fx-sig-hop block h-full w-full">
-            <DrumMan />
+            <BrainrotFigure id="tung_tung_sahur" />
           </span>
         </span>
         {[0, 1, 2].map((i) => (

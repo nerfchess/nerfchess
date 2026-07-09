@@ -33,6 +33,8 @@ import {
   activatedSimple,
   addEffect,
   addNovel,
+  bindCandidates,
+  bindPiece,
   emptySquares,
   inHalf,
   leapMoves,
@@ -280,6 +282,34 @@ export const TIER9: Buff[] = [
       flavor: "Reinforcements, at last.",
     },
     placePieces(["q", "r", "n", "n"], myHalfZone),
+  ),
+
+  // Living God: promoted from tier 8 into the apex band (owner request). One
+  // of your pieces ascends for the game: amazon movement, permanently
+  // uncapturable, and it detonates the surrounding ring whenever it captures.
+  // Same rails as its tier-8 life: bindPiece never offers the king, the
+  // permanent shield is the square-bound kind (it follows the piece), and the
+  // engine's invulnerability guard means the god itself may never be the piece
+  // that captures the enemy king.
+  apex(
+    {
+      id: "living_god",
+      icon: "Sparkles",
+      name: "Living God",
+      description:
+        "One piece gains amazon movement, is uncapturable, and explodes on capture, for the game. An uncapturable piece may never capture the king itself.",
+      category: "movement",
+      flavor: "Worship is optional. Survival is not.",
+      fx: { motif: "empower", pieces: ["p", "n", "b", "r", "q"], moveAs: "q", self: true },
+    },
+    bindPiece("Choose your living god", bindCandidates(), {
+      shieldTurns: null,
+      gen: (board, sq, via) => [
+        ...slideMoves(board, sq, ALL_DIRS, via),
+        ...leapMoves(board, sq, KNIGHT_LEAPS, via),
+      ],
+      explodeOnCapture: true,
+    }),
   ),
 
   // --- Devastating hexes (cast on the opponent) -----------------------------

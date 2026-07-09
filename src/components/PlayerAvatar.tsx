@@ -63,10 +63,11 @@ export function PlayerAvatar({
   );
 }
 
-// House-player accounts hold "_flower" avatar preset ids (see lib/avatars.ts),
-// but the flower mark itself is no longer drawn: house players render exactly
-// like everyone else. The flowered ids stay valid so server data keeps
-// resolving to the right base look.
+// House-player accounts hold "_flower" avatar preset ids (see lib/avatars.ts).
+// The flower renders again (owner request): a very small bloom in the TOP-RIGHT
+// corner of every house avatar, so a bot is identifiable at a glance anywhere
+// an avatar shows — subtle enough to read as decoration, consistent enough to
+// learn. Human presets never resolve to a flowered id, so no human gets one.
 function PresetAvatar({
   name,
   avatar,
@@ -80,6 +81,7 @@ function PresetAvatar({
 }) {
   const spec = AVATARS[avatarIdFor(name, avatar)];
   const starSize = Math.max(5, Math.round(size * 0.2));
+  const flowerSize = Math.max(6, Math.round(size * 0.24));
   return (
     <div
       className={"relative grid shrink-0 place-items-center overflow-hidden rounded-md border border-white/20 " + className}
@@ -89,6 +91,35 @@ function PresetAvatar({
       <div style={{ width: "80%", height: "80%" }}>
         <Piece type={spec.piece} color={spec.pieceColor} size="100%" />
       </div>
+      {spec.flower && (
+        <svg
+          viewBox="0 0 24 24"
+          style={{
+            position: "absolute",
+            top: Math.max(1, Math.round(size * 0.05)),
+            right: Math.max(1, Math.round(size * 0.05)),
+            width: flowerSize,
+            height: flowerSize,
+            opacity: 0.85,
+          }}
+        >
+          {/* Five petals around a golden heart. */}
+          {[0, 72, 144, 216, 288].map((a) => (
+            <ellipse
+              key={a}
+              cx="12"
+              cy="6.6"
+              rx="3.1"
+              ry="4.6"
+              fill="#e9a6c9"
+              stroke="#8a4a6b"
+              strokeWidth="0.7"
+              transform={`rotate(${a} 12 12)`}
+            />
+          ))}
+          <circle cx="12" cy="12" r="3" fill="#f4c430" stroke="#8a6414" strokeWidth="0.8" />
+        </svg>
+      )}
       {spec.star && (
         <svg
           viewBox="0 0 24 24"

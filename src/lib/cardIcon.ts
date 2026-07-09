@@ -90,6 +90,111 @@ const RINGS: Record<BuffCategory, LucideIcon[]> = Object.fromEntries(
   ]),
 ) as Record<BuffCategory, LucideIcon[]>;
 
+// Curated case-matched icons for the most prominent cards (owner request:
+// "icons should be more for each case"). Checked BEFORE the ring, after the
+// card's own `icon` field, so a def-level icon still wins and everything not
+// listed keeps its deterministic ring glyph. Names are validated through the
+// same resolver, so a renamed lucide icon degrades to the ring, never crashes.
+const CARD_ICON_OVERRIDES: Record<string, string> = {
+  // Attack flagships
+  nova: "Sparkles",
+  meteor: "Flame",
+  cataclysmic_meteor: "Flame",
+  lightning_strike: "Zap",
+  cataclysm: "Mountain",
+  extinction: "Bone",
+  chain_atomic: "Radiation",
+  total_atomic: "Radiation",
+  atomic_captures: "Radiation",
+  annihilation: "Crosshair",
+  total_annihilation: "Crosshair",
+  detonate: "Bomb",
+  shatter: "Gem",
+  queens_rampage: "Crown",
+  siege_rook: "Castle",
+  void: "Orbit",
+  abyss: "Orbit",
+  void_realm: "Orbit",
+  // Time & tempo
+  time_skip: "FastForward",
+  time_lock: "Lock",
+  time_freeze: "Snowflake",
+  time_prison: "Hourglass",
+  time_rewind: "History",
+  perfect_rewind: "RotateCcw",
+  full_rewind: "RotateCcw",
+  rewind_one: "Undo2",
+  blitzkrieg: "Zap",
+  world_end: "Globe",
+  endless_turn: "Infinity",
+  extra_move: "ChevronsRight",
+  extra_move_repeat: "ChevronsRight",
+  overwhelm: "Swords",
+  onslaught: "Flag",
+  // Freezes
+  mass_freeze: "Snowflake",
+  deep_freeze: "ThermometerSnowflake",
+  eternal_freeze: "ThermometerSnowflake",
+  total_freeze: "Snowflake",
+  frost: "Snowflake",
+  snap_freeze: "Snowflake",
+  // Summons & revives
+  phoenix_rebirth: "Bird",
+  grand_reset: "RefreshCcw",
+  resurrect: "HeartPulse",
+  mass_resurrect: "HeartPulse",
+  full_resurrection: "HeartPulse",
+  grand_summon: "Sparkles",
+  kings_legion: "Users",
+  summon_knight: "Plus",
+  second_army: "Users",
+  vanguard: "Shield",
+  phantom_rook: "Ghost",
+  // Movement grants
+  amazon: "Crown",
+  amazon_knight: "Crown",
+  god_knight: "Crown",
+  double_amazon: "Crown",
+  triple_amazon: "Crown",
+  amazon_army: "Crown",
+  royal_ascension: "Crown",
+  colossus: "Mountain",
+  titan: "Mountain",
+  titan_legion: "Mountain",
+  eternal_reign: "Crown",
+  godslayer_knight: "Sword",
+  camel_knight: "Footprints",
+  long_knight: "MoveDiagonal",
+  teleport_knight: "Sparkle",
+  dragon_pawn: "Flame",
+  kingslide: "ChevronsRight",
+  overclock: "Gauge",
+  overclock_major: "Gauge",
+  // Protection
+  aegis: "ShieldCheck",
+  immortal_king: "ShieldCheck",
+  divine_fortress: "Church",
+  rampart: "Fence",
+  sanctuary: "House",
+  fortress: "Castle",
+  chain_mail: "Link",
+  bulwark: "BrickWall",
+  iron_wall: "BrickWall",
+  checkmate_immunity: "ShieldAlert",
+  iron_reign: "ShieldCheck",
+  // Info / draft / misc
+  peek: "Eye",
+  extra_glance: "Eye",
+  watchtower: "Binoculars",
+  patch_notes: "FileText",
+  nerf_breaker: "Unlink",
+  chess_diff: "GitBranch",
+  mirror: "Copy",
+  buff_thief: "Hand",
+  buff_thief_minor: "Hand",
+  trade_up: "TrendingUp",
+};
+
 // Small stable string hash (FNV-1a); only spread matters, not quality.
 function hashId(id: string): number {
   let h = 0x811c9dc5;
@@ -100,15 +205,16 @@ function hashId(id: string): number {
   return h >>> 0;
 }
 
-/** The face icon for a card: its own `icon` when set, otherwise a distinct
- * glyph drawn deterministically from its category's ring. Falls back to the
- * ring's first entry only if a ring somehow resolves empty. */
+/** The face icon for a card: its own `icon` when set, then a curated
+ * case-matched override, otherwise a distinct glyph drawn deterministically
+ * from its category's ring. Returns undefined only if a ring somehow resolves
+ * empty (the caller falls back to the category glyph). */
 export function cardFaceIcon(
   id: string,
   category: BuffCategory,
   icon?: string,
 ): LucideIcon | undefined {
-  const own = resolveLucideIcon(icon);
+  const own = resolveLucideIcon(icon) ?? resolveLucideIcon(CARD_ICON_OVERRIDES[id]);
   if (own) return own;
   const ring = RINGS[category];
   if (!ring || ring.length === 0) return undefined;

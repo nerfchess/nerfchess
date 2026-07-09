@@ -12,26 +12,44 @@ interface Props {
    * Only honoured for queens (the Amazon card crowns a queen so she also moves
    * like a knight); ignored for every other piece. */
   amazon?: boolean;
+  /** The piece type whose MOVEMENT this piece has been granted (CardFx.moveAs):
+   * the piece renders as a fused HYBRID — its own body with the granted
+   * piece's silhouette rising behind its shoulder — so an empowered piece
+   * reads as a genuinely new piece, not a plain one with a badge (owner
+   * request). A queen granted knight moves (or a knight granted queen moves)
+   * renders the bespoke Amazon sprite; every other combination composes the
+   * two Cburnett silhouettes. Ignored when equal to `type`. */
+  moveAs?: PieceType;
 }
-
-const SHEETS: Record<string, string> = {
-  // We use Cburnett SVGs encoded inline as React components below
-};
 
 // Memoized so identical (type, color, size, className) props skip re-rendering.
 // Without this, every premove update reflows every piece's SVG via
 // dangerouslySetInnerHTML and the textures visibly flicker.
-export const Piece = React.memo(function Piece({ type, color, size = 60, className = "", amazon = false }: Props) {
-  const isAmazon = amazon && type === "q";
+export const Piece = React.memo(function Piece({ type, color, size = 60, className = "", amazon = false, moveAs }: Props) {
+  const grant = moveAs && moveAs !== type ? moveAs : undefined;
+  // Queen+knight in either direction is the classic amazon: use the bespoke
+  // fused sprite rather than the generic hybrid composition.
+  const isAmazon =
+    (amazon && type === "q") ||
+    (grant === "n" && type === "q") ||
+    (grant === "q" && type === "n");
+  const isHybrid = !isAmazon && !!grant;
   const key = `${color}${type}`;
-  const path = isAmazon ? AMAZON_PATHS[color] : PATHS[key];
+  const path = isAmazon
+    ? AMAZON_PATHS[color]
+    : isHybrid
+      ? hybridPath(type, grant!, color)
+      : PATHS[key];
   const style: CSSProperties = { width: size, height: size };
+  const fancy = isAmazon || isHybrid;
   return (
     <span
       className={"piece-shell inline-grid place-items-center select-none " + className}
       style={style}
       role="img"
-      aria-label={`${color === "w" ? "White" : "Black"} ${isAmazon ? "amazon" : type}`}
+      aria-label={`${color === "w" ? "White" : "Black"} ${
+        isAmazon ? "amazon" : isHybrid ? `${type} empowered with ${grant} movement` : type
+      }`}
     >
       <svg
         viewBox="0 0 45 45"
@@ -40,15 +58,15 @@ export const Piece = React.memo(function Piece({ type, color, size = 60, classNa
         className="piece-inline"
         aria-hidden="true"
         // Image piece skins (data-piece-source="lichess") hide .piece-inline and
-        // show the asset span instead. The Amazon has no themed asset, so force
-        // its inline sprite visible even under those skins.
-        style={isAmazon ? { display: "block" } : undefined}
+        // show the asset span instead. The Amazon and the fused hybrids have no
+        // themed assets, so force their inline sprites visible under skins too.
+        style={fancy ? { display: "block" } : undefined}
         dangerouslySetInnerHTML={{ __html: path }}
       />
-      {/* Piece-theme image skins map to the base piece art; the Amazon is a
-          bespoke fairy sprite with no themed asset, so it renders the inline
-          SVG alone (a queen skin must not paint over it). */}
-      {!isAmazon && (
+      {/* Piece-theme image skins map to the base piece art; the Amazon and the
+          hybrids are bespoke fairy sprites with no themed asset, so they render
+          the inline SVG alone (a base-piece skin must not paint over them). */}
+      {!fancy && (
         <span
           className="piece-asset"
           aria-hidden="true"
@@ -58,6 +76,20 @@ export const Piece = React.memo(function Piece({ type, color, size = 60, classNa
     </span>
   );
 });
+
+/** Fused hybrid sprite for a piece granted another piece's movement: the
+ * granted piece's silhouette rises behind the shoulder (top-right, half
+ * scale) while the base piece stands slightly lower-left — one two-headed
+ * figure rather than a badge. Both halves draw from the same themed PATHS,
+ * so hybrids recolor with every piece theme. */
+function hybridPath(type: PieceType, grant: PieceType, color: Color): string {
+  const base = PATHS[`${color}${type}`];
+  const crest = PATHS[`${color}${grant}`];
+  return (
+    `<g transform="translate(22.5,0) scale(0.5)" opacity="0.92">${crest}</g>` +
+    `<g transform="translate(0,4.5) scale(0.9)">${base}</g>`
+  );
+}
 
 // A piece hexed into a walnut: the whole piece becomes a plump, glossy walnut
 // (the joke), with the original piece shrunk down and nestled in the shell so

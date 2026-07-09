@@ -320,20 +320,20 @@ export const PT_TIME_CARDS: Buff[] = [
   ),
 
   // #118 Gamble ------------------------------------------------------------
-  // Reworked so it is never pure downside: heads is a clean upside (take every
-  // card from your next two offers), and tails still costs you a draft but drags
-  // the opponent down with you (you both skip your next draft), so the coin is
-  // "win big or trade evenly" rather than "win or just lose".
+  // Buffed (owner request: the gambling cards paid out too little): heads now
+  // also lifts the next offer a tier, and tails still trades a skipped draft
+  // evenly with the opponent but banks YOU the +1 for the offer after — so
+  // even the losing face leaves you ahead on tempo.
   card(
     {
       id: "gamble",
       icon: "Spade",
       name: "Gamble",
       description:
-        "Flip a coin. Heads: for your next two draft offers you take every card instead of one. Tails: both you and your opponent skip your next draft.",
+        "Flip a coin. Heads: for your next two draft offers you take every card instead of one, and your next offer rolls a tier higher. Tails: both you and your opponent skip your next draft, but your following offer still rolls a tier higher.",
       tier: 4,
       category: "draft",
-      flavor: "Heads you win, tails you both sit out.",
+      flavor: "Heads you win, tails you win a little.",
     },
     instant((_inst, api) => {
       if (api.rng.int(2) === 0) {
@@ -342,46 +342,51 @@ export const PT_TIME_CARDS: Buff[] = [
         api.mine.flags.blockedDrafts = (api.mine.flags.blockedDrafts ?? 0) + 1;
         api.theirs.flags.blockedDrafts = (api.theirs.flags.blockedDrafts ?? 0) + 1;
       }
+      // Both faces bank the tier lift (capped at 1 like every bank).
+      api.mine.flags.bankBonus = Math.min(1, (api.mine.flags.bankBonus ?? 0) + 1);
     }),
   ),
 
   // #119 Jackpot -----------------------------------------------------------
-  // The tier-9 gateway from the gambling side: a long shot (one in three) at a
-  // genuinely game-winning apex card. On a miss you get a small consolation
-  // (your next offer rolls one tier higher) so the pull is never a dead loss.
+  // The apex gateway from the gambling side, buffed to a genuine coin flip
+  // (owner request): heads lands a random apex card outright, and even the
+  // miss pays double — your next offer rolls a tier higher AND deals three
+  // cards instead of two, so a pull is never close to a dead loss.
   card(
     {
       id: "jackpot",
       icon: "Dices",
       name: "Jackpot",
       description:
-        "Pull the lever for a one-in-three shot at a random apex card, one of the game's most powerful. Miss, and you take a consolation: your next draft rolls one tier higher.",
+        "Pull the lever for a coin-flip shot at a random apex card, one of the game's most powerful. Miss, and the consolation is still rich: your next draft rolls one tier higher and offers three cards instead of two.",
       tier: 7,
       category: "draft",
       flavor: "Cherry, cherry, and please, cherry.",
     },
     instant((_inst, api) => {
-      if (api.rng.int(3) === 0) {
+      if (api.rng.int(2) === 0) {
         grantRandomTier9(api);
       } else {
         api.mine.flags.bankBonus = Math.min(1, (api.mine.flags.bankBonus ?? 0) + 1);
+        api.mine.flags.prepThree = true;
       }
     }),
   ),
 
   // #120 Double or Nothing -------------------------------------------------
-  // Risk a card you already hold: heads it is upgraded a tier (capped at 8, so
-  // it never becomes a tier-9 special), tails it is spent for nothing. A random
-  // eligible held card is chosen deterministically off the seeded RNG; bound
-  // upgrades are excluded (their state points at a board square). Does nothing
-  // if you hold no other riskable card.
+  // Risk a card you already hold: heads it is upgraded TWO tiers (capped at 8,
+  // so it never becomes a tier-9 special — buffed from one, owner request),
+  // tails it is spent for nothing. A random eligible held card is chosen
+  // deterministically off the seeded RNG; bound upgrades are excluded (their
+  // state points at a board square). Does nothing if you hold no other
+  // riskable card.
   card(
     {
       id: "double_or_nothing",
       icon: "Coins",
       name: "Double or Nothing",
       description:
-        "Bet one of your other held cards on a coin flip. Heads: it is upgraded one tier. Tails: it is spent and lost.",
+        "Bet one of your other held cards on a coin flip. Heads: it is upgraded two tiers. Tails: it is spent and lost.",
       tier: 4,
       category: "draft",
       flavor: "Let it ride.",
@@ -399,7 +404,7 @@ export const PT_TIME_CARDS: Buff[] = [
       if (eligible.length === 0) return;
       const stake = eligible[api.rng.int(eligible.length)];
       if (api.rng.int(2) === 0) {
-        stake.tier = Math.min(8, stake.tier + 1) as Tier;
+        stake.tier = Math.min(8, stake.tier + 2) as Tier;
       } else {
         stake.spent = true;
       }

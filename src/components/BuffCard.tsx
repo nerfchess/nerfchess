@@ -143,6 +143,18 @@ export function BuffCard({ buff, tier, status, spent, nullified, onClick, compac
       <p className={`leading-snug text-parchment/90 ${compact ? "mt-1.5 text-[11px]" : "flex-1 text-[13px]"}`}>
         <GlossaryText text={buff.description} />
       </p>
+      {/* Rules footnote, auto-attached to every card that grants
+          uncapturability (owner request): the engine never lets a piece that
+          cannot be captured deliver the king capture itself (you must expose
+          a piece to win), and players should learn that from the card face,
+          not from a rejected move. Keyed off the description so future shield
+          cards inherit the note with zero per-card work. */}
+      {!compact && /uncapturable|cannot be captured|can't be captured/i.test(buff.description) && (
+        <p className="mt-2 text-[10.5px] leading-snug text-parchment-400">
+          Note: a piece that cannot be captured may not capture the king while its
+          protection lasts — you must expose a piece to win.
+        </p>
+      )}
       {/* Flavor line: the card's voice, quoted and dim, TCG-style. Full cards
           only; dock rows and compact picks stay all-business. */}
       {!compact && buff.flavor && (

@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Bombardiro Crocodilo: the crocodile bomber-plane on its run, propeller roaring, payload swaying. Loops like a GIF. -->
+  <g>
+    <animateTransform attributeName="transform" type="rotate" values="-2.5 32 32; 2.5 32 32; -2.5 32 32" dur="1.1s" repeatCount="indefinite"/>
+    <!-- wings -->
+    <path d="M20 28 L4 20 L6 28 L20 33 Z" fill="#5d7f4a" stroke="#2c473a" stroke-width="1.8"/>
+    <path d="M34 28 L52 18 L52 26 L34 33 Z" fill="#5d7f4a" stroke="#2c473a" stroke-width="1.8"/>
+    <!-- fuselage: croc body -->
+    <path d="M6 34 C14 26 40 25 52 30 C58 32.4 58 36 52 38 C40 43 14 42 6 34 Z" fill="#6f9a45" stroke="#2c473a" stroke-width="2"/>
+    <!-- jaws -->
+    <path d="M46 30 L62 27 L58 33 L62 37 L46 38 Z" fill="#6f9a45" stroke="#2c473a" stroke-width="1.8"/>
+    <path d="M49 31.4 L52 33 L55 31 L58 32.6 M49 36 L52 34.6 L55 36.4 L58 34.8" fill="none" stroke="#f4f7f2" stroke-width="1.6" stroke-linecap="round"/>
+    <!-- eye + scutes -->
+    <circle cx="46" cy="29" r="2" fill="#f4e9c8" stroke="#2c473a" stroke-width="1"/>
+    <circle cx="46.4" cy="29.4" r="0.9" fill="#141416"/>
+    <path d="M14 29 L17 26 L20 29 M22 28 L25 25 L28 28 M30 27.6 L33 25 L36 27.6" fill="none" stroke="#2c473a" stroke-width="1.4" stroke-linejoin="round"/>
+    <!-- propeller at the tail -->
+    <g>
+      <animateTransform attributeName="transform" type="rotate" values="0 7 34; 360 7 34" dur="0.3s" repeatCount="indefinite"/>
+      <ellipse cx="7" cy="34" rx="1.6" ry="9" fill="#c9d2dc" opacity="0.85"/>
+      <ellipse cx="7" cy="34" rx="9" ry="1.6" fill="#c9d2dc" opacity="0.85"/>
+    </g>
+    <!-- payload -->
+    <g>
+      <animateTransform attributeName="transform" type="rotate" values="-6 30 42; 6 30 42; -6 30 42" dur="0.8s" repeatCount="indefinite"/>
+      <path d="M30 42 L30 46" stroke="#2c473a" stroke-width="1.6"/>
+      <ellipse cx="30" cy="51" rx="4.4" ry="5.6" fill="#4a4a50" stroke="#141416" stroke-width="1.4"/>
+      <path d="M30 45 L30 42.6 M28 43.6 H32" stroke="#8a8478" stroke-width="1.2" stroke-linecap="round"/>
+    </g>
+  </g>
+</svg>

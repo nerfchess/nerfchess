@@ -1142,16 +1142,36 @@ export function Board({
     }
     return s;
   }, [buffs, board.pieces]);
+  // Movement-grant HYBRID sprites (owner request: an empowered piece should
+  // look like a genuinely new piece). Every running card that declares a
+  // movement grant (CardFx motif "empower" with moveAs) already paints a
+  // motif mark on each affected square — piece-bound cards on their one
+  // tracked piece, army-wide grants on every matching piece — so the granted
+  // type per square is a pure read of those marks. The Piece sprite then
+  // renders the fused hybrid (or the bespoke Amazon for queen+knight). The
+  // marks derive from public card state on both surfaces, so both players see
+  // the same new piece.
+  const moveAsSquares = useMemo(() => {
+    const m = new Map<number, PieceType>();
+    for (const mk of visual?.motifSquares ?? []) {
+      if (mk.motif !== "empower" || !mk.moveAs) continue;
+      const p = board.pieces[mk.sq];
+      if (p && mk.moveAs !== p.type) m.set(mk.sq, mk.moveAs);
+    }
+    return m;
+  }, [visual?.motifSquares, board.pieces]);
   const strikeSquares = useMemo(() => new Set(visual?.strikeSquares ?? []), [visual?.strikeSquares]);
   const walnutSquares = useMemo(() => new Set(visual?.walnutSquares ?? []), [visual?.walnutSquares]);
   const frozenSkins = visual?.frozenSkins ?? EMPTY_SKINS;
   const effectTurns = visual?.effectTurns ?? EMPTY_TURNS;
-  // "N turns left" status line for a square's active effect (null = permanent
-  // or none). Shown as the popover's own status row per effect.
+  // Duration status line for a square's active effect (null = permanent or
+  // none). Spelled out precisely (owner request): the timer ticks once each
+  // time the AFFECTED side completes a move, so "2 turns" means two more of
+  // their moves — up to four half-moves of the game — not two full rounds.
   const effectStatusLine = (sq: number): string | null => {
     const t = effectTurns[sq];
     if (t == null) return null;
-    return `${t} turn${t === 1 ? "" : "s"} left`;
+    return `${t} turn${t === 1 ? "" : "s"} left: ${t} more move${t === 1 ? "" : "s"} by the affected side (up to ${t * 2} half-moves)`;
   };
   const lockedSquares = useMemo(() => new Set(visual?.lockedSquares ?? []), [visual?.lockedSquares]);
   const bananaSquares = useMemo(() => new Set(visual?.bananaSquares ?? []), [visual?.bananaSquares]);
@@ -2294,6 +2314,7 @@ export function Board({
                         color={piece.color}
                         size="100%"
                         amazon={amazonSquares.has(sq)}
+                        moveAs={moveAsSquares.get(sq)}
                       />
                     )}
                   </div>

@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Bombombini Gusini: the jet-goose, wings flapping, bomb clutched tight, HONK loading. Loops like a GIF. -->
+  <g>
+    <animateTransform attributeName="transform" type="translate" values="0 0; 0 -2.2; 0 0" dur="0.6s" repeatCount="indefinite"/>
+    <!-- flapping far wing -->
+    <g>
+      <animateTransform attributeName="transform" type="rotate" values="-26 30 30; 12 30 30; -26 30 30" dur="0.6s" repeatCount="indefinite"/>
+      <path d="M30 30 C20 20 10 18 4 22 C10 26 18 30 30 33 Z" fill="#dbe3ea" stroke="#4a5560" stroke-width="1.8"/>
+    </g>
+    <!-- body -->
+    <path d="M14 40 C12 30 20 22 30 22 C42 22 50 30 48 41 C46 49 20 49 14 40 Z" fill="#f4f7f2" stroke="#4a5560" stroke-width="2"/>
+    <!-- neck + head -->
+    <path d="M42 26 C42 18 44 12 50 10 C54 9 56 12 54 14 C50 17 48 22 48 27 Z" fill="#f4f7f2" stroke="#4a5560" stroke-width="2"/>
+    <path d="M52 11 L62 13 L52 16 Z" fill="#e8912d" stroke="#8a5311" stroke-width="1.2"/>
+    <circle cx="51" cy="12" r="1.3" fill="#141416"/>
+    <!-- jet pod -->
+    <g>
+      <rect x="18" y="40" width="14" height="7" rx="3.5" fill="#8aa0b4" stroke="#33414e" stroke-width="1.6"/>
+      <path d="M18 43.5 L10 43.5" stroke="#f4a83a" stroke-width="4" stroke-linecap="round">
+        <animate attributeName="stroke-width" values="4;1.5;4" dur="0.22s" repeatCount="indefinite"/>
+      </path>
+    </g>
+    <!-- near wing -->
+    <g>
+      <animateTransform attributeName="transform" type="rotate" values="16 34 34; -18 34 34; 16 34 34" dur="0.6s" repeatCount="indefinite"/>
+      <path d="M34 34 C28 28 18 26 12 30 C18 35 26 38 34 38 Z" fill="#f4f7f2" stroke="#4a5560" stroke-width="1.8"/>
+    </g>
+    <!-- bomb in the feet -->
+    <g>
+      <animateTransform attributeName="transform" type="rotate" values="-5 34 50; 5 34 50; -5 34 50" dur="0.9s" repeatCount="indefinite"/>
+      <path d="M30 47 L32 51 M38 47 L36 51" stroke="#e8912d" stroke-width="2" stroke-linecap="round"/>
+      <ellipse cx="34" cy="55" rx="5" ry="4.4" fill="#4a4a50" stroke="#141416" stroke-width="1.4"/>
+      <path d="M34 50.6 L34 48.4 M32 49.4 H36" stroke="#8a8478" stroke-width="1.2" stroke-linecap="round"/>
+    </g>
+  </g>
+</svg>

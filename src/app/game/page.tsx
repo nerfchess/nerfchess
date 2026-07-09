@@ -26,6 +26,7 @@ import {
   bankDraft,
   currentHint,
   enableDraftMode,
+  gameInCheck,
   NerfGame,
   UNRESTRICTED_NERF,
   legalMoves,
@@ -773,7 +774,10 @@ function GamePage() {
     if (last) {
       if (last.captured) playCapture();
       else playMoveSfx();
-      if (isInCheck(game.board, game.board.turn)) {
+      // gameInCheck also sees buff-granted movement, so a king attacked only
+      // by an empowered "weird" piece (an amazon, a camel knight...) still
+      // rings the check bell.
+      if (gameInCheck(game, game.board.turn)) {
         setTimeout(playCheck, 80);
       }
     }
@@ -1264,8 +1268,13 @@ function GamePage() {
     : confirmMovePending ?? lastMove;
   const orientation: Color = uiSettings.flipBoard ? (myColor === "w" ? "b" : "w") : myColor;
   const checkedBoard = reviewBoard ?? game.board;
+  // The live position runs the buff-aware check test (gameInCheck) so a king
+  // attacked only through buff-granted movement still lights up; history
+  // review falls back to the plain test (a mid-replay board has no reliable
+  // buff context).
   const checkSquare =
-    uiSettings.checkHighlight && isInCheck(checkedBoard, checkedBoard.turn)
+    uiSettings.checkHighlight &&
+    (reviewBoard ? isInCheck(checkedBoard, checkedBoard.turn) : gameInCheck(game, game.board.turn))
       ? findKing(checkedBoard, checkedBoard.turn)
       : null;
   const hint = currentHint(game, myColor);

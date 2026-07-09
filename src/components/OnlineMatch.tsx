@@ -44,6 +44,7 @@ import type { GameContext, Nerf } from "@/engine/nerf";
 import { IMPLEMENTED_BY_ID, openingNerfPool } from "@/engine/nerfs/library";
 import {
   currentHint,
+  gameInCheck,
   NerfGame,
   UNRESTRICTED_NERF,
   enableDraftMode,
@@ -624,7 +625,12 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     if (move.captured) playCapture();
     else playMoveSfx();
     const after = makeMove(cloneBoard(base), move);
-    if (isInCheck(after, after.turn)) setTimeout(playCheck, 80);
+    // Run the buff-aware test against a view of the live game holding the
+    // optimistic board, so a check delivered only through buff-granted
+    // movement still sounds; without game context fall back to the plain test.
+    const g = gameRef.current;
+    const inCheck = g ? gameInCheck({ ...g, board: after }, after.turn) : isInCheck(after, after.turn);
+    if (inCheck) setTimeout(playCheck, 80);
   };
 
   // Fire the queued premove the instant it becomes our turn. No artificial
@@ -849,7 +855,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         if (!alreadySounded) {
           if (lm.captured) playCapture();
           else playMoveSfx();
-          if (isInCheck(next.board, next.board.turn)) setTimeout(playCheck, 80);
+          if (gameInCheck(next, next.board.turn)) setTimeout(playCheck, 80);
         }
         // Our turn again (opponent moved, or our premove landed and the next
         // queued one already applies): fire the queued premove immediately.
@@ -1830,8 +1836,11 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     reviewBoard ?? confirmPreviewBoard ?? virtualBoard ?? pendingLocalBoard ?? game.board;
   const orientation: Color = uiSettings.flipBoard ? oppColor : myColor;
   const checkedBoard = reviewBoard ?? game.board;
+  // Buff-aware check test on the live position (a king attacked only by an
+  // empowered piece still lights up); plain test while reviewing history.
   const checkSquare =
-    uiSettings.checkHighlight && isInCheck(checkedBoard, checkedBoard.turn)
+    uiSettings.checkHighlight &&
+    (reviewBoard ? isInCheck(checkedBoard, checkedBoard.turn) : gameInCheck(game, game.board.turn))
       ? findKing(checkedBoard, checkedBoard.turn)
       : null;
   const lastMoveForDisplay = isReviewingHistory
