@@ -1541,6 +1541,14 @@ export class GameServer extends DurableObject<Env> {
       draftExtras = {
         draft: true,
         ...(match.mode ? { mode: match.mode } : {}),
+        // The real draft RNG seed, so the client's own reconnect replay rolls
+        // the SAME stream the server did. Card effects that consume the draft
+        // RNG (random removals / spectacles) otherwise land differently on a
+        // rebuild than on the authoritative server, and the reconstructed board
+        // diverges (removed pieces reappear, then the opponent's real moves get
+        // rejected as out of sync). Offers are still server-provided; matching
+        // the seed only keeps effect randomness identical.
+        draftSeed: match.draftSeed ?? match.setup.seed,
         picksVisible: !!match.picksVisible,
         dtActions: this.publicDraftActions(match, color),
         ...(game?.buffs ? { dtState: this.draftStateFor(game, match, color) } : {}),
