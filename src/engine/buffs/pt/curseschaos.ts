@@ -58,7 +58,7 @@ function noseCaptures(api: BuffApi, sq: Square, nose: number, via: string): Move
   const p = api.board.pieces[sq];
   if (!p || p.type !== "p") return [];
   const dir = p.color === "w" ? 1 : -1;
-  const reach = 1 + Math.min(3, Math.max(0, nose));
+  const reach = 1 + Math.min(4, Math.max(0, nose));
   const out: Move[] = [];
   const f = FILE(sq);
   let r = RANK(sq) + dir;
@@ -81,26 +81,30 @@ function noseCaptures(api: BuffApi, sq: Square, nose: number, via: string): Move
   return out;
 }
 
-/** Greenhouse: my pawns on `file` may promote one rank early, at relative rank
- * 7, either by a forward advance onto an empty square or a diagonal capture. */
+/** Greenhouse: my pawns may promote one rank early, at relative rank 7, when
+ * the move touches the domed file: a forward advance on the file, a diagonal
+ * capture out of the file, or a diagonal capture into it. */
 function greenhouseGen(api: BuffApi, file: number, via: string): Move[] {
   const out: Move[] = [];
   const dir = api.me === "w" ? 1 : -1;
   for (const sq of mySquares(api.board, api.me, "p")) {
-    if (FILE(sq) !== file) continue;
     const f = FILE(sq),
       r = RANK(sq);
     const nr = r + dir;
     if (!inBoard(f, nr)) continue;
-    const fwd = SQ(f, nr);
-    if (!api.board.pieces[fwd] && relRank(api.me, fwd) === 7) {
-      for (const promo of ["q", "r", "b", "n"] as PieceType[]) {
-        out.push({ from: sq, to: fwd, piece: "p", color: api.me, via, promotion: promo });
+    if (f === file) {
+      const fwd = SQ(f, nr);
+      if (!api.board.pieces[fwd] && relRank(api.me, fwd) === 7) {
+        for (const promo of ["q", "r", "b", "n"] as PieceType[]) {
+          out.push({ from: sq, to: fwd, piece: "p", color: api.me, via, promotion: promo });
+        }
       }
     }
     for (const dfl of [-1, 1]) {
       const nf = f + dfl;
       if (!inBoard(nf, nr)) continue;
+      // The capture qualifies when it starts on the domed file or lands on it.
+      if (f !== file && nf !== file) continue;
       const to = SQ(nf, nr);
       const t = api.board.pieces[to];
       if (t && t.color !== api.me && t.type !== "k" && relRank(api.me, to) === 7) {
@@ -130,26 +134,26 @@ export const PT_CURSE_CARDS: Buff[] = [
       icon: "AlarmClockOff",
       name: "Snooze Button",
       description:
-        "Hit snooze on the whole enemy army: every one of your opponent's pieces except the king falls asleep and cannot move for their next turn.",
+        "Hit snooze on the whole enemy army: every one of your opponent's pieces except the king falls asleep and cannot move for their next 2 turns.",
       tier: 4,
       category: "tempo",
       flavor: "Five more minutes.",
       fx: { motif: "jail", pieces: ["p", "n", "b", "r", "q"] },
     },
-    freezeAllEnemies(1, "sleep"),
+    freezeAllEnemies(2, "sleep"),
   ),
 
   // #20 Groundhog Day ------------------------------------------------------
   // A VHS rewind: whichever piece the opponent moves next, they must move that
-  // same piece again on the turn after. A passive that records their choice
-  // then echoes it; the filter always keeps a non-empty fallback.
+  // same piece again on the two turns after. A passive that records their
+  // choice then echoes it; the filter always keeps a non-empty fallback.
   card(
     {
       id: "groundhog_day",
       icon: "Repeat",
       name: "Groundhog Day",
       description:
-        "The board hits a VHS rewind on your opponent: whichever piece they move on their next turn, they must move that same piece again on the turn after. If that piece can no longer move, the loop is skipped.",
+        "The board hits a VHS rewind on your opponent: whichever piece they move on their next turn, they must move that same piece again on the two turns after. If that piece can no longer move, the loop is skipped.",
       tier: 6,
       category: "hex",
       flavor: "Didn't we just do this?",
@@ -158,7 +162,7 @@ export const PT_CURSE_CARDS: Buff[] = [
     {
       kind: "passive",
       init: (inst) => {
-        inst.state.turns = 2;
+        inst.state.turns = 3; // the recording turn plus two echoes
       },
       filterOpponentMoves: (moves, inst) => {
         if (turnsLeft(inst) <= 0 || moves.length === 0) return moves;
@@ -182,14 +186,14 @@ export const PT_CURSE_CARDS: Buff[] = [
 
   // #60 Whoopee Cushion ----------------------------------------------------
   // Hide a cushion on an empty square. The first non-king enemy piece to land
-  // on it is embarrassed and must move again on their next turn, then the
+  // on it is embarrassed and must keep moving for their next 2 turns, then the
   // cushion is spent.
   card(
     {
       id: "whoopee_cushion",
       name: "Whoopee Cushion",
       description:
-        "Hide a whoopee cushion on an empty square. The first enemy piece other than the king to land on it makes a rude noise and must move that same piece again on their next turn. Then the cushion is done.",
+        "Hide a whoopee cushion on an empty square. The first enemy piece other than the king to land on it makes a rude noise and must move that same piece again on their next 2 turns. Then the cushion is done.",
       tier: 2,
       category: "item",
       flavor: "PFFFFT.",
@@ -228,9 +232,21 @@ export const PT_CURSE_CARDS: Buff[] = [
       onMovePlayed: (inst, move, api) => {
         const cushion = inst.state.cushion as Square | undefined;
         if (cushion == null) return;
-        if (inst.state.armed != null) {
-          // A piece sat on the cushion last turn; their next move discharges it.
-          if (move.color === api.opp) {
+        const armed = inst.state.armed as Square | undefined;
+        if (armed != null) {
+          // The embarrassed piece was captured or overrun: the gag ends early.
+          if (move.to === armed && move.from !== armed && move.color === api.me) {
+            inst.state.armed = undefined;
+            inst.spent = true;
+            return;
+          }
+          if (move.color !== api.opp) return;
+          // Follow the sitter through each forced move; the echo runs for the
+          // opponent's next 2 turns, then the cushion is spent.
+          if (move.from === armed) inst.state.armed = move.to;
+          const left = ((inst.state.echo as number) ?? 1) - 1;
+          inst.state.echo = left;
+          if (left <= 0) {
             inst.state.armed = undefined;
             inst.spent = true;
           }
@@ -245,6 +261,7 @@ export const PT_CURSE_CARDS: Buff[] = [
         // (the PFFFT) at the moment it triggers and keeps both clients in sync.
         if (move.color === api.opp && move.to === cushion && move.piece !== "k") {
           inst.state.armed = cushion;
+          inst.state.echo = 2;
           addEffect(api, { kind: "strike", squares: [cushion], owner: api.me, turns: 1 });
         }
       },
@@ -252,13 +269,13 @@ export const PT_CURSE_CARDS: Buff[] = [
         inst.state.cushion == null
           ? "activate to place the cushion"
           : inst.state.armed != null
-            ? "PFFFT: they must move that piece again"
+            ? `PFFFT: they must move that piece again (${(inst.state.echo as number) ?? 0} turns)`
             : "cushion set and waiting",
     },
   ),
 
   // #70 Werewolf -----------------------------------------------------------
-  // Curse one of your own pawns: every 6 of your turns it transforms between a
+  // Curse one of your own pawns: every 5 of your turns it transforms between a
   // pawn and a knight. Only ever toggles between p and n, ends on promotion or
   // capture, and never leaves a pawn stranded on the back rank.
   card(
@@ -267,7 +284,7 @@ export const PT_CURSE_CARDS: Buff[] = [
       icon: "Dog",
       name: "Werewolf",
       description:
-        "Curse one of your pawns with lycanthropy: every 6 of your turns it transforms into a knight, and 6 turns later back into a pawn, for the game. If it promotes or is captured the curse lifts.",
+        "Curse one of your pawns with lycanthropy: every 5 of your turns it transforms into a knight, and 5 turns later back into a pawn, for the game. If it promotes or is captured the curse lifts.",
       tier: 6,
       category: "pieces",
       requires: ["p"],
@@ -291,7 +308,7 @@ export const PT_CURSE_CARDS: Buff[] = [
         if (sq == null) return;
         inst.state.sq = sq;
         inst.state.form = "p";
-        inst.state.turns = 6; // countdown to the next transformation
+        inst.state.turns = 5; // countdown to the next transformation
       },
       onMovePlayed: (inst, move, api) => {
         let sq = inst.state.sq as Square | undefined;
@@ -316,12 +333,12 @@ export const PT_CURSE_CARDS: Buff[] = [
           return;
         }
         if (move.color !== api.me) return;
-        const left = ((inst.state.turns as number) ?? 6) - 1;
+        const left = ((inst.state.turns as number) ?? 5) - 1;
         if (left > 0) {
           inst.state.turns = left;
           return;
         }
-        inst.state.turns = 6;
+        inst.state.turns = 5;
         const form = inst.state.form as PieceType;
         const next: PieceType = form === "p" ? "n" : "p";
         const p = api.board.pieces[sq];
@@ -333,12 +350,12 @@ export const PT_CURSE_CARDS: Buff[] = [
       status: (inst) =>
         inst.state.sq == null
           ? "activate to choose a pawn"
-          : `${inst.state.form === "n" ? "wolf" : "pawn"} form, changes in ${(inst.state.turns as number) ?? 6} of your turns`,
+          : `${inst.state.form === "n" ? "wolf" : "pawn"} form, changes in ${(inst.state.turns as number) ?? 5} of your turns`,
     },
   ),
 
   // #72 Slowpoke -----------------------------------------------------------
-  // A gag "bad card": for your next 2 turns your whole army can only step one
+  // A gag "bad card": for your next turn your whole army can only step one
   // square. Uses the owner-scoped short_leash effect, which game.ts relaxes
   // rather than ever stranding you, so it cannot soft-lock.
   card(
@@ -347,20 +364,20 @@ export const PT_CURSE_CARDS: Buff[] = [
       icon: "Snail",
       name: "Slowpoke",
       description:
-        "A famously bad card. Your whole army goes sluggish: for your next 2 turns every piece can move only one square. It shrugs, apologetically.",
+        "A famously bad card. Your whole army goes sluggish: for your next turn every piece can move only one square. It shrugs, apologetically.",
       tier: 2,
       category: "movement",
       flavor: "Sorry. Sorry. Coming through. Sorry.",
       fx: { motif: "anchor", pieces: "all", self: true },
     },
     instant((_inst, api) => {
-      addEffect(api, { kind: "short_leash", owner: api.me, turns: 2 });
+      addEffect(api, { kind: "short_leash", owner: api.me, turns: 1 });
     }),
   ),
 
   // #75 Pinocchio ----------------------------------------------------------
   // Bind one pawn; each of your turns it does not capture its nose grows by 1
-  // (up to +3), letting it spear the first enemy piece straight ahead within
+  // (up to +4), letting it spear the first enemy piece straight ahead within
   // 1 + nose squares. Pure augment: it only ever widens your own move list.
   card(
     {
@@ -368,7 +385,7 @@ export const PT_CURSE_CARDS: Buff[] = [
       icon: "Ruler",
       name: "Pinocchio",
       description:
-        "One pawn's nose grows: each of your turns it does not capture, its reach grows by one square, up to plus three. It may capture the first enemy piece other than a king directly ahead of it within that reach. Capturing shrinks the nose back to zero.",
+        "One pawn's nose grows: each of your turns it does not capture, its reach grows by one square, up to plus four. It may capture the first enemy piece other than a king directly ahead of it within that reach. Capturing shrinks the nose back to zero.",
       tier: 4,
       category: "movement",
       requires: ["p"],
@@ -422,7 +439,7 @@ export const PT_CURSE_CARDS: Buff[] = [
         }
         if (move.color !== api.me) return;
         if (move.from === sq && move.captured) inst.state.nose = 0;
-        else inst.state.nose = Math.min(3, ((inst.state.nose as number) ?? 0) + 1);
+        else inst.state.nose = Math.min(4, ((inst.state.nose as number) ?? 0) + 1);
       },
       status: (inst) =>
         inst.state.sq == null ? "activate to choose a pawn" : `nose +${(inst.state.nose as number) ?? 0}`,
@@ -430,7 +447,7 @@ export const PT_CURSE_CARDS: Buff[] = [
   ),
 
   // #93 Hot Potato ---------------------------------------------------------
-  // Target one enemy piece (never a king): for their next 3 turns they must
+  // Target one enemy piece (never a king): for their next 4 turns they must
   // move that exact piece, if it can move. The filter follows the potato and
   // always keeps a non-empty fallback.
   card(
@@ -438,7 +455,7 @@ export const PT_CURSE_CARDS: Buff[] = [
       id: "hot_potato",
       name: "Hot Potato",
       description:
-        "Curse one enemy piece other than the king into a hot potato: for their next 3 turns your opponent must move that piece if it has any legal move.",
+        "Curse one enemy piece other than the king into a hot potato: for their next 4 turns your opponent must move that piece if it has any legal move.",
       tier: 4,
       category: "hex",
       flavor: "Hot hot hot, pass it on.",
@@ -462,7 +479,7 @@ export const PT_CURSE_CARDS: Buff[] = [
         const sq = picks[0]?.square;
         if (sq == null) return;
         inst.state.sq = sq;
-        inst.state.turns = 3;
+        inst.state.turns = 4;
       },
       filterOpponentMoves: (moves, inst, api) => {
         if (turnsLeft(inst) <= 0 || moves.length === 0) return moves;
@@ -490,7 +507,7 @@ export const PT_CURSE_CARDS: Buff[] = [
   ),
 
   // #94 Stinky -------------------------------------------------------------
-  // Mark one enemy piece: for their next 2 turns their OTHER pieces cannot step
+  // Mark one enemy piece: for their next 3 turns their OTHER pieces cannot step
   // into the ring of squares around it (the marked piece may move freely).
   // Follows the stinker; always keeps a non-empty fallback.
   card(
@@ -498,7 +515,7 @@ export const PT_CURSE_CARDS: Buff[] = [
       id: "stinky",
       name: "Stinky",
       description:
-        "One enemy piece other than the king reeks: for your opponent's next 2 turns their other pieces cannot move onto any square adjacent to it. The smelly piece itself may still move anywhere.",
+        "One enemy piece other than the king reeks: for your opponent's next 3 turns their other pieces cannot move onto any square adjacent to it. The smelly piece itself may still move anywhere.",
       tier: 3,
       category: "hex",
       flavor: "Somebody skipped bath day.",
@@ -522,7 +539,7 @@ export const PT_CURSE_CARDS: Buff[] = [
         const sq = picks[0]?.square;
         if (sq == null) return;
         inst.state.sq = sq;
-        inst.state.turns = 2;
+        inst.state.turns = 3;
       },
       filterOpponentMoves: (moves, inst, api) => {
         if (turnsLeft(inst) <= 0 || moves.length === 0) return moves;
@@ -551,7 +568,7 @@ export const PT_CURSE_CARDS: Buff[] = [
   ),
 
   // #101 Allergies ---------------------------------------------------------
-  // Target one enemy piece: the sneeze schedule for its next 2 turns is rolled
+  // Target one enemy piece: the sneeze schedule for its next 3 turns is rolled
   // once, deterministically, at cast time. On a scheduled turn that piece is
   // "achoo"-stuck (they must move something else). Never touches other pieces,
   // so the opponent always has moves.
@@ -560,7 +577,7 @@ export const PT_CURSE_CARDS: Buff[] = [
       id: "allergies",
       name: "Allergies",
       description:
-        "One enemy piece other than the king comes down with the sniffles. On each of your opponent's next 2 turns there is a chance it sneezes and cannot move that turn. Their other pieces are unaffected.",
+        "One enemy piece other than the king comes down with the sniffles. On each of your opponent's next 3 turns there is a chance it sneezes and cannot move that turn. Their other pieces are unaffected.",
       tier: 3,
       category: "hex",
       flavor: "Bless you.",
@@ -584,9 +601,13 @@ export const PT_CURSE_CARDS: Buff[] = [
         const sq = picks[0]?.square;
         if (sq == null) return;
         inst.state.sq = sq;
-        inst.state.turns = 2;
+        inst.state.turns = 3;
         // Roll the sneeze schedule once, deterministically, at cast time.
-        inst.state.schedule = [api.rng.next() < 0.6, api.rng.next() < 0.6];
+        inst.state.schedule = [
+          api.rng.next() < 0.6,
+          api.rng.next() < 0.6,
+          api.rng.next() < 0.6,
+        ];
       },
       filterOpponentMoves: (moves, inst, api) => {
         if (turnsLeft(inst) <= 0 || moves.length === 0) return moves;
@@ -595,7 +616,7 @@ export const PT_CURSE_CARDS: Buff[] = [
         const p = api.board.pieces[sq];
         if (!p || p.color !== api.opp) return moves;
         const schedule = (inst.state.schedule as boolean[]) ?? [];
-        const idx = 2 - turnsLeft(inst); // 0 on the first restricted turn, then 1
+        const idx = 3 - turnsLeft(inst); // 0 on the first restricted turn, then 1, 2
         if (!schedule[idx]) return moves; // no sneeze this turn
         const kept = moves.filter((m) => m.from !== sq); // the sneezing piece is stuck
         return kept.length > 0 ? kept : moves;
@@ -618,14 +639,14 @@ export const PT_CURSE_CARDS: Buff[] = [
 
   // #82 Necromancer --------------------------------------------------------
   // Raise your strongest captured piece as a spooky temporary version in your
-  // half; a timed_loss removes it after 5 of your turns. No king is ever
+  // half; a timed_loss removes it after 6 of your turns. No king is ever
   // revived (kings are not in the revive pool).
   card(
     {
       id: "necromancer",
       name: "Necromancer",
       description:
-        "Raise your strongest fallen piece as a spectre on an empty square in your half. It fights for you, then crumbles to dust after 5 of your turns. If nothing of yours has been captured, nothing rises.",
+        "Raise your strongest fallen piece as a spectre on an empty square in your half. It fights for you, then crumbles to dust after 6 of your turns. If nothing of yours has been captured, nothing rises.",
       tier: 7,
       category: "pieces",
       flavor: "The grave was more of a suggestion.",
@@ -650,13 +671,13 @@ export const PT_CURSE_CARDS: Buff[] = [
         if (type === "p" && !pawnRankOk(sq)) return;
         api.place(sq, type, api.me);
         markRevived(api, type);
-        addEffect(api, { kind: "timed_loss", owner: api.me, sq, turns: 5, then: "remove" });
+        addEffect(api, { kind: "timed_loss", owner: api.me, sq, turns: 6, then: "remove" });
       },
     ),
   ),
 
   // #88 Sea Monkeys --------------------------------------------------------
-  // Three tiny pawns hatch on random empty squares in your half. Distinct from
+  // Four tiny pawns hatch on random empty squares in your half. Distinct from
   // Clone Army (which you place by hand): these sprout wherever there is room,
   // chosen by the deterministic rng.
   card(
@@ -665,14 +686,14 @@ export const PT_CURSE_CARDS: Buff[] = [
       icon: "FishSymbol",
       name: "Sea Monkeys",
       description:
-        "Just add water: three tiny pawns hatch on random empty squares in your half and grow into real pawns.",
+        "Just add water: four tiny pawns hatch on random empty squares in your half and grow into real pawns.",
       tier: 4,
       category: "pieces",
       flavor: "The instructions promised a castle.",
     },
     instant((_inst, api) => {
       const spots = emptySquares(api.board, (sq) => inHalf(api.me, sq) && pawnRankOk(sq));
-      for (let i = 0; i < 3 && spots.length > 0; i++) {
+      for (let i = 0; i < 4 && spots.length > 0; i++) {
         const idx = api.rng.int(spots.length);
         const sq = spots.splice(idx, 1)[0];
         api.place(sq, "p", api.me);
@@ -707,7 +728,7 @@ export const PT_CURSE_CARDS: Buff[] = [
       icon: "Flower",
       name: "Greenhouse",
       description:
-        "Raise a glass dome over one file. For the game, your pawns on that file may promote one rank early, on your 7th rank instead of your 8th, whether they advance or capture into it.",
+        "Raise a glass dome over one file. For the game, your pawns may promote one rank early, on your 7th rank instead of your 8th, when they advance along that file, capture out of it, or capture into it.",
       tier: 4,
       category: "pieces",
       requires: ["p"],
@@ -786,22 +807,22 @@ export const PT_CURSE_CARDS: Buff[] = [
       icon: "Ticket",
       name: "Wheel of Fortune",
       description:
-        "Spin the wheel for one of six random effects: plus 45 seconds to your clock, minus 45 seconds off your opponent's, your army uncapturable for their next 2 turns, a new knight in your half, every enemy piece asleep for their next 2 turns, or two random enemy pieces other than the king removed.",
+        "Spin the wheel for one of six random effects: plus 55 seconds to your clock, minus 55 seconds off your opponent's, your army uncapturable for their next 2 turns, a new knight in your half, every enemy piece asleep for their next 2 turns, or two random enemy pieces other than the king removed.",
       tier: 6,
       category: "tempo",
       flavor: "Big money, big money, no whammies.",
     },
     // Every wedge pays out bigger (owner request: the gambling cards paid out
-    // too little for their tier): the clocks swing 45s, the shield and sleep
+    // too little for their tier): the clocks swing 55s, the shield and sleep
     // hold two turns, the summon is a knight, and the removal takes two.
     instant((_inst, api) => {
       const roll = api.rng.int(6);
       switch (roll) {
         case 0:
-          api.adjustClock({ addSelfSec: 45 });
+          api.adjustClock({ addSelfSec: 55 });
           break;
         case 1:
-          api.adjustClock({ subOppSec: 45 });
+          api.adjustClock({ subOppSec: 55 });
           break;
         case 2:
           addEffect(api, { kind: "shield", owner: api.me, squares: null, turns: 2 });
