@@ -137,7 +137,7 @@ for (const skill of [1200, 1400, 1600, 1750] as HouseSkill[]) {
 const N = 100_000;
 let long = 0;
 for (let i = 0; i < N; i++) {
-  const d = houseThinkMs(random, 120_000, true);
+  const d = houseThinkMs(random, 120_000, 600); // slow control (10+0): full pacing
   check(d >= 1000 && d <= 10_000, `think ${d}ms out of range`);
   if (d > 4001) long++;
 }
@@ -145,10 +145,18 @@ const longShare = long / N;
 check(longShare > 0.07 && longShare < 0.13, `long-think share ${longShare}`);
 console.log(`pacing: base 1-4s, long 6-10s share ${(longShare * 100).toFixed(1)}% (target ~10%)`);
 
+// Fast time controls (base <= 180s: 1+0, 2+1, 3+0): snappy 1-3s, never the
+// 6-10s long think, so a bullet/blitz game against a bot stays live.
+for (let i = 0; i < 20_000; i++) {
+  const f = houseThinkMs(random, 120_000, 180);
+  check(f >= 1000 && f <= 3000, `fast-TC think ${f}ms out of range`);
+}
+console.log("pacing: fast TC (<=180s) stays within 1-3s");
+
 for (let i = 0; i < 10_000; i++) {
-  const low = houseThinkMs(random, 6_000, true); // 6s left on the clock
+  const low = houseThinkMs(random, 6_000, 600); // 6s left on the clock
   check(low <= 900, `low-clock think ${low}ms too slow`);
-  const mid = houseThinkMs(random, 20_000, true);
+  const mid = houseThinkMs(random, 20_000, 600);
   check(mid <= 1600, `mid-clock think ${mid}ms too slow`);
   const draft = houseDraftThinkMs(random);
   check(draft >= 2000 && draft <= 8000, `draft think ${draft}ms out of range`);

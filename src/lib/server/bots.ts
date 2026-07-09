@@ -309,9 +309,16 @@ export function pickHouseSeek(random: (max: number) => number): { pool: string; 
 /** Move pacing: uniform 1-4s, with roughly 1 move in 10 tanking 6-10s. The
  * delay is clamped hard once the bot's own clock runs low so pacing can never
  * flag a bot that still has bank left. */
-export function houseThinkMs(random: (max: number) => number, myClockMs: number, hasClock: boolean): number {
+export function houseThinkMs(random: (max: number) => number, myClockMs: number, timeSec: number): number {
+  const hasClock = timeSec > 0;
+  // Fast time controls (1+0, 2+1, 3+0 and the like, base <= 3 min): the bot
+  // answers snappily in 1-3s so a bullet/blitz game against a bot feels live and
+  // never drags. Slower controls keep the more humanlike, occasionally-longer
+  // think below.
+  const fast = hasClock && timeSec <= 180;
   let delay: number;
-  if (random(10) < 9) delay = 1000 + random(3001); // 1-4s
+  if (fast) delay = 1000 + random(2001); // 1-3s
+  else if (random(10) < 9) delay = 1000 + random(3001); // 1-4s
   else delay = 6000 + random(4001); // 6-10s
 
   if (hasClock) {
