@@ -190,7 +190,7 @@ export const BRAINROT: Buff[] = [
       name: "Bombardiro Crocodilo",
       description:
         "The bomber-croc drops its payload on a square: every enemy piece except a king in the 5 by 5 area centred on it (that square and the 24 around it) is destroyed.",
-      tier: 6,
+      tier: 8,
       category: "attack",
       flavor: "Cleared for the run, no survivors below.",
     },

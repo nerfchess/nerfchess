@@ -477,7 +477,7 @@ type HouseSeekEntry = {
 // (deserializing every finished game's move history), which on a bloated table
 // blew the DO CPU limit before it could cache or GC anything: the crash loop.
 const liveIdsKey = "live:ids";
-const buildVersion = "house-bot-fixes-1";
+const buildVersion = "bot-reconnect-hardening-1";
 // The single account allowed to use the owner "fun with friends" tools: the
 // -15s opponent-clock button and the god panel card grant. SERVER-verified on
 // every gated message (never trust the client). Compared case-insensitively so
@@ -2243,8 +2243,31 @@ export class GameServer extends DurableObject<Env> {
     }
     // A live draft game whose replay went stale across a deploy ends now,
     // through gameForPlay's graceful draw, so the returning player gets the
-    // end frame instead of a board that can never accept a move.
-    if (match.draft && !match.result) await this.gameForPlay(match);
+    // end frame instead of a board that can never accept a move. If the rebuild
+    // THROWS (a special card that corrupts its own replay), never leave the
+    // returning player stuck on "connecting": end the game as an interrupted,
+    // unrated draw and deliver the end frame instead. Logged so the offending
+    // card can be found and fixed at the source.
+    if (match.draft && !match.result) {
+      try {
+        await this.gameForPlay(match);
+      } catch (err) {
+        console.error("reconnect replay threw, ending game", match.id, "moves=", match.moves.length, "draftActions=", JSON.stringify(match.draftActions ?? []), err);
+        if (!match.result) {
+          match.clocks = this.currentClocks(match);
+          match.runningSince = null;
+          match.result = { winner: "draw", reason: "game interrupted" };
+          match.completedAt = Date.now();
+          match.rated = false;
+          try {
+            await this.endMatch(match);
+          } catch (endErr) {
+            console.error("reconnect end after replay throw failed", match.id, endErr);
+          }
+        }
+        return;
+      }
+    }
     // House game: the clock was paused when this human seat disconnected;
     // resume it now that they are back, unless a draft offer's lock-in window
     // is still holding it paused. Re-arm the bot so it resumes acting on its
@@ -2911,7 +2934,7 @@ export class GameServer extends DurableObject<Env> {
     if (match.botActAt) return;
     const clocks = this.currentClocks(match, now);
     const grace = this.movesByColor(match, turn) === 0 ? firstMoveGraceMs : 0;
-    match.botActAt = now + houseThinkMs(randomInt, clocks[turn] + grace, match.setup.timeSec > 0);
+    match.botActAt = now + houseThinkMs(randomInt, clocks[turn] + grace, match.setup.timeSec);
   }
 
   // A house match threw while acting (engine edge case, corrupt record, storage

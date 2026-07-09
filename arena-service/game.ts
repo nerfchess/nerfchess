@@ -176,7 +176,7 @@ export class ArenaGame {
     const turn = g.board.turn;
     const grace = this.movedOnce[turn] ? 0 : firstMoveGraceMs;
     const clock = this.timeSec > 0 ? this.clocks[turn] + grace : 0;
-    return houseThinkMs(randomInt, clock, this.timeSec > 0);
+    return houseThinkMs(randomInt, clock, this.timeSec);
   }
 
   // ---- the one-action step (port of playHouseAction) ----
