@@ -40,6 +40,8 @@ import {
   houseThinkMs,
   isHouseUserId,
   pickHouseBotByDifficulty,
+  activeHouseRoster,
+  clampHouseCount,
   pickHouseMove,
   pickHouseSeek,
   syncHouseRatings,
@@ -794,6 +796,30 @@ export class GameServer extends DurableObject<Env> {
       }
     } catch {}
     this.houseEnabledCache = { value, at: now };
+    return value;
+  }
+
+  // How many house bots are active right now: the first N of the roster, set by
+  // the moderator slider (app_settings.house_count, 30-60). Cached on the same
+  // TTL as houseEnabled; an absent/garbage row means the default minimum.
+  private houseCountCache: { value: number; at: number } | null = null;
+  private async houseCount(): Promise<number> {
+    const now = Date.now();
+    if (this.houseCountCache && now - this.houseCountCache.at < houseEnabledTtlMs) {
+      return this.houseCountCache.value;
+    }
+    let value = this.houseCountCache?.value ?? clampHouseCount(NaN);
+    try {
+      const db = await this.db();
+      if (db) {
+        const row = await db
+          .prepare("SELECT value FROM app_settings WHERE key = ?")
+          .bind("house_count")
+          .first<{ value: string }>();
+        value = row ? clampHouseCount(Number(row.value)) : clampHouseCount(NaN);
+      }
+    } catch {}
+    this.houseCountCache = { value, at: now };
     return value;
   }
 
@@ -3207,7 +3233,7 @@ export class GameServer extends DurableObject<Env> {
       }
     }
 
-    const free = HOUSE_ROSTER.filter(
+    const free = activeHouseRoster(await this.houseCount()).filter(
       (persona) => !busy.has(persona.userId) && !seeks.some((seek) => seek.userId === persona.userId),
     );
 

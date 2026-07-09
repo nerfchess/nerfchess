@@ -134,6 +134,47 @@ const PERSONA_DEFS: Array<[name: string, skill: HouseSkill]> = [
   ["ilovewhitestickystuff", 2150],
   ["cobrakai", 2200],
   ["ilovemysister", 2200],
+  // --- Expansion personas (indices 30-59). The house-bot count is a moderator
+  // slider (30-60): the FIRST N of this roster are the active bots that seek,
+  // play, and get picked up, so the base 30 above are always on and raising the
+  // slider switches these in. Same believable-handle style, same rating bands.
+  // ~1550
+  ["woodpush_will", 1550],
+  ["mira_k", 1550],
+  ["casualcastle", 1550],
+  ["h4habit", 1550],
+  ["teatimechess", 1550],
+  ["patzer_pat", 1550],
+  // ~1750
+  ["dev_e4", 1750],
+  ["rooklift_ryan", 1750],
+  ["quietqueen", 1750],
+  ["sam_b12", 1750],
+  ["boardsnack", 1750],
+  ["midnightblitz", 1750],
+  // ~1900
+  ["tanya_v", 1900],
+  ["forkfiend", 1900],
+  ["positional_pete", 1900],
+  ["elena_88", 1900],
+  ["coffeehousepro", 1900],
+  // ~1950
+  ["zugzwangzoe", 1950],
+  ["coldblood_c", 1950],
+  ["maya_r2", 1950],
+  ["gambit_grace", 1950],
+  // ~2000
+  ["endgame_ed", 2000],
+  ["sasha_p", 2000],
+  ["thefianchetto", 2000],
+  ["sacpawn", 2000],
+  // ~2050
+  ["nadia_x", 2050],
+  ["crushingpawns", 2050],
+  ["iceberg_ivan", 2050],
+  // 2100-2200 top band
+  ["quietstormq", 2150],
+  ["apexpawn", 2200],
 ];
 
 // Flowered avatar presets (see lib/avatars.ts): the ordinary piece-on-plate
@@ -177,6 +218,23 @@ export const HOUSE_ROSTER: HousePersona[] = PERSONA_DEFS.map(([name, skill], i) 
 const HOUSE_USER_IDS = new Set(HOUSE_ROSTER.map((p) => p.userId));
 const HOUSE_BY_ID = new Map(HOUSE_ROSTER.map((p) => [p.userId, p]));
 
+// House-bot count is a moderator slider (30-60): the FIRST N of HOUSE_ROSTER are
+// the ACTIVE bots that seek, get picked up, play filler, and appear online. The
+// base 30 are always on; raising the slider switches in the expansion personas.
+// Every persona still holds a seeded account, so an idle one's profile/rating
+// stay intact if the count later drops back below it.
+export const HOUSE_COUNT_MIN = 30;
+export const HOUSE_COUNT_MAX = HOUSE_ROSTER.length;
+export function clampHouseCount(n: number): number {
+  return Number.isFinite(n)
+    ? Math.max(HOUSE_COUNT_MIN, Math.min(HOUSE_COUNT_MAX, Math.floor(n)))
+    : HOUSE_COUNT_MIN;
+}
+/** The active house personas: the first N of the roster (moderator-set count). */
+export function activeHouseRoster(count: number): HousePersona[] {
+  return HOUSE_ROSTER.slice(0, clampHouseCount(count));
+}
+
 export function isHouseUserId(id: string | null | undefined): boolean {
   return !!id && HOUSE_USER_IDS.has(id);
 }
@@ -199,13 +257,14 @@ export function pickHouseBotByDifficulty(
   difficulty: BotDifficulty,
   busy: ReadonlySet<string>,
   rand: (n: number) => number,
+  roster: readonly HousePersona[] = HOUSE_ROSTER,
 ): HousePersona | null {
   const inBand: Record<BotDifficulty, (skill: HouseSkill) => boolean> = {
     easy: (skill) => skill <= 1550,
     medium: (skill) => skill >= 1750 && skill <= 1900,
     hard: (skill) => skill >= 1950,
   };
-  const free = HOUSE_ROSTER.filter((persona) => !busy.has(persona.userId));
+  const free = roster.filter((persona) => !busy.has(persona.userId));
   if (!free.length) return null;
   const banded = free.filter((persona) => inBand[difficulty](persona.skill));
   const pool = banded.length ? banded : free;
