@@ -12,7 +12,7 @@ import {
   effectTickColor,
   newBuffMatchState,
 } from "./buff";
-import { pawnRankOk } from "./buffs/helpers";
+import { grantRandomTier10, pawnRankOk } from "./buffs/helpers";
 import { BUFF_BY_ID } from "./buffs/library";
 import { PLAYABLE_NERFS } from "./nerfs/library";
 import { DEFAULT_CADENCE, NERF_MODE_CADENCE, bankOffer, rerollOffer, rollOffer, rollSharedTiers } from "./draft";
@@ -277,6 +277,8 @@ export function makeContext(game: NerfGame, color: Color): GameContext {
 }
 
 export function applyTurnStart(game: NerfGame) {
+  // Chess Diff sub-game: nerfs are fully suspended — plain chess only.
+  if (game.buffs?.diff) return;
   const slot = game.board.turn === "w" ? game.white : game.black;
   if (slot.nerf.onTurnStart) {
     const ctx = makeContext(game, slot.color);
@@ -484,7 +486,7 @@ export function makeBuffApi(game: NerfGame, me: Color): BuffApi {
  */
 export function buffAugmentedAttacks(game: NerfGame, color: Color): Square[] {
   const bs = game.buffs;
-  if (!bs) return [];
+  if (!bs || bs.diff) return [];
   const held = heldBuffs(game, color);
   if (held.length === 0) return [];
   const board = cloneBoard(game.board);
@@ -545,6 +547,9 @@ function wallLine(squares: Square[]): { axis: "file" | "rank"; line: number } | 
 export function legalMoves(game: NerfGame): Move[] {
   if (game.result) return [];
   let all = generateMoves(game.board);
+  // Chess Diff sub-game: a plain game of chess. No nerf filters, no buff
+  // augments, no zone effects (stashed empty anyway), no pocket drops.
+  if (game.buffs?.diff) return all;
   const me = game.board.turn;
   const opp: Color = me === "w" ? "b" : "w";
   const slot = me === "w" ? game.white : game.black;
@@ -748,6 +753,54 @@ export function legalMoves(game: NerfGame): Move[] {
   return all;
 }
 
+// ---------------------------------------------------------------------------
+// Chess Diff sub-game (see ChessDiffState in buff.ts and the card in
+// buffs/library.ts). While bs.diff is set the game is a plain 1+0 game of
+// chess: no drafts roll, no nerfs filter, no buffs augment or activate, and
+// board effects are stashed away. The functions below decide the diff and
+// resume the paused game.
+// ---------------------------------------------------------------------------
+
+/** Decide the running Chess Diff: restore the paused game's board (keeping
+ * the full, continuous move history so ply counters never drift), effects and
+ * tempo counters, and hand ONLY the diff's winner a guaranteed mythic
+ * (tier 10) card. A drawn diff grants nobody anything. Deterministic: every
+ * replica reaches this through the same move/action record. */
+function endChessDiff(game: NerfGame, winner: Color | "draw") {
+  const bs = game.buffs;
+  const diff = bs?.diff;
+  if (!bs || !diff) return;
+  // The move record keeps counting through the diff, so the restored board
+  // carries the live (pre-diff + diff) history, not the stale stashed one.
+  const fullHistory = game.board.history;
+  game.board = diff.savedBoard;
+  game.board.history = fullHistory;
+  bs.effects = diff.savedEffects;
+  bs.extraMoves = diff.savedExtraMoves;
+  bs.skips = diff.savedSkips;
+  bs.chainKingGuard = diff.savedChainKingGuard;
+  bs.diff = undefined;
+  // The board was rewritten twice (into and out of the diff): history can no
+  // longer reproduce it, so replay-based checks stay off.
+  bs.historyDiverged = true;
+  if (winner !== "draw") {
+    grantRandomTier10(makeBuffApi(game, winner));
+  }
+  // Resume the paused game exactly like a turn handover: the restored mover's
+  // nerf turn-start runs, and a lockdown that was pending when the game
+  // paused still force-passes rather than soft-locking.
+  applyTurnStart(game);
+  resolveNoMoves(game);
+}
+
+/** A player flagged (ran out of the diff's 1+0 clock) during a Chess Diff:
+ * the other side wins the diff and the paused game resumes. Recorded by the
+ * game server as a draft action so every replica replays the same outcome. */
+export function resolveDiffFlag(game: NerfGame, flagged: Color) {
+  if (!game.buffs?.diff || game.result) return;
+  endChessDiff(game, flagged === "w" ? "b" : "w");
+}
+
 export function checkLossConditions(game: NerfGame): GameResult | null {
   // King capture check first
   const captured = kingCaptured(game.board);
@@ -766,6 +819,9 @@ export function checkLossConditions(game: NerfGame): GameResult | null {
     }
     return { winner, reason: "king captured" };
   }
+  // Chess Diff sub-game: nerf loss conditions are suspended with the nerfs
+  // themselves — only king capture decides the diff.
+  if (game.buffs?.diff) return null;
   for (const color of ["w", "b"] as Color[]) {
     const slot = color === "w" ? game.white : game.black;
     if (!slot.nerf.checkLoss || nerfDisabled(game, color)) continue;
@@ -860,7 +916,9 @@ export function playMove(game: NerfGame, move: Move): NerfGame {
     // and a skipped board mutation is a permanent desync. State-only changes
     // (charge counters) stay private; dtState frames resync those.
     const fired: { color: Color; index: number }[] = [];
-    for (const color of ["w", "b"] as Color[]) {
+    // Chess Diff sub-game: held buffs are dormant — their hooks reference the
+    // paused board and must not fire on diff moves.
+    for (const color of bs.diff ? [] : (["w", "b"] as Color[])) {
       const api = makeBuffApi(game, color);
       for (const { inst, def } of heldBuffs(game, color)) {
         if (!def.onMovePlayed) continue;
@@ -910,6 +968,13 @@ export function playMove(game: NerfGame, move: Move): NerfGame {
   // Check loss conditions
   const result = checkLossConditions(game);
   if (result) {
+    // Chess Diff sub-game: a decided diff ends the DIFF, never the match. The
+    // winner takes the mythic (a mutual king capture is a drawn diff: nobody
+    // does), the paused game resumes, and play continues.
+    if (bs?.diff) {
+      endChessDiff(game, result.winner === "draw" || result.winner == null ? "draw" : result.winner);
+      return game;
+    }
     game.result = result;
     return game;
   }
@@ -919,6 +984,12 @@ export function playMove(game: NerfGame, move: Move): NerfGame {
   // worker, and client-side replays of server move lists) agrees on when a
   // game is drawn.
   if (game.board.halfmove >= 100) {
+    // Fifty quiet moves inside a Chess Diff draw the DIFF (its halfmove clock
+    // started at zero), not the match.
+    if (bs?.diff) {
+      endChessDiff(game, "draw");
+      return game;
+    }
     game.result = { winner: "draw", reason: "draw by the fifty-move rule" };
     return game;
   }
@@ -949,6 +1020,13 @@ export function playMove(game: NerfGame, move: Move): NerfGame {
     // trigger runs on total plies (a full round is two plies), so neither
     // side ever runs a draft ahead of the other. White rolls first for a
     // stable RNG stream; draft-block effects eat offers individually.
+    // Suspended entirely while a Chess Diff runs: no drafts during the diff
+    // (the trigger stays put; the restored game's shorter history re-arms it).
+    if (bs.diff) {
+      applyTurnStart(game);
+      resolveNoMoves(game);
+      return game;
+    }
     if (bs.nextDraftAtPly == null) {
       // Saved games from the per-player cadence era resume on the earlier
       // of the two old thresholds.
@@ -986,6 +1064,13 @@ function resolveNoMoves(game: NerfGame) {
   if (game.result) return;
   if (legalMoves(game).length > 0) return;
   const bs = game.buffs;
+  // Chess Diff sub-game: no moves loses the DIFF (the same king-capture rule
+  // the whole site plays under), never the match. The winner takes the mythic
+  // and the paused game resumes.
+  if (bs?.diff) {
+    endChessDiff(game, game.board.turn === "w" ? "b" : "w");
+    return;
+  }
   if (bs && generateMoves(game.board).length > 0) {
     const stuck = game.board.turn;
     for (const e of bs.effects) {
@@ -1009,6 +1094,8 @@ function resolveNoMoves(game: NerfGame) {
 }
 
 export function currentHint(game: NerfGame, color: Color) {
+  // Nerfs are suspended during a Chess Diff, so their hints are too.
+  if (game.buffs?.diff) return null;
   const slot = color === "w" ? game.white : game.black;
   if (!slot.nerf.hint || nerfDisabled(game, color)) return null;
   if (game.result || game.board.turn !== color) return null;
@@ -1046,7 +1133,8 @@ export function acquireBuff(game: NerfGame, color: Color, id: string, tier: Tier
 /** Resolve the pending offer by taking the card at `cardIndex`. */
 export function pickDraftCard(game: NerfGame, color: Color, cardIndex: number) {
   const bs = game.buffs;
-  if (!bs) return;
+  // No drafting during a Chess Diff (offers were cancelled when it started).
+  if (!bs || bs.diff) return;
   const ps = bs.players[color];
   const offer = ps.offer;
   if (!offer || !offer.cards[cardIndex]) return;
@@ -1062,7 +1150,7 @@ export function pickDraftCard(game: NerfGame, color: Color, cardIndex: number) {
 /** Skip the pending offer and bank +1 tier for the next draft. */
 export function bankDraft(game: NerfGame, color: Color) {
   const bs = game.buffs;
-  if (!bs) return;
+  if (!bs || bs.diff) return;
   bankOffer(bs.players[color]);
 }
 
@@ -1070,7 +1158,7 @@ export function bankDraft(game: NerfGame, color: Color) {
  * tiers off the deterministic RNG. Returns whether a reroll happened. */
 export function rerollDraft(game: NerfGame, color: Color): boolean {
   const bs = game.buffs;
-  if (!bs) return false;
+  if (!bs || bs.diff) return false;
   return rerollOffer(bs, color, game.board);
 }
 
@@ -1082,7 +1170,8 @@ export function buffNextTarget(
   picks: BuffPick[],
 ): BuffTarget | null {
   const bs = game.buffs;
-  if (!bs) return null;
+  // Buffs cannot be aimed or used while a Chess Diff runs (plain chess only).
+  if (!bs || bs.diff) return null;
   const inst = bs.players[color].buffs[buffIndex];
   const def = inst && BUFF_BY_ID[inst.id];
   if (!inst || !def?.targets || inst.spent || inst.nullified || inst.usedActivation) return null;
@@ -1111,7 +1200,8 @@ export function activateBuff(
   picks: BuffPick[],
 ): boolean {
   const bs = game.buffs;
-  if (!bs || game.result) return false;
+  // No buff activations during a Chess Diff: the sub-game is plain chess.
+  if (!bs || game.result || bs.diff) return false;
   const inst = bs.players[color].buffs[buffIndex];
   const def = inst && BUFF_BY_ID[inst.id];
   if (
@@ -1335,7 +1425,7 @@ export function aiChooseBuffActivation(
   color: Color,
 ): { buffIndex: number; picks: BuffPick[] } | null {
   const bs = game.buffs;
-  if (!bs || game.result || game.board.turn !== color) return null;
+  if (!bs || bs.diff || game.result || game.board.turn !== color) return null;
   const ps = bs.players[color];
   const inDanger = gameInCheck(game, color);
   for (let i = 0; i < ps.buffs.length; i++) {

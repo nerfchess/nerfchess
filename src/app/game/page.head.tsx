@@ -36,7 +36,6 @@ import {
   playMove,
   rerollDraft,
   resign,
-  resolveDiffFlag,
 } from "@/engine/game";
 import { BuffDock, EnemyBuffModal, TargetingBanner, useBuffTargeting } from "@/components/BuffDock";
 import { draftCardNoun, turnCost } from "@/engine/buff";
@@ -290,9 +289,7 @@ function GamePage() {
       const now = Date.now();
       const spent = Math.max(0, now - turnStartedAtRef.current);
       turnStartedAtRef.current = now;
-      // No increment while a Chess Diff sub-game runs: it is strictly 1+0.
-      const inc = gameRef.current?.buffs?.diff ? 0 : incrementMs;
-      const bank = (prev: number) => Math.max(0, prev - spent) + inc;
+      const bank = (prev: number) => Math.max(0, prev - spent) + incrementMs;
       if (mover === "w") setWhiteMs(bank);
       else setBlackMs(bank);
     },
@@ -302,29 +299,6 @@ function GamePage() {
   useEffect(() => {
     gameRef.current = game;
   }, [game]);
-
-  // Chess Diff sub-game clock swap: while the engine's bs.diff runs, both
-  // sides play on the diff's 1+0 minute; the paused game's clocks are stashed
-  // here and restored when the diff is decided (mirrors the online server's
-  // match.diff handling). The transition guard (the ref) makes the effect a
-  // no-op on every re-render in between.
-  const diffActive = !!game?.buffs?.diff;
-  const diffSavedClocksRef = useRef<{ w: number; b: number } | null>(null);
-  useEffect(() => {
-    if (!clockEnabled) return;
-    if (diffActive && !diffSavedClocksRef.current) {
-      diffSavedClocksRef.current = { w: whiteMs, b: blackMs };
-      turnStartedAtRef.current = Date.now();
-      setWhiteMs(60_000);
-      setBlackMs(60_000);
-    } else if (!diffActive && diffSavedClocksRef.current) {
-      const saved = diffSavedClocksRef.current;
-      diffSavedClocksRef.current = null;
-      turnStartedAtRef.current = Date.now();
-      setWhiteMs(saved.w);
-      setBlackMs(saved.b);
-    }
-  }, [diffActive, clockEnabled, whiteMs, blackMs]);
 
   useEffect(() => {
     return () => {
@@ -908,25 +882,22 @@ function GamePage() {
     // Clock paused for a buff lock-in window: no flag can fall due.
     if (offerPausedAt != null) return;
     const active = game.board.turn;
-    // A flag during a Chess Diff loses the DIFF, never the game: the other
-    // side takes the mythic and the paused game (and its clocks) resumes.
-    const flagFall = () => {
-      if (game.buffs?.diff) {
-        resolveDiffFlag(game, active);
-      } else {
-        game.result = {
-          winner: active === "w" ? "b" : "w",
-          reason: `${active === "w" ? "white" : "black"} ran out of time`,
-        };
-      }
-      setGame({ ...game });
-    };
     const remaining = remainingClock(active);
     if (remaining <= 0) {
-      flagFall();
+      game.result = {
+        winner: active === "w" ? "b" : "w",
+        reason: `${active === "w" ? "white" : "black"} ran out of time`,
+      };
+      setGame({ ...game });
       return;
     }
-    const id = window.setTimeout(flagFall, remaining + 20);
+    const id = window.setTimeout(() => {
+      game.result = {
+        winner: active === "w" ? "b" : "w",
+        reason: `${active === "w" ? "white" : "black"} ran out of time`,
+      };
+      setGame({ ...game });
+    }, remaining + 20);
     return () => window.clearTimeout(id);
   }, [clockEnabled, game, remainingClock]);
 

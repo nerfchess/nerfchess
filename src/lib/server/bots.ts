@@ -4,8 +4,9 @@
 // warm so a new player always finds a game. They hold real user rows (rated
 // games, profiles, and the leaderboard work unchanged), sit in the two queue
 // pools as seeks, pick up humans who queue, and occasionally play each other
-// so the lobby and TV never look dead. They present as regular players except
-// for a small flower in the bottom-left corner of their avatar.
+// so the lobby and TV never look dead. They present exactly like regular
+// players (their accounts still hold "_flower" avatar preset ids as an
+// internal marker, but no visible mark is drawn from them anymore).
 //
 // Everything here is deliberately tiny and pure (no Durable Object state, no
 // timers): the game server drives the roster from its alarm and this module
@@ -86,8 +87,11 @@ export type HousePersona = {
 
 // Natural, realistic chess-site handles: a believable mix of casual gamertags,
 // chess-themed handles, first-name-plus-number styles, lowercase handles, and a
-// few ALLCAPS, nothing that says "bot". Roster of 50 for a busy lobby and a load
-// test. A handful of owner-chosen meme names are kept verbatim in the roster.
+// few ALLCAPS, nothing that says "bot". The cutesy alliteration handles
+// (sicilian_sam, backrankbetty, zugzwangzoe...) were swapped for plainer
+// Lichess-style ones (name+year, engine/player fandom, opening-line handles) so
+// the roster reads like a random slice of a real player base. A handful of
+// owner-chosen meme names are kept verbatim in the roster.
 // Ratings: the floor is 1550 and a top band reaches 2200, with several personas
 // seated in the 2100-2200 range so the top of the leaderboard is a spread of
 // numbers, not a single tier. The 80ms search ceiling still caps real strength,
@@ -97,7 +101,7 @@ export type HousePersona = {
 // houseSeedRating still applies on top of each tier.)
 const PERSONA_DEFS: Array<[name: string, skill: HouseSkill]> = [
   // ~1550
-  ["rook_ranger", 1550],
+  ["pawnstorm77", 1550],
   ["coffeeknight", 1550],
   ["blitzbrain", 1550],
   ["night0wl", 1550],
@@ -110,14 +114,14 @@ const PERSONA_DEFS: Array<[name: string, skill: HouseSkill]> = [
   ["CHECKMATE99", 1750],
   ["discocheck", 1750],
   // ~1900
-  ["sicilian_sam", 1900],
+  ["alexk2004", 1900],
   ["natalie88", 1900],
   ["forkmaster", 1900],
-  ["backrankbetty", 1900],
+  ["e4e5nf3", 1900],
   ["capitals", 1900],
   // ~1950
   ["matt_b44", 1950],
-  ["najdorf_nate", 1950],
+  ["veselin88", 1950],
   ["priya_r", 1950],
   // ~2000
   ["tom_lee23", 2000],
@@ -139,15 +143,15 @@ const PERSONA_DEFS: Array<[name: string, skill: HouseSkill]> = [
   // play, and get picked up, so the base 30 above are always on and raising the
   // slider switches these in. Same believable-handle style, same rating bands.
   // ~1550
-  ["woodpush_will", 1550],
+  ["lukas_j", 1550],
   ["mira_k", 1550],
   ["casualcastle", 1550],
   ["h4habit", 1550],
   ["teatimechess", 1550],
-  ["patzer_pat", 1550],
+  ["chessnoob2012", 1550],
   // ~1750
   ["dev_e4", 1750],
-  ["rooklift_ryan", 1750],
+  ["rybkafan", 1750],
   ["quietqueen", 1750],
   ["sam_b12", 1750],
   ["boardsnack", 1750],
@@ -155,23 +159,23 @@ const PERSONA_DEFS: Array<[name: string, skill: HouseSkill]> = [
   // ~1900
   ["tanya_v", 1900],
   ["forkfiend", 1900],
-  ["positional_pete", 1900],
+  ["karpov_enjoyer", 1900],
   ["elena_88", 1900],
   ["coffeehousepro", 1900],
   // ~1950
-  ["zugzwangzoe", 1950],
+  ["yasser64", 1950],
   ["coldblood_c", 1950],
   ["maya_r2", 1950],
-  ["gambit_grace", 1950],
+  ["jess2001", 1950],
   // ~2000
-  ["endgame_ed", 2000],
+  ["marat90", 2000],
   ["sasha_p", 2000],
   ["thefianchetto", 2000],
   ["sacpawn", 2000],
   // ~2050
   ["nadia_x", 2050],
   ["crushingpawns", 2050],
-  ["iceberg_ivan", 2050],
+  ["stefan_bg", 2050],
   // 2100-2200 top band
   ["quietstormq", 2150],
   ["apexpawn", 2200],

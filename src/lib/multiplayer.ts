@@ -23,6 +23,10 @@ export type MPHiddenCard = { hidden: true; tier: number; spent?: boolean; nullif
 export type MPDraftAction =
   | { ply: number; color: Color; a: "pick"; cards: (MPDraftCard | MPHiddenCard)[] }
   | { ply: number; color: Color; a: "bank" }
+  // `color` flagged the Chess Diff sub-game's 1+0 clock: the diff ends
+  // against them and the paused game resumes. Replayed through the engine's
+  // resolveDiffFlag so every replica lands on the same restored board.
+  | { ply: number; color: Color; a: "diffFlag" }
   | { ply: number; color: Color; a: "use"; buffIndex: number; picks: BuffPick[]; card?: MPDraftCard };
 
 // Per-receiver filtered view of one player's draft state. The own seat gets
@@ -265,6 +269,7 @@ export type MPEvent =
   | { type: "draft-offer"; offer: MPDraftOffer }
   | { type: "draft-resolved"; resolved: MPDraftResolved }
   | { type: "draft-used"; used: MPDraftUsed }
+  | { type: "draft-diff-flag"; color: Color }
   | { type: "draft-state"; state: MPDraftState }
   | { type: "draft-target"; buffIndex: number; target: BuffTarget | null }
   | { type: "nerf-picked"; color: Color }
@@ -299,6 +304,7 @@ type ServerFrame =
   | { t: "dtOffer"; d: MPDraftOffer }
   | { t: "dtResolved"; d: MPDraftResolved }
   | { t: "dtUsed"; d: MPDraftUsed }
+  | { t: "dtDiffFlag"; d: { color: Color } }
   | { t: "dtState"; d: { state: MPDraftState } }
   | { t: "dtTargetReq"; d: { buffIndex: number; target: BuffTarget | null } }
   | { t: "dtNerfPicked"; d: { color: Color } }
@@ -760,6 +766,9 @@ export class MPSession {
         break;
       case "dtUsed":
         this.emit({ type: "draft-used", used: frame.d });
+        break;
+      case "dtDiffFlag":
+        this.emit({ type: "draft-diff-flag", color: frame.d.color });
         break;
       case "dtState":
         this.emit({ type: "draft-state", state: frame.d.state });

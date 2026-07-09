@@ -112,7 +112,7 @@ function playSimGame(skill: HouseSkill, mode: "nerf" | "buff", seed: number) {
 }
 
 console.log("house move legality + budget:");
-for (const skill of [1200, 1400, 1600, 1750] as HouseSkill[]) {
+for (const skill of [1350, 1550, 1750] as HouseSkill[]) {
   for (const mode of ["nerf", "buff"] as const) {
     let worst = 0;
     let total = 0;
@@ -167,13 +167,17 @@ console.log("pacing: low-clock clamps and 2-8s draft picks ok");
 // 3. Roster shape, seek mix, nerf pick.
 // ---------------------------------------------------------------------------
 
-const bySkill = new Map<number, number>();
-for (const p of HOUSE_ROSTER) bySkill.set(p.skill, (bySkill.get(p.skill) ?? 0) + 1);
-check(HOUSE_ROSTER.length === 16, "roster size");
-check(bySkill.get(1200) === 6 && bySkill.get(1400) === 5 && bySkill.get(1600) === 3 && bySkill.get(1750) === 2, "skill mix 6/5/3/2");
+// The roster grew from the original 16 to a moderator-sliderable 60 and its
+// skill bands were re-seeded (1550 floor, 2200 top): assert the invariants
+// that must hold whatever the current mix is, not a frozen census.
+check(HOUSE_ROSTER.length === 60, "roster size");
+check(
+  HOUSE_ROSTER.every((p) => HOUSE_SKILL_PROFILES[p.skill] != null),
+  "every persona uses a real skill tier",
+);
 check(HOUSE_ROSTER.every((p) => !/bot/i.test(p.name)), "no 'bot' in names");
-check(HOUSE_ROSTER.every((p) => p.avatar.endsWith("_flower")), "flower avatars");
-check(new Set(HOUSE_ROSTER.map((p) => p.name.toLowerCase())).size === 16, "unique names");
+check(HOUSE_ROSTER.every((p) => p.avatar.endsWith("_flower")), "house avatar preset ids");
+check(new Set(HOUSE_ROSTER.map((p) => p.name.toLowerCase())).size === HOUSE_ROSTER.length, "unique names");
 console.log(
   "roster:",
   HOUSE_ROSTER.map((p) => `${p.name}(${p.skill}->${houseSeedRating(p)})`).join(", "),

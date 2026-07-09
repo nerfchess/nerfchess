@@ -2,6 +2,29 @@ import { Tier } from "./nerf";
 import { BoardState, Color, Move, PieceType, Square } from "./types";
 import { RNG } from "./rng";
 
+// --- Chess Diff sub-game -------------------------------------------------------
+// Chess Diff (tier 6) PAUSES the running game and spawns a fresh, completely
+// normal game of chess on top of it: the pre-diff board, board effects, and
+// tempo counters are stashed here, both armies snap to the standard opening,
+// and (in timed games) the game server swaps both clocks for a 1+0 sprint.
+// While the diff runs there are NO drafts, NO nerfs, NO buff activations and
+// no lingering effects — plain chess. When the diff is decided the stash is
+// restored, the paused game (and its clocks) resumes, and ONLY the diff's
+// winner is handed a mythic (tier 10) card. A drawn diff grants nobody
+// anything. Fully part of the deterministic engine state, so replicas replay
+// it from the shared move/action record and snapshots persist it.
+export interface ChessDiffState {
+  /** Who cast Chess Diff (they get no reward unless they win the diff). */
+  caster: Color;
+  /** Deep, detached copy of the paused game's board (history included). */
+  savedBoard: BoardState;
+  /** The paused game's board effects, restored when the diff ends. */
+  savedEffects: ActiveEffect[];
+  savedExtraMoves: { w: number; b: number };
+  savedSkips: { w: number; b: number };
+  savedChainKingGuard?: Color;
+}
+
 // ---------------------------------------------------------------------------
 // Buff system core types.
 //
@@ -305,6 +328,9 @@ export interface BuffMatchState {
    * skips: that player cannot capture the king until the opponent has
    * played one reply move. Cleared by the opponent's next actual move. */
   chainKingGuard?: Color;
+  /** Present while a Chess Diff sub-game is running (see ChessDiffState).
+   * Persistent engine state: snapshots keep it and replays rebuild it. */
+  diff?: ChessDiffState;
   players: { w: PlayerBuffState; b: PlayerBuffState };
   /**
    * Set once a buff mutates the board directly (summon, removal, teleport…).

@@ -31,7 +31,6 @@ import {
   freezeAllEnemies,
   freezeTarget,
   grantInventory,
-  grantRandomTier10,
   inHalf,
   instant,
   leapMoves,
@@ -2553,17 +2552,21 @@ const TIER6: Buff[] = [
     // Chess Diff: the card that reaches BOTH sections at once. `boon: true` with
     // a non-nerf, non-hex category seats it in buff-mode drafts (a general card)
     // AND in nerf-mode drafts (nerf mode's pool is boons + hexes + items), so it
-    // is the rare card offered as both a nerf and a buff. It forces the whole
-    // board into a fresh 1+0 sprint: every piece is wiped and both armies snap
-    // back to a standard opening (a real, deterministic board transform), and the
-    // player who called the diff draws first blood -- a GUARANTEED mythic
-    // (tier-10) card in hand for the restart. Deliberately game-breaking. Given a
-    // 2x appearance rate via DOUBLE_CHANCE_IDS in draft.ts.
+    // is the rare card offered as both a nerf and a buff. It PAUSES the running
+    // game and spawns a fresh, completely normal game of chess on top of it: the
+    // board, board effects, and tempo counters are stashed on bs.diff, both
+    // armies snap to the standard opening, and the game server swaps both clocks
+    // for a 1+0 sprint (see ChessDiffState in buff.ts and endChessDiff in
+    // game.ts). No drafts, nerfs, or buffs run while the diff does — it is
+    // decided by plain chess. When it ends, the paused game resumes and ONLY the
+    // diff's winner is handed a GUARANTEED mythic (tier-10) card; a drawn diff
+    // grants nobody anything. Deliberately game-breaking. Given a 2x appearance
+    // rate via DOUBLE_CHANCE_IDS in draft.ts.
     {
       id: "chess_diff",
       name: "Chess Diff",
       description:
-        "Chess diff! The whole board is wiped and both armies snap back to a fresh starting position for a sudden 1+0 sprint. You called the diff, so you draw first blood: seize a mythic (tier 10) buff to bring into the restart.",
+        "Chess diff! The game is paused and a fresh, completely normal game of 1+0 chess is played on a clean board — no drafts, no nerfs, no buffs. Whoever WINS the diff seizes a mythic (tier 10) buff, then the paused game (board and clocks) resumes.",
       tier: 6,
       category: "pieces",
       boon: true,
@@ -2571,6 +2574,28 @@ const TIER6: Buff[] = [
       flavor: "Bet. Let's just diff.",
     },
     instant((_inst, api) => {
+      const bs = api.bs;
+      // Never nest a diff inside a diff (unreachable through normal play: no
+      // drafts run during a diff; this guards god-panel grants and the like).
+      if (bs.diff) return;
+      // Stash the paused game: a deep, detached board copy plus the live
+      // effects/tempo state, restored verbatim when the diff is decided.
+      bs.diff = {
+        caster: api.me,
+        savedBoard: JSON.parse(JSON.stringify(api.board)) as typeof api.board,
+        savedEffects: bs.effects,
+        savedExtraMoves: bs.extraMoves,
+        savedSkips: bs.skips,
+        ...(bs.chainKingGuard ? { savedChainKingGuard: bs.chainKingGuard } : {}),
+      };
+      bs.effects = [];
+      bs.extraMoves = { w: 0, b: 0 };
+      bs.skips = { w: 0, b: 0 };
+      bs.chainKingGuard = undefined;
+      // The diff eats any draft still on the table: no drafts during the diff
+      // (the shared cadence is also suspended while it runs, see playMove).
+      bs.players.w.offer = null;
+      bs.players.b.offer = null;
       // Wipe every square (uncounted: a board rewrite loses nothing, so the
       // revive pools must stay untouched).
       for (let sq = 0; sq < 64; sq++) {
@@ -2584,14 +2609,19 @@ const TIER6: Buff[] = [
         api.place(SQ(f, 6), "p", "b");
         api.place(SQ(f, 7), back[f], "b");
       }
-      // Fresh position: both sides regain full castling and no en passant is
-      // pending. The board can no longer be reproduced from move history, so
-      // repetition checks are switched off.
+      // A genuinely fresh game: white to move, full castling for both sides,
+      // no en passant pending, and the fifty-move clock starts at zero. The
+      // board can no longer be reproduced from move history, so repetition
+      // checks are switched off. History is deliberately kept: the shared
+      // move record keeps counting through the diff, so server and replica
+      // ply counters never drift.
+      api.board.turn = "w";
       api.board.castling = { wk: true, wq: true, bk: true, bq: true };
       api.board.epTarget = null;
+      api.board.halfmove = 0;
       api.bs.historyDiverged = true;
-      // Winner of the diff walks away with a mythic.
-      grantRandomTier10(api);
+      // The mythic is granted when the diff is DECIDED, to its winner only
+      // (see endChessDiff in game.ts) — never at cast time.
     }),
   ),
   def(

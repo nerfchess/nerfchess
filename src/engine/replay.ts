@@ -30,6 +30,7 @@ import {
   newGame,
   pickDraftCard,
   playMove,
+  resolveDiffFlag,
 } from "./game";
 import { PLAYABLE_NERFS } from "./nerfs/library";
 import type { Color, Move } from "./types";
@@ -39,6 +40,8 @@ import type { Color, Move } from "./types";
 export type EngineDraftAction =
   | { ply: number; color: Color; a: "pick"; index: number; cards?: { id: string; tier: number }[] }
   | { ply: number; color: Color; a: "bank" }
+  // A Chess Diff sub-game decided by a clock flag (`color` flagged).
+  | { ply: number; color: Color; a: "diffFlag" }
   | { ply: number; color: Color; a: "use"; buffIndex: number; picks: BuffPick[] };
 
 /** The StoredMatch subset needed to reconstruct a position. Never carries
@@ -64,6 +67,7 @@ export function moveByUci(game: NerfGame, uci: string): Move | undefined {
 function applyEngineDraftAction(game: NerfGame, action: EngineDraftAction): void {
   if (action.a === "pick") pickDraftCard(game, action.color, action.index);
   else if (action.a === "bank") bankDraft(game, action.color);
+  else if (action.a === "diffFlag") resolveDiffFlag(game, action.color);
   else activateBuff(game, action.color, action.buffIndex, action.picks);
 }
 
