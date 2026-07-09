@@ -50,7 +50,7 @@ export const PT_PASSIVE_CARDS: Buff[] = [
       id: "home_field",
       name: "Home Field",
       description:
-        "Home advantage: while standing in your own half of the board, each of your knights, bishops, and rooks may also step one square in any direction.",
+        "Home advantage: while standing in your own half of the board or one rank past it, each of your knights, bishops, and rooks may also step one square in any direction.",
       tier: 5,
       category: "movement",
       requires: ["n", "b", "r"],
@@ -61,7 +61,8 @@ export const PT_PASSIVE_CARDS: Buff[] = [
       mySquares(api.board, api.me)
         .filter((sq) => {
           const t = api.board.pieces[sq]!.type;
-          return (t === "n" || t === "b" || t === "r") && inHalf(api.me, sq);
+          // "Home turf" reaches one rank past your own half (relative rank 5).
+          return (t === "n" || t === "b" || t === "r") && relRank(api.me, sq) <= 5;
         })
         .flatMap((sq) => leapMoves(api.board, sq, ALL_DIRS, inst.id)),
     ),
@@ -73,7 +74,7 @@ export const PT_PASSIVE_CARDS: Buff[] = [
       id: "gravity_well",
       name: "Gravity Well",
       description:
-        "Your king bends space around it: enemy pieces standing next to your king are caught in orbit and cannot move to a square farther from it. Enemy kings are not affected.",
+        "Your king bends space around it: enemy pieces standing within two squares of your king are caught in orbit and cannot move to a square farther from it. Enemy kings are not affected.",
       tier: 6,
       category: "tempo",
       flavor: "What goes near, stays near.",
@@ -86,7 +87,7 @@ export const PT_PASSIVE_CARDS: Buff[] = [
         if (k == null) return moves;
         const kept = moves.filter((m) => {
           if (m.piece === "k") return true; // never trap the enemy king
-          if (dist(m.from, k) !== 1) return true; // only pieces already in orbit
+          if (dist(m.from, k) > 2) return true; // only pieces already in orbit
           return dist(m.to, k) <= dist(m.from, k); // may not drift outward
         });
         return kept.length > 0 ? kept : moves;
@@ -101,7 +102,7 @@ export const PT_PASSIVE_CARDS: Buff[] = [
       id: "rust",
       name: "Rust",
       description:
-        "Idle enemy pieces seize up: any enemy piece (never a king) that has stood still for 3 of your opponent's turns rusts solid and may only move if the move is a capture, until it finally moves.",
+        "Idle enemy pieces seize up: any enemy piece (never a king) that has stood still for 2 of your opponent's turns rusts solid and may only move if the move is a capture, until it finally moves.",
       tier: 5,
       category: "hex",
       flavor: "Rome was not oxidized in a day.",
@@ -129,7 +130,7 @@ export const PT_PASSIVE_CARDS: Buff[] = [
       filterOpponentMoves: (moves, inst, _api) => {
         const idle = (inst.state.idle as Record<number, number>) ?? {};
         const kept = moves.filter(
-          (m) => m.piece === "k" || (idle[m.from] ?? 0) < 3 || !!m.captured,
+          (m) => m.piece === "k" || (idle[m.from] ?? 0) < 2 || !!m.captured,
         );
         return kept.length > 0 ? kept : moves;
       },
@@ -143,7 +144,7 @@ export const PT_PASSIVE_CARDS: Buff[] = [
       id: "photosynthesis",
       name: "Photosynthesis",
       description:
-        "Your pawns grow toward the light: after every 4 of your turns, one of your pawns advances one square on its own (the pawn nearest promotion that has an empty square ahead). It never auto-advances onto the promotion rank.",
+        "Your pawns grow toward the light: after every 3 of your turns, one of your pawns advances one square on its own (the pawn nearest promotion that has an empty square ahead). It never auto-advances onto the promotion rank.",
       tier: 4,
       category: "tempo",
       flavor: "Just add sunlight.",
@@ -155,7 +156,7 @@ export const PT_PASSIVE_CARDS: Buff[] = [
         if (move.color !== api.me) return;
         const n = ((inst.state.turns as number) ?? 0) + 1;
         inst.state.turns = n;
-        if (n % 4 !== 0) return;
+        if (n % 3 !== 0) return;
         const dir = api.me === "w" ? 1 : -1;
         const opts: { sq: Square; to: Square }[] = [];
         for (const sq of mySquares(api.board, api.me, "p")) {
@@ -181,7 +182,7 @@ export const PT_PASSIVE_CARDS: Buff[] = [
       id: "union_rules",
       name: "Union Rules",
       description:
-        "Your pieces will not be captured two turns running: on any turn right after your opponent captured one of your pieces, they cannot make a capture. If capturing is their only legal option, the rule is waived for that turn.",
+        "Your pieces get mandated rest: for your opponent's next 2 turns after they capture one of your pieces, they cannot make a capture. If capturing is their only legal option, the rule is waived for that turn.",
       tier: 5,
       category: "protection",
       flavor: "You cannot work them to the bone every shift.",
@@ -191,15 +192,23 @@ export const PT_PASSIVE_CARDS: Buff[] = [
       onMovePlayed: (inst, move, api) => {
         if (move.color !== api.opp) return;
         // Did the opponent just take one of my pieces? (A king capture ends the
-        // game, so it never matters here.)
-        inst.state.blockNext = !!move.captured && move.captured !== "k";
+        // game, so it never matters here.) A capture files a fresh two-turn
+        // grievance; otherwise the open one winds down by a turn.
+        if (!!move.captured && move.captured !== "k") {
+          inst.state.block = 2;
+        } else {
+          inst.state.block = Math.max(0, ((inst.state.block as number) ?? 0) - 1);
+        }
       },
       filterOpponentMoves: (moves, inst, _api) => {
-        if (!inst.state.blockNext) return moves;
+        if (((inst.state.block as number) ?? 0) <= 0) return moves;
         const kept = moves.filter((m) => !m.captured);
         return kept.length > 0 ? kept : moves;
       },
-      status: (inst) => (inst.state.blockNext ? "grievance filed, no captures" : "union on watch"),
+      status: (inst) =>
+        ((inst.state.block as number) ?? 0) > 0
+          ? "grievance filed, no captures"
+          : "union on watch",
     },
   ),
 
