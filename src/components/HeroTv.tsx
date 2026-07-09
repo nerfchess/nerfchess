@@ -125,48 +125,71 @@ export function HeroTv() {
     if (shownId) router.prefetch(`/game/${shownId}`);
   }, [shownId, router]);
 
-  if (!shownId || !shownPlayers) return <HeroBoard />;
+  if (!shownId || !shownPlayers) {
+    return (
+      <div className="w-full max-w-[600px] mx-auto">
+        <div className="tv-frame">
+          <HeroBoard />
+        </div>
+      </div>
+    );
+  }
 
+  // Each seat is its own link into the player's profile — the board link and
+  // the name links sit side by side, never nested.
   const seat = (color: Color) => {
     const p = shownPlayers[color];
     return (
-      <span className="flex min-w-0 items-center gap-2">
-        <PlayerAvatar name={p.name} avatar={p.avatar} size={22} />
-        <span className="truncate font-display text-sm text-parchment-100">
+      <Link
+        href={`/u/${encodeURIComponent(p.name)}`}
+        className="group/seat flex min-w-0 items-center gap-2 no-underline"
+        title={`${p.name}'s profile`}
+      >
+        <PlayerAvatar name={p.name} avatar={p.avatar} size={24} />
+        <span className="truncate font-display text-[15px] text-parchment-100 underline-offset-4 transition-colors group-hover/seat:text-gold-leaf group-hover/seat:underline group-hover/seat:decoration-gold/50">
           {p.name}
-          {p.rating != null && <span className="text-parchment-400"> ({p.rating})</span>}
+          {p.rating != null && <span className="text-parchment-400 no-underline"> ({p.rating})</span>}
         </span>
-      </span>
+      </Link>
     );
   };
 
   return (
-    <Link href={`/game/${shownId}`} className="block w-full max-w-[560px] mx-auto no-underline group">
-      <div className="flex items-center justify-between gap-2 pb-1.5">
+    <div className="w-full max-w-[600px] mx-auto">
+      <div className="flex items-center justify-between gap-2 pb-2">
         {seat("b")}
-        <span className="flex items-center gap-1.5 border border-white/10 bg-white/5 px-2.5 py-0.5 smallcaps text-[10px] text-parchment-300">
-          <span className={"h-2 w-2 " + (live && !over ? "bg-oxblood-glow animate-flicker" : "bg-parchment-400")} />
-          {live ? (over ? "Just finished" : "Live") : "Latest game"}
+        <span className="flex items-center gap-2 border border-white/10 bg-white/5 px-2.5 py-1 smallcaps text-[10px] text-parchment-200">
+          <span
+            className={
+              "h-2 w-2 " + (live && !over ? "dot-live bg-oxblood-glow" : "bg-parchment-400")
+            }
+          />
+          {live ? (over ? "Top board · just finished" : "Top board · live") : "Latest game"}
         </span>
       </div>
-      <div className="overflow-hidden border border-black/50 shadow-[0_24px_70px_-30px_rgba(0,0,0,0.85)] transition group-hover:border-gold/40">
-        <Board
-          board={board}
-          legalMoves={[]}
-          orientation="w"
-          onMove={() => {}}
-          myColor="w"
-          lastMove={lastMove}
-          disabled
-          showCoordinates={false}
-        />
-      </div>
-      <div className="flex items-center justify-between gap-2 pt-1.5">
+      <Link href={`/game/${shownId}`} className="tv-frame group block no-underline" title={live ? "Watch this game" : "Replay this game"}>
+        <div className="overflow-hidden">
+          <Board
+            board={board}
+            legalMoves={[]}
+            orientation="w"
+            onMove={() => {}}
+            myColor="w"
+            lastMove={lastMove}
+            disabled
+            showCoordinates={false}
+          />
+        </div>
+      </Link>
+      <div className="flex items-center justify-between gap-2 pt-2">
         {seat("w")}
-        <span className="smallcaps text-[10px] text-parchment-400 transition group-hover:text-gold-leaf">
+        <Link
+          href={`/game/${shownId}`}
+          className="smallcaps text-[10px] text-parchment-400 no-underline transition hover:text-gold-leaf"
+        >
           {live ? "Watch →" : "Replay →"}
-        </span>
+        </Link>
       </div>
-    </Link>
+    </div>
   );
 }

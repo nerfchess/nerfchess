@@ -52,13 +52,19 @@ const WATCH_MENU_LINKS: NavMenuItem[] = [
   { href: "/tv?mode=buff", label: "Buff TV", className: "text-mode-buffGlow" },
 ];
 
+// Clubs and Tournaments live under Community: three social destinations
+// grouped behind one label keeps the top bar readable at larger type.
+const COMMUNITY_MENU_LINKS: NavMenuItem[] = [
+  { href: "/community", label: "Community hub" },
+  { href: "/clubs", label: "Clubs" },
+  { href: "/tournaments", label: "Tournaments" },
+];
+
 const NAV_LINKS: NavLink[] = [
   { href: "/lobby", label: "Play", menu: PLAY_MENU_LINKS },
   { href: "/tv", label: "Watch", menu: WATCH_MENU_LINKS },
   { href: "/leaderboard", label: "Leaderboard" },
-  { href: "/community", label: "Community" },
-  { href: "/clubs", label: "Clubs" },
-  { href: "/tournaments", label: "Tournaments" },
+  { href: "/community", label: "Community", menu: COMMUNITY_MENU_LINKS },
   { href: "/history", label: "History" },
   { href: "/codex", label: "Rules" },
   { href: "/achievements", label: "Achievements" },
@@ -217,7 +223,7 @@ export function SiteHeader({ active }: { active?: string }) {
             phones and tablets, where the inline nav below is hidden. */}
         <MobileNavMenu align="left" hideAt="md" />
         <Logo />
-        <div className="hidden items-center gap-1 text-sm font-body font-medium md:flex">
+        <div className="hidden items-center gap-1 text-base font-body font-medium md:flex">
           {NAV_LINKS.map((link) =>
             link.menu ? (
               // Lichess-style: the label is still a link, and hovering it (or
@@ -239,14 +245,14 @@ export function SiteHeader({ active }: { active?: string }) {
                     />
                   )}
                 </Link>
-                <div className="invisible absolute left-0 top-full z-40 w-52 opacity-0 transition-opacity group-focus-within:visible group-focus-within:opacity-100 group-hover:visible group-hover:opacity-100">
+                <div className="invisible absolute left-0 top-full z-40 w-56 opacity-0 transition-opacity group-focus-within:visible group-focus-within:opacity-100 group-hover:visible group-hover:opacity-100">
                   <div className="plate dropdown py-1 shadow-2xl">
                     {link.menu.map((item) => (
                       <Link
                         key={item.href}
                         href={item.href}
                         className={
-                          "block px-4 py-2 text-sm transition-colors hover:bg-white/5 " +
+                          "block px-4 py-2.5 text-[15px] transition-colors hover:bg-white/5 " +
                           (item.className ?? "text-parchment-100 hover:text-parchment-50")
                         }
                       >
@@ -279,15 +285,25 @@ export function SiteHeader({ active }: { active?: string }) {
       </div>
 
       <div ref={rightRef} className="relative flex items-center gap-0.5 sm:gap-1">
-        {/* Search */}
-        <button type="button" aria-label="Search players" title="Search players" className={iconButton} onClick={() => toggle("search")}>
-          <Search size={17} />
-        </button>
-        {menu === "search" && (
-          <div className="absolute right-0 top-full z-40 mt-3 w-72 plate dropdown p-3 shadow-2xl">
-            <PlayerSearch autoFocus />
-          </div>
-        )}
+        {/* Search: lichess-style. The icon stays put and the field rolls out to
+            its LEFT, floating over the nav links; results drop below the field. */}
+        <div className="relative">
+          <button
+            type="button"
+            aria-label="Search players"
+            title="Search players"
+            aria-expanded={menu === "search"}
+            className={iconButton + (menu === "search" ? " bg-white/5 text-parchment-50" : "")}
+            onClick={() => toggle("search")}
+          >
+            <Search size={18} />
+          </button>
+          {menu === "search" && (
+            <div className="header-search-panel absolute right-full top-1/2 z-40 mr-1 -translate-y-1/2 [&_input]:bg-ink-800 [&_input]:shadow-2xl">
+              <PlayerSearch autoFocus />
+            </div>
+          )}
+        </div>
 
         {user && (
           <>

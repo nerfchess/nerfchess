@@ -722,6 +722,145 @@ html[data-theme="light"] .masthead {
   animation: aura-breathe 14s ease-in-out infinite;
 }
 
+/* --- Home hero: the TV frame -------------------------------------------------
+   The top played board is the star of the landing page. A warm→cool seam
+   gradient ring wraps the live board and a soft blurred aura breathes behind
+   it, so the TV reads as the brightest object on the page while the lobby
+   column beside it stays crisp and readable. */
+.tv-frame {
+  position: relative;
+  display: block;
+  padding: 2px;
+  background: linear-gradient(
+    135deg,
+    rgb(var(--seam-warm-rgb) / 0.9),
+    rgb(255 255 255 / 0.22) 52%,
+    rgb(var(--seam-cool-rgb) / 0.9)
+  );
+  box-shadow: 0 30px 90px -34px rgba(0, 0, 0, 0.9);
+  transition: box-shadow var(--dur-2) var(--ease-out), transform var(--dur-2) var(--ease-out);
+}
+.tv-frame::before {
+  content: "";
+  position: absolute;
+  inset: -16px;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(55% 55% at 22% 18%, rgb(var(--seam-warm-rgb) / 0.30), transparent 70%),
+    radial-gradient(55% 55% at 80% 86%, rgb(var(--seam-cool-rgb) / 0.30), transparent 70%);
+  filter: blur(18px);
+  animation: aura-breathe 9s ease-in-out infinite;
+}
+@media (hover: hover) {
+  .tv-frame:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 38px 100px -34px rgba(0, 0, 0, 0.95);
+  }
+}
+
+/* Live dot with an expanding echo, so "LIVE" is impossible to miss. The echo
+   is square on purpose — it matches the flat 1px-corner geometry. */
+.dot-live { position: relative; }
+.dot-live::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: inherit;
+  animation: dot-ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+@keyframes dot-ping {
+  0% { transform: scale(1); opacity: 0.75; }
+  75%, 100% { transform: scale(2.6); opacity: 0; }
+}
+
+/* Periodic light sweep across the primary CTA: a thin sheen crosses the button
+   every few seconds so "Play Someone" quietly asks for the click. */
+.cta-shine { position: relative; overflow: hidden; }
+.cta-shine::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -60%;
+  width: 42%;
+  background: linear-gradient(105deg, transparent, rgba(255, 255, 255, 0.32), transparent);
+  transform: skewX(-18deg);
+  pointer-events: none;
+  animation: cta-sweep 5s ease-in-out 1.2s infinite;
+}
+@keyframes cta-sweep {
+  0%, 62% { left: -60%; }
+  86%, 100% { left: 130%; }
+}
+
+/* Green sibling of .btn-leaf, for CTAs that should read "go" instead of the
+   site-wide accent blue. Same metal-button physics. */
+.btn-grass {
+  background: linear-gradient(to bottom, #74ad2d, #629924);
+  color: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.28);
+  border-radius: 1px;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.18) inset,
+    0 2px 6px -2px rgba(0, 0, 0, 0.5);
+  transition: background 160ms ease, filter 160ms ease, box-shadow 180ms ease, transform 120ms ease;
+  font-weight: 600;
+  letter-spacing: 0.005em;
+}
+.btn-grass:hover { filter: brightness(1.06); }
+.btn-grass:active {
+  filter: brightness(0.95);
+  transform: translateY(0.5px);
+}
+
+/* Section-title underline that sweeps in from the left on load (OPEN LOBBY). */
+.title-underline::after {
+  content: "";
+  display: block;
+  height: 3px;
+  margin-top: 0.45rem;
+  background: linear-gradient(90deg, rgb(var(--accent-hi-rgb)), rgb(var(--accent-hi-rgb) / 0));
+  transform-origin: left;
+  animation: sweep-in 0.9s var(--ease-out) 0.25s both;
+}
+@keyframes sweep-in {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+/* Nerf / Buff definition cards on the home lobby panel: each carries its mode
+   color as an rgb triple so one hover rule lights the pair correctly. */
+.mode-def-card {
+  --def-rgb: var(--accent-rgb);
+  transition: transform var(--dur-2) var(--ease-out),
+    border-color var(--dur-2) var(--ease-out),
+    box-shadow var(--dur-2) var(--ease-out);
+}
+.mode-def-card--nerf { --def-rgb: var(--seam-warm-rgb); }
+.mode-def-card--buff { --def-rgb: var(--seam-cool-rgb); }
+@media (hover: hover) {
+  .mode-def-card:hover {
+    transform: translateY(-2px);
+    border-color: rgb(var(--def-rgb) / 0.7);
+    box-shadow:
+      0 0 26px -10px rgb(var(--def-rgb) / 0.5),
+      0 12px 28px -18px rgba(0, 0, 0, 0.8);
+  }
+}
+
+/* Header search, lichess-style: the field rolls out LEFTWARD from the search
+   icon instead of dropping down. Width is animated (not transform) so the
+   input never looks squashed; clamped so it can't run off small screens. */
+.header-search-panel {
+  width: min(17rem, calc(100vw - 8.5rem));
+  animation: search-grow 0.24s var(--ease-out) both;
+}
+@keyframes search-grow {
+  from { width: 2.5rem; opacity: 0; }
+  to { width: min(17rem, calc(100vw - 8.5rem)); opacity: 1; }
+}
+
 /* --- Top-nav micro-interactions -------------------------------------------
    The desktop nav links get a quiet, quality hover/press: a background wash
    that eases in, a thin accent underline that grows from the center, and a
@@ -1168,6 +1307,8 @@ nav, header { position: relative; z-index: 30; }
   .animate-rise, .animate-seal, .animate-sigil, .animate-flicker, .animate-reveal, .animate-bob,
   .draft-in,
   .hero-aura, .mode-field::before,
+  .tv-frame::before, .dot-live::after, .cta-shine::after,
+  .title-underline::after, .header-search-panel,
   .stagger-in > *,
   .sq-strike, .sq-freeze, .sq-freeze-flake, .sq-shield-in, .walnut-piece, .banana-peel,
   .sq-walnut {
