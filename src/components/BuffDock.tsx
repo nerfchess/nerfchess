@@ -147,28 +147,39 @@ export function TargetingBanner({
   const name = (inst && BUFF_BY_ID[inst.id]?.name) ?? "Buff";
   const empty = targeting.target.kind === "square" && targeting.target.squares.length === 0;
   const finishable = targeting.target.kind === "square" && !!targeting.target.finishable;
+  const picked = targeting.picks.length;
   return (
     <div className="pointer-events-none absolute inset-x-0 bottom-2 z-30 flex justify-center px-2">
-      {/* Your card is mid-use: mint marks the active card (yours), coral the
-          back-out. 1px corners, no glow, clear labels (design law). */}
-      <div className="pointer-events-auto flex max-w-full items-center gap-2.5 rounded-[1px] border border-mint/45 bg-ink-900/95 px-3 py-2 shadow-plate backdrop-blur-sm">
-        <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-[1px] bg-mint-glow animate-flicker" />
+      {/* Your card is mid-use: a frosted glass chip with the card name, the
+          current step, a picked-so-far counter, and clear Done / Cancel.
+          Mint marks the active card (yours), coral the back-out. */}
+      <div className="glass-chip pointer-events-auto flex max-w-full items-center gap-2.5 border border-mint/40 px-3.5 py-2">
+        <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-mint-glow" />
         <span className="min-w-0 truncate font-display text-xs font-semibold text-parchment">
           <span className="text-mint-glow">{name}</span>
           <span className="text-parchment-400"> · </span>
           {empty ? "no valid targets right now" : targeting.target.label}
         </span>
+        {picked > 0 && (
+          <span
+            className="shrink-0 rounded-full border border-white/20 bg-white/[0.08] px-2 py-0.5 font-mono text-[10px] tabular-nums text-parchment-200"
+            title={`${picked} target${picked === 1 ? "" : "s"} picked so far`}
+          >
+            {picked} picked
+          </span>
+        )}
         {finishable && onFinish && (
           <button
             onClick={onFinish}
-            className="shrink-0 rounded-[1px] border border-mint/50 bg-mint/15 px-2.5 py-1 font-display text-[10px] font-semibold tracking-wide text-mint-glow transition hover:bg-mint/25"
+            className="shrink-0 rounded-full border border-mint/60 bg-mint/20 px-3 py-1 font-display text-[10px] font-bold tracking-wide text-mint-glow transition hover:bg-mint/30"
+            title="Fire now with the targets picked so far (the rest are forfeited)"
           >
             Done
           </button>
         )}
         <button
           onClick={onCancel}
-          className="shrink-0 rounded-[1px] border border-coral/40 bg-coral/10 px-2.5 py-1 font-display text-[10px] font-semibold tracking-wide text-coral-glow transition hover:bg-coral/20"
+          className="shrink-0 rounded-full border border-coral/40 bg-coral/10 px-3 py-1 font-display text-[10px] font-semibold tracking-wide text-coral-glow transition hover:bg-coral/20"
         >
           Cancel <span className="text-coral-glow/60">Esc</span>
         </button>

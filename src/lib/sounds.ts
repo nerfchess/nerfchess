@@ -310,8 +310,14 @@ export function playCapture() {
 // Check: a brighter, bell-like ping (two-note overtone).
 export function playCheck() {
   if (!soundPrefs.enabled || !soundPrefs.check) return;
-  tone({ freq: 1320, dur: 0.18, type: "sine", gain: 0.18, attack: 0.002, release: 0.18 });
-  tone({ freq: 1980, dur: 0.18, type: "sine", gain: 0.08, attack: 0.002, release: 0.18, delay: 0.01 });
+  // Alarm bell, not a polite chime (owner request: a check must be
+  // unmissable): a bright strike with its fifth and octave partials, then a
+  // quick second toll a shade lower — the classic two-ring alarm shape.
+  tone({ freq: 1320, dur: 0.22, type: "sine", gain: 0.2, attack: 0.002, release: 0.22 });
+  tone({ freq: 1980, dur: 0.2, type: "sine", gain: 0.09, attack: 0.002, release: 0.2, delay: 0.01 });
+  tone({ freq: 2640, dur: 0.14, type: "sine", gain: 0.045, attack: 0.002, release: 0.14, delay: 0.01 });
+  tone({ freq: 1188, dur: 0.24, type: "sine", gain: 0.16, attack: 0.002, release: 0.24, delay: 0.16 });
+  tone({ freq: 1782, dur: 0.2, type: "sine", gain: 0.07, attack: 0.002, release: 0.2, delay: 0.17 });
 }
 
 // Nerf trigger: soft two-note descending notification.

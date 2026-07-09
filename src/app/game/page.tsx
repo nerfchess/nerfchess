@@ -472,8 +472,8 @@ function GamePage() {
   // Shared reveal moment: once BOTH sides of a simultaneous draft round have
   // resolved (either order: the bot usually resolves first, but my pick can
   // land before its effect runs), show both briefly. The bot side follows
-  // the same visibility rules as the rest of the UI: instants are public at
-  // pick, everything else renders as a face-down back with its tier numeral.
+  // the same visibility rules as the rest of the UI: fully open-handed, every
+  // card face-up (full transparency).
   const [draftReveal, setDraftReveal] = useState<{
     mine: DraftRevealSide;
     theirs: DraftRevealSide;
@@ -536,16 +536,12 @@ function GamePage() {
       }
       // Hold the bot's resolution for the shared reveal that fires once
       // both sides of the round are in (my pick may already be waiting).
-      // Identity shows only where the current rules already make it public
-      // (instants); other picks reveal tier alone.
+      // FULL TRANSPARENCY: every picked card shows face-up, identity and all,
+      // matching the open-handed online rules.
       botResolvedRef.current = gained.length
         ? {
             banked: false,
-            cards: gained.map((b) =>
-              BUFF_BY_ID[b.id]?.kind === "instant" && !b.nullified
-                ? { id: b.id, tier: b.tier }
-                : { tier: b.tier },
-            ),
+            cards: gained.map((b) => ({ id: b.id, tier: b.tier })),
           }
         : { banked: true, cards: [] };
       tryFireDraftReveal();
@@ -1703,7 +1699,6 @@ function GamePage() {
                   <DraftNotice
                     buffs={bsTheirs.buffs}
                     banked={!!bsTheirs.flags.bankBonus}
-                    hidden
                     cardNoun={draftCardNoun(game.buffs?.mode)}
                   />
                 )}

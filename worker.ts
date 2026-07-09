@@ -112,7 +112,13 @@ type Result = NerfGame["result"];
 //     rerolls changed the same way. (c) Living God moved from the tier-8 pool
 //     to the tier-9 apex band, shifting the tier-8 pool. (d) The gambling
 //     cards' payouts changed their draw counts (Roulette and the Wheel's
-//     removal wedge spin twice, Jackpot's gate is now a coin flip).
+//     removal wedge spin twice, Jackpot's gate is now a coin flip). (e) The
+//     v5 mutual-king-capture draw was REMOVED: the first king captured ends
+//     the game with the capturer winning outright, so a game decided by the
+//     draw rule pre-bump replays to a win post-bump. (f) The info/reveal
+//     cards (Peek, Extra Glance, Watchtower, Quick Glance, Draft Insight...)
+//     left every draft pool: the whole game is public now, so there is
+//     nothing left for them to reveal.
 const REPLAY_VERSION = 7;
 
 // Refresh a match's replay checkpoint (see StoredMatch.checkpoint) at most once
@@ -1301,7 +1307,33 @@ export class GameServer extends DurableObject<Env> {
     }
   }
 
+  // --- Transient store for house-vs-house filler games -----------------------
+  // Bot-only games are entertainment, not records-in-progress: nothing about
+  // them needs a durable write on EVERY move (owner request: "the bots don't
+  // have to store everything, just temporary stuff"). Their live record —
+  // moves, clocks, draft actions, replay checkpoint included — lives in this
+  // in-memory map; the durable copy is written only at creation (so the id
+  // resolves after a restart), on a sparse heartbeat (every
+  // BOT_MATCH_FLUSH_EVERY saves, so a restart resumes at most that many events
+  // back), and at completion (the finished record feeds the archive). Human
+  // games are untouched: any match with a human seat persists on every save
+  // exactly as before. If the isolate is evicted mid-game the bots simply
+  // resume from the last heartbeat — they replay their own moves and nobody
+  // loses anything that matters.
+  private botMatches = new Map<string, StoredMatch>();
+  private botMatchDirty = new Map<string, number>();
+  private static readonly BOT_MATCH_FLUSH_EVERY = 24;
+
+  /** True for a filler game with NO human seat (both seats house personas). */
+  private isBotOnlyMatch(match: StoredMatch): boolean {
+    return !!match.bots?.w && !!match.bots?.b;
+  }
+
   private async loadMatch(id: string): Promise<StoredMatch | null> {
+    // Bot-only games read from the in-memory record first: it is the freshest
+    // (the durable copy may be a heartbeat behind).
+    const transient = this.botMatches.get(id);
+    if (transient) return transient;
     return (await this.ctx.storage.get<StoredMatch>(matchKey(id))) ?? null;
   }
 
@@ -1309,10 +1341,29 @@ export class GameServer extends DurableObject<Env> {
     // The match set changed (create / start / move / end), so the cached lobby
     // snapshot is stale. Clearing it forces the next poll to rebuild.
     this.lobbyCache = null;
-    await this.ctx.storage.put(matchKey(match.id), match);
+    if (this.isBotOnlyMatch(match) && !match.result) {
+      // Transient path: hold the live record in memory, write the durable copy
+      // only at creation and on the sparse heartbeat.
+      this.botMatches.set(match.id, match);
+      const dirty = (this.botMatchDirty.get(match.id) ?? 0) + 1;
+      const creation = (match.moves?.length ?? 0) === 0 && (match.draftActions?.length ?? 0) === 0;
+      if (creation || dirty >= GameServer.BOT_MATCH_FLUSH_EVERY) {
+        await this.ctx.storage.put(matchKey(match.id), match);
+        this.botMatchDirty.set(match.id, 0);
+      } else {
+        this.botMatchDirty.set(match.id, dirty);
+      }
+    } else {
+      await this.ctx.storage.put(matchKey(match.id), match);
+      // A finished (or human) game leaves the transient store; the durable
+      // copy just written is authoritative from here on.
+      this.botMatches.delete(match.id);
+      this.botMatchDirty.delete(match.id);
+    }
     await this.ensureLiveIndex();
-    this.trackLive(match);
-    await this.persistLiveIndex();
+    // The live-id set only changes when a game is created or ends; skip the
+    // durable index write on the per-move saves where nothing changed.
+    if (this.trackLive(match)) await this.persistLiveIndex();
     if (schedule) await this.scheduleAlarmForMatch(match);
   }
 
@@ -1325,6 +1376,8 @@ export class GameServer extends DurableObject<Env> {
       }
     }
     this.liveMatchIndex?.delete(match.id);
+    this.botMatches.delete(match.id);
+    this.botMatchDirty.delete(match.id);
     await this.ctx.storage.delete(matchKey(match.id));
   }
 
@@ -1345,10 +1398,14 @@ export class GameServer extends DurableObject<Env> {
 
   // Keep the index in step with a write: a finished game leaves the live set,
   // any other save is a live game. Assumes the index is already loaded.
-  private trackLive(match: StoredMatch) {
-    if (!this.liveMatchIndex) return;
-    if (match.result) this.liveMatchIndex.delete(match.id);
-    else this.liveMatchIndex.add(match.id);
+  // Returns whether membership actually changed, so saveMatch can skip the
+  // durable index write on the per-move saves where nothing moved.
+  private trackLive(match: StoredMatch): boolean {
+    if (!this.liveMatchIndex) return false;
+    if (match.result) return this.liveMatchIndex.delete(match.id);
+    if (this.liveMatchIndex.has(match.id)) return false;
+    this.liveMatchIndex.add(match.id);
+    return true;
   }
 
   // Persist the live-id set so a fresh isolate can load it without a scan.
@@ -1602,7 +1659,10 @@ export class GameServer extends DurableObject<Env> {
         // engine/game.ts), which is what keeps random removals identical on
         // the server, both clients, and spectators.
         draftSeed: match.draftSeed ?? match.setup.seed,
-        picksVisible: !!match.picksVisible,
+        // FULL TRANSPARENCY: every draft match plays open-handed now, so the
+        // client's picks-visible UI (opponent offer view, face-up dock) is
+        // always on regardless of how the match record was created.
+        picksVisible: true,
         dtActions: this.publicDraftActions(match, color),
         ...(game?.buffs ? { dtState: this.draftStateFor(game, match, color) } : {}),
         ...(match.dtDeadline ? { dtDeadline: match.dtDeadline } : {}),
@@ -2610,9 +2670,9 @@ export class GameServer extends DurableObject<Env> {
     if (match.draft && nextGame.buffs) {
       // The shared draft cadence rolls offers for BOTH seats on the same
       // move, so each seat whose offer appeared gets its dtOffer frame now,
-      // not just the mover's. dtOffer goes to the drafting seat only, plus
-      // the opponent when the match was created with visible picks.
-      // Spectators never see offers.
+      // not just the mover's. FULL TRANSPARENCY: every offer goes to BOTH
+      // seats, always — pending offers are public, live (spectators read the
+      // same cards from their open dtState).
       let rolledAny = false;
       for (const color of ["w", "b"] as Color[]) {
         const rolled = nextGame.buffs.players[color].offer;
@@ -2626,9 +2686,7 @@ export class GameServer extends DurableObject<Env> {
           ...(match.dtDeadline ? { deadline: match.dtDeadline } : {}),
         };
         send(this.connectedSession(match.id, color), "dtOffer", offerPayload);
-        if (match.picksVisible) {
-          send(this.connectedSession(match.id, color === "w" ? "b" : "w"), "dtOffer", offerPayload);
-        }
+        send(this.connectedSession(match.id, color === "w" ? "b" : "w"), "dtOffer", offerPayload);
       }
       if (rolledAny) this.sendDraftState(match, nextGame);
     }
@@ -4765,10 +4823,16 @@ export class GameServer extends DurableObject<Env> {
     const playerState = (color: Color) => {
       const ps = bs.players[color];
       const self = seat === color;
-      const open = self || (seat !== "spectator" && !!match.picksVisible);
-      // Reveal held-buff identities to the admin viewer for the OPPONENT seat
-      // (the own seat and picksVisible are already open above).
-      const showBuffs = open || (revealOpp && seat !== "spectator" && !self);
+      // FULL TRANSPARENCY (owner rule): the whole draft game is public, live.
+      // Every viewer — both seats and every spectator — sees both sides' held
+      // cards face-up, pending offers, and draft flags. The old masking layer
+      // (maskBuff / isBuffRevealed / picksVisible / the admin reveal toggle)
+      // is bypassed rather than deleted, so nothing downstream that still
+      // consults it breaks; `revealOpp` is now moot.
+      void revealOpp;
+      void match;
+      const open = true;
+      const showBuffs = true;
       return {
         buffs: showBuffs ? ps.buffs : ps.buffs.map((b) => (this.isBuffRevealed(b) ? b : this.maskBuff(b))),
         draftsTaken: ps.draftsTaken,
@@ -4822,37 +4886,27 @@ export class GameServer extends DurableObject<Env> {
   }
 
   // The draft record a given viewer may replay: your own picked cards are
-  // yours to see, the opponent's picks are masked to { hidden, tier } until
-  // the card's identity showed on the table (instant effect, activation, or
-  // a granted move), a bank only reveals that it happened, and buff
-  // activations carry their targets (the effects are on the board anyway).
-  // Spectators get both sides masked the same way. The pick's offer slot
-  // index stays private with the rest of the offer.
+  // FULL TRANSPARENCY (owner rule): every viewer — both seats and every
+  // spectator — replays the same fully-open record. Picks carry their real
+  // card identities, banks reveal that they happened, and buff activations
+  // carry their targets. The old per-viewer masking ({ hidden, tier }
+  // placeholders until a card's identity showed on the table) is gone; the
+  // `viewer` parameter is kept so call sites stay unchanged.
   private publicDraftActions(match: StoredMatch, viewer: Color | "spectator") {
-    const rebuild = this.draftRebuild?.matchId === match.id ? this.draftRebuild : null;
+    void viewer;
     type PublicDraftAction =
-      | { ply: number; color: Color; a: "pick"; cards: ({ id: string; tier: number } | { hidden: true; tier: number })[] }
+      | { ply: number; color: Color; a: "pick"; cards: { id: string; tier: number }[] }
       | { ply: number; color: Color; a: "bank" }
       | { ply: number; color: Color; a: "diffFlag" }
       | { ply: number; color: Color; a: "use"; buffIndex: number; picks: BuffPick[] };
-    return (match.draftActions ?? []).flatMap<PublicDraftAction>((action, i) => {
+    return (match.draftActions ?? []).flatMap<PublicDraftAction>((action) => {
       // Rerolls are a server-only RNG detail (the client never rolls offers);
       // drop them so the replica's applyDraftAction never sees one. Owner
-      // god-panel grants are dropped for the same reason and, crucially, to
-      // keep the summon invisible to the opponent and every spectator: only the
-      // granting seat's own dtState (never a public action) carries the card.
-      // Indexing stays correct because flatMap still passes the original `i`.
+      // god-panel grants are dropped for the same reason (they only seat a
+      // held card; dtState now carries every held card face-up anyway).
       if (action.a === "reroll" || action.a === "grant") return [];
       if (action.a !== "pick") return [action];
-      const open = !!match.picksVisible || viewer === action.color;
-      const acquired = rebuild?.acquired.get(i);
-      const cards = action.cards.map((card, j) => {
-        const inst = acquired?.[j];
-        const revealed =
-          open || BUFF_BY_ID[card.id]?.kind === "instant" || (inst ? this.isBuffRevealed(inst) : false);
-        return revealed ? card : { hidden: true as const, tier: card.tier };
-      });
-      return [{ ply: action.ply, color: action.color, a: "pick" as const, cards }];
+      return [{ ply: action.ply, color: action.color, a: "pick" as const, cards: action.cards }];
     });
   }
 
@@ -4957,20 +5011,12 @@ export class GameServer extends DurableObject<Env> {
       this.sendWatchers(match, "n", clockFrame);
     }
     if (resolved) {
+      // FULL TRANSPARENCY: the resolved pick (its real cards included) goes to
+      // both seats AND every spectator identically — no masked variant.
       const publicFrame = { color: resolved.color, kind: resolved.kind };
       const ownFrame = resolved.cards ? { ...publicFrame, cards: resolved.cards } : publicFrame;
-      const maskedCards = resolved.acquired?.map((b) =>
-        this.isBuffRevealed(b) ? { id: b.id, tier: b.tier as number } : this.maskBuff(b),
-      );
-      const maskedFrame = maskedCards ? { ...publicFrame, cards: maskedCards } : publicFrame;
-      const oppColor: Color = resolved.color === "w" ? "b" : "w";
-      send(this.connectedSession(match.id, resolved.color), "dtResolved", ownFrame);
-      send(
-        this.connectedSession(match.id, oppColor),
-        "dtResolved",
-        match.picksVisible ? ownFrame : maskedFrame,
-      );
-      this.sendWatchers(match, "dtResolved", maskedFrame);
+      this.broadcast(match, "dtResolved", ownFrame);
+      this.sendWatchers(match, "dtResolved", ownFrame);
     }
     if (used) {
       this.broadcast(match, "dtUsed", used);

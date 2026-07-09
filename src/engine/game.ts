@@ -835,20 +835,17 @@ export function resolveDiffFlag(game: NerfGame, flagged: Color) {
 }
 
 export function checkLossConditions(game: NerfGame): GameResult | null {
-  // King capture check first
+  // King capture check first. The FIRST king captured ends the game on the
+  // spot: the capturer wins, full stop, even if their own king was hanging
+  // (owner rule: "when you capture the king it's game, no more other stuff").
+  // The former mutual-capture draw was removed under REPLAY_VERSION 7. The
+  // both-kings-gone edge (a board wipe that somehow cleared both) stays a
+  // draw as the only sane reading of an empty throne room.
   const captured = kingCaptured(game.board);
   if (captured) {
     const winner: Color = captured === "w" ? "b" : "w";
-    // Mutual king capture is a DRAW, not an insta-loss. If the side that just
-    // lost its king could capture the winner's king in immediate reply (the
-    // winner's king is hanging too), or both kings are already gone, neither
-    // side really survived. This stops a chained or guarded capture (extra
-    // moves, chainKingGuard) from stealing a game where both kings were equally
-    // exposed: your king getting taken the move before you would have taken
-    // theirs is a draw, not a loss. isInCheck is false when the winner's king is
-    // itself missing, so the findKing check covers the both-kings-gone case.
-    if (findKing(game.board, winner) == null || isInCheck(game.board, winner)) {
-      return { winner: "draw", reason: "mutual king capture" };
+    if (findKing(game.board, winner) == null) {
+      return { winner: "draw", reason: "both kings gone" };
     }
     return { winner, reason: "king captured" };
   }
@@ -1221,6 +1218,17 @@ export function buffNextTarget(
   if (target && picks.length > 0) {
     if (target.kind === "square" && target.squares.length === 0 && !target.finishable) return null;
     if (target.kind === "enemy-buff" && target.options.length === 0) return null;
+  }
+  // Early finish everywhere (owner request): once at least ONE target is
+  // picked, every further square step is finishable — the player may press
+  // Done and fire the card with the targets chosen so far, forfeiting the
+  // rest ("teleport 3" can teleport 1). Effects already iterate their picks,
+  // so a shorter list simply applies to fewer targets; the server's dtUse
+  // validation accepts any stop on a finishable step, so both surfaces and
+  // the server agree. The FIRST pick is never skippable: a card with zero
+  // picks is a cancel, not a cast.
+  if (target && target.kind === "square" && picks.length > 0 && !target.finishable) {
+    return { ...target, finishable: true };
   }
   return target;
 }

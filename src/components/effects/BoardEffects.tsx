@@ -20,6 +20,7 @@ import {
   Wind,
 } from "lucide-react";
 import type { BuffCategory, CardFx } from "@/engine/buff";
+import { cardFaceIcon } from "@/lib/cardIcon";
 import type { PieceType } from "@/engine/types";
 import "./effects.css";
 
@@ -730,12 +731,17 @@ function CategoryChip({
   category,
   color,
   className,
+  icon,
 }: {
   category: BuffCategory;
   color: string;
   className: string;
+  /** Per-card face icon (cardFaceIcon): when present the chip shows THIS
+   * card's own glyph instead of the shared category suit, so every badge on
+   * the board is unique to its card (owner request). */
+  icon?: LucideIcon;
 }) {
-  const Icon = CATEGORY_ICON[category];
+  const Icon = icon ?? CATEGORY_ICON[category];
   return (
     <span
       aria-hidden="true"
@@ -938,11 +944,17 @@ export const MotifBadge = React.memo(function MotifBadge({
   category,
   moveAs,
   name,
+  cardId,
+  cardIcon,
 }: {
   motif: CardFx["motif"];
   tier: number;
   category: BuffCategory;
   moveAs?: PieceType;
+  /** Card id + explicit icon name: resolves the card's OWN face icon for the
+   * badge chip, so two cards sharing a motif never wear the same mark. */
+  cardId?: string;
+  cardIcon?: string;
   /** Card name: seeds the deterministic per-card accent pip. Optional and
    * backward compatible: when Board does not forward it the badge simply omits
    * the accent (the tier tint + category glyph still apply). Board has it in
@@ -953,6 +965,7 @@ export const MotifBadge = React.memo(function MotifBadge({
   const color = TIER_COLOR[tier] ?? TIER_COLOR[3];
   const accent = name ? nameHash(name) : null;
   const accentAngle = accent != null ? accent % 360 : null;
+  const faceIcon = cardId ? cardFaceIcon(cardId, category, cardIcon) : undefined;
   if (motif === "rally") {
     return (
       <span
@@ -971,7 +984,7 @@ export const MotifBadge = React.memo(function MotifBadge({
             strokeLinejoin="round"
           />
         </svg>
-        <CategoryChip category={category} color={color} className="bottom-[6%] left-0 h-[26%] w-[24%]" />
+        <CategoryChip category={category} color={color} icon={faceIcon} className="bottom-[6%] left-0 h-[26%] w-[24%]" />
       </span>
     );
   }
@@ -997,7 +1010,7 @@ export const MotifBadge = React.memo(function MotifBadge({
             {accent != null && <AccentPip cx={6 + (accent % 48)} cy={6} r={0} angleDeg={0} />}
           </svg>
         </span>
-        <CategoryChip category={category} color={color} className="bottom-[40%] right-[3%] h-[15%] w-[15%]" />
+        <CategoryChip category={category} color={color} icon={faceIcon} className="bottom-[40%] right-[3%] h-[15%] w-[15%]" />
       </>
     );
   }
@@ -1015,7 +1028,7 @@ export const MotifBadge = React.memo(function MotifBadge({
             {accent != null && <AccentPip cx={6 + (accent % 48)} cy={6} r={0} angleDeg={0} />}
           </svg>
         </span>
-        <CategoryChip category={category} color={color} className="bottom-[22%] right-[3%] h-[15%] w-[15%]" />
+        <CategoryChip category={category} color={color} icon={faceIcon} className="bottom-[22%] right-[3%] h-[15%] w-[15%]" />
       </>
     );
   }
@@ -1033,7 +1046,7 @@ export const MotifBadge = React.memo(function MotifBadge({
             {accentAngle != null && <AccentPip cx={10} cy={10} r={8.8} angleDeg={accentAngle} />}
           </svg>
         </span>
-        <CategoryChip category={category} color={color} className="right-[2%] top-[34%] h-[15%] w-[15%]" />
+        <CategoryChip category={category} color={color} icon={faceIcon} className="right-[2%] top-[34%] h-[15%] w-[15%]" />
       </>
     );
   }
@@ -1057,7 +1070,7 @@ export const MotifBadge = React.memo(function MotifBadge({
           {accentAngle != null && <AccentPip cx={10} cy={10} r={9} angleDeg={accentAngle} />}
         </svg>
       </span>
-      <CategoryChip category={category} color={color} className="right-[3%] top-[33%] h-[15%] w-[15%]" />
+      <CategoryChip category={category} color={color} icon={faceIcon} className="right-[3%] top-[33%] h-[15%] w-[15%]" />
     </>
   );
 });

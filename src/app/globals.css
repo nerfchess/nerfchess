@@ -797,8 +797,11 @@ html[data-piece-source="lichess"] .piece-asset {
 }
 .sq-light { background-color: var(--sq-light); }
 .sq-dark  { background-color: var(--sq-dark); }
-/* Checked king (Settings > Board & Pieces > Check highlight): a red radial
-   burst under the piece, like Lichess. */
+/* Checked king (Settings > Board & Pieces > Check highlight): the square burns
+   an unmissable red — the radial burst under the piece, a thick pulsing red
+   ring, and a red-hot glow on the king itself (owner request: "turn the
+   opponent's king red when you check"). Works for EITHER side's king; the
+   pulse is dropped under reduced motion but the red stays. */
 .sq-check {
   background-image: radial-gradient(
     ellipse at center,
@@ -807,6 +810,62 @@ html[data-piece-source="lichess"] .piece-asset {
     rgba(180, 0, 0, 0) 72%
   );
 }
+.sq-check::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+  box-shadow: inset 0 0 0 3px rgba(255, 56, 44, 0.9), inset 0 0 18px rgba(220, 30, 20, 0.55);
+  animation: sq-check-pulse 0.9s ease-in-out infinite;
+}
+@keyframes sq-check-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+/* The king piece itself glows red-hot while checked. */
+.sq-check .piece-inline,
+.sq-check .piece-asset {
+  filter: drop-shadow(0 0 7px rgba(255, 46, 36, 0.95)) drop-shadow(0 0 2px rgba(255, 90, 70, 0.9));
+}
+@media (prefers-reduced-motion: reduce) {
+  .sq-check::after {
+    animation: none;
+  }
+}
+/* Frosted glass chip: the shared treatment for floating in-game chrome
+   (targeting banner, opponent notices, draft chips). Translucent, blurred,
+   lit from the top edge — the "glass shiny" look. */
+.glass-chip {
+  border-radius: 999px;
+  background: linear-gradient(165deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.03) 45%, rgba(12, 18, 26, 0.25)),
+    rgba(14, 20, 30, 0.62);
+  backdrop-filter: blur(12px) saturate(1.3);
+  -webkit-backdrop-filter: blur(12px) saturate(1.3);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.35),
+    0 12px 30px -12px rgba(0, 0, 0, 0.75);
+}
+
+/* Targeting pick squares: a clean breathing glow instead of a hard flicker.
+   The soft ring swells and settles so candidates read instantly without
+   strobing the whole board. Static ring under reduced motion. */
+.sq-pickable {
+  background: radial-gradient(circle, rgba(216, 181, 110, 0.28), rgba(216, 181, 110, 0.10) 68%, transparent 78%);
+  box-shadow: inset 0 0 0 2px rgba(232, 202, 138, 0.95);
+  animation: sq-pick-breathe 1.4s ease-in-out infinite;
+}
+@keyframes sq-pick-breathe {
+  0%, 100% { box-shadow: inset 0 0 0 2px rgba(232, 202, 138, 0.95); opacity: 1; }
+  50% { box-shadow: inset 0 0 0 3px rgba(244, 220, 160, 1); opacity: 0.82; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sq-pickable {
+    animation: none;
+  }
+}
+
 /* Selection: thick brass ring + light wash, so the piece stays readable on top */
 .sq-sel {
   box-shadow:

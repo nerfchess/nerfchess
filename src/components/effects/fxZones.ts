@@ -25,6 +25,11 @@ export type MotifKind = CardFx["motif"];
 export interface MotifMark {
   sq: number;
   motif: MotifKind;
+  /** Card id: lets the board badge stamp the card's own face icon, so two
+   * different cards sharing a motif read differently at a glance. */
+  id: string;
+  /** The card's explicit icon name, when its def sets one. */
+  icon?: string;
   /** Card name, for the hover tooltip. */
   name: string;
   /** The card's own rule text, so the hover explains exactly what this card
@@ -161,6 +166,8 @@ export function computeFxVisual(game: { board: BoardState; buffs?: BuffMatchStat
       const target: Color = fx.self ? caster : caster === "w" ? "b" : "w";
       const mark: Omit<MotifMark, "sq"> = {
         motif: fx.motif,
+        id: def.id,
+        ...(def.icon ? { icon: def.icon } : {}),
         name: def.name,
         description: def.description,
         tier: inst.tier,
