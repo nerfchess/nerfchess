@@ -238,6 +238,25 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   const isNerfMode = isDraft && start.mode === "nerf";
   const picksVisible = !!start.picksVisible;
 
+  // Owner god panel is opt-in: it only mounts when ilovenewjeans has switched it
+  // on from /mod (persisted in app_settings). Fetched once for the owner account;
+  // non-owners never render the panel and never make this request. Defaults to
+  // hidden, so a failed or pending fetch simply keeps it off.
+  const [godPanelOn, setGodPanelOn] = useState(false);
+  useEffect(() => {
+    if (!isOwnerAccount) return;
+    let cancelled = false;
+    fetch("/api/mod/god-panel")
+      .then((res) => (res.ok ? (res.json() as Promise<{ enabled: boolean }>) : null))
+      .then((data) => {
+        if (!cancelled && data) setGodPanelOn(data.enabled);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [isOwnerAccount]);
+
   // Draft games open with a nerf draft: pick one of two rules before the
   // game exists. While it is unresolved there is no game to build (the
   // server holds the match un-started and the clocks off).
@@ -2421,10 +2440,11 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
 
       <OppPlaysLog plays={oppLog} />
 
-      {/* Owner god panel: far-right, mounted only for the ilovenewjeans account
-          and only in a live draft game (buffs exist there). Fixed at xl+ so it
-          never overlaps the board on normal screens. Server re-verifies. */}
-      {isOwnerAccount && isDraft && game.buffs && <AdminGodPanel session={session} />}
+      {/* Owner god panel: far-right, mounted only for the ilovenewjeans account,
+          only when he has switched it on from /mod, and only in a live draft game
+          (buffs exist there). Fixed at xl+ so it never overlaps the board on
+          normal screens. Server re-verifies every gated message. */}
+      {isOwnerAccount && godPanelOn && isDraft && game.buffs && <AdminGodPanel session={session} />}
 
       {/* Shared reveal moment: both sides of the draft round resolved, show
           the outcome briefly. Non-blocking, click to dismiss, auto-dismisses
