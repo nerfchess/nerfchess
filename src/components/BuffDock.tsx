@@ -722,17 +722,19 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
           type="button"
           onClick={() => toggle(key)}
           aria-expanded={open}
-          className="flex w-full items-center gap-1.5 px-2 py-1 text-left"
+          className="flex w-full items-center gap-1.5 px-2 py-1.5 text-left"
         >
           <ChevronRight
             aria-hidden
-            size={12}
+            size={14}
             strokeWidth={2.4}
             className={"shrink-0 text-parchment-400 transition-transform duration-150 " + (open ? "rotate-90" : "")}
           />
+          {/* The opponent's held cards read a notch LARGER than your own arsenal:
+              what threatens you is the thing worth seeing clearly at a glance. */}
           <span
             className={
-              "min-w-0 flex-1 truncate font-display text-[11px] font-semibold " +
+              "min-w-0 flex-1 truncate font-display text-[13px] font-semibold leading-tight " +
               (dead
                 ? "text-parchment-400 line-through decoration-1 decoration-parchment-500/60"
                 : `tier-${inst.tier}`)
@@ -743,14 +745,14 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
           <TurnCostBadge cost={turnCost(def)} short />
           {dead && <UsedBadge nullified={!!inst.nullified} />}
           <span
-            className={`shrink-0 rounded-[1px] border px-1.5 py-px font-display text-[9px] font-bold tier-bg-${inst.tier} tier-${inst.tier}`}
+            className={`shrink-0 rounded-[1px] border px-1.5 py-px font-display text-[10px] font-bold tier-bg-${inst.tier} tier-${inst.tier}`}
           >
             {TIER_ROMAN[inst.tier]}
           </span>
         </button>
         {open && (
           /* Rule text on demand: what a revealed card does is one click away. */
-          <p className={"px-2 pb-1 text-[10px] leading-snug " + (dead ? "text-parchment-500" : "text-parchment-300")}>
+          <p className={"px-2 pb-1.5 text-[11px] leading-snug " + (dead ? "text-parchment-500" : "text-parchment-300")}>
             {def.description}
           </p>
         )}

@@ -843,6 +843,9 @@ export function Board({
   // Remembers what was under the pointer when a press began, so releasing on
   // the same square can toggle the selection off (lichess click behaviour).
   const pressRef = useRef<{ sq: Square; wasSelected: boolean } | null>(null);
+  // The last dead-tap (square + timestamp) for the mobile double-tap gesture
+  // that cancels the whole premove queue (touch has no right-click).
+  const lastTapRef = useRef<{ sq: Square; t: number } | null>(null);
   // The destination of a just-dropped drag: that piece must not animate.
   const dropSkipRef = useRef<Square | null>(null);
   const prevPiecesRef = useRef<BoardState["pieces"] | null>(null);
@@ -1503,12 +1506,37 @@ export function Board({
       }
       return;
     }
-    if (disabled) return;
+    // While the board is not interactive (not your turn, move review, an open
+    // draft offer), a touch tap on a special square still inspects it: mobile
+    // has no hover, so this is the phone counterpart of the desktop popover.
+    if (disabled) {
+      if (e.pointerType === "touch" && effectInfoFor(sq)) {
+        e.stopPropagation();
+        setEffectPopoverSq(sq);
+      }
+      return;
+    }
     if (tryPlay(sq)) return;
     const piece = board.pieces[sq];
     if (piece && piece.color === myColor && movesFrom.has(sq)) {
       pressRef.current = { sq, wasSelected: selected === sq };
       onPointerDownPiece(e, sq);
+      return;
+    }
+    // A tap that plays no move and grabs no piece, landing on a special square
+    // (a frozen/locked/warded/hexed piece or square, an opponent's bound card),
+    // inspects it: the same effect popover desktop shows on hover. Touch only,
+    // so desktop's click-to-clear-shapes stays untouched. A legal move onto a
+    // special square already fired via tryPlay above, so capturing a hexed
+    // enemy piece still captures. Clear the selection and shapes first, exactly
+    // like the dead-tap path below, so inspecting never leaves a move armed
+    // under the popover (a later tap must not fire a stale target).
+    if (e.pointerType === "touch" && effectInfoFor(sq)) {
+      clearAnnotations();
+      setSelected(null);
+      lastTapRef.current = null;
+      e.stopPropagation();
+      setEffectPopoverSq(sq);
       return;
     }
     // A plain left-click / tap on the board that neither plays a move nor picks
@@ -1517,9 +1545,26 @@ export function Board({
     // clearing shapes and canceling a premove are separate concerns. A premove
     // is still canceled the normal way (a different premove, the right-click
     // context menu, or the dedicated cancel control), never by a stray click.
+    const hadSelection = selected != null;
     clearAnnotations();
-    if (selected != null) {
+    if (hadSelection) {
       setSelected(null);
+    }
+    // Touch has no right-click, which is how desktop cancels a queued premove
+    // (handleSquareContextMenu). On mobile, a double-tap on the same empty
+    // square cancels the whole premove queue. Only a "pure" dead tap counts (one
+    // that did not just deselect a piece), so retrying a mis-tapped premove
+    // never nukes the queue. We only reach here on a tap that played no move and
+    // grabbed no piece, so this can never disturb tap-to-move or premove making.
+    if (e.pointerType === "touch" && premoves && premoves.length > 0 && onCancelPremove) {
+      const now = e.timeStamp || Date.now();
+      const prev = lastTapRef.current;
+      if (!hadSelection && prev && prev.sq === sq && now - prev.t < 320) {
+        lastTapRef.current = null;
+        onCancelPremove();
+        return;
+      }
+      lastTapRef.current = hadSelection ? null : { sq, t: now };
     }
   };
 

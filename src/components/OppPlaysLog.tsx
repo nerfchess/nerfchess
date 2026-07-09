@@ -4,7 +4,7 @@ import { BUFF_BY_ID } from "@/engine/buffs/library";
 import { Tier } from "@/engine/nerf";
 import { TIER_ROMAN } from "@/lib/tiers";
 import { useReducedMotion } from "framer-motion";
-import { History } from "lucide-react";
+import { ChevronRight, History } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 // The feed of cards/hexes the opponent has played.
@@ -166,6 +166,10 @@ export function OppPlaysLog({ plays }: { plays: OppPlay[] }) {
 export function OppPlaysDockSection({ plays }: { plays: OppPlay[] }) {
   // Manual expand/collapse taps override the newest-N default per row.
   const [overrides, setOverrides] = useState<Record<number, boolean>>({});
+  // The ledger is an archive: every fresh play already gets its 10s in the
+  // top-right feed, so the permanent dock list starts collapsed to a count-only
+  // header and opens on tap. Keeps the dock (and the mobile drawer) uncluttered.
+  const [open, setOpen] = useState(false);
   const [, setTick] = useState(0);
   // Tick only while something is still upstairs in the feed, so its row
   // appears here the moment it lands; a quiet ledger costs nothing.
@@ -177,18 +181,32 @@ export function OppPlaysDockSection({ plays }: { plays: OppPlay[] }) {
   }, [pending]);
 
   const now = Date.now();
-  const landed = plays.filter((p) => now - p.at >= FEED_TTL_MS);
+  // Only plays whose card is still in the library render a row, so filter the
+  // same set the count chip reports: the header number always matches the list.
+  const landed = plays.filter((p) => now - p.at >= FEED_TTL_MS && BUFF_BY_ID[p.card.id]);
   if (!landed.length) return null;
   const newestFirst = [...landed].reverse();
   return (
     <div className="border-t border-white/10 pt-2">
-      <div className="flex items-center gap-1.5">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className="flex w-full items-center gap-1.5 text-left"
+      >
+        <ChevronRight
+          aria-hidden
+          size={12}
+          strokeWidth={2.4}
+          className={"shrink-0 text-parchment-400 transition-transform duration-150 " + (open ? "rotate-90" : "")}
+        />
         <History aria-hidden size={12} strokeWidth={2.2} className="shrink-0 text-parchment-400" />
         <span className="smallcaps min-w-0 truncate text-[10px] text-parchment-400">Opponent played</span>
         <span className="ml-auto shrink-0 rounded-[1px] border border-white/15 bg-white/[0.05] px-1.5 py-px font-mono text-[9px] tabular-nums text-parchment-300">
           {landed.length}
         </span>
-      </div>
+      </button>
+      {open && (
       <ul className="mt-1 space-y-0.5">
         {newestFirst.map((p, idx) => {
           const def = BUFF_BY_ID[p.card.id];
@@ -232,6 +250,7 @@ export function OppPlaysDockSection({ plays }: { plays: OppPlay[] }) {
           );
         })}
       </ul>
+      )}
     </div>
   );
 }
