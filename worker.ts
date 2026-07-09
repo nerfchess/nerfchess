@@ -113,7 +113,12 @@ type Result = NerfGame["result"];
 //     to the tier-9 apex band, shifting the tier-8 pool. (d) The gambling
 //     cards' payouts changed their draw counts (Roulette and the Wheel's
 //     removal wedge spin twice, Jackpot's gate is now a coin flip).
-const REPLAY_VERSION = 7;
+//   8 - Chess Diff now uses STANDARD chess rules: the sub-game is decided by
+//     checkmate/stalemate (not king capture) and no piece may move into check,
+//     and the draft cadence is re-armed past the diff's plies on resume. A diff
+//     recorded pre-bump (king-capture line, backlogged cadence) replays into a
+//     different resolution and offer timing post-bump.
+const REPLAY_VERSION = 8;
 
 // Refresh a match's replay checkpoint (see StoredMatch.checkpoint) at most once
 // per this many committed events (moves + draft actions), so gameForPlay never
@@ -520,7 +525,7 @@ type HouseSeekEntry = {
 // (deserializing every finished game's move history), which on a bloated table
 // blew the DO CPU limit before it could cache or GC anything: the crash loop.
 const liveIdsKey = "live:ids";
-const buildVersion = "house-consolidated-1";
+const buildVersion = "chess-diff-standard-rules-1";
 // The single account allowed to use the owner "fun with friends" tools: the
 // -15s opponent-clock button and the god panel card grant. SERVER-verified on
 // every gated message (never trust the client). Compared case-insensitively so
