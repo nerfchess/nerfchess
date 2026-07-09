@@ -66,7 +66,7 @@ export function MobileNavMenu({
         aria-expanded={open}
         aria-label={open ? "Close menu" : "Open menu"}
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex h-9 w-9 items-center justify-center btn-ghost"
+        className="inline-flex h-11 w-11 items-center justify-center btn-ghost"
       >
         {open ? <X size={18} /> : <Menu size={18} />}
       </button>

@@ -1355,13 +1355,13 @@ function GamePage() {
       <div className="grid grid-cols-2 gap-2">
         <button
           onClick={confirmHeldMove}
-          className="min-w-0 px-3 py-2 border border-gold/40 bg-gold/10 text-gold-leaf hover:bg-gold/20 hover:border-gold/70 transition text-xs font-display font-semibold tracking-wide"
+          className="min-w-0 min-h-[44px] inline-flex items-center justify-center px-3 py-2 border border-gold/40 bg-gold/10 text-gold-leaf hover:bg-gold/20 hover:border-gold/70 transition text-xs font-display font-semibold tracking-wide"
         >
           Confirm
         </button>
         <button
           onClick={() => setConfirmMovePending(null)}
-          className="min-w-0 px-3 py-2 btn-ghost text-xs font-display tracking-wide"
+          className="min-w-0 min-h-[44px] inline-flex items-center justify-center px-3 py-2 btn-ghost text-xs font-display tracking-wide"
         >
           Cancel
         </button>
@@ -1373,13 +1373,13 @@ function GamePage() {
       <div className="grid grid-cols-2 gap-2">
         <button
           onClick={onOfferDraw}
-          className="min-w-0 px-3 py-2 border border-gold/40 bg-gold/10 text-gold-leaf hover:bg-gold/20 hover:border-gold/70 transition text-xs font-display font-semibold tracking-wide"
+          className="min-w-0 min-h-[44px] inline-flex items-center justify-center px-3 py-2 border border-gold/40 bg-gold/10 text-gold-leaf hover:bg-gold/20 hover:border-gold/70 transition text-xs font-display font-semibold tracking-wide"
         >
           Offer draw
         </button>
         <button
           onClick={() => setConfirmingDraw(false)}
-          className="min-w-0 px-3 py-2 btn-ghost text-xs font-display tracking-wide"
+          className="min-w-0 min-h-[44px] inline-flex items-center justify-center px-3 py-2 btn-ghost text-xs font-display tracking-wide"
         >
           Cancel
         </button>
@@ -1391,13 +1391,13 @@ function GamePage() {
       <div className="grid grid-cols-2 gap-2">
         <button
           onClick={() => { onResign(); setConfirmingResign(false); }}
-          className="min-w-0 px-3 py-2 border border-oxblood/70 bg-oxblood/25 text-oxblood-glow hover:bg-oxblood/40 transition text-xs font-display font-semibold tracking-wide"
+          className="min-w-0 min-h-[44px] inline-flex items-center justify-center px-3 py-2 border border-oxblood/70 bg-oxblood/25 text-oxblood-glow hover:bg-oxblood/40 transition text-xs font-display font-semibold tracking-wide"
         >
           Yes
         </button>
         <button
           onClick={() => setConfirmingResign(false)}
-          className="min-w-0 px-3 py-2 btn-ghost text-xs font-display tracking-wide"
+          className="min-w-0 min-h-[44px] inline-flex items-center justify-center px-3 py-2 btn-ghost text-xs font-display tracking-wide"
         >
           Cancel
         </button>
@@ -1414,7 +1414,7 @@ function GamePage() {
           disabled={drawOfferStatus !== "idle"}
           title="Offer a draw"
           aria-label="Offer a draw"
-          className="min-w-0 px-3 py-2 border border-gold/40 bg-gold/10 text-gold-leaf hover:bg-gold/20 hover:border-gold/70 transition text-xs font-display font-semibold tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
+          className="min-w-0 min-h-[44px] inline-flex items-center justify-center px-3 py-2 border border-gold/40 bg-gold/10 text-gold-leaf hover:bg-gold/20 hover:border-gold/70 transition text-xs font-display font-semibold tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {drawOfferStatus === "offering" ? "Offering..." : "Draw"}
         </button>
@@ -1422,7 +1422,7 @@ function GamePage() {
           onClick={requestResign}
           title="Resign the game"
           aria-label="Resign the game"
-          className="min-w-0 px-3 py-2 border border-oxblood/40 bg-oxblood/10 text-oxblood-glow hover:bg-oxblood/20 hover:border-oxblood/70 transition text-xs font-display font-semibold tracking-wide"
+          className="min-w-0 min-h-[44px] inline-flex items-center justify-center px-3 py-2 border border-oxblood/40 bg-oxblood/10 text-oxblood-glow hover:bg-oxblood/20 hover:border-oxblood/70 transition text-xs font-display font-semibold tracking-wide"
         >
           Resign
         </button>
@@ -1456,7 +1456,7 @@ function GamePage() {
             onClick={toggleMute}
             aria-label={muted ? "Unmute" : "Mute"}
             title={muted ? "Sound off" : "Sound on"}
-            className="w-9 h-9 inline-flex items-center justify-center rounded-full btn-ghost"
+            className="h-11 w-11 sm:h-9 sm:w-9 inline-flex items-center justify-center rounded-full btn-ghost"
           >
             {muted ? (
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -1476,7 +1476,7 @@ function GamePage() {
             onClick={() => setSettingsOpen(true)}
             aria-label="Settings"
             title="Settings"
-            className="w-9 h-9 inline-flex items-center justify-center rounded-full btn-ghost"
+            className="h-11 w-11 sm:h-9 sm:w-9 inline-flex items-center justify-center rounded-full btn-ghost"
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <circle cx="12" cy="12" r="3" />
