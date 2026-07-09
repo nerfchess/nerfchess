@@ -1,15 +1,18 @@
 "use client";
 
-import type { BuffInstance } from "@/engine/buff";
+import type { Buff, BuffInstance } from "@/engine/buff";
 import { BUFF_BY_ID } from "@/engine/buffs/library";
+import { cardFaceIcon } from "@/lib/cardIcon";
 import { useEffect, useRef, useState } from "react";
 
 interface Notice {
   key: number;
   text: string;
   /** The picked card's rule text, shown under the headline when the card's
-   * identity is public (picks-visible games). Absent for masked drafts. */
+   * identity is public (every game now: full transparency). */
   detail?: string;
+  /** The named card, so the notice can stamp its face icon. */
+  card?: Buff;
   leaving: boolean;
 }
 
@@ -52,16 +55,17 @@ export function DraftNotice({
   }, []);
 
   useEffect(() => {
-    const items: { text: string; detail?: string }[] = [];
+    const items: { text: string; detail?: string; card?: Buff }[] = [];
     let arrivedSpent = 0;
     if (count > prevCount.current) {
       for (const inst of buffs.slice(prevCount.current)) {
         if (inst.spent) arrivedSpent += 1;
-        // Only name the card (and spell out what it does) when its identity is
-        // public; a masked draft keeps the generic line so nothing leaks.
+        // Full transparency: name the card and spell out what it does. The
+        // `hidden` prop survives only for exotic callers that still want the
+        // generic line.
         const def = !hidden ? BUFF_BY_ID[inst.id] : undefined;
         if (def) {
-          items.push({ text: `Opponent drafted ${def.name}`, detail: def.description });
+          items.push({ text: `Opponent drafted ${def.name}`, detail: def.description, card: def });
         } else {
           items.push({ text: `Opponent drafted a ${cardNoun}` });
         }
@@ -77,7 +81,7 @@ export function DraftNotice({
     }
     prevSpent.current = spentCount;
     if (items.length === 0) return;
-    const fresh = items.map(({ text, detail }) => ({ key: nextKey.current++, text, detail, leaving: false }));
+    const fresh = items.map(({ text, detail, card }) => ({ key: nextKey.current++, text, detail, card, leaving: false }));
     const keys = new Set(fresh.map((n) => n.key));
     setNotices((cur) => [...cur, ...fresh]);
     timers.current.push(
@@ -100,24 +104,31 @@ export function DraftNotice({
       aria-live="polite"
       className="pointer-events-none absolute inset-x-0 top-2 z-30 flex flex-col items-center gap-1"
     >
-      {notices.map((n) => (
-        <div
-          key={n.key}
-          className={
-            "animate-rise max-w-[18rem] rounded-[1px] border border-gold/40 bg-ink-700/95 px-3.5 py-1.5 shadow-plate backdrop-blur-sm " +
-            "transition-opacity duration-300 " +
-            (n.leaving ? "opacity-0" : "opacity-100")
-          }
-        >
-          <div className="font-display text-xs font-semibold text-parchment">
-            <span aria-hidden className="mr-2 inline-block h-1.5 w-1.5 bg-gold-leaf align-middle" />
-            {n.text}
+      {notices.map((n) => {
+        const Icon = n.card ? cardFaceIcon(n.card.id, n.card.category, n.card.icon) : undefined;
+        return (
+          <div
+            key={n.key}
+            className={
+              "glass-chip animate-rise max-w-[20rem] border border-gold/40 px-4 py-2 " +
+              "transition-opacity duration-300 " +
+              (n.leaving ? "opacity-0" : "opacity-100")
+            }
+          >
+            <div className="flex items-center gap-2 font-display text-xs font-semibold text-parchment">
+              {Icon ? (
+                <Icon aria-hidden className="h-3.5 w-3.5 shrink-0 text-gold-leaf" strokeWidth={2.2} />
+              ) : (
+                <span aria-hidden className="inline-block h-1.5 w-1.5 shrink-0 bg-gold-leaf" />
+              )}
+              {n.text}
+            </div>
+            {n.detail && (
+              <p className="mt-0.5 text-[11px] font-normal leading-snug text-parchment-300">{n.detail}</p>
+            )}
           </div>
-          {n.detail && (
-            <p className="mt-0.5 text-[11px] font-normal leading-snug text-parchment-300">{n.detail}</p>
-          )}
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

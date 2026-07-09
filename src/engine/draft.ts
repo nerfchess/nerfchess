@@ -24,7 +24,24 @@ import { BoardState, Color, PieceType } from "./types";
 
 // Info cards whose whole effect is reading the opponent's NERF. Buff mode has
 // no nerfs, so these are dead weight there and are filtered out of buff drafts.
+// (They stay in nerf mode: handicaps are still secret, so they still reveal
+// something real.)
 const NERF_REVEAL = new Set(["extra_glance", "watchtower"]);
+
+// Draft/buff reveal cards, removed from EVERY pool (owner request: the whole
+// game is public now — every held card, pick, bank, and pending offer is
+// visible to both players and spectators — so "see your opponent's cards"
+// effects reveal nothing). Cards that bundled a reveal with a rider
+// (Mind Read's nullify) go with them: their identity was the peek. The defs
+// stay implemented so archived games and held copies keep replaying.
+const DEAD_REVEALS = new Set([
+  "peek",
+  "quick_glance",
+  "draft_insight",
+  "wa_foresight",
+  "wa_mind_read",
+  "wa_omniscience",
+]);
 
 // Draft cadence in own moves. Tuning guide: 5 creates faster chaos, 6 is the
 // slower arc, 7 slows it further and delays high-tier cards. Set to 5 so
@@ -256,6 +273,8 @@ function rollCards(
     // single apex card; in both, every draw is a tier-9 card with an
     // APEX_MYTHIC_CHANCE (~10%) upgrade to a tier-10 mythic.
     if (b.special || b.tier === 9 || b.tier === 10) return false;
+    // Full-transparency era: buff/draft reveal cards left every pool.
+    if (DEAD_REVEALS.has(b.id)) return false;
     if ((reliefIsDead || nerfDeclinesMaxed) && b.category === "nerf") return false;
     if (owned && b.requires && !b.requires.some((t) => owned.has(t))) return false;
     return bs.mode === "buff"

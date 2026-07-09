@@ -2183,6 +2183,9 @@ export function Board({
                     tier={motifMark.tier}
                     category={motifMark.category}
                     moveAs={motifMark.moveAs}
+                    name={motifMark.name}
+                    cardId={motifMark.id}
+                    cardIcon={motifMark.icon}
                   />
                 )}
                 {boundMark && (
@@ -2278,7 +2281,7 @@ export function Board({
                   <div className="absolute inset-0 pointer-events-none rounded-sm ring-2 ring-inset ring-gold-leaf/80 shadow-[inset_0_0_24px_-4px_rgba(230,191,106,0.55)] animate-flicker" />
                 )}
                 {isPickTarget && (
-                  <div className="absolute inset-0 pointer-events-none rounded-sm bg-gold/15 ring-2 ring-inset ring-gold-leaf/90 animate-flicker" />
+                  <div className="sq-pickable absolute inset-0 pointer-events-none rounded-sm" />
                 )}
                 {fogHide ? (
                   <div className="absolute inset-0 bg-gradient-to-br from-stone-700/85 to-stone-900/95 backdrop-blur-sm pointer-events-none" />
