@@ -8,7 +8,8 @@ import { Board, QueuedPremove } from "@/components/Board";
 import { BoardPlayerRow } from "@/components/BoardPlayerRow";
 import { AdminGodPanel } from "@/components/AdminGodPanel";
 import { OppPlaysLog, type OppPlay } from "@/components/OppPlaysLog";
-import { BuffDock, EnemyBuffModal, TargetingBanner, useBuffTargeting } from "@/components/BuffDock";
+import { BuffDock, EnemyBuffModal, TargetingBanner, againstYouRows, useBuffTargeting } from "@/components/BuffDock";
+import { BoardSplashHost } from "@/components/BoardSplash";
 import { ChatPanel } from "@/components/ChatPanel";
 import { ClockPill } from "@/components/ClockPill";
 import { DraftNotice } from "@/components/DraftNotice";
@@ -78,7 +79,7 @@ import {
   saveOnlineSeat,
 } from "@/lib/multiplayer";
 import { premoveOptionsFor } from "@/lib/premoves";
-import { isMuted, playCapture, playCheck, playError, playMove as playMoveSfx, playNerf, setMuted } from "@/lib/sounds";
+import { isMuted, playCapture, playChallenge, playCheck, playError, playMove as playMoveSfx, playNerf, setMuted } from "@/lib/sounds";
 
 // Mirrors the server's start-of-game grace: each side's first move gets this
 // many free milliseconds before their clock starts charging.
@@ -373,10 +374,17 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   // The full-screen waiting overlay has out-stayed its welcome: collapse it to
   // the non-blocking corner pill (see WAITING_OVERLAY_AUTO_HIDE_MS).
   const [waitTimedOut, setWaitTimedOut] = useState(false);
+  // Player clicked the post-draft waiting card away (collapses to the pill).
+  const [waitingMinimized, setWaitingMinimized] = useState(false);
   const [oppDrafting, setOppDrafting] = useState(() => {
     const opp = start.dtState?.players?.[start.color === "w" ? "b" : "w"];
     return !!opp?.offerPending || !!opp?.offer;
   });
+  // Un-dismiss the waiting card whenever the opponent is no longer mid-draft,
+  // so each new waiting period starts with the full card again.
+  useEffect(() => {
+    if (!oppDrafting) setWaitingMinimized(false);
+  }, [oppDrafting]);
   // Lock-in window for the current buff offers; the server auto-resolves at
   // the deadline while both clocks stay paused.
   const [draftDeadline, setDraftDeadline] = useState<number | null>(() => start.dtDeadline ?? null);
@@ -1047,8 +1055,13 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         applyGame({ ...g });
       } else if (e.type === "rematch-offer") {
         setRematchStatus(e.color === myColor ? "offered" : "incoming");
-        // An offer from the opponent is proof of life.
-        if (e.color !== myColor) setOpponentGone(false);
+        // An offer from the opponent is proof of life. It also dings like a
+        // challenge, so an offer arriving with the end panel closed (or the
+        // tab in the background) still lands.
+        if (e.color !== myColor) {
+          setOpponentGone(false);
+          playChallenge();
+        }
       } else if (e.type === "rematch-cancelled") {
         setRematchStatus("none");
       } else if (e.type === "rematched") {
@@ -1836,13 +1849,24 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     reviewBoard ?? confirmPreviewBoard ?? virtualBoard ?? pendingLocalBoard ?? game.board;
   const orientation: Color = uiSettings.flipBoard ? oppColor : myColor;
   const checkedBoard = reviewBoard ?? game.board;
-  // Buff-aware check test on the live position (a king attacked only by an
-  // empowered piece still lights up); plain test while reviewing history.
-  const checkSquare =
-    uiSettings.checkHighlight &&
-    (reviewBoard ? isInCheck(checkedBoard, checkedBoard.turn) : gameInCheck(game, game.board.turn))
-      ? findKing(checkedBoard, checkedBoard.turn)
-      : null;
+  // BOTH kings are tested every ply (a king may legally stand in check here,
+  // so a checked king stays red on the opponent's turn too). Buff-aware test
+  // on the live position (amazon-style empowered attacks count); plain test
+  // while reviewing history.
+  const checkSquares: Square[] = [];
+  if (uiSettings.checkHighlight) {
+    for (const color of ["w", "b"] as const) {
+      const attacked = reviewBoard ? isInCheck(checkedBoard, color) : gameInCheck(game, color);
+      if (attacked) {
+        const k = findKing(checkedBoard, color);
+        if (k != null) checkSquares.push(k);
+      }
+    }
+  }
+  // A new constraint landing on me (turn skip, halted pawns, frozen piece...)
+  // gets one big board-wide splash (BoardSplashHost below); the dock's
+  // "Against you" section keeps the permanent record.
+  const againstMe = isDraft && game.buffs ? againstYouRows(game, myColor) : [];
   const lastMoveForDisplay = isReviewingHistory
     ? game.board.history[currentHistoryPly - 1] ?? null
     : confirmMovePending ?? pendingLocalMove?.move ?? lastMove;
@@ -2144,7 +2168,23 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           className="grid min-h-0 flex-1 gap-y-2 lg:grid-cols-[440px_auto] lg:justify-center lg:gap-x-4 xl:grid-cols-[500px_auto]"
           style={railHeightStyle}
         >
-          <aside className="hidden min-h-0 gap-2 overflow-y-auto lg:grid lg:min-h-[var(--board-height)] lg:max-h-full lg:grid-rows-[auto_minmax(6rem,1fr)_auto] lg:self-start">
+          {/* The command rail: one framed column (mode header, opponent, dock
+              + chat, you) instead of three floating islands, so the left side
+              reads as a single control surface. */}
+          <aside className="hidden min-h-0 gap-2 overflow-y-auto border border-white/10 bg-white/[0.02] p-2 lg:grid lg:min-h-[var(--board-height)] lg:max-h-full lg:grid-rows-[auto_auto_minmax(6rem,1fr)_auto] lg:self-start">
+            <div className="seam-edge-b flex items-center justify-between gap-2 px-1 pb-2">
+              <span
+                className={
+                  "font-display text-xs font-bold uppercase tracking-[0.14em] " +
+                  (isBuffMode ? "text-mode-buffGlow" : "text-mode-nerfGlow")
+                }
+              >
+                {isBuffMode ? "Buff mode" : "Nerf mode"}
+              </span>
+              {subtitle && (
+                <span className="smallcaps min-w-0 truncate text-[9px] text-parchment-400">{subtitle}</span>
+              )}
+            </div>
             <PlayerNerfCard
               board={boardForDisplay}
               playerColor={oppColor}
@@ -2298,7 +2338,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   showCoordinates={uiSettings.showCoordinates}
                   highlightLastMove={uiSettings.highlightLastMove}
                   showLegalMoves={uiSettings.showLegalMoves}
-                  checkSquare={isReviewingHistory ? null : checkSquare}
+                  checkSquares={isReviewingHistory ? undefined : checkSquares}
                   signatureCard={isReviewingHistory ? null : signatureCard}
                   pickSquares={
                     buffTargeting.targeting?.target.kind === "square"
@@ -2332,6 +2372,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                     onFinish={buffTargeting.finish}
                   />
                 )}
+                {!isReviewingHistory && <BoardSplashHost rows={againstMe} />}
               </div>
               {/* Crazyhouse pocket: the viewer's banked pieces sit in a tray
                   directly under the board. Click one to arm a drop; the board
@@ -2539,7 +2580,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           clock, so a straggling (or vanished) opponent can never lock this
           player out of the game. */}
       {showWaitingOverlay &&
-        (draftGraceOver || waitTimedOut ? (
+        (draftGraceOver || waitTimedOut || waitingMinimized ? (
           <div className="pointer-events-none fixed bottom-24 right-3 z-40 sm:bottom-16 lg:bottom-4">
             <motion.div
               initial={{ opacity: 0, x: 40 }}
@@ -2564,7 +2605,14 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
             <motion.div
               initial={{ opacity: 0, y: 12, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              className="plate pointer-events-auto w-full max-w-xs border-gold/30 p-4 text-center shadow-plate"
+              onClick={() => setWaitingMinimized(true)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " " || e.key === "Escape") setWaitingMinimized(true);
+              }}
+              title="Dismiss"
+              className="plate pointer-events-auto w-full max-w-xs cursor-pointer border-gold/30 p-4 text-center shadow-plate"
             >
               <div className="smallcaps text-[10px] text-parchment-400">
                 {genuinelySkipped
@@ -2595,7 +2643,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                 <LockInCountdown deadline={draftDeadline} className="mt-3" />
               )}
               <p className="mt-2 text-[10px] leading-snug text-parchment-400">
-                Both clocks stay paused until the pick window runs out.
+                Both clocks stay paused until the pick window runs out. Tap to dismiss.
               </p>
             </motion.div>
           </div>
@@ -2654,6 +2702,31 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         />
       )}
 
+      {game.result && !showResult && rematchStatus === "incoming" && (
+        /* The end panel is closed but the opponent just asked for a rematch:
+           surface it as a floating offer so it can never be missed. Accept
+           fires the same handler as the panel's button; opening the panel
+           remains one tap away. */
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          role="status"
+          aria-live="assertive"
+          className="plate fixed bottom-36 right-3 z-40 flex items-center gap-3 border-gold/50 p-3 px-4 shadow-xl sm:bottom-28 lg:bottom-16"
+        >
+          <span aria-hidden className="h-2 w-2 shrink-0 bg-gold-leaf animate-flicker" />
+          <span className="font-display text-sm text-parchment-100">
+            {oppName} wants a rematch
+          </span>
+          <button
+            type="button"
+            onClick={handleRematch}
+            className="btn-leaf px-3 py-1.5 font-display text-xs font-semibold"
+          >
+            Accept
+          </button>
+        </motion.div>
+      )}
       {game.result && !showResult && (
         <button
           type="button"

@@ -326,7 +326,7 @@ export default function OnlineGamePage() {
         <section className="max-w-xl mx-auto px-6 py-16 text-center">
           <h1 className="font-display text-4xl">That game has wrapped up</h1>
           <p className="mt-3 text-parchment-200">
-            It&apos;s no longer live and we couldn&apos;t find a saved copy — the
+            It&apos;s no longer live and we couldn&apos;t find a saved copy: the
             match likely just finished, or the broadcast ended. Taking you back
             to the lobby in {redirectIn}s&hellip;
           </p>
@@ -630,17 +630,46 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
 // identity shows on the table (instant effect, activation, a granted move)
 // or the game ends. Hidden cards render as face-down minis with their tier.
 // Pending offers and reveal snapshots never reach this view.
+// One player per TAB: spectators flip between the two hands instead of
+// scrolling one long stack, and each tab wears its player's name.
 function SpectatorBuffsPanel({ game, players }: { game: NerfGame; players: MPPlayers }) {
+  const [tab, setTab] = useState<Color>("w");
   const bs = game.buffs;
   if (!bs) return null;
+  const tabButton = (color: Color) => {
+    const held = bs.players[color].buffs;
+    const active = tab === color;
+    return (
+      <button
+        type="button"
+        onClick={() => setTab(color)}
+        aria-pressed={active}
+        className={
+          "flex min-w-0 flex-1 items-center justify-center gap-1.5 border px-2 py-1.5 font-display text-[11px] font-semibold transition-colors " +
+          (active
+            ? "border-gold/60 bg-gold/10 text-gold-leaf"
+            : "border-white/10 bg-white/[0.02] text-parchment-300 hover:bg-white/5")
+        }
+      >
+        <span
+          aria-hidden
+          className={
+            "h-2 w-2 shrink-0 rounded-full border " +
+            (color === "w" ? "border-black/40 bg-[#e8e6e1]" : "border-white/30 bg-[#1a1a22]")
+          }
+        />
+        <span className="min-w-0 truncate">{players[color].name}</span>
+        <span className="shrink-0 font-mono text-[9px] tabular-nums text-parchment-400">
+          {held.length}
+        </span>
+      </button>
+    );
+  };
   const side = (color: Color) => {
     const held = bs.players[color].buffs;
     const hiddenOnes = held.filter((inst) => !BUFF_BY_ID[inst.id]);
     return (
       <div>
-        <div className="smallcaps text-[9px] text-parchment-400">
-          {players[color].name} ({color === "w" ? "White" : "Black"})
-        </div>
         {held.length === 0 ? (
           <p className="text-[11px] text-parchment-400">No buffs drafted yet.</p>
         ) : (
@@ -687,8 +716,11 @@ function SpectatorBuffsPanel({ game, players }: { game: NerfGame; players: MPPla
   return (
     <div className="plate max-h-72 space-y-2 overflow-y-auto p-2 px-3">
       <div className="smallcaps text-[9px] text-parchment-400">Drafted buffs</div>
-      {side("w")}
-      {side("b")}
+      <div className="flex gap-1">
+        {tabButton("w")}
+        {tabButton("b")}
+      </div>
+      {side(tab)}
     </div>
   );
 }

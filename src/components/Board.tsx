@@ -206,9 +206,11 @@ interface Props {
   // Dots/rings on the squares a selected piece can move to (Settings). Moves
   // stay playable when off; only the hints are hidden.
   showLegalMoves?: boolean;
-  // The checked king's square, tinted red when the check-highlight setting is
-  // on (pages pass null/undefined when disabled or not in check).
-  checkSquare?: Square | null;
+  // Every checked king's square, tinted red when the check-highlight setting
+  // is on. An array because in this variant BOTH kings can be in check at
+  // once (a king may legally stand in or move into check), and a checked king
+  // stays lit on the opponent's turn too.
+  checkSquares?: Square[];
   // Buff targeting mode: while set, the board is a square picker. Candidate
   // squares glow and clicking one calls onPickSquare; every other pointer
   // interaction (moves, selection, premoves) is suspended.
@@ -807,7 +809,7 @@ export function Board({
   showCoordinates = true,
   highlightLastMove = true,
   showLegalMoves = true,
-  checkSquare = null,
+  checkSquares,
   pickSquares,
   onPickSquare,
   signatureCard,
@@ -2047,7 +2049,7 @@ export function Board({
               isLight ? "sq-light" : "sq-dark",
               isSelected ? "sq-sel" : "",
               highlightLastMove && (lastFrom || lastTo) ? "sq-last" : "",
-              checkSquare === sq ? "sq-check" : "",
+              checkSquares?.includes(sq) ? "sq-check" : "",
               isHover && (isTarget || isCastleHint) ? "sq-hover" : "",
             ].join(" ");
 

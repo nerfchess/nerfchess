@@ -109,7 +109,7 @@ const GROUPS: { title: string; terms: { term: string; def: string }[] }[] = [
       },
       {
         term: "King capture",
-        def: "The win condition. There is no checkmate or stalemate; the game ends the instant a king is physically taken — the first capture wins, even if the capturer's own king was hanging — or when a nerf's lose condition fires, or a player resigns.",
+        def: "The win condition. There is no checkmate or stalemate; the game ends the instant a king is physically taken (the first capture wins, even if the capturer's own king was hanging), or when a nerf's lose condition fires, or a player resigns.",
       },
     ],
   },

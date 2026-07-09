@@ -102,7 +102,9 @@ export function DraftNotice({
     <div
       role="status"
       aria-live="polite"
-      className="pointer-events-none absolute inset-x-0 top-2 z-30 flex flex-col items-center gap-1"
+      // Floats just ABOVE the board's top edge (bottom-full), never over the
+      // squares: an announcement must not cover the position it announces.
+      className="pointer-events-none absolute inset-x-0 bottom-full z-30 mb-1.5 flex flex-col items-center gap-1"
     >
       {notices.map((n) => {
         const Icon = n.card ? cardFaceIcon(n.card.id, n.card.category, n.card.icon) : undefined;

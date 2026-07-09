@@ -94,8 +94,36 @@ export class ArenaGame {
     if (this.done) return;
     this.done = true;
     if (this.timer) clearTimeout(this.timer);
-    // No record emitted for an abort (mirrors the DO deleting filler on error).
-    void reason;
+    // Nothing is archived or rated for an abort (mirrors the DO deleting
+    // filler on error), but the sink is still told: a watched game's spectator
+    // replica in the DO only ends on an end frame, so a silent abort stranded
+    // TV watchers on a board that never moves again. The record is best-effort
+    // (an abort can land before the nerf draft resolves, so the nerf ids fall
+    // back to unrestricted) with a null winner — the DO ends the replica for
+    // its watchers and drops it, and never records a result from it.
+    this.sink.gameAbort({
+      id: this.id,
+      setup: {
+        whiteNerfId: this.nerf?.w ?? UNRESTRICTED_NERF.id,
+        blackNerfId: this.nerf?.b ?? UNRESTRICTED_NERF.id,
+        seed: this.seed,
+        timeSec: this.timeSec,
+        incrementSec: this.incrementSec,
+      },
+      mode: this.mode,
+      draft: true,
+      cadence: this.cadence,
+      draftSeed: this.draftSeed,
+      moves: [...this.moves],
+      draftActions: [...this.draftActions],
+      bots: { w: this.seats.w.userId, b: this.seats.b.userId },
+      seats: { w: seat(this.seats.w, this.ratings.w), b: seat(this.seats.b, this.ratings.b) },
+      result: { winner: null, reason },
+      rated: true,
+      replayVersion: this.replayVersion,
+      startedAt: this.startedAt,
+      completedAt: Date.now(),
+    });
     this.onDone(this);
   }
 

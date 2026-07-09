@@ -38,7 +38,8 @@ import {
   resign,
   resolveDiffFlag,
 } from "@/engine/game";
-import { BuffDock, EnemyBuffModal, TargetingBanner, useBuffTargeting } from "@/components/BuffDock";
+import { BuffDock, EnemyBuffModal, TargetingBanner, againstYouRows, useBuffTargeting } from "@/components/BuffDock";
+import { BoardSplashHost } from "@/components/BoardSplash";
 import { draftCardNoun, turnCost } from "@/engine/buff";
 import { draftZones } from "@/lib/draftOnline";
 import { computeFxVisual } from "@/components/effects/fxZones";
@@ -52,7 +53,7 @@ import {
 } from "@/components/DraftOverlay";
 import { NerfCard } from "@/components/NerfCard";
 import { makeSeed } from "@/engine/rng";
-import { BoardState, Color, Move } from "@/engine/types";
+import { BoardState, Color, Move, Square } from "@/engine/types";
 import { cloneBoard, findKing, isInCheck, makeMove, moveToUCI } from "@/engine/board";
 import { computeMoveRisks } from "@/engine/moveSafety";
 import { loadSettings } from "@/lib/settings";
@@ -1264,15 +1265,26 @@ function GamePage() {
     : confirmMovePending ?? lastMove;
   const orientation: Color = uiSettings.flipBoard ? (myColor === "w" ? "b" : "w") : myColor;
   const checkedBoard = reviewBoard ?? game.board;
-  // The live position runs the buff-aware check test (gameInCheck) so a king
-  // attacked only through buff-granted movement still lights up; history
-  // review falls back to the plain test (a mid-replay board has no reliable
-  // buff context).
-  const checkSquare =
-    uiSettings.checkHighlight &&
-    (reviewBoard ? isInCheck(checkedBoard, checkedBoard.turn) : gameInCheck(game, game.board.turn))
-      ? findKing(checkedBoard, checkedBoard.turn)
-      : null;
+  // BOTH kings are tested every ply: in this variant a king may legally stand
+  // in check, so a checked king stays red on the opponent's turn too. The live
+  // position runs the buff-aware test (gameInCheck) so a king attacked only
+  // through buff-granted movement (amazon and friends) still lights up;
+  // history review falls back to the plain test (a mid-replay board has no
+  // reliable buff context).
+  const checkSquares: Square[] = [];
+  if (uiSettings.checkHighlight) {
+    for (const color of ["w", "b"] as const) {
+      const attacked = reviewBoard ? isInCheck(checkedBoard, color) : gameInCheck(game, color);
+      if (attacked) {
+        const k = findKing(checkedBoard, color);
+        if (k != null) checkSquares.push(k);
+      }
+    }
+  }
+  // A new constraint landing on me (turn skip, halted pawns, frozen piece...)
+  // gets one big board-wide splash (BoardSplashHost below); the dock's
+  // "Against you" section keeps the permanent record.
+  const againstMe = game.buffs ? againstYouRows(game, myColor) : [];
   const hint = currentHint(game, myColor);
   const forcedSquares = hint?.squares ?? [];
   const railHeightStyle = boardHeight
@@ -1543,7 +1555,26 @@ function GamePage() {
           className="grid min-h-0 flex-1 gap-y-2 lg:grid-cols-[440px_auto] lg:justify-center lg:gap-x-4 xl:grid-cols-[500px_auto]"
           style={railHeightStyle}
         >
-          <aside className="hidden min-h-0 gap-3 overflow-hidden lg:grid lg:min-h-[var(--board-height)] lg:max-h-full lg:grid-rows-[auto_minmax(8rem,1fr)_auto] lg:self-start">
+          {/* The command rail: one framed column (mode header, opponent, dock,
+              you) instead of floating islands; mirrors the online layout. */}
+          <aside className="hidden min-h-0 gap-3 overflow-hidden border border-white/10 bg-white/[0.02] p-2 lg:grid lg:min-h-[var(--board-height)] lg:max-h-full lg:grid-rows-[auto_auto_minmax(8rem,1fr)_auto] lg:self-start">
+            <div className="seam-edge-b flex items-center justify-between gap-2 px-1 pb-2">
+              <span
+                className={
+                  "font-display text-xs font-bold uppercase tracking-[0.14em] " +
+                  (plainMode
+                    ? "text-parchment-300"
+                    : gameMode === "buff"
+                    ? "text-mode-buffGlow"
+                    : "text-mode-nerfGlow")
+                }
+              >
+                {plainMode ? "Plain chess" : gameMode === "buff" ? "Buff mode" : "Nerf mode"}
+              </span>
+              <span className="smallcaps min-w-0 truncate text-[9px] text-parchment-400">
+                Casual · vs bot
+              </span>
+            </div>
             <PlayerNerfCard
               board={boardForDisplay}
               playerColor={myColor === "w" ? "b" : "w"}
@@ -1682,7 +1713,7 @@ function GamePage() {
                   showCoordinates={uiSettings.showCoordinates}
                   highlightLastMove={uiSettings.highlightLastMove}
                   showLegalMoves={uiSettings.showLegalMoves}
-                  checkSquare={isReviewingHistory ? null : checkSquare}
+                  checkSquares={isReviewingHistory ? undefined : checkSquares}
                   signatureCard={isReviewingHistory ? null : signatureCard}
                   pickSquares={
                     buffTargeting.targeting?.target.kind === "square"
@@ -1711,6 +1742,7 @@ function GamePage() {
                     onFinish={buffTargeting.finish}
                   />
                 )}
+                {!isReviewingHistory && <BoardSplashHost rows={againstMe} />}
               </div>
               <div className="flex items-center justify-between gap-2 sm:hidden">
                 <BoardPlayerRow

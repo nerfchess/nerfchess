@@ -502,6 +502,11 @@ const houseMaxActionsPerTick = 3;
 // remaining due actions defer to a follow-up tick even if under the count cap,
 // so a handful of long late-game replays cannot blow a single alarm's CPU.
 const houseTickBudgetMs = 250;
+// How long a due filler (house-vs-house) action may keep being deferred by the
+// human-priority budget before it forces one action anyway. Under sustained
+// human load the yield can otherwise starve filler on EVERY tick, freezing a
+// spectated (TV) game indefinitely while its clocks run.
+const houseFillerMaxDeferMs = 10 * 1000;
 // How long a queued human waits for a human opponent before a house player
 // picks them up.
 const houseHumanPickupMs = 4500;
@@ -820,6 +825,13 @@ export class GameServer extends DurableObject<Env> {
     string,
     { game: NerfGame; moves: number; cursor: number; rebuild: { revealed: Set<BuffInstance>; acquired: Map<number, BuffInstance[]> } }
   >();
+  // When the last arena frame (snapshot/move/draft) landed for each watched
+  // replica. The arena is the only thing that ever ends a replica; if it dies
+  // mid-game (or an old bundle aborts silently), no end frame ever comes and
+  // the replica would sit "live" forever with a frozen board — the reported TV
+  // stall. sweepExternalReplicas uses this to detect the silence and end the
+  // game for its watchers. Dropped alongside the replica.
+  private externalFrameAt = new Map<string, number>();
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
@@ -3374,7 +3386,17 @@ export class GameServer extends DurableObject<Env> {
     // Pass 2: at most ONE house-vs-house filler action, and only once every due
     // human-facing action this tick has been served (deferredDueWork is false)
     // and there is CPU budget left. A human never waits behind a filler search.
-    if (!deferredDueWork && dueFiller.length && !budgetSpent()) {
+    //
+    // Starvation valve: sustained human load can make that yield defer filler
+    // on EVERY tick, so a spectated (TV) filler game never acts — the board
+    // freezes while its clocks run down. Once the head filler action has been
+    // due past houseFillerMaxDeferMs, it takes exactly one action this tick
+    // regardless of the budget: one bounded search per tick cannot meaningfully
+    // delay the human pass (which already ran), while unbounded deferral is a
+    // permanent stall.
+    const fillerStarved =
+      dueFiller.length > 0 && now - (dueFiller[0].botActAt ?? now) > houseFillerMaxDeferMs;
+    if (dueFiller.length && (fillerStarved || (!deferredDueWork && !budgetSpent()))) {
       const match = dueFiller[0];
       if (!this.houseRetireFailed.has(match.id)) {
         try {
@@ -3413,12 +3435,20 @@ export class GameServer extends DurableObject<Env> {
     // permanently stranded. In the normal case cache == replay, so this only
     // adds one cheap checkpoint-based rebuild while a human is on the clock in a
     // bot game (a handful at most, at the heartbeat cadence); it changes nothing.
+    //
+    // Filler (bot-vs-bot) games get the same reconcile: they have no human seat
+    // to gate on, but the identical extra-move/turn-skip drift strands them just
+    // as permanently — and unlike a human game nobody at the board can nudge
+    // them, so spectators (TV) watch a frozen board whose clock frame charges
+    // the wrong color (the "clock bounces back up every 10s" stall). An unarmed
+    // live filler match is already anomalous, so this adds a rebuild only in
+    // the failure case it repairs.
     for (const match of liveHouseMatches) {
       if (match.result || match.botActAt || this.houseRetireFailed.has(match.id)) continue;
       try {
         if (await this.finishOnFlag(match, now, false)) continue;
         const humanSeat = humanSeatOf(match);
-        if (match.startedAt && humanSeat && this.connectedSession(match.id, humanSeat)) {
+        if (match.startedAt && (isFiller(match) || (humanSeat && this.connectedSession(match.id, humanSeat)))) {
           const game = await this.gameForPlay(match);
           if (game && !game.result && this.activeColor(match) !== game.board.turn) {
             this.houseLastDesync = `unarmed ${match.id} cached=${this.activeColor(match)} replay=${game.board.turn} moves=${match.moves.length} actions=${JSON.stringify(match.draftActions ?? [])}`;
@@ -4175,9 +4205,9 @@ export class GameServer extends DurableObject<Env> {
 
     if (url.pathname === "/arena/end") {
       if (!ingest) return Response.json({ ok: false, ingest: false });
-      let body: { record?: ArenaEndRecord };
+      let body: { record?: ArenaEndRecord; aborted?: boolean };
       try {
-        body = (await request.json()) as { record?: ArenaEndRecord };
+        body = (await request.json()) as { record?: ArenaEndRecord; aborted?: boolean };
       } catch {
         return Response.json({ error: "bad_json" }, { status: 400 });
       }
@@ -4190,6 +4220,10 @@ export class GameServer extends DurableObject<Env> {
       // buffs, then the replica is dropped (Tier 2 / M3). Independent of the
       // archive write below so a DB hiccup never strands a watched game "live".
       this.endExternalForWatchers(rec);
+      // An abort (arena shutdown/pause/error) has no outcome: the replica ends
+      // for its watchers above, but nothing is archived and no rating moves —
+      // recording the void result would pollute both accounts' histories.
+      if (body.aborted) return Response.json({ ok: true, aborted: true });
       if (this.arenaArchived.has(rec.id)) return Response.json({ ok: true, dup: true });
       const db = await this.db();
       if (!db) return Response.json({ ok: false, reason: "no_db" });
@@ -4326,9 +4360,20 @@ export class GameServer extends DurableObject<Env> {
     if (!snap.startedAt) return;
     const match = this.buildExternalMatch(snap);
     this.externalMatches.set(snap.id, match);
+    this.externalFrameAt.set(snap.id, Date.now());
     // A fresh snapshot replaces the move/action arrays, so any cached replay is
     // stale — drop it and let the next frame rebuild from this snapshot.
     this.externalReplay.delete(snap.id);
+    // Seed turnColor from the replayed board, not move parity: in a draft game
+    // buff activations and tempo cards move the turn off parity, so a snapshot
+    // that lands mid-game would otherwise leave activeColor charging the wrong
+    // seat's clock — every 10s heartbeat then re-sent the real on-turn clock at
+    // its full banked value (the spectator "clock bounces back up" bug). The
+    // replay also warms the incremental cache the first frame would build.
+    try {
+      const game = this.syncExternalGame(match);
+      if (game) match.turnColor = game.board.turn;
+    } catch {}
     for (const [ws, session] of this.sessions) {
       if (session.watching === snap.id && ws.readyState === WebSocket.OPEN) this.sendWstart(ws, match);
     }
@@ -4403,6 +4448,7 @@ export class GameServer extends DurableObject<Env> {
   private applyExternalMove(id: string, ply: number, uci: string, clocks: Record<Color, number>) {
     const match = this.externalMatches.get(id);
     if (!match || match.result) return;
+    this.externalFrameAt.set(id, Date.now());
     // Apply only the next expected move (mirrors the client's own ply check): a
     // stale/duplicate frame that raced the bootstrap snapshot is dropped, not
     // double-applied. A gap (frame lost) leaves the replica where it is.
@@ -4469,6 +4515,7 @@ export class GameServer extends DurableObject<Env> {
   private applyExternalDraft(id: string, action: StoredDraftAction, card?: { id: string; tier: number }) {
     const match = this.externalMatches.get(id);
     if (!match || match.result) return;
+    this.externalFrameAt.set(id, Date.now());
     match.draftActions = [...(match.draftActions ?? []), action];
     let game: NerfGame | null = null;
     try {
@@ -4544,6 +4591,7 @@ export class GameServer extends DurableObject<Env> {
     const match = this.externalMatches.get(rec.id);
     this.externalMatches.delete(rec.id);
     this.externalReplay.delete(rec.id);
+    this.externalFrameAt.delete(rec.id);
     if (!match) return; // nobody was watching
     match.moves = [...rec.moves];
     if (rec.draftActions) match.draftActions = [...rec.draftActions];
@@ -4569,6 +4617,83 @@ export class GameServer extends DurableObject<Env> {
       nerfs: { w: rec.setup.whiteNerfId, b: rec.setup.blackNerfId },
       ...(draftBuffs ? { draftBuffs } : {}),
     });
+  }
+
+  // How far past flag-fall a replica's active clock may run before the watchdog
+  // ends it: the arena itself flags a game within a couple seconds, so this only
+  // trips when the arena is gone, while comfortably absorbing frame latency.
+  private static readonly EXTERNAL_FLAG_SLACK_MS = 15 * 1000;
+  // How long a watched replica may go without ANY arena frame before it is
+  // considered stranded (paired with a second signal below — silence alone is
+  // not enough, since a bot on a long clock may legitimately think a while).
+  private static readonly EXTERNAL_SILENCE_MS = 2 * 60 * 1000;
+
+  // Watchdog for stranded arena replicas (Tier 2 / M3). Only /arena/end ends a
+  // replica — finishOnFlag and loadMatch never see externalMatches — so an
+  // arena that dies mid-game (or an old bundle that aborted without an end
+  // frame) left its watchers on a board that never moves again, with the clock
+  // frame "bouncing" forever: the reported TV stall. Two conservative
+  // tripwires, checked from the maintenance sweep:
+  //   1. Flag fall: the active clock ran out well past a slack window and no
+  //      frame came — the arena would have ended the game itself long ago.
+  //   2. Silence: no frame at all for a generous window while one was clearly
+  //      due (the replica already holds a result but the end frame was lost,
+  //      or the clock is not running so no flag can ever fall).
+  // Either way the game ends for its watchers and the replica drops. Nothing
+  // is archived or rated from here — a false positive costs one spectator an
+  // early end frame, never a bogus record.
+  private sweepExternalReplicas(now: number) {
+    for (const [id, match] of [...this.externalMatches]) {
+      // Watcherless replicas normally drop on leave/close; this catches a
+      // socket that vanished without either event firing.
+      this.dropExternalIfUnwatched(id);
+      if (!this.externalMatches.has(id)) continue;
+      const active = this.activeColor(match);
+      // How far past exhausting its whole banked clock the active side is
+      // (null when no flag can fall: untimed, unstarted, or paused clock).
+      const overdueBy =
+        match.setup.timeSec && match.startedAt && !match.result && match.runningSince !== null
+          ? now -
+            match.runningSince -
+            (this.movesByColor(match, active) === 0 ? firstMoveGraceMs : 0) -
+            match.clocks[active]
+          : null;
+      const silentFor = now - (this.externalFrameAt.get(id) ?? match.createdAt);
+      const flagged = overdueBy !== null && overdueBy > GameServer.EXTERNAL_FLAG_SLACK_MS;
+      const stale =
+        silentFor > GameServer.EXTERNAL_SILENCE_MS && (match.result !== null || overdueBy === null);
+      if (!flagged && !stale) continue;
+      const result =
+        match.result ??
+        (flagged
+          ? {
+              winner: (active === "w" ? "b" : "w") as Color,
+              reason: active === "w" ? "white ran out of time" : "black ran out of time",
+            }
+          : { winner: null, reason: "connection to game lost" });
+      console.error(
+        "external replica stranded, ending for watchers",
+        id,
+        JSON.stringify({ flagged, stale, silentFor, overdueBy }),
+      );
+      // Also drop the lobby listing so a dead game cannot be re-watched (the
+      // TTL filter would age it out anyway; this just makes it immediate).
+      this.externalGames.delete(id);
+      this.endExternalForWatchers({
+        id,
+        setup: match.setup,
+        mode: match.mode ?? "nerf",
+        moves: [...match.moves],
+        bots: { w: match.bots?.w ?? "", b: match.bots?.b ?? "" },
+        seats: { w: { name: match.users?.w?.name ?? "?" }, b: { name: match.users?.b?.name ?? "?" } },
+        result,
+        startedAt: match.startedAt ?? 0,
+        completedAt: now,
+        draftSeed: match.draftSeed,
+        cadence: match.cadence,
+        draftActions: match.draftActions,
+      });
+    }
   }
 
   // Fresh (non-expired) arena games as lobby liveGames entries (Tier 2 / M2).
@@ -5611,6 +5736,7 @@ export class GameServer extends DurableObject<Env> {
     if (this.externalMatches.has(id) && this.watcherCount(id) === 0) {
       this.externalMatches.delete(id);
       this.externalReplay.delete(id);
+      this.externalFrameAt.delete(id);
     }
   }
 
@@ -6118,6 +6244,14 @@ export class GameServer extends DurableObject<Env> {
       } catch (err) {
         console.error("maintenance failed for match", match.id, err);
       }
+    }
+    // Watched arena replicas live outside the match table (never persisted, not
+    // in the live index), so the flag enforcement above never sees them — sweep
+    // them for stranded games on the same cadence.
+    try {
+      this.sweepExternalReplicas(now);
+    } catch (err) {
+      console.error("sweepExternalReplicas failed", err);
     }
     // Drain expired/finished records a bounded page at a time. Keep draining
     // fast (a quick follow-up alarm) until the table is clean, then fall back to

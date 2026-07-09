@@ -97,7 +97,7 @@ export default function HowToPlayPage() {
           {
             question: "How do you win at Nerf Chess?",
             answer:
-              "Capture the enemy king. There is no checkmate: the game continues until a king is taken, a nerf's lose condition fires, or someone resigns. The first king captured ends the game on the spot — the capturer wins even if their own king was hanging.",
+              "Capture the enemy king. There is no checkmate: the game continues until a king is taken, a nerf's lose condition fires, or someone resigns. The first king captured ends the game on the spot: the capturer wins even if their own king was hanging.",
           },
           {
             question: "Can the king move into check in Nerf Chess?",
