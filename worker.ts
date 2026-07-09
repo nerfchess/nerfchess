@@ -63,7 +63,7 @@ import { Color, PIECE_VALUE } from "./src/engine/types";
 import type { AchievementExtras } from "./src/lib/server/achievements";
 import { sessionTokenFromCookieHeader, userForSession } from "./src/lib/server/auth";
 import { ensureSchema } from "./src/lib/server/schema";
-import { loadCategoryRatings, recordFinishedGame, RatingChange } from "./src/lib/server/games";
+import { loadCategoryRatings, recordFinishedGame, RatingChange, type DraftRecord } from "./src/lib/server/games";
 import { categoryForTimeControl, type RatingCategory } from "./src/lib/speed";
 import { censorText, findProfanity } from "./src/lib/profanity";
 import { glickoUpdatePair } from "./src/lib/glicko";
@@ -112,14 +112,20 @@ type Result = NerfGame["result"];
 //     rerolls changed the same way. (c) Living God moved from the tier-8 pool
 //     to the tier-9 apex band, shifting the tier-8 pool. (d) The gambling
 //     cards' payouts changed their draw counts (Roulette and the Wheel's
-//     removal wedge spin twice, Jackpot's gate is now a coin flip). (e) The
-//     v5 mutual-king-capture draw was REMOVED: the first king captured ends
-//     the game with the capturer winning outright, so a game decided by the
-//     draw rule pre-bump replays to a win post-bump. (f) The info/reveal
-//     cards (Peek, Extra Glance, Watchtower, Quick Glance, Draft Insight...)
-//     left every draft pool: the whole game is public now, so there is
-//     nothing left for them to reveal.
-const REPLAY_VERSION = 7;
+//     removal wedge spin twice, Jackpot's gate is now a coin flip).
+//   8 - Chess Diff now uses STANDARD chess rules: the sub-game is decided by
+//     checkmate/stalemate (not king capture) and no piece may move into check,
+//     and the draft cadence is re-armed past the diff's plies on resume. A diff
+//     recorded pre-bump (king-capture line, backlogged cadence) replays into a
+//     different resolution and offer timing post-bump.
+//   9 - open-handed era rule changes. (a) The v5 mutual-king-capture draw was
+//     REMOVED: the first king captured ends the game with the capturer winning
+//     outright, so a game decided by the draw rule pre-bump replays to a win
+//     post-bump. (b) The buff/draft reveal cards (Peek, Quick Glance, Draft
+//     Insight, Foresight, Mind Read, Omniscience) left every draft pool — the
+//     whole draft game is public now, so there is nothing left for them to
+//     reveal — shifting the pools they rolled in.
+const REPLAY_VERSION = 9;
 
 // Refresh a match's replay checkpoint (see StoredMatch.checkpoint) at most once
 // per this many committed events (moves + draft actions), so gameForPlay never
@@ -526,7 +532,7 @@ type HouseSeekEntry = {
 // (deserializing every finished game's move history), which on a bloated table
 // blew the DO CPU limit before it could cache or GC anything: the crash loop.
 const liveIdsKey = "live:ids";
-const buildVersion = "house-consolidated-1";
+const buildVersion = "chess-diff-standard-rules-1";
 // The single account allowed to use the owner "fun with friends" tools: the
 // -15s opponent-clock button and the god panel card grant. SERVER-verified on
 // every gated message (never trust the client). Compared case-insensitively so
@@ -670,6 +676,10 @@ type ArenaEndRecord = {
   draftSeed?: number;
   cadence?: number;
   draftActions?: StoredDraftAction[];
+  // Engine REPLAY_VERSION the arena built the record under (arena's own
+  // ArenaFinishedRecord carries it required; optional here so an older bundle
+  // that omits it still archives).
+  replayVersion?: number;
 };
 
 // Bootstrap state for a spectator's wstart, pushed by the arena for a watched,
@@ -736,6 +746,24 @@ function serializeMatchForEngine(match: StoredMatch): EngineMatch {
       (a): a is Exclude<StoredDraftAction, { a: "reroll" | "grant" }> =>
         a.a !== "reroll" && a.a !== "grant",
     ),
+  };
+}
+
+// The archive's full-fidelity draft record (draft games only). Unlike
+// serializeMatchForEngine, this keeps the COMPLETE action stream — including
+// reroll and grant — because the archive is the system of record and must be
+// losslessly, deterministically replayable, not merely best-effort. draftSeed
+// falls back to the game seed exactly as the replay loop does (enableDraftMode,
+// gameFromMatch). See docs/archive-draft-record.md.
+function draftRecordFromMatch(match: StoredMatch): DraftRecord {
+  return {
+    ...(match.mode ? { mode: match.mode } : {}),
+    draftSeed: match.draftSeed ?? match.setup.seed,
+    ...(match.cadence !== undefined ? { cadence: match.cadence } : {}),
+    ...(match.stacked ? { stacked: true } : {}),
+    ...(match.picksVisible ? { picksVisible: true } : {}),
+    ...(match.cardOverrides ? { cardOverrides: match.cardOverrides } : {}),
+    draftActions: match.draftActions ?? [],
   };
 }
 
@@ -2266,6 +2294,10 @@ export class GameServer extends DurableObject<Env> {
             // Mode games count toward (and, when rated, move) the per-mode
             // rating bucket instead of a speed bucket.
             ...(match.draft && match.mode ? { ratingCategory: match.mode } : {}),
+            // Full draft record so the game replays from the archive alone.
+            ...(match.draft ? { draftRecord: draftRecordFromMatch(match) } : {}),
+            // Engine-version provenance for every game (absent stamp = v1).
+            replayVersion: match.replayVersion ?? 1,
             startedAt: match.startedAt,
             completedAt: match.completedAt,
           }, this.env.HYPERDRIVE?.connectionString, this.achievementExtras(match));
@@ -4184,6 +4216,22 @@ export class GameServer extends DurableObject<Env> {
             rated: true,
             ruleset: "draft",
             ratingCategory: rec.mode,
+            // Full draft record so the arena game replays from the archive
+            // alone. Guarded so an older arena bundle (no draft fields) still
+            // archives exactly as before. The arena rolls its own pools, so no
+            // cardOverrides. draftActions here already exclude reroll/grant
+            // (the arena/spectator stream never carries them).
+            ...(rec.draftSeed !== undefined && rec.draftActions
+              ? {
+                  draftRecord: {
+                    mode: rec.mode,
+                    draftSeed: rec.draftSeed,
+                    ...(rec.cadence !== undefined ? { cadence: rec.cadence } : {}),
+                    draftActions: rec.draftActions,
+                  },
+                }
+              : {}),
+            replayVersion: rec.replayVersion,
             startedAt: rec.startedAt,
             completedAt: rec.completedAt,
           },

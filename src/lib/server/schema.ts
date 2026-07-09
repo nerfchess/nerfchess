@@ -382,6 +382,13 @@ const ADDITIVE_COLUMNS: string[] = [
   // owner (validated against src/lib/clubIcons.ts; '' = monogram fallback).
   // Mirrors migrations/0018_club_icon.sql.
   `ALTER TABLE clubs ADD COLUMN icon TEXT NOT NULL DEFAULT ''`,
+  // Full-fidelity draft record (JSON string) + the engine REPLAY_VERSION the row
+  // was written under, so a draft game replays from the archive alone. D1 has no
+  // JSONB, so draft_record is TEXT here; Postgres uses JSONB. Mirrors
+  // migrations/0020_games_draft_record.sql (and migrations-pg/0002). Never
+  // exposed by any public API (see docs/archive-draft-record.md).
+  `ALTER TABLE games ADD COLUMN draft_record TEXT`,
+  `ALTER TABLE games ADD COLUMN replay_version INTEGER`,
 ];
 
 export async function ensureSchema(db: D1Database): Promise<void> {
