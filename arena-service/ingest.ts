@@ -85,11 +85,15 @@ export class IngestClient {
   /** Report a finished game for archive + rating. One retry, then give up (a
    *  lost filler archive is acceptable). */
   async reportEnd(record: ArenaFinishedRecord): Promise<void> {
+    let status: number | "network" = "network";
+    let bodyText = "";
     for (let attempt = 0; attempt < 2; attempt++) {
       const res = await this.post("/arena/end", { record });
       if (res && res.ok) return;
+      status = res ? res.status : "network";
+      bodyText = res ? await res.text().catch(() => "") : "";
     }
     // eslint-disable-next-line no-console
-    console.error(JSON.stringify({ event: "arena_end_report_failed", id: record.id }));
+    console.error(JSON.stringify({ event: "arena_end_report_failed", id: record.id, status, body: bodyText.slice(0, 300) }));
   }
 }
