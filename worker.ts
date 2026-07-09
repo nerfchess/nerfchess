@@ -40,6 +40,8 @@ import {
   houseThinkMs,
   isHouseUserId,
   pickHouseBotByDifficulty,
+  activeHouseRoster,
+  clampHouseCount,
   pickHouseMove,
   pickHouseSeek,
   syncHouseRatings,
@@ -91,7 +93,10 @@ type Result = NerfGame["result"];
 //   4 - crazyhouse-style inventory: a new tier-3 pooled card (Supply Drop)
 //     grants a piece to a pocket that is dropped on a later turn. The new
 //     card shifts the tier-3 pool, so in-flight offers roll differently.
-const REPLAY_VERSION = 4;
+//   5 - mutual king capture is now a DRAW (checkLossConditions): a king-capture
+//     where the winner's king is also hanging replays as a draw, not a win, so
+//     an in-flight game decided pre-bump must not resume post-bump.
+const REPLAY_VERSION = 5;
 
 // Refresh a match's replay checkpoint (see StoredMatch.checkpoint) at most once
 // per this many committed events (moves + draft actions), so gameForPlay never
@@ -364,7 +369,13 @@ const abandonmentClaimMs = 30 * 1000;
 // completely when no human socket is connected, at most one house-vs-house
 // action runs per alarm tick, and games above the caps simply do not start.
 const houseSeeksKey = "hp:seeks";
-const houseSeededKey = "hp:seeded:v1";
+// v2: the v1 seed created an EARLIER roster; the live roster was later replaced
+// and expanded to 60, so the current personas never got a users/user_ratings
+// row - their profiles 404'd and beating them moved no rating (recordFinishedGame
+// needs BOTH seats' rows). v2 re-runs ensureHouseUsers over the full current
+// roster on the next cold start. Bump the suffix again if the roster identities
+// change. (Old orphaned bot accounts stay on the leaderboard; harmless.)
+const houseSeededKey = "hp:seeded:v2";
 // One-time-per-revision sync of every house account's rating to the current
 // houseSeedRating (see syncHouseRatings). Bump the suffix whenever the roster's
 // ratings change so existing accounts (seeded with INSERT OR IGNORE at the old
@@ -477,7 +488,7 @@ type HouseSeekEntry = {
 // (deserializing every finished game's move history), which on a bloated table
 // blew the DO CPU limit before it could cache or GC anything: the crash loop.
 const liveIdsKey = "live:ids";
-const buildVersion = "bot-reconnect-hardening-1";
+const buildVersion = "house-consolidated-1";
 // The single account allowed to use the owner "fun with friends" tools: the
 // -15s opponent-clock button and the god panel card grant. SERVER-verified on
 // every gated message (never trust the client). Compared case-insensitively so
@@ -794,6 +805,30 @@ export class GameServer extends DurableObject<Env> {
       }
     } catch {}
     this.houseEnabledCache = { value, at: now };
+    return value;
+  }
+
+  // How many house bots are active right now: the first N of the roster, set by
+  // the moderator slider (app_settings.house_count, 30-60). Cached on the same
+  // TTL as houseEnabled; an absent/garbage row means the default minimum.
+  private houseCountCache: { value: number; at: number } | null = null;
+  private async houseCount(): Promise<number> {
+    const now = Date.now();
+    if (this.houseCountCache && now - this.houseCountCache.at < houseEnabledTtlMs) {
+      return this.houseCountCache.value;
+    }
+    let value = this.houseCountCache?.value ?? clampHouseCount(NaN);
+    try {
+      const db = await this.db();
+      if (db) {
+        const row = await db
+          .prepare("SELECT value FROM app_settings WHERE key = ?")
+          .bind("house_count")
+          .first<{ value: string }>();
+        value = row ? clampHouseCount(Number(row.value)) : clampHouseCount(NaN);
+      }
+    } catch {}
+    this.houseCountCache = { value, at: now };
     return value;
   }
 
@@ -1512,6 +1547,14 @@ export class GameServer extends DurableObject<Env> {
       draftExtras = {
         draft: true,
         ...(match.mode ? { mode: match.mode } : {}),
+        // The real draft RNG seed, so the client's own reconnect replay rolls
+        // the SAME stream the server did. Card effects that consume the draft
+        // RNG (random removals / spectacles) otherwise land differently on a
+        // rebuild than on the authoritative server, and the reconstructed board
+        // diverges (removed pieces reappear, then the opponent's real moves get
+        // rejected as out of sync). Offers are still server-provided; matching
+        // the seed only keeps effect randomness identical.
+        draftSeed: match.draftSeed ?? match.setup.seed,
         picksVisible: !!match.picksVisible,
         dtActions: this.publicDraftActions(match, color),
         ...(game?.buffs ? { dtState: this.draftStateFor(game, match, color) } : {}),
@@ -3207,7 +3250,7 @@ export class GameServer extends DurableObject<Env> {
       }
     }
 
-    const free = HOUSE_ROSTER.filter(
+    const free = activeHouseRoster(await this.houseCount()).filter(
       (persona) => !busy.has(persona.userId) && !seeks.some((seek) => seek.userId === persona.userId),
     );
 
@@ -3741,7 +3784,7 @@ export class GameServer extends DurableObject<Env> {
         if (id) busy.add(id);
       }
     }
-    const persona = pickHouseBotByDifficulty(difficulty, busy, randomInt);
+    const persona = pickHouseBotByDifficulty(difficulty, busy, randomInt, activeHouseRoster(await this.houseCount()));
     if (!persona) return error(ws, "no_bot", "Every bot is busy right now. Try again shortly.");
     let rating = 1500;
     let rd = 350;
@@ -5525,7 +5568,7 @@ export class GameServer extends DurableObject<Env> {
       // always discoverable. The lobby still reads as busy because real
       // house-vs-house filler games run up to houseVsHouseCap (each puts two
       // personas on genuine "playing" AND lists a watchable game above).
-      const idlePersonas = HOUSE_ROSTER.filter((p) => !seen.has(p.userId));
+      const idlePersonas = activeHouseRoster(await this.houseCount()).filter((p) => !seen.has(p.userId));
       for (const persona of idlePersonas) {
         seen.set(persona.userId, {
           name: persona.name,

@@ -534,15 +534,25 @@ function ChatFlagsTab() {
 // down any bot game already in progress. Persisted, so it survives redeploys.
 function HouseBotsToggle() {
   const [enabled, setEnabled] = useState<boolean | null>(null);
+  const [count, setCount] = useState<number | null>(null);
+  const [bounds, setBounds] = useState<{ min: number; max: number }>({ min: 30, max: 60 });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     fetch("/api/mod/house")
-      .then((res) => (res.ok ? (res.json() as Promise<{ enabled: boolean }>) : null))
+      .then((res) =>
+        res.ok
+          ? (res.json() as Promise<{ enabled: boolean; count: number; min: number; max: number }>)
+          : null,
+      )
       .then((data) => {
-        if (!cancelled && data) setEnabled(data.enabled);
+        if (!cancelled && data) {
+          setEnabled(data.enabled);
+          setCount(data.count);
+          setBounds({ min: data.min, max: data.max });
+        }
       })
       .catch(() => {});
     return () => {
@@ -550,20 +560,19 @@ function HouseBotsToggle() {
     };
   }, []);
 
-  const toggle = async () => {
-    if (enabled === null || saving) return;
-    const next = !enabled;
+  const post = async (body: Record<string, unknown>) => {
     setSaving(true);
     setError(null);
     try {
       const res = await fetch("/api/mod/house", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ enabled: next }),
+        body: JSON.stringify(body),
       });
       if (!res.ok) throw new Error();
-      const data = (await res.json()) as { enabled: boolean };
+      const data = (await res.json()) as { enabled: boolean; count: number };
       setEnabled(data.enabled);
+      setCount(data.count);
     } catch {
       setError("Could not update. Try again.");
     } finally {
@@ -571,44 +580,81 @@ function HouseBotsToggle() {
     }
   };
 
+  const toggle = () => {
+    if (enabled !== null && !saving) post({ enabled: !enabled });
+  };
+  const commitCount = (n: number) => {
+    if (!saving && Number.isFinite(n)) post({ count: n });
+  };
+
   return (
-    <div className="mt-4 plate flex flex-wrap items-center justify-between gap-3 p-4">
-      <div className="min-w-0">
-        <div className="font-display text-sm font-semibold text-parchment-50">House bots</div>
-        <p className="mt-0.5 max-w-md text-xs text-parchment-400">
-          The engine-driven roster that keeps the lobby warm. Turn off to run pure human traffic;
-          bot seeks clear and any bot game winds down within a few seconds.
-        </p>
-        {error && <p className="mt-1 text-xs text-oxblood-glow">{error}</p>}
-      </div>
-      <button
-        type="button"
-        onClick={toggle}
-        disabled={enabled === null || saving}
-        aria-pressed={enabled === true}
-        title={enabled === null ? "Loading…" : enabled ? "House bots are on. Click to turn off." : "House bots are off. Click to turn on."}
-        className={
-          "press shrink-0 inline-flex items-center gap-2 border px-4 py-2 font-display text-sm font-semibold transition disabled:opacity-60 " +
-          (enabled === null
-            ? "border-white/15 text-parchment-400"
-            : enabled
-              ? "border-verdigris/50 bg-verdigris/15 text-verdigris-glow"
-              : "border-oxblood-glow/50 bg-oxblood/15 text-oxblood-glow")
-        }
-      >
-        <span
-          aria-hidden
+    <div className="mt-4 plate space-y-4 p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <div className="font-display text-sm font-semibold text-parchment-50">House bots</div>
+          <p className="mt-0.5 max-w-md text-xs text-parchment-400">
+            The engine-driven roster that keeps the lobby warm. Turn off to run pure human traffic;
+            bot seeks clear and any bot game winds down within a few seconds.
+          </p>
+          {error && <p className="mt-1 text-xs text-oxblood-glow">{error}</p>}
+        </div>
+        <button
+          type="button"
+          onClick={toggle}
+          disabled={enabled === null || saving}
+          aria-pressed={enabled === true}
+          title={enabled === null ? "Loading…" : enabled ? "House bots are on. Click to turn off." : "House bots are off. Click to turn on."}
           className={
-            "h-2 w-2 rounded-full " +
+            "press shrink-0 inline-flex items-center gap-2 border px-4 py-2 font-display text-sm font-semibold transition disabled:opacity-60 " +
             (enabled === null
-              ? "bg-parchment-400"
+              ? "border-white/15 text-parchment-400"
               : enabled
-                ? "bg-verdigris-glow animate-flicker"
-                : "bg-oxblood-glow")
+                ? "border-verdigris/50 bg-verdigris/15 text-verdigris-glow"
+                : "border-oxblood-glow/50 bg-oxblood/15 text-oxblood-glow")
           }
+        >
+          <span
+            aria-hidden
+            className={
+              "h-2 w-2 rounded-full " +
+              (enabled === null
+                ? "bg-parchment-400"
+                : enabled
+                  ? "bg-verdigris-glow animate-flicker"
+                  : "bg-oxblood-glow")
+            }
+          />
+          {enabled === null ? "…" : saving ? "Saving…" : enabled ? "On" : "Off"}
+        </button>
+      </div>
+      {/* Active-bot count: how many of the roster seek, play, and appear online.
+          The first N are active, so the base set is always on and raising this
+          switches in the expansion personas. Commits on release. */}
+      <div className={"border-t border-white/10 pt-3 " + (enabled === false ? "opacity-50" : "")}>
+        <div className="flex items-center justify-between">
+          <label htmlFor="house-count" className="smallcaps text-[11px] text-parchment-400">
+            Active bots in the lobby
+          </label>
+          <span className="font-mono text-sm text-gold-leaf tabular-nums">{count ?? "…"}</span>
+        </div>
+        <input
+          id="house-count"
+          type="range"
+          min={bounds.min}
+          max={bounds.max}
+          step={1}
+          value={count ?? bounds.min}
+          disabled={count === null || saving}
+          onChange={(e) => setCount(Number(e.target.value))}
+          onPointerUp={(e) => commitCount(Number((e.target as HTMLInputElement).value))}
+          onKeyUp={(e) => commitCount(Number((e.target as HTMLInputElement).value))}
+          className="mt-1.5 w-full accent-gold-leaf disabled:cursor-not-allowed"
         />
-        {enabled === null ? "…" : saving ? "Saving…" : enabled ? "On" : "Off"}
-      </button>
+        <p className="mt-1 text-[11px] text-parchment-400">
+          The first {count ?? bounds.min} of the {bounds.max} roster bots seek, play, and show
+          online. Takes effect within a few seconds, no redeploy.
+        </p>
+      </div>
     </div>
   );
 }

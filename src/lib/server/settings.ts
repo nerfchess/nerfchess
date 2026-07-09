@@ -8,6 +8,10 @@ import type { D1Database } from "@cloudflare/workers-types";
 // are active. Absent row = on by default.
 export const HOUSE_ENABLED_KEY = "house_enabled";
 
+// How many house bots are active (the first N of the roster). A moderator
+// slider between 30 and 60; an absent row means the default (30).
+export const HOUSE_COUNT_KEY = "house_count";
+
 export async function getAppSetting(db: D1Database, key: string): Promise<string | null> {
   try {
     const row = await db
