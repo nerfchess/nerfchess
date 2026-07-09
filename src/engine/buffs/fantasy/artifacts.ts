@@ -46,7 +46,7 @@ export const FANTASY_ARTIFACTS: Buff[] = [
       icon: "Music",
       name: "Horn of Summoning",
       description:
-        "One long note fills your pocket with a knight and a bishop, then drop them onto empty squares on later turns.",
+        "One long note fills your pocket with a knight, a bishop, and a pawn, then drop them onto empty squares on later turns.",
       tier: 6,
       category: "pieces",
       flavor: "One long note, and the hills empty toward you.",
@@ -54,6 +54,7 @@ export const FANTASY_ARTIFACTS: Buff[] = [
     instant((_inst, api) => {
       grantInventory(api, "n", 1);
       grantInventory(api, "b", 1);
+      grantInventory(api, "p", 1);
     }),
   ),
   card(
@@ -127,12 +128,12 @@ export const FANTASY_ARTIFACTS: Buff[] = [
       icon: "Wand",
       name: "Staff of Stasis",
       description:
-        "Tap the Staff of Stasis and lock one enemy piece inside a bubble of frozen time: it cannot move for 3 of their turns. Kings cannot be targeted.",
+        "Tap the Staff of Stasis and lock one enemy piece inside a bubble of frozen time: it cannot move for 4 of their turns. Kings cannot be targeted.",
       tier: 4,
       category: "tempo",
       flavor: "For it, a heartbeat lasts an age.",
     },
-    freezeTarget(3, "bubble"),
+    freezeTarget(4, "bubble"),
   ),
   card(
     {
@@ -140,7 +141,7 @@ export const FANTASY_ARTIFACTS: Buff[] = [
       icon: "ShieldPlus",
       name: "Aegis of the Ages",
       description:
-        "Lift the ancient aegis and its ward falls over your whole host, your king included: nothing you own can be captured for your opponent's next 2 turns.",
+        "Lift the ancient aegis and its ward falls over your whole host, your king included: nothing you own can be captured for your opponent's next 3 turns.",
       tier: 7,
       category: "protection",
       flavor: "Forged before the first war, unbroken since.",
@@ -149,8 +150,8 @@ export const FANTASY_ARTIFACTS: Buff[] = [
     // An unbroken bulwark: the army shield AND a king ward, so unlike the plain
     // army aegis the crown cannot be taken either while it holds.
     instant((_inst, api) => {
-      addEffect(api, { kind: "shield", owner: api.me, squares: null, turns: 2 });
-      addEffect(api, { kind: "king_safe", owner: api.me, turns: 2 });
+      addEffect(api, { kind: "shield", owner: api.me, squares: null, turns: 3 });
+      addEffect(api, { kind: "king_safe", owner: api.me, turns: 3 });
     }),
   ),
   card(
@@ -159,14 +160,14 @@ export const FANTASY_ARTIFACTS: Buff[] = [
       icon: "FlagTriangleRight",
       name: "Banner of War",
       description:
-        "Raise the banner and your cavalry surges: for your next 2 turns each of your knights may also step one square in any direction like a king.",
+        "Raise the banner and your cavalry surges: for your next 3 turns each of your knights may also step one square in any direction like a king.",
       tier: 3,
       category: "movement",
       requires: ["n"],
       flavor: "Follow the colors and do not look back.",
       fx: { motif: "empower", pieces: ["n"], moveAs: "k", self: true },
     },
-    timedAugment(2, (_m, inst, api) =>
+    timedAugment(3, (_m, inst, api) =>
       mySquares(api.board, api.me, "n").flatMap((sq) =>
         slideMoves(api.board, sq, ALL_DIRS, inst.id, 1),
       ),

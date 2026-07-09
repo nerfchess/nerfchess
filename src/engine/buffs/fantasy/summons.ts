@@ -25,12 +25,12 @@ export const FANTASY_SUMMONS: Buff[] = [
       icon: "Cat",
       name: "Imp Familiar",
       description:
-        "A new pawn joins your pocket. Later, spend a turn to drop it onto any empty square.",
+        "Two new pawns join your pocket. Later, spend turns to drop them onto empty squares.",
       tier: 2,
       category: "pieces",
-      flavor: "It is mostly loyal and entirely smug.",
+      flavor: "They are mostly loyal and entirely smug.",
     },
-    instant((_inst, api) => grantInventory(api, "p", 1)),
+    instant((_inst, api) => grantInventory(api, "p", 2)),
   ),
   card(
     {
@@ -38,12 +38,12 @@ export const FANTASY_SUMMONS: Buff[] = [
       icon: "ShieldHalf",
       name: "Phantom Guardian",
       description:
-        "Call up a phantom guardian that fights beside you as a bishop for 4 of your turns, then dissolves back into the aether.",
+        "Call up a phantom guardian that fights beside you as a bishop for 5 of your turns, then dissolves back into the aether.",
       tier: 4,
       category: "pieces",
       flavor: "Half here, half somewhere colder.",
     },
-    summonTemp("b", 4, myHalfZone),
+    summonTemp("b", 5, myHalfZone),
   ),
   card(
     {
@@ -51,13 +51,13 @@ export const FANTASY_SUMMONS: Buff[] = [
       icon: "Fence",
       name: "Wall of Thorns",
       description:
-        "A thicket of living thorns bursts up around an empty square: your opponent cannot enter any of the 8 squares around it for their next 3 turns.",
+        "A thicket of living thorns bursts up around an empty square: your opponent cannot enter any of the 8 squares around it for their next 4 turns.",
       tier: 5,
       category: "hex",
       flavor: "Every branch is a spear.",
       fx: { motif: "blindfold" },
     },
-    barNeighbors(3, "Choose the empty square the thorns burst from"),
+    barNeighbors(4, "Choose the empty square the thorns burst from"),
   ),
   card(
     {
@@ -65,12 +65,12 @@ export const FANTASY_SUMMONS: Buff[] = [
       icon: "Blocks",
       name: "Stone Golem",
       description:
-        "Bind a spirit into rock and stone: a lumbering golem serves as a rook for 5 of your turns, then crumbles back to rubble.",
+        "Bind a spirit into rock and stone: a lumbering golem serves as a rook for 6 of your turns, then crumbles back to rubble.",
       tier: 5,
       category: "pieces",
       flavor: "Slow, patient, and extremely heavy.",
     },
-    summonTemp("r", 5, myHalfZone),
+    summonTemp("r", 6, myHalfZone),
   ),
   card(
     {
@@ -78,15 +78,15 @@ export const FANTASY_SUMMONS: Buff[] = [
       icon: "Hexagon",
       name: "Summoning Circle",
       description:
-        "Chalk a summoning circle and a whole warband answers: a new knight, bishop, and pawn arrive in your pocket, ready to drop onto empty squares on later turns.",
+        "Chalk a summoning circle and a whole warband answers: a new knight, a bishop, and two pawns arrive in your pocket, ready to drop onto empty squares on later turns.",
       tier: 7,
       category: "pieces",
-      flavor: "Three names spoken, three shapes stepping through.",
+      flavor: "Four names spoken, four shapes stepping through.",
     },
     instant((_inst, api) => {
       grantInventory(api, "n", 1);
       grantInventory(api, "b", 1);
-      grantInventory(api, "p", 1);
+      grantInventory(api, "p", 2);
     }),
   ),
   card(
@@ -95,11 +95,14 @@ export const FANTASY_SUMMONS: Buff[] = [
       icon: "Sparkle",
       name: "Summon Dragon",
       description:
-        "A new queen joins your pocket. Later, spend a turn to drop it onto any empty square.",
+        "A new queen joins your pocket, and a hatchling follows her in as a pawn. Later, spend turns to drop them onto empty squares.",
       tier: 7,
       category: "pieces",
       flavor: "The oldest thing on the board, and the hungriest.",
     },
-    instant((_inst, api) => grantInventory(api, "q", 1)),
+    instant((_inst, api) => {
+      grantInventory(api, "q", 1);
+      grantInventory(api, "p", 1);
+    }),
   ),
 ];

@@ -9,7 +9,7 @@ import { Buff } from "./shared";
 import {
   card,
   lineSweep,
-  relocateAnywhere,
+  relocateMany,
   summonTemp,
   grantInventory,
   instant,
@@ -43,13 +43,13 @@ export const FANTASY_BEASTS: Buff[] = [
       icon: "Feather",
       name: "Wyvern's Dive",
       description:
-        "A wyvern folds its wings and dives: one of your knights streaks in a straight line, snatches the first enemy piece it reaches, and lands just beyond, once.",
+        "A wyvern folds its wings and dives: one of your knights streaks in a straight line, snatches up to the first two enemy pieces it reaches, and lands just beyond, once.",
       tier: 4,
       category: "attack",
       requires: ["n"],
       flavor: "The shriek comes a heartbeat before the talons.",
     },
-    lineSweep("n", ALL_DIRS, 1),
+    lineSweep("n", ALL_DIRS, 2),
   ),
   card(
     {
@@ -57,7 +57,7 @@ export const FANTASY_BEASTS: Buff[] = [
       icon: "Eye",
       name: "Basilisk's Gaze",
       description:
-        "Turn one enemy piece to stone: it becomes a walnut that can only shuffle one square at a time for 3 of their turns, and while petrified it cannot capture. Kings cannot be targeted.",
+        "Turn one enemy piece to stone: it becomes a walnut that can only shuffle one square at a time for 4 of their turns, and while petrified it cannot capture. Kings cannot be targeted.",
       tier: 3,
       category: "hex",
       flavor: "Do not, under any circumstance, look back.",
@@ -80,8 +80,8 @@ export const FANTASY_BEASTS: Buff[] = [
         const sq = picks[0]?.square;
         if (sq == null || inst.state.sq != null) return;
         inst.state.sq = sq;
-        inst.state.turns = 3;
-        addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 3 });
+        inst.state.turns = 4;
+        addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 4 });
       },
       // While petrified the stone piece may still take its one-square shuffle,
       // but never as a capture: strip its captures from the cursed side's moves.
@@ -123,7 +123,7 @@ export const FANTASY_BEASTS: Buff[] = [
       icon: "Worm",
       name: "Serpent Brood",
       description:
-        "Venomous stone serpents coil around the enemy clergy: every one of your opponent's bishops turns to a walnut for 3 of their turns, and the venom lingers so no enemy bishop may capture for the rest of the game.",
+        "Venomous stone serpents coil around the enemy clergy: every one of your opponent's bishops turns to a walnut for 4 of their turns, and the venom lingers so no enemy bishop may capture for the rest of the game.",
       tier: 4,
       category: "hex",
       flavor: "Marble scales, and not a single blink.",
@@ -131,11 +131,11 @@ export const FANTASY_BEASTS: Buff[] = [
     },
     {
       kind: "passive",
-      // Petrify every enemy bishop for 3 turns, once, on the draft.
+      // Petrify every enemy bishop for 4 turns, once, on the draft.
       init: (_inst, api) => {
         for (const sq of mySquares(api.board, api.opp)) {
           if (api.board.pieces[sq]!.type === "b") {
-            addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 3 });
+            addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 4 });
           }
         }
       },
@@ -153,15 +153,12 @@ export const FANTASY_BEASTS: Buff[] = [
       icon: "Bird",
       name: "Griffon Rider",
       description:
-        "Move one of your pieces to any empty square, once.",
+        "Move up to two of your pieces to any empty squares, once.",
       tier: 5,
       category: "movement",
       flavor: "Hold on tight and mind the updraft.",
     },
-    relocateAnywhere(
-      "Choose the piece the griffon lifts",
-      "Choose the empty square it is carried to",
-    ),
+    relocateMany(2, () => Array.from({ length: 64 }, (_v, i) => i as Square)),
   ),
   card(
     {
@@ -169,12 +166,12 @@ export const FANTASY_BEASTS: Buff[] = [
       icon: "PawPrint",
       name: "Direwolf Pack",
       description:
-        "A spectral direwolf answers your howl and hunts at your side as a knight for 5 of your turns, then melts back into the mist.",
+        "A spectral direwolf answers your howl and hunts at your side as a knight for 6 of your turns, then melts back into the mist.",
       tier: 4,
       category: "pieces",
       flavor: "The pack always returns to the wild.",
     },
-    summonTemp("n", 5, myHalfZone),
+    summonTemp("n", 6, myHalfZone),
   ),
   card(
     {
@@ -182,11 +179,11 @@ export const FANTASY_BEASTS: Buff[] = [
       icon: "Egg",
       name: "Roost of Rocs",
       description:
-        "Two titanic rocs descend from the mountain roost and settle into your pocket as knights, then drop them onto empty squares on later turns.",
+        "Three titanic rocs descend from the mountain roost and settle into your pocket as knights, then drop them onto empty squares on later turns.",
       tier: 6,
       category: "pieces",
       flavor: "Their shadows blot out the board.",
     },
-    instant((_inst, api) => grantInventory(api, "n", 2)),
+    instant((_inst, api) => grantInventory(api, "n", 3)),
   ),
 ];

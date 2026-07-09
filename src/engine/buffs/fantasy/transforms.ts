@@ -26,13 +26,13 @@ export const FANTASY_TRANSFORMS: Buff[] = [
       icon: "RefreshCw",
       name: "Metamorphosis",
       description:
-        "Force a violent change of form on one of your own knights or bishops: it reshapes itself into a rook, once.",
+        "Force a violent change of form on one of your own pawns, knights, or bishops: it reshapes itself into a rook, once.",
       tier: 4,
       category: "pieces",
-      requires: ["n", "b"],
+      requires: ["p", "n", "b"],
       flavor: "Bones crack, and settle into something taller.",
     },
-    transformOwn(1, ["n", "b"], "r", "Choose the piece to reshape into a rook"),
+    transformOwn(1, ["p", "n", "b"], "r", "Choose the piece to reshape into a rook"),
   ),
   card(
     {
@@ -57,13 +57,13 @@ export const FANTASY_TRANSFORMS: Buff[] = [
       icon: "Trophy",
       name: "Apotheosis",
       description:
-        "Raise one of your knights, bishops, or rooks to godhood: it ascends on the spot into a queen, once.",
+        "Raise one of your pawns, knights, bishops, or rooks to godhood: it ascends on the spot into a queen, once.",
       tier: 5,
       category: "pieces",
-      requires: ["n", "b", "r"],
+      requires: ["p", "n", "b", "r"],
       flavor: "Mortal one moment, divine the next.",
     },
-    transformOwn(1, ["n", "b", "r"], "q", "Choose the piece to raise to godhood"),
+    transformOwn(1, ["p", "n", "b", "r"], "q", "Choose the piece to raise to godhood"),
   ),
   card(
     {
@@ -106,12 +106,12 @@ export const FANTASY_TRANSFORMS: Buff[] = [
       icon: "FlaskConical",
       name: "Philosopher's Stone",
       description:
-        "Press the fabled stone to your ranks and transmute base metal to gold: two of your pawns become queens, once.",
+        "Press the fabled stone to your ranks and transmute base metal to gold: three of your pawns become queens, once.",
       tier: 7,
       category: "pieces",
       requires: ["p"],
       flavor: "The final work of a thousand alchemists.",
     },
-    transformOwn(2, ["p"], "q", "Choose a pawn to transmute to gold"),
+    transformOwn(3, ["p"], "q", "Choose a pawn to transmute to gold"),
   ),
 ];

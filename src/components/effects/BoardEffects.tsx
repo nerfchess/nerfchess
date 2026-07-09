@@ -1313,7 +1313,64 @@ export type SigVisual =
   | "homesick"
   | "jetlag"
   | "hillflag"
-  | "sugarrush";
+  | "sugarrush"
+  // --- Batch 11 (fantasy & meta spectacles): every FANTASY card that still
+  // had no bespoke signature becomes a board-wide statement (oversized lead
+  // clipped by the board crop, like the dragon / wizard / brainrot takeovers),
+  // and the FUNNY + PT ("meta") sets get full card-for-card coverage.
+  // Fantasy earth / artifact / necromancy / transform / curse spectacles.
+  | "sinkhole"
+  | "fissurefield"
+  | "dominionorb"
+  | "phylactery"
+  | "metamorph"
+  | "godhood"
+  | "transmute"
+  | "queenshackle"
+  | "frailty"
+  | "doomtide"
+  // Funny / PT clock economy.
+  | "deadlineclock"
+  | "whistleblast"
+  | "timeoutflag"
+  | "cashclock"
+  | "overclock"
+  // PT gambling / faustian market.
+  | "allin"
+  | "mysterybox"
+  | "swapmeet"
+  | "goldtouch"
+  // PT curses & chaos.
+  | "outoffice"
+  | "sneeze"
+  | "tornado"
+  | "glassdome"
+  | "vhsrewind"
+  | "hotpotato"
+  | "pinocchionose"
+  | "seamonkeys"
+  | "snailslow"
+  | "snoozebar"
+  | "stinkcloud"
+  | "whoopee"
+  | "springtrap"
+  // PT passives.
+  | "contagion"
+  | "fanclub"
+  | "gravitywell"
+  | "magnetpull"
+  | "photosyn"
+  | "termitegnaw"
+  | "picketline"
+  // Funny slapstick / summons / transforms.
+  | "creampie"
+  | "photocopy"
+  | "umbrella"
+  | "spotlight"
+  | "internpop"
+  | "cratedrop"
+  | "rentarook"
+  | "pizzarun";
 export type SigOrdering = "file" | "sweep" | "octagon" | "line" | "radial";
 export type SigSoundKey =
   | "nova"
@@ -1654,9 +1711,14 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   kings_legion: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "summonrift", hasLead: false, sound: "wall", source: "summon" },
   ww_mercenary_queen: { ordering: "radial", staggerMs: 0, victims: "all", visual: "summonrift", hasLead: false, sound: "wall", source: "summon" },
   second_army: { ordering: "sweep", staggerMs: 85, victims: "all", visual: "reinforce", hasLead: false, sound: "wall", source: "summon" },
-  clone_army: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "reinforce", hasLead: false, sound: "wall", source: "summon" },
+  // Batch 11 upgrade: the clone army rolls out of the same photocopier as its
+  // sibling card Clone — a board-wide scan-bar lead instead of the generic
+  // reinforcement pop.
+  clone_army: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "photocopy", hasLead: true, sound: "wall", source: "summon" },
   wc_conga_line: { ordering: "sweep", staggerMs: 90, victims: "all", visual: "paradrop", hasLead: false, sound: "wall", source: "summon" },
-  pizza_delivery: { ordering: "radial", staggerMs: 0, victims: "all", visual: "portal", hasLead: false, sound: "wall", source: "summon" },
+  // Batch 11 upgrade: the pizza actually gets DELIVERED — a scooter tears
+  // across the whole board trailing steam (was a generic portal pop).
+  pizza_delivery: { ordering: "radial", staggerMs: 0, victims: "all", visual: "pizzarun", hasLead: true, sound: "wall", source: "summon" },
   wc_clown_car: { ordering: "radial", staggerMs: 60, victims: "all", visual: "portal", hasLead: false, sound: "wall", source: "summon" },
   wc_rubber_duck_squad: { ordering: "radial", staggerMs: 60, victims: "all", visual: "portal", hasLead: false, sound: "wall", source: "summon" },
   wc_attack_goose: { ordering: "radial", staggerMs: 0, victims: "all", visual: "portal", hasLead: false, sound: "wall", source: "summon" },
@@ -1729,7 +1791,9 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   // Effect-data spectacles (inert-until-wired, like their shipped peers).
   ice_age: { ordering: "radial", staggerMs: 50, victims: "all", visual: "iceage", hasLead: true, sound: "massfreeze", source: "frozen" },
   world_end: { ordering: "radial", staggerMs: 55, victims: "all", visual: "worldend", hasLead: true, sound: "massfreeze", source: "frozen" },
-  rust: { ordering: "radial", staggerMs: 45, victims: "all", visual: "rustlock", hasLead: false, sound: "massfreeze", source: "frozen" },
+  // Batch 11 upgrade: the corrosion now CREEPS board-wide from the lead square
+  // before each piece seizes up.
+  rust: { ordering: "radial", staggerMs: 45, victims: "all", visual: "rustlock", hasLead: true, sound: "massfreeze", source: "frozen" },
   mass_petrify: { ordering: "sweep", staggerMs: 55, victims: ["n", "b"], visual: "masspetrify", hasLead: false, sound: "petrify", source: "walnut" },
   walnut_queen: { ordering: "radial", staggerMs: 0, victims: ["q"], visual: "walnutcurse", hasLead: true, sound: "petrify", source: "walnut" },
   amazon: { ordering: "radial", staggerMs: 0, victims: ["q"], visual: "amazoncrown", hasLead: true, sound: "coronation", source: "empower" },
@@ -1745,7 +1809,9 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   iron_legion: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "ironlegion", hasLead: false, sound: "wall", source: "summon" },
   second_coming: { ordering: "radial", staggerMs: 0, victims: "all", visual: "secondcoming", hasLead: true, sound: "wall", source: "summon" },
   necromancer: { ordering: "radial", staggerMs: 0, victims: "all", visual: "necromancer", hasLead: true, sound: "wall", source: "summon" },
-  lava_floor: { ordering: "sweep", staggerMs: 55, victims: "all", visual: "lavafloor", hasLead: false, sound: "wall", source: "blindfold" },
+  // Batch 11 upgrade: the floor is LAVA everywhere — a magma tide sweeps the
+  // whole board crop ahead of the per-square eruptions.
+  lava_floor: { ordering: "sweep", staggerMs: 55, victims: "all", visual: "lavafloor", hasLead: true, sound: "wall", source: "blindfold" },
 
   // --- Batch 9: THEMATIC, character-matched signatures. A round of the most
   // flavorful cards that still fired a GENERIC reused motif instead of their own
@@ -1799,7 +1865,9 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   we_glaciate: { ordering: "radial", staggerMs: 0, victims: "all", visual: "encase", hasLead: false, sound: "massfreeze", source: "frozen" },
   snowball: { ordering: "radial", staggerMs: 0, victims: ["p"], visual: "snowballsplat", hasLead: true, sound: "massfreeze", source: "frozen" },
   we_gale: { ordering: "sweep", staggerMs: 50, victims: ["b"], visual: "galephase", hasLead: false, sound: "blitz", source: "empower" },
-  opposite_day: { ordering: "radial", staggerMs: 45, victims: "all", visual: "oppositeday", hasLead: false, sound: "snooze", source: "slow" },
+  // Batch 11 upgrade: the whole board flips — two giant counter-running arrows
+  // charge across the crop in opposite directions on the lead square.
+  opposite_day: { ordering: "radial", staggerMs: 45, victims: "all", visual: "oppositeday", hasLead: true, sound: "snooze", source: "slow" },
 
   // --- Batch 10: gambling wheels, the drum-man, and a slapstick funny batch.
   // The gambling cards (Wheel of Fortune / Jackpot / Gamble) join roulette with
@@ -1822,7 +1890,9 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
 
   // Slapstick freezes (frozen zone, the snowball precedent): a rake to the face,
   // a fly swatter, a nap, a glue trap, a bear trap.
-  rake: { ordering: "radial", staggerMs: 0, victims: ["p", "n", "b", "r", "q"], visual: "rakebonk", hasLead: false, sound: "siege", source: "frozen" },
+  // Batch 11 upgrade: the rake is now COLOSSAL — it springs up over the whole
+  // board before the per-square bonk lands.
+  rake: { ordering: "radial", staggerMs: 0, victims: ["p", "n", "b", "r", "q"], visual: "rakebonk", hasLead: true, sound: "siege", source: "frozen" },
   fly_swatter: { ordering: "radial", staggerMs: 0, victims: ["n"], visual: "flyswat", hasLead: false, sound: "massfreeze", source: "frozen" },
   napping: { ordering: "radial", staggerMs: 0, victims: ["n"], visual: "sleepcap", hasLead: false, sound: "snooze", source: "frozen" },
   super_glue: { ordering: "radial", staggerMs: 45, victims: "all", visual: "superglue", hasLead: true, sound: "massfreeze", source: "frozen" },
@@ -1831,7 +1901,9 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   // Slapstick knockbacks (stun zone: a bonked / stunned piece): the ACME anvil
   // flattens, the spring glove punches back.
   anvil_drop: { ordering: "radial", staggerMs: 0, victims: ["p", "n", "b", "r", "q"], visual: "anvildrop", hasLead: true, sound: "atomic", source: "stun" },
-  boxing_glove: { ordering: "radial", staggerMs: 0, victims: ["p", "n", "b", "r", "q"], visual: "boxingglove", hasLead: false, sound: "rampage", source: "stun" },
+  // Batch 11 upgrade: the spring-loaded glove now hauls off across the WHOLE
+  // board before the per-square jab connects.
+  boxing_glove: { ordering: "radial", staggerMs: 0, victims: ["p", "n", "b", "r", "q"], visual: "boxingglove", hasLead: true, sound: "rampage", source: "stun" },
 
   // Ward (shield zone): the bubble-wrapped piece.
   bubble_wrap: { ordering: "radial", staggerMs: 0, victims: ["p", "n", "b", "r", "q"], visual: "bubblewrap", hasLead: true, sound: "aegis", source: "shield" },
@@ -1847,6 +1919,89 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   // Self grants: the king climbs the hill (empower zone), a sugar rush (rally).
   king_of_the_hill: { ordering: "radial", staggerMs: 0, victims: ["k"], visual: "hillflag", hasLead: true, sound: "coronation", source: "empower" },
   sugar_rush: { ordering: "radial", staggerMs: 60, victims: "all", visual: "sugarrush", hasLead: true, sound: "blitz", source: "rally" },
+
+  // --- Batch 11: fantasy & meta spectacles (the "dragon-roar" coverage pass).
+  // Every FANTASY card that still had NO signature entry gets a board-wide
+  // statement (oversized lead clipped by the board crop, hasLead: true), and
+  // the FUNNY + PT ("meta") sets are covered card-for-card: bespoke gags for
+  // the flavorful ones, shared-but-reflavored reads (chronosteal / coinflip /
+  // wings / hillflag / mortgagesign / minefield / paradrop) where a new
+  // component would add nothing — each still distinct via ordering / stagger /
+  // zone / palette. Every entry reuses an existing SigSoundKey (playSignature
+  // needs no new cases) and an already-declared SigZone, so every source !==
+  // "removal" entry rides the same inert-until-wired zone wiring as Batch
+  // 2-10. No new keyframes: every visual composes shipped fx-sig-* classes.
+
+  // FANTASY earth: the ground itself turns traitor.
+  sinkhole: { ordering: "radial", staggerMs: 90, victims: "all", visual: "sinkhole", hasLead: true, sound: "cataclysm", source: "blindfold" },
+  fissure_field: { ordering: "sweep", staggerMs: 60, victims: ["p"], visual: "fissurefield", hasLead: true, sound: "cataclysm", source: "slow" },
+
+  // FANTASY artifact / necromancy: dominion and the lich's insurance.
+  orb_of_dominion: { ordering: "radial", staggerMs: 0, victims: ["r", "q"], visual: "dominionorb", hasLead: true, sound: "shades", source: "summon" },
+  lich_phylactery: { ordering: "radial", staggerMs: 0, victims: ["q"], visual: "phylactery", hasLead: true, sound: "shades", source: "shield" },
+
+  // FANTASY transforms: violent reshaping, godhood, and gold.
+  metamorphosis: { ordering: "radial", staggerMs: 0, victims: ["n", "b"], visual: "metamorph", hasLead: true, sound: "colossus", source: "empower" },
+  apotheosis: { ordering: "radial", staggerMs: 0, victims: ["n", "b", "r"], visual: "godhood", hasLead: true, sound: "coronation", source: "empower" },
+  philosophers_stone: { ordering: "sweep", staggerMs: 140, victims: ["p"], visual: "transmute", hasLead: true, sound: "coronation", source: "empower" },
+
+  // FANTASY curses: iron, decay, and the dread compulsion.
+  shackle_the_queen: { ordering: "radial", staggerMs: 0, victims: ["q"], visual: "queenshackle", hasLead: true, sound: "clockcage", source: "slow" },
+  curse_of_frailty: { ordering: "radial", staggerMs: 45, victims: "all", visual: "frailty", hasLead: true, sound: "petrify", source: "slow" },
+  doom_march: { ordering: "sweep", staggerMs: 55, victims: "all", visual: "doomtide", hasLead: true, sound: "extinction", source: "slow" },
+
+  // FUNNY / PT clock economy (stun = the opponent's clock area, rally = ours).
+  deadline: { ordering: "radial", staggerMs: 0, victims: "all", visual: "deadlineclock", hasLead: true, sound: "clockcage", source: "stun" },
+  buzzer_beater: { ordering: "radial", staggerMs: 0, victims: "all", visual: "chronosteal", hasLead: true, sound: "clockcage", source: "stun" },
+  overtime_whistle: { ordering: "radial", staggerMs: 0, victims: "all", visual: "whistleblast", hasLead: true, sound: "blitz", source: "rally" },
+  time_out: { ordering: "radial", staggerMs: 0, victims: "all", visual: "timeoutflag", hasLead: true, sound: "snooze", source: "stun" },
+  overtime_pay: { ordering: "radial", staggerMs: 0, victims: "all", visual: "cashclock", hasLead: true, sound: "coronation", source: "rally" },
+  overclocked: { ordering: "radial", staggerMs: 50, victims: "all", visual: "overclock", hasLead: true, sound: "blitz", source: "rally" },
+
+  // PT gambling / faustian market (rally = a bet on our own tempo).
+  all_in: { ordering: "radial", staggerMs: 0, victims: "all", visual: "allin", hasLead: true, sound: "blitz", source: "rally" },
+  double_or_nothing: { ordering: "radial", staggerMs: 0, victims: "all", visual: "coinflip", hasLead: true, sound: "snooze", source: "rally" },
+  mystery_box: { ordering: "radial", staggerMs: 0, victims: "all", visual: "mysterybox", hasLead: true, sound: "snooze", source: "rally" },
+  swap_meet: { ordering: "radial", staggerMs: 0, victims: "all", visual: "swapmeet", hasLead: true, sound: "snooze", source: "rally" },
+  golden_touch: { ordering: "radial", staggerMs: 0, victims: ["p"], visual: "goldtouch", hasLead: true, sound: "coronation", source: "empower" },
+
+  // PT curses & chaos (slow / stun zones = the hexed enemy pieces).
+  understaffed: { ordering: "radial", staggerMs: 0, victims: "all", visual: "outoffice", hasLead: false, sound: "snooze", source: "stun" },
+  allergies: { ordering: "radial", staggerMs: 0, victims: "all", visual: "sneeze", hasLead: true, sound: "snooze", source: "slow" },
+  chaos_theory: { ordering: "sweep", staggerMs: 70, victims: ["p"], visual: "tornado", hasLead: true, sound: "rampage", source: "summon" },
+  greenhouse: { ordering: "file", staggerMs: 80, victims: ["p"], visual: "glassdome", hasLead: true, sound: "aegis", source: "empower" },
+  groundhog_day: { ordering: "radial", staggerMs: 0, victims: "all", visual: "vhsrewind", hasLead: true, sound: "clockcage", source: "stun" },
+  hot_potato: { ordering: "radial", staggerMs: 0, victims: "all", visual: "hotpotato", hasLead: true, sound: "rampage", source: "slow" },
+  pinocchio: { ordering: "radial", staggerMs: 0, victims: ["p"], visual: "pinocchionose", hasLead: true, sound: "coronation", source: "empower" },
+  sea_monkeys: { ordering: "sweep", staggerMs: 90, victims: ["p"], visual: "seamonkeys", hasLead: true, sound: "wall", source: "summon" },
+  slowpoke: { ordering: "sweep", staggerMs: 70, victims: "all", visual: "snailslow", hasLead: true, sound: "snooze", source: "slow" },
+  snooze_button: { ordering: "radial", staggerMs: 60, victims: "all", visual: "snoozebar", hasLead: true, sound: "snooze", source: "stun" },
+  stinky: { ordering: "radial", staggerMs: 45, victims: "all", visual: "stinkcloud", hasLead: true, sound: "snooze", source: "slow" },
+  whoopee_cushion: { ordering: "radial", staggerMs: 0, victims: "all", visual: "whoopee", hasLead: true, sound: "rampage", source: "stun" },
+  trapdoor: { ordering: "radial", staggerMs: 0, victims: "all", visual: "springtrap", hasLead: false, sound: "wall", source: "blindfold" },
+
+  // PT passives (the rule changes announce themselves once, on play).
+  contagion: { ordering: "radial", staggerMs: 55, victims: "all", visual: "contagion", hasLead: true, sound: "massfreeze", source: "frozen" },
+  fan_club: { ordering: "sweep", staggerMs: 70, victims: ["p"], visual: "fanclub", hasLead: true, sound: "aegis", source: "shield" },
+  gravity_well: { ordering: "radial", staggerMs: 0, victims: ["k"], visual: "gravitywell", hasLead: true, sound: "shades", source: "kingSafe" },
+  guardian_angel: { ordering: "radial", staggerMs: 0, victims: "all", visual: "wings", hasLead: true, sound: "aegis", source: "shield" },
+  home_field: { ordering: "sweep", staggerMs: 80, victims: ["n", "b", "r"], visual: "hillflag", hasLead: true, sound: "coronation", source: "empower" },
+  landlord: { ordering: "radial", staggerMs: 60, victims: "all", visual: "mortgagesign", hasLead: false, sound: "wall", source: "blindfold" },
+  magnetism: { ordering: "radial", staggerMs: 0, victims: ["n"], visual: "magnetpull", hasLead: true, sound: "colossus", source: "empower" },
+  photosynthesis: { ordering: "sweep", staggerMs: 75, victims: ["p"], visual: "photosyn", hasLead: true, sound: "aegis", source: "empower" },
+  termites: { ordering: "radial", staggerMs: 50, victims: ["r"], visual: "termitegnaw", hasLead: true, sound: "petrify", source: "slow" },
+  union_rules: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "picketline", hasLead: true, sound: "aegis", source: "shield" },
+
+  // FUNNY slapstick / summons / transforms.
+  cream_pie: { ordering: "radial", staggerMs: 0, victims: "all", visual: "creampie", hasLead: true, sound: "rampage", source: "stun" },
+  minefield: { ordering: "radial", staggerMs: 60, victims: "all", visual: "minefield", hasLead: false, sound: "siege", source: "blindfold" },
+  clone: { ordering: "radial", staggerMs: 0, victims: ["p"], visual: "photocopy", hasLead: true, sound: "wall", source: "summon" },
+  insurance: { ordering: "radial", staggerMs: 0, victims: ["n", "q"], visual: "umbrella", hasLead: false, sound: "aegis", source: "shield" },
+  understudy: { ordering: "radial", staggerMs: 0, victims: ["b", "q"], visual: "spotlight", hasLead: true, sound: "coronation", source: "shield" },
+  summon_intern: { ordering: "radial", staggerMs: 0, victims: ["p"], visual: "internpop", hasLead: false, sound: "wall", source: "summon" },
+  reinforcements: { ordering: "sweep", staggerMs: 100, victims: ["p"], visual: "paradrop", hasLead: false, sound: "wall", source: "summon" },
+  supply_drop: { ordering: "radial", staggerMs: 0, victims: ["n"], visual: "cratedrop", hasLead: true, sound: "wall", source: "summon" },
+  rent_a_rook: { ordering: "radial", staggerMs: 0, victims: ["r"], visual: "rentarook", hasLead: true, sound: "wall", source: "summon" },
 };
 
 /** A jagged lightning bolt that fills its wrapper (BoltGlyph is fixed-size). */
@@ -4742,7 +4897,26 @@ function WorldEndBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 }
 
 /** Rust: idle pieces seize up under a bloom of corrosion. */
-function RustLockBurst({ delayMs }: { delayMs: number }) {
+function RustLockBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 11 upgrade: the lead square spreads the corrosion board-wide — a
+  // rust-brown wash creeps over the whole crop while oxide patches wipe in one
+  // after another and a ring of flakes scatters.
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(150,90,50,0.22)" delayMs={delayMs} />
+        {[
+          { l: "26%", t: "34%", w: "16%", h: "7%", d: 0 },
+          { l: "48%", t: "52%", w: "20%", h: "8%", d: 140 },
+          { l: "60%", t: "30%", w: "14%", h: "6%", d: 260 },
+          { l: "34%", t: "60%", w: "17%", h: "7%", d: 380 },
+        ].map((p, i) => (
+          <span key={i} className="fx-sig-frost absolute block rounded-[2px]" style={{ left: p.l, top: p.t, width: p.w, height: p.h, background: "rgba(150,90,50,0.5)", border: "1px solid rgba(120,70,40,0.8)", animationDelay: `${delayMs + p.d}ms` }} />
+        ))}
+        <ShardBurst vectors={BURST_MED} fill="#a86a3a" stroke="#5a3418" delayMs={delayMs + 300} sizePct={5} />
+      </BoardWideStage>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-frost absolute inset-[16%] block rounded-[1px]" style={{ background: "rgba(150,90,50,0.42)", border: "1px solid rgba(120,70,40,0.8)", animationDelay: `${delayMs}ms` }} />
@@ -4931,7 +5105,25 @@ function SecondComingBurst({ lead, delayMs }: { lead: boolean; delayMs: number }
 }
 
 /** Lava Floor: a rank erupts, tongues of flame licking up from the ground. */
-function LavaFloorBurst({ delayMs }: { delayMs: number }) {
+function LavaFloorBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 11 upgrade: the lead square paints a board-wide magma tide (oversized
+  // canvas clipped by the board crop) — a red glow washes the whole board, a
+  // full-width lava wave rolls across it, and an ember shockwave blooms past
+  // the edges — before the per-square eruptions sweep through.
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(230,110,60,0.2)" delayMs={delayMs} />
+        <span className="fx-sig-wave absolute left-[18%] top-[38%] block h-[26%] w-[64%]" style={{ animationDelay: `${delayMs + 120}ms`, animationDuration: "1.2s" }}>
+          <svg viewBox="0 0 120 30" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
+            <path d="M0 30 C10 16 22 24 34 14 C46 6 58 18 70 10 C82 4 94 16 106 8 L120 14 V30 Z" fill="rgba(230,110,60,0.8)" stroke="#7a3a12" strokeWidth="1.2" strokeLinejoin="round" />
+            <path d="M8 30 C20 22 32 26 44 18 C56 12 70 22 84 16 C96 12 108 20 120 18 V30 Z" fill="rgba(255,214,120,0.85)" />
+          </svg>
+        </span>
+        <BoardBoom delayMs={delayMs + 320} color="rgba(255,214,120,0.8)" thickness={4} />
+      </BoardWideStage>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-rise absolute inset-x-[14%] bottom-[6%] top-[16%] block" style={{ animationDelay: `${delayMs}ms` }}>
@@ -5656,7 +5848,29 @@ function GalePhaseBurst({ delayMs }: { delayMs: number }) {
 
 /** Opposite Day: everything runs backwards. Two arrows counter-rotate as the
  * enemy is forbidden to close on your king. */
-function OppositeDayBurst({ delayMs }: { delayMs: number }) {
+function OppositeDayBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 11 upgrade: on the lead square the whole board flips — two giant
+  // arrows charge the full crop in OPPOSITE directions (coral right-bound on
+  // top, mint left-bound below) over a pale reversal wash.
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(224,119,107,0.12)" delayMs={delayMs} />
+        <span className="fx-sig-cross absolute left-[38%] top-[34%] block h-[10%] w-[16%]" style={{ animationDelay: `${delayMs}ms` }}>
+          <svg viewBox="0 0 48 14" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
+            <path d="M2 7 H36" stroke="#e0776b" strokeWidth="4" strokeLinecap="round" />
+            <path d="M34 1 L46 7 L34 13 Z" fill="#e0776b" stroke="#7a2f28" strokeWidth="1" strokeLinejoin="round" />
+          </svg>
+        </span>
+        <span className="fx-sig-crossback absolute left-[46%] top-[54%] block h-[10%] w-[16%]" style={{ animationDelay: `${delayMs + 180}ms` }}>
+          <svg viewBox="0 0 48 14" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
+            <path d="M46 7 H12" stroke="#7eb59a" strokeWidth="4" strokeLinecap="round" />
+            <path d="M14 1 L2 7 L14 13 Z" fill="#7eb59a" stroke="#2f4a3c" strokeWidth="1" strokeLinejoin="round" />
+          </svg>
+        </span>
+      </BoardWideStage>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-swirl absolute inset-[18%] block" style={{ animationDelay: `${delayMs}ms` }}>
@@ -6002,7 +6216,25 @@ function DrumBonkBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 // SLAPSTICK FUNNY BATCH: a rake, a fly swatter, a nap, super glue, a bear trap,
 // an anvil, a boxing glove, bubble wrap, vertigo, origami, gremlins, homesick,
 // jet lag, king-of-the-hill, and a sugar rush.
-function RakeBonkBurst({ delayMs }: { delayMs: number }) {
+function RakeBonkBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 11 upgrade: the lead square swings a COLOSSAL rake up over the whole
+  // board crop (the classic step-on-it gag at billboard scale), with a gold
+  // shockwave rolling past the edges when the handle smacks home.
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <span className="fx-sig-arc absolute left-[40%] bottom-[18%] block h-[52%] w-[20%]" style={{ animationDelay: `${delayMs}ms`, animationDuration: "0.9s" }}>
+          <svg viewBox="0 0 20 40" className="h-full w-full" aria-hidden="true">
+            <path d="M10 40 L10 12" stroke="#8a6a4a" strokeWidth="2.6" strokeLinecap="round" />
+            <path d="M3 12 H17" stroke="#6b4a34" strokeWidth="2.8" strokeLinecap="round" />
+            <path d="M4 12 L4 6 M8 12 L8 6 M12 12 L12 6 M16 12 L16 6" stroke="#6b4a34" strokeWidth="1.8" strokeLinecap="round" />
+          </svg>
+        </span>
+        <BoardBoom delayMs={delayMs + 420} color="rgba(230,191,106,0.85)" thickness={4} />
+        <ShardBurst vectors={PIN_STARS} fill="#ffd95e" stroke="#8a6414" delayMs={delayMs + 460} sizePct={6} />
+      </BoardWideStage>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-arc absolute left-[30%] bottom-[6%] block h-[80%] w-[40%]" style={{ animationDelay: `${delayMs}ms` }}>
@@ -6130,7 +6362,25 @@ function AnvilDropBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
     </span>
   );
 }
-function BoxingGloveBurst({ delayMs }: { delayMs: number }) {
+function BoxingGloveBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 11 upgrade: the lead square throws a HAYMAKER — a giant spring-arm
+  // glove punches across the whole board crop, landing with a coral shockwave
+  // and a burst of stars.
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <span className="fx-sig-punch absolute left-[22%] top-[42%] block h-[16%] w-[42%]" style={{ animationDelay: `${delayMs}ms` }}>
+          <svg viewBox="0 0 48 24" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
+            <path d="M2 12 L8 6 L12 18 L18 6 L22 18 L28 8" fill="none" stroke="#8aa0b4" strokeWidth="2" strokeLinejoin="round" />
+            <path d="M28 4 C40 2 46 8 46 12 C46 16 40 22 28 20 C24 19 24 16 26 15 C22 15 22 9 26 9 C24 8 24 5 28 4 Z" fill="#e0776b" stroke="#7a2f28" strokeWidth="1.2" strokeLinejoin="round" />
+            <path d="M30 12 H42" stroke="#7a2f28" strokeWidth="0.9" />
+          </svg>
+        </span>
+        <BoardBoom delayMs={delayMs + 340} color="rgba(224,119,107,0.85)" thickness={4} />
+        <ShardBurst vectors={PIN_STARS} fill="#ffd95e" stroke="#8a6414" delayMs={delayMs + 380} sizePct={6} />
+      </BoardWideStage>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-punch absolute left-[2%] top-[30%] block h-[40%] w-[76%]" style={{ animationDelay: `${delayMs}ms` }}>
@@ -6322,6 +6572,1635 @@ function SugarRushBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
         </span>
       )}
       <ShardBurst vectors={PIN_STARS} fill="#f4c430" stroke="#8a6414" delayMs={delayMs + 60} sizePct={8} />
+    </span>
+  );
+}
+
+// --- 10k. Batch 11 visuals: fantasy & meta spectacles ------------------------
+// The coverage pass. Every FANTASY card that still had no bespoke signature
+// gets a BOARD-WIDE statement (the oversized-lead pattern of the dragon /
+// wizard / brainrot takeovers: the lead square paints an oversized canvas
+// clipped by the board crop via BoardWideStage), and the FUNNY + PT ("meta")
+// sets get bespoke gags. Same law as every signature: flat SVG fills / solid
+// discs (no gradients / glow / box-shadow / blur), coral / mint / sun / gold,
+// transform + opacity only, one-shot, hidden entirely under reduced motion.
+// NO new keyframes: every motion here composes fx-sig-* classes already in
+// effects.css (wash / cross / rain / boom / muzzle / frost / wave / grow /
+// rise / swirl / crown / cage / hole / quake / splat / dart / sweepbar /
+// rewind / glitch / chomp / wiggle / hop / punch / moat / implode / dome ...).
+
+/** A jagged crack ray radiating out from the stage centre: a static-rotated
+ * wrapper (the animation owns the child's transform) around a muzzle-extend. */
+function CrackRay({ deg, lengthPct, delayMs, color }: { deg: number; lengthPct: number; delayMs: number; color: string }) {
+  return (
+    <span
+      className="absolute left-1/2 top-1/2 block h-[2%]"
+      style={{ width: `${lengthPct}%`, transform: `rotate(${deg}deg)`, transformOrigin: "0% 50%" }}
+    >
+      <span className="fx-sig-muzzle absolute inset-0 block" style={{ animationDelay: `${delayMs}ms`, animationDuration: "0.6s" }}>
+        <svg viewBox="0 0 100 4" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
+          <path d="M0 2 L16 0.8 L32 3 L50 1 L68 3.2 L84 1 L100 2" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
+        </svg>
+      </span>
+    </span>
+  );
+}
+
+const SINKHOLE_RAYS = [8, 55, 104, 152, 199, 251, 305];
+
+/** Sinkhole: the earth gives way. Lead: jagged cracks radiate BOARD-WIDE from
+ * the caster square, the ground shudders under a dust wash, and a debris ring
+ * blooms past the board edges; each rigged square then yawns open into a dark
+ * pit with a crumbling rim. */
+function SinkholeBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(74,53,33,0.2)" delayMs={delayMs} />
+        {SINKHOLE_RAYS.map((deg, i) => (
+          <CrackRay key={i} deg={deg} lengthPct={26 + (i % 3) * 7} delayMs={delayMs + i * 55} color="#4a3521" />
+        ))}
+        <span className="fx-sig-quake absolute left-[38%] top-[40%] block h-[20%] w-[24%]" style={{ animationDelay: `${delayMs + 180}ms` }}>
+          <svg viewBox="0 0 40 30" className="h-full w-full" aria-hidden="true">
+            <ellipse cx="20" cy="15" rx="17" ry="10" fill="rgba(20,14,8,0.9)" stroke="#4a3521" strokeWidth="1.6" />
+            <path d="M6 10 L1 6 M34 10 L39 5 M8 22 L3 26 M32 22 L38 25" stroke="#4a3521" strokeWidth="1.4" strokeLinecap="round" />
+          </svg>
+        </span>
+        <BoardBoom delayMs={delayMs + 380} color="rgba(150,110,66,0.7)" thickness={4} />
+      </BoardWideStage>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-hole absolute inset-[18%] block rounded-full" style={{ background: "rgba(20,14,8,0.92)", border: "2px solid rgba(74,53,33,0.9)", animationDelay: `${delayMs}ms` }} />
+      <span className="fx-sig-crumble absolute left-[14%] top-[10%] block h-[16%] w-[16%]" style={{ animationDelay: `${delayMs + 90}ms` }}>
+        <SigShard fill="#966e42" stroke="#4a3521" variant={0} />
+      </span>
+      <span className="fx-sig-crumble absolute right-[14%] top-[24%] block h-[13%] w-[13%]" style={{ animationDelay: `${delayMs + 170}ms` }}>
+        <SigShard fill="#7a5b3a" stroke="#4a3521" variant={1} />
+      </span>
+      <span className="fx-sig-soot absolute inset-[6%] block rounded-full" style={{ border: "2px solid rgba(150,110,66,0.55)", animationDelay: `${delayMs + 60}ms` }} />
+    </span>
+  );
+}
+
+/** Fissure Field: the ground splits into a lattice. Lead: two full-width
+ * jagged fissures rip across the whole board crop (staggered heights) while
+ * the earth shudders; each pawn's square takes its own ground-split and a
+ * spray of grit. */
+function FissureFieldBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(107,74,52,0.16)" delayMs={delayMs} />
+        {[
+          { t: "38%", d: 0 },
+          { t: "56%", d: 220 },
+        ].map((f, i) => (
+          <span key={i} className="fx-sig-frost absolute left-[20%] block h-[3%] w-[60%]" style={{ top: f.t, animationDelay: `${delayMs + f.d}ms`, animationDuration: "0.9s" }}>
+            <svg viewBox="0 0 200 6" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
+              <path d="M0 3 L22 1 L40 5 L62 2 L84 4.6 L108 1.2 L130 4.8 L154 1.6 L176 4.4 L200 3" fill="none" stroke="#4a3521" strokeWidth="2.4" strokeLinecap="round" />
+              <path d="M40 5 L46 8 M108 1.2 L104 -2 M154 1.6 L160 -1" stroke="#6b4a34" strokeWidth="1.4" strokeLinecap="round" />
+            </svg>
+          </span>
+        ))}
+        <BoardBoom delayMs={delayMs + 420} color="rgba(150,110,66,0.6)" thickness={3} />
+      </BoardWideStage>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-quake absolute inset-x-[6%] top-[38%] block h-[24%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 40 10" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
+          <path d="M0 5 L8 2 L15 8 L23 3 L31 7 L40 4" fill="none" stroke="#4a3521" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+      </span>
+      <ShardBurst vectors={BURST_MED} fill="#966e42" stroke="#4a3521" delayMs={delayMs + 80} sizePct={9} />
+    </span>
+  );
+}
+
+const ORB_TENDRILS = [24, 96, 168, 232, 316];
+
+/** Orb of Dominion: a violet orb of command rises over the board and casts
+ * crackling tendrils of will board-wide; the seized piece's square is gripped
+ * by a spinning rune ring as wisps of purple are drawn INTO it. */
+function DominionOrbBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(90,63,160,0.18)" delayMs={delayMs} />
+        <span className="fx-sig-grow absolute left-[42%] top-[36%] block h-[22%] w-[16%]" style={{ animationDelay: `${delayMs}ms` }}>
+          <svg viewBox="0 0 32 40" className="h-full w-full" aria-hidden="true">
+            <circle cx="16" cy="16" r="13" fill="#5a3fa0" stroke="#3a2a63" strokeWidth="1.6" />
+            <circle cx="12" cy="12" r="4" fill="#a877d8" />
+            <path d="M8 32 H24 L21 38 H11 Z" fill="#3a2a63" stroke="#241a40" strokeWidth="1" strokeLinejoin="round" />
+          </svg>
+        </span>
+        {ORB_TENDRILS.map((deg, i) => (
+          <CrackRay key={i} deg={deg} lengthPct={24 + (i % 2) * 8} delayMs={delayMs + 260 + i * 60} color="#a877d8" />
+        ))}
+        <BoardBoom delayMs={delayMs + 420} color="rgba(168,119,216,0.8)" thickness={3} />
+      </BoardWideStage>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-swirl absolute inset-[10%] block" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <circle cx="20" cy="20" r="17" fill="none" stroke="#a877d8" strokeWidth="1.8" strokeDasharray="6 4" />
+          <circle cx="20" cy="20" r="11" fill="none" stroke="#5a3fa0" strokeWidth="1.1" strokeDasharray="3 3" />
+        </svg>
+      </span>
+      {VORTEX_VEC.slice(0, 4).map((v, i) => (
+        <span key={i} className="fx-sig-implode absolute left-1/2 top-1/2 ml-[-5%] mt-[-5%] block h-[10%] w-[10%]" style={{ "--dx": v.dx, "--dy": v.dy, "--rot": v.rot, animationDelay: `${delayMs + 120 + v.d}ms` } as React.CSSProperties}>
+          <SigShard fill="#a877d8" stroke="#4a3070" variant={i} />
+        </span>
+      ))}
+      <span className="fx-sig-flash absolute inset-[30%] block rounded-full" style={{ background: "rgba(168,119,216,0.6)", animationDelay: `${delayMs + 260}ms` }} />
+    </span>
+  );
+}
+
+/** Lich Phylactery: the queen's soul is decanted for safe keeping. Lead: a
+ * sickly-green wash settles board-wide while a soul-gem vessel rises and
+ * drifting soul-wisps are drawn INTO it from across the board; the queen's
+ * square gets the gem seal and a wisp ring. */
+function PhylacteryBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(94,170,120,0.14)" delayMs={delayMs} />
+        <span className="fx-sig-rise absolute left-[44%] top-[34%] block h-[26%] w-[12%]" style={{ animationDelay: `${delayMs}ms` }}>
+          <svg viewBox="0 0 24 48" className="h-full w-full" aria-hidden="true">
+            <path d="M12 2 L22 16 L18 40 L6 40 L2 16 Z" fill="#2e5f4a" stroke="#1c3a2d" strokeWidth="1.4" strokeLinejoin="round" />
+            <path d="M12 10 L17 17 L15 32 L9 32 L7 17 Z" fill="#7eb59a" />
+            <circle cx="12" cy="21" r="3" fill="#c9f2dd" />
+          </svg>
+        </span>
+        {VORTEX_VEC.map((v, i) => (
+          <span key={i} className="fx-sig-implode absolute left-1/2 top-1/2 ml-[-2%] mt-[-2%] block h-[4%] w-[4%] rounded-full" style={{ background: "rgba(160,222,190,0.85)", "--dx": v.dx, "--dy": v.dy, "--rot": v.rot, animationDelay: `${delayMs + 240 + v.d * 6}ms`, animationDuration: "0.9s" } as React.CSSProperties} />
+        ))}
+        <BoardBoom delayMs={delayMs + 520} color="rgba(126,181,154,0.7)" thickness={3} />
+      </BoardWideStage>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-grow absolute left-[34%] top-[20%] block h-[52%] w-[32%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 24 48" className="h-full w-full" aria-hidden="true">
+          <path d="M12 2 L22 16 L18 40 L6 40 L2 16 Z" fill="#2e5f4a" stroke="#1c3a2d" strokeWidth="1.4" strokeLinejoin="round" />
+          <circle cx="12" cy="21" r="3" fill="#c9f2dd" />
+        </svg>
+      </span>
+      <span className="fx-sig-ring absolute inset-[12%] block rounded-full" style={{ border: "1.5px solid rgba(126,181,154,0.85)", animationDelay: `${delayMs + 160}ms` }} />
+      <span className="fx-sig-zzz absolute left-[58%] top-[10%] block h-[18%] w-[14%] rounded-full" style={{ background: "rgba(160,222,190,0.6)", animationDelay: `${delayMs + 300}ms` }} />
+    </span>
+  );
+}
+
+/** Metamorphosis: a violent change of form. Lead: an amber wash floods the
+ * board as a giant chrysalis swells and BURSTS in a wide shard scatter with a
+ * shockwave; the reshaped piece's square grows a rook silhouette out of the
+ * wreckage. */
+function MetamorphosisBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(230,191,106,0.16)" delayMs={delayMs} />
+        <span className="fx-sig-grow absolute left-[41%] top-[34%] block h-[26%] w-[18%]" style={{ animationDelay: `${delayMs}ms` }}>
+          <svg viewBox="0 0 30 42" className="h-full w-full" aria-hidden="true">
+            <path d="M15 2 C25 8 27 20 24 32 C22 39 8 39 6 32 C3 20 5 8 15 2 Z" fill="#8a6a4a" stroke="#5d3a1e" strokeWidth="1.6" strokeLinejoin="round" />
+            <path d="M15 4 V38 M8 14 C13 17 17 17 22 14 M8 26 C13 23 17 23 22 26" stroke="#5d3a1e" strokeWidth="1" fill="none" />
+          </svg>
+        </span>
+        <ShardBurst vectors={BURST_BIG} fill="#e6bf6a" stroke="#7a5b23" delayMs={delayMs + 460} sizePct={6} />
+        <BoardBoom delayMs={delayMs + 460} color="rgba(230,191,106,0.85)" thickness={4} />
+      </BoardWideStage>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-flash absolute inset-[20%] block rounded-full" style={{ background: "rgba(230,191,106,0.7)", animationDelay: `${delayMs}ms` }} />
+      <span className="fx-sig-rise absolute left-[30%] bottom-[10%] block h-[64%] w-[40%]" style={{ animationDelay: `${delayMs + 120}ms` }}>
+        <svg viewBox="0 0 24 32" className="h-full w-full" aria-hidden="true">
+          <path d="M4 32 L6 14 H18 L20 32 Z M4 8 H8 V4 H10 V8 H14 V4 H16 V8 H20 V14 H4 Z" fill="#e6bf6a" stroke="#7a5b23" strokeWidth="1.2" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <ShardBurst vectors={BURST_MED} fill="#8a6a4a" stroke="#5d3a1e" delayMs={delayMs} sizePct={10} />
+    </span>
+  );
+}
+
+/** Apotheosis: a piece is raised to godhood. Lead: golden light shafts descend
+ * across the whole board, a colossal crown lowers onto the centre with a
+ * spring-settle, and a halo shockwave rolls past the edges; the ascending
+ * square gets its own shaft, halo ring, and falling crown. */
+function ApotheosisBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(244,196,48,0.14)" delayMs={delayMs} />
+        {[
+          { l: "30%", d: 0 },
+          { l: "47%", d: 130 },
+          { l: "64%", d: 260 },
+        ].map((s, i) => (
+          <span key={i} className="fx-sig-shaft absolute top-[26%] block h-[48%] w-[5%]" style={{ left: s.l, background: "rgba(255,240,180,0.5)", animationDelay: `${delayMs + s.d}ms`, animationDuration: "1s" }} />
+        ))}
+        <span className="fx-sig-crown absolute left-[42%] top-[38%] block h-[16%] w-[16%]" style={{ animationDelay: `${delayMs + 260}ms` }}>
+          <svg viewBox="0 0 40 26" className="h-full w-full" aria-hidden="true">
+            <path d="M4 22 L4 8 L13 15 L20 4 L27 15 L36 8 L36 22 Z" fill="#f4c430" stroke="#8a6414" strokeWidth="1.6" strokeLinejoin="round" />
+            <circle cx="20" cy="19" r="2" fill="#e05252" />
+          </svg>
+        </span>
+        <BoardBoom delayMs={delayMs + 560} color="rgba(244,196,48,0.85)" thickness={4} />
+      </BoardWideStage>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-shaft absolute inset-x-[30%] top-0 block h-[70%]" style={{ background: "rgba(255,240,180,0.55)", animationDelay: `${delayMs}ms` }} />
+      <span className="fx-sig-ring absolute inset-[14%] block rounded-full" style={{ border: "2px solid rgba(244,196,48,0.9)", animationDelay: `${delayMs + 140}ms` }} />
+      <span className="fx-sig-crownfall absolute left-[32%] top-[6%] block h-[28%] w-[36%]" style={{ animationDelay: `${delayMs + 200}ms` }}>
+        <svg viewBox="0 0 40 26" className="h-full w-full" aria-hidden="true">
+          <path d="M4 22 L4 8 L13 15 L20 4 L27 15 L36 8 L36 22 Z" fill="#f4c430" stroke="#8a6414" strokeWidth="1.6" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <ShardBurst vectors={BURST_MED} fill="#ffd95e" stroke="#8a6414" delayMs={delayMs + 220} sizePct={9} />
+    </span>
+  );
+}
+
+/** Philosopher's Stone: base metal to gold. Lead: a giant alchemical circle —
+ * dashed rings and an inscribed triangle — draws itself over the whole board
+ * in gold while transmutation sparkle rains down the crop; each pawn square
+ * flares gold and receives a crown. */
+function TransmuteBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(230,191,106,0.15)" delayMs={delayMs} />
+        <span className="fx-sig-swirl absolute left-[28%] top-[28%] block h-[44%] w-[44%]" style={{ animationDelay: `${delayMs}ms`, animationDuration: "1.3s" }}>
+          <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+            <circle cx="20" cy="20" r="18" fill="none" stroke="#e6bf6a" strokeWidth="1.4" strokeDasharray="6 3" />
+            <circle cx="20" cy="20" r="12.5" fill="none" stroke="#f4c430" strokeWidth="1" strokeDasharray="3 2.5" />
+            <path d="M20 6 L32 28 L8 28 Z" fill="none" stroke="#e6bf6a" strokeWidth="1.2" strokeLinejoin="round" />
+            <circle cx="20" cy="20" r="2.4" fill="#f4c430" />
+          </svg>
+        </span>
+        <BoardRain
+          delayMs={delayMs + 200}
+          render={() => (
+            <svg viewBox="0 0 10 10" className="h-full w-full" aria-hidden="true">
+              <path d="M5 0 L6.2 3.8 L10 5 L6.2 6.2 L5 10 L3.8 6.2 L0 5 L3.8 3.8 Z" fill="#ffd95e" stroke="#8a6414" strokeWidth="0.5" />
+            </svg>
+          )}
+        />
+      </BoardWideStage>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-flash absolute inset-[16%] block rounded-full" style={{ background: "rgba(244,196,48,0.75)", animationDelay: `${delayMs}ms` }} />
+      <span className="fx-sig-petrify absolute bottom-[8%] left-[22%] right-[22%] top-[14%] block rounded-[1px]" style={{ background: "rgba(230,191,106,0.6)", border: "1px solid rgba(138,100,20,0.8)", animationDelay: `${delayMs + 80}ms` }} />
+      <span className="fx-sig-crown absolute left-[34%] top-[26%] block h-[30%] w-[32%]" style={{ animationDelay: `${delayMs + 200}ms` }}>
+        <svg viewBox="0 0 40 26" className="h-full w-full" aria-hidden="true">
+          <path d="M4 22 L4 8 L13 15 L20 4 L27 15 L36 8 L36 22 Z" fill="#f4c430" stroke="#8a6414" strokeWidth="1.6" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <ShardBurst vectors={PIN_STARS} fill="#ffd95e" stroke="#8a6414" delayMs={delayMs + 160} sizePct={9} />
+    </span>
+  );
+}
+
+/** Shackle the Queen: cursed iron. Lead: two colossal chains whip across the
+ * whole board in opposite directions over an iron-grey wash and clank home
+ * with a shockwave; the queen's square takes falling manacle bars and a chain
+ * link ring. */
+function ShackleQueenBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  const chain = (
+    <svg viewBox="0 0 64 12" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
+      {[0, 1, 2, 3].map((i) => (
+        <ellipse key={i} cx={8 + i * 16} cy="6" rx="7" ry="4.6" fill="none" stroke="#5b6672" strokeWidth="2.6" />
+      ))}
+    </svg>
+  );
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(91,102,114,0.2)" delayMs={delayMs} />
+        <span className="fx-sig-cross absolute left-[36%] top-[38%] block h-[6%] w-[20%]" style={{ animationDelay: `${delayMs}ms` }}>{chain}</span>
+        <span className="fx-sig-crossback absolute left-[44%] top-[52%] block h-[6%] w-[20%]" style={{ animationDelay: `${delayMs + 150}ms` }}>{chain}</span>
+        <BoardBoom delayMs={delayMs + 430} color="rgba(91,102,114,0.85)" thickness={4} />
+      </BoardWideStage>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-cage absolute inset-x-[18%] top-[6%] block h-[74%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 40 40" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
+          <path d="M8 0 V40 M20 0 V40 M32 0 V40" stroke="#5b6672" strokeWidth="2.6" strokeLinecap="round" />
+          <path d="M2 34 H38" stroke="#3f474f" strokeWidth="3" strokeLinecap="round" />
+        </svg>
+      </span>
+      <span className="fx-sig-ring absolute inset-[14%] block rounded-full" style={{ border: "2px dashed rgba(91,102,114,0.9)", animationDelay: `${delayMs + 180}ms` }} />
+      <ShardBurst vectors={BURST_MED} fill="#8aa0b4" stroke="#3f474f" delayMs={delayMs + 220} sizePct={8} />
+    </span>
+  );
+}
+
+/** Curse of Frailty: a wasting curse. Lead: the whole board desaturates under
+ * a double grey pulse while a cracked hex sigil turns overhead; every enemy
+ * square takes a brittle-crack overlay and a grey shiver. */
+function FrailtyBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(90,90,98,0.26)" delayMs={delayMs} />
+        <BoardWash color="rgba(90,90,98,0.2)" delayMs={delayMs + 340} />
+        <span className="fx-sig-swirl absolute left-[34%] top-[32%] block h-[36%] w-[32%]" style={{ animationDelay: `${delayMs + 120}ms`, animationDuration: "1.2s" }}>
+          <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+            <circle cx="20" cy="20" r="16" fill="none" stroke="#71717a" strokeWidth="1.6" strokeDasharray="7 4" />
+            <path d="M20 8 L23 17 L32 17 L25 23 L27 32 L20 26 L13 32 L15 23 L8 17 L17 17 Z" fill="none" stroke="#9a9a9f" strokeWidth="1.2" strokeLinejoin="round" />
+            <path d="M12 12 L16 16 M28 26 L24 22" stroke="#5b6672" strokeWidth="1" strokeLinecap="round" />
+          </svg>
+        </span>
+      </BoardWideStage>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-flash absolute inset-[8%] block rounded-[2px]" style={{ background: "rgba(122,122,130,0.4)", animationDelay: `${delayMs}ms` }} />
+      <span className="fx-sig-quake absolute inset-[12%] block" style={{ animationDelay: `${delayMs + 80}ms` }}>
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <path d="M20 4 L17 14 L22 20 L16 27 L21 36 M17 14 L9 18 M22 20 L31 22 M16 27 L8 31" fill="none" stroke="#71717a" strokeWidth="1.6" strokeLinecap="round" />
+        </svg>
+      </span>
+      <span className="fx-sig-crumble absolute left-[20%] top-[16%] block h-[12%] w-[12%]" style={{ animationDelay: `${delayMs + 220}ms` }}>
+        <SigShard fill="#9a9a9f" stroke="#5b6672" variant={2} />
+      </span>
+    </span>
+  );
+}
+
+/** Doom March: a dread compulsion drives the enemy backward. Lead: a black
+ * tide — a full-width dark wave crested with a skull standard — rolls across
+ * the whole board crop under a dusk wash; each cursed square takes a dark
+ * wavelet and a falling back-rank chevron. */
+function DoomTideBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(24,18,36,0.3)" delayMs={delayMs} />
+        <span className="fx-sig-wave absolute left-[18%] top-[36%] block h-[26%] w-[64%]" style={{ animationDelay: `${delayMs + 100}ms`, animationDuration: "1.3s" }}>
+          <svg viewBox="0 0 120 30" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
+            <path d="M0 30 C12 14 26 22 40 12 C54 4 68 16 82 8 C96 2 108 14 120 10 V30 Z" fill="rgba(40,30,58,0.88)" stroke="#181224" strokeWidth="1.2" strokeLinejoin="round" />
+            <path d="M56 10 C52 4 52 0 56 -4 M56 10 C60 4 60 0 56 -4" fill="none" stroke="#8a8aa0" strokeWidth="1" />
+            <circle cx="56" cy="2" r="3.4" fill="#c9c9d4" />
+            <circle cx="54.8" cy="1.4" r="0.8" fill="#181224" />
+            <circle cx="57.2" cy="1.4" r="0.8" fill="#181224" />
+          </svg>
+        </span>
+        <BoardBoom delayMs={delayMs + 520} color="rgba(122,91,154,0.7)" thickness={3} />
+      </BoardWideStage>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-wave absolute inset-x-[6%] bottom-[12%] block h-[34%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 40 14" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
+          <path d="M0 14 C6 5 12 10 18 4 C24 0 30 7 40 3 V14 Z" fill="rgba(40,30,58,0.82)" stroke="#181224" strokeWidth="0.8" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <span className="fx-sig-crownfall absolute left-[36%] top-[8%] block h-[26%] w-[28%]" style={{ animationDelay: `${delayMs + 120}ms` }}>
+        <svg viewBox="0 0 20 16" className="h-full w-full" aria-hidden="true">
+          <path d="M2 2 L10 8 L18 2 M2 8 L10 14 L18 8" fill="none" stroke="#8a8aa0" strokeWidth="2.2" strokeLinejoin="round" strokeLinecap="round" />
+        </svg>
+      </span>
+    </span>
+  );
+}
+
+// --- Batch 11 meta: the clock economy (deadlines, whistles, wages) -----------
+
+/** Deadline: the deadline moves UP. Lead: a red panic wash, a giant office
+ * clock whose hands whip backward as the half-minute is docked, and a red
+ * strike-through slash; targets get a small docked clock and a red flash. */
+function DeadlineBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  const clock = (size: string) => (
+    <svg viewBox="0 0 40 40" className={size} aria-hidden="true">
+      <circle cx="20" cy="20" r="17" fill="#f4f0e8" stroke="#7a2f28" strokeWidth="2" />
+      <path d="M20 6 V9 M34 20 H31 M20 34 V31 M6 20 H9" stroke="#7a2f28" strokeWidth="1.6" strokeLinecap="round" />
+      <g className="fx-sig-rewind" style={{ animationDelay: `${delayMs + 140}ms` }}>
+        <path d="M20 20 L20 9 M20 20 L28 24" stroke="#c2403a" strokeWidth="2.4" strokeLinecap="round" />
+      </g>
+      <circle cx="20" cy="20" r="2" fill="#7a2f28" />
+    </svg>
+  );
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(194,64,58,0.16)" delayMs={delayMs} />
+        <span className="fx-sig-grow absolute left-[40%] top-[34%] block h-[26%] w-[20%]" style={{ animationDelay: `${delayMs}ms` }}>{clock("h-full w-full")}</span>
+        <span className="fx-sig-slash absolute left-[36%] top-[30%] block h-[34%] w-[28%]" style={{ animationDelay: `${delayMs + 480}ms` }}>
+          <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+            <path d="M4 36 L36 4" stroke="#c2403a" strokeWidth="4" strokeLinecap="round" />
+          </svg>
+        </span>
+        <BoardBoom delayMs={delayMs + 520} color="rgba(194,64,58,0.8)" thickness={4} />
+      </BoardWideStage>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-grow absolute inset-[18%] block">{clock("h-full w-full")}</span>
+      <span className="fx-sig-flash absolute inset-[8%] block rounded-full" style={{ background: "rgba(194,64,58,0.35)", animationDelay: `${delayMs + 260}ms` }} />
+    </span>
+  );
+}
+
+/** Overtime Whistle / Time Out: the ref makes a call. Lead: a giant whistle
+ * with concentric TWEET shockwaves rolling past the board edges; the Time Out
+ * variant also hurls the yellow penalty flag down the crop. Targets get a
+ * small whistle and a ring. */
+function WhistleBurst({ lead, delayMs, flag }: { lead: boolean; delayMs: number; flag: boolean }) {
+  const whistle = (
+    <svg viewBox="0 0 40 30" className="h-full w-full" aria-hidden="true">
+      <path d="M4 10 H26 V16 C26 24 18 28 12 26 C5 24 2 16 4 10 Z" fill="#f4c430" stroke="#8a6414" strokeWidth="1.6" strokeLinejoin="round" />
+      <circle cx="14" cy="18" r="3" fill="#8a6414" />
+      <path d="M26 11 L36 8 M26 15 L36 16" stroke="#8a6414" strokeWidth="1.4" strokeLinecap="round" />
+    </svg>
+  );
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color={flag ? "rgba(244,196,48,0.12)" : "rgba(126,181,154,0.12)"} delayMs={delayMs} />
+        <span className="fx-sig-grow absolute left-[41%] top-[38%] block h-[16%] w-[18%]" style={{ animationDelay: `${delayMs}ms` }}>{whistle}</span>
+        {[0, 1, 2].map((i) => (
+          <BoardBoom key={i} delayMs={delayMs + 260 + i * 170} color={flag ? "rgba(244,196,48,0.85)" : "rgba(126,181,154,0.85)"} thickness={3} />
+        ))}
+        {flag && (
+          <span className="fx-sig-crownfall absolute left-[52%] top-[30%] block h-[12%] w-[10%]" style={{ animationDelay: `${delayMs + 200}ms`, animationDuration: "1.1s" }}>
+            <svg viewBox="0 0 24 24" className="h-full w-full" aria-hidden="true">
+              <path d="M6 2 L6 22" stroke="#8a6414" strokeWidth="1.8" strokeLinecap="round" />
+              <path d="M7 3 H20 L16 8 L20 13 H7 Z" fill="#f4c430" stroke="#8a6414" strokeWidth="1.2" strokeLinejoin="round" />
+            </svg>
+          </span>
+        )}
+      </BoardWideStage>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-grow absolute left-[26%] top-[30%] block h-[40%] w-[48%]" style={{ animationDelay: `${delayMs}ms` }}>{whistle}</span>
+      <span className="fx-sig-shock absolute inset-[10%] block rounded-full" style={{ border: `2px solid ${flag ? "rgba(244,196,48,0.85)" : "rgba(126,181,154,0.85)"}`, animationDelay: `${delayMs + 180}ms` }} />
+    </span>
+  );
+}
+
+const COIN_GLYPH = (
+  <svg viewBox="0 0 12 12" className="h-full w-full" aria-hidden="true">
+    <circle cx="6" cy="6" r="5" fill="#f4c430" stroke="#8a6414" strokeWidth="1" />
+    <path d="M6 3.4 V8.6 M4.4 4.6 C4.4 3.9 7.6 3.9 7.6 5 C7.6 6.4 4.4 5.8 4.4 7.2 C4.4 8.2 7.6 8.2 7.6 7.4" fill="none" stroke="#8a6414" strokeWidth="0.9" strokeLinecap="round" />
+  </svg>
+);
+
+/** Overtime Pay: time and a half, paid in full. Lead: a golden payday — coins
+ * rain down the whole board while a punch-card clock rises and a gold wash
+ * settles; targets get a coin pop and sparks. */
+function CashClockBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(244,196,48,0.14)" delayMs={delayMs} />
+        <span className="fx-sig-rise absolute left-[42%] top-[36%] block h-[22%] w-[14%]" style={{ animationDelay: `${delayMs}ms` }}>
+          <svg viewBox="0 0 30 40" className="h-full w-full" aria-hidden="true">
+            <rect x="3" y="6" width="24" height="30" rx="3" fill="#8a6a4a" stroke="#5d3a1e" strokeWidth="1.4" />
+            <circle cx="15" cy="16" r="7" fill="#f4f0e8" stroke="#5d3a1e" strokeWidth="1.2" />
+            <path d="M15 16 L15 11 M15 16 L18 18" stroke="#5d3a1e" strokeWidth="1.4" strokeLinecap="round" />
+            <rect x="8" y="27" width="14" height="5" rx="1" fill="#f4c430" stroke="#8a6414" strokeWidth="0.9" />
+          </svg>
+        </span>
+        <BoardRain delayMs={delayMs + 160} render={() => COIN_GLYPH} />
+      </BoardWideStage>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-crown absolute left-[32%] top-[24%] block h-[36%] w-[36%]" style={{ animationDelay: `${delayMs}ms` }}>{COIN_GLYPH}</span>
+      <ShardBurst vectors={PIN_STARS} fill="#ffd95e" stroke="#8a6414" delayMs={delayMs + 160} sizePct={8} />
+    </span>
+  );
+}
+
+/** Overclocked: crank the clock until it glows. Lead: a hot red wash, a giant
+ * gear spinning up with speed-streaks darting across, then steam puffs as it
+ * all has to cool down; targets get a small gear whirl and a hot flash. */
+function OverclockBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  const gear = (
+    <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+      <path d="M20 2 L23 8 L29 5 L29 12 L36 12 L32 17 L38 20 L32 23 L36 28 L29 28 L29 35 L23 32 L20 38 L17 32 L11 35 L11 28 L4 28 L8 23 L2 20 L8 17 L4 12 L11 12 L11 5 L17 8 Z" fill="#e0776b" stroke="#7a2f28" strokeWidth="1.2" strokeLinejoin="round" />
+      <circle cx="20" cy="20" r="6" fill="#f4f0e8" stroke="#7a2f28" strokeWidth="1.2" />
+    </svg>
+  );
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(224,82,82,0.16)" delayMs={delayMs} />
+        <span className="fx-sig-swirl absolute left-[40%] top-[34%] block h-[24%] w-[18%]" style={{ animationDelay: `${delayMs}ms` }}>{gear}</span>
+        {[
+          { t: "36%", d: 80 },
+          { t: "50%", d: 200 },
+          { t: "62%", d: 320 },
+        ].map((s, i) => (
+          <span key={i} className="fx-sig-dart absolute left-[24%] block h-[2%] w-[50%]" style={{ top: s.t, animationDelay: `${delayMs + s.d}ms` }}>
+            <svg viewBox="0 0 100 4" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
+              <path d="M0 2 H100" stroke="rgba(255,214,120,0.85)" strokeWidth="2.4" strokeLinecap="round" />
+            </svg>
+          </span>
+        ))}
+        <span className="fx-sig-ash absolute left-[46%] top-[26%] block h-[8%] w-[8%] rounded-full" style={{ background: "rgba(220,220,228,0.7)", animationDelay: `${delayMs + 640}ms` }} />
+        <span className="fx-sig-ash absolute left-[52%] top-[30%] block h-[6%] w-[6%] rounded-full" style={{ background: "rgba(220,220,228,0.6)", animationDelay: `${delayMs + 760}ms` }} />
+      </BoardWideStage>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-swirl absolute inset-[22%] block" style={{ animationDelay: `${delayMs}ms` }}>{gear}</span>
+      <span className="fx-sig-flash absolute inset-[10%] block rounded-full" style={{ background: "rgba(224,82,82,0.4)", animationDelay: `${delayMs + 120}ms` }} />
+    </span>
+  );
+}
+
+// --- Batch 11 meta: the PT gambling / faustian market -------------------------
+
+/** All In: everything pushed to the centre. Lead: a felt-green wash, a stack
+ * of poker chips shoved across the whole board, and a shower of chips raining
+ * down the crop; targets get a chip spin and star sparks. */
+function AllInBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  const chip = (
+    <svg viewBox="0 0 12 12" className="h-full w-full" aria-hidden="true">
+      <circle cx="6" cy="6" r="5.2" fill="#e0776b" stroke="#7a2f28" strokeWidth="0.9" />
+      <circle cx="6" cy="6" r="2.6" fill="#f4f0e8" />
+      <path d="M6 0.8 V2.6 M6 9.4 V11.2 M0.8 6 H2.6 M9.4 6 H11.2" stroke="#f4f0e8" strokeWidth="1.2" />
+    </svg>
+  );
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(46,95,74,0.2)" delayMs={delayMs} />
+        <span className="fx-sig-cross absolute left-[38%] top-[42%] block h-[12%] w-[14%]" style={{ animationDelay: `${delayMs}ms` }}>
+          <svg viewBox="0 0 30 24" className="h-full w-full" aria-hidden="true">
+            {[0, 1, 2].map((i) => (
+              <g key={i}>
+                <ellipse cx="15" cy={20 - i * 6} rx="12" ry="4" fill={i % 2 ? "#7eb59a" : "#e0776b"} stroke={i % 2 ? "#2f4a3c" : "#7a2f28"} strokeWidth="1" />
+              </g>
+            ))}
+          </svg>
+        </span>
+        <BoardRain delayMs={delayMs + 240} render={() => chip} />
+      </BoardWideStage>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-spin absolute inset-[26%] block" style={{ animationDelay: `${delayMs}ms` }}>{chip}</span>
+      <ShardBurst vectors={PIN_STARS} fill="#7eb59a" stroke="#2f4a3c" delayMs={delayMs + 100} sizePct={8} />
+    </span>
+  );
+}
+
+/** Mystery Box: rattle the crate, pop the lid. Lead: a giant crate shivers,
+ * its lid flips open, and a fountain of question-mark shards erupts over the
+ * board; targets get a small rattling box and a drifting "?". */
+function MysteryBoxBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  const qmark = (
+    <svg viewBox="0 0 12 12" className="h-full w-full" aria-hidden="true">
+      <path d="M4 4 C4 1.6 8 1.6 8 4 C8 5.6 6 5.6 6 7.4 M6 9.6 V10.4" fill="none" stroke="#a877d8" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(122,91,154,0.14)" delayMs={delayMs} />
+        <span className="fx-sig-wiggle absolute left-[41%] top-[42%] block h-[18%] w-[16%]" style={{ animationDelay: `${delayMs}ms` }}>
+          <svg viewBox="0 0 32 32" className="h-full w-full" aria-hidden="true">
+            <rect x="3" y="10" width="26" height="20" rx="2" fill="#8a6a4a" stroke="#5d3a1e" strokeWidth="1.6" />
+            <path d="M3 16 H29 M16 10 V30" stroke="#5d3a1e" strokeWidth="1.2" />
+          </svg>
+        </span>
+        <span className="fx-sig-flap-l absolute left-[41%] top-[40%] block h-[4%] w-[16%]" style={{ transformOrigin: "0% 50%", animationDelay: `${delayMs + 420}ms` }}>
+          <svg viewBox="0 0 32 6" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
+            <rect x="1" y="0.5" width="30" height="5" rx="1.5" fill="#a3814f" stroke="#5d3a1e" strokeWidth="1" />
+          </svg>
+        </span>
+        <ShardBurst vectors={BURST_BIG} fill="#a877d8" stroke="#4a3070" delayMs={delayMs + 480} sizePct={5} />
+        <BoardBoom delayMs={delayMs + 520} color="rgba(168,119,216,0.8)" thickness={3} />
+      </BoardWideStage>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-wiggle absolute left-[28%] top-[34%] block h-[44%] w-[44%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 32 32" className="h-full w-full" aria-hidden="true">
+          <rect x="3" y="10" width="26" height="20" rx="2" fill="#8a6a4a" stroke="#5d3a1e" strokeWidth="1.6" />
+          <path d="M3 16 H29 M16 10 V30" stroke="#5d3a1e" strokeWidth="1.2" />
+        </svg>
+      </span>
+      <span className="fx-sig-zzz absolute left-[52%] top-[10%] block h-[26%] w-[24%]" style={{ animationDelay: `${delayMs + 300}ms` }}>{qmark}</span>
+    </span>
+  );
+}
+
+/** Swap Meet: shake on the deal. Lead: two trading cards charge the whole
+ * board in opposite directions and pass mid-crop under a market-stall wash;
+ * targets get a pair of counter-curved swap arrows. */
+function SwapMeetBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  const card = (flip: boolean) => (
+    <svg viewBox="0 0 20 28" className="h-full w-full" aria-hidden="true" style={{ transform: flip ? "rotate(8deg)" : "rotate(-8deg)" }}>
+      <rect x="1.5" y="1.5" width="17" height="25" rx="2.5" fill={flip ? "#7eb59a" : "#e0776b"} stroke={flip ? "#2f4a3c" : "#7a2f28"} strokeWidth="1.4" />
+      <circle cx="10" cy="11" r="4" fill="#f4f0e8" />
+      <path d="M5 20 H15" stroke="#f4f0e8" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(230,191,106,0.12)" delayMs={delayMs} />
+        <span className="fx-sig-cross absolute left-[40%] top-[34%] block h-[13%] w-[8%]" style={{ animationDelay: `${delayMs}ms` }}>{card(false)}</span>
+        <span className="fx-sig-crossback absolute left-[52%] top-[52%] block h-[13%] w-[8%]" style={{ animationDelay: `${delayMs + 120}ms` }}>{card(true)}</span>
+        <span className="fx-sig-flash absolute left-[44%] top-[44%] block h-[12%] w-[12%] rounded-full" style={{ background: "rgba(244,196,48,0.5)", animationDelay: `${delayMs + 560}ms` }} />
+      </BoardWideStage>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-swirl absolute inset-[16%] block" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <path d="M10 16 A12 12 0 0 1 30 12" fill="none" stroke="#e0776b" strokeWidth="2.4" strokeLinecap="round" />
+          <path d="M30 12 L32 5 L24 8 Z" fill="#e0776b" />
+          <path d="M30 24 A12 12 0 0 1 10 28" fill="none" stroke="#7eb59a" strokeWidth="2.4" strokeLinecap="round" />
+          <path d="M10 28 L8 35 L16 32 Z" fill="#7eb59a" />
+        </svg>
+      </span>
+    </span>
+  );
+}
+
+/** Golden Touch: the price of greed. Lead: a golden wash, a giant reaching
+ * hand rising over the board, and transmutation sparkle raining down; the
+ * touched square is glazed in climbing gold with coin-bright sparks. */
+function GoldenTouchBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(244,196,48,0.15)" delayMs={delayMs} />
+        <span className="fx-sig-rise absolute left-[40%] top-[32%] block h-[28%] w-[16%]" style={{ animationDelay: `${delayMs}ms` }}>
+          <svg viewBox="0 0 30 44" className="h-full w-full" aria-hidden="true">
+            <path d="M8 44 V22 C8 18 12 18 12 22 V14 C12 10 16 10 16 14 V12 C16 8 20 8 20 12 V16 C20 13 24 13 24 16 V30 C24 38 20 44 14 44 Z" fill="#f4c430" stroke="#8a6414" strokeWidth="1.4" strokeLinejoin="round" />
+          </svg>
+        </span>
+        <BoardRain
+          delayMs={delayMs + 220}
+          render={(i) => (i % 2 === 0 ? COIN_GLYPH : (
+            <svg viewBox="0 0 10 10" className="h-full w-full" aria-hidden="true">
+              <path d="M5 0 L6.2 3.8 L10 5 L6.2 6.2 L5 10 L3.8 6.2 L0 5 L3.8 3.8 Z" fill="#ffd95e" stroke="#8a6414" strokeWidth="0.5" />
+            </svg>
+          ))}
+        />
+      </BoardWideStage>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-petrify absolute bottom-[8%] left-[20%] right-[20%] top-[12%] block rounded-[1px]" style={{ background: "rgba(244,196,48,0.55)", border: "1px solid rgba(138,100,20,0.8)", animationDelay: `${delayMs}ms` }} />
+      <ShardBurst vectors={PIN_STARS} fill="#ffd95e" stroke="#8a6414" delayMs={delayMs + 140} sizePct={9} />
+    </span>
+  );
+}
+
+// --- Batch 11 meta: PT curses & chaos -----------------------------------------
+
+/** Understaffed: the next hire never shows. A desk sign slams down, papers
+ * scatter, and a lone Z drifts off the empty chair. Deliberately small — the
+ * joke is the anticlimax. */
+function OutOfOfficeBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-snooze absolute left-[22%] top-[26%] block h-[46%] w-[56%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 40 30" className="h-full w-full" aria-hidden="true">
+          <path d="M6 28 L12 6 H28 L34 28" fill="none" stroke="#8a6a4a" strokeWidth="2" strokeLinecap="round" />
+          <rect x="8" y="8" width="24" height="12" rx="2" fill="#f4f0e8" stroke="#5d3a1e" strokeWidth="1.4" />
+          <path d="M12 12 H28 M12 16 H24" stroke="#8aa0b4" strokeWidth="1.4" strokeLinecap="round" />
+        </svg>
+      </span>
+      <span className="fx-sig-crumble absolute left-[12%] top-[20%] block h-[14%] w-[14%]" style={{ animationDelay: `${delayMs + 200}ms` }}>
+        <svg viewBox="0 0 10 10" className="h-full w-full" aria-hidden="true"><rect x="1" y="1" width="8" height="8" fill="#f4f0e8" stroke="#8aa0b4" strokeWidth="0.6" /></svg>
+      </span>
+      <span className="fx-sig-zzz absolute left-[62%] top-[8%] block h-[22%] w-[20%]" style={{ animationDelay: `${delayMs + 380}ms` }}>
+        <svg viewBox="0 0 20 20" className="h-full w-full" aria-hidden="true">
+          <path d="M5 5 H13 L5 14 H13" fill="none" stroke="#8aa0b4" strokeWidth="2.2" strokeLinejoin="round" strokeLinecap="round" />
+        </svg>
+      </span>
+    </span>
+  );
+}
+
+/** Allergies: the sniffles strike. Lead: pollen motes drift down the whole
+ * board before a colossal AH-CHOO — a green sneeze cloud splat and a
+ * shockwave; the sneezy square gets its own splat cloud and droplet spray. */
+function SneezeBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardRain
+          delayMs={delayMs}
+          render={() => (
+            <svg viewBox="0 0 8 8" className="h-full w-full" aria-hidden="true"><circle cx="4" cy="4" r="2.6" fill="rgba(230,214,120,0.85)" stroke="#8a6414" strokeWidth="0.5" /></svg>
+          )}
+        />
+        <span className="fx-sig-splat absolute left-[36%] top-[38%] block h-[22%] w-[28%]" style={{ animationDelay: `${delayMs + 520}ms` }}>
+          <svg viewBox="0 0 48 24" className="h-full w-full" aria-hidden="true">
+            <path d="M6 18 C0 18 2 8 10 9 C10 2 22 0 25 6 C32 1 42 6 40 12 C46 13 46 18 40 19 Z" fill="rgba(163,209,150,0.8)" stroke="#5f927a" strokeWidth="1.2" strokeLinejoin="round" />
+          </svg>
+        </span>
+        <BoardBoom delayMs={delayMs + 560} color="rgba(163,209,150,0.8)" thickness={3} />
+      </BoardWideStage>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-splat absolute inset-x-[14%] top-[30%] block h-[36%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 48 24" className="h-full w-full" aria-hidden="true">
+          <path d="M6 18 C0 18 2 8 10 9 C10 2 22 0 25 6 C32 1 42 6 40 12 C46 13 46 18 40 19 Z" fill="rgba(163,209,150,0.75)" stroke="#5f927a" strokeWidth="1.2" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <ShardBurst vectors={BURST_MED} fill="#a3d196" stroke="#5f927a" delayMs={delayMs + 80} sizePct={8} />
+    </span>
+  );
+}
+
+/** Chaos Theory: a tornado sweeps the board. Lead: a great grey funnel churns
+ * across the entire crop while flung pawns rain back down; each reshuffled
+ * square spins up its own dust spiral and scatters debris wide. */
+function TornadoBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(122,122,130,0.18)" delayMs={delayMs} />
+        <span className="fx-sig-cross absolute left-[38%] top-[30%] block h-[30%] w-[14%]" style={{ animationDelay: `${delayMs}ms` }}>
+          <svg viewBox="0 0 32 48" className="h-full w-full" aria-hidden="true">
+            <path d="M2 6 C10 2 22 2 30 6 C24 10 8 10 6 14 C14 18 24 16 26 20 C18 24 10 22 10 26 C16 30 20 28 20 32 C14 36 12 34 13 38 C16 40 15 44 14 47" fill="none" stroke="#9a9a9f" strokeWidth="2.6" strokeLinecap="round" />
+          </svg>
+        </span>
+        <BoardRain
+          delayMs={delayMs + 220}
+          render={() => (
+            <svg viewBox="0 0 12 16" className="h-full w-full" aria-hidden="true">
+              <circle cx="6" cy="5" r="3" fill="#c9c9d4" stroke="#5b6672" strokeWidth="0.8" />
+              <path d="M3 15 C3 10 9 10 9 15 Z" fill="#c9c9d4" stroke="#5b6672" strokeWidth="0.8" strokeLinejoin="round" />
+            </svg>
+          )}
+        />
+      </BoardWideStage>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-whirl absolute inset-[12%] block" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <path d="M20 20 C20 12 30 12 30 20 C30 30 12 30 12 20 C12 8 34 8 34 22" fill="none" stroke="#9a9a9f" strokeWidth="2.2" strokeLinecap="round" />
+        </svg>
+      </span>
+      <ShardBurst vectors={BURST_BIG} fill="#c9c9d4" stroke="#5b6672" delayMs={delayMs + 60} sizePct={9} />
+    </span>
+  );
+}
+
+/** Greenhouse: a glass dome over one file. Lead: a giant translucent dome
+ * descends over the crop while sun shafts warm it; each pawn square on the
+ * file gets a small dome and a sprouting leaf. */
+function GreenhouseBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(163,209,96,0.12)" delayMs={delayMs} />
+        <span className="fx-sig-shaft absolute left-[30%] top-[24%] block h-[46%] w-[5%]" style={{ background: "rgba(255,240,180,0.45)", animationDelay: `${delayMs + 80}ms`, animationDuration: "1s" }} />
+        <span className="fx-sig-shaft absolute left-[62%] top-[24%] block h-[46%] w-[5%]" style={{ background: "rgba(255,240,180,0.45)", animationDelay: `${delayMs + 220}ms`, animationDuration: "1s" }} />
+        <span className="fx-sig-dome absolute left-[34%] top-[36%] block h-[26%] w-[32%]" style={{ animationDelay: `${delayMs + 140}ms` }}>
+          <svg viewBox="0 0 60 30" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
+            <path d="M2 30 C2 8 58 8 58 30 Z" fill="rgba(198,234,255,0.35)" stroke="#7fb8dd" strokeWidth="1.6" strokeLinejoin="round" />
+            <path d="M30 9 V30 M14 13 C13 20 12 25 12 30 M46 13 C47 20 48 25 48 30" stroke="#7fb8dd" strokeWidth="1" fill="none" />
+          </svg>
+        </span>
+      </BoardWideStage>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-dome absolute inset-x-[10%] bottom-[10%] block h-[62%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 60 30" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
+          <path d="M2 30 C2 8 58 8 58 30 Z" fill="rgba(198,234,255,0.3)" stroke="#7fb8dd" strokeWidth="1.6" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <span className="fx-sig-grow absolute left-[38%] bottom-[16%] block h-[36%] w-[24%]" style={{ animationDelay: `${delayMs + 180}ms` }}>
+        <svg viewBox="0 0 20 26" className="h-full w-full" aria-hidden="true">
+          <path d="M10 26 V10" stroke="#5f927a" strokeWidth="1.8" strokeLinecap="round" />
+          <path d="M10 14 C4 14 2 8 3 4 C8 4 11 8 10 14 Z M10 10 C16 10 18 5 17 1 C12 1 9 5 10 10 Z" fill="#a3d160" stroke="#5f927a" strokeWidth="1" strokeLinejoin="round" />
+        </svg>
+      </span>
+    </span>
+  );
+}
+
+/** Groundhog Day: the VHS rewind. Lead: static scanline bars sweep the whole
+ * board while a giant double-triangle rewind glyph jitters over a grey wash;
+ * targets get a glitch bar and a ghosted double image. */
+function GroundhogBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  const rewindGlyph = (
+    <svg viewBox="0 0 40 24" className="h-full w-full" aria-hidden="true">
+      <path d="M20 2 L4 12 L20 22 Z M38 2 L22 12 L38 22 Z" fill="#c9c9d4" stroke="#5b6672" strokeWidth="1.4" strokeLinejoin="round" />
+    </svg>
+  );
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(90,90,98,0.22)" delayMs={delayMs} />
+        {[
+          { t: "34%", d: 0 },
+          { t: "50%", d: 180 },
+          { t: "64%", d: 360 },
+        ].map((b, i) => (
+          <span key={i} className="fx-sig-sweepbar absolute left-[20%] block h-[2.6%] w-[60%]" style={{ top: b.t, background: "rgba(201,201,212,0.5)", animationDelay: `${delayMs + b.d}ms` }} />
+        ))}
+        <span className="fx-sig-glitch absolute left-[40%] top-[42%] block h-[14%] w-[18%]" style={{ animationDelay: `${delayMs + 240}ms` }}>{rewindGlyph}</span>
+      </BoardWideStage>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-glitch absolute inset-x-[10%] top-[30%] block h-[16%]" style={{ background: "rgba(201,201,212,0.55)", animationDelay: `${delayMs}ms` }} />
+      <span className="fx-sig-afterimage absolute left-[28%] top-[24%] block h-[50%] w-[44%]" style={{ animationDelay: `${delayMs + 160}ms` }}>{rewindGlyph}</span>
+    </span>
+  );
+}
+
+/** Hot Potato: too hot to hold. Lead: a steaming potato ricochets across the
+ * whole board over an oven-orange wash with an ember shockwave; the cursed
+ * square's potato hops in place shedding flame licks. */
+function HotPotatoBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  const potato = (
+    <svg viewBox="0 0 24 18" className="h-full w-full" aria-hidden="true">
+      <ellipse cx="12" cy="10" rx="10" ry="7" fill="#b98a5a" stroke="#6b4a2a" strokeWidth="1.2" />
+      <circle cx="8" cy="8" r="0.9" fill="#6b4a2a" />
+      <circle cx="15" cy="12" r="0.9" fill="#6b4a2a" />
+      <path d="M8 2 C7 0.5 9 0 9 -1 M13 2 C12 0.5 14 0 14 -1" fill="none" stroke="#c9c9d4" strokeWidth="1" strokeLinecap="round" />
+    </svg>
+  );
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(230,110,60,0.16)" delayMs={delayMs} />
+        <span className="fx-sig-cross absolute left-[38%] top-[40%] block h-[10%] w-[12%]" style={{ animationDelay: `${delayMs}ms` }}>{potato}</span>
+        <BoardBoom delayMs={delayMs + 480} color="rgba(255,214,120,0.8)" thickness={3} />
+      </BoardWideStage>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-hop absolute left-[26%] top-[28%] block h-[44%] w-[48%]" style={{ animationDelay: `${delayMs}ms` }}>{potato}</span>
+      <span className="fx-sig-rise absolute left-[42%] bottom-[10%] block h-[30%] w-[16%]" style={{ animationDelay: `${delayMs + 240}ms` }}>
+        <svg viewBox="0 0 12 16" className="h-full w-full" aria-hidden="true">
+          <path d="M6 16 C2 12 4 7 6 4 C6 8 9 8 8 11 C10 9 9 6 8 4 C11 8 10 13 8 16 Z" fill="rgba(224,119,107,0.9)" stroke="#7a2f28" strokeWidth="0.7" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <span className="fx-sig-soot absolute inset-[18%] block rounded-full" style={{ border: "2px solid rgba(230,110,60,0.5)", animationDelay: `${delayMs + 160}ms` }} />
+    </span>
+  );
+}
+
+/** Pinocchio: the nose grows. Lead: an enormous wooden nose telescopes out
+ * across the board from a startled wooden face; the pawn's square gets its
+ * own nose-extend and a sparkle of splinters. */
+function PinocchioBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <span className="fx-sig-grow absolute left-[30%] top-[38%] block h-[18%] w-[10%]" style={{ animationDelay: `${delayMs}ms` }}>
+          <svg viewBox="0 0 24 32" className="h-full w-full" aria-hidden="true">
+            <circle cx="12" cy="16" r="11" fill="#e8d3b0" stroke="#8a6a4a" strokeWidth="1.6" />
+            <circle cx="9" cy="13" r="1.6" fill="#3a2a1a" />
+            <circle cx="17" cy="13" r="1.6" fill="#3a2a1a" />
+            <path d="M8 22 C11 24 15 24 18 22" fill="none" stroke="#3a2a1a" strokeWidth="1.2" strokeLinecap="round" />
+            <path d="M2 4 L12 10 L4 12 Z" fill="#c2403a" stroke="#7a2f28" strokeWidth="1" strokeLinejoin="round" />
+          </svg>
+        </span>
+        <span className="absolute left-[39%] top-[45%] block h-[3.5%] w-[26%]" style={{ transformOrigin: "0% 50%" }}>
+          <span className="fx-sig-muzzle absolute inset-0 block" style={{ animationDelay: `${delayMs + 260}ms`, animationDuration: "0.8s" }}>
+            <svg viewBox="0 0 100 6" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
+              <path d="M0 1 L96 2 L100 3 L96 4 L0 5 Z" fill="#b98a5a" stroke="#6b4a2a" strokeWidth="0.8" strokeLinejoin="round" />
+              <path d="M20 1.4 V4.6 M44 1.2 V4.8 M70 1.1 V4.9" stroke="#6b4a2a" strokeWidth="0.5" />
+            </svg>
+          </span>
+        </span>
+      </BoardWideStage>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-flash absolute left-[8%] top-[26%] block h-[48%] w-[42%] rounded-full" style={{ background: "rgba(232,211,176,0.5)", animationDelay: `${delayMs}ms` }} />
+      <span className="absolute left-[42%] top-[46%] block h-[10%] w-[52%]" style={{ transformOrigin: "0% 50%" }}>
+        <span className="fx-sig-muzzle absolute inset-0 block" style={{ animationDelay: `${delayMs + 100}ms`, animationDuration: "0.7s" }}>
+          <svg viewBox="0 0 100 10" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
+            <path d="M0 1 L94 3 L100 5 L94 7 L0 9 Z" fill="#b98a5a" stroke="#6b4a2a" strokeWidth="1" strokeLinejoin="round" />
+          </svg>
+        </span>
+      </span>
+      <ShardBurst vectors={BURST_MED} fill="#e8d3b0" stroke="#8a6a4a" delayMs={delayMs + 300} sizePct={7} />
+    </span>
+  );
+}
+
+/** Sea Monkeys: just add water. Lead: an aqua splash wash and a spreading
+ * ripple shockwave with bubbles popping across the crop; each hatching square
+ * splashes, bubbles, and raises a tiny pawn. */
+function SeaMonkeysBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(79,125,104,0.2)" delayMs={delayMs} />
+        {[0, 1].map((i) => (
+          <BoardBoom key={i} delayMs={delayMs + 160 + i * 240} color="rgba(163,209,150,0.75)" thickness={3} />
+        ))}
+        {[
+          { l: "34%", t: "38%", d: 120 }, { l: "56%", t: "32%", d: 300 },
+          { l: "46%", t: "56%", d: 220 }, { l: "64%", t: "50%", d: 420 },
+          { l: "30%", t: "56%", d: 500 },
+        ].map((b, i) => (
+          <span key={i} className="fx-sig-flash absolute block h-[4%] w-[4%] rounded-full" style={{ left: b.l, top: b.t, border: "1.5px solid rgba(198,234,255,0.9)", background: "rgba(198,234,255,0.3)", animationDelay: `${delayMs + b.d}ms` }} />
+        ))}
+      </BoardWideStage>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-splat absolute inset-x-[16%] bottom-[10%] block h-[26%] rounded-full" style={{ background: "rgba(126,181,154,0.5)", animationDelay: `${delayMs}ms` }} />
+      <span className="fx-sig-rise absolute left-[36%] bottom-[16%] block h-[46%] w-[28%]" style={{ animationDelay: `${delayMs + 160}ms` }}>
+        <svg viewBox="0 0 12 16" className="h-full w-full" aria-hidden="true">
+          <circle cx="6" cy="5" r="3" fill="#7eb59a" stroke="#2f4a3c" strokeWidth="0.9" />
+          <path d="M3 15 C3 10 9 10 9 15 Z" fill="#7eb59a" stroke="#2f4a3c" strokeWidth="0.9" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <span className="fx-sig-zzz absolute left-[58%] top-[16%] block h-[12%] w-[10%] rounded-full" style={{ border: "1.2px solid rgba(198,234,255,0.9)", animationDelay: `${delayMs + 320}ms` }} />
+    </span>
+  );
+}
+
+/** Slowpoke: famously bad. Lead: a giant snail trundles across the whole
+ * board at half speed over a sheepish mint wash; each sluggish square gets a
+ * slime wipe and its own tiny crawler. */
+function SnailBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  const snail = (
+    <svg viewBox="0 0 40 26" className="h-full w-full" aria-hidden="true">
+      <path d="M4 24 C2 18 8 16 14 17 L30 17 C34 17 36 20 34 24 Z" fill="#a3d196" stroke="#5f927a" strokeWidth="1.2" strokeLinejoin="round" />
+      <circle cx="20" cy="12" r="9" fill="#b98a5a" stroke="#6b4a2a" strokeWidth="1.2" />
+      <path d="M20 12 C20 8 25 8 25 12 C25 17 15 17 15 12 C15 5 28 5 28 13" fill="none" stroke="#6b4a2a" strokeWidth="1.1" />
+      <path d="M32 17 C33 12 32 8 34 6 M34 17 C36 13 36 10 38 8" fill="none" stroke="#5f927a" strokeWidth="1.2" strokeLinecap="round" />
+      <circle cx="34" cy="5" r="1.2" fill="#5f927a" />
+      <circle cx="38" cy="7" r="1.2" fill="#5f927a" />
+    </svg>
+  );
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(126,181,154,0.12)" delayMs={delayMs} />
+        <span className="fx-sig-cross absolute left-[38%] top-[42%] block h-[12%] w-[16%]" style={{ animationDelay: `${delayMs}ms`, animationDuration: "1.6s" }}>{snail}</span>
+        <span className="fx-sig-frost absolute left-[26%] top-[52%] block h-[2.5%] w-[44%] rounded-full" style={{ background: "rgba(198,234,216,0.6)", animationDelay: `${delayMs + 200}ms`, animationDuration: "1.4s" }} />
+      </BoardWideStage>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-frost absolute inset-x-[8%] bottom-[22%] block h-[8%] rounded-full" style={{ background: "rgba(198,234,216,0.55)", animationDelay: `${delayMs}ms`, animationDuration: "1.1s" }} />
+      <span className="fx-sig-dart absolute left-[18%] top-[34%] block h-[38%] w-[64%]" style={{ animationDelay: `${delayMs + 80}ms`, animationDuration: "1.3s" }}>{snail}</span>
+    </span>
+  );
+}
+
+/** Snooze Button: hit snooze on the whole army. Lead: a navy dusk wash, a
+ * giant alarm clock rising mid-board, a colossal snooze bar slamming onto it,
+ * and Zs raining down the crop; each sleeper gets a drifting Z. */
+function SnoozeButtonBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(26,34,46,0.3)" delayMs={delayMs} />
+        <span className="fx-sig-rise absolute left-[40%] top-[36%] block h-[24%] w-[18%]" style={{ animationDelay: `${delayMs}ms` }}>
+          <svg viewBox="0 0 40 44" className="h-full w-full" aria-hidden="true">
+            <circle cx="20" cy="26" r="16" fill="#f4f0e8" stroke="#4a5560" strokeWidth="2.2" />
+            <path d="M20 26 L20 16 M20 26 L27 29" stroke="#4a5560" strokeWidth="2" strokeLinecap="round" />
+            <path d="M8 12 L3 6 M32 12 L37 6" stroke="#4a5560" strokeWidth="2.4" strokeLinecap="round" />
+            <circle cx="3" cy="5" r="3" fill="#e0776b" stroke="#7a2f28" strokeWidth="1" />
+            <circle cx="37" cy="5" r="3" fill="#e0776b" stroke="#7a2f28" strokeWidth="1" />
+          </svg>
+        </span>
+        <span className="fx-sig-snooze absolute left-[43%] top-[28%] block h-[6%] w-[12%]" style={{ animationDelay: `${delayMs + 300}ms` }}>
+          <svg viewBox="0 0 30 8" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
+            <rect x="1" y="1" width="28" height="6" rx="3" fill="#8aa0b4" stroke="#4a5560" strokeWidth="1" />
+          </svg>
+        </span>
+        <BoardRain
+          delayMs={delayMs + 380}
+          render={() => (
+            <svg viewBox="0 0 20 20" className="h-full w-full" aria-hidden="true">
+              <path d="M5 5 H14 L5 15 H14" fill="none" stroke="#8aa0b4" strokeWidth="2.4" strokeLinejoin="round" strokeLinecap="round" />
+            </svg>
+          )}
+        />
+      </BoardWideStage>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-zzz absolute left-[30%] top-[20%] block h-[34%] w-[32%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 20 20" className="h-full w-full" aria-hidden="true">
+          <path d="M4 4 H13 L4 14 H13" fill="none" stroke="#8aa0b4" strokeWidth="2.4" strokeLinejoin="round" strokeLinecap="round" />
+        </svg>
+      </span>
+      <span className="fx-sig-zzz absolute left-[52%] top-[36%] block h-[22%] w-[20%]" style={{ animationDelay: `${delayMs + 220}ms` }}>
+        <svg viewBox="0 0 20 20" className="h-full w-full" aria-hidden="true">
+          <path d="M5 5 H13 L5 14 H13" fill="none" stroke="#67748a" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+        </svg>
+      </span>
+    </span>
+  );
+}
+
+/** Stinky: one piece reeks. Lead: a queasy green wash with three colossal
+ * stench wisps curling up the whole crop and a scatter of fleeing flies; the
+ * smelly square gets its own wisps and orbiting flies. */
+function StinkBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  const wisp = (
+    <svg viewBox="0 0 12 32" className="h-full w-full" aria-hidden="true">
+      <path d="M6 32 C2 26 10 22 6 16 C2 10 10 6 6 0" fill="none" stroke="rgba(163,209,150,0.85)" strokeWidth="2.4" strokeLinecap="round" />
+    </svg>
+  );
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(122,145,64,0.18)" delayMs={delayMs} />
+        {[
+          { l: "36%", d: 0 }, { l: "47%", d: 180 }, { l: "58%", d: 340 },
+        ].map((w, i) => (
+          <span key={i} className="fx-sig-ash absolute top-[34%] block h-[26%] w-[5%]" style={{ left: w.l, animationDelay: `${delayMs + w.d}ms`, animationDuration: "1.1s" }}>{wisp}</span>
+        ))}
+        <ShardBurst vectors={BURST_BIG} fill="#2b2b2f" stroke="#141416" delayMs={delayMs + 420} sizePct={3} />
+      </BoardWideStage>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-ash absolute left-[24%] bottom-[24%] block h-[54%] w-[16%]" style={{ animationDelay: `${delayMs}ms` }}>{wisp}</span>
+      <span className="fx-sig-ash absolute left-[44%] bottom-[28%] block h-[58%] w-[16%]" style={{ animationDelay: `${delayMs + 160}ms` }}>{wisp}</span>
+      <span className="fx-sig-ash absolute left-[62%] bottom-[22%] block h-[50%] w-[16%]" style={{ animationDelay: `${delayMs + 300}ms` }}>{wisp}</span>
+      <span className="fx-sig-swirl absolute inset-[20%] block" style={{ animationDelay: `${delayMs + 120}ms` }}>
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <circle cx="8" cy="14" r="1.6" fill="#2b2b2f" />
+          <circle cx="32" cy="20" r="1.6" fill="#2b2b2f" />
+          <circle cx="18" cy="34" r="1.6" fill="#2b2b2f" />
+        </svg>
+      </span>
+    </span>
+  );
+}
+
+/** Whoopee Cushion: the rude noise heard around the board. Lead: a giant pink
+ * cushion flattens with a SPLAT while honk-rings roll past the edges and
+ * musical notes scatter; targets get a small deflating cushion. */
+function WhoopeeBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  const cushion = (
+    <svg viewBox="0 0 40 26" className="h-full w-full" aria-hidden="true">
+      <ellipse cx="18" cy="14" rx="15" ry="10" fill="#e07ab8" stroke="#8a3a6a" strokeWidth="1.4" />
+      <path d="M31 10 C36 8 39 9 39 12 C39 14 35 15 32 14" fill="#e07ab8" stroke="#8a3a6a" strokeWidth="1.2" strokeLinejoin="round" />
+      <circle cx="18" cy="14" r="3" fill="none" stroke="#8a3a6a" strokeWidth="0.9" strokeDasharray="2 1.6" />
+    </svg>
+  );
+  const note = (
+    <svg viewBox="0 0 12 12" className="h-full w-full" aria-hidden="true">
+      <path d="M8 1 V8 M8 1 L11 2 V4 L8 3" fill="none" stroke="#8a3a6a" strokeWidth="1.2" strokeLinejoin="round" />
+      <ellipse cx="6.4" cy="8.6" rx="2" ry="1.5" fill="#8a3a6a" />
+    </svg>
+  );
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(224,122,184,0.14)" delayMs={delayMs} />
+        <span className="fx-sig-splat absolute left-[38%] top-[40%] block h-[16%] w-[20%]" style={{ animationDelay: `${delayMs}ms` }}>{cushion}</span>
+        {[0, 1].map((i) => (
+          <BoardBoom key={i} delayMs={delayMs + 220 + i * 200} color="rgba(224,122,184,0.8)" thickness={4} />
+        ))}
+        <ShardBurst vectors={BURST_MED} fill="#e07ab8" stroke="#8a3a6a" delayMs={delayMs + 300} sizePct={5} />
+      </BoardWideStage>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-splat absolute inset-x-[12%] top-[30%] block h-[42%]" style={{ animationDelay: `${delayMs}ms` }}>{cushion}</span>
+      <span className="fx-sig-shock absolute inset-[10%] block rounded-full" style={{ border: "2px solid rgba(224,122,184,0.8)", animationDelay: `${delayMs + 160}ms` }} />
+      <span className="fx-sig-zzz absolute left-[60%] top-[10%] block h-[22%] w-[20%]" style={{ animationDelay: `${delayMs + 240}ms` }}>{note}</span>
+    </span>
+  );
+}
+
+/** Trapdoor (funny): the rigged spring. The doors flap open, a coil spring
+ * extends with a BOING, and the sprung piece is flung back in a star arc. A
+ * per-square gag by design (the trap is one square's secret). */
+function SpringTrapBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-flap-l absolute left-[10%] top-[46%] block h-[8%] w-[40%]" style={{ transformOrigin: "0% 50%", animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 40 8" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true"><rect x="0.5" y="0.5" width="39" height="7" rx="1" fill="#8a6a4a" stroke="#5d3a1e" strokeWidth="1" /></svg>
+      </span>
+      <span className="fx-sig-flap-r absolute right-[10%] top-[46%] block h-[8%] w-[40%]" style={{ transformOrigin: "100% 50%", animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 40 8" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true"><rect x="0.5" y="0.5" width="39" height="7" rx="1" fill="#8a6a4a" stroke="#5d3a1e" strokeWidth="1" /></svg>
+      </span>
+      <span className="fx-sig-crown absolute left-[34%] bottom-[10%] block h-[52%] w-[32%]" style={{ animationDelay: `${delayMs + 160}ms` }}>
+        <svg viewBox="0 0 20 32" className="h-full w-full" aria-hidden="true">
+          <path d="M4 32 L16 28 L4 24 L16 20 L4 16 L16 12 L4 8 L16 4" fill="none" stroke="#8aa0b4" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+      </span>
+      <span className="fx-sig-star absolute left-1/2 top-1/2 ml-[-9%] mt-[-9%] block h-[18%] w-[18%]" style={{ "--dx": "-40%", "--dy": "-260%", "--rot": "-160deg", animationDelay: `${delayMs + 360}ms` } as React.CSSProperties}>
+        <SigShard fill="#ffd95e" stroke="#8a6414" variant={1} />
+      </span>
+    </span>
+  );
+}
+
+// --- Batch 11 meta: PT passives -----------------------------------------------
+
+/** Contagion: freezes are catching. Lead: a sickly green wash with THREE
+ * expanding infection rings rolling past the board edges one after another —
+ * the spread made literal; each square gets a double ripple and droplets. */
+function ContagionBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(122,181,122,0.16)" delayMs={delayMs} />
+        {[0, 1, 2].map((i) => (
+          <BoardBoom key={i} delayMs={delayMs + 120 + i * 240} color="rgba(163,209,150,0.75)" thickness={3} />
+        ))}
+        <ShardBurst vectors={BURST_MED} fill="#a3d196" stroke="#5f927a" delayMs={delayMs + 520} sizePct={4} />
+      </BoardWideStage>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-shock absolute inset-[16%] block rounded-full" style={{ border: "2px solid rgba(163,209,150,0.9)", animationDelay: `${delayMs}ms` }} />
+      <span className="fx-sig-shock absolute inset-[6%] block rounded-full" style={{ border: "1.5px solid rgba(163,209,150,0.6)", animationDelay: `${delayMs + 180}ms` }} />
+      <ShardBurst vectors={BURST_MED} fill="#a3d196" stroke="#5f927a" delayMs={delayMs + 80} sizePct={8} />
+    </span>
+  );
+}
+
+/** Fan Club: the home crowd goes wild. Lead: confetti rains down the whole
+ * board while a giant pennant waves over a warm wash and a cheer-ring rolls
+ * out; each guarded pawn gets a mini pennant and confetti sparks. */
+function FanClubBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  const pennant = (
+    <svg viewBox="0 0 40 26" className="h-full w-full" aria-hidden="true">
+      <path d="M6 25 L6 3" stroke="#3a2a1a" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M7 4 L36 9 L7 16 Z" fill="#e0776b" stroke="#7a2f28" strokeWidth="1.1" strokeLinejoin="round" />
+    </svg>
+  );
+  const CONFETTI = ["#e0776b", "#7eb59a", "#f4c430", "#a877d8"];
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(244,196,48,0.1)" delayMs={delayMs} />
+        <span className="fx-sig-crown absolute left-[40%] top-[36%] block h-[20%] w-[16%]" style={{ animationDelay: `${delayMs}ms` }}>{pennant}</span>
+        <BoardRain
+          delayMs={delayMs + 120}
+          render={(i) => (
+            <svg viewBox="0 0 8 8" className="h-full w-full" aria-hidden="true">
+              <rect x="1.4" y="1.4" width="5.2" height="5.2" rx="0.8" fill={CONFETTI[i % CONFETTI.length]} />
+            </svg>
+          )}
+        />
+        <BoardBoom delayMs={delayMs + 340} color="rgba(244,196,48,0.75)" thickness={3} />
+      </BoardWideStage>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-crown absolute left-[28%] top-[22%] block h-[46%] w-[44%]" style={{ animationDelay: `${delayMs}ms` }}>{pennant}</span>
+      <ShardBurst vectors={PIN_STARS} fill="#f4c430" stroke="#8a6414" delayMs={delayMs + 180} sizePct={8} />
+    </span>
+  );
+}
+
+/** Gravity Well: the king bends space. Lead: an indigo wash, two colossal
+ * orbit rings locking in around the king, and a field of starlets dragged
+ * INTO the well; the king's square gets a small orbit and a dark core. */
+function GravityWellBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(40,34,66,0.24)" delayMs={delayMs} />
+        <span className="fx-sig-moat absolute left-[30%] top-[32%] block h-[36%] w-[40%]" style={{ animationDelay: `${delayMs + 80}ms` }}>
+          <svg viewBox="0 0 80 60" className="h-full w-full" aria-hidden="true">
+            <ellipse cx="40" cy="30" rx="37" ry="24" fill="none" stroke="#a877d8" strokeWidth="1.8" strokeDasharray="8 5" />
+            <ellipse cx="40" cy="30" rx="24" ry="13" fill="none" stroke="#7a5b9a" strokeWidth="1.2" strokeDasharray="4 4" />
+          </svg>
+        </span>
+        {VORTEX_VEC.map((v, i) => (
+          <span key={i} className="fx-sig-implode absolute left-1/2 top-1/2 ml-[-1.6%] mt-[-1.6%] block h-[3.2%] w-[3.2%]" style={{ "--dx": v.dx, "--dy": v.dy, "--rot": v.rot, animationDelay: `${delayMs + 260 + v.d * 8}ms`, animationDuration: "0.9s" } as React.CSSProperties}>
+            <SigShard fill="#c9b8e8" stroke="#4a3070" variant={i} />
+          </span>
+        ))}
+      </BoardWideStage>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-moat absolute inset-[8%] block" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <ellipse cx="20" cy="20" rx="17" ry="11" fill="none" stroke="#a877d8" strokeWidth="1.6" strokeDasharray="5 4" />
+        </svg>
+      </span>
+      <span className="fx-sig-hole absolute inset-[38%] block rounded-full" style={{ background: "rgba(24,18,36,0.85)", border: "1.5px solid rgba(122,91,154,0.9)", animationDelay: `${delayMs + 140}ms` }} />
+    </span>
+  );
+}
+
+/** Magnetism: the knights go magnetic. A horseshoe magnet rises, dashed field
+ * arcs pulse around it, and iron filings snap INTO the square; the lead adds
+ * a wider field ring and a flash. */
+function MagnetBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-rise absolute left-[32%] bottom-[14%] block h-[50%] w-[36%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 24 28" className="h-full w-full" aria-hidden="true">
+          <path d="M4 28 V10 C4 -2 20 -2 20 10 V28 H14 V10 C14 6 10 6 10 10 V28 Z" fill="#e0526b" stroke="#7a2035" strokeWidth="1.3" strokeLinejoin="round" />
+          <rect x="4" y="22" width="6" height="6" fill="#c9c9d4" stroke="#5b6672" strokeWidth="0.9" />
+          <rect x="14" y="22" width="6" height="6" fill="#c9c9d4" stroke="#5b6672" strokeWidth="0.9" />
+        </svg>
+      </span>
+      <span className="fx-sig-moat absolute inset-[10%] block" style={{ animationDelay: `${delayMs + 160}ms` }}>
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <circle cx="20" cy="20" r="16" fill="none" stroke="#8aa0b4" strokeWidth="1.2" strokeDasharray="4 3" />
+        </svg>
+      </span>
+      {VORTEX_VEC.slice(0, 4).map((v, i) => (
+        <span key={i} className="fx-sig-implode absolute left-1/2 top-1/2 ml-[-4%] mt-[-4%] block h-[8%] w-[8%]" style={{ "--dx": v.dx, "--dy": v.dy, "--rot": v.rot, animationDelay: `${delayMs + 220 + v.d}ms` } as React.CSSProperties}>
+          <SigShard fill="#8aa0b4" stroke="#3f474f" variant={i} />
+        </span>
+      ))}
+      {lead && <span className="fx-sig-flash absolute inset-[24%] block rounded-full" style={{ background: "rgba(224,82,107,0.35)", animationDelay: `${delayMs + 320}ms` }} />}
+    </span>
+  );
+}
+
+/** Photosynthesis: growing toward the light. Lead: a warm dawn wash, a giant
+ * sun blooming with turning rays, and leaves fluttering down the whole crop;
+ * each pawn square gets a sunbeam and a sprout. */
+function PhotosynthesisBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  const leaf = (
+    <svg viewBox="0 0 12 12" className="h-full w-full" aria-hidden="true">
+      <path d="M2 10 C2 4 6 1 10 1 C10 7 6 10 2 10 Z" fill="#a3d160" stroke="#5f927a" strokeWidth="0.8" strokeLinejoin="round" />
+      <path d="M3 9 C5 7 7 5 9 3" fill="none" stroke="#5f927a" strokeWidth="0.6" />
+    </svg>
+  );
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(244,196,48,0.13)" delayMs={delayMs} />
+        <span className="fx-sig-swirl absolute left-[40%] top-[34%] block h-[24%] w-[18%]" style={{ animationDelay: `${delayMs}ms`, animationDuration: "1.2s" }}>
+          <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+            <circle cx="20" cy="20" r="9" fill="#f4c430" stroke="#8a6414" strokeWidth="1.4" />
+            <path d="M20 2 V8 M20 32 V38 M2 20 H8 M32 20 H38 M7 7 L11 11 M29 29 L33 33 M33 7 L29 11 M11 29 L7 33" stroke="#f4c430" strokeWidth="2.4" strokeLinecap="round" />
+          </svg>
+        </span>
+        <BoardRain delayMs={delayMs + 240} render={() => leaf} />
+      </BoardWideStage>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-shaft absolute inset-x-[32%] top-0 block h-[64%]" style={{ background: "rgba(255,240,180,0.5)", animationDelay: `${delayMs}ms` }} />
+      <span className="fx-sig-grow absolute left-[36%] bottom-[12%] block h-[42%] w-[28%]" style={{ animationDelay: `${delayMs + 160}ms` }}>
+        <svg viewBox="0 0 20 26" className="h-full w-full" aria-hidden="true">
+          <path d="M10 26 V10" stroke="#5f927a" strokeWidth="1.8" strokeLinecap="round" />
+          <path d="M10 14 C4 14 2 8 3 4 C8 4 11 8 10 14 Z M10 10 C16 10 18 5 17 1 C12 1 9 5 10 10 Z" fill="#a3d160" stroke="#5f927a" strokeWidth="1" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <ShardBurst vectors={BURST_MED} fill="#ffd95e" stroke="#8a6414" delayMs={delayMs + 260} sizePct={7} />
+    </span>
+  );
+}
+
+/** Termites: the towers are being eaten. Lead: a swarm rains down the crop
+ * over a timber-brown wash while a pair of colossal mandibles CHOMP mid-board;
+ * each rook square gets gnawing jaws, sawdust, and a fresh crack. */
+function TermitesBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  const bug = (
+    <svg viewBox="0 0 12 12" className="h-full w-full" aria-hidden="true">
+      <ellipse cx="6" cy="7" rx="3" ry="4" fill="#b98a5a" stroke="#6b4a2a" strokeWidth="0.8" />
+      <circle cx="6" cy="2.6" r="1.8" fill="#8a6a4a" stroke="#6b4a2a" strokeWidth="0.7" />
+      <path d="M3 6 L1 5 M3 9 L1 10 M9 6 L11 5 M9 9 L11 10" stroke="#6b4a2a" strokeWidth="0.7" strokeLinecap="round" />
+    </svg>
+  );
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(107,74,42,0.16)" delayMs={delayMs} />
+        <span className="fx-sig-chomp absolute left-[42%] top-[40%] block h-[16%] w-[14%]" style={{ animationDelay: `${delayMs + 160}ms` }}>
+          <svg viewBox="0 0 30 30" className="h-full w-full" aria-hidden="true">
+            <path d="M2 13 C8 5 22 5 28 13 L22 11 L18 14 L12 14 L8 11 Z" fill="#8a6a4a" stroke="#5d3a1e" strokeWidth="1.2" strokeLinejoin="round" />
+            <path d="M2 17 C8 25 22 25 28 17 L22 19 L18 16 L12 16 L8 19 Z" fill="#8a6a4a" stroke="#5d3a1e" strokeWidth="1.2" strokeLinejoin="round" />
+          </svg>
+        </span>
+        <BoardRain delayMs={delayMs} render={() => bug} />
+      </BoardWideStage>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-chomp absolute left-[30%] top-[26%] block h-[44%] w-[40%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 30 30" className="h-full w-full" aria-hidden="true">
+          <path d="M2 13 C8 5 22 5 28 13 L22 11 L18 14 L12 14 L8 11 Z" fill="#8a6a4a" stroke="#5d3a1e" strokeWidth="1.2" strokeLinejoin="round" />
+          <path d="M2 17 C8 25 22 25 28 17 L22 19 L18 16 L12 16 L8 19 Z" fill="#8a6a4a" stroke="#5d3a1e" strokeWidth="1.2" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <span className="fx-sig-crumble absolute left-[18%] top-[18%] block h-[12%] w-[12%]" style={{ animationDelay: `${delayMs + 180}ms` }}>
+        <SigShard fill="#b98a5a" stroke="#6b4a2a" variant={0} />
+      </span>
+      <span className="fx-sig-crumble absolute right-[16%] top-[30%] block h-[10%] w-[10%]" style={{ animationDelay: `${delayMs + 280}ms` }}>
+        <SigShard fill="#8a6a4a" stroke="#5d3a1e" variant={2} />
+      </span>
+    </span>
+  );
+}
+
+/** Union Rules: the picket line forms. Lead: three staggered strike placards
+ * heave up across the whole board over a solidarity wash, with a rally ring;
+ * each protected square raises its own placard. */
+function PicketLineBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  const sign = (
+    <svg viewBox="0 0 24 32" className="h-full w-full" aria-hidden="true">
+      <path d="M12 31 V14" stroke="#8a6a4a" strokeWidth="2" strokeLinecap="round" />
+      <rect x="2" y="2" width="20" height="13" rx="1.5" fill="#f4f0e8" stroke="#5d3a1e" strokeWidth="1.3" />
+      <path d="M6 6.5 H18 M6 10.5 H14" stroke="#c2403a" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(194,64,58,0.1)" delayMs={delayMs} />
+        {[
+          { l: "32%", t: "40%", d: 0 }, { l: "45%", t: "36%", d: 170 }, { l: "58%", t: "42%", d: 340 },
+        ].map((s, i) => (
+          <span key={i} className="fx-sig-brick absolute block h-[18%] w-[9%]" style={{ left: s.l, top: s.t, animationDelay: `${delayMs + s.d}ms` }}>{sign}</span>
+        ))}
+        <BoardBoom delayMs={delayMs + 520} color="rgba(194,64,58,0.7)" thickness={3} />
+      </BoardWideStage>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-brick absolute left-[28%] bottom-[8%] block h-[74%] w-[44%]" style={{ animationDelay: `${delayMs}ms` }}>{sign}</span>
+      <ShardBurst vectors={PIN_STARS} fill="#e0776b" stroke="#7a2f28" delayMs={delayMs + 220} sizePct={7} />
+    </span>
+  );
+}
+
+// --- Batch 11 meta: funny slapstick / summons / transforms --------------------
+
+/** Cream Pie: right in the face. Lead: a giant pie darts across the whole
+ * board and detonates in a cream splat with a white shockwave; the stunned
+ * square gets its own splat, drips, and the cherry on top. */
+function CreamPieBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  const pie = (
+    <svg viewBox="0 0 32 16" className="h-full w-full" aria-hidden="true">
+      <path d="M2 10 H30 L27 15 H5 Z" fill="#d8a86a" stroke="#8a6a3a" strokeWidth="1.1" strokeLinejoin="round" />
+      <path d="M3 10 C6 4 12 8 16 4 C20 8 26 4 29 10 Z" fill="#f7f2e6" stroke="#c9bfa4" strokeWidth="0.9" strokeLinejoin="round" />
+      <circle cx="16" cy="4" r="2" fill="#e05252" stroke="#7a2f28" strokeWidth="0.7" />
+    </svg>
+  );
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(247,242,230,0.16)" delayMs={delayMs} />
+        <span className="fx-sig-dart absolute left-[30%] top-[42%] block h-[8%] w-[18%]" style={{ animationDelay: `${delayMs}ms` }}>{pie}</span>
+        <span className="fx-sig-splat absolute left-[52%] top-[40%] block h-[12%] w-[14%] rounded-full" style={{ background: "rgba(247,242,230,0.85)", animationDelay: `${delayMs + 420}ms` }} />
+        <BoardBoom delayMs={delayMs + 460} color="rgba(247,242,230,0.85)" thickness={4} />
+      </BoardWideStage>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-splat absolute inset-x-[12%] top-[28%] block h-[38%]" style={{ animationDelay: `${delayMs}ms` }}>{pie}</span>
+      <span className="fx-sig-crumble absolute left-[24%] top-[52%] block h-[14%] w-[10%] rounded-full" style={{ background: "rgba(247,242,230,0.9)", animationDelay: `${delayMs + 200}ms` }} />
+      <span className="fx-sig-crumble absolute left-[60%] top-[50%] block h-[12%] w-[9%] rounded-full" style={{ background: "rgba(247,242,230,0.85)", animationDelay: `${delayMs + 300}ms` }} />
+    </span>
+  );
+}
+
+/** Clone / Clone Army: run it through the photocopier. Lead: a blinding green
+ * scan bar sweeps the entire board crop under a copier-light wash; each copy
+ * square gets a mini scan bar and a ghosted duplicate sliding off the
+ * original. */
+function PhotocopyBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(163,209,150,0.14)" delayMs={delayMs} />
+        <span className="fx-sig-sweepbar absolute left-[20%] top-[28%] block h-[44%] w-[6%]" style={{ background: "rgba(198,255,214,0.65)", animationDelay: `${delayMs + 80}ms`, animationDuration: "1.2s" }} />
+        <span className="fx-sig-flash absolute left-[20%] top-[28%] block h-[44%] w-[60%]" style={{ background: "rgba(198,255,214,0.22)", animationDelay: `${delayMs + 560}ms` }} />
+      </BoardWideStage>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-sweepbar absolute inset-y-[12%] left-[10%] block w-[10%]" style={{ background: "rgba(198,255,214,0.7)", animationDelay: `${delayMs}ms` }} />
+      <span className="fx-sig-afterimage absolute left-[30%] top-[22%] block h-[54%] w-[40%]" style={{ animationDelay: `${delayMs + 220}ms` }}>
+        <svg viewBox="0 0 12 16" className="h-full w-full" aria-hidden="true">
+          <circle cx="6" cy="5" r="3" fill="none" stroke="#5f927a" strokeWidth="1.2" />
+          <path d="M3 15 C3 10 9 10 9 15 Z" fill="none" stroke="#5f927a" strokeWidth="1.2" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <ShardBurst vectors={BURST_MED} fill="#f4f0e8" stroke="#8aa0b4" delayMs={delayMs + 320} sizePct={7} />
+    </span>
+  );
+}
+
+/** Insurance: the policy pays out. An umbrella pops open over the square with
+ * a dome flourish and deflected-drop sparks. A per-square read on purpose —
+ * it is a quiet contingency, not a spectacle. */
+function UmbrellaBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-dome absolute left-[18%] top-[14%] block h-[56%] w-[64%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 40 30" className="h-full w-full" aria-hidden="true">
+          <path d="M2 16 C2 4 38 4 38 16 C33 12 29 12 26 16 C24 12 16 12 14 16 C11 12 7 12 2 16 Z" fill="#e0776b" stroke="#7a2f28" strokeWidth="1.3" strokeLinejoin="round" />
+          <path d="M20 6 V26 C20 29 16 29 16 26" fill="none" stroke="#7a2f28" strokeWidth="1.4" strokeLinecap="round" />
+        </svg>
+      </span>
+      <ShardBurst vectors={BURST_MED} fill="#8ba9c4" stroke="#3f5a74" delayMs={delayMs + 200} sizePct={7} />
+    </span>
+  );
+}
+
+/** Understudy: the stage call. Lead: the board dims to house-black, two
+ * spotlight shafts swing in from the wings, and a star takes centre stage
+ * with a spring bow; the promoted square gets its own beam and rising star. */
+function SpotlightBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(10,10,16,0.4)" delayMs={delayMs} />
+        <span className="absolute left-[34%] top-[24%] block h-[42%] w-[8%]" style={{ transform: "rotate(14deg)", transformOrigin: "50% 0%" }}>
+          <span className="fx-sig-shaft absolute inset-0 block" style={{ background: "rgba(255,240,180,0.5)", animationDelay: `${delayMs + 120}ms`, animationDuration: "1s" }} />
+        </span>
+        <span className="absolute left-[58%] top-[24%] block h-[42%] w-[8%]" style={{ transform: "rotate(-14deg)", transformOrigin: "50% 0%" }}>
+          <span className="fx-sig-shaft absolute inset-0 block" style={{ background: "rgba(255,240,180,0.5)", animationDelay: `${delayMs + 260}ms`, animationDuration: "1s" }} />
+        </span>
+        <span className="fx-sig-crown absolute left-[44%] top-[44%] block h-[12%] w-[12%]" style={{ animationDelay: `${delayMs + 380}ms` }}>
+          <svg viewBox="0 0 20 20" className="h-full w-full" aria-hidden="true">
+            <path d="M10 1 L12.4 7 L19 7.4 L13.8 11.4 L15.6 18 L10 14 L4.4 18 L6.2 11.4 L1 7.4 L7.6 7 Z" fill="#f4c430" stroke="#8a6414" strokeWidth="1" strokeLinejoin="round" />
+          </svg>
+        </span>
+      </BoardWideStage>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-shaft absolute inset-x-[28%] top-0 block h-[72%]" style={{ background: "rgba(255,240,180,0.55)", animationDelay: `${delayMs}ms` }} />
+      <span className="fx-sig-rise absolute left-[32%] bottom-[12%] block h-[42%] w-[36%]" style={{ animationDelay: `${delayMs + 160}ms` }}>
+        <svg viewBox="0 0 20 20" className="h-full w-full" aria-hidden="true">
+          <path d="M10 1 L12.4 7 L19 7.4 L13.8 11.4 L15.6 18 L10 14 L4.4 18 L6.2 11.4 L1 7.4 L7.6 7 Z" fill="#f4c430" stroke="#8a6414" strokeWidth="1" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <ShardBurst vectors={PIN_STARS} fill="#ffd95e" stroke="#8a6414" delayMs={delayMs + 300} sizePct={8} />
+    </span>
+  );
+}
+
+/** Summon Intern: the new hire reports in. A necktied pawn springs up with a
+ * steaming coffee cup and a flurry of memo pages. Deliberately small — it's
+ * one intern. */
+function InternBurst({ delayMs }: { delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-crown absolute left-[28%] bottom-[12%] block h-[62%] w-[40%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 16 22" className="h-full w-full" aria-hidden="true">
+          <circle cx="8" cy="5" r="3.6" fill="#e8d3b0" stroke="#5d3a1e" strokeWidth="0.9" />
+          <path d="M3 21 C3 13 13 13 13 21 Z" fill="#8aa0b4" stroke="#4a5560" strokeWidth="0.9" strokeLinejoin="round" />
+          <path d="M8 12 L7 16 L8 19 L9 16 Z" fill="#c2403a" stroke="#7a2f28" strokeWidth="0.5" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <span className="fx-sig-rise absolute left-[62%] bottom-[30%] block h-[30%] w-[20%]" style={{ animationDelay: `${delayMs + 180}ms` }}>
+        <svg viewBox="0 0 14 14" className="h-full w-full" aria-hidden="true">
+          <path d="M2 5 H10 V12 C10 13 3 13 3 12 Z" fill="#f4f0e8" stroke="#8a6a4a" strokeWidth="0.9" strokeLinejoin="round" />
+          <path d="M10 7 C13 7 13 10 10 10" fill="none" stroke="#8a6a4a" strokeWidth="0.9" />
+          <path d="M5 3 C4.5 2 5.5 1.4 5 0.5 M8 3 C7.5 2 8.5 1.4 8 0.5" fill="none" stroke="#c9c9d4" strokeWidth="0.8" strokeLinecap="round" />
+        </svg>
+      </span>
+      <span className="fx-sig-crumble absolute left-[14%] top-[20%] block h-[13%] w-[13%]" style={{ animationDelay: `${delayMs + 260}ms` }}>
+        <svg viewBox="0 0 10 10" className="h-full w-full" aria-hidden="true"><rect x="1" y="1" width="8" height="8" fill="#f4f0e8" stroke="#8aa0b4" strokeWidth="0.6" /></svg>
+      </span>
+    </span>
+  );
+}
+
+/** Supply Drop: air support inbound. Lead: parachute crates drift down the
+ * whole board crop with a dust ring where the payload lands; the drop square
+ * takes the crate thump, chute collapse, and dust. */
+function CrateDropBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  const chuteCrate = (
+    <svg viewBox="0 0 20 26" className="h-full w-full" aria-hidden="true">
+      <path d="M2 8 C2 1 18 1 18 8 L14 7 L10 8 L6 7 Z" fill="#e0776b" stroke="#7a2f28" strokeWidth="0.9" strokeLinejoin="round" />
+      <path d="M4 8 L8 15 M16 8 L12 15" stroke="#7a2f28" strokeWidth="0.7" />
+      <rect x="7" y="15" width="7" height="7" fill="#8a6a4a" stroke="#5d3a1e" strokeWidth="0.9" />
+      <path d="M7 18.5 H14 M10.5 15 V22" stroke="#5d3a1e" strokeWidth="0.6" />
+    </svg>
+  );
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(139,169,196,0.1)" delayMs={delayMs} />
+        <BoardRain delayMs={delayMs} render={() => chuteCrate} />
+        <BoardBoom delayMs={delayMs + 620} color="rgba(150,110,66,0.7)" thickness={3} />
+      </BoardWideStage>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-crownfall absolute left-[30%] top-[4%] block h-[52%] w-[40%]" style={{ animationDelay: `${delayMs}ms` }}>{chuteCrate}</span>
+      <span className="fx-sig-soot absolute inset-x-[16%] bottom-[10%] block h-[18%] rounded-full" style={{ background: "rgba(150,110,66,0.4)", animationDelay: `${delayMs + 520}ms` }} />
+    </span>
+  );
+}
+
+/** Rent-a-Rook: the loaner arrives. A rook rolls up with its price tag still
+ * swinging, a gold deal-ring pops, and coins spark; the lead flashes the
+ * showroom lights. */
+function RentARookBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-rise absolute left-[28%] bottom-[10%] block h-[62%] w-[38%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 24 32" className="h-full w-full" aria-hidden="true">
+          <path d="M4 32 L6 14 H18 L20 32 Z M4 8 H8 V4 H10 V8 H14 V4 H16 V8 H20 V14 H4 Z" fill="#8aa0b4" stroke="#4a5560" strokeWidth="1.2" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <span className="fx-sig-wiggle absolute left-[58%] top-[18%] block h-[26%] w-[22%]" style={{ animationDelay: `${delayMs + 260}ms` }}>
+        <svg viewBox="0 0 14 18" className="h-full w-full" aria-hidden="true">
+          <path d="M7 0 V5" stroke="#8a6414" strokeWidth="1" />
+          <path d="M2 5 H12 L12 16 L7 18 L2 16 Z" fill="#f4c430" stroke="#8a6414" strokeWidth="1" strokeLinejoin="round" />
+          <circle cx="7" cy="8" r="1.2" fill="#8a6414" />
+        </svg>
+      </span>
+      <ShardBurst vectors={PIN_STARS} fill="#ffd95e" stroke="#8a6414" delayMs={delayMs + 200} sizePct={8} />
+      {lead && <span className="fx-sig-shock absolute inset-[8%] block rounded-full" style={{ border: "2px solid rgba(244,196,48,0.8)", animationDelay: `${delayMs + 120}ms` }} />}
+    </span>
+  );
+}
+
+/** Pizza Delivery: thirty minutes or free. Lead: the delivery scooter tears
+ * across the whole board trailing steam puffs over a warm oven wash; each
+ * drop square gets a flipped-open pizza box and pepperoni sparks. */
+function PizzaRunBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(230,110,60,0.1)" delayMs={delayMs} />
+        <span className="fx-sig-cross absolute left-[37%] top-[40%] block h-[13%] w-[15%]" style={{ animationDelay: `${delayMs}ms` }}>
+          <svg viewBox="0 0 44 30" className="h-full w-full" aria-hidden="true">
+            <circle cx="10" cy="24" r="5" fill="#2b2b2f" stroke="#141416" strokeWidth="1" />
+            <circle cx="34" cy="24" r="5" fill="#2b2b2f" stroke="#141416" strokeWidth="1" />
+            <path d="M6 18 C10 12 16 12 20 14 L28 14 L32 8 L38 8 M28 14 L30 20 L34 22" fill="none" stroke="#e0776b" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+            <circle cx="31" cy="5" r="2.6" fill="#e8d3b0" stroke="#8a6a4a" strokeWidth="0.8" />
+            <rect x="12" y="6" width="10" height="7" rx="1" fill="#d8a86a" stroke="#8a6a3a" strokeWidth="1" />
+          </svg>
+        </span>
+        <span className="fx-sig-zzz absolute left-[30%] top-[46%] block h-[6%] w-[5%] rounded-full" style={{ background: "rgba(220,220,228,0.6)", animationDelay: `${delayMs + 240}ms` }} />
+        <span className="fx-sig-zzz absolute left-[26%] top-[50%] block h-[5%] w-[4%] rounded-full" style={{ background: "rgba(220,220,228,0.5)", animationDelay: `${delayMs + 380}ms` }} />
+      </BoardWideStage>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-grow absolute left-[20%] top-[28%] block h-[46%] w-[60%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 40 26" className="h-full w-full" aria-hidden="true">
+          <path d="M4 12 L20 4 L36 12 Z" fill="#d8a86a" stroke="#8a6a3a" strokeWidth="1.1" strokeLinejoin="round" />
+          <rect x="4" y="12" width="32" height="10" rx="1.5" fill="#e8c98a" stroke="#8a6a3a" strokeWidth="1.1" />
+          <circle cx="14" cy="17" r="2" fill="#e05252" />
+          <circle cx="22" cy="18" r="2" fill="#e05252" />
+          <circle cx="29" cy="16" r="2" fill="#e05252" />
+        </svg>
+      </span>
+      <ShardBurst vectors={BURST_MED} fill="#e05252" stroke="#7a2f28" delayMs={delayMs + 180} sizePct={7} />
+      <span className="fx-sig-ash absolute left-[44%] top-[10%] block h-[14%] w-[12%] rounded-full" style={{ background: "rgba(220,220,228,0.55)", animationDelay: `${delayMs + 260}ms` }} />
     </span>
   );
 }
@@ -6555,7 +8434,7 @@ export function SignatureOverlay({
     case "worldend":
       return <WorldEndBurst lead={lead} delayMs={delayMs} />;
     case "rustlock":
-      return <RustLockBurst delayMs={delayMs} />;
+      return <RustLockBurst lead={lead} delayMs={delayMs} />;
     case "masspetrify":
       return <MassPetrifyBurst delayMs={delayMs} />;
     case "walnutcurse":
@@ -6581,7 +8460,7 @@ export function SignatureOverlay({
     case "secondcoming":
       return <SecondComingBurst lead={lead} delayMs={delayMs} />;
     case "lavafloor":
-      return <LavaFloorBurst delayMs={delayMs} />;
+      return <LavaFloorBurst lead={lead} delayMs={delayMs} />;
     case "necromancer":
       return <NecromancerBurst lead={lead} delayMs={delayMs} />;
     case "werewolf":
@@ -6638,7 +8517,7 @@ export function SignatureOverlay({
     case "galephase":
       return <GalePhaseBurst delayMs={delayMs} />;
     case "oppositeday":
-      return <OppositeDayBurst delayMs={delayMs} />;
+      return <OppositeDayBurst lead={lead} delayMs={delayMs} />;
     // --- Batch 10 (board-wide virus + gambling wheels + drum-man + funnies) ---
     case "virusspread":
       return <VirusSpreadBurst lead={lead} delayMs={delayMs} />;
@@ -6651,7 +8530,7 @@ export function SignatureOverlay({
     case "drumbonk":
       return <DrumBonkBurst lead={lead} delayMs={delayMs} />;
     case "rakebonk":
-      return <RakeBonkBurst delayMs={delayMs} />;
+      return <RakeBonkBurst lead={lead} delayMs={delayMs} />;
     case "flyswat":
       return <FlySwatBurst delayMs={delayMs} />;
     case "sleepcap":
@@ -6663,7 +8542,7 @@ export function SignatureOverlay({
     case "anvildrop":
       return <AnvilDropBurst lead={lead} delayMs={delayMs} />;
     case "boxingglove":
-      return <BoxingGloveBurst delayMs={delayMs} />;
+      return <BoxingGloveBurst lead={lead} delayMs={delayMs} />;
     case "bubblewrap":
       return <BubbleWrapBurst lead={lead} delayMs={delayMs} />;
     case "vertigo":
@@ -6682,6 +8561,101 @@ export function SignatureOverlay({
       return <SugarRushBurst lead={lead} delayMs={delayMs} />;
     case "totalwar":
       return <TotalWarBurst lead={lead} delayMs={delayMs} />;
+    // --- Batch 11 (fantasy & meta spectacles) ---
+    case "sinkhole":
+      return <SinkholeBurst lead={lead} delayMs={delayMs} />;
+    case "fissurefield":
+      return <FissureFieldBurst lead={lead} delayMs={delayMs} />;
+    case "dominionorb":
+      return <DominionOrbBurst lead={lead} delayMs={delayMs} />;
+    case "phylactery":
+      return <PhylacteryBurst lead={lead} delayMs={delayMs} />;
+    case "metamorph":
+      return <MetamorphosisBurst lead={lead} delayMs={delayMs} />;
+    case "godhood":
+      return <ApotheosisBurst lead={lead} delayMs={delayMs} />;
+    case "transmute":
+      return <TransmuteBurst lead={lead} delayMs={delayMs} />;
+    case "queenshackle":
+      return <ShackleQueenBurst lead={lead} delayMs={delayMs} />;
+    case "frailty":
+      return <FrailtyBurst lead={lead} delayMs={delayMs} />;
+    case "doomtide":
+      return <DoomTideBurst lead={lead} delayMs={delayMs} />;
+    case "deadlineclock":
+      return <DeadlineBurst lead={lead} delayMs={delayMs} />;
+    case "whistleblast":
+      return <WhistleBurst lead={lead} delayMs={delayMs} flag={false} />;
+    case "timeoutflag":
+      return <WhistleBurst lead={lead} delayMs={delayMs} flag={true} />;
+    case "cashclock":
+      return <CashClockBurst lead={lead} delayMs={delayMs} />;
+    case "overclock":
+      return <OverclockBurst lead={lead} delayMs={delayMs} />;
+    case "allin":
+      return <AllInBurst lead={lead} delayMs={delayMs} />;
+    case "mysterybox":
+      return <MysteryBoxBurst lead={lead} delayMs={delayMs} />;
+    case "swapmeet":
+      return <SwapMeetBurst lead={lead} delayMs={delayMs} />;
+    case "goldtouch":
+      return <GoldenTouchBurst lead={lead} delayMs={delayMs} />;
+    case "outoffice":
+      return <OutOfOfficeBurst delayMs={delayMs} />;
+    case "sneeze":
+      return <SneezeBurst lead={lead} delayMs={delayMs} />;
+    case "tornado":
+      return <TornadoBurst lead={lead} delayMs={delayMs} />;
+    case "glassdome":
+      return <GreenhouseBurst lead={lead} delayMs={delayMs} />;
+    case "vhsrewind":
+      return <GroundhogBurst lead={lead} delayMs={delayMs} />;
+    case "hotpotato":
+      return <HotPotatoBurst lead={lead} delayMs={delayMs} />;
+    case "pinocchionose":
+      return <PinocchioBurst lead={lead} delayMs={delayMs} />;
+    case "seamonkeys":
+      return <SeaMonkeysBurst lead={lead} delayMs={delayMs} />;
+    case "snailslow":
+      return <SnailBurst lead={lead} delayMs={delayMs} />;
+    case "snoozebar":
+      return <SnoozeButtonBurst lead={lead} delayMs={delayMs} />;
+    case "stinkcloud":
+      return <StinkBurst lead={lead} delayMs={delayMs} />;
+    case "whoopee":
+      return <WhoopeeBurst lead={lead} delayMs={delayMs} />;
+    case "springtrap":
+      return <SpringTrapBurst delayMs={delayMs} />;
+    case "contagion":
+      return <ContagionBurst lead={lead} delayMs={delayMs} />;
+    case "fanclub":
+      return <FanClubBurst lead={lead} delayMs={delayMs} />;
+    case "gravitywell":
+      return <GravityWellBurst lead={lead} delayMs={delayMs} />;
+    case "magnetpull":
+      return <MagnetBurst lead={lead} delayMs={delayMs} />;
+    case "photosyn":
+      return <PhotosynthesisBurst lead={lead} delayMs={delayMs} />;
+    case "termitegnaw":
+      return <TermitesBurst lead={lead} delayMs={delayMs} />;
+    case "picketline":
+      return <PicketLineBurst lead={lead} delayMs={delayMs} />;
+    case "creampie":
+      return <CreamPieBurst lead={lead} delayMs={delayMs} />;
+    case "photocopy":
+      return <PhotocopyBurst lead={lead} delayMs={delayMs} />;
+    case "umbrella":
+      return <UmbrellaBurst delayMs={delayMs} />;
+    case "spotlight":
+      return <SpotlightBurst lead={lead} delayMs={delayMs} />;
+    case "internpop":
+      return <InternBurst delayMs={delayMs} />;
+    case "cratedrop":
+      return <CrateDropBurst lead={lead} delayMs={delayMs} />;
+    case "rentarook":
+      return <RentARookBurst lead={lead} delayMs={delayMs} />;
+    case "pizzarun":
+      return <PizzaRunBurst lead={lead} delayMs={delayMs} />;
     default:
       return null;
   }

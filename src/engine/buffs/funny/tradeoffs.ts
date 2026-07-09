@@ -59,7 +59,7 @@ export const FUNNY_TRADEOFFS: Buff[] = [
       icon: "Hourglass",
       name: "Borrowed Time",
       description:
-        "Your queen becomes uncapturable for your next 3 moves, and then her time runs out: she is removed from the board.",
+        "Your queen becomes uncapturable for your next 4 moves, and then her time runs out: she is removed from the board.",
       tier: 5,
       category: "protection",
       requires: ["q"],
@@ -69,8 +69,8 @@ export const FUNNY_TRADEOFFS: Buff[] = [
     instant((_inst, api) => {
       const q = mySquares(api.board, api.me, "q")[0];
       if (q == null) return;
-      addEffect(api, { kind: "shield", owner: api.me, squares: [q], turns: 3 });
-      addEffect(api, { kind: "timed_loss", owner: api.me, sq: q, turns: 3, then: "remove" });
+      addEffect(api, { kind: "shield", owner: api.me, squares: [q], turns: 4 });
+      addEffect(api, { kind: "timed_loss", owner: api.me, sq: q, turns: 4, then: "remove" });
     }),
   ),
   card(
@@ -79,7 +79,7 @@ export const FUNNY_TRADEOFFS: Buff[] = [
       icon: "Axe",
       name: "Berserker",
       description:
-        "For your next 2 turns, all your pieces except your king also move like a queen. For the 2 turns after that, all your pieces can move only one square.",
+        "For your next 3 turns, all your pieces except your king also move like a queen. For the 2 turns after that, all your pieces can move only one square.",
       tier: 6,
       category: "movement",
       flavor: "Blood first, thinking later.",
@@ -88,7 +88,7 @@ export const FUNNY_TRADEOFFS: Buff[] = [
     {
       kind: "passive",
       init: (inst) => {
-        inst.state.turns = 2;
+        inst.state.turns = 3;
         inst.state.phase = "rage";
       },
       augmentMoves: (moves, inst, api) => {
@@ -129,7 +129,7 @@ export const FUNNY_TRADEOFFS: Buff[] = [
       icon: "Gem",
       name: "Glass Cannon",
       description:
-        "Choose one of your bishops. For your next 3 turns it can capture any enemy piece except the king along its diagonals, passing through any pieces in between. While it is overcharged, if that bishop is captured, two of your pawns are removed as well.",
+        "Choose one of your bishops. For your next 4 turns it can capture any enemy piece except the king along its diagonals, passing through any pieces in between. While it is overcharged, if that bishop is captured, two of your pawns are removed as well.",
       tier: 6,
       category: "attack",
       requires: ["b"],
@@ -152,7 +152,7 @@ export const FUNNY_TRADEOFFS: Buff[] = [
         const sq = picks[0]?.square;
         if (sq == null) return;
         inst.state.sq = sq;
-        inst.state.turns = 3;
+        inst.state.turns = 4;
       },
       augmentMoves: (moves, inst, api) => {
         const sq = inst.state.sq as Square | undefined;
@@ -180,7 +180,7 @@ export const FUNNY_TRADEOFFS: Buff[] = [
           inst.state.sq = undefined;
           return;
         }
-        // Follow the bishop as it moves; retire after 3 of my turns.
+        // Follow the bishop as it moves; retire after 4 of my turns.
         if (move.from === sq) inst.state.sq = move.to;
         if (move.color !== api.me) return;
         const left = (inst.state.turns as number) - 1;
@@ -202,7 +202,7 @@ export const FUNNY_TRADEOFFS: Buff[] = [
       icon: "Candy",
       name: "Sugar Rush",
       description:
-        "Slam a sugar rush: take two extra moves right now. Then comes the sugar crash and you skip your next turn.",
+        "Slam a sugar rush: take three extra moves right now. Then comes the sugar crash and you skip your next turn.",
       tier: 4,
       category: "tempo",
       flavor: "Wheee... zzz.",
@@ -210,7 +210,7 @@ export const FUNNY_TRADEOFFS: Buff[] = [
     },
     {
       ...activatedSimple((_inst, api) => {
-        api.bs.extraMoves[api.me] += 2;
+        api.bs.extraMoves[api.me] += 3;
         api.bs.skips[api.me] += 1;
       }),
       freeAction: true,

@@ -80,7 +80,7 @@ export const PT_TIME_CARDS: Buff[] = [
       icon: "Coins",
       name: "Golden Touch",
       description:
-        "The next enemy piece you capture (other than a king) is reforged as your own and added to your army on an empty square in your half. The price of greed: one of your pawns turns to gold and is lost.",
+        "The next two enemy pieces you capture (other than kings) are reforged as your own and added to your army on empty squares in your half. The price of greed: each reforging turns one of your pawns to gold, and it is lost.",
       tier: 6,
       category: "pieces",
       flavor: "Everything you touch, and everything it costs you.",
@@ -88,10 +88,11 @@ export const PT_TIME_CARDS: Buff[] = [
     {
       kind: "passive",
       init: (inst) => {
-        inst.state.charges = 1;
+        inst.state.charges = 2;
       },
       onMovePlayed: (inst, move, api) => {
-        if (((inst.state.charges as number) ?? 0) <= 0) return;
+        const left = (inst.state.charges as number) ?? 0;
+        if (left <= 0) return;
         if (move.color !== api.me) return;
         if (!move.captured || move.captured === "k") return;
         const type = move.captured as PieceType;
@@ -105,31 +106,33 @@ export const PT_TIME_CARDS: Buff[] = [
         // Pay the pawn (never the piece we just spawned).
         const pawn = mySquares(api.board, api.me, "p").find((sq) => sq !== spot);
         if (pawn != null) api.removePiece(pawn, { uncounted: true });
-        inst.state.charges = 0;
-        inst.spent = true;
+        inst.state.charges = left - 1;
+        if (left - 1 <= 0) inst.spent = true;
       },
       status: (inst) =>
-        ((inst.state.charges as number) ?? 0) > 0 ? "your next capture joins your army" : null,
+        ((inst.state.charges as number) ?? 0) > 0
+          ? `your next ${(inst.state.charges as number) > 1 ? "2 captures join" : "capture joins"} your army`
+          : null,
     },
   ),
 
   // #5 All In --------------------------------------------------------------
   // Engine order (game.ts): a blockedDrafts round is skipped WITHOUT consuming
-  // prepThree / bankBonus / takeBoth, so the two skips resolve first and the
-  // banked three-card, tier-up, take-all offer lands on the draft after them.
+  // prepThree / bankBonus / takeBoth, so the single skip resolves first and the
+  // banked three-card, tier-up, take-all offer lands on the draft after it.
   // rollOffer (draft.ts) guards the prepThree offer against the apex-bank
   // collapse: a banked skip that would otherwise fold into a single top-tier
   // apex card stays a three-card, one-tier-higher offer here, so All In always
   // pays out three cards (not one) even when it banks into the top of the curve.
   // takeBoth then auto-takes all three. Same net as pt.txt's "three from the
-  // next tier up, skip your next two".
+  // next tier up", but the ante is now a single skipped draft.
   card(
     {
       id: "all_in",
       icon: "Club",
       name: "All In",
       description:
-        "Push everything to the center. Your next two draft offers are skipped. The offer after that shows three cards one tier higher, and you take all three.",
+        "Push everything to the center. Your next draft offer is skipped. The offer after that shows three cards one tier higher, and you take all three.",
       tier: 6,
       category: "draft",
       flavor: "Three sevens or nothing.",
@@ -138,7 +141,7 @@ export const PT_TIME_CARDS: Buff[] = [
       api.mine.flags.prepThree = true;
       api.mine.flags.takeBoth = (api.mine.flags.takeBoth ?? 0) + 1;
       api.mine.flags.bankBonus = Math.min(1, (api.mine.flags.bankBonus ?? 0) + 1);
-      api.mine.flags.blockedDrafts = (api.mine.flags.blockedDrafts ?? 0) + 2;
+      api.mine.flags.blockedDrafts = (api.mine.flags.blockedDrafts ?? 0) + 1;
     }),
   ),
 
@@ -185,14 +188,14 @@ export const PT_TIME_CARDS: Buff[] = [
       icon: "Gauge",
       name: "Overclocked",
       description:
-        "Crank the clock speed: add 60 seconds to your own clock. Then everything runs hot and has to cool down, so for your next 3 turns all your pieces can move only one square.",
+        "Crank the clock speed: add 75 seconds to your own clock. Then everything runs hot and has to cool down, so for your next 3 turns all your pieces can move only one square.",
       tier: 7,
       category: "tempo",
       flavor: "More gigahertz, more regret.",
       fx: { motif: "anchor", pieces: "all", self: true },
     },
     instant((_inst, api) => {
-      api.adjustClock({ addSelfSec: 60 });
+      api.adjustClock({ addSelfSec: 75 });
       addEffect(api, { kind: "short_leash", owner: api.me, turns: 3 });
     }),
   ),
@@ -208,13 +211,13 @@ export const PT_TIME_CARDS: Buff[] = [
       icon: "Drumstick",
       name: "Last Meal",
       description:
-        "Your king ties on a napkin. For your next 2 turns it may capture any enemy piece (other than a king) up to two squares away, leaping over anything in between.",
+        "Your king ties on a napkin. For your next 3 turns it may capture any enemy piece (other than a king) up to two squares away, leaping over anything in between.",
       tier: 5,
       category: "attack",
       flavor: "Fork, knife, and no table manners.",
       fx: { motif: "empower", pieces: ["k"], self: true },
     },
-    timedAugment(2, (_moves, inst, api) => feastCaptures(api, inst.id)),
+    timedAugment(3, (_moves, inst, api) => feastCaptures(api, inst.id)),
   ),
 
   // #24 Time Out -----------------------------------------------------------
@@ -224,14 +227,14 @@ export const PT_TIME_CARDS: Buff[] = [
       icon: "TimerOff",
       name: "Time Out",
       description:
-        "The referee throws a flag on your opponent: their next draft is skipped and their clock loses 10 seconds.",
+        "The referee throws a flag on your opponent: their next draft is skipped and their clock loses 20 seconds.",
       tier: 5,
       category: "draft",
       flavor: "Two-minute penalty, no draft for you.",
     },
     instant((_inst, api) => {
       api.theirs.flags.blockedDrafts = (api.theirs.flags.blockedDrafts ?? 0) + 1;
-      api.adjustClock({ subOppSec: 10 });
+      api.adjustClock({ subOppSec: 20 });
     }),
   ),
 
@@ -244,22 +247,22 @@ export const PT_TIME_CARDS: Buff[] = [
   // Reworked (owner): the old version was a passive that dripped 3 seconds
   // onto your clock per capture, so PLAYING the card did nothing visible and
   // it only paid out if you happened to trade. Now it pays the moment you
-  // clock in: a lump sum straight onto your own clock, no strings. Time and a
-  // half literally reads as ninety seconds (a minute and a half), which is the
-  // payout. Instant and deterministic (no RNG), and tier drops to 2.
+  // clock in: a lump sum straight onto your own clock, no strings, with a
+  // small raise on top (105 seconds). Instant and deterministic (no RNG), and
+  // tier drops to 2.
   card(
     {
       id: "overtime_pay",
       icon: "PiggyBank",
       name: "Overtime Pay",
       description:
-        "You clock in and cash out on the spot: 90 seconds go straight onto your own clock the moment you play this. Time and a half, paid in full.",
+        "You clock in and cash out on the spot: 105 seconds go straight onto your own clock the moment you play this. Time and a half, paid in full.",
       tier: 2,
       category: "tempo",
       flavor: "Time and a half, in your favor.",
     },
     instant((_inst, api) => {
-      api.adjustClock({ addSelfSec: 90 });
+      api.adjustClock({ addSelfSec: 105 });
     }),
   ),
 
@@ -270,19 +273,21 @@ export const PT_TIME_CARDS: Buff[] = [
       icon: "Gift",
       name: "Mystery Box",
       description:
-        "Rattle the crate and pop the lid: your next draft offer rolls at a completely random tier, anywhere from 1 to 8.",
+        "Rattle the crate and pop the lid: your next draft offer rolls at a completely random tier, anywhere from 2 to 8.",
       tier: 4,
       category: "draft",
       flavor: "Could be a diamond, could be a sock.",
     },
     instant((_inst, api) => {
-      api.mine.flags.forceTier = (1 + api.rng.int(8)) as Tier;
+      // The floor is tier 2: the sock at the bottom of the crate was thrown out.
+      api.mine.flags.forceTier = (2 + api.rng.int(7)) as Tier;
     }),
   ),
 
   // #117 Swap Meet ---------------------------------------------------------
-  // A blind two-way trade: a random unspent, un-bound card of yours and a
-  // random one of your opponent's change hands. Only cards that transfer
+  // A half-blind trade: your LOWEST-TIER unspent, un-bound card and a random
+  // one of your opponent's change hands (you used to give a random card too,
+  // so the deal could cost you your best hold). Only cards that transfer
   // cleanly are eligible (never a spent, nullified, or already-bound-in
   // upgrade), matching the exclusion the shipped buff-theft cards use.
   card(
@@ -291,7 +296,7 @@ export const PT_TIME_CARDS: Buff[] = [
       icon: "ArrowLeftRight",
       name: "Swap Meet",
       description:
-        "Set up a stall and shake on a deal: one of your held cards and one of your opponent's held cards are picked at random and swapped between you.",
+        "Set up a stall and shake on a deal: your lowest-tier held card and a random one of your opponent's held cards are swapped between you.",
       tier: 5,
       category: "draft",
       flavor: "One player's junk...",
@@ -307,7 +312,10 @@ export const PT_TIME_CARDS: Buff[] = [
       const mineOpts = api.mine.buffs.filter(eligible);
       const theirOpts = api.theirs.buffs.filter(eligible);
       if (mineOpts.length === 0 || theirOpts.length === 0) return;
-      const give = mineOpts[api.rng.int(mineOpts.length)];
+      // You always put your cheapest eligible card on the table (first-listed
+      // wins tier ties, so the pick is deterministic on every replica).
+      let give = mineOpts[0];
+      for (const b of mineOpts) if (b.tier < give.tier) give = b;
       const take = theirOpts[api.rng.int(theirOpts.length)];
       const gi = api.mine.buffs.indexOf(give);
       const ti = api.theirs.buffs.indexOf(take);
@@ -322,21 +330,22 @@ export const PT_TIME_CARDS: Buff[] = [
   // #118 Gamble ------------------------------------------------------------
   // Buffed (owner request: the gambling cards paid out too little): heads now
   // also lifts the next offer a tier, and tails still trades a skipped draft
-  // evenly with the opponent but banks YOU the +1 for the offer after — so
-  // even the losing face leaves you ahead on tempo.
+  // evenly with the opponent but banks YOU the +1 for the offer after, so
+  // even the losing face leaves you ahead on tempo. The coin is now weighted:
+  // heads lands two times in three.
   card(
     {
       id: "gamble",
       icon: "Spade",
       name: "Gamble",
       description:
-        "Flip a coin. Heads: for your next two draft offers you take every card instead of one, and your next offer rolls a tier higher. Tails: both you and your opponent skip your next draft, but your following offer still rolls a tier higher.",
+        "Flip a lucky coin: heads lands two times in three. Heads: for your next two draft offers you take every card instead of one, and your next offer rolls a tier higher. Tails: both you and your opponent skip your next draft, but your following offer still rolls a tier higher.",
       tier: 4,
       category: "draft",
       flavor: "Heads you win, tails you win a little.",
     },
     instant((_inst, api) => {
-      if (api.rng.int(2) === 0) {
+      if (api.rng.int(3) !== 2) {
         api.mine.flags.takeBoth = (api.mine.flags.takeBoth ?? 0) + 2;
       } else {
         api.mine.flags.blockedDrafts = (api.mine.flags.blockedDrafts ?? 0) + 1;
@@ -348,23 +357,24 @@ export const PT_TIME_CARDS: Buff[] = [
   ),
 
   // #119 Jackpot -----------------------------------------------------------
-  // The apex gateway from the gambling side, buffed to a genuine coin flip
-  // (owner request): heads lands a random apex card outright, and even the
-  // miss pays double — your next offer rolls a tier higher AND deals three
-  // cards instead of two, so a pull is never close to a dead loss.
+  // The apex gateway from the gambling side, buffed past a coin flip (owner
+  // request): the lever now hits two times in three, landing a random apex
+  // card outright, and even the miss pays double: your next offer rolls a
+  // tier higher AND deals three cards instead of two, so a pull is never
+  // close to a dead loss.
   card(
     {
       id: "jackpot",
       icon: "Dices",
       name: "Jackpot",
       description:
-        "Pull the lever for a coin-flip shot at a random apex card, one of the game's most powerful. Miss, and the consolation is still rich: your next draft rolls one tier higher and offers three cards instead of two.",
+        "Pull the lever for a two-in-three shot at a random apex card, one of the game's most powerful. Miss, and the consolation is still rich: your next draft rolls one tier higher and offers three cards instead of two.",
       tier: 7,
       category: "draft",
       flavor: "Cherry, cherry, and please, cherry.",
     },
     instant((_inst, api) => {
-      if (api.rng.int(2) === 0) {
+      if (api.rng.int(3) !== 2) {
         grantRandomTier9(api);
       } else {
         api.mine.flags.bankBonus = Math.min(1, (api.mine.flags.bankBonus ?? 0) + 1);
@@ -375,8 +385,9 @@ export const PT_TIME_CARDS: Buff[] = [
 
   // #120 Double or Nothing -------------------------------------------------
   // Risk a card you already hold: heads it is upgraded TWO tiers (capped at 8,
-  // so it never becomes a tier-9 special — buffed from one, owner request),
-  // tails it is spent for nothing. A random eligible held card is chosen
+  // so it never becomes a tier-9 special, buffed from one, owner request),
+  // tails it is knocked down one tier instead of being lost outright (the
+  // softened downside, owner request). A random eligible held card is chosen
   // deterministically off the seeded RNG; bound upgrades are excluded (their
   // state points at a board square). Does nothing if you hold no other
   // riskable card.
@@ -386,7 +397,7 @@ export const PT_TIME_CARDS: Buff[] = [
       icon: "Coins",
       name: "Double or Nothing",
       description:
-        "Bet one of your other held cards on a coin flip. Heads: it is upgraded two tiers. Tails: it is spent and lost.",
+        "Bet one of your other held cards on a coin flip. Heads: it is upgraded two tiers. Tails: it is knocked down one tier, but you keep it.",
       tier: 4,
       category: "draft",
       flavor: "Let it ride.",
@@ -406,7 +417,7 @@ export const PT_TIME_CARDS: Buff[] = [
       if (api.rng.int(2) === 0) {
         stake.tier = Math.min(8, stake.tier + 2) as Tier;
       } else {
-        stake.spent = true;
+        stake.tier = Math.max(1, stake.tier - 1) as Tier;
       }
     }),
   ),
