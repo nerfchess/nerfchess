@@ -707,6 +707,7 @@ const TIER_COLOR: Record<number, string> = {
   7: "#a877d8",
   8: "#e05252",
   9: "#f4c430",
+  10: "#22d3ee",
 };
 
 // Same suit glyphs BuffCard stamps on card faces, shrunk to a micro-chip.
@@ -1280,6 +1281,7 @@ export type SigVisual =
   // wheels / a slot machine / a coin flip; tung_tung_sahur finally gets its own
   // drum-man bonk; and a spread of comedic library cards each get a bespoke gag.
   | "virusspread"
+  | "totalwar"
   | "fortunewheel"
   | "slotmachine"
   | "coinflip"
@@ -1759,6 +1761,10 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   boneca_ambalabu: { ordering: "radial", staggerMs: 50, victims: "all", visual: "tirefrog", hasLead: true, sound: "colossus", source: "slow" },
 
   // Apex / library flagships (Oblivion + Blood Pact render today off removals).
+  // Total War (the tier-10 board-wipe + fresh force) fires off the same
+  // removal diff as Oblivion but with its own war-march read: banners, a
+  // triple concussion, and per-square battle-standard slashes.
+  total_war: { ordering: "sweep", staggerMs: 45, victims: "all", visual: "totalwar", hasLead: true, sound: "atomic" },
   oblivion: { ordering: "radial", staggerMs: 45, victims: "all", visual: "oblivionwipe", hasLead: true, sound: "extinction" },
   blood_pact: { ordering: "radial", staggerMs: 0, victims: ["p"], visual: "bloodpact", hasLead: true, sound: "rampage" },
   regicide: { ordering: "radial", staggerMs: 0, victims: ["q"], visual: "regicideblade", hasLead: true, sound: "coronation", source: "empower" },
@@ -4999,20 +5005,6 @@ function AeroBomb({ className }: { className?: string }) {
 
 /** The bomber-croc: a stubby crocodile fitted with little plane wings, jaws
  * open over its payload. */
-function CrocPlane() {
-  return (
-    <svg viewBox="0 0 48 26" className="h-full w-full" aria-hidden="true">
-      <path d="M2 13 L10 8.5 L10 17.5 Z" fill="#4f7a5e" stroke="#2c473a" strokeWidth="1" strokeLinejoin="round" />
-      <path d="M8 10 C16 6.6 30 6.6 40 11 C44 12.5 44 14 40 15.5 C30 19.4 16 19.4 8 16 Z" fill="#7eb59a" stroke="#2c473a" strokeWidth="1" strokeLinejoin="round" />
-      <path d="M12 15.6 C22 17.8 34 17.4 40.5 15.2 C34 16.4 22 16.4 12 15.6 Z" fill="#cfe8d8" />
-      <path d="M40 11 L47.5 9.6 L44.4 13 L47.5 15.8 L40 15.5 Z" fill="#7eb59a" stroke="#2c473a" strokeWidth="1" strokeLinejoin="round" />
-      <path d="M41 12 L42.6 13 L44.2 12 M41 14.4 L42.6 13.4 L44.2 14.4" stroke="#f4f7f2" strokeWidth="0.8" fill="none" strokeLinejoin="round" strokeLinecap="round" />
-      <path d="M22 8.5 L28 1.5 L30.5 10 Z" fill="#5f927a" stroke="#2c473a" strokeWidth="1" strokeLinejoin="round" />
-      <circle cx="38" cy="10.6" r="1" fill="#141e2b" />
-      <path d="M16 8.2 L21 7.8 M25 7.9 L30 8.4" stroke="#4f7a5e" strokeWidth="0.8" strokeLinecap="round" />
-    </svg>
-  );
-}
 
 /** Bombardiro Crocodilo: the bomber-croc banks across the board (lead), then on
  * each struck square a bomb whistles down and detonates in a burst of embers. A
@@ -5026,9 +5018,9 @@ function CrocBomberBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) 
       <BoardWideStage>
         <BoardWash color="rgba(18,24,18,0.36)" delayMs={delayMs} />
         <BoardRain delayMs={delayMs + 120} render={() => <AeroBomb className="h-full w-full" />} />
-        <span className="fx-sig-cross absolute left-[37%] top-[40%] block h-[15%] w-[26%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <span className="fx-sig-cross absolute left-[37%] top-[36%] block h-[24%] w-[24%]" style={{ animationDelay: `${delayMs}ms` }}>
           <span className="fx-sig-wingbeat block h-full w-full">
-            <CrocPlane />
+            <BrainrotFigure id="bombardiro_croc" />
           </span>
         </span>
         <span className="fx-sig-flash absolute left-[35%] top-[40%] block h-[30%] w-[30%] rounded-full" style={{ background: "rgba(255,178,84,0.45)", animationDelay: `${delayMs + 640}ms` }} />
@@ -5060,22 +5052,6 @@ function CrocBomberBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) 
 
 /** Tralalero Tralala: the shark in Nike sneakers blurs across the board (lead),
  * throwing a spray of water on the square it dashed through. */
-function SharkSneaker() {
-  return (
-    <svg viewBox="0 0 48 22" className="h-full w-full" aria-hidden="true">
-      <path d="M4 11 C11 4.5 30 3.6 42 8.6 C46 10.4 46 11.6 42 13.2 C34 16.4 13 17 4 11 Z" fill="#8aa0b4" stroke="#3f4b57" strokeWidth="1" strokeLinejoin="round" />
-      <path d="M9 12 C19 15 32 14.4 40 12 C32 13.4 19 13.6 9 12 Z" fill="#dbe7f2" />
-      <path d="M19 6 L26 0 L28.5 7 Z" fill="#6f8496" stroke="#3f4b57" strokeWidth="1" strokeLinejoin="round" />
-      <path d="M2 11 L9 6.5 L9 15.5 Z" fill="#6f8496" stroke="#3f4b57" strokeWidth="1" strokeLinejoin="round" />
-      <circle cx="37" cy="9.6" r="1" fill="#141e2b" />
-      <path d="M40 11.4 L45.4 10.6 M40 12.6 L44.6 13.2" stroke="#3f4b57" strokeWidth="0.8" strokeLinecap="round" />
-      <path d="M30 8.4 L30 13 M27 8.4 L27 13 M24 9 L24 13" stroke="#3f4b57" strokeWidth="0.7" />
-      <rect x="13" y="15" width="8" height="4" rx="1.6" fill="#f4f7f2" stroke="#e0776b" strokeWidth="0.9" />
-      <rect x="25" y="15" width="8" height="4" rx="1.6" fill="#f4f7f2" stroke="#e0776b" strokeWidth="0.9" />
-      <path d="M14 17 L19.6 16 M26 17 L31.6 16" stroke="#e0776b" strokeWidth="0.7" strokeLinecap="round" />
-    </svg>
-  );
-}
 function SharkDashBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   if (lead) {
     // BOARD-WIDE: the shark sprints the full length of the board, a speed-blur
@@ -5084,12 +5060,12 @@ function SharkDashBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
     return (
       <BoardWideStage>
         <BoardWash color="rgba(150,196,224,0.22)" delayMs={delayMs} />
-        <span className="fx-sig-cross absolute left-[36%] top-[46%] block h-[13%] w-[30%]" style={{ animationDelay: `${delayMs + 90}ms`, opacity: 0.5 }}>
-          <SharkSneaker />
+        <span className="fx-sig-cross absolute left-[36%] top-[44%] block h-[18%] w-[18%]" style={{ animationDelay: `${delayMs + 90}ms`, opacity: 0.45 }}>
+          <BrainrotFigure id="tralalero_dash" />
         </span>
-        <span className="fx-sig-cross absolute left-[36%] top-[42%] block h-[15%] w-[32%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <span className="fx-sig-cross absolute left-[35%] top-[38%] block h-[22%] w-[22%]" style={{ animationDelay: `${delayMs}ms` }}>
           <span className="fx-sig-wiggle block h-full w-full">
-            <SharkSneaker />
+            <BrainrotFigure id="tralalero_dash" />
           </span>
         </span>
         <BoardRain
@@ -5115,16 +5091,6 @@ function SharkDashBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 
 /** Bombombini Gusini: the bomber-goose waddles in (lead) and lobs a stun grenade
  * that pops with a HONK ring of stars. */
-function HonkGoose() {
-  return (
-    <svg viewBox="0 0 34 30" className="h-full w-full" aria-hidden="true">
-      <path d="M8 28 C4 22 6 14 12 13 L12 7 C12 3 18 3 18 7 L18 13 C24 15 26 22 22 28 Z" fill="#f4f7f2" stroke="#4a5560" strokeWidth="1" strokeLinejoin="round" />
-      <path d="M18 8 L26 9 L18 11 Z" fill="#e8912d" stroke="#8a5311" strokeWidth="0.8" strokeLinejoin="round" />
-      <circle cx="15" cy="8" r="1" fill="#141e2b" />
-      <path d="M11 6.6 a6 6 0 0 1 8 0 L18 4.4 H12 Z" fill="#7eb59a" stroke="#2c473a" strokeWidth="0.8" strokeLinejoin="round" />
-    </svg>
-  );
-}
 function GooseBombBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   if (lead) {
     // BOARD-WIDE: a giant HONK. The goose thumps down centre-board and a
@@ -5133,9 +5099,9 @@ function GooseBombBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
     return (
       <BoardWideStage>
         <BoardWash color="rgba(230,191,106,0.2)" delayMs={delayMs + 220} />
-        <span className="fx-sig-grow absolute left-[38%] top-[34%] block h-[28%] w-[24%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <span className="fx-sig-grow absolute left-[38%] top-[32%] block h-[28%] w-[24%]" style={{ animationDelay: `${delayMs}ms` }}>
           <span className="fx-sig-hop block h-full w-full">
-            <HonkGoose />
+            <BrainrotFigure id="bombombini_gusini" />
           </span>
         </span>
         <BoardBoom delayMs={delayMs + 240} color="rgba(230,191,106,0.9)" thickness={4} />
@@ -5169,16 +5135,6 @@ function GooseBombBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 
 /** Lirili Larila: the clock-elephant plants its clock (lead); on the struck
  * squares the hands sweep backward and a Z of stopped time drifts off. */
-function ClockElephant() {
-  return (
-    <svg viewBox="0 0 34 30" className="h-full w-full" aria-hidden="true">
-      <path d="M6 28 C2 22 3 12 10 10 C11 6 20 6 22 10 C29 12 30 22 26 28 L22 28 L21 20 L20 28 L14 28 L13 20 L12 28 Z" fill="#9aa6b0" stroke="#4a5560" strokeWidth="1" strokeLinejoin="round" />
-      <path d="M22 12 C27 12 28 18 24 22 C22 24 20 22 20 19 C20 15 21 12 22 12 Z" fill="#9aa6b0" stroke="#4a5560" strokeWidth="1" strokeLinejoin="round" />
-      <circle cx="14" cy="16" r="6.4" fill="#f4f7f2" stroke="#8a6414" strokeWidth="1.2" />
-      <circle cx="8" cy="9" r="1" fill="#141e2b" />
-    </svg>
-  );
-}
 function ClockElephantBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   if (lead) {
     // BOARD-WIDE: time stops. The whole board greys out, a giant ghost clock
@@ -5196,9 +5152,9 @@ function ClockElephantBurst({ lead, delayMs }: { lead: boolean; delayMs: number 
             </g>
           </svg>
         </span>
-        <span className="fx-sig-grow absolute left-[40%] top-[42%] block h-[24%] w-[22%]" style={{ animationDelay: `${delayMs + 120}ms` }}>
+        <span className="fx-sig-grow absolute left-[39%] top-[40%] block h-[26%] w-[24%]" style={{ animationDelay: `${delayMs + 120}ms` }}>
           <span className="fx-sig-wiggle block h-full w-full">
-            <ClockElephant />
+            <BrainrotFigure id="lirili_larila" />
           </span>
         </span>
         {[{ l: "26%", t: "30%", d: 220 }, { l: "66%", t: "36%", d: 360 }, { l: "46%", t: "22%", d: 480 }].map((z, i) => (
@@ -5245,6 +5201,9 @@ function ColdSnapBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
     return (
       <BoardWideStage>
         <BoardWash color="rgba(150,200,235,0.34)" delayMs={delayMs} />
+        <span className="fx-sig-grow absolute left-[39%] top-[36%] block h-[26%] w-[22%]" style={{ animationDelay: `${delayMs + 80}ms` }}>
+          <BrainrotFigure id="brr_brr_patapim" />
+        </span>
         <span className="fx-sig-frost absolute inset-x-[24%] top-[26%] block h-[8%] rounded-[1px]" style={{ background: "rgba(198,234,255,0.6)", animationDelay: `${delayMs}ms` }} />
         <span className="fx-sig-frost absolute inset-x-[24%] top-[64%] block h-[8%] rounded-[1px]" style={{ background: "rgba(198,234,255,0.5)", animationDelay: `${delayMs + 160}ms` }} />
         <BoardRain
@@ -5278,18 +5237,6 @@ function ColdSnapBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 
 /** Chimpanzini Bananini: the banana-monkey thumps in (lead) and banana peels
  * spin off the empowered knight. */
-function ChestApe() {
-  return (
-    <svg viewBox="0 0 30 28" className="h-full w-full" aria-hidden="true">
-      <path d="M4 26 C1 18 4 10 9 9 C10 4 20 4 21 9 C26 10 29 18 26 26 Z" fill="#6b4a34" stroke="#33210f" strokeWidth="1" strokeLinejoin="round" />
-      <path d="M9 24 C8 18 10 15 15 15 C20 15 22 18 21 24 Z" fill="#caa580" />
-      <circle cx="15" cy="9" r="6" fill="#6b4a34" stroke="#33210f" strokeWidth="1" />
-      <ellipse cx="15" cy="10" rx="4" ry="3.4" fill="#caa580" />
-      <circle cx="13" cy="9" r="0.9" fill="#141e2b" />
-      <circle cx="17" cy="9" r="0.9" fill="#141e2b" />
-    </svg>
-  );
-}
 function BananApeBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   if (lead) {
     // BOARD-WIDE: the ape goes King-Kong. A colossal ape heaves up over the
@@ -5300,7 +5247,7 @@ function BananApeBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
         <BoardWash color="rgba(242,201,76,0.2)" delayMs={delayMs + 280} />
         <span className="fx-sig-phoenix absolute left-1/2 top-[20%] block h-[62%] w-[56%]" style={{ marginLeft: "-28%", animationDelay: `${delayMs}ms` }}>
           <span className="fx-sig-chomp block h-full w-full">
-            <ChestApe />
+            <BrainrotFigure id="chimpanzini_bananini" />
           </span>
         </span>
         <BoardBoom delayMs={delayMs + 320} color="rgba(242,201,76,0.85)" thickness={4} />
@@ -5340,16 +5287,8 @@ function TireFrogBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
     return (
       <BoardWideStage>
         <BoardWash color="rgba(43,43,47,0.26)" delayMs={delayMs} />
-        <span className="fx-sig-cross absolute left-[36%] top-[34%] block h-[30%] w-[30%]" style={{ animationDelay: `${delayMs}ms` }}>
-          <span className="fx-sig-spin block h-full w-full">
-            <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
-              <circle cx="20" cy="20" r="18" fill="#2b2b2f" stroke="#141416" strokeWidth="1.6" />
-              <circle cx="20" cy="20" r="8.5" fill="#3d5a48" stroke="#141416" strokeWidth="1.4" />
-              <g stroke="#4a4a50" strokeWidth="1.8"><path d="M20 3 V8 M20 32 V37 M3 20 H8 M32 20 H37 M8 8 L12 12 M32 8 L28 12 M8 32 L12 28 M32 32 L28 28" /></g>
-              <circle cx="16" cy="17" r="3" fill="#7eb59a" stroke="#2c473a" strokeWidth="1" />
-              <circle cx="24" cy="17" r="3" fill="#7eb59a" stroke="#2c473a" strokeWidth="1" />
-            </svg>
-          </span>
+        <span className="fx-sig-cross absolute left-[36%] top-[32%] block h-[32%] w-[28%]" style={{ animationDelay: `${delayMs}ms` }}>
+          <BrainrotFigure id="boneca_ambalabu" />
         </span>
         <span className="fx-sig-wave absolute inset-x-[22%] top-[62%] block h-[6%] rounded-[1px]" style={{ background: "rgba(74,74,80,0.7)", animationDelay: `${delayMs + 120}ms` }} />
         {[{ l: "12%" }, { l: "82%" }].map((s, i) => (
@@ -5770,6 +5709,14 @@ function VirusSpreadBurst({ lead, delayMs }: { lead: boolean; delayMs: number })
       <span className="pointer-events-none absolute inset-0 z-30" aria-hidden="true">
         <span className="absolute left-[-750%] top-[-750%] block h-[1600%] w-[1600%]">
           <span className="fx-sig-glitch absolute inset-0 block" style={{ background: "rgba(126,181,154,0.12)", animationDelay: `${delayMs}ms` }} />
+          {/* CRT scanline flicker over the whole board while the corruption runs. */}
+          <span
+            className="fx-cast-scanlines absolute inset-0 block"
+            style={{
+              background: "repeating-linear-gradient(0deg, rgba(126,181,154,0.10) 0 0.35%, transparent 0.35% 1%)",
+              animationDelay: `${delayMs + 60}ms`,
+            }}
+          />
           {VIRUS_COLS.map((c, i) => (
             <span key={i} className="fx-sig-codefall absolute top-[-28%] block h-[64%] w-[2.4%]" style={{ left: c.left, animationDelay: `${delayMs + c.d}ms` }}>
               <CodeColumn />
@@ -5779,6 +5726,18 @@ function VirusSpreadBurst({ lead, delayMs }: { lead: boolean; delayMs: number })
             <span key={`b${i}`} className="fx-sig-sweepbar absolute left-[-30%] block h-[2.6%] w-[160%] rounded-[1px]" style={{ top: b.top, background: b.c, animationDelay: `${delayMs + b.d}ms` }} />
           ))}
           <span className="fx-sig-flash absolute inset-[42%] block rounded-[1px]" style={{ background: "rgba(224,119,107,0.4)", animationDelay: `${delayMs + 120}ms` }} />
+          {/* The system gives up: an error window slams up mid-board, shakes,
+              and blinks out — the comedic beat of the takeover. */}
+          <span className="fx-cast-errorwin absolute left-[42%] top-[42%] block h-[10%] w-[16%]" style={{ animationDelay: `${delayMs + 620}ms` }}>
+            <svg viewBox="0 0 64 40" className="h-full w-full" aria-hidden="true">
+              <rect x="1" y="1" width="62" height="38" rx="2" fill="#141e2b" stroke="#7eb59a" strokeWidth="1.4" />
+              <rect x="1" y="1" width="62" height="8" rx="2" fill="#7eb59a" />
+              <path d="M56 3 L60 7 M60 3 L56 7" stroke="#141e2b" strokeWidth="1.4" strokeLinecap="round" />
+              <path d="M10 16 L18 24 M18 16 L10 24" stroke="#e0776b" strokeWidth="2.4" strokeLinecap="round" />
+              <path d="M24 17 H54 M24 22 H48 M24 27 H52" stroke="#8aa0b4" strokeWidth="1.6" strokeLinecap="round" />
+              <rect x="38" y="30" width="18" height="6" rx="1" fill="#e0776b" />
+            </svg>
+          </span>
         </span>
       </span>
     );
@@ -5937,36 +5896,78 @@ function CoinFlipBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   );
 }
 
-// BRAINROT: the drum-man (tung_tung_sahur) finally gets his own signature: he
-// marches in bobbing (lead), then a drumstick bonks each nearest enemy.
-function DrumMan() {
+// --- Brainrot character figures ----------------------------------------------
+// Each brainrot card's board-wide takeover stars the character itself as a
+// looping animated image (owner request: "include a GIF"). The images live in
+// public/brainrot/<cardId>.<ext>: the component tries `.gif` FIRST — drop a
+// real downloaded GIF in that folder under the card's id and it is picked up
+// automatically with no code change — and falls back to the bundled looping
+// animated SVG (drawn in-repo; it plays exactly like a GIF inside an <img>).
+// The resolved extension is remembered per id so the 404 probe for a missing
+// GIF happens once per session, not once per cast.
+const brainrotExt = new Map<string, "gif" | "svg">();
+
+export function BrainrotFigure({ id, className = "" }: { id: string; className?: string }) {
+  const [ext, setExt] = React.useState<"gif" | "svg">(brainrotExt.get(id) ?? "gif");
   return (
-    <svg viewBox="0 0 34 34" className="h-full w-full" aria-hidden="true">
-      <rect x="6" y="14" width="22" height="16" rx="2" fill="#e0776b" stroke="#7a2f28" strokeWidth="1.2" />
-      <path d="M6 18 H28 M6 26 H28" stroke="#f4f7f2" strokeWidth="1" />
-      <path d="M8 14 L12 30 M26 14 L22 30" stroke="#e6bf6a" strokeWidth="1" />
-      <circle cx="17" cy="8" r="4" fill="#caa580" stroke="#6b4a34" strokeWidth="1" />
-      <path d="M10 11 L2 4 M24 11 L32 4" stroke="#6b4a34" strokeWidth="1.4" strokeLinecap="round" />
-      <circle cx="2" cy="4" r="1.6" fill="#8a6a4a" />
-      <circle cx="32" cy="4" r="1.6" fill="#8a6a4a" />
-    </svg>
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={`/brainrot/${id}.${ext}`}
+      alt=""
+      aria-hidden="true"
+      draggable={false}
+      className={"pointer-events-none h-full w-full select-none object-contain " + className}
+      onError={() => {
+        if (ext === "gif") {
+          brainrotExt.set(id, "svg");
+          setExt("svg");
+        }
+      }}
+    />
   );
 }
+
+// BRAINROT: the drum-man (tung_tung_sahur) finally gets his own signature: he
+// marches in bobbing (lead), then a drumstick bonks each nearest enemy.
 function DrumBonkBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   if (lead) {
-    // BOARD-WIDE: the drum-man marches the full width of the board, and three
-    // drumbeat shockwaves pulse out across it - tung, tung, tung.
+    // BOARD-WIDE: the drum-man marches the full width of the board, three
+    // drumbeat shockwaves pulse out across it, and the chant itself lands as
+    // stamped words — TUNG, TUNG, TUNG on each beat, then a big SAHUR.
     return (
       <BoardWideStage>
         <BoardWash color="rgba(224,119,107,0.16)" delayMs={delayMs + 220} />
         <span className="fx-sig-cross absolute left-[36%] top-[34%] block h-[30%] w-[26%]" style={{ animationDelay: `${delayMs}ms` }}>
           <span className="fx-sig-hop block h-full w-full">
-            <DrumMan />
+            <BrainrotFigure id="tung_tung_sahur" />
           </span>
         </span>
         {[0, 1, 2].map((i) => (
           <BoardBoom key={i} delayMs={delayMs + 180 + i * 240} color="rgba(224,119,107,0.8)" thickness={3} />
         ))}
+        {["35%", "45%", "55%"].map((left, i) => (
+          <span
+            key={`t${i}`}
+            className="fx-cast-stamp absolute top-[38%] block h-[4%] w-[8%]"
+            style={{ left, animationDelay: `${delayMs + 180 + i * 240}ms`, "--tilt": `${i % 2 ? 4 : -5}deg` } as React.CSSProperties}
+          >
+            <svg viewBox="0 0 60 22" className="h-full w-full" aria-hidden="true">
+              <text x="30" y="16" textAnchor="middle" fontSize="15" fontWeight="800" fill="#f4e9c8" stroke="#5a1512" strokeWidth="0.6" style={{ letterSpacing: "1px" }}>
+                TUNG
+              </text>
+            </svg>
+          </span>
+        ))}
+        <span
+          className="fx-cast-stamp absolute left-[41%] top-[50%] block h-[6%] w-[14%]"
+          style={{ animationDelay: `${delayMs + 900}ms`, "--tilt": "-3deg" } as React.CSSProperties}
+        >
+          <svg viewBox="0 0 90 26" className="h-full w-full" aria-hidden="true">
+            <text x="45" y="19" textAnchor="middle" fontSize="18" fontWeight="900" fill="#ffd95e" stroke="#5a1512" strokeWidth="0.7" style={{ letterSpacing: "1.5px" }}>
+              SAHUR!
+            </text>
+          </svg>
+        </span>
         <ShardBurst vectors={PIN_STARS} fill="#ffd95e" stroke="#8a6414" delayMs={delayMs + 300} sizePct={6} />
       </BoardWideStage>
     );
@@ -6666,7 +6667,208 @@ export function SignatureOverlay({
       return <HillFlagBurst lead={lead} delayMs={delayMs} />;
     case "sugarrush":
       return <SugarRushBurst lead={lead} delayMs={delayMs} />;
+    case "totalwar":
+      return <TotalWarBurst lead={lead} delayMs={delayMs} />;
     default:
       return null;
   }
+}
+
+// --- Total War (tier-10 mythic): the board goes to war -----------------------
+// Lead: a board-wide war march — a crimson wash, two heraldic banners sweeping
+// the full width in opposite directions, and a triple concussion that shoves
+// past the board edges. Targets: each wiped square takes a battle-standard
+// slash and a star burst, swept across the board in sequence.
+
+function WarBanner({ tilt }: { tilt: number }) {
+  return (
+    <svg viewBox="0 0 40 30" className="h-full w-full" aria-hidden="true" style={{ transform: `rotate(${tilt}deg)` }}>
+      <path d="M6 28 L6 3" stroke="#3a2a1a" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M7 4 H34 L28 9 L34 14 H7 Z" fill="#c2403a" stroke="#5a1512" strokeWidth="1" strokeLinejoin="round" />
+      <path d="M12 6.5 L15 11.5 M15 6.5 L12 11.5" stroke="#f4e9c8" strokeWidth="1.1" strokeLinecap="round" />
+      <circle cx="6" cy="2.6" r="1.7" fill="#e6bf6a" stroke="#7a5b23" strokeWidth="0.7" />
+    </svg>
+  );
+}
+
+function TotalWarBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(194,64,58,0.20)" delayMs={delayMs} />
+        {/* Two banners charge the board in opposite directions. */}
+        <span className="fx-sig-cross absolute left-[36%] top-[32%] block h-[16%] w-[15%]" style={{ animationDelay: `${delayMs}ms` }}>
+          <WarBanner tilt={-4} />
+        </span>
+        <span className="fx-sig-crossback absolute left-[49%] top-[52%] block h-[16%] w-[15%]" style={{ animationDelay: `${delayMs + 160}ms` }}>
+          <WarBanner tilt={5} />
+        </span>
+        {[0, 1, 2].map((i) => (
+          <BoardBoom key={i} delayMs={delayMs + 140 + i * 210} color="rgba(224,119,107,0.85)" thickness={4} />
+        ))}
+        <ShardBurst vectors={PIN_STARS} fill="#ffd95e" stroke="#8a6414" delayMs={delayMs + 420} sizePct={6} />
+      </BoardWideStage>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span
+        className="fx-sig-slash absolute left-[8%] top-[16%] block h-[68%] w-[84%]"
+        style={{ animationDelay: `${delayMs}ms` }}
+      >
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <path d="M4 36 L36 4" stroke="#f4e9c8" strokeWidth="3" strokeLinecap="round" />
+          <path d="M4 36 L36 4" stroke="#c2403a" strokeWidth="1.2" strokeLinecap="round" />
+        </svg>
+      </span>
+      <span
+        className="fx-sig-shock absolute inset-[14%] block rounded-full"
+        style={{ border: "2px solid rgba(224,119,107,0.9)", animationDelay: `${delayMs + 90}ms` }}
+      />
+      <ShardBurst vectors={PIN_STARS} fill="#e0776b" stroke="#5a1512" delayMs={delayMs + 90} sizePct={9} />
+    </span>
+  );
+}
+
+// --- Cast spectacles: EVERY card play gets a themed read ---------------------
+// The category fallback layer (owner request: "no card should ever play
+// silently"). Board mounts ONE CastSpectacle over the whole board crop each
+// time a card is played (any card — bespoke signature or not), themed by the
+// card's category and scaled by its tier:
+//   sleek   (tier 1-4): a quick, elegant edge ring + a diagonal shine sweep +
+//           a small emblem pop. Subtle enough to sit under bespoke art.
+//   grand   (tier 5-7): a category-tinted radial wash, a bigger emblem slam
+//           with a shockwave, and a spark ring.
+//   marquee (tier 8-10): a board takeover — vignette dim, twin sweeping beams,
+//           a colossal emblem, triple shockwaves (Board adds the screen shake).
+// All transform/opacity-only, all one-shot, all hidden under
+// prefers-reduced-motion (see effects.css). The emblem reuses the category
+// suit glyphs so the read matches the card face the player just clicked.
+
+export type CastIntensity = "sleek" | "grand" | "marquee";
+
+export function castIntensity(tier: number): CastIntensity {
+  return tier >= 8 ? "marquee" : tier >= 5 ? "grand" : "sleek";
+}
+
+/** Per-category theme: a saturated accent and a soft wash of the same hue. */
+export const CAST_THEME: Record<BuffCategory, { color: string; soft: string }> = {
+  movement: { color: "#67e8f9", soft: "rgba(103,232,249,0.14)" },
+  pieces: { color: "#e6bf6a", soft: "rgba(230,191,106,0.14)" },
+  tempo: { color: "#f4c430", soft: "rgba(244,196,48,0.13)" },
+  protection: { color: "#7eb59a", soft: "rgba(126,181,154,0.15)" },
+  attack: { color: "#e05252", soft: "rgba(224,82,82,0.14)" },
+  info: { color: "#8ba9c4", soft: "rgba(139,169,196,0.14)" },
+  draft: { color: "#e07ab8", soft: "rgba(224,122,184,0.13)" },
+  nerf: { color: "#5eead4", soft: "rgba(94,234,212,0.14)" },
+  hex: { color: "#a877d8", soft: "rgba(168,119,216,0.15)" },
+  item: { color: "#a3d160", soft: "rgba(163,209,96,0.14)" },
+};
+
+const CAST_SPARKS = [
+  { dx: "330%", dy: "-140%", rot: "200deg", delay: 0 },
+  { dx: "-310%", dy: "-190%", rot: "-230deg", delay: 30 },
+  { dx: "290%", dy: "170%", rot: "250deg", delay: 12 },
+  { dx: "-280%", dy: "200%", rot: "-210deg", delay: 40 },
+  { dx: "10%", dy: "-330%", rot: "140deg", delay: 20 },
+  { dx: "-20%", dy: "320%", rot: "-160deg", delay: 48 },
+];
+
+export function CastSpectacle({ category, tier }: { category: BuffCategory; tier: number }) {
+  const theme = CAST_THEME[category];
+  const Icon = CATEGORY_ICON[category];
+  const intensity = castIntensity(tier);
+  if (intensity === "sleek") {
+    return (
+      <span className="fx-cast pointer-events-none absolute inset-0 z-40 block" aria-hidden="true">
+        <span
+          className="fx-cast-ring absolute inset-[1.5%] block rounded-sm"
+          style={{ border: `1.5px solid ${theme.color}`, boxShadow: `inset 0 0 18px ${theme.soft}` }}
+        />
+        <span className="absolute inset-0 block overflow-hidden">
+          <span
+            className="fx-cast-sweep absolute top-[-40%] left-[-25%] block h-[180%] w-[10%]"
+            style={{
+              background: `linear-gradient(90deg, transparent, ${theme.soft}, transparent)`,
+              "--tilt": "14deg",
+            } as React.CSSProperties}
+          />
+        </span>
+        <span
+          className="fx-cast-emblem absolute left-1/2 top-[6%] ml-[-5%] flex h-[10%] w-[10%] items-center justify-center"
+          style={{ color: theme.color }}
+        >
+          <Icon className="h-full w-full" strokeWidth={2} />
+        </span>
+      </span>
+    );
+  }
+  if (intensity === "grand") {
+    return (
+      <span className="fx-cast pointer-events-none absolute inset-0 z-40 block" aria-hidden="true">
+        <span
+          className="fx-cast-wash absolute inset-0 block"
+          style={{ background: `radial-gradient(circle, ${theme.soft}, transparent 74%)` }}
+        />
+        <span
+          className="fx-cast-ring absolute inset-[1%] block rounded-sm"
+          style={{ border: `2px solid ${theme.color}`, boxShadow: `inset 0 0 26px ${theme.soft}` }}
+        />
+        <span
+          className="fx-cast-shock absolute left-1/2 top-1/2 ml-[-14%] mt-[-14%] block h-[28%] w-[28%] rounded-full"
+          style={{ border: `2px solid ${theme.color}` }}
+        />
+        <span
+          className="fx-cast-emblem-slam absolute left-1/2 top-1/2 ml-[-11%] mt-[-11%] flex h-[22%] w-[22%] items-center justify-center"
+          style={{ color: theme.color, filter: `drop-shadow(0 0 6px ${theme.soft})` }}
+        >
+          <Icon className="h-full w-full" strokeWidth={1.8} />
+        </span>
+        <span className="absolute left-1/2 top-1/2 ml-[-5%] mt-[-5%] block h-[10%] w-[10%]">
+          <ShardBurst vectors={CAST_SPARKS} fill={theme.color} stroke="#1a222e" delayMs={260} sizePct={70} />
+        </span>
+      </span>
+    );
+  }
+  return (
+    <span className="fx-cast pointer-events-none absolute inset-0 z-40 block" aria-hidden="true">
+      <span className="fx-cast-dim absolute inset-0 block" style={{ background: "rgba(6,10,16,0.5)" }} />
+      <span className="absolute inset-0 block overflow-hidden">
+        <span
+          className="fx-cast-beam absolute top-[-40%] left-[-30%] block h-[180%] w-[16%]"
+          style={{
+            background: `linear-gradient(90deg, transparent, ${theme.soft}, ${theme.color}22, transparent)`,
+            "--tilt": "16deg",
+          } as React.CSSProperties}
+        />
+        <span
+          className="fx-cast-beam-back absolute top-[-40%] right-[-30%] block h-[180%] w-[16%]"
+          style={{
+            background: `linear-gradient(90deg, transparent, ${theme.soft}, ${theme.color}22, transparent)`,
+            "--tilt": "-16deg",
+          } as React.CSSProperties}
+        />
+      </span>
+      {[0, 1, 2].map((i) => (
+        <span
+          key={i}
+          className="fx-cast-shock absolute left-1/2 top-1/2 ml-[-16%] mt-[-16%] block h-[32%] w-[32%] rounded-full"
+          style={{ border: `3px solid ${theme.color}`, animationDelay: `${140 + i * 190}ms` }}
+        />
+      ))}
+      <span
+        className="fx-cast-emblem-slam absolute left-1/2 top-1/2 ml-[-24%] mt-[-24%] flex h-[48%] w-[48%] items-center justify-center"
+        style={{ color: theme.color, filter: `drop-shadow(0 0 14px ${theme.soft})` }}
+      >
+        <Icon className="h-full w-full" strokeWidth={1.4} />
+      </span>
+      <span
+        className="fx-cast-ring absolute inset-[0.5%] block rounded-sm"
+        style={{ border: `2.5px solid ${theme.color}`, boxShadow: `inset 0 0 40px ${theme.soft}`, animationDelay: "120ms" }}
+      />
+      <span className="absolute left-1/2 top-1/2 ml-[-6%] mt-[-6%] block h-[12%] w-[12%]">
+        <ShardBurst vectors={CAST_SPARKS} fill={theme.color} stroke="#1a222e" delayMs={420} sizePct={85} />
+      </span>
+    </span>
+  );
 }

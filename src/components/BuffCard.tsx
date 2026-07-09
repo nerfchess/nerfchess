@@ -2,13 +2,13 @@
 
 import { Buff, turnCost } from "@/engine/buff";
 import { Tier } from "@/engine/nerf";
+import { cardFaceIcon } from "@/lib/cardIcon";
 import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
 import { GlossaryText } from "@/components/GlossaryText";
 import { TurnCostBadge } from "@/components/TurnCostBadge";
 import {
   Castle,
   Eye,
-  icons as LucideIcons,
   Layers,
   type LucideIcon,
   Package,
@@ -32,21 +32,6 @@ const CATEGORY_LABEL: Record<Buff["category"], string> = {
   hex: "Hex",
   item: "Item",
 };
-
-/** Resolve a per-card lucide icon NAME to its component. Accepts both the
- * PascalCase export key ("Bomb") and lucide's kebab-case id ("shield-alert"),
- * so buff (PascalCase) and nerf (kebab) naming both resolve. Unknown or
- * misspelled names return undefined, so the caller falls back to a glyph and
- * a bad name can never crash the card. */
-function resolveLucideIcon(name: string | undefined): LucideIcon | undefined {
-  if (!name) return undefined;
-  const direct = LucideIcons[name as keyof typeof LucideIcons];
-  if (direct) return direct as LucideIcon;
-  const pascal = name.replace(/(^|[-_ ])(\w)/g, (_m: string, _s: string, c: string) =>
-    c.toUpperCase(),
-  );
-  return LucideIcons[pascal as keyof typeof LucideIcons] as LucideIcon | undefined;
-}
 
 // One glyph per category: it labels the small chip AND repeats as a large,
 // barely-there watermark on the card face, so a hand of cards can be told
@@ -83,10 +68,11 @@ interface Props {
 export function BuffCard({ buff, tier, status, spent, nullified, onClick, compact, glow, enterDelayMs }: Props) {
   const t = tier ?? buff.tier;
   const dead = spent || nullified;
-  // Per-card icon (a lucide-react name on the buff) wins over the shared
-  // category glyph, so cards that share a category can each look distinct.
-  // Unknown / misspelled names fall back to the category glyph, never crash.
-  const CatIcon = resolveLucideIcon(buff.icon) ?? CATEGORY_ICON[buff.category];
+  // Per-card icon: the buff's own lucide name when set, otherwise a DISTINCT
+  // glyph drawn deterministically from the category's icon ring (see
+  // cardFaceIcon) — so two cards sharing a category no longer wear the same
+  // face. Unknown names still degrade to the category glyph, never crash.
+  const CatIcon = cardFaceIcon(buff.id, buff.category, buff.icon) ?? CATEGORY_ICON[buff.category];
   const body = (
     <div
       style={enterDelayMs != null ? { animationDelay: `${enterDelayMs}ms` } : undefined}
@@ -157,6 +143,18 @@ export function BuffCard({ buff, tier, status, spent, nullified, onClick, compac
       <p className={`leading-snug text-parchment/90 ${compact ? "mt-1.5 text-[11px]" : "flex-1 text-[13px]"}`}>
         <GlossaryText text={buff.description} />
       </p>
+      {/* Rules footnote, auto-attached to every card that grants
+          uncapturability (owner request): the engine never lets a piece that
+          cannot be captured deliver the king capture itself (you must expose
+          a piece to win), and players should learn that from the card face,
+          not from a rejected move. Keyed off the description so future shield
+          cards inherit the note with zero per-card work. */}
+      {!compact && /uncapturable|cannot be captured|can't be captured/i.test(buff.description) && (
+        <p className="mt-2 text-[10.5px] leading-snug text-parchment-400">
+          Note: a piece that cannot be captured may not capture the king while its
+          protection lasts — you must expose a piece to win.
+        </p>
+      )}
       {/* Flavor line: the card's voice, quoted and dim, TCG-style. Full cards
           only; dock rows and compact picks stay all-business. */}
       {!compact && buff.flavor && (

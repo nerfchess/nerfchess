@@ -422,6 +422,12 @@ export interface BuffApi {
   bs: BuffMatchState;
   mine: PlayerBuffState;
   theirs: PlayerBuffState;
+  /** Effect randomness. Seeded deterministically from the synced public state
+   * (ply + board + acting color; see fxRng in game.ts), so a random effect
+   * replayed from the public action record removes / picks the SAME squares on
+   * the server, both clients, and spectators. Draw from it only inside init /
+   * effect / onMovePlayed — the paths every replica replays — never inside
+   * targets() or status(), which the UI calls speculatively. */
   rng: RNG;
   /** Piece counts the opponent has captured from me (revivable pool). */
   capturedFromMe: Record<PieceType, number>;

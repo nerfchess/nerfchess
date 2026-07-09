@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Brr Brr Patapim: the tangled forest-thing with the enormous nose, shivering in the sudden cold. Loops like a GIF. -->
+  <g>
+    <animateTransform attributeName="transform" type="translate" values="0 0; -1.1 0; 0.9 0; -0.7 0; 0 0" dur="0.28s" repeatCount="indefinite"/>
+    <!-- root legs -->
+    <path d="M24 52 C22 56 20 58 16 60 M40 52 C42 56 44 58 48 60" fill="none" stroke="#5c3714" stroke-width="3" stroke-linecap="round"/>
+    <!-- tangled body -->
+    <path d="M20 52 C12 44 14 30 22 24 C28 18 40 18 45 25 C52 32 52 44 44 52 C36 57 26 57 20 52 Z" fill="#6b8f5a" stroke="#2c473a" stroke-width="2"/>
+    <path d="M20 40 C26 36 38 36 45 41 M22 47 C28 43 38 43 43 48" fill="none" stroke="#4a6b3c" stroke-width="1.6"/>
+    <!-- head leaves: rustle -->
+    <g>
+      <animateTransform attributeName="transform" type="rotate" values="-5 32 20; 5 32 20; -5 32 20" dur="0.56s" repeatCount="indefinite"/>
+      <path d="M26 20 C22 12 26 6 32 4 C33 10 32 15 30 19 Z" fill="#5d8f5a" stroke="#2c473a" stroke-width="1.6"/>
+      <path d="M36 19 C38 11 44 8 50 9 C48 15 43 19 39 21 Z" fill="#5d8f5a" stroke="#2c473a" stroke-width="1.6"/>
+    </g>
+    <!-- eyes -->
+    <circle cx="26" cy="31" r="2.6" fill="#f4f7f2" stroke="#2b1c10" stroke-width="1"/>
+    <circle cx="26.4" cy="31.6" r="1.1" fill="#141416"/>
+    <circle cx="44" cy="31" r="2.6" fill="#f4f7f2" stroke="#2b1c10" stroke-width="1"/>
+    <circle cx="43.6" cy="31.6" r="1.1" fill="#141416"/>
+    <!-- THE nose -->
+    <path d="M30 33 C28 42 30 48 35 52 C39 54.4 43 52 41.6 48.4 C39 43 37.6 38 38 33 Z" fill="#caa580" stroke="#6b4a34" stroke-width="1.8"/>
+    <!-- chattering breath puffs -->
+    <g fill="#dbe7f2" opacity="0.8">
+      <circle cx="50" cy="42" r="1.6"><animate attributeName="opacity" values="0;0.9;0" dur="0.84s" repeatCount="indefinite"/></circle>
+      <circle cx="54" cy="39" r="1.1"><animate attributeName="opacity" values="0;0.7;0" dur="0.84s" begin="0.28s" repeatCount="indefinite"/></circle>
+    </g>
+  </g>
+</svg>

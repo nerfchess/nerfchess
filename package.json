@@ -14,6 +14,7 @@
     "test:rules": "npm run server:build && node scripts/test-hexes.cjs",
     "test:nerfs": "npm run server:build && node scripts/test-nerfs.cjs",
     "test:desync": "npm run server:build && node scripts/test-desync.cjs",
+    "test:apex": "npm run server:build && node scripts/test-apex.cjs",
     "test:snapshot": "npm run server:build && node scripts/test-snapshot.cjs",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy"

@@ -2,7 +2,6 @@
 
 import dynamic from "next/dynamic";
 import { Board } from "@/components/Board";
-import { SIGNATURES } from "@/components/effects/BoardEffects";
 import { BoardPlayerRow } from "@/components/BoardPlayerRow";
 import { ClockPill } from "@/components/ClockPill";
 // The end screen is never part of first paint; loading it on demand keeps it
@@ -27,6 +26,7 @@ import {
   bankDraft,
   currentHint,
   enableDraftMode,
+  gameInCheck,
   NerfGame,
   UNRESTRICTED_NERF,
   legalMoves,
@@ -457,14 +457,16 @@ function GamePage() {
   const [signatureCard, setSignatureCard] = useState<{ id: string; key: number } | null>(null);
   const sigKeyRef = useRef(0);
   const pendingSigIdRef = useRef<string | null>(null);
+  // Every known card fires: cards with a bespoke SIGNATURES entry get their
+  // choreography, and every other card gets the category cast spectacle the
+  // Board synthesizes from its category + tier (no card plays silently).
   const fireSignature = (id: string) => {
-    if (SIGNATURES[id]) setSignatureCard({ id, key: ++sigKeyRef.current });
+    if (BUFF_BY_ID[id]) setSignatureCard({ id, key: ++sigKeyRef.current });
   };
   // Snapshot the id of a card I am about to use (dock "Use" entry point) so
   // onChanged can fire its signature once the activation resolves.
   const snapshotMySignature = (buffIndex: number) => {
-    const id = game?.buffs?.players[myColor].buffs[buffIndex]?.id;
-    pendingSigIdRef.current = id && SIGNATURES[id] ? id : null;
+    pendingSigIdRef.current = game?.buffs?.players[myColor].buffs[buffIndex]?.id ?? null;
   };
 
   // Shared reveal moment: once BOTH sides of a simultaneous draft round have
@@ -772,7 +774,10 @@ function GamePage() {
     if (last) {
       if (last.captured) playCapture();
       else playMoveSfx();
-      if (isInCheck(game.board, game.board.turn)) {
+      // gameInCheck also sees buff-granted movement, so a king attacked only
+      // by an empowered "weird" piece (an amazon, a camel knight...) still
+      // rings the check bell.
+      if (gameInCheck(game, game.board.turn)) {
         setTimeout(playCheck, 80);
       }
     }
@@ -1263,8 +1268,13 @@ function GamePage() {
     : confirmMovePending ?? lastMove;
   const orientation: Color = uiSettings.flipBoard ? (myColor === "w" ? "b" : "w") : myColor;
   const checkedBoard = reviewBoard ?? game.board;
+  // The live position runs the buff-aware check test (gameInCheck) so a king
+  // attacked only through buff-granted movement still lights up; history
+  // review falls back to the plain test (a mid-replay board has no reliable
+  // buff context).
   const checkSquare =
-    uiSettings.checkHighlight && isInCheck(checkedBoard, checkedBoard.turn)
+    uiSettings.checkHighlight &&
+    (reviewBoard ? isInCheck(checkedBoard, checkedBoard.turn) : gameInCheck(game, game.board.turn))
       ? findKing(checkedBoard, checkedBoard.turn)
       : null;
   const hint = currentHint(game, myColor);
@@ -1869,9 +1879,10 @@ function GamePage() {
               banked: false,
               cards: gained.map((b) => ({ id: b.id, tier: b.tier })),
             });
-            // My own instant attack spectacle (Cataclysm, Extinction) clears
-            // the board at pick time; dress that clear as its signature.
-            const inst = gained.find((b) => BUFF_BY_ID[b.id]?.kind === "instant" && SIGNATURES[b.id]);
+            // My own instant spectacle (Cataclysm, Extinction, and now every
+            // instant via the category cast layer) resolves at pick time;
+            // dress that resolution as the card's signature.
+            const inst = gained.find((b) => BUFF_BY_ID[b.id]?.kind === "instant");
             if (inst) fireSignature(inst.id);
             setGame({ ...game });
           }}

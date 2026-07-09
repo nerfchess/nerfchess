@@ -1269,8 +1269,185 @@
   .fx-sig-bwash,
   .fx-sig-cross,
   .fx-sig-rain,
-  .fx-sig-boom {
+  .fx-sig-boom,
+  /* Batch 11: the Total War reverse charge + battle-standard slash, and the
+     virus takeover's scanline flicker + error window. */
+  .fx-sig-crossback,
+  .fx-sig-slash,
+  .fx-cast-scanlines,
+  .fx-cast-errorwin,
+  .fx-cast-stamp {
     animation: none !important;
     opacity: 0 !important;
   }
+  /* Cast spectacles (the every-card category layer) are pure flourish: hide
+     the whole overlay, not just its parts, so nothing lingers. The board
+     shake is motion by definition and is dropped with it. */
+  .fx-cast {
+    display: none !important;
+  }
+  .fx-board-shake {
+    animation: none !important;
+  }
 }
+
+/* --- Batch 11: Total War + virus takeover extras ----------------------------- */
+
+/* The mirror of fx-sig-cross: a giant object charging the full width of the
+   board RIGHT to LEFT with the same vertical bob. */
+@keyframes fx-sig-crossback {
+  0% { opacity: 0; transform: translate(88%, 3%) scale(0.9); }
+  14% { opacity: 1; transform: translate(58%, 0) scale(1); }
+  50% { transform: translate(0, -3%) scale(1.04); }
+  86% { opacity: 1; transform: translate(-58%, 0) scale(1); }
+  100% { opacity: 0; transform: translate(-90%, 3%) scale(0.92); }
+}
+.fx-sig-crossback { animation: fx-sig-crossback 1.2s var(--ease-out, cubic-bezier(0.3, 0.7, 0.4, 1)) both; }
+
+/* A battle-standard slash raked across the square: flashes in along its own
+   diagonal, holds a beat, burns out. */
+@keyframes fx-sig-slash {
+  0% { opacity: 0; transform: scale(0.4) rotate(-18deg); }
+  22% { opacity: 1; transform: scale(1.06) rotate(0deg); }
+  60% { opacity: 0.9; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.04); }
+}
+.fx-sig-slash { animation: fx-sig-slash 0.62s var(--ease-out, ease-out) both; transform-origin: 50% 50%; }
+
+/* CRT scanline flicker while the corruption runs (virus takeover). */
+@keyframes fx-cast-scanlines {
+  0% { opacity: 0; }
+  12% { opacity: 1; }
+  18% { opacity: 0.35; }
+  26% { opacity: 0.95; }
+  38% { opacity: 0.5; }
+  52% { opacity: 0.9; }
+  78% { opacity: 0.6; }
+  100% { opacity: 0; }
+}
+.fx-cast-scanlines { animation: fx-cast-scanlines 1.5s steps(12) both; }
+
+/* The error window: slams up, rattles like a stuck dialog, blinks out. */
+@keyframes fx-cast-errorwin {
+  0% { opacity: 0; transform: translateY(30%) scale(0.6); }
+  14% { opacity: 1; transform: translateY(0) scale(1.04); }
+  22% { transform: translate(-2%, 0) scale(1); }
+  30% { transform: translate(2%, -1%) scale(1); }
+  38% { transform: translate(-2%, 1%) scale(1); }
+  46% { transform: translate(1%, 0) scale(1); }
+  80% { opacity: 1; transform: translate(0, 0) scale(1); }
+  88% { opacity: 0.2; }
+  94% { opacity: 0.9; }
+  100% { opacity: 0; transform: scale(0.98); }
+}
+.fx-cast-errorwin { animation: fx-cast-errorwin 1.35s var(--ease-out, ease-out) both; }
+
+/* A chanted word stamped onto the board: pops in oversized, squashes to rest,
+   fades. Carries --tilt so each stamp keeps its jaunty angle. */
+@keyframes fx-cast-stamp {
+  0% { opacity: 0; transform: rotate(var(--tilt, 0deg)) scale(2.2); }
+  30% { opacity: 1; transform: rotate(var(--tilt, 0deg)) scale(0.92); }
+  42% { transform: rotate(var(--tilt, 0deg)) scale(1.05); }
+  78% { opacity: 1; transform: rotate(var(--tilt, 0deg)) scale(1); }
+  100% { opacity: 0; transform: rotate(var(--tilt, 0deg)) scale(1.02); }
+}
+.fx-cast-stamp { animation: fx-cast-stamp 0.9s var(--ease-out, cubic-bezier(0.2, 0.8, 0.3, 1.1)) both; }
+
+/* --- Cast spectacles: the every-card category layer -------------------------
+   One overlay per card play, themed by category and scaled by tier (see
+   CastSpectacle in BoardEffects.tsx). Everything transform/opacity-only. */
+
+/* The board-edge ring: breathes in, holds, fades. */
+@keyframes fx-cast-ring {
+  0% { opacity: 0; transform: scale(1.02); }
+  22% { opacity: 0.9; transform: scale(1); }
+  70% { opacity: 0.55; }
+  100% { opacity: 0; transform: scale(1); }
+}
+.fx-cast-ring { animation: fx-cast-ring 0.85s var(--ease-out, ease-out) both; transform-origin: 50% 50%; }
+
+/* The sleek diagonal shine: a thin bar sweeping corner to corner. */
+@keyframes fx-cast-sweep {
+  0% { opacity: 0; transform: translateX(0) rotate(var(--tilt, 14deg)); }
+  12% { opacity: 1; }
+  88% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(1400%) rotate(var(--tilt, 14deg)); }
+}
+.fx-cast-sweep { animation: fx-cast-sweep 0.7s var(--ease-out, ease-out) both; }
+
+/* The small emblem pop (sleek): rises a touch as it blinks in and out. */
+@keyframes fx-cast-emblem {
+  0% { opacity: 0; transform: translateY(40%) scale(0.6); }
+  25% { opacity: 0.95; transform: translateY(0) scale(1); }
+  75% { opacity: 0.85; }
+  100% { opacity: 0; transform: translateY(-25%) scale(1.02); }
+}
+.fx-cast-emblem { animation: fx-cast-emblem 0.8s var(--ease-out, ease-out) both; }
+
+/* The radial category wash (grand): blooms and settles. */
+@keyframes fx-cast-wash {
+  0% { opacity: 0; transform: scale(0.6); }
+  30% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.06); }
+}
+.fx-cast-wash { animation: fx-cast-wash 1s var(--ease-out, ease-out) both; transform-origin: 50% 50%; }
+
+/* A shockwave ring off the emblem slam. */
+@keyframes fx-cast-shock {
+  0% { opacity: 0; transform: scale(0.2); }
+  18% { opacity: 1; }
+  100% { opacity: 0; transform: scale(2.6); }
+}
+.fx-cast-shock { animation: fx-cast-shock 0.9s var(--ease-out, cubic-bezier(0.15, 0.7, 0.2, 1)) both; transform-origin: 50% 50%; }
+
+/* The emblem slam (grand / marquee): drops in oversized, squashes, holds. */
+@keyframes fx-cast-emblem-slam {
+  0% { opacity: 0; transform: scale(2.4); }
+  22% { opacity: 1; transform: scale(0.9); }
+  34% { transform: scale(1.06); }
+  44% { transform: scale(1); }
+  80% { opacity: 0.95; }
+  100% { opacity: 0; transform: scale(1.03); }
+}
+.fx-cast-emblem-slam { animation: fx-cast-emblem-slam 1.15s var(--ease-out, cubic-bezier(0.2, 0.8, 0.3, 1.1)) both; }
+
+/* The marquee vignette dim: the room goes dark for the big one. */
+@keyframes fx-cast-dim {
+  0% { opacity: 0; }
+  20% { opacity: 1; }
+  78% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.fx-cast-dim { animation: fx-cast-dim 1.5s ease-in-out both; }
+
+/* Twin light beams raking across the darkened board (marquee). */
+@keyframes fx-cast-beam {
+  0% { opacity: 0; transform: translateX(0) rotate(var(--tilt, 16deg)); }
+  15% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(900%) rotate(var(--tilt, 16deg)); }
+}
+.fx-cast-beam { animation: fx-cast-beam 1.3s var(--ease-out, ease-out) both; }
+@keyframes fx-cast-beam-back {
+  0% { opacity: 0; transform: translateX(0) rotate(var(--tilt, -16deg)); }
+  15% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(-900%) rotate(var(--tilt, -16deg)); }
+}
+.fx-cast-beam-back { animation: fx-cast-beam-back 1.3s var(--ease-out, ease-out) both; }
+
+/* --- Board shake: the whole crop jolts for a marquee cast --------------------
+   Transform-only, small amplitude, quick decay: reads as a thump, not motion
+   sickness. Applied to the board crop by Board.tsx and removed after it runs;
+   disabled outright under prefers-reduced-motion above. */
+@keyframes fx-board-shake {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  12% { transform: translate(-0.8%, 0.5%) rotate(-0.35deg); }
+  24% { transform: translate(0.7%, -0.5%) rotate(0.3deg); }
+  38% { transform: translate(-0.55%, -0.35%) rotate(-0.2deg); }
+  52% { transform: translate(0.45%, 0.4%) rotate(0.15deg); }
+  68% { transform: translate(-0.25%, 0.2%) rotate(-0.1deg); }
+  84% { transform: translate(0.12%, -0.12%) rotate(0.05deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
+}
+.fx-board-shake { animation: fx-board-shake 0.55s var(--ease-out, ease-out) both; }

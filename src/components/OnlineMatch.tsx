@@ -5,7 +5,6 @@ import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 import { type CSSProperties, useEffect, useMemo, useRef, useState } from "react";
 import { Board, QueuedPremove } from "@/components/Board";
-import { SIGNATURES } from "@/components/effects/BoardEffects";
 import { BoardPlayerRow } from "@/components/BoardPlayerRow";
 import { AdminGodPanel } from "@/components/AdminGodPanel";
 import { OppPlaysLog, type OppPlay } from "@/components/OppPlaysLog";
@@ -45,6 +44,7 @@ import type { GameContext, Nerf } from "@/engine/nerf";
 import { IMPLEMENTED_BY_ID, openingNerfPool } from "@/engine/nerfs/library";
 import {
   currentHint,
+  gameInCheck,
   NerfGame,
   UNRESTRICTED_NERF,
   enableDraftMode,
@@ -160,10 +160,11 @@ function buildGameFromStart(start: MPStart): NerfGame {
   if (start.draft) {
     // The REAL draft seed (older servers omit it: fall back to 1). Offer rolls
     // are still discarded (the server's dtOffer / dtState frames carry the real
-    // cards), but a card whose EFFECT consumes the draft RNG (a random removal
-    // or spectacle) must roll the same stream the server did, or the rebuilt
-    // board diverges (removed pieces reappear) and the opponent's real moves
-    // then get rejected as out of sync. The mode sets the draft cadence the
+    // cards); matching the seed only keeps this replica's local placeholder
+    // rolls harmless. Card-EFFECT randomness no longer depends on any seed at
+    // all: api.rng is now derived per event from the synced public state (see
+    // fxRng in engine/game.ts), so random removals replay identically here,
+    // on the server, and for spectators. The mode sets the draft cadence the
     // dock displays.
     enableDraftMode(next, start.draftSeed ?? 1, { mode: start.mode });
     next = replayDraftGame(next, start.moves ?? [], start.dtActions ?? []);
@@ -324,7 +325,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   const [signatureCard, setSignatureCard] = useState<{ id: string; key: number } | null>(null);
   const sigKeyRef = useRef(0);
   const fireSignature = (id: string) => {
-    if (SIGNATURES[id]) setSignatureCard({ id, key: ++sigKeyRef.current });
+    // Every known card fires: bespoke signatures get their choreography and
+    // every other card gets the Board's category cast spectacle.
+    if (BUFF_BY_ID[id]) setSignatureCard({ id, key: ++sigKeyRef.current });
   };
   // A held/passive buff whose onMovePlayed hook observably changed the board
   // (a summon, relocate, transform, revive, pawn-push, or a fresh board
@@ -346,7 +349,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           `Opponent's ${draftCardNoun(start.mode)} triggered`,
         );
       }
-      if (!firedSignature && SIGNATURES[inst.id]) {
+      if (!firedSignature) {
         fireSignature(inst.id);
         firedSignature = true;
       }
@@ -622,7 +625,12 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     if (move.captured) playCapture();
     else playMoveSfx();
     const after = makeMove(cloneBoard(base), move);
-    if (isInCheck(after, after.turn)) setTimeout(playCheck, 80);
+    // Run the buff-aware test against a view of the live game holding the
+    // optimistic board, so a check delivered only through buff-granted
+    // movement still sounds; without game context fall back to the plain test.
+    const g = gameRef.current;
+    const inCheck = g ? gameInCheck({ ...g, board: after }, after.turn) : isInCheck(after, after.turn);
+    if (inCheck) setTimeout(playCheck, 80);
   };
 
   // Fire the queued premove the instant it becomes our turn. No artificial
@@ -847,7 +855,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         if (!alreadySounded) {
           if (lm.captured) playCapture();
           else playMoveSfx();
-          if (isInCheck(next.board, next.board.turn)) setTimeout(playCheck, 80);
+          if (gameInCheck(next, next.board.turn)) setTimeout(playCheck, 80);
         }
         // Our turn again (opponent moved, or our premove landed and the next
         // queued one already applies): fire the queued premove immediately.
@@ -1000,7 +1008,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         // later activation) fires here for whichever seat can see its id.
         if (e.resolved.kind === "picked") {
           for (const c of e.resolved.cards ?? []) {
-            if ("id" in c && SIGNATURES[c.id]) {
+            // Instants resolve on the board at pick time; other kinds fire
+            // later at activation (dtUsed), so only instants cast here.
+            if ("id" in c && BUFF_BY_ID[c.id]?.kind === "instant") {
               fireSignature(c.id);
               break;
             }
@@ -1826,8 +1836,11 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     reviewBoard ?? confirmPreviewBoard ?? virtualBoard ?? pendingLocalBoard ?? game.board;
   const orientation: Color = uiSettings.flipBoard ? oppColor : myColor;
   const checkedBoard = reviewBoard ?? game.board;
+  // Buff-aware check test on the live position (a king attacked only by an
+  // empowered piece still lights up); plain test while reviewing history.
   const checkSquare =
-    uiSettings.checkHighlight && isInCheck(checkedBoard, checkedBoard.turn)
+    uiSettings.checkHighlight &&
+    (reviewBoard ? isInCheck(checkedBoard, checkedBoard.turn) : gameInCheck(game, game.board.turn))
       ? findKing(checkedBoard, checkedBoard.turn)
       : null;
   const lastMoveForDisplay = isReviewingHistory

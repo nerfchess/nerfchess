@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Boneca Ambalabu: the frog head on a tractor tire, bouncing with rubbery menace. Loops like a GIF. -->
+  <g>
+    <animateTransform attributeName="transform" type="translate" values="0 0; 0 -2.6; 0 0.4; 0 0" dur="0.8s" repeatCount="indefinite"/>
+    <!-- frog head -->
+    <path d="M20 30 C18 18 26 12 32 12 C38 12 46 18 44 30 Z" fill="#5d8f5a" stroke="#2c473a" stroke-width="2"/>
+    <g>
+      <circle cx="25" cy="14" r="4.4" fill="#5d8f5a" stroke="#2c473a" stroke-width="1.8"/>
+      <circle cx="39" cy="14" r="4.4" fill="#5d8f5a" stroke="#2c473a" stroke-width="1.8"/>
+      <circle cx="25" cy="14" r="2" fill="#f4e9c8" stroke="#2b1c10" stroke-width="0.8"/>
+      <circle cx="39" cy="14" r="2" fill="#f4e9c8" stroke="#2b1c10" stroke-width="0.8"/>
+      <circle cx="25.4" cy="14.4" r="0.9" fill="#141416"/>
+      <circle cx="39.4" cy="14.4" r="0.9" fill="#141416"/>
+      <rect x="19" y="11.8" width="26" height="4.6" fill="#5d8f5a" opacity="0">
+        <animate attributeName="opacity" values="0;0;1;0;0" keyTimes="0;0.88;0.92;0.96;1" dur="3.1s" repeatCount="indefinite"/>
+      </rect>
+    </g>
+    <path d="M24 24 C28 27 36 27 40 24" fill="none" stroke="#2c473a" stroke-width="1.6" stroke-linecap="round"/>
+    <!-- the tire body: the hub spins slowly with the bounce -->
+    <g>
+      <circle cx="32" cy="44" r="15" fill="#2b2b2f" stroke="#141416" stroke-width="2"/>
+      <circle cx="32" cy="44" r="6.6" fill="#3d5a48" stroke="#141416" stroke-width="1.6"/>
+      <g stroke="#4a4a50" stroke-width="2">
+        <animateTransform attributeName="transform" type="rotate" values="0 32 44; 360 32 44" dur="4s" repeatCount="indefinite"/>
+        <path d="M32 30 V34 M32 54 V58 M18 44 H22 M42 44 H46 M22 34 L25 37 M42 34 L39 37 M22 54 L25 51 M42 54 L39 51"/>
+      </g>
+    </g>
+    <!-- one sturdy human leg (the meme's finishing touch) -->
+    <path d="M32 58 L32 61 L38 61" fill="none" stroke="#caa580" stroke-width="3" stroke-linecap="round"/>
+  </g>
+</svg>

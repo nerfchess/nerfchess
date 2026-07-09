@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Lirili Larila: the cactus-elephant in sandals, checking its pocket watch. Loops like a GIF. -->
+  <g>
+    <animateTransform attributeName="transform" type="translate" values="0 0; 0 -1.4; 0 0" dur="1.2s" repeatCount="indefinite"/>
+    <!-- sandals -->
+    <rect x="20" y="56" width="10" height="4" rx="2" fill="#b98a4e" stroke="#5c3714" stroke-width="1.2"/>
+    <rect x="34" y="56" width="10" height="4" rx="2" fill="#b98a4e" stroke="#5c3714" stroke-width="1.2"/>
+    <!-- cactus body -->
+    <path d="M22 57 C18 44 18 28 24 20 C28 14 38 14 42 20 C48 28 47 44 43 57 Z" fill="#5d8f5a" stroke="#2c473a" stroke-width="2"/>
+    <!-- cactus arm -->
+    <path d="M21 34 C14 33 12 27 13 22 C16 22 20 25 21 28 Z" fill="#5d8f5a" stroke="#2c473a" stroke-width="1.8"/>
+    <!-- spines -->
+    <g stroke="#dbe7d2" stroke-width="1.2" stroke-linecap="round">
+      <path d="M26 26 L24 24 M38 25 L40 23 M27 38 L25 37 M39 39 L41 38 M30 49 L28.6 47.4 M36 50 L37.6 48.6"/>
+    </g>
+    <!-- elephant ear -->
+    <path d="M42 24 C49 21 53 26 51 32 C49.6 36 45 36 43 33 Z" fill="#7ba877" stroke="#2c473a" stroke-width="1.8"/>
+    <!-- eyes: slow deadpan blink -->
+    <g>
+      <circle cx="29" cy="26" r="1.6" fill="#141416"/>
+      <circle cx="37" cy="26" r="1.6" fill="#141416"/>
+      <rect x="26" y="24.6" width="14" height="3" fill="#5d8f5a" opacity="0">
+        <animate attributeName="opacity" values="0;0;1;0;0" keyTimes="0;0.86;0.9;0.94;1" dur="3.4s" repeatCount="indefinite"/>
+      </rect>
+    </g>
+    <!-- trunk: sways while holding the watch -->
+    <g>
+      <animateTransform attributeName="transform" type="rotate" values="-7 33 30; 7 33 30; -7 33 30" dur="1.2s" repeatCount="indefinite"/>
+      <path d="M33 30 C33 38 30 42 26 45 C24 46.6 25 49 27.6 48.4" fill="none" stroke="#5d8f5a" stroke-width="4.6" stroke-linecap="round"/>
+      <path d="M33 30 C33 38 30 42 26 45" fill="none" stroke="#2c473a" stroke-width="1" opacity="0.35"/>
+      <!-- the pocket watch, hanging off the trunk tip -->
+      <g>
+        <path d="M28 48.6 L30 52" stroke="#8a6414" stroke-width="1.2"/>
+        <circle cx="31" cy="55" r="4.6" fill="#f4e9c8" stroke="#8a6414" stroke-width="1.4"/>
+        <g stroke="#7a2f28" stroke-width="1.1" stroke-linecap="round">
+          <path d="M31 55 L31 52.4">
+            <animateTransform attributeName="transform" type="rotate" values="0 31 55; -360 31 55" dur="2.4s" repeatCount="indefinite"/>
+          </path>
+          <path d="M31 55 L33 55">
+            <animateTransform attributeName="transform" type="rotate" values="0 31 55; -360 31 55" dur="0.6s" repeatCount="indefinite"/>
+          </path>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>

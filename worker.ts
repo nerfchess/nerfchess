@@ -101,7 +101,19 @@ type Result = NerfGame["result"];
 //     longer grants the caster a mythic and the board transform, turn, and
 //     grant timing all changed, so a game where the card resolved pre-bump
 //     replays into a completely different state post-bump.
-const REPLAY_VERSION = 6;
+//   7 - several engine changes to the deterministic stream, shipped together.
+//     (a) Buff-effect randomness (api.rng) moved off the per-player nerf RNG —
+//     which only the server had, the root cause of the random-removal desyncs
+//     — onto a stateless RNG seeded from the synced public state (ply + board
+//     signature + acting color), so a random effect replayed pre-bump lands on
+//     different squares post-bump. (b) Banking at the top tier now deals a
+//     TWO-card apex offer, each slot tier 9 with a 10% mythic upgrade (it used
+//     to guarantee a single tier-10), consuming different RNG draws; apex
+//     rerolls changed the same way. (c) Living God moved from the tier-8 pool
+//     to the tier-9 apex band, shifting the tier-8 pool. (d) The gambling
+//     cards' payouts changed their draw counts (Roulette and the Wheel's
+//     removal wedge spin twice, Jackpot's gate is now a coin flip).
+const REPLAY_VERSION = 7;
 
 // Refresh a match's replay checkpoint (see StoredMatch.checkpoint) at most once
 // per this many committed events (moves + draft actions), so gameForPlay never
@@ -1604,13 +1616,13 @@ export class GameServer extends DurableObject<Env> {
       draftExtras = {
         draft: true,
         ...(match.mode ? { mode: match.mode } : {}),
-        // The real draft RNG seed, so the client's own reconnect replay rolls
-        // the SAME stream the server did. Card effects that consume the draft
-        // RNG (random removals / spectacles) otherwise land differently on a
-        // rebuild than on the authoritative server, and the reconstructed board
-        // diverges (removed pieces reappear, then the opponent's real moves get
-        // rejected as out of sync). Offers are still server-provided; matching
-        // the seed only keeps effect randomness identical.
+        // The real draft RNG seed, so the client's reconnect replay advances
+        // the SAME draft rngState the server did (its locally rolled
+        // placeholder offers are discarded; the server's frames carry the real
+        // cards). Card-EFFECT randomness no longer reads any seed: api.rng is
+        // derived per event from the synced public state (fxRng in
+        // engine/game.ts), which is what keeps random removals identical on
+        // the server, both clients, and spectators.
         draftSeed: match.draftSeed ?? match.setup.seed,
         picksVisible: !!match.picksVisible,
         dtActions: this.publicDraftActions(match, color),
@@ -5806,8 +5818,22 @@ export class GameServer extends DurableObject<Env> {
     if (db && humanIds.length > 0) {
       try {
         const placeholders = humanIds.map(() => "?").join(",");
+        // Same live-bucket rule the house personas use above (best of the two
+        // mode buckets): the legacy users.rating column is never written after
+        // games anymore, so reading it here showed humans frozen at stale
+        // numbers while the bots' ratings moved — the "ratings don't match
+        // between pages" report.
         const rows = await db
-          .prepare(`SELECT id, username, rating, avatar FROM users WHERE id IN (${placeholders})`)
+          .prepare(
+            `SELECT u.id, u.username,
+                    COALESCE(
+                      (SELECT MAX(r.rating) FROM user_ratings r
+                        WHERE r.user_id = u.id AND r.category IN ('nerf','buff')),
+                      u.rating
+                    ) AS rating,
+                    u.avatar
+             FROM users u WHERE u.id IN (${placeholders})`,
+          )
           .bind(...humanIds)
           .all<{ id: string; username: string; rating: number; avatar: string | null }>();
         for (const row of rows.results) {
