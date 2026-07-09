@@ -1,0 +1,11 @@
+# Oneshot fired by nerfchess-autoupdate.timer — see autoupdate.sh for what a
+# run does and why it can never break a healthy box (idempotent + version
+# guard). Install: /etc/systemd/system/nerfchess-autoupdate.service
+[Unit]
+Description=nerfchess Tokyo box periodic self-update check
+After=network-online.target nerfchess-engine-updater.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/opt/nerfchess-engine/autoupdate.sh
