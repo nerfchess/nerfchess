@@ -786,39 +786,45 @@ export const PT_CURSE_CARDS: Buff[] = [
       icon: "Ticket",
       name: "Wheel of Fortune",
       description:
-        "Spin the wheel for one of six random effects: plus 20 seconds to your clock, minus 20 seconds off your opponent's, your army uncapturable for their next turn, a new pawn in your half, every enemy piece asleep for a turn, or a random enemy piece other than the king removed.",
+        "Spin the wheel for one of six random effects: plus 45 seconds to your clock, minus 45 seconds off your opponent's, your army uncapturable for their next 2 turns, a new knight in your half, every enemy piece asleep for their next 2 turns, or two random enemy pieces other than the king removed.",
       tier: 6,
       category: "tempo",
       flavor: "Big money, big money, no whammies.",
     },
+    // Every wedge pays out bigger (owner request: the gambling cards paid out
+    // too little for their tier): the clocks swing 45s, the shield and sleep
+    // hold two turns, the summon is a knight, and the removal takes two.
     instant((_inst, api) => {
       const roll = api.rng.int(6);
       switch (roll) {
         case 0:
-          api.adjustClock({ addSelfSec: 20 });
+          api.adjustClock({ addSelfSec: 45 });
           break;
         case 1:
-          api.adjustClock({ subOppSec: 20 });
+          api.adjustClock({ subOppSec: 45 });
           break;
         case 2:
-          addEffect(api, { kind: "shield", owner: api.me, squares: null, turns: 1 });
+          addEffect(api, { kind: "shield", owner: api.me, squares: null, turns: 2 });
           break;
         case 3: {
-          const spots = emptySquares(api.board, (sq) => inHalf(api.me, sq) && pawnRankOk(sq));
-          if (spots.length) api.place(spots[api.rng.int(spots.length)], "p", api.me);
+          const spots = emptySquares(api.board, (sq) => inHalf(api.me, sq));
+          if (spots.length) api.place(spots[api.rng.int(spots.length)], "n", api.me);
           break;
         }
         case 4:
           for (const sq of mySquares(api.board, api.opp)) {
             if (api.board.pieces[sq]!.type === "k") continue;
-            addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 1, skin: "sleep" });
+            addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2, skin: "sleep" });
           }
           break;
         default: {
-          const targets = mySquares(api.board, api.opp).filter(
-            (sq) => api.board.pieces[sq]!.type !== "k",
-          );
-          if (targets.length) api.removePiece(targets[api.rng.int(targets.length)]);
+          for (let spin = 0; spin < 2; spin++) {
+            const targets = mySquares(api.board, api.opp).filter(
+              (sq) => api.board.pieces[sq]!.type !== "k",
+            );
+            if (!targets.length) break;
+            api.removePiece(targets[api.rng.int(targets.length)]);
+          }
           break;
         }
       }

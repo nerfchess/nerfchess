@@ -9,6 +9,47 @@ import { glickoUpdatePair, GlickoRating } from "../glicko";
 import { categoryForTimeControl, isModeCategory, SPEED_CATEGORIES, type RatingCategory } from "../speed";
 import { awardAchievementsForFinishedGame, type AchievementExtras } from "./achievements";
 
+/** One resolved draft interaction as persisted in the archive. The archive
+ *  stores the stream VERBATIM as JSON and never interprets it, so this is the
+ *  loose structural shape common to every opcode — deliberately NOT a copy of
+ *  the exact discriminated union. That exhaustive union is the engine/DO's
+ *  (worker.ts `StoredDraftAction`: pick/bank/reroll/grant/use, plus future
+ *  opcodes like diffFlag) and may grow new variants without breaking archival
+ *  typing. The archive keeps the FULL stream (including reroll/grant) for a
+ *  lossless, deterministically-replayable record — unlike
+ *  serializeMatchForEngine, which drops some opcodes for the best-effort path.
+ *
+ *  `grant` is an owner-only god-panel action NEVER surfaced publicly (see
+ *  publicDraftActions in worker.ts). Any future endpoint that exposes a
+ *  draft_record MUST filter grant actions the same way. */
+export type ArchivedDraftAction = {
+  ply: number;
+  color: "w" | "b";
+  a: string;
+  [key: string]: unknown;
+};
+
+/** Everything beyond setup + moves needed to deterministically replay a draft
+ *  game from the archive alone. Field names/shapes are the StoredMatch originals
+ *  so a replayer can feed them straight into the gameFromMatch /
+ *  replayToPosition logic. Serialized to JSON for storage (JSONB on Postgres,
+ *  a TEXT string on the D1 fallback). See docs/archive-draft-record.md. */
+export interface DraftRecord {
+  /** "nerf" | "buff"; absent = legacy merged rules (matches StoredMatch.mode). */
+  mode?: string;
+  draftSeed: number;
+  cadence?: number;
+  stacked?: boolean;
+  /** Wire-visibility only (no board effect); kept so a review UI can render the
+   *  game as the players saw it. */
+  picksVisible?: boolean;
+  /** Moderator pool overrides frozen at match creation (StoredMatch.cardOverrides).
+   *  Offers re-roll against these, so pick indexes are meaningless without them.
+   *  Absent for arena games (the arena rolls its own pools). */
+  cardOverrides?: unknown;
+  draftActions: ArchivedDraftAction[];
+}
+
 export interface FinishedGameRecord {
   id: string;
   whiteUserId: string | null;
@@ -30,6 +71,12 @@ export interface FinishedGameRecord {
    *  pass their mode here; omitted falls back to the speed bucket for the
    *  time control (legacy classic behavior). */
   ratingCategory?: RatingCategory;
+  /** Full draft record (draft games only) so the game replays from the archive
+   *  alone. Absent for classic games. */
+  draftRecord?: DraftRecord;
+  /** Engine REPLAY_VERSION the record was written under (provenance for every
+   *  game, not just draft ones). Absent pre-dates stamping = version 1. */
+  replayVersion?: number;
   startedAt: number;
   completedAt: number;
 }
@@ -160,6 +207,11 @@ export async function recordFinishedGame(
 
   const movesText = game.moves.join(" ");
   const ruleset = game.ruleset ?? "classic";
+  // The draft record is stored as a JSON string. Postgres infers the target
+  // jsonb column and parses it (the same server-side type inference the bigint
+  // serializer relies on); D1 keeps it verbatim in a TEXT column.
+  const draftRecordJson = game.draftRecord ? JSON.stringify(game.draftRecord) : null;
+  const replayVersion = game.replayVersion ?? null;
 
   // The hot rating/counter updates always run on D1. The archive `games` row
   // goes to Postgres when a connection is supplied; otherwise it falls into
@@ -175,8 +227,8 @@ export async function recordFinishedGame(
             white_nerf_id, black_nerf_id, seed, time_sec, increment_sec,
             moves, winner, reason, rated, category, ruleset,
             white_rating_before, white_rating_after, black_rating_before, black_rating_after,
-            started_at, completed_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            started_at, completed_at, draft_record, replay_version
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         )
         .bind(
           game.id,
@@ -201,6 +253,8 @@ export async function recordFinishedGame(
           blackAfter?.rating ?? null,
           game.startedAt,
           game.completedAt,
+          draftRecordJson,
+          replayVersion,
         ),
     );
   }
@@ -283,6 +337,8 @@ export async function recordFinishedGame(
           black_rating_after: blackAfter?.rating ?? null,
           started_at: game.startedAt,
           completed_at: game.completedAt,
+          draft_record: draftRecordJson,
+          replay_version: replayVersion,
         })}
         ON CONFLICT (id) DO NOTHING
       `;

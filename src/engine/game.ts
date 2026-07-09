@@ -359,6 +359,39 @@ export function nerfDisabled(game: NerfGame, color: Color): boolean {
   );
 }
 
+/**
+ * The RNG behind api.rng: buff-effect randomness (The Culling's victims, chaos
+ * scatters, the Jackpot / apex grants...). Seeded STATELESSLY from public,
+ * byte-identically-synced state — the ply count, the 64-square board signature,
+ * and the acting color — never from any per-client secret.
+ *
+ * Why not slot.rng (the per-player nerf RNG, used here historically): that
+ * stream only exists on the server. A client replica builds the OPPONENT's slot
+ * as RNG(0) (their nerf seed is hidden) and a spectator replica seeds both
+ * slots with a dummy, so any card effect that rolled on slot.rng removed
+ * DIFFERENT pieces on every replica — the root cause of the "crazy powerup
+ * desyncs the game" reports. Every replica does share the board and the move /
+ * public-action record, so a seed derived purely from those replays the same
+ * draws everywhere: server, both clients, spectators, arena replays, snapshot
+ * restores.
+ *
+ * Stateless-per-event is deliberate (no persistent fx stream in
+ * BuffMatchState): a hidden card whose hook draws but does nothing observable
+ * never shifts anyone else's future draws, so replicas can never drift apart —
+ * each event reseeds from state they all agree on. Within one event (one
+ * makeBuffApi lifetime) successive draws walk one Mulberry32 stream, so
+ * multi-draw effects stay properly varied. The board signature is taken at api
+ * creation, which every apply path does per event (activation, hook loop,
+ * instant pick), so two same-ply events by the same color are still separated
+ * by the board change the first one made.
+ */
+function fxRng(game: NerfGame, me: Color): RNG {
+  let seed = boardSignature(game.board);
+  seed = Math.imul(seed ^ (game.board.history.length + 1), 0x9e3779b1);
+  seed = Math.imul(seed ^ (me === "w" ? 0x517cc1b7 : 0x27220a95), 0x85ebca6b);
+  return new RNG(seed >>> 0);
+}
+
 export function makeBuffApi(game: NerfGame, me: Color): BuffApi {
   const bs = game.buffs!;
   const opp: Color = me === "w" ? "b" : "w";
@@ -378,7 +411,7 @@ export function makeBuffApi(game: NerfGame, me: Color): BuffApi {
     bs,
     mine: bs.players[me],
     theirs: bs.players[opp],
-    rng: slot.rng,
+    rng: fxRng(game, me),
     capturedFromMe: game.captured[opp],
     capturedByMe: game.captured[me],
     place: (sq, type, color) => {

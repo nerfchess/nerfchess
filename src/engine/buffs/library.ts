@@ -3481,14 +3481,9 @@ const TIER8: Buff[] = [
       addEffect(api, { kind: "king_only", against: api.opp, turns: 2 });
     }),
   ),
-  def(
-    { id: "living_god", name: "Living God", description: "One piece gains amazon movement, is uncapturable, and explodes on capture, for the game.", tier: 8, category: "movement", fx: { motif: "empower", pieces: ["p", "n", "b", "r", "q"], moveAs: "q", self: true } },
-    bindPiece("Choose your living god", bindCandidates(), {
-      shieldTurns: null,
-      gen: amazonGen,
-      explodeOnCapture: true,
-    }),
-  ),
+  // Living God moved to the tier-9 apex band (owner request): see
+  // buffs/tier9.ts. Apex cards never roll in the normal pools, so it now
+  // arrives only through the apex grants (banking at the top tier, Jackpot).
   def(
     { id: "void_realm", name: "The Void Realm", description: "Three squares you pick swallow any enemy piece except a king that enters, for the game.", tier: 8, category: "attack" },
     voidSquares(3, null),

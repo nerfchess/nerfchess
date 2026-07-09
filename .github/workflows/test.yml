@@ -35,3 +35,8 @@ jobs:
 
       - name: Nerf tests
         run: npm run test:nerfs
+
+      # Every tier-9 apex / tier-10 mythic card activated end-to-end, plus the
+      # bank-at-top apex offer's shape and mythic-upgrade rate.
+      - name: Apex / mythic tests
+        run: node scripts/test-apex.cjs

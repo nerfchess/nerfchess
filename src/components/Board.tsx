@@ -7,6 +7,8 @@ import {
   BarrierStakes,
   BoltGlyph,
   BoundBuffMark,
+  CastSpectacle,
+  castIntensity,
   ChainJail,
   DetonationBurst,
   DuckGlyph,
@@ -28,20 +30,28 @@ import type { BuffCategory, BuffMatchState } from "@/engine/buff";
 import { BUFF_BY_ID } from "@/engine/buffs/library";
 import { BoardState, Color, FILE, Move, PieceType, RANK, SQ, Square } from "@/engine/types";
 import {
+  playAegis,
   playAtomic,
+  playBlitz,
+  playBonk,
   playCataclysm,
   playChains,
+  playClockCage,
+  playDraftChime,
   playDrop,
   playExplosion,
   playExtinction,
   playFreeze,
   playLightning,
   playNova,
+  playPetrify,
   playRampage,
   playSelect,
+  playShades,
   playShieldUp,
   playSiege,
   playSlip,
+  playSnooze,
   playStun,
   playSummon,
   playTransform,
@@ -251,6 +261,35 @@ function playSignature(id: string, count: number) {
       return playSiege(count);
     default:
       return playExplosion();
+  }
+}
+
+// The category-fallback cast voice: cards with NO bespoke signature entry get
+// a themed sound alongside their CastSpectacle, scaled up for marquee-tier
+// (8+) casts. Sleek (tier 1-4) casts stay silent here — the dock's card-use
+// chime already covers the quiet read.
+function playCastVoice(category: BuffCategory, marquee: boolean) {
+  switch (category) {
+    case "attack":
+      return marquee ? playAtomic(8) : playRampage(3);
+    case "tempo":
+      return marquee ? playClockCage() : playSnooze();
+    case "hex":
+      return marquee ? playShades() : playPetrify();
+    case "item":
+      return playBonk();
+    case "movement":
+      return playBlitz(marquee ? 5 : 3);
+    case "pieces":
+      return playSummon();
+    case "protection":
+      return playAegis();
+    case "info":
+      return playShades();
+    case "draft":
+      return playDraftChime();
+    case "nerf":
+      return playChains();
   }
 }
 
@@ -826,6 +865,41 @@ export function Board({
   const zoneSigRef = useRef<
     Map<number, { sig: string; order: number; role: "lead" | "target"; key: number }>
   >(new Map());
+  // --- Cast spectacles: EVERY played card gets a board-level themed read ----
+  // The category fallback layer (see CastSpectacle in BoardEffects): one
+  // overlay per card play, themed by the card's category and scaled by its
+  // tier. Runs for bespoke-signature cards too (their square art plays on
+  // top); its per-play sound only fires for cards with NO bespoke entry so
+  // nothing double-voices. Marquee-tier casts (8+) also thump the whole board
+  // crop with a transform-only shake, skipped under prefers-reduced-motion.
+  const cropRef = useRef<HTMLDivElement | null>(null);
+  const [cast, setCast] = useState<{
+    key: number;
+    category: BuffCategory;
+    tier: number;
+  } | null>(null);
+  const castSeenKeyRef = useRef(0);
+  useEffect(() => {
+    if (!signatureCard || signatureCard.key <= castSeenKeyRef.current) return;
+    castSeenKeyRef.current = signatureCard.key;
+    const def = BUFF_BY_ID[signatureCard.id];
+    if (!def) return;
+    setCast({ key: signatureCard.key, category: def.category, tier: def.tier });
+    const intensity = castIntensity(def.tier);
+    if (!SIGNATURES[signatureCard.id] && intensity !== "sleek") {
+      playCastVoice(def.category, intensity === "marquee");
+    }
+    if (intensity === "marquee") {
+      const el = cropRef.current;
+      if (el && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        el.classList.remove("fx-board-shake");
+        // Force a reflow so removing and re-adding the class restarts the
+        // animation even when two marquee casts land back to back.
+        void el.offsetWidth;
+        el.classList.add("fx-board-shake");
+      }
+    }
+  }, [signatureCard]);
 
   // Diff against the previous position during render (reference equality
   // guards against re-runs) so animated squares can be tagged in this pass.
@@ -1068,16 +1142,36 @@ export function Board({
     }
     return s;
   }, [buffs, board.pieces]);
+  // Movement-grant HYBRID sprites (owner request: an empowered piece should
+  // look like a genuinely new piece). Every running card that declares a
+  // movement grant (CardFx motif "empower" with moveAs) already paints a
+  // motif mark on each affected square — piece-bound cards on their one
+  // tracked piece, army-wide grants on every matching piece — so the granted
+  // type per square is a pure read of those marks. The Piece sprite then
+  // renders the fused hybrid (or the bespoke Amazon for queen+knight). The
+  // marks derive from public card state on both surfaces, so both players see
+  // the same new piece.
+  const moveAsSquares = useMemo(() => {
+    const m = new Map<number, PieceType>();
+    for (const mk of visual?.motifSquares ?? []) {
+      if (mk.motif !== "empower" || !mk.moveAs) continue;
+      const p = board.pieces[mk.sq];
+      if (p && mk.moveAs !== p.type) m.set(mk.sq, mk.moveAs);
+    }
+    return m;
+  }, [visual?.motifSquares, board.pieces]);
   const strikeSquares = useMemo(() => new Set(visual?.strikeSquares ?? []), [visual?.strikeSquares]);
   const walnutSquares = useMemo(() => new Set(visual?.walnutSquares ?? []), [visual?.walnutSquares]);
   const frozenSkins = visual?.frozenSkins ?? EMPTY_SKINS;
   const effectTurns = visual?.effectTurns ?? EMPTY_TURNS;
-  // "N turns left" status line for a square's active effect (null = permanent
-  // or none). Shown as the popover's own status row per effect.
+  // Duration status line for a square's active effect (null = permanent or
+  // none). Spelled out precisely (owner request): the timer ticks once each
+  // time the AFFECTED side completes a move, so "2 turns" means two more of
+  // their moves — up to four half-moves of the game — not two full rounds.
   const effectStatusLine = (sq: number): string | null => {
     const t = effectTurns[sq];
     if (t == null) return null;
-    return `${t} turn${t === 1 ? "" : "s"} left`;
+    return `${t} turn${t === 1 ? "" : "s"} left: ${t} more move${t === 1 ? "" : "s"} by the affected side (up to ${t * 2} half-moves)`;
   };
   const lockedSquares = useMemo(() => new Set(visual?.lockedSquares ?? []), [visual?.lockedSquares]);
   const bananaSquares = useMemo(() => new Set(visual?.bananaSquares ?? []), [visual?.bananaSquares]);
@@ -1879,7 +1973,7 @@ export function Board({
 
   return (
     <div ref={boardRef} className="relative w-full max-w-[min(92vw,720px)] aspect-square mx-auto">
-      <div className="absolute inset-2 sm:inset-3 rounded-sm overflow-hidden border border-black/40">
+      <div ref={cropRef} className="absolute inset-2 sm:inset-3 rounded-sm overflow-hidden border border-black/40">
         <div
           data-board-grid
           // touch-action: none is what makes drag work on mobile — without it
@@ -2220,6 +2314,7 @@ export function Board({
                         color={piece.color}
                         size="100%"
                         amazon={amazonSquares.has(sq)}
+                        moveAs={moveAsSquares.get(sq)}
                       />
                     )}
                   </div>
@@ -2273,6 +2368,14 @@ export function Board({
             );
           })}
         </div>
+
+        {/* Cast spectacle: the board-level themed read every played card gets
+            (category fallback layer). One-shot, keyed to the play so React
+            mounts it exactly once per cast; the finished overlay ends at
+            opacity 0 and simply waits to be replaced by the next cast. */}
+        {cast && (
+          <CastSpectacle key={`cast-${cast.key}`} category={cast.category} tier={cast.tier} />
+        )}
 
         {/* Drawn annotations: arrows above the pieces, clicks pass through. */}
         {(arrows.length > 0 || (rightDrag && rightDrag.hover !== rightDrag.from)) && (

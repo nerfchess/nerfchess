@@ -46,16 +46,22 @@ export const FUNNY_CHAOS: Buff[] = [
       id: "roulette",
       icon: "Dices",
       name: "Roulette",
-      description: "Spin the wheel: one random enemy piece other than the king is removed from the board.",
+      description: "Spin the wheel twice: two random enemy pieces other than the king are removed from the board.",
       tier: 5,
       category: "attack",
-      flavor: "Round and round she goes.",
+      flavor: "Round and round she goes. Twice.",
     },
+    // Two spins (owner request: the gambling cards paid out too little). Each
+    // spin re-reads the board, so the second can never hit an already-empty
+    // square; both draws run on the seeded api.rng and replay identically.
     instant((_inst, api) => {
-      const targets = mySquares(api.board, api.opp).filter(
-        (sq) => api.board.pieces[sq]!.type !== "k",
-      );
-      if (targets.length) api.removePiece(targets[api.rng.int(targets.length)]);
+      for (let spin = 0; spin < 2; spin++) {
+        const targets = mySquares(api.board, api.opp).filter(
+          (sq) => api.board.pieces[sq]!.type !== "k",
+        );
+        if (!targets.length) break;
+        api.removePiece(targets[api.rng.int(targets.length)]);
+      }
     }),
   ),
   card(
