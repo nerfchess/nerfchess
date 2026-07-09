@@ -1,0 +1,16 @@
+# Poll origin/master every 15 minutes so same-version replay drift (engine or
+# arena built from an older master than the deployed worker) self-heals without
+# anyone remembering to ping /update after a merge. The updater's own cooldown
+# and update.sh's applied-commit stamp make runs free when nothing changed.
+# Install: /etc/systemd/system/nerfchess-autoupdate.timer
+#   systemctl daemon-reload && systemctl enable --now nerfchess-autoupdate.timer
+[Unit]
+Description=Run nerfchess self-update check every 15 minutes
+
+[Timer]
+OnBootSec=3min
+OnUnitActiveSec=15min
+RandomizedDelaySec=60
+
+[Install]
+WantedBy=timers.target

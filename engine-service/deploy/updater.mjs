@@ -1,10 +1,13 @@
 // nerfchess engine self-updater (webhook target).
 //
 // The game-server Worker pings POST /update {replayVersion} when the engine
-// answers 409 (version drift, e.g. after a worker deploy). This service then
-// rebuilds the engine bundle from origin/master via update.sh and applies it
-// through the root-owned nerfchess-engine-apply. Runs as ubuntu on 127.0.0.1
-// only; the Cloudflare tunnel routes engine.nerfchess.com/update here.
+// answers 409 (version drift, e.g. after a worker deploy), and
+// nerfchess-autoupdate.timer pings it every 15 min at the applied version to
+// heal silent same-version drift (see docs/tokyo-box-self-update.md). This
+// service then rebuilds the engine AND arena bundles from origin/master via
+// update.sh and applies them through the root-owned nerfchess-engine-apply.
+// Runs as ubuntu on 127.0.0.1 only; the Cloudflare tunnel routes
+// engine.nerfchess.com/update here.
 //
 // GET  /update -> last/current run status (same bearer token).
 // POST /update {replayVersion:int} -> 202 started | 200 cooldown | 202 already_running.

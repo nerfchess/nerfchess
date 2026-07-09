@@ -1,26 +1,61 @@
 #!/usr/bin/env bash
-# Root half of the engine self-update: swap the bundle, stamp the env version,
-# restart, health-check. The only shape sudoers lets ubuntu run is this script;
-# it accepts nothing but an integer version and the one fixed bundle path.
+# Root half of the Tokyo box self-update: swap the engine and arena bundles,
+# stamp the env versions, restart, health-check. The only shape sudoers lets
+# ubuntu run is this script; it accepts nothing but an integer version, the two
+# fixed bundle paths, and a commit hash for the applied-commit stamp.
+#
+# A bundle that is byte-identical to the installed one is skipped (no restart),
+# so an update that only touches one service never bounces the other — and the
+# arena's in-RAM games only die when the arena itself actually changed.
 set -euo pipefail
 VER="${1:?}"
-BUNDLE="${2:?}"
+ENGINE_BUNDLE="${2:?}"
+ARENA_BUNDLE="${3:-}"
+COMMIT="${4:-}"
 case "$VER" in '' | *[!0-9]*) echo "bad version" >&2; exit 2 ;; esac
-[ "$BUNDLE" = "/opt/nerfchess-engine/repo/engine-service/dist/server.mjs" ] || { echo "bad bundle path" >&2; exit 2; }
-[ -s "$BUNDLE" ] || { echo "empty bundle" >&2; exit 2; }
+[ "$ENGINE_BUNDLE" = "/opt/nerfchess-engine/repo/engine-service/dist/server.mjs" ] || { echo "bad engine bundle path" >&2; exit 2; }
+[ -s "$ENGINE_BUNDLE" ] || { echo "empty engine bundle" >&2; exit 2; }
+if [ -n "$ARENA_BUNDLE" ]; then
+  [ "$ARENA_BUNDLE" = "/opt/nerfchess-engine/repo/arena-service/dist/server.mjs" ] || { echo "bad arena bundle path" >&2; exit 2; }
+  [ -s "$ARENA_BUNDLE" ] || { echo "empty arena bundle" >&2; exit 2; }
+fi
+if [ -n "$COMMIT" ]; then
+  case "$COMMIT" in *[!0-9a-f]*) echo "bad commit" >&2; exit 2 ;; esac
+fi
 
-cp /opt/nerfchess-engine/server.mjs "/opt/nerfchess-engine/server.mjs.bak-$(date +%Y%m%d-%H%M%S)"
-install -o root -g root -m 644 "$BUNDLE" /opt/nerfchess-engine/server.mjs
-sed -i "s/^ENGINE_REPLAY_VERSION=.*/ENGINE_REPLAY_VERSION=$VER/" /etc/nerfchess-engine.env
-systemctl restart nerfchess-engine
-for _ in 1 2 3 4 5; do
-  sleep 1
-  if curl -sf -m 3 localhost:8787/healthz >/dev/null; then
-    echo "applied REPLAY_VERSION=$VER"
-    # keep the five most recent backups
-    ls -t /opt/nerfchess-engine/server.mjs.bak-* 2>/dev/null | tail -n +6 | xargs -r rm --
-    exit 0
+apply_one() { # name bundle target env_file env_key unit port
+  local name="$1" bundle="$2" target="$3" env_file="$4" env_key="$5" unit="$6" port="$7"
+  if cmp -s "$bundle" "$target"; then
+    # Bundle unchanged; still stamp the env version (a version-only drift —
+    # same code, new number — needs the stamp + restart to take effect).
+    if grep -q "^$env_key=$VER\$" "$env_file"; then
+      echo "$name: unchanged, skipping restart"
+      return 0
+    fi
   fi
-done
-echo "engine failed health check after restart" >&2
-exit 4
+  cp "$target" "$target.bak-$(date +%Y%m%d-%H%M%S)"
+  install -o root -g root -m 644 "$bundle" "$target"
+  sed -i "s/^$env_key=.*/$env_key=$VER/" "$env_file"
+  systemctl restart "$unit"
+  for _ in 1 2 3 4 5; do
+    sleep 1
+    if curl -sf -m 3 "localhost:$port/healthz" >/dev/null; then
+      echo "$name: applied $env_key=$VER"
+      # keep the five most recent backups
+      ls -t "$target.bak-"* 2>/dev/null | tail -n +6 | xargs -r rm --
+      return 0
+    fi
+  done
+  echo "$name failed health check after restart" >&2
+  return 4
+}
+
+apply_one engine "$ENGINE_BUNDLE" /opt/nerfchess-engine/server.mjs \
+  /etc/nerfchess-engine.env ENGINE_REPLAY_VERSION nerfchess-engine 8787
+if [ -n "$ARENA_BUNDLE" ]; then
+  apply_one arena "$ARENA_BUNDLE" /opt/nerfchess-arena/server.mjs \
+    /etc/nerfchess-arena.env ARENA_REPLAY_VERSION nerfchess-arena 8788
+fi
+if [ -n "$COMMIT" ]; then
+  echo "$COMMIT" > /opt/nerfchess-engine/applied-commit
+fi
