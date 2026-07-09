@@ -47,6 +47,13 @@ import {
   turnsLeft,
 } from "./helpers";
 
+/** Chance a single apex draw upgrades from a tier-9 card to a tier-10 mythic.
+ * The ONE knob every apex grant shares: each slot of the bank-at-top offer,
+ * the Jackpot gamble, and any future grant all roll this same gate, so "a
+ * mythic replaces a tier 9 about one time in ten" holds everywhere. Lives here
+ * (not draft.ts) so helpers.ts can import it without a dependency cycle. */
+export const APEX_MYTHIC_CHANCE = 0.1;
+
 type Meta = {
   id: string;
   name: string;

@@ -160,10 +160,11 @@ function buildGameFromStart(start: MPStart): NerfGame {
   if (start.draft) {
     // The REAL draft seed (older servers omit it: fall back to 1). Offer rolls
     // are still discarded (the server's dtOffer / dtState frames carry the real
-    // cards), but a card whose EFFECT consumes the draft RNG (a random removal
-    // or spectacle) must roll the same stream the server did, or the rebuilt
-    // board diverges (removed pieces reappear) and the opponent's real moves
-    // then get rejected as out of sync. The mode sets the draft cadence the
+    // cards); matching the seed only keeps this replica's local placeholder
+    // rolls harmless. Card-EFFECT randomness no longer depends on any seed at
+    // all: api.rng is now derived per event from the synced public state (see
+    // fxRng in engine/game.ts), so random removals replay identically here,
+    // on the server, and for spectators. The mode sets the draft cadence the
     // dock displays.
     enableDraftMode(next, start.draftSeed ?? 1, { mode: start.mode });
     next = replayDraftGame(next, start.moves ?? [], start.dtActions ?? []);

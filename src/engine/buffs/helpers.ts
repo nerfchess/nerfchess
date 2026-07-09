@@ -11,7 +11,7 @@ import { BoardState, Color, FILE, Move, PieceType, RANK, SQ, Square, inBoard } f
 // Circular by design: tier9.ts imports the movement/effect factories below, and
 // this only reads TIER9 at call time (grantRandomTier9), never at module eval,
 // so the cycle resolves cleanly (tier9's array is built from hoisted functions).
-import { TIER9, TIER10 } from "./tier9";
+import { APEX_MYTHIC_CHANCE, TIER9, TIER10 } from "./tier9";
 
 // ---------------------------------------------------------------------------
 // Move-generation helpers for buff-granted movement. All of these produce
@@ -399,15 +399,17 @@ export function grantInventory(api: BuffApi, type: PieceType, n = 1) {
 /** Grant the holder a random apex card as an unspent, usable card added to
  * their hand (modeled on how acquireBuff seats a card: fresh instance, run
  * init, push). Rolls a tier-9 apex card most of the time and, roughly one time
- * in ten, a tier-10 mythic card instead. Every draw runs on the seeded api.rng
- * only (first the 10% gate, then the pick), so it advances the same RNG state
- * on every replica and replays identically (desync-safe). Both apex pools are
- * excluded from every normal draft, so this grant (and banking at the top tier)
- * is the only way one reaches a hand. */
+ * in ten (the shared APEX_MYTHIC_CHANCE gate the bank-at-top offer also
+ * rolls), a tier-10 mythic card instead. Every draw runs on the seeded api.rng
+ * only (first the gate, then the pick); api.rng is itself seeded from the
+ * synced public state, so the grant lands on the identical card on every
+ * replica (desync-safe). Both apex pools are excluded from every normal draft,
+ * so this grant (and banking at the top tier) is the only way one reaches a
+ * hand. */
 export function grantRandomTier9(api: BuffApi) {
-  // The 10% gate is drawn first and unconditionally, so the RNG stream advances
-  // the same way on every replica regardless of which pool is chosen.
-  const mythic = api.rng.next() < 0.1 && TIER10.length > 0;
+  // The gate is drawn first and unconditionally, so the draw sequence is the
+  // same on every replica regardless of which pool is chosen.
+  const mythic = api.rng.next() < APEX_MYTHIC_CHANCE && TIER10.length > 0;
   const pool = mythic ? TIER10 : TIER9;
   if (pool.length === 0) return;
   const def = pool[api.rng.int(pool.length)];
@@ -420,8 +422,8 @@ export function grantRandomTier9(api: BuffApi) {
  * added to their hand (same seating as grantRandomTier9, but never a tier-9
  * fallback unless TIER10 is somehow empty). Used by Chess Diff, whose whole
  * premise is that winning the diff hands you a mythic. A single seeded api.rng
- * draw picks the card, so it advances the RNG state identically on every replica
- * and replays deterministically (desync-safe). */
+ * draw picks the card (and api.rng is seeded from the synced public state), so
+ * every replica seats the identical card (desync-safe). */
 export function grantRandomTier10(api: BuffApi) {
   const pool = TIER10.length > 0 ? TIER10 : TIER9;
   if (pool.length === 0) return;
