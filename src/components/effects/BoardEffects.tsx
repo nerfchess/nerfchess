@@ -707,6 +707,7 @@ const TIER_COLOR: Record<number, string> = {
   7: "#a877d8",
   8: "#e05252",
   9: "#f4c430",
+  10: "#22d3ee",
 };
 
 // Same suit glyphs BuffCard stamps on card faces, shrunk to a micro-chip.
@@ -1280,6 +1281,7 @@ export type SigVisual =
   // wheels / a slot machine / a coin flip; tung_tung_sahur finally gets its own
   // drum-man bonk; and a spread of comedic library cards each get a bespoke gag.
   | "virusspread"
+  | "totalwar"
   | "fortunewheel"
   | "slotmachine"
   | "coinflip"
@@ -1759,6 +1761,10 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   boneca_ambalabu: { ordering: "radial", staggerMs: 50, victims: "all", visual: "tirefrog", hasLead: true, sound: "colossus", source: "slow" },
 
   // Apex / library flagships (Oblivion + Blood Pact render today off removals).
+  // Total War (the tier-10 board-wipe + fresh force) fires off the same
+  // removal diff as Oblivion but with its own war-march read: banners, a
+  // triple concussion, and per-square battle-standard slashes.
+  total_war: { ordering: "sweep", staggerMs: 45, victims: "all", visual: "totalwar", hasLead: true, sound: "atomic" },
   oblivion: { ordering: "radial", staggerMs: 45, victims: "all", visual: "oblivionwipe", hasLead: true, sound: "extinction" },
   blood_pact: { ordering: "radial", staggerMs: 0, victims: ["p"], visual: "bloodpact", hasLead: true, sound: "rampage" },
   regicide: { ordering: "radial", staggerMs: 0, victims: ["q"], visual: "regicideblade", hasLead: true, sound: "coronation", source: "empower" },
@@ -5770,6 +5776,14 @@ function VirusSpreadBurst({ lead, delayMs }: { lead: boolean; delayMs: number })
       <span className="pointer-events-none absolute inset-0 z-30" aria-hidden="true">
         <span className="absolute left-[-750%] top-[-750%] block h-[1600%] w-[1600%]">
           <span className="fx-sig-glitch absolute inset-0 block" style={{ background: "rgba(126,181,154,0.12)", animationDelay: `${delayMs}ms` }} />
+          {/* CRT scanline flicker over the whole board while the corruption runs. */}
+          <span
+            className="fx-cast-scanlines absolute inset-0 block"
+            style={{
+              background: "repeating-linear-gradient(0deg, rgba(126,181,154,0.10) 0 0.35%, transparent 0.35% 1%)",
+              animationDelay: `${delayMs + 60}ms`,
+            }}
+          />
           {VIRUS_COLS.map((c, i) => (
             <span key={i} className="fx-sig-codefall absolute top-[-28%] block h-[64%] w-[2.4%]" style={{ left: c.left, animationDelay: `${delayMs + c.d}ms` }}>
               <CodeColumn />
@@ -5779,6 +5793,18 @@ function VirusSpreadBurst({ lead, delayMs }: { lead: boolean; delayMs: number })
             <span key={`b${i}`} className="fx-sig-sweepbar absolute left-[-30%] block h-[2.6%] w-[160%] rounded-[1px]" style={{ top: b.top, background: b.c, animationDelay: `${delayMs + b.d}ms` }} />
           ))}
           <span className="fx-sig-flash absolute inset-[42%] block rounded-[1px]" style={{ background: "rgba(224,119,107,0.4)", animationDelay: `${delayMs + 120}ms` }} />
+          {/* The system gives up: an error window slams up mid-board, shakes,
+              and blinks out — the comedic beat of the takeover. */}
+          <span className="fx-cast-errorwin absolute left-[42%] top-[42%] block h-[10%] w-[16%]" style={{ animationDelay: `${delayMs + 620}ms` }}>
+            <svg viewBox="0 0 64 40" className="h-full w-full" aria-hidden="true">
+              <rect x="1" y="1" width="62" height="38" rx="2" fill="#141e2b" stroke="#7eb59a" strokeWidth="1.4" />
+              <rect x="1" y="1" width="62" height="8" rx="2" fill="#7eb59a" />
+              <path d="M56 3 L60 7 M60 3 L56 7" stroke="#141e2b" strokeWidth="1.4" strokeLinecap="round" />
+              <path d="M10 16 L18 24 M18 16 L10 24" stroke="#e0776b" strokeWidth="2.4" strokeLinecap="round" />
+              <path d="M24 17 H54 M24 22 H48 M24 27 H52" stroke="#8aa0b4" strokeWidth="1.6" strokeLinecap="round" />
+              <rect x="38" y="30" width="18" height="6" rx="1" fill="#e0776b" />
+            </svg>
+          </span>
         </span>
       </span>
     );
@@ -5954,8 +5980,9 @@ function DrumMan() {
 }
 function DrumBonkBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   if (lead) {
-    // BOARD-WIDE: the drum-man marches the full width of the board, and three
-    // drumbeat shockwaves pulse out across it - tung, tung, tung.
+    // BOARD-WIDE: the drum-man marches the full width of the board, three
+    // drumbeat shockwaves pulse out across it, and the chant itself lands as
+    // stamped words — TUNG, TUNG, TUNG on each beat, then a big SAHUR.
     return (
       <BoardWideStage>
         <BoardWash color="rgba(224,119,107,0.16)" delayMs={delayMs + 220} />
@@ -5967,6 +5994,29 @@ function DrumBonkBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
         {[0, 1, 2].map((i) => (
           <BoardBoom key={i} delayMs={delayMs + 180 + i * 240} color="rgba(224,119,107,0.8)" thickness={3} />
         ))}
+        {["35%", "45%", "55%"].map((left, i) => (
+          <span
+            key={`t${i}`}
+            className="fx-cast-stamp absolute top-[38%] block h-[4%] w-[8%]"
+            style={{ left, animationDelay: `${delayMs + 180 + i * 240}ms`, "--tilt": `${i % 2 ? 4 : -5}deg` } as React.CSSProperties}
+          >
+            <svg viewBox="0 0 60 22" className="h-full w-full" aria-hidden="true">
+              <text x="30" y="16" textAnchor="middle" fontSize="15" fontWeight="800" fill="#f4e9c8" stroke="#5a1512" strokeWidth="0.6" style={{ letterSpacing: "1px" }}>
+                TUNG
+              </text>
+            </svg>
+          </span>
+        ))}
+        <span
+          className="fx-cast-stamp absolute left-[41%] top-[50%] block h-[6%] w-[14%]"
+          style={{ animationDelay: `${delayMs + 900}ms`, "--tilt": "-3deg" } as React.CSSProperties}
+        >
+          <svg viewBox="0 0 90 26" className="h-full w-full" aria-hidden="true">
+            <text x="45" y="19" textAnchor="middle" fontSize="18" fontWeight="900" fill="#ffd95e" stroke="#5a1512" strokeWidth="0.7" style={{ letterSpacing: "1.5px" }}>
+              SAHUR!
+            </text>
+          </svg>
+        </span>
         <ShardBurst vectors={PIN_STARS} fill="#ffd95e" stroke="#8a6414" delayMs={delayMs + 300} sizePct={6} />
       </BoardWideStage>
     );
@@ -6666,7 +6716,208 @@ export function SignatureOverlay({
       return <HillFlagBurst lead={lead} delayMs={delayMs} />;
     case "sugarrush":
       return <SugarRushBurst lead={lead} delayMs={delayMs} />;
+    case "totalwar":
+      return <TotalWarBurst lead={lead} delayMs={delayMs} />;
     default:
       return null;
   }
+}
+
+// --- Total War (tier-10 mythic): the board goes to war -----------------------
+// Lead: a board-wide war march — a crimson wash, two heraldic banners sweeping
+// the full width in opposite directions, and a triple concussion that shoves
+// past the board edges. Targets: each wiped square takes a battle-standard
+// slash and a star burst, swept across the board in sequence.
+
+function WarBanner({ tilt }: { tilt: number }) {
+  return (
+    <svg viewBox="0 0 40 30" className="h-full w-full" aria-hidden="true" style={{ transform: `rotate(${tilt}deg)` }}>
+      <path d="M6 28 L6 3" stroke="#3a2a1a" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M7 4 H34 L28 9 L34 14 H7 Z" fill="#c2403a" stroke="#5a1512" strokeWidth="1" strokeLinejoin="round" />
+      <path d="M12 6.5 L15 11.5 M15 6.5 L12 11.5" stroke="#f4e9c8" strokeWidth="1.1" strokeLinecap="round" />
+      <circle cx="6" cy="2.6" r="1.7" fill="#e6bf6a" stroke="#7a5b23" strokeWidth="0.7" />
+    </svg>
+  );
+}
+
+function TotalWarBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(194,64,58,0.20)" delayMs={delayMs} />
+        {/* Two banners charge the board in opposite directions. */}
+        <span className="fx-sig-cross absolute left-[36%] top-[32%] block h-[16%] w-[15%]" style={{ animationDelay: `${delayMs}ms` }}>
+          <WarBanner tilt={-4} />
+        </span>
+        <span className="fx-sig-crossback absolute left-[49%] top-[52%] block h-[16%] w-[15%]" style={{ animationDelay: `${delayMs + 160}ms` }}>
+          <WarBanner tilt={5} />
+        </span>
+        {[0, 1, 2].map((i) => (
+          <BoardBoom key={i} delayMs={delayMs + 140 + i * 210} color="rgba(224,119,107,0.85)" thickness={4} />
+        ))}
+        <ShardBurst vectors={PIN_STARS} fill="#ffd95e" stroke="#8a6414" delayMs={delayMs + 420} sizePct={6} />
+      </BoardWideStage>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span
+        className="fx-sig-slash absolute left-[8%] top-[16%] block h-[68%] w-[84%]"
+        style={{ animationDelay: `${delayMs}ms` }}
+      >
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <path d="M4 36 L36 4" stroke="#f4e9c8" strokeWidth="3" strokeLinecap="round" />
+          <path d="M4 36 L36 4" stroke="#c2403a" strokeWidth="1.2" strokeLinecap="round" />
+        </svg>
+      </span>
+      <span
+        className="fx-sig-shock absolute inset-[14%] block rounded-full"
+        style={{ border: "2px solid rgba(224,119,107,0.9)", animationDelay: `${delayMs + 90}ms` }}
+      />
+      <ShardBurst vectors={PIN_STARS} fill="#e0776b" stroke="#5a1512" delayMs={delayMs + 90} sizePct={9} />
+    </span>
+  );
+}
+
+// --- Cast spectacles: EVERY card play gets a themed read ---------------------
+// The category fallback layer (owner request: "no card should ever play
+// silently"). Board mounts ONE CastSpectacle over the whole board crop each
+// time a card is played (any card — bespoke signature or not), themed by the
+// card's category and scaled by its tier:
+//   sleek   (tier 1-4): a quick, elegant edge ring + a diagonal shine sweep +
+//           a small emblem pop. Subtle enough to sit under bespoke art.
+//   grand   (tier 5-7): a category-tinted radial wash, a bigger emblem slam
+//           with a shockwave, and a spark ring.
+//   marquee (tier 8-10): a board takeover — vignette dim, twin sweeping beams,
+//           a colossal emblem, triple shockwaves (Board adds the screen shake).
+// All transform/opacity-only, all one-shot, all hidden under
+// prefers-reduced-motion (see effects.css). The emblem reuses the category
+// suit glyphs so the read matches the card face the player just clicked.
+
+export type CastIntensity = "sleek" | "grand" | "marquee";
+
+export function castIntensity(tier: number): CastIntensity {
+  return tier >= 8 ? "marquee" : tier >= 5 ? "grand" : "sleek";
+}
+
+/** Per-category theme: a saturated accent and a soft wash of the same hue. */
+export const CAST_THEME: Record<BuffCategory, { color: string; soft: string }> = {
+  movement: { color: "#67e8f9", soft: "rgba(103,232,249,0.14)" },
+  pieces: { color: "#e6bf6a", soft: "rgba(230,191,106,0.14)" },
+  tempo: { color: "#f4c430", soft: "rgba(244,196,48,0.13)" },
+  protection: { color: "#7eb59a", soft: "rgba(126,181,154,0.15)" },
+  attack: { color: "#e05252", soft: "rgba(224,82,82,0.14)" },
+  info: { color: "#8ba9c4", soft: "rgba(139,169,196,0.14)" },
+  draft: { color: "#e07ab8", soft: "rgba(224,122,184,0.13)" },
+  nerf: { color: "#5eead4", soft: "rgba(94,234,212,0.14)" },
+  hex: { color: "#a877d8", soft: "rgba(168,119,216,0.15)" },
+  item: { color: "#a3d160", soft: "rgba(163,209,96,0.14)" },
+};
+
+const CAST_SPARKS = [
+  { dx: "330%", dy: "-140%", rot: "200deg", delay: 0 },
+  { dx: "-310%", dy: "-190%", rot: "-230deg", delay: 30 },
+  { dx: "290%", dy: "170%", rot: "250deg", delay: 12 },
+  { dx: "-280%", dy: "200%", rot: "-210deg", delay: 40 },
+  { dx: "10%", dy: "-330%", rot: "140deg", delay: 20 },
+  { dx: "-20%", dy: "320%", rot: "-160deg", delay: 48 },
+];
+
+export function CastSpectacle({ category, tier }: { category: BuffCategory; tier: number }) {
+  const theme = CAST_THEME[category];
+  const Icon = CATEGORY_ICON[category];
+  const intensity = castIntensity(tier);
+  if (intensity === "sleek") {
+    return (
+      <span className="fx-cast pointer-events-none absolute inset-0 z-40 block" aria-hidden="true">
+        <span
+          className="fx-cast-ring absolute inset-[1.5%] block rounded-sm"
+          style={{ border: `1.5px solid ${theme.color}`, boxShadow: `inset 0 0 18px ${theme.soft}` }}
+        />
+        <span className="absolute inset-0 block overflow-hidden">
+          <span
+            className="fx-cast-sweep absolute top-[-40%] left-[-25%] block h-[180%] w-[10%]"
+            style={{
+              background: `linear-gradient(90deg, transparent, ${theme.soft}, transparent)`,
+              "--tilt": "14deg",
+            } as React.CSSProperties}
+          />
+        </span>
+        <span
+          className="fx-cast-emblem absolute left-1/2 top-[6%] ml-[-5%] flex h-[10%] w-[10%] items-center justify-center"
+          style={{ color: theme.color }}
+        >
+          <Icon className="h-full w-full" strokeWidth={2} />
+        </span>
+      </span>
+    );
+  }
+  if (intensity === "grand") {
+    return (
+      <span className="fx-cast pointer-events-none absolute inset-0 z-40 block" aria-hidden="true">
+        <span
+          className="fx-cast-wash absolute inset-0 block"
+          style={{ background: `radial-gradient(circle, ${theme.soft}, transparent 74%)` }}
+        />
+        <span
+          className="fx-cast-ring absolute inset-[1%] block rounded-sm"
+          style={{ border: `2px solid ${theme.color}`, boxShadow: `inset 0 0 26px ${theme.soft}` }}
+        />
+        <span
+          className="fx-cast-shock absolute left-1/2 top-1/2 ml-[-14%] mt-[-14%] block h-[28%] w-[28%] rounded-full"
+          style={{ border: `2px solid ${theme.color}` }}
+        />
+        <span
+          className="fx-cast-emblem-slam absolute left-1/2 top-1/2 ml-[-11%] mt-[-11%] flex h-[22%] w-[22%] items-center justify-center"
+          style={{ color: theme.color, filter: `drop-shadow(0 0 6px ${theme.soft})` }}
+        >
+          <Icon className="h-full w-full" strokeWidth={1.8} />
+        </span>
+        <span className="absolute left-1/2 top-1/2 ml-[-5%] mt-[-5%] block h-[10%] w-[10%]">
+          <ShardBurst vectors={CAST_SPARKS} fill={theme.color} stroke="#1a222e" delayMs={260} sizePct={70} />
+        </span>
+      </span>
+    );
+  }
+  return (
+    <span className="fx-cast pointer-events-none absolute inset-0 z-40 block" aria-hidden="true">
+      <span className="fx-cast-dim absolute inset-0 block" style={{ background: "rgba(6,10,16,0.5)" }} />
+      <span className="absolute inset-0 block overflow-hidden">
+        <span
+          className="fx-cast-beam absolute top-[-40%] left-[-30%] block h-[180%] w-[16%]"
+          style={{
+            background: `linear-gradient(90deg, transparent, ${theme.soft}, ${theme.color}22, transparent)`,
+            "--tilt": "16deg",
+          } as React.CSSProperties}
+        />
+        <span
+          className="fx-cast-beam-back absolute top-[-40%] right-[-30%] block h-[180%] w-[16%]"
+          style={{
+            background: `linear-gradient(90deg, transparent, ${theme.soft}, ${theme.color}22, transparent)`,
+            "--tilt": "-16deg",
+          } as React.CSSProperties}
+        />
+      </span>
+      {[0, 1, 2].map((i) => (
+        <span
+          key={i}
+          className="fx-cast-shock absolute left-1/2 top-1/2 ml-[-16%] mt-[-16%] block h-[32%] w-[32%] rounded-full"
+          style={{ border: `3px solid ${theme.color}`, animationDelay: `${140 + i * 190}ms` }}
+        />
+      ))}
+      <span
+        className="fx-cast-emblem-slam absolute left-1/2 top-1/2 ml-[-24%] mt-[-24%] flex h-[48%] w-[48%] items-center justify-center"
+        style={{ color: theme.color, filter: `drop-shadow(0 0 14px ${theme.soft})` }}
+      >
+        <Icon className="h-full w-full" strokeWidth={1.4} />
+      </span>
+      <span
+        className="fx-cast-ring absolute inset-[0.5%] block rounded-sm"
+        style={{ border: `2.5px solid ${theme.color}`, boxShadow: `inset 0 0 40px ${theme.soft}`, animationDelay: "120ms" }}
+      />
+      <span className="absolute left-1/2 top-1/2 ml-[-6%] mt-[-6%] block h-[12%] w-[12%]">
+        <ShardBurst vectors={CAST_SPARKS} fill={theme.color} stroke="#1a222e" delayMs={420} sizePct={85} />
+      </span>
+    </span>
+  );
 }

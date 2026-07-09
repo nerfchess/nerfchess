@@ -5,7 +5,6 @@ import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 import { type CSSProperties, useEffect, useMemo, useRef, useState } from "react";
 import { Board, QueuedPremove } from "@/components/Board";
-import { SIGNATURES } from "@/components/effects/BoardEffects";
 import { BoardPlayerRow } from "@/components/BoardPlayerRow";
 import { AdminGodPanel } from "@/components/AdminGodPanel";
 import { OppPlaysLog, type OppPlay } from "@/components/OppPlaysLog";
@@ -325,7 +324,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   const [signatureCard, setSignatureCard] = useState<{ id: string; key: number } | null>(null);
   const sigKeyRef = useRef(0);
   const fireSignature = (id: string) => {
-    if (SIGNATURES[id]) setSignatureCard({ id, key: ++sigKeyRef.current });
+    // Every known card fires: bespoke signatures get their choreography and
+    // every other card gets the Board's category cast spectacle.
+    if (BUFF_BY_ID[id]) setSignatureCard({ id, key: ++sigKeyRef.current });
   };
   // A held/passive buff whose onMovePlayed hook observably changed the board
   // (a summon, relocate, transform, revive, pawn-push, or a fresh board
@@ -347,7 +348,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           `Opponent's ${draftCardNoun(start.mode)} triggered`,
         );
       }
-      if (!firedSignature && SIGNATURES[inst.id]) {
+      if (!firedSignature) {
         fireSignature(inst.id);
         firedSignature = true;
       }
@@ -1001,7 +1002,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         // later activation) fires here for whichever seat can see its id.
         if (e.resolved.kind === "picked") {
           for (const c of e.resolved.cards ?? []) {
-            if ("id" in c && SIGNATURES[c.id]) {
+            // Instants resolve on the board at pick time; other kinds fire
+            // later at activation (dtUsed), so only instants cast here.
+            if ("id" in c && BUFF_BY_ID[c.id]?.kind === "instant") {
               fireSignature(c.id);
               break;
             }
