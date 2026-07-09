@@ -63,7 +63,7 @@ import { Color, PIECE_VALUE } from "./src/engine/types";
 import type { AchievementExtras } from "./src/lib/server/achievements";
 import { sessionTokenFromCookieHeader, userForSession } from "./src/lib/server/auth";
 import { ensureSchema } from "./src/lib/server/schema";
-import { loadCategoryRatings, recordFinishedGame, RatingChange } from "./src/lib/server/games";
+import { loadCategoryRatings, recordFinishedGame, RatingChange, type DraftRecord } from "./src/lib/server/games";
 import { categoryForTimeControl, type RatingCategory } from "./src/lib/speed";
 import { censorText, findProfanity } from "./src/lib/profanity";
 import { glickoUpdatePair } from "./src/lib/glicko";
@@ -652,6 +652,10 @@ type ArenaEndRecord = {
   draftSeed?: number;
   cadence?: number;
   draftActions?: StoredDraftAction[];
+  // Engine REPLAY_VERSION the arena built the record under (arena's own
+  // ArenaFinishedRecord carries it required; optional here so an older bundle
+  // that omits it still archives).
+  replayVersion?: number;
 };
 
 // Bootstrap state for a spectator's wstart, pushed by the arena for a watched,
@@ -718,6 +722,24 @@ function serializeMatchForEngine(match: StoredMatch): EngineMatch {
       (a): a is Exclude<StoredDraftAction, { a: "reroll" | "grant" }> =>
         a.a !== "reroll" && a.a !== "grant",
     ),
+  };
+}
+
+// The archive's full-fidelity draft record (draft games only). Unlike
+// serializeMatchForEngine, this keeps the COMPLETE action stream — including
+// reroll and grant — because the archive is the system of record and must be
+// losslessly, deterministically replayable, not merely best-effort. draftSeed
+// falls back to the game seed exactly as the replay loop does (enableDraftMode,
+// gameFromMatch). See docs/archive-draft-record.md.
+function draftRecordFromMatch(match: StoredMatch): DraftRecord {
+  return {
+    ...(match.mode ? { mode: match.mode } : {}),
+    draftSeed: match.draftSeed ?? match.setup.seed,
+    ...(match.cadence !== undefined ? { cadence: match.cadence } : {}),
+    ...(match.stacked ? { stacked: true } : {}),
+    ...(match.picksVisible ? { picksVisible: true } : {}),
+    ...(match.cardOverrides ? { cardOverrides: match.cardOverrides } : {}),
+    draftActions: match.draftActions ?? [],
   };
 }
 
@@ -2194,6 +2216,10 @@ export class GameServer extends DurableObject<Env> {
             // Mode games count toward (and, when rated, move) the per-mode
             // rating bucket instead of a speed bucket.
             ...(match.draft && match.mode ? { ratingCategory: match.mode } : {}),
+            // Full draft record so the game replays from the archive alone.
+            ...(match.draft ? { draftRecord: draftRecordFromMatch(match) } : {}),
+            // Engine-version provenance for every game (absent stamp = v1).
+            replayVersion: match.replayVersion ?? 1,
             startedAt: match.startedAt,
             completedAt: match.completedAt,
           }, this.env.HYPERDRIVE?.connectionString, this.achievementExtras(match));
@@ -4114,6 +4140,22 @@ export class GameServer extends DurableObject<Env> {
             rated: true,
             ruleset: "draft",
             ratingCategory: rec.mode,
+            // Full draft record so the arena game replays from the archive
+            // alone. Guarded so an older arena bundle (no draft fields) still
+            // archives exactly as before. The arena rolls its own pools, so no
+            // cardOverrides. draftActions here already exclude reroll/grant
+            // (the arena/spectator stream never carries them).
+            ...(rec.draftSeed !== undefined && rec.draftActions
+              ? {
+                  draftRecord: {
+                    mode: rec.mode,
+                    draftSeed: rec.draftSeed,
+                    ...(rec.cadence !== undefined ? { cadence: rec.cadence } : {}),
+                    draftActions: rec.draftActions,
+                  },
+                }
+              : {}),
+            replayVersion: rec.replayVersion,
             startedAt: rec.startedAt,
             completedAt: rec.completedAt,
           },

@@ -32,12 +32,15 @@ if (!password) {
 }
 
 // Explicit column list — the intersection of the D1 and PG `games` schemas.
+// draft_record is a JSON string in D1's TEXT column; PG's jsonb column parses
+// it on insert (server-side type inference). Old D1 rows carry NULL for both.
 const COLUMNS = [
   "id", "white_user_id", "black_user_id", "white_name", "black_name",
   "white_nerf_id", "black_nerf_id", "seed", "time_sec", "increment_sec",
   "moves", "winner", "reason", "rated", "category", "ruleset",
   "white_rating_before", "white_rating_after", "black_rating_before",
   "black_rating_after", "started_at", "completed_at",
+  "draft_record", "replay_version",
 ];
 
 // Plaintext is fine here: the SSH tunnel already encrypts the hop to the box.
