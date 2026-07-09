@@ -364,7 +364,14 @@ const abandonmentClaimMs = 30 * 1000;
 // completely when no human socket is connected, at most one house-vs-house
 // action runs per alarm tick, and games above the caps simply do not start.
 const houseSeeksKey = "hp:seeks";
-const houseSeededKey = "hp:seeded:v1";
+// Bump the suffix whenever the roster's IDENTITIES change (names added/renamed),
+// so ensureHouseUsers re-runs and INSERT-OR-IGNOREs the current personas. The v1
+// seed created an earlier roster; the live roster was later replaced with new
+// personas that never got a users/user_ratings row, so their profiles 404 AND
+// beating them moved no rating (recordFinishedGame needs BOTH seats' rows). v2
+// seeds the current roster. (Old orphaned bot accounts stay on the leaderboard;
+// harmless. This is separate from houseRatingsSyncedKey, which only UPDATEs.)
+const houseSeededKey = "hp:seeded:v2";
 // One-time-per-revision sync of every house account's rating to the current
 // houseSeedRating (see syncHouseRatings). Bump the suffix whenever the roster's
 // ratings change so existing accounts (seeded with INSERT OR IGNORE at the old
@@ -477,7 +484,7 @@ type HouseSeekEntry = {
 // (deserializing every finished game's move history), which on a bloated table
 // blew the DO CPU limit before it could cache or GC anything: the crash loop.
 const liveIdsKey = "live:ids";
-const buildVersion = "bot-reconnect-hardening-1";
+const buildVersion = "house-reseed-1";
 // The single account allowed to use the owner "fun with friends" tools: the
 // -15s opponent-clock button and the god panel card grant. SERVER-verified on
 // every gated message (never trust the client). Compared case-insensitively so
