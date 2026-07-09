@@ -12,6 +12,11 @@ export const HOUSE_ENABLED_KEY = "house_enabled";
 // slider between 30 and 60; an absent row means the default (30).
 export const HOUSE_COUNT_KEY = "house_count";
 
+// Whether ilovenewjeans's in-game "god panel" (summon a card into his own hand)
+// is mounted. Owner-only tool, kept hidden unless deliberately switched on from
+// /mod, so it never clutters normal play. Absent row = off (settingIsOnStrict).
+export const GOD_PANEL_KEY = "god_panel_enabled";
+
 export async function getAppSetting(db: D1Database, key: string): Promise<string | null> {
   try {
     const row = await db
@@ -38,4 +43,11 @@ export async function setAppSetting(db: D1Database, key: string, value: string):
 // else (including a missing row) is on, so the house bots default to enabled.
 export function settingIsOn(value: string | null): boolean {
   return value !== "0" && value !== "false";
+}
+
+// The opposite default: only an explicit "1"/"true" counts as on, so an absent
+// row reads as off. Used for opt-in tools that must stay hidden until switched
+// on deliberately (the owner god panel).
+export function settingIsOnStrict(value: string | null): boolean {
+  return value === "1" || value === "true";
 }

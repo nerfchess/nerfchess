@@ -105,6 +105,9 @@ export default function ModPage() {
   }, []);
 
   const isMod = me && (me.role === "mod" || me.role === "admin");
+  // The god panel is ilovenewjeans's personal tool, so its toggle only shows
+  // for that account (matched case-insensitively, like the game server).
+  const isOwner = !!me && me.username.toLowerCase() === "ilovenewjeans";
 
   return (
     <main className="min-h-screen">
@@ -149,6 +152,7 @@ export default function ModPage() {
             </div>
 
             <HouseBotsToggle />
+            {isOwner && <GodPanelToggle />}
 
             <div className="mt-6 flex flex-wrap gap-1 border-b border-white/10 pb-px">
               {(
@@ -655,6 +659,90 @@ function HouseBotsToggle() {
           online. Takes effect within a few seconds, no redeploy.
         </p>
       </div>
+    </div>
+  );
+}
+
+// The owner god panel is hidden by default; ilovenewjeans switches it on here
+// when he wants it, and it mounts in his next game. Mirrors HouseBotsToggle but
+// hits the owner-gated /api/mod/god-panel and defaults to off.
+function GodPanelToggle() {
+  const [enabled, setEnabled] = useState<boolean | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/mod/god-panel")
+      .then((res) => (res.ok ? (res.json() as Promise<{ enabled: boolean }>) : null))
+      .then((data) => {
+        if (!cancelled && data) setEnabled(data.enabled);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const toggle = async () => {
+    if (enabled === null || saving) return;
+    const next = !enabled;
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/mod/god-panel", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enabled: next }),
+      });
+      if (!res.ok) throw new Error();
+      const data = (await res.json()) as { enabled: boolean };
+      setEnabled(data.enabled);
+    } catch {
+      setError("Could not update. Try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="mt-4 plate flex flex-wrap items-center justify-between gap-3 p-4">
+      <div className="min-w-0">
+        <div className="font-display text-sm font-semibold text-parchment-50">God panel</div>
+        <p className="mt-0.5 max-w-md text-xs text-parchment-400">
+          Your in-game card-summon panel. Hidden by default so it never gets in the way; switch it
+          on here and it mounts in your next draft game. Only you can see or use it.
+        </p>
+        {error && <p className="mt-1 text-xs text-oxblood-glow">{error}</p>}
+      </div>
+      <button
+        type="button"
+        onClick={toggle}
+        disabled={enabled === null || saving}
+        aria-pressed={enabled === true}
+        title={enabled === null ? "Loading…" : enabled ? "God panel is on. Click to hide it." : "God panel is off. Click to show it."}
+        className={
+          "press shrink-0 inline-flex items-center gap-2 border px-4 py-2 font-display text-sm font-semibold transition disabled:opacity-60 " +
+          (enabled === null
+            ? "border-white/15 text-parchment-400"
+            : enabled
+              ? "border-verdigris/50 bg-verdigris/15 text-verdigris-glow"
+              : "border-oxblood-glow/50 bg-oxblood/15 text-oxblood-glow")
+        }
+      >
+        <span
+          aria-hidden
+          className={
+            "h-2 w-2 rounded-full " +
+            (enabled === null
+              ? "bg-parchment-400"
+              : enabled
+                ? "bg-verdigris-glow animate-flicker"
+                : "bg-oxblood-glow")
+          }
+        />
+        {enabled === null ? "…" : saving ? "Saving…" : enabled ? "On" : "Off"}
+      </button>
     </div>
   );
 }
