@@ -1026,6 +1026,15 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         // below batches with this so the Board claims exactly this diff).
         if (e.used.card) fireSignature(e.used.card.id);
         applyGame({ ...g });
+      } else if (e.type === "draft-diff-flag") {
+        // Someone flagged the Chess Diff's 1+0 clock: replay the same action
+        // the server recorded, so the diff ends against them, the paused game
+        // (board, effects) is restored, and the winner's mythic lands. The
+        // restored clocks arrive through the accompanying clock frame.
+        const g = gameRef.current;
+        if (!g?.buffs) return;
+        applyDraftAction(g, { ply: g.board.history.length, color: e.color, a: "diffFlag" });
+        applyGame({ ...g });
       } else if (e.type === "rematch-offer") {
         setRematchStatus(e.color === myColor ? "offered" : "incoming");
         // An offer from the opponent is proof of life.

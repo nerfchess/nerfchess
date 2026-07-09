@@ -9,6 +9,7 @@ import {
   legalMoves,
   newGame,
   playMove,
+  resolveDiffFlag,
 } from "@/engine/game";
 import type { Nerf, Tier } from "@/engine/nerf";
 import type { Color, Move } from "@/engine/types";
@@ -65,6 +66,11 @@ export function applyDraftAction(game: NerfGame, action: MPDraftAction) {
     }
   } else if (action.a === "bank") {
     bankDraft(game, action.color);
+  } else if (action.a === "diffFlag") {
+    // A Chess Diff clock flag (a server-time event the move stream cannot
+    // carry): end the diff against the flagged color and resume the paused
+    // game, exactly as the server did.
+    resolveDiffFlag(game, action.color);
   } else {
     // A use names the fired card: fill in a previously masked slot so the
     // engine can apply the real effect.

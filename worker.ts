@@ -25,6 +25,7 @@ import {
   playMove,
   rerollDraft,
   resign,
+  resolveDiffFlag,
   serializeGame,
 } from "./src/engine/game";
 import {
@@ -96,7 +97,11 @@ type Result = NerfGame["result"];
 //   5 - mutual king capture is now a DRAW (checkLossConditions): a king-capture
 //     where the winner's king is also hanging replays as a draw, not a win, so
 //     an in-flight game decided pre-bump must not resume post-bump.
-const REPLAY_VERSION = 5;
+//   6 - Chess Diff became a paused-game 1+0 sub-game (bs.diff): the cast no
+//     longer grants the caster a mythic and the board transform, turn, and
+//     grant timing all changed, so a game where the card resolved pre-bump
+//     replays into a completely different state post-bump.
+const REPLAY_VERSION = 6;
 
 // Refresh a match's replay checkpoint (see StoredMatch.checkpoint) at most once
 // per this many committed events (moves + draft actions), so gameForPlay never
@@ -129,6 +134,11 @@ type StoredDraftAction =
   // but NEVER surfaced in publicDraftActions, so the opponent's replica and
   // every spectator stay unaware it happened.
   | { ply: number; color: Color; a: "grant"; id: string; tier: number }
+  // A player flagged the Chess Diff sub-game's 1+0 clock (`color` is the
+  // flagged side). A server-time event the move stream cannot carry, so it is
+  // recorded (and sent to every replica) as a draft action: replaying it runs
+  // resolveDiffFlag, which ends the diff and resumes the paused game.
+  | { ply: number; color: Color; a: "diffFlag" }
   | { ply: number; color: Color; a: "use"; buffIndex: number; picks: BuffPick[] };
 type StoredMatch = {
   id: string;
@@ -207,6 +217,12 @@ type StoredMatch = {
   // activator's turn and tempo cards insert extra moves or skips, so move
   // parity no longer determines it. Classic games never set this.
   turnColor?: Color;
+  // Chess Diff sub-game in progress: the paused game's banked clocks, swapped
+  // back in when the diff is decided. Mirrors the engine's bs.diff (kept on
+  // the match so flag checks never need a game replay); in a timed game the
+  // live clocks hold the diff's 1+0 minute while this is set. Null/absent
+  // when no diff is running.
+  diff?: { savedClocks: Record<Color, number> } | null;
   // House-player seats: color -> house user id (see lib/server/bots.ts). A
   // house seat counts as connected for game start; the alarm plays its moves
   // and draft picks. Absent on every purely human game.
@@ -375,7 +391,11 @@ const houseSeeksKey = "hp:seeks";
 // needs BOTH seats' rows). v2 re-runs ensureHouseUsers over the full current
 // roster on the next cold start. Bump the suffix again if the roster identities
 // change. (Old orphaned bot accounts stay on the leaderboard; harmless.)
-const houseSeededKey = "hp:seeded:v2";
+// v3: twelve alliteration personas were renamed to plainer Lichess-style
+// handles (pawnstorm77, alexk2004, ...). New names mean new hp_ user ids, so
+// re-run ensureHouseUsers to create their rows. (The renamed old accounts
+// stay orphaned in the DB; harmless, same as the v2 note below.)
+const houseSeededKey = "hp:seeded:v3";
 // One-time-per-revision sync of every house account's rating to the current
 // houseSeedRating (see syncHouseRatings). Bump the suffix whenever the roster's
 // ratings change so existing accounts (seeded with INSERT OR IGNORE at the old
@@ -519,6 +539,9 @@ const firstMoveGraceMs = 10 * 1000;
 // push a clock below. A card pressures the opponent's time but must never
 // instantly flag them: a drained clock always keeps at least this much.
 const clockFxFloorMs = 3 * 1000;
+// Chess Diff sub-game time control: both clocks are swapped to a 1+0 minute
+// (no increment) while the diff runs, whatever the match's own control is.
+const chessDiffClockMs = 60 * 1000;
 // Draft lock-in window: every pick (the opening nerf pick and each buff
 // offer) must resolve within this window while the game clock is paused.
 // The server auto-resolves overdue picks so a stalling player cannot freeze
@@ -709,6 +732,18 @@ export class GameServer extends DurableObject<Env> {
   // deleteMatch); queue/seek changes are absorbed by the TTL.
   private lobbyCache: { at: number; payload: unknown } | null = null;
   private static readonly LOBBY_CACHE_TTL_MS = 2000;
+  // Cached LIVE per-mode ratings for the house roster, read from user_ratings
+  // (the same buckets recordFinishedGame moves after every rated game). The
+  // lobby's online list and the house seeks display from this, so a bot's
+  // shown rating actually moves as it wins and loses instead of sitting on
+  // its static seed forever. One bounded query per TTL window keeps the
+  // lobby/tick paths off per-poll D1 work; a read failure just falls back to
+  // houseSeedRating until the next refresh.
+  private houseRatingsCache: {
+    at: number;
+    byId: Map<string, Partial<Record<DraftMode, number>>>;
+  } | null = null;
+  private static readonly HOUSE_RATINGS_TTL_MS = 60_000;
   // Arena (Tier 2 / M2): bot-vs-bot games simulated on the OCI arena, kept in
   // memory only. Refreshed by /arena/games; entries older than the TTL are
   // ignored (self-heals if the arena crashes or the DO loses this on eviction).
@@ -1912,6 +1947,10 @@ export class GameServer extends DurableObject<Env> {
       // can never drift from the card definition.
       const def = BUFF_BY_ID[action.id];
       if (def) acquireBuff(game, action.color, action.id, def.tier);
+    } else if (action.a === "diffFlag") {
+      // A Chess Diff clock flag: end the diff against the flagged color and
+      // resume the paused game, exactly as the live path did.
+      resolveDiffFlag(game, action.color);
     } else {
       const bs = game.buffs;
       const mine = bs?.players[action.color];
@@ -1962,6 +2001,13 @@ export class GameServer extends DurableObject<Env> {
     const active = this.activeColor(match);
     if (clocks[active] > 0) return false;
 
+    // A flag during a Chess Diff loses the DIFF, never the match: the other
+    // side takes the mythic, the paused game (and its stashed clocks) resumes.
+    if (match.diff) {
+      await this.flagChessDiff(match, active, now, schedule);
+      return false;
+    }
+
     match.clocks = clocks;
     match.runningSince = null;
     match.result = {
@@ -1971,6 +2017,40 @@ export class GameServer extends DurableObject<Env> {
     match.completedAt = now;
     await this.endMatch(match, schedule);
     return true;
+  }
+
+  // A player ran out the Chess Diff's 1+0 clock: decide the diff against them
+  // in the engine, record it as a `diffFlag` draft action (a server-time event
+  // the move stream cannot carry — every rebuild and every replica replays the
+  // recorded action, so the record stays deterministic), restore the paused
+  // game's clocks, and tell every client. The match itself continues.
+  private async flagChessDiff(match: StoredMatch, flagged: Color, now: number, schedule = true) {
+    const game = await this.gameForPlay(match);
+    if (!game) return; // gameForPlay already ended an unreplayable match
+    if (game.buffs?.diff) {
+      match.draftActions = [
+        ...(match.draftActions ?? []),
+        { ply: match.moves.length, color: flagged, a: "diffFlag" },
+      ];
+      resolveDiffFlag(game, flagged);
+      match.turnColor = game.board.turn;
+    }
+    // Restore the paused game's clocks (also reconciles a skewed match.diff
+    // if the engine had no diff running).
+    this.applyDiffTransitions(match, game, now);
+    this.armBotAction(match, game, now);
+    this.maybeCheckpoint(match, game);
+    await this.saveMatch(match, schedule);
+    // Replicas replay the flag as a draft action; the clock frame carries the
+    // restored clocks and the draft state re-syncs the restored effects.
+    this.broadcast(match, "dtDiffFlag", { color: flagged });
+    this.sendWatchers(match, "dtDiffFlag", { color: flagged });
+    const clocks = this.currentClocks(match, now);
+    const clockFrame = { wc: Math.round(clocks.w), bc: Math.round(clocks.b) };
+    this.broadcast(match, "n", clockFrame);
+    this.sendWatchers(match, "n", clockFrame);
+    this.sendDraftState(match, game);
+    this.sendWatcherDraftState(match, game);
   }
 
   // Drain the buff system's pending clock adjustments (Time Thief, Deadline,
@@ -2021,6 +2101,39 @@ export class GameServer extends DurableObject<Env> {
       }
     }
     return changed;
+  }
+
+  // Reconcile the match record with the engine's Chess Diff state after any
+  // action that advanced the game. The engine flips bs.diff on/off entirely
+  // inside its deterministic replay; the match record mirrors it so flag
+  // checks never need a replay, and (in timed games) the clocks swap: the
+  // paused game's banked clocks are stashed and both sides get the diff's
+  // 1+0 minute, then swap back when the diff is decided. Banks the live
+  // clocks itself (idempotent if the caller already did) and restarts the
+  // charge from `now`, so no pre-diff elapsed time bleeds into the diff and
+  // no diff time bleeds back out. Returns true when the clocks changed.
+  private applyDiffTransitions(match: StoredMatch, game: NerfGame, now = Date.now()): boolean {
+    const engineDiff = !!game.buffs?.diff;
+    if (engineDiff && !match.diff) {
+      match.clocks = this.currentClocks(match, now);
+      match.diff = { savedClocks: { ...match.clocks } };
+      if (match.runningSince !== null) match.runningSince = now;
+      if (match.setup.timeSec) {
+        match.clocks = { w: chessDiffClockMs, b: chessDiffClockMs };
+        return true;
+      }
+      return false;
+    }
+    if (!engineDiff && match.diff) {
+      const saved = match.diff.savedClocks;
+      match.diff = null;
+      if (match.runningSince !== null) match.runningSince = now;
+      if (match.setup.timeSec) {
+        match.clocks = { ...saved };
+        return true;
+      }
+    }
+    return false;
   }
 
   // Final-board facts for achievement evaluation: material per side (kings
@@ -2435,7 +2548,10 @@ export class GameServer extends DurableObject<Env> {
     match.moves.push(uci);
     // Draft games: extra moves and skips can leave the turn off parity.
     if (match.draft) match.turnColor = nextGame.board.turn;
-    if (match.setup.timeSec) match.clocks[mover] += match.setup.incrementSec * 1000;
+    // No increment while a Chess Diff runs: the sub-game is strictly 1+0
+    // (this also covers the move that decides it — the paused game's restored
+    // clocks resume untouched below).
+    if (match.setup.timeSec && !match.diff) match.clocks[mover] += match.setup.incrementSec * 1000;
     const offersPending =
       match.draft && nextGame.buffs
         ? !!nextGame.buffs.players.w.offer || !!nextGame.buffs.players.b.offer
@@ -2453,6 +2569,9 @@ export class GameServer extends DurableObject<Env> {
     match.runningSince = nextGame.result || (offersPending && match.dtDeadline) ? null : now;
     match.result = nextGame.result;
     if (nextGame.result) match.completedAt = now;
+    // A move that decided a Chess Diff restores the paused game's clocks (the
+    // move frame below then carries the restored values to every client).
+    this.applyDiffTransitions(match, nextGame, now);
     // A clock-manipulation buff whose onMovePlayed hook fired this move adjusts
     // the clocks now, so the move frame below carries the updated values.
     this.applyClockFx(match, nextGame, now);
@@ -3305,14 +3424,16 @@ export class GameServer extends DurableObject<Env> {
     }
 
     // Keep 2-3 personas seeking across the two pools at all times (a mix of
-    // Nerf and Buff, rotating which personas via random draw).
+    // Nerf and Buff, rotating which personas via random draw). Seeks carry
+    // the persona's LIVE rating (cached, one bounded query per TTL window).
+    const liveRatings = await this.houseLiveRatings(db);
     while (seeks.length < houseSeekMin && free.length) {
       const persona = free.splice(randomInt(free.length), 1)[0];
-      seeks.push(this.newHouseSeek(persona, now));
+      seeks.push(this.newHouseSeek(persona, now, liveRatings));
     }
     if (seeks.length >= houseSeekMin && seeks.length < houseSeekMax && free.length && randomInt(100) < 5) {
       const persona = free.splice(randomInt(free.length), 1)[0];
-      seeks.push(this.newHouseSeek(persona, now));
+      seeks.push(this.newHouseSeek(persona, now, liveRatings));
     }
     // Per-mode floor: guarantee at least one seek in each pool so neither the
     // Nerf nor the Buff lobby is ever left without a house seeker (the random
@@ -3322,7 +3443,7 @@ export class GameServer extends DurableObject<Env> {
       if (!free.length) break;
       if (seeks.some((seek) => seek.mode === mode)) continue;
       const persona = free.splice(randomInt(free.length), 1)[0];
-      seeks.push({ ...this.newHouseSeek(persona, now), mode });
+      seeks.push({ ...this.newHouseSeek(persona, now, liveRatings), mode });
     }
     await this.ctx.storage.put(houseSeeksKey, seeks);
 
@@ -3621,14 +3742,56 @@ export class GameServer extends DurableObject<Env> {
     await this.commitMove(match, game, color, move, moveToUCI(move));
   }
 
-  private newHouseSeek(persona: HousePersona, now: number): HouseSeekEntry {
+  // Live per-mode ratings for the whole house roster, cached for
+  // HOUSE_RATINGS_TTL_MS (see houseRatingsCache). Missing rows and read
+  // failures fall back to houseSeedRating at the call sites.
+  private async houseLiveRatings(
+    db: D1Database | null,
+  ): Promise<Map<string, Partial<Record<DraftMode, number>>>> {
+    const now = Date.now();
+    if (this.houseRatingsCache && now - this.houseRatingsCache.at < GameServer.HOUSE_RATINGS_TTL_MS) {
+      return this.houseRatingsCache.byId;
+    }
+    const byId = new Map<string, Partial<Record<DraftMode, number>>>();
+    if (db) {
+      try {
+        const ids = HOUSE_ROSTER.map((p) => p.userId);
+        const placeholders = ids.map(() => "?").join(",");
+        const rows = await db
+          .prepare(
+            `SELECT user_id, category, rating FROM user_ratings
+             WHERE category IN ('nerf','buff') AND user_id IN (${placeholders})`,
+          )
+          .bind(...ids)
+          .all<{ user_id: string; category: string; rating: number }>();
+        for (const row of rows.results) {
+          if (row.category !== "nerf" && row.category !== "buff") continue;
+          const entry = byId.get(row.user_id) ?? {};
+          entry[row.category as DraftMode] = Math.round(row.rating);
+          byId.set(row.user_id, entry);
+        }
+      } catch {
+        // Fall back to seed ratings; retry after the TTL.
+      }
+    }
+    this.houseRatingsCache = { at: now, byId };
+    return byId;
+  }
+
+  private newHouseSeek(
+    persona: HousePersona,
+    now: number,
+    liveRatings?: Map<string, Partial<Record<DraftMode, number>>>,
+  ): HouseSeekEntry {
     const { pool, mode } = pickHouseSeek(randomInt);
     return {
       userId: persona.userId,
       name: persona.name,
       pool,
       mode,
-      rating: houseSeedRating(persona),
+      // The LIVE rating in the seek's mode bucket, so the number in the lobby
+      // moves with the account's real results (seed only as a fallback).
+      rating: liveRatings?.get(persona.userId)?.[mode] ?? houseSeedRating(persona),
       avatar: persona.avatar,
       at: now,
     };
@@ -4658,6 +4821,7 @@ export class GameServer extends DurableObject<Env> {
     type PublicDraftAction =
       | { ply: number; color: Color; a: "pick"; cards: ({ id: string; tier: number } | { hidden: true; tier: number })[] }
       | { ply: number; color: Color; a: "bank" }
+      | { ply: number; color: Color; a: "diffFlag" }
       | { ply: number; color: Color; a: "use"; buffIndex: number; picks: BuffPick[] };
     return (match.draftActions ?? []).flatMap<PublicDraftAction>((action, i) => {
       // Rerolls are a server-only RNG detail (the client never rolls offers);
@@ -4761,10 +4925,13 @@ export class GameServer extends DurableObject<Env> {
     ) {
       match.runningSince = Date.now();
     }
+    // A pick that cast Chess Diff swaps both clocks for the diff's 1+0 minute
+    // (the paused game's clocks are stashed on the match until it is decided).
+    const diffChanged = this.applyDiffTransitions(match, game);
     // A clock-manipulation buff picked or used this action (Time Thief, Jet
     // Lag, Overtime Whistle...) adjusts the authoritative clocks now, after the
     // turn-handover banking above so the delta lands on up-to-date values.
-    const clockChanged = this.applyClockFx(match, game);
+    const clockChanged = this.applyClockFx(match, game) || diffChanged;
     // House seats: a resolved action can hand the turn (or a fresh offer) to
     // the house side. No-op for purely human games.
     this.armBotAction(match, game, Date.now());
@@ -5569,10 +5736,19 @@ export class GameServer extends DurableObject<Env> {
       // house-vs-house filler games run up to houseVsHouseCap (each puts two
       // personas on genuine "playing" AND lists a watchable game above).
       const idlePersonas = activeHouseRoster(await this.houseCount()).filter((p) => !seen.has(p.userId));
+      // LIVE ratings (cached): a bot's displayed number moves with its real
+      // results instead of sitting on the static seed forever. Shown as the
+      // better of its two mode buckets, seed only as a fallback.
+      const liveRatings = await this.houseLiveRatings(await this.db());
       for (const persona of idlePersonas) {
+        const live = liveRatings.get(persona.userId);
+        const rating =
+          live && (live.nerf != null || live.buff != null)
+            ? Math.max(live.nerf ?? 0, live.buff ?? 0)
+            : houseSeedRating(persona);
         seen.set(persona.userId, {
           name: persona.name,
-          rating: houseSeedRating(persona),
+          rating,
           status: "online",
           avatar: persona.avatar,
         });
