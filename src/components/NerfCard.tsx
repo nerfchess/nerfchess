@@ -5,21 +5,8 @@ import { motion } from "framer-motion";
 import { GlossaryText } from "@/components/GlossaryText";
 import { NERF_TURN_COST } from "@/engine/buff";
 import { TurnCostBadge } from "@/components/TurnCostBadge";
-import { icons as LucideIcons, type LucideIcon, Unlink } from "lucide-react";
-
-/** Resolve a nerf's per-card lucide icon NAME to its component. Accepts both
- * the PascalCase export key ("Skull") and lucide's kebab-case id ("shield-alert",
- * "cloud-fog"), which is the form the nerf library uses. Unknown or misspelled
- * names return undefined so the caller falls back to a glyph, never crashing. */
-function resolveLucideIcon(name: string | undefined): LucideIcon | undefined {
-  if (!name) return undefined;
-  const direct = LucideIcons[name as keyof typeof LucideIcons];
-  if (direct) return direct as LucideIcon;
-  const pascal = name.replace(/(^|[-_ ])(\w)/g, (_m: string, _s: string, c: string) =>
-    c.toUpperCase(),
-  );
-  return LucideIcons[pascal as keyof typeof LucideIcons] as LucideIcon | undefined;
-}
+import { type LucideIcon, Unlink } from "lucide-react";
+import { nerfFaceIcon } from "@/lib/cardIcon";
 
 interface Props {
   nerf: Nerf;
@@ -49,23 +36,27 @@ export function NerfCard({ nerf, revealed = true, compact = false, ownerLabel, p
     );
   }
 
-  // Per-card icon (a lucide-react name on the nerf) draws a faint watermark so
-  // each rule reads distinct. Unknown / misspelled names fall back to the
-  // shared nerf glyph, so a bad name can never crash the card.
-  const FaceIcon: LucideIcon = resolveLucideIcon(nerf.icon) ?? Unlink;
+  // Per-card face icon from the shared globally-unique assignment (see
+  // src/lib/cardIcon.ts): every nerf in the library wears a face no other
+  // card in the game uses. Unlink survives only as the truly-last-resort
+  // fallback for an id outside the shipped library, so nothing can crash.
+  const FaceIcon: LucideIcon = nerfFaceIcon(nerf.id, nerf.icon) ?? Unlink;
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`relative plate draft-face p-5 overflow-hidden tier-bg-${nerf.tier} border`}
+      className={`group/card relative plate draft-face p-5 overflow-hidden tier-bg-${nerf.tier} border`}
     >
+      {/* Watermark: faint by default; hovering the card brightens it in the
+          card's tier (severity) color and nudges the scale. Transitions only
+          (no keyframes), so prefers-reduced-motion users just see the state
+          change; the scale nudge is additionally gated behind motion-safe. */}
       <FaceIcon
         aria-hidden
-        className={`pointer-events-none absolute -bottom-3 -right-2 tier-${nerf.tier}`}
+        className={`pointer-events-none absolute -bottom-3 -right-2 tier-${nerf.tier} opacity-[0.08] transition-all duration-200 group-hover/card:opacity-[0.18] motion-safe:group-hover/card:scale-105`}
         size={92}
         strokeWidth={1.2}
-        style={{ opacity: 0.08 }}
       />
       <div className="relative flex items-start justify-between gap-3">
         <div className="min-w-0">

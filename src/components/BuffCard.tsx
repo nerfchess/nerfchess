@@ -68,16 +68,18 @@ interface Props {
 export function BuffCard({ buff, tier, status, spent, nullified, onClick, compact, glow, enterDelayMs }: Props) {
   const t = tier ?? buff.tier;
   const dead = spent || nullified;
-  // Per-card icon: the buff's own lucide name when set, otherwise a DISTINCT
-  // glyph drawn deterministically from the category's icon ring (see
-  // cardFaceIcon) — so two cards sharing a category no longer wear the same
-  // face. Unknown names still degrade to the category glyph, never crash.
+  // Per-card icon: every buff in the library gets a GLOBALLY UNIQUE lucide
+  // glyph via cardFaceIcon (see src/lib/cardIcon.ts) — no two cards in the
+  // whole game wear the same face. The category glyph survives only as the
+  // truly-last-resort fallback for an unknown id, so nothing can crash.
   const CatIcon = cardFaceIcon(buff.id, buff.category, buff.icon) ?? CATEGORY_ICON[buff.category];
   const body = (
     <div
       style={enterDelayMs != null ? { animationDelay: `${enterDelayMs}ms` } : undefined}
       className={
-        `relative plate draft-face overflow-hidden border tier-bg-${t} ` +
+        // group/card (a NAMED group, so ancestor `group` wrappers in docks /
+        // overlays can't leak in) lets the face icons color up on card hover.
+        `group/card relative plate draft-face overflow-hidden border tier-bg-${t} ` +
         (enterDelayMs != null ? "draft-in " : "") +
         // Full-size cards fill their grid cell as a column so every card in
         // one draft offer lands the same height (description stretches, tier
@@ -94,15 +96,18 @@ export function BuffCard({ buff, tier, status, spent, nullified, onClick, compac
           : "")
       }
     >
-      {/* Category watermark: a large, faint suit glyph anchored bottom-right,
-          behind the text. Skipped on compact rows where it would just smear. */}
+      {/* Face watermark: a large glyph anchored bottom-right, behind the
+          text. Faint by default; hovering the card brightens it in the tier
+          (severity) color and nudges the scale. Transitions only (no
+          keyframes) so prefers-reduced-motion is respected; the scale nudge
+          is additionally gated behind motion-safe. Skipped on compact rows
+          where it would just smear. */}
       {!compact && (
         <CatIcon
           aria-hidden
-          className={`pointer-events-none absolute -bottom-3 -right-2 tier-${t}`}
+          className={`pointer-events-none absolute -bottom-3 -right-2 tier-${t} opacity-[0.08] transition-all duration-200 group-hover/card:opacity-[0.18] motion-safe:group-hover/card:scale-105`}
           size={84}
           strokeWidth={1.2}
-          style={{ opacity: 0.08 }}
         />
       )}
       <div className="relative flex items-start justify-between gap-2">
@@ -112,11 +117,13 @@ export function BuffCard({ buff, tier, status, spent, nullified, onClick, compac
           </div>
           <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
             <span className="inline-flex items-center gap-1 smallcaps text-[10px] text-parchment-400">
+              {/* Chip icon: parchment tone at rest; card hover tints it in the
+                  tier color via --tier-rgb (set by the root's tier-bg class). */}
               <CatIcon
                 aria-hidden
                 size={compact ? 11 : 12}
                 strokeWidth={compact ? 2 : 2.5}
-                className={compact ? "opacity-70" : "opacity-95"}
+                className={`transition-colors duration-200 group-hover/card:text-[rgb(var(--tier-rgb))] ${compact ? "opacity-70" : "opacity-95"}`}
               />
               {CATEGORY_LABEL[buff.category]}
             </span>
@@ -152,7 +159,7 @@ export function BuffCard({ buff, tier, status, spent, nullified, onClick, compac
       {!compact && /uncapturable|cannot be captured|can't be captured/i.test(buff.description) && (
         <p className="mt-2 text-[10.5px] leading-snug text-parchment-400">
           Note: a piece that cannot be captured may not capture the king while its
-          protection lasts — you must expose a piece to win.
+          protection lasts. You must expose a piece to win.
         </p>
       )}
       {/* Flavor line: the card's voice, quoted and dim, TCG-style. Full cards

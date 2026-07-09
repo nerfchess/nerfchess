@@ -92,4 +92,17 @@ export class IngestClient {
     // eslint-disable-next-line no-console
     console.error(JSON.stringify({ event: "arena_end_report_failed", id: record.id }));
   }
+
+  /** Report an aborted game so the DO ends its spectator replica for watchers.
+   *  `aborted: true` tells the DO to skip archive + rating entirely (there is
+   *  no outcome to record). Same retry posture as reportEnd; a lost abort is
+   *  covered by the DO's own replica watchdog. */
+  async reportAbort(record: ArenaFinishedRecord): Promise<void> {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const res = await this.post("/arena/end", { record, aborted: true });
+      if (res && res.ok) return;
+    }
+    // eslint-disable-next-line no-console
+    console.error(JSON.stringify({ event: "arena_abort_report_failed", id: record.id }));
+  }
 }

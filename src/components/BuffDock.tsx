@@ -9,7 +9,7 @@ import { Tier } from "@/engine/nerf";
 import { TIER_ROMAN } from "@/lib/tiers";
 import { playCardUse } from "@/lib/sounds";
 import { motion, useReducedMotion } from "framer-motion";
-import { Ban, ChevronRight, Clock, Hourglass, Inbox, Layers, ShieldAlert, Swords, type LucideIcon } from "lucide-react";
+import { Archive, Ban, ChevronRight, Clock, Hourglass, Inbox, Layers, ShieldAlert, Swords, type LucideIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { BuffCard } from "./BuffCard";
 import { OppPlaysDockSection, type OppPlay } from "./OppPlaysLog";
@@ -149,10 +149,12 @@ export function TargetingBanner({
   const finishable = targeting.target.kind === "square" && !!targeting.target.finishable;
   const picked = targeting.picks.length;
   return (
-    <div className="pointer-events-none absolute inset-x-0 bottom-2 z-30 flex justify-center px-2">
+    <div className="pointer-events-none absolute inset-x-0 top-full z-30 mt-1.5 flex justify-center px-2">
       {/* Your card is mid-use: a frosted glass chip with the card name, the
-          current step, a picked-so-far counter, and clear Done / Cancel.
-          Mint marks the active card (yours), coral the back-out. */}
+          current step, a picked-so-far counter, and clear Done / Cancel. Sits
+          just BELOW the board's bottom edge so it never hides the squares the
+          player is aiming at. Mint marks the active card (yours), coral the
+          back-out. */}
       <div className="glass-chip pointer-events-auto flex max-w-full items-center gap-2.5 border border-mint/40 px-3.5 py-2">
         <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-mint-glow" />
         <span className="min-w-0 truncate font-display text-xs font-semibold text-parchment">
@@ -302,6 +304,58 @@ function DockSectionHeader({
   );
 }
 
+/** Hoverable card name for the Latest pocket: mousing over (or tapping, on
+ * touch) the newest card's name raises a small popover with the full rule
+ * text, so "what did Grand Dominion do again?" is answered in place instead
+ * of hunting the row below. */
+function LatestHoverName({
+  name,
+  tier,
+  description,
+  className,
+}: {
+  name: string;
+  tier: Tier;
+  description?: string;
+  className: string;
+}) {
+  const [open, setOpen] = useState(false);
+  if (!description) return <span className={className}>{name}</span>;
+  return (
+    <span
+      className="relative min-w-0 flex-1"
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+    >
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className={
+          className +
+          " block w-full text-left underline decoration-dotted decoration-1 underline-offset-2 decoration-parchment-500/60"
+        }
+      >
+        {name}
+      </button>
+      {open && (
+        <span
+          role="tooltip"
+          className="plate dropdown absolute left-0 top-full z-30 mt-1.5 block w-64 max-w-[70vw] p-2.5 shadow-2xl"
+        >
+          <span className={`block font-display text-[12px] font-bold tier-${tier}`}>
+            {name}
+            <span className="ml-1.5 text-parchment-400">{TIER_ROMAN[tier]}</span>
+          </span>
+          <span className="mt-1 block text-[10px] font-normal normal-case leading-snug tracking-normal text-parchment-300">
+            {description}
+          </span>
+        </span>
+      )}
+    </span>
+  );
+}
+
 /** Unmistakable state stamp for a spent or nullified card, sized to read
  * without a hover. Nullified wears the oxblood alert colour; a plain "Used"
  * stays quiet but crisp. Kept at full strength (the row dims its name and
@@ -327,7 +381,7 @@ function UsedBadge({ nullified }: { nullified: boolean }) {
 // supplies the "N turns left" line). Answers "if I have blinkered bishops it
 // needs to show them" from the affected side.
 
-interface AgainstRow {
+export interface AgainstRow {
   key: string;
   name: string;
   detail: string;
@@ -347,7 +401,10 @@ const sqName = (sq: number) => "abcdefgh"[sq % 8] + (Math.floor(sq / 8) + 1);
 const turnsLeft = (turns: number | null) =>
   turns == null ? "Until it ends" : `${turns} turn${turns === 1 ? "" : "s"} left`;
 
-function againstYouRows(game: NerfGame, myColor: Color): AgainstRow[] {
+// Exported: the game surfaces also feed these rows to the board-wide splash
+// (BoardSplash), so a new constraint lands with one big announcement plus its
+// permanent row here in the dock.
+export function againstYouRows(game: NerfGame, myColor: Color): AgainstRow[] {
   const bs = game.buffs;
   if (!bs || game.result) return [];
   const rows: AgainstRow[] = [];
@@ -481,6 +538,20 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
     !BUFF_BY_ID[inst.id] || (hideOpponentCards && !inst.spent && !inst.nullified);
   const theirsShown = theirsAll.filter(({ inst }) => !isHiddenOpp(inst));
 
+  // Spent / nullified / activation-used cards leave the live sections and sink
+  // into one compact "Used" pile at the very bottom of the dock, tier
+  // descending, so the live sections only ever hold cards that still matter.
+  const isDead = (inst: (typeof mine)[number]) =>
+    !!(inst.spent || inst.nullified || inst.usedActivation);
+  const byTierDesc = (
+    a: { inst: (typeof mine)[number] },
+    b: { inst: (typeof mine)[number] },
+  ) => b.inst.tier - a.inst.tier;
+  const mineLive = mineAll.filter(({ inst }) => !isDead(inst));
+  const mineDead = mineAll.filter(({ inst }) => isDead(inst)).sort(byTierDesc);
+  const theirsLive = theirsShown.filter(({ inst }) => !isDead(inst));
+  const theirsDead = theirsShown.filter(({ inst }) => isDead(inst)).sort(byTierDesc);
+
   const lastMine = mine[mine.length - 1] ?? null;
   const lastMineDef = lastMine ? BUFF_BY_ID[lastMine.id] : undefined;
   const lastTheirs = theirs[theirs.length - 1] ?? null;
@@ -516,8 +587,9 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
     const usable = canAct && activatable;
     const status = inst.spent || inst.nullified ? null : def.status?.(inst) ?? null;
     const key = `mine-${i}`;
-    // Your own cards start expanded; collapse is a per-card choice.
-    const open = expanded[key] ?? true;
+    // Your own live cards start expanded; used ones land in the pile compact
+    // (collapsed) and only open on demand.
+    const open = expanded[key] ?? !dead;
     return (
       <motion.div
         key={i}
@@ -604,7 +676,9 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
                     onStartUse(i);
                   }}
                   onClick={() => onStartUse(i)}
-                  className="btn-glass btn-glass--primary mt-1.5 cursor-grab px-2.5 py-1 font-display text-[10px] font-semibold tracking-wide active:cursor-grabbing"
+                  // Thumb-sized below sm (44px is the touch floor); compact on
+                  // desktop where the pointer is precise.
+                  className="btn-glass btn-glass--primary mt-1.5 cursor-grab px-2.5 py-1 font-display text-[10px] font-semibold tracking-wide active:cursor-grabbing max-sm:min-h-[44px] max-sm:w-full max-sm:px-4 max-sm:text-xs"
                 >
                   Use
                 </button>
@@ -613,7 +687,7 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
                   type="button"
                   disabled
                   title="Your turn only"
-                  className="mt-1.5 cursor-not-allowed rounded-[1px] border border-white/10 bg-white/[0.03] px-2.5 py-1 font-display text-[10px] tracking-wide text-parchment-400"
+                  className="mt-1.5 cursor-not-allowed rounded-[1px] border border-white/10 bg-white/[0.03] px-2.5 py-1 font-display text-[10px] tracking-wide text-parchment-400 max-sm:min-h-[44px] max-sm:w-full max-sm:px-4 max-sm:text-xs"
                 >
                   Use
                 </button>
@@ -756,9 +830,14 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
                 initial={{ opacity: 0, x: -18, scale: 0.9 }}
                 animate={{ opacity: 1, x: 0, scale: 1 }}
                 transition={{ duration: 0.3 }}
-                className={`min-w-0 flex-1 truncate font-display text-[11px] font-semibold tier-${lastMine.tier}`}
+                className="flex min-w-0 flex-1"
               >
-                {lastMineDef?.name ?? "Banked"}
+                <LatestHoverName
+                  name={lastMineDef?.name ?? "Banked"}
+                  tier={lastMine.tier}
+                  description={lastMineDef?.description}
+                  className={`truncate font-display text-[11px] font-semibold tier-${lastMine.tier}`}
+                />
               </motion.span>
             )}
             {!lastMine && <span className="min-w-0 flex-1" />}
@@ -768,9 +847,14 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.3 }}
-                className={`max-w-[45%] shrink-0 truncate font-display text-[11px] tier-${lastTheirs.tier}`}
+                className="flex max-w-[45%] shrink-0"
               >
-                {BUFF_BY_ID[lastTheirs.id]?.name}
+                <LatestHoverName
+                  name={BUFF_BY_ID[lastTheirs.id]?.name ?? "Hidden"}
+                  tier={lastTheirs.tier}
+                  description={BUFF_BY_ID[lastTheirs.id]?.description}
+                  className={`truncate font-display text-[11px] tier-${lastTheirs.tier}`}
+                />
               </motion.span>
             )}
             </div>
@@ -865,34 +949,53 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
         <DockSectionHeader
           icon={Layers}
           label={`Your ${nounPlural}`}
-          count={mine.length}
+          count={mineLive.length}
           accent="mine"
         />
         {/* The next-draft chip above already says when cards arrive; repeating
             it here went stale after banks ("your first draft" forever). */}
-        {mine.length === 0 && <p className="text-[11px] text-parchment-400">None yet.</p>}
+        {mineLive.length === 0 && <p className="text-[11px] text-parchment-400">None yet.</p>}
         {/* A thin mint spine brackets your arsenal so "these are mine" is
-            unmistakable next to the opponent's coral rows. Every card you have
-            drafted stays here, used ones included. */}
-        {mine.length > 0 && (
-          <div className="space-y-1 border-l border-mint/30 pl-2">{mineAll.map(myRow)}</div>
+            unmistakable next to the opponent's coral rows. Only live cards sit
+            here; spent ones sink into the Used pile below. */}
+        {mineLive.length > 0 && (
+          <div className="space-y-1 border-l border-mint/30 pl-2">{mineLive.map(myRow)}</div>
         )}
 
-        {theirs.length > 0 && (
+        {theirsLive.length > 0 && (
           <>
             <div className="border-t border-white/10 pt-2">
               <DockSectionHeader
                 icon={Swords}
                 label={`Opponent's ${nounPlural}`}
-                count={theirs.length}
+                count={theirsLive.length}
                 accent="opponent"
               />
             </div>
-            <div className="space-y-1">{theirsShown.map(oppEntry)}</div>
+            <div className="space-y-1">{theirsLive.map(oppEntry)}</div>
             {/* Opponent hidden cards render nothing at all: no face-down minis
                 and no "N hidden" count. Cards summoned via the owner god panel
                 (and any still-masked card) stay fully invisible to the
                 opponent, on the left side included. */}
+          </>
+        )}
+
+        {/* The Used pile: every spent / nullified / activation-used card, both
+            sides, compact and tier-descending at the very bottom. Rows still
+            expand on click for the rule text. */}
+        {(mineDead.length > 0 || theirsDead.length > 0) && (
+          <>
+            <div className="border-t border-white/10 pt-2">
+              <DockSectionHeader
+                icon={Archive}
+                label="Used"
+                count={mineDead.length + theirsDead.length}
+              />
+            </div>
+            <div className="space-y-1 opacity-80">
+              {mineDead.map(myRow)}
+              {theirsDead.map(oppEntry)}
+            </div>
           </>
         )}
 

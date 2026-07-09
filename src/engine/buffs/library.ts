@@ -2566,7 +2566,7 @@ const TIER6: Buff[] = [
       id: "chess_diff",
       name: "Chess Diff",
       description:
-        "Chess diff! The game is paused and a fresh, completely normal game of 1+0 chess is played on a clean board — no drafts, no nerfs, no buffs. Whoever WINS the diff seizes a mythic (tier 10) buff, then the paused game (board and clocks) resumes.",
+        "Chess diff! The game is paused and a fresh, completely normal game of 1+0 chess is played on a clean board: no drafts, no nerfs, no buffs. Whoever WINS the diff seizes a mythic (tier 10) buff, then the paused game (board and clocks) resumes.",
       tier: 6,
       category: "pieces",
       boon: true,

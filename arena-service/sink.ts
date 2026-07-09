@@ -13,6 +13,12 @@ export interface ArenaSink {
   /** replayOk = did the finished record round-trip through replayToPosition
    *  back to the in-RAM board? M2 can ignore it; M1 gates on it. */
   gameEnd(record: ArenaFinishedRecord, replayOk: boolean): void;
+  /** The game was aborted (shutdown/pause/error) — no result, nothing to
+   *  archive or rate. Still MUST reach the DO: a watched game's spectator
+   *  replica only ends on an end frame, so a silent abort left TV watchers on
+   *  a board frozen forever. The record here is best-effort (an abort can land
+   *  mid-nerf-draft, before the game even built). */
+  gameAbort(record: ArenaFinishedRecord): void;
 }
 
 function log(event: string, data: unknown): void {
@@ -64,6 +70,12 @@ export class LogSink implements ArenaSink {
     });
   }
 
+  gameAbort(rec: ArenaFinishedRecord): void {
+    // Not a finish: no result/mode/ply counters (an abort is roster churn, not
+    // an outcome).
+    log("game_abort", { id: rec.id, mode: rec.mode, reason: rec.result.reason, plies: rec.moves.length });
+  }
+
   stats(): object {
     return {
       spawnedTotal: this.spawnedTotal,
@@ -94,6 +106,11 @@ export class IngestSink implements ArenaSink {
   gameEnd(record: ArenaFinishedRecord, replayOk: boolean): void {
     if (replayOk) void this.ingest.reportEnd(record);
   }
+  gameAbort(record: ArenaFinishedRecord): void {
+    // Only a streaming game can have a spectator replica at the DO; every
+    // other abort has nothing to clean up there.
+    if (this.ingest.isStreaming(record.id)) void this.ingest.reportAbort(record);
+  }
 }
 
 /** Fan a single event stream out to several sinks (e.g. LogSink + IngestSink). */
@@ -110,5 +127,8 @@ export class CompositeSink implements ArenaSink {
   }
   gameEnd(record: ArenaFinishedRecord, replayOk: boolean): void {
     for (const k of this.sinks) k.gameEnd(record, replayOk);
+  }
+  gameAbort(record: ArenaFinishedRecord): void {
+    for (const k of this.sinks) k.gameAbort(record);
   }
 }
