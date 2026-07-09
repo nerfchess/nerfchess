@@ -794,6 +794,26 @@ html[data-theme="light"] .tv-frame {
   86%, 100% { left: 130%; }
 }
 
+/* Calm red CTA: the Nerf terracotta family as a metal button. Warm and
+   settled, never the alert oxblood. White type stays AA on the clay base. */
+.btn-clay {
+  background: linear-gradient(to bottom, #c9836a, #b06a52);
+  color: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.28);
+  border-radius: 1px;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.2) inset,
+    0 2px 6px -2px rgba(0, 0, 0, 0.5);
+  transition: background 160ms ease, filter 160ms ease, box-shadow 180ms ease, transform 120ms ease;
+  font-weight: 600;
+  letter-spacing: 0.005em;
+}
+.btn-clay:hover { filter: brightness(1.05); }
+.btn-clay:active {
+  filter: brightness(0.95);
+  transform: translateY(0.5px);
+}
+
 /* Welcoming mint CTA: a friendly spring green with dark ink type, softer than
    the utility green and clearly distinct from the accent blue. Same
    metal-button physics as .btn-leaf. */
@@ -1076,6 +1096,72 @@ html[data-piece-source="lichess"] .piece-asset {
   .sq-pickable {
     animation: none;
   }
+}
+
+/* --- Empowered shine + passive edge aura ------------------------------------
+   "Stronger pieces shine": a piece carrying a live self-grant card fx
+   (empower / ward / rally) breathes a soft halo + crisp 1px ring in the
+   card's tier color (--tier-rgb, set inline by EmpowerAura.tsx), painted
+   UNDER the piece. While the viewer holds any such grant, .edge-aura washes
+   a whisper of the same tint along their edge of the board crop.
+   Perf law (DraftOverlay.css header): keyframes touch only transform and
+   opacity — the gradients and the ring are static paints. No big blurry
+   blobs: one crisp circle ring + a contained soft radial. Reduced motion
+   stills both to their static full-opacity paint (gate near the bottom of
+   this file). */
+.empower-shine::before {
+  /* Soft radial halo pooled under the piece's feet. */
+  content: "";
+  position: absolute;
+  inset: 8%;
+  pointer-events: none;
+  background: radial-gradient(
+    circle at 50% 56%,
+    rgb(var(--tier-rgb, 216 181 110) / 0.30),
+    rgb(var(--tier-rgb, 216 181 110) / 0.10) 52%,
+    transparent 72%
+  );
+  animation: empower-breathe 2.6s ease-in-out infinite;
+}
+.empower-shine::after {
+  /* Crisp 1px tier ring, breathing slightly out of phase in scale only. */
+  content: "";
+  position: absolute;
+  inset: 11%;
+  pointer-events: none;
+  border-radius: 999px;
+  border: 1px solid rgb(var(--tier-rgb, 216 181 110) / 0.7);
+  animation: empower-breathe-ring 2.6s ease-in-out infinite;
+}
+@keyframes empower-breathe {
+  0%, 100% { opacity: 0.55; transform: scale(0.97); }
+  50% { opacity: 1; transform: scale(1); }
+}
+@keyframes empower-breathe-ring {
+  0%, 100% { opacity: 0.45; transform: scale(0.965); }
+  50% { opacity: 0.9; transform: scale(1); }
+}
+/* Passive edge aura: very faint (color alpha caps at 0.14; the breathe dims
+   it further), hugging whichever crop edge is the viewer's. */
+.edge-aura {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 16%;
+  pointer-events: none;
+  animation: edge-aura-breathe 3.4s ease-in-out infinite;
+}
+.edge-aura-bottom {
+  bottom: 0;
+  background: linear-gradient(to top, rgb(var(--tier-rgb, 216 181 110) / 0.14), transparent 85%);
+}
+.edge-aura-top {
+  top: 0;
+  background: linear-gradient(to bottom, rgb(var(--tier-rgb, 216 181 110) / 0.14), transparent 85%);
+}
+@keyframes edge-aura-breathe {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
 }
 
 /* Selection: thick brass ring + light wash, so the piece stays readable on top */
@@ -1385,7 +1471,8 @@ nav, header { position: relative; z-index: 30; }
   .board-splash, .board-splash-card,
   .stagger-in > *,
   .sq-strike, .sq-freeze, .sq-freeze-flake, .sq-shield-in, .walnut-piece, .banana-peel,
-  .sq-walnut {
+  .sq-walnut,
+  .empower-shine::before, .empower-shine::after, .edge-aura {
     animation: none !important;
   }
   .walnut-squirrel { animation: none !important; opacity: 0 !important; }

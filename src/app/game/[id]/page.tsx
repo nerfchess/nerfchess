@@ -516,9 +516,13 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
     return () => clearInterval(id);
   }, [board.turn, clockEnabled, result, setup.started, uciMoves.length]);
 
-  // Draft games disable history scrubbing: positions between buff mutations
-  // cannot be rebuilt from the move list alone.
-  const scrubbing = !isDraft;
+  // Draft games can scrub history while the move list still reproduces the
+  // board. Once a card rewrites it outside move history (summons, removals,
+  // teleports set buffs.historyDiverged) earlier positions cannot be rebuilt
+  // from the moves alone, so review locks — the MoveList disables its
+  // controls and says why, instead of leaving live-looking buttons and arrow
+  // keys that silently do nothing.
+  const scrubbing = !isDraft || !draftGame?.buffs?.historyDiverged;
   const currentPly = scrubbing ? historyPly ?? history.length : history.length;
   const displayBoard =
     !scrubbing || historyPly == null ? board : boardAtPly(history, historyPly);
@@ -544,6 +548,9 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
         if (!scrubbing) return;
         setHistoryPly(ply >= history.length ? null : Math.max(0, ply));
       }}
+      // Review locked (a card rewrote the board): disable the nav controls
+      // and show the notice instead of swallowing clicks and arrow keys.
+      minPly={scrubbing ? 0 : history.length}
       clockEnabled={clockEnabled}
       whiteMs={whiteMs}
       blackMs={blackMs}
@@ -943,6 +950,7 @@ function GameShell({
   history,
   currentPly,
   onPlyChange,
+  minPly = 0,
   clockEnabled,
   whiteMs,
   blackMs,
@@ -960,6 +968,8 @@ function GameShell({
   history: ReturnType<typeof replayUci>["history"];
   currentPly: number;
   onPlyChange: (ply: number) => void;
+  /** Earliest reviewable ply (see MoveList.minPly). */
+  minPly?: number;
   clockEnabled: boolean;
   whiteMs: number;
   blackMs: number;
@@ -1037,6 +1047,7 @@ function GameShell({
                 moves={history}
                 currentPly={currentPly}
                 onPlyChange={onPlyChange}
+                minPly={minPly}
                 compact
               />
             </div>

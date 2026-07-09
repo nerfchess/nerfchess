@@ -262,6 +262,10 @@ const DEAL_STAGGER_MS = 80;
 const DEAL_MS = 280;
 const FLIP_MS = 300;
 const DEAL_TOTAL_MS = 900;
+// Pack opening: how long the sealed pack sits before tearing itself, and how
+// long the tear runs before the cards deal out of it.
+const PACK_HOLD_MS = 1150;
+const PACK_TEAR_MS = 520;
 const flipDelayMs = (i: number, tier: number) => i * DEAL_STAGGER_MS + DEAL_MS + 40 + tier * 12;
 
 // Accidental-double-click guard: a click on the already-selected card only
@@ -336,6 +340,9 @@ export function DraftOverlay({
   const nounCap = noun.charAt(0).toUpperCase() + noun.slice(1);
   const oppOffer = opponent?.offer ?? null;
   const reduceMotion = useReducedMotion();
+  // The strongest card in the offer decides the pack's finish (gold for 7+,
+  // mythic for 9/10) and whether the reveal earns a shake + confetti.
+  const maxTier = offer.cards.reduce((m, c) => Math.max(m, c.tier), 1);
   // Two-step pick: the first click only selects (highlight); the Confirm
   // button (or a second click on the same card) locks it in. `chosen` is the
   // confirmed card sliding into the pocket (the buff dock) before the pick
@@ -367,6 +374,11 @@ export function DraftOverlay({
   // chip (still one click from the cards), and a fresh offer / reroll pops it
   // back so an unresolved draft keeps re-announcing itself.
   const [tucked, setTucked] = useState(false);
+  // Pack opening: each offer arrives as a sealed pack that tears open before
+  // the cards deal. Tap to tear immediately; it auto-tears after a beat so a
+  // player who just wants cards is never held up. Skipped entirely under
+  // reduced motion and in the minimized panel.
+  const [packStage, setPackStage] = useState<"sealed" | "tearing" | "open">("open");
   // Measured flight path from the chosen card to the dock, captured at
   // confirm time (measuring during render would thrash layout).
   const [pocket, setPocket] = useState<{ dx: number; dy: number } | null>(null);
@@ -482,13 +494,37 @@ export function DraftOverlay({
     committedRef.current = false;
     selectedAtRef.current = 0;
     setDealt(!!reduceMotion);
+    // Fresh cards arrive as a sealed pack (full overlay, motion on); the deal
+    // timer starts once the pack tears open (see the pack effects below).
+    setPackStage(reduceMotion || minimized ? "open" : "sealed");
     // A fresh offer demands attention: the board is blocked until it resolves.
     playDraftChime();
-    if (reduceMotion) return;
-    const t = window.setTimeout(() => setDealt(true), DEAL_TOTAL_MS);
-    return () => window.clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dealKey]);
+
+  // Pack lifecycle: sealed -> (tap or auto) tearing -> open. The card deal and
+  // its settle timer only start once the pack is open.
+  useEffect(() => {
+    if (packStage !== "sealed") return;
+    const id = window.setTimeout(() => setPackStage("tearing"), PACK_HOLD_MS);
+    return () => window.clearTimeout(id);
+  }, [packStage]);
+  useEffect(() => {
+    if (packStage !== "tearing") return;
+    const id = window.setTimeout(() => setPackStage("open"), PACK_TEAR_MS);
+    return () => window.clearTimeout(id);
+  }, [packStage]);
+  useEffect(() => {
+    if (packStage !== "open") return;
+    if (reduceMotion) {
+      setDealt(true);
+      return;
+    }
+    const id = window.setTimeout(() => setDealt(true), DEAL_TOTAL_MS);
+    return () => window.clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [packStage]);
+  const tearPack = () => setPackStage((s) => (s === "sealed" ? "tearing" : s));
 
   useEffect(
     () => () => {
@@ -809,7 +845,11 @@ export function DraftOverlay({
         <motion.div
           initial={{ opacity: 0, y: 16, scale: 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          className="draft-frame corner-cut min-w-0 w-full"
+          className={
+            "draft-frame corner-cut min-w-0 w-full" +
+            // A mythic-grade pull rattles the whole panel as the pack opens.
+            (packStage === "open" && maxTier >= 9 && !reduceMotion ? " draft-shake" : "")
+          }
         >
           <div className="plate draft-panel max-h-[78dvh] w-full overflow-y-auto overflow-x-hidden p-5 sm:p-8">
         <div className="flex items-center justify-between gap-4">
@@ -869,6 +909,59 @@ export function DraftOverlay({
           </div>
         )}
 
+        {packStage !== "open" && (
+          /* The sealed pack: the cards' tiers stay secret, only the pack's
+             finish hints at what's inside (gold foil for a tier 7+ pull,
+             mythic shimmer for 9/10). Tap tears it open immediately. */
+          <button
+            type="button"
+            onClick={tearPack}
+            aria-label="Tear the pack open"
+            className="pack-shell mx-auto mt-6 block"
+          >
+            <div
+              className={
+                "pack " +
+                (maxTier >= 9 ? "pack--mythic " : maxTier >= 7 ? "pack--gold " : "") +
+                (packStage === "tearing" ? "pack--tearing" : "")
+              }
+            >
+              <span aria-hidden className="pack-burst" />
+              <span aria-hidden className="pack-flap">
+                <span className="pack-flap__zigzag" />
+              </span>
+              <span className="pack-body">
+                <span className="pack-numeral font-display">{offer.cards.length}</span>
+                <span className="smallcaps pack-label">
+                  {nounCap} pack · draft #{offer.index}
+                </span>
+                <span className="smallcaps pack-hint">Tap to tear open</span>
+              </span>
+            </div>
+          </button>
+        )}
+
+        {packStage === "open" && maxTier >= 9 && !reduceMotion && (
+          /* A tier 9/10 pull is an event: one confetti burst out of the pack's
+             position, deterministic angles, one shot, never blocks a click. */
+          <div key={`confetti-${dealKey}`} aria-hidden className="pointer-events-none relative">
+            <span className="draft-confetti">
+              {Array.from({ length: 26 }).map((_, i) => (
+                <i
+                  key={i}
+                  style={{
+                    ["--ang" as string]: `${(i * 137) % 360}deg`,
+                    ["--dist" as string]: `${110 + ((i * 53) % 140)}px`,
+                    ["--conf-delay" as string]: `${(i % 7) * 28}ms`,
+                  }}
+                  className={`confetti-bit confetti-bit--${i % 4}`}
+                />
+              ))}
+            </span>
+          </div>
+        )}
+
+        {packStage === "open" && (
         <div
           className={`draft-deal-grid mt-5 grid items-stretch gap-3 lg:gap-4 ${offer.cards.length >= 3 ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}
         >
@@ -963,6 +1056,30 @@ export function DraftOverlay({
                 onAnimationComplete={() => {
                   if (chosen === i) commit(i);
                 }}
+                // Parallax tilt: the pointer's position tips the card face in
+                // 3D (CSS vars read by .draft-card-front, so framer's own
+                // transform on this wrapper is never touched).
+                onMouseMove={
+                  reduceMotion
+                    ? undefined
+                    : (e) => {
+                        const el = e.currentTarget as HTMLElement;
+                        const r = el.getBoundingClientRect();
+                        el.style.setProperty(
+                          "--tiltY",
+                          `${((e.clientX - r.left) / r.width - 0.5) * 9}deg`,
+                        );
+                        el.style.setProperty(
+                          "--tiltX",
+                          `${((e.clientY - r.top) / r.height - 0.5) * -9}deg`,
+                        );
+                      }
+                }
+                onMouseLeave={(e) => {
+                  const el = e.currentTarget as HTMLElement;
+                  el.style.removeProperty("--tiltX");
+                  el.style.removeProperty("--tiltY");
+                }}
               >
                 <span aria-hidden className="draft-fx__glow" />
                 {/* 3D flip: the back faces the viewer while dealing, then the
@@ -988,6 +1105,9 @@ export function DraftOverlay({
                       tier={card.tier}
                       onClick={chosen == null && !banking ? () => choose(i) : undefined}
                     />
+                    {/* Foil finish: tier 7+ faces carry a slow holographic
+                        sheen that drifts across the card, TCG-rare style. */}
+                    {card.tier >= 7 && <span aria-hidden className="draft-holo" />}
                   </div>
                   {/* Card back: an ink panel with a hairline frame and the
                       tier numeral as a quiet watermark. */}
@@ -1002,6 +1122,7 @@ export function DraftOverlay({
             );
           })}
         </div>
+        )}
 
         <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-center">
           <button

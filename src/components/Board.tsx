@@ -24,6 +24,7 @@ import {
   SummonPoof,
   TransformFlourish,
 } from "./effects/BoardEffects";
+import { EdgeAura, EmpowerShine, tierRgb } from "./effects/EmpowerAura";
 import type { MotifMark } from "./effects/fxZones";
 import { EffectPopover, type EffectPopoverContent } from "./EffectPopover";
 import type { BuffCategory, BuffMatchState } from "@/engine/buff";
@@ -35,15 +36,22 @@ import {
   playBlitz,
   playBonk,
   playCataclysm,
+  playCathedral,
   playChains,
   playClockCage,
+  playClockIce,
+  playColossus,
+  playCoronation,
+  playCrownRain,
   playDraftChime,
   playDrop,
   playExplosion,
   playExtinction,
   playFreeze,
   playLightning,
+  playMassFreeze,
   playNova,
+  playPetrifiedForest,
   playPetrify,
   playRampage,
   playSelect,
@@ -55,6 +63,7 @@ import {
   playStun,
   playSummon,
   playTransform,
+  playWall,
 } from "@/lib/sounds";
 
 interface Visual {
@@ -261,6 +270,36 @@ function playSignature(id: string, count: number) {
       return playRampage(count);
     case "siege":
       return playSiege(count);
+    // Batch 2+ voices: every declared SigSoundKey routes to its own sounds.ts
+    // voice now, so a coronation no longer explodes.
+    case "coronation":
+      return playCoronation();
+    case "crownrain":
+      return playCrownRain();
+    case "colossus":
+      return playColossus();
+    case "snooze":
+      return playSnooze();
+    case "clockcage":
+      return playClockCage();
+    case "clockice":
+      return playClockIce();
+    case "blitz":
+      return playBlitz(count);
+    case "massfreeze":
+      return playMassFreeze();
+    case "petrify":
+      return playPetrify();
+    case "petrifiedforest":
+      return playPetrifiedForest();
+    case "aegis":
+      return playAegis();
+    case "cathedral":
+      return playCathedral();
+    case "shades":
+      return playShades();
+    case "wall":
+      return playWall();
     default:
       return playExplosion();
   }
@@ -2174,6 +2213,15 @@ export function Board({
                      edge; the path ahead is closed. */
                   <PawnFence edge={fenceEdge} />
                 )}
+                {motifShown && motifMark && isEmpowerMotif(motifMark.motif) && (
+                  /* Empowered-piece shine: a soft breathing halo + tier ring
+                     under a piece carrying a self-grant (empower/ward/rally).
+                     Rides the same motifShown gate as the badge, so frozen /
+                     walnut constraints silence it and it never paints where
+                     the motif itself is suppressed. Rendered before the piece
+                     div, so the piece always stays on top. */
+                  <EmpowerShine tier={motifMark.tier} />
+                )}
                 {motifShown && motifMark && (
                   /* Card-fx motif badge, tinted by the card's tier and
                      stamped with its category glyph. Keyed by motif + card
@@ -2373,6 +2421,24 @@ export function Board({
             );
           })}
         </div>
+
+        {/* Passive-grant edge aura: while any of the VIEWER's own pieces
+            carries a live self-grant motif (empower / ward / rally), a very
+            faint tinted glow breathes along the viewer's edge of the crop —
+            "you have a perk running". The strongest (highest-tier) grant
+            picks the tint; orientation decides which edge is the viewer's. */}
+        {(() => {
+          let bestTier = 0;
+          for (const mk of motifBySquare.values()) {
+            if (!isEmpowerMotif(mk.motif)) continue;
+            const p = board.pieces[mk.sq];
+            if (!p || p.color !== myColor) continue;
+            if (mk.tier > bestTier) bestTier = mk.tier;
+          }
+          return bestTier > 0 ? (
+            <EdgeAura color={myColor} orientation={orientation} tint={tierRgb(bestTier)} />
+          ) : null;
+        })()}
 
         {/* Cast spectacle: the board-level themed read every played card gets
             (category fallback layer). One-shot, keyed to the play so React
