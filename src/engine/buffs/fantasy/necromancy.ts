@@ -13,6 +13,7 @@ import {
   instant,
   lineSweep,
   myHalfZone,
+  anyEmptyZone,
   backRankZone,
   DIAG_DIRS,
   SQ,
@@ -64,7 +65,9 @@ function soulHarvestSweep(): Mech {
       const spots = emptySquares(api.board, myHalfZone(api))
         .filter((sq) => pawnRankOk(sq))
         .sort((a, b) => relRank(api.me, a) - relRank(api.me, b) || a - b);
-      for (let i = 0; i < reaped && i < spots.length; i++) {
+      // A bountiful harvest: one pawn per reaped piece, plus one bonus pawn.
+      const raised = reaped + 1;
+      for (let i = 0; i < raised && i < spots.length; i++) {
         api.place(spots[i], "p", api.me);
       }
     },
@@ -72,7 +75,7 @@ function soulHarvestSweep(): Mech {
 }
 
 // Undying Thrall reuses the back-rank revive (reviveOne, like Minor Recall) but
-// binds a timed_loss to the raised piece so it fights for 4 of your turns and
+// binds a timed_loss to the raised piece so it fights for 5 of your turns and
 // then crumbles to dust. That temporary lifespan is what distinguishes it from
 // the permanent recall it used to duplicate.
 function undyingThrallRevive(): Mech {
@@ -85,9 +88,9 @@ function undyingThrallRevive(): Mech {
       if (sq == null) return;
       const p = api.board.pieces[sq];
       // Only when a thrall was actually raised on this square (a captured minor
-      // was available): a timed_loss removes it after 4 of your own turns.
+      // was available): a timed_loss removes it after 5 of your own turns.
       if (p && p.color === api.me && p.type !== "k") {
-        addEffect(api, { kind: "timed_loss", owner: api.me, sq, turns: 4, then: "remove" });
+        addEffect(api, { kind: "timed_loss", owner: api.me, sq, turns: 5, then: "remove" });
       }
     },
   };
@@ -100,7 +103,7 @@ export const FANTASY_NECROMANCY: Buff[] = [
       icon: "Bone",
       name: "Undying Thrall",
       description:
-        "Bind a restless spirit into service: one of your captured knights or bishops claws back onto an empty square of your back rank and fights for 4 of your turns, then crumbles to dust, once.",
+        "Bind a restless spirit into service: one of your captured knights or bishops claws back onto an empty square of your back rank and fights for 5 of your turns, then crumbles to dust, once.",
       tier: 2,
       category: "pieces",
       flavor: "It does not remember dying, only serving.",
@@ -113,12 +116,12 @@ export const FANTASY_NECROMANCY: Buff[] = [
       icon: "Ghost",
       name: "Raise Dead",
       description:
-        "Speak the words of unmaking: one of your fallen pawns, knights, or bishops rises again on an empty square in your half, once.",
+        "Speak the words of unmaking: one of your fallen pawns, knights, or bishops rises again on any empty square, once.",
       tier: 3,
       category: "pieces",
       flavor: "The grave was only ever a suggestion.",
     },
-    reviveOne(["p", "n", "b"], myHalfZone),
+    reviveOne(["p", "n", "b"], anyEmptyZone),
   ),
   card(
     {
@@ -126,7 +129,7 @@ export const FANTASY_NECROMANCY: Buff[] = [
       icon: "HeartCrack",
       name: "Withering Touch",
       description:
-        "One enemy piece freezes solid for 2 of their turns, then withers to a walnut that can only shuffle one square at a time for the rest of the game. Kings cannot be targeted.",
+        "One enemy piece freezes solid for 3 of their turns, then withers to a walnut that can only shuffle one square at a time for the rest of the game. Kings cannot be targeted.",
       tier: 5,
       category: "hex",
       flavor: "Flesh remembers how to be dust.",
@@ -146,10 +149,10 @@ export const FANTASY_NECROMANCY: Buff[] = [
       (_inst, api, picks) => {
         const sq = picks[0]?.square;
         if (sq == null) return;
-        // Two decay stages: hold it frozen for 2 turns, then leave it a heavy
+        // Two decay stages: hold it frozen for 3 turns, then leave it a heavy
         // walnut (a one-square shuffle) for the rest of the game. The long
         // walnut timer stands in for "permanent"; a walnut has no null option.
-        addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2, skin: "stone" });
+        addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 3, skin: "stone" });
         addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 99 });
       },
     ),
@@ -160,7 +163,7 @@ export const FANTASY_NECROMANCY: Buff[] = [
       icon: "Wheat",
       name: "Soul Harvest",
       description:
-        "Your queen captures every enemy piece along one diagonal in a single move; for each piece reaped, a friendly pawn rises on an empty square in your half, once.",
+        "Your queen captures every enemy piece along one diagonal in a single move; for each piece reaped, a friendly pawn rises on an empty square in your half, plus one bonus pawn, once.",
       tier: 7,
       category: "attack",
       requires: ["q"],
@@ -174,7 +177,7 @@ export const FANTASY_NECROMANCY: Buff[] = [
       icon: "FlaskRound",
       name: "Lich Phylactery",
       description:
-        "The first time your queen is captured, a new queen appears on her home square if it is empty.",
+        "The first time your queen is captured, a new queen appears on her home square, or on the nearest empty square of your back rank if her home is taken.",
       tier: 6,
       category: "pieces",
       flavor: "You cannot kill what refuses to stay dead.",
@@ -183,8 +186,24 @@ export const FANTASY_NECROMANCY: Buff[] = [
       kind: "passive",
       onMovePlayed: (inst, move, api) => {
         if (move.color !== api.opp || move.captured !== "q") return;
-        const home = SQ(3, api.me === "w" ? 0 : 7);
-        if (!api.board.pieces[home]) api.place(home, "q", api.me);
+        // The queen rises on her home square, or the nearest empty back-rank
+        // square if her home is occupied (ties break toward the a-file, so the
+        // fallback is deterministic on every replica).
+        const rank = api.me === "w" ? 0 : 7;
+        let spot = api.board.pieces[SQ(3, rank)] ? -1 : SQ(3, rank);
+        if (spot < 0) {
+          let bestD = Infinity;
+          for (let f = 0; f < 8; f++) {
+            const sq = SQ(f, rank);
+            if (api.board.pieces[sq]) continue;
+            const d = Math.abs(f - 3);
+            if (d < bestD) {
+              bestD = d;
+              spot = sq;
+            }
+          }
+        }
+        if (spot >= 0) api.place(spot, "q", api.me);
         inst.spent = true;
       },
       status: () => "phylactery intact",
@@ -196,11 +215,11 @@ export const FANTASY_NECROMANCY: Buff[] = [
       icon: "Skull",
       name: "Army of the Dead",
       description:
-        "Three fresh pawns muster into your pocket, then drop them onto empty squares on later turns.",
+        "Four fresh pawns muster into your pocket, then drop them onto empty squares on later turns.",
       tier: 6,
       category: "pieces",
       flavor: "Roll call is a very long list of names.",
     },
-    instant((_inst, api) => grantInventory(api, "p", 3)),
+    instant((_inst, api) => grantInventory(api, "p", 4)),
   ),
 ];

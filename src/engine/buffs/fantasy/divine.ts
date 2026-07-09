@@ -15,7 +15,7 @@ import {
   reviveOne,
   activated,
   instant,
-  backRankZone,
+  myHalfZone,
   mySquares,
   slideMoves,
   leapMoves,
@@ -66,7 +66,7 @@ export const FANTASY_DIVINE: Buff[] = [
       icon: "Sun",
       name: "Divine Intervention",
       description:
-        "Your king cannot be captured for your opponent's next 2 turns, and the first enemy piece to strike at your king in that time is hurled clean off the board. Kings are never banished.",
+        "Your king cannot be captured for your opponent's next 3 turns, and the first enemy piece to strike at your king in that time is hurled clean off the board. Kings are never banished.",
       tier: 5,
       category: "protection",
       flavor: "Not today, the heavens say.",
@@ -75,8 +75,8 @@ export const FANTASY_DIVINE: Buff[] = [
     {
       kind: "passive",
       init: (inst, api) => {
-        inst.state.turns = 2;
-        addEffect(api, { kind: "king_safe", owner: api.me, turns: 2 });
+        inst.state.turns = 3;
+        addEffect(api, { kind: "king_safe", owner: api.me, turns: 3 });
       },
       onMovePlayed: (inst, move, api) => {
         if (move.color !== api.opp) return;
@@ -111,7 +111,7 @@ export const FANTASY_DIVINE: Buff[] = [
       icon: "Scale",
       name: "Judgment Day",
       description:
-        "A pillar of holy light smites one enemy knight, bishop, rook, or queen you name, then petrifies the enemy piece nearest the impact into stone for the rest of the game. Kings are never petrified.",
+        "A pillar of holy light smites one enemy knight, bishop, rook, or queen you name, then petrifies the two enemy pieces nearest the impact into stone for the rest of the game. Kings are never petrified.",
       tier: 6,
       category: "attack",
       flavor: "Weighed, measured, and found wanting; the stone is left to mark the spot.",
@@ -132,26 +132,24 @@ export const FANTASY_DIVINE: Buff[] = [
         const target = picks[0]?.square;
         if (target == null) return;
         api.removePiece(target);
-        // The pillar leaves a monument: the nearest surviving enemy piece is
-        // petrified to a walnut for the rest of the game (never a king). Nearest
-        // is Chebyshev distance; mySquares yields ascending squares and we only
-        // replace on a strictly smaller distance, so the lowest-index square
-        // wins ties. A pure read of the board, so it replays identically.
-        let best: Square | null = null;
-        let bestD = Infinity;
-        for (const sq of mySquares(api.board, api.opp)) {
-          if (api.board.pieces[sq]!.type === "k") continue;
-          const d = Math.max(
-            Math.abs(FILE(sq) - FILE(target)),
-            Math.abs(RANK(sq) - RANK(target)),
-          );
-          if (best == null || d < bestD) {
-            best = sq;
-            bestD = d;
-          }
-        }
-        if (best != null) {
-          addEffect(api, { kind: "walnut", sq: best, owner: api.opp, turns: 99 });
+        // The pillar leaves monuments: the two nearest surviving enemy pieces
+        // are petrified to walnuts for the rest of the game (never a king).
+        // Nearest is Chebyshev distance; the sort tie-breaks on the lower
+        // square index, so both picks are deterministic. A pure read of the
+        // board, so it replays identically.
+        const nearest = mySquares(api.board, api.opp)
+          .filter((sq) => api.board.pieces[sq]!.type !== "k")
+          .map((sq) => ({
+            sq,
+            d: Math.max(
+              Math.abs(FILE(sq) - FILE(target)),
+              Math.abs(RANK(sq) - RANK(target)),
+            ),
+          }))
+          .sort((a, b) => a.d - b.d || a.sq - b.sq)
+          .slice(0, 2);
+        for (const { sq } of nearest) {
+          addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 99 });
         }
       },
     ),
@@ -162,12 +160,12 @@ export const FANTASY_DIVINE: Buff[] = [
       icon: "Sparkles",
       name: "Hallowed Return",
       description:
-        "A prayer is answered: one of your captured knights, bishops, or rooks is restored to life on an empty square of your back rank, once.",
+        "A prayer is answered: one of your captured knights, bishops, or rooks is restored to life on an empty square in your half, once.",
       tier: 3,
       category: "pieces",
       flavor: "Called back from the far shore.",
     },
-    reviveOne(["r", "b", "n"], backRankZone),
+    reviveOne(["r", "b", "n"], myHalfZone),
   ),
   card(
     {
@@ -175,7 +173,7 @@ export const FANTASY_DIVINE: Buff[] = [
       icon: "ScrollText",
       name: "Divine Mandate",
       description:
-        "You speak with the authority of heaven: one enemy knight, bishop, or rook joins your army, and heaven shields the defection so it cannot be recaptured for your opponent's next 2 turns. Kings cannot be swayed.",
+        "You speak with the authority of heaven: one enemy knight, bishop, or rook joins your army, and heaven shields the defection so it cannot be recaptured for your opponent's next 3 turns. Kings cannot be swayed.",
       tier: 6,
       category: "pieces",
       flavor: "Kneel, and rise ours.",
@@ -197,8 +195,8 @@ export const FANTASY_DIVINE: Buff[] = [
         if (sq == null) return;
         api.setPieceColor(sq, api.me);
         // Heaven shields the defector: a square-scoped shield that follows the
-        // piece keeps it uncapturable for the opponent's next 2 turns.
-        addEffect(api, { kind: "shield", owner: api.me, squares: [sq], turns: 2 });
+        // piece keeps it uncapturable for the opponent's next 3 turns.
+        addEffect(api, { kind: "shield", owner: api.me, squares: [sq], turns: 3 });
       },
     ),
   ),
@@ -208,14 +206,14 @@ export const FANTASY_DIVINE: Buff[] = [
       icon: "Gavel",
       name: "Divine Reckoning",
       description:
-        "Judgment falls on the whole court: on your opponent's next turn they may move only their king, and their next drafted card arrives nullified.",
+        "Judgment falls on the whole court: for your opponent's next 2 turns they may move only their king, and their next drafted card arrives nullified.",
       tier: 5,
       category: "hex",
       flavor: "Every courtier is called to account at once.",
       fx: { motif: "jail", pieces: ["p", "n", "b", "r", "q"] },
     },
     instant((_inst, api) => {
-      addEffect(api, { kind: "king_only", against: api.opp, turns: 1 });
+      addEffect(api, { kind: "king_only", against: api.opp, turns: 2 });
       // The reckoning reaches their hand too: their next drafted buff arrives
       // nullified (spent before it can be used), reusing the engine's existing
       // draft-nullify flag so judgment strikes their army and their draft.
@@ -228,11 +226,11 @@ export const FANTASY_DIVINE: Buff[] = [
       icon: "CloudLightning",
       name: "Heaven's Wrath",
       description:
-        "The sky splits and twin bolts of wrath descend: smite two enemy knights, bishops, rooks, or queens you name from the board.",
+        "The sky splits and three bolts of wrath descend: smite three enemy knights, bishops, rooks, or queens you name from the board.",
       tier: 8,
       category: "attack",
       flavor: "There is no shelter from a righteous storm.",
     },
-    removeEnemies(2, ["n", "b", "r", "q"]),
+    removeEnemies(3, ["n", "b", "r", "q"]),
   ),
 ];

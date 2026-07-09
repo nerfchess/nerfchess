@@ -19,13 +19,13 @@ export const FUNNY_CLOCK: Buff[] = [
       icon: "Watch",
       name: "Time Thief",
       description:
-        "Pick your opponent's pocket: steal half of the time left on their clock (up to 60 seconds) and add it to your own.",
+        "Pick your opponent's pocket: steal half of the time left on their clock (up to 75 seconds) and add it to your own.",
       tier: 5,
       category: "tempo",
       flavor: "Tick tock, that's mine now.",
     },
     instant((_inst, api) => {
-      api.adjustClock({ stealFractionOfOpp: 0.5, stealCapSec: 60 });
+      api.adjustClock({ stealFractionOfOpp: 0.5, stealCapSec: 75 });
     }),
   ),
   card(
@@ -33,13 +33,13 @@ export const FUNNY_CLOCK: Buff[] = [
       id: "deadline",
       icon: "AlarmClock",
       name: "Deadline",
-      description: "Move the deadline up: your opponent's clock loses 30 seconds.",
+      description: "Move the deadline up: your opponent's clock loses 40 seconds.",
       tier: 4,
       category: "tempo",
       flavor: "The report was due yesterday.",
     },
     instant((_inst, api) => {
-      api.adjustClock({ subOppSec: 30 });
+      api.adjustClock({ subOppSec: 40 });
     }),
   ),
   card(
@@ -48,7 +48,7 @@ export const FUNNY_CLOCK: Buff[] = [
       icon: "Plane",
       name: "Jet Lag",
       description:
-        "Book your opponent a red-eye: their clock loses 15 seconds, and the next piece they move is left so groggy it must move again on the turn after. If that piece can no longer move, the repeat is skipped.",
+        "Book your opponent a red-eye: their clock loses 20 seconds, and the next piece they move is left so groggy it must move again on the turn after. If that piece can no longer move, the repeat is skipped.",
       tier: 3,
       category: "tempo",
       flavor: "What time zone is it even.",
@@ -61,7 +61,7 @@ export const FUNNY_CLOCK: Buff[] = [
     {
       kind: "passive",
       init: (inst, api) => {
-        api.adjustClock({ subOppSec: 15 });
+        api.adjustClock({ subOppSec: 20 });
         inst.state.turns = 2;
       },
       filterOpponentMoves: (moves, inst) => {
@@ -88,13 +88,13 @@ export const FUNNY_CLOCK: Buff[] = [
       id: "overtime_whistle",
       icon: "Bell",
       name: "Overtime Whistle",
-      description: "Blow the whistle for overtime: add 20 seconds to your own clock.",
+      description: "Blow the whistle for overtime: add 30 seconds to your own clock.",
       tier: 3,
       category: "tempo",
       flavor: "We are not done yet.",
     },
     instant((_inst, api) => {
-      api.adjustClock({ addSelfSec: 20 });
+      api.adjustClock({ addSelfSec: 30 });
     }),
   ),
   card(
@@ -103,13 +103,13 @@ export const FUNNY_CLOCK: Buff[] = [
       icon: "TimerReset",
       name: "Buzzer Beater",
       description:
-        "Steal a buzzer-beating 15 seconds off your opponent's clock and put it on yours.",
+        "Steal a buzzer-beating 20 seconds off your opponent's clock and put it on yours.",
       tier: 4,
       category: "tempo",
       flavor: "Off the glass at the buzzer.",
     },
     instant((_inst, api) => {
-      api.adjustClock({ stealFlatSec: 15 });
+      api.adjustClock({ stealFlatSec: 20 });
     }),
   ),
   card(
@@ -118,7 +118,7 @@ export const FUNNY_CLOCK: Buff[] = [
       icon: "Cpu",
       name: "Computer Virus",
       description:
-        "Upload a virus to your opponent's clock. At the end of each of their next 4 turns it drains 8 seconds from their time. The clock floor still stops it from flagging them instantly.",
+        "Upload a virus to your opponent's clock. At the end of each of their next 5 turns it drains 8 seconds from their time. The clock floor still stops it from flagging them instantly.",
       tier: 4,
       category: "tempo",
       flavor: "Your files are encrypted. Also your clock.",
@@ -126,7 +126,7 @@ export const FUNNY_CLOCK: Buff[] = [
     {
       kind: "passive",
       init: (inst) => {
-        inst.state.ticks = 4;
+        inst.state.ticks = 5;
       },
       onMovePlayed: (inst, move, api) => {
         // Tick only at the end of the opponent's turn (the virus eats THEIR

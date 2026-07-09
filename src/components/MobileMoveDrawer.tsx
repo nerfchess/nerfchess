@@ -17,12 +17,15 @@ export function MobileMoveDrawer({
   moves,
   currentPly,
   onPlyChange,
+  minPly = 0,
   footer,
   chatCount = 0,
 }: {
   moves: Move[];
   currentPly: number;
   onPlyChange: (ply: number) => void;
+  /** Earliest reviewable ply (see MoveList.minPly). */
+  minPly?: number;
   footer?: ReactNode;
   chatCount?: number;
 }) {
@@ -104,6 +107,7 @@ export function MobileMoveDrawer({
               moves={moves}
               currentPly={currentPly}
               onPlyChange={onPlyChange}
+              minPly={minPly}
               compact
               showHeader={false}
               footer={footer}

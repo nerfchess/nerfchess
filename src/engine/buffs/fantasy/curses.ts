@@ -27,12 +27,12 @@ export const FANTASY_CURSES: Buff[] = [
       icon: "EyeOff",
       name: "Evil Eye",
       description:
-        "One enemy piece you choose cannot move for 2 of their turns. Kings cannot be targeted.",
+        "One enemy piece you choose cannot move for 3 of their turns. Kings cannot be targeted.",
       tier: 2,
       category: "item",
       flavor: "It feels the stare and dares not move.",
     },
-    freezeTarget(2, "charm"),
+    freezeTarget(3, "charm"),
   ),
   card(
     {
@@ -40,13 +40,13 @@ export const FANTASY_CURSES: Buff[] = [
       icon: "Lock",
       name: "Shackle the Queen",
       description:
-        "Bind the enemy queen in cursed iron: your opponent cannot move their queen for their next 3 turns.",
+        "Bind the enemy queen in cursed iron: your opponent cannot move their queen for their next 4 turns.",
       tier: 4,
       category: "hex",
       flavor: "Even a crown answers to a good enough chain.",
       fx: { motif: "jail", pieces: ["q"] },
     },
-    curse(3, (moves) => moves.filter((m) => m.piece !== "q")),
+    curse(4, (moves) => moves.filter((m) => m.piece !== "q")),
   ),
   card(
     {
@@ -54,13 +54,13 @@ export const FANTASY_CURSES: Buff[] = [
       icon: "HeartPulse",
       name: "Curse of Frailty",
       description:
-        "A wasting curse saps the enemy's strength: for their next 2 turns your opponent cannot capture, and no piece of theirs may slide more than two squares.",
+        "A wasting curse saps the enemy's strength: for their next 3 turns your opponent cannot capture, and no piece of theirs may slide more than two squares.",
       tier: 5,
       category: "hex",
       flavor: "Every sword arm goes soft as wax.",
       fx: { motif: "anchor", pieces: "all" },
     },
-    curse(2, (moves) =>
+    curse(3, (moves) =>
       moves.filter((m) => {
         if (m.captured) return false;
         const dist = Math.max(
@@ -77,13 +77,13 @@ export const FANTASY_CURSES: Buff[] = [
       icon: "Footprints",
       name: "Doom March",
       description:
-        "A dread compulsion drives the enemy backward: for their next 3 turns every one of your opponent's pieces may only move toward or along its own back rank.",
+        "A dread compulsion drives the enemy backward: for their next 4 turns every one of your opponent's pieces may only move toward or along its own back rank.",
       tier: 5,
       category: "hex",
       flavor: "One slow, unwilling retreat into the dark.",
       fx: { motif: "anchor", pieces: "all" },
     },
-    curse(3, (moves, api) =>
+    curse(4, (moves, api) =>
       moves.filter((m) => relRank(api.opp, m.to) <= relRank(api.opp, m.from)),
     ),
   ),
@@ -93,13 +93,13 @@ export const FANTASY_CURSES: Buff[] = [
       icon: "Anchor",
       name: "Chains of Binding",
       description:
-        "Spectral chains lock the enemy's towers: both of your opponent's rooks turn to dead stone and cannot move for 3 of their turns.",
+        "Spectral chains lock the enemy's towers: both of your opponent's rooks turn to dead stone and cannot move for 4 of their turns.",
       tier: 5,
       category: "hex",
       flavor: "The clank of iron, then perfect stillness.",
       fx: { motif: "jail", pieces: ["r"] },
     },
-    walnutAll(["r"], 3),
+    walnutAll(["r"], 4),
   ),
   card(
     {
@@ -107,7 +107,7 @@ export const FANTASY_CURSES: Buff[] = [
       icon: "Mountain",
       name: "Hex of Stone",
       description:
-        "A creeping grey hex hardens the enemy's flanks: every one of your opponent's knights and bishops turns to a walnut for 3 of their turns, and for those 3 turns their rooks and queen may slide no more than two squares.",
+        "A creeping grey hex hardens the enemy's flanks: every one of your opponent's knights and bishops turns to a walnut for 4 of their turns, and for those 4 turns their rooks and queen may slide no more than two squares.",
       tier: 7,
       category: "hex",
       flavor: "The cavalry and the clergy, all one quarry now.",
@@ -115,13 +115,13 @@ export const FANTASY_CURSES: Buff[] = [
     },
     {
       kind: "passive",
-      // Petrify the minors for 3 turns, once, and open a 3-turn clamp window.
+      // Petrify the minors for 4 turns, once, and open a 4-turn clamp window.
       init: (inst, api) => {
-        inst.state.turns = 3;
+        inst.state.turns = 4;
         for (const sq of mySquares(api.board, api.opp)) {
           const t = api.board.pieces[sq]!.type;
           if (t === "n" || t === "b") {
-            addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 3 });
+            addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 4 });
           }
         }
       },

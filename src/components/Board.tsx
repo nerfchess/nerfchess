@@ -24,6 +24,40 @@ import {
   SummonPoof,
   TransformFlourish,
 } from "./effects/BoardEffects";
+import {
+  GenBurst,
+  genSignatureConfig,
+  runGenSelfCheck,
+  type GenConfig,
+} from "./effects/genSignature";
+
+// Signature resolution: bespoke entries win; every other card falls back to
+// its deterministic generated choreography (see genSignature.tsx), so no card
+// is ever left without a play animation. Generated configs are cached: the
+// generator is pure, so one build per card id per session is plenty.
+const genConfigCache = new Map<string, GenConfig>();
+function resolveSignature(id: string): SignatureConfig | GenConfig | undefined {
+  const bespoke = SIGNATURES[id];
+  if (bespoke) return bespoke;
+  const def = BUFF_BY_ID[id];
+  if (!def) return undefined;
+  let cfg = genConfigCache.get(id);
+  if (!cfg) {
+    cfg = genSignatureConfig(id, def.category, def.tier);
+    genConfigCache.set(id, cfg);
+  }
+  return cfg;
+}
+const isGenConfig = (cfg: SignatureConfig | GenConfig): cfg is GenConfig =>
+  (cfg.visual as { gen?: boolean }).gen === true;
+// Dev-only: prove the generated assignments stay collision-free next to the
+// bespoke table.
+if (process.env.NODE_ENV !== "production") {
+  try {
+    runGenSelfCheck(new Set(Object.keys(SIGNATURES)));
+  } catch {}
+}
+import { EdgeAura, EmpowerShine, tierRgb } from "./effects/EmpowerAura";
 import type { MotifMark } from "./effects/fxZones";
 import { EffectPopover, type EffectPopoverContent } from "./EffectPopover";
 import type { BuffCategory, BuffMatchState } from "@/engine/buff";
@@ -35,15 +69,22 @@ import {
   playBlitz,
   playBonk,
   playCataclysm,
+  playCathedral,
   playChains,
   playClockCage,
+  playClockIce,
+  playColossus,
+  playCoronation,
+  playCrownRain,
   playDraftChime,
   playDrop,
   playExplosion,
   playExtinction,
   playFreeze,
   playLightning,
+  playMassFreeze,
   playNova,
+  playPetrifiedForest,
   playPetrify,
   playRampage,
   playSelect,
@@ -55,6 +96,7 @@ import {
   playStun,
   playSummon,
   playTransform,
+  playWall,
 } from "@/lib/sounds";
 
 interface Visual {
@@ -261,6 +303,36 @@ function playSignature(id: string, count: number) {
       return playRampage(count);
     case "siege":
       return playSiege(count);
+    // Batch 2+ voices: every declared SigSoundKey routes to its own sounds.ts
+    // voice now, so a coronation no longer explodes.
+    case "coronation":
+      return playCoronation();
+    case "crownrain":
+      return playCrownRain();
+    case "colossus":
+      return playColossus();
+    case "snooze":
+      return playSnooze();
+    case "clockcage":
+      return playClockCage();
+    case "clockice":
+      return playClockIce();
+    case "blitz":
+      return playBlitz(count);
+    case "massfreeze":
+      return playMassFreeze();
+    case "petrify":
+      return playPetrify();
+    case "petrifiedforest":
+      return playPetrifiedForest();
+    case "aegis":
+      return playAegis();
+    case "cathedral":
+      return playCathedral();
+    case "shades":
+      return playShades();
+    case "wall":
+      return playWall();
     default:
       return playExplosion();
   }
@@ -500,7 +572,7 @@ function orderSignature(
   capturedSquare: Square | null,
   orientation: Color,
 ): { targets: { sq: Square; order: number; role: "lead" | "target" }[]; leadSq: Square | null } {
-  const cfg = SIGNATURES[id];
+  const cfg = resolveSignature(id);
   if (!cfg) return { targets: [], leadSq: null };
   // Claim only the victim types this signature owns; anything else stays a
   // plain detonation (handled by the caller).
@@ -635,7 +707,7 @@ function computeBoardFx(
   orientation: Color,
 ): Map<Square, BoardFx> {
   const fx = new Map<Square, BoardFx>();
-  const sig = signatureId ? SIGNATURES[signatureId] : null;
+  const sig = signatureId ? resolveSignature(signatureId) ?? null : null;
   let appeared = 0;
   let vanishedCount = 0;
   const lostColor: Record<Color, boolean> = { w: false, b: false };
@@ -880,16 +952,21 @@ export function Board({
   const cropRef = useRef<HTMLDivElement | null>(null);
   const [cast, setCast] = useState<{
     key: number;
+    id: string;
     category: BuffCategory;
     tier: number;
   } | null>(null);
   const castSeenKeyRef = useRef(0);
+  // Play keys whose lead art already rendered through the piece-diff path;
+  // the cast-level generated lead only fires for diff-less plays (clock,
+  // draft, info cards...) so a card never leads twice.
+  const castLeadSuppressKeyRef = useRef(0);
   useEffect(() => {
     if (!signatureCard || signatureCard.key <= castSeenKeyRef.current) return;
     castSeenKeyRef.current = signatureCard.key;
     const def = BUFF_BY_ID[signatureCard.id];
     if (!def) return;
-    setCast({ key: signatureCard.key, category: def.category, tier: def.tier });
+    setCast({ key: signatureCard.key, id: signatureCard.id, category: def.category, tier: def.tier });
     const intensity = castIntensity(def.tier);
     if (!SIGNATURES[signatureCard.id] && intensity !== "sleek") {
       playCastVoice(def.category, intensity === "marquee");
@@ -917,9 +994,12 @@ export function Board({
     );
     animsRef.current = anims;
     const activeSig =
-      signatureCard && signatureCard.key > sigSeenKeyRef.current && SIGNATURES[signatureCard.id]
+      signatureCard && signatureCard.key > sigSeenKeyRef.current && resolveSignature(signatureCard.id)
         ? signatureCard.id
         : null;
+    // A diff claimed this play key: the cast-level generated lead stands down
+    // (the diff path renders the lead on its own lead square).
+    if (activeSig && signatureCard) castLeadSuppressKeyRef.current = signatureCard.key;
     if (signatureCard) sigSeenKeyRef.current = signatureCard.key;
     fxRef.current = computeBoardFx(
       prevPiecesRef.current,
@@ -1002,7 +1082,10 @@ export function Board({
     // A signature plays its own choreographed voice (scaled to how many
     // squares it cleared) and suppresses the generic explosion for its own
     // hits; any un-dressed detonation this turn still cracks normally.
-    if (sigId) playSignature(sigId, Math.max(1, sigCount));
+    // Bespoke signatures voice themselves; generated ones stay quiet here
+    // because the category cast voice (playCastVoice) already covered the
+    // play, and double-voicing reads as a bug.
+    if (sigId && SIGNATURES[sigId]) playSignature(sigId, Math.max(1, sigCount));
     if (detonate) playExplosion();
     if (morph) playTransform();
     if (summon) playSummon();
@@ -2219,6 +2302,15 @@ export function Board({
                      edge; the path ahead is closed. */
                   <PawnFence edge={fenceEdge} />
                 )}
+                {motifShown && motifMark && isEmpowerMotif(motifMark.motif) && (
+                  /* Empowered-piece shine: a soft breathing halo + tier ring
+                     under a piece carrying a self-grant (empower/ward/rally).
+                     Rides the same motifShown gate as the badge, so frozen /
+                     walnut constraints silence it and it never paints where
+                     the motif itself is suppressed. Rendered before the piece
+                     div, so the piece always stays on top. */
+                  <EmpowerShine tier={motifMark.tier} />
+                )}
                 {motifShown && motifMark && (
                   /* Card-fx motif badge, tinted by the card's tier and
                      stamped with its category glyph. Keyed by motif + card
@@ -2301,16 +2393,28 @@ export function Board({
                 )}
                 {boardFx?.kind === "summon" && <SummonPoof key={`fx-${boardFx.key}`} />}
                 {boardFx?.kind === "detonate" &&
-                  (boardFx.sig && SIGNATURES[boardFx.sig] ? (
-                    <SignatureOverlay
-                      key={`fx-${boardFx.key}`}
-                      visual={SIGNATURES[boardFx.sig].visual}
-                      role={boardFx.sigRole ?? "target"}
-                      delayMs={(boardFx.sigOrder ?? 0) * SIGNATURES[boardFx.sig].staggerMs}
-                    />
-                  ) : (
-                    <DetonationBurst key={`fx-${boardFx.key}`} />
-                  ))}
+                  (() => {
+                    const sigCfg = boardFx.sig ? resolveSignature(boardFx.sig) : undefined;
+                    if (!sigCfg) return <DetonationBurst key={`fx-${boardFx.key}`} />;
+                    const delay = (boardFx.sigOrder ?? 0) * sigCfg.staggerMs;
+                    // Generated configs carry their own renderer; bespoke ones
+                    // go through the classic SignatureOverlay switch.
+                    return isGenConfig(sigCfg) ? (
+                      <GenBurst
+                        key={`fx-${boardFx.key}`}
+                        config={sigCfg}
+                        role={boardFx.sigRole ?? "target"}
+                        delayMs={delay}
+                      />
+                    ) : (
+                      <SignatureOverlay
+                        key={`fx-${boardFx.key}`}
+                        visual={sigCfg.visual}
+                        role={boardFx.sigRole ?? "target"}
+                        delayMs={delay}
+                      />
+                    );
+                  })()}
                 {zoneSig && SIGNATURES[zoneSig.sig] && (
                   /* Zone-sourced signature (source !== "removal"): the same
                      SignatureOverlay art, but staged over a piece that STAYS on
@@ -2419,6 +2523,24 @@ export function Board({
           })}
         </div>
 
+        {/* Passive-grant edge aura: while any of the VIEWER's own pieces
+            carries a live self-grant motif (empower / ward / rally), a very
+            faint tinted glow breathes along the viewer's edge of the crop —
+            "you have a perk running". The strongest (highest-tier) grant
+            picks the tint; orientation decides which edge is the viewer's. */}
+        {(() => {
+          let bestTier = 0;
+          for (const mk of motifBySquare.values()) {
+            if (!isEmpowerMotif(mk.motif)) continue;
+            const p = board.pieces[mk.sq];
+            if (!p || p.color !== myColor) continue;
+            if (mk.tier > bestTier) bestTier = mk.tier;
+          }
+          return bestTier > 0 ? (
+            <EdgeAura color={myColor} orientation={orientation} tint={tierRgb(bestTier)} />
+          ) : null;
+        })()}
+
         {/* Cast spectacle: the board-level themed read every played card gets
             (category fallback layer). One-shot, keyed to the play so React
             mounts it exactly once per cast; the finished overlay ends at
@@ -2426,6 +2548,25 @@ export function Board({
         {cast && (
           <CastSpectacle key={`cast-${cast.key}`} category={cast.category} tier={cast.tier} />
         )}
+        {/* Diff-less generated lead: a played card that removes nothing and
+            leaves no zone (clock steals, draft tricks, info peeks...) still
+            gets its unique board-wide flourish here. Suppressed whenever the
+            piece-diff path already led this play key. */}
+        {cast &&
+          cast.key !== castLeadSuppressKeyRef.current &&
+          (() => {
+            const cfg = resolveSignature(cast.id);
+            if (!cfg || !isGenConfig(cfg) || !cfg.hasLead) return null;
+            return (
+              <div
+                key={`genlead-${cast.key}`}
+                aria-hidden
+                className="pointer-events-none absolute inset-0 z-30"
+              >
+                <GenBurst config={cfg} role="lead" delayMs={0} />
+              </div>
+            );
+          })()}
 
         {/* Drawn annotations: arrows above the pieces, clicks pass through. */}
         {(arrows.length > 0 || (rightDrag && rightDrag.hover !== rightDrag.from)) && (

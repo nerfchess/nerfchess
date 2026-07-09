@@ -21,18 +21,23 @@ export default function HomePage() {
       <section className="w-full max-w-7xl mx-auto px-5 sm:px-6 pt-3 pb-12 sm:pt-7 grid lg:grid-cols-[minmax(0,1fr)_410px] gap-10 lg:gap-12 items-center">
         <div className="order-1 animate-rise">
           <HeroTv />
-          <SocialsRow />
+          {/* Desktop only here; on phones the socials live at the very bottom
+              of the page so the play actions come first in the scroll. */}
+          <div className="hidden lg:block">
+            <SocialsRow />
+          </div>
         </div>
 
         {/* The action column is kept short on purpose: it should never run
             taller than the board beside it. */}
         <div className="order-2 stagger-in">
           <span className="eyebrow">Nerf Chess</span>
-          {/* OPEN LOBBY: a proper button now, the page's blue front door. */}
+          {/* OPEN LOBBY: a proper button now, in a calm terracotta red so the
+              front door reads warm next to the mint Play Someone. */}
           <h1 className="mt-2">
             <Link
               href="/lobby"
-              className="btn-leaf btn-cta w-full flex items-center justify-center gap-3 px-6 py-4 font-display text-2xl sm:text-3xl font-bold uppercase tracking-[0.05em] no-underline motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out motion-safe:hover:-translate-y-px motion-safe:active:scale-[0.98]"
+              className="btn-clay btn-cta w-full flex items-center justify-center gap-3 px-6 py-4 font-display text-2xl sm:text-3xl font-bold uppercase tracking-[0.05em] no-underline motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out motion-safe:hover:-translate-y-px motion-safe:active:scale-[0.98]"
             >
               Open Lobby
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -122,6 +127,12 @@ export default function HomePage() {
       <StatStrip />
       <SeamDivider />
       <HowItWorks />
+
+      {/* Phones get the socials here, below everything, so the scroll reaches
+          play actions first. Desktop shows them under the TV instead. */}
+      <div className="lg:hidden pb-6">
+        <SocialsRow />
+      </div>
 
       <SiteFooter />
     </main>

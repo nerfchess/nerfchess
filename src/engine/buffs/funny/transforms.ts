@@ -20,8 +20,10 @@ import {
   SQ,
 } from "./shared";
 
-/** The four central squares (d4, e4, d5, e5). */
-const CENTER = [SQ(3, 3), SQ(4, 3), SQ(3, 4), SQ(4, 4)];
+/** The hill: the four central squares (d4, e4, d5, e5) plus the ring of
+ * squares directly around them (the extended center, c3 to f6). */
+const onHill = (sq: number) =>
+  FILE(sq) >= 2 && FILE(sq) <= 5 && RANK(sq) >= 2 && RANK(sq) <= 5;
 
 export const FUNNY_TRANSFORMS: Buff[] = [
   card(
@@ -45,7 +47,7 @@ export const FUNNY_TRANSFORMS: Buff[] = [
       id: "king_of_the_hill",
       icon: "Flag",
       name: "King of the Hill",
-      description: "Your king rules the hill: while it stands on one of the four center squares it may move like a queen.",
+      description: "Your king rules the hill: while it stands on or beside one of the four center squares it may move like a queen.",
       tier: 4,
       category: "movement",
       flavor: "Plant the flag and hold the high ground.",
@@ -53,7 +55,7 @@ export const FUNNY_TRANSFORMS: Buff[] = [
     },
     permanentAugment((_m, inst, api) =>
       mySquares(api.board, api.me, "k").flatMap((sq) =>
-        CENTER.includes(sq) ? slideMoves(api.board, sq, ALL_DIRS, inst.id) : [],
+        onHill(sq) ? slideMoves(api.board, sq, ALL_DIRS, inst.id) : [],
       ),
     ),
   ),
@@ -62,7 +64,7 @@ export const FUNNY_TRANSFORMS: Buff[] = [
       id: "understudy",
       icon: "Drama",
       name: "Understudy",
-      description: "The first time your queen is captured, one of your bishops immediately turns into a queen on its own square. If you have no bishop, nothing happens. Triggers once.",
+      description: "The first time your queen is captured, one of your bishops, or a knight if you have no bishop, immediately turns into a queen on its own square. If you have neither, nothing happens. Triggers once.",
       tier: 5,
       category: "pieces",
       flavor: "Spotlight, and a bow.",
@@ -71,7 +73,9 @@ export const FUNNY_TRANSFORMS: Buff[] = [
       kind: "passive",
       onMovePlayed: (inst, move, api) => {
         if (move.color !== api.opp || move.captured !== "q") return;
-        const b = mySquares(api.board, api.me, "b")[0];
+        // The understudy is a bishop, or a knight when the bishops are gone.
+        const b =
+          mySquares(api.board, api.me, "b")[0] ?? mySquares(api.board, api.me, "n")[0];
         if (b != null) api.setPieceType(b, "q");
         inst.spent = true;
       },
@@ -83,7 +87,7 @@ export const FUNNY_TRANSFORMS: Buff[] = [
       id: "clone",
       icon: "Copy",
       name: "Clone",
-      description: "Run one of your pawns through the photocopier: place an exact copy on an empty square beside it, once.",
+      description: "Run one of your pawns through the photocopier: place an exact copy on an empty square within two squares of it, once.",
       tier: 3,
       category: "pieces",
       requires: ["p"],
@@ -91,13 +95,21 @@ export const FUNNY_TRANSFORMS: Buff[] = [
     },
     activated(
       (_inst, api, picks) => {
-        const adj = (sq: number) =>
-          ALL_DIRS.flatMap(([df, dr]) => {
-            const f = FILE(sq) + df, r = RANK(sq) + dr;
-            if (f < 0 || f > 7 || r < 0 || r > 7) return [];
-            const to = SQ(f, r);
-            return !api.board.pieces[to] && pawnRankOk(to) ? [to] : [];
-          });
+        // The copy tray reaches two squares in every direction (it used to be
+        // only the adjacent ring).
+        const adj = (sq: number) => {
+          const out: number[] = [];
+          for (let df = -2; df <= 2; df++) {
+            for (let dr = -2; dr <= 2; dr++) {
+              if (df === 0 && dr === 0) continue;
+              const f = FILE(sq) + df, r = RANK(sq) + dr;
+              if (f < 0 || f > 7 || r < 0 || r > 7) continue;
+              const to = SQ(f, r);
+              if (!api.board.pieces[to] && pawnRankOk(to)) out.push(to);
+            }
+          }
+          return out;
+        };
         if (picks.length === 0) {
           return {
             kind: "square",

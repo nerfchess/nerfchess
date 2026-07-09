@@ -1,0 +1,286 @@
+/* ---------------------------------------------------------------------------
+   Generated signature overlays (src/components/effects/genSignature.tsx).
+
+   Shared one-shot keyframes for the deterministic per-card play animations
+   that cover every buff card WITHOUT a bespoke SIGNATURES entry. Mirrors the
+   effects.css motion rules:
+   - transform / opacity ONLY inside keyframes (no layout, no paint props)
+   - one-shot with `both` fill so a finished flourish holds opacity 0
+   - global speed control comes free from the html[data-anim] duration clamps
+     in globals.css (they apply to every element)
+   - prefers-reduced-motion: generated flourishes are transient spectacle, so
+     the whole overlay is hidden outright (walnut-squirrel precedent)
+
+   Class naming: .gsig-* (generated signature), so nothing here can collide
+   with the bespoke .fx-sig-* classes in effects.css.
+--------------------------------------------------------------------------- */
+
+/* --- Cores & rings --------------------------------------------------------- */
+
+/* Bright core that pops then fades (most families' center beat). */
+@keyframes gsig-pop {
+  0% { opacity: 0; transform: scale(0.25); }
+  22% { opacity: 1; transform: scale(1.12); }
+  100% { opacity: 0; transform: scale(1.45); }
+}
+.gsig-pop { animation: gsig-pop 0.55s ease-out both; transform-origin: 50% 50%; }
+
+/* Expanding ring lip. */
+@keyframes gsig-ring {
+  0% { opacity: 0.95; transform: scale(0.2); }
+  100% { opacity: 0; transform: scale(1.9); }
+}
+.gsig-ring { animation: gsig-ring 0.6s ease-out both; transform-origin: 50% 50%; }
+
+/* Slow heavy shockwave (drum / gravity / decree slams). */
+@keyframes gsig-shock {
+  0% { opacity: 0; transform: scale(0.15); }
+  20% { opacity: 1; transform: scale(0.55); }
+  100% { opacity: 0; transform: scale(2.3); }
+}
+.gsig-shock { animation: gsig-shock 0.8s ease-out both; transform-origin: 50% 50%; }
+
+/* Collapse inward (gravity well: rings fall INTO the square). */
+@keyframes gsig-collapse {
+  0% { opacity: 0; transform: scale(1.9); }
+  30% { opacity: 1; }
+  100% { opacity: 0; transform: scale(0.15); }
+}
+.gsig-collapse { animation: gsig-collapse 0.7s ease-in both; transform-origin: 50% 50%; }
+
+/* --- Directional travel ---------------------------------------------------- */
+
+/* Rise up and fade (lanterns, chevrons, bubbles, gleams). */
+@keyframes gsig-rise {
+  0% { opacity: 0; transform: translate3d(0, 45%, 0) scale(0.7); }
+  28% { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+  100% { opacity: 0; transform: translate3d(0, -85%, 0) scale(1.05); }
+}
+.gsig-rise { animation: gsig-rise 0.7s ease-out both; }
+
+/* Drop in from above and land (stamps, dice, anvil-ish beats). */
+@keyframes gsig-drop {
+  0% { opacity: 0; transform: translate3d(0, -110%, 0) scale(1.1); }
+  55% { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+  70% { transform: translate3d(0, -8%, 0); }
+  84% { transform: translate3d(0, 0, 0); }
+  100% { opacity: 0; transform: translate3d(0, 0, 0); }
+}
+.gsig-drop { animation: gsig-drop 0.75s ease-out both; }
+
+/* Fall through and fade (embers, feathers, rain-like beats). */
+@keyframes gsig-fall {
+  0% { opacity: 0; transform: translate3d(0, -80%, 0); }
+  25% { opacity: 1; }
+  100% { opacity: 0; transform: translate3d(0, 90%, 0); }
+}
+.gsig-fall { animation: gsig-fall 0.7s ease-in both; }
+
+/* Sweep horizontally across the square (tides, veils, winds).
+   Direction is set by a static scaleX(-1) on a non-animated wrapper. */
+@keyframes gsig-sweep {
+  0% { opacity: 0; transform: translate3d(-70%, 0, 0); }
+  30% { opacity: 1; }
+  100% { opacity: 0; transform: translate3d(70%, 0, 0); }
+}
+.gsig-sweep { animation: gsig-sweep 0.65s ease-out both; }
+
+/* Radial shard: flies outward along its wrapper's static rotation. The shard
+   element is small (8-14% of the square) so -420% of its own height reads as
+   roughly a third of the square. */
+@keyframes gsig-shard {
+  0% { opacity: 0; transform: translate3d(0, -30%, 0) scale(0.5); }
+  22% { opacity: 1; }
+  100% { opacity: 0; transform: translate3d(0, -420%, 0) scale(1); }
+}
+.gsig-shard { animation: gsig-shard 0.6s ease-out both; }
+
+/* --- Rotation -------------------------------------------------------------- */
+
+/* Smooth single spin and fade (spirals, helixes, orbit accents). */
+@keyframes gsig-spin {
+  0% { opacity: 0; transform: rotate(0deg) scale(0.55); }
+  25% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(300deg) scale(1.1); }
+}
+.gsig-spin { animation: gsig-spin 0.8s ease-out both; transform-origin: 50% 50%; }
+.gsig-spin-ccw { animation: gsig-spin 0.8s ease-out both reverse; transform-origin: 50% 50%; }
+
+/* Stepped gear tick (clockwork): eight hard detents. */
+@keyframes gsig-tick {
+  0% { opacity: 0; transform: rotate(0deg); }
+  12% { opacity: 1; }
+  88% { opacity: 1; transform: rotate(90deg); }
+  100% { opacity: 0; transform: rotate(90deg); }
+}
+.gsig-tick { animation: gsig-tick 0.8s steps(6, end) both; transform-origin: 50% 50%; }
+
+/* Coin / die tumble: flip over twice while popping up, then settle. */
+@keyframes gsig-tumble {
+  0% { opacity: 0; transform: translate3d(0, 30%, 0) rotate(0deg) scale(0.7); }
+  20% { opacity: 1; }
+  55% { transform: translate3d(0, -35%, 0) rotate(380deg) scale(1.05); }
+  82% { transform: translate3d(0, 4%, 0) rotate(710deg) scale(1); }
+  100% { opacity: 0; transform: translate3d(0, 0, 0) rotate(720deg) scale(1); }
+}
+.gsig-tumble { animation: gsig-tumble 0.85s ease-out both; transform-origin: 50% 50%; }
+
+/* Pendulum swing (bells, lanterns on hooks). */
+@keyframes gsig-swing {
+  0% { opacity: 0; transform: rotate(-24deg); }
+  18% { opacity: 1; }
+  45% { transform: rotate(20deg); }
+  70% { transform: rotate(-12deg); }
+  88% { opacity: 1; transform: rotate(6deg); }
+  100% { opacity: 0; transform: rotate(0deg); }
+}
+.gsig-swing { animation: gsig-swing 0.85s ease-in-out both; transform-origin: 50% 0%; }
+
+/* --- Growth / build -------------------------------------------------------- */
+
+/* Grow up from the ground (crystals, ramparts, thorns, banners' poles). */
+@keyframes gsig-grow {
+  0% { opacity: 0; transform: scaleY(0.05); }
+  45% { opacity: 1; transform: scaleY(1.08); }
+  60% { transform: scaleY(0.97); }
+  80% { opacity: 1; transform: scaleY(1); }
+  100% { opacity: 0; transform: scaleY(1); }
+}
+.gsig-grow { animation: gsig-grow 0.75s ease-out both; transform-origin: 50% 100%; }
+
+/* Unfurl horizontally (scrolls, banners' cloth, contracts). */
+@keyframes gsig-unfurl {
+  0% { opacity: 0; transform: scaleX(0.06); }
+  50% { opacity: 1; transform: scaleX(1.06); }
+  64% { transform: scaleX(0.98); }
+  86% { opacity: 1; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.gsig-unfurl { animation: gsig-unfurl 0.75s ease-out both; transform-origin: 0% 50%; }
+
+/* Snap taut with overshoot then release (chains, banner cloth crack). */
+@keyframes gsig-snap {
+  0% { opacity: 0; transform: scaleX(0.2); }
+  38% { opacity: 1; transform: scaleX(1.18); }
+  52% { transform: scaleX(0.94); }
+  64% { transform: scaleX(1.03); }
+  86% { opacity: 1; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.gsig-snap { animation: gsig-snap 0.7s ease-out both; transform-origin: 50% 50%; }
+
+/* Drain away (hourglass sand, tide receding): shrink to the top edge. */
+@keyframes gsig-drain {
+  0% { opacity: 1; transform: scaleY(1); }
+  70% { opacity: 1; transform: scaleY(0.15); }
+  100% { opacity: 0; transform: scaleY(0.05); }
+}
+.gsig-drain { animation: gsig-drain 0.8s ease-in both; transform-origin: 50% 0%; }
+
+/* Stamp down: oversized, slams to rest, fades (sigils, seals). */
+@keyframes gsig-stamp {
+  0% { opacity: 0; transform: scale(2); }
+  40% { opacity: 1; transform: scale(0.92); }
+  55% { transform: scale(1.05); }
+  80% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1); }
+}
+.gsig-stamp { animation: gsig-stamp 0.6s ease-in both; transform-origin: 50% 50%; }
+
+/* --- Flicker / shatter ----------------------------------------------------- */
+
+/* Crack flicker: a pane jitters before the shards fly. */
+@keyframes gsig-crack {
+  0% { opacity: 0; transform: translate3d(0, 0, 0); }
+  15% { opacity: 1; transform: translate3d(-2%, 1%, 0); }
+  30% { transform: translate3d(2%, -1%, 0); }
+  45% { transform: translate3d(-1%, -1%, 0); }
+  60% { opacity: 1; transform: translate3d(1%, 1%, 0); }
+  100% { opacity: 0; transform: translate3d(0, 0, 0) scale(1.04); }
+}
+.gsig-crack { animation: gsig-crack 0.55s ease-out both; }
+
+/* Twinkle: stars pinch in and out. */
+@keyframes gsig-twinkle {
+  0% { opacity: 0; transform: scale(0.2) rotate(0deg); }
+  35% { opacity: 1; transform: scale(1.15) rotate(24deg); }
+  65% { opacity: 0.7; transform: scale(0.8) rotate(38deg); }
+  100% { opacity: 0; transform: scale(1.2) rotate(45deg); }
+}
+.gsig-twinkle { animation: gsig-twinkle 0.75s ease-out both; transform-origin: 50% 50%; }
+
+/* Rift slit: opens wide then zips shut (teleports, blinks). */
+@keyframes gsig-rift {
+  0% { opacity: 0; transform: scaleX(0.03) scaleY(0.4); }
+  30% { opacity: 1; transform: scaleX(1) scaleY(1.05); }
+  62% { opacity: 1; transform: scaleX(1) scaleY(1); }
+  100% { opacity: 0; transform: scaleX(0.03) scaleY(0.5); }
+}
+.gsig-rift { animation: gsig-rift 0.7s ease-in-out both; transform-origin: 50% 50%; }
+
+/* Quill stroke: a mark slashes in with a flourish. */
+@keyframes gsig-stroke {
+  0% { opacity: 0; transform: translate3d(-35%, -25%, 0) rotate(-18deg) scale(0.7); }
+  40% { opacity: 1; transform: translate3d(0, 0, 0) rotate(0deg) scale(1); }
+  58% { transform: translate3d(6%, 4%, 0) rotate(5deg); }
+  84% { opacity: 1; transform: translate3d(0, 0, 0) rotate(0deg); }
+  100% { opacity: 0; transform: translate3d(0, 0, 0); }
+}
+.gsig-stroke { animation: gsig-stroke 0.7s ease-out both; }
+
+/* --- Lead (board-wide) flourishes ------------------------------------------
+   Rendered oversized on the lead square and clipped by the board crop, like
+   the dragon / wizard marquee spectacles in BoardEffects. */
+
+/* Marquee band: a rank-wide procession slides across the board. */
+@keyframes gsig-lead-band {
+  0% { opacity: 0; transform: translate3d(-18%, 0, 0); }
+  18% { opacity: 1; }
+  82% { opacity: 1; }
+  100% { opacity: 0; transform: translate3d(18%, 0, 0); }
+}
+.gsig-lead-band { animation: gsig-lead-band 1.1s ease-in-out both; }
+
+/* Glyph rain: emblems pour down the whole crop. Applied to elements roughly
+   80% of a square tall, so 1050% of own height crosses the full board. */
+@keyframes gsig-lead-rain {
+  0% { opacity: 0; transform: translate3d(0, 0, 0); }
+  12% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { opacity: 0; transform: translate3d(0, 1050%, 0); }
+}
+.gsig-lead-rain { animation: gsig-lead-rain 1.05s ease-in both; }
+
+/* Glyph ascent: emblems float up the whole crop. */
+@keyframes gsig-lead-rise {
+  0% { opacity: 0; transform: translate3d(0, 0, 0) scale(0.8); }
+  14% { opacity: 1; transform: scale(1); }
+  85% { opacity: 1; }
+  100% { opacity: 0; transform: translate3d(0, -1050%, 0) scale(1.05); }
+}
+.gsig-lead-rise { animation: gsig-lead-rise 1.1s ease-out both; }
+
+/* Board bloom: an enormous double ring rolls out from the lead square. */
+@keyframes gsig-lead-bloom {
+  0% { opacity: 0; transform: scale(0.05); }
+  16% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.15); }
+}
+.gsig-lead-bloom { animation: gsig-lead-bloom 0.95s ease-out both; transform-origin: 50% 50%; }
+
+/* Board orbit: an oversized wheel of emblems makes one slow turn. */
+@keyframes gsig-lead-orbit {
+  0% { opacity: 0; transform: rotate(0deg) scale(0.5); }
+  16% { opacity: 1; transform: rotate(40deg) scale(1); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(240deg) scale(1.05); }
+}
+.gsig-lead-orbit { animation: gsig-lead-orbit 1.2s ease-in-out both; transform-origin: 50% 50%; }
+
+/* --- Reduced motion --------------------------------------------------------
+   Generated signatures are pure transient spectacle (never state the player
+   must read), so the whole overlay is hidden outright, matching the treatment
+   effects.css gives one-shot flourishes. */
+@media (prefers-reduced-motion: reduce) {
+  .gsig-root { display: none !important; }
+}

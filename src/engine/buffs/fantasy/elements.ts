@@ -33,7 +33,7 @@ import {
 // sweeps (Unmake, Arc Lightning). Every step is a pure read of the post-sweep
 // board, so it replays identically on both clients.
 function chainLightningSweep(): Mech {
-  const base = lineSweep("b", DIAG_DIRS, 2);
+  const base = lineSweep("b", DIAG_DIRS, 3);
   return {
     ...base,
     effect: (inst: BuffInstance, api: BuffApi, picks: BuffPick[]) => {
@@ -68,12 +68,15 @@ export const FANTASY_ELEMENTS: Buff[] = [
       icon: "Star",
       name: "Starfall",
       description:
-        "A rook crashes down into your pocket, then spend a later turn to drop it onto any empty square.",
+        "A rook crashes down into your pocket, and a chip of star-iron lands with it as a pawn: drop them onto empty squares on later turns.",
       tier: 5,
       category: "pieces",
       flavor: "The crater is still glowing.",
     },
-    instant((_inst, api) => grantInventory(api, "r", 1)),
+    instant((_inst, api) => {
+      grantInventory(api, "r", 1);
+      grantInventory(api, "p", 1);
+    }),
   ),
   card(
     {
@@ -81,13 +84,13 @@ export const FANTASY_ELEMENTS: Buff[] = [
       icon: "Snowflake",
       name: "Frost Wall",
       description:
-        "A wall of blue ice erupts from the board: pick any square and its entire file becomes impassable to your opponent for their next 3 turns.",
+        "A wall of blue ice erupts from the board: pick any square and its entire file becomes impassable to your opponent for their next 4 turns.",
       tier: 5,
       category: "hex",
       flavor: "Cold enough to stop an army cold.",
       fx: { motif: "blindfold" },
     },
-    barLine("file", 3),
+    barLine("file", 4),
   ),
   card(
     {
@@ -95,12 +98,12 @@ export const FANTASY_ELEMENTS: Buff[] = [
       icon: "ArrowDownToLine",
       name: "Sinkhole",
       description:
-        "Open two yawning sinkholes on empty squares: the first enemy piece to step onto each one (never a king) plunges out of the game. They stay open the rest of the match.",
+        "Open three yawning sinkholes on empty squares: the first enemy piece to step onto each one (never a king) plunges out of the game. They stay open the rest of the match.",
       tier: 6,
       category: "attack",
       flavor: "The ground had other plans.",
     },
-    voidSquares(2, null),
+    voidSquares(3, null),
   ),
   card(
     {
@@ -108,7 +111,7 @@ export const FANTASY_ELEMENTS: Buff[] = [
       icon: "Zap",
       name: "Chain Lightning",
       description:
-        "One bishop captures up to two enemy pieces down a diagonal and lands beyond them; the bolt then jumps on to freeze the next enemy piece further along that diagonal for 2 of their turns, once.",
+        "One bishop captures up to three enemy pieces down a diagonal and lands beyond them; the bolt then jumps on to freeze the next enemy piece further along that diagonal for 2 of their turns, once.",
       tier: 5,
       category: "attack",
       requires: ["b"],
@@ -122,14 +125,14 @@ export const FANTASY_ELEMENTS: Buff[] = [
       icon: "Split",
       name: "Fissure Field",
       description:
-        "The ground splits into a lattice of fissures across the enemy front: your opponent's pawns cannot advance for their next 4 turns. They may still capture diagonally.",
+        "The ground splits into a lattice of fissures across the enemy front: your opponent's pawns cannot advance for their next 5 turns. They may still capture diagonally.",
       tier: 4,
       category: "hex",
       flavor: "Every furrow becomes a chasm.",
       fx: { motif: "anchor", pieces: ["p"] },
     },
     instant((_inst, api) => {
-      addEffect(api, { kind: "no_pawn_advance", against: api.opp, turns: 4 });
+      addEffect(api, { kind: "no_pawn_advance", against: api.opp, turns: 5 });
     }),
   ),
 ];

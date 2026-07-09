@@ -46,16 +46,16 @@ export const FUNNY_CHAOS: Buff[] = [
       id: "roulette",
       icon: "Dices",
       name: "Roulette",
-      description: "Spin the wheel twice: two random enemy pieces other than the king are removed from the board.",
+      description: "Spin the wheel three times: three random enemy pieces other than the king are removed from the board.",
       tier: 5,
       category: "attack",
-      flavor: "Round and round she goes. Twice.",
+      flavor: "Round and round she goes. Thrice.",
     },
-    // Two spins (owner request: the gambling cards paid out too little). Each
-    // spin re-reads the board, so the second can never hit an already-empty
-    // square; both draws run on the seeded api.rng and replay identically.
+    // Three spins (owner request: the gambling cards paid out too little). Each
+    // spin re-reads the board, so a later one can never hit an already-empty
+    // square; all draws run on the seeded api.rng and replay identically.
     instant((_inst, api) => {
-      for (let spin = 0; spin < 2; spin++) {
+      for (let spin = 0; spin < 3; spin++) {
         const targets = mySquares(api.board, api.opp).filter(
           (sq) => api.board.pieces[sq]!.type !== "k",
         );
@@ -69,7 +69,7 @@ export const FUNNY_CHAOS: Buff[] = [
       id: "trapdoor",
       icon: "DoorOpen",
       name: "Trapdoor",
-      description: "Rig a spring on an empty square. For your next 3 turns, an enemy piece except a king that steps onto it is flung one square back toward its home rank and cannot move for 1 of their turns. A slapstick trap, not a delete.",
+      description: "Rig a spring on an empty square. For your next 4 turns, an enemy piece except a king that steps onto it is flung one square back toward its home rank and cannot move for 1 of their turns. A slapstick trap, not a delete.",
       tier: 4,
       category: "attack",
       flavor: "Mind the gap.",
@@ -92,7 +92,7 @@ export const FUNNY_CHAOS: Buff[] = [
         const sq = picks[0]?.square;
         if (sq == null) return;
         inst.state.sq = sq;
-        inst.state.turns = 3;
+        inst.state.turns = 4;
       },
       {
         spendOnUse: false,
@@ -128,12 +128,12 @@ export const FUNNY_CHAOS: Buff[] = [
       id: "minefield",
       icon: "Bomb",
       name: "Minefield",
-      description: "Seed three mines on empty squares. The first enemy piece, never the king, to step on a mine is destroyed.",
+      description: "Seed four mines on empty squares. The first enemy piece, never the king, to step on a mine is destroyed.",
       tier: 6,
       category: "attack",
       flavor: "Click... uh oh.",
     },
-    voidSquares(3, null),
+    voidSquares(4, null),
   ),
   card(
     {
@@ -141,14 +141,14 @@ export const FUNNY_CHAOS: Buff[] = [
       icon: "Fish",
       name: "Kraken",
       description:
-        "A kraken surfaces on an empty square. For your opponent's next 2 turns, at the end of each of their turns it drags the nearest enemy piece one square toward it whenever the square between is empty, then seizes any enemy piece left next to it so that piece cannot move on its next turn. Kings are never dragged or seized, and the kraken's square cannot be entered.",
+        "A kraken surfaces on an empty square. For your opponent's next 3 turns, at the end of each of their turns it drags the nearest enemy piece one square toward it whenever the square between is empty, then seizes any enemy piece left next to it so that piece cannot move on its next turn. Kings are never dragged or seized, and the kraken's square cannot be entered.",
       tier: 6,
       category: "hex",
       flavor: "Release the tentacles.",
       fx: { motif: "anchor" },
     },
     // A living hazard, not static zoning: it borrows Magnet's one-step pull and
-    // the freeze grip, run on each of the opponent's next 2 turns.
+    // the freeze grip, run on each of the opponent's next 3 turns.
     activated(
       (inst, api, picks) =>
         picks.length > 0 || inst.state.kraken != null
@@ -163,10 +163,10 @@ export const FUNNY_CHAOS: Buff[] = [
         const c = picks[0]?.square;
         if (c == null) return;
         inst.state.kraken = c;
-        inst.state.turns = 2;
+        inst.state.turns = 3;
         // Bar only the kraken's own square: it is visible to both sides and
         // cannot be entered. A single square is never a board-splitting wall.
-        addEffect(api, { kind: "barred", squares: [c], against: api.opp, turns: 2 });
+        addEffect(api, { kind: "barred", squares: [c], against: api.opp, turns: 3 });
       },
       {
         spendOnUse: false,
@@ -222,7 +222,7 @@ export const FUNNY_CHAOS: Buff[] = [
       id: "lava_floor",
       icon: "Flame",
       name: "Lava Floor",
-      description: "A whole rank erupts into lava: pick any square and its entire rank is barred to your opponent for their next 3 turns, and the eruption throws every enemy piece already on that rank one square back toward its home rank.",
+      description: "A whole rank erupts into lava: pick any square and its entire rank is barred to your opponent for their next 4 turns, and the eruption throws every enemy piece already on that rank one square back toward its home rank.",
       tier: 5,
       category: "hex",
       flavor: "The floor is, in fact, lava.",
@@ -247,7 +247,7 @@ export const FUNNY_CHAOS: Buff[] = [
         const rank = RANK(pick);
         const squares: Square[] = [];
         for (let i = 0; i < 8; i++) squares.push(SQ(i, rank));
-        addEffect(api, { kind: "barred", squares, against: api.opp, turns: 3 });
+        addEffect(api, { kind: "barred", squares, against: api.opp, turns: 4 });
         const back = api.opp === "w" ? -8 : 8;
         const hit: Square[] = [];
         for (const sq of squares) {

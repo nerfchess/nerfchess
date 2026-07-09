@@ -9,6 +9,7 @@ export function MoveList({
   moves,
   currentPly = moves.length,
   onPlyChange,
+  minPly = 0,
   compact = false,
   showHeader = true,
   footer,
@@ -16,6 +17,12 @@ export function MoveList({
   moves: Move[];
   currentPly?: number;
   onPlyChange?: (ply: number) => void;
+  /** Earliest ply navigation may reach. Cards can rewrite the board outside
+   * move history (summons, removals, teleports), and positions before the
+   * last faithful snapshot can't be rebuilt by replaying the move list — the
+   * game pages pass the first replayable ply here so the back controls stop
+   * at it (with a notice) instead of silently showing a wrong or live board. */
+  minPly?: number;
   compact?: boolean;
   showHeader?: boolean;
   footer?: ReactNode;
@@ -48,12 +55,15 @@ export function MoveList({
     }
     if (cur.w || cur.b) rows.push(cur);
   }
-  const canBack = currentPly > 0;
-  const canForward = currentPly < moves.length;
   const maxPly = moves.length;
+  // The reachable floor: never past the head (a fully locked history passes
+  // minPly === maxPly, which disables every control below).
+  const floorPly = Math.max(0, Math.min(minPly, maxPly));
+  const canBack = currentPly > floorPly;
+  const canForward = currentPly < maxPly;
   const jumpTo = useCallback(
-    (ply: number) => onPlyChange?.(Math.max(0, Math.min(ply, maxPly))),
-    [onPlyChange, maxPly],
+    (ply: number) => onPlyChange?.(Math.max(floorPly, Math.min(ply, maxPly))),
+    [onPlyChange, floorPly, maxPly],
   );
   const rootClass = compact ? "plate p-2 min-h-0 h-full flex flex-col" : "plate p-4";
   const titleClass = compact
@@ -83,15 +93,20 @@ export function MoveList({
         jumpTo(currentPly + 1);
       } else if (event.key === "ArrowUp" && canBack) {
         event.preventDefault();
-        jumpTo(0);
+        jumpTo(floorPly);
       } else if (event.key === "ArrowDown" && canForward) {
         event.preventDefault();
+        jumpTo(maxPly);
+      } else if (event.key === "Escape" && canForward) {
+        // Escape always bails out of review back to the live position. No
+        // preventDefault: other Escape listeners (dismissing the result
+        // panel, clearing board drawings) still get their turn.
         jumpTo(maxPly);
       }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [canBack, canForward, currentPly, jumpTo, maxPly, onPlyChange]);
+  }, [canBack, canForward, currentPly, floorPly, jumpTo, maxPly, onPlyChange]);
 
   return (
     <div className={rootClass + (compact ? " overflow-hidden" : "")}>
@@ -104,7 +119,7 @@ export function MoveList({
         </div>
       )}
       <div className="grid shrink-0 grid-cols-4 gap-1 mb-2">
-        <HistoryButton label="To start" disabled={!canBack} onClick={() => jumpTo(0)}>
+        <HistoryButton label="To start" disabled={!canBack} onClick={() => jumpTo(floorPly)}>
           <ChevronsLeft size={15} />
         </HistoryButton>
         <HistoryButton label="Previous move" disabled={!canBack} onClick={() => jumpTo(currentPly - 1)}>
@@ -117,6 +132,13 @@ export function MoveList({
           <ChevronsRight size={15} />
         </HistoryButton>
       </div>
+      {floorPly > 0 && moves.length > 0 && (
+        <p className="shrink-0 mb-2 text-[10px] leading-snug text-parchment-400">
+          {floorPly >= maxPly
+            ? "Earlier positions can't be replayed — a card rewrote the board mid-game."
+            : "Positions before this point can't be replayed — a card rewrote the board."}
+        </p>
+      )}
       {rows.length === 0 && (
         <div className="min-h-0 text-parchment-300/60 text-sm">No moves yet.</div>
       )}
@@ -139,7 +161,7 @@ export function MoveList({
               <MoveCell
                 ply={row.w.ply}
                 selected={currentPly === row.w.ply}
-                onSelect={onPlyChange}
+                onSelect={onPlyChange ? jumpTo : undefined}
                 selectedRef={selectedMoveRef}
               >
                 {row.w.san}
@@ -151,7 +173,7 @@ export function MoveList({
               <MoveCell
                 ply={row.b.ply}
                 selected={currentPly === row.b.ply}
-                onSelect={onPlyChange}
+                onSelect={onPlyChange ? jumpTo : undefined}
                 selectedRef={selectedMoveRef}
               >
                 {row.b.san}

@@ -64,8 +64,8 @@ import { nerfSummary, outcomeFor, recordCompletedGame } from "@/lib/gameHistory"
 import { applyResult, loadRatingFor, saveRatingFor } from "@/lib/rating";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { loadSavedAiGame, restoreSavedAiGame, saveAiGame, snapshotGame } from "@/lib/gamePersistence";
-import { boardAtPly } from "@/lib/gameReview";
-import { premoveOptionsFor } from "@/lib/premoves";
+import { boardAtPly, replayBoardSpan } from "@/lib/gameReview";
+import { premoveOptionsFor, premoveSelfChecks } from "@/lib/premoves";
 import { categoryForTimeControl } from "@/lib/ratingCategories";
 import type { AIWorkerRequest, AIWorkerResponse } from "@/workers/aiWorker";
 import Link from "next/link";
@@ -255,9 +255,10 @@ function GamePage() {
   const wheelNavRef = useRef<{
     blocked: boolean;
     ply: number | null;
+    min: number;
     max: number;
     nav: (ply: number) => void;
-  }>({ blocked: false, ply: null, max: 0, nav: () => {} });
+  }>({ blocked: false, ply: null, min: 0, max: 0, nav: () => {} });
   const lastWheelNavRef = useRef(0);
   const whiteCustomSpec = useRef<CustomNerf | null>(null);
   const blackCustomSpec = useRef<CustomNerf | null>(null);
@@ -614,8 +615,13 @@ function GamePage() {
 
   useEffect(() => {
     if (!game || historyPly == null) return;
-    if (historyPly > game.board.history.length) {
-      setHistoryPly(game.board.history.length);
+    // History shrank past (or exactly to) the reviewed ply — a rewind or a
+    // fresh game replaced the record. Return to the LIVE board (null), never
+    // to historyPly === length: that would strand the UI in a half-review
+    // state showing the live position while review still blocks every move
+    // and disables the forward controls.
+    if (historyPly >= game.board.history.length) {
+      setHistoryPly(null);
     }
   }, [game, historyPly]);
 
@@ -675,7 +681,9 @@ function GamePage() {
       if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
       const cur = st.ply ?? st.max;
       const next = cur + (e.deltaY < 0 ? -1 : 1);
-      if (next < 0 || next > st.max) return;
+      // st.min is the earliest reviewable ply (positions past a board-rewriting
+      // card can't be replayed); past either end the page scrolls normally.
+      if (next < st.min || next > st.max) return;
       e.preventDefault();
       // Throttle to one step per gesture beat, so inertia scrolling does not
       // rocket through the whole game in a single flick.
@@ -881,6 +889,12 @@ function GamePage() {
         (!head.capture || !!lm.captured),
     );
     if (!m) {
+      setPremoves([]);
+      return;
+    }
+    // Safety net: never auto-play into check (see premoveSelfChecks). The
+    // same move stays available manually for a deliberate king walk.
+    if (premoveSelfChecks(game, m, myColor)) {
       setPremoves([]);
       return;
     }
@@ -1091,23 +1105,57 @@ function GamePage() {
     if (!game || historyPly == null) return null;
     // Prefer the exact board we witnessed live at this ply: a snapshot taken
     // as the game advanced includes any buff mutations (summons, removals,
-    // teleports) that a pure move replay cannot reproduce. Fall back to a clean
-    // replay only for plies never seen live (e.g. a restored game), and only
-    // while the board has not diverged from move history.
+    // teleports) that a pure move replay cannot reproduce.
     const snap = boardSnapshotsRef.current.get(historyPly);
     if (snap) return snap;
+    // Snapshot gap (several plies committed in one batched update): bridge it
+    // by replaying the recorded moves onto the nearest earlier snapshot.
+    let baseKey = -1;
+    for (const key of boardSnapshotsRef.current.keys()) {
+      if (key < historyPly && key > baseKey) baseKey = key;
+    }
+    if (baseKey >= 0) {
+      return replayBoardSpan(
+        boardSnapshotsRef.current.get(baseKey)!,
+        game.board.history,
+        baseKey,
+        historyPly,
+      );
+    }
+    // No snapshot at or below this ply (a restored game): a clean replay from
+    // the start is only faithful while no card has rewritten the board.
+    // Navigation never reaches here after divergence (reviewFloor clamps),
+    // so the null is a backstop, not a UI state.
     if (game.buffs?.historyDiverged) return null;
     return boardAtPly(game.board.history, historyPly);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [game, historyPly]);
+  // Earliest ply history review can faithfully reach. While the move list
+  // still reproduces the board (no card rewrote it) everything replays from
+  // ply 0. After divergence only positions witnessed live (the snapshots) are
+  // trustworthy — a restored game that diverged before this session began has
+  // none, so its earlier plies are unreviewable. Navigation clamps here and
+  // the MoveList explains why instead of showing a wrong (or live) board.
+  const reviewFloor = useMemo(() => {
+    if (!game?.buffs?.historyDiverged) return 0;
+    let min = game.board.history.length;
+    for (const key of boardSnapshotsRef.current.keys()) {
+      if (key < min) min = key;
+    }
+    return min;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [game]);
   const currentHistoryPly = historyPly ?? game?.board.history.length ?? 0;
   const isReviewingHistory = historyPly != null;
   const handleHistoryPlyChange = (ply: number) => {
     const max = game?.board.history.length ?? 0;
-    if (ply >= max) {
+    // Clamp into the reviewable window; the head (or an empty window, when
+    // reviewFloor === max) always resolves to the live board.
+    const target = Math.max(reviewFloor, ply);
+    if (target >= max) {
       setHistoryPly(null);
     } else {
-      setHistoryPly(Math.max(0, ply));
+      setHistoryPly(Math.max(0, target));
       setPremoves([]);
     }
   };
@@ -1383,15 +1431,20 @@ function GamePage() {
     setMutedState(next);
   };
 
-  // Wheel navigation stands down while an overlay owns the screen.
+  // Wheel navigation stands down while an overlay owns the screen. A draft
+  // offer only blocks while its panel is actually front-and-center: once the
+  // free lock-in window expires the panel minimizes (offerOnClockIndex) and
+  // the board is back in view, so navigation must come back with it — the
+  // player can deliberate on their own clock for minutes.
   const wheelNavBlocked =
     settingsOpen ||
     (!!game.result && showResult) ||
     !!buffTargeting.targeting ||
-    !!myOffer;
+    (!!myOffer && offerOnClockIndex !== myOffer.index);
   wheelNavRef.current = {
     blocked: wheelNavBlocked,
     ply: historyPly,
+    min: reviewFloor,
     max: game.board.history.length,
     nav: handleHistoryPlyChange,
   };
@@ -1801,6 +1854,7 @@ function GamePage() {
                 moves={game.board.history}
                 currentPly={currentHistoryPly}
                 onPlyChange={handleHistoryPlyChange}
+                minPly={reviewFloor}
                 compact
                 showHeader={false}
                 footer={moveListFooter}
@@ -1821,6 +1875,7 @@ function GamePage() {
         moves={game.board.history}
         currentPly={currentHistoryPly}
         onPlyChange={handleHistoryPlyChange}
+        minPly={reviewFloor}
         footer={moveListFooter}
       />
 

@@ -1,5 +1,5 @@
-import { cloneBoard, generateMoves } from "@/engine/board";
-import { legalMoves, type NerfGame } from "@/engine/game";
+import { cloneBoard, generateMoves, makeMove } from "@/engine/board";
+import { gameInCheck, legalMoves, type NerfGame } from "@/engine/game";
 import type { Nerf, NerfState, GameContext } from "@/engine/nerf";
 import { FILE, inBoard, RANK, SQ, type BoardState, type Color, type Move, type PieceType } from "@/engine/types";
 
@@ -15,69 +15,32 @@ function pushUnique(moves: Move[], move: Move) {
   }
 }
 
-// Restrictions a queued premove must already respect. The engine's legalMoves
-// applies these to its own output; speculative extras (recaptures, empty-
-// diagonal pawn captures) are generated outside that pipeline, so the same
-// rules are re-imposed here. Mirrors the effect semantics in engine/game.ts
-// legalMoves; king captures stay exempt exactly as they are there.
-function restrictExtras(
-  extras: Move[],
-  game: NerfGame,
-  me: Color,
-  nerf: Nerf | null,
-  nerfState: NerfState | null,
-  ctx: GameContext | null,
-): Move[] {
-  let out = extras;
-  const bs = game.buffs;
-  if (bs) {
-    const active = (turns: number | null | undefined) => turns == null || turns > 0;
-    const frozen = new Set<number>();
-    const walnut = new Set<number>();
-    const barredTo = new Set<number>();
-    let kingOnly = false;
-    let shortLeash = false;
-    let pawnHalt = false;
-    for (const e of bs.effects) {
-      if (e.kind === "freeze" && e.owner === me && active(e.turns)) frozen.add(e.sq);
-      else if (e.kind === "walnut" && e.owner === me && active(e.turns)) walnut.add(e.sq);
-      else if (e.kind === "king_only" && e.against === me && active(e.turns)) kingOnly = true;
-      else if (e.kind === "short_leash" && e.owner === me && active(e.turns)) shortLeash = true;
-      else if (e.kind === "no_pawn_advance" && e.against === me && active(e.turns)) pawnHalt = true;
-      else if (e.kind === "barred" && e.against === me && active(e.turns)) {
-        for (const sq of e.squares) barredTo.add(sq);
-      }
-    }
-    const oneStep = (m: Move) =>
-      Math.max(Math.abs(FILE(m.to) - FILE(m.from)), Math.abs(RANK(m.to) - RANK(m.from))) <= 1;
-    out = out.filter(
-      (m) =>
-        !frozen.has(m.from) &&
-        (!walnut.has(m.from) || oneStep(m)) &&
-        (!kingOnly || m.piece === "k" || m.captured === "k") &&
-        (!shortLeash || oneStep(m) || m.captured === "k") &&
-        (m.captured === "k" || !barredTo.has(m.to)) &&
-        (!pawnHalt || !(m.piece === "p" && FILE(m.from) === FILE(m.to))),
-    );
+// Premove safety net, checked at EXECUTION time: a queued premove that would
+// land or leave your own king in check is cancelled instead of played. Moving
+// into check is legal in this variant and stays available as a DELIBERATE
+// manual move; a premove firing blind must never do it for you. Buff-aware
+// (an amazon's queen+knight attacks count), and fail-open: if the simulation
+// throws, the premove plays as before rather than dead-locking the queue.
+export function premoveSelfChecks(game: NerfGame, move: Move, me: Color): boolean {
+  try {
+    const after = makeMove(cloneBoard(game.board), move);
+    return gameInCheck({ ...game, board: after }, me);
+  } catch {
+    return false;
   }
-  if (nerf?.filterMoves && nerfState && ctx) {
-    try {
-      out = nerf.filterMoves(out, nerfState, ctx);
-    } catch {}
-  }
-  return out;
 }
 
-// Premove options on a turn-flipped board, STRICT: a move that is illegal
-// right now cannot be queued. When `game` is provided the base set is the real
-// legalMoves pipeline on a turn-flipped copy (buff-granted movement included,
-// nerf filter, freezes, walls, king-only... all applied), so the picker simply
-// refuses squares the piece could not go to. Speculative extras stay on top of
-// that base so the two premoves that genuinely anticipate the opponent
-// (recapturing your own square, a pawn capture onto a currently-empty
-// diagonal) remain available, but they too respect the active restrictions.
-// Queued premoves are still re-validated at execution, so an anticipated
-// capture that never materializes just drops.
+// Pseudo-legal premove options on a turn-flipped board. The active nerf's
+// filterMoves is applied to the base move list so nerf-illegal premoves
+// are not queueable. Friendly-target moves are added separately so a player can
+// premove onto one of their own pieces in anticipation of an opponent capture.
+//
+// When `game` is provided, buff-granted movement is UNIONED in: a piece whose
+// movement a card upgraded (a pawn that now moves like a queen, god-knight
+// leaps...) can be premoved with its real moves, not just its base-type ones.
+// A union, never a replacement: the plain pseudo-legal set stays, because a
+// piece that is frozen or filtered RIGHT NOW may be free by the time the
+// premove fires; queued premoves are always re-validated at execution.
 export function premoveOptionsFor(
   board: BoardState,
   me: Color,
@@ -86,29 +49,13 @@ export function premoveOptionsFor(
   ctx: GameContext | null,
   game?: NerfGame | null,
 ): Move[] {
-  let filtered: Move[] | null = null;
-  if (game && !game.result) {
+  const base = generateMoves(board);
+  let filtered: Move[] = base;
+  if (nerf?.filterMoves && nerfState && ctx) {
     try {
-      const flipped: NerfGame = {
-        ...game,
-        board: { ...cloneBoard(board), turn: me },
-      };
-      filtered = legalMoves(flipped);
+      filtered = nerf.filterMoves(base, nerfState, ctx);
     } catch {
-      filtered = null;
-    }
-  }
-  if (!filtered) {
-    // No game context (or the engine hiccuped): fall back to the pseudo-legal
-    // set through the nerf filter. Premoves must never crash the board.
-    const base = generateMoves(board);
-    filtered = base;
-    if (nerf?.filterMoves && nerfState && ctx) {
-      try {
-        filtered = nerf.filterMoves(base, nerfState, ctx);
-      } catch {
-        filtered = base;
-      }
+      filtered = base;
     }
   }
   const extras: Move[] = [];
@@ -182,12 +129,19 @@ export function premoveOptionsFor(
     }
   }
 
-  // Speculative extras obey the same board restrictions the base set already
-  // went through, so a frozen piece (or a king-only turn, a walled square...)
-  // cannot be premoved even speculatively.
-  const constrained = game ? restrictExtras(extras, game, me, nerf, nerfState, ctx) : extras;
+  // Buff-aware union: run the REAL move pipeline on a turn-flipped shallow
+  // copy of the game so card-granted movement shows up as premovable. The
+  // clone is never mutated (legalMoves only reads), and any engine hiccup
+  // falls back to the plain set: premoves must never crash the board.
+  if (game && !game.result) {
+    try {
+      const flipped: NerfGame = {
+        ...game,
+        board: { ...cloneBoard(board), turn: me },
+      };
+      for (const m of legalMoves(flipped)) pushUnique(extras, m);
+    } catch {}
+  }
 
-  const out = [...filtered];
-  for (const m of constrained) pushUnique(out, m);
-  return out;
+  return [...filtered, ...extras];
 }

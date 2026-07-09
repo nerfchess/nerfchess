@@ -50,7 +50,7 @@ export const PT_PASSIVE_CARDS: Buff[] = [
       id: "home_field",
       name: "Home Field",
       description:
-        "Home advantage: while standing in your own half of the board, each of your knights, bishops, and rooks may also step one square in any direction.",
+        "Home advantage: while standing in your own half of the board or one rank past it, each of your knights, bishops, and rooks may also step one square in any direction.",
       tier: 5,
       category: "movement",
       requires: ["n", "b", "r"],
@@ -61,7 +61,8 @@ export const PT_PASSIVE_CARDS: Buff[] = [
       mySquares(api.board, api.me)
         .filter((sq) => {
           const t = api.board.pieces[sq]!.type;
-          return (t === "n" || t === "b" || t === "r") && inHalf(api.me, sq);
+          // "Home turf" reaches one rank past your own half (relative rank 5).
+          return (t === "n" || t === "b" || t === "r") && relRank(api.me, sq) <= 5;
         })
         .flatMap((sq) => leapMoves(api.board, sq, ALL_DIRS, inst.id)),
     ),
@@ -73,7 +74,7 @@ export const PT_PASSIVE_CARDS: Buff[] = [
       id: "gravity_well",
       name: "Gravity Well",
       description:
-        "Your king bends space around it: enemy pieces standing next to your king are caught in orbit and cannot move to a square farther from it. Enemy kings are not affected.",
+        "Your king bends space around it: enemy pieces standing within two squares of your king are caught in orbit and cannot move to a square farther from it. Enemy kings are not affected.",
       tier: 6,
       category: "tempo",
       flavor: "What goes near, stays near.",
@@ -86,7 +87,7 @@ export const PT_PASSIVE_CARDS: Buff[] = [
         if (k == null) return moves;
         const kept = moves.filter((m) => {
           if (m.piece === "k") return true; // never trap the enemy king
-          if (dist(m.from, k) !== 1) return true; // only pieces already in orbit
+          if (dist(m.from, k) > 2) return true; // only pieces already in orbit
           return dist(m.to, k) <= dist(m.from, k); // may not drift outward
         });
         return kept.length > 0 ? kept : moves;
@@ -101,7 +102,7 @@ export const PT_PASSIVE_CARDS: Buff[] = [
       id: "rust",
       name: "Rust",
       description:
-        "Idle enemy pieces seize up: any enemy piece (never a king) that has stood still for 3 of your opponent's turns rusts solid and may only move if the move is a capture, until it finally moves.",
+        "Idle enemy pieces seize up: any enemy piece (never a king) that has stood still for 2 of your opponent's turns rusts solid and may only move if the move is a capture, until it finally moves.",
       tier: 5,
       category: "hex",
       flavor: "Rome was not oxidized in a day.",
@@ -129,7 +130,7 @@ export const PT_PASSIVE_CARDS: Buff[] = [
       filterOpponentMoves: (moves, inst, _api) => {
         const idle = (inst.state.idle as Record<number, number>) ?? {};
         const kept = moves.filter(
-          (m) => m.piece === "k" || (idle[m.from] ?? 0) < 3 || !!m.captured,
+          (m) => m.piece === "k" || (idle[m.from] ?? 0) < 2 || !!m.captured,
         );
         return kept.length > 0 ? kept : moves;
       },
@@ -143,7 +144,7 @@ export const PT_PASSIVE_CARDS: Buff[] = [
       id: "photosynthesis",
       name: "Photosynthesis",
       description:
-        "Your pawns grow toward the light: after every 4 of your turns, one of your pawns advances one square on its own (the pawn nearest promotion that has an empty square ahead). It never auto-advances onto the promotion rank.",
+        "Your pawns grow toward the light: after every 3 of your turns, one of your pawns advances one square on its own (the pawn nearest promotion that has an empty square ahead). It never auto-advances onto the promotion rank.",
       tier: 4,
       category: "tempo",
       flavor: "Just add sunlight.",
@@ -155,7 +156,7 @@ export const PT_PASSIVE_CARDS: Buff[] = [
         if (move.color !== api.me) return;
         const n = ((inst.state.turns as number) ?? 0) + 1;
         inst.state.turns = n;
-        if (n % 4 !== 0) return;
+        if (n % 3 !== 0) return;
         const dir = api.me === "w" ? 1 : -1;
         const opts: { sq: Square; to: Square }[] = [];
         for (const sq of mySquares(api.board, api.me, "p")) {
@@ -181,7 +182,7 @@ export const PT_PASSIVE_CARDS: Buff[] = [
       id: "union_rules",
       name: "Union Rules",
       description:
-        "Your pieces will not be captured two turns running: on any turn right after your opponent captured one of your pieces, they cannot make a capture. If capturing is their only legal option, the rule is waived for that turn.",
+        "Your pieces get mandated rest: for your opponent's next 2 turns after they capture one of your pieces, they cannot make a capture. If capturing is their only legal option, the rule is waived for that turn.",
       tier: 5,
       category: "protection",
       flavor: "You cannot work them to the bone every shift.",
@@ -191,15 +192,23 @@ export const PT_PASSIVE_CARDS: Buff[] = [
       onMovePlayed: (inst, move, api) => {
         if (move.color !== api.opp) return;
         // Did the opponent just take one of my pieces? (A king capture ends the
-        // game, so it never matters here.)
-        inst.state.blockNext = !!move.captured && move.captured !== "k";
+        // game, so it never matters here.) A capture files a fresh two-turn
+        // grievance; otherwise the open one winds down by a turn.
+        if (!!move.captured && move.captured !== "k") {
+          inst.state.block = 2;
+        } else {
+          inst.state.block = Math.max(0, ((inst.state.block as number) ?? 0) - 1);
+        }
       },
       filterOpponentMoves: (moves, inst, _api) => {
-        if (!inst.state.blockNext) return moves;
+        if (((inst.state.block as number) ?? 0) <= 0) return moves;
         const kept = moves.filter((m) => !m.captured);
         return kept.length > 0 ? kept : moves;
       },
-      status: (inst) => (inst.state.blockNext ? "grievance filed, no captures" : "union on watch"),
+      status: (inst) =>
+        ((inst.state.block as number) ?? 0) > 0
+          ? "grievance filed, no captures"
+          : "union on watch",
     },
   ),
 
@@ -210,7 +219,7 @@ export const PT_PASSIVE_CARDS: Buff[] = [
       icon: "Building",
       name: "Landlord",
       description:
-        "Claim three empty squares as your property. Any enemy piece (never a king) that ends its move on one of them owes rent: it is stuck fast for 1 of their turns.",
+        "Claim four empty squares as your property. Any enemy piece (never a king) that ends its move on one of them owes rent: it is stuck fast for 1 of their turns.",
       tier: 6,
       category: "tempo",
       flavor: "First, last, and a security deposit.",
@@ -221,11 +230,11 @@ export const PT_PASSIVE_CARDS: Buff[] = [
       // Placement is a one-time activation; after that the card is a permanent
       // passive that never re-aims (mirrors voidSquares).
       targets: (inst, api, picks) =>
-        picks.length >= 3 || inst.state.squares != null
+        picks.length >= 4 || inst.state.squares != null
           ? null
           : {
               kind: "square",
-              label: `Claim a square you own (${picks.length + 1}/3)`,
+              label: `Claim a square you own (${picks.length + 1}/4)`,
               squares: emptySquares(api.board).filter((sq) => !picks.some((k) => k.square === sq)),
             },
       effect: (inst, _api, picks) => {
@@ -256,7 +265,7 @@ export const PT_PASSIVE_CARDS: Buff[] = [
       icon: "Magnet",
       name: "Magnetism",
       description:
-        "Your knights are magnetized: after each knight move, the nearest enemy piece (never a king) is dragged one square toward that knight, if the square between them is empty.",
+        "Your knights are magnetized: after each knight move, the nearest enemy piece (never a king) is dragged up to two squares toward that knight, as long as the squares between them are empty.",
       tier: 6,
       category: "tempo",
       flavor: "Opposites attract, and so does the cavalry.",
@@ -279,13 +288,19 @@ export const PT_PASSIVE_CARDS: Buff[] = [
           }
         }
         if (best == null) return;
-        const f = FILE(best) + Math.sign(FILE(knight) - FILE(best));
-        const r = RANK(best) + Math.sign(RANK(knight) - RANK(best));
-        if (!inBoard(f, r)) return;
-        const to = SQ(f, r);
-        if (to === knight || api.board.pieces[to]) return; // no room to slide it
-        if (api.board.pieces[best]!.type === "p" && !pawnRankOk(to)) return; // never a bad pawn rank
-        api.relocate(best, to);
+        // A stronger pull: up to two one-square steps toward the knight, each
+        // one only when the next square is empty and legal for the piece.
+        let cur: Square = best;
+        for (let step = 0; step < 2; step++) {
+          const f = FILE(cur) + Math.sign(FILE(knight) - FILE(cur));
+          const r = RANK(cur) + Math.sign(RANK(knight) - RANK(cur));
+          if (!inBoard(f, r)) break;
+          const to = SQ(f, r);
+          if (to === knight || api.board.pieces[to]) break; // no room to slide it
+          if (api.board.pieces[cur]!.type === "p" && !pawnRankOk(to)) break; // never a bad pawn rank
+          api.relocate(cur, to);
+          cur = to;
+        }
       },
       status: () => "knights pulling the enemy in",
     },
@@ -298,7 +313,7 @@ export const PT_PASSIVE_CARDS: Buff[] = [
       icon: "Radiation",
       name: "Contagion",
       description:
-        "Freezes are catching: whenever one of your opponent's pieces is newly frozen, one adjacent enemy piece (never a king) catches it and is frozen for 1 of their turns. Each fresh freeze spreads at most one square, so it never runs away.",
+        "Freezes are catching: whenever one of your opponent's pieces is newly frozen, one adjacent enemy piece (never a king) catches it and is frozen for 2 of their turns. Each fresh freeze spreads at most one square, so it never runs away.",
       tier: 7,
       category: "hex",
       flavor: "Cover your cough.",
@@ -323,7 +338,7 @@ export const PT_PASSIVE_CARDS: Buff[] = [
             const p = api.board.pieces[nb];
             if (!p || p.color !== api.opp || p.type === "k") continue;
             if (cur.has(nb) || caught.has(nb)) continue; // already frozen / already caught
-            addEffect(api, { kind: "freeze", sq: nb, owner: api.opp, turns: 1, skin: "slime" });
+            addEffect(api, { kind: "freeze", sq: nb, owner: api.opp, turns: 2, skin: "slime" });
             caught.add(nb);
             break; // one hop per fresh freeze
           }
@@ -346,15 +361,20 @@ export const PT_PASSIVE_CARDS: Buff[] = [
       icon: "HandHeart",
       name: "Guardian Angel",
       description:
-        "Once per game, the first time your opponent captures one of your pieces (not your king), that piece is spirited to safety instead: an identical piece reappears on an empty square deep in your own half.",
+        "Twice per game, when your opponent captures one of your pieces (not your king), that piece is spirited to safety instead: an identical piece reappears on an empty square deep in your own half.",
       tier: 6,
       category: "protection",
       flavor: "Someone up there is watching.",
     },
     {
       kind: "passive",
+      init: (inst) => {
+        inst.state.saves = 2;
+      },
       onMovePlayed: (inst, move, api) => {
         if (move.color !== api.opp || !move.captured || move.captured === "k") return;
+        const left = (inst.state.saves as number) ?? 2;
+        if (left <= 0) return;
         const type = move.captured;
         const safe = emptySquares(
           api.board,
@@ -362,9 +382,13 @@ export const PT_PASSIVE_CARDS: Buff[] = [
         ).sort((a, b) => relRank(api.me, a) - relRank(api.me, b) || a - b)[0];
         if (safe == null) return; // nowhere safe right now: keep the save for later
         api.place(safe, type, api.me);
-        inst.spent = true;
+        inst.state.saves = left - 1;
+        if (left - 1 <= 0) inst.spent = true;
       },
-      status: (inst) => (inst.spent ? "the save was spent" : "watching over your army"),
+      status: (inst) =>
+        inst.spent
+          ? "both saves were spent"
+          : `watching over your army (${(inst.state.saves as number) ?? 2} saves left)`,
     },
   ),
 
@@ -374,7 +398,7 @@ export const PT_PASSIVE_CARDS: Buff[] = [
       id: "termites",
       name: "Termites",
       description:
-        "Termites gnaw at your opponent's towers: every 3 of their turns, their rooks lose one more square of reach. The decay stops at a reach of 1, so a rook can always shuffle a single square.",
+        "Termites gnaw at your opponent's towers: every 2 of their turns, their rooks lose one more square of reach. The decay stops at a reach of 1, so a rook can always shuffle a single square.",
       tier: 6,
       category: "hex",
       flavor: "You can hear them chewing.",
@@ -390,7 +414,7 @@ export const PT_PASSIVE_CARDS: Buff[] = [
         if (move.color !== api.opp) return;
         const tick = ((inst.state.tick as number) ?? 0) + 1;
         inst.state.tick = tick;
-        if (tick % 3 === 0) {
+        if (tick % 2 === 0) {
           inst.state.cap = Math.max(1, ((inst.state.cap as number) ?? 7) - 1);
         }
       },
@@ -411,7 +435,7 @@ export const PT_PASSIVE_CARDS: Buff[] = [
       icon: "Megaphone",
       name: "Fan Club",
       description:
-        "The home crowd guards your bench: while you have as many or more pieces as your opponent, your pawns on your back two ranks cannot be captured. Fall behind on material and the cheering stops.",
+        "The home crowd guards your bench: while you have as many or more pieces as your opponent, your pawns on your back three ranks cannot be captured. Fall behind on material and the cheering stops.",
       tier: 4,
       category: "protection",
       requires: ["p"],
@@ -437,13 +461,13 @@ export const PT_PASSIVE_CARDS: Buff[] = [
         const kept = moves.filter((m) => {
           const capSq = m.capturedSquare ?? m.to;
           const victim = api.board.pieces[capSq];
-          // Block only captures of your OWN pawns sitting on your back two ranks.
+          // Block only captures of your OWN pawns sitting on your back three ranks.
           return !(
             m.captured != null &&
             victim != null &&
             victim.color === api.me &&
             victim.type === "p" &&
-            relRank(api.me, capSq) <= 2
+            relRank(api.me, capSq) <= 3
           );
         });
         return kept.length > 0 ? kept : moves;
