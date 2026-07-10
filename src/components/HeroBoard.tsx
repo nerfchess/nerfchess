@@ -2,18 +2,25 @@
 
 import { useMemo } from "react";
 import { Piece } from "./Pieces";
-import type { Color, PieceType } from "@/engine/types";
+import { FILE, RANK, type BoardState, type Color, type Move, type PieceType } from "@/engine/types";
 
-// A quiet, non-interactive board for the landing hero. It shows a real
-// position (Giuoco Piano, after 3...Bc5) so the page reads as "a game in
-// progress" the instant it loads — the board sells the site, not copy.
+// This is the homepage's board. It must stay lightweight: NEVER import from
+// "./Board" or "./effects/*". Those pull the full in-game effects stack
+// (~24k lines + framer-motion) into the landing route bundle, which is exactly
+// the lag this component exists to avoid. It is a non-interactive TV preview —
+// no move logic, no animation, no effects.
+//
+// A quiet, non-interactive board for the landing hero. With no `board` prop it
+// shows a real static position (Giuoco Piano, after 3...Bc5) so the page reads
+// as "a game in progress" the instant it loads — the board sells the site, not
+// copy. When a live/replay `board` is passed it renders that instead.
 // White is at the bottom; cells are laid out rank 8 → 1, file a → h, which
 // matches FEN reading order exactly, so we can render straight from the FEN.
 const FEN = "r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R";
 
 // Row-major indices (row 0 = rank 8, col 0 = file a) of black's last move,
 // Bf8–c5, so the board carries a lit last-move trail like a live game.
-const LAST_MOVE = new Set([5, 26]);
+const DEMO_LAST_MOVE = new Set([5, 26]);
 
 type Cell = { type: PieceType; color: Color } | null;
 
@@ -31,8 +38,38 @@ function parseFen(fen: string): Cell[] {
   return cells;
 }
 
-export function HeroBoard() {
-  const cells = useMemo(() => parseFen(FEN), []);
+// Engine square (0..63, rank 0 = white's first rank) → grid index (row 0 =
+// rank 8, col 0 = file a). Displayed rank 8-row maps to engine rank 7-row.
+const gridIndexOf = (sq: number) => (7 - RANK(sq)) * 8 + FILE(sq);
+
+// A BoardState's 64 pieces, in the hero grid's row-major order.
+function cellsFromBoard(board: BoardState): Cell[] {
+  const cells: Cell[] = [];
+  for (let i = 0; i < 64; i++) {
+    const sq = (7 - Math.floor(i / 8)) * 8 + (i % 8);
+    const p = board.pieces[sq];
+    cells.push(p ? { type: p.type, color: p.color } : null);
+  }
+  return cells;
+}
+
+type HeroBoardProps = {
+  /** Live/replay position; falls back to the built-in demo FEN when absent. */
+  board?: BoardState;
+  /** Highlights from/to with the same .sq-last treatment as the demo. */
+  lastMove?: Move | null;
+};
+
+export function HeroBoard({ board, lastMove }: HeroBoardProps = {}) {
+  const cells = useMemo(
+    () => (board ? cellsFromBoard(board) : parseFen(FEN)),
+    [board],
+  );
+  const lastMoveSquares = useMemo(() => {
+    if (!board) return DEMO_LAST_MOVE;
+    if (!lastMove) return new Set<number>();
+    return new Set<number>([gridIndexOf(lastMove.from), gridIndexOf(lastMove.to)]);
+  }, [board, lastMove]);
 
   return (
     <div className="w-full max-w-[560px] mx-auto aspect-square border border-black/50 shadow-[0_24px_70px_-30px_rgba(0,0,0,0.85)]">
@@ -49,7 +86,7 @@ export function HeroBoard() {
               className={
                 "relative flex items-center justify-center " +
                 (isLight ? "sq-light" : "sq-dark") +
-                (LAST_MOVE.has(i) ? " sq-last" : "")
+                (lastMoveSquares.has(i) ? " sq-last" : "")
               }
             >
               {cell && (
