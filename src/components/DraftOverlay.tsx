@@ -755,7 +755,14 @@ export function DraftOverlay({
             /* Reroll (or a fresh offer) in the compact panel still earns its
                pack moment: a mini pack that tears itself on a fast fuse. */
             <button type="button" onClick={tearPack} className="pack-shell mx-auto mt-2 block scale-75">
-              <div className={"pack " + (packStage === "tearing" ? "pack--tearing" : "")}>
+              <div
+                data-tier={maxTier}
+                className={
+                  "pack " +
+                  (maxTier >= 9 ? "pack--mythic " : maxTier >= 7 ? "pack--gold " : maxTier >= 5 ? "pack--rare " : "") +
+                  (packStage === "tearing" ? "pack--tearing" : "")
+                }
+              >
                 <span aria-hidden className="pack-burst" />
                 <span aria-hidden className="pack-flap">
                   <span className="pack-flap__zigzag" />
@@ -943,9 +950,10 @@ export function DraftOverlay({
         )}
 
         {packStage !== "open" && (
-          /* The sealed pack: the cards' tiers stay secret, only the pack's
-             finish hints at what's inside (gold foil for a tier 7+ pull,
-             mythic shimmer for 9/10). Tap tears it open immediately. */
+          /* The sealed pack: the individual cards stay secret, but the pack
+             wears the tier color of the best card inside (owner request) and
+             the finish scales with it (halo 5+, foil glow 7+, mythic shimmer
+             9/10). Tap tears it open immediately. */
           <button
             type="button"
             onClick={tearPack}
@@ -953,9 +961,10 @@ export function DraftOverlay({
             className="pack-shell mx-auto mt-6 block"
           >
             <div
+              data-tier={maxTier}
               className={
                 "pack " +
-                (maxTier >= 9 ? "pack--mythic " : maxTier >= 7 ? "pack--gold " : "") +
+                (maxTier >= 9 ? "pack--mythic " : maxTier >= 7 ? "pack--gold " : maxTier >= 5 ? "pack--rare " : "") +
                 (packStage === "tearing" ? "pack--tearing" : "")
               }
             >
