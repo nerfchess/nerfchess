@@ -83,6 +83,9 @@ export type HousePersona = {
   userId: string;
   skill: HouseSkill;
   avatar: string;
+  // Plausible home base ("🇵🇹 Braga, Portugal"), distinct per persona, shown
+  // as the account's profile bio line.
+  location: string;
 };
 
 // Natural, realistic chess-site handles: a believable mix of casual gamertags,
@@ -182,26 +185,86 @@ const PERSONA_DEFS: Array<[name: string, skill: HouseSkill]> = [
 ];
 
 // Flowered avatar presets (see lib/avatars.ts): the ordinary piece-on-plate
-// look plus a small flower in the bottom-left corner. Never offered to real
-// accounts (isAvatarId rejects them), so the flower is a reliable house mark
-// everywhere an avatar renders from server data.
-const FLOWER_AVATARS = [
-  "gold_n_flower",
-  "verdigris_b_flower",
-  "bruise_r_flower",
-  "oxblood_q_flower",
-  "slate_n_flower",
-  "copper_b_flower",
-  "moss_r_flower",
-  "plum_q_flower",
-  "gold_q_flower",
-  "verdigris_r_flower",
-  "bruise_n_flower",
-  "oxblood_b_flower",
-  "slate_q_flower",
-  "copper_r_flower",
-  "moss_n_flower",
-  "plum_b_flower",
+// look plus a small flower mark. Never offered to real accounts (isAvatarId
+// rejects them), so the flower stays a reliable internal house mark everywhere
+// an avatar renders from server data. The FULL flowered catalog (8 palettes x
+// 6 pieces = 48 looks) is used, assigned by name hash, so the roster reads as
+// a varied crowd instead of the same few plates cycling in order. The mark
+// itself is drawn small and muted by PlayerAvatar (owner: the old bloom was
+// too loud).
+const FLOWER_PALETTES = ["gold", "verdigris", "bruise", "oxblood", "slate", "copper", "moss", "plum"] as const;
+const FLOWER_PIECES = ["p", "n", "b", "r", "q", "k"] as const;
+const FLOWER_AVATARS: string[] = FLOWER_PALETTES.flatMap((palette) =>
+  FLOWER_PIECES.map((piece) => `${palette}_${piece}_flower`),
+);
+
+// One plausible home base per persona (owner report: every bot showed the
+// same location). Distinct for the whole roster (>= PERSONA_DEFS.length
+// entries, assigned by roster index) and spread world-wide so the crowd reads
+// like a real player base. Surfaced as the account's profile bio line; a
+// moderator-edited bio is never overwritten (see ensureHouseUsers /
+// syncHouseRatings).
+const HOUSE_LOCATIONS: string[] = [
+  "🇧🇷 Curitiba, Brazil",
+  "🇩🇪 Leipzig, Germany",
+  "🇵🇭 Cebu City, Philippines",
+  "🇺🇸 Columbus, Ohio",
+  "🇵🇱 Wrocław, Poland",
+  "🇮🇳 Pune, India",
+  "🇬🇧 Sheffield, England",
+  "🇦🇷 Rosario, Argentina",
+  "🇨🇦 Halifax, Canada",
+  "🇫🇷 Nantes, France",
+  "🇺🇦 Lviv, Ukraine",
+  "🇯🇵 Sendai, Japan",
+  "🇪🇸 Zaragoza, Spain",
+  "🇳🇴 Trondheim, Norway",
+  "🇲🇽 Guadalajara, Mexico",
+  "🇮🇹 Bologna, Italy",
+  "🇹🇷 Izmir, Türkiye",
+  "🇦🇺 Adelaide, Australia",
+  "🇷🇸 Novi Sad, Serbia",
+  "🇺🇸 Tacoma, Washington",
+  "🇳🇱 Utrecht, Netherlands",
+  "🇮🇩 Bandung, Indonesia",
+  "🇨🇱 Valparaíso, Chile",
+  "🇨🇿 Brno, Czechia",
+  "🇿🇦 Durban, South Africa",
+  "🇰🇷 Daejeon, South Korea",
+  "🇵🇹 Braga, Portugal",
+  "🇷🇴 Cluj-Napoca, Romania",
+  "🇺🇸 Madison, Wisconsin",
+  "🇬🇷 Thessaloniki, Greece",
+  "🇻🇳 Da Nang, Vietnam",
+  "🇸🇪 Gothenburg, Sweden",
+  "🇨🇴 Medellín, Colombia",
+  "🇭🇺 Debrecen, Hungary",
+  "🇬🇧 Dundee, Scotland",
+  "🇺🇸 Boise, Idaho",
+  "🇦🇹 Graz, Austria",
+  "🇲🇾 Penang, Malaysia",
+  "🇵🇪 Arequipa, Peru",
+  "🇫🇮 Tampere, Finland",
+  "🇮🇳 Kochi, India",
+  "🇮🇪 Galway, Ireland",
+  "🇧🇬 Plovdiv, Bulgaria",
+  "🇺🇸 Tucson, Arizona",
+  "🇩🇪 Bremen, Germany",
+  "🇹🇭 Chiang Mai, Thailand",
+  "🇨🇦 Winnipeg, Canada",
+  "🇭🇷 Split, Croatia",
+  "🇪🇬 Alexandria, Egypt",
+  "🇱🇹 Kaunas, Lithuania",
+  "🇺🇾 Montevideo, Uruguay",
+  "🇸🇰 Košice, Slovakia",
+  "🇳🇿 Christchurch, New Zealand",
+  "🇯🇵 Fukuoka, Japan",
+  "🇧🇪 Ghent, Belgium",
+  "🇺🇸 Richmond, Virginia",
+  "🇪🇪 Tartu, Estonia",
+  "🇲🇦 Casablanca, Morocco",
+  "🇨🇭 Basel, Switzerland",
+  "🇱🇻 Riga, Latvia",
 ];
 
 function nameHash(name: string): number {
@@ -216,7 +279,12 @@ export const HOUSE_ROSTER: HousePersona[] = PERSONA_DEFS.map(([name, skill], i) 
   // retired roster's 'bot_' ids, which migration 0008 deletes by prefix.
   userId: `hp_${name.toLowerCase()}`,
   skill,
-  avatar: FLOWER_AVATARS[i % FLOWER_AVATARS.length],
+  // Name-hashed across the full flowered catalog: stable per persona, varied
+  // across the roster (the old i % 16 cycled the same plates in order).
+  avatar: FLOWER_AVATARS[nameHash(name) % FLOWER_AVATARS.length],
+  // Roster-index assignment keeps every persona's location DISTINCT (the list
+  // is at least as long as the roster) and stable across deploys.
+  location: HOUSE_LOCATIONS[i % HOUSE_LOCATIONS.length],
 }));
 
 const HOUSE_USER_IDS = new Set(HOUSE_ROSTER.map((p) => p.userId));
@@ -292,10 +360,10 @@ export async function ensureHouseUsers(db: D1Database): Promise<void> {
     return [
       db
         .prepare(
-          `INSERT OR IGNORE INTO users (id, username, username_lower, password_hash, created_at, rating, rd, vol, avatar)
-           VALUES (?, ?, ?, ?, ?, ?, 150, 0.06, ?)`,
+          `INSERT OR IGNORE INTO users (id, username, username_lower, password_hash, created_at, rating, rd, vol, avatar, bio)
+           VALUES (?, ?, ?, ?, ?, ?, 150, 0.06, ?, ?)`,
         )
-        .bind(persona.userId, persona.name, persona.name.toLowerCase(), "unusable", now, rating, persona.avatar),
+        .bind(persona.userId, persona.name, persona.name.toLowerCase(), "unusable", now, rating, persona.avatar, persona.location),
       ...(["nerf", "buff"] as const).map((mode) =>
         db
           .prepare(
@@ -310,18 +378,24 @@ export async function ensureHouseUsers(db: D1Database): Promise<void> {
 }
 
 // Re-point every EXISTING house account's rating (and its per-mode buckets) at
-// the current houseSeedRating. ensureHouseUsers only ever INSERTs (OR IGNORE),
-// so once an account exists a skill/rating revision never reaches it; this
-// bounded UPDATE is what actually circulates a new rating. House users only
-// (every id comes from HOUSE_ROSTER), and idempotent: it writes the same
-// deterministic value every time, and peak only ever ratchets up (MAX), never
-// down. The caller gates it behind a versioned cold-start key so it runs once
-// per revision rather than every tick.
+// the current houseSeedRating, and circulate identity revisions (avatar,
+// location bio). ensureHouseUsers only ever INSERTs (OR IGNORE), so once an
+// account exists a roster revision never reaches it; this bounded UPDATE is
+// what actually circulates one. House users only (every id comes from
+// HOUSE_ROSTER), and idempotent: it writes the same deterministic values every
+// time, peak only ever ratchets up (MAX), and the location bio fills in only
+// when the bio is empty so a moderator-written bio is never clobbered. The
+// caller gates it behind a versioned cold-start key so it runs once per
+// revision rather than every tick.
 export async function syncHouseRatings(db: D1Database): Promise<void> {
   const statements = HOUSE_ROSTER.flatMap((persona) => {
     const rating = houseSeedRating(persona);
     return [
-      db.prepare(`UPDATE users SET rating = ? WHERE id = ?`).bind(rating, persona.userId),
+      db
+        .prepare(
+          `UPDATE users SET rating = ?, avatar = ?, bio = COALESCE(NULLIF(bio, ''), ?) WHERE id = ?`,
+        )
+        .bind(rating, persona.avatar, persona.location, persona.userId),
       ...(["nerf", "buff"] as const).map((mode) =>
         db
           .prepare(
