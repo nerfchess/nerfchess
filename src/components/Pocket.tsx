@@ -36,6 +36,9 @@ interface Props {
   canDrop: boolean;
   /** Toggle drop mode for a pocket piece; the same type again cancels. */
   onSelect: (type: PieceType) => void;
+  /** Tray caption; defaults to "Pocket". The opponent's read-only tray passes
+   * "Their pocket". */
+  label?: string;
 }
 
 /**
@@ -54,7 +57,7 @@ interface Props {
  * Look: 1px corners, no gradients/glow/shadow. Mint marks the armed /
  * actionable piece; the count chip rides in coral so it reads at a glance.
  */
-export function Pocket({ entries, color, activeType, canDrop, onSelect }: Props) {
+export function Pocket({ entries, color, activeType, canDrop, onSelect, label = "Pocket" }: Props) {
   const reduceMotion = useReducedMotion();
   // Authoritative filter: only real, held, droppable pieces ever reach the
   // tray, so a masked value can never surface as a hidden tile.
@@ -64,7 +67,7 @@ export function Pocket({ entries, color, activeType, canDrop, onSelect }: Props)
   if (shown.length === 0) return null;
   return (
     <div className="plate flex items-center gap-3 rounded-[1px] px-3 py-2.5">
-      <span className="smallcaps shrink-0 text-[11px] text-parchment-400">Pocket</span>
+      <span className="smallcaps shrink-0 text-[11px] text-parchment-400">{label}</span>
       <div className="flex min-w-0 flex-wrap items-center gap-2.5">
         {shown.map(({ type, count }) => {
           const active = activeType === type;

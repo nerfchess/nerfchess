@@ -594,6 +594,7 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
               walnutSquares: zones.walnut,
               bananaSquares: zones.banana,
               trapSquares: zones.traps,
+              doomSquares: zones.doom,
               lockedSquares: zones.locked,
             }
           : undefined

@@ -90,6 +90,7 @@ function sqToFrac(sq: Square, orientation: Color): VfxPoint {
 }
 import type { BuffCategory, BuffMatchState } from "@/engine/buff";
 import { BUFF_BY_ID } from "@/engine/buffs/library";
+import { TIER_ROMAN } from "@/lib/tiers";
 import { BoardState, Color, FILE, Move, PieceType, RANK, SQ, Square } from "@/engine/types";
 import {
   playAegis,
@@ -158,6 +159,8 @@ interface Visual {
   /** Every other placed trap (mine, sinkhole, trapdoor, whoopee cushion,
    * landlord claim), each drawn with its own realistic animated marker. */
   trapSquares?: { sq: number; kind: string; name: string }[];
+  /** Doomed pieces (timed_loss effects): badge with the death countdown. */
+  doomSquares?: { sq: number; turns: number }[];
   /** Squares the opponent's buffs bar YOU from entering (stakes + rope; the
    * same squares also flow into bannedSquares for the flat tint). */
   barredSquares?: number[];
@@ -243,24 +246,59 @@ function ExtraTurnsBanner({ mine, gained, total }: { mine: boolean; gained: numb
   );
 }
 
-/** Board-wide play announcement for BIG rule-warping cards (owner request:
- * "for big things it needs to say what happened - fair for the environment"):
- * tier 7+ casts state their name and effect in plain text over the board, so
- * the other player is never surprised by an army suddenly moving like queens.
- * FUNCTIONAL like the extra-turns banner (never gated); sits in the board's
- * upper third so it can coexist with the centered extra-turns banner when one
- * card triggers both. */
-function PlayAnnouncement({ name, description }: { name: string; description: string }) {
-  // First sentence, hard-capped, so the banner reads at a glance.
-  const firstSentence = description.split(/(?<=[.!?])\s/)[0] ?? description;
-  const effect = firstSentence.length > 110 ? firstSentence.slice(0, 107).trimEnd() + "..." : firstSentence;
+/** Card-name label riding EVERY play's animation (owner request: "show what
+ * powerup your opponent used, beside or beneath the animation"). Name + tier
+ * chip only - the full description stays in the top-right play feed. Softer
+ * than the first cut (owner: too contrasting): translucent ink, hairline
+ * border, tier-colored name. Scales with tier - a quiet pill for 1-4, larger
+ * from 5, headline-sized at 7+. FUNCTIONAL (never gated by the effects dial);
+ * sits in the board's upper area so it coexists with the centered
+ * extra-turns banner when one card triggers both. */
+function PlayAnnouncement({ name, tier }: { name: string; tier: number }) {
+  const big = tier >= 7;
+  const mid = tier >= 5 && tier < 7;
   return (
-    <div aria-live="polite" className="pointer-events-none absolute inset-x-0 top-[7%] z-[45] flex justify-center">
-      <div className="extra-turns-banner mx-4 max-w-[min(92%,34rem)] border-2 border-gold/70 bg-ink-950/92 px-5 py-3 text-center shadow-plate">
-        <div className="font-display text-2xl font-bold tracking-wide text-gold-leaf sm:text-3xl">{name}</div>
-        <div className="mt-1 text-[13px] font-semibold leading-snug text-parchment-100 sm:text-sm">{effect}</div>
+    <div aria-live="polite" className="pointer-events-none absolute inset-x-0 top-[6%] z-[45] flex justify-center">
+      <div
+        className={
+          "extra-turns-banner mx-4 flex max-w-[min(92%,30rem)] items-center gap-2 border border-white/25 bg-ink-950/70 text-center shadow-plate backdrop-blur-[2px] " +
+          (big ? "px-5 py-2.5" : mid ? "px-4 py-2" : "px-3 py-1.5")
+        }
+      >
+        <span
+          className={
+            `font-display font-bold tracking-wide tier-${tier} ` +
+            (big ? "text-2xl sm:text-3xl" : mid ? "text-lg sm:text-xl" : "text-sm")
+          }
+        >
+          {name}
+        </span>
+        <span
+          className={`shrink-0 rounded-[1px] border px-1.5 py-px font-display font-bold tier-bg-${tier} tier-${tier} ${big ? "text-[11px]" : "text-[9px]"}`}
+        >
+          {TIER_ROMAN[tier]}
+        </span>
       </div>
     </div>
+  );
+}
+
+/** Small corner countdown for any timed piece effect (owner request: every
+ * timed effect wears its remaining turns). Doom (timed_loss) renders the
+ * oxblood variant with a skull tick; everything else a neutral ink chip. */
+function CountdownChip({ n, doom = false }: { n: number; doom?: boolean }) {
+  return (
+    <span
+      aria-hidden
+      className={
+        "pointer-events-none absolute bottom-0.5 left-0.5 z-10 flex h-[15px] min-w-[15px] items-center justify-center rounded-[1px] border px-0.5 font-mono text-[10px] font-bold leading-none " +
+        (doom
+          ? "border-oxblood-glow/70 bg-ink-950/90 text-oxblood-glow"
+          : "border-white/25 bg-ink-950/80 text-parchment-100")
+      }
+    >
+      {n}
+    </span>
   );
 }
 
@@ -1493,6 +1531,11 @@ export function Board({
     for (const t of visual?.trapSquares ?? []) m.set(t.sq, { kind: t.kind, name: t.name });
     return m;
   }, [visual?.trapSquares]);
+  const doomMarks = useMemo(() => {
+    const m = new Map<number, number>();
+    for (const d of visual?.doomSquares ?? []) m.set(d.sq, d.turns);
+    return m;
+  }, [visual?.doomSquares]);
   const barredSquares = useMemo(() => new Set(visual?.barredSquares ?? []), [visual?.barredSquares]);
   // Royal-guard (king_safe) tint. Recompute from live state as well: it always
   // sits on the owner's CURRENT king square and clears the instant the ward
@@ -2327,6 +2370,15 @@ export function Board({
         body: TRAP_HOVER_BODY[t.kind] ?? "A placed trap waits on this square.",
       });
     }
+    if (doomMarks.has(sq)) {
+      const n = doomMarks.get(sq)!;
+      out.push({
+        title: "Doomed",
+        tone: "hex",
+        status: null,
+        body: `This piece dies in ${n} of its owner's turns unless it is captured first.`,
+      });
+    }
     if (strikeSquares.has(sq))
       out.push({
         title: "Lightning",
@@ -2600,6 +2652,16 @@ export function Board({
                       <BananaPeel />
                     </div>
                   </div>
+                )}
+                {doomMarks.has(sq) && piece && (
+                  /* Doomed piece (Death Arcana style): the countdown to its
+                     death rides the square, skull-tagged. */
+                  <CountdownChip n={doomMarks.get(sq)!} doom />
+                )}
+                {!doomMarks.has(sq) && piece && effectTurns[sq] != null && (
+                  /* Any other timed piece effect (freeze, walnut, shield,
+                     ward...): the remaining turns ride the corner. */
+                  <CountdownChip n={effectTurns[sq]!} />
                 )}
                 {trapMarks.has(sq) && (
                   /* Any other placed trap: a realistic animated marker per
@@ -2897,12 +2959,8 @@ export function Board({
             total={extraBannerRef.current.total}
           />
         )}
-        {cast && cast.tier >= 7 && BUFF_BY_ID[cast.id] && (
-          <PlayAnnouncement
-            key={`ann-${cast.key}`}
-            name={BUFF_BY_ID[cast.id]!.name}
-            description={BUFF_BY_ID[cast.id]!.description}
-          />
+        {cast && BUFF_BY_ID[cast.id] && (
+          <PlayAnnouncement key={`ann-${cast.key}`} name={BUFF_BY_ID[cast.id]!.name} tier={cast.tier} />
         )}
         {/* Diff-less lead: a played card that removes nothing and leaves no
             zone (clock steals, draft tricks, info peeks...) still gets its
