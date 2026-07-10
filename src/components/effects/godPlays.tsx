@@ -8,11 +8,12 @@
 //   climax        — touchdown flare + spark burst + shockwave ring(s) that
 //                   sweep past the board edges
 //   aftermath     — a brief hanging glint
-// Total length stays within ~2.5s. Non-lead ("target") renders are compact
+// Total length stays within ~2.5s (the two APEX tier-9 set pieces below may
+// run to ~3.2s). Non-lead ("target") renders are compact
 // per-square hits (glyph pop + ring + sparks) because zone-fed cards mount one
 // overlay per affected square.
 //
-// ELEVEN TEMPLATES, each parameterised by { palette, glyph }:
+// THIRTEEN TEMPLATES, each parameterised by { palette, glyph }:
 //   GodDescent    — haloed robed deity descends in a 5-ray god-fan
 //   TitanRise     — stone/earth titan shoulders up from below, rubble arcs
 //   SkyWrath      — storm-god in a cloud bank hurls a jagged bolt down
@@ -24,6 +25,12 @@
 //   ForgeColossus — the glyph itself, writ huge, slams the board centre
 //   GorgonIdol    — colossal idol head rises, radiating petrifying gaze rings
 //   ChronoLord    — hourglass time sovereign + great clock ring with a hand
+//   SkullStrike   — APEX (tier 9, culling only): death's bowling night — the
+//                   skull glyph writ huge bowls the width of the crop, piece-
+//                   pins scatter, STRIKE flare + triple shockwave
+//   PlanetAlign   — APEX (tier 9, grand_conjunction only): letterbox bars,
+//                   three worlds slide into syzygy and a conjunction beam
+//                   pierces the board, triple shockwave
 //
 // CARD -> TEMPLATE / PALETTE / GLYPH table (69 entries):
 //   GodDescent    : draft_tyranny (iron crown), sovereign_draft (twin cards),
@@ -46,15 +53,14 @@
 //                   (double null)
 //   ReaperSweep   : endless_night (crescent), peace_of_the_grave (lily),
 //                   withered_hands (withered hand), grand_malediction (hex
-//                   star), blighted_furrows (wilted wheat), culling (skull;
-//                   tier 9 — third shockwave), poisoned_counsel (venom goblet)
+//                   star), blighted_furrows (wilted wheat), poisoned_counsel
+//                   (venom goblet)
 //   HostMarch     : age_of_heroes (laurel), grand_retreat (reversed banner),
 //                   noble_rout (fleeing banner), sacked_capital (burning tower)
 //   CelestialRing : genesis (sprouting seed), reality_warp (hex portal),
 //                   total_warp (spiral), warp_cataclysm (five-dot rift),
 //                   warp_sovereign (swap arrows), nerf_reversal (yin-yang
-//                   arrows), celestial_alignment (three orbs),
-//                   grand_conjunction (triple star; tier 9 — extra ray pass)
+//                   arrows), celestial_alignment (three orbs)
 //   FrostTitan    : glacial_tomb (tomb slab), frozen_solid (snowflake),
 //                   absolute_zero (zero in crystal), everfrost_shard (shard)
 //   ForgeColossus : ban_hammer (moderator gavel — comedic, huge), dragonslayer
@@ -68,6 +74,8 @@
 //   ChronoLord    : full_rewind (ccw arrow), perfect_rewind (double ccw),
 //                   endless_turn (infinity), lost_fortnight (torn calendar),
 //                   sabbatical (hammock)
+//   SkullStrike   : culling (skull, writ huge and BOWLED)
+//   PlanetAlign   : grand_conjunction (triple star as the syzygy sigil)
 
 import "./godPlays.css";
 
@@ -85,7 +93,10 @@ interface TemplateProps {
   glyph: ReactNode;
   lead: boolean;
   delayMs: number;
-  /** Tier-9 boost knob (culling's third shockwave, conjunction's ray pass). */
+  /** Legacy boost knob (kept for future upgrades): >0 arms a template's extra
+   * beat — ReaperSweep's third shockwave, CelestialRing's ray pass. The two
+   * tier-9 cards that used it (culling, grand_conjunction) now run their own
+   * bespoke APEX templates instead. */
   extra?: number;
 }
 
@@ -952,6 +963,193 @@ function ChronoLord({ palette, glyph, lead, delayMs }: TemplateProps) {
 }
 
 /* =============================================================================
+   APEX helpers (tier 9/10) — letterbox bars for the two set-piece templates.
+   ========================================================================== */
+function Bars({ delayMs }: { delayMs: number }) {
+  return (
+    <>
+      <span
+        className="gp-bar absolute left-0 right-0 block"
+        style={{ top: "21.5%", height: "6%", background: "rgba(8,8,12,0.82)", transformOrigin: "50% 0%", animationDelay: `${delayMs}ms` }}
+      />
+      <span
+        className="gp-bar absolute left-0 right-0 block"
+        style={{ top: "72.5%", height: "6%", background: "rgba(8,8,12,0.82)", transformOrigin: "50% 100%", animationDelay: `${delayMs}ms` }}
+      />
+    </>
+  );
+}
+
+/* =============================================================================
+   Template 12: SkullStrike — APEX set piece (culling, tier 9). DEATH'S
+   BOWLING NIGHT: the lane lights up across the crop, the card's skull glyph
+   — writ COLOSSAL — bowls the full width of the board, the doomed pieces
+   scatter like pins, and the STRIKE lands a flare plus a TRIPLE shockwave.
+   ========================================================================== */
+const PINS = [
+  { l: 46, d: 520, dx: "-140%", dy: "-260%", rot: "-200deg" },
+  { l: 52, d: 620, dx: "160%", dy: "-300%", rot: "220deg" },
+  { l: 58, d: 720, dx: "-100%", dy: "-340%", rot: "-160deg" },
+  { l: 64, d: 820, dx: "200%", dy: "-240%", rot: "260deg" },
+  { l: 70, d: 920, dx: "120%", dy: "-360%", rot: "180deg" },
+  { l: 76, d: 1020, dx: "240%", dy: "-180%", rot: "300deg" },
+];
+function SkullStrike({ palette, glyph, lead, delayMs }: TemplateProps) {
+  const [p0, p1, p2] = palette;
+  if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
+  return (
+    <Stage>
+      <Wash color={tint(p1, 0.4)} delayMs={delayMs} />
+      <Bars delayMs={delayMs} />
+      {/* the lane shine, waxed for the occasion */}
+      <span
+        className="gp-pane absolute block"
+        style={{
+          left: "12%",
+          top: "46%",
+          width: "76%",
+          height: "11%",
+          background: `linear-gradient(90deg, ${tint(p2, 0.5)}, ${tint(p0, 0.25)} 70%, transparent)`,
+          animationDelay: `${delayMs + 80}ms`,
+          animationDuration: "1.4s",
+        }}
+      />
+      {/* THE SKULL, bowled the full width of the crop */}
+      <span className="gp-roll absolute block" style={{ left: "31%", top: "37%", width: "17%", height: "22%", animationDelay: `${delayMs + 240}ms` }}>
+        {glyph}
+      </span>
+      {/* the pins: the marked pieces, scattered as it ploughs through */}
+      {PINS.map((v, i) => (
+        <span
+          key={i}
+          className="gp-lob absolute block"
+          style={
+            {
+              left: `${v.l}%`,
+              top: "44%",
+              width: "4.5%",
+              height: "8%",
+              "--dx": v.dx,
+              "--dy": v.dy,
+              "--rot": v.rot,
+              animationDelay: `${delayMs + v.d}ms`,
+            } as CSSProperties
+          }
+        >
+          <svg viewBox="0 0 10 18" className="block h-full w-full" aria-hidden="true">
+            {/* a piece-pin: pawn head on a bowling-pin body */}
+            <circle cx="5" cy="3.4" r="2.6" fill={p2} stroke={p1} strokeWidth="0.6" />
+            <path d="M3 16.6 C3.4 11 2.6 9 3.6 7 C4 6.2 6 6.2 6.4 7 C7.4 9 6.6 11 7 16.6 Z" fill={p2} stroke={p1} strokeWidth="0.6" {...SJ} />
+            <path d="M3.4 8.6 H6.6" stroke={p0} strokeWidth="1" strokeLinecap="round" />
+          </svg>
+        </span>
+      ))}
+      {/* STRIKE: flare at the far end + sparks + a TRIPLE graven shockwave */}
+      <span
+        className="gp-flash absolute block rounded-full"
+        style={{ left: "60%", top: "42%", width: "22%", height: "14%", background: tint(p0, 0.75), animationDelay: `${delayMs + 1720}ms` }}
+      />
+      <Sparks delayMs={delayMs + 1760} fill={p0} stroke={p2} sizePct={6} cx={68} cy={48} />
+      <Boom delayMs={delayMs + 1820} color={tint(p0, 0.9)} thickness={4} />
+      <Boom delayMs={delayMs + 1980} color={tint(p2, 0.85)} thickness={3} />
+      <Boom delayMs={delayMs + 2140} color={tint(p1, 0.8)} />
+      <Glint delayMs={delayMs + 2420} color={p2} left={64} top={36} />
+    </Stage>
+  );
+}
+
+/* =============================================================================
+   Template 13: PlanetAlign — APEX set piece (grand_conjunction, tier 9). THE
+   PLANETS ALIGN: letterbox bars drop, a starfield kindles, three worlds glide
+   in from off-crop and SNAP into syzygy over the board's spine, and the
+   conjunction beam pierces straight down through all three — flare, sparks,
+   TRIPLE shockwave.
+   ========================================================================== */
+const SKY_STARS = [
+  { l: 28, t: 27, d: 0 },
+  { l: 70, t: 30, d: 90 },
+  { l: 34, t: 62, d: 180 },
+  { l: 66, t: 66, d: 270 },
+  { l: 24, t: 46, d: 135 },
+  { l: 74, t: 48, d: 225 },
+];
+const WORLDS = [
+  { t: 26, s: 7, fx: "-340%", fy: "-80%", d: 300 },
+  { t: 37, s: 10, fx: "360%", fy: "60%", d: 400 },
+  { t: 51, s: 8, fx: "-300%", fy: "140%", d: 500 },
+];
+function PlanetAlign({ palette, glyph, lead, delayMs }: TemplateProps) {
+  const [p0, p1, p2] = palette;
+  if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
+  return (
+    <Stage>
+      <Wash color={tint(p0, 0.42)} delayMs={delayMs} />
+      <Bars delayMs={delayMs} />
+      {/* the starfield kindles */}
+      {SKY_STARS.map((s, i) => (
+        <span key={i} className="gp-glint absolute block" style={{ left: `${s.l}%`, top: `${s.t}%`, width: "3%", height: "3%", animationDelay: `${delayMs + 160 + s.d}ms` }}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <path d="M5 0 L6.1 3.9 L10 5 L6.1 6.1 L5 10 L3.9 6.1 L0 5 L3.9 3.9 Z" fill={i % 2 ? p2 : p1} />
+          </svg>
+        </span>
+      ))}
+      {/* three worlds glide in and SNAP into syzygy over the board's spine */}
+      {WORLDS.map((w, i) => (
+        <span
+          key={i}
+          className="gp-planet absolute block"
+          style={
+            {
+              left: `${50 - w.s / 2}%`,
+              top: `${w.t}%`,
+              width: `${w.s}%`,
+              height: `${w.s}%`,
+              "--fx": w.fx,
+              "--fy": w.fy,
+              animationDelay: `${delayMs + w.d}ms`,
+            } as CSSProperties
+          }
+        >
+          <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+            <circle cx="10" cy="10" r="7" fill={tint(i === 1 ? p1 : p0, 0.9)} stroke={p2} strokeWidth="0.9" />
+            {i === 1 ? (
+              <ellipse cx="10" cy="10" rx="9.4" ry="2.6" transform="rotate(-18 10 10)" fill="none" stroke={p2} strokeWidth="0.8" />
+            ) : (
+              <path d="M4 8 C7 6.5 13 6.5 16 8 M4.6 12.5 C7.5 14 12.5 14 15.4 12.5" fill="none" stroke={tint(p2, 0.7)} strokeWidth="0.7" strokeLinecap="round" />
+            )}
+            {i === 2 && <circle cx="6.6" cy="7.4" r="1.2" fill={tint(p2, 0.55)} />}
+          </svg>
+        </span>
+      ))}
+      {/* the conjunction beam pierces straight down through all three */}
+      <span
+        className="absolute block"
+        style={{ left: "47.5%", top: "20%", width: "5%", height: "48%" }}
+      >
+        <span
+          className="gp-ray absolute inset-0 block"
+          style={{ background: `linear-gradient(180deg, ${tint(p2, 0.95)}, ${tint(p1, 0.4)} 70%, transparent)`, animationDelay: `${delayMs + 1480}ms` }}
+        />
+      </span>
+      {/* the card's sigil blazes at the meeting point */}
+      <span className="gp-pop absolute block" style={{ left: "45%", top: "40%", width: "10%", height: "10%", animationDelay: `${delayMs + 1560}ms` }}>
+        {glyph}
+      </span>
+      {/* syzygy: flare + sparks + TRIPLE shockwave */}
+      <span
+        className="gp-flash absolute block rounded-full"
+        style={{ left: "42%", top: "40%", width: "16%", height: "11%", background: tint(p2, 0.8), animationDelay: `${delayMs + 1620}ms` }}
+      />
+      <Sparks delayMs={delayMs + 1660} fill={p2} stroke={p1} sizePct={5} cy={45} />
+      <Boom delayMs={delayMs + 1720} color={tint(p2, 0.9)} thickness={4} />
+      <Boom delayMs={delayMs + 1880} color={tint(p1, 0.85)} thickness={3} />
+      <Boom delayMs={delayMs + 2040} color={tint(p0, 0.8)} />
+      <Glint delayMs={delayMs + 2340} color={p2} left={47} top={30} />
+    </Stage>
+  );
+}
+
+/* =============================================================================
    Glyphs — one small hand-drawn SVG per card, recognisable at a glance.
    All share a 0 0 10 10 viewBox so every template slot letterboxes them
    without distortion.
@@ -1705,10 +1903,10 @@ export const PLAYS: Record<string, SigPlugin> = {
   blighted_furrows: G(ReaperSweep, ["#8faf4a", "#5c5348", "#2f3a26"], GLYPH.blighted_furrows, {
     ordering: "sweep", staggerMs: 55, victims: ["p"], hasLead: true, sound: "extinction",
   }),
-  // tier 9 — a third shockwave (extra = 1)
-  culling: G(ReaperSweep, ["#d6234f", "#1c1c22", "#eef1f7"], GLYPH.culling, {
+  // APEX (tier 9) — bespoke SkullStrike set piece: death's bowling night.
+  culling: G(SkullStrike, ["#d6234f", "#1c1c22", "#eef1f7"], GLYPH.culling, {
     ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "extinction",
-  }, 1),
+  }),
   poisoned_counsel: G(ReaperSweep, ["#8faf4a", "#2f3a26", "#c9b0e8"], GLYPH.poisoned_counsel, {
     ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "petrify",
   }),
@@ -1749,10 +1947,10 @@ export const PLAYS: Record<string, SigPlugin> = {
   celestial_alignment: G(CelestialRing, ["#2c3e6b", "#cdd6ff", "#ffd76a"], GLYPH.celestial_alignment, {
     ordering: "radial", staggerMs: 45, victims: "all", hasLead: true, sound: "clockice", source: "frozen",
   }),
-  // tier 9 — an extra god-ray pass (extra = 1)
-  grand_conjunction: G(CelestialRing, ["#3b1a5e", "#e3d0ff", "#ffd76a"], GLYPH.grand_conjunction, {
+  // APEX (tier 9) — bespoke PlanetAlign set piece: the planets align.
+  grand_conjunction: G(PlanetAlign, ["#3b1a5e", "#e3d0ff", "#ffd76a"], GLYPH.grand_conjunction, {
     ordering: "radial", staggerMs: 45, victims: "all", hasLead: true, sound: "clockice", source: "frozen",
-  }, 1),
+  }),
 
   /* --- FrostTitan ---------------------------------------------------------------- */
   glacial_tomb: G(FrostTitan, ["#9fd8ff", "#e8f8ff", "#4f8fd1"], GLYPH.glacial_tomb, {

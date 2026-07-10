@@ -5,10 +5,13 @@
 // transform/opacity only. Do NOT import from BoardEffects.tsx.
 //
 // Design brief (owner: "animations for all the tiers 1 to 8, still unique
-// animations, maybe they don't need to be as extravagant"): ONE clean beat,
-// 0.8-1.3s, NO shockwaves, NO board-darkening washes, NO colossal figures.
-// Each play is a small centered emblem scene (~30-40% of the crop) plus a
-// compact per-square target hit for zone-fed cards.
+// animations, maybe they don't need to be as extravagant" — later hyped:
+// "you don't need to make the tier 1-4 animations so small, you can hype it
+// up a bit more"): ONE clean beat, ~1.2-1.6s, NO shockwaves, NO
+// board-darkening washes, NO colossal figures. Each play is a centered
+// emblem scene (~38% of the crop; tier-4 bold ~45%) carrying one modest
+// built-in flourish (see EmblemFlourish), plus a compact per-square target
+// hit for zone-fed cards.
 //
 // UNIQUENESS RECIPE: twenty micro-templates, each parameterised by
 // { palette, glyph } — and the glyph is the card's OWN globally unique face
@@ -85,9 +88,100 @@ function Stage({ children }: { children: ReactNode }) {
   );
 }
 
-/** The centered emblem box: the whole scene lives inside this (~30-40% of the
- * visible crop; the crop is the canvas's central ~57%, so 19% / 24% of the
- * canvas). `cls` picks the entrance keyframe. */
+/* --- Built-in hype flourish ---------------------------------------------------
+   Owner pass ("you don't need to make the tier 1-4 animations so small — you
+   can hype it up a bit more"): every emblem scene now carries ONE modest
+   flourish, chosen by its entrance class so it matches the template's motion —
+   a ring pulse for settlers/stampers, a shard scatter for droppers/risers, a
+   shine sweep for unfurlers/flickers. Neutral warm-white so it reads on every
+   palette; still NO shockwave and NO wash (basic-band rules hold). */
+type FlourishKind = "pulse" | "shards" | "sweep";
+const FLOURISH_BY_CLS: Record<string, FlourishKind> = {
+  "bsp-settle": "pulse",
+  "bsp-stamp": "pulse",
+  "bsp-facein": "pulse",
+  "bsp-shudder": "shards",
+  "bsp-blot": "pulse",
+  "bsp-spoke": "pulse",
+  "bsp-turn": "pulse",
+  "bsp-drop": "shards",
+  "bsp-rise": "shards",
+  "bsp-plop": "shards",
+  "bsp-grow": "shards",
+  "bsp-swing": "shards",
+  "bsp-lift": "shards",
+  "bsp-unfurl": "sweep",
+  "bsp-scroll": "sweep",
+  "bsp-taut": "sweep",
+  "bsp-flip": "sweep",
+  "bsp-blink": "sweep",
+};
+const FLOURISH_SHARDS = [
+  { dx: "170%", dy: "-150%", rot: "140deg", d: 0 },
+  { dx: "-165%", dy: "-125%", rot: "-150deg", d: 30 },
+  { dx: "150%", dy: "140%", rot: "120deg", d: 60 },
+  { dx: "-145%", dy: "155%", rot: "-130deg", d: 90 },
+];
+const SHINE = "rgba(255,250,235,0.8)";
+
+function EmblemFlourish({ cls, delayMs }: { cls: string; delayMs: number }) {
+  const kind = FLOURISH_BY_CLS[cls] ?? "pulse";
+  if (kind === "sweep") {
+    return (
+      <span
+        className="bsp-sweep absolute block"
+        style={{
+          left: "8%",
+          top: "10%",
+          width: "30%",
+          height: "80%",
+          background: `linear-gradient(90deg, transparent, ${SHINE}, transparent)`,
+          animationDelay: `${delayMs}ms`,
+        }}
+      />
+    );
+  }
+  if (kind === "shards") {
+    return (
+      <>
+        {FLOURISH_SHARDS.map((v, i) => (
+          <span
+            key={i}
+            className="bsp-shard absolute block"
+            style={
+              {
+                left: "44%",
+                top: "44%",
+                width: "12%",
+                height: "12%",
+                "--dx": v.dx,
+                "--dy": v.dy,
+                "--rot": v.rot,
+                animationDelay: `${delayMs + v.d}ms`,
+              } as CSSProperties
+            }
+          >
+            <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+              <path d="M5 0.8 L9.2 5 L5 9.2 L0.8 5 Z" fill={SHINE} />
+            </svg>
+          </span>
+        ))}
+      </>
+    );
+  }
+  return (
+    <span
+      className="bsp-ring absolute block rounded-full"
+      style={{ left: "-9%", top: "-9%", width: "118%", height: "118%", border: `2px solid ${SHINE}`, animationDelay: `${delayMs}ms` }}
+    />
+  );
+}
+
+/** The centered emblem box: the whole scene lives inside this. Hyped-up scale
+ * (owner pass): ~22% of the canvas base / 26% bold — the crop is the canvas's
+ * central ~57%, so that reads as ~38% of the visible crop, ~45% for tier-4
+ * bold cuts (was 19/24). `cls` picks the entrance keyframe and also selects
+ * the scene's built-in flourish. */
 function Emblem({
   bold,
   cls,
@@ -101,7 +195,7 @@ function Emblem({
   children: ReactNode;
   style?: CSSProperties;
 }) {
-  const s = bold ? 24 : 19;
+  const s = bold ? 26 : 22;
   return (
     <span
       className={`${cls} absolute block`}
@@ -115,6 +209,7 @@ function Emblem({
       }}
     >
       {children}
+      <EmblemFlourish cls={cls} delayMs={delayMs + 380} />
     </span>
   );
 }

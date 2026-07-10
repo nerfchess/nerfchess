@@ -47,6 +47,13 @@ export interface CardVfx {
 
 export const CARD_VFX: Record<string, CardVfx> = {
   // ---- Tier 10 — apex ----
+  // RIDICULOUS band (owner pass): every tier 9/10 overlay lead is now a
+  // bespoke ~3s physical-comedy set piece (fist slam, rage-quit board flip,
+  // guillotine, pearly gates...), so these canvas specs run the heaviest
+  // vocabulary available — big travel, hard impacts, a LINGERING aftermath on
+  // every entry (nothing in this band ends quietly), and shake on. The host
+  // scales particle density by tier, so tier 9/10 already draws the densest
+  // impacts the engine can produce.
   // Whole army becomes amazons: a royal surge rolls out from the middle of your host.
   ascendancy: { travel: "wave", impact: "burst", aftermath: "sparkle", palette: ["#b98cff", "#ffd76a", "#ffffff"], source: "center", shake: true },
   // A fresh army thunders down out of the sky onto your half.
@@ -57,8 +64,9 @@ export const CARD_VFX: Record<string, CardVfx> = {
   total_war: { travel: "rain", impact: "debris", aftermath: "scorch", palette: ["#e6432c", "#ff9d3d", "#3a1c12"], source: "sky", shake: true },
 
   // ---- Tier 9 ----
-  // The lights go out: darkness pours down over the whole enemy board. Eerie, not thumpy.
-  blackout: { travel: "wave", impact: "shock", aftermath: "none", palette: ["#141322", "#3a3766", "#0a0a12"], source: "sky", shake: true },
+  // The lights go out: darkness pours down over the whole enemy board. Eerie — and now
+  // the dark HANGS there (apex aftermath: nothing in this band ends quietly).
+  blackout: { travel: "wave", impact: "shock", aftermath: "smolder", palette: ["#141322", "#3a3766", "#0a0a12"], source: "sky", shake: true },
   // Quiet holy coronation on your own king.
   divine_right: { travel: "bolt", impact: "burst", aftermath: "sparkle", palette: ["#ffd76a", "#fff7de", "#b98cff"], source: "sky", shake: true },
   // A glacial front sweeps the whole board and locks the enemy solid.
@@ -125,7 +133,8 @@ export const CARD_VFX: Record<string, CardVfx> = {
   // ---- Tier 7 ----
   // Two squares yawn open into the abyss. Trap placement, quiet dread.
   abyss: { travel: "none", impact: "shock", aftermath: "smolder", palette: ["#3b1a5e", "#0d0618", "#8f6bff"], source: "lead", shake: true },
-  aegis: { travel: "none", impact: "shock", aftermath: "sparkle", palette: ["#5fc9b0", "#ffd76a", "#e8fff7"], source: "caster", shake: true },
+  // (moved to tier 6 by the info-card rework — shake dropped, board thumps are a tier 7+ privilege)
+  aegis: { travel: "none", impact: "shock", aftermath: "sparkle", palette: ["#5fc9b0", "#ffd76a", "#e8fff7"], source: "caster" },
   // The ancient ward rolls out from your king over everything you own.
   aegis_of_ages: { travel: "wave", impact: "shock", aftermath: "sparkle", palette: ["#c9a84c", "#5fc9b0", "#fff7de"], source: "caster", shake: true },
   // The queen is crowned an Amazon on her own square.
@@ -685,7 +694,8 @@ export const CARD_VFX: Record<string, CardVfx> = {
   // [ChronoLord] The hourglass sovereign winds five whole moves back.
   full_rewind: { travel: "bolt", impact: "shock", aftermath: "sparkle", palette: ["#6fe3ff", "#ffd76a", "#2a2a38"], source: "sky", shake: true },
   // [ChronoLord] The perfect rewind: eight half-moves undone in one turning.
-  perfect_rewind: { travel: "bolt", impact: "shock", aftermath: "sparkle", palette: ["#8f6bff", "#6fe3ff", "#ffffff"], source: "sky", shake: true },
+  // (moved to tier 6 by the coordinator's rebalance — shake dropped, board thumps are a tier 7+ privilege)
+  perfect_rewind: { travel: "bolt", impact: "shock", aftermath: "sparkle", palette: ["#8f6bff", "#6fe3ff", "#ffffff"], source: "sky" },
   // [ChronoLord] The infinity clock: your turn does not end until blood is drawn.
   endless_turn: { travel: "bolt", impact: "shock", aftermath: "sparkle", palette: ["#e6432c", "#ffd76a", "#ffffff"], source: "caster", shake: true },
   // [ChronoLord] The torn calendar: turn, draft and clock all struck away.
