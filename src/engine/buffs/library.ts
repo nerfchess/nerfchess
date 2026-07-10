@@ -3348,7 +3348,7 @@ const TIER7: Buff[] = [
     }),
   ),
   def(
-    { id: "abyss", name: "Abyss", description: "Two squares you pick swallow any enemy piece except a king that enters, for the game.", tier: 7, category: "attack" },
+    { id: "abyss", name: "Abyss", description: "Two squares you pick swallow any enemy piece except a king that enters, for the game.", tier: 5, category: "attack" },
     voidSquares(2, null),
   ),
   def(

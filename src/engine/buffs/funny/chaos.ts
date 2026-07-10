@@ -54,14 +54,21 @@ export const FUNNY_CHAOS: Buff[] = [
     // Three spins (owner request: the gambling cards paid out too little). Each
     // spin re-reads the board, so a later one can never hit an already-empty
     // square; all draws run on the seeded api.rng and replay identically.
-    instant((_inst, api) => {
+    instant((inst, api) => {
+      let hits = 0;
       for (let spin = 0; spin < 3; spin++) {
         const targets = mySquares(api.board, api.opp).filter(
           (sq) => api.board.pieces[sq]!.type !== "k",
         );
         if (!targets.length) break;
         api.removePiece(targets[api.rng.int(targets.length)]);
+        hits++;
       }
+      // outcome shown on the board after the wheel spins (cast banner).
+      inst.state.outcome =
+        hits === 0
+          ? "No enemy pieces left to take"
+          : `${hits} enemy piece${hits === 1 ? "" : "s"} removed!`;
     }),
   ),
   card(
