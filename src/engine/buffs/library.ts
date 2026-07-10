@@ -2266,7 +2266,10 @@ const TIER5: Buff[] = [
     },
   ),
   def(
-    { id: "resurrect_queen", name: "Resurrect Queen", description: "Bring your captured queen back to any empty square on the board, and she cannot be captured for your opponent's next 2 turns.", tier: 5, category: "pieces" },
+    // Tier 6 (owner call). Pools are built by the card's own `tier` field
+    // (poolAtTier filters b.tier === t), so it drafts as a tier-6 card even
+    // though it's declared in this file's TIER5 block.
+    { id: "resurrect_queen", name: "Resurrect Queen", description: "Bring your captured queen back to any empty square on the board, and she cannot be captured for your opponent's next 2 turns.", tier: 6, category: "pieces" },
     activated(
       (_inst, api, picks) => {
         if (picks.length > 0) return null;
