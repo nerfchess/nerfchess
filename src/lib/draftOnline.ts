@@ -242,6 +242,9 @@ export type DraftZones = {
    * request: "a super realistic animation and icon" for placements). Same
    * visibility rule as the peels: public to both players from placement. */
   traps: TrapMark[];
+  /** Doomed pieces (timed_loss effects: Death Arcana and friends): the piece
+   * on this square dies when the countdown reaches zero. */
+  doom: { sq: number; turns: number }[];
 };
 
 export type TrapKind = "mine" | "sinkhole" | "trapdoor" | "whoopee" | "landlord" | "beartrap";
@@ -286,7 +289,7 @@ function immobilizedSquares(game: NerfGame): number[] {
  * frozen pieces, sanctuary squares, barred squares for each side, and the
  * lightning-struck squares' brief flash. */
 export function draftZones(game: NerfGame, myColor: Color): DraftZones {
-  const zones: DraftZones = { frozen: [], shielded: [], ward: [], barred: [], strike: [], walnut: [], frozenSkin: {}, turns: {}, locked: [], banana: [], traps: [] };
+  const zones: DraftZones = { frozen: [], shielded: [], ward: [], barred: [], strike: [], walnut: [], frozenSkin: {}, turns: {}, locked: [], banana: [], traps: [], doom: [] };
   if (!game.buffs) return zones;
   zones.frozen.push(...immobilizedSquares(game));
   const addTrap = (sq: number, kind: TrapKind, name: string) => {
@@ -375,6 +378,12 @@ export function draftZones(game: NerfGame, myColor: Color): DraftZones {
     } else if (e.kind === "walnut") {
       zones.walnut.push(e.sq);
       noteTurns(e.sq, e.turns);
+    } else if (e.kind === "timed_loss") {
+      // A doomed piece (Death Arcana style): badge with the countdown.
+      if (e.turns != null && e.turns > 0) {
+        zones.doom.push({ sq: e.sq, turns: e.turns });
+        noteTurns(e.sq, e.turns);
+      }
     } else if (e.kind === "shield") {
       if (e.squares) {
         // Only paint a shield square that still holds the owner's piece. A

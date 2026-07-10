@@ -10,9 +10,11 @@
      state is carried by the card's own zone overlay, never by the play;
    - all bsp-* classes are hidden outright under reduced motion (guard at the
      bottom of this file);
-   - this is the BASIC band: one clean beat, 0.8-1.3s, NO shockwaves, NO
-     board-darkening washes, NO colossal figures — a small centered emblem
-     scene plus a compact per-square target hit.
+   - this is the BASIC band, hyped up (owner: "you don't need to make the
+     tier 1-4 animations so small"): one clean beat, ~1.2-1.6s, a bigger
+     centered emblem scene (~38% of the crop; tier-4 bold ~45%) with one
+     modest built-in flourish — but still NO shockwaves, NO board-darkening
+     washes, NO colossal figures. Plus a compact per-square target hit.
    ========================================================================= */
 
 /* --- Target hits (per-square, zone-fed cards mount one per square) -------- */
@@ -23,7 +25,7 @@
   30% { opacity: 0.85; transform: scale(1); }
   100% { opacity: 0; transform: scale(1.15); }
 }
-.bsp-flash { animation: bsp-flash 0.7s ease-out both; }
+.bsp-flash { animation: bsp-flash 0.8s ease-out both; }
 
 /* The card glyph popping on the struck square. */
 @keyframes bsp-pop {
@@ -33,7 +35,7 @@
   80% { opacity: 0.95; transform: scale(1); }
   100% { opacity: 0; transform: scale(1.02); }
 }
-.bsp-pop { animation: bsp-pop 0.85s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.bsp-pop { animation: bsp-pop 1s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
 
 /* Small expanding ring on the square (emblem-scale, not a shockwave). */
 @keyframes bsp-ring {
@@ -41,7 +43,7 @@
   25% { opacity: 0.9; }
   100% { opacity: 0; transform: scale(1.25); }
 }
-.bsp-ring { animation: bsp-ring 0.7s ease-out both; }
+.bsp-ring { animation: bsp-ring 0.8s ease-out both; }
 
 /* A shard / spark flying out (--dx / --dy / --rot per instance). */
 @keyframes bsp-shard {
@@ -49,7 +51,7 @@
   20% { opacity: 1; }
   100% { opacity: 0; transform: translate(var(--dx), var(--dy)) rotate(var(--rot)) scale(0.5); }
 }
-.bsp-shard { animation: bsp-shard 0.75s ease-out both; }
+.bsp-shard { animation: bsp-shard 0.85s ease-out both; }
 
 /* --- Emblem entrances ------------------------------------------------------ */
 
@@ -61,7 +63,7 @@
   84% { opacity: 0.95; }
   100% { opacity: 0; transform: translateY(-2%) scale(1.01); }
 }
-.bsp-drop { animation: bsp-drop 1s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.bsp-drop { animation: bsp-drop 1.3s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
 
 /* Emblem rises from below (lantern, banner pole, sprout base). */
 @keyframes bsp-rise {
@@ -71,7 +73,7 @@
   84% { opacity: 0.95; }
   100% { opacity: 0; transform: translateY(-4%) scale(1); }
 }
-.bsp-rise { animation: bsp-rise 1s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.bsp-rise { animation: bsp-rise 1.3s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
 
 /* A sigil / rune tile settling flat out of the air with a slight twist. */
 @keyframes bsp-settle {
@@ -80,7 +82,7 @@
   84% { opacity: 0.92; }
   100% { opacity: 0; transform: scale(1.02) rotate(2deg); }
 }
-.bsp-settle { animation: bsp-settle 0.95s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.bsp-settle { animation: bsp-settle 1.25s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
 
 /* A hard stamp: fast scale-down hit, brief hold, gone. */
 @keyframes bsp-stamp {
@@ -91,7 +93,7 @@
   82% { opacity: 0.95; }
   100% { opacity: 0; transform: scale(1); }
 }
-.bsp-stamp { animation: bsp-stamp 0.9s cubic-bezier(0.3, 0, 0.4, 1) both; }
+.bsp-stamp { animation: bsp-stamp 1.2s cubic-bezier(0.3, 0, 0.4, 1) both; }
 
 /* The card's face glyph fading in at the emblem's heart. */
 @keyframes bsp-facein {
@@ -101,7 +103,7 @@
   84% { opacity: 0.95; }
   100% { opacity: 0; transform: scale(1); }
 }
-.bsp-facein { animation: bsp-facein 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.bsp-facein { animation: bsp-facein 1.05s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
 
 /* --- Emblem behaviours ------------------------------------------------------ */
 
@@ -113,7 +115,7 @@
   84% { opacity: 0.95; }
   100% { opacity: 0; transform: scaleY(1); }
 }
-.bsp-grow { animation: bsp-grow 0.95s cubic-bezier(0.2, 0.8, 0.2, 1) both; transform-origin: 50% 100%; }
+.bsp-grow { animation: bsp-grow 1.25s cubic-bezier(0.2, 0.8, 0.2, 1) both; transform-origin: 50% 100%; }
 
 /* Unfurl sideways from the hoist (flag, ribbon). */
 @keyframes bsp-unfurl {
@@ -123,7 +125,7 @@
   84% { opacity: 0.95; }
   100% { opacity: 0; transform: scaleX(1); }
 }
-.bsp-unfurl { animation: bsp-unfurl 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both; transform-origin: 0% 50%; }
+.bsp-unfurl { animation: bsp-unfurl 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) both; transform-origin: 0% 50%; }
 
 /* A scroll unrolling downward, holding, then snapping shut. */
 @keyframes bsp-scroll {
@@ -134,7 +136,7 @@
   86% { opacity: 1; transform: scaleY(0.1); }
   100% { opacity: 0; transform: scaleY(0.06); }
 }
-.bsp-scroll { animation: bsp-scroll 1.2s cubic-bezier(0.3, 0, 0.3, 1) both; transform-origin: 50% 0%; }
+.bsp-scroll { animation: bsp-scroll 1.5s cubic-bezier(0.3, 0, 0.3, 1) both; transform-origin: 50% 0%; }
 
 /* An eye opening, holding its look, then blinking shut. */
 @keyframes bsp-blink {
@@ -145,7 +147,7 @@
   86% { transform: scaleY(0.9); }
   100% { opacity: 0; transform: scaleY(0.85); }
 }
-.bsp-blink { animation: bsp-blink 1.15s ease-in-out both; }
+.bsp-blink { animation: bsp-blink 1.45s ease-in-out both; }
 
 /* A key (or gear) turning a hard quarter-turn with a settle. */
 @keyframes bsp-turn {
@@ -156,7 +158,7 @@
   84% { opacity: 0.95; }
   100% { opacity: 0; transform: rotate(90deg); }
 }
-.bsp-turn { animation: bsp-turn 1.05s cubic-bezier(0.4, 0, 0.3, 1) both; }
+.bsp-turn { animation: bsp-turn 1.35s cubic-bezier(0.4, 0, 0.3, 1) both; }
 
 /* A slow counter-rotating tick (secondary gear). */
 @keyframes bsp-tickback {
@@ -166,7 +168,7 @@
   84% { opacity: 0.85; transform: rotate(-68deg); }
   100% { opacity: 0; transform: rotate(-68deg); }
 }
-.bsp-tickback { animation: bsp-tickback 1.05s cubic-bezier(0.4, 0, 0.3, 1) both; }
+.bsp-tickback { animation: bsp-tickback 1.35s cubic-bezier(0.4, 0, 0.3, 1) both; }
 
 /* A bell swinging twice around its crown. */
 @keyframes bsp-swing {
@@ -178,7 +180,7 @@
   92% { opacity: 0.9; transform: rotate(0deg); }
   100% { opacity: 0; transform: rotate(0deg); }
 }
-.bsp-swing { animation: bsp-swing 1.2s ease-in-out both; transform-origin: 50% 6%; }
+.bsp-swing { animation: bsp-swing 1.5s ease-in-out both; transform-origin: 50% 6%; }
 
 /* A lantern (or mote) lifting away with a gentle sway. */
 @keyframes bsp-lift {
@@ -187,7 +189,7 @@
   62% { transform: translateY(-8%) rotate(-2deg); }
   100% { opacity: 0; transform: translateY(-18%) rotate(1deg); }
 }
-.bsp-lift { animation: bsp-lift 1.25s ease-in-out both; }
+.bsp-lift { animation: bsp-lift 1.55s ease-in-out both; }
 
 /* A satchel dropping in with a squash-and-settle. */
 @keyframes bsp-plop {
@@ -198,7 +200,7 @@
   84% { opacity: 0.95; }
   100% { opacity: 0; transform: translateY(0) scale(1, 1); }
 }
-.bsp-plop { animation: bsp-plop 1s cubic-bezier(0.3, 0.7, 0.3, 1) both; transform-origin: 50% 100%; }
+.bsp-plop { animation: bsp-plop 1.3s cubic-bezier(0.3, 0.7, 0.3, 1) both; transform-origin: 50% 100%; }
 
 /* A playing-card flick: flips up from edge-on to face-on. */
 @keyframes bsp-flip {
@@ -208,7 +210,7 @@
   84% { opacity: 0.95; }
   100% { opacity: 0; transform: scaleX(1) rotate(0deg); }
 }
-.bsp-flip { animation: bsp-flip 0.95s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.bsp-flip { animation: bsp-flip 1.25s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
 
 /* Half-shells closing in from the flanks (stone shell, closing gates). */
 @keyframes bsp-close-l {
@@ -218,7 +220,7 @@
   84% { opacity: 0.95; }
   100% { opacity: 0; transform: translateX(0); }
 }
-.bsp-close-l { animation: bsp-close-l 0.95s cubic-bezier(0.3, 0, 0.4, 1) both; }
+.bsp-close-l { animation: bsp-close-l 1.25s cubic-bezier(0.3, 0, 0.4, 1) both; }
 @keyframes bsp-close-r {
   0% { opacity: 0; transform: translateX(70%); }
   40% { opacity: 1; transform: translateX(-4%); }
@@ -226,7 +228,7 @@
   84% { opacity: 0.95; }
   100% { opacity: 0; transform: translateX(0); }
 }
-.bsp-close-r { animation: bsp-close-r 0.95s cubic-bezier(0.3, 0, 0.4, 1) both; }
+.bsp-close-r { animation: bsp-close-r 1.25s cubic-bezier(0.3, 0, 0.4, 1) both; }
 
 /* A chain pulled taut across the emblem with an overshoot twang. */
 @keyframes bsp-taut {
@@ -237,7 +239,7 @@
   84% { opacity: 0.95; }
   100% { opacity: 0; transform: scaleX(1); }
 }
-.bsp-taut { animation: bsp-taut 0.9s cubic-bezier(0.3, 0, 0.3, 1) both; transform-origin: 0% 50%; }
+.bsp-taut { animation: bsp-taut 1.2s cubic-bezier(0.3, 0, 0.3, 1) both; transform-origin: 0% 50%; }
 
 /* A light beam fanning out of the prism. */
 @keyframes bsp-beam {
@@ -246,7 +248,7 @@
   78% { opacity: 0.7; }
   100% { opacity: 0; transform: scaleX(1); }
 }
-.bsp-beam { animation: bsp-beam 0.85s ease-out both; transform-origin: 0% 50%; }
+.bsp-beam { animation: bsp-beam 1.1s ease-out both; transform-origin: 0% 50%; }
 
 /* Leaves / motes orbiting the emblem centre. */
 @keyframes bsp-orbit {
@@ -255,7 +257,7 @@
   80% { opacity: 0.9; }
   100% { opacity: 0; transform: rotate(300deg); }
 }
-.bsp-orbit { animation: bsp-orbit 1.25s ease-in-out both; }
+.bsp-orbit { animation: bsp-orbit 1.55s ease-in-out both; }
 
 /* A drip / drift piece falling away (--dx / --dy / --rot per instance). */
 @keyframes bsp-drift {
@@ -263,7 +265,7 @@
   22% { opacity: 0.95; }
   100% { opacity: 0; transform: translate(var(--dx), var(--dy)) rotate(var(--rot)); }
 }
-.bsp-drift { animation: bsp-drift 0.95s ease-in both; }
+.bsp-drift { animation: bsp-drift 1.2s ease-in both; }
 
 /* Frost spokes reaching out of the centre (scale from middle). */
 @keyframes bsp-spoke {
@@ -273,7 +275,7 @@
   84% { opacity: 0.9; }
   100% { opacity: 0; transform: scale(1); }
 }
-.bsp-spoke { animation: bsp-spoke 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.bsp-spoke { animation: bsp-spoke 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
 
 /* A glint star popping along the arc (staggered by inline delay). */
 @keyframes bsp-glint {
@@ -281,7 +283,7 @@
   40% { opacity: 1; transform: scale(1.1) rotate(0deg); }
   100% { opacity: 0; transform: scale(0.6) rotate(15deg); }
 }
-.bsp-glint { animation: bsp-glint 0.65s ease-out both; }
+.bsp-glint { animation: bsp-glint 0.8s ease-out both; }
 
 /* The whole emblem giving one small shudder (stone shell slam, ink hit). */
 @keyframes bsp-shudder {
@@ -301,7 +303,7 @@
   84% { opacity: 0.92; }
   100% { opacity: 0; transform: scale(1.02); }
 }
-.bsp-blot { animation: bsp-blot 0.95s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.bsp-blot { animation: bsp-blot 1.25s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
 
 /* A soft glow breathing once (lantern glass, prism core). */
 @keyframes bsp-breathe {
@@ -310,7 +312,15 @@
   65% { opacity: 0.6; transform: scale(0.98); }
   100% { opacity: 0; transform: scale(1.06); }
 }
-.bsp-breathe { animation: bsp-breathe 1.1s ease-in-out both; }
+.bsp-breathe { animation: bsp-breathe 1.4s ease-in-out both; }
+
+/* A shine band sweeping once across the emblem (built-in hype flourish). */
+@keyframes bsp-sweep {
+  0% { opacity: 0; transform: translateX(-120%) skewX(-18deg); }
+  25% { opacity: 0.8; }
+  100% { opacity: 0; transform: translateX(220%) skewX(-18deg); }
+}
+.bsp-sweep { animation: bsp-sweep 0.9s ease-out both; }
 
 /* --- Reduced motion --------------------------------------------------------- */
 /* Defensive: the mounting layers already gate on prefers-reduced-motion, but

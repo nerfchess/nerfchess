@@ -1394,21 +1394,26 @@ export const WILD_ARCANE: Buff[] = [
     }),
   ),
 
-  // ===================== META: REVEALS (real effects attached) =====================
+  // ===================== META: INTEL (nerf reveals with real riders) ==========
+  // Reworked for the full-transparency era: held cards, picks, and offers are
+  // public, so the old card/tier peeks revealed nothing. The nerf is the one
+  // secret left; each card reads it and carries a distinct live rider.
   card(
     {
       id: "wa_foresight",
       name: "Foresight",
       description:
-        "See the tier of your opponent's next draft, and reveal their nerf for the rest of the game.",
+        "See your opponent's nerf for the rest of the game, and your next draft rolls one tier higher.",
       tier: 3,
       category: "info",
       boon: true,
       flavor: "You read the next page before they turn it.",
     },
+    // Unique combo: Extra Glance is the reveal alone, Oracle's Eye the tier
+    // lift alone.
     instant((_inst, api) => {
-      api.mine.flags.seeOppTier = true;
       api.mine.oppNerfRevealed = true;
+      api.mine.flags.bankBonus = Math.min(1, (api.mine.flags.bankBonus ?? 0) + 1);
     }),
   ),
   card(
@@ -1416,14 +1421,16 @@ export const WILD_ARCANE: Buff[] = [
       id: "wa_mind_read",
       name: "Mind Read",
       description:
-        "See your opponent's next buff options, and their next drafted buff arrives nullified.",
+        "Your opponent's next drafted buff arrives nullified, and their reroll token slips away if they hold one.",
       tier: 4,
-      category: "info",
+      category: "draft",
       flavor: "You know what they want, so you spoil it.",
     },
+    // Unique combo: Chain Nullify is the nullify alone, Quick Glance the
+    // reroll theft alone.
     instant((_inst, api) => {
-      api.mine.flags.seeOppCards = true;
       api.theirs.flags.nullifyIncoming = (api.theirs.flags.nullifyIncoming ?? 0) + 1;
+      api.theirs.rerollsLeft = Math.max(0, (api.theirs.rerollsLeft ?? 0) - 1);
     }),
   ),
   card(
@@ -1432,16 +1439,18 @@ export const WILD_ARCANE: Buff[] = [
       icon: "Telescope",
       name: "Omniscience",
       description:
-        "See your opponent's next buff options and its tier, and reveal their nerf for the rest of the game.",
+        "See your opponent's nerf for the rest of the game; your next draft shows three cards to pick from and rolls one tier higher.",
       tier: 4,
       category: "info",
       boon: true,
       flavor: "Nothing about them is hidden now.",
     },
+    // Unique triple: reveal + prepThree + bankBonus (Transcendence pairs the
+    // draft half with a nerf removal instead).
     instant((_inst, api) => {
-      api.mine.flags.seeOppCards = true;
-      api.mine.flags.seeOppTier = true;
       api.mine.oppNerfRevealed = true;
+      api.mine.flags.prepThree = true;
+      api.mine.flags.bankBonus = Math.min(1, (api.mine.flags.bankBonus ?? 0) + 1);
     }),
   ),
 ];

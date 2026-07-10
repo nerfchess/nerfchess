@@ -1,7 +1,7 @@
 // Funny set: TERMINALLY ONLINE. Meta gags about games, drafts, clocks, and
 // internet brainrot: crash their draft client (blockedDrafts), buy both cards
-// (takeBoth), ship them a day-one nerf (nullifyIncoming), read their stream
-// (info flags), lag their clock (adjustClock), send them outside
+// (takeBoth), ship them a day-one nerf (nullifyIncoming), snipe their stream
+// (nerf reveal + prepThree), lag their clock (adjustClock), send them outside
 // (skipOpponent), Ctrl+Z a capture (reviveOne), bonk with a rubber chicken
 // (walnut), cover the board in a pop-up ad (summonTemp), mute their heavy
 // hitters (curse), hand out a skill issue (curse), promote one piece to main
@@ -72,14 +72,18 @@ export const FUNNY_META: Buff[] = [
       id: "stream_sniper",
       name: "Stream Sniper",
       description:
-        "You scouted the whole bracket: see the tier of your opponent's next draft, and your own next draft shows three cards to pick from.",
-      tier: 3,
+        "You found their stream: see your opponent's nerf for the rest of the game, and your own next draft shows three cards to pick from.",
+      tier: 2,
       category: "info",
       boon: true,
       flavor: "Thanks for the content, streamer.",
     },
+    // Reworked for the full-transparency era (offer tiers are public): sniping
+    // the stream now reads the one secret left (their nerf) and preps your
+    // counters. Unique combo: Extra Glance is the reveal alone, Prep the
+    // three-card offer alone. Tier 2 = the sum of those two tier-1 pieces.
     instant((_inst, api) => {
-      api.mine.flags.seeOppTier = true;
+      api.mine.oppNerfRevealed = true;
       api.mine.flags.prepThree = true;
     }),
   ),

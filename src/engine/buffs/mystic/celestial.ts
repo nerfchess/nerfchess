@@ -91,14 +91,18 @@ export const MYSTIC_CELESTIAL: Buff[] = [
       id: "zodiac_wheel",
       name: "Zodiac Wheel",
       description:
-        "You read all twelve houses at once: your next draft shows three cards to pick from, and you see your opponent's next card options.",
+        "You read all twelve houses at once: your next draft shows three cards to pick from, all fated to tier 4.",
       tier: 4,
       category: "draft",
       flavor: "Mercury is in retrograde. Your rooks are in ascension.",
     },
+    // Reworked for the full-transparency era (opponent offers are public): the
+    // wheel now fixes where your widened draft is dealt from. Unique combo of
+    // prepThree + forceTier (North Star is the forceTier alone, Prep the
+    // three-card offer alone).
     instant((_inst, api) => {
       api.mine.flags.prepThree = true;
-      api.mine.flags.seeOppCards = true;
+      api.mine.flags.forceTier = 4;
     }),
   ),
   card(
