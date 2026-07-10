@@ -1867,20 +1867,6 @@ const TIER4: Buff[] = [
     },
   ),
   def(
-    { id: "sanctuary", name: "Sanctuary", description: "Choose a square. The piece standing on it (never your king) cannot be captured for the rest of the game, and this protection follows that piece as it moves.", tier: 4, category: "protection" },
-    activated(
-      (_inst, _api, picks) =>
-        picks.length > 0
-          ? null
-          : { kind: "square", label: "Choose the sanctuary square", squares: Array.from({ length: 64 }, (_, i) => i) },
-      (_inst, api, picks) => {
-        if (picks[0]?.square != null) {
-          addEffect(api, { kind: "shield", owner: api.me, squares: [picks[0].square], turns: null });
-        }
-      },
-    ),
-  ),
-  def(
     { id: "amazon_knight", requires: ["n"], name: "Amazon Knight", description: "One knight becomes a knight plus queen for 2 turns.", tier: 4, category: "movement", fx: { motif: "empower", pieces: ["n"], moveAs: "q", self: true } },
     bindPiece("Choose the knight", bindCandidates(["n"]), {
       turns: 2,
@@ -2794,52 +2780,6 @@ const TIER6: Buff[] = [
     ),
   ),
   def(
-    { id: "sanctuary_zone", name: "Sanctuary Zone", description: "Pick any 2x2 area: your pieces standing there, your king aside, cannot be captured for your opponent's next 5 turns.", tier: 6, category: "protection", boon: true },
-    activated(
-      (_inst, _api, picks) => {
-        // Two picks place the 2x2 precisely: the first is any corner, the
-        // second is a diagonal neighbour of it, so the two picks are opposite
-        // corners and the player aims the box in whatever direction they want
-        // (no fixed up-and-right auto-extend that felt random).
-        if (picks.length === 0) {
-          return {
-            kind: "square",
-            label: "Pick one corner of your 2x2 sanctuary",
-            squares: Array.from({ length: 64 }, (_, i) => i),
-          };
-        }
-        if (picks.length === 1) {
-          const a = picks[0].square!;
-          return {
-            kind: "square",
-            label: "Pick the opposite corner to place the 2x2",
-            squares: [a - 9, a - 7, a + 7, a + 9].filter(
-              (b) =>
-                b >= 0 &&
-                b < 64 &&
-                Math.abs(FILE(b) - FILE(a)) === 1 &&
-                Math.abs(RANK(b) - RANK(a)) === 1,
-            ),
-          };
-        }
-        return null;
-      },
-      (_inst, api, picks) => {
-        const a = picks[0]?.square;
-        const b = picks[1]?.square;
-        if (a == null || b == null) return;
-        const f0 = Math.min(FILE(a), FILE(b));
-        const r0 = Math.min(RANK(a), RANK(b));
-        addEffect(api, {
-          kind: "shield",
-          owner: api.me,
-          squares: [SQ(f0, r0), SQ(f0 + 1, r0), SQ(f0, r0 + 1), SQ(f0 + 1, r0 + 1)],
-          turns: 4,
-        });
-      },
-    ),
-  ),
-  def(
     { id: "overwhelm", name: "Overwhelm", description: "Take three moves in a row, once. You cannot capture the king during these bonus moves: your opponent replies first.", tier: 6, category: "tempo", fx: { motif: "rally", pieces: "all", self: true } },
     extraMovesNow(2),
   ),
@@ -3435,11 +3375,6 @@ const TIER7: Buff[] = [
   ),
 ];
 
-/** Copy of the board's piece placement (Perfect Rewind snapshots). */
-function snapshotPieces(board: BoardState): BoardState["pieces"] {
-  return board.pieces.map((p) => (p ? { ...p } : null));
-}
-
 // ---------------------------------------------------------------------------
 // TIER 8 — game-warping, rare
 // ---------------------------------------------------------------------------
@@ -3459,35 +3394,6 @@ const TIER8: Buff[] = [
         ]),
       ),
     ),
-  ),
-  def(
-    { id: "perfect_rewind", name: "Perfect Rewind", description: "Rewind all pieces to where they stood eight half-moves ago, once.", tier: 6, category: "tempo" },
-    {
-      kind: "activated",
-      init: (inst, api) => {
-        inst.state.snaps = [snapshotPieces(api.board)];
-      },
-      onMovePlayed: (inst, _move, api) => {
-        const snaps = inst.state.snaps as BoardState["pieces"][];
-        snaps.push(snapshotPieces(api.board));
-        while (snaps.length > 9) snaps.shift();
-      },
-      effect: (inst, api) => {
-        const snap = (inst.state.snaps as BoardState["pieces"][] | undefined)?.[0];
-        if (!snap) return;
-        // Whole-board rewrite: the clears are bookkeeping, not captures, so
-        // they must not feed the revive pools or capture counters.
-        for (let sq = 0; sq < 64; sq++) {
-          api.removePiece(sq, { uncounted: true });
-          const p = snap[sq];
-          if (p) api.place(sq, p.type, p.color);
-        }
-      },
-      status: (inst) => {
-        const back = ((inst.state.snaps as unknown[])?.length ?? 1) - 1;
-        return back >= 8 ? "rewinds eight half-moves" : `rewinds ${back} half-moves so far`;
-      },
-    },
   ),
   def(
     { id: "divine_legion", name: "Divine Legion", description: "Add a queen to your pocket, then spend a later turn to drop it onto any empty square.", tier: 7, category: "pieces" },

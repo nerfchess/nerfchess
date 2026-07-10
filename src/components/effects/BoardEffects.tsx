@@ -651,9 +651,76 @@ const DET_VECTORS = [
  * and a scorch mark that lingers a beat before fading. Pure one-shot CSS;
  * hidden entirely under reduced motion like the other transient flourishes.
  */
+/** Flame tongues for the firestorm bursts: licks of fire thrown outward and
+ *  up, each with its own vector + delay (mirrors the shard pattern). */
+const FLAME_VECTORS = [
+  { dx: "-135%", dy: "-190%", rot: "-24deg", delay: 30 },
+  { dx: "120%", dy: "-210%", rot: "20deg", delay: 0 },
+  { dx: "-40%", dy: "-260%", rot: "-6deg", delay: 55 },
+  { dx: "195%", dy: "-120%", rot: "38deg", delay: 40 },
+  { dx: "-205%", dy: "-95%", rot: "-40deg", delay: 70 },
+];
+
+function FlameLicks({ delayMs = 0, sizePct = 16 }: { delayMs?: number; sizePct?: number }) {
+  return (
+    <>
+      {FLAME_VECTORS.map((v, i) => (
+        <span
+          key={i}
+          className="fx-flame-lick absolute left-1/2 top-1/2 block"
+          style={
+            {
+              width: `${sizePct}%`,
+              height: `${sizePct * 1.4}%`,
+              marginLeft: `-${sizePct / 2}%`,
+              marginTop: `-${sizePct / 2}%`,
+              "--dx": v.dx,
+              "--dy": v.dy,
+              "--rot": v.rot,
+              animationDelay: `${delayMs + v.delay}ms`,
+            } as React.CSSProperties
+          }
+        >
+          <svg viewBox="0 0 10 14" className="h-full w-full" aria-hidden="true">
+            <path
+              d="M5 0 C7.5 3 9 5.5 9 8.5 C9 11.5 7.2 14 5 14 C2.8 14 1 11.5 1 8.5 C1 6.5 2 4.5 3.2 3 C3.4 5 4 6 5 6.6 C5.6 4.4 5.4 2 5 0 Z"
+              fill="#ff9d3d"
+              stroke="#7a2e0e"
+              strokeWidth="0.5"
+            />
+            <path d="M5 4.5 C6.4 6.4 7 8 7 9.6 C7 11.6 6 13 5 13 C4 13 3 11.6 3 9.6 C3 8 3.6 6.4 5 4.5 Z" fill="#ffd166" />
+          </svg>
+        </span>
+      ))}
+    </>
+  );
+}
+
 export function DetonationBurst() {
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      {/* White-hot core, then the fireball climbs off the square. */}
+      <span
+        className="fx-sig-flash absolute inset-[10%] block rounded-full"
+        style={{ background: "radial-gradient(circle, rgba(255,255,255,0.95), rgba(255,157,61,0.55) 52%, transparent 74%)" }}
+      />
+      <span
+        className="fx-fireball absolute inset-[16%] block rounded-full"
+        style={{
+          background:
+            "radial-gradient(circle at 50% 62%, rgba(255,240,200,0.95), rgba(255,157,61,0.85) 42%, rgba(230,67,44,0.7) 68%, rgba(58,28,18,0.4) 88%, transparent 100%)",
+        }}
+      />
+      {/* Twin fire shockwaves racing past the square's edges. */}
+      <span
+        className="fx-sig-shock absolute inset-[8%] block rounded-full"
+        style={{ border: "2.5px solid rgba(255,157,61,0.95)" }}
+      />
+      <span
+        className="fx-sig-shock absolute inset-[16%] block rounded-full"
+        style={{ border: "1.5px solid rgba(255,209,102,0.9)", animationDelay: "90ms" }}
+      />
+      <FlameLicks />
       <span className="fx-scorch absolute inset-[12%] block">
         <svg viewBox="0 0 40 40" className="h-full w-full">
           <path
@@ -2314,25 +2381,79 @@ function StrikeBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 }
 
 function AtomicBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    // Ground zero: a white-out flash, a climbing mushroom fireball on a hot
+    // stem, twin shockwaves blown past the square, and flame licks thrown
+    // clear — the fiery storm the name promises. Overflows its square on
+    // purpose (pointer-events-none, purely decorative).
+    return (
+      <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+        <span
+          className="fx-sig-flash absolute inset-[-45%] block rounded-full"
+          style={{
+            background: "radial-gradient(circle, rgba(255,255,255,0.98), rgba(255,180,90,0.6) 46%, transparent 72%)",
+            animationDelay: `${delayMs}ms`,
+          }}
+        />
+        {/* The stem: a hot column rising out of the square. */}
+        <span
+          className="fx-fire-stem absolute bottom-[8%] left-[34%] block h-[95%] w-[32%]"
+          style={{
+            background: "linear-gradient(180deg, rgba(255,157,61,0.9), rgba(230,67,44,0.75) 55%, rgba(58,28,18,0.4))",
+            animationDelay: `${delayMs + 60}ms`,
+          }}
+        />
+        {/* The cap: the mushroom fireball swelling as it climbs. */}
+        <span
+          className="fx-fireball absolute inset-[-18%] bottom-auto block h-[85%] rounded-full"
+          style={{
+            background:
+              "radial-gradient(circle at 50% 68%, rgba(255,240,200,0.98), rgba(255,157,61,0.9) 40%, rgba(230,67,44,0.75) 66%, rgba(40,20,14,0.5) 88%, transparent 100%)",
+            animationDelay: `${delayMs + 60}ms`,
+          }}
+        />
+        <span
+          className="fx-sig-shock absolute inset-[-40%] block rounded-full"
+          style={{ border: "3px solid rgba(255,157,61,0.95)", animationDelay: `${delayMs + 40}ms` }}
+        />
+        <span
+          className="fx-sig-shock absolute inset-[-20%] block rounded-full"
+          style={{ border: "2px solid rgba(255,209,102,0.9)", animationDelay: `${delayMs + 150}ms` }}
+        />
+        <span
+          className="fx-sig-soot absolute inset-[2%] block rounded-full"
+          style={{ border: "3px solid rgba(30,24,20,0.7)", animationDelay: `${delayMs + 120}ms` }}
+        />
+        <FlameLicks delayMs={delayMs + 80} sizePct={20} />
+      </span>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span
-        className="fx-sig-soot absolute block rounded-full"
+        className="fx-sig-flash absolute inset-[14%] block rounded-full"
         style={{
-          inset: lead ? "6%" : "22%",
-          border: lead ? "3px solid rgba(30,24,20,0.7)" : "2px solid rgba(30,24,20,0.6)",
+          background: "radial-gradient(circle, rgba(255,210,140,0.95), rgba(230,67,44,0.5) 60%, transparent 76%)",
           animationDelay: `${delayMs}ms`,
         }}
       />
       <span
-        className="fx-sig-flash absolute inset-[26%] block rounded-full"
+        className="fx-fireball absolute inset-[20%] block rounded-full"
         style={{
-          background: lead
-            ? "radial-gradient(circle, rgba(255,255,255,0.95), rgba(255,180,90,0.5) 55%, transparent 72%)"
-            : "radial-gradient(circle, rgba(255,210,140,0.9), transparent 70%)",
-          animationDelay: `${delayMs}ms`,
+          background:
+            "radial-gradient(circle at 50% 62%, rgba(255,240,200,0.92), rgba(255,157,61,0.8) 46%, rgba(230,67,44,0.6) 72%, transparent 100%)",
+          animationDelay: `${delayMs + 40}ms`,
         }}
       />
+      <span
+        className="fx-sig-shock absolute inset-[12%] block rounded-full"
+        style={{ border: "2px solid rgba(255,157,61,0.9)", animationDelay: `${delayMs + 60}ms` }}
+      />
+      <span
+        className="fx-sig-soot absolute inset-[22%] block rounded-full"
+        style={{ border: "2px solid rgba(30,24,20,0.6)", animationDelay: `${delayMs + 100}ms` }}
+      />
+      <FlameLicks delayMs={delayMs + 60} sizePct={13} />
     </span>
   );
 }
@@ -13249,11 +13370,84 @@ const CAST_SPARKS = [
   { dx: "-20%", dy: "320%", rot: "-160deg", delay: 48 },
 ];
 
-export function CastSpectacle({ category, tier }: { category: BuffCategory; tier: number }) {
+/** Small deterministic hash so a card's cast styling (sweep direction, tilt,
+ *  glint ring phase) is ITS OWN and stable across plays — two same-category
+ *  tier-2 cards no longer produce pixel-identical casts. */
+function castHash(id: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < id.length; i++) {
+    h ^= id.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+/** Centered card announcement riding the cast: the card's name in its tier
+ *  color over a one-line rule summary, so what just happened is readable ON
+ *  the board (the top-right feed keeps the permanent record). */
+function CastBanner({
+  name,
+  description,
+  tier,
+  color,
+}: {
+  name: string;
+  description?: string;
+  tier: number;
+  color: string;
+}) {
+  return (
+    <span className="fx-cast-banner absolute inset-x-0 top-[12%] flex justify-center px-[6%]">
+      <span
+        className="block max-w-[86%] rounded-[2px] border px-3 py-1.5 text-center backdrop-blur-[2px]"
+        style={{ borderColor: color, background: "rgba(10,12,17,0.82)", boxShadow: `0 0 22px -6px ${color}` }}
+      >
+        <span className={`block font-display text-sm font-bold leading-tight tier-${tier}`}>
+          {name}
+        </span>
+        {description && (
+          <span className="mt-0.5 block max-h-[2.6em] overflow-hidden text-[10.5px] leading-snug text-parchment-200">
+            {description}
+          </span>
+        )}
+      </span>
+    </span>
+  );
+}
+
+export function CastSpectacle({
+  category,
+  tier,
+  id,
+  name,
+  description,
+  cardIcon,
+}: {
+  category: BuffCategory;
+  tier: number;
+  /** Card id: keys the per-card emblem + deterministic cast variation. */
+  id?: string;
+  /** Card name + rule text for the on-board announcement banner. */
+  name?: string;
+  description?: string;
+  /** The card's own icon field (BUFF_BY_ID[id].icon), when it has one. */
+  cardIcon?: string;
+}) {
   const theme = CAST_THEME[category];
-  const Icon = CATEGORY_ICON[category];
+  // The card's UNIQUE face icon (the same one on its card face and in the
+  // dock) — a goose card casts a goose, not a generic category glyph.
+  const Icon = (id ? cardFaceIcon(id, category, cardIcon) : undefined) ?? CATEGORY_ICON[category];
   const intensity = castIntensity(tier);
+  const banner = name ? (
+    <CastBanner name={name} description={description} tier={tier} color={theme.color} />
+  ) : null;
   if (intensity === "sleek") {
+    // Per-card variation: sweep direction + tilt + emblem anchor derive from
+    // the id hash, so every low-tier card owns a recognizably distinct cast.
+    const h = id ? castHash(id) : 0;
+    const fromRight = (h & 1) === 1;
+    const tilt = `${(fromRight ? -1 : 1) * (10 + (h % 12))}deg`;
+    const emblemLeft = 8 + ((h >>> 4) % 3) * 42; // 8% / 50% / 92% across the top
     return (
       <span className="fx-cast pointer-events-none absolute inset-0 z-40 block" aria-hidden="true">
         <span
@@ -13262,19 +13456,35 @@ export function CastSpectacle({ category, tier }: { category: BuffCategory; tier
         />
         <span className="absolute inset-0 block overflow-hidden">
           <span
-            className="fx-cast-sweep absolute top-[-40%] left-[-25%] block h-[180%] w-[10%]"
+            className={(fromRight ? "fx-cast-sweep-rev" : "fx-cast-sweep") + " absolute top-[-40%] block h-[180%] w-[10%]"}
             style={{
+              [fromRight ? "right" : "left"]: "-25%",
               background: `linear-gradient(90deg, transparent, ${theme.soft}, transparent)`,
-              "--tilt": "14deg",
+              "--tilt": tilt,
             } as React.CSSProperties}
           />
         </span>
+        {/* A pair of counter-orbiting glints so the sleek band reads as a
+            crafted moment, not just a border blink. */}
+        <span className="fx-cast-orbit absolute left-1/2 top-1/2 block h-[38%] w-[38%] -translate-x-1/2 -translate-y-1/2">
+          <span
+            className="absolute left-1/2 top-0 h-[6%] w-[6%] -translate-x-1/2 rounded-full"
+            style={{ background: theme.color, boxShadow: `0 0 8px 2px ${theme.soft}` }}
+          />
+        </span>
+        <span className="fx-cast-orbit-rev absolute left-1/2 top-1/2 block h-[52%] w-[52%] -translate-x-1/2 -translate-y-1/2">
+          <span
+            className="absolute bottom-0 left-1/2 h-[4.5%] w-[4.5%] -translate-x-1/2 rounded-full"
+            style={{ background: theme.color, boxShadow: `0 0 6px 1px ${theme.soft}` }}
+          />
+        </span>
         <span
-          className="fx-cast-emblem absolute left-1/2 top-[6%] ml-[-5%] flex h-[10%] w-[10%] items-center justify-center"
-          style={{ color: theme.color }}
+          className="fx-cast-emblem absolute top-[6%] flex h-[10%] w-[10%] items-center justify-center"
+          style={{ color: theme.color, left: `${emblemLeft}%`, marginLeft: "-5%" }}
         >
           <Icon className="h-full w-full" strokeWidth={2} />
         </span>
+        {banner}
       </span>
     );
   }
@@ -13302,6 +13512,7 @@ export function CastSpectacle({ category, tier }: { category: BuffCategory; tier
         <span className="absolute left-1/2 top-1/2 ml-[-5%] mt-[-5%] block h-[10%] w-[10%]">
           <ShardBurst vectors={CAST_SPARKS} fill={theme.color} stroke="#1a222e" delayMs={260} sizePct={70} />
         </span>
+        {banner}
       </span>
     );
   }
@@ -13344,6 +13555,7 @@ export function CastSpectacle({ category, tier }: { category: BuffCategory; tier
       <span className="absolute left-1/2 top-1/2 ml-[-6%] mt-[-6%] block h-[12%] w-[12%]">
         <ShardBurst vectors={CAST_SPARKS} fill={theme.color} stroke="#1a222e" delayMs={420} sizePct={85} />
       </span>
+      {banner}
     </span>
   );
 }

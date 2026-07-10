@@ -2277,14 +2277,20 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           {/* The command rail: one framed column (mode header, opponent, dock
               + chat, you) instead of three floating islands, so the left side
               reads as a single control surface. */}
-          <aside className="hidden min-h-0 gap-2 overflow-y-auto border border-white/10 bg-white/[0.02] p-2 lg:grid lg:min-h-[var(--board-height)] lg:max-h-full lg:grid-rows-[auto_auto_minmax(6rem,1fr)_auto] lg:self-start">
+          <aside className="rail-panel corner-cut hidden min-h-0 gap-2 overflow-y-auto p-2.5 lg:grid lg:min-h-[var(--board-height)] lg:max-h-full lg:grid-rows-[auto_auto_minmax(6rem,1fr)_auto] lg:self-start">
             <div className="seam-edge-b flex items-center justify-between gap-2 px-1 pb-2">
               <span
                 className={
-                  "font-display text-xs font-bold uppercase tracking-[0.14em] " +
+                  "flex items-center gap-1.5 font-display text-xs font-bold uppercase tracking-[0.14em] " +
                   (isBuffMode ? "text-mode-buffGlow" : "text-mode-nerfGlow")
                 }
               >
+                {/* A lit mode ember anchors the rail's identity at a glance. */}
+                <span
+                  aria-hidden
+                  className="h-1.5 w-1.5 shrink-0 rounded-full bg-current"
+                  style={{ boxShadow: "0 0 8px 1px currentColor" }}
+                />
                 {isBuffMode ? "Buff mode" : "Nerf mode"}
               </span>
               {subtitle && (
@@ -2378,6 +2384,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               <div data-board-measure className={`relative mx-auto sm:mx-0 ${boardFitClass}`}>
                 <Board
                   board={boardForDisplay}
+                  // Removal FX diff the committed position, never the premove /
+                  // confirm / review overlays (see Board.fxBoard).
+                  fxBoard={game.board}
                   legalMoves={
                     isReviewingHistory || buffTargeting.targeting
                       ? []
