@@ -859,9 +859,11 @@ export function DraftOverlay({
         aria-hidden={hidden || undefined}
         // z-[55]: strictly above every z-50 sibling (end screens, side modals,
         // stray toasts) so nothing can ever sit invisibly over the cards and
-        // eat the pick clicks.
+        // eat the pick clicks. No backdrop blur: a full-screen blur repainted
+        // on every board animation frame chugged phones; a slightly deeper
+        // scrim reads the same.
         className={
-          "fixed inset-0 z-[55] overflow-y-auto overscroll-contain bg-black/70 backdrop-blur-sm" +
+          "fixed inset-0 z-[55] overflow-y-auto overscroll-contain bg-black/80" +
           (hidden ? " invisible" : "")
         }
       >
@@ -1086,6 +1088,17 @@ export function DraftOverlay({
                 }
                 onAnimationComplete={() => {
                   if (chosen === i) commit(i);
+                }}
+                // Belt and braces for the pick click: if ANY decorative layer
+                // (holo, sheen, glow, a future overlay) ever swallows the
+                // click before it reaches the card's button, the shell catches
+                // the bubble and picks anyway. Events that already went
+                // through the button are skipped (their target sits inside
+                // it), so nothing double-fires.
+                onClick={(e) => {
+                  if (chosen != null || banking) return;
+                  if ((e.target as HTMLElement).closest("button")) return;
+                  choose(i);
                 }}
                 // Parallax tilt: the pointer's position tips the card face in
                 // 3D (CSS vars read by .draft-card-front, so framer's own

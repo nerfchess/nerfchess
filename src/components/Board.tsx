@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Piece, WalnutPiece, BananaPeel } from "./Pieces";
 import {
@@ -61,6 +61,19 @@ import { EdgeAura, EmpowerShine, tierRgb } from "./effects/EmpowerAura";
 import type { MotifMark } from "./effects/fxZones";
 import { EffectPopover, type EffectPopoverContent } from "./EffectPopover";
 import { useFxHidden } from "@/lib/fxToggle";
+import { VfxLayer } from "./effects/vfx/VfxLayer";
+import { vfxPlay } from "./effects/vfx/vfxBus";
+import type { VfxPlay, VfxPoint } from "./effects/vfx/types";
+import { resolveCardVfx } from "./effects/vfxSpecs";
+import { findKing } from "@/engine/board";
+
+// Rendered board-fraction center of a square (orientation-resolved), the
+// coordinate space the canvas VFX layer draws in.
+function sqToFrac(sq: Square, orientation: Color): VfxPoint {
+  const col = orientation === "w" ? FILE(sq) : 7 - FILE(sq);
+  const rowFromTop = orientation === "w" ? 7 - RANK(sq) : RANK(sq);
+  return { x: (col + 0.5) / 8, y: (rowFromTop + 0.5) / 8 };
+}
 import type { BuffCategory, BuffMatchState } from "@/engine/buff";
 import { BUFF_BY_ID } from "@/engine/buffs/library";
 import { BoardState, Color, FILE, Move, PieceType, RANK, SQ, Square } from "@/engine/types";
@@ -905,6 +918,26 @@ export function Board({
   // The player's "hide effects/animations" switch (the small eye button in
   // the game rails). Decorative layers stand down; functional reads stay.
   const fxHiddenPref = useFxHidden();
+  // Canvas VFX plays staged during render (the diff/zone claims happen in the
+  // render pass) and flushed to the bus after commit, so render stays pure.
+  const pendingVfxRef = useRef<VfxPlay[]>([]);
+  useEffect(() => {
+    if (pendingVfxRef.current.length === 0) return;
+    const plays = pendingVfxRef.current;
+    pendingVfxRef.current = [];
+    if (fxHiddenPref) return;
+    for (const p of plays) vfxPlay(p);
+  });
+  // The VFX layer's shake request rides the existing marquee board thump.
+  const vfxShake = useCallback(() => {
+    const el = cropRef.current;
+    if (el && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      el.classList.remove("fx-board-shake");
+      void el.offsetWidth;
+      el.classList.add("fx-board-shake");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   // Square whose effect-explanation popover is currently open (hover, focus,
   // or tap). One at a time; the Board owns open/close, EffectPopover just
   // renders the card. Null = nothing open.
@@ -1016,6 +1049,76 @@ export function Board({
       activeSig,
       orientation,
     );
+    // Canvas VFX for the claimed play: the card's fiction-matched spec
+    // (vfxSpecs) travels from its true source square to the exact squares the
+    // effect landed on, staggered in choreography order. Staged into a ref
+    // here (render must stay pure) and flushed to the bus after commit.
+    if (activeSig) {
+      const sigCfg = resolveSignature(activeSig);
+      const def = BUFF_BY_ID[activeSig];
+      const spec =
+        sigCfg && def
+          ? resolveCardVfx(
+              activeSig,
+              def.tier,
+              isGenConfig(sigCfg) ? (sigCfg.visual as { family?: string }).family : undefined,
+            )
+          : null;
+      if (spec && sigCfg && def) {
+        const hits: { sq: Square; order: number; role: "lead" | "target" }[] = [];
+        for (const [sq, fx] of fxRef.current) {
+          if (fx.kind === "detonate" && fx.sig === activeSig) {
+            hits.push({ sq, order: fx.sigOrder ?? 0, role: fx.sigRole ?? "target" });
+          }
+        }
+        if (hits.length > 0) {
+          hits.sort((a, b) => a.order - b.order);
+          const leadSq = hits.find((h) => h.role === "lead")?.sq ?? hits[0].sq;
+          // The caster is whichever side lost FEWER pieces in this diff (the
+          // same majority read orderSignature uses).
+          let wLost = 0;
+          let bLost = 0;
+          for (const h of hits) {
+            const p = prevPiecesRef.current?.[h.sq];
+            if (p?.color === "w") wLost++;
+            else if (p?.color === "b") bLost++;
+          }
+          const casterColor: Color = bLost >= wLost ? "w" : "b";
+          let source: VfxPoint;
+          switch (spec.source) {
+            case "mover":
+              source = lastMove ? sqToFrac(lastMove.from, orientation) : sqToFrac(leadSq, orientation);
+              break;
+            case "caster": {
+              const k = findKing(board, casterColor);
+              source = k != null ? sqToFrac(k, orientation) : { x: 0.5, y: 0.5 };
+              break;
+            }
+            case "sky":
+              source = { x: 0.5, y: -0.06 };
+              break;
+            case "center":
+              source = { x: 0.5, y: 0.5 };
+              break;
+            default:
+              source = sqToFrac(leadSq, orientation);
+          }
+          pendingVfxRef.current.push({
+            tier: def.tier,
+            palette: spec.palette,
+            source,
+            targets: hits.map((h) => ({
+              p: sqToFrac(h.sq, orientation),
+              delayMs: h.order * sigCfg.staggerMs,
+            })),
+            travel: spec.travel,
+            impact: spec.impact,
+            aftermath: spec.aftermath,
+            shake: spec.shake,
+          });
+        }
+      }
+    }
     dropSkipRef.current = null;
   }
   prevPiecesRef.current = board.pieces;
@@ -1434,6 +1537,52 @@ export function Board({
           role: t.role,
           key: signatureCard.key,
         });
+      }
+      // Canvas VFX over the zone squares: the same fiction-matched spec the
+      // removal path uses, travelling to the pieces the card actually touched
+      // (frozen, shielded, empowered...). Staged into the ref; flushed after
+      // commit.
+      if (marks.size > 0) {
+        const def = BUFF_BY_ID[signatureCard.id];
+        const spec = def ? resolveCardVfx(signatureCard.id, def.tier) : null;
+        if (spec && def) {
+          const ordered = [...marks.entries()].sort((a, b) => a[1].order - b[1].order);
+          const leadSq = ordered.find(([, m]) => m.role === "lead")?.[0] ?? ordered[0][0];
+          // Zone effects land on the AFFECTED side's pieces; the caster is
+          // the other side's king.
+          const affected = board.pieces[leadSq]?.color;
+          const casterColor: Color = affected === "w" ? "b" : "w";
+          let source: VfxPoint;
+          switch (spec.source) {
+            case "caster":
+            case "mover": {
+              const k = findKing(board, casterColor);
+              source = k != null ? sqToFrac(k, orientation) : { x: 0.5, y: 0.5 };
+              break;
+            }
+            case "sky":
+              source = { x: 0.5, y: -0.06 };
+              break;
+            case "center":
+              source = { x: 0.5, y: 0.5 };
+              break;
+            default:
+              source = sqToFrac(leadSq, orientation);
+          }
+          pendingVfxRef.current.push({
+            tier: def.tier,
+            palette: spec.palette,
+            source,
+            targets: ordered.map(([sq, m]) => ({
+              p: sqToFrac(sq, orientation),
+              delayMs: m.order * cfg.staggerMs,
+            })),
+            travel: spec.travel,
+            impact: spec.impact,
+            aftermath: spec.aftermath,
+            shake: spec.shake,
+          });
+        }
       }
     }
     // Replace (even when empty: a removal signature or a card with no zone
@@ -2108,6 +2257,10 @@ export function Board({
   return (
     <div ref={boardRef} className="relative w-full max-w-[min(92vw,720px)] aspect-square mx-auto">
       <div ref={cropRef} className="absolute inset-2 sm:inset-3 rounded-sm overflow-hidden border border-black/40">
+        {/* Canvas VFX layer: particles, projectiles, beams and cinematics for
+            card plays, drawn over the squares but under floating UI. The
+            engine sleeps whenever nothing is animating. */}
+        <VfxLayer onShake={vfxShake} />
         <div
           data-board-grid
           // touch-action: none is what makes drag work on mobile — without it
