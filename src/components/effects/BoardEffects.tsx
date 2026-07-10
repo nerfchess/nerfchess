@@ -2076,13 +2076,50 @@ const PIN_STARS = [
   { dx: "20%", dy: "-320%", rot: "120deg", delay: 5 },
 ];
 
+const NOVA_STARS = [
+  { dx: "260%", dy: "-200%", rot: "160deg", d: 0 },
+  { dx: "-240%", dy: "-170%", rot: "-150deg", d: 20 },
+  { dx: "280%", dy: "150%", rot: "200deg", d: 40 },
+  { dx: "-260%", dy: "180%", rot: "-190deg", d: 10 },
+  { dx: "40%", dy: "-300%", rot: "120deg", d: 30 },
+];
 function NovaBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
-  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
-  // whole crop (palette wash + the card's own motif writ large + a shockwave
-  // past the board edges) instead of a square-local pop.
+  // Tier 5-6 pass — THE SUPERNOVA: the pawn's star swells at the board's
+  // heart, detonates a blinding column straight up its file, throws a corona
+  // of star shards, and rolls a single white shockwave past the edges.
   if (lead) {
     return (
-      <BoardWideLead wash="rgba(255,255,255,0.24)" boom="rgba(255,255,255,0.85)" delayMs={delayMs} />
+      <BoardWideStage>
+        <BoardWash color="rgba(255,255,255,0.26)" delayMs={delayMs} />
+        {/* the light column, blown straight up the file */}
+        <span
+          className="fx-sig-shaft absolute left-[45%] top-[6%] block h-[60%] w-[10%]"
+          style={{
+            background:
+              "linear-gradient(180deg, transparent, rgba(255,255,255,0.9) 35%, rgba(255,214,106,0.8))",
+            animationDelay: `${delayMs + 160}ms`,
+          }}
+        />
+        {/* the swelling star core */}
+        <span
+          className="fx-sig-flash absolute left-[41%] top-[40%] block h-[16%] w-[18%] rounded-full"
+          style={{
+            background: "radial-gradient(circle, #ffffff, rgba(255,214,106,0.6) 55%, transparent 75%)",
+            animationDelay: `${delayMs + 340}ms`,
+          }}
+        />
+        {/* the corona of star shards */}
+        {NOVA_STARS.map((v, i) => (
+          <span
+            key={i}
+            className="fx-sig-star absolute left-[47%] top-[45%] block h-[6%] w-[6%]"
+            style={{ "--dx": v.dx, "--dy": v.dy, "--rot": v.rot, animationDelay: `${delayMs + 420 + v.d}ms` } as React.CSSProperties}
+          >
+            <SparkStar />
+          </span>
+        ))}
+        <BoardBoom delayMs={delayMs + 480} color="rgba(255,255,255,0.85)" thickness={4} />
+      </BoardWideStage>
     );
   }
   return (
@@ -2404,12 +2441,46 @@ function SigCrown() {
 /** Amazon Knight / God Knight: a shaft of light drops, a crown lowers onto the
  * piece, and a coronation flash blooms (lead). */
 function CoronationBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
-  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
-  // whole crop (palette wash + the card's own motif writ large + a shockwave
-  // past the board edges) instead of a square-local pop.
+  // Tier 5-6 pass — THE CORONATION: one great shaft of light parts the sky
+  // and a COLOSSAL jeweled crown descends onto the board's heart, gold stars
+  // fanning off the touchdown before a single gilded shockwave rolls out.
   if (lead) {
     return (
-      <BoardWideLead wash="rgba(255,244,200,0.24)" boom="rgba(255,220,130,0.85)" delayMs={delayMs} />
+      <BoardWideStage>
+        <BoardWash color="rgba(255,244,200,0.26)" delayMs={delayMs} />
+        {/* the anointing shaft */}
+        <span
+          className="fx-sig-shaft absolute left-[42%] top-[4%] block h-[52%] w-[16%]"
+          style={{
+            background: "linear-gradient(180deg, rgba(255,244,200,0.9), rgba(255,220,130,0.25) 70%, transparent)",
+            animationDelay: `${delayMs + 100}ms`,
+          }}
+        />
+        {/* the colossal crown, lowering in */}
+        <span className="fx-sig-crown absolute left-[38%] top-[30%] block h-[16%] w-[24%]" style={{ animationDelay: `${delayMs + 260}ms` }}>
+          <SigCrown />
+        </span>
+        {/* gold stars off the touchdown */}
+        {[
+          { dx: "240%", dy: "-160%", rot: "160deg", d: 0 },
+          { dx: "-220%", dy: "-140%", rot: "-150deg", d: 25 },
+          { dx: "200%", dy: "140%", rot: "200deg", d: 50 },
+          { dx: "-240%", dy: "120%", rot: "-190deg", d: 12 },
+        ].map((v, i) => (
+          <span
+            key={i}
+            className="fx-sig-star absolute left-[47%] top-[42%] block h-[5.5%] w-[5.5%]"
+            style={{ "--dx": v.dx, "--dy": v.dy, "--rot": v.rot, animationDelay: `${delayMs + 700 + v.d}ms` } as React.CSSProperties}
+          >
+            <SparkStar />
+          </span>
+        ))}
+        <span
+          className="fx-sig-flash absolute left-[43%] top-[42%] block h-[10%] w-[14%] rounded-full"
+          style={{ background: "radial-gradient(circle, rgba(255,244,200,0.9), transparent 70%)", animationDelay: `${delayMs + 680}ms` }}
+        />
+        <BoardBoom delayMs={delayMs + 760} color="rgba(255,220,130,0.85)" />
+      </BoardWideStage>
     );
   }
   return (
@@ -3617,13 +3688,47 @@ const WITHER_MOTES = [
 ];
 
 /** Withering Touch: a grey pall drains up the piece as flesh crumbles to dust. */
+const WITHER_FALL = [
+  { l: "52%", t: "38%", w: "2.4%", d: 0 },
+  { l: "58%", t: "44%", w: "2%", d: 90 },
+  { l: "55%", t: "52%", w: "2.6%", d: 180 },
+  { l: "62%", t: "40%", w: "1.8%", d: 260 },
+  { l: "49%", t: "47%", w: "2%", d: 340 },
+];
 function WitherBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
-  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
-  // whole crop (palette wash + the card's own motif writ large + a shockwave
-  // past the board edges) instead of a square-local pop.
+  // Tier 5-6 pass — THE WITHERED REACH: a colossal gaunt hand stretches in
+  // from the wing, its touch crumbling the board's heart to husk-motes before
+  // a single dust-grey shockwave rolls out.
   if (lead) {
     return (
-      <BoardWideLead wash="rgba(108,102,92,0.24)" boom="rgba(96,110,90,0.85)" delayMs={delayMs} />
+      <BoardWideStage>
+        <BoardWash color="rgba(108,102,92,0.26)" delayMs={delayMs} />
+        {/* the withered hand, reaching across the crop */}
+        <span className="fx-sig-punch absolute left-[22%] top-[34%] block h-[26%] w-[34%]" style={{ animationDelay: `${delayMs + 160}ms` }}>
+          <svg viewBox="0 0 40 26" className="h-full w-full" aria-hidden="true">
+            {/* gaunt forearm off the left edge */}
+            <path d="M0 10 C7 8 13 8 19 9.6 L19 17 C13 18.6 7 18.6 0 17 Z" fill="rgba(122,110,96,0.92)" stroke="#3f382c" strokeWidth="1" strokeLinejoin="round" />
+            <path d="M4 11 C8 10.4 12 10.4 16 11 M4 15.6 C8 16.2 12 16.2 16 15.6" fill="none" stroke="rgba(63,56,44,0.55)" strokeWidth="0.6" />
+            {/* skeletal fingers, splayed toward the heart of the board */}
+            <path d="M19 10 C25 6.4 30 5.4 35 6.6 M19 12.4 C26 10.6 32 10.6 38 12 M19 14.8 C26 15.8 32 16.4 37 18 M19 16.8 C24 19 28 20.6 31 22.6" fill="none" stroke="rgba(122,110,96,0.95)" strokeWidth="2" strokeLinecap="round" />
+            <path d="M35 6.6 L37.4 6.4 M38 12 L40 12.4 M37 18 L39 19" stroke="rgba(96,110,90,0.9)" strokeWidth="1.2" strokeLinecap="round" />
+          </svg>
+        </span>
+        {/* the touch: a sickly bloom where the fingers land */}
+        <span
+          className="fx-sig-flash absolute left-[56%] top-[40%] block h-[13%] w-[15%] rounded-full"
+          style={{ background: "radial-gradient(circle, rgba(143,175,74,0.7), transparent 70%)", animationDelay: `${delayMs + 560}ms` }}
+        />
+        {/* husk-motes crumbling off the touched ground */}
+        {WITHER_FALL.map((m, i) => (
+          <span
+            key={i}
+            className="fx-sig-crumble absolute block rounded-[1px]"
+            style={{ left: m.l, top: m.t, width: m.w, height: m.w, background: "rgba(122,110,96,0.9)", animationDelay: `${delayMs + 620 + m.d}ms` }}
+          />
+        ))}
+        <BoardBoom delayMs={delayMs + 700} color="rgba(96,110,90,0.85)" />
+      </BoardWideStage>
     );
   }
   return (
@@ -4012,13 +4117,52 @@ function GraveHandsBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) 
 }
 
 /** Hallowed Return / Divine Intervention: a shaft of holy light and a halo. */
+const HOLY_SHAFTS = [
+  { l: "33%", w: "8%", d: 0 },
+  { l: "45%", w: "11%", d: 90 },
+  { l: "59%", w: "8%", d: 180 },
+];
 function HolyLightBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
-  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
-  // whole crop (palette wash + the card's own motif writ large + a shockwave
-  // past the board edges) instead of a square-local pop.
+  // Tier 5-6 pass — THE INTERVENTION: the clouds part in three warm shafts and
+  // a dove of light descends to the board's heart inside a settling halo; one
+  // gold shockwave carries the blessing out.
   if (lead) {
     return (
-      <BoardWideLead wash="rgba(255,242,192,0.24)" boom="rgba(255,242,192,0.85)" delayMs={delayMs} />
+      <BoardWideStage>
+        <BoardWash color="rgba(255,242,192,0.26)" delayMs={delayMs} />
+        {/* the parted-cloud shafts */}
+        {HOLY_SHAFTS.map((s, i) => (
+          <span
+            key={i}
+            className="fx-sig-shaft absolute top-[6%] block h-[58%]"
+            style={{
+              left: s.l,
+              width: s.w,
+              background: "linear-gradient(180deg, rgba(255,242,192,0.85), rgba(255,214,106,0.2) 70%, transparent)",
+              animationDelay: `${delayMs + s.d}ms`,
+            }}
+          />
+        ))}
+        {/* the descending dove of light */}
+        <span className="fx-sig-crown absolute left-[42%] top-[34%] block h-[14%] w-[16%]" style={{ animationDelay: `${delayMs + 300}ms` }}>
+          <svg viewBox="0 0 24 16" className="h-full w-full" aria-hidden="true">
+            <path d="M11 8 C7 4 3 3.4 0.8 5 C4 6.2 6 8 7.6 10.4 Z" fill="rgba(255,252,240,0.95)" stroke="#c9a244" strokeWidth="0.7" strokeLinejoin="round" />
+            <path d="M13 8 C17 4 21 3.4 23.2 5 C20 6.2 18 8 16.4 10.4 Z" fill="rgba(255,252,240,0.95)" stroke="#c9a244" strokeWidth="0.7" strokeLinejoin="round" />
+            <path d="M12 5.6 C13.6 5.6 14.6 6.8 14.4 8.4 L13 12.6 L12 15 L11 12.6 L9.6 8.4 C9.4 6.8 10.4 5.6 12 5.6 Z" fill="#fffcf0" stroke="#c9a244" strokeWidth="0.7" strokeLinejoin="round" />
+            <circle cx="12" cy="4.6" r="1.6" fill="#fffcf0" stroke="#c9a244" strokeWidth="0.6" />
+          </svg>
+        </span>
+        {/* the halo settling around the touch point */}
+        <span
+          className="fx-sig-ring absolute left-[39%] top-[40%] block h-[16%] w-[22%] rounded-full"
+          style={{ border: "2px solid rgba(255,220,130,0.9)", animationDelay: `${delayMs + 620}ms` }}
+        />
+        <span
+          className="fx-sig-flash absolute left-[43%] top-[44%] block h-[10%] w-[14%] rounded-full"
+          style={{ background: "radial-gradient(circle, rgba(255,252,240,0.9), transparent 70%)", animationDelay: `${delayMs + 660}ms` }}
+        />
+        <BoardBoom delayMs={delayMs + 720} color="rgba(255,220,130,0.85)" />
+      </BoardWideStage>
     );
   }
   return (
@@ -4204,26 +4348,41 @@ function WarhornBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 /** Dragon's Breath: a corridor of flame. Lead flashes at the rook's mouth; each
  * victim is a fireball flash, ember shatter, and scorch. */
 function DragonFireBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
-  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
-  // whole crop (palette wash + the card's own motif writ large + a shockwave
-  // past the board edges) instead of a square-local pop.
+  // Tier 5-6 pass — THE DRAGON'S EXHALE: a horned dragon head rears in from
+  // the wing and breathes a two-tone fire cone the full width of the crop;
+  // scorch smudges bloom along the lane before one amber shockwave rolls out.
   if (lead) {
     return (
-      <BoardWideLead wash="rgba(255,150,60,0.24)" boom="rgba(255,180,84,0.85)" delayMs={delayMs} />
-    );
-  }
-  if (lead) {
-    return (
-      <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <BoardWideStage>
+        <BoardWash color="rgba(255,150,60,0.24)" delayMs={delayMs} />
+        {/* the dragon head, rearing in from the left wing */}
+        <span className="fx-sig-punch absolute left-[20%] top-[30%] block h-[24%] w-[18%]" style={{ animationDelay: `${delayMs + 120}ms` }}>
+          <svg viewBox="0 0 22 22" className="h-full w-full" aria-hidden="true">
+            {/* neck off the edge, head, horns, open jaw */}
+            <path d="M0 14 C4 11 7 9 10 8.6 L14 6.4 C16 5.4 18 6 19.4 7.6 L16.4 9.4 L21 11.4 L15.6 12.4 C15.2 14.6 13 16.4 10.4 16.2 L9 20 L6.6 17 C4 17.4 1.8 16.6 0 15 Z" fill="rgba(178,58,32,0.95)" stroke="#5a160a" strokeWidth="0.9" strokeLinejoin="round" />
+            <path d="M14.6 5.8 C14.6 3.8 15.6 2.4 17.4 1.6 M17.6 6.4 C18.4 4.8 19.8 4 21.4 4.2" fill="none" stroke="#ffd166" strokeWidth="1" strokeLinecap="round" />
+            <circle cx="15.4" cy="8.2" r="0.7" fill="#ffd166" />
+          </svg>
+        </span>
+        {/* the fire cone, lancing the crop's width */}
         <span
-          className="fx-sig-muzzle absolute left-[8%] top-[34%] block h-[32%] w-[84%] rounded-full"
-          style={{ background: "rgba(255,150,60,0.9)", animationDelay: `${delayMs}ms` }}
+          className="fx-sig-muzzle absolute left-[36%] top-[35%] block h-[18%] w-[42%] rounded-full"
+          style={{ background: "linear-gradient(90deg, rgba(255,150,60,0.95), rgba(230,67,44,0.6) 70%, transparent)", animationDelay: `${delayMs + 420}ms` }}
         />
         <span
-          className="fx-sig-muzzle absolute left-[14%] top-[42%] block h-[16%] w-[70%] rounded-full"
-          style={{ background: "rgba(255,224,150,0.95)", animationDelay: `${delayMs + 30}ms` }}
+          className="fx-sig-muzzle absolute left-[36%] top-[39%] block h-[10%] w-[34%] rounded-full"
+          style={{ background: "linear-gradient(90deg, rgba(255,224,150,0.95), transparent)", animationDelay: `${delayMs + 460}ms` }}
         />
-      </span>
+        {/* scorch smudges along the burnt lane */}
+        {[46, 58, 68].map((l, i) => (
+          <span
+            key={i}
+            className="fx-sig-scorch absolute top-[40%] block h-[8%] w-[7%] rounded-full"
+            style={{ left: `${l}%`, background: "rgba(26,16,8,0.6)", animationDelay: `${delayMs + 640 + i * 90}ms` }}
+          />
+        ))}
+        <BoardBoom delayMs={delayMs + 700} color="rgba(255,180,84,0.85)" thickness={4} />
+      </BoardWideStage>
     );
   }
   return (
@@ -5192,13 +5351,48 @@ function GlitchBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 
 /** Purge / Annihilate / Shatter: a doomed piece is unmade in a puff of grey
  * motes and a thin dissolve ring; lead adds a wider shock. */
+const UNMAKE_MOTES = [
+  { l: "38%", t: "34%", d: 0 },
+  { l: "60%", t: "36%", d: 60 },
+  { l: "42%", t: "56%", d: 120 },
+  { l: "57%", t: "54%", d: 180 },
+  { l: "49%", t: "30%", d: 240 },
+  { l: "50%", t: "60%", d: 90 },
+];
 function DisintegrateBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
-  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
-  // whole crop (palette wash + the card's own motif writ large + a shockwave
-  // past the board edges) instead of a square-local pop.
+  // Tier 5-6 pass — THE UNMAKING RIFT: a pale blade of un-light slashes the
+  // board's heart open, matter motes implode into the cut, and a purging bar
+  // sweeps the seam before one grey-violet shockwave rolls out.
   if (lead) {
     return (
-      <BoardWideLead wash="rgba(150,146,158,0.24)" boom="rgba(182,176,190,0.85)" delayMs={delayMs} />
+      <BoardWideStage>
+        <BoardWash color="rgba(150,146,158,0.26)" delayMs={delayMs} />
+        {/* the rift slash across the heart of the board */}
+        <span className="fx-sig-slash absolute left-[30%] top-[42%] block h-[8%] w-[40%]" style={{ animationDelay: `${delayMs + 140}ms` }}>
+          <span
+            className="absolute inset-0 block rounded-full"
+            style={{ background: "linear-gradient(90deg, transparent, rgba(233,228,242,0.95) 30%, rgba(185,140,255,0.8) 70%, transparent)" }}
+          />
+        </span>
+        {/* matter imploding into the cut */}
+        {UNMAKE_MOTES.map((m, i) => (
+          <span
+            key={i}
+            className="fx-sig-implode absolute block rounded-full"
+            style={{ left: m.l, top: m.t, width: "2.6%", height: "2.6%", background: "rgba(182,176,190,0.9)", animationDelay: `${delayMs + 380 + m.d}ms` }}
+          />
+        ))}
+        {/* the purging sweep along the seam */}
+        <span
+          className="fx-sig-sweepbar absolute left-[28%] top-[44%] block h-[4%] w-[44%]"
+          style={{ background: "linear-gradient(90deg, transparent, rgba(185,140,255,0.75), transparent)", animationDelay: `${delayMs + 520}ms` }}
+        />
+        <span
+          className="fx-sig-flash absolute left-[44%] top-[42%] block h-[10%] w-[12%] rounded-full"
+          style={{ background: "radial-gradient(circle, rgba(233,228,242,0.9), transparent 70%)", animationDelay: `${delayMs + 660}ms` }}
+        />
+        <BoardBoom delayMs={delayMs + 720} color="rgba(182,176,190,0.85)" />
+      </BoardWideStage>
     );
   }
   return (
@@ -6386,12 +6580,39 @@ function PurgeLineBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 /** Nerf This: lightning is called down onto the marked pieces. Reticle locks,
  * the bolt cracks, a scorch flashes; lead adds a shock ring. */
 function CalldownBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
-  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
-  // whole crop (palette wash + the card's own motif writ large + a shockwave
-  // past the board edges) instead of a square-local pop.
+  // Tier 5-6 pass — ORBITAL NERF STRIKE: a giant targeting reticle sweeps in
+  // and locks over the board's heart, the cartoon zap column drops through it,
+  // and one gold ring carries the "nerf this" out past the edges.
   if (lead) {
     return (
-      <BoardWideLead wash="rgba(255,214,94,0.24)" boom="rgba(30,22,10,0.85)" delayMs={delayMs} />
+      <BoardWideStage>
+        <BoardWash color="rgba(255,214,94,0.24)" delayMs={delayMs} />
+        {/* the giant lock-on reticle */}
+        <span className="fx-sig-reticle absolute left-[34%] top-[28%] block h-[44%] w-[32%] rounded-full" style={{ border: "3px solid rgba(255,214,94,0.9)", animationDelay: `${delayMs + 120}ms` }}>
+          <span className="absolute left-1/2 top-[-8%] block h-[14%] w-[3px] -translate-x-1/2" style={{ background: "rgba(255,214,94,0.9)" }} />
+          <span className="absolute left-1/2 bottom-[-8%] block h-[14%] w-[3px] -translate-x-1/2" style={{ background: "rgba(255,214,94,0.9)" }} />
+          <span className="absolute top-1/2 left-[-8%] block w-[14%] h-[3px] -translate-y-1/2" style={{ background: "rgba(255,214,94,0.9)" }} />
+          <span className="absolute top-1/2 right-[-8%] block w-[14%] h-[3px] -translate-y-1/2" style={{ background: "rgba(255,214,94,0.9)" }} />
+        </span>
+        {/* the inner lock ring snapping tight */}
+        <span
+          className="fx-sig-ring absolute left-[42%] top-[39%] block h-[22%] w-[16%] rounded-full"
+          style={{ border: "2px solid rgba(255,79,163,0.9)", animationDelay: `${delayMs + 380}ms` }}
+        />
+        {/* the zap column, dropped through the reticle */}
+        <span className="fx-sig-bolt absolute left-[44%] top-[6%] block h-[44%] w-[12%]" style={{ animationDelay: `${delayMs + 520}ms` }}>
+          <JagBolt />
+        </span>
+        <span
+          className="fx-sig-flash absolute left-[42%] top-[44%] block h-[11%] w-[16%] rounded-full"
+          style={{ background: "radial-gradient(circle, rgba(255,214,94,0.95), rgba(255,79,163,0.5) 60%, transparent 75%)", animationDelay: `${delayMs + 620}ms` }}
+        />
+        <span
+          className="fx-sig-scorch absolute left-[45%] top-[47%] block h-[8%] w-[10%] rounded-full"
+          style={{ background: "rgba(30,22,10,0.6)", animationDelay: `${delayMs + 720}ms` }}
+        />
+        <BoardBoom delayMs={delayMs + 700} color="rgba(255,214,94,0.85)" thickness={4} />
+      </BoardWideStage>
     );
   }
   return (
