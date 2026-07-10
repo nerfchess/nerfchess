@@ -2790,23 +2790,39 @@ export function Board({
         {!fxHiddenPref && cast && (
           <CastSpectacle key={`cast-${cast.key}`} category={cast.category} tier={cast.tier} />
         )}
-        {/* Diff-less generated lead: a played card that removes nothing and
-            leaves no zone (clock steals, draft tricks, info peeks...) still
-            gets its unique board-wide flourish here. Suppressed whenever the
-            piece-diff path already led this play key. */}
+        {/* Diff-less lead: a played card that removes nothing and leaves no
+            zone (clock steals, draft tricks, info peeks...) still gets its
+            unique board-wide flourish here — the generated burst for gen
+            configs, the SignatureOverlay art for bespoke/plugin configs whose
+            source is unset (zone-sourced bespoke plays render through the
+            zone-signature path instead, so they are skipped to avoid a double
+            lead). Suppressed whenever the piece-diff path already led this
+            play key. */}
         {!fxHiddenPref &&
           cast &&
           cast.key !== castLeadSuppressKeyRef.current &&
           (() => {
             const cfg = resolveSignature(cast.id);
-            if (!cfg || !isGenConfig(cfg) || !cfg.hasLead) return null;
+            if (!cfg || !cfg.hasLead) return null;
+            if (isGenConfig(cfg)) {
+              return (
+                <div
+                  key={`genlead-${cast.key}`}
+                  aria-hidden
+                  className="pointer-events-none absolute inset-0 z-30"
+                >
+                  <GenBurst config={cfg} role="lead" delayMs={0} />
+                </div>
+              );
+            }
+            if (cfg.source && cfg.source !== "removal") return null;
             return (
               <div
-                key={`genlead-${cast.key}`}
+                key={`siglead-${cast.key}`}
                 aria-hidden
                 className="pointer-events-none absolute inset-0 z-30"
               >
-                <GenBurst config={cfg} role="lead" delayMs={0} />
+                <SignatureOverlay visual={cfg.visual} role="lead" delayMs={0} />
               </div>
             );
           })()}
