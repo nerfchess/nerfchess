@@ -32,12 +32,12 @@ export default function HomePage() {
             taller than the board beside it. */}
         <div className="order-2 stagger-in">
           <span className="eyebrow">Nerf Chess</span>
-          {/* OPEN LOBBY: a proper button now, in a calm terracotta red so the
-              front door reads warm next to the mint Play Someone. */}
+          {/* OPEN LOBBY: a proper button now, in an airy light blue beside the
+              cyan Play Someone. */}
           <h1 className="mt-2">
             <Link
               href="/lobby"
-              className="btn-clay btn-cta w-full flex items-center justify-center gap-3 px-6 py-4 font-display text-2xl sm:text-3xl font-bold uppercase tracking-[0.05em] no-underline motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out motion-safe:hover:-translate-y-px motion-safe:active:scale-[0.98]"
+              className="btn-sky btn-cta w-full flex items-center justify-center gap-3 px-6 py-4 font-display text-2xl sm:text-3xl font-bold uppercase tracking-[0.05em] no-underline motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out motion-safe:hover:-translate-y-px motion-safe:active:scale-[0.98]"
             >
               Open Lobby
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -80,7 +80,7 @@ export default function HomePage() {
           <div className="mt-4 flex flex-col gap-3 border border-white/10 bg-white/[0.04] p-4">
             <Link
               href="/lobby"
-              className="btn-mint btn-cta cta-shine w-full flex items-center justify-center gap-3 px-8 py-5 font-display text-xl sm:text-2xl font-semibold motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out motion-safe:hover:-translate-y-px motion-safe:active:scale-[0.98]"
+              className="btn-cyan btn-cta cta-shine w-full flex items-center justify-center gap-3 px-8 py-5 font-display text-xl sm:text-2xl font-semibold motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out motion-safe:hover:-translate-y-px motion-safe:active:scale-[0.98]"
             >
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
@@ -157,7 +157,7 @@ function SocialsRow() {
         Discord
       </a>
       <a
-        href="https://instagram.com/nerfchess"
+        href="https://www.instagram.com/officialnerfchess"
         target="_blank"
         rel="noopener noreferrer"
         className="btn-ghost flex items-center gap-2.5 px-5 py-2.5 text-base no-underline"
@@ -179,6 +179,18 @@ function SocialsRow() {
           <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
         </svg>
         TikTok
+      </a>
+      <a
+        href="https://www.youtube.com/@OfficialNerfChess"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="btn-ghost flex items-center gap-2.5 px-5 py-2.5 text-base no-underline"
+      >
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+          <path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17" />
+          <path d="m10 15 5-3-5-3z" />
+        </svg>
+        YouTube
       </a>
     </div>
   );

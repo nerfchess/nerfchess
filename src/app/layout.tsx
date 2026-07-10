@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Noto_Sans } from "next/font/google";
+import { AchievementToast } from "@/components/AchievementToast";
 import { SettingsBootstrap } from "@/components/SettingsBootstrap";
 import "./globals.css";
 
@@ -164,6 +165,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={`no-tap-highlight font-body ${notoSans.variable} ${inter.variable}`}>
         <SettingsBootstrap />
         {children}
+        {/* Site-wide, desktop-only unlock popups (bottom right). */}
+        <AchievementToast />
       </body>
     </html>
   );

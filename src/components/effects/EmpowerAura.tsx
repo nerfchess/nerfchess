@@ -31,16 +31,24 @@ export function tierRgb(tier: number): string {
   return TIER_RGB[tier] ?? TIER_RGB[3];
 }
 
-/** Soft breathing glow ring/halo under a piece empowered by a self-grant
- * card, in the card's tier color. Purely decorative; never intercepts input
- * and never obscures the piece (mount it before the piece div). */
+/** Shining aura under a piece empowered by a self-grant card, in the card's
+ * tier color: a soft breathing pool of light with three glints orbiting the
+ * piece and twinkling as they go (owner: "kind of like a shining aura", not
+ * a flat ring). Purely decorative; never intercepts input and never obscures
+ * the piece (mount it before the piece div). */
 export function EmpowerShine({ tier }: { tier: number }) {
   return (
     <div
       aria-hidden
       className="empower-shine absolute inset-0 pointer-events-none"
       style={{ "--tier-rgb": tierRgb(tier) } as React.CSSProperties}
-    />
+    >
+      <span className="empower-orbit">
+        <i className="empower-glint empower-glint--1" />
+        <i className="empower-glint empower-glint--2" />
+        <i className="empower-glint empower-glint--3" />
+      </span>
+    </div>
   );
 }
 

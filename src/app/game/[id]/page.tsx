@@ -5,7 +5,6 @@ import { useParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Board } from "@/components/Board";
 import { BoardPlayerRow } from "@/components/BoardPlayerRow";
-import { BuffCard } from "@/components/BuffCard";
 import { ClockPill } from "@/components/ClockPill";
 import { GameOver } from "@/components/GameOver";
 import { MoveList } from "@/components/MoveList";
@@ -641,6 +640,8 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
 // scrolling one long stack, and each tab wears its player's name.
 function SpectatorBuffsPanel({ game, players }: { game: NerfGame; players: MPPlayers }) {
   const [tab, setTab] = useState<Color>("w");
+  // Per-row expand state for the condensed card list, keyed by tab + index.
+  const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
   const bs = game.buffs;
   if (!bs) return null;
   const tabButton = (color: Color) => {
@@ -703,16 +704,41 @@ function SpectatorBuffsPanel({ game, players }: { game: NerfGame; players: MPPla
             {held.map((inst, i) => {
               const def = BUFF_BY_ID[inst.id];
               if (!def) return null;
+              // Condensed one-line rows (name + tier), rule text one tap away:
+              // spectators scan a hand, they don't study every card at once.
+              const key = `${tab}-${i}`;
+              const open = !!expandedRows[key];
+              const dead = inst.spent || inst.nullified;
               return (
-                <BuffCard
-                  key={i}
-                  buff={def}
-                  tier={inst.tier}
-                  compact
-                  spent={inst.spent}
-                  nullified={inst.nullified}
-                  status={def.status?.(inst) ?? null}
-                />
+                <div key={i} className="rounded-[1px] border border-white/10 bg-white/[0.02]">
+                  <button
+                    type="button"
+                    onClick={() => setExpandedRows((prev) => ({ ...prev, [key]: !open }))}
+                    aria-expanded={open}
+                    className="flex w-full items-center gap-1.5 px-2 py-1 text-left"
+                  >
+                    <span
+                      className={
+                        "min-w-0 flex-1 truncate font-display text-[11px] font-semibold " +
+                        (dead
+                          ? "text-parchment-200 line-through decoration-1 decoration-parchment-400/70"
+                          : `tier-${inst.tier}`)
+                      }
+                    >
+                      {def.name}
+                    </span>
+                    <span
+                      className={`shrink-0 rounded-[1px] border px-1.5 py-px font-display text-[9px] font-bold tier-bg-${inst.tier} tier-${inst.tier}`}
+                    >
+                      {TIER_ROMAN[inst.tier]}
+                    </span>
+                  </button>
+                  {open && (
+                    <p className="px-2 pb-1 text-[10px] leading-snug text-parchment-300">
+                      {def.description}
+                    </p>
+                  )}
+                </div>
               );
             })}
           </div>

@@ -631,7 +631,7 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
             className={
               "min-w-0 flex-1 truncate font-display text-[12px] font-semibold leading-tight " +
               (dead
-                ? "text-parchment-400 line-through decoration-1 decoration-parchment-500/60"
+                ? "text-parchment-200 line-through decoration-1 decoration-parchment-400/70"
                 : `tier-${inst.tier}`)
             }
           >
@@ -657,7 +657,7 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
             )}
             {/* Full description, always readable without hovering; spent cards
                 fade their copy so the live rows carry the eye. */}
-            <p className={"text-[10px] leading-snug " + (dead ? "text-parchment-500" : "text-parchment-300")}>
+            <p className={"text-[10px] leading-snug text-parchment-300"}>
               {def.description}
             </p>
             {activatable &&
@@ -736,7 +736,7 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
             className={
               "min-w-0 flex-1 truncate font-display text-[13px] font-semibold leading-tight " +
               (dead
-                ? "text-parchment-400 line-through decoration-1 decoration-parchment-500/60"
+                ? "text-parchment-200 line-through decoration-1 decoration-parchment-400/70"
                 : `tier-${inst.tier}`)
             }
           >
@@ -752,7 +752,7 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
         </button>
         {open && (
           /* Rule text on demand: what a revealed card does is one click away. */
-          <p className={"px-2 pb-1.5 text-[11px] leading-snug " + (dead ? "text-parchment-500" : "text-parchment-300")}>
+          <p className={"px-2 pb-1.5 text-[11px] leading-snug text-parchment-300"}>
             {def.description}
           </p>
         )}
@@ -994,7 +994,7 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
                 count={mineDead.length + theirsDead.length}
               />
             </div>
-            <div className="space-y-1 opacity-80">
+            <div className="space-y-1">
               {mineDead.map(myRow)}
               {theirsDead.map(oppEntry)}
             </div>

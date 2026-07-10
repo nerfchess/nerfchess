@@ -794,22 +794,41 @@ html[data-theme="light"] .tv-frame {
   86%, 100% { left: 130%; }
 }
 
-/* Calm red CTA: the Nerf terracotta family as a metal button. Warm and
-   settled, never the alert oxblood. White type stays AA on the clay base. */
-.btn-clay {
-  background: linear-gradient(to bottom, #c9836a, #b06a52);
-  color: #fff;
+/* Light blue CTA: an airy sky blue with dark ink type, one step lighter and
+   friendlier than the accent blue. Same metal-button physics as .btn-leaf. */
+.btn-sky {
+  background: linear-gradient(to bottom, #9fd0f5, #78b6e8);
+  color: #0e2334;
   border: 1px solid rgba(0, 0, 0, 0.28);
   border-radius: 1px;
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.2) inset,
+    0 1px 0 rgba(255, 255, 255, 0.35) inset,
     0 2px 6px -2px rgba(0, 0, 0, 0.5);
   transition: background 160ms ease, filter 160ms ease, box-shadow 180ms ease, transform 120ms ease;
   font-weight: 600;
   letter-spacing: 0.005em;
 }
-.btn-clay:hover { filter: brightness(1.05); }
-.btn-clay:active {
+.btn-sky:hover { filter: brightness(1.05); }
+.btn-sky:active {
+  filter: brightness(0.95);
+  transform: translateY(0.5px);
+}
+
+/* Cyan CTA: bright teal-cyan with dark ink type, unmistakably "go". */
+.btn-cyan {
+  background: linear-gradient(to bottom, #67dbe8, #38bccd);
+  color: #072a30;
+  border: 1px solid rgba(0, 0, 0, 0.28);
+  border-radius: 1px;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.3) inset,
+    0 2px 6px -2px rgba(0, 0, 0, 0.5);
+  transition: background 160ms ease, filter 160ms ease, box-shadow 180ms ease, transform 120ms ease;
+  font-weight: 600;
+  letter-spacing: 0.005em;
+}
+.btn-cyan:hover { filter: brightness(1.05); }
+.btn-cyan:active {
   filter: brightness(0.95);
   transform: translateY(0.5px);
 }
@@ -1124,22 +1143,61 @@ html[data-piece-source="lichess"] .piece-asset {
   animation: empower-breathe 2.6s ease-in-out infinite;
 }
 .empower-shine::after {
-  /* Crisp 1px tier ring, breathing slightly out of phase in scale only. */
+  /* A diagonal shine sweep crossing the pool every few seconds: the "it's
+     glowing" read without a hard ring. Masked to a soft disc by the radial
+     gradient itself. */
   content: "";
   position: absolute;
-  inset: 11%;
+  inset: 6%;
   pointer-events: none;
   border-radius: 999px;
-  border: 1px solid rgb(var(--tier-rgb, 216 181 110) / 0.7);
-  animation: empower-breathe-ring 2.6s ease-in-out infinite;
+  background: linear-gradient(
+    115deg,
+    transparent 30%,
+    rgb(255 255 255 / 0.22) 46%,
+    rgb(var(--tier-rgb, 216 181 110) / 0.28) 52%,
+    rgb(255 255 255 / 0.16) 58%,
+    transparent 72%
+  );
+  opacity: 0;
+  animation: empower-sweep 4.2s ease-in-out infinite;
+}
+/* Three glints orbiting the piece, twinkling as they circle: the shining
+   aura. One slow rotation carries all three; each glint twinkles on its own
+   offset so the sparkle feels alive rather than mechanical. */
+.empower-orbit {
+  position: absolute;
+  inset: 4%;
+  pointer-events: none;
+  animation: empower-orbit-spin 7s linear infinite;
+}
+.empower-glint {
+  position: absolute;
+  width: 9%;
+  height: 9%;
+  background: radial-gradient(circle, rgb(255 255 255 / 0.95), rgb(var(--tier-rgb, 216 181 110) / 0.8) 45%, transparent 72%);
+  border-radius: 999px;
+  animation: empower-twinkle 1.9s ease-in-out infinite;
+}
+.empower-glint--1 { left: 46%; top: -2%; }
+.empower-glint--2 { left: 88%; top: 64%; animation-delay: 0.6s; }
+.empower-glint--3 { left: 4%; top: 64%; animation-delay: 1.2s; }
+@keyframes empower-orbit-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes empower-twinkle {
+  0%, 100% { opacity: 0.25; transform: scale(0.7); }
+  50% { opacity: 1; transform: scale(1.15); }
 }
 @keyframes empower-breathe {
   0%, 100% { opacity: 0.55; transform: scale(0.97); }
   50% { opacity: 1; transform: scale(1); }
 }
-@keyframes empower-breathe-ring {
-  0%, 100% { opacity: 0.45; transform: scale(0.965); }
-  50% { opacity: 0.9; transform: scale(1); }
+@keyframes empower-sweep {
+  0%, 55% { opacity: 0; transform: translateX(-30%) rotate(0.001deg); }
+  70% { opacity: 1; transform: translateX(0%); }
+  85%, 100% { opacity: 0; transform: translateX(30%); }
 }
 /* Passive edge aura: very faint (color alpha caps at 0.14; the breathe dims
    it further), hugging whichever crop edge is the viewer's. */
@@ -1472,7 +1530,8 @@ nav, header { position: relative; z-index: 30; }
   .stagger-in > *,
   .sq-strike, .sq-freeze, .sq-freeze-flake, .sq-shield-in, .walnut-piece, .banana-peel,
   .sq-walnut,
-  .empower-shine::before, .empower-shine::after, .edge-aura {
+  .empower-shine::before, .empower-shine::after, .edge-aura,
+  .empower-orbit, .empower-glint {
     animation: none !important;
   }
   .walnut-squirrel { animation: none !important; opacity: 0 !important; }

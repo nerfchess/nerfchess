@@ -265,6 +265,9 @@ const DEAL_TOTAL_MS = 900;
 // Pack opening: how long the sealed pack sits before tearing itself, and how
 // long the tear runs before the cards deal out of it.
 const PACK_HOLD_MS = 1150;
+// The minimized panel runs on the player's own clock: the pack still shows
+// (a reroll always earns its box) but tears itself almost immediately.
+const PACK_HOLD_MINIMIZED_MS = 450;
 const PACK_TEAR_MS = 520;
 const flipDelayMs = (i: number, tier: number) => i * DEAL_STAGGER_MS + DEAL_MS + 40 + tier * 12;
 
@@ -494,9 +497,11 @@ export function DraftOverlay({
     committedRef.current = false;
     selectedAtRef.current = 0;
     setDealt(!!reduceMotion);
-    // Fresh cards arrive as a sealed pack (full overlay, motion on); the deal
-    // timer starts once the pack tears open (see the pack effects below).
-    setPackStage(reduceMotion || minimized ? "open" : "sealed");
+    // Fresh cards arrive as a sealed pack; the deal timer starts once the
+    // pack tears open (see the pack effects below). The minimized panel gets
+    // the pack too (owner: a reroll should ALWAYS show the box) but on a
+    // fast fuse since that panel runs on the player's own clock.
+    setPackStage(reduceMotion ? "open" : "sealed");
     // A fresh offer demands attention: the board is blocked until it resolves.
     playDraftChime();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -506,8 +511,12 @@ export function DraftOverlay({
   // its settle timer only start once the pack is open.
   useEffect(() => {
     if (packStage !== "sealed") return;
-    const id = window.setTimeout(() => setPackStage("tearing"), PACK_HOLD_MS);
+    const id = window.setTimeout(
+      () => setPackStage("tearing"),
+      minimized ? PACK_HOLD_MINIMIZED_MS : PACK_HOLD_MS,
+    );
     return () => window.clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [packStage]);
   useEffect(() => {
     if (packStage !== "tearing") return;
@@ -742,6 +751,24 @@ export function DraftOverlay({
               Picking any card takes the whole offer.
             </p>
           )}
+          {packStage !== "open" ? (
+            /* Reroll (or a fresh offer) in the compact panel still earns its
+               pack moment: a mini pack that tears itself on a fast fuse. */
+            <button type="button" onClick={tearPack} className="pack-shell mx-auto mt-2 block scale-75">
+              <div className={"pack " + (packStage === "tearing" ? "pack--tearing" : "")}>
+                <span aria-hidden className="pack-burst" />
+                <span aria-hidden className="pack-flap">
+                  <span className="pack-flap__zigzag" />
+                </span>
+                <span className="pack-body">
+                  <span className="pack-numeral font-display">{offer.cards.length}</span>
+                  <span className="smallcaps pack-label">
+                    {nounCap} pack · draft #{offer.index}
+                  </span>
+                </span>
+              </div>
+            </button>
+          ) : (
           <div className="mt-2 space-y-1.5">
             {offer.cards.map((card, i) => {
               const def = BUFF_BY_ID[card.id];
@@ -758,6 +785,7 @@ export function DraftOverlay({
               );
             })}
           </div>
+          )}
           <div className="mt-2 flex flex-wrap items-center gap-2">
             {selected != null && !settled && (
               <button
@@ -829,8 +857,11 @@ export function DraftOverlay({
       )}
       <div
         aria-hidden={hidden || undefined}
+        // z-[55]: strictly above every z-50 sibling (end screens, side modals,
+        // stray toasts) so nothing can ever sit invisibly over the cards and
+        // eat the pick clicks.
         className={
-          "fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-black/70 backdrop-blur-sm" +
+          "fixed inset-0 z-[55] overflow-y-auto overscroll-contain bg-black/70 backdrop-blur-sm" +
           (hidden ? " invisible" : "")
         }
       >
