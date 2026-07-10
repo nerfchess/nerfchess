@@ -319,7 +319,7 @@ export default function CodexPage() {
                     className="block h-full rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-gold/60"
                     title={`Read the ${d.name} card page`}
                   >
-                    <NerfCard nerf={d} ownerLabel={`${TIER_ROMAN[d.tier]} · ${TIER_LABEL[d.tier]}`} />
+                    <NerfCard nerf={d} dense ownerLabel={`${TIER_ROMAN[d.tier]} · ${TIER_LABEL[d.tier]}`} />
                   </Link>
                 ))
               : buffFiltered.map((b) => (

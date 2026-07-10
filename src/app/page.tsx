@@ -116,10 +116,41 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* A little knight gallops across this rule every few seconds: the home
-          screen's one purely-for-fun animation. */}
+      {/* The knight plays Geometry Dash: a long scrolling course of blocks
+          and spikes slides by while the knight-cube jumps them on the beat.
+          The home screen's one purely-for-fun animation — pure CSS, one loop,
+          hidden under reduced motion. */}
       <div className="knight-track w-full max-w-7xl mx-auto px-5 sm:px-6" aria-hidden>
-        <span className="knight-runner">
+        <span className="gd-world">
+          {/* Two identical halves so the 200%-wide strip loops seamlessly.
+              Obstacles sit every 12.5% of the strip; the knight's jump is
+              phase-locked to that spacing. */}
+          {[0, 1].map((half) =>
+            [0, 1, 2, 3, 4, 5, 6, 7].map((slot) => {
+              const left = half * 50 + 4.5 + slot * 6.25; // % of the strip
+              const kind = slot % 4;
+              return (
+                <span key={`${half}-${slot}`} className="gd-obstacle" style={{ left: `${left}%` }}>
+                  {kind === 0 && <i className="gd-spike" />}
+                  {kind === 1 && <i className="gd-block" />}
+                  {kind === 2 && (
+                    <>
+                      <i className="gd-spike" />
+                      <i className="gd-spike" />
+                    </>
+                  )}
+                  {kind === 3 && (
+                    <>
+                      <i className="gd-block" />
+                      <i className="gd-spike" />
+                    </>
+                  )}
+                </span>
+              );
+            }),
+          )}
+        </span>
+        <span className="gd-knight">
           <span>♞</span>
         </span>
       </div>

@@ -241,23 +241,34 @@ export const HEXES_T7: Buff[] = [
     },
   ),
 
-  // --- barred: seal the entire center (4th and 5th ranks) for 3 turns -----
+  // --- deterrent: their next two capturing pieces burn up with their prey ---
   H(
     {
+      // Not a second Scorched Middle (that BARS ranks 4-5): a capture
+      // deterrent. Removal inside onMovePlayed mirrors the proven hook
+      // patterns (Voodoo Doll / The Culling) and uses no rng at all.
       id: "molten_heart",
       name: "Molten Heart",
-      description: "Your opponent cannot move any piece onto the 4th or 5th ranks for their next 3 turns.",
-      flavor: "The middle of the board runs with lava.",
-      // Board already paints barred squares; square-scoped, no pieces field.
-      fx: { motif: "blindfold" },
+      description: "Their blades run molten: for your opponent's next 2 captures, the capturing piece is destroyed along with its victim. Kings burn nothing and are never destroyed.",
+      flavor: "Whatever the fire takes, it keeps.",
+      fx: { motif: "muzzle", pieces: "all" },
     },
-    instant((_inst, api) => {
-      const squares: number[] = [];
-      for (let f = 0; f < 8; f++) {
-        squares.push(SQ(f, 3), SQ(f, 4));
-      }
-      addEffect(api, { kind: "barred", squares, against: api.opp, turns: 3 });
-    }),
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.charges = 2;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.opp || !move.captured || move.piece === "k") return;
+        const left = (inst.state.charges as number) ?? 0;
+        if (left <= 0) return;
+        inst.state.charges = left - 1;
+        if (left - 1 <= 0) inst.spent = true;
+        const p = api.board.pieces[move.to];
+        if (p && p.color === api.opp && p.type !== "k") api.removePiece(move.to);
+      },
+      status: (inst) => `${(inst.state.charges as number) ?? 2} captures left`,
+    },
   ),
 
   // --- draft denial that DECAYS: skip the next draft outright, then let the

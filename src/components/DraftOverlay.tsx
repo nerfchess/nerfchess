@@ -642,7 +642,14 @@ export function DraftOverlay({
       onBank();
       return;
     }
-    setBankDeltas(offer.cards.map((_, i) => bankDelta(cardRefs.current[i], bankBtnRef.current)));
+    // Land the cards in the vault door that opens just above the button
+    // (see .bank-vault), not on the button label itself.
+    setBankDeltas(
+      offer.cards.map((_, i) => {
+        const d = bankDelta(cardRefs.current[i], bankBtnRef.current);
+        return { dx: d.dx, dy: d.dy - 66 };
+      }),
+    );
     setBanking(true);
     bankTimer.current = window.setTimeout(() => onBank(), 750);
   };
@@ -651,11 +658,31 @@ export function DraftOverlay({
   // offer stays open (no commit), so this never touches committedRef. The
   // `rerolling` guard blocks a double-fire until the new cards deal in.
   const canReroll = rerollsLeft > 0 && !!onReroll && chosen == null && !banking && !committedRef.current;
+  const rerollTimer = useRef<number | null>(null);
   const handleReroll = () => {
     if (!canReroll || rerolling) return;
     setRerolling(true);
-    onReroll?.();
+    if (reduceMotion) {
+      onReroll?.();
+      return;
+    }
+    // Give the shuffle a beat to read (cards flip face-down and converge into
+    // a spinning stack) before the fresh roll swaps them out.
+    rerollTimer.current = window.setTimeout(() => onReroll?.(), 480);
   };
+  // Fail-safe: if the fresh offer never arrives (disconnect, dropped frame),
+  // un-shuffle so the current cards come back instead of sitting invisible.
+  useEffect(() => {
+    if (!rerolling) return;
+    const id = window.setTimeout(() => setRerolling(false), 4000);
+    return () => window.clearTimeout(id);
+  }, [rerolling]);
+  useEffect(
+    () => () => {
+      if (rerollTimer.current != null) window.clearTimeout(rerollTimer.current);
+    },
+    [],
+  );
 
   // Free window over: the pick stays open, but from here on it runs on the
   // player's own clock. The parent minimizes the overlay to the side.
@@ -998,10 +1025,29 @@ export function DraftOverlay({
         )}
 
         {packStage === "open" && maxTier >= 9 && !reduceMotion && (
-          /* A tier 9/10 pull is an event: one confetti burst out of the pack's
-             position, deterministic angles, one shot, never blocks a click. */
-          <div key={`confetti-${dealKey}`} aria-hidden className="pointer-events-none relative">
-            <span className="draft-confetti">
+          /* A tier 9/10 pull is THE event: the pack detonates into a white
+             flash, a rotating god-ray fan floods the panel, sparks climb the
+             air, and the classic confetti burst rides on top. One shot,
+             deterministic, and pointer-events-none throughout so it can never
+             block a pick. Tier 9 pulls burn gold; tier 10 burns mythic cyan. */
+          <div key={`pull-${dealKey}`} aria-hidden className="pointer-events-none">
+            <span className="draft-pull absolute inset-0 overflow-hidden" data-tier={maxTier}>
+              <span className="draft-pull__flash absolute inset-0" />
+              <span className="draft-pull__rays absolute left-1/2 top-[38%]" />
+              <span className="draft-pull__rays draft-pull__rays--rev absolute left-1/2 top-[38%]" />
+              {Array.from({ length: 14 }).map((_, i) => (
+                <i
+                  key={i}
+                  style={{
+                    ["--x" as string]: `${6 + ((i * 61) % 88)}%`,
+                    ["--rise-delay" as string]: `${(i % 7) * 110}ms`,
+                    ["--rise-dur" as string]: `${1200 + ((i * 97) % 700)}ms`,
+                  }}
+                  className="draft-pull__mote"
+                />
+              ))}
+            </span>
+            <span className="draft-confetti relative">
               {Array.from({ length: 26 }).map((_, i) => (
                 <i
                   key={i}
@@ -1073,12 +1119,24 @@ export function DraftOverlay({
                     : banking
                     ? {
                         // Into the bank: face-down again (the inner flip) and
-                        // off toward the Skip button as a stack.
+                        // off toward the vault over the Skip button as a stack.
                         x: bankDeltas?.[i]?.dx ?? 0,
                         y: bankDeltas?.[i]?.dy ?? 240,
                         scale: 0.22,
                         rotate: 4,
                         opacity: [1, 1, 0.9, 0],
+                      }
+                    : rerolling && !reduceMotion
+                    ? {
+                        // Reroll: the rejected cards flip face-down (inner
+                        // wrapper below) and converge into ONE spinning stack
+                        // at the deck spot, each a beat apart with a slight
+                        // fan, then the fresh offer deals back out of it.
+                        x: `${(mid - i) * 104 * 0.06}%`,
+                        y: "54%",
+                        rotate: 360 + (i - mid) * 14,
+                        scale: 0.5,
+                        opacity: [1, 1, 1, 0],
                       }
                     : // Once a card is selected the others dim to focus it.
                       {
@@ -1094,6 +1152,8 @@ export function DraftOverlay({
                     ? { duration: 0.55, ease: [0.3, 0.05, 0.2, 1], opacity: { times: [0, 0.6, 0.85, 1] } }
                     : chosen != null
                     ? { duration: 0.3, ease: "easeIn" }
+                    : rerolling && !reduceMotion
+                    ? { delay: i * 0.05, duration: 0.52, ease: [0.4, 0, 0.3, 1], opacity: { times: [0, 0.6, 0.85, 1] } }
                     : banking
                     ? {
                         delay: 0.14 + i * 0.06,
@@ -1155,9 +1215,9 @@ export function DraftOverlay({
                 <motion.div
                   className="draft-flip"
                   initial={reduceMotion ? false : { rotateY: 180 }}
-                  animate={{ rotateY: banking && !reduceMotion ? 180 : 0 }}
+                  animate={{ rotateY: (banking || rerolling) && !reduceMotion ? 180 : 0 }}
                   transition={
-                    banking
+                    banking || rerolling
                       ? { duration: 0.22, ease: "easeIn" }
                       : {
                           delay: reduceMotion || dealt ? 0 : flipDelay / 1000,
@@ -1167,6 +1227,12 @@ export function DraftOverlay({
                   }
                 >
                   <div className="draft-card-front">
+                    {/* Mythic presence: a tier 9/10 card radiates its own
+                        breathing halo behind the face, so THE card of the
+                        pull is unmistakable even inside a strong offer. */}
+                    {card.tier >= 9 && (
+                      <span aria-hidden className="draft-mythic-aura" data-tier={card.tier} />
+                    )}
                     <BuffCard
                       buff={def}
                       tier={card.tier}
@@ -1259,19 +1325,34 @@ export function DraftOverlay({
                 >
                   +1 tier
                 </motion.span>
-                {/* Coin burst out of the bank as the cards land in it:
-                    deterministic angles/distances, one shot, decorative. */}
+                {/* THE VAULT: a steel door materializes above the button, its
+                    wheel spins shut as the face-down cards fly in, and it
+                    flashes gold as the deposit lands. Decorative, one shot. */}
+                <span aria-hidden className="bank-vault">
+                  <span className="bank-vault__door" />
+                  <span className="bank-vault__wheel">
+                    <span className="bank-vault__spoke" />
+                    <span className="bank-vault__spoke bank-vault__spoke--cross" />
+                  </span>
+                  <span className="bank-vault__flash" />
+                </span>
+                {/* A golden shockwave ring (plus a fainter echo) blooms off the
+                    vault, a gleam sweeps the button, and a fan of coins and
+                    glints bursts upward. Deterministic, one shot, decorative. */}
+                <span aria-hidden className="bank-ring" />
+                <span aria-hidden className="bank-ring--echo" />
+                <span aria-hidden className="bank-gleam" />
                 <span aria-hidden className="bank-burst">
-                  {Array.from({ length: 10 }).map((_, i) => (
+                  {Array.from({ length: 16 }).map((_, i) => (
                     <i
                       key={i}
                       style={{
-                        // An upward fan: -55deg..+55deg around straight up.
-                        ["--ang" as string]: `${Math.round(-55 + (i * 110) / 9)}deg`,
-                        ["--dist" as string]: `${30 + ((i * 29) % 26)}px`,
-                        ["--d" as string]: `${(i % 5) * 26}ms`,
+                        // An upward fan: -60deg..+60deg around straight up.
+                        ["--ang" as string]: `${Math.round(-60 + (i * 120) / 15)}deg`,
+                        ["--dist" as string]: `${34 + ((i * 29) % 34)}px`,
+                        ["--d" as string]: `${(i % 6) * 26}ms`,
                       }}
-                      className="bank-coin"
+                      className={i % 2 === 0 ? "bank-coin" : "bank-coin bank-coin--spark"}
                     />
                   ))}
                 </span>

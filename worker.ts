@@ -125,7 +125,12 @@ type Result = NerfGame["result"];
 //     Insight, Foresight, Mind Read, Omniscience) left every draft pool — the
 //     whole draft game is public now, so there is nothing left for them to
 //     reveal — shifting the pools they rolled in.
-const REPLAY_VERSION = 9;
+//  10 - the engine payload carries the COMPLETE draft-action stream: reroll
+//     and grant opcodes are now serialized (serializeMatchForEngine) and
+//     replayed remotely (replay.ts). A v9 engine mis-replays the new opcodes
+//     (its action fall-through treats them as `use`), so the bump is
+//     mandatory even though the wire shape is backward-parseable.
+const REPLAY_VERSION = 10;
 
 // Refresh a match's replay checkpoint (see StoredMatch.checkpoint) at most once
 // per this many committed events (moves + draft actions), so gameForPlay never
@@ -360,7 +365,9 @@ export interface Env {
   HOUSE_ENGINE_URL?: string;
   HOUSE_ENGINE_TOKEN?: string;
   // Arena offload (Tier 2 / M2). The OCI arena runs bot-vs-bot games and POSTs
-  // to /arena/* here. INGEST_ENABLED gates archive+rating of arena results;
+  // to /arena/* here. INGEST_ENABLED gates whether arena POSTs are accepted at
+  // all (bot-vs-bot is never archived or rated — owner rule; the POSTs only
+  // feed the lobby/TV and spectator end frames);
   // LOBBY_ENABLED gates whether arena games appear in the lobby/TV. Both off =
   // the arena is inert (its POSTs no-op), so this ships dark and flips on live.
   // ARENA_INGEST_TOKEN is the shared bearer secret (set via `wrangler secret put`).
@@ -509,6 +516,13 @@ const houseTickBudgetMs = 250;
 // human load the yield can otherwise starve filler on EVERY tick, freezing a
 // spectated (TV) game indefinitely while its clocks run.
 const houseFillerMaxDeferMs = 10 * 1000;
+// Bot-vs-bot filler paces its moves this many times slower than a bot playing
+// a human. Filler is lobby/TV decoration: halving its action rate halves the
+// alarm wakes and engine searches it costs in steady state, while 2-6s per
+// blitz move still reads as a live game to a spectator. If the slower pace
+// runs a filler bot out of time it simply flags — a normal chess result for a
+// game that is never recorded anyway.
+const houseFillerThinkMultiplier = 2;
 // How long a queued human waits for a human opponent before a house player
 // picks them up.
 const houseHumanPickupMs = 4500;
@@ -679,7 +693,8 @@ type ExternalGameMeta = {
   seats: Record<Color, ExternalSeat>;
 };
 // The finished-game record the arena POSTs to /arena/end. A subset of the arena
-// service's ArenaFinishedRecord — recordFinishedGame needs the top fields; the
+// service's ArenaFinishedRecord. Bot-vs-bot is never archived or rated (owner
+// rule), so this record's only remaining job is the spectator end frame: the
 // draft fields (M3) let a spectated game's `end` frame carry held buffs.
 type ArenaEndRecord = {
   id: string;
@@ -755,17 +770,14 @@ function serializeMatchForEngine(match: StoredMatch): EngineMatch {
     cadence: match.cadence,
     stacked: match.stacked,
     moves: match.moves,
-    // The remote engine (replay.ts) has no reroll or grant opcode; drop both. A
-    // reroll only changes which cards were OFFERED, never the board, and an
-    // owner god-panel grant only seats a HELD card (never an instant or an
-    // opponent-move filter). The worker re-validates any returned move against
-    // its own legal set (falling back to the local engine on a mismatch), so a
-    // stale action stream on the remote side can only cost a fallback, never a
-    // desync.
-    draftActions: match.draftActions?.filter(
-      (a): a is Exclude<StoredDraftAction, { a: "reroll" | "grant" }> =>
-        a.a !== "reroll" && a.a !== "grant",
-    ),
+    // The COMPLETE action stream, rerolls and grants included. A reroll
+    // advances the shared draft rngState (see rerollOffer), so dropping it
+    // desyncs every subsequent offer/pick in the remote replay — the engine
+    // then returns moves that fail the local legality check and EVERY
+    // remaining bot move in the game falls back to the local search (the
+    // 2026-07-10 DO CPU outage). A grant changes the seat's hand, so later
+    // `use` actions depend on it the same way.
+    draftActions: match.draftActions,
   };
 }
 
@@ -814,10 +826,6 @@ export class GameServer extends DurableObject<Env> {
   // memory only. Refreshed by /arena/games; entries older than the TTL are
   // ignored (self-heals if the arena crashes or the DO loses this on eviction).
   private externalGames = new Map<string, { meta: ExternalGameMeta; at: number }>();
-  // Arena game ids already archived, so a retried /arena/end never double-rates
-  // the house accounts. In-memory + bounded; the rare eviction-window dup is
-  // bot-only and low stakes.
-  private arenaArchived = new Set<string>();
   // Tier 2 / M3 (spectating): an ephemeral StoredMatch replica for each arena
   // game a human is watching, built from the arena's snapshot and advanced by
   // its move/draft frames. Never persisted. Present only while watched, so the
@@ -1079,6 +1087,8 @@ export class GameServer extends DurableObject<Env> {
           houseVsHouse,
           tickError: this.houseTickError,
           lastDesync: this.houseLastDesync,
+          engineRejects: this.houseEngineRejects,
+          lastEngineReject: this.houseLastEngineReject,
         },
       });
     }
@@ -1363,21 +1373,15 @@ export class GameServer extends DurableObject<Env> {
   }
 
   // --- Transient store for house-vs-house filler games -----------------------
-  // Bot-only games are entertainment, not records-in-progress: nothing about
-  // them needs a durable write on EVERY move (owner request: "the bots don't
-  // have to store everything, just temporary stuff"). Their live record —
-  // moves, clocks, draft actions, replay checkpoint included — lives in this
-  // in-memory map; the durable copy is written only at creation (so the id
-  // resolves after a restart), on a sparse heartbeat (every
-  // BOT_MATCH_FLUSH_EVERY saves, so a restart resumes at most that many events
-  // back), and at completion (the finished record feeds the archive). Human
-  // games are untouched: any match with a human seat persists on every save
-  // exactly as before. If the isolate is evicted mid-game the bots simply
-  // resume from the last heartbeat — they replay their own moves and nobody
-  // loses anything that matters.
+  // Bot-only games are entertainment, not records: NOTHING about them is ever
+  // written durably (owner rule: "you don't need to store bot vs bot — not
+  // anything"). Their live record — moves, clocks, draft actions, replay
+  // checkpoint included — lives only in this in-memory map, and their finished
+  // state is never archived to D1/Postgres (see endMatch). Human games are
+  // untouched: any match with a human seat persists on every save exactly as
+  // before. If the isolate is evicted mid-game the games simply vanish and the
+  // filler spawner starts fresh TV games; nobody loses anything that matters.
   private botMatches = new Map<string, StoredMatch>();
-  private botMatchDirty = new Map<string, number>();
-  private static readonly BOT_MATCH_FLUSH_EVERY = 24;
 
   /** True for a filler game with NO human seat (both seats house personas). */
   private isBotOnlyMatch(match: StoredMatch): boolean {
@@ -1385,8 +1389,7 @@ export class GameServer extends DurableObject<Env> {
   }
 
   private async loadMatch(id: string): Promise<StoredMatch | null> {
-    // Bot-only games read from the in-memory record first: it is the freshest
-    // (the durable copy may be a heartbeat behind).
+    // Bot-only games live only in the in-memory record (never stored).
     const transient = this.botMatches.get(id);
     if (transient) return transient;
     return (await this.ctx.storage.get<StoredMatch>(matchKey(id))) ?? null;
@@ -1396,24 +1399,22 @@ export class GameServer extends DurableObject<Env> {
     // The match set changed (create / start / move / end), so the cached lobby
     // snapshot is stale. Clearing it forces the next poll to rebuild.
     this.lobbyCache = null;
-    if (this.isBotOnlyMatch(match) && !match.result) {
-      // Transient path: hold the live record in memory, write the durable copy
-      // only at creation and on the sparse heartbeat.
-      this.botMatches.set(match.id, match);
-      const dirty = (this.botMatchDirty.get(match.id) ?? 0) + 1;
-      const creation = (match.moves?.length ?? 0) === 0 && (match.draftActions?.length ?? 0) === 0;
-      if (creation || dirty >= GameServer.BOT_MATCH_FLUSH_EVERY) {
-        await this.ctx.storage.put(matchKey(match.id), match);
-        this.botMatchDirty.set(match.id, 0);
+    if (this.isBotOnlyMatch(match)) {
+      if (match.result) {
+        // Finished bot-vs-bot: nothing is kept, anywhere. Drop the transient
+        // record and clear any durable copy an older build may have written
+        // (the previous scheme wrote a creation record + sparse heartbeats).
+        this.botMatches.delete(match.id);
+        await this.ctx.storage.delete(matchKey(match.id));
       } else {
-        this.botMatchDirty.set(match.id, dirty);
+        // Live bot-vs-bot: memory only. Zero storage writes per move.
+        this.botMatches.set(match.id, match);
       }
     } else {
       await this.ctx.storage.put(matchKey(match.id), match);
-      // A finished (or human) game leaves the transient store; the durable
-      // copy just written is authoritative from here on.
+      // A human game is always durable; make sure it never shadows a stale
+      // transient copy (a seat swap cannot happen, but stay defensive).
       this.botMatches.delete(match.id);
-      this.botMatchDirty.delete(match.id);
     }
     await this.ensureLiveIndex();
     // The live-id set only changes when a game is created or ends; skip the
@@ -1432,7 +1433,6 @@ export class GameServer extends DurableObject<Env> {
     }
     this.liveMatchIndex?.delete(match.id);
     this.botMatches.delete(match.id);
-    this.botMatchDirty.delete(match.id);
     await this.ctx.storage.delete(matchKey(match.id));
   }
 
@@ -1492,15 +1492,11 @@ export class GameServer extends DurableObject<Env> {
       const chunk = ids.slice(i, i + 128);
       const found = await this.ctx.storage.get<StoredMatch>(chunk.map(matchKey));
       for (const id of chunk) {
-        // Bot-only (filler) games live in the transient store between sparse
-        // durable flushes (see saveMatch), so the durable copy read here can be
-        // up to BOT_MATCH_FLUSH_EVERY events behind. Every live path that goes
+        // Bot-only (filler) games live ONLY in the transient store (see
+        // saveMatch; they are never written durably). Every live path that goes
         // through this loader (houseTick's due pass and re-arm sweep, the lobby
-        // snapshot, maintenance flag checks) must see the SAME freshest record
-        // loadMatch serves, or the tick acts on a rewound game: it replays
-        // already-played plies, re-arms off a stale turn, and can persist the
-        // stale copy back over the fresh one — a house game that "just stops
-        // moving" (or visibly rewinds) even though its record was fine.
+        // snapshot, maintenance flag checks) must see the SAME record loadMatch
+        // serves, so the map is consulted before the batched storage read.
         const match = this.botMatches.get(id) ?? found.get(matchKey(id));
         if (!match || match.result) {
           index.delete(id);
@@ -1648,13 +1644,17 @@ export class GameServer extends DurableObject<Env> {
     category: RatingCategory,
   ): Promise<{ rating: number; rd: number; vol: number; avatar: string | null } | null> {
     try {
-      const ratings = await loadCategoryRatings(db, [userId], category);
+      // The avatar read is independent of the rating read: run them together
+      // so a seat attach costs one D1 round-trip of latency, not two.
+      const [ratings, row] = await Promise.all([
+        loadCategoryRatings(db, [userId], category),
+        db
+          .prepare("SELECT avatar FROM users WHERE id = ?")
+          .bind(userId)
+          .first<{ avatar: string | null }>(),
+      ]);
       const r = ratings.get(userId);
       if (!r) return null;
-      const row = await db
-        .prepare("SELECT avatar FROM users WHERE id = ?")
-        .bind(userId)
-        .first<{ avatar: string | null }>();
       return { rating: r.rating, rd: r.rd, vol: r.vol, avatar: row?.avatar ?? null };
     } catch {
       return null;
@@ -1680,17 +1680,20 @@ export class GameServer extends DurableObject<Env> {
     if (match.result) return;
     const db = await this.db();
     if (!db) return;
-    for (const color of colors) {
-      const seat = match.users?.[color];
-      if (!seat?.id) continue;
-      const row = await this.seatCategoryRating(db, seat.id, this.matchRatingCategory(match));
-      if (row) {
-        seat.rating = row.rating;
-        seat.rd = row.rd;
-        seat.vol = row.vol;
-        seat.avatar = row.avatar;
-      }
-    }
+    // Both seats read independent rows; refresh them concurrently.
+    await Promise.all(
+      colors.map(async (color) => {
+        const seat = match.users?.[color];
+        if (!seat?.id) return;
+        const row = await this.seatCategoryRating(db, seat.id, this.matchRatingCategory(match));
+        if (row) {
+          seat.rating = row.rating;
+          seat.rd = row.rd;
+          seat.vol = row.vol;
+          seat.avatar = row.avatar;
+        }
+      }),
+    );
   }
 
   private playersPayload(match: StoredMatch) {
@@ -2351,7 +2354,10 @@ export class GameServer extends DurableObject<Env> {
     if (!match.completedAt) match.completedAt = Date.now();
 
     let ratings: { w: RatingChange | null; b: RatingChange | null } | null = null;
-    if (!match.recorded && match.startedAt) {
+    // Bot-vs-bot games are never recorded ANYWHERE (owner rule): no games row
+    // (D1 or Postgres), no recorded_games claim, no rating movement, no
+    // achievement pass. Only games with at least one human seat archive.
+    if (!match.recorded && match.startedAt && !this.isBotOnlyMatch(match)) {
       match.recorded = true;
       // Persist the result (and the recorded claim) BEFORE the D1/PG write
       // below. That write is a subrequest, so it does not hold the DO input
@@ -2408,7 +2414,10 @@ export class GameServer extends DurableObject<Env> {
     // Draft games also close with the public draft record: each side's held
     // buffs (public all game anyway, repeated here for post-game screens).
     let draftBuffs: Record<Color, { id: string; tier: number; spent?: boolean; nullified?: boolean }[]> | null = null;
-    if (match.draft) {
+    // The held-buff reveal needs a full replay from ply 0 — worth it for any
+    // game a human played or is watching, pure waste for an unwatched filler
+    // game (its end frame goes to nobody).
+    if (match.draft && (!this.isBotOnlyMatch(match) || this.watcherCount(match.id) > 0)) {
       try {
         const game = this.gameFromMatch(match);
         if (game?.buffs) {
@@ -3245,6 +3254,11 @@ export class GameServer extends DurableObject<Env> {
   // turn), surfaced on /healthz so a reproducing owner can report the exact
   // card + move sequence that drifted the turn without needing the DO logs.
   private houseLastDesync: string | null = null;
+  // Remote-engine moves rejected by the local legality check (replay
+  // divergence): count + last instance, surfaced on /healthz. In-memory only,
+  // so they reset with the isolate — nonzero here means it is happening NOW.
+  private houseEngineRejects = 0;
+  private houseLastEngineReject: string | null = null;
   private houseSeeded = false;
   // Match ids whose retire (end/delete) itself failed while acting. Kept for
   // the life of the isolate so neither the due loop nor the self-heal sweep
@@ -3296,7 +3310,40 @@ export class GameServer extends DurableObject<Env> {
     if (match.botActAt) return;
     const clocks = this.currentClocks(match, now);
     const grace = this.movesByColor(match, turn) === 0 ? firstMoveGraceMs : 0;
-    match.botActAt = now + houseThinkMs(randomInt, clocks[turn] + grace, match.setup.timeSec);
+    let think = houseThinkMs(randomInt, clocks[turn] + grace, match.setup.timeSec);
+    if (this.isBotOnlyMatch(match)) think *= houseFillerThinkMultiplier;
+    match.botActAt = now + think;
+  }
+
+  // Clock re-attribution for a turn-cache heal. While the cache was drifted,
+  // currentClocks was (virtually) draining the CACHED side's clock, but the
+  // authoritative replay says the REAL side was on turn for the whole running
+  // window — typically the bot "thinking" (or the server stalled) while the
+  // record charged the human. The old heal banked via currentClocks, which
+  // COMMITTED that wrong charge: the human's clock dropped by the entire stall
+  // while the bot's sprang back to its last banked value — the reported "the
+  // bot visibly ran out of time, then suddenly moved with its clock teleported
+  // back up to 24 seconds, and now I'M flagging". Rules here:
+  //   - real turn is a BOT seat: charge the window to the bot — its real
+  //     elapsed think/stall time, hard-floored at 0. It may flag on it; the
+  //     callers run finishOnFlag right after so a genuinely flagged bot ends
+  //     the game instead of moving.
+  //   - real turn is a HUMAN seat: drop the window entirely. The human was
+  //     never shown as on turn (their client had the bot thinking), so a
+  //     server-side mixup must never eat their clock.
+  //   - the CACHED side is never charged: its banked value stays put. No clock
+  //     is ever "healed" upward past the last authoritative frame, and no
+  //     clock is charged for a window it was not actually on turn for.
+  private rebankTurnHeal(match: StoredMatch, realTurn: Color, now: number) {
+    if (match.runningSince !== null) {
+      if (match.setup.timeSec && !match.result && match.bots?.[realTurn]) {
+        const grace = this.movesByColor(match, realTurn) === 0 ? firstMoveGraceMs : 0;
+        const elapsed = Math.max(0, now - match.runningSince - grace);
+        match.clocks[realTurn] = Math.max(0, match.clocks[realTurn] - elapsed);
+      }
+      match.runningSince = now;
+    }
+    match.turnColor = realTurn;
   }
 
   // After a turn-cache heal (cached turnColor != authoritative replay), the
@@ -3561,9 +3608,11 @@ export class GameServer extends DurableObject<Env> {
           if (game && !game.result && this.activeColor(match) !== game.board.turn) {
             this.houseLastDesync = `unarmed ${match.id} cached=${this.activeColor(match)} replay=${game.board.turn} moves=${match.moves.length} actions=${JSON.stringify(match.draftActions ?? [])}`;
             console.error("house un-armed turn desync (self-healed)", this.houseLastDesync);
-            match.clocks = this.currentClocks(match, now);
-            if (match.runningSince !== null) match.runningSince = now;
-            match.turnColor = game.board.turn;
+            // Charge the drifted window to the side the replay says was on
+            // turn (a bot pays; a human is never charged for a server mixup)
+            // and flag the bot outright if that exhausted its clock.
+            this.rebankTurnHeal(match, game.board.turn, now);
+            if (await this.finishOnFlag(match, now, false)) continue;
             // The heal fixed the SERVER; the human's client may still be on
             // the pre-heal turn (that is how the game got here). Push the
             // authoritative replay-restore frame so their board un-freezes —
@@ -3860,9 +3909,12 @@ export class GameServer extends DurableObject<Env> {
     if (match.draft && cachedTurn !== game.board.turn) {
       this.houseLastDesync = `armed ${match.id} cached=${cachedTurn} replay=${game.board.turn} moves=${match.moves.length} actions=${JSON.stringify(match.draftActions ?? [])}`;
       console.error("house turn desync", this.houseLastDesync);
-      match.clocks = this.currentClocks(match, now);
-      if (match.runningSince !== null) match.runningSince = now;
-      match.turnColor = game.board.turn;
+      // Charge the drifted window to the side the replay says was on turn (a
+      // bot pays its real elapsed time; a human is never charged for a server
+      // mixup — see rebankTurnHeal). A bot whose re-attributed clock ran out
+      // flags right here rather than moving after visibly running out.
+      this.rebankTurnHeal(match, game.board.turn, now);
+      if (await this.finishOnFlag(match, now, false)) return;
       // Reconciling the cache to the replay can hand the turn to the HUMAN.
       // In that direction the bot correctly goes idle, so no move frame will
       // ever reach the human's client — which is still on the pre-heal turn
@@ -3965,7 +4017,19 @@ export class GameServer extends DurableObject<Env> {
     const clocks = this.currentClocks(match, now);
     const remaining = match.setup.timeSec ? clocks[color] : undefined;
     let move: Move | null = null;
-    if (this.env.HOUSE_ENGINE_REMOTE === "true") {
+    // Remote (OCI) search only for games a human is in. Filler (bot-vs-bot)
+    // moves always use the local hard-capped search (<= 80ms): one fewer
+    // subrequest and up to HOUSE_ENGINE_TIMEOUT_MS less awaited wall time per
+    // bot-vs-bot move, on games whose playing strength nobody depends on.
+    // Also skip remote when the bot's clock is nearly gone: the round-trip
+    // (up to 3s) is charged as real think time and could flag the bot
+    // mid-fetch, while the local pick answers in tens of milliseconds — the
+    // hard cap on the bot's think budget under time pressure.
+    const useRemote =
+      this.env.HOUSE_ENGINE_REMOTE === "true" &&
+      !this.isBotOnlyMatch(match) &&
+      (remaining === undefined || remaining > HOUSE_ENGINE_TIMEOUT_MS + 2000);
+    if (useRemote) {
       const remote = await this.remoteHouseMove(match, persona.skill, remaining);
       // The await above yielded the DO thread for up to HOUSE_ENGINE_TIMEOUT_MS;
       // the match may have ended (resign, disconnect, flag) or advanced while
@@ -3996,7 +4060,19 @@ export class GameServer extends DurableObject<Env> {
       // Treat the OCI reply as untrusted: accept only a move that is legal in
       // our own reconstruction, and commit our LOCAL instance (never the wire
       // object). A desynced/tampered move simply isn't found -> local fallback.
-      if (remote) move = legalMoves(game).find((m) => sameMove(m, remote)) ?? null;
+      if (remote) {
+        move = legalMoves(game).find((m) => sameMove(m, remote)) ?? null;
+        if (!move) {
+          // A rejected engine move means the remote replay DIVERGED from ours
+          // despite matching REPLAY_VERSIONs — a serialization-level bug (the
+          // 2026-07-10 reroll incident), not ordinary drift. Every rejection
+          // burns a local fallback search on the DO thread, so make the signal
+          // impossible to miss: it is surfaced on /healthz next to lastDesync.
+          this.houseEngineRejects += 1;
+          this.houseLastEngineReject = `${match.id} uci=${moveToUCI(remote)} moves=${match.moves.length}`;
+          console.error("house engine move rejected as illegal (replay divergence?)", this.houseLastEngineReject);
+        }
+      }
     }
     if (!move) {
       try {
@@ -4032,6 +4108,11 @@ export class GameServer extends DurableObject<Env> {
         return;
       }
     }
+    // The searches above (a remote fetch can take up to 3s; a late alarm can
+    // add more) run on the bot's own clock. If its time ran out while
+    // "thinking", it flags here — a bot must never play a move after visibly
+    // running out of time, and its clock must never re-appear with time on it.
+    if (await this.finishOnFlag(match, Date.now(), false)) return;
     await this.commitMove(match, game, color, move, moveToUCI(move));
   }
 
@@ -4090,9 +4171,10 @@ export class GameServer extends DurableObject<Env> {
     };
   }
 
-  // The persona's SeatUser for a match seat, with its live rating in the
-  // pool's mode bucket (one D1 read, event-scale only: pairing and filler
-  // starts, never per tick).
+  // The persona's SeatUser for a HUMAN-facing match seat, with its live rating
+  // in the pool's mode bucket (one D1 read, event-scale only: queue pickups and
+  // /play bot games — filler seats use the cached ratings instead, see
+  // startHouseVsHouseGame).
   private async houseSeatUser(db: D1Database, persona: HousePersona, mode: DraftMode): Promise<SeatUser> {
     try {
       const row = await this.seatCategoryRating(db, persona.userId, mode);
@@ -4274,11 +4356,25 @@ export class GameServer extends DurableObject<Env> {
     const aWhite = randomInt(2) === 0;
     const [white, black] = aWhite ? [a, b] : [b, a];
     const tc = QUEUE_POOLS[pool];
+    // Filler seats are display-only (a bot-vs-bot game is never recorded, so
+    // rd/vol never feed a rating update): build them from the cached live
+    // ratings the tick already loads for seeks instead of houseSeatUser's two
+    // D1 queries per seat — four fewer queries per filler spawn, zero marginal
+    // D1 on this path.
+    const liveRatings = await this.houseLiveRatings(db);
+    const seatOf = (p: HousePersona): SeatUser => ({
+      id: p.userId,
+      name: p.name,
+      rating: liveRatings.get(p.userId)?.[mode] ?? houseSeedRating(p),
+      rd: 150,
+      vol: 0.06,
+      avatar: p.avatar,
+    });
     const match = await this.newHouseMatchRecord(
       { timeSec: tc.timeSec, incrementSec: tc.incrementSec },
       mode,
       {
-        users: { w: await this.houseSeatUser(db, white, mode), b: await this.houseSeatUser(db, black, mode) },
+        users: { w: seatOf(white), b: seatOf(black) },
         bots: { w: white.userId, b: black.userId },
       },
     );
@@ -4380,66 +4476,14 @@ export class GameServer extends DurableObject<Env> {
       }
       this.externalGames.delete(rec.id);
       // Spectators (if any) see the game end with the revealed nerfs + held
-      // buffs, then the replica is dropped (Tier 2 / M3). Independent of the
-      // archive write below so a DB hiccup never strands a watched game "live".
+      // buffs, then the replica is dropped (Tier 2 / M3).
       this.endExternalForWatchers(rec);
-      // An abort (arena shutdown/pause/error) has no outcome: the replica ends
-      // for its watchers above, but nothing is archived and no rating moves —
-      // recording the void result would pollute both accounts' histories.
+      // Bot-vs-bot is never recorded (owner rule): arena games end for their
+      // watchers above and that is ALL — no games row (D1 or Postgres), no
+      // recorded_games claim, no Glicko movement on the house accounts. The
+      // arena's POST stays (it is what delivers the end frame to spectators);
+      // it just no longer triggers any database work.
       if (body.aborted) return Response.json({ ok: true, aborted: true });
-      if (this.arenaArchived.has(rec.id)) return Response.json({ ok: true, dup: true });
-      const db = await this.db();
-      if (!db) return Response.json({ ok: false, reason: "no_db" });
-      try {
-        // Same call endMatch uses — applies Glicko to both house accounts and
-        // writes the archive row (PG via Hyperdrive, else D1). Bot-only, so a
-        // bad arena can move house ratings but never a human's.
-        await recordFinishedGame(
-          db,
-          {
-            id: rec.id,
-            whiteUserId: rec.bots.w,
-            blackUserId: rec.bots.b,
-            whiteName: rec.seats.w.name,
-            blackName: rec.seats.b.name,
-            whiteNerfId: rec.setup.whiteNerfId,
-            blackNerfId: rec.setup.blackNerfId,
-            seed: rec.setup.seed,
-            timeSec: rec.setup.timeSec,
-            incrementSec: rec.setup.incrementSec,
-            moves: rec.moves,
-            winner: rec.result.winner,
-            reason: rec.result.reason,
-            rated: true,
-            ruleset: "draft",
-            ratingCategory: rec.mode,
-            // Full draft record so the arena game replays from the archive
-            // alone. Guarded so an older arena bundle (no draft fields) still
-            // archives exactly as before. The arena rolls its own pools, so no
-            // cardOverrides. draftActions here already exclude reroll/grant
-            // (the arena/spectator stream never carries them).
-            ...(rec.draftSeed !== undefined && rec.draftActions
-              ? {
-                  draftRecord: {
-                    mode: rec.mode,
-                    draftSeed: rec.draftSeed,
-                    ...(rec.cadence !== undefined ? { cadence: rec.cadence } : {}),
-                    draftActions: rec.draftActions,
-                  },
-                }
-              : {}),
-            replayVersion: rec.replayVersion,
-            startedAt: rec.startedAt,
-            completedAt: rec.completedAt,
-          },
-          this.env.HYPERDRIVE?.connectionString,
-        );
-        this.arenaArchived.add(rec.id);
-        if (this.arenaArchived.size > 2000) this.arenaArchived.clear();
-      } catch (err) {
-        console.error("arena game record failed", rec.id, err);
-        return Response.json({ ok: false, reason: "record_failed" });
-      }
       return Response.json({ ok: true });
     }
 
@@ -5791,8 +5835,20 @@ export class GameServer extends DurableObject<Env> {
       return true;
     }
     if (!match.startedAt || !match.dtDeadline || now < match.dtDeadline) return false;
+    const expiredAt = match.dtDeadline;
     match.dtDeadline = null;
-    if (!match.result && match.runningSince === null) match.runningSince = now;
+    // House games resume the clock from the moment the free window EXPIRED,
+    // not from whenever this enforcement happened to run: under alarm backlog
+    // the gap between the two is exactly the "bot got its time back" window —
+    // the client resumed counting down at the deadline, then the next server
+    // frame showed the bot's clock teleported back up by the enforcement lag.
+    // Charging from the deadline matches what every client already displayed.
+    // Purely-human games keep the old behavior byte-for-byte (owner rule:
+    // human-vs-human is untouched); their enforcement lag is bounded by the
+    // alarm anyway.
+    if (!match.result && match.runningSince === null) {
+      match.runningSince = match.bots ? expiredAt : now;
+    }
     // The lock-in window expiring resumes play; if a house seat is to move (or
     // still holds its own offer) and its think timer was lost while the clock
     // sat paused, nothing else re-arms it until the heartbeat sweep. Arm it
@@ -5960,9 +6016,26 @@ export class GameServer extends DurableObject<Env> {
         // for their invitee and never appear as open challenges.
         if (!match.invitedUsername && this.connectedSession(match.id, "w")) {
           const host = match.users?.w;
+          // The seat snapshot was captured when the challenge was CREATED and
+          // only refreshes when an opponent joins, so a code sitting in the
+          // lobby shows a stale number while the host's rating moves in other
+          // games — the reported "challenge shows the wrong rating". Read the
+          // live rating from the SAME bucket this match would rate under
+          // (matchRatingCategory, the value recordFinishedGame reads as
+          // `before`); the snapshot stays the fallback on any read failure.
+          // Bounded: one read per open challenge per lobby cache window
+          // (LOBBY_CACHE_TTL_MS) — open challenges are rare and short-lived.
+          let hostRating = host ? Math.round(host.rating) : null;
+          if (host?.id) {
+            const db = await this.db();
+            const live = db
+              ? await this.seatCategoryRating(db, host.id, this.matchRatingCategory(match))
+              : null;
+            if (live) hostRating = Math.round(live.rating);
+          }
           challenges.push({
             id: match.id,
-            host: host ? { name: host.name, rating: Math.round(host.rating) } : { name: "Anonymous", rating: null },
+            host: host ? { name: host.name, rating: hostRating } : { name: "Anonymous", rating: null },
             rated: !!match.rated,
             draft: !!match.draft,
             ...(match.mode ? { mode: match.mode } : {}),

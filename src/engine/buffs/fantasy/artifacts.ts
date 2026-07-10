@@ -11,14 +11,14 @@ import { Buff } from "./shared";
 import {
   card,
   pieceBound,
-  grantInventory,
-  freezeTarget,
+  permanentAugment,
   timedAugment,
   slideMoves,
   mySquares,
   addEffect,
   instant,
   ORTHO_DIRS,
+  DIAG_DIRS,
   ALL_DIRS,
 } from "./shared";
 
@@ -46,16 +46,18 @@ export const FANTASY_ARTIFACTS: Buff[] = [
       icon: "Music",
       name: "Horn of Summoning",
       description:
-        "One long note fills your pocket with a knight, a bishop, and a pawn, then drop them onto empty squares on later turns.",
+        "One long note wakes the stone itself: for the rest of the game, your rooks may also step one square diagonally.",
       tier: 6,
-      category: "pieces",
-      flavor: "One long note, and the hills empty toward you.",
+      category: "movement",
+      requires: ["r"],
+      flavor: "One long note, and the towers themselves answer.",
+      fx: { motif: "empower", pieces: ["r"], moveAs: "k", self: true },
     },
-    instant((_inst, api) => {
-      grantInventory(api, "n", 1);
-      grantInventory(api, "b", 1);
-      grantInventory(api, "p", 1);
-    }),
+    permanentAugment((_m, inst, api) =>
+      mySquares(api.board, api.me, "r").flatMap((sq) =>
+        slideMoves(api.board, sq, DIAG_DIRS, inst.id, 1),
+      ),
+    ),
   ),
   card(
     {
@@ -128,12 +130,49 @@ export const FANTASY_ARTIFACTS: Buff[] = [
       icon: "Wand",
       name: "Staff of Stasis",
       description:
-        "Tap the Staff of Stasis and lock one enemy piece inside a bubble of frozen time: it cannot move for 4 of their turns. Kings cannot be targeted.",
+        "Bind the staff to one of your pieces: whoever dares capture it is locked in a bubble of frozen time for 3 of their turns. The ward lasts the rest of the game.",
       tier: 4,
-      category: "tempo",
-      flavor: "For it, a heartbeat lasts an age.",
+      category: "protection",
+      flavor: "For whoever touches it, a heartbeat lasts an age.",
+      fx: { motif: "ward", pieces: "all", self: true },
     },
-    freezeTarget(4, "bubble"),
+    {
+      kind: "activated",
+      spendOnUse: false,
+      // One activation only: the staff is bound to a single bearer.
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null
+          ? null
+          : {
+              kind: "square",
+              label: "Choose the piece that bears the staff",
+              squares: mySquares(api.board, api.me).filter(
+                (sq) => api.board.pieces[sq]!.type !== "k",
+              ),
+            },
+      effect: (inst, _api, picks) => {
+        if (inst.state.sq != null) return;
+        inst.state.sq = picks[0]?.square;
+      },
+      onMovePlayed: (inst, move, api) => {
+        const sq = inst.state.sq as number | undefined;
+        if (sq == null) return;
+        // The bearer falls: freeze the capturer in the stasis bubble (kings
+        // are never frozen), then the staff is spent.
+        if (move.to === sq && move.from !== sq && move.color === api.opp) {
+          if (move.piece !== "k") {
+            // Added during their own move, so the shared post-move tick eats
+            // one turn immediately: 4 here leaves 3 of their turns frozen.
+            addEffect(api, { kind: "freeze", sq: move.to, owner: api.opp, turns: 4, skin: "bubble" });
+          }
+          inst.spent = true;
+          return;
+        }
+        if (move.from === sq) inst.state.sq = move.to;
+      },
+      status: (inst) =>
+        inst.state.sq == null ? "activate to bind the staff" : "the staff stands ready",
+    },
   ),
   card(
     {

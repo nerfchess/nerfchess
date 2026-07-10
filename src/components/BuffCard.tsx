@@ -156,7 +156,7 @@ export function BuffCard({ buff, tier, status, spent, nullified, onClick, compac
           a piece to win), and players should learn that from the card face,
           not from a rejected move. Keyed off the description so future shield
           cards inherit the note with zero per-card work. */}
-      {!compact && /uncapturable|cannot be captured|can't be captured/i.test(buff.description) && (
+      {!compact && /uncapturable|cannot be captured|can't be captured|shield|sanctuary|warded/i.test(buff.description) && (
         <p className="mt-2 text-[10.5px] leading-snug text-parchment-400">
           Note: a piece that cannot be captured may not capture the king while its
           protection lasts. You must expose a piece to win.

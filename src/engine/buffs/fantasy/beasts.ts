@@ -8,11 +8,11 @@
 import { Buff } from "./shared";
 import {
   card,
+  activated,
+  emptySquares,
   lineSweep,
+  placePieces,
   relocateMany,
-  summonTemp,
-  grantInventory,
-  instant,
   myHalfZone,
   mySquares,
   addEffect,
@@ -166,12 +166,32 @@ export const FANTASY_BEASTS: Buff[] = [
       icon: "PawPrint",
       name: "Direwolf Pack",
       description:
-        "A spectral direwolf answers your howl and hunts at your side as a knight for 6 of your turns, then melts back into the mist.",
+        "Two spectral direwolves answer your howl: place two knights on empty squares in your half. The pack melts back into the mist after 5 of your turns.",
       tier: 4,
       category: "pieces",
       flavor: "The pack always returns to the wild.",
     },
-    summonTemp("n", 6, myHalfZone),
+    activated(
+      (_inst, api, picks) =>
+        picks.length >= 2
+          ? null
+          : {
+              kind: "square",
+              label: `Choose where a direwolf appears (${picks.length + 1}/2)`,
+              squares: emptySquares(api.board, myHalfZone(api)).filter(
+                (sq) => !picks.some((k) => k.square === sq),
+              ),
+            },
+      (_inst, api, picks) => {
+        for (const k of picks) {
+          if (k.square == null || api.board.pieces[k.square]) continue;
+          api.place(k.square, "n", api.me);
+          // The pack departs on its own: a timed_loss removes each wolf after
+          // 5 of your turns (pruned early if it is captured first).
+          addEffect(api, { kind: "timed_loss", owner: api.me, sq: k.square, turns: 5, then: "remove" });
+        }
+      },
+    ),
   ),
   card(
     {
@@ -179,11 +199,14 @@ export const FANTASY_BEASTS: Buff[] = [
       icon: "Egg",
       name: "Roost of Rocs",
       description:
-        "Three titanic rocs descend from the mountain roost and settle into your pocket as knights, then drop them onto empty squares on later turns.",
-      tier: 6,
+        "Three titanic rocs descend and perch along the board's edge: place three knights on empty squares of the outer rim.",
+      tier: 7,
       category: "pieces",
       flavor: "Their shadows blot out the board.",
     },
-    instant((_inst, api) => grantInventory(api, "n", 3)),
+    placePieces(["n", "n", "n"], () => (sq: Square) => {
+      const f = sq % 8, r = Math.floor(sq / 8);
+      return f === 0 || f === 7 || r === 0 || r === 7;
+    }),
   ),
 ];

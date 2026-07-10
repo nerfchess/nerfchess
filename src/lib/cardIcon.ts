@@ -181,7 +181,6 @@ const CARD_ICON_OVERRIDES: Record<string, string> = {
   mass_mind_control: "BrainCircuit", // every mind rewired
   medusa_stare: "Eye", // the petrifying gaze
   peace_of_the_grave: "Shovel", // six feet of quiet
-  perfect_rewind: "RotateCcw", // wound back perfectly
   petrified_forest: "Trees", // a forest turned to stone
   phoenix_rebirth: "Bird", // the phoenix itself
   poisoned_counsel: "Wine", // the tainted goblet
@@ -302,7 +301,6 @@ const CARD_ICON_OVERRIDES: Record<string, string> = {
   teleport_knight: "Sparkle",
   kingslide: "ArrowRightToLine",
   // Protection
-  sanctuary: "House",
   chain_mail: "Link",
   checkmate_immunity: "ShieldX",
   // Info / draft / misc

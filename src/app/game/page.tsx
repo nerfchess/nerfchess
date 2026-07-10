@@ -463,9 +463,38 @@ function GamePage() {
   // Every known card fires: cards with a bespoke SIGNATURES entry get their
   // choreography, and every other card gets the category cast spectacle the
   // Board synthesizes from its category + tier (no card plays silently).
+  // HOLD-AND-REPLAY: see OnlineMatch - plays that land while my full-screen
+  // draft overlay covers the board queue and replay once it is visible.
+  const heldPlaysRef = useRef<string[]>([]);
+  const draftCovered =
+    !!game?.buffs?.players[myColor]?.offer &&
+    offerOnClockIndex !== game.buffs.players[myColor].offer!.index &&
+    !game?.result;
+  const draftCoveredRef = useRef(false);
+  draftCoveredRef.current = draftCovered;
   const fireSignature = (id: string) => {
-    if (BUFF_BY_ID[id]) setSignatureCard({ id, key: ++sigKeyRef.current });
+    if (!BUFF_BY_ID[id]) return;
+    if (draftCoveredRef.current) {
+      heldPlaysRef.current = [...heldPlaysRef.current, id].slice(-6);
+      return;
+    }
+    setSignatureCard({ id, key: ++sigKeyRef.current });
   };
+  useEffect(() => {
+    if (draftCovered || heldPlaysRef.current.length === 0) return;
+    let timer: number | null = null;
+    const step = () => {
+      const id = heldPlaysRef.current.shift();
+      if (!id) return;
+      setSignatureCard({ id, key: ++sigKeyRef.current });
+      if (heldPlaysRef.current.length > 0) timer = window.setTimeout(step, 2600);
+    };
+    step();
+    return () => {
+      if (timer != null) window.clearTimeout(timer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draftCovered]);
   // Snapshot the id of a card I am about to use (dock "Use" entry point) so
   // onChanged can fire its signature once the activation resolves.
   const snapshotMySignature = (buffIndex: number) => {
@@ -1611,11 +1640,11 @@ function GamePage() {
         >
           {/* The command rail: one framed column (mode header, opponent, dock,
               you) instead of floating islands; mirrors the online layout. */}
-          <aside className="hidden min-h-0 gap-3 overflow-hidden border border-white/10 bg-white/[0.02] p-2 lg:grid lg:min-h-[var(--board-height)] lg:max-h-full lg:grid-rows-[auto_auto_minmax(8rem,1fr)_auto] lg:self-start">
+          <aside className="rail-panel corner-cut hidden min-h-0 gap-3 overflow-hidden p-2.5 lg:grid lg:min-h-[var(--board-height)] lg:max-h-full lg:grid-rows-[auto_auto_minmax(8rem,1fr)_auto] lg:self-start">
             <div className="seam-edge-b flex items-center justify-between gap-2 px-1 pb-2">
               <span
                 className={
-                  "font-display text-xs font-bold uppercase tracking-[0.14em] " +
+                  "flex items-center gap-1.5 font-display text-xs font-bold uppercase tracking-[0.14em] " +
                   (plainMode
                     ? "text-parchment-300"
                     : gameMode === "buff"
@@ -1623,6 +1652,12 @@ function GamePage() {
                     : "text-mode-nerfGlow")
                 }
               >
+                {/* A lit mode ember anchors the rail's identity at a glance. */}
+                <span
+                  aria-hidden
+                  className="h-1.5 w-1.5 shrink-0 rounded-full bg-current"
+                  style={{ boxShadow: "0 0 8px 1px currentColor" }}
+                />
                 {plainMode ? "Plain chess" : gameMode === "buff" ? "Buff mode" : "Nerf mode"}
               </span>
               <span className="smallcaps min-w-0 truncate text-[9px] text-parchment-400">
@@ -1723,6 +1758,9 @@ function GamePage() {
               <div data-board-measure className={`relative mx-auto sm:mx-0 ${boardFitClass}`}>
                 <Board
                   board={boardForDisplay}
+                  // Removal FX diff the committed position, never the premove /
+                  // confirm / review overlays (see Board.fxBoard).
+                  fxBoard={game.board}
                   legalMoves={
                     isReviewingHistory || buffTargeting.targeting
                       ? []
@@ -1752,6 +1790,7 @@ function GamePage() {
                           walnutSquares: zone.walnut,
                           bananaSquares: zone.banana,
                           trapSquares: zone.traps,
+                          doomSquares: zone.doom,
                           lockedSquares: zone.locked,
                           barredSquares: zone.barred,
                           kingSafeSquares: fxZone.kingSafeSquares,

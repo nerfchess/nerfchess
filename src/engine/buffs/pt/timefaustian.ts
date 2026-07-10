@@ -255,9 +255,12 @@ export const PT_TIME_CARDS: Buff[] = [
       id: "overtime_pay",
       icon: "PiggyBank",
       name: "Overtime Pay",
+      // Tier 4 (moved up from 2): a flat 105 seconds is a bigger swing than
+      // any other pure clock gain in the game; it prices like the other
+      // tier-4 clock cards, not a tier-2 trinket.
       description:
         "You clock in and cash out on the spot: 105 seconds go straight onto your own clock the moment you play this. Time and a half, paid in full.",
-      tier: 2,
+      tier: 4,
       category: "tempo",
       flavor: "Time and a half, in your favor.",
     },

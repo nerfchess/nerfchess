@@ -12,13 +12,17 @@ interface Props {
   nerf: Nerf;
   revealed?: boolean;
   compact?: boolean;
+  /** Codex grid: match BuffCard's proportions (p-4, text-lg name, equal-height
+   * flex column) so nerf and buff cards read the same size side by side. The
+   * in-game full card keeps its larger type. */
+  dense?: boolean;
   ownerLabel?: string;
   progress?: { value: number; max: number; label: string } | null;
 }
 
 import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
 
-export function NerfCard({ nerf, revealed = true, compact = false, ownerLabel, progress }: Props) {
+export function NerfCard({ nerf, revealed = true, compact = false, dense = false, ownerLabel, progress }: Props) {
   if (!revealed) {
     return (
       <div className="relative plate p-5 overflow-hidden">
@@ -46,7 +50,9 @@ export function NerfCard({ nerf, revealed = true, compact = false, ownerLabel, p
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`group/card relative plate draft-face p-5 overflow-hidden tier-bg-${nerf.tier} border`}
+      className={`group/card relative plate draft-face overflow-hidden tier-bg-${nerf.tier} border ${
+        dense ? "flex h-full flex-col p-4" : "p-5"
+      }`}
     >
       {/* Watermark: faint by default; hovering the card brightens it in the
           card's tier (severity) color and nudges the scale. Transitions only
@@ -55,7 +61,7 @@ export function NerfCard({ nerf, revealed = true, compact = false, ownerLabel, p
       <FaceIcon
         aria-hidden
         className={`pointer-events-none absolute -bottom-3 -right-2 tier-${nerf.tier} opacity-[0.08] transition-all duration-200 group-hover/card:opacity-[0.18] motion-safe:group-hover/card:scale-105`}
-        size={92}
+        size={dense ? 84 : 92}
         strokeWidth={1.2}
       />
       <div className="relative flex items-start justify-between gap-3">
@@ -66,7 +72,7 @@ export function NerfCard({ nerf, revealed = true, compact = false, ownerLabel, p
             </span>
             <TurnCostBadge cost={NERF_TURN_COST} />
           </div>
-          <div className={`font-display text-2xl leading-tight tier-${nerf.tier}`}>
+          <div className={`font-display leading-tight tier-${nerf.tier} ${dense ? "text-lg" : "text-2xl"}`}>
             {nerf.name}
           </div>
         </div>
@@ -77,10 +83,10 @@ export function NerfCard({ nerf, revealed = true, compact = false, ownerLabel, p
           {TIER_ROMAN[nerf.tier]}
         </span>
       </div>
-      <div className="rule-ornament my-3 text-[10px]">
+      <div className={`rule-ornament text-[10px] ${dense ? "my-2.5" : "my-3"}`}>
         <span className="font-display">{TIER_LABEL[nerf.tier]}</span>
       </div>
-      <p className="text-[15px] leading-relaxed text-parchment/95">
+      <p className={dense ? "flex-1 text-[13px] leading-snug text-parchment/90" : "text-[15px] leading-relaxed text-parchment/95"}>
         <GlossaryText text={nerf.description} />
       </p>
       {progress && progress.max > 0 && (
@@ -98,7 +104,7 @@ export function NerfCard({ nerf, revealed = true, compact = false, ownerLabel, p
         </div>
       )}
       {!compact && nerf.flavor && (
-        <p className="mt-3 text-[13px] text-parchment-300/85 font-display border-l-2 border-white/15 pl-3">
+        <p className={`font-display border-l-2 border-white/15 pl-3 text-parchment-300/85 ${dense ? "mt-2 text-[11px] italic" : "mt-3 text-[13px]"}`}>
           &ldquo;{nerf.flavor}&rdquo;
         </p>
       )}

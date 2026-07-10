@@ -7,6 +7,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { useLobbySnapshot } from "@/lib/lobbyClient";
 import { DEFAULT_CATEGORY, getCategory, isRatingCategoryId } from "@/lib/ratingCategories";
+import { isProvisionalRd } from "@/lib/ratingDisplay";
 
 // The community hub: who is on top, who is playing the most, who is online
 // right now, and what was just played, plus doors to the social spaces.
@@ -195,7 +196,7 @@ export default function CommunityPage() {
                         right={
                           <span className="font-mono text-sm tabular-nums text-parchment-100">
                             {Math.round(player.rating)}
-                            {player.rd > 150 && <span className="text-parchment-400">?</span>}
+                            {isProvisionalRd(player.rd) && <span className="text-parchment-400">?</span>}
                           </span>
                         }
                       />

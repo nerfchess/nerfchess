@@ -328,10 +328,24 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   // two batch into one render and the signature claims exactly that diff.
   const [signatureCard, setSignatureCard] = useState<{ id: string; key: number } | null>(null);
   const sigKeyRef = useRef(0);
+  // HOLD-AND-REPLAY (owner: "animations must happen when the opponent is
+  // watching"): while MY full-screen draft overlay covers the board, incoming
+  // play animations would fire to nobody - the single biggest reason plays
+  // went unseen. They queue here instead and replay one by one (2.6s apart,
+  // newest 6 kept) the moment the board is visible again. A replayed play has
+  // lost its removal diff, so it renders through the board-wide lead fallback
+  // (full art + name label, no per-square hits) - the right trade.
+  const heldPlaysRef = useRef<string[]>([]);
+  const draftCoveredRef = useRef(false);
   const fireSignature = (id: string) => {
     // Every known card fires: bespoke signatures get their choreography and
     // every other card gets the Board's category cast spectacle.
-    if (BUFF_BY_ID[id]) setSignatureCard({ id, key: ++sigKeyRef.current });
+    if (!BUFF_BY_ID[id]) return;
+    if (draftCoveredRef.current) {
+      heldPlaysRef.current = [...heldPlaysRef.current, id].slice(-6);
+      return;
+    }
+    setSignatureCard({ id, key: ++sigKeyRef.current });
   };
   // A held/passive buff whose onMovePlayed hook observably changed the board
   // (a summon, relocate, transform, revive, pawn-push, or a fresh board
@@ -459,6 +473,27 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   // the board comes back, and the clock runs — deliberating past the window
   // costs the straggler's own time (the server resumes the clock too).
   const [draftGraceOver, setDraftGraceOver] = useState(false);
+  // The board is covered while my offer renders full-screen (the grace-over
+  // minimized panel leaves the board visible). Kept in a ref for
+  // fireSignature and mirrored to state-shaped deps for the flush effect.
+  const draftCovered =
+    !!game?.buffs?.players[myColor]?.offer && !draftGraceOver && !game?.result;
+  draftCoveredRef.current = draftCovered;
+  useEffect(() => {
+    if (draftCovered || heldPlaysRef.current.length === 0) return;
+    let timer: number | null = null;
+    const step = () => {
+      const id = heldPlaysRef.current.shift();
+      if (!id) return;
+      setSignatureCard({ id, key: ++sigKeyRef.current });
+      if (heldPlaysRef.current.length > 0) timer = window.setTimeout(step, 2600);
+    };
+    step();
+    return () => {
+      if (timer != null) window.clearTimeout(timer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draftCovered]);
   useEffect(() => {
     if (draftDeadline == null) {
       setDraftGraceOver(true);
@@ -1851,6 +1886,14 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         .filter((t) => t !== "k" && (myInventory[t] ?? 0) > 0)
         .map((t) => ({ type: t, count: myInventory[t]! }))
     : [];
+  // The opponent's pocket, read-only (owner: "be able to see your opponent's
+  // pocket") - full transparency covers banked pieces too.
+  const oppInventory = game.buffs?.players[oppColor].inventory ?? null;
+  const oppPocketEntries = oppInventory
+    ? (Object.keys(oppInventory) as PieceType[])
+        .filter((t) => t !== "k" && (oppInventory[t] ?? 0) > 0)
+        .map((t) => ({ type: t, count: oppInventory[t]! }))
+    : [];
   // Squares where the armed pocket piece may legally drop: the engine already
   // generated these as drop moves in the live legal-move list.
   const dropSquares = dropType ? moves.filter((m) => m.drop === dropType).map((m) => m.to) : [];
@@ -2234,14 +2277,20 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           {/* The command rail: one framed column (mode header, opponent, dock
               + chat, you) instead of three floating islands, so the left side
               reads as a single control surface. */}
-          <aside className="hidden min-h-0 gap-2 overflow-y-auto border border-white/10 bg-white/[0.02] p-2 lg:grid lg:min-h-[var(--board-height)] lg:max-h-full lg:grid-rows-[auto_auto_minmax(6rem,1fr)_auto] lg:self-start">
+          <aside className="rail-panel corner-cut hidden min-h-0 gap-2 overflow-y-auto p-2.5 lg:grid lg:min-h-[var(--board-height)] lg:max-h-full lg:grid-rows-[auto_auto_minmax(6rem,1fr)_auto] lg:self-start">
             <div className="seam-edge-b flex items-center justify-between gap-2 px-1 pb-2">
               <span
                 className={
-                  "font-display text-xs font-bold uppercase tracking-[0.14em] " +
+                  "flex items-center gap-1.5 font-display text-xs font-bold uppercase tracking-[0.14em] " +
                   (isBuffMode ? "text-mode-buffGlow" : "text-mode-nerfGlow")
                 }
               >
+                {/* A lit mode ember anchors the rail's identity at a glance. */}
+                <span
+                  aria-hidden
+                  className="h-1.5 w-1.5 shrink-0 rounded-full bg-current"
+                  style={{ boxShadow: "0 0 8px 1px currentColor" }}
+                />
                 {isBuffMode ? "Buff mode" : "Nerf mode"}
               </span>
               {subtitle && (
@@ -2335,6 +2384,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               <div data-board-measure className={`relative mx-auto sm:mx-0 ${boardFitClass}`}>
                 <Board
                   board={boardForDisplay}
+                  // Removal FX diff the committed position, never the premove /
+                  // confirm / review overlays (see Board.fxBoard).
+                  fxBoard={game.board}
                   legalMoves={
                     isReviewingHistory || buffTargeting.targeting
                       ? []
@@ -2372,6 +2424,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                                 walnutSquares: zone.walnut,
                                 bananaSquares: zone.banana,
                                 trapSquares: zone.traps,
+                                doomSquares: zone.doom,
                                 // Previously missing online: king-only /
                                 // no-pawn-advance shackles now paint here too.
                                 lockedSquares: zone.locked,
@@ -2455,6 +2508,20 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                     activeType={dropType}
                     canDrop={draftCanAct}
                     onSelect={handlePocketSelect}
+                  />
+                </div>
+              )}
+              {/* Opponent's pocket, read-only: what they can drop is public
+                  information under full transparency. */}
+              {isDraft && game.buffs && !isReviewingHistory && oppPocketEntries.length > 0 && (
+                <div className={`mx-auto mt-1 sm:mx-0 ${boardFitClass}`}>
+                  <Pocket
+                    entries={oppPocketEntries}
+                    color={oppColor}
+                    activeType={null}
+                    canDrop={false}
+                    onSelect={() => {}}
+                    label="Their pocket"
                   />
                 </div>
               )}
@@ -2763,8 +2830,11 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
             // Replica opponent offers only ever hold cards the server sent
             // us (picksVisible matches); otherwise they stay null.
             offer: bsTheirs?.offer ?? null,
-            showCards: picksVisible || !!bsMine?.flags.seeOppCards,
-            showTier: !!bsMine?.flags.seeOppTier,
+            // Full transparency (owner rule): the opponent's offer is public
+            // data the server already sends open - always show it face-up.
+            // The old reveal flags survive only as inputs no longer needed.
+            showCards: true,
+            showTier: true,
             reveal: bsMine?.oppReveal ?? null,
             lastPick: bsTheirs?.buffs.length
               ? {

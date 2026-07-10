@@ -25,6 +25,7 @@ import type { SignatureConfig } from "./BoardEffects";
 import { PLAYS as GOD_PLAYS } from "./godPlays";
 import { PLAYS as FUNNY_PLAYS } from "./funnyPlays";
 import { PLAYS as GREAT_PLAYS } from "./greatPlays";
+import { PLAYS as BASIC_PLAYS } from "./basicPlays";
 
 export interface SigPlugin {
   config: Omit<SignatureConfig, "visual">;
@@ -33,7 +34,7 @@ export interface SigPlugin {
 
 // Later spreads win within plugins; core SIGNATURES always beat plugins at
 // the resolve site. Merge order: god-tier set, tier 5-6 set, funny/meta set.
-const MERGED: Record<string, SigPlugin> = { ...GOD_PLAYS, ...GREAT_PLAYS, ...FUNNY_PLAYS };
+const MERGED: Record<string, SigPlugin> = { ...BASIC_PLAYS, ...GOD_PLAYS, ...GREAT_PLAYS, ...FUNNY_PLAYS };
 
 /** Full SignatureConfig per plugin card id, visual keyed back to this module. */
 export const PLUGIN_SIGNATURES: Record<string, SignatureConfig> = Object.fromEntries(

@@ -8,15 +8,19 @@ import {
   AccentColor,
   BOARD_THEMES,
   BoardTheme,
+  CUSTOM_BG_DATA_MAX,
   CUSTOM_BG_URL_MAX,
   DEFAULT_SETTINGS,
   PIECE_THEMES,
   PieceTheme,
+  SITE_THEMES,
+  SiteTheme,
   loadSettings,
   sanitizeCustomBgUrl,
   saveSettings,
   Settings,
 } from "@/lib/settings";
+import { fileToDataUrl } from "@/lib/imageUpload";
 import { configureSoundPrefs, playMove as playMoveSample, setUiSounds, setVolume } from "@/lib/sounds";
 import Link from "next/link";
 import { Piece } from "@/components/Pieces";
@@ -106,14 +110,7 @@ export function SettingsPanel({ open, onClose }: Props) {
           />
         );
       case "siteTheme":
-        return (
-          <Select
-            label={label}
-            value={settings.siteTheme}
-            options={control.options}
-            onChange={(v) => update({ siteTheme: v })}
-          />
-        );
+        return <SiteThemePicker value={settings.siteTheme} onChange={(t) => update({ siteTheme: t })} />;
       case "soundTheme":
         return (
           <Select
@@ -128,11 +125,20 @@ export function SettingsPanel({ open, onClose }: Props) {
       case "accentColor":
         return (
           <Swatches
-            colors={(Object.keys(ACCENT_THEMES) as AccentColor[]).map((id) => ({
-              id,
-              color: ACCENT_THEMES[id].accent,
-              label: ACCENT_THEMES[id].label,
-            }))}
+            colors={[
+              {
+                // "Auto" follows whichever theme is active (its swatch shows
+                // the current theme's own accent).
+                id: "auto",
+                color: (SITE_THEMES[settings.siteTheme] ?? SITE_THEMES.dark).accent.accent,
+                label: "Theme",
+              },
+              ...(Object.keys(ACCENT_THEMES) as Exclude<AccentColor, "auto">[]).map((id) => ({
+                id: id as string,
+                color: ACCENT_THEMES[id].accent,
+                label: ACCENT_THEMES[id].label,
+              })),
+            ]}
             selected={settings.accentColor}
             onSelect={(id) => update({ accentColor: id as AccentColor })}
           />
@@ -141,6 +147,7 @@ export function SettingsPanel({ open, onClose }: Props) {
         return (
           <CustomBackgroundControl
             url={settings.customBgUrl}
+            data={settings.customBgData}
             dim={settings.customBgDim}
             onApply={(patch) => update(patch)}
           />
@@ -167,6 +174,7 @@ export function SettingsPanel({ open, onClose }: Props) {
   const isStacked = (control: Control) =>
     control.kind === "boardTheme" ||
     control.kind === "pieceTheme" ||
+    control.kind === "siteTheme" ||
     control.kind === "account" ||
     control.kind === "customBg";
 
@@ -241,20 +249,80 @@ export function SettingsPanel({ open, onClose }: Props) {
   );
 }
 
-/** Custom background: URL field with Apply/Clear plus a dim slider. The URL is
- *  validated (http(s), length-capped) before it is persisted; a bad value is
- *  never written, so the page background always degrades to the theme default. */
+/** Full-site theme picker: a swatch card per theme showing the page background,
+ *  a floating panel chip, and the theme's glow color — so each mood previews at
+ *  a glance before it's applied. */
+function SiteThemePicker({
+  value,
+  onChange,
+}: {
+  value: SiteTheme;
+  onChange: (theme: SiteTheme) => void;
+}) {
+  return (
+    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+      {(Object.keys(SITE_THEMES) as SiteTheme[]).map((k) => {
+        const t = SITE_THEMES[k];
+        const selected = value === k;
+        return (
+          <button
+            key={k}
+            onClick={() => onChange(k)}
+            aria-pressed={selected}
+            className={
+              "group overflow-hidden rounded border text-left transition-colors " +
+              (selected
+                ? "border-gold/70 bg-gold/10"
+                : "border-white/10 hover:border-white/25 hover:bg-white/[0.03]")
+            }
+          >
+            {/* Miniature page: background wash, a panel chip, a glow dot. */}
+            <span
+              className="relative block h-12 w-full"
+              style={{ background: t.swatch.bg }}
+              aria-hidden
+            >
+              <span
+                className="absolute left-2 top-2 h-5 w-9 rounded-[2px] border border-white/10"
+                style={{ background: t.swatch.panel }}
+              />
+              <span
+                className="absolute bottom-2 right-2 h-2 w-2 rounded-full"
+                style={{ background: t.swatch.glow, boxShadow: `0 0 8px 1px ${t.swatch.glow}` }}
+              />
+            </span>
+            <span className="block px-2 py-1.5">
+              <span className="block font-display text-[12.5px] leading-tight text-parchment">
+                {t.label}
+              </span>
+              <span className="block text-[10px] leading-tight text-parchment-500">{t.hint}</span>
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/** Custom background: upload an image (stored device-local as a data URL) or
+ *  paste an http(s) URL, plus a dim slider. Both inputs are validated before
+ *  anything persists, so the page background always degrades to the theme
+ *  default. An upload wins over the URL until it's removed. */
 function CustomBackgroundControl({
   url,
+  data,
   dim,
   onApply,
 }: {
   url: string;
+  data: string;
   dim: number;
   onApply: (patch: Partial<Settings>) => void;
 }) {
   const [draft, setDraft] = useState(url);
   const [invalid, setInvalid] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   // Track external changes (reset, server sync) while the panel is open.
   useEffect(() => {
@@ -272,8 +340,53 @@ function CustomBackgroundControl({
     onApply({ customBgUrl: clean });
   };
 
+  const upload = async (file: File) => {
+    setUploading(true);
+    setUploadError(null);
+    try {
+      const dataUrl = await fileToDataUrl(file, { maxDim: 1920, maxChars: CUSTOM_BG_DATA_MAX });
+      onApply({ customBgData: dataUrl });
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : "Could not read that image.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
     <div className="space-y-2">
+      <div className="flex items-center gap-2">
+        <label className="btn-ghost relative cursor-pointer rounded px-3 py-1.5 font-display text-[12px]">
+          {uploading ? "Reading…" : data ? "Replace image" : "Upload image"}
+          <input
+            type="file"
+            accept="image/*"
+            aria-label="Upload a background image"
+            className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              e.target.value = "";
+              if (file) void upload(file);
+            }}
+          />
+        </label>
+        {data && (
+          <>
+            <span
+              aria-hidden
+              className="h-8 w-12 shrink-0 rounded-[2px] border border-white/15 bg-cover bg-center"
+              style={{ backgroundImage: `url("${data}")` }}
+            />
+            <GhostButton label="Remove" onClick={() => onApply({ customBgData: "" })} />
+          </>
+        )}
+      </div>
+      {uploadError && <p className="text-[11px] text-oxblood-glow">{uploadError}</p>}
+      {data && (
+        <p className="text-[11px] text-parchment-500">
+          Uploaded backgrounds stay on this device and override the URL below.
+        </p>
+      )}
       <div className="flex items-center gap-2">
         <input
           type="url"
@@ -313,7 +426,7 @@ function CustomBackgroundControl({
           min={0}
           max={0.6}
           step={0.05}
-          disabled={!url}
+          disabled={!url && !data}
           format={(v) => `${Math.round(v * 100)}%`}
           onChange={(v) => onApply({ customBgDim: v })}
         />

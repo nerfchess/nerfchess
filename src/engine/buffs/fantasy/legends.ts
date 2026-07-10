@@ -32,6 +32,8 @@ import {
   ALL_DIRS,
   DIAG_DIRS,
   ORTHO_DIRS,
+  FILE,
+  RANK,
 } from "./shared";
 
 export const FANTASY_LEGENDS: Buff[] = [
@@ -110,52 +112,118 @@ export const FANTASY_LEGENDS: Buff[] = [
       id: "giants_maul",
       name: "Giant's Maul",
       description:
-        "One of your rooks swings a maul the size of a wagon: it charges along a rank or file, smashing up to two enemy pieces on the way, and stops where the swing ends. Friendly pieces and kings block the charge.",
+        "The maul comes down once: crush one enemy knight, bishop, or rook, and the shock leaves every enemy piece beside it (kings aside) frozen for 1 of their turns.",
       tier: 6,
       category: "attack",
-      requires: ["r"],
       flavor: "Subtlety is for people who cannot lift the hammer.",
     },
-    lineSweep("r", ORTHO_DIRS, 2),
+    activated(
+      (_inst, api, picks) =>
+        picks.length > 0
+          ? null
+          : {
+              kind: "square",
+              label: "Choose where the maul comes down",
+              squares: mySquares(api.board, api.opp).filter((sq) => {
+                const t = api.board.pieces[sq]!.type;
+                return t === "n" || t === "b" || t === "r";
+              }),
+            },
+      (_inst, api, picks) => {
+        const c = picks[0]?.square;
+        if (c == null) return;
+        const p = api.board.pieces[c];
+        if (!p || p.color !== api.opp || p.type === "k" || p.type === "q" || p.type === "p") return;
+        api.removePiece(c);
+        for (const [df, dr] of ALL_DIRS) {
+          const f = FILE(c) + df, r = RANK(c) + dr;
+          if (f < 0 || f > 7 || r < 0 || r > 7) continue;
+          const sq = f + r * 8;
+          const t = api.board.pieces[sq];
+          if (t && t.color === api.opp && t.type !== "k") {
+            addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 1 });
+          }
+        }
+      },
+    ),
   ),
   card(
     {
       id: "riddle_game",
       name: "Riddle Game",
       description:
-        "You pose a riddle with no good answer and the enemy camp argues all night: your opponent skips their next turn.",
+        "You wager the deck itself on a dangerous game: your opponent's next two drafts are skipped, but so is your own next one.",
       tier: 5,
-      category: "tempo",
+      category: "draft",
       flavor: "What have I got in my pocket?",
     },
-    skipOpponent(1),
+    instant((_inst, api) => {
+      api.theirs.flags.blockedDrafts = (api.theirs.flags.blockedDrafts ?? 0) + 2;
+      api.mine.flags.blockedDrafts = (api.mine.flags.blockedDrafts ?? 0) + 1;
+    }),
   ),
   card(
     {
       id: "valkyrie",
       name: "Valkyrie",
       description:
-        "A chooser of the slain descends and carries one of your captured queens or rooks back to the field: it returns to an empty square in your half, once.",
+        "A chooser of the slain rides beside your army: for your opponent's next 3 turns, any knight, bishop, or rook of yours they capture is carried home to your pocket instead of being lost for good. Drop it back onto an empty square on a later turn.",
       tier: 6,
       category: "pieces",
       flavor: "Not this one. This one still has work to do.",
     },
-    reviveOne(["q", "r"], myHalfZone),
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.turns = 3;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.opp) return;
+        if (
+          move.captured === "n" ||
+          move.captured === "b" ||
+          move.captured === "r"
+        ) {
+          grantInventory(api, move.captured, 1);
+        }
+        const t = ((inst.state.turns as number) ?? 0) - 1;
+        inst.state.turns = t;
+        if (t <= 0) inst.spent = true;
+      },
+      status: (inst) => `${(inst.state.turns as number) ?? 0} of their turns left`,
+    },
   ),
   card(
     {
       id: "hold_the_bridge",
       name: "Hold the Bridge",
       description:
-        "A lone hero plants their feet before your throne: your king cannot be captured for your opponent's next 2 turns.",
+        "One hero plants their feet: choose one of your knights, bishops, or rooks. It cannot be captured for your opponent's next 3 turns, but it stands its ground and cannot move for those turns either.",
       tier: 4,
       category: "protection",
+      requires: ["n", "b", "r"],
       flavor: "The bridge is narrow and so is your chance.",
-      fx: { motif: "ward", pieces: ["k"], self: true },
+      fx: { motif: "ward", pieces: ["n", "b", "r"], self: true },
     },
-    instant((_inst, api) => {
-      addEffect(api, { kind: "king_safe", owner: api.me, turns: 2 });
-    }),
+    activated(
+      (_inst, api, picks) =>
+        picks.length > 0
+          ? null
+          : {
+              kind: "square",
+              label: "Choose the piece that holds the bridge",
+              squares: mySquares(api.board, api.me).filter((sq) => {
+                const t = api.board.pieces[sq]!.type;
+                return t === "n" || t === "b" || t === "r";
+              }),
+            },
+      (_inst, api, picks) => {
+        const sq = picks[0]?.square;
+        if (sq == null) return;
+        addEffect(api, { kind: "shield", owner: api.me, squares: [sq], turns: 3 });
+        addEffect(api, { kind: "freeze", sq, owner: api.me, turns: 3 });
+      },
+    ),
   ),
   card(
     {
@@ -200,13 +268,37 @@ export const FANTASY_LEGENDS: Buff[] = [
       id: "legendary_forge",
       name: "Legendary Forge",
       description:
-        "The forge of the old kings burns one night only: one of your knights or bishops is reforged into a rook where it stands.",
-      tier: 5,
+        "The forge mends what war broke: one of your captured knights or bishops is reforged and returns to your pocket. Spend a later turn to drop it onto any empty square.",
+      tier: 3,
       category: "pieces",
-      requires: ["n", "b"],
       flavor: "Iron remembers every shape it has ever worn.",
     },
-    transformOwn(1, ["n", "b"], "r", "Choose the piece to reforge into a rook"),
+    {
+      ...activated(
+        (_inst, api, picks) => {
+          if (picks.length > 0) return null;
+          const type = (["n", "b"] as const).find(
+            (t) => (api.capturedFromMe[t] ?? 0) - (api.mine.revived[t] ?? 0) > 0,
+          );
+          // The single pick is a confirmation beat at the throne: the forge
+          // only lights when there is something to reforge.
+          return {
+            kind: "square",
+            label: "Light the forge (choose your king)",
+            squares: type == null ? [] : mySquares(api.board, api.me, "k"),
+          };
+        },
+        (_inst, api, picks) => {
+          if (picks[0]?.square == null) return;
+          const type = (["n", "b"] as const).find(
+            (t) => (api.capturedFromMe[t] ?? 0) - (api.mine.revived[t] ?? 0) > 0,
+          );
+          if (type == null) return;
+          grantInventory(api, type, 1);
+          api.mine.revived[type] = (api.mine.revived[type] ?? 0) + 1;
+        },
+      ),
+    },
   ),
   card(
     {

@@ -14,10 +14,10 @@ import { Buff, Square } from "./shared";
 import {
   card,
   instant,
-  voidSquares,
   activated,
   addEffect,
   emptySquares,
+  explodeAt,
   mySquares,
   pawnRankOk,
   tickTurns,
@@ -128,12 +128,45 @@ export const FUNNY_CHAOS: Buff[] = [
       id: "minefield",
       icon: "Bomb",
       name: "Minefield",
-      description: "Seed four mines on empty squares. The first enemy piece, never the king, to step on a mine is destroyed.",
+      description: "Seed three mines on empty squares. The first enemy piece, never a king, to step on each mine is destroyed, and the blast removes every enemy piece except kings on the 8 squares around it. Shielded pieces resist the blast.",
       tier: 6,
       category: "attack",
       flavor: "Click... uh oh.",
     },
-    voidSquares(4, null),
+    {
+      kind: "activated",
+      spendOnUse: false,
+      // One activation only: once seeded, the mines never move.
+      targets: (inst, api, picks) =>
+        picks.length >= 3 || inst.state.squares != null
+          ? null
+          : {
+              kind: "square",
+              label: `Choose a mine square (${picks.length + 1}/3)`,
+              squares: emptySquares(api.board).filter((sq) => !picks.some((k) => k.square === sq)),
+            },
+      effect: (inst, _api, picks) => {
+        if (inst.state.squares != null) return;
+        inst.state.squares = picks.map((k) => k.square).filter((s): s is Square => s != null);
+      },
+      onMovePlayed: (inst, move, api) => {
+        const squares = inst.state.squares as Square[] | undefined;
+        if (!squares?.length) return;
+        if (move.color !== api.opp || move.piece === "k" || !squares.includes(move.to)) return;
+        // The mine goes off once: the stepper dies and the blast clears the
+        // ring (explodeAt spares kings and shielded pieces).
+        api.removePiece(move.to);
+        explodeAt(api, move.to);
+        inst.state.squares = squares.filter((sq) => sq !== move.to);
+        if ((inst.state.squares as Square[]).length === 0) inst.spent = true;
+      },
+      status: (inst) => {
+        const squares = inst.state.squares as Square[] | undefined;
+        if (!squares?.length) return "activate to seed the mines";
+        const names = squares.map((sq) => `${"abcdefgh"[FILE(sq)]}${RANK(sq) + 1}`).join(", ");
+        return `mines armed at ${names}`;
+      },
+    },
   ),
   card(
     {

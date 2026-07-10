@@ -134,13 +134,34 @@ export const PT_CURSE_CARDS: Buff[] = [
       icon: "AlarmClockOff",
       name: "Snooze Button",
       description:
-        "Hit snooze on the whole enemy army: every one of your opponent's pieces except the king falls asleep and cannot move for their next 2 turns.",
+        "Pump sleeping gas down one file you pick: every enemy piece except the king standing on that file falls asleep and cannot move for their next 2 turns.",
       tier: 4,
       category: "tempo",
       flavor: "Five more minutes.",
       fx: { motif: "jail", pieces: ["p", "n", "b", "r", "q"] },
     },
-    freezeAllEnemies(2, "sleep"),
+    activated(
+      (_inst, _api, picks) =>
+        picks.length > 0
+          ? null
+          : {
+              kind: "square",
+              label: "Pick any square on the file to gas",
+              squares: Array.from({ length: 64 }, (_, i) => i),
+            },
+      (_inst, api, picks) => {
+        const c = picks[0]?.square;
+        if (c == null) return;
+        const f = FILE(c);
+        for (let r = 0; r < 8; r++) {
+          const sq = SQ(f, r);
+          const p = api.board.pieces[sq];
+          if (p && p.color === api.opp && p.type !== "k") {
+            addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2, skin: "sleep" });
+          }
+        }
+      },
+    ),
   ),
 
   // #20 Groundhog Day ------------------------------------------------------
@@ -709,14 +730,26 @@ export const PT_CURSE_CARDS: Buff[] = [
       id: "understaffed",
       name: "Understaffed",
       description:
-        "Your opponent is understaffed: their next drafted card does not show up for work and arrives useless.",
+        "Half the office calls in sick: for their next 2 turns your opponent cannot move any piece standing on files a through d.",
       tier: 3,
-      category: "draft",
+      category: "hex",
       flavor: "Gone to break, back never.",
+      fx: { motif: "slow", pieces: "all" },
     },
-    instant((_inst, api) => {
-      api.theirs.flags.nullifyIncoming = (api.theirs.flags.nullifyIncoming ?? 0) + 1;
-    }),
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.turns = 2;
+      },
+      filterOpponentMoves: (moves, inst) => {
+        if (turnsLeft(inst) <= 0) return moves;
+        const kept = moves.filter((m) => FILE(m.from) >= 4);
+        // Safety net: never strand the opponent with zero moves.
+        return kept.length > 0 ? kept : moves;
+      },
+      onMovePlayed: (inst, move, api) => tickTurns(inst, move, api.opp),
+      status: (inst) => `${turnsLeft(inst)} of their turns left`,
+    },
   ),
 
   // #113 Greenhouse --------------------------------------------------------

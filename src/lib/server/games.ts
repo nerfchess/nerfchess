@@ -139,16 +139,27 @@ export async function loadCategoryRatings(
 ): Promise<Map<string, CategoryRating>> {
   const out = new Map<string, CategoryRating>();
   if (!userIds.length) return out;
-  await seedCategoryRatings(db, userIds, category);
-  const placeholders = userIds.map(() => "?").join(",");
-  const rows = await db
-    .prepare(
-      `SELECT user_id, rating, rd, vol, games FROM user_ratings WHERE category = ? AND user_id IN (${placeholders})`,
-    )
-    .bind(category, ...userIds)
-    .all<UserRatingRow>();
-  for (const row of rows.results) {
-    out.set(row.user_id, { rating: row.rating, rd: row.rd, vol: row.vol, games: row.games });
+  const readInto = async (ids: string[]) => {
+    const placeholders = ids.map(() => "?").join(",");
+    const rows = await db
+      .prepare(
+        `SELECT user_id, rating, rd, vol, games FROM user_ratings WHERE category = ? AND user_id IN (${placeholders})`,
+      )
+      .bind(category, ...ids)
+      .all<UserRatingRow>();
+    for (const row of rows.results) {
+      out.set(row.user_id, { rating: row.rating, rd: row.rd, vol: row.vol, games: row.games });
+    }
+  };
+  await readInto(userIds);
+  // Seed only accounts with no bucket row yet (their first contact with this
+  // category). This path runs on every join/start-frame refresh, so the
+  // common already-seeded case must cost one read — not the unconditional
+  // seed INSERT (a D1 write round-trip) it used to fire every call.
+  const missing = userIds.filter((id) => !out.has(id));
+  if (missing.length) {
+    await seedCategoryRatings(db, missing, category);
+    await readInto(missing);
   }
   return out;
 }
