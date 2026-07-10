@@ -2164,13 +2164,33 @@ function TrapdoorBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 }
 
 function StoneBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
-  // Batch 12 — tier 6+ board-wide guarantee: extinction's lead greys the whole
-  // crop, rains stone chips down the central band, and rolls a dust ring out
-  // past the board edges.
+  // God-tier pass — EXTINCTION AS AN EVENT: the crop greys out, ash-light
+  // blazes up out of the ground and a colossal horned extinction-idol rises
+  // over the board while stone chips rain the central band; twin dust
+  // shockwaves roll past the edges.
   if (lead) {
     return (
-      <BoardWideStage>
-        <BoardWash color="rgba(120,116,110,0.3)" delayMs={delayMs} />
+      <GodEvent
+        wash="rgba(120,116,110,0.3)"
+        rays="rgba(154,143,138,0.7)"
+        boom="rgba(150,150,155,0.85)"
+        flare="rgba(178,170,160,0.75)"
+        sparkFill="#9a8f8a"
+        sparkStroke="#2b2320"
+        motion="rise"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 40 44" className="h-full w-full" aria-hidden="true">
+            {/* horned ashen idol: the extinction god looms up out of the dust */}
+            <path d="M6 10 C3 6 3 3 5 1 C9 4 10 7 10 10 Z" fill="rgba(120,116,110,0.9)" stroke="#4a4a44" strokeWidth="1" strokeLinejoin="round" />
+            <path d="M34 10 C37 6 37 3 35 1 C31 4 30 7 30 10 Z" fill="rgba(120,116,110,0.9)" stroke="#4a4a44" strokeWidth="1" strokeLinejoin="round" />
+            <path d="M12 44 V30 C8 28 7 22 9 15 C11 9 15 6 20 6 C25 6 29 9 31 15 C33 22 32 28 28 30 V44 Z" fill="rgba(150,150,155,0.88)" stroke="#4a4a44" strokeWidth="1.2" strokeLinejoin="round" />
+            {/* hollow eyes + cracked jaw seams */}
+            <path d="M14.5 16 L18 17.5 M25.5 16 L22 17.5" stroke="#e6432c" strokeWidth="1.6" strokeLinecap="round" />
+            <path d="M14 24 H26 M17 28 L20 25 L23 28" stroke="rgba(74,74,68,0.85)" strokeWidth="0.9" fill="none" />
+          </svg>
+        }
+      >
         <BoardRain
           delayMs={delayMs + 100}
           render={() => (
@@ -2179,8 +2199,7 @@ function StoneBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
             </svg>
           )}
         />
-        <BoardBoom delayMs={delayMs + 260} color="rgba(150,150,155,0.8)" />
-      </BoardWideStage>
+      </GodEvent>
     );
   }
   return (
@@ -2276,17 +2295,30 @@ function AtomicBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 }
 
 function PinBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
-  // Batch 12 — tier 6+ board-wide guarantee: the queen's rampage leads with a
-  // gilded board-wide flare — a gold wash, twin shock rings rolling past the
-  // edges, and a spray of spark-stars from the origin.
+  // God-tier pass — THE QUEEN MADE MANIFEST: gold god-rays split the sky and a
+  // colossal war-queen descends over the board, greatsword swept low, before
+  // her touchdown flare and twin gilded shockwaves rake past the edges.
   if (lead) {
     return (
-      <BoardWideStage>
-        <BoardWash color="rgba(230,191,106,0.24)" delayMs={delayMs} />
-        <BoardBoom delayMs={delayMs + 120} color="rgba(230,191,106,0.9)" thickness={4} />
-        <BoardBoom delayMs={delayMs + 260} color="rgba(255,214,120,0.75)" />
-        <ShardBurst vectors={BURST_MED} fill="#ffd95e" stroke="#8a6414" delayMs={delayMs + 80} sizePct={5} />
-      </BoardWideStage>
+      <GodEvent
+        wash="rgba(230,191,106,0.24)"
+        rays="rgba(255,214,120,0.85)"
+        boom="rgba(230,191,106,0.9)"
+        flare="rgba(255,232,150,0.8)"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 40 44" className="h-full w-full" aria-hidden="true">
+            {/* colossal war-queen: crown, gown, and a low-swept greatsword */}
+            <path d="M13 10 L14 4 L17 7.5 L20 3 L23 7.5 L26 4 L27 10 Z" fill="#e6bf6a" stroke="#7a5b23" strokeWidth="0.9" strokeLinejoin="round" />
+            <circle cx="20" cy="13.5" r="3.2" fill="#ffe9b0" stroke="#8a6414" strokeWidth="0.8" />
+            <path d="M20 17 C16 17 14.5 20 14 24 L10 42 H30 L26 24 C25.5 20 24 17 20 17 Z" fill="rgba(214,35,79,0.85)" stroke="#5a1512" strokeWidth="1" strokeLinejoin="round" />
+            {/* the rampage blade, swung across the whole board line */}
+            <path d="M2 34 L15 27 L16.5 29.5 L4 37 Z" fill="#e3ecf4" stroke="#5b6672" strokeWidth="0.8" strokeLinejoin="round" />
+            <path d="M15 26 L18 31" stroke="#7a5b23" strokeWidth="1.6" strokeLinecap="round" />
+            <path d="M17 24 V40 M23 24 V40" stroke="rgba(90,21,18,0.5)" strokeWidth="0.7" fill="none" />
+          </svg>
+        }
+      />
     );
   }
   return (
@@ -2408,15 +2440,32 @@ const CROWN_RAIN = [
 
 /** Double / Triple Amazon, Amazon Army: crowns rain down onto the piece. */
 function CrownRainBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
-  // Batch 12 — tier 6+ board-wide guarantee: the lead square opens the sky —
-  // a gold wash over the whole crop and a board-wide rain of tumbling crowns.
+  // God-tier pass — THE CORONATRIX: gold god-rays break the sky and a colossal
+  // Amazon war-goddess descends, spear planted, while crowns rain the whole
+  // central band; her touchdown throws sparks and twin gilded shockwaves.
   if (lead) {
     return (
-      <BoardWideStage>
-        <BoardWash color="rgba(230,191,106,0.22)" delayMs={delayMs} />
+      <GodEvent
+        wash="rgba(230,191,106,0.22)"
+        rays="rgba(255,231,150,0.85)"
+        boom="rgba(230,191,106,0.85)"
+        flare="rgba(255,236,178,0.8)"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 40 44" className="h-full w-full" aria-hidden="true">
+            {/* Amazon war-goddess: plumed crown, breastplate, planted spear */}
+            <path d="M14 9 L15 3.5 L18 6.5 L20 2.5 L22 6.5 L25 3.5 L26 9 Z" fill="#e6bf6a" stroke="#7a5b23" strokeWidth="0.9" strokeLinejoin="round" />
+            <circle cx="20" cy="12.5" r="3.1" fill="#ffe9b0" stroke="#8a6414" strokeWidth="0.8" />
+            <path d="M20 16 C16.5 16 15 18.5 14.5 22 L11 42 H29 L25.5 22 C25 18.5 23.5 16 20 16 Z" fill="rgba(168,119,216,0.85)" stroke="#4a2a6e" strokeWidth="1" strokeLinejoin="round" />
+            <path d="M15 23 H25 M16 27 H24" stroke="rgba(74,42,110,0.6)" strokeWidth="0.8" fill="none" />
+            {/* the planted spear */}
+            <path d="M32 42 V10" stroke="#8a6a3a" strokeWidth="1.4" strokeLinecap="round" />
+            <path d="M32 9 L29.5 13 H34.5 Z" fill="#e3ecf4" stroke="#5b6672" strokeWidth="0.7" strokeLinejoin="round" />
+          </svg>
+        }
+      >
         <BoardRain delayMs={delayMs + 80} render={() => <SigCrown />} />
-        <BoardBoom delayMs={delayMs + 340} color="rgba(230,191,106,0.85)" />
-      </BoardWideStage>
+      </GodEvent>
     );
   }
   return (
@@ -2441,24 +2490,35 @@ function ColossusBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   // whole crop (palette wash + the card's own motif writ large + a shockwave
   // past the board edges) instead of a square-local pop.
   if (lead) {
-    // Titan / Colossus: one colossal stone figure heaves up out of the board,
-    // shoulders past the crop line — a giant where a chess piece stood.
+    // God-tier pass — TITANOGENESIS: dust-light blazes up from the ground and
+    // the colossal stone figure heaves out of the board, shoulders past the
+    // crop line, its footfall flaring and thumping twin shockwaves outward.
     return (
-      <BoardWideLead wash="rgba(150,150,158,0.24)" boom="rgba(120,120,128,0.85)" delayMs={delayMs} motifClass="fx-sig-rise">
-        <svg viewBox="0 0 40 44" className="h-full w-full" aria-hidden="true">
-          {/* colossus silhouette: head, massive shoulders, planted arms */}
-          <path
-            d="M14 44 V30 C10 29 7 26 7 21 L2 22 L7 17 C8 11 12 7 17 6 C16 3 18 1 20 1 C22 1 24 3 23 6 C28 7 32 11 33 17 L38 22 L33 21 C33 26 30 29 26 30 V44 Z"
-            fill="rgba(120,120,128,0.85)"
-            stroke="#4c4c53"
-            strokeWidth="1.2"
-            strokeLinejoin="round"
-          />
-          {/* stone seams + eyes */}
-          <path d="M13 20 H27 M15 26 H25" stroke="rgba(76,76,83,0.8)" strokeWidth="0.8" fill="none" />
-          <path d="M16.5 13 H19 M21 13 H23.5" stroke="#e6bf6a" strokeWidth="1.4" strokeLinecap="round" />
-        </svg>
-      </BoardWideLead>
+      <GodEvent
+        wash="rgba(150,150,158,0.24)"
+        rays="rgba(200,200,208,0.7)"
+        boom="rgba(120,120,128,0.85)"
+        flare="rgba(216,168,90,0.7)"
+        sparkFill="#d8a85a"
+        sparkStroke="#4c4c53"
+        motion="rise"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 40 44" className="h-full w-full" aria-hidden="true">
+            {/* colossus silhouette: head, massive shoulders, planted arms */}
+            <path
+              d="M14 44 V30 C10 29 7 26 7 21 L2 22 L7 17 C8 11 12 7 17 6 C16 3 18 1 20 1 C22 1 24 3 23 6 C28 7 32 11 33 17 L38 22 L33 21 C33 26 30 29 26 30 V44 Z"
+              fill="rgba(120,120,128,0.85)"
+              stroke="#4c4c53"
+              strokeWidth="1.2"
+              strokeLinejoin="round"
+            />
+            {/* stone seams + eyes */}
+            <path d="M13 20 H27 M15 26 H25" stroke="rgba(76,76,83,0.8)" strokeWidth="0.8" fill="none" />
+            <path d="M16.5 13 H19 M21 13 H23.5" stroke="#e6bf6a" strokeWidth="1.4" strokeLinecap="round" />
+          </svg>
+        }
+      />
     );
   }
   return (
@@ -2514,17 +2574,35 @@ function ClockCageBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   // whole crop (palette wash + the card's own motif writ large + a shockwave
   // past the board edges) instead of a square-local pop.
   if (lead) {
+    // God-tier pass — THE WARDEN OF HOURS: cold steel-light splits the sky and
+    // a colossal clock-faced prison cage is lowered over the board by the time
+    // god's chains; it slams home with a flare and twin iron shockwaves.
     return (
-      <BoardWideLead wash="rgba(20,30,43,0.24)" boom="rgba(185,196,214,0.85)" delayMs={delayMs} motifClass="fx-sig-cage">
-        <svg viewBox="0 0 32 32" className="h-full w-full" aria-hidden="true">
-          <g stroke="#b9c4d6" strokeWidth="2" strokeLinecap="round">
-            <path d="M6 3 V29 M13 3 V29 M19 3 V29 M26 3 V29" />
-          </g>
-          <g stroke="#8a97ab" strokeWidth="2.2" strokeLinecap="round">
-            <path d="M4 4 H28 M4 28 H28" />
-          </g>
-        </svg>
-      </BoardWideLead>
+      <GodEvent
+        wash="rgba(20,30,43,0.28)"
+        rays="rgba(185,196,214,0.7)"
+        boom="rgba(185,196,214,0.85)"
+        flare="rgba(205,216,230,0.7)"
+        sparkFill="#b9c4d6"
+        sparkStroke="#3a4556"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 36 44" className="h-full w-full" aria-hidden="true">
+            {/* hoisting chains */}
+            <path d="M10 0 L12 8 M26 0 L24 8" stroke="#8a97ab" strokeWidth="1.2" strokeLinecap="round" strokeDasharray="2 1.6" />
+            {/* the colossal cage */}
+            <g stroke="#b9c4d6" strokeWidth="2" strokeLinecap="round">
+              <path d="M8 9 V41 M14 9 V41 M22 9 V41 M28 9 V41" />
+            </g>
+            <g stroke="#8a97ab" strokeWidth="2.2" strokeLinecap="round">
+              <path d="M6 10 H30 M6 40 H30" />
+            </g>
+            {/* the clock face bolted to its front, hands stopped */}
+            <circle cx="18" cy="24" r="6.5" fill="rgba(20,30,43,0.85)" stroke="#b9c4d6" strokeWidth="1.4" />
+            <path d="M18 24 L18 19.5 M18 24 L21.5 26" stroke="#e6bf6a" strokeWidth="1.3" strokeLinecap="round" />
+          </svg>
+        }
+      />
     );
   }
   return (
@@ -2550,12 +2628,30 @@ function ClockIceBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   // whole crop (palette wash + the card's own motif writ large + a shockwave
   // past the board edges) instead of a square-local pop.
   if (lead) {
+    // God-tier pass — THE GLACIAL HOROLOGE: pale rays split the sky and a
+    // colossal cracked clock, already entombed in a berg of ice, is lowered
+    // onto the board; it lands in a frost flare and twin rime shockwaves.
     return (
-      <BoardWideLead wash="rgba(200,235,255,0.24)" boom="rgba(223,242,255,0.85)" delayMs={delayMs} motifClass="fx-sig-ice">
-        <svg viewBox="0 0 32 32" className="h-full w-full" aria-hidden="true">
-          <path d="M8 4 L14 14 L9 20 L16 30" fill="none" stroke="rgba(235,250,255,0.75)" strokeWidth="1" strokeLinejoin="round" />
-        </svg>
-      </BoardWideLead>
+      <GodEvent
+        wash="rgba(200,235,255,0.26)"
+        rays="rgba(223,242,255,0.8)"
+        boom="rgba(223,242,255,0.85)"
+        flare="rgba(235,250,255,0.75)"
+        sparkFill="#bfe6ff"
+        sparkStroke="#3f6f9f"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 36 44" className="h-full w-full" aria-hidden="true">
+            {/* the ice block, faceted */}
+            <path d="M6 14 L18 4 L30 13 L32 32 L20 42 L5 34 Z" fill="rgba(200,235,255,0.45)" stroke="rgba(220,245,255,0.85)" strokeWidth="1.2" strokeLinejoin="round" />
+            <path d="M6 14 L20 20 L32 32 M20 20 L20 42 M18 4 L20 20" fill="none" stroke="rgba(235,250,255,0.6)" strokeWidth="0.8" />
+            {/* the entombed clock, its face split */}
+            <circle cx="19" cy="23" r="7.5" fill="rgba(20,30,43,0.7)" stroke="#bfe6ff" strokeWidth="1.4" />
+            <path d="M19 23 L19 17.5 M19 23 L23 25.5" stroke="#e6bf6a" strokeWidth="1.3" strokeLinecap="round" />
+            <path d="M14 18 L19 23 L16 28" fill="none" stroke="rgba(235,250,255,0.9)" strokeWidth="1" strokeLinejoin="round" />
+          </svg>
+        }
+      />
     );
   }
   return (
@@ -2590,19 +2686,42 @@ function BlitzBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   // whole crop (palette wash + the card's own motif writ large + a shockwave
   // past the board edges) instead of a square-local pop.
   if (lead) {
-    // Lightning war: four jagged strike-bolts rake across the whole crop in
-    // quick succession — the four moves in a row, each its own lightning crack.
+    // God-tier pass — THE STORM MARSHAL: a colossal winged war-god of speed
+    // drops out of a gold-white sky, a fistful of strike-bolts raking the crop
+    // beneath him — four moves, four cracks — before the concussion rings.
     return (
-      <BoardWideLead wash="rgba(255,246,200,0.24)" boom="rgba(255,200,90,0.85)" delayMs={delayMs} motifClass="fx-sig-streak">
-        <svg viewBox="0 0 48 32" className="h-full w-full" aria-hidden="true">
-          <g stroke="#e6bf6a" strokeWidth="2.2" strokeLinejoin="round" fill="none">
-            <path d="M4 4 L14 12 L10 14 L20 22" />
-            <path d="M16 2 L26 10 L22 12 L32 20" />
-            <path d="M28 6 L38 14 L34 16 L44 24" />
-          </g>
-          <path d="M10 24 L20 28 L16 29 L26 31" stroke="#fff3c9" strokeWidth="1.4" strokeLinejoin="round" fill="none" />
-        </svg>
-      </BoardWideLead>
+      <GodEvent
+        wash="rgba(255,246,200,0.24)"
+        rays="rgba(255,220,130,0.85)"
+        boom="rgba(255,200,90,0.85)"
+        flare="rgba(255,243,201,0.8)"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 44 44" className="h-full w-full" aria-hidden="true">
+            {/* swept war-wings */}
+            <path d="M14 16 C7 12 3 13 1 17 C6 18 9 20 12 23 Z" fill="rgba(255,231,150,0.8)" stroke="#8a6414" strokeWidth="0.9" strokeLinejoin="round" />
+            <path d="M30 16 C37 12 41 13 43 17 C38 18 35 20 32 23 Z" fill="rgba(255,231,150,0.8)" stroke="#8a6414" strokeWidth="0.9" strokeLinejoin="round" />
+            {/* the marshal: crested helm, war-coat */}
+            <path d="M19 6 L22 2 L25 6 Z" fill="#e6432c" stroke="#7a1a10" strokeWidth="0.7" strokeLinejoin="round" />
+            <circle cx="22" cy="10" r="3.2" fill="#ffe9b0" stroke="#8a6414" strokeWidth="0.8" />
+            <path d="M22 14 C18.5 14 17 17 16.5 21 L13 42 H31 L27.5 21 C27 17 25.5 14 22 14 Z" fill="rgba(230,67,44,0.85)" stroke="#7a1a10" strokeWidth="1" strokeLinejoin="round" />
+            {/* the fistful of bolts hurled down */}
+            <path d="M16 26 L11 34 L14 34 L9 42 M28 26 L33 34 L30 34 L35 42" fill="none" stroke="#ffe9b0" strokeWidth="1.6" strokeLinejoin="round" />
+          </svg>
+        }
+      >
+        {/* the four raking strike-bolts under him */}
+        <span className="fx-sig-streak absolute left-[26%] top-[38%] block h-[26%] w-[48%]" style={{ animationDelay: `${delayMs + 260}ms` }}>
+          <svg viewBox="0 0 48 32" className="h-full w-full" aria-hidden="true">
+            <g stroke="#e6bf6a" strokeWidth="2.2" strokeLinejoin="round" fill="none">
+              <path d="M4 4 L14 12 L10 14 L20 22" />
+              <path d="M16 2 L26 10 L22 12 L32 20" />
+              <path d="M28 6 L38 14 L34 16 L44 24" />
+            </g>
+            <path d="M10 24 L20 28 L16 29 L26 31" stroke="#fff3c9" strokeWidth="1.4" strokeLinejoin="round" fill="none" />
+          </svg>
+        </span>
+      </GodEvent>
     );
   }
   return (
@@ -2670,13 +2789,32 @@ function PetrifyBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 
 /** Petrified Forest: bark creeps up the piece and a stone leaf drifts off. */
 function PetrifiedForestBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
-  // Batch 12 — tier 6+ board-wide guarantee: the lead petrifies the WHOLE
-  // grove — a bark-brown wash creeps over the crop while stone leaves rain
-  // down the central band.
+  // God-tier pass — THE PETRIFIED TREANT: grey grove-light blazes up from the
+  // ground and a colossal stone-barked treant god rises over the board, its
+  // canopy already rock, while stone leaves rain the central band.
   if (lead) {
     return (
-      <BoardWideStage>
-        <BoardWash color="rgba(96,72,44,0.3)" delayMs={delayMs} />
+      <GodEvent
+        wash="rgba(96,72,44,0.3)"
+        rays="rgba(158,158,148,0.65)"
+        boom="rgba(138,138,128,0.85)"
+        flare="rgba(178,170,150,0.7)"
+        sparkFill="#8a8a80"
+        sparkStroke="#4a4a44"
+        motion="rise"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 40 44" className="h-full w-full" aria-hidden="true">
+            {/* petrified canopy */}
+            <path d="M20 2 C29 2 34 8 33 15 C37 17 37 22 33 24 L28 22 C25 25 15 25 12 22 L7 24 C3 22 3 17 7 15 C6 8 11 2 20 2 Z" fill="rgba(138,138,128,0.85)" stroke="#4a4a44" strokeWidth="1.1" strokeLinejoin="round" />
+            {/* stone trunk with a hollow face */}
+            <path d="M15 44 V28 C13 25 13 22 15 20 H25 C27 22 27 25 25 28 V44 Z" fill="rgba(110,92,72,0.9)" stroke="#4a3a2a" strokeWidth="1.1" strokeLinejoin="round" />
+            <path d="M17.5 23.5 L19 25 M22.5 23.5 L21 25 M18 29 C19.5 30.5 20.5 30.5 22 29" stroke="#2f3a26" strokeWidth="1" strokeLinecap="round" fill="none" />
+            {/* bark seams turning to rock */}
+            <path d="M16 34 V42 M24 33 V41 M20 31 V44" stroke="rgba(74,58,42,0.7)" strokeWidth="0.7" fill="none" />
+          </svg>
+        }
+      >
         <BoardRain
           delayMs={delayMs + 100}
           render={() => (
@@ -2685,8 +2823,7 @@ function PetrifiedForestBurst({ lead, delayMs }: { lead: boolean; delayMs: numbe
             </svg>
           )}
         />
-        <BoardBoom delayMs={delayMs + 320} color="rgba(138,138,128,0.8)" />
-      </BoardWideStage>
+      </GodEvent>
     );
   }
   return (
@@ -2717,18 +2854,32 @@ function AegisBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   // whole crop (palette wash + the card's own motif writ large + a shockwave
   // past the board edges) instead of a square-local pop.
   if (lead) {
+    // God-tier pass — THE SHIELD SERAPH: verdant god-rays break the sky and a
+    // colossal winged warden descends bearing the aegis before it, planting it
+    // with a flare and twin green shockwaves.
     return (
-      <BoardWideLead wash="rgba(123,181,47,0.24)" boom="rgba(123,181,47,0.85)" delayMs={delayMs} motifClass="fx-sig-crown">
-        <svg viewBox="0 0 24 28" className="h-full w-full" aria-hidden="true">
-            <path
-              d="M12 1 L22 5 V13 C22 20 17.5 25.2 12 27 C6.5 25.2 2 20 2 13 V5 Z"
-              fill="rgba(22,30,22,0.85)"
-              stroke="#7bb52f"
-              strokeWidth="1.6"
-              strokeLinejoin="round"
-            />
+      <GodEvent
+        wash="rgba(123,181,47,0.24)"
+        rays="rgba(163,209,96,0.8)"
+        boom="rgba(123,181,47,0.85)"
+        flare="rgba(196,230,140,0.75)"
+        sparkFill="#a3d160"
+        sparkStroke="#3f6f1f"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 44 44" className="h-full w-full" aria-hidden="true">
+            {/* warden wings */}
+            <path d="M12 14 C5 10 2 12 1 17 C6 17 9 19 11 22 Z" fill="rgba(196,230,140,0.75)" stroke="#3f6f1f" strokeWidth="0.9" strokeLinejoin="round" />
+            <path d="M32 14 C39 10 42 12 43 17 C38 17 35 19 33 22 Z" fill="rgba(196,230,140,0.75)" stroke="#3f6f1f" strokeWidth="0.9" strokeLinejoin="round" />
+            {/* the warden behind the great shield */}
+            <circle cx="22" cy="8" r="3" fill="#ffe9b0" stroke="#8a6414" strokeWidth="0.8" />
+            <path d="M22 12 C18 12 16 15 15.5 19 L14 30 H30 L28.5 19 C28 15 26 12 22 12 Z" fill="rgba(90,130,50,0.8)" stroke="#3f6f1f" strokeWidth="1" strokeLinejoin="round" />
+            {/* the colossal aegis, borne before it */}
+            <path d="M22 16 L33 20 V29 C33 36 28.5 41.2 22 43 C15.5 41.2 11 36 11 29 V20 Z" fill="rgba(22,30,22,0.88)" stroke="#7bb52f" strokeWidth="1.8" strokeLinejoin="round" />
+            <path d="M22 22 V37 M16 28 H28" stroke="rgba(163,209,96,0.85)" strokeWidth="1.2" strokeLinecap="round" />
           </svg>
-      </BoardWideLead>
+        }
+      />
     );
   }
   return (
@@ -2752,13 +2903,32 @@ function CathedralBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   // whole crop (palette wash + the card's own motif writ large + a shockwave
   // past the board edges) instead of a square-local pop.
   if (lead) {
+    // God-tier pass — THE RISEN CATHEDRAL: consecrated light blazes up out of
+    // the squares and a colossal spired cathedral heaves out of the board,
+    // rose window aglow, its bells answered by twin silver shockwaves.
     return (
-      <BoardWideLead wash="rgba(30,40,55,0.24)" boom="rgba(200,215,235,0.85)" delayMs={delayMs} motifClass="fx-sig-dome">
-        <svg viewBox="0 0 40 40" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
-          <path d="M20 3 C31 3 36 14 36 26 V38 H4 V26 C4 14 9 3 20 3 Z" fill="rgba(30,40,55,0.35)" stroke="rgba(200,215,235,0.85)" strokeWidth="1.4" />
-          <path d="M20 3 V38 M12 8 V38 M28 8 V38" stroke="rgba(200,215,235,0.5)" strokeWidth="0.8" fill="none" />
-        </svg>
-      </BoardWideLead>
+      <GodEvent
+        wash="rgba(30,40,55,0.26)"
+        rays="rgba(200,215,235,0.75)"
+        boom="rgba(200,215,235,0.85)"
+        flare="rgba(230,240,255,0.7)"
+        sparkFill="#c8d7eb"
+        sparkStroke="#3a4a5e"
+        motion="rise"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 40 44" className="h-full w-full" aria-hidden="true">
+            {/* twin spires + central dome */}
+            <path d="M7 44 V20 L11 12 L15 20 V44 Z" fill="rgba(30,40,55,0.6)" stroke="rgba(200,215,235,0.85)" strokeWidth="1.1" strokeLinejoin="round" />
+            <path d="M25 44 V20 L29 12 L33 20 V44 Z" fill="rgba(30,40,55,0.6)" stroke="rgba(200,215,235,0.85)" strokeWidth="1.1" strokeLinejoin="round" />
+            <path d="M15 44 V24 C15 16 17 12 20 10 C23 12 25 16 25 24 V44 Z" fill="rgba(30,40,55,0.5)" stroke="rgba(200,215,235,0.9)" strokeWidth="1.3" strokeLinejoin="round" />
+            <path d="M20 10 V4 M18 6 H22" stroke="#e6bf6a" strokeWidth="1.2" strokeLinecap="round" />
+            {/* rose window + lancets, lit from within */}
+            <circle cx="20" cy="22" r="3" fill="rgba(230,191,106,0.75)" stroke="rgba(200,215,235,0.9)" strokeWidth="0.8" />
+            <path d="M10 30 V38 M30 30 V38 M18 32 V42 M22 32 V42" stroke="rgba(230,191,106,0.65)" strokeWidth="1.1" strokeLinecap="round" />
+          </svg>
+        }
+      />
     );
   }
   return (
@@ -2779,18 +2949,32 @@ function ShadesBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   // whole crop (palette wash + the card's own motif writ large + a shockwave
   // past the board edges) instead of a square-local pop.
   if (lead) {
+    // God-tier pass — THE DEATHLESS KING: pale sepulchre-light splits the sky
+    // and a colossal crowned shade-king descends over the board, lesser shades
+    // trailing his mantle, settling in a cold flare and twin spectral rings.
     return (
-      <BoardWideLead wash="rgba(210,225,255,0.24)" boom="rgba(180,205,255,0.85)" delayMs={delayMs} motifClass="fx-sig-shade">
-        <svg viewBox="0 0 20 26" className="h-full w-full" aria-hidden="true">
-          <path
-            d="M10 1 L10 5 M8 3 H12 M6.5 22 C4.5 15 7 10 10 10 C13 10 15.5 15 13.5 22 Z"
-            fill="rgba(210,225,255,0.5)"
-            stroke="rgba(180,205,255,0.85)"
-            strokeWidth="1"
-            strokeLinejoin="round"
-          />
-        </svg>
-      </BoardWideLead>
+      <GodEvent
+        wash="rgba(210,225,255,0.24)"
+        rays="rgba(180,205,255,0.7)"
+        boom="rgba(180,205,255,0.85)"
+        flare="rgba(220,232,255,0.7)"
+        sparkFill="#cdd8e6"
+        sparkStroke="#4a5a78"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 40 44" className="h-full w-full" aria-hidden="true">
+            {/* the colossal shade-king: cross-crown, hollow gaze, wraith robe */}
+            <path d="M20 1 V6 M17 3.5 H23" stroke="rgba(180,205,255,0.95)" strokeWidth="1.6" strokeLinecap="round" />
+            <path d="M15 10 L16 6.5 L18.5 9 L20 5.5 L21.5 9 L24 6.5 L25 10 Z" fill="rgba(210,225,255,0.6)" stroke="rgba(180,205,255,0.9)" strokeWidth="0.8" strokeLinejoin="round" />
+            <circle cx="20" cy="14" r="3.4" fill="rgba(210,225,255,0.4)" stroke="rgba(180,205,255,0.9)" strokeWidth="0.9" />
+            <path d="M18.4 13.6 H19.4 M20.6 13.6 H21.6" stroke="#2c3e6b" strokeWidth="1.2" strokeLinecap="round" />
+            <path d="M13 42 C10 30 13 19 20 19 C27 19 30 30 27 42 C24.5 39.5 23 40.5 22 43 C21 40.5 19 40.5 18 43 C17 40.5 15.5 39.5 13 42 Z" fill="rgba(210,225,255,0.45)" stroke="rgba(180,205,255,0.85)" strokeWidth="1.1" strokeLinejoin="round" />
+            {/* trailing lesser shades */}
+            <path d="M6 34 C5 28 7 24 9 24 C10.5 24 11.5 27 11 32 Z" fill="rgba(210,225,255,0.35)" stroke="rgba(180,205,255,0.6)" strokeWidth="0.7" />
+            <path d="M34 34 C35 28 33 24 31 24 C29.5 24 28.5 27 29 32 Z" fill="rgba(210,225,255,0.35)" stroke="rgba(180,205,255,0.6)" strokeWidth="0.7" />
+          </svg>
+        }
+      />
     );
   }
   return (
@@ -3043,6 +3227,105 @@ function BoardWideLead({
   );
 }
 
+// --- God-scale staged lead (tier 7+ divine-event guarantee) -------------------
+// Owner: "I want all of them to be like gods and stuff... all above tier 6 at
+// least." Bar = LivingGodBurst. Every tier 7+ lead composes the same four-act
+// arc, keeping the card's own motif art as the colossal centerpiece:
+//   (a) build-up  — the crop washes in the card's tint while a five-ray god-fan
+//                   breaks from the heavens (or blazes up out of the ground for
+//                   risers),
+//   (b) manifest  — the card's colossal central figure descends / rises over
+//                   the board,
+//   (c) climax    — touchdown flare, a spark burst, and twin shockwaves rolled
+//                   past the board edges,
+//   (d) aftermath — the second, softer ring fading out.
+// Composes only existing fx-sig-* classes (transform/opacity, one-shot, hidden
+// under prefers-reduced-motion by effects.css), stays inside BoardWideStage's
+// oversized-clipped crop, and finishes well inside the 2.5s play budget.
+const GOD_FAN = [
+  { r: "-28deg", d: 0, w: "7%" },
+  { r: "-14deg", d: 60, w: "9%" },
+  { r: "0deg", d: 30, w: "11%" },
+  { r: "14deg", d: 90, w: "9%" },
+  { r: "28deg", d: 120, w: "7%" },
+];
+function GodEvent({
+  wash,
+  rays,
+  boom,
+  flare,
+  delayMs,
+  motion = "descend",
+  sparkFill = "#ffd95e",
+  sparkStroke = "#8a6414",
+  figure,
+  children,
+}: {
+  /** Build-up wash tint over the whole crop. */
+  wash: string;
+  /** God-fan ray colour (bright, translucent). */
+  rays: string;
+  /** Shockwave ring colour. */
+  boom: string;
+  /** Touchdown flare colour. */
+  flare: string;
+  delayMs: number;
+  /** How the colossal figure enters: lowered from the sky or up from below. */
+  motion?: "descend" | "rise";
+  sparkFill?: string;
+  sparkStroke?: string;
+  /** The colossal central manifestation (card-unique SVG). */
+  figure: React.ReactNode;
+  /** Optional card-specific extra staging layered over the arc. */
+  children?: React.ReactNode;
+}) {
+  const rise = motion === "rise";
+  return (
+    <BoardWideStage>
+      <BoardWash color={wash} delayMs={delayMs} />
+      {/* (a) the god-fan: five staggered rays break over the board (flipped to
+          blaze out of the ground for risers — grave-light, magma, frost). */}
+      {GOD_FAN.map((s, i) => (
+        <span
+          key={i}
+          className={"absolute left-1/2 block h-[62%] " + (rise ? "top-[32%]" : "top-[6%]")}
+          style={{
+            width: s.w,
+            marginLeft: `calc(${s.w} / -2)`,
+            transform: `rotate(${s.r})${rise ? " scaleY(-1)" : ""}`,
+            transformOrigin: rise ? "50% 100%" : "50% 0%",
+          }}
+        >
+          <span
+            className="fx-sig-shaft absolute inset-0 block"
+            style={{
+              background: `linear-gradient(180deg, ${rays}, transparent 78%)`,
+              animationDelay: `${delayMs + s.d}ms`,
+            }}
+          />
+        </span>
+      ))}
+      {/* (b) the colossal manifestation, entering the board */}
+      <span
+        className={(rise ? "fx-sig-rise" : "fx-sig-shade") + " absolute left-[35%] top-[21%] block h-[48%] w-[30%]"}
+        style={{ animationDelay: `${delayMs + 170}ms` }}
+      >
+        {figure}
+      </span>
+      {children}
+      {/* (c) climax: touchdown flare + sparks + twin shockwaves */}
+      <span
+        className="fx-sig-flash absolute left-[38%] top-[55%] block h-[18%] w-[24%] rounded-full"
+        style={{ background: flare, animationDelay: `${delayMs + 470}ms` }}
+      />
+      <ShardBurst vectors={BURST_MED} fill={sparkFill} stroke={sparkStroke} delayMs={delayMs + 500} sizePct={7} />
+      <BoardBoom delayMs={delayMs + 520} color={boom} thickness={4} />
+      {/* (d) aftermath: the second, softer ring */}
+      <BoardBoom delayMs={delayMs + 680} color={boom} />
+    </BoardWideStage>
+  );
+}
+
 // --- Freeze family (each ice card its own read) ------------------------------
 
 /** Mass Freeze: a quick spike-frost SNAP, shards flick outward, rime flashes. */
@@ -3088,18 +3371,30 @@ function DeepGlacierBurst({ lead, delayMs }: { lead: boolean; delayMs: number })
   // whole crop (palette wash + the card's own motif writ large + a shockwave
   // past the board edges) instead of a square-local pop.
   if (lead) {
+    // God-tier pass — THE GLACIER TITAN: cold light wells up out of the board
+    // and a colossal slab-shouldered titan of veined glacier ice grinds up
+    // over the crop, flash-flaring as its mass sets with twin rime shockwaves.
     return (
-      <BoardWideLead wash="rgba(176,220,245,0.24)" boom="rgba(224,246,255,0.85)" delayMs={delayMs} motifClass="fx-sig-slab">
-        <svg viewBox="0 0 32 32" className="h-full w-full" aria-hidden="true">
-          <path
-            d="M8 2 L13 12 L7 18 L14 30 M23 3 L18 11 L25 17 L20 31"
-            fill="none"
-            stroke="rgba(235,250,255,0.7)"
-            strokeWidth="1.2"
-            strokeLinejoin="round"
-          />
-        </svg>
-      </BoardWideLead>
+      <GodEvent
+        wash="rgba(176,220,245,0.26)"
+        rays="rgba(224,246,255,0.75)"
+        boom="rgba(224,246,255,0.85)"
+        flare="rgba(235,250,255,0.7)"
+        sparkFill="#e6f6ff"
+        sparkStroke="#82bcdf"
+        motion="rise"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 40 44" className="h-full w-full" aria-hidden="true">
+            {/* the glacier titan: faceted slab body, jagged berg shoulders */}
+            <path d="M8 44 L6 26 L2 22 L9 18 L12 8 L20 3 L28 9 L31 18 L38 22 L34 26 L32 44 Z" fill="rgba(176,220,245,0.55)" stroke="rgba(224,246,255,0.9)" strokeWidth="1.3" strokeLinejoin="round" />
+            {/* crack veins running its face */}
+            <path d="M14 10 L18 18 L13 24 L18 34 M26 11 L22 18 L27 24 L23 36" fill="none" stroke="rgba(235,250,255,0.75)" strokeWidth="1.1" strokeLinejoin="round" />
+            {/* cold sunk eyes */}
+            <path d="M16 15 H18.5 M21.5 15 H24" stroke="#3f6f9f" strokeWidth="1.4" strokeLinecap="round" />
+          </svg>
+        }
+      />
     );
   }
   return (
@@ -3129,12 +3424,32 @@ function IceShatterBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) 
   // whole crop (palette wash + the card's own motif writ large + a shockwave
   // past the board edges) instead of a square-local pop.
   if (lead) {
+    // God-tier pass — THE WINTER EMPRESS: white rays split the sky and a
+    // colossal ice empress descends, sceptre levelled, the board flash-flaring
+    // under her as a wide shard-shatter and twin frost shockwaves erupt.
     return (
-      <BoardWideLead wash="rgba(190,230,250,0.24)" boom="rgba(230,246,255,0.85)" delayMs={delayMs} motifClass="fx-sig-ice">
-        <svg viewBox="0 0 32 32" className="h-full w-full" aria-hidden="true">
-          <path d="M16 2 L11 14 L18 18 L13 30 M4 12 L14 16 M28 12 L18 16" fill="none" stroke="rgba(235,250,255,0.7)" strokeWidth="1" strokeLinejoin="round" />
-        </svg>
-      </BoardWideLead>
+      <GodEvent
+        wash="rgba(190,230,250,0.26)"
+        rays="rgba(230,246,255,0.85)"
+        boom="rgba(230,246,255,0.85)"
+        flare="rgba(235,250,255,0.8)"
+        sparkFill="#e6f6ff"
+        sparkStroke="#82bcdf"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 40 44" className="h-full w-full" aria-hidden="true">
+            {/* spiked ice diadem */}
+            <path d="M14 9 L15 3 L17.5 6.5 L20 1.5 L22.5 6.5 L25 3 L26 9 Z" fill="rgba(230,246,255,0.85)" stroke="#82bcdf" strokeWidth="0.8" strokeLinejoin="round" />
+            <circle cx="20" cy="12.5" r="3.1" fill="rgba(235,250,255,0.9)" stroke="#82bcdf" strokeWidth="0.8" />
+            {/* crystalline gown */}
+            <path d="M20 16 C16.5 16 15 19 14.5 23 L10 42 L15 39 L20 43 L25 39 L30 42 L25.5 23 C25 19 23.5 16 20 16 Z" fill="rgba(190,230,250,0.6)" stroke="rgba(224,246,255,0.9)" strokeWidth="1.1" strokeLinejoin="round" />
+            <path d="M17 22 L20 26 L23 22 M20 26 V38" stroke="rgba(235,250,255,0.7)" strokeWidth="0.8" fill="none" />
+            {/* the levelled sceptre, tipped in a snow-star */}
+            <path d="M28 20 L37 14" stroke="#82bcdf" strokeWidth="1.3" strokeLinecap="round" />
+            <path d="M37 14 L37 10.5 M37 14 L40 15 M37 14 L34.5 11.5 M37 14 L39 11" stroke="rgba(235,250,255,0.95)" strokeWidth="1" strokeLinecap="round" />
+          </svg>
+        }
+      />
     );
   }
   return (
@@ -3223,16 +3538,37 @@ function MedusaGazeBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) 
   // whole crop (palette wash + the card's own motif writ large + a shockwave
   // past the board edges) instead of a square-local pop.
   if (lead) {
+    // God-tier pass — THE GORGON RISEN: sickly green grave-light blazes up and
+    // a colossal snake-haired gorgon head rises over the board, its slit gaze
+    // sweeping the crop before the stone-flare and twin petrifying shockwaves.
     return (
-      <BoardWideLead wash="rgba(146,146,152,0.24)" boom="rgba(143,181,154,0.85)" delayMs={delayMs} motifClass="fx-sig-gaze">
-        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
-          <g stroke="#8fb59a" strokeWidth="1.6" fill="none" strokeLinecap="round">
-            <path d="M20 6 q4 3 2 8 M34 20 q-3 4 -8 2 M20 34 q-4 -3 -2 -8 M6 20 q3 -4 8 -2" />
-            <path d="M30 10 q1 4 -3 6 M30 30 q-4 1 -6 -3 M10 30 q-1 -4 3 -6 M10 10 q4 -1 6 3" />
-          </g>
-          <circle cx="20" cy="20" r="5.5" fill="none" stroke="#b6f0b8" strokeWidth="1.4" />
-        </svg>
-      </BoardWideLead>
+      <GodEvent
+        wash="rgba(146,146,152,0.26)"
+        rays="rgba(143,181,154,0.7)"
+        boom="rgba(143,181,154,0.85)"
+        flare="rgba(182,240,184,0.6)"
+        sparkFill="#a6a6ac"
+        sparkStroke="#3a3a40"
+        motion="rise"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 40 44" className="h-full w-full" aria-hidden="true">
+            {/* writhing snake crown */}
+            <g stroke="#8fb59a" strokeWidth="1.8" fill="none" strokeLinecap="round">
+              <path d="M12 12 C8 8 8 4 11 2 M20 10 C19 5 21 2 24 2 M28 12 C32 8 32 4 29 2 M8 18 C4 16 3 12 5 9 M32 18 C36 16 37 12 35 9" />
+            </g>
+            <circle cx="11" cy="2" r="1" fill="#3a5a40" />
+            <circle cx="24" cy="2" r="1" fill="#3a5a40" />
+            <circle cx="29" cy="2" r="1" fill="#3a5a40" />
+            {/* the colossal stone face */}
+            <path d="M20 8 C28 8 32 15 32 24 C32 34 27 40 20 40 C13 40 8 34 8 24 C8 15 12 8 20 8 Z" fill="rgba(146,146,152,0.85)" stroke="#5c5c63" strokeWidth="1.2" strokeLinejoin="round" />
+            {/* slit-pupil gaze */}
+            <path d="M12 21 C14 19 17 19 18.5 21 C17 23 14 23 12 21 Z M28 21 C26 19 23 19 21.5 21 C23 23 26 23 28 21 Z" fill="#b6f0b8" stroke="#3a5a40" strokeWidth="0.8" />
+            <path d="M15.2 20 V22.2 M24.8 20 V22.2" stroke="#1c2e20" strokeWidth="1" strokeLinecap="round" />
+            <path d="M16 32 C18 34 22 34 24 32" stroke="#5c5c63" strokeWidth="1" fill="none" strokeLinecap="round" />
+          </svg>
+        }
+      />
     );
   }
   return (
@@ -3371,21 +3707,32 @@ function StoneChainBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) 
 
 /** Hex of Stone: a creeping grey hex crawls a stone hexagon over the flanks. */
 function GreyHexBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
-  // Batch 12 — tier 6+ board-wide guarantee: the lead casts the hex over the
-  // WHOLE board — a grey wash while a colossal stone hexagon grows across the
-  // crop, a second sigil blooming inside it.
+  // God-tier pass — THE HEXWRIGHT: grey warlock-light splits the sky and a
+  // colossal robed hexwright descends, both hands pressing the great stone
+  // hexagon down onto the board; it seats with a flare and twin grey rings.
   if (lead) {
     return (
-      <BoardWideStage>
-        <BoardWash color="rgba(134,134,140,0.3)" delayMs={delayMs} />
-        <span className="fx-sig-grow absolute inset-[26%] block" style={{ animationDelay: `${delayMs + 80}ms` }}>
-          <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
-            <polygon points="20,4 34,12 34,28 20,36 6,28 6,12" fill="rgba(120,120,128,0.2)" stroke="rgba(168,168,176,0.9)" strokeWidth="1.2" strokeLinejoin="round" />
-            <polygon points="20,12 28,16 28,24 20,28 12,24 12,16" fill="none" stroke="rgba(150,150,158,0.7)" strokeWidth="0.7" strokeLinejoin="round" />
+      <GodEvent
+        wash="rgba(134,134,140,0.3)"
+        rays="rgba(168,168,176,0.7)"
+        boom="rgba(168,168,176,0.85)"
+        flare="rgba(190,190,198,0.7)"
+        sparkFill="#a8a8b0"
+        sparkStroke="#4c4c53"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 40 44" className="h-full w-full" aria-hidden="true">
+            {/* the hooded hexwright */}
+            <path d="M20 2 C15 2 12.5 5 12.5 9 C12.5 11 13.5 12.5 15 13.5 L14 20 H26 L25 13.5 C26.5 12.5 27.5 11 27.5 9 C27.5 5 25 2 20 2 Z" fill="rgba(96,96,104,0.9)" stroke="#4c4c53" strokeWidth="1" strokeLinejoin="round" />
+            <path d="M16.5 8.5 H18.5 M21.5 8.5 H23.5" stroke="#b6f0b8" strokeWidth="1.2" strokeLinecap="round" />
+            {/* arms pressing the hex down */}
+            <path d="M14 16 L8 25 M26 16 L32 25" stroke="rgba(96,96,104,0.9)" strokeWidth="2.4" strokeLinecap="round" />
+            {/* the great stone hexagon, forced onto the board */}
+            <polygon points="20,22 33,29 33,40 20,44 7,40 7,29" fill="rgba(120,120,128,0.35)" stroke="rgba(168,168,176,0.95)" strokeWidth="1.4" strokeLinejoin="round" />
+            <polygon points="20,28 27,32 27,38 20,40.5 13,38 13,32" fill="none" stroke="rgba(150,150,158,0.75)" strokeWidth="0.8" strokeLinejoin="round" />
           </svg>
-        </span>
-        <BoardBoom delayMs={delayMs + 300} color="rgba(168,168,176,0.85)" />
-      </BoardWideStage>
+        }
+      />
     );
   }
   return (
@@ -3547,6 +3894,40 @@ function WingsBurst({ tone, lead, delayMs }: { tone: "dragon" | "feather"; lead:
 
 /** Summon Dragon: dragon wings sweep open with a burst of scale-shards. */
 function DragonRiseBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // God-tier pass — THE DRAGON QUEEN ANSWERS: ember-light roars up out of the
+  // board and a colossal crowned dragon rises over the crop, wings spread and
+  // maw alight, her hatchling wheeling at her flank; scale-sparks and twin
+  // ember shockwaves mark the summons.
+  if (lead) {
+    return (
+      <GodEvent
+        wash="rgba(214,35,79,0.2)"
+        rays="rgba(255,157,61,0.75)"
+        boom="rgba(230,168,92,0.85)"
+        flare="rgba(255,209,102,0.75)"
+        sparkFill="#e6a85c"
+        sparkStroke="#7a3a12"
+        motion="rise"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 44 44" className="h-full w-full" aria-hidden="true">
+            {/* spread dragon wings */}
+            <path d="M16 18 C9 12 4 12 1 16 C5 17 7 19 8 22 C10 20 13 19 16 20 Z" fill="rgba(214,35,79,0.8)" stroke="#5a1512" strokeWidth="1" strokeLinejoin="round" />
+            <path d="M28 18 C35 12 40 12 43 16 C39 17 37 19 36 22 C34 20 31 19 28 20 Z" fill="rgba(214,35,79,0.8)" stroke="#5a1512" strokeWidth="1" strokeLinejoin="round" />
+            {/* crowned head + serpentine neck and body */}
+            <path d="M20 8 L21 4 L23 7 L25 3.5 L26.5 7 L28 5 L28 9 Z" fill="#e6bf6a" stroke="#7a5b23" strokeWidth="0.7" strokeLinejoin="round" />
+            <path d="M20 12 C20 9.5 22 8.5 24 9 C27 9.8 28 12 27 14 L30 15 L26.5 16.5 C24 17 21.5 16 20.5 14 Z" fill="rgba(138,90,56,0.95)" stroke="#3c2818" strokeWidth="0.9" strokeLinejoin="round" />
+            <circle cx="24.5" cy="12" r="0.9" fill="#ffd166" />
+            <path d="M21 16 C16 20 15 27 17 33 C18.5 38 22 41 27 42 C24 38 23 34 24 29 C25 24 25 19 23 16 Z" fill="rgba(138,90,56,0.9)" stroke="#3c2818" strokeWidth="1" strokeLinejoin="round" />
+            {/* fire licking from the maw */}
+            <path d="M30 15 C33 14.5 35 15.5 36.5 18 C34.5 17.8 33 18.5 32 20" fill="none" stroke="#ff9d3d" strokeWidth="1.3" strokeLinecap="round" />
+            {/* the hatchling at her flank */}
+            <path d="M8 30 C6.5 28 4.5 28 3.5 29.5 C5 30 5.8 31 6 32.5 C7 31.5 8 31 9.5 31.2 L12 32 C10.5 33.5 10.5 35.5 12 37 C12.5 34.5 14 33 16 32.5 L13 30.5 C11.5 29.5 9.8 29.5 8 30 Z" fill="rgba(214,35,79,0.7)" stroke="#5a1512" strokeWidth="0.8" strokeLinejoin="round" />
+          </svg>
+        }
+      />
+    );
+  }
   return (
     <>
       <WingsBurst tone="dragon" lead={lead} delayMs={delayMs} />
@@ -3863,26 +4244,43 @@ function DragonFireBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) 
 /** Soul Harvest: a great scythe blade sweeps the diagonal; each reaped square
  * gives up a rising soul wisp. */
 function ScytheBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
-  // Batch 12 — tier 6+ board-wide guarantee: the lead reaps the WHOLE board —
-  // a deathly violet wash while a colossal scythe blade arcs across the crop
-  // and soul wisps drift up along the central band.
+  // God-tier pass — THE HARVESTER QUEEN: grave-violet light wells up out of
+  // the board and a colossal crowned reaper rises over the crop, her great
+  // scythe arcing across it while the reaped souls stream upward; the harvest
+  // closes on a flare and twin spectral shockwaves.
   if (lead) {
     return (
-      <BoardWideStage>
-        <BoardWash color="rgba(74,58,102,0.3)" delayMs={delayMs} />
-        <span className="fx-sig-arc absolute inset-[26%] block" style={{ animationDelay: `${delayMs + 60}ms` }}>
-          <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
-            <path d="M6 34 C6 14 22 4 36 8 C24 10 14 20 14 34 Z" fill="#c9d2dc" stroke="#5b6672" strokeWidth="1" strokeLinejoin="round" />
+      <GodEvent
+        wash="rgba(74,58,102,0.3)"
+        rays="rgba(168,119,216,0.6)"
+        boom="rgba(168,119,216,0.85)"
+        flare="rgba(201,210,220,0.6)"
+        sparkFill="#c9d2dc"
+        sparkStroke="#5b6672"
+        motion="rise"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 44 44" className="h-full w-full" aria-hidden="true">
+            {/* the crowned reaper: hood, tattered robe */}
+            <path d="M18 8 L19 4 L21 6.5 L23 3.5 L25 6.5 L27 4 L28 8 Z" fill="#e6bf6a" stroke="#7a5b23" strokeWidth="0.7" strokeLinejoin="round" />
+            <path d="M23 8 C19 8 17 11 17 15 C17 17 18 18.5 19.5 19.5 L18 26 H28 L26.5 19.5 C28 18.5 29 17 29 15 C29 11 27 8 23 8 Z" fill="rgba(42,32,60,0.92)" stroke="#a877d8" strokeWidth="1" strokeLinejoin="round" />
+            <path d="M20.5 14 H22.5 M24 14 H26" stroke="#a877d8" strokeWidth="1.1" strokeLinecap="round" />
+            <path d="M15 44 C13 34 15 26 23 26 C31 26 33 34 31 44 C28.5 41 27 42 26 44 C24.5 41.5 22 41.5 20.5 44 C19.5 41.5 17.5 41 15 44 Z" fill="rgba(42,32,60,0.85)" stroke="#a877d8" strokeWidth="0.9" strokeLinejoin="round" />
+            {/* the great scythe, swung across the whole board */}
+            <path d="M30 10 L36 40" stroke="#5b6672" strokeWidth="1.6" strokeLinecap="round" />
+            <path d="M30 10 C20 2 8 4 2 12 C11 8 21 10 28 16 Z" fill="#c9d2dc" stroke="#5b6672" strokeWidth="1" strokeLinejoin="round" />
           </svg>
-        </span>
+        }
+      >
+        {/* the reaped souls, streaming up out of the squares */}
         {[
-          { l: "30%", d: 180 },
-          { l: "48%", d: 300 },
-          { l: "62%", d: 420 },
+          { l: "30%", d: 260 },
+          { l: "48%", d: 380 },
+          { l: "62%", d: 500 },
         ].map((w, i) => (
           <span key={i} className="fx-sig-ash absolute top-[38%] block h-[10%] w-[7%] rounded-full" style={{ left: w.l, background: "rgba(168,119,216,0.5)", animationDelay: `${delayMs + w.d}ms` }} />
         ))}
-      </BoardWideStage>
+      </GodEvent>
     );
   }
   return (
@@ -3960,27 +4358,36 @@ function SmiteBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   // whole crop (palette wash + the card's own motif writ large + a shockwave
   // past the board edges) instead of a square-local pop.
   if (lead) {
-    // Heaven's Wrath: the sky splits — a storm cloud writ large with three
-    // bolts of judgment stabbing down out of it.
+    // God-tier pass — THE ARBITER OF HEAVEN: gold rays split the sky and a
+    // colossal blindfolded arbiter angel descends out of the storm cloud,
+    // three wrath-bolts stabbing down from its raised hand before the radiant
+    // flare and twin judgment shockwaves.
     return (
-      <BoardWideLead wash="rgba(255,246,200,0.24)" boom="rgba(255,232,150,0.85)" delayMs={delayMs} motifClass="fx-sig-cage">
-        <svg viewBox="0 0 44 40" className="h-full w-full" aria-hidden="true">
-          {/* the split cloud */}
-          <path
-            d="M8 12 C8 6 14 3 19 5 C21 1 29 1 31 5 C37 3 42 8 40 13 C38 16 34 17 30 16 L14 16 C10 16 8 15 8 12 Z"
-            fill="rgba(58,66,88,0.9)"
-            stroke="#b9c4d6"
-            strokeWidth="1.2"
-            strokeLinejoin="round"
-          />
-          {/* three descending wrath-bolts */}
-          <g fill="#ffe896" stroke="#8a6414" strokeWidth="0.7" strokeLinejoin="round">
-            <path d="M12 17 L16 24 L13.5 24.5 L18 33 L10.5 26 L13 25.5 Z" />
-            <path d="M22 17 L26 26 L23.5 26.5 L28 37 L20.5 28 L23 27.5 Z" />
-            <path d="M32 17 L36 24 L33.5 24.5 L38 33 L30.5 26 L33 25.5 Z" />
-          </g>
-        </svg>
-      </BoardWideLead>
+      <GodEvent
+        wash="rgba(255,246,200,0.24)"
+        rays="rgba(255,232,150,0.85)"
+        boom="rgba(255,232,150,0.85)"
+        flare="rgba(255,246,200,0.8)"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 44 44" className="h-full w-full" aria-hidden="true">
+            {/* the storm cloud it steps out of */}
+            <path d="M8 12 C8 6 14 3 19 5 C21 1 29 1 31 5 C37 3 42 8 40 13 C38 16 34 17 30 16 L14 16 C10 16 8 15 8 12 Z" fill="rgba(58,66,88,0.9)" stroke="#b9c4d6" strokeWidth="1.2" strokeLinejoin="round" />
+            {/* the blindfolded arbiter: halo, bound eyes, robed */}
+            <circle cx="22" cy="19" r="5.5" fill="none" stroke="#ffe896" strokeWidth="1.2" />
+            <circle cx="22" cy="19" r="2.8" fill="#ffe9b0" stroke="#8a6414" strokeWidth="0.7" />
+            <path d="M19 18.4 H25" stroke="#3a4258" strokeWidth="1.4" strokeLinecap="round" />
+            <path d="M22 22 C19 22 17.5 24.5 17 27.5 L15 40 H29 L27 27.5 C26.5 24.5 25 22 22 22 Z" fill="rgba(255,236,178,0.9)" stroke="#b98a2e" strokeWidth="0.9" strokeLinejoin="round" />
+            {/* the raised hand of judgment + three wrath-bolts */}
+            <path d="M27 25 L33 20" stroke="#b98a2e" strokeWidth="1.6" strokeLinecap="round" />
+            <g fill="#ffe896" stroke="#8a6414" strokeWidth="0.7" strokeLinejoin="round">
+              <path d="M10 22 L14 29 L11.5 29.5 L16 38 L8.5 31 L11 30.5 Z" />
+              <path d="M33 21 L37 28 L34.5 28.5 L39 37 L31.5 30 L34 29.5 Z" />
+              <path d="M20 42 L22 36 L24 42 Z" />
+            </g>
+          </svg>
+        }
+      />
     );
   }
   return (
@@ -4143,12 +4550,36 @@ function BlizzardBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   // whole crop (palette wash + the card's own motif writ large + a shockwave
   // past the board edges) instead of a square-local pop.
   if (lead) {
+    // God-tier pass — THE NORTH WIND HIMSELF: white rays crack the sky and a
+    // colossal cloud-bearded wind god leans over the board, cheeks full,
+    // blowing the whiteout across the crop in driving streaks.
     return (
-      <BoardWideLead wash="rgba(224,244,255,0.24)" boom="rgba(234,248,255,0.85)" delayMs={delayMs} motifClass="fx-sig-swirl">
-        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
-          <path d="M20 4 C30 8 32 20 20 24 C10 27 8 16 18 14 C24 13 25 19 20 20" fill="none" stroke="rgba(224,244,255,0.8)" strokeWidth="2" strokeLinecap="round" />
-        </svg>
-      </BoardWideLead>
+      <GodEvent
+        wash="rgba(224,244,255,0.26)"
+        rays="rgba(234,248,255,0.85)"
+        boom="rgba(234,248,255,0.85)"
+        flare="rgba(240,250,255,0.75)"
+        sparkFill="#eaf8ff"
+        sparkStroke="#82bcdf"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 44 44" className="h-full w-full" aria-hidden="true">
+            {/* the wind god's cloud head, brows knit, cheeks blown */}
+            <path d="M8 18 C4 18 2 13 6 10 C5 5 12 2 16 5 C19 0 28 0 30 5 C36 3 40 8 37 13 C39 16 36 20 32 19 C30 24 22 26 17 23 C13 25 8 23 8 18 Z" fill="rgba(224,244,255,0.85)" stroke="#82bcdf" strokeWidth="1.1" strokeLinejoin="round" />
+            <path d="M14 10 H17.5 M24 10 H27.5" stroke="#3f6f9f" strokeWidth="1.4" strokeLinecap="round" />
+            <path d="M19 16 C20 15 22 15 23 16" stroke="#3f6f9f" strokeWidth="1" strokeLinecap="round" fill="none" />
+            {/* the gale, driven out of pursed lips */}
+            <path d="M21 20 C21 22 23 23 26 23" stroke="#82bcdf" strokeWidth="1.2" strokeLinecap="round" fill="none" />
+            <g stroke="rgba(234,248,255,0.95)" strokeWidth="1.8" strokeLinecap="round" fill="none">
+              <path d="M24 26 C30 25 35 26 40 30 M20 30 C27 30 33 32 37 37 M23 35 C28 35 32 37 34 41" />
+            </g>
+            {/* driven snow */}
+            <circle cx="38" cy="26" r="1.3" fill="rgba(234,248,255,0.95)" />
+            <circle cx="41" cy="34" r="1.1" fill="rgba(234,248,255,0.9)" />
+            <circle cx="36" cy="41" r="1.2" fill="rgba(234,248,255,0.9)" />
+          </svg>
+        }
+      />
     );
   }
   return (
@@ -4229,13 +4660,34 @@ const ROCK_DROPS = [
 
 /** Landslide: boulders crash down and burst into rubble with a dust cloud. */
 function RockfallBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
-  // Batch 12 — tier 6+ board-wide guarantee: the lead brings the WHOLE slope
-  // down — a dust wash while boulders rain across the central band and a
-  // rubble ring rolls out.
+  // God-tier pass — THE MOUNTAIN WAKES: dust-light heaves up out of the board
+  // and a colossal mountain titan shoulders over the crop, hurling boulders
+  // down the central band; the slope lands with a flare and twin rubble rings.
   if (lead) {
     return (
-      <BoardWideStage>
-        <BoardWash color="rgba(120,112,102,0.3)" delayMs={delayMs} />
+      <GodEvent
+        wash="rgba(120,112,102,0.3)"
+        rays="rgba(178,168,150,0.6)"
+        boom="rgba(138,132,120,0.85)"
+        flare="rgba(178,168,150,0.7)"
+        sparkFill="#8a8478"
+        sparkStroke="#4a443c"
+        motion="rise"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 40 44" className="h-full w-full" aria-hidden="true">
+            {/* the mountain titan: peak-crowned head, ridge shoulders */}
+            <path d="M20 2 L26 12 L23 12 L28 20 H12 L17 12 L14 12 Z" fill="rgba(224,236,240,0.75)" stroke="#4a443c" strokeWidth="1" strokeLinejoin="round" />
+            <path d="M8 44 L4 30 C4 24 8 20 14 19 H26 C32 20 36 24 36 30 L32 44 Z" fill="rgba(120,110,98,0.9)" stroke="#4a443c" strokeWidth="1.2" strokeLinejoin="round" />
+            {/* craggy eyes + seams */}
+            <path d="M15 26 H18 M22 26 H25" stroke="#e6bf6a" strokeWidth="1.3" strokeLinecap="round" />
+            <path d="M12 34 L17 30 M28 34 L23 30 M20 24 V40" stroke="rgba(74,68,60,0.75)" strokeWidth="0.8" fill="none" />
+            {/* a hurled boulder in its fist */}
+            <path d="M33 22 L39 17" stroke="rgba(120,110,98,0.95)" strokeWidth="2.4" strokeLinecap="round" />
+            <polygon points="39,12 43,14.5 42.5,19 38,20 35.5,16 37,13" fill="rgba(128,122,112,0.95)" stroke="#4a443c" strokeWidth="0.8" strokeLinejoin="round" />
+          </svg>
+        }
+      >
         <BoardRain
           delayMs={delayMs + 80}
           render={() => (
@@ -4244,8 +4696,7 @@ function RockfallBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
             </svg>
           )}
         />
-        <BoardBoom delayMs={delayMs + 320} color="rgba(138,132,120,0.85)" />
-      </BoardWideStage>
+      </GodEvent>
     );
   }
   return (
@@ -4657,21 +5108,36 @@ function PinataBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 /** Genie Wish: a plume of smoke swirls up and a wish-sparkle pops as the queen
  * appears. */
 function GeniePoofBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
-  // Batch 12 — tier 6+ board-wide guarantee: the lead grants the wish over
-  // the WHOLE board — a smoky wash while a colossal plume swirls across the
-  // crop and gold wish-sparks scatter from the lamp.
+  // God-tier pass — THE GENIE UNBOTTLED: lamp-smoke light billows up out of
+  // the board and a COLOSSAL genie torso towers over the crop, arms folded,
+  // its smoke-tail still corkscrewing into the tiny lamp below; the wish lands
+  // with a gold flare and twin spark shockwaves.
   if (lead) {
     return (
-      <BoardWideStage>
-        <BoardWash color="rgba(168,180,196,0.26)" delayMs={delayMs} />
-        <span className="fx-sig-swirl absolute inset-[26%] block" style={{ animationDelay: `${delayMs + 60}ms` }}>
-          <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
-            <path d="M20 36 C12 34 14 26 20 26 C26 26 24 20 18 20 C12 20 14 12 22 12 C30 12 30 6 24 4" fill="none" stroke="rgba(168,180,196,0.75)" strokeWidth="2.4" strokeLinecap="round" />
+      <GodEvent
+        wash="rgba(168,180,196,0.26)"
+        rays="rgba(201,74,209,0.5)"
+        boom="rgba(255,217,94,0.8)"
+        flare="rgba(255,232,150,0.75)"
+        motion="rise"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 40 44" className="h-full w-full" aria-hidden="true">
+            {/* turbaned head with gem */}
+            <path d="M14 9 C14 4 17 1.5 20 1.5 C23 1.5 26 4 26 9 Z" fill="rgba(201,74,209,0.85)" stroke="#5e2a66" strokeWidth="0.9" strokeLinejoin="round" />
+            <circle cx="20" cy="4.5" r="1.2" fill="#ffd95e" stroke="#8a6414" strokeWidth="0.5" />
+            <circle cx="20" cy="12" r="3.6" fill="rgba(95,201,176,0.9)" stroke="#1f6e6e" strokeWidth="0.9" />
+            <path d="M18 11.4 H19.2 M20.8 11.4 H22" stroke="#123a3a" strokeWidth="1" strokeLinecap="round" />
+            <path d="M17.5 14.5 C19 15.8 21 15.8 22.5 14.5" stroke="#123a3a" strokeWidth="0.8" fill="none" strokeLinecap="round" />
+            {/* folded-arm torso */}
+            <path d="M20 16 C14 16 11 19 11 24 L14 26 L17 22.5 H23 L26 26 L29 24 C29 19 26 16 20 16 Z" fill="rgba(95,201,176,0.85)" stroke="#1f6e6e" strokeWidth="1" strokeLinejoin="round" />
+            <path d="M14 22 C17 20.5 23 20.5 26 22" stroke="#1f6e6e" strokeWidth="1.6" strokeLinecap="round" fill="none" />
+            {/* smoke tail corkscrewing into the lamp */}
+            <path d="M20 26 C24 30 16 32 20 35 C23 37 18 38.5 20 40" fill="none" stroke="rgba(168,180,196,0.85)" strokeWidth="2.4" strokeLinecap="round" />
+            <path d="M16 41.5 C16 40 17.5 39 20 39 C22.5 39 24 40 24 41.5 C26 41 27 40 27.5 38.5 C28.5 41 27 43 24 43.5 H17 C15 43 14.5 42 16 41.5 Z" fill="#e6bf6a" stroke="#7a5b23" strokeWidth="0.8" strokeLinejoin="round" />
           </svg>
-        </span>
-        <ShardBurst vectors={BURST_MED} fill="#ffd95e" stroke="#8a6414" delayMs={delayMs + 260} sizePct={5} />
-        <BoardBoom delayMs={delayMs + 320} color="rgba(255,217,94,0.8)" />
-      </BoardWideStage>
+        }
+      />
     );
   }
   return (
@@ -4819,13 +5285,33 @@ function StonehideBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   // whole crop (palette wash + the card's own motif writ large + a shockwave
   // past the board edges) instead of a square-local pop.
   if (lead) {
+    // God-tier pass — THE EARTHSHELL WARDEN: slate light grinds up out of the
+    // board and a colossal stone-plated guardian rises over the crop, plates
+    // still locking across its chest; it sets with a flare and twin stone rings.
     return (
-      <BoardWideLead wash="rgba(140,140,146,0.24)" boom="rgba(168,168,176,0.85)" delayMs={delayMs} motifClass="fx-sig-grow">
-        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
-          <path d="M8 36 C4 22 8 6 20 4 C32 6 36 22 32 36 Z" fill="rgba(140,140,146,0.32)" stroke="rgba(168,168,176,0.9)" strokeWidth="1.6" strokeLinejoin="round" />
-          <path d="M20 5 V35 M9 20 H31" stroke="rgba(150,150,158,0.7)" strokeWidth="0.9" fill="none" />
-        </svg>
-      </BoardWideLead>
+      <GodEvent
+        wash="rgba(140,140,146,0.24)"
+        rays="rgba(176,166,143,0.6)"
+        boom="rgba(168,168,176,0.85)"
+        flare="rgba(190,186,176,0.7)"
+        sparkFill="#b0a68f"
+        sparkStroke="#464648"
+        motion="rise"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 40 44" className="h-full w-full" aria-hidden="true">
+            {/* the plated guardian: dome head, shell body */}
+            <circle cx="20" cy="8" r="4.2" fill="rgba(128,128,134,0.95)" stroke="#464648" strokeWidth="1" />
+            <path d="M17.5 7.5 H19 M21 7.5 H22.5" stroke="#e6bf6a" strokeWidth="1.1" strokeLinecap="round" />
+            <path d="M10 44 C6 32 8 18 20 14 C32 18 34 32 30 44 Z" fill="rgba(140,140,146,0.85)" stroke="#464648" strokeWidth="1.2" strokeLinejoin="round" />
+            {/* interlocking slate plates */}
+            <path d="M20 15 V42 M11 26 H29 M13 34 H27 M15 20 H25" stroke="rgba(70,70,76,0.85)" strokeWidth="1" fill="none" />
+            <path d="M14 22 L16 24 M26 22 L24 24 M17 30 L19 32 M23 30 L21 32" stroke="rgba(176,166,143,0.8)" strokeWidth="0.8" strokeLinecap="round" />
+            {/* fists planted into the board */}
+            <path d="M8 40 C5 38 4 35 6 33 L10 36 Z M32 40 C35 38 36 35 34 33 L30 36 Z" fill="rgba(128,128,134,0.9)" stroke="#464648" strokeWidth="0.9" strokeLinejoin="round" />
+          </svg>
+        }
+      />
     );
   }
   return (
@@ -5231,6 +5717,30 @@ function DragonLordBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) 
   if (lead) {
     return (
       <span className="pointer-events-none absolute inset-0 z-30" aria-hidden="true">
+        {/* God-tier pass — APOCALYPSE STAGING: the sky goes ember-dark and
+            heat-light fans up before the wyrm passes; its wake detonates twin
+            concussion rings past the board edges. */}
+        <BoardWideStage>
+          <BoardWash color="rgba(58,21,18,0.3)" delayMs={delayMs} />
+          {GOD_FAN.map((s, i) => (
+            <span
+              key={i}
+              className="absolute left-1/2 top-[32%] block h-[62%]"
+              style={{ width: s.w, marginLeft: `calc(${s.w} / -2)`, transform: `rotate(${s.r}) scaleY(-1)`, transformOrigin: "50% 100%" }}
+            >
+              <span
+                className="fx-sig-shaft absolute inset-0 block"
+                style={{ background: "linear-gradient(180deg, rgba(224,119,107,0.7), transparent 78%)", animationDelay: `${delayMs + s.d}ms` }}
+              />
+            </span>
+          ))}
+          <span
+            className="fx-sig-flash absolute left-[38%] top-[55%] block h-[18%] w-[24%] rounded-full"
+            style={{ background: "rgba(255,168,80,0.75)", animationDelay: `${delayMs + 520}ms` }}
+          />
+          <BoardBoom delayMs={delayMs + 560} color="rgba(224,119,107,0.9)" thickness={4} />
+          <BoardBoom delayMs={delayMs + 700} color="rgba(230,191,106,0.8)" />
+        </BoardWideStage>
         <span
           className="fx-sig-dragon-fly absolute left-[-42%] top-[2%] block h-[62%] w-[150%]"
           style={{ animationDelay: `${delayMs}ms` }}
@@ -5302,17 +5812,21 @@ function DragonLordBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) 
  * a rising rune sigil, and a spark burst. */
 function ArchmageBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   if (lead) {
+    // God-tier pass — THE ARCHMAGE ASCENDANT: arcane light wells up out of the
+    // board and the archmage rises COLOSSAL over the whole crop, staff-orb
+    // flaring as a board-spanning spell ring spins out beneath him and twin
+    // arcane shockwaves roll past the edges.
     return (
-      <span className="pointer-events-none absolute inset-0 z-30" aria-hidden="true">
-        {/* arcane rings cast outward */}
-        <span className="fx-sig-swirl absolute inset-[8%] block" style={{ animationDelay: `${delayMs + 220}ms` }}>
-          <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
-            <circle cx="20" cy="20" r="17" fill="none" stroke="#a877d8" strokeWidth="1.6" strokeDasharray="5 4" />
-            <circle cx="20" cy="20" r="11" fill="none" stroke="#7eb59a" strokeWidth="1" strokeDasharray="3 3" />
-          </svg>
-        </span>
-        {/* the rising archmage */}
-        <span className="fx-sig-wizard-rise absolute left-[26%] bottom-[2%] block h-[92%] w-[48%]" style={{ animationDelay: `${delayMs}ms` }}>
+      <GodEvent
+        wash="rgba(90,63,160,0.24)"
+        rays="rgba(168,119,216,0.6)"
+        boom="rgba(168,119,216,0.85)"
+        flare="rgba(126,181,154,0.8)"
+        sparkFill="#a877d8"
+        sparkStroke="#4a3070"
+        motion="rise"
+        delayMs={delayMs}
+        figure={
           <svg viewBox="0 0 40 48" className="h-full w-full" aria-hidden="true">
             {/* staff */}
             <path d="M31 12 L28 47" stroke="#6b4a2a" strokeWidth="1.8" strokeLinecap="round" />
@@ -5330,14 +5844,16 @@ function ArchmageBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
             {/* staff orb */}
             <circle cx="31.5" cy="10" r="3.2" fill="#7eb59a" stroke="#2e5f4a" strokeWidth="0.8" />
           </svg>
+        }
+      >
+        {/* the board-spanning spell ring, cast out beneath him */}
+        <span className="fx-sig-swirl absolute inset-[28%] block" style={{ animationDelay: `${delayMs + 340}ms` }}>
+          <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+            <circle cx="20" cy="20" r="17" fill="none" stroke="#a877d8" strokeWidth="1.6" strokeDasharray="5 4" />
+            <circle cx="20" cy="20" r="11" fill="none" stroke="#7eb59a" strokeWidth="1" strokeDasharray="3 3" />
+          </svg>
         </span>
-        {/* orb flare */}
-        <span
-          className="fx-sig-flash absolute left-[62%] top-[10%] block h-[22%] w-[22%] rounded-full"
-          style={{ background: "rgba(126,181,154,0.85)", animationDelay: `${delayMs + 180}ms` }}
-        />
-        <ShardBurst vectors={BURST_MED} fill="#a877d8" stroke="#4a3070" delayMs={delayMs + 220} sizePct={10} />
-      </span>
+      </GodEvent>
     );
   }
   return (
@@ -5430,13 +5946,35 @@ function AbyssBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   // whole crop (palette wash + the card's own motif writ large + a shockwave
   // past the board edges) instead of a square-local pop.
   if (lead) {
+    // God-tier pass — THE ABYSS LOOKS BACK: the crop darkens, abyssal light
+    // wells UP out of the board, and a colossal lidded void-maw heaves open
+    // across its centre, tendrils questing out of the dark before the
+    // event-horizon flare and twin drowned shockwaves.
     return (
-      <BoardWideLead wash="rgba(12,16,22,0.24)" boom="rgba(90,140,120,0.85)" delayMs={delayMs} motifClass="fx-sig-maw">
-        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
-          <circle cx="20" cy="20" r="18" fill="rgba(12,16,22,0.92)" stroke="rgba(126,181,154,0.85)" strokeWidth="1.6" />
-          <circle cx="20" cy="20" r="11" fill="rgba(6,9,13,0.95)" stroke="rgba(90,140,120,0.7)" strokeWidth="1" />
-        </svg>
-      </BoardWideLead>
+      <GodEvent
+        wash="rgba(12,16,22,0.34)"
+        rays="rgba(90,140,120,0.55)"
+        boom="rgba(90,140,120,0.85)"
+        flare="rgba(126,181,154,0.55)"
+        sparkFill="#5a8c78"
+        sparkStroke="#243a30"
+        motion="rise"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 44 44" className="h-full w-full" aria-hidden="true">
+            {/* questing tendrils */}
+            <g stroke="rgba(90,140,120,0.8)" strokeWidth="1.6" fill="none" strokeLinecap="round">
+              <path d="M8 20 C4 16 3 11 6 7 M36 20 C40 16 41 11 38 7 M14 12 C12 8 13 4 16 2 M30 12 C32 8 31 4 28 2" />
+            </g>
+            {/* the colossal void maw */}
+            <circle cx="22" cy="26" r="17" fill="rgba(12,16,22,0.94)" stroke="rgba(126,181,154,0.9)" strokeWidth="1.8" />
+            <circle cx="22" cy="26" r="10.5" fill="rgba(6,9,13,0.96)" stroke="rgba(90,140,120,0.75)" strokeWidth="1" />
+            {/* the eye at the bottom of the world */}
+            <path d="M15 26 C18 22.5 26 22.5 29 26 C26 29.5 18 29.5 15 26 Z" fill="rgba(126,181,154,0.35)" stroke="rgba(126,181,154,0.85)" strokeWidth="0.9" />
+            <circle cx="22" cy="26" r="1.6" fill="#a3d196" />
+          </svg>
+        }
+      />
     );
   }
   return (
@@ -5597,20 +6135,32 @@ function FrozenMoatBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) 
  * an ember shatter, and a scorch. A nova-class boardwide (removal diff). */
 function MeteorStormBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   if (lead) {
+    // God-tier pass — HEAVENFALL: the sky goes furnace-dark and a TRULY
+    // colossal meteor tears down across the whole crop, its strike flaring
+    // white-gold and slamming twin concussion rings past the board edges.
     return (
       <span className="pointer-events-none absolute inset-0 z-30" aria-hidden="true">
-        <span
-          className="fx-sig-meteor absolute left-[-30%] top-[-30%] block h-[150%] w-[150%]"
-          style={{ animationDelay: `${delayMs}ms` }}
-        >
-          <svg viewBox="0 0 80 80" className="h-full w-full" aria-hidden="true">
-            <path d="M2 2 L46 46" stroke="#e6bf6a" strokeWidth="4" strokeLinecap="round" />
-            <path d="M10 4 L46 40" stroke="#ffd95e" strokeWidth="2" strokeLinecap="round" />
-            <path d="M4 10 L40 46" stroke="#e0776b" strokeWidth="2" strokeLinecap="round" />
-            <circle cx="50" cy="50" r="9" fill="#c66860" stroke="#7a2410" strokeWidth="1.4" />
-            <circle cx="50" cy="50" r="4.5" fill="#ffd95e" />
-          </svg>
-        </span>
+        <BoardWideStage>
+          <BoardWash color="rgba(58,28,18,0.32)" delayMs={delayMs} />
+          {/* the falling star, crop-scale */}
+          <span className="fx-sig-meteor absolute left-[8%] top-[-4%] block h-[70%] w-[70%]" style={{ animationDelay: `${delayMs}ms` }}>
+            <svg viewBox="0 0 80 80" className="h-full w-full" aria-hidden="true">
+              <path d="M2 2 L46 46" stroke="#e6bf6a" strokeWidth="4" strokeLinecap="round" />
+              <path d="M10 4 L46 40" stroke="#ffd95e" strokeWidth="2" strokeLinecap="round" />
+              <path d="M4 10 L40 46" stroke="#e0776b" strokeWidth="2" strokeLinecap="round" />
+              <circle cx="50" cy="50" r="9" fill="#c66860" stroke="#7a2410" strokeWidth="1.4" />
+              <circle cx="50" cy="50" r="4.5" fill="#ffd95e" />
+            </svg>
+          </span>
+          {/* strike flare + ejecta + twin concussions */}
+          <span
+            className="fx-sig-flash absolute left-[36%] top-[46%] block h-[22%] w-[28%] rounded-full"
+            style={{ background: "rgba(255,217,94,0.85)", animationDelay: `${delayMs + 620}ms` }}
+          />
+          <ShardBurst vectors={BURST_BIG} fill="#e6a85c" stroke="#7a3a12" delayMs={delayMs + 640} sizePct={7} />
+          <BoardBoom delayMs={delayMs + 660} color="rgba(255,168,80,0.9)" thickness={4} />
+          <BoardBoom delayMs={delayMs + 800} color="rgba(230,191,106,0.8)" />
+        </BoardWideStage>
       </span>
     );
   }
@@ -5646,27 +6196,34 @@ function MeteorStormBurst({ lead, delayMs }: { lead: boolean; delayMs: number })
  * wizard-family boardwide (summon zone). */
 function PhoenixRiseBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   if (lead) {
+    // God-tier pass — THE FIREBIRD ASCENDANT: ember-light roars up out of the
+    // board and the great firebird heaves COLOSSAL over the whole crop, wings
+    // beating past the board edges; its cry lands a flare, an ember burst and
+    // twin flame shockwaves.
     return (
-      <span className="pointer-events-none absolute inset-0 z-30" aria-hidden="true">
-        <span className="fx-sig-phoenix absolute left-[6%] bottom-[2%] block h-[96%] w-[88%]" style={{ animationDelay: `${delayMs}ms` }}>
+      <GodEvent
+        wash="rgba(224,119,107,0.22)"
+        rays="rgba(255,157,61,0.7)"
+        boom="rgba(255,168,80,0.9)"
+        flare="rgba(255,209,102,0.8)"
+        sparkFill="#e6bf6a"
+        sparkStroke="#7a5b23"
+        motion="rise"
+        delayMs={delayMs}
+        figure={
           <svg viewBox="0 0 64 48" className="h-full w-full" aria-hidden="true">
             <path d="M32 46 C28 38 30 30 32 22 C34 30 36 38 32 46 Z" fill="#c66860" stroke="#7a2410" strokeWidth="1" strokeLinejoin="round" />
-            <g className="fx-sig-wingbeat" style={{ animationDelay: `${delayMs}ms` }}>
+            <g className="fx-sig-wingbeat" style={{ animationDelay: `${delayMs + 170}ms` }}>
               <path d="M32 22 C22 10 12 8 2 12 C10 14 12 20 8 26 C16 22 24 24 32 26 Z" fill="#e0776b" stroke="#7a2f28" strokeWidth="1" strokeLinejoin="round" />
             </g>
-            <g className="fx-sig-wingbeat" style={{ animationDelay: `${delayMs + 40}ms` }}>
+            <g className="fx-sig-wingbeat" style={{ animationDelay: `${delayMs + 210}ms` }}>
               <path d="M32 22 C42 10 52 8 62 12 C54 14 52 20 56 26 C48 22 40 24 32 26 Z" fill="#e0776b" stroke="#7a2f28" strokeWidth="1" strokeLinejoin="round" />
             </g>
             <circle cx="32" cy="18" r="3.4" fill="#e6bf6a" stroke="#7a5b23" strokeWidth="0.8" />
             <path d="M32 14 L34 9 L35 14 Z" fill="#ffd95e" stroke="#8a6414" strokeWidth="0.5" strokeLinejoin="round" />
           </svg>
-        </span>
-        <span
-          className="fx-sig-flash absolute inset-x-[34%] bottom-[10%] block h-[24%] rounded-full"
-          style={{ background: "rgba(255,168,80,0.7)", animationDelay: `${delayMs + 120}ms` }}
-        />
-        <ShardBurst vectors={BURST_MED} fill="#e6bf6a" stroke="#7a5b23" delayMs={delayMs + 200} sizePct={10} />
-      </span>
+        }
+      />
     );
   }
   return (
@@ -5852,22 +6409,39 @@ function AnnihilationBurst({ lead, delayMs }: { lead: boolean; delayMs: number }
   // whole crop (palette wash + the card's own motif writ large + a shockwave
   // past the board edges) instead of a square-local pop.
   if (lead) {
-    // Annihilation: two unmaking darts cross into a single void core — the
-    // two doomed pieces, cancelled at one point of violet nothing.
+    // God-tier pass — THE UNMAKER: the crop goes void-dark, violet rays split
+    // the sky, and a colossal hooded archon descends holding the point of
+    // nothing between its spread hands — the two unmaking darts cross into it
+    // before the collapse flare and twin violet shockwaves.
     return (
-      <BoardWideLead wash="rgba(16,12,20,0.24)" boom="rgba(164,140,196,0.85)" delayMs={delayMs} motifClass="fx-sig-reticle">
-        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
-          <circle cx="20" cy="20" r="7" fill="rgba(16,12,20,0.95)" stroke="#a48cc4" strokeWidth="1.6" />
-          <g stroke="#c9b6e0" strokeWidth="2" strokeLinecap="round">
-            <path d="M4 4 L14.5 14.5 M36 4 L25.5 14.5" />
-          </g>
-          <g fill="#a48cc4" stroke="#463357" strokeWidth="0.7" strokeLinejoin="round">
-            <path d="M13 13 L18 15.5 L15.5 18 Z" />
-            <path d="M27 13 L24.5 18 L22 15.5 Z" />
-          </g>
-          <path d="M20 30 V35 M12 26 L8 30 M28 26 L32 30" stroke="rgba(164,140,196,0.7)" strokeWidth="1.2" strokeLinecap="round" />
-        </svg>
-      </BoardWideLead>
+      <GodEvent
+        wash="rgba(16,12,20,0.3)"
+        rays="rgba(164,140,196,0.65)"
+        boom="rgba(164,140,196,0.85)"
+        flare="rgba(201,182,224,0.6)"
+        sparkFill="#a48cc4"
+        sparkStroke="#463357"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 40 44" className="h-full w-full" aria-hidden="true">
+            {/* the hooded archon */}
+            <path d="M20 2 C15.5 2 13 5 13 9 C13 11 14 12.5 15.5 13.5 L14 20 H26 L24.5 13.5 C26 12.5 27 11 27 9 C27 5 24.5 2 20 2 Z" fill="rgba(30,22,40,0.94)" stroke="#a48cc4" strokeWidth="1" strokeLinejoin="round" />
+            <path d="M17 8.5 H19 M21 8.5 H23" stroke="#c9b6e0" strokeWidth="1.1" strokeLinecap="round" />
+            <path d="M13 44 C11 33 13 22 20 22 C27 22 29 33 27 44 Z" fill="rgba(30,22,40,0.9)" stroke="#a48cc4" strokeWidth="0.9" strokeLinejoin="round" />
+            {/* spread hands cradling the void core */}
+            <path d="M14 24 L7 30 M26 24 L33 30" stroke="rgba(30,22,40,0.95)" strokeWidth="2.4" strokeLinecap="round" />
+            <circle cx="20" cy="31" r="6" fill="rgba(16,12,20,0.97)" stroke="#a48cc4" strokeWidth="1.6" />
+            {/* the two unmaking darts, cancelled at one point */}
+            <g stroke="#c9b6e0" strokeWidth="1.8" strokeLinecap="round">
+              <path d="M6 18 L15 27 M34 18 L25 27" />
+            </g>
+            <g fill="#a48cc4" stroke="#463357" strokeWidth="0.6" strokeLinejoin="round">
+              <path d="M14 26 L18.5 28 L16.5 30 Z" />
+              <path d="M26 26 L23.5 30 L21.5 28 Z" />
+            </g>
+          </svg>
+        }
+      />
     );
   }
   return (
@@ -5896,13 +6470,38 @@ function MeteorCrossBurst({ lead, delayMs }: { lead: boolean; delayMs: number })
   // whole crop (palette wash + the card's own motif writ large + a shockwave
   // past the board edges) instead of a square-local pop.
   if (lead) {
+    // God-tier pass — THE CROSSING STAR: the sky goes ember-dark and a
+    // colossal burning boulder drops straight onto the board's heart; its
+    // strike flares and detonates a rank-and-file cross clean across the crop
+    // beneath the twin concussion rings.
     return (
-      <BoardWideLead wash="rgba(255,168,80,0.24)" boom="rgba(230,168,92,0.85)" delayMs={delayMs} motifClass="fx-sig-streak">
-        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
-          <path d="M2 2 L26 26" stroke="#e6a85c" strokeWidth="3" strokeLinecap="round" />
-          <circle cx="28" cy="28" r="5" fill="#d98a4a" stroke="#7a3a12" strokeWidth="1.2" />
-        </svg>
-      </BoardWideLead>
+      <GodEvent
+        wash="rgba(58,28,18,0.28)"
+        rays="rgba(255,168,80,0.75)"
+        boom="rgba(230,168,92,0.9)"
+        flare="rgba(255,217,94,0.85)"
+        sparkFill="#e6a85c"
+        sparkStroke="#7a3a12"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 40 44" className="h-full w-full" aria-hidden="true">
+            {/* the burning boulder, fire streaming up off it */}
+            <g stroke="#ffd95e" strokeWidth="1.6" strokeLinecap="round" fill="none">
+              <path d="M14 2 L17 12 M20 0 L20 10 M26 2 L23 12" />
+            </g>
+            <path d="M20 12 C29 12 35 19 35 27 C35 36 28 42 20 42 C12 42 5 36 5 27 C5 19 11 12 20 12 Z" fill="#c66860" stroke="#7a2410" strokeWidth="1.4" strokeLinejoin="round" />
+            <path d="M12 20 L18 26 L14 32 M27 18 L23 25 L28 31" fill="none" stroke="#ffd95e" strokeWidth="1.1" strokeLinejoin="round" />
+            <circle cx="20" cy="27" r="4.5" fill="#ffd95e" />
+          </svg>
+        }
+      >
+        {/* the rank-and-file shock cross, detonating out under the strike */}
+        <span className="fx-sig-shock absolute inset-[18%] block" style={{ animationDelay: `${delayMs + 520}ms` }}>
+          <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+            <path d="M20 2 V38 M2 20 H38" stroke="rgba(255,168,80,0.9)" strokeWidth="2.4" strokeLinecap="round" fill="none" />
+          </svg>
+        </span>
+      </GodEvent>
     );
   }
   return (
@@ -5925,21 +6524,34 @@ function MeteorCrossBurst({ lead, delayMs }: { lead: boolean; delayMs: number })
 
 /** Purge Realm: enemy minors are banished in a purple arcane shimmer. */
 function PurgeRealmBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
-  // Batch 12 — tier 6+ board-wide guarantee: the lead banishes across the
-  // WHOLE realm — a violet wash while a colossal dashed banishing circle
-  // spins over the crop and an arcane shock rolls out.
+  // God-tier pass — THE BANISHER: violet rays split the sky and a colossal
+  // winged exiler descends, arms flung wide, the great dashed banishing circle
+  // spinning out beneath her before the flare and twin arcane shockwaves.
   if (lead) {
     return (
-      <BoardWideStage>
-        <BoardWash color="rgba(164,140,196,0.22)" delayMs={delayMs} />
-        <span className="fx-sig-swirl absolute inset-[26%] block" style={{ animationDelay: `${delayMs + 60}ms` }}>
-          <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
-            <circle cx="20" cy="20" r="16" fill="none" stroke="#a48cc4" strokeWidth="1" strokeDasharray="4 4" />
-            <circle cx="20" cy="20" r="9" fill="none" stroke="#c9b6e0" strokeWidth="0.7" />
+      <GodEvent
+        wash="rgba(164,140,196,0.22)"
+        rays="rgba(201,182,224,0.75)"
+        boom="rgba(164,140,196,0.85)"
+        flare="rgba(201,182,224,0.7)"
+        sparkFill="#c9b6e0"
+        sparkStroke="#463357"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 44 44" className="h-full w-full" aria-hidden="true">
+            {/* violet wings, thrown open */}
+            <path d="M14 14 C6 9 2 11 1 16 C6 16 9 18 11 21 Z" fill="rgba(201,182,224,0.7)" stroke="#463357" strokeWidth="0.9" strokeLinejoin="round" />
+            <path d="M30 14 C38 9 42 11 43 16 C38 16 35 18 33 21 Z" fill="rgba(201,182,224,0.7)" stroke="#463357" strokeWidth="0.9" strokeLinejoin="round" />
+            {/* the exiler, arms flung wide in the banishing word */}
+            <circle cx="22" cy="9" r="3.1" fill="#e8d3b0" stroke="#463357" strokeWidth="0.8" />
+            <path d="M22 13 C18.5 13 17 16 16.5 20 L14 34 H30 L27.5 20 C27 16 25.5 13 22 13 Z" fill="rgba(90,63,160,0.82)" stroke="#3a2a63" strokeWidth="1" strokeLinejoin="round" />
+            <path d="M16 18 L8 14 M28 18 L36 14" stroke="rgba(90,63,160,0.9)" strokeWidth="2.2" strokeLinecap="round" />
+            {/* the banishing circle spinning out beneath */}
+            <circle cx="22" cy="38" r="9" fill="none" stroke="#a48cc4" strokeWidth="1" strokeDasharray="4 3" />
+            <circle cx="22" cy="38" r="5" fill="none" stroke="#c9b6e0" strokeWidth="0.7" />
           </svg>
-        </span>
-        <BoardBoom delayMs={delayMs + 260} color="rgba(164,140,196,0.85)" />
-      </BoardWideStage>
+        }
+      />
     );
   }
   return (
@@ -5968,28 +6580,43 @@ function RuinBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   // whole crop (palette wash + the card's own motif writ large + a shockwave
   // past the board edges) instead of a square-local pop.
   if (lead) {
-    // Ruin: the ground itself gives way — a jagged fissure tears across the
-    // crop while rubble blocks shear off and drop into it.
+    // God-tier pass — THE BREAKER BELOW: dead grey light wells up out of the
+    // ground and a colossal ruined earth-god heaves halfway out of the board,
+    // already crumbling, tearing the fissure open across the crop as it comes.
     return (
-      <BoardWideLead wash="rgba(40,40,46,0.24)" boom="rgba(120,116,110,0.85)" delayMs={delayMs} motifClass="fx-sig-crumble">
-        <svg viewBox="0 0 48 40" className="h-full w-full" aria-hidden="true">
-          {/* the crack */}
-          <path
-            d="M2 8 L12 14 L10 20 L22 22 L20 28 L34 28 L32 34 L46 36"
-            fill="none"
-            stroke="rgba(20,20,24,0.9)"
-            strokeWidth="3"
-            strokeLinejoin="round"
-          />
-          <path d="M2 8 L12 14 L10 20 L22 22 L20 28 L34 28 L32 34 L46 36" fill="none" stroke="#8c8c92" strokeWidth="1" strokeLinejoin="round" />
-          {/* shearing rubble */}
-          <g fill="#71717a" stroke="rgba(40,40,46,0.85)" strokeWidth="0.8">
-            <path d="M14 10 L19 9 L20 14 L15 15 Z" />
-            <path d="M26 20 L31 19 L32 24 L27 25 Z" />
-            <path d="M36 28 L41 27 L42 32 L37 33 Z" />
-          </g>
-        </svg>
-      </BoardWideLead>
+      <GodEvent
+        wash="rgba(40,40,46,0.28)"
+        rays="rgba(140,140,146,0.55)"
+        boom="rgba(120,116,110,0.85)"
+        flare="rgba(154,154,159,0.65)"
+        sparkFill="#8c8c92"
+        sparkStroke="#28282e"
+        motion="rise"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 40 44" className="h-full w-full" aria-hidden="true">
+            {/* the broken earth-god: cracked head, one shoulder already gone */}
+            <path d="M14 12 C14 6 17 3 21 3 C25 3 28 6 27 11 L25 12 L26 8 L23 11 L22 6 L20 10 L18 7 L18 12 Z" fill="rgba(113,113,122,0.95)" stroke="#28282e" strokeWidth="1" strokeLinejoin="round" />
+            <path d="M17 8.5 H19 M22 8.5 H24" stroke="#e6a85c" strokeWidth="1.2" strokeLinecap="round" />
+            <path d="M10 44 L9 30 C9 21 13 15 20 14 C27 15 31 20 31 27 L33 25 L31 33 L29 44 Z" fill="rgba(140,140,146,0.9)" stroke="#28282e" strokeWidth="1.2" strokeLinejoin="round" />
+            {/* crumbling shards falling off it */}
+            <g fill="#71717a" stroke="rgba(40,40,46,0.85)" strokeWidth="0.7">
+              <path d="M31 16 L35 15 L36 19 L32 20 Z" />
+              <path d="M34 24 L37 23.5 L37.5 27 L34.5 27.5 Z" />
+            </g>
+            {/* the great crack running down its chest into the board */}
+            <path d="M20 16 L18 24 L22 28 L19 36 L23 44" fill="none" stroke="rgba(20,20,24,0.9)" strokeWidth="2" strokeLinejoin="round" />
+          </svg>
+        }
+      >
+        {/* the fissure, torn across the whole crop at its feet */}
+        <span className="fx-sig-streak absolute left-[24%] top-[56%] block h-[16%] w-[52%]" style={{ animationDelay: `${delayMs + 380}ms` }}>
+          <svg viewBox="0 0 48 16" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
+            <path d="M0 6 L12 8 L10 12 L24 10 L22 14 L36 11 L34 15 L48 12" fill="none" stroke="rgba(20,20,24,0.9)" strokeWidth="3" strokeLinejoin="round" />
+            <path d="M0 6 L12 8 L10 12 L24 10 L22 14 L36 11 L34 15 L48 12" fill="none" stroke="#8c8c92" strokeWidth="1" strokeLinejoin="round" />
+          </svg>
+        </span>
+      </GodEvent>
     );
   }
   return (
@@ -6049,23 +6676,38 @@ function IceAgeBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   // whole crop (palette wash + the card's own motif writ large + a shockwave
   // past the board edges) instead of a square-local pop.
   if (lead) {
-    // Ice Age: a colossal six-armed frost crystal blooms over the whole crop
-    // while a glacier ridgeline heaves up along the bottom of the board.
+    // God-tier pass — THE AGE COMES WALKING: aurora light wells up out of the
+    // ice and a COLOSSAL frost mammoth strides over the board, tusks sheathed
+    // in glacier, the great six-armed crystal blazing above its back before
+    // the whiteout flare and twin rime shockwaves.
     return (
-      <BoardWideLead wash="rgba(198,234,255,0.24)" boom="rgba(230,246,255,0.85)" delayMs={delayMs} motifClass="fx-sig-ice">
-        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
-          <g stroke="#bfe6ff" strokeWidth="1.8" strokeLinecap="round" fill="none">
-            <path d="M20 3 V37 M5.3 11.5 L34.7 28.5 M5.3 28.5 L34.7 11.5" />
-          </g>
-          <g stroke="#e8f8ff" strokeWidth="1" strokeLinecap="round" fill="none">
-            <path d="M20 8 L16 12 M20 8 L24 12 M20 32 L16 28 M20 32 L24 28" />
-            <path d="M9.6 14 L9.8 19.6 M9.6 26 L14.4 23.2 M30.4 14 L30.2 19.6 M30.4 26 L25.6 23.2" />
-          </g>
-          <circle cx="20" cy="20" r="3.4" fill="rgba(232,248,255,0.9)" stroke="#7fb8dd" strokeWidth="1" />
-          {/* glacier front grinding in along the foot */}
-          <path d="M2 40 L8 33 L14 36 L20 31 L27 35 L33 32 L38 40 Z" fill="rgba(198,234,255,0.55)" stroke="#bfe6ff" strokeWidth="0.8" strokeLinejoin="round" />
-        </svg>
-      </BoardWideLead>
+      <GodEvent
+        wash="rgba(198,234,255,0.28)"
+        rays="rgba(230,246,255,0.8)"
+        boom="rgba(230,246,255,0.85)"
+        flare="rgba(235,250,255,0.8)"
+        sparkFill="#e6f6ff"
+        sparkStroke="#7fb8dd"
+        motion="rise"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 44 44" className="h-full w-full" aria-hidden="true">
+            {/* the frost crystal blazing above its back */}
+            <g stroke="#bfe6ff" strokeWidth="1.3" strokeLinecap="round" fill="none">
+              <path d="M22 1 V13 M17 3 L27 11 M17 11 L27 3" />
+            </g>
+            <circle cx="22" cy="7" r="1.8" fill="rgba(232,248,255,0.95)" stroke="#7fb8dd" strokeWidth="0.7" />
+            {/* the mammoth: domed head, humped back, pillar legs */}
+            <path d="M8 40 L8 32 C6 26 8 19 14 16 C18 13.5 27 13.5 32 17 C37 20 38 27 36 32 L36 40 H31 L31 34 H27 L27 40 H17 L17 34 H13 L13 40 Z" fill="rgba(160,196,224,0.9)" stroke="#3f6f9f" strokeWidth="1.2" strokeLinejoin="round" />
+            {/* trunk + glacier tusks */}
+            <path d="M33 20 C37 22 38 27 36 31 C35 33 33 34 31 33" fill="none" stroke="#3f6f9f" strokeWidth="2.2" strokeLinecap="round" />
+            <path d="M31 24 C36 24 40 27 41 32 C37 31 33 31.5 31 33" fill="rgba(235,250,255,0.95)" stroke="#7fb8dd" strokeWidth="0.9" strokeLinejoin="round" />
+            <circle cx="30" cy="20" r="1.1" fill="#1c3a5e" />
+            {/* shaggy ice-fur strokes */}
+            <path d="M12 24 L10 29 M16 22 L14 28 M21 21 L20 27 M26 21 L25 27" stroke="rgba(63,111,159,0.55)" strokeWidth="0.9" strokeLinecap="round" />
+          </svg>
+        }
+      />
     );
   }
   return (
@@ -6083,20 +6725,37 @@ function WorldEndBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   // whole crop (palette wash + the card's own motif writ large + a shockwave
   // past the board edges) instead of a square-local pop.
   if (lead) {
-    // World End: the world itself — a great globe with its meridians — cracks
-    // apart over the board as everything grinds to a dead-grey halt.
+    // God-tier pass — THE PALLBEARER OF WORLDS: ashen rays split the sky and
+    // a colossal grey seraph descends bearing the dying world in its hands —
+    // the globe's killing crack splits as it is set down on the board in a
+    // cold flare and twin dead-grey shockwaves.
     return (
-      <BoardWideLead wash="rgba(198,220,240,0.24)" boom="rgba(219,233,245,0.85)" delayMs={delayMs} motifClass="fx-sig-grow">
-        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
-          <circle cx="20" cy="20" r="16" fill="rgba(40,50,64,0.55)" stroke="#dbe9f5" strokeWidth="1.6" />
-          {/* meridians + equator */}
-          <path d="M20 4 A 16 16 0 0 0 20 36 A 8 16 0 0 0 20 4 A 8 16 0 0 1 20 36" fill="none" stroke="rgba(219,233,245,0.6)" strokeWidth="0.9" />
-          <path d="M4 20 H36 M6.5 12 H33.5 M6.5 28 H33.5" stroke="rgba(219,233,245,0.5)" strokeWidth="0.8" fill="none" />
-          {/* the killing crack */}
-          <path d="M12 6 L18 14 L15 19 L23 24 L20 30 L27 35" fill="none" stroke="rgba(16,20,26,0.95)" strokeWidth="2.2" strokeLinejoin="round" />
-          <path d="M12 6 L18 14 L15 19 L23 24 L20 30 L27 35" fill="none" stroke="#eef4fa" strokeWidth="0.7" strokeLinejoin="round" />
-        </svg>
-      </BoardWideLead>
+      <GodEvent
+        wash="rgba(198,220,240,0.26)"
+        rays="rgba(219,233,245,0.7)"
+        boom="rgba(219,233,245,0.85)"
+        flare="rgba(238,244,250,0.7)"
+        sparkFill="#dbe9f5"
+        sparkStroke="#7f93a8"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 44 44" className="h-full w-full" aria-hidden="true">
+            {/* grey mourning wings folded around the world */}
+            <path d="M8 14 C2 10 0 13 1 18 C5 18 7 20 9 23 Z" fill="rgba(219,233,245,0.6)" stroke="#7f93a8" strokeWidth="0.9" strokeLinejoin="round" />
+            <path d="M36 14 C42 10 44 13 43 18 C39 18 37 20 35 23 Z" fill="rgba(219,233,245,0.6)" stroke="#7f93a8" strokeWidth="0.9" strokeLinejoin="round" />
+            {/* the bowed bearer above it */}
+            <circle cx="22" cy="6" r="2.8" fill="#e8eef6" stroke="#7f93a8" strokeWidth="0.8" />
+            <path d="M22 9 C18 9 15 12 14 17 L10 25 M22 9 C26 9 29 12 30 17 L34 25" stroke="rgba(160,178,196,0.9)" strokeWidth="2.2" strokeLinecap="round" fill="none" />
+            {/* the dying world in its hands */}
+            <circle cx="22" cy="27" r="14" fill="rgba(40,50,64,0.6)" stroke="#dbe9f5" strokeWidth="1.5" />
+            <path d="M22 13 A 14 14 0 0 0 22 41 A 7 14 0 0 0 22 13 A 7 14 0 0 1 22 41" fill="none" stroke="rgba(219,233,245,0.6)" strokeWidth="0.8" />
+            <path d="M8 27 H36 M10.5 20 H33.5 M10.5 34 H33.5" stroke="rgba(219,233,245,0.5)" strokeWidth="0.7" fill="none" />
+            {/* the killing crack */}
+            <path d="M15 15 L20 21 L17 25 L25 29 L22 34 L28 39" fill="none" stroke="rgba(16,20,26,0.95)" strokeWidth="2" strokeLinejoin="round" />
+            <path d="M15 15 L20 21 L17 25 L25 29 L22 34 L28 39" fill="none" stroke="#eef4fa" strokeWidth="0.6" strokeLinejoin="round" />
+          </svg>
+        }
+      />
     );
   }
   return (
@@ -6138,16 +6797,39 @@ function RustLockBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 
 /** Mass Petrify: a wave of stone climbs the minors, shedding grey chips. */
 function MassPetrifyBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
-  // Batch 12 — tier 6+ board-wide guarantee: the lead turns the WHOLE board
-  // to stone — a grey wash while a colossal petrifying slab climbs the crop
-  // and chips scatter from its face.
+  // God-tier pass — THE STONE QUEEN'S COURT: grey petrifying light climbs out
+  // of the squares and a colossal gorgon QUEEN rises full-figure over the
+  // crop — serpent sceptre levelled, stone climbing her gown — before the
+  // grey flare and twin petrifying shockwaves.
   if (lead) {
     return (
-      <BoardWideStage>
-        <BoardWash color="rgba(150,150,158,0.3)" delayMs={delayMs} />
-        <span className="fx-sig-petrify absolute left-[26%] bottom-[28%] top-[32%] block w-[48%] rounded-[2px]" style={{ background: "rgba(150,150,158,0.55)", border: "1px solid rgba(120,120,128,0.7)", animationDelay: `${delayMs + 80}ms` }} />
-        <ShardBurst vectors={BURST_MED} fill="#9a9a9f" stroke="#5b6672" delayMs={delayMs + 260} sizePct={5} />
-      </BoardWideStage>
+      <GodEvent
+        wash="rgba(150,150,158,0.3)"
+        rays="rgba(154,154,159,0.65)"
+        boom="rgba(154,154,159,0.85)"
+        flare="rgba(190,190,198,0.7)"
+        sparkFill="#9a9a9f"
+        sparkStroke="#5b6672"
+        motion="rise"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 40 44" className="h-full w-full" aria-hidden="true">
+            {/* serpent diadem */}
+            <g stroke="#8fb59a" strokeWidth="1.4" fill="none" strokeLinecap="round">
+              <path d="M15 7 C13 4 14 1.5 17 1 M20 6 C20 3 21.5 1 24 1.5 M25 7 C27 4 26 1.5 23 1" />
+            </g>
+            <circle cx="20" cy="11" r="3.2" fill="rgba(190,190,198,0.95)" stroke="#5b6672" strokeWidth="0.9" />
+            <path d="M18 10.5 H19.2 M20.8 10.5 H22" stroke="#3a5a40" strokeWidth="1" strokeLinecap="round" />
+            {/* the petrifying gown, stone seams climbing it */}
+            <path d="M20 15 C16 15 14.5 18 14 22 L10 43 H30 L26 22 C25.5 18 24 15 20 15 Z" fill="rgba(150,150,158,0.85)" stroke="#5b6672" strokeWidth="1.1" strokeLinejoin="round" />
+            <path d="M14 30 H26 M12.5 37 H27.5 M20 16 V42" stroke="rgba(91,102,114,0.6)" strokeWidth="0.8" fill="none" />
+            {/* the levelled serpent sceptre */}
+            <path d="M27 22 L36 16" stroke="#5b6672" strokeWidth="1.4" strokeLinecap="round" />
+            <path d="M36 16 C38 14 38 11.5 36 10.5 C34.5 12 34.5 14 35.5 15.5" fill="none" stroke="#8fb59a" strokeWidth="1.2" strokeLinecap="round" />
+            <circle cx="36.5" cy="10.8" r="0.9" fill="#3a5a40" />
+          </svg>
+        }
+      />
     );
   }
   return (
@@ -6193,12 +6875,31 @@ function AmazonCrownBurst({ lead, delayMs }: { lead: boolean; delayMs: number })
   // whole crop (palette wash + the card's own motif writ large + a shockwave
   // past the board edges) instead of a square-local pop.
   if (lead) {
+    // God-tier pass — THE AMAZON APOTHEOSIS: violet-gold rays split the sky
+    // and a colossal Amazon ascendant descends — crown settling, the
+    // knight-leap arc blazing across her — before the flare and twin rings.
     return (
-      <BoardWideLead wash="rgba(230,191,106,0.24)" boom="rgba(168,119,216,0.85)" delayMs={delayMs} motifClass="fx-sig-arc">
-        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
-          <path d="M10 32 C10 18 18 12 26 12 L24 8 L30 10 L28 16" fill="none" stroke="#a877d8" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </BoardWideLead>
+      <GodEvent
+        wash="rgba(230,191,106,0.24)"
+        rays="rgba(230,191,106,0.8)"
+        boom="rgba(168,119,216,0.85)"
+        flare="rgba(255,236,178,0.75)"
+        sparkFill="#e6bf6a"
+        sparkStroke="#7a5b23"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 40 44" className="h-full w-full" aria-hidden="true">
+            {/* the settling crown */}
+            <path d="M13 9 L14 3.5 L17 6.5 L20 2 L23 6.5 L26 3.5 L27 9 Z" fill="#e6bf6a" stroke="#7a5b23" strokeWidth="0.9" strokeLinejoin="round" />
+            <circle cx="20" cy="13" r="3.2" fill="#ffe9b0" stroke="#8a6414" strokeWidth="0.8" />
+            {/* the ascendant, sword sheathed at her back */}
+            <path d="M20 17 C16.5 17 15 20 14.5 24 L11 43 H29 L25.5 24 C25 20 23.5 17 20 17 Z" fill="rgba(168,119,216,0.85)" stroke="#4a2a6e" strokeWidth="1" strokeLinejoin="round" />
+            <path d="M27 18 L33 6 M31.5 8.5 L35 10" stroke="#c9d2dc" strokeWidth="1.4" strokeLinecap="round" />
+            {/* the knight-leap arc blazing across her */}
+            <path d="M8 34 C8 22 16 15 26 15 L24 11 L30 13 L28 19" fill="none" stroke="#a877d8" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        }
+      />
     );
   }
   return (
@@ -6220,29 +6921,40 @@ function TitanLegionBurst({ lead, delayMs }: { lead: boolean; delayMs: number })
   // whole crop (palette wash + the card's own motif writ large + a shockwave
   // past the board edges) instead of a square-local pop.
   if (lead) {
-    // Titan Legion: THREE colossal silhouettes shoulder up out of the board
-    // in a staggered rank — the three pieces forged into titans.
+    // God-tier pass — THE LEGION STANDS: forge-light blazes up out of the
+    // board and THREE colossal titans shoulder up over the crop in a
+    // staggered rank, their formation landing a flare and twin gold rings.
     return (
-      <BoardWideLead wash="rgba(150,150,158,0.24)" boom="rgba(230,191,106,0.85)" delayMs={delayMs} motifClass="fx-sig-rise">
-        <svg viewBox="0 0 64 44" className="h-full w-full" aria-hidden="true">
-          {[
-            { x: 0, s: 0.82, y: 8 },
-            { x: 40, s: 0.9, y: 5 },
-            { x: 19, s: 1, y: 0 },
-          ].map((t, i) => (
-            <g key={i} transform={`translate(${t.x} ${t.y}) scale(${t.s})`}>
-              <path
-                d="M8 44 V32 C5 31 3 28 3 24 L0 25 L3 21 C4 15 7 11 11 10 C10.5 7 12 5 13 5 C14 5 15.5 7 15 10 C19 11 22 15 23 21 L26 25 L23 24 C23 28 21 31 18 32 V44 Z"
-                fill={i === 2 ? "rgba(140,140,148,0.9)" : "rgba(120,120,128,0.75)"}
-                stroke="#4c4c53"
-                strokeWidth="1"
-                strokeLinejoin="round"
-              />
-              <path d="M10 16 H16" stroke="#e6bf6a" strokeWidth="1.1" strokeLinecap="round" />
-            </g>
-          ))}
-        </svg>
-      </BoardWideLead>
+      <GodEvent
+        wash="rgba(150,150,158,0.24)"
+        rays="rgba(230,191,106,0.6)"
+        boom="rgba(230,191,106,0.85)"
+        flare="rgba(255,236,178,0.7)"
+        sparkFill="#d8a85a"
+        sparkStroke="#4c4c53"
+        motion="rise"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 64 44" className="h-full w-full" aria-hidden="true">
+            {[
+              { x: 0, s: 0.82, y: 8 },
+              { x: 40, s: 0.9, y: 5 },
+              { x: 19, s: 1, y: 0 },
+            ].map((t, i) => (
+              <g key={i} transform={`translate(${t.x} ${t.y}) scale(${t.s})`}>
+                <path
+                  d="M8 44 V32 C5 31 3 28 3 24 L0 25 L3 21 C4 15 7 11 11 10 C10.5 7 12 5 13 5 C14 5 15.5 7 15 10 C19 11 22 15 23 21 L26 25 L23 24 C23 28 21 31 18 32 V44 Z"
+                  fill={i === 2 ? "rgba(140,140,148,0.9)" : "rgba(120,120,128,0.75)"}
+                  stroke="#4c4c53"
+                  strokeWidth="1"
+                  strokeLinejoin="round"
+                />
+                <path d="M10 16 H16" stroke="#e6bf6a" strokeWidth="1.1" strokeLinecap="round" />
+              </g>
+            ))}
+          </svg>
+        }
+      />
     );
   }
   const rings = [
@@ -6347,26 +7059,40 @@ function EternalReignBurst({ lead, delayMs }: { lead: boolean; delayMs: number }
   // whole crop (palette wash + the card's own motif writ large + a shockwave
   // past the board edges) instead of a square-local pop.
   if (lead) {
-    // Eternal Reign: the crown lowers over an unbroken infinity loop — a
-    // king's rule with no end written into it.
+    // God-tier pass — THE REIGN WITHOUT END: gold rays split the sky and a
+    // colossal enthroned sovereign descends, the crown settling over him as
+    // the unbroken infinity blazes across his throne; the coronation lands a
+    // flare and twin gilded shockwaves.
     return (
-      <BoardWideLead wash="rgba(230,191,106,0.24)" boom="rgba(255,240,190,0.85)" delayMs={delayMs} motifClass="fx-sig-crown">
-        <svg viewBox="0 0 40 34" className="h-full w-full" aria-hidden="true">
-          {/* the crown */}
-          <path d="M12 14 L12 6.5 L16 9.5 L20 4 L24 9.5 L28 6.5 L28 14 Z" fill="#e6bf6a" stroke="#7a5b23" strokeWidth="1" strokeLinejoin="round" />
-          <circle cx="16" cy="12.5" r="0.8" fill="#7a5b23" />
-          <circle cx="20" cy="12.5" r="0.8" fill="#7a5b23" />
-          <circle cx="24" cy="12.5" r="0.8" fill="#7a5b23" />
-          {/* the infinity beneath it */}
-          <path
-            d="M20 24 C16 19 10 19 8 23 C6 27 10 30 14 28 C17 26.5 18 25.5 20 24 C24 19 30 19 32 23 C34 27 30 30 26 28 C23 26.5 22 25.5 20 24 Z"
-            fill="none"
-            stroke="#ffe9b0"
-            strokeWidth="1.8"
-            strokeLinejoin="round"
-          />
-        </svg>
-      </BoardWideLead>
+      <GodEvent
+        wash="rgba(230,191,106,0.24)"
+        rays="rgba(255,240,190,0.85)"
+        boom="rgba(255,240,190,0.85)"
+        flare="rgba(255,236,178,0.8)"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 40 44" className="h-full w-full" aria-hidden="true">
+            {/* the throne back */}
+            <path d="M9 44 V14 C9 10 12 8 14 8 M31 44 V14 C31 10 28 8 26 8" fill="none" stroke="#7a5b23" strokeWidth="1.6" strokeLinecap="round" />
+            {/* the crown, lowering onto the sovereign */}
+            <path d="M13 8 L13 2.5 L16.5 5 L20 1 L23.5 5 L27 2.5 L27 8 Z" fill="#e6bf6a" stroke="#7a5b23" strokeWidth="1" strokeLinejoin="round" />
+            <circle cx="16.5" cy="6.8" r="0.7" fill="#7a5b23" />
+            <circle cx="20" cy="6.8" r="0.7" fill="#7a5b23" />
+            <circle cx="23.5" cy="6.8" r="0.7" fill="#7a5b23" />
+            {/* the sovereign */}
+            <circle cx="20" cy="12.5" r="3" fill="#ffe9b0" stroke="#8a6414" strokeWidth="0.8" />
+            <path d="M20 16 C16.5 16 15 19 14.5 23 L12 42 H28 L25.5 23 C25 19 23.5 16 20 16 Z" fill="rgba(255,236,178,0.9)" stroke="#b98a2e" strokeWidth="1" strokeLinejoin="round" />
+            {/* the infinity, blazing across the throne's foot */}
+            <path
+              d="M20 34 C16 29 10 29 8 33 C6 37 10 40 14 38 C17 36.5 18 35.5 20 34 C24 29 30 29 32 33 C34 37 30 40 26 38 C23 36.5 22 35.5 20 34 Z"
+              fill="none"
+              stroke="#ffe9b0"
+              strokeWidth="1.8"
+              strokeLinejoin="round"
+            />
+          </svg>
+        }
+      />
     );
   }
   return (
@@ -6384,13 +7110,35 @@ function GodslayerBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   // whole crop (palette wash + the card's own motif writ large + a shockwave
   // past the board edges) instead of a square-local pop.
   if (lead) {
+    // God-tier pass — THE GODSLAYER CONSECRATED: silver rays split the sky
+    // and a COLOSSAL smiting blade descends point-first through a broken halo
+    // — the weapon that ends gods — striking the board in a white flare and
+    // twin silver shockwaves.
     return (
-      <BoardWideLead wash="rgba(214,232,246,0.24)" boom="rgba(227,236,244,0.85)" delayMs={delayMs} motifClass="fx-sig-arc">
-        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
-          <path d="M20 36 L18 12 L20 4 L22 12 Z" fill="#e3ecf4" stroke="#5b6672" strokeWidth="1" strokeLinejoin="round" />
-          <path d="M14 14 H26" stroke="#7a5b23" strokeWidth="2.2" strokeLinecap="round" />
-        </svg>
-      </BoardWideLead>
+      <GodEvent
+        wash="rgba(214,232,246,0.24)"
+        rays="rgba(227,236,244,0.85)"
+        boom="rgba(227,236,244,0.85)"
+        flare="rgba(240,246,252,0.8)"
+        sparkFill="#e3ecf4"
+        sparkStroke="#5b6672"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 40 44" className="h-full w-full" aria-hidden="true">
+            {/* the broken halo it falls through */}
+            <path d="M8 12 A 12 7 0 0 1 26 8 M32 12 A 12 7 0 0 1 30 16" fill="none" stroke="#e6bf6a" strokeWidth="1.4" strokeLinecap="round" />
+            {/* the colossal blade, point-first */}
+            <path d="M20 43 L17 14 L20 2 L23 14 Z" fill="#e3ecf4" stroke="#5b6672" strokeWidth="1.2" strokeLinejoin="round" />
+            <path d="M20 6 V38" stroke="rgba(91,102,114,0.5)" strokeWidth="0.7" />
+            {/* gilded crossguard + grip */}
+            <path d="M11 16 H29" stroke="#7a5b23" strokeWidth="2.4" strokeLinecap="round" />
+            <path d="M20 16 V10" stroke="#e6bf6a" strokeWidth="2" strokeLinecap="round" />
+            <circle cx="20" cy="8.5" r="1.6" fill="#e6bf6a" stroke="#7a5b23" strokeWidth="0.6" />
+            {/* sparks shearing off the edge */}
+            <path d="M15 26 L11 24 M25 30 L29 28 M16 34 L12 34" stroke="#e6bf6a" strokeWidth="1" strokeLinecap="round" />
+          </svg>
+        }
+      />
     );
   }
   return (
@@ -6412,23 +7160,41 @@ function OnslaughtBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   // whole crop (palette wash + the card's own motif writ large + a shockwave
   // past the board edges) instead of a square-local pop.
   if (lead) {
-    // Onslaught: three war-charge arrows punch across the crop in file — the
-    // three consecutive moves, each a spearpoint deeper than the last.
+    // God-tier pass — THE WAR GOD'S SIGNAL: crimson rays split the sky and a
+    // colossal horned war god descends, warhorn raised — the three war-charge
+    // arrows punching across the crop at his call before the flare and twin
+    // crimson shockwaves.
     return (
-      <BoardWideLead wash="rgba(224,119,107,0.24)" boom="rgba(224,119,107,0.85)" delayMs={delayMs} motifClass="fx-sig-streak">
-        <svg viewBox="0 0 48 36" className="h-full w-full" aria-hidden="true">
-          <g stroke="#e0776b" strokeWidth="2.6" strokeLinecap="round" fill="none">
-            <path d="M4 8 H26" />
-            <path d="M4 18 H32" />
-            <path d="M4 28 H38" />
-          </g>
-          <g fill="#e0776b" stroke="#7a2f28" strokeWidth="0.8" strokeLinejoin="round">
-            <path d="M26 4.5 L33 8 L26 11.5 Z" />
-            <path d="M32 14.5 L39 18 L32 21.5 Z" />
-            <path d="M38 24.5 L45 28 L38 31.5 Z" />
-          </g>
-        </svg>
-      </BoardWideLead>
+      <GodEvent
+        wash="rgba(224,119,107,0.24)"
+        rays="rgba(224,119,107,0.75)"
+        boom="rgba(224,119,107,0.85)"
+        flare="rgba(255,181,168,0.7)"
+        sparkFill="#e0776b"
+        sparkStroke="#7a2f28"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 40 44" className="h-full w-full" aria-hidden="true">
+            {/* horned war-helm */}
+            <path d="M12 8 C9 5 9 2 12 1 C13 4 13.5 6 13.5 8 Z M28 8 C31 5 31 2 28 1 C27 4 26.5 6 26.5 8 Z" fill="#c9d2dc" stroke="#5b6672" strokeWidth="0.8" strokeLinejoin="round" />
+            <path d="M14 12 C14 7 16.5 5 20 5 C23.5 5 26 7 26 12 V14 H14 Z" fill="#c66860" stroke="#7a2f28" strokeWidth="0.9" strokeLinejoin="round" />
+            <path d="M16.5 10.5 H18.5 M21.5 10.5 H23.5" stroke="#ffd166" strokeWidth="1.1" strokeLinecap="round" />
+            {/* war-coat */}
+            <path d="M20 15 C16 15 14.5 18 14 22 L11 43 H29 L26 22 C25.5 18 24 15 20 15 Z" fill="rgba(198,104,96,0.9)" stroke="#7a2f28" strokeWidth="1" strokeLinejoin="round" />
+            {/* the raised warhorn */}
+            <path d="M26 20 L34 13 C36 11.5 38 12 38.5 14 C36.5 14.5 34.5 16 33 18 Z" fill="#e6bf6a" stroke="#7a5b23" strokeWidth="0.9" strokeLinejoin="round" />
+            {/* the three war-charge arrows at his call */}
+            <g stroke="#e0776b" strokeWidth="2" strokeLinecap="round" fill="none">
+              <path d="M2 28 H12 M2 34 H15 M2 40 H18" />
+            </g>
+            <g fill="#e0776b" stroke="#7a2f28" strokeWidth="0.6" strokeLinejoin="round">
+              <path d="M12 25.5 L17 28 L12 30.5 Z" />
+              <path d="M15 31.5 L20 34 L15 36.5 Z" />
+              <path d="M18 37.5 L23 40 L18 42.5 Z" />
+            </g>
+          </svg>
+        }
+      />
     );
   }
   const dashes = [
@@ -6452,13 +7218,37 @@ function ResurrectionBurst({ lead, delayMs }: { lead: boolean; delayMs: number }
   // whole crop (palette wash + the card's own motif writ large + a shockwave
   // past the board edges) instead of a square-local pop.
   if (lead) {
+    // God-tier pass — THE GREAT RETURNING: grave-gold light wells up out of
+    // every square and a colossal haloed soul-warden rises over the board,
+    // arms lifted, the lesser fallen rising in its wake before the flare and
+    // twin grave-light shockwaves.
     return (
-      <BoardWideLead wash="rgba(255,242,192,0.24)" boom="rgba(201,162,68,0.85)" delayMs={delayMs} motifClass="fx-sig-rise">
-        <svg viewBox="0 0 24 32" className="h-full w-full" aria-hidden="true">
-          <circle cx="12" cy="8" r="4.4" fill="rgba(255,246,210,0.85)" stroke="#c9a244" strokeWidth="1" />
-          <path d="M5 30 C6 20 8 15 12 15 C16 15 18 20 19 30 Z" fill="rgba(255,246,210,0.85)" stroke="#c9a244" strokeWidth="1" strokeLinejoin="round" />
-        </svg>
-      </BoardWideLead>
+      <GodEvent
+        wash="rgba(255,242,192,0.24)"
+        rays="rgba(255,242,192,0.7)"
+        boom="rgba(201,162,68,0.85)"
+        flare="rgba(255,246,210,0.8)"
+        sparkFill="#fff2c0"
+        sparkStroke="#c9a244"
+        motion="rise"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 40 44" className="h-full w-full" aria-hidden="true">
+            {/* the soul-warden, haloed, arms lifted in the raising word */}
+            <circle cx="20" cy="10" r="7" fill="none" stroke="rgba(255,233,176,0.85)" strokeWidth="1.2" />
+            <circle cx="20" cy="10" r="3.4" fill="rgba(255,246,210,0.9)" stroke="#c9a244" strokeWidth="0.9" />
+            <path d="M20 14 C16.5 14 15 17 14.5 21 L12 42 H28 L25.5 21 C25 17 23.5 14 20 14 Z" fill="rgba(255,246,210,0.88)" stroke="#c9a244" strokeWidth="1" strokeLinejoin="round" />
+            <path d="M15 19 L7 12 M25 19 L33 12" stroke="rgba(255,246,210,0.95)" strokeWidth="2.2" strokeLinecap="round" />
+            {/* the lesser fallen, rising in its wake */}
+            <g fill="rgba(255,246,210,0.75)" stroke="#c9a244" strokeWidth="0.7">
+              <circle cx="7" cy="28" r="1.8" />
+              <path d="M4.5 40 C5 34.5 5.8 31 7 31 C8.2 31 9 34.5 9.5 40 Z" />
+              <circle cx="33" cy="28" r="1.8" />
+              <path d="M30.5 40 C31 34.5 31.8 31 33 31 C34.2 31 35 34.5 35.5 40 Z" />
+            </g>
+          </svg>
+        }
+      />
     );
   }
   return (
@@ -6482,12 +7272,21 @@ function GrandReviveBurst({ lead, delayMs }: { lead: boolean; delayMs: number })
   // whole crop (palette wash + the card's own motif writ large + a shockwave
   // past the board edges) instead of a square-local pop.
   if (lead) {
-    // Grand Resurrection: the queen and her minor rise together out of
-    // grave-light — two haloed silhouettes lifting from the ground under a
-    // descending crown.
+    // God-tier pass — THE QUEEN RETURNS IN GLORY: grave-gold light wells up
+    // out of the board and the queen and her minor rise COLOSSAL over the
+    // crop, both haloed, before the flare and twin gilded shockwaves.
     return (
-      <BoardWideLead wash="rgba(255,242,192,0.24)" boom="rgba(255,242,192,0.85)" delayMs={delayMs} motifClass="fx-sig-rise">
-        <svg viewBox="0 0 44 40" className="h-full w-full" aria-hidden="true">
+      <GodEvent
+        wash="rgba(255,242,192,0.24)"
+        rays="rgba(255,242,192,0.75)"
+        boom="rgba(255,242,192,0.85)"
+        flare="rgba(255,246,210,0.75)"
+        sparkFill="#fff2c0"
+        sparkStroke="#c9a244"
+        motion="rise"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 44 40" className="h-full w-full" aria-hidden="true">
           {/* the returning queen, haloed */}
           <g>
             <circle cx="16" cy="10" r="8" fill="none" stroke="rgba(255,233,176,0.8)" strokeWidth="1.2" />
@@ -6500,8 +7299,9 @@ function GrandReviveBurst({ lead, delayMs }: { lead: boolean; delayMs: number })
             <circle cx="33" cy="16" r="2.6" fill="rgba(255,236,178,0.9)" stroke="#b98a2e" strokeWidth="0.8" />
             <path d="M30 20 C29.5 27 29 32 28.5 38 H37.5 C37 32 36.5 27 36 20 Z" fill="rgba(255,236,178,0.8)" stroke="#b98a2e" strokeWidth="0.8" strokeLinejoin="round" />
           </g>
-        </svg>
-      </BoardWideLead>
+          </svg>
+        }
+      />
     );
   }
   return (
@@ -6515,27 +7315,39 @@ function GrandReviveBurst({ lead, delayMs }: { lead: boolean; delayMs: number })
 
 /** Iron Legion: a relief force rises from the ground in a haze of dust. */
 function IronLegionBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
-  // Batch 12 — tier 6+ board-wide guarantee: the lead raises the WHOLE
-  // legion — a steel wash while a rank of iron towers heaves up across the
-  // central band in a haze of dust.
+  // God-tier pass — THE IRON MARSHAL: steel light grinds up out of the ground
+  // and a colossal iron-masked marshal rises over the crop, its rank of iron
+  // towers heaving up around it in a haze of dust before the flare and twin
+  // steel shockwaves.
   if (lead) {
     return (
-      <BoardWideStage>
-        <BoardWash color="rgba(140,150,160,0.26)" delayMs={delayMs} />
-        {[
-          { l: "28%", d: 0 },
-          { l: "42%", d: 130 },
-          { l: "56%", d: 260 },
-          { l: "66%", d: 390 },
-        ].map((t, i) => (
-          <span key={i} className="fx-sig-rise absolute bottom-[28%] block h-[24%] w-[7%]" style={{ left: t.l, animationDelay: `${delayMs + t.d}ms` }}>
-            <svg viewBox="0 0 24 32" className="h-full w-full" aria-hidden="true">
-              <path d="M5 30 V14 L4 13 V7 H8 V9 H11 V7 H13 V9 H16 V7 H20 V13 L19 14 V30 Z" fill="rgba(140,150,160,0.9)" stroke="#4a525c" strokeWidth="1" strokeLinejoin="round" />
-            </svg>
-          </span>
-        ))}
-        <span className="fx-sig-ash absolute left-[28%] bottom-[26%] block h-[7%] w-[44%] rounded-full" style={{ background: "rgba(120,124,130,0.5)", animationDelay: `${delayMs + 420}ms` }} />
-      </BoardWideStage>
+      <GodEvent
+        wash="rgba(140,150,160,0.26)"
+        rays="rgba(180,190,200,0.6)"
+        boom="rgba(180,190,200,0.85)"
+        flare="rgba(200,210,220,0.7)"
+        sparkFill="#c9d2dc"
+        sparkStroke="#4a525c"
+        motion="rise"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 40 44" className="h-full w-full" aria-hidden="true">
+            {/* iron-masked head: riveted visor */}
+            <path d="M14 13 C14 7 16.5 4 20 4 C23.5 4 26 7 26 13 V16 H14 Z" fill="rgba(140,150,160,0.95)" stroke="#4a525c" strokeWidth="1" strokeLinejoin="round" />
+            <path d="M16 10 H18.5 M21.5 10 H24" stroke="#e6bf6a" strokeWidth="1.2" strokeLinecap="round" />
+            <circle cx="15.5" cy="14" r="0.5" fill="#4a525c" />
+            <circle cx="24.5" cy="14" r="0.5" fill="#4a525c" />
+            {/* plated greatcoat */}
+            <path d="M20 17 C16 17 14.5 20 14 24 L11 44 H29 L26 24 C25.5 20 24 17 20 17 Z" fill="rgba(140,150,160,0.88)" stroke="#4a525c" strokeWidth="1.1" strokeLinejoin="round" />
+            <path d="M14 26 H26 M13 33 H27 M20 18 V42" stroke="rgba(74,82,92,0.7)" strokeWidth="0.8" fill="none" />
+            {/* the iron towers of the legion rising at its flanks */}
+            <g fill="rgba(140,150,160,0.8)" stroke="#4a525c" strokeWidth="0.8" strokeLinejoin="round">
+              <path d="M3 44 V32 L2 31 V27 H5 V28.5 H6.5 V27 H9 V31 L8 32 V44 Z" />
+              <path d="M31 44 V32 L30 31 V27 H33 V28.5 H34.5 V27 H37 V31 L36 32 V44 Z" />
+            </g>
+          </svg>
+        }
+      />
     );
   }
   return (
@@ -6586,7 +7398,9 @@ function SecondComingBurst({ lead, delayMs }: { lead: boolean; delayMs: number }
           style={{ background: "rgba(163,209,150,0.55)", animationDelay: `${delayMs + 420}ms` }}
         />
         <ShardBurst vectors={BURST_MED} fill="#cfe8c9" stroke="#4a6b52" delayMs={delayMs + 440} sizePct={7} />
-        <BoardBoom delayMs={delayMs + 480} color="rgba(163,209,150,0.85)" />
+        {/* God-tier pass: her arrival lands twin ward shockwaves. */}
+        <BoardBoom delayMs={delayMs + 480} color="rgba(163,209,150,0.85)" thickness={4} />
+        <BoardBoom delayMs={delayMs + 620} color="rgba(255,244,200,0.75)" />
       </BoardWideStage>
     );
   }
@@ -6638,13 +7452,37 @@ function NecromancerBurst({ lead, delayMs }: { lead: boolean; delayMs: number })
   // whole crop (palette wash + the card's own motif writ large + a shockwave
   // past the board edges) instead of a square-local pop.
   if (lead) {
+    // God-tier pass — THE PALE NECROMANCER: soul-fire wells up out of the
+    // grave-squares and a colossal lich rises over the board, grave-staff
+    // raised, spectres streaming up around him before the pale flare and twin
+    // violet shockwaves.
     return (
-      <BoardWideLead wash="rgba(180,160,200,0.24)" boom="rgba(150,120,180,0.85)" delayMs={delayMs} motifClass="fx-sig-rise">
-        <svg viewBox="0 0 24 30" className="h-full w-full" aria-hidden="true">
-          <path d="M6 30 C4 20 8 10 12 10 C16 10 20 20 18 30 C15 26 9 26 6 30 Z" fill="rgba(180,160,200,0.55)" stroke="rgba(150,120,180,0.85)" strokeWidth="1" strokeLinejoin="round" />
-          <circle cx="12" cy="9" r="3.2" fill="rgba(200,186,224,0.6)" stroke="rgba(150,120,180,0.85)" strokeWidth="1" />
-        </svg>
-      </BoardWideLead>
+      <GodEvent
+        wash="rgba(180,160,200,0.24)"
+        rays="rgba(150,120,180,0.6)"
+        boom="rgba(150,120,180,0.85)"
+        flare="rgba(200,186,224,0.6)"
+        sparkFill="#c8bae0"
+        sparkStroke="#5a4478"
+        motion="rise"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 40 44" className="h-full w-full" aria-hidden="true">
+            {/* horned skull-crown lich head */}
+            <path d="M15 8 C15 4 17 2 20 2 C23 2 25 4 25 8 C25 10.5 23.8 12 22.5 12.5 L22 15 H18 L17.5 12.5 C16.2 12 15 10.5 15 8 Z" fill="rgba(230,224,240,0.95)" stroke="#5a4478" strokeWidth="0.9" strokeLinejoin="round" />
+            <path d="M17.4 7.5 L19 8.5 M22.6 7.5 L21 8.5" stroke="#96c47f" strokeWidth="1.4" strokeLinecap="round" />
+            <path d="M13 5 C11 3.5 10.5 1.5 12 0.5 M27 5 C29 3.5 29.5 1.5 28 0.5" stroke="#5a4478" strokeWidth="1.1" strokeLinecap="round" fill="none" />
+            {/* tattered grave-robe */}
+            <path d="M12 44 C10 32 12 18 20 16 C28 18 30 32 28 44 C25.5 41 24 42 23 44 C21.5 41.5 19 41.5 17.5 44 C16.5 41.5 14.5 41 12 44 Z" fill="rgba(60,48,80,0.9)" stroke="#9678b4" strokeWidth="1" strokeLinejoin="round" />
+            {/* the raised grave-staff, skull-tipped */}
+            <path d="M30 40 L34 12" stroke="#6b4a2a" strokeWidth="1.6" strokeLinecap="round" />
+            <circle cx="34.5" cy="9.5" r="2.6" fill="rgba(200,186,224,0.9)" stroke="#5a4478" strokeWidth="0.8" />
+            {/* spectres streaming up around him */}
+            <path d="M6 26 C4.5 20 6 15 8 15 C9.5 15 10.5 18.5 10 24 Z" fill="rgba(180,160,200,0.5)" stroke="rgba(150,120,180,0.75)" strokeWidth="0.7" />
+            <path d="M8 13 C8 11.8 8.8 11 10 11" stroke="rgba(150,120,180,0.7)" strokeWidth="0.8" fill="none" />
+          </svg>
+        }
+      />
     );
   }
   return (
@@ -6764,6 +7602,9 @@ function CrocBomberBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) 
         </span>
         <span className="fx-sig-flash absolute left-[35%] top-[40%] block h-[30%] w-[30%] rounded-full" style={{ background: "rgba(255,178,84,0.45)", animationDelay: `${delayMs + 640}ms` }} />
         <ShardBurst vectors={BURST_BIG} fill="#e6a85c" stroke="#7a3a12" delayMs={delayMs + 660} sizePct={6} />
+        {/* God-tier pass: the carpet run detonates twin concussion rings. */}
+        <BoardBoom delayMs={delayMs + 680} color="rgba(255,168,80,0.9)" thickness={4} />
+        <BoardBoom delayMs={delayMs + 820} color="rgba(230,168,92,0.8)" />
       </BoardWideStage>
     );
   }
@@ -7067,24 +7908,39 @@ function OblivionBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   // whole crop (palette wash + the card's own motif writ large + a shockwave
   // past the board edges) instead of a square-local pop.
   if (lead) {
-    // Oblivion: a total eclipse swallows the board — a black disc with a
-    // stark silver corona, thin light rays bleeding out around the rim as
-    // everything beneath it is unmade.
+    // God-tier pass — THE MONARCH OF NOTHING (tier 10): the crop goes black,
+    // silver rays bleed down out of the dark, and a colossal faceless void
+    // monarch descends bearing the total eclipse as its head — its arrival
+    // unmakes the light in a stark flare and a TRIPLE event-horizon shock.
     return (
-      <BoardWideLead wash="rgba(8,8,10,0.3)" boom="rgba(201,210,220,0.85)" delayMs={delayMs} motifClass="fx-sig-grow">
-        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
-          {/* corona rays */}
-          <g stroke="rgba(232,238,246,0.55)" strokeWidth="1" strokeLinecap="round">
-            <path d="M20 1 V6 M20 34 V39 M1 20 H6 M34 20 H39" />
-            <path d="M6.6 6.6 L10 10 M33.4 6.6 L30 10 M6.6 33.4 L10 30 M33.4 33.4 L30 30" />
-          </g>
-          {/* corona ring + the black body of the eclipse */}
-          <circle cx="20" cy="20" r="13.5" fill="none" stroke="#e8eef6" strokeWidth="1.8" />
-          <circle cx="20" cy="20" r="12" fill="rgba(8,8,10,0.97)" stroke="#3f4b57" strokeWidth="0.8" />
-          {/* one last sliver of light dying on the rim */}
-          <path d="M9 14 A 12.5 12.5 0 0 1 14 9" fill="none" stroke="#ffffff" strokeWidth="1.6" strokeLinecap="round" />
-        </svg>
-      </BoardWideLead>
+      <GodEvent
+        wash="rgba(8,8,10,0.38)"
+        rays="rgba(201,210,220,0.5)"
+        boom="rgba(201,210,220,0.9)"
+        flare="rgba(232,238,246,0.6)"
+        sparkFill="#c9d2dc"
+        sparkStroke="#3f4b57"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 40 44" className="h-full w-full" aria-hidden="true">
+            {/* the eclipse head: black disc, silver corona, dying sliver */}
+            <g stroke="rgba(232,238,246,0.55)" strokeWidth="0.9" strokeLinecap="round">
+              <path d="M20 0.5 V4 M6 11 L9 12.5 M34 11 L31 12.5 M8 3 L10.5 5.5 M32 3 L29.5 5.5" />
+            </g>
+            <circle cx="20" cy="12" r="9.5" fill="none" stroke="#e8eef6" strokeWidth="1.6" />
+            <circle cx="20" cy="12" r="8.2" fill="rgba(8,8,10,0.97)" stroke="#3f4b57" strokeWidth="0.8" />
+            <path d="M13 8 A 8.5 8.5 0 0 1 16 5" fill="none" stroke="#ffffff" strokeWidth="1.3" strokeLinecap="round" />
+            {/* the faceless monarch's mantle, swallowing the ranks below */}
+            <path d="M10 44 C7 33 9 24 20 22 C31 24 33 33 30 44 C27 41 25.5 42 24.5 44 C22.5 41.5 20.5 41.5 18.5 44 C17 41.5 14.5 41 10 44 Z" fill="rgba(20,20,24,0.95)" stroke="#5b6672" strokeWidth="1" strokeLinejoin="round" />
+            {/* the sceptre of unmaking */}
+            <path d="M31 40 L34 24" stroke="#3f4b57" strokeWidth="1.5" strokeLinecap="round" />
+            <circle cx="34.5" cy="21.5" r="2.4" fill="rgba(8,8,10,0.97)" stroke="#e8eef6" strokeWidth="1" />
+          </svg>
+        }
+      >
+        {/* tier-10: a third, final event-horizon ring */}
+        <BoardBoom delayMs={delayMs + 840} color="rgba(232,238,246,0.7)" />
+      </GodEvent>
     );
   }
   return (
@@ -7106,13 +7962,36 @@ function BloodPactBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   // whole crop (palette wash + the card's own motif writ large + a shockwave
   // past the board edges) instead of a square-local pop.
   if (lead) {
+    // God-tier pass — THE COLLECTOR OF DEBTS: blood-light wells up out of the
+    // board and a colossal horned pact-fiend rises over the crop, pressing the
+    // great wax seal down with one clawed hand; the bargain closes in a
+    // crimson flare and twin blood shockwaves.
     return (
-      <BoardWideLead wash="rgba(160,44,40,0.24)" boom="rgba(122,47,40,0.85)" delayMs={delayMs} motifClass="fx-sig-grow">
-        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
-            <circle cx="20" cy="20" r="15" fill="#7a2f28" stroke="#3a1512" strokeWidth="1.4" />
-            <path d="M20 11 L23 18 L30 18 L24.5 22.5 L26.5 30 L20 25.5 L13.5 30 L15.5 22.5 L10 18 L17 18 Z" fill="#c25248" stroke="#3a1512" strokeWidth="0.8" strokeLinejoin="round" />
+      <GodEvent
+        wash="rgba(160,44,40,0.26)"
+        rays="rgba(194,82,72,0.6)"
+        boom="rgba(122,47,40,0.85)"
+        flare="rgba(194,82,72,0.7)"
+        sparkFill="#c25248"
+        sparkStroke="#3a1512"
+        motion="rise"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 40 44" className="h-full w-full" aria-hidden="true">
+            {/* curled horns + fiend head */}
+            <path d="M12 8 C9 6 8 3 10 1 C12 3 13 5.5 13.5 8 Z M28 8 C31 6 32 3 30 1 C28 3 27 5.5 26.5 8 Z" fill="#7a2f28" stroke="#3a1512" strokeWidth="0.9" strokeLinejoin="round" />
+            <path d="M14 13 C14 8 16.5 6 20 6 C23.5 6 26 8 26 13 C26 15.5 24.5 17 22.5 17.5 H17.5 C15.5 17 14 15.5 14 13 Z" fill="#a5443c" stroke="#3a1512" strokeWidth="1" strokeLinejoin="round" />
+            <path d="M16.5 11.5 L18.5 12.5 M23.5 11.5 L21.5 12.5" stroke="#ffd166" strokeWidth="1.2" strokeLinecap="round" />
+            <path d="M18 15.5 C19.3 16.3 20.7 16.3 22 15.5" stroke="#3a1512" strokeWidth="0.8" fill="none" strokeLinecap="round" />
+            {/* robed torso, one claw pressing the seal down */}
+            <path d="M12 44 C10 33 12 21 20 19 C28 21 30 33 28 44 Z" fill="rgba(58,21,18,0.92)" stroke="#a5443c" strokeWidth="1" strokeLinejoin="round" />
+            <path d="M25 24 L31 32" stroke="rgba(58,21,18,0.95)" strokeWidth="2.4" strokeLinecap="round" />
+            {/* the great pact seal beneath the claw */}
+            <circle cx="32" cy="36" r="5.5" fill="#7a2f28" stroke="#3a1512" strokeWidth="1.1" />
+            <path d="M32 32.5 L33.2 35.2 L36 35.2 L33.8 37 L34.6 40 L32 38.2 L29.4 40 L30.2 37 L28 35.2 L30.8 35.2 Z" fill="#c25248" stroke="#3a1512" strokeWidth="0.5" strokeLinejoin="round" />
           </svg>
-      </BoardWideLead>
+        }
+      />
     );
   }
   return (
@@ -7130,13 +8009,39 @@ function RegicideBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   // whole crop (palette wash + the card's own motif writ large + a shockwave
   // past the board edges) instead of a square-local pop.
   if (lead) {
+    // God-tier pass — THE QUEEN OF KNIVES: crimson rays split the sky and a
+    // colossal executioner-queen descends over the enemy court, cleaver low,
+    // the shattered crown tumbling from her other hand before the flare and
+    // twin regicidal shockwaves.
     return (
-      <BoardWideLead wash="rgba(230,191,106,0.24)" boom="rgba(230,191,106,0.85)" delayMs={delayMs} motifClass="fx-sig-crownfall">
-        <svg viewBox="0 0 30 40" className="h-full w-full" aria-hidden="true">
-          <path d="M6 4 L10 10 L15 2 L20 10 L24 4 L24 13 L6 13 Z" fill="#e6bf6a" stroke="#7a5b23" strokeWidth="1" strokeLinejoin="round" />
-          <path d="M15 13 L15 30 M9 34 C9 26 21 26 21 34 Z" fill="#c9d2dc" stroke="#4a5560" strokeWidth="1" strokeLinejoin="round" />
-        </svg>
-      </BoardWideLead>
+      <GodEvent
+        wash="rgba(214,35,79,0.22)"
+        rays="rgba(230,191,106,0.75)"
+        boom="rgba(230,191,106,0.85)"
+        flare="rgba(255,214,120,0.75)"
+        sparkFill="#e6bf6a"
+        sparkStroke="#7a5b23"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 40 44" className="h-full w-full" aria-hidden="true">
+            {/* her own crown, worn low */}
+            <path d="M14 8 L15 3 L17.5 6 L20 2 L22.5 6 L25 3 L26 8 Z" fill="#e6bf6a" stroke="#7a5b23" strokeWidth="0.8" strokeLinejoin="round" />
+            <circle cx="20" cy="12" r="3.1" fill="#ffe9b0" stroke="#8a6414" strokeWidth="0.8" />
+            <path d="M18.5 11.5 H21.5" stroke="#7a2f28" strokeWidth="1" strokeLinecap="round" />
+            {/* the executioner's gown */}
+            <path d="M20 15.5 C16.5 15.5 15 18.5 14.5 22.5 L11 43 H29 L25.5 22.5 C25 18.5 23.5 15.5 20 15.5 Z" fill="rgba(122,26,42,0.9)" stroke="#3a0e1a" strokeWidth="1" strokeLinejoin="round" />
+            {/* the cleaver, held low */}
+            <path d="M27 22 L34 30" stroke="#7a5b23" strokeWidth="1.6" strokeLinecap="round" />
+            <path d="M33 29 C38 28 40 31 39 35 L31 34 Z" fill="#c9d2dc" stroke="#4a5560" strokeWidth="0.9" strokeLinejoin="round" />
+            {/* the enemy's crown, tumbling shattered from her hand */}
+            <path d="M13 24 L7 29" stroke="rgba(122,26,42,0.95)" strokeWidth="2.2" strokeLinecap="round" />
+            <g transform="rotate(-40 6 34)">
+              <path d="M2 36 L2 31 L4.5 33 L6.5 30 L8.5 33 L11 31 L11 36 Z" fill="#e6bf6a" stroke="#7a5b23" strokeWidth="0.7" strokeLinejoin="round" />
+            </g>
+            <path d="M4 40 L6 38 M9 41 L10 38.5" stroke="#e6bf6a" strokeWidth="0.9" strokeLinecap="round" />
+          </svg>
+        }
+      />
     );
   }
   return (
@@ -7158,12 +8063,32 @@ function DivineRightBurst({ lead, delayMs }: { lead: boolean; delayMs: number })
   // whole crop (palette wash + the card's own motif writ large + a shockwave
   // past the board edges) instead of a square-local pop.
   if (lead) {
+    // God-tier pass — THE HAND OF HEAVEN: gold rays split the sky and a
+    // colossal haloed hand of heaven descends bearing the crown of right,
+    // lowering it onto the king in a radiant flare and twin anointing rings.
     return (
-      <BoardWideLead wash="rgba(255,246,200,0.24)" boom="rgba(230,191,106,0.85)" delayMs={delayMs} motifClass="fx-sig-crown">
-        <svg viewBox="0 0 24 14" className="h-full w-full" aria-hidden="true">
-          <path d="M2 12 L2 4.5 L7 8 L12 1.5 L17 8 L22 4.5 L22 12 Z" fill="#e6bf6a" stroke="#7a5b23" strokeWidth="1" strokeLinejoin="round" />
-        </svg>
-      </BoardWideLead>
+      <GodEvent
+        wash="rgba(255,246,200,0.26)"
+        rays="rgba(255,232,150,0.85)"
+        boom="rgba(230,191,106,0.85)"
+        flare="rgba(255,246,200,0.8)"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 40 44" className="h-full w-full" aria-hidden="true">
+            {/* the sleeve of heaven, breaking out of the light */}
+            <path d="M14 0 H26 L25 8 H15 Z" fill="rgba(255,244,200,0.9)" stroke="#b98a2e" strokeWidth="0.9" strokeLinejoin="round" />
+            {/* the colossal anointing hand */}
+            <path d="M15 8 C14 14 14.5 18 16 21 L17.5 24 H22.5 L24 21 C25.5 18 26 14 25 8 Z" fill="#ffe9b0" stroke="#8a6414" strokeWidth="1" strokeLinejoin="round" />
+            <path d="M17 10 V18 M20 9.5 V19 M23 10 V18" stroke="rgba(138,100,20,0.5)" strokeWidth="0.7" fill="none" />
+            {/* the crown of right, lowered between finger and thumb */}
+            <circle cx="20" cy="30" r="8.5" fill="none" stroke="rgba(255,233,176,0.85)" strokeWidth="1.2" />
+            <path d="M12 34 L12 26.5 L17 30 L20 24 L23 30 L28 26.5 L28 34 Z" fill="#e6bf6a" stroke="#7a5b23" strokeWidth="1" strokeLinejoin="round" />
+            <circle cx="16" cy="32" r="0.7" fill="#7a5b23" />
+            <circle cx="20" cy="32" r="0.7" fill="#7a5b23" />
+            <circle cx="24" cy="32" r="0.7" fill="#7a5b23" />
+          </svg>
+        }
+      />
     );
   }
   return (
@@ -7185,12 +8110,42 @@ function AscendancyBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) 
   // whole crop (palette wash + the card's own motif writ large + a shockwave
   // past the board edges) instead of a square-local pop.
   if (lead) {
+    // God-tier pass — THE ASCENDANT HOST (tier 10): gold light wells up out of
+    // every square and a colossal crowned ascendant rises over the board,
+    // arms spread as the whole army is lifted with her — haloed motes climbing
+    // at her flanks — before the flare and a TRIPLE golden shockwave.
     return (
-      <BoardWideLead wash="rgba(244,196,64,0.24)" boom="rgba(230,191,106,0.85)" delayMs={delayMs} motifClass="fx-sig-rise">
-        <svg viewBox="0 0 20 30" className="h-full w-full" aria-hidden="true">
-          <path d="M4 28 L5 12 L8 16 L10 8 L12 16 L15 12 L16 28 Z" fill="#e6bf6a" stroke="#7a5b23" strokeWidth="1" strokeLinejoin="round" />
-        </svg>
-      </BoardWideLead>
+      <GodEvent
+        wash="rgba(244,196,64,0.26)"
+        rays="rgba(244,196,64,0.75)"
+        boom="rgba(230,191,106,0.9)"
+        flare="rgba(255,236,178,0.8)"
+        sparkFill="#f4c430"
+        sparkStroke="#8a6414"
+        motion="rise"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 40 44" className="h-full w-full" aria-hidden="true">
+            {/* her halo + amazon crown */}
+            <circle cx="20" cy="9" r="7" fill="none" stroke="rgba(255,233,176,0.85)" strokeWidth="1.2" />
+            <path d="M15 9 L16 4 L18.5 6.5 L20 2.5 L21.5 6.5 L24 4 L25 9 Z" fill="#e6bf6a" stroke="#7a5b23" strokeWidth="0.8" strokeLinejoin="round" />
+            <circle cx="20" cy="12" r="2.8" fill="#ffe9b0" stroke="#8a6414" strokeWidth="0.7" />
+            {/* the ascendant, arms spread to lift her whole host */}
+            <path d="M20 15 C16.5 15 15 18 14.5 22 L12 42 H28 L25.5 22 C25 18 23.5 15 20 15 Z" fill="rgba(244,196,64,0.85)" stroke="#8a6414" strokeWidth="1" strokeLinejoin="round" />
+            <path d="M15 20 L6 14 M25 20 L34 14" stroke="rgba(244,196,64,0.95)" strokeWidth="2.2" strokeLinecap="round" />
+            {/* the host, rising haloed at her flanks */}
+            <g fill="rgba(255,236,178,0.85)" stroke="#8a6414" strokeWidth="0.7">
+              <path d="M5 40 L5.5 30 L7 32 L8 28 L9 32 L10.5 30 L11 40 Z" />
+              <path d="M29 40 L29.5 30 L31 32 L32 28 L33 32 L34.5 30 L35 40 Z" />
+            </g>
+            <circle cx="8" cy="24" r="2.6" fill="none" stroke="rgba(255,233,176,0.75)" strokeWidth="0.8" />
+            <circle cx="32" cy="24" r="2.6" fill="none" stroke="rgba(255,233,176,0.75)" strokeWidth="0.8" />
+          </svg>
+        }
+      >
+        {/* tier-10: the third golden ring */}
+        <BoardBoom delayMs={delayMs + 840} color="rgba(255,236,178,0.7)" />
+      </GodEvent>
     );
   }
   return (
@@ -7244,14 +8199,36 @@ function BlackoutBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   // whole crop (palette wash + the card's own motif writ large + a shockwave
   // past the board edges) instead of a square-local pop.
   if (lead) {
+    // God-tier pass — THE NIGHTBRINGER: the crop drowns in dark while dim
+    // silver rays die overhead and a colossal night-shrouded figure descends,
+    // drawing its great starless curtain across the board with one hand and
+    // throwing the breaker to OFF with the other; twin dark rings roll out.
     return (
-      <BoardWideLead wash="rgba(12,14,20,0.24)" boom="rgba(58,68,80,0.85)" delayMs={delayMs} motifClass="fx-sig-snooze">
-        <svg viewBox="0 0 20 28" className="h-full w-full" aria-hidden="true">
-          <rect x="4" y="2" width="12" height="24" rx="1" fill="#3a4450" stroke="#141e2b" strokeWidth="1" />
-          <rect x="8" y="14" width="4" height="9" rx="1" fill="#c9d2dc" stroke="#141e2b" strokeWidth="0.8" />
-          <circle cx="10" cy="8" r="1.6" fill="#e0776b" />
-        </svg>
-      </BoardWideLead>
+      <GodEvent
+        wash="rgba(12,14,20,0.4)"
+        rays="rgba(90,107,143,0.45)"
+        boom="rgba(58,68,80,0.85)"
+        flare="rgba(58,68,80,0.6)"
+        sparkFill="#3a4450"
+        sparkStroke="#141e2b"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 44 44" className="h-full w-full" aria-hidden="true">
+            {/* the nightbringer: hooded in starless cloth */}
+            <path d="M22 3 C17.5 3 15 6 15 10 C15 12 16 13.5 17.5 14.5 L16 20 H28 L26.5 14.5 C28 13.5 29 12 29 10 C29 6 26.5 3 22 3 Z" fill="rgba(12,14,20,0.95)" stroke="#5a6b8f" strokeWidth="1" strokeLinejoin="round" />
+            <path d="M19 9.5 H21 M23 9.5 H25" stroke="#8fa3c8" strokeWidth="1" strokeLinecap="round" />
+            <path d="M15 44 C13 33 15 22 22 22 C29 22 31 33 29 44 Z" fill="rgba(12,14,20,0.92)" stroke="#5a6b8f" strokeWidth="0.9" strokeLinejoin="round" />
+            {/* the great curtain, drawn across half the sky */}
+            <path d="M16 24 L4 20 C2 26 2 34 4 40 L14 38 Z" fill="rgba(8,8,12,0.95)" stroke="#3a4450" strokeWidth="0.9" strokeLinejoin="round" />
+            <path d="M7 23 C6 28 6 33 7 37 M11 24.5 C10 29 10 33 11 36.5" stroke="rgba(90,107,143,0.4)" strokeWidth="0.7" fill="none" />
+            {/* the master breaker, slammed to OFF */}
+            <path d="M28 26 L34 30" stroke="rgba(12,14,20,0.95)" strokeWidth="2.2" strokeLinecap="round" />
+            <rect x="32" y="28" width="8" height="13" rx="1" fill="#3a4450" stroke="#141e2b" strokeWidth="0.9" />
+            <rect x="34.5" y="34.5" width="3" height="5" rx="0.8" fill="#c9d2dc" stroke="#141e2b" strokeWidth="0.6" />
+            <circle cx="36" cy="31.5" r="1" fill="#e0776b" />
+          </svg>
+        }
+      />
     );
   }
   return (
@@ -7361,6 +8338,8 @@ function GrandArmyBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           </span>
         ))}
         <BoardBoom delayMs={delayMs + 420} color="rgba(230,191,106,0.9)" thickness={4} />
+        {/* God-tier pass: the muster lands a second, rolling shockwave. */}
+        <BoardBoom delayMs={delayMs + 560} color="rgba(255,236,178,0.8)" />
       </BoardWideStage>
     );
   }
@@ -7942,6 +8921,10 @@ function GoldWheelBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
     />
   );
   if (lead) {
+    // God-tier pass — FORTUNA'S FLOOR SHOW: the colossal payout wheel spins
+    // down over the whole crop, gold god-rays breaking from the sky as it
+    // settles, and the jackpot pays out in a board-wide coin rain and twin
+    // gilded shockwaves.
     return (
       <WheelSpinPlay
         wide
@@ -7949,7 +8932,24 @@ function GoldWheelBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
         disc={disc}
         wash="rgba(244,196,48,0.22)"
         boom="rgba(244,196,48,0.9)"
-        landFx={<BoardRain delayMs={delayMs + 950} render={() => coin} />}
+        landFx={
+          <>
+            {GOD_FAN.map((s, i) => (
+              <span
+                key={i}
+                className="absolute left-1/2 top-[6%] block h-[62%]"
+                style={{ width: s.w, marginLeft: `calc(${s.w} / -2)`, transform: `rotate(${s.r})`, transformOrigin: "50% 0%" }}
+              >
+                <span
+                  className="fx-sig-shaft absolute inset-0 block"
+                  style={{ background: "linear-gradient(180deg, rgba(255,236,178,0.8), transparent 78%)", animationDelay: `${delayMs + s.d}ms` }}
+                />
+              </span>
+            ))}
+            <BoardRain delayMs={delayMs + 950} render={() => coin} />
+            <BoardBoom delayMs={delayMs + 1140} color="rgba(255,236,178,0.8)" thickness={4} />
+          </>
+        }
       />
     );
   }
@@ -8772,21 +9772,36 @@ const ORB_TENDRILS = [24, 96, 168, 232, 316];
  * by a spinning rune ring as wisps of purple are drawn INTO it. */
 function DominionOrbBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   if (lead) {
+    // God-tier pass — THE WILL MADE FLESH: the crop dims violet and a
+    // COLOSSAL crowned hand rises out of the board holding the orb of
+    // dominion aloft; its tendrils of will crackle out across the whole crop
+    // before the flare and twin dominion shockwaves.
     return (
-      <BoardWideStage>
-        <BoardWash color="rgba(90,63,160,0.18)" delayMs={delayMs} />
-        <span className="fx-sig-grow absolute left-[42%] top-[36%] block h-[22%] w-[16%]" style={{ animationDelay: `${delayMs}ms` }}>
-          <svg viewBox="0 0 32 40" className="h-full w-full" aria-hidden="true">
-            <circle cx="16" cy="16" r="13" fill="#5a3fa0" stroke="#3a2a63" strokeWidth="1.6" />
-            <circle cx="12" cy="12" r="4" fill="#a877d8" />
-            <path d="M8 32 H24 L21 38 H11 Z" fill="#3a2a63" stroke="#241a40" strokeWidth="1" strokeLinejoin="round" />
+      <GodEvent
+        wash="rgba(90,63,160,0.2)"
+        rays="rgba(168,119,216,0.55)"
+        boom="rgba(168,119,216,0.85)"
+        flare="rgba(201,182,224,0.6)"
+        sparkFill="#a877d8"
+        sparkStroke="#4a3070"
+        motion="rise"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 40 44" className="h-full w-full" aria-hidden="true">
+            {/* the orb of dominion, held aloft */}
+            <circle cx="20" cy="12" r="10" fill="#5a3fa0" stroke="#3a2a63" strokeWidth="1.6" />
+            <circle cx="17" cy="9" r="3" fill="#a877d8" />
+            <path d="M13 6 L15 8 M25 5 L23.5 7.5" stroke="#c9b6e0" strokeWidth="0.9" strokeLinecap="round" />
+            {/* the colossal gauntleted hand gripping it from below */}
+            <path d="M12 44 V30 C12 26 14 23.5 16 22.5 L15 19 L17.5 21.5 L18.5 18 L20 21.5 L21.5 18 L22.5 21.5 L25 19 L24 22.5 C26 23.5 28 26 28 30 V44 Z" fill="rgba(58,42,99,0.95)" stroke="#a877d8" strokeWidth="1.1" strokeLinejoin="round" />
+            <path d="M16 28 H24 M15 34 H25" stroke="rgba(168,119,216,0.55)" strokeWidth="0.8" fill="none" />
           </svg>
-        </span>
+        }
+      >
         {ORB_TENDRILS.map((deg, i) => (
-          <CrackRay key={i} deg={deg} lengthPct={24 + (i % 2) * 8} delayMs={delayMs + 260 + i * 60} color="#a877d8" />
+          <CrackRay key={i} deg={deg} lengthPct={24 + (i % 2) * 8} delayMs={delayMs + 300 + i * 60} color="#a877d8" />
         ))}
-        <BoardBoom delayMs={delayMs + 420} color="rgba(168,119,216,0.8)" thickness={3} />
-      </BoardWideStage>
+      </GodEvent>
     );
   }
   return (
@@ -8942,6 +9957,19 @@ function TransmuteBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
             </svg>
           )}
         />
+        {/* God-tier pass — THE MAGNUM OPUS: the Stone itself manifests at the
+            circle's heart, rising blinding red-gold, and the Great Work lands
+            a flare and twin transmutation shockwaves. */}
+        <span className="fx-sig-rise absolute left-[42%] top-[38%] block h-[24%] w-[16%]" style={{ animationDelay: `${delayMs + 260}ms` }}>
+          <svg viewBox="0 0 24 36" className="h-full w-full" aria-hidden="true">
+            <path d="M12 1 L22 12 L18 34 L6 34 L2 12 Z" fill="#c25248" stroke="#7a2410" strokeWidth="1.3" strokeLinejoin="round" />
+            <path d="M12 6 L17 13 L15 28 L9 28 L7 13 Z" fill="#f4c430" />
+            <circle cx="12" cy="17" r="2.6" fill="#fff2c9" />
+          </svg>
+        </span>
+        <span className="fx-sig-flash absolute left-[40%] top-[42%] block h-[16%] w-[20%] rounded-full" style={{ background: "rgba(255,217,94,0.8)", animationDelay: `${delayMs + 640}ms` }} />
+        <BoardBoom delayMs={delayMs + 680} color="rgba(244,196,48,0.9)" thickness={4} />
+        <BoardBoom delayMs={delayMs + 820} color="rgba(230,191,106,0.75)" />
       </BoardWideStage>
     );
   }
@@ -9190,14 +10218,42 @@ function OverclockBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
     </svg>
   );
   if (lead) {
+    // God-tier pass — THE ENGINE GOD REDLINES: heat-light blazes up out of
+    // the board and a COLOSSAL overclocked gear-titan rises over the crop —
+    // the great gear its burning heart — while speed-streaks dart across and
+    // steam vents off it; the redline lands a flare and twin hot shockwaves.
     return (
-      <BoardWideStage>
-        <BoardWash color="rgba(224,82,82,0.16)" delayMs={delayMs} />
-        <span className="fx-sig-swirl absolute left-[40%] top-[34%] block h-[24%] w-[18%]" style={{ animationDelay: `${delayMs}ms` }}>{gear}</span>
+      <GodEvent
+        wash="rgba(224,82,82,0.18)"
+        rays="rgba(255,214,120,0.65)"
+        boom="rgba(224,119,107,0.85)"
+        flare="rgba(255,214,120,0.75)"
+        sparkFill="#e0776b"
+        sparkStroke="#7a2f28"
+        motion="rise"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 40 44" className="h-full w-full" aria-hidden="true">
+            {/* the gear-titan's shoulders */}
+            <path d="M8 44 L7 32 C7 24 12 19 20 19 C28 19 33 24 33 32 L32 44 Z" fill="rgba(122,47,40,0.9)" stroke="#3a1512" strokeWidth="1.2" strokeLinejoin="round" />
+            {/* the great gear burning as its heart */}
+            <g transform="translate(9 8) scale(0.55)">
+              <path d="M20 2 L23 8 L29 5 L29 12 L36 12 L32 17 L38 20 L32 23 L36 28 L29 28 L29 35 L23 32 L20 38 L17 32 L11 35 L11 28 L4 28 L8 23 L2 20 L8 17 L4 12 L11 12 L11 5 L17 8 Z" fill="#e0776b" stroke="#7a2f28" strokeWidth="1.2" strokeLinejoin="round" />
+              <circle cx="20" cy="20" r="6" fill="#f4f0e8" stroke="#7a2f28" strokeWidth="1.2" />
+            </g>
+            {/* rivet eyes over the boiler chest */}
+            <path d="M15 27 H18 M22 27 H25" stroke="#ffd166" strokeWidth="1.4" strokeLinecap="round" />
+            <path d="M13 34 H27 M14 39 H26" stroke="rgba(58,21,18,0.7)" strokeWidth="0.9" fill="none" />
+            {/* steam venting off its shoulders */}
+            <circle cx="7" cy="20" r="2.4" fill="rgba(220,220,228,0.7)" />
+            <circle cx="34" cy="18" r="2" fill="rgba(220,220,228,0.6)" />
+          </svg>
+        }
+      >
         {[
-          { t: "36%", d: 80 },
-          { t: "50%", d: 200 },
-          { t: "62%", d: 320 },
+          { t: "36%", d: 200 },
+          { t: "50%", d: 320 },
+          { t: "62%", d: 440 },
         ].map((s, i) => (
           <span key={i} className="fx-sig-dart absolute left-[24%] block h-[2%] w-[50%]" style={{ top: s.t, animationDelay: `${delayMs + s.d}ms` }}>
             <svg viewBox="0 0 100 4" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
@@ -9205,9 +10261,7 @@ function OverclockBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
             </svg>
           </span>
         ))}
-        <span className="fx-sig-ash absolute left-[46%] top-[26%] block h-[8%] w-[8%] rounded-full" style={{ background: "rgba(220,220,228,0.7)", animationDelay: `${delayMs + 640}ms` }} />
-        <span className="fx-sig-ash absolute left-[52%] top-[30%] block h-[6%] w-[6%] rounded-full" style={{ background: "rgba(220,220,228,0.6)", animationDelay: `${delayMs + 760}ms` }} />
-      </BoardWideStage>
+      </GodEvent>
     );
   }
   return (
@@ -9431,14 +10485,31 @@ function SneezeBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
  * square spins up its own dust spiral and scatters debris wide. */
 function TornadoBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   if (lead) {
+    // God-tier pass — THE STORM THAT THINKS: the crop greys out under a
+    // COLOSSAL churning funnel that grinds across the whole board — a storm
+    // god's face scowling in its thunderhead — while flung pawns rain back
+    // down; it lands a dust flare and twin gale shockwaves.
     return (
-      <BoardWideStage>
-        <BoardWash color="rgba(122,122,130,0.18)" delayMs={delayMs} />
-        <span className="fx-sig-cross absolute left-[38%] top-[30%] block h-[30%] w-[14%]" style={{ animationDelay: `${delayMs}ms` }}>
-          <svg viewBox="0 0 32 48" className="h-full w-full" aria-hidden="true">
-            <path d="M2 6 C10 2 22 2 30 6 C24 10 8 10 6 14 C14 18 24 16 26 20 C18 24 10 22 10 26 C16 30 20 28 20 32 C14 36 12 34 13 38 C16 40 15 44 14 47" fill="none" stroke="#9a9a9f" strokeWidth="2.6" strokeLinecap="round" />
+      <GodEvent
+        wash="rgba(122,122,130,0.2)"
+        rays="rgba(154,154,159,0.5)"
+        boom="rgba(154,154,159,0.85)"
+        flare="rgba(201,201,212,0.6)"
+        sparkFill="#c9c9d4"
+        sparkStroke="#5b6672"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 40 48" className="h-full w-full" aria-hidden="true">
+            {/* the thunderhead with the storm god's scowl */}
+            <path d="M6 10 C6 4 12 1 17 3 C19 -1 27 -1 29 3 C35 1 40 6 38 11 C36 14 32 15 28 14 L12 14 C8 14 6 13 6 10 Z" fill="rgba(90,96,110,0.92)" stroke="#2f3540" strokeWidth="1.1" strokeLinejoin="round" />
+            <path d="M13 8 H17 M23 8 H27" stroke="#ffd166" strokeWidth="1.3" strokeLinecap="round" />
+            <path d="M17 11.5 C19 10.5 21 10.5 23 11.5" stroke="#2f3540" strokeWidth="1" fill="none" strokeLinecap="round" />
+            {/* the colossal funnel churning down out of it */}
+            <path d="M6 15 C14 11 26 11 34 15 C28 19 12 19 10 23 C18 27 28 25 30 29 C22 33 14 31 14 35 C20 39 24 37 24 41 C18 45 16 43 17 47" fill="none" stroke="#9a9a9f" strokeWidth="2.6" strokeLinecap="round" />
+            <path d="M12 17 C20 14 28 15 32 17 M14 25 C20 23 26 24 28 26 M17 33 C20 32 22 32 23 34" stroke="rgba(201,201,212,0.6)" strokeWidth="1" fill="none" strokeLinecap="round" />
           </svg>
-        </span>
+        }
+      >
         <BoardRain
           delayMs={delayMs + 220}
           render={() => (
@@ -9448,7 +10519,7 @@ function TornadoBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
             </svg>
           )}
         />
-      </BoardWideStage>
+      </GodEvent>
     );
   }
   return (
@@ -9829,14 +10900,42 @@ function SpringTrapBurst({ delayMs }: { delayMs: number }) {
  * the spread made literal; each square gets a double ripple and droplets. */
 function ContagionBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   if (lead) {
+    // God-tier pass — THE PLAGUE HERALD: sickly grave-light wells up out of
+    // the board and a colossal beaked plague-doctor herald rises over the
+    // crop, censer swinging, while THREE infection rings roll past the board
+    // edges one after another — the spread made literal.
     return (
-      <BoardWideStage>
-        <BoardWash color="rgba(122,181,122,0.16)" delayMs={delayMs} />
+      <GodEvent
+        wash="rgba(122,181,122,0.18)"
+        rays="rgba(163,209,150,0.55)"
+        boom="rgba(163,209,150,0.8)"
+        flare="rgba(163,209,150,0.55)"
+        sparkFill="#a3d196"
+        sparkStroke="#5f927a"
+        motion="rise"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 40 44" className="h-full w-full" aria-hidden="true">
+            {/* wide plague hat + beaked mask */}
+            <path d="M8 10 C8 8 13 6.5 20 6.5 C27 6.5 32 8 32 10 C32 12 27 13 20 13 C13 13 8 12 8 10 Z" fill="rgba(47,58,38,0.95)" stroke="#1c2e20" strokeWidth="0.9" />
+            <path d="M16 7 C16 4 17.5 2 20 2 C22.5 2 24 4 24 7 Z" fill="rgba(47,58,38,0.95)" stroke="#1c2e20" strokeWidth="0.9" />
+            <path d="M17 13 C17 15 18 16.5 20 19 L26 24 C23 20 22 16 22 13 Z" fill="#c9c9b0" stroke="#5f927a" strokeWidth="0.8" strokeLinejoin="round" />
+            <circle cx="18.5" cy="14.5" r="1" fill="#a3d196" stroke="#2f3a26" strokeWidth="0.5" />
+            {/* the herald's long robe */}
+            <path d="M12 44 C10 33 12 20 20 18 C28 20 30 33 28 44 Z" fill="rgba(47,58,38,0.9)" stroke="#5f927a" strokeWidth="1" strokeLinejoin="round" />
+            <path d="M16 26 H24 M15 33 H25" stroke="rgba(95,146,122,0.5)" strokeWidth="0.8" fill="none" />
+            {/* the swinging censer, leaking miasma */}
+            <path d="M27 24 L33 32" stroke="rgba(47,58,38,0.95)" strokeWidth="1.8" strokeLinecap="round" />
+            <path d="M31 33 C31 31.5 32 30.5 33.5 30.5 C35 30.5 36 31.5 36 33 C36 35 34.8 36 33.5 36 C32.2 36 31 35 31 33 Z" fill="#5f927a" stroke="#2f3a26" strokeWidth="0.8" />
+            <circle cx="36.5" cy="27" r="1.4" fill="rgba(163,209,150,0.6)" />
+            <circle cx="38" cy="23.5" r="1.1" fill="rgba(163,209,150,0.5)" />
+          </svg>
+        }
+      >
         {[0, 1, 2].map((i) => (
-          <BoardBoom key={i} delayMs={delayMs + 120 + i * 240} color="rgba(163,209,150,0.75)" thickness={3} />
+          <BoardBoom key={i} delayMs={delayMs + 240 + i * 240} color="rgba(163,209,150,0.75)" thickness={3} />
         ))}
-        <ShardBurst vectors={BURST_MED} fill="#a3d196" stroke="#5f927a" delayMs={delayMs + 520} sizePct={4} />
-      </BoardWideStage>
+      </GodEvent>
     );
   }
   return (
@@ -10331,17 +11430,37 @@ function CrownLegionBurst({ lead, delayMs }: { lead: boolean; delayMs: number })
     </svg>
   );
   if (lead) {
+    // God-tier pass — THE QUEENMAKER: gold god-rays split the sky and a
+    // colossal winged queenmaker descends holding the great regnal crown out
+    // over the whole corps while crowns and mitres rain the central band; the
+    // mass coronation lands a flare and twin gilded shockwaves.
     return (
-      <BoardWideStage>
-        <BoardWash color="rgba(230,191,106,0.24)" delayMs={delayMs} />
+      <GodEvent
+        wash="rgba(230,191,106,0.24)"
+        rays="rgba(255,231,150,0.8)"
+        boom="rgba(230,191,106,0.85)"
+        flare="rgba(255,236,178,0.75)"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 44 44" className="h-full w-full" aria-hidden="true">
+            {/* queenmaker wings */}
+            <path d="M13 12 C6 8 2 10 1 15 C6 15 9 17 11 20 Z" fill="rgba(255,231,150,0.75)" stroke="#8a6414" strokeWidth="0.9" strokeLinejoin="round" />
+            <path d="M31 12 C38 8 42 10 43 15 C38 15 35 17 33 20 Z" fill="rgba(255,231,150,0.75)" stroke="#8a6414" strokeWidth="0.9" strokeLinejoin="round" />
+            {/* the queenmaker, robed */}
+            <circle cx="22" cy="8" r="3" fill="#ffe9b0" stroke="#8a6414" strokeWidth="0.8" />
+            <path d="M22 12 C18.5 12 17 15 16.5 19 L14 32 H30 L27.5 19 C27 15 25.5 12 22 12 Z" fill="rgba(168,119,216,0.8)" stroke="#4a2a6e" strokeWidth="1" strokeLinejoin="round" />
+            {/* arms holding the great regnal crown out over the corps */}
+            <path d="M17 18 L10 28 M27 18 L34 28" stroke="rgba(168,119,216,0.9)" strokeWidth="2.2" strokeLinecap="round" />
+            <path d="M10 38 L10 30 L15 33.5 L22 28 L29 33.5 L34 30 L34 38 Z" fill="#e6bf6a" stroke="#7a5b23" strokeWidth="1.1" strokeLinejoin="round" />
+            <circle cx="16" cy="35.5" r="0.9" fill="#7a5b23" />
+            <circle cx="22" cy="35.5" r="0.9" fill="#7a5b23" />
+            <circle cx="28" cy="35.5" r="0.9" fill="#7a5b23" />
+          </svg>
+        }
+      >
         {/* crowns for the knights, mitres for the bishops */}
         <BoardRain delayMs={delayMs + 80} render={(i) => (i % 2 === 0 ? <SigCrown /> : mitre)} />
-        {/* the great crown of the army, lowering over all of it */}
-        <span className="fx-sig-crown absolute left-[38%] top-[30%] block h-[16%] w-[24%]" style={{ animationDelay: `${delayMs + 180}ms` }}>
-          <SigCrown />
-        </span>
-        <BoardBoom delayMs={delayMs + 380} color="rgba(230,191,106,0.85)" thickness={4} />
-      </BoardWideStage>
+      </GodEvent>
     );
   }
   return (
@@ -10383,10 +11502,41 @@ function AgesWardBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
     </svg>
   );
   if (lead) {
+    // God-tier pass — THE FIRST WARDEN WAKES: bronze-age light wells up out
+    // of the board and a colossal ancient warden rises over the crop — a
+    // bearded titan of the old age with the riveted aegis on its arm — before
+    // the flare and twin weathered-bronze shockwaves.
     return (
-      <BoardWideLead wash="rgba(201,168,76,0.22)" boom="rgba(201,168,76,0.85)" delayMs={delayMs} motifClass="fx-sig-grow">
-        {shield}
-      </BoardWideLead>
+      <GodEvent
+        wash="rgba(201,168,76,0.22)"
+        rays="rgba(230,191,106,0.65)"
+        boom="rgba(201,168,76,0.85)"
+        flare="rgba(255,236,178,0.65)"
+        sparkFill="#c9a84c"
+        sparkStroke="#7a5b23"
+        motion="rise"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 44 44" className="h-full w-full" aria-hidden="true">
+            {/* the old warden: horned bronze helm, great beard */}
+            <path d="M14 8 C12 6 12 3 14 2 C15.5 3.5 16 5.5 16 8 Z M30 8 C32 6 32 3 30 2 C28.5 3.5 28 5.5 28 8 Z" fill="#c9a84c" stroke="#7a5b23" strokeWidth="0.8" strokeLinejoin="round" />
+            <path d="M16 12 C16 7 18.5 5 22 5 C25.5 5 28 7 28 12 V14 H16 Z" fill="#8a6a3a" stroke="#5c5138" strokeWidth="0.9" strokeLinejoin="round" />
+            <path d="M18.5 10.5 H20.5 M23.5 10.5 H25.5" stroke="#ffe9b0" strokeWidth="1.1" strokeLinecap="round" />
+            <path d="M18 14 C18.5 20 20 23 22 23 C24 23 25.5 20 26 14 Z" fill="#e8e2d2" stroke="#8a8a80" strokeWidth="0.6" strokeLinejoin="round" />
+            {/* weathered cloak */}
+            <path d="M13 44 C11 33 13 22 22 20 C31 22 33 33 31 44 Z" fill="rgba(92,81,56,0.9)" stroke="#c9a84c" strokeWidth="1" strokeLinejoin="round" />
+            {/* the riveted round aegis on its arm */}
+            <circle cx="13" cy="31" r="9" fill="rgba(58,50,30,0.92)" stroke="#c9a84c" strokeWidth="1.6" />
+            <circle cx="13" cy="31" r="3" fill="#e6bf6a" stroke="#7a5b23" strokeWidth="0.9" />
+            <g fill="#c9a84c">
+              <circle cx="13" cy="24.5" r="0.8" />
+              <circle cx="13" cy="37.5" r="0.8" />
+              <circle cx="6.5" cy="31" r="0.8" />
+              <circle cx="19.5" cy="31" r="0.8" />
+            </g>
+          </svg>
+        }
+      />
     );
   }
   return (
@@ -10413,24 +11563,48 @@ function DugInBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
     </svg>
   );
   if (lead) {
+    // God-tier pass — THE PATRON SAINT OF SANDBAGS: trench-light heaves up
+    // out of the ground and a COLOSSAL helmeted sapper god rises behind the
+    // parapet, entrenching spade shouldered, dust rolling off the works — an
+    // equally epic, equally deadpan dig-in with twin olive shockwaves.
     return (
-      <BoardWideStage>
-        <BoardWash color="rgba(124,138,74,0.22)" delayMs={delayMs} />
-        {/* the parapet heaves up across the central band */}
-        <span className="fx-sig-brick absolute left-[26%] bottom-[36%] block h-[10%] w-[48%]" style={{ animationDelay: `${delayMs + 80}ms` }}>
+      <GodEvent
+        wash="rgba(124,138,74,0.22)"
+        rays="rgba(176,160,114,0.6)"
+        boom="rgba(124,138,74,0.85)"
+        flare="rgba(176,160,114,0.6)"
+        sparkFill="#b0a072"
+        sparkStroke="#5c5138"
+        motion="rise"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 40 44" className="h-full w-full" aria-hidden="true">
+            {/* the great brodie helmet */}
+            <path d="M8 14 C8 6 14 2 20 2 C26 2 32 6 32 14 Z" fill="#7c8a4a" stroke="#3a4022" strokeWidth="1.2" strokeLinejoin="round" />
+            <path d="M5 14 H35" stroke="#3a4022" strokeWidth="1.8" strokeLinecap="round" />
+            {/* the sapper's mud-caked greatcoat, half dug-in */}
+            <path d="M11 44 L11 26 C11 20 15 16 20 16 C25 16 29 20 29 26 L29 44 Z" fill="rgba(92,81,56,0.92)" stroke="#3a4022" strokeWidth="1.1" strokeLinejoin="round" />
+            <path d="M15 20 H18 M22 20 H25" stroke="#e8e2d2" strokeWidth="1.2" strokeLinecap="round" />
+            <path d="M13 30 H27 M14 36 H26" stroke="rgba(58,64,34,0.6)" strokeWidth="0.8" fill="none" />
+            {/* the shouldered entrenching spade */}
+            <path d="M29 24 L37 14" stroke="#8a6a4a" strokeWidth="1.6" strokeLinecap="round" />
+            <path d="M36 15 C39 12 40 9 38 7 C36 7.5 34 9.5 33 12.5 Z" fill="#c9d2dc" stroke="#4a5560" strokeWidth="0.9" strokeLinejoin="round" />
+            {/* the parapet at its waist */}
+            <g fill="#b0a072" stroke="#5c5138" strokeWidth="0.8" strokeLinejoin="round">
+              <rect x="2" y="38" width="11" height="6" rx="2.6" />
+              <rect x="27" y="38" width="11" height="6" rx="2.6" />
+              <rect x="8" y="32" width="11" height="6" rx="2.6" />
+              <rect x="21" y="32" width="11" height="6" rx="2.6" />
+            </g>
+          </svg>
+        }
+      >
+        {/* the works thrown up across the central band */}
+        <span className="fx-sig-brick absolute left-[26%] bottom-[32%] block h-[10%] w-[48%]" style={{ animationDelay: `${delayMs + 200}ms` }}>
           {sandbags}
         </span>
-        {/* a helmet ducks up behind it */}
-        <span className="fx-sig-rise absolute left-[45%] bottom-[45%] block h-[7%] w-[10%]" style={{ animationDelay: `${delayMs + 260}ms` }}>
-          <svg viewBox="0 0 24 12" className="h-full w-full" aria-hidden="true">
-            <path d="M2 11 C2 4 8 1 12 1 C16 1 22 4 22 11 Z" fill="#7c8a4a" stroke="#3a4022" strokeWidth="1" strokeLinejoin="round" />
-            <path d="M0.5 11 H23.5" stroke="#3a4022" strokeWidth="1.4" strokeLinecap="round" />
-          </svg>
-        </span>
-        {/* trench dust */}
-        <span className="fx-sig-ash absolute left-[28%] bottom-[34%] block h-[6%] w-[44%] rounded-full" style={{ background: "rgba(176,160,114,0.5)", animationDelay: `${delayMs + 300}ms` }} />
-        <BoardBoom delayMs={delayMs + 360} color="rgba(124,138,74,0.8)" />
-      </BoardWideStage>
+        <span className="fx-sig-ash absolute left-[28%] bottom-[30%] block h-[6%] w-[44%] rounded-full" style={{ background: "rgba(176,160,114,0.5)", animationDelay: `${delayMs + 420}ms` }} />
+      </GodEvent>
     );
   }
   return (
@@ -10465,20 +11639,34 @@ function ChalkCircleBurst({ lead, delayMs }: { lead: boolean; delayMs: number })
     </svg>
   );
   if (lead) {
+    // God-tier pass — THE ANSWERED CALL: the chalked pentacle inscribes
+    // itself across the whole crop while violet light wells up out of it —
+    // and something COLOSSAL actually steps through: a horned eidolon rising
+    // out of the circle before the flare and twin conjuring shockwaves.
     return (
-      <BoardWideStage>
-        <BoardWash color="rgba(168,119,216,0.2)" delayMs={delayMs} />
-        <span className="fx-sig-swirl absolute inset-[22%] block" style={{ animationDelay: `${delayMs + 60}ms` }}>{pentacle}</span>
-        {/* conjuring light rising off the chalk lines */}
-        {[
-          { l: "36%", d: 260 },
-          { l: "49%", d: 380 },
-          { l: "60%", d: 320 },
-        ].map((s, i) => (
-          <span key={i} className="fx-sig-rise absolute bottom-[30%] block h-[28%] w-[4%] rounded-[1px]" style={{ left: s.l, background: "rgba(214,190,240,0.55)", animationDelay: `${delayMs + s.d}ms` }} />
-        ))}
-        <BoardBoom delayMs={delayMs + 420} color="rgba(168,119,216,0.85)" />
-      </BoardWideStage>
+      <GodEvent
+        wash="rgba(168,119,216,0.2)"
+        rays="rgba(214,190,240,0.6)"
+        boom="rgba(168,119,216,0.85)"
+        flare="rgba(214,190,240,0.65)"
+        sparkFill="#c9b6e0"
+        sparkStroke="#463357"
+        motion="rise"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 40 44" className="h-full w-full" aria-hidden="true">
+            {/* the horned eidolon, half-manifested */}
+            <path d="M12 10 C9 7 8.5 3 11 1 C12.5 3.5 13.5 6 13.5 9 Z M28 10 C31 7 31.5 3 29 1 C27.5 3.5 26.5 6 26.5 9 Z" fill="rgba(90,63,160,0.9)" stroke="#3a2a63" strokeWidth="0.9" strokeLinejoin="round" />
+            <path d="M14 14 C14 9 16.5 7 20 7 C23.5 7 26 9 26 14 C26 16.5 24.5 18 22.5 18.5 H17.5 C15.5 18 14 16.5 14 14 Z" fill="rgba(122,92,192,0.85)" stroke="#3a2a63" strokeWidth="1" strokeLinejoin="round" />
+            <path d="M17 12.5 L19 13.5 M23 12.5 L21 13.5" stroke="#f0ead8" strokeWidth="1.2" strokeLinecap="round" />
+            {/* the body still dissolving into conjuring light below */}
+            <path d="M13 38 C12 28 14 20 20 19.5 C26 20 28 28 27 38 C25 35.5 23.5 36.5 22.5 39 C21 36.5 19 36.5 17.5 39 C16.5 36.5 15 35.5 13 38 Z" fill="rgba(122,92,192,0.65)" stroke="#a877d8" strokeWidth="0.9" strokeLinejoin="round" />
+            <path d="M15 41 V43 M20 41.5 V44 M25 41 V43" stroke="rgba(214,190,240,0.8)" strokeWidth="1.1" strokeLinecap="round" />
+          </svg>
+        }
+      >
+        <span className="fx-sig-swirl absolute inset-[24%] block" style={{ animationDelay: `${delayMs + 60}ms` }}>{pentacle}</span>
+      </GodEvent>
     );
   }
   return (
@@ -10499,26 +11687,45 @@ function KingsMusterBurst({ lead, delayMs }: { lead: boolean; delayMs: number })
     </svg>
   );
   if (lead) {
+    // God-tier pass — THE KING'S OWN HERALD: war-red rays split the sky and a
+    // colossal crowned herald descends bearing the king's standard, the
+    // legion's banners snapping up in a rank at his feet before the flare and
+    // twin muster shockwaves.
     return (
-      <BoardWideStage>
-        <BoardWash color="rgba(198,90,74,0.2)" delayMs={delayMs} />
-        {/* the king's crown, presiding */}
-        <span className="fx-sig-crown absolute left-[40%] top-[24%] block h-[13%] w-[20%]" style={{ animationDelay: `${delayMs}ms` }}>
-          <SigCrown />
-        </span>
-        {/* the legion's banners snapping up beneath it: knight, bishop, pawn */}
+      <GodEvent
+        wash="rgba(198,90,74,0.2)"
+        rays="rgba(230,191,106,0.7)"
+        boom="rgba(198,90,74,0.85)"
+        flare="rgba(255,214,120,0.7)"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 40 44" className="h-full w-full" aria-hidden="true">
+            {/* crown + tabarded herald */}
+            <path d="M14 8 L15 3 L17.5 6 L20 2 L22.5 6 L25 3 L26 8 Z" fill="#e6bf6a" stroke="#7a5b23" strokeWidth="0.9" strokeLinejoin="round" />
+            <circle cx="20" cy="11.5" r="3" fill="#ffe9b0" stroke="#8a6414" strokeWidth="0.8" />
+            <path d="M20 15 C16.5 15 15 18 14.5 22 L12 43 H28 L25.5 22 C25 18 23.5 15 20 15 Z" fill="rgba(198,90,74,0.9)" stroke="#7a2f28" strokeWidth="1" strokeLinejoin="round" />
+            <path d="M20 16 V41 M14 24 H26" stroke="rgba(230,191,106,0.75)" strokeWidth="1" fill="none" />
+            {/* the king's standard, planted */}
+            <path d="M31 43 V6" stroke="#8a6a4a" strokeWidth="1.6" strokeLinecap="round" />
+            <path d="M31 6 H40 L36.5 10.5 L40 15 H31 Z" fill="#c65a4a" stroke="#3a2a1a" strokeWidth="0.9" strokeLinejoin="round" />
+            <path d="M31 4 V8" stroke="#e6bf6a" strokeWidth="1.6" strokeLinecap="round" />
+            {/* the raised muster-horn */}
+            <path d="M14 22 L7 16 C5.5 14.5 5.5 12.5 7.5 12 C8.5 14 10.5 15.5 13 16.5 Z" fill="#e6bf6a" stroke="#7a5b23" strokeWidth="0.8" strokeLinejoin="round" />
+          </svg>
+        }
+      >
+        {/* the legion's banners snapping up in a rank at his feet */}
         {[
-          { l: "34%", d: 160 },
-          { l: "47%", d: 280 },
-          { l: "60%", d: 220 },
+          { l: "32%", d: 260 },
+          { l: "45%", d: 380 },
+          { l: "58%", d: 320 },
         ].map((s, i) => (
           <span key={i} className="fx-sig-brick absolute bottom-[26%] block h-[26%] w-[6%]" style={{ left: s.l, animationDelay: `${delayMs + s.d}ms` }}>
             {banner(i)}
           </span>
         ))}
-        <span className="fx-sig-ash absolute left-[32%] bottom-[24%] block h-[6%] w-[36%] rounded-full" style={{ background: "rgba(196,178,142,0.5)", animationDelay: `${delayMs + 360}ms` }} />
-        <BoardBoom delayMs={delayMs + 400} color="rgba(198,90,74,0.85)" />
-      </BoardWideStage>
+        <span className="fx-sig-ash absolute left-[30%] bottom-[24%] block h-[6%] w-[36%] rounded-full" style={{ background: "rgba(196,178,142,0.5)", animationDelay: `${delayMs + 460}ms` }} />
+      </GodEvent>
     );
   }
   return (
@@ -10542,26 +11749,50 @@ function TotalAnnihilationBurst({ lead, delayMs }: { lead: boolean; delayMs: num
     </svg>
   );
   if (lead) {
+    // God-tier pass — THE THREE-EYED ANNIHILATOR: the crop goes void-dark and
+    // a colossal three-eyed archon descends over the board — each of its eyes
+    // snapping a kill-reticle onto a doomed piece below — before the triple
+    // detonation, the flare and twin violet shockwaves.
     return (
-      <BoardWideStage>
-        <BoardWash color="rgba(22,14,28,0.28)" delayMs={delayMs} />
+      <GodEvent
+        wash="rgba(22,14,28,0.32)"
+        rays="rgba(164,140,196,0.6)"
+        boom="rgba(164,140,196,0.9)"
+        flare="rgba(224,119,107,0.7)"
+        sparkFill="#c9b6e0"
+        sparkStroke="#463357"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 40 44" className="h-full w-full" aria-hidden="true">
+            {/* the archon's crowned void head with three burning eyes */}
+            <path d="M14 3 L16 7 L20 2 L24 7 L26 3 L27 10 H13 Z" fill="rgba(30,22,40,0.95)" stroke="#a48cc4" strokeWidth="0.9" strokeLinejoin="round" />
+            <path d="M13 16 C13 11 16 9 20 9 C24 9 27 11 27 16 C27 19 25 21 22.5 21.5 H17.5 C15 21 13 19 13 16 Z" fill="rgba(40,30,56,0.95)" stroke="#a48cc4" strokeWidth="1" strokeLinejoin="round" />
+            <circle cx="16.5" cy="14.5" r="1.2" fill="#e0776b" />
+            <circle cx="20" cy="13" r="1.4" fill="#e0776b" />
+            <circle cx="23.5" cy="14.5" r="1.2" fill="#e0776b" />
+            {/* the mantle, spread over the doomed board */}
+            <path d="M11 44 C9 33 11 24 20 22 C29 24 31 33 29 44 C26.5 41 25 42 24 44 C22 41.5 20 41.5 18 44 C16.5 41.5 14.5 41 11 44 Z" fill="rgba(30,22,40,0.9)" stroke="#a48cc4" strokeWidth="0.9" strokeLinejoin="round" />
+            {/* sighting lines flicking down from the eyes */}
+            <path d="M16 16 L8 34 M20 15 L20 36 M24 16 L32 34" stroke="rgba(224,119,107,0.6)" strokeWidth="0.8" strokeLinecap="round" strokeDasharray="2 2" />
+          </svg>
+        }
+      >
         {[
-          { l: "30%", t: "30%", d: 0 },
-          { l: "56%", t: "40%", d: 160 },
-          { l: "40%", t: "56%", d: 320 },
+          { l: "24%", t: "62%", d: 200 },
+          { l: "44%", t: "68%", d: 360 },
+          { l: "64%", t: "60%", d: 520 },
         ].map((s, i) => (
           <React.Fragment key={i}>
-            <span className="fx-sig-reticle absolute block h-[13%] w-[13%]" style={{ left: s.l, top: s.t, animationDelay: `${delayMs + s.d}ms` }}>
+            <span className="fx-sig-reticle absolute block h-[11%] w-[11%]" style={{ left: s.l, top: s.t, animationDelay: `${delayMs + s.d}ms` }}>
               {reticle}
             </span>
             <span
-              className="fx-sig-flash absolute block h-[11%] w-[11%] rounded-full"
+              className="fx-sig-flash absolute block h-[9%] w-[9%] rounded-full"
               style={{ left: s.l, top: s.t, margin: "1%", background: "rgba(224,119,107,0.8)", animationDelay: `${delayMs + s.d + 200}ms` }}
             />
           </React.Fragment>
         ))}
-        <BoardBoom delayMs={delayMs + 620} color="rgba(164,140,196,0.9)" thickness={4} />
-      </BoardWideStage>
+      </GodEvent>
     );
   }
   return (
@@ -10585,20 +11816,49 @@ function VoidRealmBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
     </svg>
   );
   if (lead) {
+    // God-tier pass — THE REALM-EATER: the crop drowns violet-black and a
+    // colossal three-mawed void leviathan rises through the board — each of
+    // its mouths yawning open as one of the three hungry pits — before the
+    // event-horizon flare and twin violet shockwaves.
     return (
-      <BoardWideStage>
-        <BoardWash color="rgba(18,8,31,0.3)" delayMs={delayMs} />
+      <GodEvent
+        wash="rgba(18,8,31,0.34)"
+        rays="rgba(143,107,255,0.5)"
+        boom="rgba(143,107,255,0.85)"
+        flare="rgba(143,107,255,0.5)"
+        sparkFill="#8f6bff"
+        sparkStroke="#2a1050"
+        motion="rise"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 44 44" className="h-full w-full" aria-hidden="true">
+            {/* the leviathan's mass, barely more than outline against the dark */}
+            <path d="M6 44 C2 32 6 18 14 12 C18 8 26 8 30 12 C38 18 42 32 38 44 Z" fill="rgba(18,8,31,0.92)" stroke="#8f6bff" strokeWidth="1.3" strokeLinejoin="round" />
+            {/* its three maws — the pits themselves */}
+            <circle cx="14" cy="24" r="6.5" fill="rgba(8,3,15,0.97)" stroke="#8f6bff" strokeWidth="1.2" />
+            <circle cx="14" cy="24" r="2.4" fill="#000000" />
+            <circle cx="30" cy="22" r="5.5" fill="rgba(8,3,15,0.97)" stroke="#8f6bff" strokeWidth="1.1" />
+            <circle cx="30" cy="22" r="2" fill="#000000" />
+            <circle cx="22" cy="35" r="6" fill="rgba(8,3,15,0.97)" stroke="#8f6bff" strokeWidth="1.2" />
+            <circle cx="22" cy="35" r="2.2" fill="#000000" />
+            {/* thin hungry teeth around each rim */}
+            <path d="M9 20 L10.5 22 M19 20 L17.5 22 M26 18 L27.5 20 M34 18 L32.5 20 M17 32 L18.5 34 M27 32 L25.5 34" stroke="rgba(143,107,255,0.7)" strokeWidth="0.8" strokeLinecap="round" />
+            {/* a pale watching eye between the maws */}
+            <path d="M18 15 C20 13 24 13 26 15 C24 17 20 17 18 15 Z" fill="rgba(143,107,255,0.3)" stroke="#8f6bff" strokeWidth="0.8" />
+            <circle cx="22" cy="15" r="1" fill="#c9b6ff" />
+          </svg>
+        }
+      >
         {[
-          { l: "28%", t: "34%", s: "14%", d: 0 },
-          { l: "52%", t: "28%", s: "12%", d: 180 },
-          { l: "42%", t: "52%", s: "13%", d: 360 },
+          { l: "26%", t: "60%", s: "11%", d: 300 },
+          { l: "50%", t: "64%", s: "10%", d: 440 },
+          { l: "64%", t: "56%", s: "10%", d: 580 },
         ].map((p, i) => (
           <span key={i} className="fx-sig-maw absolute block" style={{ left: p.l, top: p.t, height: p.s, width: p.s, animationDelay: `${delayMs + p.d}ms` }}>
             {pit}
           </span>
         ))}
-        <BoardBoom delayMs={delayMs + 520} color="rgba(143,107,255,0.85)" />
-      </BoardWideStage>
+      </GodEvent>
     );
   }
   return (
@@ -10654,7 +11914,9 @@ function SanctRiseBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           </span>
         ))}
         <ShardBurst vectors={PIN_STARS} fill="#ffd95e" stroke="#8a6414" delayMs={delayMs + 480} sizePct={6} />
-        <BoardBoom delayMs={delayMs + 540} color="rgba(255,232,150,0.9)" />
+        {/* God-tier pass: the sanctified return lands twin dawn shockwaves. */}
+        <BoardBoom delayMs={delayMs + 540} color="rgba(255,232,150,0.9)" thickness={4} />
+        <BoardBoom delayMs={delayMs + 680} color="rgba(255,244,200,0.75)" />
       </BoardWideStage>
     );
   }
@@ -11179,20 +12441,57 @@ function WarBanner({ tilt }: { tilt: number }) {
 
 function TotalWarBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   if (lead) {
+    // God-tier pass — WAR ITSELF TAKES THE FIELD (tier 10): the crop floods
+    // crimson, fire-light fans up out of the ground, and a COLOSSAL war god
+    // rises over the board with the great standard planted in one fist while
+    // the banners charge beneath it — triple concussion, sparks, the works.
     return (
       <BoardWideStage>
         <BoardWash color="rgba(194,64,58,0.20)" delayMs={delayMs} />
+        {/* fire-light fanning up out of the ground */}
+        {GOD_FAN.map((s, i) => (
+          <span
+            key={i}
+            className="absolute left-1/2 top-[32%] block h-[62%]"
+            style={{ width: s.w, marginLeft: `calc(${s.w} / -2)`, transform: `rotate(${s.r}) scaleY(-1)`, transformOrigin: "50% 100%" }}
+          >
+            <span
+              className="fx-sig-shaft absolute inset-0 block"
+              style={{ background: "linear-gradient(180deg, rgba(224,119,107,0.7), transparent 78%)", animationDelay: `${delayMs + s.d}ms` }}
+            />
+          </span>
+        ))}
+        {/* the colossal war god, standard planted */}
+        <span className="fx-sig-rise absolute left-[36%] top-[20%] block h-[48%] w-[28%]" style={{ animationDelay: `${delayMs + 170}ms` }}>
+          <svg viewBox="0 0 40 44" className="h-full w-full" aria-hidden="true">
+            {/* horned helm, burning eyes */}
+            <path d="M12 9 C9 6 9 3 12 2 C13 4.5 13.5 6.5 13.5 9 Z M28 9 C31 6 31 3 28 2 C27 4.5 26.5 6.5 26.5 9 Z" fill="#c9d2dc" stroke="#5b6672" strokeWidth="0.8" strokeLinejoin="round" />
+            <path d="M14 13 C14 8 16.5 6 20 6 C23.5 6 26 8 26 13 V15 H14 Z" fill="#7a2f28" stroke="#3a1512" strokeWidth="1" strokeLinejoin="round" />
+            <path d="M16.5 11 H18.5 M21.5 11 H23.5" stroke="#ffd95e" strokeWidth="1.2" strokeLinecap="round" />
+            {/* armoured bulk */}
+            <path d="M11 44 L10 28 C10 21 14 16.5 20 16.5 C26 16.5 30 21 30 28 L29 44 Z" fill="rgba(194,64,58,0.9)" stroke="#5a1512" strokeWidth="1.1" strokeLinejoin="round" />
+            <path d="M14 24 H26 M13 32 H27" stroke="rgba(90,21,18,0.65)" strokeWidth="0.9" fill="none" />
+            {/* the great standard, planted in one fist */}
+            <path d="M33 44 V4" stroke="#3a2a1a" strokeWidth="1.8" strokeLinecap="round" />
+            <path d="M33 5 H40 L37.5 9 L40 13 H33 Z" fill="#c2403a" stroke="#5a1512" strokeWidth="0.9" strokeLinejoin="round" />
+            <circle cx="33" cy="3" r="1.4" fill="#e6bf6a" stroke="#7a5b23" strokeWidth="0.6" />
+          </svg>
+        </span>
         {/* Two banners charge the board in opposite directions. */}
-        <span className="fx-sig-cross absolute left-[36%] top-[32%] block h-[16%] w-[15%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <span className="fx-sig-cross absolute left-[36%] top-[52%] block h-[16%] w-[15%]" style={{ animationDelay: `${delayMs + 160}ms` }}>
           <WarBanner tilt={-4} />
         </span>
-        <span className="fx-sig-crossback absolute left-[49%] top-[52%] block h-[16%] w-[15%]" style={{ animationDelay: `${delayMs + 160}ms` }}>
+        <span className="fx-sig-crossback absolute left-[49%] top-[62%] block h-[16%] w-[15%]" style={{ animationDelay: `${delayMs + 320}ms` }}>
           <WarBanner tilt={5} />
         </span>
+        <span
+          className="fx-sig-flash absolute left-[38%] top-[55%] block h-[18%] w-[24%] rounded-full"
+          style={{ background: "rgba(255,181,168,0.7)", animationDelay: `${delayMs + 470}ms` }}
+        />
         {[0, 1, 2].map((i) => (
-          <BoardBoom key={i} delayMs={delayMs + 140 + i * 210} color="rgba(224,119,107,0.85)" thickness={4} />
+          <BoardBoom key={i} delayMs={delayMs + 500 + i * 190} color="rgba(224,119,107,0.85)" thickness={4} />
         ))}
-        <ShardBurst vectors={PIN_STARS} fill="#ffd95e" stroke="#8a6414" delayMs={delayMs + 420} sizePct={6} />
+        <ShardBurst vectors={PIN_STARS} fill="#ffd95e" stroke="#8a6414" delayMs={delayMs + 520} sizePct={6} />
       </BoardWideStage>
     );
   }
