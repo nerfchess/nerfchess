@@ -9,7 +9,7 @@ import { Tier } from "@/engine/nerf";
 import { TIER_ROMAN } from "@/lib/tiers";
 import { playCardUse } from "@/lib/sounds";
 import { motion, useReducedMotion } from "framer-motion";
-import { Archive, Ban, ChevronRight, Clock, Hourglass, Inbox, Layers, ShieldAlert, Swords, type LucideIcon } from "lucide-react";
+import { Ban, ChevronRight, Clock, Hourglass, Inbox, Layers, ShieldAlert, Swords, type LucideIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { BuffCard } from "./BuffCard";
 import { OppPlaysDockSection, type OppPlay } from "./OppPlaysLog";
@@ -372,6 +372,19 @@ function UsedBadge({ nullified }: { nullified: boolean }) {
   );
 }
 
+/** Thin rule that brackets the spent cards at the foot of an arsenal, so the
+ * cards still in play read first and the used ones settle below their own
+ * label. Rendered once per side (yours and the opponent's), never merged
+ * across the two. */
+function UsedDivider() {
+  return (
+    <div className="flex items-center gap-2 pt-1">
+      <span className="smallcaps text-[8px] font-semibold text-parchment-500">Used</span>
+      <span aria-hidden className="h-px flex-1 bg-white/10" />
+    </div>
+  );
+}
+
 // --- "Against you" transparency section -------------------------------------
 // Every constraint currently limiting YOUR play, with its remaining duration,
 // derived from public state only: board effects whose owner/against side is
@@ -538,9 +551,11 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
     !BUFF_BY_ID[inst.id] || (hideOpponentCards && !inst.spent && !inst.nullified);
   const theirsShown = theirsAll.filter(({ inst }) => !isHiddenOpp(inst));
 
-  // Spent / nullified / activation-used cards leave the live sections and sink
-  // into one compact "Used" pile at the very bottom of the dock, tier
-  // descending, so the live sections only ever hold cards that still matter.
+  // A card counts as "used" once it is spent, nullified, or an activation that
+  // has already fired. Split each arsenal so the cards still in play sit at the
+  // top and the used ones gather under a "Used" rule at the foot of THAT side's
+  // section, tier descending. Kept separate for your list and the opponent's,
+  // never merged into one shared pile: "used" stays owned.
   const isDead = (inst: (typeof mine)[number]) =>
     !!(inst.spent || inst.nullified || inst.usedActivation);
   const byTierDesc = (
@@ -951,53 +966,54 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
         <DockSectionHeader
           icon={Layers}
           label={`Your ${nounPlural}`}
-          count={mineLive.length}
+          count={mine.length}
           accent="mine"
         />
         {/* The next-draft chip above already says when cards arrive; repeating
             it here went stale after banks ("your first draft" forever). */}
-        {mineLive.length === 0 && <p className="text-[11px] text-parchment-400">None yet.</p>}
+        {mine.length === 0 && <p className="text-[11px] text-parchment-400">None yet.</p>}
         {/* A thin mint spine brackets your arsenal so "these are mine" is
-            unmistakable next to the opponent's coral rows. Only live cards sit
-            here; spent ones sink into the Used pile below. */}
-        {mineLive.length > 0 && (
-          <div className="space-y-1 border-l border-mint/30 pl-2">{mineLive.map(myRow)}</div>
+            unmistakable next to the opponent's coral rows. Live cards sit up
+            top; your spent ones gather under a "Used" rule at the foot of the
+            same section (tier descending), so used cards stay clearly YOURS. */}
+        {mine.length > 0 && (
+          <div className="space-y-1 border-l border-mint/30 pl-2">
+            {mineLive.map(myRow)}
+            {mineDead.length > 0 && (
+              <>
+                <UsedDivider />
+                {mineDead.map(myRow)}
+              </>
+            )}
+          </div>
         )}
 
-        {theirsLive.length > 0 && (
+        {theirsShown.length > 0 && (
           <>
             <div className="border-t border-white/10 pt-2">
               <DockSectionHeader
                 icon={Swords}
                 label={`Opponent's ${nounPlural}`}
-                count={theirsLive.length}
+                count={theirsShown.length}
                 accent="opponent"
               />
             </div>
-            <div className="space-y-1">{theirsLive.map(oppEntry)}</div>
+            {/* Opponent's cards mirror yours: live rows first, then their used
+                ones under the same "Used" rule, kept in the opponent's own
+                section rather than blended into a shared pile. */}
+            <div className="space-y-1">
+              {theirsLive.map(oppEntry)}
+              {theirsDead.length > 0 && (
+                <>
+                  <UsedDivider />
+                  {theirsDead.map(oppEntry)}
+                </>
+              )}
+            </div>
             {/* Opponent hidden cards render nothing at all: no face-down minis
                 and no "N hidden" count. Cards summoned via the owner god panel
                 (and any still-masked card) stay fully invisible to the
                 opponent, on the left side included. */}
-          </>
-        )}
-
-        {/* The Used pile: every spent / nullified / activation-used card, both
-            sides, compact and tier-descending at the very bottom. Rows still
-            expand on click for the rule text. */}
-        {(mineDead.length > 0 || theirsDead.length > 0) && (
-          <>
-            <div className="border-t border-white/10 pt-2">
-              <DockSectionHeader
-                icon={Archive}
-                label="Used"
-                count={mineDead.length + theirsDead.length}
-              />
-            </div>
-            <div className="space-y-1">
-              {mineDead.map(myRow)}
-              {theirsDead.map(oppEntry)}
-            </div>
           </>
         )}
 
