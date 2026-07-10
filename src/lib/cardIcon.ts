@@ -302,7 +302,6 @@ const CARD_ICON_OVERRIDES: Record<string, string> = {
   teleport_knight: "Sparkle",
   kingslide: "ArrowRightToLine",
   // Protection
-  sanctuary: "House",
   chain_mail: "Link",
   checkmate_immunity: "ShieldX",
   // Info / draft / misc

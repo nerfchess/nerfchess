@@ -1140,8 +1140,6 @@ export const PLAYS: Record<string, SigPlugin> = {
   hold_the_bridge: B(SigilRing, ["#c9a84c","#e8fff7","#3a3026"], "hold_the_bridge", { ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "aegis", source: "kingSafe" }, true),
   // Iron Wall (t4 protection)
   iron_wall: B(SigilRing, ["#5fc9b0","#ffd76a","#1c4a3a"], "iron_wall", { ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "aegis", source: "shield" }, true),
-  // Sanctuary (t4 protection)
-  sanctuary: B(SigilRing, ["#5fc9b0","#e3d0ff","#1c3a40"], "sanctuary", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis", source: "shield" }, true),
   // Shieldmaiden (t4 protection)
   shieldmaiden: B(SigilRing, ["#7fd8a8","#fff2c9","#1c4a2c"], "shieldmaiden", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis", source: "shield" }, true),
   // Warding Circle (t4 protection)

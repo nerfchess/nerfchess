@@ -1867,20 +1867,6 @@ const TIER4: Buff[] = [
     },
   ),
   def(
-    { id: "sanctuary", name: "Sanctuary", description: "Choose a square. The piece standing on it (never your king) cannot be captured for the rest of the game, and this protection follows that piece as it moves.", tier: 4, category: "protection" },
-    activated(
-      (_inst, _api, picks) =>
-        picks.length > 0
-          ? null
-          : { kind: "square", label: "Choose the sanctuary square", squares: Array.from({ length: 64 }, (_, i) => i) },
-      (_inst, api, picks) => {
-        if (picks[0]?.square != null) {
-          addEffect(api, { kind: "shield", owner: api.me, squares: [picks[0].square], turns: null });
-        }
-      },
-    ),
-  ),
-  def(
     { id: "amazon_knight", requires: ["n"], name: "Amazon Knight", description: "One knight becomes a knight plus queen for 2 turns.", tier: 4, category: "movement", fx: { motif: "empower", pieces: ["n"], moveAs: "q", self: true } },
     bindPiece("Choose the knight", bindCandidates(["n"]), {
       turns: 2,
@@ -2791,52 +2777,6 @@ const TIER6: Buff[] = [
           ? [pawnMove(api, sq, back, inst.id)]
           : [];
       }),
-    ),
-  ),
-  def(
-    { id: "sanctuary_zone", name: "Sanctuary Zone", description: "Pick any 2x2 area: your pieces standing there, your king aside, cannot be captured for your opponent's next 5 turns.", tier: 6, category: "protection", boon: true },
-    activated(
-      (_inst, _api, picks) => {
-        // Two picks place the 2x2 precisely: the first is any corner, the
-        // second is a diagonal neighbour of it, so the two picks are opposite
-        // corners and the player aims the box in whatever direction they want
-        // (no fixed up-and-right auto-extend that felt random).
-        if (picks.length === 0) {
-          return {
-            kind: "square",
-            label: "Pick one corner of your 2x2 sanctuary",
-            squares: Array.from({ length: 64 }, (_, i) => i),
-          };
-        }
-        if (picks.length === 1) {
-          const a = picks[0].square!;
-          return {
-            kind: "square",
-            label: "Pick the opposite corner to place the 2x2",
-            squares: [a - 9, a - 7, a + 7, a + 9].filter(
-              (b) =>
-                b >= 0 &&
-                b < 64 &&
-                Math.abs(FILE(b) - FILE(a)) === 1 &&
-                Math.abs(RANK(b) - RANK(a)) === 1,
-            ),
-          };
-        }
-        return null;
-      },
-      (_inst, api, picks) => {
-        const a = picks[0]?.square;
-        const b = picks[1]?.square;
-        if (a == null || b == null) return;
-        const f0 = Math.min(FILE(a), FILE(b));
-        const r0 = Math.min(RANK(a), RANK(b));
-        addEffect(api, {
-          kind: "shield",
-          owner: api.me,
-          squares: [SQ(f0, r0), SQ(f0 + 1, r0), SQ(f0, r0 + 1), SQ(f0 + 1, r0 + 1)],
-          turns: 4,
-        });
-      },
     ),
   ),
   def(
