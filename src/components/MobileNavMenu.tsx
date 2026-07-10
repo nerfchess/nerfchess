@@ -91,8 +91,10 @@ export function MobileNavMenu({
                 <>
                   <PlayerAvatar name={user.username} avatar={user.avatar} size={22} className="rounded-full" />
                   <span className="min-w-0 truncate">{user.username}</span>
+                  {/* Live displayed rating (best mode bucket), matching the
+                      header chip and profile — not the frozen legacy column. */}
                   <span className="ml-auto shrink-0 font-mono text-xs text-parchment-400">
-                    {Math.round(user.rating)}
+                    {Math.round(user.displayRating ?? user.rating)}
                   </span>
                 </>
               ) : (

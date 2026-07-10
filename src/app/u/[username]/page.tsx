@@ -19,6 +19,7 @@ import {
   RETIRED_CATEGORY_IDS,
   type RatingCategoryId,
 } from "@/lib/ratingCategories";
+import { isProvisionalRd } from "@/lib/ratingDisplay";
 
 interface ProfileUser {
   username: string;
@@ -218,7 +219,7 @@ export default function ProfilePage() {
                       {r ? (
                         <>
                           {Math.round(r.rating)}
-                          {r.rd > 150 && <span className="text-parchment-400">?</span>}
+                          {isProvisionalRd(r.rd) && <span className="text-parchment-400">?</span>}
                         </>
                       ) : (
                         <span className="text-parchment-500">-</span>
