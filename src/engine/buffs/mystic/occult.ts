@@ -1,5 +1,5 @@
 // Mystic set: THE OCCULT. Spirit work and hidden power: a third eye that reads
-// their hand (info flag), a seance calling a captured piece back (reviveOne),
+// their nerf and grants a reroll, a seance calling a captured piece back (reviveOne),
 // a hex doll that pins a piece in place (walnut), a chalk warding circle
 // around your throne (king_safe), a ley line no enemy may cross (barLine), a
 // spirit guide that walks beside you and departs (summonTemp), and a mirror
@@ -32,15 +32,19 @@ export const MYSTIC_OCCULT: Buff[] = [
       id: "third_eye",
       name: "Third Eye",
       description:
-        "Your third eye opens onto their whole hand: see your opponent's next card options before they pick, and see their nerf for the rest of the game.",
+        "Your third eye opens onto what is still hidden: see your opponent's nerf for the rest of the game, and gain one draft reroll.",
       tier: 2,
       category: "info",
       boon: true,
       flavor: "It does not blink. It does not need to.",
     },
+    // Reworked for the full-transparency era: hands and offers are public, so
+    // the eye now reads the one thing that stays secret (the nerf) and guides
+    // the holder's own hand (+1 reroll). Unique combo: Extra Glance is the
+    // reveal alone, Peek the reroll alone.
     instant((_inst, api) => {
-      api.mine.flags.seeOppCards = true;
       api.mine.oppNerfRevealed = true;
+      api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
     }),
   ),
   card(

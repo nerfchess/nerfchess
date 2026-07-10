@@ -574,8 +574,11 @@ const TIER1: Buff[] = [
   ),
   def({ id: "free_retreat", name: "Free Retreat", description: "Undo your last move once, before your opponent replies.", tier: 1, category: "tempo" }),
   def(
-    { id: "peek", name: "Peek", description: "See your opponent's next buff options.", tier: 1, category: "info", boon: true },
-    instant((_inst, api) => { api.mine.flags.seeOppCards = true; }),
+    // Reworked for the full-transparency era (hands and offers are public, so
+    // "see their next options" revealed nothing): a peek at the deck is now a
+    // do-over token. Sole card granting exactly +1 reroll and nothing else.
+    { id: "peek", name: "Peek", description: "Gain one draft reroll.", tier: 1, category: "draft", boon: true, flavor: "One look was enough to want a different look." },
+    instant((_inst, api) => { api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1; }),
   ),
   def(
     { id: "loyal_pawn", requires: ["p"], name: "Loyal Pawn", description: "One pawn promotes on your 7th rank instead of your 8th.", tier: 1, category: "pieces" },
@@ -618,20 +621,14 @@ const TIER1: Buff[] = [
     }),
   ),
   def(
-    { id: "scout", name: "Scout", description: "Reveal one random buff your opponent holds.", tier: 1, category: "info", boon: true },
-    {
-      kind: "passive",
-      init: (inst, api) => {
-        const options = api.theirs.buffs.filter((b) => !b.spent && !b.nullified);
-        if (options.length) inst.state.seen = options[api.rng.int(options.length)].id;
-      },
-      status: (inst) => {
-        const seen = inst.state.seen as string | undefined;
-        return seen
-          ? `opponent holds ${BUFF_BY_ID[seen]?.name ?? seen}`
-          : "opponent held no buffs";
-      },
-    },
+    // Reworked for the full-transparency era (held buffs are public, so the
+    // random reveal showed nothing new): the scout now raids the supply line.
+    // Sole card granting exactly takeBoth+1 with no rider (Draft Seize and
+    // Greed bundle it with a block / prepThree); priced against those peers.
+    { id: "scout", name: "Scout", description: "Take both cards in your next draft instead of one.", tier: 4, category: "draft", boon: true, flavor: "Sent ahead to look. Came back with the wagon." },
+    instant((_inst, api) => {
+      api.mine.flags.takeBoth = (api.mine.flags.takeBoth ?? 0) + 1;
+    }),
   ),
   def(
     // Guards the king without a shield effect, so the ward motif is the only
@@ -784,8 +781,13 @@ const TIER1: Buff[] = [
     }),
   ),
   def(
-    { id: "quick_glance", name: "Quick Glance", description: "See the tier of your opponent's next draft.", tier: 1, category: "info", boon: true },
-    instant((_inst, api) => { api.mine.flags.seeOppTier = true; }),
+    // Reworked for the full-transparency era (offer tiers are public): one
+    // glance now palms the opponent's do-over. Sole card whose whole effect is
+    // stealing a reroll (War Room Sabotage bundles the steal with a block).
+    { id: "quick_glance", name: "Quick Glance", description: "Your opponent loses one draft reroll, if they still hold one.", tier: 1, category: "draft", flavor: "You saw them reaching for the do-over. Now there is no do-over." },
+    instant((_inst, api) => {
+      api.theirs.rerollsLeft = Math.max(0, (api.theirs.rerollsLeft ?? 0) - 1);
+    }),
   ),
   def(
     { id: "nudge", name: "Nudge", description: "Push one enemy pawn back one square if empty behind, once.", tier: 1, category: "attack" },
@@ -1250,10 +1252,13 @@ const TIER2: Buff[] = [
     ),
   ),
   def(
-    { id: "draft_insight", name: "Draft Insight", description: "See both of your opponent's next draft cards and their tiers.", tier: 2, category: "info", boon: true },
+    // Reworked for the full-transparency era (opponent offers are public):
+    // insight now bends your own draft instead. forceTier=3 is unique to this
+    // card, priced on the forceTier ladder (North Star 4@t3, High Roll 5@t4,
+    // Favorable Stars 6@t5).
+    { id: "draft_insight", name: "Draft Insight", description: "Your next draft is fated to offer tier 3 cards.", tier: 2, category: "draft", boon: true, flavor: "You cannot change the cards. You can change where they are dealt from." },
     instant((_inst, api) => {
-      api.mine.flags.seeOppCards = true;
-      api.mine.flags.seeOppTier = true;
+      api.mine.flags.forceTier = 3;
     }),
   ),
   def(
@@ -3456,7 +3461,7 @@ const TIER8: Buff[] = [
     ),
   ),
   def(
-    { id: "perfect_rewind", name: "Perfect Rewind", description: "Rewind all pieces to where they stood eight half-moves ago, once.", tier: 8, category: "tempo" },
+    { id: "perfect_rewind", name: "Perfect Rewind", description: "Rewind all pieces to where they stood eight half-moves ago, once.", tier: 6, category: "tempo" },
     {
       kind: "activated",
       init: (inst, api) => {
