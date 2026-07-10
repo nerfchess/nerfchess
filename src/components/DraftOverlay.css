@@ -30,13 +30,32 @@
 }
 
 /* Border-first hover: a solid tier-colored outline and a hard dark drop.
-   Overrides the colored bloom `.draft-face:hover` would otherwise add. */
+   Overrides the colored bloom `.draft-face:hover` would otherwise add.
+
+   CRITICAL: hover is tracked on the WRAPPER (.draft-fx), never the face.
+   The face lifts on hover (card-juicy) and tilts under the pointer
+   (parallax), so keying :hover on the face itself flickered — the
+   moved/tilted face slides out from under the cursor near the edges,
+   :hover drops, the face falls back, and the state oscillates ("hovering
+   stops sometimes"). The wrapper's box never transforms on hover, so its
+   :hover is rock solid; the face inherits the treatment from it. */
 @media (hover: hover) {
-  .draft-fx .draft-face:hover {
+  .draft-fx:hover .draft-face {
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.12),
       0 0 0 2px rgb(var(--tier-rgb, 216 181 110) / 0.9),
       0 14px 28px -14px rgba(0, 0, 0, 0.85);
+  }
+  /* The card-juicy lift, re-keyed to the wrapper for the same reason. The
+     element's own :hover rule (globals) applies identical styles, so even
+     when the face's flickery self-hover drops, nothing visibly changes. */
+  .draft-fx:hover .card-juicy {
+    transform: translateY(-3px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .draft-fx:hover .card-juicy {
+    transform: none;
   }
 }
 
@@ -163,7 +182,7 @@
   align-items: center;
   gap: 0.4rem;
   padding: 2.4rem 1.5rem 1.7rem;
-  border: 1px solid rgb(216 181 110 / 0.35);
+  border: 1px solid rgb(var(--pack-rgb, 216 181 110) / 0.4);
   border-top: 0;
   background:
     linear-gradient(165deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02) 45%, rgba(0, 0, 0, 0.25)),
@@ -177,14 +196,14 @@
   content: "";
   position: absolute;
   inset: 8px;
-  border: 1px solid rgb(216 181 110 / 0.16);
+  border: 1px solid rgb(var(--pack-rgb, 216 181 110) / 0.18);
   pointer-events: none;
 }
 .pack-numeral {
   font-size: 44px;
   line-height: 1;
   font-weight: 700;
-  color: rgb(216 181 110 / 0.85);
+  color: rgb(var(--pack-rgb, 216 181 110) / 0.9);
 }
 .pack-label {
   font-size: 9px;
@@ -192,7 +211,7 @@
 }
 .pack-hint {
   font-size: 8px;
-  color: rgb(216 181 110 / 0.7);
+  color: rgb(var(--pack-rgb, 216 181 110) / 0.75);
   animation: pack-hint-blink 1.6s ease-in-out infinite;
 }
 @keyframes pack-hint-blink {
@@ -204,8 +223,8 @@
   position: relative;
   display: block;
   height: 26px;
-  border: 1px solid rgb(216 181 110 / 0.35);
-  border-bottom: 1px dashed rgb(216 181 110 / 0.5);
+  border: 1px solid rgb(var(--pack-rgb, 216 181 110) / 0.4);
+  border-bottom: 1px dashed rgb(var(--pack-rgb, 216 181 110) / 0.55);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.02)),
     #1a1712;
@@ -219,7 +238,7 @@
   background: repeating-linear-gradient(
     -45deg,
     transparent 0 4px,
-    rgb(216 181 110 / 0.25) 4px 5px
+    rgb(var(--pack-rgb, 216 181 110) / 0.3) 4px 5px
   );
 }
 /* Idle temptation: a tiny periodic wiggle. */
@@ -238,24 +257,48 @@
   opacity: 0;
   background: radial-gradient(50% 50% at 50% 30%, rgb(255 233 170 / 0.5), transparent 70%);
 }
-/* Finishes. */
-.pack--gold .pack-body,
-.pack--gold .pack-flap {
-  border-color: rgb(244 196 48 / 0.6);
+/* Tier tint: the pack wears the color of the BEST card inside (owner
+   request: "the tier of the box should match what's inside"). Mirrors the
+   tier-bg-N palette in globals.css; data-tier is set by the overlay from
+   the offer's max tier. The finish classes below only scale the glow. */
+.pack[data-tier="1"]  { --pack-rgb: 126 181 154; }
+.pack[data-tier="2"]  { --pack-rgb: 139 169 196; }
+.pack[data-tier="3"]  { --pack-rgb: 216 181 110; }
+.pack[data-tier="4"]  { --pack-rgb: 199 148 104; }
+.pack[data-tier="5"]  { --pack-rgb: 198 104 96; }
+.pack[data-tier="6"]  { --pack-rgb: 198 95 143; }
+.pack[data-tier="7"]  { --pack-rgb: 168 119 216; }
+.pack[data-tier="8"]  { --pack-rgb: 224 82 82; }
+.pack[data-tier="9"]  { --pack-rgb: 244 196 48; }
+.pack[data-tier="10"] { --pack-rgb: 34 211 238; }
+
+/* Finishes: a soft tier-colored halo from tier 5 up, a stronger foil glow
+   for 7+, and the full mythic shimmer for 9/10 — all in the pack's own
+   tier color rather than a fixed gold/cyan. */
+.pack--rare .pack-body,
+.pack--rare .pack-flap {
   box-shadow:
     inset 0 0 0 1px rgba(0, 0, 0, 0.5),
-    0 0 30px -8px rgb(244 196 48 / 0.35),
+    0 0 24px -10px rgb(var(--pack-rgb, 216 181 110) / 0.3),
+    0 22px 50px -22px rgba(0, 0, 0, 0.9);
+}
+.pack--gold .pack-body,
+.pack--gold .pack-flap {
+  border-color: rgb(var(--pack-rgb, 244 196 48) / 0.6);
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.5),
+    0 0 30px -8px rgb(var(--pack-rgb, 244 196 48) / 0.35),
     0 22px 50px -22px rgba(0, 0, 0, 0.9);
 }
 .pack--mythic .pack-body,
 .pack--mythic .pack-flap {
-  border-color: rgb(34 211 238 / 0.65);
+  border-color: rgb(var(--pack-rgb, 34 211 238) / 0.65);
   box-shadow:
     inset 0 0 0 1px rgba(0, 0, 0, 0.5),
-    0 0 36px -6px rgb(34 211 238 / 0.4),
+    0 0 36px -6px rgb(var(--pack-rgb, 34 211 238) / 0.4),
     0 22px 50px -22px rgba(0, 0, 0, 0.9);
 }
-.pack--mythic .pack-numeral { color: #22d3ee; }
+.pack--mythic .pack-numeral { color: rgb(var(--pack-rgb, 34 211 238)); }
 /* The tear: flap rips up and away, body drops and fades, burst flashes. */
 .pack--tearing {
   animation: none;
@@ -394,6 +437,63 @@
     transform: none;
     transition: none;
   }
+}
+
+/* ---------------------------------------------------------------------------
+   Reroll feedback: the circular-arrow icon spins while a reroll request is in
+   flight (until the fresh cards deal in and clear `rerolling`). */
+@keyframes reroll-spin {
+  to { transform: rotate(360deg); }
+}
+.reroll-spin {
+  animation: reroll-spin 0.6s linear infinite;
+}
+
+/* ---------------------------------------------------------------------------
+   Banking feedback: as the face-down cards arrive at the Skip button ("the
+   bank"), the button itself pulses once like a vault door taking the deposit,
+   and a small fan of gold coins bursts up out of it under the rising
+   "+1 tier". Delays are tuned to the cards' flight (they land ~0.55-0.7s
+   after banking starts). Transform/opacity only. */
+@keyframes bank-pulse {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgb(216 181 110 / 0.55); }
+  35% { transform: scale(1.06); }
+  100% { transform: scale(1); box-shadow: 0 0 0 14px rgb(216 181 110 / 0); }
+}
+.bank-pulse {
+  animation: bank-pulse 0.6s ease-out 0.45s both;
+}
+.bank-burst {
+  position: absolute;
+  left: 50%;
+  top: 40%;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  z-index: 5;
+}
+.bank-coin {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ffe9aa, #d8b56e 60%, #a37f3f);
+  box-shadow: inset 0 0 0 1px rgb(163 127 63 / 0.8);
+  opacity: 0;
+  animation: bank-coin-fly 0.7s cubic-bezier(0.2, 0.6, 0.3, 1) calc(0.5s + var(--d, 0ms)) both;
+}
+@keyframes bank-coin-fly {
+  0% { opacity: 0; transform: rotate(var(--ang)) translateY(2px) scale(0.5); }
+  18% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(var(--ang)) translateY(calc(var(--dist) * -1)) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .reroll-spin,
+  .bank-pulse,
+  .bank-coin {
+    animation: none !important;
+  }
+  .bank-coin { opacity: 0; }
 }
 
 /* The floating draft timer: a flat ink chip, hard edges, quiet urgency. */

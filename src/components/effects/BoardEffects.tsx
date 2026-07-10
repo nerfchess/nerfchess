@@ -1370,7 +1370,24 @@ export type SigVisual =
   | "internpop"
   | "cratedrop"
   | "rentarook"
-  | "pizzarun";
+  | "pizzarun"
+  // --- Batch 14 (tier 7+ name-match pass: every 7+ card unique & distinct) ---
+  // Splits of visuals that used to be shared by two-plus tier 7+ cards, so no
+  // two of them ever play the same art.
+  | "crownlegion" // amazon_army (was crownrain, shared with triple_amazon)
+  | "agesward" // aegis_of_ages (was aegis, shared three ways)
+  | "dugin" // ww_dug_in_defense (was aegis)
+  | "chalkcircle" // summoning_circle (was summonrift)
+  | "kingsmuster" // kings_legion (was summonrift)
+  | "totalannihilation" // total_annihilation (was dragonlord, shared with queens_apocalypse)
+  | "voidrealm" // void_realm (was archmage, shared with grand_reset)
+  | "sanctrise" // full_resurrection (was phoenixrise, shared with phoenix_rebirth)
+  // --- Gambling wheels (owner add-on: every gambling card spins a wheel) ---
+  | "goldwheel" // jackpot: gold coin wheel, pays out on landing
+  | "gamblewheel" // gamble: red/gold double-or-nothing wedges
+  | "zodiacwheel" // zodiac_wheel: midnight star-chart houses
+  | "dicewheel" // wa_high_roll: die-pip wedges
+  | "runewheel"; // wa_arcane_reroll: rune-etched reroll wheel
 export type SigOrdering = "file" | "sweep" | "octagon" | "line" | "radial";
 export type SigSoundKey =
   | "nova"
@@ -1499,7 +1516,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   god_knight: { ordering: "radial", staggerMs: 0, victims: ["n"], visual: "coronation", hasLead: true, sound: "coronation", source: "empower" },
   double_amazon: { ordering: "sweep", staggerMs: 110, victims: ["n"], visual: "crownrain", hasLead: true, sound: "crownrain", source: "empower" },
   triple_amazon: { ordering: "sweep", staggerMs: 100, victims: ["n"], visual: "crownrain", hasLead: true, sound: "crownrain", source: "empower" },
-  amazon_army: { ordering: "sweep", staggerMs: 90, victims: ["n", "b"], visual: "crownrain", hasLead: true, sound: "crownrain", source: "empower" },
+  amazon_army: { ordering: "sweep", staggerMs: 90, victims: ["n", "b"], visual: "crownlegion", hasLead: true, sound: "crownrain", source: "empower" },
   colossus: { ordering: "radial", staggerMs: 0, victims: ["p", "n", "b", "r", "q"], visual: "colossus", hasLead: true, sound: "colossus", source: "empower" },
   titan: { ordering: "radial", staggerMs: 0, victims: ["p", "n", "b", "r", "q"], visual: "colossus", hasLead: true, sound: "colossus", source: "empower" },
 
@@ -1552,7 +1569,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   hex_of_stone: { ordering: "sweep", staggerMs: 55, victims: ["n", "b"], visual: "greyhex", hasLead: true, sound: "petrify", source: "walnut" },
 
   // Divine / protection (shield + kingSafe zones).
-  aegis_of_ages: { ordering: "radial", staggerMs: 35, victims: "all", visual: "aegis", hasLead: true, sound: "aegis", source: "shield" },
+  aegis_of_ages: { ordering: "radial", staggerMs: 35, victims: "all", visual: "agesward", hasLead: true, sound: "aegis", source: "shield" },
   divine_intervention: { ordering: "radial", staggerMs: 0, victims: ["k"], visual: "holylight", hasLead: true, sound: "shades", source: "kingSafe" },
 
   // Court decree (stun zone).
@@ -1577,7 +1594,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   undying_thrall: { ordering: "radial", staggerMs: 0, victims: "all", visual: "gravehands", hasLead: false, sound: "wall", source: "summon" },
   hallowed_return: { ordering: "radial", staggerMs: 0, victims: "all", visual: "holylight", hasLead: true, sound: "wall", source: "summon" },
   imp_familiar: { ordering: "radial", staggerMs: 0, victims: "all", visual: "summonrift", hasLead: false, sound: "wall", source: "summon" },
-  summoning_circle: { ordering: "sweep", staggerMs: 90, victims: "all", visual: "summonrift", hasLead: true, sound: "wall", source: "summon" },
+  summoning_circle: { ordering: "sweep", staggerMs: 90, victims: "all", visual: "chalkcircle", hasLead: true, sound: "wall", source: "summon" },
   horn_of_summoning: { ordering: "sweep", staggerMs: 100, victims: "all", visual: "summonrift", hasLead: true, sound: "wall", source: "summon" },
   roost_of_rocs: { ordering: "sweep", staggerMs: 100, victims: "all", visual: "summonrift", hasLead: true, sound: "wall", source: "summon" },
   phantom_guardian: { ordering: "radial", staggerMs: 0, victims: "all", visual: "summonrift", hasLead: false, sound: "wall", source: "summon" },
@@ -1628,7 +1645,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   ww_paratroopers: { ordering: "sweep", staggerMs: 100, victims: "all", visual: "paradrop", hasLead: true, sound: "wall", source: "summon" },
   ww_suppressive_fire: { ordering: "radial", staggerMs: 45, victims: ["n"], visual: "suppress", hasLead: false, sound: "massfreeze", source: "frozen" },
   ww_double_trench: { ordering: "sweep", staggerMs: 60, victims: "all", visual: "trench", hasLead: true, sound: "wall", source: "blindfold" },
-  ww_dug_in_defense: { ordering: "radial", staggerMs: 30, victims: "all", visual: "aegis", hasLead: true, sound: "aegis", source: "shield" },
+  ww_dug_in_defense: { ordering: "radial", staggerMs: 30, victims: "all", visual: "dugin", hasLead: true, sound: "aegis", source: "shield" },
 
   // ARCANE (wild/arcane): time stop, mass freeze/petrify, disintegration, conjure.
   wa_time_stop: { ordering: "radial", staggerMs: 0, victims: "all", visual: "timestop", hasLead: true, sound: "clockcage", source: "walnut" },
@@ -1715,7 +1732,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
 
   // Summons / reinforcements (summon zone).
   grand_summon: { ordering: "sweep", staggerMs: 90, victims: "all", visual: "summonrift", hasLead: true, sound: "wall", source: "summon" },
-  kings_legion: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "summonrift", hasLead: true, sound: "wall", source: "summon" },
+  kings_legion: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "kingsmuster", hasLead: true, sound: "wall", source: "summon" },
   ww_mercenary_queen: { ordering: "radial", staggerMs: 0, victims: "all", visual: "summonrift", hasLead: true, sound: "wall", source: "summon" },
   second_army: { ordering: "sweep", staggerMs: 85, victims: "all", visual: "reinforce", hasLead: false, sound: "wall", source: "summon" },
   // Batch 11 upgrade: the clone army rolls out of the same photocopier as its
@@ -1752,10 +1769,10 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   // that sweeps the board breathing fire (removal diff, like Nova), and an
   // archmage who rises and casts (summon / void zones). Every entry reuses an
   // existing SigSoundKey and an already-wired source. ---
-  total_annihilation: { ordering: "sweep", staggerMs: 95, victims: ["p", "n", "b", "r"], visual: "dragonlord", hasLead: true, sound: "atomic" },
+  total_annihilation: { ordering: "sweep", staggerMs: 95, victims: ["p", "n", "b", "r"], visual: "totalannihilation", hasLead: true, sound: "atomic" },
   queens_apocalypse: { ordering: "sweep", staggerMs: 85, victims: "all", visual: "dragonlord", hasLead: true, sound: "atomic" },
   grand_reset: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "archmage", hasLead: true, sound: "coronation", source: "summon" },
-  void_realm: { ordering: "radial", staggerMs: 55, victims: "all", visual: "archmage", hasLead: true, sound: "shades", source: "blindfold" },
+  void_realm: { ordering: "radial", staggerMs: 55, victims: "all", visual: "voidrealm", hasLead: true, sound: "shades", source: "blindfold" },
 
   // --- Batch 7: MARQUEE sea / monster cards + two more top-tier boardwide
   // spectacles. The sea beasts get bespoke reads so no two look alike: a kraken
@@ -1771,7 +1788,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   we_flood: { ordering: "sweep", staggerMs: 70, victims: "all", visual: "flood", hasLead: true, sound: "wall", source: "blindfold" },
   cataclysmic_meteor: { ordering: "sweep", staggerMs: 80, victims: ["p", "n", "b", "r", "q"], visual: "meteorstorm", hasLead: true, sound: "atomic" },
   phoenix_rebirth: { ordering: "sweep", staggerMs: 85, victims: "all", visual: "phoenixrise", hasLead: true, sound: "wall", source: "summon" },
-  full_resurrection: { ordering: "sweep", staggerMs: 90, victims: "all", visual: "phoenixrise", hasLead: true, sound: "wall", source: "summon" },
+  full_resurrection: { ordering: "sweep", staggerMs: 90, victims: "all", visual: "sanctrise", hasLead: true, sound: "wall", source: "summon" },
 
   // --- Batch 8: flavor pass. A round of dramatically-named cards that still
   // fell back to the plain detonation burst or a shared motif. The REMOVAL
@@ -1886,9 +1903,18 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   // same zone wiring as the rest of Batch 2-9.
 
   // Gambling (spin a wheel / pull the lever / flip a coin).
+  // Gambling wheels (owner add-on): every gambling card spins its own wheel —
+  // fortune = carnival wedges, jackpot = gold payout wheel + coin rain,
+  // gamble = red/gold chancer's wheel, zodiac = star-chart houses, high roll =
+  // die pips, arcane reroll = rune ticks. Roulette (red/black pockets) keeps
+  // its own entry in the removals block above. double_or_nothing stays on
+  // "coinflip" — that card IS a coin toss, and it keeps the two distinct.
   wheel_of_fortune: { ordering: "radial", staggerMs: 0, victims: "all", visual: "fortunewheel", hasLead: true, sound: "snooze", source: "stun" },
-  jackpot: { ordering: "radial", staggerMs: 0, victims: "all", visual: "slotmachine", hasLead: true, sound: "coronation", source: "summon" },
-  gamble: { ordering: "radial", staggerMs: 0, victims: "all", visual: "coinflip", hasLead: true, sound: "snooze", source: "stun" },
+  jackpot: { ordering: "radial", staggerMs: 0, victims: "all", visual: "goldwheel", hasLead: true, sound: "coronation", source: "summon" },
+  gamble: { ordering: "radial", staggerMs: 0, victims: "all", visual: "gamblewheel", hasLead: true, sound: "snooze", source: "stun" },
+  zodiac_wheel: { ordering: "radial", staggerMs: 0, victims: "all", visual: "zodiacwheel", hasLead: true, sound: "snooze", source: "stun" },
+  wa_high_roll: { ordering: "radial", staggerMs: 0, victims: "all", visual: "dicewheel", hasLead: true, sound: "snooze", source: "stun" },
+  wa_arcane_reroll: { ordering: "radial", staggerMs: 0, victims: "all", visual: "runewheel", hasLead: true, sound: "snooze", source: "stun" },
 
   // The one brainrot card still without a signature: the drum-man marches and
   // bonks the nearest enemy (freeze skin "stun" + bonk), so it reads off the
@@ -2408,8 +2434,24 @@ function ColossusBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   // whole crop (palette wash + the card's own motif writ large + a shockwave
   // past the board edges) instead of a square-local pop.
   if (lead) {
+    // Titan / Colossus: one colossal stone figure heaves up out of the board,
+    // shoulders past the crop line — a giant where a chess piece stood.
     return (
-      <BoardWideLead wash="rgba(150,150,158,0.24)" boom="rgba(120,120,128,0.85)" delayMs={delayMs} />
+      <BoardWideLead wash="rgba(150,150,158,0.24)" boom="rgba(120,120,128,0.85)" delayMs={delayMs} motifClass="fx-sig-rise">
+        <svg viewBox="0 0 40 44" className="h-full w-full" aria-hidden="true">
+          {/* colossus silhouette: head, massive shoulders, planted arms */}
+          <path
+            d="M14 44 V30 C10 29 7 26 7 21 L2 22 L7 17 C8 11 12 7 17 6 C16 3 18 1 20 1 C22 1 24 3 23 6 C28 7 32 11 33 17 L38 22 L33 21 C33 26 30 29 26 30 V44 Z"
+            fill="rgba(120,120,128,0.85)"
+            stroke="#4c4c53"
+            strokeWidth="1.2"
+            strokeLinejoin="round"
+          />
+          {/* stone seams + eyes */}
+          <path d="M13 20 H27 M15 26 H25" stroke="rgba(76,76,83,0.8)" strokeWidth="0.8" fill="none" />
+          <path d="M16.5 13 H19 M21 13 H23.5" stroke="#e6bf6a" strokeWidth="1.4" strokeLinecap="round" />
+        </svg>
+      </BoardWideLead>
     );
   }
   return (
@@ -2541,8 +2583,19 @@ function BlitzBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   // whole crop (palette wash + the card's own motif writ large + a shockwave
   // past the board edges) instead of a square-local pop.
   if (lead) {
+    // Lightning war: four jagged strike-bolts rake across the whole crop in
+    // quick succession — the four moves in a row, each its own lightning crack.
     return (
-      <BoardWideLead wash="rgba(255,246,200,0.24)" boom="rgba(255,200,90,0.85)" delayMs={delayMs} />
+      <BoardWideLead wash="rgba(255,246,200,0.24)" boom="rgba(255,200,90,0.85)" delayMs={delayMs} motifClass="fx-sig-streak">
+        <svg viewBox="0 0 48 32" className="h-full w-full" aria-hidden="true">
+          <g stroke="#e6bf6a" strokeWidth="2.2" strokeLinejoin="round" fill="none">
+            <path d="M4 4 L14 12 L10 14 L20 22" />
+            <path d="M16 2 L26 10 L22 12 L32 20" />
+            <path d="M28 6 L38 14 L34 16 L44 24" />
+          </g>
+          <path d="M10 24 L20 28 L16 29 L26 31" stroke="#fff3c9" strokeWidth="1.4" strokeLinejoin="round" fill="none" />
+        </svg>
+      </BoardWideLead>
     );
   }
   return (
@@ -3900,8 +3953,27 @@ function SmiteBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   // whole crop (palette wash + the card's own motif writ large + a shockwave
   // past the board edges) instead of a square-local pop.
   if (lead) {
+    // Heaven's Wrath: the sky splits — a storm cloud writ large with three
+    // bolts of judgment stabbing down out of it.
     return (
-      <BoardWideLead wash="rgba(255,246,200,0.24)" boom="rgba(255,232,150,0.85)" delayMs={delayMs} />
+      <BoardWideLead wash="rgba(255,246,200,0.24)" boom="rgba(255,232,150,0.85)" delayMs={delayMs} motifClass="fx-sig-cage">
+        <svg viewBox="0 0 44 40" className="h-full w-full" aria-hidden="true">
+          {/* the split cloud */}
+          <path
+            d="M8 12 C8 6 14 3 19 5 C21 1 29 1 31 5 C37 3 42 8 40 13 C38 16 34 17 30 16 L14 16 C10 16 8 15 8 12 Z"
+            fill="rgba(58,66,88,0.9)"
+            stroke="#b9c4d6"
+            strokeWidth="1.2"
+            strokeLinejoin="round"
+          />
+          {/* three descending wrath-bolts */}
+          <g fill="#ffe896" stroke="#8a6414" strokeWidth="0.7" strokeLinejoin="round">
+            <path d="M12 17 L16 24 L13.5 24.5 L18 33 L10.5 26 L13 25.5 Z" />
+            <path d="M22 17 L26 26 L23.5 26.5 L28 37 L20.5 28 L23 27.5 Z" />
+            <path d="M32 17 L36 24 L33.5 24.5 L38 33 L30.5 26 L33 25.5 Z" />
+          </g>
+        </svg>
+      </BoardWideLead>
     );
   }
   return (
@@ -5675,19 +5747,32 @@ function PurgeStormBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) 
 
 /** Roulette: a wheel spins and a piece is flicked off with a shower of chips. */
 function RouletteBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
-  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
-  // whole crop (palette wash + the card's own motif writ large + a shockwave
-  // past the board edges) instead of a square-local pop.
+  // Owner add-on (gambling wheels): the lead is now a true roulette wheel —
+  // alternating red/black pockets with the lone green zero, a gold rim, and
+  // the ivory ball resting in a pocket — spun board-wide (T5) and left to
+  // decelerate to its fatal stop.
   if (lead) {
-    return (
-      <BoardWideLead wash="rgba(224,119,107,0.24)" boom="rgba(224,119,107,0.85)" delayMs={delayMs} motifClass="fx-sig-swirl">
-        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
-          <circle cx="20" cy="20" r="17" fill="none" stroke="#e0776b" strokeWidth="2" />
-          <g stroke="#7a2f28" strokeWidth="1.4" fill="none"><path d="M20 3 V37 M3 20 H37 M8 8 L32 32 M32 8 L8 32" /></g>
-          <circle cx="20" cy="20" r="3" fill="#e6bf6a" stroke="#7a5b23" strokeWidth="1" />
-        </svg>
-      </BoardWideLead>
+    const pockets = ["#2e7d4f", "#b03030", "#1c1c22", "#b03030", "#1c1c22", "#b03030", "#1c1c22", "#b03030", "#1c1c22", "#b03030", "#1c1c22", "#b03030", "#1c1c22"];
+    const disc = (
+      <WheelFace
+        colors={pockets}
+        rim="#7a5b23"
+        hub="#e6bf6a"
+        detail={
+          <g>
+            {/* pocket separators' outer frets */}
+            {wheelPoints(13, 17).map((p, i) => (
+              <circle key={i} cx={p.x.toFixed(2)} cy={p.y.toFixed(2)} r="0.6" fill="#e6bf6a" opacity="0.85" />
+            ))}
+            {/* inner bowl ring */}
+            <circle cx="20" cy="20" r="8.5" fill="none" stroke="#e6bf6a" strokeWidth="0.8" opacity="0.8" />
+            {/* the ivory ball, settled just off the zero pocket */}
+            <circle cx="21.8" cy="7.6" r="1.5" fill="#f4f7f2" stroke="#8a8478" strokeWidth="0.5" />
+          </g>
+        }
+      />
     );
+    return <WheelSpinPlay wide delayMs={delayMs} disc={disc} wash="rgba(176,48,48,0.2)" boom="rgba(224,119,107,0.85)" />;
   }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
@@ -5760,8 +5845,22 @@ function AnnihilationBurst({ lead, delayMs }: { lead: boolean; delayMs: number }
   // whole crop (palette wash + the card's own motif writ large + a shockwave
   // past the board edges) instead of a square-local pop.
   if (lead) {
+    // Annihilation: two unmaking darts cross into a single void core — the
+    // two doomed pieces, cancelled at one point of violet nothing.
     return (
-      <BoardWideLead wash="rgba(16,12,20,0.24)" boom="rgba(164,140,196,0.85)" delayMs={delayMs} />
+      <BoardWideLead wash="rgba(16,12,20,0.24)" boom="rgba(164,140,196,0.85)" delayMs={delayMs} motifClass="fx-sig-reticle">
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <circle cx="20" cy="20" r="7" fill="rgba(16,12,20,0.95)" stroke="#a48cc4" strokeWidth="1.6" />
+          <g stroke="#c9b6e0" strokeWidth="2" strokeLinecap="round">
+            <path d="M4 4 L14.5 14.5 M36 4 L25.5 14.5" />
+          </g>
+          <g fill="#a48cc4" stroke="#463357" strokeWidth="0.7" strokeLinejoin="round">
+            <path d="M13 13 L18 15.5 L15.5 18 Z" />
+            <path d="M27 13 L24.5 18 L22 15.5 Z" />
+          </g>
+          <path d="M20 30 V35 M12 26 L8 30 M28 26 L32 30" stroke="rgba(164,140,196,0.7)" strokeWidth="1.2" strokeLinecap="round" />
+        </svg>
+      </BoardWideLead>
     );
   }
   return (
@@ -5862,8 +5961,28 @@ function RuinBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   // whole crop (palette wash + the card's own motif writ large + a shockwave
   // past the board edges) instead of a square-local pop.
   if (lead) {
+    // Ruin: the ground itself gives way — a jagged fissure tears across the
+    // crop while rubble blocks shear off and drop into it.
     return (
-      <BoardWideLead wash="rgba(40,40,46,0.24)" boom="rgba(120,116,110,0.85)" delayMs={delayMs} />
+      <BoardWideLead wash="rgba(40,40,46,0.24)" boom="rgba(120,116,110,0.85)" delayMs={delayMs} motifClass="fx-sig-crumble">
+        <svg viewBox="0 0 48 40" className="h-full w-full" aria-hidden="true">
+          {/* the crack */}
+          <path
+            d="M2 8 L12 14 L10 20 L22 22 L20 28 L34 28 L32 34 L46 36"
+            fill="none"
+            stroke="rgba(20,20,24,0.9)"
+            strokeWidth="3"
+            strokeLinejoin="round"
+          />
+          <path d="M2 8 L12 14 L10 20 L22 22 L20 28 L34 28 L32 34 L46 36" fill="none" stroke="#8c8c92" strokeWidth="1" strokeLinejoin="round" />
+          {/* shearing rubble */}
+          <g fill="#71717a" stroke="rgba(40,40,46,0.85)" strokeWidth="0.8">
+            <path d="M14 10 L19 9 L20 14 L15 15 Z" />
+            <path d="M26 20 L31 19 L32 24 L27 25 Z" />
+            <path d="M36 28 L41 27 L42 32 L37 33 Z" />
+          </g>
+        </svg>
+      </BoardWideLead>
     );
   }
   return (
@@ -5923,8 +6042,23 @@ function IceAgeBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   // whole crop (palette wash + the card's own motif writ large + a shockwave
   // past the board edges) instead of a square-local pop.
   if (lead) {
+    // Ice Age: a colossal six-armed frost crystal blooms over the whole crop
+    // while a glacier ridgeline heaves up along the bottom of the board.
     return (
-      <BoardWideLead wash="rgba(198,234,255,0.24)" boom="rgba(230,246,255,0.85)" delayMs={delayMs} />
+      <BoardWideLead wash="rgba(198,234,255,0.24)" boom="rgba(230,246,255,0.85)" delayMs={delayMs} motifClass="fx-sig-ice">
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <g stroke="#bfe6ff" strokeWidth="1.8" strokeLinecap="round" fill="none">
+            <path d="M20 3 V37 M5.3 11.5 L34.7 28.5 M5.3 28.5 L34.7 11.5" />
+          </g>
+          <g stroke="#e8f8ff" strokeWidth="1" strokeLinecap="round" fill="none">
+            <path d="M20 8 L16 12 M20 8 L24 12 M20 32 L16 28 M20 32 L24 28" />
+            <path d="M9.6 14 L9.8 19.6 M9.6 26 L14.4 23.2 M30.4 14 L30.2 19.6 M30.4 26 L25.6 23.2" />
+          </g>
+          <circle cx="20" cy="20" r="3.4" fill="rgba(232,248,255,0.9)" stroke="#7fb8dd" strokeWidth="1" />
+          {/* glacier front grinding in along the foot */}
+          <path d="M2 40 L8 33 L14 36 L20 31 L27 35 L33 32 L38 40 Z" fill="rgba(198,234,255,0.55)" stroke="#bfe6ff" strokeWidth="0.8" strokeLinejoin="round" />
+        </svg>
+      </BoardWideLead>
     );
   }
   return (
@@ -5942,8 +6076,20 @@ function WorldEndBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   // whole crop (palette wash + the card's own motif writ large + a shockwave
   // past the board edges) instead of a square-local pop.
   if (lead) {
+    // World End: the world itself — a great globe with its meridians — cracks
+    // apart over the board as everything grinds to a dead-grey halt.
     return (
-      <BoardWideLead wash="rgba(198,220,240,0.24)" boom="rgba(219,233,245,0.85)" delayMs={delayMs} />
+      <BoardWideLead wash="rgba(198,220,240,0.24)" boom="rgba(219,233,245,0.85)" delayMs={delayMs} motifClass="fx-sig-grow">
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <circle cx="20" cy="20" r="16" fill="rgba(40,50,64,0.55)" stroke="#dbe9f5" strokeWidth="1.6" />
+          {/* meridians + equator */}
+          <path d="M20 4 A 16 16 0 0 0 20 36 A 8 16 0 0 0 20 4 A 8 16 0 0 1 20 36" fill="none" stroke="rgba(219,233,245,0.6)" strokeWidth="0.9" />
+          <path d="M4 20 H36 M6.5 12 H33.5 M6.5 28 H33.5" stroke="rgba(219,233,245,0.5)" strokeWidth="0.8" fill="none" />
+          {/* the killing crack */}
+          <path d="M12 6 L18 14 L15 19 L23 24 L20 30 L27 35" fill="none" stroke="rgba(16,20,26,0.95)" strokeWidth="2.2" strokeLinejoin="round" />
+          <path d="M12 6 L18 14 L15 19 L23 24 L20 30 L27 35" fill="none" stroke="#eef4fa" strokeWidth="0.7" strokeLinejoin="round" />
+        </svg>
+      </BoardWideLead>
     );
   }
   return (
@@ -6067,8 +6213,29 @@ function TitanLegionBurst({ lead, delayMs }: { lead: boolean; delayMs: number })
   // whole crop (palette wash + the card's own motif writ large + a shockwave
   // past the board edges) instead of a square-local pop.
   if (lead) {
+    // Titan Legion: THREE colossal silhouettes shoulder up out of the board
+    // in a staggered rank — the three pieces forged into titans.
     return (
-      <BoardWideLead wash="rgba(150,150,158,0.24)" boom="rgba(230,191,106,0.85)" delayMs={delayMs} />
+      <BoardWideLead wash="rgba(150,150,158,0.24)" boom="rgba(230,191,106,0.85)" delayMs={delayMs} motifClass="fx-sig-rise">
+        <svg viewBox="0 0 64 44" className="h-full w-full" aria-hidden="true">
+          {[
+            { x: 0, s: 0.82, y: 8 },
+            { x: 40, s: 0.9, y: 5 },
+            { x: 19, s: 1, y: 0 },
+          ].map((t, i) => (
+            <g key={i} transform={`translate(${t.x} ${t.y}) scale(${t.s})`}>
+              <path
+                d="M8 44 V32 C5 31 3 28 3 24 L0 25 L3 21 C4 15 7 11 11 10 C10.5 7 12 5 13 5 C14 5 15.5 7 15 10 C19 11 22 15 23 21 L26 25 L23 24 C23 28 21 31 18 32 V44 Z"
+                fill={i === 2 ? "rgba(140,140,148,0.9)" : "rgba(120,120,128,0.75)"}
+                stroke="#4c4c53"
+                strokeWidth="1"
+                strokeLinejoin="round"
+              />
+              <path d="M10 16 H16" stroke="#e6bf6a" strokeWidth="1.1" strokeLinecap="round" />
+            </g>
+          ))}
+        </svg>
+      </BoardWideLead>
     );
   }
   const rings = [
@@ -6085,20 +6252,84 @@ function TitanLegionBurst({ lead, delayMs }: { lead: boolean; delayMs: number })
   );
 }
 
-/** Living God: a shaft of light, a lowered crown, and a divine shock ring. */
+/** Living God: A GOD DESCENDS (owner directive: not a generic wash). The whole
+ * board floods gold, a fan of god-rays breaks from the top of the sky, and a
+ * colossal haloed deity — robed, arms spread, crowned in light — lowers onto
+ * the chosen piece before a divine shockwave rolls past the board edges. */
 function LivingGodBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
-  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
-  // whole crop (palette wash + the card's own motif writ large + a shockwave
-  // past the board edges) instead of a square-local pop.
   if (lead) {
     return (
-      <BoardWideLead wash="rgba(255,244,200,0.24)" boom="rgba(255,232,150,0.85)" delayMs={delayMs} />
+      <BoardWideStage>
+        <BoardWash color="rgba(255,244,200,0.3)" delayMs={delayMs} />
+        {/* the fan of god-rays, breaking from the heavens */}
+        {/* outer spans hold the static fan rotation; the animated fx-sig-shaft
+            lives one level in so its keyframed transform never clobbers it */}
+        {[
+          { r: "-28deg", d: 0, w: "7%" },
+          { r: "-14deg", d: 60, w: "9%" },
+          { r: "0deg", d: 30, w: "11%" },
+          { r: "14deg", d: 90, w: "9%" },
+          { r: "28deg", d: 120, w: "7%" },
+        ].map((s, i) => (
+          <span
+            key={i}
+            className="absolute left-1/2 top-[6%] block h-[62%]"
+            style={{
+              width: s.w,
+              marginLeft: `calc(${s.w} / -2)`,
+              transform: `rotate(${s.r})`,
+              transformOrigin: "50% 0%",
+            }}
+          >
+            <span
+              className="fx-sig-shaft absolute inset-0 block"
+              style={{
+                background:
+                  "linear-gradient(180deg, rgba(255,244,200,0.85), rgba(255,220,130,0.25) 70%, transparent)",
+                animationDelay: `${delayMs + s.d}ms`,
+              }}
+            />
+          </span>
+        ))}
+        {/* the colossal deity, descending into the light */}
+        <span className="fx-sig-shade absolute left-[36%] top-[22%] block h-[46%] w-[28%]" style={{ animationDelay: `${delayMs + 180}ms` }}>
+          <svg viewBox="0 0 32 44" className="h-full w-full" aria-hidden="true">
+            {/* halo */}
+            <circle cx="16" cy="8" r="7.5" fill="none" stroke="#ffe896" strokeWidth="1.6" />
+            {/* head */}
+            <circle cx="16" cy="8" r="3.6" fill="#ffe9b0" stroke="#8a6414" strokeWidth="0.8" />
+            {/* crown of light */}
+            <path d="M12.5 4.5 L13.5 1.5 L15 3.5 L16 0.5 L17 3.5 L18.5 1.5 L19.5 4.5 Z" fill="#ffd95e" stroke="#8a6414" strokeWidth="0.5" strokeLinejoin="round" />
+            {/* robed body, arms spread in benediction */}
+            <path
+              d="M16 12 C13 12 12 14 11.5 17 L3 24 L5 26 L11 22 L9 42 H23 L21 22 L27 26 L29 24 L20.5 17 C20 14 19 12 16 12 Z"
+              fill="rgba(255,236,178,0.92)"
+              stroke="#b98a2e"
+              strokeWidth="1"
+              strokeLinejoin="round"
+            />
+            {/* robe folds */}
+            <path d="M13 26 L12 40 M16 24 V41 M19 26 L20 40" stroke="rgba(185,138,46,0.55)" strokeWidth="0.7" fill="none" />
+          </svg>
+        </span>
+        {/* touchdown flare + gilded sparks + divine shockwave */}
+        <span
+          className="fx-sig-flash absolute left-[38%] top-[56%] block h-[18%] w-[24%] rounded-full"
+          style={{ background: "rgba(255,232,150,0.8)", animationDelay: `${delayMs + 460}ms` }}
+        />
+        <ShardBurst vectors={BURST_MED} fill="#ffd95e" stroke="#8a6414" delayMs={delayMs + 480} sizePct={7} />
+        <BoardBoom delayMs={delayMs + 520} color="rgba(255,232,150,0.9)" thickness={4} />
+        <BoardBoom delayMs={delayMs + 640} color="rgba(255,244,200,0.8)" />
+      </BoardWideStage>
     );
   }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-shaft absolute left-[36%] top-0 block h-[80%] w-[28%]" style={{ background: "rgba(255,244,200,0.55)", animationDelay: `${delayMs}ms` }} />
+      {/* halo ring settles around the ascended piece */}
+      <span className="fx-sig-ring absolute inset-[14%] block rounded-full" style={{ border: "1.5px solid rgba(255,232,150,0.95)", animationDelay: `${delayMs + 100}ms` }} />
       <span className="fx-sig-crown absolute left-[30%] top-[10%] block h-[26%] w-[40%]" style={{ animationDelay: `${delayMs + 120}ms` }}><SigCrown /></span>
+      <ShardBurst vectors={BURST_MED} fill="#ffd95e" stroke="#8a6414" delayMs={delayMs + 160} sizePct={9} />
     </span>
   );
 }
@@ -6109,8 +6340,26 @@ function EternalReignBurst({ lead, delayMs }: { lead: boolean; delayMs: number }
   // whole crop (palette wash + the card's own motif writ large + a shockwave
   // past the board edges) instead of a square-local pop.
   if (lead) {
+    // Eternal Reign: the crown lowers over an unbroken infinity loop — a
+    // king's rule with no end written into it.
     return (
-      <BoardWideLead wash="rgba(230,191,106,0.24)" boom="rgba(255,240,190,0.85)" delayMs={delayMs} />
+      <BoardWideLead wash="rgba(230,191,106,0.24)" boom="rgba(255,240,190,0.85)" delayMs={delayMs} motifClass="fx-sig-crown">
+        <svg viewBox="0 0 40 34" className="h-full w-full" aria-hidden="true">
+          {/* the crown */}
+          <path d="M12 14 L12 6.5 L16 9.5 L20 4 L24 9.5 L28 6.5 L28 14 Z" fill="#e6bf6a" stroke="#7a5b23" strokeWidth="1" strokeLinejoin="round" />
+          <circle cx="16" cy="12.5" r="0.8" fill="#7a5b23" />
+          <circle cx="20" cy="12.5" r="0.8" fill="#7a5b23" />
+          <circle cx="24" cy="12.5" r="0.8" fill="#7a5b23" />
+          {/* the infinity beneath it */}
+          <path
+            d="M20 24 C16 19 10 19 8 23 C6 27 10 30 14 28 C17 26.5 18 25.5 20 24 C24 19 30 19 32 23 C34 27 30 30 26 28 C23 26.5 22 25.5 20 24 Z"
+            fill="none"
+            stroke="#ffe9b0"
+            strokeWidth="1.8"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </BoardWideLead>
     );
   }
   return (
@@ -6156,8 +6405,23 @@ function OnslaughtBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   // whole crop (palette wash + the card's own motif writ large + a shockwave
   // past the board edges) instead of a square-local pop.
   if (lead) {
+    // Onslaught: three war-charge arrows punch across the crop in file — the
+    // three consecutive moves, each a spearpoint deeper than the last.
     return (
-      <BoardWideLead wash="rgba(224,119,107,0.24)" boom="rgba(224,119,107,0.85)" delayMs={delayMs} />
+      <BoardWideLead wash="rgba(224,119,107,0.24)" boom="rgba(224,119,107,0.85)" delayMs={delayMs} motifClass="fx-sig-streak">
+        <svg viewBox="0 0 48 36" className="h-full w-full" aria-hidden="true">
+          <g stroke="#e0776b" strokeWidth="2.6" strokeLinecap="round" fill="none">
+            <path d="M4 8 H26" />
+            <path d="M4 18 H32" />
+            <path d="M4 28 H38" />
+          </g>
+          <g fill="#e0776b" stroke="#7a2f28" strokeWidth="0.8" strokeLinejoin="round">
+            <path d="M26 4.5 L33 8 L26 11.5 Z" />
+            <path d="M32 14.5 L39 18 L32 21.5 Z" />
+            <path d="M38 24.5 L45 28 L38 31.5 Z" />
+          </g>
+        </svg>
+      </BoardWideLead>
     );
   }
   const dashes = [
@@ -6211,8 +6475,26 @@ function GrandReviveBurst({ lead, delayMs }: { lead: boolean; delayMs: number })
   // whole crop (palette wash + the card's own motif writ large + a shockwave
   // past the board edges) instead of a square-local pop.
   if (lead) {
+    // Grand Resurrection: the queen and her minor rise together out of
+    // grave-light — two haloed silhouettes lifting from the ground under a
+    // descending crown.
     return (
-      <BoardWideLead wash="rgba(255,242,192,0.24)" boom="rgba(255,242,192,0.85)" delayMs={delayMs} />
+      <BoardWideLead wash="rgba(255,242,192,0.24)" boom="rgba(255,242,192,0.85)" delayMs={delayMs} motifClass="fx-sig-rise">
+        <svg viewBox="0 0 44 40" className="h-full w-full" aria-hidden="true">
+          {/* the returning queen, haloed */}
+          <g>
+            <circle cx="16" cy="10" r="8" fill="none" stroke="rgba(255,233,176,0.8)" strokeWidth="1.2" />
+            <path d="M10 14 L10 8.5 L13 11 L16 6 L19 11 L22 8.5 L22 14 Z" fill="#e6bf6a" stroke="#7a5b23" strokeWidth="0.8" strokeLinejoin="round" />
+            <path d="M12 15 C11 24 10 30 9 38 H23 C22 30 21 24 20 15 Z" fill="rgba(255,236,178,0.85)" stroke="#b98a2e" strokeWidth="0.9" strokeLinejoin="round" />
+          </g>
+          {/* the smaller minor beside her, haloed */}
+          <g>
+            <circle cx="33" cy="16" r="5.5" fill="none" stroke="rgba(255,233,176,0.7)" strokeWidth="1" />
+            <circle cx="33" cy="16" r="2.6" fill="rgba(255,236,178,0.9)" stroke="#b98a2e" strokeWidth="0.8" />
+            <path d="M30 20 C29.5 27 29 32 28.5 38 H37.5 C37 32 36.5 27 36 20 Z" fill="rgba(255,236,178,0.8)" stroke="#b98a2e" strokeWidth="0.8" strokeLinejoin="round" />
+          </g>
+        </svg>
+      </BoardWideLead>
     );
   }
   return (
@@ -6268,8 +6550,37 @@ function SecondComingBurst({ lead, delayMs }: { lead: boolean; delayMs: number }
   // whole crop (palette wash + the card's own motif writ large + a shockwave
   // past the board edges) instead of a square-local pop.
   if (lead) {
+    // Second Coming: a radiant queen descends out of a break in the sky — a
+    // crowned figure inside a corona of light, ward-light pooling below her.
     return (
-      <BoardWideLead wash="rgba(126,181,154,0.24)" boom="rgba(163,209,150,0.85)" delayMs={delayMs} />
+      <BoardWideStage>
+        <BoardWash color="rgba(126,181,154,0.24)" delayMs={delayMs} />
+        {/* the break in the sky she steps through */}
+        <span
+          className="fx-sig-shaft absolute left-[40%] top-[4%] block h-[56%] w-[20%]"
+          style={{
+            background: "linear-gradient(180deg, rgba(255,244,200,0.85), rgba(163,209,150,0.25) 70%, transparent)",
+            animationDelay: `${delayMs}ms`,
+          }}
+        />
+        {/* the descending queen, crowned and haloed */}
+        <span className="fx-sig-shade absolute left-[39%] top-[24%] block h-[40%] w-[22%]" style={{ animationDelay: `${delayMs + 140}ms` }}>
+          <svg viewBox="0 0 24 40" className="h-full w-full" aria-hidden="true">
+            <circle cx="12" cy="8" r="7" fill="none" stroke="rgba(255,233,176,0.85)" strokeWidth="1.3" />
+            <circle cx="12" cy="8" r="3" fill="#ffe9b0" stroke="#8a6414" strokeWidth="0.7" />
+            <path d="M8 4.5 L8.5 1.5 L10.5 3.5 L12 0.5 L13.5 3.5 L15.5 1.5 L16 4.5 Z" fill="#ffd95e" stroke="#8a6414" strokeWidth="0.5" strokeLinejoin="round" />
+            <path d="M8 12 C7 22 6 30 5 38 H19 C18 30 17 22 16 12 Z" fill="rgba(255,236,178,0.9)" stroke="#b98a2e" strokeWidth="0.9" strokeLinejoin="round" />
+            <path d="M9.5 20 L8.5 36 M12 16 V37 M14.5 20 L15.5 36" stroke="rgba(185,138,46,0.5)" strokeWidth="0.6" fill="none" />
+          </svg>
+        </span>
+        {/* ward-light pooling over the host below */}
+        <span
+          className="fx-sig-flash absolute left-[34%] top-[58%] block h-[14%] w-[32%] rounded-full"
+          style={{ background: "rgba(163,209,150,0.55)", animationDelay: `${delayMs + 420}ms` }}
+        />
+        <ShardBurst vectors={BURST_MED} fill="#cfe8c9" stroke="#4a6b52" delayMs={delayMs + 440} sizePct={7} />
+        <BoardBoom delayMs={delayMs + 480} color="rgba(163,209,150,0.85)" />
+      </BoardWideStage>
     );
   }
   return (
@@ -6749,8 +7060,24 @@ function OblivionBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   // whole crop (palette wash + the card's own motif writ large + a shockwave
   // past the board edges) instead of a square-local pop.
   if (lead) {
+    // Oblivion: a total eclipse swallows the board — a black disc with a
+    // stark silver corona, thin light rays bleeding out around the rim as
+    // everything beneath it is unmade.
     return (
-      <BoardWideLead wash="rgba(8,8,10,0.24)" boom="rgba(201,210,220,0.85)" delayMs={delayMs} />
+      <BoardWideLead wash="rgba(8,8,10,0.3)" boom="rgba(201,210,220,0.85)" delayMs={delayMs} motifClass="fx-sig-grow">
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          {/* corona rays */}
+          <g stroke="rgba(232,238,246,0.55)" strokeWidth="1" strokeLinecap="round">
+            <path d="M20 1 V6 M20 34 V39 M1 20 H6 M34 20 H39" />
+            <path d="M6.6 6.6 L10 10 M33.4 6.6 L30 10 M6.6 33.4 L10 30 M33.4 33.4 L30 30" />
+          </g>
+          {/* corona ring + the black body of the eclipse */}
+          <circle cx="20" cy="20" r="13.5" fill="none" stroke="#e8eef6" strokeWidth="1.8" />
+          <circle cx="20" cy="20" r="12" fill="rgba(8,8,10,0.97)" stroke="#3f4b57" strokeWidth="0.8" />
+          {/* one last sliver of light dying on the rim */}
+          <path d="M9 14 A 12.5 12.5 0 0 1 14 9" fill="none" stroke="#ffffff" strokeWidth="1.6" strokeLinecap="round" />
+        </svg>
+      </BoardWideLead>
     );
   }
   return (
@@ -6990,8 +7317,44 @@ function GrandArmyBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   // whole crop (palette wash + the card's own motif writ large + a shockwave
   // past the board edges) instead of a square-local pop.
   if (lead) {
+    // Grand Army: the sky opens and a WHOLE ARMY thunders down — chess pieces
+    // raining across the board while a rank of banner-spears plants itself
+    // along the central band.
     return (
-      <BoardWideLead wash="rgba(230,191,106,0.24)" boom="rgba(138,106,74,0.85)" delayMs={delayMs} />
+      <BoardWideStage>
+        <BoardWash color="rgba(230,191,106,0.24)" delayMs={delayMs} />
+        {/* the army raining in: alternating pawn / rook / knight silhouettes */}
+        <BoardRain
+          delayMs={delayMs + 100}
+          render={(i) =>
+            i % 3 === 0 ? (
+              <svg viewBox="0 0 16 24" className="h-full w-full" aria-hidden="true">
+                <circle cx="8" cy="6" r="3.2" fill="#e8e2d2" stroke="#6e5321" strokeWidth="1" />
+                <path d="M3 22 C3.6 14 5 12 8 12 C11 12 12.4 14 13 22 Z" fill="#e8e2d2" stroke="#6e5321" strokeWidth="1" strokeLinejoin="round" />
+              </svg>
+            ) : i % 3 === 1 ? (
+              <svg viewBox="0 0 16 24" className="h-full w-full" aria-hidden="true">
+                <path d="M3 22 V10 L2.4 9.4 V5 H5 V6.6 H7 V5 H9 V6.6 H11 V5 H13.6 V9.4 L13 10 V22 Z" fill="#e8e2d2" stroke="#6e5321" strokeWidth="1" strokeLinejoin="round" />
+              </svg>
+            ) : (
+              <svg viewBox="0 0 16 24" className="h-full w-full" aria-hidden="true">
+                <path d="M4 22 C4 15 6 13 6 10 C4.5 11 3 10.5 3.4 8.5 C4 6 7 3.5 10 3.5 C13 5 13.5 9 13 14 L12 22 Z" fill="#e8e2d2" stroke="#6e5321" strokeWidth="1" strokeLinejoin="round" />
+              </svg>
+            )
+          }
+        />
+        {/* the banner rank planting mid-crop */}
+        {[{ l: "34%", d: 260 }, { l: "47%", d: 340 }, { l: "60%", d: 300 }].map((s, i) => (
+          <span key={i} className="fx-sig-brick absolute bottom-[30%] block h-[26%] w-[6%]" style={{ left: s.l, animationDelay: `${delayMs + s.d}ms` }}>
+            <svg viewBox="0 0 16 40" className="h-full w-full" aria-hidden="true">
+              <path d="M8 40 L8 6" stroke="#8a6a4a" strokeWidth="2" strokeLinecap="round" />
+              <path d="M8 6 L15 8 L8 12 Z" fill={i % 2 === 0 ? "#e0776b" : "#7eb59a"} stroke="#3a2a1a" strokeWidth="0.8" strokeLinejoin="round" />
+              <path d="M8 4 L8 8" stroke="#e6bf6a" strokeWidth="1.4" strokeLinecap="round" />
+            </svg>
+          </span>
+        ))}
+        <BoardBoom delayMs={delayMs + 420} color="rgba(230,191,106,0.9)" thickness={4} />
+      </BoardWideStage>
     );
   }
   return (
@@ -7405,33 +7768,139 @@ function SegmentedWheel() {
     </svg>
   );
 }
-function FortuneWheelBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
-  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
-  // whole crop (palette wash + the card's own motif writ large + a shockwave
-  // past the board edges) instead of a square-local pop.
-  if (lead) {
+// --- The gambling wheels (owner add-on) ---------------------------------------
+// Every gambling-themed card plays a SPINNING WHEEL: the disc spins hard,
+// decelerates on the shared fx-sig-wheelspin ease-out, and lands with a
+// pointer tick + flash. Tier 5+ cards stage it board-wide like the other big
+// leads; below that it plays as a compact centred wheel. Each card's disc is
+// its own (carnival wedges / red-black pockets / gold coin faces / zodiac
+// ring / dice pips / reroll runes) so no two wheels are identical.
+
+/** A segmented wheel disc: `colors` paints the wedges clockwise from 12
+ * o'clock; `detail` renders extra art (glyphs, pips, the roulette ball)
+ * between the wedges and the hub. */
+function WheelFace({
+  colors,
+  rim = "#3a2a1a",
+  hub = "#e6bf6a",
+  hubStroke = "#7a5b23",
+  detail,
+}: {
+  colors: string[];
+  rim?: string;
+  hub?: string;
+  hubStroke?: string;
+  detail?: React.ReactNode;
+}) {
+  const n = colors.length;
+  return (
+    <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+      {colors.map((c, i) => {
+        const a0 = (i / n) * 2 * Math.PI - Math.PI / 2;
+        const a1 = ((i + 1) / n) * 2 * Math.PI - Math.PI / 2;
+        const x0 = 20 + 18 * Math.cos(a0);
+        const y0 = 20 + 18 * Math.sin(a0);
+        const x1 = 20 + 18 * Math.cos(a1);
+        const y1 = 20 + 18 * Math.sin(a1);
+        return (
+          <path
+            key={i}
+            d={`M20 20 L${x0.toFixed(2)} ${y0.toFixed(2)} A18 18 0 0 1 ${x1.toFixed(2)} ${y1.toFixed(2)} Z`}
+            fill={c}
+            stroke={rim}
+            strokeWidth="0.6"
+            strokeLinejoin="round"
+          />
+        );
+      })}
+      <circle cx="20" cy="20" r="18" fill="none" stroke={rim} strokeWidth="1.6" />
+      {detail}
+      <circle cx="20" cy="20" r="3" fill={hub} stroke={hubStroke} strokeWidth="1" />
+    </svg>
+  );
+}
+
+/** Points evenly spaced on the wheel's mid-radius, for glyph/pip placement. */
+function wheelPoints(n: number, r: number): { x: number; y: number }[] {
+  return Array.from({ length: n }, (_, i) => {
+    const a = ((i + 0.5) / n) * 2 * Math.PI - Math.PI / 2;
+    return { x: 20 + r * Math.cos(a), y: 20 + r * Math.sin(a) };
+  });
+}
+
+/** The full spin-down play: disc spins on fx-sig-wheelspin, the pointer flicks
+ * off the pegs on fx-sig-tick, and the landing (~0.95s in, as the wheel
+ * settles) fires a flash + star burst (`landFx` adds per-card extras). Board-
+ * wide when `wide`, compact and centred otherwise. */
+function WheelSpinPlay({
+  wide,
+  delayMs,
+  disc,
+  wash,
+  boom,
+  landFx,
+}: {
+  wide: boolean;
+  delayMs: number;
+  disc: React.ReactNode;
+  wash: string;
+  boom: string;
+  landFx?: React.ReactNode;
+}) {
+  const pointer = (
+    <span className="fx-sig-tick absolute left-[44%] top-[-6%] block h-[16%] w-[12%]" style={{ animationDelay: `${delayMs}ms` }}>
+      <svg viewBox="0 0 12 18" className="h-full w-full" aria-hidden="true">
+        <path d="M1 1 H11 L6 16 Z" fill="#f4f7f2" stroke="#4a5560" strokeWidth="1" strokeLinejoin="round" />
+      </svg>
+    </span>
+  );
+  const wheel = (extraClass: string) => (
+    <span className={"absolute block " + extraClass}>
+      <span className="fx-sig-wheelspin absolute inset-0 block" style={{ animationDelay: `${delayMs}ms` }}>{disc}</span>
+      {pointer}
+      <span
+        className="fx-sig-flash absolute inset-[30%] block rounded-full"
+        style={{ background: "rgba(255,244,200,0.75)", animationDelay: `${delayMs + 950}ms` }}
+      />
+    </span>
+  );
+  if (wide) {
     return (
-      <BoardWideLead wash="rgba(244,247,242,0.24)" boom="rgba(244,247,242,0.85)" delayMs={delayMs} motifClass="fx-sig-tick">
-        <svg viewBox="0 0 12 18" className="h-full w-full" aria-hidden="true">
-            <path d="M1 1 H11 L6 16 Z" fill="#f4f7f2" stroke="#4a5560" strokeWidth="1" strokeLinejoin="round" />
-          </svg>
-      </BoardWideLead>
+      <BoardWideStage>
+        <BoardWash color={wash} delayMs={delayMs} />
+        {wheel("inset-[27%]")}
+        {landFx}
+        <ShardBurst vectors={PIN_STARS} fill="#ffd95e" stroke="#8a6414" delayMs={delayMs + 950} sizePct={6} />
+        <BoardBoom delayMs={delayMs + 1000} color={boom} />
+      </BoardWideStage>
     );
   }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      {wheel("inset-[14%]")}
+      {landFx}
+      <ShardBurst vectors={PIN_STARS} fill="#ffd95e" stroke="#8a6414" delayMs={delayMs + 950} sizePct={9} />
+    </span>
+  );
+}
+
+/** Wheel of Fortune (T6): the carnival wheel itself — bright fairground
+ * wedges, gold pegs, spun board-wide and left to clatter to a stop. */
+function FortuneWheelBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  const disc = (
+    <WheelFace
+      colors={["#e0776b", "#e6bf6a", "#7eb59a", "#f4f7f2", "#e0776b", "#e6bf6a", "#7eb59a", "#f4f7f2", "#e0776b", "#e6bf6a", "#7eb59a", "#f4f7f2"]}
+      detail={
+        <g fill="#e6bf6a" stroke="#7a5b23" strokeWidth="0.4">
+          {wheelPoints(12, 17).map((p, i) => (
+            <circle key={i} cx={p.x.toFixed(2)} cy={p.y.toFixed(2)} r="0.8" />
+          ))}
+        </g>
+      }
+    />
+  );
   if (lead) {
-    return (
-      <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
-        <span className="fx-sig-wheelspin absolute inset-[10%] block" style={{ animationDelay: `${delayMs}ms` }}>
-          <SegmentedWheel />
-        </span>
-        <span className="fx-sig-tick absolute left-[44%] top-[2%] block h-[18%] w-[12%]" style={{ animationDelay: `${delayMs}ms` }}>
-          <svg viewBox="0 0 12 18" className="h-full w-full" aria-hidden="true">
-            <path d="M1 1 H11 L6 16 Z" fill="#f4f7f2" stroke="#4a5560" strokeWidth="1" strokeLinejoin="round" />
-          </svg>
-        </span>
-        <ShardBurst vectors={PIN_STARS} fill="#ffd95e" stroke="#8a6414" delayMs={delayMs + 900} sizePct={9} />
-      </span>
-    );
+    return <WheelSpinPlay wide delayMs={delayMs} disc={disc} wash="rgba(230,191,106,0.2)" boom="rgba(230,191,106,0.85)" />;
   }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
@@ -7440,6 +7909,151 @@ function FortuneWheelBurst({ lead, delayMs }: { lead: boolean; delayMs: number }
       </span>
     </span>
   );
+}
+
+/** Jackpot (T7): the golden payout wheel — coin-faced wedges, and when it
+ * lands the pot pays out: a rain of gold coins across the whole board. */
+function GoldWheelBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  const coin = (
+    <svg viewBox="0 0 12 12" className="h-full w-full" aria-hidden="true">
+      <circle cx="6" cy="6" r="5" fill="#f4c430" stroke="#8a6414" strokeWidth="0.9" />
+      <circle cx="6" cy="6" r="2.6" fill="none" stroke="#8a6414" strokeWidth="0.7" />
+    </svg>
+  );
+  const disc = (
+    <WheelFace
+      colors={["#f4c430", "#c9a84c", "#fff2c9", "#e6bf6a", "#f4c430", "#c9a84c", "#fff2c9", "#e6bf6a", "#f4c430", "#c9a84c", "#fff2c9", "#e6bf6a"]}
+      rim="#7a5b23"
+      hub="#fff2c9"
+      detail={
+        <g>
+          {wheelPoints(12, 12.5).map((p, i) => (
+            <circle key={i} cx={p.x.toFixed(2)} cy={p.y.toFixed(2)} r={i % 3 === 0 ? 1.6 : 1.1} fill="#8a6414" opacity="0.8" />
+          ))}
+        </g>
+      }
+    />
+  );
+  if (lead) {
+    return (
+      <WheelSpinPlay
+        wide
+        delayMs={delayMs}
+        disc={disc}
+        wash="rgba(244,196,48,0.22)"
+        boom="rgba(244,196,48,0.9)"
+        landFx={<BoardRain delayMs={delayMs + 950} render={() => coin} />}
+      />
+    );
+  }
+  return <WheelSpinPlay wide={false} delayMs={delayMs} disc={disc} wash="" boom="" />;
+}
+
+/** Gamble (T4): the chancer's wheel — six red/gold double-or-nothing wedges
+ * around the lucky-coin hub. Compact: a T4 flutter, not a floor show. */
+function GambleWheelBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  const disc = (
+    <WheelFace
+      colors={["#c65a4a", "#e6bf6a", "#c65a4a", "#e6bf6a", "#c65a4a", "#e6bf6a"]}
+      rim="#7a2f28"
+      detail={
+        <g fill="#fff2c9" opacity="0.9">
+          {wheelPoints(6, 12).map((p, i) =>
+            i % 2 === 0 ? (
+              <path key={i} d={`M${(p.x - 1.8).toFixed(2)} ${(p.y + 1.6).toFixed(2)} L${p.x.toFixed(2)} ${(p.y - 2).toFixed(2)} L${(p.x + 1.8).toFixed(2)} ${(p.y + 1.6).toFixed(2)} Z`} />
+            ) : (
+              <circle key={i} cx={p.x.toFixed(2)} cy={p.y.toFixed(2)} r="1.4" />
+            ),
+          )}
+        </g>
+      }
+    />
+  );
+  return <WheelSpinPlay wide={false} delayMs={delayMs + (lead ? 0 : 120)} disc={disc} wash="" boom="" />;
+}
+
+/** Zodiac Wheel (T4): the star-chart wheel — midnight-indigo houses under a
+ * gold ecliptic ring, star glyphs wheeling past the pointer. */
+function ZodiacWheelBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  const disc = (
+    <WheelFace
+      colors={["#2c3e6b", "#3a2a63", "#2c3e6b", "#3a2a63", "#2c3e6b", "#3a2a63", "#2c3e6b", "#3a2a63", "#2c3e6b", "#3a2a63", "#2c3e6b", "#3a2a63"]}
+      rim="#c9a84c"
+      hub="#cdd6ff"
+      hubStroke="#5a6b8f"
+      detail={
+        <g stroke="#cdd6ff" strokeWidth="0.7" strokeLinecap="round" fill="none">
+          {wheelPoints(12, 12.5).map((p, i) =>
+            i % 2 === 0 ? (
+              <path key={i} d={`M${p.x.toFixed(2)} ${(p.y - 1.8).toFixed(2)} V${(p.y + 1.8).toFixed(2)} M${(p.x - 1.8).toFixed(2)} ${p.y.toFixed(2)} H${(p.x + 1.8).toFixed(2)}`} />
+            ) : (
+              <path key={i} d={`M${(p.x - 1.4).toFixed(2)} ${(p.y - 1.4).toFixed(2)} L${(p.x + 1.4).toFixed(2)} ${(p.y + 1.4).toFixed(2)} M${(p.x + 1.4).toFixed(2)} ${(p.y - 1.4).toFixed(2)} L${(p.x - 1.4).toFixed(2)} ${(p.y + 1.4).toFixed(2)}`} />
+            ),
+          )}
+          <circle cx="20" cy="20" r="9" strokeDasharray="1.6 2.2" opacity="0.7" />
+        </g>
+      }
+    />
+  );
+  return <WheelSpinPlay wide={false} delayMs={delayMs + (lead ? 0 : 120)} disc={disc} wash="" boom="" />;
+}
+
+/** High Roll (T4): the gambler-mage's dice wheel — violet and ivory wedges
+ * carrying die pips 1-6, twice around. */
+function DiceWheelBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  const pipSets: [number, number][][] = [
+    [[0, 0]],
+    [[-1.4, -1.4], [1.4, 1.4]],
+    [[-1.6, -1.6], [0, 0], [1.6, 1.6]],
+    [[-1.4, -1.4], [1.4, -1.4], [-1.4, 1.4], [1.4, 1.4]],
+    [[-1.6, -1.6], [1.6, -1.6], [0, 0], [-1.6, 1.6], [1.6, 1.6]],
+    [[-1.4, -1.8], [1.4, -1.8], [-1.4, 0], [1.4, 0], [-1.4, 1.8], [1.4, 1.8]],
+  ];
+  const disc = (
+    <WheelFace
+      colors={["#5a3fa0", "#f4f7f2", "#5a3fa0", "#f4f7f2", "#5a3fa0", "#f4f7f2", "#5a3fa0", "#f4f7f2", "#5a3fa0", "#f4f7f2", "#5a3fa0", "#f4f7f2"]}
+      rim="#3a2a63"
+      hub="#a877d8"
+      hubStroke="#3a2a63"
+      detail={
+        <g>
+          {wheelPoints(12, 12.5).map((p, i) => (
+            <g key={i} fill={i % 2 === 0 ? "#f4f7f2" : "#3a2a63"}>
+              {pipSets[i % 6].map(([dx, dy], k) => (
+                <circle key={k} cx={(p.x + dx).toFixed(2)} cy={(p.y + dy).toFixed(2)} r="0.75" />
+              ))}
+            </g>
+          ))}
+        </g>
+      }
+    />
+  );
+  return <WheelSpinPlay wide={false} delayMs={delayMs + (lead ? 0 : 120)} disc={disc} wash="" boom="" />;
+}
+
+/** Arcane Reroll (T3): the reroll wheel — teal and violet wedges etched with
+ * rune ticks, respun until the fates cough up something better. */
+function RuneWheelBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  const disc = (
+    <WheelFace
+      colors={["#1f5a5a", "#3a2a63", "#1f5a5a", "#3a2a63", "#1f5a5a", "#3a2a63", "#1f5a5a", "#3a2a63"]}
+      rim="#12303a"
+      hub="#7fd8d8"
+      hubStroke="#1f5a5a"
+      detail={
+        <g stroke="#7fd8d8" strokeWidth="0.7" strokeLinecap="round" fill="none">
+          {wheelPoints(8, 12.5).map((p, i) =>
+            i % 2 === 0 ? (
+              <path key={i} d={`M${p.x.toFixed(2)} ${(p.y - 2).toFixed(2)} V${(p.y + 2).toFixed(2)} M${p.x.toFixed(2)} ${(p.y - 0.6).toFixed(2)} L${(p.x + 1.6).toFixed(2)} ${(p.y - 1.8).toFixed(2)}`} />
+            ) : (
+              <path key={i} d={`M${(p.x - 1.4).toFixed(2)} ${(p.y + 2).toFixed(2)} L${p.x.toFixed(2)} ${(p.y - 2).toFixed(2)} L${(p.x + 1.4).toFixed(2)} ${(p.y + 2).toFixed(2)}`} />
+            ),
+          )}
+        </g>
+      }
+    />
+  );
+  return <WheelSpinPlay wide={false} delayMs={delayMs + (lead ? 0 : 120)} disc={disc} wash="" boom="" />;
 }
 function SlotSymbol({ variant }: { variant: number }) {
   if (variant % 4 === 0)
@@ -9693,6 +10307,365 @@ function PizzaRunBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   );
 }
 
+// --- Batch 14: tier 7+ distinctness splits ------------------------------------
+// Owner directive: every card above tier 7 must be unique, distinct, and read
+// as its NAME. These eight components split the visuals that two-plus tier 7+
+// cards used to share (crownrain, aegis, summonrift, dragonlord, archmage,
+// phoenixrise). Same rules as every batch: flat SVG, transform/opacity only,
+// one-shot fx-sig-* classes, hidden under reduced motion via effects.css.
+
+/** Amazon Army (crownlegion): the WHOLE minor corps is crowned at once — a
+ * board-wide rain of crowns and bishop mitres under one great regnal crown. */
+function CrownLegionBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  const mitre = (
+    <svg viewBox="0 0 20 22" className="h-full w-full" aria-hidden="true">
+      <path d="M10 1 C14 5 16 11 15 18 H5 C4 11 6 5 10 1 Z" fill="#e8e2d2" stroke="#6e5321" strokeWidth="1" strokeLinejoin="round" />
+      <path d="M10 3 V16 M6.5 9 H13.5" stroke="#c9a84c" strokeWidth="1.1" strokeLinecap="round" fill="none" />
+    </svg>
+  );
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(230,191,106,0.24)" delayMs={delayMs} />
+        {/* crowns for the knights, mitres for the bishops */}
+        <BoardRain delayMs={delayMs + 80} render={(i) => (i % 2 === 0 ? <SigCrown /> : mitre)} />
+        {/* the great crown of the army, lowering over all of it */}
+        <span className="fx-sig-crown absolute left-[38%] top-[30%] block h-[16%] w-[24%]" style={{ animationDelay: `${delayMs + 180}ms` }}>
+          <SigCrown />
+        </span>
+        <BoardBoom delayMs={delayMs + 380} color="rgba(230,191,106,0.85)" thickness={4} />
+      </BoardWideStage>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-crownfall absolute top-0 left-[12%] block h-[26%] w-[34%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <SigCrown />
+      </span>
+      <span className="fx-sig-crownfall absolute top-0 left-[54%] block h-[30%] w-[30%]" style={{ animationDelay: `${delayMs + 110}ms` }}>
+        {mitre}
+      </span>
+      <ShardBurst vectors={PIN_STARS} fill="#e6bf6a" stroke="#7a5b23" delayMs={delayMs + 240} sizePct={8} />
+    </span>
+  );
+}
+
+/** Aegis of the Ages (agesward): the ANCIENT ward — a round bronze-age shield,
+ * boss and rivets, inside a slow ring of weathered runes. */
+function AgesWardBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  const shield = (
+    <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+      {/* rune ring */}
+      <circle cx="20" cy="20" r="18" fill="none" stroke="#c9a84c" strokeWidth="0.9" strokeDasharray="2.5 3.5" />
+      <g stroke="#c9a84c" strokeWidth="1" strokeLinecap="round" fill="none">
+        <path d="M20 1 V4 M20 36 V39 M1 20 H4 M36 20 H39" />
+      </g>
+      {/* the round shield: rim, field, boss, rivets */}
+      <circle cx="20" cy="20" r="13" fill="rgba(58,50,30,0.88)" stroke="#c9a84c" strokeWidth="1.8" />
+      <circle cx="20" cy="20" r="4.2" fill="#e6bf6a" stroke="#7a5b23" strokeWidth="1" />
+      <g fill="#c9a84c">
+        <circle cx="20" cy="10" r="1" />
+        <circle cx="20" cy="30" r="1" />
+        <circle cx="10" cy="20" r="1" />
+        <circle cx="30" cy="20" r="1" />
+        <circle cx="13" cy="13" r="0.8" />
+        <circle cx="27" cy="13" r="0.8" />
+        <circle cx="13" cy="27" r="0.8" />
+        <circle cx="27" cy="27" r="0.8" />
+      </g>
+    </svg>
+  );
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(201,168,76,0.22)" boom="rgba(201,168,76,0.85)" delayMs={delayMs} motifClass="fx-sig-grow">
+        {shield}
+      </BoardWideLead>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-grow absolute inset-[14%] block" style={{ animationDelay: `${delayMs}ms` }}>{shield}</span>
+      <span className="fx-sig-flash absolute inset-[30%] block rounded-full" style={{ background: "radial-gradient(circle, rgba(230,191,106,0.6), transparent 70%)", animationDelay: `${delayMs + 80}ms` }} />
+    </span>
+  );
+}
+
+/** Dug-In Defense (dugin): heads down — a sandbag parapet is thrown up and a
+ * helmet ducks behind it in a puff of trench dust. */
+function DugInBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  const sandbags = (
+    <svg viewBox="0 0 48 20" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
+      <g fill="#b0a072" stroke="#5c5138" strokeWidth="0.9" strokeLinejoin="round">
+        <rect x="1" y="11" width="14" height="8" rx="3.5" />
+        <rect x="17" y="11" width="14" height="8" rx="3.5" />
+        <rect x="33" y="11" width="14" height="8" rx="3.5" />
+        <rect x="9" y="3" width="14" height="8" rx="3.5" />
+        <rect x="25" y="3" width="14" height="8" rx="3.5" />
+      </g>
+      <path d="M4 15 H12 M20 15 H28 M36 15 H44 M12 7 H20 M28 7 H36" stroke="rgba(92,81,56,0.6)" strokeWidth="0.6" fill="none" />
+    </svg>
+  );
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(124,138,74,0.22)" delayMs={delayMs} />
+        {/* the parapet heaves up across the central band */}
+        <span className="fx-sig-brick absolute left-[26%] bottom-[36%] block h-[10%] w-[48%]" style={{ animationDelay: `${delayMs + 80}ms` }}>
+          {sandbags}
+        </span>
+        {/* a helmet ducks up behind it */}
+        <span className="fx-sig-rise absolute left-[45%] bottom-[45%] block h-[7%] w-[10%]" style={{ animationDelay: `${delayMs + 260}ms` }}>
+          <svg viewBox="0 0 24 12" className="h-full w-full" aria-hidden="true">
+            <path d="M2 11 C2 4 8 1 12 1 C16 1 22 4 22 11 Z" fill="#7c8a4a" stroke="#3a4022" strokeWidth="1" strokeLinejoin="round" />
+            <path d="M0.5 11 H23.5" stroke="#3a4022" strokeWidth="1.4" strokeLinecap="round" />
+          </svg>
+        </span>
+        {/* trench dust */}
+        <span className="fx-sig-ash absolute left-[28%] bottom-[34%] block h-[6%] w-[44%] rounded-full" style={{ background: "rgba(176,160,114,0.5)", animationDelay: `${delayMs + 300}ms` }} />
+        <BoardBoom delayMs={delayMs + 360} color="rgba(124,138,74,0.8)" />
+      </BoardWideStage>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-brick absolute inset-x-[6%] bottom-[8%] block h-[34%]" style={{ animationDelay: `${delayMs}ms` }}>
+        {sandbags}
+      </span>
+      <span className="fx-sig-ash absolute inset-x-[20%] bottom-[6%] block h-[14%] rounded-full" style={{ background: "rgba(176,160,114,0.5)", animationDelay: `${delayMs + 140}ms` }} />
+    </span>
+  );
+}
+
+/** Summoning Circle (chalkcircle): the chalked pentacle itself — a double
+ * chalk ring, a five-point star, and rune ticks, inscribing in violet light. */
+function ChalkCircleBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  const pentacle = (
+    <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+      <circle cx="20" cy="20" r="18" fill="none" stroke="#f0ead8" strokeWidth="1.3" />
+      <circle cx="20" cy="20" r="14.5" fill="none" stroke="#f0ead8" strokeWidth="0.8" strokeDasharray="2 2.4" />
+      {/* the five-point star, drawn unbroken */}
+      <path
+        d="M20 6 L23.9 17.6 L36 17.6 L26.2 24.6 L30 36 L20 29 L10 36 L13.8 24.6 L4 17.6 L16.1 17.6 Z"
+        fill="none"
+        stroke="#a877d8"
+        strokeWidth="1.4"
+        strokeLinejoin="round"
+      />
+      {/* rune ticks between the rings */}
+      <g stroke="#f0ead8" strokeWidth="0.8" strokeLinecap="round" fill="none">
+        <path d="M20 2.6 V5 M32.6 8 L31 9.6 M37.4 20 H35 M32.6 32 L31 30.4 M20 37.4 V35 M7.4 32 L9 30.4 M2.6 20 H5 M7.4 8 L9 9.6" />
+      </g>
+    </svg>
+  );
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(168,119,216,0.2)" delayMs={delayMs} />
+        <span className="fx-sig-swirl absolute inset-[22%] block" style={{ animationDelay: `${delayMs + 60}ms` }}>{pentacle}</span>
+        {/* conjuring light rising off the chalk lines */}
+        {[
+          { l: "36%", d: 260 },
+          { l: "49%", d: 380 },
+          { l: "60%", d: 320 },
+        ].map((s, i) => (
+          <span key={i} className="fx-sig-rise absolute bottom-[30%] block h-[28%] w-[4%] rounded-[1px]" style={{ left: s.l, background: "rgba(214,190,240,0.55)", animationDelay: `${delayMs + s.d}ms` }} />
+        ))}
+        <BoardBoom delayMs={delayMs + 420} color="rgba(168,119,216,0.85)" />
+      </BoardWideStage>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-swirl absolute inset-[10%] block" style={{ animationDelay: `${delayMs}ms` }}>{pentacle}</span>
+      <ShardBurst vectors={BURST_MED} fill="#c9b6e0" stroke="#463357" delayMs={delayMs + 140} sizePct={8} />
+    </span>
+  );
+}
+
+/** King's Legion (kingsmuster): the king's own muster — his crown over a rank
+ * of banner-spears snapping upright, one per recruit. */
+function KingsMusterBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  const banner = (i: number) => (
+    <svg viewBox="0 0 16 40" className="h-full w-full" aria-hidden="true">
+      <path d="M8 40 L8 6" stroke="#8a6a4a" strokeWidth="2" strokeLinecap="round" />
+      <path d="M8 6 H15 L12.5 9.5 L15 13 H8 Z" fill={i % 2 === 0 ? "#c65a4a" : "#e6bf6a"} stroke="#3a2a1a" strokeWidth="0.8" strokeLinejoin="round" />
+    </svg>
+  );
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(198,90,74,0.2)" delayMs={delayMs} />
+        {/* the king's crown, presiding */}
+        <span className="fx-sig-crown absolute left-[40%] top-[24%] block h-[13%] w-[20%]" style={{ animationDelay: `${delayMs}ms` }}>
+          <SigCrown />
+        </span>
+        {/* the legion's banners snapping up beneath it: knight, bishop, pawn */}
+        {[
+          { l: "34%", d: 160 },
+          { l: "47%", d: 280 },
+          { l: "60%", d: 220 },
+        ].map((s, i) => (
+          <span key={i} className="fx-sig-brick absolute bottom-[26%] block h-[26%] w-[6%]" style={{ left: s.l, animationDelay: `${delayMs + s.d}ms` }}>
+            {banner(i)}
+          </span>
+        ))}
+        <span className="fx-sig-ash absolute left-[32%] bottom-[24%] block h-[6%] w-[36%] rounded-full" style={{ background: "rgba(196,178,142,0.5)", animationDelay: `${delayMs + 360}ms` }} />
+        <BoardBoom delayMs={delayMs + 400} color="rgba(198,90,74,0.85)" />
+      </BoardWideStage>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-brick absolute left-[38%] bottom-[8%] block h-[68%] w-[24%]" style={{ animationDelay: `${delayMs}ms` }}>
+        {banner(0)}
+      </span>
+      <span className="fx-sig-ash absolute inset-x-[28%] bottom-[6%] block h-[14%] rounded-full" style={{ background: "rgba(196,178,142,0.5)", animationDelay: `${delayMs + 140}ms` }} />
+    </span>
+  );
+}
+
+/** Total Annihilation (totalannihilation): three kill-marks. Crosshairs snap
+ * onto three points and each erupts — nothing implodes quietly here. */
+function TotalAnnihilationBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  const reticle = (
+    <svg viewBox="0 0 24 24" className="h-full w-full" aria-hidden="true">
+      <circle cx="12" cy="12" r="9" fill="none" stroke="#c9b6e0" strokeWidth="1.6" />
+      <path d="M12 1 V6 M12 18 V23 M1 12 H6 M18 12 H23" stroke="#c9b6e0" strokeWidth="1.6" strokeLinecap="round" />
+      <circle cx="12" cy="12" r="2" fill="#e0776b" />
+    </svg>
+  );
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(22,14,28,0.28)" delayMs={delayMs} />
+        {[
+          { l: "30%", t: "30%", d: 0 },
+          { l: "56%", t: "40%", d: 160 },
+          { l: "40%", t: "56%", d: 320 },
+        ].map((s, i) => (
+          <React.Fragment key={i}>
+            <span className="fx-sig-reticle absolute block h-[13%] w-[13%]" style={{ left: s.l, top: s.t, animationDelay: `${delayMs + s.d}ms` }}>
+              {reticle}
+            </span>
+            <span
+              className="fx-sig-flash absolute block h-[11%] w-[11%] rounded-full"
+              style={{ left: s.l, top: s.t, margin: "1%", background: "rgba(224,119,107,0.8)", animationDelay: `${delayMs + s.d + 200}ms` }}
+            />
+          </React.Fragment>
+        ))}
+        <BoardBoom delayMs={delayMs + 620} color="rgba(164,140,196,0.9)" thickness={4} />
+      </BoardWideStage>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-reticle absolute inset-[14%] block" style={{ animationDelay: `${delayMs}ms` }}>{reticle}</span>
+      <span className="fx-sig-flash absolute inset-[26%] block rounded-full" style={{ background: "rgba(224,119,107,0.8)", animationDelay: `${delayMs + 180}ms` }} />
+      <ShardBurst vectors={BURST_BIG} fill="#c9b6e0" stroke="#463357" delayMs={delayMs + 180} sizePct={10} />
+      <span className="fx-sig-scorch absolute inset-[30%] block rounded-full" style={{ background: "rgba(22,14,28,0.72)", animationDelay: `${delayMs + 320}ms` }} />
+    </span>
+  );
+}
+
+/** The Void Realm (voidrealm): three patches of board simply STOP EXISTING —
+ * hungry violet-rimmed pits yawning open one after another. */
+function VoidRealmBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  const pit = (
+    <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+      <circle cx="20" cy="20" r="18" fill="rgba(18,8,31,0.94)" stroke="#8f6bff" strokeWidth="1.6" />
+      <circle cx="20" cy="20" r="11" fill="rgba(8,3,15,0.97)" stroke="rgba(143,107,255,0.55)" strokeWidth="0.9" />
+      <circle cx="20" cy="20" r="4.5" fill="#000000" />
+    </svg>
+  );
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(18,8,31,0.3)" delayMs={delayMs} />
+        {[
+          { l: "28%", t: "34%", s: "14%", d: 0 },
+          { l: "52%", t: "28%", s: "12%", d: 180 },
+          { l: "42%", t: "52%", s: "13%", d: 360 },
+        ].map((p, i) => (
+          <span key={i} className="fx-sig-maw absolute block" style={{ left: p.l, top: p.t, height: p.s, width: p.s, animationDelay: `${delayMs + p.d}ms` }}>
+            {pit}
+          </span>
+        ))}
+        <BoardBoom delayMs={delayMs + 520} color="rgba(143,107,255,0.85)" />
+      </BoardWideStage>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-maw absolute inset-[14%] block" style={{ animationDelay: `${delayMs}ms` }}>{pit}</span>
+      {VORTEX_VEC.map((v, i) => (
+        <span
+          key={i}
+          className="fx-sig-implode absolute left-1/2 top-1/2 ml-[-5%] mt-[-5%] block h-[10%] w-[10%]"
+          style={{ "--dx": v.dx, "--dy": v.dy, "--rot": v.rot, animationDelay: `${delayMs + v.d}ms` } as React.CSSProperties}
+        >
+          <SigShard fill="#8f6bff" stroke="#2a1050" variant={i} />
+        </span>
+      ))}
+    </span>
+  );
+}
+
+/** Full Resurrection (sanctrise): a sanctified return — dawn light breaks and
+ * the queen rises flanked by both rooks, every one of them haloed. Gold and
+ * holy where Phoenix Rebirth is fire and wings. */
+function SanctRiseBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(255,236,178,0.26)" delayMs={delayMs} />
+        {/* the break of dawn light */}
+        <span
+          className="fx-sig-shaft absolute left-[34%] top-[4%] block h-[52%] w-[32%]"
+          style={{
+            background: "linear-gradient(180deg, rgba(255,244,200,0.8), rgba(255,220,130,0.2) 70%, transparent)",
+            animationDelay: `${delayMs}ms`,
+          }}
+        />
+        {/* rook — queen — rook, rising haloed out of the ground */}
+        {[
+          { l: "31%", d: 320, q: false },
+          { l: "45%", d: 140, q: true },
+          { l: "59%", d: 400, q: false },
+        ].map((s, i) => (
+          <span key={i} className="fx-sig-rise absolute block" style={{ left: s.l, bottom: "28%", height: s.q ? "26%" : "19%", width: s.q ? "11%" : "9%", animationDelay: `${delayMs + s.d}ms` }}>
+            <svg viewBox="0 0 20 34" className="h-full w-full" aria-hidden="true">
+              <circle cx="10" cy="7" r="6.5" fill="none" stroke="rgba(255,233,176,0.8)" strokeWidth="1.1" />
+              {s.q ? (
+                <>
+                  <path d="M5 9 L5 4.5 L7.5 6.5 L10 3 L12.5 6.5 L15 4.5 L15 9 Z" fill="#e6bf6a" stroke="#7a5b23" strokeWidth="0.7" strokeLinejoin="round" />
+                  <path d="M6.5 10 C6 20 5.5 26 5 33 H15 C14.5 26 14 20 13.5 10 Z" fill="rgba(255,236,178,0.9)" stroke="#b98a2e" strokeWidth="0.8" strokeLinejoin="round" />
+                </>
+              ) : (
+                <path d="M5 33 V14 L4.4 13.4 V8 H7 V9.8 H9 V8 H11 V9.8 H13 V8 H15.6 V13.4 L15 14 V33 Z" fill="rgba(255,236,178,0.88)" stroke="#b98a2e" strokeWidth="0.8" strokeLinejoin="round" />
+              )}
+            </svg>
+          </span>
+        ))}
+        <ShardBurst vectors={PIN_STARS} fill="#ffd95e" stroke="#8a6414" delayMs={delayMs + 480} sizePct={6} />
+        <BoardBoom delayMs={delayMs + 540} color="rgba(255,232,150,0.9)" />
+      </BoardWideStage>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-shaft absolute left-[36%] top-0 block h-[72%] w-[28%]" style={{ background: "rgba(255,242,192,0.55)", animationDelay: `${delayMs}ms` }} />
+      <span className="fx-sig-ring absolute inset-[18%] block rounded-full" style={{ border: "1.5px solid rgba(255,233,176,0.9)", animationDelay: `${delayMs + 90}ms` }} />
+      <span className="fx-sig-rise absolute left-[36%] bottom-[10%] block h-[52%] w-[28%]" style={{ animationDelay: `${delayMs + 60}ms` }}>
+        <svg viewBox="0 0 20 30" className="h-full w-full" aria-hidden="true">
+          <path d="M5 6 L5 2 L7.5 4 L10 1 L12.5 4 L15 2 L15 6 Z" fill="#e6bf6a" stroke="#7a5b23" strokeWidth="0.7" strokeLinejoin="round" />
+          <path d="M6.5 7 C6 16 5.5 22 5 29 H15 C14.5 22 14 16 13.5 7 Z" fill="rgba(255,236,178,0.9)" stroke="#b98a2e" strokeWidth="0.8" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <ShardBurst vectors={PIN_STARS} fill="#ffd95e" stroke="#8a6414" delayMs={delayMs + 200} sizePct={8} />
+    </span>
+  );
+}
+
 /** One square's slice of a signature sequence. `role` is "lead" for the single
  * origin flourish (nova's pop, atomic's central thump, the siege muzzle) and
  * "target" for every cleared enemy square; `delayMs` is the pre-computed
@@ -10144,6 +11117,34 @@ export function SignatureOverlay({
       return <RentARookBurst lead={lead} delayMs={delayMs} />;
     case "pizzarun":
       return <PizzaRunBurst lead={lead} delayMs={delayMs} />;
+    // --- Batch 14 (tier 7+ distinctness splits) ---
+    case "crownlegion":
+      return <CrownLegionBurst lead={lead} delayMs={delayMs} />;
+    case "agesward":
+      return <AgesWardBurst lead={lead} delayMs={delayMs} />;
+    case "dugin":
+      return <DugInBurst lead={lead} delayMs={delayMs} />;
+    case "chalkcircle":
+      return <ChalkCircleBurst lead={lead} delayMs={delayMs} />;
+    case "kingsmuster":
+      return <KingsMusterBurst lead={lead} delayMs={delayMs} />;
+    case "totalannihilation":
+      return <TotalAnnihilationBurst lead={lead} delayMs={delayMs} />;
+    case "voidrealm":
+      return <VoidRealmBurst lead={lead} delayMs={delayMs} />;
+    case "sanctrise":
+      return <SanctRiseBurst lead={lead} delayMs={delayMs} />;
+    // --- Gambling wheels (owner add-on) ---
+    case "goldwheel":
+      return <GoldWheelBurst lead={lead} delayMs={delayMs} />;
+    case "gamblewheel":
+      return <GambleWheelBurst lead={lead} delayMs={delayMs} />;
+    case "zodiacwheel":
+      return <ZodiacWheelBurst lead={lead} delayMs={delayMs} />;
+    case "dicewheel":
+      return <DiceWheelBurst lead={lead} delayMs={delayMs} />;
+    case "runewheel":
+      return <RuneWheelBurst lead={lead} delayMs={delayMs} />;
     default:
       return null;
   }

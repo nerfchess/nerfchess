@@ -238,7 +238,20 @@ export type DraftZones = {
    * Placed traps are public the moment they land (owner rule: full
    * visibility), so both players see every peel. */
   banana: number[];
+  /** Every other placed trap, drawn with its own realistic marker (owner
+   * request: "a super realistic animation and icon" for placements). Same
+   * visibility rule as the peels: public to both players from placement. */
+  traps: TrapMark[];
 };
+
+export type TrapKind = "mine" | "sinkhole" | "trapdoor" | "whoopee" | "landlord";
+
+export interface TrapMark {
+  sq: number;
+  kind: TrapKind;
+  /** Card name, for the hover tooltip. */
+  name: string;
+}
 
 /** Squares held in place by an active Immobilizer: enemy non-king pieces
  * adjacent to the bound piece. Painted with the frozen tint so the lockdown
@@ -273,9 +286,12 @@ function immobilizedSquares(game: NerfGame): number[] {
  * frozen pieces, sanctuary squares, barred squares for each side, and the
  * lightning-struck squares' brief flash. */
 export function draftZones(game: NerfGame, myColor: Color): DraftZones {
-  const zones: DraftZones = { frozen: [], shielded: [], ward: [], barred: [], strike: [], walnut: [], frozenSkin: {}, turns: {}, locked: [], banana: [] };
+  const zones: DraftZones = { frozen: [], shielded: [], ward: [], barred: [], strike: [], walnut: [], frozenSkin: {}, turns: {}, locked: [], banana: [], traps: [] };
   if (!game.buffs) return zones;
   zones.frozen.push(...immobilizedSquares(game));
+  const addTrap = (sq: number, kind: TrapKind, name: string) => {
+    if (!zones.traps.some((t) => t.sq === sq)) zones.traps.push({ sq, kind, name });
+  };
   // Placed traps are stored on their buff instance (not in effects) and are
   // PUBLIC from the moment they land: every activation is broadcast with its
   // targets (dtUsed / the public action record), so both replicas hold the
@@ -289,11 +305,37 @@ export function draftZones(game: NerfGame, myColor: Color): DraftZones {
           (inst.state.sqs as number[] | undefined) ??
           (inst.state.sq != null ? [inst.state.sq as number] : []);
         for (const sq of sqs) if (!zones.banana.includes(sq)) zones.banana.push(sq);
-      } else if (inst.id === "void" || inst.id === "abyss" || inst.id === "void_realm") {
+      } else if (
+        inst.id === "void" ||
+        inst.id === "abyss" ||
+        inst.id === "void_realm" ||
+        inst.id === "we_flood" ||
+        inst.id === "wc_black_hole" ||
+        inst.id === "wc_haunted_house"
+      ) {
         // Void squares swallow enemy pieces that enter: painted as a hostile
-        // barrier for the threatened side and as the owner's ward.
+        // barrier for the threatened side and as the owner's ward. The flood /
+        // black hole / haunted house voids were previously painted NOWHERE:
+        // an invisible trap the opponent could not play around.
         const sqs = (inst.state.squares as number[] | undefined) ?? [];
         (color === myColor ? zones.ward : zones.barred).push(...sqs);
+      } else if (inst.id === "minefield" || inst.id === "sinkhole") {
+        // Void-mechanic traps with their own realistic markers.
+        const sqs = (inst.state.squares as number[] | undefined) ?? [];
+        for (const sq of sqs) addTrap(sq, inst.id === "minefield" ? "mine" : "sinkhole", inst.id === "minefield" ? "Mine" : "Sinkhole");
+      } else if (inst.id === "landlord") {
+        const sqs = (inst.state.squares as number[] | undefined) ?? [];
+        for (const sq of sqs) addTrap(sq, "landlord", "Claimed by the Landlord");
+      } else if (inst.id === "trapdoor") {
+        // Armed while its timed window is open (state.turns ticks down).
+        const sq = inst.state.sq as number | undefined;
+        const turns = (inst.state.turns as number | undefined) ?? 0;
+        if (sq != null && turns > 0) addTrap(sq, "trapdoor", "Trapdoor");
+      } else if (inst.id === "whoopee_cushion") {
+        // Hidden until it fires; once armed the gag rides the sitting piece,
+        // so the cushion mark leaves the square.
+        const sq = inst.state.cushion as number | undefined;
+        if (sq != null && inst.state.armed == null) addTrap(sq, "whoopee", "Whoopee Cushion");
       } else if (inst.id === "flypaper_file") {
         // A limed file, while its window is open: same hostile/ward split.
         const sq = inst.state.sq as number | undefined;

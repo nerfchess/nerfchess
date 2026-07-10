@@ -16,6 +16,8 @@ import { FANTASY_ARTIFACTS } from "./artifacts";
 import { FANTASY_CURSES } from "./curses";
 import { FANTASY_TRANSFORMS } from "./transforms";
 import { FANTASY_SUMMONS } from "./summons";
+import { FANTASY_FEY } from "./fey";
+import { FANTASY_LEGENDS } from "./legends";
 
 export const FANTASY_CARDS: Buff[] = [
   ...FANTASY_BEASTS,
@@ -26,4 +28,6 @@ export const FANTASY_CARDS: Buff[] = [
   ...FANTASY_CURSES,
   ...FANTASY_TRANSFORMS,
   ...FANTASY_SUMMONS,
+  ...FANTASY_FEY,
+  ...FANTASY_LEGENDS,
 ];

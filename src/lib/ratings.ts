@@ -11,6 +11,7 @@
 // wins / losses / draws are part of the schema and UI now but are populated
 // later, when real rated queues land — hence "stored and displayed" for now.
 
+import { GLICKO_DEFAULT } from "./glicko";
 import {
   LEGACY_LOCAL_CATEGORY,
   RATING_CATEGORIES,
@@ -34,9 +35,9 @@ const STORAGE_KEY = "dc:ratings-v2";
 const LEGACY_KEY = "dc:rating-v1";
 
 export const DEFAULT_STATS: CategoryStats = {
-  rating: 1500,
-  rd: 350,
-  vol: 0.06,
+  rating: GLICKO_DEFAULT.rating,
+  rd: GLICKO_DEFAULT.rd,
+  vol: GLICKO_DEFAULT.vol,
   games: 0,
   wins: 0,
   losses: 0,
@@ -89,11 +90,15 @@ function migrateLegacy(): Ratings {
     if (raw) {
       const p = JSON.parse(raw) as Partial<CategoryStats> | null;
       if (p && typeof p.rating === "number") {
+        // Glicko-2 resettle policy ("keep, resettle fast", mirrors
+        // migrations/0022): keep the legacy rating number, but come in with a
+        // widened RD — max(stored, 150), 200 when none was stored — and the
+        // 0.06 volatility default so the first ~10 games re-converge quickly.
         out[LEGACY_LOCAL_CATEGORY] = {
           ...DEFAULT_STATS,
           rating: p.rating,
-          rd: num(p.rd, DEFAULT_STATS.rd),
-          vol: num(p.vol, DEFAULT_STATS.vol),
+          rd: Math.max(num(p.rd, 200), 150),
+          vol: 0.06,
           games: num(p.games, 0),
           peak: Math.max(DEFAULT_STATS.peak, p.rating),
         };

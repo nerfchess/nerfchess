@@ -1,19 +1,19 @@
-// Shared surface for the "funny" card set: a batch of joke and slapstick cards
-// (anvils, snowballs, clones, krakens, curses with personality) that ALL reuse
-// primitives that already exist in the engine. Every funny file imports ONLY
-// from this module so the whole set stays consistent and typecheck-clean.
+// Shared surface for the "mystic" card set: prophecy and fate, star signs and
+// moon phases, tarot, spirits, seances, and ley lines. Every card reuses
+// primitives that already live in the engine; this module mirrors
+// fantasy/shared.ts (and funny/shared.ts before it) so the whole set stays
+// consistent and typecheck-clean. Every mystic file imports ONLY from this
+// module.
 //
-// Unlike hexes/shared.ts (which fixes category to "hex"), the funny set spans
-// many categories: items, summons, transforms, and opponent curses. The `card`
-// factory below is the general equivalent of library.ts's private `def`.
-//
-// Safety rails are inherited from the wrapped helpers: kings are never frozen,
-// petrified, or targeted; every opponent-move filter keeps a non-empty
-// fallback (via `curse`) so a card can never soft-lock the game.
+// Like the fantasy and funny sets (and unlike hexes/shared.ts, which fixes
+// category to "hex"), the mystic set spans many categories, so the `card`
+// factory takes a category per card. Safety rails are inherited from the
+// wrapped helpers: kings are never frozen, petrified, or targeted; every
+// opponent-move filter keeps a non-empty fallback (via `curse`) so a card can
+// never soft-lock the game.
 
 import {
   ActiveEffect,
-  FreezeSkin,
   Buff,
   BuffApi,
   BuffInstance,
@@ -46,6 +46,7 @@ import {
   barLine,
   emptySquares,
   extraMovesNow,
+  freezeAllEnemies,
   freezeTarget,
   grantInventory,
   inHalf,
@@ -58,8 +59,10 @@ import {
   pieceBound,
   placePieces,
   relRank,
+  relocateMany,
   removeEnemies,
   reviveOne,
+  shieldArmy,
   skipOpponent,
   slideMoves,
   tickTurns,
@@ -83,6 +86,7 @@ export {
   barLine,
   emptySquares,
   extraMovesNow,
+  freezeAllEnemies,
   freezeTarget,
   grantInventory,
   inHalf,
@@ -95,8 +99,10 @@ export {
   pieceBound,
   placePieces,
   relRank,
+  relocateMany,
   removeEnemies,
   reviveOne,
+  shieldArmy,
   skipOpponent,
   slideMoves,
   tickTurns,
@@ -126,8 +132,8 @@ export type {
   Tier,
 };
 
-/** Metadata for a funny card. Unlike a hex, the category is chosen per card. */
-export type FunnyMeta = {
+/** Metadata for a mystic card. Like a fantasy card, the category is per card. */
+export type MysticMeta = {
   id: string;
   name: string;
   description: string;
@@ -136,6 +142,8 @@ export type FunnyMeta = {
   flavor?: string;
   boon?: boolean;
   fx?: CardFx;
+  /** Apex cards are flagged special: never offered by the normal draft roll. */
+  special?: boolean;
   /** Per-card lucide-react icon name; overrides the category glyph. */
   icon?: string;
   /** Piece types the caster must own on the board for this card to be offered
@@ -144,21 +152,24 @@ export type FunnyMeta = {
 };
 
 /** Build a fully implemented card from metadata + mechanics. Mirrors the `def`
- * factory in library.ts (which is private to that file). */
-export function card(meta: FunnyMeta, mech: Mech): Buff {
+ * factory in library.ts (private to that file) and fantasy/shared.ts's `card`. */
+export function card(meta: MysticMeta, mech: Mech): Buff {
   return { ...meta, implemented: true, ...mech };
 }
 
 // ---------------------------------------------------------------------------
-// Chebyshev (king-step) distance a move travels, reused by the range curses.
+// Common destination zones (local copies; the sibling sets keep theirs).
 // ---------------------------------------------------------------------------
-export const dist = (from: number, to: number) =>
-  Math.max(Math.abs(FILE(to) - FILE(from)), Math.abs(RANK(to) - RANK(from)));
+export const myHalfZone = (api: BuffApi) => (sq: Square) => inHalf(api.me, sq);
+export const anyEmptyZone = (_api: BuffApi) => (_sq: Square) => true;
+export const backRankZone = (api: BuffApi) => (sq: Square) =>
+  RANK(sq) === (api.me === "w" ? 0 : 7);
 
 // ---------------------------------------------------------------------------
-// Opponent-move filter with the non-empty safety guarantee (a copy of the hex
-// module's `curse`, kept local so the funny set does not import from hexes/).
-// The filter MUST be partial: it can never strand the opponent with 0 moves.
+// Opponent-move filter with the non-empty safety guarantee (a copy of the hex,
+// funny, and fantasy modules' `curse`, kept local so the mystic set does not
+// import from those sibling folders). The filter MUST be partial: it can never
+// strand the opponent with 0 moves.
 // ---------------------------------------------------------------------------
 export function curse(
   turns: number,
@@ -172,45 +183,23 @@ export function curse(
 }
 
 // ---------------------------------------------------------------------------
-// Targeted freeze restricted to a set of piece types (Snowball hits a pawn,
-// Fly Swatter a knight...). Kings are never eligible. Mirrors freezeTarget.
+// Instant: every enemy piece of the given types becomes a walnut (petrified,
+// cannot move) for `turns` of the owner's turns. Kings are never petrified.
+// Mirrors fantasy/shared.ts's walnutAll, kept local for self-containment.
 // ---------------------------------------------------------------------------
-export function freezeTargetTyped(
-  turns: number,
-  types: PieceType[] | undefined,
-  label: string,
-  skin?: FreezeSkin,
-): Mech {
-  return activated(
-    (_inst, api, picks) =>
-      picks.length > 0
-        ? null
-        : {
-            kind: "square",
-            label,
-            squares: mySquares(api.board, api.opp).filter((sq) => {
-              const t = api.board.pieces[sq]!.type;
-              return t !== "k" && (!types || types.includes(t));
-            }),
-          },
-    (_inst, api, picks) => {
-      if (picks[0]?.square != null) {
-        addEffect(api, {
-          kind: "freeze",
-          sq: picks[0].square,
-          owner: api.opp,
-          turns,
-          ...(skin ? { skin } : {}),
-        });
-      }
-    },
-  );
+export function walnutAll(types: PieceType[], turns: number): Mech {
+  return instant((_inst, api) => {
+    for (const sq of mySquares(api.board, api.opp)) {
+      const t = api.board.pieces[sq]!.type;
+      if (t === "k" || !types.includes(t)) continue;
+      addEffect(api, { kind: "walnut", sq, owner: api.opp, turns });
+    }
+  });
 }
 
 // ---------------------------------------------------------------------------
-// Targeted petrify (walnut): the piece cannot move at all for `turns`. Kings
-// are never eligible. Mirrors the hex module's walnutTarget but lives here so
-// the funny set is self-contained.
+// Targeted petrify (walnut): one enemy piece cannot move for `turns`. Kings are
+// never eligible. Mirrors the fantasy module's petrifyTarget.
 // ---------------------------------------------------------------------------
 export function petrifyTarget(
   turns: number,
@@ -239,16 +228,16 @@ export function petrifyTarget(
 
 // ---------------------------------------------------------------------------
 // A temporary summon: place a fresh piece, then remove it again after `turns`
-// of the owner's own turns. Modeled on voidSquares (activated, spendOnUse
-// false, ticks its own timer on onMovePlayed, mutates the board on expiry via
-// uncounted removePiece so nothing enters the revive pool). Only summons
-// non-pawns so there is never a promotion edge to track.
+// of the owner's own turns. Copied verbatim from fantasy/shared.ts (which
+// copied funny/shared.ts, which models it on voidSquares): activated,
+// spendOnUse false, ticks its own timer on onMovePlayed, and removes the
+// visitor via an uncounted removePiece so nothing enters the revive pool. Only
+// summons non-pawns so there is never a promotion edge to track.
 // ---------------------------------------------------------------------------
 export function summonTemp(
   type: Exclude<PieceType, "p" | "k">,
   turns: number,
   zone: (api: BuffApi) => (sq: Square) => boolean,
-  opts: { shield?: boolean } = {},
 ): Mech {
   return {
     kind: "activated",
@@ -258,7 +247,7 @@ export function summonTemp(
         ? null
         : {
             kind: "square",
-            label: "Choose where your rental piece lands",
+            label: "Choose where the summoned spirit appears",
             squares: emptySquares(api.board, zone(api)),
           },
     effect: (inst, api, picks) => {
@@ -267,18 +256,11 @@ export function summonTemp(
       api.place(sq, type, api.me);
       inst.state.sq = sq;
       inst.state.turns = turns;
-      // Optional: the rental cannot be lost. A permanent (turns:null) square
-      // shield rides the piece (game.ts moves shield squares with the piece)
-      // and is orphan-pruned the instant the rental is removed on expiry, so
-      // nothing protective ever lingers on an empty square.
-      if (opts.shield) {
-        addEffect(api, { kind: "shield", owner: api.me, squares: [sq], turns: null });
-      }
     },
     onMovePlayed: (inst, move, api) => {
       const sq = inst.state.sq as Square | undefined;
       if (sq == null) return;
-      // Follow the rental as it moves; retire it if it is captured or overrun.
+      // Follow the spirit; let it pass on if captured or overrun.
       if (move.capturedSquare === sq && move.from !== sq) {
         inst.spent = true;
         inst.state.sq = undefined;
@@ -304,10 +286,33 @@ export function summonTemp(
     status: (inst) =>
       inst.state.sq == null
         ? "activate to summon"
-        : `rental leaves in ${(inst.state.turns as number) ?? 0} of your turns`,
+        : `the spirit departs in ${(inst.state.turns as number) ?? 0} of your turns`,
   };
 }
 
-// --- Common destination zones (local copies; library.ts keeps its own) ------
-export const myHalfZone = (api: BuffApi) => (sq: Square) => inHalf(api.me, sq);
-export const anyEmptyZone = (_api: BuffApi) => (_sq: Square) => true;
+// ---------------------------------------------------------------------------
+// Activated: convert `count` enemy pieces of the given types to your color.
+// A local copy of fantasy/shared.ts's convertEnemies (itself a copy of
+// library.ts's private one). buffNextTarget ends collection gracefully once
+// eligible targets run short, so it never soft-locks even when fewer than
+// `count` enemies of those types exist. Kings are never eligible (they are
+// never listed among the offered types).
+// ---------------------------------------------------------------------------
+export function convertEnemies(count: number, types: PieceType[], label: string): Mech {
+  return activated(
+    (_inst, api, picks) =>
+      picks.length >= count
+        ? null
+        : {
+            kind: "square",
+            label: count > 1 ? `${label} (${picks.length + 1}/${count})` : label,
+            squares: mySquares(api.board, api.opp).filter((sq) => {
+              const p = api.board.pieces[sq]!;
+              return types.includes(p.type) && !picks.some((k) => k.square === sq);
+            }),
+          },
+    (_inst, api, picks) => {
+      for (const k of picks) if (k.square != null) api.setPieceColor(k.square, api.me);
+    },
+  );
+}

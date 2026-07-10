@@ -5,7 +5,7 @@
 // only apply to rated games where both seats belong to accounts.
 
 import postgres from "postgres";
-import { glickoUpdatePair, GlickoRating } from "../glicko";
+import { glickoUpdatePair, GlickoRating, isProvisional } from "../glicko";
 import { categoryForTimeControl, isModeCategory, SPEED_CATEGORIES, type RatingCategory } from "../speed";
 import { awardAchievementsForFinishedGame, type AchievementExtras } from "./achievements";
 
@@ -157,6 +157,9 @@ export interface RatingChange {
   userId: string;
   before: number;
   after: number;
+  /** True while the post-game RD is still provisional (RD > 110), so UIs can
+   *  render the new rating as "1500?". */
+  provisional: boolean;
 }
 
 export async function recordFinishedGame(
@@ -200,8 +203,18 @@ export async function recordFinishedGame(
       const updated = glickoUpdatePair(whiteBefore, blackBefore, scoreForWhite);
       whiteAfter = updated.a;
       blackAfter = updated.b;
-      whiteChange = { userId: game.whiteUserId!, before: whiteBefore.rating, after: whiteAfter.rating };
-      blackChange = { userId: game.blackUserId!, before: blackBefore.rating, after: blackAfter.rating };
+      whiteChange = {
+        userId: game.whiteUserId!,
+        before: whiteBefore.rating,
+        after: whiteAfter.rating,
+        provisional: isProvisional(whiteAfter),
+      };
+      blackChange = {
+        userId: game.blackUserId!,
+        before: blackBefore.rating,
+        after: blackAfter.rating,
+        provisional: isProvisional(blackAfter),
+      };
     }
   }
 
@@ -216,7 +229,24 @@ export async function recordFinishedGame(
   // The hot rating/counter updates always run on D1. The archive `games` row
   // goes to Postgres when a connection is supplied; otherwise it falls into
   // this same D1 batch (dev/no-Hyperdrive fallback).
-  const statements: D1PreparedStatement[] = [];
+  //
+  // IDEMPOTENCY GUARD: the first statement claims this game id in
+  // recorded_games (INSERT OR IGNORE) with a nonce unique to THIS call, and
+  // every rating/counter update below is conditioned on this call's nonce
+  // having won that insert. D1 batches run as a single transaction, so either
+  // the claim + deltas all commit together (first call) or the claim is a
+  // no-op and every guarded update matches zero rows (any re-run: DO evicted
+  // between the DB write and the durable `recorded` flag, arena /arena/end
+  // retries after its in-memory dedupe set is lost, replayed end frames).
+  // One finished game can therefore apply its Glicko deltas exactly once.
+  const nonce = crypto.randomUUID();
+  const statements: D1PreparedStatement[] = [
+    db
+      .prepare(`INSERT OR IGNORE INTO recorded_games (id, nonce, recorded_at) VALUES (?, ?, ?)`)
+      .bind(game.id, nonce, Date.now()),
+  ];
+  // Appended to guarded UPDATEs; true only when this call inserted the claim.
+  const guardSql = `AND EXISTS (SELECT 1 FROM recorded_games WHERE id = ? AND nonce = ?)`;
 
   if (!archiveConnectionString) {
     statements.push(
@@ -270,42 +300,56 @@ export async function recordFinishedGame(
         .prepare(
           `UPDATE user_ratings SET rating = ?, rd = ?, vol = ?, games = games + 1, peak = MAX(peak, ?),
              ${winCol(game.winner === "w", drew)}
-           WHERE user_id = ? AND category = ?`,
+           WHERE user_id = ? AND category = ? ${guardSql}`,
         )
-        .bind(whiteAfter.rating, whiteAfter.rd, whiteAfter.vol, whiteAfter.rating, game.whiteUserId, category),
+        .bind(whiteAfter.rating, whiteAfter.rd, whiteAfter.vol, whiteAfter.rating, game.whiteUserId, category, game.id, nonce),
       db
         .prepare(
           `UPDATE user_ratings SET rating = ?, rd = ?, vol = ?, games = games + 1, peak = MAX(peak, ?),
              ${winCol(game.winner === "b", drew)}
-           WHERE user_id = ? AND category = ?`,
+           WHERE user_id = ? AND category = ? ${guardSql}`,
         )
-        .bind(blackAfter.rating, blackAfter.rd, blackAfter.vol, blackAfter.rating, game.blackUserId, category),
+        .bind(blackAfter.rating, blackAfter.rd, blackAfter.vol, blackAfter.rating, game.blackUserId, category, game.id, nonce),
       // Aggregate account counters (total rated games / results) still live on
       // the users row for profiles and the guest-visibility filter; the shared
       // users.rating column is legacy and no longer written.
       db
-        .prepare(`UPDATE users SET games = games + 1, ${winCol(game.winner === "w", drew)} WHERE id = ?`)
-        .bind(game.whiteUserId),
+        .prepare(`UPDATE users SET games = games + 1, ${winCol(game.winner === "w", drew)} WHERE id = ? ${guardSql}`)
+        .bind(game.whiteUserId, game.id, nonce),
       db
-        .prepare(`UPDATE users SET games = games + 1, ${winCol(game.winner === "b", drew)} WHERE id = ?`)
-        .bind(game.blackUserId),
+        .prepare(`UPDATE users SET games = games + 1, ${winCol(game.winner === "b", drew)} WHERE id = ? ${guardSql}`)
+        .bind(game.blackUserId, game.id, nonce),
     );
   }
 
-  if (statements.length) await db.batch(statements);
+  const batchResults = await db.batch(statements);
+  // Did THIS call win the recorded_games claim? If not, some earlier call
+  // already processed this game id: every guarded update above no-opped, and
+  // we must not re-report rating movement or re-run achievement progress.
+  // (The archive write below stays: it is idempotent on the game id, and a
+  // retry whose first attempt archived nothing should still archive.)
+  const firstApplication = (batchResults[0]?.meta?.changes ?? 1) > 0;
+  if (!firstApplication) {
+    whiteChange = null;
+    blackChange = null;
+  }
 
   // Evaluate achievements for both seated accounts off the same D1, keyed by
   // user_id (no table scan). Runs for every finished game, rated or not, so
-  // casual and Buff games unlock their achievements too. Awarding must never
-  // block the game from ending, so any failure is logged and swallowed.
-  try {
-    await awardAchievementsForFinishedGame(db, game, {
-      ...achievementExtras,
-      whiteRatingBefore: whiteBefore?.rating ?? null,
-      blackRatingBefore: blackBefore?.rating ?? null,
-    });
-  } catch (err) {
-    console.error("failed to award achievements", game.id, err);
+  // casual and Buff games unlock their achievements too — but only on the
+  // game's FIRST application (achievement progress counters are not idempotent
+  // and would double-advance on a replayed end). Awarding must never block the
+  // game from ending, so any failure is logged and swallowed.
+  if (firstApplication) {
+    try {
+      await awardAchievementsForFinishedGame(db, game, {
+        ...achievementExtras,
+        whiteRatingBefore: whiteBefore?.rating ?? null,
+        blackRatingBefore: blackBefore?.rating ?? null,
+      });
+    } catch (err) {
+      console.error("failed to award achievements", game.id, err);
+    }
   }
 
   // Archive the finished game to Postgres (OCI, via Hyperdrive). Idempotent on

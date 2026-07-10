@@ -18,7 +18,9 @@ interface Props {
   myColor: Color;
   myNerf?: Nerf;
   opponentNerf?: Nerf;
-  ratingChange?: { before: number; after: number } | null;
+  // `provisional` = the post-game rating deviation is still wide (RD > 110),
+  // so the new rating renders with a "?" suffix ("1500?").
+  ratingChange?: { before: number; after: number; provisional?: boolean } | null;
   onRematch: () => void;
   onNewGame: () => void;
   onReview?: () => void;
@@ -503,7 +505,10 @@ export function GameOver({
         {ratingChange && (
           <div className="mt-5 inline-flex items-center gap-2 rounded-sm border border-gold/25 bg-gold/5 px-3 py-2 font-mono text-sm">
             <span className="smallcaps text-[10px] text-parchment-400">Rating</span>
-            <span className="text-parchment tabular">{Math.round(ratingNow)}</span>
+            <span className="text-parchment tabular">
+              {Math.round(ratingNow)}
+              {ratingChange.provisional ? "?" : ""}
+            </span>
             <span
               className={
                 "tabular " + (ratingDelta >= 0 ? "text-gold-leaf" : "text-oxblood-glow")

@@ -755,7 +755,14 @@ export function DraftOverlay({
             /* Reroll (or a fresh offer) in the compact panel still earns its
                pack moment: a mini pack that tears itself on a fast fuse. */
             <button type="button" onClick={tearPack} className="pack-shell mx-auto mt-2 block scale-75">
-              <div className={"pack " + (packStage === "tearing" ? "pack--tearing" : "")}>
+              <div
+                data-tier={maxTier}
+                className={
+                  "pack " +
+                  (maxTier >= 9 ? "pack--mythic " : maxTier >= 7 ? "pack--gold " : maxTier >= 5 ? "pack--rare " : "") +
+                  (packStage === "tearing" ? "pack--tearing" : "")
+                }
+              >
                 <span aria-hidden className="pack-burst" />
                 <span aria-hidden className="pack-flap">
                   <span className="pack-flap__zigzag" />
@@ -805,7 +812,7 @@ export function DraftOverlay({
                 className="flex min-w-[6rem] min-h-[44px] flex-1 touch-manipulation items-center justify-center gap-1 rounded-[1px] border border-white/15 bg-white/[0.03] px-3 py-2 font-display text-[11px] font-semibold tracking-wide text-parchment-200 transition hover:border-gold/50 hover:text-gold-leaf disabled:opacity-40"
                 title="Roll fresh cards at the same tier"
               >
-                <RerollIcon className="text-gold-leaf" /> Reroll ({rerollsLeft})
+                <RerollIcon className={"text-gold-leaf" + (rerolling ? " reroll-spin" : "")} /> Reroll ({rerollsLeft})
               </button>
             )}
             <button
@@ -943,9 +950,10 @@ export function DraftOverlay({
         )}
 
         {packStage !== "open" && (
-          /* The sealed pack: the cards' tiers stay secret, only the pack's
-             finish hints at what's inside (gold foil for a tier 7+ pull,
-             mythic shimmer for 9/10). Tap tears it open immediately. */
+          /* The sealed pack: the individual cards stay secret, but the pack
+             wears the tier color of the best card inside (owner request) and
+             the finish scales with it (halo 5+, foil glow 7+, mythic shimmer
+             9/10). Tap tears it open immediately. */
           <button
             type="button"
             onClick={tearPack}
@@ -953,9 +961,10 @@ export function DraftOverlay({
             className="pack-shell mx-auto mt-6 block"
           >
             <div
+              data-tier={maxTier}
               className={
                 "pack " +
-                (maxTier >= 9 ? "pack--mythic " : maxTier >= 7 ? "pack--gold " : "") +
+                (maxTier >= 9 ? "pack--mythic " : maxTier >= 7 ? "pack--gold " : maxTier >= 5 ? "pack--rare " : "") +
                 (packStage === "tearing" ? "pack--tearing" : "")
               }
             >
@@ -1183,7 +1192,7 @@ export function DraftOverlay({
               className="btn-glass flex w-full touch-manipulation items-center justify-center gap-1.5 px-6 py-3 font-display text-sm font-semibold tracking-wide disabled:opacity-40 sm:w-auto"
               title="Discard this offer and roll fresh cards at the same tier"
             >
-              <RerollIcon className="text-gold-leaf" />
+              <RerollIcon className={"text-gold-leaf" + (rerolling ? " reroll-spin" : "")} />
               Reroll <span className="text-parchment-400">({rerollsLeft})</span>
             </button>
           )}
@@ -1196,7 +1205,12 @@ export function DraftOverlay({
                   ref={bankBtnRef}
                   onClick={handleBank}
                   disabled={chosen != null || banking}
-                  className="btn-glass w-full touch-manipulation rounded-[1px] border border-coral/50 px-6 py-3 font-display text-sm font-semibold tracking-wide text-coral-glow sm:w-auto"
+                  className={
+                    "btn-glass w-full touch-manipulation rounded-[1px] border border-coral/50 px-6 py-3 font-display text-sm font-semibold tracking-wide text-coral-glow sm:w-auto" +
+                    // The vault takes the deposit: one pulse as the face-down
+                    // cards land in the button.
+                    (banking ? " bank-pulse" : "")
+                  }
                   title="Bank this draft and roll a tier higher next time"
                 >
                   Bank this draft?
@@ -1221,15 +1235,33 @@ export function DraftOverlay({
               </button>
             )}
             {banking && (
-              <motion.span
-                aria-hidden
-                initial={{ opacity: 0, y: 6, x: "-50%" }}
-                animate={{ opacity: [0, 1, 1, 0], y: -22, x: "-50%" }}
-                transition={{ duration: 0.6, delay: 0.15 }}
-                className="pointer-events-none absolute -top-1 left-1/2 font-display text-xs font-semibold text-gold-leaf"
-              >
-                +1 tier
-              </motion.span>
+              <>
+                <motion.span
+                  aria-hidden
+                  initial={{ opacity: 0, y: 6, x: "-50%" }}
+                  animate={{ opacity: [0, 1, 1, 0], y: -26, x: "-50%" }}
+                  transition={{ duration: 0.7, delay: 0.5 }}
+                  className="pointer-events-none absolute -top-1 left-1/2 font-display text-sm font-bold text-gold-leaf"
+                >
+                  +1 tier
+                </motion.span>
+                {/* Coin burst out of the bank as the cards land in it:
+                    deterministic angles/distances, one shot, decorative. */}
+                <span aria-hidden className="bank-burst">
+                  {Array.from({ length: 10 }).map((_, i) => (
+                    <i
+                      key={i}
+                      style={{
+                        // An upward fan: -55deg..+55deg around straight up.
+                        ["--ang" as string]: `${Math.round(-55 + (i * 110) / 9)}deg`,
+                        ["--dist" as string]: `${30 + ((i * 29) % 26)}px`,
+                        ["--d" as string]: `${(i % 5) * 26}ms`,
+                      }}
+                      className="bank-coin"
+                    />
+                  ))}
+                </span>
+              </>
             )}
           </div>
         </div>

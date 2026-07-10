@@ -229,9 +229,11 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   // for this account; matched case-insensitively like the server does.
   const isOwnerAccount = myName.toLowerCase() === "ilovenewjeans";
   const myRating = start.players?.[myColor]?.rating ?? null;
+  const myProvisional = start.players?.[myColor]?.provisional ?? false;
   const oppColor: Color = myColor === "w" ? "b" : "w";
   const oppName = start.players?.[oppColor]?.name ?? "Opponent";
   const oppRating = start.players?.[oppColor]?.rating ?? null;
+  const oppProvisional = start.players?.[oppColor]?.provisional ?? false;
   // Draft ruleset: the server owns offers and resolutions; this component
   // keeps a deterministic replica in the game object (see lib/draftOnline).
   const isDraft = !!start.draft;
@@ -298,7 +300,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     const oppId = start.revealed?.[start.color === "w" ? "b" : "w"];
     return oppId ? IMPLEMENTED_BY_ID[oppId] ?? null : null;
   });
-  const [ratingChange, setRatingChange] = useState<{ before: number; after: number } | null>(null);
+  const [ratingChange, setRatingChange] = useState<{ before: number; after: number; provisional?: boolean } | null>(null);
   const [chatMessages, setChatMessages] = useState<MPChatMessage[]>(() => start.chat ?? []);
   const [rematchStatus, setRematchStatus] = useState<"none" | "offered" | "incoming">("none");
   // Abandonment claims: opponentGone arrived and no sign of life since; after
@@ -893,7 +895,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           setRevealedOppNerf(IMPLEMENTED_BY_ID[oppNerfId]);
         }
         const change = e.end.ratings?.[myColor];
-        if (change) setRatingChange({ before: change.before, after: change.after });
+        if (change) setRatingChange({ before: change.before, after: change.after, provisional: change.provisional });
         const finished = gameRef.current;
         if (finished) {
           // Game over: every held buff goes public (like both nerfs), so
@@ -2246,6 +2248,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               myColor={myColor}
               name={oppName}
               elo={oppRating}
+              provisional={oppProvisional}
               avatar={start.players?.[oppColor]?.avatar}
               nerf={opponentNerf}
               revealed={oppNerfShown}
@@ -2287,6 +2290,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                 myColor={myColor}
                 name={myName}
                 elo={myRating}
+                provisional={myProvisional}
                 avatar={start.players?.[myColor]?.avatar}
                 nerf={myNerf}
                 hideNerf={isBuffMode}
@@ -2361,6 +2365,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                                 strikeSquares: zone.strike,
                                 walnutSquares: zone.walnut,
                                 bananaSquares: zone.banana,
+                                trapSquares: zone.traps,
                                 // Previously missing online: king-only /
                                 // no-pawn-advance shackles now paint here too.
                                 lockedSquares: zone.locked,

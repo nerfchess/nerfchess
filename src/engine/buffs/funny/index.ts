@@ -11,6 +11,7 @@ import { FUNNY_SUMMONS } from "./summons";
 import { FUNNY_CHAOS } from "./chaos";
 import { FUNNY_CLOCK } from "./clock";
 import { FUNNY_TRADEOFFS } from "./tradeoffs";
+import { FUNNY_META } from "./meta";
 
 export const FUNNY_CARDS: Buff[] = [
   ...FUNNY_SLAPSTICK,
@@ -20,4 +21,5 @@ export const FUNNY_CARDS: Buff[] = [
   ...FUNNY_CHAOS,
   ...FUNNY_CLOCK,
   ...FUNNY_TRADEOFFS,
+  ...FUNNY_META,
 ];

@@ -120,7 +120,8 @@ export type FreezeSkin =
   | "petal"
   | "rust"
   | "gum"
-  | "stone";
+  | "stone"
+  | "beartrap";
 
 export type ActiveEffect =
   | { kind: "freeze"; sq: Square; owner: Color; turns: number; skin?: FreezeSkin }

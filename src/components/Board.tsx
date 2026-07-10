@@ -2,7 +2,17 @@
 
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Piece, WalnutPiece, BananaPeel } from "./Pieces";
+import {
+  Piece,
+  WalnutPiece,
+  BananaPeel,
+  WhoopeeCushionMark,
+  MineMark,
+  TrapdoorMark,
+  SinkholeMark,
+  BearTrapMark,
+  LandlordClaimMark,
+} from "./Pieces";
 import {
   BarrierStakes,
   BoltGlyph,
@@ -141,6 +151,9 @@ interface Visual {
   lockedSquares?: number[];
   /** Squares where the viewer has tossed a banana peel (owner-only trap). */
   bananaSquares?: number[];
+  /** Every other placed trap (mine, sinkhole, trapdoor, whoopee cushion,
+   * landlord claim), each drawn with its own realistic animated marker. */
+  trapSquares?: { sq: number; kind: string; name: string }[];
   /** Squares the opponent's buffs bar YOU from entering (stakes + rope; the
    * same squares also flow into bannedSquares for the flat tint). */
   barredSquares?: number[];
@@ -184,6 +197,9 @@ const FREEZE_SKINS: Record<string, { tint: string; glyph: FreezeGlyphKind; label
   stone: { tint: "bg-stone-500/35", glyph: "cracks", label: "Petrified: turned to stone" },
   quicksand: { tint: "bg-amber-600/30", glyph: "cracks", label: "Sinking: caught in quicksand" },
   bubble: { tint: "bg-sky-200/30", glyph: "frost", label: "Wrapped: sealed in bubble wrap" },
+  // Rendered with the full BearTrapMark jaws under the piece (see the frozen
+  // block in the square loop), not just the corner glyph.
+  beartrap: { tint: "bg-zinc-500/25", glyph: "chain", label: "Trapped: jaws locked around it" },
 };
 function freezeSkinOf(skin: string | undefined) {
   return FREEZE_SKINS[skin ?? "ice"] ?? FREEZE_SKINS.ice;
@@ -191,6 +207,15 @@ function freezeSkinOf(skin: string | undefined) {
 // Stable empty refs so a board with no skin/turn data does not churn renders.
 const EMPTY_SKINS: Record<string, string> = {};
 const EMPTY_TURNS: Record<number, number | null> = {};
+
+// Hover copy for the placed-trap markers (mine, sinkhole, trapdoor...).
+const TRAP_HOVER_BODY: Record<string, string> = {
+  mine: "The first enemy piece (never a king) to step on this mine is destroyed.",
+  sinkhole: "The first enemy piece (never a king) to step here plunges out of the game.",
+  trapdoor: "An enemy piece (never a king) landing here is sprung back toward home and stunned.",
+  whoopee: "The first enemy piece (never a king) to sit here makes a rude noise and must keep moving.",
+  landlord: "An enemy piece (never a king) ending its move here owes rent: stuck for a turn.",
+};
 
 /** Tiny corner marker for a frozen square, chosen by the skin's glyph kind.
  * Strokes only (no gradients/glow/emoji), sized to sit unobtrusively. */
@@ -1370,6 +1395,11 @@ export function Board({
   };
   const lockedSquares = useMemo(() => new Set(visual?.lockedSquares ?? []), [visual?.lockedSquares]);
   const bananaSquares = useMemo(() => new Set(visual?.bananaSquares ?? []), [visual?.bananaSquares]);
+  const trapMarks = useMemo(() => {
+    const m = new Map<number, { kind: string; name: string }>();
+    for (const t of visual?.trapSquares ?? []) m.set(t.sq, { kind: t.kind, name: t.name });
+    return m;
+  }, [visual?.trapSquares]);
   const barredSquares = useMemo(() => new Set(visual?.barredSquares ?? []), [visual?.barredSquares]);
   // Royal-guard (king_safe) tint. Recompute from live state as well: it always
   // sits on the owner's CURRENT king square and clears the instant the ward
@@ -2174,6 +2204,15 @@ export function Board({
         status: null,
         body: "The next enemy piece to step here slips and skids off course.",
       });
+    if (trapMarks.has(sq)) {
+      const t = trapMarks.get(sq)!;
+      out.push({
+        title: t.name,
+        tone: "neutral",
+        status: null,
+        body: TRAP_HOVER_BODY[t.kind] ?? "A placed trap waits on this square.",
+      });
+    }
     if (strikeSquares.has(sq))
       out.push({
         title: "Lightning",
@@ -2409,6 +2448,15 @@ export function Board({
                     <div
                       className={`absolute inset-0 pointer-events-none sq-freeze ${freezeSkinOf(frozenSkins[sq]).tint}`}
                     />
+                    {frozenSkins[sq] === "beartrap" && (
+                      /* Bear Trap: the whole steel-jaw marker clamps around
+                         the held piece (which renders above it). */
+                      <div className="absolute inset-0 grid place-items-center pointer-events-none">
+                        <div style={{ width: "84%", height: "84%" }}>
+                          <BearTrapMark />
+                        </div>
+                      </div>
+                    )}
                     <span className="absolute top-0.5 right-0.5 z-10 leading-none pointer-events-none drop-shadow sq-freeze-flake">
                       <FreezeGlyph kind={freezeSkinOf(frozenSkins[sq]).glyph} />
                     </span>
@@ -2436,6 +2484,25 @@ export function Board({
                   <div className="absolute inset-0 z-10 grid place-items-center pointer-events-none">
                     <div className="banana-peel" style={{ width: "60%", height: "60%" }}>
                       <BananaPeel />
+                    </div>
+                  </div>
+                )}
+                {trapMarks.has(sq) && (
+                  /* Any other placed trap: a realistic animated marker per
+                     kind (SMIL idle loops inside the SVGs; reduced-motion
+                     aware). Same publicity rule as the peel. */
+                  <div className="absolute inset-0 z-10 grid place-items-center pointer-events-none">
+                    <div style={{ width: "68%", height: "68%" }}>
+                      {(() => {
+                        switch (trapMarks.get(sq)!.kind) {
+                          case "mine": return <MineMark />;
+                          case "sinkhole": return <SinkholeMark />;
+                          case "trapdoor": return <TrapdoorMark />;
+                          case "whoopee": return <WhoopeeCushionMark />;
+                          case "landlord": return <LandlordClaimMark />;
+                          default: return null;
+                        }
+                      })()}
                     </div>
                   </div>
                 )}

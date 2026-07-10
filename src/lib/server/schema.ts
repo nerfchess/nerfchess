@@ -278,6 +278,19 @@ export const SCHEMA_STATEMENTS: string[] = [
     PRIMARY KEY (user_id, achievement_id)
   )`,
   `CREATE INDEX IF NOT EXISTS idx_user_achievements_user ON user_achievements(user_id, unlocked_at)`,
+  // Idempotency ledger for finished-game processing: recordFinishedGame
+  // INSERT OR IGNOREs one row per game id (with a per-call nonce) in the same
+  // atomic D1 batch as the rating/counter updates, and every update is
+  // conditioned on THIS call's nonce having won the insert. A game id can
+  // therefore apply its rating deltas exactly once, no matter how many times
+  // the end path re-runs (DO eviction between the DB write and the durable
+  // `recorded` flag, arena /arena/end retries, replayed end frames).
+  // Mirrors migrations/0021_recorded_games.sql.
+  `CREATE TABLE IF NOT EXISTS recorded_games (
+    id TEXT PRIMARY KEY,
+    nonce TEXT NOT NULL,
+    recorded_at INTEGER NOT NULL
+  )`,
   // Buff/nerf card metadata overrides a moderator edits at runtime (name,
   // description, flavor, tier, enabled) so card copy and draft availability
   // change without a deploy. At most one row per card id; NULL column = no
@@ -389,6 +402,13 @@ const ADDITIVE_COLUMNS: string[] = [
   // exposed by any public API (see docs/archive-draft-record.md).
   `ALTER TABLE games ADD COLUMN draft_record TEXT`,
   `ALTER TABLE games ADD COLUMN replay_version INTEGER`,
+  // Claim every game already archived on D1 in the recorded_games idempotency
+  // ledger (nonce 'backfill' can never match a live call's random nonce), so a
+  // stale replay of a pre-ledger game can never re-apply its rating deltas.
+  // Idempotent: INSERT OR IGNORE never overwrites a real claim. Mirrors
+  // migrations/0021_recorded_games.sql.
+  `INSERT OR IGNORE INTO recorded_games (id, nonce, recorded_at)
+     SELECT id, 'backfill', completed_at FROM games`,
 ];
 
 export async function ensureSchema(db: D1Database): Promise<void> {
