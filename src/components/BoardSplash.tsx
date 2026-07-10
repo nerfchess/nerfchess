@@ -29,14 +29,37 @@ export function useBoardSplash(rows: AgainstRow[]): {
     const fresh = rows.filter((r) => !seen.current!.has(r.key));
     if (fresh.length === 0) return;
     for (const r of fresh) seen.current!.add(r.key);
-    setQueue((q) => [
-      ...q,
-      ...fresh.map((r) => ({
-        key: `${r.key}:${q.length}`,
-        title: r.name,
-        sub: r.left === "Pending" || r.left === "Until it ends" ? r.detail : `${r.detail} ${r.left}.`,
-      })),
-    ]);
+    // Coalesce a BATCH of same-named constraints into ONE splash: a mass
+    // freeze (Ice Age locks a whole army) used to enqueue a separate "Frozen
+    // piece" splash per square — a dozen pops playing back-to-back for 2.3s
+    // each ("the frozen piece things start spamming"). Group this batch by
+    // constraint name and announce each group once, with a count when it hit
+    // more than one piece.
+    const groups = new Map<string, AgainstRow[]>();
+    for (const r of fresh) {
+      const g = groups.get(r.name);
+      if (g) g.push(r);
+      else groups.set(r.name, [r]);
+    }
+    const events = [...groups.values()].map((g) => {
+      const first = g[0];
+      const durable = first.left !== "Pending" && first.left !== "Until it ends";
+      if (g.length === 1) {
+        return {
+          title: first.name,
+          sub: durable ? `${first.detail} ${first.left}.` : first.detail,
+        };
+      }
+      return {
+        title: `${first.name} ×${g.length}`,
+        sub: durable
+          ? `${g.length} of your pieces are affected. ${first.left}.`
+          : `${g.length} of your pieces are affected.`,
+      };
+    });
+    setQueue((q) =>
+      [...q, ...events.map((e, i) => ({ key: `${e.title}:${q.length + i}`, ...e }))].slice(0, 5),
+    );
   }, [rows]);
   return {
     current: queue[0] ?? null,
