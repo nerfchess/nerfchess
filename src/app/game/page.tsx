@@ -1665,7 +1665,6 @@ function GamePage() {
                   snapshotMySignature(i);
                   buffTargeting.start(i);
                 }}
-                hideOpponentCards
                 plays={oppLog}
               />
             ) : (
@@ -1909,7 +1908,6 @@ function GamePage() {
               snapshotMySignature(i);
               buffTargeting.start(i);
             }}
-            hideOpponentCards
             plays={oppLog}
           />
         </MobileBuffDrawer>

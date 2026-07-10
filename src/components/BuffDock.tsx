@@ -25,11 +25,12 @@ import "./DraftOverlay.css";
 // Only enemy-buff-list targets (which have no board representation) fall
 // back to the EnemyBuffModal.
 //
-// Held-buff visibility: your cards render as compact rows; the opponent's
-// render as face-down minis (tier numeral only) whenever their identity is
-// hidden. Online the server already masks identities (placeholder instances
-// with an empty id); bot games pass hideOpponentCards to apply the same rule
-// locally.
+// Held-buff visibility: FULLY PUBLIC HANDS (owner rule). Online the server
+// sends both sides' held cards face-up and bot games no longer pass
+// hideOpponentCards, so the opponent's whole inventory renders as real rows.
+// The hidden-card machinery below (empty-id placeholder instances, the
+// hideOpponentCards prop, the "N hidden" sign) is kept working rather than
+// deleted so an old server frame or a future hidden mode degrades gracefully.
 // ---------------------------------------------------------------------------
 
 export interface BuffTargeting {
