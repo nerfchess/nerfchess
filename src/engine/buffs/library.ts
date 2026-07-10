@@ -1254,7 +1254,7 @@ const TIER2: Buff[] = [
   def(
     // Reworked for the full-transparency era (opponent offers are public):
     // insight now bends your own draft instead. forceTier=3 is unique to this
-    // card, priced on the forceTier ladder (North Star 4@t3, High Roll 5@t4,
+    // card, priced on the forceTier ladder (North Star 4@t3, High Roll 6@t4,
     // Favorable Stars 6@t5).
     { id: "draft_insight", name: "Draft Insight", description: "Your next draft is fated to offer tier 3 cards.", tier: 2, category: "draft", boon: true, flavor: "You cannot change the cards. You can change where they are dealt from." },
     instant((_inst, api) => {
