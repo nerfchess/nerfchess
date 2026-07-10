@@ -3476,6 +3476,35 @@ const TIER8: Buff[] = [
     barLine("file", null, 3),
   ),
   def(
+    // Demoted from the tier-9 apex band (owner call): a five-turn royal
+    // rampage is huge but earnable in the normal tier-8 pool.
+    { id: "divine_right", icon: "Crown", name: "Divine Right", description: "For your next 5 turns your king may move and capture as a queen, and it cannot be captured.", tier: 8, category: "movement", flavor: "By the grace of no one in particular.", fx: { motif: "empower", pieces: ["k"], moveAs: "q", self: true } },
+    {
+      kind: "activated",
+      spendOnUse: false,
+      effect: (inst, api) => {
+        // One activation only; re-use is a guarded no-op.
+        if (inst.state.turns != null) return;
+        inst.state.turns = 5;
+        addEffect(api, { kind: "king_safe", owner: api.me, turns: 5 });
+      },
+      augmentMoves: (moves, inst, api) => {
+        if (turnsLeft(inst) <= 0) return;
+        for (const sq of mySquares(api.board, api.me, "k")) {
+          addNovel(moves, slideMoves(api.board, sq, ALL_DIRS, inst.id));
+        }
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.state.turns == null) return;
+        tickTurns(inst, move, api.me);
+      },
+      status: (inst) =>
+        inst.state.turns == null
+          ? "activate: your king rules as a queen"
+          : `divine reign: ${turnsLeft(inst)} of your turns left`,
+    },
+  ),
+  def(
     { id: "time_prison", name: "Time Prison", description: "Your opponent skips their next three turns, once.", tier: 8, category: "tempo", fx: { motif: "slow", pieces: "all" } },
     skipOpponent(3),
   ),

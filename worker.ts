@@ -6264,17 +6264,19 @@ export class GameServer extends DurableObject<Env> {
     if (db && humanIds.length > 0) {
       try {
         const placeholders = humanIds.map(() => "?").join(",");
-        // Same live-bucket rule the house personas use above (best of the two
-        // mode buckets): the legacy users.rating column is never written after
-        // games anymore, so reading it here showed humans frozen at stale
-        // numbers while the bots' ratings moved — the "ratings don't match
-        // between pages" report.
+        // The player's ACTIVE bucket (most games played; ties broken by the
+        // higher number), not MAX(nerf, buff): the max rule meant a player who
+        // only plays one mode and loses kept displaying the other bucket's
+        // untouched 1500 seed forever — the "online list shows the wrong elo
+        // and never updates" report. Falls back to the legacy users.rating
+        // only when neither mode bucket exists yet.
         const rows = await db
           .prepare(
             `SELECT u.id, u.username,
                     COALESCE(
-                      (SELECT MAX(r.rating) FROM user_ratings r
-                        WHERE r.user_id = u.id AND r.category IN ('nerf','buff')),
+                      (SELECT r.rating FROM user_ratings r
+                        WHERE r.user_id = u.id AND r.category IN ('nerf','buff')
+                        ORDER BY r.games DESC, r.rating DESC LIMIT 1),
                       u.rating
                     ) AS rating,
                     u.avatar
