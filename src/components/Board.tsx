@@ -255,30 +255,38 @@ function ExtraTurnsBanner({ mine, gained, total }: { mine: boolean; gained: numb
  * from 5, headline-sized at 7+. FUNCTIONAL (never gated by the effects dial);
  * sits in the board's upper area so it coexists with the centered
  * extra-turns banner when one card triggers both. */
-function PlayAnnouncement({ name, tier }: { name: string; tier: number }) {
+function PlayAnnouncement({ name, tier, outcome }: { name: string; tier: number; outcome?: string }) {
   const big = tier >= 7;
   const mid = tier >= 5 && tier < 7;
   return (
     <div aria-live="polite" className="pointer-events-none absolute inset-x-0 top-[6%] z-[45] flex justify-center">
       <div
         className={
-          "extra-turns-banner mx-4 flex max-w-[min(92%,30rem)] items-center gap-2 border border-white/25 bg-ink-950/70 text-center shadow-plate backdrop-blur-[2px] " +
+          "extra-turns-banner mx-4 flex max-w-[min(92%,30rem)] flex-col items-center gap-1 border border-white/25 bg-ink-950/70 text-center shadow-plate backdrop-blur-[2px] " +
           (big ? "px-5 py-2.5" : mid ? "px-4 py-2" : "px-3 py-1.5")
         }
       >
-        <span
-          className={
-            `font-display font-bold tracking-wide tier-${tier} ` +
-            (big ? "text-2xl sm:text-3xl" : mid ? "text-lg sm:text-xl" : "text-sm")
-          }
-        >
-          {name}
-        </span>
-        <span
-          className={`shrink-0 rounded-[1px] border px-1.5 py-px font-display font-bold tier-bg-${tier} tier-${tier} ${big ? "text-[11px]" : "text-[9px]"}`}
-        >
-          {TIER_ROMAN[tier]}
-        </span>
+        <div className="flex items-center gap-2">
+          <span
+            className={
+              `font-display font-bold tracking-wide tier-${tier} ` +
+              (big ? "text-2xl sm:text-3xl" : mid ? "text-lg sm:text-xl" : "text-sm")
+            }
+          >
+            {name}
+          </span>
+          <span
+            className={`shrink-0 rounded-[1px] border px-1.5 py-px font-display font-bold tier-bg-${tier} tier-${tier} ${big ? "text-[11px]" : "text-[9px]"}`}
+          >
+            {TIER_ROMAN[tier]}
+          </span>
+        </div>
+        {/* Random-branch result: what the spin/flip actually gave you. */}
+        {outcome && (
+          <span className="max-w-full font-display text-[12px] font-semibold leading-snug text-gold-leaf sm:text-sm">
+            {outcome}
+          </span>
+        )}
       </div>
     </div>
   );
@@ -1169,7 +1177,16 @@ export function Board({
     id: string;
     category: BuffCategory;
     tier: number;
+    /** Random-branch cards (Gamble, Jackpot, Wheel of Fortune...) stash a
+     * short result line in their instance state; the announcement banner shows
+     * it after the play so "what did I get?" is answered on the board. */
+    outcome?: string;
   } | null>(null);
+  // Latest buffs, read inside the cast effect (which only deps on
+  // signatureCard) to pull the just-played card's outcome without re-running
+  // on every buff change.
+  const buffsRef = useRef(buffs);
+  buffsRef.current = buffs;
   const castSeenKeyRef = useRef(0);
   // Play keys whose lead art already rendered through the piece-diff path;
   // the cast-level generated lead only fires for diff-less plays (clock,
@@ -1180,7 +1197,20 @@ export function Board({
     castSeenKeyRef.current = signatureCard.key;
     const def = BUFF_BY_ID[signatureCard.id];
     if (!def) return;
-    setCast({ key: signatureCard.key, id: signatureCard.id, category: def.category, tier: def.tier });
+    // Pull the played card's result line, if it recorded one (last matching
+    // instance wins, so a repeat play shows its own freshest outcome).
+    let outcome: string | undefined;
+    const bs = buffsRef.current;
+    if (bs) {
+      for (const color of ["w", "b"] as Color[]) {
+        for (const inst of bs.players[color].buffs) {
+          if (inst.id === signatureCard.id && typeof inst.state.outcome === "string") {
+            outcome = inst.state.outcome as string;
+          }
+        }
+      }
+    }
+    setCast({ key: signatureCard.key, id: signatureCard.id, category: def.category, tier: def.tier, outcome });
     const intensity = castIntensity(def.tier);
     if (!sigOf(signatureCard.id) && intensity !== "sleek") {
       playCastVoice(def.category, intensity === "marquee");
@@ -2643,8 +2673,11 @@ export function Board({
                 {banned && (
                   <>
                     <div className="absolute inset-0 bg-red-900/45 pointer-events-none" />
-                    {/* Glowing aura: the nerf is ACTING here, not just tinting. */}
-                    <NerfAura />
+                    {/* Glowing aura: the nerf is ACTING here, not just tinting.
+                        Decorative, so it stands down when effects are hidden or
+                        the clock is calming FX (the red tint is the functional
+                        read and always stays). */}
+                    {!fxHiddenPref && !fxCalmClock && <NerfAura />}
                   </>
                 )}
                 {wardSquares.has(sq) && (
@@ -2900,9 +2933,9 @@ export function Board({
                   <>
                     <div className="absolute inset-0 pointer-events-none rounded-sm ring-2 ring-inset ring-gold-leaf/80 shadow-[inset_0_0_24px_-4px_rgba(230,191,106,0.55)] animate-flicker" />
                     {/* The nerf's grip on this piece glows, matching the
-                        banned-square aura, so "what my nerf is affecting"
-                        reads as one visual language. */}
-                    <NerfAura />
+                        banned-square aura. Decorative: hidden when FX are off,
+                        while the gold ring stays as the read. */}
+                    {!fxHiddenPref && !fxCalmClock && <NerfAura />}
                   </>
                 )}
                 {isPickTarget && (
@@ -3050,7 +3083,7 @@ export function Board({
           />
         )}
         {cast && BUFF_BY_ID[cast.id] && (
-          <PlayAnnouncement key={`ann-${cast.key}`} name={BUFF_BY_ID[cast.id]!.name} tier={cast.tier} />
+          <PlayAnnouncement key={`ann-${cast.key}`} name={BUFF_BY_ID[cast.id]!.name} tier={cast.tier} outcome={cast.outcome} />
         )}
         {/* Diff-less lead: a played card that removes nothing and leaves no
             zone (clock steals, draft tricks, info peeks...) still gets its

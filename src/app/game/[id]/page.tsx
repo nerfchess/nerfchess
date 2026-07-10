@@ -531,21 +531,12 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
   const history = isDraft && draftGame ? draftGame.board.history : replayed.history;
   const clockEnabled = setup.timeSec > 0;
 
-  // Local clock tick between server updates. The side to move gets a 10s
-  // grace before its first move, so hold the display still until then.
-  useEffect(() => {
-    if (!clockEnabled || result || !setup.started) return;
-    const id = setInterval(() => {
-      // Grace window: the side to move hasn't played yet (w before ply 1,
-      // b before ply 2). Server clock frames stay authoritative regardless.
-      if (board.turn === "w" && uciMoves.length === 0) return;
-      if (board.turn === "b" && uciMoves.length === 1) return;
-      const dec = (t: number) => Math.max(0, t - 100);
-      if (board.turn === "w") setWhiteMs(dec);
-      else setBlackMs(dec);
-    }, 100);
-    return () => clearInterval(id);
-  }, [board.turn, clockEnabled, result, setup.started, uciMoves.length]);
+  // No local 100ms decrement interval here: it re-rendered the WHOLE
+  // SpectatorView subtree 10x/second for the entire game. The visible clock is
+  // unaffected — ClockPill self-interpolates from its `ms` prop via rAF — and
+  // server clock frames keep whiteMs/blackMs authoritative. The time-pressure
+  // FX (below) reads those server-frame values, which refresh often enough
+  // that a low clock still calms the effects.
 
   // Draft games can scrub history while the move list still reproduces the
   // board. Once a card rewrites it outside move history (summons, removals,

@@ -128,6 +128,11 @@ export interface Settings {
   // the server sync so the settings blob stays small). Wins over customBgUrl.
   customBgData: string;
   fxDuration: number; // 0.5..2, multiplies how long card/FX animations last
+  // Performance mode: drops the most paint-costly decorative layers (backdrop
+  // blurs, the full-screen paper-grain blend, fixed-attachment backgrounds)
+  // for smooth play on low-end devices. Auto-enabled once on weak hardware,
+  // then user-overridable. Functional visuals (board, pieces, effects) stay.
+  perfMode: boolean;
 }
 
 export const SETTINGS_CHANGED_EVENT = "nerfchess:settings-changed";
@@ -172,6 +177,7 @@ export const DEFAULT_SETTINGS: Settings = {
   customBgDim: 0.3,
   customBgData: "",
   fxDuration: 1,
+  perfMode: false,
 };
 const DEFAULT = DEFAULT_SETTINGS;
 
@@ -330,9 +336,22 @@ export function loadSettings(): Settings {
         typeof parsed.fxDuration === "number" && Number.isFinite(parsed.fxDuration)
           ? Math.max(0.5, Math.min(2, parsed.fxDuration))
           : DEFAULT.fxDuration,
+      // First run on this device: seed perfMode from a hardware sniff (weak
+      // CPU or low memory) so low-end devices are smooth out of the box; once
+      // the user has any stored settings, their explicit choice wins.
+      perfMode: typeof parsed.perfMode === "boolean" ? parsed.perfMode : detectLowEnd(),
     };
   } catch {}
   return { ...DEFAULT };
+}
+
+/** Coarse low-end sniff for the perfMode default: few CPU cores or little RAM.
+ *  Conservative (only trips on genuinely weak hardware) and SSR-safe. */
+function detectLowEnd(): boolean {
+  if (typeof navigator === "undefined") return false;
+  const cores = navigator.hardwareConcurrency ?? 8;
+  const mem = (navigator as unknown as { deviceMemory?: number }).deviceMemory ?? 8;
+  return cores <= 4 || mem <= 4;
 }
 
 const UPDATED_AT_KEY = "dc:settings-updated-at";
@@ -446,6 +465,9 @@ export function applyUiPrefs(s: Settings) {
   html.style.setProperty("--accent-dim-rgb", accent.rgbDim);
   html.dataset.anim = s.reducedMotion ? "off" : s.animationSpeed;
   html.dataset.contrast = s.highContrast ? "high" : "normal";
+  // Performance mode: gates the heaviest decorative paint in globals.css.
+  if (s.perfMode) html.dataset.perf = "low";
+  else delete html.dataset.perf;
   // FX duration multiplier: CSS-driven card/board animations read this var
   // (calc(<base> * var(--fx-dur, 1))); the canvas VFX engine reads the same
   // setting through its play specs.

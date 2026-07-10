@@ -281,6 +281,12 @@ export const SECTIONS: SectionConfig[] = [
         hint: "Minimize animations and transitions",
         control: { kind: "toggle", setting: "reducedMotion" },
       },
+      {
+        id: "perfMode",
+        label: "Performance mode",
+        hint: "Drops heavy blur/grain effects for smoother play on low-end devices",
+        control: { kind: "toggle", setting: "perfMode" },
+      },
     ],
   },
   {
