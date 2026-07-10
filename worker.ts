@@ -125,7 +125,12 @@ type Result = NerfGame["result"];
 //     Insight, Foresight, Mind Read, Omniscience) left every draft pool — the
 //     whole draft game is public now, so there is nothing left for them to
 //     reveal — shifting the pools they rolled in.
-const REPLAY_VERSION = 9;
+//  10 - the engine payload carries the COMPLETE draft-action stream: reroll
+//     and grant opcodes are now serialized (serializeMatchForEngine) and
+//     replayed remotely (replay.ts). A v9 engine mis-replays the new opcodes
+//     (its action fall-through treats them as `use`), so the bump is
+//     mandatory even though the wire shape is backward-parseable.
+const REPLAY_VERSION = 10;
 
 // Refresh a match's replay checkpoint (see StoredMatch.checkpoint) at most once
 // per this many committed events (moves + draft actions), so gameForPlay never
@@ -755,17 +760,14 @@ function serializeMatchForEngine(match: StoredMatch): EngineMatch {
     cadence: match.cadence,
     stacked: match.stacked,
     moves: match.moves,
-    // The remote engine (replay.ts) has no reroll or grant opcode; drop both. A
-    // reroll only changes which cards were OFFERED, never the board, and an
-    // owner god-panel grant only seats a HELD card (never an instant or an
-    // opponent-move filter). The worker re-validates any returned move against
-    // its own legal set (falling back to the local engine on a mismatch), so a
-    // stale action stream on the remote side can only cost a fallback, never a
-    // desync.
-    draftActions: match.draftActions?.filter(
-      (a): a is Exclude<StoredDraftAction, { a: "reroll" | "grant" }> =>
-        a.a !== "reroll" && a.a !== "grant",
-    ),
+    // The COMPLETE action stream, rerolls and grants included. A reroll
+    // advances the shared draft rngState (see rerollOffer), so dropping it
+    // desyncs every subsequent offer/pick in the remote replay — the engine
+    // then returns moves that fail the local legality check and EVERY
+    // remaining bot move in the game falls back to the local search (the
+    // 2026-07-10 DO CPU outage). A grant changes the seat's hand, so later
+    // `use` actions depend on it the same way.
+    draftActions: match.draftActions,
   };
 }
 
@@ -1079,6 +1081,8 @@ export class GameServer extends DurableObject<Env> {
           houseVsHouse,
           tickError: this.houseTickError,
           lastDesync: this.houseLastDesync,
+          engineRejects: this.houseEngineRejects,
+          lastEngineReject: this.houseLastEngineReject,
         },
       });
     }
@@ -3245,6 +3249,11 @@ export class GameServer extends DurableObject<Env> {
   // turn), surfaced on /healthz so a reproducing owner can report the exact
   // card + move sequence that drifted the turn without needing the DO logs.
   private houseLastDesync: string | null = null;
+  // Remote-engine moves rejected by the local legality check (replay
+  // divergence): count + last instance, surfaced on /healthz. In-memory only,
+  // so they reset with the isolate — nonzero here means it is happening NOW.
+  private houseEngineRejects = 0;
+  private houseLastEngineReject: string | null = null;
   private houseSeeded = false;
   // Match ids whose retire (end/delete) itself failed while acting. Kept for
   // the life of the isolate so neither the due loop nor the self-heal sweep
@@ -3996,7 +4005,19 @@ export class GameServer extends DurableObject<Env> {
       // Treat the OCI reply as untrusted: accept only a move that is legal in
       // our own reconstruction, and commit our LOCAL instance (never the wire
       // object). A desynced/tampered move simply isn't found -> local fallback.
-      if (remote) move = legalMoves(game).find((m) => sameMove(m, remote)) ?? null;
+      if (remote) {
+        move = legalMoves(game).find((m) => sameMove(m, remote)) ?? null;
+        if (!move) {
+          // A rejected engine move means the remote replay DIVERGED from ours
+          // despite matching REPLAY_VERSIONs — a serialization-level bug (the
+          // 2026-07-10 reroll incident), not ordinary drift. Every rejection
+          // burns a local fallback search on the DO thread, so make the signal
+          // impossible to miss: it is surfaced on /healthz next to lastDesync.
+          this.houseEngineRejects += 1;
+          this.houseLastEngineReject = `${match.id} uci=${moveToUCI(remote)} moves=${match.moves.length}`;
+          console.error("house engine move rejected as illegal (replay divergence?)", this.houseLastEngineReject);
+        }
+      }
     }
     if (!move) {
       try {

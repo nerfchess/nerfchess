@@ -128,10 +128,34 @@ type SearchState = {
   history: Int32Array;
   // Whether leaf evaluation uses the extended terms (hard only).
   extended: boolean;
+  // Node-count abort: the wall-clock budget check below is USELESS on
+  // Cloudflare Workers, where Date.now() is frozen during synchronous compute
+  // — a search there never observes time passing and runs to full depth,
+  // which is exactly the Durable Object exceededCpu blowup of 2026-07-08/-10.
+  // The node cap is the platform-independent backstop: sized from the time
+  // budget (NODES_PER_MS) so on ordinary runtimes the clock check still fires
+  // first and playing strength is unchanged.
+  nodes: number;
+  nodeCap: number;
 };
 
-function newSearchState(extended: boolean): SearchState {
-  return { killers: [], history: new Int32Array(64 * 64), extended };
+// Rough search throughput used to convert a time budget into a node cap.
+// Measured 2026-07-10 on hard-level midgame searches: ~450 nodes/ms median
+// (317-727 across 30 samples), so 1000 deliberately overshoots ~2x — on any
+// runtime with a working clock the budget*2 clock net below fires first and
+// playing strength is unchanged; the node cap only bites where the clock is
+// frozen, containing a runaway search to roughly 2x the nominal budget's
+// worth of real CPU. Precision does not matter, only the order of magnitude.
+const NODES_PER_MS = 1000;
+
+function newSearchState(extended: boolean, budgetMs = 0): SearchState {
+  return {
+    killers: [],
+    history: new Int32Array(64 * 64),
+    extended,
+    nodes: 0,
+    nodeCap: budgetMs > 0 ? budgetMs * 2 * NODES_PER_MS : 0,
+  };
 }
 
 // MVV-LVA for captures (most valuable victim taken by least valuable attacker
@@ -242,7 +266,7 @@ export function pickAIMove(game: NerfGame, level: AILevel, overrideBudgetMs?: nu
   const budget = overrideBudgetMs ?? cfg.budgetMs;
   const maxDepth = cfg.maxDepth;
   const start = Date.now();
-  const state = newSearchState(cfg.extendedEval);
+  const state = newSearchState(cfg.extendedEval, budget);
 
   let bestMove: Move | null = null;
 
@@ -272,6 +296,9 @@ export function pickAIMove(game: NerfGame, level: AILevel, overrideBudgetMs?: nu
 
     if (!timedOut && depthBest) bestMove = depthBest;
 
+    // A timed-out depth means the budget (clock or node cap) is spent; going
+    // deeper would only burn more nodes to time out again immediately.
+    if (timedOut) break;
     // After depth 1 has run, respect the time budget.
     if (d >= 1 && Date.now() - start > budget) break;
   }
@@ -298,7 +325,7 @@ export function analyzeBoard(board: BoardState, budgetMs = 300, maxDepth = 10): 
 
   const opp: Color = me === "w" ? "b" : "w";
   const start = Date.now();
-  const state = newSearchState(true);
+  const state = newSearchState(true, budgetMs);
   let bestMove: Move | null = null;
   let bestScore = 0;
   let completed = 0;
@@ -326,6 +353,7 @@ export function analyzeBoard(board: BoardState, budgetMs = 300, maxDepth = 10): 
       bestScore = depthBestScore;
       completed = d;
     }
+    if (timedOut) break;
     if (Date.now() - start > budgetMs) break;
   }
 
@@ -347,6 +375,9 @@ function negamax(
   state: SearchState,
   ply: number,
 ): number {
+  // Node cap first: on Workers the clock check below never fires (Date.now()
+  // is frozen during synchronous compute), so this is the only abort there.
+  if (state.nodeCap > 0 && ++state.nodes > state.nodeCap) return TIMEOUT_SENTINEL;
   if (budget > 0 && Date.now() - start > budget * 2) return TIMEOUT_SENTINEL;
 
   // Terminal king captures score from the side to move's perspective (like
@@ -356,7 +387,7 @@ function negamax(
   const bk = findKing(board, "b");
   if (wk == null) return side === "w" ? -100000 : 100000;
   if (bk == null) return side === "b" ? -100000 : 100000;
-  if (depth === 0) return quiesce(board, alpha, beta, side, 6, state.extended);
+  if (depth === 0) return quiesce(board, alpha, beta, side, 6, state);
 
   const moves = orderMoves(generateMoves(board), null, state, ply);
   const opp: Color = side === "w" ? "b" : "w";
@@ -378,20 +409,23 @@ function negamax(
 
 // Quiescence search: only consider captures so the leaf eval isn't called on a
 // position where the side to move can immediately win/lose major material.
+// Counts against the same node cap as negamax; an over-cap subtree returns the
+// NaN sentinel, which propagates up the negamax recursion like any timeout.
 function quiesce(
   board: BoardState,
   alpha: number,
   beta: number,
   side: Color,
   depth: number,
-  extended = false,
+  state: SearchState,
 ): number {
+  if (state.nodeCap > 0 && ++state.nodes > state.nodeCap) return TIMEOUT_SENTINEL;
   const wk = findKing(board, "w");
   const bk = findKing(board, "b");
   if (wk == null) return side === "w" ? -100000 : 100000;
   if (bk == null) return side === "b" ? -100000 : 100000;
 
-  const standPat = evaluate(board, side, extended);
+  const standPat = evaluate(board, side, state.extended);
   if (standPat >= beta) return beta;
   if (alpha < standPat) alpha = standPat;
   if (depth === 0) return alpha;
@@ -400,7 +434,8 @@ function quiesce(
   const opp: Color = side === "w" ? "b" : "w";
   for (const m of captures) {
     const nb = makeMove(board, m);
-    const score = -quiesce(nb, -beta, -alpha, opp, depth - 1, extended);
+    const score = -quiesce(nb, -beta, -alpha, opp, depth - 1, state);
+    if (Number.isNaN(score)) return TIMEOUT_SENTINEL;
     if (score >= beta) return beta;
     if (score > alpha) alpha = score;
   }
