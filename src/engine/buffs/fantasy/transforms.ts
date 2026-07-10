@@ -132,7 +132,7 @@ export const FANTASY_TRANSFORMS: Buff[] = [
       name: "Philosopher's Stone",
       description:
         "Press the fabled stone to your ranks and transmute base metal to gold: three of your pawns become queens, once.",
-      tier: 7,
+      tier: 8,
       category: "pieces",
       requires: ["p"],
       flavor: "The final work of a thousand alchemists.",

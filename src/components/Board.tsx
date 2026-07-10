@@ -300,12 +300,13 @@ function CountdownChip({ n, doom = false }: { n: number; doom?: boolean }) {
   return (
     <span
       aria-hidden
-      // z-30: the countdown must ALWAYS beat the effect art sharing its square
-      // (trap markers, freeze skins, shield pulses render later at z-10 and
-      // used to paint over it — "the number is blocked by some of the
-      // effects"). The solid ink backing + shadow keep it legible on any art.
+      // Bottom-RIGHT corner: the other three corners each own a mark (bound
+      // sigil top-left, freeze flake top-right, shield disc bottom-left), so
+      // the countdown used to stack on top of the green shield disc — the
+      // reported overlap. z-30 keeps it above any effect art it shares a
+      // square with; the solid ink backing + shadow keep it legible.
       className={
-        "pointer-events-none absolute bottom-0.5 left-0.5 z-30 flex h-[15px] min-w-[15px] items-center justify-center rounded-[1px] border px-0.5 font-mono text-[10px] font-bold leading-none shadow-[0_1px_4px_rgba(0,0,0,0.8)] " +
+        "pointer-events-none absolute bottom-0.5 right-0.5 z-30 flex h-[15px] min-w-[15px] items-center justify-center rounded-[1px] border px-0.5 font-mono text-[10px] font-bold leading-none shadow-[0_1px_4px_rgba(0,0,0,0.8)] " +
         tone
       }
     >
