@@ -183,7 +183,7 @@ export function BuffCard({ buff, tier, status, spent, nullified, onClick, compac
 
   if (!onClick || dead) return body;
   return (
-    <button type="button" onClick={onClick} className="block h-full w-full text-left">
+    <button type="button" onClick={onClick} className="block h-full w-full touch-manipulation text-left">
       {body}
     </button>
   );

@@ -77,6 +77,11 @@
   transform: rotateY(180deg);
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
+  /* Decoration only, and CRITICALLY not hit-testable: the back sits after
+     the front in DOM order, and several mobile browsers hit-test a
+     backface-hidden element anyway — which ate the card taps ("something
+     is blocking the cards"). */
+  pointer-events: none;
   border-radius: 1px;
   border: 1px solid rgb(216 181 110 / 0.3);
   background: #16130f;
@@ -280,38 +285,49 @@
   100% { opacity: 0; transform: scale(1.35); }
 }
 
-/* Holographic foil for tier 7+ card faces: a soft rainbow band drifting
-   diagonally across the face, blended so the card text stays readable. */
+/* Holographic foil for tier 7+ card faces: a rainbow band SWEEPING across
+   on the compositor (transform-only, no background-position repaints, no
+   blend mode — those chugged phones and made taps feel dead). The band
+   crosses once every few seconds and rests in between. */
 .draft-holo {
   position: absolute;
   inset: 0;
   pointer-events: none;
   border-radius: 1px;
-  mix-blend-mode: overlay;
-  opacity: 0.5;
+  overflow: hidden;
+}
+.draft-holo::before {
+  content: "";
+  position: absolute;
+  inset: -20% -60%;
+  pointer-events: none;
   background: linear-gradient(
     115deg,
-    transparent 18%,
-    rgb(125 220 183 / 0.5) 34%,
-    rgb(255 217 126 / 0.55) 46%,
-    rgb(132 183 226 / 0.5) 58%,
-    rgb(221 155 130 / 0.45) 70%,
-    transparent 84%
+    transparent 32%,
+    rgb(125 220 183 / 0.16) 42%,
+    rgb(255 217 126 / 0.18) 48%,
+    rgb(132 183 226 / 0.16) 54%,
+    rgb(221 155 130 / 0.14) 60%,
+    transparent 70%
   );
-  background-size: 260% 260%;
-  animation: holo-drift 4.4s ease-in-out infinite;
+  transform: translateX(-45%);
+  will-change: transform;
+  animation: holo-sweep 4.6s ease-in-out infinite;
 }
-@keyframes holo-drift {
-  0%, 100% { background-position: 0% 0%; }
-  50% { background-position: 100% 100%; }
+@keyframes holo-sweep {
+  0%, 55% { transform: translateX(-45%); }
+  95%, 100% { transform: translateX(45%); }
 }
 
-/* Parallax tilt: the pointer tips the card face (vars set from JS on the
-   card shell; framer never animates the face itself, so no fights). */
-.draft-card-front {
-  transform: perspective(760px) rotateX(var(--tiltX, 0deg)) rotateY(var(--tiltY, 0deg));
-  transition: transform 160ms ease-out;
-  will-change: transform;
+/* Parallax tilt: pointer-fine devices only. On touch there is no hover, and
+   a resting 3D transform on every face was pure cost (plus hit-testing
+   hazards on some mobile browsers). */
+@media (hover: hover) and (pointer: fine) {
+  .draft-card-front {
+    transform: perspective(760px) rotateX(var(--tiltX, 0deg)) rotateY(var(--tiltY, 0deg));
+    transition: transform 160ms ease-out;
+    will-change: transform;
+  }
 }
 
 /* Mythic pull: the whole panel rattles once as the pack opens. */
@@ -617,6 +633,9 @@
 .draft-frame {
   position: relative;
 }
+/* The glass shine crosses on the COMPOSITOR: a fixed gradient band moved by
+   transform inside an overflow-hidden layer (background-position animation
+   repainted the whole panel every frame, which chugged phones). */
 .draft-frame::after {
   content: "";
   position: absolute;
@@ -624,21 +643,23 @@
   z-index: 3;
   pointer-events: none;
   border-radius: inherit;
+  overflow: hidden;
+  /* The band itself lives on an oversized gradient translated across. */
   background: linear-gradient(
     115deg,
-    transparent 32%,
-    rgba(255, 255, 255, 0.13) 46%,
-    rgba(255, 255, 255, 0.02) 53%,
-    transparent 64%
+    transparent 40%,
+    rgba(255, 255, 255, 0.13) 47%,
+    rgba(255, 255, 255, 0.02) 52%,
+    transparent 60%
   );
-  background-size: 260% 100%;
-  background-position: 130% 0;
+  transform: translateX(-70%);
+  will-change: transform;
   animation: draft-glass-shine 6s ease-in-out infinite;
 }
 @keyframes draft-glass-shine {
-  0% { background-position: 130% 0; }
-  45% { background-position: -90% 0; }
-  100% { background-position: -90% 0; }
+  0% { transform: translateX(-70%); }
+  45% { transform: translateX(70%); }
+  100% { transform: translateX(70%); }
 }
 @media (prefers-reduced-motion: reduce) {
   .draft-frame::after {
