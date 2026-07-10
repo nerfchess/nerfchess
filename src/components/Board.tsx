@@ -2673,8 +2673,11 @@ export function Board({
                 {banned && (
                   <>
                     <div className="absolute inset-0 bg-red-900/45 pointer-events-none" />
-                    {/* Glowing aura: the nerf is ACTING here, not just tinting. */}
-                    <NerfAura />
+                    {/* Glowing aura: the nerf is ACTING here, not just tinting.
+                        Decorative, so it stands down when effects are hidden or
+                        the clock is calming FX (the red tint is the functional
+                        read and always stays). */}
+                    {!fxHiddenPref && !fxCalmClock && <NerfAura />}
                   </>
                 )}
                 {wardSquares.has(sq) && (
@@ -2930,9 +2933,9 @@ export function Board({
                   <>
                     <div className="absolute inset-0 pointer-events-none rounded-sm ring-2 ring-inset ring-gold-leaf/80 shadow-[inset_0_0_24px_-4px_rgba(230,191,106,0.55)] animate-flicker" />
                     {/* The nerf's grip on this piece glows, matching the
-                        banned-square aura, so "what my nerf is affecting"
-                        reads as one visual language. */}
-                    <NerfAura />
+                        banned-square aura. Decorative: hidden when FX are off,
+                        while the gold ring stays as the read. */}
+                    {!fxHiddenPref && !fxCalmClock && <NerfAura />}
                   </>
                 )}
                 {isPickTarget && (

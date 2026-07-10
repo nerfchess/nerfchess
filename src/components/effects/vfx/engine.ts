@@ -31,6 +31,35 @@ function mulberry32(seed: number): () => number {
 }
 
 /* ------------------------------------------------------------------ */
+/* cached smoke sprites: one soft-radial puff per color, blitted instead of   */
+/* rebuilding a radial gradient per particle per frame.                       */
+
+const SMOKE_SPRITE_PX = 64;
+const smokeSpriteCache = new Map<string, HTMLCanvasElement>();
+
+function smokeSprite(color: string): HTMLCanvasElement {
+  let sprite = smokeSpriteCache.get(color);
+  if (sprite) return sprite;
+  sprite = document.createElement("canvas");
+  sprite.width = sprite.height = SMOKE_SPRITE_PX;
+  const sc = sprite.getContext("2d");
+  if (sc) {
+    const r = SMOKE_SPRITE_PX / 2;
+    const grad = sc.createRadialGradient(r, r, 0, r, r, r);
+    grad.addColorStop(0, color);
+    grad.addColorStop(1, "rgba(0,0,0,0)");
+    sc.fillStyle = grad;
+    sc.beginPath();
+    sc.arc(r, r, r, 0, Math.PI * 2);
+    sc.fill();
+  }
+  // Bounded so an exotic palette can never grow this without limit.
+  if (smokeSpriteCache.size > 48) smokeSpriteCache.clear();
+  smokeSpriteCache.set(color, sprite);
+  return sprite;
+}
+
+/* ------------------------------------------------------------------ */
 /* entity types                                                        */
 
 type ParticleShape = "spark" | "shard" | "ember" | "smoke" | "debris" | "sparkle";
@@ -129,7 +158,10 @@ export function createVfxEngine(
     const rect = (parent ?? canvas).getBoundingClientRect();
     w = Math.max(0, rect.width);
     h = Math.max(0, rect.height);
-    const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+    // DPR capped at 2: a DPR-3 phone would back the canvas at ~9x the CSS pixel
+    // count, and every particle fill/gradient pays that per frame on the main
+    // thread. 2 stays crisp on retina without the low-end tax.
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
     canvas.width = Math.max(1, Math.round(w * dpr));
     canvas.height = Math.max(1, Math.round(h * dpr));
     ctx?.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -1029,15 +1061,14 @@ export function createVfxEngine(
         break;
       }
       case "smoke": {
-        const a = fade * p.alpha;
-        const grad = c.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size);
-        grad.addColorStop(0, p.color);
-        grad.addColorStop(1, "rgba(0,0,0,0)");
-        c.globalAlpha = a;
-        c.fillStyle = grad;
-        c.beginPath();
-        c.arc(p.x, p.y, p.size, 0, TAU);
-        c.fill();
+        // Blit a cached soft-radial puff sprite (baked once per color) instead
+        // of building a fresh createRadialGradient + arc fill for every smoke
+        // particle every frame — dozens can be alive at once, so this was a
+        // real per-frame main-thread cost. Visually identical: the sprite bakes
+        // the same two-stop radial falloff.
+        c.globalAlpha = fade * p.alpha;
+        const sprite = smokeSprite(p.color);
+        c.drawImage(sprite, p.x - p.size, p.y - p.size, p.size * 2, p.size * 2);
         break;
       }
       case "debris": {
