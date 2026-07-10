@@ -252,7 +252,10 @@ html, body {
   background-color: #191713;
   background-image:
     linear-gradient(180deg, #282420 0%, #1e1b17 46%, #191713 100%);
-  background-attachment: fixed;
+  /* scroll, not fixed: fixed-attachment backgrounds force a full-page repaint
+     on every scroll frame on many mobile/low-end GPUs (and iOS ignores fixed
+     anyway). The gradient is subtle; stretching it over the document instead
+     of the viewport is imperceptible and scrolling stops costing paint. */
   color: var(--paper);
   min-height: 100vh;
 }
@@ -513,6 +516,27 @@ html[data-theme="light"] .mode-seam::after { background: #e4e0d6; }
 :where(.plate) {
   position: relative;
   z-index: 2;
+}
+
+/* TV tuning-in spinner: one quiet accent ring orbiting the radio glyph. */
+.tv-tuning-ring {
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  width: 56px;
+  height: 56px;
+  margin-left: -28px;
+  border-radius: 999px;
+  border: 2px solid transparent;
+  border-top-color: rgb(var(--accent-rgb) / 0.8);
+  border-right-color: rgb(var(--accent-rgb) / 0.25);
+  animation: tv-tuning-spin 1s linear infinite;
+}
+@keyframes tv-tuning-spin {
+  to { transform: rotate(360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tv-tuning-ring { animation: none; }
 }
 
 /* The in-game command rail: one machined control surface for the left column.
@@ -935,29 +959,42 @@ html[data-theme="light"] .tv-frame {
    page's dusk wash. Stars are layered radial dots — no images, no motion. */
 html[data-theme="nebula"] .btn-sky,
 html[data-theme="nebula"] .btn-cyan {
+  color: #efe9ff;
+  text-shadow: 0 1px 6px rgba(20, 10, 40, 0.8);
+}
+/* Open Lobby: deep-space BLUE. */
+html[data-theme="nebula"] .btn-sky {
   background:
     radial-gradient(1px 1px at 12% 30%, rgba(255, 255, 255, 0.9), transparent 55%),
     radial-gradient(1px 1px at 78% 22%, rgba(255, 255, 255, 0.7), transparent 55%),
-    radial-gradient(1.5px 1.5px at 55% 68%, rgba(214, 197, 255, 0.8), transparent 55%),
+    radial-gradient(1.5px 1.5px at 55% 68%, rgba(190, 214, 255, 0.8), transparent 55%),
     radial-gradient(1px 1px at 32% 82%, rgba(255, 255, 255, 0.55), transparent 55%),
-    radial-gradient(1px 1px at 90% 62%, rgba(214, 197, 255, 0.6), transparent 55%),
     radial-gradient(2px 2px at 68% 40%, rgba(255, 255, 255, 0.35), transparent 60%),
-    linear-gradient(135deg, #4a3579 0%, #33245b 52%, #221740 100%);
-  color: #efe9ff;
-  border: 1px solid rgba(180, 148, 226, 0.55);
+    linear-gradient(135deg, #2c4a86 0%, #223768 52%, #16224a 100%);
+  border: 1px solid rgba(140, 172, 235, 0.55);
   box-shadow:
-    inset 0 1px 0 rgba(214, 197, 255, 0.35),
-    0 0 26px -8px rgba(157, 122, 212, 0.7),
+    inset 0 1px 0 rgba(190, 214, 255, 0.35),
+    0 0 26px -8px rgba(111, 149, 218, 0.7),
     0 2px 8px -2px rgba(0, 0, 0, 0.6);
-  text-shadow: 0 1px 6px rgba(20, 10, 40, 0.8);
+}
+/* Play Someone: LIGHT PURPLE space. */
+html[data-theme="nebula"] .btn-cyan {
+  background:
+    radial-gradient(1px 1px at 16% 28%, rgba(255, 255, 255, 0.9), transparent 55%),
+    radial-gradient(1px 1px at 74% 20%, rgba(255, 255, 255, 0.7), transparent 55%),
+    radial-gradient(1.5px 1.5px at 52% 70%, rgba(232, 218, 255, 0.85), transparent 55%),
+    radial-gradient(1px 1px at 30% 84%, rgba(255, 255, 255, 0.55), transparent 55%),
+    radial-gradient(2px 2px at 66% 42%, rgba(255, 255, 255, 0.35), transparent 60%),
+    linear-gradient(135deg, #7a5cb8 0%, #62479c 52%, #45306f 100%);
+  border: 1px solid rgba(200, 174, 245, 0.6);
+  box-shadow:
+    inset 0 1px 0 rgba(232, 218, 255, 0.4),
+    0 0 26px -8px rgba(180, 148, 226, 0.75),
+    0 2px 8px -2px rgba(0, 0, 0, 0.6);
 }
 html[data-theme="nebula"] .btn-sky:hover,
 html[data-theme="nebula"] .btn-cyan:hover {
   filter: brightness(1.12);
-  box-shadow:
-    inset 0 1px 0 rgba(214, 197, 255, 0.45),
-    0 0 34px -8px rgba(157, 122, 212, 0.9),
-    0 2px 8px -2px rgba(0, 0, 0, 0.6);
 }
 html[data-theme="nebula"] .mode-def-card {
   background:
@@ -1038,6 +1075,8 @@ html[data-theme="nebula"] .mode-def-card {
   inset: 0;
   width: 200%;
   animation: gd-scroll 24s linear infinite;
+  /* Compositor-only scroll: the strip animates as one GPU layer. */
+  will-change: transform;
 }
 @keyframes gd-scroll {
   0% { transform: translateX(0); }
@@ -1063,6 +1102,21 @@ html[data-theme="nebula"] .mode-def-card {
   height: 9px;
   background: rgb(var(--accent-dim-rgb) / 0.7);
   box-shadow: inset 0 0 0 1px rgb(var(--accent-hi-rgb) / 0.5);
+}
+/* Structure variants: a two-high tower, a wide low platform, a runt spike. */
+.gd-block--tall { height: 17px; }
+.gd-platform {
+  display: block;
+  width: 24px;
+  height: 6px;
+  background: rgb(var(--accent-dim-rgb) / 0.7);
+  box-shadow: inset 0 0 0 1px rgb(var(--accent-hi-rgb) / 0.5);
+}
+.gd-spike--small { width: 7px; height: 7px; }
+.gd-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 .gd-knight {
   position: absolute;
@@ -1732,10 +1786,13 @@ nav, header { position: relative; z-index: 30; }
    that clashed with every non-classic theme). color-mix keeps the translucent
    glass look; the solid var is the fallback for older engines. */
 .site-nav {
+  /* NO backdrop-filter here: a filter turns the nav into a containing block
+     for position:fixed descendants, and the Settings modal (rendered inside
+     the nav) then anchors to the nav instead of the viewport — the broken
+     "preferences way too high" bug. The nav scrolls with the page anyway, so
+     blur bought nothing and cost paint time on low-end devices. */
   background: var(--surface-panel);
-  background: color-mix(in srgb, var(--surface-panel) 74%, transparent);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: color-mix(in srgb, var(--surface-panel) 88%, transparent);
 }
 
 /* Accessibility */

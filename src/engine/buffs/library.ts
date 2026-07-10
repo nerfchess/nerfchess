@@ -2266,7 +2266,10 @@ const TIER5: Buff[] = [
     },
   ),
   def(
-    { id: "resurrect_queen", name: "Resurrect Queen", description: "Bring your captured queen back to any empty square on the board, and she cannot be captured for your opponent's next 2 turns.", tier: 5, category: "pieces" },
+    // Tier 6 (owner call). Pools are built by the card's own `tier` field
+    // (poolAtTier filters b.tier === t), so it drafts as a tier-6 card even
+    // though it's declared in this file's TIER5 block.
+    { id: "resurrect_queen", name: "Resurrect Queen", description: "Bring your captured queen back to any empty square on the board, and she cannot be captured for your opponent's next 2 turns.", tier: 6, category: "pieces" },
     activated(
       (_inst, api, picks) => {
         if (picks.length > 0) return null;
@@ -2799,7 +2802,7 @@ const TIER6: Buff[] = [
     }),
   ),
   def(
-    { id: "time_lock", name: "Time Lock", description: "Lock your opponent's clock and hand: they skip their next turn, and their next two drafts are skipped, once.", tier: 6, category: "tempo", fx: { motif: "slow", pieces: "all" } },
+    { id: "time_lock", name: "Time Lock", description: "Lock your opponent's clock and hand: they skip their next turn, and their next two drafts are skipped, once.", tier: 8, category: "tempo", fx: { motif: "slow", pieces: "all" } },
     instant((_inst, api) => {
       api.bs.skips[api.opp] += 1;
       api.theirs.flags.blockedDrafts = (api.theirs.flags.blockedDrafts ?? 0) + 2;
@@ -3474,6 +3477,35 @@ const TIER8: Buff[] = [
     // Board already paints barred squares; square-scoped, no pieces field.
     { id: "sundering", name: "Sundering", description: "Three files become impassable to enemies for the rest of the game.", tier: 8, category: "protection", fx: { motif: "blindfold" } },
     barLine("file", null, 3),
+  ),
+  def(
+    // Demoted from the tier-9 apex band (owner call): a five-turn royal
+    // rampage is huge but earnable in the normal tier-8 pool.
+    { id: "divine_right", icon: "Crown", name: "Divine Right", description: "For your next 5 turns your king may move and capture as a queen, and it cannot be captured.", tier: 8, category: "movement", flavor: "By the grace of no one in particular.", fx: { motif: "empower", pieces: ["k"], moveAs: "q", self: true } },
+    {
+      kind: "activated",
+      spendOnUse: false,
+      effect: (inst, api) => {
+        // One activation only; re-use is a guarded no-op.
+        if (inst.state.turns != null) return;
+        inst.state.turns = 5;
+        addEffect(api, { kind: "king_safe", owner: api.me, turns: 5 });
+      },
+      augmentMoves: (moves, inst, api) => {
+        if (turnsLeft(inst) <= 0) return;
+        for (const sq of mySquares(api.board, api.me, "k")) {
+          addNovel(moves, slideMoves(api.board, sq, ALL_DIRS, inst.id));
+        }
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.state.turns == null) return;
+        tickTurns(inst, move, api.me);
+      },
+      status: (inst) =>
+        inst.state.turns == null
+          ? "activate: your king rules as a queen"
+          : `divine reign: ${turnsLeft(inst)} of your turns left`,
+    },
   ),
   def(
     { id: "time_prison", name: "Time Prison", description: "Your opponent skips their next three turns, once.", tier: 8, category: "tempo", fx: { motif: "slow", pieces: "all" } },

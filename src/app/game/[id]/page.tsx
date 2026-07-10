@@ -408,6 +408,25 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
     draftGameRef.current = game;
     return game;
   });
+  // Card-use animation for watchers: a monotonic key fires the Board's
+  // board-wide flourish whenever a card is used (an activation, or a
+  // held/passive card whose move-hook changed the board), so spectators see
+  // the same effects the players do. Bespoke signatures get their choreography
+  // and every other card gets the category cast spectacle.
+  const [signatureCard, setSignatureCard] = useState<{ id: string; key: number } | null>(null);
+  const sigKeyRef = useRef(0);
+  const fireSignature = (id: string) => {
+    if (!BUFF_BY_ID[id]) return;
+    setSignatureCard({ id, key: ++sigKeyRef.current });
+  };
+  // A hook-fired card (summon, transform, revive, fresh board effect) is
+  // announced too: the replica sets lastHookMutations after a move.
+  const fireHookSignatures = (g: NerfGame | null) => {
+    const fired = g?.buffs?.lastHookMutations;
+    if (!fired?.length) return;
+    const first = g?.buffs?.players[fired[0].color].buffs[fired[0].index];
+    if (first?.id) fireSignature(first.id);
+  };
 
   useEffect(() => {
     const off = session.on((e) => {
@@ -428,6 +447,9 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
           if (move) {
             const next = playReplicaMove(g, move);
             draftGameRef.current = next;
+            // A passive/held card whose move-hook changed the board plays
+            // its flourish for watchers too.
+            fireHookSignatures(next);
             setDraftGame({ ...next });
           }
         }
@@ -454,6 +476,9 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
                   }
                 : { ply: g.board.history.length, color: e.resolved.color, a: "bank" },
           );
+          // An activation (draft-used) is a card play the watcher must see.
+          if (e.type === "draft-used" && e.used.card) fireSignature(e.used.card.id);
+          fireHookSignatures(g);
           setDraftGame({ ...g });
         }
       } else if (e.type === "draft-state") {
@@ -599,6 +624,9 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
             }
           : undefined
       }
+      // No flourish while scrubbing history (a past position isn't a live
+      // play), matching the players' own board.
+      signatureCard={historyPly == null ? signatureCard : null}
       rail={
         <div className="mt-3 space-y-3">
           {isDraft && draftGame && <SpectatorBuffsPanel game={draftGame} players={setup.players} />}
@@ -993,6 +1021,7 @@ function GameShell({
   statusLabel,
   nerfs,
   visual,
+  signatureCard,
   rail,
 }: {
   players: MPPlayers;
@@ -1013,6 +1042,9 @@ function GameShell({
   nerfs: Partial<Record<Color, string>> | null;
   // Draft spectating: public zone effects painted on the board.
   visual?: React.ComponentProps<typeof Board>["visual"];
+  // Card-use animation: a played card's board-wide flourish fires for
+  // spectators too, so watching a game shows the same effects the players see.
+  signatureCard?: React.ComponentProps<typeof Board>["signatureCard"];
   rail?: React.ReactNode;
 }) {
   return (
@@ -1048,6 +1080,7 @@ function GameShell({
                 myColor="w"
                 fxTimePressure={clockEnabled && activeColor != null && (whiteMs < 15_000 || blackMs < 15_000)}
                 visual={visual}
+                signatureCard={signatureCard}
                 lastMove={lastMove}
                 disabled
               />

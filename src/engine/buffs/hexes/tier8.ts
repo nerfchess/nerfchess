@@ -202,8 +202,8 @@ export const HEXES_T8: Buff[] = [
   // --- combo: skip a whole turn AND block the next 2 drafts ----------------
   H(
     {
-      // The scaled-up sibling of Time Lock (tier 6: one skip, two blocked
-      // drafts): a full two turns stripped on top of the two drafts.
+      // The scaled-up sibling of Time Lock (one skip, two blocked drafts):
+      // a full two turns stripped on top of the two drafts.
       id: "sacked_capital",
       name: "Sacked Capital",
       description: "Your opponent skips their next 2 turns entirely, and their next 2 drafts are skipped as well.",
