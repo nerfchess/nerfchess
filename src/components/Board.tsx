@@ -2295,7 +2295,7 @@ export function Board({
         title: "Sanctuary",
         tone: "buff",
         status,
-        body: "This piece cannot be captured while the shield holds. Kings are never shielded.",
+        body: "This piece cannot be captured while the shield holds - and while it cannot be captured, it may not capture the king itself (you must expose a piece to win). Kings are never shielded.",
       });
     if (kingSafeSquares.has(sq))
       out.push({
