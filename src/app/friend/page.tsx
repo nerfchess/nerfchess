@@ -28,6 +28,12 @@ const TIME_STEPS_SEC = [
 
 export default function FriendPage() {
   const [view, setView] = useState<View>("setup");
+  // Live mirror for the session event handler below: wireSession registers its
+  // callback once at session creation, so reading `view` directly there froze
+  // it at that moment ("setup"/"joining") and the not-in-game guard never
+  // actually stood down after `start`. The ref always reads the current view.
+  const viewRef = useRef(view);
+  viewRef.current = view;
   const [code, setCode] = useState("");
   const [joinCode, setJoinCode] = useState("");
   // Default custom-challenge clock: 3+2 (a brisk blitz control most players
@@ -132,7 +138,7 @@ export default function FriendPage() {
         setCode(e.setup.id);
         setError(null);
         setView("game");
-      } else if (e.type === "error" && view !== "game") {
+      } else if (e.type === "error" && viewRef.current !== "game") {
         setError(e.message);
       }
     });

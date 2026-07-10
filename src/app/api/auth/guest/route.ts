@@ -3,6 +3,8 @@ import { getDb, requestIsSecure } from "@/lib/server/db";
 import {
   createSession,
   hashPassword,
+  loginThrottled,
+  recordLoginFailure,
   sessionCookie,
   sessionTokenFromCookieHeader,
   userForSession,
@@ -22,6 +24,23 @@ export async function POST(request: Request) {
   const existing = await userForSession(db, sessionTokenFromCookieHeader(request.headers.get("cookie")));
   if (existing) {
     return NextResponse.json({ id: existing.id, username: existing.username });
+  }
+
+  // Throttle guest MINTING per client IP (the same rolling-window counter the
+  // login brute-force guard uses, under its own key prefix). This endpoint is
+  // unauthenticated and writes a users row per call, so without a cap a loop
+  // of empty POSTs can flood the users table. Real visitors mint one guest per
+  // device; 30 per 15-minute window per IP is far above any legitimate use.
+  const ip = request.headers.get("CF-Connecting-IP");
+  if (ip) {
+    const key = `guest:${ip}`;
+    if (await loginThrottled(db, key, 30)) {
+      return NextResponse.json(
+        { error: "Too many guest accounts created from this network. Try again later." },
+        { status: 429 },
+      );
+    }
+    await recordLoginFailure(db, key); // counts one guest creation in the window
   }
 
   let username: string | null = null;

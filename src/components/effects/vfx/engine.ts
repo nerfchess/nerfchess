@@ -200,9 +200,15 @@ export function createVfxEngine(
 
   /* ---------------- impacts ---------------- */
 
+  // The effects dial's per-play particle multiplier (VfxPlay.intensity). Set
+  // by play(); spawns scheduled by that play read it via impactCount. A later
+  // overlapping play with a different value can briefly re-scale a pending
+  // spawn, which is harmless: the dial is a device-global setting.
+  let playScale = 1;
+
   function impactCount(tier: number): number {
-    // tier 4 ≈ 12 particles, tier 10 ≈ 60
-    return Math.round(clamp(12 + (tier - 4) * 8, 8, 60));
+    // tier 4 ≈ 12 particles, tier 10 ≈ 60 at Normal; the dial scales it.
+    return Math.round(clamp((12 + (tier - 4) * 8) * playScale, 6, 90));
   }
 
   function addFlash(x: number, y: number, color: string, radius: number, dur = 150): void {
@@ -835,6 +841,7 @@ export function createVfxEngine(
     if (w <= 0 || h <= 0) return; // not laid out yet; drop
 
     const now = performance.now();
+    playScale = clamp(spec.intensity ?? 1, 0.3, 2);
     const tier = clamp(spec.tier ?? 1, 1, 12);
     const palette =
       spec.palette && spec.palette.length > 0 ? spec.palette : ["#ffe9a3", "#ff9d2e"];

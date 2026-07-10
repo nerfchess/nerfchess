@@ -34,6 +34,7 @@ import {
   SummonPoof,
   TransformFlourish,
 } from "./effects/BoardEffects";
+import { PLUGIN_SIGNATURES } from "./effects/sigPlugins";
 import {
   GenBurst,
   genSignatureConfig,
@@ -46,8 +47,11 @@ import {
 // is ever left without a play animation. Generated configs are cached: the
 // generator is pure, so one build per card id per session is plenty.
 const genConfigCache = new Map<string, GenConfig>();
+// Bespoke lookup spanning the core table AND the plug-in registry
+// (sigPlugins.tsx: god-tier / funny-meta modules). Core entries win.
+const sigOf = (id: string): SignatureConfig | undefined => SIGNATURES[id] ?? PLUGIN_SIGNATURES[id];
 function resolveSignature(id: string): SignatureConfig | GenConfig | undefined {
-  const bespoke = SIGNATURES[id];
+  const bespoke = sigOf(id);
   if (bespoke) return bespoke;
   const def = BUFF_BY_ID[id];
   if (!def) return undefined;
@@ -70,7 +74,7 @@ if (process.env.NODE_ENV !== "production") {
 import { EdgeAura, EmpowerShine, tierRgb } from "./effects/EmpowerAura";
 import type { MotifMark } from "./effects/fxZones";
 import { EffectPopover, type EffectPopoverContent } from "./EffectPopover";
-import { useFxHidden } from "@/lib/fxToggle";
+import { FX_LEVELS, useFxHidden, useFxLevel } from "@/lib/fxToggle";
 import { VfxLayer } from "./effects/vfx/VfxLayer";
 import { vfxPlay } from "./effects/vfx/vfxBus";
 import type { VfxPlay, VfxPoint } from "./effects/vfx/types";
@@ -292,6 +296,11 @@ interface Props {
   // once (a king may legally stand in or move into check), and a checked king
   // stays lit on the opponent's turn too.
   checkSquares?: Square[];
+  /** Someone's clock is under the scramble threshold (~15s): board-wide
+   * spectacle stands down (cast banners, board-wide leads, shake, canvas
+   * travel) while per-piece effects keep playing, so nothing steals
+   * attention or frames during a time scramble. */
+  fxTimePressure?: boolean;
   // Buff targeting mode: while set, the board is a square picker. Candidate
   // squares glow and clicking one calls onPickSquare; every other pointer
   // interaction (moves, selection, premoves) is suspended.
@@ -327,7 +336,7 @@ interface BoundMark {
 // Map a signature's sound key to its sounds.ts voice, scaled to the number of
 // squares it cleared so a small strike does not sound like a full rank.
 function playSignature(id: string, count: number) {
-  switch (SIGNATURES[id]?.sound) {
+  switch (sigOf(id)?.sound) {
     case "nova":
       return playNova(count);
     case "cataclysm":
@@ -921,6 +930,7 @@ export function Board({
   highlightLastMove = true,
   showLegalMoves = true,
   checkSquares,
+  fxTimePressure,
   pickSquares,
   onPickSquare,
   signatureCard,
@@ -943,6 +953,17 @@ export function Board({
   // The player's "hide effects/animations" switch (the small eye button in
   // the game rails). Decorative layers stand down; functional reads stay.
   const fxHiddenPref = useFxHidden();
+  // The effects dial (Off/Calm/Normal/Epic/Max): scales canvas particle
+  // counts and gates/upsizes the board shake. Mirrored into a ref for the
+  // stable callbacks (vfxShake) that must read the current value.
+  const fxLevel = useFxLevel();
+  const fxLevelRef = useRef(fxLevel);
+  fxLevelRef.current = fxLevel;
+  // Low-clock auto-calm (owner request): under time pressure the board-wide
+  // show stands down automatically, independent of the dial.
+  const fxCalmClock = !!fxTimePressure;
+  const fxCalmClockRef = useRef(fxCalmClock);
+  fxCalmClockRef.current = fxCalmClock;
   // Canvas VFX plays staged during render (the diff/zone claims happen in the
   // render pass) and flushed to the bus after commit, so render stays pure.
   const pendingVfxRef = useRef<VfxPlay[]>([]);
@@ -955,11 +976,15 @@ export function Board({
   });
   // The VFX layer's shake request rides the existing marquee board thump.
   const vfxShake = useCallback(() => {
+    if (fxCalmClockRef.current) return; // time scramble: never shake
+    const shake = FX_LEVELS[fxLevelRef.current].shake;
+    if (shake === "none") return; // Calm and Off never thump the board
     const el = cropRef.current;
     if (el && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      el.classList.remove("fx-board-shake");
+      el.classList.remove("fx-board-shake", "fx-board-shake--big");
       void el.offsetWidth;
       el.classList.add("fx-board-shake");
+      if (shake === "big") el.classList.add("fx-board-shake--big");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -1030,17 +1055,18 @@ export function Board({
     if (!def) return;
     setCast({ key: signatureCard.key, id: signatureCard.id, category: def.category, tier: def.tier });
     const intensity = castIntensity(def.tier);
-    if (!SIGNATURES[signatureCard.id] && intensity !== "sleek") {
+    if (!sigOf(signatureCard.id) && intensity !== "sleek") {
       playCastVoice(def.category, intensity === "marquee");
     }
-    if (intensity === "marquee") {
+    if (intensity === "marquee" && !fxCalmClockRef.current && FX_LEVELS[fxLevelRef.current].shake !== "none") {
       const el = cropRef.current;
       if (el && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-        el.classList.remove("fx-board-shake");
+        el.classList.remove("fx-board-shake", "fx-board-shake--big");
         // Force a reflow so removing and re-adding the class restarts the
         // animation even when two marquee casts land back to back.
         void el.offsetWidth;
         el.classList.add("fx-board-shake");
+        if (FX_LEVELS[fxLevelRef.current].shake === "big") el.classList.add("fx-board-shake--big");
       }
     }
   }, [signatureCard]);
@@ -1136,10 +1162,11 @@ export function Board({
               p: sqToFrac(h.sq, orientation),
               delayMs: h.order * sigCfg.staggerMs,
             })),
-            travel: spec.travel,
+            travel: fxCalmClock ? "none" : spec.travel,
             impact: spec.impact,
-            aftermath: spec.aftermath,
-            shake: spec.shake,
+            aftermath: fxCalmClock ? "none" : spec.aftermath,
+            shake: spec.shake && !fxCalmClock && FX_LEVELS[fxLevel].shake !== "none",
+            intensity: fxCalmClock ? Math.min(0.6, FX_LEVELS[fxLevel].vfx) : FX_LEVELS[fxLevel].vfx,
           });
         }
       }
@@ -1217,7 +1244,7 @@ export function Board({
     // Bespoke signatures voice themselves; generated ones stay quiet here
     // because the category cast voice (playCastVoice) already covered the
     // play, and double-voicing reads as a bug.
-    if (sigId && SIGNATURES[sigId]) playSignature(sigId, Math.max(1, sigCount));
+    if (sigId && sigOf(sigId)) playSignature(sigId, Math.max(1, sigCount));
     if (detonate) playExplosion();
     if (morph) playTransform();
     if (summon) playSummon();
@@ -1523,7 +1550,7 @@ export function Board({
   // exactly once and an unrelated re-render (hover, resize) never replays it.
   if (signatureCard && signatureCard.key > zoneSigSeenKeyRef.current) {
     zoneSigSeenKeyRef.current = signatureCard.key;
-    const cfg = SIGNATURES[signatureCard.id];
+    const cfg = sigOf(signatureCard.id);
     const marks = new Map<
       number,
       { sig: string; order: number; role: "lead" | "target"; key: number }
@@ -1607,10 +1634,11 @@ export function Board({
               p: sqToFrac(sq, orientation),
               delayMs: m.order * cfg.staggerMs,
             })),
-            travel: spec.travel,
+            travel: fxCalmClock ? "none" : spec.travel,
             impact: spec.impact,
-            aftermath: spec.aftermath,
-            shake: spec.shake,
+            aftermath: fxCalmClock ? "none" : spec.aftermath,
+            shake: spec.shake && !fxCalmClock && FX_LEVELS[fxLevel].shake !== "none",
+            intensity: fxCalmClock ? Math.min(0.6, FX_LEVELS[fxLevel].vfx) : FX_LEVELS[fxLevel].vfx,
           });
         }
       }
@@ -2628,19 +2656,19 @@ export function Board({
                       <GenBurst
                         key={`fx-${boardFx.key}`}
                         config={sigCfg}
-                        role={boardFx.sigRole ?? "target"}
+                        role={fxCalmClock ? "target" : boardFx.sigRole ?? "target"}
                         delayMs={delay}
                       />
                     ) : (
                       <SignatureOverlay
                         key={`fx-${boardFx.key}`}
                         visual={sigCfg.visual}
-                        role={boardFx.sigRole ?? "target"}
+                        role={fxCalmClock ? "target" : boardFx.sigRole ?? "target"}
                         delayMs={delay}
                       />
                     );
                   })()}
-                {!fxHiddenPref && zoneSig && SIGNATURES[zoneSig.sig] && (
+                {!fxHiddenPref && zoneSig && sigOf(zoneSig.sig) && (
                   /* Zone-sourced signature (source !== "removal"): the same
                      SignatureOverlay art, but staged over a piece that STAYS on
                      the board and sourced from the fx-effect zone the card
@@ -2648,9 +2676,9 @@ export function Board({
                      mounts and plays exactly once per play. */
                   <SignatureOverlay
                     key={`zsig-${zoneSig.key}`}
-                    visual={SIGNATURES[zoneSig.sig].visual}
-                    role={zoneSig.role}
-                    delayMs={zoneSig.order * SIGNATURES[zoneSig.sig].staggerMs}
+                    visual={sigOf(zoneSig.sig)!.visual}
+                    role={fxCalmClock ? "target" : zoneSig.role}
+                    delayMs={zoneSig.order * sigOf(zoneSig.sig)!.staggerMs}
                   />
                 )}
                 {isForced && !isDragging && (
@@ -2771,26 +2799,43 @@ export function Board({
             (category fallback layer). One-shot, keyed to the play so React
             mounts it exactly once per cast; the finished overlay ends at
             opacity 0 and simply waits to be replaced by the next cast. */}
-        {!fxHiddenPref && cast && (
+        {!fxHiddenPref && !fxCalmClock && cast && (
           <CastSpectacle key={`cast-${cast.key}`} category={cast.category} tier={cast.tier} />
         )}
-        {/* Diff-less generated lead: a played card that removes nothing and
-            leaves no zone (clock steals, draft tricks, info peeks...) still
-            gets its unique board-wide flourish here. Suppressed whenever the
-            piece-diff path already led this play key. */}
+        {/* Diff-less lead: a played card that removes nothing and leaves no
+            zone (clock steals, draft tricks, info peeks...) still gets its
+            unique board-wide flourish here — the generated burst for gen
+            configs, the SignatureOverlay art for bespoke/plugin configs whose
+            source is unset (zone-sourced bespoke plays render through the
+            zone-signature path instead, so they are skipped to avoid a double
+            lead). Suppressed whenever the piece-diff path already led this
+            play key. */}
         {!fxHiddenPref &&
+          !fxCalmClock &&
           cast &&
           cast.key !== castLeadSuppressKeyRef.current &&
           (() => {
             const cfg = resolveSignature(cast.id);
-            if (!cfg || !isGenConfig(cfg) || !cfg.hasLead) return null;
+            if (!cfg || !cfg.hasLead) return null;
+            if (isGenConfig(cfg)) {
+              return (
+                <div
+                  key={`genlead-${cast.key}`}
+                  aria-hidden
+                  className="pointer-events-none absolute inset-0 z-30"
+                >
+                  <GenBurst config={cfg} role="lead" delayMs={0} />
+                </div>
+              );
+            }
+            if (cfg.source && cfg.source !== "removal") return null;
             return (
               <div
-                key={`genlead-${cast.key}`}
+                key={`siglead-${cast.key}`}
                 aria-hidden
                 className="pointer-events-none absolute inset-0 z-30"
               >
-                <GenBurst config={cfg} role="lead" delayMs={0} />
+                <SignatureOverlay visual={cfg.visual} role="lead" delayMs={0} />
               </div>
             );
           })()}

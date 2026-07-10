@@ -80,7 +80,9 @@ export function PlayerSearch({ className = "", autoFocus = false }: { className?
     if (!hit) return;
     // Hard navigation: router.push from a keydown inside this input proved
     // unreliable in the packaged worker build.
-    window.location.assign(`/u/${hit.username}`);
+    // Encoded like every other profile link (lobby, leaderboard): a username
+    // is server-validated, but the URL must never depend on that.
+    window.location.assign(`/u/${encodeURIComponent(hit.username)}`);
   };
 
   useEffect(() => {

@@ -14,4 +14,5 @@ export interface VfxPlay {
   aftermath?: VfxAftermath;           // lingering residue on target squares (~600ms fade)
   shake?: boolean;                    // ask the host to thump the board on first impact
   squareSize?: number;                // fraction of board width one square occupies (default 1/8)
+  intensity?: number;                 // particle-count multiplier from the effects dial (default 1, clamped 0.3-2)
 }

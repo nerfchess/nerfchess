@@ -74,23 +74,38 @@ export async function POST(request: Request) {
 
   // A signed-in guest registering upgrades their account in place, keeping
   // their rating, games, and member-since date.
+  // Both writes below can still hit the UNIQUE indexes (username_lower /
+  // email) despite the checks above: a concurrent registration can win the
+  // race between check and write, and a signed-in non-guest re-posting their
+  // own current username passes the check but violates the index on INSERT.
+  // Map the constraint error to a 409 instead of letting it 500.
+  const conflict = () =>
+    NextResponse.json({ error: "That username or email is already in use." }, { status: 409 });
   if (caller?.is_guest) {
-    await db
-      .prepare(
-        "UPDATE users SET username = ?, username_lower = ?, password_hash = ?, email = COALESCE(?, email), is_guest = 0 WHERE id = ?",
-      )
-      .bind(username, username.toLowerCase(), await hashPassword(password), email, caller.id)
-      .run();
+    try {
+      await db
+        .prepare(
+          "UPDATE users SET username = ?, username_lower = ?, password_hash = ?, email = COALESCE(?, email), is_guest = 0 WHERE id = ?",
+        )
+        .bind(username, username.toLowerCase(), await hashPassword(password), email, caller.id)
+        .run();
+    } catch {
+      return conflict();
+    }
     return NextResponse.json({ id: caller.id, username });
   }
 
   const id = crypto.randomUUID();
-  await db
-    .prepare(
-      "INSERT INTO users (id, username, username_lower, password_hash, email, created_at) VALUES (?, ?, ?, ?, ?, ?)",
-    )
-    .bind(id, username, username.toLowerCase(), await hashPassword(password), email, Date.now())
-    .run();
+  try {
+    await db
+      .prepare(
+        "INSERT INTO users (id, username, username_lower, password_hash, email, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+      )
+      .bind(id, username, username.toLowerCase(), await hashPassword(password), email, Date.now())
+      .run();
+  } catch {
+    return conflict();
+  }
 
   const token = await createSession(db, id);
   const response = NextResponse.json({ id, username });

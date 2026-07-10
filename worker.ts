@@ -637,6 +637,19 @@ function error(ws: WebSocket, code: string, message: string) {
   send(ws, "error", { code, message });
 }
 
+// Constant-time-ish string comparison for bearer secrets (the arena ingest
+// token), so the token cannot be probed byte by byte off response timing.
+// Mirrors keysMatch in /api/analytics/summary.
+function timingSafeEqual(a: string, b: string): boolean {
+  const enc = new TextEncoder();
+  const ab = enc.encode(a);
+  const bb = enc.encode(b);
+  if (ab.length !== bb.length) return false;
+  let diff = 0;
+  for (let i = 0; i < ab.length; i++) diff |= ab[i] ^ bb[i];
+  return diff === 0;
+}
+
 // House-bot engine offload (see docs/bot-offload-tier1-engine-service.md).
 // When HOUSE_ENGINE_REMOTE === "true" the house move search runs on the OCI
 // box instead of this single-threaded DO. The fetch is hard-bounded so a slow
@@ -2340,6 +2353,13 @@ export class GameServer extends DurableObject<Env> {
     let ratings: { w: RatingChange | null; b: RatingChange | null } | null = null;
     if (!match.recorded && match.startedAt) {
       match.recorded = true;
+      // Persist the result (and the recorded claim) BEFORE the D1/PG write
+      // below. That write is a subrequest, so it does not hold the DO input
+      // gate: a frame arriving mid-write (a move, a draw accept) loads the
+      // match from storage and must already see match.result there — without
+      // this save, such a frame could be accepted into (and saved over) a game
+      // that has already ended, resurrecting it as live.
+      await this.saveMatch(match, schedule);
       const db = await this.db();
       if (db) {
         try {
@@ -2374,6 +2394,11 @@ export class GameServer extends DurableObject<Env> {
           }
         } catch (err) {
           console.error("failed to record game", match.id, err);
+          // Drop the claim so a later end-path replay can retry the record:
+          // the recorded_games ledger makes a retry idempotent (rating deltas
+          // apply at most once), whereas keeping recorded=true here would make
+          // this game permanently unrecorded after one transient D1/PG blip.
+          match.recorded = false;
         }
       }
     }
@@ -3777,7 +3802,18 @@ export class GameServer extends DurableObject<Env> {
     }).catch(() => {});
   }
 
-  private async playHouseAction(match: StoredMatch, now = Date.now()) {
+  private async playHouseAction(dueMatch: StoredMatch, now = Date.now()) {
+    // RACE GUARD: `dueMatch` was loaded at the start of the tick, and earlier
+    // due matches' actions (engine searches, D1 end writes, remote-engine
+    // fetches) awaited in between — none of those hold the DO input gate, so a
+    // human frame for THIS match may have landed and advanced or ended it in
+    // storage since. For a human-seated game dueMatch is a deserialized copy
+    // that cannot see that mutation; acting on it would save the stale copy
+    // back over the newer record (a finished game resurrected as live).
+    // Re-read the freshest copy (a map hit for bot-only games, one input-gated
+    // storage get otherwise) and act on THAT. Behavior is identical when
+    // nothing changed.
+    let match = (await this.loadMatch(dueMatch.id)) ?? dueMatch;
     match.botActAt = null;
     if (match.result) return;
 
@@ -3931,9 +3967,32 @@ export class GameServer extends DurableObject<Env> {
     let move: Move | null = null;
     if (this.env.HOUSE_ENGINE_REMOTE === "true") {
       const remote = await this.remoteHouseMove(match, persona.skill, remaining);
-      // The await above yielded the DO thread; the match may have ended (resign,
-      // disconnect, flag) while the remote search ran. Bail if so.
-      if (match.result) return;
+      // The await above yielded the DO thread for up to HOUSE_ENGINE_TIMEOUT_MS;
+      // the match may have ended (resign, disconnect, flag) or advanced while
+      // the remote search ran — and for a human-seated game `match` is a
+      // pre-await deserialized copy that cannot see a storage mutation (the
+      // top-of-method reload only covers up to this point). Re-read before
+      // acting so a stale copy is never committed over the newer record.
+      const fresh = await this.loadMatch(match.id);
+      if (!fresh || fresh.result) return;
+      if (fresh !== match) {
+        if (
+          fresh.moves.length !== match.moves.length ||
+          (fresh.draftActions?.length ?? 0) !== (match.draftActions?.length ?? 0)
+        ) {
+          // The game advanced mid-search: the replayed `game` (and any move
+          // validated against it) is stale. Re-arm off the fresh record and
+          // let the follow-up alarm act on the real position.
+          this.armBotAction(fresh, null, Date.now());
+          await this.saveMatch(fresh, false);
+          return;
+        }
+        // Same position (moves/actions unchanged, so `game` is still exact);
+        // continue with the freshest record so chat/clock/offer fields written
+        // during the await are not clobbered by the pre-await copy.
+        fresh.botActAt = null;
+        match = fresh;
+      }
       // Treat the OCI reply as untrusted: accept only a move that is legal in
       // our own reconstruction, and commit our LOCAL instance (never the wire
       // object). A desynced/tampered move simply isn't found -> local fallback.
@@ -4244,7 +4303,9 @@ export class GameServer extends DurableObject<Env> {
   private async handleArena(request: Request, url: URL): Promise<Response> {
     if (request.method !== "POST") return new Response("method not allowed", { status: 405 });
     const token = this.env.ARENA_INGEST_TOKEN;
-    if (!token || request.headers.get("authorization") !== `Bearer ${token}`) {
+    // Timing-safe compare: a plain !== short-circuits on the first differing
+    // byte, which lets the bearer token be probed off response timing.
+    if (!token || !timingSafeEqual(request.headers.get("authorization") ?? "", `Bearer ${token}`)) {
       return new Response("unauthorized", { status: 401 });
     }
     const ingest = this.env.ARENA_INGEST_ENABLED === "true";

@@ -1768,3 +1768,68 @@ html[data-theme="light"] .bg-black\/70 {
   background-color: rgba(43, 40, 34, 0.35);
 }
 /* === END THEME CUSTOMIZATION === */
+
+/* --- Effects dial (the slider beside the board) ------------------------------
+   The Max step swaps the board thump for a bigger one: same shape as
+   fx-board-shake (effects.css) at roughly double amplitude. Kept here (not in
+   effects.css) so the dial's styling lives with the rest of the site chrome. */
+@keyframes fx-board-shake-big {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  12% { transform: translate(-1.6%, 1%) rotate(-0.7deg); }
+  24% { transform: translate(1.4%, -1%) rotate(0.6deg); }
+  38% { transform: translate(-1.1%, -0.7%) rotate(-0.4deg); }
+  52% { transform: translate(0.9%, 0.8%) rotate(0.3deg); }
+  68% { transform: translate(-0.5%, 0.4%) rotate(-0.2deg); }
+  84% { transform: translate(0.25%, -0.25%) rotate(0.1deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
+}
+.fx-board-shake.fx-board-shake--big {
+  animation: fx-board-shake-big 0.6s var(--ease-out, ease-out) both;
+}
+
+/* The dial's range input: a thin ink track with a small square gold thumb,
+   consistent in both engines. */
+.fx-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 14px;
+  background: transparent;
+  cursor: pointer;
+}
+.fx-slider::-webkit-slider-runnable-track {
+  height: 3px;
+  border-radius: 1px;
+  background: rgba(255, 255, 255, 0.14);
+}
+.fx-slider::-moz-range-track {
+  height: 3px;
+  border-radius: 1px;
+  background: rgba(255, 255, 255, 0.14);
+}
+.fx-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  margin-top: -4.5px;
+  height: 12px;
+  width: 8px;
+  border-radius: 1px;
+  border: 1px solid rgb(216 181 110 / 0.7);
+  background: #d8b56e;
+}
+.fx-slider::-moz-range-thumb {
+  height: 12px;
+  width: 8px;
+  border-radius: 1px;
+  border: 1px solid rgb(216 181 110 / 0.7);
+  background: #d8b56e;
+}
+.fx-slider:focus-visible {
+  outline: 1px solid rgb(216 181 110 / 0.7);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fx-board-shake.fx-board-shake--big {
+    animation: none !important;
+  }
+}

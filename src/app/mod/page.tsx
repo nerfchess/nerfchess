@@ -12,7 +12,7 @@ import { useCallback, useEffect, useState } from "react";
 import { AccountUser, fetchMe } from "@/lib/authClient";
 import { ModeBadge } from "@/components/ModeBadge";
 
-type Tab = "reports" | "chat" | "users" | "suggestions" | "rules" | "buffs" | "log";
+type Tab = "reports" | "games" | "chat" | "users" | "suggestions" | "rules" | "buffs" | "log";
 
 interface Report {
   id: string;
@@ -158,6 +158,7 @@ export default function ModPage() {
               {(
                 [
                   ["reports", "Reports"],
+                  ["games", "Games"],
                   ["chat", "Chat flags"],
                   ["users", "Players"],
                   ["suggestions", "Suggestions"],
@@ -182,6 +183,7 @@ export default function ModPage() {
 
             <div className="mt-6">
               {tab === "reports" && <ReportsTab />}
+              {tab === "games" && <GamesTab />}
               {tab === "chat" && <ChatFlagsTab />}
               {tab === "users" && <UsersTab isAdmin={me.role === "admin"} />}
               {tab === "suggestions" && <SuggestionsTab />}
@@ -383,6 +385,272 @@ function BuffFeedbackTab() {
             ))}
           </ul>
         </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------- human games ----------------
+
+type SeatKind = "member" | "guest" | "anon" | "house";
+
+interface ModGameSeat {
+  name: string;
+  userId: string | null;
+  kind: SeatKind;
+  ratingBefore: number | null;
+  ratingAfter: number | null;
+}
+
+interface ModGame {
+  id: string;
+  white: ModGameSeat;
+  black: ModGameSeat;
+  winner: "w" | "b" | "draw" | null;
+  reason: string;
+  rated: boolean;
+  ruleset: string;
+  category: string | null;
+  timeSec: number;
+  incrementSec: number;
+  moveCount: number;
+  replayable: boolean;
+  durationMs: number;
+  startedAt: number;
+  completedAt: number;
+}
+
+interface GamesStats {
+  today: { total: number; humanVsHuman: number; humanVsHouse: number };
+  week: { total: number; humanVsHuman: number; humanVsHouse: number };
+  averageGame: { moves: number | null; durationMs: number | null };
+  topMode: { label: string; games: number } | null;
+  humansToday: { members: number; guests: number; anonSeatGames: number };
+  lastHumanGame: { id: string; completedAt: number } | null;
+}
+
+function fmtDuration(ms: number | null): string {
+  if (ms === null || !Number.isFinite(ms) || ms < 0) return "—";
+  const totalSec = Math.round(ms / 1000);
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  if (m >= 60) return `${Math.floor(m / 60)}h ${m % 60}m`;
+  return m > 0 ? `${m}m ${s}s` : `${s}s`;
+}
+
+function tcLabel(baseSec: number, incSec: number): string {
+  if (baseSec <= 0) return "∞";
+  const base = baseSec < 60 ? `${baseSec}s` : `${Math.round(baseSec / 60)}`;
+  return `${base}+${incSec}`;
+}
+
+function resultLabel(winner: ModGame["winner"]): string {
+  return winner === "w" ? "1–0" : winner === "b" ? "0–1" : winner === "draw" ? "½–½" : "—";
+}
+
+function ratingDelta(seat: ModGameSeat): string | null {
+  if (seat.ratingBefore === null || seat.ratingAfter === null) return null;
+  const d = Math.round(seat.ratingAfter) - Math.round(seat.ratingBefore);
+  return `${d >= 0 ? "+" : ""}${d}`;
+}
+
+// Small identity pill after a seat's name: who (or what) was sitting there.
+// Registered members get no pill — they are the default. Guests are shown by
+// their real guest username (moderator surface; public surfaces already show
+// these names too), just marked as guests.
+function SeatBadge({ kind }: { kind: SeatKind }) {
+  if (kind === "member") return null;
+  const style =
+    kind === "house"
+      ? "border-bruise-glow/40 text-bruise-glow"
+      : kind === "guest"
+        ? "border-white/20 text-parchment-300"
+        : "border-white/15 text-parchment-400";
+  const label = kind === "house" ? "house bot" : kind === "guest" ? "guest" : "anon";
+  return (
+    <span className={`smallcaps text-[9px] px-1.5 py-px rounded-full border ${style}`}>{label}</span>
+  );
+}
+
+function GameStatCard({ label, value, sub }: { label: string; value: string; sub?: string }) {
+  return (
+    <div className="plate p-4">
+      <div className="smallcaps text-[10px] text-parchment-400">{label}</div>
+      <div className="mt-1 font-display text-xl text-parchment-50">{value}</div>
+      {sub && <div className="mt-0.5 text-[11px] text-parchment-400">{sub}</div>}
+    </div>
+  );
+}
+
+// Every archived game with at least one HUMAN seat (member, guest, or an
+// anonymous seat) — so human-vs-house-bot games count and bot-vs-bot filler
+// doesn't. Newest first; the most recent human game is pinned on top. Rows
+// link to /game/{id}, the archive replay viewer.
+function GamesTab() {
+  const [stats, setStats] = useState<GamesStats | null>(null);
+  const [games, setGames] = useState<ModGame[] | null>(null);
+  const [nextBefore, setNextBefore] = useState<number | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/mod/games/stats")
+      .then((res) => (res.ok ? (res.json() as Promise<GamesStats>) : Promise.reject()))
+      .then((data) => {
+        if (!cancelled) setStats(data);
+      })
+      .catch(() => {});
+    fetch("/api/mod/games")
+      .then((res) =>
+        res.ok ? (res.json() as Promise<{ games: ModGame[]; nextBefore: number | null }>) : Promise.reject(),
+      )
+      .then((data) => {
+        if (cancelled) return;
+        setGames(data.games);
+        setNextBefore(data.nextBefore);
+      })
+      .catch(() => {
+        if (!cancelled) setFailed(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const loadMore = async () => {
+    if (nextBefore === null || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const res = await fetch(`/api/mod/games?before=${nextBefore}`);
+      if (!res.ok) throw new Error();
+      const data = (await res.json()) as { games: ModGame[]; nextBefore: number | null };
+      setGames((prev) => [...(prev ?? []), ...data.games]);
+      setNextBefore(data.nextBefore);
+    } catch {
+      // Leave the cursor as-is so the button can be tried again.
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  if (failed) return <p className="text-sm text-parchment-400">Could not load the game archive. Try again in a minute.</p>;
+
+  return (
+    <div>
+      {stats && (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          <GameStatCard
+            label="Human games today"
+            value={String(stats.today.total)}
+            sub={`${stats.today.humanVsHuman} vs humans · ${stats.today.humanVsHouse} vs house`}
+          />
+          <GameStatCard
+            label="This week"
+            value={String(stats.week.total)}
+            sub={`${stats.week.humanVsHuman} vs humans · ${stats.week.humanVsHouse} vs house`}
+          />
+          <GameStatCard
+            label="Avg. game (7d)"
+            value={stats.averageGame.moves !== null ? `${stats.averageGame.moves} moves` : "—"}
+            sub={fmtDuration(stats.averageGame.durationMs)}
+          />
+          <GameStatCard
+            label="Most played mode (7d)"
+            value={stats.topMode ? stats.topMode.label : "—"}
+            sub={stats.topMode ? `${stats.topMode.games} games` : undefined}
+          />
+          <GameStatCard
+            label="Humans today"
+            value={`${stats.humansToday.members + stats.humansToday.guests}`}
+            sub={`${stats.humansToday.members} members · ${stats.humansToday.guests} guests${
+              stats.humansToday.anonSeatGames > 0 ? ` · ${stats.humansToday.anonSeatGames} anon-seat games` : ""
+            }`}
+          />
+          <GameStatCard
+            label="Last human game"
+            value={stats.lastHumanGame ? when(stats.lastHumanGame.completedAt) : "none yet"}
+          />
+        </div>
+      )}
+
+      {!games ? (
+        <p className="mt-6 text-parchment-300">Loading…</p>
+      ) : games.length === 0 ? (
+        <p className="mt-6 text-parchment-300">No human games recorded yet.</p>
+      ) : (
+        <>
+          <div className="mt-6 space-y-2">
+            {games.map((g, i) => (
+              <div
+                key={g.id}
+                className={`plate p-4 ${i === 0 ? "border border-gold/40" : ""}`}
+              >
+                {i === 0 && (
+                  <div className="smallcaps text-[10px] text-gold-leaf">Last human game</div>
+                )}
+                <div className={`flex flex-wrap items-center gap-2 text-sm ${i === 0 ? "mt-1" : ""}`}>
+                  <span className="font-display font-semibold text-parchment-50">
+                    {g.white.kind === "member" || g.white.kind === "guest" ? (
+                      <Link href={`/u/${g.white.name}`} className="hover:underline">{g.white.name}</Link>
+                    ) : (
+                      g.white.name
+                    )}
+                  </span>
+                  <SeatBadge kind={g.white.kind} />
+                  <span className="font-mono tabular-nums text-parchment-200">{resultLabel(g.winner)}</span>
+                  <span className="font-display font-semibold text-parchment-50">
+                    {g.black.kind === "member" || g.black.kind === "guest" ? (
+                      <Link href={`/u/${g.black.name}`} className="hover:underline">{g.black.name}</Link>
+                    ) : (
+                      g.black.name
+                    )}
+                  </span>
+                  <SeatBadge kind={g.black.kind} />
+                  <ModeBadge mode={g.category === "nerf" || g.category === "buff" ? g.category : undefined} />
+                  <span className="smallcaps text-[10px] px-2 py-0.5 rounded-full border border-white/15 text-parchment-300">
+                    {g.rated ? "rated" : "casual"}
+                  </span>
+                  <span className="ml-auto text-xs text-parchment-400">{when(g.completedAt)}</span>
+                </div>
+                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-parchment-400">
+                  <span>{g.reason}</span>
+                  <span>{tcLabel(g.timeSec, g.incrementSec)}</span>
+                  <span>{g.moveCount} moves</span>
+                  <span>{fmtDuration(g.durationMs)}</span>
+                  {ratingDelta(g.white) && (
+                    <span className="font-mono tabular-nums">
+                      {g.white.name} {ratingDelta(g.white)}
+                    </span>
+                  )}
+                  {ratingDelta(g.black) && (
+                    <span className="font-mono tabular-nums">
+                      {g.black.name} {ratingDelta(g.black)}
+                    </span>
+                  )}
+                  {g.replayable ? (
+                    <Link href={`/game/${g.id}`} className="ml-auto text-gold-leaf hover:underline">
+                      Replay
+                    </Link>
+                  ) : (
+                    <span className="ml-auto text-parchment-400/60" title="This game was archived without its move list.">
+                      no moves stored
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+          {nextBefore !== null && (
+            <button
+              onClick={loadMore}
+              disabled={loadingMore}
+              className="mt-4 px-4 py-1.5 rounded-sm btn-ghost text-sm disabled:opacity-60"
+            >
+              {loadingMore ? "Loading…" : "Load older games"}
+            </button>
+          )}
+        </>
       )}
     </div>
   );

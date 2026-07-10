@@ -1,0 +1,455 @@
+/* ----------------------------------------------------------------------------
+   funnyPlays.css — keyframes for the funny/meta bespoke play animations
+   (funnyPlays.tsx). Owned by the funny/meta workstream.
+
+   Rules (mirrors effects.css):
+   - transform/opacity ONLY: every keyframe animates nothing else, so the
+     compositor never has to relayout mid-play.
+   - one-shot flourishes: fill-mode `both` keeps delayed elements hidden until
+     their start frame and every track ends at opacity 0.
+   - prefers-reduced-motion: the whole layer is transient spectacle, so it is
+     hidden outright (the walnut-squirrel precedent) even though the caller's
+     play layer already gates it — defensive double-cover.
+---------------------------------------------------------------------------- */
+
+/* Percentage transform-origins on SVG children must resolve against the
+   element's own box (not the viewBox), or every pivot lands wrong. */
+.fnp svg * {
+  transform-box: fill-box;
+}
+
+/* --- shared stage tracks ---------------------------------------------------- */
+
+/* Soft board wash behind a wide lead. */
+@keyframes fnp-wash {
+  0% { opacity: 0; transform: scale(1.04); }
+  16% { opacity: 0.9; transform: scale(1); }
+  70% { opacity: 0.55; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.02); }
+}
+.fnp-wash { animation: fnp-wash 1.2s ease-out both; transform-origin: 50% 50%; }
+
+/* Closing shockwave ring. */
+@keyframes fnp-boom {
+  0% { opacity: 0; transform: scale(0.05); }
+  20% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.15); }
+}
+.fnp-boom { animation: fnp-boom 0.9s cubic-bezier(0.15, 0.7, 0.2, 1) both; transform-origin: 50% 50%; }
+
+/* --- generic one-shot moves -------------------------------------------------- */
+
+/* Chunky pop: overshoot in, hold, fade away. */
+@keyframes fnp-pop {
+  0% { opacity: 0; transform: scale(0.2); }
+  22% { opacity: 1; transform: scale(1.18); }
+  36% { transform: scale(0.96); }
+  48% { transform: scale(1); }
+  82% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.04); }
+}
+.fnp-pop { animation: fnp-pop 1.05s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; transform-origin: 50% 50%; }
+
+/* Small rise-and-fade (hearts, Zs, +45s chips). */
+@keyframes fnp-rise {
+  0% { opacity: 0; transform: translateY(30%) scale(0.7); }
+  25% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-120%) scale(1.05); }
+}
+.fnp-rise { animation: fnp-rise 1s ease-out both; transform-origin: 50% 50%; }
+
+/* Cartoon bounce-in for windows / props, then a late fade. */
+@keyframes fnp-bounce-in {
+  0% { opacity: 0; transform: translateY(-40%) scale(0.5); }
+  30% { opacity: 1; transform: translateY(4%) scale(1.06); }
+  46% { transform: translateY(-2%) scale(0.98); }
+  58% { transform: translateY(0) scale(1); }
+  86% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(0) scale(1); }
+}
+.fnp-bounce-in { animation: fnp-bounce-in 1.5s cubic-bezier(0.2, 0.9, 0.3, 1.1) both; transform-origin: 50% 60%; }
+
+/* Heavy prop drop from above with a squash landing (sunglasses, crates). */
+@keyframes fnp-drop {
+  0% { opacity: 0; transform: translateY(-160%) scale(1); }
+  55% { opacity: 1; transform: translateY(0) scale(1); }
+  66% { transform: translateY(0) scale(1.14, 0.82); }
+  78% { transform: translateY(-4%) scale(0.96, 1.04); }
+  88% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(0) scale(1); }
+}
+.fnp-drop { animation: fnp-drop 1.15s cubic-bezier(0.4, 0, 0.6, 1) both; transform-origin: 50% 90%; }
+
+/* Rubber stamp: slams down from big to placed, then fades. */
+@keyframes fnp-stamp {
+  0% { opacity: 0; transform: scale(2.4) rotate(-14deg); }
+  28% { opacity: 1; transform: scale(0.94) rotate(-8deg); }
+  40% { transform: scale(1.05) rotate(-8deg); }
+  50% { transform: scale(1) rotate(-8deg); }
+  85% { opacity: 1; transform: scale(1) rotate(-8deg); }
+  100% { opacity: 0; transform: scale(1) rotate(-8deg); }
+}
+.fnp-stamp { animation: fnp-stamp 1.1s cubic-bezier(0.3, 0.9, 0.4, 1) both; transform-origin: 50% 50%; }
+
+/* Starburst / sparkle blink. */
+@keyframes fnp-star {
+  0% { opacity: 0; transform: scale(0.1) rotate(0deg); }
+  30% { opacity: 1; transform: scale(1.25) rotate(18deg); }
+  55% { transform: scale(0.95) rotate(24deg); }
+  100% { opacity: 0; transform: scale(1.3) rotate(32deg); }
+}
+.fnp-star { animation: fnp-star 0.7s ease-out both; transform-origin: 50% 50%; }
+
+/* Little dust puff after a slam. */
+@keyframes fnp-puff {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.3); }
+  30% { opacity: 0.85; transform: translate(var(--fnp-x, 0), var(--fnp-y, -30%)) scale(1); }
+  100% { opacity: 0; transform: translate(calc(var(--fnp-x, 0) * 1.8), calc(var(--fnp-y, -30%) * 1.7)) scale(1.5); }
+}
+.fnp-puff { animation: fnp-puff 0.8s ease-out both; transform-origin: 50% 50%; }
+
+/* Late fade-out for props that should linger, then leave. */
+@keyframes fnp-linger {
+  0% { opacity: 0; }
+  12% { opacity: 1; }
+  84% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.fnp-linger { animation: fnp-linger 1.5s ease-out both; }
+
+/* --- keyboard / window skits (Alt+F4, Ctrl+Z, pop-ups, patches) ------------- */
+
+/* Keycap press: dips down, springs back. */
+@keyframes fnp-press {
+  0% { opacity: 0; transform: translateY(-30%); }
+  18% { opacity: 1; transform: translateY(0); }
+  38% { transform: translateY(14%) scale(0.96); }
+  56% { transform: translateY(0) scale(1); }
+  84% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.fnp-press { animation: fnp-press 1.2s cubic-bezier(0.3, 0.7, 0.4, 1) both; transform-origin: 50% 100%; }
+
+/* Window slams shut: collapses to its title bar, then blinks out. */
+@keyframes fnp-slam {
+  0% { opacity: 1; transform: scaleY(1); }
+  55% { opacity: 1; transform: scaleY(1); }
+  70% { opacity: 1; transform: scaleY(0.06); }
+  78% { opacity: 1; transform: scaleY(0.1); }
+  86% { opacity: 1; transform: scaleY(0.03); }
+  100% { opacity: 0; transform: scaleY(0.02); }
+}
+.fnp-slam { animation: fnp-slam 1.35s cubic-bezier(0.6, 0, 0.8, 1) both; transform-origin: 50% 0%; }
+
+/* Close-X refuses to work: angry little shake. */
+@keyframes fnp-deny {
+  0%, 100% { opacity: 1; transform: translateX(0); }
+  15% { transform: translateX(-12%) rotate(-6deg); }
+  30% { transform: translateX(12%) rotate(6deg); }
+  45% { transform: translateX(-9%) rotate(-4deg); }
+  60% { transform: translateX(9%) rotate(4deg); }
+  75% { transform: translateX(0) rotate(0); }
+}
+.fnp-deny { animation: fnp-deny 0.7s ease-in-out both; transform-origin: 50% 50%; }
+
+/* Progress bar fill (scaleX from the left). */
+@keyframes fnp-fill {
+  0% { opacity: 1; transform: scaleX(0); }
+  85% { opacity: 1; transform: scaleX(1); }
+  100% { opacity: 1; transform: scaleX(1); }
+}
+.fnp-fill { animation: fnp-fill 0.85s cubic-bezier(0.3, 0.6, 0.4, 1) both; transform-origin: 0% 50%; }
+
+/* Opacity cross-swaps (rating flip, card grey-out). */
+@keyframes fnp-swap-out {
+  0% { opacity: 1; transform: scale(1); }
+  45% { opacity: 1; transform: scale(1); }
+  60% { opacity: 0; transform: scale(0.7); }
+  100% { opacity: 0; transform: scale(0.7); }
+}
+.fnp-swap-out { animation: fnp-swap-out 1.4s ease-out both; transform-origin: 50% 50%; }
+@keyframes fnp-swap-in {
+  0% { opacity: 0; transform: scale(1.6); }
+  55% { opacity: 0; transform: scale(1.6); }
+  70% { opacity: 1; transform: scale(0.96); }
+  78% { transform: scale(1.06); }
+  86% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1); }
+}
+.fnp-swap-in { animation: fnp-swap-in 1.4s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; transform-origin: 50% 50%; }
+
+/* --- connection / lag skit --------------------------------------------------- */
+
+/* Signal bar cuts out. */
+@keyframes fnp-bar-out {
+  0% { opacity: 1; }
+  60% { opacity: 1; }
+  70% { opacity: 0.15; }
+  80% { opacity: 0.7; }
+  90% { opacity: 0.1; }
+  100% { opacity: 0; }
+}
+.fnp-bar-out { animation: fnp-bar-out 0.9s steps(1, end) both; }
+
+/* Buffering spinner: stuttering eighth-turns, then it seizes. */
+@keyframes fnp-buffer {
+  0% { opacity: 0; transform: rotate(0deg); }
+  10% { opacity: 1; }
+  70% { opacity: 1; transform: rotate(315deg); }
+  92% { opacity: 1; transform: rotate(315deg); }
+  100% { opacity: 0; transform: rotate(315deg); }
+}
+.fnp-buffer { animation: fnp-buffer 1.4s steps(8, end) both; transform-origin: 50% 50%; }
+
+/* Whole-HUD freeze jitter: choppy displaced frames, then locks solid. */
+@keyframes fnp-jitter {
+  0% { opacity: 0; transform: translate(0, 0); }
+  8% { opacity: 1; transform: translate(0, 0); }
+  30% { transform: translate(0, 0); }
+  36% { transform: translate(-3%, 1%); }
+  44% { transform: translate(2%, -2%); }
+  52% { transform: translate(-2%, 2%); }
+  60% { transform: translate(3%, 0); }
+  66% { transform: translate(0, 0); }
+  88% { opacity: 1; transform: translate(0, 0); }
+  100% { opacity: 0; transform: translate(0, 0); }
+}
+.fnp-jitter { animation: fnp-jitter 1.5s steps(2, end) both; transform-origin: 50% 50%; }
+
+/* --- undo / rewind skit ------------------------------------------------------ */
+
+/* Big counter-clockwise undo arrow wheels in. */
+@keyframes fnp-undo {
+  0% { opacity: 0; transform: rotate(150deg) scale(0.4); }
+  35% { opacity: 1; transform: rotate(-12deg) scale(1.05); }
+  48% { transform: rotate(6deg) scale(1); }
+  58% { transform: rotate(0deg) scale(1); }
+  85% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.fnp-undo { animation: fnp-undo 1.25s cubic-bezier(0.2, 0.8, 0.3, 1.1) both; transform-origin: 50% 50%; }
+
+/* Ghost piece rewinds back onto the board and solidifies. */
+@keyframes fnp-rewind {
+  0% { opacity: 0; transform: translateX(120%) scale(0.9); }
+  30% { opacity: 0.35; transform: translateX(60%) scale(0.95); }
+  42% { opacity: 0.3; transform: translateX(72%) scale(0.95); }
+  70% { opacity: 0.55; transform: translateX(8%) scale(1); }
+  82% { opacity: 1; transform: translateX(0) scale(1.06); }
+  90% { opacity: 1; transform: translateX(0) scale(1); }
+  100% { opacity: 0; transform: translateX(0) scale(1); }
+}
+.fnp-rewind { animation: fnp-rewind 1.4s cubic-bezier(0.3, 0.7, 0.3, 1) both; transform-origin: 50% 100%; }
+
+/* Ghost materialize on the landing square (target-side Ctrl+Z). */
+@keyframes fnp-ghost-in {
+  0% { opacity: 0; transform: translateY(18%) scale(0.85); }
+  35% { opacity: 0.45; transform: translateY(6%) scale(0.95); }
+  50% { opacity: 0.35; transform: translateY(8%) scale(0.95); }
+  75% { opacity: 1; transform: translateY(0) scale(1.05); }
+  85% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(0) scale(1); }
+}
+.fnp-ghost-in { animation: fnp-ghost-in 1.1s ease-out both; transform-origin: 50% 100%; }
+
+/* --- bonk / slapstick --------------------------------------------------------- */
+
+/* Rubber chicken swings down like a war hammer and boings back. */
+@keyframes fnp-bonk {
+  0% { opacity: 0; transform: rotate(-95deg); }
+  20% { opacity: 1; transform: rotate(-80deg); }
+  42% { transform: rotate(24deg); }
+  54% { transform: rotate(-18deg); }
+  66% { transform: rotate(12deg); }
+  76% { transform: rotate(-4deg); }
+  88% { opacity: 1; transform: rotate(2deg); }
+  100% { opacity: 0; transform: rotate(0deg); }
+}
+.fnp-bonk { animation: fnp-bonk 1.2s cubic-bezier(0.5, 0, 0.4, 1.4) both; transform-origin: 8% 88%; }
+
+/* --- meters / gauges ---------------------------------------------------------- */
+
+/* Gauge needle flops to rock-bottom with a sad wobble. */
+@keyframes fnp-needle {
+  0% { opacity: 0; transform: rotate(40deg); }
+  15% { opacity: 1; transform: rotate(40deg); }
+  45% { transform: rotate(-78deg); }
+  58% { transform: rotate(-62deg); }
+  70% { transform: rotate(-74deg); }
+  80% { transform: rotate(-70deg); }
+  90% { opacity: 1; transform: rotate(-70deg); }
+  100% { opacity: 0; transform: rotate(-70deg); }
+}
+.fnp-needle { animation: fnp-needle 1.5s cubic-bezier(0.4, 0, 0.4, 1.2) both; transform-origin: 50% 92%; }
+
+/* Speaker sound-wave pops away (muted). */
+@keyframes fnp-wave-off {
+  0% { opacity: 1; transform: scale(1); }
+  55% { opacity: 1; transform: scale(1); }
+  75% { opacity: 0.9; transform: scale(1.25); }
+  100% { opacity: 0; transform: scale(0.4); }
+}
+.fnp-wave-off { animation: fnp-wave-off 0.9s ease-in both; transform-origin: 0% 50%; }
+
+/* Speaker sags, defeated. */
+@keyframes fnp-sag {
+  0% { opacity: 0; transform: rotate(0deg); }
+  12% { opacity: 1; transform: rotate(0deg); }
+  60% { transform: rotate(0deg); }
+  78% { transform: rotate(-8deg) translateY(3%); }
+  90% { opacity: 1; transform: rotate(-8deg) translateY(3%); }
+  100% { opacity: 0; transform: rotate(-8deg) translateY(3%); }
+}
+.fnp-sag { animation: fnp-sag 1.5s ease-out both; transform-origin: 50% 80%; }
+
+/* --- nature (touch grass) ------------------------------------------------------ */
+
+/* Grass blade grows up from the soil. */
+@keyframes fnp-grass {
+  0% { opacity: 0; transform: scaleY(0); }
+  30% { opacity: 1; transform: scaleY(1.15); }
+  45% { transform: scaleY(0.94); }
+  58% { transform: scaleY(1); }
+  88% { opacity: 1; transform: scaleY(1); }
+  100% { opacity: 0; transform: scaleY(1); }
+}
+.fnp-grass { animation: fnp-grass 1.35s cubic-bezier(0.25, 0.9, 0.35, 1.2) both; transform-origin: 50% 100%; }
+
+/* Sun climbs into the corner and beams. */
+@keyframes fnp-sunrise {
+  0% { opacity: 0; transform: translateY(70%) rotate(0deg); }
+  35% { opacity: 1; transform: translateY(0) rotate(12deg); }
+  85% { opacity: 1; transform: translateY(0) rotate(26deg); }
+  100% { opacity: 0; transform: translateY(0) rotate(30deg); }
+}
+.fnp-sunrise { animation: fnp-sunrise 1.5s ease-out both; transform-origin: 50% 50%; }
+
+/* Butterfly flits across in a lazy sine. */
+@keyframes fnp-flit {
+  0% { opacity: 0; transform: translate(-120%, 30%) rotate(8deg); }
+  15% { opacity: 1; }
+  35% { transform: translate(-50%, -18%) rotate(-8deg); }
+  60% { transform: translate(20%, 16%) rotate(10deg); }
+  85% { opacity: 1; transform: translate(90%, -10%) rotate(-6deg); }
+  100% { opacity: 0; transform: translate(130%, 0%) rotate(0deg); }
+}
+.fnp-flit { animation: fnp-flit 1.6s ease-in-out both; transform-origin: 50% 50%; }
+
+/* --- showbiz (main character) --------------------------------------------------- */
+
+/* Clapperboard top stick snaps shut. */
+@keyframes fnp-clap {
+  0% { opacity: 0; transform: rotate(-28deg); }
+  20% { opacity: 1; transform: rotate(-28deg); }
+  38% { transform: rotate(0deg); }
+  46% { transform: rotate(-6deg); }
+  54% { transform: rotate(0deg); }
+  82% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.fnp-clap { animation: fnp-clap 1.2s cubic-bezier(0.5, 0, 0.5, 1.3) both; transform-origin: 4% 100%; }
+
+/* Spotlight cone swings in from above and settles on the star. */
+@keyframes fnp-spot {
+  0% { opacity: 0; transform: rotate(-32deg); }
+  25% { opacity: 0.9; transform: rotate(-32deg); }
+  55% { transform: rotate(14deg); }
+  70% { transform: rotate(-5deg); }
+  80% { transform: rotate(0deg); }
+  90% { opacity: 0.9; transform: rotate(0deg); }
+  100% { opacity: 0; transform: rotate(0deg); }
+}
+.fnp-spot { animation: fnp-spot 1.5s cubic-bezier(0.4, 0, 0.3, 1) both; transform-origin: 50% 0%; }
+
+/* --- commerce (pay to win, battle pass) ------------------------------------------ */
+
+/* Credit card swipes through the reader slot. */
+@keyframes fnp-swipe {
+  0% { opacity: 0; transform: translateX(-130%) rotate(-4deg); }
+  22% { opacity: 1; transform: translateX(-70%) rotate(-2deg); }
+  60% { transform: translateX(60%) rotate(2deg); }
+  80% { opacity: 1; transform: translateX(120%) rotate(4deg); }
+  100% { opacity: 0; transform: translateX(150%) rotate(4deg); }
+}
+.fnp-swipe { animation: fnp-swipe 1.1s cubic-bezier(0.5, 0, 0.3, 1) both; transform-origin: 50% 50%; }
+
+/* Coin / confetti chunk arcs away (direction via CSS vars). */
+@keyframes fnp-coin {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.4) rotate(0deg); }
+  20% { opacity: 1; transform: translate(calc(var(--fnp-x, 0%) * 0.4), calc(var(--fnp-y, -60%) * 0.55)) scale(1) rotate(var(--fnp-r, 90deg)); }
+  100% { opacity: 0; transform: translate(var(--fnp-x, 0%), var(--fnp-y, -60%)) scale(0.9) rotate(calc(var(--fnp-r, 90deg) * 2)); }
+}
+.fnp-coin { animation: fnp-coin 0.95s cubic-bezier(0.2, 0.6, 0.6, 1) both; transform-origin: 50% 50%; }
+
+/* Won card fans out of the deck (rotation via CSS var). */
+@keyframes fnp-fan {
+  0% { opacity: 0; transform: translateY(35%) rotate(0deg) scale(0.7); }
+  35% { opacity: 1; transform: translateY(-4%) rotate(var(--fnp-r, 12deg)) scale(1.04); }
+  50% { transform: translateY(0) rotate(var(--fnp-r, 12deg)) scale(1); }
+  86% { opacity: 1; transform: translateY(0) rotate(var(--fnp-r, 12deg)) scale(1); }
+  100% { opacity: 0; transform: translateY(-3%) rotate(var(--fnp-r, 12deg)) scale(1); }
+}
+.fnp-fan { animation: fnp-fan 1.4s cubic-bezier(0.2, 0.9, 0.3, 1.15) both; transform-origin: 50% 100%; }
+
+/* Battle-pass tier node lights up. */
+@keyframes fnp-node {
+  0% { opacity: 0.25; transform: scale(1); }
+  40% { opacity: 1; transform: scale(1.45); }
+  65% { transform: scale(0.95); }
+  80% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1); }
+}
+.fnp-node { animation: fnp-node 0.9s cubic-bezier(0.3, 0.9, 0.4, 1.2) both; transform-origin: 50% 50%; }
+
+/* --- sniper scope ---------------------------------------------------------------- */
+
+/* Reticle sweeps in, hunts, then locks on. */
+@keyframes fnp-scope {
+  0% { opacity: 0; transform: translate(-90%, -55%) scale(1.6); }
+  22% { opacity: 1; transform: translate(28%, 20%) scale(1.25); }
+  45% { transform: translate(-14%, 8%) scale(1.1); }
+  62% { transform: translate(0, 0) scale(1); }
+  70% { transform: translate(0, 0) scale(0.92); }
+  78% { transform: translate(0, 0) scale(1); }
+  90% { opacity: 1; transform: translate(0, 0) scale(1); }
+  100% { opacity: 0; transform: translate(0, 0) scale(1); }
+}
+.fnp-scope { animation: fnp-scope 1.5s cubic-bezier(0.35, 0, 0.3, 1) both; transform-origin: 50% 50%; }
+
+/* Recording dot blink. */
+@keyframes fnp-blink {
+  0% { opacity: 0; }
+  10%, 30%, 50%, 70% { opacity: 1; }
+  20%, 40%, 60% { opacity: 0.25; }
+  88% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.fnp-blink { animation: fnp-blink 1.4s linear both; }
+
+/* --- pocket pal (emotional support pawn) ------------------------------------------ */
+
+/* The pal hops up, wiggles hello, then dives into the pocket. */
+@keyframes fnp-hop {
+  0% { opacity: 0; transform: translateY(60%) scale(0.6); }
+  22% { opacity: 1; transform: translateY(-14%) scale(1.05); }
+  34% { transform: translateY(0) scale(1); }
+  46% { transform: translateY(0) rotate(-7deg); }
+  56% { transform: translateY(0) rotate(7deg); }
+  66% { transform: translateY(0) rotate(0deg); }
+  84% { opacity: 1; transform: translateY(46%) scale(0.82); }
+  100% { opacity: 0; transform: translateY(64%) scale(0.7); }
+}
+.fnp-hop { animation: fnp-hop 1.5s cubic-bezier(0.3, 0.8, 0.35, 1.1) both; transform-origin: 50% 100%; }
+
+/* --- reduced motion ----------------------------------------------------------------
+   Everything in this module is a transient one-shot flourish: hide the whole
+   layer outright (defensive — the caller's play layer gates it too). */
+@media (prefers-reduced-motion: reduce) {
+  .fnp,
+  .fnp * {
+    animation: none !important;
+  }
+  .fnp {
+    display: none !important;
+  }
+}

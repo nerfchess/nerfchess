@@ -129,25 +129,33 @@ export async function GET(request: Request) {
         "That Google email already belongs to an account. Sign in with its password, then use Google sign-in to link it.",
       );
     }
-    if (caller) {
-      await db
-        .prepare("UPDATE users SET google_sub = ?, email = COALESCE(email, ?), is_guest = 0 WHERE id = ?")
-        .bind(sub, email, caller.id)
-        .run();
-      account = { id: caller.id, username: caller.username, banned_until: null };
-    } else {
-      const username = await pickUsername(db, email);
-      const id = crypto.randomUUID();
-      // No usable password: the account signs in through Google.
-      const unknowable = crypto.randomUUID() + crypto.randomUUID();
-      await db
-        .prepare(
-          `INSERT INTO users (id, username, username_lower, password_hash, email, google_sub, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        )
-        .bind(id, username, username.toLowerCase(), await hashPassword(unknowable), email, sub, Date.now())
-        .run();
-      account = { id, username, banned_until: null };
+    // Both writes can still trip the UNIQUE indexes (google_sub / email /
+    // username_lower) when a concurrent sign-in wins the race between the
+    // lookups above and this write. Fail to the friendly redirect instead of
+    // throwing a raw 500 out of the OAuth callback.
+    try {
+      if (caller) {
+        await db
+          .prepare("UPDATE users SET google_sub = ?, email = COALESCE(email, ?), is_guest = 0 WHERE id = ?")
+          .bind(sub, email, caller.id)
+          .run();
+        account = { id: caller.id, username: caller.username, banned_until: null };
+      } else {
+        const username = await pickUsername(db, email);
+        const id = crypto.randomUUID();
+        // No usable password: the account signs in through Google.
+        const unknowable = crypto.randomUUID() + crypto.randomUUID();
+        await db
+          .prepare(
+            `INSERT INTO users (id, username, username_lower, password_hash, email, google_sub, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          )
+          .bind(id, username, username.toLowerCase(), await hashPassword(unknowable), email, sub, Date.now())
+          .run();
+        account = { id, username, banned_until: null };
+      }
+    } catch {
+      return failRedirect(url.origin, "Google sign-in hit a conflict. Please try again.");
     }
   }
 
