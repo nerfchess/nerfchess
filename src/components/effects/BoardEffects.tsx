@@ -9638,8 +9638,14 @@ function WheelSpinPlay({
       </svg>
     </span>
   );
+  // The whole wheel fades away after it lands: the spin keyframes only
+  // rotate, so without this wrapper the disc sat on the board at full
+  // opacity until the next card played ("the reroll wheel gets stuck").
   const wheel = (extraClass: string) => (
-    <span className={"absolute block " + extraClass}>
+    <span
+      className={"fx-sig-wheelfade absolute block " + extraClass}
+      style={{ animationDelay: `${delayMs}ms` }}
+    >
       <span className="fx-sig-wheelspin absolute inset-0 block" style={{ animationDelay: `${delayMs}ms` }}>{disc}</span>
       {pointer}
       <span

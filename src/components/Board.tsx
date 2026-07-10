@@ -2844,24 +2844,42 @@ export function Board({
                   !fxHiddenPref &&
                   (() => {
                     const sigCfg = boardFx.sig ? resolveSignature(boardFx.sig) : undefined;
-                    if (!sigCfg) return <DetonationBurst key={`fx-${boardFx.key}`} />;
+                    // Every branch mounts inside the fx-one-shot guard: art
+                    // that fails to fade itself out (see effects.css) is
+                    // taken off the board by the wrapper instead of sitting
+                    // there until the next play.
+                    if (!sigCfg)
+                      return (
+                        <span
+                          key={`fx-${boardFx.key}`}
+                          className="fx-one-shot pointer-events-none absolute inset-0 block"
+                        >
+                          <DetonationBurst />
+                        </span>
+                      );
                     const delay = (boardFx.sigOrder ?? 0) * sigCfg.staggerMs;
                     // Generated configs carry their own renderer; bespoke ones
                     // go through the classic SignatureOverlay switch.
-                    return isGenConfig(sigCfg) ? (
-                      <GenBurst
+                    return (
+                      <span
                         key={`fx-${boardFx.key}`}
-                        config={sigCfg}
-                        role={fxCalmClock ? "target" : boardFx.sigRole ?? "target"}
-                        delayMs={delay}
-                      />
-                    ) : (
-                      <SignatureOverlay
-                        key={`fx-${boardFx.key}`}
-                        visual={sigCfg.visual}
-                        role={fxCalmClock ? "target" : boardFx.sigRole ?? "target"}
-                        delayMs={delay}
-                      />
+                        className="fx-one-shot pointer-events-none absolute inset-0 block"
+                        style={{ animationDelay: `${delay}ms` }}
+                      >
+                        {isGenConfig(sigCfg) ? (
+                          <GenBurst
+                            config={sigCfg}
+                            role={fxCalmClock ? "target" : boardFx.sigRole ?? "target"}
+                            delayMs={delay}
+                          />
+                        ) : (
+                          <SignatureOverlay
+                            visual={sigCfg.visual}
+                            role={fxCalmClock ? "target" : boardFx.sigRole ?? "target"}
+                            delayMs={delay}
+                          />
+                        )}
+                      </span>
                     );
                   })()}
                 {!fxHiddenPref && zoneSig && sigOf(zoneSig.sig) && (
@@ -3053,7 +3071,7 @@ export function Board({
                 <div
                   key={`genlead-${cast.key}`}
                   aria-hidden
-                  className="pointer-events-none absolute inset-0 z-30"
+                  className="fx-one-shot pointer-events-none absolute inset-0 z-30"
                 >
                   <GenBurst config={cfg} role="lead" delayMs={0} />
                 </div>
@@ -3070,7 +3088,7 @@ export function Board({
               <div
                 key={`siglead-${cast.key}`}
                 aria-hidden
-                className="pointer-events-none absolute inset-0 z-30"
+                className="fx-one-shot pointer-events-none absolute inset-0 z-30"
               >
                 <SignatureOverlay visual={cfg.visual} role="lead" delayMs={0} />
               </div>
