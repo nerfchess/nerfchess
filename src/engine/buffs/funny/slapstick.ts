@@ -162,7 +162,7 @@ export const FUNNY_SLAPSTICK: Buff[] = [
       category: "item",
       flavor: "It hops on one foot now.",
     },
-    freezeTargetTyped(4, undefined, "Choose an enemy piece to trap", "chains"),
+    freezeTargetTyped(4, undefined, "Choose an enemy piece to trap", "beartrap"),
   ),
   card(
     {

@@ -2365,6 +2365,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                                 strikeSquares: zone.strike,
                                 walnutSquares: zone.walnut,
                                 bananaSquares: zone.banana,
+                                trapSquares: zone.traps,
                                 // Previously missing online: king-only /
                                 // no-pawn-advance shackles now paint here too.
                                 lockedSquares: zone.locked,

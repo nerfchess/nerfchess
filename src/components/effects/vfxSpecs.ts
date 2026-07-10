@@ -4,7 +4,8 @@
  * Every bespoke SIGNATURES card of tier >= 4 gets a hand-tuned CardVfx here,
  * spatially anchored to where the effect actually applies (mover / lead /
  * caster / sky / center). Generated (non-bespoke) tier-4+ cards fall back to
- * a fiction-matched per-family default in GEN_FAMILY_VFX.
+ * a fiction-matched per-family default in GEN_FAMILY_VFX. Tiers 1-3 get a
+ * basic-but-present floor (small impact only) in resolveCardVfx below.
  *
  * The travel/impact/aftermath vocabulary is the canvas engine's contract,
  * imported type-only from ./vfx/types. CardVfx is the per-card spec shape the
@@ -12,6 +13,11 @@
  */
 
 import type { VfxTravel, VfxImpact, VfxAftermath } from "./vfx/types";
+// Category lookup for the tier 1-3 floor (bespoke low-tier cards carry no gen
+// family). The buff library is a pure engine module — no import back into any
+// component — so this static import cannot form a cycle; the BoardEffects
+// self-check below still uses a dynamic import because THAT edge would cycle.
+import { BUFF_BY_ID } from "@/engine/buffs/library";
 
 export type { VfxTravel, VfxImpact, VfxAftermath };
 
@@ -54,8 +60,10 @@ export const CARD_VFX: Record<string, CardVfx> = {
   ice_age: { travel: "wave", impact: "shatter", aftermath: "frost", palette: ["#9fd8ff", "#e8f8ff", "#3f7fb5"], source: "center", shake: true },
   // Heavy reinforcements slam down into your half.
   iron_legion: { travel: "rain", impact: "smoke", aftermath: "sparkle", palette: ["#aab6c8", "#e3e9f2", "#ffd76a"], source: "sky", shake: true },
-  // One piece quietly ascends to godhood on its own square.
-  living_god: { travel: "none", impact: "sparkle", aftermath: "sparkle", palette: ["#ffd76a", "#ffffff", "#8f6bff"], source: "lead" },
+  // A god descends: a golden shaft splits the sky and slams into the chosen
+  // piece's square, divine light everywhere (owner: "effects should be way
+  // cooler" — this is the apex empowerment, it thumps).
+  living_god: { travel: "bolt", impact: "burst", aftermath: "sparkle", palette: ["#ffd76a", "#fff7de", "#ffffff"], source: "sky", shake: true },
   // A stone-grey wave rolls over the enemy court and hardens it.
   mass_petrify: { travel: "wave", impact: "debris", aftermath: "smolder", palette: ["#8d8d94", "#c9c9cf", "#4c4c53"], source: "center", shake: true },
   // Your queen streaks across the board to the enemy king; frost locks the court behind her.
@@ -134,8 +142,8 @@ export const CARD_VFX: Record<string, CardVfx> = {
   grand_resurrection: { travel: "none", impact: "sparkle", aftermath: "sparkle", palette: ["#fff2c9", "#7fd8a8", "#ffffff"], source: "lead" },
   // A grey hex rolls off your king and hardens the enemy flanks to stone.
   hex_of_stone: { travel: "wave", impact: "debris", aftermath: "smolder", palette: ["#8d8d94", "#7fae5a", "#3a3a40"], source: "caster", shake: true },
-  // Slot machine at your king: bells, lights, no board contact.
-  jackpot: { travel: "none", impact: "sparkle", aftermath: "none", palette: ["#ffd76a", "#e6432c", "#ffffff"], source: "caster" },
+  // The golden payout wheel spins down at your king and pays out in coins.
+  jackpot: { travel: "none", impact: "sparkle", aftermath: "sparkle", palette: ["#ffd76a", "#f4c430", "#ffffff"], source: "caster" },
   // A warband musters into your pocket beside your king.
   kings_legion: { travel: "none", impact: "sparkle", aftermath: "none", palette: ["#c94a3a", "#ffd76a", "#8a94a8"], source: "caster" },
   // A meteor slams the crossing square; rank and file go up with it.
@@ -439,8 +447,8 @@ export const CARD_VFX: Record<string, CardVfx> = {
   fault_line: { travel: "wave", impact: "debris", aftermath: "none", palette: ["#8a7a63", "#3a3026", "#c9b89a"], source: "lead" },
   // A lattice of cracks spiders across the enemy front.
   fissure_field: { travel: "wave", impact: "debris", aftermath: "smolder", palette: ["#8a7a63", "#5c5348", "#b0a68f"], source: "center" },
-  // A lucky coin spins over the draft table.
-  gamble: { travel: "arc", impact: "sparkle", aftermath: "none", palette: ["#ffd76a", "#1c7a4a", "#fff7de"], source: "caster" },
+  // The chancer's red-and-gold wheel spins down over the draft table.
+  gamble: { travel: "none", impact: "sparkle", aftermath: "none", palette: ["#c65a4a", "#ffd76a", "#fff7de"], source: "caster" },
   // A glass dome settles over the greenhouse file.
   greenhouse: { travel: "none", impact: "sparkle", aftermath: "sparkle", palette: ["#a8e07f", "#dff7ff", "#3f8f3f"], source: "lead" },
   // The cursed spud sizzles in someone's hands.
@@ -486,8 +494,12 @@ export const CARD_VFX: Record<string, CardVfx> = {
   trapdoor: { travel: "none", impact: "sparkle", aftermath: "none", palette: ["#8a6a3a", "#c9a84c", "#e8dcc0"], source: "lead" },
   // The queen's head swims: green-purple wooze.
   vertigo: { travel: "arc", impact: "smoke", aftermath: "none", palette: ["#8f6bff", "#8faf4a", "#e3d0ff"], source: "caster" },
+  // The midnight star-chart wheel turns and settles on a house.
+  zodiac_wheel: { travel: "none", impact: "sparkle", aftermath: "sparkle", palette: ["#2c3e6b", "#cdd6ff", "#c9a84c"], source: "caster" },
   // Stolen seconds siphon home while frost takes one piece.
   wa_chrono_siphon: { travel: "arc", impact: "sparkle", aftermath: "frost", palette: ["#ffd76a", "#6fe3ff", "#bfe6ff"], source: "caster" },
+  // The gambler-mage's dice wheel rattles to a stop at your king.
+  wa_high_roll: { travel: "none", impact: "sparkle", aftermath: "none", palette: ["#5a3fa0", "#f4f7f2", "#a877d8"], source: "caster" },
   // One piece steps through violet light to anywhere.
   wa_far_step: { travel: "arc", impact: "sparkle", aftermath: "sparkle", palette: ["#8f6bff", "#6fe3ff", "#e3d0ff"], source: "mover" },
   // Glowing glyphs seal the file end to end.
@@ -628,16 +640,64 @@ const DEFAULT_VFX: CardVfx = {
 /** Impacts weighty enough to earn a board shake at tier >= 7. */
 const HEAVY_IMPACTS: ReadonlySet<VfxImpact> = new Set(["burst", "shatter", "debris", "shock"]);
 
+// --- Tier 1-3 floor (owner: "tiers 1-4: more basic ones but still unique for
+// the name and effect") ---------------------------------------------------------
+// Low tiers get a BASIC but present canvas effect: no travel, one small
+// impact, no aftermath, never a shake. The palette (and which small impact)
+// derives from the card's gen family when it has one, else from its category,
+// so a frost card still pops icy-blue and a hex card still puffs sickly green.
+// The engine's particle scaling already clamps sanely at tier 1
+// (impactCount clamps to a floor of 8 particles), so no extra clamping is
+// needed here — only the vocabulary is restricted.
+
+/** The only impacts a tier 1-3 play may use — the small, cheap ones. */
+const SOFT_IMPACT: Record<VfxImpact, "sparkle" | "smoke" | "burst"> = {
+  sparkle: "sparkle",
+  smoke: "smoke",
+  burst: "burst",
+  shock: "burst", // a shock ring reads as a small pop down here
+  shatter: "sparkle", // icy glints instead of flying shards
+  debris: "smoke", // a puff of dust instead of rubble
+  embers: "sparkle", // warm glints instead of an ember storm
+};
+
+/** Per-category small-impact defaults for low-tier cards with no gen family
+ * (bespoke SIGNATURES cards below tier 4, and safety for unknown ids). */
+const CATEGORY_LOW_VFX: Record<string, { impact: "sparkle" | "smoke" | "burst"; palette: string[] }> = {
+  movement: { impact: "sparkle", palette: ["#6fe3ff", "#dff7ff", "#ffffff"] },
+  pieces: { impact: "sparkle", palette: ["#ffd76a", "#fff7de", "#c9a84c"] },
+  tempo: { impact: "sparkle", palette: ["#ffcf4d", "#6fe3ff", "#ffffff"] },
+  protection: { impact: "sparkle", palette: ["#5fc9b0", "#e8fff7", "#ffd76a"] },
+  attack: { impact: "burst", palette: ["#e6432c", "#ff9d3d", "#ffd166"] },
+  info: { impact: "sparkle", palette: ["#4fa3d1", "#dfe8ff", "#ffffff"] },
+  draft: { impact: "sparkle", palette: ["#b98cff", "#ffd76a", "#ffffff"] },
+  nerf: { impact: "burst", palette: ["#ff9d3d", "#ff4fa3", "#ffffff"] },
+  hex: { impact: "smoke", palette: ["#8faf4a", "#6b4a8f", "#c9b0e8"] },
+  item: { impact: "sparkle", palette: ["#e8963a", "#ffd23f", "#fff7de"] },
+};
+
 /**
  * Resolve the VFX spec for a card play.
- * - tier < 4: no cinematic VFX (returns null).
+ * - tier 1-3: a BASIC but present effect — travel "none", one small impact
+ *   (sparkle/smoke/burst) in a palette derived from the card's gen family or
+ *   category, aftermath "none", never a shake.
  * - Bespoke tier-4+ cards: their hand-tuned CARD_VFX entry.
  * - Generated tier-4+ cards: their family default (pass the GenFamily string),
  *   with shake promoted at tier >= 7 for heavy impacts.
- * - Anything else: a safe neutral default — never null at tier >= 4.
+ * - Anything else: a safe neutral default — never null at tier >= 1.
  */
 export function resolveCardVfx(id: string, tier: number, genFamily?: string): CardVfx | null {
-  if (tier < 4) return null;
+  if (tier < 4) {
+    const fam = genFamily !== undefined ? GEN_FAMILY_VFX[genFamily] : undefined;
+    const cat = CATEGORY_LOW_VFX[BUFF_BY_ID[id]?.category ?? ""];
+    return {
+      travel: "none",
+      impact: fam ? SOFT_IMPACT[fam.impact] : (cat?.impact ?? "sparkle"),
+      aftermath: "none",
+      palette: fam?.palette ?? cat?.palette ?? DEFAULT_VFX.palette,
+      source: "lead",
+    };
+  }
   const bespoke = CARD_VFX[id];
   if (bespoke) return bespoke;
   const base = (genFamily !== undefined && GEN_FAMILY_VFX[genFamily]) || DEFAULT_VFX;

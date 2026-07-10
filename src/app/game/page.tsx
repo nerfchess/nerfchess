@@ -1749,6 +1749,7 @@ function GamePage() {
                           strikeSquares: zone.strike,
                           walnutSquares: zone.walnut,
                           bananaSquares: zone.banana,
+                          trapSquares: zone.traps,
                           lockedSquares: zone.locked,
                           barredSquares: zone.barred,
                           kingSafeSquares: fxZone.kingSafeSquares,
