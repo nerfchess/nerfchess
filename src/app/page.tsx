@@ -8,7 +8,7 @@ import { ALL_NERFS } from "@/engine/nerfs/library";
 import { ALL_BUFFS } from "@/engine/buffs/library";
 import { useLobbySnapshot } from "@/lib/lobbyClient";
 import { AccountUser, fetchMe } from "@/lib/authClient";
-import { ActiveGame, loadActiveGame } from "@/lib/multiplayer";
+import { ActiveGame, loadActiveGame, clearActiveGame } from "@/lib/multiplayer";
 
 export default function HomePage() {
   return (
@@ -244,18 +244,57 @@ function LiveNowStrip() {
 // cleared when it ends.
 function ReturnToGameBanner() {
   const [active, setActive] = useState<ActiveGame | null>(null);
-  useEffect(() => setActive(loadActiveGame()), []);
+  useEffect(() => {
+    const stored = loadActiveGame();
+    if (!stored) return;
+    let cancelled = false;
+    // The local record is only cleared when the game ends while this tab is
+    // open. If the tab was closed mid-game, or the game ended on the opponent's
+    // resignation/timeout while we were away, the record lingers (up to its
+    // TTL) and wrongly claims a game is still in progress. Verify against the
+    // archive before offering a rejoin: a finished game is written to Postgres
+    // with a result, so a row carrying a winner or completed_at means it is
+    // over -> drop the stale record and stay hidden. A 404 means it is not
+    // archived yet (still live), so we fail open and offer the rejoin.
+    fetch(`/api/games/${encodeURIComponent(stored.id)}`)
+      .then((res) =>
+        res.ok
+          ? (res.json() as Promise<{ game?: { winner: unknown; completed_at: unknown } } | null>)
+          : null,
+      )
+      .then((data) => {
+        if (cancelled) return;
+        const g = data?.game;
+        const finished = !!g && (g.completed_at != null || g.winner != null);
+        if (finished) {
+          clearActiveGame(stored.id);
+          return;
+        }
+        setActive(stored);
+      })
+      .catch(() => {
+        if (!cancelled) setActive(stored);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   if (!active) return null;
   return (
     <Link
       href={`/game/${active.id}`}
-      className="plate mt-4 flex items-center justify-between gap-3 border border-gold/40 bg-gold/10 p-3 px-4 no-underline transition-colors hover:border-gold/70"
+      className="plate group mt-4 flex items-center justify-between gap-3 border border-gold/40 bg-gold/10 p-3 px-4 no-underline transition-colors hover:border-gold/70"
     >
       <span className="flex items-center gap-2 text-sm text-parchment-100">
         <span className="w-2 h-2 bg-gold-leaf animate-flicker" />
         You have a game in progress.
       </span>
-      <span className="smallcaps text-[10px] text-gold-leaf">Rejoin →</span>
+      <span className="flex shrink-0 items-center gap-1.5 font-display text-xs font-semibold tracking-wide text-gold-leaf">
+        Rejoin
+        <span aria-hidden className="motion-safe:transition-transform motion-safe:duration-200 group-hover:translate-x-0.5">
+          &rarr;
+        </span>
+      </span>
     </Link>
   );
 }
@@ -416,9 +455,12 @@ function HowItWorks() {
               className={`plate relative flex flex-col overflow-hidden p-5 sm:p-6 ${emphasized ? "gilt" : ""}`}
             >
               {/* One aligned header row per card: number chip, title, icon.
-                  Identical structure and spacing across all three so the
-                  1 / 2 / 3 line reads as a single rule across the grid. */}
-              <div className="flex items-center gap-3">
+                  The row reserves a fixed two-line height and centers its
+                  contents, so a one-line title (card 1) and a two-line title
+                  (card 3) produce headers of identical height. That keeps the
+                  chips, icons, and the body text below all on the same lines
+                  across the grid instead of drifting off-center card to card. */}
+              <div className="flex min-h-[3.25rem] items-center gap-3">
                 <span
                   className={`grid h-9 w-9 shrink-0 place-items-center border font-display text-base font-bold ${
                     emphasized
