@@ -28,7 +28,7 @@ export default function ContactPage() {
             Join the Discord
           </a>
           <a
-            href="https://instagram.com/nerfchess"
+            href="https://www.instagram.com/officialnerfchess"
             target="_blank"
             rel="noopener noreferrer"
             className="px-5 py-2.5 rounded-sm btn-ghost font-display"

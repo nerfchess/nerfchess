@@ -27,6 +27,7 @@ const GameOver = dynamic(() => import("@/components/GameOver").then((m) => m.Gam
 import { MobileActionsMenu } from "@/components/MobileActionsMenu";
 import { MobileBuffDrawer } from "@/components/MobileBuffDrawer";
 import { MobileMoveDrawer } from "@/components/MobileMoveDrawer";
+import { FxToggleButton } from "@/components/FxToggleButton";
 import { MoveList } from "@/components/MoveList";
 import { NerfCard } from "@/components/NerfCard";
 import { Pocket } from "@/components/Pocket";
@@ -2551,6 +2552,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   warnLowTime={uiSettings.lowTimeWarning}
                 />
               )}
+              <div className="flex justify-end pt-1">
+                <FxToggleButton />
+              </div>
             </div>
           </div>
         </div>

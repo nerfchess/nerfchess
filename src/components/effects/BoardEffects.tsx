@@ -1478,21 +1478,28 @@ export interface SignatureConfig {
  * Registering them here is inert until then (fireSignature marks them active,
  * but with no detSquares nothing renders and no signature voice plays), so it
  * is safe to ship the dispatcher layer ahead of the board wiring. */
+// Batch 12 — tier 5+ board-wide guarantee: every SIGNATURES entry whose card is
+// tier >= 5 now sets hasLead, and every visual those entries name renders a
+// board-wide lead branch (the oversized-clipped BoardWideStage pattern), so no
+// high-tier card resolves with only per-square pops.
+// Batch 13 — board-wide lead upgrade: the tier 5+ visuals whose existing leads
+// were square-local flashes/rings (aegis, smite, blitz, coronation, kraken,
+// worldend families and peers) now take over the whole crop via BoardWideLead.
 export const SIGNATURES: Record<string, SignatureConfig> = {
   nova: { ordering: "file", staggerMs: 130, victims: "all", visual: "nova", hasLead: true, sound: "nova" },
-  cataclysm: { ordering: "sweep", staggerMs: 55, victims: ["p"], visual: "trapdoor", hasLead: false, sound: "cataclysm" },
-  extinction: { ordering: "sweep", staggerMs: 65, victims: ["p", "n", "b"], visual: "stone", hasLead: false, sound: "extinction" },
-  lightning_strike: { ordering: "sweep", staggerMs: 165, victims: "all", visual: "strike", hasLead: false, sound: "lightning" },
-  queens_rampage: { ordering: "line", staggerMs: 105, victims: "all", mover: "q", visual: "pin", hasLead: false, sound: "rampage" },
-  queens_wrath: { ordering: "line", staggerMs: 110, victims: "all", mover: "q", visual: "pin", hasLead: false, sound: "rampage" },
+  cataclysm: { ordering: "sweep", staggerMs: 55, victims: ["p"], visual: "trapdoor", hasLead: true, sound: "cataclysm" },
+  extinction: { ordering: "sweep", staggerMs: 65, victims: ["p", "n", "b"], visual: "stone", hasLead: true, sound: "extinction" },
+  lightning_strike: { ordering: "sweep", staggerMs: 165, victims: "all", visual: "strike", hasLead: true, sound: "lightning" },
+  queens_rampage: { ordering: "line", staggerMs: 105, victims: "all", mover: "q", visual: "pin", hasLead: true, sound: "rampage" },
+  queens_wrath: { ordering: "line", staggerMs: 110, victims: "all", mover: "q", visual: "pin", hasLead: true, sound: "rampage" },
   siege_rook: { ordering: "line", staggerMs: 85, victims: "all", mover: "r", visual: "siege", hasLead: true, sound: "siege" },
 
   // --- Batch 2: movement / coronation grants (empower motif zone) ---
   amazon_knight: { ordering: "radial", staggerMs: 0, victims: ["n"], visual: "coronation", hasLead: true, sound: "coronation", source: "empower" },
   god_knight: { ordering: "radial", staggerMs: 0, victims: ["n"], visual: "coronation", hasLead: true, sound: "coronation", source: "empower" },
-  double_amazon: { ordering: "sweep", staggerMs: 110, victims: ["n"], visual: "crownrain", hasLead: false, sound: "crownrain", source: "empower" },
-  triple_amazon: { ordering: "sweep", staggerMs: 100, victims: ["n"], visual: "crownrain", hasLead: false, sound: "crownrain", source: "empower" },
-  amazon_army: { ordering: "sweep", staggerMs: 90, victims: ["n", "b"], visual: "crownrain", hasLead: false, sound: "crownrain", source: "empower" },
+  double_amazon: { ordering: "sweep", staggerMs: 110, victims: ["n"], visual: "crownrain", hasLead: true, sound: "crownrain", source: "empower" },
+  triple_amazon: { ordering: "sweep", staggerMs: 100, victims: ["n"], visual: "crownrain", hasLead: true, sound: "crownrain", source: "empower" },
+  amazon_army: { ordering: "sweep", staggerMs: 90, victims: ["n", "b"], visual: "crownrain", hasLead: true, sound: "crownrain", source: "empower" },
   colossus: { ordering: "radial", staggerMs: 0, victims: ["p", "n", "b", "r", "q"], visual: "colossus", hasLead: true, sound: "colossus", source: "empower" },
   titan: { ordering: "radial", staggerMs: 0, victims: ["p", "n", "b", "r", "q"], visual: "colossus", hasLead: true, sound: "colossus", source: "empower" },
 
@@ -1504,7 +1511,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
 
   // --- Batch 2: freeze spectacles (frozen zone) --- now each its own read:
   // a quick spike-frost snap, a slab of deep glacier, an eternal ice shatter.
-  mass_freeze: { ordering: "radial", staggerMs: 45, victims: ["p", "n", "b", "r", "q"], visual: "snapfrost", hasLead: false, sound: "massfreeze", source: "frozen" },
+  mass_freeze: { ordering: "radial", staggerMs: 45, victims: ["p", "n", "b", "r", "q"], visual: "snapfrost", hasLead: true, sound: "massfreeze", source: "frozen" },
   deep_freeze: { ordering: "radial", staggerMs: 55, victims: ["p", "n", "b", "r", "q"], visual: "deepglacier", hasLead: true, sound: "massfreeze", source: "frozen" },
   eternal_freeze: { ordering: "radial", staggerMs: 65, victims: ["p", "n", "b", "r", "q"], visual: "iceshatter", hasLead: true, sound: "massfreeze", source: "frozen" },
 
@@ -1512,14 +1519,14 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   // wash, so the two Medusa cards no longer read the same.
   medusas_stare: { ordering: "radial", staggerMs: 0, victims: ["q"], visual: "gorgonstare", hasLead: true, sound: "petrify", source: "walnut" },
   medusa_stare: { ordering: "radial", staggerMs: 40, victims: "all", visual: "medusagaze", hasLead: true, sound: "petrify", source: "walnut" },
-  petrified_forest: { ordering: "sweep", staggerMs: 70, victims: ["n", "b"], visual: "petrifiedforest", hasLead: false, sound: "petrifiedforest", source: "walnut" },
+  petrified_forest: { ordering: "sweep", staggerMs: 70, victims: ["n", "b"], visual: "petrifiedforest", hasLead: true, sound: "petrifiedforest", source: "walnut" },
 
   // --- Batch 2: protection ---
   aegis: { ordering: "radial", staggerMs: 35, victims: "all", visual: "aegis", hasLead: true, sound: "aegis", source: "shield" },
   immortal_king: { ordering: "radial", staggerMs: 0, victims: ["k"], visual: "shades", hasLead: true, sound: "shades", source: "kingSafe" },
   divine_fortress: { ordering: "radial", staggerMs: 40, victims: "all", visual: "cathedral", hasLead: true, sound: "cathedral", source: "shield" },
-  rampart: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "wallbuild", hasLead: false, sound: "wall", source: "summon" },
-  great_wall: { ordering: "sweep", staggerMs: 70, victims: "all", visual: "greatwall", hasLead: false, sound: "wall", source: "blindfold" },
+  rampart: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "wallbuild", hasLead: true, sound: "wall", source: "summon" },
+  great_wall: { ordering: "sweep", staggerMs: 70, victims: "all", visual: "greatwall", hasLead: true, sound: "wall", source: "blindfold" },
 
   // --- Batch 3: FANTASY set (src/engine/buffs/fantasy/*). Each entry reuses an
   // existing SigSoundKey and an already-wired source zone; the visual is a new
@@ -1528,8 +1535,8 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   // Beasts / attack line sweeps + smites (removal diff, the default source).
   dragons_breath: { ordering: "line", staggerMs: 80, victims: "all", mover: "r", visual: "dragonfire", hasLead: true, sound: "atomic" },
   wyverns_dive: { ordering: "line", staggerMs: 90, victims: "all", mover: "n", visual: "dive", hasLead: false, sound: "rampage" },
-  soul_harvest: { ordering: "line", staggerMs: 95, victims: "all", mover: "q", visual: "scythe", hasLead: false, sound: "rampage" },
-  chain_lightning: { ordering: "line", staggerMs: 110, victims: "all", mover: "b", visual: "arclight", hasLead: false, sound: "lightning" },
+  soul_harvest: { ordering: "line", staggerMs: 95, victims: "all", mover: "q", visual: "scythe", hasLead: true, sound: "rampage" },
+  chain_lightning: { ordering: "line", staggerMs: 110, victims: "all", mover: "b", visual: "arclight", hasLead: true, sound: "lightning" },
   judgment_day: { ordering: "radial", staggerMs: 0, victims: ["n", "b", "r", "q"], visual: "smite", hasLead: true, sound: "lightning" },
   heavens_wrath: { ordering: "sweep", staggerMs: 150, victims: ["n", "b", "r", "q"], visual: "smite", hasLead: true, sound: "lightning" },
 
@@ -1541,8 +1548,8 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   basilisk_stare: { ordering: "radial", staggerMs: 0, victims: "all", visual: "gorgonstare", hasLead: true, sound: "petrify", source: "walnut" },
   serpent_brood: { ordering: "sweep", staggerMs: 60, victims: ["b"], visual: "serpentstone", hasLead: false, sound: "petrify", source: "walnut" },
   withering_touch: { ordering: "radial", staggerMs: 0, victims: "all", visual: "wither", hasLead: true, sound: "petrify", source: "walnut" },
-  chains_of_binding: { ordering: "sweep", staggerMs: 70, victims: ["r"], visual: "stonechain", hasLead: false, sound: "petrify", source: "walnut" },
-  hex_of_stone: { ordering: "sweep", staggerMs: 55, victims: ["n", "b"], visual: "greyhex", hasLead: false, sound: "petrify", source: "walnut" },
+  chains_of_binding: { ordering: "sweep", staggerMs: 70, victims: ["r"], visual: "stonechain", hasLead: true, sound: "petrify", source: "walnut" },
+  hex_of_stone: { ordering: "sweep", staggerMs: 55, victims: ["n", "b"], visual: "greyhex", hasLead: true, sound: "petrify", source: "walnut" },
 
   // Divine / protection (shield + kingSafe zones).
   aegis_of_ages: { ordering: "radial", staggerMs: 35, victims: "all", visual: "aegis", hasLead: true, sound: "aegis", source: "shield" },
@@ -1554,27 +1561,27 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   // Regalia / movement grants (empower zone).
   excalibur: { ordering: "radial", staggerMs: 0, victims: ["b"], visual: "bladegift", hasLead: true, sound: "coronation", source: "empower" },
   dragon_form: { ordering: "radial", staggerMs: 0, victims: ["r"], visual: "wings", hasLead: true, sound: "colossus", source: "empower" },
-  celestial_ascension: { ordering: "sweep", staggerMs: 80, victims: ["b"], visual: "wings", hasLead: false, sound: "colossus", source: "empower" },
+  celestial_ascension: { ordering: "sweep", staggerMs: 80, victims: ["b"], visual: "wings", hasLead: true, sound: "colossus", source: "empower" },
   god_king: { ordering: "radial", staggerMs: 0, victims: ["k"], visual: "coronation", hasLead: true, sound: "coronation", source: "empower" },
   banner_of_war: { ordering: "radial", staggerMs: 60, victims: ["n"], visual: "bannerwar", hasLead: true, sound: "blitz", source: "empower" },
 
   // Barred walls (blindfold zone).
-  frost_wall: { ordering: "sweep", staggerMs: 60, victims: "all", visual: "icewall", hasLead: false, sound: "wall", source: "blindfold" },
-  wall_of_thorns: { ordering: "sweep", staggerMs: 60, victims: "all", visual: "thornwall", hasLead: false, sound: "wall", source: "blindfold" },
+  frost_wall: { ordering: "sweep", staggerMs: 60, victims: "all", visual: "icewall", hasLead: true, sound: "wall", source: "blindfold" },
+  wall_of_thorns: { ordering: "sweep", staggerMs: 60, victims: "all", visual: "thornwall", hasLead: true, sound: "wall", source: "blindfold" },
 
   // Summons / reinforcements / graves (summon zone).
   summon_dragon: { ordering: "radial", staggerMs: 0, victims: "all", visual: "dragonrise", hasLead: true, sound: "wall", source: "summon" },
   starfall: { ordering: "radial", staggerMs: 0, victims: "all", visual: "meteor", hasLead: true, sound: "wall", source: "summon" },
-  army_of_the_dead: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "gravehands", hasLead: false, sound: "wall", source: "summon" },
+  army_of_the_dead: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "gravehands", hasLead: true, sound: "wall", source: "summon" },
   raise_dead: { ordering: "sweep", staggerMs: 90, victims: "all", visual: "gravehands", hasLead: false, sound: "wall", source: "summon" },
   undying_thrall: { ordering: "radial", staggerMs: 0, victims: "all", visual: "gravehands", hasLead: false, sound: "wall", source: "summon" },
   hallowed_return: { ordering: "radial", staggerMs: 0, victims: "all", visual: "holylight", hasLead: true, sound: "wall", source: "summon" },
   imp_familiar: { ordering: "radial", staggerMs: 0, victims: "all", visual: "summonrift", hasLead: false, sound: "wall", source: "summon" },
-  summoning_circle: { ordering: "sweep", staggerMs: 90, victims: "all", visual: "summonrift", hasLead: false, sound: "wall", source: "summon" },
-  horn_of_summoning: { ordering: "sweep", staggerMs: 100, victims: "all", visual: "summonrift", hasLead: false, sound: "wall", source: "summon" },
-  roost_of_rocs: { ordering: "sweep", staggerMs: 100, victims: "all", visual: "summonrift", hasLead: false, sound: "wall", source: "summon" },
+  summoning_circle: { ordering: "sweep", staggerMs: 90, victims: "all", visual: "summonrift", hasLead: true, sound: "wall", source: "summon" },
+  horn_of_summoning: { ordering: "sweep", staggerMs: 100, victims: "all", visual: "summonrift", hasLead: true, sound: "wall", source: "summon" },
+  roost_of_rocs: { ordering: "sweep", staggerMs: 100, victims: "all", visual: "summonrift", hasLead: true, sound: "wall", source: "summon" },
   phantom_guardian: { ordering: "radial", staggerMs: 0, victims: "all", visual: "summonrift", hasLead: false, sound: "wall", source: "summon" },
-  stone_golem: { ordering: "radial", staggerMs: 0, victims: "all", visual: "summonrift", hasLead: false, sound: "wall", source: "summon" },
+  stone_golem: { ordering: "radial", staggerMs: 0, victims: "all", visual: "summonrift", hasLead: true, sound: "wall", source: "summon" },
   direwolf_pack: { ordering: "radial", staggerMs: 0, victims: "all", visual: "summonrift", hasLead: false, sound: "wall", source: "summon" },
 
   // --- Batch 4: WILD set (wild/elemental|warfare|arcane|chaos) + Computer
@@ -1586,55 +1593,55 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   // flourish (they carry no detonation and already read as a coronation). ---
 
   // FIRE (wild/elemental): big removals and a queen's hellfire beam.
-  we_immolation: { ordering: "radial", staggerMs: 0, victims: ["r", "q"], visual: "inferno", hasLead: false, sound: "atomic" },
-  we_conflagration: { ordering: "sweep", staggerMs: 120, victims: ["p", "n", "b"], visual: "inferno", hasLead: false, sound: "cataclysm" },
+  we_immolation: { ordering: "radial", staggerMs: 0, victims: ["r", "q"], visual: "inferno", hasLead: true, sound: "atomic" },
+  we_conflagration: { ordering: "sweep", staggerMs: 120, victims: ["p", "n", "b"], visual: "inferno", hasLead: true, sound: "cataclysm" },
   we_flame_lance: { ordering: "line", staggerMs: 95, victims: "all", mover: "r", visual: "dragonfire", hasLead: true, sound: "atomic" },
   we_hellfire_beam: { ordering: "line", staggerMs: 70, victims: "all", mover: "q", visual: "hellfire", hasLead: true, sound: "cataclysm" },
 
   // ICE (wild/elemental): mass freezes, an ice wall, a whiteout blizzard.
   we_hailstorm: { ordering: "sweep", staggerMs: 55, victims: ["p"], visual: "hailstorm", hasLead: false, sound: "massfreeze", source: "frozen" },
   we_flash_freeze: { ordering: "radial", staggerMs: 40, victims: "all", visual: "iceshatter", hasLead: true, sound: "massfreeze", source: "frozen" },
-  we_glacier_wall: { ordering: "sweep", staggerMs: 50, victims: "all", visual: "icewall", hasLead: false, sound: "wall", source: "blindfold" },
+  we_glacier_wall: { ordering: "sweep", staggerMs: 50, victims: "all", visual: "icewall", hasLead: true, sound: "wall", source: "blindfold" },
   we_whiteout: { ordering: "radial", staggerMs: 0, victims: "all", visual: "blizzard", hasLead: true, sound: "clockice", source: "stun" },
 
   // EARTH (wild/elemental): petrify, summon, rock walls, a landslide.
-  we_petrify_ranks: { ordering: "sweep", staggerMs: 60, victims: ["n", "b"], visual: "greyhex", hasLead: false, sound: "petrify", source: "walnut" },
+  we_petrify_ranks: { ordering: "sweep", staggerMs: 60, victims: ["n", "b"], visual: "greyhex", hasLead: true, sound: "petrify", source: "walnut" },
   we_stone_soldiers: { ordering: "sweep", staggerMs: 90, victims: "all", visual: "stonerise", hasLead: false, sound: "wall", source: "summon" },
-  we_mountain_range: { ordering: "sweep", staggerMs: 65, victims: "all", visual: "mountainwall", hasLead: false, sound: "wall", source: "blindfold" },
-  we_landslide: { ordering: "sweep", staggerMs: 100, victims: ["r", "q"], visual: "rockfall", hasLead: false, sound: "cataclysm" },
-  we_thorn_barrier: { ordering: "sweep", staggerMs: 55, victims: "all", visual: "thornwall", hasLead: false, sound: "wall", source: "blindfold" },
+  we_mountain_range: { ordering: "sweep", staggerMs: 65, victims: "all", visual: "mountainwall", hasLead: true, sound: "wall", source: "blindfold" },
+  we_landslide: { ordering: "sweep", staggerMs: 100, victims: ["r", "q"], visual: "rockfall", hasLead: true, sound: "cataclysm" },
+  we_thorn_barrier: { ordering: "sweep", staggerMs: 55, victims: "all", visual: "thornwall", hasLead: true, sound: "wall", source: "blindfold" },
 
   // STORM (wild/elemental): targeted bolts and a summoned thunderhead.
   we_lightning_bolt: { ordering: "line", staggerMs: 0, victims: "all", mover: "q", visual: "strike", hasLead: false, sound: "lightning" },
-  we_arc_lightning: { ordering: "line", staggerMs: 100, victims: "all", mover: "r", visual: "arclight", hasLead: false, sound: "lightning" },
+  we_arc_lightning: { ordering: "line", staggerMs: 100, victims: "all", mover: "r", visual: "arclight", hasLead: true, sound: "lightning" },
   we_thunderhead: { ordering: "radial", staggerMs: 0, victims: "all", visual: "stormcloud", hasLead: false, sound: "wall", source: "summon" },
 
   // WARFARE (wild/warfare): charges, bombardment, reinforcement, siege lines.
   ww_bayonet_charge: { ordering: "line", staggerMs: 85, victims: "all", mover: "b", visual: "spearcharge", hasLead: false, sound: "rampage" },
   ww_spearhead: { ordering: "line", staggerMs: 90, victims: "all", mover: "r", visual: "spearcharge", hasLead: true, sound: "siege" },
-  ww_armored_breakthrough: { ordering: "line", staggerMs: 80, victims: "all", mover: "q", visual: "tankroll", hasLead: false, sound: "rampage" },
+  ww_armored_breakthrough: { ordering: "line", staggerMs: 80, victims: "all", mover: "q", visual: "tankroll", hasLead: true, sound: "rampage" },
   ww_bombardment: { ordering: "sweep", staggerMs: 110, victims: ["p"], visual: "artillery", hasLead: false, sound: "siege" },
-  ww_counter_battery: { ordering: "radial", staggerMs: 0, victims: ["r", "b"], visual: "artillery", hasLead: false, sound: "siege" },
-  ww_combined_arms: { ordering: "sweep", staggerMs: 90, victims: "all", visual: "reinforce", hasLead: false, sound: "wall", source: "summon" },
-  ww_muster_the_ranks: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "reinforce", hasLead: false, sound: "wall", source: "summon" },
-  ww_forward_outpost: { ordering: "radial", staggerMs: 0, victims: "all", visual: "reinforce", hasLead: false, sound: "wall", source: "summon" },
-  ww_paratroopers: { ordering: "sweep", staggerMs: 100, victims: "all", visual: "paradrop", hasLead: false, sound: "wall", source: "summon" },
+  ww_counter_battery: { ordering: "radial", staggerMs: 0, victims: ["r", "b"], visual: "artillery", hasLead: true, sound: "siege" },
+  ww_combined_arms: { ordering: "sweep", staggerMs: 90, victims: "all", visual: "reinforce", hasLead: true, sound: "wall", source: "summon" },
+  ww_muster_the_ranks: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "reinforce", hasLead: true, sound: "wall", source: "summon" },
+  ww_forward_outpost: { ordering: "radial", staggerMs: 0, victims: "all", visual: "reinforce", hasLead: true, sound: "wall", source: "summon" },
+  ww_paratroopers: { ordering: "sweep", staggerMs: 100, victims: "all", visual: "paradrop", hasLead: true, sound: "wall", source: "summon" },
   ww_suppressive_fire: { ordering: "radial", staggerMs: 45, victims: ["n"], visual: "suppress", hasLead: false, sound: "massfreeze", source: "frozen" },
-  ww_double_trench: { ordering: "sweep", staggerMs: 60, victims: "all", visual: "trench", hasLead: false, sound: "wall", source: "blindfold" },
+  ww_double_trench: { ordering: "sweep", staggerMs: 60, victims: "all", visual: "trench", hasLead: true, sound: "wall", source: "blindfold" },
   ww_dug_in_defense: { ordering: "radial", staggerMs: 30, victims: "all", visual: "aegis", hasLead: true, sound: "aegis", source: "shield" },
 
   // ARCANE (wild/arcane): time stop, mass freeze/petrify, disintegration, conjure.
   wa_time_stop: { ordering: "radial", staggerMs: 0, victims: "all", visual: "timestop", hasLead: true, sound: "clockcage", source: "walnut" },
   wa_frozen_moment: { ordering: "radial", staggerMs: 50, victims: ["r", "q"], visual: "chainfreeze", hasLead: true, sound: "massfreeze", source: "frozen" },
   wa_stone_pawns: { ordering: "sweep", staggerMs: 55, victims: ["p"], visual: "greyhex", hasLead: false, sound: "petrify", source: "walnut" },
-  wa_unmake: { ordering: "line", staggerMs: 90, victims: "all", mover: "b", visual: "unmake", hasLead: false, sound: "extinction" },
+  wa_unmake: { ordering: "line", staggerMs: 90, victims: "all", mover: "b", visual: "unmake", hasLead: true, sound: "extinction" },
   wa_banish: { ordering: "radial", staggerMs: 0, victims: ["p", "n", "b"], visual: "unmake", hasLead: false, sound: "extinction" },
-  wa_spectral_minors: { ordering: "sweep", staggerMs: 85, victims: "all", visual: "summonrift", hasLead: false, sound: "wall", source: "summon" },
+  wa_spectral_minors: { ordering: "sweep", staggerMs: 85, victims: "all", visual: "summonrift", hasLead: true, sound: "wall", source: "summon" },
 
   // CHAOS (wild/chaos): wrecking ball, pinata, genie, hot seat.
   wc_wrecking_ball: { ordering: "line", staggerMs: 85, victims: "all", mover: "q", visual: "wreckingball", hasLead: true, sound: "rampage" },
   wc_pinata: { ordering: "radial", staggerMs: 0, victims: "all", visual: "pinata", hasLead: true, sound: "rampage" },
-  wc_genie_wish: { ordering: "radial", staggerMs: 0, victims: "all", visual: "geniepoof", hasLead: false, sound: "wall", source: "summon" },
+  wc_genie_wish: { ordering: "radial", staggerMs: 0, victims: "all", visual: "geniepoof", hasLead: true, sound: "wall", source: "summon" },
   wc_hot_seat: { ordering: "radial", staggerMs: 0, victims: "all", visual: "decree", hasLead: true, sound: "snooze", source: "stun" },
 
   // FUNNY (funny/clock): the Computer Virus corrupts the opponent's clock. No
@@ -1657,8 +1664,8 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   // added with the Batch 5 art below (coral / mint / sun + tier colours). ---
 
   // Core removals (detonation diff): a piece is unmade in a crumble of motes.
-  purge: { ordering: "radial", staggerMs: 0, victims: ["p", "n", "b", "r"], visual: "disintegrate", hasLead: false, sound: "extinction" },
-  annihilate: { ordering: "radial", staggerMs: 40, victims: ["p", "n", "b", "r"], visual: "disintegrate", hasLead: false, sound: "extinction" },
+  purge: { ordering: "radial", staggerMs: 0, victims: ["p", "n", "b", "r"], visual: "disintegrate", hasLead: true, sound: "extinction" },
+  annihilate: { ordering: "radial", staggerMs: 40, victims: ["p", "n", "b", "r"], visual: "disintegrate", hasLead: true, sound: "extinction" },
   shatter: { ordering: "radial", staggerMs: 55, victims: ["r", "b", "n"], visual: "disintegrate", hasLead: true, sound: "rampage" },
   purge_two: { ordering: "sweep", staggerMs: 90, victims: ["p"], visual: "disintegrate", hasLead: false, sound: "cataclysm" },
   we_scorch: { ordering: "radial", staggerMs: 0, victims: ["n", "b"], visual: "inferno", hasLead: false, sound: "atomic" },
@@ -1668,11 +1675,11 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   // Freezes (frozen zone): each ice card its own read, varied stagger.
   wc_tar_pit: { ordering: "radial", staggerMs: 55, victims: ["b"], visual: "chainfreeze", hasLead: false, sound: "massfreeze", source: "frozen" },
   wc_double_trouble: { ordering: "radial", staggerMs: 60, victims: "all", visual: "iceshatter", hasLead: true, sound: "massfreeze", source: "frozen" },
-  ww_pincer_movement: { ordering: "radial", staggerMs: 50, victims: "all", visual: "snapfrost", hasLead: false, sound: "massfreeze", source: "frozen" },
+  ww_pincer_movement: { ordering: "radial", staggerMs: 50, victims: "all", visual: "snapfrost", hasLead: true, sound: "massfreeze", source: "frozen" },
   wa_arrest_time: { ordering: "radial", staggerMs: 50, victims: ["r", "q"], visual: "deepglacier", hasLead: true, sound: "massfreeze", source: "frozen" },
 
   // Petrify (walnut zone): concrete shoes clamp the heavy pieces.
-  wc_concrete_shoes: { ordering: "radial", staggerMs: 40, victims: ["r", "q"], visual: "stonechain", hasLead: false, sound: "petrify", source: "walnut" },
+  wc_concrete_shoes: { ordering: "radial", staggerMs: 40, victims: ["r", "q"], visual: "stonechain", hasLead: true, sound: "petrify", source: "walnut" },
   we_stone_grip: { ordering: "radial", staggerMs: 0, victims: "all", visual: "greyhex", hasLead: false, sound: "petrify", source: "walnut" },
 
   // Shields / wards (shield zone): stone shells, bark canopies, rune pulses.
@@ -1680,7 +1687,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   ww_form_square: { ordering: "sweep", staggerMs: 60, victims: "all", visual: "wardpulse", hasLead: true, sound: "aegis", source: "shield" },
   we_verdant_shield: { ordering: "sweep", staggerMs: 70, victims: ["p"], visual: "canopy", hasLead: false, sound: "aegis", source: "shield" },
   wa_royal_aegis: { ordering: "radial", staggerMs: 0, victims: ["k", "q"], visual: "wardpulse", hasLead: true, sound: "aegis", source: "shield" },
-  borrowed_time: { ordering: "radial", staggerMs: 0, victims: ["q"], visual: "wardpulse", hasLead: false, sound: "aegis", source: "shield" },
+  borrowed_time: { ordering: "radial", staggerMs: 0, victims: ["q"], visual: "wardpulse", hasLead: true, sound: "aegis", source: "shield" },
 
   // King wards (kingSafe zone).
   we_frost_ward: { ordering: "radial", staggerMs: 0, victims: ["k"], visual: "frozenmoat", hasLead: true, sound: "shades", source: "kingSafe" },
@@ -1696,7 +1703,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   extra_move: { ordering: "radial", staggerMs: 0, victims: "all", visual: "blitz", hasLead: true, sound: "blitz", source: "rally" },
   overwhelm: { ordering: "radial", staggerMs: 70, victims: "all", visual: "blitz", hasLead: true, sound: "blitz", source: "rally" },
   wa_quicken: { ordering: "radial", staggerMs: 60, victims: "all", visual: "blitz", hasLead: true, sound: "blitz", source: "rally" },
-  ww_relentless_assault: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "blitz", hasLead: false, sound: "blitz", source: "rally" },
+  ww_relentless_assault: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "blitz", hasLead: true, sound: "blitz", source: "rally" },
   wc_juggling_act: { ordering: "sweep", staggerMs: 70, victims: "all", visual: "warhorn", hasLead: true, sound: "blitz", source: "rally" },
   berserker: { ordering: "sweep", staggerMs: 75, victims: "all", visual: "warhorn", hasLead: true, sound: "blitz", source: "rally" },
 
@@ -1707,38 +1714,38 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   glass_cannon: { ordering: "radial", staggerMs: 0, victims: ["b"], visual: "bladegift", hasLead: true, sound: "coronation", source: "empower" },
 
   // Summons / reinforcements (summon zone).
-  grand_summon: { ordering: "sweep", staggerMs: 90, victims: "all", visual: "summonrift", hasLead: false, sound: "wall", source: "summon" },
-  kings_legion: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "summonrift", hasLead: false, sound: "wall", source: "summon" },
-  ww_mercenary_queen: { ordering: "radial", staggerMs: 0, victims: "all", visual: "summonrift", hasLead: false, sound: "wall", source: "summon" },
+  grand_summon: { ordering: "sweep", staggerMs: 90, victims: "all", visual: "summonrift", hasLead: true, sound: "wall", source: "summon" },
+  kings_legion: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "summonrift", hasLead: true, sound: "wall", source: "summon" },
+  ww_mercenary_queen: { ordering: "radial", staggerMs: 0, victims: "all", visual: "summonrift", hasLead: true, sound: "wall", source: "summon" },
   second_army: { ordering: "sweep", staggerMs: 85, victims: "all", visual: "reinforce", hasLead: false, sound: "wall", source: "summon" },
   // Batch 11 upgrade: the clone army rolls out of the same photocopier as its
   // sibling card Clone — a board-wide scan-bar lead instead of the generic
   // reinforcement pop.
   clone_army: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "photocopy", hasLead: true, sound: "wall", source: "summon" },
-  wc_conga_line: { ordering: "sweep", staggerMs: 90, victims: "all", visual: "paradrop", hasLead: false, sound: "wall", source: "summon" },
+  wc_conga_line: { ordering: "sweep", staggerMs: 90, victims: "all", visual: "paradrop", hasLead: true, sound: "wall", source: "summon" },
   // Batch 11 upgrade: the pizza actually gets DELIVERED — a scooter tears
   // across the whole board trailing steam (was a generic portal pop).
   pizza_delivery: { ordering: "radial", staggerMs: 0, victims: "all", visual: "pizzarun", hasLead: true, sound: "wall", source: "summon" },
-  wc_clown_car: { ordering: "radial", staggerMs: 60, victims: "all", visual: "portal", hasLead: false, sound: "wall", source: "summon" },
-  wc_rubber_duck_squad: { ordering: "radial", staggerMs: 60, victims: "all", visual: "portal", hasLead: false, sound: "wall", source: "summon" },
-  wc_attack_goose: { ordering: "radial", staggerMs: 0, victims: "all", visual: "portal", hasLead: false, sound: "wall", source: "summon" },
+  wc_clown_car: { ordering: "radial", staggerMs: 60, victims: "all", visual: "portal", hasLead: true, sound: "wall", source: "summon" },
+  wc_rubber_duck_squad: { ordering: "radial", staggerMs: 60, victims: "all", visual: "portal", hasLead: true, sound: "wall", source: "summon" },
+  wc_attack_goose: { ordering: "radial", staggerMs: 0, victims: "all", visual: "portal", hasLead: true, sound: "wall", source: "summon" },
 
   // Teleports / relocations (summon zone: the landing squares gain a piece).
   wa_far_step: { ordering: "radial", staggerMs: 0, victims: "all", visual: "blink", hasLead: false, sound: "wall", source: "summon" },
-  wa_twin_blink: { ordering: "sweep", staggerMs: 90, victims: "all", visual: "blink", hasLead: false, sound: "wall", source: "summon" },
+  wa_twin_blink: { ordering: "sweep", staggerMs: 90, victims: "all", visual: "blink", hasLead: true, sound: "wall", source: "summon" },
   wc_yeet: { ordering: "radial", staggerMs: 0, victims: "all", visual: "blink", hasLead: false, sound: "wall", source: "summon" },
-  warp_legion: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "blink", hasLead: false, sound: "wall", source: "summon" },
-  warp_storm: { ordering: "sweep", staggerMs: 75, victims: "all", visual: "blink", hasLead: false, sound: "wall", source: "summon" },
+  warp_legion: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "blink", hasLead: true, sound: "wall", source: "summon" },
+  warp_storm: { ordering: "sweep", staggerMs: 75, victims: "all", visual: "blink", hasLead: true, sound: "wall", source: "summon" },
 
   // Walls / voids / traps (blindfold zone).
   fault_line: { ordering: "sweep", staggerMs: 60, victims: "all", visual: "trench", hasLead: false, sound: "wall", source: "blindfold" },
-  fissure: { ordering: "sweep", staggerMs: 55, victims: "all", visual: "trench", hasLead: false, sound: "wall", source: "blindfold" },
+  fissure: { ordering: "sweep", staggerMs: 55, victims: "all", visual: "trench", hasLead: true, sound: "wall", source: "blindfold" },
   wa_glyph_seal: { ordering: "sweep", staggerMs: 60, victims: "all", visual: "borderward", hasLead: false, sound: "wall", source: "blindfold" },
-  wa_border_ward: { ordering: "sweep", staggerMs: 50, victims: "all", visual: "borderward", hasLead: false, sound: "wall", source: "blindfold" },
+  wa_border_ward: { ordering: "sweep", staggerMs: 50, victims: "all", visual: "borderward", hasLead: true, sound: "wall", source: "blindfold" },
   wc_banana_peel_trail: { ordering: "sweep", staggerMs: 55, victims: "all", visual: "banana", hasLead: false, sound: "wall", source: "blindfold" },
-  ww_claymore_line: { ordering: "sweep", staggerMs: 60, victims: "all", visual: "minefield", hasLead: false, sound: "siege", source: "blindfold" },
+  ww_claymore_line: { ordering: "sweep", staggerMs: 60, victims: "all", visual: "minefield", hasLead: true, sound: "siege", source: "blindfold" },
   wc_black_hole: { ordering: "radial", staggerMs: 0, victims: "all", visual: "vortex", hasLead: true, sound: "wall", source: "blindfold" },
-  wc_haunted_house: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "vortex", hasLead: false, sound: "wall", source: "blindfold" },
+  wc_haunted_house: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "vortex", hasLead: true, sound: "wall", source: "blindfold" },
   wa_void_rift: { ordering: "radial", staggerMs: 0, victims: "all", visual: "vortex", hasLead: true, sound: "wall", source: "blindfold" },
 
   // --- Batch 6: MARQUEE spectacles for the top-tier (tier-8) cards. A dragon
@@ -1761,7 +1768,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   kraken: { ordering: "radial", staggerMs: 60, victims: "all", visual: "kraken", hasLead: true, sound: "wall", source: "summon" },
   abyss: { ordering: "radial", staggerMs: 0, victims: "all", visual: "abyss", hasLead: true, sound: "wall", source: "blindfold" },
   we_whirlpool: { ordering: "radial", staggerMs: 0, victims: ["p"], visual: "whirlpool", hasLead: false, sound: "wall", source: "summon" },
-  we_flood: { ordering: "sweep", staggerMs: 70, victims: "all", visual: "flood", hasLead: false, sound: "wall", source: "blindfold" },
+  we_flood: { ordering: "sweep", staggerMs: 70, victims: "all", visual: "flood", hasLead: true, sound: "wall", source: "blindfold" },
   cataclysmic_meteor: { ordering: "sweep", staggerMs: 80, victims: ["p", "n", "b", "r", "q"], visual: "meteorstorm", hasLead: true, sound: "atomic" },
   phoenix_rebirth: { ordering: "sweep", staggerMs: 85, victims: "all", visual: "phoenixrise", hasLead: true, sound: "wall", source: "summon" },
   full_resurrection: { ordering: "sweep", staggerMs: 90, victims: "all", visual: "phoenixrise", hasLead: true, sound: "wall", source: "summon" },
@@ -1779,13 +1786,13 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   // Removals (detonation diff, render today).
   detonate: { ordering: "radial", staggerMs: 40, victims: "all", visual: "detonate", hasLead: true, sound: "atomic" },
   we_cinder_strike: { ordering: "radial", staggerMs: 0, victims: ["p"], visual: "cinderstrike", hasLead: false, sound: "atomic" },
-  purge_storm: { ordering: "sweep", staggerMs: 60, victims: ["p"], visual: "purgestorm", hasLead: false, sound: "extinction" },
+  purge_storm: { ordering: "sweep", staggerMs: 60, victims: ["p"], visual: "purgestorm", hasLead: true, sound: "extinction" },
   roulette: { ordering: "radial", staggerMs: 0, victims: "all", visual: "roulette", hasLead: true, sound: "rampage" },
-  purge_line: { ordering: "sweep", staggerMs: 55, victims: ["p", "n", "b", "r"], visual: "purgeline", hasLead: false, sound: "extinction" },
+  purge_line: { ordering: "sweep", staggerMs: 55, victims: ["p", "n", "b", "r"], visual: "purgeline", hasLead: true, sound: "extinction" },
   nerf_this: { ordering: "radial", staggerMs: 90, victims: ["p", "n", "b"], visual: "calldown", hasLead: true, sound: "lightning" },
   annihilation: { ordering: "radial", staggerMs: 45, victims: ["p", "n", "b", "r"], visual: "annihilation", hasLead: true, sound: "extinction" },
   meteor: { ordering: "radial", staggerMs: 35, victims: "all", visual: "meteorcross", hasLead: true, sound: "atomic" },
-  purge_realm: { ordering: "sweep", staggerMs: 40, victims: ["n", "b"], visual: "purgerealm", hasLead: false, sound: "extinction" },
+  purge_realm: { ordering: "sweep", staggerMs: 40, victims: ["n", "b"], visual: "purgerealm", hasLead: true, sound: "extinction" },
   ruin: { ordering: "sweep", staggerMs: 60, victims: ["p", "n"], visual: "ruin", hasLead: true, sound: "cataclysm" },
 
   // Effect-data spectacles (inert-until-wired, like their shipped peers).
@@ -1794,7 +1801,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   // Batch 11 upgrade: the corrosion now CREEPS board-wide from the lead square
   // before each piece seizes up.
   rust: { ordering: "radial", staggerMs: 45, victims: "all", visual: "rustlock", hasLead: true, sound: "massfreeze", source: "frozen" },
-  mass_petrify: { ordering: "sweep", staggerMs: 55, victims: ["n", "b"], visual: "masspetrify", hasLead: false, sound: "petrify", source: "walnut" },
+  mass_petrify: { ordering: "sweep", staggerMs: 55, victims: ["n", "b"], visual: "masspetrify", hasLead: true, sound: "petrify", source: "walnut" },
   walnut_queen: { ordering: "radial", staggerMs: 0, victims: ["q"], visual: "walnutcurse", hasLead: true, sound: "petrify", source: "walnut" },
   amazon: { ordering: "radial", staggerMs: 0, victims: ["q"], visual: "amazoncrown", hasLead: true, sound: "coronation", source: "empower" },
   titan_legion: { ordering: "radial", staggerMs: 0, victims: "all", visual: "titanlegion", hasLead: true, sound: "colossus", source: "empower" },
@@ -1802,11 +1809,11 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   eternal_reign: { ordering: "radial", staggerMs: 0, victims: ["k"], visual: "eternalreign", hasLead: true, sound: "coronation", source: "empower" },
   godslayer_knight: { ordering: "radial", staggerMs: 0, victims: ["n"], visual: "godslayer", hasLead: true, sound: "coronation", source: "empower" },
   werewolf: { ordering: "radial", staggerMs: 0, victims: "all", visual: "werewolf", hasLead: true, sound: "colossus", source: "empower" },
-  last_meal: { ordering: "radial", staggerMs: 0, victims: ["k"], visual: "lastmeal", hasLead: false, sound: "coronation", source: "empower" },
+  last_meal: { ordering: "radial", staggerMs: 0, victims: ["k"], visual: "lastmeal", hasLead: true, sound: "coronation", source: "empower" },
   onslaught: { ordering: "radial", staggerMs: 60, victims: "all", visual: "onslaught", hasLead: true, sound: "blitz", source: "rally" },
   resurrection: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "resurrection", hasLead: true, sound: "wall", source: "summon" },
   grand_resurrection: { ordering: "sweep", staggerMs: 85, victims: "all", visual: "grandrevive", hasLead: true, sound: "wall", source: "summon" },
-  iron_legion: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "ironlegion", hasLead: false, sound: "wall", source: "summon" },
+  iron_legion: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "ironlegion", hasLead: true, sound: "wall", source: "summon" },
   second_coming: { ordering: "radial", staggerMs: 0, victims: "all", visual: "secondcoming", hasLead: true, sound: "wall", source: "summon" },
   necromancer: { ordering: "radial", staggerMs: 0, victims: "all", visual: "necromancer", hasLead: true, sound: "wall", source: "summon" },
   // Batch 11 upgrade: the floor is LAVA everywhere — a magma tide sweeps the
@@ -1853,11 +1860,11 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   blackout: { ordering: "radial", staggerMs: 40, victims: "all", visual: "blackout", hasLead: true, sound: "snooze", source: "stun" },
 
   // Beasts / summons / relocations (summon zone: the landing squares gain a piece).
-  griffon_rider: { ordering: "radial", staggerMs: 0, victims: "all", visual: "griffoncarry", hasLead: false, sound: "wall", source: "summon" },
+  griffon_rider: { ordering: "radial", staggerMs: 0, victims: "all", visual: "griffoncarry", hasLead: true, sound: "wall", source: "summon" },
   grand_army: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "grandarmy", hasLead: true, sound: "wall", source: "summon" },
-  mortgage: { ordering: "radial", staggerMs: 0, victims: "all", visual: "mortgagesign", hasLead: false, sound: "wall", source: "summon" },
-  wc_repo_rook: { ordering: "radial", staggerMs: 0, victims: "all", visual: "reporook", hasLead: false, sound: "wall", source: "summon" },
-  wc_musical_chairs: { ordering: "radial", staggerMs: 0, victims: "all", visual: "musicalchairs", hasLead: false, sound: "wall", source: "summon" },
+  mortgage: { ordering: "radial", staggerMs: 0, victims: "all", visual: "mortgagesign", hasLead: true, sound: "wall", source: "summon" },
+  wc_repo_rook: { ordering: "radial", staggerMs: 0, victims: "all", visual: "reporook", hasLead: true, sound: "wall", source: "summon" },
+  wc_musical_chairs: { ordering: "radial", staggerMs: 0, victims: "all", visual: "musicalchairs", hasLead: true, sound: "wall", source: "summon" },
 
   // Faustian / frenzy / freeze / wind / slow (existing effect zones).
   wc_deal_with_the_devil: { ordering: "radial", staggerMs: 0, victims: ["p"], visual: "devildeal", hasLead: true, sound: "coronation", source: "empower" },
@@ -1913,7 +1920,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   vertigo: { ordering: "radial", staggerMs: 0, victims: ["q"], visual: "vertigo", hasLead: true, sound: "snooze", source: "slow" },
   origami: { ordering: "radial", staggerMs: 40, victims: ["r"], visual: "origami", hasLead: false, sound: "snooze", source: "slow" },
   gremlins: { ordering: "radial", staggerMs: 40, victims: ["r"], visual: "gremlins", hasLead: false, sound: "snooze", source: "slow" },
-  homesick: { ordering: "radial", staggerMs: 45, victims: "all", visual: "homesick", hasLead: false, sound: "snooze", source: "slow" },
+  homesick: { ordering: "radial", staggerMs: 45, victims: "all", visual: "homesick", hasLead: true, sound: "snooze", source: "slow" },
   jet_lag: { ordering: "radial", staggerMs: 0, victims: "all", visual: "jetlag", hasLead: true, sound: "clockcage", source: "slow" },
 
   // Self grants: the king climbs the hill (empower zone), a sugar rush (rally).
@@ -1986,7 +1993,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   gravity_well: { ordering: "radial", staggerMs: 0, victims: ["k"], visual: "gravitywell", hasLead: true, sound: "shades", source: "kingSafe" },
   guardian_angel: { ordering: "radial", staggerMs: 0, victims: "all", visual: "wings", hasLead: true, sound: "aegis", source: "shield" },
   home_field: { ordering: "sweep", staggerMs: 80, victims: ["n", "b", "r"], visual: "hillflag", hasLead: true, sound: "coronation", source: "empower" },
-  landlord: { ordering: "radial", staggerMs: 60, victims: "all", visual: "mortgagesign", hasLead: false, sound: "wall", source: "blindfold" },
+  landlord: { ordering: "radial", staggerMs: 60, victims: "all", visual: "mortgagesign", hasLead: true, sound: "wall", source: "blindfold" },
   magnetism: { ordering: "radial", staggerMs: 0, victims: ["n"], visual: "magnetpull", hasLead: true, sound: "colossus", source: "empower" },
   photosynthesis: { ordering: "sweep", staggerMs: 75, victims: ["p"], visual: "photosyn", hasLead: true, sound: "aegis", source: "empower" },
   termites: { ordering: "radial", staggerMs: 50, victims: ["r"], visual: "termitegnaw", hasLead: true, sound: "petrify", source: "slow" },
@@ -1994,7 +2001,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
 
   // FUNNY slapstick / summons / transforms.
   cream_pie: { ordering: "radial", staggerMs: 0, victims: "all", visual: "creampie", hasLead: true, sound: "rampage", source: "stun" },
-  minefield: { ordering: "radial", staggerMs: 60, victims: "all", visual: "minefield", hasLead: false, sound: "siege", source: "blindfold" },
+  minefield: { ordering: "radial", staggerMs: 60, victims: "all", visual: "minefield", hasLead: true, sound: "siege", source: "blindfold" },
   clone: { ordering: "radial", staggerMs: 0, victims: ["p"], visual: "photocopy", hasLead: true, sound: "wall", source: "summon" },
   insurance: { ordering: "radial", staggerMs: 0, victims: ["n", "q"], visual: "umbrella", hasLead: false, sound: "aegis", source: "shield" },
   understudy: { ordering: "radial", staggerMs: 0, victims: ["b", "q"], visual: "spotlight", hasLead: true, sound: "coronation", source: "shield" },
@@ -2037,14 +2044,16 @@ const PIN_STARS = [
 ];
 
 function NovaBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(255,255,255,0.24)" boom="rgba(255,255,255,0.85)" delayMs={delayMs} />
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
-      {lead && (
-        <span
-          className="fx-sig-shock absolute inset-[4%] block rounded-full"
-          style={{ border: "2px solid rgba(255,255,255,0.95)", animationDelay: `${delayMs}ms` }}
-        />
-      )}
       <span
         className="fx-sig-flash absolute inset-[24%] block rounded-full"
         style={{
@@ -2068,7 +2077,34 @@ function NovaBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   );
 }
 
-function TrapdoorBurst({ delayMs }: { delayMs: number }) {
+function TrapdoorBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 12 — tier 6+ board-wide guarantee: the lead square drops the WHOLE
+  // floor — a dark board-wide dim while pit-mouths yawn open across the crop
+  // and a pale dust cloud kicks up.
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(20,12,6,0.35)" delayMs={delayMs} />
+        {[
+          { l: "28%", t: "32%", w: "12%", d: 0 },
+          { l: "52%", t: "42%", w: "14%", d: 120 },
+          { l: "36%", t: "58%", w: "11%", d: 240 },
+          { l: "60%", t: "26%", w: "10%", d: 320 },
+          { l: "44%", t: "30%", w: "9%", d: 180 },
+        ].map((h, i) => (
+          <span
+            key={i}
+            className="fx-sig-hole absolute block rounded-[2px]"
+            style={{ left: h.l, top: h.t, width: h.w, height: `calc(${h.w} * 0.7)`, background: "rgba(10,8,6,0.85)", border: "1px solid #2a1a0d", animationDelay: `${delayMs + h.d}ms` }}
+          />
+        ))}
+        <span
+          className="fx-sig-ash absolute left-[38%] top-[40%] block h-[20%] w-[24%] rounded-full"
+          style={{ background: "rgba(196,178,142,0.45)", animationDelay: `${delayMs + 280}ms` }}
+        />
+      </BoardWideStage>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span
@@ -2094,7 +2130,26 @@ function TrapdoorBurst({ delayMs }: { delayMs: number }) {
   );
 }
 
-function StoneBurst({ delayMs }: { delayMs: number }) {
+function StoneBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 12 — tier 6+ board-wide guarantee: extinction's lead greys the whole
+  // crop, rains stone chips down the central band, and rolls a dust ring out
+  // past the board edges.
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(120,116,110,0.3)" delayMs={delayMs} />
+        <BoardRain
+          delayMs={delayMs + 100}
+          render={() => (
+            <svg viewBox="0 0 12 12" className="h-full w-full" aria-hidden="true">
+              <polygon points="6,0 11,3 10,9 4,11 1,6 2,2" fill="rgba(150,150,155,0.9)" stroke="#4a4a44" strokeWidth="0.7" strokeLinejoin="round" />
+            </svg>
+          )}
+        />
+        <BoardBoom delayMs={delayMs + 260} color="rgba(150,150,155,0.8)" />
+      </BoardWideStage>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span
@@ -2122,7 +2177,27 @@ function StoneBurst({ delayMs }: { delayMs: number }) {
   );
 }
 
-function StrikeBurst({ delayMs }: { delayMs: number }) {
+function StrikeBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 12 — tier 6+ board-wide guarantee: the lead whites the sky over the
+  // whole crop while three colossal bolts crack down the central band and a
+  // shock ring rolls out.
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(210,225,255,0.3)" delayMs={delayMs} />
+        {[
+          { l: "32%", d: 0 },
+          { l: "48%", d: 140 },
+          { l: "62%", d: 260 },
+        ].map((b, i) => (
+          <span key={i} className="fx-sig-bolt absolute top-[4%] block h-[52%] w-[8%]" style={{ left: b.l, animationDelay: `${delayMs + b.d}ms` }}>
+            <JagBolt />
+          </span>
+        ))}
+        <BoardBoom delayMs={delayMs + 320} color="rgba(230,240,255,0.85)" />
+      </BoardWideStage>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span
@@ -2167,7 +2242,20 @@ function AtomicBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   );
 }
 
-function PinBurst({ delayMs }: { delayMs: number }) {
+function PinBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 12 — tier 6+ board-wide guarantee: the queen's rampage leads with a
+  // gilded board-wide flare — a gold wash, twin shock rings rolling past the
+  // edges, and a spray of spark-stars from the origin.
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(230,191,106,0.24)" delayMs={delayMs} />
+        <BoardBoom delayMs={delayMs + 120} color="rgba(230,191,106,0.9)" thickness={4} />
+        <BoardBoom delayMs={delayMs + 260} color="rgba(255,214,120,0.75)" />
+        <ShardBurst vectors={BURST_MED} fill="#ffd95e" stroke="#8a6414" delayMs={delayMs + 80} sizePct={5} />
+      </BoardWideStage>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span
@@ -2191,18 +2279,22 @@ function PinBurst({ delayMs }: { delayMs: number }) {
 }
 
 function SiegeBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the cannon's muzzle flash now lances
+  // across the WHOLE crop — a powder wash while the blast tongue streaks the
+  // board's full width and a concussion ring rolls past the edges.
   if (lead) {
-    // Muzzle flash at the cannon's mouth (the rook's origin square).
     return (
-      <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <BoardWideStage>
+        <BoardWash color="rgba(255,244,200,0.22)" delayMs={delayMs} />
         <span
-          className="fx-sig-muzzle absolute left-[10%] top-[38%] block h-[24%] w-[80%] rounded-full"
+          className="fx-sig-muzzle absolute left-[22%] top-[44%] block h-[12%] w-[56%] rounded-full"
           style={{
             background: "linear-gradient(90deg, rgba(255,244,200,0.95), rgba(255,170,70,0.5) 60%, transparent)",
             animationDelay: `${delayMs}ms`,
           }}
         />
-      </span>
+        <BoardBoom delayMs={delayMs + 220} color="rgba(255,170,70,0.85)" thickness={4} />
+      </BoardWideStage>
     );
   }
   return (
@@ -2247,6 +2339,14 @@ function SigCrown() {
 /** Amazon Knight / God Knight: a shaft of light drops, a crown lowers onto the
  * piece, and a coronation flash blooms (lead). */
 function CoronationBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(255,244,200,0.24)" boom="rgba(255,220,130,0.85)" delayMs={delayMs} />
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span
@@ -2257,16 +2357,6 @@ function CoronationBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) 
           animationDelay: `${delayMs}ms`,
         }}
       />
-      {lead && (
-        <span
-          className="fx-sig-flash absolute inset-[22%] block rounded-full"
-          style={{
-            background:
-              "radial-gradient(circle, rgba(255,240,190,0.9), rgba(230,191,106,0.4) 55%, transparent 72%)",
-            animationDelay: `${delayMs + 180}ms`,
-          }}
-        />
-      )}
       <span
         className="fx-sig-crown absolute left-[27%] top-[8%] block h-[30%] w-[46%]"
         style={{ animationDelay: `${delayMs}ms` }}
@@ -2284,7 +2374,18 @@ const CROWN_RAIN = [
 ];
 
 /** Double / Triple Amazon, Amazon Army: crowns rain down onto the piece. */
-function CrownRainBurst({ delayMs }: { delayMs: number }) {
+function CrownRainBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 12 — tier 6+ board-wide guarantee: the lead square opens the sky —
+  // a gold wash over the whole crop and a board-wide rain of tumbling crowns.
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(230,191,106,0.22)" delayMs={delayMs} />
+        <BoardRain delayMs={delayMs + 80} render={() => <SigCrown />} />
+        <BoardBoom delayMs={delayMs + 340} color="rgba(230,191,106,0.85)" />
+      </BoardWideStage>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       {CROWN_RAIN.map((c, i) => (
@@ -2303,6 +2404,14 @@ function CrownRainBurst({ delayMs }: { delayMs: number }) {
 /** Colossus / Titan: a stone shell grows over the piece and it stomps a ring
  * (lead). */
 function ColossusBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(150,150,158,0.24)" boom="rgba(120,120,128,0.85)" delayMs={delayMs} />
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span
@@ -2313,12 +2422,6 @@ function ColossusBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           animationDelay: `${delayMs}ms`,
         }}
       />
-      {lead && (
-        <span
-          className="fx-sig-shock absolute inset-[10%] block rounded-full"
-          style={{ border: "2px solid rgba(230,191,106,0.8)", animationDelay: `${delayMs + 220}ms` }}
-        />
-      )}
     </span>
   );
 }
@@ -2358,6 +2461,23 @@ function SnoozeBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 /** Time Prison: iron clock-hand bars drop into a cage around the king, a clock
  * face stamped on the front (lead). */
 function ClockCageBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(20,30,43,0.24)" boom="rgba(185,196,214,0.85)" delayMs={delayMs} motifClass="fx-sig-cage">
+        <svg viewBox="0 0 32 32" className="h-full w-full" aria-hidden="true">
+          <g stroke="#b9c4d6" strokeWidth="2" strokeLinecap="round">
+            <path d="M6 3 V29 M13 3 V29 M19 3 V29 M26 3 V29" />
+          </g>
+          <g stroke="#8a97ab" strokeWidth="2.2" strokeLinecap="round">
+            <path d="M4 4 H28 M4 28 H28" />
+          </g>
+        </svg>
+      </BoardWideLead>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-cage absolute inset-[12%] block" style={{ animationDelay: `${delayMs}ms` }}>
@@ -2370,17 +2490,6 @@ function ClockCageBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           </g>
         </svg>
       </span>
-      {lead && (
-        <span
-          className="fx-sig-flash absolute left-[34%] top-[36%] block h-[28%] w-[32%]"
-          style={{ animationDelay: `${delayMs + 200}ms` }}
-        >
-          <svg viewBox="0 0 20 20" className="h-full w-full" aria-hidden="true">
-            <circle cx="10" cy="10" r="8.4" fill="rgba(20,30,43,0.85)" stroke="#cdd8e6" strokeWidth="1.4" />
-            <path d="M10 10 V4 M10 10 L14 12" stroke="#cdd8e6" strokeWidth="1.4" strokeLinecap="round" fill="none" />
-          </svg>
-        </span>
-      )}
     </span>
   );
 }
@@ -2388,6 +2497,18 @@ function ClockCageBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 /** Time Freeze: a frost-rimmed clock crashes down and entombs the king in an
  * ice block, its face cracked (lead). */
 function ClockIceBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(200,235,255,0.24)" boom="rgba(223,242,255,0.85)" delayMs={delayMs} motifClass="fx-sig-ice">
+        <svg viewBox="0 0 32 32" className="h-full w-full" aria-hidden="true">
+          <path d="M8 4 L14 14 L9 20 L16 30" fill="none" stroke="rgba(235,250,255,0.75)" strokeWidth="1" strokeLinejoin="round" />
+        </svg>
+      </BoardWideLead>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span
@@ -2402,17 +2523,6 @@ function ClockIceBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           <path d="M8 4 L14 14 L9 20 L16 30" fill="none" stroke="rgba(235,250,255,0.75)" strokeWidth="1" strokeLinejoin="round" />
         </svg>
       </span>
-      {lead && (
-        <span
-          className="fx-sig-flash absolute left-[34%] top-[34%] block h-[30%] w-[32%]"
-          style={{ animationDelay: `${delayMs + 120}ms` }}
-        >
-          <svg viewBox="0 0 20 20" className="h-full w-full" aria-hidden="true">
-            <circle cx="10" cy="10" r="8.4" fill="rgba(30,48,66,0.7)" stroke="#dff2ff" strokeWidth="1.4" />
-            <path d="M10 10 V4 M10 10 L13.5 12" stroke="#dff2ff" strokeWidth="1.4" strokeLinecap="round" fill="none" />
-          </svg>
-        </span>
-      )}
     </span>
   );
 }
@@ -2427,6 +2537,14 @@ const BLITZ_IMGS = [
 /** Blitzkrieg: four forked-lightning after-images streak across in sequence,
  * with a combo flash on the lead square. */
 function BlitzBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(255,246,200,0.24)" boom="rgba(255,200,90,0.85)" delayMs={delayMs} />
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       {BLITZ_IMGS.map((b, i) => (
@@ -2438,15 +2556,6 @@ function BlitzBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           <JagBolt />
         </span>
       ))}
-      {lead && (
-        <span
-          className="fx-sig-flash absolute inset-[26%] block rounded-full"
-          style={{
-            background: "radial-gradient(circle, rgba(255,246,200,0.9), rgba(255,200,90,0.4) 55%, transparent 72%)",
-            animationDelay: `${delayMs + 200}ms`,
-          }}
-        />
-      )}
     </span>
   );
 }
@@ -2500,7 +2609,26 @@ function PetrifyBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 }
 
 /** Petrified Forest: bark creeps up the piece and a stone leaf drifts off. */
-function PetrifiedForestBurst({ delayMs }: { delayMs: number }) {
+function PetrifiedForestBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 12 — tier 6+ board-wide guarantee: the lead petrifies the WHOLE
+  // grove — a bark-brown wash creeps over the crop while stone leaves rain
+  // down the central band.
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(96,72,44,0.3)" delayMs={delayMs} />
+        <BoardRain
+          delayMs={delayMs + 100}
+          render={() => (
+            <svg viewBox="0 0 12 12" className="h-full w-full" aria-hidden="true">
+              <path d="M6 1 C9 3 9 8 6 11 C3 8 3 3 6 1 Z" fill="#8a8a80" stroke="#4a4a44" strokeWidth="0.6" />
+            </svg>
+          )}
+        />
+        <BoardBoom delayMs={delayMs + 320} color="rgba(138,138,128,0.8)" />
+      </BoardWideStage>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span
@@ -2525,6 +2653,24 @@ function PetrifiedForestBurst({ delayMs }: { delayMs: number }) {
 /** Aegis: a board-wide shield flash rings the piece, a shield glyph settling on
  * the lead square. */
 function AegisBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(123,181,47,0.24)" boom="rgba(123,181,47,0.85)" delayMs={delayMs} motifClass="fx-sig-crown">
+        <svg viewBox="0 0 24 28" className="h-full w-full" aria-hidden="true">
+            <path
+              d="M12 1 L22 5 V13 C22 20 17.5 25.2 12 27 C6.5 25.2 2 20 2 13 V5 Z"
+              fill="rgba(22,30,22,0.85)"
+              stroke="#7bb52f"
+              strokeWidth="1.6"
+              strokeLinejoin="round"
+            />
+          </svg>
+      </BoardWideLead>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span
@@ -2535,22 +2681,6 @@ function AegisBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
         className="fx-sig-flash absolute inset-[24%] block rounded-full"
         style={{ background: "radial-gradient(circle, rgba(163,209,96,0.65), transparent 70%)", animationDelay: `${delayMs}ms` }}
       />
-      {lead && (
-        <span
-          className="fx-sig-crown absolute left-[32%] top-[20%] block h-[54%] w-[36%]"
-          style={{ animationDelay: `${delayMs}ms` }}
-        >
-          <svg viewBox="0 0 24 28" className="h-full w-full" aria-hidden="true">
-            <path
-              d="M12 1 L22 5 V13 C22 20 17.5 25.2 12 27 C6.5 25.2 2 20 2 13 V5 Z"
-              fill="rgba(22,30,22,0.85)"
-              stroke="#7bb52f"
-              strokeWidth="1.6"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </span>
-      )}
     </span>
   );
 }
@@ -2558,6 +2688,19 @@ function AegisBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 /** Divine Fortress: a cathedral dome descends over the square, a bright apex
  * glint (lead). */
 function CathedralBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(30,40,55,0.24)" boom="rgba(200,215,235,0.85)" delayMs={delayMs} motifClass="fx-sig-dome">
+        <svg viewBox="0 0 40 40" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
+          <path d="M20 3 C31 3 36 14 36 26 V38 H4 V26 C4 14 9 3 20 3 Z" fill="rgba(30,40,55,0.35)" stroke="rgba(200,215,235,0.85)" strokeWidth="1.4" />
+          <path d="M20 3 V38 M12 8 V38 M28 8 V38" stroke="rgba(200,215,235,0.5)" strokeWidth="0.8" fill="none" />
+        </svg>
+      </BoardWideLead>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-dome absolute left-[14%] right-[14%] top-[10%] block h-[64%]" style={{ animationDelay: `${delayMs}ms` }}>
@@ -2566,18 +2709,30 @@ function CathedralBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           <path d="M20 3 V38 M12 8 V38 M28 8 V38" stroke="rgba(200,215,235,0.5)" strokeWidth="0.8" fill="none" />
         </svg>
       </span>
-      {lead && (
-        <span
-          className="fx-sig-flash absolute left-[42%] top-[4%] block h-[16%] w-[16%] rounded-full"
-          style={{ background: "radial-gradient(circle, rgba(255,244,210,0.95), transparent 70%)", animationDelay: `${delayMs + 220}ms` }}
-        />
-      )}
     </span>
   );
 }
 
 /** Immortal King: the king returns wreathed in translucent shades. */
 function ShadesBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(210,225,255,0.24)" boom="rgba(180,205,255,0.85)" delayMs={delayMs} motifClass="fx-sig-shade">
+        <svg viewBox="0 0 20 26" className="h-full w-full" aria-hidden="true">
+          <path
+            d="M10 1 L10 5 M8 3 H12 M6.5 22 C4.5 15 7 10 10 10 C13 10 15.5 15 13.5 22 Z"
+            fill="rgba(210,225,255,0.5)"
+            stroke="rgba(180,205,255,0.85)"
+            strokeWidth="1"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </BoardWideLead>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-shade absolute left-[24%] top-[14%] block h-[66%] w-[44%]" style={{ animationDelay: `${delayMs}ms` }}>
@@ -2591,12 +2746,6 @@ function ShadesBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           />
         </svg>
       </span>
-      {lead && (
-        <span
-          className="fx-sig-ring absolute inset-[16%] block rounded-full"
-          style={{ border: "1px solid rgba(200,220,255,0.85)", animationDelay: `${delayMs + 80}ms` }}
-        />
-      )}
     </span>
   );
 }
@@ -2611,7 +2760,26 @@ const WALL_BRICKS = [
 
 /** Rampart / Great Wall: an uncapturable wall builds brick by brick from the
  * ground up. */
-function WallBuildBurst({ delayMs }: { delayMs: number }) {
+function WallBuildBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 12 — tier 5+ board-wide guarantee: the lead raises the WHOLE
+  // rampart — an earthen wash while a course of bricks stacks the full width
+  // of the crop, merlons rising on top.
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(120,86,58,0.24)" delayMs={delayMs} />
+        <span className="fx-sig-brick absolute left-[24%] bottom-[36%] block h-[8%] w-[52%] rounded-[2px]" style={{ background: "rgba(120,86,58,0.92)", border: "1px solid rgba(60,40,24,0.85)", animationDelay: `${delayMs + 60}ms` }} />
+        {[
+          { l: "28%", d: 170 },
+          { l: "40%", d: 260 },
+          { l: "52%", d: 350 },
+          { l: "64%", d: 440 },
+        ].map((m, i) => (
+          <span key={i} className="fx-sig-brick absolute bottom-[44%] block h-[5%] w-[7%] rounded-[1px]" style={{ left: m.l, background: "rgba(132,96,64,0.92)", border: "1px solid rgba(60,40,24,0.85)", animationDelay: `${delayMs + m.d}ms` }} />
+        ))}
+      </BoardWideStage>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       {WALL_BRICKS.map((b, i) => (
@@ -2782,10 +2950,62 @@ function BoardBoom({ delayMs, color, thickness = 3 }: { delayMs: number; color: 
   );
 }
 
+// Batch 13 — board-wide lead upgrade: shared takeover stage for the signatures
+// whose lead flourish used to be a square-local flash or ring. Washes the whole
+// crop in the card's tint, floats the card's own per-square motif writ large
+// over the centre (animated by the same fx-sig class it uses per square, so the
+// motion fiction carries over), and rolls a shockwave out past the board edges.
+// Composes only existing helpers/classes: transform/opacity, one-shot, hidden
+// under reduced motion.
+function BoardWideLead({
+  wash,
+  boom,
+  delayMs,
+  motifClass = "fx-sig-grow",
+  children,
+}: {
+  wash: string;
+  boom: string;
+  delayMs: number;
+  motifClass?: string;
+  children?: React.ReactNode;
+}) {
+  return (
+    <BoardWideStage>
+      <BoardWash color={wash} delayMs={delayMs} />
+      {children && (
+        <span className={motifClass + " absolute inset-[34%] block"} style={{ animationDelay: `${delayMs + 100}ms` }}>
+          {children}
+        </span>
+      )}
+      <BoardBoom delayMs={delayMs + 300} color={boom} />
+    </BoardWideStage>
+  );
+}
+
 // --- Freeze family (each ice card its own read) ------------------------------
 
 /** Mass Freeze: a quick spike-frost SNAP, shards flick outward, rime flashes. */
-function SnapFrostBurst({ delayMs }: { delayMs: number }) {
+function SnapFrostBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 12 — tier 6+ board-wide guarantee: the lead snap glazes the WHOLE
+  // board — an icy wash, rime panes wiping in across the crop, and a frost
+  // ring rolling out past the edges.
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(198,234,255,0.3)" delayMs={delayMs} />
+        {[
+          { l: "26%", t: "30%", w: "18%", h: "9%", d: 0 },
+          { l: "50%", t: "48%", w: "22%", h: "10%", d: 130 },
+          { l: "34%", t: "60%", w: "16%", h: "8%", d: 250 },
+          { l: "58%", t: "28%", w: "15%", h: "8%", d: 340 },
+        ].map((p, i) => (
+          <span key={i} className="fx-sig-frost absolute block rounded-[2px]" style={{ left: p.l, top: p.t, width: p.w, height: p.h, background: "rgba(198,234,255,0.45)", border: "1px solid rgba(224,246,255,0.85)", animationDelay: `${delayMs + p.d}ms` }} />
+        ))}
+        <BoardBoom delayMs={delayMs + 300} color="rgba(224,246,255,0.9)" />
+      </BoardWideStage>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span
@@ -2804,6 +3024,24 @@ function SnapFrostBurst({ delayMs }: { delayMs: number }) {
 /** Deep Freeze: a heavy glacier slab heaves up and slams over the piece, its
  * face veined with cracks; a rime crack flash on the lead square. */
 function DeepGlacierBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(176,220,245,0.24)" boom="rgba(224,246,255,0.85)" delayMs={delayMs} motifClass="fx-sig-slab">
+        <svg viewBox="0 0 32 32" className="h-full w-full" aria-hidden="true">
+          <path
+            d="M8 2 L13 12 L7 18 L14 30 M23 3 L18 11 L25 17 L20 31"
+            fill="none"
+            stroke="rgba(235,250,255,0.7)"
+            strokeWidth="1.2"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </BoardWideLead>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span
@@ -2820,12 +3058,6 @@ function DeepGlacierBurst({ lead, delayMs }: { lead: boolean; delayMs: number })
           />
         </svg>
       </span>
-      {lead && (
-        <span
-          className="fx-sig-flash absolute inset-[24%] block rounded-full"
-          style={{ background: "rgba(224,246,255,0.75)", animationDelay: `${delayMs + 120}ms` }}
-        />
-      )}
     </span>
   );
 }
@@ -2833,6 +3065,18 @@ function DeepGlacierBurst({ lead, delayMs }: { lead: boolean; delayMs: number })
 /** Eternal Freeze: an ice block sets, then EXPLODES into a wide shard shatter
  * with a shockwave ring: the most violent of the three. */
 function IceShatterBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(190,230,250,0.24)" boom="rgba(230,246,255,0.85)" delayMs={delayMs} motifClass="fx-sig-ice">
+        <svg viewBox="0 0 32 32" className="h-full w-full" aria-hidden="true">
+          <path d="M16 2 L11 14 L18 18 L13 30 M4 12 L14 16 M28 12 L18 16" fill="none" stroke="rgba(235,250,255,0.7)" strokeWidth="1" strokeLinejoin="round" />
+        </svg>
+      </BoardWideLead>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span
@@ -2844,18 +3088,28 @@ function IceShatterBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) 
         </svg>
       </span>
       <ShardBurst vectors={BURST_BIG} fill="#e6f6ff" stroke="#82bcdf" delayMs={delayMs + 220} sizePct={13} />
-      {lead && (
-        <span
-          className="fx-sig-shock absolute inset-[8%] block rounded-full"
-          style={{ border: "2px solid rgba(210,240,255,0.85)", animationDelay: `${delayMs + 220}ms` }}
-        />
-      )}
     </span>
   );
 }
 
 /** Staff of Stasis: iced chain-links drape and freeze solid over the piece. */
 function ChainFreezeBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(190,230,250,0.24)" boom="rgba(207,233,250,0.85)" delayMs={delayMs} motifClass="fx-sig-cage">
+        <svg viewBox="0 0 32 32" className="h-full w-full" aria-hidden="true">
+          <g stroke="#cfe9fa" strokeWidth="2.4" fill="none">
+            <ellipse cx="9" cy="9" rx="3.6" ry="2.4" transform="rotate(45 9 9)" />
+            <ellipse cx="16" cy="16" rx="3.6" ry="2.4" transform="rotate(45 16 16)" />
+            <ellipse cx="23" cy="23" rx="3.6" ry="2.4" transform="rotate(45 23 23)" />
+          </g>
+        </svg>
+      </BoardWideLead>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span
@@ -2871,12 +3125,6 @@ function ChainFreezeBurst({ lead, delayMs }: { lead: boolean; delayMs: number })
           </g>
         </svg>
       </span>
-      {lead && (
-        <span
-          className="fx-sig-flash absolute inset-[30%] block rounded-full"
-          style={{ background: "rgba(224,246,255,0.72)", animationDelay: `${delayMs}ms` }}
-        />
-      )}
     </span>
   );
 }
@@ -2911,6 +3159,22 @@ function GorgonStareBurst({ lead, delayMs }: { lead: boolean; delayMs: number })
 /** Medusa's full gaze: grey stone washes up as snake-hair tendrils whip round
  * a gaze ring; a green glint on the lead square. */
 function MedusaGazeBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(146,146,152,0.24)" boom="rgba(143,181,154,0.85)" delayMs={delayMs} motifClass="fx-sig-gaze">
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <g stroke="#8fb59a" strokeWidth="1.6" fill="none" strokeLinecap="round">
+            <path d="M20 6 q4 3 2 8 M34 20 q-3 4 -8 2 M20 34 q-4 -3 -2 -8 M6 20 q3 -4 8 -2" />
+            <path d="M30 10 q1 4 -3 6 M30 30 q-4 1 -6 -3 M10 30 q-1 -4 3 -6 M10 10 q4 -1 6 3" />
+          </g>
+          <circle cx="20" cy="20" r="5.5" fill="none" stroke="#b6f0b8" strokeWidth="1.4" />
+        </svg>
+      </BoardWideLead>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span
@@ -2926,12 +3190,6 @@ function MedusaGazeBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) 
           <circle cx="20" cy="20" r="5.5" fill="none" stroke="#b6f0b8" strokeWidth="1.4" />
         </svg>
       </span>
-      {lead && (
-        <span
-          className="fx-sig-flash absolute inset-[34%] block rounded-full"
-          style={{ background: "rgba(150,220,150,0.8)", animationDelay: `${delayMs + 90}ms` }}
-        />
-      )}
     </span>
   );
 }
@@ -2964,6 +3222,14 @@ const WITHER_MOTES = [
 
 /** Withering Touch: a grey pall drains up the piece as flesh crumbles to dust. */
 function WitherBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(108,102,92,0.24)" boom="rgba(96,110,90,0.85)" delayMs={delayMs} />
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span
@@ -2977,19 +3243,42 @@ function WitherBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           style={{ left: m.left, top: m.top, width: m.w, height: m.w, background: m.c, animationDelay: `${delayMs + m.d}ms` }}
         />
       ))}
-      {lead && (
-        <span
-          className="fx-sig-flash absolute inset-[30%] block rounded-full"
-          style={{ background: "rgba(96,110,90,0.7)", animationDelay: `${delayMs + 60}ms` }}
-        />
-      )}
     </span>
   );
 }
 
 /** Chains of Binding: spectral chain-bars drop over the towers as they turn to
  * dead stone. */
-function StoneChainBurst({ delayMs }: { delayMs: number }) {
+function StoneChainBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 12 — tier 5+ board-wide guarantee: the lead binds the WHOLE board —
+  // a stone-grey wash while colossal spectral chains drop across the crop.
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(140,140,146,0.28)" delayMs={delayMs} />
+        {[
+          { l: "30%", d: 0 },
+          { l: "47%", d: 140 },
+          { l: "62%", d: 280 },
+        ].map((c, i) => (
+          <span key={i} className="fx-sig-cage absolute top-[26%] block h-[48%] w-[8%]" style={{ left: c.l, animationDelay: `${delayMs + c.d}ms` }}>
+            <svg viewBox="0 0 16 32" className="h-full w-full" aria-hidden="true">
+              <g stroke="#141e2b" strokeWidth="3" fill="none">
+                <ellipse cx="8" cy="6" rx="2.4" ry="4" />
+                <ellipse cx="8" cy="16" rx="2.4" ry="4" />
+                <ellipse cx="8" cy="26" rx="2.4" ry="4" />
+              </g>
+              <g stroke="#b9c4d6" strokeWidth="1.2" fill="none">
+                <ellipse cx="8" cy="6" rx="2.4" ry="4" />
+                <ellipse cx="8" cy="16" rx="2.4" ry="4" />
+                <ellipse cx="8" cy="26" rx="2.4" ry="4" />
+              </g>
+            </svg>
+          </span>
+        ))}
+      </BoardWideStage>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span
@@ -3021,7 +3310,24 @@ function StoneChainBurst({ delayMs }: { delayMs: number }) {
 }
 
 /** Hex of Stone: a creeping grey hex crawls a stone hexagon over the flanks. */
-function GreyHexBurst({ delayMs }: { delayMs: number }) {
+function GreyHexBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 12 — tier 6+ board-wide guarantee: the lead casts the hex over the
+  // WHOLE board — a grey wash while a colossal stone hexagon grows across the
+  // crop, a second sigil blooming inside it.
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(134,134,140,0.3)" delayMs={delayMs} />
+        <span className="fx-sig-grow absolute inset-[26%] block" style={{ animationDelay: `${delayMs + 80}ms` }}>
+          <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+            <polygon points="20,4 34,12 34,28 20,36 6,28 6,12" fill="rgba(120,120,128,0.2)" stroke="rgba(168,168,176,0.9)" strokeWidth="1.2" strokeLinejoin="round" />
+            <polygon points="20,12 28,16 28,24 20,28 12,24 12,16" fill="none" stroke="rgba(150,150,158,0.7)" strokeWidth="0.7" strokeLinejoin="round" />
+          </svg>
+        </span>
+        <BoardBoom delayMs={delayMs + 300} color="rgba(168,168,176,0.85)" />
+      </BoardWideStage>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span
@@ -3049,7 +3355,27 @@ const GREATWALL_MERLONS = [
 
 /** Great Wall: a battlement course rises across the square and merlons rise on
  * top of it. */
-function GreatWallBurst({ delayMs }: { delayMs: number }) {
+function GreatWallBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 12 — tier 5+ board-wide guarantee: the lead raises the Great Wall
+  // itself — an earthen wash while a battlement course spans the full crop
+  // width and a run of merlons rises along its top.
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(120,86,58,0.24)" delayMs={delayMs} />
+        <span className="fx-sig-brick absolute left-[22%] bottom-[38%] block h-[9%] w-[56%] rounded-[2px]" style={{ background: "rgba(120,86,58,0.92)", border: "1px solid rgba(60,40,24,0.85)", animationDelay: `${delayMs + 60}ms` }} />
+        {[
+          { l: "25%", d: 160 },
+          { l: "35%", d: 240 },
+          { l: "45%", d: 320 },
+          { l: "55%", d: 400 },
+          { l: "65%", d: 480 },
+        ].map((m, i) => (
+          <span key={i} className="fx-sig-brick absolute bottom-[47%] block h-[5%] w-[6%] rounded-[1px]" style={{ left: m.l, background: "rgba(132,96,64,0.92)", border: "1px solid rgba(60,40,24,0.85)", animationDelay: `${delayMs + m.d}ms` }} />
+        ))}
+      </BoardWideStage>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span
@@ -3069,7 +3395,32 @@ function GreatWallBurst({ delayMs }: { delayMs: number }) {
 
 /** Generic conjuring: an arcane summoning circle draws and spins as a shaft of
  * light rises from its centre (imps, guardians, golems, warbands). */
-function SummonRiftBurst({ delayMs }: { delayMs: number }) {
+function SummonRiftBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 12 — tier 6+ board-wide guarantee: the lead draws the summoning
+  // circle across the WHOLE board — a mint wash, a colossal spinning rift
+  // sigil, and shafts of conjuring light rising along the central band.
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(126,181,154,0.22)" delayMs={delayMs} />
+        <span className="fx-sig-swirl absolute inset-[24%] block" style={{ animationDelay: `${delayMs + 60}ms` }}>
+          <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+            <circle cx="20" cy="20" r="17" fill="none" stroke="#7eb59a" strokeWidth="1" />
+            <circle cx="20" cy="20" r="11" fill="none" stroke="#e6bf6a" strokeWidth="0.7" strokeDasharray="3 3" />
+            <polygon points="20,6 32,27 8,27" fill="none" stroke="#7eb59a" strokeWidth="0.7" />
+            <polygon points="20,34 8,13 32,13" fill="none" stroke="#7eb59a" strokeWidth="0.7" />
+          </svg>
+        </span>
+        {[
+          { l: "32%", d: 120 },
+          { l: "49%", d: 240 },
+          { l: "64%", d: 360 },
+        ].map((s, i) => (
+          <span key={i} className="fx-sig-rise absolute bottom-[26%] block h-[36%] w-[5%] rounded-[1px]" style={{ left: s.l, background: "rgba(180,224,204,0.5)", animationDelay: `${delayMs + s.d}ms` }} />
+        ))}
+      </BoardWideStage>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-swirl absolute inset-[12%] block" style={{ animationDelay: `${delayMs}ms` }}>
@@ -3097,6 +3448,27 @@ function WingsBurst({ tone, lead, delayMs }: { tone: "dragon" | "feather"; lead:
     tone === "dragon"
       ? "M22 20 L4 6 L8 14 L2 13 L9 20 L3 22 L11 24 L7 30 Z"
       : "M22 20 C12 6 4 8 3 20 C7 16 12 17 15 21 C10 20 7 23 6 28 C11 23 16 22 22 22 Z";
+  // Batch 12 — tier 6+ board-wide guarantee: the lead unfurls wings over the
+  // WHOLE board — a tone-tinted wash while two colossal wings spring open
+  // across the crop and a shock ring rolls past the edges.
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color={tone === "dragon" ? "rgba(230,168,92,0.22)" : "rgba(206,226,240,0.28)"} delayMs={delayMs} />
+        <span className="fx-sig-wing-l absolute left-[22%] top-[30%] block h-[40%] w-[28%]" style={{ animationDelay: `${delayMs + 60}ms` }}>
+          <svg viewBox="0 0 24 34" className="h-full w-full" aria-hidden="true">
+            <path d={path} fill={fill} stroke={stroke} strokeWidth="1" strokeLinejoin="round" />
+          </svg>
+        </span>
+        <span className="fx-sig-wing-r absolute right-[22%] top-[30%] block h-[40%] w-[28%]" style={{ animationDelay: `${delayMs + 60}ms` }}>
+          <svg viewBox="0 0 24 34" className="h-full w-full" aria-hidden="true" style={{ transform: "scaleX(-1)" }}>
+            <path d={path} fill={fill} stroke={stroke} strokeWidth="1" strokeLinejoin="round" />
+          </svg>
+        </span>
+        <BoardBoom delayMs={delayMs + 300} color={tone === "dragon" ? "rgba(230,168,92,0.85)" : "rgba(214,232,246,0.9)"} />
+      </BoardWideStage>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-wing-l absolute left-[4%] top-[22%] block h-[50%] w-[46%]" style={{ animationDelay: `${delayMs}ms` }}>
@@ -3109,12 +3481,6 @@ function WingsBurst({ tone, lead, delayMs }: { tone: "dragon" | "feather"; lead:
           <path d={path} fill={fill} stroke={stroke} strokeWidth="1" strokeLinejoin="round" />
         </svg>
       </span>
-      {lead && (
-        <span
-          className="fx-sig-flash absolute inset-[32%] block rounded-full"
-          style={{ background: tone === "dragon" ? "rgba(230,168,92,0.6)" : "rgba(214,232,246,0.7)", animationDelay: `${delayMs + 140}ms` }}
-        />
-      )}
     </span>
   );
 }
@@ -3133,6 +3499,20 @@ function DragonRiseBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) 
 
 /** Starfall: a meteor streaks in from the corner, cracks down, throws embers. */
 function MeteorBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(230,168,92,0.24)" boom="rgba(230,168,92,0.85)" delayMs={delayMs} motifClass="fx-sig-streak">
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <path d="M2 2 L26 26" stroke="#e6a85c" strokeWidth="3" strokeLinecap="round" />
+          <path d="M8 4 L26 22" stroke="#ffd95e" strokeWidth="1.4" strokeLinecap="round" />
+          <circle cx="28" cy="28" r="5" fill="#d98a4a" stroke="#7a3a12" strokeWidth="1.2" />
+        </svg>
+      </BoardWideLead>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-streak absolute left-[-6%] top-[-6%] block h-[68%] w-[68%]" style={{ animationDelay: `${delayMs}ms` }}>
@@ -3143,18 +3523,38 @@ function MeteorBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
         </svg>
       </span>
       <ShardBurst vectors={BURST_MED} fill="#e6a85c" stroke="#7a3a12" delayMs={delayMs + 260} sizePct={11} />
-      {lead && (
-        <span
-          className="fx-sig-ring absolute inset-[18%] block rounded-full"
-          style={{ border: "1.5px solid rgba(230,168,92,0.9)", animationDelay: `${delayMs + 260}ms` }}
-        />
-      )}
     </span>
   );
 }
 
 /** Raise Dead / Army of the Dead: bony hands and grave dirt heave up. */
-function GraveHandsBurst({ delayMs }: { delayMs: number }) {
+function GraveHandsBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 12 — tier 6+ board-wide guarantee: the lead raises the WHOLE
+  // graveyard — a deathly wash over the crop while ranks of bony hands heave
+  // up along the central band under drifting grave dust.
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(60,64,52,0.34)" delayMs={delayMs} />
+        {[
+          { l: "28%", d: 0 },
+          { l: "42%", d: 140 },
+          { l: "56%", d: 60 },
+          { l: "66%", d: 220 },
+        ].map((h, i) => (
+          <span key={i} className="fx-sig-rise absolute bottom-[26%] block h-[22%] w-[9%]" style={{ left: h.l, animationDelay: `${delayMs + h.d}ms` }}>
+            <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+              <g fill="rgba(206,216,200,0.85)" stroke="#5a6155" strokeWidth="0.8" strokeLinejoin="round">
+                <path d="M10 40 L10 22 L8 22 L8 30 M13 40 L13 18 L11 18 L11 28 M16 40 L16 20 L14 20 L14 30" />
+                <path d="M26 40 L26 20 L24 20 L24 30 M29 40 L29 22 L27 22 L27 30 M32 40 L32 24 L30 24 L30 32" />
+              </g>
+            </svg>
+          </span>
+        ))}
+        <span className="fx-sig-ash absolute left-[30%] bottom-[24%] block h-[8%] w-[40%] rounded-full" style={{ background: "rgba(90,84,72,0.5)", animationDelay: `${delayMs + 260}ms` }} />
+      </BoardWideStage>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-rise absolute left-[22%] bottom-[6%] block h-[56%] w-[56%]" style={{ animationDelay: `${delayMs}ms` }}>
@@ -3172,18 +3572,20 @@ function GraveHandsBurst({ delayMs }: { delayMs: number }) {
 
 /** Hallowed Return / Divine Intervention: a shaft of holy light and a halo. */
 function HolyLightBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(255,242,192,0.24)" boom="rgba(255,242,192,0.85)" delayMs={delayMs} />
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span
         className="fx-sig-shaft absolute left-[36%] top-0 block h-[82%] w-[28%]"
         style={{ background: "rgba(255,242,192,0.5)", animationDelay: `${delayMs}ms` }}
       />
-      {lead && (
-        <span
-          className="fx-sig-ring absolute inset-[20%] block rounded-full"
-          style={{ border: "1.5px solid rgba(255,224,140,0.9)", animationDelay: `${delayMs + 120}ms` }}
-        />
-      )}
       <ShardBurst vectors={BURST_MED} fill="#fff2c0" stroke="#c9a244" delayMs={delayMs + 120} sizePct={10} />
     </span>
   );
@@ -3197,7 +3599,27 @@ const ICEWALL_BLOCKS = [
 ];
 
 /** Frost Wall: a column of blue ice blocks erupts up the file. */
-function IceWallBurst({ delayMs }: { delayMs: number }) {
+function IceWallBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 12 — tier 6+ board-wide guarantee: the lead raises the glacier
+  // across the WHOLE board — an icy wash while a rampart of ice blocks stacks
+  // up along the central band.
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(176,220,245,0.26)" delayMs={delayMs} />
+        {[
+          { l: "26%", d: 0 },
+          { l: "36%", d: 90 },
+          { l: "46%", d: 180 },
+          { l: "56%", d: 270 },
+          { l: "66%", d: 360 },
+        ].map((b, i) => (
+          <span key={i} className="fx-sig-brick absolute bottom-[34%] block h-[14%] w-[9%] rounded-[2px]" style={{ left: b.l, background: "rgba(176,220,245,0.55)", border: "1px solid rgba(224,246,255,0.85)", animationDelay: `${delayMs + b.d}ms` }} />
+        ))}
+        <BoardBoom delayMs={delayMs + 420} color="rgba(224,246,255,0.9)" />
+      </BoardWideStage>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       {ICEWALL_BLOCKS.map((b, i) => (
@@ -3212,7 +3634,33 @@ function IceWallBurst({ delayMs }: { delayMs: number }) {
 }
 
 /** Wall of Thorns: a bramble of barbed thorns bursts up from the ground. */
-function ThornWallBurst({ delayMs }: { delayMs: number }) {
+function ThornWallBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 12 — tier 6+ board-wide guarantee: the lead overgrows the WHOLE
+  // board — a verdant wash while a colossal bramble of barbed thorns bursts up
+  // across the central band.
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(74,107,58,0.26)" delayMs={delayMs} />
+        <span className="fx-sig-rise absolute left-[24%] bottom-[26%] block h-[38%] w-[52%]" style={{ animationDelay: `${delayMs + 80}ms` }}>
+          <svg viewBox="0 0 40 40" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
+            <g stroke="#4a6b3a" strokeWidth="2" fill="none" strokeLinecap="round">
+              <path d="M4 40 L8 6 M14 40 L12 4 M22 40 L20 8 M30 40 L32 5 M37 40 L35 9" />
+            </g>
+            <g fill="#6b8a4a" stroke="#33481f" strokeWidth="0.6" strokeLinejoin="round">
+              <polygon points="8,10 4,14 10,14" />
+              <polygon points="12,8 8,12 16,12" />
+              <polygon points="20,12 16,16 23,15" />
+              <polygon points="32,9 28,13 35,13" />
+              <polygon points="35,18 31,21 38,22" />
+              <polygon points="12,20 7,23 14,24" />
+              <polygon points="22,22 26,26 19,27" />
+            </g>
+          </svg>
+        </span>
+      </BoardWideStage>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-rise absolute inset-x-[12%] bottom-[6%] block h-[66%]" style={{ animationDelay: `${delayMs}ms` }}>
@@ -3237,6 +3685,21 @@ function ThornWallBurst({ delayMs }: { delayMs: number }) {
 
 /** Excalibur: a radiant blade descends point-down and plants on the bishop. */
 function BladeGiftBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(200,224,240,0.24)" boom="rgba(227,237,245,0.85)" delayMs={delayMs} motifClass="fx-sig-cage">
+        <svg viewBox="0 0 12 34" className="h-full w-full" aria-hidden="true">
+          <polygon points="6,0 8,20 6,26 4,20" fill="#e3edf5" stroke="#7a8b98" strokeWidth="0.8" strokeLinejoin="round" />
+          <rect x="1" y="19.5" width="10" height="2.4" rx="0.5" fill="#c79a48" stroke="#7a5b23" strokeWidth="0.6" />
+          <rect x="5" y="22" width="2" height="8" fill="#8a6a3a" />
+          <circle cx="6" cy="31" r="1.6" fill="#c79a48" stroke="#7a5b23" strokeWidth="0.6" />
+        </svg>
+      </BoardWideLead>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span
@@ -3251,12 +3714,6 @@ function BladeGiftBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           <circle cx="6" cy="31" r="1.6" fill="#c79a48" stroke="#7a5b23" strokeWidth="0.6" />
         </svg>
       </span>
-      {lead && (
-        <span
-          className="fx-sig-flash absolute inset-[30%] block rounded-full"
-          style={{ background: "rgba(214,232,246,0.7)", animationDelay: `${delayMs + 160}ms` }}
-        />
-      )}
     </span>
   );
 }
@@ -3269,6 +3726,19 @@ const WARHORN_DASHES = [
 
 /** Banner of War: the war banner runs up its pole with speed-dashes trailing. */
 function WarhornBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(224,119,107,0.24)" boom="rgba(122,91,35,0.85)" delayMs={delayMs} motifClass="fx-sig-crown">
+        <svg viewBox="0 0 24 32" className="h-full w-full" aria-hidden="true">
+          <path d="M6 32 V2" stroke="#7a5b23" strokeWidth="2.2" strokeLinecap="round" fill="none" />
+          <path d="M6 3 H21 L17 8 L21 13 H6 Z" fill="#e0776b" stroke="#7a2f28" strokeWidth="1" strokeLinejoin="round" />
+        </svg>
+      </BoardWideLead>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-crown absolute left-[34%] top-[4%] block h-[68%] w-[40%]" style={{ animationDelay: `${delayMs}ms` }}>
@@ -3284,12 +3754,6 @@ function WarhornBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           style={{ top: s.top, background: "rgba(224,119,107,0.8)", animationDelay: `${delayMs + s.d}ms` }}
         />
       ))}
-      {lead && (
-        <span
-          className="fx-sig-flash absolute inset-[36%] block rounded-full"
-          style={{ background: "rgba(224,119,107,0.55)", animationDelay: `${delayMs + 120}ms` }}
-        />
-      )}
     </span>
   );
 }
@@ -3299,6 +3763,14 @@ function WarhornBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 /** Dragon's Breath: a corridor of flame. Lead flashes at the rook's mouth; each
  * victim is a fireball flash, ember shatter, and scorch. */
 function DragonFireBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(255,150,60,0.24)" boom="rgba(255,180,84,0.85)" delayMs={delayMs} />
+    );
+  }
   if (lead) {
     return (
       <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
@@ -3330,7 +3802,29 @@ function DragonFireBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) 
 
 /** Soul Harvest: a great scythe blade sweeps the diagonal; each reaped square
  * gives up a rising soul wisp. */
-function ScytheBurst({ delayMs }: { delayMs: number }) {
+function ScytheBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 12 — tier 6+ board-wide guarantee: the lead reaps the WHOLE board —
+  // a deathly violet wash while a colossal scythe blade arcs across the crop
+  // and soul wisps drift up along the central band.
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(74,58,102,0.3)" delayMs={delayMs} />
+        <span className="fx-sig-arc absolute inset-[26%] block" style={{ animationDelay: `${delayMs + 60}ms` }}>
+          <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+            <path d="M6 34 C6 14 22 4 36 8 C24 10 14 20 14 34 Z" fill="#c9d2dc" stroke="#5b6672" strokeWidth="1" strokeLinejoin="round" />
+          </svg>
+        </span>
+        {[
+          { l: "30%", d: 180 },
+          { l: "48%", d: 300 },
+          { l: "62%", d: 420 },
+        ].map((w, i) => (
+          <span key={i} className="fx-sig-ash absolute top-[38%] block h-[10%] w-[7%] rounded-full" style={{ left: w.l, background: "rgba(168,119,216,0.5)", animationDelay: `${delayMs + w.d}ms` }} />
+        ))}
+      </BoardWideStage>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-arc absolute inset-[2%] block" style={{ animationDelay: `${delayMs}ms` }}>
@@ -3349,7 +3843,23 @@ function ScytheBurst({ delayMs }: { delayMs: number }) {
 
 /** Chain Lightning: a forked bolt leaps down the diagonal in strobed
  * after-images, throwing sparks at each arc point. */
-function ArcLightBurst({ delayMs }: { delayMs: number }) {
+function ArcLightBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 12 — tier 5+ board-wide guarantee: the lead forks the storm across
+  // the WHOLE board — a pale charge wash while a colossal strobed bolt leaps
+  // the crop diagonally and sparks scatter from the arc.
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(255,246,200,0.24)" delayMs={delayMs} />
+        <span className="fx-sig-afterimage absolute inset-[24%] block" style={{ animationDelay: `${delayMs + 60}ms` }}>
+          <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+            <polygon points="6,4 18,14 12,16 26,26 20,26 34,38 22,30 27,29 13,19 19,18 6,8" fill="#fff6c8" stroke="#e6b800" strokeWidth="1" strokeLinejoin="round" />
+          </svg>
+        </span>
+        <ShardBurst vectors={BURST_MED} fill="#ffe98a" stroke="#8a6414" delayMs={delayMs + 220} sizePct={5} />
+      </BoardWideStage>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-afterimage absolute left-[8%] top-[6%] block h-[80%] w-[80%]" style={{ animationDelay: `${delayMs}ms` }}>
@@ -3386,6 +3896,14 @@ function DiveBurst({ delayMs }: { delayMs: number }) {
 /** Judgment Day / Heaven's Wrath: a pillar of holy light slams a named piece
  * off the board with a radiant shock and scorch. */
 function SmiteBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(255,246,200,0.24)" boom="rgba(255,232,150,0.85)" delayMs={delayMs} />
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span
@@ -3400,18 +3918,25 @@ function SmiteBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
         className="fx-sig-scorch absolute inset-[30%] block rounded-full"
         style={{ background: "rgba(30,22,10,0.6)", animationDelay: `${delayMs + 180}ms` }}
       />
-      {lead && (
-        <span
-          className="fx-sig-shock absolute inset-[10%] block rounded-full"
-          style={{ border: "2px solid rgba(255,244,200,0.85)", animationDelay: `${delayMs + 120}ms` }}
-        />
-      )}
     </span>
   );
 }
 
 /** Divine Reckoning: a gilded court decree stamps down over the enemy ranks. */
 function DecreeBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(40,52,72,0.24)" boom="rgba(230,191,106,0.85)" delayMs={delayMs} motifClass="fx-sig-snooze">
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <path d="M20 8 V32 M12 14 H28 M14 32 H26" stroke="#e6bf6a" strokeWidth="2.2" strokeLinecap="round" fill="none" />
+          <path d="M12 14 L9 22 H15 Z M28 14 L25 22 H31 Z" fill="rgba(226,196,106,0.5)" stroke="#e6bf6a" strokeWidth="1" strokeLinejoin="round" />
+        </svg>
+      </BoardWideLead>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span
@@ -3423,12 +3948,6 @@ function DecreeBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           <path d="M12 14 L9 22 H15 Z M28 14 L25 22 H31 Z" fill="rgba(226,196,106,0.5)" stroke="#e6bf6a" strokeWidth="1" strokeLinejoin="round" />
         </svg>
       </span>
-      {lead && (
-        <span
-          className="fx-sig-ring absolute inset-[14%] block rounded-full"
-          style={{ border: "1.5px solid rgba(226,196,106,0.85)", animationDelay: `${delayMs + 120}ms` }}
-        />
-      )}
     </span>
   );
 }
@@ -3442,7 +3961,30 @@ function DecreeBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 // genuinely new. Coral / mint / sun accents plus theme colours.
 
 /** Immolation / Conflagration: flame tongues leap up, an ember shatter, scorch. */
-function InfernoBurst({ delayMs }: { delayMs: number }) {
+function InfernoBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 12 — tier 6+ board-wide guarantee: the lead sets the WHOLE board
+  // alight — an ember wash while great flame tongues leap up along the central
+  // band and a fire ring rolls past the edges.
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(230,110,60,0.24)" delayMs={delayMs} />
+        {[
+          { l: "28%", w: "12%", d: 0 },
+          { l: "44%", w: "14%", d: 130 },
+          { l: "60%", w: "11%", d: 260 },
+        ].map((f, i) => (
+          <span key={i} className="fx-sig-rise absolute bottom-[26%] block h-[34%]" style={{ left: f.l, width: f.w, animationDelay: `${delayMs + f.d}ms` }}>
+            <svg viewBox="0 0 40 40" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
+              <path d="M20 40 C9 30 15 22 12 11 C18 17 17 7 20 2 C23 9 25 16 28 11 C25 22 31 30 20 40 Z" fill="rgba(230,110,60,0.85)" stroke="#7a3a12" strokeWidth="1" strokeLinejoin="round" />
+              <path d="M20 40 C15 32 18 24 20 15 C22 24 25 32 20 40 Z" fill="rgba(255,214,120,0.9)" />
+            </svg>
+          </span>
+        ))}
+        <BoardBoom delayMs={delayMs + 340} color="rgba(255,168,80,0.85)" thickness={4} />
+      </BoardWideStage>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-rise absolute inset-x-[16%] bottom-[6%] top-[12%] block" style={{ animationDelay: `${delayMs}ms` }}>
@@ -3462,12 +4004,17 @@ function InfernoBurst({ delayMs }: { delayMs: number }) {
  * queen's mouth; each victim is a red-gold fireball, a wide ember shatter, and
  * a deep scorch. */
 function HellfireBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the beam's ignition now torches the
+  // WHOLE crop — a red-hot wash, a colossal core flash mid-board, and twin
+  // fire rings rolling past the edges.
   if (lead) {
     return (
-      <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
-        <span className="fx-sig-flash absolute inset-[16%] block rounded-full" style={{ background: "rgba(226,60,40,0.85)", animationDelay: `${delayMs}ms` }} />
-        <span className="fx-sig-ring absolute inset-[10%] block rounded-full" style={{ border: "2px solid rgba(255,150,60,0.9)", animationDelay: `${delayMs}ms` }} />
-      </span>
+      <BoardWideStage>
+        <BoardWash color="rgba(226,60,40,0.26)" delayMs={delayMs} />
+        <span className="fx-sig-flash absolute inset-[38%] block rounded-full" style={{ background: "rgba(226,60,40,0.8)", animationDelay: `${delayMs + 60}ms` }} />
+        <BoardBoom delayMs={delayMs + 200} color="rgba(255,150,60,0.9)" thickness={4} />
+        <BoardBoom delayMs={delayMs + 340} color="rgba(255,214,120,0.8)" />
+      </BoardWideStage>
     );
   }
   return (
@@ -3513,6 +4060,18 @@ const BLIZ_FLAKES = [
 
 /** Whiteout: a blizzard swirls and whites out the king, snow driving past. */
 function BlizzardBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(224,244,255,0.24)" boom="rgba(234,248,255,0.85)" delayMs={delayMs} motifClass="fx-sig-swirl">
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <path d="M20 4 C30 8 32 20 20 24 C10 27 8 16 18 14 C24 13 25 19 20 20" fill="none" stroke="rgba(224,244,255,0.8)" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+      </BoardWideLead>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-swirl absolute inset-[10%] block" style={{ animationDelay: `${delayMs}ms` }}>
@@ -3527,9 +4086,6 @@ function BlizzardBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           </svg>
         </span>
       ))}
-      {lead && (
-        <span className="fx-sig-flash absolute inset-[20%] block rounded-full" style={{ background: "rgba(240,250,255,0.8)", animationDelay: `${delayMs}ms` }} />
-      )}
     </span>
   );
 }
@@ -3554,7 +4110,25 @@ function StoneRiseBurst({ delayMs }: { delayMs: number }) {
 }
 
 /** Mountain Range: a ridge of jagged, snow-capped rock heaves up. */
-function MountainWallBurst({ delayMs }: { delayMs: number }) {
+function MountainWallBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 12 — tier 6+ board-wide guarantee: the lead heaves the WHOLE range
+  // up — a dust wash while a colossal snow-capped ridge rises across the crop.
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(120,110,98,0.28)" delayMs={delayMs} />
+        <span className="fx-sig-rise absolute left-[22%] bottom-[28%] block h-[34%] w-[56%]" style={{ animationDelay: `${delayMs + 80}ms` }}>
+          <svg viewBox="0 0 40 30" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
+            <polygon points="0,30 8,10 14,18 22,4 30,16 40,8 40,30" fill="rgba(120,110,98,0.9)" stroke="#4a443c" strokeWidth="1" strokeLinejoin="round" />
+            <polygon points="22,4 18,12 26,12" fill="rgba(224,236,240,0.7)" />
+            <polygon points="8,10 5,16 12,16" fill="rgba(224,236,240,0.6)" />
+            <polygon points="40,8 36,14 40,14" fill="rgba(224,236,240,0.6)" />
+          </svg>
+        </span>
+        <span className="fx-sig-ash absolute left-[30%] bottom-[26%] block h-[7%] w-[40%] rounded-full" style={{ background: "rgba(120,112,102,0.5)", animationDelay: `${delayMs + 260}ms` }} />
+      </BoardWideStage>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-rise absolute inset-x-[4%] bottom-[8%] block h-[66%]" style={{ animationDelay: `${delayMs}ms` }}>
@@ -3575,7 +4149,26 @@ const ROCK_DROPS = [
 ];
 
 /** Landslide: boulders crash down and burst into rubble with a dust cloud. */
-function RockfallBurst({ delayMs }: { delayMs: number }) {
+function RockfallBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 12 — tier 6+ board-wide guarantee: the lead brings the WHOLE slope
+  // down — a dust wash while boulders rain across the central band and a
+  // rubble ring rolls out.
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(120,112,102,0.3)" delayMs={delayMs} />
+        <BoardRain
+          delayMs={delayMs + 80}
+          render={() => (
+            <svg viewBox="0 0 12 12" className="h-full w-full" aria-hidden="true">
+              <polygon points="6,0 11,3 10,9 4,11 1,6 2,2" fill="rgba(128,122,112,0.9)" stroke="#4a443c" strokeWidth="0.7" strokeLinejoin="round" />
+            </svg>
+          )}
+        />
+        <BoardBoom delayMs={delayMs + 320} color="rgba(138,132,120,0.85)" />
+      </BoardWideStage>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       {ROCK_DROPS.map((r, i) => (
@@ -3611,11 +4204,16 @@ function StormCloudBurst({ delayMs }: { delayMs: number }) {
 /** Bayonet Charge / Spearhead: a lance drives in with an impact splat. Lead
  * cries out with a war-shout muzzle flash. */
 function SpearChargeBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the war-shout now carries over the
+  // WHOLE line — a brass wash while the rallying flash lances the full crop
+  // width and a charge ring rolls out.
   if (lead) {
     return (
-      <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
-        <span className="fx-sig-muzzle absolute left-[10%] top-[38%] block h-[24%] w-[80%] rounded-full" style={{ background: "rgba(226,196,106,0.9)", animationDelay: `${delayMs}ms` }} />
-      </span>
+      <BoardWideStage>
+        <BoardWash color="rgba(226,196,106,0.22)" delayMs={delayMs} />
+        <span className="fx-sig-muzzle absolute left-[22%] top-[45%] block h-[10%] w-[56%] rounded-full" style={{ background: "rgba(226,196,106,0.9)", animationDelay: `${delayMs}ms` }} />
+        <BoardBoom delayMs={delayMs + 220} color="rgba(226,196,106,0.85)" />
+      </BoardWideStage>
     );
   }
   return (
@@ -3633,7 +4231,36 @@ function SpearChargeBurst({ lead, delayMs }: { lead: boolean; delayMs: number })
 }
 
 /** Armored Breakthrough: an armored hull rolls through with treads and debris. */
-function TankRollBurst({ delayMs }: { delayMs: number }) {
+function TankRollBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 12 — tier 6+ board-wide guarantee: the lead sends the armor through
+  // the WHOLE line — a dust wash while a colossal hull lunges across the crop
+  // over churned tread scars.
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(96,104,88,0.26)" delayMs={delayMs} />
+        <span className="fx-sig-gallop absolute left-[24%] top-[36%] block h-[24%] w-[46%]" style={{ animationDelay: `${delayMs + 80}ms` }}>
+          <svg viewBox="0 0 40 20" className="h-full w-full" aria-hidden="true">
+            <rect x="4" y="8" width="30" height="7" rx="1" fill="rgba(96,104,88,0.9)" stroke="#33402b" strokeWidth="1" />
+            <rect x="12" y="3" width="14" height="5" rx="1" fill="rgba(112,120,100,0.9)" stroke="#33402b" strokeWidth="1" />
+            <rect x="24" y="4" width="14" height="2" rx="1" fill="rgba(112,120,100,0.9)" />
+            <g fill="#2a3323">
+              <circle cx="9" cy="16" r="2.4" />
+              <circle cx="17" cy="16" r="2.4" />
+              <circle cx="25" cy="16" r="2.4" />
+              <circle cx="32" cy="16" r="2.4" />
+            </g>
+          </svg>
+        </span>
+        {[
+          { t: "62%", d: 160 },
+          { t: "66%", d: 240 },
+        ].map((b, i) => (
+          <span key={i} className="fx-sig-sweepbar absolute left-[-30%] block h-[1.6%] w-[160%] rounded-[1px]" style={{ top: b.t, background: "rgba(42,51,35,0.55)", animationDelay: `${delayMs + b.d}ms` }} />
+        ))}
+      </BoardWideStage>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-afterimage absolute left-[6%] top-[26%] block h-[48%] w-[84%]" style={{ animationDelay: `${delayMs}ms` }}>
@@ -3661,7 +4288,26 @@ const SHELL_DROPS = [
 ];
 
 /** Bombardment / Counter Battery: a shell whistles down and cracks a crater. */
-function ArtilleryBurst({ delayMs }: { delayMs: number }) {
+function ArtilleryBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 12 — tier 5+ board-wide guarantee: the lead opens the barrage on
+  // the WHOLE grid — a smoke wash while shells whistle down the central band
+  // and a blast ring rolls out.
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(90,96,88,0.26)" delayMs={delayMs} />
+        <BoardRain
+          delayMs={delayMs + 60}
+          render={() => (
+            <svg viewBox="0 0 10 16" className="h-full w-full" aria-hidden="true">
+              <path d="M5 0 C8 3 8 6 8 10 L8 14 L2 14 L2 10 C2 6 2 3 5 0 Z" fill="rgba(90,96,88,0.9)" stroke="#2f3530" strokeWidth="0.7" strokeLinejoin="round" />
+            </svg>
+          )}
+        />
+        <BoardBoom delayMs={delayMs + 300} color="rgba(255,200,120,0.85)" thickness={4} />
+      </BoardWideStage>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       {SHELL_DROPS.map((s, i) => (
@@ -3680,7 +4326,30 @@ function ArtilleryBurst({ delayMs }: { delayMs: number }) {
 
 /** Combined Arms / Muster / Forward Outpost: a war banner plants with dust as
  * fresh troops arrive. */
-function ReinforceBurst({ delayMs }: { delayMs: number }) {
+function ReinforceBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 12 — tier 6+ board-wide guarantee: the lead musters the WHOLE
+  // front — a mint wash while war banners plant across the central band in a
+  // rolling rally and dust kicks along the line.
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(126,181,154,0.22)" delayMs={delayMs} />
+        {[
+          { l: "30%", d: 0 },
+          { l: "46%", d: 150 },
+          { l: "62%", d: 300 },
+        ].map((b, i) => (
+          <span key={i} className="fx-sig-rise absolute bottom-[28%] block h-[26%] w-[8%]" style={{ left: b.l, animationDelay: `${delayMs + b.d}ms` }}>
+            <svg viewBox="0 0 24 32" className="h-full w-full" aria-hidden="true">
+              <path d="M6 32 V2" stroke="#5a4a2a" strokeWidth="2.2" strokeLinecap="round" fill="none" />
+              <path d="M6 3 H21 L17 8 L21 13 H6 Z" fill="rgba(126,181,154,0.9)" stroke="#2f4a3c" strokeWidth="1" strokeLinejoin="round" />
+            </svg>
+          </span>
+        ))}
+        <span className="fx-sig-ash absolute left-[30%] bottom-[26%] block h-[7%] w-[40%] rounded-full" style={{ background: "rgba(120,116,110,0.45)", animationDelay: `${delayMs + 340}ms` }} />
+      </BoardWideStage>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-rise absolute left-[32%] bottom-[8%] block h-[70%] w-[40%]" style={{ animationDelay: `${delayMs}ms` }}>
@@ -3700,7 +4369,26 @@ const CHUTE_DROPS = [
 ];
 
 /** Paratroopers: parachutes descend behind the lines. */
-function ParadropBurst({ delayMs }: { delayMs: number }) {
+function ParadropBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 12 — tier 6+ board-wide guarantee: the lead fills the WHOLE sky —
+  // a pale wash while parachutes rain down across the central band.
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(168,180,196,0.22)" delayMs={delayMs} />
+        <BoardRain
+          delayMs={delayMs + 80}
+          render={() => (
+            <svg viewBox="0 0 20 24" className="h-full w-full" aria-hidden="true">
+              <path d="M1 9 A9 9 0 0 1 19 9 Z" fill="rgba(126,181,154,0.85)" stroke="#2f4a3c" strokeWidth="0.9" strokeLinejoin="round" />
+              <path d="M1 9 L10 16 L19 9 M7 9 L10 16 M13 9 L10 16" stroke="#2f4a3c" strokeWidth="0.7" fill="none" />
+              <circle cx="10" cy="19" r="2.2" fill="rgba(96,104,88,0.95)" stroke="#2f3530" strokeWidth="0.6" />
+            </svg>
+          )}
+        />
+      </BoardWideStage>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       {CHUTE_DROPS.map((c, i) => (
@@ -3735,7 +4423,29 @@ function SuppressBurst({ delayMs }: { delayMs: number }) {
 }
 
 /** Double Trench: a sandbag parapet stacks up and barbed wire strings across. */
-function TrenchBurst({ delayMs }: { delayMs: number }) {
+function TrenchBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 12 — tier 6+ board-wide guarantee: the lead digs in across the
+  // WHOLE front — an earthen wash while a parapet bar stacks the full width of
+  // the crop and barbed wire strings above it.
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(150,132,90,0.24)" delayMs={delayMs} />
+        <span className="fx-sig-brick absolute left-[22%] bottom-[40%] block h-[8%] w-[56%] rounded-[2px]" style={{ background: "rgba(150,132,90,0.9)", border: "1px solid rgba(80,66,38,0.85)", animationDelay: `${delayMs + 80}ms` }} />
+        <span className="fx-sig-rise absolute left-[22%] bottom-[48%] block h-[9%] w-[56%]" style={{ animationDelay: `${delayMs + 220}ms` }}>
+          <svg viewBox="0 0 40 16" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
+            <path d="M0 8 L40 8 M6 4 L9 12 M16 4 L19 12 M26 4 L29 12 M34 4 L37 12" stroke="#8a8478" strokeWidth="1" fill="none" strokeLinecap="round" />
+            <g fill="#8a8478">
+              <polygon points="4,8 6,6 8,8 6,10" />
+              <polygon points="14,8 16,6 18,8 16,10" />
+              <polygon points="24,8 26,6 28,8 26,10" />
+              <polygon points="32,8 34,6 36,8 34,10" />
+            </g>
+          </svg>
+        </span>
+      </BoardWideStage>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-brick absolute inset-x-[8%] bottom-[16%] block h-[24%] rounded-[1px]" style={{ background: "rgba(150,132,90,0.9)", border: "1px solid rgba(80,66,38,0.85)", animationDelay: `${delayMs}ms` }} />
@@ -3782,7 +4492,28 @@ const UNMAKE_VOXELS = [
 
 /** Unmake / Banish: reality unravels: the square dissolves into voxels that
  * scatter apart with an arcane flash. */
-function UnmakeBurst({ delayMs }: { delayMs: number }) {
+function UnmakeBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 12 — tier 5+ board-wide guarantee: the lead unravels the WHOLE
+  // board — a violet wash while reality crumbles into scattered voxels across
+  // the crop and an arcane ring rolls out.
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(168,119,216,0.22)" delayMs={delayMs} />
+        {[
+          { l: "30%", t: "32%", w: "5%", c: "rgba(168,119,216,0.85)", d: 0 },
+          { l: "54%", t: "38%", w: "4%", c: "rgba(140,96,200,0.8)", d: 90 },
+          { l: "38%", t: "54%", w: "5.5%", c: "rgba(150,110,205,0.82)", d: 170 },
+          { l: "60%", t: "56%", w: "4%", c: "rgba(120,86,180,0.8)", d: 60 },
+          { l: "46%", t: "28%", w: "3.6%", c: "rgba(180,140,224,0.8)", d: 130 },
+          { l: "26%", t: "48%", w: "4.4%", c: "rgba(160,120,210,0.8)", d: 220 },
+        ].map((v, i) => (
+          <span key={i} className="fx-sig-crumble absolute block rounded-[1px]" style={{ left: v.l, top: v.t, width: v.w, height: v.w, background: v.c, animationDelay: `${delayMs + v.d}ms` }} />
+        ))}
+        <BoardBoom delayMs={delayMs + 260} color="rgba(180,140,224,0.85)" />
+      </BoardWideStage>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-flash absolute inset-[24%] block rounded-full" style={{ background: "rgba(168,119,216,0.7)", animationDelay: `${delayMs}ms` }} />
@@ -3797,6 +4528,20 @@ function UnmakeBurst({ delayMs }: { delayMs: number }) {
 /** Wrecking Ball: a great iron ball swings across on its chain, smashing the
  * piece to rubble. Lead is the impact flash. */
 function WreckingBallBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(70,76,86,0.24)" boom="rgba(91,102,114,0.85)" delayMs={delayMs} motifClass="fx-sig-arc">
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <path d="M20 2 L20 22" stroke="#5b6672" strokeWidth="1.6" strokeDasharray="2 2" fill="none" />
+          <circle cx="20" cy="28" r="8" fill="rgba(70,76,86,0.92)" stroke="#23282f" strokeWidth="1.2" />
+          <circle cx="17" cy="25" r="2" fill="rgba(150,158,168,0.6)" />
+        </svg>
+      </BoardWideLead>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-arc absolute inset-[2%] block" style={{ animationDelay: `${delayMs}ms` }}>
@@ -3807,9 +4552,6 @@ function WreckingBallBurst({ lead, delayMs }: { lead: boolean; delayMs: number }
         </svg>
       </span>
       <ShardBurst vectors={BURST_MED} fill="#8a8478" stroke="#3a352c" delayMs={delayMs + 140} sizePct={11} />
-      {lead && (
-        <span className="fx-sig-flash absolute inset-[26%] block rounded-full" style={{ background: "rgba(150,146,140,0.7)", animationDelay: `${delayMs + 160}ms` }} />
-      )}
     </span>
   );
 }
@@ -3835,7 +4577,24 @@ function PinataBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 
 /** Genie Wish: a plume of smoke swirls up and a wish-sparkle pops as the queen
  * appears. */
-function GeniePoofBurst({ delayMs }: { delayMs: number }) {
+function GeniePoofBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 12 — tier 6+ board-wide guarantee: the lead grants the wish over
+  // the WHOLE board — a smoky wash while a colossal plume swirls across the
+  // crop and gold wish-sparks scatter from the lamp.
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(168,180,196,0.26)" delayMs={delayMs} />
+        <span className="fx-sig-swirl absolute inset-[26%] block" style={{ animationDelay: `${delayMs + 60}ms` }}>
+          <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+            <path d="M20 36 C12 34 14 26 20 26 C26 26 24 20 18 20 C12 20 14 12 22 12 C30 12 30 6 24 4" fill="none" stroke="rgba(168,180,196,0.75)" strokeWidth="2.4" strokeLinecap="round" />
+          </svg>
+        </span>
+        <ShardBurst vectors={BURST_MED} fill="#ffd95e" stroke="#8a6414" delayMs={delayMs + 260} sizePct={5} />
+        <BoardBoom delayMs={delayMs + 320} color="rgba(255,217,94,0.8)" />
+      </BoardWideStage>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-swirl absolute inset-[14%] block" style={{ animationDelay: `${delayMs}ms` }}>
@@ -3889,6 +4648,14 @@ function GlitchBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 /** Purge / Annihilate / Shatter: a doomed piece is unmade in a puff of grey
  * motes and a thin dissolve ring; lead adds a wider shock. */
 function DisintegrateBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(150,146,158,0.24)" boom="rgba(182,176,190,0.85)" delayMs={delayMs} />
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span
@@ -3907,12 +4674,6 @@ function DisintegrateBurst({ lead, delayMs }: { lead: boolean; delayMs: number }
         className="fx-sig-ash absolute inset-x-[26%] bottom-[18%] block h-[16%] rounded-full"
         style={{ background: "rgba(120,116,124,0.55)", animationDelay: `${delayMs + 130}ms` }}
       />
-      {lead && (
-        <span
-          className="fx-sig-shock absolute inset-[10%] block rounded-full"
-          style={{ border: "2px solid rgba(170,166,178,0.8)", animationDelay: `${delayMs}ms` }}
-        />
-      )}
     </span>
   );
 }
@@ -3920,6 +4681,18 @@ function DisintegrateBurst({ lead, delayMs }: { lead: boolean; delayMs: number }
 /** Cavalry Charge: a knight thunders down a line. Lead kicks up a dust burst at
  * the origin; each cleared square takes a hoof-slash and a dust splat. */
 function CavalryChargeBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(150,132,98,0.24)" boom="rgba(138,112,72,0.85)" delayMs={delayMs} motifClass="fx-sig-streak">
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <path d="M2 26 C10 18 16 20 22 12 L18 20 L26 16 L20 26 L30 24" fill="none" stroke="#8a7048" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </BoardWideLead>
+    );
+  }
   if (lead) {
     return (
       <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
@@ -3963,6 +4736,19 @@ const STONEHIDE_PLATES = [
 /** Stoneskin / Form Square: slate plates lock over the piece as a stone shell
  * grows; lead thumps a stone ring. */
 function StonehideBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(140,140,146,0.24)" boom="rgba(168,168,176,0.85)" delayMs={delayMs} motifClass="fx-sig-grow">
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <path d="M8 36 C4 22 8 6 20 4 C32 6 36 22 32 36 Z" fill="rgba(140,140,146,0.32)" stroke="rgba(168,168,176,0.9)" strokeWidth="1.6" strokeLinejoin="round" />
+          <path d="M20 5 V35 M9 20 H31" stroke="rgba(150,150,158,0.7)" strokeWidth="0.9" fill="none" />
+        </svg>
+      </BoardWideLead>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-grow absolute inset-[16%] block rounded-[2px]" style={{ animationDelay: `${delayMs}ms` }}>
@@ -3978,12 +4764,6 @@ function StonehideBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           style={{ left: p.left, bottom: p.bottom, background: "rgba(128,128,134,0.9)", border: "1px solid rgba(70,70,76,0.85)", animationDelay: `${delayMs + p.d}ms` }}
         />
       ))}
-      {lead && (
-        <span
-          className="fx-sig-ring absolute inset-[10%] block rounded-full"
-          style={{ border: "1.5px solid rgba(168,168,176,0.85)", animationDelay: `${delayMs + 160}ms` }}
-        />
-      )}
     </span>
   );
 }
@@ -3991,6 +4771,19 @@ function StonehideBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 /** Royal Aegis / Frost Ward / Panic Button / Borrowed Time: a rune ward ring
  * snaps in and pulses; lead stamps a sigil hexagon at its heart. */
 function WardPulseBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(126,181,154,0.24)" boom="rgba(126,181,154,0.85)" delayMs={delayMs} motifClass="fx-sig-grow">
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+            <polygon points="20,4 34,12 34,28 20,36 6,28 6,12" fill="rgba(20,30,26,0.6)" stroke="rgba(163,209,150,0.9)" strokeWidth="1.6" strokeLinejoin="round" />
+            <path d="M20 12 V28 M13 16 H27 M13 24 H27" stroke="rgba(163,209,150,0.8)" strokeWidth="1" fill="none" strokeLinecap="round" />
+          </svg>
+      </BoardWideLead>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span
@@ -4001,14 +4794,6 @@ function WardPulseBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
         className="fx-sig-flash absolute inset-[26%] block rounded-full"
         style={{ background: "rgba(126,181,154,0.45)", animationDelay: `${delayMs}ms` }}
       />
-      {lead && (
-        <span className="fx-sig-grow absolute inset-[24%] block" style={{ animationDelay: `${delayMs + 60}ms` }}>
-          <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
-            <polygon points="20,4 34,12 34,28 20,36 6,28 6,12" fill="rgba(20,30,26,0.6)" stroke="rgba(163,209,150,0.9)" strokeWidth="1.6" strokeLinejoin="round" />
-            <path d="M20 12 V28 M13 16 H27 M13 24 H27" stroke="rgba(163,209,150,0.8)" strokeWidth="1" fill="none" strokeLinecap="round" />
-          </svg>
-        </span>
-      )}
     </span>
   );
 }
@@ -4036,6 +4821,22 @@ function CanopyBurst({ delayMs }: { delayMs: number }) {
 /** Time Thief / Chrono Siphon: a clock face spins its hands backward while
  * stolen seconds bleed off to the side; lead flashes as time is siphoned. */
 function ChronoStealBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(40,44,58,0.24)" boom="rgba(216,181,110,0.85)" delayMs={delayMs} motifClass="fx-sig-ice">
+        <svg viewBox="0 0 32 32" className="h-full w-full" aria-hidden="true">
+          <circle cx="16" cy="16" r="13" fill="rgba(40,44,58,0.5)" stroke="#d8b56e" strokeWidth="1.6" />
+          <g className="fx-sig-rewind">
+            <path d="M16 16 V6 M16 16 L22 20" stroke="#f0dca8" strokeWidth="1.8" strokeLinecap="round" fill="none" />
+          </g>
+          <circle cx="16" cy="16" r="1.5" fill="#f0dca8" />
+        </svg>
+      </BoardWideLead>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-ice absolute inset-[18%] block" style={{ animationDelay: `${delayMs}ms` }}>
@@ -4051,19 +4852,31 @@ function ChronoStealBurst({ lead, delayMs }: { lead: boolean; delayMs: number })
         className="fx-sig-ash absolute right-[14%] top-[16%] block h-[24%] w-[22%] rounded-full"
         style={{ background: "rgba(216,181,110,0.5)", animationDelay: `${delayMs + 120}ms` }}
       />
-      {lead && (
-        <span
-          className="fx-sig-flash absolute inset-[30%] block rounded-full"
-          style={{ background: "rgba(240,220,168,0.7)", animationDelay: `${delayMs}ms` }}
-        />
-      )}
     </span>
   );
 }
 
 /** Blink / Far Step / Yeet / Warp: a piece teleports in on a rune ring with a
  * pop of arcane light and a scatter of sparks. */
-function BlinkBurst({ delayMs }: { delayMs: number }) {
+function BlinkBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 12 — tier 6+ board-wide guarantee: the warp storm's lead tears the
+  // WHOLE board — an arcane wash while a colossal rune ring spins across the
+  // crop and a violet shock rolls past the edges.
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(168,119,216,0.2)" delayMs={delayMs} />
+        <span className="fx-sig-swirl absolute inset-[26%] block" style={{ animationDelay: `${delayMs + 60}ms` }}>
+          <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+            <circle cx="20" cy="20" r="16" fill="none" stroke="rgba(168,119,216,0.85)" strokeWidth="1" strokeDasharray="4 3" />
+            <polygon points="20,7 31,26 9,26" fill="none" stroke="rgba(190,150,230,0.8)" strokeWidth="0.7" />
+            <polygon points="20,33 9,14 31,14" fill="none" stroke="rgba(190,150,230,0.6)" strokeWidth="0.7" />
+          </svg>
+        </span>
+        <BoardBoom delayMs={delayMs + 260} color="rgba(168,119,216,0.85)" />
+      </BoardWideStage>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-swirl absolute inset-[16%] block" style={{ animationDelay: `${delayMs}ms` }}>
@@ -4087,7 +4900,31 @@ function BlinkBurst({ delayMs }: { delayMs: number }) {
 
 /** Pizza / Clown Car / Ducks / Goose: a coral summoning portal swirls open and
  * a shaft of light lifts the new arrival in, sparks popping. */
-function PortalBurst({ delayMs }: { delayMs: number }) {
+function PortalBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 12 — tier 5+ board-wide guarantee: the lead swings the door wide —
+  // a coral wash while a colossal summoning portal swirls over the WHOLE crop
+  // and shafts of arrival light rise along the central band.
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(224,119,107,0.2)" delayMs={delayMs} />
+        <span className="fx-sig-swirl absolute inset-[26%] block" style={{ animationDelay: `${delayMs + 60}ms` }}>
+          <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+            <circle cx="20" cy="20" r="17" fill="none" stroke="#e0776b" strokeWidth="1.2" />
+            <circle cx="20" cy="20" r="11" fill="none" stroke="#f0b0a6" strokeWidth="0.8" strokeDasharray="3 3" />
+            <circle cx="20" cy="20" r="5" fill="none" stroke="#e0776b" strokeWidth="0.8" />
+          </svg>
+        </span>
+        {[
+          { l: "34%", d: 200 },
+          { l: "50%", d: 320 },
+          { l: "62%", d: 440 },
+        ].map((s, i) => (
+          <span key={i} className="fx-sig-rise absolute bottom-[28%] block h-[32%] w-[4.5%] rounded-[1px]" style={{ left: s.l, background: "rgba(240,176,166,0.5)", animationDelay: `${delayMs + s.d}ms` }} />
+        ))}
+      </BoardWideStage>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-swirl absolute inset-[12%] block" style={{ animationDelay: `${delayMs}ms` }}>
@@ -4114,7 +4951,29 @@ const BORDERWARD_RUNES = [
 
 /** Glyph Seal / Border Ward: a translucent curtain of warding runes rises to
  * seal the ground. */
-function BorderWardBurst({ delayMs }: { delayMs: number }) {
+function BorderWardBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 12 — tier 5+ board-wide guarantee: the lead seals the WHOLE
+  // frontier — a mint wash while a warding curtain climbs across the full
+  // crop width, runes rising along its face.
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(126,181,154,0.2)" delayMs={delayMs} />
+        <span className="fx-sig-brick absolute left-[24%] bottom-[30%] block h-[32%] w-[52%] rounded-[2px]" style={{ background: "rgba(126,181,154,0.2)", border: "1px solid rgba(163,209,150,0.7)", animationDelay: `${delayMs + 60}ms` }} />
+        {[
+          { l: "30%", d: 180 },
+          { l: "46%", d: 300 },
+          { l: "60%", d: 420 },
+        ].map((r, i) => (
+          <span key={i} className="fx-sig-rise absolute bottom-[36%] block h-[16%] w-[7%]" style={{ left: r.l, animationDelay: `${delayMs + r.d}ms` }}>
+            <svg viewBox="0 0 20 20" className="h-full w-full" aria-hidden="true">
+              <path d="M10 2 V18 M4 7 H16 M4 13 H16" stroke="rgba(163,209,150,0.8)" strokeWidth="1.4" strokeLinecap="round" fill="none" />
+            </svg>
+          </span>
+        ))}
+      </BoardWideStage>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span
@@ -4170,7 +5029,33 @@ const MINE_POS = [
 ];
 
 /** Claymore Line: a row of mines clicks up out of the ground and arms. */
-function MinefieldBurst({ delayMs }: { delayMs: number }) {
+function MinefieldBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 12 — tier 6+ board-wide guarantee: the lead sows the WHOLE field —
+  // an olive wash while a rank of mines clicks up across the crop and an
+  // arming ring pulses out.
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(96,104,72,0.24)" delayMs={delayMs} />
+        {[
+          { l: "28%", d: 0 },
+          { l: "40%", d: 110 },
+          { l: "52%", d: 220 },
+          { l: "64%", d: 330 },
+        ].map((m, i) => (
+          <span key={i} className="fx-sig-brick absolute bottom-[36%] block h-[10%] w-[8%]" style={{ left: m.l, animationDelay: `${delayMs + m.d}ms` }}>
+            <svg viewBox="0 0 20 20" className="h-full w-full" aria-hidden="true">
+              <path d="M3 16 C3 10 17 10 17 16 Z" fill="rgba(96,104,72,0.92)" stroke="#33402b" strokeWidth="1" strokeLinejoin="round" />
+              <path d="M6 20 L6 15 M14 20 L14 15" stroke="#33402b" strokeWidth="1.2" strokeLinecap="round" />
+              <path d="M10 10 V4" stroke="#8a8478" strokeWidth="1" strokeLinecap="round" />
+              <circle cx="10" cy="3.5" r="1.4" fill="#e0776b" />
+            </svg>
+          </span>
+        ))}
+        <BoardBoom delayMs={delayMs + 400} color="rgba(224,119,107,0.85)" />
+      </BoardWideStage>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       {MINE_POS.map((m, i) => (
@@ -4209,6 +5094,29 @@ const VORTEX_VEC = [
 /** Void Rift / Black Hole / Haunted House: a dark maw opens and everything is
  * pulled inward as it collapses to a point; lead adds an event-horizon ring. */
 function VortexBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead opens the maw under the
+  // WHOLE board — a void-dark wash while a colossal event horizon collapses
+  // mid-crop, pulling shards in from every direction.
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(18,14,24,0.4)" delayMs={delayMs} />
+        <span
+          className="fx-sig-implode absolute left-1/2 top-1/2 ml-[-13%] mt-[-13%] block h-[26%] w-[26%] rounded-full"
+          style={{ background: "rgba(18,14,24,0.92)", border: "2px solid rgba(122,91,154,0.9)", "--dx": "0%", "--dy": "0%", "--rot": "0deg", animationDelay: `${delayMs + 80}ms` } as React.CSSProperties}
+        />
+        {VORTEX_VEC.map((v, i) => (
+          <span
+            key={i}
+            className="fx-sig-implode absolute left-1/2 top-1/2 ml-[-2.5%] mt-[-2.5%] block h-[5%] w-[5%]"
+            style={{ "--dx": v.dx, "--dy": v.dy, "--rot": v.rot, animationDelay: `${delayMs + 80 + v.d}ms` } as React.CSSProperties}
+          >
+            <SigShard fill="#a48cc4" stroke="#463357" variant={i} />
+          </span>
+        ))}
+      </BoardWideStage>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span
@@ -4224,12 +5132,6 @@ function VortexBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           <SigShard fill="#a48cc4" stroke="#463357" variant={i} />
         </span>
       ))}
-      {lead && (
-        <span
-          className="fx-sig-ring absolute inset-[14%] block rounded-full"
-          style={{ border: "1.5px solid rgba(150,120,186,0.85)", animationDelay: `${delayMs}ms` }}
-        />
-      )}
     </span>
   );
 }
@@ -4393,6 +5295,24 @@ const KRAKEN_SUCKER = "#a3d196";
 /** Kraken: a suckered tentacle rears up out of the square and sways; the lead
  * square raises a second coil with a green splash flash. Sea-green (mint). */
 function KrakenBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(126,181,154,0.24)" boom="rgba(47,74,60,0.85)" delayMs={delayMs} motifClass="fx-sig-grow">
+        <svg viewBox="0 0 20 48" className="h-full w-full" aria-hidden="true">
+              <path
+                d="M7 48 C5 34 10 28 6 18 C4 12 8 6 12 2 C10 8 13 12 10 20 C7 28 11 36 10 48 Z"
+                fill="#3f6a58"
+                stroke="#274035"
+                strokeWidth="1"
+                strokeLinejoin="round"
+              />
+            </svg>
+      </BoardWideLead>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span
@@ -4419,28 +5339,6 @@ function KrakenBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           </g>
         </svg>
       </span>
-      {lead && (
-        <>
-          <span
-            className="fx-sig-tentacle absolute left-[54%] bottom-[6%] block h-[70%] w-[26%]"
-            style={{ animationDelay: `${delayMs + 90}ms` }}
-          >
-            <svg viewBox="0 0 20 48" className="h-full w-full" aria-hidden="true">
-              <path
-                d="M7 48 C5 34 10 28 6 18 C4 12 8 6 12 2 C10 8 13 12 10 20 C7 28 11 36 10 48 Z"
-                fill="#3f6a58"
-                stroke="#274035"
-                strokeWidth="1"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </span>
-          <span
-            className="fx-sig-flash absolute inset-x-[24%] bottom-[6%] block h-[22%] rounded-full"
-            style={{ background: "rgba(163,209,150,0.6)", animationDelay: `${delayMs}ms` }}
-          />
-        </>
-      )}
       <ShardBurst vectors={BURST_MED} fill={KRAKEN_SUCKER} stroke="#2f4a3c" delayMs={delayMs + 120} sizePct={9} />
     </span>
   );
@@ -4449,6 +5347,19 @@ function KrakenBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 /** Abyss / Void: a dark maw yawns open and pieces are pulled down into it; the
  * lead square adds an event-horizon ring. Reuses VORTEX_VEC for the in-pull. */
 function AbyssBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(12,16,22,0.24)" boom="rgba(90,140,120,0.85)" delayMs={delayMs} motifClass="fx-sig-maw">
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <circle cx="20" cy="20" r="18" fill="rgba(12,16,22,0.92)" stroke="rgba(126,181,154,0.85)" strokeWidth="1.6" />
+          <circle cx="20" cy="20" r="11" fill="rgba(6,9,13,0.95)" stroke="rgba(90,140,120,0.7)" strokeWidth="1" />
+        </svg>
+      </BoardWideLead>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-maw absolute inset-[16%] block" style={{ animationDelay: `${delayMs}ms` }}>
@@ -4466,12 +5377,6 @@ function AbyssBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           <SigShard fill="#5a8c78" stroke="#243a30" variant={i} />
         </span>
       ))}
-      {lead && (
-        <span
-          className="fx-sig-ring absolute inset-[10%] block rounded-full"
-          style={{ border: "1.5px solid rgba(126,181,154,0.85)", animationDelay: `${delayMs}ms` }}
-        />
-      )}
     </span>
   );
 }
@@ -4505,7 +5410,30 @@ function WhirlpoolBurst({ delayMs }: { delayMs: number }) {
 
 /** Flood: a crested wave washes across the trap square and drains off, throwing
  * a couple of foam flecks. */
-function FloodBurst({ delayMs }: { delayMs: number }) {
+function FloodBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 12 — tier 6+ board-wide guarantee: the lead breaks the levee — a
+  // water wash over the WHOLE crop while a colossal crested wave sweeps
+  // across the board and foam flecks spray off it.
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(126,181,154,0.26)" delayMs={delayMs} />
+        <span className="fx-sig-wave absolute left-[10%] bottom-[28%] block h-[26%] w-[80%]" style={{ animationDelay: `${delayMs + 60}ms` }}>
+          <svg viewBox="0 0 48 24" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
+            <path
+              d="M0 12 C8 4 14 4 22 10 C30 16 38 16 48 8 L48 24 L0 24 Z"
+              fill="rgba(126,181,154,0.6)"
+              stroke="rgba(163,209,150,0.85)"
+              strokeWidth="1.2"
+              strokeLinejoin="round"
+            />
+            <path d="M0 16 C10 10 16 12 24 16 C32 20 40 18 48 14" fill="none" stroke="rgba(230,246,255,0.8)" strokeWidth="1" />
+          </svg>
+        </span>
+        <ShardBurst vectors={BURST_MED} fill="#e6f6ff" stroke="#7fb8dd" delayMs={delayMs + 260} sizePct={4} />
+      </BoardWideStage>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-wave absolute inset-x-[2%] bottom-[10%] block h-[52%]" style={{ animationDelay: `${delayMs}ms` }}>
@@ -4539,6 +5467,29 @@ function FloodBurst({ delayMs }: { delayMs: number }) {
 /** Frost Ward frozen moat: a spiked ring of ice locks in around the king; lead
  * adds a frost flash. Ice palette, distinct from the generic ward pulse. */
 function FrozenMoatBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(224,246,255,0.24)" boom="rgba(127,184,221,0.85)" delayMs={delayMs} motifClass="fx-sig-moat">
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <circle cx="20" cy="20" r="17" fill="none" stroke="rgba(224,246,255,0.9)" strokeWidth="2" />
+          <circle cx="20" cy="20" r="13" fill="none" stroke="rgba(127,184,221,0.8)" strokeWidth="1" />
+          <g fill="rgba(230,246,255,0.9)" stroke="#7fb8dd" strokeWidth="0.6" strokeLinejoin="round">
+            <path d="M20 1 L22 6 L18 6 Z" />
+            <path d="M39 20 L34 22 L34 18 Z" />
+            <path d="M20 39 L18 34 L22 34 Z" />
+            <path d="M1 20 L6 18 L6 22 Z" />
+            <path d="M33 7 L31 11 L28 8 Z" />
+            <path d="M7 33 L9 29 L12 32 Z" />
+            <path d="M33 33 L29 31 L32 28 Z" />
+            <path d="M7 7 L11 9 L8 12 Z" />
+          </g>
+        </svg>
+      </BoardWideLead>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-moat absolute inset-[8%] block" style={{ animationDelay: `${delayMs}ms` }}>
@@ -4557,12 +5508,6 @@ function FrozenMoatBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) 
           </g>
         </svg>
       </span>
-      {lead && (
-        <span
-          className="fx-sig-flash absolute inset-[28%] block rounded-full"
-          style={{ background: "rgba(224,246,255,0.7)", animationDelay: `${delayMs}ms` }}
-        />
-      )}
       <ShardBurst vectors={BURST_MED} fill="#e6f6ff" stroke="#7fb8dd" delayMs={delayMs + 120} sizePct={9} />
     </span>
   );
@@ -4700,7 +5645,25 @@ function CinderStrikeBurst({ delayMs }: { delayMs: number }) {
 
 /** Purge Storm: pawns disintegrate into motes while a rime line glazes the
  * survivors that freeze. */
-function PurgeStormBurst({ delayMs }: { delayMs: number }) {
+function PurgeStormBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 12 — tier 5+ board-wide guarantee: the lead breaks the storm over
+  // the WHOLE board — a pale rime wash while frost lines glaze across the
+  // full crop width and motes scatter from the origin.
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(198,234,255,0.26)" delayMs={delayMs} />
+        {[
+          { t: "36%", d: 0 },
+          { t: "50%", d: 150 },
+          { t: "62%", d: 300 },
+        ].map((f, i) => (
+          <span key={i} className="fx-sig-frost absolute left-[24%] block h-[3%] w-[52%] rounded-[1px]" style={{ top: f.t, background: "rgba(198,234,255,0.6)", animationDelay: `${delayMs + f.d}ms` }} />
+        ))}
+        <ShardBurst vectors={BURST_MED} fill="#dbe7f2" stroke="#8aa0b4" delayMs={delayMs + 200} sizePct={5} />
+      </BoardWideStage>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-frost absolute inset-x-[6%] top-[44%] block h-[10%] rounded-[1px]" style={{ background: "rgba(198,234,255,0.55)", animationDelay: `${delayMs}ms` }} />
@@ -4712,6 +5675,20 @@ function PurgeStormBurst({ delayMs }: { delayMs: number }) {
 
 /** Roulette: a wheel spins and a piece is flicked off with a shower of chips. */
 function RouletteBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(224,119,107,0.24)" boom="rgba(224,119,107,0.85)" delayMs={delayMs} motifClass="fx-sig-swirl">
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <circle cx="20" cy="20" r="17" fill="none" stroke="#e0776b" strokeWidth="2" />
+          <g stroke="#7a2f28" strokeWidth="1.4" fill="none"><path d="M20 3 V37 M3 20 H37 M8 8 L32 32 M32 8 L8 32" /></g>
+          <circle cx="20" cy="20" r="3" fill="#e6bf6a" stroke="#7a5b23" strokeWidth="1" />
+        </svg>
+      </BoardWideLead>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-swirl absolute inset-[14%] block" style={{ animationDelay: `${delayMs}ms` }}>
@@ -4724,13 +5701,30 @@ function RouletteBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
       <span className="fx-sig-spin absolute inset-[32%] block" style={{ animationDelay: `${delayMs + 200}ms` }}>
         <SigShard fill="#e6bf6a" stroke="#7a5b23" variant={1} />
       </span>
-      {lead && <ShardBurst vectors={PIN_STARS} fill="#ffd95e" stroke="#8a6414" delayMs={delayMs + 200} sizePct={9} />}
     </span>
   );
 }
 
 /** Purge Line: a rank-wide bar of light sweeps across, unmaking the pieces. */
-function PurgeLineBurst({ delayMs }: { delayMs: number }) {
+function PurgeLineBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 12 — tier 6+ board-wide guarantee: the lead unmakes the WHOLE rank
+  // in one stroke — a pale-gold wash while bars of purging light sweep the
+  // full width of the crop.
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(255,244,200,0.26)" delayMs={delayMs} />
+        {[
+          { t: "38%", d: 0 },
+          { t: "50%", d: 140 },
+          { t: "60%", d: 280 },
+        ].map((b, i) => (
+          <span key={i} className="fx-sig-sweepbar absolute left-[-30%] block h-[3%] w-[160%] rounded-[1px]" style={{ top: b.t, background: "rgba(255,244,200,0.7)", animationDelay: `${delayMs + b.d}ms` }} />
+        ))}
+        <ShardBurst vectors={BURST_MED} fill="#f0e2b0" stroke="#a88a3a" delayMs={delayMs + 240} sizePct={4} />
+      </BoardWideStage>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-frost absolute inset-x-[2%] top-[40%] block h-[18%] rounded-[1px]" style={{ background: "rgba(255,244,200,0.6)", animationDelay: `${delayMs}ms` }} />
@@ -4743,18 +5737,33 @@ function PurgeLineBurst({ delayMs }: { delayMs: number }) {
 /** Nerf This: lightning is called down onto the marked pieces. Reticle locks,
  * the bolt cracks, a scorch flashes; lead adds a shock ring. */
 function CalldownBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(255,214,94,0.24)" boom="rgba(30,22,10,0.85)" delayMs={delayMs} />
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-reticle absolute inset-[16%] block rounded-full" style={{ border: "1.5px solid rgba(255,214,94,0.9)", animationDelay: `${delayMs}ms` }} />
       <span className="fx-sig-bolt absolute left-[38%] top-[-4%] block h-[74%] w-[24%]" style={{ animationDelay: `${delayMs + 80}ms` }}><JagBolt /></span>
       <span className="fx-sig-scorch absolute inset-[30%] block rounded-full" style={{ background: "rgba(30,22,10,0.6)", animationDelay: `${delayMs + 200}ms` }} />
-      {lead && <span className="fx-sig-shock absolute inset-[10%] block rounded-full" style={{ border: "2px solid rgba(255,232,150,0.85)", animationDelay: `${delayMs + 120}ms` }} />}
     </span>
   );
 }
 
 /** Annihilation: pieces are pulled into a void core and collapse to nothing. */
 function AnnihilationBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(16,12,20,0.24)" boom="rgba(164,140,196,0.85)" delayMs={delayMs} />
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span
@@ -4770,7 +5779,6 @@ function AnnihilationBurst({ lead, delayMs }: { lead: boolean; delayMs: number }
           <SigShard fill="#a48cc4" stroke="#463357" variant={i} />
         </span>
       ))}
-      {lead && <span className="fx-sig-flash absolute inset-[28%] block rounded-full" style={{ background: "rgba(180,160,214,0.6)", animationDelay: `${delayMs + 260}ms` }} />}
     </span>
   );
 }
@@ -4778,6 +5786,19 @@ function AnnihilationBurst({ lead, delayMs }: { lead: boolean; delayMs: number }
 /** Meteor: a meteor slams the crossing square and a plus-shaped shock rolls
  * out along the struck rank and file. */
 function MeteorCrossBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(255,168,80,0.24)" boom="rgba(230,168,92,0.85)" delayMs={delayMs} motifClass="fx-sig-streak">
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <path d="M2 2 L26 26" stroke="#e6a85c" strokeWidth="3" strokeLinecap="round" />
+          <circle cx="28" cy="28" r="5" fill="#d98a4a" stroke="#7a3a12" strokeWidth="1.2" />
+        </svg>
+      </BoardWideLead>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-streak absolute left-[-6%] top-[-6%] block h-[64%] w-[64%]" style={{ animationDelay: `${delayMs}ms` }}>
@@ -4792,13 +5813,29 @@ function MeteorCrossBurst({ lead, delayMs }: { lead: boolean; delayMs: number })
         </svg>
       </span>
       <ShardBurst vectors={BURST_MED} fill="#e6a85c" stroke="#7a3a12" delayMs={delayMs + 160} sizePct={11} />
-      {lead && <span className="fx-sig-scorch absolute inset-[26%] block rounded-full" style={{ background: "rgba(24,14,8,0.7)", animationDelay: `${delayMs + 220}ms` }} />}
     </span>
   );
 }
 
 /** Purge Realm: enemy minors are banished in a purple arcane shimmer. */
-function PurgeRealmBurst({ delayMs }: { delayMs: number }) {
+function PurgeRealmBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 12 — tier 6+ board-wide guarantee: the lead banishes across the
+  // WHOLE realm — a violet wash while a colossal dashed banishing circle
+  // spins over the crop and an arcane shock rolls out.
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(164,140,196,0.22)" delayMs={delayMs} />
+        <span className="fx-sig-swirl absolute inset-[26%] block" style={{ animationDelay: `${delayMs + 60}ms` }}>
+          <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+            <circle cx="20" cy="20" r="16" fill="none" stroke="#a48cc4" strokeWidth="1" strokeDasharray="4 4" />
+            <circle cx="20" cy="20" r="9" fill="none" stroke="#c9b6e0" strokeWidth="0.7" />
+          </svg>
+        </span>
+        <BoardBoom delayMs={delayMs + 260} color="rgba(164,140,196,0.85)" />
+      </BoardWideStage>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-swirl absolute inset-[20%] block" style={{ animationDelay: `${delayMs}ms` }}>
@@ -4821,6 +5858,14 @@ const RUIN_CHUNKS = [
 
 /** Ruin: the piece crumbles into a heap of rubble with a puff of dust. */
 function RuinBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(40,40,46,0.24)" boom="rgba(120,116,110,0.85)" delayMs={delayMs} />
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       {RUIN_CHUNKS.map((s, i) => (
@@ -4831,7 +5876,6 @@ function RuinBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
         />
       ))}
       <span className="fx-sig-ash absolute inset-x-[24%] bottom-[10%] block h-[20%] rounded-full" style={{ background: "rgba(120,116,110,0.5)", animationDelay: `${delayMs + 120}ms` }} />
-      {lead && <span className="fx-sig-scorch absolute inset-[28%] block rounded-full" style={{ background: "rgba(30,26,20,0.5)", animationDelay: `${delayMs + 180}ms` }} />}
     </span>
   );
 }
@@ -4875,11 +5919,18 @@ function BannerWarBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 /** Ice Age: a heavy glacier slab heaves up and slams the square, shedding
  * frost shards; lead flashes a boardwide rime. */
 function IceAgeBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(198,234,255,0.24)" boom="rgba(230,246,255,0.85)" delayMs={delayMs} />
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-slab absolute inset-x-[10%] bottom-[8%] top-[16%] block rounded-[1px]" style={{ background: "rgba(198,234,255,0.42)", border: "1.5px solid rgba(224,246,255,0.85)", animationDelay: `${delayMs}ms` }} />
       <ShardBurst vectors={BURST_MED} fill="#e6f6ff" stroke="#7fb8dd" delayMs={delayMs + 80} sizePct={11} />
-      {lead && <span className="fx-sig-flash absolute inset-[26%] block rounded-full" style={{ background: "rgba(234,248,255,0.75)", animationDelay: `${delayMs}ms` }} />}
     </span>
   );
 }
@@ -4887,11 +5938,18 @@ function IceAgeBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 /** World End: the whole army seizes under an apocalyptic frost that shudders
  * the ground; lead flashes the wave. */
 function WorldEndBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(198,220,240,0.24)" boom="rgba(219,233,245,0.85)" delayMs={delayMs} />
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-quake absolute inset-[8%] block rounded-[1px]" style={{ background: "rgba(198,220,240,0.4)", border: "1.5px solid rgba(210,232,248,0.85)", animationDelay: `${delayMs}ms` }} />
       <ShardBurst vectors={BURST_MED} fill="#dbe9f5" stroke="#7f93a8" delayMs={delayMs + 80} sizePct={10} />
-      {lead && <span className="fx-sig-flash absolute inset-[28%] block rounded-full" style={{ background: "rgba(228,240,250,0.7)", animationDelay: `${delayMs}ms` }} />}
     </span>
   );
 }
@@ -4926,7 +5984,19 @@ function RustLockBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 }
 
 /** Mass Petrify: a wave of stone climbs the minors, shedding grey chips. */
-function MassPetrifyBurst({ delayMs }: { delayMs: number }) {
+function MassPetrifyBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 12 — tier 6+ board-wide guarantee: the lead turns the WHOLE board
+  // to stone — a grey wash while a colossal petrifying slab climbs the crop
+  // and chips scatter from its face.
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(150,150,158,0.3)" delayMs={delayMs} />
+        <span className="fx-sig-petrify absolute left-[26%] bottom-[28%] top-[32%] block w-[48%] rounded-[2px]" style={{ background: "rgba(150,150,158,0.55)", border: "1px solid rgba(120,120,128,0.7)", animationDelay: `${delayMs + 80}ms` }} />
+        <ShardBurst vectors={BURST_MED} fill="#9a9a9f" stroke="#5b6672" delayMs={delayMs + 260} sizePct={5} />
+      </BoardWideStage>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-petrify absolute bottom-[8%] left-[18%] right-[18%] top-[10%] block rounded-[1px]" style={{ background: "rgba(150,150,158,0.66)", border: "1px solid rgba(120,120,128,0.7)", animationDelay: `${delayMs}ms` }} />
@@ -4938,6 +6008,19 @@ function MassPetrifyBurst({ delayMs }: { delayMs: number }) {
 /** Walnut Queen: a walnut shell closes over the queen, a stone leaf drifting
  * off; lead is a small settle. */
 function WalnutCurseBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(150,110,66,0.24)" boom="rgba(93,58,30,0.85)" delayMs={delayMs} motifClass="fx-sig-grow">
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <path d="M20 4 C31 4 36 13 36 22 C36 32 29 38 20 38 C11 38 4 32 4 22 C4 13 9 4 20 4 Z" fill="rgba(150,110,66,0.85)" stroke="#5d3a1e" strokeWidth="1.4" strokeLinejoin="round" />
+          <path d="M20 5 V37 M8 16 C16 20 24 20 32 16 M8 28 C16 24 24 24 32 28" stroke="#5d3a1e" strokeWidth="1" fill="none" />
+        </svg>
+      </BoardWideLead>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-grow absolute inset-[16%] block" style={{ animationDelay: `${delayMs}ms` }}>
@@ -4946,13 +6029,6 @@ function WalnutCurseBurst({ lead, delayMs }: { lead: boolean; delayMs: number })
           <path d="M20 5 V37 M8 16 C16 20 24 20 32 16 M8 28 C16 24 24 24 32 28" stroke="#5d3a1e" strokeWidth="1" fill="none" />
         </svg>
       </span>
-      {lead && (
-        <span className="fx-sig-ash absolute left-[54%] top-[12%] block h-[16%] w-[16%]" style={{ animationDelay: `${delayMs + 140}ms` }}>
-          <svg viewBox="0 0 12 12" className="h-full w-full" aria-hidden="true">
-            <path d="M6 1 C9 3 9 8 6 11 C3 8 3 3 6 1 Z" fill="#8a5230" stroke="#4a2e18" strokeWidth="0.6" />
-          </svg>
-        </span>
-      )}
     </span>
   );
 }
@@ -4960,6 +6036,18 @@ function WalnutCurseBurst({ lead, delayMs }: { lead: boolean; delayMs: number })
 /** Amazon: the queen is crowned an Amazon, a knight-jump arc tracing over the
  * lowered crown. */
 function AmazonCrownBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(230,191,106,0.24)" boom="rgba(168,119,216,0.85)" delayMs={delayMs} motifClass="fx-sig-arc">
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <path d="M10 32 C10 18 18 12 26 12 L24 8 L30 10 L28 16" fill="none" stroke="#a877d8" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </BoardWideLead>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-crown absolute left-[28%] top-[8%] block h-[30%] w-[44%]" style={{ animationDelay: `${delayMs}ms` }}><SigCrown /></span>
@@ -4968,7 +6056,6 @@ function AmazonCrownBurst({ lead, delayMs }: { lead: boolean; delayMs: number })
           <path d="M10 32 C10 18 18 12 26 12 L24 8 L30 10 L28 16" fill="none" stroke="#a877d8" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </span>
-      {lead && <span className="fx-sig-flash absolute inset-[30%] block rounded-full" style={{ background: "rgba(230,191,106,0.55)", animationDelay: `${delayMs + 160}ms` }} />}
     </span>
   );
 }
@@ -4976,6 +6063,14 @@ function AmazonCrownBurst({ lead, delayMs }: { lead: boolean; delayMs: number })
 /** Titan Legion: stone shells grow over the chosen pieces, each stomping a
  * ring; lead adds a gold shock. */
 function TitanLegionBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(150,150,158,0.24)" boom="rgba(230,191,106,0.85)" delayMs={delayMs} />
+    );
+  }
   const rings = [
     { i: "26%", d: 0 },
     { i: "16%", d: 80 },
@@ -4986,29 +6081,42 @@ function TitanLegionBurst({ lead, delayMs }: { lead: boolean; delayMs: number })
       {rings.map((r, k) => (
         <span key={k} className="fx-sig-grow absolute block rounded-full" style={{ top: r.i, left: r.i, right: r.i, bottom: r.i, border: "2px solid rgba(150,150,158,0.85)", animationDelay: `${delayMs + r.d}ms` }} />
       ))}
-      {lead && <span className="fx-sig-shock absolute inset-[6%] block rounded-full" style={{ border: "2px solid rgba(230,191,106,0.8)", animationDelay: `${delayMs + 220}ms` }} />}
     </span>
   );
 }
 
 /** Living God: a shaft of light, a lowered crown, and a divine shock ring. */
 function LivingGodBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(255,244,200,0.24)" boom="rgba(255,232,150,0.85)" delayMs={delayMs} />
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-shaft absolute left-[36%] top-0 block h-[80%] w-[28%]" style={{ background: "rgba(255,244,200,0.55)", animationDelay: `${delayMs}ms` }} />
       <span className="fx-sig-crown absolute left-[30%] top-[10%] block h-[26%] w-[40%]" style={{ animationDelay: `${delayMs + 120}ms` }}><SigCrown /></span>
-      {lead && <span className="fx-sig-shock absolute inset-[10%] block rounded-full" style={{ border: "2px solid rgba(255,232,150,0.85)", animationDelay: `${delayMs + 200}ms` }} />}
     </span>
   );
 }
 
 /** Eternal Reign: a crown lowers inside an enduring ward ring; lead glints. */
 function EternalReignBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(230,191,106,0.24)" boom="rgba(255,240,190,0.85)" delayMs={delayMs} />
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-ring absolute inset-[14%] block rounded-full" style={{ border: "1.5px solid rgba(230,191,106,0.9)", animationDelay: `${delayMs}ms` }} />
       <span className="fx-sig-crown absolute left-[28%] top-[8%] block h-[30%] w-[44%]" style={{ animationDelay: `${delayMs + 80}ms` }}><SigCrown /></span>
-      {lead && <span className="fx-sig-flash absolute inset-[28%] block rounded-full" style={{ background: "rgba(255,240,190,0.6)", animationDelay: `${delayMs + 120}ms` }} />}
     </span>
   );
 }
@@ -5016,6 +6124,19 @@ function EternalReignBurst({ lead, delayMs }: { lead: boolean; delayMs: number }
 /** Godslayer Knight: a great smiting blade drops through the knight, throwing
  * gilded sparks; lead flashes silver. */
 function GodslayerBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(214,232,246,0.24)" boom="rgba(227,236,244,0.85)" delayMs={delayMs} motifClass="fx-sig-arc">
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <path d="M20 36 L18 12 L20 4 L22 12 Z" fill="#e3ecf4" stroke="#5b6672" strokeWidth="1" strokeLinejoin="round" />
+          <path d="M14 14 H26" stroke="#7a5b23" strokeWidth="2.2" strokeLinecap="round" />
+        </svg>
+      </BoardWideLead>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-arc absolute inset-[6%] block" style={{ animationDelay: `${delayMs}ms` }}>
@@ -5025,13 +6146,20 @@ function GodslayerBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
         </svg>
       </span>
       <ShardBurst vectors={BURST_MED} fill="#e6bf6a" stroke="#7a5b23" delayMs={delayMs + 140} sizePct={9} />
-      {lead && <span className="fx-sig-flash absolute inset-[30%] block rounded-full" style={{ background: "rgba(214,232,246,0.6)", animationDelay: `${delayMs + 120}ms` }} />}
     </span>
   );
 }
 
 /** Onslaught: three war-charge lunges roll forward in sequence; lead flashes. */
 function OnslaughtBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(224,119,107,0.24)" boom="rgba(224,119,107,0.85)" delayMs={delayMs} />
+    );
+  }
   const dashes = [
     { top: "32%", d: 0 },
     { top: "50%", d: 70 },
@@ -5042,7 +6170,6 @@ function OnslaughtBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
       {dashes.map((s, i) => (
         <span key={i} className="fx-sig-gallop absolute left-[6%] block h-[8%] w-[52%] rounded-[1px]" style={{ top: s.top, background: "rgba(224,119,107,0.8)", animationDelay: `${delayMs + s.d}ms` }} />
       ))}
-      {lead && <span className="fx-sig-flash absolute inset-[34%] block rounded-full" style={{ background: "rgba(224,119,107,0.5)", animationDelay: `${delayMs + 140}ms` }} />}
     </span>
   );
 }
@@ -5050,6 +6177,19 @@ function OnslaughtBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 /** Resurrection: a shaft of holy light and the fallen rise back in glory; lead
  * rings the halo. */
 function ResurrectionBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(255,242,192,0.24)" boom="rgba(201,162,68,0.85)" delayMs={delayMs} motifClass="fx-sig-rise">
+        <svg viewBox="0 0 24 32" className="h-full w-full" aria-hidden="true">
+          <circle cx="12" cy="8" r="4.4" fill="rgba(255,246,210,0.85)" stroke="#c9a244" strokeWidth="1" />
+          <path d="M5 30 C6 20 8 15 12 15 C16 15 18 20 19 30 Z" fill="rgba(255,246,210,0.85)" stroke="#c9a244" strokeWidth="1" strokeLinejoin="round" />
+        </svg>
+      </BoardWideLead>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-shaft absolute left-[36%] top-0 block h-[80%] w-[28%]" style={{ background: "rgba(255,242,192,0.5)", animationDelay: `${delayMs}ms` }} />
@@ -5060,7 +6200,6 @@ function ResurrectionBurst({ lead, delayMs }: { lead: boolean; delayMs: number }
         </svg>
       </span>
       <ShardBurst vectors={BURST_MED} fill="#fff2c0" stroke="#c9a244" delayMs={delayMs + 140} sizePct={9} />
-      {lead && <span className="fx-sig-ring absolute inset-[18%] block rounded-full" style={{ border: "1.5px solid rgba(255,224,140,0.9)", animationDelay: `${delayMs + 120}ms` }} />}
     </span>
   );
 }
@@ -5068,18 +6207,48 @@ function ResurrectionBurst({ lead, delayMs }: { lead: boolean; delayMs: number }
 /** Grand Resurrection: twin light shafts and a crown descend as the queen and a
  * minor return; lead rings. */
 function GrandReviveBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(255,242,192,0.24)" boom="rgba(255,242,192,0.85)" delayMs={delayMs} />
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-shaft absolute left-[26%] top-0 block h-[76%] w-[20%]" style={{ background: "rgba(255,242,192,0.5)", animationDelay: `${delayMs}ms` }} />
       <span className="fx-sig-shaft absolute left-[54%] top-0 block h-[76%] w-[20%]" style={{ background: "rgba(255,242,192,0.5)", animationDelay: `${delayMs + 90}ms` }} />
       <span className="fx-sig-crownfall absolute top-0 left-[34%] block h-[26%] w-[32%]" style={{ animationDelay: `${delayMs + 60}ms` }}><SigCrown /></span>
-      {lead && <span className="fx-sig-ring absolute inset-[20%] block rounded-full" style={{ border: "1.5px solid rgba(255,224,140,0.85)", animationDelay: `${delayMs + 160}ms` }} />}
     </span>
   );
 }
 
 /** Iron Legion: a relief force rises from the ground in a haze of dust. */
-function IronLegionBurst({ delayMs }: { delayMs: number }) {
+function IronLegionBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 12 — tier 6+ board-wide guarantee: the lead raises the WHOLE
+  // legion — a steel wash while a rank of iron towers heaves up across the
+  // central band in a haze of dust.
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(140,150,160,0.26)" delayMs={delayMs} />
+        {[
+          { l: "28%", d: 0 },
+          { l: "42%", d: 130 },
+          { l: "56%", d: 260 },
+          { l: "66%", d: 390 },
+        ].map((t, i) => (
+          <span key={i} className="fx-sig-rise absolute bottom-[28%] block h-[24%] w-[7%]" style={{ left: t.l, animationDelay: `${delayMs + t.d}ms` }}>
+            <svg viewBox="0 0 24 32" className="h-full w-full" aria-hidden="true">
+              <path d="M5 30 V14 L4 13 V7 H8 V9 H11 V7 H13 V9 H16 V7 H20 V13 L19 14 V30 Z" fill="rgba(140,150,160,0.9)" stroke="#4a525c" strokeWidth="1" strokeLinejoin="round" />
+            </svg>
+          </span>
+        ))}
+        <span className="fx-sig-ash absolute left-[28%] bottom-[26%] block h-[7%] w-[44%] rounded-full" style={{ background: "rgba(120,124,130,0.5)", animationDelay: `${delayMs + 420}ms` }} />
+      </BoardWideStage>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-rise absolute left-[30%] bottom-[10%] block h-[56%] w-[40%]" style={{ animationDelay: `${delayMs}ms` }}>
@@ -5095,11 +6264,18 @@ function IronLegionBurst({ delayMs }: { delayMs: number }) {
 /** Second Coming: a crown of light descends inside a protective ward ring;
  * lead flashes mint. */
 function SecondComingBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(126,181,154,0.24)" boom="rgba(163,209,150,0.85)" delayMs={delayMs} />
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-ring absolute inset-[14%] block rounded-full" style={{ border: "1.5px solid rgba(126,181,154,0.9)", animationDelay: `${delayMs}ms` }} />
       <span className="fx-sig-crownfall absolute top-0 left-[32%] block h-[28%] w-[36%]" style={{ animationDelay: `${delayMs}ms` }}><SigCrown /></span>
-      {lead && <span className="fx-sig-flash absolute inset-[28%] block rounded-full" style={{ background: "rgba(163,209,150,0.55)", animationDelay: `${delayMs + 140}ms` }} />}
     </span>
   );
 }
@@ -5140,6 +6316,19 @@ function LavaFloorBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 /** Necromancer: a spectre heaves up out of the grave in a wisp of soul-fire;
  * lead flashes pale violet. */
 function NecromancerBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(180,160,200,0.24)" boom="rgba(150,120,180,0.85)" delayMs={delayMs} motifClass="fx-sig-rise">
+        <svg viewBox="0 0 24 30" className="h-full w-full" aria-hidden="true">
+          <path d="M6 30 C4 20 8 10 12 10 C16 10 20 20 18 30 C15 26 9 26 6 30 Z" fill="rgba(180,160,200,0.55)" stroke="rgba(150,120,180,0.85)" strokeWidth="1" strokeLinejoin="round" />
+          <circle cx="12" cy="9" r="3.2" fill="rgba(200,186,224,0.6)" stroke="rgba(150,120,180,0.85)" strokeWidth="1" />
+        </svg>
+      </BoardWideLead>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-rise absolute left-[26%] bottom-[8%] block h-[58%] w-[48%]" style={{ animationDelay: `${delayMs}ms` }}>
@@ -5149,13 +6338,24 @@ function NecromancerBurst({ lead, delayMs }: { lead: boolean; delayMs: number })
         </svg>
       </span>
       <span className="fx-sig-ash absolute left-[44%] top-[12%] block h-[22%] w-[18%] rounded-full" style={{ background: "rgba(150,120,180,0.5)", animationDelay: `${delayMs + 120}ms` }} />
-      {lead && <span className="fx-sig-flash absolute inset-[32%] block rounded-full" style={{ background: "rgba(180,160,200,0.5)", animationDelay: `${delayMs + 140}ms` }} />}
     </span>
   );
 }
 
 /** Werewolf: a raking claw-slash and a feral beast lunge; lead flashes. */
 function WerewolfBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(200,190,180,0.24)" boom="rgba(201,210,220,0.85)" delayMs={delayMs} motifClass="fx-sig-afterimage">
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <g stroke="#c9d2dc" strokeWidth="2.4" strokeLinecap="round" fill="none"><path d="M6 8 L30 22 M4 18 L26 30 M12 4 L30 26" /></g>
+        </svg>
+      </BoardWideLead>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-afterimage absolute left-[16%] top-[14%] block h-[60%] w-[60%]" style={{ animationDelay: `${delayMs}ms` }}>
@@ -5168,13 +6368,29 @@ function WerewolfBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           <path d="M2 24 C8 18 12 10 18 8 L22 2 L24 8 C30 10 36 16 38 24 L30 22 L26 25 L20 22 L12 25 Z" fill="#8a7a6a" stroke="#3c3228" strokeWidth="1" strokeLinejoin="round" />
         </svg>
       </span>
-      {lead && <span className="fx-sig-flash absolute inset-[32%] block rounded-full" style={{ background: "rgba(200,190,180,0.5)", animationDelay: `${delayMs + 140}ms` }} />}
     </span>
   );
 }
 
 /** Last Meal: the king ties on a napkin and a fork and plate clatter down. */
-function LastMealBurst({ delayMs }: { delayMs: number }) {
+function LastMealBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 12 — tier 5+ board-wide guarantee: the lead sets the table for the
+  // WHOLE board — a warm gold wash while a colossal fork-and-plate setting
+  // grows mid-crop and a dinner-bell ring rolls out.
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(230,191,106,0.2)" delayMs={delayMs} />
+        <span className="fx-sig-grow absolute inset-[30%] block" style={{ animationDelay: `${delayMs + 80}ms` }}>
+          <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+            <path d="M12 6 V16 M12 6 V13 M16 6 V16 M12 16 V34" stroke="#e6bf6a" strokeWidth="2" strokeLinecap="round" fill="none" />
+            <circle cx="26" cy="20" r="8" fill="none" stroke="#e0776b" strokeWidth="2.2" />
+          </svg>
+        </span>
+        <BoardBoom delayMs={delayMs + 280} color="rgba(230,191,106,0.85)" />
+      </BoardWideStage>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-grow absolute inset-[18%] block" style={{ animationDelay: `${delayMs}ms` }}>
@@ -5529,6 +6745,14 @@ function TireFrogBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
  * that collapses to a point; lead adds a stark event-horizon shock ring. A
  * monochrome unmaking, distinct from the violet Annihilation / Vortex. */
 function OblivionBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(8,8,10,0.24)" boom="rgba(201,210,220,0.85)" delayMs={delayMs} />
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-implode absolute left-1/2 top-1/2 ml-[-21%] mt-[-21%] block h-[42%] w-[42%] rounded-full" style={{ background: "rgba(8,8,10,0.95)", border: "1.5px solid rgba(232,238,246,0.95)", "--dx": "0%", "--dy": "0%", "--rot": "0deg", animationDelay: `${delayMs}ms` } as React.CSSProperties} />
@@ -5537,7 +6761,6 @@ function OblivionBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           <SigShard fill="#c9d2dc" stroke="#3f4b57" variant={i} />
         </span>
       ))}
-      {lead && <span className="fx-sig-shock absolute inset-[6%] block rounded-full" style={{ border: "2px solid rgba(232,238,246,0.9)", animationDelay: `${delayMs}ms` }} />}
     </span>
   );
 }
@@ -5545,16 +6768,21 @@ function OblivionBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 /** Blood Pact: a wax seal presses down (lead) and the sacrificed pawn bursts in
  * a dark-crimson spatter. */
 function BloodPactBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
-  return (
-    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
-      {lead && (
-        <span className="fx-sig-grow absolute inset-[24%] block" style={{ animationDelay: `${delayMs}ms` }}>
-          <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(160,44,40,0.24)" boom="rgba(122,47,40,0.85)" delayMs={delayMs} motifClass="fx-sig-grow">
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
             <circle cx="20" cy="20" r="15" fill="#7a2f28" stroke="#3a1512" strokeWidth="1.4" />
             <path d="M20 11 L23 18 L30 18 L24.5 22.5 L26.5 30 L20 25.5 L13.5 30 L15.5 22.5 L10 18 L17 18 Z" fill="#c25248" stroke="#3a1512" strokeWidth="0.8" strokeLinejoin="round" />
           </svg>
-        </span>
-      )}
+      </BoardWideLead>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-flash absolute inset-[26%] block rounded-full" style={{ background: "rgba(160,44,40,0.7)", animationDelay: `${delayMs + 120}ms` }} />
       <ShardBurst vectors={BURST_BIG} fill="#a52c28" stroke="#3a1512" delayMs={delayMs + 120} sizePct={11} />
     </span>
@@ -5564,6 +6792,19 @@ function BloodPactBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 /** Regicide: an executioner's crown-and-cleaver drops beside the throne as the
  * queen takes station over the enemy king. */
 function RegicideBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(230,191,106,0.24)" boom="rgba(230,191,106,0.85)" delayMs={delayMs} motifClass="fx-sig-crownfall">
+        <svg viewBox="0 0 30 40" className="h-full w-full" aria-hidden="true">
+          <path d="M6 4 L10 10 L15 2 L20 10 L24 4 L24 13 L6 13 Z" fill="#e6bf6a" stroke="#7a5b23" strokeWidth="1" strokeLinejoin="round" />
+          <path d="M15 13 L15 30 M9 34 C9 26 21 26 21 34 Z" fill="#c9d2dc" stroke="#4a5560" strokeWidth="1" strokeLinejoin="round" />
+        </svg>
+      </BoardWideLead>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-crownfall absolute left-[30%] top-0 block h-[54%] w-[40%]" style={{ animationDelay: `${delayMs}ms` }}>
@@ -5572,7 +6813,6 @@ function RegicideBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           <path d="M15 13 L15 30 M9 34 C9 26 21 26 21 34 Z" fill="#c9d2dc" stroke="#4a5560" strokeWidth="1" strokeLinejoin="round" />
         </svg>
       </span>
-      {lead && <span className="fx-sig-flash absolute inset-[28%] block rounded-full" style={{ background: "rgba(230,191,106,0.55)", animationDelay: `${delayMs + 220}ms` }} />}
     </span>
   );
 }
@@ -5580,6 +6820,18 @@ function RegicideBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 /** Divine Right: a shaft of heaven-light falls and a crown settles on the king,
  * who rules with a queen's reach. */
 function DivineRightBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(255,246,200,0.24)" boom="rgba(230,191,106,0.85)" delayMs={delayMs} motifClass="fx-sig-crown">
+        <svg viewBox="0 0 24 14" className="h-full w-full" aria-hidden="true">
+          <path d="M2 12 L2 4.5 L7 8 L12 1.5 L17 8 L22 4.5 L22 12 Z" fill="#e6bf6a" stroke="#7a5b23" strokeWidth="1" strokeLinejoin="round" />
+        </svg>
+      </BoardWideLead>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-shaft absolute left-[34%] top-0 block h-[92%] w-[32%]" style={{ background: "rgba(255,246,200,0.6)", animationDelay: `${delayMs}ms` }} />
@@ -5588,7 +6840,6 @@ function DivineRightBurst({ lead, delayMs }: { lead: boolean; delayMs: number })
           <path d="M2 12 L2 4.5 L7 8 L12 1.5 L17 8 L22 4.5 L22 12 Z" fill="#e6bf6a" stroke="#7a5b23" strokeWidth="1" strokeLinejoin="round" />
         </svg>
       </span>
-      {lead && <span className="fx-sig-ring absolute inset-[20%] block rounded-full" style={{ border: "1.5px solid rgba(255,232,150,0.85)", animationDelay: `${delayMs + 200}ms` }} />}
     </span>
   );
 }
@@ -5596,6 +6847,18 @@ function DivineRightBurst({ lead, delayMs }: { lead: boolean; delayMs: number })
 /** Ascendancy: every piece is haloed and lifts as it ascends to a queen's
  * reach; motes of gold light rise around it. */
 function AscendancyBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(244,196,64,0.24)" boom="rgba(230,191,106,0.85)" delayMs={delayMs} motifClass="fx-sig-rise">
+        <svg viewBox="0 0 20 30" className="h-full w-full" aria-hidden="true">
+          <path d="M4 28 L5 12 L8 16 L10 8 L12 16 L15 12 L16 28 Z" fill="#e6bf6a" stroke="#7a5b23" strokeWidth="1" strokeLinejoin="round" />
+        </svg>
+      </BoardWideLead>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-rise absolute left-[34%] bottom-[10%] block h-[52%] w-[32%]" style={{ animationDelay: `${delayMs}ms` }}>
@@ -5605,7 +6868,6 @@ function AscendancyBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) 
       </span>
       <span className="fx-sig-ring absolute left-[28%] top-[6%] block h-[26%] w-[44%] rounded-full" style={{ border: "1.5px solid rgba(244,196,64,0.9)", animationDelay: `${delayMs + 80}ms` }} />
       <ShardBurst vectors={BURST_MED} fill="#f4c430" stroke="#8a6414" delayMs={delayMs + 120} sizePct={8} />
-      {lead && <span className="fx-sig-flash absolute inset-[30%] block rounded-full" style={{ background: "rgba(244,196,64,0.5)", animationDelay: `${delayMs + 60}ms` }} />}
     </span>
   );
 }
@@ -5613,6 +6875,20 @@ function AscendancyBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) 
 /** Divine Mandate: a sealed decree stamps down and a heaven-ward halo falls over
  * the enemy piece that defects to your side. */
 function MandateBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(255,232,150,0.24)" boom="rgba(242,231,200,0.85)" delayMs={delayMs} motifClass="fx-sig-grow">
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <rect x="9" y="7" width="22" height="26" rx="1" fill="#f2e7c8" stroke="#8a6414" strokeWidth="1.2" />
+          <path d="M13 13 H27 M13 18 H27 M13 23 H23" stroke="#b79a5a" strokeWidth="1" strokeLinecap="round" />
+          <circle cx="20" cy="30" r="4" fill="#c25248" stroke="#7a2f28" strokeWidth="1" />
+        </svg>
+      </BoardWideLead>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-grow absolute left-[24%] top-[16%] block h-[52%] w-[52%]" style={{ animationDelay: `${delayMs}ms` }}>
@@ -5623,7 +6899,6 @@ function MandateBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
         </svg>
       </span>
       <span className="fx-sig-ring absolute inset-[16%] block rounded-full" style={{ border: "1.5px solid rgba(255,232,150,0.85)", animationDelay: `${delayMs + 160}ms` }} />
-      {lead && <span className="fx-sig-shaft absolute left-[40%] top-0 block h-[40%] w-[20%]" style={{ background: "rgba(255,246,200,0.5)", animationDelay: `${delayMs + 120}ms` }} />}
     </span>
   );
 }
@@ -5631,6 +6906,20 @@ function MandateBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 /** Blackout: the lights cut out on the enemy court. A breaker panel slams to OFF
  * and a dark curtain wipes across the square. */
 function BlackoutBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(12,14,20,0.24)" boom="rgba(58,68,80,0.85)" delayMs={delayMs} motifClass="fx-sig-snooze">
+        <svg viewBox="0 0 20 28" className="h-full w-full" aria-hidden="true">
+          <rect x="4" y="2" width="12" height="24" rx="1" fill="#3a4450" stroke="#141e2b" strokeWidth="1" />
+          <rect x="8" y="14" width="4" height="9" rx="1" fill="#c9d2dc" stroke="#141e2b" strokeWidth="0.8" />
+          <circle cx="10" cy="8" r="1.6" fill="#e0776b" />
+        </svg>
+      </BoardWideLead>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-frost absolute inset-[6%] block rounded-[1px]" style={{ background: "rgba(12,14,20,0.72)", animationDelay: `${delayMs + 120}ms`, transformOrigin: "50% 50%" }} />
@@ -5641,20 +6930,34 @@ function BlackoutBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           <circle cx="10" cy="8" r="1.6" fill="#e0776b" />
         </svg>
       </span>
-      {lead && (
-        <span className="fx-sig-zzz absolute left-[54%] top-[14%] block h-[22%] w-[22%]" style={{ animationDelay: `${delayMs + 240}ms` }}>
-          <svg viewBox="0 0 20 20" className="h-full w-full" aria-hidden="true">
-            <path d="M4 4 H12 L4 14 H12" fill="none" stroke="#8aa0b4" strokeWidth="2.4" strokeLinejoin="round" strokeLinecap="round" />
-          </svg>
-        </span>
-      )}
     </span>
   );
 }
 
 /** Griffon Rider: a griffon swoops in on beating wings and sets a carried piece
  * down on the empty square. */
-function GriffonCarryBurst({ delayMs }: { delayMs: number }) {
+function GriffonCarryBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 12 — tier 5+ board-wide guarantee: the lead flies the griffon over
+  // the WHOLE board — a sky wash while the colossal beast streaks across the
+  // crop on a beating wing.
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(202,161,90,0.2)" delayMs={delayMs} />
+        <span className="fx-sig-gallop absolute left-[26%] top-[30%] block h-[26%] w-[38%]" style={{ animationDelay: `${delayMs + 60}ms` }}>
+          <svg viewBox="0 0 40 30" className="h-full w-full" aria-hidden="true">
+            <path d="M12 22 C8 16 11 10 17 9 C18 5 24 5 25 9 C30 11 31 18 27 24 Z" fill="#caa15a" stroke="#6e5321" strokeWidth="1" strokeLinejoin="round" />
+            <path d="M28 8 L36 6 L31 10 Z" fill="#e8912d" stroke="#8a5311" strokeWidth="0.7" strokeLinejoin="round" />
+            <circle cx="26" cy="8" r="0.9" fill="#141e2b" />
+            <g className="fx-sig-wingbeat" style={{ animationDelay: `${delayMs + 60}ms` }}>
+              <path d="M18 12 L4 2 L10 12 L4 14 Z" fill="#e8e2d2" stroke="#6e5321" strokeWidth="0.9" strokeLinejoin="round" />
+            </g>
+          </svg>
+        </span>
+        <span className="fx-sig-ash absolute left-[34%] bottom-[26%] block h-[7%] w-[32%] rounded-full" style={{ background: "rgba(196,178,142,0.45)", animationDelay: `${delayMs + 320}ms` }} />
+      </BoardWideStage>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-streak absolute left-[-4%] top-[-6%] block h-[62%] w-[62%]" style={{ animationDelay: `${delayMs}ms` }}>
@@ -5683,6 +6986,14 @@ function GriffonCarryBurst({ delayMs }: { delayMs: number }) {
 /** Grand Army: a fresh force answers the call. A rank of banner-topped spears
  * heaves up out of the ground. */
 function GrandArmyBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(230,191,106,0.24)" boom="rgba(138,106,74,0.85)" delayMs={delayMs} />
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       {[{ l: "16%", d: 0 }, { l: "40%", d: 70 }, { l: "64%", d: 35 }].map((s, i) => (
@@ -5694,14 +7005,39 @@ function GrandArmyBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           </svg>
         </span>
       ))}
-      {lead && <span className="fx-sig-shock absolute inset-[14%] block rounded-full" style={{ border: "2px solid rgba(230,191,106,0.8)", animationDelay: `${delayMs}ms` }} />}
     </span>
   );
 }
 
 /** Mortgage: a loan is drawn against the home. A SOLD sign plants and a
  * mortgaged rook rises behind it; a few gold coins scatter. */
-function MortgageBurst({ delayMs }: { delayMs: number }) {
+function MortgageBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 12 — tier 6+ board-wide guarantee: the lead forecloses on the WHOLE
+  // board — a gold wash while a colossal SOLD sign plants mid-crop and coins
+  // rain down the central band.
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(244,196,48,0.18)" delayMs={delayMs} />
+        <span className="fx-sig-brick absolute left-[34%] bottom-[34%] block h-[22%] w-[24%]" style={{ animationDelay: `${delayMs + 80}ms` }}>
+          <svg viewBox="0 0 30 24" className="h-full w-full" aria-hidden="true">
+            <path d="M4 24 L4 4" stroke="#8a6a4a" strokeWidth="2" strokeLinecap="round" />
+            <rect x="4" y="3" width="22" height="12" rx="1" fill="#7eb59a" stroke="#2c473a" strokeWidth="1" />
+            <path d="M8 9 H22 M8 12 H18" stroke="#f4f7f2" strokeWidth="1.2" strokeLinecap="round" />
+          </svg>
+        </span>
+        <BoardRain
+          delayMs={delayMs + 160}
+          render={() => (
+            <svg viewBox="0 0 12 12" className="h-full w-full" aria-hidden="true">
+              <circle cx="6" cy="6" r="5" fill="#f4c430" stroke="#8a6414" strokeWidth="0.9" />
+              <circle cx="6" cy="6" r="2.6" fill="none" stroke="#8a6414" strokeWidth="0.7" />
+            </svg>
+          )}
+        />
+      </BoardWideStage>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-rise absolute left-[42%] bottom-[12%] block h-[46%] w-[26%]" style={{ animationDelay: `${delayMs + 120}ms` }}>
@@ -5723,7 +7059,32 @@ function MortgageBurst({ delayMs }: { delayMs: number }) {
 
 /** Repo Rook: a repo man's tow-hook lowers a rook behind enemy lines on a chain,
  * a REPO tag swinging from it. */
-function RepoRookBurst({ delayMs }: { delayMs: number }) {
+function RepoRookBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 12 — tier 5+ board-wide guarantee: the lead sends the tow rig over
+  // the WHOLE board — a steel-dusk wash while a colossal hook lowers mid-crop
+  // on its chain and the repossessed rook rises to meet it.
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(91,102,114,0.24)" delayMs={delayMs} />
+        <span className="fx-sig-crownfall absolute left-[49%] top-[16%] block h-[24%] w-[4%]" style={{ animationDelay: `${delayMs + 60}ms` }}>
+          <svg viewBox="0 0 6 24" className="h-full w-full" aria-hidden="true">
+            <path d="M3 0 V16 C3 20 6 20 6 16" fill="none" stroke="#5b6672" strokeWidth="1.4" strokeLinecap="round" />
+          </svg>
+        </span>
+        <span className="fx-sig-rise absolute left-[42%] bottom-[30%] block h-[26%] w-[13%]" style={{ animationDelay: `${delayMs + 220}ms` }}>
+          <svg viewBox="0 0 16 24" className="h-full w-full" aria-hidden="true">
+            <path d="M3 22 V10 L2.4 9.4 V5 H5 V6.6 H7 V5 H9 V6.6 H11 V5 H13.6 V9.4 L13 10 V22 Z" fill="#e0776b" stroke="#7a2f28" strokeWidth="1" strokeLinejoin="round" />
+          </svg>
+        </span>
+        <span className="fx-sig-zzz absolute left-[54%] top-[34%] block h-[8%] w-[11%]" style={{ animationDelay: `${delayMs + 380}ms` }}>
+          <svg viewBox="0 0 24 12" className="h-full w-full" aria-hidden="true">
+            <rect x="1" y="2" width="22" height="8" rx="1" fill="#e6bf6a" stroke="#7a5b23" strokeWidth="0.8" />
+          </svg>
+        </span>
+      </BoardWideStage>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-crownfall absolute left-[52%] top-0 block h-[26%] w-[8%]" style={{ animationDelay: `${delayMs}ms` }}>
@@ -5747,7 +7108,25 @@ function RepoRookBurst({ delayMs }: { delayMs: number }) {
 
 /** Musical Chairs: the music stops and two pieces scramble to swap seats, a
  * chair spinning in on the beat. */
-function MusicalChairsBurst({ delayMs }: { delayMs: number }) {
+function MusicalChairsBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 12 — tier 5+ board-wide guarantee: the lead stops the music for the
+  // WHOLE board — a warm wash while a colossal chair-and-note spins mid-crop
+  // and a scramble ring rolls out on the final beat.
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(230,191,106,0.18)" delayMs={delayMs} />
+        <span className="fx-sig-swirl absolute inset-[32%] block" style={{ animationDelay: `${delayMs + 60}ms` }}>
+          <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+            <path d="M12 34 V16 M12 16 H24 M24 14 V34 M12 24 H24" fill="none" stroke="#8a6a4a" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M26 8 a5 5 0 1 1 -0.1 0" fill="none" stroke="#e0776b" strokeWidth="2" />
+            <circle cx="26" cy="18" r="2" fill="#e6bf6a" />
+          </svg>
+        </span>
+        <BoardBoom delayMs={delayMs + 300} color="rgba(224,119,107,0.8)" />
+      </BoardWideStage>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-swirl absolute inset-[18%] block" style={{ animationDelay: `${delayMs}ms` }}>
@@ -5765,6 +7144,19 @@ function MusicalChairsBurst({ delayMs }: { delayMs: number }) {
 /** Deal with the Devil: a smoking contract is signed and stamped with a red
  * sigil; the pawn is crowned in brimstone (and the devil collects). */
 function DevilDealBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(90,70,80,0.24)" boom="rgba(242,231,200,0.85)" delayMs={delayMs} motifClass="fx-sig-grow">
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <rect x="10" y="8" width="20" height="24" rx="1" fill="#f2e7c8" stroke="#7a2f28" strokeWidth="1.2" />
+          <path d="M20 12 L22 17 L27 17 L23 20 L24.5 25 L20 22 L15.5 25 L17 20 L13 17 L18 17 Z" fill="#c25248" stroke="#7a2f28" strokeWidth="0.7" strokeLinejoin="round" />
+        </svg>
+      </BoardWideLead>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-grow absolute left-[26%] top-[18%] block h-[48%] w-[48%]" style={{ animationDelay: `${delayMs}ms` }}>
@@ -5774,7 +7166,6 @@ function DevilDealBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
         </svg>
       </span>
       <span className="fx-sig-ash absolute left-[44%] top-[10%] block h-[24%] w-[20%] rounded-full" style={{ background: "rgba(90,70,80,0.5)", animationDelay: `${delayMs + 140}ms` }} />
-      {lead && <span className="fx-sig-flash absolute inset-[30%] block rounded-full" style={{ background: "rgba(194,82,72,0.55)", animationDelay: `${delayMs + 120}ms` }} />}
     </span>
   );
 }
@@ -5782,6 +7173,18 @@ function DevilDealBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 /** Berserk Pawn: a pawn flies into a red frenzy, a snarl of rage streaks flaring
  * around it (before it burns out). */
 function BerserkBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(224,90,82,0.24)" boom="rgba(224,119,107,0.85)" delayMs={delayMs} motifClass="fx-sig-afterimage">
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+          <g stroke="#e0776b" strokeWidth="2.6" strokeLinecap="round" fill="none"><path d="M6 10 L30 20 M4 22 L26 30 M12 6 L28 26" /></g>
+        </svg>
+      </BoardWideLead>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-afterimage absolute left-[16%] top-[16%] block h-[58%] w-[58%]" style={{ animationDelay: `${delayMs}ms` }}>
@@ -5790,7 +7193,6 @@ function BerserkBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
         </svg>
       </span>
       <span className="fx-sig-flash absolute inset-[24%] block rounded-full" style={{ background: "rgba(224,90,82,0.6)", animationDelay: `${delayMs + 60}ms` }} />
-      {lead && <ShardBurst vectors={PIN_STARS} fill="#e05252" stroke="#7a2f28" delayMs={delayMs + 120} sizePct={9} />}
     </span>
   );
 }
@@ -6004,6 +7406,18 @@ function SegmentedWheel() {
   );
 }
 function FortuneWheelBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(244,247,242,0.24)" boom="rgba(244,247,242,0.85)" delayMs={delayMs} motifClass="fx-sig-tick">
+        <svg viewBox="0 0 12 18" className="h-full w-full" aria-hidden="true">
+            <path d="M1 1 H11 L6 16 Z" fill="#f4f7f2" stroke="#4a5560" strokeWidth="1" strokeLinejoin="round" />
+          </svg>
+      </BoardWideLead>
+    );
+  }
   if (lead) {
     return (
       <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
@@ -6069,6 +7483,20 @@ function SlotReel({ delayMs, start }: { delayMs: number; start: number }) {
   );
 }
 function SlotMachineBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(122,47,40,0.24)" boom="rgba(122,47,40,0.85)" delayMs={delayMs} motifClass="fx-sig-grow">
+        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+            <rect x="4" y="4" width="32" height="32" rx="2" fill="#7a2f28" stroke="#3a1512" strokeWidth="1.4" />
+            <rect x="7" y="8" width="26" height="14" rx="1" fill="#141e2b" />
+            <rect x="9" y="26" width="22" height="6" rx="1" fill="#e6bf6a" stroke="#7a5b23" strokeWidth="0.8" />
+          </svg>
+      </BoardWideLead>
+    );
+  }
   if (lead) {
     return (
       <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
@@ -6476,7 +7904,32 @@ function GremlinsBurst({ delayMs }: { delayMs: number }) {
     </span>
   );
 }
-function HomesickBurst({ delayMs }: { delayMs: number }) {
+function HomesickBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 12 — tier 5+ board-wide guarantee: the lead calls everyone home —
+  // a warm hearth wash over the WHOLE crop while a colossal cottage grows
+  // mid-board and hearts drift down the central band.
+  if (lead) {
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(230,191,106,0.2)" delayMs={delayMs} />
+        <span className="fx-sig-grow absolute left-[38%] top-[36%] block h-[26%] w-[24%]" style={{ animationDelay: `${delayMs + 60}ms` }}>
+          <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+            <path d="M6 20 L20 8 L34 20 Z" fill="#e0776b" stroke="#7a2f28" strokeWidth="1.2" strokeLinejoin="round" />
+            <rect x="10" y="20" width="20" height="14" fill="#e6bf6a" stroke="#7a5b23" strokeWidth="1.2" />
+            <rect x="17" y="26" width="6" height="8" fill="#7a2f28" />
+          </svg>
+        </span>
+        <BoardRain
+          delayMs={delayMs + 140}
+          render={() => (
+            <svg viewBox="0 0 20 20" className="h-full w-full" aria-hidden="true">
+              <path d="M10 18 C2 12 3 4 8 5 C9.5 5.4 10 7 10 7 C10 7 10.5 5.4 12 5 C17 4 18 12 10 18 Z" fill="#c25248" stroke="#7a2f28" strokeWidth="1" strokeLinejoin="round" />
+            </svg>
+          )}
+        />
+      </BoardWideStage>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-grow absolute left-[26%] top-[24%] block h-[50%] w-[48%]" style={{ animationDelay: `${delayMs}ms` }}>
@@ -6533,6 +7986,18 @@ function JetLagBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   );
 }
 function HillFlagBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(244,196,64,0.24)" boom="rgba(126,181,154,0.85)" delayMs={delayMs} motifClass="fx-sig-rise">
+        <svg viewBox="0 0 40 20" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
+          <path d="M0 20 C10 6 30 6 40 20 Z" fill="#7eb59a" stroke="#2c473a" strokeWidth="1" strokeLinejoin="round" />
+        </svg>
+      </BoardWideLead>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-rise absolute inset-x-[10%] bottom-[6%] block h-[40%]" style={{ animationDelay: `${delayMs}ms` }}>
@@ -6548,7 +8013,6 @@ function HillFlagBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           <path d="M0 1 H24 L20 8 L24 15 H0 Z" fill="#e0776b" stroke="#7a2f28" strokeWidth="1" strokeLinejoin="round" />
         </svg>
       </span>
-      {lead && <span className="fx-sig-flash absolute left-[40%] top-[2%] block h-[18%] w-[20%] rounded-full" style={{ background: "rgba(244,196,64,0.55)", animationDelay: `${delayMs + 200}ms` }} />}
     </span>
   );
 }
@@ -7837,6 +9301,20 @@ function GravityWellBurst({ lead, delayMs }: { lead: boolean; delayMs: number })
  * arcs pulse around it, and iron filings snap INTO the square; the lead adds
  * a wider field ring and a flash. */
 function MagnetBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(224,82,107,0.24)" boom="rgba(224,82,107,0.85)" delayMs={delayMs} motifClass="fx-sig-rise">
+        <svg viewBox="0 0 24 28" className="h-full w-full" aria-hidden="true">
+          <path d="M4 28 V10 C4 -2 20 -2 20 10 V28 H14 V10 C14 6 10 6 10 10 V28 Z" fill="#e0526b" stroke="#7a2035" strokeWidth="1.3" strokeLinejoin="round" />
+          <rect x="4" y="22" width="6" height="6" fill="#c9c9d4" stroke="#5b6672" strokeWidth="0.9" />
+          <rect x="14" y="22" width="6" height="6" fill="#c9c9d4" stroke="#5b6672" strokeWidth="0.9" />
+        </svg>
+      </BoardWideLead>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-rise absolute left-[32%] bottom-[14%] block h-[50%] w-[36%]" style={{ animationDelay: `${delayMs}ms` }}>
@@ -7856,7 +9334,6 @@ function MagnetBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           <SigShard fill="#8aa0b4" stroke="#3f474f" variant={i} />
         </span>
       ))}
-      {lead && <span className="fx-sig-flash absolute inset-[24%] block rounded-full" style={{ background: "rgba(224,82,107,0.35)", animationDelay: `${delayMs + 320}ms` }} />}
     </span>
   );
 }
@@ -8146,6 +9623,18 @@ function CrateDropBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
  * swinging, a gold deal-ring pops, and coins spark; the lead flashes the
  * showroom lights. */
 function RentARookBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
+  // whole crop (palette wash + the card's own motif writ large + a shockwave
+  // past the board edges) instead of a square-local pop.
+  if (lead) {
+    return (
+      <BoardWideLead wash="rgba(244,196,48,0.24)" boom="rgba(138,160,180,0.85)" delayMs={delayMs} motifClass="fx-sig-rise">
+        <svg viewBox="0 0 24 32" className="h-full w-full" aria-hidden="true">
+          <path d="M4 32 L6 14 H18 L20 32 Z M4 8 H8 V4 H10 V8 H14 V4 H16 V8 H20 V14 H4 Z" fill="#8aa0b4" stroke="#4a5560" strokeWidth="1.2" strokeLinejoin="round" />
+        </svg>
+      </BoardWideLead>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="fx-sig-rise absolute left-[28%] bottom-[10%] block h-[62%] w-[38%]" style={{ animationDelay: `${delayMs}ms` }}>
@@ -8161,7 +9650,6 @@ function RentARookBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
         </svg>
       </span>
       <ShardBurst vectors={PIN_STARS} fill="#ffd95e" stroke="#8a6414" delayMs={delayMs + 200} sizePct={8} />
-      {lead && <span className="fx-sig-shock absolute inset-[8%] block rounded-full" style={{ border: "2px solid rgba(244,196,48,0.8)", animationDelay: `${delayMs + 120}ms` }} />}
     </span>
   );
 }
@@ -8223,22 +9711,22 @@ export function SignatureOverlay({
     case "nova":
       return <NovaBurst lead={lead} delayMs={delayMs} />;
     case "trapdoor":
-      return <TrapdoorBurst delayMs={delayMs} />;
+      return <TrapdoorBurst lead={lead} delayMs={delayMs} />;
     case "stone":
-      return <StoneBurst delayMs={delayMs} />;
+      return <StoneBurst lead={lead} delayMs={delayMs} />;
     case "strike":
-      return <StrikeBurst delayMs={delayMs} />;
+      return <StrikeBurst lead={lead} delayMs={delayMs} />;
     case "atomic":
       return <AtomicBurst lead={lead} delayMs={delayMs} />;
     case "pin":
-      return <PinBurst delayMs={delayMs} />;
+      return <PinBurst lead={lead} delayMs={delayMs} />;
     case "siege":
       return <SiegeBurst lead={lead} delayMs={delayMs} />;
     // --- Batch 2 (effect-data sourced) ---
     case "coronation":
       return <CoronationBurst lead={lead} delayMs={delayMs} />;
     case "crownrain":
-      return <CrownRainBurst delayMs={delayMs} />;
+      return <CrownRainBurst lead={lead} delayMs={delayMs} />;
     case "colossus":
       return <ColossusBurst lead={lead} delayMs={delayMs} />;
     case "snooze":
@@ -8254,7 +9742,7 @@ export function SignatureOverlay({
     case "petrify":
       return <PetrifyBurst lead={lead} delayMs={delayMs} />;
     case "petrifiedforest":
-      return <PetrifiedForestBurst delayMs={delayMs} />;
+      return <PetrifiedForestBurst lead={lead} delayMs={delayMs} />;
     case "aegis":
       return <AegisBurst lead={lead} delayMs={delayMs} />;
     case "cathedral":
@@ -8262,10 +9750,10 @@ export function SignatureOverlay({
     case "shades":
       return <ShadesBurst lead={lead} delayMs={delayMs} />;
     case "wallbuild":
-      return <WallBuildBurst delayMs={delayMs} />;
+      return <WallBuildBurst lead={lead} delayMs={delayMs} />;
     // --- Batch 3 (distinctness split + fantasy set) ---
     case "snapfrost":
-      return <SnapFrostBurst delayMs={delayMs} />;
+      return <SnapFrostBurst lead={lead} delayMs={delayMs} />;
     case "deepglacier":
       return <DeepGlacierBurst lead={lead} delayMs={delayMs} />;
     case "iceshatter":
@@ -8281,25 +9769,25 @@ export function SignatureOverlay({
     case "wither":
       return <WitherBurst lead={lead} delayMs={delayMs} />;
     case "stonechain":
-      return <StoneChainBurst delayMs={delayMs} />;
+      return <StoneChainBurst lead={lead} delayMs={delayMs} />;
     case "greyhex":
-      return <GreyHexBurst delayMs={delayMs} />;
+      return <GreyHexBurst lead={lead} delayMs={delayMs} />;
     case "greatwall":
-      return <GreatWallBurst delayMs={delayMs} />;
+      return <GreatWallBurst lead={lead} delayMs={delayMs} />;
     case "summonrift":
-      return <SummonRiftBurst delayMs={delayMs} />;
+      return <SummonRiftBurst lead={lead} delayMs={delayMs} />;
     case "dragonrise":
       return <DragonRiseBurst lead={lead} delayMs={delayMs} />;
     case "meteor":
       return <MeteorBurst lead={lead} delayMs={delayMs} />;
     case "gravehands":
-      return <GraveHandsBurst delayMs={delayMs} />;
+      return <GraveHandsBurst lead={lead} delayMs={delayMs} />;
     case "holylight":
       return <HolyLightBurst lead={lead} delayMs={delayMs} />;
     case "icewall":
-      return <IceWallBurst delayMs={delayMs} />;
+      return <IceWallBurst lead={lead} delayMs={delayMs} />;
     case "thornwall":
-      return <ThornWallBurst delayMs={delayMs} />;
+      return <ThornWallBurst lead={lead} delayMs={delayMs} />;
     case "bladegift":
       return <BladeGiftBurst lead={lead} delayMs={delayMs} />;
     case "wings":
@@ -8309,9 +9797,9 @@ export function SignatureOverlay({
     case "dragonfire":
       return <DragonFireBurst lead={lead} delayMs={delayMs} />;
     case "scythe":
-      return <ScytheBurst delayMs={delayMs} />;
+      return <ScytheBurst lead={lead} delayMs={delayMs} />;
     case "arclight":
-      return <ArcLightBurst delayMs={delayMs} />;
+      return <ArcLightBurst lead={lead} delayMs={delayMs} />;
     case "dive":
       return <DiveBurst delayMs={delayMs} />;
     case "smite":
@@ -8320,23 +9808,23 @@ export function SignatureOverlay({
       return <DecreeBurst lead={lead} delayMs={delayMs} />;
     // --- Batch 4 (WILD set + Computer Virus) ---
     case "inferno":
-      return <InfernoBurst delayMs={delayMs} />;
+      return <InfernoBurst lead={lead} delayMs={delayMs} />;
     case "hellfire":
       return <HellfireBurst lead={lead} delayMs={delayMs} />;
     case "rockfall":
-      return <RockfallBurst delayMs={delayMs} />;
+      return <RockfallBurst lead={lead} delayMs={delayMs} />;
     case "unmake":
-      return <UnmakeBurst delayMs={delayMs} />;
+      return <UnmakeBurst lead={lead} delayMs={delayMs} />;
     case "wreckingball":
       return <WreckingBallBurst lead={lead} delayMs={delayMs} />;
     case "pinata":
       return <PinataBurst lead={lead} delayMs={delayMs} />;
     case "artillery":
-      return <ArtilleryBurst delayMs={delayMs} />;
+      return <ArtilleryBurst lead={lead} delayMs={delayMs} />;
     case "spearcharge":
       return <SpearChargeBurst lead={lead} delayMs={delayMs} />;
     case "tankroll":
-      return <TankRollBurst delayMs={delayMs} />;
+      return <TankRollBurst lead={lead} delayMs={delayMs} />;
     case "hailstorm":
       return <HailstormBurst delayMs={delayMs} />;
     case "blizzard":
@@ -8346,15 +9834,15 @@ export function SignatureOverlay({
     case "stonerise":
       return <StoneRiseBurst delayMs={delayMs} />;
     case "mountainwall":
-      return <MountainWallBurst delayMs={delayMs} />;
+      return <MountainWallBurst lead={lead} delayMs={delayMs} />;
     case "trench":
-      return <TrenchBurst delayMs={delayMs} />;
+      return <TrenchBurst lead={lead} delayMs={delayMs} />;
     case "reinforce":
-      return <ReinforceBurst delayMs={delayMs} />;
+      return <ReinforceBurst lead={lead} delayMs={delayMs} />;
     case "paradrop":
-      return <ParadropBurst delayMs={delayMs} />;
+      return <ParadropBurst lead={lead} delayMs={delayMs} />;
     case "geniepoof":
-      return <GeniePoofBurst delayMs={delayMs} />;
+      return <GeniePoofBurst lead={lead} delayMs={delayMs} />;
     case "suppress":
       return <SuppressBurst delayMs={delayMs} />;
     case "timestop":
@@ -8375,15 +9863,15 @@ export function SignatureOverlay({
     case "chronosteal":
       return <ChronoStealBurst lead={lead} delayMs={delayMs} />;
     case "blink":
-      return <BlinkBurst delayMs={delayMs} />;
+      return <BlinkBurst lead={lead} delayMs={delayMs} />;
     case "portal":
-      return <PortalBurst delayMs={delayMs} />;
+      return <PortalBurst lead={lead} delayMs={delayMs} />;
     case "borderward":
-      return <BorderWardBurst delayMs={delayMs} />;
+      return <BorderWardBurst lead={lead} delayMs={delayMs} />;
     case "banana":
       return <BananaBurst delayMs={delayMs} />;
     case "minefield":
-      return <MinefieldBurst delayMs={delayMs} />;
+      return <MinefieldBurst lead={lead} delayMs={delayMs} />;
     case "vortex":
       return <VortexBurst lead={lead} delayMs={delayMs} />;
     // --- Batch 6 (marquee dragon + wizard) ---
@@ -8399,7 +9887,7 @@ export function SignatureOverlay({
     case "whirlpool":
       return <WhirlpoolBurst delayMs={delayMs} />;
     case "flood":
-      return <FloodBurst delayMs={delayMs} />;
+      return <FloodBurst lead={lead} delayMs={delayMs} />;
     case "frozenmoat":
       return <FrozenMoatBurst lead={lead} delayMs={delayMs} />;
     case "meteorstorm":
@@ -8412,11 +9900,11 @@ export function SignatureOverlay({
     case "cinderstrike":
       return <CinderStrikeBurst delayMs={delayMs} />;
     case "purgestorm":
-      return <PurgeStormBurst delayMs={delayMs} />;
+      return <PurgeStormBurst lead={lead} delayMs={delayMs} />;
     case "roulette":
       return <RouletteBurst lead={lead} delayMs={delayMs} />;
     case "purgeline":
-      return <PurgeLineBurst delayMs={delayMs} />;
+      return <PurgeLineBurst lead={lead} delayMs={delayMs} />;
     case "calldown":
       return <CalldownBurst lead={lead} delayMs={delayMs} />;
     case "annihilation":
@@ -8424,7 +9912,7 @@ export function SignatureOverlay({
     case "meteorcross":
       return <MeteorCrossBurst lead={lead} delayMs={delayMs} />;
     case "purgerealm":
-      return <PurgeRealmBurst delayMs={delayMs} />;
+      return <PurgeRealmBurst lead={lead} delayMs={delayMs} />;
     case "ruin":
       return <RuinBurst lead={lead} delayMs={delayMs} />;
     case "bannerwar":
@@ -8436,7 +9924,7 @@ export function SignatureOverlay({
     case "rustlock":
       return <RustLockBurst lead={lead} delayMs={delayMs} />;
     case "masspetrify":
-      return <MassPetrifyBurst delayMs={delayMs} />;
+      return <MassPetrifyBurst lead={lead} delayMs={delayMs} />;
     case "walnutcurse":
       return <WalnutCurseBurst lead={lead} delayMs={delayMs} />;
     case "amazoncrown":
@@ -8456,7 +9944,7 @@ export function SignatureOverlay({
     case "grandrevive":
       return <GrandReviveBurst lead={lead} delayMs={delayMs} />;
     case "ironlegion":
-      return <IronLegionBurst delayMs={delayMs} />;
+      return <IronLegionBurst lead={lead} delayMs={delayMs} />;
     case "secondcoming":
       return <SecondComingBurst lead={lead} delayMs={delayMs} />;
     case "lavafloor":
@@ -8466,7 +9954,7 @@ export function SignatureOverlay({
     case "werewolf":
       return <WerewolfBurst lead={lead} delayMs={delayMs} />;
     case "lastmeal":
-      return <LastMealBurst delayMs={delayMs} />;
+      return <LastMealBurst lead={lead} delayMs={delayMs} />;
     // --- Batch 9 (thematic character-matched signatures) ---
     case "crocbomber":
       return <CrocBomberBurst lead={lead} delayMs={delayMs} />;
@@ -8497,15 +9985,15 @@ export function SignatureOverlay({
     case "blackout":
       return <BlackoutBurst lead={lead} delayMs={delayMs} />;
     case "griffoncarry":
-      return <GriffonCarryBurst delayMs={delayMs} />;
+      return <GriffonCarryBurst lead={lead} delayMs={delayMs} />;
     case "grandarmy":
       return <GrandArmyBurst lead={lead} delayMs={delayMs} />;
     case "mortgagesign":
-      return <MortgageBurst delayMs={delayMs} />;
+      return <MortgageBurst lead={lead} delayMs={delayMs} />;
     case "reporook":
-      return <RepoRookBurst delayMs={delayMs} />;
+      return <RepoRookBurst lead={lead} delayMs={delayMs} />;
     case "musicalchairs":
-      return <MusicalChairsBurst delayMs={delayMs} />;
+      return <MusicalChairsBurst lead={lead} delayMs={delayMs} />;
     case "devildeal":
       return <DevilDealBurst lead={lead} delayMs={delayMs} />;
     case "berserkrage":
@@ -8552,7 +10040,7 @@ export function SignatureOverlay({
     case "gremlins":
       return <GremlinsBurst delayMs={delayMs} />;
     case "homesick":
-      return <HomesickBurst delayMs={delayMs} />;
+      return <HomesickBurst lead={lead} delayMs={delayMs} />;
     case "jetlag":
       return <JetLagBurst lead={lead} delayMs={delayMs} />;
     case "hillflag":

@@ -69,6 +69,9 @@ export function OppPlaysLog({ plays }: { plays: OppPlay[] }) {
   const itemRefs = useRef(new Map<number, HTMLDivElement | null>());
   // Flight vector per departing entry, measured once when it crosses the TTL.
   const [flights, setFlights] = useState<Record<number, { dx: number; dy: number }>>({});
+  // Entries the player clicked away early. The play still lands in the dock
+  // ledger as usual; only its feed time is cut short.
+  const [dismissed, setDismissed] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     const id = window.setInterval(() => setTick((t) => t + 1), 400);
@@ -97,7 +100,7 @@ export function OppPlaysLog({ plays }: { plays: OppPlay[] }) {
   // Reduced motion skips the flight: entries simply leave at the TTL.
   const visibleFor = reduceMotion ? FEED_TTL_MS : FEED_TTL_MS + FLY_MS;
   const shown = plays
-    .filter((p) => now - p.at < visibleFor)
+    .filter((p) => now - p.at < visibleFor && !dismissed.has(p.key))
     .slice(-FEED_MAX)
     .reverse();
   if (!shown.length) return null;
@@ -118,6 +121,14 @@ export function OppPlaysLog({ plays }: { plays: OppPlay[] }) {
             }}
             role={newest ? "status" : undefined}
             aria-live={newest ? "polite" : undefined}
+            // Click (or Enter) waves the toast away early; the play still
+            // lands in the dock's permanent ledger.
+            onClick={() => setDismissed((s) => new Set(s).add(p.key))}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") setDismissed((s) => new Set(s).add(p.key));
+            }}
+            tabIndex={0}
+            title="Dismiss"
             style={
               flight
                 ? {
@@ -130,7 +141,7 @@ export function OppPlaysLog({ plays }: { plays: OppPlay[] }) {
                 : undefined
             }
             className={
-              "rounded-[1px] border bg-ink-700/95 px-3 shadow-plate backdrop-blur-sm " +
+              "pointer-events-auto cursor-pointer rounded-[1px] border bg-ink-700/95 px-3 shadow-plate backdrop-blur-sm " +
               (newest ? "border-gold/40 py-2.5 animate-rise" : "border-white/10 py-1.5 opacity-85")
             }
           >

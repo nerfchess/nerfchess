@@ -224,6 +224,17 @@ function TvView() {
                 lastMove={lastMove}
                 disabled
               />
+            ) : !lobby ? (
+              /* Tuning in: the first lobby snapshot (and the recent-game
+                 fallback) are still loading. A quiet loading state instead of
+                 flashing "no games" at every visitor for a second. */
+              <div className="grid aspect-square w-full place-items-center plate">
+                <div className="flex flex-col items-center gap-3">
+                  <Radio size={28} className="animate-flicker text-gold-leaf" aria-hidden />
+                  <div className="skeleton h-2 w-32" />
+                  <p className="smallcaps text-[10px] text-parchment-400">Tuning in…</p>
+                </div>
+              </div>
             ) : (
               <div className="grid aspect-square w-full place-items-center plate">
                 <p className="max-w-xs px-6 text-center text-sm text-parchment-400">
@@ -278,7 +289,15 @@ function TvView() {
               <div className="border-b border-white/10 px-4 py-2.5 smallcaps text-[10px] text-parchment-400">
                 Live games {liveGames.length > 0 && `(${liveGames.length})`}
               </div>
-              {liveGames.length === 0 ? (
+              {!lobby ? (
+                /* First snapshot still loading: shimmer instead of a premature
+                   "nothing live" that flashes and then fills in. */
+                <div className="space-y-2 px-4 py-3" aria-label="Loading live games">
+                  <div className="skeleton h-9 w-full" />
+                  <div className="skeleton h-9 w-full" />
+                  <div className="skeleton h-9 w-3/4" />
+                </div>
+              ) : liveGames.length === 0 ? (
                 <p className="px-4 py-4 text-sm text-parchment-400">Nothing live right now.</p>
               ) : (
                 <ul className="divide-y divide-white/5">

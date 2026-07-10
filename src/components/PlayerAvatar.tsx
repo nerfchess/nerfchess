@@ -64,10 +64,13 @@ export function PlayerAvatar({
 }
 
 // House-player accounts hold "_flower" avatar preset ids (see lib/avatars.ts).
-// The flower renders again (owner request): a very small bloom in the TOP-RIGHT
-// corner of every house avatar, so a bot is identifiable at a glance anywhere
-// an avatar shows — subtle enough to read as decoration, consistent enough to
-// learn. Human presets never resolve to a flowered id, so no human gets one.
+// The flower renders as a very small bloom in the TOP-RIGHT corner of every
+// house avatar, so a bot is identifiable at a glance anywhere an avatar shows.
+// Owner feedback: the old bloom (bright pink petals, gold heart, 0.85 opacity)
+// was a loud emblem that screamed "bot"; it now draws small, ghosted, and in a
+// single muted tone — like the legacy star mark — so it reads as quiet plate
+// decoration while staying learnable. Human presets never resolve to a
+// flowered id, so no human gets one.
 function PresetAvatar({
   name,
   avatar,
@@ -81,7 +84,7 @@ function PresetAvatar({
 }) {
   const spec = AVATARS[avatarIdFor(name, avatar)];
   const starSize = Math.max(5, Math.round(size * 0.2));
-  const flowerSize = Math.max(6, Math.round(size * 0.24));
+  const flowerSize = Math.max(5, Math.round(size * 0.16));
   return (
     <div
       className={"relative grid shrink-0 place-items-center overflow-hidden rounded-md border border-white/20 " + className}
@@ -100,24 +103,23 @@ function PresetAvatar({
             right: Math.max(1, Math.round(size * 0.05)),
             width: flowerSize,
             height: flowerSize,
-            opacity: 0.85,
+            opacity: 0.35,
           }}
         >
-          {/* Five petals around a golden heart. */}
+          {/* Five ghosted petals in the star mark's parchment tone: one muted
+              color, no strokes, no golden heart — quiet plate decoration. */}
           {[0, 72, 144, 216, 288].map((a) => (
             <ellipse
               key={a}
               cx="12"
-              cy="6.6"
-              rx="3.1"
-              ry="4.6"
-              fill="#e9a6c9"
-              stroke="#8a4a6b"
-              strokeWidth="0.7"
+              cy="6.8"
+              rx="2.8"
+              ry="4.4"
+              fill="#f3e9c8"
               transform={`rotate(${a} 12 12)`}
             />
           ))}
-          <circle cx="12" cy="12" r="3" fill="#f4c430" stroke="#8a6414" strokeWidth="0.8" />
+          <circle cx="12" cy="12" r="2.4" fill="#f3e9c8" />
         </svg>
       )}
       {spec.star && (

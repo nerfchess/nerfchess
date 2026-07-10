@@ -60,6 +60,7 @@ if (process.env.NODE_ENV !== "production") {
 import { EdgeAura, EmpowerShine, tierRgb } from "./effects/EmpowerAura";
 import type { MotifMark } from "./effects/fxZones";
 import { EffectPopover, type EffectPopoverContent } from "./EffectPopover";
+import { useFxHidden } from "@/lib/fxToggle";
 import type { BuffCategory, BuffMatchState } from "@/engine/buff";
 import { BUFF_BY_ID } from "@/engine/buffs/library";
 import { BoardState, Color, FILE, Move, PieceType, RANK, SQ, Square } from "@/engine/types";
@@ -901,6 +902,9 @@ export function Board({
   const [promotionMove, setPromotionMove] = useState<Move[] | null>(null);
   const [drag, setDrag] = useState<DragState | null>(null);
   const [hoverSq, setHoverSq] = useState<Square | null>(null);
+  // The player's "hide effects/animations" switch (the small eye button in
+  // the game rails). Decorative layers stand down; functional reads stay.
+  const fxHiddenPref = useFxHidden();
   // Square whose effect-explanation popover is currently open (hover, focus,
   // or tap). One at a time; the Board owns open/close, EffectPopover just
   // renders the card. Null = nothing open.
@@ -2302,7 +2306,7 @@ export function Board({
                      edge; the path ahead is closed. */
                   <PawnFence edge={fenceEdge} />
                 )}
-                {motifShown && motifMark && isEmpowerMotif(motifMark.motif) && (
+                {!fxHiddenPref && motifShown && motifMark && isEmpowerMotif(motifMark.motif) && (
                   /* Empowered-piece shine: a soft breathing halo + tier ring
                      under a piece carrying a self-grant (empower/ward/rally).
                      Rides the same motifShown gate as the badge, so frozen /
@@ -2311,7 +2315,7 @@ export function Board({
                      div, so the piece always stays on top. */
                   <EmpowerShine tier={motifMark.tier} />
                 )}
-                {motifShown && motifMark && (
+                {!fxHiddenPref && motifShown && motifMark && (
                   /* Card-fx motif badge, tinted by the card's tier and
                      stamped with its category glyph. Keyed by motif + card
                      name so re-renders never replay the entrance; only a
@@ -2393,6 +2397,7 @@ export function Board({
                 )}
                 {boardFx?.kind === "summon" && <SummonPoof key={`fx-${boardFx.key}`} />}
                 {boardFx?.kind === "detonate" &&
+                  !fxHiddenPref &&
                   (() => {
                     const sigCfg = boardFx.sig ? resolveSignature(boardFx.sig) : undefined;
                     if (!sigCfg) return <DetonationBurst key={`fx-${boardFx.key}`} />;
@@ -2415,7 +2420,7 @@ export function Board({
                       />
                     );
                   })()}
-                {zoneSig && SIGNATURES[zoneSig.sig] && (
+                {!fxHiddenPref && zoneSig && SIGNATURES[zoneSig.sig] && (
                   /* Zone-sourced signature (source !== "removal"): the same
                      SignatureOverlay art, but staged over a piece that STAYS on
                      the board and sourced from the fx-effect zone the card
@@ -2528,31 +2533,33 @@ export function Board({
             faint tinted glow breathes along the viewer's edge of the crop —
             "you have a perk running". The strongest (highest-tier) grant
             picks the tint; orientation decides which edge is the viewer's. */}
-        {(() => {
-          let bestTier = 0;
-          for (const mk of motifBySquare.values()) {
-            if (!isEmpowerMotif(mk.motif)) continue;
-            const p = board.pieces[mk.sq];
-            if (!p || p.color !== myColor) continue;
-            if (mk.tier > bestTier) bestTier = mk.tier;
-          }
-          return bestTier > 0 ? (
-            <EdgeAura color={myColor} orientation={orientation} tint={tierRgb(bestTier)} />
-          ) : null;
-        })()}
+        {!fxHiddenPref &&
+          (() => {
+            let bestTier = 0;
+            for (const mk of motifBySquare.values()) {
+              if (!isEmpowerMotif(mk.motif)) continue;
+              const p = board.pieces[mk.sq];
+              if (!p || p.color !== myColor) continue;
+              if (mk.tier > bestTier) bestTier = mk.tier;
+            }
+            return bestTier > 0 ? (
+              <EdgeAura color={myColor} orientation={orientation} tint={tierRgb(bestTier)} />
+            ) : null;
+          })()}
 
         {/* Cast spectacle: the board-level themed read every played card gets
             (category fallback layer). One-shot, keyed to the play so React
             mounts it exactly once per cast; the finished overlay ends at
             opacity 0 and simply waits to be replaced by the next cast. */}
-        {cast && (
+        {!fxHiddenPref && cast && (
           <CastSpectacle key={`cast-${cast.key}`} category={cast.category} tier={cast.tier} />
         )}
         {/* Diff-less generated lead: a played card that removes nothing and
             leaves no zone (clock steals, draft tricks, info peeks...) still
             gets its unique board-wide flourish here. Suppressed whenever the
             piece-diff path already led this play key. */}
-        {cast &&
+        {!fxHiddenPref &&
+          cast &&
           cast.key !== castLeadSuppressKeyRef.current &&
           (() => {
             const cfg = resolveSignature(cast.id);
@@ -2594,6 +2601,7 @@ export function Board({
           suppressed under the promotion picker. */}
       {effectPopoverSq != null &&
         !promotionMove &&
+        !fxHiddenPref &&
         (() => {
           const info = effectInfoFor(effectPopoverSq);
           if (!info) return null;

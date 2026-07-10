@@ -420,12 +420,14 @@ const houseSeeksKey = "hp:seeks";
 // re-run ensureHouseUsers to create their rows. (The renamed old accounts
 // stay orphaned in the DB; harmless, same as the v2 note below.)
 const houseSeededKey = "hp:seeded:v3";
-// One-time-per-revision sync of every house account's rating to the current
-// houseSeedRating (see syncHouseRatings). Bump the suffix whenever the roster's
-// ratings change so existing accounts (seeded with INSERT OR IGNORE at the old
-// numbers) get UPDATEd to the new ones on the next cold start. This bump goes
-// with the roster-wide raise (1550 floor) and the new 2100-2200 top band.
-const houseRatingsSyncedKey = "hp:ratings-synced:elo-2200";
+// One-time-per-revision sync of every house account's rating AND identity
+// (avatar, location bio) to the current roster values (see syncHouseRatings).
+// Bump the suffix whenever the roster's ratings or identity change so existing
+// accounts (seeded with INSERT OR IGNORE at the old values) get UPDATEd on the
+// next cold start. This bump circulates the identity pass: varied flowered
+// avatars (name-hashed over the full catalog) and one distinct world-wide
+// location per persona as the profile bio.
+const houseRatingsSyncedKey = "hp:ratings-synced:identity-1";
 const houseNextFillerKey = "hp:nextFillerAt";
 // Slow heartbeat while at least one human socket is connected; with nobody
 // online there is no heartbeat and the DO goes idle between match deadlines.
@@ -1477,7 +1479,16 @@ export class GameServer extends DurableObject<Env> {
       const chunk = ids.slice(i, i + 128);
       const found = await this.ctx.storage.get<StoredMatch>(chunk.map(matchKey));
       for (const id of chunk) {
-        const match = found.get(matchKey(id));
+        // Bot-only (filler) games live in the transient store between sparse
+        // durable flushes (see saveMatch), so the durable copy read here can be
+        // up to BOT_MATCH_FLUSH_EVERY events behind. Every live path that goes
+        // through this loader (houseTick's due pass and re-arm sweep, the lobby
+        // snapshot, maintenance flag checks) must see the SAME freshest record
+        // loadMatch serves, or the tick acts on a rewound game: it replays
+        // already-played plies, re-arms off a stale turn, and can persist the
+        // stale copy back over the fresh one — a house game that "just stops
+        // moving" (or visibly rewinds) even though its record was fine.
+        const match = this.botMatches.get(id) ?? found.get(matchKey(id));
         if (!match || match.result) {
           index.delete(id);
           continue;
@@ -1547,6 +1558,12 @@ export class GameServer extends DurableObject<Env> {
         ...(match.users ?? {}),
         [color]: { id: session.userId, name: session.username, rating, rd, vol, avatar },
       };
+    } else if (match.users?.[color]?.id) {
+      // Returning seat: re-read its rating so every start frame this player
+      // receives shows the live number for this game's own rating bucket
+      // (see refreshSeatRatings for the invariant). The caller persists the
+      // match after attaching.
+      await this.refreshSeatRatings(match, [color]);
     }
   }
 
@@ -1628,6 +1645,38 @@ export class GameServer extends DurableObject<Env> {
       return { rating: r.rating, rd: r.rd, vol: r.vol, avatar: row?.avatar ?? null };
     } catch {
       return null;
+    }
+  }
+
+  // Re-read the given seats' rating (plus rd/vol/avatar) from the CURRENT
+  // value of the SAME rating bucket this game is rated in
+  // (matchRatingCategory).
+  //
+  // INVARIANT: the rating a start frame shows beside a player must equal what
+  // recordFinishedGame will read as `before` when the game ends, so the
+  // number on the game screen plus the end frame's delta is exactly the end
+  // frame's new rating. match.users is a snapshot taken when the seat was
+  // created (queue pairing / challenge creation / rematch creation); rated
+  // games recorded for the same account+bucket between that snapshot and the
+  // game actually being played (a challenge sitting in the lobby while the
+  // host plays elsewhere, rematch chains, a second tab) leave it stale — the
+  // "in-game said 1759, game over said 1802 +13" bug. Refreshing on attach
+  // and at game start keeps every surface built from match.users honest.
+  // Callers persist the match afterwards.
+  private async refreshSeatRatings(match: StoredMatch, colors: Color[]) {
+    if (match.result) return;
+    const db = await this.db();
+    if (!db) return;
+    for (const color of colors) {
+      const seat = match.users?.[color];
+      if (!seat?.id) continue;
+      const row = await this.seatCategoryRating(db, seat.id, this.matchRatingCategory(match));
+      if (row) {
+        seat.rating = row.rating;
+        seat.rd = row.rd;
+        seat.vol = row.vol;
+        seat.avatar = row.avatar;
+      }
     }
   }
 
@@ -2467,6 +2516,11 @@ export class GameServer extends DurableObject<Env> {
     }
 
     await this.attachSession(ws, match, "b");
+    // The host's seat rating was snapshotted when the challenge was created,
+    // possibly long before this join (their rating may have moved in other
+    // games since); bring it current before the start frames go out. The
+    // joiner's own seat was read fresh in attachSession just above.
+    await this.refreshSeatRatings(match, ["w"]);
     // Draft games open with the nerf draft instead of starting outright.
     // Buff mode has no nerfs, so it starts like a classic game.
     if (match.draft && match.mode !== "buff") return this.beginNerfDraft(match);
@@ -3213,6 +3267,28 @@ export class GameServer extends DurableObject<Env> {
     match.botActAt = now + houseThinkMs(randomInt, clocks[turn] + grace, match.setup.timeSec);
   }
 
+  // After a turn-cache heal (cached turnColor != authoritative replay), the
+  // SERVER is consistent again — but a connected human client built its board
+  // from the live frame stream, which is exactly what the replay disagreed
+  // with. If the reconciled turn is the HUMAN's, no further server frame is
+  // coming (the bot correctly stays idle), so a client still showing "opponent
+  // to move" waits forever — the reported "made two moves and the bot just
+  // stopped" freeze in the direction no bot re-arm can fix. Re-send the full
+  // start payload (the same authoritative replay-restore frame a reconnect
+  // gets) to every connected human seat so their board rebuilds onto the
+  // server's truth and play resumes, whichever side is to move.
+  private resyncHumanSeatsAfterTurnHeal(match: StoredMatch) {
+    for (const color of ["w", "b"] as Color[]) {
+      if (match.bots?.[color]) continue;
+      if (!this.connectedSession(match.id, color)) continue;
+      try {
+        this.sendStart(match, color);
+      } catch (err) {
+        console.error("post-heal resync failed", match.id, color, err);
+      }
+    }
+  }
+
   // A house match threw while acting (engine edge case, corrupt record, storage
   // hiccup). It must never wedge the roster, so retire it here instead of
   // letting it re-throw on every later tick. A mixed human game ends as an
@@ -3456,6 +3532,13 @@ export class GameServer extends DurableObject<Env> {
             match.clocks = this.currentClocks(match, now);
             if (match.runningSince !== null) match.runningSince = now;
             match.turnColor = game.board.turn;
+            // The heal fixed the SERVER; the human's client may still be on
+            // the pre-heal turn (that is how the game got here). Push the
+            // authoritative replay-restore frame so their board un-freezes —
+            // without this the record heals but the human keeps waiting on a
+            // bot the server (correctly) never arms.
+            await this.saveMatch(match, false);
+            this.resyncHumanSeatsAfterTurnHeal(match);
           }
           this.armBotAction(match, game, now);
           if (match.botActAt) await this.saveMatch(match, false);
@@ -3737,6 +3820,18 @@ export class GameServer extends DurableObject<Env> {
       match.clocks = this.currentClocks(match, now);
       if (match.runningSince !== null) match.runningSince = now;
       match.turnColor = game.board.turn;
+      // Reconciling the cache to the replay can hand the turn to the HUMAN.
+      // In that direction the bot correctly goes idle, so no move frame will
+      // ever reach the human's client — which is still on the pre-heal turn
+      // and shows a bot "thinking" forever. Persist the healed record and
+      // re-send the authoritative start payload so the client rebuilds onto
+      // the server's truth and can move (the !personaId branch below then
+      // parks the bot until they do). When the replay says it is the BOT's
+      // turn the move committed below carries the correction instead.
+      if (!match.bots?.[game.board.turn]) {
+        await this.saveMatch(match, false);
+        this.resyncHumanSeatsAfterTurnHeal(match);
+      }
     }
     if (game.result) {
       // Derived but unrecorded result (should not happen): settle it.
@@ -5630,6 +5725,12 @@ export class GameServer extends DurableObject<Env> {
     if (!match.startedAt || !match.dtDeadline || now < match.dtDeadline) return false;
     match.dtDeadline = null;
     if (!match.result && match.runningSince === null) match.runningSince = now;
+    // The lock-in window expiring resumes play; if a house seat is to move (or
+    // still holds its own offer) and its think timer was lost while the clock
+    // sat paused, nothing else re-arms it until the heartbeat sweep. Arm it
+    // here so the bot resumes with the clock. Guarded on being unarmed so an
+    // already-ticking timer is never disturbed.
+    if (!match.result && !match.botActAt) this.armBotAction(match, null, now);
     await this.saveMatch(match, false);
     return true;
   }
@@ -5952,6 +6053,32 @@ export class GameServer extends DurableObject<Env> {
           }
         }
       }
+      // Arena (OCI bot-vs-bot) games: every seated persona counts as an online
+      // player exactly like a seat in a native house game above. These games
+      // already show in the live-games list (externalLiveGames), so their
+      // players must show in the online list too or the two panels disagree —
+      // 19 bot games must read as at least 38 seated bot players. Same gate
+      // and TTL as externalLiveGames so a paused/expired arena adds nobody.
+      if (this.env.ARENA_LOBBY_ENABLED === "true") {
+        for (const { meta, at } of this.externalGames.values()) {
+          if (now - at > EXTERNAL_GAME_TTL_MS) continue;
+          for (const color of ["w", "b"] as Color[]) {
+            const seat = meta.seats[color];
+            if (!seat?.userId) continue;
+            const existing = seen.get(seat.userId);
+            if (!existing) {
+              seen.set(seat.userId, {
+                name: seat.name,
+                rating: Math.round(seat.rating),
+                status: "playing",
+                avatar: housePersona(seat.userId)?.avatar ?? null,
+              });
+            } else if (existing.status !== "playing") {
+              existing.status = "playing";
+            }
+          }
+        }
+      }
       // Display presence: the house roster fills out the lobby so it never
       // looks dead. Personas already added above keep their REAL status
       // ("playing" from a live game, "searching" from a seek); those are never
@@ -6031,6 +6158,24 @@ export class GameServer extends DurableObject<Env> {
     const players = [...seen.values()]
       .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0))
       .slice(0, 120);
+    // ---- Online-count floor: a DELIBERATE PRODUCT DECISION ----
+    // Every surface derives its player count as players.length + anonymous
+    // (home strip, lobby header), so the floor is applied here, once, and every
+    // surface agrees. The site must never read as dead: below a ~60 baseline
+    // the anonymous count is padded with a deterministic, slowly-varying
+    // amount — a hash of the current hour+minute bucket mapped to ±8 — so the
+    // number looks organic (it drifts a little across the hour), never jumps
+    // wildly between polls (identical within a bucket, at most a small step at
+    // the boundary), and is identical for every viewer. Padding only ever ADDS
+    // to the anonymous count, so the shown total can never fall below the real
+    // humans plus seated bots counted above.
+    {
+      const shownReal = players.length + anonymous;
+      const bucket = Math.floor(now / (10 * 60 * 1000)); // hour + 10-min bucket
+      const jitter = ((Math.imul(bucket, 2654435761) >>> 0) % 17) - 8; // -8..+8
+      const floor = 60 + jitter;
+      if (shownReal < floor) anonymous += floor - shownReal;
+    }
     const payload = {
       players,
       anonymous,

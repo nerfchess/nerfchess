@@ -7,6 +7,7 @@ import { Lock, Trophy } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { fetchMe } from "@/lib/authClient";
 import { achievementIcon } from "@/lib/achievementIcons";
+import { achievementToastsDisabled, setAchievementToastsDisabled } from "@/components/AchievementToast";
 import {
   ACHIEVEMENTS,
   CATEGORY_LABEL,
@@ -222,6 +223,8 @@ function AchievementsContent() {
           </div>
         </div>
 
+        <UnlockPopupToggle />
+
         {state === "signin" && (
           <div className="mt-6 plate p-4 text-sm text-parchment-300">
             <Link href="/login?next=/achievements" className="text-gold-leaf hover:underline">
@@ -287,5 +290,36 @@ export default function AchievementsPage() {
     <Suspense fallback={<main className="min-h-screen" />}>
       <AchievementsContent />
     </Suspense>
+  );
+}
+
+// Desktop unlock popups (bottom-right toasts) on/off. The toast's "Disable
+// these popups" button lands people here to turn them back on.
+function UnlockPopupToggle() {
+  const [off, setOff] = useState(false);
+  useEffect(() => setOff(achievementToastsDisabled()), []);
+  return (
+    <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border border-white/10 bg-white/[0.02] px-4 py-2.5">
+      <span className="text-sm text-parchment-300">
+        Unlock popups{" "}
+        <span className="text-parchment-500">(a small card in the corner when you earn one, desktop only)</span>
+      </span>
+      <button
+        type="button"
+        onClick={() => {
+          setAchievementToastsDisabled(!off);
+          setOff(!off);
+        }}
+        aria-pressed={!off}
+        className={
+          "smallcaps border px-3 py-1 text-[10px] transition-colors " +
+          (off
+            ? "border-white/15 bg-white/[0.03] text-parchment-400 hover:border-white/30"
+            : "border-verdigris-glow/50 bg-verdigris/10 text-verdigris-glow")
+        }
+      >
+        {off ? "Off · turn on" : "On · turn off"}
+      </button>
+    </div>
   );
 }

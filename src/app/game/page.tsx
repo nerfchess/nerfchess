@@ -11,6 +11,7 @@ const GameOver = dynamic(() => import("@/components/GameOver").then((m) => m.Gam
 });
 import { MobileActionsMenu } from "@/components/MobileActionsMenu";
 import { MobileMoveDrawer } from "@/components/MobileMoveDrawer";
+import { FxToggleButton } from "@/components/FxToggleButton";
 import { MoveList } from "@/components/MoveList";
 import { PlayerNerfCard } from "@/components/PlayerNerfCard";
 import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
@@ -1866,6 +1867,9 @@ function GamePage() {
                   warnLowTime={uiSettings.lowTimeWarning}
                 />
               )}
+              <div className="flex justify-end pt-1">
+                <FxToggleButton />
+              </div>
             </div>
           </div>
         </div>
