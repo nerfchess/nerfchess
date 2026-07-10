@@ -125,9 +125,11 @@ html[data-anim="fast"] *::after {
 /* Site theme (Settings > Appearance): the site is dark-first; "light" remaps
    the core surfaces and text ramps like the high-contrast block below. */
 html[data-theme="light"] body {
-  background: linear-gradient(180deg, #efece5 0%, #e4e0d6 100%) fixed, #e9e6de;
   background-color: #e9e6de;
   color: #2b2822;
+}
+html[data-theme="light"]::before {
+  background: linear-gradient(180deg, #efece5 0%, #e4e0d6 100%);
 }
 html[data-theme="light"] { --paper: #2b2822; --paper-dim: #5c584f; }
 html[data-theme="light"] .plate {
@@ -151,16 +153,27 @@ html[data-contrast="high"] .text-parchment-500 { color: #97948e; }
 
 /* A solid dark background-color must sit behind the gradient: during fast
    scrolls (and rubber-band overscroll) mobile browsers reveal areas the
-   fixed-attachment gradient hasn't painted yet, which otherwise flash the
-   default white. Lifted and warmed a step: dark, but never dim, with a faint
-   color wash (warm top-left, cool bottom-right) so the page has weather. */
+   gradient hasn't painted yet, which otherwise flash the default white. Lifted
+   and warmed a step: dark, but never dim, with a faint color wash (warm
+   top-left, cool bottom-right) so the page has weather. */
 html, body {
   background-color: #191713;
-  background-image:
-    linear-gradient(180deg, #282420 0%, #1e1b17 46%, #191713 100%);
-  background-attachment: fixed;
   color: var(--paper);
   min-height: 100vh;
+}
+/* The page gradient rides a fixed pseudo-element instead of
+   `background-attachment: fixed` on the body. Both pin the gradient to the
+   viewport, but a fixed element is painted once and only translated on scroll,
+   whereas a fixed-attachment background forces a full repaint of the gradient
+   every scroll frame — the homepage's biggest scroll-jank source. `body::before`
+   is already the paper grain, so this lives on `html::before`. */
+html::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(180deg, #282420 0%, #1e1b17 46%, #191713 100%);
 }
 
 /* Geometry: crisp 1px corners everywhere. Owner verdict: soft rounding read
@@ -730,15 +743,17 @@ html[data-theme="light"] .masthead {
   position: relative;
   display: block;
   padding: 8px;
+  /* No backdrop-filter: a live blur over the fixed page gradient re-samples on
+     every repaint and is a top scroll-jank source. The frost is baked into a
+     near-opaque base layer instead — visually near-identical since what sits
+     behind the frame is only the page gradient. */
   background:
     linear-gradient(165deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.03) 45%, rgba(10, 12, 16, 0.25)),
-    rgba(22, 21, 18, 0.6);
+    rgba(28, 26, 22, 0.92);
   border: 1px solid rgba(255, 255, 255, 0.15);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.14),
     0 30px 80px -32px rgba(0, 0, 0, 0.9);
-  backdrop-filter: blur(10px) saturate(1.15);
-  -webkit-backdrop-filter: blur(10px) saturate(1.15);
   transition: box-shadow var(--dur-2) var(--ease-out), transform var(--dur-2) var(--ease-out),
     border-color var(--dur-2) var(--ease-out);
 }
@@ -752,7 +767,7 @@ html[data-theme="light"] .masthead {
   }
 }
 html[data-theme="light"] .tv-frame {
-  background: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.9);
   border-color: rgba(43, 40, 34, 0.18);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.85),
@@ -782,16 +797,21 @@ html[data-theme="light"] .tv-frame {
   position: absolute;
   top: 0;
   bottom: 0;
-  left: -60%;
+  left: 0;
   width: 42%;
   background: linear-gradient(105deg, transparent, rgba(255, 255, 255, 0.32), transparent);
-  transform: skewX(-18deg);
+  /* Motion via transform (compositor-only) rather than `left` (which forces
+     layout every frame). The sheen is 42% of the button wide, so the old
+     left:-60%..130% of the button maps to translateX(-143%)..310% of the
+     sheen. skewX rides along in every keyframe since transform is animated. */
+  transform: translateX(-143%) skewX(-18deg);
+  will-change: transform;
   pointer-events: none;
   animation: cta-sweep 5s ease-in-out 1.2s infinite;
 }
 @keyframes cta-sweep {
-  0%, 62% { left: -60%; }
-  86%, 100% { left: 130%; }
+  0%, 62% { transform: translateX(-143%) skewX(-18deg); }
+  86%, 100% { transform: translateX(310%) skewX(-18deg); }
 }
 
 /* Light blue CTA: an airy sky blue with dark ink type, one step lighter and
@@ -861,6 +881,8 @@ html[data-theme="light"] .tv-frame {
   height: 34px;
   overflow: hidden;
   pointer-events: none;
+  /* Establishes the container for the runner's cqw-based travel below. */
+  container-type: inline-size;
 }
 .knight-track::before {
   content: "";
@@ -874,22 +896,26 @@ html[data-theme="light"] .tv-frame {
 .knight-runner {
   position: absolute;
   bottom: 5px;
-  left: -6%;
+  left: 0;
   font-size: 22px;
   line-height: 1;
   color: var(--paper-dim);
   opacity: 0;
+  /* Travel via transform (compositor-only) rather than `left` (which forces
+     layout every frame). cqw units resolve against .knight-track's width, so
+     the runner still crosses the full track edge to edge. */
+  will-change: transform;
   animation: knight-run 16s linear 2s infinite;
 }
 /* The drift crosses the track in the first 55% of the cycle, then rests off
    screen until the next lap, so the gallop is an occasional visitor rather
    than a constant marquee. */
 @keyframes knight-run {
-  0% { left: -6%; opacity: 0; }
+  0% { transform: translateX(-6cqw); opacity: 0; }
   4% { opacity: 0.85; }
   50% { opacity: 0.85; }
-  55% { left: 101%; opacity: 0; }
-  100% { left: 101%; opacity: 0; }
+  55% { transform: translateX(101cqw); opacity: 0; }
+  100% { transform: translateX(101cqw); opacity: 0; }
 }
 .knight-runner > span {
   display: inline-block;
