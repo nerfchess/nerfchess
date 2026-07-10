@@ -11,7 +11,7 @@ import {
   validUsername,
 } from "@/lib/server/auth";
 import { containsProfanity } from "@/lib/profanity";
-import { randomGuestNameNumbered } from "@/lib/guestNames";
+import { cryptoRand, randomGuestNameNumbered } from "@/lib/guestNames";
 
 export const dynamic = "force-dynamic";
 
@@ -48,7 +48,7 @@ async function pickUsername(db: D1Database, email: string | null): Promise<strin
   const candidates: string[] = [];
   if (validUsername(base) && !RESERVED_USERNAMES.includes(base.toLowerCase()) && !containsProfanity(base)) {
     candidates.push(base);
-    for (let i = 0; i < 5; i++) candidates.push(`${base}${Math.floor(Math.random() * 9000) + 1000}`);
+    for (let i = 0; i < 5; i++) candidates.push(`${base}${Math.floor(cryptoRand() * 9000) + 1000}`);
   }
   for (let i = 0; i < 6; i++) candidates.push(randomGuestNameNumbered());
   for (const candidate of candidates) {
