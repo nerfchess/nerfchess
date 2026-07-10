@@ -2802,7 +2802,7 @@ const TIER6: Buff[] = [
     }),
   ),
   def(
-    { id: "time_lock", name: "Time Lock", description: "Lock your opponent's clock and hand: they skip their next turn, and their next two drafts are skipped, once.", tier: 6, category: "tempo", fx: { motif: "slow", pieces: "all" } },
+    { id: "time_lock", name: "Time Lock", description: "Lock your opponent's clock and hand: they skip their next turn, and their next two drafts are skipped, once.", tier: 8, category: "tempo", fx: { motif: "slow", pieces: "all" } },
     instant((_inst, api) => {
       api.bs.skips[api.opp] += 1;
       api.theirs.flags.blockedDrafts = (api.theirs.flags.blockedDrafts ?? 0) + 2;
