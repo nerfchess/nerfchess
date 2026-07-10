@@ -39,6 +39,23 @@ export interface BuffTargeting {
   target: BuffTarget;
 }
 
+/** True on hover-capable fine-pointer devices (mouse/trackpad). SSR-safe:
+ * false until mounted. Used to gate the Use button's HTML5 draggable: on
+ * touch browsers a draggable element inside the scrollable drawer swallows
+ * taps (the touch is held as a potential drag and click never fires), which
+ * blocked the Use button on mobile. */
+function useFinePointer(): boolean {
+  const [fine, setFine] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(hover: hover) and (pointer: fine)");
+    const update = () => setFine(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+  return fine;
+}
+
 export function useBuffTargeting({
   game,
   myColor,
@@ -519,6 +536,7 @@ interface Props {
 }
 
 export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards, plays }: Props) {
+  const finePointer = useFinePointer();
   // Per-card expand/collapse, remembered for the whole game. A missing key
   // falls back to the default: your own cards start expanded, the opponent's
   // start collapsed (see defaultOpen). Keyed by owner + index, both stable
@@ -685,7 +703,10 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
                   // separate from the board's pointer-drag, so the click flow is
                   // untouched. The custom dataTransfer type lets the Board react
                   // to card drags only.
-                  draggable
+                  // Drag-to-board is a desktop affordance: on touch browsers
+                  // a draggable element swallows taps (held as a potential
+                  // drag), which blocked this button on mobile entirely.
+                  draggable={finePointer}
                   onDragStart={(e) => {
                     e.dataTransfer.setData("application/x-nerf-card", String(i));
                     e.dataTransfer.effectAllowed = "move";
@@ -694,7 +715,7 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
                   onClick={() => onStartUse(i)}
                   // Thumb-sized below sm (44px is the touch floor); compact on
                   // desktop where the pointer is precise.
-                  className="btn-glass btn-glass--primary mt-1.5 cursor-grab px-2.5 py-1 font-display text-[10px] font-semibold tracking-wide active:cursor-grabbing max-sm:min-h-[44px] max-sm:w-full max-sm:px-4 max-sm:text-xs"
+                  className="btn-glass btn-glass--primary mt-1.5 touch-manipulation px-2.5 py-1 font-display text-[10px] font-semibold tracking-wide max-sm:min-h-[44px] max-sm:w-full max-sm:px-4 max-sm:text-xs sm:cursor-grab sm:active:cursor-grabbing"
                 >
                   Use
                 </button>

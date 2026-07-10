@@ -33,7 +33,9 @@ export const EMPTY_FILTERS: CodexFilters = {
   categories: [],
   collection: null,
   playableOnly: false,
-  sort: "az",
+  // Hardest first by default (owner request): the spectacular top-tier cards
+  // greet the browser, A-Z remains one click away.
+  sort: "brutal",
 };
 
 export function hasActiveFilters(f: CodexFilters): boolean {
@@ -57,7 +59,7 @@ export function filtersToQueryString(f: CodexFilters): string {
   if (f.categories.length > 0) p.set("category", f.categories.join(","));
   if (f.collection) p.set("collection", f.collection);
   if (f.playableOnly) p.set("playable", "1");
-  if (f.sort !== "az") p.set("sort", f.sort);
+  if (f.sort !== EMPTY_FILTERS.sort) p.set("sort", f.sort);
   return p.toString();
 }
 
@@ -77,7 +79,7 @@ export function filtersFromQueryString(qs: string): CodexFilters {
     categories: cats,
     collection: collection && COLLECTION_IDS.includes(collection) ? collection : null,
     playableOnly: p.get("playable") === "1",
-    sort: sort && SORT_IDS.includes(sort) ? sort : "az",
+    sort: sort && SORT_IDS.includes(sort) ? sort : EMPTY_FILTERS.sort,
   };
 }
 
