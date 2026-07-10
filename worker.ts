@@ -1547,6 +1547,12 @@ export class GameServer extends DurableObject<Env> {
         ...(match.users ?? {}),
         [color]: { id: session.userId, name: session.username, rating, rd, vol, avatar },
       };
+    } else if (match.users?.[color]?.id) {
+      // Returning seat: re-read its rating so every start frame this player
+      // receives shows the live number for this game's own rating bucket
+      // (see refreshSeatRatings for the invariant). The caller persists the
+      // match after attaching.
+      await this.refreshSeatRatings(match, [color]);
     }
   }
 
@@ -1628,6 +1634,38 @@ export class GameServer extends DurableObject<Env> {
       return { rating: r.rating, rd: r.rd, vol: r.vol, avatar: row?.avatar ?? null };
     } catch {
       return null;
+    }
+  }
+
+  // Re-read the given seats' rating (plus rd/vol/avatar) from the CURRENT
+  // value of the SAME rating bucket this game is rated in
+  // (matchRatingCategory).
+  //
+  // INVARIANT: the rating a start frame shows beside a player must equal what
+  // recordFinishedGame will read as `before` when the game ends, so the
+  // number on the game screen plus the end frame's delta is exactly the end
+  // frame's new rating. match.users is a snapshot taken when the seat was
+  // created (queue pairing / challenge creation / rematch creation); rated
+  // games recorded for the same account+bucket between that snapshot and the
+  // game actually being played (a challenge sitting in the lobby while the
+  // host plays elsewhere, rematch chains, a second tab) leave it stale — the
+  // "in-game said 1759, game over said 1802 +13" bug. Refreshing on attach
+  // and at game start keeps every surface built from match.users honest.
+  // Callers persist the match afterwards.
+  private async refreshSeatRatings(match: StoredMatch, colors: Color[]) {
+    if (match.result) return;
+    const db = await this.db();
+    if (!db) return;
+    for (const color of colors) {
+      const seat = match.users?.[color];
+      if (!seat?.id) continue;
+      const row = await this.seatCategoryRating(db, seat.id, this.matchRatingCategory(match));
+      if (row) {
+        seat.rating = row.rating;
+        seat.rd = row.rd;
+        seat.vol = row.vol;
+        seat.avatar = row.avatar;
+      }
     }
   }
 
@@ -2467,6 +2505,11 @@ export class GameServer extends DurableObject<Env> {
     }
 
     await this.attachSession(ws, match, "b");
+    // The host's seat rating was snapshotted when the challenge was created,
+    // possibly long before this join (their rating may have moved in other
+    // games since); bring it current before the start frames go out. The
+    // joiner's own seat was read fresh in attachSession just above.
+    await this.refreshSeatRatings(match, ["w"]);
     // Draft games open with the nerf draft instead of starting outright.
     // Buff mode has no nerfs, so it starts like a classic game.
     if (match.draft && match.mode !== "buff") return this.beginNerfDraft(match);
