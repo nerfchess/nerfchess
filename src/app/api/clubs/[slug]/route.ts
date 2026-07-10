@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getDb } from "@/lib/server/db";
 import { isModerator, sessionTokenFromCookieHeader, userForSession } from "@/lib/server/auth";
 import { isValidClubIcon } from "@/lib/clubIcons";
+import { bestLiveRatingSql } from "@/lib/server/ratingSql";
 
 export const dynamic = "force-dynamic";
 
@@ -54,12 +55,17 @@ export async function GET(request: Request, { params }: { params: { slug: string
   if (!club) return NextResponse.json({ error: "Club not found." }, { status: 404 });
 
   const [members, posts, tournaments] = await Promise.all([
+    // Member rating = the best of the player's LIVE mode buckets (the shared
+    // display rule in lib/server/ratingSql.ts), never the frozen legacy
+    // users.rating column, so the club list agrees with the leaderboard,
+    // search, and lobby for the same player at the same moment.
     db
       .prepare(
-        `SELECT cm.user_id, u.username, u.avatar, u.rating, u.games, cm.role, cm.joined_at
+        `SELECT cm.user_id, u.username, u.avatar, ${bestLiveRatingSql("u")} AS rating,
+                u.games, cm.role, cm.joined_at
          FROM club_members cm JOIN users u ON u.id = cm.user_id
          WHERE cm.club_id = ?
-         ORDER BY u.rating DESC
+         ORDER BY rating DESC
          LIMIT 200`,
       )
       .bind(club.id)

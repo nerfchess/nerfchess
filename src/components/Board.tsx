@@ -212,6 +212,58 @@ function freezeSkinOf(skin: string | undefined) {
 const EMPTY_SKINS: Record<string, string> = {};
 const EMPTY_TURNS: Record<number, number | null> = {};
 
+// Number words for the extra-turns banner headline ("TWO EXTRA TURNS").
+const EXTRA_WORDS = ["", "ONE", "TWO", "THREE", "FOUR", "FIVE", "SIX"];
+
+/** HUGE board-wide notification for an extra-turns grant (owner request),
+ * spelling out the total ("TWO EXTRA TURNS - opponent plays 3 moves in a
+ * row"). One shot ~2.8s, pointer-transparent, FUNCTIONAL: never gated by the
+ * effects dial or low-clock calm. Gold when it is the viewer's own gain,
+ * oxblood alarm when it is against them. */
+function ExtraTurnsBanner({ mine, gained, total }: { mine: boolean; gained: number; total: number }) {
+  const word = gained < EXTRA_WORDS.length ? EXTRA_WORDS[gained] : `+${gained}`;
+  return (
+    <div aria-live="assertive" className="pointer-events-none absolute inset-0 z-[45] grid place-items-center">
+      <div
+        className={
+          "extra-turns-banner mx-4 border-2 px-6 py-4 text-center shadow-plate " +
+          (mine
+            ? "border-gold/70 bg-ink-950/90 text-gold-leaf"
+            : "border-oxblood-glow/70 bg-ink-950/90 text-oxblood-glow")
+        }
+      >
+        <div className="font-display text-3xl font-bold tracking-wide sm:text-4xl">
+          {word} EXTRA {gained === 1 ? "TURN" : "TURNS"}
+        </div>
+        <div className="mt-1 font-display text-base font-semibold text-parchment-100 sm:text-lg">
+          {mine ? "You play" : "Opponent plays"} {total} moves in a row
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Board-wide play announcement for BIG rule-warping cards (owner request:
+ * "for big things it needs to say what happened - fair for the environment"):
+ * tier 7+ casts state their name and effect in plain text over the board, so
+ * the other player is never surprised by an army suddenly moving like queens.
+ * FUNCTIONAL like the extra-turns banner (never gated); sits in the board's
+ * upper third so it can coexist with the centered extra-turns banner when one
+ * card triggers both. */
+function PlayAnnouncement({ name, description }: { name: string; description: string }) {
+  // First sentence, hard-capped, so the banner reads at a glance.
+  const firstSentence = description.split(/(?<=[.!?])\s/)[0] ?? description;
+  const effect = firstSentence.length > 110 ? firstSentence.slice(0, 107).trimEnd() + "..." : firstSentence;
+  return (
+    <div aria-live="polite" className="pointer-events-none absolute inset-x-0 top-[7%] z-[45] flex justify-center">
+      <div className="extra-turns-banner mx-4 max-w-[min(92%,34rem)] border-2 border-gold/70 bg-ink-950/92 px-5 py-3 text-center shadow-plate">
+        <div className="font-display text-2xl font-bold tracking-wide text-gold-leaf sm:text-3xl">{name}</div>
+        <div className="mt-1 text-[13px] font-semibold leading-snug text-parchment-100 sm:text-sm">{effect}</div>
+      </div>
+    </div>
+  );
+}
+
 // Hover copy for the placed-trap markers (mine, sinkhole, trapdoor...).
 const TRAP_HOVER_BODY: Record<string, string> = {
   mine: "The first enemy piece (never a king) to step on this mine is destroyed.",
@@ -1032,6 +1084,14 @@ export function Board({
   // rework changed what it paints, or the effect simply hit nothing) falls
   // back to the diff-less cast lead below instead of playing silently.
   const zoneLeadClaimKeyRef = useRef(0);
+  // Extra-turns grant banner (owner request: a HUGE board-wide notification
+  // naming the total). FUNCTIONAL, so it is never gated by the effects dial
+  // or the low-clock calm: knowing the opponent moves three times in a row
+  // is rules information, not decoration. Values are diffed (not object
+  // identity) because server frames rebuild the extraMoves object each merge.
+  const prevExtraMovesRef = useRef<{ w: number; b: number } | null>(null);
+  const extraBannerRef = useRef<{ color: Color; gained: number; total: number; key: number } | null>(null);
+  const extraBannerKeyRef = useRef(0);
   const zoneSigRef = useRef<
     Map<number, { sig: string; order: number; role: "lead" | "target"; key: number }>
   >(new Map());
@@ -1554,6 +1614,25 @@ export function Board({
   // public, so both players build the identical sequence (never gated on the
   // viewer), and it is keyed to the play key via zoneSigSeenKeyRef so it fires
   // exactly once and an unrelated re-render (hover, resize) never replays it.
+  {
+    const ex = buffs?.extraMoves;
+    if (ex) {
+      const prev = prevExtraMovesRef.current;
+      if (prev) {
+        for (const c of ["w", "b"] as Color[]) {
+          const gained = ex[c] - prev[c];
+          // A grant (increase) fires the banner; consumption (decrease) never
+          // does. total = remaining extras + the normal turn.
+          if (gained > 0) {
+            extraBannerRef.current = { color: c, gained, total: ex[c] + 1, key: ++extraBannerKeyRef.current };
+          }
+        }
+      }
+      prevExtraMovesRef.current = { w: ex.w, b: ex.b };
+    } else {
+      prevExtraMovesRef.current = null;
+    }
+  }
   if (signatureCard && signatureCard.key > zoneSigSeenKeyRef.current) {
     zoneSigSeenKeyRef.current = signatureCard.key;
     const cfg = sigOf(signatureCard.id);
@@ -2216,7 +2295,7 @@ export function Board({
         title: "Sanctuary",
         tone: "buff",
         status,
-        body: "This piece cannot be captured while the shield holds. Kings are never shielded.",
+        body: "This piece cannot be captured while the shield holds - and while it cannot be captured, it may not capture the king itself (you must expose a piece to win). Kings are never shielded.",
       });
     if (kingSafeSquares.has(sq))
       out.push({
@@ -2809,6 +2888,21 @@ export function Board({
             opacity 0 and simply waits to be replaced by the next cast. */}
         {!fxHiddenPref && !fxCalmClock && cast && (
           <CastSpectacle key={`cast-${cast.key}`} category={cast.category} tier={cast.tier} />
+        )}
+        {extraBannerRef.current && (
+          <ExtraTurnsBanner
+            key={`exb-${extraBannerRef.current.key}`}
+            mine={extraBannerRef.current.color === myColor}
+            gained={extraBannerRef.current.gained}
+            total={extraBannerRef.current.total}
+          />
+        )}
+        {cast && cast.tier >= 7 && BUFF_BY_ID[cast.id] && (
+          <PlayAnnouncement
+            key={`ann-${cast.key}`}
+            name={BUFF_BY_ID[cast.id]!.name}
+            description={BUFF_BY_ID[cast.id]!.description}
+          />
         )}
         {/* Diff-less lead: a played card that removes nothing and leaves no
             zone (clock steals, draft tricks, info peeks...) still gets its
