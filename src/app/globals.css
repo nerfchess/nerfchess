@@ -814,11 +814,13 @@ html[data-theme="light"] .tv-frame {
   86%, 100% { transform: translateX(310%) skewX(-18deg); }
 }
 
-/* Light blue CTA: an airy sky blue with dark ink type, one step lighter and
-   friendlier than the accent blue. Same metal-button physics as .btn-leaf. */
+/* Open Lobby CTA: the quiet secondary in the blue family. A desaturated
+   steel-blue tint of the brand azure with dark ink — present and airy, but
+   reads as subordinate to the saturated .btn-cyan primary below it. Same
+   metal-button physics as .btn-leaf. */
 .btn-sky {
-  background: linear-gradient(to bottom, #9fd0f5, #78b6e8);
-  color: #0e2334;
+  background: linear-gradient(to bottom, #aac2da, #89a6c4);
+  color: #16283a;
   border: 1px solid rgba(0, 0, 0, 0.28);
   border-radius: 1px;
   box-shadow:
@@ -834,14 +836,16 @@ html[data-theme="light"] .tv-frame {
   transform: translateY(0.5px);
 }
 
-/* Cyan CTA: bright teal-cyan with dark ink type, unmistakably "go". */
+/* Play Someone CTA: the loud primary in brand azure with white type,
+   unmistakably "go". Anchors the blue family; .btn-sky above is its quieter
+   sibling. */
 .btn-cyan {
-  background: linear-gradient(to bottom, #67dbe8, #38bccd);
-  color: #072a30;
-  border: 1px solid rgba(0, 0, 0, 0.28);
+  background: linear-gradient(to bottom, #4a9fee, #2f7ecb);
+  color: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.32);
   border-radius: 1px;
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.3) inset,
+    0 1px 0 rgba(255, 255, 255, 0.28) inset,
     0 2px 6px -2px rgba(0, 0, 0, 0.5);
   transition: background 160ms ease, filter 160ms ease, box-shadow 180ms ease, transform 120ms ease;
   font-weight: 600;
