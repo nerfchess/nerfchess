@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Bell, LogOut, Mail, Search, Settings, Shield, Swords, User, UserPlus } from "lucide-react";
+import { Bell, LogIn, LogOut, Mail, Search, Settings, Shield, Swords, User, UserPlus } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { MobileNavMenu } from "@/components/MobileNavMenu";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
@@ -436,6 +436,14 @@ export function SiteHeader({ active }: { active?: string }) {
                         router.push("/login?upgrade=1");
                       }}
                     />
+                    <MenuItem
+                      icon={<LogIn size={14} />}
+                      label="Sign in"
+                      onClick={() => {
+                        setMenu(null);
+                        router.push("/login");
+                      }}
+                    />
                     <div className="my-1 border-t border-white/10" />
                   </>
                 )}
@@ -473,8 +481,15 @@ export function SiteHeader({ active }: { active?: string }) {
                     }}
                   />
                 )}
-                <div className="my-1 border-t border-white/10" />
-                <MenuItem icon={<LogOut size={14} />} label="Sign out" onClick={handleSignOut} />
+                {/* Guests get no Sign out: it only ever destroyed their
+                    progress. Sign in / Create account (above) are their
+                    doors; a real account signs out normally. */}
+                {!user.isGuest && (
+                  <>
+                    <div className="my-1 border-t border-white/10" />
+                    <MenuItem icon={<LogOut size={14} />} label="Sign out" onClick={handleSignOut} />
+                  </>
+                )}
               </div>
             )}
           </>
