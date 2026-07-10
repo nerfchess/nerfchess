@@ -409,6 +409,14 @@ html[data-theme="light"] .mode-seam::after { background: #e4e0d6; }
     inset 0 0 0 1px rgba(255, 255, 255, 0.025),
     0 12px 40px -24px rgba(0, 0, 0, 0.7);
   border-radius: 1px;
+}
+/* Positioning defaults live in a zero-specificity :where() so any positioning
+   utility on the same element (fixed, absolute, sticky, z-30...) wins. This
+   rule sits after Tailwind's utilities in the sheet, so at equal specificity
+   it would silently demote e.g. the mobile buff drawer's `fixed z-40` panel
+   to relative/z-2 — leaving its own z-30 backdrop painted on top and eating
+   every tap (the un-clickable Use button on phones). */
+:where(.plate) {
   position: relative;
   z-index: 2;
 }
@@ -423,9 +431,8 @@ html[data-theme="light"] .mode-seam::after { background: #e4e0d6; }
     calc(100% - 10px) 100%, 0 100%, 0 10px
   );
 }
-/* A plate used as a floating menu must stay absolutely positioned; without
-   this the base rule above beats the `absolute` utility, the menu joins the
-   layout flow, and opening it shoves the whole header around. Floating surfaces
+/* A plate used as a floating menu is absolutely positioned (many dropdowns
+   carry no `absolute` utility of their own and rely on this). Floating surfaces
    also step ONE rung up the ink ladder (ink-600) so menus and modals read as
    closer to the viewer — depth from lightness, not a heavier shadow. */
 .plate.dropdown {
