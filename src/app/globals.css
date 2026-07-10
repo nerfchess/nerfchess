@@ -1833,3 +1833,30 @@ html[data-theme="light"] .bg-black\/70 {
     animation: none !important;
   }
 }
+
+/* --- Extra-turns grant banner ------------------------------------------------
+   The huge board-wide notification when a card grants extra moves: pops in
+   hard, holds long enough to read the total, fades out. Functional (rules
+   information), so only reduced-motion softens it - the effects dial never
+   hides it. */
+@keyframes extra-turns-banner {
+  0% { opacity: 0; transform: scale(0.6); }
+  10% { opacity: 1; transform: scale(1.06); }
+  16% { transform: scale(1); }
+  80% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.97); }
+}
+.extra-turns-banner {
+  border-radius: 1px;
+  animation: extra-turns-banner 2.8s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  @keyframes extra-turns-banner-fade {
+    0% { opacity: 0; }
+    8%, 82% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+  .extra-turns-banner {
+    animation: extra-turns-banner-fade 2.8s linear both;
+  }
+}
