@@ -19,6 +19,8 @@ import {
   instant,
   addEffect,
   mySquares,
+  FILE,
+  RANK,
   SQ,
 } from "./shared";
 
@@ -116,33 +118,47 @@ export const HEXES_T6: Buff[] = [
     {
       id: "total_whiteout",
       name: "Total Whiteout",
-      description: "Freeze all of your opponent's pieces except their pawns and king for 2 of their turns.",
+      description: "A blizzard buries every sightline: for their next 3 turns, your opponent's pieces can only capture at arm's length, exactly one square away.",
       flavor: "A blizzard buries the whole board.",
-      // Board already paints freezes; fx carried for consistency.
-      fx: { motif: "jail", pieces: ["n", "b", "r", "q"] },
+      fx: { motif: "muzzle", pieces: "all" },
     },
-    instant((_inst, api) => {
-      for (const sq of mySquares(api.board, api.opp)) {
-        const t = api.board.pieces[sq]!.type;
-        if (t === "k" || t === "p") continue;
-        addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2 });
-      }
-    }),
+    curse(3, (moves) =>
+      moves.filter(
+        (m) =>
+          !m.captured ||
+          Math.max(Math.abs(FILE(m.to) - FILE(m.from)), Math.abs(RANK(m.to) - RANK(m.from))) <= 1,
+      ),
+    ),
   ),
 
-  // --- no_pawn_advance: pawns nailed down for six turns -------------------
+  // --- freeze the entire enemy army for two turns ---------------------------
   H(
     {
+      // Moved up from tier 5: freezing the WHOLE enemy army for two of their
+      // turns is the scaled-up sibling of Mass Freeze (1 turn, tier 4) and
+      // sits two clean tiers below Absolute Zero (3 turns, tier 8).
+      id: "the_big_chill",
+      name: "The Big Chill",
+      description: "Freeze all of your opponent's pieces except their king for 2 of their turns.",
+      flavor: "The whole board glazes over in a single night.",
+      // Board already paints freezes; fx carried for consistency.
+      fx: { motif: "jail", pieces: ["p", "n", "b", "r", "q"] },
+    },
+    freezeAllEnemies(2),
+  ),
+
+  // --- full pawn lock: the infantry cannot move at all for four turns -------
+  H(
+    {
+      // The scaled-up sibling of Sown Salt (tier 3, 2 turns): a full pawn
+      // lock, no advance and no capture, held twice as long.
       id: "leaden_fields",
       name: "Leaden Fields",
-      description: "Your opponent's pawns cannot advance straight forward for their next 6 turns. They may still capture diagonally, including en passant.",
+      description: "Your opponent's pawns are cast in lead and cannot move at all, not even to capture, for their next 4 turns.",
       flavor: "Every furrow is poured full of lead.",
-      // Board already paints no_pawn_advance; fx carried for consistency.
       fx: { motif: "anchor", pieces: ["p"] },
     },
-    instant((_inst, api) => {
-      addEffect(api, { kind: "no_pawn_advance", against: api.opp, turns: 6 });
-    }),
+    curse(4, (moves) => moves.filter((m) => m.piece !== "p")),
   ),
 
   // --- timed filter: lock down every major piece --------------------------
@@ -157,15 +173,16 @@ export const HEXES_T6: Buff[] = [
     curse(3, (moves) => moves.filter((m) => m.piece !== "q" && m.piece !== "r")),
   ),
 
-  // --- petrify one targeted piece for a very long time --------------------
+  // --- petrify one targeted piece for the rest of the game ------------------
   H(
     {
       id: "eternal_statue",
       name: "Eternal Statue",
-      description: "Turn one enemy piece you target into a walnut for 5 of their turns: it can only shuffle one square at a time. Kings cannot be targeted.",
+      description: "Turn one enemy piece you target into a walnut for the rest of the game: it can only shuffle one square at a time. Kings cannot be targeted.",
       flavor: "Chosen once, still for an age.",
     },
-    walnutTarget(5),
+    // 999 turns: outlasts any realistic game, so the card reads "for the game".
+    walnutTarget(999),
   ),
 
   // --- barred: seal the two central files for four turns ------------------

@@ -123,16 +123,16 @@ export const HEXES_T3: Buff[] = [
     }),
   ),
 
-  // --- skip: opponent loses a turn ----------------------------------------
+  // --- timed filter: one turn of pawn-or-king moves only --------------------
   H(
     {
       id: "wasted_hour",
       name: "Wasted Hour",
-      description: "Your opponent skips their next turn.",
+      description: "The officers argue all morning: on your opponent's next turn they may only move a pawn or their king.",
       flavor: "The whole camp oversleeps.",
-      fx: { motif: "slow", pieces: "all" },
+      fx: { motif: "slow", pieces: ["n", "b", "r", "q"] },
     },
-    skipOpponent(1),
+    curse(1, (moves) => moves.filter((m) => m.piece === "p" || m.piece === "k")),
   ),
 
   // --- timed filter: queen short range ------------------------------------
@@ -152,18 +152,17 @@ export const HEXES_T3: Buff[] = [
     curse(2, (moves) => moves.filter((m) => m.piece !== "p")),
   ),
 
-  // --- barred: seal the four center squares -------------------------------
+  // --- timed filter: the center is a truce zone, no captures there ---------
   H(
-    // Board already paints barred squares; fx carried for consistency
-    // (square-scoped, so no pieces field).
-    { id: "no_trespass", name: "No Trespass", description: "Your opponent cannot move any piece onto the four center squares (d4, e4, d5, e5) for their next 4 turns.", fx: { motif: "blindfold" } },
-    instant((_inst, api) => {
-      addEffect(api, {
-        kind: "barred",
-        squares: [SQ(3, 3), SQ(4, 3), SQ(3, 4), SQ(4, 4)],
-        against: api.opp,
-        turns: 4,
-      });
-    }),
+    // Not a second No Man's Land (that BARS the center outright): pieces may
+    // still cross and occupy the middle, they just cannot take anything there.
+    { id: "no_trespass", name: "No Trespass", description: "A truce holds at the crossroads: your opponent cannot capture anything standing on the four center squares (d4, e4, d5, e5) for their next 5 turns.", fx: { motif: "muzzle", pieces: "all" } },
+    curse(5, (moves) =>
+      moves.filter((m) => {
+        const cap = m.capturedSquare ?? (m.captured ? m.to : null);
+        if (cap == null) return true;
+        return ![SQ(3, 3), SQ(4, 3), SQ(3, 4), SQ(4, 4)].includes(cap);
+      }),
+    ),
   ),
 ];

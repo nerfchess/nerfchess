@@ -10,7 +10,7 @@
 // Every card reuses an existing primitive; every opponent filter is partial so
 // nothing can soft-lock, and kings are never targeted.
 
-import { Buff } from "./shared";
+import { Buff, Move } from "./shared";
 import {
   card,
   curse,
@@ -18,15 +18,15 @@ import {
   activated,
   addEffect,
   anyEmptyZone,
-  grantInventory,
   instant,
   mySquares,
   myHalfZone,
   petrifyTarget,
   placePieces,
+  relRank,
   removeEnemies,
   reviveOne,
-  skipOpponent,
+  timedAugment,
   summonTemp,
 } from "./shared";
 
@@ -36,27 +36,51 @@ export const FUNNY_META: Buff[] = [
       id: "emotional_support_pawn",
       name: "Emotional Support Pawn",
       description:
-        "A small round friend joins your pocket: add a pawn to your pocket, then spend a later turn to drop it onto any empty square.",
+        "A small round friend refuses to leave your side: place a new pawn on an empty square right beside your king.",
       tier: 2,
       category: "pieces",
       flavor: "It cannot play chess. It believes in you SO much.",
     },
-    instant((_inst, api) => grantInventory(api, "p", 1)),
+    activated(
+      (_inst, api, picks) => {
+        if (picks.length > 0) return null;
+        const k = mySquares(api.board, api.me, "k")[0];
+        const squares: number[] = [];
+        if (k != null) {
+          for (const df of [-1, 0, 1]) {
+            for (const dr of [-1, 0, 1]) {
+              if (df === 0 && dr === 0) continue;
+              const f = (k % 8) + df, r = Math.floor(k / 8) + dr;
+              if (f < 0 || f > 7 || r < 1 || r > 6) continue;
+              const sq = f + r * 8;
+              if (!api.board.pieces[sq]) squares.push(sq);
+            }
+          }
+        }
+        return { kind: "square", label: "Choose where your friend stands", squares };
+      },
+      (_inst, api, picks) => {
+        const sq = picks[0]?.square;
+        if (sq == null || api.board.pieces[sq]) return;
+        if (Math.floor(sq / 8) < 1 || Math.floor(sq / 8) > 6) return;
+        api.place(sq, "p", api.me);
+      },
+    ),
   ),
   card(
     {
       id: "stream_sniper",
       name: "Stream Sniper",
       description:
-        "You found their stream on a two second delay: see your opponent's next card options and the tier of their next draft.",
+        "You scouted the whole bracket: see the tier of your opponent's next draft, and your own next draft shows three cards to pick from.",
       tier: 3,
       category: "info",
       boon: true,
       flavor: "Thanks for the content, streamer.",
     },
     instant((_inst, api) => {
-      api.mine.flags.seeOppCards = true;
       api.mine.flags.seeOppTier = true;
+      api.mine.flags.prepThree = true;
     }),
   ),
   card(
@@ -103,13 +127,27 @@ export const FUNNY_META: Buff[] = [
       id: "day_one_patch",
       name: "Day One Patch",
       description:
-        "Ship your opponent the launch build: their next drafted card arrives nullified and does nothing.",
+        "The devs buffed pawns, but only in YOUR build: for your next 2 turns your pawns may also step one square diagonally forward onto empty squares (never onto the last rank).",
       tier: 4,
-      category: "draft",
+      category: "movement",
+      requires: ["p"],
       flavor: "Known issues: everything. Fix ETA: soon (tm).",
+      fx: { motif: "empower", pieces: ["p"], self: true },
     },
-    instant((_inst, api) => {
-      api.theirs.flags.nullifyIncoming = (api.theirs.flags.nullifyIncoming ?? 0) + 1;
+    timedAugment(2, (_m, inst, api) => {
+      const out: Move[] = [];
+      const fwd = api.me === "w" ? 1 : -1;
+      for (const sq of mySquares(api.board, api.me, "p")) {
+        for (const df of [-1, 1]) {
+          const f = (sq % 8) + df, r = Math.floor(sq / 8) + fwd;
+          if (f < 0 || f > 7 || r < 1 || r > 6) continue;
+          const to = f + r * 8;
+          if (!api.board.pieces[to]) {
+            out.push({ from: sq, to, piece: "p", color: api.me, via: inst.id });
+          }
+        }
+      }
+      return out;
     }),
   ),
   card(
@@ -117,14 +155,26 @@ export const FUNNY_META: Buff[] = [
       id: "battle_pass",
       name: "Battle Pass",
       description:
-        "Season rewards unlocked: add 45 seconds to your own clock.",
+        "Season rewards trickle in: at the end of each of your next 6 turns, your clock gains 10 seconds.",
       tier: 4,
       category: "tempo",
       flavor: "Only 99 more tiers of grinding to go.",
     },
-    instant((_inst, api) => {
-      api.adjustClock({ addSelfSec: 45 });
-    }),
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.ticks = 6;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.me) return;
+        const left = (inst.state.ticks as number) ?? 0;
+        if (left <= 0) return;
+        api.adjustClock({ addSelfSec: 10 });
+        inst.state.ticks = left - 1;
+        if (left - 1 <= 0) inst.spent = true;
+      },
+      status: (inst) => `rewards: ${(inst.state.ticks as number) ?? 0} daily logins left`,
+    },
   ),
   card(
     {
@@ -158,26 +208,28 @@ export const FUNNY_META: Buff[] = [
       id: "skill_issue",
       name: "Skill Issue",
       description:
-        "Diagnosis delivered: for their next 3 turns none of your opponent's pieces may move more than two squares.",
+        "Diagnosis delivered: their minor pieces whiff every attack: enemy knights and bishops cannot capture for their next 4 turns.",
       tier: 4,
       category: "hex",
       flavor: "Have you tried simply being better?",
-      fx: { motif: "slow", pieces: "all" },
+      fx: { motif: "muzzle", pieces: ["n", "b"] },
     },
-    curse(3, (moves) => moves.filter((m) => dist(m.from, m.to) <= 2)),
+    curse(4, (moves) =>
+      moves.filter((m) => !(m.captured && (m.piece === "n" || m.piece === "b"))),
+    ),
   ),
   card(
     {
       id: "alt_f4",
       name: "Alt+F4",
       description:
-        "Their draft client crashes to desktop: your opponent's next card draft is skipped entirely.",
+        "Their whole client crashes to desktop and takes a minute to reboot: your opponent's clock loses 60 seconds.",
       tier: 5,
-      category: "draft",
+      category: "tempo",
       flavor: "Press Alt+F4 for free rating points, they said.",
     },
     instant((_inst, api) => {
-      api.theirs.flags.blockedDrafts = (api.theirs.flags.blockedDrafts ?? 0) + 1;
+      api.adjustClock({ subOppSec: 60 });
     }),
   ),
   card(
@@ -185,12 +237,15 @@ export const FUNNY_META: Buff[] = [
       id: "touch_grass",
       name: "Touch Grass",
       description:
-        "You send your opponent outside for their own good: they skip their next turn.",
-      tier: 5,
-      category: "tempo",
+        "You step outside for your own good: add 30 seconds to your clock, and your nerf is suspended for your next 2 turns.",
+      tier: 4,
+      category: "nerf",
       flavor: "The sun. The big lamp in the sky. Go look at it.",
     },
-    skipOpponent(1),
+    instant((_inst, api) => {
+      api.adjustClock({ addSelfSec: 30 });
+      addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 2 });
+    }),
   ),
   card(
     {
@@ -238,25 +293,66 @@ export const FUNNY_META: Buff[] = [
       id: "pay_to_win",
       name: "Pay to Win",
       description:
-        "Swipe the card and skip the choice: at your next draft you take both offered cards instead of picking one.",
+        "Money buys more of whatever is working: choose one of your knights, bishops, or rooks, and a store-bought copy of it joins your pocket, ready to drop onto an empty square on a later turn.",
       tier: 6,
-      category: "draft",
+      category: "pieces",
+      requires: ["n", "b", "r"],
       flavor: "It is not gambling if you always win.",
     },
-    instant((_inst, api) => {
-      api.mine.flags.takeBoth = (api.mine.flags.takeBoth ?? 0) + 1;
-    }),
+    activated(
+      (_inst, api, picks) =>
+        picks.length > 0
+          ? null
+          : {
+              kind: "square",
+              label: "Choose the piece to buy another of",
+              squares: mySquares(api.board, api.me).filter((sq) => {
+                const t = api.board.pieces[sq]!.type;
+                return t === "n" || t === "b" || t === "r";
+              }),
+            },
+      (_inst, api, picks) => {
+        const sq = picks[0]?.square;
+        if (sq == null) return;
+        const t = api.board.pieces[sq]?.type;
+        if (t === "n" || t === "b" || t === "r") {
+          const pocket = (api.mine.inventory ??= {});
+          pocket[t] = (pocket[t] ?? 0) + 1;
+        }
+      },
+    ),
   ),
   card(
     {
       id: "ban_hammer",
       name: "Ban Hammer",
       description:
-        "Moderator privileges activated: name two enemy knights, bishops, or rooks and they are permanently banned from the board.",
+        "Moderator privileges activated: point at one enemy knight, bishop, or rook, and EVERY enemy piece of that type is permanently banned from the board.",
       tier: 8,
       category: "attack",
       flavor: "Reason: no reason given. Appeals: closed.",
     },
-    removeEnemies(2, ["n", "b", "r"]),
+    activated(
+      (_inst, api, picks) =>
+        picks.length > 0
+          ? null
+          : {
+              kind: "square",
+              label: "Point the hammer at the piece type to ban",
+              squares: mySquares(api.board, api.opp).filter((sq) => {
+                const t = api.board.pieces[sq]!.type;
+                return t === "n" || t === "b" || t === "r";
+              }),
+            },
+      (_inst, api, picks) => {
+        const sq = picks[0]?.square;
+        if (sq == null) return;
+        const p = api.board.pieces[sq];
+        if (!p || p.color !== api.opp) return;
+        const banned = p.type;
+        if (banned === "k" || banned === "q" || banned === "p") return;
+        for (const s of mySquares(api.board, api.opp, banned)) api.removePiece(s);
+      },
+    ),
   ),
 ];

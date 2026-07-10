@@ -930,6 +930,192 @@ export const CARD_VFX: Record<string, CardVfx> = {
   dragon_mount: { travel: "bolt", impact: "shock", aftermath: "none", palette: ["#4a8f5f", "#d6234f", "#1c4a2c"], source: "caster" },
   // [BeastRush] Bobrito Bandito.
   sahur: { travel: "bolt", impact: "shock", aftermath: "none", palette: ["#8a6a3a", "#c94a3a", "#4a3a22"], source: "caster" },
+
+  // ---- Tier 4 basic-band plugin cards (basicPlays.tsx) ----
+  // Palette matches each card's basicPlays template; restrained specs, no
+  // shake anywhere below tier 7.
+  // [ChainLash] Abandoned Post.
+  abandoned_post: { travel: "chain", impact: "shock", aftermath: "none", palette: ["#8a94a8","#c9cdd6","#2e3440"], source: "caster" },
+  // [BellToll] Adrenaline.
+  adrenaline: { travel: "none", impact: "shock", aftermath: "none", palette: ["#ffd76a","#fff7de","#8a6a3a"], source: "caster" },
+  // [PennantRaise] Army Reversal.
+  army_reversal: { travel: "wave", impact: "sparkle", aftermath: "none", palette: ["#c94a3a","#ffd76a","#3a1c16"], source: "caster" },
+  // [RuneStamp] Atomic Captures (Small).
+  atomic_captures_small: { travel: "arc", impact: "smoke", aftermath: "smolder", palette: ["#8faf4a","#c9b0e8","#2f3a26"], source: "caster" },
+  // [PrismFlash] Blink Army.
+  blink_army: { travel: "none", impact: "sparkle", aftermath: "sparkle", palette: ["#8f6bff","#6fe3ff","#1c1030"], source: "lead" },
+  // [ChainLash] Blockade.
+  blockade: { travel: "chain", impact: "shock", aftermath: "none", palette: ["#7d8aa0","#e3e9f2","#1f2734"], source: "caster" },
+  // [CardFlick] Buff Thief (Minor).
+  buff_thief_minor: { travel: "none", impact: "sparkle", aftermath: "sparkle", palette: ["#b98cff","#ffd76a","#2a1a4a"], source: "caster" },
+  // [ScrollSnap] Burned Dispatches.
+  burned_dispatches: { travel: "none", impact: "sparkle", aftermath: "none", palette: ["#e8dcc0","#8a6a3a","#2c3e6b"], source: "caster" },
+  // [ColdSnap] Cascade Freeze.
+  cascade_freeze: { travel: "none", impact: "shatter", aftermath: "frost", palette: ["#9fd8ff","#e8f8ff","#2c5a80"], source: "lead" },
+  // [ScrollSnap] Chain Nullify.
+  chain_nullify: { travel: "none", impact: "sparkle", aftermath: "none", palette: ["#e0d0a8","#c94a3a","#2a3450"], source: "caster" },
+  // [GlintArc] Changeling.
+  changeling: { travel: "none", impact: "sparkle", aftermath: "sparkle", palette: ["#6fe3ff","#ffffff","#1c3a4a"], source: "lead" },
+  // [SatchelDrop] Coffee.
+  coffee: { travel: "none", impact: "burst", aftermath: "sparkle", palette: ["#b0824a","#ffe9b0","#3e2f1c"], source: "lead" },
+  // [SatchelDrop] Comet Shard.
+  comet_shard: { travel: "none", impact: "burst", aftermath: "sparkle", palette: ["#8a6a3a","#ffd23f","#33261a"], source: "lead" },
+  // [BellToll] Counter-Nerf.
+  counter_nerf: { travel: "none", impact: "shock", aftermath: "none", palette: ["#f7c95a","#fff2c9","#6e5528"], source: "caster" },
+  // [ColdSnap] Cryostasis.
+  cryostasis: { travel: "none", impact: "shatter", aftermath: "frost", palette: ["#8fb5e8","#dff7ff","#22304a"], source: "lead" },
+  // [ScrollSnap] Dead Letter.
+  dead_letter: { travel: "none", impact: "sparkle", aftermath: "none", palette: ["#e8dcc0","#8f2bbf","#241a3a"], source: "caster" },
+  // [SigilRing] Duelist.
+  duelist: { travel: "none", impact: "sparkle", aftermath: "sparkle", palette: ["#8fb5e8","#ffd76a","#22304a"], source: "lead" },
+  // [LeafSpin] Faerie Ring.
+  faerie_ring: { travel: "none", impact: "sparkle", aftermath: "sparkle", palette: ["#5faf5f","#ff9dd6","#1c4a2c"], source: "lead" },
+  // [HoofSpring] Firecracker.
+  firecracker: { travel: "arc", impact: "shock", aftermath: "none", palette: ["#a8763a","#ffd76a","#3a2a18"], source: "mover" },
+  // [KeyTurn] Flypaper File.
+  flypaper_file: { travel: "none", impact: "shock", aftermath: "none", palette: ["#bfa050","#efe0b8","#36301e"], source: "lead" },
+  // [ChainLash] Frozen Furrows.
+  frozen_furrows: { travel: "chain", impact: "shock", aftermath: "none", palette: ["#6e7b8f","#ffd76a","#242c38"], source: "caster" },
+  // [HoofSpring] Giant Slayer.
+  giant_slayer: { travel: "arc", impact: "shock", aftermath: "none", palette: ["#bf9a68","#f2e6d0","#46381f"], source: "mover" },
+  // [PrismFlash] Grand Recall.
+  grand_recall: { travel: "none", impact: "sparkle", aftermath: "sparkle", palette: ["#9d7fff","#7fd8d8","#221440"], source: "lead" },
+  // [StoneShell] Granite Towers.
+  granite_towers: { travel: "none", impact: "debris", aftermath: "smolder", palette: ["#9a8f8a","#c9b89a","#3a322c"], source: "lead" },
+  // [ColdSnap] Hard Frost.
+  hard_frost: { travel: "none", impact: "shatter", aftermath: "frost", palette: ["#9fd8ff","#e8f8ff","#2c5a80"], source: "lead" },
+  // [ChainLash] Heavy Shackles.
+  heavy_shackles: { travel: "chain", impact: "shock", aftermath: "none", palette: ["#7d8aa0","#e3e9f2","#1f2734"], source: "caster" },
+  // [CardFlick] Hero's Journey.
+  heros_journey: { travel: "none", impact: "sparkle", aftermath: "sparkle", palette: ["#8f6bff","#fff2c9","#22123e"], source: "caster" },
+  // [RuneStamp] Hex Doll.
+  hex_doll: { travel: "arc", impact: "smoke", aftermath: "smolder", palette: ["#8faf4a","#c9b0e8","#2f3a26"], source: "caster" },
+  // [SigilRing] Hold the Bridge.
+  hold_the_bridge: { travel: "none", impact: "sparkle", aftermath: "sparkle", palette: ["#c9a84c","#e8fff7","#3a3026"], source: "lead" },
+  // [ColdSnap] Immobilizer.
+  immobilizer: { travel: "none", impact: "shatter", aftermath: "frost", palette: ["#8fb5e8","#dff7ff","#22304a"], source: "lead" },
+  // [SigilRing] Iron Wall.
+  iron_wall: { travel: "none", impact: "sparkle", aftermath: "sparkle", palette: ["#5fc9b0","#ffd76a","#1c4a3a"], source: "lead" },
+  // [StoneShell] Ironbound Rook.
+  ironbound_rook: { travel: "none", impact: "debris", aftermath: "smolder", palette: ["#b0a68f","#e3ddd0","#4a4336"], source: "lead" },
+  // [GlintArc] Kingslide.
+  kingslide: { travel: "none", impact: "sparkle", aftermath: "sparkle", palette: ["#6fd8e8","#f2fcff","#173842"], source: "lead" },
+  // [CogTick] Lost Weekend.
+  lost_weekend: { travel: "none", impact: "sparkle", aftermath: "none", palette: ["#b5924a","#8fe8ff","#302818"], source: "lead" },
+  // [PrismFlash] Mass Recall.
+  mass_recall: { travel: "none", impact: "sparkle", aftermath: "sparkle", palette: ["#a88cff","#8fe8ff","#281a48"], source: "lead" },
+  // [BannerMuster] Mass Resurrect.
+  mass_resurrect: { travel: "none", impact: "shock", aftermath: "sparkle", palette: ["#a83a2a","#e3e9f2","#2c100c"], source: "lead" },
+  // [ScrollSnap] Mirror.
+  mirror: { travel: "none", impact: "sparkle", aftermath: "none", palette: ["#f0e2c4","#4a7a5f","#2c2416"], source: "caster" },
+  // [HoofSpring] Overrun.
+  overrun: { travel: "arc", impact: "shock", aftermath: "none", palette: ["#c9a84c","#fff2c9","#4a3a22"], source: "mover" },
+  // [ScrollSnap] Patch Notes.
+  patch_notes: { travel: "none", impact: "sparkle", aftermath: "none", palette: ["#e8dcc0","#8a6a3a","#2c3e6b"], source: "caster" },
+  // [BannerMuster] Phantom Rook.
+  phantom_rook: { travel: "none", impact: "shock", aftermath: "sparkle", palette: ["#bf5a3a","#cdd6e0","#361812"], source: "lead" },
+  // [LeafSpin] Puck's Mischief.
+  pucks_mischief: { travel: "none", impact: "sparkle", aftermath: "sparkle", palette: ["#6fae4a","#e8fff7","#243f14"], source: "lead" },
+  // [CardFlick] Recast.
+  recast: { travel: "none", impact: "sparkle", aftermath: "sparkle", palette: ["#a880e8","#ffd23f","#261644"], source: "caster" },
+  // [PrismFlash] Regroup.
+  regroup: { travel: "none", impact: "sparkle", aftermath: "sparkle", palette: ["#9d7fff","#7fd8d8","#221440"], source: "lead" },
+  // [BellToll] Respite.
+  respite: { travel: "none", impact: "shock", aftermath: "none", palette: ["#f7c95a","#fff2c9","#6e5528"], source: "caster" },
+  // [LanternLift] Resurrect.
+  resurrect: { travel: "none", impact: "burst", aftermath: "sparkle", palette: ["#5fae7f","#ffd76a","#16301f"], source: "lead" },
+  // [LanternLift] Resurrect Major.
+  resurrect_major: { travel: "none", impact: "burst", aftermath: "sparkle", palette: ["#8fd1b0","#ffe9c9","#22422e"], source: "lead" },
+  // [GlintArc] Royal Decree.
+  royal_decree: { travel: "none", impact: "sparkle", aftermath: "sparkle", palette: ["#7fc9e8","#e3f6ff","#1c3644"], source: "lead" },
+  // [SigilRing] Sanctuary.
+  sanctuary: { travel: "none", impact: "sparkle", aftermath: "sparkle", palette: ["#5fc9b0","#e3d0ff","#1c3a40"], source: "lead" },
+  // [KeyTurn] Sealed Gate.
+  sealed_gate: { travel: "none", impact: "shock", aftermath: "none", palette: ["#d1a85a","#fff2c9","#3d3220"], source: "lead" },
+  // [SigilRing] Shieldmaiden.
+  shieldmaiden: { travel: "none", impact: "sparkle", aftermath: "sparkle", palette: ["#7fd8a8","#fff2c9","#1c4a2c"], source: "lead" },
+  // [PennantRaise] Solstice.
+  solstice: { travel: "wave", impact: "sparkle", aftermath: "none", palette: ["#b5533a","#fff2c9","#33170f"], source: "caster" },
+  // [StoneShell] Statue Stable.
+  statue_stable: { travel: "none", impact: "debris", aftermath: "smolder", palette: ["#8a8478","#e8dcc0","#3c362c"], source: "lead" },
+  // [StoneShell] Stone Clergy.
+  stone_clergy: { travel: "none", impact: "debris", aftermath: "smolder", palette: ["#9a8f8a","#c9b89a","#3a322c"], source: "lead" },
+  // [ScrollSnap] Suppress.
+  suppress: { travel: "none", impact: "sparkle", aftermath: "none", palette: ["#e8dcc0","#8f2bbf","#241a3a"], source: "caster" },
+  // [PrismFlash] Total Recall.
+  total_recall: { travel: "none", impact: "sparkle", aftermath: "sparkle", palette: ["#8468f0","#c9f4ff","#1a0f38"], source: "lead" },
+  // [HoofSpring] Twin Knights.
+  twin_knights: { travel: "arc", impact: "shock", aftermath: "none", palette: ["#9a7a4a","#e0d0b0","#332918"], source: "mover" },
+  // [GlintArc] Arcane Conduit.
+  wa_arcane_conduit: { travel: "none", impact: "sparkle", aftermath: "sparkle", palette: ["#a8e0e8","#fff7de","#274048"], source: "lead" },
+  // [ColdSnap] Bind the Queen.
+  wa_bind_the_queen: { travel: "none", impact: "shatter", aftermath: "frost", palette: ["#7fd8d8","#eef8ff","#1c4a52"], source: "lead" },
+  // [CogTick] Borrowed Minute.
+  wa_borrowed_minute: { travel: "none", impact: "sparkle", aftermath: "none", palette: ["#d1aa5a","#7fd8e8","#3c3120"], source: "lead" },
+  // [HoofSpring] Camel Rider.
+  wa_camel_rider: { travel: "arc", impact: "shock", aftermath: "none", palette: ["#c9a84c","#fff2c9","#4a3a22"], source: "mover" },
+  // [SatchelDrop] Conjured Bishop.
+  wa_conjure_bishop: { travel: "none", impact: "burst", aftermath: "sparkle", palette: ["#8a6a3a","#ff9dd6","#2e2214"], source: "lead" },
+  // [CardFlick] Disjunction.
+  wa_disjunction: { travel: "none", impact: "sparkle", aftermath: "sparkle", palette: ["#b98cff","#ffd76a","#2a1a4a"], source: "caster" },
+  // [ScrollSnap] Disrupt Ritual.
+  wa_disrupt_ritual: { travel: "none", impact: "sparkle", aftermath: "none", palette: ["#f0e2c4","#4a7a5f","#2c2416"], source: "caster" },
+  // [InkSplash] Dominate.
+  wa_dominate_minor: { travel: "none", impact: "smoke", aftermath: "smolder", palette: ["#5b4a9f","#e8ddff","#0e0c1c"], source: "caster" },
+  // [ScrollSnap] Jinx.
+  wa_jinx: { travel: "none", impact: "sparkle", aftermath: "none", palette: ["#e8dcc0","#8a6a3a","#2c3e6b"], source: "caster" },
+  // [EyeBlink] Mind Read.
+  wa_mind_read: { travel: "none", impact: "sparkle", aftermath: "none", palette: ["#7b8fd1","#f0f4ff","#232e52"], source: "caster" },
+  // [EyeBlink] Omniscience.
+  wa_omniscience: { travel: "none", impact: "sparkle", aftermath: "none", palette: ["#4fa3d1","#dfe8ff","#1c2c44"], source: "caster" },
+  // [PrismFlash] Fold Space.
+  wa_swap_flanks: { travel: "none", impact: "sparkle", aftermath: "sparkle", palette: ["#8f6bff","#6fe3ff","#1c1030"], source: "lead" },
+  // [SigilRing] Warding Circle.
+  warding_circle: { travel: "none", impact: "sparkle", aftermath: "sparkle", palette: ["#5fc9b0","#ffd76a","#1c4a3a"], source: "lead" },
+  // [PrismFlash] Warp Field.
+  warp_field: { travel: "none", impact: "sparkle", aftermath: "sparkle", palette: ["#7b5fe8","#aef0ff","#170c2e"], source: "lead" },
+  // [PrismFlash] Warp Reign.
+  warp_reign: { travel: "none", impact: "sparkle", aftermath: "sparkle", palette: ["#8468f0","#c9f4ff","#1a0f38"], source: "lead" },
+  // [PrismFlash] Warp Rook.
+  warp_rook: { travel: "none", impact: "sparkle", aftermath: "sparkle", palette: ["#a88cff","#8fe8ff","#281a48"], source: "lead" },
+  // [SigilRing] Watermelon Rind.
+  watermelon_rind: { travel: "none", impact: "sparkle", aftermath: "sparkle", palette: ["#4fa3d1","#dff7ff","#173a52"], source: "lead" },
+  // [InkSplash] Body Double.
+  wc_body_double: { travel: "none", impact: "smoke", aftermath: "smolder", palette: ["#8a70e0","#efe6ff","#181430"], source: "caster" },
+  // [RuneStamp] Butterfingers.
+  wc_butterfingers: { travel: "arc", impact: "smoke", aftermath: "smolder", palette: ["#a07fd1","#ffd76a","#2a1a3a"], source: "caster" },
+  // [PennantRaise] Chaos Reigns.
+  wc_chaos_reigns: { travel: "wave", impact: "sparkle", aftermath: "none", palette: ["#c05a2a","#f7e3b0","#361a0c"], source: "caster" },
+  // [LanternLift] Lost and Found.
+  wc_lost_and_found: { travel: "none", impact: "burst", aftermath: "sparkle", palette: ["#5fae7f","#ffd76a","#16301f"], source: "lead" },
+  // [ChainLash] Quicksand Patch.
+  wc_quicksand_patch: { travel: "chain", impact: "shock", aftermath: "none", palette: ["#95a0b5","#d6a25a","#2a3140"], source: "caster" },
+  // [LeafSpin] Ancient Grove.
+  we_ancient_grove: { travel: "none", impact: "sparkle", aftermath: "sparkle", palette: ["#3f8f3f","#a8e07f","#1c4a1c"], source: "lead" },
+  // [RuneStamp] Backdraft.
+  we_backdraft: { travel: "arc", impact: "smoke", aftermath: "smolder", palette: ["#7a9440","#e3d0ff","#28301c"], source: "caster" },
+  // [PrismFlash] Riptide.
+  we_riptide: { travel: "none", impact: "sparkle", aftermath: "sparkle", palette: ["#7b5fe8","#aef0ff","#170c2e"], source: "lead" },
+  // [PrismFlash] Undertow.
+  we_undertow: { travel: "none", impact: "sparkle", aftermath: "sparkle", palette: ["#9d7fff","#7fd8d8","#221440"], source: "lead" },
+  // [ColdSnap] Counter Charge.
+  ww_counter_charge: { travel: "none", impact: "shatter", aftermath: "frost", palette: ["#6fc3e8","#ffffff","#1d4560"], source: "lead" },
+  // [InkSplash] Defectors.
+  ww_defectors: { travel: "none", impact: "smoke", aftermath: "smolder", palette: ["#8f6bff","#e3d0ff","#141322"], source: "caster" },
+  // [PennantRaise] Field Fortification.
+  ww_field_fortification: { travel: "wave", impact: "sparkle", aftermath: "none", palette: ["#b5533a","#fff2c9","#33170f"], source: "caster" },
+  // [BannerMuster] Forward Observer.
+  ww_forward_observer: { travel: "none", impact: "shock", aftermath: "sparkle", palette: ["#a83a2a","#e3e9f2","#2c100c"], source: "lead" },
+  // [SigilRing] High Ground.
+  ww_high_ground: { travel: "none", impact: "sparkle", aftermath: "sparkle", palette: ["#7fd8a8","#fff2c9","#1c4a2c"], source: "lead" },
+  // [InkSplash] Mass Defection.
+  ww_mass_defection: { travel: "none", impact: "smoke", aftermath: "smolder", palette: ["#6f5fd1","#f0e8ff","#100f1e"], source: "caster" },
+  // [LanternLift] Recommission.
+  ww_recommission: { travel: "none", impact: "burst", aftermath: "sparkle", palette: ["#8fd1b0","#ffe9c9","#22422e"], source: "lead" },
+  // [BannerMuster] Reserve Cavalry.
+  ww_reserve_cavalry: { travel: "none", impact: "shock", aftermath: "sparkle", palette: ["#b0402e","#e8eef7","#2e120e"], source: "lead" },
+  // [SatchelDrop] Shieldbearers.
+  ww_shieldbearers: { travel: "none", impact: "burst", aftermath: "sparkle", palette: ["#a87a4a","#a8e07f","#3a2c1c"], source: "lead" },
 };
 
 // --- Generated-family defaults (covers non-bespoke tier-4+ cards) -------------
@@ -1111,13 +1297,18 @@ export function runVfxSelfCheck(): void {
     // BoardEffects.
     import("./godPlays"),
     import("./greatPlays"),
+    // The tier 1-4 "basic" plugin set also anchors CARD_VFX entries (its
+    // tier-4 cards carry palette-matched specs); dynamic for the same
+    // cycle-safety reason as BoardEffects.
+    import("./basicPlays"),
   ])
-    .then(([fx, lib, god, great]) => {
+    .then(([fx, lib, god, great, basic]) => {
       const signatures = (fx as { SIGNATURES?: Record<string, unknown> }).SIGNATURES;
       const buffById = (lib as { BUFF_BY_ID?: Record<string, { tier?: number }> }).BUFF_BY_ID;
       const plays = {
         ...((god as { PLAYS?: Record<string, unknown> }).PLAYS ?? {}),
         ...((great as { PLAYS?: Record<string, unknown> }).PLAYS ?? {}),
+        ...((basic as { PLAYS?: Record<string, unknown> }).PLAYS ?? {}),
       };
       if (!signatures || !buffById) return;
       const missing: string[] = [];

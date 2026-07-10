@@ -244,7 +244,7 @@ export type DraftZones = {
   traps: TrapMark[];
 };
 
-export type TrapKind = "mine" | "sinkhole" | "trapdoor" | "whoopee" | "landlord";
+export type TrapKind = "mine" | "sinkhole" | "trapdoor" | "whoopee" | "landlord" | "beartrap";
 
 export interface TrapMark {
   sq: number;
@@ -331,6 +331,11 @@ export function draftZones(game: NerfGame, myColor: Color): DraftZones {
         const sq = inst.state.sq as number | undefined;
         const turns = (inst.state.turns as number | undefined) ?? 0;
         if (sq != null && turns > 0) addTrap(sq, "trapdoor", "Trapdoor");
+      } else if (inst.id === "bear_trap") {
+        // Set and unsprung: the steel jaws wait on the square (once it snaps
+        // the card is spent and the caught piece wears the beartrap skin).
+        const sq = inst.state.sq as number | undefined;
+        if (sq != null) addTrap(sq, "beartrap", "Bear Trap");
       } else if (inst.id === "whoopee_cushion") {
         // Hidden until it fires; once armed the gag rides the sitting piece,
         // so the cushion mark leaves the square.

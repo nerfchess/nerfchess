@@ -269,16 +269,17 @@ export const BRAINROT: Buff[] = [
       icon: "Clock",
       name: "Lirili Larila",
       description:
-        "The cactus-elephant checks its clock and stops time: your opponent skips their next 2 turns, and their clock loses 40 seconds.",
+        "The cactus-elephant trades your afternoon for its hourglass: steal 45 seconds from your opponent's clock, but you skip your own next turn.",
       tier: 4,
       category: "tempo",
       flavor: "Is it later already? For you it is.",
     },
-    // The skip reuses the same skip counter skipOpponent writes; the clock hit
-    // is a no-op in an untimed game (the server clamps it above the floor).
+    // The self-skip reuses the same skip counter skipOpponent writes (aimed at
+    // the owner); the clock steal is a no-op in an untimed game (the server
+    // clamps it above the floor).
     instant((_inst, api) => {
-      api.bs.skips[api.opp] += 2;
-      api.adjustClock({ subOppSec: 40 });
+      api.bs.skips[api.me] += 1;
+      api.adjustClock({ stealFlatSec: 45, stealCapSec: 45 });
     }),
   ),
 
@@ -288,13 +289,34 @@ export const BRAINROT: Buff[] = [
       icon: "Snowflake",
       name: "Brr Brr Patapim",
       description:
-        "A sudden deep freeze: every enemy piece except the king freezes solid and cannot move for their next 2 turns.",
+        "The cold finds whoever wanders alone: every enemy piece except the king with no friendly piece on any square beside it freezes solid for their next 2 turns.",
       tier: 6,
       category: "tempo",
-      flavor: "Brr brr. Someone left the window open.",
+      flavor: "Brr brr. Stay with the group.",
       fx: { motif: "jail", pieces: ["p", "n", "b", "r", "q"] },
     },
-    freezeAllEnemies(2, "ice"),
+    instant((_inst, api) => {
+      // Read the lonely set first, then freeze, so one freeze never changes
+      // another piece's isolation check.
+      const lonely: Square[] = [];
+      for (const sq of mySquares(api.board, api.opp)) {
+        if (api.board.pieces[sq]!.type === "k") continue;
+        let hasFriend = false;
+        for (const [df, dr] of ALL_DIRS) {
+          const f = FILE(sq) + df, r = RANK(sq) + dr;
+          if (!inBoard(f, r)) continue;
+          const p = api.board.pieces[SQ(f, r)];
+          if (p && p.color === api.opp) {
+            hasFriend = true;
+            break;
+          }
+        }
+        if (!hasFriend) lonely.push(sq);
+      }
+      for (const sq of lonely) {
+        addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2, skin: "ice" });
+      }
+    }),
   ),
 
   card(

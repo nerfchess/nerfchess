@@ -26,6 +26,22 @@ import {
 const H = tierHexes(5);
 
 export const HEXES_T5: Buff[] = [
+  // --- draft denial: block one draft and nullify the next -------------------
+  // Moved up from tier 4: a plain single draft skip already prices at tier 4
+  // (Dead Letter), so the skip-plus-nullify combo sits one clean tier above it.
+  H(
+    {
+      id: "burned_dispatches",
+      name: "Burned Dispatches",
+      description: "Your opponent's next draft is skipped outright, and the draft after that arrives nullified and inert.",
+      flavor: "Two orders lost: one to the fire, one to the smudge.",
+    },
+    instant((_inst, api) => {
+      api.theirs.flags.blockedDrafts = (api.theirs.flags.blockedDrafts ?? 0) + 1;
+      api.theirs.flags.nullifyIncoming = (api.theirs.flags.nullifyIncoming ?? 0) + 1;
+    }),
+  ),
+
   // --- petrify the queen 4 turns AND freeze whatever stands beside her -----
   H(
     {
@@ -118,19 +134,6 @@ export const HEXES_T5: Buff[] = [
     walnutTarget(4),
   ),
 
-  // --- freeze the entire enemy army for two turns -------------------------
-  H(
-    {
-      id: "the_big_chill",
-      name: "The Big Chill",
-      description: "Freeze all of your opponent's pieces except their king for 2 of their turns.",
-      flavor: "The whole board glazes over in a single night.",
-      // Board already paints freezes; fx carried for consistency.
-      fx: { motif: "jail", pieces: ["p", "n", "b", "r", "q"] },
-    },
-    freezeAllEnemies(2),
-  ),
-
   // --- partial lockdown: only king and knights may move for 2 turns -------
   H(
     {
@@ -186,28 +189,57 @@ export const HEXES_T5: Buff[] = [
     }),
   ),
 
-  // --- timed filter: queen fully locked -----------------------------------
+  // --- timed filter: queen tethered to her king -----------------------------
   H(
     {
       id: "throne_bound",
       name: "Throne Bound",
-      description: "Your opponent cannot move their queen for their next 3 turns.",
+      description: "The queen may not stray from her king: for your opponent's next 4 turns, her every move must end within 2 squares of their king.",
       flavor: "The queen is chained to her own throne.",
-      fx: { motif: "jail", pieces: ["q"] },
+      fx: { motif: "anchor", pieces: ["q"] },
     },
-    curse(3, (moves) => moves.filter((m) => m.piece !== "q")),
+    curse(4, (moves, api) =>
+      moves.filter((m) => {
+        if (m.piece !== "q") return true;
+        const k = mySquares(api.board, api.opp, "k")[0];
+        if (k == null) return true;
+        return (
+          Math.max(Math.abs(FILE(m.to) - FILE(k)), Math.abs(RANK(m.to) - RANK(k))) <= 2
+        );
+      }),
+    ),
   ),
 
-  // --- timed filter: no captures at all -----------------------------------
+  // --- stateful filter: no two captures in a row -----------------------------
   H(
     {
       id: "palsied_hands",
       name: "Palsied Hands",
-      description: "Your opponent cannot capture with any piece for their next 2 turns.",
+      description: "Their hands shake after every kill: for your opponent's next 6 turns, they cannot capture on two turns in a row.",
       flavor: "Every hand in the army has gone numb.",
       fx: { motif: "muzzle", pieces: "all" },
     },
-    curse(2, (moves) => moves.filter((m) => !m.captured)),
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.turns = 6;
+      },
+      filterOpponentMoves: (moves, inst) => {
+        if (((inst.state.turns as number) ?? 0) <= 0) return moves;
+        if (!inst.state.lastWasCapture) return moves;
+        const kept = moves.filter((m) => !m.captured);
+        // Safety net: never strand the opponent with zero moves.
+        return kept.length > 0 ? kept : moves;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.opp) return;
+        inst.state.lastWasCapture = !!move.captured;
+        const t = ((inst.state.turns as number) ?? 0) - 1;
+        inst.state.turns = t;
+        if (t <= 0) inst.spent = true;
+      },
+      status: (inst) => `${(inst.state.turns as number) ?? 0} of their turns left`,
+    },
   ),
 
   // --- timed filter: only pawns and the king may move ---------------------
