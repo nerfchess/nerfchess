@@ -1,4 +1,4 @@
-import { cloneBoard, generateMoves, initialBoard, makeMove, moveToUCI } from "@/engine/board";
+import { cloneBoard, generateMoves, initialBoard, makeMove, moveFromUCI, moveToUCI } from "@/engine/board";
 import { BoardState, Move } from "@/engine/types";
 
 /** Replay history moves [fromPly, toPly) onto a board known to be correct at
@@ -53,8 +53,22 @@ export function boardAtPly(moves: Move[], ply: number): BoardState {
 export function replayUci(uciMoves: string[]): { board: BoardState; history: Move[] } {
   let board = initialBoard();
   for (const uci of uciMoves) {
-    const move = generateMoves(board).find((candidate) => moveToUCI(candidate) === uci);
+    // Server-validated moves the plain generator cannot reproduce (inventory
+    // drops like "n@e4", buff-granted movement) are applied raw via
+    // moveFromUCI rather than truncating the replay at the first one.
+    const move =
+      generateMoves(board).find((candidate) => moveToUCI(candidate) === uci) ??
+      moveFromUCI(board, uci);
     if (!move) break;
+    if (move.drop) {
+      const nb = cloneBoard(board);
+      nb.pieces[move.to] = { type: move.drop, color: move.color };
+      nb.epTarget = null;
+      nb.turn = move.color === "w" ? "b" : "w";
+      nb.history.push(move);
+      board = nb;
+      continue;
+    }
     board = makeMove(board, move);
   }
   return { board, history: board.history };

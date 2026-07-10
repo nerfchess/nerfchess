@@ -1522,8 +1522,14 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
       window.clearTimeout(timer);
       if (interval !== undefined) window.clearInterval(interval);
     };
+    // draftGraceOver / oppDrafting must be deps: the early return above keys on
+    // them, and draftGraceOver flips on its own timer with no game/clock frame
+    // accompanying it. Without them, a draft window that expired with no
+    // further server frames left this effect un-rerun — no flag-check timer was
+    // ever armed, so a player letting their clock run out after the free
+    // window could hang the game until some other frame arrived.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [game, whiteMs, blackMs, clockEnabled, session]);
+  }, [game, whiteMs, blackMs, clockEnabled, session, draftGraceOver, oppDrafting]);
 
   // The low-time warning is owned by the local player's ClockPill (warnLowTime):
   // it plays the lichess LowTime sample as the visible clock ticks under 10s and

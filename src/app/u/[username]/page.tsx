@@ -82,6 +82,12 @@ export default function ProfilePage() {
 
   useEffect(() => {
     let cancelled = false;
+    // Client-side profile→profile navigation re-runs this effect without a
+    // remount: clear the previous player's state so a stale "not found" flag
+    // (or the old profile/stats) can never stick to the new username.
+    setMissing(false);
+    setProfile(null);
+    setStats(null);
     (async () => {
       const res = await fetch(`/api/users/${encodeURIComponent(username)}`);
       if (cancelled) return;
@@ -240,7 +246,13 @@ export default function ProfilePage() {
             <AchievementsStrip username={profile.user.username} />
 
             {profile.ratingHistory.length > 0 && (
-              <RatingHistorySection points={profile.ratingHistory} />
+              // Keyed by profile: the section seeds its tab from the player's
+              // most-played bucket on mount, so navigating profile→profile
+              // must remount it — otherwise the previous player's tab sticks.
+              <RatingHistorySection
+                key={profile.user.username}
+                points={profile.ratingHistory}
+              />
             )}
 
             {stats && (

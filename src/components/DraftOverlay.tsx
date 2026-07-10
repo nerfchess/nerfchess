@@ -816,7 +816,21 @@ export function DraftOverlay({
               </button>
             )}
             <button
-              onClick={settled ? undefined : bankArmed ? onBank : () => setBankArmed(true)}
+              onClick={
+                settled
+                  ? undefined
+                  : bankArmed
+                  ? () => {
+                      // Same one-shot guard as the full overlay's handleBank: a
+                      // rapid double-click on the armed Bank button must not
+                      // send the bank action twice (the overlay only unmounts
+                      // after the parent processes the first one).
+                      if (committedRef.current) return;
+                      committedRef.current = true;
+                      onBank();
+                    }
+                  : () => setBankArmed(true)
+              }
               disabled={settled}
               className={
                 "min-w-[6rem] min-h-[44px] flex-1 touch-manipulation rounded-[1px] border px-3 py-2 font-display text-[11px] font-semibold tracking-wide transition disabled:opacity-40 " +

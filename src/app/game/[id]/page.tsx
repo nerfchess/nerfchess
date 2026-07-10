@@ -9,7 +9,7 @@ import { ClockPill } from "@/components/ClockPill";
 import { GameOver } from "@/components/GameOver";
 import { MoveList } from "@/components/MoveList";
 import { OnlineMatch } from "@/components/OnlineMatch";
-import { moveToUCI } from "@/engine/board";
+import { moveFromUCI, moveToUCI } from "@/engine/board";
 import { BUFF_BY_ID } from "@/engine/buffs/library";
 import { NerfGame, legalMoves } from "@/engine/game";
 import { Nerf } from "@/engine/nerf";
@@ -417,7 +417,14 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
         setBlackMs(e.move.bc);
         const g = draftGameRef.current;
         if (g && !g.result) {
-          const move = legalMoves(g).find((candidate) => moveToUCI(candidate) === e.move.u);
+          // Same fallback OnlineMatch uses: a server-accepted move this
+          // replica cannot regenerate (a hidden nerf/buff effect) is applied
+          // raw instead of silently dropped — a skipped move froze the
+          // spectator's draft board for the rest of the game (dtState frames
+          // never carry the board, so nothing else could repair it).
+          const move =
+            legalMoves(g).find((candidate) => moveToUCI(candidate) === e.move.u) ??
+            moveFromUCI(g.board, e.move.u);
           if (move) {
             const next = playReplicaMove(g, move);
             draftGameRef.current = next;

@@ -163,7 +163,12 @@ export function saveAiGame(input: {
       ...(input.game.buffs ? { buffs: input.game.buffs } : {}),
     },
   };
-  window.localStorage.setItem(ACTIVE_AI_GAME_KEY, JSON.stringify(saved));
+  try {
+    window.localStorage.setItem(ACTIVE_AI_GAME_KEY, JSON.stringify(saved));
+  } catch {
+    // Quota exceeded / privacy mode: persistence is best-effort. Throwing here
+    // would crash the persist effect that runs every few seconds mid-game.
+  }
 }
 
 export function clearSavedAiGame() {
