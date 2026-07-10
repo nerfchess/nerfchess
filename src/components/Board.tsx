@@ -74,7 +74,7 @@ if (process.env.NODE_ENV !== "production") {
 import { EdgeAura, EmpowerShine, tierRgb } from "./effects/EmpowerAura";
 import type { MotifMark } from "./effects/fxZones";
 import { EffectPopover, type EffectPopoverContent } from "./EffectPopover";
-import { useFxHidden } from "@/lib/fxToggle";
+import { FX_LEVELS, useFxHidden, useFxLevel } from "@/lib/fxToggle";
 import { VfxLayer } from "./effects/vfx/VfxLayer";
 import { vfxPlay } from "./effects/vfx/vfxBus";
 import type { VfxPlay, VfxPoint } from "./effects/vfx/types";
@@ -947,6 +947,12 @@ export function Board({
   // The player's "hide effects/animations" switch (the small eye button in
   // the game rails). Decorative layers stand down; functional reads stay.
   const fxHiddenPref = useFxHidden();
+  // The effects dial (Off/Calm/Normal/Epic/Max): scales canvas particle
+  // counts and gates/upsizes the board shake. Mirrored into a ref for the
+  // stable callbacks (vfxShake) that must read the current value.
+  const fxLevel = useFxLevel();
+  const fxLevelRef = useRef(fxLevel);
+  fxLevelRef.current = fxLevel;
   // Canvas VFX plays staged during render (the diff/zone claims happen in the
   // render pass) and flushed to the bus after commit, so render stays pure.
   const pendingVfxRef = useRef<VfxPlay[]>([]);
@@ -959,11 +965,14 @@ export function Board({
   });
   // The VFX layer's shake request rides the existing marquee board thump.
   const vfxShake = useCallback(() => {
+    const shake = FX_LEVELS[fxLevelRef.current].shake;
+    if (shake === "none") return; // Calm and Off never thump the board
     const el = cropRef.current;
     if (el && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      el.classList.remove("fx-board-shake");
+      el.classList.remove("fx-board-shake", "fx-board-shake--big");
       void el.offsetWidth;
       el.classList.add("fx-board-shake");
+      if (shake === "big") el.classList.add("fx-board-shake--big");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -1037,14 +1046,15 @@ export function Board({
     if (!sigOf(signatureCard.id) && intensity !== "sleek") {
       playCastVoice(def.category, intensity === "marquee");
     }
-    if (intensity === "marquee") {
+    if (intensity === "marquee" && FX_LEVELS[fxLevelRef.current].shake !== "none") {
       const el = cropRef.current;
       if (el && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-        el.classList.remove("fx-board-shake");
+        el.classList.remove("fx-board-shake", "fx-board-shake--big");
         // Force a reflow so removing and re-adding the class restarts the
         // animation even when two marquee casts land back to back.
         void el.offsetWidth;
         el.classList.add("fx-board-shake");
+        if (FX_LEVELS[fxLevelRef.current].shake === "big") el.classList.add("fx-board-shake--big");
       }
     }
   }, [signatureCard]);
@@ -1143,7 +1153,8 @@ export function Board({
             travel: spec.travel,
             impact: spec.impact,
             aftermath: spec.aftermath,
-            shake: spec.shake,
+            shake: spec.shake && FX_LEVELS[fxLevel].shake !== "none",
+            intensity: FX_LEVELS[fxLevel].vfx,
           });
         }
       }
@@ -1614,7 +1625,8 @@ export function Board({
             travel: spec.travel,
             impact: spec.impact,
             aftermath: spec.aftermath,
-            shake: spec.shake,
+            shake: spec.shake && FX_LEVELS[fxLevel].shake !== "none",
+            intensity: FX_LEVELS[fxLevel].vfx,
           });
         }
       }
