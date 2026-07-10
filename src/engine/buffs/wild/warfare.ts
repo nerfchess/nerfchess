@@ -1159,7 +1159,7 @@ export const WILD_WARFARE: Buff[] = [
       id: "ww_high_ground",
       name: "High Ground",
       description: "Choose one of your pieces: for the game it cannot be captured while it stands in your opponent's half.",
-      tier: 4,
+      tier: 7,
       category: "protection",
       flavor: "They have to climb to reach you, and they will not.",
       fx: { motif: "ward", self: true },

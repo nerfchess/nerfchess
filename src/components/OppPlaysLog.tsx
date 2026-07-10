@@ -73,10 +73,15 @@ export function OppPlaysLog({ plays }: { plays: OppPlay[] }) {
   // ledger as usual; only its feed time is cut short.
   const [dismissed, setDismissed] = useState<Set<number>>(new Set());
 
+  // Only tick while something is actually aging in the feed (fresh play within
+  // its TTL + flight). An idle match used to re-render this 2.5x/second for the
+  // whole game for nothing.
+  const hasActive = plays.some((p) => Date.now() - p.at < FEED_TTL_MS + FLY_MS);
   useEffect(() => {
+    if (!hasActive) return;
     const id = window.setInterval(() => setTick((t) => t + 1), 400);
     return () => window.clearInterval(id);
-  }, []);
+  }, [hasActive]);
 
   // Measure the flight for entries that just crossed the TTL (an effect, not
   // render: reading layout during render would thrash it). The guard keeps

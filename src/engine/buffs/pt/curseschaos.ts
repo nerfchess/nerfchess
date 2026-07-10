@@ -848,21 +848,27 @@ export const PT_CURSE_CARDS: Buff[] = [
     // Every wedge pays out bigger (owner request: the gambling cards paid out
     // too little for their tier): the clocks swing 55s, the shield and sleep
     // hold two turns, the summon is a knight, and the removal takes two.
-    instant((_inst, api) => {
+    instant((inst, api) => {
       const roll = api.rng.int(6);
       switch (roll) {
         case 0:
           api.adjustClock({ addSelfSec: 55 });
+          // outcome: the wedge that came up, shown on the board after the
+          // wheel lands (see the cast announcement banner). Synced with state.
+          inst.state.outcome = "+55 seconds on your clock!";
           break;
         case 1:
           api.adjustClock({ subOppSec: 55 });
+          inst.state.outcome = "-55 seconds off your opponent's clock!";
           break;
         case 2:
           addEffect(api, { kind: "shield", owner: api.me, squares: null, turns: 2 });
+          inst.state.outcome = "Your whole army is uncapturable for 2 turns!";
           break;
         case 3: {
           const spots = emptySquares(api.board, (sq) => inHalf(api.me, sq));
           if (spots.length) api.place(spots[api.rng.int(spots.length)], "n", api.me);
+          inst.state.outcome = "A fresh knight joins your ranks!";
           break;
         }
         case 4:
@@ -870,6 +876,7 @@ export const PT_CURSE_CARDS: Buff[] = [
             if (api.board.pieces[sq]!.type === "k") continue;
             addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2, skin: "sleep" });
           }
+          inst.state.outcome = "The enemy army falls asleep for 2 turns!";
           break;
         default: {
           for (let spin = 0; spin < 2; spin++) {
@@ -879,6 +886,7 @@ export const PT_CURSE_CARDS: Buff[] = [
             if (!targets.length) break;
             api.removePiece(targets[api.rng.int(targets.length)]);
           }
+          inst.state.outcome = "Two enemy pieces vanish!";
           break;
         }
       }

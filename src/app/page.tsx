@@ -4,8 +4,11 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { HeroTv } from "@/components/HeroTv";
 import { SiteHeader } from "@/components/SiteHeader";
-import { ALL_NERFS } from "@/engine/nerfs/library";
-import { ALL_BUFFS } from "@/engine/buffs/library";
+// NOTE: the card libraries (ALL_BUFFS / ALL_NERFS) are NOT imported statically.
+// They transitively pull the entire card engine (~12k lines) into the home
+// page's client bundle just to show two `.length` counts — a large parse +
+// execute cost on the landing page for low-end devices. StatStrip lazy-imports
+// them, and only for signed-in users, so the engine never ships in this chunk.
 import { useLobbySnapshot } from "@/lib/lobbyClient";
 import { AccountUser, fetchMe } from "@/lib/authClient";
 import { ActiveGame, loadActiveGame, clearActiveGame } from "@/lib/multiplayer";
@@ -360,6 +363,8 @@ function ReturnToGameBanner() {
 function StatStrip() {
   const [user, setUser] = useState<AccountUser | null | undefined>(undefined);
   const [modeRatings, setModeRatings] = useState<Partial<Record<"nerf" | "buff", number>>>({});
+  // Deck counts, lazy-loaded so the card engine stays out of the home bundle.
+  const [deckCounts, setDeckCounts] = useState<{ buffs: number; nerfs: number } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -367,6 +372,13 @@ function StatStrip() {
       if (cancelled) return;
       setUser(me);
       if (!me) return;
+      // Signed in: pull the card libraries in their own async chunk (never on
+      // the landing-page critical path) to read the deck sizes.
+      Promise.all([import("@/engine/buffs/library"), import("@/engine/nerfs/library")])
+        .then(([buffs, nerfs]) => {
+          if (!cancelled) setDeckCounts({ buffs: buffs.ALL_BUFFS.length, nerfs: nerfs.ALL_NERFS.length });
+        })
+        .catch(() => {});
       fetch(`/api/users/${encodeURIComponent(me.username)}`)
         .then((res) => (res.ok ? res.json() : null) as Promise<{ ratings?: Record<string, { rating: number }> } | null>)
         .then((data) => {
@@ -407,8 +419,8 @@ function StatStrip() {
   const stats = [
     { value: String(modeRatings.nerf ?? fallback), label: "Nerf rating", tone: "text-mode-nerfGlow", tick: "bg-mode-nerf/70" },
     { value: String(modeRatings.buff ?? fallback), label: "Buff rating", tone: "text-mode-buffGlow", tick: "bg-mode-buff/70" },
-    { value: ALL_BUFFS.length.toLocaleString(), label: "buffs in the deck", tone: "text-parchment-50", tick: "bg-sun/70" },
-    { value: ALL_NERFS.length.toLocaleString(), label: "nerfs in the deck", tone: "text-parchment-50", tick: "bg-mint/70" },
+    { value: deckCounts ? deckCounts.buffs.toLocaleString() : "…", label: "buffs in the deck", tone: "text-parchment-50", tick: "bg-sun/70" },
+    { value: deckCounts ? deckCounts.nerfs.toLocaleString() : "…", label: "nerfs in the deck", tone: "text-parchment-50", tick: "bg-mint/70" },
   ];
   return (
     <section className="w-full max-w-7xl mx-auto px-5 sm:px-6 py-4">
