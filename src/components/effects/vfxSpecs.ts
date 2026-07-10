@@ -18,6 +18,10 @@ import type { VfxTravel, VfxImpact, VfxAftermath } from "./vfx/types";
 // component — so this static import cannot form a cycle; the BoardEffects
 // self-check below still uses a dynamic import because THAT edge would cycle.
 import { BUFF_BY_ID } from "@/engine/buffs/library";
+// Plug-in canvas specs from the funny/meta bespoke workstream (own file, so
+// this large table and that set can be edited concurrently). Core CARD_VFX
+// entries win on collision.
+import { EXTRA_CARD_VFX } from "./vfxExtra";
 
 export type { VfxTravel, VfxImpact, VfxAftermath };
 
@@ -698,7 +702,7 @@ export function resolveCardVfx(id: string, tier: number, genFamily?: string): Ca
       source: "lead",
     };
   }
-  const bespoke = CARD_VFX[id];
+  const bespoke = CARD_VFX[id] ?? EXTRA_CARD_VFX[id];
   if (bespoke) return bespoke;
   const base = (genFamily !== undefined && GEN_FAMILY_VFX[genFamily]) || DEFAULT_VFX;
   if (tier >= 7 && !base.shake && HEAVY_IMPACTS.has(base.impact)) {

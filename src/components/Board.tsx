@@ -34,6 +34,7 @@ import {
   SummonPoof,
   TransformFlourish,
 } from "./effects/BoardEffects";
+import { PLUGIN_SIGNATURES } from "./effects/sigPlugins";
 import {
   GenBurst,
   genSignatureConfig,
@@ -46,8 +47,11 @@ import {
 // is ever left without a play animation. Generated configs are cached: the
 // generator is pure, so one build per card id per session is plenty.
 const genConfigCache = new Map<string, GenConfig>();
+// Bespoke lookup spanning the core table AND the plug-in registry
+// (sigPlugins.tsx: god-tier / funny-meta modules). Core entries win.
+const sigOf = (id: string): SignatureConfig | undefined => SIGNATURES[id] ?? PLUGIN_SIGNATURES[id];
 function resolveSignature(id: string): SignatureConfig | GenConfig | undefined {
-  const bespoke = SIGNATURES[id];
+  const bespoke = sigOf(id);
   if (bespoke) return bespoke;
   const def = BUFF_BY_ID[id];
   if (!def) return undefined;
@@ -327,7 +331,7 @@ interface BoundMark {
 // Map a signature's sound key to its sounds.ts voice, scaled to the number of
 // squares it cleared so a small strike does not sound like a full rank.
 function playSignature(id: string, count: number) {
-  switch (SIGNATURES[id]?.sound) {
+  switch (sigOf(id)?.sound) {
     case "nova":
       return playNova(count);
     case "cataclysm":
@@ -1030,7 +1034,7 @@ export function Board({
     if (!def) return;
     setCast({ key: signatureCard.key, id: signatureCard.id, category: def.category, tier: def.tier });
     const intensity = castIntensity(def.tier);
-    if (!SIGNATURES[signatureCard.id] && intensity !== "sleek") {
+    if (!sigOf(signatureCard.id) && intensity !== "sleek") {
       playCastVoice(def.category, intensity === "marquee");
     }
     if (intensity === "marquee") {
@@ -1217,7 +1221,7 @@ export function Board({
     // Bespoke signatures voice themselves; generated ones stay quiet here
     // because the category cast voice (playCastVoice) already covered the
     // play, and double-voicing reads as a bug.
-    if (sigId && SIGNATURES[sigId]) playSignature(sigId, Math.max(1, sigCount));
+    if (sigId && sigOf(sigId)) playSignature(sigId, Math.max(1, sigCount));
     if (detonate) playExplosion();
     if (morph) playTransform();
     if (summon) playSummon();
@@ -1523,7 +1527,7 @@ export function Board({
   // exactly once and an unrelated re-render (hover, resize) never replays it.
   if (signatureCard && signatureCard.key > zoneSigSeenKeyRef.current) {
     zoneSigSeenKeyRef.current = signatureCard.key;
-    const cfg = SIGNATURES[signatureCard.id];
+    const cfg = sigOf(signatureCard.id);
     const marks = new Map<
       number,
       { sig: string; order: number; role: "lead" | "target"; key: number }
@@ -2640,7 +2644,7 @@ export function Board({
                       />
                     );
                   })()}
-                {!fxHiddenPref && zoneSig && SIGNATURES[zoneSig.sig] && (
+                {!fxHiddenPref && zoneSig && sigOf(zoneSig.sig) && (
                   /* Zone-sourced signature (source !== "removal"): the same
                      SignatureOverlay art, but staged over a piece that STAYS on
                      the board and sourced from the fx-effect zone the card
@@ -2648,9 +2652,9 @@ export function Board({
                      mounts and plays exactly once per play. */
                   <SignatureOverlay
                     key={`zsig-${zoneSig.key}`}
-                    visual={SIGNATURES[zoneSig.sig].visual}
+                    visual={sigOf(zoneSig.sig)!.visual}
                     role={zoneSig.role}
-                    delayMs={zoneSig.order * SIGNATURES[zoneSig.sig].staggerMs}
+                    delayMs={zoneSig.order * sigOf(zoneSig.sig)!.staggerMs}
                   />
                 )}
                 {isForced && !isDragging && (

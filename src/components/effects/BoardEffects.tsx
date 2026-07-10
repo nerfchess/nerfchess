@@ -22,6 +22,10 @@ import {
 import type { BuffCategory, CardFx } from "@/engine/buff";
 import { cardFaceIcon } from "@/lib/cardIcon";
 import type { PieceType } from "@/engine/types";
+// Plug-in signature visuals (`x:<key>`): registered outside this file so
+// other workstreams can add play art without editing it. Runtime-safe: the
+// plugin modules never import back into this file at module-init time.
+import { renderPluginVisual } from "./sigPlugins";
 import "./effects.css";
 
 // --- Small inline glyphs (replacements for emoji/dingbat markers) -----------
@@ -1117,6 +1121,9 @@ export const BoundBuffMark = React.memo(function BoundBuffMark({
 // event surfaces its id, and both players see the identical sequence.
 
 export type SigVisual =
+  // Plug-in visuals (sigPlugins.tsx): `x:<card_id>` routes the overlay's
+  // default case to a registered plugin module (godPlays / funnyPlays).
+  | `x:${string}`
   | "nova"
   | "trapdoor"
   | "stone"
@@ -11146,6 +11153,9 @@ export function SignatureOverlay({
     case "runewheel":
       return <RuneWheelBurst lead={lead} delayMs={delayMs} />;
     default:
+      // Plug-in visuals: `x:<key>` renders from the sigPlugins registry
+      // (godPlays / funnyPlays modules). Anything else is a config bug.
+      if (visual.startsWith("x:")) return renderPluginVisual(visual.slice(2), role, delayMs);
       return null;
   }
 }
