@@ -1038,6 +1038,7 @@ function GameShell({
                 orientation="w"
                 onMove={() => {}}
                 myColor="w"
+                fxTimePressure={clockEnabled && activeColor != null && (whiteMs < 15_000 || blackMs < 15_000)}
                 visual={visual}
                 lastMove={lastMove}
                 disabled

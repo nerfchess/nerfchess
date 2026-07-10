@@ -296,6 +296,11 @@ interface Props {
   // once (a king may legally stand in or move into check), and a checked king
   // stays lit on the opponent's turn too.
   checkSquares?: Square[];
+  /** Someone's clock is under the scramble threshold (~15s): board-wide
+   * spectacle stands down (cast banners, board-wide leads, shake, canvas
+   * travel) while per-piece effects keep playing, so nothing steals
+   * attention or frames during a time scramble. */
+  fxTimePressure?: boolean;
   // Buff targeting mode: while set, the board is a square picker. Candidate
   // squares glow and clicking one calls onPickSquare; every other pointer
   // interaction (moves, selection, premoves) is suspended.
@@ -925,6 +930,7 @@ export function Board({
   highlightLastMove = true,
   showLegalMoves = true,
   checkSquares,
+  fxTimePressure,
   pickSquares,
   onPickSquare,
   signatureCard,
@@ -953,6 +959,11 @@ export function Board({
   const fxLevel = useFxLevel();
   const fxLevelRef = useRef(fxLevel);
   fxLevelRef.current = fxLevel;
+  // Low-clock auto-calm (owner request): under time pressure the board-wide
+  // show stands down automatically, independent of the dial.
+  const fxCalmClock = !!fxTimePressure;
+  const fxCalmClockRef = useRef(fxCalmClock);
+  fxCalmClockRef.current = fxCalmClock;
   // Canvas VFX plays staged during render (the diff/zone claims happen in the
   // render pass) and flushed to the bus after commit, so render stays pure.
   const pendingVfxRef = useRef<VfxPlay[]>([]);
@@ -965,6 +976,7 @@ export function Board({
   });
   // The VFX layer's shake request rides the existing marquee board thump.
   const vfxShake = useCallback(() => {
+    if (fxCalmClockRef.current) return; // time scramble: never shake
     const shake = FX_LEVELS[fxLevelRef.current].shake;
     if (shake === "none") return; // Calm and Off never thump the board
     const el = cropRef.current;
@@ -1046,7 +1058,7 @@ export function Board({
     if (!sigOf(signatureCard.id) && intensity !== "sleek") {
       playCastVoice(def.category, intensity === "marquee");
     }
-    if (intensity === "marquee" && FX_LEVELS[fxLevelRef.current].shake !== "none") {
+    if (intensity === "marquee" && !fxCalmClockRef.current && FX_LEVELS[fxLevelRef.current].shake !== "none") {
       const el = cropRef.current;
       if (el && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
         el.classList.remove("fx-board-shake", "fx-board-shake--big");
@@ -1150,11 +1162,11 @@ export function Board({
               p: sqToFrac(h.sq, orientation),
               delayMs: h.order * sigCfg.staggerMs,
             })),
-            travel: spec.travel,
+            travel: fxCalmClock ? "none" : spec.travel,
             impact: spec.impact,
-            aftermath: spec.aftermath,
-            shake: spec.shake && FX_LEVELS[fxLevel].shake !== "none",
-            intensity: FX_LEVELS[fxLevel].vfx,
+            aftermath: fxCalmClock ? "none" : spec.aftermath,
+            shake: spec.shake && !fxCalmClock && FX_LEVELS[fxLevel].shake !== "none",
+            intensity: fxCalmClock ? Math.min(0.6, FX_LEVELS[fxLevel].vfx) : FX_LEVELS[fxLevel].vfx,
           });
         }
       }
@@ -1622,11 +1634,11 @@ export function Board({
               p: sqToFrac(sq, orientation),
               delayMs: m.order * cfg.staggerMs,
             })),
-            travel: spec.travel,
+            travel: fxCalmClock ? "none" : spec.travel,
             impact: spec.impact,
-            aftermath: spec.aftermath,
-            shake: spec.shake && FX_LEVELS[fxLevel].shake !== "none",
-            intensity: FX_LEVELS[fxLevel].vfx,
+            aftermath: fxCalmClock ? "none" : spec.aftermath,
+            shake: spec.shake && !fxCalmClock && FX_LEVELS[fxLevel].shake !== "none",
+            intensity: fxCalmClock ? Math.min(0.6, FX_LEVELS[fxLevel].vfx) : FX_LEVELS[fxLevel].vfx,
           });
         }
       }
@@ -2644,14 +2656,14 @@ export function Board({
                       <GenBurst
                         key={`fx-${boardFx.key}`}
                         config={sigCfg}
-                        role={boardFx.sigRole ?? "target"}
+                        role={fxCalmClock ? "target" : boardFx.sigRole ?? "target"}
                         delayMs={delay}
                       />
                     ) : (
                       <SignatureOverlay
                         key={`fx-${boardFx.key}`}
                         visual={sigCfg.visual}
-                        role={boardFx.sigRole ?? "target"}
+                        role={fxCalmClock ? "target" : boardFx.sigRole ?? "target"}
                         delayMs={delay}
                       />
                     );
@@ -2665,7 +2677,7 @@ export function Board({
                   <SignatureOverlay
                     key={`zsig-${zoneSig.key}`}
                     visual={sigOf(zoneSig.sig)!.visual}
-                    role={zoneSig.role}
+                    role={fxCalmClock ? "target" : zoneSig.role}
                     delayMs={zoneSig.order * sigOf(zoneSig.sig)!.staggerMs}
                   />
                 )}
@@ -2787,7 +2799,7 @@ export function Board({
             (category fallback layer). One-shot, keyed to the play so React
             mounts it exactly once per cast; the finished overlay ends at
             opacity 0 and simply waits to be replaced by the next cast. */}
-        {!fxHiddenPref && cast && (
+        {!fxHiddenPref && !fxCalmClock && cast && (
           <CastSpectacle key={`cast-${cast.key}`} category={cast.category} tier={cast.tier} />
         )}
         {/* Diff-less lead: a played card that removes nothing and leaves no
@@ -2799,6 +2811,7 @@ export function Board({
             lead). Suppressed whenever the piece-diff path already led this
             play key. */}
         {!fxHiddenPref &&
+          !fxCalmClock &&
           cast &&
           cast.key !== castLeadSuppressKeyRef.current &&
           (() => {

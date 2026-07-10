@@ -2383,6 +2383,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                         }
                   }
                   lastMove={lastMoveForDisplay}
+                  fxTimePressure={
+                    clockEnabled && !game.result && (whiteMs < 15_000 || blackMs < 15_000)
+                  }
                   disabled={
                     !!game.result ||
                     isReviewingHistory ||

@@ -1734,6 +1734,9 @@ function GamePage() {
                   orientation={orientation}
                   onMove={handleMove}
                   myColor={myColor}
+                  fxTimePressure={
+                    clockEnabled && !game.result && (whiteMs < 15_000 || blackMs < 15_000)
+                  }
                   visual={
                     isReviewingHistory
                       ? undefined
