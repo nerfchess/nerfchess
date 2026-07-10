@@ -431,6 +431,14 @@ export interface AgainstRow {
 const sqName = (sq: number) => "abcdefgh"[sq % 8] + (Math.floor(sq / 8) + 1);
 const turnsLeft = (turns: number | null) =>
   turns == null ? "Until it ends" : `${turns} turn${turns === 1 ? "" : "s"} left`;
+/** Hover detail for a "N turns left" chip: effect timers tick once per the
+ *  affected side's move, so N turns ≈ 2N half-moves (plies) of game time. */
+const pliesTitle = (left: string): string | undefined => {
+  const m = /(\d+)\s*turn/i.exec(left);
+  if (!m) return undefined;
+  const n = parseInt(m[1], 10);
+  return `${left} — about ${n * 2} half-move${n * 2 === 1 ? "" : "s"} (plies) of game time`;
+};
 
 // Exported: the game surfaces also feed these rows to the board-wide splash
 // (BoardSplash), so a new constraint lands with one big announcement plus its
@@ -687,7 +695,9 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
         {open && (
           <div className="px-2 pb-1.5">
             {status && (
-              <div className="smallcaps mb-1 truncate text-[8px] text-gold/80">{status}</div>
+              <div title={pliesTitle(status)} className="smallcaps mb-1 truncate text-[8px] text-gold/80">
+                {status}
+              </div>
             )}
             {/* Full description, always readable without hovering; spent cards
                 fade their copy so the live rows carry the eye. */}
@@ -900,6 +910,11 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
           </div>
         )}
 
+        {/* The opponent's play ledger ("their pocket") lives at the TOP of the
+            dock, right under the Latest slot — their plays land up here by the
+            opponent's side of the table, not buried at the foot of the list. */}
+        {plays && plays.length > 0 && <OppPlaysDockSection plays={plays} />}
+
         {/* Pending take-both: the next offer is taken whole, and the player
             should know before the draft opens, not discover it inside. */}
         {(bs.players[myColor].flags.takeBoth ?? 0) > 0 && (
@@ -961,11 +976,17 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
                         </span>
                       )}
                       {t ? (
-                        <span className="smallcaps shrink-0 rounded-[1px] border border-white/15 bg-white/[0.05] px-1.5 py-px text-[8px] font-semibold text-parchment-300">
+                        <span
+                          title={pliesTitle(row.left)}
+                          className="smallcaps shrink-0 rounded-[1px] border border-white/15 bg-white/[0.05] px-1.5 py-px text-[8px] font-semibold text-parchment-300"
+                        >
                           {row.left}
                         </span>
                       ) : (
-                        <span className="smallcaps shrink-0 rounded-[1px] border border-oxblood-glow/40 bg-oxblood/15 px-1.5 py-px text-[8px] font-semibold text-oxblood-glow">
+                        <span
+                          title={pliesTitle(row.left)}
+                          className="smallcaps shrink-0 rounded-[1px] border border-oxblood-glow/40 bg-oxblood/15 px-1.5 py-px text-[8px] font-semibold text-oxblood-glow"
+                        >
                           {row.left}
                         </span>
                       )}
@@ -1072,7 +1093,6 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
           </motion.div>
         )}
 
-        {plays && plays.length > 0 && <OppPlaysDockSection plays={plays} />}
       </div>
     </div>
   );

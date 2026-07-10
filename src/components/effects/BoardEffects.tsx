@@ -13249,11 +13249,84 @@ const CAST_SPARKS = [
   { dx: "-20%", dy: "320%", rot: "-160deg", delay: 48 },
 ];
 
-export function CastSpectacle({ category, tier }: { category: BuffCategory; tier: number }) {
+/** Small deterministic hash so a card's cast styling (sweep direction, tilt,
+ *  glint ring phase) is ITS OWN and stable across plays — two same-category
+ *  tier-2 cards no longer produce pixel-identical casts. */
+function castHash(id: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < id.length; i++) {
+    h ^= id.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+/** Centered card announcement riding the cast: the card's name in its tier
+ *  color over a one-line rule summary, so what just happened is readable ON
+ *  the board (the top-right feed keeps the permanent record). */
+function CastBanner({
+  name,
+  description,
+  tier,
+  color,
+}: {
+  name: string;
+  description?: string;
+  tier: number;
+  color: string;
+}) {
+  return (
+    <span className="fx-cast-banner absolute inset-x-0 top-[12%] flex justify-center px-[6%]">
+      <span
+        className="block max-w-[86%] rounded-[2px] border px-3 py-1.5 text-center backdrop-blur-[2px]"
+        style={{ borderColor: color, background: "rgba(10,12,17,0.82)", boxShadow: `0 0 22px -6px ${color}` }}
+      >
+        <span className={`block font-display text-sm font-bold leading-tight tier-${tier}`}>
+          {name}
+        </span>
+        {description && (
+          <span className="mt-0.5 block max-h-[2.6em] overflow-hidden text-[10.5px] leading-snug text-parchment-200">
+            {description}
+          </span>
+        )}
+      </span>
+    </span>
+  );
+}
+
+export function CastSpectacle({
+  category,
+  tier,
+  id,
+  name,
+  description,
+  cardIcon,
+}: {
+  category: BuffCategory;
+  tier: number;
+  /** Card id: keys the per-card emblem + deterministic cast variation. */
+  id?: string;
+  /** Card name + rule text for the on-board announcement banner. */
+  name?: string;
+  description?: string;
+  /** The card's own icon field (BUFF_BY_ID[id].icon), when it has one. */
+  cardIcon?: string;
+}) {
   const theme = CAST_THEME[category];
-  const Icon = CATEGORY_ICON[category];
+  // The card's UNIQUE face icon (the same one on its card face and in the
+  // dock) — a goose card casts a goose, not a generic category glyph.
+  const Icon = (id ? cardFaceIcon(id, category, cardIcon) : undefined) ?? CATEGORY_ICON[category];
   const intensity = castIntensity(tier);
+  const banner = name ? (
+    <CastBanner name={name} description={description} tier={tier} color={theme.color} />
+  ) : null;
   if (intensity === "sleek") {
+    // Per-card variation: sweep direction + tilt + emblem anchor derive from
+    // the id hash, so every low-tier card owns a recognizably distinct cast.
+    const h = id ? castHash(id) : 0;
+    const fromRight = (h & 1) === 1;
+    const tilt = `${(fromRight ? -1 : 1) * (10 + (h % 12))}deg`;
+    const emblemLeft = 8 + ((h >>> 4) % 3) * 42; // 8% / 50% / 92% across the top
     return (
       <span className="fx-cast pointer-events-none absolute inset-0 z-40 block" aria-hidden="true">
         <span
@@ -13262,19 +13335,35 @@ export function CastSpectacle({ category, tier }: { category: BuffCategory; tier
         />
         <span className="absolute inset-0 block overflow-hidden">
           <span
-            className="fx-cast-sweep absolute top-[-40%] left-[-25%] block h-[180%] w-[10%]"
+            className={(fromRight ? "fx-cast-sweep-rev" : "fx-cast-sweep") + " absolute top-[-40%] block h-[180%] w-[10%]"}
             style={{
+              [fromRight ? "right" : "left"]: "-25%",
               background: `linear-gradient(90deg, transparent, ${theme.soft}, transparent)`,
-              "--tilt": "14deg",
+              "--tilt": tilt,
             } as React.CSSProperties}
           />
         </span>
+        {/* A pair of counter-orbiting glints so the sleek band reads as a
+            crafted moment, not just a border blink. */}
+        <span className="fx-cast-orbit absolute left-1/2 top-1/2 block h-[38%] w-[38%] -translate-x-1/2 -translate-y-1/2">
+          <span
+            className="absolute left-1/2 top-0 h-[6%] w-[6%] -translate-x-1/2 rounded-full"
+            style={{ background: theme.color, boxShadow: `0 0 8px 2px ${theme.soft}` }}
+          />
+        </span>
+        <span className="fx-cast-orbit-rev absolute left-1/2 top-1/2 block h-[52%] w-[52%] -translate-x-1/2 -translate-y-1/2">
+          <span
+            className="absolute bottom-0 left-1/2 h-[4.5%] w-[4.5%] -translate-x-1/2 rounded-full"
+            style={{ background: theme.color, boxShadow: `0 0 6px 1px ${theme.soft}` }}
+          />
+        </span>
         <span
-          className="fx-cast-emblem absolute left-1/2 top-[6%] ml-[-5%] flex h-[10%] w-[10%] items-center justify-center"
-          style={{ color: theme.color }}
+          className="fx-cast-emblem absolute top-[6%] flex h-[10%] w-[10%] items-center justify-center"
+          style={{ color: theme.color, left: `${emblemLeft}%`, marginLeft: "-5%" }}
         >
           <Icon className="h-full w-full" strokeWidth={2} />
         </span>
+        {banner}
       </span>
     );
   }
@@ -13302,6 +13391,7 @@ export function CastSpectacle({ category, tier }: { category: BuffCategory; tier
         <span className="absolute left-1/2 top-1/2 ml-[-5%] mt-[-5%] block h-[10%] w-[10%]">
           <ShardBurst vectors={CAST_SPARKS} fill={theme.color} stroke="#1a222e" delayMs={260} sizePct={70} />
         </span>
+        {banner}
       </span>
     );
   }
@@ -13344,6 +13434,7 @@ export function CastSpectacle({ category, tier }: { category: BuffCategory; tier
       <span className="absolute left-1/2 top-1/2 ml-[-6%] mt-[-6%] block h-[12%] w-[12%]">
         <ShardBurst vectors={CAST_SPARKS} fill={theme.color} stroke="#1a222e" delayMs={420} sizePct={85} />
       </span>
+      {banner}
     </span>
   );
 }

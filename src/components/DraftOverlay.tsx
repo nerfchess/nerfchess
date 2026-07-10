@@ -998,10 +998,29 @@ export function DraftOverlay({
         )}
 
         {packStage === "open" && maxTier >= 9 && !reduceMotion && (
-          /* A tier 9/10 pull is an event: one confetti burst out of the pack's
-             position, deterministic angles, one shot, never blocks a click. */
-          <div key={`confetti-${dealKey}`} aria-hidden className="pointer-events-none relative">
-            <span className="draft-confetti">
+          /* A tier 9/10 pull is THE event: the pack detonates into a white
+             flash, a rotating god-ray fan floods the panel, sparks climb the
+             air, and the classic confetti burst rides on top. One shot,
+             deterministic, and pointer-events-none throughout so it can never
+             block a pick. Tier 9 pulls burn gold; tier 10 burns mythic cyan. */
+          <div key={`pull-${dealKey}`} aria-hidden className="pointer-events-none">
+            <span className="draft-pull absolute inset-0 overflow-hidden" data-tier={maxTier}>
+              <span className="draft-pull__flash absolute inset-0" />
+              <span className="draft-pull__rays absolute left-1/2 top-[38%]" />
+              <span className="draft-pull__rays draft-pull__rays--rev absolute left-1/2 top-[38%]" />
+              {Array.from({ length: 14 }).map((_, i) => (
+                <i
+                  key={i}
+                  style={{
+                    ["--x" as string]: `${6 + ((i * 61) % 88)}%`,
+                    ["--rise-delay" as string]: `${(i % 7) * 110}ms`,
+                    ["--rise-dur" as string]: `${1200 + ((i * 97) % 700)}ms`,
+                  }}
+                  className="draft-pull__mote"
+                />
+              ))}
+            </span>
+            <span className="draft-confetti relative">
               {Array.from({ length: 26 }).map((_, i) => (
                 <i
                   key={i}
@@ -1167,6 +1186,12 @@ export function DraftOverlay({
                   }
                 >
                   <div className="draft-card-front">
+                    {/* Mythic presence: a tier 9/10 card radiates its own
+                        breathing halo behind the face, so THE card of the
+                        pull is unmistakable even inside a strong offer. */}
+                    {card.tier >= 9 && (
+                      <span aria-hidden className="draft-mythic-aura" data-tier={card.tier} />
+                    )}
                     <BuffCard
                       buff={def}
                       tier={card.tier}
@@ -1259,19 +1284,24 @@ export function DraftOverlay({
                 >
                   +1 tier
                 </motion.span>
-                {/* Coin burst out of the bank as the cards land in it:
-                    deterministic angles/distances, one shot, decorative. */}
+                {/* The vault takes the deposit: a golden shockwave ring (plus a
+                    fainter echo) blooms off the button, a gleam sweeps across
+                    its face, and a fan of coins and glints bursts upward.
+                    Deterministic, one shot, decorative. */}
+                <span aria-hidden className="bank-ring" />
+                <span aria-hidden className="bank-ring--echo" />
+                <span aria-hidden className="bank-gleam" />
                 <span aria-hidden className="bank-burst">
-                  {Array.from({ length: 10 }).map((_, i) => (
+                  {Array.from({ length: 16 }).map((_, i) => (
                     <i
                       key={i}
                       style={{
-                        // An upward fan: -55deg..+55deg around straight up.
-                        ["--ang" as string]: `${Math.round(-55 + (i * 110) / 9)}deg`,
-                        ["--dist" as string]: `${30 + ((i * 29) % 26)}px`,
-                        ["--d" as string]: `${(i % 5) * 26}ms`,
+                        // An upward fan: -60deg..+60deg around straight up.
+                        ["--ang" as string]: `${Math.round(-60 + (i * 120) / 15)}deg`,
+                        ["--dist" as string]: `${34 + ((i * 29) % 34)}px`,
+                        ["--d" as string]: `${(i % 6) * 26}ms`,
                       }}
-                      className="bank-coin"
+                      className={i % 2 === 0 ? "bank-coin" : "bank-coin bank-coin--spark"}
                     />
                   ))}
                 </span>

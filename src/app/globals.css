@@ -123,7 +123,101 @@ html[data-anim="fast"] *::after {
 }
 
 /* Site theme (Settings > Appearance): the site is dark-first; "light" remaps
-   the core surfaces and text ramps like the high-contrast block below. */
+   the core surfaces and text ramps like the high-contrast block below. The
+   named dark variants (midnight, void, abyss, ember, moss, nebula — see
+   SITE_THEMES in src/lib/settings.ts) inherit every dark style and remap only
+   the surface variables plus the page wash, so each reads as a full palette
+   shift with zero per-component work. */
+html[data-theme="midnight"] {
+  --paper: #ccd2dc;
+  --paper-dim: #8d95a4;
+  --ink-deep: #0b0e12;
+  --ink-warm: #171b22;
+  --surface-panel: #1a1f27;
+  --surface-raise: #242b36;
+  --surface-hover: #1f2530;
+  --edge: #2d3542;
+  --edge-strong: #3e4a5c;
+}
+html[data-theme="midnight"], html[data-theme="midnight"] body {
+  background-color: #101318;
+  background-image: linear-gradient(180deg, #1b2028 0%, #14181e 46%, #101318 100%);
+}
+html[data-theme="void"] {
+  --paper: #d4d4d4;
+  --paper-dim: #8f8f8f;
+  --ink-deep: #000000;
+  --ink-warm: #101010;
+  --surface-panel: #141414;
+  --surface-raise: #1e1e1f;
+  --surface-hover: #191919;
+  --edge: #272727;
+  --edge-strong: #3b3b3b;
+}
+html[data-theme="void"], html[data-theme="void"] body {
+  background-color: #000000;
+  background-image: linear-gradient(180deg, #0a0a0a 0%, #030303 46%, #000000 100%);
+}
+html[data-theme="abyss"] {
+  --paper: #c9d6d3;
+  --paper-dim: #869a96;
+  --ink-deep: #070e10;
+  --ink-warm: #121d20;
+  --surface-panel: #152327;
+  --surface-raise: #1e3036;
+  --surface-hover: #1a2a2f;
+  --edge: #24383d;
+  --edge-strong: #315057;
+}
+html[data-theme="abyss"], html[data-theme="abyss"] body {
+  background-color: #0c1517;
+  background-image: linear-gradient(180deg, #142225 0%, #0f1a1c 46%, #0c1517 100%);
+}
+html[data-theme="ember"] {
+  --paper: #dcccc4;
+  --paper-dim: #a08a80;
+  --ink-deep: #100908;
+  --ink-warm: #1f1512;
+  --surface-panel: #261815;
+  --surface-raise: #33211c;
+  --surface-hover: #2c1c18;
+  --edge: #432c25;
+  --edge-strong: #5c3c31;
+}
+html[data-theme="ember"], html[data-theme="ember"] body {
+  background-color: #170f0e;
+  background-image: linear-gradient(180deg, #251715 0%, #1d1210 46%, #170f0e 100%);
+}
+html[data-theme="moss"] {
+  --paper: #ced6c6;
+  --paper-dim: #909a85;
+  --ink-deep: #0a0e08;
+  --ink-warm: #171f13;
+  --surface-panel: #1a2318;
+  --surface-raise: #253021;
+  --surface-hover: #1f2a1c;
+  --edge: #2d3c27;
+  --edge-strong: #405537;
+}
+html[data-theme="moss"], html[data-theme="moss"] body {
+  background-color: #0f140e;
+  background-image: linear-gradient(180deg, #1a2217 0%, #131a11 46%, #0f140e 100%);
+}
+html[data-theme="nebula"] {
+  --paper: #d2cbde;
+  --paper-dim: #948ba4;
+  --ink-deep: #0d0a12;
+  --ink-warm: #1a1523;
+  --surface-panel: #1f1929;
+  --surface-raise: #2b2238;
+  --surface-hover: #251e31;
+  --edge: #362c48;
+  --edge-strong: #4b3d64;
+}
+html[data-theme="nebula"], html[data-theme="nebula"] body {
+  background-color: #131019;
+  background-image: linear-gradient(180deg, #1e1927 0%, #17131f 46%, #131019 100%);
+}
 html[data-theme="light"] body {
   background: linear-gradient(180deg, #efece5 0%, #e4e0d6 100%) fixed, #e9e6de;
   background-color: #e9e6de;
@@ -419,6 +513,24 @@ html[data-theme="light"] .mode-seam::after { background: #e4e0d6; }
 :where(.plate) {
   position: relative;
   z-index: 2;
+}
+
+/* The in-game command rail: one machined control surface for the left column.
+   A themed panel (follows every site theme via the surface vars) with a faint
+   top-light gradient and a crisp double edge — sharp and minimal, no glow. */
+.rail-panel {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0) 120px),
+    var(--surface-panel);
+  border: 1px solid var(--edge);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.02),
+    0 10px 34px -26px rgba(0, 0, 0, 0.65);
+  border-radius: 1px;
+}
+html[data-theme="light"] .rail-panel {
+  background: rgba(255, 255, 255, 0.5);
+  border-color: rgba(0, 0, 0, 0.14);
 }
 
 /* Chamfered corners: the signature box device. Two opposite corners cut at
@@ -1192,6 +1304,23 @@ html[data-piece-source="lichess"] .piece-asset {
 @keyframes empower-orbit-spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+/* Hostile variant for nerf-affected squares (NerfAura): the same pooled glow
+   but slower and heavier — an ember smolder, not a blessing — with the orbit
+   running backward and the cheerful shine sweep dropped. */
+.nerf-aura::before {
+  animation-duration: 3.6s;
+  background: radial-gradient(
+    circle at 50% 56%,
+    rgb(var(--tier-rgb, 224 119 107) / 0.34),
+    rgb(var(--tier-rgb, 224 119 107) / 0.12) 52%,
+    transparent 74%
+  );
+}
+.nerf-aura::after { display: none; }
+.nerf-aura .empower-orbit {
+  animation-duration: 11s;
+  animation-direction: reverse;
 }
 @keyframes empower-twinkle {
   0%, 100% { opacity: 0.25; transform: scale(0.7); }

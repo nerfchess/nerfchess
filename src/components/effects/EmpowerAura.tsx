@@ -52,6 +52,27 @@ export function EmpowerShine({ tier }: { tier: number }) {
   );
 }
 
+/** Hostile twin of EmpowerShine: a slow, ominous terracotta glow marking a
+ * square the viewer's NERF is acting on (a banned square, a forced piece, the
+ * duck...). Reuses the shine plumbing with the .nerf-aura overrides in
+ * globals.css: slower breathe, reversed orbit, no cheerful sweep. Mounted
+ * before the piece div so pieces always paint on top. */
+export function NerfAura() {
+  return (
+    <div
+      aria-hidden
+      className="empower-shine nerf-aura absolute inset-0 pointer-events-none"
+      style={{ "--tier-rgb": "224 119 107" } as React.CSSProperties}
+    >
+      <span className="empower-orbit">
+        <i className="empower-glint empower-glint--1" />
+        <i className="empower-glint empower-glint--2" />
+        <i className="empower-glint empower-glint--3" />
+      </span>
+    </div>
+  );
+}
+
 /** Faint ambient glow hugging the viewer's edge of the board crop while they
  * hold any live passive/perk grant. `tint` is an "R G B" triplet (use
  * tierRgb); the aura sits on the bottom edge when the board is oriented the

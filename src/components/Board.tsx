@@ -71,10 +71,11 @@ if (process.env.NODE_ENV !== "production") {
     runGenSelfCheck(new Set(Object.keys(SIGNATURES)));
   } catch {}
 }
-import { EdgeAura, EmpowerShine, tierRgb } from "./effects/EmpowerAura";
+import { EdgeAura, EmpowerShine, NerfAura, tierRgb } from "./effects/EmpowerAura";
 import type { MotifMark } from "./effects/fxZones";
 import { EffectPopover, type EffectPopoverContent } from "./EffectPopover";
 import { FX_LEVELS, useFxHidden, useFxLevel } from "@/lib/fxToggle";
+import { fxDurationScale } from "@/lib/settings";
 import { VfxLayer } from "./effects/vfx/VfxLayer";
 import { vfxPlay } from "./effects/vfx/vfxBus";
 import type { VfxPlay, VfxPoint } from "./effects/vfx/types";
@@ -290,11 +291,15 @@ function CountdownChip({ n, doom = false }: { n: number; doom?: boolean }) {
   return (
     <span
       aria-hidden
+      // z-30: the countdown must ALWAYS beat the effect art sharing its square
+      // (trap markers, freeze skins, shield pulses render later at z-10 and
+      // used to paint over it — "the number is blocked by some of the
+      // effects"). The solid ink backing + shadow keep it legible on any art.
       className={
-        "pointer-events-none absolute bottom-0.5 left-0.5 z-10 flex h-[15px] min-w-[15px] items-center justify-center rounded-[1px] border px-0.5 font-mono text-[10px] font-bold leading-none " +
+        "pointer-events-none absolute bottom-0.5 left-0.5 z-30 flex h-[15px] min-w-[15px] items-center justify-center rounded-[1px] border px-0.5 font-mono text-[10px] font-bold leading-none shadow-[0_1px_4px_rgba(0,0,0,0.8)] " +
         (doom
           ? "border-oxblood-glow/70 bg-ink-950/90 text-oxblood-glow"
-          : "border-white/25 bg-ink-950/80 text-parchment-100")
+          : "border-white/25 bg-ink-950/90 text-parchment-100")
       }
     >
       {n}
@@ -1271,6 +1276,7 @@ export function Board({
             aftermath: fxCalmClock ? "none" : spec.aftermath,
             shake: spec.shake && !fxCalmClock && FX_LEVELS[fxLevel].shake !== "none",
             intensity: fxCalmClock ? Math.min(0.6, FX_LEVELS[fxLevel].vfx) : FX_LEVELS[fxLevel].vfx,
+            durationScale: fxDurationScale(),
           });
         }
       }
@@ -1768,6 +1774,7 @@ export function Board({
             aftermath: fxCalmClock ? "none" : spec.aftermath,
             shake: spec.shake && !fxCalmClock && FX_LEVELS[fxLevel].shake !== "none",
             intensity: fxCalmClock ? Math.min(0.6, FX_LEVELS[fxLevel].vfx) : FX_LEVELS[fxLevel].vfx,
+            durationScale: fxDurationScale(),
           });
         }
       }
@@ -2335,7 +2342,7 @@ export function Board({
       });
     if (shieldedSquares.has(sq))
       out.push({
-        title: "Sanctuary",
+        title: "Shielded",
         tone: "buff",
         status,
         body: "This piece cannot be captured while the shield holds - and while it cannot be captured, it may not capture the king itself (you must expose a piece to win). Kings are never shielded.",
@@ -2597,7 +2604,11 @@ export function Board({
                   <div className="absolute inset-0 bg-cyan-500/25 mix-blend-screen pointer-events-none" />
                 )}
                 {banned && (
-                  <div className="absolute inset-0 bg-red-900/45 pointer-events-none" />
+                  <>
+                    <div className="absolute inset-0 bg-red-900/45 pointer-events-none" />
+                    {/* Glowing aura: the nerf is ACTING here, not just tinting. */}
+                    <NerfAura />
+                  </>
                 )}
                 {wardSquares.has(sq) && (
                   <>
@@ -2831,7 +2842,13 @@ export function Board({
                   />
                 )}
                 {isForced && !isDragging && (
-                  <div className="absolute inset-0 pointer-events-none rounded-sm ring-2 ring-inset ring-gold-leaf/80 shadow-[inset_0_0_24px_-4px_rgba(230,191,106,0.55)] animate-flicker" />
+                  <>
+                    <div className="absolute inset-0 pointer-events-none rounded-sm ring-2 ring-inset ring-gold-leaf/80 shadow-[inset_0_0_24px_-4px_rgba(230,191,106,0.55)] animate-flicker" />
+                    {/* The nerf's grip on this piece glows, matching the
+                        banned-square aura, so "what my nerf is affecting"
+                        reads as one visual language. */}
+                    <NerfAura />
+                  </>
                 )}
                 {isPickTarget && (
                   <div className="sq-pickable absolute inset-0 pointer-events-none rounded-sm" />
@@ -2949,7 +2966,15 @@ export function Board({
             mounts it exactly once per cast; the finished overlay ends at
             opacity 0 and simply waits to be replaced by the next cast. */}
         {!fxHiddenPref && !fxCalmClock && cast && (
-          <CastSpectacle key={`cast-${cast.key}`} category={cast.category} tier={cast.tier} />
+          <CastSpectacle
+            key={`cast-${cast.key}`}
+            category={cast.category}
+            tier={cast.tier}
+            id={cast.id}
+            name={BUFF_BY_ID[cast.id]?.name}
+            description={BUFF_BY_ID[cast.id]?.description}
+            cardIcon={BUFF_BY_ID[cast.id]?.icon}
+          />
         )}
         {extraBannerRef.current && (
           <ExtraTurnsBanner

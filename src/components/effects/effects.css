@@ -1364,7 +1364,7 @@
   70% { opacity: 0.55; }
   100% { opacity: 0; transform: scale(1); }
 }
-.fx-cast-ring { animation: fx-cast-ring 0.85s var(--ease-out, ease-out) both; transform-origin: 50% 50%; }
+.fx-cast-ring { animation: fx-cast-ring calc(0.85s * var(--fx-dur, 1)) var(--ease-out, ease-out) both; transform-origin: 50% 50%; }
 
 /* The sleek diagonal shine: a thin bar sweeping corner to corner. */
 @keyframes fx-cast-sweep {
@@ -1373,7 +1373,41 @@
   88% { opacity: 1; }
   100% { opacity: 0; transform: translateX(1400%) rotate(var(--tilt, 14deg)); }
 }
-.fx-cast-sweep { animation: fx-cast-sweep 0.7s var(--ease-out, ease-out) both; }
+.fx-cast-sweep { animation: fx-cast-sweep calc(0.7s * var(--fx-dur, 1)) var(--ease-out, ease-out) both; }
+@keyframes fx-cast-sweep-rev {
+  0% { opacity: 0; transform: translateX(0) rotate(var(--tilt, -14deg)); }
+  12% { opacity: 1; }
+  88% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(-1400%) rotate(var(--tilt, -14deg)); }
+}
+.fx-cast-sweep-rev { animation: fx-cast-sweep-rev calc(0.7s * var(--fx-dur, 1)) var(--ease-out, ease-out) both; }
+
+/* Counter-orbiting glints (sleek): two motes circle the board center in
+   opposite directions while the cast plays, fading with it. */
+@keyframes fx-cast-orbit {
+  0% { opacity: 0; transform: translate(-50%, -50%) rotate(0deg); }
+  18% { opacity: 1; }
+  80% { opacity: 0.8; }
+  100% { opacity: 0; transform: translate(-50%, -50%) rotate(300deg); }
+}
+.fx-cast-orbit { animation: fx-cast-orbit calc(0.9s * var(--fx-dur, 1)) var(--ease-out, ease-out) both; }
+@keyframes fx-cast-orbit-rev {
+  0% { opacity: 0; transform: translate(-50%, -50%) rotate(0deg); }
+  18% { opacity: 1; }
+  80% { opacity: 0.8; }
+  100% { opacity: 0; transform: translate(-50%, -50%) rotate(-260deg); }
+}
+.fx-cast-orbit-rev { animation: fx-cast-orbit-rev calc(0.9s * var(--fx-dur, 1)) var(--ease-out, ease-out) both; }
+
+/* The card announcement banner: settles in fast, holds long enough to read
+   the name + one rule line, lifts away. */
+@keyframes fx-cast-banner {
+  0% { opacity: 0; transform: translateY(-10px) scale(0.96); }
+  10% { opacity: 1; transform: translateY(0) scale(1); }
+  82% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-8px) scale(0.99); }
+}
+.fx-cast-banner { animation: fx-cast-banner calc(2.4s * var(--fx-dur, 1)) var(--ease-out, ease-out) both; }
 
 /* The small emblem pop (sleek): rises a touch as it blinks in and out. */
 @keyframes fx-cast-emblem {
@@ -1382,7 +1416,7 @@
   75% { opacity: 0.85; }
   100% { opacity: 0; transform: translateY(-25%) scale(1.02); }
 }
-.fx-cast-emblem { animation: fx-cast-emblem 0.8s var(--ease-out, ease-out) both; }
+.fx-cast-emblem { animation: fx-cast-emblem calc(0.8s * var(--fx-dur, 1)) var(--ease-out, ease-out) both; }
 
 /* The radial category wash (grand): blooms and settles. */
 @keyframes fx-cast-wash {
@@ -1390,7 +1424,7 @@
   30% { opacity: 1; transform: scale(1); }
   100% { opacity: 0; transform: scale(1.06); }
 }
-.fx-cast-wash { animation: fx-cast-wash 1s var(--ease-out, ease-out) both; transform-origin: 50% 50%; }
+.fx-cast-wash { animation: fx-cast-wash calc(1s * var(--fx-dur, 1)) var(--ease-out, ease-out) both; transform-origin: 50% 50%; }
 
 /* A shockwave ring off the emblem slam. */
 @keyframes fx-cast-shock {
@@ -1398,7 +1432,7 @@
   18% { opacity: 1; }
   100% { opacity: 0; transform: scale(2.6); }
 }
-.fx-cast-shock { animation: fx-cast-shock 0.9s var(--ease-out, cubic-bezier(0.15, 0.7, 0.2, 1)) both; transform-origin: 50% 50%; }
+.fx-cast-shock { animation: fx-cast-shock calc(0.9s * var(--fx-dur, 1)) var(--ease-out, cubic-bezier(0.15, 0.7, 0.2, 1)) both; transform-origin: 50% 50%; }
 
 /* The emblem slam (grand / marquee): drops in oversized, squashes, holds. */
 @keyframes fx-cast-emblem-slam {
@@ -1409,7 +1443,7 @@
   80% { opacity: 0.95; }
   100% { opacity: 0; transform: scale(1.03); }
 }
-.fx-cast-emblem-slam { animation: fx-cast-emblem-slam 1.15s var(--ease-out, cubic-bezier(0.2, 0.8, 0.3, 1.1)) both; }
+.fx-cast-emblem-slam { animation: fx-cast-emblem-slam calc(1.15s * var(--fx-dur, 1)) var(--ease-out, cubic-bezier(0.2, 0.8, 0.3, 1.1)) both; }
 
 /* The marquee vignette dim: the room goes dark for the big one. */
 @keyframes fx-cast-dim {
@@ -1418,7 +1452,7 @@
   78% { opacity: 1; }
   100% { opacity: 0; }
 }
-.fx-cast-dim { animation: fx-cast-dim 1.5s ease-in-out both; }
+.fx-cast-dim { animation: fx-cast-dim calc(1.5s * var(--fx-dur, 1)) ease-in-out both; }
 
 /* Twin light beams raking across the darkened board (marquee). */
 @keyframes fx-cast-beam {
@@ -1427,14 +1461,14 @@
   85% { opacity: 1; }
   100% { opacity: 0; transform: translateX(900%) rotate(var(--tilt, 16deg)); }
 }
-.fx-cast-beam { animation: fx-cast-beam 1.3s var(--ease-out, ease-out) both; }
+.fx-cast-beam { animation: fx-cast-beam calc(1.3s * var(--fx-dur, 1)) var(--ease-out, ease-out) both; }
 @keyframes fx-cast-beam-back {
   0% { opacity: 0; transform: translateX(0) rotate(var(--tilt, -16deg)); }
   15% { opacity: 1; }
   85% { opacity: 1; }
   100% { opacity: 0; transform: translateX(-900%) rotate(var(--tilt, -16deg)); }
 }
-.fx-cast-beam-back { animation: fx-cast-beam-back 1.3s var(--ease-out, ease-out) both; }
+.fx-cast-beam-back { animation: fx-cast-beam-back calc(1.3s * var(--fx-dur, 1)) var(--ease-out, ease-out) both; }
 
 /* --- Board shake: the whole crop jolts for a marquee cast --------------------
    Transform-only, small amplitude, quick decay: reads as a thump, not motion

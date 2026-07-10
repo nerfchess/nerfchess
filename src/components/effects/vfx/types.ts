@@ -15,4 +15,5 @@ export interface VfxPlay {
   shake?: boolean;                    // ask the host to thump the board on first impact
   squareSize?: number;                // fraction of board width one square occupies (default 1/8)
   intensity?: number;                 // particle-count multiplier from the effects dial (default 1, clamped 0.3-2)
+  durationScale?: number;             // stretches/squeezes every lifetime + stagger (Settings > card effect duration; default 1, clamped 0.5-2)
 }

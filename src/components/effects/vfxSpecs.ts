@@ -804,8 +804,6 @@ export const CARD_VFX: Record<string, CardVfx> = {
   iron_reign: { travel: "none", impact: "shock", aftermath: "sparkle", palette: ["#8a94a8", "#ffd76a", "#3a3a40"], source: "lead" },
   // [WarBanner] Ironclad.
   ironclad: { travel: "none", impact: "shock", aftermath: "sparkle", palette: ["#aab6c8", "#e3e9f2", "#3a4556"], source: "lead" },
-  // [WarBanner] Sanctuary Zone.
-  sanctuary_zone: { travel: "none", impact: "shock", aftermath: "sparkle", palette: ["#5fc9b0", "#ffd76a", "#1c4a3a"], source: "lead" },
   // [WarBanner] Iron Bulwark.
   ww_iron_bulwark: { travel: "none", impact: "shock", aftermath: "sparkle", palette: ["#8a94a8", "#c94a3a", "#3a3a40"], source: "lead" },
   // [WarBanner] Praetorian Guard.
@@ -1038,8 +1036,6 @@ export const CARD_VFX: Record<string, CardVfx> = {
   resurrect_major: { travel: "none", impact: "burst", aftermath: "sparkle", palette: ["#8fd1b0","#ffe9c9","#22422e"], source: "lead" },
   // [GlintArc] Royal Decree.
   royal_decree: { travel: "none", impact: "sparkle", aftermath: "sparkle", palette: ["#7fc9e8","#e3f6ff","#1c3644"], source: "lead" },
-  // [SigilRing] Sanctuary.
-  sanctuary: { travel: "none", impact: "sparkle", aftermath: "sparkle", palette: ["#5fc9b0","#e3d0ff","#1c3a40"], source: "lead" },
   // [KeyTurn] Sealed Gate.
   sealed_gate: { travel: "none", impact: "shock", aftermath: "none", palette: ["#d1a85a","#fff2c9","#3d3220"], source: "lead" },
   // [SigilRing] Shieldmaiden.
@@ -1259,29 +1255,65 @@ const CATEGORY_LOW_VFX: Record<string, { impact: "sparkle" | "smoke" | "burst"; 
   item: { impact: "sparkle", palette: ["#e8963a", "#ffd23f", "#fff7de"] },
 };
 
+/** FNV-1a hash so each card's low-tier styling is its own and stable. */
+function cardHash(id: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < id.length; i++) {
+    h ^= id.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+/** The gentle travels a tier 2-3 card may draw from its hash: cheap, quick,
+ *  and quiet enough to sit below the tier-4+ band, but no longer nothing. */
+const LOW_TRAVEL: CardVfx["travel"][] = ["none", "arc", "wave", "rain", "bolt"];
+/** Small accents mixed into a low-tier palette by hash, so two cards of the
+ *  same category still pop with visibly different light. */
+const LOW_ACCENTS = ["#ffffff", "#ffd76a", "#6fe3ff", "#ff9dd6", "#a8e07f", "#b98cff", "#ffcf7a", "#9fd8ff"];
+const LOW_SOURCES: CardVfx["source"][] = ["lead", "caster", "sky", "center"];
+
 /**
  * Resolve the VFX spec for a card play.
- * - tier 1-3: a BASIC but present effect — travel "none", one small impact
- *   (sparkle/smoke/burst) in a palette derived from the card's gen family or
- *   category, aftermath "none", never a shake.
- * - Bespoke tier-4+ cards: their hand-tuned CARD_VFX entry.
+ * - Bespoke cards (CARD_VFX / EXTRA_CARD_VFX) play their hand-tuned entry at
+ *   EVERY tier — a low-tier card someone bothered to author is trusted, minus
+ *   the shake (that stays a tier-7+ privilege).
+ * - Non-bespoke tier 1-3: a small but OWNED effect. The palette starts from
+ *   the card's gen family or category, then the card id deterministically
+ *   picks an accent tint, a soft impact, a gentle travel (tier 2-3; tier 1
+ *   stays travel-free), a source, and — at tier 3 — a sparkle aftermath.
+ *   Two same-category commons no longer play the same pixels.
  * - Generated tier-4+ cards: their family default (pass the GenFamily string),
  *   with shake promoted at tier >= 7 for heavy impacts.
  * - Anything else: a safe neutral default — never null at tier >= 1.
  */
 export function resolveCardVfx(id: string, tier: number, genFamily?: string): CardVfx | null {
+  const bespoke = CARD_VFX[id] ?? EXTRA_CARD_VFX[id];
   if (tier < 4) {
+    if (bespoke) return bespoke.shake ? { ...bespoke, shake: false } : bespoke;
     const fam = genFamily !== undefined ? GEN_FAMILY_VFX[genFamily] : undefined;
     const cat = CATEGORY_LOW_VFX[BUFF_BY_ID[id]?.category ?? ""];
+    const h = cardHash(id);
+    const basePalette = fam?.palette ?? cat?.palette ?? DEFAULT_VFX.palette;
+    const accent = LOW_ACCENTS[(h >>> 3) % LOW_ACCENTS.length];
+    // Keep the family/category primary (the fiction read) and thread the
+    // card's own accent into the middle of the palette.
+    const palette = [basePalette[0], accent, ...basePalette.slice(1)];
+    const softImpact = fam ? SOFT_IMPACT[fam.impact] : (cat?.impact ?? "sparkle");
+    // A third of commons trade their family impact for a hash-picked sibling,
+    // widening the low-tier vocabulary without leaving the soft set.
+    const impact =
+      (h >>> 7) % 3 === 0
+        ? (["sparkle", "smoke", "burst"] as const)[(h >>> 9) % 3]
+        : softImpact;
     return {
-      travel: "none",
-      impact: fam ? SOFT_IMPACT[fam.impact] : (cat?.impact ?? "sparkle"),
-      aftermath: "none",
-      palette: fam?.palette ?? cat?.palette ?? DEFAULT_VFX.palette,
-      source: "lead",
+      travel: tier >= 2 ? LOW_TRAVEL[(h >>> 11) % LOW_TRAVEL.length] : "none",
+      impact,
+      aftermath: tier >= 3 && (h & 2) === 2 ? "sparkle" : "none",
+      palette,
+      source: LOW_SOURCES[(h >>> 14) % LOW_SOURCES.length],
     };
   }
-  const bespoke = CARD_VFX[id] ?? EXTRA_CARD_VFX[id];
   if (bespoke) return bespoke;
   const base = (genFamily !== undefined && GEN_FAMILY_VFX[genFamily]) || DEFAULT_VFX;
   if (tier >= 7 && !base.shake && HEAVY_IMPACTS.has(base.impact)) {
