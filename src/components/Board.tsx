@@ -219,6 +219,7 @@ const TRAP_HOVER_BODY: Record<string, string> = {
   trapdoor: "An enemy piece (never a king) landing here is sprung back toward home and stunned.",
   whoopee: "The first enemy piece (never a king) to sit here makes a rude noise and must keep moving.",
   landlord: "An enemy piece (never a king) ending its move here owes rent: stuck for a turn.",
+  beartrap: "The first enemy piece (never a king) to step here is snapped up for 4 turns.",
 };
 
 /** Tiny corner marker for a frozen square, chosen by the skin's glyph kind.
@@ -1026,6 +1027,11 @@ export function Board({
   // one per affected square, and persists (invisible after they play) exactly
   // like fxRef so an unrelated re-render never remounts and replays them.
   const zoneSigSeenKeyRef = useRef(0);
+  // Play keys whose zone-sourced signature actually claimed one or more
+  // squares. A zone-sourced card whose zone came up EMPTY on this play (a
+  // rework changed what it paints, or the effect simply hit nothing) falls
+  // back to the diff-less cast lead below instead of playing silently.
+  const zoneLeadClaimKeyRef = useRef(0);
   const zoneSigRef = useRef<
     Map<number, { sig: string; order: number; role: "lead" | "target"; key: number }>
   >(new Map());
@@ -1595,6 +1601,7 @@ export function Board({
           key: signatureCard.key,
         });
       }
+      if (marks.size > 0) zoneLeadClaimKeyRef.current = signatureCard.key;
       // Canvas VFX over the zone squares: the same fiction-matched spec the
       // removal path uses, travelling to the pieces the card actually touched
       // (frozen, shielded, empowered...). Staged into the ref; flushed after
@@ -2528,6 +2535,7 @@ export function Board({
                           case "trapdoor": return <TrapdoorMark />;
                           case "whoopee": return <WhoopeeCushionMark />;
                           case "landlord": return <LandlordClaimMark />;
+                          case "beartrap": return <BearTrapMark />;
                           default: return null;
                         }
                       })()}
@@ -2828,7 +2836,13 @@ export function Board({
                 </div>
               );
             }
-            if (cfg.source && cfg.source !== "removal") return null;
+            if (
+              cfg.source &&
+              cfg.source !== "removal" &&
+              cast.key === zoneLeadClaimKeyRef.current
+            ) {
+              return null; // the zone path is playing this card's art
+            }
             return (
               <div
                 key={`siglead-${cast.key}`}

@@ -25,12 +25,36 @@ export const FUNNY_SLAPSTICK: Buff[] = [
       id: "rake",
       icon: "Shovel",
       name: "Rake",
-      description: "One enemy piece cannot move for 2 of their turns. Kings cannot be targeted.",
+      description: "One wide swing: every enemy pawn standing beside a piece you choose is raked one square back toward its home rank, wherever that square is free.",
       tier: 2,
       category: "item",
       flavor: "Sideshow Bob would be proud.",
     },
-    freezeTarget(2),
+    activated(
+      (_inst, api, picks) =>
+        picks.length > 0
+          ? null
+          : {
+              kind: "square",
+              label: "Choose the piece that swings the rake",
+              squares: mySquares(api.board, api.me),
+            },
+      (_inst, api, picks) => {
+        const c = picks[0]?.square;
+        if (c == null) return;
+        const back = api.opp === "w" ? -8 : 8;
+        for (const [df, dr] of [[1, 1], [1, -1], [-1, 1], [-1, -1], [1, 0], [-1, 0], [0, 1], [0, -1]]) {
+          const f = FILE(c) + df, r = RANK(c) + dr;
+          if (!inBoard(f, r)) continue;
+          const sq = SQ(f, r);
+          const p = api.board.pieces[sq];
+          if (!p || p.color !== api.opp || p.type !== "p") continue;
+          const to = sq + back;
+          if (to < 0 || to > 63) continue;
+          if (!api.board.pieces[to] && pawnRankOk(to)) api.relocate(sq, to);
+        }
+      },
+    ),
   ),
   card(
     {
@@ -61,12 +85,32 @@ export const FUNNY_SLAPSTICK: Buff[] = [
       id: "napping",
       icon: "Moon",
       name: "Napping",
-      description: "One enemy knight falls fast asleep for 3 of their turns. Kings cannot be targeted.",
+      description: "The enemy piece farthest from its own king sneaks a nap while nobody is watching: it is frozen for 3 of their turns. Kings never nap; ties pick the square nearest a1.",
       tier: 3,
       category: "item",
       flavor: "Do not wake the horse.",
     },
-    freezeTargetTyped(3, ["n"], "Choose an enemy knight to send to sleep"),
+    {
+      kind: "instant",
+      effect: (_inst, api) => {
+        const k = mySquares(api.board, api.opp, "k")[0];
+        let best: number | null = null, bestD = -1;
+        for (const sq of mySquares(api.board, api.opp)) {
+          if (api.board.pieces[sq]!.type === "k") continue;
+          const d =
+            k == null
+              ? 0
+              : Math.max(Math.abs(FILE(sq) - FILE(k)), Math.abs(RANK(sq) - RANK(k)));
+          if (d > bestD) {
+            bestD = d;
+            best = sq;
+          }
+        }
+        if (best != null) {
+          addEffect(api, { kind: "freeze", sq: best, owner: api.opp, turns: 3, skin: "sleep" });
+        }
+      },
+    },
   ),
   card(
     {
@@ -157,12 +201,48 @@ export const FUNNY_SLAPSTICK: Buff[] = [
       id: "bear_trap",
       icon: "Scissors",
       name: "Bear Trap",
-      description: "Snap a bear trap shut on one enemy piece: it is held in place and cannot move for 4 of their turns. Kings cannot be targeted.",
+      description: "Hide a bear trap on an empty square, visible only in your nightmares: the first enemy piece except a king to step onto it is snapped up and cannot move for 4 of their turns.",
       tier: 4,
       category: "item",
-      flavor: "It hops on one foot now.",
+      flavor: "It will hop on one foot from now on.",
     },
-    freezeTargetTyped(4, undefined, "Choose an enemy piece to trap", "beartrap"),
+    {
+      kind: "activated",
+      spendOnUse: false,
+      // One activation only: once set, the trap never moves.
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null
+          ? null
+          : {
+              kind: "square",
+              label: "Choose the empty square to hide the trap on",
+              squares: (() => {
+                const out: number[] = [];
+                for (let sq = 0; sq < 64; sq++) if (!api.board.pieces[sq]) out.push(sq);
+                return out;
+              })(),
+            },
+      effect: (inst, _api, picks) => {
+        if (inst.state.sq != null) return;
+        inst.state.sq = picks[0]?.square;
+      },
+      onMovePlayed: (inst, move, api) => {
+        const sq = inst.state.sq as number | undefined;
+        if (sq == null) return;
+        if (move.color === api.opp && move.to === sq && move.piece !== "k") {
+          // Added during their own move, so the shared post-move tick eats one
+          // turn immediately: 5 here leaves exactly 4 of their turns trapped.
+          addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 5, skin: "beartrap" });
+          inst.spent = true;
+        }
+      },
+      status: (inst) => {
+        const sq = inst.state.sq as number | undefined;
+        return sq == null
+          ? "activate to hide the trap"
+          : `trap set at ${"abcdefgh"[FILE(sq)]}${RANK(sq) + 1}`;
+      },
+    },
   ),
   card(
     {

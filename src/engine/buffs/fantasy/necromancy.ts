@@ -116,12 +116,12 @@ export const FANTASY_NECROMANCY: Buff[] = [
       icon: "Ghost",
       name: "Raise Dead",
       description:
-        "Speak the words of unmaking: one of your fallen pawns, knights, or bishops rises again on any empty square, once.",
+        "Speak the words of unmaking over enemy soil: one of your fallen pawns, knights, or bishops rises again on an empty square in your OPPONENT'S half of the board, once.",
       tier: 3,
       category: "pieces",
-      flavor: "The grave was only ever a suggestion.",
+      flavor: "The grave was only ever a suggestion. So was the border.",
     },
-    reviveOne(["p", "n", "b"], anyEmptyZone),
+    reviveOne(["p", "n", "b"], (api) => (sq) => !myHalfZone(api)(sq)),
   ),
   card(
     {
@@ -215,11 +215,17 @@ export const FANTASY_NECROMANCY: Buff[] = [
       icon: "Skull",
       name: "Army of the Dead",
       description:
-        "Four fresh pawns muster into your pocket, then drop them onto empty squares on later turns.",
+        "The fallen answer the roll: one pawn musters into your pocket for every two of your pieces captured so far, plus one more, up to five in all. Drop them onto empty squares on later turns.",
       tier: 6,
       category: "pieces",
       flavor: "Roll call is a very long list of names.",
     },
-    instant((_inst, api) => grantInventory(api, "p", 4)),
+    instant((_inst, api) => {
+      const fallen = (["p", "n", "b", "r", "q"] as const).reduce(
+        (sum, t) => sum + (api.capturedFromMe[t] ?? 0),
+        0,
+      );
+      grantInventory(api, "p", Math.min(5, Math.floor(fallen / 2) + 1));
+    }),
   ),
 ];

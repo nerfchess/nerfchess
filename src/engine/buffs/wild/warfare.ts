@@ -351,23 +351,67 @@ export const WILD_WARFARE: Buff[] = [
     {
       id: "ww_reclaim_the_fallen",
       name: "Reclaim the Fallen",
-      description: "Return one of your captured pawns to any empty square in your half, once.",
+      description: "Battlefield salvage: the next 2 enemy pawns you capture are pressed into service, joining your pocket to be dropped onto empty squares on later turns.",
       tier: 2,
       category: "pieces",
-      flavor: "No body left behind.",
+      flavor: "No body left behind. Especially not a useful one.",
     },
-    reviveOne(["p"], myHalfZone),
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.charges = 2;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.me || move.captured !== "p") return;
+        const left = (inst.state.charges as number) ?? 0;
+        if (left <= 0) return;
+        grantInventory(api, "p", 1);
+        inst.state.charges = left - 1;
+        if (left - 1 <= 0) inst.spent = true;
+      },
+      status: (inst) => `${(inst.state.charges as number) ?? 2} salvage claims left`,
+    },
   ),
   card(
     {
       id: "ww_last_reserves",
       name: "Last Reserves",
-      description: "Return one of your captured knights or bishops to any empty square in your half, once.",
-      tier: 3,
+      description: "Commit everything: up to two of your captured knights or bishops return to empty squares on your back rank, once.",
+      tier: 4,
       category: "pieces",
-      flavor: "Pull the veterans off the bench.",
+      flavor: "Pull the veterans off the bench. All of them.",
     },
-    reviveOne(["n", "b"], myHalfZone),
+    activated(
+      (_inst, api, picks) => {
+        if (picks.length >= 2) return null;
+        const pool =
+          ((api.capturedFromMe.n ?? 0) - (api.mine.revived.n ?? 0)) +
+          ((api.capturedFromMe.b ?? 0) - (api.mine.revived.b ?? 0));
+        if (pool - picks.length <= 0) return null;
+        const rank = api.me === "w" ? 0 : 7;
+        const squares = Array.from({ length: 8 }, (_, f) => SQ(f, rank)).filter(
+          (sq) => !api.board.pieces[sq] && !picks.some((k) => k.square === sq),
+        );
+        if (!squares.length) return null;
+        return {
+          kind: "square",
+          label: `Choose where a reserve returns (${picks.length + 1}/2)`,
+          squares,
+          ...(picks.length > 0 ? { finishable: true } : {}),
+        };
+      },
+      (_inst, api, picks) => {
+        for (const k of picks) {
+          if (k.square == null || api.board.pieces[k.square]) continue;
+          const type = (["n", "b"] as const).find(
+            (t) => (api.capturedFromMe[t] ?? 0) - (api.mine.revived[t] ?? 0) > 0,
+          );
+          if (type == null) break;
+          api.place(k.square, type, api.me);
+          markRevived(api, type);
+        }
+      },
+    ),
   ),
   card(
     {
@@ -412,10 +456,12 @@ export const WILD_WARFARE: Buff[] = [
   ),
   card(
     {
+      // Tier 4 (moved up from 3): Summon Knight (tier 3) plus a free pawn
+      // advance is strictly more than the plain summon, so it prices a tier up.
       id: "ww_outriders",
       name: "Outriders",
       description: "Place a new knight on any empty square in your half, then advance one of your pawns one square.",
-      tier: 3,
+      tier: 4,
       category: "pieces",
       flavor: "Cavalry ahead, infantry a step behind.",
     },
@@ -457,51 +503,85 @@ export const WILD_WARFARE: Buff[] = [
     {
       id: "ww_sapper_team",
       name: "Sapper Team",
-      description: "A bishop reports to your pocket, then spend a later turn to drop it onto any empty square.",
+      description: "The sappers surface behind their lines: place a new pawn on an empty square in your opponent's half of the board.",
       tier: 3,
       category: "pieces",
       flavor: "They dig the tunnels no one else will.",
     },
-    instant((_inst, api) => grantInventory(api, "b", 1)),
+    placePieces(["p"], oppHalfZone),
   ),
   card(
     {
       id: "ww_muster_the_ranks",
       name: "Muster the Ranks",
-      description: "A knight and two pawns muster into your pocket, then drop them onto empty squares on later turns.",
+      description: "The trumpet sounds and the whole line steps off: every one of your pawns with an empty square ahead advances one square. Pawns one step from the last rank hold their ground.",
       tier: 5,
-      category: "pieces",
+      category: "movement",
+      requires: ["p"],
       flavor: "The muster roll fills out fast.",
     },
     instant((_inst, api) => {
-      grantInventory(api, "n", 1);
-      grantInventory(api, "p", 2);
+      const fwd = api.me === "w" ? 8 : -8;
+      // March the far ranks first so a pawn never blocks the one behind it.
+      const pawns = mySquares(api.board, api.me, "p").sort(
+        (a, b) => relRank(api.me, b) - relRank(api.me, a) || a - b,
+      );
+      for (const sq of pawns) {
+        const to = sq + fwd;
+        if (to < 0 || to > 63) continue;
+        if (!api.board.pieces[to] && pawnRankOk(to)) api.relocate(sq, to);
+      }
     }),
   ),
   card(
     {
       id: "ww_combined_arms",
       name: "Combined Arms",
-      description: "A rook and a knight report to your pocket, then drop them onto empty squares on later turns.",
+      description: "Armor learns from cavalry: for your next 3 turns, your rooks may also leap like knights.",
       tier: 6,
-      category: "pieces",
+      category: "movement",
+      requires: ["r"],
       flavor: "Armor and cavalry, moving as one.",
+      fx: { motif: "empower", pieces: ["r"], moveAs: "n", self: true },
     },
-    instant((_inst, api) => {
-      grantInventory(api, "r", 1);
-      grantInventory(api, "n", 1);
-    }),
+    timedAugment(3, (_m, inst, api) =>
+      mySquares(api.board, api.me, "r").flatMap((sq) =>
+        leapMoves(api.board, sq, KNIGHT_LEAPS, inst.id),
+      ),
+    ),
   ),
   card(
     {
       id: "ww_shieldbearers",
       name: "Shieldbearers",
-      description: "Two pawns fall in to your pocket, then drop them onto empty squares on later turns.",
+      description: "While at least one of your pawns stands on a square beside your king, your king cannot be captured, for the rest of the game.",
       tier: 4,
-      category: "pieces",
+      category: "protection",
+      requires: ["p"],
       flavor: "Close ranks around the crown.",
+      fx: { motif: "ward", pieces: ["k"], self: true },
     },
-    instant((_inst, api) => grantInventory(api, "p", 2)),
+    {
+      kind: "passive",
+      filterOpponentMoves: (moves, _inst, api) => {
+        const k = mySquares(api.board, api.me, "k")[0];
+        if (k == null) return moves;
+        let guarded = false;
+        for (const [df, dr] of ALL_DIRS) {
+          const f = FILE(k) + df, r = RANK(k) + dr;
+          if (!inBoard(f, r)) continue;
+          const p = api.board.pieces[SQ(f, r)];
+          if (p && p.color === api.me && p.type === "p") {
+            guarded = true;
+            break;
+          }
+        }
+        if (!guarded) return moves;
+        const kept = moves.filter((m) => m.to !== k);
+        // Safety net: never strand the opponent with zero moves.
+        return kept.length > 0 ? kept : moves;
+      },
+    },
   ),
   card(
     {
@@ -541,23 +621,80 @@ export const WILD_WARFARE: Buff[] = [
     {
       id: "ww_forward_observer",
       name: "Forward Observer",
-      description: "Deploy a bishop that scouts for you as a bishop for 3 of your turns, then pulls back.",
+      description: "The observer calls in indirect fire: for your next 2 turns, your rooks may capture an enemy piece along a rank or file even when exactly one piece stands in the way. The blocker is unharmed; the rook lands on its target.",
       tier: 4,
-      category: "pieces",
-      flavor: "Eyes on the far ridge.",
+      category: "attack",
+      requires: ["r"],
+      flavor: "Eyes on the far ridge, shells over the hill.",
+      fx: { motif: "empower", pieces: ["r"], self: true },
     },
-    summonTemp("b", 3, myHalfZone),
+    timedAugment(2, (_m, inst, api) => {
+      const out: Move[] = [];
+      for (const from of mySquares(api.board, api.me, "r")) {
+        for (const [df, dr] of ORTHO_DIRS) {
+          let f = FILE(from) + df, r = RANK(from) + dr, passed = 0;
+          while (inBoard(f, r)) {
+            const to = SQ(f, r);
+            const t = api.board.pieces[to];
+            if (t) {
+              if (passed === 0) {
+                passed = 1;
+              } else {
+                if (t.color === api.opp) {
+                  out.push({
+                    from,
+                    to,
+                    piece: "r",
+                    color: api.me,
+                    captured: t.type,
+                    capturedSquare: to,
+                    via: inst.id,
+                  });
+                }
+                break;
+              }
+            }
+            f += df;
+            r += dr;
+          }
+        }
+      }
+      return out;
+    }),
   ),
   card(
     {
       id: "ww_reserve_cavalry",
       name: "Reserve Cavalry",
-      description: "Call up a knight that rides with you for 4 of your turns, then returns to reserve.",
+      description: "The reserve waits for the line to break: the first time your opponent captures one of your pieces, a knight rides in on the empty back-rank square nearest your king's file.",
       tier: 4,
       category: "pieces",
       flavor: "Held back for exactly this moment.",
     },
-    summonTemp("n", 4, myHalfZone),
+    {
+      kind: "passive",
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.opp || !move.captured || move.captured === "k") return;
+        const rank = api.me === "w" ? 0 : 7;
+        const kf = (() => {
+          const k = mySquares(api.board, api.me, "k")[0];
+          return k == null ? 4 : FILE(k);
+        })();
+        let spot = -1, bestD = Infinity;
+        for (let f = 0; f < 8; f++) {
+          const sq = SQ(f, rank);
+          if (api.board.pieces[sq]) continue;
+          const d = Math.abs(f - kf);
+          if (d < bestD) {
+            bestD = d;
+            spot = sq;
+          }
+        }
+        if (spot >= 0) api.place(spot, "n", api.me);
+        inst.spent = true;
+      },
+      status: () => "the reserve waits for the line to break",
+    },
   ),
   card(
     {
@@ -627,21 +764,23 @@ export const WILD_WARFARE: Buff[] = [
     {
       id: "ww_armored_breakthrough",
       name: "Armored Breakthrough",
-      description: "One of your queens rolls in a straight line, capturing up to two enemy pieces in its path and stopping, once.",
+      description: "One of your bishops spearheads the drive: it sweeps along one diagonal, capturing every enemy piece on it, and stops where the drive ends. Friendly pieces and enemy kings block the drive, once.",
       tier: 6,
       category: "attack",
-      requires: ["q"],
+      requires: ["b"],
       flavor: "Nothing in this lane survives the advance.",
     },
-    lineSweep("q", ALL_DIRS, 2),
+    lineSweep("b", DIAG_DIRS, null),
   ),
   card(
     {
       id: "ww_bombardment",
       icon: "Crosshair",
       name: "Bombardment",
+      // Tier 4 (moved up from 3): two pawns of guaranteed material is the
+      // doubled sibling of Cinder Strike (one pawn, tier 2).
       description: "Remove two enemy pawns you name from the board, once.",
-      tier: 3,
+      tier: 4,
       category: "attack",
       flavor: "Soften the trenches before the push.",
     },
@@ -680,15 +819,15 @@ export const WILD_WARFARE: Buff[] = [
     {
       id: "ww_dragoons",
       name: "Dragoons",
-      description: "One of your knights may also step one square in any direction like a king, for the game.",
+      description: "One of your knights trains to vault the line: it may also jump exactly two squares straight in any direction, over anything, for the game.",
       tier: 3,
       category: "movement",
       requires: ["n"],
-      flavor: "Ride to the fight, dismount to win it.",
-      fx: { motif: "empower", pieces: ["n"], moveAs: "k", self: true },
+      flavor: "Ride to the fight, vault the wall to win it.",
+      fx: { motif: "empower", pieces: ["n"], moveAs: "n", self: true },
     },
     pieceBound("n", "Choose the knight to train as dragoons", (board, sq, via) =>
-      slideMoves(board, sq, ALL_DIRS, via, 1),
+      leapMoves(board, sq, [[2, 0], [-2, 0], [0, 2], [0, -2]], via),
     ),
   ),
   card(
@@ -740,16 +879,27 @@ export const WILD_WARFARE: Buff[] = [
     {
       id: "ww_phalanx_advance",
       name: "Phalanx Advance",
-      description: "One of your rooks may pass through up to two of your own pieces on its move, for the game.",
+      description: "Shields lock across the whole front: enemy pawns can never capture your pawns, for the rest of the game.",
       tier: 3,
-      category: "movement",
-      requires: ["r"],
+      category: "protection",
+      requires: ["p"],
       flavor: "Shields locked, the whole line moves together.",
-      fx: { motif: "empower", pieces: ["r"], self: true },
+      fx: { motif: "ward", pieces: ["p"], self: true },
     },
-    pieceBound("r", "Choose the rook to anchor the phalanx", (board, sq, via) =>
-      phasingSlideMoves(board, sq, ORTHO_DIRS, via, 2),
-    ),
+    {
+      kind: "passive",
+      filterOpponentMoves: (moves, _inst, api) => {
+        const kept = moves.filter((m) => {
+          if (m.piece !== "p") return true;
+          const cap = captureSquare(m);
+          if (cap == null) return true;
+          const target = api.board.pieces[cap];
+          return !(target && target.color === api.me && target.type === "p");
+        });
+        // Safety net: never strand the opponent with zero moves.
+        return kept.length > 0 ? kept : moves;
+      },
+    },
   ),
 
   // -------------------------------------------------------------------------
@@ -831,41 +981,27 @@ export const WILD_WARFARE: Buff[] = [
     {
       id: "ww_regroup_lines",
       name: "Regroup the Lines",
-      description: "Return any one of your pieces to an empty square on your back rank, once.",
+      description: "Sound the recall: every one of your pieces standing in the enemy half falls back one square toward home, wherever the square behind it is free.",
       tier: 2,
       category: "movement",
       flavor: "Fall back, re-form, hold.",
     },
-    {
-      kind: "activated",
-      spendOnUse: true,
-      targets: (_inst, api, picks) => {
-        const dests = (from: Square) =>
-          backRankDest(api, from).filter((sq) => !api.board.pieces[sq]);
-        if (picks.length === 0) {
-          return {
-            kind: "square",
-            label: "Choose the piece to pull back",
-            squares: mySquares(api.board, api.me).filter(
-              (sq) =>
-                api.board.pieces[sq]!.type !== "k" &&
-                api.board.pieces[sq]!.type !== "p" &&
-                dests(sq).length > 0,
-            ),
-          };
+    instant((_inst, api) => {
+      const back = api.me === "w" ? -8 : 8;
+      // Pull back the pieces nearest home first so space opens up behind the
+      // ones deeper in (deterministic order on every replica).
+      const mine = mySquares(api.board, api.me)
+        .filter((sq) => inHalf(api.opp, sq) && api.board.pieces[sq]!.type !== "k")
+        .sort((a, b) => relRank(api.me, a) - relRank(api.me, b) || a - b);
+      for (const sq of mine) {
+        const to = sq + back;
+        if (to < 0 || to > 63) continue;
+        const p = api.board.pieces[sq]!;
+        if (!api.board.pieces[to] && (p.type !== "p" || pawnRankOk(to))) {
+          api.relocate(sq, to);
         }
-        if (picks.length === 1 && picks[0].square != null) {
-          return { kind: "square", label: "Choose the back-rank square", squares: dests(picks[0].square) };
-        }
-        return null;
-      },
-      effect: (_inst, api, picks) => {
-        const from = picks[0]?.square, to = picks[1]?.square;
-        if (from != null && to != null && api.board.pieces[from] && !api.board.pieces[to]) {
-          api.relocate(from, to);
-        }
-      },
-    },
+      }
+    }),
   ),
   card(
     {
@@ -948,13 +1084,34 @@ export const WILD_WARFARE: Buff[] = [
     {
       id: "ww_dug_in_defense",
       name: "Dug-In Defense",
-      description: "None of your pieces can be captured for your opponent's next 1 turn.",
+      description: "Dig three foxholes: choose up to three of your pieces; they cannot be captured for your opponent's next 3 turns.",
       tier: 7,
       category: "protection",
-      flavor: "One turn to weather anything.",
+      flavor: "Three holes to weather anything.",
       fx: { motif: "ward", pieces: "all", self: true },
     },
-    shieldArmy(1),
+    activated(
+      (_inst, api, picks) =>
+        picks.length >= 3
+          ? null
+          : {
+              kind: "square",
+              label: `Choose a piece to dig in (${picks.length + 1}/3)`,
+              squares: mySquares(api.board, api.me).filter(
+                (sq) =>
+                  api.board.pieces[sq]!.type !== "k" && !picks.some((k) => k.square === sq),
+              ),
+              ...(picks.length > 0 ? { finishable: true } : {}),
+            },
+      (_inst, api, picks) => {
+        const squares = picks
+          .map((k) => k.square)
+          .filter((s): s is Square => s != null);
+        if (squares.length) {
+          addEffect(api, { kind: "shield", owner: api.me, squares, turns: 3 });
+        }
+      },
+    ),
   ),
   card(
     {
@@ -1122,13 +1279,31 @@ export const WILD_WARFARE: Buff[] = [
     {
       id: "ww_pincer_movement",
       name: "Pincer Movement",
-      description: "Freeze two enemy pieces you choose for their next 2 turns each. Kings cannot be targeted.",
+      description: "Close both jaws at once: every enemy piece except a king caught directly between two of your pieces (left and right, above and below, or across a diagonal) is pinned and frozen for 2 of their turns.",
       tier: 5,
       category: "tempo",
       flavor: "Close both jaws at the same time.",
       fx: { motif: "jail" },
     },
-    freezeMany(2, 2, "Choose an enemy piece to trap in the pincer"),
+    instant((_inst, api) => {
+      const axes: [number, number][] = [[1, 0], [0, 1], [1, 1], [1, -1]];
+      for (const sq of mySquares(api.board, api.opp)) {
+        if (api.board.pieces[sq]!.type === "k") continue;
+        let pinched = false;
+        for (const [df, dr] of axes) {
+          const f1 = FILE(sq) + df, r1 = RANK(sq) + dr;
+          const f2 = FILE(sq) - df, r2 = RANK(sq) - dr;
+          if (!inBoard(f1, r1) || !inBoard(f2, r2)) continue;
+          const a = api.board.pieces[SQ(f1, r1)];
+          const b = api.board.pieces[SQ(f2, r2)];
+          if (a && b && a.color === api.me && b.color === api.me) {
+            pinched = true;
+            break;
+          }
+        }
+        if (pinched) addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2 });
+      }
+    }),
   ),
   card(
     {
@@ -1169,8 +1344,10 @@ export const WILD_WARFARE: Buff[] = [
     {
       id: "ww_mass_defection",
       name: "Mass Defection",
+      // Tier 5 (moved up from 4): converting two pawns is a four-point swing,
+      // the doubled sibling of Piece Steal (one pawn, tier 3).
       description: "Turn two enemy pawns to your side for the rest of the game, once.",
-      tier: 4,
+      tier: 5,
       category: "pieces",
       flavor: "Word spreads down the whole trench.",
     },
