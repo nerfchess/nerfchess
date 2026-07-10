@@ -2,11 +2,12 @@
 // from the source barrels the library spreads together (see buffs/library.ts
 // ALL_BUFFS and nerfs/implemented.ts). This is display metadata only, computed
 // once from the static libraries, so the codex can offer a "Collection" filter
-// (Fantasy, Wild, Funny/meta, ...) without tagging every card definition by
-// hand. Membership is resolved by id, so it survives the moderator-override
-// text mapping the codex applies.
+// (Fantasy, Mystic, Wild, Funny/meta, ...) without tagging every card
+// definition by hand. Membership is resolved by id, so it survives the
+// moderator-override text mapping the codex applies.
 
 import { FANTASY_CARDS } from "@/engine/buffs/fantasy";
+import { MYSTIC_CARDS } from "@/engine/buffs/mystic";
 import { WILD_CARDS } from "@/engine/buffs/wild";
 import { FUNNY_CARDS } from "@/engine/buffs/funny";
 import { PT_CARDS } from "@/engine/buffs/pt";
@@ -14,10 +15,11 @@ import { WILD_NERFS } from "@/engine/nerfs/wild";
 import type { Buff } from "@/engine/buff";
 import type { Nerf } from "@/engine/nerf";
 
-export type BuffCollection = "Core" | "Hex" | "Funny" | "Fantasy" | "Wild" | "Item";
+export type BuffCollection = "Core" | "Hex" | "Funny" | "Fantasy" | "Mystic" | "Wild" | "Item";
 export type NerfCollection = "Core" | "Wild";
 
 const FANTASY = new Set(FANTASY_CARDS.map((c) => c.id));
+const MYSTIC = new Set(MYSTIC_CARDS.map((c) => c.id));
 const WILD = new Set(WILD_CARDS.map((c) => c.id));
 const FUNNY = new Set([...FUNNY_CARDS, ...PT_CARDS].map((c) => c.id));
 const WILD_N = new Set(WILD_NERFS.map((c) => c.id));
@@ -27,6 +29,7 @@ const WILD_N = new Set(WILD_NERFS.map((c) => c.id));
  * Core for the original tiered set. */
 export function buffCollection(b: Pick<Buff, "id" | "category">): BuffCollection {
   if (FANTASY.has(b.id)) return "Fantasy";
+  if (MYSTIC.has(b.id)) return "Mystic";
   if (WILD.has(b.id)) return "Wild";
   if (FUNNY.has(b.id)) return "Funny";
   if (b.category === "item") return "Item";
@@ -45,6 +48,7 @@ export const BUFF_COLLECTIONS: { id: BuffCollection; label: string; hint: string
   { id: "Core", label: "Core", hint: "The original tiered set" },
   { id: "Funny", label: "Funny / meta", hint: "Gags and meta plays, like Computer Virus" },
   { id: "Fantasy", label: "Fantasy", hint: "Mystical, fantasy-themed cards" },
+  { id: "Mystic", label: "Mystic", hint: "Prophecy, star signs, tarot, and spirit cards" },
   { id: "Wild", label: "Wild", hint: "Elemental, warfare, arcane, and chaos cards" },
   { id: "Hex", label: "Hexes", hint: "Curses cast on the opponent" },
   { id: "Item", label: "Items", hint: "One-use consumables" },
@@ -55,4 +59,4 @@ export const NERF_COLLECTIONS: { id: NerfCollection; label: string; hint: string
 ];
 
 /** Every collection id that can appear in a URL, for validation on parse. */
-export const COLLECTION_IDS: string[] = ["Core", "Funny", "Fantasy", "Wild", "Hex", "Item"];
+export const COLLECTION_IDS: string[] = ["Core", "Funny", "Fantasy", "Mystic", "Wild", "Hex", "Item"];
