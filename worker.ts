@@ -1644,13 +1644,17 @@ export class GameServer extends DurableObject<Env> {
     category: RatingCategory,
   ): Promise<{ rating: number; rd: number; vol: number; avatar: string | null } | null> {
     try {
-      const ratings = await loadCategoryRatings(db, [userId], category);
+      // The avatar read is independent of the rating read: run them together
+      // so a seat attach costs one D1 round-trip of latency, not two.
+      const [ratings, row] = await Promise.all([
+        loadCategoryRatings(db, [userId], category),
+        db
+          .prepare("SELECT avatar FROM users WHERE id = ?")
+          .bind(userId)
+          .first<{ avatar: string | null }>(),
+      ]);
       const r = ratings.get(userId);
       if (!r) return null;
-      const row = await db
-        .prepare("SELECT avatar FROM users WHERE id = ?")
-        .bind(userId)
-        .first<{ avatar: string | null }>();
       return { rating: r.rating, rd: r.rd, vol: r.vol, avatar: row?.avatar ?? null };
     } catch {
       return null;
@@ -1676,17 +1680,20 @@ export class GameServer extends DurableObject<Env> {
     if (match.result) return;
     const db = await this.db();
     if (!db) return;
-    for (const color of colors) {
-      const seat = match.users?.[color];
-      if (!seat?.id) continue;
-      const row = await this.seatCategoryRating(db, seat.id, this.matchRatingCategory(match));
-      if (row) {
-        seat.rating = row.rating;
-        seat.rd = row.rd;
-        seat.vol = row.vol;
-        seat.avatar = row.avatar;
-      }
-    }
+    // Both seats read independent rows; refresh them concurrently.
+    await Promise.all(
+      colors.map(async (color) => {
+        const seat = match.users?.[color];
+        if (!seat?.id) return;
+        const row = await this.seatCategoryRating(db, seat.id, this.matchRatingCategory(match));
+        if (row) {
+          seat.rating = row.rating;
+          seat.rd = row.rd;
+          seat.vol = row.vol;
+          seat.avatar = row.avatar;
+        }
+      }),
+    );
   }
 
   private playersPayload(match: StoredMatch) {
