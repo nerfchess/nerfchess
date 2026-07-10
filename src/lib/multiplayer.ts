@@ -1,7 +1,12 @@
 import type { ActiveEffect, BuffInstance, BuffOffer, BuffPick, BuffTarget, DraftFlags, DraftMode } from "@/engine/buff";
 import type { Color } from "@/engine/types";
 
-export type MPPlayers = Record<Color, { name: string; rating: number | null; avatar?: string | null }>;
+// `provisional` = the seat's rating deviation is still wide (RD > 110), so the
+// rating renders as "1500?". Optional so frames from older servers still parse.
+export type MPPlayers = Record<
+  Color,
+  { name: string; rating: number | null; avatar?: string | null; provisional?: boolean }
+>;
 
 // ---------------- draft mode (buff drafts) ----------------
 
@@ -231,7 +236,9 @@ export type MPAcceptedMove = {
   f?: string;
 };
 
-export type MPRatingChange = { userId: string; before: number; after: number };
+// `provisional` = the post-game RD is still wide (RD > 110): render the new
+// rating as "1500?". Optional so end frames from older servers still parse.
+export type MPRatingChange = { userId: string; before: number; after: number; provisional?: boolean };
 
 export type MPEnd = {
   result: {

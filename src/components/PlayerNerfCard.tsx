@@ -26,6 +26,8 @@ interface Props {
   myColor: Color;
   name: string;
   elo?: number | null;
+  /** Rating deviation still wide (provisional): the rating renders as "1500?". */
+  provisional?: boolean;
   avatar?: string | null;
   nerf: Nerf;
   revealed?: boolean;
@@ -50,6 +52,7 @@ export function PlayerNerfCard({
   myColor,
   name,
   elo,
+  provisional = false,
   avatar,
   nerf,
   revealed = true,
@@ -113,7 +116,11 @@ export function PlayerNerfCard({
               name
             )}
             {typeof elo === "number" && (
-              <span className="text-parchment-400"> ({Math.round(elo)})</span>
+              <span className="text-parchment-400">
+                {" "}
+                ({Math.round(elo)}
+                {provisional ? "?" : ""})
+              </span>
             )}
           </div>
           <div className="mt-1 flex min-h-[1.4rem] min-w-0 items-center gap-1">

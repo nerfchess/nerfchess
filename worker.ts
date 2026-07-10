@@ -66,7 +66,7 @@ import { ensureSchema } from "./src/lib/server/schema";
 import { loadCategoryRatings, recordFinishedGame, RatingChange, type DraftRecord } from "./src/lib/server/games";
 import { categoryForTimeControl, type RatingCategory } from "./src/lib/speed";
 import { censorText, findProfanity } from "./src/lib/profanity";
-import { glickoUpdatePair } from "./src/lib/glicko";
+import { GLICKO_DEFAULT, glickoUpdatePair, isProvisional } from "./src/lib/glicko";
 
 type Result = NerfGame["result"];
 
@@ -1684,7 +1684,14 @@ export class GameServer extends DurableObject<Env> {
     const seat = (color: Color) => {
       const user = match.users?.[color];
       return user
-        ? { name: user.name, rating: Math.round(user.rating), avatar: user.avatar ?? null }
+        ? {
+            name: user.name,
+            rating: Math.round(user.rating),
+            avatar: user.avatar ?? null,
+            // Provisional (RD still wide) so clients can render "1500?".
+            // Omitted when the seat snapshot predates rd tracking.
+            ...(typeof user.rd === "number" ? { provisional: isProvisional({ rd: user.rd }) } : {}),
+          }
         : { name: "Anonymous", rating: null, avatar: null };
     };
     return { w: seat("w"), b: seat("b") };
@@ -1700,8 +1707,8 @@ export class GameServer extends DurableObject<Env> {
   // players can see what a win/draw/loss is worth ("+8 / +0 / -8").
   private ratingPreview(match: StoredMatch): Record<Color, { win: number; draw: number; loss: number }> | null {
     if (!match.rated || !match.users?.w || !match.users?.b) return null;
-    const w = { rating: match.users.w.rating, rd: match.users.w.rd ?? 350, vol: match.users.w.vol ?? 0.06 };
-    const b = { rating: match.users.b.rating, rd: match.users.b.rd ?? 350, vol: match.users.b.vol ?? 0.06 };
+    const w = { rating: match.users.w.rating, rd: match.users.w.rd ?? GLICKO_DEFAULT.rd, vol: match.users.w.vol ?? GLICKO_DEFAULT.vol };
+    const b = { rating: match.users.b.rating, rd: match.users.b.rd ?? GLICKO_DEFAULT.rd, vol: match.users.b.vol ?? GLICKO_DEFAULT.vol };
     const whiteWins = glickoUpdatePair(w, b, 1);
     const draw = glickoUpdatePair(w, b, 0.5);
     const blackWins = glickoUpdatePair(w, b, 0);
