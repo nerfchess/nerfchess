@@ -452,6 +452,36 @@
 }
 .fx-sig-soot { animation: fx-sig-soot 0.6s ease-out both; }
 
+/* --- Firestorm pieces (DetonationBurst / AtomicBurst) ------------------------
+   A fireball that swells as it climbs off the square, the hot column under a
+   mushroom cap, and flame licks thrown outward. All transform/opacity, all
+   one-shot, all scaled by the card-effect-duration setting. */
+@keyframes fx-fireball {
+  0% { opacity: 0; transform: translateY(16%) scale(0.3); }
+  16% { opacity: 1; }
+  60% { opacity: 0.92; transform: translateY(-10%) scale(1.12); }
+  100% { opacity: 0; transform: translateY(-30%) scale(1.35); }
+}
+.fx-fireball { animation: fx-fireball calc(0.9s * var(--fx-dur, 1)) var(--ease-out, ease-out) both; border-radius: 999px; }
+@keyframes fx-fire-stem {
+  0% { opacity: 0; transform: scaleY(0.1); }
+  25% { opacity: 0.95; transform: scaleY(0.7); }
+  70% { opacity: 0.8; transform: scaleY(1); }
+  100% { opacity: 0; transform: scaleY(1.06); }
+}
+.fx-fire-stem {
+  animation: fx-fire-stem calc(0.85s * var(--fx-dur, 1)) var(--ease-out, ease-out) both;
+  transform-origin: 50% 100%;
+  border-radius: 40% 40% 20% 20%;
+  filter: blur(0.5px);
+}
+@keyframes fx-flame-lick {
+  0% { opacity: 0; transform: translate(0, 0) rotate(0deg) scale(0.4); }
+  18% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--dx, 0), var(--dy, -180%)) rotate(var(--rot, 0deg)) scale(1.2); }
+}
+.fx-flame-lick { animation: fx-flame-lick calc(0.75s * var(--fx-dur, 1)) var(--ease-out, ease-out) both; }
+
 /* Rampage: the struck piece spins off with a burst of stars. */
 @keyframes fx-sig-spin {
   0% { opacity: 0; transform: scale(0.4) rotate(0deg); }
@@ -1188,6 +1218,9 @@
   .fx-sig-reticle,
   .fx-sig-bolt,
   .fx-sig-scorch,
+  .fx-fireball,
+  .fx-fire-stem,
+  .fx-flame-lick,
   .fx-sig-soot,
   .fx-sig-spin,
   .fx-sig-star,

@@ -642,7 +642,14 @@ export function DraftOverlay({
       onBank();
       return;
     }
-    setBankDeltas(offer.cards.map((_, i) => bankDelta(cardRefs.current[i], bankBtnRef.current)));
+    // Land the cards in the vault door that opens just above the button
+    // (see .bank-vault), not on the button label itself.
+    setBankDeltas(
+      offer.cards.map((_, i) => {
+        const d = bankDelta(cardRefs.current[i], bankBtnRef.current);
+        return { dx: d.dx, dy: d.dy - 66 };
+      }),
+    );
     setBanking(true);
     bankTimer.current = window.setTimeout(() => onBank(), 750);
   };
@@ -1092,12 +1099,23 @@ export function DraftOverlay({
                     : banking
                     ? {
                         // Into the bank: face-down again (the inner flip) and
-                        // off toward the Skip button as a stack.
+                        // off toward the vault over the Skip button as a stack.
                         x: bankDeltas?.[i]?.dx ?? 0,
                         y: bankDeltas?.[i]?.dy ?? 240,
                         scale: 0.22,
                         rotate: 4,
                         opacity: [1, 1, 0.9, 0],
+                      }
+                    : rerolling && !reduceMotion
+                    ? {
+                        // Reroll: the rejected cards corkscrew back into the
+                        // deck at the bottom center, spinning as they shrink;
+                        // the fresh offer then deals and flips as normal.
+                        x: `${(mid - i) * 30}%`,
+                        y: "56%",
+                        rotate: 540 + i * 40,
+                        scale: 0.25,
+                        opacity: [1, 1, 0],
                       }
                     : // Once a card is selected the others dim to focus it.
                       {
@@ -1113,6 +1131,8 @@ export function DraftOverlay({
                     ? { duration: 0.55, ease: [0.3, 0.05, 0.2, 1], opacity: { times: [0, 0.6, 0.85, 1] } }
                     : chosen != null
                     ? { duration: 0.3, ease: "easeIn" }
+                    : rerolling && !reduceMotion
+                    ? { delay: i * 0.06, duration: 0.5, ease: [0.45, 0, 0.55, 1], opacity: { times: [0, 0.72, 1] } }
                     : banking
                     ? {
                         delay: 0.14 + i * 0.06,
@@ -1284,10 +1304,20 @@ export function DraftOverlay({
                 >
                   +1 tier
                 </motion.span>
-                {/* The vault takes the deposit: a golden shockwave ring (plus a
-                    fainter echo) blooms off the button, a gleam sweeps across
-                    its face, and a fan of coins and glints bursts upward.
-                    Deterministic, one shot, decorative. */}
+                {/* THE VAULT: a steel door materializes above the button, its
+                    wheel spins shut as the face-down cards fly in, and it
+                    flashes gold as the deposit lands. Decorative, one shot. */}
+                <span aria-hidden className="bank-vault">
+                  <span className="bank-vault__door" />
+                  <span className="bank-vault__wheel">
+                    <span className="bank-vault__spoke" />
+                    <span className="bank-vault__spoke bank-vault__spoke--cross" />
+                  </span>
+                  <span className="bank-vault__flash" />
+                </span>
+                {/* A golden shockwave ring (plus a fainter echo) blooms off the
+                    vault, a gleam sweeps the button, and a fan of coins and
+                    glints bursts upward. Deterministic, one shot, decorative. */}
                 <span aria-hidden className="bank-ring" />
                 <span aria-hidden className="bank-ring--echo" />
                 <span aria-hidden className="bank-gleam" />

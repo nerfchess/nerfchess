@@ -651,9 +651,76 @@ const DET_VECTORS = [
  * and a scorch mark that lingers a beat before fading. Pure one-shot CSS;
  * hidden entirely under reduced motion like the other transient flourishes.
  */
+/** Flame tongues for the firestorm bursts: licks of fire thrown outward and
+ *  up, each with its own vector + delay (mirrors the shard pattern). */
+const FLAME_VECTORS = [
+  { dx: "-135%", dy: "-190%", rot: "-24deg", delay: 30 },
+  { dx: "120%", dy: "-210%", rot: "20deg", delay: 0 },
+  { dx: "-40%", dy: "-260%", rot: "-6deg", delay: 55 },
+  { dx: "195%", dy: "-120%", rot: "38deg", delay: 40 },
+  { dx: "-205%", dy: "-95%", rot: "-40deg", delay: 70 },
+];
+
+function FlameLicks({ delayMs = 0, sizePct = 16 }: { delayMs?: number; sizePct?: number }) {
+  return (
+    <>
+      {FLAME_VECTORS.map((v, i) => (
+        <span
+          key={i}
+          className="fx-flame-lick absolute left-1/2 top-1/2 block"
+          style={
+            {
+              width: `${sizePct}%`,
+              height: `${sizePct * 1.4}%`,
+              marginLeft: `-${sizePct / 2}%`,
+              marginTop: `-${sizePct / 2}%`,
+              "--dx": v.dx,
+              "--dy": v.dy,
+              "--rot": v.rot,
+              animationDelay: `${delayMs + v.delay}ms`,
+            } as React.CSSProperties
+          }
+        >
+          <svg viewBox="0 0 10 14" className="h-full w-full" aria-hidden="true">
+            <path
+              d="M5 0 C7.5 3 9 5.5 9 8.5 C9 11.5 7.2 14 5 14 C2.8 14 1 11.5 1 8.5 C1 6.5 2 4.5 3.2 3 C3.4 5 4 6 5 6.6 C5.6 4.4 5.4 2 5 0 Z"
+              fill="#ff9d3d"
+              stroke="#7a2e0e"
+              strokeWidth="0.5"
+            />
+            <path d="M5 4.5 C6.4 6.4 7 8 7 9.6 C7 11.6 6 13 5 13 C4 13 3 11.6 3 9.6 C3 8 3.6 6.4 5 4.5 Z" fill="#ffd166" />
+          </svg>
+        </span>
+      ))}
+    </>
+  );
+}
+
 export function DetonationBurst() {
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      {/* White-hot core, then the fireball climbs off the square. */}
+      <span
+        className="fx-sig-flash absolute inset-[10%] block rounded-full"
+        style={{ background: "radial-gradient(circle, rgba(255,255,255,0.95), rgba(255,157,61,0.55) 52%, transparent 74%)" }}
+      />
+      <span
+        className="fx-fireball absolute inset-[16%] block rounded-full"
+        style={{
+          background:
+            "radial-gradient(circle at 50% 62%, rgba(255,240,200,0.95), rgba(255,157,61,0.85) 42%, rgba(230,67,44,0.7) 68%, rgba(58,28,18,0.4) 88%, transparent 100%)",
+        }}
+      />
+      {/* Twin fire shockwaves racing past the square's edges. */}
+      <span
+        className="fx-sig-shock absolute inset-[8%] block rounded-full"
+        style={{ border: "2.5px solid rgba(255,157,61,0.95)" }}
+      />
+      <span
+        className="fx-sig-shock absolute inset-[16%] block rounded-full"
+        style={{ border: "1.5px solid rgba(255,209,102,0.9)", animationDelay: "90ms" }}
+      />
+      <FlameLicks />
       <span className="fx-scorch absolute inset-[12%] block">
         <svg viewBox="0 0 40 40" className="h-full w-full">
           <path
@@ -2314,25 +2381,79 @@ function StrikeBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 }
 
 function AtomicBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    // Ground zero: a white-out flash, a climbing mushroom fireball on a hot
+    // stem, twin shockwaves blown past the square, and flame licks thrown
+    // clear — the fiery storm the name promises. Overflows its square on
+    // purpose (pointer-events-none, purely decorative).
+    return (
+      <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+        <span
+          className="fx-sig-flash absolute inset-[-45%] block rounded-full"
+          style={{
+            background: "radial-gradient(circle, rgba(255,255,255,0.98), rgba(255,180,90,0.6) 46%, transparent 72%)",
+            animationDelay: `${delayMs}ms`,
+          }}
+        />
+        {/* The stem: a hot column rising out of the square. */}
+        <span
+          className="fx-fire-stem absolute bottom-[8%] left-[34%] block h-[95%] w-[32%]"
+          style={{
+            background: "linear-gradient(180deg, rgba(255,157,61,0.9), rgba(230,67,44,0.75) 55%, rgba(58,28,18,0.4))",
+            animationDelay: `${delayMs + 60}ms`,
+          }}
+        />
+        {/* The cap: the mushroom fireball swelling as it climbs. */}
+        <span
+          className="fx-fireball absolute inset-[-18%] bottom-auto block h-[85%] rounded-full"
+          style={{
+            background:
+              "radial-gradient(circle at 50% 68%, rgba(255,240,200,0.98), rgba(255,157,61,0.9) 40%, rgba(230,67,44,0.75) 66%, rgba(40,20,14,0.5) 88%, transparent 100%)",
+            animationDelay: `${delayMs + 60}ms`,
+          }}
+        />
+        <span
+          className="fx-sig-shock absolute inset-[-40%] block rounded-full"
+          style={{ border: "3px solid rgba(255,157,61,0.95)", animationDelay: `${delayMs + 40}ms` }}
+        />
+        <span
+          className="fx-sig-shock absolute inset-[-20%] block rounded-full"
+          style={{ border: "2px solid rgba(255,209,102,0.9)", animationDelay: `${delayMs + 150}ms` }}
+        />
+        <span
+          className="fx-sig-soot absolute inset-[2%] block rounded-full"
+          style={{ border: "3px solid rgba(30,24,20,0.7)", animationDelay: `${delayMs + 120}ms` }}
+        />
+        <FlameLicks delayMs={delayMs + 80} sizePct={20} />
+      </span>
+    );
+  }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span
-        className="fx-sig-soot absolute block rounded-full"
+        className="fx-sig-flash absolute inset-[14%] block rounded-full"
         style={{
-          inset: lead ? "6%" : "22%",
-          border: lead ? "3px solid rgba(30,24,20,0.7)" : "2px solid rgba(30,24,20,0.6)",
+          background: "radial-gradient(circle, rgba(255,210,140,0.95), rgba(230,67,44,0.5) 60%, transparent 76%)",
           animationDelay: `${delayMs}ms`,
         }}
       />
       <span
-        className="fx-sig-flash absolute inset-[26%] block rounded-full"
+        className="fx-fireball absolute inset-[20%] block rounded-full"
         style={{
-          background: lead
-            ? "radial-gradient(circle, rgba(255,255,255,0.95), rgba(255,180,90,0.5) 55%, transparent 72%)"
-            : "radial-gradient(circle, rgba(255,210,140,0.9), transparent 70%)",
-          animationDelay: `${delayMs}ms`,
+          background:
+            "radial-gradient(circle at 50% 62%, rgba(255,240,200,0.92), rgba(255,157,61,0.8) 46%, rgba(230,67,44,0.6) 72%, transparent 100%)",
+          animationDelay: `${delayMs + 40}ms`,
         }}
       />
+      <span
+        className="fx-sig-shock absolute inset-[12%] block rounded-full"
+        style={{ border: "2px solid rgba(255,157,61,0.9)", animationDelay: `${delayMs + 60}ms` }}
+      />
+      <span
+        className="fx-sig-soot absolute inset-[22%] block rounded-full"
+        style={{ border: "2px solid rgba(30,24,20,0.6)", animationDelay: `${delayMs + 100}ms` }}
+      />
+      <FlameLicks delayMs={delayMs + 60} sizePct={13} />
     </span>
   );
 }

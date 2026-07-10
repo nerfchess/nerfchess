@@ -326,7 +326,10 @@ export const BRAINROT: Buff[] = [
       name: "Chimpanzini Bananini",
       description:
         "The banana-monkey goes ape: for the game every one of your knights may also slide like a queen, keeping its knight leap on top.",
-      tier: 3,
+      // Every knight an amazon, permanently — that is Amazon Army power
+      // (tier 8, knights AND bishops) minus the bishops. Tier 7, not the
+      // laughable 3 it shipped at.
+      tier: 7,
       category: "movement",
       requires: ["n"],
       flavor: "Peel, then unpeel the whole board.",

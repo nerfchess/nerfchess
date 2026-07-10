@@ -627,6 +627,77 @@
   20% { opacity: 1; }
   100% { opacity: 0; transform: scale(5); }
 }
+/* The vault itself: a steel disc door that materializes above the bank
+   button, wheel spinning shut as the cards arrive, flashing gold on the
+   deposit, then sinking away. */
+.bank-vault {
+  position: absolute;
+  left: 50%;
+  top: -96px;
+  width: 76px;
+  height: 76px;
+  margin-left: -38px;
+  pointer-events: none;
+  z-index: 6;
+  animation: bank-vault-in 1.5s var(--ease-out, ease-out) both;
+}
+@keyframes bank-vault-in {
+  0% { opacity: 0; transform: scale(0.4) translateY(14px); }
+  12% { opacity: 1; transform: scale(1.04) translateY(0); }
+  18% { transform: scale(1); }
+  82% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.85) translateY(10px); }
+}
+.bank-vault__door {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 32% 28%, rgba(255,255,255,0.14), transparent 55%),
+    radial-gradient(circle, #4a4f58 0%, #33363d 62%, #23252a 100%);
+  border: 3px solid #5b616c;
+  box-shadow:
+    inset 0 0 0 5px rgba(20, 22, 26, 0.85),
+    inset 0 0 0 7px rgba(216, 181, 110, 0.35),
+    0 10px 26px -10px rgba(0, 0, 0, 0.8);
+}
+.bank-vault__wheel {
+  position: absolute;
+  inset: 22%;
+  border-radius: 999px;
+  border: 3px solid #8a919e;
+  box-shadow: inset 0 0 0 2px rgba(20, 22, 26, 0.7);
+  animation: bank-vault-spin 0.9s cubic-bezier(0.3, 0.05, 0.2, 1) 0.18s both;
+}
+.bank-vault__spoke {
+  position: absolute;
+  left: 50%;
+  top: 6%;
+  bottom: 6%;
+  width: 3px;
+  margin-left: -1.5px;
+  background: #8a919e;
+  border-radius: 2px;
+}
+.bank-vault__spoke--cross { transform: rotate(90deg); }
+@keyframes bank-vault-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(300deg); }
+}
+.bank-vault__flash {
+  position: absolute;
+  inset: -18%;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(255, 233, 170, 0.9), rgba(255, 217, 126, 0.35) 55%, transparent 75%);
+  opacity: 0;
+  animation: bank-vault-flash 0.5s ease-out 0.62s both;
+}
+@keyframes bank-vault-flash {
+  0% { opacity: 0; transform: scale(0.5); }
+  25% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.25); }
+}
+
 /* A golden gleam sweeps once across the bank button as the vault seals. */
 .bank-gleam {
   position: absolute;
@@ -661,9 +732,15 @@
   .bank-gleam::before {
     animation: none !important;
   }
+  .bank-vault,
+  .bank-vault__wheel,
+  .bank-vault__flash {
+    animation: none !important;
+  }
   .bank-coin,
   .bank-ring,
-  .bank-ring--echo { opacity: 0; }
+  .bank-ring--echo,
+  .bank-vault { opacity: 0; }
 }
 
 /* The floating draft timer: a flat ink chip, hard edges, quiet urgency. */

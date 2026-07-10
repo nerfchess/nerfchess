@@ -693,9 +693,6 @@ export const CARD_VFX: Record<string, CardVfx> = {
   crown_and_castle: { travel: "wave", impact: "debris", aftermath: "smolder", palette: ["#ffd76a", "#8d8d94", "#8a6a4a"], source: "center", shake: true },
   // [ChronoLord] The hourglass sovereign winds five whole moves back.
   full_rewind: { travel: "bolt", impact: "shock", aftermath: "sparkle", palette: ["#6fe3ff", "#ffd76a", "#2a2a38"], source: "sky", shake: true },
-  // [ChronoLord] The perfect rewind: eight half-moves undone in one turning.
-  // (moved to tier 6 by the coordinator's rebalance — shake dropped, board thumps are a tier 7+ privilege)
-  perfect_rewind: { travel: "bolt", impact: "shock", aftermath: "sparkle", palette: ["#8f6bff", "#6fe3ff", "#ffffff"], source: "sky" },
   // [ChronoLord] The infinity clock: your turn does not end until blood is drawn.
   endless_turn: { travel: "bolt", impact: "shock", aftermath: "sparkle", palette: ["#e6432c", "#ffd76a", "#ffffff"], source: "caster", shake: true },
   // [ChronoLord] The torn calendar: turn, draft and clock all struck away.
@@ -1123,6 +1120,14 @@ export const CARD_VFX: Record<string, CardVfx> = {
   // [SatchelDrop] Shieldbearers.
   ww_shieldbearers: { travel: "none", impact: "burst", aftermath: "sparkle", palette: ["#a87a4a","#a8e07f","#3a2c1c"], source: "lead" },
 };
+
+// --- Brainrot apex band --------------------------------------------------------
+// [BananApe] Chimpanzini Bananini: a banana monsoon crashes out of the sky
+// onto every knight and the whole jungle shakes.
+const BRAINROT_APEX_VFX: Record<string, CardVfx> = {
+  chimpanzini_bananini: { travel: "rain", impact: "burst", aftermath: "sparkle", palette: ["#ffd23f", "#a3d160", "#7a5b23"], source: "sky", shake: true },
+};
+Object.assign(CARD_VFX, BRAINROT_APEX_VFX);
 
 // --- Generated-family defaults (covers non-bespoke tier-4+ cards) -------------
 // One fiction-matched default per genSignature family. resolveCardVfx upgrades

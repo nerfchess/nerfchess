@@ -1305,6 +1305,22 @@ html[data-piece-source="lichess"] .piece-asset {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
+/* --- Pieces wearing their effects --------------------------------------------
+   The affected PIECE changes, not just its square: filter-only treatments so
+   every piece set (inline SVG and lichess assets alike) picks them up. Kept
+   readable — tint and glow, never so heavy the piece type gets ambiguous. */
+.piece-frozen {
+  filter: saturate(0.35) brightness(1.15) drop-shadow(0 0 3px rgba(159, 216, 255, 0.9))
+    drop-shadow(0 0 8px rgba(122, 176, 224, 0.5));
+}
+.piece-doomed {
+  filter: saturate(0.6) contrast(1.05) drop-shadow(0 0 3px rgba(224, 82, 82, 0.9))
+    drop-shadow(0 1px 7px rgba(122, 20, 16, 0.7));
+}
+.piece-shielded {
+  filter: drop-shadow(0 0 3px rgba(255, 217, 126, 0.9)) drop-shadow(0 0 9px rgba(216, 181, 110, 0.55));
+}
+
 /* Hostile variant for nerf-affected squares (NerfAura): the same pooled glow
    but slower and heavier — an ember smolder, not a blessing — with the orbit
    running backward and the cheerful shine sweep dropped. */

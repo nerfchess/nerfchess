@@ -2384,6 +2384,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               <div data-board-measure className={`relative mx-auto sm:mx-0 ${boardFitClass}`}>
                 <Board
                   board={boardForDisplay}
+                  // Removal FX diff the committed position, never the premove /
+                  // confirm / review overlays (see Board.fxBoard).
+                  fxBoard={game.board}
                   legalMoves={
                     isReviewingHistory || buffTargeting.targeting
                       ? []

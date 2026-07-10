@@ -288,6 +288,15 @@ function PlayAnnouncement({ name, tier }: { name: string; tier: number }) {
  * timed effect wears its remaining turns). Doom (timed_loss) renders the
  * oxblood variant with a skull tick; everything else a neutral ink chip. */
 function CountdownChip({ n, doom = false }: { n: number; doom?: boolean }) {
+  // Duration ramp: the chip's color IS the urgency read. Plenty of time stays
+  // neutral, two turns warms to amber, the last turn burns red (doom is
+  // always red — it is a death timer).
+  const tone =
+    doom || n <= 1
+      ? "border-oxblood-glow/70 bg-ink-950/90 text-oxblood-glow"
+      : n <= 2
+      ? "border-gold/60 bg-ink-950/90 text-gold-leaf"
+      : "border-white/25 bg-ink-950/90 text-parchment-100";
   return (
     <span
       aria-hidden
@@ -297,9 +306,7 @@ function CountdownChip({ n, doom = false }: { n: number; doom?: boolean }) {
       // effects"). The solid ink backing + shadow keep it legible on any art.
       className={
         "pointer-events-none absolute bottom-0.5 left-0.5 z-30 flex h-[15px] min-w-[15px] items-center justify-center rounded-[1px] border px-0.5 font-mono text-[10px] font-bold leading-none shadow-[0_1px_4px_rgba(0,0,0,0.8)] " +
-        (doom
-          ? "border-oxblood-glow/70 bg-ink-950/90 text-oxblood-glow"
-          : "border-white/25 bg-ink-950/90 text-parchment-100")
+        tone
       }
     >
       {n}
@@ -408,6 +415,12 @@ interface Props {
   // instead of plain detonation bursts. Keyed so re-renders never replay it,
   // and absent on the initial mount / a rejoined game (so nothing fires then).
   signatureCard?: { id: string; key: number } | null;
+  /** The COMMITTED position for the removal-FX diff. When the rendered
+   * `board` is an optimistic overlay (premove preview, move-confirm preview,
+   * history review), pass the real game board here so detonation art, canvas
+   * VFX, and the explosion voice only ever react to real state changes.
+   * Absent = diff the rendered board (the old behavior). */
+  fxBoard?: BoardState;
   // The public buff state both surfaces already hold (game.buffs). Used only
   // to derive Duelist-style piece-bound buff markers: a small corner sigil on
   // any piece carrying an active bound buff that draws no CardFx motif, with
@@ -1030,6 +1043,7 @@ export function Board({
   pickSquares,
   onPickSquare,
   signatureCard,
+  fxBoard,
   buffs,
 }: Props) {
   const pickSquareSet = useMemo(() => new Set(pickSquares ?? []), [pickSquares]);
@@ -1104,6 +1118,9 @@ export function Board({
   // The destination of a just-dropped drag: that piece must not animate.
   const dropSkipRef = useRef<Square | null>(null);
   const prevPiecesRef = useRef<BoardState["pieces"] | null>(null);
+  // Committed-position ref for the removal-FX diff (see the twin diffs below).
+  const prevFxPiecesRef = useRef<BoardState["pieces"] | null>(null);
+  const fxPieces = fxBoard?.pieces ?? board.pieces;
   const animsRef = useRef<Map<Square, PieceAnim>>(new Map());
   // One-shot flourishes (transform / summon) keyed monotonically so React
   // remounts them exactly once per detected change; see computeBoardFx.
@@ -1182,14 +1199,32 @@ export function Board({
 
   // Diff against the previous position during render (reference equality
   // guards against re-runs) so animated squares can be tagged in this pass.
+  // Two diffs on purpose:
+  //  - Piece SLIDES follow the rendered board (premove previews included, so
+  //    a queued premove still glides).
+  //  - Removal FX (detonations, signature choreography, canvas VFX, the
+  //    explosion voice) diff the COMMITTED position only (fxPieces). The
+  //    premove overlay adds/drops a "held" piece as pure UI artifact, and
+  //    diffing it here read as a card removal — the "atomic explosion when
+  //    you premove" bug. History review boards also route through here and
+  //    now stay silent for free.
   if (prevPiecesRef.current && prevPiecesRef.current !== board.pieces) {
-    const { anims, movedFrom } = computeAnims(
+    animsRef.current = computeAnims(
       prevPiecesRef.current,
       board.pieces,
       orientation,
       dropSkipRef.current,
+    ).anims;
+  }
+  prevPiecesRef.current = board.pieces;
+
+  if (prevFxPiecesRef.current && prevFxPiecesRef.current !== fxPieces) {
+    const { anims, movedFrom } = computeAnims(
+      prevFxPiecesRef.current,
+      fxPieces,
+      orientation,
+      dropSkipRef.current,
     );
-    animsRef.current = anims;
     const activeSig =
       signatureCard && signatureCard.key > sigSeenKeyRef.current && resolveSignature(signatureCard.id)
         ? signatureCard.id
@@ -1199,8 +1234,8 @@ export function Board({
     if (activeSig && signatureCard) castLeadSuppressKeyRef.current = signatureCard.key;
     if (signatureCard) sigSeenKeyRef.current = signatureCard.key;
     fxRef.current = computeBoardFx(
-      prevPiecesRef.current,
-      board.pieces,
+      prevFxPiecesRef.current,
+      fxPieces,
       anims,
       movedFrom,
       dropSkipRef.current,
@@ -1239,7 +1274,7 @@ export function Board({
           let wLost = 0;
           let bLost = 0;
           for (const h of hits) {
-            const p = prevPiecesRef.current?.[h.sq];
+            const p = prevFxPiecesRef.current?.[h.sq];
             if (p?.color === "w") wLost++;
             else if (p?.color === "b") bLost++;
           }
@@ -1283,7 +1318,7 @@ export function Board({
     }
     dropSkipRef.current = null;
   }
-  prevPiecesRef.current = board.pieces;
+  prevFxPiecesRef.current = fxPieces;
 
   // Start the animations before paint: place each tagged piece on its origin
   // square via transform, force a reflow, then transition to rest. All
@@ -1358,7 +1393,8 @@ export function Board({
     if (detonate) playExplosion();
     if (morph) playTransform();
     if (summon) playSummon();
-  }, [board.pieces]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fxPieces]);
 
   const movesFrom = useMemo(() => {
     const m = new Map<Square, Move[]>();
@@ -2870,6 +2906,16 @@ export function Board({
                     className={
                       "pointer-events-none " +
                       (isDragging ? "opacity-30 " : "") +
+                      // The piece itself wears its live effect (owner: "a mark
+                      // should actually change the piece"): frostbitten when
+                      // frozen, gilded when shielded, deathly when doomed.
+                      (frozenSquares.has(sq)
+                        ? "piece-frozen "
+                        : doomMarks.has(sq)
+                        ? "piece-doomed "
+                        : shieldedSquares.has(sq)
+                        ? "piece-shielded "
+                        : "") +
                       (boardFx?.kind === "morph"
                         ? "fx-piece-pop"
                         : boardFx?.kind === "summon"

@@ -71,7 +71,7 @@
 //                   statue_garden (statue on plinth), cockatrice_gaze
 //                   (cockerel-serpent), chisel_curse (chisel + mallet),
 //                   crown_and_castle (crown atop turret)
-//   ChronoLord    : full_rewind (ccw arrow), perfect_rewind (double ccw),
+//   ChronoLord    : full_rewind (ccw arrow),
 //                   endless_turn (infinity), lost_fortnight (torn calendar),
 //                   sabbatical (hammock)
 //   SkullStrike   : culling (skull, writ huge and BOWLED)
@@ -1733,16 +1733,6 @@ const GLYPH: Record<string, ReactNode> = {
       <circle cx="5" cy="5" r="0.6" fill="#ffd76a" />
     </Gl>
   ),
-  // double ccw arrows
-  perfect_rewind: (
-    <Gl>
-      <path d="M7.4 2.6 A3.8 3.8 0 1 0 8.8 5.4" fill="none" stroke="#8f6bff" strokeWidth="0.6" strokeLinecap="round" />
-      <path d="M7.7 0.8 L7.2 3 L9.3 2.4 Z" fill="#8f6bff" />
-      <path d="M6.4 3.8 A1.9 1.9 0 1 0 6.9 5.4" fill="none" stroke="#6fe3ff" strokeWidth="0.55" strokeLinecap="round" />
-      <path d="M6.7 2.6 L6.3 4.1 L7.7 3.7 Z" fill="#6fe3ff" />
-      <circle cx="5" cy="5" r="0.45" fill="#ffffff" />
-    </Gl>
-  ),
   // infinity loop
   endless_turn: (
     <Gl>
@@ -2008,9 +1998,6 @@ export const PLAYS: Record<string, SigPlugin> = {
 
   /* --- ChronoLord ------------------------------------------------------------------- */
   full_rewind: G(ChronoLord, ["#6fe3ff", "#ffd76a", "#2a2a38"], GLYPH.full_rewind, {
-    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "clockcage",
-  }),
-  perfect_rewind: G(ChronoLord, ["#8f6bff", "#6fe3ff", "#ffffff"], GLYPH.perfect_rewind, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "clockcage",
   }),
   endless_turn: G(ChronoLord, ["#e6432c", "#ffd76a", "#ffffff"], GLYPH.endless_turn, {

@@ -3375,11 +3375,6 @@ const TIER7: Buff[] = [
   ),
 ];
 
-/** Copy of the board's piece placement (Perfect Rewind snapshots). */
-function snapshotPieces(board: BoardState): BoardState["pieces"] {
-  return board.pieces.map((p) => (p ? { ...p } : null));
-}
-
 // ---------------------------------------------------------------------------
 // TIER 8 — game-warping, rare
 // ---------------------------------------------------------------------------
@@ -3399,35 +3394,6 @@ const TIER8: Buff[] = [
         ]),
       ),
     ),
-  ),
-  def(
-    { id: "perfect_rewind", name: "Perfect Rewind", description: "Rewind all pieces to where they stood eight half-moves ago, once.", tier: 6, category: "tempo" },
-    {
-      kind: "activated",
-      init: (inst, api) => {
-        inst.state.snaps = [snapshotPieces(api.board)];
-      },
-      onMovePlayed: (inst, _move, api) => {
-        const snaps = inst.state.snaps as BoardState["pieces"][];
-        snaps.push(snapshotPieces(api.board));
-        while (snaps.length > 9) snaps.shift();
-      },
-      effect: (inst, api) => {
-        const snap = (inst.state.snaps as BoardState["pieces"][] | undefined)?.[0];
-        if (!snap) return;
-        // Whole-board rewrite: the clears are bookkeeping, not captures, so
-        // they must not feed the revive pools or capture counters.
-        for (let sq = 0; sq < 64; sq++) {
-          api.removePiece(sq, { uncounted: true });
-          const p = snap[sq];
-          if (p) api.place(sq, p.type, p.color);
-        }
-      },
-      status: (inst) => {
-        const back = ((inst.state.snaps as unknown[])?.length ?? 1) - 1;
-        return back >= 8 ? "rewinds eight half-moves" : `rewinds ${back} half-moves so far`;
-      },
-    },
   ),
   def(
     { id: "divine_legion", name: "Divine Legion", description: "Add a queen to your pocket, then spend a later turn to drop it onto any empty square.", tier: 7, category: "pieces" },
