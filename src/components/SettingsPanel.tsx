@@ -125,11 +125,20 @@ export function SettingsPanel({ open, onClose }: Props) {
       case "accentColor":
         return (
           <Swatches
-            colors={(Object.keys(ACCENT_THEMES) as AccentColor[]).map((id) => ({
-              id,
-              color: ACCENT_THEMES[id].accent,
-              label: ACCENT_THEMES[id].label,
-            }))}
+            colors={[
+              {
+                // "Auto" follows whichever theme is active (its swatch shows
+                // the current theme's own accent).
+                id: "auto",
+                color: (SITE_THEMES[settings.siteTheme] ?? SITE_THEMES.dark).accent.accent,
+                label: "Theme",
+              },
+              ...(Object.keys(ACCENT_THEMES) as Exclude<AccentColor, "auto">[]).map((id) => ({
+                id: id as string,
+                color: ACCENT_THEMES[id].accent,
+                label: ACCENT_THEMES[id].label,
+              })),
+            ]}
             selected={settings.accentColor}
             onSelect={(id) => update({ accentColor: id as AccentColor })}
           />

@@ -3476,26 +3476,6 @@ const TIER8: Buff[] = [
     barLine("file", null, 3),
   ),
   def(
-    { id: "queens_apocalypse", requires: ["q"], name: "Queen's Apocalypse", description: "Your queen wipes every enemy piece off the board except their king and queen, once. Requires a queen.", tier: 8, category: "attack" },
-    activated(
-      (_inst, api, picks) =>
-        picks.length > 0
-          ? null
-          : {
-              kind: "square",
-              label: "Choose the queen who brings the apocalypse",
-              squares: mySquares(api.board, api.me, "q"),
-            },
-      (_inst, api, picks) => {
-        if (picks[0]?.square == null) return;
-        for (const sq of mySquares(api.board, api.opp)) {
-          const t = api.board.pieces[sq]!.type;
-          if (t !== "k" && t !== "q") api.removePiece(sq);
-        }
-      },
-    ),
-  ),
-  def(
     { id: "time_prison", name: "Time Prison", description: "Your opponent skips their next three turns, once.", tier: 8, category: "tempo", fx: { motif: "slow", pieces: "all" } },
     skipOpponent(3),
   ),
@@ -3657,57 +3637,6 @@ const TIER8: Buff[] = [
   def(
     { id: "absolute_aegis", name: "Absolute Aegis", description: "Every one of your pieces except your king cannot be captured for 2 full turns.", tier: 8, category: "protection", boon: true },
     shieldArmy(2),
-  ),
-  def(
-    { id: "titan_legion", name: "Titan Legion", description: "Three of your pieces become uncapturable amazons for the game.", tier: 8, category: "movement", fx: { motif: "empower", pieces: ["p", "n", "b", "r", "q"], moveAs: "q", self: true } },
-    {
-      kind: "activated",
-      spendOnUse: false,
-      // One activation only: the titans are chosen once (re-activating would
-      // also stack extra permanent shield effects).
-      targets: (inst, api, picks) =>
-        picks.length >= 3 || inst.state.sqs != null
-          ? null
-          : {
-              kind: "square",
-              label: `Choose a titan (${picks.length + 1}/3)`,
-              squares: bindCandidates()(api).filter((sq) => !picks.some((k) => k.square === sq)),
-            },
-      effect: (inst, api, picks) => {
-        if (inst.state.sqs != null) return;
-        const sqs = picks.map((k) => k.square).filter((s): s is Square => s != null);
-        if (!sqs.length) return;
-        inst.state.sqs = sqs;
-        addEffect(api, { kind: "shield", owner: api.me, squares: [...sqs], turns: null });
-      },
-      augmentMoves: (moves, inst, api) => {
-        const sqs = inst.state.sqs as Square[] | undefined;
-        if (!sqs?.length) return;
-        for (const sq of sqs) {
-          const p = api.board.pieces[sq];
-          if (p && p.color === api.me) addNovel(moves, amazonGen(api.board, sq, inst.id));
-        }
-      },
-      onMovePlayed: (inst, move) => {
-        const sqs = inst.state.sqs as Square[] | undefined;
-        if (!sqs?.length) return;
-        const next = sqs
-          .map((sq) => {
-            if (move.capturedSquare === sq && move.from !== sq) return null;
-            if (move.from === sq) return move.to;
-            if (move.to === sq && move.from !== sq) return null;
-            return sq;
-          })
-          .filter((s): s is Square => s != null);
-        inst.state.sqs = next;
-        if (!next.length) inst.spent = true;
-      },
-      status: (inst) => {
-        const sqs = inst.state.sqs as Square[] | undefined;
-        if (!sqs?.length) return "activate to choose three pieces";
-        return `titans at ${sqs.map((sq) => `${"abcdefgh"[FILE(sq)]}${RANK(sq) + 1}`).join(", ")}`;
-      },
-    },
   ),
   def(
     { id: "endless_turn", name: "Endless Turn", description: "Take moves until you make a capture, once (minimum one move).", tier: 8, category: "tempo", fx: { motif: "rally", pieces: "all", self: true } },

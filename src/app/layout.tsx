@@ -155,7 +155,10 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    // data-theme matches DEFAULT_SETTINGS.siteTheme so first paint is already
+    // the default (Nebula) instead of flashing classic; SettingsBootstrap then
+    // applies whatever the user actually chose.
+    <html lang="en" data-theme="nebula">
       <head>
         <script
           type="application/ld+json"
