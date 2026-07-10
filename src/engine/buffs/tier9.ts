@@ -400,6 +400,104 @@ export const TIER9: Buff[] = [
       },
     },
   ),
+
+  // Promoted from tier 8 (owner call): one queen deleting the entire enemy
+  // army is apex-grade, not a normal draft pull.
+  apex(
+    {
+      id: "queens_apocalypse",
+      icon: "Siren",
+      name: "Queen's Apocalypse",
+      description:
+        "Your queen wipes every enemy piece off the board except their king and queen, once. Requires a queen.",
+      category: "attack",
+      requires: ["q"],
+      flavor: "She knocks once.",
+    },
+    activated(
+      (_inst, api, picks) =>
+        picks.length > 0
+          ? null
+          : {
+              kind: "square",
+              label: "Choose the queen who brings the apocalypse",
+              squares: mySquares(api.board, api.me, "q"),
+            },
+      (_inst, api, picks) => {
+        if (picks[0]?.square == null) return;
+        for (const sq of mySquares(api.board, api.opp)) {
+          const t = api.board.pieces[sq]!.type;
+          if (t !== "k" && t !== "q") api.removePiece(sq);
+        }
+      },
+    ),
+  ),
+
+  // Promoted from tier 8 (owner call): three permanent uncapturable amazons
+  // belong in the apex band.
+  apex(
+    {
+      id: "titan_legion",
+      icon: "Pyramid",
+      name: "Titan Legion",
+      description: "Three of your pieces become uncapturable amazons for the game.",
+      category: "movement",
+      flavor: "Monuments that march.",
+      fx: { motif: "empower", pieces: ["p", "n", "b", "r", "q"], moveAs: "q", self: true },
+    },
+    {
+      kind: "activated",
+      spendOnUse: false,
+      // One activation only: the titans are chosen once (re-activating would
+      // also stack extra permanent shield effects).
+      targets: (inst, api, picks) =>
+        picks.length >= 3 || inst.state.sqs != null
+          ? null
+          : {
+              kind: "square",
+              label: `Choose a titan (${picks.length + 1}/3)`,
+              squares: bindCandidates()(api).filter((sq) => !picks.some((k) => k.square === sq)),
+            },
+      effect: (inst, api, picks) => {
+        if (inst.state.sqs != null) return;
+        const sqs = picks.map((k) => k.square).filter((s): s is Square => s != null);
+        if (!sqs.length) return;
+        inst.state.sqs = sqs;
+        addEffect(api, { kind: "shield", owner: api.me, squares: [...sqs], turns: null });
+      },
+      augmentMoves: (moves, inst, api) => {
+        const sqs = inst.state.sqs as Square[] | undefined;
+        if (!sqs?.length) return;
+        for (const sq of sqs) {
+          const p = api.board.pieces[sq];
+          if (p && p.color === api.me)
+            addNovel(moves, [
+              ...slideMoves(api.board, sq, ALL_DIRS, inst.id),
+              ...leapMoves(api.board, sq, KNIGHT_LEAPS, inst.id),
+            ]);
+        }
+      },
+      onMovePlayed: (inst, move) => {
+        const sqs = inst.state.sqs as Square[] | undefined;
+        if (!sqs?.length) return;
+        const next = sqs
+          .map((sq) => {
+            if (move.capturedSquare === sq && move.from !== sq) return null;
+            if (move.from === sq) return move.to;
+            if (move.to === sq && move.from !== sq) return null;
+            return sq;
+          })
+          .filter((s): s is Square => s != null);
+        inst.state.sqs = next;
+        if (!next.length) inst.spent = true;
+      },
+      status: (inst) => {
+        const sqs = inst.state.sqs as Square[] | undefined;
+        if (!sqs?.length) return "activate to choose three pieces";
+        return `titans at ${sqs.map((sq) => `${"abcdefgh"[FILE(sq)]}${RANK(sq) + 1}`).join(", ")}`;
+      },
+    },
+  ),
 ];
 
 // ---------------------------------------------------------------------------
@@ -427,7 +525,8 @@ function amazonMoves(api: BuffApi, sq: Square, via: string): Move[] {
     ...leapMoves(api.board, sq, KNIGHT_LEAPS, via),
   ];
   if (p.type !== "p") return raw;
-  const out: Move[] = [];
+  const out: Move[] = [
+];
   for (const m of raw) {
     if (relRank(api.me, m.to) === 8) {
       for (const promo of ["q", "r", "b", "n"] as PieceType[]) out.push({ ...m, promotion: promo });

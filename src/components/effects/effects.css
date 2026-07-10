@@ -1036,6 +1036,12 @@
   transform-box: fill-box;
   transform-origin: center;
 }
+/* Holds through the spin + landing flash, then takes the whole wheel away. */
+@keyframes fx-sig-wheelfade {
+  0%, 74% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.fx-sig-wheelfade { animation: fx-sig-wheelfade calc(2.1s * var(--fx-dur, 1)) ease-out both; }
 /* The pointer flicks off the pegs, the kicks shrinking as the wheel slows. */
 @keyframes fx-sig-tick {
   0% { transform: rotate(0deg); }
@@ -1385,6 +1391,28 @@
   100% { opacity: 0; transform: rotate(var(--tilt, 0deg)) scale(1.02); }
 }
 .fx-cast-stamp { animation: fx-cast-stamp 0.9s var(--ease-out, cubic-bezier(0.2, 0.8, 0.3, 1.1)) both; }
+
+/* --- One-shot guard rail ------------------------------------------------------
+   Card art is one-shot by convention: every signature/burst is supposed to end
+   its own animation at opacity 0 and wait to be replaced. When a piece of art
+   breaks the convention (animates only transform, or an animation never runs
+   because the element mounted mid-frame), it used to sit on the board until
+   the NEXT card played. This wrapper class is applied to every mounted
+   one-shot art slot (the diff-less lead, the per-square detonation art) as a
+   hard ceiling: hold through any legitimate sequence, then fade the whole
+   slot out and keep it hidden. Scales with the card-effect-duration setting
+   like the art it guards. */
+@keyframes fx-one-shot {
+  0%, 82% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.fx-one-shot { animation: fx-one-shot calc(3.4s * var(--fx-dur, 1)) linear both; }
+@media (prefers-reduced-motion: reduce) {
+  .fx-one-shot {
+    animation: none !important;
+    opacity: 0 !important;
+  }
+}
 
 /* --- Cast spectacles: the every-card category layer -------------------------
    One overlay per card play, themed by category and scaled by tier (see

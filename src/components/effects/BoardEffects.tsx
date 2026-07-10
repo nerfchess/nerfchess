@@ -2389,7 +2389,7 @@ function AtomicBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
     return (
       <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
         <span
-          className="fx-sig-flash absolute inset-[-45%] block rounded-full"
+          className="fx-sig-flash absolute inset-[-32%] block rounded-full"
           style={{
             background: "radial-gradient(circle, rgba(255,255,255,0.98), rgba(255,180,90,0.6) 46%, transparent 72%)",
             animationDelay: `${delayMs}ms`,
@@ -2405,7 +2405,7 @@ function AtomicBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
         />
         {/* The cap: the mushroom fireball swelling as it climbs. */}
         <span
-          className="fx-fireball absolute inset-[-18%] bottom-auto block h-[85%] rounded-full"
+          className="fx-fireball absolute inset-[-10%] bottom-auto block h-[80%] rounded-full"
           style={{
             background:
               "radial-gradient(circle at 50% 68%, rgba(255,240,200,0.98), rgba(255,157,61,0.9) 40%, rgba(230,67,44,0.75) 66%, rgba(40,20,14,0.5) 88%, transparent 100%)",
@@ -2413,7 +2413,7 @@ function AtomicBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           }}
         />
         <span
-          className="fx-sig-shock absolute inset-[-40%] block rounded-full"
+          className="fx-sig-shock absolute inset-[-30%] block rounded-full"
           style={{ border: "3px solid rgba(255,157,61,0.95)", animationDelay: `${delayMs + 40}ms` }}
         />
         <span
@@ -9638,8 +9638,14 @@ function WheelSpinPlay({
       </svg>
     </span>
   );
+  // The whole wheel fades away after it lands: the spin keyframes only
+  // rotate, so without this wrapper the disc sat on the board at full
+  // opacity until the next card played ("the reroll wheel gets stuck").
   const wheel = (extraClass: string) => (
-    <span className={"absolute block " + extraClass}>
+    <span
+      className={"fx-sig-wheelfade absolute block " + extraClass}
+      style={{ animationDelay: `${delayMs}ms` }}
+    >
       <span className="fx-sig-wheelspin absolute inset-0 block" style={{ animationDelay: `${delayMs}ms` }}>{disc}</span>
       {pointer}
       <span

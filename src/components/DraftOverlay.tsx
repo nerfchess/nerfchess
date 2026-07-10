@@ -658,11 +658,31 @@ export function DraftOverlay({
   // offer stays open (no commit), so this never touches committedRef. The
   // `rerolling` guard blocks a double-fire until the new cards deal in.
   const canReroll = rerollsLeft > 0 && !!onReroll && chosen == null && !banking && !committedRef.current;
+  const rerollTimer = useRef<number | null>(null);
   const handleReroll = () => {
     if (!canReroll || rerolling) return;
     setRerolling(true);
-    onReroll?.();
+    if (reduceMotion) {
+      onReroll?.();
+      return;
+    }
+    // Give the shuffle a beat to read (cards flip face-down and converge into
+    // a spinning stack) before the fresh roll swaps them out.
+    rerollTimer.current = window.setTimeout(() => onReroll?.(), 480);
   };
+  // Fail-safe: if the fresh offer never arrives (disconnect, dropped frame),
+  // un-shuffle so the current cards come back instead of sitting invisible.
+  useEffect(() => {
+    if (!rerolling) return;
+    const id = window.setTimeout(() => setRerolling(false), 4000);
+    return () => window.clearTimeout(id);
+  }, [rerolling]);
+  useEffect(
+    () => () => {
+      if (rerollTimer.current != null) window.clearTimeout(rerollTimer.current);
+    },
+    [],
+  );
 
   // Free window over: the pick stays open, but from here on it runs on the
   // player's own clock. The parent minimizes the overlay to the side.
@@ -1108,14 +1128,15 @@ export function DraftOverlay({
                       }
                     : rerolling && !reduceMotion
                     ? {
-                        // Reroll: the rejected cards corkscrew back into the
-                        // deck at the bottom center, spinning as they shrink;
-                        // the fresh offer then deals and flips as normal.
-                        x: `${(mid - i) * 30}%`,
-                        y: "56%",
-                        rotate: 540 + i * 40,
-                        scale: 0.25,
-                        opacity: [1, 1, 0],
+                        // Reroll: the rejected cards flip face-down (inner
+                        // wrapper below) and converge into ONE spinning stack
+                        // at the deck spot, each a beat apart with a slight
+                        // fan, then the fresh offer deals back out of it.
+                        x: `${(mid - i) * 104 * 0.06}%`,
+                        y: "54%",
+                        rotate: 360 + (i - mid) * 14,
+                        scale: 0.5,
+                        opacity: [1, 1, 1, 0],
                       }
                     : // Once a card is selected the others dim to focus it.
                       {
@@ -1132,7 +1153,7 @@ export function DraftOverlay({
                     : chosen != null
                     ? { duration: 0.3, ease: "easeIn" }
                     : rerolling && !reduceMotion
-                    ? { delay: i * 0.06, duration: 0.5, ease: [0.45, 0, 0.55, 1], opacity: { times: [0, 0.72, 1] } }
+                    ? { delay: i * 0.05, duration: 0.52, ease: [0.4, 0, 0.3, 1], opacity: { times: [0, 0.6, 0.85, 1] } }
                     : banking
                     ? {
                         delay: 0.14 + i * 0.06,
@@ -1194,9 +1215,9 @@ export function DraftOverlay({
                 <motion.div
                   className="draft-flip"
                   initial={reduceMotion ? false : { rotateY: 180 }}
-                  animate={{ rotateY: banking && !reduceMotion ? 180 : 0 }}
+                  animate={{ rotateY: (banking || rerolling) && !reduceMotion ? 180 : 0 }}
                   transition={
-                    banking
+                    banking || rerolling
                       ? { duration: 0.22, ease: "easeIn" }
                       : {
                           delay: reduceMotion || dealt ? 0 : flipDelay / 1000,
