@@ -170,6 +170,19 @@ export const SCHEMA_STATEMENTS: string[] = [
     created_at INTEGER NOT NULL
   )`,
   `CREATE INDEX IF NOT EXISTS idx_challenges_to ON challenges(to_user_id, status, created_at DESC)`,
+  // Friendships: ONE row per pair, stored canonically (user_lo < user_hi by id)
+  // so direction never duplicates it. requested_by records who sent the request
+  // (the OTHER user accepts); status is 'pending' until then, 'accepted' after.
+  // Mirrors migrations/0024_friendships.sql.
+  `CREATE TABLE IF NOT EXISTS friendships (
+    user_lo TEXT NOT NULL,
+    user_hi TEXT NOT NULL,
+    requested_by TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending',
+    created_at INTEGER NOT NULL,
+    PRIMARY KEY (user_lo, user_hi)
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_friendships_hi ON friendships(user_hi)`,
   // Small site-wide counters (e.g. bot games played, which have no game row).
   `CREATE TABLE IF NOT EXISTS site_counters (
     key TEXT PRIMARY KEY,

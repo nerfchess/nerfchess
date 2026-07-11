@@ -1,6 +1,7 @@
 "use client";
 
 import { MobileNavMenu } from "@/components/MobileNavMenu";
+import { FriendsPanel } from "@/components/FriendsPanel";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { OnlineMatch } from "@/components/OnlineMatch";
@@ -521,6 +522,15 @@ export default function FriendPage() {
           </>
           )}
         </div>
+
+        {/* Your friends: add by username and challenge in one tap. Hidden on
+            the challenge-specific flow (arriving via ?challenge=name), where
+            the page is already about one opponent. */}
+        {!challenging && (
+          <div className="mt-6">
+            <FriendsPanel />
+          </div>
+        )}
       </section>
     </main>
   );
