@@ -413,11 +413,21 @@ export function rollOffer(
   // A prepThree offer (All In) is never collapsed into an apex offer: it owes
   // the player THREE cards one tier higher, so it must keep going down the
   // normal multi-card path even when its banked tier would otherwise hit 8.
+  //
+  // GATED behind tier-8 presence (owner rule): apex (tier 9/10) cards only
+  // surface once the game has actually escalated to tier 8 — either player must
+  // already hold a tier-8 card in their draft. Until then a banked top roll
+  // deals a normal tier-8 offer instead of an apex one. Spent cards still count
+  // (they were drafted), and both sides count so a strong opponent also opens
+  // the apex gate.
+  const anyTier8 =
+    bs.players.w.buffs.some((b) => b.tier === 8) || bs.players.b.buffs.some((b) => b.tier === 8);
   const bankedToTop =
     !prepping &&
     bonus > 0 &&
     forced == null &&
     tiers[0] + bonus + boost >= 8 &&
+    anyTier8 &&
     TIER9.length > 0;
   if (bankedToTop) {
     const rng = drawRng(bs);
