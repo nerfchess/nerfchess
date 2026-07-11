@@ -1344,13 +1344,13 @@ export const WILD_ARCANE: Buff[] = [
       id: "wa_high_roll",
       icon: "Dice6",
       name: "High Roll",
-      description: "Force your next draft offer to roll at tier 5.",
+      description: "Force your next draft offer to roll at tier 6.",
       tier: 4,
       category: "draft",
       flavor: "Load the dice, then roll them.",
     },
     instant((_inst, api) => {
-      api.mine.flags.forceTier = 5;
+      api.mine.flags.forceTier = 6;
     }),
   ),
   card(

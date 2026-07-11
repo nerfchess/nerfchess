@@ -1254,7 +1254,7 @@ const TIER2: Buff[] = [
   def(
     // Reworked for the full-transparency era (opponent offers are public):
     // insight now bends your own draft instead. forceTier=3 is unique to this
-    // card, priced on the forceTier ladder (North Star 4@t3, High Roll 5@t4,
+    // card, priced on the forceTier ladder (North Star 4@t3, High Roll 6@t4,
     // Favorable Stars 6@t5).
     { id: "draft_insight", name: "Draft Insight", description: "Your next draft is fated to offer tier 3 cards.", tier: 2, category: "draft", boon: true, flavor: "You cannot change the cards. You can change where they are dealt from." },
     instant((_inst, api) => {
@@ -1550,7 +1550,7 @@ const TIER3: Buff[] = [
     ),
   ),
   def(
-    { id: "hunter_knight", requires: ["n"], name: "Hunter Knight", description: "One knight captures a piece one leap away and lands a second leap beyond, once.", tier: 3, category: "attack" },
+    { id: "hunter_knight", requires: ["n"], name: "Hunter Knight", description: "One knight captures a piece one leap away and lands a second leap beyond, once.", tier: 5, category: "attack" },
     augment((_m, inst, api) => {
       const out: Move[] = [];
       for (const sq of mySquares(api.board, api.me, "n")) {
@@ -2701,7 +2701,7 @@ const TIER6: Buff[] = [
     captureExplosion({ chain: true }),
   ),
   def(
-    { id: "double_amazon", requires: ["n"], name: "Double Amazon", description: "All your knights become amazons for the game.", tier: 6, category: "movement", fx: { motif: "empower", pieces: ["n"], moveAs: "q", self: true } },
+    { id: "double_amazon", requires: ["n"], name: "Double Amazon", description: "All your knights become amazons for the game.", tier: 8, category: "movement", fx: { motif: "empower", pieces: ["n"], moveAs: "q", self: true } },
     permanentAugment((_m, inst, api) =>
       mySquares(api.board, api.me, "n").flatMap((sq) => slideMoves(api.board, sq, ALL_DIRS, inst.id)),
     ),

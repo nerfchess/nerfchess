@@ -32,7 +32,7 @@ const {
   playMove,
 } = load("game.js");
 const { moveToUCI } = load("board.js");
-const { rollOffer } = load("draft.js");
+const { rollOffer, bankOffer } = load("draft.js");
 const { TIER9, TIER10, APEX_MYTHIC_CHANCE } = load(path.join("buffs", "tier9.js"));
 const { BUFF_BY_ID } = load(path.join("buffs", "library.js"));
 
@@ -144,7 +144,12 @@ for (let seed = 1; seed <= 1500; seed++) {
   const game = newGame(UNRESTRICTED_NERF, UNRESTRICTED_NERF, seed);
   enableDraftMode(game, seed, { mode: "buff" });
   const bs = game.buffs;
+  // The apex offer is GATED (owner rule): it is the reward for BANKING an
+  // offer that contained a tier-8 card. bankOffer sets bankedTier8 from the
+  // skipped offer's cards; the harness sets it directly alongside bankBonus so
+  // the top-tier bank promotes into an apex pull.
   bs.players.w.flags.bankBonus = 1;
+  bs.players.w.flags.bankedTier8 = true;
   const offer = rollOffer(bs, "w", [8, 8], game.board);
   if (!offer) {
     fail(`seed ${seed}: bank-at-top rolled no offer`);
@@ -168,6 +173,38 @@ for (let seed = 1; seed <= 1500; seed++) {
 const rate = mythicSlots / Math.max(1, slots);
 if (Math.abs(rate - APEX_MYTHIC_CHANCE) > 0.03) {
   fail(`mythic rate ${(rate * 100).toFixed(1)}% strays from ${APEX_MYTHIC_CHANCE * 100}%`);
+}
+
+// --- Part 3: the apex gate actually gates -----------------------------------
+// Banking a top-tier roll WITHOUT having skipped a tier-8 must NOT promote to
+// an apex offer: it deals a normal tier-8 offer instead (bankBonus set,
+// bankedTier8 unset). Conversely, bankOffer must arm the gate only when the
+// skipped offer contained a tier-8. Both checked across several seeds.
+let ungatedApex = 0;
+let gateArmedWrong = 0;
+for (let seed = 1; seed <= 200; seed++) {
+  // Ungated bank at the top: no bankedTier8 -> a normal, non-apex offer.
+  const g1 = newGame(UNRESTRICTED_NERF, UNRESTRICTED_NERF, seed);
+  enableDraftMode(g1, seed, { mode: "buff" });
+  g1.buffs.players.w.flags.bankBonus = 1;
+  const plain = rollOffer(g1.buffs, "w", [8, 8], g1.board);
+  if (plain && plain.cards.some((c) => c.tier === 9 || c.tier === 10)) ungatedApex += 1;
+
+  // bankOffer arms the gate iff the skipped offer held a tier-8.
+  const withT8 = { cards: [{ id: "x", tier: 8 }], index: 1 };
+  const noT8 = { cards: [{ id: "x", tier: 5 }, { id: "y", tier: 7 }], index: 1 };
+  const p1 = { offer: withT8, flags: {} };
+  const p2 = { offer: noT8, flags: {} };
+  bankOffer(p1);
+  bankOffer(p2);
+  if (p1.flags.bankedTier8 !== true) gateArmedWrong += 1;
+  if (p2.flags.bankedTier8 === true) gateArmedWrong += 1;
+}
+if (ungatedApex > 0) {
+  fail(`apex gate leaked: ${ungatedApex} ungated top-tier banks still rolled apex`);
+}
+if (gateArmedWrong > 0) {
+  fail(`bankOffer armed the apex gate incorrectly ${gateArmedWrong} time(s)`);
 }
 
 if (failures > 0) {
