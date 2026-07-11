@@ -810,7 +810,7 @@ function ReportsTab() {
       {!reports ? (
         <p className="mt-4 text-parchment-300">Loading…</p>
       ) : reports.length === 0 ? (
-        <p className="mt-4 text-parchment-300">No reports. Quiet day.</p>
+        <p className="mt-4 text-parchment-300">No reports.</p>
       ) : (
         <div className="mt-4 space-y-2">
           {reports.map((r) => (
