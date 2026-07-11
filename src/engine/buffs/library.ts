@@ -3184,7 +3184,7 @@ const TIER7: Buff[] = [
     }),
   ),
   def(
-    { id: "titan", name: "Titan", description: "One piece becomes uncapturable with amazon movement for the rest of the game.", tier: 7, category: "movement", fx: { motif: "empower", pieces: ["p", "n", "b", "r", "q"], moveAs: "q", self: true } },
+    { id: "titan", name: "Titan", description: "One piece becomes uncapturable with amazon movement for the rest of the game.", tier: 8, category: "movement", fx: { motif: "empower", pieces: ["p", "n", "b", "r", "q"], moveAs: "q", self: true } },
     bindPiece("Choose the titan", bindCandidates(), { shieldTurns: null, gen: amazonGen }),
   ),
   def(
