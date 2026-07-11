@@ -230,68 +230,30 @@ function RuleFeedbackTab() {
     };
   }, []);
 
-  const nerfName = (id: string) => ALL_NERFS.find((n) => n.id === id)?.name ?? id;
+  const nerf = (id: string) => ALL_NERFS.find((n) => n.id === id);
 
   if (!totals) return <p className="text-sm text-parchment-400">Loading rule feedback…</p>;
   if (totals.length === 0) {
     return <p className="text-sm text-parchment-400">No feedback yet. Votes appear after players rate their rule post-game.</p>;
   }
 
-  return (
-    <div className="space-y-6">
-      <div className="plate overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="smallcaps text-[9px] text-parchment-400">
-              <th className="px-4 py-2 text-left font-normal">Rule</th>
-              <th className="px-4 py-2 text-right font-normal">Liked</th>
-              <th className="px-4 py-2 text-right font-normal">Disliked</th>
-              <th className="px-4 py-2 text-right font-normal">Score</th>
-              <th className="px-4 py-2 text-right font-normal">Last vote</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-white/5">
-            {totals.map((row) => (
-              <tr key={row.nerf_id}>
-                <td className="px-4 py-2 text-parchment-100">{nerfName(row.nerf_id)}</td>
-                <td className="px-4 py-2 text-right font-mono tabular-nums text-verdigris-glow">{row.up}</td>
-                <td className="px-4 py-2 text-right font-mono tabular-nums text-oxblood-glow">{row.down}</td>
-                <td className="px-4 py-2 text-right font-mono tabular-nums text-parchment-100">
-                  {row.up - row.down > 0 ? "+" : ""}
-                  {row.up - row.down}
-                </td>
-                <td className="px-4 py-2 text-right text-xs text-parchment-400">
-                  {new Date(row.last_at).toLocaleDateString()}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+  const rows: FeedbackRow[] = totals.map((t) => ({
+    id: t.nerf_id,
+    name: nerf(t.nerf_id)?.name ?? t.nerf_id,
+    tier: nerf(t.nerf_id)?.tier ?? null,
+    up: t.up,
+    down: t.down,
+    last_at: t.last_at,
+  }));
+  const recentRows: FeedbackRecentRow[] = recent.map((v) => ({
+    id: v.nerf_id,
+    name: nerf(v.nerf_id)?.name ?? v.nerf_id,
+    vote: v.vote,
+    username: v.username,
+    created_at: v.created_at,
+  }));
 
-      {recent.length > 0 && (
-        <div>
-          <h3 className="smallcaps text-xs text-parchment-400">Recent votes</h3>
-          <ul className="mt-2 plate divide-y divide-white/5 text-sm">
-            {recent.map((v, i) => (
-              <li key={i} className="flex items-center justify-between gap-3 px-4 py-2">
-                <span className="min-w-0 truncate text-parchment-100">
-                  <span className={v.vote > 0 ? "text-verdigris-glow" : "text-oxblood-glow"}>
-                    {v.vote > 0 ? "+1" : "-1"}
-                  </span>{" "}
-                  {nerfName(v.nerf_id)}
-                  <span className="text-parchment-400"> by {v.username ?? "unknown"}</span>
-                </span>
-                <span className="shrink-0 text-xs text-parchment-400">
-                  {new Date(v.created_at).toLocaleString()}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </div>
-  );
+  return <FeedbackTable label="Rule" rows={rows} recent={recentRows} />;
 }
 
 // ---------------- buff feedback ----------------
@@ -326,41 +288,181 @@ function BuffFeedbackTab() {
     };
   }, []);
 
-  const buffName = (id: string) => BUFF_BY_ID[id]?.name ?? id;
+  const buff = (id: string) => BUFF_BY_ID[id];
 
   if (!totals) return <p className="text-sm text-parchment-400">Loading buff feedback…</p>;
   if (totals.length === 0) {
     return <p className="text-sm text-parchment-400">No feedback yet. Votes appear after players rate their buffs post-game.</p>;
   }
 
+  const rows: FeedbackRow[] = totals.map((t) => ({
+    id: t.buff_id,
+    name: buff(t.buff_id)?.name ?? t.buff_id,
+    tier: buff(t.buff_id)?.tier ?? null,
+    up: t.up,
+    down: t.down,
+    last_at: t.last_at,
+  }));
+  const recentRows: FeedbackRecentRow[] = recent.map((v) => ({
+    id: v.buff_id,
+    name: buff(v.buff_id)?.name ?? v.buff_id,
+    vote: v.vote,
+    username: v.username,
+    created_at: v.created_at,
+  }));
+
+  return <FeedbackTable label="Buff" rows={rows} recent={recentRows} />;
+}
+
+// ---------------- shared feedback table ----------------
+
+// One aggregated card row with its library tier resolved. The nerf and buff
+// tabs differ only in labels and where each row's name/tier comes from, so
+// both feed their rows through FeedbackTable.
+type FeedbackRow = {
+  id: string;
+  name: string;
+  tier: number | null;
+  up: number;
+  down: number;
+  last_at: number;
+};
+
+type FeedbackRecentRow = {
+  id: string;
+  name: string;
+  vote: number;
+  username: string | null;
+  created_at: number;
+};
+
+type FeedbackSortKey = "name" | "tier" | "up" | "down" | "score" | "last";
+
+// Sortable, tier-filterable table of post-game thumbs. Click a column header to
+// sort by it (toggling ascending/descending); the tier chips above filter the
+// rows to a single library tier.
+function FeedbackTable({
+  label,
+  rows,
+  recent,
+}: {
+  label: string;
+  rows: FeedbackRow[];
+  recent: FeedbackRecentRow[];
+}) {
+  const [sort, setSort] = useState<FeedbackSortKey>("score");
+  const [dir, setDir] = useState<"asc" | "desc">("desc");
+  const [tier, setTier] = useState<number | "all">("all");
+
+  const score = (r: FeedbackRow) => r.up - r.down;
+
+  const tiers = Array.from(
+    new Set(rows.map((r) => r.tier).filter((t): t is number => t !== null)),
+  ).sort((a, b) => a - b);
+
+  const filtered = tier === "all" ? rows : rows.filter((r) => r.tier === tier);
+  const sorted = [...filtered].sort((a, b) => {
+    let cmp: number;
+    switch (sort) {
+      case "name":
+        cmp = a.name.localeCompare(b.name);
+        break;
+      case "tier":
+        cmp = (a.tier ?? 0) - (b.tier ?? 0);
+        break;
+      case "up":
+        cmp = a.up - b.up;
+        break;
+      case "down":
+        cmp = a.down - b.down;
+        break;
+      case "last":
+        cmp = a.last_at - b.last_at;
+        break;
+      default:
+        cmp = score(a) - score(b);
+    }
+    // Break ties on score so equal columns still land in a stable, useful order.
+    if (cmp === 0) cmp = score(a) - score(b);
+    return dir === "asc" ? cmp : -cmp;
+  });
+
+  const toggle = (key: FeedbackSortKey) => {
+    if (sort === key) {
+      setDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSort(key);
+      // Names read best A–Z; numeric columns default to biggest-first.
+      setDir(key === "name" ? "asc" : "desc");
+    }
+  };
+
+  const arrow = (key: FeedbackSortKey) => (sort === key ? (dir === "asc" ? " ↑" : " ↓") : "");
+
   return (
     <div className="space-y-6">
+      <div className="flex flex-wrap items-center gap-2 text-sm">
+        <span className="smallcaps text-[10px] text-parchment-400">Tier</span>
+        <FilterButton active={tier === "all"} onClick={() => setTier("all")}>
+          All
+        </FilterButton>
+        {tiers.map((t) => (
+          <FilterButton key={t} active={tier === t} onClick={() => setTier(t)}>
+            {t}
+          </FilterButton>
+        ))}
+      </div>
+
       <div className="plate overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="smallcaps text-[9px] text-parchment-400">
-              <th className="px-4 py-2 text-left font-normal">Buff</th>
-              <th className="px-4 py-2 text-right font-normal">Liked</th>
-              <th className="px-4 py-2 text-right font-normal">Disliked</th>
-              <th className="px-4 py-2 text-right font-normal">Score</th>
-              <th className="px-4 py-2 text-right font-normal">Last vote</th>
+              <FeedbackHeader align="left" active={sort === "name"} onClick={() => toggle("name")}>
+                {label}
+                {arrow("name")}
+              </FeedbackHeader>
+              <FeedbackHeader align="right" active={sort === "tier"} onClick={() => toggle("tier")}>
+                Tier{arrow("tier")}
+              </FeedbackHeader>
+              <FeedbackHeader align="right" active={sort === "up"} onClick={() => toggle("up")}>
+                Liked{arrow("up")}
+              </FeedbackHeader>
+              <FeedbackHeader align="right" active={sort === "down"} onClick={() => toggle("down")}>
+                Disliked{arrow("down")}
+              </FeedbackHeader>
+              <FeedbackHeader align="right" active={sort === "score"} onClick={() => toggle("score")}>
+                Score{arrow("score")}
+              </FeedbackHeader>
+              <FeedbackHeader align="right" active={sort === "last"} onClick={() => toggle("last")}>
+                Last vote{arrow("last")}
+              </FeedbackHeader>
             </tr>
           </thead>
           <tbody className="divide-y divide-white/5">
-            {totals.map((row) => (
-              <tr key={row.buff_id}>
-                <td className="px-4 py-2 text-parchment-100">{buffName(row.buff_id)}</td>
+            {sorted.map((row) => (
+              <tr key={row.id}>
+                <td className="px-4 py-2 text-parchment-100">{row.name}</td>
+                <td className="px-4 py-2 text-right font-mono tabular-nums text-parchment-300">
+                  {row.tier ?? "—"}
+                </td>
                 <td className="px-4 py-2 text-right font-mono tabular-nums text-verdigris-glow">{row.up}</td>
                 <td className="px-4 py-2 text-right font-mono tabular-nums text-oxblood-glow">{row.down}</td>
                 <td className="px-4 py-2 text-right font-mono tabular-nums text-parchment-100">
-                  {row.up - row.down > 0 ? "+" : ""}
-                  {row.up - row.down}
+                  {score(row) > 0 ? "+" : ""}
+                  {score(row)}
                 </td>
                 <td className="px-4 py-2 text-right text-xs text-parchment-400">
                   {new Date(row.last_at).toLocaleDateString()}
                 </td>
               </tr>
             ))}
+            {sorted.length === 0 && (
+              <tr>
+                <td colSpan={6} className="px-4 py-3 text-parchment-400">
+                  No cards in this tier.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
@@ -375,7 +477,7 @@ function BuffFeedbackTab() {
                   <span className={v.vote > 0 ? "text-verdigris-glow" : "text-oxblood-glow"}>
                     {v.vote > 0 ? "+1" : "-1"}
                   </span>{" "}
-                  {buffName(v.buff_id)}
+                  {v.name}
                   <span className="text-parchment-400"> by {v.username ?? "unknown"}</span>
                 </span>
                 <span className="shrink-0 text-xs text-parchment-400">
@@ -387,6 +489,29 @@ function BuffFeedbackTab() {
         </div>
       )}
     </div>
+  );
+}
+
+function FeedbackHeader({
+  align,
+  active,
+  onClick,
+  children,
+}: {
+  align: "left" | "right";
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <th className={`px-4 py-2 font-normal ${align === "left" ? "text-left" : "text-right"}`}>
+      <button
+        onClick={onClick}
+        className={`smallcaps transition hover:text-parchment-100 ${active ? "text-gold-leaf" : ""}`}
+      >
+        {children}
+      </button>
+    </th>
   );
 }
 
@@ -864,10 +989,6 @@ function HouseBotsToggle() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
           <div className="font-display text-sm font-semibold text-parchment-50">House bots</div>
-          <p className="mt-0.5 max-w-md text-xs text-parchment-400">
-            The engine-driven roster that keeps the lobby warm. Turn off to run pure human traffic;
-            bot seeks clear and any bot game winds down within a few seconds.
-          </p>
           {error && <p className="mt-1 text-xs text-oxblood-glow">{error}</p>}
         </div>
         <button
@@ -922,10 +1043,6 @@ function HouseBotsToggle() {
           onKeyUp={(e) => commitCount(Number((e.target as HTMLInputElement).value))}
           className="mt-1.5 w-full accent-gold-leaf disabled:cursor-not-allowed"
         />
-        <p className="mt-1 text-[11px] text-parchment-400">
-          The first {count ?? bounds.min} of the {bounds.max} roster bots seek, play, and show
-          online. Takes effect within a few seconds, no redeploy.
-        </p>
       </div>
     </div>
   );
@@ -1078,7 +1195,7 @@ function UsersTab({ isAdmin }: { isAdmin: boolean }) {
 
       {!query.trim() && (
         <p className="mt-2 smallcaps text-[10px] text-parchment-400">
-          Recent players · type to search anyone
+          Recent players
         </p>
       )}
       {users.length === 0 && (
