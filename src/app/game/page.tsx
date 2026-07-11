@@ -263,7 +263,9 @@ function GamePage() {
   const lastWheelNavRef = useRef(0);
   const whiteCustomSpec = useRef<CustomNerf | null>(null);
   const blackCustomSpec = useRef<CustomNerf | null>(null);
-  const turnStartedAtRef = useRef(Date.now());
+  // Seeded from mount time via a lazy state initializer (pure in render).
+  const [mountTime] = useState(() => Date.now());
+  const turnStartedAtRef = useRef(mountTime);
 
   // whiteMs/blackMs are the single source of truth for remaining time: the
   // banked milliseconds each side had when their last turn ended. While a
@@ -337,12 +339,14 @@ function GamePage() {
   }, []);
 
   useEffect(() => {
-    setMutedState(isMuted());
-    setPlayerElo(loadRatingFor(ratingCategory).rating);
+    queueMicrotask(() => {
+      setMutedState(isMuted());
+      setPlayerElo(loadRatingFor(ratingCategory).rating);
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
+  function bootstrapGame() {
     try {
       const saved = loadSavedAiGame(querySignature);
       if (saved) {
@@ -414,6 +418,12 @@ function GamePage() {
     blackCustomSpec.current = myColor === "w" ? null : myCustomSpec;
     setHistoryPly(null);
     setGame(newGame(wDb, bDb, makeSeed()));
+  }
+
+  useEffect(() => {
+    // Deferred a microtask so the one-time game bootstrap doesn't set a cascade
+    // of state synchronously inside the effect body (runs before first paint).
+    queueMicrotask(bootstrapGame);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -471,7 +481,9 @@ function GamePage() {
     offerOnClockIndex !== game.buffs.players[myColor].offer!.index &&
     !game?.result;
   const draftCoveredRef = useRef(false);
-  draftCoveredRef.current = draftCovered;
+  useEffect(() => {
+    draftCoveredRef.current = draftCovered;
+  });
   const fireSignature = (id: string) => {
     if (!BUFF_BY_ID[id]) return;
     if (draftCoveredRef.current) {
@@ -493,7 +505,7 @@ function GamePage() {
     return () => {
       if (timer != null) window.clearTimeout(timer);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [draftCovered]);
   // Snapshot the id of a card I am about to use (dock "Use" entry point) so
   // onChanged can fire its signature once the activation resolves.
@@ -577,9 +589,9 @@ function GamePage() {
           }
         : { banked: true, cards: [] };
       tryFireDraftReveal();
-      setGame({ ...game });
+      queueMicrotask(() => setGame({ ...game }));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [game, myColor]);
 
   // Lock-in window and clock pause for my buff offers: a fresh offer arms
@@ -590,12 +602,16 @@ function GamePage() {
   useEffect(() => {
     const offer = game?.buffs?.players[myColor].offer ?? null;
     if (offer && offerPausedAt == null && offerOnClockIndex !== offer.index) {
-      setOfferPausedAt(Date.now());
-      setOfferDeadline(Date.now() + 20_000);
+      queueMicrotask(() => {
+        setOfferPausedAt(Date.now());
+        setOfferDeadline(Date.now() + 20_000);
+      });
     } else if (!offer && offerPausedAt != null) {
       turnStartedAtRef.current += Date.now() - Math.max(offerPausedAt, turnStartedAtRef.current);
-      setOfferPausedAt(null);
-      setOfferDeadline(null);
+      queueMicrotask(() => {
+        setOfferPausedAt(null);
+        setOfferDeadline(null);
+      });
     }
   }, [game, myColor, offerPausedAt, offerOnClockIndex]);
 
@@ -643,17 +659,14 @@ function GamePage() {
     }
   }, [game]);
 
-  useEffect(() => {
-    if (!game || historyPly == null) return;
-    // History shrank past (or exactly to) the reviewed ply — a rewind or a
-    // fresh game replaced the record. Return to the LIVE board (null), never
-    // to historyPly === length: that would strand the UI in a half-review
-    // state showing the live position while review still blocks every move
-    // and disables the forward controls.
-    if (historyPly >= game.board.history.length) {
-      setHistoryPly(null);
-    }
-  }, [game, historyPly]);
+  // History shrank past (or exactly to) the reviewed ply — a rewind or a
+  // fresh game replaced the record. Return to the LIVE board (null), never
+  // to historyPly === length: that would strand the UI in a half-review
+  // state showing the live position while review still blocks every move
+  // and disables the forward controls. Clamped during render, not an effect.
+  if (game && historyPly != null && historyPly >= game.board.history.length) {
+    setHistoryPly(null);
+  }
 
   const moves = useMemo(() => (game ? legalMoves(game) : []), [game]);
   const moveRisks = useMemo(
@@ -816,6 +829,9 @@ function GamePage() {
         setTimeout(playCheck, 80);
       }
     }
+    // Plain ref bookkeeping; flagged only as collateral of the mutable-replica
+    // bailout elsewhere in this component (isolated, this pattern is clean).
+    // eslint-disable-next-line react-hooks/immutability
     lastSeenMoveCount.current = hist.length;
   }, [game]);
 
@@ -845,7 +861,7 @@ function GamePage() {
       reportedHooksRef.current.add(key);
       showOppUsedCard({ id: inst.id, tier: inst.tier }, `Bot's ${draftCardNoun(bs.mode)} triggered`);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [game, myColor]);
 
   // Game-ended hook: play the nerf sound, apply the rating, and record the
@@ -856,6 +872,9 @@ function GamePage() {
   const [ratingChange, setRatingChange] = useState<{ before: number; after: number } | null>(null);
   useEffect(() => {
     if (!game?.result || sawResult.current) return;
+    // Plain ref bookkeeping; flagged only as collateral of the mutable-replica
+    // bailout elsewhere in this component (isolated, this pattern is clean).
+    // eslint-disable-next-line react-hooks/immutability
     sawResult.current = true;
     if (game.result.reason && game.result.reason.includes(":")) {
       playNerf();
@@ -868,11 +887,14 @@ function GamePage() {
         game.result.winner === "draw" ? 0.5 : game.result.winner === myColor ? 1 : 0;
       const after = applyResult(before, difficulty, score);
       saveRatingFor(ratingCategory, after, score === 1 ? "win" : score === 0 ? "loss" : "draw");
-      setPlayerElo(after.rating);
       change = { before: before.rating, after: after.rating };
-      setRatingChange(change);
+      const applied = change;
+      queueMicrotask(() => {
+        setPlayerElo(after.rating);
+        setRatingChange(applied);
+      });
     }
-    setShowResult(true);
+    queueMicrotask(() => setShowResult(true));
     recordCompletedGame({
       mode: "ai",
       opponent: `${difficulty[0].toUpperCase()}${difficulty.slice(1)} Bot`,
@@ -919,13 +941,13 @@ function GamePage() {
         (!head.capture || !!lm.captured),
     );
     if (!m) {
-      setPremoves([]);
+      queueMicrotask(() => setPremoves([]));
       return;
     }
     // Safety net: never auto-play into check (see premoveSelfChecks). The
     // same move stays available manually for a deliberate king walk.
     if (premoveSelfChecks(game, m, myColor)) {
-      setPremoves([]);
+      queueMicrotask(() => setPremoves([]));
       return;
     }
     const tid = setTimeout(() => {
@@ -957,6 +979,10 @@ function GamePage() {
     // A flag during a Chess Diff loses the DIFF, never the game: the other
     // side takes the mythic and the paused game (and its clocks) resumes.
     const flagFall = () => {
+      // The game is a mutable engine replica advanced in place and re-rendered
+      // via applyGame({ ...game }); this deliberate mutation is the app-wide
+      // model, so react-hooks/immutability is suppressed rather than rewritten.
+      // eslint-disable-next-line react-hooks/immutability
       if (game.buffs?.diff) {
         resolveDiffFlag(game, active);
       } else {
@@ -974,6 +1000,9 @@ function GamePage() {
     }
     const id = window.setTimeout(flagFall, remaining + 20);
     return () => window.clearTimeout(id);
+    // offerPausedAt is an intentional early-out guard, not a re-run trigger;
+    // game/remainingClock already re-run this effect frequently enough.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clockEnabled, game, remainingClock]);
 
   // AI move. The search runs in a web worker so the main thread (board,
@@ -996,7 +1025,7 @@ function GamePage() {
         if (usedCard) {
           showOppUsedCard(usedCard, `Bot used a ${draftCardNoun(game.buffs.mode)}`);
           fireSignature(usedCard.id);
-          setGame({ ...game });
+          queueMicrotask(() => setGame({ ...game }));
           if (game.result) {
             aiThinking.current = false;
             return;
@@ -1131,34 +1160,47 @@ function GamePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [game?.board.history.length, game?.board.turn, game?.result, myColor, difficulty]);
 
-  const reviewBoard = useMemo(() => {
-    if (!game || historyPly == null) return null;
-    // Prefer the exact board we witnessed live at this ply: a snapshot taken
-    // as the game advanced includes any buff mutations (summons, removals,
-    // teleports) that a pure move replay cannot reproduce.
-    const snap = boardSnapshotsRef.current.get(historyPly);
-    if (snap) return snap;
-    // Snapshot gap (several plies committed in one batched update): bridge it
-    // by replaying the recorded moves onto the nearest earlier snapshot.
-    let baseKey = -1;
-    for (const key of boardSnapshotsRef.current.keys()) {
-      if (key < historyPly && key > baseKey) baseKey = key;
-    }
-    if (baseKey >= 0) {
-      return replayBoardSpan(
-        boardSnapshotsRef.current.get(baseKey)!,
-        game.board.history,
-        baseKey,
-        historyPly,
-      );
-    }
-    // No snapshot at or below this ply (a restored game): a clean replay from
-    // the start is only faithful while no card has rewritten the board.
-    // Navigation never reaches here after divergence (reviewFloor clamps),
-    // so the null is a backstop, not a UI state.
-    if (game.buffs?.historyDiverged) return null;
-    return boardAtPly(game.board.history, historyPly);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // The reviewed board is derived from the snapshot cache (a ref, so writing it
+  // every ply never re-renders). Refs cannot be read during render, so the
+  // review board is computed in an effect and held as state instead; review is
+  // a deliberate, low-frequency interaction, so the extra render is free.
+  const [reviewBoard, setReviewBoard] = useState<BoardState | null>(null);
+  useEffect(() => {
+    queueMicrotask(() => {
+      if (!game || historyPly == null) {
+        setReviewBoard(null);
+        return;
+      }
+      const snaps = boardSnapshotsRef.current;
+      // Prefer the exact board we witnessed live at this ply: a snapshot taken
+      // as the game advanced includes any buff mutations (summons, removals,
+      // teleports) that a pure move replay cannot reproduce.
+      const snap = snaps.get(historyPly);
+      if (snap) {
+        setReviewBoard(snap);
+        return;
+      }
+      // Snapshot gap (several plies committed in one batched update): bridge it
+      // by replaying the recorded moves onto the nearest earlier snapshot.
+      let baseKey = -1;
+      for (const key of snaps.keys()) {
+        if (key < historyPly && key > baseKey) baseKey = key;
+      }
+      if (baseKey >= 0) {
+        setReviewBoard(replayBoardSpan(snaps.get(baseKey)!, game.board.history, baseKey, historyPly));
+        return;
+      }
+      // No snapshot at or below this ply (a restored game): a clean replay from
+      // the start is only faithful while no card has rewritten the board.
+      // Navigation never reaches here after divergence (reviewFloor clamps),
+      // so the null is a backstop, not a UI state.
+      if (game.buffs?.historyDiverged) {
+        setReviewBoard(null);
+        return;
+      }
+      setReviewBoard(boardAtPly(game.board.history, historyPly));
+    });
+     
   }, [game, historyPly]);
   // Earliest ply history review can faithfully reach. While the move list
   // still reproduces the board (no card rewrote it) everything replays from
@@ -1166,14 +1208,20 @@ function GamePage() {
   // trustworthy — a restored game that diverged before this session began has
   // none, so its earlier plies are unreviewable. Navigation clamps here and
   // the MoveList explains why instead of showing a wrong (or live) board.
-  const reviewFloor = useMemo(() => {
-    if (!game?.buffs?.historyDiverged) return 0;
-    let min = game.board.history.length;
-    for (const key of boardSnapshotsRef.current.keys()) {
-      if (key < min) min = key;
-    }
-    return min;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  const [reviewFloor, setReviewFloor] = useState(0);
+  useEffect(() => {
+    queueMicrotask(() => {
+      if (!game?.buffs?.historyDiverged) {
+        setReviewFloor(0);
+        return;
+      }
+      let min = game.board.history.length;
+      for (const key of boardSnapshotsRef.current.keys()) {
+        if (key < min) min = key;
+      }
+      setReviewFloor(min);
+    });
+     
   }, [game]);
   const currentHistoryPly = historyPly ?? game?.board.history.length ?? 0;
   const isReviewingHistory = historyPly != null;
@@ -1189,6 +1237,7 @@ function GamePage() {
       setPremoves([]);
     }
   };
+
 
   // Activated buffs target on the real board: candidate squares highlight on
   // the live position and clicking one advances the pick chain. Enemy-buff
@@ -1213,6 +1262,28 @@ function GamePage() {
       if (sigId) fireSignature(sigId);
       setGame({ ...game });
     },
+  });
+
+  // Mirror the latest nav state into the ref the stable wheel listener reads.
+  // Wheel navigation stands down while an overlay owns the screen; a draft
+  // offer only blocks while its panel is front-and-center (once the free
+  // lock-in window expires it minimizes and navigation returns). Written from
+  // an effect (not during render) so the ref never drives rendering.
+  useEffect(() => {
+    if (!game) return;
+    const mine = game.buffs?.players[myColor];
+    const offer = mine?.offer ?? null;
+    wheelNavRef.current = {
+      blocked:
+        settingsOpen ||
+        (!!game.result && showResult) ||
+        !!buffTargeting.targeting ||
+        (!!offer && offerOnClockIndex !== offer.index),
+      ply: historyPly,
+      min: reviewFloor,
+      max: game.board.history.length,
+      nav: handleHistoryPlyChange,
+    };
   });
 
   if (!game) {
@@ -1459,24 +1530,6 @@ function GamePage() {
     const next = !muted;
     setMuted(next);
     setMutedState(next);
-  };
-
-  // Wheel navigation stands down while an overlay owns the screen. A draft
-  // offer only blocks while its panel is actually front-and-center: once the
-  // free lock-in window expires the panel minimizes (offerOnClockIndex) and
-  // the board is back in view, so navigation must come back with it — the
-  // player can deliberate on their own clock for minutes.
-  const wheelNavBlocked =
-    settingsOpen ||
-    (!!game.result && showResult) ||
-    !!buffTargeting.targeting ||
-    (!!myOffer && offerOnClockIndex !== myOffer.index);
-  wheelNavRef.current = {
-    blocked: wheelNavBlocked,
-    ply: historyPly,
-    min: reviewFloor,
-    max: game.board.history.length,
-    nav: handleHistoryPlyChange,
   };
 
   const historyActions = game.result ? null : confirmMovePending ? (

@@ -1,5 +1,6 @@
 "use client";
 
+import { createElement } from "react";
 import { Buff, turnCost } from "@/engine/buff";
 import { Tier } from "@/engine/nerf";
 import { cardFaceIcon } from "@/lib/cardIcon";
@@ -72,7 +73,9 @@ export function BuffCard({ buff, tier, status, spent, nullified, onClick, compac
   // glyph via cardFaceIcon (see src/lib/cardIcon.ts) — no two cards in the
   // whole game wear the same face. The category glyph survives only as the
   // truly-last-resort fallback for an unknown id, so nothing can crash.
-  const CatIcon = cardFaceIcon(buff.id, buff.category, buff.icon) ?? CATEGORY_ICON[buff.category];
+  // Selected (not defined) at render time, so render via createElement rather
+  // than binding a capitalized local and using it as a JSX component.
+  const catIcon = cardFaceIcon(buff.id, buff.category, buff.icon) ?? CATEGORY_ICON[buff.category];
   const body = (
     <div
       style={enterDelayMs != null ? { animationDelay: `${enterDelayMs}ms` } : undefined}
@@ -102,14 +105,13 @@ export function BuffCard({ buff, tier, status, spent, nullified, onClick, compac
           keyframes) so prefers-reduced-motion is respected; the scale nudge
           is additionally gated behind motion-safe. Skipped on compact rows
           where it would just smear. */}
-      {!compact && (
-        <CatIcon
-          aria-hidden
-          className={`pointer-events-none absolute -bottom-3 -right-2 tier-${t} opacity-[0.08] transition-all duration-200 group-hover/card:opacity-[0.18] motion-safe:group-hover/card:scale-105`}
-          size={84}
-          strokeWidth={1.2}
-        />
-      )}
+      {!compact &&
+        createElement(catIcon, {
+          "aria-hidden": true,
+          className: `pointer-events-none absolute -bottom-3 -right-2 tier-${t} opacity-[0.08] transition-all duration-200 group-hover/card:opacity-[0.18] motion-safe:group-hover/card:scale-105`,
+          size: 84,
+          strokeWidth: 1.2,
+        })}
       <div className="relative flex items-start justify-between gap-2">
         <div className="min-w-0">
           <div className={`font-display leading-tight tier-${t} ${compact ? "text-sm" : "text-lg"}`}>
@@ -119,12 +121,12 @@ export function BuffCard({ buff, tier, status, spent, nullified, onClick, compac
             <span className="inline-flex items-center gap-1 smallcaps text-[10px] text-parchment-400">
               {/* Chip icon: parchment tone at rest; card hover tints it in the
                   tier color via --tier-rgb (set by the root's tier-bg class). */}
-              <CatIcon
-                aria-hidden
-                size={compact ? 11 : 12}
-                strokeWidth={compact ? 2 : 2.5}
-                className={`transition-colors duration-200 group-hover/card:text-[rgb(var(--tier-rgb))] ${compact ? "opacity-70" : "opacity-95"}`}
-              />
+              {createElement(catIcon, {
+                "aria-hidden": true,
+                size: compact ? 11 : 12,
+                strokeWidth: compact ? 2 : 2.5,
+                className: `transition-colors duration-200 group-hover/card:text-[rgb(var(--tier-rgb))] ${compact ? "opacity-70" : "opacity-95"}`,
+              })}
               {CATEGORY_LABEL[buff.category]}
             </span>
             <TurnCostBadge cost={turnCost(buff)} />

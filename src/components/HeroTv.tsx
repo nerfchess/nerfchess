@@ -55,11 +55,10 @@ export function HeroTv() {
   }, []);
 
   // Keep watching a finished game briefly rather than cutting away mid-frame;
-  // the next lobby poll supplies the replacement.
-  useEffect(() => {
-    if (topGameId) setStreamId(topGameId);
-    else if (over || !streamId) setStreamId(topGameId);
-  }, [topGameId, over, streamId]);
+  // the next lobby poll supplies the replacement. Derived during render so no
+  // extra cascading render is scheduled.
+  const nextStream = topGameId ? topGameId : over || !streamId ? topGameId : streamId;
+  if (nextStream !== streamId) setStreamId(nextStream);
 
   useEffect(() => {
     if (!streamId) return;

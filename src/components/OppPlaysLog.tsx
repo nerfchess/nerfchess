@@ -63,8 +63,9 @@ function dockDelta(el: HTMLElement | null): { dx: number; dy: number } {
 
 export function OppPlaysLog({ plays }: { plays: OppPlay[] }) {
   // Re-render on a tick so entries age through their phases (fresh, flying,
-  // gone) without any parent state change.
-  const [, setTick] = useState(0);
+  // gone) without any parent state change. The tick carries the current time so
+  // rendering stays pure (no Date.now() during render).
+  const [now, setNow] = useState(() => Date.now());
   const reduceMotion = useReducedMotion();
   const itemRefs = useRef(new Map<number, HTMLDivElement | null>());
   // Flight vector per departing entry, measured once when it crosses the TTL.
@@ -76,16 +77,19 @@ export function OppPlaysLog({ plays }: { plays: OppPlay[] }) {
   // Only tick while something is actually aging in the feed (fresh play within
   // its TTL + flight). An idle match used to re-render this 2.5x/second for the
   // whole game for nothing.
-  const hasActive = plays.some((p) => Date.now() - p.at < FEED_TTL_MS + FLY_MS);
+  const hasActive = plays.some((p) => now - p.at < FEED_TTL_MS + FLY_MS);
   useEffect(() => {
     if (!hasActive) return;
-    const id = window.setInterval(() => setTick((t) => t + 1), 400);
+    const id = window.setInterval(() => setNow(Date.now()), 400);
     return () => window.clearInterval(id);
   }, [hasActive]);
 
   // Measure the flight for entries that just crossed the TTL (an effect, not
   // render: reading layout during render would thrash it). The guard keeps
   // this from looping: it only ever writes when an unmeasured entry exists.
+  // Intentionally runs every render (no dep array) to catch entries the moment
+  // they cross the TTL; the write is self-guarded against loops.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (reduceMotion) return;
     const t = Date.now();
@@ -101,7 +105,6 @@ export function OppPlaysLog({ plays }: { plays: OppPlay[] }) {
     });
   });
 
-  const now = Date.now();
   // Reduced motion skips the flight: entries simply leave at the TTL.
   const visibleFor = reduceMotion ? FEED_TTL_MS : FEED_TTL_MS + FLY_MS;
   const shown = plays
@@ -186,17 +189,16 @@ export function OppPlaysDockSection({ plays }: { plays: OppPlay[] }) {
   // top-right feed, so the permanent dock list starts collapsed to a count-only
   // header and opens on tap. Keeps the dock (and the mobile drawer) uncluttered.
   const [open, setOpen] = useState(false);
-  const [, setTick] = useState(0);
+  // The tick carries the current time so rendering stays pure.
+  const [now, setNow] = useState(() => Date.now());
   // Tick only while something is still upstairs in the feed, so its row
   // appears here the moment it lands; a quiet ledger costs nothing.
-  const pending = plays.some((p) => Date.now() - p.at < FEED_TTL_MS);
+  const pending = plays.some((p) => now - p.at < FEED_TTL_MS);
   useEffect(() => {
     if (!pending) return;
-    const id = window.setInterval(() => setTick((t) => t + 1), 1000);
+    const id = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(id);
   }, [pending]);
-
-  const now = Date.now();
   // Only plays whose card is still in the library render a row, so filter the
   // same set the count chip reports: the header number always matches the list.
   const landed = plays.filter((p) => now - p.at >= FEED_TTL_MS && BUFF_BY_ID[p.card.id]);

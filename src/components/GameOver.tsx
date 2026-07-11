@@ -228,11 +228,11 @@ const playedGameOverKeys = new Set<string>();
 // to the final value when motion is reduced. Pure requestAnimationFrame, no deps.
 function useCountUp(from: number, to: number, animate: boolean, durationMs = 700) {
   const [value, setValue] = useState(animate ? from : to);
+  // With motion reduced the figure just tracks its target; adjust during render
+  // instead of in an effect so no extra cascading render is scheduled.
+  if (!animate && value !== to) setValue(to);
   useEffect(() => {
-    if (!animate) {
-      setValue(to);
-      return;
-    }
+    if (!animate) return;
     let raf = 0;
     let startTs: number | null = null;
     const tick = (ts: number) => {

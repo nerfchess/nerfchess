@@ -1,5 +1,6 @@
 "use client";
 
+import { createElement } from "react";
 import { Nerf } from "@/engine/nerf";
 import { motion } from "framer-motion";
 import { GlossaryText } from "@/components/GlossaryText";
@@ -44,7 +45,7 @@ export function NerfCard({ nerf, revealed = true, compact = false, dense = false
   // src/lib/cardIcon.ts): every nerf in the library wears a face no other
   // card in the game uses. Unlink survives only as the truly-last-resort
   // fallback for an id outside the shipped library, so nothing can crash.
-  const FaceIcon: LucideIcon = nerfFaceIcon(nerf.id, nerf.icon) ?? Unlink;
+  const faceIcon: LucideIcon = nerfFaceIcon(nerf.id, nerf.icon) ?? Unlink;
 
   return (
     <motion.div
@@ -58,12 +59,12 @@ export function NerfCard({ nerf, revealed = true, compact = false, dense = false
           card's tier (severity) color and nudges the scale. Transitions only
           (no keyframes), so prefers-reduced-motion users just see the state
           change; the scale nudge is additionally gated behind motion-safe. */}
-      <FaceIcon
-        aria-hidden
-        className={`pointer-events-none absolute -bottom-3 -right-2 tier-${nerf.tier} opacity-[0.08] transition-all duration-200 group-hover/card:opacity-[0.18] motion-safe:group-hover/card:scale-105`}
-        size={dense ? 84 : 92}
-        strokeWidth={1.2}
-      />
+      {createElement(faceIcon, {
+        "aria-hidden": true,
+        className: `pointer-events-none absolute -bottom-3 -right-2 tier-${nerf.tier} opacity-[0.08] transition-all duration-200 group-hover/card:opacity-[0.18] motion-safe:group-hover/card:scale-105`,
+        size: dense ? 84 : 92,
+        strokeWidth: 1.2,
+      })}
       <div className="relative flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-1.5">

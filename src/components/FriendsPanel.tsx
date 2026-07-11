@@ -51,6 +51,10 @@ export function FriendsPanel() {
   }, []);
 
   useEffect(() => {
+    // `load` only sets state after awaiting the fetch (never synchronously),
+    // so this is the sanctioned fetch-on-mount pattern; the rule can't see
+    // through the useCallback's await boundary.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void load();
   }, [load]);
 

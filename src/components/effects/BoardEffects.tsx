@@ -13505,7 +13505,7 @@ export function CastSpectacle({
           className="fx-cast-emblem absolute top-[6%] flex h-[10%] w-[10%] items-center justify-center"
           style={{ color: theme.color, left: `${emblemLeft}%`, marginLeft: "-5%" }}
         >
-          <Icon className="h-full w-full" strokeWidth={2} />
+          {React.createElement(Icon, { className: "h-full w-full", strokeWidth: 2 })}
         </span>
         {banner}
       </span>
@@ -13530,7 +13530,7 @@ export function CastSpectacle({
           className="fx-cast-emblem-slam absolute left-1/2 top-1/2 ml-[-11%] mt-[-11%] flex h-[22%] w-[22%] items-center justify-center"
           style={{ color: theme.color, filter: `drop-shadow(0 0 6px ${theme.soft})` }}
         >
-          <Icon className="h-full w-full" strokeWidth={1.8} />
+          {React.createElement(Icon, { className: "h-full w-full", strokeWidth: 1.8 })}
         </span>
         <span className="absolute left-1/2 top-1/2 ml-[-5%] mt-[-5%] block h-[10%] w-[10%]">
           <ShardBurst vectors={CAST_SPARKS} fill={theme.color} stroke="#1a222e" delayMs={260} sizePct={70} />
@@ -13569,7 +13569,7 @@ export function CastSpectacle({
         className="fx-cast-emblem-slam absolute left-1/2 top-1/2 ml-[-24%] mt-[-24%] flex h-[48%] w-[48%] items-center justify-center"
         style={{ color: theme.color, filter: `drop-shadow(0 0 14px ${theme.soft})` }}
       >
-        <Icon className="h-full w-full" strokeWidth={1.4} />
+        {React.createElement(Icon, { className: "h-full w-full", strokeWidth: 1.4 })}
       </span>
       <span
         className="fx-cast-ring absolute inset-[0.5%] block rounded-sm"
