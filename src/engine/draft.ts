@@ -391,6 +391,10 @@ export function rollOffer(
 
   const bonus = Math.min(1, ps.flags.bankBonus ?? 0);
   ps.flags.bankBonus = undefined;
+  // Whether the offer just banked held a tier-8 (the apex gate; see below).
+  // Consumed here so it only ever applies to this one banked roll.
+  const bankedTier8 = ps.flags.bankedTier8 === true;
+  ps.flags.bankedTier8 = undefined;
   // "Stacked draft" preset: a persistent lift on every offer (not consumed),
   // so a surprised friend keeps drafting high-tier cards. Capped at +3.
   const boost = Math.min(3, Math.max(0, ps.flags.stackBoost ?? 0));
@@ -414,20 +418,17 @@ export function rollOffer(
   // the player THREE cards one tier higher, so it must keep going down the
   // normal multi-card path even when its banked tier would otherwise hit 8.
   //
-  // GATED behind tier-8 presence (owner rule): apex (tier 9/10) cards only
-  // surface once the game has actually escalated to tier 8 — either player must
-  // already hold a tier-8 card in their draft. Until then a banked top roll
-  // deals a normal tier-8 offer instead of an apex one. Spent cards still count
-  // (they were drafted), and both sides count so a strong opponent also opens
-  // the apex gate.
-  const anyTier8 =
-    bs.players.w.buffs.some((b) => b.tier === 8) || bs.players.b.buffs.some((b) => b.tier === 8);
+  // GATED on skipping a tier-8 (owner rule): the apex (tier 9/10) offer is the
+  // reward for BANKING an offer that contained a tier-8 card. You don't have to
+  // draft the tier-8 — passing it up is what earns the apex pull. Without that,
+  // a banked top roll deals a normal tier-8 offer instead. bankedTier8 is set by
+  // bankOffer from the skipped offer's cards and consumed above.
   const bankedToTop =
     !prepping &&
     bonus > 0 &&
     forced == null &&
     tiers[0] + bonus + boost >= 8 &&
-    anyTier8 &&
+    bankedTier8 &&
     TIER9.length > 0;
   if (bankedToTop) {
     const rng = drawRng(bs);
@@ -498,6 +499,10 @@ export function rollOffer(
 
 /** Skip the pending offer, banking +1 tier for the next one (capped). */
 export function bankOffer(ps: PlayerBuffState) {
+  // Reward for skipping a strong offer: if the offer being banked CONTAINED a
+  // tier-8 card, the next (banked) roll may deal an apex offer. Captured here
+  // before the offer is cleared; consumed in rollOffer.
+  if (ps.offer?.cards.some((c) => c.tier === 8)) ps.flags.bankedTier8 = true;
   ps.offer = null;
   ps.flags.bankBonus = 1;
 }

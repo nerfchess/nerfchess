@@ -1550,7 +1550,7 @@ const TIER3: Buff[] = [
     ),
   ),
   def(
-    { id: "hunter_knight", requires: ["n"], name: "Hunter Knight", description: "One knight captures a piece one leap away and lands a second leap beyond, once.", tier: 3, category: "attack" },
+    { id: "hunter_knight", requires: ["n"], name: "Hunter Knight", description: "One knight captures a piece one leap away and lands a second leap beyond, once.", tier: 5, category: "attack" },
     augment((_m, inst, api) => {
       const out: Move[] = [];
       for (const sq of mySquares(api.board, api.me, "n")) {
