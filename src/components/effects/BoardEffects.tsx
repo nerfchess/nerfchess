@@ -6727,7 +6727,9 @@ function RouletteBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
         }
       />
     );
-    return <WheelSpinPlay wide delayMs={delayMs} disc={disc} wash="rgba(176,48,48,0.2)" boom="rgba(224,119,107,0.85)" />;
+    // Roulette's board-wide wheel was overwhelming the board; shrink the whole
+    // effect to a more contained size (the other gambling wheels keep full size).
+    return <WheelSpinPlay wide scale={0.55} delayMs={delayMs} disc={disc} wash="rgba(176,48,48,0.2)" boom="rgba(224,119,107,0.85)" />;
   }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
@@ -9623,6 +9625,7 @@ function WheelSpinPlay({
   wash,
   boom,
   landFx,
+  scale = 1,
 }: {
   wide: boolean;
   delayMs: number;
@@ -9630,6 +9633,9 @@ function WheelSpinPlay({
   wash: string;
   boom: string;
   landFx?: React.ReactNode;
+  /** Uniform shrink for the whole board-wide effect (wheel, wash, shards,
+   * boom), scaled about the centre so it stays in place. 1 = full size. */
+  scale?: number;
 }) {
   const pointer = (
     <span className="fx-sig-tick absolute left-[44%] top-[-6%] block h-[16%] w-[12%]" style={{ animationDelay: `${delayMs}ms` }}>
@@ -9655,13 +9661,24 @@ function WheelSpinPlay({
     </span>
   );
   if (wide) {
-    return (
-      <BoardWideStage>
+    const body = (
+      <>
         <BoardWash color={wash} delayMs={delayMs} />
         {wheel("inset-[27%]")}
         {landFx}
         <ShardBurst vectors={PIN_STARS} fill="#ffd95e" stroke="#8a6414" delayMs={delayMs + 950} sizePct={6} />
         <BoardBoom delayMs={delayMs + 1000} color={boom} />
+      </>
+    );
+    return (
+      <BoardWideStage>
+        {scale === 1 ? (
+          body
+        ) : (
+          <span className="absolute inset-0 block" style={{ transform: `scale(${scale})`, transformOrigin: "center" }}>
+            {body}
+          </span>
+        )}
       </BoardWideStage>
     );
   }
