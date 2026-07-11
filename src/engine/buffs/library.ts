@@ -2701,7 +2701,7 @@ const TIER6: Buff[] = [
     captureExplosion({ chain: true }),
   ),
   def(
-    { id: "double_amazon", requires: ["n"], name: "Double Amazon", description: "All your knights become amazons for the game.", tier: 6, category: "movement", fx: { motif: "empower", pieces: ["n"], moveAs: "q", self: true } },
+    { id: "double_amazon", requires: ["n"], name: "Double Amazon", description: "All your knights become amazons for the game.", tier: 8, category: "movement", fx: { motif: "empower", pieces: ["n"], moveAs: "q", self: true } },
     permanentAugment((_m, inst, api) =>
       mySquares(api.board, api.me, "n").flatMap((sq) => slideMoves(api.board, sq, ALL_DIRS, inst.id)),
     ),
