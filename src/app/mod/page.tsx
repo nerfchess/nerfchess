@@ -10,6 +10,7 @@ import { BUFF_BY_ID } from "@/engine/buffs/library";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { AccountUser, fetchMe } from "@/lib/authClient";
+import { isGodPanelUser } from "@/lib/godPanel";
 import { ModeBadge } from "@/components/ModeBadge";
 
 type Tab = "reports" | "games" | "chat" | "users" | "suggestions" | "rules" | "buffs" | "log";
@@ -105,9 +106,9 @@ export default function ModPage() {
   }, []);
 
   const isMod = me && (me.role === "mod" || me.role === "admin");
-  // The god panel is ilovenewjeans's personal tool, so its toggle only shows
-  // for that account (matched case-insensitively, like the game server).
-  const isOwner = !!me && me.username.toLowerCase() === "ilovenewjeans";
+  // The god panel is the owners' personal tool, so its toggle only shows for a
+  // god-panel account (matched case-insensitively, like the game server).
+  const isOwner = !!me && isGodPanelUser(me.username);
 
   return (
     <main className="min-h-screen">
