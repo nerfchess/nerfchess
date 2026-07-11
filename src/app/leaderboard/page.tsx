@@ -32,11 +32,18 @@ export default function LeaderboardPage() {
   const [me, setMe] = useState<AccountUser | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
+  // Clear stale rows the instant the category changes (React's sanctioned
+  // adjust-state-on-change pattern) so the effect below only fetches.
+  const [prevCategory, setPrevCategory] = useState(category);
+  if (prevCategory !== category) {
+    setPrevCategory(category);
     setRows(null);
     setMeRow(null);
     setError(null);
+  }
+
+  useEffect(() => {
+    let cancelled = false;
     (async () => {
       try {
         const res = await fetch(`/api/leaderboard?category=${category}`);

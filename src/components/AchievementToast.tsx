@@ -55,7 +55,7 @@ export function AchievementToast() {
   const [disabled, setDisabled] = useState(true);
 
   useEffect(() => {
-    setDisabled(achievementToastsDisabled());
+    queueMicrotask(() => setDisabled(achievementToastsDisabled()));
     let cancelled = false;
     let timer: number | null = null;
     let username: string | null = null;

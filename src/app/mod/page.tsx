@@ -669,7 +669,9 @@ function ReportsTab() {
   }, [status]);
 
   useEffect(() => {
-    load();
+    void (async () => {
+      await load();
+    })();
   }, [load]);
 
   const close = async (id: string, next: "resolved" | "dismissed") => {
@@ -743,7 +745,9 @@ function ChatFlagsTab() {
   }, [all]);
 
   useEffect(() => {
-    load();
+    void (async () => {
+      await load();
+    })();
   }, [load]);
 
   const review = async (id: string) => {
@@ -1028,6 +1032,13 @@ function UsersTab({ isAdmin }: { isAdmin: boolean }) {
   const [duration, setDuration] = useState<number | null>(DURATIONS[2].ms);
   const [note, setNote] = useState("");
   const [message, setMessage] = useState<string | null>(null);
+  // Current time on a slow tick so ban/mute expiry badges stay live without
+  // calling Date.now() during render.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(Date.now()), 30000);
+    return () => window.clearInterval(id);
+  }, []);
 
   const search = useCallback(async (q: string) => {
     // An empty query loads the default roster (recent members) rather than
@@ -1100,12 +1111,12 @@ function UsersTab({ isAdmin }: { isAdmin: boolean }) {
             >
               <span className="font-display font-semibold">{u.username}</span>
               {u.role !== "user" && <RoleBadge role={u.role} />}
-              {u.banned_until && u.banned_until > Date.now() && (
+              {u.banned_until && u.banned_until > now && (
                 <span className="smallcaps text-[10px] px-2 py-0.5 rounded-full bg-oxblood-glow/20 text-oxblood-glow">
                   banned {untilLabel(u.banned_until)}
                 </span>
               )}
-              {u.muted_until && u.muted_until > Date.now() && (
+              {u.muted_until && u.muted_until > now && (
                 <span className="smallcaps text-[10px] px-2 py-0.5 rounded-full bg-bruise-glow/20 text-bruise-glow">
                   muted {untilLabel(u.muted_until)}
                 </span>
@@ -1165,12 +1176,12 @@ function UsersTab({ isAdmin }: { isAdmin: boolean }) {
           </div>
 
           <div className="mt-3 flex flex-wrap gap-2 text-sm">
-            {selected.muted_until && selected.muted_until > Date.now() && (
+            {selected.muted_until && selected.muted_until > now && (
               <button onClick={() => act(selected.username, { action: "unmute" })} className="px-3 py-1 rounded-sm btn-ghost">
                 Unmute
               </button>
             )}
-            {selected.banned_until && selected.banned_until > Date.now() && (
+            {selected.banned_until && selected.banned_until > now && (
               <button onClick={() => act(selected.username, { action: "unban" })} className="px-3 py-1 rounded-sm btn-ghost">
                 Unban
               </button>

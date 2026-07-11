@@ -74,9 +74,9 @@ export function useBuffTargeting({
 }) {
   const [targeting, setTargeting] = useState<BuffTargeting | null>(null);
 
-  useEffect(() => {
-    if (!active && targeting) setTargeting(null);
-  }, [active, targeting]);
+  // Deactivating cancels any in-progress targeting; adjust during render rather
+  // than in an effect so the panel never shows a stale targeting frame.
+  if (!active && targeting) setTargeting(null);
 
   useEffect(() => {
     if (!targeting) return;

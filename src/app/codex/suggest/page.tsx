@@ -104,10 +104,12 @@ export default function SuggestRulePage() {
   // Links can preselect the type (?type=hex). The legacy ?kind=buff link, from
   // before this form grew a full type selector, still resolves to the buff type.
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const t = params.get("type");
-    if (isRuleType(t)) setType(t);
-    else if (params.get("kind") === "buff") setType("buff");
+    queueMicrotask(() => {
+      const params = new URLSearchParams(window.location.search);
+      const t = params.get("type");
+      if (isRuleType(t)) setType(t);
+      else if (params.get("kind") === "buff") setType("buff");
+    });
   }, []);
 
   const submit = async (e: React.FormEvent) => {

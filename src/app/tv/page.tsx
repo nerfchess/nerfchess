@@ -66,8 +66,10 @@ function TvView() {
   const [recentChecked, setRecentChecked] = useState(false);
 
   // Switching channels (All / Nerf / Buff) drops everything shown so nothing
-  // from the other pool lingers on screen.
-  useEffect(() => {
+  // from the other pool lingers on screen. Reset on the change during render.
+  const [prevMode, setPrevMode] = useState(modeFilter);
+  if (prevMode !== modeFilter) {
+    setPrevMode(modeFilter);
     setPinnedId(null);
     setStreamId(null);
     setMoves([]);
@@ -75,7 +77,7 @@ function TvView() {
     setOver(false);
     setRecent(null);
     setRecentChecked(false);
-  }, [modeFilter]);
+  }
 
   const liveGames = useMemo(() => {
     const games = lobby?.games ?? [];
@@ -105,10 +107,9 @@ function TvView() {
   }, [lobby, liveGames.length, recent, modeFilter]);
 
   // Keep a just-finished game on screen until the lobby offers a replacement.
-  useEffect(() => {
-    if (targetId) setStreamId(targetId);
-    else if (over || !streamId) setStreamId(targetId);
-  }, [targetId, over, streamId]);
+  // Derived during render so no extra cascading render is scheduled.
+  const nextStream = targetId ? targetId : over || !streamId ? targetId : streamId;
+  if (nextStream !== streamId) setStreamId(nextStream);
 
   useEffect(() => {
     if (!streamId) return;

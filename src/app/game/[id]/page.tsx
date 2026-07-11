@@ -93,14 +93,19 @@ export default function OnlineGamePage() {
   // Seconds left before a viewer stranded on a game that has ended / gone dark
   // is eased back to the lobby (see the `missing` effect + view below).
   const [redirectIn, setRedirectIn] = useState(REDIRECT_SECONDS);
-  const sessionRef = useRef<MPSession | null>(null);
+  // Held as state (not a ref) because the render below chooses the view from
+  // it; a ref cannot drive rendering. Set inside the effect once the session
+  // exists, cleared on teardown.
+  const [liveSession, setLiveSession] = useState<MPSession | null>(null);
 
   useEffect(() => {
     if (!gameId) return;
     let cancelled = false;
     const session = new MPSession();
     session.persistFriendSession = false;
-    sessionRef.current = session;
+    queueMicrotask(() => {
+      if (!cancelled) setLiveSession(session);
+    });
 
     // Fetch the archived game once, returning it (or null if it is not stored).
     // Kept separate from rendering so the request can be kicked off in parallel
@@ -229,7 +234,7 @@ export default function OnlineGamePage() {
       cancelled = true;
       offWatch();
       session.destroy();
-      sessionRef.current = null;
+      setLiveSession(null);
     };
   }, [gameId]);
 
@@ -237,9 +242,17 @@ export default function OnlineGamePage() {
   // and it was never saved), don't leave the viewer staring at a dead end —
   // count down and gently send them to the lobby, with manual buttons meanwhile
   // for anyone who wants to go home or jump straight to another game.
+  // Restart the countdown the moment a game is found missing; adjusted during
+  // render so the effect below only owns the interval.
+  const isMissing = mode.kind === "missing";
+  const [prevMissing, setPrevMissing] = useState(isMissing);
+  if (prevMissing !== isMissing) {
+    setPrevMissing(isMissing);
+    if (isMissing) setRedirectIn(REDIRECT_SECONDS);
+  }
+
   useEffect(() => {
     if (mode.kind !== "missing") return;
-    setRedirectIn(REDIRECT_SECONDS);
     const tick = window.setInterval(() => {
       setRedirectIn((s) => {
         if (s <= 1) {
@@ -253,10 +266,10 @@ export default function OnlineGamePage() {
     return () => window.clearInterval(tick);
   }, [mode.kind]);
 
-  if (mode.kind === "player" && sessionRef.current) {
+  if (mode.kind === "player" && liveSession) {
     return (
       <OnlineMatch
-        session={sessionRef.current}
+        session={liveSession}
         start={mode.start}
         subtitle={
           mode.start.rated
@@ -272,8 +285,8 @@ export default function OnlineGamePage() {
     );
   }
 
-  if (mode.kind === "spectator" && sessionRef.current) {
-    return <SpectatorView key={watchGen} session={sessionRef.current} setup={mode.setup} />;
+  if (mode.kind === "spectator" && liveSession) {
+    return <SpectatorView key={watchGen} session={liveSession} setup={mode.setup} />;
   }
 
   if (mode.kind === "replay") {
@@ -401,13 +414,13 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
   // removals) and zone effects render correctly. The wstart payload is
   // spectator-safe: held buffs and effects only, never pending offers.
   const isDraft = !!setup.draft;
-  const draftGameRef = useRef<NerfGame | null>(null);
   const [draftGame, setDraftGame] = useState<NerfGame | null>(() => {
     if (!isDraft) return null;
-    const game = buildSpectatorDraftGame(setup.moves, setup.dtActions ?? [], setup.dtState, setup.mode);
-    draftGameRef.current = game;
-    return game;
+    return buildSpectatorDraftGame(setup.moves, setup.dtActions ?? [], setup.dtState, setup.mode);
   });
+  // Mirrors draftGame as the mutable replica the event handlers advance in
+  // place; seeded from the same initial object (useRef init, not a render write).
+  const draftGameRef = useRef<NerfGame | null>(draftGame);
   // Card-use animation for watchers: a monotonic key fires the Board's
   // board-wide flourish whenever a card is used (an activation, or a
   // held/passive card whose move-hook changed the board), so spectators see
@@ -522,6 +535,9 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
       }
     });
     return off;
+    // Subscribe once per session; the signature-firing helpers are recreated
+    // every render but must not re-register the listener.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session]);
 
   const replayed = useMemo(() => replayUci(uciMoves), [uciMoves]);

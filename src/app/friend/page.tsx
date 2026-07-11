@@ -34,7 +34,9 @@ export default function FriendPage() {
   // it at that moment ("setup"/"joining") and the not-in-game guard never
   // actually stood down after `start`. The ref always reads the current view.
   const viewRef = useRef(view);
-  viewRef.current = view;
+  useEffect(() => {
+    viewRef.current = view;
+  });
   const [code, setCode] = useState("");
   const [joinCode, setJoinCode] = useState("");
   // Default custom-challenge clock: 3+2 (a brisk blitz control most players
@@ -61,6 +63,10 @@ export default function FriendPage() {
   const [challenging, setChallenging] = useState<string | null>(null);
 
   const sessionRef = useRef<MPSession | null>(null);
+  // Mirrors sessionRef for the in-game render gate below: the many pre-game
+  // transitions read the ref synchronously, but rendering must not, so the live
+  // session is also tracked as state (set when the `start` frame lands).
+  const [session, setSession] = useState<MPSession | null>(null);
   const expectedChallengeHostRef = useRef<string | null>(null);
 
   // Tell the target the game exists; failures degrade to a plain friend code.
@@ -130,6 +136,7 @@ export default function FriendPage() {
           setError("That challenge no longer points to the player who sent it.");
           sess.destroy();
           if (sessionRef.current === sess) sessionRef.current = null;
+          setSession(null);
           expectedChallengeHostRef.current = null;
           clearSavedFriendSession();
           setView("setup");
@@ -138,11 +145,50 @@ export default function FriendPage() {
         setStart(e.setup);
         setCode(e.setup.id);
         setError(null);
+        setSession(sess);
         setView("game");
       } else if (e.type === "error" && viewRef.current !== "game") {
         setError(e.message);
       }
     });
+  };
+
+  const joinWithCode = async (trimmed: string) => {
+    setError(null);
+    clearSavedFriendSession();
+    expectedChallengeHostRef.current = null;
+    if (!trimmed) {
+      setError("Enter a code.");
+      return;
+    }
+    const sess = new MPSession();
+    sessionRef.current = sess;
+    wireSession(sess);
+    setView("joining");
+    try {
+      const claimed = await claimIncomingChallenge(trimmed);
+      expectedChallengeHostRef.current = claimed.from ?? null;
+      if (!claimed.ok) {
+        if (sessionRef.current === sess) {
+          sess.destroy();
+          sessionRef.current = null;
+          expectedChallengeHostRef.current = null;
+          setView("setup");
+        }
+        return;
+      }
+      await sess.join(trimmed);
+      // The game starts on receipt of the server `start` frame.
+    } catch (e) {
+      // Join refused (host left, seat taken, bad code): drop the session and
+      // all challenge expectations so the setup form starts clean.
+      if (sessionRef.current !== sess) return;
+      sess.destroy();
+      sessionRef.current = null;
+      expectedChallengeHostRef.current = null;
+      setError((e instanceof Error ? e.message : String(e)) || "Failed to connect. Check the code.");
+      setView("setup");
+    }
   };
 
   useEffect(() => {
@@ -152,7 +198,7 @@ export default function FriendPage() {
     // that game immediately.
     const codeParam = search.get("code")?.trim().toUpperCase();
     if (codeParam) {
-      setJoinCode(codeParam);
+      queueMicrotask(() => setJoinCode(codeParam));
       // A refresh mid-game lands here with the challenge code still in the
       // URL. By then the challenge record is consumed and the joiner seat is
       // taken, so a fresh join can never succeed; the saved seat token is the
@@ -161,8 +207,10 @@ export default function FriendPage() {
       // the seat (game gone or archived).
       const savedForCode = loadSavedFriendSession();
       if (savedForCode && savedForCode.id === codeParam) {
-        setCode(savedForCode.id);
-        setView("joining");
+        queueMicrotask(() => {
+          setCode(savedForCode.id);
+          setView("joining");
+        });
         const sess = new MPSession();
         sessionRef.current = sess;
         wireSession(sess);
@@ -180,16 +228,21 @@ export default function FriendPage() {
     }
     // Mode preselected on the play page carries over (?mode=nerf|buff).
     const modeParam = search.get("mode");
-    if (modeParam === "nerf" || modeParam === "buff") setGameMode(modeParam);
+    if (modeParam === "nerf" || modeParam === "buff") {
+      const m = modeParam;
+      queueMicrotask(() => setGameMode(m));
+    }
     const challengeParam = search.get("challenge")?.trim();
     if (challengeParam) {
-      setChallenging(challengeParam);
+      queueMicrotask(() => setChallenging(challengeParam));
       return;
     }
     const saved = loadSavedFriendSession();
     if (!saved) return;
-    setCode(saved.id);
-    setView("joining");
+    queueMicrotask(() => {
+      setCode(saved.id);
+      setView("joining");
+    });
     let cancelled = false;
     const resumeSaved = async () => {
       // A finished game must never re-capture this page: if the saved game
@@ -251,44 +304,6 @@ export default function FriendPage() {
     }
   };
 
-  const joinWithCode = async (trimmed: string) => {
-    setError(null);
-    clearSavedFriendSession();
-    expectedChallengeHostRef.current = null;
-    if (!trimmed) {
-      setError("Enter a code.");
-      return;
-    }
-    const sess = new MPSession();
-    sessionRef.current = sess;
-    wireSession(sess);
-    setView("joining");
-    try {
-      const claimed = await claimIncomingChallenge(trimmed);
-      expectedChallengeHostRef.current = claimed.from ?? null;
-      if (!claimed.ok) {
-        if (sessionRef.current === sess) {
-          sess.destroy();
-          sessionRef.current = null;
-          expectedChallengeHostRef.current = null;
-          setView("setup");
-        }
-        return;
-      }
-      await sess.join(trimmed);
-      // The game starts on receipt of the server `start` frame.
-    } catch (e) {
-      // Join refused (host left, seat taken, bad code): drop the session and
-      // all challenge expectations so the setup form starts clean.
-      if (sessionRef.current !== sess) return;
-      sess.destroy();
-      sessionRef.current = null;
-      expectedChallengeHostRef.current = null;
-      setError((e instanceof Error ? e.message : String(e)) || "Failed to connect. Check the code.");
-      setView("setup");
-    }
-  };
-
   const handleJoin = () => joinWithCode(joinCode.trim().toUpperCase());
 
   const handleExit = () => {
@@ -296,6 +311,7 @@ export default function FriendPage() {
     clearSavedFriendSession();
     sessionRef.current?.destroy();
     sessionRef.current = null;
+    setSession(null);
     expectedChallengeHostRef.current = null;
     setStart(null);
     setView("setup");
@@ -304,10 +320,10 @@ export default function FriendPage() {
     setError(null);
   };
 
-  if (view === "game" && start && sessionRef.current) {
+  if (view === "game" && start && session) {
     return (
       <OnlineMatch
-        session={sessionRef.current}
+        session={session}
         start={start}
         subtitle={`code ${start.id}`}
         onExit={handleExit}

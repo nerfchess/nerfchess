@@ -34,7 +34,8 @@ export type ClubTournamentRow = {
   max_players: number;
 };
 
-export async function GET(request: Request, { params }: { params: { slug: string } }) {
+export async function GET(request: Request, props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
   const db = await getDb();
   const club = await db
     .prepare(
@@ -117,7 +118,8 @@ export async function GET(request: Request, { params }: { params: { slug: string
 // Club settings: today just the identity icon, a curated "emoji|colorId"
 // pair (see src/lib/clubIcons.ts). Owner-only, with the same moderator
 // override the post-delete path uses.
-export async function PATCH(request: Request, { params }: { params: { slug: string } }) {
+export async function PATCH(request: Request, props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
   const db = await getDb();
   const user = await userForSession(db, sessionTokenFromCookieHeader(request.headers.get("cookie")));
   if (!user) return NextResponse.json({ error: "Sign in first." }, { status: 401 });

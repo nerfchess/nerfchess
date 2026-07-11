@@ -4,7 +4,8 @@ import { sessionTokenFromCookieHeader, userForSession } from "@/lib/server/auth"
 
 export const dynamic = "force-dynamic";
 
-export async function POST(request: Request, { params }: { params: { slug: string } }) {
+export async function POST(request: Request, props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
   const db = await getDb();
   const user = await userForSession(db, sessionTokenFromCookieHeader(request.headers.get("cookie")));
   if (!user) return NextResponse.json({ error: "Sign in to join clubs." }, { status: 401 });

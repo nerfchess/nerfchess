@@ -1030,6 +1030,11 @@ for (let r = 7; r >= 0; r--) {
 }
 const ORDERED_SQUARES_BLACK = [...ORDERED_SQUARES_WHITE].reverse();
 
+/** Wall-clock fallback for input timing when an event carries no timeStamp. */
+function nowMs(): number {
+  return Date.now();
+}
+
 export function Board({
   board,
   legalMoves,
@@ -1077,12 +1082,16 @@ export function Board({
   // stable callbacks (vfxShake) that must read the current value.
   const fxLevel = useFxLevel();
   const fxLevelRef = useRef(fxLevel);
-  fxLevelRef.current = fxLevel;
   // Low-clock auto-calm (owner request): under time pressure the board-wide
   // show stands down automatically, independent of the dial.
   const fxCalmClock = !!fxTimePressure;
   const fxCalmClockRef = useRef(fxCalmClock);
-  fxCalmClockRef.current = fxCalmClock;
+  // Mirror both dials into refs so the stable callbacks (vfxShake) read current
+  // values; written in an effect, never during render.
+  useEffect(() => {
+    fxLevelRef.current = fxLevel;
+    fxCalmClockRef.current = fxCalmClock;
+  });
   // Canvas VFX plays staged during render (the diff/zone claims happen in the
   // render pass) and flushed to the bus after commit, so render stays pure.
   const pendingVfxRef = useRef<VfxPlay[]>([]);
@@ -1105,7 +1114,7 @@ export function Board({
       el.classList.add("fx-board-shake");
       if (shake === "big") el.classList.add("fx-board-shake--big");
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
   // Square whose effect-explanation popover is currently open (hover, focus,
   // or tap). One at a time; the Board owns open/close, EffectPopover just
@@ -1186,7 +1195,12 @@ export function Board({
   // signatureCard) to pull the just-played card's outcome without re-running
   // on every buff change.
   const buffsRef = useRef(buffs);
-  buffsRef.current = buffs;
+  // Mirror latest buffs into a ref (written in an effect, never during render)
+  // so the cast effect below can read the just-played card's outcome without
+  // depending on buffs and re-running on every buff change.
+  useEffect(() => {
+    buffsRef.current = buffs;
+  });
   const castSeenKeyRef = useRef(0);
   // Play keys whose lead art already rendered through the piece-diff path;
   // the cast-level generated lead only fires for diff-less plays (clock,
@@ -1210,7 +1224,9 @@ export function Board({
         }
       }
     }
-    setCast({ key: signatureCard.key, id: signatureCard.id, category: def.category, tier: def.tier, outcome });
+    queueMicrotask(() =>
+      setCast({ key: signatureCard.key, id: signatureCard.id, category: def.category, tier: def.tier, outcome }),
+    );
     const intensity = castIntensity(def.tier);
     if (!sigOf(signatureCard.id) && intensity !== "sleek") {
       playCastVoice(def.category, intensity === "marquee");
@@ -1239,6 +1255,14 @@ export function Board({
   //    diffing it here read as a card removal — the "atomic explosion when
   //    you premove" bug. History review boards also route through here and
   //    now stay silent for free.
+  //
+  // This animation pipeline deliberately reads and writes refs during render:
+  // the derived transforms are applied imperatively in the layout effect below
+  // so React never re-renders them, which is what stops an unrelated re-render
+  // (hover, selection) from snapping a piece mid-flight. Routing this through
+  // state would reintroduce that snapping, so react-hooks/refs is intentionally
+  // suppressed for this block rather than rewritten.
+  /* eslint-disable react-hooks/refs */
   if (prevPiecesRef.current && prevPiecesRef.current !== board.pieces) {
     animsRef.current = computeAnims(
       prevPiecesRef.current,
@@ -1350,6 +1374,7 @@ export function Board({
     dropSkipRef.current = null;
   }
   prevFxPiecesRef.current = fxPieces;
+  /* eslint-enable react-hooks/refs */
 
   // Start the animations before paint: place each tagged piece on its origin
   // square via transform, force a reflow, then transition to rest. All
@@ -1424,7 +1449,7 @@ export function Board({
     if (detonate) playExplosion();
     if (morph) playTransform();
     if (summon) playSummon();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [fxPieces]);
 
   const movesFrom = useMemo(() => {
@@ -1730,6 +1755,10 @@ export function Board({
   // public, so both players build the identical sequence (never gated on the
   // viewer), and it is keyed to the play key via zoneSigSeenKeyRef so it fires
   // exactly once and an unrelated re-render (hover, resize) never replays it.
+  // Same deliberate render-phase ref pattern as the piece-diff above (staged
+  // once per play key, consumed imperatively), so react-hooks/refs is suppressed
+  // rather than rewritten.
+  /* eslint-disable react-hooks/refs */
   {
     const ex = buffs?.extraMoves;
     if (ex) {
@@ -1851,6 +1880,7 @@ export function Board({
     // instant the next card is played.
     zoneSigRef.current = marks;
   }
+  /* eslint-enable react-hooks/refs */
 
   // Entrance voices for the persistent square effects: each family sounds
   // exactly once, when a square first gains the effect, matching the visual
@@ -1968,9 +1998,11 @@ export function Board({
   // drops against the move list from that moment — if the opponent moved (or
   // a premove fired) mid-drag, a perfectly good drop would silently die.
   const tryPlayRef = useRef(tryPlay);
-  tryPlayRef.current = tryPlay;
   const targetsRef = useRef(targets);
-  targetsRef.current = targets;
+  useEffect(() => {
+    tryPlayRef.current = tryPlay;
+    targetsRef.current = targets;
+  });
 
   // Everything happens on pointer *down*, lichess-style: pressing a legal
   // destination plays the move immediately (no waiting for the release —
@@ -2054,7 +2086,7 @@ export function Board({
     // never nukes the queue. We only reach here on a tap that played no move and
     // grabbed no piece, so this can never disturb tap-to-move or premove making.
     if (e.pointerType === "touch" && premoves && premoves.length > 0 && onCancelPremove) {
-      const now = e.timeStamp || Date.now();
+      const now = e.timeStamp || nowMs();
       const prev = lastTapRef.current;
       if (!hadSelection && prev && prev.sq === sq && now - prev.t < 320) {
         lastTapRef.current = null;
@@ -2548,6 +2580,10 @@ export function Board({
           className="grid grid-cols-8 grid-rows-8 w-full h-full select-none [touch-action:none]"
           onContextMenu={(e) => e.preventDefault()}
         >
+          {/* Per-square render reads the staged animation refs (fx, zone
+              signature, piece anims) — the same deliberate imperative pipeline
+              documented above, so react-hooks/refs is suppressed here too. */}
+          {/* eslint-disable-next-line react-hooks/refs */}
           {orderedSquares.map((sq) => {
             const f = FILE(sq), r = RANK(sq);
             const isLight = (f + r) % 2 === 1;
@@ -3074,6 +3110,9 @@ export function Board({
             cardIcon={BUFF_BY_ID[cast.id]?.icon}
           />
         )}
+        {/* extraBannerRef is staged during render by the extra-moves block
+            above and consumed imperatively, same deliberate ref pattern. */}
+        {/* eslint-disable react-hooks/refs */}
         {extraBannerRef.current && (
           <ExtraTurnsBanner
             key={`exb-${extraBannerRef.current.key}`}
@@ -3082,6 +3121,7 @@ export function Board({
             total={extraBannerRef.current.total}
           />
         )}
+        {/* eslint-enable react-hooks/refs */}
         {cast && BUFF_BY_ID[cast.id] && (
           <PlayAnnouncement key={`ann-${cast.key}`} name={BUFF_BY_ID[cast.id]!.name} tier={cast.tier} outcome={cast.outcome} />
         )}
@@ -3093,6 +3133,10 @@ export function Board({
             zone-signature path instead, so they are skipped to avoid a double
             lead). Suppressed whenever the piece-diff path already led this
             play key. */}
+        {/* Both the lead-suppression and the zone-claim checks below read
+            play-key refs the animation blocks staked during render (deliberate
+            render-phase reads, see those blocks above). */}
+        {/* eslint-disable react-hooks/refs */}
         {!fxHiddenPref &&
           !fxCalmClock &&
           cast &&
@@ -3128,6 +3172,7 @@ export function Board({
               </div>
             );
           })()}
+        {/* eslint-enable react-hooks/refs */}
 
         {/* Drawn annotations: arrows above the pieces, clicks pass through. */}
         {(arrows.length > 0 || (rightDrag && rightDrag.hover !== rightDrag.from)) && (

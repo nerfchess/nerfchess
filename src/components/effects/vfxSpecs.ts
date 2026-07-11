@@ -1364,7 +1364,7 @@ export function runVfxSelfCheck(): void {
         if (tier >= 4 && !CARD_VFX[id]) missing.push(`${id} (tier ${tier})`);
       }
       if (missing.length > 0) {
-        // eslint-disable-next-line no-console
+         
         console.warn(
           `[vfxSpecs] ${missing.length} tier>=4 bespoke card(s) missing a CARD_VFX entry:`,
           missing,
@@ -1372,7 +1372,7 @@ export function runVfxSelfCheck(): void {
       }
       const orphaned = Object.keys(CARD_VFX).filter((id) => !(id in signatures) && !(id in plays));
       if (orphaned.length > 0) {
-        // eslint-disable-next-line no-console
+         
         console.warn(
           `[vfxSpecs] CARD_VFX entries with no SIGNATURES / plugin-PLAYS counterpart:`,
           orphaned,

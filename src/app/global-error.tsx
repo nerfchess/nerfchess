@@ -64,8 +64,13 @@ export default function GlobalError({ reset }: { error: Error & { digest?: strin
               gap: "8px",
             }}
           >
-            <a
-              href="/"
+            <button
+              type="button"
+              onClick={() => {
+                // A hard navigation fully resets the crashed app tree, which is
+                // exactly what recovering from a global error wants.
+                window.location.href = "/";
+              }}
               style={{
                 ...buttonBase,
                 background: "rgba(255,255,255,0.04)",
@@ -74,7 +79,7 @@ export default function GlobalError({ reset }: { error: Error & { digest?: strin
               }}
             >
               Back to the game
-            </a>
+            </button>
             <button
               onClick={reset}
               style={{

@@ -55,7 +55,9 @@ function useCountdown(deadline: number, onExpire?: () => void) {
   const [leftMs, setLeftMs] = useState(() => Math.max(0, deadline - Date.now()));
   const expiredRef = useRef(false);
   const onExpireRef = useRef(onExpire);
-  onExpireRef.current = onExpire;
+  useEffect(() => {
+    onExpireRef.current = onExpire;
+  });
 
   useEffect(() => {
     expiredRef.current = false;
@@ -193,6 +195,21 @@ function clampPanelPos(x: number, y: number, w: number, h: number): { x: number;
   const maxX = Math.max(0, window.innerWidth - w);
   const maxY = Math.max(0, window.innerHeight - h);
   return { x: Math.min(Math.max(0, x), maxX), y: Math.min(Math.max(0, y), maxY) };
+}
+
+/** Remembered panel position, read once on the client (guarded for SSR). A
+ * generous size estimate; the real size re-clamps once the panel mounts. */
+function readStoredDragPos(): { x: number; y: number } | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(DRAFT_PANEL_POS_KEY);
+    if (!raw) return null;
+    const p = JSON.parse(raw) as { x?: unknown; y?: unknown };
+    if (typeof p?.x === "number" && typeof p?.y === "number") {
+      return clampPanelPos(p.x, p.y, 304, 360);
+    }
+  } catch {}
+  return null;
 }
 
 /** Static circular-arrow mark for the reroll control (no motion, no emoji). */
@@ -358,7 +375,7 @@ export function DraftOverlay({
   const [bankDeltas, setBankDeltas] = useState<{ dx: number; dy: number }[] | null>(null);
   // True once the deal has settled: later animations (dim, select) run
   // without the deal's stagger delays.
-  const [dealt, setDealt] = useState(false);
+  const [dealt, setDealt] = useState(() => !!reduceMotion);
   // A reroll request is in flight (online: awaiting the server's fresh offer):
   // disables the reroll control until the new cards deal in. Reset by the deal
   // effect whenever the offer changes.
@@ -381,14 +398,20 @@ export function DraftOverlay({
   // the cards deal. Tap to tear immediately; it auto-tears after a beat so a
   // player who just wants cards is never held up. Skipped entirely under
   // reduced motion and in the minimized panel.
-  const [packStage, setPackStage] = useState<"sealed" | "tearing" | "open">("open");
+  const [packStage, setPackStage] = useState<"sealed" | "tearing" | "open">(() =>
+    reduceMotion || minimized ? "open" : "sealed",
+  );
   // Measured flight path from the chosen card to the dock, captured at
   // confirm time (measuring during render would thrash layout).
   const [pocket, setPocket] = useState<{ dx: number; dy: number } | null>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const bankBtnRef = useRef<HTMLButtonElement | null>(null);
   const bankTimer = useRef<number | null>(null);
+  // Synchronous double-commit guard. `committedRef` is read inside handlers so a
+  // second click can never slip through before a re-render; `committed` mirrors
+  // it for render-time gating (a ref must not drive rendering).
   const committedRef = useRef(false);
+  const [committed, setCommitted] = useState(false);
   // When the current selection happened: a second click on the same card
   // only confirms after CONFIRM_GUARD_MS (accidental double-click guard).
   const selectedAtRef = useRef(0);
@@ -398,25 +421,14 @@ export function DraftOverlay({
   // default corner can sit on top of the clock, so the header is a drag handle
   // (pointer AND touch) and the chosen spot is remembered for the session.
   // `dragPos` null = use the default bottom-right CSS anchor.
-  const [dragPos, setDragPos] = useState<{ x: number; y: number } | null>(null);
+  const [dragPos, setDragPos] = useState<{ x: number; y: number } | null>(readStoredDragPos);
   const [dragging, setDragging] = useState(false);
   const panelRef = useRef<HTMLDivElement | null>(null);
   const dragOffset = useRef<{ dx: number; dy: number } | null>(null);
   const dragPosRef = useRef<{ x: number; y: number } | null>(null);
-  dragPosRef.current = dragPos;
-
-  // Restore any remembered position once, clamped to the current viewport
-  // (a generous size estimate; the real size re-clamps once the panel mounts).
   useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(DRAFT_PANEL_POS_KEY);
-      if (!raw) return;
-      const p = JSON.parse(raw) as { x?: unknown; y?: unknown };
-      if (typeof p?.x === "number" && typeof p?.y === "number") {
-        setDragPos(clampPanelPos(p.x, p.y, 304, 360));
-      }
-    } catch {}
-  }, []);
+    dragPosRef.current = dragPos;
+  }, [dragPos]);
 
   // Once the compact panel actually mounts, re-clamp any restored position with
   // its real measured size so it can never sit partly off a short screen.
@@ -425,7 +437,7 @@ export function DraftOverlay({
     const rect = panelRef.current?.getBoundingClientRect();
     if (!rect) return;
     setDragPos((prev) => (prev ? clampPanelPos(prev.x, prev.y, rect.width, rect.height) : prev));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [minimized]);
 
   // Keep the panel on screen if the viewport shrinks (rotate, keyboard open).
@@ -481,7 +493,12 @@ export function DraftOverlay({
   // A reroll keeps the same offer index but swaps the cards, so key the deal
   // on both: bumping `rerolled` replays the deal (and chime) for fresh cards.
   const dealKey = `${offer.index}:${offer.rerolled ?? 0}`;
-  useEffect(() => {
+  // Reset all per-offer state the instant a new offer (or reroll) arrives.
+  // Adjusting state during render on a key change is React's sanctioned reset
+  // pattern and avoids the stale-frame flash a post-render effect would leave.
+  const [dealtKey, setDealtKey] = useState(dealKey);
+  if (dealtKey !== dealKey) {
+    setDealtKey(dealKey);
     setSelected(null);
     setChosen(null);
     setPocket(null);
@@ -491,20 +508,24 @@ export function DraftOverlay({
     setBankArmed(false);
     setTucked(false);
     setRerolling(false);
+    setCommitted(false);
+    setDealt(!!reduceMotion);
+    // Fresh cards arrive as a sealed pack (full overlay, motion on); the deal
+    // timer starts once the pack tears open (see the pack effects below). The
+    // minimized panel gets the pack too (a reroll should ALWAYS show the box)
+    // but on a fast fuse since that panel runs on the player's own clock.
+    setPackStage(reduceMotion ? "open" : "sealed");
+  }
+  // Ref bookkeeping and the attention chime are side effects, so they stay in
+  // an effect keyed on the same offer identity (runs on mount and each deal).
+  useEffect(() => {
     // A genuinely new offer (or reroll) starts unpinned so it can auto-tuck
     // after its grace; only a manual re-open pins the CURRENT offer.
     userPinnedRef.current = false;
     committedRef.current = false;
     selectedAtRef.current = 0;
-    setDealt(!!reduceMotion);
-    // Fresh cards arrive as a sealed pack; the deal timer starts once the
-    // pack tears open (see the pack effects below). The minimized panel gets
-    // the pack too (owner: a reroll should ALWAYS show the box) but on a
-    // fast fuse since that panel runs on the player's own clock.
-    setPackStage(reduceMotion ? "open" : "sealed");
     // A fresh offer demands attention: the board is blocked until it resolves.
     playDraftChime();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dealKey]);
 
   // Pack lifecycle: sealed -> (tap or auto) tearing -> open. The card deal and
@@ -525,11 +546,9 @@ export function DraftOverlay({
   }, [packStage]);
   useEffect(() => {
     if (packStage !== "open") return;
-    if (reduceMotion) {
-      setDealt(true);
-      return;
-    }
-    const id = window.setTimeout(() => setDealt(true), DEAL_TOTAL_MS);
+    // Reduced motion still defers by a tick rather than setting synchronously,
+    // so the deal state settles outside the effect body (imperceptible at 0ms).
+    const id = window.setTimeout(() => setDealt(true), reduceMotion ? 0 : DEAL_TOTAL_MS);
     return () => window.clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [packStage]);
@@ -545,12 +564,13 @@ export function DraftOverlay({
   const commit = (i: number) => {
     if (committedRef.current) return;
     committedRef.current = true;
+    setCommitted(true);
     onPick(i);
   };
 
-  const selectCard = (i: number) => {
+  const selectCard = (i: number, at: number) => {
     setSelected(i);
-    selectedAtRef.current = Date.now();
+    selectedAtRef.current = at;
     // Reaching for a card means you are not banking after all.
     setBankArmed(false);
   };
@@ -589,16 +609,17 @@ export function DraftOverlay({
     setChosen(i);
   };
 
-  const choose = (i: number) => {
+  const choose = (i: number, at: number) => {
     if (chosen != null || banking) return;
     if (selected === i) {
       // Second click on the selected card confirms it, but only after the
       // guard window: an accidental double-click must not lock the pick in.
-      if (Date.now() - selectedAtRef.current < CONFIRM_GUARD_MS) return;
+      // `at` is the click event's timestamp, so the delta is real elapsed time.
+      if (at - selectedAtRef.current < CONFIRM_GUARD_MS) return;
       confirmCard(i);
       return;
     }
-    selectCard(i);
+    selectCard(i, at);
   };
 
   const confirmSelection = () => {
@@ -638,6 +659,7 @@ export function DraftOverlay({
   const handleBank = () => {
     if (chosen != null || banking || committedRef.current) return;
     committedRef.current = true;
+    setCommitted(true);
     if (reduceMotion) {
       onBank();
       return;
@@ -657,7 +679,7 @@ export function DraftOverlay({
   // Reroll: discard the current offer, roll fresh cards at the same tiers. The
   // offer stays open (no commit), so this never touches committedRef. The
   // `rerolling` guard blocks a double-fire until the new cards deal in.
-  const canReroll = rerollsLeft > 0 && !!onReroll && chosen == null && !banking && !committedRef.current;
+  const canReroll = rerollsLeft > 0 && !!onReroll && chosen == null && !banking && !committed;
   const rerollTimer = useRef<number | null>(null);
   const handleReroll = () => {
     if (!canReroll || rerolling) return;
@@ -695,17 +717,17 @@ export function DraftOverlay({
     // A committed pick renders the panel inert while the server (or engine)
     // resolves it; `chosen` alone is not enough because the commit-on-minimize
     // effect can have fired without an animation ever setting `chosen` late.
-    const settled = chosen != null || banking || committedRef.current;
-    const chooseMinimized = (i: number) => {
+    const settled = chosen != null || banking || committed;
+    const chooseMinimized = (i: number, at: number) => {
       if (settled) return;
       if (selected === i) {
         // Same double-click guard as the full overlay.
-        if (Date.now() - selectedAtRef.current < CONFIRM_GUARD_MS) return;
+        if (at - selectedAtRef.current < CONFIRM_GUARD_MS) return;
         setChosen(i);
         commit(i);
         return;
       }
-      selectCard(i);
+      selectCard(i, at);
     };
     // Tucked: the panel has stepped aside to a slim chip so it does not sit on
     // the board forever. It stays one tap from the cards (click re-opens) and a
@@ -813,7 +835,7 @@ export function DraftOverlay({
                     buff={def}
                     tier={card.tier}
                     compact
-                    onClick={!settled ? () => chooseMinimized(i) : undefined}
+                    onClick={!settled ? () => chooseMinimized(i, Date.now()) : undefined}
                   />
                 </div>
               );
@@ -1181,7 +1203,7 @@ export function DraftOverlay({
                 onClick={(e) => {
                   if (chosen != null || banking) return;
                   if ((e.target as HTMLElement).closest("button")) return;
-                  choose(i);
+                  choose(i, Date.now());
                 }}
                 // Parallax tilt: the pointer's position tips the card face in
                 // 3D (CSS vars read by .draft-card-front, so framer's own
@@ -1236,7 +1258,7 @@ export function DraftOverlay({
                     <BuffCard
                       buff={def}
                       tier={card.tier}
-                      onClick={chosen == null && !banking ? () => choose(i) : undefined}
+                      onClick={chosen == null && !banking ? () => choose(i, Date.now()) : undefined}
                     />
                     {/* Foil finish: tier 7+ faces carry a slow holographic
                         sheen that drifts across the card, TCG-rare style. */}

@@ -7,7 +7,8 @@ export const dynamic = "force-dynamic";
 
 const MAX_POST_CHARS = 500;
 
-export async function POST(request: Request, { params }: { params: { slug: string } }) {
+export async function POST(request: Request, props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
   const db = await getDb();
   const user = await userForSession(db, sessionTokenFromCookieHeader(request.headers.get("cookie")));
   if (!user) return NextResponse.json({ error: "Sign in to post." }, { status: 401 });
@@ -48,7 +49,8 @@ export async function POST(request: Request, { params }: { params: { slug: strin
   });
 }
 
-export async function DELETE(request: Request, { params }: { params: { slug: string } }) {
+export async function DELETE(request: Request, props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
   const db = await getDb();
   const user = await userForSession(db, sessionTokenFromCookieHeader(request.headers.get("cookie")));
   if (!user) return NextResponse.json({ error: "Sign in first." }, { status: 401 });

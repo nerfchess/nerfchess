@@ -46,9 +46,16 @@ export function ClockPill({
   // actually starts charging (startDelayMs counting down to zero).
   const [graceMs, setGraceMs] = useState(() => (active ? startDelayMs : 0));
 
-  useEffect(() => {
+  // Snap the display back to the authoritative clock values whenever they
+  // change (adjust during render), leaving the effect to run the tick loop.
+  const [prevSync, setPrevSync] = useState({ ms, active, startDelayMs });
+  if (prevSync.ms !== ms || prevSync.active !== active || prevSync.startDelayMs !== startDelayMs) {
+    setPrevSync({ ms, active, startDelayMs });
     setDisplayMs(ms);
     setGraceMs(active ? startDelayMs : 0);
+  }
+
+  useEffect(() => {
     if (!active) return;
 
     const startedAt = performance.now();

@@ -45,13 +45,16 @@ export function SettingsPanel({ open, onClose }: Props) {
 
   // Re-sync from storage each time the panel opens, matching the previous
   // behaviour where values were reloaded on open. Also start back on the
-  // first tab so the panel always opens in the same place.
-  useEffect(() => {
+  // first tab so the panel always opens in the same place. Handled on the
+  // open transition during render.
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (prevOpen !== open) {
+    setPrevOpen(open);
     if (open) {
       setSettings(loadSettings());
       setActiveTab(SECTIONS[0].id);
     }
-  }, [open]);
+  }
 
   if (!open) return null;
 
@@ -324,11 +327,14 @@ function CustomBackgroundControl({
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
 
-  // Track external changes (reset, server sync) while the panel is open.
-  useEffect(() => {
+  // Track external changes (reset, server sync); adjust on the change during
+  // render rather than in an effect.
+  const [prevUrl, setPrevUrl] = useState(url);
+  if (prevUrl !== url) {
+    setPrevUrl(url);
     setDraft(url);
     setInvalid(false);
-  }, [url]);
+  }
 
   const apply = () => {
     const clean = sanitizeCustomBgUrl(draft);

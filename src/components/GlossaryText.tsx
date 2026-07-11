@@ -27,10 +27,11 @@ export function GlossaryText({ text, className }: Props) {
   let last = 0;
   let key = 0;
 
-  // Fresh scan each render: lastIndex is stateful on a shared regex.
-  GLOSSARY_REGEX.lastIndex = 0;
+  // Fresh scan each render on a local regex clone: `lastIndex` is stateful, so
+  // reusing the shared module regex would mutate external state during render.
+  const re = new RegExp(GLOSSARY_REGEX.source, GLOSSARY_REGEX.flags);
   let m: RegExpExecArray | null;
-  while ((m = GLOSSARY_REGEX.exec(text)) !== null) {
+  while ((m = re.exec(text)) !== null) {
     const matched = m[0];
     const norm = matched.toLowerCase();
     const definition = lookupTerm(matched);
@@ -43,7 +44,7 @@ export function GlossaryText({ text, className }: Props) {
       last = m.index + matched.length;
     }
     // Guard against zero-length matches looping forever.
-    if (GLOSSARY_REGEX.lastIndex === m.index) GLOSSARY_REGEX.lastIndex++;
+    if (re.lastIndex === m.index) re.lastIndex++;
   }
 
   if (last === 0) return className ? <span className={className}>{text}</span> : <>{text}</>;
