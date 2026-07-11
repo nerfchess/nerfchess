@@ -6,7 +6,8 @@ import { computePlayerStats, type StatsGameRow } from "@/lib/playerStats";
 export const dynamic = "force-dynamic";
 
 // Detailed statistics for one player, computed from their recorded games.
-export async function GET(_request: Request, { params }: { params: { username: string } }) {
+export async function GET(_request: Request, props: { params: Promise<{ username: string }> }) {
+  const params = await props.params;
   const username = params.username.trim().toLowerCase();
   // The account lookup stays on D1; the games it computes over are on Postgres.
   const db = await getDb();

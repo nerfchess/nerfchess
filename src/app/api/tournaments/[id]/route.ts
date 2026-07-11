@@ -44,7 +44,8 @@ export type StandingRow = {
   joined_at: number;
 };
 
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const db = await getDb();
 
   const row = await db

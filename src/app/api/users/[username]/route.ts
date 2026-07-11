@@ -5,7 +5,8 @@ import { categoryForTimeControl } from "@/lib/speed";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(_request: Request, { params }: { params: { username: string } }) {
+export async function GET(_request: Request, props: { params: Promise<{ username: string }> }) {
+  const params = await props.params;
   const username = params.username.trim().toLowerCase();
   // Account + per-category ratings stay on D1; the game archive is on Postgres.
   const db = await getDb();

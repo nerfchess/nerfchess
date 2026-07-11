@@ -3,7 +3,8 @@ import { pgFirst } from "@/lib/server/pg";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(_request: Request, { params }: { params: { id: string } }) {
+export async function GET(_request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const id = params.id.trim().toUpperCase();
   if (!/^[A-Z2-9]{4,12}$/.test(id)) {
     return NextResponse.json({ error: "Bad game id." }, { status: 400 });
