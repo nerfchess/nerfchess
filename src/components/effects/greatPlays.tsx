@@ -1345,14 +1345,6 @@ const GLYPH: Record<string, ReactNode> = {
       <path d="M5 1.4 L6 2.8 H4 Z" fill="#c9cdd6" stroke="#3a3a40" strokeWidth="0.4" {...SJ} />
     </Gl>
   ),
-  // the 2x2 sanctum, candle-lit
-  sanctuary_zone: (
-    <Gl>
-      <path d="M2 2 H8 V8 H2 Z M5 2 V8 M2 5 H8" fill="none" stroke="#5fc9b0" strokeWidth="0.6" {...SJ} />
-      <path d="M3.5 3.1 C3.9 3.5 3.9 3.9 3.5 4.3 C3.1 3.9 3.1 3.5 3.5 3.1 Z" fill="#ffd76a" />
-      <path d="M6.5 6.1 C6.9 6.5 6.9 6.9 6.5 7.3 C6.1 6.9 6.1 6.5 6.5 6.1 Z" fill="#ffd76a" />
-    </Gl>
-  ),
   // the bulwark tower, spiked against all comers
   ww_iron_bulwark: (
     <Gl>
@@ -2108,9 +2100,6 @@ export const PLAYS: Record<string, SigPlugin> = {
   }),
   ironclad: G(WarBanner, ["#aab6c8", "#e3e9f2", "#3a4556"], GLYPH.ironclad, {
     ordering: "sweep", staggerMs: 50, victims: "all", hasLead: true, sound: "aegis", source: "shield",
-  }),
-  sanctuary_zone: G(WarBanner, ["#5fc9b0", "#ffd76a", "#1c4a3a"], GLYPH.sanctuary_zone, {
-    ordering: "radial", staggerMs: 50, victims: "all", hasLead: true, sound: "cathedral", source: "shield",
   }),
   ww_iron_bulwark: G(WarBanner, ["#8a94a8", "#c94a3a", "#3a3a40"], GLYPH.ww_iron_bulwark, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall", source: "shield",

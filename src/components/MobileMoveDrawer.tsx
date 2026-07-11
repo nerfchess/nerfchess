@@ -35,9 +35,9 @@ export function MobileMoveDrawer({
   // (iOS Safari doesn't shrink the layout viewport, so a bottom-fixed drawer
   // would otherwise sit underneath it while typing in chat).
   const [keyboardInset, setKeyboardInset] = useState(0);
-  useEffect(() => {
-    if (open) setSeenChat(chatCount);
-  }, [open, chatCount]);
+  // While the drawer is open, chat is considered read up to the latest count;
+  // tracked during render so the unread badge clears without an extra render.
+  if (open && seenChat !== chatCount) setSeenChat(chatCount);
 
   useEffect(() => {
     const vv = window.visualViewport;

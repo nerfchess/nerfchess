@@ -74,15 +74,43 @@ export const HEXES_T4: Buff[] = [
     walnutTarget(3, ["q"]),
   ),
 
-  // --- freeze: one targeted piece for 4 turns -----------------------------
+  // --- freeze: a targeted piece AND its neighbors, briefly ------------------
   H(
     {
       id: "cryostasis",
       name: "Cryostasis",
-      description: "Freeze one enemy piece you target so it cannot move for 4 of their turns. Kings cannot be targeted.",
-      flavor: "Locked solid in a block of ice.",
+      description: "Flash-freeze one enemy piece you target: it and every enemy piece beside it are frozen for 1 of their turns. Kings are never frozen.",
+      flavor: "The cold spreads faster than the warning.",
     },
-    freezeTarget(4),
+    activated(
+      (_inst, api, picks) =>
+        picks.length > 0
+          ? null
+          : {
+              kind: "square",
+              label: "Choose the enemy piece at the center of the freeze",
+              squares: mySquares(api.board, api.opp).filter(
+                (sq) => api.board.pieces[sq]!.type !== "k",
+              ),
+            },
+      (_inst, api, picks) => {
+        const c = picks[0]?.square;
+        if (c == null) return;
+        addEffect(api, { kind: "freeze", sq: c, owner: api.opp, turns: 1 });
+        for (let df = -1; df <= 1; df++) {
+          for (let dr = -1; dr <= 1; dr++) {
+            if (df === 0 && dr === 0) continue;
+            const f = FILE(c) + df, r = RANK(c) + dr;
+            if (f < 0 || f > 7 || r < 0 || r > 7) continue;
+            const sq = SQ(f, r);
+            const p = api.board.pieces[sq];
+            if (p && p.color === api.opp && p.type !== "k") {
+              addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 1 });
+            }
+          }
+        }
+      },
+    ),
   ),
 
   // --- freeze: two targeted enemy pieces for 2 turns ----------------------
@@ -152,33 +180,22 @@ export const HEXES_T4: Buff[] = [
     ),
   ),
 
-  // --- no_pawn_advance: pawns pinned for 3 turns --------------------------
+  // --- mobility clamp: rooks reduced to a crawl for 4 turns ----------------
   H(
     {
       id: "frozen_furrows",
       name: "Frozen Furrows",
-      description: "Your opponent's pawns cannot advance for their next 3 turns. They may still capture diagonally.",
-      flavor: "The fields freeze over and nothing moves forward.",
-      // Board already paints no_pawn_advance; fx carried for consistency.
-      fx: { motif: "anchor", pieces: ["p"] },
+      description: "The cart wheels freeze solid in the ruts: your opponent's rooks can move at most 1 square for their next 4 turns.",
+      flavor: "The fields freeze over and nothing rolls through.",
+      fx: { motif: "anchor", pieces: ["r"] },
     },
-    instant((_inst, api) => {
-      addEffect(api, { kind: "no_pawn_advance", against: api.opp, turns: 3 });
-    }),
-  ),
-
-  // --- draft denial: block one draft and nullify the next -----------------
-  H(
-    {
-      id: "burned_dispatches",
-      name: "Burned Dispatches",
-      description: "Your opponent's next draft is skipped outright, and the draft after that arrives nullified and inert.",
-      flavor: "Two orders lost: one to the fire, one to the smudge.",
-    },
-    instant((_inst, api) => {
-      api.theirs.flags.blockedDrafts = (api.theirs.flags.blockedDrafts ?? 0) + 1;
-      api.theirs.flags.nullifyIncoming = (api.theirs.flags.nullifyIncoming ?? 0) + 1;
-    }),
+    curse(4, (moves) =>
+      moves.filter(
+        (m) =>
+          m.piece !== "r" ||
+          Math.max(Math.abs(FILE(m.to) - FILE(m.from)), Math.abs(RANK(m.to) - RANK(m.from))) <= 1,
+      ),
+    ),
   ),
 
   // --- skip plus a hangover: lose a turn AND 20 seconds off the clock ------
@@ -196,15 +213,60 @@ export const HEXES_T4: Buff[] = [
     }),
   ),
 
-  // --- petrify: one targeted rook for 3 turns -----------------------------
+  // --- targeted rail: one enemy rook is locked to its current rank ---------
   H(
     {
       id: "ironbound_rook",
       name: "Ironbound Rook",
-      description: "Turn one enemy rook you target into a walnut for 3 of their turns: a walnut is so heavy it can only shuffle one square at a time.",
-      flavor: "Banded and bolted, the tower will not budge.",
+      description: "Bind one enemy rook to its rank: for 4 of their turns it cannot leave the rank it stands on. It may still slide sideways.",
+      flavor: "Banded, bolted, and rolled onto a rail.",
     },
-    walnutTarget(3, ["r"]),
+    {
+      kind: "activated",
+      spendOnUse: false,
+      // One activation only: once bound, the rail never re-aims.
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null
+          ? null
+          : {
+              kind: "square",
+              label: "Choose the enemy rook to bind",
+              squares: mySquares(api.board, api.opp, "r"),
+            },
+      effect: (inst, _api, picks) => {
+        if (inst.state.sq != null) return;
+        const sq = picks[0]?.square;
+        if (sq == null) return;
+        inst.state.sq = sq;
+        inst.state.turns = 4;
+      },
+      filterOpponentMoves: (moves, inst, _api) => {
+        const sq = inst.state.sq as number | undefined;
+        if (sq == null || ((inst.state.turns as number) ?? 0) <= 0) return moves;
+        const kept = moves.filter((m) => m.from !== sq || RANK(m.to) === RANK(sq));
+        // Safety net: never strand the opponent with zero moves.
+        return kept.length > 0 ? kept : moves;
+      },
+      onMovePlayed: (inst, move, api) => {
+        const sq = inst.state.sq as number | undefined;
+        if (sq == null) return;
+        // Track the bound rook; the bind ends if it is captured.
+        if (move.to === sq && move.from !== sq) {
+          inst.spent = true;
+          return;
+        }
+        if (move.from === sq) inst.state.sq = move.to;
+        if (move.color === api.opp) {
+          const t = ((inst.state.turns as number) ?? 0) - 1;
+          inst.state.turns = t;
+          if (t <= 0) inst.spent = true;
+        }
+      },
+      status: (inst) =>
+        inst.state.sq == null
+          ? "activate to bind a rook"
+          : `${(inst.state.turns as number) ?? 0} of their turns left`,
+    },
   ),
 
   // --- timed filter: neither rook nor queen may move for 2 turns ----------

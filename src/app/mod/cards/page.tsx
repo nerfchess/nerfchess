@@ -107,7 +107,7 @@ export default function ModCardsPage() {
   };
 
   useEffect(() => {
-    if (isMod) void loadOverrides();
+    if (isMod) void (async () => { await loadOverrides(); })();
   }, [isMod]);
 
   const rows = useMemo(() => {

@@ -44,7 +44,9 @@ export default function HistoryPage() {
   const [filter, setFilter] = useState<Filter>("all");
   const [selected, setSelected] = useState<CompletedGame | null>(null);
 
-  useEffect(() => setGames(loadGameHistory()), []);
+  useEffect(() => {
+    queueMicrotask(() => setGames(loadGameHistory()));
+  }, []);
 
   const filtered = useMemo(() => {
     if (!games) return [];

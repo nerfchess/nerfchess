@@ -10,11 +10,11 @@
 import { Buff } from "./shared";
 import {
   card,
+  activated,
   addEffect,
   instant,
   mySquares,
   removeEnemies,
-  skipOpponent,
 } from "./shared";
 
 export const MYSTIC_FATE: Buff[] = [
@@ -23,14 +23,14 @@ export const MYSTIC_FATE: Buff[] = [
       id: "oracles_eye",
       name: "Oracle's Eye",
       description:
-        "The oracle inhales the vapors and names a number: see the tier of your opponent's next draft.",
+        "The oracle inhales the vapors and names a better price: your bank offer improves by one tier.",
       tier: 2,
-      category: "info",
+      category: "draft",
       boon: true,
       flavor: "The future is blurry. The price list is not.",
     },
     instant((_inst, api) => {
-      api.mine.flags.seeOppTier = true;
+      api.mine.flags.bankBonus = Math.min(1, (api.mine.flags.bankBonus ?? 0) + 1);
     }),
   ),
   card(
@@ -38,12 +38,26 @@ export const MYSTIC_FATE: Buff[] = [
       id: "threads_of_fate",
       name: "Threads of Fate",
       description:
-        "You find your opponent's thread on the loom and snip one stitch: they skip their next turn.",
+        "The loom repays every cut thread: for your opponent's next 3 captures, you weave an extra move into your reply.",
       tier: 5,
       category: "tempo",
       flavor: "The Fates do not take requests. You did not ask.",
     },
-    skipOpponent(1),
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.charges = 3;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.opp || !move.captured) return;
+        const left = (inst.state.charges as number) ?? 0;
+        if (left <= 0) return;
+        inst.state.charges = left - 1;
+        if (left - 1 <= 0) inst.spent = true;
+        api.bs.extraMoves[api.me] += 1;
+      },
+      status: (inst) => `${(inst.state.charges as number) ?? 3} of their captures left`,
+    },
   ),
   card(
     {
@@ -64,26 +78,40 @@ export const MYSTIC_FATE: Buff[] = [
       id: "the_tower",
       name: "The Tower",
       description:
-        "You deal your opponent the worst card in the deck: their next card draft crumbles and is skipped entirely.",
-      tier: 5,
-      category: "draft",
+        "You deal your opponent the worst card in the deck: name one enemy rook and it crumbles to rubble where it stands.",
+      tier: 4,
+      category: "attack",
       flavor: "Upright: ruin. Reversed: also ruin.",
     },
-    instant((_inst, api) => {
-      api.theirs.flags.blockedDrafts = (api.theirs.flags.blockedDrafts ?? 0) + 1;
-    }),
+    removeEnemies(1, ["r"]),
   ),
   card(
     {
       id: "death_arcana",
       name: "The Death Arcana",
       description:
-        "The thirteenth card turns face up: name one enemy knight, bishop, rook, or queen and its story ends here.",
+        "The thirteenth card turns face up and names its mark: choose one enemy piece except a king. It is doomed: after 4 of their turns it dies, wherever it has run to. Only being captured first spares it the mark.",
       tier: 6,
       category: "attack",
       flavor: "It does not mean change this time. It means exactly what it shows.",
     },
-    removeEnemies(1, ["n", "b", "r", "q"]),
+    activated(
+      (_inst, api, picks) =>
+        picks.length > 0
+          ? null
+          : {
+              kind: "square",
+              label: "Choose the piece the arcana marks",
+              squares: mySquares(api.board, api.opp).filter(
+                (sq) => api.board.pieces[sq]!.type !== "k",
+              ),
+            },
+      (_inst, api, picks) => {
+        const sq = picks[0]?.square;
+        if (sq == null) return;
+        addEffect(api, { kind: "timed_loss", owner: api.opp, sq, turns: 4, then: "remove" });
+      },
+    ),
   ),
   card(
     {

@@ -55,9 +55,13 @@ export default function PlayPage() {
   const [account, setAccount] = useState<AccountUser | null>(null);
   const [starting, setStarting] = useState(false);
   useEffect(() => {
-    const r = loadRating();
-    setRating(Math.round(r.rating));
-    setGames(r.games);
+    // loadRating() reads localStorage (client-only); defer the paint off the
+    // synchronous effect body so it doesn't cascade a render inline.
+    queueMicrotask(() => {
+      const r = loadRating();
+      setRating(Math.round(r.rating));
+      setGames(r.games);
+    });
     fetchMe()
       .then((me) => setAccount(me ?? null))
       .catch(() => {});

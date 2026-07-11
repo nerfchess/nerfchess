@@ -30,10 +30,13 @@ export function SpectatorPill({ n, names }: { n: number; names: string[] }) {
     };
   }, [open]);
 
-  // Collapse automatically once the last watcher leaves.
-  useEffect(() => {
+  // Collapse automatically once the last watcher leaves (adjust state on the
+  // change during render rather than in an effect).
+  const [prevN, setPrevN] = useState(n);
+  if (prevN !== n) {
+    setPrevN(n);
     if (n === 0) setOpen(false);
-  }, [n]);
+  }
 
   if (n <= 0) return null;
 

@@ -284,6 +284,7 @@ export type MPEvent =
   | { type: "watchers"; n: number; names?: string[] }
   | { type: "lobby"; data: MPLobby }
   | { type: "opponent-gone" }
+  | { type: "god-panel-used"; by: string; action: string; at: number }
   | { type: "disconnected" }
   | { type: "reconnecting"; attempt: number }
   | { type: "error"; message: string; code?: string };
@@ -317,6 +318,7 @@ type ServerFrame =
   | { t: "dtNerfPicked"; d: { color: Color } }
   | { t: "watchers"; d: { n: number; names?: string[] } }
   | { t: "lobby"; d: MPLobby }
+  | { t: "godUsed"; d: { by: string; action: string; at: number } }
   | { t: "opponentGone" }
   | { t: "error"; d: { code?: string; message?: string } }
   | { t: "n"; d?: { wc?: number; bc?: number } };
@@ -791,6 +793,9 @@ export class MPSession {
         break;
       case "lobby":
         this.emit({ type: "lobby", data: frame.d });
+        break;
+      case "godUsed":
+        this.emit({ type: "god-panel-used", by: frame.d.by, action: frame.d.action, at: frame.d.at });
         break;
       case "opponentGone":
         this.emit({ type: "opponent-gone" });

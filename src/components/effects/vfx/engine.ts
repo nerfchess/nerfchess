@@ -31,6 +31,35 @@ function mulberry32(seed: number): () => number {
 }
 
 /* ------------------------------------------------------------------ */
+/* cached smoke sprites: one soft-radial puff per color, blitted instead of   */
+/* rebuilding a radial gradient per particle per frame.                       */
+
+const SMOKE_SPRITE_PX = 64;
+const smokeSpriteCache = new Map<string, HTMLCanvasElement>();
+
+function smokeSprite(color: string): HTMLCanvasElement {
+  let sprite = smokeSpriteCache.get(color);
+  if (sprite) return sprite;
+  sprite = document.createElement("canvas");
+  sprite.width = sprite.height = SMOKE_SPRITE_PX;
+  const sc = sprite.getContext("2d");
+  if (sc) {
+    const r = SMOKE_SPRITE_PX / 2;
+    const grad = sc.createRadialGradient(r, r, 0, r, r, r);
+    grad.addColorStop(0, color);
+    grad.addColorStop(1, "rgba(0,0,0,0)");
+    sc.fillStyle = grad;
+    sc.beginPath();
+    sc.arc(r, r, r, 0, Math.PI * 2);
+    sc.fill();
+  }
+  // Bounded so an exotic palette can never grow this without limit.
+  if (smokeSpriteCache.size > 48) smokeSpriteCache.clear();
+  smokeSpriteCache.set(color, sprite);
+  return sprite;
+}
+
+/* ------------------------------------------------------------------ */
 /* entity types                                                        */
 
 type ParticleShape = "spark" | "shard" | "ember" | "smoke" | "debris" | "sparkle";
@@ -129,7 +158,10 @@ export function createVfxEngine(
     const rect = (parent ?? canvas).getBoundingClientRect();
     w = Math.max(0, rect.width);
     h = Math.max(0, rect.height);
-    const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+    // DPR capped at 2: a DPR-3 phone would back the canvas at ~9x the CSS pixel
+    // count, and every particle fill/gradient pays that per frame on the main
+    // thread. 2 stays crisp on retina without the low-end tax.
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
     canvas.width = Math.max(1, Math.round(w * dpr));
     canvas.height = Math.max(1, Math.round(h * dpr));
     ctx?.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -170,7 +202,7 @@ export function createVfxEngine(
     y: number,
     o: Partial<Particle> = {}
   ): void {
-    push({
+    const p: Particle = {
       x,
       y,
       vx: 0,
@@ -188,7 +220,9 @@ export function createVfxEngine(
       seed: Math.random(),
       alpha: 1,
       ...o,
-    });
+    };
+    p.life *= playDur;
+    push(p);
   }
 
   /* ---------------- palette helpers ---------------- */
@@ -205,6 +239,10 @@ export function createVfxEngine(
   // overlapping play with a different value can briefly re-scale a pending
   // spawn, which is harmless: the dial is a device-global setting.
   let playScale = 1;
+  // The card-effect-duration setting (VfxPlay.durationScale): every particle
+  // lifetime and fx duration created while a play unwinds is stretched by it.
+  // Same overlapping-plays caveat as playScale — it is a device-global knob.
+  let playDur = 1;
 
   function impactCount(tier: number): number {
     // tier 4 ≈ 12 particles, tier 10 ≈ 60 at Normal; the dial scales it.
@@ -214,7 +252,7 @@ export function createVfxEngine(
   function addFlash(x: number, y: number, color: string, radius: number, dur = 150): void {
     fx.push({
       start: performance.now(),
-      dur,
+      dur: dur * playDur,
       layer: 2,
       draw: (c, t) => {
         const r = radius * (0.35 + 0.65 * easeOutCubic(t));
@@ -236,7 +274,7 @@ export function createVfxEngine(
   function addRing(x: number, y: number, color: string, radius: number, dur = 420): void {
     fx.push({
       start: performance.now(),
-      dur,
+      dur: dur * playDur,
       layer: 2,
       draw: (c, t) => {
         const e = easeOutCubic(t);
@@ -432,7 +470,7 @@ export function createVfxEngine(
     // slow-fading tinted glow patch on the square
     fx.push({
       start: now,
-      dur: AFTERMATH_MS,
+      dur: AFTERMATH_MS * playDur,
       layer: 0,
       draw: (c, t) => {
         const a = (1 - easeInQuad(t)) * 0.38;
@@ -472,7 +510,7 @@ export function createVfxEngine(
     const motes = kind === "smolder" ? 5 : 4;
     for (let i = 0; i < motes; i++) {
       timers.push({
-        at: now + i * 90,
+        at: now + i * 90 * playDur,
         fn: () => {
           const px = x + rand(-0.35, 0.35) * sq;
           const py = y + rand(-0.2, 0.25) * sq;
@@ -593,7 +631,7 @@ export function createVfxEngine(
   ): void {
     fx.push({
       start: performance.now(),
-      dur,
+      dur: dur * playDur,
       layer: 1,
       draw: (c, t) => {
         // fast attack, eased decay
@@ -656,7 +694,7 @@ export function createVfxEngine(
     const spread = 0.62; // radians each side of the heading
     fx.push({
       start: performance.now(),
-      dur,
+      dur: dur * playDur,
       layer: 1,
       draw: (c, t) => {
         const r = dist * easeOutCubic(t) + sq * 0.2;
@@ -679,7 +717,7 @@ export function createVfxEngine(
     const nowMs = performance.now();
     for (let i = 1; i <= 4; i++) {
       timers.push({
-        at: nowMs + (dur * i) / 5,
+        at: nowMs + (dur * playDur * i) / 5,
         fn: () => {
           const e = easeOutCubic(i / 5);
           const fr = dist * e;
@@ -714,7 +752,7 @@ export function createVfxEngine(
     const baseSeed = Math.floor(Math.random() * 1e9);
     fx.push({
       start: performance.now(),
-      dur,
+      dur: dur * playDur,
       layer: 1,
       draw: (c, t, now) => {
         const fade = t < 0.15 ? t / 0.15 : 1 - easeInQuad((t - 0.15) / 0.85);
@@ -767,7 +805,7 @@ export function createVfxEngine(
       tx,
       ty,
       start: at,
-      dur,
+      dur: dur * playDur,
       size: Math.max(2, sq * 0.09),
       color: primary(palette),
       trailColor: accent(palette),
@@ -794,7 +832,7 @@ export function createVfxEngine(
       tx,
       ty,
       start: at,
-      dur,
+      dur: dur * playDur,
       size: Math.max(2.5, sq * 0.11),
       color: primary(palette),
       trailColor: accent(palette),
@@ -815,7 +853,7 @@ export function createVfxEngine(
     const now = performance.now();
     for (let i = 0; i < drops; i++) {
       timers.push({
-        at: now + rand(0, fallMs * 0.4),
+        at: now + rand(0, fallMs * playDur * 0.4),
         fn: () => {
           const px = tx + rand(-0.65, 0.65) * sq;
           const dy = sq * rand(1.6, 3);
@@ -842,6 +880,7 @@ export function createVfxEngine(
 
     const now = performance.now();
     playScale = clamp(spec.intensity ?? 1, 0.3, 2);
+    playDur = clamp(spec.durationScale ?? 1, 0.5, 2);
     const tier = clamp(spec.tier ?? 1, 1, 12);
     const palette =
       spec.palette && spec.palette.length > 0 ? spec.palette : ["#ffe9a3", "#ff9d2e"];
@@ -855,12 +894,13 @@ export function createVfxEngine(
     const aftermath = spec.aftermath ?? "none";
     if (!spec.targets || spec.targets.length === 0) return;
 
-    // keep the whole sequence inside ~2.1s (cinematic) / ~1s (standard)
-    const maxDelay = cinematic ? 480 : 300;
+    // keep the whole sequence inside ~2.1s (cinematic) / ~1s (standard) at
+    // the default duration setting; the user's multiplier stretches all of it
+    const maxDelay = (cinematic ? 480 : 300) * playDur;
     const targets = spec.targets.map((t, i) => ({
       x: t.p.x * w,
       y: t.p.y * h,
-      delay: clamp(t.delayMs ?? (travel === "chain" ? i * 70 : 0), 0, maxDelay),
+      delay: clamp((t.delayMs ?? (travel === "chain" ? i * 70 : 0)) * playDur, 0, maxDelay),
     }));
 
     let shakePending = !!spec.shake;
@@ -874,7 +914,7 @@ export function createVfxEngine(
       }
     };
 
-    const buildupMs = cinematic ? 380 : 0;
+    const buildupMs = (cinematic ? 380 : 0) * playDur;
     if (cinematic) spawnBuildup(sx, sy, palette, sq, buildupMs, tier);
     const t0 = now + buildupMs;
 
@@ -900,7 +940,7 @@ export function createVfxEngine(
           const dur = clamp(120 + dist * 0.55, 140, cinematic ? 420 : 340);
           const at = t0 + t.delay;
           timers.push({ at, fn: () => launchBolt(sx, sy, t.x, t.y, palette, sq, at, dur) });
-          scheduleImpact(t.x, t.y, at + dur);
+          scheduleImpact(t.x, t.y, at + dur * playDur);
         }
         break;
       }
@@ -910,7 +950,7 @@ export function createVfxEngine(
           const dur = clamp(340 + dist * 0.4, 380, cinematic ? 560 : 460);
           const at = t0 + t.delay;
           timers.push({ at, fn: () => launchArc(sx, sy, t.x, t.y, palette, sq, at, dur) });
-          scheduleImpact(t.x, t.y, at + dur);
+          scheduleImpact(t.x, t.y, at + dur * playDur);
         }
         break;
       }
@@ -921,7 +961,7 @@ export function createVfxEngine(
             at,
             fn: () => addBeam(sx, sy, t.x, t.y, palette, sq, cinematic ? 420 : 340),
           });
-          scheduleImpact(t.x, t.y, at + 70);
+          scheduleImpact(t.x, t.y, at + 70 * playDur);
         }
         break;
       }
@@ -931,7 +971,7 @@ export function createVfxEngine(
           const dur = cinematic ? 500 : 420;
           timers.push({ at, fn: () => addWave(sx, sy, t.x, t.y, palette, sq, dur) });
           // the eased front covers ~90% of the distance around t≈0.72
-          scheduleImpact(t.x, t.y, at + dur * 0.72);
+          scheduleImpact(t.x, t.y, at + dur * playDur * 0.72);
         }
         break;
       }
@@ -940,7 +980,7 @@ export function createVfxEngine(
         for (const t of targets) {
           const at = t0 + t.delay;
           timers.push({ at, fn: () => spawnRain(t.x, t.y, palette, sq, tier, fallMs) });
-          scheduleImpact(t.x, t.y, at + fallMs);
+          scheduleImpact(t.x, t.y, at + fallMs * playDur);
         }
         break;
       }
@@ -959,7 +999,7 @@ export function createVfxEngine(
             at,
             fn: () => addChainSegment(ax, ay, t.x, t.y, palette, sq, cinematic ? 260 : 200),
           });
-          scheduleImpact(t.x, t.y, at + 40);
+          scheduleImpact(t.x, t.y, at + 40 * playDur);
           px = t.x;
           py = t.y;
         }
@@ -1021,15 +1061,14 @@ export function createVfxEngine(
         break;
       }
       case "smoke": {
-        const a = fade * p.alpha;
-        const grad = c.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size);
-        grad.addColorStop(0, p.color);
-        grad.addColorStop(1, "rgba(0,0,0,0)");
-        c.globalAlpha = a;
-        c.fillStyle = grad;
-        c.beginPath();
-        c.arc(p.x, p.y, p.size, 0, TAU);
-        c.fill();
+        // Blit a cached soft-radial puff sprite (baked once per color) instead
+        // of building a fresh createRadialGradient + arc fill for every smoke
+        // particle every frame — dozens can be alive at once, so this was a
+        // real per-frame main-thread cost. Visually identical: the sprite bakes
+        // the same two-stop radial falloff.
+        c.globalAlpha = fade * p.alpha;
+        const sprite = smokeSprite(p.color);
+        c.drawImage(sprite, p.x - p.size, p.y - p.size, p.size * 2, p.size * 2);
         break;
       }
       case "debris": {

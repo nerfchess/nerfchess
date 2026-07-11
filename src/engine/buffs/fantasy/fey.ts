@@ -21,14 +21,10 @@ import {
   convertEnemies,
   freezeTarget,
   mySquares,
-  myHalfZone,
-  relocateAnywhere,
-  removeEnemies,
-  shieldArmy,
+  permanentAugment,
+  relocateMany,
   slideMoves,
-  summonTemp,
   timedAugment,
-  transformOwn,
   DIAG_DIRS,
   FILE,
   RANK,
@@ -71,50 +67,140 @@ export const FANTASY_FEY: Buff[] = [
       id: "will_o_wisp",
       name: "Will-o'-Wisp",
       description:
-        "A cold flame dances before one enemy piece and it cannot look away: it cannot move for 3 of their turns. Kings cannot be targeted.",
+        "A cold flame dances ahead of one enemy piece and it follows: lure one enemy piece except a king one square diagonally forward, toward your side, onto an empty square you choose.",
       tier: 3,
       category: "tempo",
       flavor: "Follow the light. The light knows a shortcut.",
     },
-    freezeTarget(3, "charm"),
+    activated(
+      (_inst, api, picks) => {
+        const fwd = api.opp === "w" ? 1 : -1;
+        const luredTo = (sq: number) =>
+          [-1, 1]
+            .map((df) => ({ f: FILE(sq) + df, r: RANK(sq) + fwd }))
+            .filter(({ f, r }) => f >= 0 && f <= 7 && r >= 0 && r <= 7)
+            .map(({ f, r }) => f + r * 8)
+            .filter(
+              (to) =>
+                !api.board.pieces[to] &&
+                // A lured pawn never lands on a promotion rank.
+                (api.board.pieces[sq]?.type !== "p" || (RANK(to) >= 1 && RANK(to) <= 6)),
+            );
+        if (picks.length >= 2) return null;
+        if (picks.length === 0) {
+          return {
+            kind: "square",
+            label: "Choose the enemy piece that follows the light",
+            squares: mySquares(api.board, api.opp).filter(
+              (sq) => api.board.pieces[sq]!.type !== "k" && luredTo(sq).length > 0,
+            ),
+          };
+        }
+        return {
+          kind: "square",
+          label: "Choose where the light leads it",
+          squares: luredTo(picks[0].square!),
+        };
+      },
+      (_inst, api, picks) => {
+        const from = picks[0]?.square, to = picks[1]?.square;
+        if (from == null || to == null) return;
+        if (api.board.pieces[from] && !api.board.pieces[to]) api.relocate(from, to);
+      },
+    ),
   ),
   card(
     {
       id: "glamour",
       name: "Glamour",
       description:
-        "You weave a glamour over one enemy pawn and it forgets whose banner it marched under: it joins your army.",
+        "The courts trade changelings: one enemy pawn you choose joins your army, and one of your pawns you choose joins theirs.",
       tier: 3,
       category: "pieces",
-      flavor: "It always liked your colors better.",
+      requires: ["p"],
+      flavor: "Both sides swear they got the better of the deal.",
     },
-    convertEnemies(1, ["p"], "Choose the enemy pawn to charm"),
+    activated(
+      (_inst, api, picks) => {
+        if (picks.length >= 2) return null;
+        if (picks.length === 0) {
+          return {
+            kind: "square",
+            label: "Choose the enemy pawn to charm",
+            // The trade needs a pawn from each court: without one of your own
+            // to give back, the bargain never starts.
+            squares:
+              mySquares(api.board, api.me, "p").length > 0
+                ? mySquares(api.board, api.opp, "p")
+                : [],
+          };
+        }
+        return {
+          kind: "square",
+          label: "Choose your pawn to trade away",
+          squares: mySquares(api.board, api.me, "p"),
+        };
+      },
+      (_inst, api, picks) => {
+        const theirs = picks[0]?.square, mine = picks[1]?.square;
+        if (theirs == null) return;
+        api.setPieceColor(theirs, api.me);
+        if (mine != null && api.board.pieces[mine]?.color === api.me) {
+          api.setPieceColor(mine, api.opp);
+        }
+      },
+    ),
   ),
   card(
     {
       id: "thorn_hedge",
       name: "Thorn Hedge",
       description:
-        "A hedge of black thorns erupts across the board: pick any square and its entire rank becomes impassable to your opponent for their next 3 turns.",
+        "A hedge of black thorns walls off your realm: enemy bishops, rooks, and queens cannot cross into your half of the board for their next 3 turns.",
       tier: 5,
       category: "hex",
       flavor: "A hundred years of briars in a single heartbeat.",
-      fx: { motif: "blindfold" },
+      fx: { motif: "blindfold", pieces: ["b", "r", "q"] },
     },
-    barLine("rank", 3),
+    curse(3, (moves, api) =>
+      moves.filter((m) => {
+        if (m.piece !== "b" && m.piece !== "r" && m.piece !== "q") return true;
+        return api.opp === "w" ? RANK(m.to) < 4 : RANK(m.to) >= 4;
+      }),
+    ),
   ),
   card(
     {
       id: "changeling",
       name: "Changeling",
       description:
-        "One of your pawns was never a pawn at all: it drops the disguise and becomes a knight where it stands.",
+        "The cradle swap ran the other way: one enemy knight or bishop you choose was a changeling all along. The glamour breaks and it is just a pawn.",
       tier: 4,
-      category: "pieces",
-      requires: ["p"],
+      category: "hex",
       flavor: "The cradle was never empty. It was just not yours.",
     },
-    transformOwn(1, ["p"], "n", "Choose the pawn that drops its disguise"),
+    activated(
+      (_inst, api, picks) =>
+        picks.length > 0
+          ? null
+          : {
+              kind: "square",
+              label: "Choose the enemy piece to unmask",
+              squares: mySquares(api.board, api.opp).filter((sq) => {
+                const t = api.board.pieces[sq]!.type;
+                // A minor on a promotion rank cannot become a stranded pawn.
+                return (t === "n" || t === "b") && RANK(sq) >= 1 && RANK(sq) <= 6;
+              }),
+            },
+      (_inst, api, picks) => {
+        const sq = picks[0]?.square;
+        if (sq == null) return;
+        const p = api.board.pieces[sq];
+        if (p && p.color === api.opp && (p.type === "n" || p.type === "b")) {
+          api.setPieceType(sq, "p");
+        }
+      },
+    ),
   ),
   card(
     {
@@ -170,12 +256,48 @@ export const FANTASY_FEY: Buff[] = [
       id: "dryad_grove",
       name: "Dryad Grove",
       description:
-        "A dryad steps out of her tree to fight beside you: place a bishop on an empty square in your half. She returns to the grove after 6 of your turns.",
+        "The grove parts for the clergy: your bishops may slide through your own pawns (never capturing them), for the rest of the game.",
       tier: 5,
-      category: "pieces",
+      category: "movement",
+      requires: ["b"],
       flavor: "Her roots go deeper than your war.",
+      fx: { motif: "empower", pieces: ["b"], self: true },
     },
-    summonTemp("b", 6, myHalfZone),
+    permanentAugment((_m, inst, api) => {
+      const out: ReturnType<typeof slideMoves> = [];
+      for (const from of mySquares(api.board, api.me, "b")) {
+        for (const [df, dr] of DIAG_DIRS) {
+          let f = FILE(from) + df, r = RANK(from) + dr, passedPawn = false;
+          while (f >= 0 && f <= 7 && r >= 0 && r <= 7) {
+            const to = f + r * 8;
+            const t = api.board.pieces[to];
+            if (!t) {
+              if (passedPawn) {
+                out.push({ from, to, piece: "b", color: api.me, via: inst.id });
+              }
+            } else if (t.color === api.me && t.type === "p" && !passedPawn) {
+              passedPawn = true;
+            } else {
+              if (passedPawn && t.color !== api.me) {
+                out.push({
+                  from,
+                  to,
+                  piece: "b",
+                  color: api.me,
+                  captured: t.type,
+                  capturedSquare: to,
+                  via: inst.id,
+                });
+              }
+              break;
+            }
+            f += df;
+            r += dr;
+          }
+        }
+      }
+      return out;
+    }),
   ),
   card(
     {
@@ -202,39 +324,71 @@ export const FANTASY_FEY: Buff[] = [
       id: "fey_step",
       name: "Fey Step",
       description:
-        "One of your pieces slips into the hedgerow and out the other side: move it to any empty square on the board, once.",
+        "One of your knights or bishops slips into the hedgerow and steps out behind their lines: move it to any empty square on your opponent's back two ranks, once.",
       tier: 5,
       category: "movement",
+      requires: ["n", "b"],
       flavor: "The shortest path runs through a country that is not there.",
     },
-    relocateAnywhere(
-      "Choose the piece that steps through the hedge",
-      "Choose where it steps back out",
-    ),
+    relocateMany(1, (api, from) => {
+      const t = api.board.pieces[from]?.type;
+      if (t !== "n" && t !== "b") return [];
+      const ranks = api.opp === "w" ? [0, 1] : [6, 7];
+      return ranks.flatMap((r) => Array.from({ length: 8 }, (_, f) => f + r * 8));
+    }),
   ),
   card(
     {
       id: "gossamer_veil",
       name: "Gossamer Veil",
       description:
-        "A shimmering veil of spider-silk settles over your army: none of your pieces can be captured for your opponent's next 2 turns.",
+        "A shimmering veil of spider-silk tangles every long blade: your pieces cannot be captured by enemy bishops, rooks, or queens for your opponent's next 3 turns. Pawns, knights, and kings still cut through.",
       tier: 6,
       category: "protection",
       flavor: "Softer than moonlight, stronger than mail.",
       fx: { motif: "ward", pieces: "all", self: true },
     },
-    shieldArmy(2),
+    curse(3, (moves) =>
+      moves.filter(
+        (m) => !(m.captured && (m.piece === "b" || m.piece === "r" || m.piece === "q")),
+      ),
+    ),
   ),
   card(
     {
       id: "wild_hunt",
       name: "The Wild Hunt",
       description:
-        "The horns of the twilight court sound and the Hunt rides through: name two enemy knights or bishops and they are carried off the board.",
+        "The horns of the twilight court sound: pick any square, and the Hunt rides both diagonals through it, carrying off every enemy piece on them. Kings are never taken.",
       tier: 6,
       category: "attack",
       flavor: "Do not look up when the hoofbeats pass overhead.",
     },
-    removeEnemies(2, ["n", "b"]),
+    activated(
+      (_inst, _api, picks) =>
+        picks.length > 0
+          ? null
+          : {
+              kind: "square",
+              label: "Choose the square the Hunt rides through",
+              squares: Array.from({ length: 64 }, (_, i) => i),
+            },
+      (_inst, api, picks) => {
+        const c = picks[0]?.square;
+        if (c == null) return;
+        for (const [df, dr] of DIAG_DIRS) {
+          let f = FILE(c) + df, r = RANK(c) + dr;
+          while (f >= 0 && f <= 7 && r >= 0 && r <= 7) {
+            const sq = f + r * 8;
+            const p = api.board.pieces[sq];
+            if (p && p.color === api.opp && p.type !== "k") api.removePiece(sq);
+            f += df;
+            r += dr;
+          }
+        }
+        const center = api.board.pieces[c];
+        if (center && center.color === api.opp && center.type !== "k") api.removePiece(c);
+      },
+    ),
   ),
 ];

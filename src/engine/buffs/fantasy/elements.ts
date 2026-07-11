@@ -10,8 +10,9 @@ import { Buff } from "./shared";
 import {
   card,
   grantInventory,
-  barLine,
-  voidSquares,
+  curse,
+  emptySquares,
+  inHalf,
   lineSweep,
   addEffect,
   instant,
@@ -20,6 +21,7 @@ import {
   RANK,
   SQ,
   inBoard,
+  type Square,
   type Mech,
   type BuffInstance,
   type BuffApi,
@@ -84,13 +86,17 @@ export const FANTASY_ELEMENTS: Buff[] = [
       icon: "Snowflake",
       name: "Frost Wall",
       description:
-        "A wall of blue ice erupts from the board: pick any square and its entire file becomes impassable to your opponent for their next 4 turns.",
+        "A wall of blue ice seals the keep: your opponent cannot move any piece onto your back two ranks for their next 4 turns.",
       tier: 5,
       category: "hex",
       flavor: "Cold enough to stop an army cold.",
       fx: { motif: "blindfold" },
     },
-    barLine("file", 4),
+    instant((_inst, api) => {
+      const ranks = api.me === "w" ? [0, 1] : [6, 7];
+      const squares = ranks.flatMap((r) => Array.from({ length: 8 }, (_, f) => SQ(f, r)));
+      addEffect(api, { kind: "barred", squares, against: api.opp, turns: 4 });
+    }),
   ),
   card(
     {
@@ -98,12 +104,38 @@ export const FANTASY_ELEMENTS: Buff[] = [
       icon: "ArrowDownToLine",
       name: "Sinkhole",
       description:
-        "Open three yawning sinkholes on empty squares: the first enemy piece to step onto each one (never a king) plunges out of the game. They stay open the rest of the match.",
+        "The earth chooses where to open: three sinkholes appear on random empty squares in your opponent's half. Any enemy piece except a king that steps onto one plunges out of the game. They stay open the rest of the match.",
       tier: 6,
       category: "attack",
       flavor: "The ground had other plans.",
     },
-    voidSquares(3, null),
+    {
+      kind: "passive",
+      // The three squares are drawn from the seeded api.rng at acquire time,
+      // so every replica opens the identical sinkholes (desync-safe).
+      init: (inst, api) => {
+        const empties = emptySquares(api.board, (sq) => !inHalf(api.me, sq));
+        const chosen: Square[] = [];
+        for (let i = 0; i < 3 && empties.length > 0; i++) {
+          const idx = api.rng.int(empties.length);
+          chosen.push(empties.splice(idx, 1)[0]);
+        }
+        inst.state.squares = chosen;
+      },
+      onMovePlayed: (inst, move, api) => {
+        const squares = inst.state.squares as Square[] | undefined;
+        if (!squares?.length) return;
+        if (move.color === api.opp && squares.includes(move.to) && move.piece !== "k") {
+          api.removePiece(move.to);
+        }
+      },
+      status: (inst) => {
+        const squares = inst.state.squares as Square[] | undefined;
+        if (!squares?.length) return null;
+        const names = squares.map((sq) => `${"abcdefgh"[FILE(sq)]}${RANK(sq) + 1}`).join(", ");
+        return `sinkholes at ${names}`;
+      },
+    },
   ),
   card(
     {
@@ -125,14 +157,14 @@ export const FANTASY_ELEMENTS: Buff[] = [
       icon: "Split",
       name: "Fissure Field",
       description:
-        "The ground splits into a lattice of fissures across the enemy front: your opponent's pawns cannot advance for their next 5 turns. They may still capture diagonally.",
+        "The ground splits open behind the enemy army: your opponent cannot move any piece onto their own back rank for their next 4 turns.",
       tier: 4,
       category: "hex",
-      flavor: "Every furrow becomes a chasm.",
-      fx: { motif: "anchor", pieces: ["p"] },
+      flavor: "There is no falling back over a chasm.",
+      fx: { motif: "blindfold" },
     },
-    instant((_inst, api) => {
-      addEffect(api, { kind: "no_pawn_advance", against: api.opp, turns: 5 });
-    }),
+    curse(4, (moves, api) =>
+      moves.filter((m) => RANK(m.to) !== (api.opp === "w" ? 0 : 7)),
+    ),
   ),
 ];

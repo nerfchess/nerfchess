@@ -13,7 +13,7 @@ import {
   Volume2,
   type LucideIcon,
 } from "lucide-react";
-import type { AnimationSpeed, Settings, SiteTheme, SoundTheme } from "@/lib/settings";
+import type { AnimationSpeed, Settings, SoundTheme } from "@/lib/settings";
 
 // Setting keys that hold a boolean (valid targets for a live toggle) and those
 // that hold a number (valid targets for a live slider), derived from the model
@@ -25,7 +25,7 @@ export type Control =
   | { kind: "toggle"; setting: BoolKey }
   | { kind: "slider"; setting: NumKey; min: number; max: number; step: number; format?: (v: number) => string }
   | { kind: "animationSpeed"; options: Array<{ value: AnimationSpeed; label: string }> }
-  | { kind: "siteTheme"; options: Array<{ value: SiteTheme; label: string }> }
+  | { kind: "siteTheme" }
   | { kind: "soundTheme"; options: Array<{ value: SoundTheme; label: string }> }
   | { kind: "accentColor" }
   | { kind: "customBg" }
@@ -172,6 +172,12 @@ export const SECTIONS: SectionConfig[] = [
           ],
         },
       },
+      {
+        id: "fxDuration",
+        label: "Card effect duration",
+        hint: "How long card-use animations play, from snappy to lingering",
+        control: { kind: "slider", setting: "fxDuration", min: 0.5, max: 2, step: 0.1, format: pct },
+      },
     ],
   },
   {
@@ -244,14 +250,8 @@ export const SECTIONS: SectionConfig[] = [
       {
         id: "siteTheme",
         label: "Theme",
-        control: {
-          kind: "siteTheme",
-          options: [
-            { value: "dark", label: "Dark" },
-            { value: "light", label: "Light" },
-            { value: "system", label: "System" },
-          ],
-        },
+        hint: "Full site palettes — pick a mood",
+        control: { kind: "siteTheme" },
       },
       {
         id: "accentColor",
@@ -261,7 +261,7 @@ export const SECTIONS: SectionConfig[] = [
       {
         id: "customBg",
         label: "Custom background",
-        hint: "Full-page background image (http(s) URL) with an adjustable dim",
+        hint: "Upload an image or paste an http(s) URL, with an adjustable dim",
         control: { kind: "customBg" },
       },
       {
@@ -280,6 +280,12 @@ export const SECTIONS: SectionConfig[] = [
         label: "Reduced motion",
         hint: "Minimize animations and transitions",
         control: { kind: "toggle", setting: "reducedMotion" },
+      },
+      {
+        id: "perfMode",
+        label: "Performance mode",
+        hint: "Drops heavy blur/grain effects for smoother play on low-end devices",
+        control: { kind: "toggle", setting: "perfMode" },
       },
     ],
   },

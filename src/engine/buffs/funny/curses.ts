@@ -12,13 +12,20 @@ export const FUNNY_CURSES: Buff[] = [
       id: "vertigo",
       icon: "Tornado",
       name: "Vertigo",
-      description: "Your opponent's queen is afraid of heights: she cannot move more than 2 squares for their next 4 turns.",
+      description: "The whole room tilts sideways: for their next 2 turns your opponent may only make diagonal moves. Their king keeps its footing and may still step anywhere.",
       tier: 4,
       category: "hex",
-      flavor: "One look down and she wobbles.",
-      fx: { motif: "anchor", pieces: ["q"] },
+      flavor: "One look down and the floor becomes a wall.",
+      fx: { motif: "slow", pieces: ["p", "n", "b", "r", "q"] },
     },
-    curse(4, (moves) => moves.filter((m) => m.piece !== "q" || dist(m.from, m.to) <= 2)),
+    curse(2, (moves) =>
+      moves.filter((m) => {
+        if (m.piece === "k") return true;
+        const df = Math.abs(FILE(m.to) - FILE(m.from));
+        const dr = Math.abs(RANK(m.to) - RANK(m.from));
+        return df === dr && df > 0;
+      }),
+    ),
   ),
   card(
     {

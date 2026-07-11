@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { Board } from "./Board";
 import { HeroBoard } from "./HeroBoard";
 import { PlayerAvatar } from "./PlayerAvatar";
 import { replayUci } from "@/lib/gameReview";
@@ -56,11 +55,10 @@ export function HeroTv() {
   }, []);
 
   // Keep watching a finished game briefly rather than cutting away mid-frame;
-  // the next lobby poll supplies the replacement.
-  useEffect(() => {
-    if (topGameId) setStreamId(topGameId);
-    else if (over || !streamId) setStreamId(topGameId);
-  }, [topGameId, over, streamId]);
+  // the next lobby poll supplies the replacement. Derived during render so no
+  // extra cascading render is scheduled.
+  const nextStream = topGameId ? topGameId : over || !streamId ? topGameId : streamId;
+  if (nextStream !== streamId) setStreamId(nextStream);
 
   useEffect(() => {
     if (!streamId) return;
@@ -169,16 +167,7 @@ export function HeroTv() {
       </div>
       <Link href={`/game/${shownId}`} className="tv-frame group block no-underline" title={live ? "Watch this game" : "Replay this game"}>
         <div className="overflow-hidden">
-          <Board
-            board={board}
-            legalMoves={[]}
-            orientation="w"
-            onMove={() => {}}
-            myColor="w"
-            lastMove={lastMove}
-            disabled
-            showCoordinates={false}
-          />
+          <HeroBoard board={board} lastMove={lastMove} />
         </div>
       </Link>
       <div className="flex items-center justify-between gap-2 pt-2">

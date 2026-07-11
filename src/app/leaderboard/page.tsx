@@ -8,6 +8,7 @@ import { PlayerSearch } from "@/components/PlayerSearch";
 import { AccountUser, fetchMe } from "@/lib/authClient";
 import { CategoryTabs } from "@/components/ratings/CategoryTabs";
 import { DEFAULT_CATEGORY, getCategory, type RatingCategoryId } from "@/lib/ratingCategories";
+import { isProvisionalRd, PROVISIONAL_RD } from "@/lib/ratingDisplay";
 
 interface Row {
   username: string;
@@ -31,11 +32,18 @@ export default function LeaderboardPage() {
   const [me, setMe] = useState<AccountUser | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
+  // Clear stale rows the instant the category changes (React's sanctioned
+  // adjust-state-on-change pattern) so the effect below only fetches.
+  const [prevCategory, setPrevCategory] = useState(category);
+  if (prevCategory !== category) {
+    setPrevCategory(category);
     setRows(null);
     setMeRow(null);
     setError(null);
+  }
+
+  useEffect(() => {
+    let cancelled = false;
     (async () => {
       try {
         const res = await fetch(`/api/leaderboard?category=${category}`);
@@ -86,8 +94,11 @@ export default function LeaderboardPage() {
         </span>
         <span className="text-right font-mono text-parchment-100 tabular-nums">
           {Math.round(row.rating)}
-          {row.rd > 150 && (
-            <span className="text-parchment-400" title="Provisional: rating deviation above 150">
+          {isProvisionalRd(row.rd) && (
+            <span
+              className="text-parchment-400"
+              title={`Provisional: rating deviation above ${PROVISIONAL_RD}`}
+            >
               ?
             </span>
           )}

@@ -71,10 +71,11 @@ if (process.env.NODE_ENV !== "production") {
     runGenSelfCheck(new Set(Object.keys(SIGNATURES)));
   } catch {}
 }
-import { EdgeAura, EmpowerShine, tierRgb } from "./effects/EmpowerAura";
+import { EdgeAura, EmpowerShine, NerfAura, tierRgb } from "./effects/EmpowerAura";
 import type { MotifMark } from "./effects/fxZones";
 import { EffectPopover, type EffectPopoverContent } from "./EffectPopover";
 import { FX_LEVELS, useFxHidden, useFxLevel } from "@/lib/fxToggle";
+import { fxDurationScale } from "@/lib/settings";
 import { VfxLayer } from "./effects/vfx/VfxLayer";
 import { vfxPlay } from "./effects/vfx/vfxBus";
 import type { VfxPlay, VfxPoint } from "./effects/vfx/types";
@@ -90,6 +91,7 @@ function sqToFrac(sq: Square, orientation: Color): VfxPoint {
 }
 import type { BuffCategory, BuffMatchState } from "@/engine/buff";
 import { BUFF_BY_ID } from "@/engine/buffs/library";
+import { TIER_ROMAN } from "@/lib/tiers";
 import { BoardState, Color, FILE, Move, PieceType, RANK, SQ, Square } from "@/engine/types";
 import {
   playAegis,
@@ -158,6 +160,8 @@ interface Visual {
   /** Every other placed trap (mine, sinkhole, trapdoor, whoopee cushion,
    * landlord claim), each drawn with its own realistic animated marker. */
   trapSquares?: { sq: number; kind: string; name: string }[];
+  /** Doomed pieces (timed_loss effects): badge with the death countdown. */
+  doomSquares?: { sq: number; turns: number }[];
   /** Squares the opponent's buffs bar YOU from entering (stakes + rope; the
    * same squares also flow into bannedSquares for the flat tint). */
   barredSquares?: number[];
@@ -212,6 +216,113 @@ function freezeSkinOf(skin: string | undefined) {
 const EMPTY_SKINS: Record<string, string> = {};
 const EMPTY_TURNS: Record<number, number | null> = {};
 
+// Number words for the extra-turns banner headline ("TWO EXTRA TURNS").
+const EXTRA_WORDS = ["", "ONE", "TWO", "THREE", "FOUR", "FIVE", "SIX"];
+
+/** HUGE board-wide notification for an extra-turns grant (owner request),
+ * spelling out the total ("TWO EXTRA TURNS - opponent plays 3 moves in a
+ * row"). One shot ~2.8s, pointer-transparent, FUNCTIONAL: never gated by the
+ * effects dial or low-clock calm. Gold when it is the viewer's own gain,
+ * oxblood alarm when it is against them. */
+function ExtraTurnsBanner({ mine, gained, total }: { mine: boolean; gained: number; total: number }) {
+  const word = gained < EXTRA_WORDS.length ? EXTRA_WORDS[gained] : `+${gained}`;
+  return (
+    <div aria-live="assertive" className="pointer-events-none absolute inset-0 z-[45] grid place-items-center">
+      <div
+        className={
+          "extra-turns-banner mx-4 border-2 px-6 py-4 text-center shadow-plate " +
+          (mine
+            ? "border-gold/70 bg-ink-950/90 text-gold-leaf"
+            : "border-oxblood-glow/70 bg-ink-950/90 text-oxblood-glow")
+        }
+      >
+        <div className="font-display text-3xl font-bold tracking-wide sm:text-4xl">
+          {word} EXTRA {gained === 1 ? "TURN" : "TURNS"}
+        </div>
+        <div className="mt-1 font-display text-base font-semibold text-parchment-100 sm:text-lg">
+          {mine ? "You play" : "Opponent plays"} {total} moves in a row
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Card-name label riding EVERY play's animation (owner request: "show what
+ * powerup your opponent used, beside or beneath the animation"). Name + tier
+ * chip only - the full description stays in the top-right play feed. Softer
+ * than the first cut (owner: too contrasting): translucent ink, hairline
+ * border, tier-colored name. Scales with tier - a quiet pill for 1-4, larger
+ * from 5, headline-sized at 7+. FUNCTIONAL (never gated by the effects dial);
+ * sits in the board's upper area so it coexists with the centered
+ * extra-turns banner when one card triggers both. */
+function PlayAnnouncement({ name, tier, outcome }: { name: string; tier: number; outcome?: string }) {
+  const big = tier >= 7;
+  const mid = tier >= 5 && tier < 7;
+  return (
+    <div aria-live="polite" className="pointer-events-none absolute inset-x-0 top-[6%] z-[45] flex justify-center">
+      <div
+        className={
+          "extra-turns-banner mx-4 flex max-w-[min(92%,30rem)] flex-col items-center gap-1 border border-white/25 bg-ink-950/70 text-center shadow-plate backdrop-blur-[2px] " +
+          (big ? "px-5 py-2.5" : mid ? "px-4 py-2" : "px-3 py-1.5")
+        }
+      >
+        <div className="flex items-center gap-2">
+          <span
+            className={
+              `font-display font-bold tracking-wide tier-${tier} ` +
+              (big ? "text-2xl sm:text-3xl" : mid ? "text-lg sm:text-xl" : "text-sm")
+            }
+          >
+            {name}
+          </span>
+          <span
+            className={`shrink-0 rounded-[1px] border px-1.5 py-px font-display font-bold tier-bg-${tier} tier-${tier} ${big ? "text-[11px]" : "text-[9px]"}`}
+          >
+            {TIER_ROMAN[tier]}
+          </span>
+        </div>
+        {/* Random-branch result: what the spin/flip actually gave you. */}
+        {outcome && (
+          <span className="max-w-full font-display text-[12px] font-semibold leading-snug text-gold-leaf sm:text-sm">
+            {outcome}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** Small corner countdown for any timed piece effect (owner request: every
+ * timed effect wears its remaining turns). Doom (timed_loss) renders the
+ * oxblood variant with a skull tick; everything else a neutral ink chip. */
+function CountdownChip({ n, doom = false }: { n: number; doom?: boolean }) {
+  // Duration ramp: the chip's color IS the urgency read. Plenty of time stays
+  // neutral, two turns warms to amber, the last turn burns red (doom is
+  // always red — it is a death timer).
+  const tone =
+    doom || n <= 1
+      ? "border-oxblood-glow/70 bg-ink-950/90 text-oxblood-glow"
+      : n <= 2
+      ? "border-gold/60 bg-ink-950/90 text-gold-leaf"
+      : "border-white/25 bg-ink-950/90 text-parchment-100";
+  return (
+    <span
+      aria-hidden
+      // Bottom-RIGHT corner: the other three corners each own a mark (bound
+      // sigil top-left, freeze flake top-right, shield disc bottom-left), so
+      // the countdown used to stack on top of the green shield disc — the
+      // reported overlap. z-30 keeps it above any effect art it shares a
+      // square with; the solid ink backing + shadow keep it legible.
+      className={
+        "pointer-events-none absolute bottom-0.5 right-0.5 z-30 flex h-[15px] min-w-[15px] items-center justify-center rounded-[1px] border px-0.5 font-mono text-[10px] font-bold leading-none shadow-[0_1px_4px_rgba(0,0,0,0.8)] " +
+        tone
+      }
+    >
+      {n}
+    </span>
+  );
+}
+
 // Hover copy for the placed-trap markers (mine, sinkhole, trapdoor...).
 const TRAP_HOVER_BODY: Record<string, string> = {
   mine: "The first enemy piece (never a king) to step on this mine is destroyed.",
@@ -219,6 +330,7 @@ const TRAP_HOVER_BODY: Record<string, string> = {
   trapdoor: "An enemy piece (never a king) landing here is sprung back toward home and stunned.",
   whoopee: "The first enemy piece (never a king) to sit here makes a rude noise and must keep moving.",
   landlord: "An enemy piece (never a king) ending its move here owes rent: stuck for a turn.",
+  beartrap: "The first enemy piece (never a king) to step here is snapped up for 4 turns.",
 };
 
 /** Tiny corner marker for a frozen square, chosen by the skin's glyph kind.
@@ -312,6 +424,12 @@ interface Props {
   // instead of plain detonation bursts. Keyed so re-renders never replay it,
   // and absent on the initial mount / a rejoined game (so nothing fires then).
   signatureCard?: { id: string; key: number } | null;
+  /** The COMMITTED position for the removal-FX diff. When the rendered
+   * `board` is an optimistic overlay (premove preview, move-confirm preview,
+   * history review), pass the real game board here so detonation art, canvas
+   * VFX, and the explosion voice only ever react to real state changes.
+   * Absent = diff the rendered board (the old behavior). */
+  fxBoard?: BoardState;
   // The public buff state both surfaces already hold (game.buffs). Used only
   // to derive Duelist-style piece-bound buff markers: a small corner sigil on
   // any piece carrying an active bound buff that draws no CardFx motif, with
@@ -912,6 +1030,11 @@ for (let r = 7; r >= 0; r--) {
 }
 const ORDERED_SQUARES_BLACK = [...ORDERED_SQUARES_WHITE].reverse();
 
+/** Wall-clock fallback for input timing when an event carries no timeStamp. */
+function nowMs(): number {
+  return Date.now();
+}
+
 export function Board({
   board,
   legalMoves,
@@ -934,6 +1057,7 @@ export function Board({
   pickSquares,
   onPickSquare,
   signatureCard,
+  fxBoard,
   buffs,
 }: Props) {
   const pickSquareSet = useMemo(() => new Set(pickSquares ?? []), [pickSquares]);
@@ -958,12 +1082,16 @@ export function Board({
   // stable callbacks (vfxShake) that must read the current value.
   const fxLevel = useFxLevel();
   const fxLevelRef = useRef(fxLevel);
-  fxLevelRef.current = fxLevel;
   // Low-clock auto-calm (owner request): under time pressure the board-wide
   // show stands down automatically, independent of the dial.
   const fxCalmClock = !!fxTimePressure;
   const fxCalmClockRef = useRef(fxCalmClock);
-  fxCalmClockRef.current = fxCalmClock;
+  // Mirror both dials into refs so the stable callbacks (vfxShake) read current
+  // values; written in an effect, never during render.
+  useEffect(() => {
+    fxLevelRef.current = fxLevel;
+    fxCalmClockRef.current = fxCalmClock;
+  });
   // Canvas VFX plays staged during render (the diff/zone claims happen in the
   // render pass) and flushed to the bus after commit, so render stays pure.
   const pendingVfxRef = useRef<VfxPlay[]>([]);
@@ -986,7 +1114,7 @@ export function Board({
       el.classList.add("fx-board-shake");
       if (shake === "big") el.classList.add("fx-board-shake--big");
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
   // Square whose effect-explanation popover is currently open (hover, focus,
   // or tap). One at a time; the Board owns open/close, EffectPopover just
@@ -1008,6 +1136,9 @@ export function Board({
   // The destination of a just-dropped drag: that piece must not animate.
   const dropSkipRef = useRef<Square | null>(null);
   const prevPiecesRef = useRef<BoardState["pieces"] | null>(null);
+  // Committed-position ref for the removal-FX diff (see the twin diffs below).
+  const prevFxPiecesRef = useRef<BoardState["pieces"] | null>(null);
+  const fxPieces = fxBoard?.pieces ?? board.pieces;
   const animsRef = useRef<Map<Square, PieceAnim>>(new Map());
   // One-shot flourishes (transform / summon) keyed monotonically so React
   // remounts them exactly once per detected change; see computeBoardFx.
@@ -1026,6 +1157,19 @@ export function Board({
   // one per affected square, and persists (invisible after they play) exactly
   // like fxRef so an unrelated re-render never remounts and replays them.
   const zoneSigSeenKeyRef = useRef(0);
+  // Play keys whose zone-sourced signature actually claimed one or more
+  // squares. A zone-sourced card whose zone came up EMPTY on this play (a
+  // rework changed what it paints, or the effect simply hit nothing) falls
+  // back to the diff-less cast lead below instead of playing silently.
+  const zoneLeadClaimKeyRef = useRef(0);
+  // Extra-turns grant banner (owner request: a HUGE board-wide notification
+  // naming the total). FUNCTIONAL, so it is never gated by the effects dial
+  // or the low-clock calm: knowing the opponent moves three times in a row
+  // is rules information, not decoration. Values are diffed (not object
+  // identity) because server frames rebuild the extraMoves object each merge.
+  const prevExtraMovesRef = useRef<{ w: number; b: number } | null>(null);
+  const extraBannerRef = useRef<{ color: Color; gained: number; total: number; key: number } | null>(null);
+  const extraBannerKeyRef = useRef(0);
   const zoneSigRef = useRef<
     Map<number, { sig: string; order: number; role: "lead" | "target"; key: number }>
   >(new Map());
@@ -1042,7 +1186,21 @@ export function Board({
     id: string;
     category: BuffCategory;
     tier: number;
+    /** Random-branch cards (Gamble, Jackpot, Wheel of Fortune...) stash a
+     * short result line in their instance state; the announcement banner shows
+     * it after the play so "what did I get?" is answered on the board. */
+    outcome?: string;
   } | null>(null);
+  // Latest buffs, read inside the cast effect (which only deps on
+  // signatureCard) to pull the just-played card's outcome without re-running
+  // on every buff change.
+  const buffsRef = useRef(buffs);
+  // Mirror latest buffs into a ref (written in an effect, never during render)
+  // so the cast effect below can read the just-played card's outcome without
+  // depending on buffs and re-running on every buff change.
+  useEffect(() => {
+    buffsRef.current = buffs;
+  });
   const castSeenKeyRef = useRef(0);
   // Play keys whose lead art already rendered through the piece-diff path;
   // the cast-level generated lead only fires for diff-less plays (clock,
@@ -1053,7 +1211,22 @@ export function Board({
     castSeenKeyRef.current = signatureCard.key;
     const def = BUFF_BY_ID[signatureCard.id];
     if (!def) return;
-    setCast({ key: signatureCard.key, id: signatureCard.id, category: def.category, tier: def.tier });
+    // Pull the played card's result line, if it recorded one (last matching
+    // instance wins, so a repeat play shows its own freshest outcome).
+    let outcome: string | undefined;
+    const bs = buffsRef.current;
+    if (bs) {
+      for (const color of ["w", "b"] as Color[]) {
+        for (const inst of bs.players[color].buffs) {
+          if (inst.id === signatureCard.id && typeof inst.state.outcome === "string") {
+            outcome = inst.state.outcome as string;
+          }
+        }
+      }
+    }
+    queueMicrotask(() =>
+      setCast({ key: signatureCard.key, id: signatureCard.id, category: def.category, tier: def.tier, outcome }),
+    );
     const intensity = castIntensity(def.tier);
     if (!sigOf(signatureCard.id) && intensity !== "sleek") {
       playCastVoice(def.category, intensity === "marquee");
@@ -1073,14 +1246,40 @@ export function Board({
 
   // Diff against the previous position during render (reference equality
   // guards against re-runs) so animated squares can be tagged in this pass.
+  // Two diffs on purpose:
+  //  - Piece SLIDES follow the rendered board (premove previews included, so
+  //    a queued premove still glides).
+  //  - Removal FX (detonations, signature choreography, canvas VFX, the
+  //    explosion voice) diff the COMMITTED position only (fxPieces). The
+  //    premove overlay adds/drops a "held" piece as pure UI artifact, and
+  //    diffing it here read as a card removal — the "atomic explosion when
+  //    you premove" bug. History review boards also route through here and
+  //    now stay silent for free.
+  //
+  // This animation pipeline deliberately reads and writes refs during render:
+  // the derived transforms are applied imperatively in the layout effect below
+  // so React never re-renders them, which is what stops an unrelated re-render
+  // (hover, selection) from snapping a piece mid-flight. Routing this through
+  // state would reintroduce that snapping, so react-hooks/refs is intentionally
+  // suppressed for this block rather than rewritten.
+  /* eslint-disable react-hooks/refs */
   if (prevPiecesRef.current && prevPiecesRef.current !== board.pieces) {
-    const { anims, movedFrom } = computeAnims(
+    animsRef.current = computeAnims(
       prevPiecesRef.current,
       board.pieces,
       orientation,
       dropSkipRef.current,
+    ).anims;
+  }
+  prevPiecesRef.current = board.pieces;
+
+  if (prevFxPiecesRef.current && prevFxPiecesRef.current !== fxPieces) {
+    const { anims, movedFrom } = computeAnims(
+      prevFxPiecesRef.current,
+      fxPieces,
+      orientation,
+      dropSkipRef.current,
     );
-    animsRef.current = anims;
     const activeSig =
       signatureCard && signatureCard.key > sigSeenKeyRef.current && resolveSignature(signatureCard.id)
         ? signatureCard.id
@@ -1090,8 +1289,8 @@ export function Board({
     if (activeSig && signatureCard) castLeadSuppressKeyRef.current = signatureCard.key;
     if (signatureCard) sigSeenKeyRef.current = signatureCard.key;
     fxRef.current = computeBoardFx(
-      prevPiecesRef.current,
-      board.pieces,
+      prevFxPiecesRef.current,
+      fxPieces,
       anims,
       movedFrom,
       dropSkipRef.current,
@@ -1130,7 +1329,7 @@ export function Board({
           let wLost = 0;
           let bLost = 0;
           for (const h of hits) {
-            const p = prevPiecesRef.current?.[h.sq];
+            const p = prevFxPiecesRef.current?.[h.sq];
             if (p?.color === "w") wLost++;
             else if (p?.color === "b") bLost++;
           }
@@ -1167,13 +1366,15 @@ export function Board({
             aftermath: fxCalmClock ? "none" : spec.aftermath,
             shake: spec.shake && !fxCalmClock && FX_LEVELS[fxLevel].shake !== "none",
             intensity: fxCalmClock ? Math.min(0.6, FX_LEVELS[fxLevel].vfx) : FX_LEVELS[fxLevel].vfx,
+            durationScale: fxDurationScale(),
           });
         }
       }
     }
     dropSkipRef.current = null;
   }
-  prevPiecesRef.current = board.pieces;
+  prevFxPiecesRef.current = fxPieces;
+  /* eslint-enable react-hooks/refs */
 
   // Start the animations before paint: place each tagged piece on its origin
   // square via transform, force a reflow, then transition to rest. All
@@ -1248,7 +1449,8 @@ export function Board({
     if (detonate) playExplosion();
     if (morph) playTransform();
     if (summon) playSummon();
-  }, [board.pieces]);
+     
+  }, [fxPieces]);
 
   const movesFrom = useMemo(() => {
     const m = new Map<Square, Move[]>();
@@ -1427,6 +1629,11 @@ export function Board({
     for (const t of visual?.trapSquares ?? []) m.set(t.sq, { kind: t.kind, name: t.name });
     return m;
   }, [visual?.trapSquares]);
+  const doomMarks = useMemo(() => {
+    const m = new Map<number, number>();
+    for (const d of visual?.doomSquares ?? []) m.set(d.sq, d.turns);
+    return m;
+  }, [visual?.doomSquares]);
   const barredSquares = useMemo(() => new Set(visual?.barredSquares ?? []), [visual?.barredSquares]);
   // Royal-guard (king_safe) tint. Recompute from live state as well: it always
   // sits on the owner's CURRENT king square and clears the instant the ward
@@ -1548,6 +1755,29 @@ export function Board({
   // public, so both players build the identical sequence (never gated on the
   // viewer), and it is keyed to the play key via zoneSigSeenKeyRef so it fires
   // exactly once and an unrelated re-render (hover, resize) never replays it.
+  // Same deliberate render-phase ref pattern as the piece-diff above (staged
+  // once per play key, consumed imperatively), so react-hooks/refs is suppressed
+  // rather than rewritten.
+  /* eslint-disable react-hooks/refs */
+  {
+    const ex = buffs?.extraMoves;
+    if (ex) {
+      const prev = prevExtraMovesRef.current;
+      if (prev) {
+        for (const c of ["w", "b"] as Color[]) {
+          const gained = ex[c] - prev[c];
+          // A grant (increase) fires the banner; consumption (decrease) never
+          // does. total = remaining extras + the normal turn.
+          if (gained > 0) {
+            extraBannerRef.current = { color: c, gained, total: ex[c] + 1, key: ++extraBannerKeyRef.current };
+          }
+        }
+      }
+      prevExtraMovesRef.current = { w: ex.w, b: ex.b };
+    } else {
+      prevExtraMovesRef.current = null;
+    }
+  }
   if (signatureCard && signatureCard.key > zoneSigSeenKeyRef.current) {
     zoneSigSeenKeyRef.current = signatureCard.key;
     const cfg = sigOf(signatureCard.id);
@@ -1595,6 +1825,7 @@ export function Board({
           key: signatureCard.key,
         });
       }
+      if (marks.size > 0) zoneLeadClaimKeyRef.current = signatureCard.key;
       // Canvas VFX over the zone squares: the same fiction-matched spec the
       // removal path uses, travelling to the pieces the card actually touched
       // (frozen, shielded, empowered...). Staged into the ref; flushed after
@@ -1639,6 +1870,7 @@ export function Board({
             aftermath: fxCalmClock ? "none" : spec.aftermath,
             shake: spec.shake && !fxCalmClock && FX_LEVELS[fxLevel].shake !== "none",
             intensity: fxCalmClock ? Math.min(0.6, FX_LEVELS[fxLevel].vfx) : FX_LEVELS[fxLevel].vfx,
+            durationScale: fxDurationScale(),
           });
         }
       }
@@ -1648,6 +1880,7 @@ export function Board({
     // instant the next card is played.
     zoneSigRef.current = marks;
   }
+  /* eslint-enable react-hooks/refs */
 
   // Entrance voices for the persistent square effects: each family sounds
   // exactly once, when a square first gains the effect, matching the visual
@@ -1765,9 +1998,11 @@ export function Board({
   // drops against the move list from that moment — if the opponent moved (or
   // a premove fired) mid-drag, a perfectly good drop would silently die.
   const tryPlayRef = useRef(tryPlay);
-  tryPlayRef.current = tryPlay;
   const targetsRef = useRef(targets);
-  targetsRef.current = targets;
+  useEffect(() => {
+    tryPlayRef.current = tryPlay;
+    targetsRef.current = targets;
+  });
 
   // Everything happens on pointer *down*, lichess-style: pressing a legal
   // destination plays the move immediately (no waiting for the release —
@@ -1851,7 +2086,7 @@ export function Board({
     // never nukes the queue. We only reach here on a tap that played no move and
     // grabbed no piece, so this can never disturb tap-to-move or premove making.
     if (e.pointerType === "touch" && premoves && premoves.length > 0 && onCancelPremove) {
-      const now = e.timeStamp || Date.now();
+      const now = e.timeStamp || nowMs();
       const prev = lastTapRef.current;
       if (!hadSelection && prev && prev.sq === sq && now - prev.t < 320) {
         lastTapRef.current = null;
@@ -2206,10 +2441,10 @@ export function Board({
       });
     if (shieldedSquares.has(sq))
       out.push({
-        title: "Sanctuary",
+        title: "Shielded",
         tone: "buff",
         status,
-        body: "This piece cannot be captured while the shield holds. Kings are never shielded.",
+        body: "This piece cannot be captured while the shield holds - and while it cannot be captured, it may not capture the king itself (you must expose a piece to win). Kings are never shielded.",
       });
     if (kingSafeSquares.has(sq))
       out.push({
@@ -2239,6 +2474,15 @@ export function Board({
         tone: "neutral",
         status: null,
         body: TRAP_HOVER_BODY[t.kind] ?? "A placed trap waits on this square.",
+      });
+    }
+    if (doomMarks.has(sq)) {
+      const n = doomMarks.get(sq)!;
+      out.push({
+        title: "Doomed",
+        tone: "hex",
+        status: null,
+        body: `This piece dies in ${n} of its owner's turns unless it is captured first.`,
       });
     }
     if (strikeSquares.has(sq))
@@ -2336,6 +2580,10 @@ export function Board({
           className="grid grid-cols-8 grid-rows-8 w-full h-full select-none [touch-action:none]"
           onContextMenu={(e) => e.preventDefault()}
         >
+          {/* Per-square render reads the staged animation refs (fx, zone
+              signature, piece anims) — the same deliberate imperative pipeline
+              documented above, so react-hooks/refs is suppressed here too. */}
+          {/* eslint-disable-next-line react-hooks/refs */}
           {orderedSquares.map((sq) => {
             const f = FILE(sq), r = RANK(sq);
             const isLight = (f + r) % 2 === 1;
@@ -2459,7 +2707,14 @@ export function Board({
                   <div className="absolute inset-0 bg-cyan-500/25 mix-blend-screen pointer-events-none" />
                 )}
                 {banned && (
-                  <div className="absolute inset-0 bg-red-900/45 pointer-events-none" />
+                  <>
+                    <div className="absolute inset-0 bg-red-900/45 pointer-events-none" />
+                    {/* Glowing aura: the nerf is ACTING here, not just tinting.
+                        Decorative, so it stands down when effects are hidden or
+                        the clock is calming FX (the red tint is the functional
+                        read and always stays). */}
+                    {!fxHiddenPref && !fxCalmClock && <NerfAura />}
+                  </>
                 )}
                 {wardSquares.has(sq) && (
                   <>
@@ -2515,6 +2770,16 @@ export function Board({
                     </div>
                   </div>
                 )}
+                {doomMarks.has(sq) && piece && (
+                  /* Doomed piece (Death Arcana style): the countdown to its
+                     death rides the square, skull-tagged. */
+                  <CountdownChip n={doomMarks.get(sq)!} doom />
+                )}
+                {!doomMarks.has(sq) && piece && effectTurns[sq] != null && (
+                  /* Any other timed piece effect (freeze, walnut, shield,
+                     ward...): the remaining turns ride the corner. */
+                  <CountdownChip n={effectTurns[sq]!} />
+                )}
                 {trapMarks.has(sq) && (
                   /* Any other placed trap: a realistic animated marker per
                      kind (SMIL idle loops inside the SVGs; reduced-motion
@@ -2528,6 +2793,7 @@ export function Board({
                           case "trapdoor": return <TrapdoorMark />;
                           case "whoopee": return <WhoopeeCushionMark />;
                           case "landlord": return <LandlordClaimMark />;
+                          case "beartrap": return <BearTrapMark />;
                           default: return null;
                         }
                       })()}
@@ -2648,24 +2914,42 @@ export function Board({
                   !fxHiddenPref &&
                   (() => {
                     const sigCfg = boardFx.sig ? resolveSignature(boardFx.sig) : undefined;
-                    if (!sigCfg) return <DetonationBurst key={`fx-${boardFx.key}`} />;
+                    // Every branch mounts inside the fx-one-shot guard: art
+                    // that fails to fade itself out (see effects.css) is
+                    // taken off the board by the wrapper instead of sitting
+                    // there until the next play.
+                    if (!sigCfg)
+                      return (
+                        <span
+                          key={`fx-${boardFx.key}`}
+                          className="fx-one-shot pointer-events-none absolute inset-0 block"
+                        >
+                          <DetonationBurst />
+                        </span>
+                      );
                     const delay = (boardFx.sigOrder ?? 0) * sigCfg.staggerMs;
                     // Generated configs carry their own renderer; bespoke ones
                     // go through the classic SignatureOverlay switch.
-                    return isGenConfig(sigCfg) ? (
-                      <GenBurst
+                    return (
+                      <span
                         key={`fx-${boardFx.key}`}
-                        config={sigCfg}
-                        role={fxCalmClock ? "target" : boardFx.sigRole ?? "target"}
-                        delayMs={delay}
-                      />
-                    ) : (
-                      <SignatureOverlay
-                        key={`fx-${boardFx.key}`}
-                        visual={sigCfg.visual}
-                        role={fxCalmClock ? "target" : boardFx.sigRole ?? "target"}
-                        delayMs={delay}
-                      />
+                        className="fx-one-shot pointer-events-none absolute inset-0 block"
+                        style={{ animationDelay: `${delay}ms` }}
+                      >
+                        {isGenConfig(sigCfg) ? (
+                          <GenBurst
+                            config={sigCfg}
+                            role={fxCalmClock ? "target" : boardFx.sigRole ?? "target"}
+                            delayMs={delay}
+                          />
+                        ) : (
+                          <SignatureOverlay
+                            visual={sigCfg.visual}
+                            role={fxCalmClock ? "target" : boardFx.sigRole ?? "target"}
+                            delayMs={delay}
+                          />
+                        )}
+                      </span>
                     );
                   })()}
                 {!fxHiddenPref && zoneSig && sigOf(zoneSig.sig) && (
@@ -2682,7 +2966,13 @@ export function Board({
                   />
                 )}
                 {isForced && !isDragging && (
-                  <div className="absolute inset-0 pointer-events-none rounded-sm ring-2 ring-inset ring-gold-leaf/80 shadow-[inset_0_0_24px_-4px_rgba(230,191,106,0.55)] animate-flicker" />
+                  <>
+                    <div className="absolute inset-0 pointer-events-none rounded-sm ring-2 ring-inset ring-gold-leaf/80 shadow-[inset_0_0_24px_-4px_rgba(230,191,106,0.55)] animate-flicker" />
+                    {/* The nerf's grip on this piece glows, matching the
+                        banned-square aura. Decorative: hidden when FX are off,
+                        while the gold ring stays as the read. */}
+                    {!fxHiddenPref && !fxCalmClock && <NerfAura />}
+                  </>
                 )}
                 {isPickTarget && (
                   <div className="sq-pickable absolute inset-0 pointer-events-none rounded-sm" />
@@ -2704,6 +2994,16 @@ export function Board({
                     className={
                       "pointer-events-none " +
                       (isDragging ? "opacity-30 " : "") +
+                      // The piece itself wears its live effect (owner: "a mark
+                      // should actually change the piece"): frostbitten when
+                      // frozen, gilded when shielded, deathly when doomed.
+                      (frozenSquares.has(sq)
+                        ? "piece-frozen "
+                        : doomMarks.has(sq)
+                        ? "piece-doomed "
+                        : shieldedSquares.has(sq)
+                        ? "piece-shielded "
+                        : "") +
                       (boardFx?.kind === "morph"
                         ? "fx-piece-pop"
                         : boardFx?.kind === "summon"
@@ -2800,7 +3100,30 @@ export function Board({
             mounts it exactly once per cast; the finished overlay ends at
             opacity 0 and simply waits to be replaced by the next cast. */}
         {!fxHiddenPref && !fxCalmClock && cast && (
-          <CastSpectacle key={`cast-${cast.key}`} category={cast.category} tier={cast.tier} />
+          <CastSpectacle
+            key={`cast-${cast.key}`}
+            category={cast.category}
+            tier={cast.tier}
+            id={cast.id}
+            name={BUFF_BY_ID[cast.id]?.name}
+            description={BUFF_BY_ID[cast.id]?.description}
+            cardIcon={BUFF_BY_ID[cast.id]?.icon}
+          />
+        )}
+        {/* extraBannerRef is staged during render by the extra-moves block
+            above and consumed imperatively, same deliberate ref pattern. */}
+        {/* eslint-disable react-hooks/refs */}
+        {extraBannerRef.current && (
+          <ExtraTurnsBanner
+            key={`exb-${extraBannerRef.current.key}`}
+            mine={extraBannerRef.current.color === myColor}
+            gained={extraBannerRef.current.gained}
+            total={extraBannerRef.current.total}
+          />
+        )}
+        {/* eslint-enable react-hooks/refs */}
+        {cast && BUFF_BY_ID[cast.id] && (
+          <PlayAnnouncement key={`ann-${cast.key}`} name={BUFF_BY_ID[cast.id]!.name} tier={cast.tier} outcome={cast.outcome} />
         )}
         {/* Diff-less lead: a played card that removes nothing and leaves no
             zone (clock steals, draft tricks, info peeks...) still gets its
@@ -2810,6 +3133,10 @@ export function Board({
             zone-signature path instead, so they are skipped to avoid a double
             lead). Suppressed whenever the piece-diff path already led this
             play key. */}
+        {/* Both the lead-suppression and the zone-claim checks below read
+            play-key refs the animation blocks staked during render (deliberate
+            render-phase reads, see those blocks above). */}
+        {/* eslint-disable react-hooks/refs */}
         {!fxHiddenPref &&
           !fxCalmClock &&
           cast &&
@@ -2822,23 +3149,30 @@ export function Board({
                 <div
                   key={`genlead-${cast.key}`}
                   aria-hidden
-                  className="pointer-events-none absolute inset-0 z-30"
+                  className="fx-one-shot pointer-events-none absolute inset-0 z-30"
                 >
                   <GenBurst config={cfg} role="lead" delayMs={0} />
                 </div>
               );
             }
-            if (cfg.source && cfg.source !== "removal") return null;
+            if (
+              cfg.source &&
+              cfg.source !== "removal" &&
+              cast.key === zoneLeadClaimKeyRef.current
+            ) {
+              return null; // the zone path is playing this card's art
+            }
             return (
               <div
                 key={`siglead-${cast.key}`}
                 aria-hidden
-                className="pointer-events-none absolute inset-0 z-30"
+                className="fx-one-shot pointer-events-none absolute inset-0 z-30"
               >
                 <SignatureOverlay visual={cfg.visual} role="lead" delayMs={0} />
               </div>
             );
           })()}
+        {/* eslint-enable react-hooks/refs */}
 
         {/* Drawn annotations: arrows above the pieces, clicks pass through. */}
         {(arrows.length > 0 || (rightDrag && rightDrag.hover !== rightDrag.from)) && (

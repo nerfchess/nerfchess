@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/server/db";
+import { bestLiveRatingSql } from "@/lib/server/ratingSql";
 
 export const dynamic = "force-dynamic";
 
@@ -11,18 +12,15 @@ export async function GET(request: Request) {
 
   const db = await getDb();
   // Displayed rating = the best of the player's LIVE mode buckets (nerf/buff),
-  // the same source the leaderboard and profiles read. The legacy users.rating
-  // column is never written after games anymore, so reading it here showed
-  // frozen numbers (house bots especially: their buckets move with arena
-  // results while the legacy column sits on the seed forever).
+  // the same source the leaderboard and profiles read (shared rule in
+  // lib/server/ratingSql.ts). The legacy users.rating column is never written
+  // after games anymore, so reading it here showed frozen numbers (house bots
+  // especially: their buckets move with arena results while the legacy column
+  // sits on the seed forever).
   const rows = await db
     .prepare(
       `SELECT u.username,
-              COALESCE(
-                (SELECT MAX(r.rating) FROM user_ratings r
-                  WHERE r.user_id = u.id AND r.category IN ('nerf','buff')),
-                u.rating
-              ) AS rating,
+              ${bestLiveRatingSql("u")} AS rating,
               u.games
        FROM users u
        WHERE u.username_lower LIKE ? ESCAPE '\\'

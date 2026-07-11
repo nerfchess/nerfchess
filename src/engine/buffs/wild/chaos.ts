@@ -28,6 +28,7 @@ import {
   augment,
   captureExplosion,
   emptySquares,
+  explodeAt,
   grantInventory,
   inHalf,
   instant,
@@ -395,13 +396,46 @@ export const WILD_CHAOS: Buff[] = [
     {
       id: "wc_double_trouble",
       name: "Double Trouble",
-      description: "Freeze two of your opponent's pieces you choose for their next 3 turns each. Kings cannot be targeted.",
+      description: "One of your knights or bishops splits in two: place its exact twin on an empty square right beside it.",
       tier: 6,
-      category: "tempo",
+      category: "pieces",
+      requires: ["n", "b"],
       flavor: "One is bad luck. Two is a bit.",
-      fx: { motif: "jail" },
     },
-    freezeMany(2, 3, "Choose an enemy piece to freeze"),
+    activated(
+      (_inst, api, picks) => {
+        if (picks.length >= 2) return null;
+        if (picks.length === 0) {
+          return {
+            kind: "square",
+            label: "Choose the piece that splits",
+            squares: mySquares(api.board, api.me).filter((sq) => {
+              const t = api.board.pieces[sq]!.type;
+              if (t !== "n" && t !== "b") return false;
+              for (const [df, dr] of ALL_DIRS) {
+                const f = FILE(sq) + df, r = RANK(sq) + dr;
+                if (inBoard(f, r) && !api.board.pieces[SQ(f, r)]) return true;
+              }
+              return false;
+            }),
+          };
+        }
+        const first = picks[0].square!;
+        const squares: Square[] = [];
+        for (const [df, dr] of ALL_DIRS) {
+          const f = FILE(first) + df, r = RANK(first) + dr;
+          if (inBoard(f, r) && !api.board.pieces[SQ(f, r)]) squares.push(SQ(f, r));
+        }
+        return { kind: "square", label: "Choose where the twin appears", squares };
+      },
+      (_inst, api, picks) => {
+        const src = picks[0]?.square, dst = picks[1]?.square;
+        if (src == null || dst == null || api.board.pieces[dst]) return;
+        const p = api.board.pieces[src];
+        if (!p || p.color !== api.me || (p.type !== "n" && p.type !== "b")) return;
+        api.place(dst, p.type, api.me);
+      },
+    ),
   ),
 
   // =========================================================================
@@ -411,13 +445,26 @@ export const WILD_CHAOS: Buff[] = [
     {
       id: "wc_stage_fright",
       name: "Stage Fright",
-      description: "Your opponent's queen freezes up under the lights: she cannot move on your opponent's next turn.",
+      description: "The spotlight waits for her: the next time your opponent's queen moves, stage fright strikes and she freezes where she lands for 2 of their turns.",
       tier: 3,
       category: "hex",
       flavor: "All those eyes, and she just blanks.",
       fx: { motif: "jail", pieces: ["q"] },
     },
-    curse(1, (moves) => moves.filter((m) => m.piece !== "q")),
+    {
+      kind: "passive",
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.opp || move.piece !== "q") return;
+        const p = api.board.pieces[move.to];
+        if (p && p.color === api.opp && p.type === "q") {
+          // Added during their own move, so the shared post-move tick eats
+          // one turn immediately: 3 here leaves 2 of their turns frozen.
+          addEffect(api, { kind: "freeze", sq: move.to, owner: api.opp, turns: 3 });
+        }
+        inst.spent = true;
+      },
+      status: () => "the spotlight waits for their queen",
+    },
   ),
   card(
     {
@@ -451,13 +498,15 @@ export const WILD_CHAOS: Buff[] = [
     {
       id: "wc_butterfingers",
       name: "Butterfingers",
-      description: "Your opponent's queen cannot hold onto anything: she may not capture for their next 2 turns.",
+      description: "Your whole army is slathered in butter: enemy pawns and knights cannot capture your pieces for their next 2 turns. Nothing short-armed can keep a grip.",
       tier: 4,
-      category: "hex",
+      category: "protection",
       flavor: "So close, and it squirts right out.",
-      fx: { motif: "muzzle", pieces: ["q"] },
+      fx: { motif: "ward", pieces: "all", self: true },
     },
-    curse(2, (moves) => moves.filter((m) => !(m.piece === "q" && m.captured))),
+    curse(2, (moves) =>
+      moves.filter((m) => !(m.captured && (m.piece === "p" || m.piece === "n"))),
+    ),
   ),
   card(
     {
@@ -543,34 +592,109 @@ export const WILD_CHAOS: Buff[] = [
       id: "wc_clown_car",
       icon: "Car",
       name: "Clown Car",
-      description: "Two knights pile out of one tiny car straight into your pocket, then drop them onto empty squares on later turns.",
+      description: "Two knights pile out of one tiny car: place them on two empty squares that touch each other. Both are too dizzy to move on your next turn.",
       tier: 5,
       category: "pieces",
-      flavor: "How were they all in there.",
+      flavor: "How were they both in there.",
     },
-    instant((_inst, api) => grantInventory(api, "n", 2)),
+    activated(
+      (_inst, api, picks) => {
+        if (picks.length >= 2) return null;
+        if (picks.length === 0) {
+          return {
+            kind: "square",
+            label: "Choose where the car parks (first knight)",
+            squares: emptySquares(api.board).filter((sq) => {
+              for (const [df, dr] of ALL_DIRS) {
+                const f = FILE(sq) + df, r = RANK(sq) + dr;
+                if (inBoard(f, r) && !api.board.pieces[SQ(f, r)]) return true;
+              }
+              return false;
+            }),
+          };
+        }
+        const first = picks[0].square!;
+        const squares: Square[] = [];
+        for (const [df, dr] of ALL_DIRS) {
+          const f = FILE(first) + df, r = RANK(first) + dr;
+          if (inBoard(f, r) && !api.board.pieces[SQ(f, r)]) squares.push(SQ(f, r));
+        }
+        return { kind: "square", label: "Choose where the second knight stumbles out", squares };
+      },
+      (_inst, api, picks) => {
+        for (const k of picks) {
+          if (k.square == null || api.board.pieces[k.square]) continue;
+          api.place(k.square, "n", api.me);
+          addEffect(api, { kind: "freeze", sq: k.square, owner: api.me, turns: 1 });
+        }
+      },
+    ),
   ),
   card(
     {
       id: "wc_conga_line",
       name: "Conga Line",
-      description: "Three pawns conga straight into enemy territory: place them on empty squares in your opponent's half, once.",
-      tier: 6,
-      category: "pieces",
+      description: "The whole line dances one step to the side: every one of your pawns shifts one square toward the board edge you pick (pawns with no room sit the song out).",
+      tier: 5,
+      category: "movement",
+      requires: ["p"],
       flavor: "Da, da, da, da-da-da, HEY.",
     },
-    placePieces(["p", "p", "p"], oppHalfZone),
+    activated(
+      (_inst, _api, picks) =>
+        picks.length > 0
+          ? null
+          : {
+              kind: "square",
+              label: "Pick any square on the side the line dances toward",
+              squares: Array.from({ length: 64 }, (_, i) => i),
+            },
+      (_inst, api, picks) => {
+        const c = picks[0]?.square;
+        if (c == null) return;
+        const dir = FILE(c) < 4 ? -1 : 1;
+        // Shift the pawns nearest the target edge first so the line never
+        // steps on its own toes (deterministic order on every replica).
+        const pawns = mySquares(api.board, api.me, "p").sort((a, b) =>
+          dir === 1 ? FILE(b) - FILE(a) || a - b : FILE(a) - FILE(b) || a - b,
+        );
+        for (const sq of pawns) {
+          const f = FILE(sq) + dir;
+          if (f < 0 || f > 7) continue;
+          const to = SQ(f, RANK(sq));
+          if (!api.board.pieces[to]) api.relocate(sq, to);
+        }
+      },
+    ),
   ),
   card(
     {
       id: "wc_rubber_duck_squad",
       name: "Rubber Duck Squad",
-      description: "Two rubber ducks waddle into your pocket as bishops, then drop them onto empty squares on later turns.",
+      description: "Your bishops are secretly rubber: for your opponent's next 3 turns, any enemy piece that captures one of your bishops bounces straight back to the square it came from.",
       tier: 5,
-      category: "pieces",
-      flavor: "Squeak. Squeak.",
+      category: "protection",
+      requires: ["b"],
+      flavor: "Squeak. Squeak. Boing.",
+      fx: { motif: "ward", pieces: ["b"], self: true },
     },
-    instant((_inst, api) => grantInventory(api, "b", 2)),
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.turns = 3;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.opp) return;
+        const t = ((inst.state.turns as number) ?? 0) - 1;
+        inst.state.turns = t;
+        if (t >= 0 && move.captured === "b" && !api.board.pieces[move.from]) {
+          const p = api.board.pieces[move.to];
+          if (p && p.color === api.opp) api.relocate(move.to, move.from);
+        }
+        if (t <= 0) inst.spent = true;
+      },
+      status: (inst) => `${Math.max(0, (inst.state.turns as number) ?? 0)} of their turns left`,
+    },
   ),
   card(
     {
@@ -598,12 +722,18 @@ export const WILD_CHAOS: Buff[] = [
     {
       id: "wc_genie_wish",
       name: "Genie Wish",
-      description: "You get one wish and you wished for a queen: a new queen appears in your pocket, then spend a later turn to drop it onto any empty square.",
+      description: "You wished for a queen and the genie obliges, with a flourish of fine print: a new queen appears in your pocket, and a knight appears in your OPPONENT'S. Both drop onto empty squares on later turns.",
       tier: 7,
       category: "pieces",
       flavor: "Should have read the terms.",
     },
-    instant((_inst, api) => grantInventory(api, "q", 1)),
+    instant((_inst, api) => {
+      grantInventory(api, "q", 1);
+      // The fine print: the opponent's pocket gains a knight. grantInventory
+      // only writes the caster's pocket, so write theirs directly.
+      const pocket = (api.theirs.inventory ??= {});
+      pocket.n = (pocket.n ?? 0) + 1;
+    }),
   ),
 
   // =========================================================================
@@ -992,8 +1122,11 @@ export const WILD_CHAOS: Buff[] = [
       id: "wc_black_hole",
       icon: "Atom",
       name: "Black Hole",
+      // Tier 3 (moved down from 4): a single step-on trap the opponent can see
+      // and route around; Void Rift (tier 4) is the same idea with the
+      // adjacency-pull rider, so the plain hole prices a tier below it.
       description: "Open a black hole on one empty square: any enemy piece that steps onto it, never a king, is swallowed off the board. It stays open for the rest of the game.",
-      tier: 4,
+      tier: 3,
       category: "attack",
       flavor: "Do not look directly into it.",
       fx: { motif: "blindfold" },
@@ -1096,12 +1229,26 @@ export const WILD_CHAOS: Buff[] = [
       id: "wc_wrecking_ball",
       icon: "Hammer",
       name: "Wrecking Ball",
-      description: "One of your queens swings a wrecking ball down a rank or file, removing every enemy piece in its path, never a king, and stopping at the end, once.",
+      description: "Your queen takes one full swing in place: every enemy piece except a king on the 8 squares around her is smashed off the board. Shielded pieces resist the swing, once.",
       tier: 6,
       category: "attack",
       requires: ["q"],
       flavor: "Structural integrity was more of a suggestion.",
     },
-    lineSweep("q", ORTHO_DIRS, null),
+    activated(
+      (_inst, api, picks) =>
+        picks.length > 0
+          ? null
+          : {
+              kind: "square",
+              label: "Choose the queen that swings",
+              squares: mySquares(api.board, api.me, "q"),
+            },
+      (_inst, api, picks) => {
+        const sq = picks[0]?.square;
+        if (sq == null || api.board.pieces[sq]?.type !== "q") return;
+        explodeAt(api, sq);
+      },
+    ),
   ),
 ];

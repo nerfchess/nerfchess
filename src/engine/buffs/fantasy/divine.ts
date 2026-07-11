@@ -160,12 +160,46 @@ export const FANTASY_DIVINE: Buff[] = [
       icon: "Sparkles",
       name: "Hallowed Return",
       description:
-        "A prayer is answered: one of your captured knights, bishops, or rooks is restored to life on an empty square in your half, once.",
+        "A prayer is answered exactly: one of your captured knights, bishops, or rooks is restored to life on one of its own starting squares, if one is free, once.",
       tier: 3,
       category: "pieces",
-      flavor: "Called back from the far shore.",
+      flavor: "Called back from the far shore, to the very pew it left.",
     },
-    reviveOne(["r", "b", "n"], myHalfZone),
+    activated(
+      (_inst, api, picks) => {
+        if (picks.length > 0) return null;
+        const homes: Record<string, number[]> = { r: [0, 7], n: [1, 6], b: [2, 5] };
+        const rank = api.me === "w" ? 0 : 7;
+        const type = (["r", "b", "n"] as const).find(
+          (t) =>
+            (api.capturedFromMe[t] ?? 0) - (api.mine.revived[t] ?? 0) > 0 &&
+            homes[t].some((f) => !api.board.pieces[SQ(f, rank)]),
+        );
+        return {
+          kind: "square",
+          label: "Choose the home square it returns to",
+          squares:
+            type == null
+              ? []
+              : homes[type].map((f) => SQ(f, rank)).filter((sq) => !api.board.pieces[sq]),
+        };
+      },
+      (_inst, api, picks) => {
+        const sq = picks[0]?.square;
+        if (sq == null || api.board.pieces[sq]) return;
+        const homes: Record<string, number[]> = { r: [0, 7], n: [1, 6], b: [2, 5] };
+        const rank = api.me === "w" ? 0 : 7;
+        const type = (["r", "b", "n"] as const).find(
+          (t) =>
+            (api.capturedFromMe[t] ?? 0) - (api.mine.revived[t] ?? 0) > 0 &&
+            homes[t].includes(FILE(sq)) &&
+            RANK(sq) === rank,
+        );
+        if (type == null) return;
+        api.place(sq, type, api.me);
+        api.mine.revived[type] = (api.mine.revived[type] ?? 0) + 1;
+      },
+    ),
   ),
   card(
     {
@@ -206,19 +240,45 @@ export const FANTASY_DIVINE: Buff[] = [
       icon: "Gavel",
       name: "Divine Reckoning",
       description:
-        "Judgment falls on the whole court: for your opponent's next 2 turns they may move only their king, and their next drafted card arrives nullified.",
+        "The verdict is exile: choose one enemy piece except the king. If one of its own starting squares is free it is sent back there (nearest the a-file first); either way it is frozen for 2 of their turns.",
       tier: 5,
       category: "hex",
-      flavor: "Every courtier is called to account at once.",
-      fx: { motif: "jail", pieces: ["p", "n", "b", "r", "q"] },
+      flavor: "Every courtier is called to account, and sent to their room.",
+      fx: { motif: "jail", pieces: "all" },
     },
-    instant((_inst, api) => {
-      addEffect(api, { kind: "king_only", against: api.opp, turns: 2 });
-      // The reckoning reaches their hand too: their next drafted buff arrives
-      // nullified (spent before it can be used), reusing the engine's existing
-      // draft-nullify flag so judgment strikes their army and their draft.
-      api.theirs.flags.nullifyIncoming = (api.theirs.flags.nullifyIncoming ?? 0) + 1;
-    }),
+    activated(
+      (_inst, api, picks) =>
+        picks.length > 0
+          ? null
+          : {
+              kind: "square",
+              label: "Choose the enemy piece to judge",
+              squares: mySquares(api.board, api.opp).filter(
+                (sq) => api.board.pieces[sq]!.type !== "k",
+              ),
+            },
+      (_inst, api, picks) => {
+        const sq = picks[0]?.square;
+        if (sq == null) return;
+        const p = api.board.pieces[sq];
+        if (!p || p.color !== api.opp || p.type === "k") return;
+        const rank = api.opp === "w" ? 0 : 7;
+        const homesByType: Record<string, number[]> = {
+          r: [0, 7],
+          n: [1, 6],
+          b: [2, 5],
+          q: [3],
+          p: Array.from({ length: 8 }, (_, f) => f),
+        };
+        const homeRank = p.type === "p" ? (api.opp === "w" ? 1 : 6) : rank;
+        const home = (homesByType[p.type] ?? [])
+          .map((f) => SQ(f, homeRank))
+          .find((h) => h !== sq && !api.board.pieces[h]);
+        const finalSq = home != null ? home : sq;
+        if (home != null) api.relocate(sq, home);
+        addEffect(api, { kind: "freeze", sq: finalSq, owner: api.opp, turns: 2 });
+      },
+    ),
   ),
   card(
     {

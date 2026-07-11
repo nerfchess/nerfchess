@@ -39,6 +39,23 @@ export interface BuffTargeting {
   target: BuffTarget;
 }
 
+/** True on hover-capable fine-pointer devices (mouse/trackpad). SSR-safe:
+ * false until mounted. Used to gate the Use button's HTML5 draggable: on
+ * touch browsers a draggable element inside the scrollable drawer swallows
+ * taps (the touch is held as a potential drag and click never fires), which
+ * blocked the Use button on mobile. */
+function useFinePointer(): boolean {
+  const [fine, setFine] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(hover: hover) and (pointer: fine)");
+    const update = () => setFine(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+  return fine;
+}
+
 export function useBuffTargeting({
   game,
   myColor,
@@ -57,9 +74,9 @@ export function useBuffTargeting({
 }) {
   const [targeting, setTargeting] = useState<BuffTargeting | null>(null);
 
-  useEffect(() => {
-    if (!active && targeting) setTargeting(null);
-  }, [active, targeting]);
+  // Deactivating cancels any in-progress targeting; adjust during render rather
+  // than in an effect so the panel never shows a stale targeting frame.
+  if (!active && targeting) setTargeting(null);
 
   useEffect(() => {
     if (!targeting) return;
@@ -414,6 +431,14 @@ export interface AgainstRow {
 const sqName = (sq: number) => "abcdefgh"[sq % 8] + (Math.floor(sq / 8) + 1);
 const turnsLeft = (turns: number | null) =>
   turns == null ? "Until it ends" : `${turns} turn${turns === 1 ? "" : "s"} left`;
+/** Hover detail for a "N turns left" chip: effect timers tick once per the
+ *  affected side's move, so N turns ≈ 2N half-moves (plies) of game time. */
+const pliesTitle = (left: string): string | undefined => {
+  const m = /(\d+)\s*turn/i.exec(left);
+  if (!m) return undefined;
+  const n = parseInt(m[1], 10);
+  return `${left} — about ${n * 2} half-move${n * 2 === 1 ? "" : "s"} (plies) of game time`;
+};
 
 // Exported: the game surfaces also feed these rows to the board-wide splash
 // (BoardSplash), so a new constraint lands with one big announcement plus its
@@ -519,6 +544,7 @@ interface Props {
 }
 
 export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards, plays }: Props) {
+  const finePointer = useFinePointer();
   // Per-card expand/collapse, remembered for the whole game. A missing key
   // falls back to the default: your own cards start expanded, the opponent's
   // start collapsed (see defaultOpen). Keyed by owner + index, both stable
@@ -669,7 +695,9 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
         {open && (
           <div className="px-2 pb-1.5">
             {status && (
-              <div className="smallcaps mb-1 truncate text-[8px] text-gold/80">{status}</div>
+              <div title={pliesTitle(status)} className="smallcaps mb-1 truncate text-[8px] text-gold/80">
+                {status}
+              </div>
             )}
             {/* Full description, always readable without hovering; spent cards
                 fade their copy so the live rows carry the eye. */}
@@ -685,7 +713,10 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
                   // separate from the board's pointer-drag, so the click flow is
                   // untouched. The custom dataTransfer type lets the Board react
                   // to card drags only.
-                  draggable
+                  // Drag-to-board is a desktop affordance: on touch browsers
+                  // a draggable element swallows taps (held as a potential
+                  // drag), which blocked this button on mobile entirely.
+                  draggable={finePointer}
                   onDragStart={(e) => {
                     e.dataTransfer.setData("application/x-nerf-card", String(i));
                     e.dataTransfer.effectAllowed = "move";
@@ -694,7 +725,7 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
                   onClick={() => onStartUse(i)}
                   // Thumb-sized below sm (44px is the touch floor); compact on
                   // desktop where the pointer is precise.
-                  className="btn-glass btn-glass--primary mt-1.5 cursor-grab px-2.5 py-1 font-display text-[10px] font-semibold tracking-wide active:cursor-grabbing max-sm:min-h-[44px] max-sm:w-full max-sm:px-4 max-sm:text-xs"
+                  className="btn-glass btn-glass--primary mt-1.5 touch-manipulation px-2.5 py-1 font-display text-[10px] font-semibold tracking-wide max-sm:min-h-[44px] max-sm:w-full max-sm:px-4 max-sm:text-xs sm:cursor-grab sm:active:cursor-grabbing"
                 >
                   Use
                 </button>
@@ -879,6 +910,11 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
           </div>
         )}
 
+        {/* The opponent's play ledger ("their pocket") lives at the TOP of the
+            dock, right under the Latest slot — their plays land up here by the
+            opponent's side of the table, not buried at the foot of the list. */}
+        {plays && plays.length > 0 && <OppPlaysDockSection plays={plays} />}
+
         {/* Pending take-both: the next offer is taken whole, and the player
             should know before the draft opens, not discover it inside. */}
         {(bs.players[myColor].flags.takeBoth ?? 0) > 0 && (
@@ -940,11 +976,17 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
                         </span>
                       )}
                       {t ? (
-                        <span className="smallcaps shrink-0 rounded-[1px] border border-white/15 bg-white/[0.05] px-1.5 py-px text-[8px] font-semibold text-parchment-300">
+                        <span
+                          title={pliesTitle(row.left)}
+                          className="smallcaps shrink-0 rounded-[1px] border border-white/15 bg-white/[0.05] px-1.5 py-px text-[8px] font-semibold text-parchment-300"
+                        >
                           {row.left}
                         </span>
                       ) : (
-                        <span className="smallcaps shrink-0 rounded-[1px] border border-oxblood-glow/40 bg-oxblood/15 px-1.5 py-px text-[8px] font-semibold text-oxblood-glow">
+                        <span
+                          title={pliesTitle(row.left)}
+                          className="smallcaps shrink-0 rounded-[1px] border border-oxblood-glow/40 bg-oxblood/15 px-1.5 py-px text-[8px] font-semibold text-oxblood-glow"
+                        >
                           {row.left}
                         </span>
                       )}
@@ -1051,7 +1093,6 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
           </motion.div>
         )}
 
-        {plays && plays.length > 0 && <OppPlaysDockSection plays={plays} />}
       </div>
     </div>
   );

@@ -123,11 +123,107 @@ html[data-anim="fast"] *::after {
 }
 
 /* Site theme (Settings > Appearance): the site is dark-first; "light" remaps
-   the core surfaces and text ramps like the high-contrast block below. */
+   the core surfaces and text ramps like the high-contrast block below. The
+   named dark variants (midnight, void, abyss, ember, moss, nebula — see
+   SITE_THEMES in src/lib/settings.ts) inherit every dark style and remap only
+   the surface variables plus the page wash, so each reads as a full palette
+   shift with zero per-component work. */
+html[data-theme="midnight"] {
+  --paper: #ccd2dc;
+  --paper-dim: #8d95a4;
+  --ink-deep: #0b0e12;
+  --ink-warm: #171b22;
+  --surface-panel: #1a1f27;
+  --surface-raise: #242b36;
+  --surface-hover: #1f2530;
+  --edge: #2d3542;
+  --edge-strong: #3e4a5c;
+}
+html[data-theme="midnight"], html[data-theme="midnight"] body {
+  background-color: #101318;
+  background-image: linear-gradient(180deg, #1b2028 0%, #14181e 46%, #101318 100%);
+}
+html[data-theme="void"] {
+  --paper: #d4d4d4;
+  --paper-dim: #8f8f8f;
+  --ink-deep: #000000;
+  --ink-warm: #101010;
+  --surface-panel: #141414;
+  --surface-raise: #1e1e1f;
+  --surface-hover: #191919;
+  --edge: #272727;
+  --edge-strong: #3b3b3b;
+}
+html[data-theme="void"], html[data-theme="void"] body {
+  background-color: #000000;
+  background-image: linear-gradient(180deg, #0a0a0a 0%, #030303 46%, #000000 100%);
+}
+html[data-theme="abyss"] {
+  --paper: #c9d6d3;
+  --paper-dim: #869a96;
+  --ink-deep: #070e10;
+  --ink-warm: #121d20;
+  --surface-panel: #152327;
+  --surface-raise: #1e3036;
+  --surface-hover: #1a2a2f;
+  --edge: #24383d;
+  --edge-strong: #315057;
+}
+html[data-theme="abyss"], html[data-theme="abyss"] body {
+  background-color: #0c1517;
+  background-image: linear-gradient(180deg, #142225 0%, #0f1a1c 46%, #0c1517 100%);
+}
+html[data-theme="ember"] {
+  --paper: #dcccc4;
+  --paper-dim: #a08a80;
+  --ink-deep: #100908;
+  --ink-warm: #1f1512;
+  --surface-panel: #261815;
+  --surface-raise: #33211c;
+  --surface-hover: #2c1c18;
+  --edge: #432c25;
+  --edge-strong: #5c3c31;
+}
+html[data-theme="ember"], html[data-theme="ember"] body {
+  background-color: #170f0e;
+  background-image: linear-gradient(180deg, #251715 0%, #1d1210 46%, #170f0e 100%);
+}
+html[data-theme="moss"] {
+  --paper: #ced6c6;
+  --paper-dim: #909a85;
+  --ink-deep: #0a0e08;
+  --ink-warm: #171f13;
+  --surface-panel: #1a2318;
+  --surface-raise: #253021;
+  --surface-hover: #1f2a1c;
+  --edge: #2d3c27;
+  --edge-strong: #405537;
+}
+html[data-theme="moss"], html[data-theme="moss"] body {
+  background-color: #0f140e;
+  background-image: linear-gradient(180deg, #1a2217 0%, #131a11 46%, #0f140e 100%);
+}
+html[data-theme="nebula"] {
+  --paper: #d2cbde;
+  --paper-dim: #948ba4;
+  --ink-deep: #0d0a12;
+  --ink-warm: #1a1523;
+  --surface-panel: #1f1929;
+  --surface-raise: #2b2238;
+  --surface-hover: #251e31;
+  --edge: #362c48;
+  --edge-strong: #4b3d64;
+}
+html[data-theme="nebula"], html[data-theme="nebula"] body {
+  background-color: #131019;
+  background-image: linear-gradient(180deg, #1e1927 0%, #17131f 46%, #131019 100%);
+}
 html[data-theme="light"] body {
-  background: linear-gradient(180deg, #efece5 0%, #e4e0d6 100%) fixed, #e9e6de;
   background-color: #e9e6de;
   color: #2b2822;
+}
+html[data-theme="light"]::before {
+  background: linear-gradient(180deg, #efece5 0%, #e4e0d6 100%);
 }
 html[data-theme="light"] { --paper: #2b2822; --paper-dim: #5c584f; }
 html[data-theme="light"] .plate {
@@ -151,16 +247,32 @@ html[data-contrast="high"] .text-parchment-500 { color: #97948e; }
 
 /* A solid dark background-color must sit behind the gradient: during fast
    scrolls (and rubber-band overscroll) mobile browsers reveal areas the
-   fixed-attachment gradient hasn't painted yet, which otherwise flash the
-   default white. Lifted and warmed a step: dark, but never dim, with a faint
-   color wash (warm top-left, cool bottom-right) so the page has weather. */
+   gradient hasn't painted yet, which otherwise flash the default white. Lifted
+   and warmed a step: dark, but never dim, with a faint color wash (warm
+   top-left, cool bottom-right) so the page has weather. */
 html, body {
   background-color: #191713;
-  background-image:
-    linear-gradient(180deg, #282420 0%, #1e1b17 46%, #191713 100%);
-  background-attachment: fixed;
+  /* The page gradient lives on the html::before fixed pseudo-element below
+     (painted once, only translated on scroll) instead of a body
+     background-image. This supersedes the earlier `background-attachment:
+     scroll` fix on master — both target the same scroll-jank, and keeping the
+     body gradient too would double-paint over the pseudo-element. */
   color: var(--paper);
   min-height: 100vh;
+}
+/* The page gradient rides a fixed pseudo-element instead of
+   `background-attachment: fixed` on the body. Both pin the gradient to the
+   viewport, but a fixed element is painted once and only translated on scroll,
+   whereas a fixed-attachment background forces a full repaint of the gradient
+   every scroll frame — the homepage's biggest scroll-jank source. `body::before`
+   is already the paper grain, so this lives on `html::before`. */
+html::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(180deg, #282420 0%, #1e1b17 46%, #191713 100%);
 }
 
 /* Geometry: crisp 1px corners everywhere. Owner verdict: soft rounding read
@@ -409,8 +521,55 @@ html[data-theme="light"] .mode-seam::after { background: #e4e0d6; }
     inset 0 0 0 1px rgba(255, 255, 255, 0.025),
     0 12px 40px -24px rgba(0, 0, 0, 0.7);
   border-radius: 1px;
+}
+/* Positioning defaults live in a zero-specificity :where() so any positioning
+   utility on the same element (fixed, absolute, sticky, z-30...) wins. This
+   rule sits after Tailwind's utilities in the sheet, so at equal specificity
+   it would silently demote e.g. the mobile buff drawer's `fixed z-40` panel
+   to relative/z-2 — leaving its own z-30 backdrop painted on top and eating
+   every tap (the un-clickable Use button on phones). */
+:where(.plate) {
   position: relative;
   z-index: 2;
+}
+
+/* TV tuning-in spinner: one quiet accent ring orbiting the radio glyph. */
+.tv-tuning-ring {
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  width: 56px;
+  height: 56px;
+  margin-left: -28px;
+  border-radius: 999px;
+  border: 2px solid transparent;
+  border-top-color: rgb(var(--accent-rgb) / 0.8);
+  border-right-color: rgb(var(--accent-rgb) / 0.25);
+  animation: tv-tuning-spin 1s linear infinite;
+}
+@keyframes tv-tuning-spin {
+  to { transform: rotate(360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tv-tuning-ring { animation: none; }
+}
+
+/* The in-game command rail: one machined control surface for the left column.
+   A themed panel (follows every site theme via the surface vars) with a faint
+   top-light gradient and a crisp double edge — sharp and minimal, no glow. */
+.rail-panel {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0) 120px),
+    var(--surface-panel);
+  border: 1px solid var(--edge);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.02),
+    0 10px 34px -26px rgba(0, 0, 0, 0.65);
+  border-radius: 1px;
+}
+html[data-theme="light"] .rail-panel {
+  background: rgba(255, 255, 255, 0.5);
+  border-color: rgba(0, 0, 0, 0.14);
 }
 
 /* Chamfered corners: the signature box device. Two opposite corners cut at
@@ -423,9 +582,8 @@ html[data-theme="light"] .mode-seam::after { background: #e4e0d6; }
     calc(100% - 10px) 100%, 0 100%, 0 10px
   );
 }
-/* A plate used as a floating menu must stay absolutely positioned; without
-   this the base rule above beats the `absolute` utility, the menu joins the
-   layout flow, and opening it shoves the whole header around. Floating surfaces
+/* A plate used as a floating menu is absolutely positioned (many dropdowns
+   carry no `absolute` utility of their own and rely on this). Floating surfaces
    also step ONE rung up the ink ladder (ink-600) so menus and modals read as
    closer to the viewer — depth from lightness, not a heavier shadow. */
 .plate.dropdown {
@@ -585,9 +743,17 @@ html[data-theme="light"] .mode-seam::after { background: #e4e0d6; }
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.16),
     0 10px 30px -16px rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
   transition: border-color 160ms ease, box-shadow 180ms ease, transform 120ms ease, background 160ms ease;
+}
+/* The frosted blur is a desktop nicety: live backdrop-filters are expensive on
+   mobile/low-end GPUs and several glass buttons can be on screen at draft/
+   lock-in moments. Restrict it to fine-pointer devices and drop it in
+   performance mode. */
+@media (hover: hover) and (pointer: fine) {
+  html:not([data-perf="low"]) .btn-glass {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
 }
 .btn-glass:hover:not(:disabled) {
   border-color: rgba(255, 255, 255, 0.32);
@@ -730,14 +896,19 @@ html[data-theme="light"] .masthead {
   position: relative;
   display: block;
   padding: 8px;
+  /* No backdrop-filter: a live blur over the fixed page gradient re-samples on
+     every repaint and is a top scroll-jank source. The frost is baked into a
+     near-opaque base layer instead — visually near-identical since what sits
+     behind the frame is only the page gradient. */
   background:
     linear-gradient(165deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.03) 45%, rgba(10, 12, 16, 0.25)),
-    rgba(22, 21, 18, 0.6);
+    rgba(28, 26, 22, 0.92);
   border: 1px solid rgba(255, 255, 255, 0.15);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.14),
     0 30px 80px -32px rgba(0, 0, 0, 0.9);
-  backdrop-filter: blur(10px) saturate(1.15);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(10px) saturate(1.15);
   transition: box-shadow var(--dur-2) var(--ease-out), transform var(--dur-2) var(--ease-out),
     border-color var(--dur-2) var(--ease-out);
@@ -752,7 +923,7 @@ html[data-theme="light"] .masthead {
   }
 }
 html[data-theme="light"] .tv-frame {
-  background: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.9);
   border-color: rgba(43, 40, 34, 0.18);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.85),
@@ -782,23 +953,30 @@ html[data-theme="light"] .tv-frame {
   position: absolute;
   top: 0;
   bottom: 0;
-  left: -60%;
+  left: 0;
   width: 42%;
   background: linear-gradient(105deg, transparent, rgba(255, 255, 255, 0.32), transparent);
-  transform: skewX(-18deg);
+  transform: translateX(0) skewX(-18deg);
   pointer-events: none;
   animation: cta-sweep 5s ease-in-out 1.2s infinite;
 }
+/* translateX (compositor-only) instead of animating `left` (which relayouts
+   and repaints every frame, forever, on the landing page). The element is 42%
+   of the button wide, so translateX percentages are element-relative: the old
+   -60%->130% left travel = 190% of button width = 190/42 ≈ 452% of the sheen's
+   own width. Same sweep, no per-frame paint. */
 @keyframes cta-sweep {
-  0%, 62% { left: -60%; }
-  86%, 100% { left: 130%; }
+  0%, 62% { transform: translateX(0) skewX(-18deg); }
+  86%, 100% { transform: translateX(452%) skewX(-18deg); }
 }
 
-/* Light blue CTA: an airy sky blue with dark ink type, one step lighter and
-   friendlier than the accent blue. Same metal-button physics as .btn-leaf. */
+/* Open Lobby CTA: the quiet secondary in the blue family. A desaturated
+   steel-blue tint of the brand azure with dark ink — present and airy, but
+   reads as subordinate to the saturated .btn-cyan primary below it. Same
+   metal-button physics as .btn-leaf. */
 .btn-sky {
-  background: linear-gradient(to bottom, #9fd0f5, #78b6e8);
-  color: #0e2334;
+  background: linear-gradient(to bottom, #aac2da, #89a6c4);
+  color: #16283a;
   border: 1px solid rgba(0, 0, 0, 0.28);
   border-radius: 1px;
   box-shadow:
@@ -809,19 +987,72 @@ html[data-theme="light"] .tv-frame {
   letter-spacing: 0.005em;
 }
 .btn-sky:hover { filter: brightness(1.05); }
+
+/* --- Nebula: the play surfaces go full space -------------------------------
+   Under the nebula theme the big play CTAs and the mode cards trade their
+   daylight blues for deep-space violet with a starfield speckle, matching the
+   page's dusk wash. Stars are layered radial dots — no images, no motion. */
+html[data-theme="nebula"] .btn-sky,
+html[data-theme="nebula"] .btn-cyan {
+  color: #efe9ff;
+  text-shadow: 0 1px 6px rgba(20, 10, 40, 0.8);
+}
+/* Open Lobby: deep-space BLUE. */
+html[data-theme="nebula"] .btn-sky {
+  background:
+    radial-gradient(1px 1px at 12% 30%, rgba(255, 255, 255, 0.9), transparent 55%),
+    radial-gradient(1px 1px at 78% 22%, rgba(255, 255, 255, 0.7), transparent 55%),
+    radial-gradient(1.5px 1.5px at 55% 68%, rgba(190, 214, 255, 0.8), transparent 55%),
+    radial-gradient(1px 1px at 32% 82%, rgba(255, 255, 255, 0.55), transparent 55%),
+    radial-gradient(2px 2px at 68% 40%, rgba(255, 255, 255, 0.35), transparent 60%),
+    linear-gradient(135deg, #2c4a86 0%, #223768 52%, #16224a 100%);
+  border: 1px solid rgba(140, 172, 235, 0.55);
+  box-shadow:
+    inset 0 1px 0 rgba(190, 214, 255, 0.35),
+    0 0 26px -8px rgba(111, 149, 218, 0.7),
+    0 2px 8px -2px rgba(0, 0, 0, 0.6);
+}
+/* Play Someone: LIGHT PURPLE space. */
+html[data-theme="nebula"] .btn-cyan {
+  background:
+    radial-gradient(1px 1px at 16% 28%, rgba(255, 255, 255, 0.9), transparent 55%),
+    radial-gradient(1px 1px at 74% 20%, rgba(255, 255, 255, 0.7), transparent 55%),
+    radial-gradient(1.5px 1.5px at 52% 70%, rgba(232, 218, 255, 0.85), transparent 55%),
+    radial-gradient(1px 1px at 30% 84%, rgba(255, 255, 255, 0.55), transparent 55%),
+    radial-gradient(2px 2px at 66% 42%, rgba(255, 255, 255, 0.35), transparent 60%),
+    linear-gradient(135deg, #7a5cb8 0%, #62479c 52%, #45306f 100%);
+  border: 1px solid rgba(200, 174, 245, 0.6);
+  box-shadow:
+    inset 0 1px 0 rgba(232, 218, 255, 0.4),
+    0 0 26px -8px rgba(180, 148, 226, 0.75),
+    0 2px 8px -2px rgba(0, 0, 0, 0.6);
+}
+html[data-theme="nebula"] .btn-sky:hover,
+html[data-theme="nebula"] .btn-cyan:hover {
+  filter: brightness(1.12);
+}
+html[data-theme="nebula"] .mode-def-card {
+  background:
+    radial-gradient(1px 1px at 18% 26%, rgba(255, 255, 255, 0.5), transparent 55%),
+    radial-gradient(1px 1px at 72% 70%, rgba(214, 197, 255, 0.45), transparent 55%),
+    radial-gradient(1.5px 1.5px at 86% 24%, rgba(255, 255, 255, 0.35), transparent 55%),
+    var(--surface-panel);
+}
 .btn-sky:active {
   filter: brightness(0.95);
   transform: translateY(0.5px);
 }
 
-/* Cyan CTA: bright teal-cyan with dark ink type, unmistakably "go". */
+/* Play Someone CTA: the loud primary in brand azure with white type,
+   unmistakably "go". Anchors the blue family; .btn-sky above is its quieter
+   sibling. */
 .btn-cyan {
-  background: linear-gradient(to bottom, #67dbe8, #38bccd);
-  color: #072a30;
-  border: 1px solid rgba(0, 0, 0, 0.28);
+  background: linear-gradient(to bottom, #4a9fee, #2f7ecb);
+  color: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.32);
   border-radius: 1px;
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.3) inset,
+    0 1px 0 rgba(255, 255, 255, 0.28) inset,
     0 2px 6px -2px rgba(0, 0, 0, 0.5);
   transition: background 160ms ease, filter 160ms ease, box-shadow 180ms ease, transform 120ms ease;
   font-weight: 600;
@@ -854,11 +1085,16 @@ html[data-theme="light"] .tv-frame {
   transform: translateY(0.5px);
 }
 
-/* The home screen's signature animation: a little knight gallops across a thin
-   track every so often, hopping as it goes. Pure decoration, one element. */
+/* The home screen's signature animation: the knight plays Geometry Dash. A
+   200%-wide obstacle strip (blocks + spikes on a ground line) scrolls past on
+   a 24s seamless loop while the knight holds its lane and jumps with a full
+   flip. Obstacles are spaced every 12.5% of the strip and the strip crosses
+   one track-width every 12s, so an obstacle reaches the knight's lane exactly
+   every 3s — the jump animation runs the same 3s period, phase-locked with a
+   negative delay. Pure decoration, transform/opacity only. */
 .knight-track {
   position: relative;
-  height: 34px;
+  height: 46px;
   overflow: hidden;
   pointer-events: none;
 }
@@ -871,33 +1107,74 @@ html[data-theme="light"] .tv-frame {
   height: 1px;
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.14) 18%, rgba(255, 255, 255, 0.14) 82%, transparent);
 }
-.knight-runner {
+.gd-world {
   position: absolute;
-  bottom: 5px;
-  left: -6%;
-  font-size: 22px;
+  inset: 0;
+  width: 200%;
+  animation: gd-scroll 24s linear infinite;
+  /* Compositor-only scroll: the strip animates as one GPU layer. */
+  will-change: transform;
+}
+@keyframes gd-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.gd-obstacle {
+  position: absolute;
+  bottom: 8px;
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+}
+.gd-spike {
+  display: block;
+  width: 9px;
+  height: 10px;
+  background: rgb(var(--accent-rgb) / 0.75);
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+.gd-block {
+  display: block;
+  width: 9px;
+  height: 9px;
+  background: rgb(var(--accent-dim-rgb) / 0.7);
+  box-shadow: inset 0 0 0 1px rgb(var(--accent-hi-rgb) / 0.5);
+}
+/* Structure variants: a two-high tower, a wide low platform, a runt spike. */
+.gd-block--tall { height: 17px; }
+.gd-platform {
+  display: block;
+  width: 24px;
+  height: 6px;
+  background: rgb(var(--accent-dim-rgb) / 0.7);
+  box-shadow: inset 0 0 0 1px rgb(var(--accent-hi-rgb) / 0.5);
+}
+.gd-spike--small { width: 7px; height: 7px; }
+.gd-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.gd-knight {
+  position: absolute;
+  bottom: 6px;
+  left: 18%;
+  font-size: 21px;
   line-height: 1;
   color: var(--paper-dim);
-  opacity: 0;
-  animation: knight-run 16s linear 2s infinite;
 }
-/* The drift crosses the track in the first 55% of the cycle, then rests off
-   screen until the next lap, so the gallop is an occasional visitor rather
-   than a constant marquee. */
-@keyframes knight-run {
-  0% { left: -6%; opacity: 0; }
-  4% { opacity: 0.85; }
-  50% { opacity: 0.85; }
-  55% { left: 101%; opacity: 0; }
-  100% { left: 101%; opacity: 0; }
-}
-.knight-runner > span {
+/* One 3s beat: grounded, then a 1s jump with a full 360 flip. Obstacles cross
+   the knight's lane at t = 3n + 0.84s (strip spacing 12.5% / scroll speed
+   4.167% per second, lane at 18%), so the -0.66s delay puts the jump's apex
+   (50% of the cycle) exactly on the collision ticks. */
+.gd-knight > span {
   display: inline-block;
-  animation: knight-hop 0.62s ease-in-out infinite;
+  animation: gd-jump 3s cubic-bezier(0.3, 0, 0.4, 1) -0.66s infinite;
 }
-@keyframes knight-hop {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  50% { transform: translateY(-6px) rotate(-6deg); }
+@keyframes gd-jump {
+  0%, 33% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(180deg); }
+  67%, 100% { transform: translateY(0) rotate(360deg); }
 }
 
 /* Nerf / Buff definition cards on the home lobby panel: each carries its mode
@@ -1108,8 +1385,11 @@ html[data-piece-source="lichess"] .piece-asset {
   animation: sq-pick-breathe 1.4s ease-in-out infinite;
 }
 @keyframes sq-pick-breathe {
-  0%, 100% { box-shadow: inset 0 0 0 2px rgba(232, 202, 138, 0.95); opacity: 1; }
-  50% { box-shadow: inset 0 0 0 3px rgba(244, 220, 160, 1); opacity: 0.82; }
+  /* Opacity-only (compositor): animating box-shadow repainted every frame for
+     every pickable square. The static ring on .sq-pickable carries the outline;
+     the breath is now a pure opacity pulse. */
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.72; }
 }
 @media (prefers-reduced-motion: reduce) {
   .sq-pickable {
@@ -1185,6 +1465,39 @@ html[data-piece-source="lichess"] .piece-asset {
 @keyframes empower-orbit-spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+/* --- Pieces wearing their effects --------------------------------------------
+   The affected PIECE changes, not just its square: filter-only treatments so
+   every piece set (inline SVG and lichess assets alike) picks them up. Kept
+   readable — tint and glow, never so heavy the piece type gets ambiguous. */
+.piece-frozen {
+  filter: saturate(0.35) brightness(1.15) drop-shadow(0 0 3px rgba(159, 216, 255, 0.9))
+    drop-shadow(0 0 8px rgba(122, 176, 224, 0.5));
+}
+.piece-doomed {
+  filter: saturate(0.6) contrast(1.05) drop-shadow(0 0 3px rgba(224, 82, 82, 0.9))
+    drop-shadow(0 1px 7px rgba(122, 20, 16, 0.7));
+}
+.piece-shielded {
+  filter: drop-shadow(0 0 3px rgba(255, 217, 126, 0.9)) drop-shadow(0 0 9px rgba(216, 181, 110, 0.55));
+}
+
+/* Hostile variant for nerf-affected squares (NerfAura): the same pooled glow
+   but slower and heavier — an ember smolder, not a blessing — with the orbit
+   running backward and the cheerful shine sweep dropped. */
+.nerf-aura::before {
+  animation-duration: 3.6s;
+  background: radial-gradient(
+    circle at 50% 56%,
+    rgb(var(--tier-rgb, 224 119 107) / 0.34),
+    rgb(var(--tier-rgb, 224 119 107) / 0.12) 52%,
+    transparent 74%
+  );
+}
+.nerf-aura::after { display: none; }
+.nerf-aura .empower-orbit {
+  animation-duration: 11s;
+  animation-direction: reverse;
 }
 @keyframes empower-twinkle {
   0%, 100% { opacity: 0.25; transform: scale(0.7); }
@@ -1509,6 +1822,18 @@ main, footer { position: relative; z-index: 2; }
    Navs that set their own z-index utility (e.g. the sticky in-game bar's
    z-20) still win: a class beats this element selector. */
 nav, header { position: relative; z-index: 30; }
+/* The top bar rides the active theme's surface (it was a hardcoded warm ink
+   that clashed with every non-classic theme). color-mix keeps the translucent
+   glass look; the solid var is the fallback for older engines. */
+.site-nav {
+  /* NO backdrop-filter here: a filter turns the nav into a containing block
+     for position:fixed descendants, and the Settings modal (rendered inside
+     the nav) then anchors to the nav instead of the viewport — the broken
+     "preferences way too high" bug. The nav scrolls with the page anyway, so
+     blur bought nothing and cost paint time on low-end devices. */
+  background: var(--surface-panel);
+  background: color-mix(in srgb, var(--surface-panel) 88%, transparent);
+}
 
 /* Accessibility */
 :focus-visible {
@@ -1525,7 +1850,7 @@ nav, header { position: relative; z-index: 30; }
   .draft-in,
   .hero-aura, .mode-field::before,
   .dot-live::after, .cta-shine::after, .header-search-panel,
-  .knight-runner, .knight-runner > span,
+  .gd-world, .gd-knight > span,
   .board-splash, .board-splash-card,
   .stagger-in > *,
   .sq-strike, .sq-freeze, .sq-freeze-flake, .sq-shield-in, .walnut-piece, .banana-peel,
@@ -1641,6 +1966,28 @@ body::before {
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.92 0 0 0 0 0.90 0 0 0 0 0.84 0 0 0 0.7 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
 }
 
+/* --- Performance mode: drop the paint-costliest DECORATIVE layers ------------
+   Gated on data-perf="low" (the Performance-mode setting, auto-seeded on
+   low-end hardware) OR the OS reduced-motion flag, so users who never open
+   settings still benefit. Functional visuals (board, pieces, effect art) are
+   never touched here. */
+html[data-perf="low"] body::before { display: none; }
+@media (prefers-reduced-motion: reduce) { body::before { display: none; } }
+
+/* The hero "TV" panel blurs the LIVE animating board behind it — a backdrop
+   filter re-run every frame. Perf mode / reduced motion swaps it for a plain
+   translucent panel (no blur), which reads nearly identical over the dark art. */
+html[data-perf="low"] .tv-frame,
+html[data-perf="low"] .btn-glass {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tv-frame { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+}
+/* Continuous decorative sweeps stop pinning the main thread/compositor. */
+html[data-perf="low"] .cta-shine::after { animation: none; opacity: 0; }
+
 /* === THEME CUSTOMIZATION (settings-driven) === */
 
 /* Custom background (Settings > Appearance): a user-supplied image behind the
@@ -1659,6 +2006,13 @@ html[data-custom-bg="on"] body {
   background-position: center;
   background-attachment: fixed;
   background-repeat: no-repeat;
+}
+/* Fixed-attachment cover backgrounds repaint the whole viewport on every
+   scroll frame (see the file's own note near the page background). Perf mode
+   scrolls the image with the page instead, trading the parallax for smooth
+   scrolling on weak GPUs. */
+html[data-perf="low"][data-custom-bg="on"] body {
+  background-attachment: scroll;
 }
 
 /* Light theme, pass 2: surfaces that were still dark-only. Same warm paper
@@ -1831,5 +2185,32 @@ html[data-theme="light"] .bg-black\/70 {
 @media (prefers-reduced-motion: reduce) {
   .fx-board-shake.fx-board-shake--big {
     animation: none !important;
+  }
+}
+
+/* --- Extra-turns grant banner ------------------------------------------------
+   The huge board-wide notification when a card grants extra moves: pops in
+   hard, holds long enough to read the total, fades out. Functional (rules
+   information), so only reduced-motion softens it - the effects dial never
+   hides it. */
+@keyframes extra-turns-banner {
+  0% { opacity: 0; transform: scale(0.6); }
+  10% { opacity: 1; transform: scale(1.06); }
+  16% { transform: scale(1); }
+  80% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.97); }
+}
+.extra-turns-banner {
+  border-radius: 1px;
+  animation: extra-turns-banner 2.8s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  @keyframes extra-turns-banner-fade {
+    0% { opacity: 0; }
+    8%, 82% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+  .extra-turns-banner {
+    animation: extra-turns-banner-fade 2.8s linear both;
   }
 }

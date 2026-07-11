@@ -228,6 +228,10 @@ export interface DraftFlags {
   prepThree?: boolean;
   /** Banked a skipped draft: next offer rolls one tier higher. Caps at 1. */
   bankBonus?: number;
+  /** The offer just banked CONTAINED a tier-8 card: the banked roll may deal an
+   * apex (tier 9/10) offer as the reward for skipping that tier-8. Set by
+   * bankOffer, consumed by rollOffer. */
+  bankedTier8?: boolean;
   /** "Stacked draft" preset: a persistent tier lift applied to EVERY one of
    * this player's offers (unlike bankBonus it is not consumed). Set once when
    * the match is created so a friend receiving a surprise game drafts strong,

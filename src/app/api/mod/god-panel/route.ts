@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireMod } from "@/lib/server/mod";
+import { isGodPanelUser } from "@/lib/godPanel";
 import {
   GOD_PANEL_KEY,
   getAppSetting,
@@ -9,14 +10,12 @@ import {
 
 export const dynamic = "force-dynamic";
 
-// The god panel is the owner's personal "fun with friends" tool, so unlike the
-// house-bots toggle it is gated to the ilovenewjeans account specifically, not
-// to any moderator. requireMod does the session/role check; this narrows it to
-// the one account, matched case-insensitively like the game server does.
-const OWNER_USERNAME = "ilovenewjeans";
-
+// The god panel is the owners' personal "fun with friends" tool, so unlike the
+// house-bots toggle it is gated to the god-panel accounts specifically, not to
+// any moderator. requireMod does the session/role check; isGodPanelUser narrows
+// it to those accounts, matched case-insensitively like the game server does.
 function isOwner(guard: { mod: { username: string } }): boolean {
-  return guard.mod.username.toLowerCase() === OWNER_USERNAME;
+  return isGodPanelUser(guard.mod.username);
 }
 
 // GET: is the owner god panel currently switched on? Defaults to off, so an

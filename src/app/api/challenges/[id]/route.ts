@@ -5,7 +5,8 @@ export const dynamic = "force-dynamic";
 
 // Update one challenge: the target may accept or decline, the challenger may
 // cancel. Body: { action: "accepted" | "declined" | "cancelled" }.
-export async function POST(request: Request, { params }: { params: { id: string } }) {
+export async function POST(request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const guard = await requireUser(request);
   if (guard instanceof NextResponse) return guard;
   const { db, user } = guard;

@@ -9,14 +9,17 @@
 import { Buff } from "./shared";
 import {
   card,
+  activated,
+  grantInventory,
   transformOwn,
   pieceBound,
   permanentAugment,
+  leapMoves,
   slideMoves,
   mySquares,
-  ALL_DIRS,
   DIAG_DIRS,
   ORTHO_DIRS,
+  KNIGHT_LEAPS,
 } from "./shared";
 
 export const FANTASY_TRANSFORMS: Buff[] = [
@@ -57,13 +60,33 @@ export const FANTASY_TRANSFORMS: Buff[] = [
       icon: "Trophy",
       name: "Apotheosis",
       description:
-        "Raise one of your pawns, knights, bishops, or rooks to godhood: it ascends on the spot into a queen, once.",
+        "Raise one of your knights, bishops, or rooks to godhood: it leaves the board for a higher plane, and a queen joins your pocket to descend in its place on a later turn.",
       tier: 5,
       category: "pieces",
-      requires: ["p", "n", "b", "r"],
+      requires: ["n", "b", "r"],
       flavor: "Mortal one moment, divine the next.",
     },
-    transformOwn(1, ["p", "n", "b", "r"], "q", "Choose the piece to raise to godhood"),
+    activated(
+      (_inst, api, picks) =>
+        picks.length > 0
+          ? null
+          : {
+              kind: "square",
+              label: "Choose the piece to raise to godhood",
+              squares: mySquares(api.board, api.me).filter((sq) => {
+                const t = api.board.pieces[sq]!.type;
+                return t === "n" || t === "b" || t === "r";
+              }),
+            },
+      (_inst, api, picks) => {
+        const sq = picks[0]?.square;
+        if (sq == null) return;
+        const t = api.board.pieces[sq]?.type;
+        if (t !== "n" && t !== "b" && t !== "r") return;
+        api.removePiece(sq, { uncounted: true });
+        grantInventory(api, "q", 1);
+      },
+    ),
   ),
   card(
     {
@@ -71,14 +94,16 @@ export const FANTASY_TRANSFORMS: Buff[] = [
       icon: "Church",
       name: "God-King",
       description:
-        "Your king moves like a queen for the rest of the game.",
+        "Your king walks between heartbeats: it may also leap like a knight, for the rest of the game.",
       tier: 6,
       category: "movement",
-      flavor: "The throne walks where it pleases now.",
-      fx: { motif: "empower", pieces: ["k"], moveAs: "q", self: true },
+      flavor: "The throne goes where it pleases now.",
+      fx: { motif: "empower", pieces: ["k"], moveAs: "n", self: true },
     },
-    pieceBound("k", "Crown your king a living god", (board, sq, via) =>
-      slideMoves(board, sq, ALL_DIRS, via),
+    permanentAugment((_m, inst, api) =>
+      mySquares(api.board, api.me, "k").flatMap((sq) =>
+        leapMoves(api.board, sq, KNIGHT_LEAPS, inst.id),
+      ),
     ),
   ),
   card(
@@ -107,7 +132,7 @@ export const FANTASY_TRANSFORMS: Buff[] = [
       name: "Philosopher's Stone",
       description:
         "Press the fabled stone to your ranks and transmute base metal to gold: three of your pawns become queens, once.",
-      tier: 7,
+      tier: 8,
       category: "pieces",
       requires: ["p"],
       flavor: "The final work of a thousand alchemists.",

@@ -63,7 +63,9 @@ export function AccountChip() {
     >
       <PlayerAvatar name={user.username} avatar={user.avatar} size={22} className="rounded-full" />
       {user.username}
-      <span className="text-parchment-400"> · {Math.round(user.rating)}</span>
+      {/* The live displayed rating (shared rule: best mode bucket), never the
+          frozen legacy column, so the chip agrees with profile/leaderboard. */}
+      <span className="text-parchment-400"> · {Math.round(user.displayRating ?? user.rating)}</span>
     </Link>
   );
 }

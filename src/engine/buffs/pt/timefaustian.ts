@@ -40,6 +40,10 @@ import {
   dist,
 } from "../funny/shared";
 import { grantRandomTier9 } from "../helpers";
+// Live binding, read only inside a runtime effect (never at module load), so
+// the library <-> card-module cycle resolves fine: BUFF_BY_ID is fully built
+// by the time any Double or Nothing is ever played.
+import { BUFF_BY_ID } from "../library";
 
 /** King "reaching out" to devour: one capture move onto every enemy piece
  * (never a king) standing exactly two king-steps away, leaping whatever sits
@@ -255,9 +259,12 @@ export const PT_TIME_CARDS: Buff[] = [
       id: "overtime_pay",
       icon: "PiggyBank",
       name: "Overtime Pay",
+      // Tier 4 (moved up from 2): a flat 105 seconds is a bigger swing than
+      // any other pure clock gain in the game; it prices like the other
+      // tier-4 clock cards, not a tier-2 trinket.
       description:
         "You clock in and cash out on the spot: 105 seconds go straight onto your own clock the moment you play this. Time and a half, paid in full.",
-      tier: 2,
+      tier: 4,
       category: "tempo",
       flavor: "Time and a half, in your favor.",
     },
@@ -344,12 +351,17 @@ export const PT_TIME_CARDS: Buff[] = [
       category: "draft",
       flavor: "Heads you win, tails you win a little.",
     },
-    instant((_inst, api) => {
+    instant((inst, api) => {
       if (api.rng.int(3) !== 2) {
         api.mine.flags.takeBoth = (api.mine.flags.takeBoth ?? 0) + 2;
+        // outcome: a short human line shown on the board after the coin flip
+        // resolves, so the player learns which face came up (see the cast
+        // announcement banner). Synced with the card state.
+        inst.state.outcome = "Heads — take BOTH cards for your next 2 drafts (+1 tier)";
       } else {
         api.mine.flags.blockedDrafts = (api.mine.flags.blockedDrafts ?? 0) + 1;
         api.theirs.flags.blockedDrafts = (api.theirs.flags.blockedDrafts ?? 0) + 1;
+        inst.state.outcome = "Tails — you both skip a draft (+1 tier next)";
       }
       // Both faces bank the tier lift (capped at 1 like every bank).
       api.mine.flags.bankBonus = Math.min(1, (api.mine.flags.bankBonus ?? 0) + 1);
@@ -373,12 +385,14 @@ export const PT_TIME_CARDS: Buff[] = [
       category: "draft",
       flavor: "Cherry, cherry, and please, cherry.",
     },
-    instant((_inst, api) => {
+    instant((inst, api) => {
       if (api.rng.int(3) !== 2) {
         grantRandomTier9(api);
+        inst.state.outcome = "JACKPOT — a random apex card is yours!";
       } else {
         api.mine.flags.bankBonus = Math.min(1, (api.mine.flags.bankBonus ?? 0) + 1);
         api.mine.flags.prepThree = true;
+        inst.state.outcome = "So close — next draft: 3 cards, +1 tier";
       }
     }),
   ),
@@ -412,12 +426,18 @@ export const PT_TIME_CARDS: Buff[] = [
           b.state.sqs == null &&
           b.state.squares == null,
       );
-      if (eligible.length === 0) return;
+      if (eligible.length === 0) {
+        inst.state.outcome = "No other card to bet — nothing happens";
+        return;
+      }
       const stake = eligible[api.rng.int(eligible.length)];
+      const stakeName = BUFF_BY_ID[stake.id]?.name ?? "a card";
       if (api.rng.int(2) === 0) {
         stake.tier = Math.min(8, stake.tier + 2) as Tier;
+        inst.state.outcome = `Heads — ${stakeName} upgraded to tier ${stake.tier}!`;
       } else {
         stake.tier = Math.max(1, stake.tier - 1) as Tier;
+        inst.state.outcome = `Tails — ${stakeName} knocked to tier ${stake.tier}`;
       }
     }),
   ),
