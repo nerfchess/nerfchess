@@ -218,13 +218,17 @@ export function rollSharedTiers(bs: BuffMatchState): [Tier, Tier] {
  * mode filter, the never-offer-a-held-card rule, the nerf-mode bucket roll,
  * and the adjacent-tier fallback, advancing the draft RNG exactly as a normal
  * offer does. Shared by rollOffer and rerollOffer so a reroll consumes the RNG
- * identically to a first roll. `suppressed` drops draft-manipulation cards. */
+ * identically to a first roll. `suppressed` drops draft-manipulation cards.
+ * `exclude` adds extra card ids to the never-offer set: a reroll passes the
+ * cards currently on the table so the fresh set is guaranteed to differ from
+ * what the player is looking at. */
 function rollCards(
   bs: BuffMatchState,
   color: Color,
   slotTiers: Tier[],
   suppressed: boolean,
   board?: BoardState,
+  exclude?: Iterable<string>,
 ): BuffOffer["cards"] {
   const ps = bs.players[color];
   const rng = drawRng(bs);
@@ -275,6 +279,12 @@ function rollCards(
   const used = new Set<string>(
     ps.buffs.filter((b) => !b.spent && !b.nullified).map((b) => b.id),
   );
+  // Reroll exclusion: fold in the cards currently on the table so a reroll is
+  // GUARANTEED to change what's offered rather than re-dealing a card the
+  // player is already looking at. The ids come from synced offer state, so both
+  // replicas exclude the same set and the seeded draw stays byte-identical
+  // (desync-safe). Empty on a first roll.
+  if (exclude) for (const id of exclude) used.add(id);
   for (const tier of slotTiers) {
     let pool = poolAtTier(tier).filter(
       (b) => inMode(b) && !used.has(b.id) && (!suppressed || b.category !== "draft"),
@@ -404,15 +414,14 @@ export function rollOffer(
   const suppressed = (ps.flags.noDraftCards ?? 0) > 0;
   if (suppressed) ps.flags.noDraftCards = (ps.flags.noDraftCards ?? 0) - 1;
 
-  // Apex bank: banking a draft while already at the top tier promotes it past
-  // tier 8 into an apex offer. Triggered only when this is a banked offer
-  // (bonus > 0, an unforced roll) whose resolved tier would hit 8. Everywhere
-  // else tiers 9 and 10 stay out of the pool. The offer deals TWO distinct
-  // apex cards (a real pick, like every other draft), each rolled tier 9 with
-  // the shared APEX_MYTHIC_CHANCE (~10%) upgrade to a tier-10 mythic — a
-  // mythic replaces a tier 9 about one time in ten, per slot, exactly like the
-  // Jackpot grant. Deterministic: each slot is one gate draw plus one pick
-  // draw off the seeded draft RNG, so the offer replays identically.
+  // Apex bank: banking an offer that CONTAINED a tier-8 card promotes the next
+  // (banked) roll past tier 8 into an apex offer. Everywhere else tiers 9 and
+  // 10 stay out of the pool. The offer deals TWO distinct apex cards (a real
+  // pick, like every other draft), each rolled tier 9 with the shared
+  // APEX_MYTHIC_CHANCE (~10%) upgrade to a tier-10 mythic — a mythic replaces a
+  // tier 9 about one time in ten, per slot, exactly like the Jackpot grant.
+  // Deterministic: each slot is one gate draw plus one pick draw off the seeded
+  // draft RNG, so the offer replays identically.
   //
   // A prepThree offer (All In) is never collapsed into an apex offer: it owes
   // the player THREE cards one tier higher, so it must keep going down the
@@ -420,14 +429,17 @@ export function rollOffer(
   //
   // GATED on skipping a tier-8 (owner rule): the apex (tier 9/10) offer is the
   // reward for BANKING an offer that contained a tier-8 card. You don't have to
-  // draft the tier-8 — passing it up is what earns the apex pull. Without that,
-  // a banked top roll deals a normal tier-8 offer instead. bankedTier8 is set by
+  // draft the tier-8 — passing it up is what earns the apex pull, and once you
+  // do it is GUARANTEED. The promotion depends ONLY on bankedTier8, never on
+  // what the next round's shared tiers happen to roll: that roll is a fresh
+  // draw (rollSharedTiers) independent of the banked offer, and the top-tier
+  // slip gate lands it below 8 often enough that keying the reward on it used
+  // to silently cancel a legitimately-earned apex pull. bankedTier8 is set by
   // bankOffer from the skipped offer's cards and consumed above.
   const bankedToTop =
     !prepping &&
     bonus > 0 &&
     forced == null &&
-    tiers[0] + bonus + boost >= 8 &&
     bankedTier8 &&
     TIER9.length > 0;
   if (bankedToTop) {
@@ -553,7 +565,11 @@ export function rerollOffer(bs: BuffMatchState, color: Color, board?: BoardState
   }
   // Suppression was already consumed at the first roll; honor whatever remains.
   const suppressed = (ps.flags.noDraftCards ?? 0) > 0;
-  const cards = rollCards(bs, color, slotTiers, suppressed, board);
+  // Exclude the cards currently on the table so the reroll deals a genuinely
+  // different set (mirrors the apex path above, which adds offer.cards to its
+  // exclusion set). The ids are synced offer state, so both replicas exclude
+  // the same cards and the reroll stays replay-safe.
+  const cards = rollCards(bs, color, slotTiers, suppressed, board, offer.cards.map((c) => c.id));
   if (cards.length === 0) return false;
   ps.rerollsLeft = (ps.rerollsLeft ?? 0) - 1;
   offer.cards = cards;

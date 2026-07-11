@@ -32,7 +32,7 @@ const {
   playMove,
 } = load("game.js");
 const { moveToUCI } = load("board.js");
-const { rollOffer, bankOffer } = load("draft.js");
+const { rollOffer, bankOffer, rerollOffer } = load("draft.js");
 const { TIER9, TIER10, APEX_MYTHIC_CHANCE } = load(path.join("buffs", "tier9.js"));
 const { BUFF_BY_ID } = load(path.join("buffs", "library.js"));
 
@@ -175,6 +175,36 @@ if (Math.abs(rate - APEX_MYTHIC_CHANCE) > 0.03) {
   fail(`mythic rate ${(rate * 100).toFixed(1)}% strays from ${APEX_MYTHIC_CHANCE * 100}%`);
 }
 
+// --- Part 2b: the reward does not depend on the next round's shared roll ------
+// Banking an offer that contained a tier-8 card GUARANTEES the apex pull. The
+// promotion must not hinge on what rollSharedTiers deals for the next round:
+// that is a fresh, independent draw, and the top-tier slip gate frequently
+// lands it below 8. A banked tier-8 must still promote to a two-card, tier
+// 9/10 apex offer at EVERY shared pair, not just [8, 8].
+let lowRollMiss = 0;
+let lowRollOffers = 0;
+for (let seed = 1; seed <= 300; seed++) {
+  for (const pair of [[1, 1], [3, 4], [5, 6], [6, 7], [7, 7]]) {
+    const g = newGame(UNRESTRICTED_NERF, UNRESTRICTED_NERF, seed);
+    enableDraftMode(g, seed, { mode: "buff" });
+    g.buffs.players.w.flags.bankBonus = 1;
+    g.buffs.players.w.flags.bankedTier8 = true;
+    const offer = rollOffer(g.buffs, "w", pair, g.board);
+    lowRollOffers += 1;
+    const isApex =
+      offer &&
+      offer.cards.length === 2 &&
+      offer.cards.every((c) => c.tier === 9 || c.tier === 10);
+    if (!isApex) lowRollMiss += 1;
+  }
+}
+if (lowRollMiss > 0) {
+  fail(
+    `banked tier-8 failed to promote to apex ${lowRollMiss}/${lowRollOffers} time(s) ` +
+      `at non-top shared rolls`,
+  );
+}
+
 // --- Part 3: the apex gate actually gates -----------------------------------
 // Banking a top-tier roll WITHOUT having skipped a tier-8 must NOT promote to
 // an apex offer: it deals a normal tier-8 offer instead (bankBonus set,
@@ -207,11 +237,50 @@ if (gateArmedWrong > 0) {
   fail(`bankOffer armed the apex gate incorrectly ${gateArmedWrong} time(s)`);
 }
 
+// --- Part 4: a reroll always changes the cards on the table ------------------
+// Rerolling must GUARANTEE a fresh set: no card currently offered may reappear
+// in the reroll (it may only re-deal a card the player is NOT looking at). The
+// normal-pool path and the apex path are both checked across many seeds and
+// tiers.
+let rerollOverlap = 0;
+let rerollsRun = 0;
+for (let seed = 1; seed <= 800; seed++) {
+  const g = newGame(UNRESTRICTED_NERF, UNRESTRICTED_NERF, seed);
+  enableDraftMode(g, seed, { mode: "buff" });
+  const ps = g.buffs.players.w;
+  // Normal-pool rerolls across the tier curve.
+  for (const pair of [[2, 3], [5, 5], [7, 8]]) {
+    const offer = rollOffer(g.buffs, "w", pair, g.board);
+    if (!offer) continue;
+    const before = new Set(offer.cards.map((c) => c.id));
+    ps.rerollsLeft = 1;
+    if (!rerollOffer(g.buffs, "w", g.board)) continue;
+    rerollsRun += 1;
+    for (const c of ps.offer.cards) if (before.has(c.id)) rerollOverlap += 1;
+  }
+  // Apex reroll: a banked tier-8 promotes to apex; its reroll must also swap.
+  ps.flags.bankBonus = 1;
+  ps.flags.bankedTier8 = true;
+  const apex = rollOffer(g.buffs, "w", [8, 8], g.board);
+  if (apex) {
+    const before = new Set(apex.cards.map((c) => c.id));
+    ps.rerollsLeft = 1;
+    if (rerollOffer(g.buffs, "w", g.board)) {
+      rerollsRun += 1;
+      for (const c of ps.offer.cards) if (before.has(c.id)) rerollOverlap += 1;
+    }
+  }
+}
+if (rerollOverlap > 0) {
+  fail(`reroll re-dealt an on-table card ${rerollOverlap} time(s) across ${rerollsRun} rerolls`);
+}
+
 if (failures > 0) {
   console.error(`\n${failures} failure(s)`);
   process.exit(1);
 }
 console.log(
   `OK: apex harness passed (${APEX_ALL.length} apex/mythic cards activated + aftermath, ` +
-    `${offers} bank offers, mythic slot rate ${(rate * 100).toFixed(1)}%)`,
+    `${offers} bank offers, mythic slot rate ${(rate * 100).toFixed(1)}%, ` +
+    `${rerollsRun} rerolls all distinct)`,
 );
