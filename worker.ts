@@ -66,6 +66,7 @@ import { ensureSchema } from "./src/lib/server/schema";
 import { loadCategoryRatings, recordFinishedGame, RatingChange, type DraftRecord } from "./src/lib/server/games";
 import { categoryForTimeControl, type RatingCategory } from "./src/lib/speed";
 import { censorText, findProfanity } from "./src/lib/profanity";
+import { isGodPanelUser } from "./src/lib/godPanel";
 import { GLICKO_DEFAULT, glickoUpdatePair, isProvisional } from "./src/lib/glicko";
 
 type Result = NerfGame["result"];
@@ -158,10 +159,11 @@ type StoredDraftAction =
   | { ply: number; color: Color; a: "pick"; index: number; cards: { id: string; tier: number }[] }
   | { ply: number; color: Color; a: "bank" }
   | { ply: number; color: Color; a: "reroll" }
-  // Owner god-panel grant: ilovenewjeans summons a card straight into his own
+  // Owner god-panel grant: an owner summons a card straight into their own
   // hand (no draft, no offer). Recorded so the deterministic replay re-adds it,
   // but NEVER surfaced in publicDraftActions, so the opponent's replica and
-  // every spectator stay unaware it happened.
+  // every spectator stay unaware of the card's IDENTITY (a generic "god panel
+  // used" notice still tells them a summon happened).
   | { ply: number; color: Color; a: "grant"; id: string; tier: number }
   // A player flagged the Chess Diff sub-game's 1+0 clock (`color` is the
   // flagged side). A server-time event the move stream cannot carry, so it is
@@ -292,9 +294,9 @@ type SessionAttachment = {
   // Debounce timestamp for the courtesy/owner clock-adjust buttons, so the
   // +15s / -15s frames cannot be spammed. In-memory only (fine for a debounce).
   lastClockAdjustAt?: number;
-  // Owner "see opponent buffs" toggle (ilovenewjeans only, re-verified on use):
-  // when set, this socket's dtState carries the OPPONENT's unmasked held-buff
-  // identities. Per-socket and in-memory, so it resets on reconnect and never
+  // Owner "see opponent buffs" toggle (god-panel accounts only, re-verified on
+  // use): when set, this socket's dtState carries the OPPONENT's unmasked
+  // held-buff identities. Per-socket and in-memory, so it resets on reconnect and never
   // affects any other viewer's masking.
   seeOppBuffs?: boolean;
 };
@@ -339,12 +341,13 @@ type ClientFrame =
   | { t: "dtUse"; d?: { buffIndex?: unknown; picks?: unknown } }
   | { t: "dtTarget"; d?: { buffIndex?: unknown; picks?: unknown } }
   | { t: "dtNerfPick"; d?: { index?: unknown } }
-  // Owner "fun with friends" tools (SERVER-gated, see ADMIN_USERNAME):
+  // Owner "fun with friends" tools (SERVER-gated, see isGodPanelUser):
   // adjustOppClock nudges the opponent's clock (+15s courtesy for anyone in a
-  // casual game; -15s only for ilovenewjeans); adminGrant summons a card into
-  // ilovenewjeans's own hand; seeOppBuffs flips a per-socket flag so his own
-  // dtState reveals the opponent's UNMASKED held-buff identities (his eyes only,
-  // the opponent is never told and no other client's view changes).
+  // casual game; -15s only for the god-panel accounts); adminGrant summons a
+  // card into the owner's own hand; seeOppBuffs flips a per-socket flag so the
+  // owner's own dtState reveals the opponent's UNMASKED held-buff identities
+  // (their eyes only; no other client's view changes). Each use is announced to
+  // the table with a "God panel used" (godUsed) notice.
   | { t: "adjustOppClock"; d?: { delta?: unknown } }
   | { t: "adminGrant"; d?: { id?: unknown } }
   | { t: "seeOppBuffs"; d?: { on?: unknown } }
@@ -554,11 +557,11 @@ type HouseSeekEntry = {
 // blew the DO CPU limit before it could cache or GC anything: the crash loop.
 const liveIdsKey = "live:ids";
 const buildVersion = "chess-diff-standard-rules-1";
-// The single account allowed to use the owner "fun with friends" tools: the
-// -15s opponent-clock button and the god panel card grant. SERVER-verified on
-// every gated message (never trust the client). Compared case-insensitively so
-// a stored-casing difference cannot lock the owner out.
-const ADMIN_USERNAME = "ilovenewjeans";
+// The accounts allowed to use the owner "fun with friends" tools: the -15s
+// opponent-clock button and the god panel card grant. SERVER-verified on every
+// gated message (never trust the client) via isGodPanelUser, which compares
+// case-insensitively so a stored-casing difference cannot lock an owner out.
+// The roster itself lives in src/lib/godPanel.ts so the client gates agree.
 // How long the moderator card-overrides snapshot (the card_overrides table:
 // disabled cards and tier moves) is cached in the DO before re-reading D1.
 // Loaded lazily on match creation and the opening nerf deal, never on a
@@ -5190,8 +5193,8 @@ export class GameServer extends DurableObject<Env> {
     match: StoredMatch,
     seat: Color | "spectator",
     // Owner "see opponent buffs": when true, unmask the OPPONENT seat's held
-    // buff identities for THIS viewer only. Set solely for ilovenewjeans's own
-    // dtState (server-verified in sendDraftState) and never for a spectator. It
+    // buff identities for THIS viewer only. Set solely for a god-panel owner's
+    // own dtState (server-verified in sendDraftState) and never for a spectator. It
     // touches nothing but the held-buff list: offers, flags, and reveals stay
     // masked exactly as before, and held buffs are display-only on the client,
     // so this reveals already-synced state without changing the authoritative
@@ -5245,14 +5248,13 @@ export class GameServer extends DurableObject<Env> {
     for (const color of ["w", "b"] as Color[]) {
       const seatWs = this.connectedSession(match.id, color);
       if (!seatWs) continue;
-      // Owner "see opponent buffs": if this connected seat is ilovenewjeans with
-      // the reveal toggled on, unmask the OPPONENT's held-buff identities in his
-      // dtState only. Re-verified here (never trust the flag alone), applied per
-      // socket so no other seat's masking changes, and threaded through every
+      // Owner "see opponent buffs": if this connected seat is a god-panel owner
+      // with the reveal toggled on, unmask the OPPONENT's held-buff identities in
+      // their dtState only. Re-verified here (never trust the flag alone), applied
+      // per socket so no other seat's masking changes, and threaded through every
       // draft change so the reveal stays live as the opponent drafts.
       const seatSession = this.session(seatWs);
-      const revealOpp =
-        !!seatSession.seeOppBuffs && (seatSession.username ?? "").toLowerCase() === ADMIN_USERNAME;
+      const revealOpp = !!seatSession.seeOppBuffs && isGodPanelUser(seatSession.username);
       const state = this.draftStateFor(game, match, color, revealOpp);
       if (state) send(seatWs, "dtState", { state });
     }
@@ -5498,8 +5500,27 @@ export class GameServer extends DurableObject<Env> {
 
   // ---------------- owner "fun with friends" tools ----------------
 
+  // Announce a god-panel action to the whole table (both seats AND every
+  // spectator) so its use is never silent. These tools used to be invisible to
+  // the opponent by design; they are now surfaced as a plain "God panel used"
+  // notice to everyone in the game, including the owner (a confirmation it
+  // fired). `by` is the owner's seat name and `action` a short phrase; the
+  // notice is transient (like a draft toast), so it is broadcast, not stored.
+  private announceGodPanel(match: StoredMatch, by: string, action: string) {
+    const payload = { by, action, at: Date.now() };
+    this.broadcast(match, "godUsed", payload);
+    this.sendWatchers(match, "godUsed", payload);
+  }
+
+  // The seat's display name (falls back to the side's colour), used to label
+  // whose god panel fired.
+  private seatName(match: StoredMatch, color: Color): string {
+    return match.users?.[color]?.name ?? (color === "w" ? "White" : "Black");
+  }
+
   // Nudge the OPPONENT's clock. +15s is a lichess-style courtesy any player may
-  // send in a casual game; -15s is the owner-only tool, gated to ilovenewjeans.
+  // send in a casual game; -15s is the owner-only tool, gated to the god-panel
+  // accounts.
   // Both are SERVER-authoritative: the magnitude is fixed here (only the sign is
   // read from the client), the subtract path floors the clock so it can never
   // fall to zero and end the game, rated games are refused outright, and each
@@ -5517,7 +5538,7 @@ export class GameServer extends DurableObject<Env> {
     // Read only the SIGN from the client; the server owns the 15s magnitude.
     const subtract = Number((data as { delta?: unknown } | undefined)?.delta) < 0;
     // -15s is the owner-only cheat: SERVER-verify the account (client gate is UX).
-    if (subtract && (session.username ?? "").toLowerCase() !== ADMIN_USERNAME) {
+    if (subtract && !isGodPanelUser(session.username)) {
       return error(ws, "forbidden", "That tool is not available on this account.");
     }
     // Debounce per socket so neither button can be spammed.
@@ -5539,23 +5560,28 @@ export class GameServer extends DurableObject<Env> {
     const frame = { wc: Math.round(c.w), bc: Math.round(c.b) };
     this.broadcast(match, "n", frame);
     this.sendWatchers(match, "n", frame);
+    // Only the -15s subtract is a god-panel tool; the +15s add is a courtesy any
+    // player may send, so it stays unannounced.
+    if (subtract) this.announceGodPanel(match, this.seatName(match, session.color), "cut 15s from the clock");
   }
 
-  // Owner god panel: ilovenewjeans summons a card straight into his own hand,
-  // no draft and no offer. SERVER-verifies the account (the client gate is only
-  // UX) and only grants cards that can be HELD hidden: an instant fires the
+  // Owner god panel: a god-panel owner summons a card straight into their own
+  // hand, no draft and no offer. SERVER-verifies the account (the client gate is
+  // only UX) and only grants cards that can be HELD hidden: an instant fires the
   // moment it is acquired and an opponent-move-filtering passive must be known
   // to the opponent to stay in sync, so neither can be a silent summon and both
   // are rejected. The grant is recorded as a draft action (so replays re-add it)
   // but is stripped from publicDraftActions and never carries a dtResolved
-  // pick-toast, so the opponent is never told a card was picked. Both seats do
-  // get a fresh dtState (masked for every view but the granting seat) purely so
-  // the hidden-card slot lines up for a later "use".
+  // pick-toast, so the card IDENTITY is never told to the opponent. (The generic
+  // "god panel used" notice fired at the end announces THAT a card was summoned,
+  // never which one.) Both seats do get a fresh dtState (masked for every view
+  // but the granting seat) purely so the hidden-card slot lines up for a later
+  // "use".
   private async adminGrant(ws: WebSocket, data: unknown) {
     const ctx = await this.draftContext(ws);
     if (!ctx) return;
     const { session, match, game } = ctx;
-    if ((session.username ?? "").toLowerCase() !== ADMIN_USERNAME) {
+    if (!isGodPanelUser(session.username)) {
       return error(ws, "forbidden", "That tool is not available on this account.");
     }
     const id = String((data as { id?: unknown } | undefined)?.id ?? "").slice(0, 64);
@@ -5581,35 +5607,47 @@ export class GameServer extends DurableObject<Env> {
     // face-down slot appears. This alignment matters: a later "use" of the card
     // references its hand slot by index on every replica, so the opponent's
     // hand length must already match the server. Crucially there is NO
-    // dtResolved frame here, so the opponent is never told a card was picked:
-    // the summon is silent, exactly like an un-revealed draft that just grows
-    // the hidden-card count.
+    // dtResolved frame here, so the opponent is never told WHICH card was
+    // summoned: the card identity stays hidden, exactly like an un-revealed
+    // draft that just grows the hidden-card count. Only the generic god-panel
+    // notice below announces that a summon happened.
     this.sendDraftState(match, game);
     this.sendWatcherDraftState(match, game);
+    // Surface the summon to the table. The card identity stays hidden (masked in
+    // every non-owner dtState); only the fact that the god panel summoned a card
+    // is announced.
+    this.announceGodPanel(match, this.seatName(match, color), "summoned a card");
   }
 
-  // Owner "see opponent buffs": ilovenewjeans-only per-viewer reveal. Flips a
-  // per-socket flag and re-sends HIS own dtState, which draftStateFor then
-  // builds with the opponent's held-buff identities UNMASKED (and re-masks when
-  // toggled off). SERVER-verifies the account (the client gate is only UX). The
-  // opponent's dtState is never touched, so he is never told and cannot learn
-  // the reveal exists. Desync-safe: held buffs are display-only on the client
-  // (their board effects flow through the synced effects/action record, not the
-  // held list), so this reveals already-synced state without changing the
-  // authoritative game or any other viewer's view.
+  // Owner "see opponent buffs": god-panel-only per-viewer reveal. Flips a
+  // per-socket flag and re-sends the owner's own dtState, which draftStateFor
+  // then builds with the opponent's held-buff identities UNMASKED (and re-masks
+  // when toggled off). SERVER-verifies the account (the client gate is only UX).
+  // The opponent's dtState is never touched, so the reveal itself changes no
+  // other view; but turning it ON is now announced to the table (see below), so
+  // the peek is no longer secret. Desync-safe: held buffs are display-only on
+  // the client (their board effects flow through the synced effects/action
+  // record, not the held list), so this reveals already-synced state without
+  // changing the authoritative game or any other viewer's view.
   private async seeOppBuffs(ws: WebSocket, data: unknown) {
     const ctx = await this.draftContext(ws);
     if (!ctx) return;
     const { session, match, game } = ctx;
-    if ((session.username ?? "").toLowerCase() !== ADMIN_USERNAME) {
+    if (!isGodPanelUser(session.username)) {
       return error(ws, "forbidden", "That tool is not available on this account.");
     }
+    const wasOn = !!session.seeOppBuffs;
     session.seeOppBuffs = Boolean((data as { on?: unknown } | undefined)?.on);
     // Refresh only this socket's dtState; draftStateFor unmasks the opponent's
     // held buffs when the flag is on and re-masks them when off. No other seat's
-    // view changes, so the opponent never learns of the reveal.
+    // dtState changes.
     const state = this.draftStateFor(game, match, session.color!, session.seeOppBuffs);
     if (state) send(ws, "dtState", { state });
+    // Announce the peek to the table, but only on the off -> on edge (toggling
+    // it back off is not a fresh "use").
+    if (session.seeOppBuffs && !wasOn) {
+      this.announceGodPanel(match, this.seatName(match, session.color!), "peeked at hidden cards");
+    }
   }
 
   private async draftUse(ws: WebSocket, data: unknown) {

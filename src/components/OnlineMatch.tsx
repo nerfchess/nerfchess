@@ -13,6 +13,7 @@ import { BoardSplashHost } from "@/components/BoardSplash";
 import { ChatPanel } from "@/components/ChatPanel";
 import { ClockPill } from "@/components/ClockPill";
 import { DraftNotice } from "@/components/DraftNotice";
+import { GodPanelNotice, type GodPanelNoticeItem } from "@/components/GodPanelNotice";
 import {
   DraftOverlay,
   DraftRevealBanner,
@@ -65,6 +66,7 @@ import {
   revealHeldBuffs,
 } from "@/lib/draftOnline";
 import { computeFxVisual } from "@/components/effects/fxZones";
+import { isGodPanelUser } from "@/lib/godPanel";
 import { nerfSummary, outcomeFor, recordCompletedGame } from "@/lib/gameHistory";
 import { boardAtPly, replayBoardSpan } from "@/lib/gameReview";
 import {
@@ -226,8 +228,8 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   const myName = start.players?.[myColor]?.name ?? "You";
   // Owner "fun with friends" gate (UX only; the server re-verifies the account
   // on every gated message). The -15s clock button and the god panel show only
-  // for this account; matched case-insensitively like the server does.
-  const isOwnerAccount = myName.toLowerCase() === "ilovenewjeans";
+  // for the god-panel accounts; matched case-insensitively like the server does.
+  const isOwnerAccount = isGodPanelUser(myName);
   const myRating = start.players?.[myColor]?.rating ?? null;
   const myProvisional = start.players?.[myColor]?.provisional ?? false;
   const oppColor: Color = myColor === "w" ? "b" : "w";
@@ -321,6 +323,29 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     // Bounded but roomy: the dock keeps the whole game's plays readable.
     setOppLog((log) => [...log, { key: oppKeyRef.current++, card, label, at: Date.now() }].slice(-60));
   };
+  // Transient "God panel used" banners: the server broadcasts a godUsed frame to
+  // the whole table whenever an owner uses a god-panel tool, and each one shows
+  // as a floating notice for a few seconds so its use is never silent. Timers
+  // are tracked so they can be cleared on unmount.
+  const [godNotices, setGodNotices] = useState<GodPanelNoticeItem[]>([]);
+  const godKeyRef = useRef(0);
+  const godTimersRef = useRef<number[]>([]);
+  const showGodPanelUse = (by: string, action: string) => {
+    const key = godKeyRef.current++;
+    setGodNotices((cur) => [...cur, { key, by, action, leaving: false }].slice(-4));
+    godTimersRef.current.push(
+      window.setTimeout(() => {
+        setGodNotices((cur) => cur.map((n) => (n.key === key ? { ...n, leaving: true } : n)));
+      }, 4200),
+      window.setTimeout(() => {
+        setGodNotices((cur) => cur.filter((n) => n.key !== key));
+      }, 4600),
+    );
+  };
+  useEffect(() => {
+    const timers = godTimersRef.current;
+    return () => timers.forEach((id) => window.clearTimeout(id));
+  }, []);
   // Signature spectacles: a played card's id + a monotonic key handed to the
   // Board, which dresses the resulting piece diff as that card's choreography.
   // Fired for BOTH sides' plays (the server echoes every activation), so both
@@ -976,6 +1001,8 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         playMoveSfx();
       } else if (e.type === "chat") {
         setChatMessages((msgs) => [...msgs, e.message].slice(-50));
+      } else if (e.type === "god-panel-used") {
+        showGodPanelUse(e.by, e.action);
       } else if (e.type === "rule-revealed") {
         if (e.color === myColor) {
           setMyRevealState("revealed");
@@ -2485,6 +2512,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                     cardNoun={draftCardNoun(start.mode)}
                   />
                 )}
+                <GodPanelNotice notices={godNotices} />
                 {buffTargeting.targeting && buffTargeting.targeting.target.kind === "square" && (
                   <TargetingBanner
                     game={game}

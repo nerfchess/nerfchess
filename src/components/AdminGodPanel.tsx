@@ -4,11 +4,12 @@ import { useEffect, useMemo, useState } from "react";
 import type { MPDraftState, MPSession } from "@/lib/multiplayer";
 import { ALL_BUFFS } from "@/engine/buffs/library";
 
-// The owner "god panel": a far-right column, mounted ONLY for the ilovenewjeans
+// The owner "god panel": a far-right column, mounted ONLY for a god-panel
 // account (the real gate is server-side; this is UX). It lists every card the
-// server can summon into his own hand and grants one on click. The server
-// re-verifies the account and stays silent to the opponent, so nothing here is
-// trusted for anything but the browse-and-click convenience.
+// server can summon into the owner's own hand and grants one on click. The
+// server re-verifies the account on every use and now announces each use to the
+// table with a "God panel used" notice, so nothing here is trusted for anything
+// but the browse-and-click convenience.
 //
 // Design law: 1px corners, no gradient / glow / shadow / emoji; coral/mint/sun
 // accents; compact and scrollable; fixed on the far right so it never overlaps
