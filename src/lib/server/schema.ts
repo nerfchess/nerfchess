@@ -319,6 +319,28 @@ export const SCHEMA_STATEMENTS: string[] = [
     enabled INTEGER NOT NULL DEFAULT 1,
     updated_at INTEGER
   )`,
+  // Cache for the codex card-insights rollup (one JSON blob of per-card
+  // aggregate stats, recomputed lazily by /api/cards/insights). key is a
+  // shape-version tag ('v1'). Mirrors migrations/0023_codex_insights.sql.
+  `CREATE TABLE IF NOT EXISTS codex_insights_cache (
+    key TEXT PRIMARY KEY,
+    json TEXT NOT NULL,
+    computed_at INTEGER NOT NULL
+  )`,
+  // Append-only audit of runtime card metadata changes (card_overrides
+  // edits), one row per changed field, shown publicly on the card's codex
+  // page. No actor column on purpose: the events are public, the moderator's
+  // identity is not. Mirrors migrations/0024_card_override_history.sql.
+  `CREATE TABLE IF NOT EXISTS card_override_history (
+    seq INTEGER PRIMARY KEY AUTOINCREMENT,
+    card_id TEXT NOT NULL,
+    kind TEXT NOT NULL,
+    field TEXT NOT NULL,
+    old_value TEXT,
+    new_value TEXT,
+    at INTEGER NOT NULL
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_coh_card ON card_override_history (kind, card_id, at DESC)`,
   // Tiny key/value ledger for schema bookkeeping (see ADDITIVE_VERSION below).
   // Mirrors migrations/0023_schema_meta.sql.
   `CREATE TABLE IF NOT EXISTS schema_meta (

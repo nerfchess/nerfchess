@@ -556,12 +556,12 @@ type HouseSeekEntry = {
 // (deserializing every finished game's move history), which on a bloated table
 // blew the DO CPU limit before it could cache or GC anything: the crash loop.
 const liveIdsKey = "live:ids";
-const buildVersion = "chess-diff-standard-rules-1";
-// The accounts allowed to use the owner "fun with friends" tools: the -15s
-// opponent-clock button and the god panel card grant. SERVER-verified on every
-// gated message (never trust the client) via isGodPanelUser, which compares
-// case-insensitively so a stored-casing difference cannot lock an owner out.
-// The roster itself lives in src/lib/godPanel.ts so the client gates agree.
+const buildVersion = "codex-card-insights-1";
+// The single account allowed to use the owner "fun with friends" tools: the
+// -15s opponent-clock button and the god panel card grant. SERVER-verified on
+// every gated message (never trust the client). Compared case-insensitively so
+// a stored-casing difference cannot lock the owner out.
+const ADMIN_USERNAME = "ilovenewjeans";
 // How long the moderator card-overrides snapshot (the card_overrides table:
 // disabled cards and tier moves) is cached in the DO before re-reading D1.
 // Loaded lazily on match creation and the opening nerf deal, never on a

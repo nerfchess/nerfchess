@@ -10,6 +10,7 @@ import {
   buffCategory,
   buffModes,
   buffType,
+  cardPath,
   modeLabel,
   nerfCategoryLabels,
   relatedBuffs,
@@ -19,6 +20,8 @@ import {
   turnCostMeaning,
 } from "@/lib/cardCodex";
 import { buffCollection, nerfCollection } from "@/lib/cardCollections";
+import { historyFor } from "@/data/cardHistory";
+import { CardInsights } from "@/components/codex/CardInsights";
 
 // Server-rendered detail page for a single card, shared by /codex/buff/[id]
 // and /codex/nerf/[id]. Everything here is plain HTML (no client component),
@@ -68,6 +71,41 @@ function NotDraftedNote() {
   );
 }
 
+// "July 5, 2026" from an ISO date, with fixed month names so server output
+// never depends on runtime locale.
+const MONTHS = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+function formatHistoryDate(iso: string): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  return `${MONTHS[(m ?? 1) - 1]} ${d}, ${y}`;
+}
+
+// Editorial timeline (introduction wave + curated balance notes), rendered on
+// the server so every card page ships unique crawlable history prose. Runtime
+// moderator changes are appended client-side by CardInsights.
+function HistoryTimeline({ kind, card }: { kind: "buff" | "nerf"; card: Buff | Nerf }) {
+  const events = historyFor(kind, card);
+  return (
+    <InfoSection title="History">
+      <ol className="space-y-3">
+        {events.map((e, i) => (
+          <li key={i} className="flex flex-col gap-0.5 sm:flex-row sm:gap-4">
+            <span className="smallcaps text-[11px] text-parchment-400 sm:w-32 sm:shrink-0 sm:pt-0.5">
+              {formatHistoryDate(e.date)}
+            </span>
+            <span className="text-[15px] text-parchment-100">
+              {e.note}
+              {e.pr !== undefined && <span className="text-parchment-400"> (PR #{e.pr})</span>}
+            </span>
+          </li>
+        ))}
+      </ol>
+    </InfoSection>
+  );
+}
+
 function RelatedGrid({ title, cards }: { title: string; cards: RelatedCard[] }) {
   if (cards.length === 0) return null;
   return (
@@ -112,7 +150,8 @@ export function BuffDetail({ buff }: { buff: Buff }) {
   const cat = buffCategory(buff);
   const modes = buffModes(buff);
   const where = modeLabel(modes);
-  const path = `/codex/buff/${buff.id}`;
+  const path = cardPath(buff);
+  const section = type === "Hex" ? "Hexes" : type === "Boon" ? "Boons" : "Buffs";
   const isHex = buff.category === "hex";
   const draftLine = isHex
     ? `You draft ${buff.name} in Nerf mode and cast it on your opponent.`
@@ -120,7 +159,7 @@ export function BuffDetail({ buff }: { buff: Buff }) {
 
   return (
     <InfoPageLayout eyebrow={`codex · ${type.toLowerCase()}`} title={buff.name} intro={<GlossaryText text={buff.description} />}>
-      <CardBreadcrumbJsonLd section="Buffs" name={buff.name} path={path} />
+      <CardBreadcrumbJsonLd section={section} name={buff.name} path={path} />
       {!buff.implemented && <NotDraftedNote />}
 
       <InfoSection title="At a glance">
@@ -136,6 +175,8 @@ export function BuffDetail({ buff }: { buff: Buff }) {
         </dl>
       </InfoSection>
 
+      {buff.implemented && <CardInsights kind="buff" id={buff.id} codeTier={buff.tier} noun={type.toLowerCase()} />}
+
       <InfoSection title="How it works">
         <p>
           {draftLine} {turnCostMeaning(buff)}
@@ -143,6 +184,8 @@ export function BuffDetail({ buff }: { buff: Buff }) {
         <p>As a {cat.label.toLowerCase()} card, it {cat.blurb}</p>
         {buff.flavor && <p className="border-l border-gold/40 pl-4 italic text-parchment-300">&ldquo;{buff.flavor}&rdquo;</p>}
       </InfoSection>
+
+      <HistoryTimeline kind="buff" card={buff} />
 
       <RelatedGrid title="Related cards" cards={relatedBuffs(buff)} />
 
@@ -177,6 +220,8 @@ export function NerfDetail({ nerf }: { nerf: Nerf }) {
         </dl>
       </InfoSection>
 
+      {nerf.implemented && <CardInsights kind="nerf" id={nerf.id} codeTier={nerf.tier} noun="nerf" />}
+
       <InfoSection title="How it works">
         <p>
           {nerf.name} is one of Nerf Chess&apos;s secret handicaps. In Nerf mode you choose one of two nerfs
@@ -189,6 +234,8 @@ export function NerfDetail({ nerf }: { nerf: Nerf }) {
         </p>
         {nerf.flavor && <p className="border-l border-gold/40 pl-4 italic text-parchment-300">&ldquo;{nerf.flavor}&rdquo;</p>}
       </InfoSection>
+
+      <HistoryTimeline kind="nerf" card={nerf} />
 
       <RelatedGrid title="Related nerfs" cards={relatedNerfs(nerf)} />
 
