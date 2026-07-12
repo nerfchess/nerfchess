@@ -5,13 +5,11 @@
 // petrifications (walnutAll) and a single freeze. Nothing here can soft-lock a
 // turn, and the petrify helpers never touch a king.
 
-import { Buff } from "./shared";
+import { Buff, Square } from "./shared";
 import {
   card,
   curse,
-  walnutAll,
-  freezeTarget,
-  relRank,
+  inHalf,
   mySquares,
   addEffect,
   turnsLeft,
@@ -27,12 +25,55 @@ export const FANTASY_CURSES: Buff[] = [
       icon: "EyeOff",
       name: "Evil Eye",
       description:
-        "One enemy piece you choose cannot move for 3 of their turns. Kings cannot be targeted.",
+        "One enemy piece you choose cannot capture anything for 4 of their turns. It may still move. Kings cannot be targeted.",
       tier: 2,
       category: "item",
-      flavor: "It feels the stare and dares not move.",
+      flavor: "It feels the stare and dares not strike.",
     },
-    freezeTarget(3, "charm"),
+    {
+      kind: "activated",
+      spendOnUse: false,
+      // One activation only: the eye fixes on a single piece.
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null
+          ? null
+          : {
+              kind: "square",
+              label: "Choose the enemy piece the eye fixes on",
+              squares: mySquares(api.board, api.opp).filter(
+                (sq) => api.board.pieces[sq]!.type !== "k",
+              ),
+            },
+      effect: (inst, _api, picks) => {
+        if (inst.state.sq != null) return;
+        const sq = picks[0]?.square;
+        if (sq == null) return;
+        inst.state.sq = sq;
+        inst.state.turns = 4;
+      },
+      filterOpponentMoves: (moves, inst) => {
+        const sq = inst.state.sq as Square | undefined;
+        if (sq == null || turnsLeft(inst) <= 0) return moves;
+        const kept = moves.filter((m) => m.from !== sq || !m.captured);
+        // Safety net: never strand the opponent with zero moves.
+        return kept.length > 0 ? kept : moves;
+      },
+      onMovePlayed: (inst, move, api) => {
+        const sq = inst.state.sq as Square | undefined;
+        if (sq == null) return;
+        // Follow the watched piece; the eye closes when it is captured.
+        if (move.to === sq && move.from !== sq) {
+          inst.spent = true;
+          return;
+        }
+        if (move.from === sq) inst.state.sq = move.to;
+        if (move.color === api.opp) tickTurns(inst, move, api.opp);
+      },
+      status: (inst) =>
+        inst.state.sq == null
+          ? "activate to fix the eye"
+          : `${turnsLeft(inst)} of their turns left`,
+    },
   ),
   card(
     {
@@ -77,15 +118,13 @@ export const FANTASY_CURSES: Buff[] = [
       icon: "Footprints",
       name: "Doom March",
       description:
-        "A dread compulsion drives the enemy backward: for their next 4 turns every one of your opponent's pieces may only move toward or along its own back rank.",
+        "The march ends where it stands: enemy pieces that have crossed into your half of the board are gripped by dread and cannot move, for your opponent's next 4 turns.",
       tier: 5,
       category: "hex",
-      flavor: "One slow, unwilling retreat into the dark.",
+      flavor: "Every step forward was one step too many.",
       fx: { motif: "anchor", pieces: "all" },
     },
-    curse(4, (moves, api) =>
-      moves.filter((m) => relRank(api.opp, m.to) <= relRank(api.opp, m.from)),
-    ),
+    curse(4, (moves, api) => moves.filter((m) => !inHalf(api.me, m.from))),
   ),
   card(
     {
@@ -93,13 +132,22 @@ export const FANTASY_CURSES: Buff[] = [
       icon: "Anchor",
       name: "Chains of Binding",
       description:
-        "Spectral chains lock the enemy's towers: both of your opponent's rooks turn to dead stone and cannot move for 4 of their turns.",
+        "A spectral chain shackles the enemy's rooks to each other: while both live, neither rook may end a move more than 3 squares from the other, for your opponent's next 5 turns. A lone rook drags its broken chain and moves freely.",
       tier: 5,
       category: "hex",
-      flavor: "The clank of iron, then perfect stillness.",
-      fx: { motif: "jail", pieces: ["r"] },
+      flavor: "The clank of iron, wherever the other tower goes.",
+      fx: { motif: "anchor", pieces: ["r"] },
     },
-    walnutAll(["r"], 4),
+    curse(5, (moves, api) =>
+      moves.filter((m) => {
+        if (m.piece !== "r") return true;
+        const other = mySquares(api.board, api.opp, "r").find((sq) => sq !== m.from);
+        if (other == null) return true;
+        return (
+          Math.max(Math.abs(FILE(m.to) - FILE(other)), Math.abs(RANK(m.to) - RANK(other))) <= 3
+        );
+      }),
+    ),
   ),
   card(
     {

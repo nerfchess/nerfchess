@@ -8,7 +8,8 @@ export const dynamic = "force-dynamic";
 // progress and unlock time so the page can render locked and unlocked states
 // side by side. The unlocked rows are read straight from D1, keyed by user_id
 // (bounded, indexed) - there is no game scan here.
-export async function GET(_request: Request, { params }: { params: { username: string } }) {
+export async function GET(_request: Request, props: { params: Promise<{ username: string }> }) {
+  const params = await props.params;
   const username = params.username.trim().toLowerCase();
   const db = await getDb();
   const user = await db

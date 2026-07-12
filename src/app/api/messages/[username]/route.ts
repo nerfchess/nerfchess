@@ -18,7 +18,8 @@ async function findPeer(db: D1Database, username: string) {
 
 // The thread with one player, oldest first. Fetching it marks their messages
 // to you as read.
-export async function GET(request: Request, { params }: { params: { username: string } }) {
+export async function GET(request: Request, props: { params: Promise<{ username: string }> }) {
+  const params = await props.params;
   const guard = await requireUser(request);
   if (guard instanceof NextResponse) return guard;
   const { db, user } = guard;
@@ -57,7 +58,8 @@ export async function GET(request: Request, { params }: { params: { username: st
 }
 
 // Send a message to one player.
-export async function POST(request: Request, { params }: { params: { username: string } }) {
+export async function POST(request: Request, props: { params: Promise<{ username: string }> }) {
+  const params = await props.params;
   const guard = await requireUser(request);
   if (guard instanceof NextResponse) return guard;
   const { db, user } = guard;

@@ -19,6 +19,7 @@ import {
   RETIRED_CATEGORY_IDS,
   type RatingCategoryId,
 } from "@/lib/ratingCategories";
+import { isProvisionalRd } from "@/lib/ratingDisplay";
 
 interface ProfileUser {
   username: string;
@@ -80,14 +81,20 @@ export default function ProfilePage() {
   const [missing, setMissing] = useState(false);
   const [reporting, setReporting] = useState(false);
 
-  useEffect(() => {
-    let cancelled = false;
-    // Client-side profile→profile navigation re-runs this effect without a
-    // remount: clear the previous player's state so a stale "not found" flag
-    // (or the old profile/stats) can never stick to the new username.
+  // Client-side profile→profile navigation re-renders this component without a
+  // remount: clear the previous player's state during render (React's sanctioned
+  // reset-on-key-change) so a stale "not found" flag (or the old profile/stats)
+  // can never stick to the new username while the fetch below is in flight.
+  const [seenUser, setSeenUser] = useState(username);
+  if (seenUser !== username) {
+    setSeenUser(username);
     setMissing(false);
     setProfile(null);
     setStats(null);
+  }
+
+  useEffect(() => {
+    let cancelled = false;
     (async () => {
       const res = await fetch(`/api/users/${encodeURIComponent(username)}`);
       if (cancelled) return;
@@ -218,7 +225,7 @@ export default function ProfilePage() {
                       {r ? (
                         <>
                           {Math.round(r.rating)}
-                          {r.rd > 150 && <span className="text-parchment-400">?</span>}
+                          {isProvisionalRd(r.rd) && <span className="text-parchment-400">?</span>}
                         </>
                       ) : (
                         <span className="text-parchment-500">-</span>

@@ -13,6 +13,7 @@ import { BoardSplashHost } from "@/components/BoardSplash";
 import { ChatPanel } from "@/components/ChatPanel";
 import { ClockPill } from "@/components/ClockPill";
 import { DraftNotice } from "@/components/DraftNotice";
+import { GodPanelNotice, type GodPanelNoticeItem } from "@/components/GodPanelNotice";
 import {
   DraftOverlay,
   DraftRevealBanner,
@@ -65,6 +66,7 @@ import {
   revealHeldBuffs,
 } from "@/lib/draftOnline";
 import { computeFxVisual } from "@/components/effects/fxZones";
+import { isGodPanelUser } from "@/lib/godPanel";
 import { nerfSummary, outcomeFor, recordCompletedGame } from "@/lib/gameHistory";
 import { boardAtPly, replayBoardSpan } from "@/lib/gameReview";
 import {
@@ -108,6 +110,12 @@ const DRAFT_REVEAL_HOLD_MS = 4000;
 // long the full-screen version collapses to the non-blocking corner pill so
 // the board stays fully usable while the straggler decides.
 const WAITING_OVERLAY_AUTO_HIDE_MS = 4500;
+
+/** Wall-clock read, kept out of render bodies so the compiler treats callers as
+ * pure (the value is only ever used inside handlers/effects). */
+function nowMs(): number {
+  return Date.now();
+}
 
 type PendingPremoveSend = { uci: string; ply: number };
 type PendingLocalMove = { uci: string; ply: number; move: Move };
@@ -226,8 +234,8 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   const myName = start.players?.[myColor]?.name ?? "You";
   // Owner "fun with friends" gate (UX only; the server re-verifies the account
   // on every gated message). The -15s clock button and the god panel show only
-  // for this account; matched case-insensitively like the server does.
-  const isOwnerAccount = myName.toLowerCase() === "ilovenewjeans";
+  // for the god-panel accounts; matched case-insensitively like the server does.
+  const isOwnerAccount = isGodPanelUser(myName);
   const myRating = start.players?.[myColor]?.rating ?? null;
   const myProvisional = start.players?.[myColor]?.provisional ?? false;
   const oppColor: Color = myColor === "w" ? "b" : "w";
@@ -321,6 +329,29 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     // Bounded but roomy: the dock keeps the whole game's plays readable.
     setOppLog((log) => [...log, { key: oppKeyRef.current++, card, label, at: Date.now() }].slice(-60));
   };
+  // Transient "God panel used" banners: the server broadcasts a godUsed frame to
+  // the whole table whenever an owner uses a god-panel tool, and each one shows
+  // as a floating notice for a few seconds so its use is never silent. Timers
+  // are tracked so they can be cleared on unmount.
+  const [godNotices, setGodNotices] = useState<GodPanelNoticeItem[]>([]);
+  const godKeyRef = useRef(0);
+  const godTimersRef = useRef<number[]>([]);
+  const showGodPanelUse = (by: string, action: string) => {
+    const key = godKeyRef.current++;
+    setGodNotices((cur) => [...cur, { key, by, action, leaving: false }].slice(-4));
+    godTimersRef.current.push(
+      window.setTimeout(() => {
+        setGodNotices((cur) => cur.map((n) => (n.key === key ? { ...n, leaving: true } : n)));
+      }, 4200),
+      window.setTimeout(() => {
+        setGodNotices((cur) => cur.filter((n) => n.key !== key));
+      }, 4600),
+    );
+  };
+  useEffect(() => {
+    const timers = godTimersRef.current;
+    return () => timers.forEach((id) => window.clearTimeout(id));
+  }, []);
   // Signature spectacles: a played card's id + a monotonic key handed to the
   // Board, which dresses the resulting piece diff as that card's choreography.
   // Fired for BOTH sides' plays (the server echoes every activation), so both
@@ -328,10 +359,24 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   // two batch into one render and the signature claims exactly that diff.
   const [signatureCard, setSignatureCard] = useState<{ id: string; key: number } | null>(null);
   const sigKeyRef = useRef(0);
+  // HOLD-AND-REPLAY (owner: "animations must happen when the opponent is
+  // watching"): while MY full-screen draft overlay covers the board, incoming
+  // play animations would fire to nobody - the single biggest reason plays
+  // went unseen. They queue here instead and replay one by one (2.6s apart,
+  // newest 6 kept) the moment the board is visible again. A replayed play has
+  // lost its removal diff, so it renders through the board-wide lead fallback
+  // (full art + name label, no per-square hits) - the right trade.
+  const heldPlaysRef = useRef<string[]>([]);
+  const draftCoveredRef = useRef(false);
   const fireSignature = (id: string) => {
     // Every known card fires: bespoke signatures get their choreography and
     // every other card gets the Board's category cast spectacle.
-    if (BUFF_BY_ID[id]) setSignatureCard({ id, key: ++sigKeyRef.current });
+    if (!BUFF_BY_ID[id]) return;
+    if (draftCoveredRef.current) {
+      heldPlaysRef.current = [...heldPlaysRef.current, id].slice(-6);
+      return;
+    }
+    setSignatureCard({ id, key: ++sigKeyRef.current });
   };
   // A held/passive buff whose onMovePlayed hook observably changed the board
   // (a summon, relocate, transform, revive, pawn-push, or a fresh board
@@ -384,10 +429,13 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     return !!opp?.offerPending || !!opp?.offer;
   });
   // Un-dismiss the waiting card whenever the opponent is no longer mid-draft,
-  // so each new waiting period starts with the full card again.
-  useEffect(() => {
+  // so each new waiting period starts with the full card again. Adjusted on the
+  // change during render rather than in an effect.
+  const [prevOppDrafting, setPrevOppDrafting] = useState(oppDrafting);
+  if (prevOppDrafting !== oppDrafting) {
+    setPrevOppDrafting(oppDrafting);
     if (!oppDrafting) setWaitingMinimized(false);
-  }, [oppDrafting]);
+  }
   // Lock-in window for the current buff offers; the server auto-resolves at
   // the deadline while both clocks stay paused.
   const [draftDeadline, setDraftDeadline] = useState<number | null>(() => start.dtDeadline ?? null);
@@ -459,17 +507,36 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   // the board comes back, and the clock runs — deliberating past the window
   // costs the straggler's own time (the server resumes the clock too).
   const [draftGraceOver, setDraftGraceOver] = useState(false);
+  // The board is covered while my offer renders full-screen (the grace-over
+  // minimized panel leaves the board visible). Kept in a ref for
+  // fireSignature and mirrored to state-shaped deps for the flush effect.
+  const draftCovered =
+    !!game?.buffs?.players[myColor]?.offer && !draftGraceOver && !game?.result;
   useEffect(() => {
-    if (draftDeadline == null) {
-      setDraftGraceOver(true);
-      return;
-    }
-    const left = draftDeadline - Date.now();
+    draftCoveredRef.current = draftCovered;
+  });
+  useEffect(() => {
+    if (draftCovered || heldPlaysRef.current.length === 0) return;
+    let timer: number | null = null;
+    const step = () => {
+      const id = heldPlaysRef.current.shift();
+      if (!id) return;
+      setSignatureCard({ id, key: ++sigKeyRef.current });
+      if (heldPlaysRef.current.length > 0) timer = window.setTimeout(step, 2600);
+    };
+    step();
+    return () => {
+      if (timer != null) window.clearTimeout(timer);
+    };
+     
+  }, [draftCovered]);
+  useEffect(() => {
+    const left = draftDeadline == null ? -1 : draftDeadline - Date.now();
     if (left <= 0) {
-      setDraftGraceOver(true);
+      queueMicrotask(() => setDraftGraceOver(true));
       return;
     }
-    setDraftGraceOver(false);
+    queueMicrotask(() => setDraftGraceOver(false));
     const id = window.setTimeout(() => setDraftGraceOver(true), left + 50);
     return () => window.clearTimeout(id);
   }, [draftDeadline]);
@@ -482,7 +549,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   useEffect(() => {
     const waiting = isDraft && !game?.result && oppDrafting && (draftSubmitted || !myOfferOpen);
     if (!waiting) {
-      setWaitTimedOut(false);
+      queueMicrotask(() => setWaitTimedOut(false));
       return;
     }
     const id = window.setTimeout(() => setWaitTimedOut(true), WAITING_OVERLAY_AUTO_HIDE_MS);
@@ -516,7 +583,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     if (skipPauseArmedRef.current) return;
     skipPauseArmedRef.current = true;
     if (draftDeadline == null || draftDeadline - Date.now() <= 0) {
-      setDraftDeadline(Date.now() + DRAFT_LOCK_IN_MS);
+      queueMicrotask(() => setDraftDeadline(Date.now() + DRAFT_LOCK_IN_MS));
     }
   }, [isDraft, oppDrafting, myOfferOpen, game?.result, draftDeadline]);
 
@@ -580,13 +647,15 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     setPendingLocalMove(null);
     setAwaitingPremoveAck(false);
     clearPremoves();
-    const now = Date.now();
+    const now = nowMs();
     if (now - lastResyncAtRef.current < 2000) return;
     lastResyncAtRef.current = now;
     session.resync();
   };
 
-  useEffect(() => setMutedState(isMuted()), []);
+  useEffect(() => {
+    queueMicrotask(() => setMutedState(isMuted()));
+  }, []);
 
   // Remember that this device is mid-game so the home page can offer a
   // "rejoin" shortcut if the tab is closed; forget it once the game ends.
@@ -941,6 +1010,8 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         playMoveSfx();
       } else if (e.type === "chat") {
         setChatMessages((msgs) => [...msgs, e.message].slice(-50));
+      } else if (e.type === "god-panel-used") {
+        showGodPanelUse(e.by, e.action);
       } else if (e.type === "rule-revealed") {
         if (e.color === myColor) {
           setMyRevealState("revealed");
@@ -1173,17 +1244,14 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     }
   }, [game]);
 
-  useEffect(() => {
-    if (!game || historyPly == null) return;
-    // History shrank past (or exactly to) the reviewed ply — a takeback or a
-    // resync replaced the record. Return to the LIVE board (null), never to
-    // historyPly === length: that would strand the UI in a half-review state
-    // showing the live position while review still blocks every move and
-    // disables the forward controls.
-    if (historyPly >= game.board.history.length) {
-      setHistoryPly(null);
-    }
-  }, [game, historyPly]);
+  // History shrank past (or exactly to) the reviewed ply — a takeback or a
+  // resync replaced the record. Return to the LIVE board (null), never to
+  // historyPly === length: that would strand the UI in a half-review state
+  // showing the live position while review still blocks every move and
+  // disables the forward controls. Clamped during render, not in an effect.
+  if (game && historyPly != null && historyPly >= game.board.history.length) {
+    setHistoryPly(null);
+  }
 
   // Game-ended hook: write the finished game into the local history, once.
   // A restored session may already carry a finished game; never re-record it.
@@ -1214,35 +1282,48 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     });
   }, [game, myColor, oppName, ratingChange, revealedOppNerf, start]);
 
-  const reviewBoard = useMemo(() => {
-    if (!game || historyPly == null) return null;
-    // Prefer the exact board we witnessed live at this ply: a snapshot taken
-    // as the game advanced includes any buff mutations (summons, removals,
-    // teleports) that a pure move replay cannot reproduce.
-    const snap = boardSnapshotsRef.current.get(historyPly);
-    if (snap) return snap;
-    // Snapshot gap (several server frames applied in one batched update leave
-    // intermediate plies without a snapshot): bridge it by replaying the
-    // recorded moves onto the nearest earlier snapshot.
-    let baseKey = -1;
-    for (const key of boardSnapshotsRef.current.keys()) {
-      if (key < historyPly && key > baseKey) baseKey = key;
-    }
-    if (baseKey >= 0) {
-      return replayBoardSpan(
-        boardSnapshotsRef.current.get(baseKey)!,
-        game.board.history,
-        baseKey,
-        historyPly,
-      );
-    }
-    // No snapshot at or below this ply (a reconnect rebuild): a clean replay
-    // from the start is only faithful while no card has rewritten the board.
-    // Navigation never reaches here after divergence (reviewFloor clamps),
-    // so the null is a backstop, not a UI state.
-    if (game.buffs?.historyDiverged) return null;
-    return boardAtPly(game.board.history, historyPly);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // The reviewed board is derived from the snapshot cache (a ref, so writing it
+  // every ply never re-renders). Refs cannot be read during render, so the
+  // review board is computed in an effect and held as state instead; review is
+  // a deliberate, low-frequency interaction, so the extra render is free.
+  const [reviewBoard, setReviewBoard] = useState<BoardState | null>(null);
+  useEffect(() => {
+    queueMicrotask(() => {
+      if (!game || historyPly == null) {
+        setReviewBoard(null);
+        return;
+      }
+      const snaps = boardSnapshotsRef.current;
+      // Prefer the exact board we witnessed live at this ply: a snapshot taken
+      // as the game advanced includes any buff mutations (summons, removals,
+      // teleports) that a pure move replay cannot reproduce.
+      const snap = snaps.get(historyPly);
+      if (snap) {
+        setReviewBoard(snap);
+        return;
+      }
+      // Snapshot gap (several server frames applied in one batched update leave
+      // intermediate plies without a snapshot): bridge it by replaying the
+      // recorded moves onto the nearest earlier snapshot.
+      let baseKey = -1;
+      for (const key of snaps.keys()) {
+        if (key < historyPly && key > baseKey) baseKey = key;
+      }
+      if (baseKey >= 0) {
+        setReviewBoard(replayBoardSpan(snaps.get(baseKey)!, game.board.history, baseKey, historyPly));
+        return;
+      }
+      // No snapshot at or below this ply (a reconnect rebuild): a clean replay
+      // from the start is only faithful while no card has rewritten the board.
+      // Navigation never reaches here after divergence (reviewFloor clamps),
+      // so the null is a backstop, not a UI state.
+      if (game.buffs?.historyDiverged) {
+        setReviewBoard(null);
+        return;
+      }
+      setReviewBoard(boardAtPly(game.board.history, historyPly));
+    });
+     
   }, [game, historyPly]);
   // Earliest ply history review can faithfully reach. While the move list
   // still reproduces the board (no card rewrote it) everything replays from
@@ -1250,14 +1331,20 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   // trustworthy — a reconnect that joined after the divergence has none, so
   // its earlier plies are unreviewable. Navigation clamps here and the
   // MoveList explains why instead of showing a wrong (or live) board.
-  const reviewFloor = useMemo(() => {
-    if (!game?.buffs?.historyDiverged) return 0;
-    let min = game.board.history.length;
-    for (const key of boardSnapshotsRef.current.keys()) {
-      if (key < min) min = key;
-    }
-    return min;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  const [reviewFloor, setReviewFloor] = useState(0);
+  useEffect(() => {
+    queueMicrotask(() => {
+      if (!game?.buffs?.historyDiverged) {
+        setReviewFloor(0);
+        return;
+      }
+      let min = game.board.history.length;
+      for (const key of boardSnapshotsRef.current.keys()) {
+        if (key < min) min = key;
+      }
+      setReviewFloor(min);
+    });
+     
   }, [game]);
   const pendingLocalBoard = useMemo(() => {
     if (!game || !pendingLocalMove || pendingLocalMove.ply !== game.board.history.length) return null;
@@ -1388,6 +1475,33 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     },
   });
 
+  // Mirror the latest nav state into the ref the stable wheel listener reads.
+  // Written from an effect (not during render) so the ref never drives
+  // rendering; kept above every early return to stay a valid hook, so the
+  // block condition is recomputed here from source state (mirrors the render
+  // derivation below of myOffer / genuinelySkipped / showWaitingOverlay).
+  useEffect(() => {
+    if (!game) return;
+    const mine = isDraft ? game.buffs?.players[myColor] : undefined;
+    const offer = mine?.offer ?? null;
+    const skipped =
+      !offer && !draftSubmitted && !myDraftResolved && (mine?.flags.blockedDrafts ?? 0) > 0;
+    const waiting =
+      isDraft && !game.result && oppDrafting && (draftSubmitted || myDraftResolved || skipped);
+    wheelNavRef.current = {
+      blocked:
+        settingsOpen ||
+        (!!game.result && showResult) ||
+        !!buffTargeting.targeting ||
+        (isDraft && !!offer && !draftSubmitted && !draftGraceOver && !game.result) ||
+        waiting,
+      ply: historyPly,
+      min: reviewFloor,
+      max: game.board.history.length,
+      nav: handleHistoryPlyChange,
+    };
+  });
+
   const handleLocalMove = (m: Move) => {
     if (!game || game.result || isReviewingHistory) return;
     // Draft: resolve the pending buff draft before moving (mirrors the
@@ -1451,10 +1565,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   }, [dropType]);
 
   // Losing the turn (or any pending/offer state) auto-disarms drop mode so the
-  // board never stays in a pick state the player can no longer act on.
-  useEffect(() => {
-    if (dropType && !draftCanAct) setDropType(null);
-  }, [dropType, draftCanAct]);
+  // board never stays in a pick state the player can no longer act on. Adjusted
+  // during render rather than in an effect so no stale pick state lingers.
+  if (dropType && !draftCanAct) setDropType(null);
 
   // Execute queued premove when our turn comes
   useEffect(() => {
@@ -1484,19 +1597,23 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
       setError("The move did not reach the game server. Try the move again.");
     }, 5000);
     return () => window.clearTimeout(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [pendingLocalMove]);
 
-  const turnStartedAtRef = useRef(Date.now());
+  // When the current turn started. Held as state (read during render by the
+  // clock-delay helper below), seeded from mount time via a lazy initializer;
+  // the per-turn update is deferred a microtask so it isn't a synchronous
+  // setState inside the effect body.
+  const [turnStartedAt, setTurnStartedAt] = useState(() => Date.now());
   useEffect(() => {
-    turnStartedAtRef.current = Date.now();
+    queueMicrotask(() => setTurnStartedAt(Date.now()));
   }, [game?.board.history.length]);
 
   const clockStartDelay = (color: Color) => {
     if (!game || game.result || game.board.turn !== color) return 0;
     const activeMoves = game.board.history.filter((m) => m.color === color).length;
     if (activeMoves > 0) return 0;
-    return Math.max(0, FIRST_MOVE_GRACE_MS - (Date.now() - turnStartedAtRef.current));
+    return Math.max(0, FIRST_MOVE_GRACE_MS - (Date.now() - turnStartedAt));
   };
 
   // Server-authoritative timeout: the moment the active side's clock reads
@@ -1544,7 +1661,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   // for the server to accept a claim; hide them the moment they return.
   useEffect(() => {
     if (!opponentGone || game?.result) {
-      setClaimReady(false);
+      queueMicrotask(() => setClaimReady(false));
       return;
     }
     const id = window.setTimeout(() => setClaimReady(true), CLAIM_DELAY_AFTER_GONE_MS);
@@ -1823,26 +1940,6 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     !game.result &&
     oppDrafting &&
     (draftSubmitted || myDraftResolved || genuinelySkipped);
-  // Wheel-nav stands down whenever a modal/overlay owns the screen: the
-  // settings sheet, the end screen, on-board buff targeting, an open draft
-  // offer, or the post-draft waiting overlay. A draft offer only blocks while
-  // its panel is actually front-and-center: once the free lock-in window
-  // expires the panel minimizes (draftGraceOver) and the board is back in
-  // view, so navigation must come back with it — the player can deliberate
-  // on their own clock for minutes.
-  const wheelNavBlocked =
-    settingsOpen ||
-    (!!game.result && showResult) ||
-    !!buffTargeting.targeting ||
-    (isDraft && !!myOffer && !draftSubmitted && !draftGraceOver && !game.result) ||
-    showWaitingOverlay;
-  wheelNavRef.current = {
-    blocked: wheelNavBlocked,
-    ply: historyPly,
-    min: reviewFloor,
-    max: game.board.history.length,
-    nav: handleHistoryPlyChange,
-  };
   // Crazyhouse pocket (viewer's own): banked piece types with a positive count.
   // Kings are never bankable. Empty pocket renders no tray.
   const myInventory = game.buffs?.players[myColor].inventory ?? null;
@@ -1850,6 +1947,14 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     ? (Object.keys(myInventory) as PieceType[])
         .filter((t) => t !== "k" && (myInventory[t] ?? 0) > 0)
         .map((t) => ({ type: t, count: myInventory[t]! }))
+    : [];
+  // The opponent's pocket, read-only (owner: "be able to see your opponent's
+  // pocket") - full transparency covers banked pieces too.
+  const oppInventory = game.buffs?.players[oppColor].inventory ?? null;
+  const oppPocketEntries = oppInventory
+    ? (Object.keys(oppInventory) as PieceType[])
+        .filter((t) => t !== "k" && (oppInventory[t] ?? 0) > 0)
+        .map((t) => ({ type: t, count: oppInventory[t]! }))
     : [];
   // Squares where the armed pocket piece may legally drop: the engine already
   // generated these as drop moves in the live legal-move list.
@@ -2234,14 +2339,20 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           {/* The command rail: one framed column (mode header, opponent, dock
               + chat, you) instead of three floating islands, so the left side
               reads as a single control surface. */}
-          <aside className="hidden min-h-0 gap-2 overflow-y-auto border border-white/10 bg-white/[0.02] p-2 lg:grid lg:min-h-[var(--board-height)] lg:max-h-full lg:grid-rows-[auto_auto_minmax(6rem,1fr)_auto] lg:self-start">
+          <aside className="rail-panel corner-cut hidden min-h-0 gap-2 overflow-y-auto p-2.5 lg:grid lg:min-h-[var(--board-height)] lg:max-h-full lg:grid-rows-[auto_auto_minmax(6rem,1fr)_auto] lg:self-start">
             <div className="seam-edge-b flex items-center justify-between gap-2 px-1 pb-2">
               <span
                 className={
-                  "font-display text-xs font-bold uppercase tracking-[0.14em] " +
+                  "flex items-center gap-1.5 font-display text-xs font-bold uppercase tracking-[0.14em] " +
                   (isBuffMode ? "text-mode-buffGlow" : "text-mode-nerfGlow")
                 }
               >
+                {/* A lit mode ember anchors the rail's identity at a glance. */}
+                <span
+                  aria-hidden
+                  className="h-1.5 w-1.5 shrink-0 rounded-full bg-current"
+                  style={{ boxShadow: "0 0 8px 1px currentColor" }}
+                />
                 {isBuffMode ? "Buff mode" : "Nerf mode"}
               </span>
               {subtitle && (
@@ -2335,6 +2446,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               <div data-board-measure className={`relative mx-auto sm:mx-0 ${boardFitClass}`}>
                 <Board
                   board={boardForDisplay}
+                  // Removal FX diff the committed position, never the premove /
+                  // confirm / review overlays (see Board.fxBoard).
+                  fxBoard={game.board}
                   legalMoves={
                     isReviewingHistory || buffTargeting.targeting
                       ? []
@@ -2372,6 +2486,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                                 walnutSquares: zone.walnut,
                                 bananaSquares: zone.banana,
                                 trapSquares: zone.traps,
+                                doomSquares: zone.doom,
                                 // Previously missing online: king-only /
                                 // no-pawn-advance shackles now paint here too.
                                 lockedSquares: zone.locked,
@@ -2432,6 +2547,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                     cardNoun={draftCardNoun(start.mode)}
                   />
                 )}
+                <GodPanelNotice notices={godNotices} />
                 {buffTargeting.targeting && buffTargeting.targeting.target.kind === "square" && (
                   <TargetingBanner
                     game={game}
@@ -2455,6 +2571,20 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                     activeType={dropType}
                     canDrop={draftCanAct}
                     onSelect={handlePocketSelect}
+                  />
+                </div>
+              )}
+              {/* Opponent's pocket, read-only: what they can drop is public
+                  information under full transparency. */}
+              {isDraft && game.buffs && !isReviewingHistory && oppPocketEntries.length > 0 && (
+                <div className={`mx-auto mt-1 sm:mx-0 ${boardFitClass}`}>
+                  <Pocket
+                    entries={oppPocketEntries}
+                    color={oppColor}
+                    activeType={null}
+                    canDrop={false}
+                    onSelect={() => {}}
+                    label="Their pocket"
                   />
                 </div>
               )}
@@ -2754,6 +2884,10 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               // the control reflects the spend at once: the replica's
               // mergeDraftState does not carry rerollsLeft back.
               if (bsMine) {
+                // Mutable engine replica advanced in place then re-rendered via
+                // applyGame({ ...game }) — the app-wide model, so
+                // react-hooks/immutability is suppressed rather than rewritten.
+                // eslint-disable-next-line react-hooks/immutability
                 bsMine.rerollsLeft = Math.max(0, (bsMine.rerollsLeft ?? 0) - 1);
                 applyGame({ ...game });
               }
@@ -2763,8 +2897,11 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
             // Replica opponent offers only ever hold cards the server sent
             // us (picksVisible matches); otherwise they stay null.
             offer: bsTheirs?.offer ?? null,
-            showCards: picksVisible || !!bsMine?.flags.seeOppCards,
-            showTier: !!bsMine?.flags.seeOppTier,
+            // Full transparency (owner rule): the opponent's offer is public
+            // data the server already sends open - always show it face-up.
+            // The old reveal flags survive only as inputs no longer needed.
+            showCards: true,
+            showTier: true,
             reveal: bsMine?.oppReveal ?? null,
             lastPick: bsTheirs?.buffs.length
               ? {

@@ -81,9 +81,15 @@ export default function TournamentsPage() {
   useEffect(() => {
     let cancelled = false;
     const initialClub = new URLSearchParams(window.location.search).get("club");
-    if (initialClub) setClubId(initialClub);
+    if (initialClub) queueMicrotask(() => setClubId(initialClub));
     fetchMe().then((me) => !cancelled && setUser(me));
-    load().catch((e) => !cancelled && setError(e instanceof Error ? e.message : "Could not load tournaments."));
+    void (async () => {
+      try {
+        await load();
+      } catch (e) {
+        if (!cancelled) setError(e instanceof Error ? e.message : "Could not load tournaments.");
+      }
+    })();
     const tick = window.setInterval(() => setNow(Date.now()), 1000);
     return () => {
       cancelled = true;

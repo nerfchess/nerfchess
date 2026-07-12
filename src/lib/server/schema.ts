@@ -170,6 +170,19 @@ export const SCHEMA_STATEMENTS: string[] = [
     created_at INTEGER NOT NULL
   )`,
   `CREATE INDEX IF NOT EXISTS idx_challenges_to ON challenges(to_user_id, status, created_at DESC)`,
+  // Friendships: ONE row per pair, stored canonically (user_lo < user_hi by id)
+  // so direction never duplicates it. requested_by records who sent the request
+  // (the OTHER user accepts); status is 'pending' until then, 'accepted' after.
+  // Mirrors migrations/0024_friendships.sql.
+  `CREATE TABLE IF NOT EXISTS friendships (
+    user_lo TEXT NOT NULL,
+    user_hi TEXT NOT NULL,
+    requested_by TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending',
+    created_at INTEGER NOT NULL,
+    PRIMARY KEY (user_lo, user_hi)
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_friendships_hi ON friendships(user_hi)`,
   // Small site-wide counters (e.g. bot games played, which have no game row).
   `CREATE TABLE IF NOT EXISTS site_counters (
     key TEXT PRIMARY KEY,
@@ -306,6 +319,12 @@ export const SCHEMA_STATEMENTS: string[] = [
     enabled INTEGER NOT NULL DEFAULT 1,
     updated_at INTEGER
   )`,
+  // Tiny key/value ledger for schema bookkeeping (see ADDITIVE_VERSION below).
+  // Mirrors migrations/0023_schema_meta.sql.
+  `CREATE TABLE IF NOT EXISTS schema_meta (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+  )`,
 ];
 
 // Columns added after launch. SQLite has no "ADD COLUMN IF NOT EXISTS", so
@@ -411,11 +430,37 @@ const ADDITIVE_COLUMNS: string[] = [
      SELECT id, 'backfill', completed_at FROM games`,
 ];
 
+// The additive pass is versioned by list length (the list is append-only) and
+// recorded in schema_meta once it completes, so it runs once per deploy that
+// appends to it — NOT on every cold isolate. Before this gate, every cold
+// start (each Next API route's first getDb() and every Durable Object wake)
+// paid ~34 sequential D1 round-trips plus the full-table-scan INSERT...SELECT
+// backfills below, which showed up as multi-second stalls on the first
+// request — including the WebSocket join right after accepting a challenge.
+const ADDITIVE_VERSION = ADDITIVE_COLUMNS.length;
+
 export async function ensureSchema(db: D1Database): Promise<void> {
-  await db.batch(SCHEMA_STATEMENTS.map((sql) => db.prepare(sql)));
+  // One round-trip: bootstrap tables and read the additive marker together.
+  const results = await db.batch([
+    ...SCHEMA_STATEMENTS.map((sql) => db.prepare(sql)),
+    db.prepare(`SELECT value FROM schema_meta WHERE key = 'additive_version'`),
+  ]);
+  const marker = results[results.length - 1]?.results?.[0] as { value?: string } | undefined;
+  if (marker?.value === String(ADDITIVE_VERSION)) return;
+  // Stale or fresh database: run the additive pass (idempotent; duplicate
+  // columns throw and are ignored), then stamp the version. Concurrent cold
+  // isolates may race through here once after a deploy; every statement is
+  // safe to repeat.
   for (const sql of ADDITIVE_COLUMNS) {
     try {
       await db.prepare(sql).run();
     } catch {}
   }
+  await db
+    .prepare(
+      `INSERT INTO schema_meta (key, value) VALUES ('additive_version', ?)
+       ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+    )
+    .bind(String(ADDITIVE_VERSION))
+    .run();
 }

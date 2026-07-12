@@ -33,14 +33,26 @@ export const FUNNY_CLOCK: Buff[] = [
       id: "deadline",
       icon: "AlarmClock",
       name: "Deadline",
-      description: "Move the deadline up: your opponent's clock loses 40 seconds.",
+      description: "Every deliverable now costs overtime: your opponent's next 3 captures each cost them 15 seconds off the clock.",
       tier: 4,
       category: "tempo",
       flavor: "The report was due yesterday.",
     },
-    instant((_inst, api) => {
-      api.adjustClock({ subOppSec: 40 });
-    }),
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.charges = 3;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.opp || !move.captured) return;
+        const left = (inst.state.charges as number) ?? 0;
+        if (left <= 0) return;
+        api.adjustClock({ subOppSec: 15 });
+        inst.state.charges = left - 1;
+        if (left - 1 <= 0) inst.spent = true;
+      },
+      status: (inst) => `${(inst.state.charges as number) ?? 3} billable captures left`,
+    },
   ),
   card(
     {

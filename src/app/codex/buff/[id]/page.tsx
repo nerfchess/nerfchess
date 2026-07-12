@@ -13,7 +13,8 @@ export function generateStaticParams() {
   return ALL_BUFFS.map((b) => ({ id: b.id }));
 }
 
-export function generateMetadata({ params }: { params: { id: string } }): Metadata {
+export async function generateMetadata(props: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const params = await props.params;
   const buff = BUFF_BY_ID[params.id];
   if (!buff) return {};
   const type = buffType(buff);
@@ -31,7 +32,8 @@ export function generateMetadata({ params }: { params: { id: string } }): Metada
   };
 }
 
-export default function BuffCardPage({ params }: { params: { id: string } }) {
+export default async function BuffCardPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const buff = BUFF_BY_ID[params.id];
   if (!buff) notFound();
   return <BuffDetail buff={buff} />;

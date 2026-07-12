@@ -20,9 +20,11 @@
 
 import { moveToUCI } from "./board";
 import type { BuffPick, DraftMode } from "./buff";
+import { BUFF_BY_ID } from "./buffs/library";
 import {
   NerfGame,
   UNRESTRICTED_NERF,
+  acquireBuff,
   activateBuff,
   bankDraft,
   enableDraftMode,
@@ -30,6 +32,7 @@ import {
   newGame,
   pickDraftCard,
   playMove,
+  rerollDraft,
   resolveDiffFlag,
 } from "./game";
 import { PLAYABLE_NERFS } from "./nerfs/library";
@@ -40,6 +43,14 @@ import type { Color, Move } from "./types";
 export type EngineDraftAction =
   | { ply: number; color: Color; a: "pick"; index: number; cards?: { id: string; tier: number }[] }
   | { ply: number; color: Color; a: "bank" }
+  // A reroll advances the shared draft rngState exactly like a normal roll
+  // (see rerollOffer), so every roll AFTER it depends on it having happened.
+  // It must be replayed or the reconstructed offers — and therefore the picks
+  // and the board — silently diverge from the DO's.
+  | { ply: number; color: Color; a: "reroll" }
+  // Owner god-panel summon: seats a held card outside the draft. It changes
+  // the seat's hand (and hand indices), so later `use` actions depend on it.
+  | { ply: number; color: Color; a: "grant"; id: string }
   // A Chess Diff sub-game decided by a clock flag (`color` flagged).
   | { ply: number; color: Color; a: "diffFlag" }
   | { ply: number; color: Color; a: "use"; buffIndex: number; picks: BuffPick[] };
@@ -67,7 +78,13 @@ export function moveByUci(game: NerfGame, uci: string): Move | undefined {
 function applyEngineDraftAction(game: NerfGame, action: EngineDraftAction): void {
   if (action.a === "pick") pickDraftCard(game, action.color, action.index);
   else if (action.a === "bank") bankDraft(game, action.color);
-  else if (action.a === "diffFlag") resolveDiffFlag(game, action.color);
+  else if (action.a === "reroll") rerollDraft(game, action.color);
+  else if (action.a === "grant") {
+    // Tier is re-derived from the library (mirrors the DO's replay) so a
+    // stored value can never drift from the card definition.
+    const def = BUFF_BY_ID[action.id];
+    if (def) acquireBuff(game, action.color, action.id, def.tier);
+  } else if (action.a === "diffFlag") resolveDiffFlag(game, action.color);
   else activateBuff(game, action.color, action.buffIndex, action.picks);
 }
 

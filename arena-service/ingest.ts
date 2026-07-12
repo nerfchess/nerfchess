@@ -110,12 +110,16 @@ export class IngestClient {
       // eslint-disable-next-line no-console
       console.error(JSON.stringify({ event: "arena_end_route_failed", id: record.id, fallback: !!this.doUrl }));
     }
+    let status: number | "network" = "network";
+    let bodyText = "";
     for (let attempt = 0; attempt < 2; attempt++) {
       const res = await this.post("/arena/end", { record });
       if (res && res.ok) return;
+      status = res ? res.status : "network";
+      bodyText = res ? await res.text().catch(() => "") : "";
     }
     // eslint-disable-next-line no-console
-    console.error(JSON.stringify({ event: "arena_end_report_failed", id: record.id }));
+    console.error(JSON.stringify({ event: "arena_end_report_failed", id: record.id, status, body: bodyText.slice(0, 300) }));
   }
 
   /** Report an aborted game so the DO ends its spectator replica for watchers.

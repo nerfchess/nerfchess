@@ -50,7 +50,7 @@ function LoginPage() {
 
   // The api.js script may already be present after a client navigation.
   useEffect(() => {
-    if (window.turnstile) setTurnstileReady(true);
+    if (window.turnstile) queueMicrotask(() => setTurnstileReady(true));
   }, []);
 
   // Render (and clean up) the widget whenever the register tab is active.

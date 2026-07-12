@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getDb } from "@/lib/server/db";
 import { sessionTokenFromCookieHeader, userForSession } from "@/lib/server/auth";
 import { tournamentPhase, type TournamentPhase } from "@/lib/tournaments";
+import { categoryRatingSql } from "@/lib/server/ratingSql";
+import { isModeCategory } from "@/lib/speed";
 
 export const dynamic = "force-dynamic";
 
@@ -42,7 +44,8 @@ export type StandingRow = {
   joined_at: number;
 };
 
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const db = await getDb();
 
   const row = await db
@@ -58,17 +61,23 @@ export async function GET(request: Request, { params }: { params: { id: string }
     .first<Omit<TournamentDetail, "players" | "phase">>();
   if (!row) return NextResponse.json({ error: "Tournament not found." }, { status: 404 });
 
+  // Standings show each entrant's LIVE rating in the bucket this tournament
+  // is played in (its mode: nerf or buff), the same number the leaderboard
+  // tab and a game's seat row show for that category — never the frozen
+  // legacy users.rating column. Shared rule: lib/server/ratingSql.ts.
+  const ratingCategory = isModeCategory(row.mode) ? row.mode : "nerf";
   const standings = await db
     .prepare(
-      `SELECT te.user_id, te.username, u.avatar, u.flair, u.rating,
+      `SELECT te.user_id, te.username, u.avatar, u.flair,
+              ${categoryRatingSql("u")} AS rating,
               te.score, te.games_played, te.streak, te.performance, te.joined_at
        FROM tournament_entries te
        JOIN users u ON u.id = te.user_id
        WHERE te.tournament_id = ?
-       ORDER BY te.score DESC, te.streak DESC, u.rating DESC, te.joined_at ASC
+       ORDER BY te.score DESC, te.streak DESC, rating DESC, te.joined_at ASC
        LIMIT 500`,
     )
-    .bind(params.id)
+    .bind(ratingCategory, params.id)
     .all<StandingRow>();
 
   const user = await userForSession(db, sessionTokenFromCookieHeader(request.headers.get("cookie")));

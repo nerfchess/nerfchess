@@ -40,7 +40,9 @@ export default function LobbyPage() {
     // Instant paint: the last snapshot this tab saw renders immediately
     // (seeks/games a few seconds stale), and the first live poll replaces it.
     const cached = readSnapshot<MPLobby>("nerfchess:lobby-snapshot");
-    if (cached) setLobby(cached);
+    // Deferred a microtask so the paint happens after mount (no hydration
+    // mismatch) but still before the first poll resolves — effectively instant.
+    if (cached) queueMicrotask(() => setLobby(cached));
     const session = new MPSession();
     session.persistFriendSession = false;
     session.autoReconnect = false; // fetchLobby reconnects on demand

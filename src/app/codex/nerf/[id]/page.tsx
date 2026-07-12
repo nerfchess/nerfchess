@@ -12,7 +12,8 @@ export function generateStaticParams() {
   return ALL_NERFS.map((n) => ({ id: n.id }));
 }
 
-export function generateMetadata({ params }: { params: { id: string } }): Metadata {
+export async function generateMetadata(props: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const params = await props.params;
   const nerf = NERF_BY_ID[params.id];
   if (!nerf) return {};
   const lead = `${nerf.name} is a ${tierName(nerf.tier)} nerf in Nerf Chess: a secret handicap you carry in Nerf mode.`;
@@ -28,7 +29,8 @@ export function generateMetadata({ params }: { params: { id: string } }): Metada
   };
 }
 
-export default function NerfCardPage({ params }: { params: { id: string } }) {
+export default async function NerfCardPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const nerf = NERF_BY_ID[params.id];
   if (!nerf) notFound();
   return <NerfDetail nerf={nerf} />;

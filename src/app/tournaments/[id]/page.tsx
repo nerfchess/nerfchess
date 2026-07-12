@@ -43,7 +43,13 @@ export default function TournamentDetailPage() {
 
   useEffect(() => {
     let cancelled = false;
-    load().catch((e) => !cancelled && setError(e instanceof Error ? e.message : "Could not load the tournament."));
+    void (async () => {
+      try {
+        await load();
+      } catch (e) {
+        if (!cancelled) setError(e instanceof Error ? e.message : "Could not load the tournament.");
+      }
+    })();
     fetchMe().then((u) => !cancelled && setMe(u));
     const tick = window.setInterval(() => setNow(Date.now()), 1000);
     return () => {

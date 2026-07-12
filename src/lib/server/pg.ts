@@ -36,6 +36,11 @@ function makeClient(hyperdrive: Hyperdrive): Sql {
   return postgres(hyperdrive.connectionString, {
     max: 1,
     fetch_types: false,
+    // Bound the worst case: postgres.js defaults to a 30s connect timeout, so
+    // a sick tunnel/origin used to hang every archive read for up to 30s
+    // before the D1 fallback below kicked in. Hyperdrive is a local hop; if it
+    // can't produce a connection in 5s it isn't going to.
+    connect_timeout: 5,
     types: { bigint: bigintAsNumber },
   });
 }

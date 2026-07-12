@@ -17,9 +17,14 @@ export function VfxLayer({ onShake }: { onShake?: () => void } = {}) {
   // always sees the current values without re-mounting the engine.
   const hidden = useFxHidden();
   const hiddenRef = useRef(hidden);
-  hiddenRef.current = hidden;
   const shakeRef = useRef(onShake);
-  shakeRef.current = onShake;
+  // Keep the latest gate + callback in refs so the one-time engine effect
+  // always reads current values without re-mounting (writes in an effect,
+  // never during render).
+  useEffect(() => {
+    hiddenRef.current = hidden;
+    shakeRef.current = onShake;
+  });
 
   useEffect(() => {
     const canvas = canvasRef.current;

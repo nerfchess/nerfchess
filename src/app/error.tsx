@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 // Route-level error boundary: any client exception in a page renders this
 // panel inside the normal layout instead of white-screening the site.
 export default function Error({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
@@ -12,12 +14,12 @@ export default function Error({ reset }: { error: Error & { digest?: string }; r
           The page hit an unexpected error. Your game state is saved locally.
         </p>
         <div className="mt-5 grid grid-cols-2 gap-2">
-          <a
+          <Link
             href="/"
             className="inline-flex items-center justify-center px-3 py-2 btn-ghost text-xs font-display tracking-wide"
           >
             Back to the game
-          </a>
+          </Link>
           <button
             onClick={reset}
             className="px-3 py-2 border border-gold/40 bg-gold/10 text-gold-leaf hover:bg-gold/20 transition text-xs font-display font-semibold tracking-wide"

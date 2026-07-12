@@ -12,6 +12,7 @@ import {
   summonTemp,
   lineSweep,
   activated,
+  emptySquares,
   grantInventory,
   instant,
   mySquares,
@@ -75,39 +76,89 @@ export const FUNNY_SUMMONS: Buff[] = [
       id: "summon_intern",
       icon: "UserPlus",
       name: "Summon Intern",
-      description: "Two new pawns join your pocket. Later, spend turns to drop them onto empty squares.",
+      description: "The first time your opponent captures one of your pieces, the intern quietly takes over the empty desk: a pawn joins your pocket, to be dropped onto an empty square on a later turn.",
       tier: 2,
       category: "pieces",
-      flavor: "They brought their own lanyards.",
+      flavor: "They brought their own lanyard.",
     },
-    instant((_inst, api) => grantInventory(api, "p", 2)),
+    {
+      kind: "passive",
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.opp || !move.captured || move.captured === "k") return;
+        grantInventory(api, "p", 1);
+        inst.spent = true;
+      },
+      status: () => "intern on standby",
+    },
   ),
   card(
     {
       id: "pizza_delivery",
       icon: "Pizza",
       name: "Pizza Delivery",
-      description: "A knight zips in on a scooter delivering pizza, and the garlic bread on the side is a pawn: both park in your pocket, ready to drop onto empty squares on later turns.",
+      description: "The delivery scooter double-parks and the boxes pile up: choose three empty squares; your opponent's pieces cannot move onto them for their next 3 turns.",
       tier: 4,
-      category: "pieces",
-      flavor: "Thirty minutes or the fork is free.",
+      category: "tempo",
+      flavor: "Thirty minutes or the roadblock is free.",
     },
-    instant((_inst, api) => {
-      grantInventory(api, "n", 1);
-      grantInventory(api, "p", 1);
-    }),
+    activated(
+      (_inst, api, picks) =>
+        picks.length >= 3
+          ? null
+          : {
+              kind: "square",
+              label: `Choose where a pizza stack lands (${picks.length + 1}/3)`,
+              squares: emptySquares(api.board).filter(
+                (sq) => !picks.some((k) => k.square === sq),
+              ),
+            },
+      (_inst, api, picks) => {
+        const squares = picks
+          .map((k) => k.square)
+          .filter((s): s is Square => s != null);
+        if (squares.length) {
+          addEffect(api, { kind: "barred", squares, against: api.opp, turns: 3 });
+        }
+      },
+    ),
   ),
   card(
     {
       id: "reinforcements",
       icon: "Users",
       name: "Reinforcements",
-      description: "Three pawns parachute into your pocket: drop them onto empty squares on later turns.",
+      description: "Two pawns march in from the depot right now: place them on empty squares of your back two ranks.",
       tier: 4,
       category: "pieces",
-      flavor: "Geronimo.",
+      flavor: "Geronimo. Well, eventually.",
     },
-    instant((_inst, api) => grantInventory(api, "p", 3)),
+    activated(
+      (_inst, api, picks) =>
+        picks.length >= 2
+          ? null
+          : {
+              kind: "square",
+              label: `Place a reinforcement pawn (${picks.length + 1}/2)`,
+              squares: (() => {
+                const ranks = api.me === "w" ? [0, 1] : [6, 7];
+                return ranks
+                  .flatMap((r) => Array.from({ length: 8 }, (_, f) => SQ(f, r)))
+                  .filter(
+                    (sq) =>
+                      !api.board.pieces[sq] &&
+                      pawnRankOk(sq) &&
+                      !picks.some((k) => k.square === sq),
+                  );
+              })(),
+            },
+      (_inst, api, picks) => {
+        for (const k of picks) {
+          if (k.square != null && !api.board.pieces[k.square] && pawnRankOk(k.square)) {
+            api.place(k.square, "p", api.me);
+          }
+        }
+      },
+    ),
   ),
   card(
     {
@@ -132,8 +183,10 @@ export const FUNNY_SUMMONS: Buff[] = [
       id: "clone_army",
       icon: "CopyPlus",
       name: "Clone Army",
+      // Tier 6 (moved up from 5): four pocket pawns is the scaled-up sibling
+      // of Second Army (two pawns, tier 4), two clean tiers below it.
       description: "Four photocopier flashes in a row: four new pawns land in your pocket, ready to drop onto empty squares on later turns.",
-      tier: 5,
+      tier: 6,
       category: "pieces",
       flavor: "Roll call is going to take a while.",
     },

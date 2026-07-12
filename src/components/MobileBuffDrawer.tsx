@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronDown, ChevronUp, Layers } from "lucide-react";
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useState } from "react";
 
 /**
  * Collapsible bottom drawer for the draft-mode buff dock below the lg
@@ -29,9 +29,13 @@ export function MobileBuffDrawer({
 }) {
   const [open, setOpen] = useState(false);
 
-  useEffect(() => {
+  // Collapse the drawer when the parent signals an auto-close (e.g. a buff was
+  // used); handled on the transition during render rather than in an effect.
+  const [prevAutoClose, setPrevAutoClose] = useState(autoCloseWhen);
+  if (prevAutoClose !== autoCloseWhen) {
+    setPrevAutoClose(autoCloseWhen);
     if (autoCloseWhen) setOpen(false);
-  }, [autoCloseWhen]);
+  }
 
   return (
     <div className="lg:hidden">

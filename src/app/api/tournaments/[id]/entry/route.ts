@@ -9,7 +9,8 @@ export const dynamic = "force-dynamic";
 // matching the club membership route's shape. Auth is the existing session
 // helper: every request must carry a valid session cookie, so this never
 // weakens the auth model.
-export async function POST(request: Request, { params }: { params: { id: string } }) {
+export async function POST(request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const db = await getDb();
   const user = await userForSession(db, sessionTokenFromCookieHeader(request.headers.get("cookie")));
   if (!user) return NextResponse.json({ error: "Sign in to join tournaments." }, { status: 401 });

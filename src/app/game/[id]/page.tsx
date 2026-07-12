@@ -94,14 +94,23 @@ export default function OnlineGamePage() {
   // Seconds left before a viewer stranded on a game that has ended / gone dark
   // is eased back to the lobby (see the `missing` effect + view below).
   const [redirectIn, setRedirectIn] = useState(REDIRECT_SECONDS);
-  const sessionRef = useRef<MPSession | null>(null);
+  // Held as state (not a ref) because the render below chooses the view from
+  // it; a ref cannot drive rendering. Set inside the effect once the session
+  // exists, cleared on teardown.
+  const [liveSession, setLiveSession] = useState<MPSession | null>(null);
 
   useEffect(() => {
     if (!gameId) return;
     let cancelled = false;
     const session = new MPSession();
     session.persistFriendSession = false;
-    sessionRef.current = session;
+    // The session actually being rendered. The not_found fallback below may
+    // swap in an arena-pointed session (Tier 3); teardown destroys whichever
+    // one is current.
+    let active: MPSession = session;
+    queueMicrotask(() => {
+      if (!cancelled) setLiveSession(session);
+    });
 
     // Fetch the archived game once, returning it (or null if it is not stored).
     // Kept separate from rendering so the request can be kicked off in parallel
@@ -160,7 +169,8 @@ export default function OnlineGamePage() {
             arenaSession.persistFriendSession = false;
             arenaSession.serverUrl = arenaSocketUrl();
             arenaSession.on(onWatchEvent);
-            sessionRef.current = arenaSession;
+            active = arenaSession;
+            if (!cancelled) setLiveSession(arenaSession);
             await spectate(pendingReplay, arenaSession);
             return;
           }
@@ -255,10 +265,10 @@ export default function OnlineGamePage() {
     return () => {
       cancelled = true;
       offWatch();
-      // The session may have been swapped for an arena-pointed one by the
+      // `active` may have been swapped for an arena-pointed session by the
       // not_found fallback above — destroy whichever is current.
-      (sessionRef.current ?? session).destroy();
-      sessionRef.current = null;
+      active.destroy();
+      setLiveSession(null);
     };
   }, [gameId]);
 
@@ -266,9 +276,17 @@ export default function OnlineGamePage() {
   // and it was never saved), don't leave the viewer staring at a dead end —
   // count down and gently send them to the lobby, with manual buttons meanwhile
   // for anyone who wants to go home or jump straight to another game.
+  // Restart the countdown the moment a game is found missing; adjusted during
+  // render so the effect below only owns the interval.
+  const isMissing = mode.kind === "missing";
+  const [prevMissing, setPrevMissing] = useState(isMissing);
+  if (prevMissing !== isMissing) {
+    setPrevMissing(isMissing);
+    if (isMissing) setRedirectIn(REDIRECT_SECONDS);
+  }
+
   useEffect(() => {
     if (mode.kind !== "missing") return;
-    setRedirectIn(REDIRECT_SECONDS);
     const tick = window.setInterval(() => {
       setRedirectIn((s) => {
         if (s <= 1) {
@@ -282,10 +300,10 @@ export default function OnlineGamePage() {
     return () => window.clearInterval(tick);
   }, [mode.kind]);
 
-  if (mode.kind === "player" && sessionRef.current) {
+  if (mode.kind === "player" && liveSession) {
     return (
       <OnlineMatch
-        session={sessionRef.current}
+        session={liveSession}
         start={mode.start}
         subtitle={
           mode.start.rated
@@ -301,8 +319,8 @@ export default function OnlineGamePage() {
     );
   }
 
-  if (mode.kind === "spectator" && sessionRef.current) {
-    return <SpectatorView key={watchGen} session={sessionRef.current} setup={mode.setup} />;
+  if (mode.kind === "spectator" && liveSession) {
+    return <SpectatorView key={watchGen} session={liveSession} setup={mode.setup} />;
   }
 
   if (mode.kind === "replay") {
@@ -430,13 +448,32 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
   // removals) and zone effects render correctly. The wstart payload is
   // spectator-safe: held buffs and effects only, never pending offers.
   const isDraft = !!setup.draft;
-  const draftGameRef = useRef<NerfGame | null>(null);
   const [draftGame, setDraftGame] = useState<NerfGame | null>(() => {
     if (!isDraft) return null;
-    const game = buildSpectatorDraftGame(setup.moves, setup.dtActions ?? [], setup.dtState, setup.mode);
-    draftGameRef.current = game;
-    return game;
+    return buildSpectatorDraftGame(setup.moves, setup.dtActions ?? [], setup.dtState, setup.mode);
   });
+  // Mirrors draftGame as the mutable replica the event handlers advance in
+  // place; seeded from the same initial object (useRef init, not a render write).
+  const draftGameRef = useRef<NerfGame | null>(draftGame);
+  // Card-use animation for watchers: a monotonic key fires the Board's
+  // board-wide flourish whenever a card is used (an activation, or a
+  // held/passive card whose move-hook changed the board), so spectators see
+  // the same effects the players do. Bespoke signatures get their choreography
+  // and every other card gets the category cast spectacle.
+  const [signatureCard, setSignatureCard] = useState<{ id: string; key: number } | null>(null);
+  const sigKeyRef = useRef(0);
+  const fireSignature = (id: string) => {
+    if (!BUFF_BY_ID[id]) return;
+    setSignatureCard({ id, key: ++sigKeyRef.current });
+  };
+  // A hook-fired card (summon, transform, revive, fresh board effect) is
+  // announced too: the replica sets lastHookMutations after a move.
+  const fireHookSignatures = (g: NerfGame | null) => {
+    const fired = g?.buffs?.lastHookMutations;
+    if (!fired?.length) return;
+    const first = g?.buffs?.players[fired[0].color].buffs[fired[0].index];
+    if (first?.id) fireSignature(first.id);
+  };
 
   useEffect(() => {
     const off = session.on((e) => {
@@ -457,6 +494,9 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
           if (move) {
             const next = playReplicaMove(g, move);
             draftGameRef.current = next;
+            // A passive/held card whose move-hook changed the board plays
+            // its flourish for watchers too.
+            fireHookSignatures(next);
             setDraftGame({ ...next });
           }
         }
@@ -483,6 +523,9 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
                   }
                 : { ply: g.board.history.length, color: e.resolved.color, a: "bank" },
           );
+          // An activation (draft-used) is a card play the watcher must see.
+          if (e.type === "draft-used" && e.used.card) fireSignature(e.used.card.id);
+          fireHookSignatures(g);
           setDraftGame({ ...g });
         }
       } else if (e.type === "draft-state") {
@@ -526,6 +569,9 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
       }
     });
     return off;
+    // Subscribe once per session; the signature-firing helpers are recreated
+    // every render but must not re-register the listener.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session]);
 
   const replayed = useMemo(() => replayUci(uciMoves), [uciMoves]);
@@ -535,21 +581,12 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
   const history = isDraft && draftGame ? draftGame.board.history : replayed.history;
   const clockEnabled = setup.timeSec > 0;
 
-  // Local clock tick between server updates. The side to move gets a 10s
-  // grace before its first move, so hold the display still until then.
-  useEffect(() => {
-    if (!clockEnabled || result || !setup.started) return;
-    const id = setInterval(() => {
-      // Grace window: the side to move hasn't played yet (w before ply 1,
-      // b before ply 2). Server clock frames stay authoritative regardless.
-      if (board.turn === "w" && uciMoves.length === 0) return;
-      if (board.turn === "b" && uciMoves.length === 1) return;
-      const dec = (t: number) => Math.max(0, t - 100);
-      if (board.turn === "w") setWhiteMs(dec);
-      else setBlackMs(dec);
-    }, 100);
-    return () => clearInterval(id);
-  }, [board.turn, clockEnabled, result, setup.started, uciMoves.length]);
+  // No local 100ms decrement interval here: it re-rendered the WHOLE
+  // SpectatorView subtree 10x/second for the entire game. The visible clock is
+  // unaffected — ClockPill self-interpolates from its `ms` prop via rAF — and
+  // server clock frames keep whiteMs/blackMs authoritative. The time-pressure
+  // FX (below) reads those server-frame values, which refresh often enough
+  // that a low clock still calms the effects.
 
   // Draft games can scrub history while the move list still reproduces the
   // board. Once a card rewrites it outside move history (summons, removals,
@@ -623,10 +660,14 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
               walnutSquares: zones.walnut,
               bananaSquares: zones.banana,
               trapSquares: zones.traps,
+              doomSquares: zones.doom,
               lockedSquares: zones.locked,
             }
           : undefined
       }
+      // No flourish while scrubbing history (a past position isn't a live
+      // play), matching the players' own board.
+      signatureCard={historyPly == null ? signatureCard : null}
       rail={
         <div className="mt-3 space-y-3">
           {isDraft && draftGame && <SpectatorBuffsPanel game={draftGame} players={setup.players} />}
@@ -1021,6 +1062,7 @@ function GameShell({
   statusLabel,
   nerfs,
   visual,
+  signatureCard,
   rail,
 }: {
   players: MPPlayers;
@@ -1041,6 +1083,9 @@ function GameShell({
   nerfs: Partial<Record<Color, string>> | null;
   // Draft spectating: public zone effects painted on the board.
   visual?: React.ComponentProps<typeof Board>["visual"];
+  // Card-use animation: a played card's board-wide flourish fires for
+  // spectators too, so watching a game shows the same effects the players see.
+  signatureCard?: React.ComponentProps<typeof Board>["signatureCard"];
   rail?: React.ReactNode;
 }) {
   return (
@@ -1076,6 +1121,7 @@ function GameShell({
                 myColor="w"
                 fxTimePressure={clockEnabled && activeColor != null && (whiteMs < 15_000 || blackMs < 15_000)}
                 visual={visual}
+                signatureCard={signatureCard}
                 lastMove={lastMove}
                 disabled
               />

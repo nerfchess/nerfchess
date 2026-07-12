@@ -61,17 +61,24 @@ function TvView() {
   const [players, setPlayers] = useState<MPPlayers | null>(null);
   const [over, setOver] = useState(false);
   const [recent, setRecent] = useState<RecentGame | null>(null);
+  // null = fallback not answered yet; the empty state must not show before
+  // BOTH the lobby snapshot and this lookup have resolved ("no games are
+  // being played" used to flash while the replay was still loading).
+  const [recentChecked, setRecentChecked] = useState(false);
 
   // Switching channels (All / Nerf / Buff) drops everything shown so nothing
-  // from the other pool lingers on screen.
-  useEffect(() => {
+  // from the other pool lingers on screen. Reset on the change during render.
+  const [prevMode, setPrevMode] = useState(modeFilter);
+  if (prevMode !== modeFilter) {
+    setPrevMode(modeFilter);
     setPinnedId(null);
     setStreamId(null);
     setMoves([]);
     setPlayers(null);
     setOver(false);
     setRecent(null);
-  }, [modeFilter]);
+    setRecentChecked(false);
+  }
 
   const liveGames = useMemo(() => {
     const games = lobby?.games ?? [];
@@ -88,19 +95,22 @@ function TvView() {
     fetch(`/api/games/recent${modeFilter ? `?mode=${modeFilter}` : ""}`)
       .then((res) => (res.ok ? (res.json() as Promise<{ game: RecentGame | null }>) : null))
       .then((data) => {
-        if (!cancelled && data?.game) setRecent(data.game);
+        if (cancelled) return;
+        if (data?.game) setRecent(data.game);
+        setRecentChecked(true);
       })
-      .catch(() => {});
+      .catch(() => {
+        if (!cancelled) setRecentChecked(true);
+      });
     return () => {
       cancelled = true;
     };
   }, [lobby, liveGames.length, recent, modeFilter]);
 
   // Keep a just-finished game on screen until the lobby offers a replacement.
-  useEffect(() => {
-    if (targetId) setStreamId(targetId);
-    else if (over || !streamId) setStreamId(targetId);
-  }, [targetId, over, streamId]);
+  // Derived during render so no extra cascading render is scheduled.
+  const nextStream = targetId ? targetId : over || !streamId ? targetId : streamId;
+  if (nextStream !== streamId) setStreamId(nextStream);
 
   useEffect(() => {
     if (!streamId) return;
@@ -229,14 +239,17 @@ function TvView() {
                 lastMove={lastMove}
                 disabled
               />
-            ) : !lobby ? (
-              /* Tuning in: the first lobby snapshot (and the recent-game
-                 fallback) are still loading. A quiet loading state instead of
-                 flashing "no games" at every visitor for a second. */
+            ) : !lobby || !recentChecked ? (
+              /* Tuning in: covers BOTH the first lobby snapshot AND the
+                 recent-game fallback lookup. The empty state only ever shows
+                 once both have answered and there is genuinely nothing to
+                 screen — no more "no games" flashing before a replay loads. */
               <div className="grid aspect-square w-full place-items-center plate">
-                <div className="flex flex-col items-center gap-3">
+                <div className="relative flex flex-col items-center gap-3">
+                  <span className="tv-tuning-ring" aria-hidden />
                   <Radio size={28} className="animate-flicker text-gold-leaf" aria-hidden />
                   <div className="skeleton h-2 w-32" />
+                  <div className="skeleton h-2 w-20" />
                   <p className="smallcaps text-[10px] text-parchment-400">Tuning in…</p>
                 </div>
               </div>

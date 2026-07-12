@@ -62,8 +62,10 @@ export function QueueButton() {
       "nerfchess:queue-card",
     );
     if (cached) {
-      setUser(cached.user);
-      setModeRatings(cached.ratings ?? {});
+      queueMicrotask(() => {
+        setUser(cached.user);
+        setModeRatings(cached.ratings ?? {});
+      });
     }
     fetchMe().then((me) => {
       if (cancelled) return;
@@ -88,18 +90,22 @@ export function QueueButton() {
         })
         .catch(() => {});
     });
-    try {
-      const saved = window.localStorage.getItem(LAST_POOL_KEY);
-      if (saved && QUEUE_POOL_OPTIONS.some((o) => o.pool === saved)) setPool(saved);
-    } catch {}
-    // Preselect a mode: an explicit ?mode= query param (home page links)
-    // wins; otherwise the last choice this browser made.
-    try {
-      const fromQuery = new URLSearchParams(window.location.search).get("mode");
-      const saved = window.localStorage.getItem(LAST_MODE_KEY);
-      const preset = fromQuery === "nerf" || fromQuery === "buff" ? fromQuery : saved;
-      if (preset === "nerf" || preset === "buff") setMode(preset);
-    } catch {}
+    // localStorage/query preselects read client-side; deferred a microtask so
+    // they don't set state synchronously in the effect body.
+    queueMicrotask(() => {
+      try {
+        const saved = window.localStorage.getItem(LAST_POOL_KEY);
+        if (saved && QUEUE_POOL_OPTIONS.some((o) => o.pool === saved)) setPool(saved);
+      } catch {}
+      // Preselect a mode: an explicit ?mode= query param (home page links)
+      // wins; otherwise the last choice this browser made.
+      try {
+        const fromQuery = new URLSearchParams(window.location.search).get("mode");
+        const saved = window.localStorage.getItem(LAST_MODE_KEY);
+        const preset = fromQuery === "nerf" || fromQuery === "buff" ? fromQuery : saved;
+        if (preset === "nerf" || preset === "buff") setMode(preset);
+      } catch {}
+    });
     return () => {
       cancelled = true;
       sessionRef.current?.destroy();

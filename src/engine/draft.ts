@@ -25,23 +25,11 @@ import { BoardState, Color, PieceType } from "./types";
 // Info cards whose whole effect is reading the opponent's NERF. Buff mode has
 // no nerfs, so these are dead weight there and are filtered out of buff drafts.
 // (They stay in nerf mode: handicaps are still secret, so they still reveal
-// something real.)
-const NERF_REVEAL = new Set(["extra_glance", "watchtower"]);
-
-// Draft/buff reveal cards, removed from EVERY pool (owner request: the whole
-// game is public now — every held card, pick, bank, and pending offer is
-// visible to both players and spectators — so "see your opponent's cards"
-// effects reveal nothing). Cards that bundled a reveal with a rider
-// (Mind Read's nullify) go with them: their identity was the peek. The defs
-// stay implemented so archived games and held copies keep replaying.
-const DEAD_REVEALS = new Set([
-  "peek",
-  "quick_glance",
-  "draft_insight",
-  "wa_foresight",
-  "wa_mind_read",
-  "wa_omniscience",
-]);
+// something real.) Watchtower left this set when it was reworked into a
+// knight ward; the former DEAD_REVEALS cards (Peek, Quick Glance, Draft
+// Insight, Foresight, Mind Read, Omniscience) rejoined the pools once each
+// was reworked into a live draft effect (see their defs in buffs/).
+const NERF_REVEAL = new Set(["extra_glance"]);
 
 // Draft cadence in own moves. Tuning guide: 5 creates faster chaos, 6 is the
 // slower arc, 7 slows it further and delays high-tier cards. Set to 5 so
@@ -230,13 +218,17 @@ export function rollSharedTiers(bs: BuffMatchState): [Tier, Tier] {
  * mode filter, the never-offer-a-held-card rule, the nerf-mode bucket roll,
  * and the adjacent-tier fallback, advancing the draft RNG exactly as a normal
  * offer does. Shared by rollOffer and rerollOffer so a reroll consumes the RNG
- * identically to a first roll. `suppressed` drops draft-manipulation cards. */
+ * identically to a first roll. `suppressed` drops draft-manipulation cards.
+ * `exclude` adds extra card ids to the never-offer set: a reroll passes the
+ * cards currently on the table so the fresh set is guaranteed to differ from
+ * what the player is looking at. */
 function rollCards(
   bs: BuffMatchState,
   color: Color,
   slotTiers: Tier[],
   suppressed: boolean,
   board?: BoardState,
+  exclude?: Iterable<string>,
 ): BuffOffer["cards"] {
   const ps = bs.players[color];
   const rng = drawRng(bs);
@@ -273,8 +265,6 @@ function rollCards(
     // single apex card; in both, every draw is a tier-9 card with an
     // APEX_MYTHIC_CHANCE (~10%) upgrade to a tier-10 mythic.
     if (b.special || b.tier === 9 || b.tier === 10) return false;
-    // Full-transparency era: buff/draft reveal cards left every pool.
-    if (DEAD_REVEALS.has(b.id)) return false;
     if ((reliefIsDead || nerfDeclinesMaxed) && b.category === "nerf") return false;
     if (owned && b.requires && !b.requires.some((t) => owned.has(t))) return false;
     return bs.mode === "buff"
@@ -289,6 +279,12 @@ function rollCards(
   const used = new Set<string>(
     ps.buffs.filter((b) => !b.spent && !b.nullified).map((b) => b.id),
   );
+  // Reroll exclusion: fold in the cards currently on the table so a reroll is
+  // GUARANTEED to change what's offered rather than re-dealing a card the
+  // player is already looking at. The ids come from synced offer state, so both
+  // replicas exclude the same set and the seeded draw stays byte-identical
+  // (desync-safe). Empty on a first roll.
+  if (exclude) for (const id of exclude) used.add(id);
   for (const tier of slotTiers) {
     let pool = poolAtTier(tier).filter(
       (b) => inMode(b) && !used.has(b.id) && (!suppressed || b.category !== "draft"),
@@ -405,6 +401,10 @@ export function rollOffer(
 
   const bonus = Math.min(1, ps.flags.bankBonus ?? 0);
   ps.flags.bankBonus = undefined;
+  // Whether the offer just banked held a tier-8 (the apex gate; see below).
+  // Consumed here so it only ever applies to this one banked roll.
+  const bankedTier8 = ps.flags.bankedTier8 === true;
+  ps.flags.bankedTier8 = undefined;
   // "Stacked draft" preset: a persistent lift on every offer (not consumed),
   // so a surprised friend keeps drafting high-tier cards. Capped at +3.
   const boost = Math.min(3, Math.max(0, ps.flags.stackBoost ?? 0));
@@ -414,24 +414,33 @@ export function rollOffer(
   const suppressed = (ps.flags.noDraftCards ?? 0) > 0;
   if (suppressed) ps.flags.noDraftCards = (ps.flags.noDraftCards ?? 0) - 1;
 
-  // Apex bank: banking a draft while already at the top tier promotes it past
-  // tier 8 into an apex offer. Triggered only when this is a banked offer
-  // (bonus > 0, an unforced roll) whose resolved tier would hit 8. Everywhere
-  // else tiers 9 and 10 stay out of the pool. The offer deals TWO distinct
-  // apex cards (a real pick, like every other draft), each rolled tier 9 with
-  // the shared APEX_MYTHIC_CHANCE (~10%) upgrade to a tier-10 mythic — a
-  // mythic replaces a tier 9 about one time in ten, per slot, exactly like the
-  // Jackpot grant. Deterministic: each slot is one gate draw plus one pick
-  // draw off the seeded draft RNG, so the offer replays identically.
+  // Apex bank: banking an offer that CONTAINED a tier-8 card promotes the next
+  // (banked) roll past tier 8 into an apex offer. Everywhere else tiers 9 and
+  // 10 stay out of the pool. The offer deals TWO distinct apex cards (a real
+  // pick, like every other draft), each rolled tier 9 with the shared
+  // APEX_MYTHIC_CHANCE (~10%) upgrade to a tier-10 mythic — a mythic replaces a
+  // tier 9 about one time in ten, per slot, exactly like the Jackpot grant.
+  // Deterministic: each slot is one gate draw plus one pick draw off the seeded
+  // draft RNG, so the offer replays identically.
   //
   // A prepThree offer (All In) is never collapsed into an apex offer: it owes
   // the player THREE cards one tier higher, so it must keep going down the
   // normal multi-card path even when its banked tier would otherwise hit 8.
+  //
+  // GATED on skipping a tier-8 (owner rule): the apex (tier 9/10) offer is the
+  // reward for BANKING an offer that contained a tier-8 card. You don't have to
+  // draft the tier-8 — passing it up is what earns the apex pull, and once you
+  // do it is GUARANTEED. The promotion depends ONLY on bankedTier8, never on
+  // what the next round's shared tiers happen to roll: that roll is a fresh
+  // draw (rollSharedTiers) independent of the banked offer, and the top-tier
+  // slip gate lands it below 8 often enough that keying the reward on it used
+  // to silently cancel a legitimately-earned apex pull. bankedTier8 is set by
+  // bankOffer from the skipped offer's cards and consumed above.
   const bankedToTop =
     !prepping &&
     bonus > 0 &&
     forced == null &&
-    tiers[0] + bonus + boost >= 8 &&
+    bankedTier8 &&
     TIER9.length > 0;
   if (bankedToTop) {
     const rng = drawRng(bs);
@@ -502,6 +511,10 @@ export function rollOffer(
 
 /** Skip the pending offer, banking +1 tier for the next one (capped). */
 export function bankOffer(ps: PlayerBuffState) {
+  // Reward for skipping a strong offer: if the offer being banked CONTAINED a
+  // tier-8 card, the next (banked) roll may deal an apex offer. Captured here
+  // before the offer is cleared; consumed in rollOffer.
+  if (ps.offer?.cards.some((c) => c.tier === 8)) ps.flags.bankedTier8 = true;
   ps.offer = null;
   ps.flags.bankBonus = 1;
 }
@@ -552,7 +565,11 @@ export function rerollOffer(bs: BuffMatchState, color: Color, board?: BoardState
   }
   // Suppression was already consumed at the first roll; honor whatever remains.
   const suppressed = (ps.flags.noDraftCards ?? 0) > 0;
-  const cards = rollCards(bs, color, slotTiers, suppressed, board);
+  // Exclude the cards currently on the table so the reroll deals a genuinely
+  // different set (mirrors the apex path above, which adds offer.cards to its
+  // exclusion set). The ids are synced offer state, so both replicas exclude
+  // the same cards and the reroll stays replay-safe.
+  const cards = rollCards(bs, color, slotTiers, suppressed, board, offer.cards.map((c) => c.id));
   if (cards.length === 0) return false;
   ps.rerollsLeft = (ps.rerollsLeft ?? 0) - 1;
   offer.cards = cards;

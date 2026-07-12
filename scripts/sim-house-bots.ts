@@ -189,7 +189,9 @@ for (let i = 0; i < 10_000; i++) {
   check(["1+0", "2+1", "3+0", "3+2", "5+0", "5+3"].includes(pool), `seek pool ${pool}`);
   if (mode === "nerf") nerfSeeks++;
 }
-check(nerfSeeks > 3000 && nerfSeeks < 5000, `nerf seek share ${nerfSeeks / 10_000}`);
+// pickHouseSeek advertises an even 50/50 buff/nerf split (3b4bc02 moved it
+// off the old 60/40 buff bias) so neither queue is starved: allow ±5%.
+check(nerfSeeks > 4500 && nerfSeeks < 5500, `nerf seek share ${nerfSeeks / 10_000}`);
 console.log(`seek mix: ${(100 - nerfSeeks / 100).toFixed(1)}% buff / ${(nerfSeeks / 100).toFixed(1)}% nerf`);
 
 check(houseNerfPickIndex([2, 5], random) === 0, "nerf pick lower tier first");

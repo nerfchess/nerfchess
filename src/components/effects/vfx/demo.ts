@@ -106,7 +106,7 @@ const DEMOS: Record<string, () => VfxPlay> = {
 export function demoVfx(kind: string): void {
   const make = DEMOS[kind];
   if (!make) {
-    // eslint-disable-next-line no-console
+     
     console.warn(`[vfx] unknown demo "${kind}". Available: ${Object.keys(DEMOS).join(", ")}`);
     return;
   }
