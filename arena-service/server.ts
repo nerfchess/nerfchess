@@ -7,19 +7,34 @@
 // Build:  node build.mjs   ->  dist/server.mjs
 // Run:    node dist/server.mjs   (env from /etc/nerfchess-arena.env)
 import { createServer } from "node:http";
+import { housePersona } from "../src/lib/server/bots";
 import { loadConfig } from "./config";
-import { CompositeSink, IngestSink, LogSink } from "./sink";
+import { CompositeSink, IngestSink, LogSink, type ArenaSink } from "./sink";
 import { IngestClient } from "./ingest";
 import { Arena } from "./arena";
+import { SpectatorHub } from "./spectate";
 
 const config = loadConfig();
 const logSink = new LogSink(config.verboseMoves);
 
 // M2: when the DO is configured, forward finished games to it (archive + rating)
 // and let it gate spawning. Otherwise stay in M1 mode (isolated, logs only).
-const ingest = config.doUrl && config.ingestToken ? new IngestClient(config.doUrl, config.ingestToken) : null;
-const sink = ingest ? new CompositeSink([logSink, new IngestSink(ingest)]) : logSink;
+// Tier 3: ARENA_END_URL alone (no DO) is enough for archive + rating via the
+// Worker route (see docs/bot-offload-tier3-direct-arena.md).
+const ingest =
+  (config.doUrl || config.endUrl) && config.ingestToken
+    ? new IngestClient(config.doUrl, config.ingestToken, config.endUrl)
+    : null;
+// The sink list is shared by reference so the spectator hub (which needs the
+// arena, which needs the sink) can join after construction.
+const sinks: ArenaSink[] = ingest ? [logSink, new IngestSink(ingest)] : [logSink];
+const sink = new CompositeSink(sinks);
 const arena = new Arena(config, sink, ingest);
+// Tier 3 / M3: direct spectator WebSocket — game events fan out to local
+// sockets instead of relaying through the DO.
+const hub = new SpectatorHub(arena, config.publicOrigins);
+sinks.push(hub);
+arena.watcherCountFn = (id) => hub.count(id);
 arena.start();
 
 // eslint-disable-next-line no-console
@@ -39,6 +54,37 @@ function authed(req: { headers: Record<string, string | string[] | undefined> })
   return !!config.token && req.headers.authorization === `Bearer ${config.token}`;
 }
 
+// Tier 3 / M2: public lobby snapshot for the site's client-side merge (see
+// docs/bot-offload-tier3-direct-arena.md §B). Cached briefly so N polling
+// clients cost one serialization; each hit also marks human presence, which is
+// what gates filler spawning once the DO sync is retired.
+const LOBBY_CACHE_MS = 2000;
+let lobbyCache: { at: number; body: string } | null = null;
+function lobbyBody(): string {
+  const now = Date.now();
+  if (lobbyCache && now - lobbyCache.at < LOBBY_CACHE_MS) return lobbyCache.body;
+  const games = arena.liveMeta().map((g) => ({
+    ...g,
+    // Avatars ride along so the site client needs no house-roster import.
+    seats: {
+      w: { ...g.seats.w, avatar: housePersona(g.seats.w.userId)?.avatar ?? null },
+      b: { ...g.seats.b, avatar: housePersona(g.seats.b.userId)?.avatar ?? null },
+    },
+    watchers: arena.watcherCount(g.id),
+  }));
+  const body = JSON.stringify({ games, at: now });
+  lobbyCache = { at: now, body };
+  return body;
+}
+
+// Browser origins allowed to read the public endpoints. Same-origin tools
+// (curl, monitors) send no Origin header and are served without CORS grants.
+function corsOrigin(req: { headers: Record<string, string | string[] | undefined> }): string | null {
+  const origin = req.headers.origin;
+  if (typeof origin === "string" && config.publicOrigins.includes(origin)) return origin;
+  return null;
+}
+
 const server = createServer((req, res) => {
   const url = req.url ?? "/";
   const json = (code: number, body: unknown) => {
@@ -50,6 +96,19 @@ const server = createServer((req, res) => {
   if (req.method === "GET" && url === "/healthz") {
     res.writeHead(200, { "content-type": "text/plain" });
     res.end("ok");
+    return;
+  }
+  // Public lobby snapshot (Tier 3 / M2): open like /healthz, CORS-gated to the
+  // site origins, and counted as human presence for the spawn gate.
+  if (req.method === "GET" && url.startsWith("/lobby")) {
+    arena.notePresence();
+    const origin = corsOrigin(req);
+    res.writeHead(200, {
+      "content-type": "application/json",
+      "cache-control": "no-store",
+      ...(origin ? { "access-control-allow-origin": origin, vary: "Origin" } : {}),
+    });
+    res.end(lobbyBody());
     return;
   }
   if (!authed(req)) {
@@ -86,6 +145,8 @@ const server = createServer((req, res) => {
   res.end("not found");
 });
 
+hub.attach(server);
+
 server.listen(config.port, () => {
   // eslint-disable-next-line no-console
   console.log(JSON.stringify({ event: "arena_listen", port: config.port }));
@@ -94,6 +155,7 @@ server.listen(config.port, () => {
 for (const sig of ["SIGTERM", "SIGINT"] as const) {
   process.on(sig, () => {
     arena.stop();
+    hub.stop();
     server.close(() => process.exit(0));
   });
 }

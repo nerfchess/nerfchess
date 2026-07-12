@@ -5,6 +5,7 @@
 // it can surface connection errors.
 
 import { useEffect, useState } from "react";
+import { withArenaLobby } from "./arenaLobby";
 import { MPLobby, MPSession } from "./multiplayer";
 
 // Last good snapshot, kept at module scope so a remount (e.g. a client-side
@@ -23,7 +24,9 @@ export function useLobbySnapshot(pollMs = 10000): MPLobby | null {
     session.autoReconnect = false; // fetchLobby reconnects on demand
     const poll = async () => {
       try {
-        const data = await session.fetchLobby();
+        // Arena (OCI bot-vs-bot) games merge in client-side, fail-soft — see
+        // src/lib/arenaLobby.ts (Tier 3).
+        const data = await withArenaLobby(await session.fetchLobby());
         lastLobby = data;
         if (!cancelled) setLobby(data);
       } catch {

@@ -8,6 +8,7 @@ import { Board } from "@/components/Board";
 import { ModeBadge } from "@/components/ModeBadge";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { SiteHeader } from "@/components/SiteHeader";
+import { arenaSocketUrl, isArenaGameId } from "@/lib/arenaLobby";
 import { replayUci } from "@/lib/gameReview";
 import { useLobbySnapshot } from "@/lib/lobbyClient";
 import { MPLobbyGame, MPPlayers, MPSession } from "@/lib/multiplayer";
@@ -116,6 +117,10 @@ function TvView() {
     let cancelled = false;
     const session = new MPSession();
     session.persistFriendSession = false;
+    // Arena-hosted (OCI bot-vs-bot) games stream from the arena's own socket
+    // (Tier 3). The lobby snapshot that produced streamId keeps the arena id
+    // cache warm, so this check is synchronous.
+    if (isArenaGameId(streamId) && arenaSocketUrl()) session.serverUrl = arenaSocketUrl();
     const off = session.on((e) => {
       if (cancelled) return;
       if (e.type === "watch-start") {

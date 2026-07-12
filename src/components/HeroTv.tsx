@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { HeroBoard } from "./HeroBoard";
 import { PlayerAvatar } from "./PlayerAvatar";
+import { arenaSocketUrl, isArenaGameId } from "@/lib/arenaLobby";
 import { replayUci } from "@/lib/gameReview";
 import { useLobbySnapshot } from "@/lib/lobbyClient";
 import { MPPlayers, MPSession } from "@/lib/multiplayer";
@@ -65,6 +66,10 @@ export function HeroTv() {
     let cancelled = false;
     const session = new MPSession();
     session.persistFriendSession = false;
+    // Arena-hosted (OCI bot-vs-bot) games stream from the arena's own socket
+    // (Tier 3). The lobby snapshot that produced streamId keeps the arena id
+    // cache warm, so this check is synchronous.
+    if (isArenaGameId(streamId) && arenaSocketUrl()) session.serverUrl = arenaSocketUrl();
     const off = session.on((e) => {
       if (cancelled) return;
       if (e.type === "watch-start") {

@@ -15,6 +15,19 @@ export interface ArenaConfig {
   doUrl: string;
   ingestToken: string;
   syncMs: number;
+  // Tier 3 / M2: browser origins allowed to read GET /lobby (CORS) and open
+  // spectator sockets (M3). Comma-separated.
+  publicOrigins: string[];
+  // Tier 3 / M3: with no DO configured, filler spawns only while a human was
+  // seen (a /lobby fetch or a live spectator socket) within this window —
+  // replaces the DO's stand-down signal.
+  presenceTtlMs: number;
+  // Tier 3 / M1: absolute URL of the Worker archive route
+  // (https://nerfchess.com/api/arena/end). When set, finished games archive
+  // there — a plain Worker request, no DO wake — and the DO is only notified
+  // display-only (aborted:true) to close any spectator replicas. Empty = ends
+  // keep going to the DO's /arena/end exactly as before.
+  endUrl: string;
 }
 
 export function loadConfig(): ArenaConfig {
@@ -33,5 +46,11 @@ export function loadConfig(): ArenaConfig {
     doUrl: (process.env.ARENA_DO_URL ?? "").replace(/\/$/, ""),
     ingestToken: process.env.ARENA_INGEST_TOKEN ?? "",
     syncMs: Number(process.env.ARENA_SYNC_MS ?? "4000"),
+    endUrl: (process.env.ARENA_END_URL ?? "").replace(/\/$/, ""),
+    publicOrigins: (process.env.ARENA_PUBLIC_ORIGINS ?? "https://nerfchess.com,https://www.nerfchess.com")
+      .split(",")
+      .map((o) => o.trim())
+      .filter(Boolean),
+    presenceTtlMs: Number(process.env.ARENA_PRESENCE_TTL_MS ?? "60000"),
   };
 }

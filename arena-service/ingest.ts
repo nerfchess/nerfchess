@@ -16,6 +16,9 @@ export class IngestClient {
   constructor(
     private readonly doUrl: string,
     private readonly token: string,
+    // Tier 3 / M1: Worker archive route. When set, reportEnd archives there
+    // (no DO wake) and the DO gets a display-only notice instead.
+    private readonly endUrl = "",
   ) {}
 
   isWatched(id: string): boolean {
@@ -33,10 +36,14 @@ export class IngestClient {
   }
 
   private async post(path: string, body: unknown, timeoutMs = 4000): Promise<Response | null> {
+    // `path` is DO-relative ("/arena/...") or an absolute URL (the Worker
+    // archive route). A relative path with no DO configured is a no-op.
+    const target = path.startsWith("https://") || path.startsWith("http://") ? path : this.doUrl ? `${this.doUrl}${path}` : "";
+    if (!target) return null;
     const ctl = new AbortController();
     const timer = setTimeout(() => ctl.abort(), timeoutMs);
     try {
-      return await fetch(`${this.doUrl}${path}`, {
+      return await fetch(target, {
         method: "POST",
         signal: ctl.signal,
         headers: { "content-type": "application/json", authorization: `Bearer ${this.token}` },
@@ -83,8 +90,26 @@ export class IngestClient {
   }
 
   /** Report a finished game for archive + rating. One retry, then give up (a
-   *  lost filler archive is acceptable). */
+   *  lost filler archive is acceptable).
+   *
+   *  Tier 3 / M1: with `endUrl` set, the archive write goes to the Worker
+   *  route (no DO wake); the DO then gets a display-only `aborted:true` notice
+   *  so a watched game's spectator replica still ends promptly (the DO shows
+   *  the record's real result either way and skips its own archive — and even
+   *  a double archive is safe, recordFinishedGame dedupes by game id). If the
+   *  Worker route stays down, fall back to the DO path so nothing is lost. */
   async reportEnd(record: ArenaFinishedRecord): Promise<void> {
+    if (this.endUrl) {
+      for (let attempt = 0; attempt < 2; attempt++) {
+        const res = await this.post(this.endUrl, { record });
+        if (res && res.ok) {
+          if (this.isStreaming(record.id)) await this.post("/arena/end", { record, aborted: true });
+          return;
+        }
+      }
+      // eslint-disable-next-line no-console
+      console.error(JSON.stringify({ event: "arena_end_route_failed", id: record.id, fallback: !!this.doUrl }));
+    }
     let status: number | "network" = "network";
     let bodyText = "";
     for (let attempt = 0; attempt < 2; attempt++) {
