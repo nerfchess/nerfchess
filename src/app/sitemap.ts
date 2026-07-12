@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { ALL_BUFFS } from "@/engine/buffs/library";
 import { ALL_NERFS } from "@/engine/nerfs/library";
+import { cardPath } from "@/lib/cardCodex";
 
 const BASE = "https://nerfchess.com";
 
@@ -24,7 +25,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
   // Only cards that actually appear in drafts are indexed; unimplemented cards
   // render (so internal links never 404) but carry a noindex and stay out here.
   const cardEntries: MetadataRoute.Sitemap = [
-    ...ALL_BUFFS.filter((b) => b.implemented).map((b) => entry(`/codex/buff/${b.id}`, 0.4, "monthly")),
+    // cardPath sends hexes and boons to their family namespaces; plain buffs
+    // and items stay at /codex/buff. Only canonical paths are listed.
+    ...ALL_BUFFS.filter((b) => b.implemented).map((b) => entry(cardPath(b), 0.4, "monthly")),
     ...ALL_NERFS.filter((n) => n.implemented).map((n) => entry(`/codex/nerf/${n.id}`, 0.4, "monthly")),
   ];
 

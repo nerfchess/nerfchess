@@ -41,6 +41,18 @@ export function nerfPath(id: string): string {
   return `/codex/nerf/${id}`;
 }
 
+/** Canonical codex path for a buff-library card: hexes and boons live in
+ * their own URL namespaces (/codex/hex, /codex/boon) matching the codex's
+ * tabs; plain buffs and items stay at /codex/buff. The old buff path keeps
+ * rendering for every id (never 404 an indexed URL) with its canonical
+ * pointing here. */
+export function cardPath(b: Buff): string {
+  const type = buffType(b);
+  if (type === "Hex") return `/codex/hex/${b.id}`;
+  if (type === "Boon") return `/codex/boon/${b.id}`;
+  return buffPath(b.id);
+}
+
 // --- Classification ---------------------------------------------------------
 
 /** Which family a buff reads as, following the codex's four tabs plus items.
@@ -106,8 +118,10 @@ const BUFF_CATEGORY: Record<Buff["category"], { label: string; blurb: string }> 
   info: { label: "Insight", blurb: "reveals hidden information, like a nerf or a draft." },
   draft: { label: "Draft", blurb: "bends one player's draft: the tier, the count, or the pool." },
   nerf: { label: "Nerf-breaker", blurb: "softens or removes your own secret handicap." },
-  hex: { label: "Hex", blurb: "a curse cast on the opponent in Nerf mode." },
-  item: { label: "Item", blurb: "a one-use consumable, drafted in either mode." },
+  // Every blurb completes the sentence "As a <label> card, it <blurb>", so
+  // each must start with a verb.
+  hex: { label: "Hex", blurb: "is a curse cast on the opponent in Nerf mode." },
+  item: { label: "Item", blurb: "is a one-use consumable, drafted in either mode." },
 };
 export function buffCategory(b: Buff): { label: string; blurb: string } {
   return BUFF_CATEGORY[b.category];
@@ -145,7 +159,7 @@ export function relatedBuffs(b: Buff, limit = 6): RelatedCard[] {
         Math.abs(x.tier - b.tier) - Math.abs(y.tier - b.tier) || x.name.localeCompare(y.name),
     )
     .slice(0, limit)
-    .map((x) => ({ id: x.id, name: x.name, tier: x.tier, path: buffPath(x.id), type: buffType(x) }));
+    .map((x) => ({ id: x.id, name: x.name, tier: x.tier, path: cardPath(x), type: buffType(x) }));
 }
 
 /** Up to `limit` other implemented nerfs sharing a mechanic category with `n`,

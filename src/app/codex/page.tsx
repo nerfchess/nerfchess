@@ -20,6 +20,7 @@ import {
 } from "@/lib/nerfFilter";
 import { cardText, hydrateCardText } from "@/lib/cardText";
 import { BUFF_COLLECTIONS, NERF_COLLECTIONS, buffCollection } from "@/lib/cardCollections";
+import { cardPath } from "@/lib/cardCodex";
 
 import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
 
@@ -325,7 +326,7 @@ export default function CodexPage() {
               : buffFiltered.map((b) => (
                   <Link
                     key={b.id}
-                    href={`/codex/buff/${b.id}`}
+                    href={cardPath(b)}
                     className="block h-full rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-gold/60"
                     title={`Read the ${b.name} card page`}
                   >

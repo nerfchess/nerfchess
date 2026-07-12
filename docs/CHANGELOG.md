@@ -132,3 +132,25 @@ Notes:
 - Animation: the walnut pops in with a comedic crunch, then gives a periodic little shudder as if the trapped piece is rattling to crack out (globals.css walnut-crunch + walnut-jiggle; cut under prefers-reduced-motion).
 - Test: scripts/test-hexes.cjs (npm run test:rules) now asserts a walnut is pruned when its piece is captured. Verified to fail without the fix and pass with it. tsc clean; test:rules green. The visual wants a preview-deploy eyeball.
 - PR #199. OPEN.
+
+---
+
+## 2026-07-12 00:18 ET (codex card insights: stats + history on every card page)
+
+Implements docs/2026-07-11-codex-card-insights-design.md. Not yet a PR.
+
+Codex pages:
+- Hexes and boons get their own URL namespaces (/codex/hex/[id], /codex/boon/[id]), statically generated like the buff/nerf pages. Old /codex/buff URLs for those ids keep rendering with canonical + og:url pointing at the family path (no redirects). cardPath() in cardCodex.ts routes the codex list, related-card links, and the sitemap to the family paths.
+- Every card page gains a server-rendered "History" timeline: wave-introduction line (src/data/cardHistory.ts, dates from git + this changelog) plus room for curated per-card balance notes (CARD_HISTORY).
+- New "In play" panel (client, src/components/codex/CardInsights.tsx): games carried / seen in offers / picked, holder win rate (hidden under 20 decided games) with tier average, last-30-days activity, popularity rank within (family, tier), house-bot split, plus "currently disabled" / runtime tier-move banners. Renders nothing on failure; static content unaffected.
+- Copy fix: hex/item category blurbs were missing their verb ("As a hex card, it a curse...").
+
+Stats pipeline:
+- src/lib/server/cardInsights.ts: one full-scan rollup over the games archive into a JSON blob cached in new D1 table codex_insights_cache (migrations/0023, mirrored in schema.ts), recomputed lazily when older than 6h, stale-served on failure. Nerf stats from the nerf id columns (portable SQL via pgAll); buff/hex/boon pick stats from draft_record (Postgres JSONB lateral walk, D1 json_each fallback). House bots split by the hp_ user-id prefix. Both SQL variants verified against a real SQLite with known fixtures.
+- New GET /api/cards/insights?kind=&id= slices the blob per card; Cache-Control public max-age=300, s-maxage=3600. Only aggregates leave the server: no draft_record contents, no draftSeed, no per-game rows, grant actions never counted.
+
+Moderator change history:
+- New append-only D1 table card_override_history (migrations/0024, mirrored in schema.ts), no actor column (events are public, moderator identity is not).
+- upsertCardOverride/deleteCardOverride now read-before-write and record one row per changed field (best effort: an audit failure never fails the override). Events (plus a synthetic "adjusted" event for pre-audit overrides) are served by the insights endpoint and rendered as "Moderator changes" on the card page.
+
+Verified: tsc clean (only pre-existing stale .next/types artifacts), server:build green, dev-server walkthrough of hex/boon/nerf pages including a seeded 36-game fixture (win rates, ranks, tier average, bot split, tier-move banner, and audit events all correct, then cleaned up). buildVersion bumped to codex-card-insights-1.
