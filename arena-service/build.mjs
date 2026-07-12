@@ -15,6 +15,12 @@ await build({
   target: "node18",
   outfile: resolve(here, "dist/server.mjs"),
   logLevel: "info",
+  // `ws` (bundled for the Tier 3 spectator endpoint) probes its optional
+  // native addons via require(); give the ESM bundle a working require so the
+  // probe falls through to the JS implementation instead of throwing.
+  banner: {
+    js: 'import { createRequire as __createRequire } from "node:module"; const require = __createRequire(import.meta.url);',
+  },
 });
 
 console.log("built arena-service/dist/server.mjs");

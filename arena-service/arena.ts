@@ -18,6 +18,10 @@ export class Arena {
   // With the DO wired, don't spawn until it confirms (ingest on + human present).
   // Standalone (M1, no ingest) follows the local enabled flag.
   private spawning: boolean;
+  // Tier 3: when a human was last seen directly — a /lobby fetch or a live
+  // spectator socket. With no DO configured this replaces the DO's stand-down
+  // signal: spawn only while presence is fresh (see tick).
+  private lastPresenceAt = 0;
   // Games we've already sent a started-snapshot for this watch episode (Tier 2 /
   // M3): a spectator gets exactly one bootstrap snapshot (the DO turns it into
   // wstart) and then incremental move/draft frames. Cleared when the game leaves
@@ -56,11 +60,29 @@ export class Arena {
     return [...this.games.values()].map((g) => g.externalMeta());
   }
 
+  // A human touched the arena directly (lobby fetch / spectator socket).
+  notePresence(): void {
+    this.lastPresenceAt = Date.now();
+  }
+
+  // Live watcher count per game, supplied by the spectator hub (Tier 3 / M3);
+  // stays 0 until the hub wires itself in.
+  watcherCountFn: (id: string) => number = () => 0;
+  watcherCount(id: string): number {
+    return this.watcherCountFn(id);
+  }
+
   private tick(): void {
     const now = Date.now();
+    // Tier 3 (no DO): presence-driven stand-down. Spawn only while a human was
+    // seen directly within the TTL; live games still play out (mirror the DO's
+    // rule that stand-down only stops NEW games).
+    if (!this.config.doUrl) {
+      this.spawning = now - this.lastPresenceAt < this.config.presenceTtlMs;
+    }
     // Periodic DO sync: push the registry, learn whether to keep spawning. Live
     // games always finish; stand-down only stops NEW games (mirror the DO).
-    if (this.ingest && now - this.lastSyncAt >= this.config.syncMs) {
+    if (this.ingest && this.config.doUrl && now - this.lastSyncAt >= this.config.syncMs) {
       this.lastSyncAt = now;
       this.ingest
         .syncGames(this.liveMeta())
@@ -125,6 +147,10 @@ export class Arena {
 
   liveCount(): number {
     return this.games.size;
+  }
+
+  game(id: string): ArenaGame | undefined {
+    return this.games.get(id);
   }
 
   liveGames(): ArenaGameSummary[] {

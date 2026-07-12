@@ -15,6 +15,7 @@ import { NerfGame, legalMoves } from "@/engine/game";
 import { Nerf } from "@/engine/nerf";
 import { IMPLEMENTED_BY_ID } from "@/engine/nerfs/library";
 import { Color } from "@/engine/types";
+import { arenaSocketUrl, isArenaGameId, isArenaGameLive } from "@/lib/arenaLobby";
 import {
   applyDraftAction,
   buildSpectatorDraftGame,
@@ -133,20 +134,37 @@ export default function OnlineGamePage() {
 
     // Any watch payload (initial or after an automatic reconnect) refreshes
     // the spectator view with the server's replayed state.
-    const offWatch = session.on((e) => {
+    const onWatchEvent = (e: Parameters<Parameters<MPSession["on"]>[0]>[0]) => {
       if (cancelled) return;
       if (e.type === "watch-start") {
         setWatchGen((g) => g + 1);
         setMode({ kind: "spectator", setup: e.setup });
       }
-    });
+    };
+    const offWatch = session.on(onWatchEvent);
 
-    const spectate = async (pendingReplay?: Promise<ReplayGame | null>) => {
+    const spectate = async (pendingReplay?: Promise<ReplayGame | null>, s: MPSession = session) => {
       try {
-        await withResponseTimeout(session.watch(gameId), "watch_timeout", 15000);
+        await withResponseTimeout(s.watch(gameId), "watch_timeout", 15000);
       } catch (e) {
         if (e instanceof Error && e.message === "not_found") {
-          session.destroy();
+          // Tier 3: a live arena-hosted (OCI bot-vs-bot) game is unknown to the
+          // game-server DO. Before treating not_found as "finished, show the
+          // archive", ask the arena — a direct link to a live filler game then
+          // watches it instead of flashing "not found". Fail-soft: an
+          // unreachable arena answers false and the archive path runs as ever.
+          if (!s.serverUrl && arenaSocketUrl() && (await isArenaGameLive(gameId))) {
+            s.destroy();
+            if (cancelled) return;
+            const arenaSession = new MPSession();
+            arenaSession.persistFriendSession = false;
+            arenaSession.serverUrl = arenaSocketUrl();
+            arenaSession.on(onWatchEvent);
+            sessionRef.current = arenaSession;
+            await spectate(pendingReplay, arenaSession);
+            return;
+          }
+          s.destroy();
           await showReplay(pendingReplay);
         } else if (e instanceof Error && e.message === "watch_timeout") {
           await showReplay(pendingReplay);
@@ -222,13 +240,24 @@ export default function OnlineGamePage() {
       // renders the moment the server answers "not_found", instead of waiting
       // for a second, serial HTTP round-trip afterward. For a live game the
       // extra request just resolves to null and is discarded.
+      //
+      // Tier 3: arena-hosted (OCI bot-vs-bot) games spectate on the arena's
+      // socket, not the DO. Lobby/TV links tag them (?src=arena); the cached
+      // arena snapshot covers untagged client-side navigations; and a cold
+      // direct link is caught by the not_found fallback inside spectate.
+      const taggedArena = new URLSearchParams(window.location.search).get("src") === "arena";
+      if (arenaSocketUrl() && (taggedArena || isArenaGameId(gameId))) {
+        session.serverUrl = arenaSocketUrl();
+      }
       spectate(fetchReplay());
     }
 
     return () => {
       cancelled = true;
       offWatch();
-      session.destroy();
+      // The session may have been swapped for an arena-pointed one by the
+      // not_found fallback above — destroy whichever is current.
+      (sessionRef.current ?? session).destroy();
       sessionRef.current = null;
     };
   }, [gameId]);

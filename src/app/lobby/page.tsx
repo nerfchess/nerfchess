@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Eye, Swords, Users } from "lucide-react";
 import { QueueButton } from "@/components/QueueButton";
+import { withArenaLobby } from "@/lib/arenaLobby";
 import { AccountUser, ensureAccount, fetchMe } from "@/lib/authClient";
 import { readSnapshot, writeSnapshot } from "@/lib/snapshotCache";
 import { MPLobby, MPLobbyChallenge, MPLobbyGame, MPLobbySeek, MPSession, saveOnlineSeat } from "@/lib/multiplayer";
@@ -52,7 +53,9 @@ export default function LobbyPage() {
     let failures = 0;
     const poll = async () => {
       try {
-        const data = await session.fetchLobby();
+        // Arena (OCI bot-vs-bot) games merge in client-side, fail-soft — see
+        // src/lib/arenaLobby.ts (Tier 3).
+        const data = await withArenaLobby(await session.fetchLobby());
         if (!cancelled) {
           failures = 0;
           setLobby(data);
@@ -565,7 +568,7 @@ function LiveGameRow({ game }: { game: MPLobbyGame }) {
         </div>
       </div>
       <Link
-        href={`/game/${game.id}`}
+        href={`/game/${game.id}${game.origin === "arena" ? "?src=arena" : ""}`}
         className="btn-ghost shrink-0 inline-flex items-center gap-1.5 px-4 py-2 font-display text-sm"
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>

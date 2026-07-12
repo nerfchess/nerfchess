@@ -172,6 +172,9 @@ export type MPLobbyGame = {
   id: string;
   players: MPPlayers;
   rated: boolean;
+  // "arena" = hosted on the OCI arena service (Tier 3): spectating connects to
+  // the arena's socket, not the DO. Absent for every DO-native game.
+  origin?: "arena";
   // Optional so snapshots from an older server still parse.
   draft?: boolean;
   // The game's section ("nerf" or "buff"); absent = legacy merged rules or an
@@ -451,6 +454,10 @@ export class MPSession {
   // Friend games save a resumable session under a well-known key; matchmade
   // and spectator sessions manage their own persistence (see onlineSeat below).
   persistFriendSession = true;
+  // Optional server override (Tier 3): spectator sessions for arena-hosted
+  // bot-vs-bot games point at the arena's socket (src/lib/arenaLobby.ts)
+  // instead of the game-server DO. Set before the first connect.
+  serverUrl: string | null = null;
 
   // --- automatic reconnection ---
   // Once this session holds a seat (or is watching a game), an unexpected
@@ -584,7 +591,7 @@ export class MPSession {
         reject(err);
       };
 
-      const socket = new WebSocket(gameServerUrl());
+      const socket = new WebSocket(this.serverUrl || gameServerUrl());
       this.socket = socket;
       let opened = false;
 

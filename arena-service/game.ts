@@ -8,7 +8,8 @@ import {
   newGame, enableDraftMode, playMove, legalMoves, checkLossConditions, resign,
   activateBuff, pickDraftCard, bankDraft, aiDraftChoice, aiChooseBuffActivation,
 } from "../src/engine/game";
-import { moveToUCI } from "../src/engine/board";
+import { moveToUCI, positionKey } from "../src/engine/board";
+import { fnv1a } from "../src/engine/desync";
 import { PLAYABLE_NERFS, openingNerfPool } from "../src/engine/nerfs/library";
 import { NERF_MODE_CADENCE, DEFAULT_CADENCE } from "../src/engine/draft";
 import { replayToPosition, type EngineMatch } from "../src/engine/replay";
@@ -168,6 +169,108 @@ export class ArenaGame {
 
   started(): boolean {
     return this.startedAt > 0 && !this.done;
+  }
+
+  // ---- direct spectating (Tier 3 / M3, docs/bot-offload-tier3-direct-arena.md) ----
+  // Payload builders for the arena's own spectator WebSocket. Shapes mirror the
+  // client protocol (src/lib/multiplayer.ts MPWatchStart / MPDraftState). Draft
+  // state ships fully open — the DO itself moved to full transparency
+  // (worker.ts draftStateFor), and a bot-vs-bot game has no human secrets.
+
+  /** Display clocks right now: the on-turn side's bank minus elapsed think
+   *  time (with the first-move grace), mirroring the DO's currentClocks. */
+  liveClocks(): Record<Color, number> {
+    const clocks = { w: this.clocks.w, b: this.clocks.b };
+    if (this.timeSec > 0 && this.startedAt && this.game && !this.game.result && !this.done) {
+      const turn = this.game.board.turn;
+      const grace = this.movedOnce[turn] ? 0 : firstMoveGraceMs;
+      const elapsed = Math.max(0, Date.now() - this.runningSince - grace);
+      clocks[turn] = Math.max(0, clocks[turn] - elapsed);
+    }
+    return { w: Math.round(clocks.w), b: Math.round(clocks.b) };
+  }
+
+  private seatPayload(c: Color): { name: string; rating: number; avatar: string | null } {
+    return { name: this.seats[c].name, rating: Math.round(this.ratings[c]), avatar: this.seats[c].avatar ?? null };
+  }
+
+  /** Fully-open live draft state (MPDraftState shape, both seats face-up). */
+  dtStatePublic(): Record<string, unknown> | null {
+    const bs = this.game?.buffs;
+    if (!bs) return null;
+    const playerState = (color: Color) => {
+      const ps = bs.players[color];
+      return {
+        buffs: ps.buffs,
+        draftsTaken: ps.draftsTaken,
+        nextDraftAt: ps.nextDraftAt,
+        rerollsLeft: ps.rerollsLeft,
+        offer: ps.offer,
+        flags: ps.flags,
+        ...(ps.nerfRemoved ? { nerfRemoved: true } : {}),
+        revived: ps.revived,
+        ...(ps.inventory ? { inventory: ps.inventory } : {}),
+      };
+    };
+    return {
+      cadence: bs.cadence,
+      effects: bs.effects,
+      extraMoves: bs.extraMoves,
+      skips: bs.skips,
+      ...(bs.chainKingGuard ? { chainKingGuard: bs.chainKingGuard } : {}),
+      ...(bs.historyDiverged ? { historyDiverged: true } : {}),
+      players: { w: playerState("w"), b: playerState("b") },
+    };
+  }
+
+  /** The spectator bootstrap frame (MPWatchStart shape, minus watcher counts —
+   *  the hub owns those). Only meaningful once started(). */
+  wstartPayload(): Record<string, unknown> {
+    const clocks = this.liveClocks();
+    const result = this.game?.result ?? null;
+    return {
+      id: this.id,
+      timeSec: this.timeSec,
+      incrementSec: this.incrementSec,
+      wc: clocks.w,
+      bc: clocks.b,
+      moves: [...this.moves],
+      players: { w: this.seatPayload("w"), b: this.seatPayload("b") },
+      rated: true,
+      started: this.startedAt > 0,
+      result,
+      spectatorChat: [],
+      ...(result ? { nerfs: { w: this.nerf!.w, b: this.nerf!.b } } : {}),
+      draft: true,
+      mode: this.mode,
+      // Already public-shaped: arena records only pick/bank/use, picks carry
+      // their real card faces (mirrors the DO's fully-open publicDraftActions).
+      dtActions: [...this.draftActions],
+      ...(this.dtStatePublic() ? { dtState: this.dtStatePublic() } : {}),
+    };
+  }
+
+  /** Post-move position hash for the client's desync self-check (MPAcceptedMove.f). */
+  boardHash(): string | null {
+    return this.game ? fnv1a(positionKey(this.game.board)) : null;
+  }
+
+  /** Both sides' held buffs for the end frame's reveal (MPEnd.draftBuffs). */
+  heldBuffsPublic(): Record<Color, { id: string; tier: number; spent?: boolean; nullified?: boolean }[]> | null {
+    const bs = this.game?.buffs;
+    if (!bs) return null;
+    const held = (color: Color) =>
+      bs.players[color].buffs.map((b) => ({
+        id: b.id,
+        tier: b.tier as number,
+        ...(b.spent ? { spent: true } : {}),
+        ...(b.nullified ? { nullified: true } : {}),
+      }));
+    return { w: held("w"), b: held("b") };
+  }
+
+  nerfIds(): Record<Color, string> {
+    return { w: this.nerf?.w ?? UNRESTRICTED_NERF.id, b: this.nerf?.b ?? UNRESTRICTED_NERF.id };
   }
 
   // Registry entry the DO shows in the lobby/TV (Tier 2 / M2).
