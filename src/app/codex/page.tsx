@@ -67,10 +67,10 @@ const LIBRARY_NOUN: Record<Library, string> = {
   boons: "boon",
 };
 const LIBRARY_TITLE: Record<Library, string> = {
-  rules: "All the nerfs",
-  buffs: "All the buffs",
-  hexes: "All the hexes",
-  boons: "All the boons",
+  rules: "Nerfs",
+  buffs: "Buffs",
+  hexes: "Hexes",
+  boons: "Boons",
 };
 // The type each library preselects in the "Suggest a rule" form.
 const LIBRARY_SUGGEST_TYPE: Record<Library, string> = {
