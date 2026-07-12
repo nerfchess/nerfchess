@@ -9,6 +9,7 @@ import { AccountUser, fetchMe } from "@/lib/authClient";
 import { CategoryTabs } from "@/components/ratings/CategoryTabs";
 import { DEFAULT_CATEGORY, getCategory, type RatingCategoryId } from "@/lib/ratingCategories";
 import { isProvisionalRd, PROVISIONAL_RD } from "@/lib/ratingDisplay";
+import { Toggle } from "@/components/settings/controls";
 
 interface Row {
   username: string;
@@ -21,22 +22,24 @@ interface Row {
   losses: number;
   draws: number;
   guest?: boolean;
+  bot?: boolean;
 }
 
 type MeRow = Row & { rank: number };
 
 export default function LeaderboardPage() {
   const [category, setCategory] = useState<RatingCategoryId>(DEFAULT_CATEGORY);
+  const [showBots, setShowBots] = useState(false);
   const [rows, setRows] = useState<Row[] | null>(null);
   const [meRow, setMeRow] = useState<MeRow | null>(null);
   const [me, setMe] = useState<AccountUser | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Clear stale rows the instant the category changes (React's sanctioned
+  // Clear stale rows the instant the query changes (React's sanctioned
   // adjust-state-on-change pattern) so the effect below only fetches.
-  const [prevCategory, setPrevCategory] = useState(category);
-  if (prevCategory !== category) {
-    setPrevCategory(category);
+  const [prevQuery, setPrevQuery] = useState({ category, showBots });
+  if (prevQuery.category !== category || prevQuery.showBots !== showBots) {
+    setPrevQuery({ category, showBots });
     setRows(null);
     setMeRow(null);
     setError(null);
@@ -46,7 +49,7 @@ export default function LeaderboardPage() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch(`/api/leaderboard?category=${category}`);
+        const res = await fetch(`/api/leaderboard?category=${category}${showBots ? "&bots=1" : ""}`);
         if (!res.ok) throw new Error("Could not load the leaderboard.");
         const data = (await res.json()) as { players: Row[]; me: MeRow | null };
         if (!cancelled) {
@@ -62,7 +65,7 @@ export default function LeaderboardPage() {
     return () => {
       cancelled = true;
     };
-  }, [category]);
+  }, [category, showBots]);
 
   const isMeName = (name: string) => !!me && name.toLowerCase() === me.username.toLowerCase();
   const meInList = !!rows?.some((row) => isMeName(row.username));
@@ -84,6 +87,11 @@ export default function LeaderboardPage() {
           {row.guest && (
             <span className="shrink-0 border border-white/15 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-parchment-400">
               guest
+            </span>
+          )}
+          {row.bot && (
+            <span className="shrink-0 border border-white/15 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-parchment-400">
+              bot
             </span>
           )}
           {mine && (
@@ -134,7 +142,13 @@ export default function LeaderboardPage() {
         {/* Exactly two boards: the Nerf and Buff mode ladders. */}
         <CategoryTabs value={category} onChange={setCategory} className="mt-5" />
 
-        <PlayerSearch className="mt-4 max-w-sm" />
+        <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-3">
+          <PlayerSearch className="max-w-sm flex-1" />
+          <label className="flex cursor-pointer items-center gap-2 text-xs text-parchment-300">
+            <Toggle checked={showBots} onChange={setShowBots} label="Show bots" />
+            Show bots
+          </label>
+        </div>
 
         {error && (
           <div className="mt-6 plate p-3 px-4 border-oxblood-glow/60 bg-oxblood/15 text-parchment">
