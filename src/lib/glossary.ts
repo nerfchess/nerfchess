@@ -42,8 +42,8 @@ export const GLOSSARY: Record<string, string> = {
   walnut:
     "A hexed piece that is sealed and cannot move for a set number of turns, then frees itself.",
   freeze: "An effect that locks a piece in place so it cannot move for a time.",
-  shield: "A protection that blocks one of your pieces from being captured.",
-  ward: "A lighter protective charm that guards a piece, a subtler form of shield.",
+  shield: "A protection that blocks one of your pieces from being captured. While a piece cannot be captured, it may not capture the king itself: you must expose a piece to win.",
+  ward: "A lighter protective charm that guards a piece, a subtler form of shield. Like any uncapturable piece, a warded piece may not capture the king while its protection lasts.",
   barred: "Blocked from doing something, such as a square or move being off-limits.",
   suspend: "To temporarily pause a nerf's effect (suspend nerf).",
   "king-only": "A restriction where you may only move your king.",

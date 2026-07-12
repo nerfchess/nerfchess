@@ -139,16 +139,27 @@ export async function loadCategoryRatings(
 ): Promise<Map<string, CategoryRating>> {
   const out = new Map<string, CategoryRating>();
   if (!userIds.length) return out;
-  await seedCategoryRatings(db, userIds, category);
-  const placeholders = userIds.map(() => "?").join(",");
-  const rows = await db
-    .prepare(
-      `SELECT user_id, rating, rd, vol, games FROM user_ratings WHERE category = ? AND user_id IN (${placeholders})`,
-    )
-    .bind(category, ...userIds)
-    .all<UserRatingRow>();
-  for (const row of rows.results) {
-    out.set(row.user_id, { rating: row.rating, rd: row.rd, vol: row.vol, games: row.games });
+  const readInto = async (ids: string[]) => {
+    const placeholders = ids.map(() => "?").join(",");
+    const rows = await db
+      .prepare(
+        `SELECT user_id, rating, rd, vol, games FROM user_ratings WHERE category = ? AND user_id IN (${placeholders})`,
+      )
+      .bind(category, ...ids)
+      .all<UserRatingRow>();
+    for (const row of rows.results) {
+      out.set(row.user_id, { rating: row.rating, rd: row.rd, vol: row.vol, games: row.games });
+    }
+  };
+  await readInto(userIds);
+  // Seed only accounts with no bucket row yet (their first contact with this
+  // category). This path runs on every join/start-frame refresh, so the
+  // common already-seeded case must cost one read — not the unconditional
+  // seed INSERT (a D1 write round-trip) it used to fire every call.
+  const missing = userIds.filter((id) => !out.has(id));
+  if (missing.length) {
+    await seedCategoryRatings(db, missing, category);
+    await readInto(missing);
   }
   return out;
 }
@@ -220,9 +231,11 @@ export async function recordFinishedGame(
 
   const movesText = game.moves.join(" ");
   const ruleset = game.ruleset ?? "classic";
-  // The draft record is stored as a JSON string. Postgres infers the target
-  // jsonb column and parses it (the same server-side type inference the bigint
-  // serializer relies on); D1 keeps it verbatim in a TEXT column.
+  // D1 has no jsonb, so the draft record goes into a TEXT column as a JSON
+  // string. (The Postgres path does NOT pre-stringify — see the sql.json() call
+  // below: a plain string bound to a jsonb column is WRAPPED as a json string
+  // scalar, not parsed, so `draft_record->'draftActions'` would break. sql.json
+  // sends it typed as json so Postgres stores the parsed object.)
   const draftRecordJson = game.draftRecord ? JSON.stringify(game.draftRecord) : null;
   const replayVersion = game.replayVersion ?? null;
 
@@ -381,7 +394,11 @@ export async function recordFinishedGame(
           black_rating_after: blackAfter?.rating ?? null,
           started_at: game.startedAt,
           completed_at: game.completedAt,
-          draft_record: draftRecordJson,
+          // sql.json => stored as a real jsonb object (queryable), not a
+          // wrapped string scalar. null stays SQL NULL for classic games.
+          draft_record: game.draftRecord
+            ? sql.json(game.draftRecord as unknown as Parameters<typeof sql.json>[0])
+            : null,
           replay_version: replayVersion,
         })}
         ON CONFLICT (id) DO NOTHING

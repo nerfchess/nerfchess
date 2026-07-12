@@ -77,17 +77,25 @@ export const Piece = React.memo(function Piece({ type, color, size = 60, classNa
   );
 });
 
-/** Fused hybrid sprite for a piece granted another piece's movement: the
- * granted piece's silhouette rises behind the shoulder (top-right, half
- * scale) while the base piece stands slightly lower-left — one two-headed
- * figure rather than a badge. Both halves draw from the same themed PATHS,
- * so hybrids recolor with every piece theme. */
+/** Fused hybrid sprite for a piece granted another piece's movement: the base
+ * piece stands lower-left and the GRANTED piece rides the upper-right shoulder
+ * as a prominent, fully-opaque second head — so a bishop that gained knight
+ * movement reads unmistakably as an archbishop, a rook+knight as a chancellor,
+ * and so on, instead of a faint crest peeking out behind. The granted head is
+ * drawn on top and given a dark outline halo (a scaled dark underlay of the
+ * same silhouette) so it separates cleanly on any square color. Both halves
+ * draw from the same themed PATHS, so hybrids recolor with every piece theme. */
 function hybridPath(type: PieceType, grant: PieceType, color: Color): string {
   const base = PATHS[`${color}${type}`];
   const crest = PATHS[`${color}${grant}`];
   return (
-    `<g transform="translate(22.5,0) scale(0.5)" opacity="0.92">${crest}</g>` +
-    `<g transform="translate(0,4.5) scale(0.9)">${base}</g>`
+    // Base piece: a touch smaller, seated lower-left to make room.
+    `<g transform="translate(-2,6) scale(0.78)">${base}</g>` +
+    // Granted head: upper-right, drawn ON TOP, bigger than before (0.5 -> 0.62)
+    // and fully opaque, so the fusion reads as a genuinely new piece. Both
+    // halves carry the set's own 1.5 stroke, which keeps them separated where
+    // they meet without an extra (paint-costly) halo.
+    `<g transform="translate(19,-2) scale(0.62)">${crest}</g>`
   );
 }
 

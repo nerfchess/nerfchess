@@ -19,10 +19,13 @@ import {
   instant,
   mySquares,
   oppFilter,
+  relRank,
   tickTurns,
   turnsLeft,
   FILE,
   RANK,
+  SQ,
+  inBoard,
 } from "./hexes/shared";
 import type {
   Buff,
@@ -107,19 +110,24 @@ export const CROSSREF_CARDS: Buff[] = [
     {
       id: "pawn_nerf",
       name: "Pawn Nerf",
-      description: "Nerf your opponent's pawns: they cannot advance for their next 3 turns. Their pawns may still capture diagonally.",
+      description: "Nerf your opponent's pawns: their two-square double step is removed for the rest of the game. Every enemy pawn crawls one square at a time.",
       tier: 3,
-      flavor: "Patch notes: enemy pawns no longer function.",
-      // Board already paints no_pawn_advance; fx carried for consistency.
+      flavor: "Patch notes: pawn movement speed reduced by 50%.",
       fx: { motif: "anchor", pieces: ["p"] },
     },
-    instant((_inst, api) => {
-      addEffect(api, { kind: "no_pawn_advance", against: api.opp, turns: 3 });
-      const pawns = mySquares(api.board, api.opp, "p");
-      if (pawns.length) {
-        addEffect(api, { kind: "strike", squares: pawns, owner: api.me, turns: 1 });
-      }
-    }),
+    {
+      kind: "passive",
+      init: (_inst, api) => {
+        const pawns = mySquares(api.board, api.opp, "p");
+        if (pawns.length) {
+          addEffect(api, { kind: "strike", squares: pawns, owner: api.me, turns: 1 });
+        }
+      },
+      filterOpponentMoves: (moves) => {
+        const kept = moves.filter((m) => !(m.piece === "p" && m.isDoublePawn));
+        return kept.length > 0 ? kept : moves;
+      },
+    },
   ),
 
   // The heaviest nerf: reduce the opponent to a king-only game for one turn.
@@ -128,32 +136,59 @@ export const CROSSREF_CARDS: Buff[] = [
     {
       id: "royal_handicap",
       name: "Royal Handicap",
-      description: "Nerf your opponent to a king-only game: on their next turn they may move only their king.",
+      description: "Nerf the crown itself: the patch removes diagonal movement from your opponent's king for their next 4 turns.",
       tier: 5,
-      flavor: "Everyone else has been benched.",
-      // Board already paints king_only; fx carried for consistency.
-      fx: { motif: "jail", pieces: ["p", "n", "b", "r", "q"] },
+      flavor: "Please look forward to the royal rework in a future season.",
+      fx: { motif: "anchor", pieces: ["k"] },
     },
-    instant((_inst, api) => {
-      addEffect(api, { kind: "king_only", against: api.opp, turns: 1 });
-      const k = mySquares(api.board, api.opp, "k")[0];
-      if (k != null) {
-        addEffect(api, { kind: "strike", squares: [k], owner: api.me, turns: 1 });
-      }
-    }),
+    {
+      kind: "passive",
+      init: (inst, api) => {
+        inst.state.turns = 4;
+        const k = mySquares(api.board, api.opp, "k")[0];
+        if (k != null) {
+          addEffect(api, { kind: "strike", squares: [k], owner: api.me, turns: 1 });
+        }
+      },
+      filterOpponentMoves: (moves, inst) => {
+        if (((inst.state.turns as number) ?? 0) <= 0) return moves;
+        const kept = moves.filter(
+          (m) =>
+            m.piece !== "k" ||
+            FILE(m.to) === FILE(m.from) ||
+            RANK(m.to) === RANK(m.from),
+        );
+        // Safety net: never strand the opponent with zero moves.
+        return kept.length > 0 ? kept : moves;
+      },
+      onMovePlayed: (inst, move, api) => tickTurns(inst, move, api.opp),
+      status: (inst) => `${turnsLeft(inst)} of their turns left`,
+    },
   ),
 
-  // Easter egg (gaming): the classic "turn it off and on again". Freezes one
-  // targeted enemy piece; freezeTarget never touches a king.
+  // Easter egg (gaming): the classic "turn it off and on again". Reboots the
+  // opponent's most advanced pawn back to its factory settings.
   hex(
     {
       id: "hard_reset",
       name: "Hard Reset",
-      description: "Freeze one enemy piece you target for 2 of their turns. Kings cannot be targeted.",
+      description: "Turn it off and on again: your opponent's most advanced pawn is sent back to its starting square, if that square is free. Ties reboot the pawn nearest the a-file.",
       tier: 2,
       flavor: "Have you tried turning it off and on again?",
     },
-    freezeTarget(2),
+    instant((_inst, api) => {
+      let best: Square | null = null, bestRank = -1;
+      for (const sq of mySquares(api.board, api.opp, "p")) {
+        const rr = relRank(api.opp, sq);
+        if (rr > bestRank) { bestRank = rr; best = sq; }
+      }
+      if (best == null) return;
+      const home = SQ(FILE(best), api.opp === "w" ? 1 : 6);
+      if (home !== best && !api.board.pieces[home]) {
+        api.relocate(best, home);
+        addEffect(api, { kind: "strike", squares: [home], owner: api.me, turns: 1 });
+      }
+    }),
   ),
 
   // Nerf the enemy queen down to a short-range slider. Timed filter with the
@@ -162,12 +197,27 @@ export const CROSSREF_CARDS: Buff[] = [
     {
       id: "queens_handicap",
       name: "Queen's Handicap",
-      description: "Nerf your opponent's queen: she slides at most 3 squares for their next 3 turns.",
+      description: "Nerf your opponent's queen: for their next 4 turns her every move must end beside another of their own pieces. No escort, no move.",
       tier: 5,
-      flavor: "Her range stat took a hit this patch.",
+      flavor: "She now requires a party to queue.",
       fx: { motif: "anchor", pieces: ["q"] },
     },
-    curse(3, (moves) => moves.filter((m) => m.piece !== "q" || dist(m.from, m.to) <= 3)),
+    curse(4, (moves, api) =>
+      moves.filter((m) => {
+        if (m.piece !== "q") return true;
+        for (const df of [-1, 0, 1]) {
+          for (const dr of [-1, 0, 1]) {
+            if (df === 0 && dr === 0) continue;
+            const f = FILE(m.to) + df, r = RANK(m.to) + dr;
+            if (!inBoard(f, r)) continue;
+            if (SQ(f, r) === m.from) continue;
+            const p = api.board.pieces[SQ(f, r)];
+            if (p && p.color === api.opp) return true;
+          }
+        }
+        return false;
+      }),
+    ),
   ),
 
   // Easter egg (gaming): THE nerf meme. Petrifies a knight, bishop, or rook
@@ -211,36 +261,26 @@ export const CROSSREF_CARDS: Buff[] = [
     {
       id: "nerf_this",
       name: "Nerf This",
-      description: "Call lightning on up to two enemy knights, bishops, or pawns, removing them from the board.",
+      description: "The balance team finally answers: one enemy queen you point at is patched down to a bishop where she stands.",
       tier: 6,
       flavor: "Nerf THIS.",
     },
     activated(
+      (_inst, api, picks) =>
+        picks.length > 0
+          ? null
+          : {
+              kind: "square",
+              label: "Point at the queen to nerf",
+              squares: mySquares(api.board, api.opp, "q"),
+            },
       (_inst, api, picks) => {
-        if (picks.length >= 2) return null;
-        const squares = mySquares(api.board, api.opp).filter((sq) => {
-          const t = api.board.pieces[sq]!.type;
-          return (t === "n" || t === "b" || t === "p") && !picks.some((k) => k.square === sq);
-        });
-        if (!squares.length && picks.length > 0) return null;
-        return {
-          kind: "square",
-          label: `Choose a piece to nerf (${picks.length + 1}/2)`,
-          squares,
-        };
-      },
-      (_inst, api, picks) => {
-        const struck: Square[] = [];
-        for (const k of picks) {
-          if (k.square == null) continue;
-          const p = api.board.pieces[k.square];
-          if (p && p.color === api.opp && (p.type === "n" || p.type === "b" || p.type === "p")) {
-            api.removePiece(k.square);
-            struck.push(k.square);
-          }
-        }
-        if (struck.length) {
-          addEffect(api, { kind: "strike", squares: struck, owner: api.me, turns: 1 });
+        const sq = picks[0]?.square;
+        if (sq == null) return;
+        const p = api.board.pieces[sq];
+        if (p && p.color === api.opp && p.type === "q") {
+          api.setPieceType(sq, "b");
+          addEffect(api, { kind: "strike", squares: [sq], owner: api.me, turns: 1 });
         }
       },
     ),

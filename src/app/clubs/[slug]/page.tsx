@@ -178,7 +178,13 @@ export default function ClubPage() {
 
   useEffect(() => {
     let cancelled = false;
-    load().catch((e) => !cancelled && setError(e instanceof Error ? e.message : "Could not load the club."));
+    void (async () => {
+      try {
+        await load();
+      } catch (e) {
+        if (!cancelled) setError(e instanceof Error ? e.message : "Could not load the club.");
+      }
+    })();
     fetchMe().then((u) => !cancelled && setMe(u));
     return () => {
       cancelled = true;

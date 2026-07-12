@@ -10,12 +10,19 @@
 import { Buff } from "./shared";
 import {
   card,
-  extraMovesNow,
-  freezeAllEnemies,
-  grantInventory,
+  addEffect,
+  activated,
+  emptySquares,
+  inHalf,
   instant,
-  shieldArmy,
+  mySquares,
+  slideMoves,
+  timedAugment,
   walnutAll,
+  ALL_DIRS,
+  FILE,
+  RANK,
+  SQ,
 } from "./shared";
 
 export const MYSTIC_CELESTIAL: Buff[] = [
@@ -24,14 +31,14 @@ export const MYSTIC_CELESTIAL: Buff[] = [
       id: "north_star",
       name: "North Star",
       description:
-        "The fixed star turns its light on your rival: see your opponent's nerf for the rest of the game.",
+        "The fixed star steadies your hand: your next draft is fated to offer tier 4 cards.",
       tier: 3,
-      category: "info",
+      category: "draft",
       boon: true,
       flavor: "Every traveler lies except the one that never moves.",
     },
     instant((_inst, api) => {
-      api.mine.oppNerfRevealed = true;
+      api.mine.flags.forceTier = 4;
     }),
   ),
   card(
@@ -39,41 +46,63 @@ export const MYSTIC_CELESTIAL: Buff[] = [
       id: "comet_shard",
       name: "Comet Shard",
       description:
-        "A shard of a passing comet drops into your pocket as a bishop, trailing a fleck of star-iron as a pawn: drop them onto empty squares on later turns.",
+        "A shard of a passing comet crashes onto the board as a bishop: place it on any empty square in your half. It lands still glowing and cannot be captured for your opponent's next turn.",
       tier: 4,
       category: "pieces",
       flavor: "Wishes granted while supplies last.",
     },
-    instant((_inst, api) => {
-      grantInventory(api, "b", 1);
-      grantInventory(api, "p", 1);
-    }),
+    activated(
+      (_inst, api, picks) =>
+        picks.length > 0
+          ? null
+          : {
+              kind: "square",
+              label: "Choose where the comet shard lands",
+              squares: emptySquares(api.board, (sq) => inHalf(api.me, sq)),
+            },
+      (_inst, api, picks) => {
+        const sq = picks[0]?.square;
+        if (sq == null) return;
+        api.place(sq, "b", api.me);
+        addEffect(api, { kind: "shield", owner: api.me, squares: [sq], turns: 1 });
+      },
+    ),
   ),
   card(
     {
       id: "solstice",
       name: "Solstice",
       description:
-        "Free action: the longest day of the year grants you a second move this turn.",
+        "The longest day gives everyone one more step: for your next turn, every one of your knights, bishops, rooks, and queens can also step one square in any direction.",
       tier: 4,
-      category: "tempo",
+      category: "movement",
       flavor: "The sun lingers. So may you.",
+      fx: { motif: "rally", pieces: ["n", "b", "r", "q"], self: true },
     },
-    extraMovesNow(1),
+    timedAugment(1, (_m, inst, api) =>
+      mySquares(api.board, api.me).flatMap((sq) => {
+        const t = api.board.pieces[sq]!.type;
+        return t === "k" || t === "p" ? [] : slideMoves(api.board, sq, ALL_DIRS, inst.id, 1);
+      }),
+    ),
   ),
   card(
     {
       id: "zodiac_wheel",
       name: "Zodiac Wheel",
       description:
-        "You read all twelve houses at once: your next draft shows three cards to pick from, and your bank offer improves by one tier.",
+        "You read all twelve houses at once: your next draft shows three cards to pick from, all fated to tier 4.",
       tier: 4,
       category: "draft",
       flavor: "Mercury is in retrograde. Your rooks are in ascension.",
     },
+    // Reworked for the full-transparency era (opponent offers are public): the
+    // wheel now fixes where your widened draft is dealt from. Unique combo of
+    // prepThree + forceTier (North Star is the forceTier alone, Prep the
+    // three-card offer alone).
     instant((_inst, api) => {
       api.mine.flags.prepThree = true;
-      api.mine.flags.bankBonus = Math.min(1, (api.mine.flags.bankBonus ?? 0) + 1);
+      api.mine.flags.forceTier = 4;
     }),
   ),
   card(
@@ -81,13 +110,22 @@ export const MYSTIC_CELESTIAL: Buff[] = [
       id: "starlight_ward",
       name: "Starlight Ward",
       description:
-        "A veil of starlight settles over your army: none of your pieces can be captured for your opponent's next 2 turns.",
+        "Starlight pools around the crown: your pieces standing on the squares beside your king cannot be captured for your opponent's next 3 turns.",
       tier: 5,
       category: "protection",
       flavor: "Light that left its star a thousand years ago, arriving exactly on time.",
-      fx: { motif: "ward", pieces: "all", self: true },
+      fx: { motif: "ward", pieces: ["k"], self: true },
     },
-    shieldArmy(2),
+    instant((_inst, api) => {
+      const k = mySquares(api.board, api.me, "k")[0];
+      if (k == null) return;
+      const squares: number[] = [];
+      for (const [df, dr] of ALL_DIRS) {
+        const f = FILE(k) + df, r = RANK(k) + dr;
+        if (f >= 0 && f <= 7 && r >= 0 && r <= 7) squares.push(SQ(f, r));
+      }
+      addEffect(api, { kind: "shield", owner: api.me, squares, turns: 3 });
+    }),
   ),
   card(
     {
@@ -107,12 +145,18 @@ export const MYSTIC_CELESTIAL: Buff[] = [
       id: "celestial_alignment",
       name: "Celestial Alignment",
       description:
-        "The wandering stars fall into a single line and the enemy court stands transfixed: every enemy piece except the king is frozen for 2 of their turns.",
+        "The stars chart the light squares and hold everything found there: every enemy piece except the king standing on a light square is frozen for 3 of their turns.",
       tier: 8,
       category: "tempo",
       flavor: "Once a century, the sky agrees with you.",
       fx: { motif: "jail", pieces: ["p", "n", "b", "r", "q"] },
     },
-    freezeAllEnemies(2),
+    instant((_inst, api) => {
+      for (const sq of mySquares(api.board, api.opp)) {
+        if (api.board.pieces[sq]!.type === "k") continue;
+        if ((FILE(sq) + RANK(sq)) % 2 !== 1) continue;
+        addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 3 });
+      }
+    }),
   ),
 ];

@@ -33,18 +33,25 @@ export function PlayerSearch({ className = "", autoFocus = false }: { className?
     return () => window.cancelAnimationFrame(id);
   }, [autoFocus]);
 
-  useEffect(() => {
-    const q = query.trim();
-    if (q.length < 2) {
+  // React to the query change during render so the panel updates on the same
+  // frame as the keystroke (snappy), leaving the effect below to run only the
+  // debounced fetch.
+  const [prevQuery, setPrevQuery] = useState(query);
+  if (prevQuery !== query) {
+    setPrevQuery(query);
+    if (query.trim().length < 2) {
       setHits([]);
       setPending(false);
       setActive(-1);
-      return;
+    } else {
+      setPending(true);
+      setOpen(true);
     }
-    // Open and flag pending immediately: the panel reacts on the same frame as
-    // the keystroke, so results feel snappy even while the fetch is in flight.
-    setPending(true);
-    setOpen(true);
+  }
+
+  useEffect(() => {
+    const q = query.trim();
+    if (q.length < 2) return;
     const controller = new AbortController();
     const reqId = ++latestReqId.current;
     // Tight debounce so results feel instant while still coalescing bursts of

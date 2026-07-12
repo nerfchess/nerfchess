@@ -8,14 +8,19 @@
 // drop a pawn on rank 1 or 8, and the barred wall is partial, so nothing here
 // can soft-lock a turn.
 
-import { Buff } from "./shared";
+import { Buff, Square } from "./shared";
 import {
   card,
   summonTemp,
   barNeighbors,
   myHalfZone,
-  grantInventory,
-  instant,
+  anyEmptyZone,
+  backRankZone,
+  emptySquares,
+  explodeAt,
+  captureSquare,
+  FILE,
+  RANK,
 } from "./shared";
 
 export const FANTASY_SUMMONS: Buff[] = [
@@ -25,12 +30,12 @@ export const FANTASY_SUMMONS: Buff[] = [
       icon: "Cat",
       name: "Imp Familiar",
       description:
-        "Two new pawns join your pocket. Later, spend turns to drop them onto empty squares.",
+        "A smug little imp perches on an empty square of your back rank and fights as a bishop for 3 of your turns, then scampers back through the veil.",
       tier: 2,
       category: "pieces",
-      flavor: "They are mostly loyal and entirely smug.",
+      flavor: "Mostly loyal and entirely smug.",
     },
-    instant((_inst, api) => grantInventory(api, "p", 2)),
+    summonTemp("b", 3, backRankZone),
   ),
   card(
     {
@@ -51,13 +56,14 @@ export const FANTASY_SUMMONS: Buff[] = [
       icon: "Fence",
       name: "Wall of Thorns",
       description:
-        "A thicket of living thorns bursts up around an empty square: your opponent cannot enter any of the 8 squares around it for their next 4 turns.",
-      tier: 5,
+        "A thicket of undying thorns bursts up around an empty square: your opponent can never enter any of the 8 squares around it, for the rest of the game.",
+      tier: 6,
       category: "hex",
-      flavor: "Every branch is a spear.",
+      flavor: "Every branch is a spear, and none of them wither.",
       fx: { motif: "blindfold" },
     },
-    barNeighbors(4, "Choose the empty square the thorns burst from"),
+    // 999 turns: outlasts any realistic game, so the card reads "for the game".
+    barNeighbors(999, "Choose the empty square the thorns burst from"),
   ),
   card(
     {
@@ -78,16 +84,12 @@ export const FANTASY_SUMMONS: Buff[] = [
       icon: "Hexagon",
       name: "Summoning Circle",
       description:
-        "Chalk a summoning circle and a whole warband answers: a new knight, a bishop, and two pawns arrive in your pocket, ready to drop onto empty squares on later turns.",
-      tier: 7,
+        "Chalk the circle and speak a greater name: a summoned queen steps through onto any empty square and serves for 6 of your turns before the circle pulls her back.",
+      tier: 8,
       category: "pieces",
-      flavor: "Four names spoken, four shapes stepping through.",
+      flavor: "One name spoken, and the candles all lean away.",
     },
-    instant((_inst, api) => {
-      grantInventory(api, "n", 1);
-      grantInventory(api, "b", 1);
-      grantInventory(api, "p", 2);
-    }),
+    summonTemp("q", 6, anyEmptyZone),
   ),
   card(
     {
@@ -95,14 +97,50 @@ export const FANTASY_SUMMONS: Buff[] = [
       icon: "Sparkle",
       name: "Summon Dragon",
       description:
-        "A new queen joins your pocket, and a hatchling follows her in as a pawn. Later, spend turns to drop them onto empty squares.",
+        "An actual dragon answers: place a new queen on an empty square in your half. Whenever she captures, she breathes fire: every enemy piece except a king on the 8 squares around her kill is also removed. Shielded pieces resist the flame.",
       tier: 7,
       category: "pieces",
       flavor: "The oldest thing on the board, and the hungriest.",
     },
-    instant((_inst, api) => {
-      grantInventory(api, "q", 1);
-      grantInventory(api, "p", 1);
-    }),
+    {
+      kind: "activated",
+      spendOnUse: false,
+      // One activation only: one dragon per horn call.
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null
+          ? null
+          : {
+              kind: "square",
+              label: "Choose where the dragon lands",
+              squares: emptySquares(api.board, myHalfZone(api)),
+            },
+      effect: (inst, api, picks) => {
+        const sq = picks[0]?.square;
+        if (sq == null || inst.state.sq != null) return;
+        api.place(sq, "q", api.me);
+        inst.state.sq = sq;
+      },
+      onMovePlayed: (inst, move, api) => {
+        const sq = inst.state.sq as Square | undefined;
+        if (sq == null) return;
+        // Follow the dragon; the buff retires when she is slain.
+        if (move.to === sq && move.from !== sq) {
+          inst.spent = true;
+          return;
+        }
+        if (move.from === sq) {
+          inst.state.sq = move.to;
+          if (move.color === api.me && move.captured && move.captured !== "k") {
+            explodeAt(api, captureSquare(move) ?? move.to);
+          }
+        }
+      },
+      status: (inst) => {
+        const sq = inst.state.sq as Square | undefined;
+        return sq == null
+          ? "activate to summon the dragon"
+          : `dragon at ${"abcdefgh"[FILE(sq)]}${RANK(sq) + 1}`;
+      },
+    },
   ),
 ];

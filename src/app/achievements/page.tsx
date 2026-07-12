@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { createElement, Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Lock, Trophy } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -45,7 +45,7 @@ const RARITY_ACCENT: Record<AchievementRarity, string> = {
 };
 
 function AchievementCard({ a }: { a: AchievementView }) {
-  const Icon = achievementIcon(a.icon);
+  const icon = achievementIcon(a.icon);
   const accent = RARITY_ACCENT[a.rarity];
   const showProgress = !a.unlocked && a.goal > 1 && a.progress > 0;
   return (
@@ -72,7 +72,7 @@ function AchievementCard({ a }: { a: AchievementView }) {
           }}
         >
           {a.unlocked ? (
-            <Icon className="h-6 w-6" style={{ color: accent }} strokeWidth={2} />
+            createElement(icon, { className: "h-6 w-6", style: { color: accent }, strokeWidth: 2 })
           ) : (
             <Lock className="h-5 w-5 text-parchment-500" strokeWidth={2} />
           )}
@@ -297,7 +297,12 @@ export default function AchievementsPage() {
 // these popups" button lands people here to turn them back on.
 function UnlockPopupToggle() {
   const [off, setOff] = useState(false);
-  useEffect(() => setOff(achievementToastsDisabled()), []);
+  // Read the stored preference after mount (deferred so the state write does
+  // not land synchronously inside the effect); the server render stays at the
+  // default to avoid a hydration mismatch.
+  useEffect(() => {
+    queueMicrotask(() => setOff(achievementToastsDisabled()));
+  }, []);
   return (
     <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border border-white/10 bg-white/[0.02] px-4 py-2.5">
       <span className="text-sm text-parchment-300">

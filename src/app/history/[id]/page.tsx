@@ -27,16 +27,18 @@ export default function HistoryReplayPage() {
   const [state, setState] = useState<State>({ kind: "loading" });
 
   useEffect(() => {
-    const game = loadGameHistory().find((g) => g.id === entryId);
-    if (!game) {
-      setState({ kind: "missing" });
-    } else if (game.moves && game.moves.length > 0) {
-      setState({ kind: "replay", game });
-    } else if (game.serverGameId) {
-      router.replace(`/game/${game.serverGameId}`);
-    } else {
-      setState({ kind: "no-moves", game });
-    }
+    queueMicrotask(() => {
+      const game = loadGameHistory().find((g) => g.id === entryId);
+      if (!game) {
+        setState({ kind: "missing" });
+      } else if (game.moves && game.moves.length > 0) {
+        setState({ kind: "replay", game });
+      } else if (game.serverGameId) {
+        router.replace(`/game/${game.serverGameId}`);
+      } else {
+        setState({ kind: "no-moves", game });
+      }
+    });
   }, [entryId, router]);
 
   if (state.kind === "replay") return <Replay game={state.game} />;

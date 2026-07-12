@@ -34,10 +34,56 @@ export type PieceTheme =
   | "lichessPirouetti"
   | "lichessStaunty";
 
-export type AccentColor = "blue" | "green" | "amber" | "rose";
+export type AccentColor = "auto" | "blue" | "green" | "amber" | "rose";
 export type AnimationSpeed = "off" | "fast" | "normal";
-export type SiteTheme = "dark" | "light" | "system";
+export type SiteTheme =
+  | "dark"
+  | "light"
+  | "system"
+  | "midnight"
+  | "void"
+  | "abyss"
+  | "ember"
+  | "moss"
+  | "nebula";
 export type SoundTheme = "lichess" | "classic";
+
+// Full site themes. "dark" and "light" are the two originals; the rest are
+// dark variants expressed purely as CSS-variable override blocks in
+// globals.css keyed on html[data-theme="<id>"] (they inherit every dark-theme
+// style, so only the palette shifts — no per-component work). `swatch` feeds
+// the settings picker preview; `scheme` is the value for CSS color-scheme.
+// Each theme also names its own ACCENT (the color of primary buttons, links,
+// and "act here" chrome). It applies while the accent setting sits on "auto"
+// (the default); picking an explicit accent color overrides every theme.
+export interface AccentDef {
+  accent: string;
+  accentHi: string;
+  rgb: string;
+  rgbHi: string;
+  rgbDim: string;
+}
+
+export const SITE_THEMES: Record<
+  SiteTheme,
+  {
+    label: string;
+    hint: string;
+    scheme: "dark" | "light";
+    swatch: { bg: string; panel: string; glow: string };
+    accent: AccentDef;
+  }
+> = {
+  dark:     { label: "Classic",  hint: "Warm charcoal, the original",   scheme: "dark",  swatch: { bg: "#191713", panel: "#2b2823", glow: "#d8b56e" }, accent: { accent: "#3692e7", accentHi: "#4a9fee", rgb: "54 146 231", rgbHi: "74 159 238", rgbDim: "42 111 176" } },
+  light:    { label: "Light",    hint: "Paper and ink",                 scheme: "light", swatch: { bg: "#e9e5da", panel: "#f4f1ea", glow: "#8a6d3b" }, accent: { accent: "#3692e7", accentHi: "#4a9fee", rgb: "54 146 231", rgbHi: "74 159 238", rgbDim: "42 111 176" } },
+  system:   { label: "System",   hint: "Follow your device",            scheme: "dark",  swatch: { bg: "#191713", panel: "#e9e5da", glow: "#3692e7" }, accent: { accent: "#3692e7", accentHi: "#4a9fee", rgb: "54 146 231", rgbHi: "74 159 238", rgbDim: "42 111 176" } },
+  midnight: { label: "Midnight", hint: "Blue-black steel",              scheme: "dark",  swatch: { bg: "#101318", panel: "#1a1f27", glow: "#7ba1c0" }, accent: { accent: "#6f9fc9", accentHi: "#8ab4da", rgb: "111 159 201", rgbHi: "138 180 218", rgbDim: "82 120 156" } },
+  void:     { label: "Void",     hint: "Pure black, OLED-friendly",     scheme: "dark",  swatch: { bg: "#000000", panel: "#141414", glow: "#9f9f9f" }, accent: { accent: "#8ab4f8", accentHi: "#a5c6fa", rgb: "138 180 248", rgbHi: "165 198 250", rgbDim: "104 138 194" } },
+  abyss:    { label: "Abyss",    hint: "Deep-sea teal",                 scheme: "dark",  swatch: { bg: "#0c1517", panel: "#152327", glow: "#5ec8b8" }, accent: { accent: "#43b3a0", accentHi: "#5ec8b8", rgb: "67 179 160", rgbHi: "94 200 184", rgbDim: "48 134 120" } },
+  ember:    { label: "Ember",    hint: "Smoldering crimson",            scheme: "dark",  swatch: { bg: "#170f0e", panel: "#261815", glow: "#e07a5f" }, accent: { accent: "#d96e50", accentHi: "#e58a6e", rgb: "217 110 80", rgbHi: "229 138 110", rgbDim: "168 84 60" } },
+  moss:     { label: "Moss",     hint: "Deep forest green",             scheme: "dark",  swatch: { bg: "#0f140e", panel: "#1a2318", glow: "#8fbc6f" }, accent: { accent: "#7bab58", accentHi: "#92c26e", rgb: "123 171 88", rgbHi: "146 194 110", rgbDim: "93 130 66" } },
+  nebula:   { label: "Nebula",   hint: "Violet dusk",                   scheme: "dark",  swatch: { bg: "#131019", panel: "#1f1929", glow: "#a877d8" }, accent: { accent: "#9d7ad4", accentHi: "#b494e2", rgb: "157 122 212", rgbHi: "180 148 226", rgbDim: "118 91 162" } },
+};
 
 export interface Settings {
   boardTheme: BoardTheme;
@@ -78,6 +124,15 @@ export interface Settings {
   fpsCounter: boolean;
   customBgUrl: string; // full-page background image URL; empty string = none
   customBgDim: number; // 0..0.6 dark overlay over the custom background
+  // Uploaded full-page background as a data URL (device-local: stripped from
+  // the server sync so the settings blob stays small). Wins over customBgUrl.
+  customBgData: string;
+  fxDuration: number; // 0.5..2, multiplies how long card/FX animations last
+  // Performance mode: drops the most paint-costly decorative layers (backdrop
+  // blurs, the full-screen paper-grain blend, fixed-attachment backgrounds)
+  // for smooth play on low-end devices. Auto-enabled once on weak hardware,
+  // then user-overridable. Functional visuals (board, pieces, effects) stay.
+  perfMode: boolean;
 }
 
 export const SETTINGS_CHANGED_EVENT = "nerfchess:settings-changed";
@@ -109,10 +164,10 @@ export const DEFAULT_SETTINGS: Settings = {
   gameEndSound: true,
   soundEnabled: true,
   soundTheme: "lichess",
-  siteTheme: "dark",
+  siteTheme: "nebula",
   compactMode: false,
   uiScale: 1,
-  accentColor: "blue",
+  accentColor: "auto",
   animationSpeed: "normal",
   uiSounds: true,
   highContrast: false,
@@ -120,11 +175,14 @@ export const DEFAULT_SETTINGS: Settings = {
   fpsCounter: false,
   customBgUrl: "",
   customBgDim: 0.3,
+  customBgData: "",
+  fxDuration: 1,
+  perfMode: false,
 };
 const DEFAULT = DEFAULT_SETTINGS;
 
 export const ACCENT_THEMES: Record<
-  AccentColor,
+  Exclude<AccentColor, "auto">,
   { label: string; accent: string; accentHi: string; rgb: string; rgbHi: string; rgbDim: string }
 > = {
   blue:  { label: "Blue",  accent: "#3692e7", accentHi: "#4a9fee", rgb: "54 146 231",  rgbHi: "74 159 238",  rgbDim: "42 111 176" },
@@ -193,6 +251,19 @@ function clampDim(v: unknown, fallback: number): number {
   return typeof v === "number" && Number.isFinite(v) ? Math.max(0, Math.min(0.6, v)) : fallback;
 }
 
+// Uploaded backgrounds live in localStorage only, so the cap can be generous:
+// ~640KB of base64 is a ~480KB JPEG, plenty for a 1920px background.
+export const CUSTOM_BG_DATA_MAX = 640_000;
+
+/** Validate an uploaded background: a length-capped base64 image data URL
+ *  (same shape isCustomAvatar accepts), nothing else. */
+export function sanitizeCustomBgData(v: unknown): string {
+  if (typeof v !== "string") return "";
+  if (!v || v.length > CUSTOM_BG_DATA_MAX) return "";
+  if (!/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(v)) return "";
+  return v;
+}
+
 export function loadSettings(): Settings {
   if (typeof window === "undefined") return { ...DEFAULT };
   try {
@@ -238,8 +309,8 @@ export function loadSettings(): Settings {
           ? parsed.soundTheme
           : DEFAULT.soundTheme,
       siteTheme:
-        parsed.siteTheme === "dark" || parsed.siteTheme === "light" || parsed.siteTheme === "system"
-          ? parsed.siteTheme
+        parsed.siteTheme && parsed.siteTheme in SITE_THEMES
+          ? (parsed.siteTheme as SiteTheme)
           : DEFAULT.siteTheme,
       compactMode: bool(parsed.compactMode, DEFAULT.compactMode),
       uiScale:
@@ -247,7 +318,7 @@ export function loadSettings(): Settings {
           ? Math.max(0.85, Math.min(1.15, parsed.uiScale))
           : DEFAULT.uiScale,
       accentColor:
-        parsed.accentColor && parsed.accentColor in ACCENT_THEMES
+        parsed.accentColor === "auto" || (parsed.accentColor && parsed.accentColor in ACCENT_THEMES)
           ? (parsed.accentColor as AccentColor)
           : DEFAULT.accentColor,
       animationSpeed:
@@ -260,9 +331,27 @@ export function loadSettings(): Settings {
       fpsCounter: bool(parsed.fpsCounter, DEFAULT.fpsCounter),
       customBgUrl: sanitizeCustomBgUrl(parsed.customBgUrl),
       customBgDim: clampDim(parsed.customBgDim, DEFAULT.customBgDim),
+      customBgData: sanitizeCustomBgData(parsed.customBgData),
+      fxDuration:
+        typeof parsed.fxDuration === "number" && Number.isFinite(parsed.fxDuration)
+          ? Math.max(0.5, Math.min(2, parsed.fxDuration))
+          : DEFAULT.fxDuration,
+      // First run on this device: seed perfMode from a hardware sniff (weak
+      // CPU or low memory) so low-end devices are smooth out of the box; once
+      // the user has any stored settings, their explicit choice wins.
+      perfMode: typeof parsed.perfMode === "boolean" ? parsed.perfMode : detectLowEnd(),
     };
   } catch {}
   return { ...DEFAULT };
+}
+
+/** Coarse low-end sniff for the perfMode default: few CPU cores or little RAM.
+ *  Conservative (only trips on genuinely weak hardware) and SSR-safe. */
+function detectLowEnd(): boolean {
+  if (typeof navigator === "undefined") return false;
+  const cores = navigator.hardwareConcurrency ?? 8;
+  const mem = (navigator as unknown as { deviceMemory?: number }).deviceMemory ?? 8;
+  return cores <= 4 || mem <= 4;
 }
 
 const UPDATED_AT_KEY = "dc:settings-updated-at";
@@ -304,10 +393,14 @@ function schedulePushToServer() {
   pushTimer = setTimeout(() => {
     pushTimer = null;
     const updatedAt = localUpdatedAt();
+    // The uploaded background stays device-local: as a data URL it would blow
+    // the server's settings-blob size cap, so it is stripped from the push
+    // (and re-injected locally when a newer server copy is adopted).
+    const settings: Settings = { ...loadSettings(), customBgData: "" };
     void fetch("/api/users/settings", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ settings: loadSettings(), updatedAt }),
+      body: JSON.stringify({ settings, updatedAt }),
     }).catch(() => {
       // Signed out or offline: local settings still apply.
     });
@@ -324,10 +417,14 @@ export async function pullSettingsFromServer(): Promise<boolean> {
     const data = (await res.json()) as { settings: Partial<Settings> | null; updatedAt: number | null };
     if (!data.settings || !data.updatedAt) return false;
     if (data.updatedAt <= localUpdatedAt()) return false;
+    // The server copy never carries the device-local uploaded background
+    // (stripped on push); keep this device's upload across the adoption.
+    const localBg = loadSettings().customBgData;
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(data.settings));
     } catch {}
     const merged = loadSettings(); // re-validate through the normal parser
+    if (!merged.customBgData && localBg) merged.customBgData = localBg;
     writeLocalSettings(merged, data.updatedAt);
     return true;
   } catch {
@@ -352,8 +449,13 @@ export function applyUiPrefs(s: Settings) {
         ? "light"
         : "dark"
       : s.siteTheme;
-  html.style.colorScheme = html.dataset.theme;
-  const accent = ACCENT_THEMES[s.accentColor] ?? ACCENT_THEMES.blue;
+  // color-scheme only accepts light/dark; every named theme maps to one.
+  html.style.colorScheme = SITE_THEMES[html.dataset.theme as SiteTheme]?.scheme ?? "dark";
+  const theme = SITE_THEMES[html.dataset.theme as SiteTheme] ?? SITE_THEMES.dark;
+  const accent =
+    s.accentColor === "auto"
+      ? theme.accent
+      : (ACCENT_THEMES[s.accentColor as Exclude<AccentColor, "auto">] ?? theme.accent);
   html.style.setProperty("--accent", accent.accent);
   html.style.setProperty("--accent-hi", accent.accentHi);
   html.style.setProperty("--gold", accent.accent);
@@ -363,9 +465,17 @@ export function applyUiPrefs(s: Settings) {
   html.style.setProperty("--accent-dim-rgb", accent.rgbDim);
   html.dataset.anim = s.reducedMotion ? "off" : s.animationSpeed;
   html.dataset.contrast = s.highContrast ? "high" : "normal";
+  // Performance mode: gates the heaviest decorative paint in globals.css.
+  if (s.perfMode) html.dataset.perf = "low";
+  else delete html.dataset.perf;
+  // FX duration multiplier: CSS-driven card/board animations read this var
+  // (calc(<base> * var(--fx-dur, 1))); the canvas VFX engine reads the same
+  // setting through its play specs.
+  html.style.setProperty("--fx-dur", String(s.fxDuration));
   // Custom background (lichess-style): the image lands on <body> through a CSS
   // variable; the appended globals.css block adds a dim overlay for legibility.
-  const bgUrl = sanitizeCustomBgUrl(s.customBgUrl);
+  // An uploaded image (validated data URL) wins over the URL field.
+  const bgUrl = sanitizeCustomBgData(s.customBgData) || sanitizeCustomBgUrl(s.customBgUrl);
   if (bgUrl) {
     html.dataset.customBg = "on";
     html.style.setProperty("--custom-bg-url", `url("${bgUrl}")`);
@@ -375,6 +485,15 @@ export function applyUiPrefs(s: Settings) {
     html.style.removeProperty("--custom-bg-url");
     html.style.removeProperty("--custom-bg-dim");
   }
+}
+
+/** Current card-FX duration multiplier as applied to the document by
+ *  applyUiPrefs (--fx-dur). Read at play time by the board's VFX dispatch so
+ *  the canvas engine and the CSS animations stretch together. */
+export function fxDurationScale(): number {
+  if (typeof document === "undefined") return 1;
+  const v = parseFloat(document.documentElement.style.getPropertyValue("--fx-dur"));
+  return Number.isFinite(v) && v > 0 ? Math.max(0.5, Math.min(2, v)) : 1;
 }
 
 export function applyBoardTheme(theme: BoardTheme) {

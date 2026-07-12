@@ -42,15 +42,15 @@ export function ChatPanel({
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
-    setMutedState(loadSettings().muteChat);
     const sync = () => setMutedState(loadSettings().muteChat);
+    queueMicrotask(sync);
     window.addEventListener(SETTINGS_CHANGED_EVENT, sync);
     return () => window.removeEventListener(SETTINGS_CHANGED_EVENT, sync);
   }, []);
 
-  useEffect(() => {
-    if (expanded) setSeenCount(messages.length);
-  }, [expanded, messages.length]);
+  // Opening the panel (or new messages while open) marks chat read; adjusted
+  // during render so the unread badge updates without an extra render.
+  if (expanded && seenCount !== messages.length) setSeenCount(messages.length);
 
   useEffect(() => {
     const list = listRef.current;

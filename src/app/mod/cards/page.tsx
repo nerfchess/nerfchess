@@ -107,7 +107,7 @@ export default function ModCardsPage() {
   };
 
   useEffect(() => {
-    if (isMod) void loadOverrides();
+    if (isMod) void (async () => { await loadOverrides(); })();
   }, [isMod]);
 
   const rows = useMemo(() => {
@@ -202,12 +202,6 @@ export default function ModCardsPage() {
         ) : (
           <>
             <h1 className="font-display text-4xl">Card editor</h1>
-            <p className="mt-3 text-sm text-parchment-300">
-              Edit a card&apos;s name, description, flavor, tier, or pull it from drafts,
-              without a deploy. Empty fields fall back to the code value. Card logic
-              stays in code. Live games keep the pools they started with; new games
-              pick changes up within about five minutes.
-            </p>
 
             <div className="mt-6 flex flex-wrap items-center gap-2">
               <input

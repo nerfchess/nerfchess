@@ -10,6 +10,7 @@ import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { AVATAR_PICKER_IDS, avatarIdFor, CUSTOM_AVATAR_MAX_CHARS, isCustomAvatar } from "@/lib/avatars";
 import { FLAIR_EMOJI } from "@/lib/flair";
 import { MODE_RATING_CATEGORIES } from "@/lib/ratingCategories";
+import { isProvisionalRd } from "@/lib/ratingDisplay";
 import { Trophy } from "lucide-react";
 
 // One user_ratings row (per mode bucket), as returned by /api/users/[username].
@@ -356,7 +357,7 @@ export default function ProfilePage() {
                         {r ? (
                           <>
                             {Math.round(r.rating)}
-                            {r.rd > 150 && <span className="text-parchment-400">?</span>}
+                            {isProvisionalRd(r.rd) && <span className="text-parchment-400">?</span>}
                           </>
                         ) : (
                           <span className="text-parchment-500">-</span>

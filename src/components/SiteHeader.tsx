@@ -217,7 +217,7 @@ export function SiteHeader({ active }: { active?: string }) {
     "nav-icon-btn relative grid h-11 w-11 sm:h-10 sm:w-10 place-items-center text-parchment-300 hover:bg-white/5 hover:text-parchment-50";
 
   return (
-    <nav className="seam-edge-b flex items-center justify-between gap-3 bg-ink-900/70 px-5 sm:px-10 py-5 sm:py-6">
+    <nav className="site-nav seam-edge-b flex items-center justify-between gap-3 px-5 sm:px-10 py-5 sm:py-6">
       <div className="flex min-w-0 items-center gap-2 sm:gap-5">
         {/* Mobile hamburger, left of the wordmark: opens every destination on
             phones and tablets, where the inline nav below is hidden. */}

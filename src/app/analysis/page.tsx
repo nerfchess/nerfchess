@@ -60,31 +60,35 @@ function AnalysisInner() {
 
   // Deep links: ?fen= loads a position, ?moves= replays a UCI list.
   useEffect(() => {
-    const fen = params.get("fen");
-    const uciList = params.get("moves");
-    if (fen) {
-      const b = fenToBoard(fen);
-      if (b) {
-        setStartBoard(b);
-        setCustomStart(boardToFen(b) !== START_FEN);
-        setMoves([]);
-        setViewPly(0);
-        if (b.turn === "b") setFlipped(true);
-        return;
+    // Deferred off the synchronous effect body so the deep-link parse doesn't
+    // cascade a render inline; runs on the same tick, before paint.
+    queueMicrotask(() => {
+      const fen = params.get("fen");
+      const uciList = params.get("moves");
+      if (fen) {
+        const b = fenToBoard(fen);
+        if (b) {
+          setStartBoard(b);
+          setCustomStart(boardToFen(b) !== START_FEN);
+          setMoves([]);
+          setViewPly(0);
+          if (b.turn === "b") setFlipped(true);
+          return;
+        }
       }
-    }
-    if (uciList) {
-      let b = initialBoard();
-      const parsed: Move[] = [];
-      for (const uci of uciList.split(/[,\s]+/).filter(Boolean)) {
-        const m = generateMoves(b).find((x) => moveToUCI(x) === uci);
-        if (!m) break;
-        parsed.push(m);
-        b = makeMove(b, m);
+      if (uciList) {
+        let b = initialBoard();
+        const parsed: Move[] = [];
+        for (const uci of uciList.split(/[,\s]+/).filter(Boolean)) {
+          const m = generateMoves(b).find((x) => moveToUCI(x) === uci);
+          if (!m) break;
+          parsed.push(m);
+          b = makeMove(b, m);
+        }
+        setMoves(parsed);
+        setViewPly(parsed.length);
       }
-      setMoves(parsed);
-      setViewPly(parsed.length);
-    }
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -108,12 +112,15 @@ function AnalysisInner() {
     [moves, viewPly],
   );
 
+  // Turning the engine off clears any shown line; adjusted during render so the
+  // effect below only schedules searches.
+  if (!engineOn && analysis !== null) setAnalysis(null);
+
   // The engine runs synchronously on the main thread; the timeout lets the
   // board paint the new move before the ~300ms search blocks.
   useEffect(() => {
     if (analysisTimer.current) window.clearTimeout(analysisTimer.current);
     if (!engineOn) {
-      setAnalysis(null);
       return;
     }
     analysisTimer.current = window.setTimeout(() => {

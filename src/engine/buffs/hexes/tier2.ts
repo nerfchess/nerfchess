@@ -4,7 +4,7 @@
 // denied), but every card is easily played around and carries no material
 // swing. Import ONLY from ./shared so the safety rails come for free.
 
-import { Buff } from "./shared";
+import { Buff, BuffInstance } from "./shared";
 import {
   tierHexes,
   curse,
@@ -13,7 +13,9 @@ import {
   mySquares,
   instant,
   addEffect,
-  blockDrafts,
+  stealBuffs,
+  suppressDraftCards,
+  inBoard,
   FILE,
   RANK,
   SQ,
@@ -27,24 +29,49 @@ const dist = (from: number, to: number) =>
 
 export const HEXES_T2: Buff[] = [
   H(
-    { id: "short_leash", name: "Short Leash", description: "Your opponent's bishops slide at most 2 squares for their next 4 turns.", flavor: "Kept close to home.", fx: { motif: "anchor", pieces: ["b"] } },
-    curse(4, (moves) => moves.filter((m) => m.piece !== "b" || dist(m.from, m.to) <= 2)),
+    { id: "short_leash", name: "Short Leash", description: "Your opponent's bishops cannot cross into your half of the board for their next 4 turns.", flavor: "Kept close to home.", fx: { motif: "anchor", pieces: ["b"] } },
+    curse(4, (moves, api) =>
+      moves.filter(
+        (m) => m.piece !== "b" || (api.opp === "w" ? RANK(m.to) < 4 : RANK(m.to) >= 4),
+      ),
+    ),
   ),
   H(
-    { id: "seized_axles", name: "Seized Axles", description: "Your opponent's rooks slide at most 2 squares for their next 4 turns.", fx: { motif: "anchor", pieces: ["r"] } },
-    curse(4, (moves) => moves.filter((m) => m.piece !== "r" || dist(m.from, m.to) <= 2)),
+    { id: "seized_axles", name: "Seized Axles", description: "Your opponent's rooks cannot move sideways for their next 4 turns: they may only slide up and down their own file.", flavor: "The wheels only roll one way now.", fx: { motif: "anchor", pieces: ["r"] } },
+    curse(4, (moves) => moves.filter((m) => m.piece !== "r" || FILE(m.from) === FILE(m.to))),
   ),
   H(
     { id: "rusted_hinges", name: "Rusted Hinges", description: "Your opponent's rooks cannot capture for their next 4 turns.", fx: { motif: "muzzle", pieces: ["r"] } },
     curse(4, (moves) => moves.filter((m) => !(m.piece === "r" && m.captured))),
   ),
   H(
-    { id: "blunted_lance", name: "Blunted Lance", description: "Your opponent's knights cannot capture for their next 4 turns.", flavor: "A lance with no point.", fx: { motif: "muzzle", pieces: ["n"] } },
-    curse(4, (moves) => moves.filter((m) => !(m.piece === "n" && m.captured))),
+    { id: "blunted_lance", name: "Blunted Lance", description: "Your opponent's knights cannot land on any square defended by one of your pawns, for their next 4 turns.", flavor: "Lances splinter on a wall of pikes.", fx: { motif: "muzzle", pieces: ["n"] } },
+    curse(4, (moves, api) =>
+      moves.filter((m) => {
+        if (m.piece !== "n") return true;
+        // A square is pawn-defended if one of MY pawns sits a diagonal step
+        // toward my own side of it (I am the opposite color of api.opp: a
+        // white pawn on r-1 defends r, a black pawn on r+1 defends r).
+        const r = RANK(m.to) + (api.opp === "w" ? 1 : -1);
+        for (const df of [-1, 1]) {
+          const f = FILE(m.to) + df;
+          if (!inBoard(f, r)) continue;
+          const p = api.board.pieces[SQ(f, r)];
+          if (p && p.color !== api.opp && p.type === "p") return false;
+        }
+        return true;
+      }),
+    ),
   ),
   H(
-    { id: "safe_passage", name: "Safe Passage", description: "Your opponent's pawns cannot capture for their next 4 turns.", fx: { motif: "muzzle", pieces: ["p"] } },
-    curse(4, (moves) => moves.filter((m) => !(m.piece === "p" && m.captured))),
+    { id: "safe_passage", name: "Safe Passage", description: "The roads along the edge are under truce: your opponent cannot capture anything standing on the outer rim of the board, for their next 4 turns.", flavor: "Even wars respect the coast road.", fx: { motif: "muzzle", pieces: "all" } },
+    curse(4, (moves) =>
+      moves.filter((m) => {
+        const cap = m.capturedSquare ?? (m.captured ? m.to : null);
+        if (cap == null) return true;
+        return !(FILE(cap) === 0 || FILE(cap) === 7 || RANK(cap) === 0 || RANK(cap) === 7);
+      }),
+    ),
   ),
   H(
     { id: "stone_hooves", name: "Stone Hooves", description: "Petrify one of your opponent's knights for 3 of their turns: it can only shuffle one square at a time. Kings cannot be targeted.", flavor: "The cavalry sets like plaster." },
@@ -82,16 +109,32 @@ export const HEXES_T2: Buff[] = [
     ),
   ),
   H(
-    { id: "cut_purse", name: "Cut Purse", description: "Your opponent's next draft is skipped.", flavor: "A hand in every pocket." },
-    blockDrafts(1),
+    { id: "cut_purse", name: "Cut Purse", description: "Steal one of your opponent's unspent cards of tier 1. Locked-in upgrades stay put.", flavor: "A hand in every pocket." },
+    stealBuffs(1, 1, (b: BuffInstance) => b.state.sq == null && b.state.squares == null),
   ),
   H(
-    { id: "timid_king", name: "Timid King", description: "Your opponent's king cannot capture for their next 4 turns.", flavor: "Beneath the dignity of the crown.", fx: { motif: "muzzle", pieces: ["k"] } },
-    curse(4, (moves) => moves.filter((m) => !(m.piece === "k" && m.captured))),
+    { id: "timid_king", name: "Timid King", description: "Your opponent's king cannot end a move beside any of your pieces, for their next 3 turns.", flavor: "He waves you forward from well behind.", fx: { motif: "muzzle", pieces: ["k"] } },
+    curse(3, (moves, api) =>
+      moves.filter((m) => {
+        if (m.piece !== "k") return true;
+        for (const df of [-1, 0, 1]) {
+          for (const dr of [-1, 0, 1]) {
+            if (df === 0 && dr === 0) continue;
+            const f = FILE(m.to) + df, r = RANK(m.to) + dr;
+            if (!inBoard(f, r)) continue;
+            const p = api.board.pieces[SQ(f, r)];
+            if (p && p.color !== api.opp) return false;
+          }
+        }
+        return true;
+      }),
+    ),
   ),
   H(
-    { id: "leaden_queen", name: "Leaden Queen", description: "Your opponent's queen slides at most 2 squares for their next 3 turns.", flavor: "Her gown is sewn with lead.", fx: { motif: "anchor", pieces: ["q"] } },
-    curse(3, (moves) => moves.filter((m) => m.piece !== "q" || dist(m.from, m.to) <= 2)),
+    { id: "leaden_queen", name: "Leaden Queen", description: "Your opponent's queen can only capture at arm's length: her captures must be exactly one square away, for their next 3 turns.", flavor: "Her gown is sewn with lead.", fx: { motif: "anchor", pieces: ["q"] } },
+    curse(3, (moves) =>
+      moves.filter((m) => m.piece !== "q" || !m.captured || dist(m.from, m.to) <= 1),
+    ),
   ),
   H(
     // Board already paints no_pawn_advance; fx carried for consistency.
@@ -110,7 +153,7 @@ export const HEXES_T2: Buff[] = [
     }),
   ),
   H(
-    { id: "sealed_orders", name: "Sealed Orders", description: "Your opponent's next draft is skipped outright, giving them no new card.", flavor: "The dispatch never reaches the tent." },
-    blockDrafts(1),
+    { id: "sealed_orders", name: "Sealed Orders", description: "Your opponent's next two draft offers contain no draft-manipulation cards.", flavor: "The dispatch never reaches the tent." },
+    suppressDraftCards(2),
   ),
 ];
