@@ -13,7 +13,7 @@ concurrency:
 jobs:
   lint:
     name: ESLint & type-check
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, tokyo]
 
     steps:
       - name: Checkout
