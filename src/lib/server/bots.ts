@@ -7,18 +7,6 @@
 // so the lobby and TV never look dead. They present exactly like regular
 // players (their accounts still hold "_flower" avatar preset ids as an
 // internal marker, but no visible mark is drawn from them anymore).
-//
-// Everything here is deliberately tiny and pure (no Durable Object state, no
-// timers): the game server drives the roster from its alarm and this module
-// only answers questions like "which move", "how long to think", "which pool".
-//
-// Crash history (the reason for every cap in this file): the first version of
-// this system ran unbounded engine searches and per-tick D1 queries inside the
-// single-threaded game-server Durable Object and starved socket upgrades and
-// lobby polls until it was removed (commit 7331763). The rebuilt system caps
-// every search at HOUSE_SEARCH_CEILING_MS, runs at most one bot-vs-bot action
-// per alarm tick, touches D1 only where human games already do, and guards
-// every bot code path so a bot failure degrades to "bots absent".
 
 import { pickAIMove, type AILevel } from "../../engine/ai";
 import { legalMoves, type NerfGame } from "../../engine/game";
@@ -61,7 +49,6 @@ export type HouseSkill = 1350 | 1550 | 1750 | 1900 | 1950 | 2000 | 2050 | 2100 |
 type SkillProfile = {
   level: AILevel;
   budgetMs: number;
-  // Chance to ignore the search and play a random non-self-losing legal move.
   blunderChance: number;
 };
 
@@ -83,25 +70,9 @@ export type HousePersona = {
   userId: string;
   skill: HouseSkill;
   avatar: string;
-  // Plausible home base ("🇵🇹 Braga, Portugal"), distinct per persona, shown
-  // as the account's profile bio line.
   location: string;
 };
 
-// Natural, realistic chess-site handles: a believable mix of casual gamertags,
-// chess-themed handles, first-name-plus-number styles, lowercase handles, and a
-// few ALLCAPS, nothing that says "bot". The cutesy alliteration handles
-// (sicilian_sam, backrankbetty, zugzwangzoe...) were swapped for plainer
-// Lichess-style ones (name+year, engine/player fandom, opening-line handles) so
-// the roster reads like a random slice of a real player base. A handful of
-// owner-chosen meme names are kept verbatim in the roster.
-// Ratings: the floor is 1550 and a top band reaches 2200, with several personas
-// seated in the 2100-2200 range so the top of the leaderboard is a spread of
-// numbers, not a single tier. The 80ms search ceiling still caps real strength,
-// so every tier from 1750 up is presentation.
-// Rough mix: 10 near 1550, 10 near 1750, 8 near 1900, 6 near 1950, 5 near 2000,
-// 4 near 2050, and 7 spread across the 2100-2200 top band. (The +-40 jitter in
-// houseSeedRating still applies on top of each tier.)
 const PERSONA_DEFS: Array<[name: string, skill: HouseSkill]> = [
   // ~1550
   ["pawnstorm77", 1550],
@@ -133,18 +104,14 @@ const PERSONA_DEFS: Array<[name: string, skill: HouseSkill]> = [
   // ~2050
   ["riptide", 2050],
   ["KINGSLAYER", 2050],
-  // 2100-2200 top band, spread so the leaderboard head is not a block of
-  // identical numbers (the jitter in houseSeedRating still applies on top).
+  // 2100-2200 
   ["passed_pawn", 2100],
   ["Stickygamer123", 2100],
   ["mellowmove", 2150],
   ["ilovewhitestickystuff", 2150],
   ["cobrakai", 2200],
   ["ilovemysister", 2200],
-  // --- Expansion personas (indices 30-59). The house-bot count is a moderator
-  // slider (30-60): the FIRST N of this roster are the active bots that seek,
-  // play, and get picked up, so the base 30 above are always on and raising the
-  // slider switches these in. Same believable-handle style, same rating bands.
+
   // ~1550
   ["lukas_j", 1550],
   ["mira_k", 1550],
