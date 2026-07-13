@@ -8,6 +8,7 @@ import { CROSSREF_CARDS } from "./crossref";
 import { PT_CARDS } from "./pt";
 import { TIER9, TIER10 } from "./tier9";
 import { BRAINROT } from "./brainrot";
+import { PERSONAL_CARDS, NEWJEANS_CARDS } from "./personal";
 import { Buff, BuffApi, BuffCategory, BuffInstance, CardFx } from "../buff";
 import { Tier } from "../nerf";
 import { BoardState, Color, FILE, Move, PieceType, RANK, SQ, Square, inBoard } from "../types";
@@ -4256,6 +4257,8 @@ export const ALL_BUFFS: Buff[] = [
   ...CROSSREF_CARDS,
   ...PT_CARDS,
   ...BRAINROT,
+  ...PERSONAL_CARDS,
+  ...NEWJEANS_CARDS,
   ...ITEMS,
   ...TIER9,
   ...TIER10,

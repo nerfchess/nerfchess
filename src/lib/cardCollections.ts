@@ -11,23 +11,37 @@ import { MYSTIC_CARDS } from "@/engine/buffs/mystic";
 import { WILD_CARDS } from "@/engine/buffs/wild";
 import { FUNNY_CARDS } from "@/engine/buffs/funny";
 import { PT_CARDS } from "@/engine/buffs/pt";
+import { PERSONAL_CARDS, NEWJEANS_CARDS } from "@/engine/buffs/personal";
 import { WILD_NERFS } from "@/engine/nerfs/wild";
 import type { Buff } from "@/engine/buff";
 import type { Nerf } from "@/engine/nerf";
 
-export type BuffCollection = "Core" | "Hex" | "Funny" | "Fantasy" | "Mystic" | "Wild" | "Item";
+export type BuffCollection =
+  | "Core"
+  | "Hex"
+  | "Funny"
+  | "Fantasy"
+  | "Mystic"
+  | "Wild"
+  | "Item"
+  | "Personal"
+  | "NewJeans";
 export type NerfCollection = "Core" | "Wild";
 
 const FANTASY = new Set(FANTASY_CARDS.map((c) => c.id));
 const MYSTIC = new Set(MYSTIC_CARDS.map((c) => c.id));
 const WILD = new Set(WILD_CARDS.map((c) => c.id));
 const FUNNY = new Set([...FUNNY_CARDS, ...PT_CARDS].map((c) => c.id));
+const PERSONAL = new Set(PERSONAL_CARDS.map((c) => c.id));
+const NEWJEANS = new Set(NEWJEANS_CARDS.map((c) => c.id));
 const WILD_N = new Set(WILD_NERFS.map((c) => c.id));
 
 /** Which collection a buff (including hexes, boons, items) belongs to. The
  * exotic barrels win first; the rest fall back to Item / Hex by category, then
  * Core for the original tiered set. */
 export function buffCollection(b: Pick<Buff, "id" | "category">): BuffCollection {
+  if (NEWJEANS.has(b.id)) return "NewJeans";
+  if (PERSONAL.has(b.id)) return "Personal";
   if (FANTASY.has(b.id)) return "Fantasy";
   if (MYSTIC.has(b.id)) return "Mystic";
   if (WILD.has(b.id)) return "Wild";
@@ -52,6 +66,8 @@ export const BUFF_COLLECTIONS: { id: BuffCollection; label: string; hint: string
   { id: "Wild", label: "Wild", hint: "Elemental, warfare, arcane, and chaos cards" },
   { id: "Hex", label: "Hexes", hint: "Curses cast on the opponent" },
   { id: "Item", label: "Items", hint: "One-use consumables" },
+  { id: "Personal", label: "Personal", hint: "Gym feats, focus, and affection cards" },
+  { id: "NewJeans", label: "NewJeans", hint: "The NewJeans K-pop set" },
 ];
 export const NERF_COLLECTIONS: { id: NerfCollection; label: string; hint: string }[] = [
   { id: "Core", label: "Core", hint: "The base handicaps" },
@@ -59,4 +75,4 @@ export const NERF_COLLECTIONS: { id: NerfCollection; label: string; hint: string
 ];
 
 /** Every collection id that can appear in a URL, for validation on parse. */
-export const COLLECTION_IDS: string[] = ["Core", "Funny", "Fantasy", "Mystic", "Wild", "Hex", "Item"];
+export const COLLECTION_IDS: string[] = ["Core", "Funny", "Fantasy", "Mystic", "Wild", "Hex", "Item", "Personal", "NewJeans"];
