@@ -129,7 +129,7 @@ export const FUNNY_TRADEOFFS: Buff[] = [
       icon: "Gem",
       name: "Glass Cannon",
       description:
-        "Choose one of your bishops. For your next 4 turns it can capture any enemy piece except the king along its diagonals, passing through any pieces in between. While it is overcharged, if that bishop is captured, two of your pawns are removed as well.",
+        "Choose a bishop. For your next 4 turns it can capture any enemy except the king along its diagonals, passing through anything in between. But while it is overcharged, if it is captured, two of your pawns shatter with it.",
       tier: 6,
       category: "attack",
       requires: ["b"],

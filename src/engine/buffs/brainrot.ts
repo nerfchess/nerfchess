@@ -140,7 +140,7 @@ export const BRAINROT: Buff[] = [
       icon: "Footprints",
       name: "Tralalero Tralala",
       description:
-        "The shark in sneakers sprints: choose one of your pieces except the king and dash it to any empty square along its rank, file, or diagonal, blurring straight past anything in the way. It is still moving so fast it cannot be captured for your opponent's next 2 turns. Once.",
+        "The shark in sneakers sprints: dash any piece except the king to an empty square along its rank, file, or diagonal, blurring straight past anything between. It moves so fast it cannot be captured for your opponent's next 2 turns. Once.",
       tier: 4,
       category: "movement",
       flavor: "Nike Air, straight through the traffic.",
@@ -326,7 +326,7 @@ export const BRAINROT: Buff[] = [
       name: "Chimpanzini Bananini",
       description:
         "The banana-monkey goes ape: for the game every one of your knights may also slide like a queen, keeping its knight leap on top.",
-      // Every knight an amazon, permanently — that is Amazon Army power
+      // Every knight an amazon, permanently, that is Amazon Army power
       // (tier 8, knights AND bishops) minus the bishops. Tier 7, not the
       // laughable 3 it shipped at.
       tier: 7,

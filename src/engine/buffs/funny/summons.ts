@@ -209,7 +209,7 @@ export const FUNNY_SUMMONS: Buff[] = [
       id: "cavalry_charge",
       icon: "Rabbit",
       name: "Cavalry Charge",
-      description: "Choose one of your knights. It charges in one horizontal or vertical direction, removes up to the first two enemy pieces (not kings) in that line, and lands on the last cleared square or on an empty square beyond it, stopping before the next piece or the board edge. As it lands, the shock bonks every enemy piece a knight's leap from the landing square one square back toward that piece's home rank. A friendly piece or an enemy king in the path blocks the charge. Once.",
+      description: "Charge a knight straight along a rank or file: it smashes the first two enemy pieces it hits (never kings), then rolls on to the far side of them, stopping before the next piece or the edge. Its landing shock shoves every enemy a knight's leap away one square back toward home. A friendly piece or enemy king stops the charge. Once.",
       tier: 5,
       category: "attack",
       requires: ["n"],
