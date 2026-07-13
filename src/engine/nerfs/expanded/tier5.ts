@@ -13,6 +13,8 @@ import {
   attackedBy,
   isInCheck,
   makeMove,
+  findKing,
+  FILE,
   Color,
 } from "./shared";
 
@@ -21,6 +23,29 @@ const N = tierNerf(5);
 const other = (c: Color): Color => (c === "w" ? "b" : "w");
 
 export const NERFS_T5: Nerf[] = [
+  N(
+    {
+      id: "middle_part",
+      name: "Middle Part",
+      description:
+        "Your king insists on a clean center part: it may only ever stand on the d or e files, so it can never castle or slip out to the wings.",
+      flavor: "Not one hair out of place, not one step off center.",
+      icon: "user",
+    },
+    {
+      filterMoves: (moves) => {
+        const kept = moves.filter(
+          (m) => m.piece !== "k" || FILE(m.to) === 3 || FILE(m.to) === 4,
+        );
+        return kept.length ? kept : moves;
+      },
+      // A passive aura hugs the king it keeps combed to the center files.
+      visual: (_state, ctx) => {
+        const k = findKing(ctx.board, ctx.me);
+        return { highlightSquares: k != null ? [k] : [] };
+      },
+    },
+  ),
   N(
     { id: "defanged_queen", name: "Defanged Queen", description: "Your queen can't capture and can't give check.", flavor: "All crown, no claws.", icon: "crown" },
     {
