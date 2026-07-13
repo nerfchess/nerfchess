@@ -343,7 +343,7 @@ const GYM: Buff[] = [
       id: "full_planche",
       name: "Full Planche",
       description:
-        "Lock one of your pieces into a perfect hold. It hovers uncapturable for the whole game and also slides like a rook along every open rank and file.",
+        "Lock one of your pieces into a perfect hold. It hovers uncapturable for your opponent's next 5 turns and slides like a rook along every open rank and file for the game.",
       tier: 6,
       category: "protection",
       icon: "StretchHorizontal",
@@ -351,7 +351,7 @@ const GYM: Buff[] = [
       fx: { motif: "ward", moveAs: "r", self: true },
     },
     bindPiece("Choose a piece to hold in a planche", bindCandidates(), {
-      shieldTurns: null,
+      shieldTurns: 5,
       gen: (b, sq, via) => slideMoves(b, sq, ORTHO_DIRS, via),
     }),
   ),
@@ -387,6 +387,80 @@ const GYM: Buff[] = [
         addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 3, skin: "stun" });
         addEffect(api, { kind: "barred", squares: neighbors8(sq), against: api.opp, turns: 3 });
       },
+    ),
+  ),
+
+  // Converted from a nerf (owner request): the clean center part is now a
+  // SYMMETRY buff. Reflect one piece across the board's center line.
+  card(
+    {
+      id: "middle_part",
+      name: "Middle Part",
+      description:
+        "Not one hair off the axis: choose one of your pieces except the king or queen, and a perfect mirror copy of it materializes on the file-reflected square (a-file to h-file), if that square is empty. Once.",
+      tier: 5,
+      category: "pieces",
+      icon: "FlipHorizontal2",
+      flavor: "Split dead center. Both sides immaculate.",
+      fx: { motif: "rally", self: true },
+    },
+    (() => {
+      const mirrorOf = (sq: Square) => SQ(7 - FILE(sq), RANK(sq));
+      const canMirror = (api: BuffApi, sq: Square) => {
+        const p = api.board.pieces[sq];
+        if (!p || p.color !== api.me || p.type === "k" || p.type === "q") return false;
+        const m = mirrorOf(sq);
+        if (m === sq || api.board.pieces[m]) return false;
+        return p.type !== "p" || pawnRankOk(m);
+      };
+      return activated(
+        (_inst, api, picks) =>
+          picks.length > 0
+            ? null
+            : {
+                kind: "square",
+                label: "Choose the piece to part down the middle",
+                squares: mySquares(api.board, api.me).filter((sq) => canMirror(api, sq)),
+              },
+        (_inst, api, picks) => {
+          const sq = picks[0]?.square;
+          if (sq == null || !canMirror(api, sq)) return;
+          const m = mirrorOf(sq);
+          api.place(m, api.board.pieces[sq]!.type, api.me);
+          addEffect(api, { kind: "strike", squares: [m], owner: api.me, turns: 1 });
+        },
+      );
+    })(),
+  ),
+
+  // Converted from a nerf (owner request): the veins now run dead straight
+  // FORWARD — a pawn-army grip no other card grants.
+  card(
+    {
+      id: "forearm_veins",
+      name: "Forearm Veins",
+      description:
+        "Veins run dead straight up the forearm: for the game, each of your pawns may also capture the enemy piece directly ahead of it, one square straight forward.",
+      tier: 4,
+      category: "attack",
+      requires: ["p"],
+      icon: "Activity",
+      flavor: "Dead straight, no curve, full grip.",
+      fx: { motif: "empower", pieces: ["p"], self: true },
+    },
+    permanentAugment((_m, inst, api) =>
+      mySquares(api.board, api.me, "p").flatMap((sq) => {
+        const dr = fwd(api.board.pieces[sq]!.color);
+        const f = FILE(sq), r = RANK(sq) + dr;
+        if (!inBoard(f, r)) return [];
+        const to = SQ(f, r);
+        const t = api.board.pieces[to];
+        // Only the straight-ahead CAPTURE is new (plain forward pushes are
+        // normal pawn moves); back-rank landings stay off the menu so the
+        // grant never has to reason about promotion.
+        if (!t || t.color !== api.opp || t.type === "k" || !pawnRankOk(to)) return [];
+        return leapMoves(api.board, sq, [[0, dr]], inst.id);
+      }),
     ),
   ),
 ];
@@ -654,13 +728,13 @@ const AFFECTION: Buff[] = [
   card(
     {
       id: "i_love_cam",
-      name: "I Love Cam",
+      name: "I Love Cami",
       description:
-        "Choose one of your pieces. Every enemy piece except a king on its rank or file is swept off the board. Cam keeps your lines clear.",
+        "Choose one of your pieces. Every enemy piece except a king on its rank or file is swept off the board. Cami keeps your lines clear.",
       tier: 8,
       category: "attack",
       icon: "Crosshair",
-      flavor: "Cam said he had my back. Cam meant it.",
+      flavor: "Cami said she had my back. Cami meant it.",
     },
     activated(
       (_inst, api, picks) =>
@@ -668,7 +742,7 @@ const AFFECTION: Buff[] = [
           ? null
           : {
               kind: "square",
-              label: "Choose the piece Cam covers",
+              label: "Choose the piece Cami covers",
               squares: mySquares(api.board, api.me).filter((sq) =>
                 mySquares(api.board, api.opp).some(
                   (e) =>
@@ -1094,13 +1168,28 @@ export const NEWJEANS_CARDS: Buff[] = [
       id: "danielle",
       name: "Danielle",
       description:
-        "Sunshine: grow two new pawns and plant them on any empty squares in your own half of the board.",
+        "Sunshine: grow two new pawns on any empty squares in your own half, basking in a warmth that keeps each of them uncapturable for your opponent's next 2 turns.",
       tier: 5,
       category: "pieces",
       icon: "Sun",
       flavor: "Warm day, good soil. Something always sprouts around her.",
+      fx: { motif: "ward", pieces: ["p"], self: true },
     },
-    placePieces(["p", "p"], (api) => (sq: Square) => inHalf(api.me, sq)),
+    (() => {
+      const base = placePieces(["p", "p"], (api: BuffApi) => (sq: Square) => inHalf(api.me, sq));
+      return {
+        ...base,
+        effect: (inst: BuffInstance, api: BuffApi, picks: { square?: Square }[]) => {
+          base.effect?.(inst, api, picks as never);
+          const squares = picks
+            .map((k) => k.square)
+            .filter((sq): sq is Square => sq != null && api.board.pieces[sq]?.color === api.me);
+          if (squares.length) {
+            addEffect(api, { kind: "shield", owner: api.me, squares, turns: 2 });
+          }
+        },
+      };
+    })(),
   ),
 
   card(

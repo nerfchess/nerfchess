@@ -9,34 +9,6 @@ const N = tierNerf(4);
 
 export const NERFS_T4: Nerf[] = [
   N(
-    {
-      id: "forearm_veins",
-      name: "Forearm Veins",
-      description:
-        "Your queen's strength runs only in straight lines. She may move and capture like a rook, along ranks and files, but never on the diagonal.",
-      flavor: "Veins bulge up the arm, dead straight, no curve.",
-      icon: "activity",
-    },
-    {
-      filterMoves: (moves) => {
-        const kept = moves.filter(
-          (m) =>
-            m.piece !== "q" || FILE(m.to) === FILE(m.from) || RANK(m.to) === RANK(m.from),
-        );
-        return kept.length ? kept : moves;
-      },
-      // A passive aura hugs each straining queen the veins run through.
-      visual: (_state, ctx) => {
-        const sqs: number[] = [];
-        for (let sq = 0; sq < 64; sq++) {
-          const p = ctx.board.pieces[sq];
-          if (p && p.color === ctx.me && p.type === "q") sqs.push(sq);
-        }
-        return { highlightSquares: sqs };
-      },
-    },
-  ),
-  N(
     { id: "rooks_charge", name: "Rooks Charge", description: "Your rooks can only move straight forward toward the enemy, never sideways or backward.", flavor: "The towers only know one command: advance.", icon: "castle" },
     {
       filterMoves: (moves, _state, ctx) =>

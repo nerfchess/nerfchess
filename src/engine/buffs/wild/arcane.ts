@@ -1332,7 +1332,7 @@ export const WILD_ARCANE: Buff[] = [
       name: "Greed",
       description:
         "Your next draft offer shows three cards, and you take all of them instead of one.",
-      tier: 5,
+      tier: 6,
       category: "draft",
       flavor: "Why choose?",
     },

@@ -2534,14 +2534,14 @@ const TIER5: Buff[] = [
     }),
   ),
   def(
-    { id: "draft_seize", name: "Draft Seize", description: "Take both cards in your next draft and deny your opponent theirs.", tier: 5, category: "draft" },
+    { id: "draft_seize", name: "Draft Seize", description: "Take both cards in your next draft and deny your opponent theirs.", tier: 6, category: "draft" },
     instant((_inst, api) => {
       api.mine.flags.takeBoth = (api.mine.flags.takeBoth ?? 0) + 1;
       api.theirs.flags.blockedDrafts = (api.theirs.flags.blockedDrafts ?? 0) + 1;
     }),
   ),
   def(
-    { id: "rampart", name: "Rampart", description: "Place a pawn on each of three empty squares you choose in your half; those three pawns cannot be captured for the rest of the game.", tier: 5, category: "protection" },
+    { id: "rampart", name: "Rampart", description: "Place a pawn on each of three empty squares you choose in your half; those three pawns cannot be captured for your opponent's next 5 turns.", tier: 5, category: "protection" },
     activated(
       (_inst, api, picks) =>
         picks.length >= 3
@@ -2558,7 +2558,7 @@ const TIER5: Buff[] = [
           .map((k) => k.square)
           .filter((s): s is Square => s != null && pawnRankOk(s));
         for (const sq of squares) api.place(sq, "p", api.me);
-        if (squares.length) addEffect(api, { kind: "shield", owner: api.me, squares, turns: null });
+        if (squares.length) addEffect(api, { kind: "shield", owner: api.me, squares, turns: 5 });
       },
     ),
   ),
@@ -2632,14 +2632,14 @@ const TIER6: Buff[] = [
     // for a 1+0 sprint (see ChessDiffState in buff.ts and endChessDiff in
     // game.ts). No drafts, nerfs, or buffs run while the diff does — it is
     // decided by plain chess. When it ends, the paused game resumes and ONLY the
-    // diff's winner is handed a GUARANTEED mythic (tier-10) card; a drawn diff
+    // diff's winner is handed a GUARANTEED apex (tier-9) card; a drawn diff
     // grants nobody anything. Deliberately game-breaking. Given a 2x appearance
     // rate via DOUBLE_CHANCE_IDS in draft.ts.
     {
       id: "chess_diff",
       name: "Chess Diff",
       description:
-        "Chess diff! The game is paused and a fresh, completely normal game of 1+0 chess is played on a clean board: no drafts, no nerfs, no buffs. Whoever WINS the diff seizes a mythic (tier 10) buff, then the paused game (board and clocks) resumes.",
+        "Chess diff! The game is paused and a fresh, completely normal game of 1+0 chess is played on a clean board: no drafts, no nerfs, no buffs. Whoever WINS the diff seizes an apex (tier 9) buff, then the paused game (board and clocks) resumes.",
       tier: 6,
       category: "pieces",
       boon: true,
@@ -2693,7 +2693,7 @@ const TIER6: Buff[] = [
       api.board.epTarget = null;
       api.board.halfmove = 0;
       api.bs.historyDiverged = true;
-      // The mythic is granted when the diff is DECIDED, to its winner only
+      // The apex prize is granted when the diff is DECIDED, to its winner only
       // (see endChessDiff in game.ts) — never at cast time.
     }),
   ),
@@ -2826,7 +2826,7 @@ const TIER6: Buff[] = [
     }),
   ),
   def(
-    { id: "draft_domination", name: "Draft Domination", description: "Force your opponent's next draft down to tier 1, so both cards they are offered come from the weakest tier.", tier: 6, category: "draft" },
+    { id: "draft_domination", name: "Draft Domination", description: "Force your opponent's next draft down to tier 1, so both cards they are offered come from the weakest tier.", tier: 5, category: "draft" },
     instant((_inst, api) => {
       api.theirs.flags.forceTier = 1;
     }),
@@ -3185,8 +3185,8 @@ const TIER7: Buff[] = [
     }),
   ),
   def(
-    { id: "titan", name: "Titan", description: "One piece becomes uncapturable with amazon movement for the rest of the game.", tier: 8, category: "movement", fx: { motif: "empower", pieces: ["p", "n", "b", "r", "q"], moveAs: "q", self: true } },
-    bindPiece("Choose the titan", bindCandidates(), { shieldTurns: null, gen: amazonGen }),
+    { id: "titan", name: "Titan", description: "One piece gains amazon movement for the rest of the game and cannot be captured for your opponent's next 6 turns.", tier: 8, category: "movement", fx: { motif: "empower", pieces: ["p", "n", "b", "r", "q"], moveAs: "q", self: true } },
+    bindPiece("Choose the titan", bindCandidates(), { shieldTurns: 6, gen: amazonGen }),
   ),
   def(
     { id: "ruin", name: "Ruin", description: "Clear all enemy pawns, and destroy one enemy minor piece (or a rook if they have no minor).", tier: 7, category: "attack" },
@@ -3435,9 +3435,9 @@ const TIER8: Buff[] = [
     ),
   ),
   def(
-    { id: "immortal_king", name: "Immortal King", description: "Your king cannot be captured for the rest of the game. You can still lose by running out of moves.", tier: 8, category: "protection" },
+    { id: "immortal_king", name: "Immortal King", description: "Your king cannot be captured for your opponent's next 8 turns. You can still lose by running out of moves.", tier: 8, category: "protection" },
     instant((_inst, api) => {
-      addEffect(api, { kind: "king_safe", owner: api.me, turns: null });
+      addEffect(api, { kind: "king_safe", owner: api.me, turns: 8 });
     }),
   ),
   def(
