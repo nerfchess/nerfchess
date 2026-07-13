@@ -67,6 +67,7 @@ import { SettingsPanel } from "@/components/SettingsPanel";
 import { loadSavedAiGame, restoreSavedAiGame, saveAiGame, snapshotGame } from "@/lib/gamePersistence";
 import { boardAtPly, replayBoardSpan } from "@/lib/gameReview";
 import { premoveOptionsFor, premoveSelfChecks, previewMovesFor } from "@/lib/premoves";
+import { TOUR_STATE_EVENT, type TourGameState } from "@/components/tutorial/tourState";
 import { categoryForTimeControl } from "@/lib/ratingCategories";
 import type { AIWorkerRequest, AIWorkerResponse } from "@/workers/aiWorker";
 import Link from "next/link";
@@ -307,6 +308,27 @@ function GamePage() {
   useEffect(() => {
     gameRef.current = game;
   }, [game]);
+
+  // --- First-game tour hook (additive; active only with ?tour=1) ----------
+  // The guided tour route (/tutorial/first-game) renders this page and layers
+  // coach marks on top. The game is never touched from outside: this effect
+  // only broadcasts a tiny read-only snapshot of tour-relevant state after
+  // every game update, and the tour component gates its steps on it.
+  const tourMode = params.get("tour") === "1";
+  useEffect(() => {
+    if (!tourMode) return;
+    const mine = game?.buffs?.players[myColor];
+    const detail: TourGameState = {
+      ready: !!game,
+      myMoves: game ? game.board.history.filter((m) => m.color === myColor).length : 0,
+      myTurn: !!game && !game.result && game.board.turn === myColor,
+      offerOpen: !!mine?.offer && !game?.result,
+      heldBuffs: mine?.buffs.length ?? 0,
+      banked: !!mine?.flags.bankBonus,
+      over: !!game?.result,
+    };
+    window.dispatchEvent(new CustomEvent<TourGameState>(TOUR_STATE_EVENT, { detail }));
+  }, [tourMode, game, myColor]);
 
   // Chess Diff sub-game clock swap: while the engine's bs.diff runs, both
   // sides play on the diff's 1+0 minute; the paused game's clocks are stashed
