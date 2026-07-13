@@ -90,6 +90,13 @@ const nextConfig = {
       },
     ];
   },
+  async redirects() {
+    // Cards converted from nerfs to buffs keep their old codex URLs alive.
+    return [
+      { source: "/codex/nerf/middle_part", destination: "/codex/buff/middle_part", permanent: true },
+      { source: "/codex/nerf/forearm_veins", destination: "/codex/buff/forearm_veins", permanent: true },
+    ];
+  },
 };
 
 export default nextConfig;

@@ -2480,7 +2480,10 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   actions) are hidden below the sm breakpoint. */}
               <div className="flex items-center justify-between gap-2 sm:hidden">
                 <BoardPlayerRow
-                  board={boardForDisplay}
+                  // Material counts read the COMMITTED position (a queued premove
+                  // must never bump the capture tally early); history review
+                  // still shows the reviewed position's material.
+                  board={isReviewingHistory ? boardForDisplay : game.board}
                   playerColor={oppColor}
                   myColor={myColor}
                   name={oppName}
@@ -2649,7 +2652,10 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               )}
               <div className="flex items-center justify-between gap-2 sm:hidden">
                 <BoardPlayerRow
-                  board={boardForDisplay}
+                  // Material counts read the COMMITTED position (a queued premove
+                  // must never bump the capture tally early); history review
+                  // still shows the reviewed position's material.
+                  board={isReviewingHistory ? boardForDisplay : game.board}
                   playerColor={myColor}
                   myColor={myColor}
                   name={myName}
