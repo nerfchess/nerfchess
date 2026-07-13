@@ -12,6 +12,15 @@ export const HOUSE_ENABLED_KEY = "house_enabled";
 // slider between 30 and 60; an absent row means the default (30).
 export const HOUSE_COUNT_KEY = "house_count";
 
+// Per-tier house-bot strength overrides: a JSON map
+// `{ "<skill>": { <field>: <value>, ... }, ... }` a moderator edits from /mod to
+// weaken (or restore) the bots live. Read by the game-server DO (cached ~15s)
+// and resolved per move against the baked profiles; every field is clamped and
+// an absent/garbage value falls back to baked strength. See bots.ts
+// (resolveSkillProfile) and docs/bot-weakening-spec.md. Absent row = no
+// overrides (baked strength).
+export const HOUSE_SKILL_OVERRIDES_KEY = "house_skill_overrides";
+
 // Whether ilovenewjeans's in-game "god panel" (summon a card into his own hand)
 // is mounted. Owner-only tool, kept hidden unless deliberately switched on from
 // /mod, so it never clutters normal play. Absent row = off (settingIsOnStrict).

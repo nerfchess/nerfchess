@@ -221,6 +221,14 @@ const LEVELS: Record<AILevel, LevelProfile> = {
   hard: { maxDepth: 12, budgetMs: 2000, rootNoise: 0, blunderChance: 0, extendedEval: true },
 };
 
+// The search shape a level runs at by default (depth + whether leaf eval uses
+// the extended terms). Exposed so the house-bot layer can resolve a weakening
+// profile's omitted maxDepth/extendedEval against the true level defaults
+// without duplicating (and drifting from) the LEVELS table.
+export function defaultSearchShape(level: AILevel): { maxDepth: number; extendedEval: boolean } {
+  return { maxDepth: LEVELS[level].maxDepth, extendedEval: LEVELS[level].extendedEval };
+}
+
 // Search budget for a level, capped to a slice of the bot's remaining clock
 // so the bot spends time like a human player and can never think its whole
 // bank away in fast time controls.
@@ -230,11 +238,56 @@ export function aiBudgetMs(level: AILevel, remainingClockMs?: number): number {
   return Math.max(60, Math.min(base || 300, remainingClockMs / 10));
 }
 
+// Move-quality weakening for the house bots. Applied ONLY when a caller passes
+// a `weaken` block whose sampling is actually active (topK > 1, or a non-zero
+// temperature/noise); with topK:1, temperatureCp:0 and evalNoiseCp:0 the search
+// takes the identical argmax path it took before this existed, so the unchanged
+// house tiers are provably unaffected. See docs/bot-weakening-spec.md. The point
+// is a *human-shaped* handicap (inaccuracies, the occasional 2nd/3rd-best move)
+// rather than a time-starved-but-flawless engine, which is why the lever is
+// move choice, not search time.
+export type WeakenParams = {
+  // Search shape (override LEVELS defaults for this move).
+  maxDepth: number;
+  extendedEval: boolean;
+  // Sample from the top `topK` root moves (1 = always the best move).
+  topK: number;
+  // Softmax temperature over root scores, centipawns (0 = argmax among the
+  // survivors, no random spread).
+  temperatureCp: number;
+  // Only root moves within this centipawn margin of the best are candidates.
+  sampleWindowCp: number;
+  // Uniform +-noise (centipawns) added to each root score before sampling, so
+  // positional judgement gets fuzzed without ever promoting a move the search
+  // sees as outright losing (that floor is enforced separately).
+  evalNoiseCp: number;
+};
+
+export type WeakenOptions = {
+  params: WeakenParams;
+  // Caller-supplied RNG (int in [0, max)), same one the house code threads
+  // everywhere so weakened move choice stays testable/deterministic under seed.
+  random: (max: number) => number;
+};
+
+// A root move a full-window search scored. Distinct from the argmax root loop,
+// which narrows alpha across moves and so returns inexact bounds for all but
+// the best — those bounds are unsafe to sample from (they can rank a refuted
+// move above a sound one), which is why sampling needs this separate pass.
+type RankedRootMove = { move: Move; scoreCp: number };
+
 // `overrideBudgetMs` caps the search time regardless of level, used by the
 // game server's house players so a bot-vs-bot move never blocks the (single
 // threaded) Durable Object long enough to stall live sockets or the lobby,
 // and by the client so the bot's thinking never exceeds its remaining clock.
-export function pickAIMove(game: NerfGame, level: AILevel, overrideBudgetMs?: number): Move | null {
+// `weaken` (house bots only) degrades move CHOICE for a realistic handicap;
+// see WeakenParams.
+export function pickAIMove(
+  game: NerfGame,
+  level: AILevel,
+  overrideBudgetMs?: number,
+  weaken?: WeakenOptions,
+): Move | null {
   const all = legalMoves(game);
   if (!all.length) return null;
   const safe = all.filter((m) => !isSelfLosing(game, m));
@@ -249,7 +302,8 @@ export function pickAIMove(game: NerfGame, level: AILevel, overrideBudgetMs?: nu
 
   if (level === "easy") {
     // Greedy one-ply search: take the move with the best immediate evaluation,
-    // with heavy noise. No lookahead, so it still walks into tactics.
+    // with heavy noise. No lookahead, so it still walks into tactics. Weakening
+    // never targets easy (it is already the weakest profile).
     let best: Move | null = null;
     let bestScore = -Infinity;
     for (const m of moves) {
@@ -264,9 +318,22 @@ export function pickAIMove(game: NerfGame, level: AILevel, overrideBudgetMs?: nu
 
   const opp: Color = me === "w" ? "b" : "w";
   const budget = overrideBudgetMs ?? cfg.budgetMs;
-  const maxDepth = cfg.maxDepth;
+  const maxDepth = weaken?.params.maxDepth ?? cfg.maxDepth;
+  const extended = weaken?.params.extendedEval ?? cfg.extendedEval;
+
+  // Sampling is only worth its extra cost (a full-window root pass) when it can
+  // actually change the choice. Otherwise fall through to the identical argmax
+  // search that predates weakening.
+  const p = weaken?.params;
+  const sampling = !!p && (p.topK > 1 || p.temperatureCp > 0 || p.evalNoiseCp > 0);
+
+  if (sampling && weaken) {
+    const ranked = rankedRoot(game, moves, opp, maxDepth, budget, extended);
+    return sampleWeakened(ranked, weaken.params, weaken.random);
+  }
+
   const start = Date.now();
-  const state = newSearchState(cfg.extendedEval, budget);
+  const state = newSearchState(extended, budget);
 
   let bestMove: Move | null = null;
 
@@ -304,6 +371,94 @@ export function pickAIMove(game: NerfGame, level: AILevel, overrideBudgetMs?: nu
   }
 
   return bestMove ?? moves[0];
+}
+
+// Iterative-deepening root search that scores EVERY root move with a full
+// window (alpha stays -Inf across root moves) so the returned scores are
+// directly comparable and safe to sample from. Interior nodes still narrow and
+// prune normally as alpha rises within each subtree; only the root-level
+// narrowing that produces inexact bounds is dropped. Costs roughly 2-4x the
+// argmax search at equal depth — fine at the shallow depths weakened tiers use,
+// and the node cap remains the frozen-clock backstop. Returns the ranked list
+// (best first) from the deepest fully completed depth.
+function rankedRoot(
+  game: NerfGame,
+  moves: Move[],
+  opp: Color,
+  maxDepth: number,
+  budget: number,
+  extended: boolean,
+): RankedRootMove[] {
+  const start = Date.now();
+  const state = newSearchState(extended, budget);
+  let ranked: RankedRootMove[] = moves.map((move) => ({ move, scoreCp: 0 }));
+  let priority: Move | null = null;
+
+  for (let d = 1; d <= maxDepth; d++) {
+    const scored: RankedRootMove[] = [];
+    let timedOut = false;
+    for (const m of orderMoves(moves, priority, state, 0)) {
+      const nb = makeMove(game.board, m);
+      // Full window (-Inf, +Inf): no root-level alpha narrowing, so each move
+      // gets an exact score rather than a bound.
+      const score = -negamax(nb, d - 1, -Infinity, Infinity, opp, start, budget, state, 1);
+      if (Number.isNaN(score)) {
+        timedOut = true;
+        break;
+      }
+      scored.push({ move: m, scoreCp: score });
+    }
+    if (!timedOut && scored.length) {
+      scored.sort((a, b) => b.scoreCp - a.scoreCp);
+      ranked = scored;
+      priority = scored[0].move; // best-so-far first at the next depth
+    }
+    if (timedOut) break;
+    if (Date.now() - start > budget) break;
+  }
+  return ranked;
+}
+
+// Pick a weakened move from ranked root scores: fuzz each score by uniform
+// noise, keep those within the window of the best, cap to topK, then softmax-
+// sample by temperature. A candidate the search scores as outright losing
+// (mate-range) is never chosen while a non-losing move exists, so a weakened
+// bot plays inaccuracies and the odd second-best move but not one-move suicides
+// the search already saw.
+const MATE_SCORE = 50000;
+
+function sampleWeakened(ranked: RankedRootMove[], p: WeakenParams, random: (max: number) => number): Move {
+  if (!ranked.length) throw new Error("sampleWeakened: no moves");
+  const rawBest = ranked[0].scoreCp; // ranked is best-first from rankedRoot
+  const noised = ranked.map((r) => ({
+    move: r.move,
+    raw: r.scoreCp,
+    s: r.scoreCp + (p.evalNoiseCp > 0 ? random(2 * p.evalNoiseCp + 1) - p.evalNoiseCp : 0),
+  }));
+
+  // Window on the (noised) score, mate-floor on the true score.
+  let cands = noised.filter((c) => c.s >= rawBest - p.sampleWindowCp);
+  if (rawBest > -MATE_SCORE) {
+    const safe = cands.filter((c) => c.raw > -MATE_SCORE);
+    if (safe.length) cands = safe;
+  }
+  if (!cands.length) cands = [noised[0]];
+
+  cands.sort((a, b) => b.s - a.s);
+  cands = cands.slice(0, Math.max(1, p.topK));
+
+  if (p.temperatureCp <= 0 || cands.length === 1) return cands[0].move;
+
+  const top = cands[0].s;
+  const weights = cands.map((c) => Math.exp((c.s - top) / p.temperatureCp));
+  const sum = weights.reduce((a, b) => a + b, 0);
+  // random(max) is an int RNG; build a [0,1) float from a large draw.
+  let roll = (random(1_000_000) / 1_000_000) * sum;
+  for (let i = 0; i < cands.length; i++) {
+    roll -= weights[i];
+    if (roll <= 0) return cands[i].move;
+  }
+  return cands[cands.length - 1].move;
 }
 
 export interface BoardAnalysis {

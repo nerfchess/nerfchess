@@ -46,6 +46,9 @@ import {
   pickHouseMove,
   pickHouseSeek,
   syncHouseRatings,
+  resolveSkillProfile,
+  parseSkillOverrides,
+  type ResolvedSkillProfile,
 } from "./src/lib/server/bots";
 import { moveByUci, type EngineMatch } from "./src/engine/replay";
 import { triggersOwnNerfLoss } from "./src/engine/moveSafety";
@@ -949,6 +952,40 @@ export class GameServer extends DurableObject<Env> {
     } catch {}
     this.houseCountCache = { value, at: now };
     return value;
+  }
+
+  // Moderator house-strength overrides (app_settings.house_skill_overrides): a
+  // per-tier JSON patch a moderator sets from /mod to weaken (or restore) the
+  // bots live. Cached on the same ~15s TTL as the other house settings, so a
+  // change reaches live games within a tick without a redeploy. Held as the
+  // parsed map; each persona resolves its own tier fresh per move
+  // (resolveHouseProfile). An absent/garbage value reads as "no overrides" =
+  // baked strength.
+  private houseSkillOverridesCache: { value: Record<string, unknown> | null; at: number } | null = null;
+  private async houseSkillOverrides(): Promise<Record<string, unknown> | null> {
+    const now = Date.now();
+    if (this.houseSkillOverridesCache && now - this.houseSkillOverridesCache.at < houseEnabledTtlMs) {
+      return this.houseSkillOverridesCache.value;
+    }
+    let value = this.houseSkillOverridesCache?.value ?? null;
+    try {
+      const db = await this.db();
+      if (db) {
+        const row = await db
+          .prepare("SELECT value FROM app_settings WHERE key = ?")
+          .bind("house_skill_overrides")
+          .first<{ value: string }>();
+        value = parseSkillOverrides(row?.value ?? null);
+      }
+    } catch {}
+    this.houseSkillOverridesCache = { value, at: now };
+    return value;
+  }
+
+  /** Resolve a house persona's effective strength: baked tier profile merged
+   * with the current moderator override for that tier, if any. */
+  private async houseResolvedProfile(skill: HouseSkill): Promise<ResolvedSkillProfile> {
+    return resolveSkillProfile(skill, await this.houseSkillOverrides());
   }
 
   // Moderator card overrides (the card_overrides table), digested down to the
@@ -3792,6 +3829,7 @@ export class GameServer extends DurableObject<Env> {
     match: StoredMatch,
     skill: HouseSkill,
     remainingClockMs?: number,
+    profile?: ResolvedSkillProfile,
   ): Promise<Move | null> {
     if (this.env.HOUSE_ENGINE_REMOTE !== "true" || !this.env.HOUSE_ENGINE_URL) return null;
     const ctl = new AbortController();
@@ -3809,6 +3847,10 @@ export class GameServer extends DurableObject<Env> {
         body: JSON.stringify({
           match: serializeMatchForEngine(match),
           skill,
+          // The moderator-resolved strength. Optional and clamped again on the
+          // box, so an old engine build ignores it (baked strength) and a new
+          // one honors it — no lockstep deploy needed for a tuning change.
+          profile,
           remainingClockMs,
           replayVersion: REPLAY_VERSION,
         }),
@@ -4019,6 +4061,10 @@ export class GameServer extends DurableObject<Env> {
     // no legal move at all.
     const clocks = this.currentClocks(match, now);
     const remaining = match.setup.timeSec ? clocks[color] : undefined;
+    // The persona's effective strength (baked tier ⊕ current moderator
+    // override). Resolved once and used for both the remote payload and the
+    // local fallback so a mid-game strength change is honored on either path.
+    const profile = await this.houseResolvedProfile(persona.skill);
     let move: Move | null = null;
     // Remote (OCI) search only for games a human is in. Filler (bot-vs-bot)
     // moves always use the local hard-capped search (<= 80ms): one fewer
@@ -4033,7 +4079,7 @@ export class GameServer extends DurableObject<Env> {
       !this.isBotOnlyMatch(match) &&
       (remaining === undefined || remaining > HOUSE_ENGINE_TIMEOUT_MS + 2000);
     if (useRemote) {
-      const remote = await this.remoteHouseMove(match, persona.skill, remaining);
+      const remote = await this.remoteHouseMove(match, persona.skill, remaining, profile);
       // The await above yielded the DO thread for up to HOUSE_ENGINE_TIMEOUT_MS;
       // the match may have ended (resign, disconnect, flag) or advanced while
       // the remote search ran — and for a human-seated game `match` is a
@@ -4079,7 +4125,7 @@ export class GameServer extends DurableObject<Env> {
     }
     if (!move) {
       try {
-        move = pickHouseMove(game, persona.skill, randomInt, remaining);
+        move = pickHouseMove(game, persona.skill, randomInt, remaining, undefined, profile);
       } catch (err) {
         console.error("house move pick failed, using a legal fallback", match.id, err);
       }

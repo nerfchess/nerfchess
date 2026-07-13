@@ -934,27 +934,60 @@ function ChatFlagsTab() {
 // the lobby warm. Flipping it writes app_settings.house_enabled; the game
 // server reads it within a few seconds, stops advertising bot seeks, and winds
 // down any bot game already in progress. Persisted, so it survives redeploys.
+// Shape of a resolved strength profile (matches ResolvedSkillProfile in
+// bots.ts) and the per-tier state the /mod API returns.
+type ResolvedProfile = {
+  level: string;
+  budgetMs: number;
+  blunderChance: number;
+  maxDepth: number;
+  extendedEval: boolean;
+  topK: number;
+  temperatureCp: number;
+  sampleWindowCp: number;
+  evalNoiseCp: number;
+};
+type SkillTier = {
+  skill: number;
+  defaults: ResolvedProfile;
+  overrides: Record<string, unknown> | null;
+  effective: ResolvedProfile;
+};
+type PresetMap = Record<string, Record<string, number | boolean>>;
+type HouseState = {
+  enabled: boolean;
+  count: number;
+  min: number;
+  max: number;
+  clamp: Record<string, [number, number]>;
+  presets: { weakened: PresetMap; veryWeak: PresetMap };
+  skillTiers: SkillTier[];
+};
+
 function HouseBotsToggle() {
   const [enabled, setEnabled] = useState<boolean | null>(null);
   const [count, setCount] = useState<number | null>(null);
   const [bounds, setBounds] = useState<{ min: number; max: number }>({ min: 30, max: 60 });
+  const [strength, setStrength] = useState<Pick<
+    HouseState,
+    "clamp" | "presets" | "skillTiers"
+  > | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const ingest = (data: HouseState) => {
+    setEnabled(data.enabled);
+    setCount(data.count);
+    setBounds({ min: data.min, max: data.max });
+    setStrength({ clamp: data.clamp, presets: data.presets, skillTiers: data.skillTiers });
+  };
 
   useEffect(() => {
     let cancelled = false;
     fetch("/api/mod/house")
-      .then((res) =>
-        res.ok
-          ? (res.json() as Promise<{ enabled: boolean; count: number; min: number; max: number }>)
-          : null,
-      )
+      .then((res) => (res.ok ? (res.json() as Promise<HouseState>) : null))
       .then((data) => {
-        if (!cancelled && data) {
-          setEnabled(data.enabled);
-          setCount(data.count);
-          setBounds({ min: data.min, max: data.max });
-        }
+        if (!cancelled && data) ingest(data);
       })
       .catch(() => {});
     return () => {
@@ -972,9 +1005,7 @@ function HouseBotsToggle() {
         body: JSON.stringify(body),
       });
       if (!res.ok) throw new Error();
-      const data = (await res.json()) as { enabled: boolean; count: number };
-      setEnabled(data.enabled);
-      setCount(data.count);
+      ingest((await res.json()) as HouseState);
     } catch {
       setError("Could not update. Try again.");
     } finally {
@@ -1049,6 +1080,178 @@ function HouseBotsToggle() {
           className="mt-1.5 w-full accent-gold-leaf disabled:cursor-not-allowed"
         />
       </div>
+      {strength && (
+        <HouseStrengthEditor
+          state={strength}
+          saving={saving}
+          disabled={enabled === false}
+          onSave={post}
+        />
+      )}
+    </div>
+  );
+}
+
+// The editable strength fields shown in the tier table. `pct` fields are stored
+// as a 0-1 fraction but edited as a percentage. sampleWindowCp is intentionally
+// omitted (advanced; left at its default) to keep the row compact.
+const STRENGTH_FIELDS = [
+  { key: "maxDepth", label: "depth", step: 1, pct: false },
+  { key: "budgetMs", label: "ms", step: 10, pct: false },
+  { key: "topK", label: "topK", step: 1, pct: false },
+  { key: "temperatureCp", label: "temp", step: 10, pct: false },
+  { key: "evalNoiseCp", label: "noise", step: 5, pct: false },
+  { key: "blunderChance", label: "blndr%", step: 1, pct: true },
+] as const;
+
+type StrengthFieldKey = (typeof STRENGTH_FIELDS)[number]["key"];
+
+// Per-tier house-bot strength tuning. Presets fill the whole override map in one
+// click; the table edits any single field live. Effective values come straight
+// from the API's resolved profiles, so what is shown is exactly what plays.
+// Changes reach live games within ~15s (the DO's settings cache TTL).
+function HouseStrengthEditor({
+  state,
+  saving,
+  disabled,
+  onSave,
+}: {
+  state: Pick<HouseState, "clamp" | "presets" | "skillTiers">;
+  saving: boolean;
+  disabled: boolean;
+  onSave: (body: Record<string, unknown>) => void;
+}) {
+  const { clamp, presets, skillTiers } = state;
+
+  // Apply a named preset: set every tier the preset names, and null every tier
+  // it doesn't, so applying a preset always fully replaces prior overrides.
+  const applyPreset = (preset: PresetMap) => {
+    if (saving) return;
+    const map: Record<string, Record<string, number | boolean> | null> = {};
+    for (const t of skillTiers) map[String(t.skill)] = preset[String(t.skill)] ?? null;
+    onSave({ skillOverrides: map });
+  };
+
+  const commitField = (skill: number, field: StrengthFieldKey, pct: boolean, raw: number) => {
+    if (saving || !Number.isFinite(raw)) return;
+    const value = pct ? raw / 100 : raw;
+    onSave({ skillOverrides: { [String(skill)]: { [field]: value } } });
+  };
+
+  const resetTier = (skill: number) => {
+    if (!saving) onSave({ skillOverrides: { [String(skill)]: null } });
+  };
+
+  const anyOverride = skillTiers.some((t) => t.overrides && Object.keys(t.overrides).length > 0);
+
+  return (
+    <div className={"border-t border-white/10 pt-3 " + (disabled ? "opacity-50" : "")}>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="smallcaps text-[11px] text-parchment-400">House bot strength</span>
+        <div className="flex flex-wrap gap-1.5">
+          <button
+            type="button"
+            disabled={saving || !anyOverride}
+            onClick={() => onSave({ resetSkillOverrides: true })}
+            className="press border border-white/15 px-2 py-1 text-[11px] text-parchment-300 disabled:opacity-40"
+          >
+            Default
+          </button>
+          <button
+            type="button"
+            disabled={saving}
+            onClick={() => applyPreset(presets.weakened)}
+            className="press border border-gold-leaf/40 bg-gold-leaf/10 px-2 py-1 text-[11px] text-gold-leaf disabled:opacity-40"
+          >
+            Weakened 50/30/20
+          </button>
+          <button
+            type="button"
+            disabled={saving}
+            onClick={() => applyPreset(presets.veryWeak)}
+            className="press border border-oxblood-glow/40 bg-oxblood/10 px-2 py-1 text-[11px] text-oxblood-glow disabled:opacity-40"
+          >
+            Very weak
+          </button>
+        </div>
+      </div>
+
+      <div className="mt-2 overflow-x-auto">
+        <table className="w-full min-w-[420px] border-collapse text-[11px]">
+          <thead>
+            <tr className="text-parchment-400">
+              <th className="py-1 pr-2 text-left font-normal smallcaps">Tier</th>
+              {STRENGTH_FIELDS.map((f) => (
+                <th key={f.key} className="px-1 py-1 text-right font-normal">
+                  {f.label}
+                </th>
+              ))}
+              <th className="pl-1" />
+            </tr>
+          </thead>
+          <tbody className="font-mono tabular-nums">
+            {skillTiers.map((t) => {
+              const over = t.overrides ?? {};
+              const touched = Object.keys(over).length > 0;
+              return (
+                <tr key={t.skill} className="border-t border-white/5">
+                  <td className={"py-1 pr-2 " + (touched ? "text-gold-leaf" : "text-parchment-200")}>
+                    {t.skill}
+                  </td>
+                  {STRENGTH_FIELDS.map((f) => {
+                    const [lo, hi] = clamp[f.key] ?? [0, 9999];
+                    const eff = t.effective[f.key] as number;
+                    const def = t.defaults[f.key] as number;
+                    const shown = f.pct ? Math.round(eff * 100) : eff;
+                    const defShown = f.pct ? Math.round(def * 100) : def;
+                    const isOver = Object.prototype.hasOwnProperty.call(over, f.key);
+                    return (
+                      <td key={f.key} className="px-1 py-1 text-right">
+                        <input
+                          type="number"
+                          min={f.pct ? lo * 100 : lo}
+                          max={f.pct ? hi * 100 : hi}
+                          step={f.step}
+                          defaultValue={shown}
+                          key={`${t.skill}-${f.key}-${shown}`}
+                          disabled={saving}
+                          title={`default ${defShown}`}
+                          onBlur={(e) => {
+                            const v = Number(e.target.value);
+                            if (v !== shown) commitField(t.skill, f.key, f.pct, v);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                          }}
+                          className={
+                            "w-12 rounded border bg-black/20 px-1 py-0.5 text-right outline-none focus:border-gold-leaf/60 " +
+                            (isOver ? "border-gold-leaf/50 text-gold-leaf" : "border-white/10 text-parchment-300")
+                          }
+                        />
+                      </td>
+                    );
+                  })}
+                  <td className="pl-1 text-right">
+                    <button
+                      type="button"
+                      disabled={saving || !touched}
+                      onClick={() => resetTier(t.skill)}
+                      title="Reset this tier to baked default"
+                      className="press px-1 text-parchment-400 disabled:opacity-25"
+                    >
+                      ↺
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      <p className="mt-2 text-[10px] leading-snug text-parchment-500">
+        Move-quality weakening (topK / temp / noise), not just time — changes reach live games within
+        ~15s. Ratings drift is expected after a strength change. Gold = overridden.
+      </p>
     </div>
   );
 }

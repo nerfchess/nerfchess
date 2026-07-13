@@ -8,7 +8,7 @@
 // players (their accounts still hold "_flower" avatar preset ids as an
 // internal marker, but no visible mark is drawn from them anymore).
 
-import { pickAIMove, type AILevel } from "../../engine/ai";
+import { pickAIMove, defaultSearchShape, type AILevel, type WeakenParams } from "../../engine/ai";
 import { legalMoves, type NerfGame } from "../../engine/game";
 import { triggersOwnNerfLoss } from "../../engine/moveSafety";
 import type { DraftMode } from "../../engine/buff";
@@ -46,10 +46,36 @@ export const HOUSE_SEARCH_CEILING_MS = 80;
 // measurement either.
 export type HouseSkill = 1350 | 1550 | 1750 | 1900 | 1950 | 2000 | 2050 | 2100 | 2150 | 2200;
 
+// Baked per-tier profile. The weakening fields are OPTIONAL and every baked
+// tier below leaves them unset, so a fresh install resolves to topK:1 / no
+// noise — i.e. the exact pre-weakening search. Weakening is applied at runtime
+// as a moderator override (app_settings.house_skill_overrides), never baked, so
+// it reverts from the /mod dashboard in one click. See docs/bot-weakening-spec.md.
 type SkillProfile = {
   level: AILevel;
   budgetMs: number;
   blunderChance: number;
+  // --- Optional weakening knobs (see WeakenParams in ai.ts). Unset = default. ---
+  maxDepth?: number;
+  extendedEval?: boolean;
+  topK?: number;
+  temperatureCp?: number;
+  sampleWindowCp?: number;
+  evalNoiseCp?: number;
+};
+
+// A profile with every field resolved (no optionals): the shape the engine and
+// the moderator dashboard both work in.
+export type ResolvedSkillProfile = {
+  level: AILevel;
+  budgetMs: number;
+  blunderChance: number;
+  maxDepth: number;
+  extendedEval: boolean;
+  topK: number;
+  temperatureCp: number;
+  sampleWindowCp: number;
+  evalNoiseCp: number;
 };
 
 export const HOUSE_SKILL_PROFILES: Record<HouseSkill, SkillProfile> = {
@@ -63,6 +89,201 @@ export const HOUSE_SKILL_PROFILES: Record<HouseSkill, SkillProfile> = {
   2100: { level: "hard", budgetMs: 550, blunderChance: 0.005 },
   2150: { level: "hard", budgetMs: 650, blunderChance: 0.005 },
   2200: { level: "hard", budgetMs: 800, blunderChance: 0.005 },
+};
+
+// ---------------------------------------------------------------------------
+// Skill resolution & runtime overrides.
+//
+// A moderator tunes strength live by storing a JSON override map in
+// app_settings (house_skill_overrides): a partial patch per tier. The DO reads
+// it (cached ~15s) and resolves each persona's profile fresh per move, so a
+// change reaches live games within a tick without a redeploy. Every numeric
+// field is clamped on the way in, and a missing/garbage field falls back to the
+// baked value field-by-field, so no stored value can drive the bots into a
+// broken (or thread-stalling) search — the worst a bad save does is default
+// strength. See docs/bot-weakening-spec.md §4-5.
+// ---------------------------------------------------------------------------
+
+// Inclusive clamp ranges for every tunable field. Exported so the engine
+// service (which independently re-clamps whatever the DO sends) stays in lockstep
+// with these bounds from the shared module rather than a hand-copied constant.
+export const WEAKEN_CLAMP = {
+  budgetMs: [10, 900],
+  blunderChance: [0, 0.25],
+  maxDepth: [1, 12],
+  topK: [1, 8],
+  temperatureCp: [0, 400],
+  sampleWindowCp: [0, 1000],
+  evalNoiseCp: [0, 200],
+} as const satisfies Record<string, readonly [number, number]>;
+
+function clampField(key: keyof typeof WEAKEN_CLAMP, v: unknown, fallback: number): number {
+  if (typeof v !== "number" || !Number.isFinite(v)) return fallback;
+  const [lo, hi] = WEAKEN_CLAMP[key];
+  // maxDepth/topK are integer knobs; the rest are fine as-is.
+  const n = key === "maxDepth" || key === "topK" ? Math.round(v) : v;
+  return Math.max(lo, Math.min(hi, n));
+}
+
+/** The baked profile for a tier, fully resolved (optionals filled from the
+ * level's default search shape). This is the "no overrides" strength. */
+export function bakedResolvedProfile(skill: HouseSkill): ResolvedSkillProfile {
+  const base = HOUSE_SKILL_PROFILES[skill];
+  const shape = defaultSearchShape(base.level);
+  return {
+    level: base.level,
+    budgetMs: base.budgetMs,
+    blunderChance: base.blunderChance,
+    maxDepth: base.maxDepth ?? shape.maxDepth,
+    extendedEval: base.extendedEval ?? shape.extendedEval,
+    topK: base.topK ?? 1,
+    temperatureCp: base.temperatureCp ?? 0,
+    sampleWindowCp: base.sampleWindowCp ?? 150,
+    evalNoiseCp: base.evalNoiseCp ?? 0,
+  };
+}
+
+// Apply a single untrusted patch object onto a resolved base, clamping every
+// numeric field and ignoring anything unrecognized. Shared by resolveSkillProfile
+// (moderator overrides, keyed by tier) and the engine service (a flat profile
+// the DO already resolved and sent). `level` is never overridable — it selects
+// eval terms/heuristics and is an engine concern, not a strength dial.
+function applyProfilePatch(base: ResolvedSkillProfile, patch: unknown): ResolvedSkillProfile {
+  if (!patch || typeof patch !== "object") return base;
+  const p = patch as Record<string, unknown>;
+  return {
+    level: base.level,
+    budgetMs: clampField("budgetMs", p.budgetMs, base.budgetMs),
+    blunderChance: clampField("blunderChance", p.blunderChance, base.blunderChance),
+    maxDepth: clampField("maxDepth", p.maxDepth, base.maxDepth),
+    extendedEval: typeof p.extendedEval === "boolean" ? p.extendedEval : base.extendedEval,
+    topK: clampField("topK", p.topK, base.topK),
+    temperatureCp: clampField("temperatureCp", p.temperatureCp, base.temperatureCp),
+    sampleWindowCp: clampField("sampleWindowCp", p.sampleWindowCp, base.sampleWindowCp),
+    evalNoiseCp: clampField("evalNoiseCp", p.evalNoiseCp, base.evalNoiseCp),
+  };
+}
+
+/** Parse the raw app_settings JSON string into an override map, or null. Never
+ * throws: an unparseable value reads as "no overrides". */
+export function parseSkillOverrides(raw: string | null | undefined): Record<string, unknown> | null {
+  if (!raw) return null;
+  try {
+    const v = JSON.parse(raw);
+    return v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Resolve a tier's effective profile: baked default merged with the (clamped)
+ * moderator override for that tier, if any. `overrides` is the parsed map (or
+ * null); accepts either the parsed object or the raw JSON string. */
+export function resolveSkillProfile(
+  skill: HouseSkill,
+  overrides: Record<string, unknown> | string | null | undefined,
+): ResolvedSkillProfile {
+  const map = typeof overrides === "string" ? parseSkillOverrides(overrides) : overrides ?? null;
+  const base = bakedResolvedProfile(skill);
+  return map ? applyProfilePatch(base, map[String(skill)]) : base;
+}
+
+/** Re-clamp a resolved profile the DO sent to the engine service. Any missing
+ * or out-of-range field falls back to that tier's baked value, so a version-
+ * skewed or malformed payload degrades to baked strength, never to a broken
+ * search. */
+export function sanitizeResolvedProfile(skill: HouseSkill, raw: unknown): ResolvedSkillProfile {
+  return applyProfilePatch(bakedResolvedProfile(skill), raw);
+}
+
+/** The WeakenOptions params carried into pickAIMove for a resolved profile. */
+function weakenParamsOf(p: ResolvedSkillProfile): WeakenParams {
+  return {
+    maxDepth: p.maxDepth,
+    extendedEval: p.extendedEval,
+    topK: p.topK,
+    temperatureCp: p.temperatureCp,
+    sampleWindowCp: p.sampleWindowCp,
+    evalNoiseCp: p.evalNoiseCp,
+  };
+}
+
+/** Every house skill tier, ascending — the unit the dashboard and overrides map
+ * are keyed by. Derived from the profile map so it never drifts. */
+export const HOUSE_SKILLS: HouseSkill[] = (Object.keys(HOUSE_SKILL_PROFILES) as unknown[])
+  .map(Number)
+  .sort((a, b) => a - b) as HouseSkill[];
+
+// The tunable numeric fields (level is engine-only, extendedEval is boolean).
+const WEAKEN_NUM_FIELDS = [
+  "budgetMs",
+  "blunderChance",
+  "maxDepth",
+  "topK",
+  "temperatureCp",
+  "sampleWindowCp",
+  "evalNoiseCp",
+] as const;
+
+/** Sanitize an untrusted per-tier patch down to the recognized, clamped fields
+ * actually present (sparse — the shape stored in the overrides map). Numeric
+ * fields are clamped to WEAKEN_CLAMP; unknown keys and non-finite values are
+ * dropped. Used by the /mod save path so stored overrides are always sane. */
+export function cleanSkillPatch(raw: unknown): Partial<SkillProfile> {
+  if (!raw || typeof raw !== "object") return {};
+  const p = raw as Record<string, unknown>;
+  const out: Record<string, number | boolean> = {};
+  for (const k of WEAKEN_NUM_FIELDS) {
+    const v = p[k];
+    if (typeof v === "number" && Number.isFinite(v)) {
+      const [lo, hi] = WEAKEN_CLAMP[k];
+      const n = k === "maxDepth" || k === "topK" ? Math.round(v) : v;
+      out[k] = Math.max(lo, Math.min(hi, n));
+    }
+  }
+  if (typeof p.extendedEval === "boolean") out.extendedEval = p.extendedEval;
+  return out as Partial<SkillProfile>;
+}
+
+// Named preset the /mod "Weakened (50/30/20)" button writes into the override
+// map: ~50% of the roster (1350-1900) significantly weaker, ~30% (1950-2050)
+// weaker, the 2100-2200 top band untouched (absent = baked).
+//
+// Calibration note (2026-07-12, scripts/sim-house-bots.ts --roundrobin + the
+// control run): mirror self-play SATURATES — two unweakened engines draw every
+// game, so any weakening flips draws into losses and even a mild topK:2/temp:60
+// tier scored ~4% against an unweakened peer. That test confirms direction and
+// monotonicity but cannot resolve the bands or predict strength vs HUMANS (who
+// also err). These numbers are therefore a GRADED ramp (subtle at the top of
+// the weakened range, clearly weak at the bottom), softened from the first cut,
+// not tuned to a self-play win rate. Treat as a starting point: enable, watch
+// real rating drift (spec §6), and hand-tune any field live from /mod.
+export const WEAKENED_PRESET: Partial<Record<HouseSkill, Partial<SkillProfile>>> = {
+  // "significantly worse": reliably beatable by a decent player.
+  1350: { blunderChance: 0.08, maxDepth: 3, topK: 4, temperatureCp: 130, evalNoiseCp: 60, extendedEval: false },
+  1550: { blunderChance: 0.05, maxDepth: 3, topK: 4, temperatureCp: 110, evalNoiseCp: 50, extendedEval: false },
+  1750: { blunderChance: 0.03, maxDepth: 4, topK: 3, temperatureCp: 90, evalNoiseCp: 40, extendedEval: false, budgetMs: 120 },
+  1900: { blunderChance: 0.02, maxDepth: 5, topK: 3, temperatureCp: 70, evalNoiseCp: 30, extendedEval: false, budgetMs: 150 },
+  // "worse": subtle — the odd inaccuracy, not a handicap match.
+  1950: { blunderChance: 0.005, maxDepth: 6, topK: 2, temperatureCp: 45, evalNoiseCp: 18 },
+  2000: { blunderChance: 0.005, maxDepth: 7, topK: 2, temperatureCp: 35, evalNoiseCp: 14 },
+  2050: { blunderChance: 0.005, maxDepth: 8, topK: 2, temperatureCp: 25, evalNoiseCp: 10 },
+};
+
+// A harder preset the /mod "Very weak" button writes: weakens the whole roster
+// (including the top band), for testing or a deliberately beginner-friendly
+// lobby. Also starting numbers, tunable live.
+export const VERY_WEAK_PRESET: Partial<Record<HouseSkill, Partial<SkillProfile>>> = {
+  1350: { blunderChance: 0.16, maxDepth: 2, topK: 6, temperatureCp: 260, evalNoiseCp: 120, extendedEval: false },
+  1550: { blunderChance: 0.12, maxDepth: 2, topK: 6, temperatureCp: 230, evalNoiseCp: 110, extendedEval: false },
+  1750: { blunderChance: 0.1, maxDepth: 3, topK: 5, temperatureCp: 200, evalNoiseCp: 100, extendedEval: false, budgetMs: 80 },
+  1900: { blunderChance: 0.08, maxDepth: 3, topK: 5, temperatureCp: 180, evalNoiseCp: 90, extendedEval: false, budgetMs: 90 },
+  1950: { blunderChance: 0.06, maxDepth: 3, topK: 4, temperatureCp: 150, evalNoiseCp: 70, extendedEval: false },
+  2000: { blunderChance: 0.05, maxDepth: 4, topK: 4, temperatureCp: 130, evalNoiseCp: 60, extendedEval: false },
+  2050: { blunderChance: 0.04, maxDepth: 4, topK: 3, temperatureCp: 110, evalNoiseCp: 50 },
+  2100: { blunderChance: 0.03, maxDepth: 5, topK: 3, temperatureCp: 90, evalNoiseCp: 40 },
+  2150: { blunderChance: 0.02, maxDepth: 5, topK: 3, temperatureCp: 80, evalNoiseCp: 35 },
+  2200: { blunderChance: 0.02, maxDepth: 6, topK: 2, temperatureCp: 70, evalNoiseCp: 30 },
 };
 
 export type HousePersona = {
@@ -443,25 +664,27 @@ export function houseDraftThinkMs(random: (max: number) => number): number {
 // Move selection.
 // ---------------------------------------------------------------------------
 
-/** Search budget for one house move: the skill profile's budget, shrunk when
- * the clock runs low, and never above `ceilingMs` (default: the DO-safe
+/** Search budget for one house move: the resolved profile's budget, shrunk
+ * when the clock runs low, and never above `ceilingMs` (default: the DO-safe
  * ceiling — pass a higher one only where the search can't stall a shared
  * thread, i.e. the OCI engine service). */
 export function houseMoveBudgetMs(
-  skill: HouseSkill,
+  budgetMs: number,
   remainingClockMs?: number,
   ceilingMs: number = HOUSE_SEARCH_CEILING_MS,
 ): number {
-  let budget = Math.min(HOUSE_SKILL_PROFILES[skill].budgetMs, ceilingMs);
+  let budget = Math.min(budgetMs, ceilingMs);
   if (remainingClockMs != null && remainingClockMs < 30_000) budget = Math.min(budget, 25);
   return Math.max(10, budget);
 }
 
-/** Pick the house player's move. Strength differences come from the skill
- * profile's budget and blunder probability. `ceilingMs` defaults to the
- * DO-safe cap so every existing caller (the DO's local fallback, the arena
- * service, the sim script) is unaffected; only the OCI engine service passes
- * a higher one, since search there costs the DO nothing.
+/** Pick the house player's move. Strength comes from the resolved profile's
+ * budget, blunder probability, and move-quality weakening (topK/temperature/
+ * noise). Pass `profile` to use a moderator-resolved strength (the DO does, per
+ * move); omit it and the baked profile for the tier is used, so every existing
+ * caller (DO local fallback, arena service, sim script) is unchanged.
+ * `ceilingMs` defaults to the DO-safe cap; only the OCI engine service passes a
+ * higher one, since search there costs the DO nothing.
  * Returns null only when the position has no legal move at all. */
 export function pickHouseMove(
   game: NerfGame,
@@ -469,16 +692,18 @@ export function pickHouseMove(
   random: (max: number) => number,
   remainingClockMs?: number,
   ceilingMs?: number,
+  profile?: ResolvedSkillProfile,
 ): Move | null {
-  const profile = HOUSE_SKILL_PROFILES[skill];
+  const p = profile ?? bakedResolvedProfile(skill);
   const all = legalMoves(game);
   if (!all.length) return null;
-  if (random(10_000) < Math.round(profile.blunderChance * 10_000)) {
+  if (random(10_000) < Math.round(p.blunderChance * 10_000)) {
     const safe = all.filter((m) => !triggersOwnNerfLoss(game, m));
     const moves = safe.length ? safe : all;
     return moves[random(moves.length)];
   }
-  return pickAIMove(game, profile.level, houseMoveBudgetMs(skill, remainingClockMs, ceilingMs));
+  const budget = houseMoveBudgetMs(p.budgetMs, remainingClockMs, ceilingMs);
+  return pickAIMove(game, p.level, budget, { params: weakenParamsOf(p), random });
 }
 
 /** Opening nerf pick: between the two dealt options, prefer the lower tier
