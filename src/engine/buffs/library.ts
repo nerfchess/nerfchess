@@ -2701,8 +2701,8 @@ const TIER6: Buff[] = [
     captureExplosion({ chain: true }),
   ),
   def(
-    { id: "double_amazon", requires: ["n"], name: "Double Amazon", description: "All your knights become amazons for the game.", tier: 8, category: "movement", fx: { motif: "empower", pieces: ["n"], moveAs: "q", self: true } },
-    permanentAugment((_m, inst, api) =>
+    { id: "double_amazon", requires: ["n"], name: "Double Amazon", description: "All your knights move as amazons for your next 3 turns.", tier: 6, category: "movement", fx: { motif: "empower", pieces: ["n"], moveAs: "q", self: true } },
+    timedAugment(3, (_m, inst, api) =>
       mySquares(api.board, api.me, "n").flatMap((sq) => slideMoves(api.board, sq, ALL_DIRS, inst.id)),
     ),
   ),
@@ -3947,14 +3947,14 @@ const HEXES: Buff[] = [
     }),
   ),
   def(
-    { id: "creeping_frost", name: "Creeping Frost", description: "Freeze two enemy pieces (not the king) for 2 of their owner's turns.", tier: 6, category: "hex" },
+    { id: "creeping_frost", name: "Creeping Frost", description: "Freeze three enemy pieces (not the king) for 2 of their owner's turns.", tier: 6, category: "hex" },
     activated(
       (_inst, api, picks) =>
-        picks.length >= 2
+        picks.length >= 3
           ? null
           : {
               kind: "square",
-              label: `Choose an enemy piece to freeze (${picks.length + 1}/2)`,
+              label: `Choose an enemy piece to freeze (${picks.length + 1}/3)`,
               squares: mySquares(api.board, api.opp).filter(
                 (sq) =>
                   api.board.pieces[sq]!.type !== "k" && !picks.some((k) => k.square === sq),
