@@ -559,7 +559,7 @@ type HouseSeekEntry = {
 // (deserializing every finished game's move history), which on a bloated table
 // blew the DO CPU limit before it could cache or GC anything: the crash loop.
 const liveIdsKey = "live:ids";
-const buildVersion = "codex-card-insights-1";
+const buildVersion = "bot-rating-consistency-1";
 // The single account allowed to use the owner "fun with friends" tools: the
 // -15s opponent-clock button and the god panel card grant. SERVER-verified on
 // every gated message (never trust the client). Compared case-insensitively so
@@ -6320,34 +6320,32 @@ export class GameServer extends DurableObject<Env> {
       // house-vs-house filler games run up to houseVsHouseCap (each puts two
       // personas on genuine "playing" AND lists a watchable game above).
       const idlePersonas = activeHouseRoster(await this.houseCount()).filter((p) => !seen.has(p.userId));
-      // LIVE ratings (cached): a bot's displayed number moves with its real
-      // results instead of sitting on the static seed forever. Shown as the
-      // better of its two mode buckets, seed only as a fallback.
-      const liveRatings = await this.houseLiveRatings(await this.db());
+      // Idle bots get a placeholder seed here; the canonical most-played-bucket
+      // query below (now shared with human rows) overwrites it for any bot that
+      // has a rated bucket, so an idle bot shows the SAME number as its profile,
+      // leaderboard, and seek. This replaces an older Math.max(nerf, buff) that
+      // matched neither profile card and went stale when the active bucket lost
+      // rating (the "a bot's rating differs on its profile" report).
       for (const persona of idlePersonas) {
-        const live = liveRatings.get(persona.userId);
-        const rating =
-          live && (live.nerf != null || live.buff != null)
-            ? Math.max(live.nerf ?? 0, live.buff ?? 0)
-            : houseSeedRating(persona);
         seen.set(persona.userId, {
           name: persona.name,
-          rating,
+          rating: houseSeedRating(persona),
           status: "online",
           avatar: persona.avatar,
         });
       }
     } catch {}
 
-    // Attach ratings for the online list in one query. House ids are excluded:
-    // every persona already carries its rating/avatar from HOUSE_ROSTER above,
-    // so leaving them out keeps this query human-only (no D1 work for the whole
-    // roster now that all 50 appear online) and its IN list bounded.
+    // Attach ratings for the online list in one query, for humans AND bots, so
+    // an idle bot's displayed rating is the same per-mode-derived number its
+    // profile / leaderboard / seek show (was Math.max above, which diverged).
+    // The IN list is the online roster (bounded, ~the roster size), one query
+    // per lobby cache window.
     const db = await this.db();
-    const humanIds = [...seen.keys()].filter((id) => !isHouseUserId(id));
-    if (db && humanIds.length > 0) {
+    const ratedIds = [...seen.keys()];
+    if (db && ratedIds.length > 0) {
       try {
-        const placeholders = humanIds.map(() => "?").join(",");
+        const placeholders = ratedIds.map(() => "?").join(",");
         // The player's ACTIVE bucket (most games played; ties broken by the
         // higher number), not MAX(nerf, buff): the max rule meant a player who
         // only plays one mode and loses kept displaying the other bucket's
@@ -6366,7 +6364,7 @@ export class GameServer extends DurableObject<Env> {
                     u.avatar
              FROM users u WHERE u.id IN (${placeholders})`,
           )
-          .bind(...humanIds)
+          .bind(...ratedIds)
           .all<{ id: string; username: string; rating: number; avatar: string | null }>();
         for (const row of rows.results) {
           const entry = seen.get(row.id);
