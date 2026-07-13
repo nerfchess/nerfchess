@@ -2131,6 +2131,17 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   fingertip_maltese: { ordering: "radial", staggerMs: 0, victims: "all", visual: "chainfreeze", hasLead: true, sound: "massfreeze", source: "frozen" },
   i_love_my_gf: { ordering: "radial", staggerMs: 35, victims: "all", visual: "aegis", hasLead: true, sound: "aegis", source: "shield" },
   uniqlo_warrior: { ordering: "radial", staggerMs: 40, victims: "all", visual: "cathedral", hasLead: true, sound: "cathedral", source: "shield" },
+  // Second batch: summon (piece placement), shield, and freeze cards, each on a
+  // distinct shipped visual so they do not read the same.
+  bee_swarm_simulator: { ordering: "radial", staggerMs: 60, victims: ["p"], visual: "geniepoof", hasLead: true, sound: "wall", source: "summon" },
+  danielle: { ordering: "sweep", staggerMs: 100, victims: ["p"], visual: "paradrop", hasLead: false, sound: "wall", source: "summon" },
+  onett: { ordering: "radial", staggerMs: 0, victims: ["p"], visual: "cratedrop", hasLead: false, sound: "wall", source: "summon" },
+  minji: { ordering: "radial", staggerMs: 35, victims: "all", visual: "picketline", hasLead: true, sound: "aegis", source: "shield" },
+  i_love_abs: { ordering: "radial", staggerMs: 30, victims: "all", visual: "dugin", hasLead: true, sound: "aegis", source: "shield" },
+  full_planche: { ordering: "radial", staggerMs: 0, victims: "all", visual: "phylactery", hasLead: true, sound: "aegis", source: "shield" },
+  ilovesmellingmygfshoodie: { ordering: "radial", staggerMs: 0, victims: "all", visual: "bubblewrap", hasLead: false, sound: "aegis", source: "shield" },
+  ilovemysister: { ordering: "radial", staggerMs: 0, victims: "all", visual: "canopy", hasLead: true, sound: "aegis", source: "shield" },
+  ihatemyex: { ordering: "radial", staggerMs: 0, victims: ["p"], visual: "coldsnap", hasLead: false, sound: "massfreeze", source: "frozen" },
 };
 
 /** A jagged lightning bolt that fills its wrapper (BoltGlyph is fixed-size). */
