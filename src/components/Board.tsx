@@ -2928,6 +2928,29 @@ export function Board({
                         </span>
                       );
                     const delay = (boardFx.sigOrder ?? 0) * sigCfg.staggerMs;
+                    const sigRole = fxCalmClock ? "target" : boardFx.sigRole ?? "target";
+                    // A board-wide LEAD flourish is painted in an oversized
+                    // canvas centred on THIS square. When the lead square sits
+                    // off-centre (an edge or corner cast) that canvas clips to a
+                    // fraction, which is the "only 1/4 of the animation shows"
+                    // report. Slide the lead so its canvas re-centres on the
+                    // board: sqToFrac gives the square centre as a 0..1 board
+                    // fraction (orientation-resolved), and 800% is one board
+                    // width (8 cells) of this one-cell wrapper, so the shift
+                    // lands the canvas centre on the board centre wherever it
+                    // was cast. Per-square target pops carry no shift and stay
+                    // on their own squares. Covers bespoke (SignatureOverlay ->
+                    // BoardWideStage) and generated (GenBurst -> GenLead) leads
+                    // alike, so neither renderer needs to know about centring.
+                    const leadShift =
+                      sigRole === "lead"
+                        ? (() => {
+                            const f = sqToFrac(sq, orientation);
+                            return {
+                              transform: `translate(${(0.5 - f.x) * 800}%, ${(0.5 - f.y) * 800}%)`,
+                            };
+                          })()
+                        : undefined;
                     // Generated configs carry their own renderer; bespoke ones
                     // go through the classic SignatureOverlay switch.
                     return (
@@ -2936,35 +2959,48 @@ export function Board({
                         className="fx-one-shot pointer-events-none absolute inset-0 block"
                         style={{ animationDelay: `${delay}ms` }}
                       >
-                        {isGenConfig(sigCfg) ? (
-                          <GenBurst
-                            config={sigCfg}
-                            role={fxCalmClock ? "target" : boardFx.sigRole ?? "target"}
-                            delayMs={delay}
-                          />
-                        ) : (
-                          <SignatureOverlay
-                            visual={sigCfg.visual}
-                            role={fxCalmClock ? "target" : boardFx.sigRole ?? "target"}
-                            delayMs={delay}
-                          />
-                        )}
+                        <span className="absolute inset-0 block" style={leadShift}>
+                          {isGenConfig(sigCfg) ? (
+                            <GenBurst config={sigCfg} role={sigRole} delayMs={delay} />
+                          ) : (
+                            <SignatureOverlay visual={sigCfg.visual} role={sigRole} delayMs={delay} />
+                          )}
+                        </span>
                       </span>
                     );
                   })()}
-                {!fxHiddenPref && zoneSig && sigOf(zoneSig.sig) && (
-                  /* Zone-sourced signature (source !== "removal"): the same
-                     SignatureOverlay art, but staged over a piece that STAYS on
-                     the board and sourced from the fx-effect zone the card
-                     names, not the removal diff. Keyed by the play key so it
-                     mounts and plays exactly once per play. */
-                  <SignatureOverlay
-                    key={`zsig-${zoneSig.key}`}
-                    visual={sigOf(zoneSig.sig)!.visual}
-                    role={fxCalmClock ? "target" : zoneSig.role}
-                    delayMs={zoneSig.order * sigOf(zoneSig.sig)!.staggerMs}
-                  />
-                )}
+                {!fxHiddenPref && zoneSig && sigOf(zoneSig.sig) &&
+                  (() => {
+                    /* Zone-sourced signature (source !== "removal"): the same
+                       SignatureOverlay art, but staged over a piece that STAYS
+                       on the board and sourced from the fx-effect zone the card
+                       names, not the removal diff. Its board-wide lead clips the
+                       same way an off-centre removal lead does, so re-centre it
+                       on the board with the identical shift. */
+                    const zRole = fxCalmClock ? "target" : zoneSig.role;
+                    const zShift =
+                      zRole === "lead"
+                        ? (() => {
+                            const f = sqToFrac(sq, orientation);
+                            return {
+                              transform: `translate(${(0.5 - f.x) * 800}%, ${(0.5 - f.y) * 800}%)`,
+                            };
+                          })()
+                        : undefined;
+                    return (
+                      <span
+                        key={`zsig-${zoneSig.key}`}
+                        className="absolute inset-0 block"
+                        style={zShift}
+                      >
+                        <SignatureOverlay
+                          visual={sigOf(zoneSig.sig)!.visual}
+                          role={zRole}
+                          delayMs={zoneSig.order * sigOf(zoneSig.sig)!.staggerMs}
+                        />
+                      </span>
+                    );
+                  })()}
                 {isForced && !isDragging && (
                   <>
                     <div className="absolute inset-0 pointer-events-none rounded-sm ring-2 ring-inset ring-gold-leaf/80 shadow-[inset_0_0_24px_-4px_rgba(230,191,106,0.55)] animate-flicker" />
