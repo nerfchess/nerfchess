@@ -2115,6 +2115,22 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   reinforcements: { ordering: "sweep", staggerMs: 100, victims: ["p"], visual: "paradrop", hasLead: false, sound: "wall", source: "summon" },
   supply_drop: { ordering: "radial", staggerMs: 0, victims: ["n"], visual: "cratedrop", hasLead: true, sound: "wall", source: "summon" },
   rent_a_rook: { ordering: "radial", staggerMs: 0, victims: ["r"], visual: "rentarook", hasLead: true, sound: "wall", source: "summon" },
+
+  // --- Bespoke spectacles for the flagship PERSONAL / NEWJEANS cards (see
+  // src/engine/buffs/personal.ts). Each reuses a visual/source/sound combo that
+  // already ships and renders, matched to the card's actual mechanic (removal
+  // diff, frozen zone, or shield zone), so it lights up the moment those cards
+  // land. Cards not listed here still get a procedural genSignature. ---
+  i_love_cam: { ordering: "radial", staggerMs: 40, victims: "all", visual: "smite", hasLead: true, sound: "lightning" },
+  fur_elise: { ordering: "line", staggerMs: 90, victims: "all", mover: "b", visual: "arclight", hasLead: true, sound: "lightning" },
+  geometry_dash: { ordering: "sweep", staggerMs: 110, victims: "all", visual: "strike", hasLead: true, sound: "lightning" },
+  haerin: { ordering: "line", staggerMs: 90, victims: "all", mover: "n", visual: "dive", hasLead: false, sound: "rampage" },
+  check_out_our_socials: { ordering: "radial", staggerMs: 65, victims: ["p", "n", "b", "r", "q"], visual: "iceshatter", hasLead: true, sound: "massfreeze", source: "frozen" },
+  bayview_secondary_school: { ordering: "radial", staggerMs: 55, victims: "all", visual: "deepglacier", hasLead: true, sound: "massfreeze", source: "frozen" },
+  hanni: { ordering: "radial", staggerMs: 45, victims: "all", visual: "snapfrost", hasLead: true, sound: "massfreeze", source: "frozen" },
+  fingertip_maltese: { ordering: "radial", staggerMs: 0, victims: "all", visual: "chainfreeze", hasLead: true, sound: "massfreeze", source: "frozen" },
+  i_love_my_gf: { ordering: "radial", staggerMs: 35, victims: "all", visual: "aegis", hasLead: true, sound: "aegis", source: "shield" },
+  uniqlo_warrior: { ordering: "radial", staggerMs: 40, victims: "all", visual: "cathedral", hasLead: true, sound: "cathedral", source: "shield" },
 };
 
 /** A jagged lightning bolt that fills its wrapper (BoltGlyph is fixed-size). */
