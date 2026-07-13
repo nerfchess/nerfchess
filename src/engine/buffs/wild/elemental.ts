@@ -1254,7 +1254,7 @@ export const WILD_ELEMENTAL: Buff[] = [
       id: "we_updraft",
       name: "Updraft",
       description: "One knight may make a longer 3-by-1 leap, once.",
-      tier: 2,
+      tier: 1,
       category: "movement",
       requires: ["n"],
       flavor: "Caught on a thermal.",

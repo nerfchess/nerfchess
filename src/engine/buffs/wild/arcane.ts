@@ -441,15 +441,17 @@ export const WILD_ARCANE: Buff[] = [
       id: "wa_camel_rider",
       name: "Camel Rider",
       description:
-        "One of your knights may also make a longer 3-by-1 leap for the rest of the game.",
+        "All your knights also make a longer 3-by-1 camel leap for the rest of the game.",
       tier: 4,
       category: "movement",
       requires: ["n"],
-      flavor: "A wider gait across the sand.",
+      flavor: "A whole troop crossing the sand.",
       fx: { motif: "empower", pieces: ["n"], moveAs: "n", self: true },
     },
-    pieceBound("n", "Choose the knight to mount the camel", (board, sq, via) =>
-      leapMoves(board, sq, CAMEL_LEAPS, via),
+    permanentAugment((_m, inst, api) =>
+      mySquares(api.board, api.me, "n").flatMap((sq) =>
+        leapMoves(api.board, sq, CAMEL_LEAPS, inst.id),
+      ),
     ),
   ),
   card(

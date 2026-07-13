@@ -510,7 +510,7 @@ export const TIER10: Buff[] = [
       icon: "Skull",
       name: "Oblivion",
       description:
-        "Every one of your opponent's pieces except the king is destroyed, every piece you have ever lost returns to your half, and your whole army cannot be captured for your opponent's next 3 turns. Only their lone king is left standing against your full force.",
+        "Every one of your opponent's pieces except the king is destroyed, every piece you have ever lost returns to your half, and your whole army cannot be captured for your opponent's next 2 turns. Only their lone king is left standing against your full force.",
       category: "attack",
       flavor: "Nothing left to defend. Everything left to lose.",
       fx: { motif: "ward", pieces: "all", self: true },
@@ -543,7 +543,7 @@ export const TIER10: Buff[] = [
         }
       }
       // And nothing can touch you while you close it out.
-      addEffect(api, { kind: "shield", owner: api.me, squares: null, turns: 3 });
+      addEffect(api, { kind: "shield", owner: api.me, squares: null, turns: 2 });
     }),
   ),
 
@@ -557,7 +557,7 @@ export const TIER10: Buff[] = [
       icon: "Castle",
       name: "Grand Army",
       description:
-        "A whole fresh army answers your call: two new queens, two rooks, two bishops and two knights appear on empty squares in your half, and every remaining empty square in your half fills with a new pawn. It spills onto the rest of the board only if your half runs out of room.",
+        "A whole fresh army answers your call: a new queen, two rooks, two bishops and two knights appear on empty squares in your half, and every remaining empty square in your half fills with a new pawn. It spills onto the rest of the board only if your half runs out of room.",
       category: "pieces",
       flavor: "Rank upon rank upon rank, out of nowhere.",
     },
@@ -569,7 +569,7 @@ export const TIER10: Buff[] = [
         ),
       );
       // Seat the heavy force first (no pawn-rank guard needed for these).
-      const force: PieceType[] = ["q", "q", "r", "r", "b", "b", "n", "n"];
+      const force: PieceType[] = ["q", "r", "r", "b", "b", "n", "n"];
       for (const type of force) {
         const sq = spots.shift();
         if (sq == null) break;
@@ -638,7 +638,7 @@ export const TIER10: Buff[] = [
       icon: "Swords",
       name: "Total War",
       description:
-        "Every enemy piece except the king is destroyed, a fresh force of a queen, two rooks, two bishops and two knights lands in your half, and your whole army cannot be captured for your opponent's next 3 turns.",
+        "Every enemy piece except the king is destroyed, a fresh force of a queen, two rooks, two bishops and two knights lands in your half, and your whole army cannot be captured for your opponent's next 2 turns.",
       category: "attack",
       flavor: "Everything, everywhere, all at once.",
       fx: { motif: "ward", pieces: "all", self: true },
@@ -660,7 +660,7 @@ export const TIER10: Buff[] = [
         if (sq == null) break;
         api.place(sq, type, api.me);
       }
-      addEffect(api, { kind: "shield", owner: api.me, squares: null, turns: 3 });
+      addEffect(api, { kind: "shield", owner: api.me, squares: null, turns: 2 });
     }),
   ),
 ];
