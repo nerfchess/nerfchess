@@ -38,6 +38,15 @@ export default function LobbyPage() {
     };
   }, []);
 
+  // Opening the lobby is real engagement: mint a guest account right away
+  // (ensureAccount no-ops for signed-in users and dedupes per page load) so
+  // engaged visitors show up in the moderators' guest counts instead of being
+  // invisible until they join a seek. Fire-and-forget and non-blocking: the
+  // lobby renders identically whether or not this ever resolves.
+  useEffect(() => {
+    void ensureAccount().catch(() => {});
+  }, []);
+
   // Poll the lobby snapshot over one long-lived socket.
   useEffect(() => {
     let cancelled = false;

@@ -46,6 +46,8 @@ interface ModUser {
   created_at: number;
   muted_until: number | null;
   banned_until: number | null;
+  // 1 for transient guest accounts (users.is_guest); 0/undefined for members.
+  is_guest?: number;
 }
 
 interface HistoryEntry {
@@ -143,6 +145,11 @@ export default function ModPage() {
                 <Link href="/mod/cards" className="text-sm text-gold-leaf hover:underline">
                   Card editor
                 </Link>
+                {me.role === "admin" && (
+                  <Link href="/mod/house" className="text-sm text-gold-leaf hover:underline">
+                    House bots
+                  </Link>
+                )}
                 <Link href="/mod/stats" className="text-sm text-gold-leaf hover:underline">
                   Site stats
                 </Link>
@@ -552,6 +559,10 @@ interface GamesStats {
   averageGame: { moves: number | null; durationMs: number | null };
   topMode: { label: string; games: number } | null;
   humansToday: { members: number; guests: number; anonSeatGames: number };
+  // Guest accounts minted today / this rolling week (engaged visitors who
+  // opened the lobby or started a bot game, not just finished games).
+  // Optional so a cached older payload shape still renders.
+  guestsCreated?: { today: number; week: number };
   lastHumanGame: { id: string; completedAt: number } | null;
 }
 
@@ -693,6 +704,13 @@ function GamesTab() {
               stats.humansToday.anonSeatGames > 0 ? ` · ${stats.humansToday.anonSeatGames} anon-seat games` : ""
             }`}
           />
+          {stats.guestsCreated && (
+            <GameStatCard
+              label="Guests created"
+              value={`${stats.guestsCreated.today} today`}
+              sub={`${stats.guestsCreated.week} this week`}
+            />
+          )}
           <GameStatCard
             label="Last human game"
             value={stats.lastHumanGame ? when(stats.lastHumanGame.completedAt) : "none yet"}
@@ -1342,8 +1360,13 @@ function GodPanelToggle() {
 
 // ---------------- players ----------------
 
+type UserFilter = "all" | "members" | "guests";
+
 function UsersTab({ isAdmin }: { isAdmin: boolean }) {
   const [query, setQuery] = useState("");
+  // Roster scope: recent members and guests together by default, narrowable to
+  // either side. Applies to the default roster and to searches alike.
+  const [filter, setFilter] = useState<UserFilter>("all");
   const [users, setUsers] = useState<ModUser[]>([]);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [reports, setReports] = useState<{ reporter_name: string; reason: string; description: string; status: string; created_at: number }[]>([]);
@@ -1360,22 +1383,28 @@ function UsersTab({ isAdmin }: { isAdmin: boolean }) {
     return () => window.clearInterval(id);
   }, []);
 
-  const search = useCallback(async (q: string) => {
-    // An empty query loads the default roster (recent members) rather than
-    // clearing the list, so the panel always opens on something browsable.
-    const res = await fetch(
-      q.trim() ? `/api/mod/users?q=${encodeURIComponent(q.trim())}` : "/api/mod/users",
-    );
-    if (!res.ok) return;
-    const data = (await res.json()) as {
-      users: ModUser[];
-      history: HistoryEntry[];
-      reports: { reporter_name: string; reason: string; description: string; status: string; created_at: number }[];
-    };
-    setUsers(data.users);
-    setHistory(data.history);
-    setReports(data.reports);
-  }, []);
+  const search = useCallback(
+    async (q: string) => {
+      // An empty query loads the default roster (recent members AND guests)
+      // rather than clearing the list, so the panel always opens on something
+      // browsable. The filter chips narrow both the roster and searches.
+      const params = new URLSearchParams();
+      if (q.trim()) params.set("q", q.trim());
+      if (filter !== "all") params.set("filter", filter);
+      const qs = params.toString();
+      const res = await fetch(`/api/mod/users${qs ? `?${qs}` : ""}`);
+      if (!res.ok) return;
+      const data = (await res.json()) as {
+        users: ModUser[];
+        history: HistoryEntry[];
+        reports: { reporter_name: string; reason: string; description: string; status: string; created_at: number }[];
+      };
+      setUsers(data.users);
+      setHistory(data.history);
+      setReports(data.reports);
+    },
+    [filter],
+  );
 
   useEffect(() => {
     const t = setTimeout(() => search(query), 300);
@@ -1408,6 +1437,12 @@ function UsersTab({ isAdmin }: { isAdmin: boolean }) {
         className="w-full max-w-sm bg-transparent plate px-4 py-2 text-sm outline-none focus:border-gold/40"
       />
 
+      <div className="mt-3 flex items-center gap-2 text-sm">
+        <FilterButton active={filter === "all"} onClick={() => setFilter("all")}>All</FilterButton>
+        <FilterButton active={filter === "members"} onClick={() => setFilter("members")}>Members</FilterButton>
+        <FilterButton active={filter === "guests"} onClick={() => setFilter("guests")}>Guests</FilterButton>
+      </div>
+
       {!query.trim() && (
         <p className="mt-2 smallcaps text-[10px] text-parchment-400">
           Recent players
@@ -1431,6 +1466,11 @@ function UsersTab({ isAdmin }: { isAdmin: boolean }) {
             >
               <span className="font-display font-semibold">{u.username}</span>
               {u.role !== "user" && <RoleBadge role={u.role} />}
+              {!!u.is_guest && (
+                <span className="smallcaps text-[10px] px-2 py-0.5 rounded-full border border-white/20 text-parchment-300">
+                  guest
+                </span>
+              )}
               {u.banned_until && u.banned_until > now && (
                 <span className="smallcaps text-[10px] px-2 py-0.5 rounded-full bg-oxblood-glow/20 text-oxblood-glow">
                   banned {untilLabel(u.banned_until)}
@@ -1456,6 +1496,11 @@ function UsersTab({ isAdmin }: { isAdmin: boolean }) {
               {selected.username}
             </Link>
             {selected.role !== "user" && <RoleBadge role={selected.role} />}
+            {!!selected.is_guest && (
+              <span className="smallcaps text-[10px] px-2 py-0.5 rounded-full border border-white/20 text-parchment-300">
+                guest
+              </span>
+            )}
           </div>
 
           <div className="mt-4 flex flex-wrap items-center gap-2 text-sm">
