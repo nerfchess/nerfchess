@@ -247,6 +247,12 @@ type StoredMatch = {
   // buff offers auto-resolve when these pass; clocks stay paused meanwhile.
   nerfDeadline?: number | null;
   dtDeadline?: number | null;
+  // Which seats currently hold an unresolved buff offer, mirrored from the
+  // game state whenever offers roll or resolve. Kept on the match so clock
+  // math (currentClocks / finishOnFlag) can charge a straggling drafter
+  // without replaying the game: past the free window the seat still holding
+  // its offer pays with its own time, never the seat waiting on it.
+  offerSeats?: Partial<Record<Color, boolean>> | null;
   // Draft games: the side actually to move. Buff activations consume the
   // activator's turn and tempo cards insert extra moves or skips, so move
   // parity no longer determines it. Classic games never set this.
@@ -1647,7 +1653,7 @@ export class GameServer extends DurableObject<Env> {
       match.startedAt &&
       !match.result &&
       match.runningSince !== null &&
-      this.activeColor(match) === session.color
+      this.chargedColor(match) === session.color
     ) {
       match.clocks = this.currentClocks(match, Date.now());
       match.runningSince = null;
@@ -2206,10 +2212,40 @@ export class GameServer extends DurableObject<Env> {
     return match.turnColor ?? (match.moves.length % 2 === 0 ? "w" : "b");
   }
 
+  // Which seat the running clock bills. Normally the side to move — but in a
+  // draft game, once the free lock-in window has expired with exactly one
+  // seat still holding its offer, that straggler pays: the waiting player
+  // may not move while the draft is open, so their clock must never run.
+  // (Both seats straggling keeps the mover charged: both are equally late,
+  // and a single running timestamp can only bill one side.)
+  private chargedColor(match: StoredMatch): Color {
+    const active = this.activeColor(match);
+    if (match.draft && match.startedAt && !match.diff && !match.result) {
+      const w = !!match.offerSeats?.w;
+      const b = !!match.offerSeats?.b;
+      if (w !== b) return w ? "w" : "b";
+    }
+    return active;
+  }
+
+  // Mirror which seats hold an unresolved offer onto the match, so clock
+  // math never needs a game replay. Call wherever offers roll (commitMove)
+  // or resolve (settleDraftAction) with the post-mutation game in hand.
+  private syncOfferSeats(match: StoredMatch, game: NerfGame | null) {
+    if (!match.draft || !game?.buffs) {
+      match.offerSeats = null;
+      return;
+    }
+    match.offerSeats = {
+      w: !!game.buffs.players.w.offer,
+      b: !!game.buffs.players.b.offer,
+    };
+  }
+
   private currentClocks(match: StoredMatch, now = Date.now()): Record<Color, number> {
     const clocks = { ...match.clocks };
     if (!match.setup.timeSec || match.result || !match.startedAt || match.runningSince === null) return clocks;
-    const active = this.activeColor(match);
+    const active = this.chargedColor(match);
     let elapsed = now - match.runningSince;
     // Start-of-game grace: the first move of each side gets 10 free seconds.
     if (this.movesByColor(match, active) === 0) {
@@ -2222,7 +2258,7 @@ export class GameServer extends DurableObject<Env> {
   private async finishOnFlag(match: StoredMatch, now = Date.now(), schedule = true): Promise<boolean> {
     if (!match.startedAt || match.result || !match.setup.timeSec) return false;
     const clocks = this.currentClocks(match, now);
-    const active = this.activeColor(match);
+    const active = this.chargedColor(match);
     if (clocks[active] > 0) return false;
 
     // A flag during a Chess Diff loses the DIFF, never the match: the other
@@ -2730,6 +2766,14 @@ export class GameServer extends DurableObject<Env> {
     if (match.draft && game.buffs?.players[session.color].offer) {
       return error(ws, "draft_pending", "Resolve your buff draft before moving.");
     }
+    // The OPPONENT's open draft blocks moves too: their pick can mutate the
+    // board mid-flight, and the waiting player is not being charged for this
+    // time (see chargedColor), so they must not get free thinking moves
+    // either. The client mirrors this by banking premoves until the pick
+    // lands.
+    if (match.draft && game.buffs?.players[session.color === "w" ? "b" : "w"].offer) {
+      return error(ws, "opp_draft_pending", "Wait for your opponent to finish drafting.");
+    }
 
     const request = (data || {}) as { u?: unknown; ply?: unknown };
     const uci = typeof request.u === "string" ? request.u.toLowerCase() : "";
@@ -2813,6 +2857,9 @@ export class GameServer extends DurableObject<Env> {
     if (match.draft) {
       if (rolledNow && !nextGame.result) match.dtDeadline = now + draftLockInMs;
       else if (!offersPending) match.dtDeadline = null;
+      // Keep the charged-seat mirror current: past the free window the seat
+      // still holding its offer pays (see chargedColor), never the waiter.
+      this.syncOfferSeats(match, nextGame);
     }
     // A pending buff offer pauses the game clock only during its free
     // lock-in window (dtDeadline). Once the window has expired the clock
@@ -3339,6 +3386,16 @@ export class GameServer extends DurableObject<Env> {
       );
       if (offerColor) {
         if (!match.botActAt) match.botActAt = now + houseDraftThinkMs(randomInt);
+        return;
+      }
+      // A HUMAN seat still holding its offer blocks all moves (the same rule
+      // the socket handler enforces on humans): the bot waits instead of
+      // arming a move timer. settleDraftAction re-arms it when the pick lands.
+      const humanDrafting = (["w", "b"] as Color[]).some(
+        (color) => !match.bots?.[color] && game.buffs!.players[color].offer,
+      );
+      if (humanDrafting) {
+        match.botActAt = null;
         return;
       }
     }
@@ -3997,6 +4054,21 @@ export class GameServer extends DurableObject<Env> {
         await this.resolveDraftBank(match, game, color);
       }
       return; // settleDraftAction armed the next action and saved
+    }
+
+    // A human seat still resolving its draft blocks all moves (same rule the
+    // socket handler applies to humans): stand down until the pick lands —
+    // settleDraftAction re-arms the bot then.
+    const buffsNow = game.buffs;
+    if (
+      match.draft &&
+      (["w", "b"] as Color[]).some(
+        (c) => !match.bots?.[c] && buffsNow?.players[c].offer,
+      )
+    ) {
+      match.botActAt = null;
+      await this.saveMatch(match, false);
+      return;
     }
 
     const color = game.board.turn;
@@ -4904,7 +4976,7 @@ export class GameServer extends DurableObject<Env> {
       // socket that vanished without either event firing.
       this.dropExternalIfUnwatched(id);
       if (!this.externalMatches.has(id)) continue;
-      const active = this.activeColor(match);
+      const active = this.chargedColor(match);
       // How far past exhausting its whole banked clock the active side is
       // (null when no flag can fall: untimed, unstarted, or paused clock).
       const overdueBy =
@@ -5391,6 +5463,14 @@ export class GameServer extends DurableObject<Env> {
     } | null,
     used?: { color: Color; buffIndex: number; picks: BuffPick[]; card?: { id: string; tier: number } },
   ) {
+    // Bill any elapsed time to whoever was charged BEFORE this action
+    // resolved (a straggling drafter's deliberation), then re-anchor: the
+    // charged seat can change the moment offerSeats is re-synced below.
+    if (!match.result && match.draft && match.runningSince !== null) {
+      const now = Date.now();
+      match.clocks = this.currentClocks(match, now);
+      match.runningSince = now;
+    }
     if (game.result && !match.result) {
       const now = Date.now();
       match.clocks = this.currentClocks(match, now);
@@ -5411,6 +5491,7 @@ export class GameServer extends DurableObject<Env> {
     const bs = game.buffs;
     const offersPending = !!bs?.players.w.offer || !!bs?.players.b.offer;
     if (!offersPending) match.dtDeadline = null;
+    this.syncOfferSeats(match, game);
     if (
       (!offersPending || !match.dtDeadline) &&
       match.startedAt &&
@@ -5703,6 +5784,11 @@ export class GameServer extends DurableObject<Env> {
     const color = session.color!;
     const ps = game.buffs!.players[color];
     if (ps.offer) return error(ws, "draft_pending", "Resolve your buff draft first.");
+    // Same rule as moves: the opponent's open draft blocks activations too
+    // (their pick can mutate the board this activation would target).
+    if (game.buffs!.players[color === "w" ? "b" : "w"].offer) {
+      return error(ws, "opp_draft_pending", "Wait for your opponent to finish drafting.");
+    }
     if (game.board.turn !== color) return error(ws, "not_your_turn", "Buffs activate on your turn.");
     const request = (data || {}) as { buffIndex?: unknown; picks?: unknown };
     const buffIndex = Number(request.buffIndex);
@@ -6440,7 +6526,7 @@ export class GameServer extends DurableObject<Env> {
   private candidateAlarm(match: StoredMatch, now = Date.now()): number | null {
     const candidates: number[] = [];
     if (match.setup.timeSec && match.startedAt && !match.result && match.runningSince !== null) {
-      const active = this.activeColor(match);
+      const active = this.chargedColor(match);
       const grace = this.movesByColor(match, active) === 0 ? firstMoveGraceMs : 0;
       candidates.push(match.runningSince + match.clocks[active] + grace);
     }

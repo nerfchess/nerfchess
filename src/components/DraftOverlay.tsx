@@ -90,7 +90,10 @@ export function LockInCountdown({
   const leftMs = useCountdown(deadline, onExpire);
   const seconds = Math.ceil(leftMs / 1000);
   const fraction = Math.max(0, Math.min(1, leftMs / total));
-  const urgent = leftMs <= 5000;
+  // The whole window is paused free time (same rule as DraftTimerWindow
+  // below): flashing the on-your-clock red at 5s-left showed it 5 seconds
+  // too early, so the urgent style only fires once the window truly ends.
+  const urgent = leftMs <= 0;
   return (
     <div className={"flex items-center gap-2 " + className} role="timer" aria-label="Lock-in timer">
       <div className="h-1 flex-1 overflow-hidden rounded-[1px] bg-white/10">
@@ -327,7 +330,9 @@ function EyeIcon({ off = false, className = "" }: { off?: boolean; className?: s
 function ChipCountdown({ deadline }: { deadline: number }) {
   const leftMs = useCountdown(deadline);
   const seconds = Math.ceil(leftMs / 1000);
-  const urgent = leftMs <= 5000;
+  // Same rule as the other draft timers: the whole window is paused free
+  // time, so the urgent red must not appear until the window actually ends.
+  const urgent = leftMs <= 0;
   return (
     <span
       className={

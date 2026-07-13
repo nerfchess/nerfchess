@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Haerin">
+  <defs>
+    <linearGradient id="ha-bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#eceff1"/>
+      <stop offset="1" stop-color="#d9dde1"/>
+    </linearGradient>
+    <linearGradient id="ha-hair" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#262a31"/>
+      <stop offset="1" stop-color="#121419"/>
+    </linearGradient>
+    <linearGradient id="ha-jkt" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#eef0f2"/>
+    </linearGradient>
+  </defs>
+
+  <!-- soft grey room -->
+  <rect width="200" height="200" fill="url(#ha-bg)"/>
+  <path d="M0 148 L200 138" stroke="#c6cbd0" stroke-width="2" opacity="0.7"/>
+
+  <!-- floating cute bits: blossom sparkle + plush bear -->
+  <g opacity="0.95">
+    <g transform="translate(26,50)">
+      <circle r="4" fill="#f7c7d6"/>
+      <circle cx="6.5" cy="0" r="4" fill="#f9d3df"/>
+      <circle cx="-6.5" cy="0" r="4" fill="#f9d3df"/>
+      <circle cx="0" cy="6.5" r="4" fill="#f9d3df"/>
+      <circle cx="0" cy="-6.5" r="4" fill="#f9d3df"/>
+      <circle r="2.4" fill="#f2a7bf"/>
+    </g>
+    <path d="M40 26 l2.4 5 5 2.4 -5 2.4 -2.4 5 -2.4 -5 -5 -2.4 5 -2.4 Z" fill="#ffffff" stroke="#d9c4cd" stroke-width="0.8"/>
+    <g transform="translate(168,96)">
+      <circle cx="-8" cy="-9" r="4.5" fill="#f6efe4"/>
+      <circle cx="8" cy="-9" r="4.5" fill="#f6efe4"/>
+      <circle r="11" fill="#faf4ea"/>
+      <circle cx="-3.6" cy="-1.5" r="1.4" fill="#4a3a2c"/>
+      <circle cx="3.6" cy="-1.5" r="1.4" fill="#4a3a2c"/>
+      <ellipse cx="0" cy="3" rx="3.4" ry="2.6" fill="#efe0cc"/>
+      <circle cx="0" cy="2.4" r="1.1" fill="#4a3a2c"/>
+    </g>
+    <path d="M160 42 q3 -6 8 -3" stroke="#e9b7c8" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M172 46 a4 4 0 1 1 -0.1 0" fill="none" stroke="#e9b7c8" stroke-width="2"/>
+  </g>
+
+  <!-- track jacket: white with pink collar -->
+  <path d="M32 200 Q40 150 76 140 L100 134 L124 140 Q160 150 168 200 Z" fill="url(#ha-jkt)"/>
+  <path d="M76 142 Q70 146 68 158 L74 164 Q82 150 88 146 Z" fill="#f4c2d2"/>
+  <path d="M124 142 Q130 146 132 158 L126 164 Q118 150 112 146 Z" fill="#f4c2d2"/>
+  <path d="M83 140 L83 122 Q100 132 117 122 L117 140 Q108 152 100 152 Q92 152 83 140 Z" fill="#ffffff"/>
+  <path d="M83 128 q17 10 34 0 l0 8 q-17 10 -34 0 Z" fill="#f4c2d2" opacity="0.9"/>
+  <path d="M100 150 V200" stroke="#c9ced3" stroke-width="3"/>
+  <path d="M100 156 h4 v6 h-4 Z" fill="#aab1b8"/>
+  <path d="M44 168 Q60 160 74 162 M156 168 Q140 160 126 162" stroke="#e6b7c6" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.8"/>
+
+  <!-- neck -->
+  <path d="M90 116 H110 V138 Q100 146 90 138 Z" fill="#f9e6d8"/>
+  <path d="M90 120 Q100 128 110 120 V116 H90 Z" fill="#ecd0be"/>
+
+  <!-- top bun + wispy crown -->
+  <circle cx="108" cy="18" r="15" fill="url(#ha-hair)"/>
+  <path d="M96 26 Q104 10 120 14" stroke="#3a4048" stroke-width="2" fill="none" opacity="0.7"/>
+  <path d="M64 74 Q62 34 100 32 Q138 34 136 74 L134 92 Q100 78 66 92 Z" fill="url(#ha-hair)"/>
+
+  <!-- face: round, cat-calm -->
+  <path d="M66 80 Q66 46 100 46 Q134 46 134 80 Q134 104 122 114 Q110 124 100 124 Q90 124 78 114 Q66 104 66 80 Z" fill="#fbeee3"/>
+
+  <!-- straight airy bangs -->
+  <path d="M64 76 Q64 42 100 40 Q136 42 136 76 L136 80 Q130 66 124 78 Q120 64 112 76 Q108 62 100 74 Q92 62 88 76 Q80 64 76 78 Q70 66 64 80 Z" fill="url(#ha-hair)"/>
+  <!-- side wisps + pink clip -->
+  <path d="M64 78 Q60 96 66 112 L70 108 Q66 94 68 80 Z" fill="url(#ha-hair)"/>
+  <path d="M136 78 Q140 96 134 112 L130 108 Q134 94 132 80 Z" fill="url(#ha-hair)"/>
+  <g transform="translate(127,58) rotate(14)">
+    <rect x="-2" y="-2.6" width="20" height="5.2" rx="2.6" fill="#f2a7bf"/>
+    <rect x="1" y="-1" width="14" height="2" rx="1" fill="#fbd3e0"/>
+  </g>
+  <g transform="translate(112,52)">
+    <circle r="3.2" fill="#f7c7d6"/>
+    <circle cx="4.6" cy="0" r="3" fill="#fbd9e3"/>
+    <circle cx="-4.6" cy="0" r="3" fill="#fbd9e3"/>
+    <circle cx="0" cy="4.6" r="3" fill="#fbd9e3"/>
+    <circle cx="0" cy="-4.6" r="3" fill="#fbd9e3"/>
+  </g>
+
+  <!-- wide, steady cat eyes -->
+  <g>
+    <ellipse cx="85" cy="88" rx="7.8" ry="8.4" fill="#231a12"/>
+    <ellipse cx="115" cy="88" rx="7.8" ry="8.4" fill="#231a12"/>
+    <circle cx="88" cy="84.5" r="2.6" fill="#fff"/>
+    <circle cx="118" cy="84.5" r="2.6" fill="#fff"/>
+    <circle cx="82.6" cy="91" r="1.2" fill="#b7a08e" opacity="0.9"/>
+    <circle cx="112.6" cy="91" r="1.2" fill="#b7a08e" opacity="0.9"/>
+    <path d="M77 81 Q85 78 93 81" stroke="#1c130c" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M107 81 Q115 78 123 81" stroke="#1c130c" stroke-width="2" fill="none" stroke-linecap="round"/>
+  </g>
+
+  <!-- tiny nose, soft lips, faint blush -->
+  <path d="M99 97 Q98 101 100 103" stroke="#e0bda6" stroke-width="1.7" fill="none" stroke-linecap="round"/>
+  <path d="M93 111 Q100 115 107 111 Q104 116 100 116 Q96 116 93 111 Z" fill="#e79a92"/>
+  <ellipse cx="78" cy="101" rx="6" ry="3.2" fill="#f4bdb2" opacity="0.5"/>
+  <ellipse cx="122" cy="101" rx="6" ry="3.2" fill="#f4bdb2" opacity="0.5"/>
+</svg>

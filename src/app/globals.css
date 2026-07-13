@@ -1631,6 +1631,22 @@ html[data-piece-source="lichess"] .piece-asset {
   border-color: rgba(199, 56, 48, 0.95);
 }
 
+/* Opponent-piece inspection preview: slate, deliberately distinct from your
+   own gold-ink move hints so the two can never be confused. */
+.dot-inspect-target {
+  width: 24%;
+  height: 24%;
+  border-radius: 9999px;
+  background: rgba(96, 132, 160, 0.34);
+  box-shadow: inset 0 0 0 2px rgba(130, 168, 198, 0.55);
+}
+.dot-inspect-capture {
+  position: absolute;
+  inset: 8%;
+  border-radius: 9999px;
+  border: 3px dashed rgba(130, 168, 198, 0.7);
+}
+
 /* --- Drag/drop --- */
 .dragging { cursor: grabbing !important; opacity: 0.35; }
 .drag-ghost {

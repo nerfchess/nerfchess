@@ -66,7 +66,7 @@ import { applyResult, loadRatingFor, saveRatingFor } from "@/lib/rating";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { loadSavedAiGame, restoreSavedAiGame, saveAiGame, snapshotGame } from "@/lib/gamePersistence";
 import { boardAtPly, replayBoardSpan } from "@/lib/gameReview";
-import { premoveOptionsFor, premoveSelfChecks } from "@/lib/premoves";
+import { premoveOptionsFor, premoveSelfChecks, previewMovesFor } from "@/lib/premoves";
 import { categoryForTimeControl } from "@/lib/ratingCategories";
 import type { AIWorkerRequest, AIWorkerResponse } from "@/workers/aiWorker";
 import Link from "next/link";
@@ -669,6 +669,12 @@ function GamePage() {
   }
 
   const moves = useMemo(() => (game ? legalMoves(game) : []), [game]);
+  // The opponent's would-be moves, for the click-an-enemy-piece inspection
+  // preview (dots on every square that piece could reach).
+  const oppPreviewMoves = useMemo(
+    () => (game && !game.result ? previewMovesFor(game, myColor === "w" ? "b" : "w") : []),
+    [game, myColor],
+  );
   const moveRisks = useMemo(
     () =>
       uiSettings.moveRiskWarnings && game && game.board.turn === myColor
@@ -1824,6 +1830,11 @@ function GamePage() {
                   orientation={orientation}
                   onMove={handleMove}
                   myColor={myColor}
+                  // Click an enemy piece to preview where it could move
+                  // (suspended during history review and buff targeting).
+                  opponentMoves={
+                    isReviewingHistory || buffTargeting.targeting ? [] : oppPreviewMoves
+                  }
                   fxTimePressure={
                     clockEnabled && !game.result && (whiteMs < 15_000 || blackMs < 15_000)
                   }

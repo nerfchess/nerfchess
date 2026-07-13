@@ -437,6 +437,12 @@ interface Props {
   // Optional and null-safe: absent (nerf mode, history review) simply paints
   // no markers.
   buffs?: BuffMatchState | null;
+  /** The OPPONENT's would-be legal moves, computed by the host on a
+   * turn-flipped board (buff-granted movement included). When provided,
+   * clicking an enemy piece "inspects" it: slate preview dots mark every
+   * square it could reach, visually distinct from your own move hints.
+   * Cleared by the next tap, your own selection, or any position change. */
+  opponentMoves?: Move[];
 }
 
 /** One derived piece-bound buff marker: everything the corner sigil and its
@@ -1059,6 +1065,7 @@ export function Board({
   signatureCard,
   fxBoard,
   buffs,
+  opponentMoves,
 }: Props) {
   const pickSquareSet = useMemo(() => new Set(pickSquares ?? []), [pickSquares]);
   const pickingSquares = !!onPickSquare;
@@ -1071,6 +1078,8 @@ export function Board({
     return s;
   }, [premoves]);
   const [selected, setSelected] = useState<Square | null>(null);
+  // Enemy piece under inspection (its would-be moves preview as slate dots).
+  const [inspectSq, setInspectSq] = useState<Square | null>(null);
   const [promotionMove, setPromotionMove] = useState<Move[] | null>(null);
   const [drag, setDrag] = useState<DragState | null>(null);
   const [hoverSq, setHoverSq] = useState<Square | null>(null);
@@ -1480,6 +1489,34 @@ export function Board({
     }
     return t;
   }, [selected, movesFrom]);
+
+  // Opponent inspection: their moves grouped by origin, and the preview
+  // squares (with capture flags) for the piece currently under inspection.
+  const oppMovesFrom = useMemo(() => {
+    const m = new Map<Square, Move[]>();
+    for (const mv of opponentMoves ?? []) {
+      let list = m.get(mv.from);
+      if (!list) {
+        list = [];
+        m.set(mv.from, list);
+      }
+      list.push(mv);
+    }
+    return m;
+  }, [opponentMoves]);
+  const inspectTargets = useMemo(() => {
+    const dots = new Map<Square, boolean>(); // sq -> is a capture
+    if (inspectSq != null) {
+      for (const m of oppMovesFrom.get(inspectSq) ?? []) {
+        dots.set(m.to, dots.get(m.to) || !!m.captured);
+      }
+    }
+    return dots;
+  }, [inspectSq, oppMovesFrom]);
+  // Any position change invalidates the inspected preview.
+  useEffect(() => {
+    setInspectSq(null);
+  }, [board.pieces]);
 
   const castleHintSquares = useMemo(() => {
     const set = new Set<Square>();
@@ -2052,6 +2089,17 @@ export function Board({
       onPointerDownPiece(e, sq);
       return;
     }
+    // Inspect an enemy piece: slate dots preview every square it could reach
+    // (turn-flipped legal moves from the host). A second tap on the same
+    // piece toggles the preview off; a frozen piece has no moves and falls
+    // through to the effect popover instead.
+    if (piece && piece.color !== myColor && oppMovesFrom.has(sq)) {
+      clearAnnotations();
+      setSelected(null);
+      setInspectSq((cur) => (cur === sq ? null : sq));
+      playSelect();
+      return;
+    }
     // A tap that plays no move and grabs no piece, landing on a special square
     // (a frozen/locked/warded/hexed piece or square, an opponent's bound card),
     // inspects it: the same effect popover desktop shows on hover. Touch only,
@@ -2079,6 +2127,7 @@ export function Board({
     if (hadSelection) {
       setSelected(null);
     }
+    setInspectSq(null);
     // Touch has no right-click, which is how desktop cancels a queued premove
     // (handleSquareContextMenu). On mobile, a double-tap on the same empty
     // square cancels the whole premove queue. Only a "pure" dead tap counts (one
@@ -2097,18 +2146,20 @@ export function Board({
     }
   };
 
-  // Clicking anywhere outside the board also clears the selection.
+  // Clicking anywhere outside the board also clears the selection (and any
+  // enemy-piece inspection preview).
   useEffect(() => {
-    if (selected == null) return;
+    if (selected == null && inspectSq == null) return;
     const onPointerDown = (e: PointerEvent) => {
       if (!(e.target instanceof Node)) return;
       if (boardRef.current && !boardRef.current.contains(e.target)) {
         setSelected(null);
+        setInspectSq(null);
       }
     };
     window.addEventListener("pointerdown", onPointerDown);
     return () => window.removeEventListener("pointerdown", onPointerDown);
-  }, [selected]);
+  }, [selected, inspectSq]);
 
   // Back out of the promotion picker instead of being forced to complete a
   // promotion. The move is committed only when a promotion piece is chosen, so
@@ -2140,6 +2191,7 @@ export function Board({
     const cell = rect.width / 8;
 
     setSelected(sq);
+    setInspectSq(null);
     if (selected !== sq) playSelect();
     setDrag({ from: sq, pointerId: e.pointerId, cell });
     setHoverSq(sq);
@@ -3083,6 +3135,18 @@ export function Board({
                 {isCastleHint && (
                   <div className="absolute inset-0 pointer-events-none ring-2 ring-inset ring-gold/70 rounded-sm" />
                 )}
+                {/* Opponent inspection preview: slate dots on every square the
+                    inspected enemy piece could reach, plus a ring on the piece
+                    itself. Distinct styling so it never reads as YOUR hints. */}
+                {inspectSq === sq && (
+                  <div className="absolute inset-0 pointer-events-none ring-2 ring-inset ring-[rgba(120,160,190,0.65)] rounded-sm" />
+                )}
+                {inspectTargets.has(sq) &&
+                  (inspectTargets.get(sq) ? (
+                    <div className="dot-inspect-capture pointer-events-none" />
+                  ) : (
+                    <div className="dot-inspect-target pointer-events-none" />
+                  ))}
                 {isPremoveSquare && (
                   <div className="absolute inset-0 pointer-events-none bg-oxblood/45" />
                 )}
@@ -3180,13 +3244,19 @@ export function Board({
           (() => {
             const cfg = resolveSignature(cast.id);
             if (!cfg || !cfg.hasLead) return null;
+            // Lead art (BoardWideStage & friends) is calibrated for a ONE-CELL
+            // parent: its 1400% canvas equals ~14 cells, blanketing the 8x8
+            // board with margin. Mounting it on the full crop (inset-0)
+            // multiplied every dimension by 8 — the "way too zoomed in"
+            // fragment bug — so both branches stage inside a single centered
+            // cell (12.5% = 1/8 of the board; already centered, no leadShift
+            // needed). This keeps board-wide effects the same real size on
+            // every screen the board itself renders on.
+            const cellStage =
+              "fx-one-shot pointer-events-none absolute left-[43.75%] top-[43.75%] h-[12.5%] w-[12.5%] z-30";
             if (isGenConfig(cfg)) {
               return (
-                <div
-                  key={`genlead-${cast.key}`}
-                  aria-hidden
-                  className="fx-one-shot pointer-events-none absolute inset-0 z-30"
-                >
+                <div key={`genlead-${cast.key}`} aria-hidden className={cellStage}>
                   <GenBurst config={cfg} role="lead" delayMs={0} />
                 </div>
               );
@@ -3199,11 +3269,7 @@ export function Board({
               return null; // the zone path is playing this card's art
             }
             return (
-              <div
-                key={`siglead-${cast.key}`}
-                aria-hidden
-                className="fx-one-shot pointer-events-none absolute inset-0 z-30"
-              >
+              <div key={`siglead-${cast.key}`} aria-hidden className={cellStage}>
                 <SignatureOverlay visual={cfg.visual} role="lead" delayMs={0} />
               </div>
             );
