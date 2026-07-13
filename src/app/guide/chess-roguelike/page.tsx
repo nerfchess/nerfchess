@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { GlossaryText } from "@/components/GlossaryText";
+import { KeyTerms } from "@/components/guide/KeyTerms";
 import { InfoPageLayout, InfoSection } from "@/components/InfoPageLayout";
 import { BreadcrumbJsonLd, FaqSection, GuideFooter } from "../shared";
 
@@ -31,7 +33,8 @@ export default function ChessRoguelikePage() {
 
       <InfoSection title="Chess with a card draft">
         <p>
-          Every 5 of your own moves, Nerf Chess deals you a draft: two cards, pick one. In{" "}
+          <GlossaryText text="Every 5 of your own moves, Nerf Chess deals you a draft: two cards, pick one — or skip it to bank a stronger offer, or spend your reroll for a fresh pair." />{" "}
+          In{" "}
           <Link href="/guide/buff-mode" className="underline">Buff mode</Link> those cards are
           power-ups you keep for yourself; in{" "}
           <Link href="/guide/nerf-mode" className="underline">Nerf mode</Link> they are mostly
@@ -44,12 +47,8 @@ export default function ChessRoguelikePage() {
       <InfoSection title="Escalating power, like a run">
         <p>
           What gives Nerf Chess its roguelike feel is the escalation. Cards are graded into eight
-          difficulty <Link href="/guide/glossary" className="underline">tiers</Link>, from I
-          (Trivial) to VIII (Unhinged), and the draft climbs that curve as the game goes on. Early
-          offers are mild; late-game offers can be board-warping. You can skip a draft to bank it
-          and roll your next offer one tier higher, a timing gamble that rewards patience. The top
-          tiers are deliberately rare, so the wildest cards stay blowout moments rather than the
-          default.
+          difficulty <Link href="/guide/glossary#tier" className="underline">tiers</Link>
+          <GlossaryText text=", from I (Trivial) to VIII (Unhinged), and the draft climbs that curve as the game goes on — round by round the offers roll around tiers I, II, III, V, then VII. Early offers are mild; late-game offers can be board-warping. You can skip a draft to bank it and roll your next offer one tier higher, a timing gamble that rewards patience. The top tiers are deliberately rare (every level above VI can slip back down), and the legendary bands — apex at tier 9 and mythic at tier 10 — never roll in the normal draft at all: they must be earned, by banking a tier-8 offer, winning a Chess Diff, or gambling on a Jackpot." />
         </p>
       </InfoSection>
 
@@ -79,6 +78,20 @@ export default function ChessRoguelikePage() {
           <Link href="/lobby" className="underline">lobby</Link>.
         </p>
       </InfoSection>
+
+      <KeyTerms
+        slugs={[
+          "draft",
+          "tier",
+          "bank",
+          "reroll",
+          "apex",
+          "mythic",
+          "take-both",
+          "blocked-draft",
+          "forced-tier",
+        ]}
+      />
 
       <FaqSection
         items={[

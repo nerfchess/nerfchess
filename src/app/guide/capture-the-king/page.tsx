@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { GlossaryText } from "@/components/GlossaryText";
+import { KeyTerms } from "@/components/guide/KeyTerms";
 import { InfoPageLayout, InfoSection } from "@/components/InfoPageLayout";
 import { BreadcrumbJsonLd, FaqSection, GuideFooter } from "../shared";
 
@@ -35,27 +37,23 @@ export default function CaptureTheKingPage() {
           abstraction. The game ends only when a king is genuinely captured, when a{" "}
           <Link href="/guide/nerf-mode" className="underline">nerf</Link> triggers a lose
           condition, or when a player resigns. There is no check to announce, no mate to declare,
-          and no stalemate to draw.
+          and no stalemate to draw.{" "}
+          <GlossaryText text="(The classical draws survive, though: the fifty-move rule and threefold repetition still apply, and mutual paralysis under a forced pass is a draw.)" />
         </p>
       </InfoSection>
 
       <InfoSection title="The king becomes a real piece">
         <p>
-          Because only capture ends the game, the king stops being a protected abstraction and
-          becomes a piece like any other. It can move into attacked squares. It can castle
-          through, into, or out of check. You are never forced to answer a threat to it. All of
-          that is legal, and all of it is usually fatal: leaving your king where it can be taken
-          loses on the spot, so vigilance replaces the check rule entirely.
+          <GlossaryText text="Because only capture ends the game, the king stops being a protected abstraction and becomes a piece like any other. It can move into attacked squares. It can castle through, into, or out of check. Both kings can be in check at the same time, and you are never forced to answer a threat to yours. All of that is legal, and all of it is usually fatal: leaving your king where it can be taken loses on the spot, so vigilance replaces the check rule entirely. The first king captured decides it — even if the capturer's own king was hanging when the axe fell." />
         </p>
       </InfoSection>
 
       <InfoSection title="Why it changes how you play">
         <p>
-          Capture-the-king rules make blunders lethal and endgames sharper. There is no safety
-          net: a king walk that would be illegal in normal chess is available here, which opens up
-          daring escapes and brutal punishments alike. It also simplifies the rulebook, since
-          check, checkmate, and stalemate all disappear, which is part of why Nerf Chess can
-          layer power-up cards and secret handicaps on top without the rules collapsing.
+          <GlossaryText text="Capture-the-king rules make blunders lethal and endgames sharper. There is no safety net: a king walk that would be illegal in normal chess is available here, which opens up daring escapes and brutal punishments alike. It also simplifies the rulebook, since check, checkmate, and stalemate all disappear, which is part of why Nerf Chess can layer power-up cards and secret handicaps on top without the rules collapsing." />
+        </p>
+        <p>
+          <GlossaryText text="Two safety rails are worth knowing. A premove that would leave your own king in check is cancelled instead of played, so walking into check is always a deliberate act, never an accident of queueing. And a chained bonus move (an extra move, or a turn your opponent was forced to skip) may never capture the king: the defender always gets one reply before the game can end." />
         </p>
         <p>
           The same win condition holds in both modes:{" "}
@@ -74,6 +72,19 @@ export default function CaptureTheKingPage() {
           <Link href="/guide/how-to-play" className="underline">how-to-play guide</Link>.
         </p>
       </InfoSection>
+
+      <KeyTerms
+        slugs={[
+          "capture-the-king",
+          "check",
+          "premove",
+          "extra-move",
+          "skip",
+          "forced-pass",
+          "king-safe",
+          "castling",
+        ]}
+      />
 
       <FaqSection
         items={[

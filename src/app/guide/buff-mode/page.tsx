@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { GlossaryText } from "@/components/GlossaryText";
+import { KeyTerms } from "@/components/guide/KeyTerms";
 import { InfoPageLayout, InfoSection } from "@/components/InfoPageLayout";
 import { BreadcrumbJsonLd, FaqSection, GuideFooter } from "../shared";
 
@@ -21,38 +23,31 @@ export default function BuffModePage() {
 
       <InfoSection title="The draft loop">
         <p>
-          Every 5 of your own moves you receive an offer: two buff cards, pick one. Buffs come
-          in three kinds. <strong>Passive</strong> buffs work quietly while you hold them, like
-          a piece gaining a new way to move. <strong>Instant</strong> buffs fire the moment you
-          pick them, like a freeze or a reveal. <strong>Activated</strong> buffs wait until you
-          choose to use them, and using one costs your turn (the extra-move family is the
-          exception and resolves within your turn).
+          <GlossaryText text="Every 5 of your own moves you receive an offer: two buff cards, pick one (in online games, within a 20-second lock-in window while the clocks pause). Buffs come in three kinds." />{" "}
+          <strong>Passive</strong>{" "}
+          <GlossaryText text="buffs work quietly while you hold them, like a piece gaining a new way to move." />{" "}
+          <strong>Instant</strong>{" "}
+          <GlossaryText text="buffs fire the moment you pick them, like a freeze or a reveal." />{" "}
+          <strong>Activated</strong>{" "}
+          <GlossaryText text="buffs wait until you choose to use them, and using one costs your turn (the extra-move family are free actions and resolve within your turn)." />
         </p>
         <p>
-          Instead of picking, you can skip a draft to bank it: your next offer rolls one tier
-          higher. Banking never stacks beyond one tier, so the decision is a real gamble on
-          timing rather than a snowball.
+          <GlossaryText text="Instead of picking, you can skip a draft to bank it: your next offer rolls one tier higher. Banking never stacks beyond one tier, so the decision is a real gamble on timing rather than a snowball — with one jackpot case: bank an offer that contained a tier-8 card and your next offer becomes a guaranteed two-card apex (tier 9) offer, each slot with about a 10% chance to upgrade into a tier-10 mythic. You also start with one reroll, which swaps the offer for a fresh, guaranteed-different pair at the same tiers." />
         </p>
       </InfoSection>
 
       <InfoSection title="Tiers: from Trivial to Unhinged">
         <p>
-          Every card carries a tier from I to VIII: Trivial, Easy, Common, Severe, Brutal,
-          Cruel, Punishing, Unhinged. Early drafts offer low tiers and the curve climbs as the
-          game goes on, with a little randomness each round. The very top tiers are gated so
-          the board-clearing, near-invincibility cards stay rare blowout moments instead of
-          the default endgame. Browse the whole library, tier by tier, in the{" "}
+          <GlossaryText text="Every card carries a tier from I to VIII: Trivial, Easy, Common, Severe, Brutal, Cruel, Punishing, Unhinged. Early drafts offer low tiers and the curve climbs round by round — roughly tiers I, II, III, V, then VII, with a small random wobble each round. The very top is gated: above tier VI every level has a 45% chance to slip back down one, so board-clearing, near-invincibility cards stay rare blowout moments instead of the default endgame." />{" "}
+          Browse the whole library, tier by tier, in the{" "}
           <Link href="/codex" className="underline">codex</Link>.
         </p>
       </InfoSection>
 
       <InfoSection title="Rules that keep it fair">
         <p>
-          A few engine rules keep Buff mode a chess game rather than pure chaos. Freezes and
-          walnut hexes never affect kings, so the target of the game can always run. A player
-          completely locked down by effects gets a forced pass instead of losing to &quot;no
-          legal moves&quot;, and if both players are paralyzed the game is a draw. And as
-          everywhere in Nerf Chess, victory means{" "}
+          <GlossaryText text="A few engine rules keep Buff mode a chess game rather than pure chaos. Freezes and walnut hexes never affect kings, so the target of the game can always run. A shield never covers the king, and an uncapturable piece may never be the one that takes the enemy king: you must expose a piece to win. A player completely locked down by effects gets a forced pass instead of losing to &quot;no legal moves&quot;, and if both players are paralyzed the game is a draw." />{" "}
+          And as everywhere in Nerf Chess, victory means{" "}
           <Link href="/guide/how-to-play" className="underline">capturing the king</Link>:
           buff-granted moves cannot dodge that goal, only race toward it.
         </p>
@@ -62,6 +57,21 @@ export default function BuffModePage() {
           modes share the draft engine but feel completely different to play.
         </p>
       </InfoSection>
+
+      <KeyTerms
+        slugs={[
+          "buff",
+          "draft",
+          "tier",
+          "bank",
+          "reroll",
+          "apex",
+          "mythic",
+          "take-both",
+          "chess-diff",
+          "forced-pass",
+        ]}
+      />
 
       <FaqSection
         items={[

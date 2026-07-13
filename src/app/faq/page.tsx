@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { GlossaryText } from "@/components/GlossaryText";
+import { KeyTerms } from "@/components/guide/KeyTerms";
 import { InfoPageLayout, InfoSection } from "@/components/InfoPageLayout";
 
 export const metadata: Metadata = {
@@ -46,7 +48,7 @@ const FAQS = [
   {
     question: "What happens if I skip a buff draft?",
     answer:
-      "Skipping banks the draft: your next offer rolls a tier stronger. Banking does not stack, so the trick is picking the right moment to be patient.",
+      "Skipping banks the draft: your next offer rolls one tier stronger. Banking does not stack, so the trick is picking the right moment to be patient. One exception: banking an offer that contained a tier-8 card earns a guaranteed apex (tier 9) offer next, with a small chance of a tier-10 mythic.",
   },
   {
     question: "Can I see what my opponent drafts?",
@@ -101,9 +103,28 @@ export default function FAQPage() {
       />
       {FAQS.map((faq) => (
         <InfoSection key={faq.question} title={faq.question}>
-          <p>{faq.answer}</p>
+          {/* Answers render through GlossaryText so every game term is
+              clickable; the JSON-LD above keeps the plain strings. */}
+          <p>
+            <GlossaryText text={faq.answer} />
+          </p>
         </InfoSection>
       ))}
+
+      <KeyTerms
+        slugs={[
+          "nerf-mode",
+          "buff-mode",
+          "nerf",
+          "buff",
+          "hex",
+          "boon",
+          "draft",
+          "bank",
+          "tier",
+          "capture-the-king",
+        ]}
+      />
 
       <div className="pt-4 flex flex-wrap gap-3">
         <Link href="/tutorial" className="px-5 py-2.5 rounded-sm btn-leaf font-display">
