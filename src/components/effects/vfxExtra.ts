@@ -43,4 +43,35 @@ const PERSONAL_VFX: Record<string, CardVfx> = {
   monkeytype: { travel: "rain", impact: "sparkle", aftermath: "none", palette: ["#e8d24d", "#e8edf6", "#39445c"], source: "sky" },
 };
 
-export const EXTRA_CARD_VFX: Record<string, CardVfx> = { ...FUNNY_VFX, ...PERSONAL_VFX };
+// Canvas VFX for the meme-pack bespoke animations (memePlays.tsx),
+// palette-matched to each card's DOM art. Only the tier-7 orbital cow shakes
+// (board-thump stays a tier 7+ privilege); the tier 2-3 entries stay subtle.
+const MEME_VFX: Record<string, CardVfx> = {
+  // ---- Tier 7 ----
+  // The ringed cow swings in from above: golden ring-dust arcs down onto the rim.
+  la_vaca_saturno_saturnita: { travel: "arc", impact: "burst", aftermath: "sparkle", palette: ["#f2c46a", "#9a6cc4", "#ffe9b8"], source: "sky", shake: true },
+
+  // ---- Tier 6 ----
+  // The espresso assassin's strike: one crack of steel, a brown splash, no residue.
+  cappuccino_assassino: { travel: "bolt", impact: "shock", aftermath: "none", palette: ["#c2d2e0", "#7d4e2c", "#fff8ec"], source: "caster" },
+
+  // ---- Tier 5 ----
+  // The fridge doors open: a cold front rolls over the chosen pieces and frost stays.
+  frigo_camelo: { travel: "wave", impact: "shatter", aftermath: "frost", palette: ["#8fd8f2", "#d6f4ff", "#4fa8cc"], source: "lead" },
+  // The vortex churns the middle of the board: blue spray, nothing lingers.
+  skibidi_flush: { travel: "wave", impact: "shock", aftermath: "none", palette: ["#5db6e8", "#bfeaff", "#2a6ea8"], source: "center" },
+
+  // ---- Tier 4 ----
+  // The formation twirl: soft pink sparkle where the dancers step.
+  ballerina_cappuccina: { travel: "none", impact: "sparkle", aftermath: "sparkle", palette: ["#f5a8c0", "#ffd9e4", "#c96a8e"], source: "lead" },
+  // The moai lands: grey debris and dust from above, then stillness (of course).
+  moai_head: { travel: "rain", impact: "debris", aftermath: "none", palette: ["#848e98", "#b4bcc4", "#4e5862"], source: "sky" },
+
+  // ---- Tier 2-3 (subtle floor) ----
+  // The shrimp legs graft on: a small coral glitch-pop on each victim.
+  trippi_troppi: { travel: "none", impact: "burst", aftermath: "none", palette: ["#f2825a", "#5db6e8", "#ffb08a"], source: "lead" },
+  // The chill guy passes by: the faintest grey shimmer. He would not want more.
+  chill_guy: { travel: "none", impact: "sparkle", aftermath: "none", palette: ["#8b93a2", "#c9d2dc", "#5c6472"], source: "caster" },
+};
+
+export const EXTRA_CARD_VFX: Record<string, CardVfx> = { ...FUNNY_VFX, ...PERSONAL_VFX, ...MEME_VFX };
