@@ -3509,8 +3509,32 @@ const TIER8: Buff[] = [
     },
   ),
   def(
-    { id: "time_prison", name: "Time Prison", description: "Your opponent skips their next three turns, once.", tier: 8, category: "tempo", fx: { motif: "slow", pieces: "all" } },
-    skipOpponent(3),
+    // Distinct from Tempo Theft (T3, the clean single skip): three stolen
+    // turns, but the prison is FRAGILE. Any capture you make while it holds
+    // shatters it and refunds the remaining skips, so you must choose between
+    // quiet maneuvering with total tempo or cashing in material and waking
+    // your opponent early.
+    { id: "time_prison", name: "Time Prison", description: "Your opponent skips their next three turns, but the prison is fragile: if you capture anything while it holds, it shatters and their remaining skipped turns are refunded.", tier: 8, category: "tempo", fx: { motif: "slow", pieces: "all" } },
+    {
+      kind: "passive",
+      init: (inst, api) => {
+        api.bs.skips[api.opp] += 3;
+        inst.state.active = true;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (!inst.state.active) return;
+        if (api.bs.skips[api.opp] <= 0) {
+          // Served in full: the prison dissolves on its own.
+          inst.spent = true;
+          return;
+        }
+        if (move.color === api.me && move.captured && move.captured !== "k") {
+          api.bs.skips[api.opp] = 0;
+          inst.spent = true;
+        }
+      },
+      status: (inst) => (inst.state.active ? "holds while you hold your fire" : null),
+    },
   ),
   def(
     { id: "divine_fortress", name: "Divine Fortress", description: "Every piece on your half of the board, your king aside, is uncapturable for 3 turns.", tier: 8, category: "protection" },
@@ -3668,8 +3692,16 @@ const TIER8: Buff[] = [
     }),
   ),
   def(
-    { id: "absolute_aegis", name: "Absolute Aegis", description: "Every one of your pieces except your king cannot be captured for 2 full turns.", tier: 8, category: "protection", boon: true },
-    shieldArmy(2),
+    // Distinct from Aegis (T6, the clean 1-turn army shield): the absolute
+    // version is the only shield that also covers the KING (king_safe), so for
+    // two turns literally nothing of yours can be taken. The engine's
+    // invulnerable-attacker guard still bars shielded pieces from delivering
+    // the king capture, so it defends without ending the game by itself.
+    { id: "absolute_aegis", name: "Absolute Aegis", description: "Every one of your pieces cannot be captured for 2 full turns, and this time that includes your king.", tier: 8, category: "protection", boon: true },
+    instant((_inst, api) => {
+      addEffect(api, { kind: "shield", owner: api.me, squares: null, turns: 2 });
+      addEffect(api, { kind: "king_safe", owner: api.me, turns: 2 });
+    }),
   ),
   def(
     { id: "endless_turn", name: "Endless Turn", description: "Take moves until you make a capture, once (minimum one move).", tier: 8, category: "tempo", fx: { motif: "rally", pieces: "all", self: true } },

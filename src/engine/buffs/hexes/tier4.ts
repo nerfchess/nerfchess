@@ -16,6 +16,7 @@ import {
   activated,
   addEffect,
   mySquares,
+  relRank,
   FILE,
   RANK,
   SQ,
@@ -50,17 +51,28 @@ export const HEXES_T4: Buff[] = [
     walnutAll(["b"], 3),
   ),
 
-  // --- petrify all: knights for 3 turns -----------------------------------
+  // --- petrify all knights, and YOUR knights take stone-skin ---------------
+  // Not a heavier Hobbled Cavalry (T3 walnuts their knights and stops there):
+  // the same casting spills onto your own stable, so your knights ride out as
+  // living statues, uncapturable while theirs sit inert.
   H(
     {
       id: "statue_stable",
       name: "Statue Stable",
-      description: "Your opponent's knights turn to walnuts for 3 of their turns: a walnut is so heavy it can only shuffle one square at a time.",
-      flavor: "Bronze horses, bolted to their plinths.",
+      description: "Your opponent's knights turn to walnuts for 2 of their turns, and your own knights harden into living statues: they cannot be captured for those same 2 turns.",
+      flavor: "One stable turns to plinths, the other to armor.",
       // Board already paints walnuts; fx carried for consistency.
       fx: { motif: "jail", pieces: ["n"] },
     },
-    walnutAll(["n"], 3),
+    instant((_inst, api) => {
+      for (const sq of mySquares(api.board, api.opp, "n")) {
+        addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 2 });
+      }
+      const mine = mySquares(api.board, api.me, "n");
+      if (mine.length) {
+        addEffect(api, { kind: "shield", owner: api.me, squares: mine, turns: 2 });
+      }
+    }),
   ),
 
   // --- petrify: one targeted queen for 3 turns ----------------------------
@@ -143,59 +155,92 @@ export const HEXES_T4: Buff[] = [
     ),
   ),
 
-  // --- barred: seal a whole file for 3 turns ------------------------------
+  // --- barred: seal ANY file of your choosing for 3 turns ------------------
+  // Not a fixed center seal (Sealed Avenues owns the d+e files): you pick the
+  // gate. Aim it down their rook's file, their attack lane, wherever it hurts.
   H(
     {
       id: "sealed_gate",
       name: "Sealed Gate",
-      description: "Your opponent cannot move any piece onto the entire e-file for their next 3 turns.",
-      flavor: "The central gate is bricked shut.",
+      description: "Brick up one gate of your choosing: pick any square, and your opponent cannot move any piece onto that square's entire file for their next 3 turns.",
+      flavor: "Any gate can be bricked shut, if you know which one.",
       // Board already paints barred squares; square-scoped, no pieces field.
       fx: { motif: "blindfold" },
     },
-    instant((_inst, api) => {
-      const squares = [
-        SQ(4, 0), SQ(4, 1), SQ(4, 2), SQ(4, 3),
-        SQ(4, 4), SQ(4, 5), SQ(4, 6), SQ(4, 7),
-      ];
-      addEffect(api, { kind: "barred", squares, against: api.opp, turns: 3 });
-    }),
+    activated(
+      (_inst, _api, picks) =>
+        picks.length > 0
+          ? null
+          : {
+              kind: "square",
+              label: "Pick any square on the file to seal",
+              squares: Array.from({ length: 64 }, (_, i) => i),
+            },
+      (_inst, api, picks) => {
+        const sq = picks[0]?.square;
+        if (sq == null) return;
+        const squares: number[] = [];
+        for (let r = 0; r < 8; r++) squares.push(SQ(FILE(sq), r));
+        addEffect(api, { kind: "barred", squares, against: api.opp, turns: 3 });
+      },
+    ),
   ),
 
-  // --- mobility clamp: every piece may move at most 2 squares for 2 turns --
+  // --- direction-gated clamp: advances crawl, retreats are free ------------
+  // Not a lighter Leaden Limbs (T8 clamps EVERY move to one square): only
+  // moves TOWARD you are clamped, and only to 2 squares. Their army can
+  // regroup and retreat at full speed; it just cannot press the attack.
   H(
     {
       id: "abandoned_post",
       name: "Abandoned Post",
-      description: "For your opponent's next 2 turns every piece may move at most 2 squares in any direction.",
+      description: "Nobody presses the attack: for your opponent's next 3 turns, any move toward your side of the board may cover at most 2 squares. Sideways moves and retreats keep their full range.",
       flavor: "The ranks hold their ground and refuse to march far.",
       // Board already paints the slowed pieces; fx carried for consistency.
       fx: { motif: "anchor", pieces: "all" },
     },
-    curse(2, (moves) =>
+    curse(3, (moves, api) =>
       moves.filter(
         (m) =>
+          relRank(api.opp, m.to) <= relRank(api.opp, m.from) ||
           Math.max(Math.abs(FILE(m.to) - FILE(m.from)), Math.abs(RANK(m.to) - RANK(m.from))) <= 2,
       ),
     ),
   ),
 
-  // --- mobility clamp: rooks reduced to a crawl for 4 turns ----------------
+  // --- stateful cooldown: rooks must rest a turn between hauls -------------
+  // Not a rook-flavored Slippery Grip (T1 clamps their slide length): rooks
+  // keep their FULL range, but after any rook moves, every rook must sit out
+  // the following turn. A cooldown, not a range clamp.
   H(
     {
       id: "frozen_furrows",
       name: "Frozen Furrows",
-      description: "The cart wheels freeze solid in the ruts: your opponent's rooks can move at most 1 square for their next 4 turns.",
-      flavor: "The fields freeze over and nothing rolls through.",
+      description: "The ruts freeze over between hauls: for your opponent's next 6 turns, whenever they move a rook, their rooks cannot move at all on their following turn.",
+      flavor: "Every pass of the cart leaves ice the next one sticks in.",
       fx: { motif: "anchor", pieces: ["r"] },
     },
-    curse(4, (moves) =>
-      moves.filter(
-        (m) =>
-          m.piece !== "r" ||
-          Math.max(Math.abs(FILE(m.to) - FILE(m.from)), Math.abs(RANK(m.to) - RANK(m.from))) <= 1,
-      ),
-    ),
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.turns = 6;
+      },
+      filterOpponentMoves: (moves, inst) => {
+        if (((inst.state.turns as number) ?? 0) <= 0) return moves;
+        if (!inst.state.lastWasRook) return moves;
+        const kept = moves.filter((m) => m.piece !== "r");
+        // Safety net: never strand the opponent with zero moves.
+        return kept.length > 0 ? kept : moves;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.opp) return;
+        inst.state.lastWasRook = move.piece === "r";
+        const t = ((inst.state.turns as number) ?? 0) - 1;
+        inst.state.turns = t;
+        if (t <= 0) inst.spent = true;
+      },
+      status: (inst) => `${(inst.state.turns as number) ?? 0} of their turns left`,
+    },
   ),
 
   // --- skip plus a hangover: lose a turn AND 20 seconds off the clock ------

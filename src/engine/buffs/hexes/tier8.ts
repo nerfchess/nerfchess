@@ -14,9 +14,6 @@ import {
   curse,
   permaOppFilter,
   walnutAll,
-  freezeAllEnemies,
-  freezeTarget,
-  nullifyDrafts,
   instant,
   activated,
   addEffect,
@@ -88,30 +85,82 @@ export const HEXES_T8: Buff[] = [
     }),
   ),
 
-  // --- freeze all: the entire army but the king iced for 2 turns ----------
+  // --- freeze all, and the cold LINGERS in their limbs after the thaw ------
+  // Not a longer Big Chill (T6, which leaks a random piece per turn) or Mass
+  // Freeze (T4, the clean 1-turn rung): the deep freeze holds 2 turns, then
+  // the whole army comes back numb, hobbled to single-square steps for 2 more
+  // turns while the blood returns.
   H(
     {
       id: "absolute_zero",
       name: "Absolute Zero",
-      description: "Freeze all of your opponent's pieces except their king for 3 of their turns, so only their king may move.",
-      flavor: "The board drops below freezing and everything but the crown locks solid.",
+      description: "Freeze all of your opponent's pieces except their king for 2 of their turns. The cold outlives the ice: for their next 2 turns after the thaw, every piece they move can only step a single square.",
+      flavor: "The ice lets go long before the cold does.",
       // Board already paints freezes; fx carried for consistency.
       fx: { motif: "jail", pieces: ["p", "n", "b", "r", "q"] },
     },
-    freezeAllEnemies(3),
+    instant((_inst, api) => {
+      for (const sq of mySquares(api.board, api.opp)) {
+        if (api.board.pieces[sq]!.type === "k") continue;
+        addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2 });
+      }
+      // 4 of their turns total: the leash is moot for the 2 frozen turns
+      // (only the one-square king moves anyway), then bites for 2 more.
+      addEffect(api, { kind: "short_leash", owner: api.opp, turns: 4 });
+    }),
   ),
 
-  // --- petrify all: every minor piece, knights and bishops, for 4 turns ----
+  // --- petrify all minors, and the forest GRABS whoever walks among them ----
+  // Not a longer Statue Garden (T7's clean all-minors rung): the stone trees
+  // have roots. For the 4 turns the forest stands, any enemy piece that ends a
+  // move beside a petrified minor is seized by the roots and frozen for a
+  // turn, so their army cannot even maneuver around its own statues.
   H(
     {
       id: "petrified_forest",
       name: "Petrified Forest",
-      description: "Your opponent's knights and bishops turn to walnuts for 4 of their turns: a walnut is so heavy it can only shuffle one square at a time.",
-      flavor: "Every horse and prelate grown into ancient stone timber.",
-      // Board already paints walnuts; fx carried for consistency.
+      description: "Your opponent's knights and bishops turn to walnuts for 4 of their turns, and the forest has roots: any enemy piece that ends a move beside one of the stone trees is entangled and frozen for 1 turn.",
+      flavor: "The trees were cavalry once. They still take prisoners.",
+      // Board already paints walnuts and freezes; fx carried for consistency.
       fx: { motif: "jail", pieces: ["n", "b"] },
     },
-    walnutAll(["n", "b"], 4),
+    {
+      kind: "passive",
+      init: (inst, api) => {
+        inst.state.turns = 4;
+        for (const sq of mySquares(api.board, api.opp)) {
+          const t = api.board.pieces[sq]!.type;
+          if (t !== "n" && t !== "b") continue;
+          addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 4 });
+        }
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color === api.opp && turnsLeft(inst) > 0) {
+          // Stone trees: active walnuts standing on enemy minors (they shuffle
+          // at most a king-step, so the live effect list tracks them exactly).
+          const trees = api.bs.effects
+            .filter((e) => {
+              if (e.kind !== "walnut" || e.owner !== api.opp || e.turns <= 0) return false;
+              const p = api.board.pieces[e.sq];
+              return !!p && p.color === api.opp && (p.type === "n" || p.type === "b");
+            })
+            .map((e) => (e.kind === "walnut" ? e.sq : -1));
+          const landed = api.board.pieces[move.to];
+          const besideTree = trees.some(
+            (t) =>
+              t !== move.to &&
+              Math.max(Math.abs(FILE(move.to) - FILE(t)), Math.abs(RANK(move.to) - RANK(t))) === 1,
+          );
+          if (landed && landed.color === api.opp && landed.type !== "k" && besideTree) {
+            // Added during their own move, so the shared post-move tick eats
+            // one turn immediately: 2 here leaves exactly 1 of their turns.
+            addEffect(api, { kind: "freeze", sq: move.to, owner: api.opp, turns: 2, skin: "roots" });
+          }
+        }
+        tickTurns(inst, move, api.opp);
+      },
+      status: (inst) => `${turnsLeft(inst)} of their turns left`,
+    },
   ),
 
   // --- MARQUEE: petrify one piece for the rest of the game, and its gaze
@@ -184,18 +233,25 @@ export const HEXES_T8: Buff[] = [
     ),
   ),
 
-  // --- no_pawn_advance: pawns nailed down for 8 turns (near-permanent) -----
+  // --- the blight takes the crop: advanced pawns DIE, the rest are locked ---
+  // Not a longer Trench Line / Iron Furrow, and no longer dominated by Salted
+  // Earth (T7's permanent advance lock): the blight consumes outright. Every
+  // enemy pawn that crossed the middle of the board rots off the board, and
+  // the pawns still at home cannot advance for 4 turns.
   H(
     {
       id: "blighted_furrows",
       name: "Blighted Furrows",
-      description: "Your opponent's pawns cannot advance for their next 8 turns. They may still capture diagonally.",
-      flavor: "The fields are poisoned; not one seed dares push upward.",
+      description: "The blight takes whatever ripened first: every enemy pawn standing in your half of the board rots away and is removed, and their remaining pawns cannot advance for their next 4 turns.",
+      flavor: "The fields are poisoned; the tallest stalks fall first.",
       // Board already paints no_pawn_advance; fx carried for consistency.
       fx: { motif: "anchor", pieces: ["p"] },
     },
     instant((_inst, api) => {
-      addEffect(api, { kind: "no_pawn_advance", against: api.opp, turns: 8 });
+      for (const sq of mySquares(api.board, api.opp, "p")) {
+        if (relRank(api.opp, sq) >= 5) api.removePiece(sq);
+      }
+      addEffect(api, { kind: "no_pawn_advance", against: api.opp, turns: 4 });
     }),
   ),
 
@@ -273,26 +329,63 @@ export const HEXES_T8: Buff[] = [
     ),
   ),
 
-  // --- freeze one targeted piece for 5 turns ------------------------------
+  // --- freeze one piece, and the shard radiates cold nobody dares approach --
+  // Not a longer Frostbite (T3's clean targeted freeze): the shard is a
+  // WEATHER SYSTEM. The pierced piece is iced for 4 of their turns, and for
+  // those turns your opponent cannot move anything onto the squares around
+  // it, so the frozen piece cannot be defended or huddled behind.
   H(
     {
       id: "everfrost_shard",
       name: "Everfrost Shard",
-      description: "Freeze one enemy piece you target so it cannot move for 5 of their turns. Kings cannot be targeted.",
-      flavor: "A splinter of unmelting winter driven straight through it.",
+      description: "Freeze one enemy piece you target for 4 of their turns. The shard radiates: for those 4 turns your opponent cannot move any piece onto a square beside it. Kings cannot be targeted.",
+      flavor: "Nothing grows near it. Nothing stands near it. Nothing helps it.",
     },
-    freezeTarget(5),
+    activated(
+      (_inst, api, picks) =>
+        picks.length > 0
+          ? null
+          : {
+              kind: "square",
+              label: "Choose an enemy piece to pierce with the shard",
+              squares: mySquares(api.board, api.opp).filter(
+                (sq) => api.board.pieces[sq]!.type !== "k",
+              ),
+            },
+      (_inst, api, picks) => {
+        const sq = picks[0]?.square;
+        if (sq == null) return;
+        addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 4 });
+        const ring: number[] = [];
+        for (let df = -1; df <= 1; df++) {
+          for (let dr = -1; dr <= 1; dr++) {
+            if (df === 0 && dr === 0) continue;
+            const f = FILE(sq) + df, r = RANK(sq) + dr;
+            if (inBoard(f, r)) ring.push(SQ(f, r));
+          }
+        }
+        if (ring.length) {
+          addEffect(api, { kind: "barred", squares: ring, against: api.opp, turns: 4 });
+        }
+      },
+    ),
   ),
 
-  // --- draft denial: opponent's next 3 drafts arrive nullified ------------
+  // --- draft denial that FEEDS you: their cards curdle, yours ripen ---------
+  // Not a bigger Hexed Satchel (T5's clean nullify-2 rung): the poison is
+  // drawn OFF their counsel and distilled into yours. Their next 2 drafted
+  // cards arrive dead, and your own next draft rolls one tier higher.
   H(
     {
       id: "poisoned_counsel",
       name: "Poisoned Counsel",
-      description: "Your opponent's next 3 drafted buffs arrive nullified and do nothing.",
-      flavor: "Every advisor whispers rot, and every plan curdles on arrival.",
+      description: "Your opponent's next 2 drafted cards arrive nullified and do nothing, and the venom drawn from their counsel sweetens yours: your next draft rolls one tier higher.",
+      flavor: "Every advisor whispers rot, and the rot pays its way to the other tent.",
     },
-    nullifyDrafts(3),
+    instant((_inst, api) => {
+      api.theirs.flags.nullifyIncoming = (api.theirs.flags.nullifyIncoming ?? 0) + 2;
+      api.mine.flags.bankBonus = Math.min(1, (api.mine.flags.bankBonus ?? 0) + 1);
+    }),
   ),
 
   // --- no captures for 3 turns AND a sealed ring around your own king ------

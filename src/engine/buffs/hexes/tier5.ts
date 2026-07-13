@@ -18,6 +18,8 @@ import {
   addEffect,
   mySquares,
   relRank,
+  tickTurns,
+  turnsLeft,
   FILE,
   RANK,
   SQ,
@@ -174,19 +176,44 @@ export const HEXES_T5: Buff[] = [
     },
   ),
 
-  // --- no_pawn_advance: pawns nailed down for five turns ------------------
+  // --- pawn advance lock with a spike trap on captures ----------------------
+  // Not a longer Trench Line (T2 is the clean advance lock): the furrow is
+  // SEEDED with iron. Pawns cannot advance, and the diagonal capture they are
+  // still allowed lands them on the spikes: the capturing pawn is caught fast
+  // (frozen) for 2 turns where it lands.
   H(
     {
       id: "iron_furrow",
       name: "Iron Furrow",
-      description: "Your opponent's pawns cannot advance for their next 5 turns. They may still capture diagonally.",
-      flavor: "The whole front rank is spiked into the earth.",
+      description: "The field is sown with iron spikes: your opponent's pawns cannot advance for their next 4 turns, and any enemy pawn that captures during that time is caught on the spikes, unable to move for 2 of their turns.",
+      flavor: "The harvest bites back.",
       // Board already paints no_pawn_advance; fx carried for consistency.
       fx: { motif: "anchor", pieces: ["p"] },
     },
-    instant((_inst, api) => {
-      addEffect(api, { kind: "no_pawn_advance", against: api.opp, turns: 5 });
-    }),
+    {
+      kind: "passive",
+      init: (inst, api) => {
+        inst.state.turns = 4;
+        addEffect(api, { kind: "no_pawn_advance", against: api.opp, turns: 4 });
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (
+          move.color === api.opp &&
+          move.piece === "p" &&
+          move.captured &&
+          ((inst.state.turns as number) ?? 0) > 0
+        ) {
+          const p = api.board.pieces[move.to];
+          if (p && p.color === api.opp && p.type === "p") {
+            // Added during their own move, so the shared post-move tick eats
+            // one turn immediately: 3 here leaves exactly 2 of their turns.
+            addEffect(api, { kind: "freeze", sq: move.to, owner: api.opp, turns: 3, skin: "beartrap" });
+          }
+        }
+        tickTurns(inst, move, api.opp);
+      },
+      status: (inst) => `${turnsLeft(inst)} of their turns left`,
+    },
   ),
 
   // --- timed filter: queen tethered to her king -----------------------------
@@ -242,16 +269,19 @@ export const HEXES_T5: Buff[] = [
     },
   ),
 
-  // --- timed filter: only pawns and the king may move ---------------------
+  // --- zone lock: only pieces standing at home may move --------------------
+  // Not a longer Wasted Hour (T3's pawn-or-king turn): the levy is a HOME
+  // GUARD. Whatever stands in their own half may fight; every piece already
+  // across the frontier is abandoned mid-campaign and cannot move.
   H(
     {
       id: "peasant_levy",
       name: "Peasant Levy",
-      description: "Your opponent may move only their pawns and their king for their next 2 turns.",
-      flavor: "The nobles have all fled; only the levy remains.",
-      fx: { motif: "jail", pieces: ["n", "b", "r", "q"] },
+      description: "The levy defends only the homeland: for your opponent's next 3 turns they may move only pieces standing in their own half of the board. Anything already across the middle is stranded.",
+      flavor: "The expedition looks back and finds no relief column coming.",
+      fx: { motif: "jail", pieces: "all" },
     },
-    curse(2, (moves) => moves.filter((m) => m.piece === "p" || m.piece === "k")),
+    curse(3, (moves, api) => moves.filter((m) => relRank(api.opp, m.from) <= 4)),
   ),
 
   // --- barred: seal the two center ranks ----------------------------------
