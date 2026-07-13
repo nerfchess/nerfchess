@@ -11,11 +11,13 @@
     "server:start": "node dist-server/server/index.js",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test:rules": "npm run server:build && node scripts/test-hexes.cjs",
+    "gen:icons": "npm run server:build && node scripts/gen-card-icons.mjs",
+    "test:rules": "npm run server:build && node scripts/gen-card-icons.mjs --check && node scripts/test-hexes.cjs",
     "test:nerfs": "npm run server:build && node scripts/test-nerfs.cjs",
     "test:desync": "npm run server:build && node scripts/test-desync.cjs",
     "test:apex": "npm run server:build && node scripts/test-apex.cjs",
     "test:snapshot": "npm run server:build && node scripts/test-snapshot.cjs",
+    "test:e2e": "playwright test",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy"
   },
@@ -31,6 +33,7 @@
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260708.1",
     "@opennextjs/cloudflare": "^1.20.1",
+    "@playwright/test": "^1.61.1",
     "@types/node": "^22",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
