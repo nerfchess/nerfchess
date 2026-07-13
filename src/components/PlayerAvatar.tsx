@@ -63,14 +63,12 @@ export function PlayerAvatar({
   );
 }
 
-// House-player accounts hold "_flower" avatar preset ids (see lib/avatars.ts).
-// The flower renders as a very small bloom in the TOP-RIGHT corner of every
-// house avatar, so a bot is identifiable at a glance anywhere an avatar shows.
-// Owner feedback: the old bloom (bright pink petals, gold heart, 0.85 opacity)
-// was a loud emblem that screamed "bot"; it now draws small, ghosted, and in a
-// single muted tone — like the legacy star mark — so it reads as quiet plate
-// decoration while staying learnable. Human presets never resolve to a
-// flowered id, so no human gets one.
+// House-player accounts hold "_flower" avatar preset ids (see lib/avatars.ts),
+// which still resolve to an ordinary piece-on-plate avatar. Owner call: house
+// bots should read as ordinary players, so the old corner bloom that marked
+// them as bots is no longer rendered (the spec.flower flag is left on the
+// preset but drawn nowhere). Bots are now indistinguishable from humans in
+// every avatar, matching the leaderboard which shows them unlabeled.
 function PresetAvatar({
   name,
   avatar,
@@ -84,7 +82,6 @@ function PresetAvatar({
 }) {
   const spec = AVATARS[avatarIdFor(name, avatar)];
   const starSize = Math.max(5, Math.round(size * 0.2));
-  const flowerSize = Math.max(5, Math.round(size * 0.16));
   return (
     <div
       className={"relative grid shrink-0 place-items-center overflow-hidden rounded-md border border-white/20 " + className}
@@ -94,34 +91,6 @@ function PresetAvatar({
       <div style={{ width: "80%", height: "80%" }}>
         <Piece type={spec.piece} color={spec.pieceColor} size="100%" />
       </div>
-      {spec.flower && (
-        <svg
-          viewBox="0 0 24 24"
-          style={{
-            position: "absolute",
-            top: Math.max(1, Math.round(size * 0.05)),
-            right: Math.max(1, Math.round(size * 0.05)),
-            width: flowerSize,
-            height: flowerSize,
-            opacity: 0.35,
-          }}
-        >
-          {/* Five ghosted petals in the star mark's parchment tone: one muted
-              color, no strokes, no golden heart — quiet plate decoration. */}
-          {[0, 72, 144, 216, 288].map((a) => (
-            <ellipse
-              key={a}
-              cx="12"
-              cy="6.8"
-              rx="2.8"
-              ry="4.4"
-              fill="#f3e9c8"
-              transform={`rotate(${a} 12 12)`}
-            />
-          ))}
-          <circle cx="12" cy="12" r="2.4" fill="#f3e9c8" />
-        </svg>
-      )}
       {spec.star && (
         <svg
           viewBox="0 0 24 24"
