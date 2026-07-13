@@ -25,6 +25,7 @@ import {
   DuckGlyph,
   MotifBadge,
   PawnFence,
+  prefetchSignatureVisuals,
   ShieldMark,
   SIGNATURES,
   type SignatureConfig,
@@ -1139,6 +1140,13 @@ export function Board({
     fxLevelRef.current = fxLevel;
     fxCalmClockRef.current = fxCalmClock;
   });
+  // Warm the code-split signature-visuals chunk (SignatureOverlay's burst art
+  // + the merged plugin registry) the moment the board mounts, so it is loaded
+  // long before any card can fire mid-game. See prefetchSignatureVisuals in
+  // effects/BoardEffects.tsx.
+  useEffect(() => {
+    prefetchSignatureVisuals();
+  }, []);
   // Canvas VFX plays staged during render (the diff/zone claims happen in the
   // render pass) and flushed to the bus after commit, so render stays pure.
   const pendingVfxRef = useRef<VfxPlay[]>([]);
