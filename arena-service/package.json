@@ -8,7 +8,11 @@
     "build": "node build.mjs",
     "start": "node dist/server.mjs"
   },
+  "dependencies": {
+    "ws": "^8.21.0"
+  },
   "devDependencies": {
+    "@types/ws": "^8.18.1",
     "esbuild": "^0.24.0"
   }
 }
