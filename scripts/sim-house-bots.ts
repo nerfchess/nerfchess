@@ -13,6 +13,7 @@
 import {
   HOUSE_ROSTER,
   HOUSE_SKILL_PROFILES,
+  HOUSE_SKILLS,
   HouseSkill,
   houseDraftThinkMs,
   houseNerfPickIndex,
@@ -20,6 +21,12 @@ import {
   houseThinkMs,
   pickHouseMove,
   pickHouseSeek,
+  resolveSkillProfile,
+  bakedResolvedProfile,
+  sanitizeResolvedProfile,
+  parseSkillOverrides,
+  WEAKENED_PRESET,
+  type ResolvedSkillProfile,
 } from "../src/lib/server/bots";
 import {
   UNRESTRICTED_NERF,
@@ -196,6 +203,129 @@ console.log(`seek mix: ${(100 - nerfSeeks / 100).toFixed(1)}% buff / ${(nerfSeek
 
 check(houseNerfPickIndex([2, 5], random) === 0, "nerf pick lower tier first");
 check(houseNerfPickIndex([6, 3], random) === 1, "nerf pick lower tier second");
+
+// ---------------------------------------------------------------------------
+// 4. Skill resolution & clamping (pure — the /mod override path).
+// ---------------------------------------------------------------------------
+
+// No overrides == baked, and baked is the un-weakened search (topK 1, no noise).
+for (const skill of HOUSE_SKILLS) {
+  const baked = bakedResolvedProfile(skill);
+  check(baked.topK === 1 && baked.temperatureCp === 0 && baked.evalNoiseCp === 0, `${skill}: baked is un-weakened`);
+  check(
+    JSON.stringify(resolveSkillProfile(skill, null)) === JSON.stringify(baked),
+    `${skill}: null overrides == baked`,
+  );
+}
+
+// A tier override merges and clamps; other tiers stay baked.
+const ov = { "1350": { topK: 5, temperatureCp: 150 } };
+check(resolveSkillProfile(1350, ov).topK === 5, "override applies topK");
+check(resolveSkillProfile(1350, ov).temperatureCp === 150, "override applies temp");
+check(resolveSkillProfile(1550, ov).topK === 1, "sibling tier stays baked");
+
+// Out-of-range values are clamped, not rejected; garbage falls back per-field.
+check(resolveSkillProfile(1350, { "1350": { topK: 999 } }).topK === 8, "topK clamped to max");
+check(resolveSkillProfile(1350, { "1350": { temperatureCp: -50 } }).temperatureCp === 0, "temp clamped to min");
+check(
+  resolveSkillProfile(1350, { "1350": { blunderChance: "x" } }).blunderChance === bakedResolvedProfile(1350).blunderChance,
+  "non-numeric falls back to baked",
+);
+check(resolveSkillProfile(1350, { "1350": { maxDepth: 4.7 } }).maxDepth === 5, "maxDepth rounds");
+check(parseSkillOverrides("not json") === null, "bad json parses to null");
+check(parseSkillOverrides("{}") !== null, "empty object parses");
+
+// The engine-service sanitizer degrades a malformed wire profile to baked.
+check(
+  sanitizeResolvedProfile(2200, { topK: 3, junk: true }).topK === 3,
+  "sanitize keeps valid field",
+);
+check(
+  sanitizeResolvedProfile(2200, null).maxDepth === bakedResolvedProfile(2200).maxDepth,
+  "sanitize null == baked",
+);
+console.log("skill resolution: overrides merge/clamp, sanitize degrades to baked");
+
+// ---------------------------------------------------------------------------
+// 5. Strength round-robin (opt-in: `--roundrobin`). Plays weakened profiles
+//    against the un-weakened top tier over plain games and reports the score
+//    matrix, asserting the spec's acceptance bands. Slow, so it is gated off
+//    the default fast run. See docs/bot-weakening-spec.md §7.
+// ---------------------------------------------------------------------------
+
+if (process.argv.includes("--roundrobin")) {
+  // A generous per-move ceiling so the strong reference gets close to its real
+  // (OCI-path) strength rather than the 80ms DO clamp; weakening is
+  // time-independent so the weak side is unaffected by the higher ceiling. Both
+  // are env-tunable: a full run wants RR_CEILING ~150 and RR_GAMES ~24 (slow,
+  // minutes); drop them for a quick indicative read. Lowering the ceiling mainly
+  // handicaps the strong reference, so weak-tier scores read conservatively.
+  const CEILING_MS = Number(process.env.RR_CEILING ?? 150);
+  const GAMES = Number(process.env.RR_GAMES ?? 24); // per pairing, colors split
+
+  // Result for white: 1 win / 0.5 draw / 0 loss. Unfinished (ply cap) = draw.
+  function playMatch(
+    wSkill: HouseSkill,
+    wProfile: ResolvedSkillProfile,
+    bSkill: HouseSkill,
+    bProfile: ResolvedSkillProfile,
+    seed: number,
+  ): number {
+    let game: NerfGame = newGame(UNRESTRICTED_NERF, UNRESTRICTED_NERF, seed);
+    for (let ply = 0; ply < 200 && !game.result; ply++) {
+      const turn = game.board.turn;
+      const skill = turn === "w" ? wSkill : bSkill;
+      const profile = turn === "w" ? wProfile : bProfile;
+      const move = pickHouseMove(game, skill, random, undefined, CEILING_MS, profile);
+      if (!move) break;
+      const legal = legalMoves(game).find((m) => moveToUCI(m) === moveToUCI(move));
+      if (!legal) break;
+      game = playMove(game, legal);
+    }
+    const w = game.result?.winner;
+    return w === "w" ? 1 : w === "b" ? 0 : 0.5;
+  }
+
+  // Score of `weak` against the un-weakened reference over GAMES games, colors
+  // alternated so first-move advantage cancels.
+  function scoreVsReference(
+    weakSkill: HouseSkill,
+    weakProfile: ResolvedSkillProfile,
+    refSkill: HouseSkill,
+    refProfile: ResolvedSkillProfile,
+  ): number {
+    let score = 0;
+    for (let g = 0; g < GAMES; g++) {
+      const seed = 7_000 + weakSkill * 100 + g;
+      if (g % 2 === 0) score += playMatch(weakSkill, weakProfile, refSkill, refProfile, seed);
+      else score += 1 - playMatch(refSkill, refProfile, weakSkill, weakProfile, seed);
+    }
+    return score / GAMES;
+  }
+
+  const refSkill: HouseSkill = 2200; // un-weakened top band under the preset
+  const refProfile = bakedResolvedProfile(refSkill);
+  const weakenedMap = WEAKENED_PRESET as Record<string, unknown>;
+  // "significantly worse" (<=20% vs ref) vs "worse" (25-40% vs ref) bands.
+  const significantly: HouseSkill[] = [1350, 1550, 1750, 1900];
+  const worse: HouseSkill[] = [1950, 2000, 2050];
+
+  console.log(`\nstrength round-robin (${GAMES} games/pairing vs un-weakened ${refSkill}):`);
+  // Thresholds are reported, not asserted: a stochastic small-sample estimate
+  // must not fail the deterministic suite above it. Raise RR_GAMES for a tighter
+  // read before trusting a band verdict.
+  for (const skill of [...significantly, ...worse]) {
+    const profile = resolveSkillProfile(skill, { [String(skill)]: weakenedMap[String(skill)] });
+    const s = scoreVsReference(skill, profile, refSkill, refProfile);
+    const band = significantly.includes(skill) ? "significantly" : "worse";
+    const target = band === "significantly" ? "target <=20%" : "target 25-40%";
+    const inBand = band === "significantly" ? s <= 0.22 : s >= 0.2 && s <= 0.45;
+    console.log(
+      `  tier ${skill} (${band}): ${(s * 100).toFixed(1)}% vs ${refSkill} — ${target} ${inBand ? "OK" : "OUT"}`,
+    );
+  }
+  console.log("  (indicative — small sample; raise RR_GAMES to tighten)");
+}
 
 if (failures) {
   console.error(`\n${failures} check(s) FAILED`);
