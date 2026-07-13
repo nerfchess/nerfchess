@@ -71,6 +71,11 @@ const nextConfig = {
     // the TURNSTILE_SECRET_KEY Worker secret.
     NEXT_PUBLIC_TURNSTILE_SITEKEY:
       process.env.NEXT_PUBLIC_TURNSTILE_SITEKEY ?? "0x4AAAAAADyLZ_9QP6JEhhkU",
+    // Tier 3 direct-arena gate: the public base URL of the arena service
+    // (e.g. https://arena.nerfchess.com). Set at build time to switch client
+    // spectating/lobby onto the arena; empty (default) means Tier 3 is off and
+    // the client stays on DO-only games. See src/lib/arenaLobby.ts.
+    NEXT_PUBLIC_ARENA_URL: process.env.NEXT_PUBLIC_ARENA_URL ?? "",
   },
   async headers() {
     return [
