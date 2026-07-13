@@ -37,6 +37,10 @@ interface Props {
   opponentHidden?: boolean;
   // When provided, a "Copy PGN" button exports the move list.
   moves?: Move[];
+  // When provided, a "Clip" button opens the clip-sharing modal (a stylized
+  // canvas replay of the final moves, recorded to webm client-side). Only the
+  // local game page wires it today; pages that don't pass it see no button.
+  onClip?: () => void;
   playerNames?: Record<Color, string>;
   startedAt?: number;
   // When provided, dismissal is delegated to the parent (which can re-show
@@ -262,6 +266,7 @@ export function GameOver({
   onCancelRematch,
   opponentHidden = false,
   moves,
+  onClip,
   playerNames,
   startedAt,
   onDismiss,
@@ -704,7 +709,15 @@ export function GameOver({
             New game
           </button>
         </div>
-        <div className={`mt-2 grid gap-2 ${moves ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
+        <div
+          className={`mt-2 grid gap-2 ${
+            moves && onClip
+              ? "sm:grid-cols-4"
+              : moves || onClip
+              ? "sm:grid-cols-3"
+              : "sm:grid-cols-2"
+          }`}
+        >
           <button
             type="button"
             onClick={handleShare}
@@ -730,6 +743,20 @@ export function GameOver({
                 <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
               </svg>
               {pgnCopied ? "Copied" : "Copy PGN"}
+            </button>
+          )}
+          {onClip && (
+            <button
+              type="button"
+              onClick={onClip}
+              data-gameover-clip
+              className="rounded-sm px-4 py-2 btn-ghost font-display text-sm inline-flex items-center justify-center gap-2"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <polygon points="23 7 16 12 23 17 23 7" />
+                <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+              </svg>
+              Clip
             </button>
           )}
           <button
