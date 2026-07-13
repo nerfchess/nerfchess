@@ -2457,3 +2457,271 @@ html[data-theme="light"] .bg-black\/70 {
     opacity: 0;
   }
 }
+
+/* === Ambient gold-dust star field (home) =====================================
+   A fixed, pointer-events-none field of candlelight motes behind the landing
+   page: three parallax dust layers (each ONE animated node carrying a tiled
+   radial-gradient speckle), a handful of 4-point brass glints that twinkle,
+   and two slow diagonal shooting stars. Everything is transform/opacity only,
+   no JS, no canvas. Node budget: 3 layers + 12 glints + 2 shooting = 17
+   animated nodes (10 on phones). Colors are the brass/candle family
+   (216 181 110 / 255 233 170) — gold dust, never sci-fi white.
+   Fully dropped under prefers-reduced-motion, perf mode, and the light theme
+   (pale dust on paper is just noise). */
+.starfield {
+  position: fixed;
+  inset: 0;
+  z-index: -1; /* behind main's content, above the page gradient */
+  pointer-events: none;
+  overflow: hidden;
+}
+/* Each dust layer drifts diagonally down-right by exactly one background tile,
+   then loops — seamless because the pattern repeats at the tile size. The
+   element is oversized top-left by one tile so the drift never exposes a gap.
+   Custom-property keyframes let all three layers share one animation. */
+.star-layer {
+  --tile: 360px;
+  position: absolute;
+  top: calc(-1 * var(--tile));
+  left: calc(-1 * var(--tile));
+  right: 0;
+  bottom: 0;
+  background-repeat: repeat;
+  background-size: var(--tile) var(--tile);
+  will-change: transform;
+  animation: star-drift 240s linear infinite;
+}
+@keyframes star-drift {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(var(--tile), var(--tile), 0); }
+}
+/* Far layer: the faintest, slowest dust. */
+.star-layer--far {
+  --tile: 360px;
+  animation-duration: 260s;
+  background-image:
+    radial-gradient(1px 1px at 23px 41px, rgb(216 181 110 / 0.5), transparent 60%),
+    radial-gradient(1px 1px at 133px 89px, rgb(216 181 110 / 0.34), transparent 60%),
+    radial-gradient(1px 1px at 279px 157px, rgb(255 233 170 / 0.4), transparent 60%),
+    radial-gradient(1px 1px at 81px 231px, rgb(216 181 110 / 0.3), transparent 60%),
+    radial-gradient(1px 1px at 317px 305px, rgb(216 181 110 / 0.44), transparent 60%),
+    radial-gradient(1px 1px at 191px 337px, rgb(255 233 170 / 0.26), transparent 60%);
+}
+/* Mid layer: slightly larger sparks, a notch quicker. */
+.star-layer--mid {
+  --tile: 460px;
+  animation-duration: 170s;
+  background-image:
+    radial-gradient(1.4px 1.4px at 61px 117px, rgb(216 181 110 / 0.5), transparent 60%),
+    radial-gradient(1.2px 1.2px at 233px 47px, rgb(255 233 170 / 0.42), transparent 60%),
+    radial-gradient(1.4px 1.4px at 397px 203px, rgb(216 181 110 / 0.38), transparent 60%),
+    radial-gradient(1.2px 1.2px at 147px 331px, rgb(216 181 110 / 0.46), transparent 60%),
+    radial-gradient(1.4px 1.4px at 329px 411px, rgb(255 233 170 / 0.32), transparent 60%);
+}
+/* Near layer: the brightest, fastest dust — hidden on phones. */
+.star-layer--near {
+  --tile: 560px;
+  animation-duration: 110s;
+  background-image:
+    radial-gradient(1.8px 1.8px at 97px 73px, rgb(255 233 170 / 0.55), transparent 60%),
+    radial-gradient(1.6px 1.6px at 341px 181px, rgb(216 181 110 / 0.5), transparent 60%),
+    radial-gradient(1.8px 1.8px at 203px 359px, rgb(216 181 110 / 0.42), transparent 60%),
+    radial-gradient(1.6px 1.6px at 471px 449px, rgb(255 233 170 / 0.38), transparent 60%),
+    radial-gradient(2px 2px at 519px 61px, rgb(216 181 110 / 0.34), transparent 60%);
+}
+/* 4-point glint stars: a soft candle core clipped to a star, pulsing scale and
+   opacity on individually offset beats so the field never reads mechanical. */
+.star-glint {
+  position: absolute;
+  background: radial-gradient(circle, rgb(255 240 190 / 0.95) 0%, rgb(216 181 110 / 0.8) 34%, rgb(216 181 110 / 0) 72%);
+  clip-path: polygon(50% 0%, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0% 50%, 40% 40%);
+  animation: star-twinkle var(--glint-dur, 4.5s) ease-in-out var(--glint-delay, 0s) infinite;
+}
+@keyframes star-twinkle {
+  0%, 100% { opacity: 0.2; transform: scale(0.62); }
+  50% { opacity: 1; transform: scale(1); }
+}
+/* Shooting star: a brass streak crossing diagonally down-right (bright head
+   leading, tail trailing), alive for ~1.3s of a 28s cycle. Two in the DOM on
+   staggered delays = one pass roughly every 14 seconds. */
+.star-shoot {
+  position: absolute;
+  width: 120px;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, rgb(216 181 110 / 0.4) 45%, rgb(255 236 180 / 0.95));
+  opacity: 0;
+  transform: translate3d(0, 0, 0) rotate(38deg);
+  animation: star-shoot 28s linear var(--shoot-delay, 5s) infinite;
+}
+@keyframes star-shoot {
+  0% { opacity: 0; transform: translate3d(0, 0, 0) rotate(38deg); }
+  0.6% { opacity: 0.9; }
+  4.6% { opacity: 0; transform: translate3d(56vmin, 44vmin, 0) rotate(38deg); }
+  100% { opacity: 0; transform: translate3d(56vmin, 44vmin, 0) rotate(38deg); }
+}
+/* Phones: drop the near layer and the large glints (fewer, calmer nodes). */
+@media (max-width: 640px) {
+  .star-layer--near,
+  .star-glint--lg {
+    display: none;
+  }
+}
+/* Perf mode and the light theme drop the whole field. */
+html[data-perf="low"] .starfield,
+html[data-theme="light"] .starfield {
+  display: none;
+}
+
+/* === The Gilded Hall (lobby) =================================================
+   The lobby redesign: a grand header with an animated gold hairline and the
+   same star-dust motif as home, luxe challenge plates with mode-colored edge
+   glows, a glassy friend panel, and illustrated empty states. All motion is
+   transform/opacity, gated below for reduced motion. */
+
+/* Animated gold hairline under the masthead: a static brass fade with a
+   narrow candle gleam sweeping across every few seconds. */
+.hall-hairline {
+  position: relative;
+  height: 1px;
+  overflow: hidden;
+  background: linear-gradient(90deg, rgb(216 181 110 / 0.6), rgb(216 181 110 / 0.14) 55%, transparent);
+}
+.hall-hairline::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgb(255 233 170 / 0.9), transparent);
+  transform: translateX(-100%);
+  animation: hall-hairline-sweep 6.5s ease-in-out 1.4s infinite;
+}
+@keyframes hall-hairline-sweep {
+  0%, 55% { transform: translateX(-100%); }
+  90%, 100% { transform: translateX(100%); }
+}
+
+/* Hall panel: the lobby's section surface — a top-lit plate with a faint
+   brass bloom along its top edge. Pair with .plate so the theme remaps,
+   high-contrast borders, and stacking defaults all keep working. */
+.hall-panel {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0) 96px),
+    radial-gradient(92% 42% at 50% 0%, rgb(216 181 110 / 0.05), transparent 72%),
+    var(--surface-panel);
+  border: 1px solid var(--edge);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 14px 44px -28px rgba(0, 0, 0, 0.75);
+}
+html[data-theme="light"] .hall-panel {
+  background: rgba(255, 255, 255, 0.55);
+  border-color: rgba(0, 0, 0, 0.14);
+}
+
+/* Glassy variant for the create-challenge (friend) panel. The live blur is a
+   fine-pointer nicety only, dropped in perf mode — same law as .btn-glass. */
+.hall-glass {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.02) 60%),
+    color-mix(in srgb, var(--surface-panel) 76%, transparent);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 14px 44px -28px rgba(0, 0, 0, 0.75);
+}
+@media (hover: hover) and (pointer: fine) {
+  html:not([data-perf="low"]) .hall-glass {
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+}
+html[data-theme="light"] .hall-glass {
+  background: rgba(255, 255, 255, 0.6);
+  border-color: rgba(43, 40, 34, 0.16);
+}
+
+/* Luxe row plates: each waiting seek / challenge / live game is its own plate
+   with a mode-colored spine and a wash that fades from that edge. Hover lifts
+   the plate a pixel and blooms the spine — transform/border/shadow only. */
+.hall-row {
+  --row-rgb: 216 181 110; /* brass default (draft / legacy entries) */
+  position: relative;
+  background:
+    linear-gradient(90deg, rgb(var(--row-rgb) / 0.08), rgb(var(--row-rgb) / 0.015) 36%, rgba(255, 255, 255, 0.015));
+  border: 1px solid var(--edge);
+  border-left: 2px solid rgb(var(--row-rgb) / 0.55);
+  transition:
+    transform var(--dur-2) var(--ease-out),
+    border-color var(--dur-2) var(--ease-out),
+    box-shadow var(--dur-2) var(--ease-out);
+}
+@media (hover: hover) {
+  .hall-row:hover {
+    transform: translateY(-1px);
+    border-color: rgb(var(--row-rgb) / 0.45);
+    border-left-color: rgb(var(--row-rgb) / 0.95);
+    box-shadow:
+      0 0 22px -10px rgb(var(--row-rgb) / 0.45),
+      0 12px 26px -18px rgba(0, 0, 0, 0.8);
+  }
+}
+.hall-row--nerf { --row-rgb: var(--seam-warm-rgb); }
+.hall-row--buff { --row-rgb: var(--seam-cool-rgb); }
+.hall-row--live { --row-rgb: 239 138 95; } /* coral, for legacy live games */
+html[data-theme="light"] .hall-row {
+  background: rgba(255, 255, 255, 0.4);
+  border-color: rgba(43, 40, 34, 0.12);
+  border-left-color: rgb(var(--row-rgb) / 0.6);
+}
+
+/* Rich empty state: a quiet 4x4 board sketched in brass with drifting candle
+   motes rising off it. Purely decorative; the message carries the meaning. */
+.hall-empty-board {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  flex: none;
+  border: 1px solid rgb(216 181 110 / 0.35);
+  background: repeating-conic-gradient(rgb(216 181 110 / 0.16) 0% 25%, transparent 0% 50%);
+  background-size: 50% 50%;
+  box-shadow: inset 0 0 18px -6px rgb(216 181 110 / 0.25);
+}
+.hall-mote {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 999px;
+  background: rgb(255 233 170 / 0.9);
+  opacity: 0;
+  pointer-events: none;
+  animation: hall-mote-drift 7s ease-in-out var(--mote-delay, 0s) infinite;
+}
+@keyframes hall-mote-drift {
+  0% { opacity: 0; transform: translate3d(0, 10px, 0) scale(0.6); }
+  22% { opacity: 0.85; }
+  62% { opacity: 0.45; }
+  100% { opacity: 0; transform: translate3d(7px, -36px, 0) scale(1); }
+}
+
+/* Reduced motion: still the dust, hide the transients (shooting stars, motes,
+   hairline gleam), keep every static paint. */
+@media (prefers-reduced-motion: reduce) {
+  .star-layer,
+  .star-glint,
+  .hall-row {
+    animation: none !important;
+  }
+  .star-shoot,
+  .hall-mote {
+    animation: none !important;
+    opacity: 0 !important;
+  }
+  .hall-hairline::after {
+    animation: none !important;
+    transform: translateX(-100%);
+  }
+  .star-glint {
+    opacity: 0.5;
+    transform: scale(0.8);
+  }
+}
