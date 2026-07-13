@@ -283,7 +283,7 @@ const GYM: Buff[] = [
       category: "movement",
       icon: "MoveUpRight",
       flavor: "Someday the second arm. Today, this reach.",
-      fx: { motif: "empower", moveAs: "b", self: true },
+      fx: { motif: "empower", pieces: ["p", "n", "b", "r", "q"], moveAs: "b", self: true },
     },
     bindPiece("Choose the piece reaching for its dream", bindCandidates(), {
       gen: (b, sq, via) => slideMoves(b, sq, DIAG_DIRS, via),
@@ -406,7 +406,7 @@ const FOCUS: Buff[] = [
       category: "tempo",
       icon: "Zap",
       flavor: "Zero sugar. All consequences.",
-      fx: { motif: "rally", self: true },
+      fx: { motif: "rally", pieces: "all", self: true },
     },
     {
       kind: "activated",
@@ -931,7 +931,7 @@ export const NEWJEANS_CARDS: Buff[] = [
       category: "movement",
       icon: "Users",
       flavor: "Five voices, one song. Standing together, they move as one.",
-      fx: { motif: "empower", self: true },
+      fx: { motif: "empower", pieces: ["n", "b", "r", "q"], self: true },
     },
     permanentAugment((_m, inst, api) =>
       mySquares(api.board, api.me).flatMap((sq) => {
@@ -1185,7 +1185,7 @@ const NAMED: Buff[] = [
       category: "movement",
       icon: "Keyboard",
       flavor: "Red, green, blue, and the whole squad glows.",
-      fx: { motif: "empower", self: true },
+      fx: { motif: "empower", pieces: ["n", "b", "r"], self: true },
     },
     permanentAugment((_m, inst, api) => [
       ...mySquares(api.board, api.me, "n").flatMap((sq) =>
