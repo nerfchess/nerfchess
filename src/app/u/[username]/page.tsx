@@ -20,6 +20,8 @@ import {
   type RatingCategoryId,
 } from "@/lib/ratingCategories";
 import { isProvisionalRd } from "@/lib/ratingDisplay";
+import { placementTitle, type LaurelPlacement } from "@/lib/laurels";
+import { LaurelBadge, useTopPlacements } from "@/components/LaurelBadge";
 
 interface ProfileUser {
   username: string;
@@ -120,6 +122,11 @@ export default function ProfilePage() {
 
   const isMe = !!me && !!profile && me.username.toLowerCase() === profile.user.username.toLowerCase();
 
+  // Current top-10 leaderboard honors, derived from the cached standings the
+  // leaderboard endpoint already serves (see lib/laurels.ts). Empty for the
+  // unlaurelled, so both surfaces below simply don't render.
+  const placements = useTopPlacements(profile?.user.username);
+
   return (
     <main className="min-h-screen">
       <SiteHeader />
@@ -158,6 +165,14 @@ export default function ProfilePage() {
                         <span className="ml-2 align-middle text-2xl" aria-hidden="true">
                           {profile.user.flair}
                         </span>
+                      )}
+                      {placements.length > 0 && (
+                        <LaurelBadge
+                          rank={placements[0].rank}
+                          title={placementTitle(placements[0])}
+                          size={24}
+                          className="ml-2"
+                        />
                       )}
                     </h1>
                     {profile.user.role !== "user" && (
@@ -251,6 +266,8 @@ export default function ProfilePage() {
             </div>
 
             <AchievementsStrip username={profile.user.username} />
+
+            {placements.length > 0 && <CurrentStandings placements={placements} />}
 
             {profile.ratingHistory.length > 0 && (
               // Keyed by profile: the section seeds its tab from the player's
@@ -377,6 +394,38 @@ function AchievementsStrip({ username }: { username: string }) {
           );
         })}
         <span className="smallcaps text-[10px] text-gold-leaf">View all</span>
+      </span>
+    </Link>
+  );
+}
+
+// The honors shelf: every leaderboard the player currently places top 10 on,
+// each with its rank-tiered laurel. Stateless by design — hold the spot and
+// the honor shows, drop out and it quietly disappears. Sits beside the
+// achievements strip and links to the boards where the ranks were earned.
+function CurrentStandings({ placements }: { placements: LaurelPlacement[] }) {
+  return (
+    <Link
+      href="/leaderboard"
+      className="mt-2 plate p-3 flex flex-wrap items-center justify-between gap-3 hover:border-gold/40 transition"
+    >
+      <span className="flex items-center gap-2 font-display text-parchment-100">
+        <LaurelBadge rank={placements[0].rank} size={16} title="Current top-10 honors" />
+        Current standings
+      </span>
+      <span className="flex flex-wrap items-center gap-2">
+        {placements.map((p) => (
+          <span
+            key={p.category}
+            title={placementTitle(p)}
+            className="flex items-center gap-1.5 rounded-md border border-white/10 bg-white/[0.03] px-2 py-1"
+          >
+            <LaurelBadge rank={p.rank} size={13} />
+            <span className="font-mono text-sm tabular-nums text-parchment-100">#{p.rank}</span>
+            <span className="smallcaps text-[10px] text-parchment-400">{p.label}</span>
+          </span>
+        ))}
+        <span className="smallcaps text-[10px] text-gold-leaf">Leaderboard</span>
       </span>
     </Link>
   );
