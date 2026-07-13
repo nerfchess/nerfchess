@@ -2385,8 +2385,8 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           {/* The command rail: one framed column (mode header, opponent, dock
               + chat, you) instead of three floating islands, so the left side
               reads as a single control surface. */}
-          <aside className="rail-panel corner-cut hidden min-h-0 gap-2 overflow-y-auto p-2.5 lg:grid lg:min-h-[var(--board-height)] lg:max-h-full lg:grid-rows-[auto_auto_minmax(6rem,1fr)_auto] lg:self-start">
-            <div className="seam-edge-b flex items-center justify-between gap-2 px-1 pb-2">
+          <aside className="rail-panel rail-lux corner-cut hidden min-h-0 gap-2 overflow-y-auto p-2.5 lg:grid lg:min-h-[var(--board-height)] lg:max-h-full lg:grid-rows-[auto_auto_minmax(6rem,1fr)_auto] lg:self-start">
+            <div className="seam-edge-b relative flex items-center justify-between gap-2 px-1 pb-2">
               <span
                 className={
                   "flex items-center gap-1.5 font-display text-xs font-bold uppercase tracking-[0.14em] " +
@@ -2404,7 +2404,12 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               {subtitle && (
                 <span className="smallcaps min-w-0 truncate text-[9px] text-parchment-400">{subtitle}</span>
               )}
+              {/* A gold gleam that occasionally travels the header hairline. */}
+              <span aria-hidden className="rail-header-sheen" />
             </div>
+            {/* The active player's card wears a soft breathing gold halo while
+                their clock is charged (decorative wrapper only). */}
+            <div className={"rail-glow-wrap" + (chargedColor === oppColor ? " rail-glow-wrap--active" : "")}>
             <PlayerNerfCard
               board={boardForDisplay}
               playerColor={oppColor}
@@ -2419,6 +2424,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               ownerLabel=""
               compact
             />
+            </div>
             <div
               className={
                 "hidden min-h-0 gap-2 lg:grid " +
@@ -2447,6 +2453,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               />
             </div>
             <div className="space-y-2">
+              <div className={"rail-glow-wrap" + (chargedColor === myColor ? " rail-glow-wrap--active" : "")}>
               <PlayerNerfCard
                 board={boardForDisplay}
                 playerColor={myColor}
@@ -2462,6 +2469,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                 boons={myHeldBoons}
                 compact
               />
+              </div>
               {!isBuffMode && revealControl}
               {ratingStakes && <RatingStakes stakes={ratingStakes} />}
             </div>

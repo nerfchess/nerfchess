@@ -1535,6 +1535,84 @@ html[data-piece-source="lichess"] .piece-asset {
   animation-duration: 11s;
   animation-direction: reverse;
 }
+/* --- Per-card aura shape variants (EmpowerAura auraVariant) ------------------
+   The pooled tint (::before) and shine sweep (::after) are the shared base;
+   each card's id hash picks ONE decoration layer so two cards never wear the
+   same aura: "orbit" (the classic three glints, also the id-less default),
+   "rune" (a slowly turning square rune frame), "motes" (sparks rising off the
+   piece), "diamond" (a pulsing diamond ring), "arcs" (twin arcs circling), or
+   "halo" (no decoration — the calm pool alone). Same perf law: keyframes are
+   transform/opacity only; alphas stay at or below the base aura's, so no
+   variant ever obscures the piece. Reduced motion stills the frames and hides
+   the transient motes (gate near the bottom of this file). */
+.empower-rune {
+  position: absolute;
+  inset: 15%;
+  pointer-events: none;
+  border: 1px solid rgb(var(--tier-rgb, 216 181 110) / 0.55);
+  border-radius: 2px;
+  box-shadow: inset 0 0 0 3px rgb(var(--tier-rgb, 216 181 110) / 0.12);
+  opacity: 0.8;
+  animation: empower-rune-turn 16s linear infinite;
+}
+@keyframes empower-rune-turn {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.empower-mote {
+  position: absolute;
+  bottom: 18%;
+  width: 8%;
+  height: 8%;
+  border-radius: 999px;
+  pointer-events: none;
+  background: radial-gradient(circle, rgb(255 255 255 / 0.9), rgb(var(--tier-rgb, 216 181 110) / 0.8) 45%, transparent 72%);
+  opacity: 0;
+  animation: empower-mote-rise 2.8s ease-in-out infinite;
+}
+.empower-mote--1 { left: 30%; }
+.empower-mote--2 { left: 52%; animation-delay: 0.9s; }
+.empower-mote--3 { left: 68%; animation-delay: 1.8s; }
+@keyframes empower-mote-rise {
+  0% { opacity: 0; transform: translateY(0) scale(0.7); }
+  25% { opacity: 0.9; transform: translateY(-85%) scale(1); }
+  60% { opacity: 0.45; transform: translateY(-205%) scale(0.95); }
+  100% { opacity: 0; transform: translateY(-340%) scale(0.85); }
+}
+.empower-diamond {
+  position: absolute;
+  inset: 20%;
+  pointer-events: none;
+  border: 1px solid rgb(var(--tier-rgb, 216 181 110) / 0.6);
+  border-radius: 3px;
+  transform: rotate(45deg);
+  animation: empower-diamond-pulse 2.6s ease-in-out infinite;
+}
+@keyframes empower-diamond-pulse {
+  0%, 100% { opacity: 0.45; transform: rotate(45deg) scale(0.92); }
+  50% { opacity: 0.9; transform: rotate(45deg) scale(1.04); }
+}
+.empower-arcs {
+  position: absolute;
+  inset: 9%;
+  pointer-events: none;
+  border: 1.5px solid transparent;
+  border-top-color: rgb(var(--tier-rgb, 216 181 110) / 0.7);
+  border-bottom-color: rgb(var(--tier-rgb, 216 181 110) / 0.7);
+  border-radius: 999px;
+  opacity: 0.85;
+  animation: empower-arcs-spin 6s linear infinite;
+}
+@keyframes empower-arcs-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+/* Hostile (nerf) tempo for the variant layers: slower and reversed, matching
+   the reversed orbit — an ill omen circling, not a blessing. */
+.nerf-aura .empower-rune { animation-duration: 26s; animation-direction: reverse; }
+.nerf-aura .empower-arcs { animation-duration: 10s; animation-direction: reverse; }
+.nerf-aura .empower-mote { animation-duration: 4.2s; }
+.nerf-aura .empower-diamond { animation-duration: 3.8s; }
 @keyframes empower-twinkle {
   0%, 100% { opacity: 0.25; transform: scale(0.7); }
   50% { opacity: 1; transform: scale(1.15); }
@@ -1908,9 +1986,13 @@ nav, header { position: relative; z-index: 30; }
   .sq-strike, .sq-freeze, .sq-freeze-flake, .sq-shield-in, .walnut-piece, .banana-peel,
   .sq-walnut,
   .empower-shine::before, .empower-shine::after, .edge-aura,
-  .empower-orbit, .empower-glint {
+  .empower-orbit, .empower-glint,
+  .empower-rune, .empower-diamond, .empower-arcs {
     animation: none !important;
   }
+  /* Rising motes are transient particles: with the animation cut their base
+     opacity (0) hides them outright, matching the walnut-squirrel precedent. */
+  .empower-mote { animation: none !important; }
   .walnut-squirrel { animation: none !important; opacity: 0 !important; }
   .sq-walnut::after { animation: none !important; opacity: 0 !important; }
   .dc-orbit-ring.spin, .dc-orbit-ring.spin-r,
@@ -2264,5 +2346,114 @@ html[data-theme="light"] .bg-black\/70 {
   }
   .extra-turns-banner {
     animation: extra-turns-banner-fade 2.8s linear both;
+  }
+}
+
+/* --- Left-rail luxe (additive) -----------------------------------------------
+   Opt-in dressing for the in-game command rail: richer layered plate texture,
+   gold corner filigree echoing the chamfered corner-cut, a glinting header
+   hairline, and a breathing gold halo on whichever player's clock is running.
+   All decoration is pointer-events-none; animation is opacity-only and fully
+   dropped under prefers-reduced-motion. */
+.rail-lux {
+  position: relative;
+  background:
+    radial-gradient(120% 55% at 0% 0%, rgb(var(--seam-warm-rgb) / 0.05), transparent 55%),
+    radial-gradient(120% 55% at 100% 100%, rgb(var(--seam-cool-rgb) / 0.05), transparent 55%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0) 140px),
+    linear-gradient(345deg, rgba(216, 181, 110, 0.03), transparent 42%),
+    var(--surface-panel);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.03),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 14px 44px -28px rgba(0, 0, 0, 0.75);
+}
+/* Corner filigree: a gold diagonal echoing the 10px chamfer plus two fading
+   hairlines along the adjacent edges. Drawn as pseudo-elements (absolutely
+   positioned, so they never become grid items) on the two cut corners, with a
+   slow candle-glint breathing their opacity. */
+.rail-lux::before,
+.rail-lux::after {
+  content: "";
+  position: absolute;
+  width: 46px;
+  height: 46px;
+  pointer-events: none;
+  z-index: 4;
+  background:
+    linear-gradient(135deg, transparent 8px, rgb(216 181 110 / 0.75) 9px, rgb(216 181 110 / 0.75) 10px, transparent 11px) no-repeat,
+    linear-gradient(90deg, rgb(216 181 110 / 0.5), transparent 85%) 13px 0 / 30px 1px no-repeat,
+    linear-gradient(180deg, rgb(216 181 110 / 0.5), transparent 85%) 0 13px / 1px 30px no-repeat;
+  animation: rail-filigree-glint 5.5s ease-in-out infinite;
+}
+.rail-lux::before {
+  top: 0;
+  left: 0;
+}
+.rail-lux::after {
+  right: 0;
+  bottom: 0;
+  transform: rotate(180deg);
+  animation-delay: 2.75s;
+}
+@keyframes rail-filigree-glint {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+/* Header hairline glint: a narrow gold gleam that occasionally travels the
+   seam-edge divider under the mode header. Transform-only, mostly at rest. */
+.rail-header-sheen {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 1px;
+  overflow: hidden;
+  pointer-events: none;
+}
+.rail-header-sheen::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgb(255 233 170 / 0.9), transparent);
+  transform: translateX(-100%);
+  will-change: transform;
+  animation: rail-hairline-sweep 7s ease-in-out infinite;
+}
+@keyframes rail-hairline-sweep {
+  0%, 55% { transform: translateX(-100%); }
+  90%, 100% { transform: translateX(100%); }
+}
+/* Active-player halo: a soft gold breath around the player card whose clock
+   is running. The glow is a static box-shadow on an overlay whose opacity
+   breathes (compositor-cheap); the plate itself is untouched. */
+.rail-glow-wrap {
+  position: relative;
+}
+.rail-glow-wrap--active::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  z-index: 0;
+  border-radius: 2px;
+  pointer-events: none;
+  box-shadow:
+    0 0 0 1px rgb(216 181 110 / 0.4),
+    0 0 22px -4px rgb(216 181 110 / 0.45);
+  animation: rail-glow-breathe 3s ease-in-out infinite;
+}
+@keyframes rail-glow-breathe {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rail-lux::before,
+  .rail-lux::after,
+  .rail-glow-wrap--active::before {
+    animation: none;
+    opacity: 0.7;
+  }
+  .rail-header-sheen::before {
+    animation: none;
+    opacity: 0;
   }
 }

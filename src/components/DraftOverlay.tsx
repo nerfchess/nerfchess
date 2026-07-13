@@ -130,16 +130,34 @@ function DraftTimerWindow({ deadline, onExpire }: { deadline: number; onExpire?:
   // remain. Firing at 5s-left showed it at 15s into the 20s window, 5 seconds
   // too early; tie it to the window end instead.
   const urgent = leftMs <= 0;
-  // r=15.5 keeps the 2.5-width stroke inside the 36px viewBox.
+  // r=15.5 keeps the 2.5-width stroke inside the ring (40px viewBox leaves
+  // room for the outer hairline ring; the countdown math is untouched).
   const CIRC = 2 * Math.PI * 15.5;
   return (
     <div role="timer" aria-label="Draft lock-in timer" className="pointer-events-none shrink-0">
-      <div className={"draft-timer flex items-center gap-3 px-4 py-2 " + (urgent ? "draft-timer--urgent" : "")}>
-        <svg width="36" height="36" viewBox="0 0 36 36" aria-hidden className="-rotate-90">
-          <circle cx="18" cy="18" r="15.5" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="2.5" />
+      <div className={"draft-timer draft-timer--lux flex items-center gap-3 px-4 py-2 " + (urgent ? "draft-timer--urgent" : "")}>
+        <svg width="40" height="40" viewBox="0 0 40 40" aria-hidden className="-rotate-90">
+          {/* Outer hairline: a second, decorative gold ring framing the dial. */}
+          <circle cx="20" cy="20" r="18.5" fill="none" stroke="rgba(216,181,110,0.22)" strokeWidth="1" />
+          <circle cx="20" cy="20" r="15.5" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="2.5" />
+          {/* Soft glow trail riding under the crisp arc (same geometry, wide
+              blurred stroke): pure decoration, shares the exact fraction. */}
           <circle
-            cx="18"
-            cy="18"
+            cx="20"
+            cy="20"
+            r="15.5"
+            fill="none"
+            stroke={urgent ? "#dc5a54" : "#4a9fee"}
+            strokeWidth="6"
+            strokeLinecap="round"
+            strokeDasharray={CIRC}
+            strokeDashoffset={CIRC * (1 - fraction)}
+            className="draft-ring-glow"
+            style={{ transition: "stroke-dashoffset 100ms linear, stroke 300ms ease" }}
+          />
+          <circle
+            cx="20"
+            cy="20"
             r="15.5"
             fill="none"
             stroke={urgent ? "#dc5a54" : "#4a9fee"}
@@ -164,6 +182,31 @@ function DraftTimerWindow({ deadline, onExpire }: { deadline: number; onExpire?:
         </div>
       </div>
     </div>
+  );
+}
+
+/** One-shot pack-tear pyrotechnics: a soft golden shockwave ring plus a fan
+ * of gold filaments flung outward from the tear line. Purely decorative
+ * (aria-hidden, pointer-events-none), deterministic angles, transform/opacity
+ * only. Rendered only while the pack is tearing and never under reduced
+ * motion (the caller gates it). */
+function PackTearFX() {
+  return (
+    <span aria-hidden className="pack-tear-fx">
+      <span className="pack-shockwave" />
+      <span className="pack-shockwave pack-shockwave--echo" />
+      {Array.from({ length: 12 }).map((_, i) => (
+        <i
+          key={i}
+          style={{
+            ["--ang" as string]: `${(i * 30 + ((i * 7) % 14)) % 360}deg`,
+            ["--fdist" as string]: `${64 + ((i * 37) % 54)}px`,
+            ["--fdelay" as string]: `${(i % 4) * 35}ms`,
+          }}
+          className="pack-filament"
+        />
+      ))}
+    </span>
   );
 }
 
@@ -818,6 +861,7 @@ export function DraftOverlay({
                 }
               >
                 <span aria-hidden className="pack-burst" />
+                {packStage === "tearing" && !reduceMotion && <PackTearFX />}
                 <span aria-hidden className="pack-flap">
                   <span className="pack-flap__zigzag" />
                 </span>
@@ -942,6 +986,37 @@ export function DraftOverlay({
           (hidden ? " invisible" : "")
         }
       >
+      {/* Ambient stage behind the cards: a layered candle-lit vignette, a slow
+          gold aurora sweep, and drifting ember motes. Fixed (never scrolls with
+          the panel), pointer-events-none, transform/opacity only; the moving
+          layers are skipped entirely under reduced motion. */}
+      <div aria-hidden className="draft-stage">
+        <span className="draft-stage__vignette" />
+        {!reduceMotion && (
+          <>
+            <span className="draft-stage__aurora" />
+            {Array.from({ length: 14 }).map((_, i) => (
+              <i
+                key={i}
+                style={{
+                  ["--mx" as string]: `${4 + ((i * 67) % 92)}%`,
+                  ["--mdrift" as string]: `${((i * 53) % 9) - 4}vw`,
+                  ["--mdur" as string]: `${11 + ((i * 41) % 9)}s`,
+                  ["--mdelay" as string]: `${-((i * 137) % 110) / 10}s`,
+                  ["--mscale" as string]: `${0.6 + ((i * 29) % 7) / 10}`,
+                }}
+                className="draft-stage__mote"
+              />
+            ))}
+          </>
+        )}
+      </div>
+      {/* A high-tier pull warms the whole screen once: a soft tier-colored
+          glow pulse breathing in from the viewport edges as the cards reveal.
+          Decorative, one shot per deal, gone under reduced motion. */}
+      {packStage === "open" && maxTier >= 7 && !reduceMotion && (
+        <span key={`edge-${dealKey}`} aria-hidden data-tier={maxTier} className="draft-edge-pulse" />
+      )}
       {/* A min-height flex wrapper centers the panel when it fits and lets the
           whole thing scroll on short or zoomed viewports, instead of the outer
           flex clipping the Skip/Confirm buttons off the top and bottom. */}
@@ -1037,6 +1112,7 @@ export function DraftOverlay({
               }
             >
               <span aria-hidden className="pack-burst" />
+              {packStage === "tearing" && !reduceMotion && <PackTearFX />}
               <span aria-hidden className="pack-flap">
                 <span className="pack-flap__zigzag" />
               </span>
@@ -1142,7 +1218,11 @@ export function DraftOverlay({
                         opacity: [1, 1, 0.85, 0],
                       }
                     : chosen != null
-                    ? { opacity: 0.12 }
+                    ? // The unpicked card bows out: it sinks and fades while
+                      // the chosen one lifts away (fade only, reduced motion).
+                      reduceMotion
+                      ? { opacity: 0.12 }
+                      : { opacity: 0.1, y: 26, scale: 0.94, rotate: 1.2 }
                     : banking
                     ? {
                         // Into the bank: face-down again (the inner flip) and
@@ -1260,6 +1340,12 @@ export function DraftOverlay({
                     {card.tier >= 9 && (
                       <span aria-hidden className="draft-mythic-aura" data-tier={card.tier} />
                     )}
+                    {/* Rarity-scaled reveal: tier 6+ cards land with a
+                        tier-colored ring blooming off the face right as the
+                        flip finishes (rides the same --reveal-delay). */}
+                    {card.tier >= 6 && !reduceMotion && (
+                      <span aria-hidden className="draft-reveal-ring" />
+                    )}
                     <BuffCard
                       buff={def}
                       tier={card.tier}
@@ -1278,6 +1364,26 @@ export function DraftOverlay({
                   </div>
                 </motion.div>
                 <span aria-hidden className="draft-fx__sheen" />
+                {/* Pick confirmation: the chosen card flares once and sheds a
+                    stream of gold motes as it dissolves toward the dock (the
+                    layer rides the wrapper's pocket flight, so the motes trail
+                    the card the whole way). Reduced motion commits instantly
+                    with no flight, so this never renders there. */}
+                {chosen === i && !reduceMotion && (
+                  <span aria-hidden className="pick-dissolve">
+                    <span className="pick-dissolve__flare" />
+                    {Array.from({ length: 10 }).map((_, m) => (
+                      <i
+                        key={m}
+                        style={{
+                          ["--ang" as string]: `${(m * 36 + 12) % 360}deg`,
+                          ["--pd" as string]: `${30 + ((m * 31) % 40)}px`,
+                          ["--pdelay" as string]: `${(m % 5) * 45}ms`,
+                        }}
+                      />
+                    ))}
+                  </span>
+                )}
               </motion.div>
             );
           })}

@@ -1001,19 +1001,74 @@ function AccentPip({ cx, cy, r, angleDeg }: { cx: number; cy: number; r: number;
   );
 }
 
+/** Corner slot Board's per-square corner allocator assigns to a
+ * corner-anchored mark (see Board.tsx): tl / tr / bl / br. */
+export type BadgeCorner = "tl" | "tr" | "bl" | "br";
+
+// Corner-anchored badge geometry per allocated corner: the badge hugs its
+// corner and the category chip sits inboard of it along the same edge, so the
+// pair reads as one mark wherever the allocator parks it. Two tables because
+// the empower roundel keeps its historic 2%/34% insets while the constraint
+// badges keep 3%/33% (the exact top-right look both had before corners were
+// allocatable). Full literal class strings so the Tailwind JIT sees them.
+const BESTOW_POS: Record<BadgeCorner, { badge: string; chip: string }> = {
+  tr: { badge: "right-[2%] top-[2%]", chip: "right-[2%] top-[34%]" },
+  tl: { badge: "left-[2%] top-[2%]", chip: "left-[2%] top-[34%]" },
+  br: { badge: "right-[2%] bottom-[2%]", chip: "right-[2%] bottom-[34%]" },
+  bl: { badge: "left-[2%] bottom-[2%]", chip: "left-[2%] bottom-[34%]" },
+};
+const MOTIF_POS: Record<BadgeCorner, { badge: string; chip: string }> = {
+  tr: { badge: "right-[3%] top-[3%]", chip: "right-[3%] top-[33%]" },
+  tl: { badge: "left-[3%] top-[3%]", chip: "left-[3%] top-[33%]" },
+  br: { badge: "right-[3%] bottom-[3%]", chip: "right-[3%] bottom-[33%]" },
+  bl: { badge: "left-[3%] bottom-[3%]", chip: "left-[3%] bottom-[33%]" },
+};
+
+/** Hash-picked badge backplate: the dark plate behind a corner badge's glyph.
+ * Five shapes (roundel / heater shield / hexagon / diamond / octagon seal),
+ * chosen by the card id, so two cards sharing a motif differ in silhouette as
+ * well as tint, icon and accent. Same ink fill + tier-tinted 1px stroke the
+ * empower roundel always had, so the glyph on top stays readable. */
+function BadgeBackplate({ variant }: { variant: number }) {
+  const common = {
+    fill: "rgba(20,30,43,0.9)",
+    stroke: "currentColor",
+    strokeWidth: 1,
+    strokeLinejoin: "round" as const,
+  };
+  switch (variant) {
+    case 1: // heater shield
+      return <path d="M10 1.2 L17.8 4.2 V9.6 C17.8 14.6 14.6 17.6 10 19 C5.4 17.6 2.2 14.6 2.2 9.6 V4.2 Z" {...common} />;
+    case 2: // hexagon
+      return <path d="M10 1 L17.8 5.5 V14.5 L10 19 L2.2 14.5 V5.5 Z" {...common} />;
+    case 3: // diamond
+      return <path d="M10 0.9 L19.1 10 L10 19.1 L0.9 10 Z" {...common} />;
+    case 4: // octagon seal
+      return <path d="M6.6 1.6 H13.4 L18.4 6.6 V13.4 L13.4 18.4 H6.6 L1.6 13.4 V6.6 Z" {...common} />;
+    default: // roundel (also the id-less fallback: the historic look)
+      return <circle cx="10" cy="10" r="8.8" {...common} />;
+  }
+}
+
 /**
  * Card-fx motif for one square. Constraints (jail / muzzle / anchor / slow)
- * are small badges in the square's top-right corner; blindfold is a band
- * across the piece base; empower is a regalia roundel bestowed with a
- * knighting rise; ward is a thin ring at the piece base; rally is a one-shot
- * banner flourish over the rallied army's king. All persistent variants end
- * in a calm static pose (reduced motion shows that state directly); rally is
- * transient and hides under reduced motion, matching the stun precedent.
+ * are small corner badges; blindfold is a band across the piece base; empower
+ * is a regalia roundel bestowed with a knighting rise; ward is a thin ring at
+ * the piece base; rally is a one-shot banner flourish over the rallied army's
+ * king. All persistent variants end in a calm static pose (reduced motion
+ * shows that state directly); rally is transient and hides under reduced
+ * motion, matching the stun precedent.
  *
- * Per-card distinctness: every badge is tinted by the card's TIER color and
- * co-stamped with its CATEGORY glyph (CategoryChip), and a NAME-seeded accent
- * pip (see nameHash / AccentPip) breaks ties between cards that also share tier
- * and category, so no two different active cards ever look identical.
+ * Per-card distinctness: every badge is tinted by the card's TIER color,
+ * plated on a card-id-hashed BACKPLATE shape (BadgeBackplate), and co-stamped
+ * with its CATEGORY glyph (CategoryChip); a NAME-seeded accent pip (see
+ * nameHash / AccentPip) breaks any remaining ties, so no two different active
+ * cards ever look identical.
+ *
+ * `corner` is the slot Board's corner allocator assigned on this square (only
+ * the corner-anchored motifs — empower and the constraint badges — use it;
+ * bands and banners are edge/center-anchored). Defaults to the historic
+ * top-right for callers that do not allocate.
  */
 export const MotifBadge = React.memo(function MotifBadge({
   motif,
@@ -1023,6 +1078,7 @@ export const MotifBadge = React.memo(function MotifBadge({
   name,
   cardId,
   cardIcon,
+  corner = "tr",
 }: {
   motif: CardFx["motif"];
   tier: number;
@@ -1038,11 +1094,16 @@ export const MotifBadge = React.memo(function MotifBadge({
    * hand at the MotifBadge call site (motifMark.name, already used for the
    * React key), so wiring it through is a one-line change. */
   name?: string;
+  /** Board-allocated corner for the corner-anchored badges (default tr). */
+  corner?: BadgeCorner;
 }) {
   const color = TIER_COLOR[tier] ?? TIER_COLOR[3];
   const accent = name ? nameHash(name) : null;
   const accentAngle = accent != null ? accent % 360 : null;
   const faceIcon = cardId ? cardFaceIcon(cardId, category, cardIcon) : undefined;
+  // Backplate silhouette, hashed from the card ID (deterministic across
+  // clients). Id-less callers keep the historic roundel.
+  const plate = cardId ? nameHash(cardId) % 5 : 0;
   if (motif === "rally") {
     return (
       <span
@@ -1110,31 +1171,34 @@ export const MotifBadge = React.memo(function MotifBadge({
     );
   }
   if (motif === "empower") {
+    const pos = BESTOW_POS[corner];
     return (
       <>
         <span
           aria-hidden="true"
-          className="fx-bestow pointer-events-none absolute right-[2%] top-[2%] z-10 h-[32%] w-[32%]"
+          className={`fx-bestow pointer-events-none absolute z-10 h-[32%] w-[32%] ${pos.badge}`}
           style={{ color }}
         >
           <svg viewBox="0 0 20 20" className="h-full w-full">
-            <circle cx="10" cy="10" r="8.8" fill="rgba(20,30,43,0.9)" stroke="currentColor" strokeWidth="1" />
+            <BadgeBackplate variant={plate} />
             <RegaliaSilhouette type={moveAs} />
             {accentAngle != null && <AccentPip cx={10} cy={10} r={8.8} angleDeg={accentAngle} />}
           </svg>
         </span>
-        <CategoryChip category={category} color={color} icon={faceIcon} className="right-[2%] top-[34%] h-[15%] w-[15%]" />
+        <CategoryChip category={category} color={color} icon={faceIcon} className={`${pos.chip} h-[15%] w-[15%]`} />
       </>
     );
   }
+  const pos = MOTIF_POS[corner];
   return (
     <>
       <span
         aria-hidden="true"
-        className="fx-motif pointer-events-none absolute right-[3%] top-[3%] z-10 h-[30%] w-[30%]"
+        className={`fx-motif pointer-events-none absolute z-10 h-[30%] w-[30%] ${pos.badge}`}
         style={{ color }}
       >
         <svg viewBox="0 0 20 20" className="h-full w-full opacity-90">
+          <BadgeBackplate variant={plate} />
           {motif === "jail" ? (
             <JailGlyph />
           ) : motif === "muzzle" ? (
@@ -1147,7 +1211,7 @@ export const MotifBadge = React.memo(function MotifBadge({
           {accentAngle != null && <AccentPip cx={10} cy={10} r={9} angleDeg={accentAngle} />}
         </svg>
       </span>
-      <CategoryChip category={category} color={color} icon={faceIcon} className="right-[3%] top-[33%] h-[15%] w-[15%]" />
+      <CategoryChip category={category} color={color} icon={faceIcon} className={`${pos.chip} h-[15%] w-[15%]`} />
     </>
   );
 });

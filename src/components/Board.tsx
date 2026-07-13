@@ -14,6 +14,7 @@ import {
   LandlordClaimMark,
 } from "./Pieces";
 import {
+  type BadgeCorner,
   BarrierStakes,
   BoltGlyph,
   BoundBuffMark,
@@ -292,10 +293,46 @@ function PlayAnnouncement({ name, tier, outcome }: { name: string; tier: number;
   );
 }
 
+// --- Per-square corner allocation (overlap fix) ------------------------------
+// Several small marks anchor to a square's corners: the countdown chip, the
+// freeze flake, the bound-buff sigil, the motif badge, plus the shield disc
+// and the coordinate labels. Instead of every mark hard-coding a corner (the
+// reported "the move counter sits on top of another mark" overlaps), each
+// square render runs a tiny deterministic allocator: marks claim corners in a
+// fixed priority order (countdown first — the remaining-moves read must stay
+// the most legible), each taking its preferred corner when free and the next
+// free one from its fallback ring otherwise. Pure function of which marks are
+// present, so both players and every reload agree; no state involved.
+const CORNER_FALLBACK: Record<BadgeCorner, BadgeCorner[]> = {
+  tl: ["tl", "tr", "bl", "br"],
+  tr: ["tr", "tl", "br", "bl"],
+  bl: ["bl", "br", "tl", "tr"],
+  br: ["br", "bl", "tr", "tl"],
+};
+// Corner-inset position classes for the small chips (countdown, freeze flake).
+const CORNER_INSET_POS: Record<BadgeCorner, string> = {
+  tl: "top-0.5 left-0.5",
+  tr: "top-0.5 right-0.5",
+  bl: "bottom-0.5 left-0.5",
+  br: "bottom-0.5 right-0.5",
+};
+// Percent-inset position classes for the bound-buff sigil button.
+const BOUND_POS: Record<BadgeCorner, string> = {
+  tl: "left-[3%] top-[3%]",
+  tr: "right-[3%] top-[3%]",
+  bl: "left-[3%] bottom-[3%]",
+  br: "right-[3%] bottom-[3%]",
+};
+// Motifs whose badge is corner-anchored (and thus claims a corner). Bands
+// (blindfold, ward) and the rally banner are edge/center-anchored: no claim.
+const CORNER_MOTIFS = new Set<MotifMark["motif"]>(["empower", "jail", "muzzle", "anchor", "slow"]);
+
 /** Small corner countdown for any timed piece effect (owner request: every
  * timed effect wears its remaining turns). Doom (timed_loss) renders the
- * oxblood variant with a skull tick; everything else a neutral ink chip. */
-function CountdownChip({ n, doom = false }: { n: number; doom?: boolean }) {
+ * oxblood variant with a skull tick; everything else a neutral ink chip.
+ * `corner` is the allocator-assigned slot (default: the historic
+ * bottom-right). */
+function CountdownChip({ n, doom = false, corner = "br" }: { n: number; doom?: boolean; corner?: BadgeCorner }) {
   // Duration ramp: the chip's color IS the urgency read. Plenty of time stays
   // neutral, two turns warms to amber, the last turn burns red (doom is
   // always red — it is a death timer).
@@ -308,13 +345,12 @@ function CountdownChip({ n, doom = false }: { n: number; doom?: boolean }) {
   return (
     <span
       aria-hidden
-      // Bottom-RIGHT corner: the other three corners each own a mark (bound
-      // sigil top-left, freeze flake top-right, shield disc bottom-left), so
-      // the countdown used to stack on top of the green shield disc — the
-      // reported overlap. z-30 keeps it above any effect art it shares a
-      // square with; the solid ink backing + shadow keep it legible.
+      // The corner allocator hands the chip its slot (it claims FIRST, so it
+      // keeps its preferred bottom-right unless something already sat there).
+      // z-30 keeps it above any effect art it shares a square with; the solid
+      // ink backing + shadow keep it legible.
       className={
-        "pointer-events-none absolute bottom-0.5 right-0.5 z-30 flex h-[15px] min-w-[15px] items-center justify-center rounded-[1px] border px-0.5 font-mono text-[10px] font-bold leading-none shadow-[0_1px_4px_rgba(0,0,0,0.8)] " +
+        `pointer-events-none absolute ${CORNER_INSET_POS[corner]} z-30 flex h-[15px] min-w-[15px] items-center justify-center rounded-[1px] border px-0.5 font-mono text-[10px] font-bold leading-none shadow-[0_1px_4px_rgba(0,0,0,0.8)] ` +
         tone
       }
     >
@@ -1513,10 +1549,14 @@ export function Board({
     }
     return dots;
   }, [inspectSq, oppMovesFrom]);
-  // Any position change invalidates the inspected preview.
-  useEffect(() => {
+  // Any position change invalidates the inspected preview. Render-time state
+  // adjustment (the react.dev "adjusting state when props change" pattern),
+  // so the stale preview never paints even for one frame.
+  const [inspectedPieces, setInspectedPieces] = useState(board.pieces);
+  if (inspectedPieces !== board.pieces) {
+    setInspectedPieces(board.pieces);
     setInspectSq(null);
-  }, [board.pieces]);
+  }
 
   const castleHintSquares = useMemo(() => {
     const set = new Set<Square>();
@@ -2013,8 +2053,13 @@ export function Board({
       const candidates = targets[sq];
       if (candidates.length > 1 && candidates[0].promotion) {
         // premoves always auto-queen (the user can't be asked mid-opponent-turn);
-        // the Settings auto-queen toggle does the same for normal moves.
-        if (premoveMode || autoQueen) {
+        // the Settings auto-queen toggle does the same for normal moves. A
+        // promotion that CAPTURES THE KING never asks either — the game is
+        // over the moment it lands, so the picker is pure friction.
+        const capturesKing = candidates.some(
+          (c) => c.captured === "k" || (c.capturedSquare != null && board.pieces[c.capturedSquare]?.type === "k"),
+        );
+        if (premoveMode || autoQueen || capturesKing) {
           const q = candidates.find((c) => c.promotion === "q") ?? candidates[0];
           onMove(q);
           setSelected(null);
@@ -2693,6 +2738,32 @@ export function Board({
             // the popover triggers below): a bound buff or any zone effect.
             const hasEffectInfo = !!effectInfoFor(sq);
 
+            // Corner claims for this square (see CORNER_FALLBACK above).
+            // Fixed priority: countdown chip > freeze flake > bound sigil >
+            // motif badge. The shield disc keeps its fixed bottom-left art, so
+            // its corner is seeded as taken; the walnut squirrel is transient
+            // and top-center (never corner-anchored), so it claims nothing.
+            const shieldShown = !!piece && (shieldedSquares.has(sq) || kingSafeSquares.has(sq));
+            const claimedCorners = new Set<BadgeCorner>();
+            if (shieldShown) claimedCorners.add("bl");
+            const claimCorner = (pref: BadgeCorner): BadgeCorner => {
+              for (const c of CORNER_FALLBACK[pref]) {
+                if (!claimedCorners.has(c)) {
+                  claimedCorners.add(c);
+                  return c;
+                }
+              }
+              return pref; // all four taken: overlap is unavoidable, keep preference
+            };
+            const countdownShown = !!piece && (doomMarks.has(sq) || effectTurns[sq] != null);
+            const countdownCorner = countdownShown ? claimCorner("br") : "br";
+            const flakeCorner = frozenSquares.has(sq) ? claimCorner("tr") : "tr";
+            const boundCorner = boundMark ? claimCorner("tl") : "tl";
+            const motifCorner =
+              !fxHiddenPref && motifShown && motifMark && CORNER_MOTIFS.has(motifMark.motif)
+                ? claimCorner("tr")
+                : "tr";
+
             const fogHide =
               !!visual?.fogged && piece && piece.color !== myColor && !lastTo;
 
@@ -2792,7 +2863,9 @@ export function Board({
                         </div>
                       </div>
                     )}
-                    <span className="absolute top-0.5 right-0.5 z-10 leading-none pointer-events-none drop-shadow sq-freeze-flake">
+                    <span
+                      className={`absolute ${CORNER_INSET_POS[flakeCorner]} z-10 leading-none pointer-events-none drop-shadow sq-freeze-flake`}
+                    >
                       <FreezeGlyph kind={freezeSkinOf(frozenSkins[sq]).glyph} />
                     </span>
                   </>
@@ -2825,12 +2898,12 @@ export function Board({
                 {doomMarks.has(sq) && piece && (
                   /* Doomed piece (Death Arcana style): the countdown to its
                      death rides the square, skull-tagged. */
-                  <CountdownChip n={doomMarks.get(sq)!} doom />
+                  <CountdownChip n={doomMarks.get(sq)!} doom corner={countdownCorner} />
                 )}
                 {!doomMarks.has(sq) && piece && effectTurns[sq] != null && (
                   /* Any other timed piece effect (freeze, walnut, shield,
                      ward...): the remaining turns ride the corner. */
-                  <CountdownChip n={effectTurns[sq]!} />
+                  <CountdownChip n={effectTurns[sq]!} corner={countdownCorner} />
                 )}
                 {trapMarks.has(sq) && (
                   /* Any other placed trap: a realistic animated marker per
@@ -2873,19 +2946,36 @@ export function Board({
                   <PawnFence edge={fenceEdge} />
                 )}
                 {!fxHiddenPref && motifShown && motifMark && isEmpowerMotif(motifMark.motif) && (
-                  /* Empowered-piece shine: a soft breathing halo + tier ring
-                     under a piece carrying a self-grant (empower/ward/rally).
-                     Rides the same motifShown gate as the badge, so frozen /
-                     walnut constraints silence it and it never paints where
-                     the motif itself is suppressed. Rendered before the piece
-                     div, so the piece always stays on top. */
-                  <EmpowerShine tier={motifMark.tier} />
+                  /* Empowered-piece shine: a soft breathing halo under a piece
+                     carrying a self-grant (empower/ward/rally), in the CARD's
+                     own tint and hash-picked shape (EmpowerAura aura identity),
+                     so two different grants never wear the same aura. Rides
+                     the same motifShown gate as the badge, so frozen / walnut
+                     constraints silence it and it never paints where the motif
+                     itself is suppressed. Rendered before the piece div, so
+                     the piece always stays on top. */
+                  <EmpowerShine tier={motifMark.tier} cardId={motifMark.id} />
                 )}
+                {!fxHiddenPref &&
+                  motifShown &&
+                  motifMark &&
+                  !isEmpowerMotif(motifMark.motif) &&
+                  !banned &&
+                  !isForced && (
+                    /* Hostile twin for constraint cards (jail / muzzle / anchor
+                       / blindfold / slow): the same per-card aura identity on
+                       the ember base, so every curse also reads as ITS card.
+                       Skipped where the square already smolders (banned /
+                       forced mounts an id-less NerfAura below) so the glow
+                       never doubles up. */
+                    <NerfAura cardId={motifMark.id} tier={motifMark.tier} />
+                  )}
                 {!fxHiddenPref && motifShown && motifMark && (
                   /* Card-fx motif badge, tinted by the card's tier and
-                     stamped with its category glyph. Keyed by motif + card
-                     name so re-renders never replay the entrance; only a
-                     genuinely different card (or motif) remounts it. */
+                     stamped with its category glyph, parked in the corner the
+                     allocator assigned. Keyed by motif + card name so
+                     re-renders never replay the entrance; only a genuinely
+                     different card (or motif) remounts it. */
                   <MotifBadge
                     key={`motif-${motifMark.motif}-${motifMark.name}`}
                     motif={motifMark.motif}
@@ -2895,6 +2985,7 @@ export function Board({
                     name={motifMark.name}
                     cardId={motifMark.id}
                     cardIcon={motifMark.icon}
+                    corner={motifCorner}
                   />
                 )}
                 {boundMark && (
@@ -2910,7 +3001,7 @@ export function Board({
                     type="button"
                     data-effect-keep
                     aria-label={`${boundMark.name}: ${boundMark.description}`}
-                    className="absolute left-[3%] top-[3%] z-30 h-[26%] w-[26%] rounded-full p-0 leading-none focus:outline-none focus-visible:ring-2 focus-visible:ring-gold/70"
+                    className={`absolute ${BOUND_POS[boundCorner]} z-30 h-[26%] w-[26%] rounded-full p-0 leading-none focus:outline-none focus-visible:ring-2 focus-visible:ring-gold/70`}
                     onPointerEnter={() => openEffectPopover(sq)}
                     onPointerDown={(e) => {
                       e.stopPropagation();
@@ -3151,11 +3242,17 @@ export function Board({
                   <div className="absolute inset-0 pointer-events-none bg-oxblood/45" />
                 )}
 
+                {/* Coordinate labels: when a mark claimed the label's home
+                    corner, the label slides along its edge past the mark's
+                    footprint and gains a subtle ink backing so it stays
+                    legible over whatever art now owns the corner. */}
                 {showCoordinates && f === (orientation === "w" ? 0 : 7) && (
                   <span
                     className={
-                      "absolute top-0.5 left-1 text-[10px] font-mono font-semibold pointer-events-none " +
-                      (isLight ? "text-[#4a3826]" : "text-[#eeeed2]/85")
+                      "absolute text-[10px] font-mono font-semibold pointer-events-none " +
+                      (claimedCorners.has("tl")
+                        ? "top-0.5 left-[36%] z-20 rounded-[2px] bg-ink-950/60 px-0.5 text-parchment-100/90"
+                        : "top-0.5 left-1 " + (isLight ? "text-[#4a3826]" : "text-[#eeeed2]/85"))
                     }
                   >
                     {r + 1}
@@ -3164,8 +3261,10 @@ export function Board({
                 {showCoordinates && r === (orientation === "w" ? 0 : 7) && (
                   <span
                     className={
-                      "absolute bottom-0.5 right-1 text-[10px] font-mono font-semibold pointer-events-none " +
-                      (isLight ? "text-[#4a3826]" : "text-[#eeeed2]/85")
+                      "absolute text-[10px] font-mono font-semibold pointer-events-none " +
+                      (claimedCorners.has("br")
+                        ? "bottom-0.5 right-[36%] z-20 rounded-[2px] bg-ink-950/60 px-0.5 text-parchment-100/90"
+                        : "bottom-0.5 right-1 " + (isLight ? "text-[#4a3826]" : "text-[#eeeed2]/85"))
                     }
                   >
                     {"abcdefgh"[f]}
