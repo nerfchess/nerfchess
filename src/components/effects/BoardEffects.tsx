@@ -2142,6 +2142,17 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   ilovesmellingmygfshoodie: { ordering: "radial", staggerMs: 0, victims: "all", visual: "bubblewrap", hasLead: false, sound: "aegis", source: "shield" },
   ilovemysister: { ordering: "radial", staggerMs: 0, victims: "all", visual: "canopy", hasLead: true, sound: "aegis", source: "shield" },
   ihatemyex: { ordering: "radial", staggerMs: 0, victims: ["p"], visual: "coldsnap", hasLead: false, sound: "massfreeze", source: "frozen" },
+  // Third batch: empower / rally / shield grants. Each of these cards now
+  // declares fx.pieces (added alongside), so its empower/rally motif paints a
+  // real zone the signature reads, exactly like double_amazon (empower) and
+  // blitzkrieg (rally). Cards without a resolvable zone stay on genSignature.
+  waist_25: { ordering: "sweep", staggerMs: 70, victims: ["p"], visual: "bladegift", hasLead: true, sound: "coronation", source: "empower" },
+  handstand_pushup: { ordering: "radial", staggerMs: 0, victims: ["p"], visual: "coronation", hasLead: true, sound: "coronation", source: "empower" },
+  onearmmuscleupismydream: { ordering: "radial", staggerMs: 0, victims: "all", visual: "colossus", hasLead: true, sound: "coronation", source: "empower" },
+  rgb_keyboard: { ordering: "sweep", staggerMs: 90, victims: ["n", "b", "r"], visual: "crownrain", hasLead: true, sound: "crownrain", source: "empower" },
+  i_love_newjeans: { ordering: "radial", staggerMs: 40, victims: "all", visual: "bannerwar", hasLead: true, sound: "coronation", source: "empower" },
+  white_monster: { ordering: "radial", staggerMs: 70, victims: "all", visual: "blitz", hasLead: true, sound: "blitz", source: "rally" },
+  joseph_leung: { ordering: "radial", staggerMs: 0, victims: "all", visual: "mandate", hasLead: true, sound: "aegis", source: "shield" },
 };
 
 /** A jagged lightning bolt that fills its wrapper (BoltGlyph is fixed-size). */
