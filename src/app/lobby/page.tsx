@@ -12,13 +12,14 @@ import { readSnapshot, writeSnapshot } from "@/lib/snapshotCache";
 import { MPLobby, MPLobbyChallenge, MPLobbyGame, MPLobbySeek, MPSession, saveOnlineSeat } from "@/lib/multiplayer";
 import { ModeBadge } from "@/components/ModeBadge";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
+import { StarField } from "@/components/StarField";
 import { categoryForTimeControl, getCategory } from "@/lib/ratingCategories";
 
-// The lobby, redesigned as the Gilded Hall: the central place to find a game.
-// A grand header with an animated gold hairline and star dust, luxe challenge
-// plates with mode-colored spines, a glassy friend panel, and a sticky
-// who's-here column. Same data, same handlers, same navigation as before —
-// only the presentation changed.
+// The lobby: the central place to find a game, styled to match the home
+// page's dark starry identity. The shared StarField drifts behind flat solid
+// ink panels with hairline borders; each row wears its mode color as a plain
+// left border — no gradients, washes, or glows. Same data, same handlers,
+// same navigation as before — only the presentation changed.
 export default function LobbyPage() {
   const router = useRouter();
   const [user, setUser] = useState<AccountUser | null | undefined>(undefined);
@@ -164,14 +165,13 @@ export default function LobbyPage() {
 
   return (
     <main className="min-h-screen pb-16">
+      <StarField />
       <SiteHeader active="/lobby" />
 
       <section className="max-w-7xl mx-auto px-5 sm:px-6">
-        {/* The grand hall header: masthead over an animated gold hairline,
-            with the home page's star-dust motif drifting behind it and the
-            live pulse of the hall as glass chips on the right. */}
+        {/* Masthead over a plain brass hairline, with the live pulse of the
+            lobby as flat chips on the right. */}
         <header className="relative mt-2 sm:mt-4">
-          <HallDust />
           <span className="eyebrow">Find a game</span>
           <div className="mt-1 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
             <h1 className="masthead text-4xl sm:text-6xl text-parchment-50">The Lobby</h1>
@@ -203,9 +203,8 @@ export default function LobbyPage() {
             {/* Step 1: the main action: get matched with a real opponent. */}
             <QueueButton />
 
-            {/* Step 2: play a specific person via a shared code — the glassy
-                create-challenge panel. */}
-            <div className="plate hall-glass p-5 sm:p-6">
+            {/* Step 2: play a specific person via a shared code. */}
+            <div className="plate p-5 sm:p-6">
               <SectionTitle tint="mint" icon={<Users size={15} aria-hidden />}>
                 Play a friend
               </SectionTitle>
@@ -245,9 +244,9 @@ export default function LobbyPage() {
             </div>
 
             {/* Open challenges: players waiting in a quick-pairing pool plus
-                friend games waiting for an opponent, each on its own luxe
-                plate wearing its mode color on the spine. */}
-            <div className="plate hall-panel p-5 sm:p-6">
+                friend games waiting for an opponent, each on its own flat row
+                wearing its mode color as a plain left border. */}
+            <div className="plate p-5 sm:p-6">
               <div className="flex items-center justify-between gap-3">
                 <SectionTitle tint="sun" icon={<Swords size={15} aria-hidden />}>
                   Open challenges
@@ -291,7 +290,7 @@ export default function LobbyPage() {
             </div>
 
             {/* Step 3 (optional): watch a game that's happening right now. */}
-            <div className="plate hall-panel p-5 sm:p-6">
+            <div className="plate p-5 sm:p-6">
               <div className="flex items-center justify-between gap-3">
                 <SectionTitle tint="coral" icon={<Eye size={15} aria-hidden />}>
                   Live games
@@ -324,7 +323,7 @@ export default function LobbyPage() {
           </div>
 
           {/* Who's here right now — rides along on desktop scroll. */}
-          <aside className="plate hall-panel p-5 h-fit lg:sticky lg:top-6">
+          <aside className="plate p-5 h-fit lg:sticky lg:top-6">
             <div className="flex items-center justify-between gap-3">
               <div className="sec-title font-display text-xl text-parchment">Online now</div>
             </div>
@@ -385,39 +384,6 @@ export default function LobbyPage() {
   );
 }
 
-// The star-dust motif from the home page, echoed behind the hall's masthead:
-// six small brass glints twinkling on offset beats. Decorative only —
-// aria-hidden, pointer-events-none, stilled under reduced motion (the
-// .star-glint gate in globals.css).
-function HallDust() {
-  const glints: { left: number; top: number; size: number; dur: number; delay: number }[] = [
-    { left: 4, top: 16, size: 8, dur: 4.4, delay: 0.2 },
-    { left: 22, top: 68, size: 6, dur: 5.4, delay: 1.8 },
-    { left: 41, top: 24, size: 10, dur: 4.8, delay: 3.1 },
-    { left: 60, top: 74, size: 7, dur: 5.8, delay: 0.9 },
-    { left: 78, top: 12, size: 9, dur: 4.2, delay: 2.4 },
-    { left: 93, top: 58, size: 6, dur: 5.2, delay: 4 },
-  ];
-  return (
-    <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
-      {glints.map((g, i) => (
-        <span
-          key={i}
-          className="star-glint"
-          style={{
-            left: `${g.left}%`,
-            top: `${g.top}%`,
-            width: g.size,
-            height: g.size,
-            "--glint-dur": `${g.dur}s`,
-            "--glint-delay": `${g.delay}s`,
-          } as React.CSSProperties}
-        />
-      ))}
-    </div>
-  );
-}
-
 // One live-pulse chip in the header: a status dot beside a smallcaps count.
 function HallStat({ dotClass, children }: { dotClass: string; children: React.ReactNode }) {
   return (
@@ -460,8 +426,9 @@ function SectionTitle({
   );
 }
 
-// The mode's spine color for a hall row: warm terracotta for Nerf, sky for
-// Buff, and the brass default (set in CSS) for legacy/draft entries.
+// The mode's flat left-border color for a lobby row: warm terracotta for
+// Nerf, sky for Buff, and the brass default (set in CSS) for legacy/draft
+// entries.
 function rowModeClass(mode: MPLobbySeek["mode"], fallback = ""): string {
   if (mode === "nerf") return "hall-row--nerf";
   if (mode === "buff") return "hall-row--buff";
@@ -500,8 +467,8 @@ function TimeControlGlyph({
   );
 }
 
-// First-load placeholders shaped like the real hall rows (spined plate, a
-// two-line text block on the left, an action chip on the right) so the panel
+// First-load placeholders shaped like the real lobby rows (flat bordered row,
+// a two-line text block on the left, an action chip on the right) so the panel
 // keeps its shape and nothing jumps when the first snapshot lands. Only shown
 // while `lobby` is still null; once a snapshot exists the last-good data
 // stays up.
@@ -537,7 +504,7 @@ function SkeletonPlayerRows({ count }: { count: number }) {
   );
 }
 
-// Rich empty state: a quiet brass board with candle motes drifting off it.
+// Empty state: a quiet flat brass checkerboard with star motes drifting off it.
 function HallEmpty({ title, hint }: { title: string; hint: string }) {
   return (
     <div className="mt-4 flex items-center gap-4 border border-dashed border-white/10 bg-white/[0.015] p-4">
