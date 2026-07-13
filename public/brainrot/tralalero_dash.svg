@@ -1,33 +1,118 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <!-- Tralalero Tralala: the shark in sneakers, legs pumping at a full sprint. Loops like a GIF. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 260">
+  <!-- Tralalero Tralala: glossy sneaker-shark at full sprint, three legs pumping. Loops like a GIF. -->
+  <defs>
+    <linearGradient id="sharkBody" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#9fb9cf"/>
+      <stop offset="0.55" stop-color="#6d8ba6"/>
+      <stop offset="1" stop-color="#46617a"/>
+    </linearGradient>
+    <linearGradient id="sharkFin" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#87a3ba"/>
+      <stop offset="1" stop-color="#3f586f"/>
+    </linearGradient>
+    <linearGradient id="belly" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#cfdde8"/>
+    </linearGradient>
+    <radialGradient id="shkIris" cx="0.38" cy="0.32" r="0.85">
+      <stop offset="0" stop-color="#8a5a2b"/>
+      <stop offset="0.6" stop-color="#4f2c10"/>
+      <stop offset="1" stop-color="#2c1607"/>
+    </radialGradient>
+    <radialGradient id="shkSclera" cx="0.4" cy="0.32" r="0.95">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="0.75" stop-color="#f6f4ef"/>
+      <stop offset="1" stop-color="#d5d5d0"/>
+    </radialGradient>
+    <linearGradient id="sneaker" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5a9be8"/>
+      <stop offset="1" stop-color="#2f6cc0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- ground shadow -->
+  <ellipse cx="102" cy="246" rx="64" ry="9" fill="#101c26" opacity="0.2">
+    <animate attributeName="rx" values="64;56;64" dur="0.45s" repeatCount="indefinite"/>
+  </ellipse>
+
   <g>
-    <animateTransform attributeName="transform" type="translate" values="0 0; 0 -1.6; 0 0" dur="0.34s" repeatCount="indefinite"/>
-    <!-- body -->
-    <path d="M4 30 C14 18 42 16 56 26 C60 29 60 32 56 34.5 C44 41 16 41 4 30 Z" fill="#7d97ad" stroke="#33414e" stroke-width="2"/>
-    <path d="M10 32 C24 37 42 36 52 31 C42 34 24 34.6 10 32 Z" fill="#dbe7f2"/>
-    <!-- dorsal fin + tail -->
-    <path d="M26 19 L34 8 L37 20 Z" fill="#61788c" stroke="#33414e" stroke-width="2"/>
-    <path d="M4 30 L-2 22 L0 33 L-2 42 Z" fill="#61788c" stroke="#33414e" stroke-width="2"/>
-    <!-- eye + gills + grin -->
-    <circle cx="48" cy="26" r="1.8" fill="#141416"/>
-    <path d="M40 24 L40 32 M36.5 24.5 L36.5 32.5 M33 25 L33 33" stroke="#33414e" stroke-width="1.2"/>
-    <path d="M50 30 C52.5 30.4 54.5 30 56 29" fill="none" stroke="#33414e" stroke-width="1.4" stroke-linecap="round"/>
-    <!-- running legs with sneakers -->
-    <g>
-      <animateTransform attributeName="transform" type="rotate" values="-16 22 38; 18 22 38; -16 22 38" dur="0.34s" repeatCount="indefinite"/>
-      <path d="M22 38 L18 50" stroke="#61788c" stroke-width="3.4" stroke-linecap="round"/>
-      <g transform="translate(11 48)"><rect width="14" height="7" rx="3" fill="#f4f7f2" stroke="#c2403a" stroke-width="1.6"/><path d="M2 4.6 L9 2.4" stroke="#c2403a" stroke-width="1.4" stroke-linecap="round"/></g>
-    </g>
-    <g>
-      <animateTransform attributeName="transform" type="rotate" values="18 36 39; -16 36 39; 18 36 39" dur="0.34s" repeatCount="indefinite"/>
-      <path d="M36 39 L40 51" stroke="#61788c" stroke-width="3.4" stroke-linecap="round"/>
-      <g transform="translate(35 49)"><rect width="14" height="7" rx="3" fill="#f4f7f2" stroke="#c2403a" stroke-width="1.6"/><path d="M2 4.6 L9 2.4" stroke="#c2403a" stroke-width="1.4" stroke-linecap="round"/></g>
-    </g>
+    <animateTransform attributeName="transform" type="translate" values="0 0; 0 -5; 0 0" dur="0.45s" repeatCount="indefinite"/>
+
     <!-- speed lines -->
-    <g stroke="#9fb7c9" stroke-width="1.6" stroke-linecap="round" opacity="0.8">
-      <path d="M2 24 L10 24 M0 30 L8 30 M2 36 L10 36">
-        <animate attributeName="opacity" values="0.9;0.2;0.9" dur="0.34s" repeatCount="indefinite"/>
+    <g stroke="#9fb7c9" stroke-width="4" stroke-linecap="round" opacity="0.8">
+      <path d="M6 84 L36 84 M0 108 L28 108 M8 132 L34 132">
+        <animate attributeName="opacity" values="0.9;0.15;0.9" dur="0.45s" repeatCount="indefinite"/>
       </path>
+    </g>
+
+    <!-- tail fin -->
+    <path d="M34 108 C20 92 12 78 12 64 C28 72 40 86 46 100 L46 118 C34 128 20 136 10 138 C16 126 26 116 34 108 Z" fill="url(#sharkFin)"/>
+
+    <!-- dorsal fin -->
+    <path d="M92 62 C96 40 108 26 124 22 C124 40 118 56 108 66 Z" fill="url(#sharkFin)"/>
+    <path d="M98 58 C102 44 110 33 118 28" stroke="#c8d8e4" stroke-width="3" fill="none" opacity="0.5" stroke-linecap="round"/>
+
+    <!-- body: nose to the right, slight forward lean -->
+    <path d="M30 106 C48 70 96 56 136 62 C166 67 186 86 189 106 C191 122 180 138 158 146 C120 158 62 152 38 130 C31 123 27 114 30 106 Z" fill="url(#sharkBody)"/>
+    <!-- belly -->
+    <path d="M44 132 C80 150 130 152 160 142 C176 136 184 126 186 116 C176 134 130 144 92 138 C70 134 54 130 44 126 Z" fill="url(#belly)"/>
+    <!-- core shadow + rim light + sheen -->
+    <path d="M150 66 C172 74 186 90 189 106 C190 116 186 126 176 133 C186 122 188 104 178 90 C170 78 160 70 150 66 Z" fill="#2c4257" opacity="0.35"/>
+    <path d="M52 84 C70 68 100 60 128 62" stroke="#dfeaf2" stroke-width="4.5" stroke-linecap="round" fill="none" opacity="0.6"/>
+    <ellipse cx="92" cy="92" rx="9" ry="26" fill="#ffffff" opacity="0.18" transform="rotate(-12 92 92)"/>
+
+    <!-- gills -->
+    <path d="M112 84 C110 94 110 104 112 112 M124 82 C122 92 122 103 124 112 M136 82 C134 92 134 102 136 110" stroke="#46617a" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.7"/>
+
+    <!-- glossy eyes (3/4 face) -->
+    <path d="M138 80 Q149 72 160 79" stroke="#31485c" stroke-width="6" stroke-linecap="round" fill="none"/>
+    <path d="M168 82 Q177 76 185 84" stroke="#31485c" stroke-width="5.5" stroke-linecap="round" fill="none"/>
+    <ellipse cx="150" cy="94" rx="12" ry="13" fill="url(#shkSclera)"/>
+    <circle cx="152" cy="96" r="7.4" fill="url(#shkIris)"/>
+    <circle cx="152" cy="96" r="3.3" fill="#1d1008"/>
+    <circle cx="149.4" cy="93" r="2.6" fill="#ffffff"/>
+    <circle cx="155" cy="98.6" r="1.3" fill="#ffffff" opacity="0.9"/>
+    <ellipse cx="176" cy="96" rx="9.5" ry="10.5" fill="url(#shkSclera)"/>
+    <circle cx="177" cy="97.6" r="6" fill="url(#shkIris)"/>
+    <circle cx="177" cy="97.6" r="2.7" fill="#1d1008"/>
+    <circle cx="174.8" cy="95.2" r="2" fill="#ffffff"/>
+
+    <!-- happy grin with teeth -->
+    <path d="M142 116 C154 134 178 132 187 114 C190 128 180 143 163 144 C150 145 142 132 142 116 Z" fill="#7c3040"/>
+    <path d="M145 120 L154 119.4 L149.5 127 Z M158 125 L167 124 L162.5 131 Z M171 124 L180 121 L176 129 Z" fill="#ffffff"/>
+    <path d="M150 140.5 L160 142.5 L154 135 Z M166 142 L176 138 L169 134 Z" fill="#ffffff"/>
+    <ellipse cx="136" cy="114" rx="6" ry="4" fill="#e08a96" opacity="0.5"/>
+
+    <!-- pectoral fin -->
+    <path d="M104 118 C96 130 84 138 72 140 C78 128 88 118 100 112 Z" fill="url(#sharkFin)"/>
+
+    <!-- three running legs with sneakers -->
+    <g>
+      <animateTransform attributeName="transform" type="rotate" values="-18 70 142; 16 70 142; -18 70 142" dur="0.45s" repeatCount="indefinite"/>
+      <path d="M70 142 L60 194" stroke="#5a7891" stroke-width="10" stroke-linecap="round"/>
+      <g transform="translate(40 190) rotate(-8)">
+        <path d="M4 6 C4 1 8 0 14 0 L20 0 C24 6 32 10 40 11 C43 11.6 44 14 44 17 L44 20 L4 20 Z" fill="url(#sneaker)"/>
+        <path d="M4 17 L44 17 L44 21 C44 23 42 25 39 25 L9 25 C6 25 4 23 4 21 Z" fill="#f4f7f2"/>
+        <path d="M12 6 L20 9 M14 12 L23 14" stroke="#eef4fa" stroke-width="2.6" stroke-linecap="round"/>
+      </g>
+    </g>
+    <g>
+      <animateTransform attributeName="transform" type="rotate" values="14 106 148; -14 106 148; 14 106 148" dur="0.45s" repeatCount="indefinite"/>
+      <path d="M106 148 L104 200" stroke="#5a7891" stroke-width="10" stroke-linecap="round"/>
+      <g transform="translate(86 196)">
+        <path d="M4 6 C4 1 8 0 14 0 L20 0 C24 6 32 10 40 11 C43 11.6 44 14 44 17 L44 20 L4 20 Z" fill="url(#sneaker)"/>
+        <path d="M4 17 L44 17 L44 21 C44 23 42 25 39 25 L9 25 C6 25 4 23 4 21 Z" fill="#f4f7f2"/>
+        <path d="M12 6 L20 9 M14 12 L23 14" stroke="#eef4fa" stroke-width="2.6" stroke-linecap="round"/>
+      </g>
+    </g>
+    <g>
+      <animateTransform attributeName="transform" type="rotate" values="-14 142 148; 18 142 148; -14 142 148" dur="0.45s" begin="0.12s" repeatCount="indefinite"/>
+      <path d="M142 148 L150 198" stroke="#5a7891" stroke-width="10" stroke-linecap="round"/>
+      <g transform="translate(132 194) rotate(6)">
+        <path d="M4 6 C4 1 8 0 14 0 L20 0 C24 6 32 10 40 11 C43 11.6 44 14 44 17 L44 20 L4 20 Z" fill="url(#sneaker)"/>
+        <path d="M4 17 L44 17 L44 21 C44 23 42 25 39 25 L9 25 C6 25 4 23 4 21 Z" fill="#f4f7f2"/>
+        <path d="M12 6 L20 9 M14 12 L23 14" stroke="#eef4fa" stroke-width="2.6" stroke-linecap="round"/>
+      </g>
     </g>
   </g>
 </svg>

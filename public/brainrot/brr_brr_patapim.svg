@@ -1,29 +1,105 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <!-- Brr Brr Patapim: the tangled forest-thing with the enormous nose, shivering in the sudden cold. Loops like a GIF. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 260">
+  <!-- Brr Brr Patapim: glossy tangled-root forest creature with THE nose, leaves rustling. Loops like a GIF. -->
+  <defs>
+    <linearGradient id="rootBody" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#a9805a"/>
+      <stop offset="0.55" stop-color="#7d5836"/>
+      <stop offset="1" stop-color="#54371e"/>
+    </linearGradient>
+    <linearGradient id="leafG" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#94c05e"/>
+      <stop offset="1" stop-color="#4f7c32"/>
+    </linearGradient>
+    <linearGradient id="noseG" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f2c49a"/>
+      <stop offset="0.6" stop-color="#dba274"/>
+      <stop offset="1" stop-color="#b47a4c"/>
+    </linearGradient>
+    <radialGradient id="patIris" cx="0.38" cy="0.32" r="0.85">
+      <stop offset="0" stop-color="#8a5a2b"/>
+      <stop offset="0.6" stop-color="#4f2c10"/>
+      <stop offset="1" stop-color="#2c1607"/>
+    </radialGradient>
+    <radialGradient id="patSclera" cx="0.4" cy="0.32" r="0.95">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="0.75" stop-color="#f6f4ef"/>
+      <stop offset="1" stop-color="#d9d2c6"/>
+    </radialGradient>
+  </defs>
+
+  <!-- ground shadow -->
+  <ellipse cx="100" cy="246" rx="58" ry="10" fill="#17240f" opacity="0.22">
+    <animate attributeName="rx" values="58;52;58" dur="1.2s" repeatCount="indefinite"/>
+  </ellipse>
+
   <g>
-    <animateTransform attributeName="transform" type="translate" values="0 0; -1.1 0; 0.9 0; -0.7 0; 0 0" dur="0.28s" repeatCount="indefinite"/>
-    <!-- root legs -->
-    <path d="M24 52 C22 56 20 58 16 60 M40 52 C42 56 44 58 48 60" fill="none" stroke="#5c3714" stroke-width="3" stroke-linecap="round"/>
-    <!-- tangled body -->
-    <path d="M20 52 C12 44 14 30 22 24 C28 18 40 18 45 25 C52 32 52 44 44 52 C36 57 26 57 20 52 Z" fill="#6b8f5a" stroke="#2c473a" stroke-width="2"/>
-    <path d="M20 40 C26 36 38 36 45 41 M22 47 C28 43 38 43 43 48" fill="none" stroke="#4a6b3c" stroke-width="1.6"/>
-    <!-- head leaves: rustle -->
+    <animateTransform attributeName="transform" type="translate" values="0 0; 0 -6; 0 0" dur="1.2s" repeatCount="indefinite"/>
+
+    <!-- root legs + feet -->
+    <path d="M78 200 C74 214 68 224 56 230 M122 200 C126 214 132 224 144 230" stroke="#54371e" stroke-width="11" stroke-linecap="round" fill="none"/>
+    <ellipse cx="52" cy="232" rx="12" ry="6.4" fill="#6e4a28"/>
+    <ellipse cx="148" cy="232" rx="12" ry="6.4" fill="#6e4a28"/>
+
+    <!-- leafy crown: rustles -->
     <g>
-      <animateTransform attributeName="transform" type="rotate" values="-5 32 20; 5 32 20; -5 32 20" dur="0.56s" repeatCount="indefinite"/>
-      <path d="M26 20 C22 12 26 6 32 4 C33 10 32 15 30 19 Z" fill="#5d8f5a" stroke="#2c473a" stroke-width="1.6"/>
-      <path d="M36 19 C38 11 44 8 50 9 C48 15 43 19 39 21 Z" fill="#5d8f5a" stroke="#2c473a" stroke-width="1.6"/>
+      <animateTransform attributeName="transform" type="rotate" values="-4 100 78; 4 100 78; -4 100 78" dur="1.2s" repeatCount="indefinite"/>
+      <path d="M84 66 C72 46 74 26 90 14 C98 28 98 50 92 64 Z" fill="url(#leafG)"/>
+      <path d="M100 62 C100 40 110 22 128 16 C130 34 120 54 106 64 Z" fill="url(#leafG)"/>
+      <path d="M80 70 C64 60 54 46 54 30 C70 34 82 48 86 64 Z" fill="url(#leafG)"/>
+      <path d="M112 66 C124 54 140 48 154 52 C148 66 132 74 118 74 Z" fill="url(#leafG)"/>
+      <path d="M88 60 C80 46 80 32 88 22 M104 58 C105 42 112 28 122 22 M82 64 C72 56 64 46 61 36" stroke="#dcedbc" stroke-width="2.6" fill="none" opacity="0.55" stroke-linecap="round"/>
     </g>
-    <!-- eyes -->
-    <circle cx="26" cy="31" r="2.6" fill="#f4f7f2" stroke="#2b1c10" stroke-width="1"/>
-    <circle cx="26.4" cy="31.6" r="1.1" fill="#141416"/>
-    <circle cx="44" cy="31" r="2.6" fill="#f4f7f2" stroke="#2b1c10" stroke-width="1"/>
-    <circle cx="43.6" cy="31.6" r="1.1" fill="#141416"/>
-    <!-- THE nose -->
-    <path d="M30 33 C28 42 30 48 35 52 C39 54.4 43 52 41.6 48.4 C39 43 37.6 38 38 33 Z" fill="#caa580" stroke="#6b4a34" stroke-width="1.8"/>
-    <!-- chattering breath puffs -->
-    <g fill="#dbe7f2" opacity="0.8">
-      <circle cx="50" cy="42" r="1.6"><animate attributeName="opacity" values="0;0.9;0" dur="0.84s" repeatCount="indefinite"/></circle>
-      <circle cx="54" cy="39" r="1.1"><animate attributeName="opacity" values="0;0.7;0" dur="0.84s" begin="0.28s" repeatCount="indefinite"/></circle>
+
+    <!-- tangled root body -->
+    <path d="M100 66 C138 66 158 96 158 138 C158 176 136 202 100 202 C64 202 42 176 42 138 C42 96 62 66 100 66 Z" fill="url(#rootBody)"/>
+    <!-- woven root strands -->
+    <g stroke-linecap="round" fill="none">
+      <path d="M50 118 C74 106 126 106 150 120 M46 146 C72 134 128 134 154 148 M54 174 C78 162 122 162 146 176" stroke="#4a2f18" stroke-width="5" opacity="0.5"/>
+      <path d="M62 96 C58 128 58 164 68 192 M138 96 C142 128 142 164 132 192" stroke="#4a2f18" stroke-width="5" opacity="0.4"/>
+      <path d="M52 116 C76 104 124 104 148 118" stroke="#c49a6e" stroke-width="2.6" opacity="0.6"/>
+      <path d="M48 144 C74 132 126 132 152 146" stroke="#c49a6e" stroke-width="2.6" opacity="0.5"/>
+    </g>
+    <!-- core shadow + rim light + sheen -->
+    <path d="M138 84 C156 104 160 148 146 180 C156 150 154 108 138 84 Z" fill="#3a2412" opacity="0.42"/>
+    <path d="M56 92 C48 112 46 140 50 164" stroke="#e0b98c" stroke-width="4.5" stroke-linecap="round" fill="none" opacity="0.5"/>
+    <rect x="62" y="94" width="13" height="92" rx="6.5" fill="#ffffff" opacity="0.17"/>
+
+    <!-- eyebrows: mossy green -->
+    <path d="M56 92 Q71 84 85 91" stroke="#42632c" stroke-width="7.5" stroke-linecap="round" fill="none"/>
+    <path d="M115 91 Q129 84 144 92" stroke="#42632c" stroke-width="7.5" stroke-linecap="round" fill="none"/>
+
+    <!-- big glossy eyes -->
+    <ellipse cx="71" cy="112" rx="14" ry="15" fill="url(#patSclera)"/>
+    <circle cx="73" cy="114" r="8.6" fill="url(#patIris)"/>
+    <circle cx="73" cy="114" r="3.9" fill="#1d1008"/>
+    <circle cx="69.8" cy="110.4" r="3" fill="#ffffff"/>
+    <circle cx="76.6" cy="116.8" r="1.5" fill="#ffffff" opacity="0.9"/>
+    <ellipse cx="129" cy="112" rx="14" ry="15" fill="url(#patSclera)"/>
+    <circle cx="127" cy="114" r="8.6" fill="url(#patIris)"/>
+    <circle cx="127" cy="114" r="3.9" fill="#1d1008"/>
+    <circle cx="123.8" cy="110.4" r="3" fill="#ffffff"/>
+    <circle cx="130.6" cy="116.8" r="1.5" fill="#ffffff" opacity="0.9"/>
+
+    <!-- smile peeking either side of the nose -->
+    <path d="M74 156 Q82 165 92 166 M126 156 Q118 165 108 166" stroke="#3a2412" stroke-width="4.4" stroke-linecap="round" fill="none"/>
+
+    <!-- THE enormous nose -->
+    <path d="M88 116 C84 138 82 158 88 172 C93 184 107 184 112 172 C118 158 116 138 112 116 C108 108 92 108 88 116 Z" fill="url(#noseG)"/>
+    <path d="M108 122 C112 142 113 160 108 172 C112 160 112 140 106 120 Z" fill="#96603a" opacity="0.45"/>
+    <path d="M90 122 C87 140 86 156 90 168" stroke="#ffe2c4" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.65"/>
+    <ellipse cx="94" cy="172" rx="3" ry="2.2" fill="#8a5632" opacity="0.7"/>
+    <ellipse cx="106" cy="172" rx="3" ry="2.2" fill="#8a5632" opacity="0.7"/>
+
+    <!-- root arms with human-like hands -->
+    <g>
+      <animateTransform attributeName="transform" type="rotate" values="-3 44 130; 3 44 130; -3 44 130" dur="1.2s" repeatCount="indefinite"/>
+      <path d="M44 130 C28 138 20 152 22 168" stroke="#54371e" stroke-width="10" stroke-linecap="round" fill="none"/>
+      <path d="M22 168 C18 174 18 180 22 184 M22 170 C26 176 27 182 25 187 M20 166 C14 170 12 176 14 181" stroke="#dba274" stroke-width="5" stroke-linecap="round" fill="none"/>
+    </g>
+    <g>
+      <animateTransform attributeName="transform" type="rotate" values="3 156 130; -3 156 130; 3 156 130" dur="1.2s" repeatCount="indefinite"/>
+      <path d="M156 130 C172 138 180 152 178 168" stroke="#54371e" stroke-width="10" stroke-linecap="round" fill="none"/>
+      <path d="M178 168 C182 174 182 180 178 184 M178 170 C174 176 173 182 175 187 M180 166 C186 170 188 176 186 181" stroke="#dba274" stroke-width="5" stroke-linecap="round" fill="none"/>
     </g>
   </g>
 </svg>

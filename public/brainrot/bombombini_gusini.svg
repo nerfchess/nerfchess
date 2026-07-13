@@ -1,36 +1,106 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <!-- Bombombini Gusini: the jet-goose, wings flapping, bomb clutched tight, HONK loading. Loops like a GIF. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 260">
+  <!-- Bombombini Gusini: glossy goose-jet hovering, afterburner flickering, missiles armed. Loops like a GIF. -->
+  <defs>
+    <linearGradient id="jetG" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#dfe6ee"/>
+      <stop offset="0.55" stop-color="#a9b4c2"/>
+      <stop offset="1" stop-color="#707c8c"/>
+    </linearGradient>
+    <linearGradient id="gooseG" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="0.6" stop-color="#eef1f2"/>
+      <stop offset="1" stop-color="#c3ccd3"/>
+    </linearGradient>
+    <linearGradient id="wingJ" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#b9c4d1"/>
+      <stop offset="1" stop-color="#7a8798"/>
+    </linearGradient>
+    <linearGradient id="beakG" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffb84e"/>
+      <stop offset="1" stop-color="#e0821c"/>
+    </linearGradient>
+    <radialGradient id="gsIris" cx="0.38" cy="0.32" r="0.85">
+      <stop offset="0" stop-color="#8a5a2b"/>
+      <stop offset="0.6" stop-color="#4f2c10"/>
+      <stop offset="1" stop-color="#2c1607"/>
+    </radialGradient>
+    <radialGradient id="gsSclera" cx="0.4" cy="0.32" r="0.95">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="0.75" stop-color="#f6f4ef"/>
+      <stop offset="1" stop-color="#d9d2c6"/>
+    </radialGradient>
+  </defs>
+
+  <!-- ground shadow -->
+  <ellipse cx="100" cy="246" rx="64" ry="10" fill="#141a22" opacity="0.2">
+    <animate attributeName="rx" values="64;56;64" dur="1s" repeatCount="indefinite"/>
+  </ellipse>
+
   <g>
-    <animateTransform attributeName="transform" type="translate" values="0 0; 0 -2.2; 0 0" dur="0.6s" repeatCount="indefinite"/>
-    <!-- flapping far wing -->
+    <animateTransform attributeName="transform" type="translate" values="0 0; 0 -7; 0 0" dur="1s" repeatCount="indefinite"/>
+
+    <!-- afterburner flame -->
     <g>
-      <animateTransform attributeName="transform" type="rotate" values="-26 30 30; 12 30 30; -26 30 30" dur="0.6s" repeatCount="indefinite"/>
-      <path d="M30 30 C20 20 10 18 4 22 C10 26 18 30 30 33 Z" fill="#dbe3ea" stroke="#4a5560" stroke-width="1.8"/>
-    </g>
-    <!-- body -->
-    <path d="M14 40 C12 30 20 22 30 22 C42 22 50 30 48 41 C46 49 20 49 14 40 Z" fill="#f4f7f2" stroke="#4a5560" stroke-width="2"/>
-    <!-- neck + head -->
-    <path d="M42 26 C42 18 44 12 50 10 C54 9 56 12 54 14 C50 17 48 22 48 27 Z" fill="#f4f7f2" stroke="#4a5560" stroke-width="2"/>
-    <path d="M52 11 L62 13 L52 16 Z" fill="#e8912d" stroke="#8a5311" stroke-width="1.2"/>
-    <circle cx="51" cy="12" r="1.3" fill="#141416"/>
-    <!-- jet pod -->
-    <g>
-      <rect x="18" y="40" width="14" height="7" rx="3.5" fill="#8aa0b4" stroke="#33414e" stroke-width="1.6"/>
-      <path d="M18 43.5 L10 43.5" stroke="#f4a83a" stroke-width="4" stroke-linecap="round">
-        <animate attributeName="stroke-width" values="4;1.5;4" dur="0.22s" repeatCount="indefinite"/>
+      <path d="M34 160 C20 152 10 160 6 168 C14 170 20 176 30 176 Z" fill="#ff9a2e">
+        <animate attributeName="opacity" values="1;0.55;1" dur="0.22s" repeatCount="indefinite"/>
+      </path>
+      <path d="M32 163 C24 159 18 163 15 167 C20 169 24 172 30 172 Z" fill="#ffd66e">
+        <animate attributeName="opacity" values="0.9;0.4;0.9" dur="0.22s" repeatCount="indefinite"/>
       </path>
     </g>
-    <!-- near wing -->
+
+    <!-- tail fin -->
+    <path d="M44 148 C38 128 38 112 46 98 C58 108 62 128 62 146 Z" fill="url(#wingJ)"/>
+
+    <!-- far wing (behind, up-left) -->
+    <path d="M88 142 C74 118 54 100 34 94 C40 114 60 136 84 150 Z" fill="url(#wingJ)"/>
+
+    <!-- jet fuselage -->
+    <path d="M30 168 C30 148 52 138 86 136 L148 140 C158 152 158 172 148 184 L82 190 C50 190 30 184 30 168 Z" fill="url(#jetG)"/>
+    <path d="M66 186 C102 190 130 187 146 180 L148 184 L82 190 C76 190 70 188 66 186 Z" fill="#4c5867" opacity="0.5"/>
+    <path d="M42 150 C56 142 74 138 92 137" stroke="#ffffff" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.7"/>
+    <rect x="58" y="146" width="12" height="38" rx="6" fill="#ffffff" opacity="0.22"/>
+    <!-- intake + roundel -->
+    <circle cx="108" cy="162" r="9" fill="none" stroke="#5c6a7a" stroke-width="3"/>
+    <circle cx="108" cy="162" r="3.4" fill="#5c6a7a"/>
+
+    <!-- goose neck + head -->
+    <path d="M138 150 C136 122 136 96 144 74 C148 62 158 60 162 68 C168 82 164 108 162 132 C161 144 154 152 144 154 Z" fill="url(#gooseG)"/>
+    <path d="M141 144 C139 118 140 92 147 74" stroke="#ffffff" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.8"/>
+    <circle cx="153" cy="64" r="21" fill="url(#gooseG)"/>
+    <path d="M167 52 C172 58 173 66 170 73 C175 64 173 54 166 49 Z" fill="#9aa5b1" opacity="0.6"/>
+    <path d="M140 52 C144 46 150 43 156 44" stroke="#ffffff" stroke-width="3.4" stroke-linecap="round" fill="none" opacity="0.85"/>
+    <!-- beak -->
+    <path d="M170 62 L194 68 C197 69 197 73 194 74 L170 78 C166 74 166 66 170 62 Z" fill="url(#beakG)"/>
+    <path d="M172 64 L188 68" stroke="#ffd58e" stroke-width="2.6" stroke-linecap="round" opacity="0.8"/>
+    <path d="M170 74 L186 73" stroke="#a85e10" stroke-width="2" stroke-linecap="round" opacity="0.7"/>
+    <!-- fierce brow + glossy eye -->
+    <path d="M143 55 Q153 49 163 55" stroke="#4c5867" stroke-width="5.5" stroke-linecap="round" fill="none"/>
+    <ellipse cx="153" cy="62" rx="11" ry="12" fill="url(#gsSclera)"/>
+    <circle cx="154.5" cy="64" r="6.8" fill="url(#gsIris)"/>
+    <circle cx="154.5" cy="64" r="3" fill="#1d1008"/>
+    <circle cx="152" cy="61.2" r="2.4" fill="#ffffff"/>
+    <circle cx="157.2" cy="66.4" r="1.2" fill="#ffffff" opacity="0.9"/>
+    <ellipse cx="144" cy="74" rx="5" ry="3.4" fill="#f0a0a0" opacity="0.4"/>
+
+    <!-- near wing (down toward viewer) with missiles -->
     <g>
-      <animateTransform attributeName="transform" type="rotate" values="16 34 34; -18 34 34; 16 34 34" dur="0.6s" repeatCount="indefinite"/>
-      <path d="M34 34 C28 28 18 26 12 30 C18 35 26 38 34 38 Z" fill="#f4f7f2" stroke="#4a5560" stroke-width="1.8"/>
-    </g>
-    <!-- bomb in the feet -->
-    <g>
-      <animateTransform attributeName="transform" type="rotate" values="-5 34 50; 5 34 50; -5 34 50" dur="0.9s" repeatCount="indefinite"/>
-      <path d="M30 47 L32 51 M38 47 L36 51" stroke="#e8912d" stroke-width="2" stroke-linecap="round"/>
-      <ellipse cx="34" cy="55" rx="5" ry="4.4" fill="#4a4a50" stroke="#141416" stroke-width="1.4"/>
-      <path d="M34 50.6 L34 48.4 M32 49.4 H36" stroke="#8a8478" stroke-width="1.2" stroke-linecap="round"/>
+      <animateTransform attributeName="transform" type="rotate" values="-2 92 168; 2 92 168; -2 92 168" dur="1s" repeatCount="indefinite"/>
+      <path d="M92 168 C76 186 58 204 42 214 C60 216 92 206 112 184 Z" fill="url(#wingJ)"/>
+      <path d="M88 172 C76 184 64 196 54 204" stroke="#dfe6ee" stroke-width="3" fill="none" opacity="0.6" stroke-linecap="round"/>
+      <!-- missiles -->
+      <g>
+        <rect x="52" y="212" width="34" height="9" rx="4.5" fill="#8d99a6"/>
+        <path d="M86 212 C92 213 95 215 96 216.5 C95 218 92 220 86 221 Z" fill="#d84a3a"/>
+        <path d="M52 212 L46 208 L46 225 L52 221 Z" fill="#5c6a7a"/>
+        <rect x="56" y="214" width="18" height="2.6" rx="1.3" fill="#dfe6ee" opacity="0.7"/>
+      </g>
+      <g>
+        <rect x="84" y="196" width="30" height="8" rx="4" fill="#8d99a6"/>
+        <path d="M114 196 C119 197 122 199 123 200 C122 201.5 119 203 114 204 Z" fill="#d84a3a"/>
+        <path d="M84 196 L79 192 L79 208 L84 204 Z" fill="#5c6a7a"/>
+        <rect x="88" y="197.6" width="15" height="2.4" rx="1.2" fill="#dfe6ee" opacity="0.7"/>
+      </g>
     </g>
   </g>
 </svg>

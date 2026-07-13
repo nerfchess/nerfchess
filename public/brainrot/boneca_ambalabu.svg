@@ -1,31 +1,101 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <!-- Boneca Ambalabu: the frog head on a tractor tire, bouncing with rubbery menace. Loops like a GIF. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 260">
+  <!-- Boneca Ambalabu: glossy frog head on a rubber tire, bouncing on thin human legs. Loops like a GIF. -->
+  <defs>
+    <linearGradient id="frogG" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7cc2a2"/>
+      <stop offset="0.55" stop-color="#4c9377"/>
+      <stop offset="1" stop-color="#2f6551"/>
+    </linearGradient>
+    <radialGradient id="tireG" cx="0.35" cy="0.3" r="1">
+      <stop offset="0" stop-color="#55555e"/>
+      <stop offset="0.6" stop-color="#33333a"/>
+      <stop offset="1" stop-color="#151518"/>
+    </radialGradient>
+    <radialGradient id="hubG" cx="0.38" cy="0.32" r="0.95">
+      <stop offset="0" stop-color="#4e7a68"/>
+      <stop offset="1" stop-color="#23433a"/>
+    </radialGradient>
+    <radialGradient id="frIris" cx="0.38" cy="0.32" r="0.85">
+      <stop offset="0" stop-color="#8a5a2b"/>
+      <stop offset="0.6" stop-color="#4f2c10"/>
+      <stop offset="1" stop-color="#2c1607"/>
+    </radialGradient>
+    <radialGradient id="frSclera" cx="0.4" cy="0.32" r="0.95">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="0.75" stop-color="#f6f4ef"/>
+      <stop offset="1" stop-color="#d9d2c6"/>
+    </radialGradient>
+  </defs>
+
+  <!-- ground shadow -->
+  <ellipse cx="100" cy="247" rx="60" ry="9" fill="#0c1210" opacity="0.24">
+    <animate attributeName="rx" values="60;52;60" dur="0.8s" repeatCount="indefinite"/>
+  </ellipse>
+
   <g>
-    <animateTransform attributeName="transform" type="translate" values="0 0; 0 -2.6; 0 0.4; 0 0" dur="0.8s" repeatCount="indefinite"/>
+    <animateTransform attributeName="transform" type="translate" values="0 0; 0 -8; 0 1; 0 0" dur="0.8s" repeatCount="indefinite"/>
+
+    <!-- thin human legs -->
+    <path d="M88 208 L86 236 M112 208 L114 236" stroke="#d9a877" stroke-width="6" stroke-linecap="round"/>
+    <path d="M86 236 L76 239 M114 236 L124 239" stroke="#3a3a40" stroke-width="8" stroke-linecap="round"/>
+
     <!-- frog head -->
-    <path d="M20 30 C18 18 26 12 32 12 C38 12 46 18 44 30 Z" fill="#5d8f5a" stroke="#2c473a" stroke-width="2"/>
     <g>
-      <circle cx="25" cy="14" r="4.4" fill="#5d8f5a" stroke="#2c473a" stroke-width="1.8"/>
-      <circle cx="39" cy="14" r="4.4" fill="#5d8f5a" stroke="#2c473a" stroke-width="1.8"/>
-      <circle cx="25" cy="14" r="2" fill="#f4e9c8" stroke="#2b1c10" stroke-width="0.8"/>
-      <circle cx="39" cy="14" r="2" fill="#f4e9c8" stroke="#2b1c10" stroke-width="0.8"/>
-      <circle cx="25.4" cy="14.4" r="0.9" fill="#141416"/>
-      <circle cx="39.4" cy="14.4" r="0.9" fill="#141416"/>
-      <rect x="19" y="11.8" width="26" height="4.6" fill="#5d8f5a" opacity="0">
-        <animate attributeName="opacity" values="0;0;1;0;0" keyTimes="0;0.88;0.92;0.96;1" dur="3.1s" repeatCount="indefinite"/>
-      </rect>
-    </g>
-    <path d="M24 24 C28 27 36 27 40 24" fill="none" stroke="#2c473a" stroke-width="1.6" stroke-linecap="round"/>
-    <!-- the tire body: the hub spins slowly with the bounce -->
-    <g>
-      <circle cx="32" cy="44" r="15" fill="#2b2b2f" stroke="#141416" stroke-width="2"/>
-      <circle cx="32" cy="44" r="6.6" fill="#3d5a48" stroke="#141416" stroke-width="1.6"/>
-      <g stroke="#4a4a50" stroke-width="2">
-        <animateTransform attributeName="transform" type="rotate" values="0 32 44; 360 32 44" dur="4s" repeatCount="indefinite"/>
-        <path d="M32 30 V34 M32 54 V58 M18 44 H22 M42 44 H46 M22 34 L25 37 M42 34 L39 37 M22 54 L25 51 M42 54 L39 51"/>
+      <!-- bulging eye stalks -->
+      <circle cx="70" cy="42" r="19" fill="url(#frogG)"/>
+      <circle cx="130" cy="42" r="19" fill="url(#frogG)"/>
+      <!-- head -->
+      <path d="M48 70 C48 42 70 30 100 30 C130 30 152 42 152 70 C152 92 130 102 100 102 C70 102 48 92 48 70 Z" fill="url(#frogG)"/>
+      <path d="M132 42 C148 52 154 72 146 90 C154 74 150 54 132 42 Z" fill="#1f4a3a" opacity="0.45"/>
+      <path d="M58 54 C66 42 82 35 96 34" stroke="#c2e6d4" stroke-width="4.5" stroke-linecap="round" fill="none" opacity="0.6"/>
+      <ellipse cx="72" cy="72" rx="7" ry="14" fill="#ffffff" opacity="0.18" transform="rotate(-10 72 72)"/>
+      <!-- glossy frog eyes with blink -->
+      <g>
+        <ellipse cx="70" cy="40" rx="13" ry="14" fill="url(#frSclera)"/>
+        <circle cx="71" cy="42" r="8" fill="url(#frIris)"/>
+        <circle cx="71" cy="42" r="3.6" fill="#1d1008"/>
+        <circle cx="68" cy="38.8" r="2.8" fill="#ffffff"/>
+        <circle cx="74" cy="44.6" r="1.4" fill="#ffffff" opacity="0.9"/>
+        <ellipse cx="130" cy="40" rx="13" ry="14" fill="url(#frSclera)"/>
+        <circle cx="129" cy="42" r="8" fill="url(#frIris)"/>
+        <circle cx="129" cy="42" r="3.6" fill="#1d1008"/>
+        <circle cx="126" cy="38.8" r="2.8" fill="#ffffff"/>
+        <circle cx="132" cy="44.6" r="1.4" fill="#ffffff" opacity="0.9"/>
+        <path d="M54 40 A16 16 0 0 1 86 40 L86 26 L54 26 Z" fill="#4c9377" opacity="0">
+          <animate attributeName="opacity" values="0;0;1;0;0" keyTimes="0;0.88;0.92;0.96;1" dur="3.4s" repeatCount="indefinite"/>
+        </path>
+        <path d="M114 40 A16 16 0 0 1 146 40 L146 26 L114 26 Z" fill="#4c9377" opacity="0">
+          <animate attributeName="opacity" values="0;0;1;0;0" keyTimes="0;0.88;0.92;0.96;1" dur="3.4s" repeatCount="indefinite"/>
+        </path>
       </g>
+      <!-- nostrils, wide smile, cheeks -->
+      <ellipse cx="92" cy="62" rx="2.4" ry="3" fill="#1f4a3a"/>
+      <ellipse cx="108" cy="62" rx="2.4" ry="3" fill="#1f4a3a"/>
+      <path d="M64 74 C82 92 118 92 136 74" stroke="#173a2e" stroke-width="5" stroke-linecap="round" fill="none"/>
+      <path d="M64 74 Q60 72 58 68 M136 74 Q140 72 142 68" stroke="#173a2e" stroke-width="5" stroke-linecap="round" fill="none"/>
+      <ellipse cx="60" cy="84" rx="7" ry="4.6" fill="#e2905c" opacity="0.4"/>
+      <ellipse cx="140" cy="84" rx="7" ry="4.6" fill="#e2905c" opacity="0.4"/>
     </g>
-    <!-- one sturdy human leg (the meme's finishing touch) -->
-    <path d="M32 58 L32 61 L38 61" fill="none" stroke="#caa580" stroke-width="3" stroke-linecap="round"/>
+
+    <!-- tire body -->
+    <g>
+      <circle cx="100" cy="158" r="58" fill="url(#tireG)"/>
+      <!-- slowly rotating tread lugs -->
+      <g stroke="#63636e" stroke-width="7" stroke-linecap="round">
+        <animateTransform attributeName="transform" type="rotate" values="0 100 158; 360 100 158" dur="6s" repeatCount="indefinite"/>
+        <path d="M100 104 V114 M100 202 V212 M46 158 H56 M144 158 H154 M62 120 L69 127 M138 196 L131 189 M62 196 L69 189 M138 120 L131 127"/>
+      </g>
+      <!-- sidewall + hub -->
+      <circle cx="100" cy="158" r="40" fill="#26262c"/>
+      <circle cx="100" cy="158" r="40" fill="none" stroke="#4a4a52" stroke-width="2.4" opacity="0.7"/>
+      <circle cx="100" cy="158" r="23" fill="url(#hubG)"/>
+      <g fill="#152b23">
+        <circle cx="100" cy="145" r="2.6"/><circle cx="100" cy="171" r="2.6"/>
+        <circle cx="87" cy="158" r="2.6"/><circle cx="113" cy="158" r="2.6"/>
+      </g>
+      <circle cx="100" cy="158" r="5" fill="#152b23"/>
+      <!-- glossy rubber highlight -->
+      <path d="M56 128 A53 53 0 0 1 92 106" stroke="#ffffff" stroke-width="7" fill="none" opacity="0.18" stroke-linecap="round"/>
+    </g>
   </g>
 </svg>
