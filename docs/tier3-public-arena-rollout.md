@@ -65,17 +65,24 @@ cloudflared tunnel ingress validate                         # must print "OK"
 cloudflared tunnel ingress rule https://arena.nerfchess.com # must match the :8788 rule
 ```
 
-**Apply without restarting** (cloudflared hot-reloads the config file on change;
-force it with SIGHUP, which does NOT drop the tunnel/SSH):
+**Apply: do nothing — cloudflared auto-reloads.** With a local config file,
+cloudflared watches `config.yml` and applies ingress changes automatically
+within a few seconds of the save. No signal, no restart.
+
+> ⚠️ **Do NOT send SIGHUP and do NOT restart cloudflared.** Both make it
+> re-establish every tunnel connection, which instantly drops your SSH session
+> (SSH rides the same tunnel). Observed 2026-07-13: `systemctl kill -s HUP
+> cloudflared` killed the session with `client_loop: send disconnect`. It
+> self-heals in seconds, but it is never necessary — the edit alone is enough.
+
+Confirm it took (this reads the running config; safe, non-disruptive):
 
 ```bash
-sudo systemctl kill -s HUP cloudflared
-journalctl -u cloudflared --since "1 min ago" | grep -i "config\|ingress\|reload"
+cloudflared tunnel ingress rule https://arena.nerfchess.com   # -> Matched … :8788
 ```
 
-If for any reason you must fully restart cloudflared, do it from an
-out-of-band console (Oracle Cloud serial/VNC console), **not** over this SSH
-session.
+If you ever genuinely must restart cloudflared, do it from an out-of-band
+console (Oracle Cloud serial/VNC), **never** over this SSH session.
 
 Rollback: restore `config.yml.bak` and `systemctl kill -s HUP cloudflared`.
 
