@@ -1098,6 +1098,31 @@ html[data-theme="nebula"] .mode-def-card {
   overflow: hidden;
   pointer-events: none;
 }
+/* Neon course floor: a faint vertical grid scrolls left under the action to
+   sell speed, Geometry-Dash style. Decorative only, killed by reduced motion. */
+.knight-track::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 8px;
+  height: 22px;
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgb(var(--accent-rgb) / 0.09) 0,
+    rgb(var(--accent-rgb) / 0.09) 1px,
+    transparent 1px,
+    transparent 26px
+  );
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent);
+  animation: gd-grid-scroll 2s linear infinite;
+  will-change: transform;
+}
+@keyframes gd-grid-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-26px); }
+}
 .knight-track::before {
   content: "";
   position: absolute;
@@ -1106,6 +1131,14 @@ html[data-theme="nebula"] .mode-def-card {
   bottom: 7px;
   height: 1px;
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.14) 18%, rgba(255, 255, 255, 0.14) 82%, transparent);
+  /* The floor pulses on the beat, brightest the instant the knight lands
+     (phase-locked to gd-jump: same 3s cycle and -0.66s delay, flash at 67%). */
+  animation: gd-ground-pulse 3s linear -0.66s infinite;
+}
+@keyframes gd-ground-pulse {
+  0%, 60% { opacity: 0.55; box-shadow: none; }
+  67% { opacity: 1; box-shadow: 0 0 7px rgb(var(--accent-rgb) / 0.45); }
+  82%, 100% { opacity: 0.55; box-shadow: none; }
 }
 .gd-world {
   position: absolute;
@@ -1161,7 +1194,10 @@ html[data-theme="nebula"] .mode-def-card {
   left: 18%;
   font-size: 21px;
   line-height: 1;
-  color: var(--paper-dim);
+  /* The knight-cube reads as a lit neon avatar: accent-tinted with a soft
+     glow, so the jump pops against the darker course. */
+  color: rgb(var(--accent-hi-rgb) / 0.92);
+  filter: drop-shadow(0 0 5px rgb(var(--accent-rgb) / 0.5));
 }
 /* One 3s beat: grounded, then a 1s jump with a full 360 flip. Obstacles cross
    the knight's lane at t = 3n + 0.84s (strip spacing 12.5% / scroll speed
@@ -1850,7 +1886,7 @@ nav, header { position: relative; z-index: 30; }
   .draft-in,
   .hero-aura, .mode-field::before,
   .dot-live::after, .cta-shine::after, .header-search-panel,
-  .gd-world, .gd-knight > span,
+  .gd-world, .gd-knight > span, .knight-track::before, .knight-track::after,
   .board-splash, .board-splash-card,
   .stagger-in > *,
   .sq-strike, .sq-freeze, .sq-freeze-flake, .sq-shield-in, .walnut-piece, .banana-peel,
