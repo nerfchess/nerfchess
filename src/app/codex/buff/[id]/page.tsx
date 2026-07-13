@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ALL_BUFFS } from "@/engine/buffs/library";
 import { BuffDetail } from "@/components/codex/CardDetail";
+import { SocialsRow } from "@/components/SocialsRow";
 import { BUFF_BY_ID, buffType, cardPath, metaDescription, modeLabel, buffModes, tierName } from "@/lib/cardCodex";
 
 // One static page per buff (including hexes, boons, and items: all live in
@@ -38,5 +39,16 @@ export default async function BuffCardPage(props: { params: Promise<{ id: string
   const params = await props.params;
   const buff = BUFF_BY_ID[params.id];
   if (!buff) notFound();
-  return <BuffDetail buff={buff} />;
+  return (
+    <>
+      <BuffDetail buff={buff} />
+      {/* The one card that literally links out: Check Out Our Socials shows the
+          real accounts right on its codex page. */}
+      {buff.id === "check_out_our_socials" && (
+        <div className="mx-auto max-w-3xl px-4 pb-10 sm:px-6">
+          <SocialsRow label="Check out our socials" className="mt-2" />
+        </div>
+      )}
+    </>
+  );
 }
