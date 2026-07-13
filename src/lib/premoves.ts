@@ -145,3 +145,19 @@ export function premoveOptionsFor(
 
   return [...filtered, ...extras];
 }
+
+/** The moves `color` could play if it were their turn right now: the engine's
+ * full legal-move pipeline (buff-granted movement, freezes, and walls all
+ * included) on a turn-flipped shallow clone. Powers the enemy-piece
+ * inspection preview — click an opponent's piece, see where it can go.
+ * Fail-soft: any engine hiccup returns [] because a preview must never crash
+ * the board. */
+export function previewMovesFor(game: NerfGame, color: Color): Move[] {
+  if (game.result) return [];
+  try {
+    if (game.board.turn === color) return legalMoves(game);
+    return legalMoves({ ...game, board: { ...cloneBoard(game.board), turn: color } });
+  } catch {
+    return [];
+  }
+}

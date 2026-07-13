@@ -1,29 +1,98 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <!-- Tung Tung Tung Sahur: the wooden log-man, bat mid-swing, bouncing to his own drumbeat. Loops like a GIF. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 260">
+  <!-- Tung Tung Tung Sahur: glossy wooden log mascot with bat, bobbing to his own drumbeat. Loops like a GIF. -->
+  <defs>
+    <linearGradient id="wood" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#d99f5c"/>
+      <stop offset="0.55" stop-color="#b06f33"/>
+      <stop offset="1" stop-color="#7d4a1e"/>
+    </linearGradient>
+    <radialGradient id="woodTop" cx="0.4" cy="0.35" r="0.9">
+      <stop offset="0" stop-color="#f2d9ae"/>
+      <stop offset="1" stop-color="#c99a5f"/>
+    </radialGradient>
+    <radialGradient id="iris" cx="0.38" cy="0.32" r="0.85">
+      <stop offset="0" stop-color="#9a6531"/>
+      <stop offset="0.6" stop-color="#5c3312"/>
+      <stop offset="1" stop-color="#331a08"/>
+    </radialGradient>
+    <radialGradient id="sclera" cx="0.4" cy="0.32" r="0.95">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="0.75" stop-color="#f6f4ef"/>
+      <stop offset="1" stop-color="#d9d2c6"/>
+    </radialGradient>
+    <linearGradient id="bat" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e0b170"/>
+      <stop offset="1" stop-color="#8f5c22"/>
+    </linearGradient>
+  </defs>
+
+  <!-- ground shadow -->
+  <ellipse cx="100" cy="245" rx="54" ry="10" fill="#241304" opacity="0.22">
+    <animate attributeName="rx" values="54;47;54" dur="1.1s" repeatCount="indefinite"/>
+  </ellipse>
+
   <g>
-    <animateTransform attributeName="transform" type="translate" values="0 0; 0 -2.4; 0 0" dur="0.5s" repeatCount="indefinite"/>
-    <!-- legs -->
-    <path d="M26 54 L26 60 L22 60 M38 54 L38 60 L42 60" fill="none" stroke="#4a2b10" stroke-width="3" stroke-linecap="round"/>
-    <!-- log body -->
-    <rect x="20" y="14" width="24" height="42" rx="10" fill="#8a5a2c" stroke="#4a2b10" stroke-width="2"/>
-    <ellipse cx="32" cy="15.5" rx="12" ry="4.5" fill="#caa580" stroke="#4a2b10" stroke-width="1.6"/>
-    <path d="M26 15.5a6 2.4 0 0 0 12 0" fill="none" stroke="#8a5a2c" stroke-width="1"/>
-    <!-- wood grain -->
-    <path d="M23 30 C28 32 36 32 41 30 M23 42 C28 44 36 44 41 42" fill="none" stroke="#5c3714" stroke-width="1.2"/>
-    <!-- face -->
-    <circle cx="27.5" cy="26" r="3.4" fill="#f4f7f2" stroke="#2b1c10" stroke-width="1.1"/>
-    <circle cx="36.5" cy="26" r="3.4" fill="#f4f7f2" stroke="#2b1c10" stroke-width="1.1"/>
-    <circle cx="27.9" cy="26.6" r="1.3" fill="#141416"/>
-    <circle cx="36.1" cy="26.6" r="1.3" fill="#141416"/>
-    <path d="M28 35 C30 37.4 34 37.4 36 35" fill="none" stroke="#2b1c10" stroke-width="1.4" stroke-linecap="round"/>
+    <animateTransform attributeName="transform" type="translate" values="0 0; 0 -7; 0 0" dur="1.1s" repeatCount="indefinite"/>
+
+    <!-- legs + bare feet -->
+    <path d="M80 195 L80 226 M120 195 L120 226" stroke="#6e4018" stroke-width="11" stroke-linecap="round" fill="none"/>
+    <ellipse cx="74" cy="230" rx="13" ry="7" fill="#c99a66"/>
+    <ellipse cx="126" cy="230" rx="13" ry="7" fill="#c99a66"/>
+    <ellipse cx="70" cy="228.4" rx="4" ry="2.4" fill="#e3bd8d"/>
+    <ellipse cx="131" cy="228.4" rx="4" ry="2.4" fill="#e3bd8d"/>
+
     <!-- left arm -->
-    <path d="M20 34 C15 35 13 38 12.5 42" fill="none" stroke="#4a2b10" stroke-width="3" stroke-linecap="round"/>
-    <!-- bat arm: swings -->
-    <g stroke-linecap="round">
-      <animateTransform attributeName="transform" type="rotate" values="-24 44 32; 14 44 32; -24 44 32" dur="0.5s" repeatCount="indefinite"/>
-      <path d="M44 32 C48 30 50 27 51 24" fill="none" stroke="#4a2b10" stroke-width="3"/>
-      <path d="M51 24 L58 8" stroke="#b98a4e" stroke-width="5"/>
-      <path d="M51 24 L58 8" stroke="#4a2b10" stroke-width="5" fill="none" opacity="0.25"/>
+    <path d="M60 126 C42 132 34 146 36 160" stroke="#7a4a1e" stroke-width="9" stroke-linecap="round" fill="none"/>
+    <circle cx="36" cy="160" r="7.5" fill="#8a5a2c"/>
+
+    <!-- log body -->
+    <rect x="55" y="50" width="90" height="150" rx="40" fill="url(#wood)"/>
+    <!-- core shadow bottom-right -->
+    <path d="M126 62 C146 100 147 162 126 194 C140 168 141 96 126 62 Z" fill="#4c2c12" opacity="0.3"/>
+    <!-- rim light top-left -->
+    <path d="M63 86 C58 122 58 160 66 188" stroke="#ffd9a1" stroke-width="5" stroke-linecap="round" fill="none" opacity="0.5"/>
+    <!-- subtle wood grain -->
+    <path d="M68 158 Q100 170 132 158 M72 176 Q100 186 128 176" stroke="#6e4018" stroke-width="3" fill="none" opacity="0.4" stroke-linecap="round"/>
+    <!-- specular sheen band -->
+    <rect x="70" y="72" width="14" height="112" rx="7" fill="#ffffff" opacity="0.2"/>
+
+    <!-- cut-log top with rings -->
+    <ellipse cx="100" cy="52" rx="46" ry="16" fill="url(#woodTop)"/>
+    <ellipse cx="100" cy="52" rx="30" ry="9.5" fill="none" stroke="#b9884c" stroke-width="2.4" opacity="0.8"/>
+    <ellipse cx="100" cy="52" rx="14" ry="4.5" fill="none" stroke="#b9884c" stroke-width="2" opacity="0.7"/>
+    <circle cx="100" cy="52" r="2.4" fill="#a5763e"/>
+
+    <!-- eyebrows -->
+    <path d="M64 86 Q79 77 93 84" stroke="#4a2a12" stroke-width="7.5" stroke-linecap="round" fill="none"/>
+    <path d="M107 84 Q121 77 136 86" stroke="#4a2a12" stroke-width="7.5" stroke-linecap="round" fill="none"/>
+
+    <!-- glossy eyes -->
+    <g>
+      <ellipse cx="79" cy="106" rx="14" ry="15" fill="url(#sclera)"/>
+      <circle cx="80.5" cy="108" r="8.6" fill="url(#iris)"/>
+      <circle cx="80.5" cy="108" r="3.9" fill="#1d1008"/>
+      <circle cx="77.4" cy="104.4" r="3.1" fill="#ffffff"/>
+      <circle cx="84" cy="110.6" r="1.5" fill="#ffffff" opacity="0.9"/>
+      <ellipse cx="121" cy="106" rx="14" ry="15" fill="url(#sclera)"/>
+      <circle cx="119.5" cy="108" r="8.6" fill="url(#iris)"/>
+      <circle cx="119.5" cy="108" r="3.9" fill="#1d1008"/>
+      <circle cx="116.4" cy="104.4" r="3.1" fill="#ffffff"/>
+      <circle cx="123" cy="110.6" r="1.5" fill="#ffffff" opacity="0.9"/>
+    </g>
+
+    <!-- cheeks + smile -->
+    <ellipse cx="64" cy="124" rx="7" ry="4.6" fill="#a86a30" opacity="0.45"/>
+    <ellipse cx="136" cy="124" rx="7" ry="4.6" fill="#a86a30" opacity="0.45"/>
+    <path d="M84 130 Q100 143 116 130" stroke="#4a2a12" stroke-width="5" stroke-linecap="round" fill="none"/>
+
+    <!-- bat arm: gentle swing -->
+    <g>
+      <animateTransform attributeName="transform" type="rotate" values="-7 142 120; 6 142 120; -7 142 120" dur="1.1s" repeatCount="indefinite"/>
+      <path d="M142 120 C152 120 158 122 161 126" stroke="#7a4a1e" stroke-width="9" stroke-linecap="round" fill="none"/>
+      <path d="M162 128 L188 54" stroke="url(#bat)" stroke-width="18" stroke-linecap="round"/>
+      <path d="M175 92 L188 54" stroke="url(#bat)" stroke-width="21" stroke-linecap="round"/>
+      <path d="M160 122 L182 60" stroke="#ffffff" stroke-width="4" stroke-linecap="round" opacity="0.3"/>
+      <circle cx="161" cy="126" r="8" fill="#8a5a2c"/>
     </g>
   </g>
 </svg>

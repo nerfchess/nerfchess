@@ -1,0 +1,116 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 260">
+  <!-- Skibidi Flush: glossy porcelain bowl with a living whirlpool face, forever mid-flush. Loops like a GIF. -->
+  <defs>
+    <linearGradient id="skiPorc" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="0.55" stop-color="#e6edf2"/>
+      <stop offset="1" stop-color="#aebfcc"/>
+    </linearGradient>
+    <linearGradient id="skiPorcDark" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#dfe8ee"/>
+      <stop offset="1" stop-color="#93a8b8"/>
+    </linearGradient>
+    <radialGradient id="skiSwirl" cx="0.42" cy="0.38" r="0.9">
+      <stop offset="0" stop-color="#bfeaff"/>
+      <stop offset="0.55" stop-color="#5db6e8"/>
+      <stop offset="1" stop-color="#2a6ea8"/>
+    </radialGradient>
+    <radialGradient id="skiIris" cx="0.38" cy="0.32" r="0.85">
+      <stop offset="0" stop-color="#8a5a2b"/>
+      <stop offset="0.6" stop-color="#4f2c10"/>
+      <stop offset="1" stop-color="#2c1607"/>
+    </radialGradient>
+    <radialGradient id="skiSclera" cx="0.4" cy="0.32" r="0.95">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="0.75" stop-color="#f6f4ef"/>
+      <stop offset="1" stop-color="#d8d2c6"/>
+    </radialGradient>
+  </defs>
+
+  <!-- ground shadow -->
+  <ellipse cx="100" cy="248" rx="58" ry="9" fill="#0f1a22" opacity="0.22">
+    <animate attributeName="rx" values="58;52;58" dur="0.8s" repeatCount="indefinite"/>
+  </ellipse>
+
+  <g>
+    <animateTransform attributeName="transform" type="translate" values="0 0; 0 -5; 0 0" dur="0.8s" repeatCount="indefinite"/>
+
+    <!-- pedestal foot -->
+    <path d="M76 196 C72 216 66 228 56 236 L144 236 C134 228 128 216 124 196 Z" fill="url(#skiPorcDark)"/>
+    <path d="M56 236 C56 230 144 230 144 236 L144 242 C144 248 56 248 56 242 Z" fill="url(#skiPorc)"/>
+    <path d="M80 200 C78 214 74 226 68 233" stroke="#ffffff" stroke-width="3.4" stroke-linecap="round" fill="none" opacity="0.7"/>
+
+    <!-- tank behind, lid + flush button -->
+    <path d="M58 60 C58 52 142 52 142 60 L142 108 L58 108 Z" fill="url(#skiPorcDark)"/>
+    <path d="M52 58 C52 46 148 46 148 58 C148 66 52 66 52 58 Z" fill="url(#skiPorc)"/>
+    <ellipse cx="122" cy="55" rx="9" ry="4.5" fill="#8fa8ba"/>
+    <ellipse cx="122" cy="53.6" rx="9" ry="4.5" fill="#c9d8e2">
+      <animate attributeName="cy" values="53.6;55.4;53.6" dur="0.8s" repeatCount="indefinite"/>
+    </ellipse>
+    <path d="M62 70 C62 82 62 94 63 104" stroke="#ffffff" stroke-width="3.4" stroke-linecap="round" fill="none" opacity="0.7"/>
+
+    <!-- the bowl -->
+    <path d="M46 108 C46 96 154 96 154 108 C154 148 136 178 118 192 C124 200 118 208 100 208 C82 208 76 200 82 192 C64 178 46 148 46 108 Z" fill="url(#skiPorc)"/>
+    <!-- bowl rim -->
+    <path d="M42 108 C42 92 158 92 158 108 C158 118 42 118 42 108 Z" fill="url(#skiPorc)"/>
+    <path d="M48 104 C70 98 130 98 152 104" stroke="#ffffff" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.85"/>
+    <!-- core shadow + sheen on the porcelain -->
+    <path d="M142 116 C142 148 128 174 114 188 C132 176 148 148 148 116 Z" fill="#5e7789" opacity="0.4"/>
+    <path d="M56 120 C58 148 68 170 80 184" stroke="#ffffff" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.6"/>
+    <rect x="60" y="122" width="10" height="42" rx="5" fill="#ffffff" opacity="0.4" transform="rotate(8 60 122)"/>
+
+    <!-- the living whirlpool inside the bowl -->
+    <ellipse cx="100" cy="138" rx="44" ry="36" fill="url(#skiSwirl)"/>
+    <!-- rotating spiral arms -->
+    <g>
+      <animateTransform attributeName="transform" type="rotate" values="0 100 138; 360 100 138" dur="1.6s" repeatCount="indefinite"/>
+      <path d="M100 138 C100 124 114 118 126 124 C116 122 106 128 106 138 Z" fill="#bfeaff" opacity="0.85"/>
+      <path d="M100 138 C100 152 86 158 74 152 C84 154 94 148 94 138 Z" fill="#bfeaff" opacity="0.85"/>
+      <path d="M100 138 C112 138 120 148 116 158 C116 150 108 144 100 144 Z" fill="#8fd4f5" opacity="0.75"/>
+      <path d="M100 138 C88 138 80 128 84 118 C84 126 92 132 100 132 Z" fill="#8fd4f5" opacity="0.75"/>
+    </g>
+    <!-- the dark drain heart of the vortex -->
+    <ellipse cx="100" cy="140" rx="7" ry="5.6" fill="#1c4a74">
+      <animate attributeName="rx" values="7;9;7" dur="0.8s" repeatCount="indefinite"/>
+    </ellipse>
+
+    <!-- big glossy eyes riding ON the water -->
+    <g>
+      <animateTransform attributeName="transform" type="rotate" values="-3 100 132; 3 100 132; -3 100 132" dur="0.8s" repeatCount="indefinite"/>
+      <path d="M62 116 Q74 108 86 114" stroke="#1c4a74" stroke-width="5" stroke-linecap="round" fill="none"/>
+      <path d="M114 114 Q126 108 138 116" stroke="#1c4a74" stroke-width="5" stroke-linecap="round" fill="none"/>
+      <ellipse cx="76" cy="128" rx="12.5" ry="13.5" fill="url(#skiSclera)"/>
+      <circle cx="78" cy="130" r="7.6" fill="url(#skiIris)"/>
+      <circle cx="78" cy="130" r="3.4" fill="#1d1008"/>
+      <circle cx="75.2" cy="127" r="2.7" fill="#ffffff"/>
+      <circle cx="81" cy="132.6" r="1.3" fill="#ffffff" opacity="0.9"/>
+      <ellipse cx="124" cy="128" rx="12.5" ry="13.5" fill="url(#skiSclera)"/>
+      <circle cx="122" cy="130" r="7.6" fill="url(#skiIris)"/>
+      <circle cx="122" cy="130" r="3.4" fill="#1d1008"/>
+      <circle cx="119.2" cy="127" r="2.7" fill="#ffffff"/>
+      <circle cx="125" cy="132.6" r="1.3" fill="#ffffff" opacity="0.9"/>
+      <!-- manic grin under the vortex -->
+      <path d="M82 156 C90 166 110 166 118 156 C116 170 104 176 100 176 C96 176 84 170 82 156 Z" fill="#124066"/>
+      <path d="M86 158 L94 157 L90 164 Z M104 159 L112 157 L108 165 Z" fill="#ffffff"/>
+    </g>
+
+    <!-- droplets flung off the swirl -->
+    <g fill="#8fd4f5">
+      <circle cx="46" cy="96" r="4">
+        <animate attributeName="opacity" values="0.9;0.1;0.9" dur="0.8s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="158" cy="90" r="3.4">
+        <animate attributeName="opacity" values="0.2;0.9;0.2" dur="0.8s" repeatCount="indefinite"/>
+      </circle>
+      <path d="M164 128 c0 -4 6 -4 6 0 c0 3 -3 5 -3 5 c0 0 -3 -2 -3 -5 Z">
+        <animate attributeName="opacity" values="0.8;0.2;0.8" dur="0.8s" begin="0.2s" repeatCount="indefinite"/>
+      </path>
+    </g>
+
+    <!-- little arms gripping the rim -->
+    <path d="M46 112 C34 116 28 126 30 138" stroke="#93a8b8" stroke-width="8" stroke-linecap="round" fill="none"/>
+    <path d="M154 112 C166 116 172 126 170 138" stroke="#93a8b8" stroke-width="8" stroke-linecap="round" fill="none"/>
+    <circle cx="30" cy="140" r="6" fill="#e6edf2"/>
+    <circle cx="170" cy="140" r="6" fill="#e6edf2"/>
+  </g>
+</svg>

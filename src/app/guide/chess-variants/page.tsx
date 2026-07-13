@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { GlossaryText } from "@/components/GlossaryText";
+import { KeyTerms } from "@/components/guide/KeyTerms";
 import { InfoPageLayout, InfoSection } from "@/components/InfoPageLayout";
 import { BreadcrumbJsonLd, FaqSection, GuideFooter } from "../shared";
 
@@ -59,11 +61,11 @@ export default function ChessVariantsPage() {
           uncertainty about what your opponent is allowed to do.
         </p>
         <p>
-          It also borrows from card games: every 5 moves both players draft from a tiered pool
-          of over 1,000 cards, hexes, boons, and buffs, which puts{" "}
+          <GlossaryText text="It also borrows from card games: every 5 moves both players draft from a tiered pool of over 1,000 cards — hexes, boons, and buffs — which puts" />{" "}
           <Link href="/guide/buff-mode" className="underline">Buff mode</Link> closer to a
-          deck-drafting game played with chess pieces. And like several modern variants it
-          drops checkmate entirely: you win by{" "}
+          deck-drafting game played with chess pieces.{" "}
+          <GlossaryText text="It even borrows Crazyhouse's signature move: some cards grant pieces into a pocket, ready to drop onto an empty square on a later turn." />{" "}
+          And like several modern variants it drops checkmate entirely: you win by{" "}
           <Link href="/guide/how-to-play" className="underline">capturing the king</Link>,
           which makes the rules simpler, not wilder, since check, mate, and stalemate all
           disappear.
@@ -79,6 +81,18 @@ export default function ChessVariantsPage() {
           against the bot at <Link href="/play" className="underline">/play</Link>.
         </p>
       </InfoSection>
+
+      <KeyTerms
+        slugs={[
+          "nerf-mode",
+          "buff-mode",
+          "capture-the-king",
+          "draft",
+          "pocket",
+          "drop",
+          "tier",
+        ]}
+      />
 
       <FaqSection
         items={[

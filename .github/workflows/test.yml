@@ -40,3 +40,12 @@ jobs:
       # bank-at-top apex offer's shape and mythic-upgrade rate.
       - name: Apex / mythic tests
         run: node scripts/test-apex.cjs
+
+      # Replica-replay determinism: a client desyncing from the authoritative
+      # worker is the single worst production bug this game can have, so the
+      # desync harness gates every PR alongside the rule suites.
+      - name: Desync / replay determinism tests
+        run: node scripts/test-desync.cjs
+
+      - name: Snapshot tests
+        run: node scripts/test-snapshot.cjs

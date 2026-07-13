@@ -398,8 +398,36 @@ function UsedDivider() {
   return (
     <div className="flex items-center gap-2 pt-1">
       <span className="smallcaps text-[8px] font-semibold text-parchment-500">Used</span>
-      <span aria-hidden className="h-px flex-1 bg-white/10" />
+      <span aria-hidden className="divider-gilt" />
     </div>
+  );
+}
+
+/** Small elegant progress ring for the "next draft in N moves" chip: fills
+ * gold toward the draft (oxblood while your draft is blocked). Decorative
+ * twin of the countdown text next to it; the fraction comes straight from
+ * the same draftFrac the old bar used, no timing logic of its own. */
+function DraftProgressRing({ fraction, blocked }: { fraction: number; blocked: boolean }) {
+  const R = 7;
+  const CIRC = 2 * Math.PI * R;
+  return (
+    <span aria-hidden className="ml-auto shrink-0">
+      <svg width="18" height="18" viewBox="0 0 18 18" className="-rotate-90 block">
+        <circle cx="9" cy="9" r={R} fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="2" />
+        <circle
+          cx="9"
+          cy="9"
+          r={R}
+          fill="none"
+          stroke={blocked ? "rgb(220 90 84 / 0.85)" : "rgb(216 181 110 / 0.9)"}
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeDasharray={CIRC}
+          strokeDashoffset={CIRC * (1 - Math.max(0, Math.min(1, fraction)))}
+          style={{ transition: "stroke-dashoffset 300ms ease, stroke 300ms ease" }}
+        />
+      </svg>
+    </span>
   );
 }
 
@@ -654,6 +682,14 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
           <span aria-hidden className="absolute inset-y-1 left-0 w-[3px] bg-verdigris-glow/80" />
         )}
         {dead && <span aria-hidden className="absolute inset-y-1 left-0 w-[3px] bg-white/15" />}
+        {/* Live-but-not-usable cards wear their tier color on the same left
+            edge anchor (tier-bg-N supplies --tier-rgb to the gradient). */}
+        {!usable && !dead && (
+          <span aria-hidden className={`dock-tier-edge tier-bg-${inst.tier}`} />
+        )}
+        {/* Idle foil shimmer on high-tier holdings (tier 6+), the dock's quiet
+            echo of the draft cards' holo finish. */}
+        {!dead && inst.tier >= 6 && <span aria-hidden className="dock-shimmer" />}
         {/* Collapsed header: name + tier only, click to toggle. The Use button
             and description live in the expanded body, so a button never nests
             inside this toggle button. */}
@@ -761,10 +797,15 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.25 }}
         className={
-          "dock-card w-full rounded-[1px] border border-white/10 " +
+          "dock-card relative w-full overflow-hidden rounded-[1px] border border-white/10 " +
           (dead ? "bg-white/[0.012]" : "bg-white/[0.02]")
         }
       >
+        {/* Tier-tinted left edge + high-tier idle shimmer, mirroring your own
+            arsenal rows so both hands read on the same visual language. */}
+        {!dead && <span aria-hidden className={`dock-tier-edge tier-bg-${inst.tier}`} />}
+        {dead && <span aria-hidden className="absolute inset-y-1 left-0 w-[3px] bg-white/15" />}
+        {!dead && inst.tier >= 6 && <span aria-hidden className="dock-shimmer" />}
         <button
           type="button"
           onClick={() => toggle(key)}
@@ -848,15 +889,7 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
                 ? "Draft now"
                 : `Next draft in ${draftMovesLeft} move${draftMovesLeft === 1 ? "" : "s"}`}
             </span>
-            <span className="ml-auto h-1 w-14 shrink-0 overflow-hidden rounded-[1px] bg-white/10">
-              <span
-                className={
-                  "block h-full transition-[width] duration-300 " +
-                  (myDraftBlocked ? "bg-oxblood-glow/70" : "bg-gold-leaf/80")
-                }
-                style={{ width: `${draftFrac * 100}%` }}
-              />
-            </span>
+            <DraftProgressRing fraction={draftFrac} blocked={myDraftBlocked} />
           </div>
         )}
 

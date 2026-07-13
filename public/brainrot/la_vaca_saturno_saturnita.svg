@@ -1,0 +1,119 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 260">
+  <!-- La Vaca Saturno Saturnita: glossy cow head on a ringed-planet body, moons in tow. Loops like a GIF. -->
+  <defs>
+    <linearGradient id="vacPlanet" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#c9a4e8"/>
+      <stop offset="0.55" stop-color="#9a6cc4"/>
+      <stop offset="1" stop-color="#5e3a86"/>
+    </linearGradient>
+    <linearGradient id="vacRing" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#ffe9b8"/>
+      <stop offset="0.5" stop-color="#f2c46a"/>
+      <stop offset="1" stop-color="#c88f3a"/>
+    </linearGradient>
+    <linearGradient id="vacHide" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="0.6" stop-color="#f2eee6"/>
+      <stop offset="1" stop-color="#cfc8ba"/>
+    </linearGradient>
+    <linearGradient id="vacMuzzle" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f7c8cf"/>
+      <stop offset="1" stop-color="#d998a4"/>
+    </linearGradient>
+    <radialGradient id="vacIris" cx="0.38" cy="0.32" r="0.85">
+      <stop offset="0" stop-color="#8a5a2b"/>
+      <stop offset="0.6" stop-color="#4f2c10"/>
+      <stop offset="1" stop-color="#2c1607"/>
+    </radialGradient>
+    <radialGradient id="vacSclera" cx="0.4" cy="0.32" r="0.95">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="0.75" stop-color="#f6f4ef"/>
+      <stop offset="1" stop-color="#d8d2c6"/>
+    </radialGradient>
+  </defs>
+
+  <!-- ground shadow (it hovers — the shadow breathes wide) -->
+  <ellipse cx="100" cy="248" rx="62" ry="9" fill="#140f1e" opacity="0.2">
+    <animate attributeName="rx" values="62;54;62" dur="1.6s" repeatCount="indefinite"/>
+  </ellipse>
+
+  <g>
+    <animateTransform attributeName="transform" type="translate" values="0 0; 0 -7; 0 0" dur="1.6s" repeatCount="indefinite"/>
+
+    <!-- back half of the ring (behind the planet): the band rises behind it -->
+    <g transform="rotate(-10 100 162)">
+      <path d="M22 162 C22 146 60 136 100 136 C140 136 178 146 178 162 L178 168 C178 154 140 144 100 144 C60 144 22 154 22 168 Z" fill="url(#vacRing)" opacity="0.85"/>
+    </g>
+
+    <!-- the planet body -->
+    <circle cx="100" cy="160" r="58" fill="url(#vacPlanet)"/>
+    <!-- banding -->
+    <path d="M48 142 C70 132 130 132 152 142 M44 162 C70 152 130 152 156 162 M50 184 C74 174 126 174 150 184" stroke="#4c2e6e" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.35"/>
+    <!-- cow patches on the planet -->
+    <path d="M70 138 C82 132 92 136 92 146 C92 154 80 158 72 152 C66 148 64 142 70 138 Z" fill="#3b2456" opacity="0.55"/>
+    <path d="M122 168 C134 164 144 170 142 180 C140 188 126 190 120 182 C116 176 116 172 122 168 Z" fill="#3b2456" opacity="0.55"/>
+    <!-- core shadow + rim light + sheen -->
+    <path d="M138 118 C156 134 162 164 150 190 C158 166 154 136 134 120 Z" fill="#2e1a48" opacity="0.45"/>
+    <path d="M56 128 C46 142 44 166 52 186" stroke="#e2c8f2" stroke-width="4.5" stroke-linecap="round" fill="none" opacity="0.55"/>
+    <ellipse cx="76" cy="138" rx="10" ry="22" fill="#ffffff" opacity="0.18" transform="rotate(-24 76 138)"/>
+
+    <!-- front half of the ring (over the planet): a full wide band -->
+    <g>
+      <animateTransform attributeName="transform" type="rotate" values="-11 100 162; -9 100 162; -11 100 162" dur="1.6s" repeatCount="indefinite"/>
+      <path d="M22 162 C22 178 60 188 100 188 C140 188 178 178 178 162 L178 154 C178 170 140 180 100 180 C60 180 22 170 22 154 Z" fill="url(#vacRing)"/>
+      <path d="M26 162 C30 174 62 183 100 183 C138 183 170 174 174 162" stroke="#fff3d6" stroke-width="2.8" fill="none" opacity="0.85"/>
+      <path d="M28 168 C40 178 68 186 100 186 C132 186 160 178 172 168" stroke="#a8742c" stroke-width="2.2" fill="none" opacity="0.6"/>
+      <!-- ring shards -->
+      <ellipse cx="36" cy="171" rx="4" ry="2.4" fill="#ffe9b8"/>
+      <ellipse cx="162" cy="173" rx="3.4" ry="2" fill="#c88f3a"/>
+    </g>
+
+    <!-- stubby hooves poking below the planet -->
+    <path d="M76 214 L74 232 M124 214 L126 232" stroke="#e8e2d6" stroke-width="11" stroke-linecap="round"/>
+    <path d="M69 232 a5.5 5.5 0 0 0 11 0 Z M120 232 a5.5 5.5 0 0 0 11 0 Z" fill="#5e4630"/>
+
+    <!-- cow head -->
+    <g>
+      <animateTransform attributeName="transform" type="rotate" values="-2.5 100 76; 2.5 100 76; -2.5 100 76" dur="1.6s" repeatCount="indefinite"/>
+      <!-- ears -->
+      <path d="M52 60 C40 52 30 52 24 58 C32 68 44 70 54 68 Z" fill="url(#vacHide)" stroke="#b8b0a0" stroke-width="1.6"/>
+      <path d="M148 60 C160 52 170 52 176 58 C168 68 156 70 146 68 Z" fill="url(#vacHide)" stroke="#b8b0a0" stroke-width="1.6"/>
+      <path d="M32 58 C38 62 46 64 52 63" stroke="#d99aa6" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.7"/>
+      <path d="M168 58 C162 62 154 64 148 63" stroke="#d99aa6" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.7"/>
+      <!-- horns -->
+      <path d="M64 40 C58 30 60 20 68 14 C72 24 72 34 70 42 Z" fill="#e8d5a8" stroke="#b89c62" stroke-width="1.6"/>
+      <path d="M136 40 C142 30 140 20 132 14 C128 24 128 34 130 42 Z" fill="#e8d5a8" stroke="#b89c62" stroke-width="1.6"/>
+      <!-- head -->
+      <path d="M100 22 C132 22 150 42 150 66 C150 92 128 106 100 106 C72 106 50 92 50 66 C50 42 68 22 100 22 Z" fill="url(#vacHide)"/>
+      <!-- head patch -->
+      <path d="M114 26 C130 30 140 42 142 56 C134 60 118 56 112 44 C108 36 108 30 114 26 Z" fill="#3b2456" opacity="0.5"/>
+      <path d="M134 32 C144 44 147 58 144 74 C150 58 148 42 138 30 Z" fill="#8a8274" opacity="0.4"/>
+      <path d="M58 44 C52 54 51 66 54 78" stroke="#ffffff" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.6"/>
+      <!-- big glossy eyes -->
+      <ellipse cx="76" cy="60" rx="13" ry="14" fill="url(#vacSclera)"/>
+      <circle cx="78" cy="62" r="8" fill="url(#vacIris)"/>
+      <circle cx="78" cy="62" r="3.6" fill="#1d1008"/>
+      <circle cx="75" cy="58.8" r="2.8" fill="#ffffff"/>
+      <circle cx="81.2" cy="64.6" r="1.4" fill="#ffffff" opacity="0.9"/>
+      <ellipse cx="124" cy="60" rx="13" ry="14" fill="url(#vacSclera)"/>
+      <circle cx="122" cy="62" r="8" fill="url(#vacIris)"/>
+      <circle cx="122" cy="62" r="3.6" fill="#1d1008"/>
+      <circle cx="119" cy="58.8" r="2.8" fill="#ffffff"/>
+      <circle cx="125.2" cy="64.6" r="1.4" fill="#ffffff" opacity="0.9"/>
+      <!-- muzzle -->
+      <path d="M70 80 C70 70 130 70 130 80 C130 96 116 104 100 104 C84 104 70 96 70 80 Z" fill="url(#vacMuzzle)"/>
+      <ellipse cx="88" cy="86" rx="4.4" ry="5.6" fill="#8a4a58"/>
+      <ellipse cx="112" cy="86" rx="4.4" ry="5.6" fill="#8a4a58"/>
+      <path d="M92 98 Q100 103 108 98" stroke="#8a4a58" stroke-width="3.4" stroke-linecap="round" fill="none"/>
+      <path d="M74 76 C78 72 88 70 96 71" stroke="#ffe2e8" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.7"/>
+    </g>
+
+    <!-- little moons in orbit -->
+    <circle cx="30" cy="112" r="6" fill="#e8e2d6">
+      <animate attributeName="opacity" values="1;0.4;1" dur="1.6s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="174" cy="196" r="4.5" fill="#cfc8ba">
+      <animate attributeName="opacity" values="0.4;1;0.4" dur="1.6s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+</svg>

@@ -1,0 +1,87 @@
+/* ---------------------------------------------------------------------------
+   Expansion Permit construction ring (ExpansionZone.tsx): the ninth file /
+   ninth rank being "bolted on" outside the board crop. Same motion rules as
+   effects.css: transform/opacity only in keyframes; under
+   prefers-reduced-motion the transient motes hide and the static scaffold
+   stays (persistent prop).
+--------------------------------------------------------------------------- */
+
+.xz-strip {
+  z-index: 0; /* under the mascot and every floating UI layer */
+}
+
+/* Fresh under-construction tiles: a faint checker echoing the board, washed
+   out like unfinished plywood decking. */
+.xz-tiles {
+  background-image:
+    linear-gradient(45deg, rgba(196, 164, 110, 0.16) 25%, transparent 25%, transparent 75%, rgba(196, 164, 110, 0.16) 75%),
+    linear-gradient(45deg, rgba(196, 164, 110, 0.16) 25%, transparent 25%, transparent 75%, rgba(196, 164, 110, 0.16) 75%);
+  background-color: rgba(120, 96, 60, 0.1);
+  background-size: 24% 24%;
+  background-position: 0 0, 12% 12%;
+  opacity: 0.9;
+}
+
+/* Scaffold: thin cross-braced lines over the decking. */
+.xz-scaffold {
+  background-image:
+    repeating-linear-gradient(0deg, rgba(214, 199, 168, 0.14) 0, rgba(214, 199, 168, 0.14) 1px, transparent 1px, transparent 12%),
+    repeating-linear-gradient(90deg, rgba(214, 199, 168, 0.14) 0, rgba(214, 199, 168, 0.14) 1px, transparent 1px, transparent 12%),
+    repeating-linear-gradient(45deg, rgba(214, 199, 168, 0.08) 0, rgba(214, 199, 168, 0.08) 1px, transparent 1px, transparent 9%);
+}
+
+/* Caution-stripe boundary: dashed hazard border around the strip, with a
+   stronger stripe band along the OUTER edge (where the world ends). */
+.xz-caution {
+  border: 2px dashed rgba(240, 195, 60, 0.55);
+}
+.xz-strip-right .xz-caution {
+  border-right: 6px solid transparent;
+  border-image: repeating-linear-gradient(45deg, rgba(240, 195, 60, 0.7) 0 8px, rgba(30, 26, 20, 0.8) 8px 16px) 6;
+}
+.xz-strip-top .xz-caution {
+  border-top: 6px solid transparent;
+  border-image: repeating-linear-gradient(45deg, rgba(240, 195, 60, 0.7) 0 8px, rgba(30, 26, 20, 0.8) 8px 16px) 6;
+}
+
+/* Dust / sparkle motes: two tiny specks drifting up off the fresh masonry. */
+@keyframes xz-mote-drift {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.6); }
+  20% { opacity: 0.9; }
+  60% { opacity: 0.5; }
+  100% { opacity: 0; transform: translate(var(--xz-dx, 30%), -320%) scale(1.15); }
+}
+.xz-mote {
+  position: absolute;
+  width: 5%;
+  aspect-ratio: 1;
+  min-width: 3px;
+  max-width: 6px;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(255, 226, 140, 0.95) 0%, rgba(255, 226, 140, 0) 70%);
+  animation: xz-mote-drift 3.6s ease-out infinite;
+}
+.xz-mote-a { left: 28%; bottom: 12%; --xz-dx: 40%; }
+.xz-mote-b { left: 64%; bottom: 30%; --xz-dx: -35%; animation-delay: -1.9s; animation-duration: 4.4s; }
+
+/* Crane: a small silhouette working the new corner, with a slow jib sway. */
+@keyframes xz-crane-sway {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-2.5deg); }
+}
+.xz-crane {
+  color: rgba(214, 199, 168, 0.55);
+  animation: xz-crane-sway 7s ease-in-out infinite;
+  transform-origin: 30% 90%;
+}
+
+/* Reduced motion: scaffold and stripes stay (persistent prop, static); the
+   transient motes hide outright and the crane stops swaying. */
+@media (prefers-reduced-motion: reduce) {
+  .xz-mote {
+    display: none;
+  }
+  .xz-crane {
+    animation: none;
+  }
+}

@@ -11,6 +11,11 @@ import { AccountChip } from "@/components/AccountChip";
 import { MobileNavMenu } from "@/components/MobileNavMenu";
 import { Logo } from "@/components/Logo";
 import { QueueButton } from "@/components/QueueButton";
+import {
+  FIRST_GAME_TOUR_HREF,
+  TUTORIAL_DONE_KEY,
+  TUTORIAL_NUDGE_DISMISSED_KEY,
+} from "@/components/tutorial/tourState";
 
 const TIME_STEPS_SEC = [
   30,
@@ -54,6 +59,9 @@ export default function PlayPage() {
   // the account/leaderboard rating; everything else stays a local casual game.
   const [account, setAccount] = useState<AccountUser | null>(null);
   const [starting, setStarting] = useState(false);
+  // "New here? Take the tour" chip: shown only to players who have neither
+  // finished (or skipped) the first-game tour nor dismissed the chip itself.
+  const [tourNudge, setTourNudge] = useState(false);
   useEffect(() => {
     // loadRating() reads localStorage (client-only); defer the paint off the
     // synchronous effect body so it doesn't cascade a render inline.
@@ -61,6 +69,16 @@ export default function PlayPage() {
       const r = loadRating();
       setRating(Math.round(r.rating));
       setGames(r.games);
+      try {
+        if (
+          window.localStorage.getItem(TUTORIAL_DONE_KEY) == null &&
+          window.localStorage.getItem(TUTORIAL_NUDGE_DISMISSED_KEY) == null
+        ) {
+          setTourNudge(true);
+        }
+      } catch {
+        // Storage unavailable: never nag.
+      }
     });
     fetchMe()
       .then((me) => setAccount(me ?? null))
@@ -144,6 +162,42 @@ export default function PlayPage() {
 
       <section className="max-w-2xl mx-auto px-6 py-8">
         <h1 className="font-display text-5xl">New game</h1>
+
+        {tourNudge && (
+          <div
+            role="note"
+            className="mt-4 flex items-center gap-3 plate border-gold/30 bg-gold/5 px-4 py-2.5"
+          >
+            <span className="min-w-0 text-[13px] text-parchment-200">
+              New here?{" "}
+              <Link
+                href={FIRST_GAME_TOUR_HREF}
+                className="font-semibold text-gold-leaf underline decoration-gold/50 underline-offset-2 hover:decoration-gold"
+              >
+                Take the tour
+              </Link>
+              <span className="hidden sm:inline"> — a guided first game, about 3 minutes.</span>
+            </span>
+            <button
+              type="button"
+              aria-label="Dismiss tour suggestion"
+              onClick={() => {
+                setTourNudge(false);
+                try {
+                  window.localStorage.setItem(TUTORIAL_NUDGE_DISMISSED_KEY, "1");
+                } catch {
+                  // Storage unavailable: it just hides for this visit.
+                }
+              }}
+              className="ml-auto grid h-7 w-7 shrink-0 place-items-center rounded-full text-parchment-400 transition hover:bg-white/10 hover:text-parchment-100"
+            >
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden>
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
+        )}
 
         <div className="mt-6 grid gap-3 sm:grid-cols-2">
           <ModeCard

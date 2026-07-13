@@ -12,7 +12,7 @@ import {
   effectTickColor,
   newBuffMatchState,
 } from "./buff";
-import { grantRandomTier10, pawnRankOk } from "./buffs/helpers";
+import { grantGuaranteedTier9, pawnRankOk } from "./buffs/helpers";
 import { BUFF_BY_ID } from "./buffs/library";
 import { PLAYABLE_NERFS } from "./nerfs/library";
 import { DEFAULT_CADENCE, NERF_MODE_CADENCE, bankOffer, rerollOffer, rollOffer, rollSharedTiers } from "./draft";
@@ -818,7 +818,7 @@ export function legalMoves(game: NerfGame): Move[] {
 
 /** Decide the running Chess Diff: restore the paused game's board (keeping
  * the full, continuous move history so ply counters never drift), effects and
- * tempo counters, and hand ONLY the diff's winner a guaranteed mythic
+ * tempo counters, and hand ONLY the diff's winner a guaranteed apex (tier 9)
  * (tier 10) card. A drawn diff grants nobody anything. Deterministic: every
  * replica reaches this through the same move/action record. */
 function endChessDiff(game: NerfGame, winner: Color | "draw") {
@@ -852,7 +852,9 @@ function endChessDiff(game: NerfGame, winner: Color | "draw") {
   // longer reproduce it, so replay-based checks stay off.
   bs.historyDiverged = true;
   if (winner !== "draw") {
-    grantRandomTier10(makeBuffApi(game, winner));
+    // Balance pass: the diff's prize is a guaranteed APEX (tier 9) card, one
+    // band below the mythic it used to pay out.
+    grantGuaranteedTier9(makeBuffApi(game, winner));
   }
   // Resume the paused game exactly like a turn handover: the restored mover's
   // nerf turn-start runs, and a lockdown that was pending when the game
@@ -1034,7 +1036,7 @@ export function playMove(game: NerfGame, move: Move): NerfGame {
   const result = checkLossConditions(game);
   if (result) {
     // Chess Diff sub-game: a decided diff ends the DIFF, never the match. The
-    // winner takes the mythic (a mutual king capture is a drawn diff: nobody
+    // winner takes the apex prize (a mutual king capture is a drawn diff: nobody
     // does), the paused game resumes, and play continues.
     if (bs?.diff) {
       endChessDiff(game, result.winner === "draw" || result.winner == null ? "draw" : result.winner);
@@ -1133,7 +1135,7 @@ function resolveNoMoves(game: NerfGame) {
   const bs = game.buffs;
   // Chess Diff sub-game: STANDARD chess endings, never the match. With no legal
   // move the mover is either checkmated (in check: the opponent wins the diff
-  // and its mythic) or stalemated (not in check: the diff is a draw and nobody
+  // and its apex prize) or stalemated (not in check: the diff is a draw and nobody
   // is rewarded). Legal moves are check-filtered (see legalMoves), so "no moves"
   // here is a true mate or stalemate, not a king simply left hanging.
   if (bs?.diff) {

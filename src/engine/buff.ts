@@ -10,7 +10,7 @@ import { RNG } from "./rng";
 // While the diff runs there are NO drafts, NO nerfs, NO buff activations and
 // no lingering effects — plain chess. When the diff is decided the stash is
 // restored, the paused game (and its clocks) resumes, and ONLY the diff's
-// winner is handed a mythic (tier 10) card. A drawn diff grants nobody
+// winner is handed an apex (tier 9) card. A drawn diff grants nobody
 // anything. Fully part of the deterministic engine state, so replicas replay
 // it from the shared move/action record and snapshots persist it.
 export interface ChessDiffState {

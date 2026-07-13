@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { GlossaryText } from "@/components/GlossaryText";
+import { KeyTerms } from "@/components/guide/KeyTerms";
 import { InfoPageLayout, InfoSection } from "@/components/InfoPageLayout";
 import { BreadcrumbJsonLd, FaqSection, GuideFooter } from "../shared";
 
@@ -49,39 +50,44 @@ export default function HowToPlayPage() {
 
       <InfoSection title="The five card types">
         <p>
-          <strong>Nerf</strong>: your secret handicap in Nerf mode, chosen from two cards
-          before the first move. It restricts how you play or invents a new way for you to
-          lose. Example: &quot;You can&apos;t capture queens.&quot;
+          <strong>Nerf</strong>:{" "}
+          <GlossaryText text="your secret handicap in Nerf mode, chosen from two cards before the first move (a 20-second lock-in window; stall and the first card is picked for you). It restricts how you play or invents a new way for you to lose." />{" "}
+          Example: &quot;You can&apos;t capture queens.&quot;
         </p>
         <p>
-          <strong>Buff</strong>: a straight power-up and the whole of Buff mode. Some buffs
-          work passively while held, some fire instantly when picked, and some wait until you
-          activate them.
+          <strong>Buff</strong>:{" "}
+          <GlossaryText text="a straight power-up and the whole of Buff mode. Passive buffs work while held, instant buffs fire the moment they are picked, and activated buffs wait until you use them — which costs your turn, unless the card is a free action." />
         </p>
         <p>
-          <strong>Hex</strong>: a curse you cast on your opponent, the most common card in
-          Nerf mode&apos;s draft. Example:{" "}
+          <strong>Hex</strong>:{" "}
+          <GlossaryText text="a curse you cast on your opponent, the most common card in Nerf mode's draft (about 60% of draws)." />{" "}
+          Example:{" "}
           <Link href="/codex/buff/cold_feet" className="underline">Cold Feet</Link> stops your
           opponent&apos;s pawns from capturing for their next 3 turns.
         </p>
         <p>
-          <strong>Boon</strong>: relief from your own nerf.{" "}
+          <strong>Boon</strong>:{" "}
+          <GlossaryText text="relief from your own nerf, or a light supportive effect." />{" "}
           <Link href="/codex/buff/reprieve" className="underline">Reprieve</Link> suspends your
           handicap for two turns;{" "}
           <Link href="/codex/buff/small_mercies" className="underline">Small Mercies</Link> waits
           until you lose pieces, then lifts your rule while you recover.
         </p>
         <p>
-          <strong>Item</strong>: a playful one-use consumable that appears in both modes.
+          <strong>Item</strong>:{" "}
+          <GlossaryText text="a playful one-use consumable that appears in both modes." />
         </p>
       </InfoSection>
 
       <InfoSection title="Drafting and banking">
         <p>
-          Every 5 of your own moves, the game deals you a draft: two cards, pick one. Offers
-          grow stronger over time through the card{" "}
-          <Link href="/guide/glossary" className="underline">tier system</Link>
-          <GlossaryText text=", which runs from tier I (Trivial) to tier VIII (Unhinged). You can also skip a draft to bank it: your next offer then rolls one tier higher. Banking does not stack, so the skill is picking the right moment to be patient." />
+          <GlossaryText text="Every 5 of your own moves, the game deals you a draft: two cards, pick one. Both players draft at the same time, and in online games each offer has a 20-second lock-in window while the clocks stay paused (dawdle past it and your own clock restarts)." />{" "}
+          Offers grow stronger over time through the card{" "}
+          <Link href="/guide/glossary#tier" className="underline">tier system</Link>
+          <GlossaryText text=", which runs from tier I (Trivial) to tier VIII (Unhinged). You can also skip a draft to bank it: your next offer then rolls one tier higher. Banking does not stack, so the skill is picking the right moment to be patient — with one famous exception: banking an offer that contained a tier-8 card earns a guaranteed apex (tier 9) offer, with a small chance of a tier-10 mythic." />
+        </p>
+        <p>
+          <GlossaryText text="Not feeling either card? Every player also starts with one reroll: it discards the offer on the table and deals a fresh, guaranteed-different pair at the same tiers." />
         </p>
         <p>
           For mode-specific strategy, read the{" "}
@@ -91,6 +97,21 @@ export default function HowToPlayPage() {
           <Link href="/play" className="underline">/play</Link>.
         </p>
       </InfoSection>
+
+      <KeyTerms
+        slugs={[
+          "capture-the-king",
+          "check",
+          "chebyshev-distance",
+          "extra-move",
+          "draft",
+          "bank",
+          "reroll",
+          "tier",
+          "lock-in-window",
+          "turn-cost",
+        ]}
+      />
 
       <FaqSection
         items={[

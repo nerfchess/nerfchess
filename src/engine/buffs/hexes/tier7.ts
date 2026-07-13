@@ -67,26 +67,29 @@ export const HEXES_T7: Buff[] = [
     walnutAll(["n", "b"], 3),
   ),
 
-  // --- petrify the two heaviest enemy minors (repointed off the queen) -----
+  // --- zone petrify: the gaze catches whatever minors crossed the middle ----
+  // Not a second Statue Garden (the clean all-minors rung right below): the
+  // cockatrice roosts on YOUR side, so only the minors that invaded your half
+  // meet the full gaze (4 turns of stone). The ones still at home just catch
+  // its reflection and flinch, frozen for a single turn.
   H(
     {
       id: "cockatrice_gaze",
       name: "Cockatrice Gaze",
-      description: "Your opponent's two heaviest minor pieces (bishops before knights) turn to walnuts for 3 of their turns: a walnut is so heavy it can only shuffle one square at a time.",
-      flavor: "One glance and the horses and prelates are limestone.",
-      // Board already paints walnuts; fx carried for consistency.
+      description: "Every enemy knight and bishop standing in your half of the board turns to a walnut for 4 of their turns. The minors still in their own half only catch the reflection: they are frozen for 1 turn.",
+      flavor: "The ones who crossed the fence met its eyes first.",
+      // Board already paints walnuts and freezes; fx carried for consistency.
       fx: { motif: "jail", pieces: ["n", "b"] },
     },
     instant((_inst, api) => {
-      const minorWeight = (sq: number) => (api.board.pieces[sq]!.type === "b" ? 1 : 0);
-      const minors = mySquares(api.board, api.opp)
-        .filter((sq) => {
-          const t = api.board.pieces[sq]!.type;
-          return t === "n" || t === "b";
-        })
-        .sort((a, b) => minorWeight(b) - minorWeight(a));
-      for (const sq of minors.slice(0, 2)) {
-        addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 3 });
+      for (const sq of mySquares(api.board, api.opp)) {
+        const t = api.board.pieces[sq]!.type;
+        if (t !== "n" && t !== "b") continue;
+        if (relRank(api.opp, sq) >= 5) {
+          addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 4 });
+        } else {
+          addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 1 });
+        }
       }
     }),
   ),
@@ -271,19 +274,21 @@ export const HEXES_T7: Buff[] = [
     },
   ),
 
-  // --- draft denial that DECAYS: skip the next draft outright, then let the
-  // two after it arrive nullified (drafted but inert) rather than a flat
-  // double skip (that is empty_handed in tier 6) ---------------------------
+  // --- draft denial that DEGRADES the pool: the next offer rolls at tier 1 --
+  // Not Burned Dispatches one tier louder (T5's block-then-nullify combo, and
+  // Hexed Satchel owns clean nullifies): the archive seals one draft away
+  // outright, and what leaks out afterwards is the DREGS: their next offer
+  // after that is forced down to tier 1.
   H(
     {
       id: "sealed_archive",
       name: "Sealed Archive",
-      description: "Your opponent's next draft is skipped entirely; the two drafts after that still arrive, but nullified and doing nothing.",
+      description: "Your opponent's next draft is skipped entirely, and the draft after that is forced to roll at tier 1: only the dregs seep out of a sealed vault.",
       flavor: "The vault is bricked over, and what little seeps out afterwards is worthless.",
     },
     instant((_inst, api) => {
       api.theirs.flags.blockedDrafts = (api.theirs.flags.blockedDrafts ?? 0) + 1;
-      api.theirs.flags.nullifyIncoming = (api.theirs.flags.nullifyIncoming ?? 0) + 2;
+      api.theirs.flags.forceTier = 1;
     }),
   ),
 
@@ -306,16 +311,27 @@ export const HEXES_T7: Buff[] = [
     }),
   ),
 
-  // --- timed filter: only pawns and the king may move for 3 turns ---------
+  // --- direction lock: the nobles are ROUTED and may only flee homeward -----
+  // Not a longer Wasted Hour / pawn-and-king turn: the nobles still move, but
+  // a rout runs one way. For 3 of their turns every knight, bishop, rook and
+  // queen may only move sideways or back toward its own side, never toward
+  // you. Pawns and the king are unaffected.
   H(
     {
       id: "noble_rout",
       name: "Noble Rout",
-      description: "Your opponent may move only their pawns and their king for their next 3 turns.",
-      flavor: "Every noble has fled the field; only the levy holds.",
-      fx: { motif: "jail", pieces: ["n", "b", "r", "q"] },
+      description: "The nobles break and run: for your opponent's next 3 turns their knights, bishops, rooks and queen cannot move toward your side of the board. Only their pawns and king may still advance.",
+      flavor: "An army can survive a defeat. A rout it must simply outrun.",
+      fx: { motif: "anchor", pieces: ["n", "b", "r", "q"] },
     },
-    curse(3, (moves) => moves.filter((m) => m.piece === "p" || m.piece === "k")),
+    curse(3, (moves, api) =>
+      moves.filter(
+        (m) =>
+          m.piece === "p" ||
+          m.piece === "k" ||
+          relRank(api.opp, m.to) <= relRank(api.opp, m.from),
+      ),
+    ),
   ),
 
   // --- timed filter: no captures with any piece for 3 turns ---------------

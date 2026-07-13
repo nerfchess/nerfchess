@@ -1,31 +1,107 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <!-- Bombardiro Crocodilo: the crocodile bomber-plane on its run, propeller roaring, payload swaying. Loops like a GIF. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 260">
+  <!-- Bombardiro Crocodilo: glossy croc-bomber cruising in place, propeller roaring, payload swaying. Loops like a GIF. -->
+  <defs>
+    <linearGradient id="crocSkin" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#9cc45e"/>
+      <stop offset="0.55" stop-color="#6d9c3c"/>
+      <stop offset="1" stop-color="#47702a"/>
+    </linearGradient>
+    <linearGradient id="fuselage" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#a9b98a"/>
+      <stop offset="0.55" stop-color="#7d9260"/>
+      <stop offset="1" stop-color="#556b42"/>
+    </linearGradient>
+    <linearGradient id="wingG" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7f955f"/>
+      <stop offset="1" stop-color="#4a5e38"/>
+    </linearGradient>
+    <radialGradient id="crocIris" cx="0.38" cy="0.32" r="0.85">
+      <stop offset="0" stop-color="#9a6531"/>
+      <stop offset="0.6" stop-color="#5c3312"/>
+      <stop offset="1" stop-color="#331a08"/>
+    </radialGradient>
+    <radialGradient id="crocSclera" cx="0.4" cy="0.32" r="0.95">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="0.75" stop-color="#f6f4ef"/>
+      <stop offset="1" stop-color="#d9d2c6"/>
+    </radialGradient>
+    <radialGradient id="bombG" cx="0.35" cy="0.3" r="0.95">
+      <stop offset="0" stop-color="#6d6d76"/>
+      <stop offset="1" stop-color="#26262c"/>
+    </radialGradient>
+  </defs>
+
+  <!-- ground shadow -->
+  <ellipse cx="100" cy="246" rx="66" ry="10" fill="#1a2410" opacity="0.2">
+    <animate attributeName="rx" values="66;58;66" dur="1.3s" repeatCount="indefinite"/>
+  </ellipse>
+
   <g>
-    <animateTransform attributeName="transform" type="rotate" values="-2.5 32 32; 2.5 32 32; -2.5 32 32" dur="1.1s" repeatCount="indefinite"/>
-    <!-- wings -->
-    <path d="M20 28 L4 20 L6 28 L20 33 Z" fill="#5d7f4a" stroke="#2c473a" stroke-width="1.8"/>
-    <path d="M34 28 L52 18 L52 26 L34 33 Z" fill="#5d7f4a" stroke="#2c473a" stroke-width="1.8"/>
-    <!-- fuselage: croc body -->
-    <path d="M6 34 C14 26 40 25 52 30 C58 32.4 58 36 52 38 C40 43 14 42 6 34 Z" fill="#6f9a45" stroke="#2c473a" stroke-width="2"/>
-    <!-- jaws -->
-    <path d="M46 30 L62 27 L58 33 L62 37 L46 38 Z" fill="#6f9a45" stroke="#2c473a" stroke-width="1.8"/>
-    <path d="M49 31.4 L52 33 L55 31 L58 32.6 M49 36 L52 34.6 L55 36.4 L58 34.8" fill="none" stroke="#f4f7f2" stroke-width="1.6" stroke-linecap="round"/>
-    <!-- eye + scutes -->
-    <circle cx="46" cy="29" r="2" fill="#f4e9c8" stroke="#2c473a" stroke-width="1"/>
-    <circle cx="46.4" cy="29.4" r="0.9" fill="#141416"/>
-    <path d="M14 29 L17 26 L20 29 M22 28 L25 25 L28 28 M30 27.6 L33 25 L36 27.6" fill="none" stroke="#2c473a" stroke-width="1.4" stroke-linejoin="round"/>
-    <!-- propeller at the tail -->
+    <animateTransform attributeName="transform" type="translate" values="0 0; 0 -7; 0 0" dur="1.3s" repeatCount="indefinite"/>
     <g>
-      <animateTransform attributeName="transform" type="rotate" values="0 7 34; 360 7 34" dur="0.3s" repeatCount="indefinite"/>
-      <ellipse cx="7" cy="34" rx="1.6" ry="9" fill="#c9d2dc" opacity="0.85"/>
-      <ellipse cx="7" cy="34" rx="9" ry="1.6" fill="#c9d2dc" opacity="0.85"/>
-    </g>
-    <!-- payload -->
-    <g>
-      <animateTransform attributeName="transform" type="rotate" values="-6 30 42; 6 30 42; -6 30 42" dur="0.8s" repeatCount="indefinite"/>
-      <path d="M30 42 L30 46" stroke="#2c473a" stroke-width="1.6"/>
-      <ellipse cx="30" cy="51" rx="4.4" ry="5.6" fill="#4a4a50" stroke="#141416" stroke-width="1.4"/>
-      <path d="M30 45 L30 42.6 M28 43.6 H32" stroke="#8a8478" stroke-width="1.2" stroke-linecap="round"/>
+      <animateTransform attributeName="transform" type="rotate" values="-2 100 140; 2 100 140; -2 100 140" dur="1.3s" repeatCount="indefinite" additive="sum"/>
+
+      <!-- far wing (up-left, behind body) -->
+      <path d="M78 132 C58 108 34 92 14 88 C20 106 40 126 70 142 Z" fill="url(#wingG)"/>
+      <path d="M74 130 C58 112 40 98 24 92" stroke="#c4d49a" stroke-width="3" fill="none" opacity="0.5" stroke-linecap="round"/>
+
+      <!-- tail fin -->
+      <path d="M36 130 C28 112 26 98 30 86 C44 96 50 112 52 128 Z" fill="url(#wingG)"/>
+
+      <!-- fuselage -->
+      <path d="M22 152 C22 130 44 120 78 120 L128 124 C136 138 136 164 126 176 L74 182 C42 182 22 172 22 152 Z" fill="url(#fuselage)"/>
+      <!-- fuselage core shadow + rim light + sheen -->
+      <path d="M60 176 C92 182 118 178 126 172 L124 176 L74 182 C68 182 63 180 60 176 Z" fill="#33421f" opacity="0.45"/>
+      <path d="M34 132 C48 124 66 121 82 121" stroke="#d6e0b2" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.55"/>
+      <rect x="52" y="128" width="12" height="46" rx="6" fill="#ffffff" opacity="0.2"/>
+      <!-- round windows -->
+      <circle cx="78" cy="146" r="6" fill="#bfe0ea" stroke="#4a5e38" stroke-width="2.4"/>
+      <circle cx="100" cy="146" r="6" fill="#bfe0ea" stroke="#4a5e38" stroke-width="2.4"/>
+      <circle cx="76.2" cy="144" r="1.8" fill="#ffffff"/>
+      <circle cx="98.2" cy="144" r="1.8" fill="#ffffff"/>
+
+      <!-- croc head -->
+      <path d="M118 128 C118 104 132 92 148 92 C160 92 166 98 170 106 L194 116 C198 118 198 124 193 126 L146 134 Z" fill="url(#crocSkin)"/>
+      <!-- snout top + nostril -->
+      <circle cx="188" cy="112" r="3.4" fill="#47702a"/>
+      <!-- brow bumps / scutes -->
+      <path d="M126 106 Q131 98 138 104 M140 100 Q145 92 152 98 M156 98 Q161 92 167 98" stroke="#3d6023" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <!-- open toothy mouth -->
+      <path d="M146 134 L193 126 C196 136 190 148 178 152 L146 156 C138 150 138 140 146 134 Z" fill="#8f2f33"/>
+      <path d="M146 134 L193 126 L189 132 L180 130.8 L175 138 L166 133.2 L160 141 L152 135.6 L146 141 Z" fill="#ffffff"/>
+      <path d="M148 154.6 L177 151.2 L170 145 L162 151.6 L155 146 Z" fill="#ffffff"/>
+      <!-- lower jaw -->
+      <path d="M140 152 L180 150 C186 155 184 163 174 165 L142 166 C134 162 134 156 140 152 Z" fill="url(#crocSkin)"/>
+      <path d="M141 164 L172 164 C177 163 180 160 180 156 C178 162 168 164 141 164 Z" fill="#33511e" opacity="0.5"/>
+
+      <!-- glossy menacing eye -->
+      <ellipse cx="141" cy="108" rx="11.5" ry="12.5" fill="url(#crocSclera)"/>
+      <circle cx="142.5" cy="110" r="7" fill="url(#crocIris)"/>
+      <circle cx="142.5" cy="110" r="3.1" fill="#1d1008"/>
+      <circle cx="140" cy="107" r="2.4" fill="#ffffff"/>
+      <circle cx="145.4" cy="112.4" r="1.2" fill="#ffffff" opacity="0.9"/>
+      <path d="M130 101 Q141 96 152 103" stroke="#2d4a18" stroke-width="6" stroke-linecap="round" fill="none"/>
+
+      <!-- spinning tail propeller -->
+      <g>
+        <animateTransform attributeName="transform" type="rotate" values="0 24 152; 360 24 152" dur="0.35s" repeatCount="indefinite"/>
+        <ellipse cx="24" cy="152" rx="4" ry="26" fill="#cdd6de" opacity="0.85"/>
+        <ellipse cx="24" cy="152" rx="26" ry="4" fill="#cdd6de" opacity="0.85"/>
+        <circle cx="24" cy="152" r="6" fill="#8a97a4"/>
+      </g>
+
+      <!-- near wing (down toward viewer) -->
+      <path d="M70 158 C52 176 34 196 26 214 C48 210 76 194 96 172 Z" fill="url(#wingG)"/>
+      <path d="M68 162 C54 176 42 190 34 202" stroke="#c4d49a" stroke-width="3" fill="none" opacity="0.45" stroke-linecap="round"/>
+
+      <!-- swaying bomb payload -->
+      <g>
+        <animateTransform attributeName="transform" type="rotate" values="-6 112 178; 6 112 178; -6 112 178" dur="1.3s" repeatCount="indefinite"/>
+        <path d="M112 178 L112 190" stroke="#33421f" stroke-width="4"/>
+        <ellipse cx="112" cy="204" rx="12" ry="15" fill="url(#bombG)"/>
+        <ellipse cx="107" cy="197" rx="4" ry="6" fill="#ffffff" opacity="0.3"/>
+        <path d="M106 214 L112 220 L118 214" fill="#8a97a4"/>
+      </g>
     </g>
   </g>
 </svg>

@@ -9,6 +9,8 @@ import { AccountUser, fetchMe } from "@/lib/authClient";
 import { CategoryTabs } from "@/components/ratings/CategoryTabs";
 import { DEFAULT_CATEGORY, getCategory, type RatingCategoryId } from "@/lib/ratingCategories";
 import { isProvisionalRd, PROVISIONAL_RD } from "@/lib/ratingDisplay";
+import { laurelTier } from "@/lib/laurels";
+import { LaurelBadge } from "@/components/LaurelBadge";
 
 interface Row {
   username: string;
@@ -71,17 +73,38 @@ export default function LeaderboardPage() {
 
   const renderRow = (row: Row, rank: number, key: string) => {
     const mine = isMeName(row.username);
+    // Top-10 medal styling: the laurelled rows get a faint gold wash (subtly
+    // brighter for the champion and the gold pair) and a metal-toned rank.
+    const tier = laurelTier(rank);
+    const tierWash =
+      tier === "champion" ? "bg-sun/[0.07]" : tier === "gold" ? "bg-sun/[0.04]" : "";
+    const rankTone =
+      tier === "champion"
+        ? "text-sun-glow"
+        : tier === "gold"
+          ? "text-sun"
+          : tier === "silver"
+            ? "text-parchment-200"
+            : "text-parchment-400";
     const rowClass =
       "grid grid-cols-[2rem_1fr_4.5rem_5.25rem] sm:grid-cols-[3rem_1fr_5rem_4rem_6rem] items-center px-3 sm:px-4 py-2.5 border-b border-white/5 text-sm transition hover:bg-white/[0.04] " +
-      (mine ? "bg-gold/10" : rank % 2 === 0 ? "bg-white/[0.015]" : "");
+      (mine ? "bg-gold/10" : tierWash || (rank % 2 === 0 ? "bg-white/[0.015]" : ""));
     const content = (
       <>
-        <span className="font-mono text-parchment-400 tabular-nums">{rank}</span>
+        <span className={"font-mono tabular-nums " + rankTone}>{rank}</span>
         <span className="flex min-w-0 items-center gap-2">
           <PlayerAvatar name={row.username} avatar={row.avatar} flair={row.flair} size={24} />
           <span className={"truncate font-medium " + (mine ? "text-gold-leaf" : "text-parchment-100")}>
             {row.username}
           </span>
+          {tier && (
+            <LaurelBadge
+              rank={rank}
+              title={`#${rank} · ${active.label} leaderboard`}
+              size={14}
+              className="shrink-0"
+            />
+          )}
           {row.guest && (
             <span className="shrink-0 border border-white/15 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-parchment-400">
               guest
@@ -175,6 +198,16 @@ export default function LeaderboardPage() {
               </>
             )}
           </div>
+        )}
+
+        {/* The reward rules, plainly stated. */}
+        {rows && rows.length > 0 && (
+          <p className="mt-3 text-xs text-parchment-400">
+            <LaurelBadge rank={1} size={13} title="Top-10 honors" className="mr-1.5" />
+            Top 10 wear the laurel — a radiant crown for the champion, gold for second and
+            third, silver-brass to tenth. Laurelled players may also claim the exclusive 🏵️
+            flair from their profile settings, for as long as their place holds.
+          </p>
         )}
       </section>
     </main>

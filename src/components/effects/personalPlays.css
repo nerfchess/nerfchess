@@ -1,0 +1,430 @@
+/* ----------------------------------------------------------------------------
+   personalPlays.css — keyframes for the "personal" set bespoke play
+   animations (personalPlays.tsx). Owned by the personal-set workstream.
+
+   Rules (mirrors funnyPlays.css / effects.css):
+   - transform/opacity ONLY: every keyframe animates nothing else, so the
+     compositor never has to relayout mid-play.
+   - one-shot flourishes: fill-mode `both` keeps delayed elements hidden until
+     their start frame and every track ends at opacity 0.
+   - prefers-reduced-motion: the whole layer is transient spectacle, so it is
+     hidden outright (defensive double-cover; the caller's play layer already
+     gates it).
+---------------------------------------------------------------------------- */
+
+/* Percentage transform-origins on SVG children must resolve against the
+   element's own box (not the viewBox), or every pivot lands wrong. */
+.pnp svg * {
+  transform-box: fill-box;
+}
+
+/* --- shared stage tracks ---------------------------------------------------- */
+
+/* Soft board wash behind a wide lead. */
+@keyframes pnp-wash {
+  0% { opacity: 0; transform: scale(1.04); }
+  16% { opacity: 0.9; transform: scale(1); }
+  70% { opacity: 0.55; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.02); }
+}
+.pnp-wash { animation: pnp-wash 1.4s ease-out both; transform-origin: 50% 50%; }
+
+/* Closing shockwave ring. */
+@keyframes pnp-ring {
+  0% { opacity: 0; transform: scale(0.05); }
+  20% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.15); }
+}
+.pnp-ring { animation: pnp-ring 0.9s cubic-bezier(0.15, 0.7, 0.2, 1) both; transform-origin: 50% 50%; }
+
+/* Fade in, hold, fade out — the prop backbone. */
+@keyframes pnp-linger {
+  0% { opacity: 0; }
+  12% { opacity: 1; }
+  84% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.pnp-linger { animation: pnp-linger 1.6s ease-out both; }
+.pnp-linger--slow { animation-duration: 2.2s; }
+
+/* Chunky pop: overshoot in, hold, fade away. */
+@keyframes pnp-pop {
+  0% { opacity: 0; transform: scale(0.2); }
+  22% { opacity: 1; transform: scale(1.18); }
+  36% { transform: scale(0.96); }
+  48% { transform: scale(1); }
+  82% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.04); }
+}
+.pnp-pop { animation: pnp-pop 1.05s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; transform-origin: 50% 50%; }
+
+/* Small rise-and-fade (chips, notes, hearts). */
+@keyframes pnp-rise {
+  0% { opacity: 0; transform: translateY(30%) scale(0.7); }
+  25% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-120%) scale(1.05); }
+}
+.pnp-rise { animation: pnp-rise 1s ease-out both; transform-origin: 50% 50%; }
+
+/* Starburst blink. */
+@keyframes pnp-star {
+  0% { opacity: 0; transform: scale(0.1) rotate(0deg); }
+  30% { opacity: 1; transform: scale(1.25) rotate(18deg); }
+  55% { transform: scale(0.95) rotate(24deg); }
+  100% { opacity: 0; transform: scale(1.3) rotate(32deg); }
+}
+.pnp-star { animation: pnp-star 0.7s ease-out both; transform-origin: 50% 50%; }
+
+/* Drifting puff (chalk clouds): --pnp-x / --pnp-y set the drift vector. */
+@keyframes pnp-puff {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.3); }
+  30% { opacity: 0.9; transform: translate(var(--pnp-x, 0%), var(--pnp-y, -30%)) scale(1); }
+  100% { opacity: 0; transform: translate(calc(var(--pnp-x, 0%) * 1.9), calc(var(--pnp-y, -30%) * 1.8)) scale(1.6); }
+}
+.pnp-puff { animation: pnp-puff 0.85s ease-out both; transform-origin: 50% 50%; }
+
+/* --- Muscle Up: the explosive bar pull -------------------------------------- */
+
+/* Dead hang below the bar, a slow first inch, then the EXPLOSIVE rise past
+   the bar with a little overshoot lock-out. */
+@keyframes pnp-pullup {
+  0% { opacity: 0; transform: translateY(36%); }
+  14% { opacity: 1; transform: translateY(36%); }
+  38% { transform: translateY(30%); }
+  56% { transform: translateY(-26%); }
+  66% { transform: translateY(-34%); }
+  76% { transform: translateY(-30%); }
+  90% { opacity: 1; transform: translateY(-30%); }
+  100% { opacity: 0; transform: translateY(-34%); }
+}
+.pnp-pullup { animation: pnp-pullup 1.5s cubic-bezier(0.5, 0, 0.2, 1) both; transform-origin: 50% 50%; }
+
+/* Vertical speed zips left behind by the rise. */
+@keyframes pnp-zip {
+  0% { opacity: 0; transform: translateY(-10%) scaleY(0.3); }
+  30% { opacity: 0.9; transform: translateY(20%) scaleY(1); }
+  100% { opacity: 0; transform: translateY(65%) scaleY(0.5); }
+}
+.pnp-zip { animation: pnp-zip 0.6s ease-out both; transform-origin: 50% 0%; }
+
+/* --- 225 Bench: the barbell press ------------------------------------------- */
+
+/* The loaded bar comes down under control, touches with a squash, then
+   DRIVES up with an overshoot lock-out and racks away. */
+@keyframes pnp-benchpress {
+  0% { opacity: 0; transform: translateY(-46%) scale(1); }
+  22% { opacity: 1; transform: translateY(0) scale(1); }
+  30% { transform: translateY(0) scale(1.05, 0.92); }
+  40% { transform: translateY(0) scale(1); }
+  60% { transform: translateY(-40%) scale(1); }
+  68% { transform: translateY(-48%) scale(1); }
+  78% { transform: translateY(-44%) scale(1); }
+  90% { opacity: 1; transform: translateY(-44%) scale(1); }
+  100% { opacity: 0; transform: translateY(-48%) scale(1); }
+}
+.pnp-benchpress { animation: pnp-benchpress 1.7s cubic-bezier(0.45, 0, 0.25, 1) both; transform-origin: 50% 50%; }
+
+/* Plates wobble on the drive (a tiny independent rock). */
+@keyframes pnp-plate-wobble {
+  0%, 40% { transform: rotate(0deg); }
+  56% { transform: rotate(-5deg); }
+  70% { transform: rotate(4deg); }
+  84%, 100% { transform: rotate(0deg); }
+}
+.pnp-plate-wobble { animation: pnp-plate-wobble 1.7s ease-in-out both; transform-origin: 50% 50%; }
+
+/* Shoved ranks: chevron rows knocked back (upward) by the press. */
+@keyframes pnp-shove {
+  0% { opacity: 0; transform: translateY(30%); }
+  30% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-140%); }
+}
+.pnp-shove { animation: pnp-shove 0.9s cubic-bezier(0.2, 0.7, 0.3, 1) both; transform-origin: 50% 50%; }
+
+/* --- Monkeytype: the typing test --------------------------------------------- */
+
+/* A word snaps from untyped to typed (instant step at its start frame). */
+@keyframes pnp-type {
+  0% { opacity: 0; }
+  1% { opacity: 1; }
+  88% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.pnp-type { animation: pnp-type 1.4s linear both; }
+
+/* The caret: blinks while it waits, holds solid while "typing". */
+@keyframes pnp-caret {
+  0% { opacity: 0; }
+  8% { opacity: 1; }
+  22% { opacity: 0.15; }
+  34% { opacity: 1; }
+  48% { opacity: 0.15; }
+  60% { opacity: 1; }
+  86% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.pnp-caret { animation: pnp-caret 1.5s linear both; }
+
+/* Keycaps shaken loose, tumbling down the board. */
+@keyframes pnp-keyfall {
+  0% { opacity: 0; transform: translateY(-30%) rotate(0deg); }
+  18% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(210%) rotate(var(--pnp-r, 24deg)); }
+}
+.pnp-keyfall { animation: pnp-keyfall 1.3s cubic-bezier(0.4, 0, 0.8, 0.6) both; transform-origin: 50% 50%; }
+
+/* WPM readouts: the first counts flash past, replaced by the next. */
+@keyframes pnp-flash {
+  0% { opacity: 0; transform: translateY(15%); }
+  18% { opacity: 1; transform: translateY(0); }
+  78% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-15%); }
+}
+.pnp-flash { animation: pnp-flash 0.42s ease-out both; }
+
+/* The final count sticks, then leaves with the scene. */
+@keyframes pnp-flash-hold {
+  0% { opacity: 0; transform: translateY(15%) scale(0.9); }
+  16% { opacity: 1; transform: translateY(0) scale(1.12); }
+  30% { transform: translateY(0) scale(1); }
+  84% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.pnp-flash-hold { animation: pnp-flash-hold 0.8s ease-out both; transform-origin: 50% 50%; }
+
+/* Target keycap press: down, click, up. */
+@keyframes pnp-keypress {
+  0% { opacity: 0; transform: translateY(-18%); }
+  25% { opacity: 1; transform: translateY(0); }
+  40% { transform: translateY(9%); }
+  55% { transform: translateY(0); }
+  85% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(0); }
+}
+.pnp-keypress { animation: pnp-keypress 0.95s cubic-bezier(0.3, 0.8, 0.4, 1) both; transform-origin: 50% 50%; }
+
+/* --- Rubik's Cube: the face twist -------------------------------------------- */
+
+/* The whole face wrenches a quarter turn with a snappy detent. */
+@keyframes pnp-twist {
+  0% { opacity: 0; transform: rotate(0deg) scale(0.7); }
+  18% { opacity: 1; transform: rotate(0deg) scale(1); }
+  34% { transform: rotate(0deg) scale(1); }
+  56% { transform: rotate(98deg) scale(1); }
+  64% { transform: rotate(88deg) scale(1); }
+  72% { transform: rotate(90deg) scale(1); }
+  86% { opacity: 1; transform: rotate(90deg) scale(1); }
+  100% { opacity: 0; transform: rotate(90deg) scale(1.05); }
+}
+.pnp-twist { animation: pnp-twist 1.6s cubic-bezier(0.5, 0, 0.2, 1.1) both; transform-origin: 50% 50%; }
+
+/* Stickers peeled loose by the twist, scattering outward. */
+@keyframes pnp-sticker {
+  0% { opacity: 0; transform: translate(0, 0) rotate(0deg) scale(1); }
+  12% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--pnp-x, 40%), var(--pnp-y, -60%)) rotate(var(--pnp-r, 160deg)) scale(0.8); }
+}
+.pnp-sticker { animation: pnp-sticker 0.9s cubic-bezier(0.2, 0.6, 0.5, 1) both; transform-origin: 50% 50%; }
+
+/* Target: two tiles cross paths (the swap). --pnp-x is each tile's journey. */
+@keyframes pnp-swap {
+  0% { opacity: 0; transform: translateX(0) scale(0.7); }
+  20% { opacity: 1; transform: translateX(0) scale(1); }
+  65% { transform: translateX(var(--pnp-x, 60%)) scale(1); }
+  85% { opacity: 1; transform: translateX(var(--pnp-x, 60%)) scale(1); }
+  100% { opacity: 0; transform: translateX(var(--pnp-x, 60%)) scale(0.9); }
+}
+.pnp-swap { animation: pnp-swap 1.1s cubic-bezier(0.55, 0, 0.2, 1) both; transform-origin: 50% 50%; }
+
+/* --- I Love Whimpering Audios: the charm broadcast ---------------------------- */
+
+/* The headphone halo descends like a crown and settles with a soft bounce. */
+@keyframes pnp-halodrop {
+  0% { opacity: 0; transform: translateY(-70%) scale(0.85); }
+  30% { opacity: 1; transform: translateY(2%) scale(1); }
+  42% { transform: translateY(-3%) scale(1.02); }
+  54% { transform: translateY(0) scale(1); }
+  86% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-4%) scale(1.03); }
+}
+.pnp-halodrop { animation: pnp-halodrop 2.2s cubic-bezier(0.3, 0.8, 0.3, 1.1) both; transform-origin: 50% 50%; }
+
+/* Soundwave ribbons washing across the whole board, layer by layer. */
+@keyframes pnp-ribbon {
+  0% { opacity: 0; transform: translateX(-9%); }
+  20% { opacity: 0.95; }
+  80% { opacity: 0.85; }
+  100% { opacity: 0; transform: translateX(9%); }
+}
+.pnp-ribbon { animation: pnp-ribbon 1.9s ease-in-out both; transform-origin: 50% 50%; }
+
+/* One full charmed orbit of hearts around the halo. */
+@keyframes pnp-orbit {
+  0% { opacity: 0; transform: rotate(0deg); }
+  15% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(360deg); }
+}
+.pnp-orbit { animation: pnp-orbit 2.1s cubic-bezier(0.4, 0.1, 0.4, 0.95) both; transform-origin: 50% 50%; }
+
+/* The halo's slow glow pulse. */
+@keyframes pnp-halopulse {
+  0% { opacity: 0; transform: scale(0.8); }
+  25% { opacity: 0.85; transform: scale(1); }
+  50% { opacity: 0.45; transform: scale(1.12); }
+  72% { opacity: 0.8; transform: scale(1.02); }
+  100% { opacity: 0; transform: scale(1.2); }
+}
+.pnp-halopulse { animation: pnp-halopulse 2.2s ease-in-out both; transform-origin: 50% 50%; }
+
+/* --- I Love Making Out: the lean-in ------------------------------------------ */
+
+/* Left piece tips toward the center (pivot at its base). */
+@keyframes pnp-lean-l {
+  0% { opacity: 0; transform: rotate(0deg) translateX(-16%); }
+  22% { opacity: 1; transform: rotate(0deg) translateX(0); }
+  52% { transform: rotate(13deg) translateX(4%); }
+  84% { opacity: 1; transform: rotate(13deg) translateX(4%); }
+  100% { opacity: 0; transform: rotate(13deg) translateX(4%); }
+}
+.pnp-lean-l { animation: pnp-lean-l 1.6s cubic-bezier(0.3, 0.8, 0.3, 1) both; transform-origin: 50% 100%; }
+
+@keyframes pnp-lean-r {
+  0% { opacity: 0; transform: rotate(0deg) translateX(16%); }
+  22% { opacity: 1; transform: rotate(0deg) translateX(0); }
+  52% { transform: rotate(-13deg) translateX(-4%); }
+  84% { opacity: 1; transform: rotate(-13deg) translateX(-4%); }
+  100% { opacity: 0; transform: rotate(-13deg) translateX(-4%); }
+}
+.pnp-lean-r { animation: pnp-lean-r 1.6s cubic-bezier(0.3, 0.8, 0.3, 1) both; transform-origin: 50% 100%; }
+
+/* Lipstick-mark confetti bursting from the meet point. */
+@keyframes pnp-kissfetti {
+  0% { opacity: 0; transform: translate(0, 0) rotate(0deg) scale(0.3); }
+  16% { opacity: 1; transform: translate(calc(var(--pnp-x, 30%) * 0.4), calc(var(--pnp-y, -40%) * 0.4)) rotate(var(--pnp-r, 20deg)) scale(1.1); }
+  100% { opacity: 0; transform: translate(var(--pnp-x, 30%), var(--pnp-y, -40%)) rotate(calc(var(--pnp-r, 20deg) * 2)) scale(0.9); }
+}
+.pnp-kissfetti { animation: pnp-kissfetti 1s cubic-bezier(0.2, 0.7, 0.4, 1) both; transform-origin: 50% 50%; }
+
+/* --- Hyein: the long stride --------------------------------------------------- */
+
+/* The portrait strides in low from the near corner and bounds up the board,
+   bobbing on each step, and strides off. */
+@keyframes pnp-stride {
+  0% { opacity: 0; transform: translate(-58%, 52%) scale(0.9); }
+  16% { opacity: 1; transform: translate(-36%, 32%) scale(0.95); }
+  30% { transform: translate(-18%, 20%) scale(0.97) rotate(-2deg); }
+  46% { transform: translate(2%, 4%) scale(1) rotate(2deg); }
+  62% { transform: translate(22%, -14%) scale(1.03) rotate(-2deg); }
+  78% { transform: translate(42%, -30%) scale(1.05) rotate(1deg); }
+  92% { opacity: 1; transform: translate(58%, -44%) scale(1.07); }
+  100% { opacity: 0; transform: translate(66%, -52%) scale(1.08); }
+}
+.pnp-stride { animation: pnp-stride 1.9s cubic-bezier(0.35, 0.1, 0.3, 1) both; transform-origin: 50% 50%; }
+
+/* A footprint pops in where the stride landed, and springs a little. */
+@keyframes pnp-foot {
+  0% { opacity: 0; transform: scale(0.2); }
+  30% { opacity: 1; transform: scale(1.15); }
+  46% { transform: scale(0.96); }
+  60% { transform: scale(1); }
+  82% { opacity: 0.95; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.06); }
+}
+.pnp-foot { animation: pnp-foot 0.95s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; transform-origin: 50% 50%; }
+
+/* --- Daniel Caesar: the smooth wash -------------------------------------------- */
+
+/* A slow silk soundwave gliding across the board. */
+@keyframes pnp-smoothwave {
+  0% { opacity: 0; transform: translateX(-7%); }
+  22% { opacity: 0.9; }
+  78% { opacity: 0.8; }
+  100% { opacity: 0; transform: translateX(7%); }
+}
+.pnp-smoothwave { animation: pnp-smoothwave 1.9s ease-in-out both; transform-origin: 50% 50%; }
+
+/* Mute badges drifting gently down like closing eyelids. */
+@keyframes pnp-driftdown {
+  0% { opacity: 0; transform: translateY(-40%) rotate(0deg); }
+  22% { opacity: 1; }
+  80% { opacity: 0.9; }
+  100% { opacity: 0; transform: translateY(120%) rotate(var(--pnp-r, -10deg)); }
+}
+.pnp-driftdown { animation: pnp-driftdown 1.7s ease-in-out both; transform-origin: 50% 50%; }
+
+/* The record turns, slow and steady. */
+@keyframes pnp-spin {
+  0% { opacity: 0; transform: rotate(0deg); }
+  15% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(300deg); }
+}
+.pnp-spin { animation: pnp-spin 2s linear both; transform-origin: 50% 50%; }
+
+/* --- Middle Part: the golden part-line ----------------------------------------- */
+
+/* The comb draws straight down the center file, one clean pass. */
+@keyframes pnp-comb {
+  0% { opacity: 0; transform: translateY(-16%); }
+  14% { opacity: 1; transform: translateY(0); }
+  76% { opacity: 1; transform: translateY(210%); }
+  100% { opacity: 0; transform: translateY(235%); }
+}
+.pnp-comb { animation: pnp-comb 1.5s cubic-bezier(0.4, 0.1, 0.4, 1) both; transform-origin: 50% 50%; }
+
+/* The part-line itself, revealed top-to-bottom behind the comb. */
+@keyframes pnp-partline {
+  0% { opacity: 0; transform: scaleY(0); }
+  10% { opacity: 1; }
+  70% { opacity: 1; transform: scaleY(1); }
+  88% { opacity: 0.9; }
+  100% { opacity: 0; transform: scaleY(1); }
+}
+.pnp-partline { animation: pnp-partline 1.7s cubic-bezier(0.4, 0.1, 0.4, 1) both; transform-origin: 50% 0%; }
+
+/* Symmetric shimmer: a soft sheen sweeps each half outward from the part.
+   --pnp-x is the sweep direction (negative left, positive right). */
+@keyframes pnp-shimmer {
+  0% { opacity: 0; transform: translateX(0) scaleX(0.4); }
+  25% { opacity: 0.8; transform: translateX(calc(var(--pnp-x, 40%) * 0.4)) scaleX(1); }
+  100% { opacity: 0; transform: translateX(var(--pnp-x, 40%)) scaleX(1.1); }
+}
+.pnp-shimmer { animation: pnp-shimmer 1.2s ease-out both; transform-origin: 50% 50%; }
+
+/* --- Forearm Veins: the surge up the files -------------------------------------- */
+
+/* A vein of light surges bottom-to-top along a file. */
+@keyframes pnp-vein {
+  0% { opacity: 0; transform: translateY(58%) scaleY(0.5); }
+  22% { opacity: 1; transform: translateY(22%) scaleY(1); }
+  78% { opacity: 0.95; transform: translateY(-38%) scaleY(1); }
+  100% { opacity: 0; transform: translateY(-60%) scaleY(0.6); }
+}
+.pnp-vein { animation: pnp-vein 1.1s cubic-bezier(0.4, 0, 0.3, 1) both; transform-origin: 50% 50%; }
+
+/* The grip-crush flash: a clench, a hard pulse, done. */
+@keyframes pnp-grip {
+  0% { opacity: 0; transform: scale(0.6); }
+  25% { opacity: 1; transform: scale(1); }
+  45% { transform: scale(0.88); }
+  60% { transform: scale(1.22); }
+  72% { transform: scale(1.05); }
+  88% { opacity: 1; transform: scale(1.08); }
+  100% { opacity: 0; transform: scale(1.15); }
+}
+.pnp-grip { animation: pnp-grip 1.2s cubic-bezier(0.3, 0.7, 0.3, 1.2) both; transform-origin: 50% 50%; }
+
+/* --- reduced motion ----------------------------------------------------------------
+   Everything in this module is a transient one-shot flourish: hide the whole
+   layer outright (defensive — the caller's play layer gates it too). */
+@media (prefers-reduced-motion: reduce) {
+  .pnp,
+  .pnp * {
+    animation: none !important;
+  }
+  .pnp {
+    display: none !important;
+  }
+}

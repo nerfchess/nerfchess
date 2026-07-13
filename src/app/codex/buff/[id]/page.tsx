@@ -35,12 +35,29 @@ export async function generateMetadata(props: { params: Promise<{ id: string }> 
   };
 }
 
+// The five NewJeans member cards carry their stylized portrait art
+// (public/newjeans/<id>.svg) right on the codex page.
+const NEWJEANS_PORTRAITS = new Set(["minji", "hanni", "danielle", "haerin", "hyein"]);
+
 export default async function BuffCardPage(props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const buff = BUFF_BY_ID[params.id];
   if (!buff) notFound();
   return (
     <>
+      {NEWJEANS_PORTRAITS.has(buff.id) && (
+        <div className="mx-auto max-w-3xl px-4 pt-6 sm:px-6">
+          <div className="plate corner-cut mx-auto w-40 overflow-hidden p-2 sm:w-48">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={`/newjeans/${buff.id}.svg`}
+              alt={`${buff.name} portrait`}
+              className="h-auto w-full rounded-sm"
+              draggable={false}
+            />
+          </div>
+        </div>
+      )}
       <BuffDetail buff={buff} />
       {/* The one card that literally links out: Check Out Our Socials shows the
           real accounts right on its codex page. */}

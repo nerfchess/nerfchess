@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
+import { fetchTopStandings, placementTitle, type TopStandings } from "@/lib/laurels";
+import { LaurelBadge } from "./LaurelBadge";
 
 interface Hit {
   username: string;
@@ -26,6 +28,25 @@ export function PlayerSearch({ className = "", autoFocus = false }: { className?
   // Monotonic id for the most recently issued query. A slow older response
   // whose id no longer matches is dropped, so results never flicker backwards.
   const latestReqId = useRef(0);
+  // Current top-10 standings, so laurelled players wear their badge in the
+  // results. Loaded lazily on the first result set (module-cached, so repeat
+  // searches and other surfaces share one fetch); null until then.
+  const [standings, setStandings] = useState<TopStandings | null>(null);
+
+  useEffect(() => {
+    if (hits.length === 0 || standings) return;
+    let cancelled = false;
+    fetchTopStandings()
+      .then((map) => {
+        if (!cancelled) setStandings(map);
+      })
+      .catch(() => {
+        /* laurels are decoration; search works fine without them */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [hits, standings]);
 
   useEffect(() => {
     if (!autoFocus) return;
@@ -139,31 +160,40 @@ export function PlayerSearch({ className = "", autoFocus = false }: { className?
           role="listbox"
           className="absolute inset-x-0 top-full z-30 mt-1 plate dropdown divide-y divide-white/5 overflow-hidden shadow-2xl"
         >
-          {hits.map((hit, i) => (
-            <button
-              key={hit.username}
-              id={`${listId}-${i}`}
-              role="option"
-              aria-selected={i === active}
-              type="button"
-              onMouseEnter={() => setActive(i)}
-              onClick={() => {
-                // Reuse the same hard navigation the keyboard path uses: plain
-                // router.push proved unreliable in the packaged worker build.
-                setOpen(false);
-                go(hit);
-              }}
-              className={
-                "flex w-full items-center justify-between px-4 py-2.5 text-left text-sm transition-colors " +
-                (i === active ? "bg-white/[0.06]" : "hover:bg-white/[0.05]")
-              }
-            >
-              <span className="min-w-0 truncate font-medium text-parchment-100">{hit.username}</span>
-              <span className="shrink-0 font-mono text-parchment-400">
-                {Math.round(hit.rating)} · {hit.games}g
-              </span>
-            </button>
-          ))}
+          {hits.map((hit, i) => {
+            // Best current top-10 placement (if any): the laurel beside the name.
+            const top = standings?.get(hit.username.toLowerCase())?.[0];
+            return (
+              <button
+                key={hit.username}
+                id={`${listId}-${i}`}
+                role="option"
+                aria-selected={i === active}
+                type="button"
+                onMouseEnter={() => setActive(i)}
+                onClick={() => {
+                  // Reuse the same hard navigation the keyboard path uses: plain
+                  // router.push proved unreliable in the packaged worker build.
+                  setOpen(false);
+                  go(hit);
+                }}
+                className={
+                  "flex w-full items-center justify-between px-4 py-2.5 text-left text-sm transition-colors " +
+                  (i === active ? "bg-white/[0.06]" : "hover:bg-white/[0.05]")
+                }
+              >
+                <span className="flex min-w-0 items-center gap-1.5">
+                  <span className="min-w-0 truncate font-medium text-parchment-100">{hit.username}</span>
+                  {top && (
+                    <LaurelBadge rank={top.rank} title={placementTitle(top)} size={12} className="shrink-0" />
+                  )}
+                </span>
+                <span className="shrink-0 font-mono text-parchment-400">
+                  {Math.round(hit.rating)} · {hit.games}g
+                </span>
+              </button>
+            );
+          })}
         </div>
       )}
       {open && query.trim().length >= 2 && hits.length === 0 && (

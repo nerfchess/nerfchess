@@ -2,7 +2,7 @@
 
 import { Piece } from "./Pieces";
 import { AVATARS, avatarIdFor, isCustomAvatar } from "@/lib/avatars";
-import { isFlairEmoji } from "@/lib/flair";
+import { isAllowedFlair } from "@/lib/flair";
 
 // A player's profile picture: an uploaded image (stored as a small data URL),
 // a preset piece-on-plate, or a deterministic default when the account never
@@ -10,8 +10,9 @@ import { isFlairEmoji } from "@/lib/flair";
 //
 // An optional emoji flair (Lichess-style) can ride along as a small badge in
 // the bottom-right corner, so a player's flair shows anywhere an avatar does
-// (leaderboard, lobby, at the board). Only allowlisted emoji render; anything
-// else is ignored, so an invalid or retired flair simply shows no badge.
+// (leaderboard, lobby, at the board). Only allowlisted emoji render (the
+// pickable set plus the earned Laurelled flair); anything else is ignored, so
+// an invalid or retired flair simply shows no badge.
 export function PlayerAvatar({
   name,
   avatar,
@@ -38,7 +39,7 @@ export function PlayerAvatar({
     <PresetAvatar name={name} avatar={avatar} size={size} className={className} />
   );
 
-  if (!isFlairEmoji(flair)) return core;
+  if (!isAllowedFlair(flair)) return core;
 
   // Badge sits over the avatar's bottom-right corner (like Lichess's flair),
   // on a dark ring so the emoji reads on any avatar background.

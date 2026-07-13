@@ -81,7 +81,7 @@ import {
   saveActiveGame,
   saveOnlineSeat,
 } from "@/lib/multiplayer";
-import { premoveOptionsFor, premoveSelfChecks } from "@/lib/premoves";
+import { premoveOptionsFor, premoveSelfChecks, previewMovesFor } from "@/lib/premoves";
 import { isMuted, playCapture, playChallenge, playCheck, playError, playMove as playMoveSfx, playNerf, setMuted } from "@/lib/sounds";
 
 // Mirrors the server's start-of-game grace: each side's first move gets this
@@ -546,6 +546,25 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   // The board is click-through underneath either way, but the dim never
   // lingers, so a slow or vanished opponent cannot hold the screen hostage.
   const myOfferOpen = !!game?.buffs?.players[myColor].offer;
+  // The opponent's draft is open while I hold no offer of my own: I may not
+  // play a live move (the server refuses it with opp_draft_pending), my
+  // clock is not being charged, and board input banks premoves until their
+  // pick lands.
+  const oppDraftHold = isDraft && !!game && !game.result && oppDrafting && !myOfferOpen;
+  // Which seat the match clock is charging right now, mirroring the server's
+  // chargedColor: nobody during the free lock-in window, the straggling
+  // drafter once the window expires with their offer still open, otherwise
+  // the side to move.
+  const chargedColor: Color | null =
+    !game || game.result
+      ? null
+      : isDraft && !draftGraceOver && (myOfferOpen || oppDrafting)
+        ? null
+        : isDraft && oppDrafting && !myOfferOpen
+          ? oppColor
+          : isDraft && myOfferOpen && !oppDrafting
+            ? myColor
+            : game.board.turn;
   useEffect(() => {
     const waiting = isDraft && !game?.result && oppDrafting && (draftSubmitted || !myOfferOpen);
     if (!waiting) {
@@ -723,6 +742,10 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     // Draft: a pending buff offer blocks all of my moves (the server would
     // reject them with draft_pending); the queue fires once it resolves.
     if (snapshot.buffs?.players[myColor].offer) return;
+    // The opponent's open draft blocks my moves too (opp_draft_pending):
+    // hold the queue until their pick lands — the draft-resolved handler
+    // re-fires it.
+    if (snapshot.buffs?.players[oppColor].offer) return;
     const head = premovesRef.current[0];
     if (!head) return;
     const move = legalMoves(snapshot).find(premoveMatches(head));
@@ -1106,6 +1129,12 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           }
         }
         applyGame({ ...g });
+        // The opponent's pick lifted the draft hold: any premove banked
+        // while the board was locked fires now (no move frame arrives to
+        // trigger it otherwise, since it is already my turn).
+        if (e.resolved.color !== myColor && !g.buffs?.players[myColor].offer) {
+          queuePremoveSend(g);
+        }
       } else if (e.type === "draft-used") {
         const g = gameRef.current;
         if (!g?.buffs) return;
@@ -1156,6 +1185,12 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   }, [session, myColor]);
 
   const moves = useMemo(() => (game ? legalMoves(game) : []), [game]);
+  // The opponent's would-be moves, for the click-an-enemy-piece inspection
+  // preview (dots on every square that piece could reach).
+  const oppPreviewMoves = useMemo(
+    () => (game && !game.result ? previewMovesFor(game, oppColor) : []),
+    [game, oppColor],
+  );
   const moveRisks = useMemo(
     () =>
       uiSettings.moveRiskWarnings && game && game.board.turn === myColor
@@ -1451,7 +1486,13 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     !!game &&
     !game.result &&
     !!virtualBoard &&
-    (game.board.turn !== myColor || !!pendingLocalMove || awaitingPremoveAck || premoves.length > 0);
+    (game.board.turn !== myColor ||
+      !!pendingLocalMove ||
+      awaitingPremoveAck ||
+      premoves.length > 0 ||
+      // Waiting on the opponent's draft: live moves are blocked, so board
+      // input banks premoves that flush the instant their pick lands.
+      oppDraftHold);
 
   // Draft ruleset: activation is only legal on my turn with nothing pending.
   const draftCanAct =
@@ -1460,6 +1501,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     !game.result &&
     game.board.turn === myColor &&
     !game.buffs?.players[myColor].offer &&
+    // The opponent's open draft blocks activations the same way it blocks
+    // moves (the server refuses both with opp_draft_pending).
+    !oppDraftHold &&
     !isReviewingHistory &&
     !pendingLocalMove &&
     !awaitingPremoveAck;
@@ -1511,6 +1555,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
       enqueuePremove(m);
       return;
     }
+    // Premoves disabled + opponent mid-draft: drop the input rather than
+    // send a move the server will refuse (opp_draft_pending).
+    if (oppDraftHold) return;
     if (game.board.turn !== myColor) return;
     if (awaitingPremoveAck || pendingLocalMove) return;
     // Match on drop too: a crazyhouse drop has from === to, so two pocket
@@ -1626,9 +1673,10 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     if (!clockEnabled || !game || game.result) return;
     // Clock paused for a draft lock-in window: no flag can fall due. Once
     // the free window has expired the clock is live again even with an
-    // unresolved offer, so the flag check must keep running.
-    if (isDraft && !draftGraceOver && (!!game.buffs?.players[myColor].offer || oppDrafting)) return;
-    const active = game.board.turn;
+    // unresolved offer — charged to the straggling drafter — so the flag
+    // check must keep running against whoever is actually being billed.
+    if (chargedColor === null) return;
+    const active = chargedColor;
     const activeMs = active === "w" ? whiteMs : blackMs;
     let interval: number | undefined;
     const timer = window.setTimeout(() => {
@@ -1981,11 +2029,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   // Effect kinds draftZones does not paint (king_safe shields, pawn-clamp
   // fences, pending-skip stuns): shared derivation, same as the bot game.
   const fxZone = zone ? computeFxVisual(game) : null;
-  // The server pauses the match clock while any buff offer is inside its
-  // free lock-in window; freeze the local display the same way. Past the
-  // window the server resumes the clock, so the display runs again.
-  const draftClockPaused =
-    isDraft && !game.result && !draftGraceOver && (!!myOffer || oppDrafting);
+  // Clock displays follow chargedColor (defined with the draft-hold state
+  // above): nobody ticks during the free lock-in window, and past it the
+  // straggling drafter's pill ticks — never the waiting player's.
   const opponentNerf = revealedOppNerf ?? (myColor === "w" ? game.black.nerf : game.white.nerf);
   const oppNerfShown = !!revealedOppNerf && (liveOppReveal || !uiSettings.hideOpponentReveal);
   // Draft games have no "hidden rule" placeholder: while the opponent's rule
@@ -2339,8 +2385,8 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           {/* The command rail: one framed column (mode header, opponent, dock
               + chat, you) instead of three floating islands, so the left side
               reads as a single control surface. */}
-          <aside className="rail-panel corner-cut hidden min-h-0 gap-2 overflow-y-auto p-2.5 lg:grid lg:min-h-[var(--board-height)] lg:max-h-full lg:grid-rows-[auto_auto_minmax(6rem,1fr)_auto] lg:self-start">
-            <div className="seam-edge-b flex items-center justify-between gap-2 px-1 pb-2">
+          <aside className="rail-panel rail-lux corner-cut hidden min-h-0 gap-2 overflow-y-auto p-2.5 lg:grid lg:min-h-[var(--board-height)] lg:max-h-full lg:grid-rows-[auto_auto_minmax(6rem,1fr)_auto] lg:self-start">
+            <div className="seam-edge-b relative flex items-center justify-between gap-2 px-1 pb-2">
               <span
                 className={
                   "flex items-center gap-1.5 font-display text-xs font-bold uppercase tracking-[0.14em] " +
@@ -2358,7 +2404,12 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               {subtitle && (
                 <span className="smallcaps min-w-0 truncate text-[9px] text-parchment-400">{subtitle}</span>
               )}
+              {/* A gold gleam that occasionally travels the header hairline. */}
+              <span aria-hidden className="rail-header-sheen" />
             </div>
+            {/* The active player's card wears a soft breathing gold halo while
+                their clock is charged (decorative wrapper only). */}
+            <div className={"rail-glow-wrap" + (chargedColor === oppColor ? " rail-glow-wrap--active" : "")}>
             <PlayerNerfCard
               board={boardForDisplay}
               playerColor={oppColor}
@@ -2373,6 +2424,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               ownerLabel=""
               compact
             />
+            </div>
             <div
               className={
                 "hidden min-h-0 gap-2 lg:grid " +
@@ -2401,6 +2453,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               />
             </div>
             <div className="space-y-2">
+              <div className={"rail-glow-wrap" + (chargedColor === myColor ? " rail-glow-wrap--active" : "")}>
               <PlayerNerfCard
                 board={boardForDisplay}
                 playerColor={myColor}
@@ -2416,6 +2469,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                 boons={myHeldBoons}
                 compact
               />
+              </div>
               {!isBuffMode && revealControl}
               {ratingStakes && <RatingStakes stakes={ratingStakes} />}
             </div>
@@ -2437,7 +2491,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                 {clockEnabled && (
                   <ClockPill
                     ms={myColor === "w" ? blackMs : whiteMs}
-                    active={!game.result && !draftClockPaused && game.board.turn !== myColor}
+                    active={chargedColor === oppColor}
                     startDelayMs={clockStartDelay(oppColor)}
                     compact
                   />
@@ -2461,6 +2515,11 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   orientation={orientation}
                   onMove={handleLocalMove}
                   myColor={myColor}
+                  // Click an enemy piece to preview where it could move
+                  // (suspended during history review and buff targeting).
+                  opponentMoves={
+                    isReviewingHistory || buffTargeting.targeting ? [] : oppPreviewMoves
+                  }
                   // Public buff state, so the board can paint BOTH sides'
                   // persistent buff markers (bound-buff sigils, and the live
                   // shield / royal-guard recompute) for the viewer, not just the
@@ -2601,7 +2660,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                 {clockEnabled && (
                   <ClockPill
                     ms={myColor === "w" ? whiteMs : blackMs}
-                    active={!game.result && !draftClockPaused && game.board.turn === myColor}
+                    active={chargedColor === myColor}
                     startDelayMs={clockStartDelay(myColor)}
                     warnLowTime={uiSettings.lowTimeWarning}
                     compact
@@ -2648,7 +2707,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                 <div className="space-y-1">
                   <ClockPill
                     ms={myColor === "w" ? blackMs : whiteMs}
-                    active={!game.result && !draftClockPaused && game.board.turn !== myColor}
+                    active={chargedColor === oppColor}
                     startDelayMs={clockStartDelay(oppColor)}
                   />
                   {/* Clock courtesy: +15s to the opponent for anyone in a casual
@@ -2691,7 +2750,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               {clockEnabled && (
                 <ClockPill
                   ms={myColor === "w" ? whiteMs : blackMs}
-                  active={!game.result && !draftClockPaused && game.board.turn === myColor}
+                  active={chargedColor === myColor}
                   startDelayMs={clockStartDelay(myColor)}
                   warnLowTime={uiSettings.lowTimeWarning}
                 />
@@ -2795,9 +2854,17 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
             >
               <span className="h-1.5 w-1.5 rounded-full bg-gold animate-flicker" aria-hidden />
               <span className="font-display text-xs text-parchment-200">
+                {/* The pill can collapse here BEFORE the free window ends
+                    (auto-hide / manual dismiss): saying "on their clock" then
+                    reported the charge ~5s early. Only claim it once the
+                    window has truly expired. */}
                 {genuinelySkipped
-                  ? "Your draft was skipped. Opponent is choosing, on their clock now."
-                  : "Opponent is still choosing, on their clock now."}
+                  ? draftGraceOver
+                    ? "Your draft was skipped. Opponent is choosing, on their clock now."
+                    : "Your draft was skipped. Opponent is choosing — clocks paused."
+                  : draftGraceOver
+                    ? "Opponent is still choosing, on their clock now."
+                    : "Opponent is still choosing — clocks paused."}
               </span>
             </motion.div>
           </div>

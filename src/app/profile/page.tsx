@@ -8,7 +8,7 @@ import type { PlayerStats } from "@/lib/playerStats";
 import { AccountUser, fetchMe } from "@/lib/authClient";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { AVATAR_PICKER_IDS, avatarIdFor, CUSTOM_AVATAR_MAX_CHARS, isCustomAvatar } from "@/lib/avatars";
-import { FLAIR_EMOJI } from "@/lib/flair";
+import { FLAIR_EMOJI, LAUREL_FLAIR } from "@/lib/flair";
 import { MODE_RATING_CATEGORIES } from "@/lib/ratingCategories";
 import { isProvisionalRd } from "@/lib/ratingDisplay";
 import { Trophy } from "lucide-react";
@@ -326,6 +326,33 @@ export default function ProfilePage() {
                     </button>
                   );
                 })}
+              </div>
+              {/* The earned one: claimable only while the account holds a top-10
+                  leaderboard spot (the server re-checks the rank on every claim). */}
+              <div className="mt-4 flex items-center gap-3 border-t border-white/5 pt-4">
+                <button
+                  type="button"
+                  onClick={() => pickFlair(LAUREL_FLAIR)}
+                  disabled={savingFlair}
+                  aria-label="Laurelled flair (top-10 exclusive)"
+                  aria-pressed={account.flair === LAUREL_FLAIR}
+                  className={
+                    "grid h-[46px] w-[46px] shrink-0 place-items-center rounded-lg text-2xl transition " +
+                    (account.flair === LAUREL_FLAIR
+                      ? "ring-2 ring-gold-leaf"
+                      : "ring-1 ring-gold/30 hover:ring-gold/60")
+                  }
+                >
+                  {LAUREL_FLAIR}
+                </button>
+                <p className="text-xs text-parchment-400">
+                  <span className="font-display text-gold-leaf">Laurelled</span> — reserved for
+                  players currently in the top 10 of a{" "}
+                  <Link href="/leaderboard" className="text-gold-leaf hover:underline">
+                    leaderboard
+                  </Link>
+                  . Claim it while your rank holds.
+                </p>
               </div>
               <p className="mt-3 text-xs text-parchment-400">
                 An emoji shown next to your name on your profile and on your avatar around the
