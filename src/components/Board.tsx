@@ -36,6 +36,8 @@ import {
   TransformFlourish,
 } from "./effects/BoardEffects";
 import { PLUGIN_SIGNATURES } from "./effects/sigPlugins";
+import { BRAINROT_MASCOT_IDS, SidelineMascot } from "./effects/SidelineMascot";
+import { ExpansionZone } from "./effects/ExpansionZone";
 import {
   GenBurst,
   genSignatureConfig,
@@ -1820,6 +1822,69 @@ export function Board({
     [visual?.highlightSquares],
   );
 
+  // --- Sideline mascots (brainrot pets) --------------------------------------
+  // Any brainrot card in a side's public buff list — held OR already played
+  // (spent instants stay in the list for the record) — summons that character
+  // as an ambient pet loitering at that side's board edge for the rest of the
+  // game. Nullified copies never activated, so they summon nothing. First
+  // matching card wins (deterministic). Limitation: a masked opponent card
+  // (empty id, only if a server build re-enables draft masking) cannot summon
+  // its mascot until its identity is revealed.
+  const mascotIds = useMemo(() => {
+    if (!buffs) return null;
+    const pick = (color: Color): string | null => {
+      for (const inst of buffs.players[color].buffs) {
+        if (inst.id && !inst.nullified && BRAINROT_MASCOT_IDS.has(inst.id)) return inst.id;
+      }
+      return null;
+    };
+    const mine = pick(myColor);
+    const theirs = pick(myColor === "w" ? "b" : "w");
+    return mine || theirs ? { mine, theirs } : null;
+  }, [buffs, myColor]);
+  // Mascot reactions ride the same committed-position signal the removal FX
+  // diff uses (fxPieces): when a side's piece count drops, that owner's pet
+  // slumps and the other pet celebrates. Count-diffed in an effect (not the
+  // render-phase fx diff, which stays untouched) so premove overlays and
+  // history review never trigger a reaction, matching the fxPieces rationale.
+  const mascotPrevCountsRef = useRef<{ w: number; b: number } | null>(null);
+  const [mascotEvent, setMascotEvent] = useState<{ key: number; loser: Color } | null>(null);
+  useEffect(() => {
+    if (!mascotIds) return;
+    const counts = { w: 0, b: 0 };
+    for (const p of fxPieces) if (p) counts[p.color] += 1;
+    const prev = mascotPrevCountsRef.current;
+    mascotPrevCountsRef.current = counts;
+    if (!prev) return;
+    const wLost = prev.w - counts.w;
+    const bLost = prev.b - counts.b;
+    if (wLost <= 0 && bLost <= 0) return;
+    // A multi-removal card can cost both sides pieces; the bigger loser mopes.
+    const loser: Color = wLost >= bLost ? "w" : "b";
+    setMascotEvent((e) => ({ key: (e?.key ?? 0) + 1, loser }));
+  }, [fxPieces, mascotIds]);
+
+  // Expansion Permit (9x9): while either side's permit is live (unspent, not
+  // nullified, turns remaining), the board wears its under-construction ring
+  // (ExpansionZone). The wrap moves themselves are real legal moves, so their
+  // destinations already highlight as normal move dots.
+  const expansionActive = useMemo(() => {
+    if (!buffs) return false;
+    for (const color of ["w", "b"] as Color[]) {
+      for (const inst of buffs.players[color].buffs) {
+        if (
+          inst.id === "expansion_permit" &&
+          !inst.spent &&
+          !inst.nullified &&
+          ((inst.state.turns as number) ?? 0) > 0
+        ) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }, [buffs]);
+
   // --- Zone-sourced signatures (source !== "removal") ------------------------
   // computeBoardFx above dresses ONLY squares a piece was REMOVED from, so a
   // signature whose art decorates a piece that STAYS on the board (an empower
@@ -3393,6 +3458,34 @@ export function Board({
           </svg>
         )}
       </div>
+
+      {/* Expansion Permit construction ring: the ninth file / ninth rank
+          being bolted on, mounted on the outer board box (outside the
+          overflow-hidden crop, same area as the mascots) so it hangs off the
+          right and top edges. Pure decoration; the wrap moves highlight as
+          normal dots inside the crop. */}
+      {!fxHiddenPref && expansionActive && <ExpansionZone />}
+
+      {/* Sideline mascots: each side's brainrot pet loiters at that side's
+          outer board edge (mine = bottom rim, theirs = top rim) for the rest
+          of the game. Ambient only: pointer-events-none, outside the crop,
+          reacting to the committed capture diff via mascotEvent. */}
+      {!fxHiddenPref && mascotIds?.mine && (
+        <SidelineMascot
+          side="mine"
+          id={mascotIds.mine}
+          mood={mascotEvent ? (mascotEvent.loser === myColor ? "sad" : "cheer") : null}
+          moodKey={mascotEvent?.key ?? 0}
+        />
+      )}
+      {!fxHiddenPref && mascotIds?.theirs && (
+        <SidelineMascot
+          side="theirs"
+          id={mascotIds.theirs}
+          mood={mascotEvent ? (mascotEvent.loser === myColor ? "cheer" : "sad") : null}
+          moodKey={mascotEvent?.key ?? 0}
+        />
+      )}
 
       {/* Effect-explanation popover: one styled card for any active-effect
           square (bound buffs and zone effects). Mounted on the outer board
