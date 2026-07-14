@@ -262,14 +262,17 @@ export const HEXES_T8: Buff[] = [
       // a full two turns stripped on top of the two drafts.
       id: "sacked_capital",
       name: "Sacked Capital",
-      description: "Your opponent skips their next 2 turns entirely, and their next 2 drafts are skipped as well.",
+      description: "Your opponent skips their next 2 turns entirely, and their next draft is skipped as well.",
       flavor: "The capital burns, the messengers scatter, and no orders reach the field.",
       // fx covers the turn skip; the draft denial half shows no board motif.
       fx: { motif: "slow", pieces: "all" },
     },
+    // Rebalance: two skipped turns AND two skipped drafts was double denial on
+    // both axes. The turn skip (the card's identity) is kept at 2; the draft
+    // denial drops to one (blockedDrafts +2 -> +1).
     instant((_inst, api) => {
       api.bs.skips[api.opp] += 2;
-      api.theirs.flags.blockedDrafts = (api.theirs.flags.blockedDrafts ?? 0) + 2;
+      api.theirs.flags.blockedDrafts = (api.theirs.flags.blockedDrafts ?? 0) + 1;
     }),
   ),
 
@@ -379,11 +382,14 @@ export const HEXES_T8: Buff[] = [
     {
       id: "poisoned_counsel",
       name: "Poisoned Counsel",
-      description: "Your opponent's next 2 drafted cards arrive nullified and do nothing, and the venom drawn from their counsel sweetens yours: your next draft rolls one tier higher.",
+      description: "Your opponent's next drafted card arrives nullified and does nothing, and the venom drawn from their counsel sweetens yours: your next draft rolls one tier higher.",
       flavor: "Every advisor whispers rot, and the rot pays its way to the other tent.",
     },
+    // Rebalance: nullifying their next two drafts plus lifting your own tier was
+    // a heavy two-sided swing. The nullify drops to a single card
+    // (nullifyIncoming +2 -> +1); the self tier lift is kept.
     instant((_inst, api) => {
-      api.theirs.flags.nullifyIncoming = (api.theirs.flags.nullifyIncoming ?? 0) + 2;
+      api.theirs.flags.nullifyIncoming = (api.theirs.flags.nullifyIncoming ?? 0) + 1;
       api.mine.flags.bankBonus = Math.min(1, (api.mine.flags.bankBonus ?? 0) + 1);
     }),
   ),

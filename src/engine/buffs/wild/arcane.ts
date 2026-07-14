@@ -1287,13 +1287,15 @@ export const WILD_ARCANE: Buff[] = [
       id: "wa_arcane_reroll",
       icon: "Dice5",
       name: "Arcane Reroll",
-      description: "Gain two draft rerolls.",
+      description: "Gain a draft reroll.",
       tier: 3,
       category: "draft",
       flavor: "Do not like these? Ask again.",
     },
+    // Rebalance: two free rerolls was a lot of raw draft-shaping for tier 3;
+    // trimmed to a single reroll (+2 -> +1).
     instant((_inst, api) => {
-      api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 2;
+      api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
     }),
   ),
   card(
@@ -1301,13 +1303,16 @@ export const WILD_ARCANE: Buff[] = [
       id: "wa_suppress_magic",
       name: "Suppress Magic",
       description:
-        "Your opponent's next two draft offers contain no draft-manipulation cards, and the next buff they draft arrives nullified.",
+        "Your opponent's next draft offer contains no draft-manipulation cards, and the next buff they draft arrives nullified.",
       tier: 3,
       category: "draft",
       flavor: "No meta for you, and the next trick fizzles too.",
     },
+    // Rebalance: denying two whole offers of draft cards plus a nullify was two
+    // strong effects at tier 3; the meta-denial drops to a single offer
+    // (noDraftCards +2 -> +1), nullify kept.
     instant((_inst, api) => {
-      api.theirs.flags.noDraftCards = (api.theirs.flags.noDraftCards ?? 0) + 2;
+      api.theirs.flags.noDraftCards = (api.theirs.flags.noDraftCards ?? 0) + 1;
       api.theirs.flags.nullifyIncoming = (api.theirs.flags.nullifyIncoming ?? 0) + 1;
     }),
   ),
@@ -1331,14 +1336,17 @@ export const WILD_ARCANE: Buff[] = [
       id: "wa_greed",
       name: "Greed",
       description:
-        "Your next draft offer shows three cards, and you take all of them instead of one.",
+        "Your next draft offer, you take both cards instead of choosing one.",
       tier: 6,
       category: "draft",
       flavor: "Why choose?",
     },
+    // Rebalance: widening to three cards AND keeping all three handed you a
+    // free extra card on top of skipping the pick entirely. Dropped the
+    // three-card widen (no prepThree), so Greed now takes both of a normal
+    // two-card offer.
     instant((_inst, api) => {
       api.mine.flags.takeBoth = (api.mine.flags.takeBoth ?? 0) + 1;
-      api.mine.flags.prepThree = true;
     }),
   ),
   card(
@@ -1346,13 +1354,16 @@ export const WILD_ARCANE: Buff[] = [
       id: "wa_high_roll",
       icon: "Dice6",
       name: "High Roll",
-      description: "Force your next draft offer to roll at tier 6.",
+      description: "Force your next draft offer to roll at tier 5.",
       tier: 4,
       category: "draft",
       flavor: "Load the dice, then roll them.",
     },
+    // Rebalance: a tier-4 card guaranteeing a tier-6 offer was a +2 tier leap,
+    // out of line with the forceTier ladder (North Star tier 3 -> tier 4 is
+    // +1). Brought down a notch to tier 5.
     instant((_inst, api) => {
-      api.mine.flags.forceTier = 6;
+      api.mine.flags.forceTier = 5;
     }),
   ),
   card(
@@ -1441,18 +1452,19 @@ export const WILD_ARCANE: Buff[] = [
       icon: "Telescope",
       name: "Omniscience",
       description:
-        "See your opponent's nerf for the rest of the game; your next draft shows three cards to pick from and rolls one tier higher.",
+        "See your opponent's nerf for the rest of the game; your next draft shows three cards to pick from.",
       tier: 4,
       category: "info",
       boon: true,
       flavor: "Nothing about them is hidden now.",
     },
-    // Unique triple: reveal + prepThree + bankBonus (Transcendence pairs the
-    // draft half with a nerf removal instead).
+    // Rebalance: reveal + prepThree + bankBonus stacked three separate perks on
+    // one tier-4 card. Dropped the tier lift (bankBonus), leaving the reveal
+    // plus the three-card offer. Still distinct from Foresight (reveal +
+    // bankBonus, tier 3).
     instant((_inst, api) => {
       api.mine.oppNerfRevealed = true;
       api.mine.flags.prepThree = true;
-      api.mine.flags.bankBonus = Math.min(1, (api.mine.flags.bankBonus ?? 0) + 1);
     }),
   ),
 ];
