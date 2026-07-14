@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Desert cactus at sunset">
+  <defs>
+    <linearGradient id="dc-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd98f"/><stop offset="0.5" stop-color="#f5915c"/><stop offset="1" stop-color="#c15b6b"/></linearGradient>
+    <linearGradient id="dc-sand" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e0a061"/><stop offset="1" stop-color="#a86a3e"/></linearGradient>
+    <radialGradient id="dc-sun" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#fff3d0"/><stop offset="0.6" stop-color="#ffcf82"/><stop offset="1" stop-color="#ffcf82" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="200" height="200" fill="url(#dc-sky)"/>
+  <circle cx="128" cy="78" r="38" fill="url(#dc-sun)"/>
+  <circle cx="128" cy="78" r="20" fill="#fff0c8"/>
+  <path d="M0 150 L46 132 L96 148 L150 130 L200 146 L200 200 L0 200 Z" fill="#b06a4a" opacity="0.6"/>
+  <rect x="0" y="150" width="200" height="50" fill="url(#dc-sand)"/>
+  <g fill="#3f6b4a" stroke="#2c4d35" stroke-width="2">
+    <rect x="78" y="78" width="18" height="78" rx="9"/>
+    <path d="M78 108 q-16 0 -16 -16 v-12 q0 -8 6 -8 t6 8 v10 q0 6 4 6 Z"/>
+    <path d="M96 100 q16 0 16 -16 v-8 q0 -8 6 -8 t6 8 v6 q0 8 -8 12 Z"/>
+  </g>
+  <g fill="#5a8a63" opacity="0.6"><rect x="82" y="82" width="5" height="70" rx="2"/></g>
+  <g stroke="#2c4d35" stroke-width="1" opacity="0.5"><path d="M78 96 h18 M78 116 h18 M78 136 h18"/></g>
+  <g fill="#3f6b4a" stroke="#2c4d35" stroke-width="2">
+    <rect x="36" y="128" width="11" height="28" rx="5"/>
+    <path d="M36 138 q-9 0 -9 -9 v-4 q0 -5 4 -5 t4 5 v4 q0 3 1 3 Z"/>
+  </g>
+  <g fill="#8f5a34"><ellipse cx="150" cy="172" rx="22" ry="5" opacity="0.5"/><ellipse cx="40" cy="180" rx="18" ry="4" opacity="0.5"/></g>
+  <g fill="#c9d67a"><circle cx="156" cy="168" r="3"/><circle cx="164" cy="172" r="3"/><circle cx="148" cy="172" r="3"/></g>
+</svg>

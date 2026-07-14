@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Rain on a window">
+  <defs>
+    <linearGradient id="wr-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fa2b3"/><stop offset="1" stop-color="#4a5b6b"/></linearGradient>
+    <linearGradient id="wr-glass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#aebfce" stop-opacity="0.25"/><stop offset="1" stop-color="#5a6b7b" stop-opacity="0.35"/></linearGradient>
+    <radialGradient id="wr-lamp" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#ffd98a"/><stop offset="1" stop-color="#ffd98a" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="200" height="200" fill="url(#wr-sky)"/>
+  <g opacity="0.7">
+    <rect x="18" y="70" width="22" height="90" fill="#57697a"/>
+    <rect x="52" y="48" width="30" height="112" fill="#48596a"/>
+    <rect x="96" y="84" width="24" height="76" fill="#5c6e7f"/>
+    <rect x="132" y="58" width="28" height="102" fill="#495a6b"/>
+    <rect x="170" y="78" width="20" height="82" fill="#57697a"/>
+  </g>
+  <g fill="#f2d98a" opacity="0.85">
+    <rect x="58" y="60" width="5" height="6"/><rect x="70" y="72" width="5" height="6"/><rect x="138" y="70" width="5" height="6"/><rect x="150" y="90" width="5" height="6"/><rect x="102" y="98" width="5" height="6"/>
+  </g>
+  <circle cx="70" cy="74" r="14" fill="url(#wr-lamp)"/>
+  <rect width="200" height="200" fill="url(#wr-glass)"/>
+  <rect x="96" y="0" width="8" height="200" fill="#3a4753"/>
+  <rect x="0" y="96" width="200" height="8" fill="#3a4753"/>
+  <rect x="0" y="0" width="200" height="200" fill="none" stroke="#2f3a44" stroke-width="12"/>
+  <g fill="#cddae6" opacity="0.7">
+    <ellipse cx="40" cy="46" rx="5" ry="7"/><path d="M40 53 q0 20 -2 34" stroke="#cddae6" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <ellipse cx="150" cy="38" rx="4" ry="6"/><path d="M150 44 q1 24 -1 40" stroke="#cddae6" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <circle cx="64" cy="140" r="4"/><circle cx="128" cy="128" r="5"/><circle cx="150" cy="150" r="3"/><circle cx="38" cy="128" r="3"/><circle cx="120" cy="166" r="4"/><circle cx="78" cy="120" r="2.5"/>
+  </g>
+  <g stroke="#dbe6ef" stroke-width="1.4" opacity="0.5" stroke-linecap="round"><path d="M30 20 l-8 22 M110 24 l-8 22 M170 30 l-8 22 M74 30 l-6 18"/></g>
+</svg>

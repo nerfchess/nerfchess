@@ -121,7 +121,10 @@ function LobbyInner() {
       }
     };
     poll();
-    const id = window.setInterval(poll, 5000);
+    // Poll a touch faster than before so a game that just ended drops out of the
+    // Watch list quickly (the server already omits finished games; this shortens
+    // how long a just-ended board can still show).
+    const id = window.setInterval(poll, 3000);
     return () => {
       cancelled = true;
       window.clearInterval(id);

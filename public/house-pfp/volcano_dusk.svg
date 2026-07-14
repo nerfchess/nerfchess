@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Erupting volcano at dusk">
+  <defs>
+    <linearGradient id="vd-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a1c46"/><stop offset="0.5" stop-color="#7d3b62"/><stop offset="1" stop-color="#e07a4d"/></linearGradient>
+    <linearGradient id="vd-cone" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a2536"/><stop offset="1" stop-color="#1c1220"/></linearGradient>
+    <radialGradient id="vd-glow" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#ffe6a8"/><stop offset="0.55" stop-color="#ff9d3c" stop-opacity="0.7"/><stop offset="1" stop-color="#ff9d3c" stop-opacity="0"/></radialGradient>
+    <linearGradient id="vd-lava" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff2b0"/><stop offset="0.5" stop-color="#ff8a2a"/><stop offset="1" stop-color="#c22a1e"/></linearGradient>
+  </defs>
+  <rect width="200" height="200" fill="url(#vd-sky)"/>
+  <circle cx="100" cy="70" r="58" fill="url(#vd-glow)"/>
+  <circle cx="44" cy="36" r="1.6" fill="#fbe6c9" opacity="0.8"/>
+  <circle cx="162" cy="28" r="1.3" fill="#fbe6c9" opacity="0.7"/>
+  <circle cx="24" cy="64" r="1.1" fill="#fbe6c9" opacity="0.6"/>
+  <path d="M20 200 L84 66 Q100 52 116 66 L180 200 Z" fill="url(#vd-cone)"/>
+  <path d="M84 66 Q100 52 116 66 L112 78 L108 70 L100 82 L92 70 L88 78 Z" fill="url(#vd-lava)"/>
+  <path d="M100 68 L96 108 L104 150 L110 200 L92 200 L96 150 Z" fill="url(#vd-lava)" opacity="0.92"/>
+  <path d="M100 66 L84 60 Q78 44 92 40 Q86 26 102 30 Q112 20 122 34 Q136 34 128 50 Q136 62 116 66 Z" fill="#4a3550" opacity="0.85"/>
+  <path d="M100 64 L88 58 Q84 46 96 44 Q92 34 104 38 Q114 32 118 44 Q128 46 120 56 Z" fill="#6b4a63" opacity="0.7"/>
+  <circle cx="96" cy="88" r="2.4" fill="#ffd27a"/>
+  <circle cx="110" cy="76" r="1.8" fill="#ffb84d"/>
+  <circle cx="88" cy="78" r="1.6" fill="#ffb84d"/>
+  <path d="M0 200 L60 176 L140 190 L200 172 L200 200 Z" fill="#170e1c"/>
+  <g stroke="#ff7a3c" stroke-width="1.2" opacity="0.45" stroke-linecap="round"><path d="M30 194 h22 M150 196 h26 M96 198 h16"/></g>
+</svg>

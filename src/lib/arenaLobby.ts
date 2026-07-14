@@ -31,6 +31,11 @@ let lastGames: ArenaLobbyGame[] = [];
 let lastAt = 0;
 let inflight: Promise<ArenaLobbyGame[]> | null = null;
 const FRESH_MS = 4000;
+// How long a last-good snapshot may stand in for a failed/blipping fetch before
+// it is dropped. A brief blip keeps the games on screen; a genuine outage clears
+// them so FINISHED arena games can't linger in the Watch list forever (the
+// "ended games should just go away" report). Comfortably longer than one poll.
+const STALE_MS = 15_000;
 
 async function fetchArenaGames(): Promise<ArenaLobbyGame[]> {
   if (!ARENA_URL) return [];
@@ -43,20 +48,29 @@ async function fetchArenaGames(): Promise<ArenaLobbyGame[]> {
       const timer = window.setTimeout(() => ctl.abort(), 3000);
       const res = await fetch(`${ARENA_URL}/lobby`, { signal: ctl.signal });
       window.clearTimeout(timer);
-      if (!res.ok) return lastGames;
+      if (!res.ok) return staleOrEmpty();
       const body = (await res.json()) as { games?: ArenaLobbyGame[] };
       lastGames = Array.isArray(body.games) ? body.games.filter((g) => g && typeof g.id === "string") : [];
       lastAt = Date.now();
       return lastGames;
     } catch {
-      // Keep the previous snapshot; an unreachable arena must never break the
-      // DO lobby around it.
-      return lastGames;
+      // Keep a RECENT snapshot through a blip; drop a stale one so an unreachable
+      // arena never leaves finished games frozen in the lobby.
+      return staleOrEmpty();
     } finally {
       inflight = null;
     }
   })();
   return inflight;
+}
+
+// The last-good games while they're still recent; otherwise clear and return
+// empty so nothing lingers past STALE_MS without a fresh confirmation.
+function staleOrEmpty(): ArenaLobbyGame[] {
+  if (Date.now() - lastAt > STALE_MS) {
+    lastGames = [];
+  }
+  return lastGames;
 }
 
 function toLobbyGame(g: ArenaLobbyGame): MPLobbyGame {

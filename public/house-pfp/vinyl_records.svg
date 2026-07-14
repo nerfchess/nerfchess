@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Vinyl records and turntable">
+  <defs>
+    <linearGradient id="vr-bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a3550"/><stop offset="1" stop-color="#1c1a2b"/></linearGradient>
+    <radialGradient id="vr-disc" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#2a2a30"/><stop offset="0.55" stop-color="#111114"/><stop offset="1" stop-color="#26262c"/></radialGradient>
+    <linearGradient id="vr-deck" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c9b79a"/><stop offset="1" stop-color="#8f7c60"/></linearGradient>
+  </defs>
+  <rect width="200" height="200" fill="url(#vr-bg)"/>
+  <rect x="14" y="70" width="172" height="120" rx="10" fill="url(#vr-deck)"/>
+  <rect x="14" y="70" width="172" height="7" rx="3" fill="#e2d3ba" opacity="0.7"/>
+  <g>
+    <circle cx="92" cy="128" r="52" fill="url(#vr-disc)"/>
+    <g fill="none" stroke="#3c3c44" stroke-width="1" opacity="0.7">
+      <circle cx="92" cy="128" r="46"/><circle cx="92" cy="128" r="40"/><circle cx="92" cy="128" r="34"/><circle cx="92" cy="128" r="28"/>
+    </g>
+    <circle cx="92" cy="128" r="18" fill="#d94f4f"/>
+    <circle cx="92" cy="128" r="18" fill="none" stroke="#a83636" stroke-width="2"/>
+    <circle cx="92" cy="128" r="3" fill="#1c1a2b"/>
+    <path d="M60 96 A52 52 0 0 1 120 92" fill="none" stroke="#6b6b74" stroke-width="2" opacity="0.5"/>
+  </g>
+  <g>
+    <circle cx="156" cy="88" r="7" fill="#4a4438"/>
+    <rect x="150" y="88" width="12" height="58" rx="3" fill="#c7c7cf" transform="rotate(24 156 88)"/>
+    <rect x="104" y="132" width="14" height="9" rx="2" fill="#26262c" transform="rotate(24 111 136)"/>
+  </g>
+  <g>
+    <rect x="150" y="150" width="40" height="40" rx="3" fill="#e0a24b" transform="rotate(-8 170 170)"/>
+    <rect x="146" y="156" width="40" height="40" rx="3" fill="#4f8db0" transform="rotate(4 166 176)"/>
+    <circle cx="166" cy="176" r="5" fill="#1c1a2b"/>
+  </g>
+</svg>

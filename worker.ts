@@ -38,11 +38,13 @@ import {
   houseNerfPickIndex,
   housePersona,
   houseSeedRating,
+  houseSeedRatingForMode,
   houseThinkMs,
   isHouseUserId,
   pickHouseBotByDifficulty,
   activeHouseRoster,
   clampHouseCount,
+  dailyHouseCount,
   pickHouseMove,
   pickHouseSeek,
   syncHouseRatings,
@@ -442,7 +444,11 @@ const houseSeeksKey = "hp:seeks";
 // ilovewhitestickystuff, ilovemysister) were rewritten to realistic
 // chess-site handles (e4enjoyer, viktor_m85, KnightSlayer99). Same drill:
 // new hp_ ids, re-run ensureHouseUsers; old accounts stay orphaned.
-const houseSeededKey = "hp:seeded:v4";
+// v5: the roster grew from 60 to 210 personas (an "expansion wave" plus two new
+// low tiers) so the active window can be 60-90 and cycle daily. The 150 new
+// handles are new hp_ ids, so re-run ensureHouseUsers to create their accounts
+// (rows, per-mode ratings, avatars, bios). Old accounts stay as-is.
+const houseSeededKey = "hp:seeded:v5";
 // One-time-per-revision sync of every house account's rating AND identity
 // (avatar, location bio) to the current roster values (see syncHouseRatings).
 // Bump the suffix whenever the roster's ratings or identity change so existing
@@ -461,7 +467,13 @@ const houseSeededKey = "hp:seeded:v4";
 // gives every persona a scenic/object pfp, was ~half), so re-circulate once
 // more to carry the new avatars onto every already-seeded users row. Bumped
 // past identity-3 in case that revision already ran in prod before this change.
-const houseRatingsSyncedKey = "hp:ratings-synced:identity-4";
+// rating-v5: the advertised ratings were re-spread (every bot +100, sub-1600
+// tiers -100..-150) AND decoupled per mode (Nerf and Buff now differ by up to
+// ~100), plus ~45% of personas gained a baked bio. Bump so syncHouseRatings
+// rewrites every existing account's users.rating, both per-mode buckets, and its
+// bio on the next cold start (ensureHouseUsers only INSERTs, so without this the
+// re-spread never reaches accounts that already exist).
+const houseRatingsSyncedKey = "hp:ratings-synced:rating-v5";
 const houseNextFillerKey = "hp:nextFillerAt";
 // Slow heartbeat while at least one human socket is connected; with nobody
 // online there is no heartbeat and the DO goes idle between match deadlines.
@@ -980,16 +992,27 @@ export class GameServer extends DurableObject<Env> {
     return value;
   }
 
-  // How many house bots are active right now: the first N of the roster, set by
-  // the moderator slider (app_settings.house_count, 30-60). Cached on the same
-  // TTL as houseEnabled; an absent/garbage row means the default minimum.
+  // Whole days since the epoch — the seed for the day-varying house count and the
+  // rotating active window, so both change once per (UTC) day and stay stable
+  // within it. Kept here (not in the pure bots module) because Date is a DO
+  // concern; the module takes it as a plain argument.
+  private houseDayIndex(): number {
+    return Math.floor(Date.now() / 86_400_000);
+  }
+
+  // How many house bots are active right now. DEFAULT: a day-varying value in
+  // 60-90 (dailyHouseCount), so the population breathes day to day and, together
+  // with the rotating window in activeHouseRoster, cycles through the 210-deep
+  // roster over time. OVERRIDE: if a moderator has pinned an explicit
+  // app_settings.house_count, that clamped value wins. Cached on the same ~15s TTL
+  // as houseEnabled; it recomputes shortly after a day boundary.
   private houseCountCache: { value: number; at: number } | null = null;
   private async houseCount(): Promise<number> {
     const now = Date.now();
     if (this.houseCountCache && now - this.houseCountCache.at < houseEnabledTtlMs) {
       return this.houseCountCache.value;
     }
-    let value = this.houseCountCache?.value ?? clampHouseCount(NaN);
+    let value = dailyHouseCount(this.houseDayIndex());
     try {
       const db = await this.db();
       if (db) {
@@ -997,7 +1020,11 @@ export class GameServer extends DurableObject<Env> {
           .prepare("SELECT value FROM app_settings WHERE key = ?")
           .bind("house_count")
           .first<{ value: string }>();
-        value = row ? clampHouseCount(Number(row.value)) : clampHouseCount(NaN);
+        // Only a non-empty stored value overrides the daily default; an absent or
+        // blank row leaves the day-varying count in place.
+        if (row && row.value != null && String(row.value).trim() !== "") {
+          value = clampHouseCount(Number(row.value));
+        }
       }
     } catch {}
     this.houseCountCache = { value, at: now };
@@ -3241,6 +3268,23 @@ export class GameServer extends DurableObject<Env> {
         if (!(await this.houseEnabled())) return error(ws, "seek_gone", "That player is no longer waiting.");
         const persona = housePersona(targetUserId);
         if (!persona) return error(ws, "seek_gone", "That player is no longer waiting.");
+        // One game per bot: a persona already seated in a live game must never be
+        // paired into a second. A ~5-7s-stale lobby row (the seek was cleared when
+        // the persona got pulled into a house game) or two humans double-tapping
+        // the same row would otherwise double-seat it — the reported "one account
+        // playing two games at once". Reject as gone, mirroring the busy guard
+        // playHouseBot uses; the human can quick-pair or tap another row.
+        const houseBusy = new Set<string>();
+        for (const m of await this.loadLiveMatches()) {
+          if (m.result) continue;
+          for (const c of ["w", "b"] as Color[]) {
+            const bid = m.bots?.[c];
+            if (bid) houseBusy.add(bid);
+          }
+        }
+        if (houseBusy.has(persona.userId)) {
+          return error(ws, "seek_gone", "That player is no longer waiting.");
+        }
         const meEntry: QueueEntry = {
           attachmentId: session.id,
           userId: session.userId,
@@ -3829,7 +3873,7 @@ export class GameServer extends DurableObject<Env> {
       }
     }
 
-    const free = activeHouseRoster(await this.houseCount()).filter(
+    const free = activeHouseRoster(await this.houseCount(), this.houseDayIndex()).filter(
       (persona) => !busy.has(persona.userId) && !seeks.some((seek) => seek.userId === persona.userId),
     );
 
@@ -4379,7 +4423,7 @@ export class GameServer extends DurableObject<Env> {
       mode,
       // The LIVE rating in the seek's mode bucket, so the number in the lobby
       // moves with the account's real results (seed only as a fallback).
-      rating: live?.byId.get(persona.userId)?.[mode] ?? houseSeedRating(persona),
+      rating: live?.byId.get(persona.userId)?.[mode] ?? houseSeedRatingForMode(persona, mode),
       avatar: identity?.avatar ?? persona.avatar,
       at: now,
     };
@@ -4405,7 +4449,7 @@ export class GameServer extends DurableObject<Env> {
         };
       }
     } catch {}
-    const rating = houseSeedRating(persona);
+    const rating = houseSeedRatingForMode(persona, mode);
     return { id: persona.userId, name: persona.name, rating, rd: 150, vol: 0.06, avatar: persona.avatar };
   }
 
@@ -4538,7 +4582,7 @@ export class GameServer extends DurableObject<Env> {
         if (id) busy.add(id);
       }
     }
-    const persona = pickHouseBotByDifficulty(difficulty, busy, randomInt, activeHouseRoster(await this.houseCount()));
+    const persona = pickHouseBotByDifficulty(difficulty, busy, randomInt, activeHouseRoster(await this.houseCount(), this.houseDayIndex()));
     if (!persona) return error(ws, "no_bot", "Every bot is busy right now. Try again shortly.");
     let rating = 1500;
     let rd = 350;
@@ -4583,7 +4627,7 @@ export class GameServer extends DurableObject<Env> {
       // Identity from the users table (admin edits from /mod/house), baked
       // constants as the fallback — same resolution as newHouseSeek.
       name: liveInfo.identity.get(p.userId)?.username ?? p.name,
-      rating: liveInfo.byId.get(p.userId)?.[mode] ?? houseSeedRating(p),
+      rating: liveInfo.byId.get(p.userId)?.[mode] ?? houseSeedRatingForMode(p, mode),
       rd: 150,
       vol: 0.06,
       avatar: liveInfo.identity.get(p.userId)?.avatar ?? p.avatar,
@@ -5833,6 +5877,16 @@ export class GameServer extends DurableObject<Env> {
     // acquired — the same grant-and-immediately-resolve a normal instant draft
     // does (see acquireBuff / applyStoredDraftAction, which replay identically).
     acquireBuff(game, color, id, def.tier);
+    // A summoned card can add/steal CLOCK time the instant it is acquired
+    // (Overtime Whistle +30s, Buzzer Beater, casino/timefaustian/meta clock
+    // instants — each calls api.adjustClock, which queues onto game.buffs.clockFx).
+    // acquireBuff fires that effect but only QUEUES the delta; unless we drain it
+    // here it is silently dropped (clockFx is transient and stripped on save), so
+    // every clock-adding card summoned from the god panel was a no-op. Drain it
+    // now — exactly as draftUse does — so the delta lands on match.clocks before
+    // the save below, and remember whether a clock actually moved.
+    const now = Date.now();
+    const clockChanged = this.applyClockFx(match, game, now);
     // An instant just mutated the authoritative board inside acquireBuff, and
     // NEITHER a dtState frame nor a dropped grant action carries a board
     // mutation to the replicas — so route the instant through the very same
@@ -5852,10 +5906,19 @@ export class GameServer extends DurableObject<Env> {
       { ply: match.moves.length, color, a: "grant", id, tier: def.tier as number },
     ];
     // Keep the fast-replay checkpoint honest (the card is now in `game`), then
-    // persist. No turn or clock change, so there is no clock frame and no bot
-    // re-arm to do.
+    // persist. A summoned instant CAN change the clock (Overtime Whistle,
+    // Buzzer Beater, every addSelfSec/subOppSec instant), so the drained delta
+    // above must persist here and be broadcast below.
     this.maybeCheckpoint(match, game);
     await this.saveMatch(match);
+    // If the summon moved a clock, broadcast the authoritative clock frame so
+    // both seats and every spectator see the new time (mirrors draftUse).
+    if (clockChanged) {
+      const c = this.currentClocks(match, now);
+      const clockFrame = { wc: Math.round(c.w), bc: Math.round(c.b) };
+      this.broadcast(match, "n", clockFrame);
+      this.sendWatchers(match, "n", clockFrame);
+    }
     // Instant only: publish the resolved effect so every LIVE client mutates its
     // own board (a spectator or the granting seat replaying later gets the same
     // effect via publicDraftActions surfacing this grant as a pick).
@@ -6562,7 +6625,7 @@ export class GameServer extends DurableObject<Env> {
       // always discoverable. The lobby still reads as busy because real
       // house-vs-house filler games run up to houseVsHouseCap (each puts two
       // personas on genuine "playing" AND lists a watchable game above).
-      const idlePersonas = activeHouseRoster(await this.houseCount()).filter((p) => !seen.has(p.userId));
+      const idlePersonas = activeHouseRoster(await this.houseCount(), this.houseDayIndex()).filter((p) => !seen.has(p.userId));
       // Idle bots get a placeholder seed here; the canonical most-played-bucket
       // query below (now shared with human rows) overwrites it for any bot that
       // has a rated bucket, so an idle bot shows the SAME number as its profile,

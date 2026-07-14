@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Green bamboo grove">
+  <defs>
+    <linearGradient id="bg-back" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d9e8c4"/><stop offset="0.5" stop-color="#9fc27a"/><stop offset="1" stop-color="#5f8a4e"/></linearGradient>
+    <linearGradient id="bg-stalk" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#a9c76a"/><stop offset="0.5" stop-color="#7fae4f"/><stop offset="1" stop-color="#557b39"/></linearGradient>
+    <linearGradient id="bg-stalk2" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#c4dd8e"/><stop offset="0.5" stop-color="#96bd5f"/><stop offset="1" stop-color="#6a9642"/></linearGradient>
+  </defs>
+  <rect width="200" height="200" fill="url(#bg-back)"/>
+  <g opacity="0.35"><rect x="28" y="0" width="7" height="200" fill="#7ba14e"/><rect x="118" y="0" width="7" height="200" fill="#7ba14e"/><rect x="170" y="0" width="6" height="200" fill="#7ba14e"/></g>
+  <g opacity="0.4" fill="#6f9a45"><path d="M40 30 q30 8 46 -6 q-20 22 -46 12 Z"/><path d="M150 60 q-30 6 -46 -8 q22 20 46 8 Z"/><path d="M60 150 q28 10 44 -4 q-18 22 -44 10 Z"/></g>
+  <rect x="54" y="0" width="13" height="200" rx="3" fill="url(#bg-stalk)"/>
+  <g fill="#405e2c"><rect x="53" y="38" width="15" height="4" rx="2"/><rect x="53" y="92" width="15" height="4" rx="2"/><rect x="53" y="148" width="15" height="4" rx="2"/></g>
+  <rect x="57" y="0" width="3" height="200" fill="#c6df95" opacity="0.6"/>
+  <rect x="92" y="0" width="16" height="200" rx="3" fill="url(#bg-stalk2)"/>
+  <g fill="#3c5a29"><rect x="91" y="24" width="18" height="5" rx="2"/><rect x="91" y="86" width="18" height="5" rx="2"/><rect x="91" y="150" width="18" height="5" rx="2"/></g>
+  <rect x="96" y="0" width="3.5" height="200" fill="#d7ecab" opacity="0.6"/>
+  <rect x="134" y="0" width="11" height="200" rx="3" fill="url(#bg-stalk)"/>
+  <g fill="#405e2c"><rect x="133" y="56" width="13" height="4" rx="2"/><rect x="133" y="116" width="13" height="4" rx="2"/></g>
+  <g fill="#4f7a34"><path d="M108 40 q34 -14 58 -6 q-26 20 -58 12 Z"/><path d="M108 40 q30 6 40 26 q-30 -6 -40 -26 Z"/><path d="M67 110 q30 -12 52 -4 q-24 18 -52 10 Z"/><path d="M145 130 q26 -10 44 -2 q-22 16 -44 8 Z"/></g>
+  <g fill="#7cab4a"><path d="M60 20 q-28 -12 -48 -4 q22 18 48 10 Z"/><path d="M92 78 q-30 -12 -50 -2 q24 18 50 8 Z"/></g>
+</svg>

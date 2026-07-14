@@ -985,7 +985,7 @@ type HouseState = {
 function HouseBotsToggle() {
   const [enabled, setEnabled] = useState<boolean | null>(null);
   const [count, setCount] = useState<number | null>(null);
-  const [bounds, setBounds] = useState<{ min: number; max: number }>({ min: 30, max: 60 });
+  const [bounds, setBounds] = useState<{ min: number; max: number }>({ min: 60, max: 90 });
   const [strength, setStrength] = useState<Pick<
     HouseState,
     "clamp" | "presets" | "skillTiers"
@@ -1074,13 +1074,14 @@ function HouseBotsToggle() {
           {enabled === null ? "…" : saving ? "Saving…" : enabled ? "On" : "Off"}
         </button>
       </div>
-      {/* Active-bot count: how many of the roster seek, play, and appear online.
-          The first N are active, so the base set is always on and raising this
-          switches in the expansion personas. Commits on release. */}
+      {/* Active-bot count: how many of the 210-deep roster seek, play, and appear
+          online at once. By default this varies daily (60-90) and the active
+          window rotates so the crowd cycles through the whole roster over time;
+          moving this slider PINS a fixed count instead. Commits on release. */}
       <div className={"border-t border-white/10 pt-3 " + (enabled === false ? "opacity-50" : "")}>
         <div className="flex items-center justify-between">
           <label htmlFor="house-count" className="smallcaps text-[11px] text-parchment-400">
-            Active bots in the lobby
+            Active bots in the lobby (pins the daily 60-90)
           </label>
           <span className="font-mono text-sm text-gold-leaf tabular-nums">{count ?? "…"}</span>
         </div>

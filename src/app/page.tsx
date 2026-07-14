@@ -13,7 +13,7 @@ import { StarField } from "@/components/StarField";
 import { useLobbySnapshot } from "@/lib/lobbyClient";
 import { AccountUser, fetchMe } from "@/lib/authClient";
 import { ActiveGame, loadActiveGame, clearActiveGame } from "@/lib/multiplayer";
-import { FIRST_GAME_TOUR_HREF } from "@/components/tutorial/tourState";
+import { NewHereChip } from "@/components/NewHereChip";
 
 export default function HomePage() {
   return (
@@ -43,14 +43,7 @@ export default function HomePage() {
               marks over the live board. */}
           <div className="flex items-start justify-between gap-3">
             <span className="eyebrow">Nerf Chess</span>
-            <Link
-              href={FIRST_GAME_TOUR_HREF}
-              className="shrink-0 inline-flex items-center gap-1.5 border border-gold/40 bg-gold/10 px-2.5 py-1 text-[11px] text-gold-leaf no-underline transition-colors hover:bg-gold/20"
-            >
-              <span className="smallcaps">New here?</span>
-              <span className="hidden sm:inline">Learn the game in 3 minutes</span>
-              <span aria-hidden>→</span>
-            </Link>
+            <NewHereChip />
           </div>
           {/* ONE dominant action. It enters the lobby's Quick Play tab, where
               Buff and 3+2 are already selected, so the next click is the

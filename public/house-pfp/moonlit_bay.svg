@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Moonlit bay at night">
+  <defs>
+    <linearGradient id="mb-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1a2a4a"/><stop offset="0.6" stop-color="#33456b"/><stop offset="1" stop-color="#6a6f8f"/></linearGradient>
+    <linearGradient id="mb-water" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a5578"/><stop offset="1" stop-color="#141f38"/></linearGradient>
+    <radialGradient id="mb-moon" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#fdfbe8"/><stop offset="0.55" stop-color="#e8ecc9"/><stop offset="1" stop-color="#e8ecc9" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="200" height="200" fill="url(#mb-sky)"/>
+  <circle cx="100" cy="62" r="40" fill="url(#mb-moon)"/>
+  <circle cx="100" cy="62" r="22" fill="#fbf8e4"/>
+  <circle cx="108" cy="56" r="4" fill="#eceac8" opacity="0.6"/>
+  <circle cx="94" cy="68" r="3" fill="#eceac8" opacity="0.6"/>
+  <g fill="#fdfbe8">
+    <circle cx="38" cy="34" r="1.3"/><circle cx="60" cy="20" r="1"/><circle cx="150" cy="30" r="1.4"/><circle cx="172" cy="48" r="1"/><circle cx="24" cy="66" r="1"/><circle cx="178" cy="18" r="1.2"/><circle cx="132" cy="16" r="1"/>
+  </g>
+  <path d="M0 118 L34 108 L58 116 L58 122 L0 122 Z" fill="#1a2438"/>
+  <path d="M200 116 L162 104 L134 114 L134 122 L200 122 Z" fill="#141d30"/>
+  <g fill="#0e1626"><path d="M40 108 l3 -8 3 8 Z"/><path d="M148 106 l3 -9 3 9 Z"/><path d="M156 108 l2 -6 2 6 Z"/></g>
+  <rect x="0" y="120" width="200" height="80" fill="url(#mb-water)"/>
+  <g fill="#f4f2d8" opacity="0.85">
+    <ellipse cx="100" cy="132" rx="18" ry="3"/><ellipse cx="100" cy="146" rx="13" ry="2.5"/><ellipse cx="100" cy="162" rx="20" ry="3"/><ellipse cx="100" cy="180" rx="15" ry="2.5"/>
+  </g>
+  <g stroke="#9aa6c4" stroke-width="1.3" opacity="0.5" stroke-linecap="round"><path d="M24 138 h26 M150 144 h32 M40 168 h30 M140 176 h34"/></g>
+</svg>

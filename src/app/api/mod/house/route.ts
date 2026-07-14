@@ -91,7 +91,8 @@ function mergeOverrides(
 }
 
 // POST { enabled?, count?, skillOverrides?, resetSkillOverrides? }:
-// - enabled/count: turn the house bots on/off and set the active count (30-60).
+// - enabled/count: turn the house bots on/off and PIN the active count (60-90),
+//   overriding the day-varying default the DO uses when no count is stored.
 // - skillOverrides: a { "<tier>": patch | null } map, merged into the stored
 //   overrides (per-tier patch, or null to clear a tier). Values are clamped.
 // - resetSkillOverrides: clear ALL strength overrides (back to baked).
