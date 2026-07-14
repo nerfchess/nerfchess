@@ -4,8 +4,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 import { type CSSProperties, useEffect, useMemo, useRef, useState } from "react";
-import { AbilityBar } from "@/components/AbilityBar";
-import { Board, QueuedPremove } from "@/components/Board";
+import { Board, NERF_REVEAL_SKIP, type NerfRevealInfo, QueuedPremove } from "@/components/Board";
 import { BoardPlayerRow } from "@/components/BoardPlayerRow";
 import { AdminGodPanel } from "@/components/AdminGodPanel";
 import { OppPlaysLog, type OppPlay } from "@/components/OppPlaysLog";
@@ -2035,6 +2034,35 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   // straggling drafter's pill ticks — never the waiting player's.
   const opponentNerf = revealedOppNerf ?? (myColor === "w" ? game.black.nerf : game.white.nerf);
   const oppNerfShown = !!revealedOppNerf && (liveOppReveal || !uiSettings.hideOpponentReveal);
+  // "The rule descends": every nerf the viewer currently knows, for the
+  // board's one-shot reveal splash (fired once per color+id inside Board) —
+  // their own rule from game start, the opponent's the moment it shows.
+  // Placeholder rules (buff mode's no-nerf, the unshackled stub) never
+  // announce. Each entry pulses the squares the rule's visual() marks.
+  const nerfReveals: NerfRevealInfo[] = [];
+  if (!NERF_REVEAL_SKIP.has(myNerf.id)) {
+    nerfReveals.push({
+      id: myNerf.id,
+      name: myNerf.name,
+      tier: myNerf.tier as number,
+      color: myColor,
+      highlightSquares: [...(visual?.highlightSquares ?? []), ...(visual?.bannedSquares ?? [])],
+    });
+  }
+  if (oppNerfShown && revealedOppNerf && !NERF_REVEAL_SKIP.has(revealedOppNerf.id)) {
+    const oppState = myColor === "w" ? game.black.state : game.white.state;
+    const oppVisual = revealedOppNerf.visual?.(oppState, makeContext(game, oppColor));
+    nerfReveals.push({
+      id: revealedOppNerf.id,
+      name: revealedOppNerf.name,
+      tier: revealedOppNerf.tier as number,
+      color: oppColor,
+      highlightSquares: [
+        ...(oppVisual?.highlightSquares ?? []),
+        ...(oppVisual?.bannedSquares ?? []),
+      ],
+    });
+  }
   // Draft games have no "hidden rule" placeholder: while the opponent's rule
   // is unknown their card shows only the player header, and the rule appears
   // there once revealed (end of game or a voluntary reveal). Buff mode never
@@ -2567,6 +2595,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                         }
                   }
                   lastMove={lastMoveForDisplay}
+                  nerfReveals={nerfReveals}
                   fxTimePressure={
                     clockEnabled && !game.result && (whiteMs < 15_000 || blackMs < 15_000)
                   }
@@ -2701,21 +2730,6 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                 </div>
               )}
             </div>
-            {/* Ability bar: the quick-cast surface, docked beside the board.
-                Same activation pipe as the dock's Use buttons (startBuffUse ->
-                useBuffTargeting); the dock stays the full inventory/ledger. */}
-            {isDraft && game.buffs && !isReviewingHistory && (
-              <AbilityBar
-                game={game}
-                myColor={myColor}
-                canAct={draftCanAct}
-                onStartUse={startBuffUse}
-                activeIndex={buffTargeting.targeting?.buffIndex ?? null}
-                orientation="vertical"
-                style={railHeightStyle}
-                className="hidden self-start sm:flex sm:max-h-[var(--board-height)]"
-              />
-            )}
             <div
               className={
                 "hidden min-h-0 overflow-hidden gap-3 sm:grid sm:h-[var(--board-height)] sm:w-72 sm:shrink-0 " +
@@ -2802,22 +2816,6 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           theirs={draftReveal.theirs}
           onDismiss={() => setDraftReveal(null)}
         />
-      )}
-
-      {/* Mobile quick-cast strip: the same ability bar, horizontal, floating
-          just above the move drawer's bar. Same activation pipe as the dock. */}
-      {isDraft && game.buffs && !isReviewingHistory && (
-        <div className="pointer-events-none fixed inset-x-0 bottom-[calc(2.75rem+env(safe-area-inset-bottom))] z-30 flex justify-center px-2 pb-1 sm:hidden">
-          <AbilityBar
-            game={game}
-            myColor={myColor}
-            canAct={draftCanAct}
-            onStartUse={startBuffUse}
-            activeIndex={buffTargeting.targeting?.buffIndex ?? null}
-            orientation="horizontal"
-            className="pointer-events-auto"
-          />
-        </div>
       )}
 
       <MobileMoveDrawer

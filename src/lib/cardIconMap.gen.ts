@@ -9,7 +9,7 @@
 // --check), and src/lib/cardIcon.ts warns at module load in dev if any
 // shipped card id is missing from the map.
 //
-// Inputs: 1186 cards (342 nerfs + 853 buffs, de-duped), lucide catalog 1539.
+// Inputs: 1184 cards (342 nerfs + 851 buffs, de-duped), lucide catalog 1539.
 // Every icon below is a per-icon named import so Next's optimizePackageImports
 // tree-shakes lucide-react down to exactly the icons on this page.
 import {
@@ -610,7 +610,6 @@ import {
   IndentDecrease,
   Infinity,
   IterationCcw,
-  IterationCw,
   Kanban,
   Keyboard,
   KeyboardMusic,
@@ -859,7 +858,6 @@ import {
   Radical,
   Radio,
   RadioReceiver,
-  RadioTower,
   Rainbow,
   Rat,
   Ratio,
@@ -1279,7 +1277,7 @@ export const CARD_ICON_NAMES: Record<string, string> = {
   board_lock: "LaptopMinimalCheck",
   board_quake: "Shrink",
   boastful: "UserCheck",
-  bodyguard: "Radio",
+  bodyguard: "Radical",
   bombardiro_croc: "Plane",
   bombombini_gusini: "Pilcrow",
   boneca_ambalabu: "LifeBuoy",
@@ -1305,8 +1303,6 @@ export const CARD_ICON_NAMES: Record<string, string> = {
   buzzer_beater: "TimerReset",
   caged_queen: "Clipboard",
   camel_knight: "Footprints",
-  cami_leap: "IterationCw",
-  cami_sweep: "Radar",
   cannon: "CloudDrizzle",
   cappuccino_assassino: "Coffee",
   carnivore_bishops: "CloudAlert",
@@ -1651,7 +1647,7 @@ export const CARD_ICON_NAMES: Record<string, string> = {
   ladies_first: "FolderKey",
   lag_spike: "CircleArrowOutUpRight",
   lame_duck: "AlignVerticalDistributeStart",
-  lame_horses: "RadioTower",
+  lame_horses: "Radio",
   landlord: "BadgeDollarSign",
   last_meal: "Drumstick",
   lava_floor: "AlignHorizontalSpaceAround",
@@ -1798,7 +1794,7 @@ export const CARD_ICON_NAMES: Record<string, string> = {
   peace_of_the_grave: "Shovel",
   peasant_levy: "RefreshCwOff",
   peek: "Glasses",
-  pen_pusher: "Radical",
+  pen_pusher: "Radar",
   peons_first: "UserRoundSearch",
   petrified_forest: "Trees",
   petrified_towers: "Equal",
@@ -2994,7 +2990,6 @@ export const GEN_ICON_COMPONENTS: Record<string, LucideIcon> = {
   IndentDecrease,
   Infinity,
   IterationCcw,
-  IterationCw,
   Kanban,
   Keyboard,
   KeyboardMusic,
@@ -3243,7 +3238,6 @@ export const GEN_ICON_COMPONENTS: Record<string, LucideIcon> = {
   Radical,
   Radio,
   RadioReceiver,
-  RadioTower,
   Rainbow,
   Rat,
   Ratio,
