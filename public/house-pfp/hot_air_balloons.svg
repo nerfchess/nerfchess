@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Hot air balloons">
+  <defs>
+    <linearGradient id="hb-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fc9ec"/><stop offset="1" stop-color="#f6dcc0"/></linearGradient>
+    <linearGradient id="hb-b1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff8a5c"/><stop offset="1" stop-color="#d9443f"/></linearGradient>
+    <linearGradient id="hb-b2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6fd0c0"/><stop offset="1" stop-color="#2f8f9a"/></linearGradient>
+    <linearGradient id="hb-b3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6c451"/><stop offset="1" stop-color="#e0892f"/></linearGradient>
+  </defs>
+  <rect width="200" height="200" fill="url(#hb-sky)"/>
+  <circle cx="160" cy="40" r="16" fill="#fff3cf" opacity="0.7"/>
+  <g fill="#ffffff" opacity="0.85"><ellipse cx="40" cy="46" rx="26" ry="8"/><ellipse cx="66" cy="40" rx="16" ry="6"/><ellipse cx="150" cy="120" rx="24" ry="7"/></g>
+  <!-- hills -->
+  <path d="M0 170 Q60 150 120 168 Q170 180 200 164 V200 H0 Z" fill="#8fae66"/>
+  <path d="M0 180 Q80 164 160 180 Q185 184 200 178 V200 H0 Z" fill="#6f9450"/>
+  <!-- small balloon -->
+  <g transform="translate(150,70)">
+    <path d="M0 0 Q-14 0 -14 -14 Q-14 -30 0 -30 Q14 -30 14 -14 Q14 0 0 0 Z" fill="url(#hb-b3)"/>
+    <path d="M-4 -30 Q-4 -6 0 0 Q4 -6 4 -30" fill="#c76f24" opacity="0.5"/>
+    <path d="M-4 2 L4 2 L2 8 L-2 8 Z" fill="#7a4a28"/>
+    <path d="M-4 0 L-2 8 M4 0 L2 8" stroke="#6b4526" stroke-width="0.8"/>
+  </g>
+  <!-- mid balloon -->
+  <g transform="translate(56,84)">
+    <path d="M0 0 Q-18 0 -18 -18 Q-18 -40 0 -40 Q18 -40 18 -18 Q18 0 0 0 Z" fill="url(#hb-b2)"/>
+    <path d="M-6 -40 Q-6 -8 0 0 Q6 -8 6 -40" fill="#207a82" opacity="0.4"/>
+    <path d="M-12 -30 Q0 -34 12 -30" stroke="#ffffff" stroke-width="1.4" fill="none" opacity="0.6"/>
+    <path d="M-5 3 L5 3 L3 11 L-3 11 Z" fill="#7a4a28"/>
+    <path d="M-5 0 L-3 11 M5 0 L3 11" stroke="#6b4526" stroke-width="0.9"/>
+  </g>
+  <!-- big foreground balloon -->
+  <g transform="translate(108,110)">
+    <path d="M0 0 Q-26 0 -26 -26 Q-26 -56 0 -56 Q26 -56 26 -26 Q26 0 0 0 Z" fill="url(#hb-b1)"/>
+    <path d="M-9 -56 Q-9 -10 0 0 Q9 -10 9 -56" fill="#b53531" opacity="0.5"/>
+    <path d="M-18 -42 Q0 -48 18 -42" stroke="#ffe0b0" stroke-width="2" fill="none" opacity="0.6"/>
+    <path d="M-16 -28 Q0 -22 16 -28" stroke="#ffe0b0" stroke-width="1.6" fill="none" opacity="0.5"/>
+    <path d="M-8 4 L8 4 L5 16 L-5 16 Z" fill="#8a5a30"/>
+    <path d="M-7 0 L-5 16 M7 0 L5 16 M0 0 L0 16" stroke="#6b4526" stroke-width="1"/>
+  </g>
+</svg>

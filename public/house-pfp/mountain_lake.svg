@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Mountain lake at dawn">
+  <defs>
+    <linearGradient id="ml-sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f7c9a0"/>
+      <stop offset="0.45" stop-color="#e79a7e"/>
+      <stop offset="1" stop-color="#8a6b8f"/>
+    </linearGradient>
+    <linearGradient id="ml-water" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#9a8ba6"/>
+      <stop offset="1" stop-color="#3d4a63"/>
+    </linearGradient>
+    <linearGradient id="ml-far" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8f7fa0"/>
+      <stop offset="1" stop-color="#6a5c7d"/>
+    </linearGradient>
+    <radialGradient id="ml-sun" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#fff4dd"/>
+      <stop offset="0.6" stop-color="#ffd79a"/>
+      <stop offset="1" stop-color="#ffd79a" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="200" height="200" fill="url(#ml-sky)"/>
+  <circle cx="126" cy="66" r="30" fill="url(#ml-sun)"/>
+  <circle cx="126" cy="66" r="15" fill="#fff2d4"/>
+  <g fill="#e8a682" opacity="0.5">
+    <ellipse cx="60" cy="46" rx="26" ry="7"/>
+    <ellipse cx="150" cy="34" rx="20" ry="5"/>
+    <ellipse cx="96" cy="58" rx="16" ry="4"/>
+  </g>
+  <!-- far ridge -->
+  <path d="M0 108 L34 78 L58 96 L92 62 L120 92 L150 70 L200 104 V128 H0 Z" fill="url(#ml-far)"/>
+  <!-- near peaks with snow -->
+  <path d="M0 122 L40 72 L74 116 Z" fill="#5b4f6e"/>
+  <path d="M118 120 L156 66 L200 118 Z" fill="#4d4460"/>
+  <path d="M28 92 L40 72 L52 92 L44 88 L36 94 Z" fill="#f3ecf4"/>
+  <path d="M144 90 L156 66 L168 90 L160 86 L151 93 Z" fill="#f3ecf4"/>
+  <path d="M64 126 L100 84 L138 126 Z" fill="#6b5d80"/>
+  <path d="M86 104 L100 84 L114 104 L106 99 L95 106 Z" fill="#faf6fb"/>
+  <!-- waterline -->
+  <rect x="0" y="126" width="200" height="74" fill="url(#ml-water)"/>
+  <!-- reflected peaks -->
+  <g opacity="0.5">
+    <path d="M64 126 L100 168 L138 126 Z" fill="#5a4d6d"/>
+    <path d="M0 126 L40 176 L74 126 Z" fill="#4d4360"/>
+    <path d="M118 126 L156 182 L200 126 Z" fill="#443a56"/>
+  </g>
+  <g stroke="#c9bcd4" stroke-width="1.4" opacity="0.55" stroke-linecap="round">
+    <path d="M20 140 h30 M96 150 h40 M40 162 h28 M120 170 h44 M150 148 h22"/>
+  </g>
+  <ellipse cx="126" cy="134" rx="10" ry="3" fill="#ffe6bd" opacity="0.7"/>
+</svg>

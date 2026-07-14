@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Lavender field">
+  <defs>
+    <linearGradient id="lf-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6d7c0"/><stop offset="0.5" stop-color="#e6b9c9"/><stop offset="1" stop-color="#c8a7d8"/></linearGradient>
+    <linearGradient id="lf-field" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9a7fc0"/><stop offset="1" stop-color="#6a5296"/></linearGradient>
+  </defs>
+  <rect width="200" height="200" fill="url(#lf-sky)"/>
+  <circle cx="146" cy="52" r="20" fill="#fff0d8" opacity="0.85"/>
+  <g fill="#ecc4b2" opacity="0.6"><ellipse cx="50" cy="40" rx="30" ry="7"/><ellipse cx="90" cy="52" rx="18" ry="4"/></g>
+  <!-- distant trees -->
+  <g fill="#7a6f4e" opacity="0.8"><ellipse cx="34" cy="98" rx="14" ry="16"/><ellipse cx="60" cy="100" rx="10" ry="12"/><ellipse cx="168" cy="96" rx="16" ry="18"/></g>
+  <rect x="0" y="106" width="200" height="94" fill="url(#lf-field)"/>
+  <!-- converging rows -->
+  <g fill="#5a4585">
+    <path d="M96 106 L60 200 L84 200 L100 106 Z"/>
+    <path d="M104 106 L140 200 L116 200 L100 106 Z"/>
+    <path d="M84 106 L20 200 L44 200 L92 106 Z"/>
+    <path d="M116 106 L180 200 L156 200 L108 106 Z"/>
+  </g>
+  <g fill="#8f76b8" opacity="0.7">
+    <path d="M100 106 L98 200 L102 200 Z"/>
+  </g>
+  <!-- lavender tufts foreground -->
+  <g stroke="#7c62a8" stroke-width="2.5" stroke-linecap="round">
+    <path d="M20 200 L24 168 M40 200 L44 174 M120 200 L124 170 M150 200 L146 176 M175 200 L178 172 M70 200 L66 178"/>
+  </g>
+  <g fill="#b79ad8">
+    <circle cx="24" cy="166" r="4"/><circle cx="44" cy="172" r="3.5"/><circle cx="124" cy="168" r="4"/><circle cx="146" cy="174" r="3.5"/><circle cx="178" cy="170" r="4"/><circle cx="66" cy="176" r="3.5"/>
+  </g>
+  <g fill="#d8c4ec"><circle cx="24" cy="160" r="2"/><circle cx="124" cy="162" r="2"/><circle cx="178" cy="164" r="2"/></g>
+  <!-- butterflies -->
+  <g stroke="#f0e2a0" stroke-width="1.4" fill="none" stroke-linecap="round"><path d="M100 90 q3 -4 6 -1 q-3 3 -6 1 q-3 -4 -6 -1 q3 3 6 1"/></g>
+</svg>

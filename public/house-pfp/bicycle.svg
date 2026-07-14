@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Bicycle against a wall">
+  <defs>
+    <linearGradient id="bc-wall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d9b98f"/><stop offset="1" stop-color="#b8905f"/></linearGradient>
+    <linearGradient id="bc-frame" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3fb0a8"/><stop offset="1" stop-color="#1f7a76"/></linearGradient>
+  </defs>
+  <rect width="200" height="200" fill="url(#bc-wall)"/>
+  <!-- brick texture -->
+  <g stroke="#9c7040" stroke-width="1" opacity="0.35">
+    <path d="M0 40 H200 M0 72 H200 M0 104 H200 M0 136 H200"/>
+    <path d="M30 40 V72 M70 40 V72 M110 40 V72 M150 40 V72 M50 72 V104 M90 72 V104 M130 72 V104 M170 72 V104 M30 104 V136 M70 104 V136 M110 104 V136 M150 104 V136"/>
+  </g>
+  <!-- ground -->
+  <rect x="0" y="160" width="200" height="40" fill="#8a8478"/>
+  <path d="M0 160 H200" stroke="#6b665c" stroke-width="2"/>
+  <ellipse cx="100" cy="176" rx="80" ry="8" fill="#000000" opacity="0.12"/>
+  <!-- wheels -->
+  <g fill="none" stroke="#2a2a2a" stroke-width="5"><circle cx="54" cy="150" r="30"/><circle cx="150" cy="150" r="30"/></g>
+  <g fill="none" stroke="#c9c2b4" stroke-width="1.2">
+    <g><line x1="54" y1="150" x2="54" y2="120"/><line x1="54" y1="150" x2="80" y2="135"/><line x1="54" y1="150" x2="80" y2="165"/><line x1="54" y1="150" x2="54" y2="180"/><line x1="54" y1="150" x2="28" y2="135"/><line x1="54" y1="150" x2="28" y2="165"/></g>
+    <g><line x1="150" y1="150" x2="150" y2="120"/><line x1="150" y1="150" x2="176" y2="135"/><line x1="150" y1="150" x2="176" y2="165"/><line x1="150" y1="150" x2="150" y2="180"/><line x1="150" y1="150" x2="124" y2="135"/><line x1="150" y1="150" x2="124" y2="165"/></g>
+  </g>
+  <g fill="#3a3a3a"><circle cx="54" cy="150" r="4"/><circle cx="150" cy="150" r="4"/></g>
+  <!-- frame -->
+  <g stroke="url(#bc-frame)" stroke-width="6" fill="none" stroke-linecap="round">
+    <path d="M54 150 L96 150 L120 106 L150 150"/>
+    <path d="M96 150 L118 106 L150 150"/>
+    <path d="M120 106 L104 106"/>
+  </g>
+  <!-- seat -->
+  <path d="M96 100 h18 q4 0 2 4 l-16 2 z" fill="#3a2a1a"/>
+  <line x1="106" y1="104" x2="120" y2="106" stroke="#1f7a76" stroke-width="4"/>
+  <!-- handlebars -->
+  <path d="M104 106 L100 82 M100 82 q-8 -2 -12 2 M100 82 q8 -2 12 2" stroke="#2a2a2a" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <!-- pedals -->
+  <circle cx="100" cy="150" r="7" fill="none" stroke="#2a2a2a" stroke-width="2.5"/>
+  <line x1="100" y1="150" x2="112" y2="158" stroke="#2a2a2a" stroke-width="3"/>
+  <rect x="110" y="156" width="8" height="4" rx="1" fill="#1a1a1a"/>
+  <!-- basket + flower -->
+  <path d="M86 84 h-16 l3 14 h10 z" fill="#a9784a"/>
+  <g fill="#e8749a"><circle cx="76" cy="82" r="3"/><circle cx="82" cy="80" r="3"/></g>
+  <g fill="#f0a03a"><circle cx="79" cy="84" r="3"/></g>
+</svg>

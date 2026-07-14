@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Desert dunes">
+  <defs>
+    <linearGradient id="dd-sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f9dca0"/>
+      <stop offset="1" stop-color="#f0a874"/>
+    </linearGradient>
+    <linearGradient id="dd-s1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f2c281"/><stop offset="1" stop-color="#dfa25f"/></linearGradient>
+    <linearGradient id="dd-s2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e3a862"/><stop offset="1" stop-color="#c07f43"/></linearGradient>
+    <linearGradient id="dd-s3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c98a4a"/><stop offset="1" stop-color="#9c5f31"/></linearGradient>
+    <radialGradient id="dd-sun" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#fff7e0"/><stop offset="0.6" stop-color="#ffe0a6"/><stop offset="1" stop-color="#ffe0a6" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="200" height="200" fill="url(#dd-sky)"/>
+  <circle cx="70" cy="60" r="34" fill="url(#dd-sun)"/>
+  <circle cx="70" cy="60" r="17" fill="#fff3d2"/>
+  <!-- dunes -->
+  <path d="M0 118 Q60 96 120 116 Q160 128 200 112 V200 H0 Z" fill="url(#dd-s1)"/>
+  <path d="M0 138 Q70 118 130 140 Q170 152 200 138 V200 H0 Z" fill="url(#dd-s2)"/>
+  <path d="M0 162 Q80 142 150 166 Q180 176 200 168 V200 H0 Z" fill="url(#dd-s3)"/>
+  <!-- ridge highlights -->
+  <path d="M0 118 Q60 96 120 116" fill="none" stroke="#fff0cf" stroke-width="2" opacity="0.7"/>
+  <path d="M0 138 Q70 118 130 140" fill="none" stroke="#ffe6bc" stroke-width="1.6" opacity="0.6"/>
+  <!-- shadow sides -->
+  <path d="M120 116 Q160 128 200 112 V128 Q160 138 120 130 Z" fill="#b07a42" opacity="0.4"/>
+  <!-- ripples -->
+  <g stroke="#b47c44" stroke-width="1" opacity="0.4" fill="none">
+    <path d="M20 176 q20 -4 40 0 M90 182 q22 -4 44 0 M140 174 q18 -3 36 0"/>
+  </g>
+  <!-- camels caravan silhouette -->
+  <g fill="#6b3f22">
+    <path d="M60 150 q3 -6 7 -5 l1 -4 2 4 q4 0 5 5 l2 6 -2 0 -1 -3 -1 3 -2 0 -1 -4 -2 4 -1 -3 -1 3 -2 0 z"/>
+    <path d="M80 148 q2 -5 6 -4 l1 -3 2 3 q3 0 4 4 l1 5 -2 0 -1 -2 -1 2 -2 0 -1 -3 -2 3 -1 -2 -1 2 -1 0 z"/>
+  </g>
+</svg>

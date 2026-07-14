@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Northern lights over pines">
+  <defs>
+    <linearGradient id="au-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0b1330"/><stop offset="1" stop-color="#1c2a4a"/></linearGradient>
+    <linearGradient id="au-g1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5df2c0" stop-opacity="0"/><stop offset="0.5" stop-color="#4fe8b0" stop-opacity="0.7"/><stop offset="1" stop-color="#2fb0d8" stop-opacity="0.2"/></linearGradient>
+    <linearGradient id="au-g2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b07de0" stop-opacity="0"/><stop offset="0.6" stop-color="#9a6fd8" stop-opacity="0.6"/><stop offset="1" stop-color="#5df2c0" stop-opacity="0.1"/></linearGradient>
+    <linearGradient id="au-snow" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a3a5c"/><stop offset="1" stop-color="#4a5c80"/></linearGradient>
+  </defs>
+  <rect width="200" height="200" fill="url(#au-sky)"/>
+  <g fill="#eaf2ff"><circle cx="30" cy="26" r="1"/><circle cx="66" cy="18" r="0.8"/><circle cx="120" cy="30" r="1"/><circle cx="160" cy="20" r="0.8"/><circle cx="180" cy="46" r="1"/><circle cx="94" cy="14" r="0.7"/><circle cx="46" cy="50" r="0.7"/></g>
+  <!-- aurora ribbons -->
+  <path d="M10 30 Q60 90 40 150 L58 150 Q78 88 40 26 Z" fill="url(#au-g1)"/>
+  <path d="M70 20 Q100 80 84 150 L104 150 Q120 78 100 20 Z" fill="url(#au-g2)"/>
+  <path d="M130 26 Q168 84 150 150 L170 150 Q188 82 162 24 Z" fill="url(#au-g1)"/>
+  <path d="M40 40 Q80 96 60 150 L74 150 Q92 92 70 40 Z" fill="url(#au-g2)" opacity="0.7"/>
+  <!-- snow ground -->
+  <path d="M0 150 Q100 140 200 150 V200 H0 Z" fill="url(#au-snow)"/>
+  <!-- pines -->
+  <g fill="#101a30">
+    <path d="M36 150 l10 -40 l10 40 z"/><path d="M40 130 l6 -18 l6 18 z"/><rect x="44" y="150" width="4" height="8"/>
+    <path d="M84 152 l8 -32 l8 32 z"/><rect x="90" y="152" width="3" height="7"/>
+    <path d="M120 150 l11 -44 l11 44 z"/><path d="M125 128 l6 -18 l6 18 z"/><rect x="129" y="150" width="4" height="8"/>
+    <path d="M164 152 l9 -34 l9 34 z"/><rect x="171" y="152" width="3" height="7"/>
+    <path d="M60 154 l6 -24 l6 24 z"/>
+  </g>
+  <g stroke="#7ff0d0" stroke-width="1" opacity="0.3"><path d="M20 164 h160" stroke-dasharray="2 6"/></g>
+</svg>

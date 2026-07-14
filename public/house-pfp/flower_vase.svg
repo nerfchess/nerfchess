@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Vase of flowers on a table">
+  <defs>
+    <linearGradient id="fv-wall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e8e0d2"/><stop offset="1" stop-color="#d2c6b2"/></linearGradient>
+    <linearGradient id="fv-table" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b98a55"/><stop offset="1" stop-color="#8a5f34"/></linearGradient>
+    <linearGradient id="fv-vase" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#5fa8c4"/><stop offset="0.5" stop-color="#3f88a8"/><stop offset="1" stop-color="#2f6884"/></linearGradient>
+  </defs>
+  <rect width="200" height="200" fill="url(#fv-wall)"/>
+  <rect x="0" y="150" width="200" height="50" fill="url(#fv-table)"/>
+  <path d="M0 150 H200" stroke="#6e4a28" stroke-width="2" opacity="0.5"/>
+  <g stroke="#9c7048" stroke-width="1" opacity="0.4"><path d="M0 168 H200 M0 184 H200"/></g>
+  <!-- soft window light -->
+  <rect x="20" y="24" width="44" height="56" rx="2" fill="#f6efe0" opacity="0.6"/>
+  <path d="M42 24 v56 M20 52 h44" stroke="#c9bca6" stroke-width="1.4" opacity="0.5"/>
+  <!-- stems -->
+  <g stroke="#4f7a3a" stroke-width="2.5" fill="none" stroke-linecap="round">
+    <path d="M100 148 Q86 110 78 78 M100 148 Q100 104 100 66 M100 148 Q114 110 124 82 M100 148 Q92 116 84 100 M100 148 Q108 116 118 104"/>
+  </g>
+  <g fill="#5c8a44"><path d="M90 116 q-10 -4 -14 -12 q10 2 16 10 z"/><path d="M112 118 q10 -4 14 -12 q-10 2 -16 10 z"/></g>
+  <!-- blooms -->
+  <g>
+    <g transform="translate(78,72)" fill="#e8749a"><circle cx="0" cy="-6" r="5"/><circle cx="-6" cy="-1" r="5"/><circle cx="6" cy="-1" r="5"/><circle cx="-3" cy="6" r="5"/><circle cx="3" cy="6" r="5"/></g><circle cx="78" cy="72" r="4" fill="#f6d24a"/>
+    <g transform="translate(100,60)" fill="#f0a03a"><circle cx="0" cy="-6" r="5.5"/><circle cx="-6" cy="-1" r="5.5"/><circle cx="6" cy="-1" r="5.5"/><circle cx="-3" cy="6" r="5.5"/><circle cx="3" cy="6" r="5.5"/></g><circle cx="100" cy="60" r="4" fill="#8a4a22"/>
+    <g transform="translate(124,78)" fill="#b785d8"><circle cx="0" cy="-5" r="5"/><circle cx="-5" cy="-1" r="5"/><circle cx="5" cy="-1" r="5"/><circle cx="-3" cy="5" r="5"/><circle cx="3" cy="5" r="5"/></g><circle cx="124" cy="78" r="3.5" fill="#f6d24a"/>
+    <circle cx="84" cy="98" r="6" fill="#e8749a"/><circle cx="84" cy="98" r="2.6" fill="#f6d24a"/>
+    <circle cx="118" cy="102" r="6" fill="#f0a03a"/><circle cx="118" cy="102" r="2.6" fill="#8a4a22"/>
+  </g>
+  <!-- vase -->
+  <path d="M84 148 Q78 122 88 116 Q100 112 112 116 Q122 122 116 148 Z" fill="url(#fv-vase)"/>
+  <path d="M88 120 Q100 116 112 120 L110 126 Q100 122 90 126 Z" fill="#ffffff" opacity="0.2"/>
+  <ellipse cx="100" cy="116" rx="14" ry="4" fill="#2f6884"/>
+  <path d="M90 124 Q88 138 92 146" stroke="#ffffff" stroke-width="2" opacity="0.25" fill="none"/>
+  <ellipse cx="100" cy="150" rx="20" ry="4" fill="#000000" opacity="0.15"/>
+</svg>

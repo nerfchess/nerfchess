@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Koi pond">
+  <defs>
+    <radialGradient id="kp-water" cx="0.5" cy="0.4" r="0.7"><stop offset="0" stop-color="#3f7d78"/><stop offset="1" stop-color="#1f4a48"/></radialGradient>
+  </defs>
+  <rect width="200" height="200" fill="url(#kp-water)"/>
+  <!-- light ripples -->
+  <g stroke="#7fc0b4" stroke-width="1.4" fill="none" opacity="0.4">
+    <circle cx="70" cy="60" r="18"/><circle cx="70" cy="60" r="30"/><circle cx="140" cy="140" r="16"/><circle cx="140" cy="140" r="28"/>
+  </g>
+  <!-- lily pads -->
+  <g fill="#2f6b3c">
+    <path d="M40 40 a18 18 0 1 0 0.1 0 l-4 0 z" transform="rotate(20 40 40)"/>
+    <path d="M150 60 a15 15 0 1 0 0.1 0 l-3 0 z" transform="rotate(-40 150 60)"/>
+    <path d="M110 160 a16 16 0 1 0 0.1 0 l-3 0 z" transform="rotate(70 110 160)"/>
+  </g>
+  <g fill="#3f8a4c" opacity="0.7"><ellipse cx="40" cy="38" rx="10" ry="6"/><ellipse cx="150" cy="58" rx="8" ry="5"/></g>
+  <!-- lotus flower -->
+  <g transform="translate(150,60)"><g fill="#f0a8c0"><ellipse cx="0" cy="-4" rx="3" ry="7"/><ellipse cx="-5" cy="-2" rx="3" ry="6" transform="rotate(-30 -5 -2)"/><ellipse cx="5" cy="-2" rx="3" ry="6" transform="rotate(30 5 -2)"/></g><circle cx="0" cy="0" r="2.4" fill="#f6e07a"/></g>
+  <!-- koi orange -->
+  <g transform="translate(92,88) rotate(30)">
+    <path d="M0 0 Q22 -12 40 -2 Q30 0 40 2 Q22 12 0 0 Z" fill="#f07a2a"/>
+    <path d="M40 -2 L52 -10 L48 0 L52 10 L40 2 Z" fill="#f4954a"/>
+    <ellipse cx="12" cy="0" rx="8" ry="5" fill="#ffffff"/>
+    <circle cx="4" cy="-2" r="1.4" fill="#2a1a10"/>
+  </g>
+  <!-- koi white/red -->
+  <g transform="translate(120,130) rotate(-140)">
+    <path d="M0 0 Q20 -10 36 -2 Q27 0 36 2 Q20 10 0 0 Z" fill="#f2efe8"/>
+    <path d="M36 -2 L46 -9 L43 0 L46 9 L36 2 Z" fill="#f2efe8"/>
+    <ellipse cx="14" cy="-1" rx="7" ry="4" fill="#e0483a"/>
+    <ellipse cx="26" cy="1" rx="4" ry="3" fill="#e0483a"/>
+    <circle cx="4" cy="-2" r="1.3" fill="#2a1a10"/>
+  </g>
+  <!-- koi small dark -->
+  <g transform="translate(56,148) rotate(20)" opacity="0.9">
+    <path d="M0 0 Q14 -7 26 -1 Q19 0 26 1 Q14 7 0 0 Z" fill="#3a4658"/>
+    <path d="M26 -1 L34 -6 L31 0 L34 6 L26 1 Z" fill="#4a586c"/>
+  </g>
+  <g fill="#bfe4d8" opacity="0.5"><circle cx="30" cy="120" r="2"/><circle cx="170" cy="110" r="2"/><circle cx="90" cy="30" r="1.6"/></g>
+</svg>

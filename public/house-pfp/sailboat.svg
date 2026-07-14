@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Sailboat on the sea">
+  <defs>
+    <linearGradient id="sb-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7fc0e8"/><stop offset="1" stop-color="#d8eef6"/></linearGradient>
+    <linearGradient id="sb-sea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3f97c9"/><stop offset="1" stop-color="#1f5c86"/></linearGradient>
+    <linearGradient id="sb-sail" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#e2e8ee"/></linearGradient>
+  </defs>
+  <rect width="200" height="200" fill="url(#sb-sky)"/>
+  <circle cx="158" cy="46" r="18" fill="#fff3cf" opacity="0.85"/>
+  <g fill="#ffffff" opacity="0.85"><ellipse cx="46" cy="40" rx="26" ry="9"/><ellipse cx="70" cy="34" rx="16" ry="6"/><ellipse cx="118" cy="52" rx="20" ry="6"/></g>
+  <g stroke="#5aa0c0" stroke-width="1.4" fill="none" stroke-linecap="round" opacity="0.7"><path d="M20 30 q4 -4 8 0 q4 -4 8 0 M150 24 q3 -3 6 0 q3 -3 6 0"/></g>
+  <rect x="0" y="116" width="200" height="84" fill="url(#sb-sea)"/>
+  <!-- boat -->
+  <g>
+    <path d="M78 108 L98 108 L98 60 Z" fill="url(#sb-sail)" stroke="#c7d0d8" stroke-width="1"/>
+    <path d="M102 108 L122 108 L102 68 Z" fill="#e9605f"/>
+    <path d="M100 60 L100 112" stroke="#6b4a2e" stroke-width="2.5"/>
+    <path d="M72 112 L128 112 L120 126 L80 126 Z" fill="#7a4a28"/>
+    <path d="M72 112 L128 112 L126 116 L74 116 Z" fill="#5c3719"/>
+  </g>
+  <!-- reflection -->
+  <g opacity="0.4">
+    <path d="M78 132 L98 132 L98 176 Z" fill="#dfe6ec"/>
+    <path d="M102 132 L122 132 L102 172 Z" fill="#e9605f"/>
+  </g>
+  <!-- waves -->
+  <g stroke="#bfe2f2" stroke-width="1.5" opacity="0.6" fill="none" stroke-linecap="round">
+    <path d="M12 140 q10 -4 20 0 q10 4 20 0 M140 150 q10 -4 20 0 q10 4 20 0 M40 168 q12 -4 24 0 q12 4 24 0 M120 178 q12 -4 24 0"/>
+  </g>
+  <g fill="#ffffff"><circle cx="30" cy="122" r="1.4"/><circle cx="170" cy="130" r="1.4"/></g>
+</svg>

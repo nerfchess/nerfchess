@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Beach at sunset">
+  <defs>
+    <linearGradient id="bs-sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffb26b"/>
+      <stop offset="0.5" stop-color="#ff8f66"/>
+      <stop offset="1" stop-color="#e46a7a"/>
+    </linearGradient>
+    <linearGradient id="bs-sea" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffab63"/>
+      <stop offset="1" stop-color="#c56a7f"/>
+    </linearGradient>
+    <linearGradient id="bs-sand" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e9b98a"/>
+      <stop offset="1" stop-color="#c79268"/>
+    </linearGradient>
+    <radialGradient id="bs-sun" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#fff6dd"/>
+      <stop offset="0.55" stop-color="#ffdf9c"/>
+      <stop offset="1" stop-color="#ffdf9c" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="200" height="118" fill="url(#bs-sky)"/>
+  <circle cx="100" cy="98" r="40" fill="url(#bs-sun)"/>
+  <circle cx="100" cy="100" r="22" fill="#fff1cf"/>
+  <g fill="#e97a72" opacity="0.55">
+    <ellipse cx="44" cy="40" rx="30" ry="6"/>
+    <ellipse cx="150" cy="30" rx="24" ry="5"/>
+    <ellipse cx="168" cy="58" rx="18" ry="4"/>
+  </g>
+  <!-- birds -->
+  <g stroke="#7a3f4e" stroke-width="1.6" fill="none" stroke-linecap="round">
+    <path d="M46 50 q4 -4 8 0 q4 -4 8 0"/>
+    <path d="M150 42 q3 -3 6 0 q3 -3 6 0"/>
+  </g>
+  <rect x="0" y="112" width="200" height="52" fill="url(#bs-sea)"/>
+  <!-- sun glitter path on sea -->
+  <g fill="#fff0c8" opacity="0.7">
+    <ellipse cx="100" cy="118" rx="20" ry="2.4"/>
+    <ellipse cx="100" cy="126" rx="15" ry="2"/>
+    <ellipse cx="100" cy="134" rx="24" ry="2.2"/>
+    <ellipse cx="100" cy="144" rx="18" ry="2"/>
+  </g>
+  <path d="M0 160 Q100 150 200 160 V200 H0 Z" fill="url(#bs-sand)"/>
+  <path d="M0 162 Q100 152 200 162" fill="none" stroke="#fff5e6" stroke-width="3" opacity="0.8"/>
+  <!-- palm -->
+  <path d="M158 200 Q150 150 156 112" stroke="#4a3524" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <g fill="#3f5a3a">
+    <path d="M156 112 Q126 100 108 112 Q132 104 156 118 Z"/>
+    <path d="M156 112 Q186 100 198 116 Q174 106 156 118 Z"/>
+    <path d="M156 112 Q140 88 120 84 Q146 96 158 116 Z"/>
+    <path d="M156 112 Q172 86 194 84 Q168 96 158 116 Z"/>
+  </g>
+  <g fill="#2f2018"><circle cx="150" cy="176" r="3"/><circle cx="120" cy="184" r="4"/><circle cx="176" cy="182" r="3"/></g>
+</svg>

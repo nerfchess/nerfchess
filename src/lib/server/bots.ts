@@ -13,6 +13,7 @@ import { legalMoves, type NerfGame } from "../../engine/game";
 import { triggersOwnNerfLoss } from "../../engine/moveSafety";
 import type { DraftMode } from "../../engine/buff";
 import type { Move } from "../../engine/types";
+import { HOUSE_PFP_IDS, HOUSE_PFP_PREFIX } from "../avatars";
 
 // Absolute ceiling for a house-player search running ON THE DO ITSELF (local
 // fallback, when the OCI engine is off/unreachable/version-mismatched). The
@@ -391,11 +392,62 @@ const FLOWER_AVATARS: string[] = FLOWER_PALETTES.flatMap((palette) =>
   FLOWER_PIECES.map((piece) => `${palette}_${piece}_flower`),
 );
 
-// The avatar id space a house persona may hold: the full flowered catalog.
-// Exported for the /mod/house admin editor (its avatar picker offers exactly
-// these, and the save route validates against this set), so an admin edit can
-// never move a house account outside the internal house mark.
-export const HOUSE_AVATAR_IDS: readonly string[] = FLOWER_AVATARS;
+// About half the roster gets a "real uploaded-looking" profile picture instead
+// of a flower preset: a hand-authored scenic/object SVG (see lib/avatars.ts,
+// served from /house-pfp/<name>.svg), so the crowd reads like real users, some
+// of whom uploaded a random photo (a beach, a coffee mug, a houseplant) and
+// some of whom kept a default. Keyed by persona name (stable across roster
+// reordering); the value is the pfp's <name>, turned into a "house_pfp:<name>"
+// avatar id below. Every listed persona name must exist in PERSONA_DEFS and
+// every pfp name must exist in lib/avatars' HOUSE_PFP_NAMES. Thematic where it's
+// fun (teatimechess -> tea_set, night0wl -> city_night), random otherwise.
+const HOUSE_PFP_ASSIGN: Record<string, string> = {
+  coffeeknight: "coffee_mug",
+  teatimechess: "tea_set",
+  night0wl: "city_night",
+  midnightblitz: "rainy_neon",
+  coffeehousepro: "record_player",
+  sarah92: "flower_vase",
+  natalie88: "lavender_field",
+  priya_r: "koi_pond",
+  elena_88: "sunflowers",
+  maya_r2: "monstera",
+  tanya_v: "succulents",
+  mira_k: "potted_cactus",
+  nadia_x: "beach_sunset",
+  jess2001: "palm_beach",
+  quietqueen: "bookshelf",
+  frostbyte: "snowy_peak",
+  riptide: "sailboat",
+  discocheck: "hot_air_balloons",
+  blitzbrain: "aurora",
+  mellowmove: "mountain_lake",
+  sleepyknight: "tent_stars",
+  karpov_enjoyer: "forest_path",
+  casualcastle: "lake_cabin",
+  boardsnack: "fruit_bowl",
+  pawnstorm77: "waterfall",
+  omar_23: "desert_dunes",
+  lukas_j: "bicycle",
+  stefan_bg: "lighthouse",
+  cobrakai: "cat_sunset",
+  crushingpawns: "autumn_leaves",
+};
+
+// The baked avatar a persona debuts with: its assigned house pfp when it has
+// one, else a name-hashed flower preset (as before).
+function personaAvatar(name: string): string {
+  const pfp = HOUSE_PFP_ASSIGN[name];
+  if (pfp) return HOUSE_PFP_PREFIX + pfp;
+  return FLOWER_AVATARS[nameHash(name) % FLOWER_AVATARS.length];
+}
+
+// The avatar id space a house persona may hold: the full flowered catalog plus
+// the house-pfp catalog. Exported for the /mod/house admin editor (its avatar
+// picker offers exactly these, and the save route validates against this set),
+// so an admin edit can move a persona between any two house looks but never
+// outside the house-only avatar space.
+export const HOUSE_AVATAR_IDS: readonly string[] = [...HOUSE_PFP_IDS, ...FLOWER_AVATARS];
 
 // One plausible home base per persona (owner report: every bot showed the
 // same location). Distinct for the whole roster (>= PERSONA_DEFS.length
@@ -478,9 +530,10 @@ export const HOUSE_ROSTER: HousePersona[] = PERSONA_DEFS.map(([name, skill], i) 
   // retired roster's 'bot_' ids, which migration 0008 deletes by prefix.
   userId: `hp_${name.toLowerCase()}`,
   skill,
-  // Name-hashed across the full flowered catalog: stable per persona, varied
-  // across the roster (the old i % 16 cycled the same plates in order).
-  avatar: FLOWER_AVATARS[nameHash(name) % FLOWER_AVATARS.length],
+  // Half the roster gets a "real uploaded-looking" scenic/object pfp
+  // (HOUSE_PFP_ASSIGN); the rest keep a name-hashed flower preset. Stable per
+  // persona and varied across the roster.
+  avatar: personaAvatar(name),
   // Roster-index assignment keeps every persona's location DISTINCT (the list
   // is at least as long as the roster) and stable across deploys.
   location: HOUSE_LOCATIONS[i % HOUSE_LOCATIONS.length],
