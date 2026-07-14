@@ -58,7 +58,7 @@ export default function HomePage() {
           <h1 className="mt-2">
             <Link
               href="/lobby"
-              className="btn-sky btn-cta cta-shine w-full flex items-center justify-center gap-3 px-6 py-5 font-display text-2xl sm:text-3xl font-bold uppercase tracking-[0.05em] no-underline motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out motion-safe:hover:-translate-y-px motion-safe:active:scale-[0.98]"
+              className="btn-sky btn-cta cta-shine w-full flex items-center justify-center gap-3 px-6 py-6 font-display text-3xl sm:text-4xl font-bold uppercase tracking-[0.05em] no-underline motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out motion-safe:hover:-translate-y-px motion-safe:active:scale-[0.98]"
             >
               Play Nerf Chess
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -72,34 +72,28 @@ export default function HomePage() {
 
           <ReturnToGameBanner />
 
-          {/* Three quieter ways in, one step below the big button. No mode
+          {/* Two quieter ways in, one step below the big button. No mode
               decision here: Buff is the site-wide default, and every setup
               page lets you switch. */}
-          <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3 border border-white/10 bg-white/[0.04] p-4">
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 border border-white/10 bg-white/[0.04] p-4">
             <Link
               href="/lobby"
-              className="btn-glass btn-glass--primary flex items-center justify-center gap-2 px-4 py-3 font-display text-base font-medium motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out motion-safe:hover:-translate-y-px motion-safe:active:scale-[0.98]"
+              className="btn-glass btn-glass--primary flex items-center justify-center gap-2 px-4 py-3.5 font-display text-base font-medium motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out motion-safe:hover:-translate-y-px motion-safe:active:scale-[0.98]"
             >
               Play Online
             </Link>
             <Link
               href="/lobby?tab=friends"
-              className="btn-glass flex items-center justify-center gap-2 px-4 py-3 font-display text-base font-medium motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out motion-safe:hover:-translate-y-px motion-safe:active:scale-[0.98]"
+              className="btn-glass flex items-center justify-center gap-2 px-4 py-3.5 font-display text-base font-medium motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out motion-safe:hover:-translate-y-px motion-safe:active:scale-[0.98]"
             >
               Play a Friend
-            </Link>
-            <Link
-              href="/play"
-              className="btn-glass flex items-center justify-center gap-2 px-4 py-3 font-display text-base font-medium motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out motion-safe:hover:-translate-y-px motion-safe:active:scale-[0.98]"
-            >
-              Play a Bot
             </Link>
           </div>
 
           {/* What the two words on the tin actually mean. Each card is a link
               into that mode's lobby; the titles carry the mode colors. */}
           <div className="mt-4 grid grid-cols-2 gap-3">
-            <Link href="/lobby?mode=buff" className="mode-def-card mode-def-card--buff plate block p-3.5 no-underline">
+            <Link href="/lobby?mode=buff" className="mode-def-card mode-def-card--buff plate block p-5 no-underline">
               <span className="font-display text-lg font-bold uppercase tracking-wide text-mode-buffGlow underline decoration-mode-buff/60 decoration-2 underline-offset-4">
                 Buff
               </span>
@@ -108,7 +102,7 @@ export default function HomePage() {
                 <span className="text-parchment-100">powers</span> for your own army.
               </p>
             </Link>
-            <Link href="/lobby?mode=nerf" className="mode-def-card mode-def-card--nerf plate block p-3.5 no-underline">
+            <Link href="/lobby?mode=nerf" className="mode-def-card mode-def-card--nerf plate block p-5 no-underline">
               <span className="font-display text-lg font-bold uppercase tracking-wide text-mode-nerfGlow underline decoration-mode-nerf/60 decoration-2 underline-offset-4">
                 Nerf
               </span>
@@ -119,15 +113,6 @@ export default function HomePage() {
             </Link>
           </div>
 
-          <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-parchment-300">
-            <Link href="/play" className="hover:text-parchment-100 transition-colors">Custom game</Link>
-            <span aria-hidden className="opacity-30">·</span>
-            <Link href="/tutorial" className="hover:text-parchment-100 transition-colors">How it works</Link>
-            <span aria-hidden className="opacity-30">·</span>
-            <Link href="/codex" className="hover:text-parchment-100 transition-colors">Browse the rules</Link>
-            <span aria-hidden className="opacity-30">·</span>
-            <Link href="/tv" className="hover:text-parchment-100 transition-colors">Watch live</Link>
-          </div>
         </div>
       </section>
 
@@ -521,11 +506,9 @@ function HowItWorks() {
     },
   ];
   return (
-    <section className="section-rhythm w-full max-w-7xl mx-auto px-5 sm:px-6">
-      <header className="mb-7 flex items-center gap-3">
-        <span aria-hidden className="h-6 w-1.5 shrink-0 bg-mint" />
+    <section className="w-full max-w-7xl mx-auto px-5 sm:px-6 pt-10 sm:pt-14 pb-8">
+      <header className="mb-6">
         <h2 className="display-3 text-parchment-50">How it works</h2>
-        <span className="coord-index">c3</span>
       </header>
       <div className="stagger-in grid gap-4 sm:grid-cols-3">
         {steps.map((step) => {

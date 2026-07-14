@@ -198,7 +198,7 @@ export default function CodexPage() {
               key={lib}
               onClick={() => switchLibrary(lib)}
               aria-pressed={library === lib}
-              className={`inline-flex items-center gap-2 px-4 py-2 rounded-full font-display text-sm transition capitalize ${
+              className={`inline-flex items-center gap-2 px-4 py-2 rounded-[1px] font-display text-sm transition capitalize ${
                 library === lib
                   ? "border border-gold/60 bg-gold/10 text-gold-leaf"
                   : "btn-ghost"
@@ -209,7 +209,7 @@ export default function CodexPage() {
           ))}
           <Link
             href={`/codex/suggest?type=${LIBRARY_SUGGEST_TYPE[library]}`}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full btn-ghost font-display text-sm"
+            className="inline-flex items-center gap-2 px-4 py-2 btn-ghost font-display text-sm"
           >
             {`Suggest a ${noun}`}
           </Link>

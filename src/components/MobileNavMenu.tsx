@@ -15,8 +15,6 @@ const NAV_LINKS: { href: string; label: string; className?: string }[] = [
   { href: "/tv?mode=nerf", label: "Nerf TV", className: "text-mode-nerfGlow" },
   { href: "/tv?mode=buff", label: "Buff TV", className: "text-mode-buffGlow" },
   { href: "/analysis", label: "Analysis board" },
-  { href: "/clubs", label: "Clubs" },
-  { href: "/tournaments", label: "Tournaments" },
   { href: "/history", label: "Game history" },
   { href: "/leaderboard", label: "Leaderboard" },
   { href: "/community", label: "Community" },
@@ -80,8 +78,10 @@ export function MobileNavMenu({
             className="fixed inset-0 z-40 cursor-default bg-black/40"
           />
           {/* !absolute / !z-50: the .plate helper hard-codes position:relative
-              and z-index:2 later in the cascade, so plain utilities lose. */}
-          <div className={"!absolute " + anchorClass + " top-full !z-50 mt-2 w-56 plate border border-white/10 py-1.5 shadow-xl"}>
+              and z-index:2 later in the cascade, so plain utilities lose.
+              `dropdown` lifts the panel onto the opaque raised surface so the
+              page content underneath can never bleed through the menu. */}
+          <div className={"!absolute " + anchorClass + " top-full !z-50 mt-2 w-56 plate dropdown border border-white/10 py-1.5 shadow-xl"}>
             <Link
               href={user ? `/u/${user.username}` : "/login"}
               onClick={() => setOpen(false)}

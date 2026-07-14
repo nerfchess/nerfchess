@@ -186,7 +186,6 @@ function PersonaRow({
         )}
         <span className="ml-auto flex items-center gap-3 text-sm text-parchment-400">
           <span className="font-mono tabular-nums" title="Skill tier">{persona.skill}</span>
-          <span className="hidden sm:inline">{persona.location}</span>
         </span>
         {canEdit && (
           <span className="flex items-center gap-2 text-sm">

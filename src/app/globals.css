@@ -734,7 +734,9 @@ html[data-theme="light"] .rail-panel {
    confirm, lock-in). A translucent pane over the ink with a hairline top
    highlight; the primary variant carries the accent inside the glass. */
 .btn-glass {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.035) 55%, rgba(255, 255, 255, 0.02));
+  /* Flat fill, no vertical gradient: the frosted read comes from the border,
+     inset hairline, and (on desktop) the backdrop blur. */
+  background: rgba(255, 255, 255, 0.06);
   color: var(--paper);
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 1px;
@@ -755,14 +757,14 @@ html[data-theme="light"] .rail-panel {
 }
 .btn-glass:hover:not(:disabled) {
   border-color: rgba(255, 255, 255, 0.32);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.05) 55%, rgba(255, 255, 255, 0.03));
+  background: rgba(255, 255, 255, 0.09);
 }
 .btn-glass:active:not(:disabled) { transform: translateY(1px); }
 .btn-glass:disabled { opacity: 0.45; cursor: not-allowed; }
 .btn-glass--primary {
   color: #fff;
   border-color: rgba(74, 159, 238, 0.55);
-  background: linear-gradient(180deg, rgba(74, 159, 238, 0.32), rgba(54, 146, 231, 0.16) 60%, rgba(54, 146, 231, 0.10));
+  background: rgba(64, 152, 234, 0.22);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.22),
     0 0 30px -10px rgba(54, 146, 231, 0.6),
@@ -770,11 +772,11 @@ html[data-theme="light"] .rail-panel {
 }
 .btn-glass--primary:hover:not(:disabled) {
   border-color: rgba(74, 159, 238, 0.85);
-  background: linear-gradient(180deg, rgba(74, 159, 238, 0.42), rgba(54, 146, 231, 0.22) 60%, rgba(54, 146, 231, 0.14));
+  background: rgba(64, 152, 234, 0.3);
 }
 
 .btn-ghost {
-  background: linear-gradient(to bottom, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
+  background: rgba(255, 255, 255, 0.045);
   color: var(--paper);
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 1px;
@@ -971,7 +973,7 @@ html[data-theme="light"] .tv-frame {
    reads as subordinate to the saturated .btn-cyan primary below it. Same
    metal-button physics as .btn-leaf. */
 .btn-sky {
-  background: linear-gradient(to bottom, #aac2da, #89a6c4);
+  background: #9cb6d1;
   color: #16283a;
   border: 1px solid rgba(0, 0, 0, 0.28);
   border-radius: 1px;
@@ -1214,6 +1216,11 @@ html[data-theme="nebula"] .mode-def-card {
    color as an rgb triple so one hover rule lights the pair correctly. */
 .mode-def-card {
   --def-rgb: var(--accent-rgb);
+  /* Each card wears its mode at rest — a flat tinted fill and a colored
+     hairline border, no gradients — so the pair reads as two territories
+     before any hover. */
+  border-color: rgb(var(--def-rgb) / 0.35);
+  background: rgb(var(--def-rgb) / 0.08);
   transition: transform var(--dur-2) var(--ease-out),
     border-color var(--dur-2) var(--ease-out),
     box-shadow var(--dur-2) var(--ease-out);
