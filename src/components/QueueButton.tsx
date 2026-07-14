@@ -224,7 +224,7 @@ export function QueueButton({
 
           <div className="mt-4">
             <div className="smallcaps text-[10px] text-parchment-400">Time control</div>
-            <div className="mt-1.5 grid grid-cols-5 gap-1.5">
+            <div className="mt-1.5 grid grid-cols-3 gap-1.5 min-[400px]:grid-cols-5">
               {QUEUE_POOL_OPTIONS.map((option) => {
                 const category = getCategory(option.speed);
                 const Icon = category.icon;
