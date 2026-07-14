@@ -2469,144 +2469,31 @@ function CastBanner({
 export function CastSpectacle({
   category,
   tier,
-  id,
   name,
   description,
-  cardIcon,
 }: {
   category: BuffCategory;
   tier: number;
-  /** Card id: keys the per-card emblem + deterministic cast variation. */
+  /** Card id: kept for API compatibility (no longer used visually). */
   id?: string;
   /** Card name + rule text for the on-board announcement banner. */
   name?: string;
   description?: string;
-  /** The card's own icon field (BUFF_BY_ID[id].icon), when it has one. */
+  /** The card's own icon field (unused since the decorative cast retired). */
   cardIcon?: string;
 }) {
+  // Owner pass ("I don't want anything basic, especially not overlapping —
+  // it's a nice animation then a super basic one right on top"): the
+  // decorative cast layers (edge ring, sweeps, orbiting glints, category
+  // emblem slams, shockwaves, vignette) are GONE. Every card now has bespoke
+  // play art, so the generic spectacle only ever painted over it. What
+  // remains is the readable announcement banner: the card's name and rule
+  // line, which is information, not decoration.
   const theme = CAST_THEME[category];
-  // The card's UNIQUE face icon (the same one on its card face and in the
-  // dock) — a goose card casts a goose, not a generic category glyph.
-  const Icon = (id ? cardFaceIcon(id, category, cardIcon) : undefined) ?? CATEGORY_ICON[category];
-  const intensity = castIntensity(tier);
-  const banner = name ? (
-    <CastBanner name={name} description={description} tier={tier} color={theme.color} />
-  ) : null;
-  if (intensity === "sleek") {
-    // Per-card variation: sweep direction + tilt + emblem anchor derive from
-    // the id hash, so every low-tier card owns a recognizably distinct cast.
-    const h = id ? castHash(id) : 0;
-    const fromRight = (h & 1) === 1;
-    const tilt = `${(fromRight ? -1 : 1) * (10 + (h % 12))}deg`;
-    const emblemLeft = 8 + ((h >>> 4) % 3) * 42; // 8% / 50% / 92% across the top
-    return (
-      <span className="fx-cast pointer-events-none absolute inset-0 z-40 block" aria-hidden="true">
-        <span
-          className="fx-cast-ring absolute inset-[1.5%] block rounded-sm"
-          style={{ border: `1.5px solid ${theme.color}`, boxShadow: `inset 0 0 18px ${theme.soft}` }}
-        />
-        <span className="absolute inset-0 block overflow-hidden">
-          <span
-            className={(fromRight ? "fx-cast-sweep-rev" : "fx-cast-sweep") + " absolute top-[-40%] block h-[180%] w-[10%]"}
-            style={{
-              [fromRight ? "right" : "left"]: "-25%",
-              background: `linear-gradient(90deg, transparent, ${theme.soft}, transparent)`,
-              "--tilt": tilt,
-            } as React.CSSProperties}
-          />
-        </span>
-        {/* A pair of counter-orbiting glints so the sleek band reads as a
-            crafted moment, not just a border blink. */}
-        <span className="fx-cast-orbit absolute left-1/2 top-1/2 block h-[38%] w-[38%] -translate-x-1/2 -translate-y-1/2">
-          <span
-            className="absolute left-1/2 top-0 h-[6%] w-[6%] -translate-x-1/2 rounded-full"
-            style={{ background: theme.color, boxShadow: `0 0 8px 2px ${theme.soft}` }}
-          />
-        </span>
-        <span className="fx-cast-orbit-rev absolute left-1/2 top-1/2 block h-[52%] w-[52%] -translate-x-1/2 -translate-y-1/2">
-          <span
-            className="absolute bottom-0 left-1/2 h-[4.5%] w-[4.5%] -translate-x-1/2 rounded-full"
-            style={{ background: theme.color, boxShadow: `0 0 6px 1px ${theme.soft}` }}
-          />
-        </span>
-        <span
-          className="fx-cast-emblem absolute top-[6%] flex h-[10%] w-[10%] items-center justify-center"
-          style={{ color: theme.color, left: `${emblemLeft}%`, marginLeft: "-5%" }}
-        >
-          {React.createElement(Icon, { className: "h-full w-full", strokeWidth: 2 })}
-        </span>
-        {banner}
-      </span>
-    );
-  }
-  if (intensity === "grand") {
-    return (
-      <span className="fx-cast pointer-events-none absolute inset-0 z-40 block" aria-hidden="true">
-        <span
-          className="fx-cast-wash absolute inset-0 block"
-          style={{ background: `radial-gradient(circle, ${theme.soft}, transparent 74%)` }}
-        />
-        <span
-          className="fx-cast-ring absolute inset-[1%] block rounded-sm"
-          style={{ border: `2px solid ${theme.color}`, boxShadow: `inset 0 0 26px ${theme.soft}` }}
-        />
-        <span
-          className="fx-cast-shock absolute left-1/2 top-1/2 ml-[-14%] mt-[-14%] block h-[28%] w-[28%] rounded-full"
-          style={{ border: `2px solid ${theme.color}` }}
-        />
-        <span
-          className="fx-cast-emblem-slam absolute left-1/2 top-1/2 ml-[-11%] mt-[-11%] flex h-[22%] w-[22%] items-center justify-center"
-          style={{ color: theme.color, filter: `drop-shadow(0 0 6px ${theme.soft})` }}
-        >
-          {React.createElement(Icon, { className: "h-full w-full", strokeWidth: 1.8 })}
-        </span>
-        <span className="absolute left-1/2 top-1/2 ml-[-5%] mt-[-5%] block h-[10%] w-[10%]">
-          <ShardBurst vectors={CAST_SPARKS} fill={theme.color} stroke="#1a222e" delayMs={260} sizePct={70} />
-        </span>
-        {banner}
-      </span>
-    );
-  }
+  if (!name) return null;
   return (
     <span className="fx-cast pointer-events-none absolute inset-0 z-40 block" aria-hidden="true">
-      <span className="fx-cast-dim absolute inset-0 block" style={{ background: "rgba(6,10,16,0.5)" }} />
-      <span className="absolute inset-0 block overflow-hidden">
-        <span
-          className="fx-cast-beam absolute top-[-40%] left-[-30%] block h-[180%] w-[16%]"
-          style={{
-            background: `linear-gradient(90deg, transparent, ${theme.soft}, ${theme.color}22, transparent)`,
-            "--tilt": "16deg",
-          } as React.CSSProperties}
-        />
-        <span
-          className="fx-cast-beam-back absolute top-[-40%] right-[-30%] block h-[180%] w-[16%]"
-          style={{
-            background: `linear-gradient(90deg, transparent, ${theme.soft}, ${theme.color}22, transparent)`,
-            "--tilt": "-16deg",
-          } as React.CSSProperties}
-        />
-      </span>
-      {[0, 1, 2].map((i) => (
-        <span
-          key={i}
-          className="fx-cast-shock absolute left-1/2 top-1/2 ml-[-16%] mt-[-16%] block h-[32%] w-[32%] rounded-full"
-          style={{ border: `3px solid ${theme.color}`, animationDelay: `${140 + i * 190}ms` }}
-        />
-      ))}
-      <span
-        className="fx-cast-emblem-slam absolute left-1/2 top-1/2 ml-[-24%] mt-[-24%] flex h-[48%] w-[48%] items-center justify-center"
-        style={{ color: theme.color, filter: `drop-shadow(0 0 14px ${theme.soft})` }}
-      >
-        {React.createElement(Icon, { className: "h-full w-full", strokeWidth: 1.4 })}
-      </span>
-      <span
-        className="fx-cast-ring absolute inset-[0.5%] block rounded-sm"
-        style={{ border: `2.5px solid ${theme.color}`, boxShadow: `inset 0 0 40px ${theme.soft}`, animationDelay: "120ms" }}
-      />
-      <span className="absolute left-1/2 top-1/2 ml-[-6%] mt-[-6%] block h-[12%] w-[12%]">
-        <ShardBurst vectors={CAST_SPARKS} fill={theme.color} stroke="#1a222e" delayMs={420} sizePct={85} />
-      </span>
-      {banner}
+      <CastBanner name={name} description={description} tier={tier} color={theme.color} />
     </span>
   );
 }

@@ -130,8 +130,9 @@ export interface Settings {
   fxDuration: number; // 0.5..2, multiplies how long card/FX animations last
   // Performance mode: drops the most paint-costly decorative layers (backdrop
   // blurs, the full-screen paper-grain blend, fixed-attachment backgrounds)
-  // for smooth play on low-end devices. Auto-enabled once on weak hardware,
-  // then user-overridable. Functional visuals (board, pieces, effects) stay.
+  // for smooth play on low-end devices. Off for everyone by default; the lag
+  // nudge (SettingsBootstrap) offers it in a popup when real jank is
+  // detected. Functional visuals (board, pieces, effects) stay.
   perfMode: boolean;
 }
 
@@ -336,22 +337,14 @@ export function loadSettings(): Settings {
         typeof parsed.fxDuration === "number" && Number.isFinite(parsed.fxDuration)
           ? Math.max(0.5, Math.min(2, parsed.fxDuration))
           : DEFAULT.fxDuration,
-      // First run on this device: seed perfMode from a hardware sniff (weak
-      // CPU or low memory) so low-end devices are smooth out of the box; once
-      // the user has any stored settings, their explicit choice wins.
-      perfMode: typeof parsed.perfMode === "boolean" ? parsed.perfMode : detectLowEnd(),
+      // Everyone gets the full visuals by default (the old hardware sniff
+      // that pre-enabled perf mode on weak devices is gone). If the page
+      // actually janks, the lag nudge in SettingsBootstrap offers perf mode
+      // as a one-tap popup instead; an explicit stored choice always wins.
+      perfMode: typeof parsed.perfMode === "boolean" ? parsed.perfMode : false,
     };
   } catch {}
   return { ...DEFAULT };
-}
-
-/** Coarse low-end sniff for the perfMode default: few CPU cores or little RAM.
- *  Conservative (only trips on genuinely weak hardware) and SSR-safe. */
-function detectLowEnd(): boolean {
-  if (typeof navigator === "undefined") return false;
-  const cores = navigator.hardwareConcurrency ?? 8;
-  const mem = (navigator as unknown as { deviceMemory?: number }).deviceMemory ?? 8;
-  return cores <= 4 || mem <= 4;
 }
 
 const UPDATED_AT_KEY = "dc:settings-updated-at";

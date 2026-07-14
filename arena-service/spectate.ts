@@ -164,8 +164,13 @@ export class SpectatorHub implements ArenaSink {
     if (previous && previous !== id) this.broadcastWatchers(previous);
     // A game still in its opening nerf draft has no board to send; the watch
     // stays registered and the first event after the game starts flushes the
-    // wstart (mirrors the DO waiting for the arena's started snapshot).
+    // wstart (mirrors the DO waiting for the arena's started snapshot). The
+    // watcher still gets an immediate `wpending` ack — without it, tuning in
+    // to a nerf-mode game mid-opening-draft looked like a dead socket and the
+    // client's watch timeout fired ("Nerf TV is broken"): buff games start
+    // instantly, so only the nerf channel ever hit this.
     if (game.started()) this.bootstrap(ws, game);
+    else send(ws, "wpending", { id });
     this.broadcastWatchers(id);
   }
 

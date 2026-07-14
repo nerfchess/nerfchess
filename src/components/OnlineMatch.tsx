@@ -1098,13 +1098,15 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
             if (revealed) showOppUsedCard(revealed, `Opponent played a ${draftCardNoun(start.mode)}`);
           }
         }
-        // A signature card that resolves as a draft instant (rather than a
-        // later activation) fires here for whichever seat can see its id.
+        // EVERY visible pick fires its signature here (owner: "every time you
+        // get a passive, I still want an animation for that"): instants
+        // because their effect already shows on the board, and passives /
+        // activated cards as their acquisition flourish (activated cards fire
+        // again later at dtUsed when they actually resolve). Masked entries
+        // carry no id and stay silent.
         if (e.resolved.kind === "picked") {
           for (const c of e.resolved.cards ?? []) {
-            // Instants resolve on the board at pick time; other kinds fire
-            // later at activation (dtUsed), so only instants cast here.
-            if ("id" in c && BUFF_BY_ID[c.id]?.kind === "instant") {
+            if ("id" in c) {
               fireSignature(c.id);
               break;
             }

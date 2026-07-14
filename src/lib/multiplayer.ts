@@ -1059,7 +1059,11 @@ export class MPSession {
           this.watchingId = id;
           resolve(event.setup);
         } else if (event.type === "watch-pending") {
-          arm(15000);
+          // Two senders: the DO (arena replica not loaded yet — streams within
+          // seconds) and the arena itself (game still in its opening nerf
+          // draft — the wstart flushes when the game starts, which can take
+          // the whole draft window). Wait generously; pending means alive.
+          arm(45000);
         } else if (event.type === "error") {
           if (timer) window.clearTimeout(timer);
           off();
