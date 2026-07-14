@@ -5490,10 +5490,23 @@ export class GameServer extends DurableObject<Env> {
       | { ply: number; color: Color; a: "use"; buffIndex: number; picks: BuffPick[] };
     return (match.draftActions ?? []).flatMap<PublicDraftAction>((action) => {
       // Rerolls are a server-only RNG detail (the client never rolls offers);
-      // drop them so the replica's applyDraftAction never sees one. Owner
-      // god-panel grants are dropped for the same reason (they only seat a
-      // held card; dtState now carries every held card face-up anyway).
-      if (action.a === "reroll" || action.a === "grant") return [];
+      // drop them so the replica's applyDraftAction never sees one.
+      if (action.a === "reroll") return [];
+      // Owner god-panel grants: a HIDEABLE summon only seats a held card, which
+      // dtState already carries face-up-or-masked, so it is dropped from the
+      // replay. An INSTANT summon, though, resolved on the board inside
+      // acquireBuff, so a replaying replica (a late-joining spectator, a
+      // reconnect) must re-run it or its board desyncs — surface it as a public
+      // pick carrying the real identity, exactly as a normally-drafted instant
+      // reveals itself. The client's pick path runs acquireBuff for a revealed
+      // card, reproducing the same board effect.
+      if (action.a === "grant") {
+        const def = BUFF_BY_ID[action.id];
+        if (def?.kind === "instant") {
+          return [{ ply: action.ply, color: action.color, a: "pick" as const, cards: [{ id: action.id, tier: action.tier }] }];
+        }
+        return [];
+      }
       if (action.a !== "pick") return [action];
       return [{ ply: action.ply, color: action.color, a: "pick" as const, cards: action.cards }];
     });
@@ -5803,11 +5816,29 @@ export class GameServer extends DurableObject<Env> {
     const id = String((data as { id?: unknown } | undefined)?.id ?? "").slice(0, 64);
     const def = BUFF_BY_ID[id];
     if (!def || !def.implemented) return error(ws, "bad_card", "Unknown card.");
-    if (def.kind === "instant" || (def.kind === "passive" && def.filterOpponentMoves)) {
-      return error(ws, "cant_hide", "That card cannot be summoned without revealing it.");
-    }
     const color = session.color!;
+    // Summon the card into the granting seat's hand — NO card-level gate any
+    // more (only the account gate above). A hideable card sits face-down in
+    // hand; a self-revealing card is allowed too, it just cannot stay secret
+    // (handled below). Instants have no "sit in hand" engine state, so
+    // acquireBuff resolves their effect on the board the instant they are
+    // acquired — the same grant-and-immediately-resolve a normal instant draft
+    // does (see acquireBuff / applyStoredDraftAction, which replay identically).
     acquireBuff(game, color, id, def.tier);
+    // An instant just mutated the authoritative board inside acquireBuff, and
+    // NEITHER a dtState frame nor a dropped grant action carries a board
+    // mutation to the replicas — so route the instant through the very same
+    // dtResolved channel a normal instant pick uses. Every client applies it as
+    // a public "pick" (acquireBuff on their own replica → same board effect),
+    // and publicDraftActions additionally surfaces this grant as a pick so a
+    // late-joining spectator's replay reproduces it. The card identity goes
+    // public here, exactly as it does for a normally-drafted instant — instants
+    // are inherently un-hideable, which is why the old gate rejected them.
+    const revealsInstant = def.kind === "instant";
+    // An opponent-move-filtering passive needs no dtResolved: it mutates no
+    // board square, and isBuffRevealed already forces it face-up in every
+    // dtState (the opponent must know it to generate the same legal moves), so
+    // the sendDraftState below keeps the boards in sync on its own.
     match.draftActions = [
       ...(match.draftActions ?? []),
       { ply: match.moves.length, color, a: "grant", id, tier: def.tier as number },
@@ -5817,21 +5848,32 @@ export class GameServer extends DurableObject<Env> {
     // re-arm to do.
     this.maybeCheckpoint(match, game);
     await this.saveMatch(match);
+    // Instant only: publish the resolved effect so every LIVE client mutates its
+    // own board (a spectator or the granting seat replaying later gets the same
+    // effect via publicDraftActions surfacing this grant as a pick).
+    if (revealsInstant) {
+      const resolvedFrame = { color, kind: "picked" as const, cards: [{ id, tier: def.tier as number }] };
+      this.broadcast(match, "dtResolved", resolvedFrame);
+      this.sendWatchers(match, "dtResolved", resolvedFrame);
+    }
     // Resync BOTH seats and every spectator. The granting seat sees the real
-    // card; every other view is masked by draftStateFor (a non-instant,
+    // card; a HIDEABLE card is masked by draftStateFor (a non-instant,
     // non-opponent-filtering card is never auto-revealed), so at most a
-    // face-down slot appears. This alignment matters: a later "use" of the card
-    // references its hand slot by index on every replica, so the opponent's
-    // hand length must already match the server. Crucially there is NO
-    // dtResolved frame here, so the opponent is never told WHICH card was
-    // summoned: the card identity stays hidden, exactly like an un-revealed
-    // draft that just grows the hidden-card count. Only the generic god-panel
-    // notice below announces that a summon happened.
+    // face-down slot appears. A self-revealing card (instant, or an
+    // opponent-move-filtering passive) is forced face-up by isBuffRevealed, so
+    // both seats already agree on it. This alignment matters: a later "use" of a
+    // held card references its hand slot by index on every replica, so the
+    // opponent's hand length must already match the server. For a HIDEABLE card
+    // there is no dtResolved frame, so the opponent is never told WHICH card was
+    // summoned; a self-revealing card is inherently public (the instant's effect
+    // is on the board, an opponent-filter must be known to move-match) — the
+    // generic god-panel notice below still announces THAT a summon happened.
     this.sendDraftState(match, game);
     this.sendWatcherDraftState(match, game);
-    // Surface the summon to the table. The card identity stays hidden (masked in
-    // every non-owner dtState); only the fact that the god panel summoned a card
-    // is announced.
+    // Surface the summon to the table. For a hideable card the identity stays
+    // masked in every non-owner dtState (only the fact of a summon is told); a
+    // self-revealing card is already public through the frames above, but the
+    // generic notice reads the same either way.
     this.announceGodPanel(match, this.seatName(match, color), "summoned a card");
   }
 
@@ -6183,7 +6225,18 @@ export class GameServer extends DurableObject<Env> {
       this.sessions.set(ws, next);
       ws.serializeAttachment(next);
       const replica = this.externalMatches.get(id);
-      if (replica) this.sendWstart(ws, replica);
+      if (replica) {
+        this.sendWstart(ws, replica);
+      } else {
+        // No replica yet: registering `watching` above is exactly what puts this
+        // id into externalWatchedIds(), so the very next /arena/games poll tells
+        // the arena to stream it and the snapshot flushes the wstart. The DO
+        // can't pull that snapshot itself (the arena polls the DO, not the
+        // reverse), so we send an immediate `wpending` ack — the client treats
+        // it as progress and extends its watch deadline instead of stalling on
+        // the base timeout while the arena's next poll lands.
+        send(ws, "wpending", { id });
+      }
       this.broadcastWatchers(id);
       return;
     }

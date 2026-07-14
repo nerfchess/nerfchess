@@ -260,6 +260,7 @@ export type MPEvent =
   | { type: "open"; code: string; color: Color; token: string }
   | { type: "start"; setup: MPStart }
   | { type: "watch-start"; setup: MPWatchStart }
+  | { type: "watch-pending" }
   | { type: "queued"; pool: string }
   | { type: "paired"; id: string; color: Color; token: string }
   | { type: "queue-cancelled" }
@@ -296,6 +297,7 @@ type ServerFrame =
   | { t: "created"; d: { id: string; color: Color; token: string } }
   | { t: "start"; d: MPStart }
   | { t: "wstart"; d: MPWatchStart }
+  | { t: "wpending"; d?: { id?: string } }
   | { t: "queued"; d: { pool: string } }
   | { t: "paired"; d: { id: string; color: Color; token: string } }
   | { t: "queueCancelled" }
@@ -721,6 +723,13 @@ export class MPSession {
         this.reconnectAttempt = 0;
         this.emit({ type: "watch-start", setup: frame.d });
         break;
+      case "wpending":
+        // The watch was registered but the (arena) replica isn't loaded yet;
+        // the wstart follows once the arena streams a started snapshot. Purely
+        // a progress signal so `watch()` extends its deadline instead of
+        // timing out on the base window.
+        this.emit({ type: "watch-pending" });
+        break;
       case "queued":
         this.emit({ type: "queued", pool: frame.d.pool });
         break;
@@ -1023,22 +1032,50 @@ export class MPSession {
     });
   }
 
-  // Spectate a live game. Resolves with the watch payload.
+  // Spectate a live game. Resolves with the watch payload, or rejects on
+  // error/disconnect/timeout so a game whose wstart never arrives (a stuck
+  // arena replica, a dropped socket) can't leave the caller "Tuning in…"
+  // forever — mirrors fetchLobby's bounded pattern.
   async watch(id: string): Promise<MPWatchStart> {
     this.code = id;
     await this.connect();
     return new Promise((resolve, reject) => {
+      let timer = 0;
+      // (Re)arm the timeout. A `watch-pending` ack (the DO registered the watch
+      // but the arena replica isn't loaded yet) counts as progress and extends
+      // the deadline, so a slow-to-stream arena game gets more time while a
+      // genuinely stuck watch still fails.
+      const arm = (ms: number) => {
+        if (timer) window.clearTimeout(timer);
+        timer = window.setTimeout(() => {
+          off();
+          reject(new Error("The game server did not respond in time."));
+        }, ms);
+      };
       const off = this.on((event) => {
         if (event.type === "watch-start") {
+          if (timer) window.clearTimeout(timer);
           off();
           this.watchingId = id;
           resolve(event.setup);
+        } else if (event.type === "watch-pending") {
+          arm(15000);
         } else if (event.type === "error") {
+          if (timer) window.clearTimeout(timer);
           off();
           reject(new Error(event.code === "not_found" ? "not_found" : event.message));
+        } else if (event.type === "disconnected") {
+          if (timer) window.clearTimeout(timer);
+          off();
+          reject(new Error("Disconnected from the game server."));
         }
       });
-      this.sendFrame("watch", { id });
+      if (!this.sendFrame("watch", { id })) {
+        off();
+        reject(new Error("Disconnected from the game server."));
+        return;
+      }
+      arm(10000);
     });
   }
 
