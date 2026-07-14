@@ -258,12 +258,8 @@ export const PLAYS: Record<string, SigPlugin> = {
   rewind_one: S(["#8fb4ff", "#e6efff", "#14243f"], GLYPH.rewind_one, {
     ordering: "radial", staggerMs: 30, victims: "all", hasLead: true, sound: "clockcage",
   }),
-  time_rewind: S(["#6fe3ff", "#e8fbff", "#0f2b33"], GLYPH.time_rewind, {
-    ordering: "radial", staggerMs: 40, victims: "all", hasLead: true, sound: "clockice",
-  }),
-  full_rewind: S(["#b98cff", "#f0e6ff", "#241338"], GLYPH.full_rewind, {
-    ordering: "radial", staggerMs: 50, victims: "all", hasLead: true, sound: "clockcage",
-  }),
+  // time_rewind and full_rewind keep their richer bespoke scenes in
+  // greatPlays (ClockSpire) and godPlays (ChronoLord); no entries here.
 
   // --- Movement escapes ---
   shadow_step: S(["#9aa6c9", "#e2e7f5", "#161a2b"], GLYPH.shadow_step, {
@@ -288,10 +284,6 @@ export const PLAYS: Record<string, SigPlugin> = {
   half_measure: S(["#c9d2e0", "#f2f5fb", "#1a2130"], GLYPH.half_measure, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: false, sound: "snooze",
   }),
-  rehab: S(["#ffcf7a", "#fff2d6", "#3a2c0f"], GLYPH.rehab, {
-    ordering: "radial", staggerMs: 40, victims: "all", hasLead: true, sound: "cathedral",
-  }),
-  nerf_reversal: S(["#ffd76a", "#fff7de", "#3a1420"], GLYPH.nerf_reversal, {
-    ordering: "radial", staggerMs: 45, victims: "all", hasLead: true, sound: "coronation", source: "shield",
-  }),
+  // rehab and nerf_reversal keep their richer bespoke scenes in greatPlays
+  // (CardRite) and godPlays (CelestialRing); no entries here.
 };

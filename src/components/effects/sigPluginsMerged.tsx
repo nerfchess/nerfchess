@@ -16,11 +16,15 @@ import { PLAYS as GREAT_PLAYS } from "./greatPlays";
 import { PLAYS as BASIC_PLAYS } from "./basicPlays";
 import { PLAYS as PERSONAL_PLAYS } from "./personalPlays";
 import { PLAYS as MEME_PLAYS } from "./memePlays";
+import { PLAYS as STUB_PLAYS } from "./stubPlays";
+import { PLAYS as PRANK_PLAYS } from "./prankPlays";
+import { PLAYS as CASINO_PLAYS } from "./casinoPlays";
 
 // Later spreads win within plugins; core SIGNATURES always beat plugins at
 // the resolve site. Merge order: god-tier set, tier 5-6 set, funny/meta set,
-// personal set, meme (brainrot batch 2) set.
-const MERGED: Record<string, SigPlugin> = { ...BASIC_PLAYS, ...GOD_PLAYS, ...GREAT_PLAYS, ...FUNNY_PLAYS, ...PERSONAL_PLAYS, ...MEME_PLAYS };
+// personal set, meme (brainrot batch 2) set, then the revived-stub, prank,
+// and casino sets.
+const MERGED: Record<string, SigPlugin> = { ...BASIC_PLAYS, ...GOD_PLAYS, ...GREAT_PLAYS, ...FUNNY_PLAYS, ...PERSONAL_PLAYS, ...MEME_PLAYS, ...STUB_PLAYS, ...PRANK_PLAYS, ...CASINO_PLAYS };
 
 // Publish the full SignatureConfig per plugin card id into the eager
 // registry, visual keyed back to this module. Deterministic: same inputs,

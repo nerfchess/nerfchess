@@ -1343,7 +1343,6 @@ export const PLAYS: Record<string, SigPlugin> = {
   // Pawn Nerf (t3 hex)
   pawn_nerf: B(ChainLash, ["#8a94a8","#c9cdd6","#2e3440"], "pawn_nerf", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "wall" }),
   // Pin Breaker (t3 movement)
-  pin_breaker: B(ChainLash, ["#a8763a","#e8dcc0","#3a2a1a"], "pin_breaker", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall" }),
   // Spooked Steeds (t3 hex)
   spooked_steeds: B(ChainLash, ["#8a94a8","#c9cdd6","#2e3440"], "spooked_steeds", { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "wall" }),
   // Static Field (t3 protection)
@@ -1723,9 +1722,7 @@ export const PLAYS: Record<string, SigPlugin> = {
 
   /* --- CogTick ----------------------------------------------------------- */
   // Free Retreat (t1 tempo)
-  free_retreat: B(CogTick, ["#c9a84c","#6fe3ff","#3a3026"], "free_retreat", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage" }),
   // Rewind One (t3 tempo)
-  rewind_one: B(CogTick, ["#a8925a","#aee2ff","#33291a"], "rewind_one", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage" }),
   // Wasted Hour (t3 hex)
   wasted_hour: B(CogTick, ["#bf9c50","#9fdcf0","#362c1c"], "wasted_hour", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze", source: "stun" }),
   // Lost Weekend (t4 hex)
@@ -1747,7 +1744,6 @@ export const PLAYS: Record<string, SigPlugin> = {
   // Hunter's Relief (t2 nerf)
   hunters_relief: B(BellToll, ["#ffe08a","#fffbef","#8a7038"], "hunters_relief", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral" }),
   // Loosen the Leash (t2 nerf)
-  loosen_the_leash: B(BellToll, ["#f2c34a","#fdf4dc","#655022"], "loosen_the_leash", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral" }),
   // Slack in the Chain (t2 nerf)
   slack_chain: B(BellToll, ["#ffe08a","#fffbef","#8a7038"], "slack_chain", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral" }),
   // Break the Nerf (t3 nerf)
@@ -1755,9 +1751,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   // Grace Period (t3 nerf)
   grace_period: B(BellToll, ["#ffd76a","#fff7de","#8a6a3a"], "grace_period", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral" }),
   // Half Measure (t3 nerf)
-  half_measure: B(BellToll, ["#ffcf4d","#ffffff","#7a5c2e"], "half_measure", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral" }),
   // Piece Parole (t3 nerf)
-  piece_parole: B(BellToll, ["#ffd76a","#fff7de","#8a6a3a"], "piece_parole", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral" }),
   // Timely Lull (t3 nerf)
   timely_lull: B(BellToll, ["#ffd76a","#fff7de","#8a6a3a"], "timely_lull", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral" }),
   // Underdog's Grit (t3 nerf)
@@ -1831,7 +1825,6 @@ export const PLAYS: Record<string, SigPlugin> = {
 
   /* --- BannerMuster ------------------------------------------------------ */
   // Decoy (t2 protection)
-  decoy: B(BannerMuster, ["#c94a3a","#d8dee9","#331410"], "decoy", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "siege" }),
   // Regenerate (t3 pieces)
   regenerate: B(BannerMuster, ["#b0402e","#e8eef7","#2e120e"], "regenerate", { ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "siege", source: "summon" }),
   // Summon Knight (t3 pieces)
@@ -1851,7 +1844,6 @@ export const PLAYS: Record<string, SigPlugin> = {
 
   /* --- InkSplash --------------------------------------------------------- */
   // Shadow Step (t2 movement)
-  shadow_step: B(InkSplash, ["#7b6bd1","#d6c9f0","#16142a"], "shadow_step", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades" }),
   // Glamour (t3 pieces)
   glamour: B(InkSplash, ["#8f6bff","#e3d0ff","#141322"], "glamour", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades" }),
   // Piece Steal (t3 pieces)
