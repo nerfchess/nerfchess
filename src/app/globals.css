@@ -2458,9 +2458,10 @@ html[data-theme="light"] .bg-black\/70 {
   }
 }
 
-/* === Ambient gold-dust star field (home) =====================================
-   A fixed, pointer-events-none field of candlelight motes behind the landing
-   page: three parallax dust layers (each ONE animated node carrying a tiled
+/* === Ambient gold-dust star field (home + lobby) =============================
+   A fixed, pointer-events-none field of candlelight motes behind the page
+   (shared via src/components/StarField.tsx): three parallax dust layers (each
+   ONE animated node carrying a tiled
    radial-gradient speckle), a handful of 4-point brass glints that twinkle,
    and two slow diagonal shooting stars. Everything is transform/opacity only,
    no JS, no canvas. Node budget: 3 layers + 12 glints + 2 shooting = 17
@@ -2573,96 +2574,38 @@ html[data-theme="light"] .starfield {
   display: none;
 }
 
-/* === The Gilded Hall (lobby) =================================================
-   The lobby redesign: a grand header with an animated gold hairline and the
-   same star-dust motif as home, luxe challenge plates with mode-colored edge
-   glows, a glassy friend panel, and illustrated empty states. All motion is
-   transform/opacity, gated below for reduced motion. */
+/* === The Lobby (flat, space-themed) ==========================================
+   Solid ink panels (.plate) with 1px hairline borders over the shared star
+   field (src/components/StarField.tsx). Mode identity is a flat 2px left
+   border on each row — no gradient plates, washes, spines, or glows. */
 
-/* Animated gold hairline under the masthead: a static brass fade with a
-   narrow candle gleam sweeping across every few seconds. */
+/* Plain flat brass hairline under "The Lobby" masthead. */
 .hall-hairline {
-  position: relative;
   height: 1px;
-  overflow: hidden;
-  background: linear-gradient(90deg, rgb(216 181 110 / 0.6), rgb(216 181 110 / 0.14) 55%, transparent);
+  background: rgb(216 181 110 / 0.4);
 }
-.hall-hairline::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, transparent, rgb(255 233 170 / 0.9), transparent);
-  transform: translateX(-100%);
-  animation: hall-hairline-sweep 6.5s ease-in-out 1.4s infinite;
-}
-@keyframes hall-hairline-sweep {
-  0%, 55% { transform: translateX(-100%); }
-  90%, 100% { transform: translateX(100%); }
+html[data-theme="light"] .hall-hairline {
+  background: rgba(43, 40, 34, 0.25);
 }
 
-/* Hall panel: the lobby's section surface — a top-lit plate with a faint
-   brass bloom along its top edge. Pair with .plate so the theme remaps,
-   high-contrast borders, and stacking defaults all keep working. */
-.hall-panel {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0) 96px),
-    radial-gradient(92% 42% at 50% 0%, rgb(216 181 110 / 0.05), transparent 72%),
-    var(--surface-panel);
-  border: 1px solid var(--edge);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.05),
-    0 14px 44px -28px rgba(0, 0, 0, 0.75);
-}
-html[data-theme="light"] .hall-panel {
-  background: rgba(255, 255, 255, 0.55);
-  border-color: rgba(0, 0, 0, 0.14);
-}
-
-/* Glassy variant for the create-challenge (friend) panel. The live blur is a
-   fine-pointer nicety only, dropped in perf mode — same law as .btn-glass. */
-.hall-glass {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.02) 60%),
-    color-mix(in srgb, var(--surface-panel) 76%, transparent);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    0 14px 44px -28px rgba(0, 0, 0, 0.75);
-}
-@media (hover: hover) and (pointer: fine) {
-  html:not([data-perf="low"]) .hall-glass {
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-  }
-}
-html[data-theme="light"] .hall-glass {
-  background: rgba(255, 255, 255, 0.6);
-  border-color: rgba(43, 40, 34, 0.16);
-}
-
-/* Luxe row plates: each waiting seek / challenge / live game is its own plate
-   with a mode-colored spine and a wash that fades from that edge. Hover lifts
-   the plate a pixel and blooms the spine — transform/border/shadow only. */
+/* Each waiting seek / challenge / live game is one flat row: a solid ink
+   step above the panel, a 1px hairline border, and the mode color as a flat
+   2px left border (warm for Nerf, cool for Buff, brass for legacy/draft).
+   Hover only firms the borders — no lift, no glow. */
 .hall-row {
   --row-rgb: 216 181 110; /* brass default (draft / legacy entries) */
-  position: relative;
-  background:
-    linear-gradient(90deg, rgb(var(--row-rgb) / 0.08), rgb(var(--row-rgb) / 0.015) 36%, rgba(255, 255, 255, 0.015));
+  background: rgba(255, 255, 255, 0.025);
   border: 1px solid var(--edge);
-  border-left: 2px solid rgb(var(--row-rgb) / 0.55);
+  border-left: 2px solid rgb(var(--row-rgb) / 0.6);
   transition:
-    transform var(--dur-2) var(--ease-out),
     border-color var(--dur-2) var(--ease-out),
-    box-shadow var(--dur-2) var(--ease-out);
+    background-color var(--dur-2) var(--ease-out);
 }
 @media (hover: hover) {
   .hall-row:hover {
-    transform: translateY(-1px);
-    border-color: rgb(var(--row-rgb) / 0.45);
+    background: rgba(255, 255, 255, 0.045);
+    border-color: rgb(var(--row-rgb) / 0.4);
     border-left-color: rgb(var(--row-rgb) / 0.95);
-    box-shadow:
-      0 0 22px -10px rgb(var(--row-rgb) / 0.45),
-      0 12px 26px -18px rgba(0, 0, 0, 0.8);
   }
 }
 .hall-row--nerf { --row-rgb: var(--seam-warm-rgb); }
@@ -2674,8 +2617,8 @@ html[data-theme="light"] .hall-row {
   border-left-color: rgb(var(--row-rgb) / 0.6);
 }
 
-/* Rich empty state: a quiet 4x4 board sketched in brass with drifting candle
-   motes rising off it. Purely decorative; the message carries the meaning. */
+/* Empty state: a quiet flat 4x4 checkerboard in brass with tiny star motes
+   drifting off it. Purely decorative; the message carries the meaning. */
 .hall-empty-board {
   position: relative;
   width: 72px;
@@ -2684,7 +2627,6 @@ html[data-theme="light"] .hall-row {
   border: 1px solid rgb(216 181 110 / 0.35);
   background: repeating-conic-gradient(rgb(216 181 110 / 0.16) 0% 25%, transparent 0% 50%);
   background-size: 50% 50%;
-  box-shadow: inset 0 0 18px -6px rgb(216 181 110 / 0.25);
 }
 .hall-mote {
   position: absolute;
@@ -2703,22 +2645,17 @@ html[data-theme="light"] .hall-row {
   100% { opacity: 0; transform: translate3d(7px, -36px, 0) scale(1); }
 }
 
-/* Reduced motion: still the dust, hide the transients (shooting stars, motes,
-   hairline gleam), keep every static paint. */
+/* Reduced motion: still the dust, hide the transients (shooting stars,
+   motes), keep every static paint. */
 @media (prefers-reduced-motion: reduce) {
   .star-layer,
-  .star-glint,
-  .hall-row {
+  .star-glint {
     animation: none !important;
   }
   .star-shoot,
   .hall-mote {
     animation: none !important;
     opacity: 0 !important;
-  }
-  .hall-hairline::after {
-    animation: none !important;
-    transform: translateX(-100%);
   }
   .star-glint {
     opacity: 0.5;

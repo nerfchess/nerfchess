@@ -389,6 +389,31 @@ function fxRng(game: NerfGame, me: Color): RNG {
   let seed = boardSignature(game.board);
   seed = Math.imul(seed ^ (game.board.history.length + 1), 0x9e3779b1);
   seed = Math.imul(seed ^ (me === "w" ? 0x517cc1b7 : 0x27220a95), 0x85ebca6b);
+  // Also mix a digest of the public card state. Board+ply alone repeated
+  // seeds byte-for-byte when two casts landed at the same position with no
+  // board change between them — e.g. two Wheel of Fortune instants picked
+  // back-to-back whose first wedge only touched the clock rolled the SAME
+  // wedge every time ("I got +55 seconds five spins in a row"). Held-card
+  // counts, spent/used flags, effect count, rerolls, and the mutation
+  // counter all advance between such casts, are part of the byte-identical
+  // synced state on every replica, and never leak a hidden card (counts
+  // only, no identities).
+  const bs = game.buffs;
+  if (bs) {
+    let d = (bs.mutations ?? 0) ^ ((bs.effects.length + 1) << 8);
+    for (const c of ["w", "b"] as Color[]) {
+      const ps = bs.players[c];
+      let spent = 0;
+      let used = 0;
+      for (const b of ps.buffs) {
+        if (b.spent) spent++;
+        if (b.usedActivation) used++;
+      }
+      d = Math.imul(d ^ (ps.buffs.length + 1), 0x9e3779b1);
+      d = Math.imul(d ^ (spent * 31 + used * 131 + ps.rerollsLeft * 7 + 1), 0x85ebca6b);
+    }
+    seed = Math.imul(seed ^ d, 0xc2b2ae35);
+  }
   return new RNG(seed >>> 0);
 }
 

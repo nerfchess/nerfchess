@@ -416,6 +416,89 @@
 }
 .pnp-grip { animation: pnp-grip 1.2s cubic-bezier(0.3, 0.7, 0.3, 1.2) both; transform-origin: 50% 50%; }
 
+/* --- Member portraits: the star entrance ---------------------------------------- */
+
+/* The portrait descends into frame with a soft settle, holds the scene, and
+   lifts away. The backbone of every member/companion lead. */
+@keyframes pnp-hero {
+  0% { opacity: 0; transform: translateY(-14%) scale(0.82); }
+  18% { opacity: 1; transform: translateY(1.5%) scale(1.02); }
+  28% { transform: translateY(-1%) scale(0.99); }
+  38% { transform: translateY(0) scale(1); }
+  86% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-4%) scale(1.04); }
+}
+.pnp-hero { animation: pnp-hero 2.1s cubic-bezier(0.3, 0.8, 0.3, 1.05) both; transform-origin: 50% 50%; }
+
+/* A shield pane / sigil snapping in: quick spin-settle, hold, out. */
+@keyframes pnp-pane {
+  0% { opacity: 0; transform: scale(0.2) rotate(-32deg); }
+  24% { opacity: 1; transform: scale(1.12) rotate(4deg); }
+  38% { transform: scale(0.97) rotate(-1deg); }
+  50% { transform: scale(1) rotate(0deg); }
+  84% { opacity: 1; transform: scale(1) rotate(0deg); }
+  100% { opacity: 0; transform: scale(1.06) rotate(0deg); }
+}
+.pnp-pane { animation: pnp-pane 1.15s cubic-bezier(0.25, 0.9, 0.3, 1.15) both; transform-origin: 50% 50%; }
+
+/* The crystal bloom: grows in and turns, slow and regal. */
+@keyframes pnp-bloom {
+  0% { opacity: 0; transform: scale(0.25) rotate(-40deg); }
+  22% { opacity: 0.95; transform: scale(1) rotate(-12deg); }
+  82% { opacity: 0.85; transform: scale(1.06) rotate(14deg); }
+  100% { opacity: 0; transform: scale(1.12) rotate(22deg); }
+}
+.pnp-bloom { animation: pnp-bloom 2.1s ease-in-out both; transform-origin: 50% 50%; }
+
+/* A dawn ray: unrolls downward from its far end, glows, and fades. */
+@keyframes pnp-ray {
+  0% { opacity: 0; transform: scaleY(0.1); }
+  22% { opacity: 0.95; transform: scaleY(1); }
+  74% { opacity: 0.7; transform: scaleY(1); }
+  100% { opacity: 0; transform: scaleY(1.04); }
+}
+.pnp-ray { animation: pnp-ray 1.7s ease-out both; transform-origin: 50% 100%; }
+
+/* The cat pounce: a long low leap clean across the board, nose down into the
+   landing, then she's gone. */
+@keyframes pnp-pounce {
+  0% { opacity: 0; transform: translate(-95%, 48%) scale(0.8) rotate(-6deg); }
+  16% { opacity: 1; transform: translate(-60%, 18%) scale(0.9) rotate(-4deg); }
+  42% { transform: translate(-10%, -16%) scale(1.02) rotate(2deg); }
+  62% { transform: translate(32%, -6%) scale(1.05) rotate(5deg); }
+  78% { transform: translate(62%, 16%) scale(1.02) rotate(2deg); }
+  92% { opacity: 1; transform: translate(88%, 34%) scale(0.98); }
+  100% { opacity: 0; transform: translate(102%, 44%) scale(0.95); }
+}
+.pnp-pounce { animation: pnp-pounce 1.9s cubic-bezier(0.35, 0.05, 0.3, 1) both; transform-origin: 50% 50%; }
+
+/* A raking claw streak: rips in along its length, flares, gone. */
+@keyframes pnp-slashsweep {
+  0% { opacity: 0; transform: scaleX(0.05); }
+  30% { opacity: 1; transform: scaleX(1.02); }
+  62% { opacity: 0.9; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1.04); }
+}
+.pnp-slashsweep { animation: pnp-slashsweep 0.75s cubic-bezier(0.2, 0.8, 0.3, 1) both; transform-origin: 0% 50%; }
+
+/* Cami's cross-sweep: the vertical blade crosses the whole rank... */
+@keyframes pnp-sweepx {
+  0% { opacity: 0; transform: translateX(-560%) scaleX(0.7); }
+  14% { opacity: 1; }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(560%) scaleX(0.7); }
+}
+.pnp-sweepx { animation: pnp-sweepx 1.15s cubic-bezier(0.5, 0, 0.3, 1) both; transform-origin: 50% 50%; }
+
+/* ...and the horizontal blade crosses the whole file. */
+@keyframes pnp-sweepy {
+  0% { opacity: 0; transform: translateY(-560%) scaleY(0.7); }
+  14% { opacity: 1; }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(560%) scaleY(0.7); }
+}
+.pnp-sweepy { animation: pnp-sweepy 1.15s cubic-bezier(0.5, 0, 0.3, 1) both; transform-origin: 50% 50%; }
+
 /* --- reduced motion ----------------------------------------------------------------
    Everything in this module is a transient one-shot flourish: hide the whole
    layer outright (defensive — the caller's play layer gates it too). */

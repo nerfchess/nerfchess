@@ -438,7 +438,11 @@ const houseSeeksKey = "hp:seeks";
 // handles (pawnstorm77, alexk2004, ...). New names mean new hp_ user ids, so
 // re-run ensureHouseUsers to create their rows. (The renamed old accounts
 // stay orphaned in the DB; harmless, same as the v2 note below.)
-const houseSeededKey = "hp:seeded:v3";
+// v4: three joke handles in the 2100-2200 band (Stickygamer123,
+// ilovewhitestickystuff, ilovemysister) were rewritten to realistic
+// chess-site handles (e4enjoyer, viktor_m85, KnightSlayer99). Same drill:
+// new hp_ ids, re-run ensureHouseUsers; old accounts stay orphaned.
+const houseSeededKey = "hp:seeded:v4";
 // One-time-per-revision sync of every house account's rating AND identity
 // (avatar, location bio) to the current roster values (see syncHouseRatings).
 // Bump the suffix whenever the roster's ratings or identity change so existing
@@ -446,7 +450,10 @@ const houseSeededKey = "hp:seeded:v3";
 // next cold start. This bump circulates the identity pass: varied flowered
 // avatars (name-hashed over the full catalog) and one distinct world-wide
 // location per persona as the profile bio.
-const houseRatingsSyncedKey = "hp:ratings-synced:identity-1";
+// identity-2: the v4 persona renames above changed three name-hashed avatars,
+// so re-circulate identity once. (syncHouseRatings itself respects the
+// /mod/house admin overrides, so this never undoes an admin edit.)
+const houseRatingsSyncedKey = "hp:ratings-synced:identity-2";
 const houseNextFillerKey = "hp:nextFillerAt";
 // Slow heartbeat while at least one human socket is connected; with nobody
 // online there is no heartbeat and the DO goes idle between match deadlines.
@@ -829,9 +836,14 @@ export class GameServer extends DurableObject<Env> {
   // its static seed forever. One bounded query per TTL window keeps the
   // lobby/tick paths off per-poll D1 work; a read failure just falls back to
   // houseSeedRating until the next refresh.
+  // `identity` rides along in the same cache window: the roster's CURRENT
+  // username/avatar from the users table (the system of record once an admin
+  // edits a persona from /mod/house), so seeks and filler seats show an
+  // admin-renamed bot within a TTL instead of the baked constant.
   private houseRatingsCache: {
     at: number;
     byId: Map<string, Partial<Record<DraftMode, number>>>;
+    identity: Map<string, { username: string; avatar: string | null }>;
   } | null = null;
   private static readonly HOUSE_RATINGS_TTL_MS = 60_000;
   // Arena (Tier 2 / M2): bot-vs-bot games simulated on the OCI arena, kept in
@@ -1688,20 +1700,28 @@ export class GameServer extends DurableObject<Env> {
     db: D1Database,
     userId: string,
     category: RatingCategory,
-  ): Promise<{ rating: number; rd: number; vol: number; avatar: string | null } | null> {
+  ): Promise<{ rating: number; rd: number; vol: number; avatar: string | null; username: string | null } | null> {
     try {
-      // The avatar read is independent of the rating read: run them together
-      // so a seat attach costs one D1 round-trip of latency, not two.
+      // The avatar/username read is independent of the rating read: run them
+      // together so a seat attach costs one D1 round-trip of latency, not two.
+      // username is only consumed by houseSeatUser (an admin can rename a
+      // house persona from /mod/house); human callers ignore it.
       const [ratings, row] = await Promise.all([
         loadCategoryRatings(db, [userId], category),
         db
-          .prepare("SELECT avatar FROM users WHERE id = ?")
+          .prepare("SELECT avatar, username FROM users WHERE id = ?")
           .bind(userId)
-          .first<{ avatar: string | null }>(),
+          .first<{ avatar: string | null; username: string | null }>(),
       ]);
       const r = ratings.get(userId);
       if (!r) return null;
-      return { rating: r.rating, rd: r.rd, vol: r.vol, avatar: row?.avatar ?? null };
+      return {
+        rating: r.rating,
+        rd: r.rd,
+        vol: r.vol,
+        avatar: row?.avatar ?? null,
+        username: row?.username ?? null,
+      };
     } catch {
       return null;
     }
@@ -3819,14 +3839,14 @@ export class GameServer extends DurableObject<Env> {
     // Keep 2-3 personas seeking across the two pools at all times (a mix of
     // Nerf and Buff, rotating which personas via random draw). Seeks carry
     // the persona's LIVE rating (cached, one bounded query per TTL window).
-    const liveRatings = await this.houseLiveRatings(db);
+    const liveInfo = await this.houseLiveInfo(db);
     while (seeks.length < houseSeekMin && free.length) {
       const persona = free.splice(randomInt(free.length), 1)[0];
-      seeks.push(this.newHouseSeek(persona, now, liveRatings));
+      seeks.push(this.newHouseSeek(persona, now, liveInfo));
     }
     if (seeks.length >= houseSeekMin && seeks.length < houseSeekMax && free.length && randomInt(100) < 5) {
       const persona = free.splice(randomInt(free.length), 1)[0];
-      seeks.push(this.newHouseSeek(persona, now, liveRatings));
+      seeks.push(this.newHouseSeek(persona, now, liveInfo));
     }
     // Per-mode floor: guarantee at least one seek in each pool so neither the
     // Nerf nor the Buff lobby is ever left without a house seeker (the random
@@ -3836,7 +3856,7 @@ export class GameServer extends DurableObject<Env> {
       if (!free.length) break;
       if (seeks.some((seek) => seek.mode === mode)) continue;
       const persona = free.splice(randomInt(free.length), 1)[0];
-      seeks.push({ ...this.newHouseSeek(persona, now, liveRatings), mode });
+      seeks.push({ ...this.newHouseSeek(persona, now, liveInfo), mode });
     }
     await this.ctx.storage.put(houseSeeksKey, seeks);
 
@@ -4243,51 +4263,77 @@ export class GameServer extends DurableObject<Env> {
   private async houseLiveRatings(
     db: D1Database | null,
   ): Promise<Map<string, Partial<Record<DraftMode, number>>>> {
+    return (await this.houseLiveInfo(db)).byId;
+  }
+
+  // Ratings AND identity for the roster, one cache window: two bounded queries
+  // per TTL, shared by seeks, filler seats, and any caller that only needs the
+  // ratings map (houseLiveRatings above).
+  private async houseLiveInfo(db: D1Database | null): Promise<{
+    byId: Map<string, Partial<Record<DraftMode, number>>>;
+    identity: Map<string, { username: string; avatar: string | null }>;
+  }> {
     const now = Date.now();
     if (this.houseRatingsCache && now - this.houseRatingsCache.at < GameServer.HOUSE_RATINGS_TTL_MS) {
-      return this.houseRatingsCache.byId;
+      return this.houseRatingsCache;
     }
     const byId = new Map<string, Partial<Record<DraftMode, number>>>();
+    const identity = new Map<string, { username: string; avatar: string | null }>();
     if (db) {
       try {
         const ids = HOUSE_ROSTER.map((p) => p.userId);
         const placeholders = ids.map(() => "?").join(",");
-        const rows = await db
-          .prepare(
-            `SELECT user_id, category, rating FROM user_ratings
-             WHERE category IN ('nerf','buff') AND user_id IN (${placeholders})`,
-          )
-          .bind(...ids)
-          .all<{ user_id: string; category: string; rating: number }>();
+        const [rows, users] = await Promise.all([
+          db
+            .prepare(
+              `SELECT user_id, category, rating FROM user_ratings
+               WHERE category IN ('nerf','buff') AND user_id IN (${placeholders})`,
+            )
+            .bind(...ids)
+            .all<{ user_id: string; category: string; rating: number }>(),
+          db
+            .prepare(`SELECT id, username, avatar FROM users WHERE id IN (${placeholders})`)
+            .bind(...ids)
+            .all<{ id: string; username: string; avatar: string | null }>(),
+        ]);
         for (const row of rows.results) {
           if (row.category !== "nerf" && row.category !== "buff") continue;
           const entry = byId.get(row.user_id) ?? {};
           entry[row.category as DraftMode] = Math.round(row.rating);
           byId.set(row.user_id, entry);
         }
+        for (const row of users.results) {
+          identity.set(row.id, { username: row.username, avatar: row.avatar });
+        }
       } catch {
-        // Fall back to seed ratings; retry after the TTL.
+        // Fall back to seed ratings / baked identity; retry after the TTL.
       }
     }
-    this.houseRatingsCache = { at: now, byId };
-    return byId;
+    this.houseRatingsCache = { at: now, byId, identity };
+    return this.houseRatingsCache;
   }
 
   private newHouseSeek(
     persona: HousePersona,
     now: number,
-    liveRatings?: Map<string, Partial<Record<DraftMode, number>>>,
+    live?: {
+      byId: Map<string, Partial<Record<DraftMode, number>>>;
+      identity: Map<string, { username: string; avatar: string | null }>;
+    },
   ): HouseSeekEntry {
     const { pool, mode } = pickHouseSeek(randomInt);
+    // Identity from the users table (admin edits from /mod/house land there),
+    // falling back to the baked persona constants.
+    const identity = live?.identity.get(persona.userId);
     return {
       userId: persona.userId,
-      name: persona.name,
+      name: identity?.username ?? persona.name,
       pool,
       mode,
       // The LIVE rating in the seek's mode bucket, so the number in the lobby
       // moves with the account's real results (seed only as a fallback).
-      rating: liveRatings?.get(persona.userId)?.[mode] ?? houseSeedRating(persona),
-      avatar: persona.avatar,
+      rating: live?.byId.get(persona.userId)?.[mode] ?? houseSeedRating(persona),
+      avatar: identity?.avatar ?? persona.avatar,
       at: now,
     };
   }
@@ -4302,7 +4348,9 @@ export class GameServer extends DurableObject<Env> {
       if (row) {
         return {
           id: persona.userId,
-          name: persona.name,
+          // The users row is the identity system of record (admin renames from
+          // /mod/house land there); baked constants are the fallback.
+          name: row.username ?? persona.name,
           rating: row.rating,
           rd: row.rd,
           vol: row.vol,
@@ -4482,14 +4530,16 @@ export class GameServer extends DurableObject<Env> {
     // ratings the tick already loads for seeks instead of houseSeatUser's two
     // D1 queries per seat — four fewer queries per filler spawn, zero marginal
     // D1 on this path.
-    const liveRatings = await this.houseLiveRatings(db);
+    const liveInfo = await this.houseLiveInfo(db);
     const seatOf = (p: HousePersona): SeatUser => ({
       id: p.userId,
-      name: p.name,
-      rating: liveRatings.get(p.userId)?.[mode] ?? houseSeedRating(p),
+      // Identity from the users table (admin edits from /mod/house), baked
+      // constants as the fallback — same resolution as newHouseSeek.
+      name: liveInfo.identity.get(p.userId)?.username ?? p.name,
+      rating: liveInfo.byId.get(p.userId)?.[mode] ?? houseSeedRating(p),
       rd: 150,
       vol: 0.06,
-      avatar: p.avatar,
+      avatar: liveInfo.identity.get(p.userId)?.avatar ?? p.avatar,
     });
     const match = await this.newHouseMatchRecord(
       { timeSec: tc.timeSec, incrementSec: tc.incrementSec },
@@ -6455,6 +6505,11 @@ export class GameServer extends DurableObject<Env> {
         for (const row of rows.results) {
           const entry = seen.get(row.id);
           if (entry) {
+            // The users row wins for the whole identity, not just rating and
+            // avatar: for humans it's the same string the session carries, and
+            // for house personas it's where an admin rename from /mod/house
+            // lands — so an idle renamed bot never shows its baked name.
+            entry.name = row.username;
             entry.rating = Math.round(row.rating);
             entry.avatar = row.avatar;
           }

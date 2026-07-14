@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="225 bench press">
+  <ellipse cx="100" cy="188" rx="70" ry="7" fill="#000" opacity="0.25"/>
+  <rect x="52" y="142" width="96" height="10" rx="4" fill="#5c6880"/>
+  <path d="M62 152 V184 M138 152 V184" stroke="#48536a" stroke-width="8" stroke-linecap="round"/>
+  <g stroke="#f4efe4" stroke-width="9" stroke-linecap="round" fill="none">
+    <circle cx="66" cy="132" r="12" fill="#f4efe4" stroke="none"/>
+    <path d="M80 136 H132"/>
+    <path d="M132 136 L152 158 L160 182"/>
+  </g>
+  <g>
+    <animateTransform attributeName="transform" type="translate" values="0 0; 0 26; 0 26; 0 0; 0 0" keyTimes="0;0.35;0.48;0.8;1" dur="2.3s" repeatCount="indefinite"/>
+    <path d="M92 118 L92 84 M112 118 L112 84" stroke="#f4efe4" stroke-width="8" stroke-linecap="round"/>
+    <rect x="30" y="78" width="140" height="7" rx="3.5" fill="#aab6c8"/>
+    <rect x="34" y="58" width="12" height="46" rx="4" fill="#d8b56e" stroke="#8a6414" stroke-width="1.5"/>
+    <rect x="154" y="58" width="12" height="46" rx="4" fill="#d8b56e" stroke="#8a6414" stroke-width="1.5"/>
+    <rect x="48" y="66" width="9" height="31" rx="3.5" fill="#8a93a6"/>
+    <rect x="143" y="66" width="9" height="31" rx="3.5" fill="#8a93a6"/>
+  </g>
+</svg>

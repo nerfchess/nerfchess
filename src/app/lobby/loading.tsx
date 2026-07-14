@@ -1,5 +1,5 @@
-// Branded route skeleton for /lobby: mirrors the Gilded Hall layout (masthead
-// over the gold hairline, spined row plates, sticky player column) so the
+// Branded route skeleton for /lobby: mirrors the lobby layout (masthead over
+// the flat brass hairline, flat bordered rows, sticky player column) so the
 // page chunk swaps in without anything jumping.
 export default function Loading() {
   return (
@@ -23,7 +23,7 @@ export default function Loading() {
         </div>
         <div className="mt-7 grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
           <div className="min-w-0 space-y-5">
-            <div className="plate hall-panel p-5">
+            <div className="plate p-5">
               <div className="skeleton h-6 w-36" />
               <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
                 {Array.from({ length: 6 }).map((_, i) => (
@@ -32,7 +32,7 @@ export default function Loading() {
               </div>
               <div className="skeleton mt-4 h-11 w-full" />
             </div>
-            <div className="plate hall-panel p-5">
+            <div className="plate p-5">
               <div className="skeleton h-6 w-44" />
               <ul className="mt-4 space-y-2.5" aria-hidden>
                 {Array.from({ length: 3 }).map((_, i) => (
@@ -47,7 +47,7 @@ export default function Loading() {
               </ul>
             </div>
           </div>
-          <div className="plate hall-panel h-fit p-5">
+          <div className="plate h-fit p-5">
             <div className="skeleton h-5 w-28" />
             <div className="mt-4 space-y-2.5">
               {Array.from({ length: 7 }).map((_, i) => (

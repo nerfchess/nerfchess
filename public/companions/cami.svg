@@ -1,0 +1,131 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 260" role="img" aria-label="Cami">
+  <!-- Cami: chibi anime companion — long dark hair, big sparkly eyes, heart staff.
+       Sticker/chibi style (matches the /newjeans portrait family, full-body).
+       Palette: pink #ff8fb1 / ink #23262e / gold #ffd76a. SMIL idle bob. -->
+  <defs>
+    <linearGradient id="cm-hair" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2e3140"/>
+      <stop offset="1" stop-color="#191b24"/>
+    </linearGradient>
+    <linearGradient id="cm-dress" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffa8c2"/>
+      <stop offset="1" stop-color="#f27ba1"/>
+    </linearGradient>
+    <radialGradient id="cm-cheek" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ff9fb8" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#ff9fb8" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="cm-eye" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4a3550"/>
+      <stop offset="0.55" stop-color="#8a4a72"/>
+      <stop offset="1" stop-color="#d178a2"/>
+    </linearGradient>
+  </defs>
+
+  <!-- ground shadow (stays put while she bobs) -->
+  <ellipse cx="100" cy="243" rx="52" ry="10" fill="#23262e" opacity="0.18">
+    <animate attributeName="rx" values="52;47;52" dur="2.6s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.18;0.13;0.18" dur="2.6s" repeatCount="indefinite"/>
+  </ellipse>
+
+  <!-- the whole girl idle-bobs -->
+  <g>
+    <animateTransform attributeName="transform" type="translate" values="0 0; 0 -5; 0 0" dur="2.6s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1; 0.45 0 0.55 1"/>
+
+    <!-- heart staff (behind the body, held in her right hand / viewer left) -->
+    <g>
+      <animateTransform attributeName="transform" type="rotate" values="-3 52 190; 3 52 190; -3 52 190" dur="2.6s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1; 0.45 0 0.55 1"/>
+      <rect x="49" y="118" width="7" height="98" rx="3.5" fill="#ffd76a" stroke="#b98a1c" stroke-width="2.5"/>
+      <path d="M52.5 92 c-9 -13 -28 -5 -28 8 c0 11 15 20 28 29 c13 -9 28 -18 28 -29 c0 -13 -19 -21 -28 -8 Z"
+            fill="#ff8fb1" stroke="#c2557d" stroke-width="4" stroke-linejoin="round"/>
+      <path d="M38 100 q3 -6 9 -7" fill="none" stroke="#ffd7e4" stroke-width="4" stroke-linecap="round"/>
+      <!-- gold sparkles off the heart -->
+      <path d="M17 84 l2.2 5.6 5.6 2.2 -5.6 2.2 -2.2 5.6 -2.2 -5.6 -5.6 -2.2 5.6 -2.2 Z" fill="#ffd76a">
+        <animate attributeName="opacity" values="1;0.25;1" dur="1.8s" repeatCount="indefinite"/>
+      </path>
+      <path d="M86 76 l1.8 4.6 4.6 1.8 -4.6 1.8 -1.8 4.6 -1.8 -4.6 -4.6 -1.8 4.6 -1.8 Z" fill="#ffd76a">
+        <animate attributeName="opacity" values="0.3;1;0.3" dur="1.8s" repeatCount="indefinite"/>
+      </path>
+    </g>
+
+    <!-- back hair: long dark hair falling past the dress -->
+    <path d="M100 42 C62 42 50 78 52 116 C53 152 60 180 57 204 q11 8 20 -2 q4 -14 4 -30 q10 12 8 34 q10 6 17 -3 L100 60 Z" fill="url(#cm-hair)"/>
+    <path d="M100 42 C138 42 150 78 148 116 C147 152 140 180 143 204 q-11 8 -20 -2 q-4 -14 -4 -30 q-10 12 -8 34 q-10 6 -17 -3 L100 60 Z" fill="url(#cm-hair)"/>
+
+    <!-- legs -->
+    <g>
+      <rect x="82" y="196" width="14" height="34" rx="7" fill="#ffe3d0"/>
+      <rect x="104" y="196" width="14" height="34" rx="7" fill="#ffe3d0"/>
+      <!-- mary-jane shoes -->
+      <path d="M78 226 q11 -6 20 0 q2 8 -4 10 h-12 q-6 -2 -4 -10 Z" fill="#e05a86" stroke="#a83b60" stroke-width="2.5"/>
+      <path d="M102 226 q11 -6 20 0 q2 8 -4 10 h-12 q-6 -2 -4 -10 Z" fill="#e05a86" stroke="#a83b60" stroke-width="2.5"/>
+    </g>
+
+    <!-- dress: puff sleeves, gold trim -->
+    <path d="M74 138 q26 -14 52 0 l14 52 q-40 18 -80 0 Z" fill="url(#cm-dress)" stroke="#c2557d" stroke-width="3"/>
+    <path d="M60 190 q40 18 80 0 l4 12 q-44 20 -88 0 Z" fill="#ffd76a" stroke="#c99a2c" stroke-width="2.5"/>
+    <!-- bodice heart -->
+    <path d="M100 150 c-4.5 -6.5 -14 -2.5 -14 4 c0 5.5 7.5 10 14 14.5 c6.5 -4.5 14 -9 14 -14.5 c0 -6.5 -9.5 -10.5 -14 -4 Z" fill="#fff" opacity="0.85"/>
+
+    <!-- right arm holds the staff (the wave arm is drawn over the hair below) -->
+    <path d="M76 146 Q58 158 54 176" fill="none" stroke="#ffe3d0" stroke-width="12" stroke-linecap="round"/>
+    <circle cx="53" cy="180" r="8.5" fill="#ffe3d0"/>
+
+    <!-- head: big chibi face -->
+    <circle cx="100" cy="86" r="46" fill="#ffe9dc"/>
+
+    <!-- fringe: soft bangs with parted center -->
+    <path d="M54 88 C52 46 78 34 100 34 C122 34 148 46 146 88 q-6 -16 -14 -22 q2 12 -4 18 q-4 -16 -14 -20 q4 10 -2 16 q-8 -14 -24 -12 q6 4 6 12 q-14 -10 -26 -2 q6 2 8 10 q-10 -8 -22 0 Z" fill="url(#cm-hair)"/>
+    <!-- side locks framing the face -->
+    <path d="M56 78 q-8 26 -2 46 q8 2 10 -6 q-4 -22 0 -36 Z" fill="url(#cm-hair)"/>
+    <path d="M144 78 q8 26 2 46 q-8 2 -10 -6 q4 -22 0 -36 Z" fill="url(#cm-hair)"/>
+    <!-- hair shine -->
+    <path d="M70 48 q14 -9 30 -8" fill="none" stroke="#5a5f75" stroke-width="5" stroke-linecap="round" opacity="0.8"/>
+
+    <!-- gold heart hairpin -->
+    <path d="M136 52 c-3 -4.4 -9.4 -1.7 -9.4 2.7 c0 3.7 5 6.7 9.4 9.8 c4.4 -3.1 9.4 -6.1 9.4 -9.8 c0 -4.4 -6.4 -7.1 -9.4 -2.7 Z" fill="#ffd76a" stroke="#c99a2c" stroke-width="2"/>
+
+    <!-- eyes: big sparkly anime eyes -->
+    <g>
+      <ellipse cx="80" cy="94" rx="12.5" ry="16" fill="url(#cm-eye)"/>
+      <ellipse cx="120" cy="94" rx="12.5" ry="16" fill="url(#cm-eye)"/>
+      <!-- pupils -->
+      <ellipse cx="80" cy="96" rx="6.5" ry="9" fill="#2b1e33"/>
+      <ellipse cx="120" cy="96" rx="6.5" ry="9" fill="#2b1e33"/>
+      <!-- the big sparkle -->
+      <circle cx="75" cy="88" r="4.6" fill="#fff"/>
+      <circle cx="115" cy="88" r="4.6" fill="#fff"/>
+      <!-- the little sparkle -->
+      <circle cx="85" cy="100" r="2.2" fill="#fff" opacity="0.95">
+        <animate attributeName="opacity" values="0.95;0.4;0.95" dur="2.1s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="125" cy="100" r="2.2" fill="#fff" opacity="0.95">
+        <animate attributeName="opacity" values="0.4;0.95;0.4" dur="2.1s" repeatCount="indefinite"/>
+      </circle>
+      <!-- upper lash line, with a cute outer flick -->
+      <path d="M68 84 q12 -9 25 -2" fill="none" stroke="#23262e" stroke-width="3.2" stroke-linecap="round"/>
+      <path d="M107 82 q13 -7 25 2" fill="none" stroke="#23262e" stroke-width="3.2" stroke-linecap="round"/>
+      <path d="M66.5 85.5 l-4.5 -3.5" stroke="#23262e" stroke-width="3" stroke-linecap="round"/>
+      <path d="M133.5 85.5 l4.5 -3.5" stroke="#23262e" stroke-width="3" stroke-linecap="round"/>
+    </g>
+
+    <!-- blush -->
+    <ellipse cx="66" cy="110" rx="9" ry="5.5" fill="url(#cm-cheek)"/>
+    <ellipse cx="134" cy="110" rx="9" ry="5.5" fill="url(#cm-cheek)"/>
+
+    <!-- happy open smile -->
+    <path d="M92 114 q8 8 16 0 q-3 9 -8 9 q-5 0 -8 -9 Z" fill="#e05a86"/>
+    <path d="M95 119.5 q5 3.5 10 0 q-2 3.5 -5 3.5 q-3 0 -5 -3.5 Z" fill="#ff9fb8"/>
+
+    <!-- left arm waves clear of the hair (drawn in front) -->
+    <g>
+      <animateTransform attributeName="transform" type="rotate" values="0 124 146; -7 124 146; 0 124 146" dur="2.6s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1; 0.45 0 0.55 1"/>
+      <path d="M124 148 Q148 142 158 122" fill="none" stroke="#ffe3d0" stroke-width="12" stroke-linecap="round"/>
+      <circle cx="160" cy="117" r="9" fill="#ffe3d0"/>
+    </g>
+    <!-- a wink of gold by the waving hand -->
+    <path d="M176 100 l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2 Z" fill="#ffd76a">
+      <animate attributeName="opacity" values="1;0.3;1" dur="2.1s" repeatCount="indefinite"/>
+    </path>
+  </g>
+</svg>

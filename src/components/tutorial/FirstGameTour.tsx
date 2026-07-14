@@ -41,9 +41,9 @@ const STEPS: CoachStep[] = [
     title: "Your first game",
     body: (
       <p>
-        This is a real game against the easiest bot — Buff mode, no clock, nothing simulated.
-        The tour points at each part of the loop as it actually happens. Arrow keys step it;
-        Escape leaves it.
+        This is a real game against the easiest bot. Buff mode, no clock, nothing simulated.
+        Take your time with each step. The tour points at each part of the game as it
+        happens. Arrow keys step through it, and Escape leaves it whenever you like.
       </p>
     ),
   },
@@ -54,13 +54,14 @@ const STEPS: CoachStep[] = [
     targetSelectors: BOARD,
     body: (
       <p>
-        There is no checkmate and no stalemate: you win by actually taking the enemy king.{" "}
+        There is no checkmate and no stalemate here. You win by actually capturing the enemy
+        king.{" "}
         <Gloss
           term="Check"
-          fallback="A direct threat to capture the king — which you are never forced to answer."
+          fallback="A direct threat to capture the king, which you are never forced to answer."
         />{" "}
-        carries no rule here — kings may walk into danger, and both kings can be in check at
-        the same time. When you can take him, take him.
+        carries no rule in this game. Kings may walk into danger, and both kings can even be
+        in check at the same time. When you can take him, take him.
       </p>
     ),
   },
@@ -72,8 +73,9 @@ const STEPS: CoachStep[] = [
     waitLabel: "Waiting for your move…",
     body: (
       <p>
-        You are White, so the board is yours. Tap a piece (or drag it) and the dots mark
-        every square it can reach. Any move works — play whatever feels natural.
+        You are White, so the board is yours. Tap a piece, or drag it, and the dots mark
+        every square it can reach. Any move works. Play whatever feels natural, and take as
+        long as you want.
       </p>
     ),
   },
@@ -89,9 +91,27 @@ const STEPS: CoachStep[] = [
           term="Draft"
           fallback="The recurring two-card offer: every 5 of your moves you pick one card or bank the offer."
         />{" "}
-        fires every 5 of your moves. The hourglass chip counts down to it; at zero, both
-        players are offered cards at the same time. (On a phone it lives in the Buffs drawer
-        along the bottom edge.)
+        fires every 5 of your moves. The hourglass chip counts down to it. When it reaches
+        zero, both players are offered cards at the same time. On a phone this chip lives in
+        the Buffs drawer along the bottom edge.
+      </p>
+    ),
+  },
+  {
+    id: "banking",
+    kicker: "pick or bank",
+    title: "Banking an offer",
+    targetSelectors: DRAFT_CHIP,
+    body: (
+      <p>
+        When an offer opens you have two choices. Picking takes one of the cards right away.{" "}
+        <Gloss
+          term="Bank"
+          fallback="Skip this offer entirely so your next draft rolls one tier higher."
+        />{" "}
+        takes nothing now, and in exchange your next draft rolls one tier higher, so patience
+        buys stronger cards. Banking an offer that already holds a tier 8 card can even push
+        the next one into the apex band.
       </p>
     ),
   },
@@ -103,8 +123,8 @@ const STEPS: CoachStep[] = [
     waitLabel: "The draft fires after your 5th move…",
     body: (
       <p>
-        Trade a few more moves with the bot. After your fifth move the card offer takes over
-        the screen — the tour will step aside and let you choose.
+        Trade a few more moves with the bot, no rush. After your fifth move the card offer
+        takes over the screen. The tour will step aside and let you choose.
       </p>
     ),
   },
@@ -117,13 +137,13 @@ const STEPS: CoachStep[] = [
       <p>
         Cards you draft land here.{" "}
         <Gloss term="Passive" fallback="A card that works on its own while you hold it." />{" "}
-        cards work while you simply hold them;{" "}
+        cards work while you simply hold them.{" "}
         <Gloss
           term="Activated"
           fallback="A card you spend by hand with its Use button, usually costing your turn."
         />{" "}
-        cards have a Use button, and spending one usually costs your turn, like a move. The
-        dock also keeps a ledger of every card the bot plays against you.
+        cards have a Use button, and spending one usually costs your turn, just like a move.
+        The dock also keeps a ledger of every card the bot plays against you.
       </p>
     ),
   },
@@ -134,7 +154,7 @@ const STEPS: CoachStep[] = [
     targetSelectors: BOARD,
     body: (
       <p>
-        Cards leave visible marks on the board: empowered pieces glow with an aura, frozen
+        Cards leave visible marks on the board. Empowered pieces glow with an aura, frozen
         pieces wear an icy badge, and numbered counters show how many turns an effect has
         left. Hover or tap a marked piece to see exactly what is affecting it.
       </p>
@@ -149,7 +169,7 @@ const STEPS: CoachStep[] = [
       <>
         <p>
           Move, draft every 5 moves, spend your cards, and take the king. Finish this game at
-          your own pace — then:
+          your own pace. When you are ready:
         </p>
         <ul className="mt-3 space-y-1.5">
           <li>
@@ -286,9 +306,10 @@ function DraftCoachBanner() {
       >
         <div className="smallcaps text-[10px] text-gold-leaf">your first draft</div>
         <p className="mt-1 text-[13px] leading-snug text-parchment-200">
-          <strong className="text-parchment">Pick</strong> a card to take it now — or{" "}
-          <strong className="text-parchment">Bank</strong> to skip this offer and be owed a
-          stronger one at your next draft.
+          <strong className="text-parchment">Pick</strong> a card to take it now, or{" "}
+          <strong className="text-parchment">Bank</strong> to take nothing and make your next
+          offer roll one tier higher. Banking away a tier 8 card can push the next offer into
+          the apex band.
         </p>
       </div>
     </div>

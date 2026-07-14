@@ -9,9 +9,15 @@
 // "you don't need to make the tier 1-4 animations so small, you can hype it
 // up a bit more"): ONE clean beat, ~1.2-1.6s, NO shockwaves, NO
 // board-darkening washes, NO colossal figures. Each play is a centered
-// emblem scene (~38% of the crop; tier-4 bold ~45%) carrying one modest
+// emblem scene (~44% of the crop; tier-4 bold ~49%) carrying one modest
 // built-in flourish (see EmblemFlourish), plus a compact per-square target
 // hit for zone-fed cards.
+//
+// SOLE EXCEPTION: ww_high_ground is a TIER 7 card that lives in this module,
+// so its play is a bespoke FULL-BOARD TAKEOVER (HighGroundTakeover, below the
+// templates) — board-wide tinted wash, terraced plateaus rising rank by rank,
+// a colossal gold/crimson summit and twin shockwaves past the board edges.
+// The basic-band restraints above deliberately do NOT apply to it.
 //
 // UNIQUENESS RECIPE: twenty micro-templates, each parameterised by
 // { palette, glyph } — and the glyph is the card's OWN globally unique face
@@ -178,10 +184,11 @@ function EmblemFlourish({ cls, delayMs }: { cls: string; delayMs: number }) {
 }
 
 /** The centered emblem box: the whole scene lives inside this. Hyped-up scale
- * (owner pass): ~22% of the canvas base / 26% bold — the crop is the canvas's
- * central ~57%, so that reads as ~38% of the visible crop, ~45% for tier-4
- * bold cuts (was 19/24). `cls` picks the entrance keyframe and also selects
- * the scene's built-in flourish. */
+ * (owner size pass: "animations are too small in general"): ~25% of the
+ * canvas base / 28% bold — the crop is the canvas's central ~57%, so that
+ * reads as ~44% of the visible crop, ~49% for tier-4 bold cuts (was 22/26 =
+ * ~38%/~45%). `cls` picks the entrance keyframe and also selects the scene's
+ * built-in flourish. */
 function Emblem({
   bold,
   cls,
@@ -195,7 +202,7 @@ function Emblem({
   children: ReactNode;
   style?: CSSProperties;
 }) {
-  const s = bold ? 26 : 22;
+  const s = bold ? 28 : 25;
   return (
     <span
       className={`${cls} absolute block`}
@@ -295,11 +302,11 @@ function TargetHit({
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span
         className="bsp-flash absolute block rounded-full"
-        style={{ left: "20%", top: "20%", width: "60%", height: "60%", background: tint(p1, 0.4), animationDelay: `${delayMs}ms` }}
+        style={{ left: "16%", top: "16%", width: "68%", height: "68%", background: tint(p1, 0.4), animationDelay: `${delayMs}ms` }}
       />
       <span
         className="bsp-pop absolute block"
-        style={{ left: "26%", top: "24%", width: "48%", height: "48%", animationDelay: `${delayMs + 60}ms` }}
+        style={{ left: "22%", top: "20%", width: "56%", height: "56%", animationDelay: `${delayMs + 60}ms` }}
       >
         {Icon ? (
           <Icon className="block h-full w-full" color={p1} strokeWidth={2} aria-hidden="true" />
@@ -311,7 +318,7 @@ function TargetHit({
       </span>
       <span
         className="bsp-ring absolute block rounded-full"
-        style={{ left: "16%", top: "16%", width: "68%", height: "68%", border: `2px solid ${tint(p1, 0.85)}`, animationDelay: `${delayMs + 120}ms` }}
+        style={{ left: "11%", top: "11%", width: "78%", height: "78%", border: `2px solid ${tint(p1, 0.85)}`, animationDelay: `${delayMs + 120}ms` }}
       />
       {HIT_SHARDS.map((v, i) => (
         <span
@@ -319,10 +326,10 @@ function TargetHit({
           className="bsp-shard absolute block"
           style={
             {
-              left: "41%",
-              top: "41%",
-              width: "18%",
-              height: "18%",
+              left: "40%",
+              top: "40%",
+              width: "20%",
+              height: "20%",
               "--dx": v.dx,
               "--dy": v.dy,
               "--rot": v.rot,
@@ -1067,6 +1074,121 @@ function InkSplash({ palette, Icon, bold, lead, delayMs }: TemplateProps) {
 }
 
 /* =============================================================================
+   Bespoke: HighGroundTakeover — ww_high_ground is TIER 7, the only card of
+   that tier in this module, so it breaks the basic-band rules on purpose:
+   a FULL-BOARD TAKEOVER. A gold-over-crimson wash rolls across the whole
+   crop, terraced high-ground plateaus rise rank by rank into a ziggurat, a
+   colossal summit (~32% of the canvas ≈ ~56% of the visible board) heaves up
+   wearing a sunburst crown and a snapping war-pennant, flanking banners plant
+   on the lower terraces, and TWIN shockwave rings sweep out past the board
+   edges. Gold/crimson tier colours throughout; whole play ~2.1s. Per-square
+   victims still get the compact TargetHit.
+   ========================================================================== */
+
+const HG_GOLD = "#ffd76a";
+const HG_GOLD_DEEP = "#c9931d";
+const HG_CRIMSON = "#c9314b";
+const HG_CRIMSON_DEEP = "#5a1220";
+const HG_SNOW = "#fff2c9";
+const HG_PALETTE: Palette = [HG_GOLD, HG_SNOW, HG_CRIMSON];
+const HG_DEF = BUFF_BY_ID["ww_high_ground"];
+const HG_ICON = HG_DEF ? cardFaceIcon("ww_high_ground", HG_DEF.category, HG_DEF.icon) : undefined;
+
+/** Terraced plateaus, board-spanning, rising rank by rank toward the summit
+ * (positions in % of the 14x14 canvas; the visible board is ~22%..78%). */
+const HG_TERRACES = [
+  { l: 22, t: 67.5, w: 56, d: 0 },
+  { l: 28, t: 58.5, w: 44, d: 120 },
+  { l: 34, t: 49.5, w: 32, d: 240 },
+  { l: 39, t: 40.5, w: 22, d: 360 },
+];
+const HG_FLAGS = [
+  { l: 27, t: 47, d: 520 },
+  { l: 68.5, t: 47, d: 640 },
+];
+const HG_GLINTS = [
+  { l: 30, t: 30, s: 5, d: 0 },
+  { l: 66, t: 26, s: 6, d: 90 },
+  { l: 25, t: 52, s: 5, d: 180 },
+  { l: 70, t: 49, s: 5, d: 270 },
+];
+
+function HighGroundTakeover({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (!lead) return <TargetHit palette={HG_PALETTE} Icon={HG_ICON} delayMs={delayMs} accent="spark" />;
+  return (
+    <Stage>
+      {/* the board-wide tinted wash: gold light over crimson ground */}
+      <span
+        className="bsp-hg-wash absolute inset-0 block"
+        style={{
+          background: `radial-gradient(circle at 50% 46%, ${tint(HG_GOLD, 0.3)} 0%, ${tint(HG_CRIMSON, 0.26)} 55%, ${tint(HG_CRIMSON_DEEP, 0.34)} 100%)`,
+          animationDelay: `${delayMs}ms`,
+        }}
+      />
+      {/* the sunburst crowning the summit */}
+      <span className="bsp-hg-rays absolute block" style={{ left: "29%", top: "17%", width: "42%", height: "42%", animationDelay: `${delayMs + 420}ms` }}>
+        <svg viewBox="0 0 40 40" className="block h-full w-full" aria-hidden="true">
+          {Array.from({ length: 12 }, (_, i) => (
+            <path key={i} d="M20 2.5 L21.4 8.6 H18.6 Z" fill={tint(HG_GOLD, 0.85)} transform={`rotate(${i * 30} 20 20)`} />
+          ))}
+        </svg>
+      </span>
+      {/* terraced plateaus rising rank by rank into the ziggurat */}
+      {HG_TERRACES.map((t, i) => (
+        <span key={i} className="bsp-hg-terrace absolute block" style={{ left: `${t.l}%`, top: `${t.t}%`, width: `${t.w}%`, height: "9%", animationDelay: `${delayMs + 120 + t.d}ms` }}>
+          <svg viewBox="0 0 56 9" className="block h-full w-full" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M2.5 9 L8 1.5 H48 L53.5 9 Z" fill={tint(HG_CRIMSON_DEEP, 0.82)} stroke={tint(HG_GOLD_DEEP, 0.9)} strokeWidth="0.7" {...SJ} />
+            <path d="M8 1.5 H48" stroke={tint(HG_GOLD, 0.95)} strokeWidth="1" strokeLinecap="round" />
+          </svg>
+        </span>
+      ))}
+      {/* the colossal summit: mountain, snow cap, glyph and peak pennant */}
+      <span className="bsp-hg-summit absolute block" style={{ left: "34%", top: "24%", width: "32%", height: "32%", animationDelay: `${delayMs + 300}ms` }}>
+        <svg viewBox="0 0 40 40" className="block h-full w-full" aria-hidden="true">
+          <path d="M20 3 L34 36 H6 Z" fill={tint(HG_CRIMSON, 0.9)} stroke={HG_GOLD} strokeWidth="1.2" {...SJ} />
+          <path d="M20 3 L27.5 36 H34 Z" fill={tint(HG_CRIMSON_DEEP, 0.6)} />
+          <path d="M20 3 L25.4 15.6 L22.6 13.9 L20 16.2 L17.4 13.9 L14.6 15.6 Z" fill={HG_SNOW} stroke={HG_GOLD_DEEP} strokeWidth="0.7" {...SJ} />
+          <path d="M6 36 H34" stroke={tint(HG_GOLD, 0.9)} strokeWidth="1.4" strokeLinecap="round" />
+        </svg>
+        <span className="bsp-hg-banner absolute block" style={{ left: "50%", top: "-8%", width: "32%", height: "20%", animationDelay: `${delayMs + 820}ms` }}>
+          <svg viewBox="0 0 20 12" className="block h-full w-full" preserveAspectRatio="none" aria-hidden="true">
+            <rect x="0.4" y="0.4" width="1.2" height="11.2" rx="0.6" fill={HG_GOLD_DEEP} />
+            <path d="M1.6 1 H19 L14 4.8 L19 8.6 H1.6 Z" fill={tint(HG_CRIMSON, 0.95)} stroke={HG_GOLD} strokeWidth="0.6" {...SJ} />
+          </svg>
+        </span>
+        <Face Icon={HG_ICON} color={HG_GOLD} delayMs={delayMs + 700} left={38} top={46} size={24} strokeWidth={2} />
+      </span>
+      {/* war-banners planted on the flanking terraces */}
+      {HG_FLAGS.map((b, i) => (
+        <span key={i} className="bsp-grow absolute block" style={{ left: `${b.l}%`, top: `${b.t}%`, width: "4.5%", height: "21%", animationDelay: `${delayMs + b.d}ms` }}>
+          <svg viewBox="0 0 6 28" className="block h-full w-full" preserveAspectRatio="none" aria-hidden="true">
+            <rect x="1" y="1" width="1.1" height="26.5" rx="0.55" fill={HG_GOLD_DEEP} />
+            <path d="M2.1 1.6 H5.8 L4.4 4 L5.8 6.4 H2.1 Z" fill={tint(HG_CRIMSON, 0.95)} stroke={tint(HG_GOLD, 0.9)} strokeWidth="0.4" {...SJ} />
+          </svg>
+        </span>
+      ))}
+      {/* TWIN shockwave rings, sweeping out past the board edges */}
+      <span
+        className="bsp-hg-shock absolute block rounded-full"
+        style={{ left: "8%", top: "5%", width: "84%", height: "84%", border: `4px solid ${tint(HG_GOLD, 0.9)}`, animationDelay: `${delayMs + 880}ms` }}
+      />
+      <span
+        className="bsp-hg-shock absolute block rounded-full"
+        style={{ left: "8%", top: "5%", width: "84%", height: "84%", border: `3px solid ${tint(HG_CRIMSON, 0.85)}`, animationDelay: `${delayMs + 1080}ms` }}
+      />
+      {/* victory glints around the summit */}
+      {HG_GLINTS.map((g, i) => (
+        <span key={i} className="bsp-glint absolute block" style={{ left: `${g.l}%`, top: `${g.t}%`, width: `${g.s}%`, height: `${g.s}%`, animationDelay: `${delayMs + 1100 + g.d}ms` }}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <path d="M5 0.6 L6.3 3.7 L9.4 5 L6.3 6.3 L5 9.4 L3.7 6.3 L0.6 5 L3.7 3.7 Z" fill={HG_GOLD} />
+          </svg>
+        </span>
+      ))}
+    </Stage>
+  );
+}
+
+/* =============================================================================
    Registry — CARD -> TEMPLATE / PALETTE, one entry per still-uncovered card.
    The glyph is always the card's own globally unique face icon (cardFaceIcon),
    so template + palette + icon is unique per card by construction. `source`
@@ -1146,8 +1268,8 @@ export const PLAYS: Record<string, SigPlugin> = {
   warding_circle: B(SigilRing, ["#5fc9b0","#ffd76a","#1c4a3a"], "warding_circle", { ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "aegis", source: "kingSafe" }, true),
   // Watermelon Rind (t4 protection)
   watermelon_rind: B(SigilRing, ["#4fa3d1","#dff7ff","#173a52"], "watermelon_rind", { ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "aegis", source: "shield" }, true),
-  // High Ground (t4 protection)
-  ww_high_ground: B(SigilRing, ["#7fd8a8","#fff2c9","#1c4a2c"], "ww_high_ground", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis" }, true),
+  // High Ground (TIER 7 protection — bespoke full-board takeover, not a template)
+  ww_high_ground: { config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis" }, Render: HighGroundTakeover },
 
   /* --- RuneStamp --------------------------------------------------------- */
   // Butterfingers (t1 hex)

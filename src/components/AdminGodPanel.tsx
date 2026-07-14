@@ -3,10 +3,14 @@
 import { useEffect, useMemo, useState } from "react";
 import type { MPDraftState, MPSession } from "@/lib/multiplayer";
 import { ALL_BUFFS } from "@/engine/buffs/library";
+import { ALL_NERFS } from "@/engine/nerfs/library";
+import { isBoon } from "@/engine/buff";
 
 // The owner "god panel": a far-right column, mounted ONLY for a god-panel
-// account (the real gate is server-side; this is UX). It lists every card the
-// server can summon into the owner's own hand and grants one on click. The
+// account (the real gate is server-side; this is UX). It lists the COMPLETE
+// card catalog — buffs, hexes, boons, items, apex/mythic, and nerfs — grouped
+// and searchable; clicking a summonable card grants it into the owner's own
+// hand (rows the server would reject render disabled with the reason). The
 // server re-verifies the account on every use and now announces each use to the
 // table with a "God panel used" notice, so nothing here is trusted for anything
 // but the browse-and-click convenience.
@@ -15,14 +19,86 @@ import { ALL_BUFFS } from "@/engine/buffs/library";
 // accents; compact and scrollable; fixed on the far right so it never overlaps
 // the board on normal screens (mounted at xl and up only).
 
-// A card is grantable HIDDEN only when it can sit in a hand without revealing
-// itself: instants fire the moment they are acquired, and an opponent-move
-// filtering passive must be felt by the opponent to keep the boards in sync.
-// The server enforces exactly this; the panel mirrors it so every listed card
-// is one a click can actually summon.
-const GRANTABLE = ALL_BUFFS.filter(
-  (b) => b.implemented && b.kind !== "instant" && !(b.kind === "passive" && b.filterOpponentMoves),
-);
+// The panel lists the COMPLETE catalog — every buff, hex, boon, item, and
+// apex/mythic card plus every nerf — grouped, so the owner can always find a
+// card by browsing or searching (the old panel silently dropped instants,
+// opponent-move-filtering passives, unimplemented cards, and all nerfs, which
+// read as "cards missing from the god panel").
+//
+// Summoning is still narrower than listing: a card is grantable HIDDEN only
+// when it can sit in a hand without revealing itself — instants fire the
+// moment they are acquired, and an opponent-move-filtering passive must be
+// felt by the opponent to keep the boards in sync. The server enforces
+// exactly this (worker.ts adminGrant), so cards it would reject render
+// disabled with the reason instead of being hidden. Nerfs are opening
+// handicaps, not hand cards, so they are browse-only reference here.
+
+type PanelCard = {
+  id: string;
+  name: string;
+  tier: number;
+  description: string;
+  /** null = summonable; otherwise why the server would reject the grant. */
+  blocked: string | null;
+  searchText: string;
+};
+
+type PanelGroup = { label: string; cards: PanelCard[] };
+
+// Why a buff cannot be summoned hidden (mirrors worker.ts adminGrant).
+function blockedReason(b: (typeof ALL_BUFFS)[number]): string | null {
+  if (!b.implemented) return "not implemented yet — cannot be summoned";
+  if (b.kind === "instant") return "instant: fires the moment it is acquired, so it cannot sit hidden in a hand";
+  if (b.kind === "passive" && b.filterOpponentMoves)
+    return "filters the opponent's moves, so summoning it would reveal it";
+  return null;
+}
+
+const GROUPS: PanelGroup[] = (() => {
+  const toCard = (b: (typeof ALL_BUFFS)[number]): PanelCard => ({
+    id: b.id,
+    name: b.name,
+    tier: b.tier as number,
+    description: b.description,
+    blocked: blockedReason(b),
+    searchText: `${b.name} ${b.id} ${b.category}`.toLowerCase(),
+  });
+  const byTierThenName = (a: PanelCard, b: PanelCard) => b.tier - a.tier || a.name.localeCompare(b.name);
+  // Each buff lands in exactly one group, checked in this order.
+  const apex: PanelCard[] = [];
+  const hexes: PanelCard[] = [];
+  const boons: PanelCard[] = [];
+  const items: PanelCard[] = [];
+  const buffs: PanelCard[] = [];
+  for (const b of ALL_BUFFS) {
+    const card = toCard(b);
+    if (b.tier >= 9 || b.special) apex.push(card);
+    else if (b.category === "hex") hexes.push(card);
+    else if (isBoon(b)) boons.push(card);
+    else if (b.category === "item") items.push(card);
+    else buffs.push(card);
+  }
+  const nerfs: PanelCard[] = ALL_NERFS.map((n) => ({
+    id: n.id,
+    name: n.name,
+    tier: n.tier as number,
+    description: n.description,
+    blocked: "nerfs are opening handicaps, not hand cards — reference only",
+    searchText: `${n.name} ${n.id} nerf`.toLowerCase(),
+  }));
+  const groups: PanelGroup[] = [
+    { label: "apex & mythic", cards: apex },
+    { label: "buffs", cards: buffs },
+    { label: "hexes", cards: hexes },
+    { label: "boons", cards: boons },
+    { label: "items", cards: items },
+    { label: "nerfs", cards: nerfs },
+  ];
+  for (const g of groups) g.cards.sort(byTierThenName);
+  return groups;
+})();
+
+const TOTAL_CARDS = GROUPS.reduce((sum, g) => sum + g.cards.length, 0);
 
 // Card id -> display name, for rendering the opponent's now-revealed hand.
 const BUFF_NAME = new Map(ALL_BUFFS.map((b) => [b.id, b.name] as const));
@@ -72,19 +148,17 @@ export function AdminGodPanel({ session }: Props) {
     if (!next) setOppBuffs([]);
   }
 
-  const cards = useMemo(() => {
+  // Groups filtered by the search box; a group with no matches drops out.
+  // Order within a group: high tiers first (the owner mainly wants tier 4-8),
+  // then by name (pre-sorted in GROUPS).
+  const groups = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const list = q
-      ? GRANTABLE.filter(
-          (b) =>
-            b.name.toLowerCase().includes(q) ||
-            b.id.toLowerCase().includes(q) ||
-            b.category.toLowerCase().includes(q),
-        )
-      : GRANTABLE;
-    // High tiers first (the owner mainly wants tier 4-8), then by name.
-    return [...list].sort((a, b) => (b.tier as number) - (a.tier as number) || a.name.localeCompare(b.name));
+    if (!q) return GROUPS;
+    return GROUPS.map((g) => ({ ...g, cards: g.cards.filter((c) => c.searchText.includes(q)) })).filter(
+      (g) => g.cards.length > 0,
+    );
   }, [query]);
+  const shownCount = groups.reduce((sum, g) => sum + g.cards.length, 0);
 
   function grant(id: string, name: string) {
     if (session.adminGrant(id)) setLastGranted(name);
@@ -111,7 +185,9 @@ export function AdminGodPanel({ session }: Props) {
     <aside className="fixed right-0 top-0 z-30 hidden h-dvh w-[248px] flex-col border-l border-white/10 bg-ink-950 xl:flex">
       <div className="flex items-center gap-2 border-b border-white/10 px-3 py-2">
         <span className="smallcaps text-[11px] font-semibold text-coral-glow">god panel</span>
-        <span className="smallcaps ml-auto text-[9px] text-parchment-400">{cards.length}</span>
+        <span className="smallcaps ml-auto text-[9px] text-parchment-400" title={`${TOTAL_CARDS} cards total`}>
+          {shownCount}
+        </span>
         <button
           type="button"
           onClick={() => setCollapsed(true)}
@@ -182,22 +258,48 @@ export function AdminGodPanel({ session }: Props) {
         />
       </div>
 
-      <div className="min-h-0 flex-1 space-y-1 overflow-y-auto px-2 pb-2">
-        {cards.map((b) => (
-          <button
-            key={b.id}
-            type="button"
-            onClick={() => grant(b.id, b.name)}
-            title={b.description}
-            className="flex w-full items-center gap-2 rounded-[1px] border border-white/10 bg-white/[0.02] px-2 py-1 text-left transition-colors hover:border-mint/45 hover:bg-mint/10"
-          >
-            <span className="min-w-0 flex-1 truncate text-xs text-parchment">{b.name}</span>
-            <span className="shrink-0 rounded-[1px] border border-sun/40 px-1 text-[9px] font-semibold tabular-nums text-sun-glow">
-              T{b.tier}
-            </span>
-          </button>
+      <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-2">
+        {groups.map((g) => (
+          <div key={g.label} className="mb-2">
+            <div className="sticky top-0 z-10 flex items-baseline gap-2 bg-ink-950 px-1 py-1">
+              <span className="smallcaps text-[9px] font-semibold text-sun-glow">{g.label}</span>
+              <span className="smallcaps text-[9px] text-parchment-500">{g.cards.length}</span>
+            </div>
+            <div className="space-y-1">
+              {g.cards.map((c) =>
+                c.blocked === null ? (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => grant(c.id, c.name)}
+                    title={c.description}
+                    className="flex w-full items-center gap-2 rounded-[1px] border border-white/10 bg-white/[0.02] px-2 py-1 text-left transition-colors hover:border-mint/45 hover:bg-mint/10"
+                  >
+                    <span className="min-w-0 flex-1 truncate text-xs text-parchment">{c.name}</span>
+                    <span className="shrink-0 rounded-[1px] border border-sun/40 px-1 text-[9px] font-semibold tabular-nums text-sun-glow">
+                      T{c.tier}
+                    </span>
+                  </button>
+                ) : (
+                  // Listed for completeness but not summonable: the server
+                  // would reject the grant, so the row says why instead of
+                  // pretending to be clickable (or worse, being absent).
+                  <div
+                    key={c.id}
+                    title={`${c.description}\n\nNot summonable: ${c.blocked}`}
+                    className="flex w-full cursor-not-allowed items-center gap-2 rounded-[1px] border border-white/5 bg-white/[0.01] px-2 py-1 text-left opacity-50"
+                  >
+                    <span className="min-w-0 flex-1 truncate text-xs text-parchment-400">{c.name}</span>
+                    <span className="shrink-0 rounded-[1px] border border-white/15 px-1 text-[9px] font-semibold tabular-nums text-parchment-500">
+                      T{c.tier}
+                    </span>
+                  </div>
+                ),
+              )}
+            </div>
+          </div>
         ))}
-        {cards.length === 0 && (
+        {shownCount === 0 && (
           <p className="px-1 py-2 text-[11px] text-parchment-400">no cards match.</p>
         )}
       </div>

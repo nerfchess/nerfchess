@@ -136,12 +136,12 @@ export default function TutorialPage() {
         <div className="mt-8 plate border-gold/40 bg-gold/5 p-5 sm:p-6">
           <div className="smallcaps text-[11px] text-gold-leaf/90">new? start here</div>
           <h2 className="font-display text-3xl sm:text-4xl mt-1">
-            Learn in 3 minutes — play your first draft
+            Learn in 3 minutes: play your first draft
           </h2>
           <p className="mt-3 text-[15px] leading-relaxed text-parchment-200/90">
             A guided real game against the easiest bot: make moves, watch the draft counter,
             pick (or bank) your first card, and read the auras it leaves on the board. The
-            tour points at everything as it happens — and you can skip it any time.
+            tour points at everything as it happens, and you can skip it any time.
           </p>
           <div className="mt-5 flex flex-wrap gap-3">
             <Link href={FIRST_GAME_TOUR_HREF} className="px-6 py-3 rounded-full btn-leaf font-display">
