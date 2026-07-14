@@ -1,0 +1,305 @@
+/* ----------------------------------------------------------------------------
+   casinoPlays.css - keyframes for the casino bespoke play animations
+   (casinoPlays.tsx). Owned by the casino card workstream.
+
+   Rules (mirrors effects.css / funnyPlays.css):
+   - transform/opacity ONLY: every keyframe animates nothing but transform and
+     opacity, so the compositor never has to relayout mid-play.
+   - one-shot flourishes: fill-mode `both` keeps delayed elements hidden until
+     their start frame; every track ends faded out.
+   - prefers-reduced-motion: the whole layer is transient spectacle, so it is
+     hidden outright (the funny-layer precedent) even though the caller's play
+     layer already gates it. Defensive double-cover.
+---------------------------------------------------------------------------- */
+
+/* Percentage transform-origins on SVG children resolve against the element's
+   own box (not the viewBox), so pivots (reels, wheels, flips) land right. */
+.csp svg * {
+  transform-box: fill-box;
+}
+
+/* --- shared stage tracks ---------------------------------------------------- */
+
+/* Soft board wash behind a wide lead (the felt lights up). */
+@keyframes csp-wash {
+  0% { opacity: 0; transform: scale(1.04); }
+  16% { opacity: 0.85; transform: scale(1); }
+  70% { opacity: 0.5; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.02); }
+}
+.csp-wash { animation: csp-wash 1.6s ease-out both; transform-origin: 50% 50%; }
+
+/* Prop holds on screen: fade in, sit, fade out (cabinets, tables, tickets). */
+@keyframes csp-linger {
+  0% { opacity: 0; transform: scale(0.94); }
+  12% { opacity: 1; transform: scale(1); }
+  84% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.01); }
+}
+.csp-linger { animation: csp-linger 1.7s ease-out both; transform-origin: 50% 50%; }
+
+/* Chunky pop: overshoot in, settle, fade. */
+@keyframes csp-pop {
+  0% { opacity: 0; transform: scale(0.2); }
+  22% { opacity: 1; transform: scale(1.18); }
+  38% { transform: scale(0.96); }
+  50% { transform: scale(1); }
+  84% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.05); }
+}
+.csp-pop { animation: csp-pop 1.15s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; transform-origin: 50% 50%; }
+
+/* Little rise-and-fade (winnings, +seconds, sparks). */
+@keyframes csp-rise {
+  0% { opacity: 0; transform: translateY(34%) scale(0.7); }
+  26% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-130%) scale(1.05); }
+}
+.csp-rise { animation: csp-rise 1.2s ease-out both; transform-origin: 50% 50%; }
+
+/* Win flash: a bright pulse that throbs twice then dies. */
+@keyframes csp-flash {
+  0% { opacity: 0; }
+  30% { opacity: 0; }
+  44% { opacity: 0.85; }
+  58% { opacity: 0.15; }
+  72% { opacity: 0.8; }
+  100% { opacity: 0; }
+}
+.csp-flash { animation: csp-flash 1.6s ease-out both; }
+
+/* Sweeping diagonal highlight (chrome/foil sheen). */
+@keyframes csp-shine {
+  0% { opacity: 0; transform: translateX(-140%); }
+  30% { opacity: 0.9; }
+  100% { opacity: 0; transform: translateX(160%); }
+}
+.csp-shine { animation: csp-shine 1.4s ease-in-out both; }
+
+/* Star twinkle (jackpot sparkle). */
+@keyframes csp-star {
+  0% { opacity: 0; transform: scale(0.2) rotate(-30deg); }
+  40% { opacity: 1; transform: scale(1.1) rotate(0deg); }
+  70% { opacity: 1; transform: scale(0.85) rotate(6deg); }
+  100% { opacity: 0; transform: scale(1) rotate(0deg); }
+}
+.csp-star { animation: csp-star 1.1s ease-out both; transform-origin: 50% 50%; }
+
+/* --- slot machine ----------------------------------------------------------- */
+
+/* Reel strip spins DOWN fast and decelerates to a stop. The strip is taller
+   than its window and stacked with symbols, so the long eased travel reads as a
+   blur of spinning icons settling onto the payline. `--stop` is the final
+   offset; per-reel animation-duration (inline) staggers the three stops. */
+@keyframes csp-reel {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(var(--stop, -66%)); }
+}
+.csp-reel { animation: csp-reel var(--spin, 1s) cubic-bezier(0.15, 0.85, 0.2, 1) both; }
+
+/* Speed lines over a spinning reel, fading as it stops. */
+@keyframes csp-speed {
+  0% { opacity: 0; }
+  14% { opacity: 0.7; }
+  70% { opacity: 0.5; }
+  100% { opacity: 0; }
+}
+.csp-speed { animation: csp-speed var(--spin, 1s) ease-out both; }
+
+/* Payline: draws across, then flashes on the win. */
+@keyframes csp-payline {
+  0% { opacity: 0; transform: scaleX(0); }
+  40% { opacity: 0; transform: scaleX(0); }
+  56% { opacity: 1; transform: scaleX(1); }
+  70% { opacity: 0.3; }
+  82% { opacity: 1; }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.csp-payline { animation: csp-payline 1.7s ease-out both; transform-origin: 50% 50%; }
+
+/* Lever arm pulls down and springs back. */
+@keyframes csp-lever {
+  0% { transform: rotate(0deg); }
+  18% { transform: rotate(46deg); }
+  46% { transform: rotate(46deg); }
+  70% { transform: rotate(0deg); }
+  100% { transform: rotate(0deg); }
+}
+.csp-lever { animation: csp-lever 1.5s cubic-bezier(0.3, 0.8, 0.3, 1) both; transform-origin: 50% 8%; }
+
+/* --- roulette --------------------------------------------------------------- */
+
+/* Wheel spins several turns clockwise and eases to rest. */
+@keyframes csp-wheel {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(1044deg); }
+}
+.csp-wheel { animation: csp-wheel 1.7s cubic-bezier(0.16, 0.82, 0.24, 1) both; transform-origin: 50% 50%; }
+
+/* Ball track counter-rotates faster and settles. */
+@keyframes csp-ball-track {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(-1584deg); }
+}
+.csp-ball-track { animation: csp-ball-track 1.55s cubic-bezier(0.12, 0.8, 0.2, 1) both; transform-origin: 50% 50%; }
+
+/* Ball drops from the rim into a pocket at the very end. */
+@keyframes csp-ball-drop {
+  0% { transform: translateY(0); }
+  78% { transform: translateY(0); }
+  90% { transform: translateY(20%); }
+  100% { transform: translateY(16%); }
+}
+.csp-ball-drop { animation: csp-ball-drop 1.55s ease-in both; }
+
+/* --- playing cards (blackjack + poker) -------------------------------------- */
+
+/* Card deals in from off to the side with a little rotation. */
+@keyframes csp-deal {
+  0% { opacity: 0; transform: translate(-160%, -40%) rotate(-24deg); }
+  60% { opacity: 1; }
+  100% { opacity: 1; transform: translate(0, 0) rotate(var(--tilt, 0deg)); }
+}
+.csp-deal { animation: csp-deal 0.6s cubic-bezier(0.2, 0.8, 0.3, 1) both; }
+
+/* Card flips face-up: squash to an edge (scaleX 0), then open the face. */
+@keyframes csp-flip-back {
+  0% { opacity: 1; transform: scaleX(1); }
+  48% { opacity: 1; transform: scaleX(0.04); }
+  50% { opacity: 0; transform: scaleX(0.04); }
+  100% { opacity: 0; transform: scaleX(0.04); }
+}
+.csp-flip-back { animation: csp-flip-back 0.7s ease-in both; transform-origin: 50% 50%; }
+@keyframes csp-flip-face {
+  0% { opacity: 0; transform: scaleX(0.04); }
+  50% { opacity: 0; transform: scaleX(0.04); }
+  52% { opacity: 1; transform: scaleX(0.04); }
+  100% { opacity: 1; transform: scaleX(1); }
+}
+.csp-flip-face { animation: csp-flip-face 0.7s ease-out both; transform-origin: 50% 50%; }
+
+/* Whole hand hold + linger while cards read out. */
+.csp-hold { animation: csp-linger 1.7s ease-out both; transform-origin: 50% 100%; }
+
+/* All-in shove: chips + cards pushed toward the pot. */
+@keyframes csp-shove {
+  0% { transform: translateY(0); }
+  40% { transform: translateY(0); }
+  62% { transform: translateY(-26%); }
+  100% { transform: translateY(-22%); }
+}
+.csp-shove { animation: csp-shove 1.6s cubic-bezier(0.3, 0.7, 0.2, 1) both; }
+
+/* --- scratch card ----------------------------------------------------------- */
+
+/* Foil layer is scraped away to the right, revealing the panels beneath. */
+@keyframes csp-scratch {
+  0% { opacity: 1; transform: translateX(0); }
+  30% { opacity: 1; transform: translateX(0); }
+  100% { opacity: 0; transform: translateX(118%); }
+}
+.csp-scratch { animation: csp-scratch 1.5s cubic-bezier(0.5, 0.1, 0.4, 1) both; }
+
+/* The coin/scraper rakes across the foil. */
+@keyframes csp-scrape {
+  0% { opacity: 0; transform: translate(-30%, 0) rotate(-18deg); }
+  20% { opacity: 1; }
+  85% { opacity: 1; transform: translate(120%, 0) rotate(-18deg); }
+  100% { opacity: 0; transform: translate(130%, 0) rotate(-18deg); }
+}
+.csp-scrape { animation: csp-scrape 1.5s ease-in-out both; }
+
+/* Scratch dust flecks flicking off. */
+@keyframes csp-dust {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.6); }
+  40% { opacity: 0.9; }
+  100% { opacity: 0; transform: translate(var(--dx, 40%), var(--dy, -60%)) scale(1); }
+}
+.csp-dust { animation: csp-dust 0.9s ease-out both; }
+
+/* --- coin flip (let it ride) ------------------------------------------------ */
+
+/* Coin arcs up and comes back down. */
+@keyframes csp-toss {
+  0% { transform: translateY(30%); }
+  46% { transform: translateY(-120%); }
+  100% { transform: translateY(0); }
+}
+.csp-toss { animation: csp-toss 1.5s cubic-bezier(0.3, 0, 0.4, 1) both; }
+
+/* Coin tumbles (scaleY squash cycles read as edge-on rotation) and lands. */
+@keyframes csp-tumble {
+  0% { transform: scaleY(1); }
+  8% { transform: scaleY(0.1); }
+  16% { transform: scaleY(1); }
+  24% { transform: scaleY(0.1); }
+  32% { transform: scaleY(1); }
+  40% { transform: scaleY(0.1); }
+  50% { transform: scaleY(1); }
+  62% { transform: scaleY(0.1); }
+  76% { transform: scaleY(1); }
+  100% { transform: scaleY(1); }
+}
+.csp-tumble { animation: csp-tumble 1.5s ease-out both; transform-origin: 50% 50%; }
+
+/* Chip stack drops in one chip at a time and settles with a bounce. */
+@keyframes csp-chip {
+  0% { opacity: 0; transform: translateY(-220%) scaleY(0.9); }
+  60% { opacity: 1; transform: translateY(0) scaleY(1); }
+  72% { transform: translateY(0) scaleY(0.82); }
+  86% { transform: translateY(0) scaleY(1.04); }
+  100% { opacity: 1; transform: translateY(0) scaleY(1); }
+}
+.csp-chip { animation: csp-chip 0.7s cubic-bezier(0.3, 0.7, 0.3, 1.3) both; transform-origin: 50% 100%; }
+
+/* --- loot box --------------------------------------------------------------- */
+
+/* Crate lid hinges open at the back. */
+@keyframes csp-lid {
+  0% { transform: rotate(0deg); }
+  30% { transform: rotate(-4deg); }
+  38% { transform: rotate(2deg); }
+  100% { transform: rotate(-116deg); }
+}
+.csp-lid { animation: csp-lid 1.4s cubic-bezier(0.3, 0.6, 0.2, 1) both; transform-origin: 8% 100%; }
+
+/* Box jiggles with anticipation before it bursts. */
+@keyframes csp-jiggle {
+  0% { transform: rotate(0deg); }
+  20% { transform: rotate(-3deg); }
+  40% { transform: rotate(3deg); }
+  55% { transform: rotate(-2deg); }
+  70% { transform: rotate(0deg); }
+  100% { transform: rotate(0deg); }
+}
+.csp-jiggle { animation: csp-jiggle 1.5s ease-in-out both; transform-origin: 50% 100%; }
+
+/* Rarity rays burst out from the open crate. */
+@keyframes csp-rays {
+  0% { opacity: 0; transform: scale(0.2) rotate(0deg); }
+  55% { opacity: 0; transform: scale(0.2) rotate(0deg); }
+  72% { opacity: 0.95; transform: scale(1.05) rotate(14deg); }
+  100% { opacity: 0; transform: scale(1.35) rotate(30deg); }
+}
+.csp-rays { animation: csp-rays 1.6s ease-out both; transform-origin: 50% 60%; }
+
+/* The prize floats up out of the crate. */
+@keyframes csp-loot {
+  0% { opacity: 0; transform: translateY(40%) scale(0.5); }
+  55% { opacity: 0; transform: translateY(40%) scale(0.5); }
+  74% { opacity: 1; transform: translateY(-18%) scale(1.12); }
+  88% { transform: translateY(-24%) scale(1); }
+  100% { opacity: 0; transform: translateY(-40%) scale(1.02); }
+}
+.csp-loot { animation: csp-loot 1.7s ease-out both; transform-origin: 50% 60%; }
+
+/* --- reduced motion --------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .csp,
+  .csp * {
+    animation: none !important;
+  }
+  .csp {
+    display: none !important;
+  }
+}
