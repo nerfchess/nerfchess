@@ -38,6 +38,9 @@ interface Props {
   oppLockedIn?: boolean;
   /** The opponent's resolution was a bank, not a pick (refines the badge). */
   oppBanked?: boolean;
+  /** Recording mode (owner 9:16 layout): constrain the panel to the vertical
+   * frame so it centers over the board and stays inside the crop. */
+  recordingMode?: boolean;
   /** What we can legitimately show about the opponent's draft. */
   opponent?: {
     offer: BuffOffer | null;
@@ -402,6 +405,7 @@ export function DraftOverlay({
   cardNoun = "buff",
   oppLockedIn,
   oppBanked,
+  recordingMode = false,
   opponent,
 }: Props) {
   const noun = cardNoun;
@@ -1023,7 +1027,12 @@ export function DraftOverlay({
       <div className="flex min-h-full items-center justify-center px-3 py-4 sm:px-4">
       {/* Timer and panel share one column: the clock chip sits centered right
           above the plate with a small gap and moves with it. */}
-      <div className="flex min-w-0 w-full max-w-2xl flex-col items-center gap-2.5 lg:max-w-3xl">
+      <div
+        className={
+          "draft-col flex min-w-0 w-full max-w-2xl flex-col items-center gap-2.5 lg:max-w-3xl" +
+          (recordingMode ? " draft-col--rec" : "")
+        }
+      >
         {deadline != null && <DraftTimerWindow deadline={deadline} onExpire={handleExpire} />}
         <motion.div
           initial={{ opacity: 0, y: 16, scale: 0.98 }}

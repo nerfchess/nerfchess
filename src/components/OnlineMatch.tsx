@@ -279,6 +279,11 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [muted, setMutedState] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  // Owner "recording mode": a purely-visual layout that reflows the board,
+  // players, and clocks into a centered 9:16 column for a vertical-video crop
+  // (YouTube Shorts / Instagram Reels). Toggled from the god panel; changes
+  // nothing about the game itself. Off for everyone but the owner account.
+  const [recordingMode, setRecordingMode] = useState(false);
   const [uiSettings, setUiSettings] = useState(() => loadSettings());
   const [confirmingResign, setConfirmingResign] = useState(false);
   const [confirmingDraw, setConfirmingDraw] = useState(false);
@@ -347,6 +352,13 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     const timers = godTimersRef.current;
     return () => timers.forEach((id) => window.clearTimeout(id));
   }, []);
+  // Recording mode is an owner-only, god-panel-driven layout. The reflow is
+  // applied only while the panel that owns the toggle is actually mounted, so a
+  // stale flag can never reflow the board for a non-owner or after the panel
+  // (the toggle's only home) goes away — the frame simply reverts, and the
+  // owner's preference is remembered for the next live draft.
+  const godPanelAvailable = isOwnerAccount && godPanelOn && isDraft && !!game?.buffs;
+  const recordingLayout = recordingMode && godPanelAvailable;
   // Signature spectacles: a played card's id + a monotonic key handed to the
   // Board, which dresses the resulting piece diff as that card's choreography.
   // Fired for BOTH sides' plays (the server echoes every activation), so both
@@ -2312,7 +2324,12 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   );
 
   return (
-    <main className="flex h-dvh min-h-0 flex-col overflow-hidden">
+    <main
+      className={
+        "flex h-dvh min-h-0 flex-col overflow-hidden" +
+        (recordingLayout ? " recording-mode" : "")
+      }
+    >
       <nav className="sticky top-0 z-20 flex w-full shrink-0 items-center justify-between px-5 py-3">
         <Link href="/" className="font-display text-2xl tracking-tight">
           nerf<span className="text-gold-leaf">chess</span>
@@ -2369,7 +2386,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         </div>
       </nav>
 
-      <div className="mx-auto flex w-full max-w-[1360px] flex-1 min-h-0 flex-col gap-2 overflow-hidden px-3 pb-14 sm:px-6 sm:pb-6 xl:max-w-[1680px]">
+      <div className="match-content mx-auto flex w-full max-w-[1360px] flex-1 min-h-0 flex-col gap-2 overflow-hidden px-3 pb-14 sm:px-6 sm:pb-6 xl:max-w-[1680px]">
         {hint && (
           <div
             role="status"
@@ -2390,7 +2407,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         {/* The opponent-drafting status lives in the waiting overlay below
             (and inside the draft overlay while my own pick is open). */}
         <div
-          className="grid min-h-0 flex-1 gap-y-2 lg:grid-cols-[440px_auto] lg:justify-center lg:gap-x-4 xl:grid-cols-[500px_auto]"
+          className="match-grid grid min-h-0 flex-1 gap-y-2 lg:grid-cols-[440px_auto] lg:justify-center lg:gap-x-4 xl:grid-cols-[500px_auto]"
           style={railHeightStyle}
         >
           {/* The command rail: one framed column (mode header, opponent, dock
@@ -2485,11 +2502,11 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               {ratingStakes && <RatingStakes stakes={ratingStakes} />}
             </div>
           </aside>
-          <div className="flex min-h-0 flex-col gap-2 sm:flex-row sm:items-stretch sm:justify-start">
-            <div ref={boardShellRef} className="min-h-0 min-w-0 sm:flex-none">
+          <div className="match-board-col flex min-h-0 flex-col gap-2 sm:flex-row sm:items-stretch sm:justify-start">
+            <div ref={boardShellRef} className="match-board-shell min-h-0 min-w-0 sm:flex-none">
               {/* Mobile-only player strips: the side rails (clocks, cards,
                   actions) are hidden below the sm breakpoint. */}
-              <div className="flex items-center justify-between gap-2 sm:hidden">
+              <div className="board-strip flex items-center justify-between gap-2 sm:hidden">
                 <BoardPlayerRow
                   // Material counts read the COMMITTED position (a queued premove
                   // must never bump the capture tally early); history review
@@ -2511,6 +2528,24 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   />
                 )}
               </div>
+              {/* Recording mode: a compact opponent name/material row directly
+                  above the board, so the vertical crop shows who is playing.
+                  Rendered only in the 9:16 layout; the normal strips stay
+                  hidden (they carry the inline clocks, which move to the bottom
+                  bar in recording mode). */}
+              {recordingLayout && (
+                <div className={`rec-name-row mx-auto ${boardFitClass}`}>
+                  <BoardPlayerRow
+                    board={isReviewingHistory ? boardForDisplay : game.board}
+                    playerColor={oppColor}
+                    myColor={myColor}
+                    name={oppName}
+                    elo={oppRating}
+                    avatar={start.players?.[oppColor]?.avatar}
+                    className="min-w-0 !px-0 !py-1"
+                  />
+                </div>
+              )}
               <div data-board-measure className={`relative mx-auto sm:mx-0 ${boardFitClass}`}>
                 <Board
                   board={boardForDisplay}
@@ -2662,7 +2697,22 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   />
                 </div>
               )}
-              <div className="flex items-center justify-between gap-2 sm:hidden">
+              {/* Recording mode: my name/material row directly under the board
+                  (the clocks live in the bottom bar in this layout). */}
+              {recordingLayout && (
+                <div className={`rec-name-row mx-auto ${boardFitClass}`}>
+                  <BoardPlayerRow
+                    board={isReviewingHistory ? boardForDisplay : game.board}
+                    playerColor={myColor}
+                    myColor={myColor}
+                    name={myName}
+                    elo={myRating}
+                    avatar={start.players?.[myColor]?.avatar}
+                    className="min-w-0 !px-0 !py-1"
+                  />
+                </div>
+              )}
+              <div className="board-strip flex items-center justify-between gap-2 sm:hidden">
                 <BoardPlayerRow
                   // Material counts read the COMMITTED position (a queued premove
                   // must never bump the capture tally early); history review
@@ -2714,7 +2764,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
             </div>
             <div
               className={
-                "hidden min-h-0 overflow-hidden gap-3 sm:grid sm:h-[var(--board-height)] sm:w-72 sm:shrink-0 " +
+                "match-side-rail hidden min-h-0 overflow-hidden gap-3 sm:grid sm:h-[var(--board-height)] sm:w-72 sm:shrink-0 " +
                 (clockEnabled ? "sm:grid-rows-[auto_minmax(0,1fr)_auto]" : "sm:grid-rows-[minmax(0,1fr)]")
               }
               style={railHeightStyle}
@@ -2787,7 +2837,54 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           only when he has switched it on from /mod, and only in a live draft game
           (buffs exist there). Fixed at xl+ so it never overlaps the board on
           normal screens. Server re-verifies every gated message. */}
-      {isOwnerAccount && godPanelOn && isDraft && game.buffs && <AdminGodPanel session={session} />}
+      {godPanelAvailable && (
+        <AdminGodPanel
+          session={session}
+          recordingMode={recordingMode}
+          onToggleRecordingMode={() => setRecordingMode((v) => !v)}
+        />
+      )}
+
+      {/* Recording mode chrome: a 9:16 crop guide (dims everything outside the
+          vertical frame) and a bottom clock bar carrying both players' clocks.
+          Both are purely presentational and only mount in recording mode. */}
+      {recordingLayout && (
+        <>
+          <div className="rec-frame-guide" aria-hidden />
+          {clockEnabled && (
+            <div className="rec-clock-bar">
+              <div className="flex min-w-0 items-center gap-2">
+                <span
+                  className="max-w-[7rem] truncate font-display text-sm font-semibold text-parchment-100"
+                  title={oppName}
+                >
+                  {oppName}
+                </span>
+                <ClockPill
+                  ms={myColor === "w" ? blackMs : whiteMs}
+                  active={chargedColor === oppColor}
+                  startDelayMs={clockStartDelay(oppColor)}
+                  compact
+                />
+              </div>
+              <div className="flex min-w-0 items-center gap-2">
+                <ClockPill
+                  ms={myColor === "w" ? whiteMs : blackMs}
+                  active={chargedColor === myColor}
+                  startDelayMs={clockStartDelay(myColor)}
+                  compact
+                />
+                <span
+                  className="max-w-[7rem] truncate font-display text-sm font-semibold text-gold-leaf"
+                  title={myName}
+                >
+                  {myName}
+                </span>
+              </div>
+            </div>
+          )}
+        </>
+      )}
 
       {/* Shared reveal moment: both sides of the draft round resolved, show
           the outcome briefly. Non-blocking, click to dismiss, auto-dismisses
@@ -2958,6 +3055,10 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           cardNoun={draftCardNoun(start.mode)}
           oppLockedIn={oppLockedIn && !oppDrafting}
           oppBanked={oppBanked}
+          // Recording mode: cap the draft panel to the 9:16 frame so it lands
+          // centered on the board (which is screen-centered here) instead of
+          // spilling past the vertical crop.
+          recordingMode={recordingLayout}
           onPick={(i) => {
             if (session.sendDraftPick(i)) {
               setDraftSubmitted(true);
