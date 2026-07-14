@@ -164,8 +164,12 @@ export class SpectatorHub implements ArenaSink {
     if (previous && previous !== id) this.broadcastWatchers(previous);
     // A game still in its opening nerf draft has no board to send; the watch
     // stays registered and the first event after the game starts flushes the
-    // wstart (mirrors the DO waiting for the arena's started snapshot).
+    // wstart (mirrors the DO waiting for the arena's started snapshot). Ack
+    // with wpending so the client's watch() extends its deadline instead of
+    // timing out at 10s while the bots finish their opening picks — without
+    // it, tuning in to a just-spawned game failed even on a healthy socket.
     if (game.started()) this.bootstrap(ws, game);
+    else send(ws, "wpending", { id });
     this.broadcastWatchers(id);
   }
 

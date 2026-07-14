@@ -714,6 +714,12 @@ interface DragState {
   from: Square;
   pointerId: number;
   cell: number; // pixel size of one square
+  // Pointer position at pickup, so the ghost's FIRST painted frame renders at
+  // the cursor. Positioning it post-render (rAF) let the ghost paint one frame
+  // at the viewport's top-left corner first — the "piece zooms across the
+  // screen" glitch on every pickup.
+  startX: number;
+  startY: number;
 }
 
 type RightClickMark = 1 | 2 | 3 | 4;
@@ -2560,15 +2566,9 @@ export function Board({
     setSelected(sq);
     setInspectSq(null);
     if (selected !== sq) playSelect();
-    setDrag({ from: sq, pointerId: e.pointerId, cell });
+    setDrag({ from: sq, pointerId: e.pointerId, cell, startX: e.clientX, startY: e.clientY });
     setHoverSq(sq);
     lastHoverRef.current = sq;
-    // Pre-position the ghost so the first frame is right
-    requestAnimationFrame(() => {
-      if (ghostRef.current) {
-        ghostRef.current.style.transform = `translate3d(${e.clientX - cell / 2}px, ${e.clientY - cell / 2}px, 0)`;
-      }
-    });
     e.preventDefault();
   };
 
@@ -3807,7 +3807,12 @@ export function Board({
           );
         })()}
 
-      {/* Floating drag ghost — position is written directly via ref to avoid React re-renders */}
+      {/* Floating drag ghost — the initial transform renders inline (at the
+          pickup point) so the very first paint is already under the cursor;
+          pointermove updates then write the transform directly via ref to
+          avoid React re-renders. The inline value never changes between
+          renders (startX/startY are fixed for the drag), so React's diff
+          leaves the imperatively-written transform alone. */}
       {drag && draggedPiece && (
         <div
           ref={ghostRef}
@@ -3817,6 +3822,7 @@ export function Board({
             top: 0,
             width: drag.cell,
             height: drag.cell,
+            transform: `translate3d(${drag.startX - drag.cell / 2}px, ${drag.startY - drag.cell / 2}px, 0)`,
             willChange: "transform",
           }}
         >
