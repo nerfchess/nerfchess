@@ -7,7 +7,7 @@
      compositor never has to relayout mid-play.
    - one-shot flourishes: fill-mode `both` keeps delayed elements hidden until
      their start frame and every track ends at opacity 0.
-   - prefers-reduced-motion: the whole layer is transient spectacle, so it is
+   - animations off (Settings): the whole layer is transient spectacle, so it is
      hidden outright (defensive double-cover on top of the caller's gate).
 ---------------------------------------------------------------------------- */
 
@@ -218,10 +218,8 @@
 }
 .prk-puff { animation: prk-puff 0.85s ease-out both; transform-origin: 50% 50%; }
 
-@media (prefers-reduced-motion: reduce) {
-  .prk,
-  .prk * {
-    animation: none !important;
-    opacity: 0 !important;
-  }
+html[data-anim="off"] .prk,
+html[data-anim="off"] .prk * {
+  animation: none !important;
+  opacity: 0 !important;
 }

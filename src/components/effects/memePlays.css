@@ -7,7 +7,7 @@
      compositor never has to relayout mid-play.
    - one-shot flourishes: fill-mode `both` keeps delayed elements hidden until
      their start frame and every track ends at opacity 0.
-   - prefers-reduced-motion: the whole layer is transient spectacle, so it is
+   - animations off (Settings): the whole layer is transient spectacle, so it is
      hidden outright (defensive double-cover; the caller's play layer already
      gates it).
 ---------------------------------------------------------------------------- */
@@ -409,15 +409,13 @@
 }
 .mnp-stamp { animation: mnp-stamp 1.1s cubic-bezier(0.25, 0.9, 0.3, 1.1) both; transform-origin: 50% 50%; }
 
-/* --- reduced motion ----------------------------------------------------------------
+/* --- animations off (Settings) -----------------------------------------------
    Everything in this module is a transient one-shot flourish: hide the whole
    layer outright (defensive — the caller's play layer gates it too). */
-@media (prefers-reduced-motion: reduce) {
-  .mnp,
-  .mnp * {
-    animation: none !important;
-  }
-  .mnp {
-    display: none !important;
-  }
+html[data-anim="off"] .mnp,
+html[data-anim="off"] .mnp * {
+  animation: none !important;
+}
+html[data-anim="off"] .mnp {
+  display: none !important;
 }

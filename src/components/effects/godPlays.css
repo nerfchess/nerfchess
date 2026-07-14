@@ -8,8 +8,8 @@
      animation-delay staggers cleanly;
    - every keyframe track ENDS at opacity 0, so nothing lingers — persistent
      state is carried by the card's own zone overlay, never by the play;
-   - all gp-* classes are hidden outright under reduced motion (guard at the
-     bottom of this file).
+   - all gp-* classes are hidden outright when animations are off in Settings
+     (guard at the bottom of this file).
    ========================================================================= */
 
 /* --- Build-up ------------------------------------------------------------ */
@@ -226,7 +226,7 @@
    drive the bespoke apex set pieces in BoardEffects.tsx (which imports this
    file) and the two tier-9 godPlays templates. Same discipline as everything
    above: transform/opacity only, one-shot, `both` fill, every track ends at
-   opacity 0. All gp-* prefixed, so the reduced-motion guard below hides them
+   opacity 0. All gp-* prefixed, so the animations-off guard below hides them
    outright. Apex budget is ~3.2s, so several of these run long. */
 
 /* Letterbox bar: cinema bars slide in from the crop's edge, hold, lift. */
@@ -486,9 +486,8 @@
 }
 .gp-planet { animation: gp-planet 1.9s cubic-bezier(0.2, 0.7, 0.3, 1) both; }
 
-/* --- Reduced motion --------------------------------------------------------
+/* --- Animations off (Settings) ---------------------------------------------
    Mirror effects.css: the plays are pure flourish; the persistent state is the
-   zone overlay, so under reduced motion the whole spectacle is simply hidden. */
-@media (prefers-reduced-motion: reduce) {
-  [class^="gp-"], [class*=" gp-"] { animation: none !important; opacity: 0 !important; }
-}
+   zone overlay, so when animations are off in Settings the whole spectacle is
+   simply hidden. */
+html[data-anim="off"] [class^="gp-"], html[data-anim="off"] [class*=" gp-"] { animation: none !important; opacity: 0 !important; }

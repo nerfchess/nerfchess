@@ -1,6 +1,6 @@
 /* Self-contained animations for the newly implemented stub cards' plugin
  * signatures (see stubPlays.tsx). transform/opacity ONLY, so the caller's
- * reduced-motion layer can gate them cleanly; a local prefers-reduced-motion
+ * animations-off layer can gate them cleanly; a local animations-off
  * guard also flattens them to a static fade as a belt-and-braces fallback.
  * No color lives here (colors ride inline on each element) so these keyframes
  * are purely motion. Class prefix `sp-` is unique to this module. */
@@ -38,13 +38,11 @@
 .sp-spark { animation: sp-spark-kf 760ms ease-out both; }
 .sp-swirl { animation: sp-swirl-kf 1000ms ease-in-out both; }
 
-@media (prefers-reduced-motion: reduce) {
-  .sp-wash,
-  .sp-ring,
-  .sp-pop,
-  .sp-spark,
-  .sp-swirl {
-    animation: none;
-    opacity: 0.9;
-  }
+html[data-anim="off"] .sp-wash,
+html[data-anim="off"] .sp-ring,
+html[data-anim="off"] .sp-pop,
+html[data-anim="off"] .sp-spark,
+html[data-anim="off"] .sp-swirl {
+  animation: none;
+  opacity: 0.9;
 }

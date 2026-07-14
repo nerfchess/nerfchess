@@ -336,22 +336,14 @@ export function loadSettings(): Settings {
         typeof parsed.fxDuration === "number" && Number.isFinite(parsed.fxDuration)
           ? Math.max(0.5, Math.min(2, parsed.fxDuration))
           : DEFAULT.fxDuration,
-      // First run on this device: seed perfMode from a hardware sniff (weak
-      // CPU or low memory) so low-end devices are smooth out of the box; once
-      // the user has any stored settings, their explicit choice wins.
-      perfMode: typeof parsed.perfMode === "boolean" ? parsed.perfMode : detectLowEnd(),
+      // No hardware sniff: animations and full visuals run everywhere by
+      // default. When a device actually struggles, the runtime lag watcher
+      // (LagWatch in SettingsBootstrap) offers performance mode instead of
+      // silently degrading anything.
+      perfMode: bool(parsed.perfMode, DEFAULT.perfMode),
     };
   } catch {}
   return { ...DEFAULT };
-}
-
-/** Coarse low-end sniff for the perfMode default: few CPU cores or little RAM.
- *  Conservative (only trips on genuinely weak hardware) and SSR-safe. */
-function detectLowEnd(): boolean {
-  if (typeof navigator === "undefined") return false;
-  const cores = navigator.hardwareConcurrency ?? 8;
-  const mem = (navigator as unknown as { deviceMemory?: number }).deviceMemory ?? 8;
-  return cores <= 4 || mem <= 4;
 }
 
 const UPDATED_AT_KEY = "dc:settings-updated-at";
@@ -494,6 +486,15 @@ export function fxDurationScale(): number {
   if (typeof document === "undefined") return 1;
   const v = parseFloat(document.documentElement.style.getPropertyValue("--fx-dur"));
   return Number.isFinite(v) && v > 0 ? Math.max(0.5, Math.min(2, v)) : 1;
+}
+
+/** True when the user turned animations off in Settings (reduced motion or
+ *  animation speed "off"). The app setting is authoritative — the OS
+ *  prefers-reduced-motion flag is NOT consulted, so battery-saver devices
+ *  still get full plays unless the user opts out. SSR-safe (false). */
+export function motionOff(): boolean {
+  if (typeof document === "undefined") return true;
+  return document.documentElement.dataset.anim === "off";
 }
 
 export function applyBoardTheme(theme: BoardTheme) {

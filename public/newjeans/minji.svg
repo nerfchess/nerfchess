@@ -15,7 +15,7 @@
   </defs>
 
   <!-- backstage: brick + drape -->
-  <rect width="200" height="200" fill="url(#mi-bg)"/>
+  <!-- background removed: portraits render as free-standing characters over the board -->
   <g fill="#b39c85" opacity="0.85">
     <rect x="4" y="10" width="30" height="12" rx="1.5"/>
     <rect x="38" y="10" width="30" height="12" rx="1.5"/>

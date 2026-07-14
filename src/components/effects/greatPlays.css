@@ -8,8 +8,8 @@
      animation-delay staggers cleanly;
    - every keyframe track ENDS at opacity 0, so nothing lingers — persistent
      state is carried by the card's own zone overlay, never by the play;
-   - all grp-* classes are hidden outright under reduced motion (guard at the
-     bottom of this file);
+   - all grp-* classes are hidden outright when animations are off in Settings
+     (guard at the bottom of this file);
    - ONE shockwave per play, no letterboxing, everything inside ~2.0s: this is
      the "great" band, one notch below the god-tier set.
    ========================================================================= */
@@ -218,10 +218,8 @@
 }
 .grp-tring { animation: grp-tring 0.5s ease-out both; }
 
-/* --- Reduced motion --------------------------------------------------------------
+/* --- Animations off (Settings) -----------------------------------------------
    Mirror effects.css / godPlays.css: the plays are pure flourish; the
-   persistent state is the zone overlay, so under reduced motion the whole
-   spectacle is simply hidden. */
-@media (prefers-reduced-motion: reduce) {
-  [class^="grp-"], [class*=" grp-"] { animation: none !important; opacity: 0 !important; }
-}
+   persistent state is the zone overlay, so when animations are off in Settings
+   the whole spectacle is simply hidden. */
+html[data-anim="off"] [class^="grp-"], html[data-anim="off"] [class*=" grp-"] { animation: none !important; opacity: 0 !important; }

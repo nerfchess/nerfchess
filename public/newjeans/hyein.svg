@@ -21,7 +21,7 @@
   </defs>
 
   <!-- moody wall backdrop with panel seams -->
-  <rect width="200" height="200" fill="url(#hy-bg)"/>
+  <!-- background removed: portraits render as free-standing characters over the board -->
   <path d="M0 62 H200 M0 128 H200 M138 0 V200" stroke="#242b33" stroke-width="2" opacity="0.7"/>
   <rect x="150" y="18" width="42" height="30" rx="4" fill="#59626c" opacity="0.55"/>
   <rect x="150" y="58" width="42" height="30" rx="4" fill="#525b65" opacity="0.5"/>

@@ -7,7 +7,7 @@
      opacity, so the compositor never has to relayout mid-play.
    - one-shot flourishes: fill-mode `both` keeps delayed elements hidden until
      their start frame; every track ends faded out.
-   - prefers-reduced-motion: the whole layer is transient spectacle, so it is
+   - animations off (Settings): the whole layer is transient spectacle, so it is
      hidden outright (the funny-layer precedent) even though the caller's play
      layer already gates it. Defensive double-cover.
 ---------------------------------------------------------------------------- */
@@ -293,13 +293,11 @@
 }
 .csp-loot { animation: csp-loot 1.7s ease-out both; transform-origin: 50% 60%; }
 
-/* --- reduced motion --------------------------------------------------------- */
-@media (prefers-reduced-motion: reduce) {
-  .csp,
-  .csp * {
-    animation: none !important;
-  }
-  .csp {
-    display: none !important;
-  }
+/* --- animations off (Settings) ---------------------------------------------- */
+html[data-anim="off"] .csp,
+html[data-anim="off"] .csp * {
+  animation: none !important;
+}
+html[data-anim="off"] .csp {
+  display: none !important;
 }

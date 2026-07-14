@@ -103,7 +103,7 @@ import { EdgeAura, EmpowerShine, NerfAura, tierRgb } from "./effects/EmpowerAura
 import type { MotifMark } from "./effects/fxZones";
 import { EffectPopover, type EffectPopoverContent } from "./EffectPopover";
 import { FX_LEVELS, useFxHidden, useFxLevel } from "@/lib/fxToggle";
-import { fxDurationScale } from "@/lib/settings";
+import { fxDurationScale, motionOff } from "@/lib/settings";
 import { VfxLayer } from "./effects/vfx/VfxLayer";
 import { vfxPlay } from "./effects/vfx/vfxBus";
 import type { VfxPlay, VfxPoint } from "./effects/vfx/types";

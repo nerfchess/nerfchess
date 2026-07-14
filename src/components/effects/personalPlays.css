@@ -7,7 +7,7 @@
      compositor never has to relayout mid-play.
    - one-shot flourishes: fill-mode `both` keeps delayed elements hidden until
      their start frame and every track ends at opacity 0.
-   - prefers-reduced-motion: the whole layer is transient spectacle, so it is
+   - animations off (Settings): the whole layer is transient spectacle, so it is
      hidden outright (defensive double-cover; the caller's play layer already
      gates it).
 ---------------------------------------------------------------------------- */
@@ -566,15 +566,13 @@
 }
 .pnp-cw-spark { animation: pnp-cw-spark 0.8s ease-out both; transform-origin: 50% 50%; }
 
-/* --- reduced motion ----------------------------------------------------------------
+/* --- animations off (Settings) -----------------------------------------------
    Everything in this module is a transient one-shot flourish: hide the whole
    layer outright (defensive — the caller's play layer gates it too). */
-@media (prefers-reduced-motion: reduce) {
-  .pnp,
-  .pnp * {
-    animation: none !important;
-  }
-  .pnp {
-    display: none !important;
-  }
+html[data-anim="off"] .pnp,
+html[data-anim="off"] .pnp * {
+  animation: none !important;
+}
+html[data-anim="off"] .pnp {
+  display: none !important;
 }

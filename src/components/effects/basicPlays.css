@@ -8,8 +8,8 @@
      animation-delay staggers cleanly;
    - every keyframe track ENDS at opacity 0, so nothing lingers — persistent
      state is carried by the card's own zone overlay, never by the play;
-   - all bsp-* classes are hidden outright under reduced motion (guard at the
-     bottom of this file);
+   - all bsp-* classes are hidden outright when animations are off in Settings
+     (guard at the bottom of this file);
    - this is the BASIC band, rebuilt as real scenes (owner, third pass: "so
      many of the current ones are so basic and look like basic icons just
      disguised as animations"): each play stages a full-crop spectacle layer
@@ -330,7 +330,7 @@
 /* --- ww_high_ground: the TIER 7 full-board takeover (bsp-hg-*) --------------
    The single sanctioned exception to the basic-band rules above. Same
    discipline otherwise: transform/opacity only, one-shot `both` fills, every
-   track ends at opacity 0, and the reduced-motion guard below hides all of
+   track ends at opacity 0, and the animations-off guard below hides all of
    it (bsp- prefix). */
 
 /* Board-wide gold-over-crimson wash — holds under the whole takeover. */
@@ -397,7 +397,7 @@
    board, themed particles, shock rings, a sweeping beam) and the emblem
    itself ARRIVES on a real trajectory instead of fading in. Transform and
    opacity only; every track ends at opacity 0; the bsp- prefix keeps all of
-   it under the reduced-motion guard below. */
+   it under the animations-off guard below. */
 
 /* Emblem arrival trajectories (outer wrapper around the whole emblem). */
 @keyframes bsp-x-slamdown {
@@ -485,13 +485,11 @@
 }
 .bsp-x-beam { animation: bsp-x-beam 1.2s ease-in-out both; transform-origin: 50% 100%; }
 
-/* --- Reduced motion --------------------------------------------------------- */
-/* Defensive: the mounting layers already gate on prefers-reduced-motion, but
+/* --- Animations off (Settings) ---------------------------------------------- */
+/* Defensive: the mounting layers already gate on the animations-off setting, but
    if one ever mounts anyway, every bsp-* element hides outright. */
-@media (prefers-reduced-motion: reduce) {
-  [class^="bsp-"],
-  [class*=" bsp-"] {
-    animation: none !important;
-    opacity: 0 !important;
-  }
+html[data-anim="off"] [class^="bsp-"],
+html[data-anim="off"] [class*=" bsp-"] {
+  animation: none !important;
+  opacity: 0 !important;
 }

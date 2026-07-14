@@ -18,7 +18,7 @@
   </defs>
 
   <!-- golden-hour window backlight -->
-  <rect width="200" height="200" fill="url(#da-bg)"/>
+  <!-- background removed: portraits render as free-standing characters over the board -->
   <rect x="8" y="8" width="80" height="120" rx="6" fill="#fff8e6" opacity="0.85"/>
   <rect x="112" y="8" width="80" height="120" rx="6" fill="#fff4d8" opacity="0.8"/>
   <path d="M48 8 V128 M152 8 V128" stroke="#eed3a2" stroke-width="3" opacity="0.8"/>
