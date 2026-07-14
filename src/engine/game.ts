@@ -12,7 +12,7 @@ import {
   effectTickColor,
   newBuffMatchState,
 } from "./buff";
-import { grantRandomTier10, pawnRankOk } from "./buffs/helpers";
+import { grantGuaranteedTier9, pawnRankOk } from "./buffs/helpers";
 import { BUFF_BY_ID } from "./buffs/library";
 import { PLAYABLE_NERFS } from "./nerfs/library";
 import { DEFAULT_CADENCE, NERF_MODE_CADENCE, bankOffer, rerollOffer, rollOffer, rollSharedTiers } from "./draft";
@@ -389,6 +389,31 @@ function fxRng(game: NerfGame, me: Color): RNG {
   let seed = boardSignature(game.board);
   seed = Math.imul(seed ^ (game.board.history.length + 1), 0x9e3779b1);
   seed = Math.imul(seed ^ (me === "w" ? 0x517cc1b7 : 0x27220a95), 0x85ebca6b);
+  // Also mix a digest of the public card state. Board+ply alone repeated
+  // seeds byte-for-byte when two casts landed at the same position with no
+  // board change between them — e.g. two Wheel of Fortune instants picked
+  // back-to-back whose first wedge only touched the clock rolled the SAME
+  // wedge every time ("I got +55 seconds five spins in a row"). Held-card
+  // counts, spent/used flags, effect count, rerolls, and the mutation
+  // counter all advance between such casts, are part of the byte-identical
+  // synced state on every replica, and never leak a hidden card (counts
+  // only, no identities).
+  const bs = game.buffs;
+  if (bs) {
+    let d = (bs.mutations ?? 0) ^ ((bs.effects.length + 1) << 8);
+    for (const c of ["w", "b"] as Color[]) {
+      const ps = bs.players[c];
+      let spent = 0;
+      let used = 0;
+      for (const b of ps.buffs) {
+        if (b.spent) spent++;
+        if (b.usedActivation) used++;
+      }
+      d = Math.imul(d ^ (ps.buffs.length + 1), 0x9e3779b1);
+      d = Math.imul(d ^ (spent * 31 + used * 131 + ps.rerollsLeft * 7 + 1), 0x85ebca6b);
+    }
+    seed = Math.imul(seed ^ d, 0xc2b2ae35);
+  }
   return new RNG(seed >>> 0);
 }
 
@@ -818,7 +843,7 @@ export function legalMoves(game: NerfGame): Move[] {
 
 /** Decide the running Chess Diff: restore the paused game's board (keeping
  * the full, continuous move history so ply counters never drift), effects and
- * tempo counters, and hand ONLY the diff's winner a guaranteed mythic
+ * tempo counters, and hand ONLY the diff's winner a guaranteed apex (tier 9)
  * (tier 10) card. A drawn diff grants nobody anything. Deterministic: every
  * replica reaches this through the same move/action record. */
 function endChessDiff(game: NerfGame, winner: Color | "draw") {
@@ -852,7 +877,9 @@ function endChessDiff(game: NerfGame, winner: Color | "draw") {
   // longer reproduce it, so replay-based checks stay off.
   bs.historyDiverged = true;
   if (winner !== "draw") {
-    grantRandomTier10(makeBuffApi(game, winner));
+    // Balance pass: the diff's prize is a guaranteed APEX (tier 9) card, one
+    // band below the mythic it used to pay out.
+    grantGuaranteedTier9(makeBuffApi(game, winner));
   }
   // Resume the paused game exactly like a turn handover: the restored mover's
   // nerf turn-start runs, and a lockdown that was pending when the game
@@ -1034,7 +1061,7 @@ export function playMove(game: NerfGame, move: Move): NerfGame {
   const result = checkLossConditions(game);
   if (result) {
     // Chess Diff sub-game: a decided diff ends the DIFF, never the match. The
-    // winner takes the mythic (a mutual king capture is a drawn diff: nobody
+    // winner takes the apex prize (a mutual king capture is a drawn diff: nobody
     // does), the paused game resumes, and play continues.
     if (bs?.diff) {
       endChessDiff(game, result.winner === "draw" || result.winner == null ? "draw" : result.winner);
@@ -1133,7 +1160,7 @@ function resolveNoMoves(game: NerfGame) {
   const bs = game.buffs;
   // Chess Diff sub-game: STANDARD chess endings, never the match. With no legal
   // move the mover is either checkmated (in check: the opponent wins the diff
-  // and its mythic) or stalemated (not in check: the diff is a draw and nobody
+  // and its apex prize) or stalemated (not in check: the diff is a draw and nobody
   // is rewarded). Legal moves are check-filtered (see legalMoves), so "no moves"
   // here is a true mate or stalemate, not a king simply left hanging.
   if (bs?.diff) {

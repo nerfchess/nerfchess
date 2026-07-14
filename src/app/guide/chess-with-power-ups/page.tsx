@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { GlossaryText } from "@/components/GlossaryText";
+import { KeyTerms } from "@/components/guide/KeyTerms";
 import { InfoPageLayout, InfoSection } from "@/components/InfoPageLayout";
 import { BreadcrumbJsonLd, FaqSection, GuideFooter } from "../shared";
 
@@ -32,28 +34,27 @@ export default function ChessWithPowerUpsPage() {
       <InfoSection title="Is there a chess game with power-ups?">
         <p>
           Yes. Nerf Chess is a browser-based chess variant built around power-ups. Its{" "}
-          <Link href="/guide/buff-mode" className="underline">Buff mode</Link> is chess plus a
-          card draft: nobody is handicapped, and every 5 moves both players are offered two
-          power-up cards and keep one. The cards range from small conveniences, like a pawn that
-          can step sideways, up to game-warping effects, like freezing an enemy piece or granting
-          a knight an extra leap. It is free, needs no download, and runs in any browser.
+          <Link href="/guide/buff-mode" className="underline">Buff mode</Link>{" "}
+          <GlossaryText text="is chess plus a card draft: nobody is handicapped, and every 5 moves both players are offered two power-up cards and keep one. The cards range from small conveniences, like a pawn that can step sideways, up to game-warping effects, like a freeze that roots an enemy piece or a buff granting a knight an extra leap." />{" "}
+          It is free, needs no download, and runs in any browser.
         </p>
       </InfoSection>
 
       <InfoSection title="How the power-ups work">
         <p>
           A power-up in Nerf Chess is called a <strong>buff</strong>. Buffs come in three shapes.{" "}
-          <strong>Passive</strong> buffs work quietly while you hold them, changing how a piece
-          moves or defends. <strong>Instant</strong> buffs fire the moment you pick them, like a
-          freeze or a board reveal. <strong>Activated</strong> buffs wait in your hand until you
-          choose to spend them, which usually costs your turn.
+          <strong>Passive</strong>{" "}
+          <GlossaryText text="buffs work quietly while you hold them, changing how a piece moves or defends." />{" "}
+          <strong>Instant</strong>{" "}
+          <GlossaryText text="buffs fire the moment you pick them, like a freeze or a board reveal." />{" "}
+          <strong>Activated</strong>{" "}
+          <GlossaryText text="buffs wait in your hand until you choose to spend them, which costs your turn unless the card is a free action — every card wears a turn-cost badge that tells you which, straight from the engine." />
         </p>
         <p>
           Power-ups get stronger as the game goes on. Every card carries a difficulty{" "}
-          <Link href="/guide/glossary" className="underline">tier</Link> from I (Trivial) to VIII
-          (Unhinged), and the draft climbs that ladder over the course of a game. You can also
-          skip a draft to bank it, so your next offer rolls one tier higher: a small gamble on
-          timing. The whole power-up library, 1,000+ cards and rules, lives in the{" "}
+          <Link href="/guide/glossary#tier" className="underline">tier</Link>
+          <GlossaryText text=" from I (Trivial) to VIII (Unhinged), and the draft climbs that ladder over the course of a game. You can also skip a draft to bank it, so your next offer rolls one tier higher: a small gamble on timing — and banking an offer that held a tier-8 card earns a guaranteed apex (tier 9) offer." />{" "}
+          The whole power-up library, 1,000+ cards and rules, lives in the{" "}
           <Link href="/codex" className="underline">codex</Link>.
         </p>
       </InfoSection>
@@ -63,10 +64,9 @@ export default function ChessWithPowerUpsPage() {
           There are two modes.{" "}
           <Link href="/guide/buff-mode" className="underline">Buff mode</Link> is pure power-up
           chess: no handicaps, just an arms race of drafted cards.{" "}
-          <Link href="/guide/nerf-mode" className="underline">Nerf mode</Link> mixes power-ups
-          with secret handicaps: each player starts with a hidden weakness, then drafts hexes to
-          curse the opponent and boons to relieve their own rule. Both modes share the same
-          twist: there is no checkmate, and you win by{" "}
+          <Link href="/guide/nerf-mode" className="underline">Nerf mode</Link>{" "}
+          <GlossaryText text="mixes power-ups with secret handicaps: each player starts with a hidden weakness (a nerf), then drafts hexes to curse the opponent and boons to relieve their own rule." />{" "}
+          Both modes share the same twist: there is no checkmate, and you win by{" "}
           <Link href="/guide/capture-the-king" className="underline">capturing the king</Link>.
         </p>
       </InfoSection>
@@ -80,6 +80,20 @@ export default function ChessWithPowerUpsPage() {
           no strings attached.
         </p>
       </InfoSection>
+
+      <KeyTerms
+        slugs={[
+          "buff",
+          "passive",
+          "instant",
+          "activated",
+          "free-action",
+          "turn-cost",
+          "draft",
+          "tier",
+          "bank",
+        ]}
+      />
 
       <FaqSection
         items={[

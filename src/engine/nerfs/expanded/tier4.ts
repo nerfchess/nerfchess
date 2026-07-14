@@ -3,7 +3,7 @@
 // in the opening. Import only from ./shared, one nerf per N(...).
 
 import { Nerf } from "./shared";
-import { tierNerf, filter, relRank, FILE, PIECE_VALUE } from "./shared";
+import { tierNerf, filter, relRank, FILE, RANK, PIECE_VALUE } from "./shared";
 
 const N = tierNerf(4);
 

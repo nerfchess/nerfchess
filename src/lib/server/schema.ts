@@ -341,6 +341,15 @@ export const SCHEMA_STATEMENTS: string[] = [
     at INTEGER NOT NULL
   )`,
   `CREATE INDEX IF NOT EXISTS idx_coh_card ON card_override_history (kind, card_id, at DESC)`,
+  // Admin-editable identity overrides (username, avatar) for the house-bot
+  // personas; NULL column = no override, fall through to the code constant in
+  // lib/server/bots.ts. Mirrors migrations/0025_house_identity_overrides.sql.
+  `CREATE TABLE IF NOT EXISTS house_identity_overrides (
+    user_id TEXT PRIMARY KEY,
+    username TEXT,
+    avatar TEXT,
+    updated_at INTEGER NOT NULL DEFAULT 0
+  )`,
   // Tiny key/value ledger for schema bookkeeping (see ADDITIVE_VERSION below).
   // Mirrors migrations/0023_schema_meta.sql.
   `CREATE TABLE IF NOT EXISTS schema_meta (

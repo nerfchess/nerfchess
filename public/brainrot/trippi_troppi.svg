@@ -1,0 +1,126 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 260">
+  <!-- Trippi Troppi: glossy shrimp-bodied cat abomination, tail curling, whiskers twitching. Loops like a GIF. -->
+  <defs>
+    <linearGradient id="triShell" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffb08a"/>
+      <stop offset="0.55" stop-color="#f2825a"/>
+      <stop offset="1" stop-color="#c2532e"/>
+    </linearGradient>
+    <linearGradient id="triBelly" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffe8d2"/>
+      <stop offset="1" stop-color="#f2bf9a"/>
+    </linearGradient>
+    <linearGradient id="triFace" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e8dcd2"/>
+      <stop offset="0.6" stop-color="#cdb9a8"/>
+      <stop offset="1" stop-color="#9a8270"/>
+    </linearGradient>
+    <radialGradient id="triIris" cx="0.38" cy="0.32" r="0.85">
+      <stop offset="0" stop-color="#8a5a2b"/>
+      <stop offset="0.6" stop-color="#4f2c10"/>
+      <stop offset="1" stop-color="#2c1607"/>
+    </radialGradient>
+    <radialGradient id="triSclera" cx="0.4" cy="0.32" r="0.95">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="0.75" stop-color="#f6f4ef"/>
+      <stop offset="1" stop-color="#d8d2c6"/>
+    </radialGradient>
+  </defs>
+
+  <!-- ground shadow -->
+  <ellipse cx="100" cy="246" rx="60" ry="9" fill="#22120a" opacity="0.22">
+    <animate attributeName="rx" values="60;53;60" dur="1.1s" repeatCount="indefinite"/>
+  </ellipse>
+
+  <g>
+    <animateTransform attributeName="transform" type="translate" values="0 0; 0 -6; 0 0" dur="1.1s" repeatCount="indefinite"/>
+
+    <!-- curled shrimp tail, flicking -->
+    <g>
+      <animateTransform attributeName="transform" type="rotate" values="-6 148 176; 8 148 176; -6 148 176" dur="1.1s" repeatCount="indefinite"/>
+      <g transform="translate(-24 -27) scale(1.16)">
+        <path d="M144 168 C168 160 184 168 186 186 C187 200 176 210 162 208 C170 202 174 194 170 188 C164 180 152 178 144 182 Z" fill="url(#triShell)"/>
+        <!-- tail fan -->
+        <path d="M182 196 C194 192 202 196 204 206 C194 210 184 207 180 202 Z" fill="#f2a878"/>
+        <path d="M178 202 C188 206 192 215 190 224 C181 219 174 210 174 204 Z" fill="#f2a878"/>
+        <path d="M184 192 C194 186 202 186 208 192 C200 197 190 198 184 196 Z" fill="#f2a878"/>
+        <path d="M170 186 C176 184 182 186 184 190" stroke="#ffd9be" stroke-width="2.6" stroke-linecap="round" fill="none" opacity="0.8"/>
+      </g>
+    </g>
+
+    <!-- shrimp body: arched segmented shell -->
+    <path d="M56 132 C64 100 108 92 134 110 C158 126 160 158 148 182 C138 202 112 212 88 206 C60 199 46 164 56 132 Z" fill="url(#triShell)"/>
+    <!-- belly plates -->
+    <path d="M62 176 C80 196 116 204 140 190 C130 204 104 210 84 202 C70 196 62 186 62 176 Z" fill="url(#triBelly)"/>
+    <!-- shell plates: transverse segment arcs wrapping the curled tail end -->
+    <path d="M92 208 C118 208 140 194 150 172 M104 200 C126 196 140 184 146 166 M114 188 C130 184 140 172 143 158 M122 174 C132 170 138 160 139 150" stroke="#a8401e" stroke-width="3.4" fill="none" opacity="0.5" stroke-linecap="round"/>
+    <path d="M96 204 C120 202 138 190 147 170" stroke="#ffd9be" stroke-width="2.2" fill="none" opacity="0.6" stroke-linecap="round"/>
+    <!-- core shadow + rim light + sheen -->
+    <path d="M140 118 C156 136 156 166 144 186 C152 164 150 134 134 116 Z" fill="#8a2e12" opacity="0.4"/>
+    <path d="M62 130 C68 112 84 100 102 97" stroke="#ffe2cc" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.65"/>
+    <ellipse cx="86" cy="128" rx="9" ry="22" fill="#ffffff" opacity="0.18" transform="rotate(-18 86 128)"/>
+
+    <!-- tiny swimmeret legs, paddling -->
+    <g stroke="#e07048" stroke-width="5" stroke-linecap="round">
+      <path d="M74 200 C72 210 68 216 62 220">
+        <animate attributeName="d" values="M74 200 C72 210 68 216 62 220; M74 200 C74 212 72 220 68 226; M74 200 C72 210 68 216 62 220" dur="0.55s" repeatCount="indefinite"/>
+      </path>
+      <path d="M94 208 C93 218 90 224 85 228">
+        <animate attributeName="d" values="M94 208 C93 218 90 224 85 228; M94 208 C96 218 95 226 92 232; M94 208 C93 218 90 224 85 228" dur="0.55s" begin="0.14s" repeatCount="indefinite"/>
+      </path>
+      <path d="M114 210 C114 220 112 228 108 232">
+        <animate attributeName="d" values="M114 210 C114 220 112 228 108 232; M114 210 C117 219 118 227 116 233; M114 210 C114 220 112 228 108 232" dur="0.55s" begin="0.28s" repeatCount="indefinite"/>
+      </path>
+    </g>
+
+    <!-- the cat face, grafted on the shrimp's front -->
+    <g>
+      <animateTransform attributeName="transform" type="rotate" values="2 74 78; -2.5 74 78; 2 74 78" dur="1.1s" repeatCount="indefinite"/>
+      <!-- ears -->
+      <path d="M40 48 L34 20 L60 36 Z" fill="url(#triFace)" stroke="#8a7260" stroke-width="1.6"/>
+      <path d="M84 40 L96 16 L106 44 Z" fill="url(#triFace)" stroke="#8a7260" stroke-width="1.6"/>
+      <path d="M42 42 L40 28 L52 36 Z" fill="#d9909c" opacity="0.75"/>
+      <path d="M88 38 L94 24 L99 40 Z" fill="#d9909c" opacity="0.75"/>
+      <!-- head -->
+      <path d="M72 30 C98 30 112 48 110 70 C108 94 92 106 70 106 C48 106 32 92 32 68 C32 46 48 30 72 30 Z" fill="url(#triFace)"/>
+      <!-- tabby stripes -->
+      <path d="M62 32 C64 38 64 44 62 48 M78 32 C80 38 80 44 78 48" stroke="#8a7260" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.6"/>
+      <path d="M96 44 C102 52 104 62 102 72 C108 62 106 50 100 42 Z" fill="#6e5846" opacity="0.4"/>
+      <path d="M38 50 C34 58 34 70 38 80" stroke="#f5ece2" stroke-width="3.5" stroke-linecap="round" fill="none" opacity="0.7"/>
+      <!-- huge glossy cat eyes -->
+      <ellipse cx="56" cy="64" rx="13" ry="14.5" fill="url(#triSclera)"/>
+      <circle cx="58" cy="66" r="8.4" fill="url(#triIris)"/>
+      <circle cx="58" cy="66" r="3.8" fill="#1d1008"/>
+      <circle cx="55" cy="62.6" r="2.9" fill="#ffffff"/>
+      <circle cx="61.4" cy="68.8" r="1.4" fill="#ffffff" opacity="0.9"/>
+      <ellipse cx="90" cy="62" rx="12" ry="13.5" fill="url(#triSclera)"/>
+      <circle cx="88" cy="64" r="7.8" fill="url(#triIris)"/>
+      <circle cx="88" cy="64" r="3.5" fill="#1d1008"/>
+      <circle cx="85.4" cy="61" r="2.6" fill="#ffffff"/>
+      <circle cx="91" cy="66.8" r="1.3" fill="#ffffff" opacity="0.9"/>
+      <!-- nose + uneasy little mouth -->
+      <path d="M68 82 L76 82 L72 88 Z" fill="#c96a78"/>
+      <path d="M72 88 C72 92 68 94 64 93 M72 88 C72 92 76 94 80 93" stroke="#6e5846" stroke-width="2.6" stroke-linecap="round" fill="none"/>
+      <path d="M62 97 Q72 101 82 97" stroke="#6e5846" stroke-width="3" stroke-linecap="round" fill="none"/>
+      <!-- whiskers, twitching -->
+      <g stroke="#f5ece2" stroke-width="2.2" stroke-linecap="round" opacity="0.9">
+        <path d="M36 82 C24 80 14 80 6 84 M38 90 C28 92 18 94 12 98">
+          <animate attributeName="opacity" values="0.9;0.5;0.9" dur="0.55s" repeatCount="indefinite"/>
+        </path>
+        <path d="M104 80 C114 76 124 74 132 76 M104 88 C114 88 124 90 130 94">
+          <animate attributeName="opacity" values="0.5;0.9;0.5" dur="0.55s" repeatCount="indefinite"/>
+        </path>
+      </g>
+    </g>
+
+    <!-- antennae from behind the cat head -->
+    <g stroke="#e07048" stroke-width="3.5" stroke-linecap="round" fill="none">
+      <path d="M96 26 C112 12 132 8 152 12">
+        <animate attributeName="d" values="M96 26 C112 12 132 8 152 12; M96 26 C114 16 134 16 154 22; M96 26 C112 12 132 8 152 12" dur="1.1s" repeatCount="indefinite"/>
+      </path>
+      <path d="M88 22 C96 10 108 2 122 0">
+        <animate attributeName="d" values="M88 22 C96 10 108 2 122 0; M88 22 C98 14 112 10 126 8; M88 22 C96 10 108 2 122 0" dur="1.1s" begin="0.2s" repeatCount="indefinite"/>
+      </path>
+    </g>
+  </g>
+</svg>

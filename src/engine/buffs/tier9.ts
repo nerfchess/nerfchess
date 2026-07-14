@@ -93,16 +93,16 @@ const myHalfZone = (api: BuffApi) => (sq: Square) => inHalf(api.me, sq);
 export const TIER9: Buff[] = [
   // --- Game-winning boons ---------------------------------------------------
 
-  // Absolute Zero: the whole enemy army (kings excepted) freezes solid for 4 of
-  // the opponent's turns. They can only shuffle their king while it thaws - four
-  // full turns of a fully locked army is more than enough to break the game open.
+  // Ice Age: the whole enemy army (kings excepted) freezes solid for 3 of the
+  // opponent's turns. They can only shuffle their king while it thaws - trimmed
+  // from 4 turns in the apex soft-nerf pass; three is still back-breaking.
   apex(
     {
       id: "ice_age",
       icon: "Snowflake",
       name: "Ice Age",
       description:
-        "Every enemy piece other than the king freezes solid and cannot move for your opponent's next 4 turns.",
+        "Every enemy piece other than the king freezes solid and cannot move for your opponent's next 3 turns.",
       category: "tempo",
       flavor: "The board holds its breath.",
       fx: { motif: "jail", pieces: "all" },
@@ -110,7 +110,7 @@ export const TIER9: Buff[] = [
     activatedSimple((_inst, api) => {
       for (const sq of mySquares(api.board, api.opp)) {
         if (api.board.pieces[sq]!.type === "k") continue;
-        addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 4, skin: "ice" });
+        addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 3, skin: "ice" });
       }
     }),
   ),
@@ -198,7 +198,7 @@ export const TIER9: Buff[] = [
 
 
   // Second Coming: a fresh queen descends onto a square you choose in your half,
-  // and your whole army is untouchable for the opponent's next 3 turns - three
+  // and your whole army is untouchable for the opponent's next 2 turns - two
   // full turns to attack with total impunity while a brand-new queen joins in.
   apex(
     {
@@ -206,7 +206,7 @@ export const TIER9: Buff[] = [
       icon: "Sparkle",
       name: "Second Coming",
       description:
-        "Summon a queen on an empty square in your half, and your whole army cannot be captured for your opponent's next 3 turns.",
+        "Summon a queen on an empty square in your half, and your whole army cannot be captured for your opponent's next 2 turns.",
       category: "pieces",
       flavor: "Foretold, and right on time.",
       fx: { motif: "ward", pieces: "all", self: true },
@@ -223,7 +223,7 @@ export const TIER9: Buff[] = [
       (_inst, api, picks) => {
         const sq = picks[0]?.square;
         if (sq != null && !api.board.pieces[sq]) api.place(sq, "q", api.me);
-        addEffect(api, { kind: "shield", owner: api.me, squares: null, turns: 3 });
+        addEffect(api, { kind: "shield", owner: api.me, squares: null, turns: 2 });
       },
     ),
   ),
@@ -237,11 +237,11 @@ export const TIER9: Buff[] = [
       icon: "Castle",
       name: "Iron Legion",
       description:
-        "A relief force arrives: place a queen, a rook and two knights on empty squares in your half.",
+        "A relief force arrives: place a queen, a rook and a knight on empty squares in your half.",
       category: "pieces",
       flavor: "Reinforcements, at last.",
     },
-    placePieces(["q", "r", "n", "n"], myHalfZone),
+    placePieces(["q", "r", "n"], myHalfZone),
   ),
 
   // Living God: promoted from tier 8 into the apex band (owner request). One
@@ -257,13 +257,13 @@ export const TIER9: Buff[] = [
       icon: "Sparkles",
       name: "Living God",
       description:
-        "One piece gains amazon movement, is uncapturable, and explodes on capture, for the game. An uncapturable piece may never capture the king itself.",
+        "One piece gains amazon movement and explosive captures for the game, and cannot be captured for your opponent's next 6 turns. An uncapturable piece may never capture the king itself.",
       category: "movement",
       flavor: "Worship is optional. Survival is not.",
       fx: { motif: "empower", pieces: ["p", "n", "b", "r", "q"], moveAs: "q", self: true },
     },
     bindPiece("Choose your living god", bindCandidates(), {
-      shieldTurns: null,
+      shieldTurns: 6,
       gen: (board, sq, via) => [
         ...slideMoves(board, sq, ALL_DIRS, via),
         ...leapMoves(board, sq, KNIGHT_LEAPS, via),
@@ -281,13 +281,13 @@ export const TIER9: Buff[] = [
       id: "blackout",
       icon: "PowerOff",
       name: "Blackout",
-      description: "The lights go out: your opponent's next 4 turns are skipped entirely.",
+      description: "The lights go out: your opponent's next 3 turns are skipped entirely.",
       category: "hex",
       flavor: "Nobody home.",
       fx: { motif: "slow", pieces: "all" },
     },
     activatedSimple((_inst, api) => {
-      api.bs.skips[api.opp] += 4;
+      api.bs.skips[api.opp] += 3;
     }),
   ),
 
@@ -302,7 +302,7 @@ export const TIER9: Buff[] = [
       icon: "Gem",
       name: "Mass Petrify",
       description:
-        "Every enemy queen, rook, knight and bishop turns to stone for your opponent's next 4 turns. A petrified piece may only shuffle one square.",
+        "Every enemy queen, rook, knight and bishop turns to stone for your opponent's next 3 turns. A petrified piece may only shuffle one square.",
       category: "hex",
       flavor: "Do not meet its gaze.",
       fx: { motif: "jail", pieces: ["q", "r", "n", "b"] },
@@ -311,23 +311,23 @@ export const TIER9: Buff[] = [
       for (const sq of mySquares(api.board, api.opp)) {
         const t = api.board.pieces[sq]!.type;
         if (t === "q" || t === "r" || t === "n" || t === "b") {
-          addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 4 });
+          addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 3 });
         }
       }
     }),
   ),
 
-  // Purge: at the start of each of your next 3 turns, a random enemy piece
+  // Purge: at the start of each of your next 2 turns, a random enemy piece
   // (never the king) is dragged off the board. Held (spendOnUse:false) so it
-  // can fire three times; it arms on use and retires when all purges are spent.
-  // Three guaranteed removals dismantles almost any defence.
+  // can fire twice; it arms on use and retires when all purges are spent.
+  // Two guaranteed removals still dismantles most defences.
   apex(
     {
       id: "culling",
       icon: "Skull",
       name: "The Culling",
       description:
-        "At the start of each of your next 3 turns, a random enemy piece other than the king is captured.",
+        "At the start of each of your next 2 turns, a random enemy piece other than the king is captured.",
       category: "hex",
       flavor: "The list grows shorter.",
       fx: { motif: "muzzle", pieces: "all" },
@@ -337,7 +337,7 @@ export const TIER9: Buff[] = [
       spendOnUse: false,
       effect: (inst) => {
         // Arm the purge on use; onMovePlayed does the work over the next turns.
-        if (inst.state.charges == null) inst.state.charges = 3;
+        if (inst.state.charges == null) inst.state.charges = 2;
       },
       onMovePlayed: (inst, move, api) => {
         const left = (inst.state.charges as number) ?? 0;
@@ -400,7 +400,7 @@ export const TIER9: Buff[] = [
       id: "titan_legion",
       icon: "Pyramid",
       name: "Titan Legion",
-      description: "Three of your pieces become uncapturable amazons for the game.",
+      description: "Three of your pieces become amazons for the game, uncapturable for your opponent's next 5 turns.",
       category: "movement",
       flavor: "Monuments that march.",
       fx: { motif: "empower", pieces: ["p", "n", "b", "r", "q"], moveAs: "q", self: true },
@@ -423,7 +423,7 @@ export const TIER9: Buff[] = [
         const sqs = picks.map((k) => k.square).filter((s): s is Square => s != null);
         if (!sqs.length) return;
         inst.state.sqs = sqs;
-        addEffect(api, { kind: "shield", owner: api.me, squares: [...sqs], turns: null });
+        addEffect(api, { kind: "shield", owner: api.me, squares: [...sqs], turns: 5 });
       },
       augmentMoves: (moves, inst, api) => {
         const sqs = inst.state.sqs as Square[] | undefined;
@@ -510,7 +510,7 @@ export const TIER10: Buff[] = [
       icon: "Skull",
       name: "Oblivion",
       description:
-        "Every one of your opponent's pieces except the king is destroyed, every piece you have ever lost returns to your half, and your whole army cannot be captured for your opponent's next 3 turns. Only their lone king is left standing against your full force.",
+        "Every one of your opponent's pieces except the king is destroyed, every piece you have ever lost returns to your half, and your whole army cannot be captured for your opponent's next turn. Only their lone king is left standing against your full force.",
       category: "attack",
       flavor: "Nothing left to defend. Everything left to lose.",
       fx: { motif: "ward", pieces: "all", self: true },
@@ -543,7 +543,7 @@ export const TIER10: Buff[] = [
         }
       }
       // And nothing can touch you while you close it out.
-      addEffect(api, { kind: "shield", owner: api.me, squares: null, turns: 3 });
+      addEffect(api, { kind: "shield", owner: api.me, squares: null, turns: 1 });
     }),
   ),
 
@@ -557,7 +557,7 @@ export const TIER10: Buff[] = [
       icon: "Castle",
       name: "Grand Army",
       description:
-        "A whole fresh army answers your call: two new queens, two rooks, two bishops and two knights appear on empty squares in your half, and every remaining empty square in your half fills with a new pawn. It spills onto the rest of the board only if your half runs out of room.",
+        "A whole fresh army answers your call: a new queen, two rooks, two bishops and two knights appear on empty squares in your half, and every remaining empty square in your half fills with a new pawn. It spills onto the rest of the board only if your half runs out of room.",
       category: "pieces",
       flavor: "Rank upon rank upon rank, out of nowhere.",
     },
@@ -569,15 +569,16 @@ export const TIER10: Buff[] = [
         ),
       );
       // Seat the heavy force first (no pawn-rank guard needed for these).
-      const force: PieceType[] = ["q", "q", "r", "r", "b", "b", "n", "n"];
+      const force: PieceType[] = ["q", "r", "r", "b", "b", "n", "n"];
       for (const type of force) {
         const sq = spots.shift();
         if (sq == null) break;
         api.place(sq, type, api.me);
       }
-      // Then flood every remaining legal square with fresh pawns.
+      // Then flood the remaining legal squares of YOUR HALF with fresh pawns
+      // (the heavy force may spill past the river, the pawn tide never does).
       for (const sq of spots) {
-        if (pawnRankOk(sq)) api.place(sq, "p", api.me);
+        if (pawnRankOk(sq) && inHalf(api.me, sq)) api.place(sq, "p", api.me);
       }
     }),
   ),
@@ -594,7 +595,7 @@ export const TIER10: Buff[] = [
       icon: "Crown",
       name: "Ascendancy",
       description:
-        "For your next 4 turns every one of your pieces except the king moves and captures as an amazon (a queen that also leaps like a knight), and your king cannot be captured.",
+        "For your next 3 turns every one of your pieces except the king moves and captures as an amazon (a queen that also leaps like a knight), and your king cannot be captured.",
       category: "movement",
       flavor: "Ascend, all of you.",
       fx: { motif: "empower", pieces: "all", moveAs: "q", self: true },
@@ -605,8 +606,8 @@ export const TIER10: Buff[] = [
       effect: (inst, api) => {
         // One activation only; re-use is a guarded no-op.
         if (inst.state.turns != null) return;
-        inst.state.turns = 4;
-        addEffect(api, { kind: "king_safe", owner: api.me, turns: 4 });
+        inst.state.turns = 3;
+        addEffect(api, { kind: "king_safe", owner: api.me, turns: 3 });
       },
       augmentMoves: (moves, inst, api) => {
         if (turnsLeft(inst) <= 0) return;
@@ -638,7 +639,7 @@ export const TIER10: Buff[] = [
       icon: "Swords",
       name: "Total War",
       description:
-        "Every enemy piece except the king is destroyed, a fresh force of a queen, two rooks, two bishops and two knights lands in your half, and your whole army cannot be captured for your opponent's next 3 turns.",
+        "Every enemy piece except the king is destroyed, a fresh force of a queen, two rooks, two bishops and two knights lands in your half, and your whole army cannot be captured for your opponent's next turn.",
       category: "attack",
       flavor: "Everything, everywhere, all at once.",
       fx: { motif: "ward", pieces: "all", self: true },
@@ -660,7 +661,7 @@ export const TIER10: Buff[] = [
         if (sq == null) break;
         api.place(sq, type, api.me);
       }
-      addEffect(api, { kind: "shield", owner: api.me, squares: null, turns: 3 });
+      addEffect(api, { kind: "shield", owner: api.me, squares: null, turns: 1 });
     }),
   ),
 ];

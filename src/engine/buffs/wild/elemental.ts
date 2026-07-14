@@ -1013,7 +1013,7 @@ export const WILD_ELEMENTAL: Buff[] = [
     {
       id: "we_stone_soldiers",
       name: "Stone Soldiers",
-      description: "One of your pawns is carved into a stone soldier: it can never move again, and it can never be captured, for the rest of the game.",
+      description: "One of your pawns is carved into a stone soldier: it cannot move and cannot be captured for your opponent's next 6 turns, then the stone crumbles and it wakes.",
       tier: 4,
       category: "protection",
       requires: ["p"],
@@ -1032,8 +1032,8 @@ export const WILD_ELEMENTAL: Buff[] = [
       (_inst, api, picks) => {
         const sq = picks[0]?.square;
         if (sq == null) return;
-        addEffect(api, { kind: "shield", owner: api.me, squares: [sq], turns: null });
-        addEffect(api, { kind: "freeze", sq, owner: api.me, turns: 999, skin: "stone" });
+        addEffect(api, { kind: "shield", owner: api.me, squares: [sq], turns: 6 });
+        addEffect(api, { kind: "freeze", sq, owner: api.me, turns: 6, skin: "stone" });
       },
     ),
   ),
@@ -1254,7 +1254,7 @@ export const WILD_ELEMENTAL: Buff[] = [
       id: "we_updraft",
       name: "Updraft",
       description: "One knight may make a longer 3-by-1 leap, once.",
-      tier: 2,
+      tier: 1,
       category: "movement",
       requires: ["n"],
       flavor: "Caught on a thermal.",

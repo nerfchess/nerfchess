@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Hanni">
+  <defs>
+    <linearGradient id="hn-bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#dff0c8"/>
+      <stop offset="1" stop-color="#a8cc7f"/>
+    </linearGradient>
+    <linearGradient id="hn-hair" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#33291f"/>
+      <stop offset="1" stop-color="#191310"/>
+    </linearGradient>
+    <linearGradient id="hn-coat" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#cfe3f5"/>
+      <stop offset="1" stop-color="#b3d0ec"/>
+    </linearGradient>
+    <radialGradient id="hn-sun" cx="0.28" cy="0.14" r="0.7">
+      <stop offset="0" stop-color="#fff7d6" stop-opacity="0.85"/>
+      <stop offset="1" stop-color="#fff7d6" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- sunlit greenery -->
+  <rect width="200" height="200" fill="url(#hn-bg)"/>
+  <g fill="#7fae55" opacity="0.85">
+    <ellipse cx="20" cy="60" rx="26" ry="40"/>
+    <ellipse cx="182" cy="52" rx="30" ry="46"/>
+    <ellipse cx="58" cy="26" rx="30" ry="22"/>
+    <ellipse cx="148" cy="20" rx="26" ry="18"/>
+  </g>
+  <g fill="#93c063" opacity="0.8">
+    <ellipse cx="8" cy="110" rx="22" ry="34"/>
+    <ellipse cx="192" cy="118" rx="24" ry="36"/>
+  </g>
+  <!-- fence rail -->
+  <path d="M0 150 H200 M0 172 H200" stroke="#e9e4cf" stroke-width="9" opacity="0.9"/>
+  <path d="M22 142 V200 M178 142 V200" stroke="#e2dcc4" stroke-width="10" opacity="0.9"/>
+  <rect width="200" height="200" fill="url(#hn-sun)"/>
+
+  <!-- long straight hair, back -->
+  <path d="M54 60 Q52 26 100 24 Q148 26 146 60 L152 182 Q126 194 100 194 Q74 194 48 182 Z" fill="url(#hn-hair)"/>
+
+  <!-- powder blue coat with big white collar -->
+  <path d="M34 200 Q42 152 78 142 L100 136 L122 142 Q158 152 166 200 Z" fill="url(#hn-coat)"/>
+  <path d="M82 141 L100 158 L118 141 L126 146 L104 170 H96 L74 146 Z" fill="#fdfdfa"/>
+  <path d="M100 170 V200" stroke="#9dbede" stroke-width="2.4"/>
+  <circle cx="100" cy="180" r="4.6" fill="#f2f5f8" stroke="#9dbede" stroke-width="1.4"/>
+  <circle cx="100" cy="195" r="4.6" fill="#f2f5f8" stroke="#9dbede" stroke-width="1.4"/>
+  <path d="M52 172 Q50 186 52 200 M148 172 Q150 186 148 200" stroke="#a3c2e2" stroke-width="2.4" fill="none"/>
+
+  <!-- neck -->
+  <path d="M90 118 H110 V140 Q100 148 90 140 Z" fill="#f8e2cd"/>
+  <path d="M90 122 Q100 130 110 122 V118 H90 Z" fill="#eccbaf"/>
+
+  <!-- face: sun-warmed, direct gaze -->
+  <path d="M65 80 Q65 44 100 44 Q135 44 135 80 Q135 104 123 115 Q111 125 100 125 Q89 125 77 115 Q65 104 65 80 Z" fill="#fbe9d3"/>
+  <path d="M65 84 Q70 108 82 117 Q73 104 71 84 Z" fill="#eed0b1" opacity="0.85"/>
+
+  <!-- full airy bangs + long side curtains -->
+  <path d="M62 78 Q62 40 100 38 Q138 40 138 78 L138 82 Q132 66 126 80 Q122 64 114 78 Q110 62 100 76 Q92 62 86 78 Q80 64 74 80 Q68 66 62 82 Z" fill="url(#hn-hair)"/>
+  <path d="M62 78 Q56 120 60 170 Q66 176 72 176 L70 92 Q66 82 62 78 Z" fill="url(#hn-hair)"/>
+  <path d="M138 78 Q144 120 140 170 Q134 176 128 176 L130 92 Q134 82 138 78 Z" fill="url(#hn-hair)"/>
+  <path d="M66 108 L64 160 M134 108 L136 160" stroke="#3f342a" stroke-width="2" opacity="0.6" stroke-linecap="round"/>
+
+  <!-- steady brown eyes -->
+  <g>
+    <ellipse cx="85" cy="88" rx="7.6" ry="8.2" fill="#2c1d12"/>
+    <ellipse cx="115" cy="88" rx="7.6" ry="8.2" fill="#2c1d12"/>
+    <circle cx="87.8" cy="84.6" r="2.5" fill="#fff"/>
+    <circle cx="117.8" cy="84.6" r="2.5" fill="#fff"/>
+    <circle cx="82.6" cy="91" r="1.2" fill="#c98f58" opacity="0.9"/>
+    <circle cx="112.6" cy="91" r="1.2" fill="#c98f58" opacity="0.9"/>
+    <path d="M77 81 Q85 77 93 81" stroke="#20140b" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M107 81 Q115 77 123 81" stroke="#20140b" stroke-width="2" fill="none" stroke-linecap="round"/>
+  </g>
+  <path d="M78 72 Q85 69 92 71" stroke="#3c2c1c" stroke-width="2.2" fill="none" stroke-linecap="round" opacity="0.85"/>
+  <path d="M108 71 Q115 69 122 72" stroke="#3c2c1c" stroke-width="2.2" fill="none" stroke-linecap="round" opacity="0.85"/>
+
+  <!-- nose, soft set lips, sun blush -->
+  <path d="M99 97 Q97 102 100 104" stroke="#dfb18c" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+  <path d="M92 111 Q100 115 108 111 Q104 117 100 117 Q96 117 92 111 Z" fill="#d98a80"/>
+  <path d="M94 110.5 Q100 113 106 110.5" stroke="#b06258" stroke-width="1" fill="none" stroke-linecap="round"/>
+  <ellipse cx="78" cy="101" rx="6.6" ry="3.4" fill="#f0ad93" opacity="0.55"/>
+  <ellipse cx="122" cy="101" rx="6.6" ry="3.4" fill="#f0ad93" opacity="0.55"/>
+
+  <!-- warm rim light on hair -->
+  <path d="M67 60 Q76 46 92 42" stroke="#8a6a3c" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.75"/>
+  <path d="M133 60 Q124 46 108 42" stroke="#8a6a3c" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.6"/>
+</svg>

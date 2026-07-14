@@ -10,7 +10,7 @@ import { RNG } from "./rng";
 // While the diff runs there are NO drafts, NO nerfs, NO buff activations and
 // no lingering effects — plain chess. When the diff is decided the stash is
 // restored, the paused game (and its clocks) resumes, and ONLY the diff's
-// winner is handed a mythic (tier 10) card. A drawn diff grants nobody
+// winner is handed an apex (tier 9) card. A drawn diff grants nobody
 // anything. Fully part of the deterministic engine state, so replicas replay
 // it from the shared move/action record and snapshots persist it.
 export interface ChessDiffState {
@@ -555,6 +555,15 @@ export interface Buff {
   onMovePlayed?: (inst: BuffInstance, move: Move, api: BuffApi) => void;
   /** Short live status line ("2 turns left", "bound to e4"). */
   status?: (inst: BuffInstance) => string | null;
+  /**
+   * Recharging activation (companion abilities): how many of the owner's
+   * turns remain before the card can be activated again, plus the full
+   * cooldown length for a progress ring. Display metadata only, a pure read
+   * of the instance state the mechanics already keep (never consulted by the
+   * engine, so it cannot desync anything). Return null while no cooldown
+   * applies (not yet online, or a once-per-game ability already used).
+   */
+  cooldown?: (inst: BuffInstance) => { left: number; total: number } | null;
 }
 
 /** True when the AI can pick this card and resolve it without a UI. */

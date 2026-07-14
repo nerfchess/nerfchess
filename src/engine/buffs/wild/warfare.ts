@@ -585,15 +585,41 @@ export const WILD_WARFARE: Buff[] = [
   ),
   card(
     {
+      // Not just a doubled Sapper Team (T3, the clean one-pawn drop): the
+      // paratroopers DIG IN on landing. Both pawns are uncapturable for one
+      // full turn, so they cannot simply be swatted before they act.
       id: "ww_paratroopers",
       icon: "Send",
       name: "Paratroopers",
-      description: "Place two new pawns on empty squares in your opponent's half, once.",
+      description: "Drop two new pawns onto empty squares in your opponent's half, once. They dig in where they land: neither can be captured for 1 full turn.",
       tier: 5,
       category: "pieces",
-      flavor: "They land behind the lines.",
+      flavor: "They land behind the lines and start filling sandbags.",
     },
-    placePieces(["p", "p"], oppHalfZone),
+    activated(
+      (_inst, api, picks) =>
+        picks.length >= 2
+          ? null
+          : {
+              kind: "square",
+              label: `Drop a paratrooper (${picks.length + 1}/2)`,
+              squares: emptySquares(api.board, oppHalfZone(api)).filter(
+                (sq) => pawnRankOk(sq) && !picks.some((k) => k.square === sq),
+              ),
+            },
+      (_inst, api, picks) => {
+        const landed: Square[] = [];
+        for (const k of picks) {
+          if (k.square != null && pawnRankOk(k.square) && !api.board.pieces[k.square]) {
+            api.place(k.square, "p", api.me);
+            landed.push(k.square);
+          }
+        }
+        if (landed.length) {
+          addEffect(api, { kind: "shield", owner: api.me, squares: landed, turns: 1 });
+        }
+      },
+    ),
   ),
   card(
     {

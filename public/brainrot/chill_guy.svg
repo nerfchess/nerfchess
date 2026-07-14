@@ -1,0 +1,115 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 260">
+  <!-- Chill Guy: glossy brown dog in a grey sweater, hands in pockets, half-lidded and unbothered. Loops (slowly) like a GIF. -->
+  <defs>
+    <linearGradient id="chgFur" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#c99668"/>
+      <stop offset="0.55" stop-color="#a06f3e"/>
+      <stop offset="1" stop-color="#6e4620"/>
+    </linearGradient>
+    <linearGradient id="chgSweater" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#b8bec8"/>
+      <stop offset="0.55" stop-color="#8b93a2"/>
+      <stop offset="1" stop-color="#5c6472"/>
+    </linearGradient>
+    <linearGradient id="chgPants" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3d434f"/>
+      <stop offset="1" stop-color="#23272f"/>
+    </linearGradient>
+    <linearGradient id="chgMuzzle" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f2ddc2"/>
+      <stop offset="1" stop-color="#d0b088"/>
+    </linearGradient>
+    <radialGradient id="chgIris" cx="0.38" cy="0.32" r="0.85">
+      <stop offset="0" stop-color="#8a5a2b"/>
+      <stop offset="0.6" stop-color="#4f2c10"/>
+      <stop offset="1" stop-color="#2c1607"/>
+    </radialGradient>
+    <radialGradient id="chgSclera" cx="0.4" cy="0.32" r="0.95">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="0.75" stop-color="#f6f4ef"/>
+      <stop offset="1" stop-color="#d8d2c6"/>
+    </radialGradient>
+  </defs>
+
+  <!-- ground shadow -->
+  <ellipse cx="100" cy="248" rx="48" ry="8" fill="#14161c" opacity="0.22">
+    <animate attributeName="rx" values="48;45;48" dur="2.4s" repeatCount="indefinite"/>
+  </ellipse>
+
+  <g>
+    <!-- the chillest possible idle: a slow, small bob -->
+    <animateTransform attributeName="transform" type="translate" values="0 0; 0 -3; 0 0" dur="2.4s" repeatCount="indefinite"/>
+
+    <!-- tail, one lazy wag -->
+    <g>
+      <animateTransform attributeName="transform" type="rotate" values="-4 128 176; 6 128 176; -4 128 176" dur="2.4s" repeatCount="indefinite"/>
+      <path d="M128 178 C144 174 154 162 156 148" stroke="#a06f3e" stroke-width="8" stroke-linecap="round" fill="none"/>
+      <circle cx="157" cy="146" r="5.5" fill="#c99668"/>
+    </g>
+
+    <!-- legs: relaxed stance, pants rolled at the ankle -->
+    <path d="M84 196 L82 234 M116 196 L118 234" stroke="url(#chgPants)" stroke-width="16" stroke-linecap="round"/>
+    <path d="M76 230 h13 M112 230 h13" stroke="#3d434f" stroke-width="6" stroke-linecap="round"/>
+    <!-- white sneakers -->
+    <path d="M70 236 C70 232 76 230 82 230 L90 232 C94 236 96 240 96 244 L70 244 Z" fill="#f4f7f2" stroke="#c3c9d2" stroke-width="1.6"/>
+    <path d="M104 244 C104 240 106 236 110 232 L118 230 C124 230 130 232 130 236 L130 244 Z" fill="#f4f7f2" stroke="#c3c9d2" stroke-width="1.6"/>
+    <path d="M70 244 h26 M104 244 h26" stroke="#aab2be" stroke-width="2.4" stroke-linecap="round"/>
+
+    <!-- the sweater: boxy, comfy, hands buried in the front pockets -->
+    <path d="M62 118 C74 106 126 106 138 118 L142 188 C142 198 126 202 100 202 C74 202 58 198 58 188 Z" fill="url(#chgSweater)"/>
+    <!-- arms merging straight into the pockets -->
+    <path d="M62 122 C50 132 46 150 50 168 C54 178 64 182 72 180 M138 122 C150 132 154 150 150 168 C146 178 136 182 128 180" stroke="url(#chgSweater)" stroke-width="17" stroke-linecap="round" fill="none"/>
+    <!-- pocket slits (where the hands live) -->
+    <path d="M66 176 Q76 184 88 182 M134 176 Q124 184 112 182" stroke="#4c5462" stroke-width="3.4" stroke-linecap="round" fill="none"/>
+    <!-- ribbed hem + collar -->
+    <path d="M60 188 C76 195 124 195 140 188" stroke="#4c5462" stroke-width="5" fill="none" opacity="0.7"/>
+    <path d="M80 113 C90 108 110 108 120 113" stroke="#4c5462" stroke-width="5" stroke-linecap="round" fill="none" opacity="0.7"/>
+    <!-- sweater shading: core shadow + sheen -->
+    <path d="M132 120 C140 140 142 168 138 192 C146 168 146 138 136 118 Z" fill="#3d4450" opacity="0.45"/>
+    <path d="M68 126 C62 142 61 164 64 182" stroke="#ccd2dc" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.6"/>
+    <rect x="74" y="126" width="11" height="58" rx="5.5" fill="#ffffff" opacity="0.14"/>
+
+    <!-- head -->
+    <g>
+      <animateTransform attributeName="transform" type="rotate" values="-1.5 100 70; 1.5 100 70; -1.5 100 70" dur="2.4s" repeatCount="indefinite"/>
+      <!-- head shape: rounded with a soft snout row -->
+      <path d="M100 22 C130 22 148 42 148 66 C148 92 128 106 100 106 C72 106 52 92 52 66 C52 42 70 22 100 22 Z" fill="url(#chgFur)"/>
+      <!-- floppy hound ears hanging OUTSIDE the head -->
+      <path d="M58 34 C46 30 38 38 38 54 C38 72 44 86 54 92 C60 86 62 66 60 50 C59 42 59 37 58 34 Z" fill="#6e4620" stroke="#54350f" stroke-width="1.6"/>
+      <path d="M142 34 C154 30 162 38 162 54 C162 72 156 86 146 92 C140 86 138 66 140 50 C141 42 141 37 142 34 Z" fill="#6e4620" stroke="#54350f" stroke-width="1.6"/>
+      <path d="M44 44 C42 56 44 72 50 82" stroke="#8a5f2e" stroke-width="2.6" stroke-linecap="round" fill="none" opacity="0.7"/>
+      <path d="M156 44 C158 56 156 72 150 82" stroke="#8a5f2e" stroke-width="2.6" stroke-linecap="round" fill="none" opacity="0.7"/>
+      <!-- rim light + core shadow -->
+      <path d="M60 46 C56 56 55 68 58 80" stroke="#e8c294" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.6"/>
+      <path d="M136 38 C146 50 148 70 140 86 C150 70 148 48 138 36 Z" fill="#4e2f12" opacity="0.45"/>
+      <ellipse cx="82" cy="42" rx="8" ry="14" fill="#ffffff" opacity="0.15" transform="rotate(-20 82 42)"/>
+      <!-- half-lidded glossy eyes: heavy lids sitting ON the eyes -->
+      <ellipse cx="78" cy="58" rx="11" ry="12" fill="url(#chgSclera)"/>
+      <circle cx="79" cy="61" r="7" fill="url(#chgIris)"/>
+      <circle cx="79" cy="61" r="3.2" fill="#1d1008"/>
+      <circle cx="76.6" cy="58.4" r="2.4" fill="#ffffff"/>
+      <circle cx="81.6" cy="63.2" r="1.2" fill="#ffffff" opacity="0.9"/>
+      <ellipse cx="122" cy="58" rx="11" ry="12" fill="url(#chgSclera)"/>
+      <circle cx="121" cy="61" r="7" fill="url(#chgIris)"/>
+      <circle cx="121" cy="61" r="3.2" fill="#1d1008"/>
+      <circle cx="118.6" cy="58.4" r="2.4" fill="#ffffff"/>
+      <circle cx="123.6" cy="63.2" r="1.2" fill="#ffffff" opacity="0.9"/>
+      <!-- the lids: permanently half closed -->
+      <path d="M67 55 A11 12 0 0 1 89 55 L89 51 A11 12 0 0 0 67 51 Z" fill="#8a5f2e"/>
+      <path d="M111 55 A11 12 0 0 1 133 55 L133 51 A11 12 0 0 0 111 51 Z" fill="#8a5f2e"/>
+      <path d="M67 55 Q78 60 89 55" stroke="#5e3c16" stroke-width="2.6" fill="none"/>
+      <path d="M111 55 Q122 60 133 55" stroke="#5e3c16" stroke-width="2.6" fill="none"/>
+      <!-- brows: raised, mildly amused -->
+      <path d="M68 42 Q78 38 88 42" stroke="#5e3c16" stroke-width="4" stroke-linecap="round" fill="none"/>
+      <path d="M112 42 Q122 38 132 42" stroke="#5e3c16" stroke-width="4" stroke-linecap="round" fill="none"/>
+      <!-- the long dog snout: it sticks out past the jawline -->
+      <path d="M76 74 C76 66 124 66 124 74 C124 92 118 108 100 108 C82 108 76 92 76 74 Z" fill="url(#chgMuzzle)"/>
+      <path d="M118 74 C120 88 116 100 106 105 C114 102 120 92 121 76 Z" fill="#b08c5c" opacity="0.5"/>
+      <!-- big dog nose on the tip -->
+      <ellipse cx="100" cy="82" rx="9" ry="7" fill="#2e1c0e"/>
+      <ellipse cx="96.8" cy="79.8" rx="2.8" ry="2" fill="#ffffff" opacity="0.65"/>
+      <!-- the trademark tight little smirk under the nose -->
+      <path d="M100 89 L100 96 M92 97 Q100 102 108 97" stroke="#4e2f12" stroke-width="3.2" stroke-linecap="round" fill="none"/>
+    </g>
+  </g>
+</svg>

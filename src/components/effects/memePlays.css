@@ -1,0 +1,423 @@
+/* ----------------------------------------------------------------------------
+   memePlays.css — keyframes for the meme-pack bespoke play animations
+   (memePlays.tsx). Owned by the brainrot batch-2 workstream.
+
+   Rules (mirrors personalPlays.css / funnyPlays.css / effects.css):
+   - transform/opacity ONLY: every keyframe animates nothing else, so the
+     compositor never has to relayout mid-play.
+   - one-shot flourishes: fill-mode `both` keeps delayed elements hidden until
+     their start frame and every track ends at opacity 0.
+   - prefers-reduced-motion: the whole layer is transient spectacle, so it is
+     hidden outright (defensive double-cover; the caller's play layer already
+     gates it).
+---------------------------------------------------------------------------- */
+
+/* Percentage transform-origins on SVG children must resolve against the
+   element's own box (not the viewBox), or every pivot lands wrong. */
+.mnp svg * {
+  transform-box: fill-box;
+}
+
+/* --- shared stage tracks ---------------------------------------------------- */
+
+/* Soft board wash behind a wide lead. */
+@keyframes mnp-wash {
+  0% { opacity: 0; transform: scale(1.04); }
+  16% { opacity: 0.9; transform: scale(1); }
+  70% { opacity: 0.55; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.02); }
+}
+.mnp-wash { animation: mnp-wash 1.4s ease-out both; transform-origin: 50% 50%; }
+.mnp-wash--slow { animation-duration: 2.4s; }
+
+/* Closing shockwave ring. */
+@keyframes mnp-ring {
+  0% { opacity: 0; transform: scale(0.05); }
+  20% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.15); }
+}
+.mnp-ring { animation: mnp-ring 0.9s cubic-bezier(0.15, 0.7, 0.2, 1) both; transform-origin: 50% 50%; }
+
+/* Starburst blink. */
+@keyframes mnp-star {
+  0% { opacity: 0; transform: scale(0.1) rotate(0deg); }
+  30% { opacity: 1; transform: scale(1.25) rotate(18deg); }
+  55% { transform: scale(0.95) rotate(24deg); }
+  100% { opacity: 0; transform: scale(1.3) rotate(32deg); }
+}
+.mnp-star { animation: mnp-star 0.7s ease-out both; transform-origin: 50% 50%; }
+
+/* Drifting puff (dust, fog): --mnp-x / --mnp-y set the drift vector. */
+@keyframes mnp-puff {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.3); }
+  30% { opacity: 0.9; transform: translate(var(--mnp-x, 0%), var(--mnp-y, -30%)) scale(1); }
+  100% { opacity: 0; transform: translate(calc(var(--mnp-x, 0%) * 1.9), calc(var(--mnp-y, -30%) * 1.8)) scale(1.6); }
+}
+.mnp-puff { animation: mnp-puff 0.85s ease-out both; transform-origin: 50% 50%; }
+
+/* Flung droplet / splash chunk: out along the vector, gravity-ish. */
+@keyframes mnp-drop {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.4); }
+  18% { opacity: 1; transform: translate(calc(var(--mnp-x, 40%) * 0.35), calc(var(--mnp-y, -60%) * 0.5)) scale(1.05); }
+  100% { opacity: 0; transform: translate(var(--mnp-x, 40%), calc(var(--mnp-y, -60%) * -0.4)) scale(0.8); }
+}
+.mnp-drop { animation: mnp-drop 0.8s cubic-bezier(0.2, 0.6, 0.6, 1) both; transform-origin: 50% 50%; }
+
+/* --- Cappuccino Assassino: the blade flurry ---------------------------------- */
+
+/* One slash: wipes in along its own diagonal, flashes, and is gone. */
+@keyframes mnp-slash {
+  0% { opacity: 0; transform: scale(0.1) rotate(-8deg); }
+  18% { opacity: 1; transform: scale(1.06) rotate(0deg); }
+  30% { transform: scale(1) rotate(0deg); }
+  70% { opacity: 0.9; }
+  100% { opacity: 0; transform: scale(1.04) rotate(2deg); }
+}
+.mnp-slash { animation: mnp-slash 0.55s cubic-bezier(0.2, 0.9, 0.3, 1) both; transform-origin: 50% 50%; }
+
+/* The assassin's dash: streaks in from the left, poses dead center for one
+   beat (blades out), then blinks away to the right faster than sight. */
+@keyframes mnp-assassin {
+  0% { opacity: 0; transform: translateX(-240%) scale(0.92); }
+  18% { opacity: 1; transform: translateX(0) scale(1); }
+  56% { transform: translateX(0) scale(1); }
+  62% { transform: translateX(6%) scale(1.03, 0.97); }
+  78% { opacity: 1; transform: translateX(230%) scale(0.94); }
+  100% { opacity: 0; transform: translateX(280%) scale(0.9); }
+}
+.mnp-assassin { animation: mnp-assassin 1.5s cubic-bezier(0.5, 0, 0.2, 1) both; transform-origin: 50% 50%; }
+
+/* Horizontal speed streak left behind by the dash. */
+@keyframes mnp-streak {
+  0% { opacity: 0; transform: translateX(-30%) scaleX(0.3); }
+  30% { opacity: 0.9; transform: translateX(0) scaleX(1); }
+  100% { opacity: 0; transform: translateX(45%) scaleX(0.5); }
+}
+.mnp-streak { animation: mnp-streak 0.6s ease-out both; transform-origin: 0% 50%; }
+
+/* --- Ballerina Cappuccina: the pirouette -------------------------------------- */
+
+/* Three tightening turns with a proud finishing pose. */
+@keyframes mnp-pirouette {
+  0% { opacity: 0; transform: rotate(0deg) scale(0.6); }
+  12% { opacity: 1; transform: rotate(60deg) scale(1); }
+  62% { transform: rotate(1020deg) scale(1); }
+  74% { transform: rotate(1080deg) scale(1.08); }
+  88% { opacity: 1; transform: rotate(1080deg) scale(1.04); }
+  100% { opacity: 0; transform: rotate(1080deg) scale(1.06); }
+}
+.mnp-pirouette { animation: mnp-pirouette 1.7s cubic-bezier(0.45, 0.05, 0.3, 1) both; transform-origin: 50% 72%; }
+
+/* The ribbon spiral counter-rotates around her. */
+@keyframes mnp-ribbonspin {
+  0% { opacity: 0; transform: rotate(0deg) scale(0.4); }
+  16% { opacity: 0.95; transform: rotate(-80deg) scale(1); }
+  80% { opacity: 0.85; transform: rotate(-560deg) scale(1.04); }
+  100% { opacity: 0; transform: rotate(-640deg) scale(1.1); }
+}
+.mnp-ribbonspin { animation: mnp-ribbonspin 1.7s cubic-bezier(0.45, 0.05, 0.3, 1) both; transform-origin: 50% 50%; }
+
+/* Petal flung off the turn. */
+@keyframes mnp-petal {
+  0% { opacity: 0; transform: translate(0, 0) rotate(0deg) scale(0.5); }
+  16% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--mnp-x, 100%), var(--mnp-y, -60%)) rotate(var(--mnp-r, 160deg)) scale(0.9); }
+}
+.mnp-petal { animation: mnp-petal 0.9s cubic-bezier(0.2, 0.6, 0.5, 1) both; transform-origin: 50% 50%; }
+
+/* Target twirl: the circular arrow spins once in place. */
+@keyframes mnp-twirl {
+  0% { opacity: 0; transform: rotate(0deg) scale(0.5); }
+  20% { opacity: 1; transform: rotate(80deg) scale(1); }
+  75% { opacity: 1; transform: rotate(340deg) scale(1); }
+  100% { opacity: 0; transform: rotate(380deg) scale(1.08); }
+}
+.mnp-twirl { animation: mnp-twirl 0.95s cubic-bezier(0.4, 0.1, 0.4, 1) both; transform-origin: 50% 50%; }
+
+/* --- La Vaca Saturno Saturnita: the orbital pass ------------------------------- */
+
+/* The ring system sweeps out over the whole board and slowly banks. */
+@keyframes mnp-ringsweep {
+  0% { opacity: 0; transform: scale(0.15) rotate(-14deg); }
+  22% { opacity: 1; transform: scale(1) rotate(-4deg); }
+  60% { transform: scale(1.06) rotate(4deg); }
+  86% { opacity: 0.9; transform: scale(1.1) rotate(8deg); }
+  100% { opacity: 0; transform: scale(1.16) rotate(10deg); }
+}
+.mnp-ringsweep { animation: mnp-ringsweep 2s cubic-bezier(0.3, 0.6, 0.3, 1) both; transform-origin: 50% 50%; }
+
+/* The cow's orbit: the wrapper spins one full revolution; the figure rides
+   the top edge of the wrapper, so it traces the whole circle. */
+@keyframes mnp-orbitpath {
+  0% { opacity: 0; transform: rotate(0deg); }
+  10% { opacity: 1; }
+  88% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(360deg); }
+}
+.mnp-orbitpath { animation: mnp-orbitpath 1.9s cubic-bezier(0.4, 0.1, 0.4, 0.95) both; transform-origin: 50% 50%; }
+
+/* She stays gently bobbing (and slightly banked) while cruising. */
+@keyframes mnp-orbitbob {
+  0%, 100% { transform: rotate(-8deg) translateY(0); }
+  50% { transform: rotate(-8deg) translateY(-6%); }
+}
+.mnp-orbitbob { animation: mnp-orbitbob 0.95s ease-in-out infinite; transform-origin: 50% 50%; }
+
+/* Target ring pop for the landing square. */
+@keyframes mnp-ringpop {
+  0% { opacity: 0; transform: scale(0.2); }
+  25% { opacity: 1; transform: scale(1.12); }
+  45% { transform: scale(0.96); }
+  60% { transform: scale(1); }
+  85% { opacity: 0.9; }
+  100% { opacity: 0; transform: scale(1.1); }
+}
+.mnp-ringpop { animation: mnp-ringpop 0.9s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; transform-origin: 50% 50%; }
+
+/* --- Frigo Camelo: the cold open ------------------------------------------------ */
+
+/* The camel-fridge backs into frame. */
+@keyframes mnp-slidein {
+  0% { opacity: 0; transform: translateX(-120%); }
+  30% { opacity: 1; transform: translateX(0); }
+  40% { transform: translateX(-3%); }
+  50% { transform: translateX(0); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(0); }
+}
+.mnp-slidein { animation: mnp-slidein 1.7s cubic-bezier(0.3, 0.8, 0.3, 1) both; transform-origin: 50% 50%; }
+
+/* The door swings open: a horizontal collapse from its left hinge. */
+@keyframes mnp-dooropen {
+  0% { opacity: 0; transform: scaleX(1); }
+  18% { opacity: 1; transform: scaleX(1); }
+  48% { transform: scaleX(0.16) skewY(-4deg); }
+  58% { transform: scaleX(0.24) skewY(-2deg); }
+  84% { opacity: 1; transform: scaleX(0.2) skewY(-3deg); }
+  100% { opacity: 0; transform: scaleX(0.2) skewY(-3deg); }
+}
+.mnp-dooropen { animation: mnp-dooropen 1.5s cubic-bezier(0.4, 0, 0.3, 1) both; transform-origin: 0% 50%; }
+
+/* The cold light spilling out once the door moves. */
+@keyframes mnp-doorglow {
+  0% { opacity: 0; transform: scaleX(0.2); }
+  30% { opacity: 0.95; transform: scaleX(1); }
+  75% { opacity: 0.7; transform: scaleX(1.15); }
+  100% { opacity: 0; transform: scaleX(1.3); }
+}
+.mnp-doorglow { animation: mnp-doorglow 1.3s ease-out both; transform-origin: 0% 50%; }
+
+/* A fog bank rolling out across the board floor. */
+@keyframes mnp-fogroll {
+  0% { opacity: 0; transform: translateX(0) scale(0.4); }
+  25% { opacity: 0.9; transform: translateX(calc(var(--mnp-x, 120%) * 0.3)) scale(1); }
+  100% { opacity: 0; transform: translateX(var(--mnp-x, 120%)) scale(1.5); }
+}
+.mnp-fogroll { animation: mnp-fogroll 1.3s ease-out both; transform-origin: 50% 50%; }
+
+/* Small target fog puff. */
+@keyframes mnp-fogpuff {
+  0% { opacity: 0; transform: translateX(0) scale(0.4); }
+  30% { opacity: 0.9; transform: translateX(calc(var(--mnp-x, 20%) * 0.5)) scale(1); }
+  100% { opacity: 0; transform: translateX(var(--mnp-x, 20%)) scale(1.5); }
+}
+.mnp-fogpuff { animation: mnp-fogpuff 0.9s ease-out both; transform-origin: 50% 50%; }
+
+/* --- Trippi Troppi: the corrupted feed ------------------------------------------ */
+
+/* Hard step-frame jitter: position snaps between offsets like dropped frames. */
+@keyframes mnp-glitch {
+  0% { opacity: 0; transform: translate(0, 0); }
+  8% { opacity: 1; transform: translate(0, 0); }
+  20% { transform: translate(-4%, 1.5%) skewX(3deg); }
+  28% { transform: translate(3%, -2%) skewX(-4deg); }
+  38% { transform: translate(-2%, 2.5%) skewX(2deg); }
+  46% { transform: translate(4%, 0.5%) skewX(-2deg); }
+  58% { transform: translate(-3.5%, -1.5%) skewX(4deg); }
+  66% { transform: translate(1.5%, 2%) skewX(-3deg); }
+  78% { transform: translate(-1%, -1%) skewX(1deg); }
+  90% { opacity: 1; transform: translate(0, 0) skewX(0deg); }
+  100% { opacity: 0; transform: translate(0, 0); }
+}
+.mnp-glitch { animation: mnp-glitch 1.35s steps(1, end) both; transform-origin: 50% 50%; }
+
+/* A scanline tear: flashes wide, snaps offset, vanishes. */
+@keyframes mnp-glitchbar {
+  0% { opacity: 0; transform: translateX(-6%) scaleX(0.2); }
+  12% { opacity: 1; transform: translateX(0) scaleX(1); }
+  30% { transform: translateX(4%) scaleX(1); }
+  44% { transform: translateX(-3%) scaleX(0.9); }
+  60% { opacity: 0.9; transform: translateX(2%) scaleX(1); }
+  100% { opacity: 0; transform: translateX(6%) scaleX(0.5); }
+}
+.mnp-glitchbar { animation: mnp-glitchbar 0.7s steps(2, end) both; transform-origin: 50% 50%; }
+
+/* --- Chill Guy: the anticlimax ---------------------------------------------------- */
+
+/* He slides across the bottom of the board. Linear. Unhurried. Complete. */
+@keyframes mnp-chillslide {
+  0% { opacity: 0; transform: translateX(-160%); }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(340%); }
+}
+.mnp-chillslide { animation: mnp-chillslide 2.6s linear both; transform-origin: 50% 50%; }
+
+/* The "..." reaction bubble (and the moai's 🗿): fade in, hold, fade. */
+@keyframes mnp-deadpan {
+  0% { opacity: 0; transform: translateY(10%); }
+  18% { opacity: 1; transform: translateY(0); }
+  82% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-6%); }
+}
+.mnp-deadpan { animation: mnp-deadpan 1.3s ease-out both; transform-origin: 50% 50%; }
+.mnp-deadpan--long { animation-duration: 1.9s; }
+
+/* One indifference dot on a target square. */
+@keyframes mnp-ellipsis {
+  0% { opacity: 0; transform: scale(0.2); }
+  30% { opacity: 1; transform: scale(1.1); }
+  50% { transform: scale(1); }
+  80% { opacity: 0.9; }
+  100% { opacity: 0; transform: scale(1); }
+}
+.mnp-ellipsis { animation: mnp-ellipsis 0.9s ease-out both; transform-origin: 50% 50%; }
+
+/* --- Moai Head: the drop, the THUD, the pause ------------------------------------- */
+
+/* Descends fast, lands HARD (squash), settles. Does not apologize. */
+@keyframes mnp-moaidrop {
+  0% { opacity: 0; transform: translateY(-160%) scale(1); }
+  10% { opacity: 1; }
+  30% { transform: translateY(0) scale(1); }
+  36% { transform: translateY(2%) scale(1.08, 0.9); }
+  44% { transform: translateY(0) scale(0.98, 1.03); }
+  52% { transform: translateY(0) scale(1); }
+  90% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(0) scale(1); }
+}
+.mnp-moaidrop { animation: mnp-moaidrop 2.3s cubic-bezier(0.55, 0, 0.7, 0.3) both; transform-origin: 50% 100%; }
+
+/* The dust shockwave ring at the base. */
+@keyframes mnp-dustring {
+  0% { opacity: 0; transform: scale(0.15); }
+  22% { opacity: 1; transform: scale(0.8); }
+  100% { opacity: 0; transform: scale(1.5); }
+}
+.mnp-dustring { animation: mnp-dustring 0.8s cubic-bezier(0.15, 0.7, 0.2, 1) both; transform-origin: 50% 50%; }
+
+/* A pebble knocked loose: out and down. */
+@keyframes mnp-pebble {
+  0% { opacity: 0; transform: translate(0, 0) rotate(0deg); }
+  16% { opacity: 1; transform: translate(calc(var(--mnp-x, 100%) * 0.5), var(--mnp-y, -80%)) rotate(120deg); }
+  100% { opacity: 0; transform: translate(var(--mnp-x, 100%), 60%) rotate(280deg); }
+}
+.mnp-pebble { animation: mnp-pebble 0.85s cubic-bezier(0.3, 0.5, 0.7, 1) both; transform-origin: 50% 50%; }
+
+/* --- Skibidi Flush: the vortex ------------------------------------------------------ */
+
+/* The whole whirlpool winds up, spins, and drains away to nothing. */
+@keyframes mnp-vortex {
+  0% { opacity: 0; transform: rotate(0deg) scale(0.2); }
+  16% { opacity: 1; transform: rotate(140deg) scale(1); }
+  70% { opacity: 0.95; transform: rotate(600deg) scale(0.92); }
+  100% { opacity: 0; transform: rotate(820deg) scale(0.35); }
+}
+.mnp-vortex { animation: mnp-vortex 1.9s cubic-bezier(0.5, 0.05, 0.5, 1) both; transform-origin: 50% 50%; }
+
+/* Wrapper that carries the ghost pieces around the drain. */
+@keyframes mnp-suckspin {
+  0% { opacity: 0; transform: rotate(0deg); }
+  12% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(520deg); }
+}
+.mnp-suckspin { animation: mnp-suckspin 1.8s cubic-bezier(0.5, 0.05, 0.6, 1) both; transform-origin: 50% 50%; }
+
+/* Each ghost shrinks toward the center as the spin carries it. */
+@keyframes mnp-suck {
+  0% { opacity: 0; transform: scale(1.2); }
+  15% { opacity: 0.95; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.1) translate(0, 20%); }
+}
+.mnp-suck { animation: mnp-suck 1.6s cubic-bezier(0.5, 0.1, 0.8, 0.6) both; transform-origin: 50% 50%; }
+
+/* The drain eye dilates and closes. */
+@keyframes mnp-drain {
+  0% { opacity: 0; transform: scale(0.2); }
+  30% { opacity: 1; transform: scale(1.15); }
+  70% { opacity: 1; transform: scale(0.9); }
+  100% { opacity: 0; transform: scale(0.2); }
+}
+.mnp-drain { animation: mnp-drain 1.4s ease-in-out both; transform-origin: 50% 50%; }
+
+/* The culprit bobs up out of the drain to take credit. */
+@keyframes mnp-surface {
+  0% { opacity: 0; transform: translateY(70%) scale(0.5); }
+  30% { opacity: 1; transform: translateY(-6%) scale(1.02); }
+  44% { transform: translateY(2%) scale(1); }
+  82% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(4%) scale(0.98); }
+}
+.mnp-surface { animation: mnp-surface 1.1s cubic-bezier(0.3, 0.9, 0.3, 1.1) both; transform-origin: 50% 100%; }
+
+/* Target mini-swirl under a flushed piece. */
+@keyframes mnp-miniswirl {
+  0% { opacity: 0; transform: rotate(0deg) scale(0.3); }
+  20% { opacity: 1; transform: rotate(120deg) scale(1); }
+  80% { opacity: 0.9; transform: rotate(560deg) scale(0.9); }
+  100% { opacity: 0; transform: rotate(720deg) scale(0.3); }
+}
+.mnp-miniswirl { animation: mnp-miniswirl 1s cubic-bezier(0.5, 0.05, 0.5, 1) both; transform-origin: 50% 50%; }
+
+/* --- Tung Tung Sahur: the drum-man marches in person --------------------------- */
+
+/* The colossal march: he stomps left-to-right across the whole crop, dropping
+   into each step (a hard down-beat), rocking with the bat on his shoulder. */
+@keyframes mnp-march {
+  0% { opacity: 0; transform: translateX(-95%) translateY(2%) rotate(-3deg); }
+  10% { opacity: 1; transform: translateX(-72%) translateY(-4%) rotate(2deg); }
+  19% { transform: translateX(-52%) translateY(3%) rotate(-3deg); }
+  28% { transform: translateX(-33%) translateY(-4%) rotate(3deg); }
+  37% { transform: translateX(-14%) translateY(3%) rotate(-3deg); }
+  46% { transform: translateX(4%) translateY(-4%) rotate(3deg); }
+  55% { transform: translateX(22%) translateY(3%) rotate(-3deg); }
+  64% { transform: translateX(40%) translateY(-4%) rotate(3deg); }
+  73% { transform: translateX(58%) translateY(3%) rotate(-3deg); }
+  82% { transform: translateX(74%) translateY(-4%) rotate(2deg); }
+  92% { opacity: 1; transform: translateX(90%) translateY(2%) rotate(-2deg); }
+  100% { opacity: 0; transform: translateX(102%) translateY(0) rotate(0deg); }
+}
+.mnp-march { animation: mnp-march 2.3s cubic-bezier(0.4, 0.05, 0.55, 1) both; transform-origin: 50% 85%; }
+
+/* A stomp shockwave: the ground ellipse blasts outward on the down-beat. */
+@keyframes mnp-stomp {
+  0% { opacity: 0; transform: scale(0.1); }
+  18% { opacity: 1; transform: scale(0.6); }
+  100% { opacity: 0; transform: scale(1.6); }
+}
+.mnp-stomp { animation: mnp-stomp 0.75s cubic-bezier(0.15, 0.7, 0.25, 1) both; transform-origin: 50% 50%; }
+
+/* The chant stamp: slams in oversized, settles on its tilt, holds, fades. */
+@keyframes mnp-stamp {
+  0% { opacity: 0; transform: scale(2.4) rotate(0deg); }
+  22% { opacity: 1; transform: scale(0.94) rotate(var(--mnp-r, -6deg)); }
+  34% { transform: scale(1.06) rotate(var(--mnp-r, -6deg)); }
+  44% { transform: scale(1) rotate(var(--mnp-r, -6deg)); }
+  82% { opacity: 1; transform: scale(1) rotate(var(--mnp-r, -6deg)); }
+  100% { opacity: 0; transform: scale(1.05) rotate(var(--mnp-r, -6deg)); }
+}
+.mnp-stamp { animation: mnp-stamp 1.1s cubic-bezier(0.25, 0.9, 0.3, 1.1) both; transform-origin: 50% 50%; }
+
+/* --- reduced motion ----------------------------------------------------------------
+   Everything in this module is a transient one-shot flourish: hide the whole
+   layer outright (defensive — the caller's play layer gates it too). */
+@media (prefers-reduced-motion: reduce) {
+  .mnp,
+  .mnp * {
+    animation: none !important;
+  }
+  .mnp {
+    display: none !important;
+  }
+}

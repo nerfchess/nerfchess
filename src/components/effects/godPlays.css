@@ -463,12 +463,14 @@
 }
 .gp-quill { animation: gp-quill 1.7s ease-in-out both; }
 
-/* The bowling skull: rolls the full width of the crop. */
+/* The bowling skull: rolls the full width of the crop. (The skull is now
+   writ truly colossal — ~56% of the visible board — so it starts further
+   off-crop to still enter from beyond the board edge.) */
 @keyframes gp-roll {
-  0% { opacity: 0; transform: translateX(-88%) rotate(0deg); }
+  0% { opacity: 0; transform: translateX(-108%) rotate(0deg); }
   10% { opacity: 1; }
-  90% { opacity: 1; transform: translateX(78%) rotate(680deg); }
-  100% { opacity: 0; transform: translateX(94%) rotate(760deg); }
+  90% { opacity: 1; transform: translateX(82%) rotate(680deg); }
+  100% { opacity: 0; transform: translateX(98%) rotate(760deg); }
 }
 .gp-roll { animation: gp-roll 1.7s linear both; }
 

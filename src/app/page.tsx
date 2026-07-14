@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { HeroTv } from "@/components/HeroTv";
 import { SiteHeader } from "@/components/SiteHeader";
+import { StarField } from "@/components/StarField";
 // NOTE: the card libraries (ALL_BUFFS / ALL_NERFS) are NOT imported statically.
 // They transitively pull the entire card engine (~12k lines) into the home
 // page's client bundle just to show two `.length` counts — a large parse +
@@ -16,6 +17,7 @@ import { ActiveGame, loadActiveGame, clearActiveGame } from "@/lib/multiplayer";
 export default function HomePage() {
   return (
     <main className="min-h-screen flex flex-col">
+      <StarField />
       <SiteHeader />
 
       {/* Hero, from the paper sketch: the top played board on the left (the

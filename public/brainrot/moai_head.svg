@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 260">
+  <!-- Moai Head: glossy basalt monolith, heavy brow, infinite patience. Loops (barely) like a GIF. -->
+  <defs>
+    <linearGradient id="moaiStone" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#b4bcc4"/>
+      <stop offset="0.55" stop-color="#848e98"/>
+      <stop offset="1" stop-color="#4e5862"/>
+    </linearGradient>
+    <linearGradient id="moaiNose" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#a8b2ba"/>
+      <stop offset="1" stop-color="#5e6872"/>
+    </linearGradient>
+    <linearGradient id="moaiPlinth" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#9aa4ac"/>
+      <stop offset="1" stop-color="#59636c"/>
+    </linearGradient>
+    <radialGradient id="moaiIris" cx="0.38" cy="0.32" r="0.85">
+      <stop offset="0" stop-color="#8a5a2b"/>
+      <stop offset="0.6" stop-color="#4f2c10"/>
+      <stop offset="1" stop-color="#2c1607"/>
+    </radialGradient>
+    <radialGradient id="moaiSclera" cx="0.4" cy="0.32" r="0.95">
+      <stop offset="0" stop-color="#f2f2ee"/>
+      <stop offset="0.75" stop-color="#dcdcd4"/>
+      <stop offset="1" stop-color="#b4b4aa"/>
+    </radialGradient>
+  </defs>
+
+  <!-- ground shadow: stone does not bounce; the shadow barely breathes -->
+  <ellipse cx="100" cy="248" rx="64" ry="9" fill="#161a1e" opacity="0.24">
+    <animate attributeName="rx" values="64;62;64" dur="4s" repeatCount="indefinite"/>
+  </ellipse>
+
+  <g>
+    <!-- the most imperceptible idle in the set: 2px over 4 seconds. He is stone. -->
+    <animateTransform attributeName="transform" type="translate" values="0 0; 0 -2; 0 0" dur="4s" repeatCount="indefinite"/>
+
+    <!-- turf plinth it stands buried in -->
+    <path d="M40 232 C40 222 160 222 160 232 L158 244 C158 250 42 250 42 244 Z" fill="url(#moaiPlinth)"/>
+    <path d="M44 228 C60 222 84 221 100 222" stroke="#c3ccd2" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.5"/>
+    <!-- tufts of grass at the base -->
+    <path d="M52 226 q-2 -8 -6 -11 q6 1 8 6 q0 -8 3 -11 q2 5 1 11 Z" fill="#6f9e52"/>
+    <path d="M148 226 q2 -8 6 -11 q-6 1 -8 6 q0 -8 -3 -11 q-2 5 -1 11 Z" fill="#5f8e46"/>
+
+    <!-- the head: tall, jaw-heavy silhouette -->
+    <path d="M100 14 C138 14 154 44 152 92 C151 130 150 178 146 208 C144 226 132 234 100 234 C68 234 56 226 54 208 C50 178 49 130 48 92 C46 44 62 14 100 14 Z" fill="url(#moaiStone)"/>
+
+    <!-- heavy brow ledge -->
+    <path d="M56 74 C72 62 128 62 144 74 L144 88 C128 78 72 78 56 88 Z" fill="#5e6872"/>
+    <path d="M58 74 C74 64 126 64 142 74" stroke="#c9d2d8" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.6"/>
+
+    <!-- THE nose: one long unbroken ridge -->
+    <path d="M92 82 C90 112 88 138 86 156 C85 168 92 174 100 174 C108 174 115 168 114 156 C112 138 110 112 108 82 C104 76 96 76 92 82 Z" fill="url(#moaiNose)"/>
+    <path d="M106 88 C108 116 110 142 111 158 C114 144 112 116 109 88 Z" fill="#454f58" opacity="0.6"/>
+    <path d="M93 90 C91 116 90 140 89 156" stroke="#cdd6dc" stroke-width="3.4" stroke-linecap="round" fill="none" opacity="0.6"/>
+    <ellipse cx="94" cy="168" rx="3" ry="2.2" fill="#3d474f" opacity="0.8"/>
+    <ellipse cx="106" cy="168" rx="3" ry="2.2" fill="#3d474f" opacity="0.8"/>
+
+    <!-- deep-set glossy eyes under the ledge (stone-dimmed sclera, same dual speculars) -->
+    <path d="M60 92 C66 86 84 86 90 94 C84 100 66 100 60 92 Z" fill="#39424a"/>
+    <path d="M110 94 C116 86 134 86 140 92 C134 100 116 100 110 94 Z" fill="#39424a"/>
+    <ellipse cx="75" cy="93" rx="10" ry="9" fill="url(#moaiSclera)"/>
+    <circle cx="76" cy="94" r="6" fill="url(#moaiIris)"/>
+    <circle cx="76" cy="94" r="2.8" fill="#1d1008"/>
+    <circle cx="73.8" cy="91.6" r="2.1" fill="#ffffff"/>
+    <circle cx="78.2" cy="96" r="1.1" fill="#ffffff" opacity="0.85"/>
+    <ellipse cx="125" cy="93" rx="10" ry="9" fill="url(#moaiSclera)"/>
+    <circle cx="124" cy="94" r="6" fill="url(#moaiIris)"/>
+    <circle cx="124" cy="94" r="2.8" fill="#1d1008"/>
+    <circle cx="121.8" cy="91.6" r="2.1" fill="#ffffff"/>
+    <circle cx="126.2" cy="96" r="1.1" fill="#ffffff" opacity="0.85"/>
+
+    <!-- long flat cheek planes -->
+    <path d="M58 108 C60 140 62 176 66 200 M142 108 C140 140 138 176 134 200" stroke="#5e6872" stroke-width="3.4" stroke-linecap="round" fill="none" opacity="0.55"/>
+
+    <!-- the mouth: a thin, absolutely unimpressed line, chin ridge below -->
+    <path d="M78 196 L122 196" stroke="#3d474f" stroke-width="5" stroke-linecap="round"/>
+    <path d="M84 210 C94 214 106 214 116 210" stroke="#5e6872" stroke-width="3.4" stroke-linecap="round" fill="none" opacity="0.7"/>
+
+    <!-- stone chips + cracks -->
+    <path d="M64 130 l7 5 -4 7 M136 152 l-8 4 3 8 M70 44 l8 3 -3 7" stroke="#454f58" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.7"/>
+    <path d="M126 30 C130 38 130 46 127 52" stroke="#454f58" stroke-width="2.2" stroke-linecap="round" fill="none" opacity="0.5"/>
+    <!-- lichen spots -->
+    <ellipse cx="66" cy="164" rx="6" ry="4" fill="#7f9e6a" opacity="0.5"/>
+    <ellipse cx="138" cy="120" rx="5" ry="3.4" fill="#7f9e6a" opacity="0.45"/>
+
+    <!-- core shadow + rim light + the long glossy sheen -->
+    <path d="M140 30 C152 56 152 120 148 188 C146 210 140 222 130 228 C142 220 146 204 148 182 C152 118 152 60 136 28 Z" fill="#333c44" opacity="0.5"/>
+    <path d="M62 34 C54 58 52 110 54 168" stroke="#d6dee4" stroke-width="4.5" stroke-linecap="round" fill="none" opacity="0.55"/>
+    <rect x="66" y="40" width="13" height="150" rx="6.5" fill="#ffffff" opacity="0.14"/>
+
+    <!-- one slow dust mote drifting off — the only thing that moves -->
+    <circle cx="152" cy="60" r="2.4" fill="#c9d2d8">
+      <animate attributeName="cy" values="60;38" dur="4s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0;0.8;0" dur="4s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+</svg>

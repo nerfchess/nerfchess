@@ -1098,6 +1098,31 @@ html[data-theme="nebula"] .mode-def-card {
   overflow: hidden;
   pointer-events: none;
 }
+/* Neon course floor: a faint vertical grid scrolls left under the action to
+   sell speed, Geometry-Dash style. Decorative only, killed by reduced motion. */
+.knight-track::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 8px;
+  height: 22px;
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgb(var(--accent-rgb) / 0.09) 0,
+    rgb(var(--accent-rgb) / 0.09) 1px,
+    transparent 1px,
+    transparent 26px
+  );
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent);
+  animation: gd-grid-scroll 2s linear infinite;
+  will-change: transform;
+}
+@keyframes gd-grid-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-26px); }
+}
 .knight-track::before {
   content: "";
   position: absolute;
@@ -1106,6 +1131,14 @@ html[data-theme="nebula"] .mode-def-card {
   bottom: 7px;
   height: 1px;
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.14) 18%, rgba(255, 255, 255, 0.14) 82%, transparent);
+  /* The floor pulses on the beat, brightest the instant the knight lands
+     (phase-locked to gd-jump: same 3s cycle and -0.66s delay, flash at 67%). */
+  animation: gd-ground-pulse 3s linear -0.66s infinite;
+}
+@keyframes gd-ground-pulse {
+  0%, 60% { opacity: 0.55; box-shadow: none; }
+  67% { opacity: 1; box-shadow: 0 0 7px rgb(var(--accent-rgb) / 0.45); }
+  82%, 100% { opacity: 0.55; box-shadow: none; }
 }
 .gd-world {
   position: absolute;
@@ -1161,7 +1194,10 @@ html[data-theme="nebula"] .mode-def-card {
   left: 18%;
   font-size: 21px;
   line-height: 1;
-  color: var(--paper-dim);
+  /* The knight-cube reads as a lit neon avatar: accent-tinted with a soft
+     glow, so the jump pops against the darker course. */
+  color: rgb(var(--accent-hi-rgb) / 0.92);
+  filter: drop-shadow(0 0 5px rgb(var(--accent-rgb) / 0.5));
 }
 /* One 3s beat: grounded, then a 1s jump with a full 360 flip. Obstacles cross
    the knight's lane at t = 3n + 0.84s (strip spacing 12.5% / scroll speed
@@ -1499,6 +1535,84 @@ html[data-piece-source="lichess"] .piece-asset {
   animation-duration: 11s;
   animation-direction: reverse;
 }
+/* --- Per-card aura shape variants (EmpowerAura auraVariant) ------------------
+   The pooled tint (::before) and shine sweep (::after) are the shared base;
+   each card's id hash picks ONE decoration layer so two cards never wear the
+   same aura: "orbit" (the classic three glints, also the id-less default),
+   "rune" (a slowly turning square rune frame), "motes" (sparks rising off the
+   piece), "diamond" (a pulsing diamond ring), "arcs" (twin arcs circling), or
+   "halo" (no decoration — the calm pool alone). Same perf law: keyframes are
+   transform/opacity only; alphas stay at or below the base aura's, so no
+   variant ever obscures the piece. Reduced motion stills the frames and hides
+   the transient motes (gate near the bottom of this file). */
+.empower-rune {
+  position: absolute;
+  inset: 15%;
+  pointer-events: none;
+  border: 1px solid rgb(var(--tier-rgb, 216 181 110) / 0.55);
+  border-radius: 2px;
+  box-shadow: inset 0 0 0 3px rgb(var(--tier-rgb, 216 181 110) / 0.12);
+  opacity: 0.8;
+  animation: empower-rune-turn 16s linear infinite;
+}
+@keyframes empower-rune-turn {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.empower-mote {
+  position: absolute;
+  bottom: 18%;
+  width: 8%;
+  height: 8%;
+  border-radius: 999px;
+  pointer-events: none;
+  background: radial-gradient(circle, rgb(255 255 255 / 0.9), rgb(var(--tier-rgb, 216 181 110) / 0.8) 45%, transparent 72%);
+  opacity: 0;
+  animation: empower-mote-rise 2.8s ease-in-out infinite;
+}
+.empower-mote--1 { left: 30%; }
+.empower-mote--2 { left: 52%; animation-delay: 0.9s; }
+.empower-mote--3 { left: 68%; animation-delay: 1.8s; }
+@keyframes empower-mote-rise {
+  0% { opacity: 0; transform: translateY(0) scale(0.7); }
+  25% { opacity: 0.9; transform: translateY(-85%) scale(1); }
+  60% { opacity: 0.45; transform: translateY(-205%) scale(0.95); }
+  100% { opacity: 0; transform: translateY(-340%) scale(0.85); }
+}
+.empower-diamond {
+  position: absolute;
+  inset: 20%;
+  pointer-events: none;
+  border: 1px solid rgb(var(--tier-rgb, 216 181 110) / 0.6);
+  border-radius: 3px;
+  transform: rotate(45deg);
+  animation: empower-diamond-pulse 2.6s ease-in-out infinite;
+}
+@keyframes empower-diamond-pulse {
+  0%, 100% { opacity: 0.45; transform: rotate(45deg) scale(0.92); }
+  50% { opacity: 0.9; transform: rotate(45deg) scale(1.04); }
+}
+.empower-arcs {
+  position: absolute;
+  inset: 9%;
+  pointer-events: none;
+  border: 1.5px solid transparent;
+  border-top-color: rgb(var(--tier-rgb, 216 181 110) / 0.7);
+  border-bottom-color: rgb(var(--tier-rgb, 216 181 110) / 0.7);
+  border-radius: 999px;
+  opacity: 0.85;
+  animation: empower-arcs-spin 6s linear infinite;
+}
+@keyframes empower-arcs-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+/* Hostile (nerf) tempo for the variant layers: slower and reversed, matching
+   the reversed orbit — an ill omen circling, not a blessing. */
+.nerf-aura .empower-rune { animation-duration: 26s; animation-direction: reverse; }
+.nerf-aura .empower-arcs { animation-duration: 10s; animation-direction: reverse; }
+.nerf-aura .empower-mote { animation-duration: 4.2s; }
+.nerf-aura .empower-diamond { animation-duration: 3.8s; }
 @keyframes empower-twinkle {
   0%, 100% { opacity: 0.25; transform: scale(0.7); }
   50% { opacity: 1; transform: scale(1.15); }
@@ -1593,6 +1707,22 @@ html[data-piece-source="lichess"] .piece-asset {
 }
 .dot-capture-red {
   border-color: rgba(199, 56, 48, 0.95);
+}
+
+/* Opponent-piece inspection preview: slate, deliberately distinct from your
+   own gold-ink move hints so the two can never be confused. */
+.dot-inspect-target {
+  width: 24%;
+  height: 24%;
+  border-radius: 9999px;
+  background: rgba(96, 132, 160, 0.34);
+  box-shadow: inset 0 0 0 2px rgba(130, 168, 198, 0.55);
+}
+.dot-inspect-capture {
+  position: absolute;
+  inset: 8%;
+  border-radius: 9999px;
+  border: 3px dashed rgba(130, 168, 198, 0.7);
 }
 
 /* --- Drag/drop --- */
@@ -1850,15 +1980,19 @@ nav, header { position: relative; z-index: 30; }
   .draft-in,
   .hero-aura, .mode-field::before,
   .dot-live::after, .cta-shine::after, .header-search-panel,
-  .gd-world, .gd-knight > span,
+  .gd-world, .gd-knight > span, .knight-track::before, .knight-track::after,
   .board-splash, .board-splash-card,
   .stagger-in > *,
   .sq-strike, .sq-freeze, .sq-freeze-flake, .sq-shield-in, .walnut-piece, .banana-peel,
   .sq-walnut,
   .empower-shine::before, .empower-shine::after, .edge-aura,
-  .empower-orbit, .empower-glint {
+  .empower-orbit, .empower-glint,
+  .empower-rune, .empower-diamond, .empower-arcs {
     animation: none !important;
   }
+  /* Rising motes are transient particles: with the animation cut their base
+     opacity (0) hides them outright, matching the walnut-squirrel precedent. */
+  .empower-mote { animation: none !important; }
   .walnut-squirrel { animation: none !important; opacity: 0 !important; }
   .sq-walnut::after { animation: none !important; opacity: 0 !important; }
   .dc-orbit-ring.spin, .dc-orbit-ring.spin-r,
@@ -2212,5 +2346,319 @@ html[data-theme="light"] .bg-black\/70 {
   }
   .extra-turns-banner {
     animation: extra-turns-banner-fade 2.8s linear both;
+  }
+}
+
+/* --- Left-rail luxe (additive) -----------------------------------------------
+   Opt-in dressing for the in-game command rail: richer layered plate texture,
+   gold corner filigree echoing the chamfered corner-cut, a glinting header
+   hairline, and a breathing gold halo on whichever player's clock is running.
+   All decoration is pointer-events-none; animation is opacity-only and fully
+   dropped under prefers-reduced-motion. */
+.rail-lux {
+  position: relative;
+  background:
+    radial-gradient(120% 55% at 0% 0%, rgb(var(--seam-warm-rgb) / 0.05), transparent 55%),
+    radial-gradient(120% 55% at 100% 100%, rgb(var(--seam-cool-rgb) / 0.05), transparent 55%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0) 140px),
+    linear-gradient(345deg, rgba(216, 181, 110, 0.03), transparent 42%),
+    var(--surface-panel);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.03),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 14px 44px -28px rgba(0, 0, 0, 0.75);
+}
+/* Corner filigree: a gold diagonal echoing the 10px chamfer plus two fading
+   hairlines along the adjacent edges. Drawn as pseudo-elements (absolutely
+   positioned, so they never become grid items) on the two cut corners, with a
+   slow candle-glint breathing their opacity. */
+.rail-lux::before,
+.rail-lux::after {
+  content: "";
+  position: absolute;
+  width: 46px;
+  height: 46px;
+  pointer-events: none;
+  z-index: 4;
+  background:
+    linear-gradient(135deg, transparent 8px, rgb(216 181 110 / 0.75) 9px, rgb(216 181 110 / 0.75) 10px, transparent 11px) no-repeat,
+    linear-gradient(90deg, rgb(216 181 110 / 0.5), transparent 85%) 13px 0 / 30px 1px no-repeat,
+    linear-gradient(180deg, rgb(216 181 110 / 0.5), transparent 85%) 0 13px / 1px 30px no-repeat;
+  animation: rail-filigree-glint 5.5s ease-in-out infinite;
+}
+.rail-lux::before {
+  top: 0;
+  left: 0;
+}
+.rail-lux::after {
+  right: 0;
+  bottom: 0;
+  transform: rotate(180deg);
+  animation-delay: 2.75s;
+}
+@keyframes rail-filigree-glint {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+/* Header hairline glint: a narrow gold gleam that occasionally travels the
+   seam-edge divider under the mode header. Transform-only, mostly at rest. */
+.rail-header-sheen {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 1px;
+  overflow: hidden;
+  pointer-events: none;
+}
+.rail-header-sheen::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgb(255 233 170 / 0.9), transparent);
+  transform: translateX(-100%);
+  will-change: transform;
+  animation: rail-hairline-sweep 7s ease-in-out infinite;
+}
+@keyframes rail-hairline-sweep {
+  0%, 55% { transform: translateX(-100%); }
+  90%, 100% { transform: translateX(100%); }
+}
+/* Active-player halo: a soft gold breath around the player card whose clock
+   is running. The glow is a static box-shadow on an overlay whose opacity
+   breathes (compositor-cheap); the plate itself is untouched. */
+.rail-glow-wrap {
+  position: relative;
+}
+.rail-glow-wrap--active::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  z-index: 0;
+  border-radius: 2px;
+  pointer-events: none;
+  box-shadow:
+    0 0 0 1px rgb(216 181 110 / 0.4),
+    0 0 22px -4px rgb(216 181 110 / 0.45);
+  animation: rail-glow-breathe 3s ease-in-out infinite;
+}
+@keyframes rail-glow-breathe {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rail-lux::before,
+  .rail-lux::after,
+  .rail-glow-wrap--active::before {
+    animation: none;
+    opacity: 0.7;
+  }
+  .rail-header-sheen::before {
+    animation: none;
+    opacity: 0;
+  }
+}
+
+/* === Ambient gold-dust star field (home + lobby) =============================
+   A fixed, pointer-events-none field of candlelight motes behind the page
+   (shared via src/components/StarField.tsx): three parallax dust layers (each
+   ONE animated node carrying a tiled
+   radial-gradient speckle), a handful of 4-point brass glints that twinkle,
+   and two slow diagonal shooting stars. Everything is transform/opacity only,
+   no JS, no canvas. Node budget: 3 layers + 12 glints + 2 shooting = 17
+   animated nodes (10 on phones). Colors are the brass/candle family
+   (216 181 110 / 255 233 170) — gold dust, never sci-fi white.
+   Fully dropped under prefers-reduced-motion, perf mode, and the light theme
+   (pale dust on paper is just noise). */
+.starfield {
+  position: fixed;
+  inset: 0;
+  z-index: -1; /* behind main's content, above the page gradient */
+  pointer-events: none;
+  overflow: hidden;
+}
+/* Each dust layer drifts diagonally down-right by exactly one background tile,
+   then loops — seamless because the pattern repeats at the tile size. The
+   element is oversized top-left by one tile so the drift never exposes a gap.
+   Custom-property keyframes let all three layers share one animation. */
+.star-layer {
+  --tile: 360px;
+  position: absolute;
+  top: calc(-1 * var(--tile));
+  left: calc(-1 * var(--tile));
+  right: 0;
+  bottom: 0;
+  background-repeat: repeat;
+  background-size: var(--tile) var(--tile);
+  will-change: transform;
+  animation: star-drift 240s linear infinite;
+}
+@keyframes star-drift {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(var(--tile), var(--tile), 0); }
+}
+/* Far layer: the faintest, slowest dust. */
+.star-layer--far {
+  --tile: 360px;
+  animation-duration: 260s;
+  background-image:
+    radial-gradient(1px 1px at 23px 41px, rgb(216 181 110 / 0.5), transparent 60%),
+    radial-gradient(1px 1px at 133px 89px, rgb(216 181 110 / 0.34), transparent 60%),
+    radial-gradient(1px 1px at 279px 157px, rgb(255 233 170 / 0.4), transparent 60%),
+    radial-gradient(1px 1px at 81px 231px, rgb(216 181 110 / 0.3), transparent 60%),
+    radial-gradient(1px 1px at 317px 305px, rgb(216 181 110 / 0.44), transparent 60%),
+    radial-gradient(1px 1px at 191px 337px, rgb(255 233 170 / 0.26), transparent 60%);
+}
+/* Mid layer: slightly larger sparks, a notch quicker. */
+.star-layer--mid {
+  --tile: 460px;
+  animation-duration: 170s;
+  background-image:
+    radial-gradient(1.4px 1.4px at 61px 117px, rgb(216 181 110 / 0.5), transparent 60%),
+    radial-gradient(1.2px 1.2px at 233px 47px, rgb(255 233 170 / 0.42), transparent 60%),
+    radial-gradient(1.4px 1.4px at 397px 203px, rgb(216 181 110 / 0.38), transparent 60%),
+    radial-gradient(1.2px 1.2px at 147px 331px, rgb(216 181 110 / 0.46), transparent 60%),
+    radial-gradient(1.4px 1.4px at 329px 411px, rgb(255 233 170 / 0.32), transparent 60%);
+}
+/* Near layer: the brightest, fastest dust — hidden on phones. */
+.star-layer--near {
+  --tile: 560px;
+  animation-duration: 110s;
+  background-image:
+    radial-gradient(1.8px 1.8px at 97px 73px, rgb(255 233 170 / 0.55), transparent 60%),
+    radial-gradient(1.6px 1.6px at 341px 181px, rgb(216 181 110 / 0.5), transparent 60%),
+    radial-gradient(1.8px 1.8px at 203px 359px, rgb(216 181 110 / 0.42), transparent 60%),
+    radial-gradient(1.6px 1.6px at 471px 449px, rgb(255 233 170 / 0.38), transparent 60%),
+    radial-gradient(2px 2px at 519px 61px, rgb(216 181 110 / 0.34), transparent 60%);
+}
+/* 4-point glint stars: a soft candle core clipped to a star, pulsing scale and
+   opacity on individually offset beats so the field never reads mechanical. */
+.star-glint {
+  position: absolute;
+  background: radial-gradient(circle, rgb(255 240 190 / 0.95) 0%, rgb(216 181 110 / 0.8) 34%, rgb(216 181 110 / 0) 72%);
+  clip-path: polygon(50% 0%, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0% 50%, 40% 40%);
+  animation: star-twinkle var(--glint-dur, 4.5s) ease-in-out var(--glint-delay, 0s) infinite;
+}
+@keyframes star-twinkle {
+  0%, 100% { opacity: 0.2; transform: scale(0.62); }
+  50% { opacity: 1; transform: scale(1); }
+}
+/* Shooting star: a brass streak crossing diagonally down-right (bright head
+   leading, tail trailing), alive for ~1.3s of a 28s cycle. Two in the DOM on
+   staggered delays = one pass roughly every 14 seconds. */
+.star-shoot {
+  position: absolute;
+  width: 120px;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, rgb(216 181 110 / 0.4) 45%, rgb(255 236 180 / 0.95));
+  opacity: 0;
+  transform: translate3d(0, 0, 0) rotate(38deg);
+  animation: star-shoot 28s linear var(--shoot-delay, 5s) infinite;
+}
+@keyframes star-shoot {
+  0% { opacity: 0; transform: translate3d(0, 0, 0) rotate(38deg); }
+  0.6% { opacity: 0.9; }
+  4.6% { opacity: 0; transform: translate3d(56vmin, 44vmin, 0) rotate(38deg); }
+  100% { opacity: 0; transform: translate3d(56vmin, 44vmin, 0) rotate(38deg); }
+}
+/* Phones: drop the near layer and the large glints (fewer, calmer nodes). */
+@media (max-width: 640px) {
+  .star-layer--near,
+  .star-glint--lg {
+    display: none;
+  }
+}
+/* Perf mode and the light theme drop the whole field. */
+html[data-perf="low"] .starfield,
+html[data-theme="light"] .starfield {
+  display: none;
+}
+
+/* === The Lobby (flat, space-themed) ==========================================
+   Solid ink panels (.plate) with 1px hairline borders over the shared star
+   field (src/components/StarField.tsx). Mode identity is a flat 2px left
+   border on each row — no gradient plates, washes, spines, or glows. */
+
+/* Plain flat brass hairline under "The Lobby" masthead. */
+.hall-hairline {
+  height: 1px;
+  background: rgb(216 181 110 / 0.4);
+}
+html[data-theme="light"] .hall-hairline {
+  background: rgba(43, 40, 34, 0.25);
+}
+
+/* Each waiting seek / challenge / live game is one flat row: a solid ink
+   step above the panel, a 1px hairline border, and the mode color as a flat
+   2px left border (warm for Nerf, cool for Buff, brass for legacy/draft).
+   Hover only firms the borders — no lift, no glow. */
+.hall-row {
+  --row-rgb: 216 181 110; /* brass default (draft / legacy entries) */
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid var(--edge);
+  border-left: 2px solid rgb(var(--row-rgb) / 0.6);
+  transition:
+    border-color var(--dur-2) var(--ease-out),
+    background-color var(--dur-2) var(--ease-out);
+}
+@media (hover: hover) {
+  .hall-row:hover {
+    background: rgba(255, 255, 255, 0.045);
+    border-color: rgb(var(--row-rgb) / 0.4);
+    border-left-color: rgb(var(--row-rgb) / 0.95);
+  }
+}
+.hall-row--nerf { --row-rgb: var(--seam-warm-rgb); }
+.hall-row--buff { --row-rgb: var(--seam-cool-rgb); }
+.hall-row--live { --row-rgb: 239 138 95; } /* coral, for legacy live games */
+html[data-theme="light"] .hall-row {
+  background: rgba(255, 255, 255, 0.4);
+  border-color: rgba(43, 40, 34, 0.12);
+  border-left-color: rgb(var(--row-rgb) / 0.6);
+}
+
+/* Empty state: a quiet flat 4x4 checkerboard in brass with tiny star motes
+   drifting off it. Purely decorative; the message carries the meaning. */
+.hall-empty-board {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  flex: none;
+  border: 1px solid rgb(216 181 110 / 0.35);
+  background: repeating-conic-gradient(rgb(216 181 110 / 0.16) 0% 25%, transparent 0% 50%);
+  background-size: 50% 50%;
+}
+.hall-mote {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 999px;
+  background: rgb(255 233 170 / 0.9);
+  opacity: 0;
+  pointer-events: none;
+  animation: hall-mote-drift 7s ease-in-out var(--mote-delay, 0s) infinite;
+}
+@keyframes hall-mote-drift {
+  0% { opacity: 0; transform: translate3d(0, 10px, 0) scale(0.6); }
+  22% { opacity: 0.85; }
+  62% { opacity: 0.45; }
+  100% { opacity: 0; transform: translate3d(7px, -36px, 0) scale(1); }
+}
+
+/* Reduced motion: still the dust, hide the transients (shooting stars,
+   motes), keep every static paint. */
+@media (prefers-reduced-motion: reduce) {
+  .star-layer,
+  .star-glint {
+    animation: none !important;
+  }
+  .star-shoot,
+  .hall-mote {
+    animation: none !important;
+    opacity: 0 !important;
+  }
+  .star-glint {
+    opacity: 0.5;
+    transform: scale(0.8);
   }
 }

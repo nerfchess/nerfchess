@@ -100,6 +100,18 @@ export async function GET(request: Request) {
     [todayStart],
   );
 
+  // Guest ACCOUNTS minted today / this rolling week — engaged visitors who
+  // started something (guests are created when the lobby or a bot game is
+  // opened, see ensureAccount), whether or not a game finished yet. Always
+  // from the D1 users table (guests live there in both storage paths).
+  const guestsCreated = await db
+    .prepare(
+      `SELECT SUM(CASE WHEN created_at >= ? THEN 1 ELSE 0 END) AS today, COUNT(*) AS week
+       FROM users WHERE is_guest = 1 AND created_at >= ?`,
+    )
+    .bind(todayStart, weekStart)
+    .first<{ today: number | null; week: number | null }>();
+
   const lastHuman = await pgFirst<{ id: string; completed_at: number }>(
     `SELECT id, completed_at FROM games
      WHERE ${HUMAN_GAME_SQL}
@@ -123,6 +135,10 @@ export async function GET(request: Request) {
       members: humanIds.length - guestCount,
       guests: guestCount,
       anonSeatGames: Number(anonSeats?.n ?? 0),
+    },
+    guestsCreated: {
+      today: Number(guestsCreated?.today ?? 0),
+      week: Number(guestsCreated?.week ?? 0),
     },
     lastHumanGame: lastHuman ? { id: lastHuman.id, completedAt: lastHuman.completed_at } : null,
   });

@@ -1,46 +1,125 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <!-- Lirili Larila: the cactus-elephant in sandals, checking its pocket watch. Loops like a GIF. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 260">
+  <!-- Lirili Larila: glossy cactus-elephant in sandals, big ticking clock on its chest. Loops like a GIF. -->
+  <defs>
+    <linearGradient id="cactus" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#a7c47a"/>
+      <stop offset="0.55" stop-color="#7ba24f"/>
+      <stop offset="1" stop-color="#527538"/>
+    </linearGradient>
+    <linearGradient id="earIn" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e8d3a0"/>
+      <stop offset="1" stop-color="#c2a468"/>
+    </linearGradient>
+    <radialGradient id="eleIris" cx="0.38" cy="0.32" r="0.85">
+      <stop offset="0" stop-color="#8a5a2b"/>
+      <stop offset="0.6" stop-color="#4f2c10"/>
+      <stop offset="1" stop-color="#2c1607"/>
+    </radialGradient>
+    <radialGradient id="eleSclera" cx="0.4" cy="0.32" r="0.95">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="0.75" stop-color="#f6f4ef"/>
+      <stop offset="1" stop-color="#d9d2c6"/>
+    </radialGradient>
+    <radialGradient id="clockFace" cx="0.4" cy="0.35" r="0.95">
+      <stop offset="0" stop-color="#fdf3d6"/>
+      <stop offset="1" stop-color="#e2c489"/>
+    </radialGradient>
+    <linearGradient id="sandal" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#d0a366"/>
+      <stop offset="1" stop-color="#96682f"/>
+    </linearGradient>
+  </defs>
+
+  <!-- sandy ground shadow -->
+  <ellipse cx="100" cy="246" rx="56" ry="10" fill="#4a3812" opacity="0.24">
+    <animate attributeName="rx" values="56;50;56" dur="1.6s" repeatCount="indefinite"/>
+  </ellipse>
+
   <g>
-    <animateTransform attributeName="transform" type="translate" values="0 0; 0 -1.4; 0 0" dur="1.2s" repeatCount="indefinite"/>
-    <!-- sandals -->
-    <rect x="20" y="56" width="10" height="4" rx="2" fill="#b98a4e" stroke="#5c3714" stroke-width="1.2"/>
-    <rect x="34" y="56" width="10" height="4" rx="2" fill="#b98a4e" stroke="#5c3714" stroke-width="1.2"/>
-    <!-- cactus body -->
-    <path d="M22 57 C18 44 18 28 24 20 C28 14 38 14 42 20 C48 28 47 44 43 57 Z" fill="#5d8f5a" stroke="#2c473a" stroke-width="2"/>
-    <!-- cactus arm -->
-    <path d="M21 34 C14 33 12 27 13 22 C16 22 20 25 21 28 Z" fill="#5d8f5a" stroke="#2c473a" stroke-width="1.8"/>
-    <!-- spines -->
-    <g stroke="#dbe7d2" stroke-width="1.2" stroke-linecap="round">
-      <path d="M26 26 L24 24 M38 25 L40 23 M27 38 L25 37 M39 39 L41 38 M30 49 L28.6 47.4 M36 50 L37.6 48.6"/>
-    </g>
-    <!-- elephant ear -->
-    <path d="M42 24 C49 21 53 26 51 32 C49.6 36 45 36 43 33 Z" fill="#7ba877" stroke="#2c473a" stroke-width="1.8"/>
-    <!-- eyes: slow deadpan blink -->
+    <animateTransform attributeName="transform" type="translate" values="0 0; 0 -5; 0 0" dur="1.6s" repeatCount="indefinite"/>
+
+    <!-- stub legs + sandals -->
+    <path d="M82 208 L82 226 M118 208 L118 226" stroke="#5d7f42" stroke-width="14" stroke-linecap="round"/>
     <g>
-      <circle cx="29" cy="26" r="1.6" fill="#141416"/>
-      <circle cx="37" cy="26" r="1.6" fill="#141416"/>
-      <rect x="26" y="24.6" width="14" height="3" fill="#5d8f5a" opacity="0">
-        <animate attributeName="opacity" values="0;0;1;0;0" keyTimes="0;0.86;0.9;0.94;1" dur="3.4s" repeatCount="indefinite"/>
+      <rect x="62" y="228" width="38" height="9" rx="4.5" fill="url(#sandal)"/>
+      <path d="M82 228 L76 222 M82 228 L90 222" stroke="#7a5222" stroke-width="3" stroke-linecap="round"/>
+      <rect x="100" y="228" width="38" height="9" rx="4.5" fill="url(#sandal)"/>
+      <path d="M118 228 L112 222 M118 228 L126 222" stroke="#7a5222" stroke-width="3" stroke-linecap="round"/>
+    </g>
+
+    <!-- big elephant ears -->
+    <path d="M52 62 C30 52 14 62 14 84 C14 104 32 114 52 106 Z" fill="url(#cactus)"/>
+    <path d="M48 70 C36 64 26 70 26 84 C26 96 36 102 48 98 Z" fill="url(#earIn)"/>
+    <path d="M148 62 C170 52 186 62 186 84 C186 104 168 114 148 106 Z" fill="url(#cactus)"/>
+    <path d="M152 70 C164 64 174 70 174 84 C174 96 164 102 152 98 Z" fill="url(#earIn)"/>
+
+    <!-- cactus body -->
+    <path d="M64 96 C60 150 62 190 70 214 L130 214 C138 190 140 150 136 96 Z" fill="url(#cactus)"/>
+    <!-- cactus arm -->
+    <path d="M64 130 C46 128 38 116 40 100 C48 98 60 106 64 116 Z" fill="url(#cactus)"/>
+    <!-- head -->
+    <ellipse cx="100" cy="76" rx="48" ry="42" fill="url(#cactus)"/>
+    <!-- core shadow + rim light + sheen -->
+    <path d="M126 52 C142 66 144 92 132 108 C142 90 140 66 126 52 Z" fill="#3a5626" opacity="0.4"/>
+    <path d="M64 54 C72 44 84 38 96 37" stroke="#d7e6b4" stroke-width="4.5" stroke-linecap="round" fill="none" opacity="0.6"/>
+    <path d="M72 120 C68 154 69 186 74 208" stroke="#d7e6b4" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.4"/>
+    <rect x="76" y="112" width="12" height="88" rx="6" fill="#ffffff" opacity="0.18"/>
+    <!-- cactus spines -->
+    <g stroke="#eef4da" stroke-width="2.6" stroke-linecap="round" opacity="0.85">
+      <path d="M70 140 L64 136 M128 146 L134 142 M74 172 L68 170 M126 178 L132 176 M92 196 L88 192 M110 198 L114 194 M46 108 L41 106 M50 118 L45 118"/>
+    </g>
+
+    <!-- eyebrows -->
+    <path d="M64 56 Q79 48 92 55" stroke="#3d5a26" stroke-width="7" stroke-linecap="round" fill="none"/>
+    <path d="M108 55 Q121 48 136 56" stroke="#3d5a26" stroke-width="7" stroke-linecap="round" fill="none"/>
+
+    <!-- glossy eyes with lazy blink -->
+    <g>
+      <ellipse cx="79" cy="74" rx="13" ry="14" fill="url(#eleSclera)"/>
+      <circle cx="80.5" cy="76" r="8" fill="url(#eleIris)"/>
+      <circle cx="80.5" cy="76" r="3.6" fill="#1d1008"/>
+      <circle cx="77.6" cy="72.8" r="2.8" fill="#ffffff"/>
+      <circle cx="83.6" cy="78.4" r="1.4" fill="#ffffff" opacity="0.9"/>
+      <ellipse cx="121" cy="74" rx="13" ry="14" fill="url(#eleSclera)"/>
+      <circle cx="119.5" cy="76" r="8" fill="url(#eleIris)"/>
+      <circle cx="119.5" cy="76" r="3.6" fill="#1d1008"/>
+      <circle cx="116.6" cy="72.8" r="2.8" fill="#ffffff"/>
+      <circle cx="122.6" cy="78.4" r="1.4" fill="#ffffff" opacity="0.9"/>
+      <rect x="62" y="58" width="76" height="32" rx="14" fill="#7ba24f" opacity="0">
+        <animate attributeName="opacity" values="0;0;1;0;0" keyTimes="0;0.87;0.91;0.95;1" dur="4.2s" repeatCount="indefinite"/>
       </rect>
     </g>
-    <!-- trunk: sways while holding the watch -->
+
+    <!-- cheeks -->
+    <ellipse cx="62" cy="90" rx="7" ry="4.6" fill="#d9975a" opacity="0.45"/>
+    <ellipse cx="138" cy="90" rx="7" ry="4.6" fill="#d9975a" opacity="0.45"/>
+
+    <!-- trunk: gentle sway -->
     <g>
-      <animateTransform attributeName="transform" type="rotate" values="-7 33 30; 7 33 30; -7 33 30" dur="1.2s" repeatCount="indefinite"/>
-      <path d="M33 30 C33 38 30 42 26 45 C24 46.6 25 49 27.6 48.4" fill="none" stroke="#5d8f5a" stroke-width="4.6" stroke-linecap="round"/>
-      <path d="M33 30 C33 38 30 42 26 45" fill="none" stroke="#2c473a" stroke-width="1" opacity="0.35"/>
-      <!-- the pocket watch, hanging off the trunk tip -->
-      <g>
-        <path d="M28 48.6 L30 52" stroke="#8a6414" stroke-width="1.2"/>
-        <circle cx="31" cy="55" r="4.6" fill="#f4e9c8" stroke="#8a6414" stroke-width="1.4"/>
-        <g stroke="#7a2f28" stroke-width="1.1" stroke-linecap="round">
-          <path d="M31 55 L31 52.4">
-            <animateTransform attributeName="transform" type="rotate" values="0 31 55; -360 31 55" dur="2.4s" repeatCount="indefinite"/>
-          </path>
-          <path d="M31 55 L33 55">
-            <animateTransform attributeName="transform" type="rotate" values="0 31 55; -360 31 55" dur="0.6s" repeatCount="indefinite"/>
-          </path>
-        </g>
+      <animateTransform attributeName="transform" type="rotate" values="-5 100 92; 5 100 92; -5 100 92" dur="1.6s" repeatCount="indefinite"/>
+      <path d="M100 92 C102 116 96 132 82 142 C74 147 70 154 74 160" fill="none" stroke="#6a9144" stroke-width="17" stroke-linecap="round"/>
+      <path d="M100 94 C102 114 97 128 86 137" fill="none" stroke="#c2d896" stroke-width="4" stroke-linecap="round" opacity="0.55"/>
+      <path d="M92 110 Q100 113 107 109 M88 124 Q96 128 103 122" stroke="#4c6e33" stroke-width="2.6" fill="none" opacity="0.6" stroke-linecap="round"/>
+      <ellipse cx="74" cy="161" rx="8" ry="6.4" fill="#57793b"/>
+    </g>
+
+    <!-- the big chest clock -->
+    <g>
+      <path d="M112 108 L120 140" stroke="#8a6414" stroke-width="3.4"/>
+      <circle cx="121" cy="160" r="23" fill="#caa53f"/>
+      <circle cx="121" cy="160" r="19" fill="url(#clockFace)"/>
+      <circle cx="121" cy="141" r="3.4" fill="#caa53f"/>
+      <path d="M121 145 V148 M121 172 V175 M106 160 H109 M133 160 H136" stroke="#7a5a14" stroke-width="2.4" stroke-linecap="round"/>
+      <g stroke="#5c3312" stroke-width="3" stroke-linecap="round">
+        <path d="M121 160 L121 149">
+          <animateTransform attributeName="transform" type="rotate" values="0 121 160; 360 121 160" dur="8s" repeatCount="indefinite"/>
+        </path>
+        <path d="M121 160 L129 160">
+          <animateTransform attributeName="transform" type="rotate" values="0 121 160; 360 121 160" dur="2s" repeatCount="indefinite"/>
+        </path>
       </g>
+      <circle cx="121" cy="160" r="2.2" fill="#5c3312"/>
+      <path d="M110 148 A15 15 0 0 1 121 144" stroke="#ffffff" stroke-width="3.4" fill="none" opacity="0.5" stroke-linecap="round"/>
     </g>
   </g>
 </svg>

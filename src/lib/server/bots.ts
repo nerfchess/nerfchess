@@ -7,20 +7,8 @@
 // so the lobby and TV never look dead. They present exactly like regular
 // players (their accounts still hold "_flower" avatar preset ids as an
 // internal marker, but no visible mark is drawn from them anymore).
-//
-// Everything here is deliberately tiny and pure (no Durable Object state, no
-// timers): the game server drives the roster from its alarm and this module
-// only answers questions like "which move", "how long to think", "which pool".
-//
-// Crash history (the reason for every cap in this file): the first version of
-// this system ran unbounded engine searches and per-tick D1 queries inside the
-// single-threaded game-server Durable Object and starved socket upgrades and
-// lobby polls until it was removed (commit 7331763). The rebuilt system caps
-// every search at HOUSE_SEARCH_CEILING_MS, runs at most one bot-vs-bot action
-// per alarm tick, touches D1 only where human games already do, and guards
-// every bot code path so a bot failure degrades to "bots absent".
 
-import { pickAIMove, type AILevel } from "../../engine/ai";
+import { pickAIMove, defaultSearchShape, type AILevel, type WeakenParams } from "../../engine/ai";
 import { legalMoves, type NerfGame } from "../../engine/game";
 import { triggersOwnNerfLoss } from "../../engine/moveSafety";
 import type { DraftMode } from "../../engine/buff";
@@ -58,11 +46,36 @@ export const HOUSE_SEARCH_CEILING_MS = 80;
 // measurement either.
 export type HouseSkill = 1350 | 1550 | 1750 | 1900 | 1950 | 2000 | 2050 | 2100 | 2150 | 2200;
 
+// Baked per-tier profile. The weakening fields are OPTIONAL and every baked
+// tier below leaves them unset, so a fresh install resolves to topK:1 / no
+// noise — i.e. the exact pre-weakening search. Weakening is applied at runtime
+// as a moderator override (app_settings.house_skill_overrides), never baked, so
+// it reverts from the /mod dashboard in one click. See docs/bot-weakening-spec.md.
 type SkillProfile = {
   level: AILevel;
   budgetMs: number;
-  // Chance to ignore the search and play a random non-self-losing legal move.
   blunderChance: number;
+  // --- Optional weakening knobs (see WeakenParams in ai.ts). Unset = default. ---
+  maxDepth?: number;
+  extendedEval?: boolean;
+  topK?: number;
+  temperatureCp?: number;
+  sampleWindowCp?: number;
+  evalNoiseCp?: number;
+};
+
+// A profile with every field resolved (no optionals): the shape the engine and
+// the moderator dashboard both work in.
+export type ResolvedSkillProfile = {
+  level: AILevel;
+  budgetMs: number;
+  blunderChance: number;
+  maxDepth: number;
+  extendedEval: boolean;
+  topK: number;
+  temperatureCp: number;
+  sampleWindowCp: number;
+  evalNoiseCp: number;
 };
 
 export const HOUSE_SKILL_PROFILES: Record<HouseSkill, SkillProfile> = {
@@ -78,30 +91,209 @@ export const HOUSE_SKILL_PROFILES: Record<HouseSkill, SkillProfile> = {
   2200: { level: "hard", budgetMs: 800, blunderChance: 0.005 },
 };
 
+// ---------------------------------------------------------------------------
+// Skill resolution & runtime overrides.
+//
+// A moderator tunes strength live by storing a JSON override map in
+// app_settings (house_skill_overrides): a partial patch per tier. The DO reads
+// it (cached ~15s) and resolves each persona's profile fresh per move, so a
+// change reaches live games within a tick without a redeploy. Every numeric
+// field is clamped on the way in, and a missing/garbage field falls back to the
+// baked value field-by-field, so no stored value can drive the bots into a
+// broken (or thread-stalling) search — the worst a bad save does is default
+// strength. See docs/bot-weakening-spec.md §4-5.
+// ---------------------------------------------------------------------------
+
+// Inclusive clamp ranges for every tunable field. Exported so the engine
+// service (which independently re-clamps whatever the DO sends) stays in lockstep
+// with these bounds from the shared module rather than a hand-copied constant.
+export const WEAKEN_CLAMP = {
+  budgetMs: [10, 900],
+  blunderChance: [0, 0.25],
+  maxDepth: [1, 12],
+  topK: [1, 8],
+  temperatureCp: [0, 400],
+  sampleWindowCp: [0, 1000],
+  evalNoiseCp: [0, 200],
+} as const satisfies Record<string, readonly [number, number]>;
+
+function clampField(key: keyof typeof WEAKEN_CLAMP, v: unknown, fallback: number): number {
+  if (typeof v !== "number" || !Number.isFinite(v)) return fallback;
+  const [lo, hi] = WEAKEN_CLAMP[key];
+  // maxDepth/topK are integer knobs; the rest are fine as-is.
+  const n = key === "maxDepth" || key === "topK" ? Math.round(v) : v;
+  return Math.max(lo, Math.min(hi, n));
+}
+
+/** The baked profile for a tier, fully resolved (optionals filled from the
+ * level's default search shape). This is the "no overrides" strength. */
+export function bakedResolvedProfile(skill: HouseSkill): ResolvedSkillProfile {
+  const base = HOUSE_SKILL_PROFILES[skill];
+  const shape = defaultSearchShape(base.level);
+  return {
+    level: base.level,
+    budgetMs: base.budgetMs,
+    blunderChance: base.blunderChance,
+    maxDepth: base.maxDepth ?? shape.maxDepth,
+    extendedEval: base.extendedEval ?? shape.extendedEval,
+    topK: base.topK ?? 1,
+    temperatureCp: base.temperatureCp ?? 0,
+    sampleWindowCp: base.sampleWindowCp ?? 150,
+    evalNoiseCp: base.evalNoiseCp ?? 0,
+  };
+}
+
+// Apply a single untrusted patch object onto a resolved base, clamping every
+// numeric field and ignoring anything unrecognized. Shared by resolveSkillProfile
+// (moderator overrides, keyed by tier) and the engine service (a flat profile
+// the DO already resolved and sent). `level` is never overridable — it selects
+// eval terms/heuristics and is an engine concern, not a strength dial.
+function applyProfilePatch(base: ResolvedSkillProfile, patch: unknown): ResolvedSkillProfile {
+  if (!patch || typeof patch !== "object") return base;
+  const p = patch as Record<string, unknown>;
+  return {
+    level: base.level,
+    budgetMs: clampField("budgetMs", p.budgetMs, base.budgetMs),
+    blunderChance: clampField("blunderChance", p.blunderChance, base.blunderChance),
+    maxDepth: clampField("maxDepth", p.maxDepth, base.maxDepth),
+    extendedEval: typeof p.extendedEval === "boolean" ? p.extendedEval : base.extendedEval,
+    topK: clampField("topK", p.topK, base.topK),
+    temperatureCp: clampField("temperatureCp", p.temperatureCp, base.temperatureCp),
+    sampleWindowCp: clampField("sampleWindowCp", p.sampleWindowCp, base.sampleWindowCp),
+    evalNoiseCp: clampField("evalNoiseCp", p.evalNoiseCp, base.evalNoiseCp),
+  };
+}
+
+/** Parse the raw app_settings JSON string into an override map, or null. Never
+ * throws: an unparseable value reads as "no overrides". */
+export function parseSkillOverrides(raw: string | null | undefined): Record<string, unknown> | null {
+  if (!raw) return null;
+  try {
+    const v = JSON.parse(raw);
+    return v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Resolve a tier's effective profile: baked default merged with the (clamped)
+ * moderator override for that tier, if any. `overrides` is the parsed map (or
+ * null); accepts either the parsed object or the raw JSON string. */
+export function resolveSkillProfile(
+  skill: HouseSkill,
+  overrides: Record<string, unknown> | string | null | undefined,
+): ResolvedSkillProfile {
+  const map = typeof overrides === "string" ? parseSkillOverrides(overrides) : overrides ?? null;
+  const base = bakedResolvedProfile(skill);
+  return map ? applyProfilePatch(base, map[String(skill)]) : base;
+}
+
+/** Re-clamp a resolved profile the DO sent to the engine service. Any missing
+ * or out-of-range field falls back to that tier's baked value, so a version-
+ * skewed or malformed payload degrades to baked strength, never to a broken
+ * search. */
+export function sanitizeResolvedProfile(skill: HouseSkill, raw: unknown): ResolvedSkillProfile {
+  return applyProfilePatch(bakedResolvedProfile(skill), raw);
+}
+
+/** The WeakenOptions params carried into pickAIMove for a resolved profile. */
+function weakenParamsOf(p: ResolvedSkillProfile): WeakenParams {
+  return {
+    maxDepth: p.maxDepth,
+    extendedEval: p.extendedEval,
+    topK: p.topK,
+    temperatureCp: p.temperatureCp,
+    sampleWindowCp: p.sampleWindowCp,
+    evalNoiseCp: p.evalNoiseCp,
+  };
+}
+
+/** Every house skill tier, ascending — the unit the dashboard and overrides map
+ * are keyed by. Derived from the profile map so it never drifts. */
+export const HOUSE_SKILLS: HouseSkill[] = (Object.keys(HOUSE_SKILL_PROFILES) as unknown[])
+  .map(Number)
+  .sort((a, b) => a - b) as HouseSkill[];
+
+// The tunable numeric fields (level is engine-only, extendedEval is boolean).
+const WEAKEN_NUM_FIELDS = [
+  "budgetMs",
+  "blunderChance",
+  "maxDepth",
+  "topK",
+  "temperatureCp",
+  "sampleWindowCp",
+  "evalNoiseCp",
+] as const;
+
+/** Sanitize an untrusted per-tier patch down to the recognized, clamped fields
+ * actually present (sparse — the shape stored in the overrides map). Numeric
+ * fields are clamped to WEAKEN_CLAMP; unknown keys and non-finite values are
+ * dropped. Used by the /mod save path so stored overrides are always sane. */
+export function cleanSkillPatch(raw: unknown): Partial<SkillProfile> {
+  if (!raw || typeof raw !== "object") return {};
+  const p = raw as Record<string, unknown>;
+  const out: Record<string, number | boolean> = {};
+  for (const k of WEAKEN_NUM_FIELDS) {
+    const v = p[k];
+    if (typeof v === "number" && Number.isFinite(v)) {
+      const [lo, hi] = WEAKEN_CLAMP[k];
+      const n = k === "maxDepth" || k === "topK" ? Math.round(v) : v;
+      out[k] = Math.max(lo, Math.min(hi, n));
+    }
+  }
+  if (typeof p.extendedEval === "boolean") out.extendedEval = p.extendedEval;
+  return out as Partial<SkillProfile>;
+}
+
+// Named preset the /mod "Weakened (50/30/20)" button writes into the override
+// map: ~50% of the roster (1350-1900) significantly weaker, ~30% (1950-2050)
+// weaker, the 2100-2200 top band untouched (absent = baked).
+//
+// Calibration note (2026-07-12, scripts/sim-house-bots.ts --roundrobin + the
+// control run): mirror self-play SATURATES — two unweakened engines draw every
+// game, so any weakening flips draws into losses and even a mild topK:2/temp:60
+// tier scored ~4% against an unweakened peer. That test confirms direction and
+// monotonicity but cannot resolve the bands or predict strength vs HUMANS (who
+// also err). These numbers are therefore a GRADED ramp (subtle at the top of
+// the weakened range, clearly weak at the bottom), softened from the first cut,
+// not tuned to a self-play win rate. Treat as a starting point: enable, watch
+// real rating drift (spec §6), and hand-tune any field live from /mod.
+export const WEAKENED_PRESET: Partial<Record<HouseSkill, Partial<SkillProfile>>> = {
+  // "significantly worse": reliably beatable by a decent player.
+  1350: { blunderChance: 0.08, maxDepth: 3, topK: 4, temperatureCp: 130, evalNoiseCp: 60, extendedEval: false },
+  1550: { blunderChance: 0.05, maxDepth: 3, topK: 4, temperatureCp: 110, evalNoiseCp: 50, extendedEval: false },
+  1750: { blunderChance: 0.03, maxDepth: 4, topK: 3, temperatureCp: 90, evalNoiseCp: 40, extendedEval: false, budgetMs: 120 },
+  1900: { blunderChance: 0.02, maxDepth: 5, topK: 3, temperatureCp: 70, evalNoiseCp: 30, extendedEval: false, budgetMs: 150 },
+  // "worse": subtle — the odd inaccuracy, not a handicap match.
+  1950: { blunderChance: 0.005, maxDepth: 6, topK: 2, temperatureCp: 45, evalNoiseCp: 18 },
+  2000: { blunderChance: 0.005, maxDepth: 7, topK: 2, temperatureCp: 35, evalNoiseCp: 14 },
+  2050: { blunderChance: 0.005, maxDepth: 8, topK: 2, temperatureCp: 25, evalNoiseCp: 10 },
+};
+
+// A harder preset the /mod "Very weak" button writes: weakens the whole roster
+// (including the top band), for testing or a deliberately beginner-friendly
+// lobby. Also starting numbers, tunable live.
+export const VERY_WEAK_PRESET: Partial<Record<HouseSkill, Partial<SkillProfile>>> = {
+  1350: { blunderChance: 0.16, maxDepth: 2, topK: 6, temperatureCp: 260, evalNoiseCp: 120, extendedEval: false },
+  1550: { blunderChance: 0.12, maxDepth: 2, topK: 6, temperatureCp: 230, evalNoiseCp: 110, extendedEval: false },
+  1750: { blunderChance: 0.1, maxDepth: 3, topK: 5, temperatureCp: 200, evalNoiseCp: 100, extendedEval: false, budgetMs: 80 },
+  1900: { blunderChance: 0.08, maxDepth: 3, topK: 5, temperatureCp: 180, evalNoiseCp: 90, extendedEval: false, budgetMs: 90 },
+  1950: { blunderChance: 0.06, maxDepth: 3, topK: 4, temperatureCp: 150, evalNoiseCp: 70, extendedEval: false },
+  2000: { blunderChance: 0.05, maxDepth: 4, topK: 4, temperatureCp: 130, evalNoiseCp: 60, extendedEval: false },
+  2050: { blunderChance: 0.04, maxDepth: 4, topK: 3, temperatureCp: 110, evalNoiseCp: 50 },
+  2100: { blunderChance: 0.03, maxDepth: 5, topK: 3, temperatureCp: 90, evalNoiseCp: 40 },
+  2150: { blunderChance: 0.02, maxDepth: 5, topK: 3, temperatureCp: 80, evalNoiseCp: 35 },
+  2200: { blunderChance: 0.02, maxDepth: 6, topK: 2, temperatureCp: 70, evalNoiseCp: 30 },
+};
+
 export type HousePersona = {
   name: string;
   userId: string;
   skill: HouseSkill;
   avatar: string;
-  // Plausible home base ("🇵🇹 Braga, Portugal"), distinct per persona, shown
-  // as the account's profile bio line.
   location: string;
 };
 
-// Natural, realistic chess-site handles: a believable mix of casual gamertags,
-// chess-themed handles, first-name-plus-number styles, lowercase handles, and a
-// few ALLCAPS, nothing that says "bot". The cutesy alliteration handles
-// (sicilian_sam, backrankbetty, zugzwangzoe...) were swapped for plainer
-// Lichess-style ones (name+year, engine/player fandom, opening-line handles) so
-// the roster reads like a random slice of a real player base. A handful of
-// owner-chosen meme names are kept verbatim in the roster.
-// Ratings: the floor is 1550 and a top band reaches 2200, with several personas
-// seated in the 2100-2200 range so the top of the leaderboard is a spread of
-// numbers, not a single tier. The 80ms search ceiling still caps real strength,
-// so every tier from 1750 up is presentation.
-// Rough mix: 10 near 1550, 10 near 1750, 8 near 1900, 6 near 1950, 5 near 2000,
-// 4 near 2050, and 7 spread across the 2100-2200 top band. (The +-40 jitter in
-// houseSeedRating still applies on top of each tier.)
 const PERSONA_DEFS: Array<[name: string, skill: HouseSkill]> = [
   // ~1550
   ["pawnstorm77", 1550],
@@ -133,18 +325,19 @@ const PERSONA_DEFS: Array<[name: string, skill: HouseSkill]> = [
   // ~2050
   ["riptide", 2050],
   ["KINGSLAYER", 2050],
-  // 2100-2200 top band, spread so the leaderboard head is not a block of
-  // identical numbers (the jitter in houseSeedRating still applies on top).
+  // 2100-2200
+  // (Three of this band's original handles read as obvious joke names —
+  // "Stickygamer123", "ilovewhitestickystuff", "ilovemysister" — and were
+  // rewritten to realistic chess-site handles. New names mean new hp_ user
+  // ids, so worker.ts's houseSeededKey was bumped to v4; the old accounts
+  // stay orphaned in the DB, harmless, same as the v3 renames.)
   ["passed_pawn", 2100],
-  ["Stickygamer123", 2100],
+  ["e4enjoyer", 2100],
   ["mellowmove", 2150],
-  ["ilovewhitestickystuff", 2150],
+  ["viktor_m85", 2150],
   ["cobrakai", 2200],
-  ["ilovemysister", 2200],
-  // --- Expansion personas (indices 30-59). The house-bot count is a moderator
-  // slider (30-60): the FIRST N of this roster are the active bots that seek,
-  // play, and get picked up, so the base 30 above are always on and raising the
-  // slider switches these in. Same believable-handle style, same rating bands.
+  ["KnightSlayer99", 2200],
+
   // ~1550
   ["lukas_j", 1550],
   ["mira_k", 1550],
@@ -197,6 +390,12 @@ const FLOWER_PIECES = ["p", "n", "b", "r", "q", "k"] as const;
 const FLOWER_AVATARS: string[] = FLOWER_PALETTES.flatMap((palette) =>
   FLOWER_PIECES.map((piece) => `${palette}_${piece}_flower`),
 );
+
+// The avatar id space a house persona may hold: the full flowered catalog.
+// Exported for the /mod/house admin editor (its avatar picker offers exactly
+// these, and the save route validates against this set), so an admin edit can
+// never move a house account outside the internal house mark.
+export const HOUSE_AVATAR_IDS: readonly string[] = FLOWER_AVATARS;
 
 // One plausible home base per persona (owner report: every bot showed the
 // same location). Distinct for the whole roster (>= PERSONA_DEFS.length
@@ -311,6 +510,52 @@ export function isHouseUserId(id: string | null | undefined): boolean {
   return !!id && HOUSE_USER_IDS.has(id);
 }
 
+// ---------------------------------------------------------------------------
+// Admin identity overrides (username / avatar), stored in D1
+// (house_identity_overrides, migrations/0025) and edited from /mod/house.
+// Resolution is always `override ?? default`: a NULL column (or a missing row)
+// falls through to the baked persona constant. The save route also writes the
+// persona's users row, so every surface that reads identity from the database
+// (profiles, leaderboard, lobby online list, seat attach) picks an edit up
+// without a deploy; these helpers exist for the surfaces that would otherwise
+// read the code constant (the /mod editor itself and syncHouseRatings, which
+// must not clobber an admin's avatar on the next identity re-sync).
+// ---------------------------------------------------------------------------
+
+export type HouseIdentityOverride = { username: string | null; avatar: string | null };
+
+/** All stored identity overrides, keyed by persona user id. Never throws: a
+ * missing table (pre-migration database) or read failure reads as "no
+ * overrides". Rows for ids no longer in the roster are ignored. */
+export async function loadHouseIdentityOverrides(
+  db: D1Database,
+): Promise<Map<string, HouseIdentityOverride>> {
+  try {
+    const rows = await db
+      .prepare(`SELECT user_id, username, avatar FROM house_identity_overrides`)
+      .all<{ user_id: string; username: string | null; avatar: string | null }>();
+    const map = new Map<string, HouseIdentityOverride>();
+    for (const row of rows.results) {
+      if (!HOUSE_USER_IDS.has(row.user_id)) continue;
+      map.set(row.user_id, { username: row.username ?? null, avatar: row.avatar ?? null });
+    }
+    return map;
+  } catch {
+    return new Map();
+  }
+}
+
+/** A persona's effective display identity: override ?? baked default. */
+export function houseIdentity(
+  persona: HousePersona,
+  override: HouseIdentityOverride | undefined | null,
+): { name: string; avatar: string } {
+  return {
+    name: override?.username || persona.name,
+    avatar: override?.avatar || persona.avatar,
+  };
+}
+
 export function housePersona(userId: string): HousePersona | undefined {
   return HOUSE_BY_ID.get(userId);
 }
@@ -352,18 +597,22 @@ export function houseSeedRating(persona: HousePersona): number {
 // Create any missing house accounts, with both per-mode rating buckets seeded
 // at the persona's skill. The password hash is unparseable on purpose
 // (verifyPassword requires a "pbkdf2:" prefix), so nobody can sign in as one.
-// Idempotent (INSERT OR IGNORE): safe to run on every cold start.
+// Idempotent (INSERT OR IGNORE): safe to run on every cold start. Seeds with
+// the admin identity override (username/avatar) when one exists, so an edit
+// saved before the account row existed (fresh database) still lands.
 export async function ensureHouseUsers(db: D1Database): Promise<void> {
   const now = Date.now();
+  const overrides = await loadHouseIdentityOverrides(db);
   const statements = HOUSE_ROSTER.flatMap((persona) => {
     const rating = houseSeedRating(persona);
+    const identity = houseIdentity(persona, overrides.get(persona.userId));
     return [
       db
         .prepare(
           `INSERT OR IGNORE INTO users (id, username, username_lower, password_hash, created_at, rating, rd, vol, avatar, bio)
            VALUES (?, ?, ?, ?, ?, ?, 150, 0.06, ?, ?)`,
         )
-        .bind(persona.userId, persona.name, persona.name.toLowerCase(), "unusable", now, rating, persona.avatar, persona.location),
+        .bind(persona.userId, identity.name, identity.name.toLowerCase(), "unusable", now, rating, identity.avatar, persona.location),
       ...(["nerf", "buff"] as const).map((mode) =>
         db
           .prepare(
@@ -386,16 +635,20 @@ export async function ensureHouseUsers(db: D1Database): Promise<void> {
 // time, peak only ever ratchets up (MAX), and the location bio fills in only
 // when the bio is empty so a moderator-written bio is never clobbered. The
 // caller gates it behind a versioned cold-start key so it runs once per
-// revision rather than every tick.
+// revision rather than every tick. Admin identity overrides (/mod/house) win
+// over the baked avatar here, so a roster identity revision never undoes an
+// admin's edit.
 export async function syncHouseRatings(db: D1Database): Promise<void> {
+  const overrides = await loadHouseIdentityOverrides(db);
   const statements = HOUSE_ROSTER.flatMap((persona) => {
     const rating = houseSeedRating(persona);
+    const identity = houseIdentity(persona, overrides.get(persona.userId));
     return [
       db
         .prepare(
           `UPDATE users SET rating = ?, avatar = ?, bio = COALESCE(NULLIF(bio, ''), ?) WHERE id = ?`,
         )
-        .bind(rating, persona.avatar, persona.location, persona.userId),
+        .bind(rating, identity.avatar, persona.location, persona.userId),
       ...(["nerf", "buff"] as const).map((mode) =>
         db
           .prepare(
@@ -476,25 +729,27 @@ export function houseDraftThinkMs(random: (max: number) => number): number {
 // Move selection.
 // ---------------------------------------------------------------------------
 
-/** Search budget for one house move: the skill profile's budget, shrunk when
- * the clock runs low, and never above `ceilingMs` (default: the DO-safe
+/** Search budget for one house move: the resolved profile's budget, shrunk
+ * when the clock runs low, and never above `ceilingMs` (default: the DO-safe
  * ceiling — pass a higher one only where the search can't stall a shared
  * thread, i.e. the OCI engine service). */
 export function houseMoveBudgetMs(
-  skill: HouseSkill,
+  budgetMs: number,
   remainingClockMs?: number,
   ceilingMs: number = HOUSE_SEARCH_CEILING_MS,
 ): number {
-  let budget = Math.min(HOUSE_SKILL_PROFILES[skill].budgetMs, ceilingMs);
+  let budget = Math.min(budgetMs, ceilingMs);
   if (remainingClockMs != null && remainingClockMs < 30_000) budget = Math.min(budget, 25);
   return Math.max(10, budget);
 }
 
-/** Pick the house player's move. Strength differences come from the skill
- * profile's budget and blunder probability. `ceilingMs` defaults to the
- * DO-safe cap so every existing caller (the DO's local fallback, the arena
- * service, the sim script) is unaffected; only the OCI engine service passes
- * a higher one, since search there costs the DO nothing.
+/** Pick the house player's move. Strength comes from the resolved profile's
+ * budget, blunder probability, and move-quality weakening (topK/temperature/
+ * noise). Pass `profile` to use a moderator-resolved strength (the DO does, per
+ * move); omit it and the baked profile for the tier is used, so every existing
+ * caller (DO local fallback, arena service, sim script) is unchanged.
+ * `ceilingMs` defaults to the DO-safe cap; only the OCI engine service passes a
+ * higher one, since search there costs the DO nothing.
  * Returns null only when the position has no legal move at all. */
 export function pickHouseMove(
   game: NerfGame,
@@ -502,16 +757,18 @@ export function pickHouseMove(
   random: (max: number) => number,
   remainingClockMs?: number,
   ceilingMs?: number,
+  profile?: ResolvedSkillProfile,
 ): Move | null {
-  const profile = HOUSE_SKILL_PROFILES[skill];
+  const p = profile ?? bakedResolvedProfile(skill);
   const all = legalMoves(game);
   if (!all.length) return null;
-  if (random(10_000) < Math.round(profile.blunderChance * 10_000)) {
+  if (random(10_000) < Math.round(p.blunderChance * 10_000)) {
     const safe = all.filter((m) => !triggersOwnNerfLoss(game, m));
     const moves = safe.length ? safe : all;
     return moves[random(moves.length)];
   }
-  return pickAIMove(game, profile.level, houseMoveBudgetMs(skill, remainingClockMs, ceilingMs));
+  const budget = houseMoveBudgetMs(p.budgetMs, remainingClockMs, ceilingMs);
+  return pickAIMove(game, p.level, budget, { params: weakenParamsOf(p), random });
 }
 
 /** Opening nerf pick: between the two dealt options, prefer the lower tier

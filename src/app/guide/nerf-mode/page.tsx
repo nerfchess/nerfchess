@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { GlossaryText } from "@/components/GlossaryText";
+import { KeyTerms } from "@/components/guide/KeyTerms";
 import { InfoPageLayout, InfoSection } from "@/components/InfoPageLayout";
 import { BreadcrumbJsonLd, FaqSection, GuideFooter } from "../shared";
 
@@ -21,35 +23,27 @@ export default function NerfModePage() {
 
       <InfoSection title="How a Nerf mode game starts">
         <p>
-          Before the first move, each player is shown two nerf cards and picks one in secret.
-          A nerf is a handicap: it restricts how you are allowed to play (&quot;you can&apos;t
-          capture queens&quot;), or creates a brand-new way for you to lose. You carry your
-          chosen rule for the whole game. You always see your own nerf; your opponent never
-          does, and vice versa. Only when the game ends are both rules revealed.
+          <GlossaryText text="Before the first move, each player is shown two nerf cards and picks one in secret, inside a 20-second lock-in window while the clocks wait (stall past it and the first card is picked for you). A nerf is a handicap: it restricts how you are allowed to play (&quot;you can't capture queens&quot;), or creates a brand-new way for you to lose. You carry your chosen rule for the whole game. Both players' two options are public — it is the pick that stays secret. Only when the game ends are both rules revealed." />
         </p>
         <p>
-          The board enforces your rule for you: moves your nerf forbids are simply never
-          offered, so you cannot break it by accident. What you can do is leak it. Every
-          capture you decline and every square you avoid tells a story, and a sharp opponent
-          reads that story fast.
+          <GlossaryText text="The board enforces your rule for you: moves your nerf forbids are simply never offered, so you cannot break it by accident. What you can do is leak it. Every capture you decline and every square you avoid tells a story, and a sharp opponent reads that story fast — knowing which two cards you chose between, they only have to tell the two apart." />
         </p>
       </InfoSection>
 
       <InfoSection title="The hex draft">
         <p>
-          Nerf mode is not only about the opening handicaps. Every 5 of your own moves you
-          draft a card. Most offers are <strong>hexes</strong>: curses cast on your opponent,
-          like <Link href="/codex/buff/cold_feet" className="underline">Cold Feet</Link> (their
-          pawns cannot capture for 3 turns) or a walnut hex that seals one of their pieces in
-          place. The rest are <strong>boons</strong> that soften your own nerf (
-          <Link href="/codex/buff/reprieve" className="underline">Reprieve</Link> suspends it for
-          two turns) and one-use <strong>items</strong>.
+          <GlossaryText text="Nerf mode is not only about the opening handicaps. Every 5 of your own moves you draft a card, and about 60% of draws are" />{" "}
+          <strong>hexes</strong>: curses cast on your opponent, like{" "}
+          <Link href="/codex/buff/cold_feet" className="underline">Cold Feet</Link>{" "}
+          <GlossaryText text="(their pawns cannot capture for their next 3 turns), a freeze that roots a piece in place, or a walnut hex that petrifies a piece so it can only shuffle one square at a time. Kings are safe from the worst of it: no hex can freeze or petrify a king." />{" "}
+          The rest are <strong>boons</strong> that soften your own nerf (
+          <Link href="/codex/buff/reprieve" className="underline">Reprieve</Link>{" "}
+          <GlossaryText text="suspends it for your next 2 turns" />) and one-use{" "}
+          <strong>items</strong>.
         </p>
         <p>
-          Your opponent&apos;s picks stay hidden while the game runs: you learn that they
-          drafted and the card&apos;s tier, nothing more, until an effect shows up on your
-          board. You can also skip a draft to bank it, making your next offer one tier
-          stronger. The full card pool is browsable in the{" "}
+          <GlossaryText text="Your opponent's picks stay hidden while the game runs: you learn that they drafted and the card's tier, nothing more, until an effect shows up on your board. You can also skip a draft to bank it, making your next offer one tier stronger, or spend your reroll for a fresh pair at the same tiers. And if you keep declining the boons that ease your nerf, the game notices: after two ignored relief offers they stop appearing." />{" "}
+          The full card pool is browsable in the{" "}
           <Link href="/codex" className="underline">codex</Link>.
         </p>
       </InfoSection>
@@ -66,6 +60,21 @@ export default function NerfModePage() {
           warning you before the axe falls.
         </p>
       </InfoSection>
+
+      <KeyTerms
+        slugs={[
+          "nerf",
+          "hex",
+          "boon",
+          "item",
+          "suspend",
+          "draft",
+          "bank",
+          "walnut",
+          "freeze",
+          "lock-in-window",
+        ]}
+      />
 
       <FaqSection
         items={[

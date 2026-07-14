@@ -1,0 +1,97 @@
+/* ---------------------------------------------------------------------------
+   Sideline mascot (SidelineMascot.tsx): the brainrot pet that loiters at the
+   board edge. Same motion rules as effects.css: transform/opacity only, the
+   persistent loops end each cycle at their resting pose, and under
+   prefers-reduced-motion the pet renders STATIC (persistent prop) instead of
+   being hidden.
+--------------------------------------------------------------------------- */
+
+/* Idle bob: a small, endless breathing bounce. */
+@keyframes slm-idle-bob {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  30% { transform: translateY(-4%) rotate(-1.2deg); }
+  60% { transform: translateY(1.5%) rotate(0.8deg); }
+}
+.slm-bob {
+  animation: slm-idle-bob 3.2s ease-in-out infinite;
+  transform-origin: 50% 100%;
+}
+
+/* Waddle stroll: parked for most of the 24s cycle, then a short shuffle along
+   the edge (flipping to face the way it walks), a pause with a little PEEK
+   over the rim at the board, and a shuffle back. translateX percentages are
+   in the mascot's OWN width (~9% of the board), so 100% is roughly one
+   figure-length of wandering along the edge. */
+@keyframes slm-waddle {
+  0%   { transform: translateX(var(--slm-home)) translateY(0) scaleX(1); }
+  55%  { transform: translateX(var(--slm-home)) translateY(0) scaleX(1); }
+  58%  { transform: translateX(var(--slm-home)) translateY(0) scaleX(var(--slm-face)); }
+  66%  { transform: translateX(var(--slm-away)) translateY(0) scaleX(var(--slm-face)); }
+  70%  { transform: translateX(var(--slm-away)) translateY(var(--slm-peek)) scaleX(1); }
+  78%  { transform: translateX(var(--slm-away)) translateY(var(--slm-peek)) scaleX(1); }
+  82%  { transform: translateX(var(--slm-away)) translateY(0) scaleX(calc(-1 * var(--slm-face))); }
+  92%  { transform: translateX(var(--slm-home)) translateY(0) scaleX(calc(-1 * var(--slm-face))); }
+  96%, 100% { transform: translateX(var(--slm-home)) translateY(0) scaleX(1); }
+}
+.slm-walk {
+  animation: slm-waddle 24s ease-in-out infinite;
+}
+/* My pet idles near the left corner and wanders right; the opponent's mirrors
+   from the right so the two never share a lane visually. The peek lifts the
+   body toward the board rim: up for the bottom pet, down for the top one. */
+.slm-walk-mine {
+  --slm-home: 4%;
+  --slm-away: 240%;
+  --slm-face: 1;
+  --slm-peek: -14%;
+}
+.slm-walk-theirs {
+  --slm-home: 780%;
+  --slm-away: 540%;
+  --slm-face: -1;
+  --slm-peek: 14%;
+  animation-delay: -11s; /* desynchronize the two pets' strolls */
+}
+
+/* Reaction: owner captured — a happy double hop with a wiggle. One-shot,
+   ends back at the neutral pose. */
+@keyframes slm-cheer-hop {
+  0% { transform: translateY(0) rotate(0deg) scale(1); }
+  18% { transform: translateY(-32%) rotate(-7deg) scale(1.06); }
+  36% { transform: translateY(0) rotate(0deg) scale(0.97); }
+  52% { transform: translateY(-22%) rotate(6deg) scale(1.05); }
+  70% { transform: translateY(0) rotate(-2deg) scale(1); }
+  84% { transform: rotate(1.5deg); }
+  100% { transform: translateY(0) rotate(0deg) scale(1); }
+}
+.slm-cheer {
+  animation: slm-cheer-hop 1.4s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  transform-origin: 50% 100%;
+}
+
+/* Reaction: owner lost a piece — a sad slump (squash, droop, sink) that
+   slowly straightens back up. One-shot, ends neutral. */
+@keyframes slm-sad-slump {
+  0% { transform: translateY(0) scale(1, 1) rotate(0deg); }
+  22% { transform: translateY(9%) scale(1.08, 0.82) rotate(-6deg); }
+  55% { transform: translateY(9%) scale(1.06, 0.85) rotate(-5deg); }
+  100% { transform: translateY(0) scale(1, 1) rotate(0deg); }
+}
+.slm-sad {
+  animation: slm-sad-slump 1.8s ease-in-out both;
+  transform-origin: 50% 100%;
+}
+
+/* Reduced motion: the pet is a persistent prop, so it stays visible but
+   perfectly still (no bob, no waddle, no reactions). */
+@media (prefers-reduced-motion: reduce) {
+  .slm-bob,
+  .slm-walk,
+  .slm-cheer,
+  .slm-sad {
+    animation: none;
+  }
+  .slm-walk {
+    transform: translateX(var(--slm-home));
+  }
+}

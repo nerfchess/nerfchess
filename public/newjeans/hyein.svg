@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Hyein">
+  <defs>
+    <linearGradient id="hy-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4a5560"/>
+      <stop offset="0.55" stop-color="#39424c"/>
+      <stop offset="1" stop-color="#2b323b"/>
+    </linearGradient>
+    <linearGradient id="hy-hair" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#20242c"/>
+      <stop offset="0.5" stop-color="#14171d"/>
+      <stop offset="1" stop-color="#0c0e12"/>
+    </linearGradient>
+    <linearGradient id="hy-knit" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7d848c"/>
+      <stop offset="1" stop-color="#5c636b"/>
+    </linearGradient>
+    <radialGradient id="hy-glow" cx="0.38" cy="0.3" r="0.75">
+      <stop offset="0" stop-color="#aeb9c4" stop-opacity="0.5"/>
+      <stop offset="1" stop-color="#aeb9c4" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- moody wall backdrop with panel seams -->
+  <rect width="200" height="200" fill="url(#hy-bg)"/>
+  <path d="M0 62 H200 M0 128 H200 M138 0 V200" stroke="#242b33" stroke-width="2" opacity="0.7"/>
+  <rect x="150" y="18" width="42" height="30" rx="4" fill="#59626c" opacity="0.55"/>
+  <rect x="150" y="58" width="42" height="30" rx="4" fill="#525b65" opacity="0.5"/>
+  <rect width="200" height="200" fill="url(#hy-glow)"/>
+
+  <!-- hair back -->
+  <path d="M56 58 Q54 26 100 24 Q146 26 144 58 L148 178 Q124 190 100 190 Q76 190 52 178 Z" fill="url(#hy-hair)"/>
+
+  <!-- grey knit sweater -->
+  <path d="M34 200 Q40 152 74 142 L100 136 L126 142 Q160 152 166 200 Z" fill="url(#hy-knit)"/>
+  <path d="M84 143 L100 160 L116 143 L106 138 L94 138 Z" fill="#4b525a"/>
+  <g stroke="#4e555d" stroke-width="1.6" opacity="0.65">
+    <path d="M52 158 Q56 178 56 200 M66 150 Q70 174 70 200 M80 146 Q84 172 84 200"/>
+    <path d="M148 158 Q144 178 144 200 M134 150 Q130 174 130 200 M116 146 Q116 172 116 200"/>
+    <path d="M100 162 V200"/>
+  </g>
+
+  <!-- neck -->
+  <path d="M89 118 H111 V142 Q100 150 89 142 Z" fill="#f3e3da"/>
+  <path d="M89 122 Q100 130 111 122 V118 H89 Z" fill="#e3cec4"/>
+
+  <!-- face -->
+  <path d="M64 78 Q64 42 100 42 Q136 42 136 78 Q136 104 124 116 Q112 126 100 126 Q88 126 76 116 Q64 104 64 78 Z" fill="#f7e9e1"/>
+  <path d="M64 82 Q70 108 84 118 Q74 106 71 82 Z" fill="#e8d4ca" opacity="0.8"/>
+
+  <!-- center-parted front hair -->
+  <path d="M100 34 Q60 36 58 84 L54 176 Q64 182 72 184 L74 96 Q80 60 99 52 L100 44 Z" fill="url(#hy-hair)"/>
+  <path d="M100 34 Q140 36 142 84 L146 176 Q136 182 128 184 L126 96 Q120 60 101 52 L100 44 Z" fill="url(#hy-hair)"/>
+  <path d="M69 100 L67 170 M133 100 L135 170" stroke="#2e353f" stroke-width="2" opacity="0.6" stroke-linecap="round"/>
+
+  <!-- eyes: calm, dark -->
+  <g>
+    <ellipse cx="85" cy="86" rx="7.4" ry="8.2" fill="#1b1410"/>
+    <ellipse cx="115" cy="86" rx="7.4" ry="8.2" fill="#1b1410"/>
+    <circle cx="87.5" cy="83" r="2.4" fill="#fff" opacity="0.95"/>
+    <circle cx="117.5" cy="83" r="2.4" fill="#fff" opacity="0.95"/>
+    <circle cx="83" cy="89" r="1.1" fill="#8a97a5" opacity="0.8"/>
+    <circle cx="113" cy="89" r="1.1" fill="#8a97a5" opacity="0.8"/>
+    <path d="M77 79 Q85 75 93 79" stroke="#241a14" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M107 79 Q115 75 123 79" stroke="#241a14" stroke-width="2" fill="none" stroke-linecap="round"/>
+  </g>
+  <path d="M78 70 Q85 67 92 69" stroke="#2c2622" stroke-width="2.4" fill="none" stroke-linecap="round" opacity="0.85"/>
+  <path d="M108 69 Q115 67 122 70" stroke="#2c2622" stroke-width="2.4" fill="none" stroke-linecap="round" opacity="0.85"/>
+
+  <!-- nose + lips: soft, neutral -->
+  <path d="M99 96 Q97 101 100 103" stroke="#d8b7a8" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+  <path d="M92 111 Q100 115 108 111 Q104 117 100 117 Q96 117 92 111 Z" fill="#cf8d88"/>
+  <path d="M94 110.5 Q100 113 106 110.5" stroke="#a96560" stroke-width="1" fill="none" stroke-linecap="round"/>
+
+  <!-- soft cool blush -->
+  <ellipse cx="78" cy="101" rx="6.5" ry="3.4" fill="#e3aca4" opacity="0.4"/>
+  <ellipse cx="122" cy="101" rx="6.5" ry="3.4" fill="#e3aca4" opacity="0.4"/>
+
+  <!-- hair sheen -->
+  <path d="M68 66 Q74 50 88 46" stroke="#4b5665" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.55"/>
+  <path d="M132 66 Q126 50 112 46" stroke="#4b5665" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.45"/>
+</svg>

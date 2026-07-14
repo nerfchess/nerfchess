@@ -6,9 +6,12 @@
 //
 // Every play here is a staged SCENE (bigger than a badge/motif moment, smaller
 // than a god manifestation): a distinct entity / object staged board-wide,
-// ~1.4-2.0s, ONE shockwave, no letterboxing-scale drama. Non-lead ("target")
-// renders are compact per-square hits because zone-fed cards mount one overlay
-// per affected square.
+// ~1.4-2.0s, ONE shockwave, no letterboxing-scale drama. Owner size pass
+// ("animations are too small in general"): the central figure of each scene
+// now sits at ~26-31% of the 14x14 canvas ≈ ~45-55% of the visible board
+// (the crop is the central ~57% of the canvas), supporting props scaled to
+// match. Non-lead ("target") renders are compact per-square hits because
+// zone-fed cards mount one overlay per affected square.
 //
 // THIRTEEN TEMPLATES, each parameterised by { palette, glyph }:
 //   WitchCircle — a hexwitch's sigil circle settles flat and ignites, candles
@@ -254,14 +257,14 @@ function TargetHit({ palette, glyph, delayMs }: { palette: Palette; glyph: React
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span
         className="grp-flash absolute block rounded-full"
-        style={{ left: "20%", top: "20%", width: "60%", height: "60%", background: tint(p1, 0.45), animationDelay: `${delayMs}ms` }}
+        style={{ left: "16%", top: "16%", width: "68%", height: "68%", background: tint(p1, 0.45), animationDelay: `${delayMs}ms` }}
       />
-      <span className="grp-pop absolute block" style={{ left: "22%", top: "20%", width: "56%", height: "56%", animationDelay: `${delayMs + 60}ms` }}>
+      <span className="grp-pop absolute block" style={{ left: "18%", top: "16%", width: "64%", height: "64%", animationDelay: `${delayMs + 60}ms` }}>
         {glyph}
       </span>
       <span
         className="grp-tring absolute block rounded-full"
-        style={{ left: "15%", top: "15%", width: "70%", height: "70%", border: `2px solid ${tint(p1, 0.9)}`, animationDelay: `${delayMs + 130}ms` }}
+        style={{ left: "10%", top: "10%", width: "80%", height: "80%", border: `2px solid ${tint(p1, 0.9)}`, animationDelay: `${delayMs + 130}ms` }}
       />
       {HIT_SPARKS.map((v, i) => (
         <span
@@ -269,10 +272,10 @@ function TargetHit({ palette, glyph, delayMs }: { palette: Palette; glyph: React
           className="grp-spark absolute block"
           style={
             {
-              left: "41%",
-              top: "41%",
-              width: "18%",
-              height: "18%",
+              left: "40%",
+              top: "40%",
+              width: "20%",
+              height: "20%",
               "--dx": v.dx,
               "--dy": v.dy,
               "--rot": v.rot,
@@ -318,11 +321,11 @@ function WitchCircle({ palette, glyph, lead, delayMs }: TemplateProps) {
           <path d="M20 1.6 V3.8 M20 36.2 V38.4 M1.6 20 H3.8 M36.2 20 H38.4" stroke={tint(p2, 0.85)} strokeWidth="0.9" strokeLinecap="round" />
         </svg>
         {/* the card's glyph, burning at the circle's heart */}
-        <span className="grp-facein absolute block" style={{ left: "37%", top: "37%", width: "26%", height: "26%", animationDelay: `${delayMs + 460}ms` }}>{glyph}</span>
+        <span className="grp-facein absolute block" style={{ left: "34%", top: "34%", width: "32%", height: "32%", animationDelay: `${delayMs + 460}ms` }}>{glyph}</span>
       </span>
       {/* candles popping alight around the circle */}
       {CANDLES.map((c, i) => (
-        <span key={i} className="grp-candle absolute block" style={{ left: `${c.l}%`, top: `${c.t}%`, width: "3.6%", height: "6%", animationDelay: `${delayMs + 320 + c.d}ms` }}>
+        <span key={i} className="grp-candle absolute block" style={{ left: `${c.l}%`, top: `${c.t}%`, width: "4.4%", height: "7.3%", animationDelay: `${delayMs + 320 + c.d}ms` }}>
           <svg viewBox="0 0 6 10" className="block h-full w-full" aria-hidden="true">
             <path d="M2.2 4.6 H3.8 V9.4 H2.2 Z" fill={tint(p2, 0.9)} />
             <path d="M3 0.6 C4.2 2 4.4 3 3 4.2 C1.6 3 1.8 2 3 0.6 Z" fill={p1} stroke={tint(p0, 0.8)} strokeWidth="0.4" {...SJ} />
@@ -349,7 +352,7 @@ function StoneGaze({ palette, glyph, lead, delayMs }: TemplateProps) {
     <Stage>
       <Wash color={tint(p0, 0.26)} delayMs={delayMs} />
       {/* the bust, grinding up out of the boards */}
-      <span className="grp-rise absolute block" style={{ left: "39%", top: "24%", width: "22%", height: "40%", animationDelay: `${delayMs + 120}ms` }}>
+      <span className="grp-rise absolute block" style={{ left: "36%", top: "20%", width: "28%", height: "50%", animationDelay: `${delayMs + 120}ms` }}>
         <svg viewBox="0 0 24 40" className="block h-full w-full" aria-hidden="true">
           {/* serpent hair */}
           <path
@@ -377,10 +380,10 @@ function StoneGaze({ palette, glyph, lead, delayMs }: TemplateProps) {
       <span
         className="grp-beam absolute block"
         style={{
-          left: "22%",
+          left: "20%",
           top: "35.5%",
-          width: "20%",
-          height: "3%",
+          width: "24%",
+          height: "3.6%",
           background: `linear-gradient(270deg, ${tint(p1, 0.9)}, transparent)`,
           transformOrigin: "100% 50%",
           animationDelay: `${delayMs + 520}ms`,
@@ -389,10 +392,10 @@ function StoneGaze({ palette, glyph, lead, delayMs }: TemplateProps) {
       <span
         className="grp-beam absolute block"
         style={{
-          left: "58%",
+          left: "56%",
           top: "35.5%",
-          width: "20%",
-          height: "3%",
+          width: "24%",
+          height: "3.6%",
           background: `linear-gradient(90deg, ${tint(p1, 0.9)}, transparent)`,
           transformOrigin: "0% 50%",
           animationDelay: `${delayMs + 520}ms`,
@@ -432,7 +435,7 @@ function ColdFront({ palette, glyph, lead, delayMs }: TemplateProps) {
             left: "22%",
             top: `${s.t}%`,
             width: "56%",
-            height: "5%",
+            height: "6%",
             background: `linear-gradient(90deg, ${tint(p1, 0.5)}, ${tint(p0, 0.25)} 70%, transparent)`,
             transformOrigin: "0% 50%",
             animationDelay: `${delayMs + s.d}ms`,
@@ -440,7 +443,7 @@ function ColdFront({ palette, glyph, lead, delayMs }: TemplateProps) {
         />
       ))}
       {/* the ice front itself: a wall of leaning icicles crossing the crop */}
-      <span className="grp-sweep absolute block" style={{ left: "26%", top: "26%", width: "26%", height: "44%", animationDelay: `${delayMs + 100}ms` }}>
+      <span className="grp-sweep absolute block" style={{ left: "24%", top: "22%", width: "32%", height: "54%", animationDelay: `${delayMs + 100}ms` }}>
         <svg viewBox="0 0 26 44" className="block h-full w-full" aria-hidden="true">
           <path
             d="M4 44 L2 12 L7 20 L8 2 L13 16 L15 6 L19 18 L21 10 L24 24 L24 44 Z"
@@ -479,7 +482,7 @@ function SiegeRoll({ palette, glyph, lead, delayMs }: TemplateProps) {
     <Stage>
       <Wash color={tint(p0, 0.24)} delayMs={delayMs} />
       {/* the engine, rolling in and braking */}
-      <span className="grp-rollin absolute block" style={{ left: "26%", top: "34%", width: "22%", height: "30%", animationDelay: `${delayMs + 80}ms` }}>
+      <span className="grp-rollin absolute block" style={{ left: "24%", top: "30%", width: "28%", height: "38%", animationDelay: `${delayMs + 80}ms` }}>
         <svg viewBox="0 0 24 32" className="block h-full w-full" aria-hidden="true">
           {/* frame + wheels */}
           <path d="M3 26 L8 14 H16 L21 26 Z" fill={tint(p0, 0.9)} stroke={p2} strokeWidth="1" {...SJ} />
@@ -504,10 +507,10 @@ function SiegeRoll({ palette, glyph, lead, delayMs }: TemplateProps) {
         className="grp-arcshot absolute block"
         style={
           {
-            left: "44%",
-            top: "34%",
-            width: "4.5%",
-            height: "4.5%",
+            left: "46%",
+            top: "30%",
+            width: "5.5%",
+            height: "5.5%",
             "--dx": "420%",
             "--dy": "-170%",
             animationDelay: `${delayMs + 660}ms`,
@@ -519,10 +522,10 @@ function SiegeRoll({ palette, glyph, lead, delayMs }: TemplateProps) {
         </svg>
       </span>
       {/* strike flash on the far wing + debris + the single concussion */}
-      <Flash delayMs={delayMs + 1000} color={tint(p1, 0.8)} left={58} top={38} w={16} h={12} />
-      <Sparks delayMs={delayMs + 1040} fill={p1} stroke={p2} cx={65} cy={43} />
+      <Flash delayMs={delayMs + 1000} color={tint(p1, 0.8)} left={60} top={37} w={18} h={13} />
+      <Sparks delayMs={delayMs + 1040} fill={p1} stroke={p2} sizePct={6.5} cx={68} cy={42} />
       <Boom delayMs={delayMs + 1080} color={tint(p1, 0.85)} thickness={4} />
-      <Glint delayMs={delayMs + 1360} color={p1} left={64} top={34} />
+      <Glint delayMs={delayMs + 1360} color={p1} left={67} top={33} sizePct={7} />
     </Stage>
   );
 }
@@ -538,8 +541,8 @@ function WarBanner({ palette, glyph, lead, delayMs }: TemplateProps) {
     <Stage>
       <Wash color={tint(p0, 0.24)} delayMs={delayMs} />
       {/* the flanking shield ranks, rising */}
-      {[28, 60].map((l, i) => (
-        <span key={i} className="grp-rise absolute block" style={{ left: `${l}%`, top: "46%", width: "12%", height: "16%", animationDelay: `${delayMs + 260 + i * 90}ms` }}>
+      {[24, 61].map((l, i) => (
+        <span key={i} className="grp-rise absolute block" style={{ left: `${l}%`, top: "46%", width: "15%", height: "20%", animationDelay: `${delayMs + 260 + i * 90}ms` }}>
           <svg viewBox="0 0 24 12" className="block h-full w-full" aria-hidden="true">
             <path
               d="M2 11 V4 C2 2 4 1 6 1 C8 1 10 2 10 4 V11 Z M12 11 V4 C12 2 14 1 16 1 C18 1 20 2 20 4 V11 Z"
@@ -553,7 +556,7 @@ function WarBanner({ palette, glyph, lead, delayMs }: TemplateProps) {
         </span>
       ))}
       {/* the great banner, slamming in */}
-      <span className="grp-drop absolute block" style={{ left: "42%", top: "22%", width: "16%", height: "44%", animationDelay: `${delayMs + 120}ms` }}>
+      <span className="grp-drop absolute block" style={{ left: "40%", top: "17%", width: "20%", height: "54%", animationDelay: `${delayMs + 120}ms` }}>
         <svg viewBox="0 0 16 44" className="block h-full w-full" aria-hidden="true">
           <path d="M8 44 V1.6" stroke={p2} strokeWidth="1.3" strokeLinecap="round" />
           <circle cx="8" cy="1.6" r="1.1" fill={p1} />
@@ -583,7 +586,7 @@ function Grove({ palette, glyph, lead, delayMs }: TemplateProps) {
     <Stage>
       <Wash color={tint(p0, 0.24)} delayMs={delayMs} />
       {/* the great tree, heaving up */}
-      <span className="grp-rise absolute block" style={{ left: "34%", top: "22%", width: "32%", height: "46%", animationDelay: `${delayMs + 120}ms` }}>
+      <span className="grp-rise absolute block" style={{ left: "31%", top: "18%", width: "38%", height: "54%", animationDelay: `${delayMs + 120}ms` }}>
         <svg viewBox="0 0 34 44" className="block h-full w-full" aria-hidden="true">
           {/* canopy */}
           <path
@@ -605,6 +608,7 @@ function Grove({ palette, glyph, lead, delayMs }: TemplateProps) {
       {/* petals adrift */}
       <Drifts
         delayMs={delayMs + 480}
+        sizePct={4}
         render={() => (
           <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
             <path d="M5 1 C8 2.4 8 6 5 9 C2 6 2 2.4 5 1 Z" fill={tint(p1, 0.9)} stroke={tint(p2, 0.6)} strokeWidth="0.4" {...SJ} />
@@ -625,9 +629,9 @@ function Grove({ palette, glyph, lead, delayMs }: TemplateProps) {
    behind a floating lantern that carries the card's glyph.
    ========================================================================== */
 const GHOSTS = [
-  { l: 30, t: 34, w: 9, d: 140 },
-  { l: 42, t: 30, w: 11, d: 0 },
-  { l: 56, t: 35, w: 9, d: 220 },
+  { l: 26, t: 32, w: 12, d: 140 },
+  { l: 40, t: 27, w: 14, d: 0 },
+  { l: 58, t: 33, w: 12, d: 220 },
 ];
 function PhantomParade({ palette, glyph, lead, delayMs }: TemplateProps) {
   const [p0, p1, p2] = palette;
@@ -651,7 +655,7 @@ function PhantomParade({ palette, glyph, lead, delayMs }: TemplateProps) {
         </span>
       ))}
       {/* the leading lantern, the glyph shining inside it */}
-      <span className="grp-sweep absolute block" style={{ left: "64%", top: "28%", width: "8%", height: "18%", animationDelay: `${delayMs + 60}ms` }}>
+      <span className="grp-sweep absolute block" style={{ left: "66%", top: "26%", width: "10%", height: "22%", animationDelay: `${delayMs + 60}ms` }}>
         <svg viewBox="0 0 12 26" className="block h-full w-full" aria-hidden="true">
           <path d="M6 0.6 V4" stroke={tint(p2, 0.9)} strokeWidth="0.8" strokeLinecap="round" />
           <path d="M3 4.6 H9 L10 9 V19 L9 23 H3 L2 19 V9 Z" fill={tint(p1, 0.35)} stroke={tint(p2, 0.9)} strokeWidth="0.8" {...SJ} />

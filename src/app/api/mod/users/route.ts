@@ -3,25 +3,38 @@ import { applyModAction, findUserByName, requireMod, MOD_ACTIONS, type ModAction
 
 export const dynamic = "force-dynamic";
 
-// GET ?q=name: look up players with their moderation state. An exact match
-// also returns their recent mod history and reports filed against them.
+// GET ?q=name&filter=members|guests|all: look up players with their moderation
+// state. An exact match also returns their recent mod history and reports
+// filed against them. With no query, the default roster is the most recent
+// accounts — members AND guests together (filter=all) unless a narrower
+// filter is asked for, so engaged unregistered visitors are visible to mods.
 export async function GET(request: Request) {
   const guard = await requireMod(request);
   if (guard instanceof NextResponse) return guard;
   const { db } = guard;
 
-  const q = (new URL(request.url).searchParams.get("q") ?? "").trim().toLowerCase();
+  const url = new URL(request.url);
+  const q = (url.searchParams.get("q") ?? "").trim().toLowerCase();
+  const filterParam = url.searchParams.get("filter");
+  const filter: "members" | "guests" | "all" =
+    filterParam === "members" || filterParam === "guests" ? filterParam : "all";
+  // Appended to the WHERE clause; guests hold real hashed passwords and UUID
+  // ids, so the seed-bot exclusions below never drop them.
+  const guestClause =
+    filter === "members" ? "AND is_guest = 0" : filter === "guests" ? "AND is_guest = 1" : "";
+
   if (!q) {
-    // Default view: the most recently registered real members, so the panel
-    // opens on a browsable roster instead of a blank box. Excludes seed
-    // leaderboard bots and transient guest accounts.
+    // Default view: the most recently created accounts, so the panel opens on
+    // a browsable roster instead of a blank box. Includes guests by default
+    // (is_guest in the payload lets the UI badge them); excludes the seed
+    // leaderboard bots. ?filter narrows to members or guests only.
     const recent = await db
       .prepare(
-        `SELECT id, username, role, rating, games, created_at, muted_until, banned_until
+        `SELECT id, username, role, rating, games, created_at, muted_until, banned_until, is_guest
          FROM users
          WHERE id NOT LIKE 'seed\\_%' ESCAPE '\\'
            AND password_hash <> 'unusable'
-           AND is_guest = 0
+           ${guestClause}
          ORDER BY created_at DESC LIMIT 30`,
       )
       .all();
@@ -34,11 +47,12 @@ export async function GET(request: Request) {
   // passwords, so they are unaffected.
   const users = await db
     .prepare(
-      `SELECT id, username, role, rating, games, created_at, muted_until, banned_until
+      `SELECT id, username, role, rating, games, created_at, muted_until, banned_until, is_guest
        FROM users
        WHERE username_lower LIKE ?
          AND id NOT LIKE 'seed\\_%' ESCAPE '\\'
          AND password_hash <> 'unusable'
+         ${guestClause}
        ORDER BY username_lower LIMIT 10`,
     )
     .bind(`${q.replace(/[%_]/g, "")}%`)

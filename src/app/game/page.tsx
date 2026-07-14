@@ -1,12 +1,18 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { AbilityBar } from "@/components/AbilityBar";
 import { Board } from "@/components/Board";
 import { BoardPlayerRow } from "@/components/BoardPlayerRow";
 import { ClockPill } from "@/components/ClockPill";
 // The end screen is never part of first paint; loading it on demand keeps it
 // out of the page's initial bundle.
 const GameOver = dynamic(() => import("@/components/GameOver").then((m) => m.GameOver), {
+  ssr: false,
+});
+// Clip sharing is an on-demand modal (canvas replay + MediaRecorder); keep it
+// out of the page's initial bundle like the end screen.
+const ClipModal = dynamic(() => import("@/components/clip/ClipModal").then((m) => m.ClipModal), {
   ssr: false,
 });
 import { MobileActionsMenu } from "@/components/MobileActionsMenu";
@@ -58,6 +64,7 @@ import { BoardState, Color, Move, Square } from "@/engine/types";
 import { cloneBoard, findKing, isInCheck, makeMove, moveToUCI } from "@/engine/board";
 import { computeMoveRisks } from "@/engine/moveSafety";
 import { loadSettings } from "@/lib/settings";
+import { ensureAccount } from "@/lib/authClient";
 import type { QueuedPremove } from "@/components/Board";
 import { buildCustomNerf, CustomNerf } from "@/engine/nerfs/custom";
 import { isMuted, playCapture, playCheck, playNerf, playMove as playMoveSfx, setMuted } from "@/lib/sounds";
@@ -66,7 +73,9 @@ import { applyResult, loadRatingFor, saveRatingFor } from "@/lib/rating";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { loadSavedAiGame, restoreSavedAiGame, saveAiGame, snapshotGame } from "@/lib/gamePersistence";
 import { boardAtPly, replayBoardSpan } from "@/lib/gameReview";
-import { premoveOptionsFor, premoveSelfChecks } from "@/lib/premoves";
+import { clipPliesAvailable } from "@/components/clip/clipReplay";
+import { premoveOptionsFor, premoveSelfChecks, previewMovesFor } from "@/lib/premoves";
+import { TOUR_STATE_EVENT, type TourGameState } from "@/components/tutorial/tourState";
 import { categoryForTimeControl } from "@/lib/ratingCategories";
 import type { AIWorkerRequest, AIWorkerResponse } from "@/workers/aiWorker";
 import Link from "next/link";
@@ -119,6 +128,13 @@ function dealNerfOptions(exclude: Set<string>): Nerf[] {
   if (Math.random() < 0.5) second.reverse();
   return Math.random() < 0.5 ? [...first, ...second] : [...second, ...first];
 }
+
+// Starting a local bot game is real engagement, so it mints a guest account
+// (fire-and-forget) to make engaged visitors visible in the moderators' guest
+// counts — see the effect below. Module-level so remounts (color swaps,
+// rematches, strict-mode double effects) never re-trigger it: at most one
+// ensure per page load.
+let ensuredAccountForBotGame = false;
 
 const BOT_ELO: Record<AILevel, number> = {
   easy: 1100,
@@ -308,6 +324,27 @@ function GamePage() {
     gameRef.current = game;
   }, [game]);
 
+  // --- First-game tour hook (additive; active only with ?tour=1) ----------
+  // The guided tour route (/tutorial/first-game) renders this page and layers
+  // coach marks on top. The game is never touched from outside: this effect
+  // only broadcasts a tiny read-only snapshot of tour-relevant state after
+  // every game update, and the tour component gates its steps on it.
+  const tourMode = params.get("tour") === "1";
+  useEffect(() => {
+    if (!tourMode) return;
+    const mine = game?.buffs?.players[myColor];
+    const detail: TourGameState = {
+      ready: !!game,
+      myMoves: game ? game.board.history.filter((m) => m.color === myColor).length : 0,
+      myTurn: !!game && !game.result && game.board.turn === myColor,
+      offerOpen: !!mine?.offer && !game?.result,
+      heldBuffs: mine?.buffs.length ?? 0,
+      banked: !!mine?.flags.bankBonus,
+      over: !!game?.result,
+    };
+    window.dispatchEvent(new CustomEvent<TourGameState>(TOUR_STATE_EVENT, { detail }));
+  }, [tourMode, game, myColor]);
+
   // Chess Diff sub-game clock swap: while the engine's bs.diff runs, both
   // sides play on the diff's 1+0 minute; the paused game's clocks are stashed
   // here and restored when the diff is decided (mirrors the online server's
@@ -427,6 +464,19 @@ function GamePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // A visitor who starts a local bot game is engaged: mint a guest account so
+  // they show up in the moderators' "guests created" counts (guests used to be
+  // created only on joining an online seek, leaving these visitors invisible).
+  // ensureAccount no-ops for signed-in users and dedupes; the module flag keeps
+  // it to one attempt per page load. Skipped for the guided tour (?tour=1),
+  // which isn't a self-initiated game. Fire-and-forget: the local game never
+  // waits on (or fails with) it.
+  useEffect(() => {
+    if (tourMode || ensuredAccountForBotGame) return;
+    ensuredAccountForBotGame = true;
+    void ensureAccount().catch(() => {});
+  }, [tourMode]);
+
   // Draft mode: the player picked their nerf; the bot picks one of its two
   // options at random and the game begins.
   const startDraftGame = (picked: Nerf) => {
@@ -484,8 +534,12 @@ function GamePage() {
   useEffect(() => {
     draftCoveredRef.current = draftCovered;
   });
+  // Signature plays keyed by the ply they landed on (history length at fire
+  // time), so the clip renderer can splash the card name over that segment.
+  const sigPlyRef = useRef<Map<number, string>>(new Map());
   const fireSignature = (id: string) => {
     if (!BUFF_BY_ID[id]) return;
+    sigPlyRef.current.set(gameRef.current?.board.history.length ?? 0, id);
     if (draftCoveredRef.current) {
       heldPlaysRef.current = [...heldPlaysRef.current, id].slice(-6);
       return;
@@ -657,7 +711,46 @@ function GamePage() {
     for (const key of boardSnapshotsRef.current.keys()) {
       if (key > ply) boardSnapshotsRef.current.delete(key);
     }
+    // Same pruning for recorded signature plays (a fresh game resets to 0).
+    for (const key of sigPlyRef.current.keys()) {
+      if (key > ply) sigPlyRef.current.delete(key);
+    }
   }, [game]);
+
+  // --- Clip sharing (stylized canvas replay of the last plies) -------------
+  const [clipOpen, setClipOpen] = useState(false);
+  // Frozen copies of the snapshot/signature caches, taken when the modal
+  // opens (refs can't be read during render, and the modal wants stable data).
+  const [clipData, setClipData] = useState<{
+    snapshots: Map<number, BoardState>;
+    signatureIds: Map<number, string>;
+  } | null>(null);
+  // Whether a clip can be built right now (>= 2 consecutive reconstructable
+  // positions ending at the head). Derived in an effect because it reads the
+  // snapshot ref; cheap (bounded to a 10-ply window).
+  const [clipPlies, setClipPlies] = useState(0);
+  useEffect(() => {
+    queueMicrotask(() => {
+      if (!game) {
+        setClipPlies(0);
+        return;
+      }
+      setClipPlies(
+        clipPliesAvailable(
+          game.board.history,
+          boardSnapshotsRef.current,
+          !!game.buffs?.historyDiverged,
+        ),
+      );
+    });
+  }, [game]);
+  const openClip = useCallback(() => {
+    setClipData({
+      snapshots: new Map(boardSnapshotsRef.current),
+      signatureIds: new Map(sigPlyRef.current),
+    });
+    setClipOpen(true);
+  }, []);
 
   // History shrank past (or exactly to) the reviewed ply — a rewind or a
   // fresh game replaced the record. Return to the LIVE board (null), never
@@ -669,6 +762,12 @@ function GamePage() {
   }
 
   const moves = useMemo(() => (game ? legalMoves(game) : []), [game]);
+  // The opponent's would-be moves, for the click-an-enemy-piece inspection
+  // preview (dots on every square that piece could reach).
+  const oppPreviewMoves = useMemo(
+    () => (game && !game.result ? previewMovesFor(game, myColor === "w" ? "b" : "w") : []),
+    [game, myColor],
+  );
   const moveRisks = useMemo(
     () =>
       uiSettings.moveRiskWarnings && game && game.board.turn === myColor
@@ -1613,7 +1712,38 @@ function GamePage() {
     </div>
   );
 
-  const moveListFooter = historyActions;
+  // History-review clip entry: lives in the move list footer (desktop rail
+  // and mobile drawer both render it). Disabled honestly when the last plies
+  // can't be reconstructed (board rewritten by a card, no stored positions).
+  const clipButton =
+    game.board.history.length >= 2 ? (
+      <button
+        type="button"
+        onClick={openClip}
+        disabled={clipPlies < 2}
+        data-clip-open
+        title={
+          clipPlies < 2
+            ? "Clip unavailable: these moves can't be replayed (the board was rewritten by a card)"
+            : "Save the last moves as a short video clip"
+        }
+        className="min-w-0 min-h-[44px] w-full inline-flex items-center justify-center gap-2 px-3 py-2 btn-ghost text-xs font-display tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+          <polygon points="23 7 16 12 23 17 23 7" />
+          <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+        </svg>
+        Clip last moves
+      </button>
+    ) : null;
+
+  const moveListFooter =
+    historyActions || clipButton ? (
+      <div className="space-y-2">
+        {historyActions}
+        {clipButton}
+      </div>
+    ) : null;
 
   return (
     <main className="flex h-dvh min-h-0 flex-col overflow-hidden">
@@ -1793,7 +1923,10 @@ function GamePage() {
                   actions) are hidden below the sm breakpoint. */}
               <div className="flex items-center justify-between gap-2 sm:hidden">
                 <BoardPlayerRow
-                  board={boardForDisplay}
+                  // Material counts read the COMMITTED position (a queued premove
+                  // must never bump the capture tally early); history review
+                  // still shows the reviewed position's material.
+                  board={isReviewingHistory ? boardForDisplay : game.board}
                   playerColor={myColor === "w" ? "b" : "w"}
                   myColor={myColor}
                   name={`${difficulty[0].toUpperCase()}${difficulty.slice(1)} Bot`}
@@ -1824,6 +1957,11 @@ function GamePage() {
                   orientation={orientation}
                   onMove={handleMove}
                   myColor={myColor}
+                  // Click an enemy piece to preview where it could move
+                  // (suspended during history review and buff targeting).
+                  opponentMoves={
+                    isReviewingHistory || buffTargeting.targeting ? [] : oppPreviewMoves
+                  }
                   fxTimePressure={
                     clockEnabled && !game.result && (whiteMs < 15_000 || blackMs < 15_000)
                   }
@@ -1895,7 +2033,10 @@ function GamePage() {
               </div>
               <div className="flex items-center justify-between gap-2 sm:hidden">
                 <BoardPlayerRow
-                  board={boardForDisplay}
+                  // Material counts read the COMMITTED position (a queued premove
+                  // must never bump the capture tally early); history review
+                  // still shows the reviewed position's material.
+                  board={isReviewingHistory ? boardForDisplay : game.board}
                   playerColor={myColor}
                   myColor={myColor}
                   name="You"
@@ -1933,6 +2074,23 @@ function GamePage() {
                 </div>
               )}
             </div>
+            {/* Ability bar: the quick-cast surface, docked beside the board.
+                Same activation pipe as the dock's Use buttons. */}
+            {game.buffs && !isReviewingHistory && (
+              <AbilityBar
+                game={game}
+                myColor={myColor}
+                canAct={!game.result && game.board.turn === myColor && !myOffer && !isReviewingHistory}
+                onStartUse={(i) => {
+                  snapshotMySignature(i);
+                  buffTargeting.start(i);
+                }}
+                activeIndex={buffTargeting.targeting?.buffIndex ?? null}
+                orientation="vertical"
+                style={railHeightStyle}
+                className="hidden self-start sm:flex sm:max-h-[var(--board-height)]"
+              />
+            )}
             <div
               className={
                 "hidden min-h-0 overflow-hidden gap-3 sm:grid sm:h-[var(--board-height)] sm:w-72 sm:shrink-0 " +
@@ -1969,6 +2127,25 @@ function GamePage() {
           </div>
         </div>
       </div>
+
+      {/* Mobile quick-cast strip: the same ability bar, horizontal, floating
+          just above the move drawer's bar. */}
+      {game.buffs && !isReviewingHistory && (
+        <div className="pointer-events-none fixed inset-x-0 bottom-[calc(2.75rem+env(safe-area-inset-bottom))] z-30 flex justify-center px-2 pb-1 sm:hidden">
+          <AbilityBar
+            game={game}
+            myColor={myColor}
+            canAct={!game.result && game.board.turn === myColor && !myOffer && !isReviewingHistory}
+            onStartUse={(i) => {
+              snapshotMySignature(i);
+              buffTargeting.start(i);
+            }}
+            activeIndex={buffTargeting.targeting?.buffIndex ?? null}
+            orientation="horizontal"
+            className="pointer-events-auto"
+          />
+        </div>
+      )}
 
       <MobileMoveDrawer
         moves={game.board.history}
@@ -2110,6 +2287,7 @@ function GamePage() {
           onRematch={handleRematch}
           onNewGame={handleRematch}
           onReview={() => handleHistoryPlyChange(0)}
+          onClip={clipPlies >= 2 ? openClip : undefined}
           moves={game.board.history}
           playerNames={{
             w: myColor === "w" ? "You" : `${difficulty[0].toUpperCase()}${difficulty.slice(1)} Bot`,
@@ -2117,6 +2295,22 @@ function GamePage() {
           }}
           startedAt={game.startedAt}
           myBuffs={game.buffs?.players[myColor].buffs}
+        />
+      )}
+      {clipOpen && clipData && (
+        <ClipModal
+          open={clipOpen}
+          onClose={() => setClipOpen(false)}
+          moves={game.board.history}
+          snapshots={clipData.snapshots}
+          signatureIds={clipData.signatureIds}
+          historyDiverged={!!game.buffs?.historyDiverged}
+          orientation={orientation}
+          playerNames={{
+            w: myColor === "w" ? "You" : `${difficulty[0].toUpperCase()}${difficulty.slice(1)} Bot`,
+            b: myColor === "b" ? "You" : `${difficulty[0].toUpperCase()}${difficulty.slice(1)} Bot`,
+          }}
+          result={game.result ?? null}
         />
       )}
       <SettingsPanel

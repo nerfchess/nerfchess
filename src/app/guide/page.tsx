@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { GlossaryText } from "@/components/GlossaryText";
+import { KeyTerms } from "@/components/guide/KeyTerms";
 import { InfoPageLayout, InfoSection } from "@/components/InfoPageLayout";
 import { FaqSection, GuideFooter } from "./shared";
 
@@ -19,24 +21,16 @@ export default function GuideIndexPage() {
     >
       <InfoSection title="The short answer">
         <p>
-          Nerf Chess is an online chess variant with two game modes and a shared twist: there
-          is no checkmate and no stalemate. You win by physically capturing the enemy king,
-          which means the king can walk into attacked squares, castle through check, and
-          generally live dangerously in ways standard chess forbids.
+          <GlossaryText text="Nerf Chess is an online chess variant with two game modes and a shared twist: there is no checkmate and no stalemate. You win by physically capturing the enemy king, which means the king can walk into attacked squares, castle through check, and generally live dangerously in ways standard chess forbids. Both kings can even be in check at the same time; whoever actually lands the capture first wins." />
         </p>
         <p>
-          <strong>Nerf mode</strong> is chess with secret rules. Before the first move, each
-          player picks one hidden handicap (a &quot;nerf&quot;) from two cards. You always know
-          your own rule; you never see your opponent&apos;s until the game ends. Every few moves
-          a draft deals extra cards: usually a hex that curses your opponent, sometimes a boon
-          or item that helps you. If you have heard of{" "}
-          drawback chess, this
-          is that idea, extended with a card draft.
+          <strong>Nerf mode</strong>{" "}
+          <GlossaryText text="is chess with secret rules. Before the first move, each player picks one hidden handicap (a nerf) from two cards. You always know your own rule; you never see your opponent's until the game ends. Then, every 5 of your own moves, a draft deals extra cards: usually a hex that curses your opponent, sometimes a boon or item that helps you." />{" "}
+          If you have heard of drawback chess, this is that idea, extended with a card draft.
         </p>
         <p>
-          <strong>Buff mode</strong> flips the formula. Nobody is handicapped: every 5 moves,
-          both players draft a power-up card and race to build the stronger army. Cards climb
-          in strength as the game goes on, from small conveniences up to game-warping effects.
+          <strong>Buff mode</strong>{" "}
+          <GlossaryText text="flips the formula. Nobody is handicapped: every 5 moves, both players draft a power-up card and race to build the stronger army. Cards climb in strength as the game goes on, from small conveniences up to game-warping effects." />
         </p>
       </InfoSection>
 
@@ -48,18 +42,17 @@ export default function GuideIndexPage() {
           secret rule is half the battle.
         </p>
         <p>
-          Buff mode keeps perfect information about the board but adds drafting, the kind of
-          decision you would find in a card game: take the safe card now, or skip the draft to
-          bank a stronger offer later. Over 1,000 cards and rules live in the{" "}
-          <Link href="/codex" className="underline">codex</Link>, each with a difficulty tier
-          from I (Trivial) to VIII (Unhinged).
+          <GlossaryText text="Buff mode keeps perfect information about the board but adds drafting, the kind of decision you would find in a card game: take the safe card now, or skip the draft to bank a one-tier-stronger offer later." />{" "}
+          Over 1,000 cards and rules live in the{" "}
+          <Link href="/codex" className="underline">codex</Link>
+          <GlossaryText text=", each with a difficulty tier from I (Trivial) to VIII (Unhinged) — plus the granted-only Apex and Mythic bands above them." />
         </p>
       </InfoSection>
 
       <InfoSection title="Where to start">
         <p>
           Read <Link href="/guide/how-to-play" className="underline">how to play</Link> for
-          the five house rules, then pick a mode:{" "}
+          the house rules, then pick a mode:{" "}
           <Link href="/guide/nerf-mode" className="underline">Nerf mode</Link> if you like
           bluffing and deduction, <Link href="/guide/buff-mode" className="underline">Buff
           mode</Link> if you like drafting and power. You can play against the bot at{" "}
@@ -68,6 +61,20 @@ export default function GuideIndexPage() {
           a five-character code, no account required.
         </p>
       </InfoSection>
+
+      <KeyTerms
+        slugs={[
+          "nerf-mode",
+          "buff-mode",
+          "capture-the-king",
+          "nerf",
+          "buff",
+          "hex",
+          "draft",
+          "tier",
+          "bank",
+        ]}
+      />
 
       <FaqSection
         items={[

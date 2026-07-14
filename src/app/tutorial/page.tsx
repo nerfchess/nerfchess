@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { SiteHeader } from "@/components/SiteHeader";
 import Link from "next/link";
+import { FIRST_GAME_TOUR_HREF } from "@/components/tutorial/tourState";
 
 export const metadata: Metadata = {
   title: "Nerf Chess tutorial: the five house rules and card types",
@@ -130,6 +131,27 @@ export default function TutorialPage() {
           Everything else depends on your mode: in Nerf mode, your secret handicap and the hexes,
           boons, and items you draft; in Buff mode, the buff cards both players draft every 5 moves.
         </p>
+        {/* Primary entry: the guided first game. A real bot game (weakest
+            bot, no clock, buff mode) with coach marks over the live board. */}
+        <div className="mt-8 plate border-gold/40 bg-gold/5 p-5 sm:p-6">
+          <div className="smallcaps text-[11px] text-gold-leaf/90">new? start here</div>
+          <h2 className="font-display text-3xl sm:text-4xl mt-1">
+            Learn in 3 minutes: play your first draft
+          </h2>
+          <p className="mt-3 text-[15px] leading-relaxed text-parchment-200/90">
+            A guided real game against the easiest bot: make moves, watch the draft counter,
+            pick (or bank) your first card, and read the auras it leaves on the board. The
+            tour points at everything as it happens, and you can skip it any time.
+          </p>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <Link href={FIRST_GAME_TOUR_HREF} className="px-6 py-3 rounded-full btn-leaf font-display">
+              Play your first draft
+            </Link>
+            <Link href="/tutorial/walkthrough" className="px-6 py-3 rounded-full btn-ghost font-display">
+              Interactive lessons
+            </Link>
+          </div>
+        </div>
         <div className="mt-9 space-y-3">
           {RULES.map((r) => (
             <div key={r.n} className="plate p-5 sm:p-6">

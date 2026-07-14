@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Handstand pushup">
+  <ellipse cx="100" cy="184" rx="52" ry="7" fill="#000" opacity="0.25"/>
+  <path d="M40 178 H160" stroke="#8a93a6" stroke-width="5" stroke-linecap="round"/>
+  <g stroke="#f4efe4" stroke-width="9" stroke-linecap="round" fill="none">
+    <g>
+      <animateTransform attributeName="transform" type="translate" values="0 0; 0 16; 0 16; 0 0; 0 0" keyTimes="0;0.35;0.5;0.85;1" dur="2.2s" repeatCount="indefinite"/>
+      <circle cx="100" cy="122" r="13" fill="#f4efe4" stroke="none"/>
+      <path d="M100 104 V58"/>
+      <path d="M100 62 L82 30 M100 62 L118 30"/>
+      <path d="M96 30 L86 14 M104 30 L114 14" stroke-width="7"/>
+    </g>
+    <path d="M100 140 L78 160 L72 176 M100 140 L122 160 L128 176"/>
+  </g>
+  <g fill="rgba(244,239,228,0.8)">
+    <circle cx="66" cy="172" r="5"><animate attributeName="opacity" values="0;0.9;0" dur="2.2s" begin="0.7s" repeatCount="indefinite"/></circle>
+    <circle cx="136" cy="172" r="4"><animate attributeName="opacity" values="0;0.8;0" dur="2.2s" begin="0.85s" repeatCount="indefinite"/></circle>
+  </g>
+</svg>

@@ -532,20 +532,28 @@ export const CROSSREF_CARDS: Buff[] = [
     },
   ),
 
-  // Fruit boon: hide behind the rind. Your whole army cannot be captured for
-  // the opponent's next 2 turns. A light supportive card, so it joins the boons.
+  // Fruit boon: hide behind the rind. Reworked: the old whole-army 2-turn
+  // shield at tier 4 strictly dominated Aegis (T6, 1 turn) and undercut
+  // Absolute Aegis (T8). The rind is thickest at the BACK: it now shells only
+  // the pieces on your back two ranks, guarding your home base and king's
+  // cover while everything forward of the rind fights unprotected.
   card(
     {
       id: "watermelon_rind",
       name: "Watermelon Rind",
-      description: "Duck behind the rind: your whole army cannot be captured for your opponent's next 2 turns.",
+      description: "Duck behind the rind: every one of your pieces standing on your back two ranks cannot be captured for your opponent's next 2 turns. Pieces further forward are outside the shell.",
       tier: 4,
       category: "protection",
       boon: true,
-      flavor: "Nature's armor, mostly water.",
+      flavor: "Nature's armor, mostly water, all of it at the back.",
     },
     instant((_inst, api) => {
-      addEffect(api, { kind: "shield", owner: api.me, squares: null, turns: 2 });
+      const squares = mySquares(api.board, api.me).filter(
+        (sq) => relRank(api.me, sq) <= 2,
+      );
+      if (squares.length) {
+        addEffect(api, { kind: "shield", owner: api.me, squares, turns: 2 });
+      }
     }),
   ),
 ];

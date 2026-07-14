@@ -71,6 +71,16 @@ const nextConfig = {
     // the TURNSTILE_SECRET_KEY Worker secret.
     NEXT_PUBLIC_TURNSTILE_SITEKEY:
       process.env.NEXT_PUBLIC_TURNSTILE_SITEKEY ?? "0x4AAAAAADyLZ_9QP6JEhhkU",
+    // Tier 3 direct-arena gate: the public base URL of the arena service.
+    // Baked to the prod arena here (like the Turnstile sitekey above) so it is
+    // inlined at every build and survives CI/dashboard var resets — a runtime
+    // wrangler var can't drive it because NEXT_PUBLIC_* is inlined into the
+    // client at build time. `||` (not `??`) so a stray empty CI var still falls
+    // through to this default. Override with a non-empty NEXT_PUBLIC_ARENA_URL
+    // for non-prod; to turn client Tier 3 off, change this default to "".
+    // See src/lib/arenaLobby.ts.
+    NEXT_PUBLIC_ARENA_URL:
+      process.env.NEXT_PUBLIC_ARENA_URL || "https://arena.nerfchess.com",
   },
   async headers() {
     return [
@@ -78,6 +88,13 @@ const nextConfig = {
         source: "/:path*",
         headers: securityHeaders,
       },
+    ];
+  },
+  async redirects() {
+    // Cards converted from nerfs to buffs keep their old codex URLs alive.
+    return [
+      { source: "/codex/nerf/middle_part", destination: "/codex/buff/middle_part", permanent: true },
+      { source: "/codex/nerf/forearm_veins", destination: "/codex/buff/forearm_veins", permanent: true },
     ];
   },
 };

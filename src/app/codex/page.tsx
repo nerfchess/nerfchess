@@ -183,8 +183,8 @@ export default function CodexPage() {
         </h1>
         <p className="mt-3 text-parchment-200">
           {isRules
-            ? `${ALL_NERFS.length} nerfs in the library. Search by name, effect, or category.`
-            : `${totalCount} ${nounPlural} in the library, ordered by the same tiers as the nerfs. Search by name, effect, or category.`}
+            ? `${ALL_NERFS.length} nerfs: search by name, effect, or category.`
+            : `${totalCount} ${nounPlural}: search by name, effect, or category.`}
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-2">
           <Link

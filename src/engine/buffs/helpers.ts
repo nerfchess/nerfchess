@@ -418,14 +418,16 @@ export function grantRandomTier9(api: BuffApi) {
   api.mine.buffs.push(inst);
 }
 
-/** Grant the holder a GUARANTEED tier-10 mythic card as an unspent, usable card
- * added to their hand (same seating as grantRandomTier9, but never a tier-9
- * fallback unless TIER10 is somehow empty). Used by Chess Diff, whose whole
- * premise is that winning the diff hands you a mythic. A single seeded api.rng
- * draw picks the card (and api.rng is seeded from the synced public state), so
- * every replica seats the identical card (desync-safe). */
-export function grantRandomTier10(api: BuffApi) {
-  const pool = TIER10.length > 0 ? TIER10 : TIER9;
+/** Grant the holder a GUARANTEED tier-9 apex card as an unspent, usable card
+ * added to their hand (same seating as grantRandomTier9, but never the mythic
+ * gate — a tier-10 fallback only if TIER9 is somehow empty). Used by Chess
+ * Diff: winning the diff now hands you an apex card, one band below the
+ * mythic it used to pay out (balance pass — a free sub-game stakes nothing).
+ * A single seeded api.rng draw picks the card (and api.rng is seeded from the
+ * synced public state), so every replica seats the identical card
+ * (desync-safe). */
+export function grantGuaranteedTier9(api: BuffApi) {
+  const pool = TIER9.length > 0 ? TIER9 : TIER10;
   if (pool.length === 0) return;
   const def = pool[api.rng.int(pool.length)];
   const inst: BuffInstance = { id: def.id, tier: def.tier, state: {} };

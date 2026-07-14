@@ -148,11 +148,11 @@ function Boom({ delayMs, color, thickness = 3 }: { delayMs: number; color: strin
  * The outer span holds the static fan rotation; the animated gp-ray lives one
  * level in so its keyframed transform never clobbers the rotation. */
 const RAYS = [
-  { r: "-28deg", d: 0, w: "7%" },
-  { r: "-14deg", d: 60, w: "9%" },
-  { r: "0deg", d: 30, w: "11%" },
-  { r: "14deg", d: 90, w: "9%" },
-  { r: "28deg", d: 120, w: "7%" },
+  { r: "-28deg", d: 0, w: "9%" },
+  { r: "-14deg", d: 60, w: "11.5%" },
+  { r: "0deg", d: 30, w: "14%" },
+  { r: "14deg", d: 90, w: "11.5%" },
+  { r: "28deg", d: 120, w: "9%" },
 ];
 function RayFan({ hex, delayMs }: { hex: string; delayMs: number }) {
   return (
@@ -164,7 +164,7 @@ function RayFan({ hex, delayMs }: { hex: string; delayMs: number }) {
           style={{
             left: "50%",
             top: "6%",
-            height: "60%",
+            height: "66%",
             width: s.w,
             marginLeft: `calc(${s.w} / -2)`,
             transform: `rotate(${s.r})`,
@@ -250,8 +250,8 @@ function Lobs({
   delayMs,
   fill,
   stroke,
-  top = 57,
-  sizePct = 5,
+  top = 60,
+  sizePct = 6.5,
 }: {
   delayMs: number;
   fill: string;
@@ -293,7 +293,7 @@ function Glint({
   color,
   left = 46,
   top = 15,
-  sizePct = 7,
+  sizePct = 9,
 }: {
   delayMs: number;
   color: string;
@@ -327,14 +327,14 @@ function TargetHit({ palette, glyph, delayMs }: { palette: Palette; glyph: React
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span
         className="gp-flash absolute block rounded-full"
-        style={{ left: "20%", top: "20%", width: "60%", height: "60%", background: tint(p1, 0.5), animationDelay: `${delayMs}ms` }}
+        style={{ left: "17%", top: "17%", width: "66%", height: "66%", background: tint(p1, 0.5), animationDelay: `${delayMs}ms` }}
       />
-      <span className="gp-pop absolute block" style={{ left: "22%", top: "20%", width: "56%", height: "56%", animationDelay: `${delayMs + 60}ms` }}>
+      <span className="gp-pop absolute block" style={{ left: "18%", top: "16%", width: "64%", height: "64%", animationDelay: `${delayMs + 60}ms` }}>
         {glyph}
       </span>
       <span
         className="gp-tring absolute block rounded-full"
-        style={{ left: "14%", top: "14%", width: "72%", height: "72%", border: `2px solid ${tint(p1, 0.95)}`, animationDelay: `${delayMs + 140}ms` }}
+        style={{ left: "10%", top: "10%", width: "80%", height: "80%", border: `2px solid ${tint(p1, 0.95)}`, animationDelay: `${delayMs + 140}ms` }}
       />
       {HIT_SPARKS.map((v, i) => (
         <span
@@ -342,10 +342,10 @@ function TargetHit({ palette, glyph, delayMs }: { palette: Palette; glyph: React
           className="gp-spark absolute block"
           style={
             {
-              left: "41%",
-              top: "41%",
-              width: "18%",
-              height: "18%",
+              left: "39.5%",
+              top: "39.5%",
+              width: "21%",
+              height: "21%",
               "--dx": v.dx,
               "--dy": v.dy,
               "--rot": v.rot,
@@ -374,7 +374,7 @@ function GodDescent({ palette, glyph, lead, delayMs }: TemplateProps) {
       <Wash color={tint(p0, 0.28)} delayMs={delayMs} />
       <RayFan hex={p1} delayMs={delayMs} />
       {/* the colossal deity, descending into the light */}
-      <span className="gp-descend absolute block" style={{ left: "36%", top: "21%", width: "28%", height: "46%", animationDelay: `${delayMs + 180}ms` }}>
+      <span className="gp-descend absolute block" style={{ left: "33%", top: "16%", width: "34%", height: "56%", animationDelay: `${delayMs + 180}ms` }}>
         <svg viewBox="0 0 32 44" className="block h-full w-full" aria-hidden="true">
           {/* halo */}
           <circle cx="16" cy="8" r="7.2" fill="none" stroke={p1} strokeWidth="1.4" />
@@ -398,9 +398,9 @@ function GodDescent({ palette, glyph, lead, delayMs }: TemplateProps) {
       {/* touchdown flare + sparks + divine shockwaves */}
       <span
         className="gp-flash absolute block rounded-full"
-        style={{ left: "38%", top: "55%", width: "24%", height: "16%", background: tint(p1, 0.8), animationDelay: `${delayMs + 520}ms` }}
+        style={{ left: "34%", top: "60%", width: "32%", height: "18%", background: tint(p1, 0.8), animationDelay: `${delayMs + 520}ms` }}
       />
-      <Sparks delayMs={delayMs + 560} fill={p1} stroke={p2} sizePct={7} />
+      <Sparks delayMs={delayMs + 560} fill={p1} stroke={p2} sizePct={9} cy={58} />
       <Boom delayMs={delayMs + 600} color={tint(p1, 0.9)} thickness={4} />
       <Boom delayMs={delayMs + 720} color={tint(p0, 0.8)} />
       <Glint delayMs={delayMs + 1050} color={p1} />
@@ -421,7 +421,7 @@ function TitanRise({ palette, glyph, lead, delayMs }: TemplateProps) {
       {/* rubble kicked up as the ground splits */}
       <Lobs delayMs={delayMs + 120} fill={tint(p0, 0.95)} stroke={p2} />
       {/* the titan shouldering up from below */}
-      <span className="gp-rise absolute block" style={{ left: "35%", top: "26%", width: "30%", height: "46%", animationDelay: `${delayMs + 160}ms` }}>
+      <span className="gp-rise absolute block" style={{ left: "32%", top: "20%", width: "36%", height: "56%", animationDelay: `${delayMs + 160}ms` }}>
         <svg viewBox="0 0 36 44" className="block h-full w-full" aria-hidden="true">
           {/* blocky head, eyes lit */}
           <path d="M14.5 9 L15 3.5 H21 L21.5 9 Z" fill={tint(p0, 0.92)} stroke={p2} strokeWidth="1" {...SJ} />
@@ -439,9 +439,9 @@ function TitanRise({ palette, glyph, lead, delayMs }: TemplateProps) {
       {/* ground-strike flare + sparks + earth-shock rings */}
       <span
         className="gp-flash absolute block rounded-full"
-        style={{ left: "37%", top: "56%", width: "26%", height: "14%", background: tint(p1, 0.75), animationDelay: `${delayMs + 600}ms` }}
+        style={{ left: "34%", top: "62%", width: "32%", height: "16%", background: tint(p1, 0.75), animationDelay: `${delayMs + 600}ms` }}
       />
-      <Sparks delayMs={delayMs + 640} fill={p1} stroke={p2} sizePct={6} cy={58} />
+      <Sparks delayMs={delayMs + 640} fill={p1} stroke={p2} sizePct={8} cy={62} />
       <Boom delayMs={delayMs + 680} color={tint(p1, 0.9)} thickness={4} />
       <Boom delayMs={delayMs + 800} color={tint(p0, 0.8)} />
       <Glint delayMs={delayMs + 1080} color={p1} left={48} top={22} />
@@ -460,10 +460,10 @@ function SkyWrath({ palette, glyph, lead, delayMs }: TemplateProps) {
     <Stage>
       <Wash color={tint(p0, 0.25)} delayMs={delayMs} />
       {/* the cloud bank + storm-god torso, boiling in at the top */}
-      <span className="gp-descend absolute block" style={{ left: "24%", top: "5%", width: "52%", height: "22%", animationDelay: `${delayMs + 100}ms` }}>
+      <span className="gp-descend absolute block" style={{ left: "16%", top: "9%", width: "68%", height: "32%", animationDelay: `${delayMs + 100}ms` }}>
         <svg viewBox="0 0 48 22" className="block h-full w-full" aria-hidden="true">
           {/* storm halo */}
-          <circle cx="24" cy="8" r="6.4" fill="none" stroke={tint(p2, 0.9)} strokeWidth="1" />
+          <circle cx="24" cy="8" r="7.4" fill="none" stroke={tint(p2, 0.9)} strokeWidth="1.2" />
           {/* cloud bank */}
           <path
             d="M2 19 Q4 11 10 13 Q12 5 19 8 Q25 1 31 7 Q40 4 42 12 Q47 14 46 19 Z"
@@ -473,16 +473,16 @@ function SkyWrath({ palette, glyph, lead, delayMs }: TemplateProps) {
             {...SJ}
           />
           {/* the god's shoulders + head, rising out of the bank */}
-          <path d="M17 19 C18 13 20.5 11.5 24 11.5 C27.5 11.5 30 13 31 19 Z" fill={tint(p0, 0.9)} stroke={p2} strokeWidth="0.8" {...SJ} />
-          <circle cx="24" cy="8.6" r="2.6" fill={tint(p0, 0.92)} stroke={p2} strokeWidth="0.7" />
+          <path d="M15 19 C16.5 11.5 20 9.6 24 9.6 C28 9.6 31.5 11.5 33 19 Z" fill={tint(p0, 0.9)} stroke={p2} strokeWidth="0.8" {...SJ} />
+          <circle cx="24" cy="8.4" r="3.4" fill={tint(p0, 0.92)} stroke={p2} strokeWidth="0.7" />
           {/* the hurling arm */}
-          <path d="M30 13.5 L38.5 8.5" stroke={tint(p0, 0.9)} strokeWidth="2" strokeLinecap="round" />
+          <path d="M32 12.5 L41.5 6.5" stroke={tint(p0, 0.9)} strokeWidth="2.6" strokeLinecap="round" />
         </svg>
         {/* the card's glyph, set inside the storm halo */}
-        <span className="absolute block" style={{ left: "46%", top: "4%", width: "8%", height: "22%" }}>{glyph}</span>
+        <span className="absolute block" style={{ left: "45%", top: "3%", width: "10%", height: "24%" }}>{glyph}</span>
       </span>
       {/* the jagged bolt, cracking down to the board centre */}
-      <span className="gp-bolt absolute block" style={{ left: "44%", top: "24%", width: "12%", height: "32%", animationDelay: `${delayMs + 480}ms` }}>
+      <span className="gp-bolt absolute block" style={{ left: "43%", top: "30%", width: "14%", height: "36%", animationDelay: `${delayMs + 480}ms` }}>
         <svg viewBox="0 0 12 32" className="block h-full w-full" aria-hidden="true">
           <path
             d="M7 0 L3 12 L6.4 13 L2 24 L5.5 24.8 L3.4 32 L10 18 L6.4 17 L10.5 6 L7.6 5.4 L9 0 Z"
@@ -496,12 +496,12 @@ function SkyWrath({ palette, glyph, lead, delayMs }: TemplateProps) {
       {/* strike flash + sparks + thunder-shock rings */}
       <span
         className="gp-flash absolute block rounded-full"
-        style={{ left: "40%", top: "50%", width: "20%", height: "14%", background: tint(p2, 0.85), animationDelay: `${delayMs + 620}ms` }}
+        style={{ left: "37%", top: "56%", width: "26%", height: "16%", background: tint(p2, 0.85), animationDelay: `${delayMs + 620}ms` }}
       />
-      <Sparks delayMs={delayMs + 660} fill={p2} stroke={p1} sizePct={6} cy={56} />
+      <Sparks delayMs={delayMs + 660} fill={p2} stroke={p1} sizePct={8} cy={62} />
       <Boom delayMs={delayMs + 700} color={tint(p2, 0.9)} thickness={4} />
       <Boom delayMs={delayMs + 820} color={tint(p0, 0.8)} />
-      <Glint delayMs={delayMs + 1080} color={p2} left={47} top={44} />
+      <Glint delayMs={delayMs + 1080} color={p2} left={47} top={48} />
     </Stage>
   );
 }
@@ -526,7 +526,7 @@ function AbyssMaw({ palette, glyph, lead, delayMs }: TemplateProps) {
       {/* gathering darkness instead of light */}
       <Wash color={tint(p2, 0.42)} delayMs={delayMs} />
       {/* the vast void maw, yawning open mid-board */}
-      <span className="gp-maw absolute block" style={{ left: "31%", top: "30%", width: "38%", height: "26%", animationDelay: `${delayMs + 150}ms` }}>
+      <span className="gp-maw absolute block" style={{ left: "29%", top: "32%", width: "42%", height: "29%", animationDelay: `${delayMs + 150}ms` }}>
         <svg viewBox="0 0 44 26" className="block h-full w-full" aria-hidden="true">
           {/* tendrils reaching out of the rift */}
           <path
@@ -553,9 +553,9 @@ function AbyssMaw({ palette, glyph, lead, delayMs }: TemplateProps) {
           style={
             {
               left: `${v.l}%`,
-              top: "41%",
-              width: "2.5%",
-              height: "2.5%",
+              top: "44%",
+              width: "3.2%",
+              height: "3.2%",
               background: tint(p0, 0.9),
               "--dx": v.dx,
               "--dy": v.dy,
@@ -567,12 +567,12 @@ function AbyssMaw({ palette, glyph, lead, delayMs }: TemplateProps) {
       {/* implosion pulse + inverse shockwaves */}
       <span
         className="gp-flash absolute block rounded-full"
-        style={{ left: "42%", top: "37%", width: "16%", height: "11%", background: tint(p1, 0.7), animationDelay: `${delayMs + 700}ms` }}
+        style={{ left: "40%", top: "42%", width: "20%", height: "13%", background: tint(p1, 0.7), animationDelay: `${delayMs + 700}ms` }}
       />
-      <Sparks delayMs={delayMs + 740} fill={p0} stroke={p1} sizePct={5} cy={42} />
+      <Sparks delayMs={delayMs + 740} fill={p0} stroke={p1} sizePct={6.5} cy={47} />
       <Boom delayMs={delayMs + 780} color={tint(p1, 0.9)} thickness={4} />
       <Boom delayMs={delayMs + 900} color={tint(p0, 0.8)} />
-      <Glint delayMs={delayMs + 1140} color={p0} left={47} top={38} />
+      <Glint delayMs={delayMs + 1140} color={p0} left={47} top={42} />
     </Stage>
   );
 }
@@ -588,7 +588,7 @@ function ReaperSweep({ palette, glyph, lead, delayMs, extra = 0 }: TemplateProps
     <Stage>
       <Wash color={tint(p0, 0.3)} delayMs={delayMs} />
       {/* the reaper, striding across the crop */}
-      <span className="gp-stride absolute block" style={{ left: "31%", top: "22%", width: "32%", height: "46%", animationDelay: `${delayMs + 120}ms` }}>
+      <span className="gp-stride absolute block" style={{ left: "28%", top: "14%", width: "38%", height: "56%", animationDelay: `${delayMs + 120}ms` }}>
         <svg viewBox="0 0 34 44" className="block h-full w-full" aria-hidden="true">
           {/* scythe shaft */}
           <path d="M6 6 L26 40" stroke={tint(p2, 0.9)} strokeWidth="1.4" strokeLinecap="round" />
@@ -611,7 +611,7 @@ function ReaperSweep({ palette, glyph, lead, delayMs, extra = 0 }: TemplateProps
         <span className="absolute block" style={{ left: "16%", top: "44%", width: "20%", height: "18%" }}>{glyph}</span>
       </span>
       {/* the great scythe arc, sweeping the whole crop */}
-      <span className="gp-scythe absolute block" style={{ left: "28%", top: "28%", width: "44%", height: "32%", animationDelay: `${delayMs + 460}ms` }}>
+      <span className="gp-scythe absolute block" style={{ left: "22%", top: "30%", width: "56%", height: "40%", animationDelay: `${delayMs + 460}ms` }}>
         <svg viewBox="0 0 44 32" className="block h-full w-full" aria-hidden="true">
           <path d="M4 22 C16 28 30 28 40 20" stroke={tint(p1, 0.5)} strokeWidth="1.2" fill="none" strokeLinecap="round" />
           <path d="M2 26 C14 32 30 32 42 24 C32 28 16 28 6 22 Z" fill={tint(p1, 0.9)} stroke={p2} strokeWidth="0.8" {...SJ} />
@@ -620,9 +620,9 @@ function ReaperSweep({ palette, glyph, lead, delayMs, extra = 0 }: TemplateProps
       {/* harvest flare + sparks + graven shockwaves */}
       <span
         className="gp-flash absolute block rounded-full"
-        style={{ left: "39%", top: "52%", width: "22%", height: "13%", background: tint(p1, 0.7), animationDelay: `${delayMs + 720}ms` }}
+        style={{ left: "36%", top: "58%", width: "28%", height: "16%", background: tint(p1, 0.7), animationDelay: `${delayMs + 720}ms` }}
       />
-      <Sparks delayMs={delayMs + 760} fill={p1} stroke={p0} sizePct={5} cy={56} />
+      <Sparks delayMs={delayMs + 760} fill={p1} stroke={p0} sizePct={6.5} cy={61} />
       <Boom delayMs={delayMs + 800} color={tint(p1, 0.9)} thickness={4} />
       <Boom delayMs={delayMs + 920} color={tint(p0, 0.8)} />
       {/* tier-9 boost (culling): a third wave rolls out */}
@@ -643,7 +643,7 @@ function HostMarch({ palette, glyph, lead, delayMs }: TemplateProps) {
     <Stage>
       <Wash color={tint(p0, 0.25)} delayMs={delayMs} />
       {/* the war-host, marching across the board width */}
-      <span className="gp-march absolute block" style={{ left: "18%", top: "34%", width: "64%", height: "26%", animationDelay: `${delayMs + 100}ms` }}>
+      <span className="gp-march absolute block" style={{ left: "10%", top: "31%", width: "80%", height: "33%", animationDelay: `${delayMs + 100}ms` }}>
         <svg viewBox="0 0 64 26" className="block h-full w-full" aria-hidden="true">
           {/* spear rank */}
           <path d="M4 26 V8 M10 26 V6 M16 26 V9 M46 26 V7 M52 26 V9 M58 26 V8" stroke={tint(p2, 0.9)} strokeWidth="0.9" />
@@ -655,12 +655,12 @@ function HostMarch({ palette, glyph, lead, delayMs }: TemplateProps) {
             {...SJ}
           />
           {/* flanking swallow-tail banners */}
-          <path d="M20 26 V4 M44 26 V4" stroke={tint(p2, 0.9)} strokeWidth="0.9" />
-          <path d="M20 4 H27 L25 7 L27 10 H20 Z M44 4 H37 L39 7 L37 10 H44 Z" fill={tint(p0, 0.9)} stroke={p2} strokeWidth="0.5" {...SJ} />
+          <path d="M15 26 V4 M49 26 V4" stroke={tint(p2, 0.9)} strokeWidth="0.9" />
+          <path d="M15 4 H22 L20 7 L22 10 H15 Z M49 4 H42 L44 7 L42 10 H49 Z" fill={tint(p0, 0.9)} stroke={p2} strokeWidth="0.5" {...SJ} />
           {/* the giant commander standard */}
-          <path d="M32 26 V1.5" stroke={p2} strokeWidth="1.2" />
-          <circle cx="32" cy="1.6" r="1" fill={p1} />
-          <path d="M25.5 3.5 H38.5 V14 L32 17 L25.5 14 Z" fill={tint(p1, 0.9)} stroke={p2} strokeWidth="0.8" {...SJ} />
+          <path d="M32 26 V1" stroke={p2} strokeWidth="1.4" />
+          <circle cx="32" cy="1.1" r="1.2" fill={p1} />
+          <path d="M21 2.5 H43 V16 L32 20.5 L21 16 Z" fill={tint(p1, 0.9)} stroke={p2} strokeWidth="0.8" {...SJ} />
           {/* shield row at the host's feet */}
           <path
             d="M2 26 C6 22 10 22 14 26 M14 26 C18 22 22 22 26 26 M38 26 C42 22 46 22 50 26 M50 26 C54 22 58 22 62 26"
@@ -670,14 +670,14 @@ function HostMarch({ palette, glyph, lead, delayMs }: TemplateProps) {
           />
         </svg>
         {/* the card's glyph, borne on the commander standard */}
-        <span className="absolute block" style={{ left: "43%", top: "15%", width: "14%", height: "36%" }}>{glyph}</span>
+        <span className="absolute block" style={{ left: "38%", top: "13%", width: "24%", height: "48%" }}>{glyph}</span>
       </span>
       {/* dust kicked up by the march */}
-      <Sparks delayMs={delayMs + 520} fill={p1} stroke={p2} sizePct={5} cx={44} cy={60} />
+      <Sparks delayMs={delayMs + 520} fill={p1} stroke={p2} sizePct={6.5} cx={44} cy={62} />
       {/* the host's war-cry: flare + shockwaves rolling past the edges */}
       <span
         className="gp-flash absolute block rounded-full"
-        style={{ left: "42%", top: "42%", width: "18%", height: "13%", background: tint(p1, 0.7), animationDelay: `${delayMs + 820}ms` }}
+        style={{ left: "40%", top: "40%", width: "22%", height: "15%", background: tint(p1, 0.7), animationDelay: `${delayMs + 820}ms` }}
       />
       <Boom delayMs={delayMs + 880} color={tint(p1, 0.9)} thickness={4} />
       <Boom delayMs={delayMs + 1000} color={tint(p0, 0.8)} />
@@ -707,7 +707,7 @@ function CelestialRing({ palette, glyph, lead, delayMs, extra = 0 }: TemplatePro
       {/* tier-9 boost (grand conjunction): a god-fan breaks with the ring */}
       {extra > 0 && <RayFan hex={p1} delayMs={delayMs + 60} />}
       {/* the vast rune ring, settling flat out of the sky */}
-      <span className="gp-ringset absolute block" style={{ left: "22%", top: "22%", width: "56%", height: "56%", animationDelay: `${delayMs + 120}ms` }}>
+      <span className="gp-ringset absolute block" style={{ left: "20%", top: "20%", width: "60%", height: "60%", animationDelay: `${delayMs + 120}ms` }}>
         <svg viewBox="0 0 40 40" className="block h-full w-full" aria-hidden="true">
           <circle cx="20" cy="20" r="17.5" fill="none" stroke={tint(p1, 0.9)} strokeWidth="1.3" />
           <circle cx="20" cy="20" r="14" fill="none" stroke={tint(p2, 0.7)} strokeWidth="0.6" strokeDasharray="2.6 1.7" />
@@ -721,11 +721,11 @@ function CelestialRing({ palette, glyph, lead, delayMs, extra = 0 }: TemplatePro
           />
         </svg>
         {/* the card's glyph as the centre sigil */}
-        <span className="absolute block" style={{ left: "36%", top: "36%", width: "28%", height: "28%" }}>{glyph}</span>
+        <span className="absolute block" style={{ left: "34%", top: "34%", width: "32%", height: "32%" }}>{glyph}</span>
       </span>
       {/* constellation sparks lighting around the ring */}
       {STARS.map((s, i) => (
-        <span key={i} className="gp-glint absolute block" style={{ left: `${s.l}%`, top: `${s.t}%`, width: "4%", height: "4%", animationDelay: `${delayMs + 420 + s.d}ms` }}>
+        <span key={i} className="gp-glint absolute block" style={{ left: `${s.l}%`, top: `${s.t}%`, width: "5%", height: "5%", animationDelay: `${delayMs + 420 + s.d}ms` }}>
           <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
             <path d="M5 0 L6.1 3.9 L10 5 L6.1 6.1 L5 10 L3.9 6.1 L0 5 L3.9 3.9 Z" fill={i % 2 ? p2 : p1} />
           </svg>
@@ -734,7 +734,7 @@ function CelestialRing({ palette, glyph, lead, delayMs, extra = 0 }: TemplatePro
       {/* alignment pulse + shockwaves */}
       <span
         className="gp-flash absolute block rounded-full"
-        style={{ left: "42%", top: "44%", width: "16%", height: "12%", background: tint(p1, 0.7), animationDelay: `${delayMs + 760}ms` }}
+        style={{ left: "40%", top: "43%", width: "20%", height: "14%", background: tint(p1, 0.7), animationDelay: `${delayMs + 760}ms` }}
       />
       <Boom delayMs={delayMs + 820} color={tint(p1, 0.9)} thickness={4} />
       <Boom delayMs={delayMs + 940} color={tint(p2, 0.8)} />
@@ -774,9 +774,9 @@ function FrostTitan({ palette, glyph, lead, delayMs }: TemplateProps) {
         />
       ))}
       {/* ice shards fanning up from the rift */}
-      <Lobs delayMs={delayMs + 140} fill={tint(p0, 0.9)} stroke={p2} top={56} sizePct={4} />
+      <Lobs delayMs={delayMs + 140} fill={tint(p0, 0.9)} stroke={p2} top={60} sizePct={5} />
       {/* the glacial colossus, rising */}
-      <span className="gp-rise absolute block" style={{ left: "35%", top: "26%", width: "30%", height: "46%", animationDelay: `${delayMs + 180}ms` }}>
+      <span className="gp-rise absolute block" style={{ left: "32%", top: "20%", width: "36%", height: "56%", animationDelay: `${delayMs + 180}ms` }}>
         <svg viewBox="0 0 36 44" className="block h-full w-full" aria-hidden="true">
           {/* jagged crown of ice */}
           <path d="M13 9 L12 3 L15 6 L18 1 L21 6 L24 3 L23 9 Z" fill={tint(p1, 0.9)} stroke={p2} strokeWidth="0.7" {...SJ} />
@@ -797,9 +797,9 @@ function FrostTitan({ palette, glyph, lead, delayMs }: TemplateProps) {
       {/* rime flare + shards + glacial shockwaves */}
       <span
         className="gp-flash absolute block rounded-full"
-        style={{ left: "38%", top: "55%", width: "24%", height: "14%", background: tint(p1, 0.75), animationDelay: `${delayMs + 640}ms` }}
+        style={{ left: "34%", top: "60%", width: "30%", height: "16%", background: tint(p1, 0.75), animationDelay: `${delayMs + 640}ms` }}
       />
-      <Sparks delayMs={delayMs + 680} fill={p1} stroke={p2} sizePct={6} cy={57} />
+      <Sparks delayMs={delayMs + 680} fill={p1} stroke={p2} sizePct={8} cy={62} />
       <Boom delayMs={delayMs + 720} color={tint(p1, 0.9)} thickness={4} />
       <Boom delayMs={delayMs + 840} color={tint(p0, 0.8)} />
       <Glint delayMs={delayMs + 1100} color={p1} left={48} top={22} />
@@ -820,15 +820,15 @@ function ForgeColossus({ palette, glyph, lead, delayMs }: TemplateProps) {
       <Wash color={tint(p0, 0.26)} delayMs={delayMs} />
       <RayFan hex={p1} delayMs={delayMs + 40} />
       {/* the colossal implement itself — the glyph, writ huge — slamming down */}
-      <span className="gp-slam absolute block" style={{ left: "33%", top: "12%", width: "34%", height: "44%", animationDelay: `${delayMs + 160}ms` }}>
+      <span className="gp-slam absolute block" style={{ left: "32%", top: "10%", width: "36%", height: "46%", animationDelay: `${delayMs + 160}ms` }}>
         {glyph}
       </span>
       {/* impact flare + forge sparks */}
       <span
         className="gp-flash absolute block rounded-full"
-        style={{ left: "36%", top: "52%", width: "28%", height: "16%", background: tint(p2, 0.85), animationDelay: `${delayMs + 560}ms` }}
+        style={{ left: "33%", top: "48%", width: "34%", height: "16%", background: tint(p2, 0.85), animationDelay: `${delayMs + 560}ms` }}
       />
-      <Sparks delayMs={delayMs + 600} fill={p2} stroke={p1} sizePct={7} cy={58} />
+      <Sparks delayMs={delayMs + 600} fill={p2} stroke={p1} sizePct={9} cy={58} />
       {/* the judge's-gavel double shockwave */}
       <Boom delayMs={delayMs + 640} color={tint(p2, 0.9)} thickness={4} />
       <Boom delayMs={delayMs + 750} color={tint(p0, 0.85)} />
@@ -848,7 +848,7 @@ function GorgonIdol({ palette, glyph, lead, delayMs }: TemplateProps) {
     <Stage>
       <Wash color={tint(p0, 0.26)} delayMs={delayMs} />
       {/* the idol head, grinding up out of the board */}
-      <span className="gp-rise absolute block" style={{ left: "34%", top: "26%", width: "30%", height: "42%", animationDelay: `${delayMs + 150}ms` }}>
+      <span className="gp-rise absolute block" style={{ left: "31%", top: "19%", width: "38%", height: "52%", animationDelay: `${delayMs + 150}ms` }}>
         <svg viewBox="0 0 36 40" className="block h-full w-full" aria-hidden="true">
           {/* serpent hair, writhing */}
           <path
@@ -879,7 +879,7 @@ function GorgonIdol({ palette, glyph, lead, delayMs }: TemplateProps) {
       {/* the eyes flare... */}
       <span
         className="gp-flash absolute block rounded-full"
-        style={{ left: "43%", top: "42%", width: "14%", height: "8%", background: tint(p1, 0.8), animationDelay: `${delayMs + 560}ms` }}
+        style={{ left: "41%", top: "40%", width: "18%", height: "10%", background: tint(p1, 0.8), animationDelay: `${delayMs + 560}ms` }}
       />
       {/* ...and the petrifying gaze rolls out in rings */}
       {[0, 130, 260].map((d, i) => (
@@ -887,16 +887,16 @@ function GorgonIdol({ palette, glyph, lead, delayMs }: TemplateProps) {
           key={i}
           className="gp-gaze absolute block rounded-full"
           style={{
-            left: "24%",
-            top: "21%",
-            width: "52%",
-            height: "52%",
+            left: "20%",
+            top: "15%",
+            width: "60%",
+            height: "60%",
             border: `${i === 0 ? 4 : 2.5}px solid ${tint(i % 2 ? p2 : p1, 0.85)}`,
             animationDelay: `${delayMs + 600 + d}ms`,
           }}
         />
       ))}
-      <Sparks delayMs={delayMs + 680} fill={p1} stroke={p2} sizePct={5} cy={50} />
+      <Sparks delayMs={delayMs + 680} fill={p1} stroke={p2} sizePct={6.5} cy={52} />
       <Boom delayMs={delayMs + 860} color={tint(p0, 0.85)} />
       <Glint delayMs={delayMs + 1140} color={p1} left={47} top={24} />
     </Stage>
@@ -915,7 +915,7 @@ function ChronoLord({ palette, glyph, lead, delayMs }: TemplateProps) {
     <Stage>
       <Wash color={tint(p0, 0.25)} delayMs={delayMs} />
       {/* the great clock ring settles over the board */}
-      <span className="gp-ringset absolute block" style={{ left: "25%", top: "30%", width: "50%", height: "50%", animationDelay: `${delayMs + 120}ms` }}>
+      <span className="gp-ringset absolute block" style={{ left: "21%", top: "22%", width: "58%", height: "58%", animationDelay: `${delayMs + 120}ms` }}>
         <svg viewBox="0 0 40 40" className="block h-full w-full" aria-hidden="true">
           <circle cx="20" cy="20" r="17" fill="none" stroke={tint(p1, 0.9)} strokeWidth="1.2" />
           <circle cx="20" cy="20" r="13.5" fill="none" stroke={tint(p2, 0.6)} strokeWidth="0.5" strokeDasharray="2.2 1.6" />
@@ -933,10 +933,10 @@ function ChronoLord({ palette, glyph, lead, delayMs }: TemplateProps) {
       {/* the great hand sweeps once around */}
       <span
         className="gp-handsweep absolute block"
-        style={{ left: "49.25%", top: "41%", width: "1.5%", height: "14%", background: `linear-gradient(180deg, ${tint(p1, 0.95)}, transparent)`, animationDelay: `${delayMs + 420}ms` }}
+        style={{ left: "49%", top: "33%", width: "2%", height: "18%", background: `linear-gradient(180deg, ${tint(p1, 0.95)}, transparent)`, animationDelay: `${delayMs + 420}ms` }}
       />
       {/* the time sovereign, descending above the ring */}
-      <span className="gp-descend absolute block" style={{ left: "37%", top: "13%", width: "26%", height: "40%", animationDelay: `${delayMs + 180}ms` }}>
+      <span className="gp-descend absolute block" style={{ left: "34%", top: "12%", width: "32%", height: "48%", animationDelay: `${delayMs + 180}ms` }}>
         <svg viewBox="0 0 32 44" className="block h-full w-full" aria-hidden="true">
           {/* crowned clock head */}
           <path d="M12.4 2.8 L13.4 0.6 L15 2.2 L16 0.2 L17 2.2 L18.6 0.6 L19.6 2.8 Z" fill={p1} stroke={p2} strokeWidth="0.4" {...SJ} />
@@ -952,9 +952,9 @@ function ChronoLord({ palette, glyph, lead, delayMs }: TemplateProps) {
       {/* the stroke of the hour: flare + sparks + shockwaves */}
       <span
         className="gp-flash absolute block rounded-full"
-        style={{ left: "42%", top: "50%", width: "16%", height: "11%", background: tint(p1, 0.75), animationDelay: `${delayMs + 800}ms` }}
+        style={{ left: "40%", top: "48%", width: "20%", height: "14%", background: tint(p1, 0.75), animationDelay: `${delayMs + 800}ms` }}
       />
-      <Sparks delayMs={delayMs + 840} fill={p1} stroke={p2} sizePct={5} cy={54} />
+      <Sparks delayMs={delayMs + 840} fill={p1} stroke={p2} sizePct={6.5} cy={56} />
       <Boom delayMs={delayMs + 880} color={tint(p1, 0.9)} thickness={4} />
       <Boom delayMs={delayMs + 1000} color={tint(p0, 0.8)} />
       <Glint delayMs={delayMs + 1220} color={p1} left={47} top={26} />
@@ -1006,16 +1006,16 @@ function SkullStrike({ palette, glyph, lead, delayMs }: TemplateProps) {
         className="gp-pane absolute block"
         style={{
           left: "12%",
-          top: "46%",
+          top: "44%",
           width: "76%",
-          height: "11%",
+          height: "14%",
           background: `linear-gradient(90deg, ${tint(p2, 0.5)}, ${tint(p0, 0.25)} 70%, transparent)`,
           animationDelay: `${delayMs + 80}ms`,
           animationDuration: "1.4s",
         }}
       />
       {/* THE SKULL, bowled the full width of the crop */}
-      <span className="gp-roll absolute block" style={{ left: "31%", top: "37%", width: "17%", height: "22%", animationDelay: `${delayMs + 240}ms` }}>
+      <span className="gp-roll absolute block" style={{ left: "26%", top: "30%", width: "32%", height: "36%", animationDelay: `${delayMs + 240}ms` }}>
         {glyph}
       </span>
       {/* the pins: the marked pieces, scattered as it ploughs through */}
@@ -1026,9 +1026,9 @@ function SkullStrike({ palette, glyph, lead, delayMs }: TemplateProps) {
           style={
             {
               left: `${v.l}%`,
-              top: "44%",
-              width: "4.5%",
-              height: "8%",
+              top: "42%",
+              width: "5.5%",
+              height: "10%",
               "--dx": v.dx,
               "--dy": v.dy,
               "--rot": v.rot,
@@ -1047,9 +1047,9 @@ function SkullStrike({ palette, glyph, lead, delayMs }: TemplateProps) {
       {/* STRIKE: flare at the far end + sparks + a TRIPLE graven shockwave */}
       <span
         className="gp-flash absolute block rounded-full"
-        style={{ left: "60%", top: "42%", width: "22%", height: "14%", background: tint(p0, 0.75), animationDelay: `${delayMs + 1720}ms` }}
+        style={{ left: "58%", top: "40%", width: "28%", height: "18%", background: tint(p0, 0.75), animationDelay: `${delayMs + 1720}ms` }}
       />
-      <Sparks delayMs={delayMs + 1760} fill={p0} stroke={p2} sizePct={6} cx={68} cy={48} />
+      <Sparks delayMs={delayMs + 1760} fill={p0} stroke={p2} sizePct={8} cx={68} cy={48} />
       <Boom delayMs={delayMs + 1820} color={tint(p0, 0.9)} thickness={4} />
       <Boom delayMs={delayMs + 1980} color={tint(p2, 0.85)} thickness={3} />
       <Boom delayMs={delayMs + 2140} color={tint(p1, 0.8)} />
@@ -1074,9 +1074,9 @@ const SKY_STARS = [
   { l: 74, t: 48, d: 225 },
 ];
 const WORLDS = [
-  { t: 26, s: 7, fx: "-340%", fy: "-80%", d: 300 },
-  { t: 37, s: 10, fx: "360%", fy: "60%", d: 400 },
-  { t: 51, s: 8, fx: "-300%", fy: "140%", d: 500 },
+  { t: 28, s: 10, fx: "-340%", fy: "-80%", d: 300 },
+  { t: 39, s: 14, fx: "360%", fy: "60%", d: 400 },
+  { t: 51, s: 11, fx: "-300%", fy: "140%", d: 500 },
 ];
 function PlanetAlign({ palette, glyph, lead, delayMs }: TemplateProps) {
   const [p0, p1, p2] = palette;
@@ -1087,7 +1087,7 @@ function PlanetAlign({ palette, glyph, lead, delayMs }: TemplateProps) {
       <Bars delayMs={delayMs} />
       {/* the starfield kindles */}
       {SKY_STARS.map((s, i) => (
-        <span key={i} className="gp-glint absolute block" style={{ left: `${s.l}%`, top: `${s.t}%`, width: "3%", height: "3%", animationDelay: `${delayMs + 160 + s.d}ms` }}>
+        <span key={i} className="gp-glint absolute block" style={{ left: `${s.l}%`, top: `${s.t}%`, width: "4%", height: "4%", animationDelay: `${delayMs + 160 + s.d}ms` }}>
           <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
             <path d="M5 0 L6.1 3.9 L10 5 L6.1 6.1 L5 10 L3.9 6.1 L0 5 L3.9 3.9 Z" fill={i % 2 ? p2 : p1} />
           </svg>
@@ -1124,7 +1124,7 @@ function PlanetAlign({ palette, glyph, lead, delayMs }: TemplateProps) {
       {/* the conjunction beam pierces straight down through all three */}
       <span
         className="absolute block"
-        style={{ left: "47.5%", top: "20%", width: "5%", height: "48%" }}
+        style={{ left: "46.5%", top: "16%", width: "7%", height: "54%" }}
       >
         <span
           className="gp-ray absolute inset-0 block"
@@ -1132,15 +1132,15 @@ function PlanetAlign({ palette, glyph, lead, delayMs }: TemplateProps) {
         />
       </span>
       {/* the card's sigil blazes at the meeting point */}
-      <span className="gp-pop absolute block" style={{ left: "45%", top: "40%", width: "10%", height: "10%", animationDelay: `${delayMs + 1560}ms` }}>
+      <span className="gp-pop absolute block" style={{ left: "43.5%", top: "39.5%", width: "13%", height: "13%", animationDelay: `${delayMs + 1560}ms` }}>
         {glyph}
       </span>
       {/* syzygy: flare + sparks + TRIPLE shockwave */}
       <span
         className="gp-flash absolute block rounded-full"
-        style={{ left: "42%", top: "40%", width: "16%", height: "11%", background: tint(p2, 0.8), animationDelay: `${delayMs + 1620}ms` }}
+        style={{ left: "40%", top: "40%", width: "20%", height: "14%", background: tint(p2, 0.8), animationDelay: `${delayMs + 1620}ms` }}
       />
-      <Sparks delayMs={delayMs + 1660} fill={p2} stroke={p1} sizePct={5} cy={45} />
+      <Sparks delayMs={delayMs + 1660} fill={p2} stroke={p1} sizePct={6.5} cy={46} />
       <Boom delayMs={delayMs + 1720} color={tint(p2, 0.9)} thickness={4} />
       <Boom delayMs={delayMs + 1880} color={tint(p1, 0.85)} thickness={3} />
       <Boom delayMs={delayMs + 2040} color={tint(p0, 0.8)} />

@@ -11,7 +11,12 @@
 
 import { createServer, type IncomingMessage } from "node:http";
 import { replayToPosition, type EngineMatch } from "../src/engine/replay";
-import { HOUSE_SKILL_PROFILES, pickHouseMove, type HouseSkill } from "../src/lib/server/bots";
+import {
+  HOUSE_SKILL_PROFILES,
+  pickHouseMove,
+  sanitizeResolvedProfile,
+  type HouseSkill,
+} from "../src/lib/server/bots";
 
 const TOKEN = process.env.HOUSE_ENGINE_TOKEN ?? "";
 const REPLAY_VERSION = Number(process.env.ENGINE_REPLAY_VERSION ?? "0");
@@ -39,6 +44,11 @@ const randomInt = (max: number) => Math.floor(Math.random() * max);
 interface MoveRequest {
   match: EngineMatch;
   skill: HouseSkill;
+  // Moderator-resolved strength the DO computed. Optional (older Workers omit
+  // it) and re-clamped here field-by-field against the tier's baked profile, so
+  // a malformed or version-skewed payload degrades to baked strength, never to
+  // a broken search. Absent -> baked profile for `skill`.
+  profile?: unknown;
   remainingClockMs?: number;
   replayVersion: number;
 }
@@ -95,9 +105,11 @@ const server = createServer(async (req, res) => {
       return;
     }
 
+    // Honor the DO's resolved profile when present (re-clamped), else baked.
+    const profile = body.profile != null ? sanitizeResolvedProfile(body.skill, body.profile) : undefined;
     const game = replayToPosition(body.match);
     const move = game
-      ? pickHouseMove(game, body.skill, randomInt, body.remainingClockMs, REMOTE_SEARCH_CEILING_MS)
+      ? pickHouseMove(game, body.skill, randomInt, body.remainingClockMs, REMOTE_SEARCH_CEILING_MS, profile)
       : null;
 
     res.writeHead(200, { "content-type": "application/json" });

@@ -12,10 +12,14 @@ import { readSnapshot, writeSnapshot } from "@/lib/snapshotCache";
 import { MPLobby, MPLobbyChallenge, MPLobbyGame, MPLobbySeek, MPSession, saveOnlineSeat } from "@/lib/multiplayer";
 import { ModeBadge } from "@/components/ModeBadge";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
+import { StarField } from "@/components/StarField";
 import { categoryForTimeControl, getCategory } from "@/lib/ratingCategories";
 
-// The lobby: the central place to find a game. Shows who is online, the games
-// being played right now (click to watch), and every way to start playing.
+// The lobby: the central place to find a game, styled to match the home
+// page's dark starry identity. The shared StarField drifts behind flat solid
+// ink panels with hairline borders; each row wears its mode color as a plain
+// left border — no gradients, washes, or glows. Same data, same handlers,
+// same navigation as before — only the presentation changed.
 export default function LobbyPage() {
   const router = useRouter();
   const [user, setUser] = useState<AccountUser | null | undefined>(undefined);
@@ -31,6 +35,15 @@ export default function LobbyPage() {
     return () => {
       cancelled = true;
     };
+  }, []);
+
+  // Opening the lobby is real engagement: mint a guest account right away
+  // (ensureAccount no-ops for signed-in users and dedupes per page load) so
+  // engaged visitors show up in the moderators' guest counts instead of being
+  // invisible until they join a seek. Fire-and-forget and non-blocking: the
+  // lobby renders identically whether or not this ever resolves.
+  useEffect(() => {
+    void ensureAccount().catch(() => {});
   }, []);
 
   // Poll the lobby snapshot over the edge-cached HTTP route (no socket). The
@@ -154,39 +167,56 @@ export default function LobbyPage() {
 
   return (
     <main className="min-h-screen pb-16">
+      <StarField />
       <SiteHeader active="/lobby" />
 
       <section className="max-w-7xl mx-auto px-5 sm:px-6">
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <h1 className="masthead text-4xl sm:text-5xl text-parchment-50">Lobby</h1>
+        {/* Masthead over a plain brass hairline, with the live pulse of the
+            lobby as flat chips on the right. */}
+        <header className="relative mt-2 sm:mt-4">
+          <span className="eyebrow">Find a game</span>
+          <div className="mt-1 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+            <h1 className="masthead text-4xl sm:text-6xl text-parchment-50">The Lobby</h1>
+            <div className="flex flex-wrap items-center gap-2 pb-1">
+              <HallStat dotClass="bg-verdigris animate-flicker">
+                {onlineCount === null
+                  ? "Connecting…"
+                  : `${onlineCount} player${onlineCount === 1 ? "" : "s"} online`}
+              </HallStat>
+              <HallStat dotClass="bg-sun/80">
+                {lobby ? `${waitingCount} waiting` : "…"}
+              </HallStat>
+              <HallStat dotClass="bg-coral/80">
+                {lobby ? `${lobby.games.length} in play` : "…"}
+              </HallStat>
+            </div>
           </div>
-          <div className="flex items-center gap-2 smallcaps text-[11px] text-parchment-300">
-            <span className="w-2 h-2 bg-verdigris animate-flicker" />
-            {onlineCount === null ? "Connecting…" : `${onlineCount} player${onlineCount === 1 ? "" : "s"} online`}
-          </div>
-        </div>
+          <div className="hall-hairline mt-4" aria-hidden />
+        </header>
 
         {lobbyError && (
-          <div className="mt-5 plate p-3 px-4 border-oxblood-glow/60 bg-oxblood/15 text-parchment text-sm">
+          <div role="alert" className="mt-5 plate p-3 px-4 border-oxblood-glow/60 bg-oxblood/15 text-parchment text-sm">
             {lobbyError}
           </div>
         )}
 
-        <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
-          <div className="space-y-4 min-w-0">
+        <div className="mt-7 grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
+          <div className="space-y-5 min-w-0 stagger-in">
             {/* Step 1: the main action: get matched with a real opponent. */}
             <QueueButton />
 
             {/* Step 2: play a specific person via a shared code. */}
-            <div className="plate plate-hover p-5 sm:p-6">
+            <div className="plate p-5 sm:p-6">
               <SectionTitle tint="mint" icon={<Users size={15} aria-hidden />}>
                 Play a friend
               </SectionTitle>
+              <p className="mt-2 text-xs text-parchment-400">
+                Create a game and share the code, or enter the one you were given.
+              </p>
               <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
                 <Link
                   href="/friend"
-                  className="btn-leaf inline-flex items-center justify-center px-6 py-3 font-display text-base font-semibold"
+                  className="btn-leaf press inline-flex items-center justify-center px-6 py-3 font-display text-base font-semibold"
                 >
                   Create a game
                 </Link>
@@ -202,12 +232,12 @@ export default function LobbyPage() {
                     placeholder="Enter a code, e.g. ABCDE"
                     maxLength={8}
                     aria-label="Friend game code"
-                    className="min-w-0 flex-1 bg-ink-900/60 border border-white/15 px-4 py-3 font-mono tracking-widest uppercase focus:outline-none focus:border-gold/60 text-parchment placeholder:text-parchment-400/40 placeholder:tracking-normal placeholder:normal-case"
+                    className="min-w-0 flex-1 bg-ink-900/60 border border-white/15 px-4 py-3 font-mono tracking-widest uppercase transition-colors focus:outline-none focus:border-gold/60 text-parchment placeholder:text-parchment-400/40 placeholder:tracking-normal placeholder:normal-case"
                   />
                   <button
                     onClick={() => router.push(`/friend?code=${encodeURIComponent(joinCode.trim())}`)}
                     disabled={!joinCode.trim()}
-                    className="px-5 btn-ghost font-display disabled:opacity-50"
+                    className="px-5 btn-ghost press font-display disabled:opacity-50"
                   >
                     Join
                   </button>
@@ -216,8 +246,9 @@ export default function LobbyPage() {
             </div>
 
             {/* Open challenges: players waiting in a quick-pairing pool plus
-                friend games waiting for an opponent. */}
-            <div className="plate plate-hover p-5 sm:p-6">
+                friend games waiting for an opponent, each on its own flat row
+                wearing its mode color as a plain left border. */}
+            <div className="plate p-5 sm:p-6">
               <div className="flex items-center justify-between gap-3">
                 <SectionTitle tint="sun" icon={<Swords size={15} aria-hidden />}>
                   Open challenges
@@ -237,9 +268,12 @@ export default function LobbyPage() {
               {!lobby ? (
                 <SkeletonRows count={3} />
               ) : waitingCount === 0 ? (
-                <p className="mt-3 text-sm text-parchment-400">No one is waiting right now.</p>
+                <HallEmpty
+                  title="No one is waiting right now."
+                  hint="Queue above and your seek will appear here for others to answer."
+                />
               ) : (
-                <ul className="mt-3 divide-y divide-white/5">
+                <ul className="mt-4 space-y-2.5 stagger-in">
                   {seeks.map((seek) => (
                     <SeekRow
                       key={`${seek.mode ?? "buff"}:${seek.pool}:${seek.name}:${seek.at}`}
@@ -258,7 +292,7 @@ export default function LobbyPage() {
             </div>
 
             {/* Step 3 (optional): watch a game that's happening right now. */}
-            <div className="plate plate-hover p-5 sm:p-6">
+            <div className="plate p-5 sm:p-6">
               <div className="flex items-center justify-between gap-3">
                 <SectionTitle tint="coral" icon={<Eye size={15} aria-hidden />}>
                   Live games
@@ -270,9 +304,12 @@ export default function LobbyPage() {
               {!lobby ? (
                 <SkeletonRows count={3} />
               ) : lobby.games.length === 0 ? (
-                <p className="mt-3 text-sm text-parchment-400">No games in play right now.</p>
+                <HallEmpty
+                  title="No games in play right now."
+                  hint="Answer a challenge and the boards will light up here."
+                />
               ) : (
-                <ul className="mt-3 divide-y divide-white/5">
+                <ul className="mt-4 space-y-2.5 stagger-in">
                   {lobby.games.map((game) => (
                     <LiveGameRow key={game.id} game={game} />
                   ))}
@@ -287,8 +324,8 @@ export default function LobbyPage() {
             </div>
           </div>
 
-          {/* Who's here right now. */}
-          <aside className="plate p-5 h-fit">
+          {/* Who's here right now — rides along on desktop scroll. */}
+          <aside className="plate p-5 h-fit lg:sticky lg:top-6">
             <div className="flex items-center justify-between gap-3">
               <div className="sec-title font-display text-xl text-parchment">Online now</div>
             </div>
@@ -307,9 +344,12 @@ export default function LobbyPage() {
                       : "."}
                   </p>
                 )}
-                <ul className="mt-3 space-y-2">
+                <ul className="mt-3 space-y-1">
                   {lobby.players.map((p) => (
-                    <li key={p.name} className="flex items-center justify-between gap-2 text-sm">
+                    <li
+                      key={p.name}
+                      className="-mx-2 flex items-center justify-between gap-2 px-2 py-1 text-sm transition-colors hover:bg-white/[0.04]"
+                    >
                       <Link
                         href={`/u/${encodeURIComponent(p.name)}`}
                         className="flex min-h-[44px] min-w-0 items-center gap-2 truncate sm:min-h-0 text-parchment-100 hover:text-gold-leaf transition-colors"
@@ -346,6 +386,16 @@ export default function LobbyPage() {
   );
 }
 
+// One live-pulse chip in the header: a status dot beside a smallcaps count.
+function HallStat({ dotClass, children }: { dotClass: string; children: React.ReactNode }) {
+  return (
+    <span className="flex items-center gap-2 border border-white/10 bg-white/[0.04] px-3 py-1.5 smallcaps text-[10px] text-parchment-300">
+      <span aria-hidden className={`h-1.5 w-1.5 shrink-0 ${dotClass}`} />
+      {children}
+    </span>
+  );
+}
+
 // Each lobby section wears a small color identity: an icon chip beside the
 // title (mint for friends, sun for open challenges, coral for live games; the
 // online queue keeps the core blue inside QueueButton). Color on the chip
@@ -378,15 +428,57 @@ function SectionTitle({
   );
 }
 
-// First-load placeholders. They mirror the real row structure (a two-line
-// text block on the left, an action chip on the right) so the panel keeps its
-// shape and nothing jumps when the first snapshot lands. Only shown while
-// `lobby` is still null; once a snapshot exists the last-good data stays up.
+// The mode's flat left-border color for a lobby row: warm terracotta for
+// Nerf, sky for Buff, and the brass default (set in CSS) for legacy/draft
+// entries.
+function rowModeClass(mode: MPLobbySeek["mode"], fallback = ""): string {
+  if (mode === "nerf") return "hall-row--nerf";
+  if (mode === "buff") return "hall-row--buff";
+  return fallback;
+}
+
+// Rating badge chip: the number in mono behind a brass hairline.
+function RatingChip({ rating }: { rating?: number | null }) {
+  if (rating == null) return null;
+  return (
+    <span className="shrink-0 border border-[rgb(216_181_110_/_0.35)] bg-[rgb(216_181_110_/_0.08)] px-1.5 py-px font-mono text-[10px] tabular-nums text-parchment-200">
+      {rating}
+    </span>
+  );
+}
+
+// Time-control glyph: the speed icon (bullet/blitz/rapid…) beside the clock
+// in mono, tinted with the category's accent.
+function TimeControlGlyph({
+  timeSec,
+  incrementSec,
+  clock,
+}: {
+  timeSec: number;
+  incrementSec: number;
+  clock: string;
+}) {
+  const category = getCategory(categoryForTimeControl(timeSec, incrementSec));
+  const Icon = category.icon;
+  return (
+    <span className="inline-flex items-center gap-1 text-parchment-300">
+      <Icon size={12} style={{ color: category.accent }} aria-hidden className="shrink-0" />
+      <span className="font-mono text-[10px] tracking-normal">{clock}</span>
+      <span>· {category.label}</span>
+    </span>
+  );
+}
+
+// First-load placeholders shaped like the real lobby rows (flat bordered row,
+// a two-line text block on the left, an action chip on the right) so the panel
+// keeps its shape and nothing jumps when the first snapshot lands. Only shown
+// while `lobby` is still null; once a snapshot exists the last-good data
+// stays up.
 function SkeletonRows({ count }: { count: number }) {
   return (
-    <ul className="mt-3 divide-y divide-white/5" aria-hidden>
+    <ul className="mt-4 space-y-2.5" aria-hidden>
       {Array.from({ length: count }).map((_, i) => (
-        <li key={i} className="flex items-center justify-between gap-3 py-2.5">
+        <li key={i} className="hall-row flex items-center justify-between gap-3 p-3 sm:px-4">
           <div className="min-w-0 flex-1 space-y-2">
             <span className="skeleton block h-3.5 w-1/2" />
             <span className="skeleton block h-2.5 w-1/3" />
@@ -411,6 +503,29 @@ function SkeletonPlayerRows({ count }: { count: number }) {
         </li>
       ))}
     </ul>
+  );
+}
+
+// Empty state: a quiet flat brass checkerboard with star motes drifting off it.
+function HallEmpty({ title, hint }: { title: string; hint: string }) {
+  return (
+    <div className="mt-4 flex items-center gap-4 border border-dashed border-white/10 bg-white/[0.015] p-4">
+      <div className="hall-empty-board" aria-hidden>
+        <span className="hall-mote" style={{ left: "28%", bottom: "18%" }} />
+        <span
+          className="hall-mote"
+          style={{ left: "54%", bottom: "30%", "--mote-delay": "2.4s" } as React.CSSProperties}
+        />
+        <span
+          className="hall-mote"
+          style={{ left: "72%", bottom: "12%", "--mote-delay": "4.7s" } as React.CSSProperties}
+        />
+      </div>
+      <div className="min-w-0">
+        <p className="text-sm text-parchment-200">{title}</p>
+        <p className="mt-1 text-xs text-parchment-400">{hint}</p>
+      </div>
+    </div>
   );
 }
 
@@ -474,25 +589,21 @@ function SeekRow({
   busy: boolean;
   onJoin: () => void;
 }) {
-  const category = getCategory(categoryForTimeControl(seek.timeSec, seek.incrementSec));
-  const Icon = category.icon;
   const clock =
     seek.timeSec >= 60
       ? `${Math.round(seek.timeSec / 60)}+${seek.incrementSec}`
       : `${seek.timeSec}s+${seek.incrementSec}`;
   return (
-    <li className="-mx-2 flex items-center justify-between gap-3 px-2 py-2.5 transition-colors hover:bg-white/[0.045]">
+    <li className={`hall-row ${rowModeClass(seek.mode)} flex items-center justify-between gap-3 p-3 sm:px-4`}>
       <div className="min-w-0">
         <div className="flex min-w-0 items-center gap-2 text-sm text-parchment-100">
-          <Icon size={14} style={{ color: category.accent }} aria-hidden className="shrink-0" />
-          <PlayerNameLink name={seek.name} rating={seek.rating} />
+          <PlayerNameLink name={seek.name} />
+          <RatingChip rating={seek.rating} />
         </div>
-        <div className="mt-0.5 flex items-center gap-1.5 smallcaps text-[9px] text-parchment-400">
+        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 smallcaps text-[9px] text-parchment-400">
           <ModeBadge mode={seek.mode} compact />
-          <span>
-            {seek.mode ? "Rated · " : "Draft · "}
-            {clock} · {category.label}
-          </span>
+          <TimeControlGlyph timeSec={seek.timeSec} incrementSec={seek.incrementSec} clock={clock} />
+          <span>{seek.mode ? "Rated" : "Draft"}</span>
         </div>
       </div>
       {isMine ? (
@@ -503,7 +614,8 @@ function SeekRow({
         <button
           onClick={onJoin}
           disabled={busy}
-          className="btn-leaf shrink-0 inline-flex items-center px-4 py-2 font-display text-sm font-semibold disabled:opacity-50"
+          aria-label={`Join ${seek.name}'s ${clock} game`}
+          className="btn-leaf press shrink-0 inline-flex items-center px-4 py-2 font-display text-sm font-semibold disabled:opacity-50"
         >
           {joining ? "Joining…" : "Join"}
         </button>
@@ -518,22 +630,34 @@ function ChallengeRow({ challenge }: { challenge: MPLobbyChallenge }) {
       ? `${Math.round(challenge.timeSec / 60)}+${challenge.incrementSec}`
       : "No clock";
   return (
-    <li className="-mx-2 flex items-center justify-between gap-3 px-2 py-2.5 transition-colors hover:bg-white/[0.045]">
+    <li className={`hall-row ${rowModeClass(challenge.mode)} flex items-center justify-between gap-3 p-3 sm:px-4`}>
       <div className="min-w-0">
-        <div className="flex min-w-0 text-sm text-parchment-100">
-          <PlayerNameLink name={challenge.host.name} rating={challenge.host.rating} />
+        <div className="flex min-w-0 items-center gap-2 text-sm text-parchment-100">
+          <PlayerNameLink name={challenge.host.name} />
+          <RatingChip rating={challenge.host.rating} />
         </div>
-        <div className="mt-0.5 flex items-center gap-1.5 smallcaps text-[9px] text-parchment-400">
+        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 smallcaps text-[9px] text-parchment-400">
           <ModeBadge mode={challenge.mode} compact />
-          <span>
-            {!challenge.mode && challenge.draft && <span className="text-gold-leaf">Draft · </span>}
-            {challenge.rated ? "Rated" : "Casual"} · {clock} · code {challenge.id}
+          {!challenge.mode && challenge.draft && <span className="text-gold-leaf">Draft</span>}
+          {challenge.timeSec > 0 ? (
+            <TimeControlGlyph
+              timeSec={challenge.timeSec}
+              incrementSec={challenge.incrementSec}
+              clock={clock}
+            />
+          ) : (
+            <span>{clock}</span>
+          )}
+          <span>{challenge.rated ? "Rated" : "Casual"}</span>
+          <span className="font-mono text-[10px] tracking-normal text-parchment-400">
+            code {challenge.id}
           </span>
         </div>
       </div>
       <Link
         href={`/friend?code=${encodeURIComponent(challenge.id)}`}
-        className="btn-leaf shrink-0 inline-flex items-center px-4 py-2 font-display text-sm font-semibold"
+        aria-label={`Accept ${challenge.host.name}'s challenge`}
+        className="btn-leaf press shrink-0 inline-flex items-center px-4 py-2 font-display text-sm font-semibold"
       >
         Accept
       </Link>
@@ -545,26 +669,30 @@ function LiveGameRow({ game }: { game: MPLobbyGame }) {
   const clock =
     game.timeSec > 0 ? `${Math.round(game.timeSec / 60)}+${game.incrementSec}` : "No clock";
   return (
-    <li className="-mx-2 flex items-center justify-between gap-3 px-2 py-2.5 transition-colors hover:bg-white/[0.045]">
+    <li className={`hall-row ${rowModeClass(game.mode, "hall-row--live")} flex items-center justify-between gap-3 p-3 sm:px-4`}>
       <div className="min-w-0">
         <div className="flex min-w-0 items-center gap-1.5 text-sm text-parchment-100">
           <PlayerNameLink name={game.players.w.name} rating={game.players.w.rating} className="max-w-[45%]" />
           <span className="shrink-0 text-parchment-400">vs</span>
           <PlayerNameLink name={game.players.b.name} rating={game.players.b.rating} className="max-w-[45%]" />
         </div>
-        <div className="mt-0.5 flex items-center gap-1.5 smallcaps text-[9px] text-parchment-400">
+        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 smallcaps text-[9px] text-parchment-400">
           <ModeBadge mode={game.mode} compact />
-          <span>
-            {!game.mode && game.draft && <span className="text-gold-leaf">Draft · </span>}
-            {game.rated ? "Rated · " : "Casual · "}
-            {clock} · move {Math.ceil(game.moves / 2)}
-            {game.watchers > 0 ? ` · ${game.watchers} watching` : ""}
-          </span>
+          {!game.mode && game.draft && <span className="text-gold-leaf">Draft</span>}
+          {game.timeSec > 0 ? (
+            <TimeControlGlyph timeSec={game.timeSec} incrementSec={game.incrementSec} clock={clock} />
+          ) : (
+            <span>{clock}</span>
+          )}
+          <span>{game.rated ? "Rated" : "Casual"}</span>
+          <span>move {Math.ceil(game.moves / 2)}</span>
+          {game.watchers > 0 && <span>{game.watchers} watching</span>}
         </div>
       </div>
       <Link
         href={`/game/${game.id}${game.origin === "arena" ? "?src=arena" : ""}`}
-        className="btn-ghost shrink-0 inline-flex items-center gap-1.5 px-4 py-2 font-display text-sm"
+        aria-label={`Watch ${game.players.w.name} versus ${game.players.b.name}`}
+        className="btn-ghost press shrink-0 inline-flex items-center gap-1.5 px-4 py-2 font-display text-sm"
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
           <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />

@@ -46,6 +46,9 @@ import {
   pickHouseMove,
   pickHouseSeek,
   syncHouseRatings,
+  resolveSkillProfile,
+  parseSkillOverrides,
+  type ResolvedSkillProfile,
 } from "./src/lib/server/bots";
 import { moveByUci, type EngineMatch } from "./src/engine/replay";
 import { triggersOwnNerfLoss } from "./src/engine/moveSafety";
@@ -244,6 +247,12 @@ type StoredMatch = {
   // buff offers auto-resolve when these pass; clocks stay paused meanwhile.
   nerfDeadline?: number | null;
   dtDeadline?: number | null;
+  // Which seats currently hold an unresolved buff offer, mirrored from the
+  // game state whenever offers roll or resolve. Kept on the match so clock
+  // math (currentClocks / finishOnFlag) can charge a straggling drafter
+  // without replaying the game: past the free window the seat still holding
+  // its offer pays with its own time, never the seat waiting on it.
+  offerSeats?: Partial<Record<Color, boolean>> | null;
   // Draft games: the side actually to move. Buff activations consume the
   // activator's turn and tempo cards insert extra moves or skips, so move
   // parity no longer determines it. Classic games never set this.
@@ -429,7 +438,11 @@ const houseSeeksKey = "hp:seeks";
 // handles (pawnstorm77, alexk2004, ...). New names mean new hp_ user ids, so
 // re-run ensureHouseUsers to create their rows. (The renamed old accounts
 // stay orphaned in the DB; harmless, same as the v2 note below.)
-const houseSeededKey = "hp:seeded:v3";
+// v4: three joke handles in the 2100-2200 band (Stickygamer123,
+// ilovewhitestickystuff, ilovemysister) were rewritten to realistic
+// chess-site handles (e4enjoyer, viktor_m85, KnightSlayer99). Same drill:
+// new hp_ ids, re-run ensureHouseUsers; old accounts stay orphaned.
+const houseSeededKey = "hp:seeded:v4";
 // One-time-per-revision sync of every house account's rating AND identity
 // (avatar, location bio) to the current roster values (see syncHouseRatings).
 // Bump the suffix whenever the roster's ratings or identity change so existing
@@ -437,7 +450,10 @@ const houseSeededKey = "hp:seeded:v3";
 // next cold start. This bump circulates the identity pass: varied flowered
 // avatars (name-hashed over the full catalog) and one distinct world-wide
 // location per persona as the profile bio.
-const houseRatingsSyncedKey = "hp:ratings-synced:identity-1";
+// identity-2: the v4 persona renames above changed three name-hashed avatars,
+// so re-circulate identity once. (syncHouseRatings itself respects the
+// /mod/house admin overrides, so this never undoes an admin edit.)
+const houseRatingsSyncedKey = "hp:ratings-synced:identity-2";
 const houseNextFillerKey = "hp:nextFillerAt";
 // Slow heartbeat while at least one human socket is connected; with nobody
 // online there is no heartbeat and the DO goes idle between match deadlines.
@@ -562,7 +578,7 @@ type HouseSeekEntry = {
 // (deserializing every finished game's move history), which on a bloated table
 // blew the DO CPU limit before it could cache or GC anything: the crash loop.
 const liveIdsKey = "live:ids";
-const buildVersion = "codex-card-insights-1";
+const buildVersion = "bot-rating-consistency-1";
 // The single account allowed to use the owner "fun with friends" tools: the
 // -15s opponent-clock button and the god panel card grant. SERVER-verified on
 // every gated message (never trust the client). Compared case-insensitively so
@@ -833,9 +849,14 @@ export class GameServer extends DurableObject<Env> {
   // its static seed forever. One bounded query per TTL window keeps the
   // lobby/tick paths off per-poll D1 work; a read failure just falls back to
   // houseSeedRating until the next refresh.
+  // `identity` rides along in the same cache window: the roster's CURRENT
+  // username/avatar from the users table (the system of record once an admin
+  // edits a persona from /mod/house), so seeks and filler seats show an
+  // admin-renamed bot within a TTL instead of the baked constant.
   private houseRatingsCache: {
     at: number;
     byId: Map<string, Partial<Record<DraftMode, number>>>;
+    identity: Map<string, { username: string; avatar: string | null }>;
   } | null = null;
   private static readonly HOUSE_RATINGS_TTL_MS = 60_000;
   // Arena (Tier 2 / M2): bot-vs-bot games simulated on the OCI arena, kept in
@@ -973,6 +994,40 @@ export class GameServer extends DurableObject<Env> {
     } catch {}
     this.houseCountCache = { value, at: now };
     return value;
+  }
+
+  // Moderator house-strength overrides (app_settings.house_skill_overrides): a
+  // per-tier JSON patch a moderator sets from /mod to weaken (or restore) the
+  // bots live. Cached on the same ~15s TTL as the other house settings, so a
+  // change reaches live games within a tick without a redeploy. Held as the
+  // parsed map; each persona resolves its own tier fresh per move
+  // (resolveHouseProfile). An absent/garbage value reads as "no overrides" =
+  // baked strength.
+  private houseSkillOverridesCache: { value: Record<string, unknown> | null; at: number } | null = null;
+  private async houseSkillOverrides(): Promise<Record<string, unknown> | null> {
+    const now = Date.now();
+    if (this.houseSkillOverridesCache && now - this.houseSkillOverridesCache.at < houseEnabledTtlMs) {
+      return this.houseSkillOverridesCache.value;
+    }
+    let value = this.houseSkillOverridesCache?.value ?? null;
+    try {
+      const db = await this.db();
+      if (db) {
+        const row = await db
+          .prepare("SELECT value FROM app_settings WHERE key = ?")
+          .bind("house_skill_overrides")
+          .first<{ value: string }>();
+        value = parseSkillOverrides(row?.value ?? null);
+      }
+    } catch {}
+    this.houseSkillOverridesCache = { value, at: now };
+    return value;
+  }
+
+  /** Resolve a house persona's effective strength: baked tier profile merged
+   * with the current moderator override for that tier, if any. */
+  private async houseResolvedProfile(skill: HouseSkill): Promise<ResolvedSkillProfile> {
+    return resolveSkillProfile(skill, await this.houseSkillOverrides());
   }
 
   // Moderator card overrides (the card_overrides table), digested down to the
@@ -1648,7 +1703,7 @@ export class GameServer extends DurableObject<Env> {
       match.startedAt &&
       !match.result &&
       match.runningSince !== null &&
-      this.activeColor(match) === session.color
+      this.chargedColor(match) === session.color
     ) {
       match.clocks = this.currentClocks(match, Date.now());
       match.runningSince = null;
@@ -1683,20 +1738,28 @@ export class GameServer extends DurableObject<Env> {
     db: D1Database,
     userId: string,
     category: RatingCategory,
-  ): Promise<{ rating: number; rd: number; vol: number; avatar: string | null } | null> {
+  ): Promise<{ rating: number; rd: number; vol: number; avatar: string | null; username: string | null } | null> {
     try {
-      // The avatar read is independent of the rating read: run them together
-      // so a seat attach costs one D1 round-trip of latency, not two.
+      // The avatar/username read is independent of the rating read: run them
+      // together so a seat attach costs one D1 round-trip of latency, not two.
+      // username is only consumed by houseSeatUser (an admin can rename a
+      // house persona from /mod/house); human callers ignore it.
       const [ratings, row] = await Promise.all([
         loadCategoryRatings(db, [userId], category),
         db
-          .prepare("SELECT avatar FROM users WHERE id = ?")
+          .prepare("SELECT avatar, username FROM users WHERE id = ?")
           .bind(userId)
-          .first<{ avatar: string | null }>(),
+          .first<{ avatar: string | null; username: string | null }>(),
       ]);
       const r = ratings.get(userId);
       if (!r) return null;
-      return { rating: r.rating, rd: r.rd, vol: r.vol, avatar: row?.avatar ?? null };
+      return {
+        rating: r.rating,
+        rd: r.rd,
+        vol: r.vol,
+        avatar: row?.avatar ?? null,
+        username: row?.username ?? null,
+      };
     } catch {
       return null;
     }
@@ -2207,10 +2270,40 @@ export class GameServer extends DurableObject<Env> {
     return match.turnColor ?? (match.moves.length % 2 === 0 ? "w" : "b");
   }
 
+  // Which seat the running clock bills. Normally the side to move — but in a
+  // draft game, once the free lock-in window has expired with exactly one
+  // seat still holding its offer, that straggler pays: the waiting player
+  // may not move while the draft is open, so their clock must never run.
+  // (Both seats straggling keeps the mover charged: both are equally late,
+  // and a single running timestamp can only bill one side.)
+  private chargedColor(match: StoredMatch): Color {
+    const active = this.activeColor(match);
+    if (match.draft && match.startedAt && !match.diff && !match.result) {
+      const w = !!match.offerSeats?.w;
+      const b = !!match.offerSeats?.b;
+      if (w !== b) return w ? "w" : "b";
+    }
+    return active;
+  }
+
+  // Mirror which seats hold an unresolved offer onto the match, so clock
+  // math never needs a game replay. Call wherever offers roll (commitMove)
+  // or resolve (settleDraftAction) with the post-mutation game in hand.
+  private syncOfferSeats(match: StoredMatch, game: NerfGame | null) {
+    if (!match.draft || !game?.buffs) {
+      match.offerSeats = null;
+      return;
+    }
+    match.offerSeats = {
+      w: !!game.buffs.players.w.offer,
+      b: !!game.buffs.players.b.offer,
+    };
+  }
+
   private currentClocks(match: StoredMatch, now = Date.now()): Record<Color, number> {
     const clocks = { ...match.clocks };
     if (!match.setup.timeSec || match.result || !match.startedAt || match.runningSince === null) return clocks;
-    const active = this.activeColor(match);
+    const active = this.chargedColor(match);
     let elapsed = now - match.runningSince;
     // Start-of-game grace: the first move of each side gets 10 free seconds.
     if (this.movesByColor(match, active) === 0) {
@@ -2223,7 +2316,7 @@ export class GameServer extends DurableObject<Env> {
   private async finishOnFlag(match: StoredMatch, now = Date.now(), schedule = true): Promise<boolean> {
     if (!match.startedAt || match.result || !match.setup.timeSec) return false;
     const clocks = this.currentClocks(match, now);
-    const active = this.activeColor(match);
+    const active = this.chargedColor(match);
     if (clocks[active] > 0) return false;
 
     // A flag during a Chess Diff loses the DIFF, never the match: the other
@@ -2731,6 +2824,14 @@ export class GameServer extends DurableObject<Env> {
     if (match.draft && game.buffs?.players[session.color].offer) {
       return error(ws, "draft_pending", "Resolve your buff draft before moving.");
     }
+    // The OPPONENT's open draft blocks moves too: their pick can mutate the
+    // board mid-flight, and the waiting player is not being charged for this
+    // time (see chargedColor), so they must not get free thinking moves
+    // either. The client mirrors this by banking premoves until the pick
+    // lands.
+    if (match.draft && game.buffs?.players[session.color === "w" ? "b" : "w"].offer) {
+      return error(ws, "opp_draft_pending", "Wait for your opponent to finish drafting.");
+    }
 
     const request = (data || {}) as { u?: unknown; ply?: unknown };
     const uci = typeof request.u === "string" ? request.u.toLowerCase() : "";
@@ -2814,6 +2915,9 @@ export class GameServer extends DurableObject<Env> {
     if (match.draft) {
       if (rolledNow && !nextGame.result) match.dtDeadline = now + draftLockInMs;
       else if (!offersPending) match.dtDeadline = null;
+      // Keep the charged-seat mirror current: past the free window the seat
+      // still holding its offer pays (see chargedColor), never the waiter.
+      this.syncOfferSeats(match, nextGame);
     }
     // A pending buff offer pauses the game clock only during its free
     // lock-in window (dtDeadline). Once the window has expired the clock
@@ -3342,6 +3446,16 @@ export class GameServer extends DurableObject<Env> {
         if (!match.botActAt) match.botActAt = now + houseDraftThinkMs(randomInt);
         return;
       }
+      // A HUMAN seat still holding its offer blocks all moves (the same rule
+      // the socket handler enforces on humans): the bot waits instead of
+      // arming a move timer. settleDraftAction re-arms it when the pick lands.
+      const humanDrafting = (["w", "b"] as Color[]).some(
+        (color) => !match.bots?.[color] && game.buffs!.players[color].offer,
+      );
+      if (humanDrafting) {
+        match.botActAt = null;
+        return;
+      }
     }
     const turn = this.activeColor(match);
     if (!match.bots[turn]) {
@@ -3764,14 +3878,14 @@ export class GameServer extends DurableObject<Env> {
     // Keep 2-3 personas seeking across the two pools at all times (a mix of
     // Nerf and Buff, rotating which personas via random draw). Seeks carry
     // the persona's LIVE rating (cached, one bounded query per TTL window).
-    const liveRatings = await this.houseLiveRatings(db);
+    const liveInfo = await this.houseLiveInfo(db);
     while (seeks.length < houseSeekMin && free.length) {
       const persona = free.splice(randomInt(free.length), 1)[0];
-      seeks.push(this.newHouseSeek(persona, now, liveRatings));
+      seeks.push(this.newHouseSeek(persona, now, liveInfo));
     }
     if (seeks.length >= houseSeekMin && seeks.length < houseSeekMax && free.length && randomInt(100) < 5) {
       const persona = free.splice(randomInt(free.length), 1)[0];
-      seeks.push(this.newHouseSeek(persona, now, liveRatings));
+      seeks.push(this.newHouseSeek(persona, now, liveInfo));
     }
     // Per-mode floor: guarantee at least one seek in each pool so neither the
     // Nerf nor the Buff lobby is ever left without a house seeker (the random
@@ -3781,7 +3895,7 @@ export class GameServer extends DurableObject<Env> {
       if (!free.length) break;
       if (seeks.some((seek) => seek.mode === mode)) continue;
       const persona = free.splice(randomInt(free.length), 1)[0];
-      seeks.push({ ...this.newHouseSeek(persona, now, liveRatings), mode });
+      seeks.push({ ...this.newHouseSeek(persona, now, liveInfo), mode });
     }
     await this.ctx.storage.put(houseSeeksKey, seeks);
 
@@ -3831,6 +3945,7 @@ export class GameServer extends DurableObject<Env> {
     match: StoredMatch,
     skill: HouseSkill,
     remainingClockMs?: number,
+    profile?: ResolvedSkillProfile,
   ): Promise<Move | null> {
     if (this.env.HOUSE_ENGINE_REMOTE !== "true" || !this.env.HOUSE_ENGINE_URL) return null;
     const ctl = new AbortController();
@@ -3848,6 +3963,10 @@ export class GameServer extends DurableObject<Env> {
         body: JSON.stringify({
           match: serializeMatchForEngine(match),
           skill,
+          // The moderator-resolved strength. Optional and clamped again on the
+          // box, so an old engine build ignores it (baked strength) and a new
+          // one honors it — no lockstep deploy needed for a tuning change.
+          profile,
           remainingClockMs,
           replayVersion: REPLAY_VERSION,
         }),
@@ -3996,6 +4115,21 @@ export class GameServer extends DurableObject<Env> {
       return; // settleDraftAction armed the next action and saved
     }
 
+    // A human seat still resolving its draft blocks all moves (same rule the
+    // socket handler applies to humans): stand down until the pick lands —
+    // settleDraftAction re-arms the bot then.
+    const buffsNow = game.buffs;
+    if (
+      match.draft &&
+      (["w", "b"] as Color[]).some(
+        (c) => !match.bots?.[c] && buffsNow?.players[c].offer,
+      )
+    ) {
+      match.botActAt = null;
+      await this.saveMatch(match, false);
+      return;
+    }
+
     const color = game.board.turn;
     const personaId = match.bots?.[color];
     if (!personaId) {
@@ -4058,6 +4192,10 @@ export class GameServer extends DurableObject<Env> {
     // no legal move at all.
     const clocks = this.currentClocks(match, now);
     const remaining = match.setup.timeSec ? clocks[color] : undefined;
+    // The persona's effective strength (baked tier ⊕ current moderator
+    // override). Resolved once and used for both the remote payload and the
+    // local fallback so a mid-game strength change is honored on either path.
+    const profile = await this.houseResolvedProfile(persona.skill);
     let move: Move | null = null;
     // Remote (OCI) search only for games a human is in. Filler (bot-vs-bot)
     // moves always use the local hard-capped search (<= 80ms): one fewer
@@ -4072,7 +4210,7 @@ export class GameServer extends DurableObject<Env> {
       !this.isBotOnlyMatch(match) &&
       (remaining === undefined || remaining > HOUSE_ENGINE_TIMEOUT_MS + 2000);
     if (useRemote) {
-      const remote = await this.remoteHouseMove(match, persona.skill, remaining);
+      const remote = await this.remoteHouseMove(match, persona.skill, remaining, profile);
       // The await above yielded the DO thread for up to HOUSE_ENGINE_TIMEOUT_MS;
       // the match may have ended (resign, disconnect, flag) or advanced while
       // the remote search ran — and for a human-seated game `match` is a
@@ -4118,7 +4256,7 @@ export class GameServer extends DurableObject<Env> {
     }
     if (!move) {
       try {
-        move = pickHouseMove(game, persona.skill, randomInt, remaining);
+        move = pickHouseMove(game, persona.skill, randomInt, remaining, undefined, profile);
       } catch (err) {
         console.error("house move pick failed, using a legal fallback", match.id, err);
       }
@@ -4164,51 +4302,77 @@ export class GameServer extends DurableObject<Env> {
   private async houseLiveRatings(
     db: D1Database | null,
   ): Promise<Map<string, Partial<Record<DraftMode, number>>>> {
+    return (await this.houseLiveInfo(db)).byId;
+  }
+
+  // Ratings AND identity for the roster, one cache window: two bounded queries
+  // per TTL, shared by seeks, filler seats, and any caller that only needs the
+  // ratings map (houseLiveRatings above).
+  private async houseLiveInfo(db: D1Database | null): Promise<{
+    byId: Map<string, Partial<Record<DraftMode, number>>>;
+    identity: Map<string, { username: string; avatar: string | null }>;
+  }> {
     const now = Date.now();
     if (this.houseRatingsCache && now - this.houseRatingsCache.at < GameServer.HOUSE_RATINGS_TTL_MS) {
-      return this.houseRatingsCache.byId;
+      return this.houseRatingsCache;
     }
     const byId = new Map<string, Partial<Record<DraftMode, number>>>();
+    const identity = new Map<string, { username: string; avatar: string | null }>();
     if (db) {
       try {
         const ids = HOUSE_ROSTER.map((p) => p.userId);
         const placeholders = ids.map(() => "?").join(",");
-        const rows = await db
-          .prepare(
-            `SELECT user_id, category, rating FROM user_ratings
-             WHERE category IN ('nerf','buff') AND user_id IN (${placeholders})`,
-          )
-          .bind(...ids)
-          .all<{ user_id: string; category: string; rating: number }>();
+        const [rows, users] = await Promise.all([
+          db
+            .prepare(
+              `SELECT user_id, category, rating FROM user_ratings
+               WHERE category IN ('nerf','buff') AND user_id IN (${placeholders})`,
+            )
+            .bind(...ids)
+            .all<{ user_id: string; category: string; rating: number }>(),
+          db
+            .prepare(`SELECT id, username, avatar FROM users WHERE id IN (${placeholders})`)
+            .bind(...ids)
+            .all<{ id: string; username: string; avatar: string | null }>(),
+        ]);
         for (const row of rows.results) {
           if (row.category !== "nerf" && row.category !== "buff") continue;
           const entry = byId.get(row.user_id) ?? {};
           entry[row.category as DraftMode] = Math.round(row.rating);
           byId.set(row.user_id, entry);
         }
+        for (const row of users.results) {
+          identity.set(row.id, { username: row.username, avatar: row.avatar });
+        }
       } catch {
-        // Fall back to seed ratings; retry after the TTL.
+        // Fall back to seed ratings / baked identity; retry after the TTL.
       }
     }
-    this.houseRatingsCache = { at: now, byId };
-    return byId;
+    this.houseRatingsCache = { at: now, byId, identity };
+    return this.houseRatingsCache;
   }
 
   private newHouseSeek(
     persona: HousePersona,
     now: number,
-    liveRatings?: Map<string, Partial<Record<DraftMode, number>>>,
+    live?: {
+      byId: Map<string, Partial<Record<DraftMode, number>>>;
+      identity: Map<string, { username: string; avatar: string | null }>;
+    },
   ): HouseSeekEntry {
     const { pool, mode } = pickHouseSeek(randomInt);
+    // Identity from the users table (admin edits from /mod/house land there),
+    // falling back to the baked persona constants.
+    const identity = live?.identity.get(persona.userId);
     return {
       userId: persona.userId,
-      name: persona.name,
+      name: identity?.username ?? persona.name,
       pool,
       mode,
       // The LIVE rating in the seek's mode bucket, so the number in the lobby
       // moves with the account's real results (seed only as a fallback).
-      rating: liveRatings?.get(persona.userId)?.[mode] ?? houseSeedRating(persona),
-      avatar: persona.avatar,
+      rating: live?.byId.get(persona.userId)?.[mode] ?? houseSeedRating(persona),
+      avatar: identity?.avatar ?? persona.avatar,
       at: now,
     };
   }
@@ -4223,7 +4387,9 @@ export class GameServer extends DurableObject<Env> {
       if (row) {
         return {
           id: persona.userId,
-          name: persona.name,
+          // The users row is the identity system of record (admin renames from
+          // /mod/house land there); baked constants are the fallback.
+          name: row.username ?? persona.name,
           rating: row.rating,
           rd: row.rd,
           vol: row.vol,
@@ -4403,14 +4569,16 @@ export class GameServer extends DurableObject<Env> {
     // ratings the tick already loads for seeks instead of houseSeatUser's two
     // D1 queries per seat — four fewer queries per filler spawn, zero marginal
     // D1 on this path.
-    const liveRatings = await this.houseLiveRatings(db);
+    const liveInfo = await this.houseLiveInfo(db);
     const seatOf = (p: HousePersona): SeatUser => ({
       id: p.userId,
-      name: p.name,
-      rating: liveRatings.get(p.userId)?.[mode] ?? houseSeedRating(p),
+      // Identity from the users table (admin edits from /mod/house), baked
+      // constants as the fallback — same resolution as newHouseSeek.
+      name: liveInfo.identity.get(p.userId)?.username ?? p.name,
+      rating: liveInfo.byId.get(p.userId)?.[mode] ?? houseSeedRating(p),
       rd: 150,
       vol: 0.06,
-      avatar: p.avatar,
+      avatar: liveInfo.identity.get(p.userId)?.avatar ?? p.avatar,
     });
     const match = await this.newHouseMatchRecord(
       { timeSec: tc.timeSec, incrementSec: tc.incrementSec },
@@ -4897,7 +5065,7 @@ export class GameServer extends DurableObject<Env> {
       // socket that vanished without either event firing.
       this.dropExternalIfUnwatched(id);
       if (!this.externalMatches.has(id)) continue;
-      const active = this.activeColor(match);
+      const active = this.chargedColor(match);
       // How far past exhausting its whole banked clock the active side is
       // (null when no flag can fall: untimed, unstarted, or paused clock).
       const overdueBy =
@@ -5384,6 +5552,14 @@ export class GameServer extends DurableObject<Env> {
     } | null,
     used?: { color: Color; buffIndex: number; picks: BuffPick[]; card?: { id: string; tier: number } },
   ) {
+    // Bill any elapsed time to whoever was charged BEFORE this action
+    // resolved (a straggling drafter's deliberation), then re-anchor: the
+    // charged seat can change the moment offerSeats is re-synced below.
+    if (!match.result && match.draft && match.runningSince !== null) {
+      const now = Date.now();
+      match.clocks = this.currentClocks(match, now);
+      match.runningSince = now;
+    }
     if (game.result && !match.result) {
       const now = Date.now();
       match.clocks = this.currentClocks(match, now);
@@ -5404,6 +5580,7 @@ export class GameServer extends DurableObject<Env> {
     const bs = game.buffs;
     const offersPending = !!bs?.players.w.offer || !!bs?.players.b.offer;
     if (!offersPending) match.dtDeadline = null;
+    this.syncOfferSeats(match, game);
     if (
       (!offersPending || !match.dtDeadline) &&
       match.startedAt &&
@@ -5696,6 +5873,11 @@ export class GameServer extends DurableObject<Env> {
     const color = session.color!;
     const ps = game.buffs!.players[color];
     if (ps.offer) return error(ws, "draft_pending", "Resolve your buff draft first.");
+    // Same rule as moves: the opponent's open draft blocks activations too
+    // (their pick can mutate the board this activation would target).
+    if (game.buffs!.players[color === "w" ? "b" : "w"].offer) {
+      return error(ws, "opp_draft_pending", "Wait for your opponent to finish drafting.");
+    }
     if (game.board.turn !== color) return error(ws, "not_your_turn", "Buffs activate on your turn.");
     const request = (data || {}) as { buffIndex?: unknown; picks?: unknown };
     const buffIndex = Number(request.buffIndex);
@@ -6320,34 +6502,32 @@ export class GameServer extends DurableObject<Env> {
       // house-vs-house filler games run up to houseVsHouseCap (each puts two
       // personas on genuine "playing" AND lists a watchable game above).
       const idlePersonas = activeHouseRoster(await this.houseCount()).filter((p) => !seen.has(p.userId));
-      // LIVE ratings (cached): a bot's displayed number moves with its real
-      // results instead of sitting on the static seed forever. Shown as the
-      // better of its two mode buckets, seed only as a fallback.
-      const liveRatings = await this.houseLiveRatings(await this.db());
+      // Idle bots get a placeholder seed here; the canonical most-played-bucket
+      // query below (now shared with human rows) overwrites it for any bot that
+      // has a rated bucket, so an idle bot shows the SAME number as its profile,
+      // leaderboard, and seek. This replaces an older Math.max(nerf, buff) that
+      // matched neither profile card and went stale when the active bucket lost
+      // rating (the "a bot's rating differs on its profile" report).
       for (const persona of idlePersonas) {
-        const live = liveRatings.get(persona.userId);
-        const rating =
-          live && (live.nerf != null || live.buff != null)
-            ? Math.max(live.nerf ?? 0, live.buff ?? 0)
-            : houseSeedRating(persona);
         seen.set(persona.userId, {
           name: persona.name,
-          rating,
+          rating: houseSeedRating(persona),
           status: "online",
           avatar: persona.avatar,
         });
       }
     } catch {}
 
-    // Attach ratings for the online list in one query. House ids are excluded:
-    // every persona already carries its rating/avatar from HOUSE_ROSTER above,
-    // so leaving them out keeps this query human-only (no D1 work for the whole
-    // roster now that all 50 appear online) and its IN list bounded.
+    // Attach ratings for the online list in one query, for humans AND bots, so
+    // an idle bot's displayed rating is the same per-mode-derived number its
+    // profile / leaderboard / seek show (was Math.max above, which diverged).
+    // The IN list is the online roster (bounded, ~the roster size), one query
+    // per lobby cache window.
     const db = await this.db();
-    const humanIds = [...seen.keys()].filter((id) => !isHouseUserId(id));
-    if (db && humanIds.length > 0) {
+    const ratedIds = [...seen.keys()];
+    if (db && ratedIds.length > 0) {
       try {
-        const placeholders = humanIds.map(() => "?").join(",");
+        const placeholders = ratedIds.map(() => "?").join(",");
         // The player's ACTIVE bucket (most games played; ties broken by the
         // higher number), not MAX(nerf, buff): the max rule meant a player who
         // only plays one mode and loses kept displaying the other bucket's
@@ -6366,11 +6546,16 @@ export class GameServer extends DurableObject<Env> {
                     u.avatar
              FROM users u WHERE u.id IN (${placeholders})`,
           )
-          .bind(...humanIds)
+          .bind(...ratedIds)
           .all<{ id: string; username: string; rating: number; avatar: string | null }>();
         for (const row of rows.results) {
           const entry = seen.get(row.id);
           if (entry) {
+            // The users row wins for the whole identity, not just rating and
+            // avatar: for humans it's the same string the session carries, and
+            // for house personas it's where an admin rename from /mod/house
+            // lands — so an idle renamed bot never shows its baked name.
+            entry.name = row.username;
             entry.rating = Math.round(row.rating);
             entry.avatar = row.avatar;
           }
@@ -6442,7 +6627,7 @@ export class GameServer extends DurableObject<Env> {
   private candidateAlarm(match: StoredMatch, now = Date.now()): number | null {
     const candidates: number[] = [];
     if (match.setup.timeSec && match.startedAt && !match.result && match.runningSince !== null) {
-      const active = this.activeColor(match);
+      const active = this.chargedColor(match);
       const grace = this.movesByColor(match, active) === 0 ? firstMoveGraceMs : 0;
       candidates.push(match.runningSince + match.clocks[active] + grace);
     }

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { GlossaryText } from "@/components/GlossaryText";
 import { InfoSection } from "@/components/InfoPageLayout";
 
 // Shared plumbing for the /guide section: server-rendered evergreen pages
@@ -42,7 +43,11 @@ export function FaqSection({ items }: { items: FaqItem[] }) {
         {items.map((f) => (
           <div key={f.question}>
             <h3 className="font-display text-lg text-parchment">{f.question}</h3>
-            <p className="mt-1">{f.answer}</p>
+            {/* Answers render through GlossaryText so every game term in them
+                is clickable; the JSON-LD above keeps the plain strings. */}
+            <p className="mt-1">
+              <GlossaryText text={f.answer} />
+            </p>
           </div>
         ))}
       </InfoSection>

@@ -29,11 +29,11 @@ interface LeaderboardRow {
 // outside the page, their own row (with true rank) is returned separately so
 // the UI can pin it.
 //
-// House players (the engine-driven roster in lib/server/bots.ts) are hidden
-// by default and opt-in with ?bots=1. When shown, they are included with
-// their seeded rating even before they have finished a rated game, so every
-// active house bot shows on the board (they were being dropped by the
-// `games > 0` filter while they sat at 0 games). Their user ids are all
+// House players (the engine-driven roster in lib/server/bots.ts) are always
+// shown on the board now, ranked alongside human accounts with no viewer-facing
+// toggle: they read as ordinary players. They are included with their seeded
+// rating even before they have finished a rated game (the OR arm), so every
+// active house bot shows even while it sits at 0 games. Their user ids are all
 // prefixed "hp_"; real accounts use random hex ids (no 'p'/'_'), so the prefix
 // match is collision-free. The underscore is escaped because it is a LIKE
 // wildcard. Keep this prefix in sync with bots.ts (HOUSE_ROSTER userId shape).
@@ -42,12 +42,10 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const requested = url.searchParams.get("category");
   const category: ModeCategory = isModeCategory(requested) ? requested : DEFAULT_CATEGORY;
-  const includeBots = url.searchParams.get("bots") === "1";
 
-  // Same shape either way so the rank subquery below can reuse it verbatim.
-  const houseFilter = includeBots
-    ? `(r.games > 0 OR r.user_id LIKE ? ESCAPE '\\')`
-    : `(r.games > 0 AND r.user_id NOT LIKE ? ESCAPE '\\')`;
+  // Bots always count toward the board; the same clause is reused verbatim by
+  // the viewer-rank subquery below (each use binds one HOUSE_ID_MATCH).
+  const houseFilter = `(r.games > 0 OR r.user_id LIKE ? ESCAPE '\\')`;
 
   const db = await getDb();
   const rows = await db

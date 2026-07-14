@@ -8,9 +8,6 @@ import { AccountUser, ensureAccount, fetchMe } from "@/lib/authClient";
 import { clearSnapshot, readSnapshot, writeSnapshot } from "@/lib/snapshotCache";
 import { MPSession, saveOnlineSeat } from "@/lib/multiplayer";
 import { getCategory, type RatingCategoryId } from "@/lib/ratingCategories";
-import { getNerf } from "@/engine/nerfs/library";
-import { BUFF_BY_ID } from "@/engine/buffs/library";
-import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
 import type { DraftMode } from "@/engine/buff";
 
 // Wire names must match QUEUE_POOLS in worker.ts.
@@ -28,13 +25,6 @@ const QUEUE_POOL_OPTIONS: { pool: string; label: string; speed: RatingCategoryId
 
 const LAST_POOL_KEY = "dc:last-pool";
 const LAST_MODE_KEY = "dc:last-mode";
-
-// A few of the rules, previewed under the two queue buttons so a new player
-// knows what each pool plays like. Static picks of well-known implemented
-// rules; name and description come from the engine libraries so they can
-// never drift from the real cards.
-const EXAMPLE_NERF_IDS = ["skittish", "horse_tranquilizer", "shadow_queen"];
-const EXAMPLE_BUFF_IDS = ["pawn_push", "ferz_king", "pawn_shield"];
 
 // Quick-pairing entry point: the two rated queue pools, Nerf and Buff. A
 // player picks a mode card (nothing queues yet), picks a time control, and
@@ -257,8 +247,6 @@ export function QueueButton() {
             </div>
           </div>
 
-          <RulePreviews />
-
           {/* The one button that actually queues, at the bottom so the flow
               reads mode, clock, play. Disabled until a mode is chosen. */}
           <button
@@ -377,60 +365,5 @@ function ModeCard({
         </span>
       </div>
     </button>
-  );
-}
-
-// "A few of the rules": three example nerfs and three example buffs as tiny
-// tier-tinted cards, a little hand of cards under each mode, so the two
-// buttons above explain themselves. Each deep-links into the codex.
-function RulePreviews() {
-  const nerfs = EXAMPLE_NERF_IDS.map((id) => getNerf(id)).filter(
-    (n): n is NonNullable<ReturnType<typeof getNerf>> => !!n,
-  );
-  const buffs = EXAMPLE_BUFF_IDS.map((id) => BUFF_BY_ID[id]).filter(Boolean);
-  return (
-    <div className="mt-4 grid gap-3 sm:grid-cols-2">
-      <div>
-        <div className="smallcaps text-[9px] text-mode-nerfGlow">A few of the nerfs</div>
-        <div className="mt-1.5 space-y-2">
-          {nerfs.map((nerf) => (
-            <MiniRuleCard key={nerf.id} name={nerf.name} description={nerf.description} tier={nerf.tier} />
-          ))}
-        </div>
-      </div>
-      <div>
-        <div className="smallcaps text-[9px] text-mode-buffGlow">A few of the buffs</div>
-        <div className="mt-1.5 space-y-2">
-          {buffs.map((buff) => (
-            <MiniRuleCard key={buff.id} name={buff.name} description={buff.description} tier={buff.tier} />
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// One tiny rule card: tinted and ringed by its tier, name beside the
-// tier numeral, description clamped to two lines. Matches the home page's
-// example-card treatment at a smaller size.
-function MiniRuleCard({ name, description, tier }: { name: string; description: string; tier: number }) {
-  return (
-    <Link
-      href={`/codex?search=${encodeURIComponent(name)}`}
-      className={`plate card-juicy block border p-2.5 no-underline tier-bg-${tier}`}
-    >
-      <div className="flex items-center justify-between gap-2">
-        <span className={`font-display text-[13px] font-semibold leading-tight tier-${tier}`}>
-          {name}
-        </span>
-        <span
-          className={`shrink-0 font-display text-[10px] font-bold tier-${tier}`}
-          title={`Difficulty ${tier}: ${TIER_LABEL[tier]}`}
-        >
-          {TIER_ROMAN[tier]}
-        </span>
-      </div>
-      <p className="mt-1 text-[11px] leading-snug text-parchment-300 line-clamp-2">{description}</p>
-    </Link>
   );
 }

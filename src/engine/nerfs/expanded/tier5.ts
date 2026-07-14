@@ -13,6 +13,7 @@ import {
   attackedBy,
   isInCheck,
   makeMove,
+  FILE,
   Color,
 } from "./shared";
 
