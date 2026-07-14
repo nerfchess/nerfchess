@@ -11,6 +11,7 @@ import { fetchLobbySnapshot } from "@/lib/lobbyClient";
 import { readSnapshot, writeSnapshot } from "@/lib/snapshotCache";
 import { MPLobby, MPLobbyChallenge, MPLobbyGame, MPLobbySeek, MPSession, saveOnlineSeat } from "@/lib/multiplayer";
 import { ModeBadge } from "@/components/ModeBadge";
+import { FriendGameProvider, FriendGameSetup, useFriendGame } from "@/components/FriendGame";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { StarField } from "@/components/StarField";
 import { categoryForTimeControl, getCategory } from "@/lib/ratingCategories";
@@ -33,30 +34,29 @@ type LobbyTab = (typeof LOBBY_TABS)[number]["id"];
 // competes with matchmaking; "View all N players" unfolds the full list.
 const ONLINE_LIST_FOLD = 8;
 
+// The lobby is wrapped in FriendGameProvider so the Friends tab can host the
+// full "Play a Friend" flow (create + share code, wait for a friend, join by
+// code) without leaving /lobby. While a friend game is being created, joined,
+// or played, the provider takes over the screen; otherwise it renders the
+// lobby below.
 export default function LobbyPage() {
+  return (
+    <FriendGameProvider>
+      <LobbyInner />
+    </FriendGameProvider>
+  );
+}
+
+function LobbyInner() {
   const router = useRouter();
   const [user, setUser] = useState<AccountUser | null | undefined>(undefined);
   const [lobby, setLobby] = useState<MPLobby | null>(null);
   const [lobbyError, setLobbyError] = useState<string | null>(null);
-  const [joinCode, setJoinCode] = useState("");
-  const [joinCodeError, setJoinCodeError] = useState<string | null>(null);
   const [tab, setTab] = useState<LobbyTab>("quick");
   // Mode filters for the Challenges and Watch tabs.
   const [challengeFilter, setChallengeFilter] = useState<"all" | "nerf" | "buff">("all");
   const [watchFilter, setWatchFilter] = useState<"all" | "nerf" | "buff">("all");
   const [showAllPlayers, setShowAllPlayers] = useState(false);
-
-  // Friend-code entry validates the shape before navigating, so a typo gets
-  // an inline explanation instead of a dead join page.
-  const joinFriendCode = () => {
-    const code = joinCode.trim().toUpperCase();
-    if (!code) return;
-    if (!/^[A-Z0-9]{4,8}$/.test(code)) {
-      setJoinCodeError("That doesn't look like a game code. Codes are 4-8 letters and digits, e.g. ABCDE.");
-      return;
-    }
-    router.push(`/friend?code=${encodeURIComponent(code)}`);
-  };
 
   // A ?tab= query param deep-links a section (e.g. /lobby?tab=watch).
   useEffect(() => {
@@ -328,52 +328,17 @@ export default function LobbyPage() {
             )}
 
             {tab === "friends" && (
-            /* Play a specific person via a shared code. */
+            /* Set up a private game with a specific person: pick a clock and
+                mode, create + share the code (or challenge a named friend), or
+                join with a code you were given — all without leaving /lobby. */
             <div role="tabpanel" id="lobby-panel-friends" aria-labelledby="lobby-tab-friends" className="plate p-5 sm:p-6">
               <SectionTitle tint="mint" icon={<Users size={15} aria-hidden />}>
                 Play a friend
               </SectionTitle>
-              <p className="mt-2 text-xs text-parchment-400">
+              <p className="mt-2 mb-5 text-xs text-parchment-400">
                 Create a game and share the code, or enter the one you were given.
               </p>
-              <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
-                <Link
-                  href="/friend"
-                  className="btn-leaf press inline-flex items-center justify-center px-6 py-3 font-display text-base font-semibold"
-                >
-                  Create a game
-                </Link>
-                <div className="flex flex-1 gap-2">
-                  <input
-                    value={joinCode}
-                    onChange={(e) => {
-                      setJoinCode(e.target.value.toUpperCase());
-                      setJoinCodeError(null);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") joinFriendCode();
-                    }}
-                    placeholder="Enter a code, e.g. ABCDE"
-                    maxLength={8}
-                    aria-label="Friend game code"
-                    aria-invalid={joinCodeError != null}
-                    className="min-w-0 flex-1 bg-ink-900/60 border border-white/15 px-4 py-3 font-mono tracking-widest uppercase transition-colors focus:outline-none focus:border-gold/60 text-parchment placeholder:text-parchment-400/40 placeholder:tracking-normal placeholder:normal-case"
-                  />
-                  <button
-                    onClick={joinFriendCode}
-                    disabled={!joinCode.trim()}
-                    title={joinCode.trim() ? undefined : "Enter the code your friend shared"}
-                    className="px-5 btn-ghost press font-display disabled:opacity-50"
-                  >
-                    Join
-                  </button>
-                </div>
-              </div>
-              {joinCodeError && (
-                <p role="alert" className="mt-2 text-xs text-coral-glow">
-                  {joinCodeError}
-                </p>
-              )}
+              <FriendGameSetup />
             </div>
             )}
 
@@ -387,12 +352,13 @@ export default function LobbyPage() {
                   Open challenges
                 </SectionTitle>
                 <div className="flex items-center gap-3">
-                  <Link
-                    href="/friend"
+                  <button
+                    type="button"
+                    onClick={() => setTab("friends")}
                     className="inline-flex min-h-[44px] items-center sm:min-h-0 smallcaps text-[10px] text-gold-leaf hover:text-gold transition-colors"
                   >
                     Create a friend game
-                  </Link>
+                  </button>
                   <span className="smallcaps text-[10px] text-parchment-400">
                     {lobby ? `${waitingCount} waiting` : "…"}
                   </span>
@@ -828,6 +794,7 @@ function SeekRow({
 }
 
 function ChallengeRow({ challenge }: { challenge: MPLobbyChallenge }) {
+  const { joinWithCode } = useFriendGame();
   const clock =
     challenge.timeSec > 0
       ? `${Math.round(challenge.timeSec / 60)}+${challenge.incrementSec}`
@@ -857,13 +824,14 @@ function ChallengeRow({ challenge }: { challenge: MPLobbyChallenge }) {
           </span>
         </div>
       </div>
-      <Link
-        href={`/friend?code=${encodeURIComponent(challenge.id)}`}
+      <button
+        type="button"
+        onClick={() => joinWithCode(challenge.id)}
         aria-label={`Accept ${challenge.host.name}'s challenge`}
         className="btn-leaf press shrink-0 inline-flex items-center px-4 py-2 font-display text-sm font-semibold"
       >
         Accept
-      </Link>
+      </button>
     </li>
   );
 }

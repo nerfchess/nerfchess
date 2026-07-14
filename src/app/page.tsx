@@ -68,7 +68,7 @@ export default function HomePage() {
               Play Online
             </Link>
             <Link
-              href="/friend"
+              href="/lobby?tab=friends"
               className="btn-glass flex items-center justify-center gap-2 px-4 py-3 font-display text-base font-medium motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out motion-safe:hover:-translate-y-px motion-safe:active:scale-[0.98]"
             >
               Play a Friend
