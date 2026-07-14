@@ -3,11 +3,11 @@
 import { SiteHeader } from "@/components/SiteHeader";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Eye, Swords, Users } from "lucide-react";
 import { QueueButton } from "@/components/QueueButton";
-import { withArenaLobby } from "@/lib/arenaLobby";
 import { AccountUser, ensureAccount, fetchMe } from "@/lib/authClient";
+import { fetchLobbySnapshot } from "@/lib/lobbyClient";
 import { readSnapshot, writeSnapshot } from "@/lib/snapshotCache";
 import { MPLobby, MPLobbyChallenge, MPLobbyGame, MPLobbySeek, MPSession, saveOnlineSeat } from "@/lib/multiplayer";
 import { ModeBadge } from "@/components/ModeBadge";
@@ -45,7 +45,6 @@ export default function LobbyPage() {
   const [challengeFilter, setChallengeFilter] = useState<"all" | "nerf" | "buff">("all");
   const [watchFilter, setWatchFilter] = useState<"all" | "nerf" | "buff">("all");
   const [showAllPlayers, setShowAllPlayers] = useState(false);
-  const sessionRef = useRef<MPSession | null>(null);
 
   // Friend-code entry validates the shape before navigating, so a typo gets
   // an inline explanation instead of a dead join page.
@@ -88,7 +87,9 @@ export default function LobbyPage() {
     void ensureAccount().catch(() => {});
   }, []);
 
-  // Poll the lobby snapshot over one long-lived socket.
+  // Poll the lobby snapshot over the edge-cached HTTP route (no socket). The
+  // socket is created on demand only when the player acts (queue / answer a
+  // seek / host a challenge), each of which already reconnects.
   useEffect(() => {
     let cancelled = false;
     // Instant paint: the last snapshot this tab saw renders immediately
@@ -97,21 +98,15 @@ export default function LobbyPage() {
     // Deferred a microtask so the paint happens after mount (no hydration
     // mismatch) but still before the first poll resolves — effectively instant.
     if (cached) queueMicrotask(() => setLobby(cached));
-    const session = new MPSession();
-    session.persistFriendSession = false;
-    session.autoReconnect = false; // fetchLobby reconnects on demand
-    sessionRef.current = session;
-    // The game server runs on a single-threaded Durable Object, so a snapshot
-    // can occasionally arrive late. Keep showing the last good snapshot (the
-    // catch below never clears `lobby`) and only surface the error banner
-    // after three misses in a row, so a one-off blip doesn't flap "can't reach
-    // the game server" at the player.
+    // The snapshot is served from an edge cache in front of the single-threaded
+    // Durable Object, so a poll can occasionally arrive late. Keep showing the
+    // last good snapshot (the catch below never clears `lobby`) and only surface
+    // the error banner after three misses in a row, so a one-off blip doesn't
+    // flap "can't reach the game server" at the player.
     let failures = 0;
     const poll = async () => {
       try {
-        // Arena (OCI bot-vs-bot) games merge in client-side, fail-soft — see
-        // src/lib/arenaLobby.ts (Tier 3).
-        const data = await withArenaLobby(await session.fetchLobby());
+        const data = await fetchLobbySnapshot();
         if (!cancelled) {
           failures = 0;
           setLobby(data);
@@ -130,8 +125,6 @@ export default function LobbyPage() {
     return () => {
       cancelled = true;
       window.clearInterval(id);
-      session.destroy();
-      sessionRef.current = null;
     };
   }, []);
 

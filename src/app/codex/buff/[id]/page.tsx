@@ -10,7 +10,11 @@ import { BUFF_BY_ID, buffType, cardPath, metaDescription, modeLabel, buffModes, 
 // of spinning up the worker on demand. Hexes and boons canonicalize to their
 // family paths (/codex/hex, /codex/boon) but keep rendering here so old links
 // and indexed URLs never 404.
-export const dynamicParams = false;
+// dynamicParams=true: every id is still prerendered at build time, but a
+// deployment whose static-asset upload dropped a page (the live "codex 404
+// no matter what" reports) now falls back to rendering it on demand in the
+// worker instead of hard-404ing. Unknown ids still 404 via notFound().
+export const dynamicParams = true;
 
 export function generateStaticParams() {
   return ALL_BUFFS.map((b) => ({ id: b.id }));

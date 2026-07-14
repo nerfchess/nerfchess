@@ -21,8 +21,11 @@
 // hanni / danielle / haerin / hyein) star their own /newjeans portrait
 // board-wide, and I Love Cami stars /companions/cami.svg with a rank+file
 // cross-sweep of light. Their old core entries were removed so these render.
-// The five members + i_love_cam are companion-placement cards engine-side,
-// so every one reads the "summon" zone (the placed piece's square).
+// Zone sources follow each card's CURRENT mechanic: minji shields (shield),
+// hanni charm-freezes (frozen), danielle summons pawns (summon), hyein's
+// pawn-stride rally paints the rally banner (rally), haerin's pounce is a
+// plain removal diff (no source), and Cami is the one remaining companion
+// placement (summon).
 
 import type { CSSProperties, ReactNode } from "react";
 import type { SigPlugin } from "./sigPlugins";
@@ -1146,7 +1149,7 @@ function HaerinPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 }
 
 /* ------------------------------------------------------------------------- */
-/* 15. I Love Cami (t8) — Cami arrives; a rank+file cross-sweep of light      */
+/* 15. I Love Cami (t6) — Cami arrives; a rank+file cross-sweep of light      */
 /* ------------------------------------------------------------------------- */
 
 function ILoveCamPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
@@ -1263,26 +1266,34 @@ export const PLAYS: Record<string, SigPlugin> = {
     config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation" },
     Render: ILoveMakingOutPlay,
   },
-  // The five members + i_love_cam are companion placements engine-side: each
-  // reads the "summon" zone (the placed companion's square) for its targets.
+  // The five members are simple one-shot / passive cards again; each entry's
+  // source names the zone its reverted mechanic actually paints (see the
+  // header note). Only i_love_cam is still a companion placement (summon).
   hyein: {
-    config: { ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "blitz", source: "summon" },
+    // Permanent pawn-stride grant: fx {motif:"rally", pieces:["p"], self}
+    // paints the rally banner zone.
+    config: { ordering: "sweep", staggerMs: 60, victims: ["p"], hasLead: true, sound: "blitz", source: "rally" },
     Render: HyeinPlay,
   },
   minji: {
-    config: { ordering: "radial", staggerMs: 40, victims: "all", hasLead: true, sound: "aegis", source: "summon" },
+    // Linked-arms guard: shields every ally beside the king (shield zone).
+    config: { ordering: "radial", staggerMs: 40, victims: "all", hasLead: true, sound: "aegis", source: "shield" },
     Render: MinjiPlay,
   },
   hanni: {
-    config: { ordering: "radial", staggerMs: 45, victims: "all", hasLead: true, sound: "massfreeze", source: "summon" },
+    // Spotlight charm: freezes the target and its neighbors (frozen zone).
+    config: { ordering: "radial", staggerMs: 45, victims: "all", hasLead: true, sound: "massfreeze", source: "frozen" },
     Render: HanniPlay,
   },
   danielle: {
-    config: { ordering: "sweep", staggerMs: 80, victims: "all", hasLead: true, sound: "wall", source: "summon" },
+    // Sunshine: places two shielded pawns (summon zone).
+    config: { ordering: "sweep", staggerMs: 80, victims: ["p"], hasLead: true, sound: "wall", source: "summon" },
     Render: DaniellePlay,
   },
   haerin: {
-    config: { ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "rampage", source: "summon" },
+    // Pounce: snatches an enemy off the board — a plain removal diff, so no
+    // zone source; the lead plays through the piece-diff path.
+    config: { ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "rampage" },
     Render: HaerinPlay,
   },
   i_love_cam: {

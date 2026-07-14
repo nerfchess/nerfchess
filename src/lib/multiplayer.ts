@@ -620,7 +620,16 @@ export class MPSession {
       socket.onopen = () => {
         opened = true;
         window.clearTimeout(failTimer);
-        this.heartbeat = window.setInterval(() => this.sendFrame("p"), 10000);
+        // While playing (`seat`) or spectating (`watchingId`) send `p`: the
+        // server runs a flag check, re-arms this game's alarm, and resends
+        // clocks — all load-bearing. Otherwise (idle on the lobby, or queued)
+        // send `hb`, which the DO answers via setWebSocketAutoResponse WITHOUT
+        // waking or billing. Keep this frame byte-identical to the DO's
+        // auto-response request string (`{"t":"hb"}`).
+        this.heartbeat = window.setInterval(
+          () => this.sendFrame(this.seat || this.watchingId ? "p" : "hb"),
+          10000,
+        );
         // Attach wake listeners now (not lazily after an onclose). On mobile the
         // socket can die during a freeze without ever firing onclose, so the
         // foreground-return handlers must already be armed to detect the zombie.

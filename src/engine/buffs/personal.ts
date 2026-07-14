@@ -27,6 +27,7 @@ import {
   KNIGHT_LEAPS,
   ORTHO_DIRS,
   activated,
+  activatedSimple,
   addEffect,
   addNovel,
   bindCandidates,
@@ -64,10 +65,6 @@ type PMeta = {
   icon?: string;
   requires?: PieceType[];
   fx?: CardFx;
-  /** Companion-ability cards are special: never offered by any draft roll
-   * (see draft.ts inMode); they only enter a hand when their companion is
-   * placed. */
-  special?: boolean;
 };
 
 function card(meta: PMeta, mech: Mech): Buff {
@@ -117,177 +114,17 @@ function nearestEnemy(
 }
 
 // ===========================================================================
-// COMPANION MACHINERY (I Love Cami and the NewJeans pocket companions)
+// COMPANION MACHINERY (I Love Cami)
 // ===========================================================================
-// A companion is a bound special piece: on deploy the card places a real
-// piece of a standard class (queen / rook / bishop / knight / pawn) whose
-// square the instance tracks through trackBoundPiece, exactly like the other
-// piece-bound cards. Rendering swaps in bespoke portrait art at that square
-// (Board.tsx companionSquares); mechanically everything is built from the
-// primitives that already ship (place / relocate / removePiece / augments /
-// opponent-move filters / shield / freeze / strike / bonk), so nothing here
-// can soft-lock a game, freeze a king, or desync a replica.
-//
-// Activated companion abilities recharge instead of being one-shots: the
-// effect arms `state.cd` (a count of the OWNER's turns) and onMovePlayed
-// ticks it down, clearing the engine's `usedActivation` latch once it hits
-// zero. Both halves run inside hooks every replica replays (activateBuff /
-// playMove), so the cooldown state is identical everywhere.
+// Cami is the one companion piece: on deploy her card places a real queen
+// whose square the instance tracks through trackBoundPiece, exactly like the
+// other piece-bound cards. Rendering swaps in bespoke portrait art at that
+// square (Board.tsx companionSquares); mechanically everything is built from
+// the primitives that already ship (place / augments / opponent-move filters
+// / freeze / strike / bonk), so nothing here can soft-lock a game, freeze a
+// king, or desync a replica.
 
 const sqLabel = (sq: Square) => `${"abcdefgh"[FILE(sq)]}${RANK(sq) + 1}`;
-
-function armCooldown(inst: BuffInstance, turns: number) {
-  inst.state.cd = turns;
-}
-
-function cooldownLeft(inst: BuffInstance): number {
-  return (inst.state.cd as number) ?? 0;
-}
-
-/** Tick a recharging ability on the owner's completed moves and re-arm the
- * activation (clear usedActivation) once the cooldown reaches zero. A
- * once-per-game ability sets `state.done` and never re-arms. */
-function tickAndRearm(inst: BuffInstance, move: Move, owner: Color) {
-  if (move.color === owner) {
-    const cd = cooldownLeft(inst);
-    if (cd > 0) inst.state.cd = cd - 1;
-  }
-  if (inst.usedActivation && !inst.state.done && cooldownLeft(inst) <= 0) {
-    inst.usedActivation = false;
-  }
-}
-
-// --- Cami lookups (her ability cards read the parent card's tracked square) --
-
-const CAMI_ID = "i_love_cam";
-
-/** The live, placed I Love Cami instance in MY hand, or null. */
-function camiInstance(api: BuffApi): BuffInstance | null {
-  const inst = api.mine.buffs.find((b) => b.id === CAMI_ID && !b.spent && !b.nullified);
-  return inst && inst.state.sq != null ? inst : null;
-}
-
-/** Cami's current square, verified against the board (my queen stands there). */
-function camiSquare(api: BuffApi): Square | null {
-  const inst = camiInstance(api);
-  if (!inst) return null;
-  const sq = inst.state.sq as Square;
-  const p = api.board.pieces[sq];
-  return p && p.color === api.me && p.type === "q" ? sq : null;
-}
-
-// --- Pocket companion factory (the five NewJeans members) --------------------
-
-interface CompanionSpec {
-  meta: PMeta;
-  /** Board class the deploy places (the member's mechanical base). */
-  piece: PieceType;
-  /** Extra placement filter beyond "empty square in your half". */
-  placeOk?: (sq: Square) => boolean;
-  /** Extra movement grafted onto the deployed member (her distinctive stat). */
-  augment?: (api: BuffApi, sq: Square, via: string) => Move[];
-  /** Ability cooldown in the owner's turns; null = once per game. */
-  abilityCooldown: number | null;
-  abilityLabel: string;
-  /** Candidate squares for the ability's single pick. Omit for a no-target
-   * ability. Empty list = currently unusable (the blank cast is refused
-   * instead of burning the turn and the cooldown). */
-  abilityTargets?: (api: BuffApi, sq: Square) => Square[];
-  /** No-target abilities: return false when firing now would do nothing. */
-  abilityReady?: (api: BuffApi, sq: Square) => boolean;
-  ability: (inst: BuffInstance, api: BuffApi, sq: Square, pick?: Square) => void;
-}
-
-/** The member's current square, verified against the board. */
-function memberSquare(inst: BuffInstance, api: BuffApi): Square | null {
-  const sq = inst.state.sq as Square | undefined;
-  if (sq == null) return null;
-  const p = api.board.pieces[sq];
-  return p && p.color === api.me ? sq : null;
-}
-
-/**
- * A pocket companion card: the FIRST activation deploys the member onto an
- * empty square in your half (costing the turn, like a crazyhouse drop);
- * every later activation fires her single ability, which then recharges over
- * `abilityCooldown` of your turns. The member is a real piece of her class;
- * if she is captured the card retires (trackBoundPiece marks it spent).
- */
-function pocketCompanion(spec: CompanionSpec): Buff {
-  const total = spec.abilityCooldown ?? 1;
-  return card(spec.meta, {
-    kind: "activated",
-    spendOnUse: false,
-    targets: (inst, api, picks) => {
-      if (picks.length > 0) return null;
-      if (inst.state.sq == null) {
-        return {
-          kind: "square",
-          label: `Place ${spec.meta.name} on an empty square in your half`,
-          squares: emptySquares(api.board, (sq) => inHalf(api.me, sq)).filter(
-            (sq) => !spec.placeOk || spec.placeOk(sq),
-          ),
-        };
-      }
-      const sq = memberSquare(inst, api);
-      if (sq == null) {
-        return { kind: "square", label: `${spec.meta.name} is off the board`, squares: [] };
-      }
-      if (spec.abilityTargets) {
-        return { kind: "square", label: spec.abilityLabel, squares: spec.abilityTargets(api, sq) };
-      }
-      if (spec.abilityReady && !spec.abilityReady(api, sq)) {
-        return { kind: "square", label: `${spec.abilityLabel}: no valid use right now`, squares: [] };
-      }
-      return null;
-    },
-    effect: (inst, api, picks) => {
-      if (inst.state.sq == null) {
-        // Deploy: place the member. The ability comes online after your next
-        // completed move (cd 1 re-arms the activation latch then).
-        const sq = picks[0]?.square;
-        if (sq == null || api.board.pieces[sq] || !inHalf(api.me, sq)) return;
-        if (spec.placeOk && !spec.placeOk(sq)) return;
-        api.place(sq, spec.piece, api.me);
-        inst.state.sq = sq;
-        addEffect(api, { kind: "strike", squares: [sq], owner: api.me, turns: 1 });
-        armCooldown(inst, 1);
-        return;
-      }
-      const sq = memberSquare(inst, api);
-      if (sq == null) return;
-      spec.ability(inst, api, sq, picks[0]?.square);
-      if (spec.abilityCooldown == null) inst.state.done = true;
-      else armCooldown(inst, spec.abilityCooldown);
-    },
-    augmentMoves: spec.augment
-      ? (moves, inst, api) => {
-          const sq = memberSquare(inst, api);
-          if (sq == null) return;
-          addNovel(moves, spec.augment!(api, sq, inst.id));
-        }
-      : undefined,
-    onMovePlayed: (inst, move, api) => {
-      // If the member is captured the card retires with her; a move-promotion
-      // (Hyein walking to the last rank herself) also closes the card out.
-      trackBoundPiece(inst, move, { dieOnPromote: true });
-      if (!inst.spent) tickAndRearm(inst, move, api.me);
-    },
-    cooldown: (inst) =>
-      inst.state.sq == null || inst.state.done
-        ? null
-        : { left: cooldownLeft(inst), total },
-    status: (inst) => {
-      const sq = inst.state.sq as Square | undefined;
-      if (sq == null) return "activate to deploy";
-      if (inst.state.done) return `deployed at ${sqLabel(sq)}, ability spent`;
-      const cd = cooldownLeft(inst);
-      return cd > 0
-        ? `deployed at ${sqLabel(sq)}, ability recharges in ${cd} of your turns`
-        : `deployed at ${sqLabel(sq)}, ability ready`;
-    },
-  });
-}
 
 // ===========================================================================
 // GYM / FEATS
@@ -903,15 +740,15 @@ const AFFECTION: Buff[] = [
     },
   ),
 
-  // Reworked (owner request): Cami is now a COMPANION. Placing her seats her
-  // two ability cards (Sweep the Lines, Guardian Leap) in your hand; while
-  // she stands she moves like an amazon and allies beside her are guarded.
+  // Cami, the companion piece (owner request, SIMPLIFIED: no ability kit).
+  // Place her and she fights as an amazon; allies beside her are guarded
+  // (Devotion) and whoever takes her is frozen (vengeance). Nothing else.
   card(
     {
       id: "i_love_cam",
       name: "I Love Cami",
       description:
-        "Place Cami on an empty square in your half: a queen who also leaps like a knight. Allies standing beside her cannot be captured, and she arrives with two abilities, Sweep the Lines and Guardian Leap. If she is ever taken, her captor is frozen for 2 turns.",
+        "Place Cami on an empty square in your half: a queen who also leaps like a knight. Devotion: allies standing beside her cannot be captured. If she is ever taken, her captor is frozen for 2 turns.",
       tier: 6,
       category: "pieces",
       icon: "Crosshair",
@@ -937,13 +774,6 @@ const AFFECTION: Buff[] = [
         api.place(sq, "q", api.me);
         inst.state.sq = sq;
         addEffect(api, { kind: "strike", squares: [sq], owner: api.me, turns: 1 });
-        // Her abilities arrive as their own activated cards (same seating as
-        // grantRandomTier9: fresh instances pushed into the hand, replayed
-        // identically by every replica through this activation).
-        api.mine.buffs.push(
-          { id: "cami_sweep", tier: 6, state: { cd: 0 } },
-          { id: "cami_leap", tier: 6, state: { cd: 0 } },
-        );
       },
       // Amazon movement: queen slides and the king-guard step are native to
       // her queen body; the knight leaps are grafted on here.
@@ -1225,126 +1055,6 @@ const AFFECTION: Buff[] = [
 ];
 
 // ===========================================================================
-// CAMI'S ABILITIES
-// ===========================================================================
-// Seated in the hand when I Love Cami is placed (never drafted: special).
-// Both read Cami's square off the parent card's state and retire themselves
-// the moment she falls, so they can never fire without her.
-
-const CAMI_ABILITIES: Buff[] = [
-  card(
-    {
-      id: "cami_sweep",
-      name: "Sweep the Lines",
-      description:
-        "Cami's signature move: every enemy piece except a king standing on her rank or file is swept off the board. Costs your turn; recharges over 3 of your turns.",
-      tier: 6,
-      category: "attack",
-      icon: "Radar",
-      flavor: "Cami keeps your lines clear.",
-      special: true,
-    },
-    {
-      kind: "activated",
-      spendOnUse: false,
-      targets: (_inst, api, picks) => {
-        if (picks.length > 0) return null;
-        const sq = camiSquare(api);
-        const hasPrey =
-          sq != null &&
-          mySquares(api.board, api.opp).some(
-            (e) =>
-              api.board.pieces[e]!.type !== "k" &&
-              (FILE(e) === FILE(sq) || RANK(e) === RANK(sq)),
-          );
-        // Nothing on her lines (or Cami gone): refuse the blank cast instead
-        // of letting it burn the turn and the cooldown.
-        return hasPrey
-          ? null
-          : { kind: "square", label: "No enemies stand on Cami's rank or file", squares: [] };
-      },
-      effect: (inst, api) => {
-        const sq = camiSquare(api);
-        if (sq == null) return;
-        const hit: Square[] = [];
-        for (const e of mySquares(api.board, api.opp)) {
-          if (api.board.pieces[e]!.type === "k") continue;
-          if (FILE(e) === FILE(sq) || RANK(e) === RANK(sq)) hit.push(e);
-        }
-        for (const e of hit) api.removePiece(e);
-        if (hit.length) addEffect(api, { kind: "strike", squares: hit, owner: api.me, turns: 1 });
-        armCooldown(inst, 3);
-      },
-      onMovePlayed: (inst, move, api) => {
-        if (!camiInstance(api)) {
-          inst.spent = true;
-          return;
-        }
-        tickAndRearm(inst, move, api.me);
-      },
-      cooldown: (inst) => ({ left: cooldownLeft(inst), total: 3 }),
-      status: (inst) => {
-        const cd = cooldownLeft(inst);
-        return cd > 0 ? `recharges in ${cd} of your turns` : "ready";
-      },
-    },
-  ),
-
-  card(
-    {
-      id: "cami_leap",
-      name: "Guardian Leap",
-      description:
-        "Cami teleports to an empty square beside your king. A free action (it does not cost your turn); recharges over 2 of your turns.",
-      tier: 6,
-      category: "protection",
-      icon: "IterationCw",
-      flavor: "Wherever the king stands, she is already there.",
-      special: true,
-    },
-    {
-      kind: "activated",
-      spendOnUse: false,
-      freeAction: true,
-      targets: (_inst, api, picks) => {
-        if (picks.length > 0) return null;
-        const cami = camiSquare(api);
-        const k = mySquares(api.board, api.me, "k")[0];
-        const squares =
-          cami == null || k == null
-            ? []
-            : neighbors8(k).filter((sq) => !api.board.pieces[sq]);
-        return { kind: "square", label: "Choose where Cami lands beside your king", squares };
-      },
-      effect: (inst, api, picks) => {
-        const cami = camiSquare(api);
-        const to = picks[0]?.square;
-        if (cami == null || to == null || api.board.pieces[to]) return;
-        api.relocate(cami, to);
-        // Keep the parent card's tracked square in step (a relocate is not a
-        // move, so trackBoundPiece never sees it).
-        const parent = camiInstance(api);
-        if (parent) parent.state.sq = to;
-        addEffect(api, { kind: "strike", squares: [to], owner: api.me, turns: 1 });
-        armCooldown(inst, 2);
-      },
-      onMovePlayed: (inst, move, api) => {
-        if (!camiInstance(api)) {
-          inst.spent = true;
-          return;
-        }
-        tickAndRearm(inst, move, api.me);
-      },
-      cooldown: (inst) => ({ left: cooldownLeft(inst), total: 2 }),
-      status: (inst) => {
-        const cd = cooldownLeft(inst);
-        return cd > 0 ? `recharges in ${cd} of your turns` : "ready";
-      },
-    },
-  ),
-];
-
-// ===========================================================================
 // NEWJEANS / K-POP
 // ===========================================================================
 
@@ -1374,165 +1084,186 @@ export const NEWJEANS_CARDS: Buff[] = [
     ),
   ),
 
-  // The five members are POCKET COMPANIONS now (owner request): the first
-  // activation deploys the member onto an empty square in your half as a real
-  // piece of her class; later activations fire her single recharging ability.
-  pocketCompanion({
-    meta: {
+  // The five members are back to simple, strong one-shot / passive cards
+  // (owner request: placing companions was too confusing). Their board-wide
+  // portrait play animations stay (personalPlays.tsx).
+  card(
+    {
       id: "minji",
       name: "Minji",
       description:
-        "Deploy the leader on an empty square in your half: a rook-class companion. Her order, Linked Arms (once per 3 of your turns): every ally standing next to her cannot be captured for your opponent's next 2 turns.",
+        "Leader's guard: every one of your pieces standing next to your king links arms and cannot be captured for your opponent's next 5 turns.",
       tier: 5,
       category: "protection",
       icon: "Crown",
       flavor: "The eldest steps forward first. Nobody gets past her line.",
+      fx: { motif: "ward", self: true },
     },
-    piece: "r",
-    abilityCooldown: 3,
-    abilityLabel: "Linked Arms",
-    abilityReady: (api, sq) =>
-      neighbors8(sq).some((n) => {
-        const p = api.board.pieces[n];
-        return !!p && p.color === api.me && p.type !== "k";
-      }),
-    ability: (_inst, api, sq) => {
-      const squares = neighbors8(sq).filter((n) => {
-        const p = api.board.pieces[n];
-        return !!p && p.color === api.me && p.type !== "k";
+    // Activated (not instant) on purpose: an activated card can sit in a hand,
+    // so the god panel may summon it and the player picks the moment the
+    // guard snaps in.
+    activatedSimple((_inst, api) => {
+      const k = mySquares(api.board, api.me, "k")[0];
+      if (k == null) return;
+      const squares = neighbors8(k).filter((sq) => {
+        const p = api.board.pieces[sq];
+        return !!p && p.color === api.me;
       });
       if (squares.length) {
-        addEffect(api, { kind: "shield", owner: api.me, squares, turns: 2 });
+        addEffect(api, { kind: "shield", owner: api.me, squares, turns: 5 });
       }
-    },
-  }),
+    }),
+  ),
 
-  pocketCompanion({
-    meta: {
+  card(
+    {
       id: "hyein",
       name: "Hyein",
       description:
-        "Deploy the maknae on an empty square in your half: a pawn-class companion with long legs, striding to the first or second empty square straight ahead and springing over anything between. Once per game she may Ascend, promoting herself into a queen-class companion.",
+        "Long legs: for the game each of your pawns may also stride straight forward to the first or second empty square ahead, springing over anything in between.",
       tier: 5,
       category: "movement",
+      requires: ["p"],
       icon: "ArrowUp",
       flavor: "The maknae is taller than all of them, and her stride shows it.",
+      fx: { motif: "rally", pieces: ["p"], self: true },
     },
-    piece: "p",
-    placeOk: pawnRankOk,
-    // Her stride, only while she still walks on pawn legs (after Ascend she
-    // has the whole queen's reach instead).
-    augment: (api, sq, via) => {
-      const p = api.board.pieces[sq];
-      if (!p || p.type !== "p") return [];
-      const dr = fwd(p.color);
-      const tos = [
-        [FILE(sq), RANK(sq) + dr],
-        [FILE(sq), RANK(sq) + dr * 2],
-      ]
-        .filter(([f, r]) => inBoard(f, r))
-        .map(([f, r]) => SQ(f, r))
-        .filter((s) => pawnRankOk(s));
-      return teleportMoves(api.board, sq, tos, via);
-    },
-    abilityCooldown: null,
-    abilityLabel: "Ascend",
-    abilityReady: (api, sq) => api.board.pieces[sq]?.type === "p",
-    ability: (_inst, api, sq) => {
-      if (api.board.pieces[sq]?.type !== "p") return;
-      api.setPieceType(sq, "q");
-      addEffect(api, { kind: "strike", squares: [sq], owner: api.me, turns: 1 });
-    },
-  }),
+    permanentAugment((_m, inst, api) =>
+      mySquares(api.board, api.me, "p").flatMap((sq) => {
+        const dr = fwd(api.board.pieces[sq]!.color);
+        const tos = [
+          [FILE(sq), RANK(sq) + dr],
+          [FILE(sq), RANK(sq) + dr * 2],
+        ]
+          .filter(([f, r]) => inBoard(f, r))
+          .map(([f, r]) => SQ(f, r))
+          .filter((s) => pawnRankOk(s));
+        return teleportMoves(api.board, sq, tos, inst.id);
+      }),
+    ),
+  ),
 
-  pocketCompanion({
-    meta: {
+  card(
+    {
       id: "haerin",
       name: "Haerin",
       description:
-        "Deploy the cat on an empty square in your half: a knight-class companion who may also step one square diagonally. Her strike, Pounce (once per 3 of your turns): snatch an enemy piece except a king a knight's leap away and land on its square.",
+        "Cat's pounce: choose one of your pieces, then an enemy a knight's leap away. Snatch that piece off the board and land yours on its square.",
       tier: 5,
       category: "attack",
       icon: "Cat",
       flavor: "Silent, then gone. The cat always lands right on the kill.",
     },
-    piece: "n",
-    augment: (api, sq, via) => leapMoves(api.board, sq, DIAG_DIRS, via),
-    abilityCooldown: 3,
-    abilityLabel: "Pounce: choose the enemy to snatch",
-    abilityTargets: (api, sq) =>
-      KNIGHT_LEAPS.flatMap(([df, dr]) => {
-        const f = FILE(sq) + df, r = RANK(sq) + dr;
-        if (!inBoard(f, r)) return [];
-        const prey = SQ(f, r);
-        const t = api.board.pieces[prey];
-        return t && t.color === api.opp && t.type !== "k" ? [prey] : [];
-      }),
-    ability: (inst, api, sq, pick) => {
-      if (pick == null) return;
-      const t = api.board.pieces[pick];
-      if (!t || t.color !== api.opp || t.type === "k") return;
-      api.removePiece(pick);
-      api.relocate(sq, pick);
-      inst.state.sq = pick;
-      addEffect(api, { kind: "strike", squares: [pick], owner: api.me, turns: 1 });
-    },
-  }),
+    (() => {
+      const preyFrom = (api: BuffApi, from: Square): Square[] => {
+        const isPawn = api.board.pieces[from]?.type === "p";
+        return KNIGHT_LEAPS.flatMap(([df, dr]) => {
+          const f = FILE(from) + df, r = RANK(from) + dr;
+          if (!inBoard(f, r)) return [];
+          const sq = SQ(f, r);
+          const t = api.board.pieces[sq];
+          if (!t || t.color !== api.opp || t.type === "k") return [];
+          if (isPawn && !pawnRankOk(sq)) return [];
+          return [sq];
+        });
+      };
+      return activated(
+        (_inst, api, picks) =>
+          picks.length === 0
+            ? {
+                kind: "square",
+                label: "Choose the piece that pounces",
+                squares: mySquares(api.board, api.me).filter(
+                  (sq) => api.board.pieces[sq]!.type !== "k" && preyFrom(api, sq).length > 0,
+                ),
+              }
+            : picks.length === 1
+              ? {
+                  kind: "square",
+                  label: "Choose the enemy to pounce on",
+                  squares: picks[0].square != null ? preyFrom(api, picks[0].square) : [],
+                }
+              : null,
+        (_inst, api, picks) => {
+          const from = picks[0]?.square, prey = picks[1]?.square;
+          if (from == null || prey == null) return;
+          const mover = api.board.pieces[from];
+          if (!mover || mover.color !== api.me) return;
+          api.removePiece(prey);
+          if (mover.type !== "p" || pawnRankOk(prey)) api.relocate(from, prey);
+          addEffect(api, { kind: "strike", squares: [prey], owner: api.me, turns: 1 });
+        },
+      );
+    })(),
+  ),
 
-  pocketCompanion({
-    meta: {
+  card(
+    {
       id: "hanni",
       name: "Hanni",
       description:
-        "Deploy the spotlight on an empty square in your half: a bishop-class companion. Her charm, Spotlight (once per 3 of your turns): an enemy piece except a king within 2 squares of her, and every enemy piece touching it, are charmed and cannot move for 1 turn.",
+        "Spotlight: choose an enemy piece. It and every enemy piece touching it are charmed and cannot move for their next 2 turns. Kings shrug it off.",
       tier: 5,
       category: "tempo",
       icon: "Sparkles",
       flavor: "One wink and the whole room forgets what it was doing.",
+      fx: { motif: "jail" },
     },
-    piece: "b",
-    abilityCooldown: 3,
-    abilityLabel: "Spotlight: choose an enemy within 2 squares of Hanni",
-    abilityTargets: (api, sq) =>
-      mySquares(api.board, api.opp).filter(
-        (e) => api.board.pieces[e]!.type !== "k" && dist(e, sq) <= 2,
-      ),
-    ability: (_inst, api, _sq, pick) => {
-      if (pick == null) return;
-      const hit: Square[] = [];
-      for (const t of [pick, ...neighbors8(pick)]) {
-        const p = api.board.pieces[t];
-        if (p && p.color === api.opp && p.type !== "k") {
-          addEffect(api, { kind: "freeze", sq: t, owner: api.opp, turns: 1, skin: "charm" });
-          hit.push(t);
+    activated(
+      (_inst, api, picks) =>
+        picks.length > 0
+          ? null
+          : {
+              kind: "square",
+              label: "Choose an enemy piece to spotlight",
+              squares: mySquares(api.board, api.opp).filter(
+                (sq) => api.board.pieces[sq]!.type !== "k",
+              ),
+            },
+      (_inst, api, picks) => {
+        const sq = picks[0]?.square;
+        if (sq == null) return;
+        const hit: Square[] = [];
+        for (const t of [sq, ...neighbors8(sq)]) {
+          const p = api.board.pieces[t];
+          if (p && p.color === api.opp && p.type !== "k") {
+            addEffect(api, { kind: "freeze", sq: t, owner: api.opp, turns: 2, skin: "charm" });
+            hit.push(t);
+          }
         }
-      }
-      if (hit.length) addEffect(api, { kind: "bonk", squares: hit, owner: api.me, turns: 1 });
-    },
-  }),
+        if (hit.length) addEffect(api, { kind: "bonk", squares: hit, owner: api.me, turns: 1 });
+      },
+    ),
+  ),
 
-  pocketCompanion({
-    meta: {
+  card(
+    {
       id: "danielle",
       name: "Danielle",
       description:
-        "Deploy sunshine on an empty square in your half: a knight-class companion. Her gift, Sunshine (once per 3 of your turns): grow a new pawn on an empty square next to her.",
+        "Sunshine: grow two new pawns on any empty squares in your own half, basking in a warmth that keeps each of them uncapturable for your opponent's next 2 turns.",
       tier: 5,
       category: "pieces",
       icon: "Sun",
       flavor: "Warm day, good soil. Something always sprouts around her.",
+      fx: { motif: "ward", pieces: ["p"], self: true },
     },
-    piece: "n",
-    abilityCooldown: 3,
-    abilityLabel: "Sunshine: choose an empty square beside Danielle",
-    abilityTargets: (api, sq) =>
-      neighbors8(sq).filter((n) => !api.board.pieces[n] && pawnRankOk(n)),
-    ability: (_inst, api, _sq, pick) => {
-      if (pick == null || api.board.pieces[pick] || !pawnRankOk(pick)) return;
-      api.place(pick, "p", api.me);
-      addEffect(api, { kind: "strike", squares: [pick], owner: api.me, turns: 1 });
-    },
-  }),
+    (() => {
+      const base = placePieces(["p", "p"], (api: BuffApi) => (sq: Square) => inHalf(api.me, sq));
+      return {
+        ...base,
+        effect: (inst: BuffInstance, api: BuffApi, picks: { square?: Square }[]) => {
+          base.effect?.(inst, api, picks as never);
+          const squares = picks
+            .map((k) => k.square)
+            .filter((sq): sq is Square => sq != null && api.board.pieces[sq]?.color === api.me);
+          if (squares.length) {
+            addEffect(api, { kind: "shield", owner: api.me, squares, turns: 2 });
+          }
+        },
+      };
+    })(),
+  ),
 
   card(
     {
@@ -1712,6 +1443,5 @@ export const PERSONAL_CARDS: Buff[] = [
   ...GYM,
   ...FOCUS,
   ...AFFECTION,
-  ...CAMI_ABILITIES,
   ...NAMED,
 ];

@@ -9,7 +9,7 @@
 // side effect, after which Board resolves plugin cards exactly as before the
 // split.
 
-import { PLUGIN_SIGNATURES, type SigPlugin } from "./sigPlugins";
+import { PLUGIN_IDS, PLUGIN_SIGNATURES, type SigPlugin } from "./sigPlugins";
 import { PLAYS as GOD_PLAYS } from "./godPlays";
 import { PLAYS as FUNNY_PLAYS } from "./funnyPlays";
 import { PLAYS as GREAT_PLAYS } from "./greatPlays";
@@ -27,6 +27,26 @@ const MERGED: Record<string, SigPlugin> = { ...BASIC_PLAYS, ...GOD_PLAYS, ...GRE
 // same merge order, same entries as the pre-split eager build.
 for (const [id, p] of Object.entries(MERGED)) {
   PLUGIN_SIGNATURES[id] = { ...p.config, visual: `x:${id}` as const };
+}
+
+// Dev-mode invariant: the eager PLUGIN_IDS list (sigPlugins.tsx) must match
+// the real merged keys exactly. The list is what suppresses the generated
+// fallback before this chunk loads, so drift means either wrong art plays
+// pre-load (id missing from the list) or a card renders no art forever (id
+// listed but no longer covered). Warn loudly the moment either happens.
+if (process.env.NODE_ENV !== "production") {
+  const listed = new Set(PLUGIN_IDS);
+  const merged = new Set(Object.keys(MERGED));
+  const missing = [...merged].filter((id) => !listed.has(id));
+  const stale = [...listed].filter((id) => !merged.has(id));
+  if (missing.length || stale.length) {
+    console.warn(
+      "[sigPlugins] PLUGIN_IDS drifted from the merged plugin registry." +
+        (missing.length ? ` Missing from PLUGIN_IDS: ${missing.join(", ")}.` : "") +
+        (stale.length ? ` Stale in PLUGIN_IDS: ${stale.join(", ")}.` : "") +
+        " Update PLUGIN_IDS in sigPlugins.tsx.",
+    );
+  }
 }
 
 /** SignatureOverlay's default-case hook: render an `x:<key>` plugin visual. */
