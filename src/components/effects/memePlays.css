@@ -27,8 +27,8 @@
   70% { opacity: 0.55; transform: scale(1); }
   100% { opacity: 0; transform: scale(1.02); }
 }
-.mnp-wash { animation: mnp-wash 1.4s ease-out both; transform-origin: 50% 50%; }
-.mnp-wash--slow { animation-duration: 2.4s; }
+.mnp-wash { animation: mnp-wash calc(1.4s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.mnp-wash--slow { animation-duration: calc(2.4s * var(--fx-dur, 1)); }
 
 /* Closing shockwave ring. */
 @keyframes mnp-ring {
@@ -36,7 +36,7 @@
   20% { opacity: 1; }
   100% { opacity: 0; transform: scale(1.15); }
 }
-.mnp-ring { animation: mnp-ring 0.9s cubic-bezier(0.15, 0.7, 0.2, 1) both; transform-origin: 50% 50%; }
+.mnp-ring { animation: mnp-ring calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.15, 0.7, 0.2, 1) both; transform-origin: 50% 50%; }
 
 /* Starburst blink. */
 @keyframes mnp-star {
@@ -45,7 +45,7 @@
   55% { transform: scale(0.95) rotate(24deg); }
   100% { opacity: 0; transform: scale(1.3) rotate(32deg); }
 }
-.mnp-star { animation: mnp-star 0.7s ease-out both; transform-origin: 50% 50%; }
+.mnp-star { animation: mnp-star calc(0.7s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
 
 /* Drifting puff (dust, fog): --mnp-x / --mnp-y set the drift vector. */
 @keyframes mnp-puff {
@@ -53,7 +53,7 @@
   30% { opacity: 0.9; transform: translate(var(--mnp-x, 0%), var(--mnp-y, -30%)) scale(1); }
   100% { opacity: 0; transform: translate(calc(var(--mnp-x, 0%) * 1.9), calc(var(--mnp-y, -30%) * 1.8)) scale(1.6); }
 }
-.mnp-puff { animation: mnp-puff 0.85s ease-out both; transform-origin: 50% 50%; }
+.mnp-puff { animation: mnp-puff calc(0.85s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
 
 /* Flung droplet / splash chunk: out along the vector, gravity-ish. */
 @keyframes mnp-drop {
@@ -61,7 +61,7 @@
   18% { opacity: 1; transform: translate(calc(var(--mnp-x, 40%) * 0.35), calc(var(--mnp-y, -60%) * 0.5)) scale(1.05); }
   100% { opacity: 0; transform: translate(var(--mnp-x, 40%), calc(var(--mnp-y, -60%) * -0.4)) scale(0.8); }
 }
-.mnp-drop { animation: mnp-drop 0.8s cubic-bezier(0.2, 0.6, 0.6, 1) both; transform-origin: 50% 50%; }
+.mnp-drop { animation: mnp-drop calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.6, 0.6, 1) both; transform-origin: 50% 50%; }
 
 /* --- Cappuccino Assassino: the blade flurry ---------------------------------- */
 
@@ -73,7 +73,7 @@
   70% { opacity: 0.9; }
   100% { opacity: 0; transform: scale(1.04) rotate(2deg); }
 }
-.mnp-slash { animation: mnp-slash 0.55s cubic-bezier(0.2, 0.9, 0.3, 1) both; transform-origin: 50% 50%; }
+.mnp-slash { animation: mnp-slash calc(0.55s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; transform-origin: 50% 50%; }
 
 /* The assassin's dash: streaks in from the left, poses dead center for one
    beat (blades out), then blinks away to the right faster than sight. */
@@ -85,7 +85,7 @@
   78% { opacity: 1; transform: translateX(230%) scale(0.94); }
   100% { opacity: 0; transform: translateX(280%) scale(0.9); }
 }
-.mnp-assassin { animation: mnp-assassin 1.5s cubic-bezier(0.5, 0, 0.2, 1) both; transform-origin: 50% 50%; }
+.mnp-assassin { animation: mnp-assassin calc(1.5s * var(--fx-dur, 1)) cubic-bezier(0.5, 0, 0.2, 1) both; transform-origin: 50% 50%; }
 
 /* Horizontal speed streak left behind by the dash. */
 @keyframes mnp-streak {
@@ -93,7 +93,7 @@
   30% { opacity: 0.9; transform: translateX(0) scaleX(1); }
   100% { opacity: 0; transform: translateX(45%) scaleX(0.5); }
 }
-.mnp-streak { animation: mnp-streak 0.6s ease-out both; transform-origin: 0% 50%; }
+.mnp-streak { animation: mnp-streak calc(0.6s * var(--fx-dur, 1)) ease-out both; transform-origin: 0% 50%; }
 
 /* --- Ballerina Cappuccina: the pirouette -------------------------------------- */
 
@@ -106,7 +106,7 @@
   88% { opacity: 1; transform: rotate(1080deg) scale(1.04); }
   100% { opacity: 0; transform: rotate(1080deg) scale(1.06); }
 }
-.mnp-pirouette { animation: mnp-pirouette 1.7s cubic-bezier(0.45, 0.05, 0.3, 1) both; transform-origin: 50% 72%; }
+.mnp-pirouette { animation: mnp-pirouette calc(1.7s * var(--fx-dur, 1)) cubic-bezier(0.45, 0.05, 0.3, 1) both; transform-origin: 50% 72%; }
 
 /* The ribbon spiral counter-rotates around her. */
 @keyframes mnp-ribbonspin {
@@ -115,7 +115,7 @@
   80% { opacity: 0.85; transform: rotate(-560deg) scale(1.04); }
   100% { opacity: 0; transform: rotate(-640deg) scale(1.1); }
 }
-.mnp-ribbonspin { animation: mnp-ribbonspin 1.7s cubic-bezier(0.45, 0.05, 0.3, 1) both; transform-origin: 50% 50%; }
+.mnp-ribbonspin { animation: mnp-ribbonspin calc(1.7s * var(--fx-dur, 1)) cubic-bezier(0.45, 0.05, 0.3, 1) both; transform-origin: 50% 50%; }
 
 /* Petal flung off the turn. */
 @keyframes mnp-petal {
@@ -123,7 +123,7 @@
   16% { opacity: 1; }
   100% { opacity: 0; transform: translate(var(--mnp-x, 100%), var(--mnp-y, -60%)) rotate(var(--mnp-r, 160deg)) scale(0.9); }
 }
-.mnp-petal { animation: mnp-petal 0.9s cubic-bezier(0.2, 0.6, 0.5, 1) both; transform-origin: 50% 50%; }
+.mnp-petal { animation: mnp-petal calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.6, 0.5, 1) both; transform-origin: 50% 50%; }
 
 /* Target twirl: the circular arrow spins once in place. */
 @keyframes mnp-twirl {
@@ -132,7 +132,7 @@
   75% { opacity: 1; transform: rotate(340deg) scale(1); }
   100% { opacity: 0; transform: rotate(380deg) scale(1.08); }
 }
-.mnp-twirl { animation: mnp-twirl 0.95s cubic-bezier(0.4, 0.1, 0.4, 1) both; transform-origin: 50% 50%; }
+.mnp-twirl { animation: mnp-twirl calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.4, 0.1, 0.4, 1) both; transform-origin: 50% 50%; }
 
 /* --- La Vaca Saturno Saturnita: the orbital pass ------------------------------- */
 
@@ -144,7 +144,7 @@
   86% { opacity: 0.9; transform: scale(1.1) rotate(8deg); }
   100% { opacity: 0; transform: scale(1.16) rotate(10deg); }
 }
-.mnp-ringsweep { animation: mnp-ringsweep 2s cubic-bezier(0.3, 0.6, 0.3, 1) both; transform-origin: 50% 50%; }
+.mnp-ringsweep { animation: mnp-ringsweep calc(2s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.6, 0.3, 1) both; transform-origin: 50% 50%; }
 
 /* The cow's orbit: the wrapper spins one full revolution; the figure rides
    the top edge of the wrapper, so it traces the whole circle. */
@@ -154,14 +154,14 @@
   88% { opacity: 1; }
   100% { opacity: 0; transform: rotate(360deg); }
 }
-.mnp-orbitpath { animation: mnp-orbitpath 1.9s cubic-bezier(0.4, 0.1, 0.4, 0.95) both; transform-origin: 50% 50%; }
+.mnp-orbitpath { animation: mnp-orbitpath calc(1.9s * var(--fx-dur, 1)) cubic-bezier(0.4, 0.1, 0.4, 0.95) both; transform-origin: 50% 50%; }
 
 /* She stays gently bobbing (and slightly banked) while cruising. */
 @keyframes mnp-orbitbob {
   0%, 100% { transform: rotate(-8deg) translateY(0); }
   50% { transform: rotate(-8deg) translateY(-6%); }
 }
-.mnp-orbitbob { animation: mnp-orbitbob 0.95s ease-in-out infinite; transform-origin: 50% 50%; }
+.mnp-orbitbob { animation: mnp-orbitbob calc(0.95s * var(--fx-dur, 1)) ease-in-out infinite; transform-origin: 50% 50%; }
 
 /* Target ring pop for the landing square. */
 @keyframes mnp-ringpop {
@@ -172,7 +172,7 @@
   85% { opacity: 0.9; }
   100% { opacity: 0; transform: scale(1.1); }
 }
-.mnp-ringpop { animation: mnp-ringpop 0.9s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; transform-origin: 50% 50%; }
+.mnp-ringpop { animation: mnp-ringpop calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1.2) both; transform-origin: 50% 50%; }
 
 /* --- Frigo Camelo: the cold open ------------------------------------------------ */
 
@@ -185,7 +185,7 @@
   86% { opacity: 1; }
   100% { opacity: 0; transform: translateX(0); }
 }
-.mnp-slidein { animation: mnp-slidein 1.7s cubic-bezier(0.3, 0.8, 0.3, 1) both; transform-origin: 50% 50%; }
+.mnp-slidein { animation: mnp-slidein calc(1.7s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.3, 1) both; transform-origin: 50% 50%; }
 
 /* The door swings open: a horizontal collapse from its left hinge. */
 @keyframes mnp-dooropen {
@@ -196,7 +196,7 @@
   84% { opacity: 1; transform: scaleX(0.2) skewY(-3deg); }
   100% { opacity: 0; transform: scaleX(0.2) skewY(-3deg); }
 }
-.mnp-dooropen { animation: mnp-dooropen 1.5s cubic-bezier(0.4, 0, 0.3, 1) both; transform-origin: 0% 50%; }
+.mnp-dooropen { animation: mnp-dooropen calc(1.5s * var(--fx-dur, 1)) cubic-bezier(0.4, 0, 0.3, 1) both; transform-origin: 0% 50%; }
 
 /* The cold light spilling out once the door moves. */
 @keyframes mnp-doorglow {
@@ -205,7 +205,7 @@
   75% { opacity: 0.7; transform: scaleX(1.15); }
   100% { opacity: 0; transform: scaleX(1.3); }
 }
-.mnp-doorglow { animation: mnp-doorglow 1.3s ease-out both; transform-origin: 0% 50%; }
+.mnp-doorglow { animation: mnp-doorglow calc(1.3s * var(--fx-dur, 1)) ease-out both; transform-origin: 0% 50%; }
 
 /* A fog bank rolling out across the board floor. */
 @keyframes mnp-fogroll {
@@ -213,7 +213,7 @@
   25% { opacity: 0.9; transform: translateX(calc(var(--mnp-x, 120%) * 0.3)) scale(1); }
   100% { opacity: 0; transform: translateX(var(--mnp-x, 120%)) scale(1.5); }
 }
-.mnp-fogroll { animation: mnp-fogroll 1.3s ease-out both; transform-origin: 50% 50%; }
+.mnp-fogroll { animation: mnp-fogroll calc(1.3s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
 
 /* Small target fog puff. */
 @keyframes mnp-fogpuff {
@@ -221,7 +221,7 @@
   30% { opacity: 0.9; transform: translateX(calc(var(--mnp-x, 20%) * 0.5)) scale(1); }
   100% { opacity: 0; transform: translateX(var(--mnp-x, 20%)) scale(1.5); }
 }
-.mnp-fogpuff { animation: mnp-fogpuff 0.9s ease-out both; transform-origin: 50% 50%; }
+.mnp-fogpuff { animation: mnp-fogpuff calc(0.9s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
 
 /* --- Trippi Troppi: the corrupted feed ------------------------------------------ */
 
@@ -239,7 +239,7 @@
   90% { opacity: 1; transform: translate(0, 0) skewX(0deg); }
   100% { opacity: 0; transform: translate(0, 0); }
 }
-.mnp-glitch { animation: mnp-glitch 1.35s steps(1, end) both; transform-origin: 50% 50%; }
+.mnp-glitch { animation: mnp-glitch calc(1.35s * var(--fx-dur, 1)) steps(1, end) both; transform-origin: 50% 50%; }
 
 /* A scanline tear: flashes wide, snaps offset, vanishes. */
 @keyframes mnp-glitchbar {
@@ -250,7 +250,7 @@
   60% { opacity: 0.9; transform: translateX(2%) scaleX(1); }
   100% { opacity: 0; transform: translateX(6%) scaleX(0.5); }
 }
-.mnp-glitchbar { animation: mnp-glitchbar 0.7s steps(2, end) both; transform-origin: 50% 50%; }
+.mnp-glitchbar { animation: mnp-glitchbar calc(0.7s * var(--fx-dur, 1)) steps(2, end) both; transform-origin: 50% 50%; }
 
 /* --- Chill Guy: the anticlimax ---------------------------------------------------- */
 
@@ -261,7 +261,7 @@
   90% { opacity: 1; }
   100% { opacity: 0; transform: translateX(340%); }
 }
-.mnp-chillslide { animation: mnp-chillslide 2.6s linear both; transform-origin: 50% 50%; }
+.mnp-chillslide { animation: mnp-chillslide calc(2.6s * var(--fx-dur, 1)) linear both; transform-origin: 50% 50%; }
 
 /* The "..." reaction bubble (and the moai's 🗿): fade in, hold, fade. */
 @keyframes mnp-deadpan {
@@ -270,8 +270,8 @@
   82% { opacity: 1; transform: translateY(0); }
   100% { opacity: 0; transform: translateY(-6%); }
 }
-.mnp-deadpan { animation: mnp-deadpan 1.3s ease-out both; transform-origin: 50% 50%; }
-.mnp-deadpan--long { animation-duration: 2.2s; }
+.mnp-deadpan { animation: mnp-deadpan calc(1.3s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.mnp-deadpan--long { animation-duration: calc(2.2s * var(--fx-dur, 1)); }
 
 /* One indifference dot on a target square. */
 @keyframes mnp-ellipsis {
@@ -281,7 +281,7 @@
   80% { opacity: 0.9; }
   100% { opacity: 0; transform: scale(1); }
 }
-.mnp-ellipsis { animation: mnp-ellipsis 0.9s ease-out both; transform-origin: 50% 50%; }
+.mnp-ellipsis { animation: mnp-ellipsis calc(0.9s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
 
 /* --- Moai Head: the drop, the THUD, the pause ------------------------------------- */
 
@@ -297,7 +297,7 @@
   90% { opacity: 1; transform: translateY(0) scale(1); }
   100% { opacity: 0; transform: translateY(0) scale(1); }
 }
-.mnp-moaidrop { animation: mnp-moaidrop 2.3s cubic-bezier(0.55, 0, 0.7, 0.3) both; transform-origin: 50% 100%; }
+.mnp-moaidrop { animation: mnp-moaidrop calc(2.3s * var(--fx-dur, 1)) cubic-bezier(0.55, 0, 0.7, 0.3) both; transform-origin: 50% 100%; }
 
 /* The dust shockwave ring at the base. */
 @keyframes mnp-dustring {
@@ -305,7 +305,7 @@
   22% { opacity: 1; transform: scale(0.8); }
   100% { opacity: 0; transform: scale(1.5); }
 }
-.mnp-dustring { animation: mnp-dustring 0.8s cubic-bezier(0.15, 0.7, 0.2, 1) both; transform-origin: 50% 50%; }
+.mnp-dustring { animation: mnp-dustring calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.15, 0.7, 0.2, 1) both; transform-origin: 50% 50%; }
 
 /* A pebble knocked loose: out and down. */
 @keyframes mnp-pebble {
@@ -313,7 +313,7 @@
   16% { opacity: 1; transform: translate(calc(var(--mnp-x, 100%) * 0.5), var(--mnp-y, -80%)) rotate(120deg); }
   100% { opacity: 0; transform: translate(var(--mnp-x, 100%), 60%) rotate(280deg); }
 }
-.mnp-pebble { animation: mnp-pebble 0.85s cubic-bezier(0.3, 0.5, 0.7, 1) both; transform-origin: 50% 50%; }
+.mnp-pebble { animation: mnp-pebble calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.5, 0.7, 1) both; transform-origin: 50% 50%; }
 
 /* --- Skibidi Flush: the vortex ------------------------------------------------------ */
 
@@ -324,7 +324,7 @@
   70% { opacity: 0.95; transform: rotate(600deg) scale(0.92); }
   100% { opacity: 0; transform: rotate(820deg) scale(0.35); }
 }
-.mnp-vortex { animation: mnp-vortex 1.9s cubic-bezier(0.5, 0.05, 0.5, 1) both; transform-origin: 50% 50%; }
+.mnp-vortex { animation: mnp-vortex calc(1.9s * var(--fx-dur, 1)) cubic-bezier(0.5, 0.05, 0.5, 1) both; transform-origin: 50% 50%; }
 
 /* Wrapper that carries the ghost pieces around the drain. */
 @keyframes mnp-suckspin {
@@ -333,7 +333,7 @@
   85% { opacity: 1; }
   100% { opacity: 0; transform: rotate(520deg); }
 }
-.mnp-suckspin { animation: mnp-suckspin 1.8s cubic-bezier(0.5, 0.05, 0.6, 1) both; transform-origin: 50% 50%; }
+.mnp-suckspin { animation: mnp-suckspin calc(1.8s * var(--fx-dur, 1)) cubic-bezier(0.5, 0.05, 0.6, 1) both; transform-origin: 50% 50%; }
 
 /* Each ghost shrinks toward the center as the spin carries it. */
 @keyframes mnp-suck {
@@ -341,7 +341,7 @@
   15% { opacity: 0.95; transform: scale(1); }
   100% { opacity: 0; transform: scale(0.1) translate(0, 20%); }
 }
-.mnp-suck { animation: mnp-suck 1.6s cubic-bezier(0.5, 0.1, 0.8, 0.6) both; transform-origin: 50% 50%; }
+.mnp-suck { animation: mnp-suck calc(1.6s * var(--fx-dur, 1)) cubic-bezier(0.5, 0.1, 0.8, 0.6) both; transform-origin: 50% 50%; }
 
 /* The drain eye dilates and closes. */
 @keyframes mnp-drain {
@@ -350,7 +350,7 @@
   70% { opacity: 1; transform: scale(0.9); }
   100% { opacity: 0; transform: scale(0.2); }
 }
-.mnp-drain { animation: mnp-drain 1.4s ease-in-out both; transform-origin: 50% 50%; }
+.mnp-drain { animation: mnp-drain calc(1.4s * var(--fx-dur, 1)) ease-in-out both; transform-origin: 50% 50%; }
 
 /* The culprit bobs up out of the drain to take credit. */
 @keyframes mnp-surface {
@@ -361,7 +361,7 @@
   84% { opacity: 1; transform: translateY(0) scale(1); }
   100% { opacity: 0; transform: translateY(4%) scale(0.98); }
 }
-.mnp-surface { animation: mnp-surface 1.3s cubic-bezier(0.3, 0.9, 0.3, 1.1) both; transform-origin: 50% 100%; }
+.mnp-surface { animation: mnp-surface calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.9, 0.3, 1.1) both; transform-origin: 50% 100%; }
 
 /* Target mini-swirl under a flushed piece. */
 @keyframes mnp-miniswirl {
@@ -370,7 +370,7 @@
   80% { opacity: 0.9; transform: rotate(560deg) scale(0.9); }
   100% { opacity: 0; transform: rotate(720deg) scale(0.3); }
 }
-.mnp-miniswirl { animation: mnp-miniswirl 1s cubic-bezier(0.5, 0.05, 0.5, 1) both; transform-origin: 50% 50%; }
+.mnp-miniswirl { animation: mnp-miniswirl calc(1s * var(--fx-dur, 1)) cubic-bezier(0.5, 0.05, 0.5, 1) both; transform-origin: 50% 50%; }
 
 /* --- Tung Tung Sahur: the drum-man marches in person --------------------------- */
 
@@ -390,7 +390,7 @@
   92% { opacity: 1; transform: translateX(90%) translateY(2%) rotate(-2deg); }
   100% { opacity: 0; transform: translateX(102%) translateY(0) rotate(0deg); }
 }
-.mnp-march { animation: mnp-march 2.3s cubic-bezier(0.4, 0.05, 0.55, 1) both; transform-origin: 50% 85%; }
+.mnp-march { animation: mnp-march calc(2.3s * var(--fx-dur, 1)) cubic-bezier(0.4, 0.05, 0.55, 1) both; transform-origin: 50% 85%; }
 
 /* A stomp shockwave: the ground ellipse blasts outward on the down-beat. */
 @keyframes mnp-stomp {
@@ -398,7 +398,7 @@
   18% { opacity: 1; transform: scale(0.6); }
   100% { opacity: 0; transform: scale(1.6); }
 }
-.mnp-stomp { animation: mnp-stomp 0.75s cubic-bezier(0.15, 0.7, 0.25, 1) both; transform-origin: 50% 50%; }
+.mnp-stomp { animation: mnp-stomp calc(0.75s * var(--fx-dur, 1)) cubic-bezier(0.15, 0.7, 0.25, 1) both; transform-origin: 50% 50%; }
 
 /* The chant stamp: slams in oversized, settles on its tilt, holds, fades. */
 @keyframes mnp-stamp {
@@ -409,7 +409,7 @@
   82% { opacity: 1; transform: scale(1) rotate(var(--mnp-r, -6deg)); }
   100% { opacity: 0; transform: scale(1.05) rotate(var(--mnp-r, -6deg)); }
 }
-.mnp-stamp { animation: mnp-stamp 1.3s cubic-bezier(0.25, 0.9, 0.3, 1.1) both; transform-origin: 50% 50%; }
+.mnp-stamp { animation: mnp-stamp calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1.1) both; transform-origin: 50% 50%; }
 
 /* --- animations off (Settings) -----------------------------------------------
    Everything in this module is a transient one-shot flourish: hide the whole

@@ -741,7 +741,38 @@ function ClockCageBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
             <path d="M18 24 L18 19.5 M18 24 L21.5 26" stroke="#e6bf6a" strokeWidth="1.3" strokeLinecap="round" />
           </svg>
         }
-      />
+      >
+        {/* tell: the warden's great pendulum takes one last swing overhead */}
+        <span className="fx-sig-pendulum absolute left-[47%] top-[16%] block h-[24%] w-[6%]" style={{ animationDelay: `${delayMs}ms` }}>
+          <svg viewBox="0 0 8 30" className="h-full w-full" aria-hidden="true">
+            <path d="M4 0 V21" stroke="#8a97ab" strokeWidth="1.6" strokeLinecap="round" />
+            <circle cx="4" cy="24.5" r="3.6" fill="#b9c4d6" stroke="#3a4556" strokeWidth="1" />
+          </svg>
+        </span>
+        {/* fiction: the seized hours — Roman numerals flash around the cage */}
+        {[
+          { l: "36%", t: "28%", n: "XII", d: 0 },
+          { l: "60%", t: "42%", n: "III", d: 130 },
+          { l: "35%", t: "56%", n: "IX", d: 260 },
+        ].map((h, i) => (
+          <span key={`hr${i}`} className="fx-sig-flash absolute block h-[6%] w-[7%]" style={{ left: h.l, top: h.t, animationDelay: `${delayMs + 620 + h.d}ms` }}>
+            <svg viewBox="0 0 20 12" className="h-full w-full" aria-hidden="true">
+              <text x="10" y="10" textAnchor="middle" fontFamily="Georgia, serif" fontSize="10" fill="#b9c4d6">
+                {h.n}
+              </text>
+            </svg>
+          </span>
+        ))}
+        {/* settle: the tick that never comes — two faint iron rings, late */}
+        <span
+          className="fx-sig-ring absolute left-[42%] top-[40%] block h-[18%] w-[16%] rounded-full"
+          style={{ border: "1.5px solid rgba(185,196,214,0.7)", animationDelay: `${delayMs + 1000}ms` }}
+        />
+        <span
+          className="fx-sig-ring absolute left-[45%] top-[43%] block h-[12%] w-[10%] rounded-full"
+          style={{ border: "1px solid rgba(138,151,171,0.6)", animationDelay: `${delayMs + 1220}ms` }}
+        />
+      </GodEvent>
     );
   }
   return (
@@ -1067,7 +1098,41 @@ function CathedralBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
             <path d="M10 30 V38 M30 30 V38 M18 32 V42 M22 32 V42" stroke="rgba(230,191,106,0.65)" strokeWidth="1.1" strokeLinecap="round" />
           </svg>
         }
-      />
+      >
+        {/* tell: the great bell takes one swing over the empty sky first */}
+        <span className="fx-sig-pendulum absolute left-[46.5%] top-[15%] block h-[16%] w-[7%]" style={{ animationDelay: `${delayMs}ms` }}>
+          <svg viewBox="0 0 10 22" className="h-full w-full" aria-hidden="true">
+            <path d="M5 0 V5" stroke="#8a97ab" strokeWidth="1.4" strokeLinecap="round" />
+            <path d="M2 14 C2 9 3.5 5.5 5 5.5 C6.5 5.5 8 9 8 14 L9 16 H1 Z" fill="#e6bf6a" stroke="#8a6414" strokeWidth="0.9" strokeLinejoin="round" />
+            <circle cx="5" cy="18" r="1.3" fill="#8a6414" />
+          </svg>
+        </span>
+        {/* fiction: consecrated light breaks through the rose window and
+            fans down the nave */}
+        {[
+          { r: "16deg", d: 0 },
+          { r: "-16deg", d: 90 },
+        ].map((b, i) => (
+          <span key={`rose${i}`} className="absolute left-[47%] top-[44%] block h-[28%] w-[6%]" style={{ transform: `rotate(${b.r})`, transformOrigin: "50% 0%" }}>
+            <span
+              className="fx-sig-shaft absolute inset-0 block"
+              style={{ background: "linear-gradient(180deg, rgba(230,191,106,0.75), transparent 82%)", animationDelay: `${delayMs + 720 + b.d}ms` }}
+            />
+          </span>
+        ))}
+        {/* settle: candle-motes drift up from the lancets */}
+        {[
+          { l: 40, t: 62, d: 0 },
+          { l: 56, t: 64, d: 150 },
+          { l: 48, t: 60, d: 300 },
+        ].map((c, i) => (
+          <span
+            key={`cnd${i}`}
+            className="fx-sig-ash absolute block h-[3%] w-[2.4%] rounded-full"
+            style={{ left: `${c.l}%`, top: `${c.t}%`, background: "rgba(255,236,178,0.75)", animationDelay: `${delayMs + 1050 + c.d}ms` }}
+          />
+        ))}
+      </GodEvent>
     );
   }
   return (
@@ -1113,7 +1178,40 @@ function ShadesBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
             <path d="M34 34 C35 28 33 24 31 24 C29.5 24 28.5 27 29 32 Z" fill="rgba(210,225,255,0.35)" stroke="rgba(180,205,255,0.6)" strokeWidth="0.7" />
           </svg>
         }
-      />
+      >
+        {/* tell: sepulchre mist banks up out of the ground before he comes */}
+        {[
+          { l: 28, t: 66, w: 20, d: 0 },
+          { l: 52, t: 68, w: 22, d: 120 },
+        ].map((m, i) => (
+          <span
+            key={`mist${i}`}
+            className="fx-sig-ash absolute block rounded-full"
+            style={{ left: `${m.l}%`, top: `${m.t}%`, width: `${m.w}%`, height: "8%", background: "rgba(210,225,255,0.35)", animationDelay: `${delayMs + m.d}ms` }}
+          />
+        ))}
+        {/* fiction: the funeral procession — lesser shades drift across the
+            court behind their deathless king */}
+        {[
+          { l: 26, t: 46, d: 420 },
+          { l: 30, t: 54, d: 580 },
+        ].map((w, i) => (
+          <span key={`wisp${i}`} className="fx-sig-dart absolute block h-[8%] w-[5%]" style={{ left: `${w.l}%`, top: `${w.t}%`, animationDelay: `${delayMs + w.d}ms` }}>
+            <svg viewBox="0 0 10 16" className="h-full w-full" aria-hidden="true">
+              <path d="M3 14 C1.5 9 3 4 5 4 C7 4 8.5 9 7 14 C6 12.5 4 12.5 3 14 Z" fill="rgba(210,225,255,0.4)" stroke="rgba(180,205,255,0.6)" strokeWidth="0.7" strokeLinejoin="round" />
+            </svg>
+          </span>
+        ))}
+        {/* settle: one spectral ring, and a last wisp curling off his mantle */}
+        <span
+          className="fx-sig-ring absolute left-[41%] top-[40%] block h-[20%] w-[18%] rounded-full"
+          style={{ border: "1.5px solid rgba(180,205,255,0.65)", animationDelay: `${delayMs + 1050}ms` }}
+        />
+        <span
+          className="fx-sig-ash absolute left-[47%] top-[34%] block h-[7%] w-[6%] rounded-full"
+          style={{ background: "rgba(210,225,255,0.45)", animationDelay: `${delayMs + 1200}ms` }}
+        />
+      </GodEvent>
     );
   }
   return (
@@ -1587,7 +1685,45 @@ function IceShatterBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) 
             <path d="M37 14 L37 10.5 M37 14 L40 15 M37 14 L34.5 11.5 M37 14 L39 11" stroke="rgba(235,250,255,0.95)" strokeWidth="1" strokeLinecap="round" />
           </svg>
         }
-      />
+      >
+        {/* tell: hairline frost creeps in from the board's corner FIRST */}
+        <span className="absolute left-[24.5%] top-[23%] block h-[2.2%] w-[24%]" style={{ transform: "rotate(24deg)", transformOrigin: "0% 50%" }}>
+          <span
+            className="fx-sig-frost absolute inset-0 block rounded-[2px]"
+            style={{ background: "rgba(224,246,255,0.7)", animationDelay: `${delayMs}ms` }}
+          />
+        </span>
+        <span className="absolute left-[75.5%] top-[76%] block h-[2.2%] w-[22%]" style={{ transform: "rotate(-156deg)", transformOrigin: "0% 50%" }}>
+          <span
+            className="fx-sig-frost absolute inset-0 block rounded-[2px]"
+            style={{ background: "rgba(224,246,255,0.55)", animationDelay: `${delayMs + 110}ms` }}
+          />
+        </span>
+        {/* fiction: snow-stars fall in her wake as she descends */}
+        {[
+          { l: 30, t: 26, d: 480 },
+          { l: 64, t: 30, d: 600 },
+          { l: 40, t: 24, d: 720 },
+        ].map((s, i) => (
+          <span key={`snow${i}`} className="fx-sig-crownfall absolute block h-[4%] w-[4%]" style={{ left: `${s.l}%`, top: `${s.t}%`, animationDelay: `${delayMs + s.d}ms` }}>
+            <svg viewBox="0 0 12 12" className="h-full w-full" aria-hidden="true">
+              <path d="M6 1 V11 M1 6 H11 M2.5 2.5 L9.5 9.5 M9.5 2.5 L2.5 9.5" stroke="rgba(235,250,255,0.95)" strokeWidth="1" strokeLinecap="round" />
+            </svg>
+          </span>
+        ))}
+        {/* settle: drifting mote glints sift down through the rime-light */}
+        {[
+          { l: 38, t: 34, dx: "-60%", d: 0 },
+          { l: 56, t: 30, dx: "80%", d: 140 },
+          { l: 47, t: 38, dx: "30%", d: 280 },
+        ].map((m, i) => (
+          <span
+            key={`mote${i}`}
+            className="fx-sig-driftmote absolute block h-[1.6%] w-[1.6%] rounded-full"
+            style={{ left: `${m.l}%`, top: `${m.t}%`, background: "#e6f6ff", "--dx": m.dx, animationDelay: `${delayMs + 1050 + m.d}ms` } as React.CSSProperties}
+          />
+        ))}
+      </GodEvent>
     );
   }
   return (
@@ -2664,7 +2800,50 @@ function SmiteBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
             </g>
           </svg>
         }
-      />
+      >
+        {/* tell: the storm flickers — two pre-bolts strobe in the sky band
+            before the arbiter ever shows */}
+        {[
+          { l: 34, t: 22, d: 0 },
+          { l: 60, t: 24, d: 90 },
+        ].map((b, i) => (
+          <span key={`pre${i}`} className="fx-sig-bolt absolute block h-[9%] w-[3%]" style={{ left: `${b.l}%`, top: `${b.t}%`, animationDelay: `${delayMs + b.d}ms` }}>
+            <JagBolt />
+          </span>
+        ))}
+        {/* fiction: the scales of judgment tip beside the verdict */}
+        <span className="fx-sig-pendulum absolute left-[62%] top-[30%] block h-[14%] w-[8%]" style={{ animationDelay: `${delayMs + 520}ms` }}>
+          <svg viewBox="0 0 16 20" className="h-full w-full" aria-hidden="true">
+            <path d="M8 1 V10" stroke="#b98a2e" strokeWidth="1.2" strokeLinecap="round" />
+            <path d="M2 5 H14" stroke="#b98a2e" strokeWidth="1.1" strokeLinecap="round" />
+            <path d="M2 5 L1 10 H5 L4 5 M14 5 L13 10 H17 L16 5" fill="none" stroke="#e6bf6a" strokeWidth="0.8" strokeLinejoin="round" />
+            <path d="M1 10 C1 12 2.5 13 3 13 C3.5 13 5 12 5 10 M13 10 C13 12 14.5 13 15 13 C15.5 13 17 12 17 10" fill="none" stroke="#e6bf6a" strokeWidth="0.8" />
+          </svg>
+        </span>
+        {/* settle: scorch-smoke climbs off the sentence + two dying embers */}
+        {[
+          { l: 38, t: 58, d: 0 },
+          { l: 54, t: 60, d: 160 },
+        ].map((s, i) => (
+          <span
+            key={`smk${i}`}
+            className="fx-sig-ash absolute block rounded-full"
+            style={{ left: `${s.l}%`, top: `${s.t}%`, width: "7%", height: "9%", background: "rgba(58,66,88,0.5)", animationDelay: `${delayMs + 1000 + s.d}ms` }}
+          />
+        ))}
+        {[
+          { dx: "180%", dy: "-140%", rot: "160deg", l: 44, d: 0 },
+          { dx: "-160%", dy: "-120%", rot: "-140deg", l: 50, d: 90 },
+        ].map((e, i) => (
+          <span
+            key={`emb${i}`}
+            className="fx-sig-star absolute top-[58%] block h-[3%] w-[3%]"
+            style={{ left: `${e.l}%`, "--dx": e.dx, "--dy": e.dy, "--rot": e.rot, animationDelay: `${delayMs + 1050 + e.d}ms` } as React.CSSProperties}
+          >
+            <SparkStar />
+          </span>
+        ))}
+      </GodEvent>
     );
   }
   return (

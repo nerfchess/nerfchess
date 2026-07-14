@@ -185,16 +185,21 @@ function PhishingPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
             <path d="M66 26 l4 2.4 -1 -4.6 Z" fill="#7c88a4" />
           </g>
           {/* the stolen secret: a red nerf card flips face-up */}
-          <g className="prk-flip" style={d(delayMs + 780)}>
+          <g className="prk-flip" style={d(delayMs + 980)}>
             <rect x={44} y={50} width={22} height={28} rx={2.6} fill="#e84d5b" stroke="#a5303b" strokeWidth={1.6} />
             <circle cx={55} cy={60} r={4.6} fill="#fff" opacity={0.9} />
             <path d="M52.4 60 h5.2 M55 57.4 v5.2" stroke="#e84d5b" strokeWidth={1.6} strokeLinecap="round" />
             <rect x={47} y={69} width={16} height={2.6} rx={1.3} fill="rgba(255,255,255,0.75)" />
           </g>
-          <g className="prk-star" style={d(delayMs + 1150)}><Sparkle x={55} y={48} s={1.1} fill="#ffd76a" /></g>
+          <g className="prk-star" style={d(delayMs + 1350)}><Sparkle x={55} y={48} s={1.1} fill="#ffd76a" /></g>
+          {/* escalation: the actual password floats off with the card */}
+          <g className="prk-rise" style={d(delayMs + 1600)}>
+            <rect x={35} y={32} width={40} height={11} rx={5.5} fill="#39445c" />
+            <text x={55} y={39.8} fontSize={5.6} fontWeight={800} fill="#ffd76a" textAnchor="middle">pw: hunter2</text>
+          </g>
         </svg>
       </Prop>
-      <Boom color="rgba(232,77,91,0.7)" delayMs={delayMs + 900} />
+      <Boom color="rgba(232,77,91,0.7)" delayMs={delayMs + 1100} />
     </Wide>
   );
 }
@@ -232,8 +237,13 @@ function RaidPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
             <text x={38} y={31} fontSize={5.6} fontWeight={700} fill="#b79aff">ChessLord420 + 4,120 raiders</text>
           </g>
           {/* the swing: +20s to you, -10s off them */}
-          <g className="prk-rise" style={d(delayMs + 620)}><ClockChip x={20} y={44} label="+20s" tone="good" /></g>
-          <g className="prk-rise" style={d(delayMs + 780)}><ClockChip x={78} y={44} label="-10s" tone="bad" /></g>
+          <g className="prk-rise" style={d(delayMs + 820)}><ClockChip x={20} y={44} label="+20s" tone="good" /></g>
+          <g className="prk-rise" style={d(delayMs + 980)}><ClockChip x={78} y={44} label="-10s" tone="bad" /></g>
+          {/* escalation: the hype train doubles itself */}
+          <g className="prk-pop prk-pop--hold" style={d(delayMs + 1300)}>
+            <rect x={36} y={0} width={58} height={12} rx={6} fill="#ffd76a" stroke="#c9931d" strokeWidth={1.2} />
+            <text x={65} y={8.8} fontSize={6.4} fontWeight={900} fill="#7a5708" textAnchor="middle">HYPE TRAIN x2</text>
+          </g>
         </svg>
       </Prop>
       {/* hype confetti raining across the board */}
@@ -244,7 +254,7 @@ function RaidPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
         { x: "-95%", y: "-40%", c: "#5aa0e8", cx: 46 },
         { x: "20%", y: "-70%", c: "#f2778f", cx: 84 },
       ].map((p, i) => (
-        <Prop key={i} left="45%" top="46%" width="10%" height="10%" className="prk-puff" style={dv(delayMs + 700 + i * 70, { "--prk-x": p.x, "--prk-y": p.y })}>
+        <Prop key={i} left="45%" top="46%" width="10%" height="10%" className="prk-puff" style={dv(delayMs + 900 + i * 70, { "--prk-x": p.x, "--prk-y": p.y })}>
           <svg viewBox="0 0 120 40" className="h-full w-full"><rect x={p.cx} y={16} width={5} height={3.2} rx={1} fill={p.c} /></svg>
         </Prop>
       ))}
@@ -282,17 +292,21 @@ function BsodPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
             <text x={4} y={78} fontSize={6} fontWeight={600} fill="#9fc0ff">STOP CODE: OPPONENT_BLUNDER_IMMINENT</text>
             {/* reboot progress crawling */}
             <rect x={4} y={88} width={132} height={7} rx={3.5} fill="rgba(255,255,255,0.2)" />
-            <g className="prk-fill" style={d(delayMs + 250)}>
+            <g className="prk-fill prk-fill--stall" style={d(delayMs + 250)}>
               <rect x={4} y={88} width={132} height={7} rx={3.5} fill="#dbe7ff" />
             </g>
             <text x={4} y={108} fontSize={6.2} fontWeight={700} fill="#dbe7ff">Collecting error info... restarting</text>
+            {/* escalation: the restart % sprints, then stalls at 99 forever */}
+            <g className="prk-tick" style={d(delayMs + 400)}><text x={136} y={84} fontSize={7} fontWeight={800} fill="#dbe7ff" textAnchor="end">34%</text></g>
+            <g className="prk-tick" style={d(delayMs + 850)}><text x={136} y={84} fontSize={7} fontWeight={800} fill="#dbe7ff" textAnchor="end">72%</text></g>
+            <g className="prk-stall" style={d(delayMs + 1300)}><text x={136} y={84} fontSize={7} fontWeight={800} fill="#dbe7ff" textAnchor="end">99%</text></g>
             {/* a QR square, because of course */}
             <rect x={112} y={4} width={24} height={24} rx={1.5} fill="#dbe7ff" />
             <path d="M116 8 h6 v6 h-6 Z M126 8 h6 v6 h-6 Z M116 18 h6 v6 h-6 Z M128 20 h4 v4 h-4 Z" fill="#1247c8" />
           </g>
         </svg>
       </Prop>
-      <Prop left="42%" top="70%" width="16%" height="8%" className="prk-rise" style={d(delayMs + 900)}>
+      <Prop left="42%" top="70%" width="16%" height="8%" className="prk-rise" style={d(delayMs + 1450)}>
         <svg viewBox="0 0 34 13" className="h-full w-full"><ClockChip x={0} y={0} label="-35s" tone="bad" /></svg>
       </Prop>
     </Wide>
@@ -338,15 +352,22 @@ function ForcedUpdatePlay({ lead, delayMs }: { lead: boolean; delayMs: number })
           <g className="prk-window" style={d(delayMs)}>
             <WindowFrame title="SYSTEM UPDATE" bar="#39445c" body="#eef2f9" w={116} h={60}>
               <g transform="translate(20 30)"><g className="prk-spin" style={d(delayMs + 100)}><Gear x={0} y={0} s={1.1} /></g></g>
-              <text x={36} y={24} fontSize={6.6} fontWeight={800} fill="#39435c">Installing update 1 of 3</text>
+              <g className="prk-swap-out" style={d(delayMs + 1050)}>
+                <text x={36} y={24} fontSize={6.6} fontWeight={800} fill="#39435c">Installing update 1 of 3</text>
+              </g>
+              {/* escalation: the bar finishes... and update 2 of 3 begins */}
+              <g className="prk-swap-in" style={d(delayMs + 1050)}>
+                <text x={36} y={24} fontSize={6.6} fontWeight={800} fill="#c2372f">Installing update 2 of 3</text>
+              </g>
               <text x={36} y={33} fontSize={5.2} fontWeight={600} fill="#7c88a4">Do not turn off your opponent.</text>
               <rect x={36} y={40} width={72} height={7} rx={3.5} fill="#c3cddd" />
-              <g className="prk-fill" style={d(delayMs + 250)}><rect x={36} y={40} width={72} height={7} rx={3.5} fill="#5aa0e8" /></g>
+              <g className="prk-fill prk-fill--reset" style={d(delayMs + 250)}><rect x={36} y={40} width={72} height={7} rx={3.5} fill="#5aa0e8" /></g>
+              <g className="prk-fill prk-fill--slow" style={d(delayMs + 1500)}><rect x={36} y={40} width={72} height={7} rx={3.5} fill="#e8a24d" /></g>
               <text x={104} y={54} fontSize={5} fontWeight={700} fill="#7c88a4" textAnchor="end">33%</text>
             </WindowFrame>
           </g>
           {/* their clock bleeds -8s per crawl */}
-          <g className="prk-rise" style={d(delayMs + 950)}><ClockChip x={41} y={-2} label="-8s" tone="bad" /></g>
+          <g className="prk-rise" style={d(delayMs + 1400)}><ClockChip x={41} y={-2} label="-8s" tone="bad" /></g>
         </svg>
       </Prop>
     </Wide>
@@ -400,15 +421,20 @@ function DefenderPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
             </WindowFrame>
           </g>
           {/* THREAT DETECTED toast */}
-          <g className="prk-pop" style={d(delayMs + 780)}>
+          <g className="prk-pop" style={d(delayMs + 980)}>
             <rect x={16} y={2} width={84} height={16} rx={4} fill="#e84d5b" />
             <path d="M24 6 l4 8 h-8 Z" fill="#fff" /><circle cx={24} cy={12.6} r={0.9} fill="#e84d5b" />
             <text x={34} y={13} fontSize={7} fontWeight={900} fill="#fff">THREAT DETECTED</text>
           </g>
-          <g className="prk-star" style={d(delayMs + 1150)}><Sparkle x={58} y={16} s={1} fill="#4be08a" /></g>
+          {/* escalation: it keeps finding more */}
+          <g className="prk-pop prk-pop--hold" style={d(delayMs + 1450)}>
+            <rect x={28} y={20} width={60} height={13} rx={3.5} fill="#a5303b" />
+            <text x={58} y={29.4} fontSize={6} fontWeight={900} fill="#fff" textAnchor="middle">+46 MORE FOUND</text>
+          </g>
+          <g className="prk-star" style={d(delayMs + 1700)}><Sparkle x={58} y={16} s={1} fill="#4be08a" /></g>
         </svg>
       </Prop>
-      <Boom color="rgba(75,224,138,0.7)" delayMs={delayMs + 950} />
+      <Boom color="rgba(75,224,138,0.7)" delayMs={delayMs + 1150} />
     </Wide>
   );
 }
@@ -457,18 +483,30 @@ function CaptchaPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
                       <path d={`M${gx + 17} ${gy + 4.5} l1.4 1.6 2.6 -3`} stroke="#fff" strokeWidth={1.2} strokeLinecap="round" fill="none" />
                     </g>
                   ) : null}
+                  {/* escalation: this tile can't decide if it's a horsey */}
+                  {i === 5 ? (
+                    <g className="prk-flicker" style={d(delayMs + 620)}>
+                      <circle cx={gx + 19} cy={gy + 4.5} r={3.6} fill="#4a76c8" />
+                      <path d={`M${gx + 17} ${gy + 4.5} l1.4 1.6 2.6 -3`} stroke="#fff" strokeWidth={1.2} strokeLinecap="round" fill="none" />
+                    </g>
+                  ) : null}
                 </g>
               );
             })}
           </g>
           {/* verification fails, a padlock slams on */}
-          <g className="prk-stamp" style={d(delayMs + 900)}>
+          <g className="prk-stamp" style={d(delayMs + 1100)}>
             <rect x={24} y={40} width={48} height={16} rx={3} fill="#e84d5b" />
             <text x={48} y={51.5} fontSize={7.2} fontWeight={900} fill="#fff" textAnchor="middle">FAILED</text>
           </g>
+          {/* escalation: this has happened before. it will happen again. */}
+          <g className="prk-rise" style={d(delayMs + 1600)}>
+            <rect x={22} y={60} width={52} height={10} rx={5} fill="#eef2f9" stroke="#8895b0" strokeWidth={0.8} />
+            <text x={48} y={67.2} fontSize={5.2} fontWeight={800} fill="#e84d5b" textAnchor="middle">attempt 7 of ∞</text>
+          </g>
         </svg>
       </Prop>
-      <Boom color="rgba(232,77,91,0.65)" delayMs={delayMs + 1050} />
+      <Boom color="rgba(232,77,91,0.65)" delayMs={delayMs + 1250} />
     </Wide>
   );
 }
@@ -509,6 +547,9 @@ function PopupStormPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
     { left: "34%", top: "48%", tint: "#e8a24d", label: "HOT", delay: 300 },
     { left: "56%", top: "52%", tint: "#3f7a52", label: "CLAIM", delay: 440 },
     { left: "44%", top: "38%", tint: "#4a76c8", label: "50% OFF", delay: 600 },
+    // escalation: trying to close one just spawns two more
+    { left: "30%", top: "60%", tint: "#c25b74", label: "NO ESCAPE", delay: 1120 },
+    { left: "58%", top: "22%", tint: "#e84d5b", label: "FREE?!?", delay: 1280 },
   ];
   return (
     <Wide>
@@ -518,7 +559,7 @@ function PopupStormPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           <AdWindow tint={a.tint} label={a.label} />
         </Prop>
       ))}
-      <Boom color="rgba(232,77,91,0.6)" delayMs={delayMs + 900} />
+      <Boom color="rgba(232,77,91,0.6)" delayMs={delayMs + 1450} />
     </Wide>
   );
 }
@@ -564,6 +605,18 @@ function ChainLetterPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) 
               <path d={`M${58 + i * 38} 58 l-4 -2.4 v4.8 Z`} fill="#c25b74" />
             </g>
           ))}
+          {/* escalation: the last forward MULTIPLIES — baby chain letters burst */}
+          {[
+            { x: "-120%", y: "-140%" },
+            { x: "120%", y: "-160%" },
+            { x: "-60%", y: "-200%" },
+            { x: "90%", y: "-60%" },
+            { x: "10%", y: "-220%" },
+          ].map((p, i) => (
+            <g key={`m${i}`} className="prk-puff" style={dv(delayMs + 1600 + i * 80, { "--prk-x": p.x, "--prk-y": p.y })}>
+              <g transform="translate(104 58)"><Envelope x={0} y={0} s={0.42} /></g>
+            </g>
+          ))}
         </svg>
       </Prop>
     </Wide>
@@ -601,9 +654,15 @@ function RatioPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
             <rect x={25} y={13} width={40} height={4} rx={2} fill="#c3cddd" />
             <rect x={25} y={20} width={80} height={4} rx={2} fill="#dce3f0" />
             {/* reply / like counters */}
-            <g className="prk-pop" style={d(delayMs + 350)}>
+            <g className="prk-pop prk-pop--hold" style={d(delayMs + 350)}>
               <path d="M12 40 a4 4 0 0 1 4 -4 h6 a4 4 0 0 1 4 4 v2 l-4 3 v-3 h-6 a4 4 0 0 1 -4 -4 Z" fill="#4a76c8" />
-              <text x={30} y={44} fontSize={7} fontWeight={900} fill="#4a76c8">14.2K</text>
+              {/* escalation: the replies keep coming */}
+              <g className="prk-swap-out" style={d(delayMs + 1150)}>
+                <text x={30} y={44} fontSize={7} fontWeight={900} fill="#4a76c8">14.2K</text>
+              </g>
+              <g className="prk-swap-in" style={d(delayMs + 1150)}>
+                <text x={30} y={44} fontSize={7.6} fontWeight={900} fill="#e84d5b">87K</text>
+              </g>
             </g>
             <g className="prk-pop" style={d(delayMs + 700)}>
               <path d="M78 38 c-1.4 -2 -4.6 -1.2 -4.6 1 c0 1.7 2.6 3.2 4.6 4.6 c2 -1.4 4.6 -2.9 4.6 -4.6 c0 -2.2 -3.2 -3 -4.6 -1 Z" fill="#c3cddd" />
@@ -611,19 +670,19 @@ function RatioPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
             </g>
           </g>
           {/* RATIO stamp */}
-          <g className="prk-stamp" style={d(delayMs + 950)}>
+          <g className="prk-stamp" style={d(delayMs + 1250)}>
             <rect x={34} y={52} width={52} height={16} rx={3} fill="#e84d5b" />
             <text x={60} y={63.5} fontSize={8} fontWeight={900} fill="#fff" textAnchor="middle">{"RATIO'D"}</text>
           </g>
         </svg>
       </Prop>
       {/* the bonk-back arrow shoves a piece toward its own side */}
-      <Prop left="40%" top="60%" width="20%" height="16%" className="prk-bonk" style={d(delayMs + 500)}>
+      <Prop left="40%" top="60%" width="20%" height="16%" className="prk-bonk" style={d(delayMs + 600)}>
         <svg viewBox="0 0 60 40" className="h-full w-full">
           <path d="M52 20 H14 M24 9 l-11 11 11 11" fill="none" stroke="#e84d5b" strokeWidth={5} strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </Prop>
-      <Boom color="rgba(232,77,91,0.66)" delayMs={delayMs + 1050} />
+      <Boom color="rgba(232,77,91,0.66)" delayMs={delayMs + 1450} />
     </Wide>
   );
 }
