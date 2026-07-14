@@ -84,6 +84,18 @@ const neighbors8 = (sq: Square): Square[] =>
     return inBoard(f, r) ? [SQ(f, r)] : [];
   });
 
+/** The in-board squares within two king-steps of `sq` (up to 24). */
+const neighbors24 = (sq: Square): Square[] => {
+  const out: Square[] = [];
+  for (let df = -2; df <= 2; df++)
+    for (let dr = -2; dr <= 2; dr++) {
+      if (df === 0 && dr === 0) continue;
+      const f = FILE(sq) + df, r = RANK(sq) + dr;
+      if (inBoard(f, r)) out.push(SQ(f, r));
+    }
+  return out;
+};
+
 /** Forward RANK step for a color (toward the opponent's back rank). */
 const fwd = (color: Color) => (color === "w" ? 1 : -1);
 
@@ -310,7 +322,7 @@ const GYM: Buff[] = [
       id: "bench_225",
       name: "225 Bench",
       description:
-        "Press 225 and shove up to 3 enemy pieces one square back toward their own home rank. Blocked pieces stay put, nobody is captured.",
+        "Press 225 and shove up to 4 enemy pieces one square back toward their own home rank. Blocked pieces stay put, nobody is captured.",
       tier: 6,
       category: "tempo",
       icon: "Dumbbell",
@@ -332,12 +344,14 @@ const GYM: Buff[] = [
       };
       return {
         kind: "activated",
+        // buffed: capacity raised from 3 to 4 shoved pieces (kings stay immune,
+        // no captures, per pushDest above).
         targets: (_inst, api, picks) =>
-          picks.length >= 3
+          picks.length >= 4
             ? null
             : {
                 kind: "square",
-                label: `Choose an enemy piece to shove back (${picks.length + 1}/3)`,
+                label: `Choose an enemy piece to shove back (${picks.length + 1}/4)`,
                 squares: mySquares(api.board, api.opp).filter(
                   (sq) => pushDest(api, sq) != null && !picks.some((k) => k.square === sq),
                 ),
@@ -1064,17 +1078,18 @@ export const NEWJEANS_CARDS: Buff[] = [
       id: "i_love_newjeans",
       name: "I Love NewJeans",
       description:
-        "Harmony: for the game, every non-pawn, non-king piece of yours that stands next to a friendly piece may also step one square in any direction.",
+        "Harmony: for the game, every non-king piece of yours that stands next to a friendly piece may also step one square in any direction.",
       tier: 6,
       category: "movement",
       icon: "Users",
       flavor: "Five voices, one song. Standing together, they move as one.",
-      fx: { motif: "empower", pieces: ["n", "b", "r", "q"], self: true },
+      fx: { motif: "empower", pieces: ["p", "n", "b", "r", "q"], self: true },
     },
     permanentAugment((_m, inst, api) =>
       mySquares(api.board, api.me).flatMap((sq) => {
         const p = api.board.pieces[sq]!;
-        if (p.type === "k" || p.type === "p") return [];
+        // buffed: pawns now share the harmony step too (only the king is barred).
+        if (p.type === "k") return [];
         const grouped = neighbors8(sq).some((n) => {
           const q = api.board.pieces[n];
           return !!q && q.color === api.me;
@@ -1092,7 +1107,7 @@ export const NEWJEANS_CARDS: Buff[] = [
       id: "minji",
       name: "Minji",
       description:
-        "Leader's guard: every one of your pieces standing next to your king links arms and cannot be captured for your opponent's next 5 turns.",
+        "Leader's guard: every one of your pieces standing within two squares of your king links arms and cannot be captured for your opponent's next 5 turns.",
       tier: 5,
       category: "protection",
       icon: "Crown",
@@ -1105,7 +1120,9 @@ export const NEWJEANS_CARDS: Buff[] = [
     activatedSimple((_inst, api) => {
       const k = mySquares(api.board, api.me, "k")[0];
       if (k == null) return;
-      const squares = neighbors8(k).filter((sq) => {
+      // buffed: the guard now reaches allies within two squares of the king
+      // (was one), while still never covering the king's own square.
+      const squares = neighbors24(k).filter((sq) => {
         const p = api.board.pieces[sq];
         return !!p && p.color === api.me;
       });
@@ -1120,7 +1137,7 @@ export const NEWJEANS_CARDS: Buff[] = [
       id: "hyein",
       name: "Hyein",
       description:
-        "Long legs: for the game each of your pawns may also stride straight forward to the first or second empty square ahead, springing over anything in between.",
+        "Long legs: for the game each of your pawns may also stride straight forward to the first, second, or third empty square ahead, springing over anything in between.",
       tier: 5,
       category: "movement",
       requires: ["p"],
@@ -1131,9 +1148,11 @@ export const NEWJEANS_CARDS: Buff[] = [
     permanentAugment((_m, inst, api) =>
       mySquares(api.board, api.me, "p").flatMap((sq) => {
         const dr = fwd(api.board.pieces[sq]!.color);
+        // buffed: the stride now reaches up to the third empty square ahead.
         const tos = [
           [FILE(sq), RANK(sq) + dr],
           [FILE(sq), RANK(sq) + dr * 2],
+          [FILE(sq), RANK(sq) + dr * 3],
         ]
           .filter(([f, r]) => inBoard(f, r))
           .map(([f, r]) => SQ(f, r))
@@ -1148,7 +1167,7 @@ export const NEWJEANS_CARDS: Buff[] = [
       id: "haerin",
       name: "Haerin",
       description:
-        "Cat's pounce: choose one of your pieces, then an enemy a knight's leap away. Snatch that piece off the board and land yours on its square.",
+        "Cat's pounce: choose one of your pieces, then an enemy a knight's leap away. Snatch that piece off the board, land yours on its square, and it stands shielded, uncapturable for your opponent's next turn.",
       tier: 5,
       category: "attack",
       icon: "Cat",
@@ -1190,8 +1209,11 @@ export const NEWJEANS_CARDS: Buff[] = [
           const mover = api.board.pieces[from];
           if (!mover || mover.color !== api.me) return;
           api.removePiece(prey);
-          if (mover.type !== "p" || pawnRankOk(prey)) api.relocate(from, prey);
+          const landed = mover.type !== "p" || pawnRankOk(prey);
+          if (landed) api.relocate(from, prey);
           addEffect(api, { kind: "strike", squares: [prey], owner: api.me, turns: 1 });
+          // buffed: the pouncer lands shielded for the opponent's next turn.
+          if (landed) addEffect(api, { kind: "shield", owner: api.me, squares: [prey], turns: 1 });
         },
       );
     })(),
@@ -1202,7 +1224,7 @@ export const NEWJEANS_CARDS: Buff[] = [
       id: "hanni",
       name: "Hanni",
       description:
-        "Spotlight: choose an enemy piece. It and every enemy piece touching it are charmed and cannot move for their next 2 turns. Kings shrug it off.",
+        "Spotlight: choose an enemy piece. It and every enemy piece within two squares of it are charmed and cannot move for their next 2 turns. Kings shrug it off.",
       tier: 5,
       category: "tempo",
       icon: "Sparkles",
@@ -1224,7 +1246,8 @@ export const NEWJEANS_CARDS: Buff[] = [
         const sq = picks[0]?.square;
         if (sq == null) return;
         const hit: Square[] = [];
-        for (const t of [sq, ...neighbors8(sq)]) {
+        // buffed: the charm now spreads to enemies within two squares (was one).
+        for (const t of [sq, ...neighbors24(sq)]) {
           const p = api.board.pieces[t];
           if (p && p.color === api.opp && p.type !== "k") {
             addEffect(api, { kind: "freeze", sq: t, owner: api.opp, turns: 2, skin: "charm" });
@@ -1241,7 +1264,7 @@ export const NEWJEANS_CARDS: Buff[] = [
       id: "danielle",
       name: "Danielle",
       description:
-        "Sunshine: grow two new pawns on any empty squares in your own half, basking in a warmth that keeps each of them uncapturable for your opponent's next 2 turns.",
+        "Sunshine: grow three new pawns on any empty squares in your own half, basking in a warmth that keeps each of them uncapturable for your opponent's next 2 turns.",
       tier: 5,
       category: "pieces",
       icon: "Sun",
@@ -1249,7 +1272,8 @@ export const NEWJEANS_CARDS: Buff[] = [
       fx: { motif: "ward", pieces: ["p"], self: true },
     },
     (() => {
-      const base = placePieces(["p", "p"], (api: BuffApi) => (sq: Square) => inHalf(api.me, sq));
+      // buffed: grows three pawns now (was two), each shielded for 2 turns.
+      const base = placePieces(["p", "p", "p"], (api: BuffApi) => (sq: Square) => inHalf(api.me, sq));
       return {
         ...base,
         effect: (inst: BuffInstance, api: BuffApi, picks: { square?: Square }[]) => {
