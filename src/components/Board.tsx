@@ -3780,7 +3780,8 @@ export function Board({
                     }}
                     className="w-14 h-14 sm:w-16 sm:h-16 rounded-sm bg-ink-800 hover:bg-ink-700 flex items-center justify-center border border-gold/30"
                   >
-                    <Piece type={m.promotion!} color={m.color} size={56} className="w-[85%] h-[85%]" />
+                    <Piece type={m.promotion!} color={m.color} size={50} className="sm:hidden" />
+                    <Piece type={m.promotion!} color={m.color} size={56} className="hidden sm:inline-grid" />
                   </button>
                 ))}
               </div>
