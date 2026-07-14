@@ -437,14 +437,17 @@ function LetItRidePlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
             <text x={0} y={3.4} fontSize={9} fontWeight={800} fill="#8a5a10" textAnchor="middle">H</text>
           </g>
         </g>
-        {/* chip stack building higher as the streak rides */}
-        <g style={d(delayMs)}>
+        {/* chip stack building higher as the streak rides — then the whole
+            tower wobbles, nearly topples, and holds */}
+        <g className="csp-tower" style={d(delayMs + 1280)}>
           <g className="csp-chip" style={d(delayMs + 300)}><Chip cx={64} cy={82} r={7} /></g>
           <g className="csp-chip" style={d(delayMs + 560)}><Chip cx={64} cy={77} r={7} fill="#5fc9b0" edge="#2a7a68" /></g>
           <g className="csp-chip" style={d(delayMs + 820)}><Chip cx={64} cy={72} r={7} fill="#7fa0e0" edge="#2c4f9e" /></g>
           <g className="csp-chip" style={d(delayMs + 1080)}><Chip cx={64} cy={67} r={7} fill="#ffd76a" edge="#b98a1e" /></g>
         </g>
-        <g className="csp-star" style={d(delayMs + 1300)}><Star x={40} y={40} s={1.4} /></g>
+        <g className="csp-star" style={d(delayMs + 1750)}><Star x={40} y={40} s={1.4} /></g>
+        {/* the ride pays toward the player's rail */}
+        <Payout x={64} y={80} delayMs={delayMs + 1800} n={4} />
       </svg>
     </Wide>
   );
@@ -505,8 +508,10 @@ function LootBoxPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
         <g className="csp-loot" style={d(delayMs)}>
           <g transform="translate(50 48)"><Gem s={1.6} /></g>
         </g>
-        <g className="csp-star" style={d(delayMs + 1200)}><Star x={40} y={40} s={1.4} /></g>
-        <g className="csp-star" style={d(delayMs + 1340)}><Star x={62} y={42} s={1.2} /></g>
+        <g className="csp-star" style={d(delayMs + 1500)}><Star x={40} y={40} s={1.4} /></g>
+        <g className="csp-star" style={d(delayMs + 1650)}><Star x={62} y={42} s={1.2} /></g>
+        {/* the drop spills loose coins toward the player's rail */}
+        <Payout x={50} y={58} delayMs={delayMs + 1350} n={4} />
       </svg>
     </Wide>
   );
@@ -534,25 +539,39 @@ function PokerBluffPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
     <Wide>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="csp-wash"><rect x={0} y={0} width={100} height={100} fill="rgba(8,26,16,0.5)" /></g>
-        <g className="csp-linger" style={d(delayMs)}>
+        <g className="csp-linger csp-linger--long" style={d(delayMs)}>
           <path d="M8 84 Q50 56 92 84" fill="none" stroke="#1f6b44" strokeWidth={2.4} />
           <text x={50} y={26} fontSize={6.4} fontWeight={800} fill="#e8dcc0" textAnchor="middle" style={{ letterSpacing: "1px" }}>ALL IN</text>
         </g>
-        {/* a fanned hand dealt into the corner */}
-        <g className="csp-hold" style={d(delayMs)}>
-          <FlipCard x={26} y={44} tilt={-18} dealMs={delayMs + 60} flipMs={delayMs + 560} label="2" />
-          <FlipCard x={34} y={42} tilt={-6} dealMs={delayMs + 300} flipMs={delayMs + 820} label="7" />
+        {/* the tell: a too-long stare — eyes narrow and just... hold */}
+        <g className="csp-stare" style={d(delayMs + 150)}>
+          <rect x={42} y={33} width={7} height={3.2} rx={1.6} fill="#e8dcc0" />
+          <rect x={52} y={33} width={7} height={3.2} rx={1.6} fill="#e8dcc0" />
         </g>
-        {/* the pot shoved forward into the middle */}
-        <g className="csp-shove" style={d(delayMs + 200)}>
-          <g style={d(delayMs)}>
-            <g className="csp-chip" style={d(delayMs + 620)}><Chip cx={54} cy={76} r={8} /></g>
-            <g className="csp-chip" style={d(delayMs + 760)}><Chip cx={66} cy={78} r={8} fill="#5fc9b0" edge="#2a7a68" /></g>
-            <g className="csp-chip" style={d(delayMs + 900)}><Chip cx={60} cy={70} r={8} fill="#7fa0e0" edge="#2c4f9e" /></g>
-            <g className="csp-chip" style={d(delayMs + 1040)}><Chip cx={60} cy={64} r={8} fill="#ffd76a" edge="#b98a1e" /></g>
+        <g className="csp-sweat" style={d(delayMs + 750)}>
+          <path d="M62.5 32 q1.8 2.8 0 4.4 q-1.8 -1.6 0 -4.4 Z" fill="#7fd0e8" />
+        </g>
+        {/* a fanned hand dealt into the corner; the 7-2 sags once it's seen */}
+        <g className="csp-hold" style={d(delayMs)}>
+          <g className="csp-deflate" style={d(delayMs + 1900)}>
+            <FlipCard x={26} y={44} tilt={-18} dealMs={delayMs + 60} flipMs={delayMs + 560} label="2" />
+            <FlipCard x={34} y={42} tilt={-6} dealMs={delayMs + 300} flipMs={delayMs + 820} label="7" />
+          </g>
+          {/* the sigh */}
+          <g className="csp-sigh" style={d(delayMs + 2050)}>
+            <circle cx={30} cy={30} r={2.2} fill="rgba(232,220,192,0.7)" />
           </g>
         </g>
-        <g className="csp-star" style={d(delayMs + 1300)}><Star x={60} y={56} s={1.5} /></g>
+        {/* ...then the chips get shoved all-in anyway */}
+        <g className="csp-shove" style={d(delayMs + 900)}>
+          <g style={d(delayMs)}>
+            <g className="csp-chip" style={d(delayMs + 1300)}><Chip cx={54} cy={76} r={8} /></g>
+            <g className="csp-chip" style={d(delayMs + 1440)}><Chip cx={66} cy={78} r={8} fill="#5fc9b0" edge="#2a7a68" /></g>
+            <g className="csp-chip" style={d(delayMs + 1580)}><Chip cx={60} cy={70} r={8} fill="#7fa0e0" edge="#2c4f9e" /></g>
+            <g className="csp-chip" style={d(delayMs + 1720)}><Chip cx={60} cy={64} r={8} fill="#ffd76a" edge="#b98a1e" /></g>
+          </g>
+        </g>
+        <g className="csp-star" style={d(delayMs + 2100)}><Star x={60} y={56} s={1.5} /></g>
       </svg>
     </Wide>
   );

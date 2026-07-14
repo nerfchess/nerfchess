@@ -1313,6 +1313,687 @@ function PlanetAlign({ palette, glyph, lead, delayMs }: TemplateProps) {
 }
 
 /* =============================================================================
+   BESPOKE SCENES — apex cards whose fiction earned an extra layer on top of
+   (or woven through) their family template. Each is a thin wrapper: the base
+   template still plays, and a second Stage carries the card-specific beat.
+   Same discipline: transform/opacity only, one-shot `both`, ends at opacity 0.
+   ========================================================================== */
+
+/** A little mushroom cloud (cap + stem + ground skirt), reused by both atomic
+ * scenes at different scales. */
+function Shroom({ core, glow, deep }: { core: string; glow: string; deep: string }) {
+  return (
+    <svg viewBox="0 0 18 24" className="block h-full w-full" aria-hidden="true">
+      {/* ground skirt */}
+      <ellipse cx="9" cy="21.6" rx="7.2" ry="1.8" fill={tint(deep, 0.55)} />
+      {/* stem */}
+      <path d="M7.2 12.6 C7.6 16 6.6 18.6 5.6 21.4 H12.4 C11.4 18.6 10.4 16 10.8 12.6 Z" fill={tint(core, 0.9)} stroke={deep} strokeWidth="0.7" {...SJ} />
+      {/* cap */}
+      <path d="M2 8.6 C2 3.2 16 3.2 16 8.6 C16 11.4 13.2 12.6 11.4 12 L10.8 13.6 H7.2 L6.6 12 C4.8 12.6 2 11.4 2 8.6 Z" fill={tint(glow, 0.92)} stroke={deep} strokeWidth="0.8" {...SJ} />
+      {/* heat glow under the cap */}
+      <ellipse cx="9" cy="9" rx="4" ry="2.2" fill={tint(core, 0.6)} />
+    </svg>
+  );
+}
+
+/* --- total_atomic: "every capture detonates... and each removed piece chains
+   its own blast". The chain hits run an increasingly RADIOACTIVE-GREEN tint
+   ramp as they spread, and the final blast leaves a small mushroom cloud that
+   wobbles smugly before dissipating. -------------------------------------- */
+const RAD_GREEN = "#7dff3f";
+const FALLOUT = [
+  { l: 42, dx: "-60%", d: 0 },
+  { l: 56, dx: "70%", d: 160 },
+  { l: 49, dx: "20%", d: 320 },
+];
+function TotalAtomic(props: TemplateProps) {
+  const { palette, glyph, lead, delayMs } = props;
+  const [, p1, p2] = palette;
+  if (!lead) {
+    // the chain: each successive blast in the spread runs hotter green
+    const t = Math.min(1, Math.max(0, delayMs / 900));
+    const greened: Palette = [mix(palette[0], RAD_GREEN, 0.7 * t), mix(p1, RAD_GREEN, 0.55 * t), p2];
+    return (
+      <>
+        <span className="pointer-events-none absolute inset-0 z-10" aria-hidden="true">
+          <span
+            className="gp-radglow absolute block rounded-full"
+            style={{
+              left: "6%",
+              top: "6%",
+              width: "88%",
+              height: "88%",
+              background: `radial-gradient(closest-side, ${tint(RAD_GREEN, 0.2 + 0.45 * t)}, transparent)`,
+              animationDelay: `${delayMs}ms`,
+            }}
+          />
+        </span>
+        <TargetHit palette={greened} glyph={glyph} delayMs={delayMs} />
+      </>
+    );
+  }
+  return (
+    <>
+      <SkyWrath {...props} />
+      <Stage>
+        {/* the fallout ramp: the whole sky greens as the chain spreads */}
+        <span className="gp-radwash absolute inset-0 block" style={{ background: tint(RAD_GREEN, 0.24), animationDelay: `${delayMs + 640}ms` }} />
+        {/* the final blast leaves a small mushroom cloud... */}
+        <span className="gp-shroom absolute block" style={{ left: "41.5%", top: "38%", width: "17%", height: "23%", animationDelay: `${delayMs + 1000}ms` }}>
+          {/* ...that wobbles smugly before dissipating */}
+          <span className="gp-smug absolute inset-0 block" style={{ animationDelay: `${delayMs + 1000}ms` }}>
+            <Shroom core={mix(p1, RAD_GREEN, 0.4)} glow={mix("#ffd166", RAD_GREEN, 0.35)} deep="#1f3a10" />
+          </span>
+        </span>
+        {/* fallout motes drift up off the cloud */}
+        {FALLOUT.map((v, i) => (
+          <span
+            key={i}
+            className="gp-updrift absolute block rounded-full"
+            style={
+              {
+                left: `${v.l}%`,
+                top: "44%",
+                width: "1.9%",
+                height: "1.9%",
+                background: tint(RAD_GREEN, 0.85),
+                "--dx": v.dx,
+                animationDelay: `${delayMs + 1250 + v.d}ms`,
+              } as CSSProperties
+            }
+          />
+        ))}
+      </Stage>
+    </>
+  );
+}
+
+/* --- chain_atomic: "every capture explodes and chains" — a domino ripple of
+   SHRINKING mushroom clouds skitters outward from the strike, left and right,
+   each pop smaller and later than the last. ------------------------------- */
+const SKITTER = [
+  { l: 45.5, t: 44, s: 9, d: 0 },
+  { l: 55, t: 46, s: 7.4, d: 140 },
+  { l: 38, t: 47, s: 7.4, d: 220 },
+  { l: 63, t: 48.5, s: 5.9, d: 360 },
+  { l: 31, t: 49.5, s: 5.9, d: 440 },
+  { l: 70, t: 51, s: 4.6, d: 580 },
+  { l: 25, t: 52, s: 4.6, d: 660 },
+];
+function ChainAtomic(props: TemplateProps) {
+  const { palette, glyph, lead, delayMs } = props;
+  const [p0, p1, p2] = palette;
+  if (!lead) {
+    return (
+      <>
+        <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />
+        {/* each struck square coughs up its own tiny mushroom puff */}
+        <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+          <span className="gp-shroomlet absolute block" style={{ left: "30%", top: "6%", width: "40%", height: "56%", animationDelay: `${delayMs + 360}ms` }}>
+            <Shroom core={p0} glow={p2} deep={p1} />
+          </span>
+        </span>
+      </>
+    );
+  }
+  return (
+    <>
+      <SkyWrath {...props} />
+      <Stage>
+        {/* the domino ripple: shrinking mushroom clouds skitter outward */}
+        {SKITTER.map((v, i) => (
+          <span
+            key={i}
+            className="gp-shroomlet absolute block"
+            style={{ left: `${v.l - v.s / 2}%`, top: `${v.t - v.s * 1.15}%`, width: `${v.s}%`, height: `${v.s * 1.33}%`, animationDelay: `${delayMs + 680 + v.d}ms` }}
+          >
+            <Shroom core={p0} glow={p2} deep={p1} />
+          </span>
+        ))}
+      </Stage>
+    </>
+  );
+}
+
+/* --- endless_night: "your opponent skips their next 2 turns... only their
+   king may move" — the sun visibly SETS (a warm disc sinks while the sky band
+   darkens), stars wink on, and nightcaps drop onto dozing piece silhouettes
+   with Z's rising off them. ------------------------------------------------ */
+const NIGHT_STARS = [
+  { l: 30, t: 24, d: 0 },
+  { l: 44, t: 20, d: 110 },
+  { l: 58, t: 23, d: 220 },
+  { l: 70, t: 27, d: 330 },
+  { l: 36, t: 30, d: 440 },
+];
+const SLEEPERS = [
+  { l: 33, d: 0 },
+  { l: 47, d: 150 },
+  { l: 61, d: 300 },
+];
+function EndlessNight(props: TemplateProps) {
+  const { palette, lead, delayMs } = props;
+  const [, p1] = palette;
+  if (!lead) return <ReaperSweep {...props} />;
+  return (
+    <>
+      <ReaperSweep {...props} />
+      <Stage>
+        {/* the sky band darkens as the sun goes down */}
+        <span
+          className="gp-nightfall absolute block"
+          style={{
+            left: "12%",
+            top: "17%",
+            width: "76%",
+            height: "30%",
+            background: "linear-gradient(180deg, rgba(9,12,40,0.92), rgba(9,12,40,0.35) 70%, transparent)",
+            animationDelay: `${delayMs + 60}ms`,
+          }}
+        />
+        {/* the warm disc sinks below the field */}
+        <span
+          className="gp-sunset absolute block rounded-full"
+          style={{
+            left: "59%",
+            top: "27%",
+            width: "9%",
+            height: "9%",
+            background: `radial-gradient(circle at 50% 38%, #ffe9a8, #ffb454 55%, ${tint("#ff7a29", 0.9)})`,
+            animationDelay: `${delayMs + 80}ms`,
+          }}
+        />
+        {/* stars wink on */}
+        {NIGHT_STARS.map((s, i) => (
+          <span key={i} className="gp-glint absolute block" style={{ left: `${s.l}%`, top: `${s.t}%`, width: "3.4%", height: "3.4%", animationDelay: `${delayMs + 900 + s.d}ms` }}>
+            <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+              <path d="M5 0 L6.1 3.9 L10 5 L6.1 6.1 L5 10 L3.9 6.1 L0 5 L3.9 3.9 Z" fill={i % 2 ? "#fff4d6" : p1} />
+            </svg>
+          </span>
+        ))}
+        {/* the court nods off: silhouettes, dropping nightcaps, rising Z's */}
+        {SLEEPERS.map((v, i) => (
+          <span key={i} className="absolute block" style={{ left: `${v.l}%`, top: "50%", width: "7%", height: "16%" }}>
+            {/* dozing pawn silhouette */}
+            <span className="gp-snooze absolute block" style={{ left: "10%", top: "26%", width: "80%", height: "74%", animationDelay: `${delayMs + 950 + v.d}ms` }}>
+              <svg viewBox="0 0 10 12" className="block h-full w-full" aria-hidden="true">
+                <path d="M5 0.8 A2 2 0 0 1 5 4.8 L6.4 9.4 H8 V11.4 H2 V9.4 H3.6 L5 4.8 A2 2 0 0 1 5 0.8 Z" fill="#141a36" stroke={tint(p1, 0.55)} strokeWidth="0.5" {...SJ} />
+              </svg>
+            </span>
+            {/* the nightcap drops on */}
+            <span className="gp-capdrop absolute block" style={{ left: "18%", top: "0%", width: "64%", height: "34%", animationDelay: `${delayMs + 1250 + v.d}ms` }}>
+              <svg viewBox="0 0 10 6" className="block h-full w-full" aria-hidden="true">
+                <path d="M1.4 5 C2 1.6 5 0.4 8 1.4 L8.8 1 C9.4 1 9.6 2 9 2.2 L8.4 2.2 C7 4.4 4 5.4 1.4 5 Z" fill="#3b4c8f" stroke="#cdd6ff" strokeWidth="0.4" {...SJ} />
+                <circle cx="9.1" cy="1.6" r="0.7" fill="#fff4d6" />
+              </svg>
+            </span>
+            {/* Z's rise */}
+            {[0, 1].map((z) => (
+              <span key={z} className="gp-zrise absolute block" style={{ left: `${58 + z * 18}%`, top: `${8 - z * 10}%`, width: `${20 - z * 6}%`, height: `${18 - z * 5}%`, animationDelay: `${delayMs + 1500 + v.d + z * 260}ms` }}>
+                <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+                  <path d="M2 2 H8 L2 8 H8" fill="none" stroke="#cdd6ff" strokeWidth="1.3" {...SJ} />
+                </svg>
+              </span>
+            ))}
+          </span>
+        ))}
+      </Stage>
+    </>
+  );
+}
+
+/* --- absolute_zero: "the cold outlives the ice" — a frost-line RACES across
+   the board, and the titan's breath-cloud freezes solid mid-air, then tinkles
+   down in shards. ---------------------------------------------------------- */
+const TINKLE = [
+  { l: 20, dx: "-70%", d: 0 },
+  { l: 42, dx: "30%", d: 110 },
+  { l: 62, dx: "-30%", d: 220 },
+  { l: 80, dx: "80%", d: 330 },
+];
+function AbsoluteZero(props: TemplateProps) {
+  const { palette, lead, delayMs } = props;
+  const [p0, p1, p2] = palette;
+  if (!lead) return <FrostTitan {...props} />;
+  return (
+    <>
+      <FrostTitan {...props} />
+      <Stage>
+        {/* the frost-line races across the board */}
+        <span
+          className="gp-frostrace absolute block"
+          style={{
+            left: "14%",
+            top: "51.5%",
+            width: "72%",
+            height: "1.2%",
+            background: `linear-gradient(90deg, ${tint(p1, 0.95)}, ${tint(p0, 0.8)} 60%, ${tint(p1, 0.5)})`,
+            animationDelay: `${delayMs + 80}ms`,
+          }}
+        />
+        {/* rime crystals snap up in its wake */}
+        {[24, 41, 58, 75].map((l, i) => (
+          <span key={i} className="gp-glint absolute block" style={{ left: `${l}%`, top: "49.4%", width: "2.8%", height: "2.8%", animationDelay: `${delayMs + 220 + i * 90}ms` }}>
+            <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+              <path d="M5 0 L6.1 3.9 L10 5 L6.1 6.1 L5 10 L3.9 6.1 L0 5 L3.9 3.9 Z" fill={i % 2 ? "#ffffff" : p1} />
+            </svg>
+          </span>
+        ))}
+        {/* the breath-cloud puffs out... */}
+        <span className="gp-breath absolute block" style={{ left: "43%", top: "33%", width: "14%", height: "9%", animationDelay: `${delayMs + 760}ms` }}>
+          <svg viewBox="0 0 16 9" className="block h-full w-full" aria-hidden="true">
+            <path d="M1.5 6.5 Q2 3.5 4.5 4 Q5.5 1 8.5 2.2 Q11.5 0.8 13 3.4 Q15.2 3.8 14.6 6.2 Q12 8.4 8 8 Q4 8.6 1.5 6.5 Z" fill="rgba(255,255,255,0.85)" stroke={tint(p0, 0.9)} strokeWidth="0.5" {...SJ} />
+          </svg>
+        </span>
+        {/* ...freezes SOLID... */}
+        <span className="gp-crack absolute block" style={{ left: "43%", top: "33%", width: "14%", height: "9%", animationDelay: `${delayMs + 1240}ms` }}>
+          <svg viewBox="0 0 16 9" className="block h-full w-full" aria-hidden="true">
+            <path d="M1.5 6.5 L4 3.6 L7 1.8 L10.5 1.6 L13.6 3 L14.6 6.2 L11 8.2 L5 8.3 Z" fill={tint(p0, 0.85)} stroke={p2} strokeWidth="0.7" {...SJ} />
+            <path d="M4.5 6.8 L8 3 M8.4 7.6 L11.6 3.2" stroke="#ffffff" strokeWidth="0.4" strokeLinecap="round" />
+          </svg>
+        </span>
+        {/* ...and tinkles down in shards */}
+        {TINKLE.map((v, i) => (
+          <span
+            key={i}
+            className="gp-tinkle absolute block"
+            style={
+              {
+                left: `${44 + (v.l / 100) * 12}%`,
+                top: "40%",
+                width: "1.8%",
+                height: "2.6%",
+                "--dx": v.dx,
+                animationDelay: `${delayMs + 1650 + v.d}ms`,
+              } as CSSProperties
+            }
+          >
+            <svg viewBox="0 0 6 9" className="block h-full w-full" aria-hidden="true">
+              <path d="M3 0.5 L5.2 4.5 L3 8.5 L0.8 4.5 Z" fill={tint(p1, 0.9)} stroke={p2} strokeWidth="0.5" {...SJ} />
+            </svg>
+          </span>
+        ))}
+      </Stage>
+    </>
+  );
+}
+
+/* --- sabbatical: "suspend your nerf for 10 turns" — the hammock itself gets
+   strung up mid-board and SWAYS, Z's drifting off the napping pawn. -------- */
+function SabbaticalScene(props: TemplateProps) {
+  const { palette, lead, delayMs } = props;
+  const [p0, , p2] = palette;
+  if (!lead) return <ChronoLord {...props} />;
+  return (
+    <>
+      <ChronoLord {...props} />
+      <Stage>
+        {/* the hammock, swinging lazily under the great clock */}
+        <span className="gp-sway absolute block" style={{ left: "36%", top: "52%", width: "28%", height: "17%", transformOrigin: "50% 0%", animationDelay: `${delayMs + 620}ms` }}>
+          <svg viewBox="0 0 28 17" className="block h-full w-full" aria-hidden="true">
+            {/* posts */}
+            <path d="M2 2 V15.5 M26 2 V15.5" stroke={p0} strokeWidth="1.4" strokeLinecap="round" />
+            {/* net */}
+            <path d="M2 4 C8 12.5 20 12.5 26 4" fill="none" stroke={p2} strokeWidth="1.2" strokeLinecap="round" />
+            <path d="M6.5 6.8 C10 10.4 18 10.4 21.5 6.8" fill="none" stroke={p2} strokeWidth="0.6" strokeLinecap="round" />
+            {/* the napping pawn, tucked in */}
+            <circle cx="12" cy="7.2" r="2" fill="#fff7de" stroke={p0} strokeWidth="0.6" />
+            <path d="M10.4 6.9 C10.9 6.5 11.5 6.5 12 6.9" fill="none" stroke={p0} strokeWidth="0.5" strokeLinecap="round" />
+            <path d="M13.5 8.6 C16.5 7.4 19 8 20.5 9.2" fill="none" stroke={p2} strokeWidth="1.6" strokeLinecap="round" />
+          </svg>
+        </span>
+        {/* Z's drift up off the nap */}
+        {[0, 1, 2].map((z) => (
+          <span key={z} className="gp-zrise absolute block" style={{ left: `${46 + z * 4}%`, top: `${48 - z * 4}%`, width: `${3.4 - z * 0.7}%`, height: `${3.4 - z * 0.7}%`, animationDelay: `${delayMs + 1050 + z * 260}ms` }}>
+            <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+              <path d="M2 2 H8 L2 8 H8" fill="none" stroke="#fff4d6" strokeWidth="1.3" {...SJ} />
+            </svg>
+          </span>
+        ))}
+      </Stage>
+    </>
+  );
+}
+
+/* --- ban_hammer: the moderator's verdict — a red circle-slash BAN seal
+   stamps over the impact, and panicked chat bubbles scatter. --------------- */
+const BUBBLES = [
+  { dx: "220%", dy: "-180%", rot: "40deg", d: 0, l: 56 },
+  { dx: "-240%", dy: "-140%", rot: "-50deg", d: 60, l: 42 },
+  { dx: "120%", dy: "-260%", rot: "24deg", d: 120, l: 50 },
+];
+function BanHammerScene(props: TemplateProps) {
+  const { lead, delayMs } = props;
+  if (!lead) return <ForgeColossus {...props} />;
+  return (
+    <>
+      <ForgeColossus {...props} />
+      <Stage>
+        {/* the BAN seal stamps over the point of impact */}
+        <span className="gp-seal absolute block" style={{ left: "39%", top: "40%", width: "22%", height: "22%", animationDelay: `${delayMs + 700}ms` }}>
+          <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+            <circle cx="10" cy="10" r="8.2" fill="rgba(214,35,79,0.18)" stroke="#d6234f" strokeWidth="1.8" />
+            <path d="M4.4 15.6 L15.6 4.4" stroke="#d6234f" strokeWidth="1.8" strokeLinecap="round" />
+          </svg>
+        </span>
+        {/* the chat scatters */}
+        {BUBBLES.map((v, i) => (
+          <span
+            key={i}
+            className="gp-spark absolute block"
+            style={
+              {
+                left: `${v.l}%`,
+                top: "50%",
+                width: "4.6%",
+                height: "3.8%",
+                "--dx": v.dx,
+                "--dy": v.dy,
+                "--rot": v.rot,
+                animationDelay: `${delayMs + 780 + v.d}ms`,
+              } as CSSProperties
+            }
+          >
+            <svg viewBox="0 0 12 10" className="block h-full w-full" aria-hidden="true">
+              <path d="M1.5 1 H10.5 A1 1 0 0 1 11.5 2 V6 A1 1 0 0 1 10.5 7 H5 L2.5 9.4 L3 7 H1.5 A1 1 0 0 1 0.5 6 V2 A1 1 0 0 1 1.5 1 Z" fill="#fff7de" stroke="#4fa3d1" strokeWidth="0.5" {...SJ} />
+              <path d="M3 4 H9" stroke="#d6234f" strokeWidth="0.8" strokeLinecap="round" />
+            </svg>
+          </span>
+        ))}
+      </Stage>
+    </>
+  );
+}
+
+/* --- salted_earth: "pawns can never advance again" — the great urn pours a
+   curtain of salt grains over the furrows, and the last green sprout WILTS. */
+const SALT = [
+  { l: 44, d: 0 },
+  { l: 47, d: 90 },
+  { l: 50, d: 40 },
+  { l: 53, d: 130 },
+  { l: 56, d: 70 },
+  { l: 48.5, d: 180 },
+];
+function SaltedEarthScene(props: TemplateProps) {
+  const { lead, delayMs } = props;
+  if (!lead) return <TitanRise {...props} />;
+  return (
+    <>
+      <TitanRise {...props} />
+      <Stage>
+        {/* salt grains pour and patter down */}
+        {SALT.map((v, i) => (
+          <span
+            key={i}
+            className="gp-tinkle absolute block rounded-full"
+            style={
+              {
+                left: `${v.l}%`,
+                top: "40%",
+                width: "1.3%",
+                height: "1.3%",
+                background: "#f2ead2",
+                "--dx": i % 2 ? "40%" : "-40%",
+                animationDelay: `${delayMs + 520 + v.d}ms`,
+              } as CSSProperties
+            }
+          />
+        ))}
+        {/* the last sprout wilts where the salt lands */}
+        <span className="gp-wilt absolute block" style={{ left: "56%", top: "56%", width: "5%", height: "8%", transformOrigin: "20% 100%", animationDelay: `${delayMs + 1050}ms` }}>
+          <svg viewBox="0 0 10 16" className="block h-full w-full" aria-hidden="true">
+            <path d="M3 15.5 C3.5 10 4 6 5.5 2" fill="none" stroke="#7a9a4e" strokeWidth="1" strokeLinecap="round" />
+            <path d="M5 5 C3.4 4.6 2.4 3.4 2.4 2 C4 2.2 5 3.2 5.2 4.6 Z M5.6 3.4 C7 3 7.8 1.8 7.8 0.6 C6.2 0.8 5.4 1.8 5.3 3 Z" fill="#8faf4a" stroke="#5c7038" strokeWidth="0.4" {...SJ} />
+          </svg>
+        </span>
+      </Stage>
+    </>
+  );
+}
+
+/* --- phoenix_line: "revive all your captured pawns" — the firebird itself
+   climbs out of the ground-strike trailing embers on its way up. ----------- */
+const EMBERS = [
+  { l: 44, dx: "-50%", d: 0 },
+  { l: 52, dx: "60%", d: 140 },
+  { l: 48, dx: "20%", d: 280 },
+  { l: 56, dx: "-30%", d: 420 },
+];
+function PhoenixLineScene(props: TemplateProps) {
+  const { lead, delayMs } = props;
+  if (!lead) return <TitanRise {...props} />;
+  return (
+    <>
+      <TitanRise {...props} />
+      <Stage>
+        {/* the phoenix climbs out of the strike */}
+        <span className="gp-phoenix absolute block" style={{ left: "39%", top: "34%", width: "22%", height: "22%", animationDelay: `${delayMs + 720}ms` }}>
+          <svg viewBox="0 0 22 22" className="block h-full w-full" aria-hidden="true">
+            {/* wings, swept up */}
+            <path d="M11 10 C7 8 3.5 8.5 1 12 C4.5 12.5 7.5 11.5 9.6 10.8 M11 10 C15 8 18.5 8.5 21 12 C17.5 12.5 14.5 11.5 12.4 10.8" fill="#ff9d3d" stroke="#d6234f" strokeWidth="0.6" {...SJ} />
+            {/* body + head */}
+            <path d="M11 8.4 C9.6 10 9.6 12 11 13.8 C12.4 12 12.4 10 11 8.4 Z" fill="#ffd76a" stroke="#d6234f" strokeWidth="0.5" {...SJ} />
+            <circle cx="11" cy="7.6" r="1" fill="#d6234f" />
+            <path d="M11 6.6 L11.4 5.4 L11.9 6.5 Z" fill="#ffd76a" />
+            {/* tail streamers */}
+            <path d="M10.4 13.8 C9.6 16.4 9.8 18.6 10.6 21 M11.6 13.8 C12.4 16.2 12.2 18.4 11.4 20.6" fill="none" stroke="#ff7a29" strokeWidth="0.7" strokeLinecap="round" />
+          </svg>
+        </span>
+        {/* embers stream up in its wake */}
+        {EMBERS.map((v, i) => (
+          <span
+            key={i}
+            className="gp-updrift absolute block rounded-full"
+            style={
+              {
+                left: `${v.l}%`,
+                top: "58%",
+                width: "1.7%",
+                height: "1.7%",
+                background: i % 2 ? "#ffd166" : "#ff7a29",
+                "--dx": v.dx,
+                animationDelay: `${delayMs + 860 + v.d}ms`,
+              } as CSSProperties
+            }
+          />
+        ))}
+      </Stage>
+    </>
+  );
+}
+
+/* --- lost_fortnight: "skips their next turn... 20 seconds struck off" — the
+   torn calendar sheds its pages, which flutter away over the board. -------- */
+const PAGES = [
+  { l: 46, t: 38, dx: "260%", dy: "-160%", rot: "70deg", d: 0 },
+  { l: 50, t: 42, dx: "320%", dy: "-40%", rot: "-50deg", d: 160 },
+  { l: 44, t: 46, dx: "280%", dy: "90%", rot: "100deg", d: 320 },
+];
+function LostFortnightScene(props: TemplateProps) {
+  const { lead, delayMs } = props;
+  if (!lead) return <ChronoLord {...props} />;
+  return (
+    <>
+      <ChronoLord {...props} />
+      <Stage>
+        {PAGES.map((v, i) => (
+          <span
+            key={i}
+            className="gp-flutter absolute block"
+            style={
+              {
+                left: `${v.l}%`,
+                top: `${v.t}%`,
+                width: "4.4%",
+                height: "5%",
+                "--dx": v.dx,
+                "--dy": v.dy,
+                "--rot": v.rot,
+                animationDelay: `${delayMs + 760 + v.d}ms`,
+              } as CSSProperties
+            }
+          >
+            <svg viewBox="0 0 9 10" className="block h-full w-full" aria-hidden="true">
+              <rect x="0.6" y="0.6" width="7.8" height="8.8" rx="0.6" fill="#f4f6ff" stroke="#5a6b8f" strokeWidth="0.5" />
+              <path d="M0.6 3 H8.4" stroke="#5a6b8f" strokeWidth="0.5" />
+              <path d="M2.2 5 H6.8 M2.2 6.8 H5.6" stroke="#8a94a8" strokeWidth="0.4" strokeLinecap="round" />
+            </svg>
+          </span>
+        ))}
+      </Stage>
+    </>
+  );
+}
+
+/* --- noble_rout: "the nobles break and run" — noble silhouettes sprint for
+   their own edge of the board, kicking up dust as they go. ----------------- */
+const FLEE = [
+  { t: 52, s: 6.5, d: 0, piece: "M5 1.6 C7 1.6 8 3 7.6 4.6 L6.6 5.2 L7.2 6 L6 6.4 L6.8 9.4 H3.2 C3.6 7 3 5.4 2.6 3.8 C2.4 2.6 3.4 1.6 5 1.6 Z" },
+  { t: 58, s: 5.8, d: 170, piece: "M5 1 L6 2.6 L5.6 3 L6.4 5.4 L5.6 6 L6.6 9.4 H3.4 L4.4 6 L3.6 5.4 L4.4 3 L4 2.6 Z" },
+  { t: 63, s: 6.2, d: 340, piece: "M2.8 2 H4 V3 H4.6 V2 H5.4 V3 H6 V2 H7.2 V4.2 H6.6 L7 9.4 H3 L3.4 4.2 H2.8 Z" },
+];
+function NobleRoutScene(props: TemplateProps) {
+  const { palette, lead, delayMs } = props;
+  const [, , p2] = palette;
+  if (!lead) return <HostMarch {...props} />;
+  return (
+    <>
+      <HostMarch {...props} />
+      <Stage>
+        {FLEE.map((v, i) => (
+          <span key={i} className="gp-flee absolute block" style={{ left: "40%", top: `${v.t}%`, width: `${v.s}%`, height: `${v.s * 1.5}%`, animationDelay: `${delayMs + 620 + v.d}ms` }}>
+            <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+              <path d={v.piece} fill="#2b1218" stroke={p2} strokeWidth="0.4" {...SJ} />
+            </svg>
+          </span>
+        ))}
+        {/* skid dust behind the rout */}
+        {FLEE.map((v, i) => (
+          <span
+            key={`d${i}`}
+            className="gp-spark absolute block rounded-full"
+            style={
+              {
+                left: "39%",
+                top: `${v.t + 6}%`,
+                width: "2.2%",
+                height: "2.2%",
+                background: tint(p2, 0.6),
+                "--dx": "-160%",
+                "--dy": "-40%",
+                "--rot": "0deg",
+                animationDelay: `${delayMs + 700 + v.d}ms`,
+              } as CSSProperties
+            }
+          />
+        ))}
+      </Stage>
+    </>
+  );
+}
+
+/* --- total_plunder: "steal ALL your opponent's active buffs" — a fountain of
+   gold coins is sucked up off the board into the maw, which gulps. --------- */
+const COINS = [
+  { dx: "-260%", dy: "420%", d: 0 },
+  { dx: "180%", dy: "460%", d: 70 },
+  { dx: "-80%", dy: "500%", d: 140 },
+  { dx: "300%", dy: "380%", d: 210 },
+  { dx: "40%", dy: "540%", d: 280 },
+  { dx: "-340%", dy: "360%", d: 350 },
+  { dx: "220%", dy: "520%", d: 420 },
+];
+function TotalPlunderScene(props: TemplateProps) {
+  const { lead, delayMs } = props;
+  if (!lead) return <AbyssMaw {...props} />;
+  return (
+    <>
+      <AbyssMaw {...props} />
+      <Stage>
+        {/* the hoard, hoovered up into the maw */}
+        {COINS.map((v, i) => (
+          <span
+            key={i}
+            className="gp-mote absolute block"
+            style={
+              {
+                left: "48.7%",
+                top: "44%",
+                width: "2.6%",
+                height: "2.6%",
+                "--dx": v.dx,
+                "--dy": v.dy,
+                animationDelay: `${delayMs + 380 + v.d}ms`,
+              } as CSSProperties
+            }
+          >
+            <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+              <circle cx="5" cy="5" r="4.2" fill="#ffd76a" stroke="#8a6a3a" strokeWidth="0.7" />
+              <path d="M5 2.8 V7.2 M3.4 4 H6.6" stroke="#8a6a3a" strokeWidth="0.6" strokeLinecap="round" />
+            </svg>
+          </span>
+        ))}
+        {/* the maw's satisfied gulp */}
+        <span
+          className="gp-flash absolute block rounded-full"
+          style={{ left: "44%", top: "42.5%", width: "12%", height: "8%", background: tint("#ffd76a", 0.75), animationDelay: `${delayMs + 1080}ms` }}
+        />
+      </Stage>
+    </>
+  );
+}
+
+/* --- leaden_limbs: "at most one square in any direction" — great iron
+   kettlebell weights drop onto the ranks and SIT there, heavy. ------------- */
+const WEIGHTS = [
+  { l: 31, t: 40, s: 8, d: 0 },
+  { l: 47, t: 37, s: 10, d: 200 },
+  { l: 64, t: 41, s: 8, d: 400 },
+];
+function LeadenLimbsScene(props: TemplateProps) {
+  const { palette, lead, delayMs } = props;
+  const [, p1] = palette;
+  if (!lead) return <ForgeColossus {...props} />;
+  return (
+    <>
+      <ForgeColossus {...props} />
+      <Stage>
+        {WEIGHTS.map((v, i) => (
+          <span key={i} className="gp-pod absolute block" style={{ left: `${v.l}%`, top: `${v.t}%`, width: `${v.s}%`, height: `${v.s * 1.2}%`, animationDelay: `${delayMs + 520 + v.d}ms` }}>
+            <svg viewBox="0 0 10 12" className="block h-full w-full" aria-hidden="true">
+              <path d="M3.4 4 V3 A1.6 1.6 0 0 1 6.6 3 V4" fill="none" stroke="#2c2c32" strokeWidth="1" strokeLinecap="round" />
+              <circle cx="5" cy="7.4" r="3.6" fill="#6e6e78" stroke="#2c2c32" strokeWidth="0.6" />
+              <path d="M3.4 6 C3.8 5.3 4.6 5 5.3 5.3" fill="none" stroke={tint(p1, 0.9)} strokeWidth="0.5" strokeLinecap="round" />
+            </svg>
+          </span>
+        ))}
+        {/* dust chuffs out where each one lands */}
+        {WEIGHTS.map((v, i) => (
+          <span
+            key={`d${i}`}
+            className="gp-spark absolute block rounded-full"
+            style={
+              {
+                left: `${v.l + v.s / 2}%`,
+                top: `${v.t + v.s}%`,
+                width: "2.4%",
+                height: "2.4%",
+                background: "rgba(200,200,210,0.6)",
+                "--dx": i % 2 ? "180%" : "-180%",
+                "--dy": "-60%",
+                "--rot": "0deg",
+                animationDelay: `${delayMs + 900 + v.d}ms`,
+              } as CSSProperties
+            }
+          />
+        ))}
+      </Stage>
+    </>
+  );
+}
+
+/* =============================================================================
    Glyphs — one small hand-drawn SVG per card, recognisable at a glance.
    All share a 0 0 10 10 viewBox so every template slot letterboxes them
    without distortion.
@@ -1999,21 +2680,21 @@ export const PLAYS: Record<string, SigPlugin> = {
   molten_heart: G(TitanRise, ["#ff5c1a", "#e6432c", "#3a1c12"], GLYPH.molten_heart, {
     ordering: "sweep", staggerMs: 70, victims: "all", hasLead: true, sound: "cataclysm", source: "blindfold",
   }),
-  salted_earth: G(TitanRise, ["#e8dcc0", "#b0a68f", "#8faf4a"], GLYPH.salted_earth, {
+  salted_earth: G(SaltedEarthScene, ["#e8dcc0", "#b0a68f", "#8faf4a"], GLYPH.salted_earth, {
     ordering: "sweep", staggerMs: 70, victims: ["p"], hasLead: true, sound: "extinction",
   }),
   unshackled_wrath: G(TitanRise, ["#e6432c", "#3a3a40", "#ffd166"], GLYPH.unshackled_wrath, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "blitz", source: "stun",
   }),
-  phoenix_line: G(TitanRise, ["#ff7a29", "#ffd76a", "#d6234f"], GLYPH.phoenix_line, {
+  phoenix_line: G(PhoenixLineScene, ["#ff7a29", "#ffd76a", "#d6234f"], GLYPH.phoenix_line, {
     ordering: "sweep", staggerMs: 80, victims: ["p"], hasLead: true, sound: "wall", source: "summon",
   }),
 
   /* --- SkyWrath ------------------------------------------------------------ */
-  chain_atomic: G(SkyWrath, ["#ff9d3d", "#e6432c", "#ffd166"], GLYPH.chain_atomic, {
+  chain_atomic: G(ChainAtomic, ["#ff9d3d", "#e6432c", "#ffd166"], GLYPH.chain_atomic, {
     ordering: "octagon", staggerMs: 70, victims: "all", hasLead: true, sound: "atomic",
   }),
-  total_atomic: G(SkyWrath, ["#e6432c", "#7a1a10", "#ffd166"], GLYPH.total_atomic, {
+  total_atomic: G(TotalAtomic, ["#e6432c", "#7a1a10", "#ffd166"], GLYPH.total_atomic, {
     ordering: "octagon", staggerMs: 70, victims: "all", hasLead: true, sound: "atomic",
   }),
   scorched_earth: G(SkyWrath, ["#ff7a29", "#3a1c12", "#ffb454"], GLYPH.scorched_earth, {
@@ -2030,7 +2711,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   buff_plunder: G(AbyssMaw, ["#ffd76a", "#8f2bbf", "#2a2a38"], GLYPH.buff_plunder, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "rampage",
   }),
-  total_plunder: G(AbyssMaw, ["#ffd76a", "#1c0f18", "#c94ad1"], GLYPH.total_plunder, {
+  total_plunder: G(TotalPlunderScene, ["#ffd76a", "#1c0f18", "#c94ad1"], GLYPH.total_plunder, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "rampage",
   }),
   grand_nullify: G(AbyssMaw, ["#8a94a8", "#8f6bff", "#eef1f7"], GLYPH.grand_nullify, {
@@ -2041,7 +2722,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   }),
 
   /* --- ReaperSweep ------------------------------------------------------------ */
-  endless_night: G(ReaperSweep, ["#2c3e6b", "#cdd6ff", "#8a94a8"], GLYPH.endless_night, {
+  endless_night: G(EndlessNight, ["#2c3e6b", "#cdd6ff", "#8a94a8"], GLYPH.endless_night, {
     ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "shades", source: "slow",
   }),
   peace_of_the_grave: G(ReaperSweep, ["#eef1f7", "#8a94a8", "#5fae7f"], GLYPH.peace_of_the_grave, {
@@ -2071,7 +2752,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   grand_retreat: G(HostMarch, ["#5a8fc0", "#c9cdd6", "#ffd76a"], GLYPH.grand_retreat, {
     ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "blitz",
   }),
-  noble_rout: G(HostMarch, ["#6b1a2a", "#c9cdd6", "#e8b04b"], GLYPH.noble_rout, {
+  noble_rout: G(NobleRoutScene, ["#6b1a2a", "#c9cdd6", "#e8b04b"], GLYPH.noble_rout, {
     ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "rampage",
   }),
   sacked_capital: G(HostMarch, ["#ff9d3d", "#2b1218", "#c94a3a"], GLYPH.sacked_capital, {
@@ -2112,7 +2793,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   frozen_solid: G(FrostTitan, ["#6fe3ff", "#ffffff", "#3f7fb5"], GLYPH.frozen_solid, {
     ordering: "radial", staggerMs: 45, victims: "all", hasLead: true, sound: "massfreeze", source: "frozen",
   }),
-  absolute_zero: G(FrostTitan, ["#bfe6ff", "#ffffff", "#1c3a5e"], GLYPH.absolute_zero, {
+  absolute_zero: G(AbsoluteZero, ["#bfe6ff", "#ffffff", "#1c3a5e"], GLYPH.absolute_zero, {
     ordering: "radial", staggerMs: 45, victims: "all", hasLead: true, sound: "massfreeze", source: "frozen",
   }),
   everfrost_shard: G(FrostTitan, ["#9fd8ff", "#8f6bff", "#e8f8ff"], GLYPH.everfrost_shard, {
@@ -2120,7 +2801,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   }),
 
   /* --- ForgeColossus --------------------------------------------------------------- */
-  ban_hammer: G(ForgeColossus, ["#4fa3d1", "#8a94a8", "#ffd76a"], GLYPH.ban_hammer, {
+  ban_hammer: G(BanHammerScene, ["#4fa3d1", "#8a94a8", "#ffd76a"], GLYPH.ban_hammer, {
     ordering: "sweep", staggerMs: 80, victims: ["n", "b", "r"], hasLead: true, sound: "siege",
   }),
   dragonslayer: G(ForgeColossus, ["#c9cdd6", "#d6234f", "#ffd76a"], GLYPH.dragonslayer, {
@@ -2135,7 +2816,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   sealed_ramparts: G(ForgeColossus, ["#8a94a8", "#5c5c63", "#c94a3a"], GLYPH.sealed_ramparts, {
     ordering: "sweep", staggerMs: 70, victims: ["r"], hasLead: true, sound: "wall",
   }),
-  leaden_limbs: G(ForgeColossus, ["#6e6e78", "#c9a84c", "#3a3a40"], GLYPH.leaden_limbs, {
+  leaden_limbs: G(LeadenLimbsScene, ["#6e6e78", "#c9a84c", "#3a3a40"], GLYPH.leaden_limbs, {
     ordering: "sweep", staggerMs: 70, victims: "all", hasLead: true, sound: "petrify",
   }),
 
@@ -2166,10 +2847,10 @@ export const PLAYS: Record<string, SigPlugin> = {
   endless_turn: G(ChronoLord, ["#e6432c", "#ffd76a", "#ffffff"], GLYPH.endless_turn, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "blitz", source: "rally",
   }),
-  lost_fortnight: G(ChronoLord, ["#5a6b8f", "#cdd6ff", "#ffd76a"], GLYPH.lost_fortnight, {
+  lost_fortnight: G(LostFortnightScene, ["#5a6b8f", "#cdd6ff", "#ffd76a"], GLYPH.lost_fortnight, {
     ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "snooze", source: "slow",
   }),
-  sabbatical: G(ChronoLord, ["#5fc9b0", "#fff7de", "#ffd76a"], GLYPH.sabbatical, {
+  sabbatical: G(SabbaticalScene, ["#5fc9b0", "#fff7de", "#ffd76a"], GLYPH.sabbatical, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "snooze",
   }),
 };

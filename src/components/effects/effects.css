@@ -1314,6 +1314,30 @@ html[data-anim="off"] .fx-sig-crossback,
 html[data-anim="off"] .fx-sig-slash,
 html[data-anim="off"] .fx-cast-scanlines,
 html[data-anim="off"] .fx-cast-errorwin,
+/* Batch 15 marquee upgrades: the jackpot lever / wedge-glow / coin fountain,
+   the total-war drum rims + banner scraps, the virus cursor / packet-trail /
+   readout chip, the mandate scroll / signature mask / quill / wax seal, the
+   kintsugi walnut snap, and the tier-8 tell/settle extras (pendulum, drifting
+   motes). All transient spectacles, hidden like the rest. */
+html[data-anim="off"] .fx-sig-leverpull,
+html[data-anim="off"] .fx-sig-wedgeglow,
+html[data-anim="off"] .fx-sig-coinpay,
+html[data-anim="off"] .fx-sig-rimin,
+html[data-anim="off"] .fx-sig-scrapfall,
+html[data-anim="off"] .fx-sig-cursor,
+html[data-anim="off"] .fx-sig-packet,
+html[data-anim="off"] .fx-sig-chip,
+html[data-anim="off"] .fx-sig-unroll,
+html[data-anim="off"] .fx-sig-maskslide,
+html[data-anim="off"] .fx-sig-maskslide-inner,
+html[data-anim="off"] .fx-sig-quill,
+html[data-anim="off"] .fx-sig-sealstamp,
+html[data-anim="off"] .fx-sig-barkspiral,
+html[data-anim="off"] .fx-sig-shutl,
+html[data-anim="off"] .fx-sig-shutr,
+html[data-anim="off"] .fx-sig-seamflash,
+html[data-anim="off"] .fx-sig-pendulum,
+html[data-anim="off"] .fx-sig-driftmote,
 html[data-anim="off"] .fx-cast-stamp {
   animation: none !important;
   opacity: 0 !important;
@@ -1542,3 +1566,229 @@ html[data-anim="off"] .fx-one-shot {
   100% { transform: translate(0, 0) rotate(0deg); }
 }
 .fx-board-shake { animation: fx-board-shake 0.55s var(--ease-out, ease-out) both; }
+
+/* --- 10k. Batch 15 marquee upgrades ------------------------------------------
+   Targeted upgrades for the marquee visuals in sigVisuals.tsx: the jackpot
+   wheel's lever-pull tell + winning-wedge glow + coin payout, the total-war
+   drum tell + banner-scrap settle, the computer-virus infection read, the
+   mandate signing ceremony, the kintsugi-walnut snap (matching the redesigned
+   WalnutPiece: #3a2415 burl, #ffd76a gold), and shared tell/settle motions for
+   the tier-8 spectacles (pendulum swing, drifting motes). Same law as every
+   signature: transform / opacity ONLY, one-shot `both` fill so the inline
+   animation-delay staggers cleanly, every duration scaled by --fx-dur, all
+   hidden outright when animations are off in Settings (guard block above). */
+
+/* Jackpot: the house lever is cranked hard and the arm recoils (the tell).
+   transform-origin set inline at the lever's pivot. */
+@keyframes fx-sig-leverpull {
+  0% { opacity: 0; transform: rotate(0deg); }
+  12% { opacity: 1; transform: rotate(0deg); }
+  34% { transform: rotate(52deg); }
+  50% { transform: rotate(44deg); }
+  70% { transform: rotate(8deg); }
+  82% { transform: rotate(18deg); }
+  92% { opacity: 1; transform: rotate(14deg); }
+  100% { opacity: 0; transform: rotate(14deg); }
+}
+.fx-sig-leverpull { animation: fx-sig-leverpull calc(0.9s * var(--fx-dur, 1)) var(--ease-out, cubic-bezier(0.2, 0.8, 0.2, 1)) both; }
+
+/* Jackpot: the winning wedge flares under the pointer as the wheel lands —
+   a double gold pulse. Mounted INSIDE the spinning wrapper so it lands where
+   the disc lands. */
+@keyframes fx-sig-wedgeglow {
+  0% { opacity: 0; transform: scale(1); }
+  15% { opacity: 1; }
+  35% { opacity: 0.3; }
+  55% { opacity: 1; transform: scale(1.03); }
+  80% { opacity: 0.85; }
+  100% { opacity: 0; transform: scale(1); }
+}
+.fx-sig-wedgeglow { animation: fx-sig-wedgeglow calc(0.85s * var(--fx-dur, 1)) ease-out both; transform-box: fill-box; transform-origin: center; }
+
+/* Jackpot: a coin flung from the hub — arcs up on its --dx spread, then rains
+   down TOWARD the board's bottom edge. */
+@keyframes fx-sig-coinpay {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.5) rotate(0deg); }
+  10% { opacity: 1; }
+  32% { transform: translate(calc(var(--dx, 0%) * 0.6), -170%) scale(1) rotate(calc(var(--rot, 200deg) * 0.4)); }
+  100% { opacity: 0; transform: translate(var(--dx, 0%), 660%) scale(0.9) rotate(var(--rot, 200deg)); }
+}
+.fx-sig-coinpay { animation: fx-sig-coinpay calc(1.1s * var(--fx-dur, 1)) ease-in both; }
+
+/* Total War: a war-drum shock rim pulsing IN (the inward twin of fx-sig-boom):
+   the air tightens over the board before the fist falls. */
+@keyframes fx-sig-rimin {
+  0% { opacity: 0; transform: scale(1.35); }
+  35% { opacity: 1; }
+  100% { opacity: 0; transform: scale(0.68); }
+}
+.fx-sig-rimin { animation: fx-sig-rimin calc(0.25s * var(--fx-dur, 1)) ease-in both; transform-origin: 50% 50%; }
+
+/* A torn banner scrap (or feather-ember, or heart petal) fluttering down,
+   swaying side to side as it falls. */
+@keyframes fx-sig-scrapfall {
+  0% { opacity: 0; transform: translate(0, -40%) rotate(0deg); }
+  12% { opacity: 1; }
+  30% { transform: translate(-30%, 60%) rotate(-24deg); }
+  55% { transform: translate(26%, 190%) rotate(18deg); }
+  80% { transform: translate(-18%, 330%) rotate(-16deg); }
+  100% { opacity: 0; transform: translate(10%, 460%) rotate(8deg); }
+}
+.fx-sig-scrapfall { animation: fx-sig-scrapfall calc(1.4s * var(--fx-dur, 1)) ease-in both; }
+
+/* Computer Virus: a glitchy terminal cursor blinks in, stuttering sideways. */
+@keyframes fx-sig-cursor {
+  0% { opacity: 0; transform: translateX(0); }
+  10% { opacity: 1; }
+  20% { opacity: 0; }
+  30% { opacity: 1; transform: translateX(6%); }
+  40% { opacity: 0.2; }
+  52% { opacity: 1; transform: translateX(-4%); }
+  72% { opacity: 1; transform: translateX(0); }
+  100% { opacity: 0; transform: translateX(0); }
+}
+.fx-sig-cursor { animation: fx-sig-cursor calc(0.6s * var(--fx-dur, 1)) steps(2, end) both; }
+
+/* Computer Virus: one segment of the packet-trail pops in (choppy, scanline-
+   flavoured), holds while the infection crawls on, then drops out. */
+@keyframes fx-sig-packet {
+  0% { opacity: 0; transform: scale(0.4); }
+  18% { opacity: 1; transform: scale(1.15); }
+  30% { transform: scale(1); }
+  72% { opacity: 0.85; }
+  100% { opacity: 0; transform: scale(1); }
+}
+.fx-sig-packet { animation: fx-sig-packet calc(0.8s * var(--fx-dur, 1)) steps(3, end) both; }
+
+/* Computer Virus: the '8s DRAINED' readout chip slams in, holds long enough to
+   read, then pixel-dissolves in choppy stepped flickers. */
+@keyframes fx-sig-chip {
+  0% { opacity: 0; transform: translateY(24%) scale(0.7); }
+  10% { opacity: 1; transform: translateY(0) scale(1.04); }
+  16% { transform: translateY(0) scale(1); }
+  62% { opacity: 1; transform: translateY(0) scale(1); }
+  70% { opacity: 0.4; transform: translateX(1.5%) scale(1); }
+  78% { opacity: 0.9; transform: translateX(-1.5%) scale(1); }
+  86% { opacity: 0.25; transform: translateX(1%) scale(1); }
+  100% { opacity: 0; transform: translateX(0) scale(0.98); }
+}
+.fx-sig-chip { animation: fx-sig-chip calc(1.3s * var(--fx-dur, 1)) steps(4, end) both; }
+
+/* Mandate: the imperial scroll unrolls top to bottom with a paper overshoot,
+   holds through the signing + seal, then fades with the ceremony. */
+@keyframes fx-sig-unroll {
+  0% { opacity: 0; transform: scaleY(0.12); }
+  10% { opacity: 1; }
+  26% { transform: scaleY(1.05); }
+  34% { transform: scaleY(1); }
+  90% { opacity: 1; transform: scaleY(1); }
+  100% { opacity: 0; transform: scaleY(1); }
+}
+.fx-sig-unroll { animation: fx-sig-unroll calc(2.6s * var(--fx-dur, 1)) var(--ease-out, cubic-bezier(0.2, 0.8, 0.2, 1)) both; transform-origin: 50% 0%; }
+
+/* Mandate: the signature reveal — a sliding-mask pair. The overflow-hidden
+   wrapper slides right while its inner child slides left by the same curve,
+   so the stroke appears drawn left to right (transform/opacity only, no
+   dashoffset). The two keyframe sets MUST mirror each other exactly. */
+@keyframes fx-sig-maskslide {
+  0% { opacity: 1; transform: translateX(-101%); }
+  45% { transform: translateX(0); }
+  90% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(0); }
+}
+.fx-sig-maskslide { animation: fx-sig-maskslide calc(2s * var(--fx-dur, 1)) var(--ease-out, ease-out) both; overflow: hidden; }
+@keyframes fx-sig-maskslide-inner {
+  0% { transform: translateX(101%); }
+  45% { transform: translateX(0); }
+  100% { transform: translateX(0); }
+}
+.fx-sig-maskslide-inner { animation: fx-sig-maskslide-inner calc(2s * var(--fx-dur, 1)) var(--ease-out, ease-out) both; }
+
+/* Mandate: the quill walks the signature line, bobbing with each loop, then
+   lifts away with a flourish. */
+@keyframes fx-sig-quill {
+  0% { opacity: 0; transform: translate(-160%, -20%) rotate(-8deg); }
+  8% { opacity: 1; transform: translate(-140%, 0) rotate(0deg); }
+  20% { transform: translate(-100%, -12%) rotate(-6deg); }
+  32% { transform: translate(-60%, 8%) rotate(5deg); }
+  44% { transform: translate(-20%, -10%) rotate(-5deg); }
+  56% { transform: translate(20%, 6%) rotate(4deg); }
+  68% { transform: translate(60%, -8%) rotate(-4deg); }
+  80% { transform: translate(100%, 0) rotate(0deg); }
+  90% { opacity: 1; transform: translate(130%, -40%) rotate(10deg); }
+  100% { opacity: 0; transform: translate(150%, -80%) rotate(16deg); }
+}
+.fx-sig-quill { animation: fx-sig-quill calc(1.1s * var(--fx-dur, 1)) ease-in-out both; }
+
+/* Mandate: the wax seal stamps down with a squash-and-set, holds, fades. */
+@keyframes fx-sig-sealstamp {
+  0% { opacity: 0; transform: translateY(-180%) scale(1.6); }
+  30% { opacity: 1; transform: translateY(0) scale(0.82); }
+  44% { transform: translateY(-6%) scale(1.08); }
+  56% { transform: translateY(0) scale(1); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(0) scale(1); }
+}
+.fx-sig-sealstamp { animation: fx-sig-sealstamp calc(1s * var(--fx-dur, 1)) var(--ease-out, cubic-bezier(0.2, 0.8, 0.2, 1)) both; transform-origin: 50% 60%; }
+
+/* Kintsugi walnut: a bark ribbon spirals up the piece (--dx sets the orbit
+   throw, --rot the wind) before the shell snaps shut. */
+@keyframes fx-sig-barkspiral {
+  0% { opacity: 0; transform: translate(var(--dx, 0%), 55%) rotate(0deg) scale(0.6); }
+  22% { opacity: 1; }
+  60% { transform: translate(calc(var(--dx, 0%) * -1), 8%) rotate(var(--rot, 200deg)) scale(1); }
+  100% { opacity: 0; transform: translate(0, -18%) rotate(calc(var(--rot, 200deg) + 120deg)) scale(1.02); }
+}
+.fx-sig-barkspiral { animation: fx-sig-barkspiral calc(0.6s * var(--fx-dur, 1)) var(--ease-out, ease-out) both; }
+
+/* Kintsugi walnut: the burl shell halves clamp shut from the sides with an
+   overshoot, hold sealed, then fade to the persistent WalnutPiece. */
+@keyframes fx-sig-shutl {
+  0% { opacity: 0; transform: translateX(-90%) rotate(-10deg); }
+  30% { opacity: 1; transform: translateX(6%) rotate(0deg); }
+  42% { transform: translateX(-3%); }
+  52% { transform: translateX(0); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(0); }
+}
+.fx-sig-shutl { animation: fx-sig-shutl calc(0.8s * var(--fx-dur, 1)) var(--ease-out, cubic-bezier(0.2, 0.8, 0.2, 1)) both; }
+@keyframes fx-sig-shutr {
+  0% { opacity: 0; transform: translateX(90%) rotate(10deg); }
+  30% { opacity: 1; transform: translateX(-6%) rotate(0deg); }
+  42% { transform: translateX(3%); }
+  52% { transform: translateX(0); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(0); }
+}
+.fx-sig-shutr { animation: fx-sig-shutr calc(0.8s * var(--fx-dur, 1)) var(--ease-out, cubic-bezier(0.2, 0.8, 0.2, 1)) both; }
+
+/* Kintsugi walnut: the molten-gold seams flash — a double pulse along the
+   shell's join as the crack-light sets. */
+@keyframes fx-sig-seamflash {
+  0% { opacity: 0; transform: scale(0.96); }
+  18% { opacity: 1; transform: scale(1); }
+  36% { opacity: 0.35; }
+  54% { opacity: 1; transform: scale(1.02); }
+  100% { opacity: 0; transform: scale(1); }
+}
+.fx-sig-seamflash { animation: fx-sig-seamflash calc(0.7s * var(--fx-dur, 1)) ease-out both; }
+
+/* Tier-8 tells: one great pendulum / bell / scale swing from a top pivot. */
+@keyframes fx-sig-pendulum {
+  0% { opacity: 0; transform: rotate(-26deg); }
+  14% { opacity: 1; }
+  38% { transform: rotate(22deg); }
+  64% { transform: rotate(-14deg); }
+  84% { opacity: 1; transform: rotate(6deg); }
+  100% { opacity: 0; transform: rotate(0deg); }
+}
+.fx-sig-pendulum { animation: fx-sig-pendulum calc(1.1s * var(--fx-dur, 1)) ease-in-out both; transform-origin: 50% 0%; }
+
+/* Tier-8 settles: a mote / snow-glint / ash fleck drifting slowly DOWN
+   (fx-sig-ash rises; this is its falling twin). */
+@keyframes fx-sig-driftmote {
+  0% { opacity: 0; transform: translate(0, -30%) rotate(0deg); }
+  16% { opacity: 0.9; }
+  100% { opacity: 0; transform: translate(var(--dx, 10%), 240%) rotate(var(--rot, 90deg)); }
+}
+.fx-sig-driftmote { animation: fx-sig-driftmote calc(1.2s * var(--fx-dur, 1)) ease-in both; }

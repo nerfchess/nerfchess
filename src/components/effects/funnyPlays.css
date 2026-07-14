@@ -42,13 +42,13 @@
 /* Chunky pop: overshoot in, hold, fade away. */
 @keyframes fnp-pop {
   0% { opacity: 0; transform: scale(0.2); }
-  22% { opacity: 1; transform: scale(1.18); }
-  36% { transform: scale(0.96); }
+  22% { opacity: 1; transform: scale(1.3); }
+  36% { transform: scale(0.9); }
   48% { transform: scale(1); }
-  82% { opacity: 1; transform: scale(1); }
+  84% { opacity: 1; transform: scale(1); }
   100% { opacity: 0; transform: scale(1.04); }
 }
-.fnp-pop { animation: fnp-pop 1.05s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; transform-origin: 50% 50%; }
+.fnp-pop { animation: fnp-pop 1.25s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; transform-origin: 50% 50%; }
 
 /* Small rise-and-fade (hearts, Zs, +45s chips). */
 @keyframes fnp-rise {
@@ -61,35 +61,35 @@
 /* Cartoon bounce-in for windows / props, then a late fade. */
 @keyframes fnp-bounce-in {
   0% { opacity: 0; transform: translateY(-40%) scale(0.5); }
-  30% { opacity: 1; transform: translateY(4%) scale(1.06); }
-  46% { transform: translateY(-2%) scale(0.98); }
+  30% { opacity: 1; transform: translateY(4%) scale(1.18, 0.86); }
+  46% { transform: translateY(-2%) scale(0.94, 1.1); }
   58% { transform: translateY(0) scale(1); }
-  86% { opacity: 1; transform: translateY(0) scale(1); }
+  88% { opacity: 1; transform: translateY(0) scale(1); }
   100% { opacity: 0; transform: translateY(0) scale(1); }
 }
-.fnp-bounce-in { animation: fnp-bounce-in 1.5s cubic-bezier(0.2, 0.9, 0.3, 1.1) both; transform-origin: 50% 60%; }
+.fnp-bounce-in { animation: fnp-bounce-in 1.7s cubic-bezier(0.2, 0.9, 0.3, 1.1) both; transform-origin: 50% 60%; }
 
 /* Heavy prop drop from above with a squash landing (sunglasses, crates). */
 @keyframes fnp-drop {
   0% { opacity: 0; transform: translateY(-160%) scale(1); }
   55% { opacity: 1; transform: translateY(0) scale(1); }
-  66% { transform: translateY(0) scale(1.14, 0.82); }
-  78% { transform: translateY(-4%) scale(0.96, 1.04); }
+  66% { transform: translateY(0) scale(1.32, 0.66); }
+  78% { transform: translateY(-5%) scale(0.9, 1.14); }
   88% { opacity: 1; transform: translateY(0) scale(1); }
   100% { opacity: 0; transform: translateY(0) scale(1); }
 }
-.fnp-drop { animation: fnp-drop 1.15s cubic-bezier(0.4, 0, 0.6, 1) both; transform-origin: 50% 90%; }
+.fnp-drop { animation: fnp-drop 1.3s cubic-bezier(0.4, 0, 0.6, 1) both; transform-origin: 50% 90%; }
 
 /* Rubber stamp: slams down from big to placed, then fades. */
 @keyframes fnp-stamp {
   0% { opacity: 0; transform: scale(2.4) rotate(-14deg); }
-  28% { opacity: 1; transform: scale(0.94) rotate(-8deg); }
-  40% { transform: scale(1.05) rotate(-8deg); }
+  28% { opacity: 1; transform: scale(1.16, 0.84) rotate(-8deg); }
+  40% { transform: scale(0.94, 1.1) rotate(-8deg); }
   50% { transform: scale(1) rotate(-8deg); }
-  85% { opacity: 1; transform: scale(1) rotate(-8deg); }
+  87% { opacity: 1; transform: scale(1) rotate(-8deg); }
   100% { opacity: 0; transform: scale(1) rotate(-8deg); }
 }
-.fnp-stamp { animation: fnp-stamp 1.1s cubic-bezier(0.3, 0.9, 0.4, 1) both; transform-origin: 50% 50%; }
+.fnp-stamp { animation: fnp-stamp 1.3s cubic-bezier(0.3, 0.9, 0.4, 1) both; transform-origin: 50% 50%; }
 
 /* Starburst / sparkle blink. */
 @keyframes fnp-star {
@@ -115,7 +115,7 @@
   84% { opacity: 1; }
   100% { opacity: 0; }
 }
-.fnp-linger { animation: fnp-linger 1.5s ease-out both; }
+.fnp-linger { animation: fnp-linger 1.8s ease-out both; }
 
 /* --- keyboard / window skits (Alt+F4, Ctrl+Z, pop-ups, patches) ------------- */
 
@@ -123,7 +123,7 @@
 @keyframes fnp-press {
   0% { opacity: 0; transform: translateY(-30%); }
   18% { opacity: 1; transform: translateY(0); }
-  38% { transform: translateY(14%) scale(0.96); }
+  38% { transform: translateY(14%) scale(1.14, 0.82); }
   56% { transform: translateY(0) scale(1); }
   84% { opacity: 1; }
   100% { opacity: 0; }
@@ -134,12 +134,12 @@
 @keyframes fnp-slam {
   0% { opacity: 1; transform: scaleY(1); }
   55% { opacity: 1; transform: scaleY(1); }
-  70% { opacity: 1; transform: scaleY(0.06); }
-  78% { opacity: 1; transform: scaleY(0.1); }
-  86% { opacity: 1; transform: scaleY(0.03); }
-  100% { opacity: 0; transform: scaleY(0.02); }
+  70% { opacity: 1; transform: scale(1.16, 0.06); }
+  78% { opacity: 1; transform: scale(0.94, 0.12); }
+  86% { opacity: 1; transform: scale(1.08, 0.03); }
+  100% { opacity: 0; transform: scale(1, 0.02); }
 }
-.fnp-slam { animation: fnp-slam 1.35s cubic-bezier(0.6, 0, 0.8, 1) both; transform-origin: 50% 0%; }
+.fnp-slam { animation: fnp-slam 1.55s cubic-bezier(0.6, 0, 0.8, 1) both; transform-origin: 50% 0%; }
 
 /* Close-X refuses to work: angry little shake. */
 @keyframes fnp-deny {
@@ -167,16 +167,16 @@
   60% { opacity: 0; transform: scale(0.7); }
   100% { opacity: 0; transform: scale(0.7); }
 }
-.fnp-swap-out { animation: fnp-swap-out 1.4s ease-out both; transform-origin: 50% 50%; }
+.fnp-swap-out { animation: fnp-swap-out 1.6s ease-out both; transform-origin: 50% 50%; }
 @keyframes fnp-swap-in {
   0% { opacity: 0; transform: scale(1.6); }
   55% { opacity: 0; transform: scale(1.6); }
-  70% { opacity: 1; transform: scale(0.96); }
-  78% { transform: scale(1.06); }
+  70% { opacity: 1; transform: scale(0.9); }
+  78% { transform: scale(1.14, 0.92); }
   86% { opacity: 1; transform: scale(1); }
   100% { opacity: 0; transform: scale(1); }
 }
-.fnp-swap-in { animation: fnp-swap-in 1.4s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; transform-origin: 50% 50%; }
+.fnp-swap-in { animation: fnp-swap-in 1.6s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; transform-origin: 50% 50%; }
 
 /* --- connection / lag skit --------------------------------------------------- */
 
@@ -258,14 +258,14 @@
 @keyframes fnp-bonk {
   0% { opacity: 0; transform: rotate(-95deg); }
   20% { opacity: 1; transform: rotate(-80deg); }
-  42% { transform: rotate(24deg); }
-  54% { transform: rotate(-18deg); }
+  42% { transform: rotate(31deg); }
+  54% { transform: rotate(-20deg); }
   66% { transform: rotate(12deg); }
   76% { transform: rotate(-4deg); }
   88% { opacity: 1; transform: rotate(2deg); }
   100% { opacity: 0; transform: rotate(0deg); }
 }
-.fnp-bonk { animation: fnp-bonk 1.2s cubic-bezier(0.5, 0, 0.4, 1.4) both; transform-origin: 8% 88%; }
+.fnp-bonk { animation: fnp-bonk 1.4s cubic-bezier(0.5, 0, 0.4, 1.4) both; transform-origin: 8% 88%; }
 
 /* --- meters / gauges ---------------------------------------------------------- */
 
@@ -280,7 +280,7 @@
   90% { opacity: 1; transform: rotate(-70deg); }
   100% { opacity: 0; transform: rotate(-70deg); }
 }
-.fnp-needle { animation: fnp-needle 1.5s cubic-bezier(0.4, 0, 0.4, 1.2) both; transform-origin: 50% 92%; }
+.fnp-needle { animation: fnp-needle 1.7s cubic-bezier(0.4, 0, 0.4, 1.2) both; transform-origin: 50% 92%; }
 
 /* Speaker sound-wave pops away (muted). */
 @keyframes fnp-wave-off {
@@ -307,8 +307,8 @@
 /* Grass blade grows up from the soil. */
 @keyframes fnp-grass {
   0% { opacity: 0; transform: scaleY(0); }
-  30% { opacity: 1; transform: scaleY(1.15); }
-  45% { transform: scaleY(0.94); }
+  30% { opacity: 1; transform: scaleY(1.3); }
+  45% { transform: scaleY(0.88); }
   58% { transform: scaleY(1); }
   88% { opacity: 1; transform: scaleY(1); }
   100% { opacity: 0; transform: scaleY(1); }
@@ -446,8 +446,8 @@
 /* A permit stamp thunks down and holds (square-local hit). */
 @keyframes fnp-permit-stamp {
   0% { opacity: 0; transform: translateY(-40%) scale(1.5) rotate(-8deg); }
-  30% { opacity: 1; transform: translateY(0) scale(1) rotate(-4deg); }
-  40% { transform: translateY(0) scale(0.96) rotate(-4deg); }
+  30% { opacity: 1; transform: translateY(0) scale(1.14, 0.84) rotate(-4deg); }
+  40% { transform: translateY(0) scale(0.95, 1.08) rotate(-4deg); }
   50% { transform: translateY(0) scale(1) rotate(-4deg); }
   84% { opacity: 1; }
   100% { opacity: 0; transform: translateY(0) scale(1) rotate(-4deg); }
@@ -514,13 +514,25 @@
 /* The APPROVED stamp thunks in. */
 @keyframes fnp-permit-thunk {
   0% { opacity: 0; transform: scale(1.6) rotate(-6deg); }
-  40% { opacity: 1; transform: scale(1) rotate(-3deg); }
-  50% { transform: scale(0.95) rotate(-3deg); }
+  40% { opacity: 1; transform: scale(1.14, 0.86) rotate(-3deg); }
+  50% { transform: scale(0.94, 1.08) rotate(-3deg); }
   60% { transform: scale(1) rotate(-3deg); }
   88% { opacity: 1; }
   100% { opacity: 0; }
 }
-.fnp-permit-thunk { animation: fnp-permit-thunk 1.1s cubic-bezier(0.2, 0.8, 0.3, 1) both; transform-origin: 50% 50%; }
+.fnp-permit-thunk { animation: fnp-permit-thunk 1.3s cubic-bezier(0.2, 0.8, 0.3, 1) both; transform-origin: 50% 50%; }
+
+
+/* Settle: a knocked-loose feather rocks side to side as it drifts down. */
+@keyframes fnp-feather {
+  0% { opacity: 0; transform: translate(0, -50%) rotate(-14deg); }
+  14% { opacity: 1; transform: translate(-8%, -20%) rotate(-6deg); }
+  36% { transform: translate(-20%, 16%) rotate(16deg); }
+  58% { transform: translate(12%, 58%) rotate(-16deg); }
+  82% { opacity: 1; transform: translate(-10%, 100%) rotate(12deg); }
+  100% { opacity: 0; transform: translate(2%, 130%) rotate(0deg); }
+}
+.fnp-feather { animation: fnp-feather 1.5s ease-in-out both; transform-origin: 50% 20%; }
 
 /* --- animations off (Settings) -----------------------------------------------
    Everything in this module is a transient one-shot flourish: hide the whole

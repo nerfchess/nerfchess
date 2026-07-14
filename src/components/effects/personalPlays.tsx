@@ -759,14 +759,17 @@ function HyeinPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   }
   return (
     <Wide>
-      <Wash color="rgba(95,174,82,0.14)" delayMs={delayMs} />
-      {/* growing footsteps bound diagonally up the board */}
+      {/* ambient: a spring-green ellipse along her diagonal, smaller than her
+          silhouette (no rectangular washes behind portraits — brief §3) */}
+      <Glow left="39%" top="36%" width="22%" height="22%" color="rgba(127,214,138,0.32)" delayMs={delayMs + 300} />
+      {/* TELL: the first two footsteps land before she's even in frame —
+          someone BIG is coming — then the trail keeps growing under her */}
       {[
-        { left: "29%", top: "63%", s: 0.55, dl: 260 },
-        { left: "37%", top: "55%", s: 0.75, dl: 480 },
-        { left: "45%", top: "46%", s: 1.0, dl: 700 },
-        { left: "53%", top: "37%", s: 1.3, dl: 920 },
-        { left: "61%", top: "28%", s: 1.65, dl: 1140 },
+        { left: "30.5%", top: "62%", s: 0.55, dl: 0 },
+        { left: "37%", top: "55%", s: 0.75, dl: 200 },
+        { left: "45%", top: "46%", s: 1.0, dl: 640 },
+        { left: "53%", top: "37%", s: 1.3, dl: 900 },
+        { left: "61%", top: "29%", s: 1.65, dl: 1160 },
       ].map((f, i) => (
         <Prop key={i} left={f.left} top={f.top} width="8%" height="8%">
           <svg viewBox="0 0 40 40" className="h-full w-full">
@@ -776,23 +779,34 @@ function HyeinPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           </svg>
         </Prop>
       ))}
+      {/* two stride after-images ghost in behind her along the diagonal */}
+      <Prop left="30%" top="42%" width="28%" height="31%">
+        <span className="pnp-ghost block h-full w-full" style={dv(delayMs + 380, { "--pnp-x": "-14%", "--pnp-y": "12%" })}>
+          <Portrait src="/newjeans/hyein.svg" />
+        </span>
+      </Prop>
+      <Prop left="32.5%" top="37%" width="30%" height="33%">
+        <span className="pnp-ghost block h-full w-full" style={dv(delayMs + 470, { "--pnp-x": "-10%", "--pnp-y": "9%" })}>
+          <Portrait src="/newjeans/hyein.svg" />
+        </span>
+      </Prop>
       {/* Hyein herself strides the same diagonal (public portrait asset),
           board-dominating: ~32% of the 14x14 canvas is ~56% of the board */}
-      <Prop left="34%" top="30%" width="32%" height="36%" className="pnp-stride" style={d(delayMs + 100)}>
+      <Prop left="34%" top="30%" width="32%" height="36%" className="pnp-stride" style={d(delayMs + 420)}>
         <Portrait src="/newjeans/hyein.svg" />
       </Prop>
-      {/* spring-green sparkles kicked up by the stride */}
+      {/* SETTLE: spring-green sparkles kicked up by the stride */}
       <Prop left="34%" top="52%" width="6%" height="6%">
         <svg viewBox="0 0 20 20" className="h-full w-full">
-          <g className="pnp-star" style={d(delayMs + 600)}><SparkStar x={10} y={10} s={0.9} fill="#a8e063" /></g>
+          <g className="pnp-star" style={d(delayMs + 900)}><SparkStar x={10} y={10} s={0.9} fill="#a8e063" /></g>
         </svg>
       </Prop>
       <Prop left="56%" top="32%" width="6%" height="6%">
         <svg viewBox="0 0 20 20" className="h-full w-full">
-          <g className="pnp-star" style={d(delayMs + 1150)}><SparkStar x={10} y={10} s={1.1} fill="#7fd68a" /></g>
+          <g className="pnp-star" style={d(delayMs + 1400)}><SparkStar x={10} y={10} s={1.1} fill="#7fd68a" /></g>
         </svg>
       </Prop>
-      <Ring color="rgba(168,224,99,0.85)" delayMs={delayMs + 1300} />
+      <Ring color="rgba(168,224,99,0.85)" delayMs={delayMs + 1500} />
     </Wide>
   );
 }
@@ -826,36 +840,43 @@ function DanielCaesarPlay({ lead, delayMs }: { lead: boolean; delayMs: number })
   return (
     <Wide>
       <Wash color="rgba(28,44,82,0.22)" delayMs={delayMs} />
-      {/* silk soundwaves glide over the whole board */}
+      {/* silk soundwaves glide over the whole board — only AFTER the needle */}
       <Prop left="21%" top="30%" width="58%" height="40%">
         <svg viewBox="0 0 104 80" className="h-full w-full">
-          <g className="pnp-smoothwave" style={d(delayMs + 120)}>
+          <g className="pnp-smoothwave" style={d(delayMs + 520)}>
             <path d="M2 16 q13 -12 26 0 t26 0 t26 0 t26 0" fill="none" stroke="rgba(74,127,214,0.9)" strokeWidth={3.6} strokeLinecap="round" />
           </g>
-          <g className="pnp-smoothwave" style={d(delayMs + 380)}>
+          <g className="pnp-smoothwave" style={d(delayMs + 760)}>
             <path d="M2 40 q13 -10 26 0 t26 0 t26 0 t26 0" fill="none" stroke="rgba(159,196,255,0.85)" strokeWidth={2.8} strokeLinecap="round" />
           </g>
-          <g className="pnp-smoothwave" style={d(delayMs + 640)}>
+          <g className="pnp-smoothwave" style={d(delayMs + 1000)}>
             <path d="M2 64 q13 -12 26 0 t26 0 t26 0 t26 0" fill="none" stroke="rgba(103,155,235,0.75)" strokeWidth={3.2} strokeLinecap="round" />
           </g>
         </svg>
       </Prop>
-      {/* the record spins, best part on repeat */}
+      {/* TELL: the record spins up and the tonearm drops onto the groove */}
       <Prop left="28%" top="32%" width="16%" height="16%">
         <svg viewBox="0 0 40 40" className="h-full w-full">
-          <g className="pnp-spin" style={d(delayMs + 200)}>
+          <g className="pnp-spin" style={d(delayMs)}>
             <circle cx={20} cy={20} r={15} fill="#12182a" stroke="#4a7fd6" strokeWidth={1.8} />
             <circle cx={20} cy={20} r={9.5} fill="none" stroke="#2c3e6b" strokeWidth={1} />
             <circle cx={20} cy={20} r={4.6} fill="#4a7fd6" />
             <circle cx={20} cy={12.4} r={1.3} fill="#9fc4ff" />
           </g>
+          <g className="pnp-needledrop" style={d(delayMs + 180)}>
+            <path d="M36.5 4.5 L27 15.5" stroke="#9fc4ff" strokeWidth={1.8} strokeLinecap="round" />
+            <circle cx={36.5} cy={4.5} r={1.9} fill="#4a7fd6" />
+            <path d="M27 15.5 l-1.6 2.4" stroke="#9fc4ff" strokeWidth={2.6} strokeLinecap="round" />
+          </g>
         </svg>
       </Prop>
+      {/* SETTLE: the low blue afterglow of a room gone quiet */}
+      <Glow left="41%" top="40%" width="18%" height="16%" color="rgba(74,127,214,0.35)" delayMs={delayMs + 1250} />
       {/* mute badges drift down: nobody swings for 3 turns */}
       {[
-        { left: "48%", top: "36%", r: "-14deg", s: 1, dl: 500 },
-        { left: "60%", top: "40%", r: "10deg", s: 0.8, dl: 720 },
-        { left: "54%", top: "33%", r: "-8deg", s: 0.65, dl: 940 },
+        { left: "48%", top: "36%", r: "-14deg", s: 1, dl: 780 },
+        { left: "60%", top: "40%", r: "10deg", s: 0.8, dl: 980 },
+        { left: "54%", top: "33%", r: "-8deg", s: 0.65, dl: 1180 },
       ].map((m, i) => (
         <Prop key={i} left={m.left} top={m.top} width="8%" height="8%">
           <svg viewBox="0 0 40 40" className="h-full w-full">
@@ -865,7 +886,7 @@ function DanielCaesarPlay({ lead, delayMs }: { lead: boolean; delayMs: number })
           </svg>
         </Prop>
       ))}
-      <Ring color="rgba(159,196,255,0.8)" delayMs={delayMs + 1150} />
+      <Ring color="rgba(159,196,255,0.8)" delayMs={delayMs + 1350} />
     </Wide>
   );
 }
@@ -902,6 +923,12 @@ function MiddlePartPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
       <Prop left="49.4%" top="24%" width="1.2%" height="52%">
         <span className="pnp-partline absolute inset-0 block rounded-full" style={{ background: "linear-gradient(180deg, #fff2c9, #ffd76a 30%, #e8b04b)", ...d(delayMs + 150) }} />
       </Prop>
+      {/* TELL: the comb glints at the crown before it draws */}
+      <Prop left="50.5%" top="21%" width="5%" height="5%">
+        <svg viewBox="0 0 20 20" className="h-full w-full">
+          <g className="pnp-star" style={d(delayMs + 60)}><SparkStar x={10} y={10} s={1} fill="#fff2c9" /></g>
+        </svg>
+      </Prop>
       {/* the comb travels the seam, drawing it */}
       <Prop left="46.5%" top="22%" width="7%" height="16%" className="pnp-comb" style={d(delayMs + 100)}>
         <svg viewBox="0 0 30 70" className="h-full w-full">
@@ -930,6 +957,19 @@ function MiddlePartPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
         <Prop key={i} left={p.l} top={p.t} width="5%" height="5%">
           <svg viewBox="0 0 20 20" className="h-full w-full">
             <g className="pnp-star" style={d(delayMs + p.dl)}><SparkStar x={10} y={10} s={0.9} /></g>
+          </svg>
+        </Prop>
+      ))}
+      {/* SETTLE: loose gold dust drifts down off the fresh part */}
+      {[
+        { l: "48%", t: "34%", dl: 1200 },
+        { l: "51.4%", t: "44%", dl: 1320 },
+      ].map((s, i) => (
+        <Prop key={"gd" + i} left={s.l} top={s.t} width="2.4%" height="4%">
+          <svg viewBox="0 0 10 14" className="h-full w-full">
+            <g className="pnp-speck" style={d(delayMs + s.dl)}>
+              <circle cx={5} cy={5} r={1.9} fill="rgba(255,215,106,0.9)" />
+            </g>
           </svg>
         </Prop>
       ))}
@@ -970,13 +1010,13 @@ function ForearmVeinsPlay({ lead, delayMs }: { lead: boolean; delayMs: number })
   return (
     <Wide>
       <Wash color="rgba(214,35,79,0.13)" delayMs={delayMs} />
-      {/* veins of light surge straight up five files */}
+      {/* veins of light surge straight up five files — AFTER the clench tell */}
       {[
-        { left: "27%", top: "30%", dl: 120, c: "#ff8a7a" },
-        { left: "38%", top: "28%", dl: 260, c: "#d6234f" },
-        { left: "49%", top: "26%", dl: 400, c: "#ff8a7a" },
-        { left: "60%", top: "28%", dl: 540, c: "#d6234f" },
-        { left: "71%", top: "30%", dl: 680, c: "#ff8a7a" },
+        { left: "27%", top: "30%", dl: 480, c: "#ff8a7a" },
+        { left: "38%", top: "28%", dl: 620, c: "#d6234f" },
+        { left: "49%", top: "26%", dl: 760, c: "#ff8a7a" },
+        { left: "60%", top: "28%", dl: 900, c: "#d6234f" },
+        { left: "71%", top: "30%", dl: 1040, c: "#ff8a7a" },
       ].map((v, i) => (
         <Prop key={i} left={v.left} top={v.top} width="6%" height="40%">
           <svg viewBox="0 0 20 70" className="h-full w-full">
@@ -986,10 +1026,11 @@ function ForearmVeinsPlay({ lead, delayMs }: { lead: boolean; delayMs: number })
           </svg>
         </Prop>
       ))}
-      {/* the grip-crush: a fist clenches dead center and pulses */}
+      {/* TELL then STRIKE: the fist arrives first, gives two testing squeezes
+          (the pnp-grip keyframe carries both pulses), then the crush lands */}
       <Prop left="39%" top="37%" width="22%" height="22%">
         <svg viewBox="0 0 60 60" className="h-full w-full">
-          <g className="pnp-grip" style={d(delayMs + 500)}>
+          <g className="pnp-grip" style={d(delayMs + 60)}>
             {/* forearm */}
             <path d="M26 56 q-3 -12 1 -20 l14 3 q2 9 -1 17 Z" fill="#e8b08f" stroke="#8f5a3a" strokeWidth={1.8} strokeLinejoin="round" />
             {/* fist: knuckle block + thumb wrap */}
@@ -999,10 +1040,12 @@ function ForearmVeinsPlay({ lead, delayMs }: { lead: boolean; delayMs: number })
             {/* the vein on the forearm itself */}
             <path d="M30 52 q-1.6 -6 0.8 -12" fill="none" stroke="#d6234f" strokeWidth={1.8} strokeLinecap="round" />
           </g>
-          <g className="pnp-star" style={d(delayMs + 1150)}><SparkStar x={48} y={14} s={1} fill="#ff8a7a" /></g>
+          <g className="pnp-star" style={d(delayMs + 1400)}><SparkStar x={48} y={14} s={1} fill="#ff8a7a" /></g>
         </svg>
       </Prop>
-      <Ring color="rgba(214,35,79,0.85)" delayMs={delayMs + 1200} />
+      {/* SETTLE: the pump's crimson afterglow lingers over the crush */}
+      <Glow left="42%" top="41%" width="16%" height="14%" color="rgba(214,35,79,0.35)" delayMs={delayMs + 1300} />
+      <Ring color="rgba(214,35,79,0.85)" delayMs={delayMs + 1450} />
     </Wide>
   );
 }
@@ -1035,20 +1078,40 @@ function MinjiPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   }
   return (
     <Wide>
-      <Wash color="rgba(90,127,214,0.17)" delayMs={delayMs} />
-      {/* the leader arrives, board-dominating (~32% canvas = ~56% board) */}
-      <Prop left="34%" top="29%" width="32%" height="34%" className="pnp-hero" style={d(delayMs)}>
+      {/* ambient: a cool blue ellipse behind her, smaller than her silhouette
+          (no rectangular washes behind portraits — brief §3) */}
+      <Glow left="39%" top="34%" width="22%" height="24%" color="rgba(90,127,214,0.35)" delayMs={delayMs + 160} />
+      {/* the ground shadow she rises out of */}
+      <GroundShadow left="41%" top="60.8%" width="18%" delayMs={delayMs} />
+      {/* the leader RISES into frame, board-dominating (~32% canvas = ~56% board) */}
+      <Prop left="34%" top="29%" width="32%" height="34%" className="pnp-heroup" style={d(delayMs + 80)}>
         <Portrait src="/newjeans/minji.svg" />
       </Prop>
-      {/* shield panes snap in around her, a guard formation */}
+      {/* signature beat: three pairs of shield panes CLAMP SHUT in sequence
+          (top guard, mid guard, low guard), each meeting on a seam flash */}
       {[
-        { left: "26%", top: "34%", dl: 420 },
-        { left: "66%", top: "34%", dl: 520 },
-        { left: "31%", top: "56%", dl: 620 },
-        { left: "61%", top: "56%", dl: 700 },
+        { left: "31%", top: "33%", x: "-170%", dl: 560 },
+        { left: "61%", top: "33%", x: "170%", dl: 560 },
+        { left: "29%", top: "44.5%", x: "-190%", dl: 760 },
+        { left: "63%", top: "44.5%", x: "190%", dl: 760 },
+        { left: "31%", top: "56%", x: "-170%", dl: 960 },
+        { left: "61%", top: "56%", x: "170%", dl: 960 },
       ].map((p, i) => (
-        <Prop key={i} left={p.left} top={p.top} width="8%" height="9%" className="pnp-pane" style={d(delayMs + p.dl)}>
+        <Prop key={i} left={p.left} top={p.top} width="8%" height="9%" className="pnp-clamp" style={dv(delayMs + p.dl, { "--pnp-x": p.x })}>
           <HexPane color={i % 2 ? "#9fc4ff" : "#5a7fd6"} />
+        </Prop>
+      ))}
+      {/* the seam flash where each pair slams shut */}
+      {[
+        { top: "33.5%", dl: 940 },
+        { top: "45%", dl: 1140 },
+        { top: "56.5%", dl: 1340 },
+      ].map((s, i) => (
+        <Prop key={"seam" + i} left="49.6%" top={s.top} width="0.8%" height="8%">
+          <span
+            className="pnp-seamflash absolute inset-0 block rounded-full"
+            style={{ background: "linear-gradient(180deg, transparent, rgba(233,242,255,0.98), transparent)", ...d(delayMs + s.dl) }}
+          />
         </Prop>
       ))}
       {/* the picket of light along the home ranks */}
@@ -1057,8 +1120,8 @@ function MinjiPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           <span className="pnp-partline absolute inset-0 block rounded-full" style={{ background: "linear-gradient(180deg, rgba(233,242,255,0.95), rgba(90,127,214,0.6))", ...d(delayMs + 760 + i * 90) }} />
         </Prop>
       ))}
-      <Ring color="rgba(159,196,255,0.9)" delayMs={delayMs + 1150} />
-      <Ring color="rgba(90,127,214,0.75)" delayMs={delayMs + 1300} />
+      <Ring color="rgba(159,196,255,0.9)" delayMs={delayMs + 1450} />
+      <Ring color="rgba(90,127,214,0.75)" delayMs={delayMs + 1600} />
     </Wide>
   );
 }
@@ -1090,38 +1153,47 @@ function HanniPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   }
   return (
     <Wide>
-      <Wash color="rgba(168,204,127,0.18)" delayMs={delayMs} />
-      {/* the giant crystal bloom turns slowly behind her */}
-      <Prop left="30%" top="26%" width="40%" height="40%" className="pnp-bloom" style={d(delayMs + 120)}>
+      {/* ambient: a pale green ellipse behind her, smaller than her silhouette
+          (no rectangular washes behind portraits — brief §3) */}
+      <Glow left="39.5%" top="35%" width="21%" height="23%" color="rgba(191,230,168,0.35)" delayMs={delayMs + 160} />
+      {/* the ground shadow she rises out of */}
+      <GroundShadow left="41.5%" top="60.4%" width="17%" delayMs={delayMs} />
+      {/* signature beat: the crystal bloom GROWS arm by arm behind her, each
+          spar shooting out from the core in sequence */}
+      <Prop left="30%" top="26%" width="40%" height="40%">
         <svg viewBox="0 0 100 100" className="h-full w-full">
-          {[0, 60, 120, 180, 240, 300].map((a) => (
+          <g className="pnp-pop" style={d(delayMs + 360)}>
+            <circle cx={50} cy={50} r={6} fill="rgba(232,247,216,0.9)" />
+          </g>
+          {[0, 60, 120, 180, 240, 300].map((a, i) => (
             <g key={a} transform={`translate(50 50) rotate(${a})`}>
-              <FrostArm color={a % 120 ? "rgba(191,230,168,0.9)" : "rgba(232,247,216,0.95)"} />
+              <g className="pnp-frostgrow" style={d(delayMs + 460 + i * 110)}>
+                <FrostArm color={a % 120 ? "rgba(191,230,168,0.9)" : "rgba(232,247,216,0.95)"} />
+              </g>
             </g>
           ))}
-          <circle cx={50} cy={50} r={6} fill="rgba(232,247,216,0.9)" />
         </svg>
       </Prop>
-      {/* Hanni front and center, board-dominating */}
-      <Prop left="34.5%" top="30%" width="31%" height="33%" className="pnp-hero" style={d(delayMs)}>
+      {/* Hanni RISES front and center, board-dominating */}
+      <Prop left="34.5%" top="30%" width="31%" height="33%" className="pnp-heroup" style={d(delayMs + 60)}>
         <Portrait src="/newjeans/hanni.svg" />
       </Prop>
-      {/* her butterflies flutter up and away */}
+      {/* her butterflies loop lazy figure-8s as they climb away */}
       {[
-        { l: "31%", t: "42%", dl: 700, f: "#f2e27a" },
-        { l: "64%", t: "36%", dl: 900, f: "#bfe6a8" },
-        { l: "58%", t: "56%", dl: 1100, f: "#f2e27a" },
+        { l: "31%", t: "42%", dl: 760, f: "#f2e27a" },
+        { l: "64%", t: "36%", dl: 960, f: "#bfe6a8" },
+        { l: "58%", t: "56%", dl: 1160, f: "#f2e27a" },
       ].map((b, i) => (
         <Prop key={i} left={b.l} top={b.t} width="5%" height="5%">
           <svg viewBox="0 0 20 20" className="h-full w-full">
-            <g className="pnp-rise" style={d(delayMs + b.dl)}>
+            <g className="pnp-fig8" style={d(delayMs + b.dl)}>
               <path d="M10 10 q-6 -7 -8 -1 q-1 5 8 3 q9 2 8 -3 q-2 -6 -8 1 Z" fill={b.f} stroke="#7a8a4a" strokeWidth={0.8} strokeLinejoin="round" />
               <path d="M10 8.5 v4" stroke="#5a4632" strokeWidth={1.2} strokeLinecap="round" />
             </g>
           </svg>
         </Prop>
       ))}
-      <Ring color="rgba(191,230,168,0.9)" delayMs={delayMs + 1250} />
+      <Ring color="rgba(191,230,168,0.9)" delayMs={delayMs + 1400} />
     </Wide>
   );
 }
@@ -1147,15 +1219,27 @@ function DaniellePlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   }
   return (
     <Wide>
-      <Wash color="rgba(246,207,157,0.2)" delayMs={delayMs} />
-      {/* dawn rays fan from behind her across the whole board */}
-      {[-52, -26, 0, 26, 52].map((a, i) => (
-        <Prop key={i} left="48.75%" top="18%" width="2.5%" height="42%" style={{ transform: `rotate(${a}deg)`, transformOrigin: "50% 90%" }}>
-          <span className="pnp-ray absolute inset-0 block rounded-full" style={{ background: "linear-gradient(0deg, transparent, rgba(255,215,106,0.55), rgba(255,242,201,0.8))", ...d(delayMs + 150 + i * 90) }} />
+      {/* ambient: a warm dawn ellipse behind her, smaller than her silhouette
+          (no rectangular washes behind portraits — brief §3) */}
+      <Glow left="39%" top="34%" width="22%" height="24%" color="rgba(255,215,106,0.35)" delayMs={delayMs + 160} />
+      {/* the ground shadow she rises out of */}
+      <GroundShadow left="41%" top="60.8%" width="18%" delayMs={delayMs} />
+      {/* signature beat: ONE lighthouse beam sweeps the dawn across the board,
+          pivoting from behind her crown, left horizon to right */}
+      <Prop left="48.4%" top="17%" width="3.2%" height="38%" className="pnp-lighthouse" style={d(delayMs + 260)}>
+        <span
+          className="absolute inset-0 block rounded-full"
+          style={{ background: "linear-gradient(0deg, rgba(255,215,106,0.75), rgba(255,242,201,0.85) 55%, transparent)" }}
+        />
+      </Prop>
+      {/* the dawn the beam leaves behind: two soft residual rays */}
+      {[-22, 22].map((a, i) => (
+        <Prop key={"ray" + i} left="48.75%" top="20%" width="2.5%" height="36%" style={{ transform: `rotate(${a}deg)`, transformOrigin: "50% 95%" }}>
+          <span className="pnp-ray absolute inset-0 block rounded-full" style={{ background: "linear-gradient(0deg, transparent, rgba(255,215,106,0.45), rgba(255,242,201,0.65))", ...d(delayMs + 1050 + i * 120) }} />
         </Prop>
       ))}
-      {/* Danielle beams at board scale */}
-      <Prop left="34%" top="30%" width="32%" height="34%" className="pnp-hero" style={d(delayMs + 80)}>
+      {/* Danielle RISES, beaming at board scale */}
+      <Prop left="34%" top="30%" width="32%" height="34%" className="pnp-heroup" style={d(delayMs + 80)}>
         <Portrait src="/newjeans/danielle.svg" />
       </Prop>
       {/* her reinforcements parachute down the files */}
@@ -1205,26 +1289,40 @@ function HaerinPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   }
   return (
     <Wide>
-      <Wash color="rgba(18,20,25,0.3)" delayMs={delayMs} />
-      {/* three colossal claw streaks rake corner to corner */}
+      {/* ambient: a moody elliptical night pool under the hunt — radial, never
+          a rectangular wash (brief §3) */}
+      <Glow left="34%" top="34%" width="32%" height="30%" color="rgba(18,20,25,0.45)" delayMs={delayMs} />
+      {/* signature beat: she CROUCHES first (butt-wiggle coil, in the pounce
+          keyframe), and the claw streaks rip open in her wake as she passes */}
       {[
-        { top: "30%", dl: 260 },
-        { top: "42%", dl: 380 },
-        { top: "54%", dl: 500 },
+        { top: "54%", dl: 820 },
+        { top: "42%", dl: 940 },
+        { top: "30%", dl: 1060 },
       ].map((s, i) => (
         <Prop key={i} left="22%" top={s.top} width="56%" height="2.4%" style={{ transform: "rotate(-16deg)", transformOrigin: "50% 50%" }}>
           <span className="pnp-slashsweep absolute inset-0 block rounded-full" style={{ background: "linear-gradient(90deg, transparent, rgba(236,239,241,0.95), transparent)", ...d(delayMs + s.dl) }} />
         </Prop>
       ))}
-      {/* Haerin pounces clean across the board, huge */}
-      <Prop left="35%" top="30%" width="30%" height="32%" className="pnp-pounce" style={d(delayMs)}>
+      {/* two pounce after-images ghost along the arc behind her */}
+      <Prop left="31%" top="37%" width="28%" height="30%">
+        <span className="pnp-ghost block h-full w-full" style={dv(delayMs + 720, { "--pnp-x": "-13%", "--pnp-y": "10%" })}>
+          <Portrait src="/newjeans/haerin.svg" />
+        </span>
+      </Prop>
+      <Prop left="35%" top="32%" width="29%" height="31%">
+        <span className="pnp-ghost block h-full w-full" style={dv(delayMs + 810, { "--pnp-x": "-9%", "--pnp-y": "7%" })}>
+          <Portrait src="/newjeans/haerin.svg" />
+        </span>
+      </Prop>
+      {/* Haerin steps in low, coils, then pounces clean across the board */}
+      <Prop left="35%" top="30%" width="30%" height="32%" className="pnp-pounce" style={d(delayMs + 60)}>
         <Portrait src="/newjeans/haerin.svg" />
       </Prop>
       {/* paw prints land where she passed */}
       {[
-        { l: "33%", t: "58%", s: 0.9, dl: 640 },
-        { l: "47%", t: "48%", s: 1.1, dl: 800 },
-        { l: "61%", t: "38%", s: 1.3, dl: 960 },
+        { l: "33%", t: "58%", s: 0.9, dl: 900 },
+        { l: "47%", t: "48%", s: 1.1, dl: 1060 },
+        { l: "61%", t: "38%", s: 1.3, dl: 1220 },
       ].map((p, i) => (
         <Prop key={i} left={p.l} top={p.t} width="6%" height="6%">
           <svg viewBox="0 0 40 40" className="h-full w-full">
@@ -1240,7 +1338,13 @@ function HaerinPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           </svg>
         </Prop>
       ))}
-      <Ring color="rgba(236,239,241,0.85)" delayMs={delayMs + 1150} />
+      {/* SETTLE: a whisker glint where she vanished */}
+      <Prop left="63%" top="34%" width="5%" height="5%">
+        <svg viewBox="0 0 20 20" className="h-full w-full">
+          <g className="pnp-star" style={d(delayMs + 1500)}><SparkStar x={10} y={10} s={1} fill="#eceff1" /></g>
+        </svg>
+      </Prop>
+      <Ring color="rgba(236,239,241,0.85)" delayMs={delayMs + 1450} />
     </Wide>
   );
 }
@@ -1267,17 +1371,27 @@ function ILoveCamPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   }
   return (
     <Wide>
-      <Wash color="rgba(255,143,177,0.16)" delayMs={delayMs} />
+      {/* ambient: a pink ellipse behind her, smaller than her silhouette
+          (portraits are free-standing characters — brief §3) */}
+      <Glow left="40%" top="34%" width="20%" height="26%" color="rgba(255,143,177,0.35)" delayMs={delayMs + 160} />
+      {/* the ground shadow she rises out of */}
+      <GroundShadow left="42%" top="65%" width="16%" delayMs={delayMs} />
+      {/* TELL: the cross point winks before the blades fire */}
+      <Prop left="47.5%" top="45%" width="5%" height="5%">
+        <svg viewBox="0 0 20 20" className="h-full w-full">
+          <g className="pnp-star" style={d(delayMs + 80)}><SparkStar x={10} y={10} s={0.9} fill="#ffd6e7" /></g>
+        </svg>
+      </Prop>
       {/* the FILE sweep: a vertical blade of light crosses every rank */}
       <Prop left="47%" top="21.5%" width="6%" height="57%">
-        <span className="pnp-sweepx absolute inset-0 block rounded-full" style={{ background: "linear-gradient(90deg, transparent, rgba(255,214,231,0.95), rgba(255,143,177,0.7), transparent)", ...d(delayMs + 250) }} />
+        <span className="pnp-sweepx absolute inset-0 block rounded-full" style={{ background: "linear-gradient(90deg, transparent, rgba(255,214,231,0.95), rgba(255,143,177,0.7), transparent)", ...d(delayMs + 350) }} />
       </Prop>
       {/* the RANK sweep: a horizontal blade crosses every file */}
       <Prop left="21.5%" top="47%" width="57%" height="6%">
-        <span className="pnp-sweepy absolute inset-0 block rounded-full" style={{ background: "linear-gradient(180deg, transparent, rgba(255,242,201,0.95), rgba(255,199,106,0.7), transparent)", ...d(delayMs + 550) }} />
+        <span className="pnp-sweepy absolute inset-0 block rounded-full" style={{ background: "linear-gradient(180deg, transparent, rgba(255,242,201,0.95), rgba(255,199,106,0.7), transparent)", ...d(delayMs + 650) }} />
       </Prop>
-      {/* Cami herself — the anime companion, board-dominating */}
-      <Prop left="35.5%" top="26%" width="29%" height="42%" className="pnp-hero" style={d(delayMs)}>
+      {/* Cami herself RISES — the anime companion, board-dominating */}
+      <Prop left="35.5%" top="26%" width="29%" height="42%" className="pnp-heroup" style={d(delayMs + 60)}>
         <Portrait src="/companions/cami.svg" />
       </Prop>
       {/* charm hearts burst off the cross point */}

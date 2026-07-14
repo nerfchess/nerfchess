@@ -982,6 +982,9 @@ function PhantomParade({ palette, glyph, lead, delayMs }: TemplateProps) {
   return (
     <Stage>
       <Wash color={tint(p0, 0.24)} delayMs={delayMs} />
+      {/* tell: a graveside chill gathers where the parade will pass */}
+      <TellGlow delayMs={delayMs} color={tint(p1, 0.26)} left={30} top={32} w={22} h={22} />
+      <TellRays delayMs={delayMs + 20} color={tint(p1, 0.6)} />
       {/* the procession, gliding through */}
       {GHOSTS.map((g, i) => (
         <span key={i} className="grp-sweep absolute block" style={{ left: `${g.l}%`, top: `${g.t}%`, width: `${g.w}%`, height: `${g.w * 2.4}%`, animationDelay: `${delayMs + g.d}ms` }}>
@@ -1024,6 +1027,9 @@ function PhantomParade({ palette, glyph, lead, delayMs }: TemplateProps) {
       <Sparks delayMs={delayMs + 920} fill={p1} stroke={p2} cy={45} />
       <Boom delayMs={delayMs + 980} color={tint(p1, 0.8)} />
       <Glint delayMs={delayMs + 1290} color={p1} left={57} top={30} />
+      {/* settle: lantern-light wisps rise off the parade's wake */}
+      <Afterglow delayMs={delayMs + 1120} color={tint(p1, 0.24)} left={36} top={32} w={28} h={22} />
+      <Settle delayMs={delayMs + 1160} dir="rise" sizePct={2} render={(i) => <Mote color={tint(i % 2 ? p1 : p0, 0.7)} />} />
     </Stage>
   );
 }
@@ -1032,12 +1038,15 @@ function PhantomParade({ palette, glyph, lead, delayMs }: TemplateProps) {
    Template 8: ClockSpire — a clock tower rises mid-board, its great pendulum
    swinging twice beneath the face; a time-ring pulse rolls out.
    ========================================================================== */
-function ClockSpire({ palette, glyph, lead, delayMs }: TemplateProps) {
+function ClockSpire({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
   const [p0, p1, p2] = palette;
   if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
     <Stage>
       <Wash color={tint(p0, 0.24)} delayMs={delayMs} />
+      {/* tell: the tower's shadow stretches over the square before it rises */}
+      <TellShadow delayMs={delayMs} color={tint(p2, 0.55)} left={40} top={64} w={20} h={6} />
+      <TellGlow delayMs={delayMs + 40} color={tint(p1, 0.3)} left={42} top={24} w={16} h={16} />
       {/* the spire, rising */}
       <span className="grp-rise absolute block" style={{ left: "41%", top: "18%", width: "18%", height: "50%", animationDelay: `${delayMs + 120}ms` }}>
         <svg viewBox="0 0 18 50" className="block h-full w-full" aria-hidden="true">
@@ -1050,21 +1059,69 @@ function ClockSpire({ palette, glyph, lead, delayMs }: TemplateProps) {
           <path d="M9 12.4 V13.8 M9 20.2 V21.6 M4.4 17 H5.8 M12.2 17 H13.6" stroke={tint(p1, 0.9)} strokeWidth="0.7" strokeLinecap="round" />
           <path d="M9 17 L9 13.6 M9 17 L11.6 18.4" stroke={p2} strokeWidth="1" strokeLinecap="round" />
         </svg>
-        {/* the great pendulum, swinging under the works */}
-        <span className="grp-pendulum absolute block" style={{ left: "42%", top: "50%", width: "16%", height: "44%", animationDelay: `${delayMs + 480}ms` }}>
+        {/* the great pendulum — for Time Stop it seizes DEAD mid-swing and
+            hangs there, held for the length of a stolen breath */}
+        <span
+          className={`${flourish === "timestop" ? "grp-halt" : "grp-pendulum"} absolute block`}
+          style={{ left: "42%", top: "50%", width: "16%", height: "44%", transformOrigin: "50% 0%", animationDelay: `${delayMs + 480}ms` }}
+        >
           <svg viewBox="0 0 6 20" className="block h-full w-full" aria-hidden="true">
             <path d="M3 0.4 V13" stroke={tint(p2, 0.9)} strokeWidth="0.9" strokeLinecap="round" />
             <circle cx="3" cy="16" r="2.6" fill={tint(p1, 0.9)} stroke={p2} strokeWidth="0.6" />
           </svg>
         </span>
+        {/* bespoke: Time Rewind — a great hand spins BACKWARDS over the face */}
+        {flourish === "rewind" && (
+          <span className="grp-spinback absolute block" style={{ left: "38%", top: "23%", width: "24%", height: "8.6%", animationDelay: `${delayMs + 560}ms` }}>
+            <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+              <path d="M5 5 L5 1.4" stroke={tint(p1, 0.95)} strokeWidth="1" strokeLinecap="round" />
+              <circle cx="5" cy="5" r="0.8" fill={p1} />
+            </svg>
+          </span>
+        )}
         {/* the card's glyph, mounted over the door */}
         <span className="grp-facein absolute block" style={{ left: "28%", top: "56%", width: "44%", height: "16%", animationDelay: `${delayMs + 560}ms` }}>{glyph}</span>
       </span>
+      {/* bespoke: Time Stop — the world hushes deep blue while the pendulum
+          hangs; the single resuming TICK glints only after the held beat */}
+      {flourish === "timestop" && (
+        <>
+          <Wash color={tint(p2, 0.4)} delayMs={delayMs + 780} />
+          <span
+            className="grp-hold absolute block rounded-full"
+            style={{ left: "44.4%", top: "24.4%", width: "11.2%", height: "5.6%", border: `2px solid ${tint(p1, 0.9)}`, animationDelay: `${delayMs + 700}ms` }}
+          />
+          <Glint delayMs={delayMs + 1500} color={p1} left={48} top={25} sizePct={5} />
+        </>
+      )}
+      {/* bespoke: Time Rewind — the hours stream back the way they came */}
+      {flourish === "rewind" && (
+        <>
+          {[36, 52].map((t, i) => (
+            <span
+              key={i}
+              className="grp-beam absolute block"
+              style={{
+                left: "24%",
+                top: `${t}%`,
+                width: "52%",
+                height: "3.4%",
+                background: `linear-gradient(270deg, ${tint(p1, 0.8)}, transparent)`,
+                transformOrigin: "100% 50%",
+                animationDelay: `${delayMs + 700 + i * 110}ms`,
+              }}
+            />
+          ))}
+        </>
+      )}
       {/* the toll: flare + sparks + the single time-ring */}
       <Flash delayMs={delayMs + 900} color={tint(p1, 0.6)} left={43} top={32} w={14} h={11} />
       <Sparks delayMs={delayMs + 940} fill={p1} stroke={p2} cy={38} />
       <Boom delayMs={delayMs + 1000} color={tint(p1, 0.85)} />
       <Glint delayMs={delayMs + 1320} color={p1} left={49} top={18} />
+      {/* settle: loosed clock-dust — for Rewind it climbs back UP the hour */}
+      <Afterglow delayMs={delayMs + 1140} color={tint(p1, 0.24)} left={40} top={26} w={20} h={20} />
+      <Settle delayMs={delayMs + 1180} dir={flourish === "rewind" ? "rise" : "fall"} sizePct={2} render={(i) => <Mote color={tint(i % 2 ? p1 : p2, 0.7)} />} />
     </Stage>
   );
 }
@@ -1073,12 +1130,15 @@ function ClockSpire({ palette, glyph, lead, delayMs }: TemplateProps) {
    Template 9: CardRite — a colossal card is dealt down over the board and its
    face resolves into the play; sparks scatter off the deal.
    ========================================================================== */
-function CardRite({ palette, glyph, lead, delayMs }: TemplateProps) {
+function CardRite({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
   const [p0, p1, p2] = palette;
   if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
     <Stage>
       <Wash color={tint(p0, 0.24)} delayMs={delayMs} />
+      {/* tell: the card's shadow grows on the boards as it falls */}
+      <TellShadow delayMs={delayMs} color={tint(p2, 0.55)} left={40} top={44} w={20} h={22} />
+      <TellGlow delayMs={delayMs + 40} color={tint(p1, 0.28)} left={42} top={30} w={16} h={16} />
       {/* the great card, dealt down */}
       <span className="grp-drop absolute block" style={{ left: "39%", top: "24%", width: "22%", height: "46%", animationDelay: `${delayMs + 120}ms` }}>
         <svg viewBox="0 0 22 46" className="block h-full w-full" aria-hidden="true">
@@ -1087,14 +1147,86 @@ function CardRite({ palette, glyph, lead, delayMs }: TemplateProps) {
           {/* corner pips */}
           <path d="M5.4 6.2 L6.4 8.6 L5.4 11 L4.4 8.6 Z M16.6 34.6 L17.6 37 L16.6 39.4 L15.6 37 Z" fill={tint(p1, 0.9)} />
         </svg>
-        {/* the face, resolving */}
-        <span className="grp-facein absolute block" style={{ left: "26%", top: "32%", width: "48%", height: "24%", animationDelay: `${delayMs + 560}ms` }}>{glyph}</span>
+        {/* the face, resolving (Death keeps its face hidden — see below) */}
+        {flourish !== "death" && (
+          <span className="grp-facein absolute block" style={{ left: "26%", top: "32%", width: "48%", height: "24%", animationDelay: `${delayMs + 560}ms` }}>{glyph}</span>
+        )}
       </span>
+      {/* bespoke: The Death Arcana — the thirteenth card lands FACE DOWN,
+          holds the beat, then flips up to name its mark (staged outside the
+          dealt card so the reveal outlives the deal itself) */}
+      {flourish === "death" && (
+        <>
+          <span className="grp-hold absolute block" style={{ left: "43%", top: "29.5%", width: "14%", height: "35%", animationDelay: `${delayMs + 480}ms` }}>
+            <svg viewBox="0 0 14 34" className="block h-full w-full" aria-hidden="true">
+              <rect x="0.6" y="0.6" width="12.8" height="32.8" rx="1.2" fill={tint(p2, 0.95)} stroke={tint(p1, 0.7)} strokeWidth="0.5" />
+              <path d="M3 8 L11 26 M11 8 L3 26" stroke={tint(p1, 0.5)} strokeWidth="0.5" />
+              <path d="M5 15.4 V18.6 M7 15.4 V18.6 M9 15.4 V18.6" stroke={tint(p1, 0.9)} strokeWidth="0.6" strokeLinecap="round" />
+            </svg>
+          </span>
+          <span className="grp-flip absolute block" style={{ left: "44.5%", top: "37%", width: "11.5%", height: "14%", animationDelay: `${delayMs + 1160}ms` }}>{glyph}</span>
+        </>
+      )}
+      {/* bespoke: The Tower — a bolt splits the card's own tower, which breaks
+          at the crown and topples off the face */}
+      {flourish === "tower" && (
+        <span className="grp-topple absolute block" style={{ left: "45.5%", top: "33%", width: "9%", height: "16%", transformOrigin: "82% 96%", animationDelay: `${delayMs + 880}ms` }}>
+          <svg viewBox="0 0 10 16" className="block h-full w-full" aria-hidden="true">
+            <path d="M3 15.4 L3.4 5 H3 V2.6 H4.2 V3.6 H5.8 V2.6 H7 V5 H6.6 L7 15.4 Z" fill={tint(p0, 0.95)} stroke="#c94a3a" strokeWidth="0.5" {...SJ} />
+            <path d="M4 7 L6 9 M6 7.4 L4.2 9.6" stroke="#c94a3a" strokeWidth="0.4" strokeLinecap="round" />
+          </svg>
+        </span>
+      )}
+      {/* bespoke: Sever — the contract is cut: a shear-line flashes across the
+          card and its severed halves spring apart */}
+      {flourish === "sever" && (
+        <>
+          <span className="absolute block" style={{ left: "36%", top: "42%", width: "28%", height: "1.4%", rotate: "-22deg" }}>
+            <span
+              className="grp-beam absolute inset-0 block"
+              style={{ background: `linear-gradient(90deg, transparent, ${tint(p1, 0.95)} 30%, ${tint(p1, 0.95)} 70%, transparent)`, transformOrigin: "0% 50%", animationDelay: `${delayMs + 760}ms` }}
+            />
+          </span>
+          {(["l", "r"] as const).map((side) => (
+            <span
+              key={side}
+              className={`grp-split-${side} absolute block`}
+              style={{ left: side === "l" ? "40%" : "50.5%", top: "26%", width: "9.5%", height: "42%", animationDelay: `${delayMs + 860}ms` }}
+            >
+              <svg viewBox="0 0 10 44" className="block h-full w-full" aria-hidden="true">
+                <path
+                  d={side === "l" ? "M2 1 H10 L10 43 H2 C1 43 0.6 42 0.6 41 V3 C0.6 2 1 1 2 1 Z" : "M0 1 H8 C9 1 9.4 2 9.4 3 V41 C9.4 42 9 43 8 43 H0 Z"}
+                  fill={tint(p0, 0.7)}
+                  stroke={tint(p1, 0.85)}
+                  strokeWidth="0.7"
+                  {...SJ}
+                />
+              </svg>
+            </span>
+          ))}
+        </>
+      )}
+      {/* bespoke: The Tower — the bolt itself, hammering the card from above */}
+      {flourish === "tower" && (
+        <span className="grp-bolt absolute block" style={{ left: "45%", top: "10%", width: "10%", height: "18%", animationDelay: `${delayMs + 700}ms` }}>
+          <svg viewBox="0 0 10 18" className="block h-full w-full" aria-hidden="true">
+            <path d="M6.4 0.6 L3 8 H5.2 L2.6 15 L8.4 6.6 H5.8 L8 0.6 Z" fill="#ffd166" stroke="#c94a3a" strokeWidth="0.6" {...SJ} />
+          </svg>
+        </span>
+      )}
       {/* the deal lands: flare + sparks + the single fate-wave */}
       <Flash delayMs={delayMs + 780} color={tint(p1, 0.6)} left={42} top={44} w={16} h={12} />
       <Sparks delayMs={delayMs + 820} fill={p1} stroke={p2} cy={49} />
       <Boom delayMs={delayMs + 880} color={tint(p1, 0.85)} />
       <Glint delayMs={delayMs + 1200} color={p1} left={54} top={27} />
+      {/* settle: paper-fate flecks drift off the deal — Death's rise as souls */}
+      <Afterglow delayMs={delayMs + 1020} color={tint(p1, 0.24)} left={40} top={32} w={20} h={22} />
+      <Settle
+        delayMs={delayMs + 1060}
+        dir={flourish === "death" ? "rise" : "fall"}
+        sizePct={2}
+        render={(i) => <Mote color={tint(i % 2 ? p1 : p0, 0.7)} />}
+      />
     </Stage>
   );
 }
@@ -1109,6 +1241,9 @@ function ThiefHand({ palette, glyph, lead, delayMs }: TemplateProps) {
   return (
     <Stage>
       <Wash color={tint(p2, 0.32)} delayMs={delayMs} />
+      {/* tell: the prize glimmers awake while a shadow creeps in from the wing */}
+      <TellGlow delayMs={delayMs} color={tint(p1, 0.35)} left={40} top={34} w={16} h={16} />
+      <TellShadow delayMs={delayMs + 60} color={tint(p2, 0.7)} left={58} top={40} w={24} h={12} />
       {/* the prize, gleaming where it sits */}
       <span className="grp-facein absolute block" style={{ left: "42%", top: "36%", width: "12%", height: "20%", animationDelay: `${delayMs + 120}ms` }}>
         <svg viewBox="0 0 12 20" className="absolute inset-0 block h-full w-full" aria-hidden="true">
@@ -1147,6 +1282,9 @@ function ThiefHand({ palette, glyph, lead, delayMs }: TemplateProps) {
       <Sparks delayMs={delayMs + 860} fill={p1} stroke={p0} cy={44} />
       <Boom delayMs={delayMs + 920} color={tint(p1, 0.8)} />
       <Glint delayMs={delayMs + 1230} color={p1} left={47} top={36} />
+      {/* settle: shadow-smoke curls up where the prize used to sit */}
+      <Afterglow delayMs={delayMs + 1060} color={tint(p1, 0.22)} left={38} top={32} w={22} h={20} />
+      <Settle delayMs={delayMs + 1100} dir="rise" sizePct={2} render={(i) => <Mote color={tint(i % 2 ? p1 : p2, 0.7)} />} />
     </Stage>
   );
 }
@@ -1155,12 +1293,15 @@ function ThiefHand({ palette, glyph, lead, delayMs }: TemplateProps) {
    Template 11: CrownForge — the old kings' anvil rises mid-board, the hammer
    falls in a fan of sparks, and the finished work comes out glowing.
    ========================================================================== */
-function CrownForge({ palette, glyph, lead, delayMs }: TemplateProps) {
+function CrownForge({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
   const [p0, p1, p2] = palette;
   if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
     <Stage>
       <Wash color={tint(p0, 0.24)} delayMs={delayMs} />
+      {/* tell: forge-heat pools under the boards before the anvil breaches */}
+      <TellShadow delayMs={delayMs} color={tint(p2, 0.55)} left={38} top={62} w={24} h={7} />
+      <TellGlow delayMs={delayMs + 40} color={tint(p1, 0.35)} left={40} top={44} w={20} h={16} />
       {/* the anvil, grinding up */}
       <span className="grp-rise absolute block" style={{ left: "38%", top: "42%", width: "24%", height: "24%", animationDelay: `${delayMs + 120}ms` }}>
         <svg viewBox="0 0 24 24" className="block h-full w-full" aria-hidden="true">
@@ -1176,14 +1317,56 @@ function CrownForge({ palette, glyph, lead, delayMs }: TemplateProps) {
           <rect x="0.8" y="2" width="9" height="6.4" rx="1" transform="rotate(-14 5.3 5.2)" fill={tint(p2, 0.95)} stroke={tint(p0, 0.85)} strokeWidth="0.8" />
         </svg>
       </span>
+      {/* bespoke: Double Queen — the hammer comes down TWICE, and a second
+          crown pops out on the off-beat (a proper double-take) */}
+      {flourish === "doublequeen" && (
+        <>
+          <span className="grp-swing absolute block" style={{ left: "53%", top: "24%", width: "13%", height: "20%", transformOrigin: "88% 88%", animationDelay: `${delayMs + 880}ms` }}>
+            <svg viewBox="0 0 16 24" className="block h-full w-full" aria-hidden="true">
+              <path d="M13.4 21.6 L4.6 7.4" stroke={tint(p0, 0.95)} strokeWidth="1.6" strokeLinecap="round" />
+              <rect x="0.8" y="2" width="9" height="6.4" rx="1" transform="rotate(-14 5.3 5.2)" fill={tint(p2, 0.95)} stroke={tint(p0, 0.85)} strokeWidth="0.8" />
+            </svg>
+          </span>
+          <Sparks delayMs={delayMs + 1180} fill={p1} stroke={p0} sizePct={4} cx={50} cy={46} />
+          <span className="grp-pop absolute block" style={{ left: "38%", top: "29%", width: "9%", height: "9%", animationDelay: `${delayMs + 1000}ms` }}>{glyph}</span>
+          <span className="grp-pop absolute block" style={{ left: "53%", top: "29%", width: "9%", height: "9%", animationDelay: `${delayMs + 1280}ms` }}>{glyph}</span>
+          <Glint delayMs={delayMs + 1480} color={p1} left={56} top={27} sizePct={5} />
+        </>
+      )}
       {/* strike sparks fanning off the anvil face */}
       <Sparks delayMs={delayMs + 760} fill={p1} stroke={p0} cx={50} cy={46} />
       <Flash delayMs={delayMs + 740} color={tint(p1, 0.8)} left={43} top={41} w={14} h={10} />
-      {/* the finished work, glowing above the anvil */}
-      <span className="grp-facein absolute block" style={{ left: "44%", top: "28%", width: "12%", height: "12%", animationDelay: `${delayMs + 900}ms` }}>{glyph}</span>
+      {/* the finished work — Royal Ascension sends it climbing on rising light */}
+      {flourish === "ascension" ? (
+        <>
+          {[42, 49, 56].map((l, i) => (
+            <span
+              key={i}
+              className="grp-ray absolute block"
+              style={{
+                left: `${l}%`,
+                top: "24%",
+                width: "2.4%",
+                height: "26%",
+                background: `linear-gradient(0deg, transparent, ${tint(p1, 0.75)})`,
+                transformOrigin: "50% 100%",
+                animationDelay: `${delayMs + 880 + i * 70}ms`,
+              }}
+            />
+          ))}
+          <span className="grp-riseslow absolute block" style={{ left: "44%", top: "30%", width: "12%", height: "12%", animationDelay: `${delayMs + 920}ms` }}>{glyph}</span>
+        </>
+      ) : (
+        flourish !== "doublequeen" && (
+          <span className="grp-facein absolute block" style={{ left: "44%", top: "28%", width: "12%", height: "12%", animationDelay: `${delayMs + 900}ms` }}>{glyph}</span>
+        )
+      )}
       {/* the single forge-wave */}
       <Boom delayMs={delayMs + 940} color={tint(p1, 0.85)} thickness={4} />
       <Glint delayMs={delayMs + 1260} color={p1} left={49} top={27} />
+      {/* settle: forge embers climb and gutter out over the cooling work */}
+      <Afterglow delayMs={delayMs + 1080} color={tint(p1, 0.28)} left={38} top={36} w={24} h={20} />
+      <Settle delayMs={delayMs + 1120} dir="rise" sizePct={2} render={(i) => <Mote color={tint(i % 2 ? p1 : "#ff9d3d", 0.8)} />} />
     </Stage>
   );
 }
@@ -1192,12 +1375,16 @@ function CrownForge({ palette, glyph, lead, delayMs }: TemplateProps) {
    Template 12: RiftGate — twin obelisks rise flanking the centre and an aurora
    pane stretches open between them; the glyph shines through the gate.
    ========================================================================== */
-function RiftGate({ palette, glyph, lead, delayMs }: TemplateProps) {
+function RiftGate({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
   const [p0, p1, p2] = palette;
   if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
     <Stage>
       <Wash color={tint(p0, 0.24)} delayMs={delayMs} />
+      {/* tell: stray aurora light converges on the two footings */}
+      <TellGlow delayMs={delayMs} color={tint(p1, 0.3)} left={35} top={40} w={10} h={20} />
+      <TellGlow delayMs={delayMs + 60} color={tint(p1, 0.3)} left={55} top={40} w={10} h={20} />
+      <TellRays delayMs={delayMs + 20} color={tint(p1, 0.7)} />
       {/* the twin obelisks */}
       {[36, 58].map((l, i) => (
         <span key={i} className="grp-rise absolute block" style={{ left: `${l}%`, top: "26%", width: "6%", height: "40%", animationDelay: `${delayMs + 120 + i * 90}ms` }}>
@@ -1221,11 +1408,36 @@ function RiftGate({ palette, glyph, lead, delayMs }: TemplateProps) {
       />
       {/* the card's glyph, shining through the gate */}
       <span className="grp-facein absolute block" style={{ left: "45%", top: "38%", width: "10%", height: "16%", animationDelay: `${delayMs + 620}ms` }}>{glyph}</span>
+      {/* bespoke: Mirror of Souls — two reflections trade places THROUGH the
+          glass, each dimming as it passes the silvered pane */}
+      {flourish === "mirror" && (
+        <>
+          <span
+            className="grp-cross absolute block"
+            style={{ left: "33%", top: "38%", width: "5.5%", height: "13%", "--dx": "510%", animationDelay: `${delayMs + 640}ms` } as CSSProperties}
+          >
+            <svg viewBox="0 0 8 16" className="block h-full w-full" aria-hidden="true">
+              <path d="M2 15 L2.6 6 C1.2 5 1.4 3 4 2.2 C6.6 3 6.8 5 5.4 6 L6 15 Z" fill={tint(p1, 0.85)} stroke={p2} strokeWidth="0.6" {...SJ} />
+            </svg>
+          </span>
+          <span
+            className="grp-cross absolute block"
+            style={{ left: "61.5%", top: "38%", width: "5.5%", height: "13%", "--dx": "-510%", animationDelay: `${delayMs + 640}ms` } as CSSProperties}
+          >
+            <svg viewBox="0 0 8 16" className="block h-full w-full" aria-hidden="true">
+              <path d="M2 15 C2 10.6 3 8.6 5.4 8.2 L6.6 10 L5.4 11.2 C5.4 13 4.4 15 3.2 15 Z" fill={tint(p2, 0.9)} stroke={tint(p1, 0.9)} strokeWidth="0.6" {...SJ} />
+            </svg>
+          </span>
+        </>
+      )}
       {/* crossing flare + sparks + the single rift-wave */}
       <Flash delayMs={delayMs + 800} color={tint(p1, 0.6)} left={43} top={42} w={14} h={11} />
       <Sparks delayMs={delayMs + 840} fill={p1} stroke={p2} cy={47} />
       <Boom delayMs={delayMs + 900} color={tint(p1, 0.85)} />
       <Glint delayMs={delayMs + 1220} color={p1} left={49} top={31} />
+      {/* settle: gate-light motes float up as the pane lets go */}
+      <Afterglow delayMs={delayMs + 1040} color={tint(p1, 0.26)} left={39} top={32} w={22} h={24} />
+      <Settle delayMs={delayMs + 1080} dir="rise" sizePct={2} render={(i) => <Mote color={tint(i % 2 ? p1 : p0, 0.75)} />} />
     </Stage>
   );
 }
@@ -1234,12 +1446,24 @@ function RiftGate({ palette, glyph, lead, delayMs }: TemplateProps) {
    Template 13: BeastRush — a horned beast charges the full width of the crop,
    dust kicked up behind it; the card's glyph rides on its flank drape.
    ========================================================================== */
-function BeastRush({ palette, glyph, lead, delayMs }: TemplateProps) {
+function BeastRush({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
   const [p0, p1, p2] = palette;
+  // Comic-timing: the bonk holds its beat before the punchline lands.
+  const hold = flourish === "sahur" ? 200 : 0;
   if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
     <Stage>
       <Wash color={tint(p0, 0.24)} delayMs={delayMs} />
+      {/* tell: hoofbeat rumble — the ground shadows and speed-light gathers */}
+      <TellShadow delayMs={delayMs} color={tint(p2, 0.55)} left={26} top={58} w={26} h={6} />
+      <TellRays delayMs={delayMs + 20} color={tint(p1, 0.7)} />
+      {/* bespoke: Dragon Mount — a wingbeat shadow crosses above the charge */}
+      {flourish === "dragon" && (
+        <span
+          className="grp-sweep-fast absolute block rounded-full"
+          style={{ left: "30%", top: "24%", width: "26%", height: "7%", background: tint(p2, 0.5), animationDelay: `${delayMs + 220}ms` }}
+        />
+      )}
       {/* dust kicked up along the charge line */}
       <Drifts
         delayMs={delayMs + 380}
