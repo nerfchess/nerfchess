@@ -441,6 +441,87 @@
 }
 .fnp-hop { animation: fnp-hop 1.5s cubic-bezier(0.3, 0.8, 0.35, 1.1) both; transform-origin: 50% 100%; }
 
+/* --- expansion permit (bolt on a ninth file; a rook wraps edge to edge) ------ */
+
+/* A permit stamp thunks down and holds (square-local hit). */
+@keyframes fnp-permit-stamp {
+  0% { opacity: 0; transform: translateY(-40%) scale(1.5) rotate(-8deg); }
+  30% { opacity: 1; transform: translateY(0) scale(1) rotate(-4deg); }
+  40% { transform: translateY(0) scale(0.96) rotate(-4deg); }
+  50% { transform: translateY(0) scale(1) rotate(-4deg); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(0) scale(1) rotate(-4deg); }
+}
+.fnp-permit-stamp { animation: fnp-permit-stamp 1.4s cubic-bezier(0.2, 0.8, 0.3, 1) both; transform-origin: 50% 50%; }
+
+/* The 9th-file panel slides in from off the right edge and bolts on. */
+@keyframes fnp-file-bolt {
+  0% { opacity: 0; transform: translateX(40%); }
+  26% { opacity: 1; transform: translateX(0); }
+  30% { transform: translateX(-1.5%); }
+  36% { transform: translateX(0); }
+  86% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.fnp-file-bolt { animation: fnp-file-bolt 1.5s cubic-bezier(0.2, 0.85, 0.25, 1) both; }
+
+/* Each bolt pops as the panel seats. */
+@keyframes fnp-bolt-pop {
+  0% { opacity: 0; transform: scale(0.2); }
+  60% { opacity: 1; transform: scale(1.35); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.fnp-bolt-pop { animation: fnp-bolt-pop 0.5s ease-out both; }
+
+/* The freshly opened wrap seams pulse on both edges. */
+@keyframes fnp-seam-glow {
+  0% { opacity: 0; }
+  30% { opacity: 0.9; }
+  60% { opacity: 0.35; }
+  100% { opacity: 0; }
+}
+.fnp-seam-glow { animation: fnp-seam-glow 1s ease-in-out both; }
+
+/* The rook glides right and dissolves at the right seam. */
+@keyframes fnp-rook-exit {
+  0% { opacity: 0; transform: translateX(0) scale(1); }
+  20% { opacity: 1; }
+  70% { opacity: 1; transform: translateX(46%); }
+  100% { opacity: 0; transform: translateX(64%) scale(0.9); }
+}
+.fnp-rook-exit { animation: fnp-rook-exit 0.9s ease-in both; transform-origin: 50% 50%; }
+
+/* ...and re-materialises gliding in from the left seam. */
+@keyframes fnp-rook-enter {
+  0% { opacity: 0; transform: translateX(-30%) scale(0.9); }
+  35% { opacity: 1; transform: translateX(6%) scale(1); }
+  50% { transform: translateX(0); }
+  86% { opacity: 1; transform: translateX(0); }
+  100% { opacity: 0; transform: translateX(0); }
+}
+.fnp-rook-enter { animation: fnp-rook-enter 1s cubic-bezier(0.2, 0.8, 0.3, 1) both; transform-origin: 50% 50%; }
+
+/* A traveller dot arcs over the top from the right edge to the left. */
+@keyframes fnp-wrap-dot {
+  0% { opacity: 0; transform: translate(100px, 40px); }
+  15% { opacity: 1; transform: translate(100px, 40px); }
+  50% { transform: translate(55px, 6px); }
+  85% { opacity: 1; transform: translate(10px, 40px); }
+  100% { opacity: 0; transform: translate(10px, 40px); }
+}
+.fnp-wrap-dot { animation: fnp-wrap-dot 0.9s ease-in-out both; }
+
+/* The APPROVED stamp thunks in. */
+@keyframes fnp-permit-thunk {
+  0% { opacity: 0; transform: scale(1.6) rotate(-6deg); }
+  40% { opacity: 1; transform: scale(1) rotate(-3deg); }
+  50% { transform: scale(0.95) rotate(-3deg); }
+  60% { transform: scale(1) rotate(-3deg); }
+  88% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.fnp-permit-thunk { animation: fnp-permit-thunk 1.1s cubic-bezier(0.2, 0.8, 0.3, 1) both; transform-origin: 50% 50%; }
+
 /* --- reduced motion ----------------------------------------------------------------
    Everything in this module is a transient one-shot flourish: hide the whole
    layer outright (defensive — the caller's play layer gates it too). */

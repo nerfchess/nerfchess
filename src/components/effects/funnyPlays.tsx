@@ -1044,6 +1044,92 @@ function PayToWinPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 }
 
 /* ------------------------------------------------------------------------- */
+/* Expansion Permit — the construction crew bolts a NINTH file onto the board  */
+/* and a rook wraps off the right edge back onto the left (toroidal files).    */
+/* ------------------------------------------------------------------------- */
+
+/** Blocky rook silhouette, centered on its own origin. */
+function RookGlyph({ fill, stroke }: { fill: string; stroke: string }) {
+  return (
+    <path
+      d="M-7 9 L-7 5 L-5 3 L-5 -3 L-7 -3 L-7 -6 L-4.5 -6 L-4.5 -4 L-1.5 -4 L-1.5 -6 L1.5 -6 L1.5 -4 L4.5 -4 L4.5 -6 L7 -6 L7 -3 L5 -3 L5 3 L7 5 L7 9 Z"
+      fill={fill}
+      stroke={stroke}
+      strokeWidth={1.4}
+      strokeLinejoin="round"
+    />
+  );
+}
+
+function ExpansionPermitPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (!lead) {
+    // Square-local: a permit stamp thunks down.
+    return (
+      <Stage inset="12%">
+        <span className="fnp-permit-stamp absolute inset-0 block" style={d(delayMs)}>
+          <svg viewBox="0 0 100 100" className="h-full w-full">
+            <rect x={18} y={26} width={64} height={48} rx={5} fill="#ffd76a" stroke="#c9931d" strokeWidth={3} />
+            <rect x={18} y={26} width={64} height={11} fill="#2a2018" opacity={0.85} />
+            <text x={50} y={58} fontSize={15} fontWeight={900} fill="#8a5a10" textAnchor="middle">+1</text>
+          </svg>
+        </span>
+      </Stage>
+    );
+  }
+  const caution = "#ffb454";
+  return (
+    <Wide>
+      <Wash color="rgba(201,147,29,0.16)" delayMs={delayMs} />
+      <Prop left="30%" top="30%" width="40%" height="34%">
+        <svg viewBox="0 0 120 88" className="h-full w-full">
+          {/* the existing board edge (a few files sketched at the left) */}
+          <g className="fnp-linger" style={d(delayMs)} opacity={0.8}>
+            {[0, 1, 2].map((i) => (
+              <rect key={i} x={10 + i * 16} y={22} width={16} height={44} fill="none" stroke="#5c5348" strokeWidth={1} strokeDasharray="2 2" />
+            ))}
+          </g>
+
+          {/* the NINTH file bolts on at the right: a striped panel slides in */}
+          <g className="fnp-file-bolt" style={d(delayMs + 120)}>
+            <rect x={82} y={20} width={20} height={48} rx={2} fill="#3a3128" stroke={caution} strokeWidth={2} />
+            {[0, 1, 2, 3, 4].map((i) => (
+              <rect key={i} x={83} y={22 + i * 9} width={18} height={4.5} fill={caution} opacity={0.55} />
+            ))}
+            {[[85, 23], [99, 23], [85, 65], [99, 65]].map(([cx, cy], i) => (
+              <circle key={i} className="fnp-bolt-pop" style={d(delayMs + 360 + i * 60)} cx={cx} cy={cy} r={2.2} fill="#ffe9a8" stroke="#8a5a10" strokeWidth={0.8} />
+            ))}
+          </g>
+
+          {/* seams on BOTH edges glow: the wrap portal is open */}
+          <rect className="fnp-seam-glow" style={d(delayMs + 520)} x={8.5} y={20} width={2.4} height={48} fill="#ffe9a8" />
+          <rect className="fnp-seam-glow" style={d(delayMs + 560)} x={100} y={20} width={2.4} height={48} fill="#ffe9a8" />
+
+          {/* the rook glides right, EXITS at the right seam... */}
+          <g className="fnp-rook-exit" style={d(delayMs + 560)} transform="translate(58 44)">
+            <RookGlyph fill="#e8dcc0" stroke="#7a6a4a" />
+          </g>
+          {/* ...and WRAPS back in from the left seam */}
+          <g className="fnp-rook-enter" style={d(delayMs + 900)} transform="translate(16 44)">
+            <RookGlyph fill="#e8dcc0" stroke="#7a6a4a" />
+          </g>
+          {/* a wrap-arrow traveller arcs over the top: right edge -> left edge */}
+          <g className="fnp-wrap-dot" style={d(delayMs + 620)}>
+            <circle cx={0} cy={0} r={2.4} fill="#ffd76a" />
+          </g>
+
+          {/* PERMIT APPROVED stamp thunks in */}
+          <g className="fnp-permit-thunk" style={d(delayMs + 760)}>
+            <rect x={34} y={72} width={52} height={13} rx={2} fill="none" stroke="#8fd0a0" strokeWidth={2} />
+            <text x={60} y={82} fontSize={8} fontWeight={900} fill="#8fd0a0" textAnchor="middle">APPROVED</text>
+          </g>
+        </svg>
+      </Prop>
+      <Boom color="rgba(255,215,106,0.85)" delayMs={delayMs + 980} />
+    </Wide>
+  );
+}
+
+/* ------------------------------------------------------------------------- */
 /* Registry                                                                   */
 /* ------------------------------------------------------------------------- */
 
@@ -1113,5 +1199,13 @@ export const PLAYS: Record<string, SigPlugin> = {
   pay_to_win: {
     config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation" },
     Render: PayToWinPlay,
+  },
+  // Expansion Permit (t5 movement): self-buff, no removal diff, so a lead-only
+  // config — the diff-less board-wide lead path (Board.tsx) plays the scene
+  // when the card is cast. "wall" is the closest voice for the construction
+  // bolt-on.
+  expansion_permit: {
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall" },
+    Render: ExpansionPermitPlay,
   },
 };

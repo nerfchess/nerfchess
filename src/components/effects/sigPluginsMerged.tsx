@@ -33,18 +33,25 @@ for (const [id, p] of Object.entries(MERGED)) {
 // the real merged keys exactly. The list is what suppresses the generated
 // fallback before this chunk loads, so drift means either wrong art plays
 // pre-load (id missing from the list) or a card renders no art forever (id
-// listed but no longer covered). Warn loudly the moment either happens.
+// listed but no longer covered).
+//
+// The AUTHORITATIVE, ship-blocking guard is the build-time check in
+// `test:rules` (scripts/check-sig-plugins.cjs), which regenerates PLUGIN_IDS
+// from these same PLAYS keys and FAILS CI on any drift. This runtime check is
+// the fast local mirror of it: it THROWS in dev/test (not just warns, which
+// production stripped and shipped silently) so a drifted registry can never be
+// exercised without someone noticing immediately.
 if (process.env.NODE_ENV !== "production") {
   const listed = new Set(PLUGIN_IDS);
   const merged = new Set(Object.keys(MERGED));
   const missing = [...merged].filter((id) => !listed.has(id));
   const stale = [...listed].filter((id) => !merged.has(id));
   if (missing.length || stale.length) {
-    console.warn(
+    throw new Error(
       "[sigPlugins] PLUGIN_IDS drifted from the merged plugin registry." +
         (missing.length ? ` Missing from PLUGIN_IDS: ${missing.join(", ")}.` : "") +
         (stale.length ? ` Stale in PLUGIN_IDS: ${stale.join(", ")}.` : "") +
-        " Update PLUGIN_IDS in sigPlugins.tsx.",
+        " Regenerate: node scripts/check-sig-plugins.cjs --write",
     );
   }
 }

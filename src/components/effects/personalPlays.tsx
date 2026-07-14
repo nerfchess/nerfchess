@@ -1211,6 +1211,109 @@ function ILoveCamPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 }
 
 /* ------------------------------------------------------------------------- */
+/* I Love Chaewon — LE SSERAFIM "Fearless" choreography: a feather drifts down  */
+/* and three pieces glide gracefully into a new formation (repositions).       */
+/* ------------------------------------------------------------------------- */
+
+/** A single elegant feather, centered on its own origin. */
+function Feather({ fill, vein }: { fill: string; vein: string }) {
+  return (
+    <g>
+      <path d="M0 -15 C6 -7 6 7 1 15 C-6 7 -6 -7 0 -15 Z" fill={fill} opacity={0.95} />
+      <path d="M0 -13 L0.4 14" stroke={vein} strokeWidth={1} fill="none" />
+      {[-10, -6, -2, 2, 6].map((y, i) => (
+        <path key={i} d={`M0.3 ${y} L${3.2 - i * 0.2} ${y - 3}`} stroke={vein} strokeWidth={0.6} opacity={0.5} />
+      ))}
+      {[-10, -6, -2, 2, 6].map((y, i) => (
+        <path key={"l" + i} d={`M-0.3 ${y} L${-3.2 + i * 0.2} ${y - 3}`} stroke={vein} strokeWidth={0.6} opacity={0.5} />
+      ))}
+    </g>
+  );
+}
+
+function ILoveChaewonPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (!lead) {
+    // Square-local: a feather settles with a soft sparkle.
+    return (
+      <Stage inset="14%">
+        <span className="pnp-cw-settle absolute inset-0 block" style={d(delayMs)}>
+          <svg viewBox="0 0 40 40" className="h-full w-full">
+            <g transform="translate(20 20) rotate(18)">
+              <Feather fill="#ffd9ea" vein="#c76f9c" />
+            </g>
+            <g className="pnp-cw-spark" style={d(delayMs + 220)}><SparkStar x={28} y={12} s={0.9} fill="#fff2f6" /></g>
+          </svg>
+        </span>
+      </Stage>
+    );
+  }
+  // Three pieces glide from their old spots to a neat diagonal formation.
+  // Each carries a CSS var start-offset (--gx,--gy) that the glide keyframe
+  // eases back to zero, so they arrive together at their landing slot.
+  const dancers = [
+    { left: "40%", top: "52%", gx: "-120%", gy: "38%", delay: 260 },
+    { left: "48%", top: "45%", gx: "10%", gy: "80%", delay: 400 },
+    { left: "56%", top: "38%", gx: "130%", gy: "34%", delay: 540 },
+  ];
+  return (
+    <Wide>
+      <Wash color="rgba(255,157,192,0.16)" delayMs={delayMs} />
+      {/* the hero feather drifts down and sways, trailing grace */}
+      <Prop left="45%" top="20%" width="10%" height="16%">
+        <svg viewBox="0 0 40 60" className="h-full w-full">
+          <g className="pnp-cw-feather" style={d(delayMs)}>
+            <g transform="translate(20 18)"><Feather fill="#ffe4f0" vein="#c76f9c" /></g>
+          </g>
+        </svg>
+      </Prop>
+
+      {/* three dancers glide into formation, each leaving a light ribbon */}
+      {dancers.map((p, i) => (
+        <Prop key={i} left={p.left} top={p.top} width="8%" height="8%">
+          <svg viewBox="0 0 28 28" className="h-full w-full">
+            <g className="pnp-cw-glide" style={dv(delayMs + p.delay, { "--gx": p.gx, "--gy": p.gy })}>
+              <g className="pnp-cw-ribbon" style={d(delayMs + p.delay)}>
+                <ellipse cx={14} cy={16} rx={11} ry={3.4} fill="rgba(255,182,214,0.35)" />
+              </g>
+              <Pawn x={14} y={12} s={0.92} fill="#fff2f6" stroke="#c76f9c" />
+            </g>
+          </svg>
+        </Prop>
+      ))}
+
+      {/* the formation locks: three aligned sparkles shimmer into place */}
+      <Prop left="38%" top="34%" width="26%" height="24%">
+        <svg viewBox="0 0 100 90" className="h-full w-full">
+          {[[24, 66], [50, 46], [76, 26]].map(([x, y], i) => (
+            <g key={i} className="pnp-cw-lock" style={d(delayMs + 900 + i * 90)}>
+              <SparkStar x={x} y={y} s={1.5} fill="#fff2f6" />
+            </g>
+          ))}
+        </svg>
+      </Prop>
+
+      {/* drifting feather-down petals for grace */}
+      {[
+        { x: "-40%", y: "-30%", r: "-24deg", dl: 500 },
+        { x: "36%", y: "-46%", r: "20deg", dl: 640 },
+        { x: "-10%", y: "-58%", r: "-8deg", dl: 780 },
+      ].map((p, i) => (
+        <Prop key={"pt" + i} left="47%" top="46%" width="5%" height="7%">
+          <svg viewBox="0 0 20 28" className="h-full w-full">
+            <g className="pnp-cw-petal" style={dv(delayMs + p.dl, { "--px": p.x, "--py": p.y, "--pr": p.r })}>
+              <g transform="translate(10 12) scale(0.5)"><Feather fill="#ffd9ea" vein="#d98cb4" /></g>
+            </g>
+          </svg>
+        </Prop>
+      ))}
+
+      <Ring color="rgba(255,157,192,0.9)" delayMs={delayMs + 1160} />
+      <Ring color="rgba(255,242,246,0.7)" delayMs={delayMs + 1300} />
+    </Wide>
+  );
+}
+
+/* ------------------------------------------------------------------------- */
 /* Registry                                                                   */
 /* ------------------------------------------------------------------------- */
 
@@ -1265,6 +1368,14 @@ export const PLAYS: Record<string, SigPlugin> = {
   ilovemakingout: {
     config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation" },
     Render: ILoveMakingOutPlay,
+  },
+  // I Love Chaewon (t6 movement): repositions up to 3 pieces to empty squares
+  // (relocations register as morph/summon flourishes, not a removal diff, and
+  // paint no fx zone), so a lead-only config riding the diff-less board-wide
+  // lead path. "coronation" is an elegant chime for the graceful choreography.
+  ilovechaewon: {
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation" },
+    Render: ILoveChaewonPlay,
   },
   // The five members are simple one-shot / passive cards again; each entry's
   // source names the zone its reverted mechanic actually paints (see the
