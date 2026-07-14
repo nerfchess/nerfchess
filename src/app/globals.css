@@ -2760,22 +2760,27 @@ html[data-theme="light"] .hall-row {
 /* ============================================================
    Recording mode — owner-only 9:16 vertical layout for capturing
    YouTube Shorts / Instagram Reels. Purely visual; toggled from the
-   in-game moderation (god) panel. It reflows opponent · board · you
-   into a centered portrait column, drops both clocks into a bar at the
-   bottom of the frame, and dims everything outside the crop so a
-   straight 9:16 export lands clean. Nothing here touches game state.
+   in-game moderation (god) panel. It screen-centers the board in a
+   9:16 crop and drops both clocks (with names) into a bar near the
+   bottom of the frame. The normal command / move-list rails stay fully
+   usable — they just move out into the side margins, outside the crop,
+   so they never show in the exported clip. Nothing here touches game
+   state.
    ============================================================ */
 main.recording-mode {
   /* The vertical frame: as wide as the viewport allows, but never wider
      than a 16-unit-tall frame is 9 wide (height * 9 / 16 = height * 0.5625). */
   --rec-w: min(100vw, calc(100dvh * 0.5625));
-  /* Cap every board-sized element (board, pockets, name rows) to the frame,
-     leaving vertical headroom for the player rows and the bottom clock bar.
-     Overrides the user's board-size --board-cap for the duration only. */
-  --board-cap: min(calc(var(--rec-w) - 0.75rem), calc(100dvh - 15rem));
+  /* One side margin (screen edge → frame edge), where the rails live. */
+  --rec-margin: calc((100vw - var(--rec-w)) / 2);
+  /* Cap every board-sized element (board, pockets) to the frame, leaving
+     vertical headroom for the bottom clock bar. Overrides the user's
+     board-size --board-cap for the duration only. */
+  --board-cap: min(calc(var(--rec-w) - 0.75rem), calc(100dvh - 13rem));
 }
 
-/* Collapse the three-column match grid into a single centered column. */
+/* Center the board on screen: collapse the match grid to a single centered
+   column (the rails leave the flow via fixed positioning below). */
 main.recording-mode .match-content {
   max-width: none;
   padding-left: 0;
@@ -2786,23 +2791,42 @@ main.recording-mode .match-grid {
   justify-content: center;
 }
 
-/* The side rails (command rail; move-list + clock rail) don't belong in the
-   vertical crop — their essentials move into the frame or the bottom bar. The
-   inline mobile strips are hidden too so player names never double up. */
-main.recording-mode .rail-panel,
-main.recording-mode .match-side-rail,
+/* The command rail (buff dock, chat, player cards) floats into the LEFT margin,
+   fully usable, capped so it always fits the space outside the crop. */
+main.recording-mode .rail-panel {
+  position: fixed;
+  left: 0.5rem;
+  top: 4rem;
+  bottom: 0.5rem;
+  z-index: 25;
+  width: auto;
+  max-width: calc(var(--rec-margin) - 1rem);
+  min-height: 0 !important;
+}
+/* The move-list / clock rail floats into the RIGHT margin, left of the god
+   panel (fixed 248px wide) so the two never overlap. */
+main.recording-mode .match-side-rail {
+  position: fixed;
+  right: calc(248px + 1rem);
+  top: 4rem;
+  bottom: 0.5rem;
+  z-index: 25;
+  height: auto !important;
+  max-width: max(9rem, calc(var(--rec-margin) - 248px - 2rem));
+}
+/* The inline mobile strips stay hidden so player names never double up. */
 main.recording-mode .board-strip {
   display: none !important;
 }
 
-/* Stack opponent row · board · my row, centered, reserving the bottom clock
-   bar's height so nothing ever collides with it. */
+/* Board · pockets, centered in the frame, with the bottom clock bar's height
+   reserved so nothing ever collides with it. */
 main.recording-mode .match-board-col {
   flex-direction: column;
   align-items: center;
   justify-content: center;
   width: 100%;
-  padding-bottom: 4.75rem;
+  padding-bottom: 6.5rem;
 }
 main.recording-mode .match-board-shell {
   display: flex;
@@ -2810,14 +2834,10 @@ main.recording-mode .match-board-shell {
   align-items: center;
   width: 100%;
 }
-main.recording-mode .rec-name-row {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-}
 
 /* 9:16 crop guide: a transparent window with a hairline gold border, backed by
-   a huge spread shadow that darkens everything outside the frame. */
+   a huge spread shadow that darkens everything outside the frame. The rails sit
+   above it (higher z-index), so they stay bright and usable in the margins. */
 .rec-frame-guide {
   position: fixed;
   top: 0;
@@ -2832,10 +2852,10 @@ main.recording-mode .rec-name-row {
   box-shadow: 0 0 0 100vmax rgb(4 5 9 / 0.82);
 }
 
-/* Both clocks, pinned to the bottom of the frame. */
+/* Both clocks (with names), sitting a little above the bottom of the frame. */
 .rec-clock-bar {
   position: fixed;
-  bottom: 0.75rem;
+  bottom: 3.25rem;
   left: 50%;
   width: min(calc(var(--rec-w) - 1rem), 92vw);
   transform: translateX(-50%);

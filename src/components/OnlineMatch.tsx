@@ -2528,24 +2528,6 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   />
                 )}
               </div>
-              {/* Recording mode: a compact opponent name/material row directly
-                  above the board, so the vertical crop shows who is playing.
-                  Rendered only in the 9:16 layout; the normal strips stay
-                  hidden (they carry the inline clocks, which move to the bottom
-                  bar in recording mode). */}
-              {recordingLayout && (
-                <div className={`rec-name-row mx-auto ${boardFitClass}`}>
-                  <BoardPlayerRow
-                    board={isReviewingHistory ? boardForDisplay : game.board}
-                    playerColor={oppColor}
-                    myColor={myColor}
-                    name={oppName}
-                    elo={oppRating}
-                    avatar={start.players?.[oppColor]?.avatar}
-                    className="min-w-0 !px-0 !py-1"
-                  />
-                </div>
-              )}
               <div data-board-measure className={`relative mx-auto sm:mx-0 ${boardFitClass}`}>
                 <Board
                   board={boardForDisplay}
@@ -2694,21 +2676,6 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                     canDrop={false}
                     onSelect={() => {}}
                     label="Their pocket"
-                  />
-                </div>
-              )}
-              {/* Recording mode: my name/material row directly under the board
-                  (the clocks live in the bottom bar in this layout). */}
-              {recordingLayout && (
-                <div className={`rec-name-row mx-auto ${boardFitClass}`}>
-                  <BoardPlayerRow
-                    board={isReviewingHistory ? boardForDisplay : game.board}
-                    playerColor={myColor}
-                    myColor={myColor}
-                    name={myName}
-                    elo={myRating}
-                    avatar={start.players?.[myColor]?.avatar}
-                    className="min-w-0 !px-0 !py-1"
                   />
                 </div>
               )}
