@@ -810,8 +810,12 @@ function animDurationMs(): number {
   if (typeof document === "undefined") return 0;
   const mode = document.documentElement.dataset.anim;
   if (mode === "off") return 0;
-  if (mode === "fast") return 120;
-  return 220;
+  // Snappier slides so pieces feel LIGHT, not heavy — the move glide used to be
+  // 220ms/120ms and coasted into place; a shorter slide (paired with a fast-start
+  // easing below) reads as a decisive snap and stops stacking on top of network
+  // lag when an opponent's move arrives late.
+  if (mode === "fast") return 90;
+  return 140;
 }
 
 // Pending animation cleanups, per piece element: starting a new slide on an
@@ -1272,6 +1276,10 @@ export function Board({
   // Canvas VFX plays staged during render (the diff/zone claims happen in the
   // render pass) and flushed to the bus after commit, so render stays pure.
   const pendingVfxRef = useRef<VfxPlay[]>([]);
+  // The last signatureCard.key for which the removal OR zone diff path actually
+  // staged a canvas play. The universal-floor fallback (cast effect) uses it to
+  // fire a burst ONLY for plays that would otherwise show nothing on the board.
+  const vfxStagedKeyRef = useRef(0);
   useEffect(() => {
     if (pendingVfxRef.current.length === 0) return;
     const plays = pendingVfxRef.current;
@@ -1511,6 +1519,51 @@ export function Board({
         if (FX_LEVELS[fxLevelRef.current].shake === "big") el.classList.add("fx-board-shake--big");
       }
     }
+    // UNIVERSAL FLOOR: every played card should throw at least one burst of
+    // board particles, not just the cast card. The removal and zone diff paths
+    // cover cards that clear pieces or match a bespoke zone source; a whole class
+    // (generated zone/empower/protection cards, "quiet" passives) matches neither
+    // and used to animate nothing on the board. Deferred a beat so a real diff
+    // that lands in a follow-up commit still wins (vfxStagedKeyRef); if none does,
+    // fire a resolveCardVfx burst (never null for tier>=1) on the caster's king
+    // or the board centre. VfxLayer still honours the fx-off / reduced-motion
+    // gates downstream, so this respects every setting.
+    let floorTimer: number | undefined;
+    if (
+      vfxStagedKeyRef.current !== signatureCard.key &&
+      FX_LEVELS[fxLevelRef.current].vfx > 0 &&
+      !motionOff()
+    ) {
+      const key = signatureCard.key;
+      const id = signatureCard.id;
+      const tier = def.tier;
+      floorTimer = window.setTimeout(() => {
+        if (vfxStagedKeyRef.current === key) return; // a real play landed meanwhile
+        const spec = resolveCardVfx(id, tier);
+        if (!spec) return;
+        const vfx = FX_LEVELS[fxLevelRef.current].vfx;
+        if (vfx <= 0 || motionOff()) return;
+        const calm = fxCalmClockRef.current;
+        // A centred burst — always on-screen, no caster/board dependency.
+        const p: VfxPoint = { x: 0.5, y: 0.5 };
+        const source: VfxPoint = spec.source === "sky" ? { x: 0.5, y: -0.06 } : p;
+        vfxPlay({
+          tier,
+          palette: spec.palette,
+          source,
+          targets: [{ p, delayMs: 0 }],
+          travel: calm ? "none" : spec.travel,
+          impact: spec.impact,
+          aftermath: calm ? "none" : spec.aftermath,
+          shake: false,
+          intensity: calm ? Math.min(0.6, vfx) : vfx,
+          durationScale: fxDurationScale(),
+        });
+      }, 60);
+    }
+    return () => {
+      if (floorTimer !== undefined) window.clearTimeout(floorTimer);
+    };
   }, [signatureCard]);
 
   // Diff against the previous position during render (reference equality
@@ -1637,6 +1690,9 @@ export function Board({
             intensity: fxCalmClock ? Math.min(0.6, FX_LEVELS[fxLevel].vfx) : FX_LEVELS[fxLevel].vfx,
             durationScale: fxDurationScale(),
           });
+          // A real removal play was staged for this key: the floor fallback
+          // (cast effect) must not double it up.
+          vfxStagedKeyRef.current = sigSeenKeyRef.current;
         }
       }
     }
@@ -1669,7 +1725,9 @@ export function Board({
       el.style.position = "relative";
       el.style.zIndex = "5";
       el.getBoundingClientRect(); // commit the starting transform
-      el.style.transition = `transform ${dur}ms ease-out`;
+      // Fast-launch / decisive-stop curve (vs the old gentle `ease-out`, which
+      // coasted): the piece leaves quickly and lands crisply, so moves feel light.
+      el.style.transition = `transform ${dur}ms cubic-bezier(0.22, 1, 0.36, 1)`;
       el.style.transform = "translate(0, 0)";
       animCleanups.set(
         el,
@@ -2276,6 +2334,8 @@ export function Board({
             intensity: fxCalmClock ? Math.min(0.6, FX_LEVELS[fxLevel].vfx) : FX_LEVELS[fxLevel].vfx,
             durationScale: fxDurationScale(),
           });
+          // A real zone play was staged for this key: suppress the floor fallback.
+          vfxStagedKeyRef.current = zoneSigSeenKeyRef.current;
         }
       }
     }
@@ -3503,7 +3563,12 @@ export function Board({
                   <div className="sq-pickable absolute inset-0 pointer-events-none rounded-sm" />
                 )}
                 {fogHide ? (
-                  <div className="absolute inset-0 bg-gradient-to-br from-stone-700/85 to-stone-900/95 backdrop-blur-sm pointer-events-none" />
+                  // A near-opaque tint instead of backdrop-blur: fog-of-war can
+                  // cover ~16 squares at once, and backdrop-filter is the costliest
+                  // paint property — each blurred square re-samples the board behind
+                  // it every frame anything animates. A solid tint hides the square
+                  // just as well and composites for free.
+                  <div className="absolute inset-0 bg-gradient-to-br from-stone-700/95 to-stone-900/98 pointer-events-none" />
                 ) : piece ? (
                   <div
                     // The fx key remounts the piece when a morph/summon fires so

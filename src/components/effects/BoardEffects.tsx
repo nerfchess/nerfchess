@@ -24,12 +24,12 @@ import { CategoryArrival } from "./cardEntrance";
 import { cardFaceIcon } from "@/lib/cardIcon";
 import type { PieceType } from "@/engine/types";
 import "./effects.css";
-// The APEX (tier 9/10) set pieces below compose the gp-* keyframes that live
-// in godPlays.css (transform/opacity only, one-shot, hidden under reduced
-// motion by that file's guard). Imported here so the classes are always
-// loaded with this file; global CSS imports dedupe, so godPlays.tsx importing
-// it too is fine.
-import "./godPlays.css";
+// NOTE: godPlays.css (the 753-line APEX tier-9/10 stylesheet) is intentionally
+// NOT imported here. It ships with the LAZY signature-visuals chunk instead
+// (godPlays.tsx and sigVisuals.tsx both import it), which prefetchSignatureVisuals
+// warms on board mount — so it still loads well before any APEX card can fire,
+// but it no longer weighs down the eager Board bundle. Global CSS imports dedupe,
+// so a single copy loads regardless of which chunk requests it first.
 
 // --- Small inline glyphs (replacements for emoji/dingbat markers) -----------
 

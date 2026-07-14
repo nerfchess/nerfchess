@@ -1732,7 +1732,9 @@ html[data-anim="off"] .sq-pickable {
   pointer-events: none;
   z-index: 60;
   transform: translate(-50%, -50%);
-  filter: drop-shadow(0 14px 18px rgba(0,0,0,0.5));
+  /* A tighter, closer shadow reads as a light piece skimming the board rather
+     than one hoisted far above it — and repaints cheaper on the moving ghost. */
+  filter: drop-shadow(0 6px 8px rgba(0,0,0,0.38));
 }
 
 /* --- Animations --- */
