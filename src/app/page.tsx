@@ -53,6 +53,17 @@ export default function HomePage() {
             </Link>
           </h1>
 
+          {/* One quiet, obvious door for brand-new players: the built-in
+              guided tutorial (a real bot game with coach marks). */}
+          <Link
+            href="/tutorial"
+            className="mt-3 inline-flex items-center gap-2 border border-gold/40 bg-gold/10 px-3 py-1.5 text-[12px] text-gold-leaf no-underline transition-colors hover:bg-gold/20"
+          >
+            <span className="smallcaps">New here?</span>
+            Learn the game in 3 minutes
+            <span aria-hidden>→</span>
+          </Link>
+
           <LiveNowStrip />
 
           <ReturnToGameBanner />
