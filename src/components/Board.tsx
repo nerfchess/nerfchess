@@ -1,6 +1,14 @@
 "use client";
 
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import React, {
+  type CSSProperties,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Piece,
@@ -36,7 +44,7 @@ import {
   SummonPoof,
   TransformFlourish,
 } from "./effects/BoardEffects";
-import { PLUGIN_SIGNATURES } from "./effects/sigPlugins";
+import { PLUGIN_ID_SET, PLUGIN_SIGNATURES } from "./effects/sigPlugins";
 import { BRAINROT_MASCOT_IDS, SidelineMascot } from "./effects/SidelineMascot";
 import { ExpansionZone } from "./effects/ExpansionZone";
 import {
@@ -46,18 +54,14 @@ import {
   type GenConfig,
 } from "./effects/genSignature";
 
-// Companion pieces (I Love Cami + the NewJeans pocket companions): each card
-// binds a placed piece whose square rides on the instance's state.sq
-// (trackBoundPiece pattern), and the board renders bespoke portrait art at
-// that square instead of the standard sprite. Art lives in public/; the id
-// set here must match the companion cards in engine/buffs/personal.ts.
-const COMPANION_ART: Record<string, string> = {
-  i_love_cam: "/companions/cami.svg",
-  minji: "/newjeans/minji.svg",
-  hanni: "/newjeans/hanni.svg",
-  danielle: "/newjeans/danielle.svg",
-  haerin: "/newjeans/haerin.svg",
-  hyein: "/newjeans/hyein.svg",
+// Companion pieces (I Love Cami): the card binds a placed piece whose square
+// rides on the instance's state.sq (trackBoundPiece pattern), and the board
+// renders bespoke portrait art at that square instead of the standard sprite.
+// Art lives in public/; the id set here must match the companion cards in
+// engine/buffs/personal.ts, and each entry names the piece class the card
+// places so the art can follow her across optimistic overlays.
+const COMPANION_ART: Record<string, { art: string; piece: PieceType }> = {
+  i_love_cam: { art: "/companions/cami.svg", piece: "q" },
 };
 
 // Signature resolution: bespoke entries win; every other card falls back to
@@ -71,6 +75,12 @@ const sigOf = (id: string): SignatureConfig | undefined => SIGNATURES[id] ?? PLU
 function resolveSignature(id: string): SignatureConfig | GenConfig | undefined {
   const bespoke = sigOf(id);
   if (bespoke) return bespoke;
+  // Plugin-covered card whose entry has not been published yet (the lazy
+  // signature-visuals chunk is still loading): treat it as PENDING bespoke.
+  // Falling through to the generated config here played the wrong,
+  // default-looking art for a card that has a customized play — no art beats
+  // wrong art, and the chunk is prefetched on mount so the window is tiny.
+  if (PLUGIN_ID_SET.has(id)) return undefined;
   const def = BUFF_BY_ID[id];
   if (!def) return undefined;
   let cfg = genConfigCache.get(id);
@@ -310,6 +320,70 @@ function PlayAnnouncement({ name, tier, outcome }: { name: string; tier: number;
   );
 }
 
+/** One-shot "the rule descends" splash for a newly-known nerf: a brief ink
+ * wash over the crop, the rule's name stamped big (the PlayAnnouncement
+ * banner family), and a pulse of the hostile NerfAura styling on every square
+ * the rule affects, all over ~2.5s. Decorative but informative; the caller
+ * gates it behind the fx-hidden switch and the CSS drops every animation
+ * under prefers-reduced-motion (the elements then hold at opacity 0). */
+function NerfRevealSplash({
+  name,
+  tier,
+  mine,
+  squares,
+  orientation,
+}: {
+  name: string;
+  tier: number;
+  mine: boolean;
+  squares: number[];
+  orientation: Color;
+}) {
+  return (
+    <div
+      aria-hidden
+      className="pointer-events-none absolute inset-0 z-[44]"
+      style={{ "--tier-rgb": tierRgb(tier) } as CSSProperties}
+    >
+      {/* the ink wash: the board darkens for a beat while the rule lands */}
+      <div className="nerf-reveal-wash absolute inset-0" />
+      {/* hostile-aura pulse on every affected square */}
+      {squares.map((sq) => {
+        if (sq < 0 || sq > 63) return null;
+        const col = orientation === "w" ? FILE(sq) : 7 - FILE(sq);
+        const row = orientation === "w" ? 7 - RANK(sq) : RANK(sq);
+        return (
+          <div
+            key={sq}
+            className="nerf-reveal-cell absolute"
+            style={{ left: `${col * 12.5}%`, top: `${row * 12.5}%`, width: "12.5%", height: "12.5%" }}
+          >
+            <NerfAura tier={tier} />
+          </div>
+        );
+      })}
+      {/* the rule stamps in big (PlayAnnouncement styling family) */}
+      <div className="absolute inset-x-0 top-[9%] flex justify-center">
+        <div className="nerf-reveal-stamp mx-4 flex max-w-[min(92%,30rem)] flex-col items-center gap-1 border-2 border-white/25 bg-ink-950/85 px-6 py-3 text-center shadow-plate backdrop-blur-[2px]">
+          <div className="flex items-center gap-2">
+            <span className={`font-display text-2xl font-bold tracking-wide sm:text-3xl tier-${tier}`}>
+              {name}
+            </span>
+            <span
+              className={`shrink-0 rounded-[1px] border px-1.5 py-px font-display text-[11px] font-bold tier-bg-${tier} tier-${tier}`}
+            >
+              {TIER_ROMAN[tier as 1]}
+            </span>
+          </div>
+          <span className="smallcaps text-[11px] font-semibold tracking-wider text-parchment-300">
+            {mine ? "your rule takes the board" : "opponent's rule revealed"}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // --- Per-square corner allocation (overlap fix) ------------------------------
 // Several small marks anchor to a square's corners: the countdown chip, the
 // freeze flake, the bound-buff sigil, the motif badge, plus the shield disc
@@ -496,6 +570,30 @@ interface Props {
    * square it could reach, visually distinct from your own move hints.
    * Cleared by the next tap, your own selection, or any position change. */
   opponentMoves?: Move[];
+  /** Every nerf currently KNOWN to the viewer (their own from game start,
+   * the opponent's once revealed). The board plays a one-shot "the rule
+   * descends" splash for each entry exactly once, keyed on color+id: a brief
+   * ink wash, the rule's name stamped big, and a ~2.5s hostile-aura pulse on
+   * the squares the nerf's visual() marks. Reduced-motion and the fx-hidden
+   * switch stand the whole splash down. */
+  nerfReveals?: NerfRevealInfo[];
+}
+
+/** Placeholder rules that must never play the reveal splash: buff mode's
+ * no-nerf stub, the single-color internal stub, and the "nerf removed by a
+ * buff" replacement (see game.ts UNRESTRICTED_NERF / NOOP_NERF / FREED_NERF).
+ * Shared by both hosts so the gate cannot drift between them. */
+export const NERF_REVEAL_SKIP: ReadonlySet<string> = new Set(["none", "noop", "nerf_removed"]);
+
+/** One newly-known nerf for the reveal splash (see Props.nerfReveals). */
+export interface NerfRevealInfo {
+  id: string;
+  name: string;
+  tier: number;
+  /** Whose rule it is; the splash subtitle reads differently for each side. */
+  color: Color;
+  /** Squares the rule affects right now (the nerf's visual() highlight). */
+  highlightSquares?: number[];
 }
 
 /** One derived piece-bound buff marker: everything the corner sigil and its
@@ -1119,6 +1217,7 @@ export function Board({
   fxBoard,
   buffs,
   opponentMoves,
+  nerfReveals,
 }: Props) {
   const pickSquareSet = useMemo(() => new Set(pickSquares ?? []), [pickSquares]);
   const pickingSquares = !!onPickSquare;
@@ -1275,6 +1374,42 @@ export function Board({
   // the cast-level generated lead only fires for diff-less plays (clock,
   // draft, info cards...) so a card never leads twice.
   const castLeadSuppressKeyRef = useRef(0);
+  // --- Nerf reveal splash: one shot per newly-known rule --------------------
+  // Keys already played (color:id), so a reveal fires exactly once no matter
+  // how often the host re-derives the prop array. The latest unseen entry
+  // wins the mount (two reveals in the same commit are vanishingly rare and
+  // the banner would fully overlap anyway).
+  const nerfRevealSeenRef = useRef<Set<string>>(new Set());
+  const nerfRevealKeyRef = useRef(0);
+  const [nerfReveal, setNerfReveal] = useState<{
+    key: number;
+    name: string;
+    tier: number;
+    mine: boolean;
+    squares: number[];
+  } | null>(null);
+  useEffect(() => {
+    if (!nerfReveals || nerfReveals.length === 0) return;
+    let fresh: NerfRevealInfo | null = null;
+    for (const r of nerfReveals) {
+      const k = `${r.color}:${r.id}`;
+      if (nerfRevealSeenRef.current.has(k)) continue;
+      nerfRevealSeenRef.current.add(k);
+      fresh = r;
+    }
+    if (!fresh) return;
+    // Reduced motion: mark it seen (above) but never stage the splash. The
+    // rule text lives in the corner nerf card either way.
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    nerfRevealKeyRef.current += 1;
+    setNerfReveal({
+      key: nerfRevealKeyRef.current,
+      name: fresh.name,
+      tier: fresh.tier,
+      mine: fresh.color === myColor,
+      squares: fresh.highlightSquares ?? [],
+    });
+  }, [nerfReveals, myColor]);
   useEffect(() => {
     if (!signatureCard || signatureCard.key <= castSeenKeyRef.current) return;
     castSeenKeyRef.current = signatureCard.key;
@@ -1698,21 +1833,40 @@ export function Board({
   // the square must still hold the owner's piece (a captured companion's card
   // is spent, so nothing stale can paint). Masked instances carry an empty
   // id and never match.
+  //
+  // The tracked square only updates on COMMITTED state, but `board` here is
+  // the DISPLAYED board — during the optimistic-move / server-ack window and
+  // under a queued-premove preview she has already been drawn on a different
+  // square. Follow her along the displayed board instead of dropping the art
+  // (the "Cami flickers to a plain queen when she moves" bug): if the tracked
+  // square no longer holds the expected friendly piece, chase it through the
+  // displayed lastMove and then the queued premove chain, and only paint once
+  // the resolved square really shows her piece class in her color.
   const companionSquares = useMemo(() => {
     const m = new Map<number, { art: string }>();
     if (!buffs) return m;
     for (const color of ["w", "b"] as Color[]) {
       for (const inst of buffs.players[color].buffs) {
-        const art = COMPANION_ART[inst.id];
-        if (!art || inst.spent || inst.nullified) continue;
-        const sq = inst.state.sq as number | undefined;
+        const spec = COMPANION_ART[inst.id];
+        if (!spec || inst.spent || inst.nullified) continue;
+        let sq = inst.state.sq as number | undefined;
         if (typeof sq !== "number" || sq < 0 || sq > 63) continue;
-        const p = board.pieces[sq];
-        if (p && p.color === color) m.set(sq, { art });
+        const holds = (s: number) => {
+          const p = board.pieces[s];
+          return !!p && p.color === color && p.type === spec.piece;
+        };
+        if (!holds(sq)) {
+          // The displayed board is ahead of the committed card state. A move
+          // she made (optimistic, pending ack, or the committed move a premove
+          // preview builds on) shows as lastMove; queued premoves stack on top.
+          if (lastMove && lastMove.from === sq && lastMove.to != null) sq = lastMove.to;
+          for (const pm of premoves ?? []) if (pm.from === sq) sq = pm.to;
+        }
+        if (holds(sq)) m.set(sq, { art: spec.art });
       }
     }
     return m;
-  }, [buffs, board.pieces]);
+  }, [buffs, board.pieces, lastMove, premoves]);
   // Movement-grant HYBRID sprites (owner request: an empowered piece should
   // look like a genuinely new piece). Every running card that declares a
   // movement grant (CardFx motif "empower" with moveAs) already paints a
@@ -3441,6 +3595,20 @@ export function Board({
         {/* eslint-enable react-hooks/refs */}
         {cast && BUFF_BY_ID[cast.id] && (
           <PlayAnnouncement key={`ann-${cast.key}`} name={BUFF_BY_ID[cast.id]!.name} tier={cast.tier} outcome={cast.outcome} />
+        )}
+        {/* Nerf reveal: "the rule descends" — plays once per newly-known rule
+            (the viewer's own at game start, the opponent's when revealed).
+            Decorative layer, so the fx-hidden switch stands it down; the CSS
+            drops it entirely under prefers-reduced-motion. */}
+        {!fxHiddenPref && nerfReveal && (
+          <NerfRevealSplash
+            key={`nerfrev-${nerfReveal.key}`}
+            name={nerfReveal.name}
+            tier={nerfReveal.tier}
+            mine={nerfReveal.mine}
+            squares={nerfReveal.squares}
+            orientation={orientation}
+          />
         )}
         {/* Diff-less lead: a played card that removes nothing and leaves no
             zone (clock steals, draft tricks, info peeks...) still gets its

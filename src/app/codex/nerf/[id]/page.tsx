@@ -6,7 +6,11 @@ import { NERF_BY_ID, metaDescription, tierName } from "@/lib/cardCodex";
 
 // One static page per nerf. Only pre-generated ids resolve; anything else 404s
 // instead of spinning up the worker on demand.
-export const dynamicParams = false;
+// dynamicParams=true: every id is still prerendered at build time, but a
+// deployment whose static-asset upload dropped a page (the live "codex 404
+// no matter what" reports) now falls back to rendering it on demand in the
+// worker instead of hard-404ing. Unknown ids still 404 via notFound().
+export const dynamicParams = true;
 
 export function generateStaticParams() {
   return ALL_NERFS.map((n) => ({ id: n.id }));

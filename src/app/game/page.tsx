@@ -1,8 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { AbilityBar } from "@/components/AbilityBar";
-import { Board } from "@/components/Board";
+import { Board, NERF_REVEAL_SKIP, type NerfRevealInfo } from "@/components/Board";
 import { BoardPlayerRow } from "@/components/BoardPlayerRow";
 import { ClockPill } from "@/components/ClockPill";
 // The end screen is never part of first paint; loading it on demand keeps it
@@ -1489,6 +1488,36 @@ function GamePage() {
   // mode hides both rule sections entirely, there are no nerfs at all.
   const hideOppNerfCard = plainMode || gameMode === "buff" || (draftMode && !oppRevealed);
   const hideMyNerfCard = plainMode || gameMode === "buff";
+  // "The rule descends": every nerf the viewer currently knows, for the
+  // board's one-shot reveal splash (fired once per color+id inside Board) —
+  // your own rule from game start, the bot's when it reveals (peek, reveal
+  // buff, or game end). Same wiring as OnlineMatch; placeholder rules never
+  // announce. Each entry pulses the squares the rule's visual() marks.
+  const nerfReveals: NerfRevealInfo[] = [];
+  if (!hideMyNerfCard && !NERF_REVEAL_SKIP.has(myNerf.id)) {
+    nerfReveals.push({
+      id: myNerf.id,
+      name: myNerf.name,
+      tier: myNerf.tier as number,
+      color: myColor,
+      highlightSquares: [...(visual?.highlightSquares ?? []), ...(visual?.bannedSquares ?? [])],
+    });
+  }
+  if (!hideOppNerfCard && oppRevealed && !NERF_REVEAL_SKIP.has(opponentNerf.id)) {
+    const oppColor: Color = myColor === "w" ? "b" : "w";
+    const oppState = myColor === "w" ? game.black.state : game.white.state;
+    const oppVisual = opponentNerf.visual?.(oppState, makeContext(game, oppColor));
+    nerfReveals.push({
+      id: opponentNerf.id,
+      name: opponentNerf.name,
+      tier: opponentNerf.tier as number,
+      color: oppColor,
+      highlightSquares: [
+        ...(oppVisual?.highlightSquares ?? []),
+        ...(oppVisual?.bannedSquares ?? []),
+      ],
+    });
+  }
   // Nerf mode: held boons ride in the same corner card as the nerf, so the
   // handicap and its reliefs read together at a glance.
   const myHeldBoons =
@@ -1991,6 +2020,7 @@ function GamePage() {
                         }
                   }
                   lastMove={lastMoveForDisplay}
+                  nerfReveals={nerfReveals}
                   disabled={!!game.result || premovePending || isReviewingHistory || !!confirmMovePending || !!myOffer}
                   premoveMode={!isReviewingHistory && premoveMode}
                   premoves={isReviewingHistory ? [] : validPremoves}
@@ -2074,23 +2104,6 @@ function GamePage() {
                 </div>
               )}
             </div>
-            {/* Ability bar: the quick-cast surface, docked beside the board.
-                Same activation pipe as the dock's Use buttons. */}
-            {game.buffs && !isReviewingHistory && (
-              <AbilityBar
-                game={game}
-                myColor={myColor}
-                canAct={!game.result && game.board.turn === myColor && !myOffer && !isReviewingHistory}
-                onStartUse={(i) => {
-                  snapshotMySignature(i);
-                  buffTargeting.start(i);
-                }}
-                activeIndex={buffTargeting.targeting?.buffIndex ?? null}
-                orientation="vertical"
-                style={railHeightStyle}
-                className="hidden self-start sm:flex sm:max-h-[var(--board-height)]"
-              />
-            )}
             <div
               className={
                 "hidden min-h-0 overflow-hidden gap-3 sm:grid sm:h-[var(--board-height)] sm:w-72 sm:shrink-0 " +
@@ -2127,25 +2140,6 @@ function GamePage() {
           </div>
         </div>
       </div>
-
-      {/* Mobile quick-cast strip: the same ability bar, horizontal, floating
-          just above the move drawer's bar. */}
-      {game.buffs && !isReviewingHistory && (
-        <div className="pointer-events-none fixed inset-x-0 bottom-[calc(2.75rem+env(safe-area-inset-bottom))] z-30 flex justify-center px-2 pb-1 sm:hidden">
-          <AbilityBar
-            game={game}
-            myColor={myColor}
-            canAct={!game.result && game.board.turn === myColor && !myOffer && !isReviewingHistory}
-            onStartUse={(i) => {
-              snapshotMySignature(i);
-              buffTargeting.start(i);
-            }}
-            activeIndex={buffTargeting.targeting?.buffIndex ?? null}
-            orientation="horizontal"
-            className="pointer-events-auto"
-          />
-        </div>
-      )}
 
       <MobileMoveDrawer
         moves={game.board.history}

@@ -2349,6 +2349,53 @@ html[data-theme="light"] .bg-black\/70 {
   }
 }
 
+/* --- Nerf reveal splash ("the rule descends") ---------------------------------
+   One shot ~2.5s when a nerf becomes known to the viewer (their own at game
+   start, the opponent's when revealed): an ink wash over the crop, the rule's
+   name stamped big, and the hostile aura pulsing on every affected square.
+   Everything opacity/transform-only and ending at opacity 0 (the mount waits
+   invisibly to be replaced, the one-shot convention). --tier-rgb is set by
+   the mount so the wash tint matches the rule's tier. */
+@keyframes nerf-reveal-wash {
+  0% { opacity: 0; }
+  12% { opacity: 1; }
+  72% { opacity: 0.75; }
+  100% { opacity: 0; }
+}
+.nerf-reveal-wash {
+  background:
+    radial-gradient(ellipse at 50% 32%, rgb(var(--tier-rgb, 181 70 65) / 0.18), transparent 72%),
+    linear-gradient(180deg, rgba(9, 10, 14, 0.55), rgba(9, 10, 14, 0.32) 45%, rgba(9, 10, 14, 0.55));
+  animation: nerf-reveal-wash 2.5s ease-out both;
+}
+@keyframes nerf-reveal-stamp {
+  0% { opacity: 0; transform: scale(1.5) rotate(-1.2deg); }
+  13% { opacity: 1; transform: scale(0.97) rotate(-1.2deg); }
+  19% { transform: scale(1.03) rotate(-1.2deg); }
+  25% { transform: scale(1) rotate(-1.2deg); }
+  80% { opacity: 1; transform: scale(1) rotate(-1.2deg); }
+  100% { opacity: 0; transform: scale(0.98) rotate(-1.2deg); }
+}
+.nerf-reveal-stamp {
+  border-radius: 1px;
+  animation: nerf-reveal-stamp 2.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+@keyframes nerf-reveal-cell {
+  0% { opacity: 0; }
+  16% { opacity: 1; }
+  38% { opacity: 0.5; }
+  58% { opacity: 1; }
+  78% { opacity: 0.55; }
+  100% { opacity: 0; }
+}
+.nerf-reveal-cell { animation: nerf-reveal-cell 2.5s ease-in-out both; }
+@media (prefers-reduced-motion: reduce) {
+  .nerf-reveal-wash, .nerf-reveal-stamp, .nerf-reveal-cell {
+    animation: none !important;
+    opacity: 0 !important;
+  }
+}
+
 /* --- Left-rail luxe (additive) -----------------------------------------------
    Opt-in dressing for the in-game command rail: richer layered plate texture,
    gold corner filigree echoing the chamfered corner-cut, a glinting header
