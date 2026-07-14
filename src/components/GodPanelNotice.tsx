@@ -32,7 +32,7 @@ export function GodPanelNotice({ notices }: { notices: GodPanelNoticeItem[] }) {
         <div
           key={n.key}
           className={
-            "glass-chip animate-rise flex max-w-[22rem] items-center gap-2 border border-coral/60 " +
+            "glass-chip animate-rise flex max-w-[min(22rem,calc(100vw-1.5rem))] items-center gap-2 border border-coral/60 " +
             "bg-coral/15 px-4 py-2 transition-opacity duration-300 " +
             (n.leaving ? "opacity-0" : "opacity-100")
           }
