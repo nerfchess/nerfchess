@@ -57,8 +57,9 @@ export function NerfCard({ nerf, revealed = true, compact = false, dense = false
     >
       {/* Watermark: faint by default; hovering the card brightens it in the
           card's tier (severity) color and nudges the scale. Transitions only
-          (no keyframes), so prefers-reduced-motion users just see the state
-          change; the scale nudge is additionally gated behind motion-safe. */}
+          (no keyframes), so with animations off in Settings users just see the
+          state change; the scale nudge is additionally gated behind motion-safe
+          (OS reduced-motion). */}
       {createElement(faceIcon, {
         "aria-hidden": true,
         className: `pointer-events-none absolute -bottom-3 -right-2 tier-${nerf.tier} opacity-[0.08] transition-all duration-200 group-hover/card:opacity-[0.18] motion-safe:group-hover/card:scale-105`,

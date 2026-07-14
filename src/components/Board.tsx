@@ -325,7 +325,7 @@ function PlayAnnouncement({ name, tier, outcome }: { name: string; tier: number;
  * banner family), and a pulse of the hostile NerfAura styling on every square
  * the rule affects, all over ~2.5s. Decorative but informative; the caller
  * gates it behind the fx-hidden switch and the CSS drops every animation
- * under prefers-reduced-motion (the elements then hold at opacity 0). */
+ * when animations are off in Settings (the elements then hold at opacity 0). */
 function NerfRevealSplash({
   name,
   tier,
@@ -1276,7 +1276,7 @@ export function Board({
     const shake = FX_LEVELS[fxLevelRef.current].shake;
     if (shake === "none") return; // Calm and Off never thump the board
     const el = cropRef.current;
-    if (el && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    if (el && !motionOff()) {
       el.classList.remove("fx-board-shake", "fx-board-shake--big");
       void el.offsetWidth;
       el.classList.add("fx-board-shake");
@@ -1347,7 +1347,7 @@ export function Board({
   // tier. Runs for bespoke-signature cards too (their square art plays on
   // top); its per-play sound only fires for cards with NO bespoke entry so
   // nothing double-voices. Marquee-tier casts (8+) also thump the whole board
-  // crop with a transform-only shake, skipped under prefers-reduced-motion.
+  // crop with a transform-only shake, skipped when animations are off in Settings.
   const cropRef = useRef<HTMLDivElement | null>(null);
   const [cast, setCast] = useState<{
     key: number;
@@ -1398,9 +1398,9 @@ export function Board({
       fresh = r;
     }
     if (!fresh) return;
-    // Reduced motion: mark it seen (above) but never stage the splash. The
-    // rule text lives in the corner nerf card either way.
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    // Animations off in Settings: mark it seen (above) but never stage the
+    // splash. The rule text lives in the corner nerf card either way.
+    if (motionOff()) return;
     nerfRevealKeyRef.current += 1;
     setNerfReveal({
       key: nerfRevealKeyRef.current,
@@ -1437,7 +1437,7 @@ export function Board({
     }
     if (intensity === "marquee" && !fxCalmClockRef.current && FX_LEVELS[fxLevelRef.current].shake !== "none") {
       const el = cropRef.current;
-      if (el && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      if (el && !motionOff()) {
         el.classList.remove("fx-board-shake", "fx-board-shake--big");
         // Force a reflow so removing and re-adding the class restarts the
         // animation even when two marquee casts land back to back.
@@ -3599,7 +3599,7 @@ export function Board({
         {/* Nerf reveal: "the rule descends" — plays once per newly-known rule
             (the viewer's own at game start, the opponent's when revealed).
             Decorative layer, so the fx-hidden switch stands it down; the CSS
-            drops it entirely under prefers-reduced-motion. */}
+            drops it entirely when animations are off in Settings. */}
         {!fxHiddenPref && nerfReveal && (
           <NerfRevealSplash
             key={`nerfrev-${nerfReveal.key}`}

@@ -232,7 +232,7 @@ export function OppPlaysDockSection({ plays }: { plays: OppPlay[] }) {
           const tier = p.card.tier as Tier;
           const expanded = overrides[p.key] ?? idx < AUTO_EXPAND_COUNT;
           // One-shot arrival flash (shares the dock pocket keyframes loaded
-          // by BuffDock; dropped under prefers-reduced-motion by that CSS).
+          // by BuffDock; dropped when animations are off in Settings by that CSS).
           const justLanded = now - p.at < FEED_TTL_MS + 1600;
           return (
             <li key={p.key}>

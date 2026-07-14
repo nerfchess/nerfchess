@@ -3,7 +3,7 @@
 // Board effect overlays: one component per card-effect family, mounted only
 // on affected squares by Board.tsx. All SVG inline (no emoji), all animation
 // transform/opacity-only, defined in effects.css. Persistent overlays render
-// a static end state under prefers-reduced-motion; one-shot flourishes hide.
+// a static end state when animations are off in Settings; one-shot flourishes hide.
 
 import React from "react";
 import {
@@ -2388,8 +2388,8 @@ export function SignatureOverlay(props: SignatureVisualProps) {
 //           with a shockwave, and a spark ring.
 //   marquee (tier 8-10): a board takeover — vignette dim, twin sweeping beams,
 //           a colossal emblem, triple shockwaves (Board adds the screen shake).
-// All transform/opacity-only, all one-shot, all hidden under
-// prefers-reduced-motion (see effects.css). The emblem reuses the category
+// All transform/opacity-only, all one-shot, all hidden when animations are off
+// in Settings (see effects.css). The emblem reuses the category
 // suit glyphs so the read matches the card face the player just clicked.
 
 export type CastIntensity = "sleek" | "grand" | "marquee";

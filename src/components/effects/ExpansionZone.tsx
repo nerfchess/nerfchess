@@ -8,8 +8,8 @@
 // the new corner. Pure decoration: the actual mechanic (horizontal cylinder
 // wrap for rooks/queens) is real moves, so its destinations already show up
 // as normal legal-move dots. pointer-events-none, hidden on small screens,
-// gated by the fx-hidden switch at the mount site, static under
-// prefers-reduced-motion (motes hide, tiles stay).
+// gated by the fx-hidden switch at the mount site, static when animations are
+// off in Settings (motes hide, tiles stay).
 
 import React from "react";
 import "./expansionZone.css";

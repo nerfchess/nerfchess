@@ -5,7 +5,7 @@
 // along the viewer's edge of the board crop while any of their passive grants
 // is live. All paint/animation lives in globals.css (.empower-shine /
 // .edge-aura-*); keyframes are transform/opacity only and are cut by the
-// prefers-reduced-motion gate there.
+// animations-off gate there (html[data-anim="off"]).
 //
 // PER-CARD AURA IDENTITY: two different empower cards used to wear identical
 // shines (same tier = same color, same art). Every aura now derives a stable

@@ -2,6 +2,7 @@
 import React from "react";
 import type { CSSProperties } from "react";
 import { Color, PieceType } from "@/engine/types";
+import { motionOff, SETTINGS_CHANGED_EVENT } from "@/lib/settings";
 
 interface Props {
   type: PieceType;
@@ -182,21 +183,19 @@ export const WalnutPiece = React.memo(function WalnutPiece({
 // All markers below follow the WalnutPiece pattern: per-instance gradient ids,
 // plump pseudo-3D shading, a soft ground shadow, and idle motion that is
 // TRANSFORM/OPACITY ONLY. Idle loops are SMIL (<animate*> inside the SVG) so
-// the markers stay self-contained; they are gated on prefers-reduced-motion by
-// the hook below, exactly like their CSS-animated neighbours (whose loops are
-// cut by the global reduced-motion block in globals.css).
+// the markers stay self-contained; they are gated on the animations-off setting
+// by the hook below, exactly like their CSS-animated neighbours (whose loops are
+// cut by the global animations-off block in globals.css).
 
-/** True when the viewer prefers reduced motion. SSR-safe (false on the server,
- * resolved on mount) and live (tracks the media query). */
+/** True when animations are turned off in Settings. SSR-safe (false on the
+ * server, resolved on mount) and live (tracks the in-app setting). */
 function useReducedMotion(): boolean {
   const [reduced, setReduced] = React.useState(false);
   React.useEffect(() => {
-    const mq = window.matchMedia?.("(prefers-reduced-motion: reduce)");
-    if (!mq) return;
-    const update = () => setReduced(mq.matches);
+    const update = () => setReduced(motionOff());
     update();
-    mq.addEventListener?.("change", update);
-    return () => mq.removeEventListener?.("change", update);
+    window.addEventListener(SETTINGS_CHANGED_EVENT, update);
+    return () => window.removeEventListener(SETTINGS_CHANGED_EVENT, update);
   }, []);
   return reduced;
 }

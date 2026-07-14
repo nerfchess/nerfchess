@@ -1277,7 +1277,7 @@ function BoardWideLead({
 //                   past the board edges,
 //   (d) aftermath — the second, softer ring fading out.
 // Composes only existing fx-sig-* classes (transform/opacity, one-shot, hidden
-// under prefers-reduced-motion by effects.css), stays inside BoardWideStage's
+// when animations are off in Settings by effects.css), stays inside BoardWideStage's
 // oversized-clipped crop, and finishes well inside the 2.5s play budget.
 const GOD_FAN = [
   { r: "-28deg", d: 0, w: "7%" },
@@ -1374,7 +1374,7 @@ function GodEvent({
 // breaker levers), up to THREE shockwaves, and a ~3s budget (vs 2.5s). The
 // gp-* keyframes live in godPlays.css (imported at the top of this file);
 // everything stays transform/opacity-only, one-shot, inside the oversized-
-// clipped BoardWideStage crop, and hidden under prefers-reduced-motion.
+// clipped BoardWideStage crop, and hidden when animations are off in Settings.
 
 /** Cinema letterbox bars along the crop's top and bottom edges (the board is
  * the canvas's central 21.5%..78.5% band). */

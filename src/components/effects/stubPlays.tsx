@@ -1,8 +1,8 @@
 // Bespoke plugin signatures for the twelve newly implemented "stub" cards
 // (the rewind / undo / nerf-meta family). Self-contained in the sigPlugins.tsx
 // mould: own inline SVG glyphs + own stubPlays.css, transform/opacity only,
-// reduced-motion safe (a local media guard flattens the motion, and the
-// caller's reduced-motion layer gates it too). No imports from
+// animations-off safe (a local html[data-anim="off"] guard flattens the motion,
+// and the caller's animations-off layer gates it too). No imports from
 // BoardEffects.tsx (cycle hazard); only the SigPlugin TYPE is imported.
 //
 // NOTE: this module is intentionally NOT registered anywhere (it is absent from
