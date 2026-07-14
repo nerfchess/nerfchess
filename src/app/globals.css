@@ -1823,20 +1823,17 @@ html[data-anim="off"] .sq-pickable {
   26% { opacity: 0.9; transform: scale(1.05); }
   100% { opacity: 0; transform: scale(2.2); }
 }
-@keyframes walnut-squirrel-drop {
-  0% { transform: translate(-50%, -210%) scale(0.5) rotate(-20deg); opacity: 0; }
-  10% { opacity: 1; }
-  19% { transform: translate(-50%, -1%) scale(1.32) rotate(6deg); opacity: 1; }
-  26% { transform: translate(-50%, 10%) scaleX(1.36) scaleY(0.7) rotate(0deg); }
-  34% { transform: translate(-62%, -22%) scaleX(0.86) scaleY(1.2) rotate(-10deg); }
-  42% { transform: translate(-38%, -4%) scale(1.04) rotate(8deg); }
-  50% { transform: translate(-64%, -12%) scale(1.06) rotate(-14deg); }
-  58% { transform: translate(-36%, -3%) scale(1) rotate(13deg); }
-  66% { transform: translate(-60%, -10%) scale(1.05) rotate(-9deg); }
-  74% { transform: translate(-42%, -4%) scale(1) rotate(6deg); opacity: 1; }
-  100% { transform: translate(-50%, -232%) scale(0.55) rotate(26deg); opacity: 0; }
+/* Carved root-claws grip the walnutted square from its corners: each claw
+   slides in past center with a slight overshoot and settles, then PERSISTS as
+   the "held fast" mark for as long as the hex runs (WalnutPiece carries the
+   idle motion). Per-corner delay is set inline. */
+@keyframes walnut-root-grip {
+  0% { transform: translate(var(--rx, -60%), var(--ry, -60%)) scale(0.6); opacity: 0; }
+  40% { opacity: 1; }
+  70% { transform: translate(6%, 6%) scale(1.06); }
+  100% { transform: translate(0, 0) scale(1); opacity: 1; }
 }
-.walnut-squirrel { animation: walnut-squirrel-drop 1.8s ease-in-out both; }
+.walnut-root { animation: walnut-root-grip 0.55s cubic-bezier(0.3, 1.2, 0.4, 1) both; }
 
 /* Shackled (king-only / no-pawn-advance hex): a single grey clamp-down pulse
    when the lock lands, then a calm persistent pall. Runs once on mount. */
@@ -1983,7 +1980,9 @@ html[data-anim="off"] .empower-rune, html[data-anim="off"] .empower-diamond, htm
 /* Rising motes are transient particles: with the animation cut their base
    opacity (0) hides them outright, matching the walnut-squirrel precedent. */
 html[data-anim="off"] .empower-mote { animation: none !important; }
-html[data-anim="off"] .walnut-squirrel { animation: none !important; opacity: 0 !important; }
+/* Root claws are persistent state (the grip lasts while the hex runs), so
+   animations-off shows their settled end state instead of hiding them. */
+html[data-anim="off"] .walnut-root { animation: none !important; transform: none; opacity: 1; }
 html[data-anim="off"] .sq-walnut::after { animation: none !important; opacity: 0 !important; }
 html[data-anim="off"] .dc-orbit-ring.spin, html[data-anim="off"] .dc-orbit-ring.spin-r,
 html[data-anim="off"] .dc-orbit-counter.spin, html[data-anim="off"] .dc-orbit-counter.spin-r {

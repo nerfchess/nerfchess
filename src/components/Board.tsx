@@ -10,6 +10,9 @@ import React, {
   useState,
 } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Sparkles, type LucideIcon } from "lucide-react";
+import { CardEntrance } from "./effects/cardEntrance";
+import { cardFaceIcon } from "@/lib/cardIcon";
 import {
   Piece,
   WalnutPiece,
@@ -38,8 +41,8 @@ import {
   SIGNATURES,
   type SignatureConfig,
   SignatureOverlay,
+  RootClaws,
   SnowflakeGlyph,
-  SquirrelGlyph,
   StunSwirl,
   SummonPoof,
   TransformFlourish,
@@ -1374,6 +1377,62 @@ export function Board({
   // the cast-level generated lead only fires for diff-less plays (clock,
   // draft, info cards...) so a card never leads twice.
   const castLeadSuppressKeyRef = useRef(0);
+  // --- Acquire entrance: one shot the moment a card ENTERS a hand -----------
+  // Diffs the public buff lists (both sides) by per-card instance count, so
+  // draft picks, steals and grants each announce themselves the moment they
+  // exist — including pure passives (clock drains, draft locks) that never
+  // observably mutate the board and so never fire a play. Masked opponent
+  // picks have an empty id and stay silent until revealed; an instance that
+  // arrives already spent/nullified (an instant resolved at pick) is the
+  // play's job, not an acquisition. The first non-null snapshot only seeds
+  // the counts: a mid-game reload must not replay every held card.
+  const entranceKeyRef = useRef(0);
+  const entranceSeenRef = useRef<Map<string, number> | null>(null);
+  const [entrance, setEntrance] = useState<{
+    key: number;
+    category: BuffCategory;
+    tier: number;
+    icon: LucideIcon;
+    name: string;
+    mine: boolean;
+  } | null>(null);
+  useEffect(() => {
+    if (!buffs) return;
+    const counts = new Map<string, number>();
+    const liveArrival = new Map<string, { tier: number; mine: boolean }>();
+    for (const color of ["w", "b"] as Color[]) {
+      for (const inst of buffs.players[color].buffs) {
+        if (!inst.id) continue;
+        const k = `${color}:${inst.id}`;
+        counts.set(k, (counts.get(k) ?? 0) + 1);
+        if (!inst.spent && !inst.nullified) {
+          liveArrival.set(k, { tier: inst.tier, mine: color === myColor });
+        }
+      }
+    }
+    const prev = entranceSeenRef.current;
+    entranceSeenRef.current = counts;
+    if (!prev) return;
+    let fresh: { id: string; tier: number; mine: boolean } | null = null;
+    for (const [k, n] of counts) {
+      if (n <= (prev.get(k) ?? 0)) continue;
+      const live = liveArrival.get(k);
+      if (!live) continue; // arrived spent: the cast layer already told it
+      fresh = { id: k.slice(2), ...live };
+    }
+    if (!fresh) return;
+    const def = BUFF_BY_ID[fresh.id];
+    if (!def) return;
+    entranceKeyRef.current += 1;
+    setEntrance({
+      key: entranceKeyRef.current,
+      category: def.category,
+      tier: fresh.tier,
+      icon: cardFaceIcon(def.id, def.category, def.icon) ?? Sparkles,
+      name: def.name,
+      mine: fresh.mine,
+    });
+  }, [buffs, myColor]);
   // --- Nerf reveal splash: one shot per newly-known rule --------------------
   // Keys already played (color:id), so a reveal fires exactly once no matter
   // how often the host re-derives the prop array. The latest unseen entry
@@ -3003,8 +3062,9 @@ export function Board({
             // Corner claims for this square (see CORNER_FALLBACK above).
             // Fixed priority: countdown chip > freeze flake > bound sigil >
             // motif badge. The shield disc keeps its fixed bottom-left art, so
-            // its corner is seeded as taken; the walnut squirrel is transient
-            // and top-center (never corner-anchored), so it claims nothing.
+            // its corner is seeded as taken; the walnut root-claws are thin
+            // decorative corner slivers badges may sit over, so they claim
+            // nothing.
             const shieldShown = !!piece && (shieldedSquares.has(sq) || kingSafeSquares.has(sq));
             const claimedCorners = new Set<BadgeCorner>();
             if (shieldShown) claimedCorners.add("bl");
@@ -3133,18 +3193,12 @@ export function Board({
                   </>
                 )}
                 {walnutSquares.has(sq) && (
-                  /* Hexed into a walnut: a heavy nut that can only shuffle one
-                     square. It sinks into the board (sq-walnut-sink) and a big
-                     squirrel scurries in once to bury it (one-shot on mount;
-                     hidden for reduced-motion). */
+                  /* Hexed into a walnut: the piece is entombed in the kintsugi
+                     shell (WalnutPiece) while carved root-claws clamp in from
+                     the square's corners and hold it fast for the duration. */
                   <>
                     <div className="absolute inset-0 bg-amber-700/20 pointer-events-none sq-walnut" />
-                    <span
-                      aria-hidden
-                      className="absolute -top-2 left-1/2 z-20 -translate-x-1/2 leading-none pointer-events-none walnut-squirrel"
-                    >
-                      <SquirrelGlyph size={28} />
-                    </span>
+                    <RootClaws />
                   </>
                 )}
                 {bananaSquares.has(sq) && (
@@ -3579,6 +3633,21 @@ export function Board({
             name={BUFF_BY_ID[cast.id]?.name}
             description={BUFF_BY_ID[cast.id]?.description}
             cardIcon={BUFF_BY_ID[cast.id]?.icon}
+            bespoke={!!sigOf(cast.id) || PLUGIN_ID_SET.has(cast.id)}
+          />
+        )}
+        {/* Acquire entrance: a card just ENTERED a hand (draft pick, steal,
+            grant). Fired from the buff-list diff above; passives and
+            off-board cards (clock drains, draft locks) announce themselves
+            here even though they never mutate the board. */}
+        {!fxHiddenPref && !fxCalmClock && entrance && (
+          <CardEntrance
+            key={`ent-${entrance.key}`}
+            category={entrance.category}
+            tier={entrance.tier}
+            icon={entrance.icon}
+            name={entrance.name}
+            mine={entrance.mine}
           />
         )}
         {/* extraBannerRef is staged during render by the extra-moves block
