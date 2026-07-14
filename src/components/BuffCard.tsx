@@ -134,7 +134,7 @@ export function BuffCard({ buff, tier, status, spent, nullified, onClick, compac
         </div>
         <span
           className={`shrink-0 font-display font-bold px-2 py-0.5 rounded-[1px] tier-bg-${t} tier-${t} ${compact ? "border text-[10px]" : "border-[1.5px] text-[13px]"}`}
-          title={`Tier ${t}: ${TIER_LABEL[t]}`}
+          title={`Buff power tier ${TIER_ROMAN[t]} (${t} of 8): ${TIER_LABEL[t]}`}
         >
           {TIER_ROMAN[t]}
         </span>

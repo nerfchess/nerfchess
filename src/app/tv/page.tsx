@@ -38,6 +38,41 @@ function clockLabel(timeSec: number, incrementSec: number): string {
   return `${Math.round(timeSec / 60)}+${incrementSec}`;
 }
 
+// Live-game list ordering. The first game under the active sort is the
+// featured board (unless the viewer pinned one).
+type TvSort = "watched" | "rated" | "newest" | "closest";
+const TV_SORTS: { id: TvSort; label: string; reason: string }[] = [
+  { id: "watched", label: "Most watched", reason: "the most-watched live game" },
+  { id: "rated", label: "Highest rated", reason: "the highest-rated live game" },
+  { id: "newest", label: "Newest", reason: "the freshest live game" },
+  { id: "closest", label: "Closest game", reason: "the closest rating matchup" },
+];
+
+function sortLiveGames(games: MPLobbyGame[], sort: TvSort): MPLobbyGame[] {
+  const best = (g: MPLobbyGame) =>
+    Math.max(g.players.w.rating ?? 0, g.players.b.rating ?? 0);
+  const gap = (g: MPLobbyGame) =>
+    g.players.w.rating != null && g.players.b.rating != null
+      ? Math.abs(g.players.w.rating - g.players.b.rating)
+      : Number.POSITIVE_INFINITY;
+  const arr = [...games];
+  switch (sort) {
+    case "watched":
+      arr.sort((a, b) => b.watchers - a.watchers || best(b) - best(a));
+      break;
+    case "rated":
+      arr.sort((a, b) => best(b) - best(a) || b.watchers - a.watchers);
+      break;
+    case "newest":
+      arr.sort((a, b) => a.moves - b.moves || b.watchers - a.watchers);
+      break;
+    case "closest":
+      arr.sort((a, b) => gap(a) - gap(b) || b.watchers - a.watchers);
+      break;
+  }
+  return arr;
+}
+
 // useSearchParams needs a Suspense boundary during prerender, so the page is
 // a thin wrapper around the real component.
 export default function TvPage() {
@@ -80,12 +115,15 @@ function TvView() {
     setRecentChecked(false);
   }
 
+  const [sort, setSort] = useState<TvSort>("watched");
   const liveGames = useMemo(() => {
     const games = lobby?.games ?? [];
-    return modeFilter ? games.filter((g) => g.mode === modeFilter) : games;
-  }, [lobby, modeFilter]);
+    const filtered = modeFilter ? games.filter((g) => g.mode === modeFilter) : games;
+    return sortLiveGames(filtered, sort);
+  }, [lobby, modeFilter, sort]);
   const pinnedStillLive = pinnedId != null && liveGames.some((g) => g.id === pinnedId);
   const targetId = pinnedStillLive ? pinnedId : liveGames[0]?.id ?? null;
+  const activeSort = TV_SORTS.find((s) => s.id === sort) ?? TV_SORTS[0];
 
   // With nothing live, pull the latest finished game (of this channel's mode,
   // if one is set) once for a replay.
@@ -221,6 +259,18 @@ function TvView() {
                   }
                 />
                 {live ? (over ? "Just finished" : "Live") : recent ? "Latest game" : title}
+                {live && !over && (
+                  <span
+                    className="border border-gold/40 bg-gold/10 px-1.5 py-0.5 text-gold-leaf"
+                    title={
+                      pinnedStillLive && streamId === pinnedId
+                        ? "You pinned this game from the list"
+                        : `Featured: ${activeSort.reason}`
+                    }
+                  >
+                    {pinnedStillLive && streamId === pinnedId ? "Pinned" : "Featured"}
+                  </span>
+                )}
                 <ModeBadge mode={shownLobbyGame?.mode} compact />
                 {shownLobbyGame && shownLobbyGame.watchers > 0 && (
                   <span className="flex items-center gap-1 text-parchment-400">
@@ -280,7 +330,7 @@ function TvView() {
                 <Radio size={16} className={titleColor} /> {title}
               </h1>
               <p className="mt-1 text-sm text-parchment-400">
-                Follows the most-watched live game
+                Features {activeSort.reason}
                 {modeFilter ? ` in the ${modeFilter === "nerf" ? "Nerf" : "Buff"} pool` : ""}. Pick
                 any game below to pin it.
               </p>
@@ -306,6 +356,28 @@ function TvView() {
             <div className="plate">
               <div className="border-b border-white/10 px-4 py-2.5 smallcaps text-[10px] text-parchment-400">
                 Live games {liveGames.length > 0 && `(${liveGames.length})`}
+              </div>
+              <div
+                role="group"
+                aria-label="Sort live games"
+                className="flex flex-wrap gap-1.5 border-b border-white/10 px-4 py-2.5"
+              >
+                {TV_SORTS.map((s) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    aria-pressed={sort === s.id}
+                    onClick={() => setSort(s.id)}
+                    className={
+                      "border px-2 py-1 smallcaps text-[9px] transition-colors " +
+                      (sort === s.id
+                        ? "border-gold/50 bg-gold/10 text-gold-leaf"
+                        : "border-white/10 text-parchment-400 hover:border-white/25 hover:text-parchment-200")
+                    }
+                  >
+                    {s.label}
+                  </button>
+                ))}
               </div>
               {!lobby ? (
                 /* First snapshot still loading: shimmer instead of a premature
@@ -343,6 +415,7 @@ function TvView() {
                           <ModeBadge mode={g.mode} compact />
                           {clockLabel(g.timeSec, g.incrementSec)}
                           {g.rated ? " · rated" : " · casual"}
+                          <span>move {Math.max(1, Math.ceil(g.moves / 2))}</span>
                           <span className="flex items-center gap-1">
                             <Eye size={10} /> {g.watchers}
                           </span>

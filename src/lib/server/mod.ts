@@ -18,7 +18,16 @@ import { createNotification } from "./social";
 // Sentinel for "permanent": far enough out to outlive the site.
 export const PERMANENT_MS = 4102444800000; // 2100-01-01
 
-export const MOD_ACTIONS = ["warn", "mute", "unmute", "ban", "unban", "set_role"] as const;
+export const MOD_ACTIONS = [
+  "warn",
+  "mute",
+  "unmute",
+  "ban",
+  "unban",
+  "set_role",
+  "flag_name",
+  "unflag_name",
+] as const;
 export type ModAction = (typeof MOD_ACTIONS)[number];
 
 export interface ModeratedUser {
@@ -115,6 +124,15 @@ export async function applyModAction(
       await db.prepare("UPDATE users SET role = ? WHERE id = ?").bind(role, target.id).run();
       break;
     }
+    case "flag_name":
+      // Never deletes the account: the owner keeps ratings, games, and
+      // achievements, but must pick a new name before playing on.
+      await db.prepare("UPDATE users SET name_flagged = 1 WHERE id = ?").bind(target.id).run();
+      break;
+    case "unflag_name":
+      // False-positive relief: clears the flag with the name unchanged.
+      await db.prepare("UPDATE users SET name_flagged = 0 WHERE id = ?").bind(target.id).run();
+      break;
     default:
       return "Unknown action.";
   }
@@ -124,7 +142,7 @@ export async function applyModAction(
 
   // Warned or muted players find out via their bell. Bans kill the session,
   // so a ban notice waits in the bell if the account ever comes back.
-  if (action === "warn" || action === "mute" || action === "ban") {
+  if (action === "warn" || action === "mute" || action === "ban" || action === "flag_name") {
     const untilText =
       timed && until < PERMANENT_MS ? ` until ${new Date(until).toLocaleString("en-US", { timeZone: "UTC" })} UTC` : "";
     const text =
@@ -132,6 +150,8 @@ export async function applyModAction(
         ? `You received a warning from the moderators${note ? `: ${note}` : "."}`
         : action === "mute"
         ? `You have been muted${untilText}. You cannot chat or send messages while muted.`
+        : action === "flag_name"
+        ? "A moderator flagged your username as inappropriate. Pick a new name to continue; your rating, games, and achievements are kept."
         : `You have been banned${untilText}.`;
     try {
       await createNotification(db, { userId: target.id, type: action, text });

@@ -1541,6 +1541,20 @@ function UsersTab({ isAdmin }: { isAdmin: boolean }) {
           </div>
 
           <div className="mt-3 flex flex-wrap gap-2 text-sm">
+            <button
+              onClick={() => act(selected.username, { action: "flag_name", note })}
+              title="Requires the owner to pick a new name; the account, ratings, games, and achievements are kept"
+              className="px-3 py-1 rounded-sm btn-ghost text-oxblood-glow"
+            >
+              Flag username
+            </button>
+            <button
+              onClick={() => act(selected.username, { action: "unflag_name" })}
+              title="Clear a username flag (false positive)"
+              className="px-3 py-1 rounded-sm btn-ghost"
+            >
+              Unflag
+            </button>
             {selected.muted_until && selected.muted_until > now && (
               <button onClick={() => act(selected.username, { action: "unmute" })} className="px-3 py-1 rounded-sm btn-ghost">
                 Unmute

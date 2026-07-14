@@ -291,7 +291,7 @@ export default function OnlineGamePage() {
       setRedirectIn((s) => {
         if (s <= 1) {
           window.clearInterval(tick);
-          window.location.href = "/play";
+          window.location.href = "/lobby";
           return 0;
         }
         return s - 1;
@@ -377,7 +377,7 @@ export default function OnlineGamePage() {
             to the lobby in {redirectIn}s&hellip;
           </p>
           <div className="mt-8 flex items-center justify-center gap-3">
-            <Link href="/play" className="inline-block px-5 py-2 rounded-sm btn-leaf font-body">
+            <Link href="/tv" className="inline-block px-5 py-2 rounded-sm btn-leaf font-body">
               Watch another game
             </Link>
             <Link
@@ -402,7 +402,7 @@ export default function OnlineGamePage() {
             ? mode.message
             : "This game doesn't exist, or it hasn't been played yet."}
         </p>
-        <Link href="/play" className="inline-block mt-8 px-5 py-2 rounded-sm btn-leaf font-body">
+        <Link href="/lobby" className="inline-block mt-8 px-5 py-2 rounded-sm btn-leaf font-body">
           Back to the lobby
         </Link>
       </section>
@@ -692,7 +692,7 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
         opponentBuffs={draftGame?.buffs?.players.b.buffs}
         onRematch={() => {}}
         onNewGame={() => {
-          window.location.href = "/play";
+          window.location.href = "/tv";
         }}
         onDismiss={() => setShowResult(false)}
       />
@@ -765,7 +765,7 @@ function SpectatorBuffsPanel({ game, players }: { game: NerfGame; players: MPPla
                 {hiddenOnes.map((inst, i) => (
                   <span
                     key={i}
-                    title={`Hidden buff · tier ${inst.tier}`}
+                    title={`Hidden buff · power tier ${inst.tier} of 8`}
                     className={
                       "relative flex h-9 w-7 items-center justify-center rounded-[3px] border border-gold/35 " +
                       "bg-[linear-gradient(135deg,rgba(216,181,110,0.14),rgba(14,12,9,0.95))] " +
@@ -869,12 +869,21 @@ function SpectatorChat({
   onSend: (text: string) => void;
 }) {
   const [draft, setDraft] = useState("");
+  // Safety controls, all local to this viewer: Hide turns the panel off,
+  // muting a name drops that spectator's messages, and Report files the
+  // message into the moderator queue (server-throttled).
+  const [hidden, setHidden] = useState(false);
+  const [mutedNames, setMutedNames] = useState<ReadonlySet<string>>(new Set());
+  const [actionsFor, setActionsFor] = useState<string | null>(null);
+  const [reportState, setReportState] = useState<Record<string, "sent" | "failed">>({});
   const listRef = useRef<HTMLDivElement | null>(null);
+
+  const shownMessages = messages.filter((m) => !mutedNames.has(m.name));
 
   useEffect(() => {
     const list = listRef.current;
     if (list) list.scrollTop = list.scrollHeight;
-  }, [messages]);
+  }, [messages, hidden, mutedNames]);
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -884,24 +893,104 @@ function SpectatorChat({
     setDraft("");
   };
 
+  const muteName = (name: string) => {
+    setMutedNames((prev) => new Set(prev).add(name));
+    setActionsFor(null);
+  };
+
+  const reportMessage = async (key: string, m: MPSpectatorChatMessage) => {
+    try {
+      const res = await fetch("/api/report", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: m.name,
+          reason: "chat",
+          description: `Spectator chat message: "${m.text.slice(0, 500)}"`,
+        }),
+      });
+      setReportState((prev) => ({ ...prev, [key]: res.ok ? "sent" : "failed" }));
+    } catch {
+      setReportState((prev) => ({ ...prev, [key]: "failed" }));
+    }
+    setActionsFor(null);
+  };
+
   return (
     <div className="plate flex h-56 flex-col p-2">
-      <div className="shrink-0 px-1 pb-1 smallcaps text-[9px] text-parchment-400">
-        Spectator chat
+      <div className="flex shrink-0 items-center justify-between px-1 pb-1">
+        <span className="smallcaps text-[9px] text-parchment-400">Spectator chat</span>
+        <button
+          type="button"
+          onClick={() => setHidden((v) => !v)}
+          className="smallcaps text-[9px] text-parchment-400 transition-colors hover:text-parchment-100"
+          title={hidden ? "Show chat messages" : "Hide chat messages"}
+        >
+          {hidden ? "Show chat" : "Hide chat"}
+        </button>
       </div>
+      {hidden ? (
+        <div className="min-h-0 flex-1 px-1 text-[12px] text-parchment-400/60">Chat is hidden.</div>
+      ) : (
       <div ref={listRef} className="min-h-0 flex-1 space-y-1 overflow-y-auto px-1 text-[12px] leading-snug">
-        {messages.length === 0 && (
+        {shownMessages.length === 0 && (
           <div className="text-parchment-400/60">
             Chat with the other spectators. The players can&apos;t see this.
           </div>
         )}
-        {messages.map((m, i) => (
-          <div key={`${m.at}-${i}`} className="break-words">
-            <span className="font-display font-semibold text-bruise-glow">{m.name}</span>
-            <span className="text-parchment-200"> {m.text}</span>
-          </div>
-        ))}
+        {shownMessages.map((m, i) => {
+          const key = `${m.at}-${m.name}-${i}`;
+          const report = reportState[key];
+          return (
+            <div key={key} className="group break-words">
+              <button
+                type="button"
+                onClick={() => setActionsFor((cur) => (cur === key ? null : key))}
+                className="font-display font-semibold text-bruise-glow hover:underline"
+                title={`Actions for ${m.name}`}
+                aria-expanded={actionsFor === key}
+              >
+                {m.name}
+              </button>
+              <span className="text-parchment-200"> {m.text}</span>
+              {report === "sent" && (
+                <span className="ml-1 smallcaps text-[9px] text-parchment-400">reported</span>
+              )}
+              {actionsFor === key && (
+                <span className="ml-2 inline-flex gap-2 smallcaps text-[9px]">
+                  <button
+                    type="button"
+                    onClick={() => muteName(m.name)}
+                    className="text-parchment-400 hover:text-parchment-100"
+                  >
+                    Mute {m.name}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => reportMessage(key, m)}
+                    className="text-oxblood-glow hover:underline"
+                  >
+                    Report
+                  </button>
+                  {report === "failed" && (
+                    <span className="text-oxblood-glow">Couldn&apos;t report (sign in first)</span>
+                  )}
+                </span>
+              )}
+            </div>
+          );
+        })}
       </div>
+      )}
+      {mutedNames.size > 0 && !hidden && (
+        <button
+          type="button"
+          onClick={() => setMutedNames(new Set())}
+          className="shrink-0 px-1 pt-1 text-left smallcaps text-[9px] text-parchment-400 hover:text-parchment-100"
+        >
+          {mutedNames.size} muted · unmute all
+        </button>
+      )}
       <form onSubmit={submit} className="mt-2 flex shrink-0 gap-1">
         <input
           value={draft}
@@ -928,6 +1017,10 @@ function SpectatorChat({
 function ReplayView({ game }: { game: ReplayGame }) {
   const uciMoves = useMemo(() => (game.moves ? game.moves.split(" ").filter(Boolean) : []), [game.moves]);
   const { history } = useMemo(() => replayUci(uciMoves), [uciMoves]);
+  // Archived draft games can hold moves a plain replay cannot reproduce (a
+  // card rewrote the board mid-game). replayUci stops at the first such move;
+  // say so honestly instead of showing a silently wrong board.
+  const truncated = history.length < uciMoves.length;
   const [historyPly, setHistoryPly] = useState<number>(history.length);
   const [pgnCopied, setPgnCopied] = useState(false);
   // Same neutral result panel as the live spectator, shown over the replay.
@@ -978,7 +1071,13 @@ function ReplayView({ game }: { game: ReplayGame }) {
       whiteMs={0}
       blackMs={0}
       activeColor={null}
-      statusLabel={describeResult({ winner: game.winner, reason: game.reason })}
+      statusLabel={
+        <>
+          {describeResult({ winner: game.winner, reason: game.reason })}
+          {truncated &&
+            ` · replay shows the first ${history.length} of ${uciMoves.length} half-moves (a card rewrote the board mid-game)`}
+        </>
+      }
       nerfs={{ w: game.white_nerf_id, b: game.black_nerf_id }}
       rail={
         <button
@@ -1007,7 +1106,7 @@ function ReplayView({ game }: { game: ReplayGame }) {
         gameId={game.id}
         onRematch={() => {}}
         onNewGame={() => {
-          window.location.href = "/play";
+          window.location.href = "/tv";
         }}
         onDismiss={() => setShowResult(false)}
       />
@@ -1169,15 +1268,26 @@ function GameShell({
   );
 }
 
+// Reduced navigation for watch/replay views: the wordmark home, a way back
+// to TV (the page most watchers came from), and the lobby. Kept slim so the
+// board stays the star, but never a dead end.
 function SiteNav() {
   return (
     <nav className="flex items-center justify-between px-5 sm:px-10 py-5">
       <Link href="/" className="font-display text-2xl tracking-tight">
         nerf<span className="text-gold-leaf">chess</span>
       </Link>
-      <Link href="/play" className="px-3 py-1.5 rounded-full text-sm font-display hover:bg-white/5 text-parchment">
-        Play
-      </Link>
+      <div className="flex items-center gap-1">
+        <Link href="/tv" className="px-3 py-1.5 rounded-full text-sm font-display hover:bg-white/5 text-gold-leaf">
+          Back to TV
+        </Link>
+        <Link href="/lobby" className="px-3 py-1.5 rounded-full text-sm font-display hover:bg-white/5 text-parchment">
+          Lobby
+        </Link>
+        <Link href="/play" className="px-3 py-1.5 rounded-full text-sm font-display hover:bg-white/5 text-parchment">
+          Play
+        </Link>
+      </div>
     </nav>
   );
 }

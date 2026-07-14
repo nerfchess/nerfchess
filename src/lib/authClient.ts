@@ -23,6 +23,9 @@ export interface AccountUser {
   bio: string | null;
   flair: string | null;
   isGuest: boolean;
+  /** True when a moderator flagged the username: the owner must rename via
+   *  /api/auth/rename before playing on. Optional: older cached payloads. */
+  nameFlagged?: boolean;
   email: string | null;
 }
 

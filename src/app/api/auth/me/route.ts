@@ -43,6 +43,7 @@ export async function GET(request: Request) {
       bio: user.bio,
       flair: user.flair,
       isGuest: !!user.is_guest,
+      nameFlagged: !!user.name_flagged,
       email: user.email,
     },
   });

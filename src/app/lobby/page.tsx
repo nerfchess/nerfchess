@@ -20,12 +20,53 @@ import { categoryForTimeControl, getCategory } from "@/lib/ratingCategories";
 // ink panels with hairline borders; each row wears its mode color as a plain
 // left border — no gradients, washes, or glows. Same data, same handlers,
 // same navigation as before — only the presentation changed.
+// The four lobby tabs. Quick Play is the default: mode, clock, one button.
+const LOBBY_TABS = [
+  { id: "quick", label: "Quick Play" },
+  { id: "challenges", label: "Challenges" },
+  { id: "watch", label: "Watch" },
+  { id: "friends", label: "Friends" },
+] as const;
+type LobbyTab = (typeof LOBBY_TABS)[number]["id"];
+
+// The Online-now sidebar starts folded to this many rows so it never
+// competes with matchmaking; "View all N players" unfolds the full list.
+const ONLINE_LIST_FOLD = 8;
+
 export default function LobbyPage() {
   const router = useRouter();
   const [user, setUser] = useState<AccountUser | null | undefined>(undefined);
   const [lobby, setLobby] = useState<MPLobby | null>(null);
   const [lobbyError, setLobbyError] = useState<string | null>(null);
   const [joinCode, setJoinCode] = useState("");
+  const [joinCodeError, setJoinCodeError] = useState<string | null>(null);
+  const [tab, setTab] = useState<LobbyTab>("quick");
+  // Mode filters for the Challenges and Watch tabs.
+  const [challengeFilter, setChallengeFilter] = useState<"all" | "nerf" | "buff">("all");
+  const [watchFilter, setWatchFilter] = useState<"all" | "nerf" | "buff">("all");
+  const [showAllPlayers, setShowAllPlayers] = useState(false);
+
+  // Friend-code entry validates the shape before navigating, so a typo gets
+  // an inline explanation instead of a dead join page.
+  const joinFriendCode = () => {
+    const code = joinCode.trim().toUpperCase();
+    if (!code) return;
+    if (!/^[A-Z0-9]{4,8}$/.test(code)) {
+      setJoinCodeError("That doesn't look like a game code. Codes are 4-8 letters and digits, e.g. ABCDE.");
+      return;
+    }
+    router.push(`/friend?code=${encodeURIComponent(code)}`);
+  };
+
+  // A ?tab= query param deep-links a section (e.g. /lobby?tab=watch).
+  useEffect(() => {
+    queueMicrotask(() => {
+      try {
+        const wanted = new URLSearchParams(window.location.search).get("tab");
+        if (wanted && LOBBY_TABS.some((t) => t.id === wanted)) setTab(wanted as LobbyTab);
+      } catch {}
+    });
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -91,6 +132,37 @@ export default function LobbyPage() {
   const seeks = lobby?.seeks ?? [];
   const challenges = lobby?.challenges ?? [];
   const waitingCount = seeks.length + challenges.length;
+
+  // Sidebar ordering: players searching for a game first (they want an
+  // opponent right now), then players mid-game, then idlers; higher-rated
+  // first within each group. Folded to a handful of rows by default.
+  const statusOrder: Record<"searching" | "playing" | "online", number> = {
+    searching: 0,
+    playing: 1,
+    online: 2,
+  };
+  const sortedPlayers = lobby
+    ? [...lobby.players].sort(
+        (a, b) =>
+          statusOrder[a.status] - statusOrder[b.status] ||
+          (b.rating ?? 0) - (a.rating ?? 0),
+      )
+    : [];
+  const visiblePlayers = showAllPlayers
+    ? sortedPlayers
+    : sortedPlayers.slice(0, ONLINE_LIST_FOLD);
+
+  // Mode filters for the Challenges and Watch tabs. Legacy entries without a
+  // mode only show under All.
+  const filteredSeeks =
+    challengeFilter === "all" ? seeks : seeks.filter((s) => s.mode === challengeFilter);
+  const filteredChallenges =
+    challengeFilter === "all"
+      ? challenges
+      : challenges.filter((c) => c.mode === challengeFilter);
+  const games = lobby?.games ?? [];
+  const filteredGames =
+    watchFilter === "all" ? games : games.filter((g) => g.mode === watchFilter);
 
   // Answer a quick-pairing seek by queueing into the same pool (same mode and
   // time control): the server pairs with the first waiting player
@@ -200,13 +272,64 @@ export default function LobbyPage() {
           </div>
         )}
 
-        <div className="mt-7 grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
-          <div className="space-y-5 min-w-0 stagger-in">
-            {/* Step 1: the main action: get matched with a real opponent. */}
-            <QueueButton />
+        {/* The lobby's four sections as tabs, so the page never stacks them
+            all into one long scroll. Quick Play is the default. */}
+        <div
+          role="tablist"
+          aria-label="Lobby sections"
+          className="mt-6 flex flex-wrap gap-1.5 border-b border-white/10 pb-px"
+        >
+          {LOBBY_TABS.map((t) => {
+            const count =
+              t.id === "challenges"
+                ? (lobby ? waitingCount : null)
+                : t.id === "watch"
+                  ? (lobby ? lobby.games.length : null)
+                  : null;
+            const selected = tab === t.id;
+            return (
+              <button
+                key={t.id}
+                role="tab"
+                aria-selected={selected}
+                id={`lobby-tab-${t.id}`}
+                aria-controls={`lobby-panel-${t.id}`}
+                onClick={() => setTab(t.id)}
+                className={
+                  "flex items-center gap-2 border border-b-0 px-4 py-2.5 font-display text-sm sm:text-base transition-colors " +
+                  (selected
+                    ? "border-gold/50 bg-gold/10 text-gold-leaf"
+                    : "border-white/10 bg-white/[0.03] text-parchment-300 hover:bg-white/[0.06] hover:text-parchment-100")
+                }
+              >
+                {t.label}
+                {count != null && count > 0 && (
+                  <span className="border border-white/15 bg-ink-900/60 px-1.5 py-px font-mono text-[10px] tabular-nums text-parchment-300">
+                    {count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
 
-            {/* Step 2: play a specific person via a shared code. */}
-            <div className="plate p-5 sm:p-6">
+        <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
+          <div className="space-y-5 min-w-0 stagger-in">
+            {tab === "quick" && (
+              <div role="tabpanel" id="lobby-panel-quick" aria-labelledby="lobby-tab-quick" className="space-y-5">
+                {/* The main action: get matched with a real opponent. */}
+                <QueueButton />
+                <div className="text-sm">
+                  <Link href="/play" className="text-parchment-400 hover:text-parchment-100 transition-colors">
+                    Prefer practice? Play a bot instead
+                  </Link>
+                </div>
+              </div>
+            )}
+
+            {tab === "friends" && (
+            /* Play a specific person via a shared code. */
+            <div role="tabpanel" id="lobby-panel-friends" aria-labelledby="lobby-tab-friends" className="plate p-5 sm:p-6">
               <SectionTitle tint="mint" icon={<Users size={15} aria-hidden />}>
                 Play a friend
               </SectionTitle>
@@ -223,32 +346,42 @@ export default function LobbyPage() {
                 <div className="flex flex-1 gap-2">
                   <input
                     value={joinCode}
-                    onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                    onChange={(e) => {
+                      setJoinCode(e.target.value.toUpperCase());
+                      setJoinCodeError(null);
+                    }}
                     onKeyDown={(e) => {
-                      if (e.key === "Enter" && joinCode.trim()) {
-                        router.push(`/friend?code=${encodeURIComponent(joinCode.trim())}`);
-                      }
+                      if (e.key === "Enter") joinFriendCode();
                     }}
                     placeholder="Enter a code, e.g. ABCDE"
                     maxLength={8}
                     aria-label="Friend game code"
+                    aria-invalid={joinCodeError != null}
                     className="min-w-0 flex-1 bg-ink-900/60 border border-white/15 px-4 py-3 font-mono tracking-widest uppercase transition-colors focus:outline-none focus:border-gold/60 text-parchment placeholder:text-parchment-400/40 placeholder:tracking-normal placeholder:normal-case"
                   />
                   <button
-                    onClick={() => router.push(`/friend?code=${encodeURIComponent(joinCode.trim())}`)}
+                    onClick={joinFriendCode}
                     disabled={!joinCode.trim()}
+                    title={joinCode.trim() ? undefined : "Enter the code your friend shared"}
                     className="px-5 btn-ghost press font-display disabled:opacity-50"
                   >
                     Join
                   </button>
                 </div>
               </div>
+              {joinCodeError && (
+                <p role="alert" className="mt-2 text-xs text-coral-glow">
+                  {joinCodeError}
+                </p>
+              )}
             </div>
+            )}
 
-            {/* Open challenges: players waiting in a quick-pairing pool plus
+            {tab === "challenges" && (
+            /* Open challenges: players waiting in a quick-pairing pool plus
                 friend games waiting for an opponent, each on its own flat row
-                wearing its mode color as a plain left border. */}
-            <div className="plate p-5 sm:p-6">
+                wearing its mode color as a plain left border. */
+            <div role="tabpanel" id="lobby-panel-challenges" aria-labelledby="lobby-tab-challenges" className="plate p-5 sm:p-6">
               <div className="flex items-center justify-between gap-3">
                 <SectionTitle tint="sun" icon={<Swords size={15} aria-hidden />}>
                   Open challenges
@@ -265,16 +398,22 @@ export default function LobbyPage() {
                   </span>
                 </div>
               </div>
+              <ModeFilter value={challengeFilter} onChange={setChallengeFilter} label="Filter challenges by mode" />
               {!lobby ? (
                 <SkeletonRows count={3} />
               ) : waitingCount === 0 ? (
                 <HallEmpty
                   title="No one is waiting right now."
-                  hint="Queue above and your seek will appear here for others to answer."
+                  hint="Queue from Quick Play and your seek will appear here for others to answer."
+                />
+              ) : filteredSeeks.length + filteredChallenges.length === 0 ? (
+                <HallEmpty
+                  title={`No ${challengeFilter === "nerf" ? "Nerf" : "Buff"} challenges right now.`}
+                  hint="Switch the filter to All, or queue from Quick Play to start one."
                 />
               ) : (
                 <ul className="mt-4 space-y-2.5 stagger-in">
-                  {seeks.map((seek) => (
+                  {filteredSeeks.map((seek) => (
                     <SeekRow
                       key={`${seek.mode ?? "buff"}:${seek.pool}:${seek.name}:${seek.at}`}
                       seek={seek}
@@ -284,23 +423,34 @@ export default function LobbyPage() {
                       onJoin={() => joinSeek(seek)}
                     />
                   ))}
-                  {challenges.map((challenge) => (
+                  {filteredChallenges.map((challenge) => (
                     <ChallengeRow key={challenge.id} challenge={challenge} />
                   ))}
                 </ul>
               )}
             </div>
+            )}
 
-            {/* Step 3 (optional): watch a game that's happening right now. */}
-            <div className="plate p-5 sm:p-6">
+            {tab === "watch" && (
+            /* Watch a game that's happening right now. */
+            <div role="tabpanel" id="lobby-panel-watch" aria-labelledby="lobby-tab-watch" className="plate p-5 sm:p-6">
               <div className="flex items-center justify-between gap-3">
                 <SectionTitle tint="coral" icon={<Eye size={15} aria-hidden />}>
                   Live games
                 </SectionTitle>
-                <span className="smallcaps text-[10px] text-parchment-400">
-                  {lobby ? `${lobby.games.length} in play` : "…"}
-                </span>
+                <div className="flex items-center gap-3">
+                  <Link
+                    href="/tv"
+                    className="inline-flex min-h-[44px] items-center sm:min-h-0 smallcaps text-[10px] text-gold-leaf hover:text-gold transition-colors"
+                  >
+                    Open Nerf Chess TV
+                  </Link>
+                  <span className="smallcaps text-[10px] text-parchment-400">
+                    {lobby ? `${lobby.games.length} in play` : "…"}
+                  </span>
+                </div>
               </div>
+              <ModeFilter value={watchFilter} onChange={setWatchFilter} label="Filter live games by mode" />
               {!lobby ? (
                 <SkeletonRows count={3} />
               ) : lobby.games.length === 0 ? (
@@ -308,20 +458,20 @@ export default function LobbyPage() {
                   title="No games in play right now."
                   hint="Answer a challenge and the boards will light up here."
                 />
+              ) : filteredGames.length === 0 ? (
+                <HallEmpty
+                  title={`No ${watchFilter === "nerf" ? "Nerf" : "Buff"} games in play right now.`}
+                  hint="Switch the filter to All to see every live board."
+                />
               ) : (
                 <ul className="mt-4 space-y-2.5 stagger-in">
-                  {lobby.games.map((game) => (
+                  {filteredGames.map((game) => (
                     <LiveGameRow key={game.id} game={game} />
                   ))}
                 </ul>
               )}
             </div>
-
-            <div className="text-sm">
-              <Link href="/play" className="text-parchment-400 hover:text-parchment-100 transition-colors">
-                Play vs bot
-              </Link>
-            </div>
+            )}
           </div>
 
           {/* Who's here right now — rides along on desktop scroll. */}
@@ -345,7 +495,7 @@ export default function LobbyPage() {
                   </p>
                 )}
                 <ul className="mt-3 space-y-1">
-                  {lobby.players.map((p) => (
+                  {visiblePlayers.map((p) => (
                     <li
                       key={p.name}
                       className="-mx-2 flex items-center justify-between gap-2 px-2 py-1 text-sm transition-colors hover:bg-white/[0.04]"
@@ -357,13 +507,29 @@ export default function LobbyPage() {
                         <PlayerAvatar name={p.name} avatar={p.avatar} size={22} />
                         {p.name}
                         {p.rating != null && (
-                          <span className="ml-1.5 font-mono text-xs text-parchment-400">{p.rating}</span>
+                          <span
+                            className="ml-1.5 font-mono text-xs text-parchment-400"
+                            title="Rating (best mode)"
+                          >
+                            {p.rating}
+                          </span>
                         )}
                       </Link>
                       <StatusBadge status={p.status} />
                     </li>
                   ))}
                 </ul>
+                {sortedPlayers.length > ONLINE_LIST_FOLD && (
+                  <button
+                    type="button"
+                    onClick={() => setShowAllPlayers((v) => !v)}
+                    className="mt-2 w-full border border-white/10 bg-white/[0.03] px-3 py-2 smallcaps text-[10px] text-parchment-300 transition-colors hover:bg-white/[0.07] hover:text-parchment-100"
+                  >
+                    {showAllPlayers
+                      ? "Show fewer"
+                      : `View all ${sortedPlayers.length} players`}
+                  </button>
+                )}
                 {lobby.players.length > 0 && lobby.anonymous > 0 && (
                   <p className="mt-3 text-xs text-parchment-400">
                     + {lobby.anonymous} anonymous player{lobby.anonymous === 1 ? "" : "s"}
@@ -424,6 +590,43 @@ function SectionTitle({
         {icon}
       </span>
       <div className="font-display text-2xl text-parchment">{children}</div>
+    </div>
+  );
+}
+
+// Segmented All / Buff / Nerf filter used by the Challenges and Watch tabs.
+function ModeFilter({
+  value,
+  onChange,
+  label,
+}: {
+  value: "all" | "nerf" | "buff";
+  onChange: (value: "all" | "nerf" | "buff") => void;
+  label: string;
+}) {
+  const options = [
+    { id: "all", label: "All", selectedClass: "border-gold/50 bg-gold/10 text-gold-leaf" },
+    { id: "buff", label: "Buff", selectedClass: "border-mode-buff bg-mode-buff/15 text-mode-buffGlow" },
+    { id: "nerf", label: "Nerf", selectedClass: "border-mode-nerf bg-mode-nerf/15 text-mode-nerfGlow" },
+  ] as const;
+  return (
+    <div role="group" aria-label={label} className="mt-3 flex gap-1.5">
+      {options.map((o) => (
+        <button
+          key={o.id}
+          type="button"
+          aria-pressed={value === o.id}
+          onClick={() => onChange(o.id)}
+          className={
+            "border px-3 py-1 smallcaps text-[10px] transition-colors " +
+            (value === o.id
+              ? o.selectedClass
+              : "border-white/10 text-parchment-400 hover:border-white/25 hover:text-parchment-200")
+          }
+        >
+          {o.label}
+        </button>
+      ))}
     </div>
   );
 }

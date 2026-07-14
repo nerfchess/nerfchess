@@ -1,6 +1,7 @@
 "use client";
 
 import { MobileNavMenu } from "@/components/MobileNavMenu";
+import { Logo } from "@/components/Logo";
 import { FriendsPanel } from "@/components/FriendsPanel";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -11,6 +12,7 @@ import {
   MPSession,
   MPStart,
 } from "@/lib/multiplayer";
+import { resolvePreferredMode, savePreferredMode } from "@/lib/modeState";
 
 type View = "setup" | "lobby" | "joining" | "game";
 
@@ -48,6 +50,12 @@ export default function FriendPage() {
   // Buff mode is the default. Picks stay hidden; everything reveals at game
   // end. Stakes (casual or rated) are chosen separately below.
   const [gameMode, setGameMode] = useState<"nerf" | "buff">("buff");
+  // A deliberate mode pick here is remembered site-wide, like every other
+  // mode selector.
+  const pickGameMode = (m: "nerf" | "buff") => {
+    setGameMode(m);
+    savePreferredMode(m);
+  };
   // "Surprise your friend" preset: when on, the friend who joins drafts a
   // stacked, high-tier build (server boosts the black seat's offers). The
   // preset also snaps the game to its recommended, easy-to-play config.
@@ -226,11 +234,12 @@ export default function FriendPage() {
       }
       return;
     }
-    // Mode preselected on the play page carries over (?mode=nerf|buff).
-    const modeParam = search.get("mode");
-    if (modeParam === "nerf" || modeParam === "buff") {
-      const m = modeParam;
-      queueMicrotask(() => setGameMode(m));
+    // Mode carries over from the rest of the site: an explicit ?mode=nerf|buff
+    // (e.g. the play page link) wins, else the last mode this browser picked,
+    // else the Buff default the state already holds.
+    {
+      const m = resolvePreferredMode();
+      if (m !== "buff") queueMicrotask(() => setGameMode(m));
     }
     const challengeParam = search.get("challenge")?.trim();
     if (challengeParam) {
@@ -467,17 +476,17 @@ export default function FriendPage() {
           <div>
             <div className="smallcaps text-[11px] text-parchment-400 mb-2">Game mode</div>
             <div className="grid grid-cols-2 gap-2">
-              <OptionButton mode="buff" selected={gameMode === "buff"} onClick={() => setGameMode("buff")}>
+              <OptionButton mode="buff" selected={gameMode === "buff"} onClick={() => pickGameMode("buff")}>
                 Buff mode
               </OptionButton>
-              <OptionButton mode="nerf" selected={gameMode === "nerf"} onClick={() => setGameMode("nerf")}>
+              <OptionButton mode="nerf" selected={gameMode === "nerf"} onClick={() => pickGameMode("nerf")}>
                 Nerf mode
               </OptionButton>
             </div>
             <p className="mt-2 text-[11px] leading-snug text-parchment-400">
               {gameMode === "buff"
-                ? "Draft buffs and cook your opponent."
-                : "You start nerfed, then draft to cook your opponent even harder."}
+                ? "Start with normal chess. Draft powers for your own army."
+                : "Start with a secret handicap. Draft curses for your opponent."}
             </p>
           </div>
 
@@ -670,12 +679,13 @@ function TimeSlider({
 function SiteNav() {
   return (
     <nav className="flex items-center justify-between px-10 py-7">
-      <Link href="/" className="font-display text-2xl tracking-tight">
-        nerf<span className="text-gold-leaf">chess</span>
-      </Link>
+      <Logo />
       <div className="flex items-center gap-1">
+        <Link href="/lobby" className="hidden sm:inline-block px-3 py-1.5 rounded-full text-sm font-display hover:bg-white/5 text-gold-leaf">
+          Back to Lobby
+        </Link>
         <Link href="/play" className="hidden sm:inline-block px-3 py-1.5 rounded-full text-sm font-display hover:bg-white/5 text-parchment">
-          vs Bot
+          Play a Bot
         </Link>
         <MobileNavMenu />
       </div>

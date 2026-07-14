@@ -18,7 +18,7 @@ export async function requireUser(
   return { db, user };
 }
 
-export type NotificationType = "message" | "challenge" | "warn" | "mute" | "ban";
+export type NotificationType = "message" | "challenge" | "warn" | "mute" | "ban" | "flag_name";
 
 export async function createNotification(
   db: D1Database,

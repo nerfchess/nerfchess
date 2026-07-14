@@ -22,13 +22,14 @@ export async function GET(request: Request) {
     white_rating_before: number | null;
     black_rating_before: number | null;
     moves: string;
+    category: string | null;
     winner: string | null;
     reason: string;
     completed_at: number;
   }>(
     `SELECT id, white_name, black_name, white_user_id, black_user_id,
             white_rating_before, black_rating_before,
-            moves, winner, reason, completed_at
+            moves, category, winner, reason, completed_at
      FROM games ${mode ? "WHERE category = ?" : ""}
      ORDER BY completed_at DESC LIMIT 1`,
     mode ? [mode] : [],
@@ -55,6 +56,7 @@ export async function GET(request: Request) {
       white_rating_before: game.white_rating_before,
       black_rating_before: game.black_rating_before,
       moves: game.moves,
+      category: game.category,
       winner: game.winner,
       reason: game.reason,
       completed_at: game.completed_at,

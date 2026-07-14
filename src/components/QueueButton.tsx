@@ -8,6 +8,7 @@ import { AccountUser, ensureAccount, fetchMe } from "@/lib/authClient";
 import { clearSnapshot, readSnapshot, writeSnapshot } from "@/lib/snapshotCache";
 import { MPSession, saveOnlineSeat } from "@/lib/multiplayer";
 import { getCategory, type RatingCategoryId } from "@/lib/ratingCategories";
+import { useSharedMode } from "@/lib/modeState";
 import type { DraftMode } from "@/engine/buff";
 
 // Wire names must match QUEUE_POOLS in worker.ts.
@@ -24,21 +25,32 @@ const QUEUE_POOL_OPTIONS: { pool: string; label: string; speed: RatingCategoryId
 ];
 
 const LAST_POOL_KEY = "dc:last-pool";
-const LAST_MODE_KEY = "dc:last-mode";
 
-// Quick-pairing entry point: the two rated queue pools, Nerf and Buff. A
-// player picks a mode card (nothing queues yet), picks a time control, and
-// the Play button at the bottom starts the search; each pool stakes its own
-// rating. The last mode choice is remembered, and a `?mode=` query param
-// (e.g. from the home page links) preselects one. Both are sent to the game
-// URL when paired; signed-out visitors queue as a guest (no login wall), with
-// a small nudge to register so their rating sticks.
-export function QueueButton() {
+// Quick-pairing entry point: the two rated queue pools, Nerf and Buff. Buff
+// is preselected (it starts from normal chess, the easiest first game); a
+// player can switch to Nerf, pick a time control, and the one button at the
+// bottom starts the search. Each pool stakes its own rating. The mode
+// preference is shared site-wide (see lib/modeState): an explicit `?mode=`
+// query param wins, then the last choice this browser made, then Buff.
+// Pages that already own a mode selector (e.g. /play) pass `mode` +
+// `onModeChange` and hide the built-in cards so one state drives the page.
+// Signed-out visitors queue as a guest (no login wall), with a small nudge
+// to register so their rating sticks.
+export function QueueButton({
+  mode: controlledMode,
+  onModeChange,
+  showModeCards = true,
+}: {
+  mode?: DraftMode;
+  onModeChange?: (mode: DraftMode) => void;
+  showModeCards?: boolean;
+} = {}) {
   const router = useRouter();
   const [user, setUser] = useState<AccountUser | null | undefined>(undefined);
   const [modeRatings, setModeRatings] = useState<Partial<Record<DraftMode, number>>>({});
   const [state, setState] = useState<"idle" | "searching" | "paired">("idle");
-  const [mode, setMode] = useState<DraftMode | null>(null);
+  const [sharedMode, pickSharedMode] = useSharedMode();
+  const mode = controlledMode ?? sharedMode;
   const [pool, setPool] = useState("3+2");
   const [error, setError] = useState<string | null>(null);
   const sessionRef = useRef<MPSession | null>(null);
@@ -80,20 +92,13 @@ export function QueueButton() {
         })
         .catch(() => {});
     });
-    // localStorage/query preselects read client-side; deferred a microtask so
-    // they don't set state synchronously in the effect body.
+    // The pool preselect reads localStorage client-side; deferred a microtask
+    // so it doesn't set state synchronously in the effect body. (The mode
+    // preselect lives in useSharedMode.)
     queueMicrotask(() => {
       try {
         const saved = window.localStorage.getItem(LAST_POOL_KEY);
         if (saved && QUEUE_POOL_OPTIONS.some((o) => o.pool === saved)) setPool(saved);
-      } catch {}
-      // Preselect a mode: an explicit ?mode= query param (home page links)
-      // wins; otherwise the last choice this browser made.
-      try {
-        const fromQuery = new URLSearchParams(window.location.search).get("mode");
-        const saved = window.localStorage.getItem(LAST_MODE_KEY);
-        const preset = fromQuery === "nerf" || fromQuery === "buff" ? fromQuery : saved;
-        if (preset === "nerf" || preset === "buff") setMode(preset);
       } catch {}
     });
     return () => {
@@ -111,10 +116,8 @@ export function QueueButton() {
   };
 
   const pickMode = (m: DraftMode) => {
-    setMode(m);
-    try {
-      window.localStorage.setItem(LAST_MODE_KEY, m);
-    } catch {}
+    if (onModeChange) onModeChange(m);
+    else pickSharedMode(m);
   };
 
   const startSearch = async (mode: DraftMode) => {
@@ -177,9 +180,7 @@ export function QueueButton() {
         <div className="font-display text-2xl text-parchment">Play online</div>
       </div>
 
-      {user === undefined ? (
-        <div className="mt-4 px-2 py-6 text-center text-parchment-400 text-sm">…</div>
-      ) : state === "searching" ? (
+      {state === "searching" ? (
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
           <span className="flex items-center gap-2 text-sm text-parchment-200">
             <span className="w-2 h-2 bg-verdigris animate-flicker" />
@@ -198,24 +199,28 @@ export function QueueButton() {
       ) : (
         <>
           {/* Step 1: pick a mode. The two cards are a selection, color-coded
-              (Nerf rose, Buff blue), each wearing the rating it stakes.
-              Nothing queues until the Play button below. */}
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            <ModeCard
-              mode="nerf"
-              rating={ratingFor("nerf")}
-              selected={mode === "nerf"}
-              dimmed={mode != null && mode !== "nerf"}
-              onClick={() => pickMode("nerf")}
-            />
-            <ModeCard
-              mode="buff"
-              rating={ratingFor("buff")}
-              selected={mode === "buff"}
-              dimmed={mode != null && mode !== "buff"}
-              onClick={() => pickMode("buff")}
-            />
-          </div>
+              (Nerf rose, Buff blue), each wearing the rating it stakes. Buff
+              leads and is preselected: it starts from normal chess, the
+              easiest first game. Nothing queues until the button below.
+              Hidden when the page already owns a shared mode selector. */}
+          {showModeCards && (
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <ModeCard
+                mode="buff"
+                rating={ratingFor("buff")}
+                selected={mode === "buff"}
+                dimmed={mode !== "buff"}
+                onClick={() => pickMode("buff")}
+              />
+              <ModeCard
+                mode="nerf"
+                rating={ratingFor("nerf")}
+                selected={mode === "nerf"}
+                dimmed={mode !== "nerf"}
+                onClick={() => pickMode("nerf")}
+              />
+            </div>
+          )}
 
           <div className="mt-4">
             <div className="smallcaps text-[10px] text-parchment-400">Time control</div>
@@ -248,26 +253,24 @@ export function QueueButton() {
           </div>
 
           {/* The one button that actually queues, at the bottom so the flow
-              reads mode, clock, play. Disabled until a mode is chosen. */}
+              reads mode, clock, play. A mode is always selected (Buff by
+              default), so it names the exact game it will find. */}
           <button
-            onClick={() => mode && startSearch(mode)}
-            disabled={!mode}
+            onClick={() => startSearch(mode)}
             className={
               "mt-4 w-full border px-8 py-4 font-display text-xl sm:text-2xl font-semibold transition-all duration-150 motion-safe:enabled:hover:-translate-y-0.5 motion-safe:enabled:active:scale-[0.98] " +
               (mode === "nerf"
                 ? "border-mode-nerf bg-mode-nerf/20 text-mode-nerfGlow hover:bg-mode-nerf/30"
-                : mode === "buff"
-                  ? "border-mode-buff bg-mode-buff/20 text-mode-buffGlow hover:bg-mode-buff/30"
-                  : "cursor-not-allowed border-white/10 bg-white/5 text-parchment-400")
+                : "border-mode-buff bg-mode-buff/20 text-mode-buffGlow hover:bg-mode-buff/30")
             }
           >
-            {mode === "nerf" ? "Play Nerf" : mode === "buff" ? "Play Buff" : "Pick a mode to play"}
+            {`Find a ${selected.label} ${mode === "nerf" ? "Nerf" : "Buff"} Game`}
           </button>
 
           {/* Signed-out or guest players can queue and play right away; this
               is a nudge, never a gate. Their rating is throwaway until they
               register. */}
-          {(!user || user.isGuest) && (
+          {user !== undefined && (!user || user.isGuest) && (
             <p className="mt-3 text-center text-xs text-parchment-400">
               Playing as a guest.{" "}
               <Link href="/login?next=/lobby" className="text-gold-leaf hover:underline">
@@ -348,13 +351,20 @@ function ModeCard({
           </svg>
         </span>
       )}
-      <div className={"font-display text-2xl sm:text-3xl font-semibold " + identity.title}>
-        {mode === "nerf" ? "Nerf" : "Buff"}
+      <div className="flex items-center gap-2">
+        <div className={"font-display text-2xl sm:text-3xl font-semibold " + identity.title}>
+          {mode === "nerf" ? "Nerf" : "Buff"}
+        </div>
+        {mode === "buff" && (
+          <span className="smallcaps border border-gold/40 bg-gold/10 px-1.5 py-0.5 text-[8px] text-gold-leaf">
+            Recommended
+          </span>
+        )}
       </div>
       <p className="mt-1 text-[12px] leading-snug text-parchment-300">
         {mode === "nerf"
-          ? "You start nerfed. Draft to cook your opponent even harder."
-          : "Draft buffs and cook your opponent."}
+          ? "Start with a secret handicap. Draft curses for your opponent."
+          : "Start with normal chess. Draft powers for your own army."}
       </p>
       <div className="mt-2.5 flex items-center gap-2">
         <span className="smallcaps text-[9px] text-parchment-400">

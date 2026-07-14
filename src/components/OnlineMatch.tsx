@@ -3059,6 +3059,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           opponentNerf={isBuffMode ? undefined : revealedOppNerf ?? undefined}
           opponentHidden={uiSettings.hideOpponentReveal}
           ratingChange={ratingChange}
+          ratingMode={start.mode === "nerf" || start.mode === "buff" ? start.mode : null}
           rematchStatus={rematchStatus}
           opponentLeft={opponentGone}
           onRematch={handleRematch}

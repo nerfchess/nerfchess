@@ -459,6 +459,10 @@ const ADDITIVE_COLUMNS: string[] = [
   // migrations/0021_recorded_games.sql.
   `INSERT OR IGNORE INTO recorded_games (id, nonce, recorded_at)
      SELECT id, 'backfill', completed_at FROM games`,
+  // A moderator can flag a username as inappropriate without touching the
+  // account: 1 = the owner must pick a new name (ratings, games, and
+  // achievements are all kept). Mirrors migrations/0026_username_flags.sql.
+  `ALTER TABLE users ADD COLUMN name_flagged INTEGER NOT NULL DEFAULT 0`,
 ];
 
 // The additive pass is versioned by list length (the list is append-only) and

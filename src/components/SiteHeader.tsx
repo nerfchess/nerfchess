@@ -58,6 +58,7 @@ const COMMUNITY_MENU_LINKS: NavMenuItem[] = [
   { href: "/community", label: "Community hub" },
   { href: "/clubs", label: "Clubs" },
   { href: "/tournaments", label: "Tournaments" },
+  { href: "/guidelines", label: "Guidelines" },
 ];
 
 const NAV_LINKS: NavLink[] = [
@@ -416,8 +417,13 @@ export function SiteHeader({ active }: { active?: string }) {
               aria-expanded={menu === "profile"}
             >
               {/* The name is dead weight at phone widths and can collide with
-                  the wordmark; the avatar alone opens the menu there. */}
-              <span className="hidden sm:inline">{user.username}</span>
+                  the wordmark; the avatar alone opens the menu there. Guests
+                  are always labeled as guests so the header never makes a
+                  throwaway identity look like a registered account. */}
+              <span className="hidden sm:inline">
+                {user.isGuest && <span className="text-parchment-400">Guest: </span>}
+                {user.username}
+              </span>
               <PlayerAvatar name={user.username} avatar={user.avatar} size={24} />
             </button>
             {menu === "profile" && (
@@ -497,7 +503,69 @@ export function SiteHeader({ active }: { active?: string }) {
       </div>
 
       <SettingsPanel open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      {user?.nameFlagged && <RenameBanner onRenamed={(name) => setUser({ ...user, username: name, nameFlagged: false })} />}
     </nav>
+  );
+}
+
+// Shown when a moderator flagged this account's username: the account (and
+// its ratings, games, achievements) is intact, but a new name is required.
+// Inline so the fix is one field away instead of a support ticket.
+function RenameBanner({ onRenamed }: { onRenamed: (name: string) => void }) {
+  const [name, setName] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (busy || !name.trim()) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/auth/rename", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: name.trim() }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { error?: string; username?: string };
+      if (!res.ok || !data.username) {
+        setError(data.error ?? "Could not rename right now.");
+      } else {
+        onRenamed(data.username);
+      }
+    } catch {
+      setError("Could not reach the server.");
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div
+      role="alert"
+      className="absolute inset-x-0 top-full z-30 border-y border-oxblood-glow/50 bg-ink-950/95 px-4 py-2.5"
+    >
+      <form onSubmit={submit} className="mx-auto flex max-w-3xl flex-wrap items-center gap-2 text-sm">
+        <span className="min-w-0 flex-1 text-parchment-200">
+          A moderator flagged your username. Pick a new name to continue; your rating, games,
+          and achievements are kept.
+        </span>
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          maxLength={20}
+          placeholder="New username"
+          aria-label="New username"
+          className="w-40 border border-white/15 bg-ink-900/60 px-2 py-1.5 text-parchment placeholder:text-parchment-400/40 focus:border-gold/60 focus:outline-none"
+        />
+        <button
+          type="submit"
+          disabled={busy || !name.trim()}
+          className="btn-leaf px-3 py-1.5 font-display text-sm disabled:opacity-50"
+        >
+          {busy ? "Renaming…" : "Rename"}
+        </button>
+        {error && <span className="w-full text-xs text-oxblood-glow">{error}</span>}
+      </form>
+    </div>
   );
 }
 
