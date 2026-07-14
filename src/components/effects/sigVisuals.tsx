@@ -1946,29 +1946,62 @@ function GreatWallBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 /** Generic conjuring: an arcane summoning circle draws and spins as a shaft of
  * light rises from its centre (imps, guardians, golems, warbands). */
 function SummonRiftBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
-  // Batch 12 — tier 6+ board-wide guarantee: the lead draws the summoning
-  // circle across the WHOLE board — a mint wash, a colossal spinning rift
-  // sigil, and shafts of conjuring light rising along the central band.
+  // God-tier pass — THE GRAND CONJURING (tier-7 guarantee: roost_of_rocs):
+  // the crop dims mint while the colossal rift sigil spins open across the
+  // whole board and conjuring shafts climb every file; then the summoned
+  // colossus itself — a vast crook-beaked roc, wings mantled — heaves up
+  // through the circle and sets with a flare, a spark burst, and twin
+  // summoning shockwaves rolled past the board edges.
   if (lead) {
     return (
-      <BoardWideStage>
-        <BoardWash color="rgba(126,181,154,0.22)" delayMs={delayMs} />
-        <span className="fx-sig-swirl absolute inset-[24%] block" style={{ animationDelay: `${delayMs + 60}ms` }}>
+      <GodEvent
+        wash="rgba(126,181,154,0.24)"
+        rays="rgba(180,224,204,0.7)"
+        boom="rgba(126,181,154,0.9)"
+        flare="rgba(230,191,106,0.7)"
+        sparkFill="#7eb59a"
+        sparkStroke="#274e3d"
+        motion="rise"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 40 44" className="h-full w-full" aria-hidden="true">
+            {/* mantled wings, spanning the frame */}
+            <path d="M20 18 C12 8 5 8 1 16 C6 14 10 16 12 20 C8 20 5 23 4 28 C9 24 14 23 18 25 Z" fill="rgba(126,181,154,0.88)" stroke="#274e3d" strokeWidth="1" strokeLinejoin="round" />
+            <path d="M20 18 C28 8 35 8 39 16 C34 14 30 16 28 20 C32 20 35 23 36 28 C31 24 26 23 22 25 Z" fill="rgba(105,160,132,0.88)" stroke="#274e3d" strokeWidth="1" strokeLinejoin="round" />
+            {/* breast + tail plumes */}
+            <path d="M20 12 C24 16 25 24 24 31 L20 44 L16 31 C15 24 16 16 20 12 Z" fill="rgba(150,204,172,0.92)" stroke="#274e3d" strokeWidth="1.1" strokeLinejoin="round" />
+            <path d="M17 33 L14 42 M23 33 L26 42" stroke="rgba(39,78,61,0.75)" strokeWidth="0.9" strokeLinecap="round" fill="none" />
+            {/* head, crest and the great crooked beak */}
+            <circle cx="20" cy="8.5" r="4" fill="rgba(150,204,172,0.95)" stroke="#274e3d" strokeWidth="1" />
+            <path d="M17.5 4.6 L18.6 1.6 L20 3.6 L21.4 1.6 L22.5 4.6 Z" fill="#e6bf6a" stroke="#7a5b23" strokeWidth="0.6" strokeLinejoin="round" />
+            <path d="M20 9.5 L23.8 11 L20 13.2 Z" fill="#e6bf6a" stroke="#7a5b23" strokeWidth="0.7" strokeLinejoin="round" />
+            <circle cx="18.6" cy="8" r="0.8" fill="#274e3d" />
+            {/* rune of the summons, glowing on the breast */}
+            <path d="M20 20 L22.4 24 L20 28 L17.6 24 Z" fill="none" stroke="#e6bf6a" strokeWidth="0.9" strokeLinejoin="round" />
+          </svg>
+        }
+      >
+        {/* the colossal rift sigil, spinning open beneath the summons */}
+        <span className="fx-sig-swirl absolute inset-[26%] block" style={{ animationDelay: `${delayMs + 40}ms` }}>
           <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
-            <circle cx="20" cy="20" r="17" fill="none" stroke="#7eb59a" strokeWidth="1" />
-            <circle cx="20" cy="20" r="11" fill="none" stroke="#e6bf6a" strokeWidth="0.7" strokeDasharray="3 3" />
-            <polygon points="20,6 32,27 8,27" fill="none" stroke="#7eb59a" strokeWidth="0.7" />
-            <polygon points="20,34 8,13 32,13" fill="none" stroke="#7eb59a" strokeWidth="0.7" />
+            <circle cx="20" cy="20" r="17.5" fill="none" stroke="rgba(126,181,154,0.85)" strokeWidth="1" />
+            <circle cx="20" cy="20" r="11" fill="none" stroke="rgba(230,191,106,0.8)" strokeWidth="0.7" strokeDasharray="3 3" />
+            <polygon points="20,6 32,27 8,27" fill="none" stroke="rgba(126,181,154,0.7)" strokeWidth="0.7" />
+            <polygon points="20,34 8,13 32,13" fill="none" stroke="rgba(126,181,154,0.7)" strokeWidth="0.7" />
+            <path d="M20 1.6 V4 M20 36 V38.4 M1.6 20 H4 M36 20 H38.4" stroke="rgba(230,191,106,0.85)" strokeWidth="0.9" strokeLinecap="round" />
           </svg>
         </span>
+        {/* conjuring shafts climbing file by file across the crop */}
         {[
-          { l: "32%", d: 120 },
-          { l: "49%", d: 240 },
-          { l: "64%", d: 360 },
+          { l: "27%", d: 100 },
+          { l: "37%", d: 220 },
+          { l: "48%", d: 60 },
+          { l: "59%", d: 280 },
+          { l: "69%", d: 160 },
         ].map((s, i) => (
-          <span key={i} className="fx-sig-rise absolute bottom-[26%] block h-[36%] w-[5%] rounded-[1px]" style={{ left: s.l, background: "rgba(180,224,204,0.5)", animationDelay: `${delayMs + s.d}ms` }} />
+          <span key={i} className="fx-sig-rise absolute bottom-[24%] block h-[34%] w-[4%] rounded-[1px]" style={{ left: s.l, background: "linear-gradient(0deg, rgba(180,224,204,0.6), transparent)", animationDelay: `${delayMs + s.d}ms` }} />
         ))}
-      </BoardWideStage>
+      </GodEvent>
     );
   }
   return (
