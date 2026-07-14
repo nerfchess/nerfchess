@@ -471,16 +471,37 @@ export function CardEntrance({
           style={{ border: `3px solid ${t.color}` }}
         />
       )}
-      <span className="ce-banner absolute inset-x-0 top-[72%] flex justify-center px-[6%]" style={{ animationDelay: "260ms" }}>
+      {/* Cinematic title over the arrival: no plate, no border — the name
+          itself is the graphic, with a light sweep and a drawn-in rule. */}
+      <span className="absolute inset-x-0 top-[68%] flex flex-col items-center px-[6%] text-center">
         <span
-          className="block max-w-[86%] rounded-[2px] border px-3 py-1 text-center"
-          style={{ borderColor: t.color, background: "rgba(10,12,17,0.85)", boxShadow: `0 0 18px -6px ${t.color}` }}
+          className="ce-title-tag smallcaps text-[9.5px] tracking-[0.22em] text-parchment-300"
+          style={{ animationDelay: "300ms", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}
         >
-          <span className="smallcaps block text-[9.5px] text-parchment-400">
-            {mine ? "New card" : "Opponent gains"}
-          </span>
-          <span className={`block font-display text-sm font-bold leading-tight tier-${tier}`}>{name}</span>
+          {mine ? "New card" : "Opponent gains"}
         </span>
+        <span className="relative block max-w-full overflow-hidden">
+          <span
+            className={`ce-title-name block font-display text-xl font-bold leading-tight tier-${tier}`}
+            style={{
+              animationDelay: "360ms",
+              textShadow: `0 2px 10px rgba(0,0,0,0.95), 0 0 22px ${t.soft}`,
+            }}
+          >
+            {name}
+          </span>
+          <span
+            className="ce-title-sweep absolute inset-y-0 w-[18%]"
+            style={{
+              animationDelay: "620ms",
+              background: "linear-gradient(100deg, transparent, rgba(255,250,235,0.5), transparent)",
+            }}
+          />
+        </span>
+        <span
+          className="ce-title-rule mt-1 block h-[2px] w-[34%] rounded-full"
+          style={{ animationDelay: "520ms", background: `linear-gradient(90deg, transparent, ${t.color}, transparent)` }}
+        />
       </span>
     </span>
   );

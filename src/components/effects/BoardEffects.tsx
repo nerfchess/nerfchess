@@ -2477,20 +2477,40 @@ function CastBanner({
   color: string;
 }) {
   return (
-    <span className="fx-cast-banner absolute inset-x-0 top-[12%] flex justify-center px-[6%]">
+    <span className="fx-cast-banner absolute inset-x-0 top-[9%] flex flex-col items-center px-[6%] text-center">
+      {/* Soft elliptical scrim for legibility — no plate, no border: the
+          cinematic title treatment (ce-title-*, cardEntrance.css). */}
       <span
-        className="block max-w-[86%] rounded-[2px] border px-3 py-1.5 text-center backdrop-blur-[2px]"
-        style={{ borderColor: color, background: "rgba(10,12,17,0.82)", boxShadow: `0 0 22px -6px ${color}` }}
-      >
-        <span className={`block font-display text-sm font-bold leading-tight tier-${tier}`}>
+        className="pointer-events-none absolute inset-x-[4%] -inset-y-[30%]"
+        style={{ background: "radial-gradient(ellipse at 50% 50%, rgba(8,10,15,0.78), transparent 72%)" }}
+      />
+      <span className="relative block max-w-full overflow-hidden">
+        <span
+          className={`ce-title-name block font-display text-base font-bold leading-tight tier-${tier}`}
+          style={{ textShadow: `0 2px 10px rgba(0,0,0,0.95), 0 0 20px ${color}44` }}
+        >
           {name}
         </span>
-        {description && (
-          <span className="mt-0.5 block max-h-[2.6em] overflow-hidden text-[10.5px] leading-snug text-parchment-200">
-            {description}
-          </span>
-        )}
+        <span
+          className="ce-title-sweep absolute inset-y-0 w-[18%]"
+          style={{
+            animationDelay: "260ms",
+            background: "linear-gradient(100deg, transparent, rgba(255,250,235,0.45), transparent)",
+          }}
+        />
       </span>
+      <span
+        className="ce-title-rule mt-0.5 block h-[2px] w-[30%] rounded-full"
+        style={{ animationDelay: "180ms", background: `linear-gradient(90deg, transparent, ${color}, transparent)` }}
+      />
+      {description && (
+        <span
+          className="ce-title-tag relative mt-0.5 block max-h-[2.6em] max-w-[86%] overflow-hidden text-[10.5px] leading-snug text-parchment-200"
+          style={{ animationDelay: "240ms", textShadow: "0 1px 5px rgba(0,0,0,0.95)" }}
+        >
+          {description}
+        </span>
+      )}
     </span>
   );
 }
