@@ -1,48 +1,337 @@
-/* Self-contained animations for the newly implemented stub cards' plugin
- * signatures (see stubPlays.tsx). transform/opacity ONLY, so the caller's
- * animations-off layer can gate them cleanly; a local animations-off
- * guard also flattens them to a static fade as a belt-and-braces fallback.
- * No color lives here (colors ride inline on each element) so these keyframes
- * are purely motion. Class prefix `sp-` is unique to this module. */
+/* Self-contained mini-scene animations for the stub cards' plugin signatures
+ * (see stubPlays.tsx — one scene per card). transform/opacity ONLY, so the
+ * caller's animations-off layer can gate them cleanly; a local animations-off
+ * guard also flattens every `sp-` element to hidden as a belt-and-braces
+ * fallback. No color lives here (colors ride inline on each element) so these
+ * keyframes are purely motion. Class prefix `sp-` is unique to this module.
+ *
+ * Conventions: every animation is one-shot `both`, duration 0.9-1.6s scaled by
+ * --fx-dur; the caller's stagger delay arrives as --sp-d on the scene root and
+ * per-beat offsets add to it (also --fx-dur scaled). Centered elements carry
+ * translate(-50%, -50%) through every keyframe. */
 
+.sp-clip { overflow: hidden; }
+
+/* --- shared: lead-only soft board wash --------------------------------- */
 @keyframes sp-wash-kf {
   0% { opacity: 0; transform: scale(0.7); }
-  25% { opacity: 0.55; }
+  25% { opacity: 0.5; }
   100% { opacity: 0; transform: scale(1.25); }
 }
-@keyframes sp-ring-kf {
-  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.15); }
-  30% { opacity: 0.9; }
-  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.6); }
+.sp-wash { animation: sp-wash-kf calc(1.1s * var(--fx-dur, 1)) ease-out var(--sp-d, 0ms) both; }
+
+/* --- free_retreat: moon-walk back -------------------------------------- */
+@keyframes sp-fr-tick-kf {
+  0% { opacity: 0; transform: translate(-50%, -50%) rotate(0deg); }
+  15% { opacity: 0.9; }
+  45% { transform: translate(-50%, -50%) rotate(-84deg); }
+  60% { transform: translate(-50%, -50%) rotate(-72deg); }
+  80% { opacity: 0.6; }
+  100% { opacity: 0; transform: translate(-50%, -50%) rotate(-72deg); }
 }
-@keyframes sp-pop-kf {
-  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.3) rotate(-12deg); }
-  35% { opacity: 1; transform: translate(-50%, -50%) scale(1.12) rotate(0deg); }
-  70% { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(0deg); }
-  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.05) rotate(0deg); }
+.sp-fr-tick { animation: sp-fr-tick-kf calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.3, 0, 0.2, 1) var(--sp-d, 0ms) both; }
+
+@keyframes sp-fr-swirl-kf {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.4) rotate(50deg); }
+  30% { opacity: 0.95; transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+  70% { opacity: 0.8; transform: translate(-50%, -50%) scale(1.06) rotate(-120deg); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.2) rotate(-190deg); }
 }
-@keyframes sp-spark-kf {
-  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.2); }
-  30% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
-  100% { opacity: 0; transform: translate(-50%, -50%) scale(0.4); }
+.sp-fr-swirl { animation: sp-fr-swirl-kf calc(1.35s * var(--fx-dur, 1)) ease-in-out calc(var(--sp-d, 0ms) + 0.1s * var(--fx-dur, 1)) both; }
+
+@keyframes sp-fr-ghost-kf {
+  0% { opacity: 0; transform: translate(-18%, -50%); }
+  18% { opacity: 0.8; }
+  75% { opacity: 0.65; transform: translate(-82%, -50%); }
+  100% { opacity: 0; transform: translate(-92%, -50%); }
 }
-@keyframes sp-swirl-kf {
-  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.3) rotate(0deg); }
-  40% { opacity: 0.85; }
-  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.4) rotate(220deg); }
+.sp-fr-ghost { animation: sp-fr-ghost-kf calc(1.4s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.6, 0.35, 1) calc(var(--sp-d, 0ms) + 0.22s * var(--fx-dur, 1)) both; }
+
+@keyframes sp-fr-dash-kf {
+  0% { opacity: 0; transform: scaleX(0.3); }
+  30% { opacity: 0.85; transform: scaleX(1); }
+  100% { opacity: 0; transform: translateX(24%) scaleX(0.45); }
+}
+.sp-fr-dash { animation: sp-fr-dash-kf calc(0.9s * var(--fx-dur, 1)) ease-out var(--sp-d, 0ms) both; }
+
+/* --- rewind_one: VHS scan + stepped ghosts + blinking rewind glyph ------ */
+@keyframes sp-rw-scan-kf {
+  0% { opacity: 0; transform: translateY(0); }
+  10% { opacity: 0.8; }
+  88% { opacity: 0.8; transform: translateY(1080%); }
+  100% { opacity: 0; transform: translateY(1180%); }
+}
+.sp-rw-scan { animation: sp-rw-scan-kf calc(1.15s * var(--fx-dur, 1)) linear var(--sp-d, 0ms) both; }
+.sp-rw-scan2 { animation-delay: calc(var(--sp-d, 0ms) + 0.28s * var(--fx-dur, 1)); }
+
+@keyframes sp-rw-ghost1-kf {
+  0% { opacity: 0; transform: translate(-50%, -50%); }
+  12% { opacity: 0.9; transform: translate(-50%, -50%); }
+  30% { transform: translate(-50%, -50%); }
+  30.1% { transform: translate(-66%, -50%); }
+  55% { transform: translate(-66%, -50%); }
+  55.1% { transform: translate(-82%, -50%); }
+  82% { opacity: 0.9; transform: translate(-82%, -50%); }
+  100% { opacity: 0; transform: translate(-86%, -50%); }
+}
+.sp-rw-ghost1 { animation: sp-rw-ghost1-kf calc(1.3s * var(--fx-dur, 1)) linear var(--sp-d, 0ms) both; }
+
+@keyframes sp-rw-ghost2-kf {
+  0% { opacity: 0; transform: translate(-34%, -50%); }
+  20% { opacity: 0.7; transform: translate(-34%, -50%); }
+  42% { transform: translate(-34%, -50%); }
+  42.1% { transform: translate(-16%, -50%); }
+  70% { transform: translate(-16%, -50%); }
+  70.1% { opacity: 0.7; transform: translate(0%, -50%); }
+  100% { opacity: 0; transform: translate(0%, -50%); }
+}
+.sp-rw-ghost2 { animation: sp-rw-ghost2-kf calc(1.3s * var(--fx-dur, 1)) linear calc(var(--sp-d, 0ms) + 0.08s * var(--fx-dur, 1)) both; }
+
+@keyframes sp-rw-rr-kf {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
+  10% { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
+  22% { opacity: 0; }
+  34% { opacity: 1; }
+  46% { opacity: 0; }
+  58% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  85% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
+}
+.sp-rw-rr { animation: sp-rw-rr-kf calc(1.25s * var(--fx-dur, 1)) linear calc(var(--sp-d, 0ms) + 0.2s * var(--fx-dur, 1)) both; }
+
+/* --- shadow_step: dip dark, split, re-merge, wisp ----------------------- */
+@keyframes sp-ss-dim-kf {
+  0% { opacity: 0; }
+  22% { opacity: 0.55; }
+  70% { opacity: 0.38; }
+  100% { opacity: 0; }
+}
+.sp-ss-dim { animation: sp-ss-dim-kf calc(1.45s * var(--fx-dur, 1)) ease-in-out var(--sp-d, 0ms) both; }
+
+@keyframes sp-ss-piece-kf {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.92); }
+  15% { opacity: 0.95; transform: translate(-50%, -50%) scale(1); }
+  38% { transform: translate(-50%, -50%) scale(0.94); }
+  76% { transform: translate(-50%, -50%) scale(1.05); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
+}
+.sp-ss-piece { animation: sp-ss-piece-kf calc(1.45s * var(--fx-dur, 1)) ease-in-out var(--sp-d, 0ms) both; }
+
+@keyframes sp-ss-shade-kf {
+  0% { opacity: 0; transform: translate(-50%, -50%); }
+  16% { opacity: 0.88; transform: translate(-50%, -50%); }
+  42% { transform: translate(-122%, -46%); }
+  60% { transform: translate(-122%, -46%); }
+  84% { opacity: 0.8; transform: translate(-50%, -50%); }
+  100% { opacity: 0; transform: translate(-50%, -50%); }
+}
+.sp-ss-shade { animation: sp-ss-shade-kf calc(1.45s * var(--fx-dur, 1)) cubic-bezier(0.4, 0, 0.3, 1) var(--sp-d, 0ms) both; }
+
+@keyframes sp-ss-wisp-kf {
+  0% { opacity: 0; transform: translate(-50%, -30%) scale(0.5); }
+  30% { opacity: 0.7; transform: translate(-50%, -70%) scale(0.85); }
+  100% { opacity: 0; transform: translate(-24%, -170%) scale(1.3); }
+}
+.sp-ss-wisp { animation: sp-ss-wisp-kf calc(0.95s * var(--fx-dur, 1)) ease-out calc(var(--sp-d, 0ms) + 0.85s * var(--fx-dur, 1)) both; }
+
+/* --- pin_breaker: taut beam snaps, halves whip away, knight rears ------- */
+@keyframes sp-pb-beam-l-kf {
+  0% { opacity: 0; transform: translateY(0); }
+  10% { opacity: 0.95; }
+  20% { transform: translateY(-3%) rotate(-0.6deg); }
+  30% { transform: translateY(3%) rotate(0.6deg); }
+  40% { transform: translateY(-2%); }
+  46% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translate(-58%, 36%) rotate(-34deg); }
+}
+.sp-pb-beam-l {
+  transform-origin: left center;
+  animation: sp-pb-beam-l-kf calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.5, 0, 0.6, 1) var(--sp-d, 0ms) both;
+}
+@keyframes sp-pb-beam-r-kf {
+  0% { opacity: 0; transform: translateY(0); }
+  10% { opacity: 0.95; }
+  20% { transform: translateY(3%) rotate(0.6deg); }
+  30% { transform: translateY(-3%) rotate(-0.6deg); }
+  40% { transform: translateY(2%); }
+  46% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translate(58%, 36%) rotate(34deg); }
+}
+.sp-pb-beam-r {
+  transform-origin: right center;
+  animation: sp-pb-beam-r-kf calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.5, 0, 0.6, 1) var(--sp-d, 0ms) both;
 }
 
-.sp-wash { animation: sp-wash-kf 900ms ease-out both; }
-.sp-ring { animation: sp-ring-kf 820ms cubic-bezier(0.22, 0.8, 0.3, 1) both; }
-.sp-pop { animation: sp-pop-kf 900ms cubic-bezier(0.2, 0.9, 0.3, 1) both; }
-.sp-spark { animation: sp-spark-kf 760ms ease-out both; }
-.sp-swirl { animation: sp-swirl-kf 1000ms ease-in-out both; }
+@keyframes sp-pb-flash-kf {
+  0%, 34% { opacity: 0; transform: translate(-50%, -50%) scale(0.2) rotate(0deg); }
+  42% { opacity: 1; transform: translate(-50%, -50%) scale(1.2) rotate(18deg); }
+  62% { opacity: 0.55; }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.7) rotate(40deg); }
+}
+.sp-pb-flash { animation: sp-pb-flash-kf calc(1s * var(--fx-dur, 1)) ease-out var(--sp-d, 0ms) both; }
 
-html[data-anim="off"] .sp-wash,
-html[data-anim="off"] .sp-ring,
-html[data-anim="off"] .sp-pop,
-html[data-anim="off"] .sp-spark,
-html[data-anim="off"] .sp-swirl {
+@keyframes sp-pb-knight-kf {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.7) rotate(0deg); }
+  22% { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+  42% { transform: translate(-50%, -54%) scale(1.1) rotate(-16deg); }
+  62% { transform: translate(-50%, -50%) scale(1.02) rotate(5deg); }
+  76% { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+}
+.sp-pb-knight {
+  transform-origin: 50% 88%;
+  animation: sp-pb-knight-kf calc(1.4s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.9, 0.4, 1) calc(var(--sp-d, 0ms) + 0.35s * var(--fx-dur, 1)) both;
+}
+
+/* --- decoy: balloon king inflates, wobbles, winks ------------------------ */
+@keyframes sp-dc-king-kf {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.4) rotate(0deg); }
+  24% { opacity: 1; transform: translate(-50%, -50%) scale(1.16) rotate(0deg); }
+  37% { transform: translate(-50%, -50%) scale(0.94) rotate(-3deg); }
+  49% { transform: translate(-50%, -50%) scale(1.08) rotate(2.5deg); }
+  61% { transform: translate(-50%, -50%) scale(0.98) rotate(-1.5deg); }
+  72% { transform: translate(-50%, -50%) scale(1.03) rotate(0deg); }
+  88% { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.02) rotate(0deg); }
+}
+.sp-dc-king {
+  transform-origin: 50% 86%;
+  animation: sp-dc-king-kf calc(1.5s * var(--fx-dur, 1)) cubic-bezier(0.34, 1.3, 0.5, 1) var(--sp-d, 0ms) both;
+}
+
+@keyframes sp-dc-eye-kf {
+  0%, 72% { transform: scaleY(1); }
+  77% { transform: scaleY(0.08); }
+  83% { transform: scaleY(1); }
+  100% { transform: scaleY(1); }
+}
+.sp-dc-eye {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: sp-dc-eye-kf calc(1.5s * var(--fx-dur, 1)) linear var(--sp-d, 0ms) both;
+}
+
+@keyframes sp-dc-glint-kf {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.2) rotate(0deg); }
+  35% { opacity: 1; transform: translate(-50%, -50%) scale(1.1) rotate(25deg); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(0.4) rotate(45deg); }
+}
+.sp-dc-glint { animation: sp-dc-glint-kf calc(0.9s * var(--fx-dur, 1)) ease-out calc(var(--sp-d, 0ms) + 1.05s * var(--fx-dur, 1)) both; }
+
+/* --- loosen_the_leash: chain stretches, link POPS, links scatter --------- */
+@keyframes sp-ll-chain-kf {
+  0% { opacity: 1; transform: scaleX(1); }
+  20% { transform: scaleX(1.05); }
+  34% { transform: scaleX(1.11); }
+  42% { transform: scaleX(1.13); }
+  100% { opacity: 1; transform: scaleX(1.13); }
+}
+.sp-ll-chain {
+  transform-origin: 50% 50%;
+  animation: sp-ll-chain-kf calc(1.4s * var(--fx-dur, 1)) ease-in var(--sp-d, 0ms) both;
+}
+
+@keyframes sp-ll-glow-kf {
+  0% { opacity: 0; transform: scale(0.9); }
+  35% { opacity: 0.7; transform: scale(1.1); }
+  58% { opacity: 1; transform: scale(1.35); }
+  70% { opacity: 0; transform: scale(1.9); }
+  100% { opacity: 0; transform: scale(1.9); }
+}
+.sp-ll-glow { animation: sp-ll-glow-kf calc(0.95s * var(--fx-dur, 1)) ease-in var(--sp-d, 0ms) both; }
+
+@keyframes sp-ll-pop-kf {
+  0%, 40% { opacity: 1; transform: scale(1) rotate(0deg); }
+  48% { opacity: 1; transform: scale(1.55) rotate(14deg); }
+  64% { opacity: 0; transform: scale(2.1) rotate(28deg); }
+  100% { opacity: 0; transform: scale(2.1) rotate(28deg); }
+}
+.sp-ll-pop { animation: sp-ll-pop-kf calc(1.4s * var(--fx-dur, 1)) ease-out var(--sp-d, 0ms) both; }
+
+@keyframes sp-ll-link-kf {
+  0%, 42% { opacity: 1; transform: translate(0, 0) rotate(0deg); }
+  68% {
+    opacity: 0.95;
+    transform: translate(calc(var(--sx, 0%) * 0.55), calc(var(--sy, 0%) * 0.5 - 55%)) rotate(calc(var(--sr, 0deg) * 0.6));
+  }
+  100% { opacity: 0; transform: translate(var(--sx, 0%), var(--sy, 0%)) rotate(var(--sr, 0deg)); }
+}
+.sp-ll-link { animation: sp-ll-link-kf calc(1.4s * var(--fx-dur, 1)) cubic-bezier(0.4, 0, 0.7, 1) var(--sp-d, 0ms) both; }
+
+/* --- piece_parole: bars rise out, PAROLE seal thunks, ink ring ----------- */
+@keyframes sp-pp-bar-kf {
+  0% { opacity: 0; transform: translateY(5%); }
+  14% { opacity: 0.9; transform: translateY(0); }
+  38% { transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-135%); }
+}
+.sp-pp-bar { animation: sp-pp-bar-kf calc(1.25s * var(--fx-dur, 1)) cubic-bezier(0.5, 0, 0.75, 0.6) var(--sp-d, 0ms) both; }
+
+@keyframes sp-pp-seal-kf {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(2.3) rotate(-14deg); }
+  32% { opacity: 1; transform: translate(-50%, -50%) scale(0.92) rotate(0deg); }
+  46% { transform: translate(-50%, -50%) scale(1.06) rotate(0deg); }
+  58% { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+}
+.sp-pp-seal { animation: sp-pp-seal-kf calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.5, 0, 0.3, 1.2) calc(var(--sp-d, 0ms) + 0.42s * var(--fx-dur, 1)) both; }
+
+@keyframes sp-pp-ring-kf {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.55); }
+  22% { opacity: 0.75; }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.5); }
+}
+.sp-pp-ring { animation: sp-pp-ring-kf calc(0.9s * var(--fx-dur, 1)) ease-out calc(var(--sp-d, 0ms) + 0.78s * var(--fx-dur, 1)) both; }
+
+/* --- half_measure: slice sweep, one half settles, one dissolves ---------- */
+@keyframes sp-hm-circle-kf {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.82); }
+  22% { opacity: 0.95; transform: translate(-50%, -50%) scale(1); }
+  45% { opacity: 0.9; }
+  60% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
+}
+.sp-hm-circle { animation: sp-hm-circle-kf calc(1.1s * var(--fx-dur, 1)) ease-out var(--sp-d, 0ms) both; }
+
+@keyframes sp-hm-slice-kf {
+  0% { opacity: 0; transform: translateX(-55%); }
+  18% { opacity: 1; }
+  70% { opacity: 0.9; transform: translateX(40%); }
+  100% { opacity: 0; transform: translateX(58%); }
+}
+.sp-hm-slice { animation: sp-hm-slice-kf calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.4, 0, 0.3, 1) calc(var(--sp-d, 0ms) + 0.12s * var(--fx-dur, 1)) both; }
+
+@keyframes sp-hm-left-kf {
+  0% { opacity: 0; transform: translate(-50%, -50%); }
+  22% { opacity: 0.95; }
+  55% { transform: translate(-56%, -47.5%); }
+  70% { transform: translate(-54%, -49%); }
+  80% { transform: translate(-55%, -48.5%); }
+  90% { opacity: 0.9; }
+  100% { opacity: 0; transform: translate(-55%, -48.5%); }
+}
+.sp-hm-left { animation: sp-hm-left-kf calc(1.55s * var(--fx-dur, 1)) ease-out var(--sp-d, 0ms) both; }
+
+@keyframes sp-hm-right-kf {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
+  22% { opacity: 0.85; }
+  45% { opacity: 0.8; transform: translate(-50%, -50%) scale(1); }
+  78% { opacity: 0.22; transform: translate(-46%, -52%) scale(1.06); }
+  100% { opacity: 0; transform: translate(-44%, -54%) scale(1.12); }
+}
+.sp-hm-right { animation: sp-hm-right-kf calc(1.3s * var(--fx-dur, 1)) ease-in var(--sp-d, 0ms) both; }
+
+@keyframes sp-hm-mote-kf {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.4); }
+  25% { opacity: 0.9; transform: translate(calc(var(--sx, 0%) * 0.25), calc(var(--sy, 0%) * 0.25)) scale(1); }
+  100% { opacity: 0; transform: translate(var(--sx, 0%), var(--sy, 0%)) scale(0.45); }
+}
+.sp-hm-mote { animation: sp-hm-mote-kf calc(1.05s * var(--fx-dur, 1)) ease-out var(--sp-d, 0ms) both; }
+
+/* --- animations-off guard: flatten every scene element ------------------- */
+html[data-anim="off"] [class^="sp-"],
+html[data-anim="off"] [class*=" sp-"] {
   animation: none;
-  opacity: 0.9;
+  opacity: 0;
 }

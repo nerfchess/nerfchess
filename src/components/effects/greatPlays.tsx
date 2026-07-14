@@ -607,11 +607,62 @@ function StoneGaze({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
           animationDelay: `${delayMs + 520}ms`,
         }}
       />
+      {/* bespoke: Medusa's Verdict — the queen catches the gaze, stiffens, and
+          crunches into a walnut while frost nips her guard */}
+      {flourish === "medusa" && (
+        <>
+          <span className="grp-shiver absolute block" style={{ left: "25%", top: "29%", width: "7%", height: "15%", animationDelay: `${delayMs + 520}ms` }}>
+            <svg viewBox="0 0 8 16" className="block h-full w-full" aria-hidden="true">
+              <path d="M2 3.4 L1.4 1 L2.6 1.9 L3.4 0.6 L4.2 1.9 L5.4 1 L4.8 3.4 Z" fill="#ffd76a" stroke="#8a6a3a" strokeWidth="0.4" {...SJ} />
+              <path d="M2.2 4 H4.6 L5.4 13 C5.4 14.4 1.4 14.4 1.4 13 Z" fill={tint(p0, 0.95)} stroke={p2} strokeWidth="0.5" {...SJ} />
+            </svg>
+          </span>
+          <span className="grp-pop absolute block" style={{ left: "24.5%", top: "34%", width: "8%", height: "10%", animationDelay: `${delayMs + 880}ms` }}>
+            <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+              <ellipse cx="5" cy="5" rx="4" ry="4.4" fill="#c9b89a" stroke="#8a6a4a" strokeWidth="0.6" />
+              <path d="M5 0.8 V9.2 M2.6 2.4 C2 3.8 2 6.2 2.6 7.6" fill="none" stroke="#8a6a4a" strokeWidth="0.45" />
+            </svg>
+          </span>
+          {[
+            { l: 21, t: 33, d: 0 },
+            { l: 33, t: 36, d: 70 },
+            { l: 27, t: 46, d: 140 },
+          ].map((v, i) => (
+            <span key={i} className="grp-glint absolute block" style={{ left: `${v.l}%`, top: `${v.t}%`, width: "3%", height: "3%", animationDelay: `${delayMs + 960 + v.d}ms` }}>
+              <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+                <path d="M5 0 L6.1 3.9 L10 5 L6.1 6.1 L5 10 L3.9 6.1 L0 5 L3.9 3.9 Z" fill="#9fd8ff" />
+              </svg>
+            </span>
+          ))}
+        </>
+      )}
+      {/* bespoke: Eternal Statue — a laurel wreath is lowered onto the bust and
+          the gallery plaque catches the light: chosen once, still for an age */}
+      {flourish === "statue" && (
+        <>
+          <span className="grp-drop absolute block" style={{ left: "41%", top: "15%", width: "18%", height: "9%", animationDelay: `${delayMs + 560}ms` }}>
+            <svg viewBox="0 0 18 9" className="block h-full w-full" aria-hidden="true">
+              <path d="M2 7 C4 3 14 3 16 7" fill="none" stroke="#7fae5a" strokeWidth="1.2" strokeLinecap="round" />
+              <path d="M4 5.2 L3 3.8 M6.5 4.2 L6 2.6 M9 4 L9 2.2 M11.5 4.2 L12 2.6 M14 5.2 L15 3.8" stroke="#7fae5a" strokeWidth="0.8" strokeLinecap="round" />
+            </svg>
+          </span>
+          <span className="grp-hold absolute block" style={{ left: "42%", top: "58%", width: "16%", height: "4%", animationDelay: `${delayMs + 760}ms` }}>
+            <svg viewBox="0 0 16 4" className="block h-full w-full" aria-hidden="true">
+              <rect x="0.5" y="0.5" width="15" height="3" rx="0.8" fill={tint(p1, 0.35)} stroke={tint(p1, 0.9)} strokeWidth="0.4" />
+              <path d="M2.5 2 H13.5" stroke={tint(p1, 0.9)} strokeWidth="0.5" strokeLinecap="round" />
+            </svg>
+          </span>
+          <Glint delayMs={delayMs + 1300} color="#7fae5a" left={44} top={57} sizePct={4} />
+        </>
+      )}
       {/* spalling stone chips + the single stone-shock */}
       <Flash delayMs={delayMs + 680} color={tint(p1, 0.55)} left={41} top={50} w={18} h={11} />
       <Sparks delayMs={delayMs + 720} fill={tint(p0, 0.95)} stroke={p2} cy={54} />
       <Boom delayMs={delayMs + 780} color={tint(p1, 0.85)} />
       <Glint delayMs={delayMs + 1120} color={p1} left={48} top={30} />
+      {/* settle: masonry dust sifts down off the fresh stone */}
+      <Afterglow delayMs={delayMs + 920} color={tint(p0, 0.3)} left={38} top={38} w={24} h={20} />
+      <Settle delayMs={delayMs + 980} dir="fall" render={(i) => <Mote color={tint(i % 2 ? p0 : p2, 0.7)} />} />
     </Stage>
   );
 }
@@ -626,12 +677,15 @@ const FROST_STRIPES = [
   { t: 47, d: 240 },
   { t: 62, d: 340 },
 ];
-function ColdFront({ palette, glyph, lead, delayMs }: TemplateProps) {
+function ColdFront({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
   const [p0, p1, p2] = palette;
   if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
     <Stage>
       <Wash color={tint(p0, 0.26)} delayMs={delayMs} />
+      {/* tell: the cold draft — a pale gleam gathers at the west wing */}
+      <TellGlow delayMs={delayMs} color={tint(p1, 0.3)} left={24} top={36} w={18} h={20} />
+      <TellRays delayMs={delayMs + 20} color={tint(p1, 0.75)} />
       {/* frost stripes glazing in behind the front */}
       {FROST_STRIPES.map((s, i) => (
         <span
@@ -668,11 +722,59 @@ function ColdFront({ palette, glyph, lead, delayMs }: TemplateProps) {
           <span className="absolute block" style={{ left: "18%", top: "18%", width: "64%", height: "64%" }}>{glyph}</span>
         </span>
       </span>
+      {/* bespoke: The Big Chill — the glaze cracks apart behind the front and
+          ONE shard shakes itself free early (the uneven thaw) */}
+      {flourish === "bigchill" && (
+        <>
+          {[
+            { l: 34, t: 40, rot: "-9deg", d: 0 },
+            { l: 46, t: 52, rot: "6deg", d: 80 },
+            { l: 40, t: 61, rot: "-4deg", d: 160 },
+          ].map((v, i) => (
+            <span key={i} className="absolute block" style={{ left: `${v.l}%`, top: `${v.t}%`, width: "22%", height: "1.1%", rotate: v.rot }}>
+              <span
+                className="grp-beam absolute inset-0 block"
+                style={{ background: `linear-gradient(90deg, ${tint(p1, 0.95)}, transparent)`, transformOrigin: "0% 50%", animationDelay: `${delayMs + 1080 + v.d}ms` }}
+              />
+            </span>
+          ))}
+          <span className="grp-bonk absolute block" style={{ left: "47%", top: "55%", width: "6%", height: "7%", animationDelay: `${delayMs + 1360}ms` }}>
+            <svg viewBox="0 0 8 9" className="block h-full w-full" aria-hidden="true">
+              <path d="M4 0.8 L7 4 L6 8.4 H2 L1 4 Z" fill={tint(p0, 0.85)} stroke={p2} strokeWidth="0.6" {...SJ} />
+              <path d="M3 3 L4.6 5.4" stroke="#ffffff" strokeWidth="0.5" strokeLinecap="round" />
+            </svg>
+          </span>
+        </>
+      )}
+      {/* bespoke: Total Freeze — every neighbour iced in the same instant: a
+          ring of six ice blocks snaps shut around the heart of the board */}
+      {flourish === "totalfreeze" && (
+        <>
+          {[
+            { l: 47, t: 30 },
+            { l: 59, t: 38 },
+            { l: 59, t: 53 },
+            { l: 47, t: 61 },
+            { l: 35, t: 53 },
+            { l: 35, t: 38 },
+          ].map((v, i) => (
+            <span key={i} className="grp-pop absolute block" style={{ left: `${v.l}%`, top: `${v.t}%`, width: "6%", height: "6.5%", animationDelay: `${delayMs + 980}ms` }}>
+              <svg viewBox="0 0 8 9" className="block h-full w-full" aria-hidden="true">
+                <path d="M1 2.6 L4 0.8 L7 2.6 V6.4 L4 8.2 L1 6.4 Z" fill={tint(p0, 0.6)} stroke={tint(p2, 0.95)} strokeWidth="0.6" {...SJ} />
+                <path d="M1.8 3.2 L3.4 4.8" stroke="#ffffff" strokeWidth="0.5" strokeLinecap="round" />
+              </svg>
+            </span>
+          ))}
+        </>
+      )}
       {/* rime flare + ice sparks + the single glacial shock */}
       <Flash delayMs={delayMs + 900} color={tint(p1, 0.6)} left={44} top={42} w={17} h={12} />
       <Sparks delayMs={delayMs + 940} fill={p1} stroke={p2} cy={47} />
       <Boom delayMs={delayMs + 1000} color={tint(p1, 0.85)} />
       <Glint delayMs={delayMs + 1320} color={p1} left={52} top={34} />
+      {/* settle: fine snow sifts down in the front's wake */}
+      <Afterglow delayMs={delayMs + 1140} color={tint(p1, 0.26)} left={38} top={36} w={26} h={22} />
+      <Settle delayMs={delayMs + 1180} dir="fall" sizePct={2} render={() => <Mote color={tint("#ffffff", 0.85)} />} />
     </Stage>
   );
 }

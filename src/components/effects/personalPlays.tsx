@@ -390,6 +390,8 @@ function Bench225Play({ lead, delayMs }: { lead: boolean; delayMs: number }) {
       {/* the bar spans the whole visible board */}
       <Prop left="17%" top="39%" width="66%" height="21%">
         <svg viewBox="0 0 200 64" className="h-full w-full">
+          {/* TELL: the loaded bar rattles out of the rack before the descent */}
+          <g className="pnp-rattle" style={d(delayMs)}>
           <g className="pnp-benchpress" style={d(delayMs)}>
             {/* bar + collars */}
             <rect x={4} y={29} width={192} height={6} rx={3} fill="#aab6c8" stroke="#5c6880" strokeWidth={1.6} />
@@ -408,6 +410,14 @@ function Bench225Play({ lead, delayMs }: { lead: boolean; delayMs: number }) {
               <text x={174} y={17.5} fontSize={7} fontWeight={800} fill="#c9d6e8" textAnchor="middle">45</text>
               <circle cx={187} cy={32} r={16} fill="#e84d5b" stroke="#8f2231" strokeWidth={2} opacity={0.95} />
             </g>
+          </g>
+          </g>
+          {/* SETTLE: chalk knocked off the knurling at lockout */}
+          <g className="pnp-puff" style={dv(delayMs + 1150, { "--pnp-x": "-14%", "--pnp-y": "-30%" })}>
+            <circle cx={62} cy={26} r={4} fill="rgba(232,237,246,0.75)" />
+          </g>
+          <g className="pnp-puff" style={dv(delayMs + 1240, { "--pnp-x": "16%", "--pnp-y": "-26%" })}>
+            <circle cx={138} cy={26} r={3.5} fill="rgba(232,237,246,0.7)" />
           </g>
         </svg>
       </Prop>
@@ -461,22 +471,25 @@ function MonkeytypePlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   return (
     <Stage inset="-150%">
       <svg viewBox="0 0 100 100" className="h-full w-full">
-        {/* the test line: a calm dark card, monkeytype-style */}
+        {/* the test line: a calm dark card, monkeytype-style; the card takes a
+            focus breath (two soft pulses) before the first keystroke — the tell */}
         <g className="pnp-linger" style={d(delayMs)}>
-          <rect x={10} y={30} width={80} height={34} rx={5} fill="#1c212e" stroke="#39445c" strokeWidth={2} />
-          {/* untyped words: dim blanks waiting on the second row */}
-          <rect x={18} y={52} width={15} height={4.5} rx={2.2} fill="#3d4a66" />
-          <rect x={37} y={52} width={11} height={4.5} rx={2.2} fill="#3d4a66" />
-          <rect x={52} y={52} width={17} height={4.5} rx={2.2} fill="#3d4a66" />
-          <rect x={73} y={52} width={9} height={4.5} rx={2.2} fill="#3d4a66" />
+          <g className="pnp-focus" style={d(delayMs)}>
+            <rect x={10} y={30} width={80} height={34} rx={5} fill="#1c212e" stroke="#39445c" strokeWidth={2} />
+            {/* untyped words: dim blanks waiting on the second row */}
+            <rect x={18} y={52} width={15} height={4.5} rx={2.2} fill="#3d4a66" />
+            <rect x={37} y={52} width={11} height={4.5} rx={2.2} fill="#3d4a66" />
+            <rect x={52} y={52} width={17} height={4.5} rx={2.2} fill="#3d4a66" />
+            <rect x={73} y={52} width={9} height={4.5} rx={2.2} fill="#3d4a66" />
+          </g>
         </g>
-        {/* typed words snap in left to right on the live row */}
-        <g className="pnp-type" style={d(delayMs + 180)}><rect x={18} y={40} width={13} height={4.5} rx={2.2} fill="#e8d24d" /></g>
-        <g className="pnp-type" style={d(delayMs + 360)}><rect x={35} y={40} width={16} height={4.5} rx={2.2} fill="#e8edf6" /></g>
-        <g className="pnp-type" style={d(delayMs + 540)}><rect x={55} y={40} width={10} height={4.5} rx={2.2} fill="#e8edf6" /></g>
-        <g className="pnp-type" style={d(delayMs + 720)}><rect x={69} y={40} width={13} height={4.5} rx={2.2} fill="#e8d24d" /></g>
-        {/* the caret rides ahead of the words */}
-        <g className="pnp-caret" style={d(delayMs + 150)}>
+        {/* typed words snap in left to right on the live row (after the breath) */}
+        <g className="pnp-type" style={d(delayMs + 420)}><rect x={18} y={40} width={13} height={4.5} rx={2.2} fill="#e8d24d" /></g>
+        <g className="pnp-type" style={d(delayMs + 590)}><rect x={35} y={40} width={16} height={4.5} rx={2.2} fill="#e8edf6" /></g>
+        <g className="pnp-type" style={d(delayMs + 760)}><rect x={55} y={40} width={10} height={4.5} rx={2.2} fill="#e8edf6" /></g>
+        <g className="pnp-type" style={d(delayMs + 930)}><rect x={69} y={40} width={13} height={4.5} rx={2.2} fill="#e8d24d" /></g>
+        {/* the caret blinks alone through the tell, then rides ahead of the words */}
+        <g className="pnp-caret" style={d(delayMs + 120)}>
           <rect x={16.4} y={38.5} width={1.8} height={8} rx={0.9} fill="#e8d24d" />
         </g>
         {/* wpm counter climbing: 72 -> 109 -> 148 */}

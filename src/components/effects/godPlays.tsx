@@ -955,6 +955,7 @@ function FrostTitan({ palette, glyph, lead, delayMs }: TemplateProps) {
       <Boom delayMs={delayMs + 720} color={tint(p1, 0.9)} thickness={4} />
       <Boom delayMs={delayMs + 840} color={tint(p0, 0.8)} />
       <Glint delayMs={delayMs + 1100} color={p1} left={48} top={22} />
+      <Settle hex={p1} delayMs={delayMs + 1100} cy={61} />
     </Stage>
   );
 }
@@ -970,6 +971,7 @@ function ForgeColossus({ palette, glyph, lead, delayMs }: TemplateProps) {
   return (
     <Stage>
       <Wash color={tint(p0, 0.26)} delayMs={delayMs} />
+      <Tell hex={p2} delayMs={delayMs} cy={56} />
       <RayFan hex={p1} delayMs={delayMs + 40} />
       {/* the colossal implement itself — the glyph, writ huge — slamming down */}
       <span className="gp-slam absolute block" style={{ left: "32%", top: "10%", width: "36%", height: "46%", animationDelay: `${delayMs + 160}ms` }}>
@@ -985,6 +987,7 @@ function ForgeColossus({ palette, glyph, lead, delayMs }: TemplateProps) {
       <Boom delayMs={delayMs + 640} color={tint(p2, 0.9)} thickness={4} />
       <Boom delayMs={delayMs + 750} color={tint(p0, 0.85)} />
       <Glint delayMs={delayMs + 1050} color={p2} left={47} top={28} />
+      <Settle hex={p2} delayMs={delayMs + 1050} cy={57} />
     </Stage>
   );
 }
@@ -999,6 +1002,7 @@ function GorgonIdol({ palette, glyph, lead, delayMs }: TemplateProps) {
   return (
     <Stage>
       <Wash color={tint(p0, 0.26)} delayMs={delayMs} />
+      <Tell hex={p1} delayMs={delayMs} cy={58} />
       {/* the idol head, grinding up out of the board */}
       <span className="gp-rise absolute block" style={{ left: "31%", top: "19%", width: "38%", height: "52%", animationDelay: `${delayMs + 150}ms` }}>
         <svg viewBox="0 0 36 40" className="block h-full w-full" aria-hidden="true">
@@ -1051,6 +1055,7 @@ function GorgonIdol({ palette, glyph, lead, delayMs }: TemplateProps) {
       <Sparks delayMs={delayMs + 680} fill={p1} stroke={p2} sizePct={6.5} cy={52} />
       <Boom delayMs={delayMs + 860} color={tint(p0, 0.85)} />
       <Glint delayMs={delayMs + 1140} color={p1} left={47} top={24} />
+      <Settle hex={p1} delayMs={delayMs + 1130} cy={48} />
     </Stage>
   );
 }
@@ -1066,6 +1071,7 @@ function ChronoLord({ palette, glyph, lead, delayMs }: TemplateProps) {
   return (
     <Stage>
       <Wash color={tint(p0, 0.25)} delayMs={delayMs} />
+      <Tell hex={p1} delayMs={delayMs} cy={54} />
       {/* the great clock ring settles over the board */}
       <span className="gp-ringset absolute block" style={{ left: "21%", top: "22%", width: "58%", height: "58%", animationDelay: `${delayMs + 120}ms` }}>
         <svg viewBox="0 0 40 40" className="block h-full w-full" aria-hidden="true">
@@ -1110,6 +1116,7 @@ function ChronoLord({ palette, glyph, lead, delayMs }: TemplateProps) {
       <Boom delayMs={delayMs + 880} color={tint(p1, 0.9)} thickness={4} />
       <Boom delayMs={delayMs + 1000} color={tint(p0, 0.8)} />
       <Glint delayMs={delayMs + 1220} color={p1} left={47} top={26} />
+      <Settle hex={p1} delayMs={delayMs + 1260} cy={54} />
     </Stage>
   );
 }
@@ -1152,6 +1159,7 @@ function SkullStrike({ palette, glyph, lead, delayMs }: TemplateProps) {
   return (
     <Stage>
       <Wash color={tint(p1, 0.4)} delayMs={delayMs} />
+      <Tell hex={p0} delayMs={delayMs} cy={48} />
       <Bars delayMs={delayMs} />
       {/* the lane shine, waxed for the occasion */}
       <span
@@ -1206,6 +1214,7 @@ function SkullStrike({ palette, glyph, lead, delayMs }: TemplateProps) {
       <Boom delayMs={delayMs + 1980} color={tint(p2, 0.85)} thickness={3} />
       <Boom delayMs={delayMs + 2140} color={tint(p1, 0.8)} />
       <Glint delayMs={delayMs + 2420} color={p2} left={64} top={36} />
+      <Settle hex={p0} delayMs={delayMs + 2360} cx={66} cy={48} />
     </Stage>
   );
 }
@@ -1236,6 +1245,7 @@ function PlanetAlign({ palette, glyph, lead, delayMs }: TemplateProps) {
   return (
     <Stage>
       <Wash color={tint(p0, 0.42)} delayMs={delayMs} />
+      <Tell hex={p1} delayMs={delayMs} cy={44} />
       <Bars delayMs={delayMs} />
       {/* the starfield kindles */}
       {SKY_STARS.map((s, i) => (
@@ -1297,6 +1307,7 @@ function PlanetAlign({ palette, glyph, lead, delayMs }: TemplateProps) {
       <Boom delayMs={delayMs + 1880} color={tint(p1, 0.85)} thickness={3} />
       <Boom delayMs={delayMs + 2040} color={tint(p0, 0.8)} />
       <Glint delayMs={delayMs + 2340} color={p2} left={47} top={30} />
+      <Settle hex={p1} delayMs={delayMs + 2320} cy={46} />
     </Stage>
   );
 }
