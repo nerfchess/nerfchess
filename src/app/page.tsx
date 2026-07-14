@@ -88,9 +88,6 @@ export default function HomePage() {
               <span className="font-display text-lg font-bold uppercase tracking-wide text-mode-buffGlow underline decoration-mode-buff/60 decoration-2 underline-offset-4">
                 Buff
               </span>
-              <span className="ml-2 smallcaps border border-gold/40 bg-gold/10 px-1.5 py-0.5 text-[8px] text-gold-leaf">
-                Best for your first game
-              </span>
               <p className="mt-2 text-[13px] leading-snug text-parchment-300">
                 Start with normal chess. Draft{" "}
                 <span className="text-parchment-100">powers</span> for your own army.
