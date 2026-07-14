@@ -613,7 +613,7 @@ function RatioPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           {/* RATIO stamp */}
           <g className="prk-stamp" style={d(delayMs + 950)}>
             <rect x={34} y={52} width={52} height={16} rx={3} fill="#e84d5b" />
-            <text x={60} y={63.5} fontSize={8} fontWeight={900} fill="#fff" textAnchor="middle">RATIO'D</text>
+            <text x={60} y={63.5} fontSize={8} fontWeight={900} fill="#fff" textAnchor="middle">{"RATIO'D"}</text>
           </g>
         </svg>
       </Prop>

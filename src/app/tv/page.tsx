@@ -95,9 +95,11 @@ function TvView() {
   const [moves, setMoves] = useState<string[]>([]);
   const [players, setPlayers] = useState<MPPlayers | null>(null);
   const [over, setOver] = useState(false);
-  // Set when tuning in to the featured game fails even after a retry, so the
-  // board area shows a brief notice instead of an eternal "Tuning in…" spinner.
-  const [tuneInFailed, setTuneInFailed] = useState(false);
+  // The stream id whose tune-in failed even after a retry, so the board area
+  // shows a brief notice instead of an eternal "Tuning in…" spinner. Keyed by
+  // id (not a boolean) so switching to another game clears it for free, with
+  // no synchronous reset needed inside the watch effect.
+  const [failedStreamId, setFailedStreamId] = useState<string | null>(null);
   const [recent, setRecent] = useState<RecentGame | null>(null);
   // null = fallback not answered yet; the empty state must not show before
   // BOTH the lobby snapshot and this lookup have resolved ("no games are
@@ -114,7 +116,7 @@ function TvView() {
     setMoves([]);
     setPlayers(null);
     setOver(false);
-    setTuneInFailed(false);
+    setFailedStreamId(null);
     setRecent(null);
     setRecentChecked(false);
   }
@@ -157,7 +159,6 @@ function TvView() {
   useEffect(() => {
     if (!streamId) return;
     let cancelled = false;
-    setTuneInFailed(false);
     const session = new MPSession();
     session.persistFriendSession = false;
     // Arena-hosted (OCI bot-vs-bot) games stream from the arena's own socket
@@ -188,7 +189,7 @@ function TvView() {
           tuneIn(retriesLeft - 1);
         } else {
           setPlayers(null);
-          setTuneInFailed(true);
+          setFailedStreamId(streamId);
         }
       });
     };
@@ -305,7 +306,7 @@ function TvView() {
                 lastMove={lastMove}
                 disabled
               />
-            ) : streamId && tuneInFailed ? (
+            ) : streamId && failedStreamId === streamId ? (
               /* Tune-in failed after a retry: don't spin forever. The featured
                  game stays selected (the lobby may recover it, or the viewer can
                  pick another), but the board area shows a brief notice. */
