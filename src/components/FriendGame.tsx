@@ -462,7 +462,7 @@ export function FriendGameSetup() {
   const [joinCode, setJoinCode] = useState("");
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {challenging && (
         <p className="text-parchment-200">
           <span className="text-gold-leaf">{challenging}</span> gets a notification and the
@@ -501,11 +501,6 @@ export function FriendGameSetup() {
           <ModeChoice mode="buff" selected={gameMode === "buff"} onClick={() => pickGameMode("buff")} />
           <ModeChoice mode="nerf" selected={gameMode === "nerf"} onClick={() => pickGameMode("nerf")} />
         </div>
-        <p className="mt-2 text-[11px] leading-snug text-parchment-400">
-          {gameMode === "buff"
-            ? "Start with normal chess. Draft powers for your own army."
-            : "Start with a secret handicap. Draft curses for your opponent."}
-        </p>
       </div>
 
       <div>
@@ -518,9 +513,11 @@ export function FriendGameSetup() {
             Rated
           </StakeButton>
         </div>
-        <p className="mt-2 text-[11px] leading-snug text-parchment-400">
-          {rated ? "Rated when both players are signed in." : "No rating change."}
-        </p>
+        {rated && (
+          <p className="mt-2 text-[11px] leading-snug text-parchment-400">
+            Rated when both players are signed in.
+          </p>
+        )}
       </div>
 
       <button
@@ -574,10 +571,9 @@ export function FriendGameSetup() {
   );
 }
 
-// The two modes, told apart by color instead of words: a colored swatch and the
-// mode's name in its glow color inside a matching border, echoing the home
-// page's mode-def cards. No "mode" suffix, no paragraph — the color is the
-// label.
+// The two modes, told apart by color: each button always wears its mode
+// identity (rose for Nerf, sky for Buff), deepening with a ring and a check
+// when selected — matching the Quick Play mode cards, no swatch dot.
 function ModeChoice({
   mode,
   selected,
@@ -587,11 +583,14 @@ function ModeChoice({
   selected: boolean;
   onClick: () => void;
 }) {
-  const swatch = mode === "nerf" ? "bg-mode-nerf" : "bg-mode-buff";
-  const selectedIdentity =
+  const identity =
     mode === "nerf"
-      ? "border-mode-nerf bg-mode-nerf/10 text-mode-nerfGlow"
-      : "border-mode-buff bg-mode-buff/10 text-mode-buffGlow";
+      ? selected
+        ? "border-mode-nerf bg-mode-nerf/20 text-mode-nerfGlow ring-2 ring-inset ring-mode-nerf"
+        : "border-mode-nerf/30 bg-mode-nerf/5 text-mode-nerfGlow/80 hover:border-mode-nerf/60 hover:bg-mode-nerf/10"
+      : selected
+        ? "border-mode-buff bg-mode-buff/20 text-mode-buffGlow ring-2 ring-inset ring-mode-buff"
+        : "border-mode-buff/30 bg-mode-buff/5 text-mode-buffGlow/80 hover:border-mode-buff/60 hover:bg-mode-buff/10";
   return (
     <button
       type="button"
@@ -600,15 +599,24 @@ function ModeChoice({
       onClick={onClick}
       className={
         "flex items-center justify-center gap-2 px-3 py-3 border transition font-display text-sm font-bold uppercase tracking-wide " +
-        (selected
-          ? selectedIdentity
-          : "border-white/15 bg-white/[0.03] text-parchment-300 hover:border-white/30 hover:bg-white/[0.06]")
+        identity
       }
     >
-      <span
-        aria-hidden
-        className={`h-3.5 w-3.5 rounded-full ${swatch} ${selected ? "" : "opacity-70"}`}
-      />
+      {selected && (
+        <svg
+          width="13"
+          height="13"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="3.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden
+        >
+          <path d="M20 6 9 17l-5-5" />
+        </svg>
+      )}
       {mode === "nerf" ? "Nerf" : "Buff"}
     </button>
   );

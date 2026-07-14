@@ -249,7 +249,9 @@ function LobbyInner() {
           <span className="eyebrow">Find a game</span>
           <div className="mt-1 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
             <h1 className="masthead text-4xl sm:text-6xl text-parchment-50">The Lobby</h1>
-            <div className="flex flex-wrap items-center gap-2 pb-1">
+            {/* Hidden on phones: the first thing a phone visitor should see is
+                the matchmaking button, not the traffic counters. */}
+            <div className="hidden sm:flex flex-wrap items-center gap-2 pb-1">
               <HallStat dotClass="bg-verdigris animate-flicker">
                 {onlineCount === null
                   ? "Connecting…"
@@ -296,10 +298,10 @@ function LobbyInner() {
                 aria-controls={`lobby-panel-${t.id}`}
                 onClick={() => setTab(t.id)}
                 className={
-                  "flex items-center justify-center gap-2 border px-4 py-2.5 font-display text-sm transition-colors sm:justify-start sm:border-b-0 sm:text-base " +
+                  "flex items-center justify-center gap-2 border-2 px-4 py-3 font-display text-sm font-semibold transition-colors sm:justify-start sm:border-b-0 sm:text-base " +
                   (selected
-                    ? "border-gold/50 bg-gold/10 text-gold-leaf"
-                    : "border-white/10 bg-white/[0.03] text-parchment-300 hover:bg-white/[0.06] hover:text-parchment-100")
+                    ? "border-gold/70 bg-gold/15 text-gold-leaf"
+                    : "border-white/15 bg-white/[0.05] text-parchment-200 hover:border-white/30 hover:bg-white/[0.09] hover:text-parchment-50")
                 }
               >
                 {t.label}

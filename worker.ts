@@ -453,7 +453,11 @@ const houseSeededKey = "hp:seeded:v4";
 // identity-2: the v4 persona renames above changed three name-hashed avatars,
 // so re-circulate identity once. (syncHouseRatings itself respects the
 // /mod/house admin overrides, so this never undoes an admin edit.)
-const houseRatingsSyncedKey = "hp:ratings-synced:identity-2";
+// identity-3: 30 personas gained scenic uploaded-style pfps and the
+// location-as-bio seeding was retired; re-circulate so users.avatar carries
+// the new pfp ids everywhere (lobby, TV, profiles) and stale location bios
+// are cleared.
+const houseRatingsSyncedKey = "hp:ratings-synced:identity-3";
 const houseNextFillerKey = "hp:nextFillerAt";
 // Slow heartbeat while at least one human socket is connected; with nobody
 // online there is no heartbeat and the DO goes idle between match deadlines.

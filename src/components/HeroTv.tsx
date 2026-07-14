@@ -158,9 +158,20 @@ export function HeroTv() {
         <PlayerAvatar name={p.name} avatar={p.avatar} size={24} />
         <span className="truncate font-display text-[15px] text-parchment-100 underline-offset-4 transition-colors group-hover/seat:text-gold-leaf group-hover/seat:underline group-hover/seat:decoration-gold/50">
           {p.name}
+          {/* The rating wears the mode's color (warm rose for Nerf, sky for
+              Buff) instead of spelling the mode out next to the number. */}
           {p.rating != null && (
-            <span className="text-parchment-400 no-underline">
-              {" "}({p.rating}{shownMode ? ` ${shownMode === "nerf" ? "Nerf" : "Buff"}` : ""})
+            <span
+              className={
+                "no-underline " +
+                (shownMode === "nerf"
+                  ? "text-mode-nerfGlow"
+                  : shownMode === "buff"
+                    ? "text-mode-buffGlow"
+                    : "text-parchment-400")
+              }
+            >
+              {" "}({p.rating})
             </span>
           )}
         </span>
@@ -172,14 +183,14 @@ export function HeroTv() {
     <div className="w-full max-w-[600px] mx-auto">
       <div className="flex items-center justify-between gap-2 pb-2">
         {seat("b")}
-        <span className="flex items-center gap-2 border border-white/10 bg-white/5 px-2.5 py-1 smallcaps text-[10px] text-parchment-200">
-          <span
-            className={
-              "h-2 w-2 " + (live && !over ? "dot-live bg-oxblood-glow" : "bg-parchment-400")
-            }
-          />
-          {live ? (over ? "Top board · just finished" : "Top board · live") : "Latest game"}
-          {shownMode ? ` · ${shownMode === "nerf" ? "Nerf" : "Buff"}` : ""}
+        <span className="flex items-center gap-2 border border-oxblood-glow/40 bg-oxblood/10 px-2.5 py-1 smallcaps text-[10px] text-oxblood-glow">
+          <span className="dot-live h-2 w-2 bg-oxblood-glow" />
+          {live && over ? "Just finished" : "Live game"}
+          {shownMode ? (
+            <span className={shownMode === "nerf" ? "text-mode-nerfGlow" : "text-mode-buffGlow"}>
+              · {shownMode === "nerf" ? "Nerf" : "Buff"}
+            </span>
+          ) : null}
         </span>
       </div>
       <Link href={`/game/${shownId}`} className="tv-frame group block no-underline" title={live ? "Watch this game" : "Replay this game"}>

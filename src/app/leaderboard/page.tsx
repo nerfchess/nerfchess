@@ -17,6 +17,7 @@ interface Row {
   username: string;
   avatar?: string | null;
   flair?: string | null;
+  bio?: string | null;
   rating: number;
   rd: number;
   games: number;

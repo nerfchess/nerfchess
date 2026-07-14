@@ -17,6 +17,7 @@ interface LeaderboardRow {
   draws: number;
   avatar: string | null;
   flair: string | null;
+  bio: string | null;
   guest: number;
   bot: number;
 }
@@ -50,7 +51,7 @@ export async function GET(request: Request) {
   const db = await getDb();
   const rows = await db
     .prepare(
-      `SELECT u.username, r.rating, r.rd, r.games, r.wins, r.losses, r.draws, u.avatar, u.flair, u.is_guest AS guest,
+      `SELECT u.username, r.rating, r.rd, r.games, r.wins, r.losses, r.draws, u.avatar, u.flair, u.bio, u.is_guest AS guest,
               (r.user_id LIKE ? ESCAPE '\\') AS bot
        FROM user_ratings r JOIN users u ON u.id = r.user_id
        WHERE r.category = ? AND ${houseFilter}
@@ -91,6 +92,7 @@ export async function GET(request: Request) {
           username: viewer.username,
           avatar: viewer.avatar,
           flair: viewer.flair,
+          bio: viewer.bio,
           guest: !!viewer.is_guest,
           bot: false,
           rank: (better?.n ?? 0) + 1,

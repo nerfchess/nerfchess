@@ -246,7 +246,9 @@ export function SiteHeader({ active }: { active?: string }) {
                     />
                   )}
                 </Link>
-                <div className="invisible absolute left-0 top-full z-40 w-56 opacity-0 transition-opacity group-focus-within:visible group-focus-within:opacity-100 group-hover:visible group-hover:opacity-100">
+                {/* No opacity fade: the menu pops in fully solid so the labels
+                    never read as half-transparent text mid-transition. */}
+                <div className="invisible absolute left-0 top-full z-40 w-56 group-focus-within:visible group-hover:visible">
                   <div className="plate dropdown py-1 shadow-2xl">
                     {link.menu.map((item) => (
                       <Link
