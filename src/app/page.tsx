@@ -13,6 +13,7 @@ import { StarField } from "@/components/StarField";
 import { useLobbySnapshot } from "@/lib/lobbyClient";
 import { AccountUser, fetchMe } from "@/lib/authClient";
 import { ActiveGame, loadActiveGame, clearActiveGame } from "@/lib/multiplayer";
+import { FIRST_GAME_TOUR_HREF } from "@/components/tutorial/tourState";
 
 export default function HomePage() {
   return (
@@ -36,7 +37,21 @@ export default function HomePage() {
         {/* The action column is kept short on purpose: it should never run
             taller than the board beside it. */}
         <div className="order-2 stagger-in">
-          <span className="eyebrow">Nerf Chess</span>
+          {/* Eyebrow row, with a quiet onboarding door parked in the upper
+              right. It drops brand-new players straight into the built-in
+              guided tutorial: a real game against the easiest bot with coach
+              marks over the live board. */}
+          <div className="flex items-start justify-between gap-3">
+            <span className="eyebrow">Nerf Chess</span>
+            <Link
+              href={FIRST_GAME_TOUR_HREF}
+              className="shrink-0 inline-flex items-center gap-1.5 border border-gold/40 bg-gold/10 px-2.5 py-1 text-[11px] text-gold-leaf no-underline transition-colors hover:bg-gold/20"
+            >
+              <span className="smallcaps">New here?</span>
+              <span className="hidden sm:inline">Learn the game in 3 minutes</span>
+              <span aria-hidden>→</span>
+            </Link>
+          </div>
           {/* ONE dominant action. It enters the lobby's Quick Play tab, where
               Buff and 3+2 are already selected, so the next click is the
               matchmaking button. */}
@@ -52,17 +67,6 @@ export default function HomePage() {
               </svg>
             </Link>
           </h1>
-
-          {/* One quiet, obvious door for brand-new players: the built-in
-              guided tutorial (a real bot game with coach marks). */}
-          <Link
-            href="/tutorial"
-            className="mt-3 inline-flex items-center gap-2 border border-gold/40 bg-gold/10 px-3 py-1.5 text-[12px] text-gold-leaf no-underline transition-colors hover:bg-gold/20"
-          >
-            <span className="smallcaps">New here?</span>
-            Learn the game in 3 minutes
-            <span aria-hidden>→</span>
-          </Link>
 
           <LiveNowStrip />
 
@@ -424,11 +428,15 @@ function StatStrip() {
   }
 
   const fallback = Math.round(user.rating);
+  // The two ratings drop the spelled-out mode: the number, the tick, and the
+  // label all wear the mode color (rose = Nerf, sky = Buff, matching the mode
+  // cards above), so the hue names the pool instead of the word. The deck
+  // counts keep the neutral muted label.
   const stats = [
-    { value: String(modeRatings.nerf ?? fallback), label: "Nerf rating", tone: "text-mode-nerfGlow", tick: "bg-mode-nerf/70" },
-    { value: String(modeRatings.buff ?? fallback), label: "Buff rating", tone: "text-mode-buffGlow", tick: "bg-mode-buff/70" },
-    { value: deckCounts ? deckCounts.buffs.toLocaleString() : "…", label: "buffs in the deck", tone: "text-parchment-50", tick: "bg-sun/70" },
-    { value: deckCounts ? deckCounts.nerfs.toLocaleString() : "…", label: "nerfs in the deck", tone: "text-parchment-50", tick: "bg-mint/70" },
+    { key: "nerf", value: String(modeRatings.nerf ?? fallback), label: "Rating", tone: "text-mode-nerfGlow", tick: "bg-mode-nerf/70", labelTone: "text-mode-nerfGlow" },
+    { key: "buff", value: String(modeRatings.buff ?? fallback), label: "Rating", tone: "text-mode-buffGlow", tick: "bg-mode-buff/70", labelTone: "text-mode-buffGlow" },
+    { key: "buffs", value: deckCounts ? deckCounts.buffs.toLocaleString() : "…", label: "buffs in the deck", tone: "text-parchment-50", tick: "bg-sun/70", labelTone: "text-parchment-400" },
+    { key: "nerfs", value: deckCounts ? deckCounts.nerfs.toLocaleString() : "…", label: "nerfs in the deck", tone: "text-parchment-50", tick: "bg-mint/70", labelTone: "text-parchment-400" },
   ];
   return (
     <section className="w-full max-w-7xl mx-auto px-5 sm:px-6 py-4">
@@ -448,12 +456,12 @@ function StatStrip() {
         </div>
         <div className="grid grid-cols-2 gap-y-5 sm:grid-cols-4 sm:divide-x sm:divide-white/10">
           {stats.map((s) => (
-            <div key={s.label} className="px-2 sm:px-6 text-center">
+            <div key={s.key} className="px-2 sm:px-6 text-center">
               <div className={`font-display text-3xl sm:text-4xl font-bold tabular-nums ${s.tone}`}>
                 {s.value}
               </div>
               <span aria-hidden className={`mx-auto mt-2.5 block h-1 w-8 ${s.tick}`} />
-              <div className="mt-2 smallcaps text-[9px] sm:text-[10px] text-parchment-400">
+              <div className={`mt-2 smallcaps text-[9px] sm:text-[10px] ${s.labelTone}`}>
                 {s.label}
               </div>
             </div>
