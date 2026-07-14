@@ -67,7 +67,7 @@ export const PLUGIN_SIGNATURES: Record<string, SignatureConfig> = {};
  */
 // <plugin-ids:generated>
 export const PLUGIN_IDS: readonly string[] = [
-  // basicPlays.tsx (296)
+  // basicPlays.tsx (304)
   "cornerstone", "firm_footing", "guarded_king", "holy_hell", "loose_pawn", "pawn_shield",
   "steady_hand", "bulwark", "fork_guard", "reinforce", "screen", "shielded_advance",
   "sidestep_king", "chain_mail", "deflect", "fortress", "iron_bishop", "phalanx",
@@ -117,7 +117,8 @@ export const PLUGIN_IDS: readonly string[] = [
   "wa_swap_flanks", "warp_field", "warp_reign", "warp_rook", "we_riptide", "we_undertow",
   "regenerate", "summon_knight", "wa_conjure_scout", "ww_outriders", "mass_resurrect", "phantom_rook",
   "ww_forward_observer", "ww_reserve_cavalry", "glamour", "piece_steal", "wa_dominate_minor", "wc_body_double",
-  "ww_defectors", "ww_mass_defection",
+  "ww_defectors", "ww_mass_defection", "free_retreat", "rewind_one", "shadow_step", "pin_breaker",
+  "decoy", "loosen_the_leash", "piece_parole", "half_measure",
   // godPlays.tsx (68)
   "draft_tyranny", "sovereign_draft", "draft_supremacy", "divine_legion", "absolute_aegis", "checkmate_denial",
   "full_pardon", "transcendence", "mind_empire", "mass_mind_control", "throne_and_silence", "abdication_edict",
@@ -164,9 +165,6 @@ export const PLUGIN_IDS: readonly string[] = [
   // memePlays.tsx (9)
   "cappuccino_assassino", "ballerina_cappuccina", "la_vaca_saturno_saturnita", "frigo_camelo", "trippi_troppi", "chill_guy",
   "moai_head", "skibidi_flush", "tung_tung_sahur",
-  // stubPlays.tsx (8)
-  "free_retreat", "rewind_one", "shadow_step", "pin_breaker", "decoy", "loosen_the_leash",
-  "piece_parole", "half_measure",
   // prankPlays.tsx (9)
   "pr_phishing", "pr_donation_alert", "pr_bsod", "pr_forced_update", "pr_defender_scan", "pr_captcha",
   "pr_popup_storm", "pr_chain_letter", "pr_ratiod",

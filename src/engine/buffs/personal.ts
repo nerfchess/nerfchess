@@ -1094,7 +1094,12 @@ export const NEWJEANS_CARDS: Buff[] = [
           const q = api.board.pieces[n];
           return !!q && q.color === api.me;
         });
-        return grouped ? slideMoves(api.board, sq, ALL_DIRS, inst.id, 1) : [];
+        if (!grouped) return [];
+        // Pawns share the harmony step but may never land on a first or last
+        // rank (the engine-wide pawn invariant; hyein/haerin guard the same way).
+        return slideMoves(api.board, sq, ALL_DIRS, inst.id, 1).filter(
+          (m) => p.type !== "p" || pawnRankOk(m.to),
+        );
       }),
     ),
   ),
