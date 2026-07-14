@@ -15,7 +15,7 @@
   </defs>
 
   <!-- soft grey room -->
-  <rect width="200" height="200" fill="url(#ha-bg)"/>
+  <!-- background removed: portraits render as free-standing characters over the board -->
   <path d="M0 148 L200 138" stroke="#c6cbd0" stroke-width="2" opacity="0.7"/>
 
   <!-- floating cute bits: blossom sparkle + plush bear -->

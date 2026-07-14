@@ -8,8 +8,8 @@
 // the edge with a peek over the rim, and one-shot reaction poses toggled by
 // the capture diff Board.tsx already runs). Hidden on small screens (edge
 // space is tight), gated by the fx-hidden switch at the mount site, and
-// rendered static under prefers-reduced-motion (persistent-prop rule from
-// effects.css).
+// rendered static when animations are off in Settings (persistent-prop rule
+// from effects.css).
 //
 // Data note (see Board.tsx derivation): the mascot is summoned from the
 // public buff list (buffs.players[color].buffs). Played brainrot cards stay

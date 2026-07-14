@@ -1,13 +1,12 @@
 "use client";
 
-// Admin editor for the house-bot identities: rename a persona or give it a
-// different avatar from the house avatar catalog. Edits persist as overrides
-// (house_identity_overrides) with the baked roster constants as the fallback,
-// and land on the persona's users row immediately, so profiles, the
+// Editor for the house-bot identities: rename a persona, give it a different
+// avatar from the house avatar catalog, or set a profile bio. Edits persist as
+// overrides (house_identity_overrides) with the baked roster constants as the
+// fallback, and land on the persona's users row immediately, so profiles, the
 // leaderboard, and the lobby pick them up without a deploy (the game server's
-// identity cache refreshes within about a minute). Server-side authorization
-// lives in /api/mod/house/personas (view: any moderator; edit: admin); this
-// page only hides the controls from non-admins.
+// identity cache refreshes within about a minute). Open to any moderator or
+// admin, matching the server-side authorization in /api/mod/house/personas.
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -20,8 +19,8 @@ type PersonaView = {
   seedRating: number;
   location: string;
   defaults: { username: string; avatar: string };
-  override: { username: string | null; avatar: string | null } | null;
-  effective: { username: string; avatar: string };
+  override: { username: string | null; avatar: string | null; bio: string | null } | null;
+  effective: { username: string; avatar: string; bio: string | null };
 };
 
 type PersonasPayload = { personas: PersonaView[]; avatars: string[] };
@@ -40,7 +39,6 @@ export default function ModHousePage() {
   }, []);
 
   const isMod = me && (me.role === "mod" || me.role === "admin");
-  const isAdmin = me?.role === "admin";
 
   return (
     <main className="min-h-screen">
@@ -66,9 +64,9 @@ export default function ModHousePage() {
           <>
             <h1 className="font-display text-4xl">House bots</h1>
             <p className="mt-3 max-w-2xl text-sm text-parchment-300">
-              The engine-driven roster that keeps the lobby warm. {isAdmin
-                ? "Rename a persona or pick a different avatar; names pass the same checks a player registration does. Changes go live without a deploy."
-                : "Viewing only — editing identities requires an admin."}
+              The engine-driven roster that keeps the lobby warm. Rename a persona,
+              pick a different avatar, or set a profile bio; names pass the same
+              checks a player registration does. Changes go live without a deploy.
             </p>
             {failed ? (
               <p className="mt-6 text-sm text-parchment-400">Could not load the roster. Try again in a minute.</p>
@@ -84,7 +82,7 @@ export default function ModHousePage() {
                     key={`${p.userId}:${p.effective.username}`}
                     persona={p}
                     avatars={data.avatars}
-                    canEdit={!!isAdmin}
+                    canEdit={!!isMod}
                     onSaved={setData}
                   />
                 ))}
@@ -109,6 +107,7 @@ function PersonaRow({
   onSaved: (data: PersonasPayload) => void;
 }) {
   const [name, setName] = useState(persona.effective.username);
+  const [bio, setBio] = useState(persona.effective.bio ?? "");
   const [picking, setPicking] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -137,8 +136,19 @@ function PersonaRow({
     }
   };
 
-  const dirty = name.trim() !== persona.effective.username;
+  const nameDirty = name.trim() !== persona.effective.username;
+  const bioDirty = bio.trim() !== (persona.effective.bio ?? "");
+  const dirty = nameDirty || bioDirty;
   const edited = !!persona.override;
+
+  // Save whichever text fields (username, bio) changed in one request; the
+  // avatar picker posts on its own.
+  const saveEdits = () => {
+    const body: Record<string, unknown> = {};
+    if (nameDirty) body.username = name.trim();
+    if (bioDirty) body.bio = bio.trim();
+    if (Object.keys(body).length) post(body);
+  };
 
   return (
     <div className="px-4 py-3">
@@ -157,7 +167,7 @@ function PersonaRow({
             value={name}
             onChange={(e) => setName(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter" && dirty) post({ username: name.trim() });
+              if (e.key === "Enter" && dirty) saveEdits();
             }}
             className="w-44 bg-transparent plate px-3 py-1.5 text-sm font-display font-semibold outline-none focus:border-gold/40"
             maxLength={20}
@@ -183,7 +193,7 @@ function PersonaRow({
             <button
               type="button"
               disabled={saving || !dirty}
-              onClick={() => post({ username: name.trim() })}
+              onClick={saveEdits}
               className="px-3 py-1 rounded-sm btn-ghost text-gold-leaf disabled:opacity-40"
             >
               {saving ? "Saving…" : "Save"}
@@ -200,6 +210,21 @@ function PersonaRow({
           </span>
         )}
       </div>
+      {canEdit && (
+        <div className="mt-2">
+          <input
+            value={bio}
+            onChange={(e) => setBio(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && dirty) saveEdits();
+            }}
+            placeholder="Profile bio (optional)"
+            maxLength={300}
+            className="w-full bg-transparent plate px-3 py-1.5 text-sm outline-none focus:border-gold/40"
+            aria-label={`Bio for ${persona.defaults.username}`}
+          />
+        </div>
+      )}
       {error && <p className="mt-2 text-xs text-oxblood-glow">{error}</p>}
       {picking && canEdit && (
         <div className="mt-3 flex flex-wrap gap-1.5">

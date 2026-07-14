@@ -8,7 +8,7 @@
    - one-shot with `both` fill so a finished flourish holds opacity 0
    - global speed control comes free from the html[data-anim] duration clamps
      in globals.css (they apply to every element)
-   - prefers-reduced-motion: generated flourishes are transient spectacle, so
+   - animations off (Settings): generated flourishes are transient spectacle, so
      the whole overlay is hidden outright (walnut-squirrel precedent)
 
    Class naming: .gsig-* (generated signature), so nothing here can collide
@@ -277,10 +277,8 @@
 }
 .gsig-lead-orbit { animation: gsig-lead-orbit 1.2s ease-in-out both; transform-origin: 50% 50%; }
 
-/* --- Reduced motion --------------------------------------------------------
+/* --- Animations off (Settings) ---------------------------------------------
    Generated signatures are pure transient spectacle (never state the player
    must read), so the whole overlay is hidden outright, matching the treatment
    effects.css gives one-shot flourishes. */
-@media (prefers-reduced-motion: reduce) {
-  .gsig-root { display: none !important; }
-}
+html[data-anim="off"] .gsig-root { display: none !important; }

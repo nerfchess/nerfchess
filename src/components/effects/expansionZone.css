@@ -1,9 +1,9 @@
 /* ---------------------------------------------------------------------------
    Expansion Permit construction ring (ExpansionZone.tsx): the ninth file /
    ninth rank being "bolted on" outside the board crop. Same motion rules as
-   effects.css: transform/opacity only in keyframes; under
-   prefers-reduced-motion the transient motes hide and the static scaffold
-   stays (persistent prop).
+   effects.css: transform/opacity only in keyframes; when animations are off in
+   Settings the transient motes hide and the static scaffold stays (persistent
+   prop).
 --------------------------------------------------------------------------- */
 
 .xz-strip {
@@ -75,13 +75,11 @@
   transform-origin: 30% 90%;
 }
 
-/* Reduced motion: scaffold and stripes stay (persistent prop, static); the
-   transient motes hide outright and the crane stops swaying. */
-@media (prefers-reduced-motion: reduce) {
-  .xz-mote {
-    display: none;
-  }
-  .xz-crane {
-    animation: none;
-  }
+/* Animations off (Settings): scaffold and stripes stay (persistent prop,
+   static); the transient motes hide outright and the crane stops swaying. */
+html[data-anim="off"] .xz-mote {
+  display: none;
+}
+html[data-anim="off"] .xz-crane {
+  animation: none;
 }

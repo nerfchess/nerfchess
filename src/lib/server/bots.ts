@@ -452,9 +452,10 @@ export const HOUSE_AVATAR_IDS: readonly string[] = [...HOUSE_PFP_IDS, ...FLOWER_
 // One plausible home base per persona (owner report: every bot showed the
 // same location). Distinct for the whole roster (>= PERSONA_DEFS.length
 // entries, assigned by roster index) and spread world-wide so the crowd reads
-// like a real player base. Surfaced as the account's profile bio line; a
-// moderator-edited bio is never overwritten (see ensureHouseUsers /
-// syncHouseRatings).
+// like a real player base. Shown only as a label in the /mod/house editor; it
+// is NOT written into the profile bio anymore (that read as a weird
+// auto-generated description). A bot's bio is empty until a moderator sets one
+// (see HouseIdentityOverride / ensureHouseUsers / syncHouseRatings).
 const HOUSE_LOCATIONS: string[] = [
   "🇧🇷 Curitiba, Brazil",
   "🇩🇪 Leipzig, Germany",
@@ -564,18 +565,24 @@ export function isHouseUserId(id: string | null | undefined): boolean {
 }
 
 // ---------------------------------------------------------------------------
-// Admin identity overrides (username / avatar), stored in D1
-// (house_identity_overrides, migrations/0025) and edited from /mod/house.
+// Staff identity overrides (username / avatar / bio), stored in D1
+// (house_identity_overrides, migrations/0025 + 0028's bio column) and edited
+// from /mod/house by any moderator or admin.
 // Resolution is always `override ?? default`: a NULL column (or a missing row)
-// falls through to the baked persona constant. The save route also writes the
-// persona's users row, so every surface that reads identity from the database
-// (profiles, leaderboard, lobby online list, seat attach) picks an edit up
-// without a deploy; these helpers exist for the surfaces that would otherwise
-// read the code constant (the /mod editor itself and syncHouseRatings, which
-// must not clobber an admin's avatar on the next identity re-sync).
+// falls through to the baked persona constant (empty for bio — the roster no
+// longer bakes a bio). The save route also writes the persona's users row, so
+// every surface that reads identity from the database (profiles, leaderboard,
+// lobby online list, seat attach) picks an edit up without a deploy; these
+// helpers exist for the surfaces that would otherwise read the code constant
+// (the /mod editor itself and syncHouseRatings, which must not clobber a
+// staff-set avatar or bio on the next identity re-sync).
 // ---------------------------------------------------------------------------
 
-export type HouseIdentityOverride = { username: string | null; avatar: string | null };
+export type HouseIdentityOverride = {
+  username: string | null;
+  avatar: string | null;
+  bio: string | null;
+};
 
 /** All stored identity overrides, keyed by persona user id. Never throws: a
  * missing table (pre-migration database) or read failure reads as "no
@@ -585,12 +592,16 @@ export async function loadHouseIdentityOverrides(
 ): Promise<Map<string, HouseIdentityOverride>> {
   try {
     const rows = await db
-      .prepare(`SELECT user_id, username, avatar FROM house_identity_overrides`)
-      .all<{ user_id: string; username: string | null; avatar: string | null }>();
+      .prepare(`SELECT user_id, username, avatar, bio FROM house_identity_overrides`)
+      .all<{ user_id: string; username: string | null; avatar: string | null; bio: string | null }>();
     const map = new Map<string, HouseIdentityOverride>();
     for (const row of rows.results) {
       if (!HOUSE_USER_IDS.has(row.user_id)) continue;
-      map.set(row.user_id, { username: row.username ?? null, avatar: row.avatar ?? null });
+      map.set(row.user_id, {
+        username: row.username ?? null,
+        avatar: row.avatar ?? null,
+        bio: row.bio ?? null,
+      });
     }
     return map;
   } catch {
@@ -598,14 +609,16 @@ export async function loadHouseIdentityOverrides(
   }
 }
 
-/** A persona's effective display identity: override ?? baked default. */
+/** A persona's effective display identity: override ?? baked default. Bio has
+ * no baked default (empty unless a moderator set one). */
 export function houseIdentity(
   persona: HousePersona,
   override: HouseIdentityOverride | undefined | null,
-): { name: string; avatar: string } {
+): { name: string; avatar: string; bio: string | null } {
   return {
     name: override?.username || persona.name,
     avatar: override?.avatar || persona.avatar,
+    bio: override?.bio || null,
   };
 }
 
@@ -651,8 +664,10 @@ export function houseSeedRating(persona: HousePersona): number {
 // at the persona's skill. The password hash is unparseable on purpose
 // (verifyPassword requires a "pbkdf2:" prefix), so nobody can sign in as one.
 // Idempotent (INSERT OR IGNORE): safe to run on every cold start. Seeds with
-// the admin identity override (username/avatar) when one exists, so an edit
-// saved before the account row existed (fresh database) still lands.
+// the staff identity override (username/avatar/bio) when one exists, so an edit
+// saved before the account row existed (fresh database) still lands. A fresh
+// bot with no bio override debuts with an empty bio (the roster no longer seeds
+// its location as a bio).
 export async function ensureHouseUsers(db: D1Database): Promise<void> {
   const now = Date.now();
   const overrides = await loadHouseIdentityOverrides(db);
@@ -665,7 +680,7 @@ export async function ensureHouseUsers(db: D1Database): Promise<void> {
           `INSERT OR IGNORE INTO users (id, username, username_lower, password_hash, created_at, rating, rd, vol, avatar, bio)
            VALUES (?, ?, ?, ?, ?, ?, 150, 0.06, ?, ?)`,
         )
-        .bind(persona.userId, identity.name, identity.name.toLowerCase(), "unusable", now, rating, identity.avatar, persona.location),
+        .bind(persona.userId, identity.name, identity.name.toLowerCase(), "unusable", now, rating, identity.avatar, identity.bio),
       ...(["nerf", "buff"] as const).map((mode) =>
         db
           .prepare(
@@ -680,28 +695,36 @@ export async function ensureHouseUsers(db: D1Database): Promise<void> {
 }
 
 // Re-point every EXISTING house account's rating (and its per-mode buckets) at
-// the current houseSeedRating, and circulate identity revisions (avatar,
-// location bio). ensureHouseUsers only ever INSERTs (OR IGNORE), so once an
-// account exists a roster revision never reaches it; this bounded UPDATE is
-// what actually circulates one. House users only (every id comes from
-// HOUSE_ROSTER), and idempotent: it writes the same deterministic values every
-// time, peak only ever ratchets up (MAX), and the location bio fills in only
-// when the bio is empty so a moderator-written bio is never clobbered. The
-// caller gates it behind a versioned cold-start key so it runs once per
-// revision rather than every tick. Admin identity overrides (/mod/house) win
-// over the baked avatar here, so a roster identity revision never undoes an
-// admin's edit.
+// the current houseSeedRating, and circulate identity revisions (avatar, bio).
+// ensureHouseUsers only ever INSERTs (OR IGNORE), so once an account exists a
+// roster revision never reaches it; this bounded UPDATE is what actually
+// circulates one. House users only (every id comes from HOUSE_ROSTER), and
+// idempotent: it writes the same deterministic values every time and peak only
+// ever ratchets up (MAX). Bio handling: when a staff bio override exists it is
+// written verbatim (a resync never clobbers it); with no override, any bio that
+// still exactly equals the persona's baked location string is CLEARED (so older
+// deployments that seeded the location-as-bio get cleaned up on the next
+// resync), while any other non-empty bio is left untouched. The caller gates it
+// behind a versioned cold-start key so it runs once per revision rather than
+// every tick. Staff identity overrides (/mod/house) win over the baked avatar
+// here, so a roster identity revision never undoes a moderator's edit.
 export async function syncHouseRatings(db: D1Database): Promise<void> {
   const overrides = await loadHouseIdentityOverrides(db);
   const statements = HOUSE_ROSTER.flatMap((persona) => {
     const rating = houseSeedRating(persona);
     const identity = houseIdentity(persona, overrides.get(persona.userId));
     return [
-      db
-        .prepare(
-          `UPDATE users SET rating = ?, avatar = ?, bio = COALESCE(NULLIF(bio, ''), ?) WHERE id = ?`,
-        )
-        .bind(rating, identity.avatar, persona.location, persona.userId),
+      // With a bio override, write it; otherwise clear any leftover
+      // location-as-bio (older seed) and leave a real bio alone.
+      identity.bio !== null
+        ? db
+            .prepare(`UPDATE users SET rating = ?, avatar = ?, bio = ? WHERE id = ?`)
+            .bind(rating, identity.avatar, identity.bio, persona.userId)
+        : db
+            .prepare(
+              `UPDATE users SET rating = ?, avatar = ?, bio = CASE WHEN bio = ? THEN NULL ELSE bio END WHERE id = ?`,
+            )
+            .bind(rating, identity.avatar, persona.location, persona.userId),
       ...(["nerf", "buff"] as const).map((mode) =>
         db
           .prepare(

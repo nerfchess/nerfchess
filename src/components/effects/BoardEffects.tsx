@@ -3,7 +3,7 @@
 // Board effect overlays: one component per card-effect family, mounted only
 // on affected squares by Board.tsx. All SVG inline (no emoji), all animation
 // transform/opacity-only, defined in effects.css. Persistent overlays render
-// a static end state under prefers-reduced-motion; one-shot flourishes hide.
+// a static end state when animations are off in Settings; one-shot flourishes hide.
 
 import React from "react";
 import {
@@ -20,6 +20,7 @@ import {
   Wind,
 } from "lucide-react";
 import type { BuffCategory, CardFx } from "@/engine/buff";
+import { CategoryArrival } from "./cardEntrance";
 import { cardFaceIcon } from "@/lib/cardIcon";
 import type { PieceType } from "@/engine/types";
 import "./effects.css";
@@ -76,27 +77,55 @@ export const DuckGlyph = React.memo(function DuckGlyph() {
   );
 });
 
-/** Squirrel scurrying in to bury a walnut-hexed piece (replaces the emoji). */
-export const SquirrelGlyph = React.memo(function SquirrelGlyph({ size = 16 }: { size?: number }) {
-  return (
-    <svg viewBox="0 0 20 20" width={size} height={size} aria-hidden="true">
-      <g stroke="#5d3a1e" strokeWidth="0.7" strokeLinejoin="round">
-        {/* tail: big back curl */}
-        <path
-          d="M12.5 16.5 C18.5 16 20 9 15.5 5.5 C17.6 9.5 15.6 13 12 13.6 Z"
-          fill="#8a5230"
-        />
-        {/* body */}
-        <path
-          d="M5.2 17 C4 13.6 5.6 10.6 8.6 10.4 C11 10.2 12.4 12 12.4 14 C12.4 16 10.6 17 8.6 17 Z"
-          fill="#a1663a"
-        />
-        {/* head + ear */}
-        <path d="M6.6 10.8 L5.9 8.6 L7.8 9.3 Z" fill="#a1663a" />
-        <circle cx="6.4" cy="11" r="2.1" fill="#a1663a" />
+/** Carved root-claws gripping a walnutted square from all four corners: dark
+ * burl wood with a molten-gold seam accent to match WalnutPiece's kintsugi
+ * shell. Each corner claw clamps in once (walnut-root in globals.css) and
+ * persists as the "held fast" mark while the hex runs. */
+export const RootClaws = React.memo(function RootClaws() {
+  const claw = (
+    <svg viewBox="0 0 20 20" width="100%" height="100%" aria-hidden="true">
+      {/* three knuckled root fingers reaching in from the corner */}
+      <g stroke="#120a04" strokeWidth="0.8" strokeLinejoin="round">
+        <path d="M0 3 C6 3 9.5 5 11.5 9 L9 10.5 C7.5 7.5 4.5 5.8 0 5.6 Z" fill="#3a2415" />
+        <path d="M3 0 C3 6 5 9.5 9 11.5 L10.5 9 C7.5 7.5 5.8 4.5 5.6 0 Z" fill="#4a2f1a" />
+        <path d="M1 1 C5.5 2.5 8.5 5.5 10 10 L12.5 12.5 C11.5 6.5 7.5 2.5 1 1 Z" fill="#2a1a0e" />
       </g>
-      <circle cx="5.7" cy="10.6" r="0.55" fill="#2b1c10" />
+      {/* gold seam glint along the longest finger */}
+      <path
+        d="M1.6 1.6 C5.5 3 8.3 5.8 9.8 9.6"
+        fill="none"
+        stroke="#ffd76a"
+        strokeWidth="0.55"
+        strokeLinecap="round"
+        opacity="0.8"
+      />
     </svg>
+  );
+  const corners: { pos: string; rot: number; rx: string; ry: string; delay: number }[] = [
+    { pos: "left-0 top-0", rot: 0, rx: "-60%", ry: "-60%", delay: 0 },
+    { pos: "right-0 top-0", rot: 90, rx: "60%", ry: "-60%", delay: 70 },
+    { pos: "right-0 bottom-0", rot: 180, rx: "60%", ry: "60%", delay: 140 },
+    { pos: "left-0 bottom-0", rot: 270, rx: "-60%", ry: "60%", delay: 210 },
+  ];
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20 block" aria-hidden="true">
+      {corners.map((c, i) => (
+        <span
+          key={i}
+          className={`walnut-root absolute block h-[38%] w-[38%] ${c.pos}`}
+          style={
+            {
+              rotate: `${c.rot}deg`,
+              "--rx": c.rx,
+              "--ry": c.ry,
+              animationDelay: `${c.delay}ms`,
+            } as React.CSSProperties
+          }
+        >
+          {claw}
+        </span>
+      ))}
+    </span>
   );
 });
 
@@ -2380,17 +2409,17 @@ export function SignatureOverlay(props: SignatureVisualProps) {
 // --- Cast spectacles: EVERY card play gets a themed read ---------------------
 // The category fallback layer (owner request: "no card should ever play
 // silently"). Board mounts ONE CastSpectacle over the whole board crop each
-// time a card is played (any card — bespoke signature or not), themed by the
-// card's category and scaled by its tier:
+// time a card is played, themed by the card's category and scaled by its tier:
 //   sleek   (tier 1-4): a quick, elegant edge ring + a diagonal shine sweep +
 //           a small emblem pop. Subtle enough to sit under bespoke art.
-//   grand   (tier 5-7): a category-tinted radial wash, a bigger emblem slam
-//           with a shockwave, and a spark ring.
+//   grand   (tier 5-7): a category-tinted radial wash plus the card icon's
+//           CategoryArrival choreography (cardEntrance.tsx).
 //   marquee (tier 8-10): a board takeover — vignette dim, twin sweeping beams,
-//           a colossal emblem, triple shockwaves (Board adds the screen shake).
-// All transform/opacity-only, all one-shot, all hidden under
-// prefers-reduced-motion (see effects.css). The emblem reuses the category
-// suit glyphs so the read matches the card face the player just clicked.
+//           the arrival at full scale, triple shockwaves (Board adds shake).
+// Cards WITH bespoke play art get chrome only (frame pulse + wash + banner):
+// their own scene is the spectacle, so a generic face icon is never stamped
+// over it. All transform/opacity-only, all one-shot, all hidden when
+// animations are off in Settings (see effects.css).
 
 export type CastIntensity = "sleek" | "grand" | "marquee";
 
@@ -2448,20 +2477,40 @@ function CastBanner({
   color: string;
 }) {
   return (
-    <span className="fx-cast-banner absolute inset-x-0 top-[12%] flex justify-center px-[6%]">
+    <span className="fx-cast-banner absolute inset-x-0 top-[9%] flex flex-col items-center px-[6%] text-center">
+      {/* Soft elliptical scrim for legibility — no plate, no border: the
+          cinematic title treatment (ce-title-*, cardEntrance.css). */}
       <span
-        className="block max-w-[86%] rounded-[2px] border px-3 py-1.5 text-center backdrop-blur-[2px]"
-        style={{ borderColor: color, background: "rgba(10,12,17,0.82)", boxShadow: `0 0 22px -6px ${color}` }}
-      >
-        <span className={`block font-display text-sm font-bold leading-tight tier-${tier}`}>
+        className="pointer-events-none absolute inset-x-[4%] -inset-y-[30%]"
+        style={{ background: "radial-gradient(ellipse at 50% 50%, rgba(8,10,15,0.78), transparent 72%)" }}
+      />
+      <span className="relative block max-w-full overflow-hidden">
+        <span
+          className={`ce-title-name block font-display text-base font-bold leading-tight tier-${tier}`}
+          style={{ textShadow: `0 2px 10px rgba(0,0,0,0.95), 0 0 20px ${color}44` }}
+        >
           {name}
         </span>
-        {description && (
-          <span className="mt-0.5 block max-h-[2.6em] overflow-hidden text-[10.5px] leading-snug text-parchment-200">
-            {description}
-          </span>
-        )}
+        <span
+          className="ce-title-sweep absolute inset-y-0 w-[18%]"
+          style={{
+            animationDelay: "260ms",
+            background: "linear-gradient(100deg, transparent, rgba(255,250,235,0.45), transparent)",
+          }}
+        />
       </span>
+      <span
+        className="ce-title-rule mt-0.5 block h-[2px] w-[30%] rounded-full"
+        style={{ animationDelay: "180ms", background: `linear-gradient(90deg, transparent, ${color}, transparent)` }}
+      />
+      {description && (
+        <span
+          className="ce-title-tag relative mt-0.5 block max-h-[2.6em] max-w-[86%] overflow-hidden text-[10.5px] leading-snug text-parchment-200"
+          style={{ animationDelay: "240ms", textShadow: "0 1px 5px rgba(0,0,0,0.95)" }}
+        >
+          {description}
+        </span>
+      )}
     </span>
   );
 }
@@ -2473,6 +2522,7 @@ export function CastSpectacle({
   name,
   description,
   cardIcon,
+  bespoke = false,
 }: {
   category: BuffCategory;
   tier: number;
@@ -2483,6 +2533,11 @@ export function CastSpectacle({
   description?: string;
   /** The card's own icon field (BUFF_BY_ID[id].icon), when it has one. */
   cardIcon?: string;
+  /** True when the card has hand-made play art (core or plugin). The bespoke
+   * scene IS the spectacle then: this layer stands down to banner + frame so
+   * a face icon is never stamped over it (the Jackpot-wheel-cherry / Total
+   * War red-swords bug). */
+  bespoke?: boolean;
 }) {
   const theme = CAST_THEME[category];
   // The card's UNIQUE face icon (the same one on its card face and in the
@@ -2492,6 +2547,28 @@ export function CastSpectacle({
   const banner = name ? (
     <CastBanner name={name} description={description} tier={tier} color={theme.color} />
   ) : null;
+  if (bespoke) {
+    // Chrome only: tier-tinted frame pulse + wash + the announcement banner.
+    // Everything center-stage belongs to the card's own art.
+    return (
+      <span className="fx-cast pointer-events-none absolute inset-0 z-40 block" aria-hidden="true">
+        {intensity !== "sleek" && (
+          <span
+            className="fx-cast-wash absolute inset-0 block"
+            style={{ background: `radial-gradient(circle, ${theme.soft}, transparent 74%)` }}
+          />
+        )}
+        <span
+          className="fx-cast-ring absolute inset-[1%] block rounded-sm"
+          style={{
+            border: `${intensity === "marquee" ? 2.5 : 1.5}px solid ${theme.color}`,
+            boxShadow: `inset 0 0 ${intensity === "marquee" ? 34 : 18}px ${theme.soft}`,
+          }}
+        />
+        {banner}
+      </span>
+    );
+  }
   if (intensity === "sleek") {
     // Per-card variation: sweep direction + tilt + emblem anchor derive from
     // the id hash, so every low-tier card owns a recognizably distinct cast.
@@ -2550,18 +2627,11 @@ export function CastSpectacle({
           className="fx-cast-ring absolute inset-[1%] block rounded-sm"
           style={{ border: `2px solid ${theme.color}`, boxShadow: `inset 0 0 26px ${theme.soft}` }}
         />
-        <span
-          className="fx-cast-shock absolute left-1/2 top-1/2 ml-[-14%] mt-[-14%] block h-[28%] w-[28%] rounded-full"
-          style={{ border: `2px solid ${theme.color}` }}
-        />
-        <span
-          className="fx-cast-emblem-slam absolute left-1/2 top-1/2 ml-[-11%] mt-[-11%] flex h-[22%] w-[22%] items-center justify-center"
-          style={{ color: theme.color, filter: `drop-shadow(0 0 6px ${theme.soft})` }}
-        >
-          {React.createElement(Icon, { className: "h-full w-full", strokeWidth: 1.8 })}
-        </span>
-        <span className="absolute left-1/2 top-1/2 ml-[-5%] mt-[-5%] block h-[10%] w-[10%]">
-          <ShardBurst vectors={CAST_SPARKS} fill={theme.color} stroke="#1a222e" delayMs={260} sizePct={70} />
+        {/* the card's icon ARRIVES in its category's choreography (comet /
+            curse circle / clock sweep / crate drop...) instead of being
+            stamped flat over the board */}
+        <span className="absolute left-[28%] top-[22%] block h-[44%] w-[44%]">
+          <CategoryArrival category={category} icon={Icon} delayMs={90} />
         </span>
         {banner}
       </span>
@@ -2593,11 +2663,9 @@ export function CastSpectacle({
           style={{ border: `3px solid ${theme.color}`, animationDelay: `${140 + i * 190}ms` }}
         />
       ))}
-      <span
-        className="fx-cast-emblem-slam absolute left-1/2 top-1/2 ml-[-24%] mt-[-24%] flex h-[48%] w-[48%] items-center justify-center"
-        style={{ color: theme.color, filter: `drop-shadow(0 0 14px ${theme.soft})` }}
-      >
-        {React.createElement(Icon, { className: "h-full w-full", strokeWidth: 1.4 })}
+      {/* marquee: the same category arrival at board-takeover scale */}
+      <span className="absolute left-[16%] top-[10%] block h-[64%] w-[64%]">
+        <CategoryArrival category={category} icon={Icon} delayMs={140} />
       </span>
       <span
         className="fx-cast-ring absolute inset-[0.5%] block rounded-sm"

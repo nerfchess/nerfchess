@@ -442,6 +442,8 @@ function TrippiTroppiPlay({ lead, delayMs }: { lead: boolean; delayMs: number })
         <g className="mnp-glitchbar" style={d(delayMs + 700)}>
           <text x={84} y={22} fontSize={15} fontWeight={900} fill="#f2825a" textAnchor="middle">?</text>
         </g>
+        {/* the settle: one clean spark once the feed dies */}
+        <g className="mnp-star" style={d(delayMs + 1250)}><SparkStar x={50} y={12} s={1.4} fill="#f2825a" /></g>
       </svg>
     </Stage>
   );
@@ -476,7 +478,7 @@ function ChillGuyPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
       {/* his complete reaction */}
       <Prop left="46%" top="46%" width="10%" height="5%">
         <svg viewBox="0 0 60 24" className="h-full w-full">
-          <g className="mnp-deadpan" style={d(delayMs + 900)}>
+          <g className="mnp-deadpan" style={d(delayMs + 1100)}>
             <rect x={6} y={2} width={48} height={17} rx={8.5} fill="rgba(245,247,251,0.92)" stroke="#8b93a2" strokeWidth={1.4} />
             <circle cx={22} cy={10.5} r={2.2} fill="#5c6472" />
             <circle cx={30} cy={10.5} r={2.2} fill="#5c6472" />
@@ -552,14 +554,14 @@ function MoaiHeadPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
       {/* ...and then the pause. the screen-wide deadpan. nothing moves. */}
       <Prop left="56%" top="34%" width="9%" height="6%">
         <svg viewBox="0 0 50 30" className="h-full w-full">
-          <g className="mnp-deadpan mnp-deadpan--long" style={d(delayMs + 950)}>
+          <g className="mnp-deadpan mnp-deadpan--long" style={d(delayMs + 1150)}>
             <text x={25} y={22} fontSize={22} textAnchor="middle">🗿</text>
           </g>
         </svg>
       </Prop>
       <Prop left="34%" top="40%" width="8%" height="5%">
         <svg viewBox="0 0 50 24" className="h-full w-full">
-          <g className="mnp-deadpan mnp-deadpan--long" style={d(delayMs + 1350)}>
+          <g className="mnp-deadpan mnp-deadpan--long" style={d(delayMs + 1550)}>
             <text x={25} y={16} fontSize={10} fontWeight={800} fill="#b4bcc4" textAnchor="middle">. . .</text>
           </g>
         </svg>
@@ -628,10 +630,10 @@ function SkibidiFlushPlay({ lead, delayMs }: { lead: boolean; delayMs: number })
         </Prop>
       ))}
       {/* the porcelain culprit surfaces, delighted */}
-      <Prop left="40.5%" top="52%" width="19%" height="27%" className="mnp-surface" style={d(delayMs + 1050)}>
+      <Prop left="40.5%" top="52%" width="19%" height="27%" className="mnp-surface" style={d(delayMs + 1250)}>
         <Figure id="skibidi_flush" />
       </Prop>
-      <Ring color="rgba(143,212,245,0.85)" delayMs={delayMs + 1250} />
+      <Ring color="rgba(143,212,245,0.85)" delayMs={delayMs + 1450} />
     </Wide>
   );
 }

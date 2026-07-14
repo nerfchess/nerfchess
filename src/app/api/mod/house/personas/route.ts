@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireMod } from "@/lib/server/mod";
 import { RESERVED_USERNAMES, validUsername } from "@/lib/server/auth";
-import { containsProfanity } from "@/lib/profanity";
+import { censorText, containsProfanity, findProfanity } from "@/lib/profanity";
 import {
   HOUSE_AVATAR_IDS,
   HOUSE_ROSTER,
@@ -13,13 +13,17 @@ import {
 
 export const dynamic = "force-dynamic";
 
-// Admin editor for the house-bot identities (username + avatar). The roster
-// itself is a code constant (lib/server/bots.ts); edits are persisted as
-// overrides in house_identity_overrides (migrations/0025) and ALSO written to
-// the persona's users row, which is the identity system of record for every
-// live surface (profiles, leaderboard, lobby, seat attach — the game-server DO
-// re-reads it within its ~60s cache window). Resolution everywhere is
-// override ?? baked default, so clearing an override restores the code value.
+// Editor for the house-bot identities (username + avatar + bio), open to any
+// moderator or admin. The roster itself is a code constant (lib/server/bots.ts);
+// edits are persisted as overrides in house_identity_overrides (migrations/0025
+// + 0028's bio column) and ALSO written to the persona's users row, which is
+// the identity system of record for every live surface (profiles, leaderboard,
+// lobby, seat attach — the game-server DO re-reads it within its ~60s cache
+// window). Resolution everywhere is override ?? baked default, so clearing an
+// override restores the code value (bio has no code default — it clears to
+// empty).
+
+const MAX_BIO = 300;
 
 type PersonaView = {
   userId: string;
@@ -27,8 +31,8 @@ type PersonaView = {
   seedRating: number;
   location: string;
   defaults: { username: string; avatar: string };
-  override: { username: string | null; avatar: string | null } | null;
-  effective: { username: string; avatar: string };
+  override: { username: string | null; avatar: string | null; bio: string | null } | null;
+  effective: { username: string; avatar: string; bio: string | null };
 };
 
 async function personasView(db: Parameters<typeof loadHouseIdentityOverrides>[0]): Promise<{
@@ -46,8 +50,8 @@ async function personasView(db: Parameters<typeof loadHouseIdentityOverrides>[0]
         seedRating: houseSeedRating(persona),
         location: persona.location,
         defaults: { username: persona.name, avatar: persona.avatar },
-        override: override && (override.username || override.avatar) ? override : null,
-        effective: { username: effective.name, avatar: effective.avatar },
+        override: override && (override.username || override.avatar || override.bio) ? override : null,
+        effective: { username: effective.name, avatar: effective.avatar, bio: effective.bio },
       };
     }),
     avatars: HOUSE_AVATAR_IDS,
@@ -62,23 +66,25 @@ export async function GET(request: Request) {
   return NextResponse.json(await personasView(guard.db));
 }
 
-// POST { userId, username?, avatar?, reset? }: edit one persona (admin only).
+// POST { userId, username?, avatar?, bio?, reset? }: edit one persona. Open to
+// any moderator or admin (requireMod already gates out non-staff); every op
+// here is a reversible identity edit confined to the house roster, so there is
+// no admin-only path.
 // - username: new display handle; must pass the SAME validation a player
 //   registration does (3-20 [A-Za-z0-9_], not reserved, no profanity) and be
 //   unused by any other account.
 // - avatar: a preset id from the house avatar catalog (HOUSE_AVATAR_IDS).
+// - bio: a profile bio (<= 300 chars, profanity censored like /api/auth/bio);
+//   an empty string clears it.
 // - reset: clear the override entirely and restore the baked identity.
 // Fields merge onto any existing override; the users row is updated in the
 // same request so the change is live everywhere the database is read.
 export async function POST(request: Request) {
   const guard = await requireMod(request);
   if (guard instanceof NextResponse) return guard;
-  const { db, mod } = guard;
-  if (mod.role !== "admin") {
-    return NextResponse.json({ error: "Admin access required." }, { status: 403 });
-  }
+  const { db } = guard;
 
-  let body: { userId?: unknown; username?: unknown; avatar?: unknown; reset?: unknown };
+  let body: { userId?: unknown; username?: unknown; avatar?: unknown; bio?: unknown; reset?: unknown };
   try {
     body = (await request.json()) as typeof body;
   } catch {
@@ -92,9 +98,21 @@ export async function POST(request: Request) {
   const reset = body.reset === true;
   const username = typeof body.username === "string" ? body.username.trim() : null;
   const avatar = typeof body.avatar === "string" ? body.avatar : null;
-  if (!reset && username === null && avatar === null) {
+  // bio: `undefined` = field omitted (leave as-is); `null` = explicit clear; a
+  // string is trimmed, capped, and profanity-censored (never rejected) like the
+  // player-facing /api/auth/bio route, then normalized to null when empty.
+  let bio: string | null | undefined;
+  if (typeof body.bio === "string") {
+    const trimmed = body.bio.trim().slice(0, MAX_BIO);
+    bio = trimmed ? (findProfanity(trimmed).length ? censorText(trimmed) : trimmed) : null;
+  } else if (body.bio === null) {
+    bio = null;
+  } else {
+    bio = undefined;
+  }
+  if (!reset && username === null && avatar === null && bio === undefined) {
     return NextResponse.json(
-      { error: "Provide `username`, `avatar`, and/or `reset: true`." },
+      { error: "Provide `username`, `avatar`, `bio`, and/or `reset: true`." },
       { status: 400 },
     );
   }
@@ -123,40 +141,42 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unknown avatar id." }, { status: 400 });
   }
 
-  // Merge onto the stored override (a save of only one field keeps the other),
+  // Merge onto the stored override (a save of only one field keeps the others),
   // then resolve the effective identity and write both stores.
   const current = (await loadHouseIdentityOverrides(db)).get(persona.userId) ?? null;
   const next = reset
-    ? { username: null, avatar: null }
+    ? { username: null, avatar: null, bio: null }
     : {
         username: username ?? current?.username ?? null,
         avatar: avatar ?? current?.avatar ?? null,
+        bio: bio !== undefined ? bio : current?.bio ?? null,
       };
   // Storing the baked value is the same as no override; normalize it away so
-  // a future roster revision isn't pinned by a no-op row.
+  // a future roster revision isn't pinned by a no-op row. (Bio has no baked
+  // value, so an empty bio is already normalized to null above.)
   if (next.username === persona.name) next.username = null;
   if (next.avatar === persona.avatar) next.avatar = null;
 
   const effective = houseIdentity(persona, next);
   try {
-    if (next.username === null && next.avatar === null) {
+    if (next.username === null && next.avatar === null && next.bio === null) {
       await db.prepare("DELETE FROM house_identity_overrides WHERE user_id = ?").bind(persona.userId).run();
     } else {
       await db
         .prepare(
-          `INSERT INTO house_identity_overrides (user_id, username, avatar, updated_at)
-           VALUES (?, ?, ?, ?)
+          `INSERT INTO house_identity_overrides (user_id, username, avatar, bio, updated_at)
+           VALUES (?, ?, ?, ?, ?)
            ON CONFLICT(user_id) DO UPDATE SET
-             username = excluded.username, avatar = excluded.avatar, updated_at = excluded.updated_at`,
+             username = excluded.username, avatar = excluded.avatar, bio = excluded.bio, updated_at = excluded.updated_at`,
         )
-        .bind(persona.userId, next.username, next.avatar, Date.now())
+        .bind(persona.userId, next.username, next.avatar, next.bio, Date.now())
         .run();
     }
     // The users row is what every live surface reads. A unique-index collision
     // (someone registered the restored baked name meanwhile) maps to 409.
     await db
-      .prepare("UPDATE users SET username = ?, username_lower = ?, avatar = ? WHERE id = ?")
-      .bind(effective.name, effective.name.toLowerCase(), effective.avatar, persona.userId)
+      .prepare("UPDATE users SET username = ?, username_lower = ?, avatar = ?, bio = ? WHERE id = ?")
+      .bind(effective.name, effective.name.toLowerCase(), effective.avatar, effective.bio, persona.userId)
       .run();
   } catch {
     return NextResponse.json(

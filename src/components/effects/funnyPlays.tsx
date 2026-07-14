@@ -229,7 +229,7 @@ function StreamSniperPlay({ lead, delayMs }: { lead: boolean; delayMs: number })
         <g className="fnp-scope" style={d(delayMs + 250)}>
           <g transform="translate(36 44)"><Reticle r={17} /></g>
         </g>
-        <g className="fnp-star" style={d(delayMs + 1150)}>
+        <g className="fnp-star" style={d(delayMs + 1350)}>
           <path d="M36 30 l2.4 8.2 8.2 2.4 -8.2 2.4 -2.4 8.2 -2.4 -8.2 -8.2 -2.4 8.2 -2.4 Z" fill="#ffd76a" transform="translate(0 3.4)" />
         </g>
       </svg>
@@ -276,7 +276,7 @@ function LagSpikePlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           </g>
         </g>
         {/* the damage: -25s rips off their clock */}
-        <g className="fnp-rise" style={d(delayMs + 780)}>
+        <g className="fnp-rise" style={d(delayMs + 980)}>
           <rect x={33} y={8} width={34} height={13} rx={6.5} fill="#e84d5b" />
           <text x={50} y={17.6} fontSize={8.5} fontWeight={800} fill="#fff" textAnchor="middle">-25s</text>
         </g>
@@ -345,7 +345,7 @@ function CtrlZPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
         <g className="fnp-rewind" style={d(delayMs + 480)}>
           <GhostPawn x={50} y={36} s={1.5} />
         </g>
-        <g className="fnp-star" style={d(delayMs + 1250)}>
+        <g className="fnp-star" style={d(delayMs + 1450)}>
           <path d="M50 24 l1.8 5 5 1.8 -5 1.8 -1.8 5 -1.8 -5 -5 -1.8 5 -1.8 Z" fill="#bfe0ff" />
         </g>
       </svg>
@@ -393,6 +393,9 @@ function RubberChickenPlay({ lead, delayMs }: { lead: boolean; delayMs: number }
             <g transform="translate(6 46) rotate(-10)"><Chicken s={0.62} /></g>
           </g>
           <g className="fnp-star" style={d(delayMs + 480)}><BonkStar x={42} y={40} s={0.85} /></g>
+          <g className="fnp-feather" style={d(delayMs + 650)}>
+            <path d="M40 22 q4 -7 1 -14 q-5 6 -1 14 Z" fill="#f3c93f" stroke="#a8821c" strokeWidth={0.8} />
+          </g>
         </svg>
       </Stage>
     );
@@ -406,6 +409,13 @@ function RubberChickenPlay({ lead, delayMs }: { lead: boolean; delayMs: number }
         <g className="fnp-star" style={d(delayMs + 470)}><BonkStar x={70} y={62} s={1.5} label="BONK" /></g>
         <g className="fnp-puff" style={dv(delayMs + 520, { "--fnp-x": "-26%", "--fnp-y": "-14%" })}><circle cx={58} cy={72} r={3.4} fill="rgba(214,204,178,0.85)" /></g>
         <g className="fnp-puff" style={dv(delayMs + 560, { "--fnp-x": "30%", "--fnp-y": "-20%" })}><circle cx={80} cy={70} r={2.8} fill="rgba(214,204,178,0.8)" /></g>
+        {/* the settle: two loose feathers rock down where the chicken hit */}
+        <g className="fnp-feather" style={d(delayMs + 720)}>
+          <path d="M66 42 q5 -9 1.5 -18 q-6.5 8 -1.5 18 Z" fill="#f3c93f" stroke="#a8821c" strokeWidth={1} />
+        </g>
+        <g className="fnp-feather" style={d(delayMs + 920)}>
+          <path d="M78 38 q4 -7 1 -14 q-5 6 -1 14 Z" fill="#ffe08a" stroke="#a8821c" strokeWidth={0.9} />
+        </g>
       </svg>
     </Stage>
   );
@@ -444,20 +454,20 @@ function DayOnePatchPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) 
             </WindowFrame>
           </g>
           {/* their fresh card gets stamped flat: colored card swaps to grey husk */}
-          <g className="fnp-swap-out" style={d(delayMs)}>
+          <g className="fnp-swap-out" style={d(delayMs + 200)}>
             <rect x={38} y={56} width={13} height={17} rx={2} fill="#b98cff" stroke="#6c4bb0" strokeWidth={1.4} />
             <circle cx={44.5} cy={62} r={2.6} fill="#fff" opacity={0.85} />
           </g>
-          <g className="fnp-swap-in" style={d(delayMs)}>
+          <g className="fnp-swap-in" style={d(delayMs + 200)}>
             <rect x={38} y={56} width={13} height={17} rx={2} fill="#aab2c2" stroke="#6d7688" strokeWidth={1.4} />
             <path d="M40.5 59 l8 11 m0 -11 l-8 11" stroke="#6d7688" strokeWidth={1.6} strokeLinecap="round" />
           </g>
-          <g className="fnp-stamp" style={d(delayMs + 720)}>
+          <g className="fnp-stamp" style={d(delayMs + 920)}>
             <path d="M60 74 L52 64 h4.6 V54 h6.8 v10 H68 Z" fill="#e8a24d" stroke="#a86a1e" strokeWidth={1.5} strokeLinejoin="round" transform="translate(0 -2)" />
           </g>
         </svg>
       </Prop>
-      <Boom color="rgba(154,165,186,0.85)" delayMs={delayMs + 800} />
+      <Boom color="rgba(154,165,186,0.85)" delayMs={delayMs + 1020} />
     </Wide>
   );
 }
@@ -502,7 +512,7 @@ function BattlePassPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
             ))}
           </g>
           {/* the reward: a +45s clock chip pops off the last tier */}
-          <g className="fnp-rise" style={d(delayMs + 950)}>
+          <g className="fnp-rise" style={d(delayMs + 1150)}>
             <rect x={66} y={-4} width={36} height={13} rx={6.5} fill="#8fd0a0" stroke="#3f7a52" strokeWidth={1.4} />
             <circle cx={74} cy={2.5} r={3.6} fill="none" stroke="#3f7a52" strokeWidth={1.4} />
             <path d="M74 0.4 v2.1 l1.6 1" stroke="#3f7a52" strokeWidth={1.2} strokeLinecap="round" fill="none" />
@@ -514,13 +524,13 @@ function BattlePassPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
             { x: "95%", y: "-60%", r: "200deg", c: "#5aa0e8", cx: 80 },
             { x: "-95%", y: "-45%", r: "-190deg", c: "#8fd0a0", cx: 90 },
           ].map((p, i) => (
-            <g key={i} className="fnp-coin" style={dv(delayMs + 900 + i * 60, { "--fnp-x": p.x, "--fnp-y": p.y, "--fnp-r": p.r })}>
+            <g key={i} className="fnp-coin" style={dv(delayMs + 1100 + i * 60, { "--fnp-x": p.x, "--fnp-y": p.y, "--fnp-r": p.r })}>
               <rect x={p.cx} y={30} width={4.6} height={2.8} rx={0.8} fill={p.c} />
             </g>
           ))}
         </svg>
       </Prop>
-      <Boom color="rgba(255,215,106,0.85)" delayMs={delayMs + 1000} />
+      <Boom color="rgba(255,215,106,0.85)" delayMs={delayMs + 1200} />
     </Wide>
   );
 }
@@ -561,7 +571,7 @@ function PopUpAdPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
       {/* second ad sneaks in behind, offset */}
       <Prop left="45%" top="42%" width="22%" height="16%">
         <svg viewBox="0 0 100 60" className="h-full w-full">
-          <g className="fnp-bounce-in" style={d(delayMs + 560)}>
+          <g className="fnp-bounce-in" style={d(delayMs + 760)}>
             <WindowFrame title="HOT SINGLES (PAWNS)" bar="#7c5cd6" body="#efe9ff" w={100} h={56} accent="#e84d5b">
               <text x={50} y={34} fontSize={9} fontWeight={800} fill="#5b47a8" textAnchor="middle">IN YOUR AREA</text>
             </WindowFrame>
@@ -600,7 +610,7 @@ function MuteButtonPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
       <Stage>
         <svg viewBox="0 0 60 60" className="h-full w-full">
           <g className="fnp-sag" style={d(delayMs)}><g transform="translate(6 0)"><SpeakerCone /></g></g>
-          <g className="fnp-stamp" style={d(delayMs + 420)}>
+          <g className="fnp-stamp" style={d(delayMs + 620)}>
             <circle cx={30} cy={30} r={19} fill="none" stroke="#e84d5b" strokeWidth={3.4} />
             <path d="M17 43 L43 17" stroke="#e84d5b" strokeWidth={3.4} strokeLinecap="round" />
           </g>
@@ -631,13 +641,13 @@ function MuteButtonPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
             </g>
           ))}
           {/* the mute slash slams down */}
-          <g className="fnp-stamp" style={d(delayMs + 680)}>
+          <g className="fnp-stamp" style={d(delayMs + 880)}>
             <circle cx={38} cy={35} r={27} fill="none" stroke="#e84d5b" strokeWidth={5} />
             <path d="M19 54 L57 16" stroke="#e84d5b" strokeWidth={5} strokeLinecap="round" />
           </g>
         </svg>
       </Prop>
-      <Boom color="rgba(232,77,91,0.85)" delayMs={delayMs + 760} />
+      <Boom color="rgba(232,77,91,0.85)" delayMs={delayMs + 980} />
     </Wide>
   );
 }
@@ -680,13 +690,13 @@ function SkillIssuePlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
             <circle cx={50} cy={52} r={4.6} fill="#e8edf6" stroke="#5c6880" strokeWidth={1.4} />
           </g>
           {/* verdict stamp */}
-          <g className="fnp-stamp" style={d(delayMs + 900)}>
+          <g className="fnp-stamp" style={d(delayMs + 1100)}>
             <rect x={56} y={30} width={38} height={15} rx={3} fill="none" stroke="#e84d5b" strokeWidth={2.6} />
             <text x={75} y={41.2} fontSize={8.4} fontWeight={900} fill="#e84d5b" textAnchor="middle" style={{ letterSpacing: "0.6px" }}>ISSUE</text>
           </g>
         </svg>
       </Prop>
-      <Boom color="rgba(232,77,91,0.8)" delayMs={delayMs + 950} />
+      <Boom color="rgba(232,77,91,0.8)" delayMs={delayMs + 1150} />
     </Wide>
   );
 }
@@ -717,7 +727,7 @@ function AltF4Play({ lead, delayMs }: { lead: boolean; delayMs: number }) {
       {/* their draft client, mid-draft */}
       <Prop left="34%" top="32%" width="30%" height="24%">
         <svg viewBox="0 0 100 74" className="h-full w-full">
-          <g className="fnp-slam" style={d(delayMs + 380)}>
+          <g className="fnp-slam" style={d(delayMs + 580)}>
             <WindowFrame title="draft.exe — picking..." bar="#39445c" body="#e8edf6" w={100} h={70} accent="#e84d5b">
               {/* the three cards they were about to pick from */}
               {[16, 42, 68].map((x, i) => (
@@ -732,9 +742,9 @@ function AltF4Play({ lead, delayMs }: { lead: boolean; delayMs: number }) {
             </WindowFrame>
           </g>
           {/* dust where the window hit the floor */}
-          <g className="fnp-puff" style={dv(delayMs + 1240, { "--fnp-x": "-30%", "--fnp-y": "-18%" })}><circle cx={30} cy={18} r={4} fill="rgba(170,178,194,0.85)" /></g>
-          <g className="fnp-puff" style={dv(delayMs + 1290, { "--fnp-x": "32%", "--fnp-y": "-24%" })}><circle cx={66} cy={18} r={3.4} fill="rgba(170,178,194,0.8)" /></g>
-          <g className="fnp-puff" style={dv(delayMs + 1340, { "--fnp-x": "0%", "--fnp-y": "-34%" })}><circle cx={48} cy={16} r={2.8} fill="rgba(170,178,194,0.75)" /></g>
+          <g className="fnp-puff" style={dv(delayMs + 1440, { "--fnp-x": "-30%", "--fnp-y": "-18%" })}><circle cx={30} cy={18} r={4} fill="rgba(170,178,194,0.85)" /></g>
+          <g className="fnp-puff" style={dv(delayMs + 1490, { "--fnp-x": "32%", "--fnp-y": "-24%" })}><circle cx={66} cy={18} r={3.4} fill="rgba(170,178,194,0.8)" /></g>
+          <g className="fnp-puff" style={dv(delayMs + 1540, { "--fnp-x": "0%", "--fnp-y": "-34%" })}><circle cx={48} cy={16} r={2.8} fill="rgba(170,178,194,0.75)" /></g>
         </svg>
       </Prop>
       {/* the fatal chord */}
@@ -745,7 +755,7 @@ function AltF4Play({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           <g className="fnp-press" style={d(delayMs + 200)}><Keycap x={58} y={2} w={30} label="F4" /></g>
         </svg>
       </Prop>
-      <Boom color="rgba(232,77,91,0.85)" delayMs={delayMs + 900} />
+      <Boom color="rgba(232,77,91,0.85)" delayMs={delayMs + 1100} />
     </Wide>
   );
 }
@@ -823,13 +833,13 @@ function TouchGrassPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
             </g>
           </g>
           {/* the prescription */}
-          <g className="fnp-rise" style={d(delayMs + 700)}>
+          <g className="fnp-rise" style={d(delayMs + 900)}>
             <rect x={40} y={30} width={60} height={14} rx={7} fill="#2f6b2f" opacity={0.92} />
             <text x={70} y={40} fontSize={8} fontWeight={800} fill="#eaf6e4" textAnchor="middle">GO OUTSIDE</text>
           </g>
         </svg>
       </Prop>
-      <Boom color="rgba(111,191,95,0.85)" delayMs={delayMs + 650} />
+      <Boom color="rgba(111,191,95,0.85)" delayMs={delayMs + 850} />
     </Wide>
   );
 }
@@ -890,12 +900,12 @@ function MainCharacterPlay({ lead, delayMs }: { lead: boolean; delayMs: number }
               <path d={`M${s2.x} ${s2.y - 4} l1.2 2.8 2.8 1.2 -2.8 1.2 -1.2 2.8 -1.2 -2.8 -2.8 -1.2 2.8 -1.2 Z`} fill="#fff2c9" />
             </g>
           ))}
-          <g className="fnp-rise" style={d(delayMs + 900)}>
+          <g className="fnp-rise" style={d(delayMs + 1100)}>
             <text x={50} y={14} fontSize={8.4} fontWeight={900} fill="#ffd76a" textAnchor="middle" style={{ letterSpacing: "1.6px" }}>STARRING</text>
           </g>
         </svg>
       </Prop>
-      <Boom color="rgba(255,215,106,0.85)" delayMs={delayMs + 800} />
+      <Boom color="rgba(255,215,106,0.85)" delayMs={delayMs + 1000} />
     </Wide>
   );
 }
@@ -955,14 +965,14 @@ function SmurfAccountPlay({ lead, delayMs }: { lead: boolean; delayMs: number })
                 <text x={64} y={55.8} fontSize={7} fontWeight={900} fill="#7a5708" textAnchor="middle">2750?!</text>
               </g>
               {/* the shades drop. everyone knows. */}
-              <g className="fnp-drop" style={d(delayMs + 850)}>
+              <g className="fnp-drop" style={d(delayMs + 1050)}>
                 <g transform="translate(26 34)"><Sunglasses w={24} /></g>
               </g>
             </WindowFrame>
           </g>
         </svg>
       </Prop>
-      <Boom color="rgba(90,160,232,0.85)" delayMs={delayMs + 1000} />
+      <Boom color="rgba(90,160,232,0.85)" delayMs={delayMs + 1200} />
     </Wide>
   );
 }
@@ -1025,20 +1035,20 @@ function PayToWinPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
               <text x={p.cx} y={48.3} fontSize={5} fontWeight={800} fill="#8a5a10" textAnchor="middle">$</text>
             </g>
           ))}
-          <g className="fnp-fan" style={dv(delayMs + 800, { "--fnp-r": "-13deg" })}>
+          <g className="fnp-fan" style={dv(delayMs + 1000, { "--fnp-r": "-13deg" })}>
             <rect x={30} y={56} width={17} height={25} rx={2.6} fill="#b98cff" stroke="#ffd76a" strokeWidth={1.8} />
             <circle cx={38.5} cy={64} r={3.2} fill="#fff" opacity={0.85} />
           </g>
-          <g className="fnp-fan" style={dv(delayMs + 900, { "--fnp-r": "13deg" })}>
+          <g className="fnp-fan" style={dv(delayMs + 1100, { "--fnp-r": "13deg" })}>
             <rect x={53} y={56} width={17} height={25} rx={2.6} fill="#5aa0e8" stroke="#ffd76a" strokeWidth={1.8} />
             <circle cx={61.5} cy={64} r={3.2} fill="#fff" opacity={0.85} />
           </g>
-          <g className="fnp-rise" style={d(delayMs + 1050)}>
+          <g className="fnp-rise" style={d(delayMs + 1250)}>
             <text x={50} y={12} fontSize={8.4} fontWeight={900} fill="#ffd76a" textAnchor="middle">TAKE BOTH</text>
           </g>
         </svg>
       </Prop>
-      <Boom color="rgba(255,215,106,0.85)" delayMs={delayMs + 850} />
+      <Boom color="rgba(255,215,106,0.85)" delayMs={delayMs + 1050} />
     </Wide>
   );
 }
@@ -1118,13 +1128,13 @@ function ExpansionPermitPlay({ lead, delayMs }: { lead: boolean; delayMs: number
           </g>
 
           {/* PERMIT APPROVED stamp thunks in */}
-          <g className="fnp-permit-thunk" style={d(delayMs + 760)}>
+          <g className="fnp-permit-thunk" style={d(delayMs + 960)}>
             <rect x={34} y={72} width={52} height={13} rx={2} fill="none" stroke="#8fd0a0" strokeWidth={2} />
             <text x={60} y={82} fontSize={8} fontWeight={900} fill="#8fd0a0" textAnchor="middle">APPROVED</text>
           </g>
         </svg>
       </Prop>
-      <Boom color="rgba(255,215,106,0.85)" delayMs={delayMs + 980} />
+      <Boom color="rgba(255,215,106,0.85)" delayMs={delayMs + 1180} />
     </Wide>
   );
 }
