@@ -488,6 +488,24 @@ const ADDITIVE_COLUMNS: string[] = [
   // original two override fields). NULL = no override, empty bio. Additive and
   // non-destructive. Mirrors migrations/0028_house_identity_bio.sql.
   `ALTER TABLE house_identity_overrides ADD COLUMN bio TEXT`,
+  // One-time re-grant: bump ilovenewjeans's nerf and buff buckets to 2250 (peak
+  // keeps whichever is higher). Same gated pattern as the 2180 grant above with
+  // its OWN marker, so it fires exactly once even though both blocks live in the
+  // append-only pass; games rated afterwards move the number normally (he can
+  // drop from here). Mirrors migrations/0029_ilovenewjeans_2250.sql.
+  `INSERT OR IGNORE INTO user_ratings (user_id, category, rating, rd, vol, peak)
+     SELECT id, 'nerf', 2250, 90, 0.06, 2250 FROM users
+     WHERE username_lower = 'ilovenewjeans'
+       AND NOT EXISTS (SELECT 1 FROM schema_meta WHERE key = 'grant_ilovenewjeans_2250')`,
+  `INSERT OR IGNORE INTO user_ratings (user_id, category, rating, rd, vol, peak)
+     SELECT id, 'buff', 2250, 90, 0.06, 2250 FROM users
+     WHERE username_lower = 'ilovenewjeans'
+       AND NOT EXISTS (SELECT 1 FROM schema_meta WHERE key = 'grant_ilovenewjeans_2250')`,
+  `UPDATE user_ratings SET rating = 2250, rd = MIN(rd, 90), peak = MAX(peak, 2250)
+     WHERE category IN ('nerf','buff')
+       AND user_id = (SELECT id FROM users WHERE username_lower = 'ilovenewjeans')
+       AND NOT EXISTS (SELECT 1 FROM schema_meta WHERE key = 'grant_ilovenewjeans_2250')`,
+  `INSERT OR IGNORE INTO schema_meta (key, value) VALUES ('grant_ilovenewjeans_2250', '1')`,
 ];
 
 // The additive pass is versioned by list length (the list is append-only) and

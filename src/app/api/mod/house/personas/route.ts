@@ -1,7 +1,17 @@
+/// <reference types="@cloudflare/workers-types" />
+
 import { NextResponse } from "next/server";
-import { requireMod } from "@/lib/server/mod";
-import { RESERVED_USERNAMES, validUsername } from "@/lib/server/auth";
+import { getDb } from "@/lib/server/db";
+import {
+  isModerator,
+  RESERVED_USERNAMES,
+  sessionTokenFromCookieHeader,
+  userForSession,
+  validUsername,
+  type SessionUser,
+} from "@/lib/server/auth";
 import { censorText, containsProfanity, findProfanity } from "@/lib/profanity";
+import { isHouseEditor } from "@/lib/godPanel";
 import {
   HOUSE_AVATAR_IDS,
   HOUSE_ROSTER,
@@ -13,17 +23,34 @@ import {
 
 export const dynamic = "force-dynamic";
 
-// Editor for the house-bot identities (username + avatar + bio), open to any
-// moderator or admin. The roster itself is a code constant (lib/server/bots.ts);
-// edits are persisted as overrides in house_identity_overrides (migrations/0025
-// + 0028's bio column) and ALSO written to the persona's users row, which is
-// the identity system of record for every live surface (profiles, leaderboard,
-// lobby, seat attach — the game-server DO re-reads it within its ~60s cache
-// window). Resolution everywhere is override ?? baked default, so clearing an
-// override restores the code value (bio has no code default — it clears to
-// empty).
-
 const MAX_BIO = 300;
+
+// Who may reach this route. Any moderator — OR the designated house editor
+// (ilovenewjeans), who edits bots inline from their profiles and need not hold
+// a mod role — may view and edit. The house-editor gate is a single username
+// (isHouseEditor), independent of role, per the owner's request; moderators
+// keep their existing /mod/house access. Every op here is a reversible identity
+// edit confined to the house roster, so there is no separate admin-only path.
+async function resolveActor(
+  request: Request,
+): Promise<{ db: D1Database; user: SessionUser } | NextResponse> {
+  const db = await getDb();
+  const user = await userForSession(db, sessionTokenFromCookieHeader(request.headers.get("cookie")));
+  if (!user) return NextResponse.json({ error: "Sign in first." }, { status: 401 });
+  if (!isModerator(user) && !isHouseEditor(user.username)) {
+    return NextResponse.json({ error: "Not authorized." }, { status: 403 });
+  }
+  return { db, user };
+}
+
+// Editor for the house-bot identities (username + avatar + bio). The roster
+// itself is a code constant (lib/server/bots.ts); edits are persisted as
+// overrides in house_identity_overrides (migrations/0025 + 0028's bio column)
+// and ALSO written to the persona's users row, which is the identity system of
+// record for every live surface (profiles, leaderboard, lobby, seat attach —
+// the game-server DO re-reads it within its ~60s cache window). Resolution
+// everywhere is override ?? baked default, so clearing an override restores the
+// code value (bio has no code default — it clears to empty).
 
 type PersonaView = {
   userId: string;
@@ -58,18 +85,18 @@ async function personasView(db: Parameters<typeof loadHouseIdentityOverrides>[0]
   };
 }
 
-// GET: the full roster with baked defaults, stored overrides, and the
-// effective identity, plus the pickable avatar catalog (moderators may view).
+// GET: the full roster with baked defaults, stored overrides, and the effective
+// identity, plus the pickable avatar catalog. Moderators and the house-editor
+// account (ilovenewjeans) may view — the latter so the profile page can tell a
+// bot from a real user and fetch its editable identity.
 export async function GET(request: Request) {
-  const guard = await requireMod(request);
+  const guard = await resolveActor(request);
   if (guard instanceof NextResponse) return guard;
   return NextResponse.json(await personasView(guard.db));
 }
 
-// POST { userId, username?, avatar?, bio?, reset? }: edit one persona. Open to
-// any moderator or admin (requireMod already gates out non-staff); every op
-// here is a reversible identity edit confined to the house roster, so there is
-// no admin-only path.
+// POST { userId, username?, avatar?, bio?, reset? }: edit one persona. Allowed
+// for any moderator and for the house-editor account (ilovenewjeans).
 // - username: new display handle; must pass the SAME validation a player
 //   registration does (3-20 [A-Za-z0-9_], not reserved, no profanity) and be
 //   unused by any other account.
@@ -80,7 +107,7 @@ export async function GET(request: Request) {
 // Fields merge onto any existing override; the users row is updated in the
 // same request so the change is live everywhere the database is read.
 export async function POST(request: Request) {
-  const guard = await requireMod(request);
+  const guard = await resolveActor(request);
   if (guard instanceof NextResponse) return guard;
   const { db } = guard;
 

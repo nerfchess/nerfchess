@@ -13,7 +13,7 @@ import { legalMoves, type NerfGame } from "../../engine/game";
 import { triggersOwnNerfLoss } from "../../engine/moveSafety";
 import type { DraftMode } from "../../engine/buff";
 import type { Move } from "../../engine/types";
-import { HOUSE_PFP_IDS, HOUSE_PFP_PREFIX } from "../avatars";
+import { HOUSE_PFP_IDS, HOUSE_PFP_NAMES, HOUSE_PFP_PREFIX } from "../avatars";
 
 // Absolute ceiling for a house-player search running ON THE DO ITSELF (local
 // fallback, when the OCI engine is off/unreachable/version-mismatched). The
@@ -392,15 +392,15 @@ const FLOWER_AVATARS: string[] = FLOWER_PALETTES.flatMap((palette) =>
   FLOWER_PIECES.map((piece) => `${palette}_${piece}_flower`),
 );
 
-// About half the roster gets a "real uploaded-looking" profile picture instead
-// of a flower preset: a hand-authored scenic/object SVG (see lib/avatars.ts,
-// served from /house-pfp/<name>.svg), so the crowd reads like real users, some
-// of whom uploaded a random photo (a beach, a coffee mug, a houseplant) and
-// some of whom kept a default. Keyed by persona name (stable across roster
-// reordering); the value is the pfp's <name>, turned into a "house_pfp:<name>"
-// avatar id below. Every listed persona name must exist in PERSONA_DEFS and
-// every pfp name must exist in lib/avatars' HOUSE_PFP_NAMES. Thematic where it's
-// fun (teatimechess -> tea_set, night0wl -> city_night), random otherwise.
+// Curated, thematic pfp assignments: where a persona's name suggests an image
+// it gets that one (teatimechess -> tea_set, night0wl -> city_night). Every
+// OTHER persona now also gets an image pfp (a name-hashed one, see
+// personaAvatar) rather than the piece-on-plate flower preset, so the whole
+// roster reads like real users who uploaded a random photo (a beach, a coffee
+// mug, a houseplant). Keyed by persona name (stable across roster reordering);
+// the value is the pfp's <name>, turned into a "house_pfp:<name>" avatar id
+// below. Every listed persona name must exist in PERSONA_DEFS and every pfp
+// name must exist in lib/avatars' HOUSE_PFP_NAMES.
 const HOUSE_PFP_ASSIGN: Record<string, string> = {
   coffeeknight: "coffee_mug",
   teatimechess: "tea_set",
@@ -434,12 +434,18 @@ const HOUSE_PFP_ASSIGN: Record<string, string> = {
   crushingpawns: "autumn_leaves",
 };
 
-// The baked avatar a persona debuts with: its assigned house pfp when it has
-// one, else a name-hashed flower preset (as before).
+// The baked avatar a persona debuts with: its curated house pfp when it has
+// one, otherwise a name-hashed house pfp from the full catalog. Owner ask: WAY
+// more of the roster should read like real users with an uploaded photo, so
+// every persona now debuts with an image pfp instead of a flower preset. The
+// pick is deterministic (name-hashed) and spread across the 30-image catalog,
+// so the crowd looks varied and stays stable across deploys. Flower presets
+// remain a valid house look (still offered in the /mod editor and held by any
+// persona an admin switches back to one), just no longer the default.
 function personaAvatar(name: string): string {
   const pfp = HOUSE_PFP_ASSIGN[name];
   if (pfp) return HOUSE_PFP_PREFIX + pfp;
-  return FLOWER_AVATARS[nameHash(name) % FLOWER_AVATARS.length];
+  return HOUSE_PFP_PREFIX + HOUSE_PFP_NAMES[nameHash(name) % HOUSE_PFP_NAMES.length];
 }
 
 // The avatar id space a house persona may hold: the full flowered catalog plus
@@ -531,9 +537,9 @@ export const HOUSE_ROSTER: HousePersona[] = PERSONA_DEFS.map(([name, skill], i) 
   // retired roster's 'bot_' ids, which migration 0008 deletes by prefix.
   userId: `hp_${name.toLowerCase()}`,
   skill,
-  // Half the roster gets a "real uploaded-looking" scenic/object pfp
-  // (HOUSE_PFP_ASSIGN); the rest keep a name-hashed flower preset. Stable per
-  // persona and varied across the roster.
+  // The whole roster debuts with a "real uploaded-looking" scenic/object pfp:
+  // a curated one (HOUSE_PFP_ASSIGN) where the name fits, else a name-hashed
+  // one from the catalog. Stable per persona and varied across the roster.
   avatar: personaAvatar(name),
   // Roster-index assignment keeps every persona's location DISTINCT (the list
   // is at least as long as the roster) and stable across deploys.

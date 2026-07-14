@@ -457,7 +457,11 @@ const houseSeededKey = "hp:seeded:v4";
 // location-as-bio seeding was retired; re-circulate so users.avatar carries
 // the new pfp ids everywhere (lobby, TV, profiles) and stale location bios
 // are cleared.
-const houseRatingsSyncedKey = "hp:ratings-synced:identity-3";
+// identity-4: the remaining personas ALSO gained image pfps (personaAvatar now
+// gives every persona a scenic/object pfp, was ~half), so re-circulate once
+// more to carry the new avatars onto every already-seeded users row. Bumped
+// past identity-3 in case that revision already ran in prod before this change.
+const houseRatingsSyncedKey = "hp:ratings-synced:identity-4";
 const houseNextFillerKey = "hp:nextFillerAt";
 // Slow heartbeat while at least one human socket is connected; with nobody
 // online there is no heartbeat and the DO goes idle between match deadlines.
