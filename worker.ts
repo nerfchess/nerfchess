@@ -452,6 +452,12 @@ const HOUSE_ENABLED = true;
 // does no per-tick database work. A mod's on/off takes effect within this long.
 const houseEnabledTtlMs = 15 * 1000;
 const houseHeartbeatMs = 20 * 1000;
+// A browsing viewer who holds no WebSocket (the lobby/home strip now polls the
+// edge-cached GET /api/lobby route instead of opening a socket) still counts as
+// "someone is on the site" for house presence if their last lobby fetch landed
+// within this window. Comfortably longer than the client poll interval (5-10s)
+// and the edge cache window (3s), so one active browser keeps the roster alive.
+const sitePresenceTtlMs = 60 * 1000;
 // The full-table maintenance sweep (GC of expired games, flag enforcement,
 // live-index rebuild) is the heaviest thing the alarm does. Bot moves wake the
 // alarm about once a second, and running the full sweep every time is what tips
@@ -813,6 +819,13 @@ export class GameServer extends DurableObject<Env> {
   // deleteMatch); queue/seek changes are absorbed by the TTL.
   private lobbyCache: { at: number; payload: unknown } | null = null;
   private static readonly LOBBY_CACHE_TTL_MS = 2000;
+  // Last time a browsing viewer fetched the lobby over HTTP (GET /lobby, fronted
+  // by the edge-cached /api/lobby route). Lets a lurker who holds NO WebSocket
+  // still register as site presence (sitePresence), mirroring the arena's
+  // presence-driven spawning. In-memory only: an evicted DO restamps on the next
+  // cache-miss fetch, so at worst the house roster lags one alarm cycle behind a
+  // cold start — invisible to viewers.
+  private lastLobbyHttpAt = 0;
   // Cached LIVE per-mode ratings for the house roster, read from user_ratings
   // (the same buckets recordFinishedGame moves after every rated game). The
   // lobby's online list and the house seeks display from this, so a bot's
@@ -865,6 +878,17 @@ export class GameServer extends DurableObject<Env> {
       const attachment = ws.deserializeAttachment() as SessionAttachment | null;
       if (attachment) this.sessions.set(ws, attachment);
     }
+    // Idle keepalive that costs nothing: the runtime answers a byte-exact
+    // `{"t":"hb"}` ping with `{"t":"n"}` (the bare clock frame a payload-less
+    // ping already returns) WITHOUT waking the DO or billing a request. Sockets
+    // that are neither playing nor watching send `hb` instead of `p` (see
+    // multiplayer.ts), so a lurker's socket no longer wakes the single-threaded
+    // DO every 10s. In-game `p` frames are load-bearing (flag check, alarm
+    // self-heal, clock resync) and keep the app-level path. NOTE: the match is
+    // exact-bytes — keep `{"t":"hb"}` here identical to the client's frame; a
+    // serializer/whitespace change silently turns free pings back into billed
+    // wakes with no error.
+    this.ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair('{"t":"hb"}', '{"t":"n"}'));
   }
 
   // Resolves to true when D1 is configured and its schema is in place.
@@ -1096,6 +1120,20 @@ export class GameServer extends DurableObject<Env> {
       });
     }
 
+    if (url.pathname === "/lobby" && request.method === "GET") {
+      // Public lobby snapshot over HTTP, fronted by the edge-cached /api/lobby
+      // Worker route so a crowd of browsers costs the DO ~1 request per cache
+      // window instead of one WebSocket poll each. Stamp browsing presence and
+      // revive the alarm chain (the same cheap getAlarm /healthz runs) so a
+      // lurker with no socket still keeps the house roster and clock enforcement
+      // alive. The payload is public and identical for every viewer.
+      this.lastLobbyHttpAt = Date.now();
+      try {
+        await this.reviveAlarmChain();
+      } catch {}
+      return Response.json(await this.buildLobbyPayload());
+    }
+
     if (url.pathname.startsWith("/arena/")) return this.handleArena(request, url);
 
     if (url.pathname !== socketPath) return new Response("Not found", { status: 404 });
@@ -1303,7 +1341,7 @@ export class GameServer extends DurableObject<Env> {
     // still refines the exact time (and clears it when truly idle). The floor is
     // gated on someone being online, matching the heartbeat/idle rule, so an
     // empty server still goes idle.
-    if (this.humanSocketCount() > 0) {
+    if (this.sitePresence()) {
       try {
         await this.armAlarmBy(Date.now() + houseHeartbeatMs);
       } catch {}
@@ -3636,12 +3674,13 @@ export class GameServer extends DurableObject<Env> {
     }
 
     // Queue presence and filler games only matter while someone is looking.
-    // With no human socket connected the roster stands down: seeks clear and
-    // nothing new starts (live games above still play out and finish).
+    // With nobody on the site — no socket AND no recent lobby fetch — the roster
+    // stands down: seeks clear and nothing new starts (live games above still
+    // play out and finish).
     let seeks = (await this.ctx.storage.get<HouseSeekEntry[]>(houseSeeksKey)) ?? [];
     const seeksBefore = seeks.length;
     seeks = seeks.filter((seek) => !busy.has(seek.userId) && now - seek.at < houseSeekTtlMs);
-    if (this.humanSocketCount() === 0) {
+    if (!this.sitePresence()) {
       if (seeksBefore) await this.ctx.storage.put(houseSeeksKey, []);
       return;
     }
@@ -6006,6 +6045,13 @@ export class GameServer extends DurableObject<Env> {
   // One snapshot for the lobby page: who is online right now and which games
   // can be watched. Polled by the client every few seconds.
   private async lobbySnapshot(ws: WebSocket) {
+    send(ws, "lobby", await this.buildLobbyPayload());
+  }
+
+  // Build (or reuse the cached) lobby snapshot. Shared by the WebSocket `lobby`
+  // frame and the HTTP GET /lobby route so both transports serve identical data
+  // off the same in-DO cache.
+  private async buildLobbyPayload(): Promise<unknown> {
     const now = Date.now();
     // Serve the shared snapshot from cache when it is fresh. This skips the
     // full match scan and every other await on the hot path (flag checks, the
@@ -6013,7 +6059,7 @@ export class GameServer extends DurableObject<Env> {
     // TTL window. The snapshot is public and identical for every viewer, so a
     // shared copy leaks no per-viewer private data.
     if (this.lobbyCache && now - this.lobbyCache.at < GameServer.LOBBY_CACHE_TTL_MS) {
-      return send(ws, "lobby", this.lobbyCache.payload);
+      return this.lobbyCache.payload;
     }
     // Live matches only. The lobby only ever lists unfinished games (open
     // challenges and in-progress games); finished records were filtered out
@@ -6368,7 +6414,7 @@ export class GameServer extends DurableObject<Env> {
     // rescanning. Set last, after any finishOnFlag writes above, so the cached
     // copy reflects the freshest state.
     this.lobbyCache = { at: now, payload };
-    send(ws, "lobby", payload);
+    return payload;
   }
 
   private async sendClocks(ws: WebSocket) {
@@ -6459,11 +6505,12 @@ export class GameServer extends DurableObject<Env> {
         }
       }),
     );
-    // Slow house heartbeat while any human socket is connected, so the house
-    // roster keeps its queue presence fresh. With nobody online there is no
-    // heartbeat: the DO goes idle until the next socket/save re-arms it via
-    // scheduleAlarmForMatch (live house games still wake it per move).
-    if (this.humanSocketCount() > 0) next = Math.min(next, now + houseHeartbeatMs);
+    // Slow house heartbeat while anyone is on the site (a live socket or a
+    // recent lobby fetch), so the house roster keeps its queue presence fresh.
+    // With nobody online there is no heartbeat: the DO goes idle until the next
+    // socket/save/lobby-fetch re-arms it via scheduleAlarmForMatch or the /lobby
+    // route's reviveAlarmChain (live house games still wake it per move).
+    if (this.sitePresence()) next = Math.min(next, now + houseHeartbeatMs);
     // No pending deadline means no alarm.
     if (!Number.isFinite(next)) return;
     let target = Math.max(next, now + 250);
@@ -6486,6 +6533,16 @@ export class GameServer extends DurableObject<Env> {
       if (ws.readyState === WebSocket.OPEN) n++;
     }
     return n;
+  }
+
+  // True when anyone is on the site: a live socket (playing, watching, or
+  // queued) OR a lurker who fetched the lobby over HTTP within sitePresenceTtlMs
+  // but holds no socket. Gates house activity (seeks, the slow heartbeat) so the
+  // roster fills the lobby while people browse, yet the DO still goes fully idle
+  // when the site is truly empty. Replaces the old bare humanSocketCount() > 0
+  // presence check now that browsing viewers no longer hold a WebSocket.
+  private sitePresence(): boolean {
+    return this.humanSocketCount() > 0 || Date.now() - this.lastLobbyHttpAt < sitePresenceTtlMs;
   }
 
   // Bounded GC sweep: walk the "match:" keyspace one page at a time (never the
@@ -6593,9 +6650,51 @@ export class GameServer extends DurableObject<Env> {
   }
 }
 
+// Edge-cached lobby snapshot. The payload is public and identical for every
+// viewer, so one cached copy per colo serves the whole browsing crowd and the DO
+// sees ~1 request per cache window (s-maxage) instead of a WebSocket poll per
+// viewer. A FIXED cache key (query stripped) stops a cache-busting query string
+// from stampeding the DO. Fails soft: a stale cached copy on DO error, then the
+// DO's own error response, so the client keeps its last snapshot either way.
+async function handleLobbyEdge(url: URL, env: Env, ctx: ExecutionContext): Promise<Response> {
+  // `caches.default` is a Workers-runtime global not present on the DOM
+  // CacheStorage type this file is compiled against; cast to reach it.
+  const cache = (caches as unknown as { default: Cache }).default;
+  const cacheKey = new Request(`${url.origin}/api/lobby`, { method: "GET" });
+  const cached = await cache.match(cacheKey);
+  if (cached) return cached;
+  let doResp: Response;
+  try {
+    const id = env.GAME_SERVER.idFromName(globalServerName);
+    doResp = await env.GAME_SERVER.get(id).fetch(new Request(`${url.origin}/lobby`, { method: "GET" }));
+  } catch (err) {
+    console.error("lobby edge fetch failed", err);
+    return new Response("lobby unavailable", { status: 503 });
+  }
+  if (!doResp.ok) return doResp;
+  // Re-wrap with cache headers; s-maxage bounds how often the DO is hit,
+  // stale-while-revalidate lets the edge serve the old copy during a refresh.
+  // s-maxage=3 caps DO lobby load at ~1 hit / 3s TOTAL (shared across every
+  // viewer, independent of viewer count) while keeping a freshly-posted or
+  // just-answered challenge no more than ~3s + the client poll interval stale.
+  const body = await doResp.arrayBuffer();
+  const resp = new Response(body, {
+    status: 200,
+    headers: {
+      "content-type": "application/json",
+      "cache-control": "public, s-maxage=3, stale-while-revalidate=6",
+    },
+  });
+  ctx.waitUntil(cache.put(cacheKey, resp.clone()));
+  return resp;
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
+    if (url.pathname === "/api/lobby" && request.method === "GET") {
+      return await handleLobbyEdge(url, env, ctx);
+    }
     if (url.pathname === socketPath || url.pathname === "/healthz" || url.pathname.startsWith("/arena/")) {
       try {
         const id = env.GAME_SERVER.idFromName(globalServerName);
