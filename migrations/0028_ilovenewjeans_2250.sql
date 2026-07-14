@@ -1,0 +1,19 @@
+-- One-time rating grant: set ilovenewjeans's nerf and buff mode buckets to
+-- 2250 (peak keeps whichever is higher). Games rated afterwards move the
+-- number normally, so it can drop from here. Gated on its OWN schema_meta
+-- marker so re-runs (including the mirrored additive pass in
+-- src/lib/server/schema.ts) never re-apply it, and independent of the earlier
+-- 2180 grant's marker.
+INSERT OR IGNORE INTO user_ratings (user_id, category, rating, rd, vol, peak)
+  SELECT id, 'nerf', 2250, 90, 0.06, 2250 FROM users
+  WHERE username_lower = 'ilovenewjeans'
+    AND NOT EXISTS (SELECT 1 FROM schema_meta WHERE key = 'grant_ilovenewjeans_2250');
+INSERT OR IGNORE INTO user_ratings (user_id, category, rating, rd, vol, peak)
+  SELECT id, 'buff', 2250, 90, 0.06, 2250 FROM users
+  WHERE username_lower = 'ilovenewjeans'
+    AND NOT EXISTS (SELECT 1 FROM schema_meta WHERE key = 'grant_ilovenewjeans_2250');
+UPDATE user_ratings SET rating = 2250, rd = MIN(rd, 90), peak = MAX(peak, 2250)
+  WHERE category IN ('nerf','buff')
+    AND user_id = (SELECT id FROM users WHERE username_lower = 'ilovenewjeans')
+    AND NOT EXISTS (SELECT 1 FROM schema_meta WHERE key = 'grant_ilovenewjeans_2250');
+INSERT OR IGNORE INTO schema_meta (key, value) VALUES ('grant_ilovenewjeans_2250', '1');

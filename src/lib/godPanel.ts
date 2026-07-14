@@ -16,3 +16,14 @@ export function isGodPanelUser(username: string | null | undefined): boolean {
   const u = username.toLowerCase();
   return GOD_PANEL_USERNAMES.some((name) => name === u);
 }
+
+// The single account allowed to edit a house bot's identity (username, avatar,
+// bio) directly from that bot's profile — "click a house bot and edit it".
+// Deliberately ONE name (narrower than the god-panel set and independent of the
+// admin role), per the owner's request. Server routes re-verify this; the
+// client gate only decides whether to show the controls. Matched
+// case-insensitively so a stored-casing difference can never lock the owner out.
+export const HOUSE_EDITOR_USERNAME = "ilovenewjeans";
+export function isHouseEditor(username: string | null | undefined): boolean {
+  return !!username && username.toLowerCase() === HOUSE_EDITOR_USERNAME;
+}

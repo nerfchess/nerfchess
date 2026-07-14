@@ -1,7 +1,17 @@
+/// <reference types="@cloudflare/workers-types" />
+
 import { NextResponse } from "next/server";
-import { requireMod } from "@/lib/server/mod";
-import { RESERVED_USERNAMES, validUsername } from "@/lib/server/auth";
-import { containsProfanity } from "@/lib/profanity";
+import { getDb } from "@/lib/server/db";
+import {
+  isModerator,
+  RESERVED_USERNAMES,
+  sessionTokenFromCookieHeader,
+  userForSession,
+  validUsername,
+  type SessionUser,
+} from "@/lib/server/auth";
+import { censorText, containsProfanity, findProfanity } from "@/lib/profanity";
+import { isHouseEditor } from "@/lib/godPanel";
 import {
   HOUSE_AVATAR_IDS,
   HOUSE_ROSTER,
@@ -12,6 +22,29 @@ import {
 } from "@/lib/server/bots";
 
 export const dynamic = "force-dynamic";
+
+const MAX_BIO = 300;
+
+// Who may reach this route. Any moderator — OR the designated house editor
+// (ilovenewjeans), who edits bots inline from their profiles and need not hold
+// a mod role — may VIEW. Editing additionally requires the admin role OR that
+// same house-editor account. The house editor gate is a single username
+// (isHouseEditor), independent of role, per the owner's request.
+async function resolveActor(
+  request: Request,
+): Promise<{ db: D1Database; user: SessionUser } | NextResponse> {
+  const db = await getDb();
+  const user = await userForSession(db, sessionTokenFromCookieHeader(request.headers.get("cookie")));
+  if (!user) return NextResponse.json({ error: "Sign in first." }, { status: 401 });
+  if (!isModerator(user) && !isHouseEditor(user.username)) {
+    return NextResponse.json({ error: "Not authorized." }, { status: 403 });
+  }
+  return { db, user };
+}
+
+function canEditIdentities(user: SessionUser): boolean {
+  return user.role === "admin" || isHouseEditor(user.username);
+}
 
 // Admin editor for the house-bot identities (username + avatar). The roster
 // itself is a code constant (lib/server/bots.ts); edits are persisted as
@@ -55,30 +88,38 @@ async function personasView(db: Parameters<typeof loadHouseIdentityOverrides>[0]
 }
 
 // GET: the full roster with baked defaults, stored overrides, and the
-// effective identity, plus the pickable avatar catalog (moderators may view).
+// effective identity, plus the pickable avatar catalog. Moderators and the
+// house-editor account (ilovenewjeans) may view — the latter so the profile
+// page can tell a bot from a real user and fetch its editable identity.
 export async function GET(request: Request) {
-  const guard = await requireMod(request);
+  const guard = await resolveActor(request);
   if (guard instanceof NextResponse) return guard;
   return NextResponse.json(await personasView(guard.db));
 }
 
-// POST { userId, username?, avatar?, reset? }: edit one persona (admin only).
+// POST { userId, username?, avatar?, bio?, reset? }: edit one persona. Allowed
+// for admins and for the house-editor account (ilovenewjeans).
 // - username: new display handle; must pass the SAME validation a player
 //   registration does (3-20 [A-Za-z0-9_], not reserved, no profanity) and be
 //   unused by any other account.
 // - avatar: a preset id from the house avatar catalog (HOUSE_AVATAR_IDS).
-// - reset: clear the override entirely and restore the baked identity.
-// Fields merge onto any existing override; the users row is updated in the
-// same request so the change is live everywhere the database is read.
+// - bio: the profile "about me" line; profanity is censored, not rejected
+//   (matches /api/auth/bio). Written straight to the users row (bio is not part
+//   of the identity-override table, and syncHouseRatings never clobbers a
+//   non-empty bio, so a direct write is durable).
+// - reset: clear the username/avatar override entirely and restore the baked
+//   identity. Bio is left as-is by a reset (it lives on the users row).
+// Username/avatar merge onto any existing override; the users row is updated in
+// the same request so the change is live everywhere the database is read.
 export async function POST(request: Request) {
-  const guard = await requireMod(request);
+  const guard = await resolveActor(request);
   if (guard instanceof NextResponse) return guard;
-  const { db, mod } = guard;
-  if (mod.role !== "admin") {
-    return NextResponse.json({ error: "Admin access required." }, { status: 403 });
+  const { db, user } = guard;
+  if (!canEditIdentities(user)) {
+    return NextResponse.json({ error: "Not authorized to edit house identities." }, { status: 403 });
   }
 
-  let body: { userId?: unknown; username?: unknown; avatar?: unknown; reset?: unknown };
+  let body: { userId?: unknown; username?: unknown; avatar?: unknown; bio?: unknown; reset?: unknown };
   try {
     body = (await request.json()) as typeof body;
   } catch {
@@ -92,11 +133,17 @@ export async function POST(request: Request) {
   const reset = body.reset === true;
   const username = typeof body.username === "string" ? body.username.trim() : null;
   const avatar = typeof body.avatar === "string" ? body.avatar : null;
-  if (!reset && username === null && avatar === null) {
+  // bio: present when the key is sent at all (null/"" clears it). `undefined`
+  // means "not editing the bio in this request".
+  const editingBio = "bio" in body && body.bio !== undefined;
+  if (!reset && username === null && avatar === null && !editingBio) {
     return NextResponse.json(
-      { error: "Provide `username`, `avatar`, and/or `reset: true`." },
+      { error: "Provide `username`, `avatar`, `bio`, and/or `reset: true`." },
       { status: 400 },
     );
+  }
+  if (editingBio && body.bio !== null && typeof body.bio !== "string") {
+    return NextResponse.json({ error: "Invalid bio." }, { status: 400 });
   }
 
   if (username !== null && username.toLowerCase() !== persona.name.toLowerCase()) {
@@ -121,6 +168,14 @@ export async function POST(request: Request) {
   }
   if (avatar !== null && !HOUSE_AVATAR_IDS.includes(avatar)) {
     return NextResponse.json({ error: "Unknown avatar id." }, { status: 400 });
+  }
+
+  // Bio (when this request edits it): trim, cap, and censor profanity rather
+  // than reject it — the exact treatment /api/auth/bio gives a real account.
+  let bioValue: string | null = null;
+  if (editingBio && body.bio !== null && body.bio !== "") {
+    const trimmed = (body.bio as string).trim().slice(0, MAX_BIO);
+    bioValue = trimmed ? (findProfanity(trimmed).length ? censorText(trimmed) : trimmed) : null;
   }
 
   // Merge onto the stored override (a save of only one field keeps the other),
@@ -158,6 +213,11 @@ export async function POST(request: Request) {
       .prepare("UPDATE users SET username = ?, username_lower = ?, avatar = ? WHERE id = ?")
       .bind(effective.name, effective.name.toLowerCase(), effective.avatar, persona.userId)
       .run();
+    // Bio lives only on the users row (no override table). syncHouseRatings
+    // fills bio only when empty, so a value set here survives a roster resync.
+    if (editingBio) {
+      await db.prepare("UPDATE users SET bio = ? WHERE id = ?").bind(bioValue, persona.userId).run();
+    }
   } catch {
     return NextResponse.json(
       { error: "Could not save — that username may already be in use." },
@@ -165,5 +225,8 @@ export async function POST(request: Request) {
     );
   }
 
-  return NextResponse.json(await personasView(db));
+  // Echo the stored (censored) bio when this request set it, so the caller can
+  // reflect exactly what was kept without re-fetching the profile.
+  const view = await personasView(db);
+  return NextResponse.json(editingBio ? { ...view, bio: bioValue } : view);
 }
