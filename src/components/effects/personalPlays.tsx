@@ -496,14 +496,16 @@ function MonkeytypePlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
         <g className="pnp-linger" style={d(delayMs + 150)}>
           <text x={82} y={25} fontSize={6} fontWeight={700} fill="#8b99b8" textAnchor="end">WPM</text>
         </g>
-        <g className="pnp-flash" style={d(delayMs + 300)}><text x={90} y={26} fontSize={8.5} fontWeight={800} fill="#e8d24d" textAnchor="middle">72</text></g>
-        <g className="pnp-flash" style={d(delayMs + 720)}><text x={90} y={26} fontSize={8.5} fontWeight={800} fill="#e8d24d" textAnchor="middle">109</text></g>
-        <g className="pnp-flash-hold" style={d(delayMs + 1140)}><text x={90} y={26} fontSize={8.5} fontWeight={800} fill="#e8d24d" textAnchor="middle">148</text></g>
+        <g className="pnp-flash" style={d(delayMs + 540)}><text x={90} y={26} fontSize={8.5} fontWeight={800} fill="#e8d24d" textAnchor="middle">72</text></g>
+        <g className="pnp-flash" style={d(delayMs + 940)}><text x={90} y={26} fontSize={8.5} fontWeight={800} fill="#e8d24d" textAnchor="middle">109</text></g>
+        <g className="pnp-flash-hold" style={d(delayMs + 1340)}><text x={90} y={26} fontSize={8.5} fontWeight={800} fill="#e8d24d" textAnchor="middle">148</text></g>
+        {/* SETTLE: personal-best star winks by the final count */}
+        <g className="pnp-star" style={d(delayMs + 1560)}><SparkStar x={80} y={22} s={0.8} fill="#e8d24d" /></g>
         {/* keycaps shaken loose, tumbling down the file */}
         {[
-          { x: 22, y: 66, l: "M", r: "26deg", dl: 480 },
-          { x: 48, y: 70, l: "K", r: "-20deg", dl: 660 },
-          { x: 72, y: 66, l: "T", r: "32deg", dl: 840 },
+          { x: 22, y: 66, l: "M", r: "26deg", dl: 700 },
+          { x: 48, y: 70, l: "K", r: "-20deg", dl: 880 },
+          { x: 72, y: 66, l: "T", r: "32deg", dl: 1060 },
         ].map((k, i) => (
           <g key={i} className="pnp-keyfall" style={dv(delayMs + k.dl, { "--pnp-r": k.r })}>
             <rect x={k.x} y={k.y + 1.6} width={11} height={9} rx={2.2} fill="#7c88a4" />
@@ -544,36 +546,41 @@ function RubiksCubePlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
       <Wash color="rgba(35,42,56,0.18)" delayMs={delayMs} />
       <Prop left="31%" top="28%" width="38%" height="38%">
         <svg viewBox="0 0 100 100" className="h-full w-full">
-          {/* the face: black frame, 3x3 stickers, wrenched a quarter turn */}
+          {/* the face: black frame, 3x3 stickers; a frantic scramble-blur
+              jitter (the tell) before the face wrenches its quarter turn */}
           <g className="pnp-twist" style={d(delayMs)}>
-            <rect x={18} y={18} width={64} height={64} rx={8} fill="#232a38" stroke="#12161f" strokeWidth={2.4} />
-            {CUBE_COLS.map((c, i) => (
-              <rect
-                key={i}
-                x={23 + (i % 3) * 18.5}
-                y={23 + Math.floor(i / 3) * 18.5}
-                width={17}
-                height={17}
-                rx={3.2}
-                fill={c}
-              />
-            ))}
+            <g className="pnp-scramble" style={d(delayMs + 280)}>
+              <rect x={18} y={18} width={64} height={64} rx={8} fill="#232a38" stroke="#12161f" strokeWidth={2.4} />
+              {CUBE_COLS.map((c, i) => (
+                <rect
+                  key={i}
+                  x={23 + (i % 3) * 18.5}
+                  y={23 + Math.floor(i / 3) * 18.5}
+                  width={17}
+                  height={17}
+                  rx={3.2}
+                  fill={c}
+                />
+              ))}
+            </g>
           </g>
           {/* the twist rips stickers loose */}
           {[
-            { x: "-190%", y: "-120%", r: "220deg", c: "#e6432c", dl: 880 },
-            { x: "170%", y: "-150%", r: "-190deg", c: "#ffd23f", dl: 930 },
-            { x: "-150%", y: "150%", r: "170deg", c: "#6abf5f", dl: 980 },
-            { x: "200%", y: "110%", r: "-240deg", c: "#4fa3d1", dl: 1030 },
-            { x: "20%", y: "-200%", r: "200deg", c: "#ff9d3d", dl: 1080 },
+            { x: "-190%", y: "-120%", r: "220deg", c: "#e6432c", dl: 1190 },
+            { x: "170%", y: "-150%", r: "-190deg", c: "#ffd23f", dl: 1240 },
+            { x: "-150%", y: "150%", r: "170deg", c: "#6abf5f", dl: 1290 },
+            { x: "200%", y: "110%", r: "-240deg", c: "#4fa3d1", dl: 1340 },
+            { x: "20%", y: "-200%", r: "200deg", c: "#ff9d3d", dl: 1390 },
           ].map((s, i) => (
             <g key={i} className="pnp-sticker" style={dv(delayMs + s.dl, { "--pnp-x": s.x, "--pnp-y": s.y, "--pnp-r": s.r })}>
               <rect x={45} y={45} width={11} height={11} rx={2.4} fill={s.c} stroke="#232a38" strokeWidth={1.2} />
             </g>
           ))}
+          {/* SETTLE: the solved wink over the locked face */}
+          <g className="pnp-star" style={d(delayMs + 1420)}><SparkStar x={50} y={12} s={1.2} fill="#ffd23f" /></g>
         </svg>
       </Prop>
-      <Ring color="rgba(255,210,63,0.85)" delayMs={delayMs + 950} />
+      <Ring color="rgba(255,210,63,0.85)" delayMs={delayMs + 1260} />
     </Wide>
   );
 }
@@ -614,6 +621,8 @@ function WhimperingAudiosPlay({ lead, delayMs }: { lead: boolean; delayMs: numbe
   return (
     <Wide>
       <Wash color="rgba(242,119,143,0.16)" delayMs={delayMs} />
+      {/* TELL: a soft charm glow breathes where the halo will settle */}
+      <Glow left="40%" top="37%" width="20%" height="18%" color="rgba(242,119,143,0.4)" delayMs={delayMs} />
       {/* soundwave ribbons wash the whole board, layer by layer */}
       <Prop left="21%" top="24%" width="58%" height="52%">
         <svg viewBox="0 0 104 100" className="h-full w-full">
@@ -693,24 +702,24 @@ function ILoveMakingOutPlay({ lead, delayMs }: { lead: boolean; delayMs: number 
           </g>
           {/* the meet: kiss-mark confetti bursts from the point of contact */}
           {[
-            { x: "-180%", y: "-90%", r: "24deg", s: 1, dl: 780 },
-            { x: "160%", y: "-130%", r: "-30deg", s: 0.85, dl: 830 },
-            { x: "-120%", y: "-190%", r: "18deg", s: 0.75, dl: 880 },
-            { x: "200%", y: "-40%", r: "-16deg", s: 0.9, dl: 930 },
-            { x: "-220%", y: "10%", r: "30deg", s: 0.7, dl: 980 },
-            { x: "90%", y: "-220%", r: "-24deg", s: 0.8, dl: 1030 },
+            { x: "-180%", y: "-90%", r: "24deg", s: 1, dl: 1020 },
+            { x: "160%", y: "-130%", r: "-30deg", s: 0.85, dl: 1070 },
+            { x: "-120%", y: "-190%", r: "18deg", s: 0.75, dl: 1120 },
+            { x: "200%", y: "-40%", r: "-16deg", s: 0.9, dl: 1170 },
+            { x: "-220%", y: "10%", r: "30deg", s: 0.7, dl: 1220 },
+            { x: "90%", y: "-220%", r: "-24deg", s: 0.8, dl: 1270 },
           ].map((k, i) => (
             <g key={i} className="pnp-kissfetti" style={dv(delayMs + k.dl, { "--pnp-x": k.x, "--pnp-y": k.y, "--pnp-r": k.r })}>
               <KissMark x={50} y={38} s={k.s} fill={i % 2 ? "#ffb3c1" : "#e8506e"} />
             </g>
           ))}
           {/* one big heart floats off the couple */}
-          <g className="pnp-rise" style={d(delayMs + 900)}>
+          <g className="pnp-rise" style={d(delayMs + 1150)}>
             <path d="M50 26 c-2.8 -4.6 -9.2 -2.8 -9.2 1.8 c0 3.8 5.2 7 9.2 9.8 c4 -2.8 9.2 -6 9.2 -9.8 c0 -4.6 -6.4 -6.4 -9.2 -1.8 Z" fill="#e8506e" stroke="#b33450" strokeWidth={1.4} strokeLinejoin="round" />
           </g>
         </svg>
       </Prop>
-      <Ring color="rgba(255,179,193,0.9)" delayMs={delayMs + 1000} />
+      <Ring color="rgba(255,179,193,0.9)" delayMs={delayMs + 1250} />
     </Wide>
   );
 }

@@ -97,6 +97,27 @@ function Star({ x, y, s = 1, fill = "#ffd76a" }: { x: number; y: number; s?: num
   );
 }
 
+/** Winnings pay out TOWARD the bottom edge (the player's side): a small
+ * fountain of gold coins that arcs down and off the board's near rail. */
+function Payout({ x, y, delayMs, n = 5 }: { x: number; y: number; delayMs: number; n?: number }) {
+  const lanes = [
+    { px: "-190%", py: "420%" },
+    { px: "-90%", py: "540%" },
+    { px: "10%", py: "460%" },
+    { px: "110%", py: "560%" },
+    { px: "200%", py: "440%" },
+  ];
+  return (
+    <>
+      {lanes.slice(0, n).map((p, i) => (
+        <g key={i} className="csp-payout" style={dv(delayMs + i * 90, { "--px": p.px, "--py": p.py })}>
+          <Chip cx={x} cy={y} r={3.6} fill="#ffd76a" edge="#b98a1e" />
+        </g>
+      ))}
+    </>
+  );
+}
+
 /* ------------------------------------------------------------------------- */
 /* 1. Slot Machine (t5) - three reels spin, stagger to a stop, payline flash  */
 /* ------------------------------------------------------------------------- */
@@ -147,7 +168,9 @@ function SlotMachinePlay({ lead, delayMs }: { lead: boolean; delayMs: number }) 
     <Wide>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="csp-wash"><rect x={0} y={0} width={100} height={100} fill="rgba(30,10,20,0.55)" /></g>
-        <g className="csp-linger" style={d(delayMs)}>
+        <g className="csp-linger csp-linger--long" style={d(delayMs)}>
+          {/* whole cabinet recoils when the lever is yanked */}
+          <g className="csp-recoil" style={d(delayMs + 330)}>
           {/* cabinet */}
           <rect x={24} y={20} width={52} height={62} rx={5} fill="#3a1524" stroke="#ffd76a" strokeWidth={2} />
           <rect x={28} y={24} width={44} height={9} rx={2} fill="#12070d" />
@@ -167,22 +190,25 @@ function SlotMachinePlay({ lead, delayMs }: { lead: boolean; delayMs: number }) 
             </g>
           </g>
           {/* payline */}
-          <g className="csp-payline" style={d(delayMs)}>
+          <g className="csp-payline" style={d(delayMs + 600)}>
             <rect x={29} y={50} width={42} height={2} rx={1} fill="#ff4d6d" />
           </g>
-          {/* coin slot + lever */}
+          {/* coin slot + lever: the tell — yank down, spring back, arm recoil */}
           <rect x={30} y={68} width={40} height={10} rx={2} fill="#12070d" />
           <circle cx={50} cy={73} r={2.4} fill="#ffd76a" />
           <g className="csp-lever" style={d(delayMs + 80)}>
             <rect x={75} y={40} width={2.4} height={20} rx={1.2} fill="#8a94a8" />
             <circle cx={76.2} cy={39} r={3.2} fill="#d6234f" stroke="#8a1230" strokeWidth={0.8} />
           </g>
+          </g>
         </g>
-        {/* jackpot sparkle on the win */}
-        <g className="csp-flash" style={d(delayMs)}><rect x={29} y={38} width={42} height={26} rx={2.5} fill="#ffef9f" opacity={0.6} /></g>
-        <g className="csp-star" style={d(delayMs + 900)}><Star x={38} y={44} s={1.4} /></g>
-        <g className="csp-star" style={d(delayMs + 1040)}><Star x={62} y={44} s={1.2} /></g>
-        <g className="csp-star" style={d(delayMs + 1160)}><Star x={50} y={40} s={1.6} /></g>
+        {/* jackpot sparkle on the win (after the third reel stops) */}
+        <g className="csp-flash" style={d(delayMs + 1000)}><rect x={29} y={38} width={42} height={26} rx={2.5} fill="#ffef9f" opacity={0.6} /></g>
+        <g className="csp-star" style={d(delayMs + 1950)}><Star x={38} y={44} s={1.4} /></g>
+        <g className="csp-star" style={d(delayMs + 2090)}><Star x={62} y={44} s={1.2} /></g>
+        <g className="csp-star" style={d(delayMs + 2210)}><Star x={50} y={40} s={1.6} /></g>
+        {/* the jackpot pays out toward the player's rail */}
+        <Payout x={50} y={76} delayMs={delayMs + 2000} />
       </svg>
     </Wide>
   );
@@ -230,7 +256,7 @@ function RoulettePlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
     <Wide>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="csp-wash"><rect x={0} y={0} width={100} height={100} fill="rgba(8,26,16,0.55)" /></g>
-        <g className="csp-linger" style={d(delayMs)}>
+        <g className="csp-linger csp-linger--long" style={d(delayMs)}>
           {/* felt + red bet chip */}
           <rect x={12} y={70} width={76} height={20} rx={3} fill="#0d3a24" stroke="#1f6b44" strokeWidth={1.6} />
           <rect x={16} y={74} width="14" height="12" rx={1.6} fill="none" stroke="#e04b63" strokeWidth={1.2} />
@@ -248,7 +274,9 @@ function RoulettePlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           {/* rim */}
           <circle r={29} fill="none" stroke="#5a3a1a" strokeWidth={2.4} />
         </g>
-        <g className="csp-star" style={d(delayMs + 1500)}><Star x={50} y={42} s={1.6} /></g>
+        <g className="csp-star" style={d(delayMs + 1650)}><Star x={50} y={42} s={1.6} /></g>
+        {/* red hits: the house pays the bet, toward the player's rail */}
+        <Payout x={23} y={82} delayMs={delayMs + 1700} n={4} />
       </svg>
     </Wide>
   );
@@ -290,7 +318,7 @@ function BlackjackPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="csp-wash"><rect x={0} y={0} width={100} height={100} fill="rgba(8,26,16,0.5)" /></g>
         {/* felt table arc */}
-        <g className="csp-linger" style={d(delayMs)}>
+        <g className="csp-linger csp-linger--long" style={d(delayMs)}>
           <path d="M8 88 Q50 58 92 88" fill="none" stroke="#1f6b44" strokeWidth={2.4} />
           <text x={50} y={30} fontSize={6.4} fontWeight={800} fill="#e8dcc0" textAnchor="middle" style={{ letterSpacing: "1px" }}>BLACKJACK PAYS 3:2</text>
           <text x={50} y={38} fontSize={4.6} fill="#9db8a8" textAnchor="middle">dealer stands on 17</text>
@@ -301,12 +329,14 @@ function BlackjackPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           <FlipCard x={50} y={60} tilt={-2} dealMs={delayMs + 320} flipMs={delayMs + 820} label="7" />
           <FlipCard x={62} y={62} tilt={9} dealMs={delayMs + 620} flipMs={delayMs + 1140} label="4" />
         </g>
-        {/* running total pops on the win */}
-        <g className="csp-pop" style={d(delayMs + 1240)}>
+        {/* running total pops on the win (after the last snap-flip lands) */}
+        <g className="csp-pop" style={d(delayMs + 2050)}>
           <rect x={41} y={78} width={18} height={11} rx={2.4} fill="#12070d" stroke="#ffd76a" strokeWidth={1} />
           <text x={50} y={86} fontSize={7} fontWeight={800} fill="#ffd76a" textAnchor="middle">21</text>
         </g>
-        <g className="csp-star" style={d(delayMs + 1360)}><Star x={68} y={50} s={1.3} /></g>
+        <g className="csp-star" style={d(delayMs + 2180)}><Star x={68} y={50} s={1.3} /></g>
+        {/* 3:2 pays toward the player's rail */}
+        <Payout x={50} y={86} delayMs={delayMs + 2200} n={4} />
       </svg>
     </Wide>
   );
@@ -336,7 +366,7 @@ function ScratchCardPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) 
     <Wide>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="csp-wash"><rect x={0} y={0} width={100} height={100} fill="rgba(28,20,8,0.5)" /></g>
-        <g className="csp-linger" style={d(delayMs)}>
+        <g className="csp-linger csp-linger--long" style={d(delayMs)}>
           {/* ticket */}
           <rect x={22} y={34} width={56} height={34} rx={3} fill="#f4ecd6" stroke="#c2a24a" strokeWidth={1.6} />
           <text x={50} y={44} fontSize={5} fontWeight={800} fill="#c2372f" textAnchor="middle" style={{ letterSpacing: "1px" }}>MATCH 3 TO WIN</text>
@@ -347,24 +377,28 @@ function ScratchCardPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) 
               <text x={p.x} y={60} fontSize={9} fontWeight={800} fill={p.col} textAnchor="middle">{p.sym}</text>
             </g>
           ))}
-          {/* foil scratched away panel by panel */}
+          {/* foil scrubbed away one panel at a time, on the coin's strokes */}
           {panels.map((p, i) => (
-            <g key={`f${i}`} className="csp-scratch" style={d(delayMs + 120 + i * 260)}>
+            <g key={`f${i}`} className="csp-scratch" style={d(delayMs + 300 + i * 420)}>
               <rect x={p.x - 6.4} y={49.6} width={12.8} height={12.8} rx={1.6} fill="#b9bec9" stroke="#8a94a8" strokeWidth={0.6} />
               <path d={`M${p.x - 5} 52 h9 M${p.x - 5} 56 h9 M${p.x - 5} 60 h9`} stroke="#9098a6" strokeWidth={0.6} />
             </g>
           ))}
         </g>
-        {/* the scraping coin */}
+        {/* the coin scrubs edge-on: back-and-forth strokes per panel */}
         <g className="csp-scrape" style={d(delayMs + 120)}>
           <g transform="translate(28 56)">
             <Chip cx={0} cy={0} r={5} fill="#ffd76a" edge="#b98a1e" />
-            {/* dust flecks */}
-            <g className="csp-dust" style={dv(delayMs + 300, { "--dx": "40%", "--dy": "-70%" })}><circle cx={4} cy={-2} r={0.8} fill="#c9c2ac" /></g>
-            <g className="csp-dust" style={dv(delayMs + 500, { "--dx": "60%", "--dy": "-40%" })}><circle cx={5} cy={1} r={0.7} fill="#c9c2ac" /></g>
+            {/* dust flecks flicked off each stroke */}
+            <g className="csp-dust" style={dv(delayMs + 450, { "--dx": "40%", "--dy": "-70%" })}><circle cx={4} cy={-2} r={0.8} fill="#c9c2ac" /></g>
+            <g className="csp-dust" style={dv(delayMs + 700, { "--dx": "60%", "--dy": "-40%" })}><circle cx={5} cy={1} r={0.7} fill="#c9c2ac" /></g>
+            <g className="csp-dust" style={dv(delayMs + 1050, { "--dx": "50%", "--dy": "-80%" })}><circle cx={4} cy={-1} r={0.8} fill="#c9c2ac" /></g>
+            <g className="csp-dust" style={dv(delayMs + 1400, { "--dx": "70%", "--dy": "-50%" })}><circle cx={5} cy={0} r={0.7} fill="#c9c2ac" /></g>
           </g>
         </g>
-        <g className="csp-star" style={d(delayMs + 1200)}><Star x={50} y={40} s={1.3} /></g>
+        <g className="csp-star" style={d(delayMs + 1600)}><Star x={50} y={40} s={1.3} /></g>
+        {/* match 3: the ticket pays toward the player's rail */}
+        <Payout x={50} y={64} delayMs={delayMs + 1700} n={4} />
       </svg>
     </Wide>
   );
@@ -392,7 +426,7 @@ function LetItRidePlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
     <Wide>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="csp-wash"><rect x={0} y={0} width={100} height={100} fill="rgba(28,20,8,0.5)" /></g>
-        <g className="csp-linger" style={d(delayMs)}>
+        <g className="csp-linger csp-linger--long" style={d(delayMs)}>
           <rect x={14} y={78} width={72} height={12} rx={3} fill="#0d3a24" stroke="#1f6b44" strokeWidth={1.4} />
           <text x={50} y={30} fontSize={6} fontWeight={800} fill="#ffd76a" textAnchor="middle" style={{ letterSpacing: "1px" }}>LET IT RIDE</text>
         </g>

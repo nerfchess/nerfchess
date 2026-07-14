@@ -783,12 +783,17 @@ function ColdFront({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
    Template 4: SiegeRoll — a siege engine rolls in from the left wing, its arm
    swings, and the payload arcs across to a strike flash on the far side.
    ========================================================================== */
-function SiegeRoll({ palette, glyph, lead, delayMs }: TemplateProps) {
+function SiegeRoll({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
   const [p0, p1, p2] = palette;
+  // Comic-timing: the party cannon holds its wind-up a beat before the punchline.
+  const hold = flourish === "confetti" ? 200 : 0;
   if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
     <Stage>
       <Wash color={tint(p0, 0.24)} delayMs={delayMs} />
+      {/* tell: the ground shadows under the incoming engine's track */}
+      <TellShadow delayMs={delayMs} color={tint(p2, 0.55)} left={24} top={64} w={26} h={6} />
+      <TellGlow delayMs={delayMs + 40} color={tint(p1, 0.28)} left={28} top={36} w={18} h={18} />
       {/* the engine, rolling in and braking */}
       <span className="grp-rollin absolute block" style={{ left: "24%", top: "30%", width: "28%", height: "38%", animationDelay: `${delayMs + 80}ms` }}>
         <svg viewBox="0 0 24 32" className="block h-full w-full" aria-hidden="true">
@@ -801,7 +806,7 @@ function SiegeRoll({ palette, glyph, lead, delayMs }: TemplateProps) {
           <circle cx="12" cy="15" r="1.2" fill={p1} stroke={p2} strokeWidth="0.5" />
         </svg>
         {/* the throwing arm, swinging over the pivot */}
-        <span className="grp-swing absolute block" style={{ left: "38%", top: "-52%", width: "24%", height: "98%", transformOrigin: "50% 96%", animationDelay: `${delayMs + 460}ms` }}>
+        <span className="grp-swing absolute block" style={{ left: "38%", top: "-52%", width: "24%", height: "98%", transformOrigin: "50% 96%", animationDelay: `${delayMs + 460 + hold}ms` }}>
           <svg viewBox="0 0 8 32" className="block h-full w-full" aria-hidden="true">
             <path d="M3.4 31 L4.6 31 L5.4 3 H2.6 Z" fill={tint(p0, 0.95)} stroke={p2} strokeWidth="0.7" {...SJ} />
             <path d="M2 3.4 C2 0.8 6 0.8 6 3.4 C6 5.4 2 5.4 2 3.4 Z" fill="none" stroke={p2} strokeWidth="0.7" />
@@ -821,7 +826,7 @@ function SiegeRoll({ palette, glyph, lead, delayMs }: TemplateProps) {
             height: "5.5%",
             "--dx": "420%",
             "--dy": "-170%",
-            animationDelay: `${delayMs + 660}ms`,
+            animationDelay: `${delayMs + 660 + hold}ms`,
           } as CSSProperties
         }
       >
@@ -829,11 +834,29 @@ function SiegeRoll({ palette, glyph, lead, delayMs }: TemplateProps) {
           <circle cx="5" cy="5" r="4" fill={tint(p1, 0.95)} stroke={p2} strokeWidth="0.8" />
         </svg>
       </span>
+      {/* bespoke: Confetti Cannon — the payload bursts into party squares */}
+      {flourish === "confetti" && (
+        <Settle
+          delayMs={delayMs + 1120 + hold}
+          dir="fall"
+          sizePct={2.2}
+          render={(i) => (
+            <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+              <rect x="2" y="2" width="6" height="6" fill={["#4fe3ff", "#ff4fa3", "#ffcf4d", "#a8e07f", "#c9b0e8", "#ff9d3d"][i]} transform="rotate(18 5 5)" />
+            </svg>
+          )}
+        />
+      )}
       {/* strike flash on the far wing + debris + the single concussion */}
-      <Flash delayMs={delayMs + 1000} color={tint(p1, 0.8)} left={60} top={37} w={18} h={13} />
-      <Sparks delayMs={delayMs + 1040} fill={p1} stroke={p2} sizePct={6.5} cx={68} cy={42} />
-      <Boom delayMs={delayMs + 1080} color={tint(p1, 0.85)} thickness={4} />
-      <Glint delayMs={delayMs + 1360} color={p1} left={67} top={33} sizePct={7} />
+      <Flash delayMs={delayMs + 1000 + hold} color={tint(p1, 0.8)} left={60} top={37} w={18} h={13} />
+      <Sparks delayMs={delayMs + 1040 + hold} fill={p1} stroke={p2} sizePct={6.5} cx={68} cy={42} />
+      <Boom delayMs={delayMs + 1080 + hold} color={tint(p1, 0.85)} thickness={4} />
+      <Glint delayMs={delayMs + 1360 + hold} color={p1} left={67} top={33} sizePct={7} />
+      {/* settle: powder smoke drifts down off the impact */}
+      <Afterglow delayMs={delayMs + 1200 + hold} color={tint(p1, 0.28)} left={56} top={32} w={22} h={18} />
+      {flourish !== "confetti" && (
+        <Settle delayMs={delayMs + 1240 + hold} dir="fall" render={(i) => <Mote color={tint(i % 2 ? p2 : p1, 0.65)} />} />
+      )}
     </Stage>
   );
 }
@@ -848,6 +871,9 @@ function WarBanner({ palette, glyph, lead, delayMs }: TemplateProps) {
   return (
     <Stage>
       <Wash color={tint(p0, 0.24)} delayMs={delayMs} />
+      {/* tell: the standard's shadow falls on the muster ground first */}
+      <TellShadow delayMs={delayMs} color={tint(p2, 0.55)} left={39} top={66} w={22} h={6} />
+      <TellGlow delayMs={delayMs + 40} color={tint(p1, 0.3)} left={40} top={26} w={20} h={18} />
       {/* the flanking shield ranks, rising */}
       {[24, 61].map((l, i) => (
         <span key={i} className="grp-rise absolute block" style={{ left: `${l}%`, top: "46%", width: "15%", height: "20%", animationDelay: `${delayMs + 260 + i * 90}ms` }}>
@@ -879,6 +905,9 @@ function WarBanner({ palette, glyph, lead, delayMs }: TemplateProps) {
       <Sparks delayMs={delayMs + 800} fill={p1} stroke={p2} cy={49} />
       <Boom delayMs={delayMs + 860} color={tint(p1, 0.85)} />
       <Glint delayMs={delayMs + 1180} color={p1} left={49} top={24} />
+      {/* settle: pennant threads and rally-light sift down over the ranks */}
+      <Afterglow delayMs={delayMs + 1000} color={tint(p1, 0.26)} left={38} top={34} w={24} h={22} />
+      <Settle delayMs={delayMs + 1040} dir="fall" render={(i) => <Mote color={tint(i % 2 ? p1 : p0, 0.7)} />} />
     </Stage>
   );
 }
@@ -893,6 +922,9 @@ function Grove({ palette, glyph, lead, delayMs }: TemplateProps) {
   return (
     <Stage>
       <Wash color={tint(p0, 0.24)} delayMs={delayMs} />
+      {/* tell: the soil bulges and green light seeps up before the trunk breaches */}
+      <TellShadow delayMs={delayMs} color={tint(p2, 0.5)} left={37} top={64} w={26} h={7} />
+      <TellGlow delayMs={delayMs + 40} color={tint(p1, 0.3)} left={40} top={44} w={20} h={18} />
       {/* the great tree, heaving up */}
       <span className="grp-rise absolute block" style={{ left: "31%", top: "18%", width: "38%", height: "54%", animationDelay: `${delayMs + 120}ms` }}>
         <svg viewBox="0 0 34 44" className="block h-full w-full" aria-hidden="true">
@@ -928,6 +960,9 @@ function Grove({ palette, glyph, lead, delayMs }: TemplateProps) {
       <Sparks delayMs={delayMs + 740} fill={p1} stroke={p2} cy={56} />
       <Boom delayMs={delayMs + 800} color={tint(p1, 0.85)} />
       <Glint delayMs={delayMs + 1130} color={p1} left={49} top={24} />
+      {/* settle: pollen motes hang and sink in the canopy's shade */}
+      <Afterglow delayMs={delayMs + 940} color={tint(p1, 0.26)} left={36} top={30} w={28} h={22} />
+      <Settle delayMs={delayMs + 980} dir="fall" sizePct={2} render={(i) => <Mote color={tint(i % 2 ? p1 : "#ffe9b0", 0.75)} />} />
     </Stage>
   );
 }
