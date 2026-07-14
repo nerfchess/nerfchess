@@ -5,6 +5,7 @@ import type { MPDraftState, MPSession } from "@/lib/multiplayer";
 import { ALL_BUFFS } from "@/engine/buffs/library";
 import { ALL_NERFS } from "@/engine/nerfs/library";
 import { isBoon } from "@/engine/buff";
+import { useScreenRecorder } from "@/lib/useScreenRecorder";
 
 // The owner "god panel": a far-right column, mounted ONLY for a god-panel
 // account (the real gate is server-side; this is UX). It lists the COMPLETE
@@ -112,9 +113,21 @@ type HeldBuff = MPDraftState["players"]["w"]["buffs"][number];
 
 type Props = {
   session: MPSession;
+  /** Whether the 9:16 "recording mode" board layout is currently on. */
+  recordingMode: boolean;
+  /** Toggle the recording-mode layout (purely visual; see OnlineMatch). */
+  onToggleRecordingMode: () => void;
 };
 
-export function AdminGodPanel({ session }: Props) {
+// mm:ss for the live recording timer.
+function fmtElapsed(ms: number): string {
+  const total = Math.floor(ms / 1000);
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+export function AdminGodPanel({ session, recordingMode, onToggleRecordingMode }: Props) {
   const [query, setQuery] = useState("");
   // Start tucked away as a thin edge tab so the panel never overlaps the board
   // on load; the owner clicks the tab to open it.
@@ -129,6 +142,11 @@ export function AdminGodPanel({ session }: Props) {
   // state.
   const [seeOpp, setSeeOpp] = useState(false);
   const [oppBuffs, setOppBuffs] = useState<HeldBuff[]>([]);
+
+  // Screen recorder for capturing a clip of the game. Independent of the
+  // recording-mode LAYOUT toggle above it: the layout rearranges the board for
+  // a 9:16 crop; this actually records the screen and hands back a download.
+  const recorder = useScreenRecorder();
 
   useEffect(() => {
     const off = session.on((e) => {
@@ -167,13 +185,20 @@ export function AdminGodPanel({ session }: Props) {
   }
 
   if (collapsed) {
+    const recording = recorder.state === "recording";
     return (
       <button
         type="button"
         onClick={() => setCollapsed(false)}
-        className="fixed right-0 top-1/2 z-30 hidden -translate-y-1/2 rounded-l-[1px] border border-coral/40 bg-ink-950 px-1.5 py-3 text-[10px] font-semibold text-coral-glow [writing-mode:vertical-rl] xl:block"
-        title="Open god panel"
+        className={
+          "fixed right-0 top-1/2 z-30 hidden -translate-y-1/2 items-center gap-1.5 rounded-l-[1px] border bg-ink-950 px-1.5 py-3 text-[10px] font-semibold [writing-mode:vertical-rl] xl:flex " +
+          (recording ? "border-coral/70 text-coral-glow" : "border-coral/40 text-coral-glow")
+        }
+        title={recording ? "Recording — open god panel to stop" : "Open god panel"}
       >
+        {recording && (
+          <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-coral-glow animate-pulse" />
+        )}
         god panel
       </button>
     );
@@ -199,6 +224,82 @@ export function AdminGodPanel({ session }: Props) {
         >
           ×
         </button>
+      </div>
+
+      {/* Recording tools: a purely-visual "recording mode" that reflows the
+          board, players, and clocks into a 9:16 column for Shorts/Reels, and a
+          screen recorder that captures a clip and offers it for download. Both
+          are local — nothing is sent to the server or the opponent. */}
+      <div className="space-y-1.5 border-b border-white/10 px-3 py-2">
+        <div className="flex gap-1">
+          <button
+            type="button"
+            onClick={onToggleRecordingMode}
+            aria-pressed={recordingMode}
+            title="Reflow the board into a 9:16 vertical frame for Shorts/Reels (visual only)"
+            className={
+              "flex-1 rounded-[1px] border px-2 py-1 text-[10px] font-semibold transition-colors " +
+              (recordingMode
+                ? "border-sun/60 bg-sun/15 text-sun-glow"
+                : "border-white/12 text-parchment-400 hover:border-sun/45 hover:text-sun-glow")
+            }
+          >
+            {recordingMode ? "recording mode: on" : "recording mode"}
+          </button>
+          {recorder.state === "recording" ? (
+            <button
+              type="button"
+              onClick={recorder.stop}
+              title="Stop recording"
+              className="flex items-center gap-1.5 rounded-[1px] border border-coral/60 bg-coral/20 px-2 py-1 text-[10px] font-semibold text-coral-glow transition-colors hover:bg-coral/30"
+            >
+              <span aria-hidden className="h-2 w-2 rounded-[1px] bg-coral-glow" />
+              stop · {fmtElapsed(recorder.elapsedMs)}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={recorder.start}
+              disabled={!recorder.supported}
+              title={
+                recorder.supported
+                  ? "Record the screen; pick this tab in the share prompt"
+                  : "Screen recording isn't supported in this browser"
+              }
+              className="flex items-center gap-1.5 rounded-[1px] border border-coral/40 bg-coral/10 px-2 py-1 text-[10px] font-semibold text-coral-glow transition-colors hover:bg-coral/20 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <span aria-hidden className="h-2 w-2 rounded-full bg-coral-glow" />
+              record
+            </button>
+          )}
+        </div>
+        {recorder.state === "stopped" && recorder.downloadUrl && (
+          <div className="flex gap-1 pt-0.5">
+            <button
+              type="button"
+              onClick={recorder.download}
+              className="flex-1 rounded-[1px] border border-mint/60 bg-mint/15 px-2 py-1 text-[10px] font-semibold text-mint-glow transition-colors hover:bg-mint/25"
+            >
+              download clip
+            </button>
+            <button
+              type="button"
+              onClick={recorder.reset}
+              title="Discard this clip"
+              className="rounded-[1px] border border-white/12 px-2 py-1 text-[10px] font-semibold text-parchment-400 transition-colors hover:border-coral/45 hover:text-coral-glow"
+            >
+              discard
+            </button>
+          </div>
+        )}
+        {recorder.error && (
+          <p className="text-[10px] leading-snug text-coral-glow">{recorder.error}</p>
+        )}
+        {recordingMode && recorder.state !== "recording" && (
+          <p className="text-[9px] leading-snug text-parchment-500">
+            board is framed 9:16 — hit record, then crop to the frame.
+          </p>
+        )}
       </div>
 
       {/* Owner tools: reveal the opponent's hidden hand (to you only) and the
