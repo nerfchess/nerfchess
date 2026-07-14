@@ -1829,7 +1829,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
       }
     };
     return (
-      <main className="min-h-screen flex items-center justify-center px-4 py-8">
+      <main className="min-h-dvh flex items-center justify-center px-4 py-8">
         <div className="w-full max-w-2xl">
           <div className="smallcaps text-[11px] text-parchment-400 text-center">Nerf draft</div>
           <h1 className="font-display text-4xl text-parchment text-center mt-1">
@@ -3017,16 +3017,16 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           animate={{ opacity: 1, y: 0 }}
           role="status"
           aria-live="assertive"
-          className="plate fixed bottom-36 right-3 z-40 flex items-center gap-3 border-gold/50 p-3 px-4 shadow-xl sm:bottom-28 lg:bottom-16"
+          className="plate fixed bottom-36 right-3 z-40 flex max-w-[92vw] items-center gap-3 border-gold/50 p-3 px-4 shadow-xl sm:bottom-28 lg:bottom-16"
         >
           <span aria-hidden className="h-2 w-2 shrink-0 bg-gold-leaf animate-flicker" />
-          <span className="font-display text-sm text-parchment-100">
+          <span className="min-w-0 truncate font-display text-sm text-parchment-100">
             {oppName} wants a rematch
           </span>
           <button
             type="button"
             onClick={handleRematch}
-            className="btn-leaf px-3 py-1.5 font-display text-xs font-semibold"
+            className="btn-leaf shrink-0 px-3 py-1.5 font-display text-xs font-semibold"
           >
             Accept
           </button>

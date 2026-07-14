@@ -191,7 +191,7 @@ export function TargetingBanner({
         {finishable && onFinish && (
           <button
             onClick={onFinish}
-            className="shrink-0 rounded-full border border-mint/60 bg-mint/20 px-3 py-1 font-display text-[10px] font-bold tracking-wide text-mint-glow transition hover:bg-mint/30"
+            className="shrink-0 touch-manipulation inline-flex items-center justify-center min-h-[44px] sm:min-h-0 rounded-full border border-mint/60 bg-mint/20 px-3 py-1 font-display text-[10px] font-bold tracking-wide text-mint-glow transition hover:bg-mint/30"
             title="Fire now with the targets picked so far (the rest are forfeited)"
           >
             Done
@@ -199,7 +199,7 @@ export function TargetingBanner({
         )}
         <button
           onClick={onCancel}
-          className="shrink-0 rounded-full border border-coral/40 bg-coral/10 px-3 py-1 font-display text-[10px] font-semibold tracking-wide text-coral-glow transition hover:bg-coral/20"
+          className="shrink-0 touch-manipulation inline-flex items-center justify-center min-h-[44px] sm:min-h-0 rounded-full border border-coral/40 bg-coral/10 px-3 py-1 font-display text-[10px] font-semibold tracking-wide text-coral-glow transition hover:bg-coral/20"
         >
           Cancel <span className="text-coral-glow/60">Esc</span>
         </button>

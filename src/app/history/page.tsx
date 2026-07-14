@@ -76,7 +76,7 @@ export default function HistoryPage() {
               type="button"
               onClick={() => setFilter(f.id)}
               className={
-                "px-4 py-2 border font-display text-sm transition " +
+                "min-h-[44px] sm:min-h-0 px-4 py-2 border font-display text-sm transition " +
                 (filter === f.id
                   ? "bg-gold/20 border-gold text-gold-leaf"
                   : "border-white/15 text-parchment-200 hover:border-white/30 hover:bg-white/5")

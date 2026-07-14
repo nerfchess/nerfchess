@@ -120,7 +120,7 @@ export default function TournamentDetailPage() {
                     Tournaments
                   </Link>
                 </div>
-                <h1 className="mt-1 font-display text-4xl text-parchment-50 sm:text-5xl">{t.name}</h1>
+                <h1 className="mt-1 break-words font-display text-3xl text-parchment-50 sm:text-5xl">{t.name}</h1>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   <ModeTag mode={t.mode} />
                   <span className="border border-white/15 px-2 py-0.5 font-mono text-xs text-parchment-200">

@@ -1273,18 +1273,18 @@ function GameShell({
 // board stays the star, but never a dead end.
 function SiteNav() {
   return (
-    <nav className="flex items-center justify-between px-5 sm:px-10 py-5">
-      <Link href="/" className="font-display text-2xl tracking-tight">
+    <nav className="flex items-center justify-between gap-2 px-4 sm:px-10 py-5">
+      <Link href="/" className="shrink-0 font-display text-xl sm:text-2xl tracking-tight">
         nerf<span className="text-gold-leaf">chess</span>
       </Link>
-      <div className="flex items-center gap-1">
-        <Link href="/tv" className="px-3 py-1.5 rounded-full text-sm font-display hover:bg-white/5 text-gold-leaf">
+      <div className="flex items-center gap-0.5 sm:gap-1">
+        <Link href="/tv" className="px-2 sm:px-3 py-1.5 rounded-full text-xs sm:text-sm font-display hover:bg-white/5 text-gold-leaf whitespace-nowrap">
           Back to TV
         </Link>
-        <Link href="/lobby" className="px-3 py-1.5 rounded-full text-sm font-display hover:bg-white/5 text-parchment">
+        <Link href="/lobby" className="px-2 sm:px-3 py-1.5 rounded-full text-xs sm:text-sm font-display hover:bg-white/5 text-parchment">
           Lobby
         </Link>
-        <Link href="/play" className="px-3 py-1.5 rounded-full text-sm font-display hover:bg-white/5 text-parchment">
+        <Link href="/play" className="px-2 sm:px-3 py-1.5 rounded-full text-xs sm:text-sm font-display hover:bg-white/5 text-parchment">
           Play
         </Link>
       </div>

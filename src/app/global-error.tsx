@@ -8,6 +8,9 @@ export default function GlobalError({ reset }: { error: Error & { digest?: strin
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
+    // Comfortable 44px touch target on phones (no Tailwind here: globals.css
+    // is not loaded when the root layout itself has crashed).
+    minHeight: "44px",
     padding: "8px 14px",
     fontSize: "12px",
     fontWeight: 600,
@@ -24,6 +27,9 @@ export default function GlobalError({ reset }: { error: Error & { digest?: strin
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
+          // Breathing room so the card never touches the screen edge on phones.
+          padding: "24px 16px",
+          boxSizing: "border-box",
           background: "#161512",
           color: "#b8b8b8",
           fontFamily: "Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",

@@ -22,9 +22,9 @@ export default function Loading() {
           <div className="hall-hairline mt-4" aria-hidden />
         </div>
         {/* Tab bar (Quick Play / Challenges / Watch / Friends). */}
-        <div className="mt-6 flex gap-1.5 border-b border-white/10 pb-px" aria-hidden>
+        <div className="mt-6 flex flex-wrap gap-1.5 border-b border-white/10 pb-px" aria-hidden>
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="skeleton h-10 w-24 sm:w-28" />
+            <div key={i} className="skeleton h-10 w-20 sm:w-28" />
           ))}
         </div>
         <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">

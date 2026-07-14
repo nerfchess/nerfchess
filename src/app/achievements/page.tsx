@@ -317,7 +317,7 @@ function UnlockPopupToggle() {
         }}
         aria-pressed={!off}
         className={
-          "smallcaps border px-3 py-1 text-[10px] transition-colors " +
+          "min-h-[44px] sm:min-h-0 smallcaps border px-3 py-1 text-[10px] transition-colors " +
           (off
             ? "border-white/15 bg-white/[0.03] text-parchment-400 hover:border-white/30"
             : "border-verdigris-glow/50 bg-verdigris/10 text-verdigris-glow")

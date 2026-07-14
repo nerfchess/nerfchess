@@ -3767,7 +3767,7 @@ export function Board({
           >
             <div
               onClick={(e) => e.stopPropagation()}
-              className="plate gilt flex flex-col items-center gap-2 p-4"
+              className="plate gilt flex flex-col items-center gap-2 p-3 sm:p-4"
             >
               <div className="flex gap-2">
                 {promotionMove.map((m) => (
@@ -3778,9 +3778,9 @@ export function Board({
                       setPromotionMove(null);
                       setSelected(null);
                     }}
-                    className="w-16 h-16 rounded-sm bg-ink-800 hover:bg-ink-700 flex items-center justify-center border border-gold/30"
+                    className="w-14 h-14 sm:w-16 sm:h-16 rounded-sm bg-ink-800 hover:bg-ink-700 flex items-center justify-center border border-gold/30"
                   >
-                    <Piece type={m.promotion!} color={m.color} size={56} />
+                    <Piece type={m.promotion!} color={m.color} size={56} className="w-[85%] h-[85%]" />
                   </button>
                 ))}
               </div>

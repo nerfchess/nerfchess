@@ -197,7 +197,7 @@ export default function TournamentsPage() {
                 </label>
                 <input id="t-name" value={name} onChange={(e) => setName(e.target.value)} maxLength={70} className={INPUT_CLASS} />
 
-                <div className="mt-3 grid grid-cols-2 gap-3">
+                <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className={LABEL_CLASS} htmlFor="t-format">
                       Format
@@ -230,7 +230,7 @@ export default function TournamentsPage() {
                       onClick={() => setClockIdx(i)}
                       aria-pressed={clockIdx === i}
                       className={
-                        "border px-2.5 py-1 font-mono text-xs transition-colors " +
+                        "min-h-[44px] sm:min-h-0 border px-2.5 py-1 font-mono text-xs transition-colors " +
                         (clockIdx === i
                           ? "border-gold/60 bg-gold/15 text-gold-leaf"
                           : "border-white/15 text-parchment-300 hover:border-white/30")
@@ -241,7 +241,7 @@ export default function TournamentsPage() {
                   ))}
                 </div>
 
-                <div className="mt-3 grid grid-cols-2 gap-3">
+                <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className={LABEL_CLASS} htmlFor="t-duration">
                       Duration
