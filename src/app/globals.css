@@ -2838,7 +2838,10 @@ main.recording-mode .match-board-shell {
    edge and rides up/down with the board instead of leaving a size-dependent gap
    near the frame floor. */
 .rec-clock-bar {
-  width: 100%;
+  /* Match the board's width (--board-cap) and center under it, so the two
+     clocks sit at the board's left/right edges rather than spreading across the
+     full-width board shell. */
+  width: min(var(--board-cap), calc(var(--rec-w) - 1rem), 92vw);
   margin: 0.5rem auto 0;
   display: flex;
   align-items: center;
