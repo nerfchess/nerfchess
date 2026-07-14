@@ -27,7 +27,9 @@ jobs:
         run: npm ci
 
       - name: Install Playwright Chromium
-        run: npx playwright install chromium --with-deps
+        # Self-hosted runner: no passwordless sudo/TTY, so --with-deps fails.
+        # System libraries are provisioned on the runner itself; only fetch the browser here.
+        run: npx playwright install chromium
 
       - name: Run e2e tests
         run: npm run test:e2e
