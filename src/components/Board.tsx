@@ -79,11 +79,12 @@ function resolveSignature(id: string): SignatureConfig | GenConfig | undefined {
   const bespoke = sigOf(id);
   if (bespoke) return bespoke;
   // Plugin-covered card whose entry has not been published yet (the lazy
-  // signature-visuals chunk is still loading): treat it as PENDING bespoke.
-  // Falling through to the generated config here played the wrong,
-  // default-looking art for a card that has a customized play — no art beats
-  // wrong art, and the chunk is prefetched on mount so the window is tiny.
-  if (PLUGIN_ID_SET.has(id)) return undefined;
+  // signature-visuals chunk is still loading). This used to return undefined
+  // ("no art beats wrong art"), but on slow connections a first play can beat
+  // the prefetch and the card then visibly did NOTHING for that player — the
+  // worse failure. The generated config is a solid themed play in its own
+  // right now, so it stands in until the chunk lands; later plays of the same
+  // card pick up the bespoke art automatically (this resolver runs per play).
   const def = BUFF_BY_ID[id];
   if (!def) return undefined;
   let cfg = genConfigCache.get(id);
