@@ -1016,17 +1016,24 @@ export function playMove(game: NerfGame, move: Move): NerfGame {
         if (!def.onMovePlayed) continue;
         const effectsBefore = bs.effects.length;
         const mutationsBefore = bs.mutations ?? 0;
+        const clockFxBefore = bs.clockFx?.length ?? 0;
         const sigBefore = boardSignature(game.board);
         def.onMovePlayed(inst, move, api);
         // Reveal the card to replicas when its hook did anything observable: a
-        // new/removed board effect, a BuffApi mutation-counter bump, OR a raw
+        // new/removed board effect, a BuffApi mutation-counter bump, a raw
         // board change the signature catches (a direct pieces[] write that never
-        // touched the counter). The signature is the systemic backstop that
-        // guarantees no removal (or any board mutation) inside a hook can be
-        // skipped by the reveal, which would desync the replica's board.
+        // touched the counter), OR a clock adjustment. The signature is the
+        // systemic backstop that guarantees no removal (or any board mutation)
+        // inside a hook can be skipped by the reveal, which would desync the
+        // replica's board. Clock requests are already visible on the clock UI
+        // the moment the server applies them, so revealing the card that made
+        // one leaks nothing new — and it is what lets the client fire the
+        // card's play art on every tick (a virus drain that changed the clock
+        // but showed nothing on the board used to play no animation at all).
         if (
           bs.effects.length !== effectsBefore ||
           (bs.mutations ?? 0) !== mutationsBefore ||
+          (bs.clockFx?.length ?? 0) !== clockFxBefore ||
           boardSignature(game.board) !== sigBefore
         ) {
           fired.push({ color, index: bs.players[color].buffs.indexOf(inst) });

@@ -79,11 +79,12 @@ function resolveSignature(id: string): SignatureConfig | GenConfig | undefined {
   const bespoke = sigOf(id);
   if (bespoke) return bespoke;
   // Plugin-covered card whose entry has not been published yet (the lazy
-  // signature-visuals chunk is still loading): treat it as PENDING bespoke.
-  // Falling through to the generated config here played the wrong,
-  // default-looking art for a card that has a customized play — no art beats
-  // wrong art, and the chunk is prefetched on mount so the window is tiny.
-  if (PLUGIN_ID_SET.has(id)) return undefined;
+  // signature-visuals chunk is still loading). This used to return undefined
+  // ("no art beats wrong art"), but on slow connections a first play can beat
+  // the prefetch and the card then visibly did NOTHING for that player — the
+  // worse failure. The generated config is a solid themed play in its own
+  // right now, so it stands in until the chunk lands; later plays of the same
+  // card pick up the bespoke art automatically (this resolver runs per play).
   const def = BUFF_BY_ID[id];
   if (!def) return undefined;
   let cfg = genConfigCache.get(id);
@@ -3381,7 +3382,7 @@ export function Board({
                       return (
                         <span
                           key={`fx-${boardFx.key}`}
-                          className="fx-one-shot pointer-events-none absolute inset-0 block"
+                          className="fx-one-shot pointer-events-none absolute inset-0 z-30 block"
                         >
                           <DetonationBurst />
                         </span>
@@ -3412,13 +3413,22 @@ export function Board({
                         : undefined;
                     // Generated configs carry their own renderer; bespoke ones
                     // go through the classic SignatureOverlay switch.
+                    // The z-30 on BOTH wrappers below is LOAD-BEARING: the
+                    // fx-one-shot guard animates opacity and the lead shift
+                    // applies a transform, and each of those makes its span a
+                    // STACKING CONTEXT that traps the art's own z-30 inside.
+                    // Without z-indexes of their own the wrappers paint in DOM
+                    // order, so every LATER square's opaque background covers
+                    // the overflowing board-wide scene — the "animation cut
+                    // off by an invisible wall" bug. Lifting the wrappers
+                    // keeps the whole stage above sibling squares.
                     return (
                       <span
                         key={`fx-${boardFx.key}`}
-                        className="fx-one-shot pointer-events-none absolute inset-0 block"
+                        className="fx-one-shot pointer-events-none absolute inset-0 z-30 block"
                         style={{ animationDelay: `${delay}ms` }}
                       >
-                        <span className="absolute inset-0 block" style={leadShift}>
+                        <span className="absolute inset-0 z-30 block" style={leadShift}>
                           {isGenConfig(sigCfg) ? (
                             <GenBurst config={sigCfg} role={sigRole} delayMs={delay} />
                           ) : (
@@ -3446,10 +3456,14 @@ export function Board({
                             };
                           })()
                         : undefined;
+                    // Same load-bearing z-30 as the removal path above: the
+                    // shift transform creates a stacking context, so without
+                    // its own z-index the lead scene is painted over by every
+                    // later square's opaque background.
                     return (
                       <span
                         key={`zsig-${zoneSig.key}`}
-                        className="absolute inset-0 block"
+                        className="absolute inset-0 z-30 block"
                         style={zShift}
                       >
                         <SignatureOverlay
