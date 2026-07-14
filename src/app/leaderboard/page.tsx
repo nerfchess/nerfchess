@@ -129,7 +129,7 @@ export default function LeaderboardPage() {
           )}
         </span>
         <span className="hidden text-right font-mono text-parchment-400 tabular-nums sm:block">{row.games}</span>
-        <span className="text-right font-mono text-parchment-400 tabular-nums">
+        <span className="text-right font-mono text-xs sm:text-sm text-parchment-400 tabular-nums">
           {row.wins}/{row.losses}/{row.draws}
         </span>
       </>

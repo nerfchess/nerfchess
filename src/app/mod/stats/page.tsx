@@ -117,7 +117,7 @@ export default function ModStatsPage() {
                     <p className="text-sm text-parchment-400">No games recorded yet.</p>
                   ) : (
                     <div className="plate overflow-hidden">
-                      <div className="grid grid-cols-[1fr_5rem_5rem_5rem] items-center border-b border-white/8 px-4 py-3 smallcaps text-[10px] text-parchment-400">
+                      <div className="grid grid-cols-[1fr_3.25rem_3.25rem_3.75rem] sm:grid-cols-[1fr_5rem_5rem_5rem] items-center border-b border-white/8 px-3 sm:px-4 py-3 smallcaps text-[10px] text-parchment-400">
                         <span>Rule</span>
                         <span className="text-right">Dealt</span>
                         <span className="text-right">Wins</span>
@@ -129,7 +129,7 @@ export default function ModStatsPage() {
                           <div
                             key={row.id}
                             className={
-                              "grid grid-cols-[1fr_5rem_5rem_5rem] items-center border-b border-white/5 px-4 py-2.5 text-sm " +
+                              "grid grid-cols-[1fr_3.25rem_3.25rem_3.75rem] sm:grid-cols-[1fr_5rem_5rem_5rem] items-center border-b border-white/5 px-3 sm:px-4 py-2.5 text-sm " +
                               (i % 2 ? "bg-white/[0.015]" : "")
                             }
                           >

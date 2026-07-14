@@ -150,6 +150,11 @@ const organizationJsonLd = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  // viewport-fit=cover lets the page paint into the display cutout / home-bar
+  // area on notched phones, so the env(safe-area-inset-*) guards on fixed UI
+  // have room to work. User zoom is intentionally left enabled (no
+  // maximum-scale / user-scalable lock) for accessibility.
+  viewportFit: "cover",
   interactiveWidget: "resizes-content",
 };
 

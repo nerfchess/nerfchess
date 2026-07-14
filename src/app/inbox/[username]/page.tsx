@@ -120,15 +120,15 @@ export default function ThreadPage() {
     <main className="min-h-screen">
       <SiteHeader />
       <section className="max-w-2xl mx-auto px-5 sm:px-6 py-6">
-        <div className="mb-4 flex items-center gap-3">
+        <div className="mb-4 flex min-w-0 items-center gap-3">
           <Link href="/inbox" className="text-sm text-parchment-400 hover:text-parchment-100">
             Inbox
           </Link>
           <span className="text-parchment-500">/</span>
           {thread && (
-            <Link href={`/u/${encodeURIComponent(thread.peer.username)}`} className="flex items-center gap-2 hover:text-gold-leaf">
+            <Link href={`/u/${encodeURIComponent(thread.peer.username)}`} className="flex min-w-0 items-center gap-2 hover:text-gold-leaf">
               <PlayerAvatar name={thread.peer.username} avatar={thread.peer.avatar} size={26} />
-              <span className="font-display text-lg text-parchment-50">{thread.peer.username}</span>
+              <span className="min-w-0 truncate font-display text-lg text-parchment-50">{thread.peer.username}</span>
             </Link>
           )}
           {!thread && !missing && <span className="text-sm text-parchment-400">{username}</span>}
@@ -147,7 +147,7 @@ export default function ThreadPage() {
         {user && !missing && (
           <>
             <div
-              className="plate h-[50vh] overflow-y-auto p-4"
+              className="plate h-[50dvh] overflow-y-auto p-4"
               onScroll={(e) => {
                 const el = e.currentTarget;
                 stickToBottom.current = el.scrollTop + el.clientHeight >= el.scrollHeight - 40;

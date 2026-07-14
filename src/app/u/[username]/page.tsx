@@ -159,7 +159,7 @@ export default function ProfilePage() {
         ) : (
           <>
             <div className="flex flex-wrap items-end justify-between gap-4">
-              <div className="flex items-center gap-4">
+              <div className="flex min-w-0 items-center gap-4">
                 {isMe ? (
                   <Link
                     href="/profile"
@@ -174,9 +174,9 @@ export default function ProfilePage() {
                 ) : (
                   <PlayerAvatar name={profile.user.username} avatar={profile.user.avatar} size={56} />
                 )}
-                <div>
+                <div className="min-w-0">
                   <div className="flex items-center gap-3 flex-wrap">
-                    <h1 className="font-display text-5xl">
+                    <h1 className="min-w-0 break-words font-display text-3xl sm:text-5xl">
                       {profile.user.username}
                       {profile.user.flair && (
                         <span className="ml-2 align-middle text-2xl" aria-hidden="true">
@@ -203,7 +203,7 @@ export default function ProfilePage() {
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 {me && !isMe && (
                   <>
                     <button
@@ -673,7 +673,7 @@ function StatCard({ label, value, accent = false }: { label: string; value: stri
   return (
     <div className="plate p-4">
       <div className="smallcaps text-[10px] text-parchment-400">{label}</div>
-      <div className={`mt-1 font-display text-3xl font-bold ${accent ? "text-gold-leaf" : "text-parchment"}`}>
+      <div className={`mt-1 font-display text-2xl sm:text-3xl font-bold ${accent ? "text-gold-leaf" : "text-parchment"}`}>
         {value}
       </div>
     </div>

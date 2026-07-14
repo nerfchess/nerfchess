@@ -468,10 +468,10 @@ function LobbyInner() {
                     >
                       <Link
                         href={`/u/${encodeURIComponent(p.name)}`}
-                        className="flex min-h-[44px] min-w-0 items-center gap-2 truncate sm:min-h-0 text-parchment-100 hover:text-gold-leaf transition-colors"
+                        className="flex min-h-[44px] min-w-0 items-center gap-2 sm:min-h-0 text-parchment-100 hover:text-gold-leaf transition-colors"
                       >
                         <PlayerAvatar name={p.name} avatar={p.avatar} size={22} />
-                        {p.name}
+                        <span className="min-w-0 truncate">{p.name}</span>
                         {p.rating != null && (
                           <span
                             className="ml-1.5 font-mono text-xs text-parchment-400"
@@ -489,7 +489,7 @@ function LobbyInner() {
                   <button
                     type="button"
                     onClick={() => setShowAllPlayers((v) => !v)}
-                    className="mt-2 w-full border border-white/10 bg-white/[0.03] px-3 py-2 smallcaps text-[10px] text-parchment-300 transition-colors hover:bg-white/[0.07] hover:text-parchment-100"
+                    className="mt-2 min-h-[44px] sm:min-h-0 w-full border border-white/10 bg-white/[0.03] px-3 py-2 smallcaps text-[10px] text-parchment-300 transition-colors hover:bg-white/[0.07] hover:text-parchment-100"
                   >
                     {showAllPlayers
                       ? "Show fewer"
@@ -584,7 +584,7 @@ function ModeFilter({
           aria-pressed={value === o.id}
           onClick={() => onChange(o.id)}
           className={
-            "border px-3 py-1 smallcaps text-[10px] transition-colors " +
+            "min-h-[44px] sm:min-h-0 border px-3 py-1 smallcaps text-[10px] transition-colors " +
             (value === o.id
               ? o.selectedClass
               : "border-white/10 text-parchment-400 hover:border-white/25 hover:text-parchment-200")

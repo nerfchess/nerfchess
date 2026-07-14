@@ -121,11 +121,11 @@ export default function TutorialWalkthroughPage() {
 
   return (
     <main className="min-h-screen pb-20">
-      <nav className="flex items-center justify-between px-10 py-7">
-        <Link href="/" className="font-display text-2xl tracking-tight">
+      <nav className="flex items-center justify-between gap-3 px-5 sm:px-10 py-6 sm:py-7">
+        <Link href="/" className="font-display text-2xl tracking-tight shrink-0">
           nerf<span className="text-gold-leaf">chess</span>
         </Link>
-        <Link href="/tutorial" className="px-3 py-1.5 rounded-full text-sm font-display hover:bg-white/5 text-parchment">
+        <Link href="/tutorial" className="shrink-0 px-3 py-1.5 rounded-full text-sm font-display hover:bg-white/5 text-parchment">
           Back to house rules
         </Link>
       </nav>

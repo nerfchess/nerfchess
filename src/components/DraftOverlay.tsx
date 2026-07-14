@@ -898,7 +898,7 @@ export function DraftOverlay({
                   setChosen(selected);
                   commit(selected);
                 }}
-                className="btn-leaf min-w-[6rem] flex-1 touch-manipulation px-3 py-2 font-display text-xs font-semibold tracking-wide"
+                className="btn-leaf min-w-[6rem] min-h-[44px] flex-1 touch-manipulation px-3 py-2 font-display text-xs font-semibold tracking-wide"
               >
                 Confirm pick
               </button>

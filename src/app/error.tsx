@@ -16,13 +16,13 @@ export default function Error({ reset }: { error: Error & { digest?: string }; r
         <div className="mt-5 grid grid-cols-2 gap-2">
           <Link
             href="/"
-            className="inline-flex items-center justify-center px-3 py-2 btn-ghost text-xs font-display tracking-wide"
+            className="inline-flex min-h-[44px] items-center justify-center px-3 py-2 btn-ghost text-xs font-display tracking-wide sm:min-h-0"
           >
             Back to the game
           </Link>
           <button
             onClick={reset}
-            className="px-3 py-2 border border-gold/40 bg-gold/10 text-gold-leaf hover:bg-gold/20 transition text-xs font-display font-semibold tracking-wide"
+            className="inline-flex min-h-[44px] items-center justify-center px-3 py-2 border border-gold/40 bg-gold/10 text-gold-leaf hover:bg-gold/20 transition text-xs font-display font-semibold tracking-wide sm:min-h-0"
           >
             Reload
           </button>

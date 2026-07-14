@@ -320,7 +320,7 @@ export function SiteHeader({ active }: { active?: string }) {
               <Badge n={challenges.length} />
             </button>
             {menu === "challenges" && (
-              <div className="absolute right-0 top-full z-40 mt-3 w-80 plate dropdown shadow-2xl">
+              <div className="absolute right-0 top-full z-40 mt-3 w-80 max-w-[calc(100vw-1.5rem)] plate dropdown shadow-2xl">
                 <div className="border-b border-white/10 px-4 py-2.5 smallcaps text-[10px] text-parchment-400">
                   Challenges
                 </div>
@@ -363,7 +363,7 @@ export function SiteHeader({ active }: { active?: string }) {
               <Badge n={unread} />
             </button>
             {menu === "bell" && (
-              <div className="absolute right-0 top-full z-40 mt-3 w-80 plate dropdown shadow-2xl">
+              <div className="absolute right-0 top-full z-40 mt-3 w-80 max-w-[calc(100vw-1.5rem)] plate dropdown shadow-2xl">
                 <div className="flex items-center justify-between border-b border-white/10 px-4 py-2.5">
                   <span className="smallcaps text-[10px] text-parchment-400">Notifications</span>
                   {unread > 0 && (

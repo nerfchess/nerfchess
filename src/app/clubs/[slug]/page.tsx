@@ -83,7 +83,7 @@ function ClubIconPicker({
         </div>
       </div>
 
-      <div className="mt-4 grid grid-cols-8 gap-1.5 sm:grid-cols-12">
+      <div className="mt-4 grid grid-cols-6 gap-1.5 sm:grid-cols-12">
         {CLUB_ICON_NAMES.map((e) => (
           <button
             key={e}
@@ -111,7 +111,7 @@ function ClubIconPicker({
             aria-label={`Color ${c.label}`}
             aria-pressed={colorId === c.id}
             title={c.label}
-            className={`h-8 w-8 cursor-pointer rounded-full border-2 transition-transform hover:scale-110 ${
+            className={`h-10 w-10 sm:h-8 sm:w-8 cursor-pointer rounded-full border-2 transition-transform hover:scale-110 ${
               colorId === c.id ? "border-parchment-50" : "border-transparent"
             }`}
             style={{ background: c.hex }}
@@ -286,7 +286,7 @@ export default function ClubPage() {
                 </p>
                 </div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 {mayModerate && (
                   <button
                     onClick={() => setPickingIcon((v) => !v)}
