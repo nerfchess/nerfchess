@@ -763,16 +763,24 @@ export const HOUSE_ROSTER: HousePersona[] = PERSONA_DEFS.map(([name, skill], i) 
 const HOUSE_USER_IDS = new Set(HOUSE_ROSTER.map((p) => p.userId));
 const HOUSE_BY_ID = new Map(HOUSE_ROSTER.map((p) => [p.userId, p]));
 
-// House-bot count: 60-90 ACTIVE bots at any time (the ones that seek, get picked
-// up, play filler, and appear online), drawn as a ROTATING, DAY-VARYING window of
-// the full 210-deep roster. The exact count changes daily (dailyHouseCount) and
-// the window's start advances each day (activeHouseRoster), so the site cycles
-// through every persona over time instead of always showing the same faces. Every
-// persona still holds a seeded account, so its profile/rating/leaderboard entry
-// stay intact whether or not it is currently in the active window. A moderator may
-// still pin an explicit count from /mod (worker.ts houseCount honours it).
+// House-bot presence has TWO tiers, both drawn as a ROTATING, DAY-VARYING window
+// of the full 210-deep roster (same day offset, so the smaller set is always a
+// prefix of the larger — no persona is "playing" without also being "online"):
+//   • ACTIVE (60-120, varies daily): the bots that actually seek, get picked up,
+//     and play filler. dailyHouseCount picks the day's count; a moderator may
+//     still pin an explicit one from /mod (worker.ts houseCount honours it).
+//   • ONLINE (up to 150): how many bots SHOW in the lobby's online list at once.
+//     The active ones among them read as playing/searching; the rest just idle
+//     "online" for a fuller lobby (they don't seek or play).
+// The window's start advances each day (step coprime with the roster) so the
+// site cycles through every persona over time. Every persona still holds a seeded
+// account, so its profile/rating/leaderboard entry stay intact whether or not it
+// is currently in a window.
 export const HOUSE_COUNT_MIN = 60;
-export const HOUSE_COUNT_MAX = 90;
+export const HOUSE_COUNT_MAX = 120;
+// How many bots idle "online" for presence — never more than the roster holds.
+export const HOUSE_ONLINE_COUNT = Math.min(150, HOUSE_ROSTER.length);
+
 export function clampHouseCount(n: number): number {
   return Number.isFinite(n)
     ? Math.max(HOUSE_COUNT_MIN, Math.min(HOUSE_COUNT_MAX, Math.floor(n)))
@@ -788,20 +796,37 @@ export function dailyHouseCount(dayIndex: number): number {
   return HOUSE_COUNT_MIN + (nameHash("house-count:" + Math.floor(dayIndex)) % span);
 }
 
-/** The active house personas for a day: a window of `count` personas that both
- * SIZES (count) and STARTS at a day-dependent offset, wrapping around the roster,
- * so consecutive days surface different personas and the whole roster cycles
- * through over time (the step is coprime with 210, so all offsets are visited).
- * `dayIndex` defaults to 0 (a stable first-N window) for pure/test callers that
- * don't rotate. */
-export function activeHouseRoster(count: number, dayIndex = 0): HousePersona[] {
+// The rotating window start for a day. Shared by the active and online windows so
+// the active set is always a prefix of the online set. Step 31 is coprime with a
+// 210-deep roster, so all offsets are visited over time.
+function houseWindowStart(dayIndex: number): number {
+  return (Math.floor(dayIndex) * 31) % HOUSE_ROSTER.length;
+}
+
+/** A `size`-persona window starting at the day's rotating offset, wrapping the
+ * roster. Clamped to the roster length; returns the whole roster when size >= it. */
+function houseWindow(size: number, dayIndex: number): HousePersona[] {
   const len = HOUSE_ROSTER.length;
-  const n = Math.min(clampHouseCount(count), len);
+  const n = Math.max(0, Math.min(Math.floor(size), len));
   if (n >= len) return HOUSE_ROSTER.slice();
-  const start = (Math.floor(dayIndex) * 31) % len;
+  const start = houseWindowStart(dayIndex);
   const out: HousePersona[] = [];
   for (let i = 0; i < n; i++) out.push(HOUSE_ROSTER[(start + i) % len]);
   return out;
+}
+
+/** The ACTIVE house personas for a day (seek / pickup / filler): a window of
+ * `count` (clamped to 60-120), rotating daily. `dayIndex` defaults to 0 (a stable
+ * first-N window) for pure/test callers that don't rotate. */
+export function activeHouseRoster(count: number, dayIndex = 0): HousePersona[] {
+  return houseWindow(clampHouseCount(count), dayIndex);
+}
+
+/** The ONLINE-presence personas for a day: the active window PLUS extra idle bots,
+ * up to HOUSE_ONLINE_COUNT, sharing the same day offset so the active set is a
+ * prefix. Used only for the lobby "online" list — the extra ones never seek/play. */
+export function onlineHouseRoster(dayIndex = 0): HousePersona[] {
+  return houseWindow(HOUSE_ONLINE_COUNT, dayIndex);
 }
 
 export function isHouseUserId(id: string | null | undefined): boolean {

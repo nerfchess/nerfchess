@@ -43,6 +43,7 @@ import {
   isHouseUserId,
   pickHouseBotByDifficulty,
   activeHouseRoster,
+  onlineHouseRoster,
   clampHouseCount,
   dailyHouseCount,
   pickHouseMove,
@@ -6625,7 +6626,12 @@ export class GameServer extends DurableObject<Env> {
       // always discoverable. The lobby still reads as busy because real
       // house-vs-house filler games run up to houseVsHouseCap (each puts two
       // personas on genuine "playing" AND lists a watchable game above).
-      const idlePersonas = activeHouseRoster(await this.houseCount(), this.houseDayIndex()).filter((p) => !seen.has(p.userId));
+      //
+      // Presence uses the ONLINE window (up to 150), a superset of the active
+      // window: the active bots already added above keep their real
+      // playing/searching status; the extra online-only personas fill in as idle
+      // "online" so the list is fuller than the set that actually plays.
+      const idlePersonas = onlineHouseRoster(this.houseDayIndex()).filter((p) => !seen.has(p.userId));
       // Idle bots get a placeholder seed here; the canonical most-played-bucket
       // query below (now shared with human rows) overwrites it for any bot that
       // has a rated bucket, so an idle bot shows the SAME number as its profile,
