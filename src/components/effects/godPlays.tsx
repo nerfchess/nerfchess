@@ -108,6 +108,19 @@ function tint(hex: string, alpha: number): string {
   return `rgba(${r},${g},${b},${alpha})`;
 }
 
+/** Linear mix of two "#rrggbb" colours (t = 0 -> a, t = 1 -> b). Drives the
+ * radioactive-green ramp on total_atomic's chain hits. */
+function mix(a: string, b: string, t: number): string {
+  const ch = (i: number) => {
+    const av = parseInt(a.slice(i, i + 2), 16);
+    const bv = parseInt(b.slice(i, i + 2), 16);
+    return Math.round(av + (bv - av) * t)
+      .toString(16)
+      .padStart(2, "0");
+  };
+  return `#${ch(1)}${ch(3)}${ch(5)}`;
+}
+
 const SJ = { strokeLinejoin: "round", strokeLinecap: "round" } as const;
 
 /** The oversized-clipped board-wide stage (the overlay mounts inside ONE
@@ -313,6 +326,113 @@ function Glint({
   );
 }
 
+/** TELL — the pre-strike anticipation beat every apex scene now opens with:
+ * the board dims hard, a rumble line shivers across the ground where the
+ * event is about to land, and loose energy converges on the centre. Runs in
+ * the first ~450ms, under the template's own build-up wash. */
+const GATHER = [
+  { dx: "-380%", dy: "-160%", d: 0 },
+  { dx: "360%", dy: "-220%", d: 45 },
+  { dx: "-300%", dy: "200%", d: 90 },
+  { dx: "340%", dy: "160%", d: 135 },
+];
+function Tell({ hex, delayMs, cy = 52 }: { hex: string; delayMs: number; cy?: number }) {
+  return (
+    <>
+      <span
+        className="gp-dim absolute inset-0 block"
+        style={{ background: "rgba(6,6,12,0.6)", animationDelay: `${delayMs}ms` }}
+      />
+      <span
+        className="gp-rumble absolute block"
+        style={{
+          left: "18%",
+          top: `${Math.min(cy + 9, 68)}%`,
+          width: "64%",
+          height: "1.1%",
+          background: `linear-gradient(90deg, transparent, ${tint(hex, 0.85)} 28%, ${tint(hex, 0.85)} 72%, transparent)`,
+          animationDelay: `${delayMs + 40}ms`,
+        }}
+      />
+      {GATHER.map((g, i) => (
+        <span
+          key={i}
+          className="gp-gather absolute block rounded-full"
+          style={
+            {
+              left: "48.9%",
+              top: `${cy - 1.1}%`,
+              width: "2.2%",
+              height: "2.2%",
+              background: tint(hex, 0.9),
+              "--dx": g.dx,
+              "--dy": g.dy,
+              animationDelay: `${delayMs + 60 + g.d}ms`,
+            } as CSSProperties
+          }
+        />
+      ))}
+    </>
+  );
+}
+
+/** SETTLE — the lingering aftermath every apex scene now closes on: a soft
+ * afterglow hangs at the impact point while ash flecks drift down past it. */
+const ASH = [
+  { l: -11, dx: "-60%", d: 0, s: 1.7 },
+  { l: 5, dx: "70%", d: 130, s: 1.3 },
+  { l: -3, dx: "30%", d: 260, s: 1.9 },
+  { l: 10, dx: "-40%", d: 390, s: 1.2 },
+  { l: -14, dx: "80%", d: 520, s: 1.4 },
+];
+function Settle({
+  hex,
+  delayMs,
+  cx = 50,
+  cy = 54,
+}: {
+  hex: string;
+  delayMs: number;
+  cx?: number;
+  cy?: number;
+}) {
+  return (
+    <>
+      <span
+        className="gp-afterglow absolute block rounded-full"
+        style={{
+          left: `${cx - 11}%`,
+          top: `${cy - 7}%`,
+          width: "22%",
+          height: "14%",
+          background: `radial-gradient(closest-side, ${tint(hex, 0.55)}, transparent)`,
+          animationDelay: `${delayMs}ms`,
+        }}
+      />
+      {ASH.map((v, i) => (
+        <span
+          key={i}
+          className="gp-ash absolute block"
+          style={
+            {
+              left: `${cx + v.l}%`,
+              top: `${cy - 9}%`,
+              width: `${v.s}%`,
+              height: `${v.s}%`,
+              "--dx": v.dx,
+              animationDelay: `${delayMs + v.d}ms`,
+            } as CSSProperties
+          }
+        >
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <path d="M5 1 L8.6 5 L5 9 L1.4 5 Z" fill={tint(hex, i % 2 ? 0.75 : 0.5)} />
+          </svg>
+        </span>
+      ))}
+    </>
+  );
+}
+
 /** Compact per-square hit for non-lead ("target") renders: glyph pop + a small
  * shock ring + three palette sparks. Zone-fed cards mount one per square, so
  * this must NOT be board-wide. */
@@ -325,16 +445,33 @@ function TargetHit({ palette, glyph, delayMs }: { palette: Palette; glyph: React
   const [p0, p1, p2] = palette;
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      {/* tell: a focus ring converges onto the square an instant before the hit */}
+      <span
+        className="gp-focus absolute block rounded-full"
+        style={{ left: "8%", top: "8%", width: "84%", height: "84%", border: `2px solid ${tint(p0, 0.9)}`, animationDelay: `${delayMs}ms` }}
+      />
       <span
         className="gp-flash absolute block rounded-full"
-        style={{ left: "17%", top: "17%", width: "66%", height: "66%", background: tint(p1, 0.5), animationDelay: `${delayMs}ms` }}
+        style={{ left: "17%", top: "17%", width: "66%", height: "66%", background: tint(p1, 0.5), animationDelay: `${delayMs + 140}ms` }}
       />
-      <span className="gp-pop absolute block" style={{ left: "18%", top: "16%", width: "64%", height: "64%", animationDelay: `${delayMs + 60}ms` }}>
+      <span className="gp-pop absolute block" style={{ left: "18%", top: "16%", width: "64%", height: "64%", animationDelay: `${delayMs + 200}ms` }}>
         {glyph}
       </span>
       <span
         className="gp-tring absolute block rounded-full"
-        style={{ left: "10%", top: "10%", width: "80%", height: "80%", border: `2px solid ${tint(p1, 0.95)}`, animationDelay: `${delayMs + 140}ms` }}
+        style={{ left: "10%", top: "10%", width: "80%", height: "80%", border: `2px solid ${tint(p1, 0.95)}`, animationDelay: `${delayMs + 280}ms` }}
+      />
+      {/* settle: a small ember-glow lingers on the struck square */}
+      <span
+        className="gp-afterglow absolute block rounded-full"
+        style={{
+          left: "24%",
+          top: "28%",
+          width: "52%",
+          height: "44%",
+          background: `radial-gradient(closest-side, ${tint(p1, 0.5)}, transparent)`,
+          animationDelay: `${delayMs + 640}ms`,
+        }}
       />
       {HIT_SPARKS.map((v, i) => (
         <span
@@ -349,7 +486,7 @@ function TargetHit({ palette, glyph, delayMs }: { palette: Palette; glyph: React
               "--dx": v.dx,
               "--dy": v.dy,
               "--rot": v.rot,
-              animationDelay: `${delayMs + 120 + v.d}ms`,
+              animationDelay: `${delayMs + 260 + v.d}ms`,
             } as CSSProperties
           }
         >
@@ -372,6 +509,7 @@ function GodDescent({ palette, glyph, lead, delayMs }: TemplateProps) {
   return (
     <Stage>
       <Wash color={tint(p0, 0.28)} delayMs={delayMs} />
+      <Tell hex={p1} delayMs={delayMs} cy={56} />
       <RayFan hex={p1} delayMs={delayMs} />
       {/* the colossal deity, descending into the light */}
       <span className="gp-descend absolute block" style={{ left: "33%", top: "16%", width: "34%", height: "56%", animationDelay: `${delayMs + 180}ms` }}>
@@ -404,6 +542,7 @@ function GodDescent({ palette, glyph, lead, delayMs }: TemplateProps) {
       <Boom delayMs={delayMs + 600} color={tint(p1, 0.9)} thickness={4} />
       <Boom delayMs={delayMs + 720} color={tint(p0, 0.8)} />
       <Glint delayMs={delayMs + 1050} color={p1} />
+      <Settle hex={p1} delayMs={delayMs + 1000} cy={58} />
     </Stage>
   );
 }
@@ -418,6 +557,7 @@ function TitanRise({ palette, glyph, lead, delayMs }: TemplateProps) {
   return (
     <Stage>
       <Wash color={tint(p0, 0.26)} delayMs={delayMs} />
+      <Tell hex={p1} delayMs={delayMs} cy={60} />
       {/* rubble kicked up as the ground splits */}
       <Lobs delayMs={delayMs + 120} fill={tint(p0, 0.95)} stroke={p2} />
       {/* the titan shouldering up from below */}
@@ -445,6 +585,7 @@ function TitanRise({ palette, glyph, lead, delayMs }: TemplateProps) {
       <Boom delayMs={delayMs + 680} color={tint(p1, 0.9)} thickness={4} />
       <Boom delayMs={delayMs + 800} color={tint(p0, 0.8)} />
       <Glint delayMs={delayMs + 1080} color={p1} left={48} top={22} />
+      <Settle hex={p1} delayMs={delayMs + 1060} cy={62} />
     </Stage>
   );
 }
@@ -459,6 +600,7 @@ function SkyWrath({ palette, glyph, lead, delayMs }: TemplateProps) {
   return (
     <Stage>
       <Wash color={tint(p0, 0.25)} delayMs={delayMs} />
+      <Tell hex={p2} delayMs={delayMs} cy={60} />
       {/* the cloud bank + storm-god torso, boiling in at the top */}
       <span className="gp-descend absolute block" style={{ left: "16%", top: "9%", width: "68%", height: "32%", animationDelay: `${delayMs + 100}ms` }}>
         <svg viewBox="0 0 48 22" className="block h-full w-full" aria-hidden="true">
@@ -502,6 +644,7 @@ function SkyWrath({ palette, glyph, lead, delayMs }: TemplateProps) {
       <Boom delayMs={delayMs + 700} color={tint(p2, 0.9)} thickness={4} />
       <Boom delayMs={delayMs + 820} color={tint(p0, 0.8)} />
       <Glint delayMs={delayMs + 1080} color={p2} left={47} top={48} />
+      <Settle hex={p2} delayMs={delayMs + 1080} cy={60} />
     </Stage>
   );
 }
@@ -525,6 +668,7 @@ function AbyssMaw({ palette, glyph, lead, delayMs }: TemplateProps) {
     <Stage>
       {/* gathering darkness instead of light */}
       <Wash color={tint(p2, 0.42)} delayMs={delayMs} />
+      <Tell hex={p1} delayMs={delayMs} cy={46} />
       {/* the vast void maw, yawning open mid-board */}
       <span className="gp-maw absolute block" style={{ left: "29%", top: "32%", width: "42%", height: "29%", animationDelay: `${delayMs + 150}ms` }}>
         <svg viewBox="0 0 44 26" className="block h-full w-full" aria-hidden="true">
@@ -573,6 +717,7 @@ function AbyssMaw({ palette, glyph, lead, delayMs }: TemplateProps) {
       <Boom delayMs={delayMs + 780} color={tint(p1, 0.9)} thickness={4} />
       <Boom delayMs={delayMs + 900} color={tint(p0, 0.8)} />
       <Glint delayMs={delayMs + 1140} color={p0} left={47} top={42} />
+      <Settle hex={p1} delayMs={delayMs + 1150} cy={47} />
     </Stage>
   );
 }
@@ -587,6 +732,7 @@ function ReaperSweep({ palette, glyph, lead, delayMs, extra = 0 }: TemplateProps
   return (
     <Stage>
       <Wash color={tint(p0, 0.3)} delayMs={delayMs} />
+      <Tell hex={p1} delayMs={delayMs} cy={58} />
       {/* the reaper, striding across the crop */}
       <span className="gp-stride absolute block" style={{ left: "28%", top: "14%", width: "38%", height: "56%", animationDelay: `${delayMs + 120}ms` }}>
         <svg viewBox="0 0 34 44" className="block h-full w-full" aria-hidden="true">
@@ -628,6 +774,7 @@ function ReaperSweep({ palette, glyph, lead, delayMs, extra = 0 }: TemplateProps
       {/* tier-9 boost (culling): a third wave rolls out */}
       {extra > 0 && <Boom delayMs={delayMs + 1040} color={tint(p2, 0.85)} thickness={2} />}
       <Glint delayMs={delayMs + 1160} color={p1} left={44} top={20} />
+      <Settle hex={p1} delayMs={delayMs + 1180} cy={61} />
     </Stage>
   );
 }
@@ -642,6 +789,7 @@ function HostMarch({ palette, glyph, lead, delayMs }: TemplateProps) {
   return (
     <Stage>
       <Wash color={tint(p0, 0.25)} delayMs={delayMs} />
+      <Tell hex={p1} delayMs={delayMs} cy={62} />
       {/* the war-host, marching across the board width */}
       <span className="gp-march absolute block" style={{ left: "10%", top: "31%", width: "80%", height: "33%", animationDelay: `${delayMs + 100}ms` }}>
         <svg viewBox="0 0 64 26" className="block h-full w-full" aria-hidden="true">
@@ -682,6 +830,7 @@ function HostMarch({ palette, glyph, lead, delayMs }: TemplateProps) {
       <Boom delayMs={delayMs + 880} color={tint(p1, 0.9)} thickness={4} />
       <Boom delayMs={delayMs + 1000} color={tint(p0, 0.8)} />
       <Glint delayMs={delayMs + 1200} color={p1} left={52} top={30} />
+      <Settle hex={p1} delayMs={delayMs + 1260} cy={48} />
     </Stage>
   );
 }
@@ -704,6 +853,7 @@ function CelestialRing({ palette, glyph, lead, delayMs, extra = 0 }: TemplatePro
   return (
     <Stage>
       <Wash color={tint(p0, 0.25)} delayMs={delayMs} />
+      <Tell hex={p1} delayMs={delayMs} cy={50} />
       {/* tier-9 boost (grand conjunction): a god-fan breaks with the ring */}
       {extra > 0 && <RayFan hex={p1} delayMs={delayMs + 60} />}
       {/* the vast rune ring, settling flat out of the sky */}
@@ -739,6 +889,7 @@ function CelestialRing({ palette, glyph, lead, delayMs, extra = 0 }: TemplatePro
       <Boom delayMs={delayMs + 820} color={tint(p1, 0.9)} thickness={4} />
       <Boom delayMs={delayMs + 940} color={tint(p2, 0.8)} />
       <Glint delayMs={delayMs + 1160} color={p1} left={47} top={46} />
+      <Settle hex={p1} delayMs={delayMs + 1200} cy={50} />
     </Stage>
   );
 }
@@ -758,6 +909,7 @@ function FrostTitan({ palette, glyph, lead, delayMs }: TemplateProps) {
   return (
     <Stage>
       <Wash color={tint(p0, 0.28)} delayMs={delayMs} />
+      <Tell hex={p1} delayMs={delayMs} cy={60} />
       {/* frost panes wiping across the board */}
       {PANES.map((p, i) => (
         <span

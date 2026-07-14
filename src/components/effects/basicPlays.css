@@ -485,6 +485,125 @@
 }
 .bsp-x-beam { animation: bsp-x-beam 1.2s ease-in-out both; transform-origin: 50% 100%; }
 
+/* --- Three-beat upgrade: tell (bsp-t-*) + settle + family layers -------------
+   Owner pass four (animation-design-brief §6): every basic-band lead now opens
+   on a ≤300ms anticipation cue (pre-glow + converging motes, themed per
+   family), closes on a decaying settle tail (afterglow + rising dust), and the
+   seven biggest families each stage one distinctive extra layer (aegis clamp,
+   curse inscription, chain stakes, frost creep, comet vault, chevron ranks,
+   prism seam). Same discipline as everything above: transform/opacity only,
+   one-shot `both` fills, every track ends at opacity 0, and the bsp- prefix
+   keeps all of it under the animations-off guard below. */
+
+/* Tell: the themed pre-glow gathering where the emblem will land. */
+@keyframes bsp-t-glow {
+  0% { opacity: 0; transform: scale(0.3); }
+  55% { opacity: 0.9; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.3); }
+}
+.bsp-t-glow { animation: bsp-t-glow 0.3s ease-out both; }
+
+/* Tell: a family-accent mote converging on the landing spot (--dx / --dy
+   are the signed own-size offsets it flies IN from). */
+@keyframes bsp-t-mote {
+  0% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.5) rotate(0deg); }
+  35% { opacity: 0.95; }
+  100% { opacity: 0; transform: translate(0, 0) scale(0.3) rotate(90deg); }
+}
+.bsp-t-mote { animation: bsp-t-mote 0.3s ease-in both; }
+
+/* Settle: the ground afterglow decaying under the emblem after the strike. */
+@keyframes bsp-x-after {
+  0% { opacity: 0; transform: scale(0.7); }
+  30% { opacity: 0.55; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.35); }
+}
+.bsp-x-after { animation: bsp-x-after 0.95s ease-out both; }
+
+/* Settle: a dust mote lifting slowly away as the scene cools. */
+@keyframes bsp-x-dust {
+  0% { opacity: 0; transform: translateY(0) scale(0.6); }
+  30% { opacity: 0.8; }
+  100% { opacity: 0; transform: translateY(-190%) scale(1); }
+}
+.bsp-x-dust { animation: bsp-x-dust 1.05s ease-out both; }
+
+/* ward: two aegis brackets clamping shut around the sigil ring. */
+@keyframes bsp-x-clamp-l {
+  0% { opacity: 0; transform: translateX(-260%); }
+  42% { opacity: 1; transform: translateX(8%); }
+  56% { transform: translateX(0); }
+  84% { opacity: 0.9; }
+  100% { opacity: 0; transform: translateX(0); }
+}
+.bsp-x-clamp-l { animation: bsp-x-clamp-l 1.05s cubic-bezier(0.3, 0, 0.4, 1) both; }
+@keyframes bsp-x-clamp-r {
+  0% { opacity: 0; transform: translateX(260%); }
+  42% { opacity: 1; transform: translateX(-8%); }
+  56% { transform: translateX(0); }
+  84% { opacity: 0.9; }
+  100% { opacity: 0; transform: translateX(0); }
+}
+.bsp-x-clamp-r { animation: bsp-x-clamp-r 1.05s cubic-bezier(0.3, 0, 0.4, 1) both; }
+
+/* curse: the dashed curse circle inscribing itself counter-clockwise. */
+@keyframes bsp-x-inscribe {
+  0% { opacity: 0; transform: rotate(150deg) scale(1.35); }
+  40% { opacity: 0.9; transform: rotate(30deg) scale(1.05); }
+  60% { transform: rotate(0deg) scale(1); }
+  85% { opacity: 0.75; }
+  100% { opacity: 0; transform: rotate(-8deg) scale(0.98); }
+}
+.bsp-x-inscribe { animation: bsp-x-inscribe 0.95s cubic-bezier(0.3, 0.2, 0.3, 1) both; }
+
+/* chain: a ground-stake slamming down to pin the chain, with a settle. */
+@keyframes bsp-x-stake {
+  0% { opacity: 0; transform: translateY(-260%); }
+  40% { opacity: 1; transform: translateY(0); }
+  52% { transform: translateY(-6%); }
+  62% { transform: translateY(0); }
+  86% { opacity: 0.9; }
+  100% { opacity: 0; transform: translateY(0); }
+}
+.bsp-x-stake { animation: bsp-x-stake 1s cubic-bezier(0.4, 0, 0.5, 1) both; }
+
+/* frost: a hairline frost finger creeping inward (origin set inline). */
+@keyframes bsp-x-creep {
+  0% { opacity: 0; transform: scaleX(0.05); }
+  50% { opacity: 0.9; transform: scaleX(1); }
+  80% { opacity: 0.75; }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.bsp-x-creep { animation: bsp-x-creep 1.05s cubic-bezier(0.2, 0.7, 0.3, 1) both; }
+
+/* glint: the comet streak vaulting the emblem along the movement arc. */
+@keyframes bsp-x-comet {
+  0% { opacity: 0; transform: translate(0, 300%) rotate(-32deg); }
+  20% { opacity: 0.95; transform: translate(200%, -150%) rotate(-12deg); }
+  55% { opacity: 0.9; transform: translate(480%, -420%) rotate(8deg); }
+  100% { opacity: 0; transform: translate(880%, 260%) rotate(30deg); }
+}
+.bsp-x-comet { animation: bsp-x-comet 1s cubic-bezier(0.3, 0.4, 0.4, 1) both; }
+
+/* leap: a chevron rolling across the ground line under the emblem. */
+@keyframes bsp-x-chev {
+  0% { opacity: 0; transform: translateX(-170%) scale(0.85); }
+  22% { opacity: 0.95; }
+  100% { opacity: 0; transform: translateX(320%) scale(1); }
+}
+.bsp-x-chev { animation: bsp-x-chev 0.95s cubic-bezier(0.2, 0.6, 0.4, 1) both; }
+
+/* prism: the vertical light seam opening in the tell, snapping shut at the
+   strike. */
+@keyframes bsp-x-seam {
+  0% { opacity: 0; transform: scaleY(0.04) scaleX(1); }
+  30% { opacity: 0.9; transform: scaleY(1) scaleX(1); }
+  62% { opacity: 0.85; transform: scaleY(1) scaleX(0.6); }
+  78% { transform: scaleY(0.08) scaleX(1.6); }
+  100% { opacity: 0; transform: scaleY(0.02) scaleX(2); }
+}
+.bsp-x-seam { animation: bsp-x-seam 0.95s ease-in-out both; }
+
 /* --- Animations off (Settings) ---------------------------------------------- */
 /* Defensive: the mounting layers already gate on the animations-off setting, but
    if one ever mounts anyway, every bsp-* element hides outright. */

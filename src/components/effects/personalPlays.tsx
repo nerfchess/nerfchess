@@ -100,6 +100,58 @@ function Ring({ color, delayMs }: { color: string; delayMs: number }) {
   );
 }
 
+/** Elliptical ambient light inside a Wide stage — the ONLY sanctioned light
+ * behind a portrait (design brief §3: radial/elliptical, smaller than the
+ * figure's silhouette; never a rectangular wash). */
+function Glow({
+  left,
+  top,
+  width,
+  height,
+  color,
+  delayMs,
+}: {
+  left: string;
+  top: string;
+  width: string;
+  height: string;
+  color: string;
+  delayMs: number;
+}) {
+  return (
+    <Prop left={left} top={top} width={width} height={height}>
+      <span
+        className="pnp-glow absolute inset-0 block rounded-full"
+        style={{ background: `radial-gradient(closest-side, ${color}, transparent 72%)`, ...d(delayMs) }}
+      />
+    </Prop>
+  );
+}
+
+/** Soft elliptical ground shadow a rising character stands over. */
+function GroundShadow({
+  left,
+  top,
+  width,
+  height = "3.4%",
+  delayMs,
+}: {
+  left: string;
+  top: string;
+  width: string;
+  height?: string;
+  delayMs: number;
+}) {
+  return (
+    <Prop left={left} top={top} width={width} height={height}>
+      <span
+        className="pnp-groundshadow absolute inset-0 block rounded-full"
+        style={{ background: "radial-gradient(closest-side, rgba(10,12,18,0.42), transparent 70%)", ...d(delayMs) }}
+      />
+    </Prop>
+  );
+}
+
 /** A star portrait as a plain <img> (the BrainrotFigure pattern, rebuilt here
  * so nothing imports the core): /newjeans/<id>.svg or /companions/<id>.svg. */
 function Portrait({ src, className }: { src: string; className?: string }) {
@@ -187,34 +239,51 @@ function AthleteScene({
   return (
     <Wide>
       <Wash color={wash} delayMs={delayMs} />
-      {/* honor ring pulsing behind the athlete */}
-      <Prop left="30%" top="22%" width="40%" height="40%">
-        <svg viewBox="0 0 100 100" className="h-full w-full">
-          <circle cx={50} cy={54} r={40} fill="none" stroke="rgba(255,215,106,0.5)" strokeWidth={1.6} className="pnp-linger" style={d(delayMs)} />
-        </svg>
-      </Prop>
-      {/* THE GUY, doing the actual skill, huge (the SVG loops its own reps) */}
-      <Prop left="26%" top="18%" width="48%" height="48%">
-        <span className="pnp-linger block h-full w-full" style={d(delayMs + 80)}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={`/gym/${id}.svg`} alt="" aria-hidden draggable={false} className="h-full w-full select-none object-contain" />
-        </span>
-      </Prop>
-      {/* chalk clap puffs framing the effort */}
-      <Prop left="18%" top="30%" width="14%" height="14%">
+      {/* TELL: the chalk clap, before anyone appears */}
+      <Prop left="40%" top="40%" width="10%" height="10%">
         <svg viewBox="0 0 30 30" className="h-full w-full">
-          <g className="pnp-puff" style={dv(delayMs + 260, { "--pnp-x": "-26%", "--pnp-y": "-20%" })}>
+          <g className="pnp-puff" style={dv(delayMs, { "--pnp-x": "-26%", "--pnp-y": "-20%" })}>
             <circle cx={15} cy={15} r={7} fill="rgba(232,237,246,0.85)" />
           </g>
         </svg>
       </Prop>
-      <Prop left="68%" top="28%" width="14%" height="14%">
+      <Prop left="50%" top="39%" width="10%" height="10%">
         <svg viewBox="0 0 30 30" className="h-full w-full">
-          <g className="pnp-puff" style={dv(delayMs + 340, { "--pnp-x": "28%", "--pnp-y": "-24%" })}>
+          <g className="pnp-puff" style={dv(delayMs + 90, { "--pnp-x": "28%", "--pnp-y": "-24%" })}>
             <circle cx={15} cy={15} r={6} fill="rgba(232,237,246,0.8)" />
           </g>
         </svg>
       </Prop>
+      {/* honor ring pulsing behind the athlete */}
+      <Prop left="30%" top="22%" width="40%" height="40%">
+        <svg viewBox="0 0 100 100" className="h-full w-full">
+          <circle cx={50} cy={54} r={40} fill="none" stroke="rgba(255,215,106,0.5)" strokeWidth={1.6} className="pnp-linger" style={d(delayMs + 260)} />
+        </svg>
+      </Prop>
+      {/* ground shadow the athlete rises over */}
+      <GroundShadow left="38%" top="62%" width="24%" delayMs={delayMs + 200} />
+      {/* STRIKE: THE GUY, doing the actual skill, huge (the SVG loops its own
+          reps); he rises out of the chalk cloud rather than fading in */}
+      <Prop left="26%" top="18%" width="48%" height="48%">
+        <span className="pnp-heroup block h-full w-full" style={d(delayMs + 240)}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={`/gym/${id}.svg`} alt="" aria-hidden draggable={false} className="h-full w-full select-none object-contain" />
+        </span>
+      </Prop>
+      {/* SETTLE: loose chalk specks drift back down */}
+      {[
+        { l: "39%", t: "38%", dl: 1050 },
+        { l: "58%", t: "36%", dl: 1180 },
+        { l: "48%", t: "42%", dl: 1310 },
+      ].map((s, i) => (
+        <Prop key={i} left={s.l} top={s.t} width="3%" height="4%">
+          <svg viewBox="0 0 10 14" className="h-full w-full">
+            <g className="pnp-speck" style={d(delayMs + s.dl)}>
+              <circle cx={5} cy={5} r={2.1} fill="rgba(232,237,246,0.8)" />
+            </g>
+          </svg>
+        </Prop>
+      ))}
     </Wide>
   );
 }
@@ -263,8 +332,11 @@ function MuscleUpPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           <g className="pnp-linger" style={d(delayMs)}>
             <rect x={13} y={26} width={4.5} height={62} rx={2.2} fill="#5c6880" />
             <rect x={82.5} y={26} width={4.5} height={62} rx={2.2} fill="#5c6880" />
-            <rect x={10} y={30} width={80} height={5} rx={2.5} fill="#aab6c8" stroke="#5c6880" strokeWidth={1.4} />
-            <path d="M38 32.5 h24" stroke="#7c88a4" strokeWidth={1.6} strokeDasharray="2 2.4" strokeLinecap="round" />
+            {/* the crossbar FLEXES under the dead hang — the tell before the pull */}
+            <g className="pnp-barflex" style={d(delayMs + 420)}>
+              <rect x={10} y={30} width={80} height={5} rx={2.5} fill="#aab6c8" stroke="#5c6880" strokeWidth={1.4} />
+              <path d="M38 32.5 h24" stroke="#7c88a4" strokeWidth={1.6} strokeDasharray="2 2.4" strokeLinecap="round" />
+            </g>
           </g>
           {/* chalk clap before the pull */}
           <g className="pnp-puff" style={dv(delayMs + 120, { "--pnp-x": "-30%", "--pnp-y": "-18%" })}>
@@ -285,6 +357,9 @@ function MuscleUpPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           <g className="pnp-zip" style={d(delayMs + 970)}><rect x={64} y={48} width={2.6} height={16} rx={1.3} fill="rgba(255,215,106,0.85)" /></g>
           {/* lock-out star over the bar */}
           <g className="pnp-star" style={d(delayMs + 1080)}><SparkStar x={50} y={16} s={1.4} /></g>
+          {/* SETTLE: chalk shaken off the grip drifts back down */}
+          <g className="pnp-speck" style={d(delayMs + 1150)}><circle cx={42} cy={36} r={1.7} fill="rgba(232,237,246,0.85)" /></g>
+          <g className="pnp-speck" style={d(delayMs + 1260)}><circle cx={58} cy={35} r={1.4} fill="rgba(232,237,246,0.8)" /></g>
         </svg>
       </Prop>
       <Ring color="rgba(255,215,106,0.85)" delayMs={delayMs + 1050} />

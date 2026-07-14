@@ -417,6 +417,197 @@ const FX_SPECS: Record<FxKind, FxSpec> = {
   ink:    { front: { rot: "-18deg", fx: "120%", fy: "26%", h: 8 }, parts: { accent: "mote", n: 9, spread: 15 }, drift: { dy: "480%", n: 5 } },
 };
 
+/* --- Three-beat upgrade: tell + settle + family layers ------------------------
+   Owner pass four (animation-design-brief §6, basicPlays): "keep shared
+   machinery, add per-family tell beats". Every lead now opens with a ≤300ms
+   anticipation cue BEFORE the emblem strikes (a themed pre-glow, plus
+   converging motes for families without their own tell layer), and closes on
+   a decaying settle tail (ground afterglow + two rising dust motes) instead
+   of a hard cut. The seven biggest families additionally stage one
+   distinctive extra layer via FAMILY_LAYERS below:
+     ward  (SigilRing)  — two aegis brackets clamp shut around the ring
+     curse (RuneStamp)  — a dashed curse circle inscribes counter-clockwise
+                          during the tell, before the rune slams into it
+     chain (ChainLash)  — two ground-stakes slam down to pin the chain
+     frost (ColdSnap)   — hairline frost fingers creep inward FIRST
+     glint (GlintArc)   — a comet streak vaults the emblem along the arc
+     leap  (HoofSpring) — a rank of chevrons rolls across the ground line
+     prism (PrismFlash) — a vertical light seam opens, then snaps shut
+   Budget: at most ~6 extra animated elements per play (families whose extra
+   layer exists trade their tell motes for it), every track one-shot `both`
+   fill, transform/opacity only, all inside the board's central ~57% crop. */
+
+/** How long the anticipation beat holds before the strike phase begins. */
+const TELL_MS = 260;
+
+/** Families whose FAMILY_LAYERS entry already reads as (or replaces) the
+ * converging-mote tell — they get the pre-glow only, keeping the element
+ * budget flat. */
+const TELL_GLOW_ONLY = new Set<FxKind>(["ward", "curse", "chain", "frost", "glint", "leap", "prism"]);
+
+/** Converging tell motes: signed own-size offsets they fly IN from. */
+const TELL_MOTES = [
+  { dx: "-560%", dy: "-340%", d: 0 },
+  { dx: "600%", dy: "-260%", d: 45 },
+  { dx: "60%", dy: "620%", d: 90 },
+];
+
+/** The anticipation beat: a themed pre-glow gathers at the emblem's landing
+ * spot and (for families without their own tell layer) three family-accent
+ * motes converge on it. Mounted a beat BEFORE the template's strike. */
+function TellCue({ kind, palette, delayMs }: { kind: FxKind; palette: Palette; delayMs: number }) {
+  const [p0, p1, p2] = palette;
+  const deep = kind === "curse" || kind === "ink" || kind === "lock";
+  const glow = kind === "frost" || kind === "prism" || kind === "gaze" ? p0 : deep ? p2 : p1;
+  const accent = FX_SPECS[kind].parts.accent;
+  return (
+    <span className="absolute inset-0 block" aria-hidden="true">
+      <span
+        className="bsp-t-glow absolute block rounded-full"
+        style={{
+          left: "41%",
+          top: "38%",
+          width: "18%",
+          height: "18%",
+          background: `radial-gradient(circle, ${tint(glow, 0.55)} 0%, ${tint(glow, 0)} 70%)`,
+          animationDelay: `${delayMs}ms`,
+        }}
+      />
+      {!TELL_GLOW_ONLY.has(kind) &&
+        TELL_MOTES.map((v, i) => (
+          <span
+            key={i}
+            className="bsp-t-mote absolute block"
+            style={
+              {
+                left: "48.75%",
+                top: "45.75%",
+                width: "2.5%",
+                height: "2.5%",
+                "--dx": v.dx,
+                "--dy": v.dy,
+                animationDelay: `${delayMs + v.d}ms`,
+              } as CSSProperties
+            }
+          >
+            <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+              {shardShape(accent, i === 1 ? p0 : p1, p2)}
+            </svg>
+          </span>
+        ))}
+    </span>
+  );
+}
+
+/** One distinctive extra layer for each of the seven biggest families
+ * (rendered inside SceneFx, so leads only). Offsets are relative to the
+ * strike start; negative offsets reach back into the tell beat, which is
+ * safe because every lead's strike is already TELL_MS after cast. */
+function familyLayer(kind: FxKind, palette: Palette, delayMs: number): ReactNode {
+  const [p0, p1, p2] = palette;
+  switch (kind) {
+    case "ward":
+      // Aegis clamp: two shield brackets slam shut around the sigil ring.
+      return (
+        <>
+          <span className="bsp-x-clamp-l absolute block" style={{ left: "28.5%", top: "33%", width: "8%", height: "28%", animationDelay: `${delayMs + 60}ms` }}>
+            <svg viewBox="0 0 10 40" className="block h-full w-full" preserveAspectRatio="none" aria-hidden="true">
+              <path d="M8.6 2 C2.4 10 2.4 30 8.6 38" fill="none" stroke={tint(p1, 0.9)} strokeWidth="2.4" strokeLinecap="round" />
+              <path d="M8.6 2 C4.6 9.6 4.6 30.4 8.6 38" fill="none" stroke={tint(p0, 0.55)} strokeWidth="1" strokeLinecap="round" />
+            </svg>
+          </span>
+          <span className="bsp-x-clamp-r absolute block" style={{ left: "63.5%", top: "33%", width: "8%", height: "28%", animationDelay: `${delayMs + 100}ms` }}>
+            <svg viewBox="0 0 10 40" className="block h-full w-full" preserveAspectRatio="none" aria-hidden="true">
+              <path d="M1.4 2 C7.6 10 7.6 30 1.4 38" fill="none" stroke={tint(p1, 0.9)} strokeWidth="2.4" strokeLinecap="round" />
+              <path d="M1.4 2 C5.4 9.6 5.4 30.4 1.4 38" fill="none" stroke={tint(p0, 0.55)} strokeWidth="1" strokeLinecap="round" />
+            </svg>
+          </span>
+        </>
+      );
+    case "curse":
+      // A dashed curse circle inscribes counter-clockwise during the tell.
+      return (
+        <span className="bsp-x-inscribe absolute block" style={{ left: "33.5%", top: "30.5%", width: "33%", height: "33%", animationDelay: `${delayMs - 240}ms` }}>
+          <svg viewBox="0 0 40 40" className="block h-full w-full" aria-hidden="true">
+            <circle cx="20" cy="20" r="17.4" fill="none" stroke={tint(p1, 0.8)} strokeWidth="1.1" strokeDasharray="5 3.4" />
+            <circle cx="20" cy="20" r="14.6" fill="none" stroke={tint(p0, 0.45)} strokeWidth="0.6" strokeDasharray="2 2.6" />
+          </svg>
+        </span>
+      );
+    case "chain":
+      // Two ground-stakes slam down at the flanks, pinning the chain.
+      return (
+        <>
+          {[0, 1].map((i) => (
+            <span key={i} className="bsp-x-stake absolute block" style={{ left: i ? "66%" : "30.5%", top: "49%", width: "3.5%", height: "10%", animationDelay: `${delayMs + 120 + i * 110}ms` }}>
+              <svg viewBox="0 0 8 22" className="block h-full w-full" preserveAspectRatio="none" aria-hidden="true">
+                <path d="M4 2 V19 L2.4 16.4 M4 19 L5.6 16.4" fill="none" stroke={p1} strokeWidth="1.7" strokeLinecap="round" />
+                <path d="M1 4 H7" fill="none" stroke={p0} strokeWidth="1.6" strokeLinecap="round" />
+              </svg>
+            </span>
+          ))}
+        </>
+      );
+    case "frost":
+      // Hairline frost fingers creep inward from both flanks FIRST.
+      return (
+        <>
+          <span className="bsp-x-creep absolute block" style={{ left: "27%", top: "40%", width: "14%", height: "9%", transformOrigin: "0% 50%", animationDelay: `${delayMs - 210}ms` }}>
+            <svg viewBox="0 0 40 12" className="block h-full w-full" preserveAspectRatio="none" aria-hidden="true">
+              <path d="M0.8 6 H39 M10 6 L15 2.2 M18 6 L23 9.8 M27 6 L31 2.8" fill="none" stroke={tint(p0, 0.9)} strokeWidth="1" strokeLinecap="round" />
+            </svg>
+          </span>
+          <span className="bsp-x-creep absolute block" style={{ left: "59%", top: "45%", width: "14%", height: "9%", transformOrigin: "100% 50%", animationDelay: `${delayMs - 150}ms` }}>
+            <svg viewBox="0 0 40 12" className="block h-full w-full" preserveAspectRatio="none" aria-hidden="true">
+              <path d="M39.2 6 H1 M30 6 L25 9.8 M22 6 L17 2.2 M13 6 L9 9.2" fill="none" stroke={tint(p0, 0.9)} strokeWidth="1" strokeLinecap="round" />
+            </svg>
+          </span>
+        </>
+      );
+    case "glint":
+      // A comet streak vaults the emblem along the movement arc.
+      return (
+        <span className="bsp-x-comet absolute block" style={{ left: "27%", top: "52%", width: "5%", height: "2%", animationDelay: `${delayMs + 80}ms` }}>
+          <span
+            className="absolute inset-0 block"
+            style={{ background: `linear-gradient(90deg, ${tint(p1, 0)}, ${tint(p1, 0.9)} 70%, ${SHINE})`, borderRadius: "999px" }}
+          />
+        </span>
+      );
+    case "leap":
+      // A rank of chevrons rolls across the ground line under the emblem.
+      return (
+        <>
+          {[0, 1, 2].map((i) => (
+            <span key={i} className="bsp-x-chev absolute block" style={{ left: `${36 + i * 7}%`, top: "59.5%", width: "4.5%", height: "3.5%", animationDelay: `${delayMs + 140 + i * 110}ms` }}>
+              <svg viewBox="0 0 10 8" className="block h-full w-full" preserveAspectRatio="none" aria-hidden="true">
+                <path d="M1.4 6.8 L5 1.2 L8.6 6.8" fill="none" stroke={i === 1 ? p0 : p1} strokeWidth="1.8" {...SJ} />
+              </svg>
+            </span>
+          ))}
+        </>
+      );
+    case "prism":
+      // A vertical light seam opens during the tell, then snaps shut.
+      return (
+        <span
+          className="bsp-x-seam absolute block"
+          style={{
+            left: "48.8%",
+            top: "29%",
+            width: "2.4%",
+            height: "36%",
+            background: `linear-gradient(180deg, ${tint(p0, 0)}, ${tint(p1, 0.85)}, ${tint(p0, 0)})`,
+            borderRadius: "999px",
+            animationDelay: `${delayMs - 230}ms`,
+          }}
+        />
+      );
+    default:
+      return null;
+  }
+}
+
 /** Deterministic launch directions (degrees + stagger ms) for the burst. */
 const FX_DIRS = [
   { a: 12, d: 0 }, { a: 55, d: 35 }, { a: 98, d: 15 }, { a: 141, d: 50 },
@@ -431,6 +622,7 @@ function SceneFx({ kind, palette, delayMs }: { kind: FxKind; palette: Palette; d
   const s = FX_SPECS[kind];
   return (
     <span className="absolute inset-0 block" aria-hidden="true">
+      {familyLayer(kind, palette, delayMs)}
       {s.front && (
         <span
           className="bsp-x-front absolute block"
@@ -526,6 +718,33 @@ function SceneFx({ kind, palette, delayMs }: { kind: FxKind; palette: Palette; d
             }
           />
         ))}
+      {/* settle tail: a ground afterglow decays under the emblem while two
+          dust motes lift away — no more hard cut at the end of the strike. */}
+      <span
+        className="bsp-x-after absolute block rounded-full"
+        style={{
+          left: "39%",
+          top: "42%",
+          width: "22%",
+          height: "14%",
+          background: `radial-gradient(circle, ${tint(p1, 0.45)} 0%, ${tint(p0, 0)} 70%)`,
+          animationDelay: `${delayMs + 820}ms`,
+        }}
+      />
+      {[0, 1].map((i) => (
+        <span
+          key={`s${i}`}
+          className="bsp-x-dust absolute block rounded-full"
+          style={{
+            left: i ? "54.5%" : "44%",
+            top: i ? "58%" : "56%",
+            width: "1.5%",
+            height: "1.5%",
+            background: tint(i ? p0 : p1, 0.85),
+            animationDelay: `${delayMs + 880 + i * 130}ms`,
+          }}
+        />
+      ))}
     </span>
   );
 }
@@ -1381,7 +1600,20 @@ function HighGroundTakeover({ lead, delayMs }: { lead: boolean; delayMs: number 
    everything else rides the removal diff or Board's diff-less lead branch.
    ========================================================================== */
 
-/** Bind a template + palette + the card's own face icon into a SigPlugin. */
+/** Template -> mechanic family, so B can theme the shared tell beat without
+ * touching any template's signature. Mirrors each template's own `fx` prop. */
+const FX_BY_TEMPLATE = new Map<ComponentType<TemplateProps>, FxKind>([
+  [SigilRing, "ward"], [RuneStamp, "curse"], [ChainLash, "chain"], [ColdSnap, "frost"],
+  [StoneShell, "stone"], [GlintArc, "glint"], [HoofSpring, "leap"], [PennantRaise, "muster"],
+  [ScrollSnap, "edict"], [CardFlick, "draw"], [EyeBlink, "gaze"], [KeyTurn, "lock"],
+  [LanternLift, "spirit"], [SatchelDrop, "loot"], [CogTick, "clock"], [BellToll, "bell"],
+  [LeafSpin, "grove"], [PrismFlash, "prism"], [BannerMuster, "banner"], [InkSplash, "ink"],
+]);
+
+/** Bind a template + palette + the card's own face icon into a SigPlugin.
+ * Leads open on the shared TellCue for TELL_MS, then the template's whole
+ * choreography (strike + settle) plays shifted after it — three beats total.
+ * Per-square TargetHits stay immediate (zone squares are followers). */
 function B(
   Template: ComponentType<TemplateProps>,
   palette: Palette,
@@ -1394,7 +1626,16 @@ function B(
   return {
     config,
     Render: function BasicPlayRender({ lead, delayMs }: { lead: boolean; delayMs: number }) {
-      return <Template palette={palette} Icon={Icon} bold={bold} lead={lead} delayMs={delayMs} />;
+      if (!lead) return <Template palette={palette} Icon={Icon} bold={bold} lead={lead} delayMs={delayMs} />;
+      const fx = FX_BY_TEMPLATE.get(Template) ?? "ward";
+      return (
+        <>
+          <Stage>
+            <TellCue kind={fx} palette={palette} delayMs={delayMs} />
+          </Stage>
+          <Template palette={palette} Icon={Icon} bold={bold} lead={lead} delayMs={delayMs + TELL_MS} />
+        </>
+      );
     },
   };
 }

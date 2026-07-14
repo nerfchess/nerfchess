@@ -60,6 +60,9 @@ interface TemplateProps {
   glyph: ReactNode;
   lead: boolean;
   delayMs: number;
+  /** Optional bespoke-flourish key for marquee cards (extra scene dressing
+   * layered on the shared template; never changes the template's core beats). */
+  flourish?: string;
 }
 
 /** hex "#rrggbb" -> rgba() at the given alpha (glow fills, gradients). */
@@ -243,6 +246,171 @@ function Glint({
   );
 }
 
+/* --- Tell beats (≤300ms anticipation, palette-themed) ----------------------- */
+
+/** Gathering glow that contracts toward the spot where the scene will land. */
+function TellGlow({
+  delayMs,
+  color,
+  left = 38,
+  top = 32,
+  w = 24,
+  h = 20,
+}: {
+  delayMs: number;
+  color: string;
+  left?: number;
+  top?: number;
+  w?: number;
+  h?: number;
+}) {
+  return (
+    <span
+      className="grp-tellglow absolute block rounded-full"
+      style={{ left: `${left}%`, top: `${top}%`, width: `${w}%`, height: `${h}%`, background: color, animationDelay: `${delayMs}ms` }}
+    />
+  );
+}
+
+/** Ground shadow pooling where a mass is about to rise or land. */
+function TellShadow({
+  delayMs,
+  color,
+  left = 38,
+  top = 60,
+  w = 24,
+  h = 6,
+}: {
+  delayMs: number;
+  color: string;
+  left?: number;
+  top?: number;
+  w?: number;
+  h?: number;
+}) {
+  return (
+    <span
+      className="grp-tellshadow absolute block rounded-full"
+      style={{ left: `${left}%`, top: `${top}%`, width: `${w}%`, height: `${h}%`, background: color, animationDelay: `${delayMs}ms` }}
+    />
+  );
+}
+
+/** Four thin streaks converging on the gather point (drawn inward). */
+const TELL_RAYS = [
+  { l: 29, t: 30, dx: "150%", dy: "110%", rot: "34deg", d: 0 },
+  { l: 64, t: 32, dx: "-160%", dy: "100%", rot: "-36deg", d: 40 },
+  { l: 27, t: 58, dx: "170%", dy: "-90%", rot: "-30deg", d: 25 },
+  { l: 66, t: 60, dx: "-170%", dy: "-100%", rot: "28deg", d: 55 },
+];
+function TellRays({ delayMs, color }: { delayMs: number; color: string }) {
+  return (
+    <>
+      {TELL_RAYS.map((v, i) => (
+        <span
+          key={i}
+          className="grp-tellray absolute block rounded-full"
+          style={
+            {
+              left: `${v.l}%`,
+              top: `${v.t}%`,
+              width: "7%",
+              height: "0.9%",
+              background: color,
+              rotate: v.rot,
+              "--dx": v.dx,
+              "--dy": v.dy,
+              animationDelay: `${delayMs + v.d}ms`,
+            } as CSSProperties
+          }
+        />
+      ))}
+    </>
+  );
+}
+
+/* --- Settle tails (decaying dust / embers / afterglow) ----------------------- */
+
+/** Soft afterglow left hanging where the strike landed, decaying. */
+function Afterglow({
+  delayMs,
+  color,
+  left = 36,
+  top = 36,
+  w = 28,
+  h = 20,
+}: {
+  delayMs: number;
+  color: string;
+  left?: number;
+  top?: number;
+  w?: number;
+  h?: number;
+}) {
+  return (
+    <span
+      className="grp-afterglow absolute block rounded-full"
+      style={{ left: `${left}%`, top: `${top}%`, width: `${w}%`, height: `${h}%`, background: color, animationDelay: `${delayMs}ms` }}
+    />
+  );
+}
+
+/** Decaying settle motes: dust falls (dir "fall"), embers rise (dir "rise"). */
+const SETTLE = [
+  { l: 42, t: 44, dx: "70%", dy: "150%", rot: "140deg", d: 0 },
+  { l: 55, t: 40, dx: "-55%", dy: "180%", rot: "-120deg", d: 90 },
+  { l: 47, t: 48, dx: "110%", dy: "130%", rot: "180deg", d: 170 },
+  { l: 61, t: 46, dx: "-85%", dy: "160%", rot: "-160deg", d: 60 },
+  { l: 38, t: 40, dx: "45%", dy: "170%", rot: "110deg", d: 230 },
+  { l: 51, t: 36, dx: "-30%", dy: "140%", rot: "90deg", d: 140 },
+];
+function Settle({
+  delayMs,
+  dir,
+  render,
+  sizePct = 2.4,
+}: {
+  delayMs: number;
+  dir: "fall" | "rise";
+  render: (i: number) => ReactNode;
+  sizePct?: number;
+}) {
+  const sign = dir === "rise" ? -1 : 1;
+  return (
+    <>
+      {SETTLE.map((v, i) => (
+        <span
+          key={i}
+          className="grp-settle absolute block"
+          style={
+            {
+              left: `${v.l}%`,
+              top: `${v.t}%`,
+              width: `${sizePct}%`,
+              height: `${sizePct}%`,
+              "--dx": v.dx,
+              "--dy": `${sign * parseFloat(v.dy)}%`,
+              "--rot": v.rot,
+              animationDelay: `${delayMs + v.d}ms`,
+            } as CSSProperties
+          }
+        >
+          {render(i)}
+        </span>
+      ))}
+    </>
+  );
+}
+
+/** Default settle mote: a soft round fleck in the given colour. */
+function Mote({ color }: { color: string }) {
+  return (
+    <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+      <circle cx="5" cy="5" r="3.4" fill={color} />
+    </svg>
+  );
+}
+
 /** Compact per-square hit for non-lead ("target") renders: glyph pop + a small
  * ring + three palette sparks. Zone-fed cards mount one per square, so this
  * must NOT be board-wide. */
@@ -255,16 +423,21 @@ function TargetHit({ palette, glyph, delayMs }: { palette: Palette; glyph: React
   const [p0, p1, p2] = palette;
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      {/* tell: a gathering glow contracts onto the square before the hit */}
+      <span
+        className="grp-tellglow absolute block rounded-full"
+        style={{ left: "22%", top: "22%", width: "56%", height: "56%", background: tint(p1, 0.4), animationDelay: `${delayMs}ms` }}
+      />
       <span
         className="grp-flash absolute block rounded-full"
-        style={{ left: "16%", top: "16%", width: "68%", height: "68%", background: tint(p1, 0.45), animationDelay: `${delayMs}ms` }}
+        style={{ left: "16%", top: "16%", width: "68%", height: "68%", background: tint(p1, 0.45), animationDelay: `${delayMs + 150}ms` }}
       />
-      <span className="grp-pop absolute block" style={{ left: "18%", top: "16%", width: "64%", height: "64%", animationDelay: `${delayMs + 60}ms` }}>
+      <span className="grp-pop absolute block" style={{ left: "18%", top: "16%", width: "64%", height: "64%", animationDelay: `${delayMs + 210}ms` }}>
         {glyph}
       </span>
       <span
         className="grp-tring absolute block rounded-full"
-        style={{ left: "10%", top: "10%", width: "80%", height: "80%", border: `2px solid ${tint(p1, 0.9)}`, animationDelay: `${delayMs + 130}ms` }}
+        style={{ left: "10%", top: "10%", width: "80%", height: "80%", border: `2px solid ${tint(p1, 0.9)}`, animationDelay: `${delayMs + 280}ms` }}
       />
       {HIT_SPARKS.map((v, i) => (
         <span
@@ -279,13 +452,37 @@ function TargetHit({ palette, glyph, delayMs }: { palette: Palette; glyph: React
               "--dx": v.dx,
               "--dy": v.dy,
               "--rot": v.rot,
-              animationDelay: `${delayMs + 110 + v.d}ms`,
+              animationDelay: `${delayMs + 260 + v.d}ms`,
             } as CSSProperties
           }
         >
           <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
             <path d="M5 0.6 L9 5 L5 9.4 L1 5 Z" fill={i === 1 ? p0 : p1} stroke={p2} strokeWidth="0.7" {...SJ} />
           </svg>
+        </span>
+      ))}
+      {/* settle: two flecks sift off the square as the hit decays */}
+      {[
+        { l: 38, t: 42, dx: "-50%", dy: "120%", rot: "-110deg", d: 0 },
+        { l: 56, t: 38, dx: "60%", dy: "140%", rot: "130deg", d: 90 },
+      ].map((v, i) => (
+        <span
+          key={`s${i}`}
+          className="grp-settle absolute block"
+          style={
+            {
+              left: `${v.l}%`,
+              top: `${v.t}%`,
+              width: "12%",
+              height: "12%",
+              "--dx": v.dx,
+              "--dy": v.dy,
+              "--rot": v.rot,
+              animationDelay: `${delayMs + 560 + v.d}ms`,
+            } as CSSProperties
+          }
+        >
+          <Mote color={tint(p1, 0.75)} />
         </span>
       ))}
     </span>
@@ -309,6 +506,9 @@ function WitchCircle({ palette, glyph, lead, delayMs }: TemplateProps) {
   return (
     <Stage>
       <Wash color={tint(p0, 0.26)} delayMs={delayMs} />
+      {/* tell: stray hex-light gathers to the point the circle will claim */}
+      <TellGlow delayMs={delayMs} color={tint(p1, 0.32)} left={40} top={36} w={20} h={18} />
+      <TellRays delayMs={delayMs + 20} color={tint(p1, 0.8)} />
       {/* the sigil circle, settling flat out of the air */}
       <span className="grp-sigil absolute block" style={{ left: "27%", top: "24%", width: "46%", height: "46%", animationDelay: `${delayMs + 120}ms` }}>
         <svg viewBox="0 0 40 40" className="block h-full w-full" aria-hidden="true">
@@ -337,6 +537,9 @@ function WitchCircle({ palette, glyph, lead, delayMs }: TemplateProps) {
       <Sparks delayMs={delayMs + 760} fill={p1} stroke={p2} cy={46} />
       <Boom delayMs={delayMs + 820} color={tint(p1, 0.85)} />
       <Glint delayMs={delayMs + 1150} color={p1} left={48} top={40} />
+      {/* settle: candle-smoke embers lift off the guttering circle */}
+      <Afterglow delayMs={delayMs + 960} color={tint(p1, 0.28)} left={38} top={34} w={24} h={22} />
+      <Settle delayMs={delayMs + 1000} dir="rise" render={(i) => <Mote color={tint(i % 2 ? p1 : p2, 0.8)} />} />
     </Stage>
   );
 }
@@ -345,12 +548,15 @@ function WitchCircle({ palette, glyph, lead, delayMs }: TemplateProps) {
    Template 2: StoneGaze — a gorgon bust rises at the board's heart and rakes
    the crop with a petrifying gaze beam; stone chips spall off the victims.
    ========================================================================== */
-function StoneGaze({ palette, glyph, lead, delayMs }: TemplateProps) {
+function StoneGaze({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
   const [p0, p1, p2] = palette;
   if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
     <Stage>
       <Wash color={tint(p0, 0.26)} delayMs={delayMs} />
+      {/* tell: the boards shadow over and grit shivers where the bust will breach */}
+      <TellShadow delayMs={delayMs} color={tint(p2, 0.55)} left={37} top={62} w={26} h={7} />
+      <TellGlow delayMs={delayMs + 40} color={tint(p1, 0.3)} left={41} top={30} w={18} h={16} />
       {/* the bust, grinding up out of the boards */}
       <span className="grp-rise absolute block" style={{ left: "36%", top: "20%", width: "28%", height: "50%", animationDelay: `${delayMs + 120}ms` }}>
         <svg viewBox="0 0 24 40" className="block h-full w-full" aria-hidden="true">
