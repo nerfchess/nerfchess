@@ -1049,7 +1049,57 @@ function AegisBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
             <path d="M22 22 V37 M16 28 H28" stroke="rgba(163,209,96,0.85)" strokeWidth="1.2" strokeLinecap="round" />
           </svg>
         }
-      />
+      >
+        {/* tell: two heart-glints pop in where the warden will land (this is
+            the "i love my gf" card — devotion is the whole fiction) */}
+        {[
+          { l: 40, t: 30, d: 0 },
+          { l: 55, t: 26, d: 110 },
+        ].map((h, i) => (
+          <span
+            key={`hg${i}`}
+            className="fx-sig-star absolute block h-[4%] w-[4%]"
+            style={{ left: `${h.l}%`, top: `${h.t}%`, "--dx": "0%", "--dy": "-90%", "--rot": "20deg", animationDelay: `${delayMs + h.d}ms` } as React.CSSProperties}
+          >
+            <svg viewBox="0 0 12 12" className="h-full w-full" aria-hidden="true">
+              <path d="M6 10.5 C2 7.5 1 5 2.2 3.2 C3.3 1.6 5.2 1.8 6 3.4 C6.8 1.8 8.7 1.6 9.8 3.2 C11 5 10 7.5 6 10.5 Z" fill="#e88ab0" stroke="#7a2f4a" strokeWidth="0.8" strokeLinejoin="round" />
+            </svg>
+          </span>
+        ))}
+        {/* fiction: when the aegis PLANTS, a ring of hearts is flung outward */}
+        {[
+          { dx: "260%", dy: "-160%", rot: "160deg", d: 0 },
+          { dx: "-240%", dy: "-140%", rot: "-140deg", d: 40 },
+          { dx: "220%", dy: "150%", rot: "200deg", d: 80 },
+          { dx: "-260%", dy: "130%", rot: "-180deg", d: 20 },
+        ].map((h, i) => (
+          <span
+            key={`hb${i}`}
+            className="fx-sig-star absolute left-[47%] top-[46%] block h-[4.5%] w-[4.5%]"
+            style={{ "--dx": h.dx, "--dy": h.dy, "--rot": h.rot, animationDelay: `${delayMs + 540 + h.d}ms` } as React.CSSProperties}
+          >
+            <svg viewBox="0 0 12 12" className="h-full w-full" aria-hidden="true">
+              <path d="M6 10.5 C2 7.5 1 5 2.2 3.2 C3.3 1.6 5.2 1.8 6 3.4 C6.8 1.8 8.7 1.6 9.8 3.2 C11 5 10 7.5 6 10.5 Z" fill="#e88ab0" stroke="#7a2f4a" strokeWidth="0.8" strokeLinejoin="round" />
+            </svg>
+          </span>
+        ))}
+        {/* settle: two heart-petals flutter down past the shield, and one
+            soft ring lingers */}
+        {[
+          { l: 42, t: 34, d: 0 },
+          { l: 56, t: 32, d: 180 },
+        ].map((p, i) => (
+          <span key={`hp${i}`} className="fx-sig-scrapfall absolute block h-[2.6%] w-[2.6%]" style={{ left: `${p.l}%`, top: `${p.t}%`, animationDelay: `${delayMs + 1000 + p.d}ms` }}>
+            <svg viewBox="0 0 12 12" className="h-full w-full" aria-hidden="true">
+              <path d="M6 10.5 C2 7.5 1 5 2.2 3.2 C3.3 1.6 5.2 1.8 6 3.4 C6.8 1.8 8.7 1.6 9.8 3.2 C11 5 10 7.5 6 10.5 Z" fill="rgba(232,138,176,0.85)" stroke="#7a2f4a" strokeWidth="0.7" strokeLinejoin="round" />
+            </svg>
+          </span>
+        ))}
+        <span
+          className="fx-sig-ring absolute left-[41%] top-[40%] block h-[20%] w-[18%] rounded-full"
+          style={{ border: "1.5px solid rgba(163,209,96,0.7)", animationDelay: `${delayMs + 1150}ms` }}
+        />
+      </GodEvent>
     );
   }
   return (
@@ -3802,7 +3852,43 @@ function StonehideBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
             <path d="M8 40 C5 38 4 35 6 33 L10 36 Z M32 40 C35 38 36 35 34 33 L30 36 Z" fill="rgba(128,128,134,0.9)" stroke="#464648" strokeWidth="0.9" strokeLinejoin="round" />
           </svg>
         }
-      />
+      >
+        {/* tell: loose slate plates skitter up out of the ground first,
+            racing to join the shell */}
+        {[
+          { l: 30, t: 62, d: 0 },
+          { l: 63, t: 64, d: 80 },
+          { l: 46, t: 66, d: 160 },
+        ].map((p, i) => (
+          <span
+            key={`plate${i}`}
+            className="fx-sig-brick absolute block h-[4%] w-[5%] rounded-[1px]"
+            style={{ left: `${p.l}%`, top: `${p.t}%`, background: "rgba(128,128,134,0.9)", border: "1px solid rgba(70,70,76,0.85)", animationDelay: `${delayMs + p.d}ms` }}
+          />
+        ))}
+        {/* fiction: the chest plates LOCK — the interlock seam flashes gold
+            across the shell as it seals */}
+        <span className="fx-sig-seamflash absolute left-[42%] top-[36%] block h-[24%] w-[16%]" style={{ animationDelay: `${delayMs + 600}ms` }}>
+          <svg viewBox="0 0 16 24" className="h-full w-full" aria-hidden="true">
+            <path d="M8 1 V23 M1 10 H15 M3 17 H13" fill="none" stroke="rgba(230,191,106,0.95)" strokeWidth="1.4" strokeLinecap="round" />
+          </svg>
+        </span>
+        {/* settle: masonry dust drifts off + two pebbles crumble loose */}
+        <span
+          className="fx-sig-ash absolute left-[40%] top-[46%] block h-[8%] w-[18%] rounded-full"
+          style={{ background: "rgba(176,166,143,0.45)", animationDelay: `${delayMs + 950}ms` }}
+        />
+        {[
+          { l: 42, t: 58, d: 0 },
+          { l: 54, t: 55, d: 110 },
+        ].map((c, i) => (
+          <span
+            key={`peb${i}`}
+            className="fx-sig-crumble absolute block h-[2%] w-[2%] rounded-[1px]"
+            style={{ left: `${c.l}%`, top: `${c.t}%`, background: "#9a9a9f", animationDelay: `${delayMs + 1050 + c.d}ms` }}
+          />
+        ))}
+      </GodEvent>
     );
   }
   return (
@@ -4776,7 +4862,45 @@ function PhoenixRiseBurst({ lead, delayMs }: { lead: boolean; delayMs: number })
             <path d="M32 14 L34 9 L35 14 Z" fill="#ffd95e" stroke="#8a6414" strokeWidth="0.5" strokeLinejoin="round" />
           </svg>
         }
-      />
+      >
+        {/* tell: embers pre-glow and drift up out of the pyre-ground before
+            the bird ever moves */}
+        {[
+          { l: 36, t: 64, d: 0 },
+          { l: 58, t: 66, d: 70 },
+          { l: 47, t: 68, d: 140 },
+        ].map((e, i) => (
+          <span
+            key={`emb${i}`}
+            className="fx-sig-ash absolute block h-[4%] w-[3%] rounded-full"
+            style={{ left: `${e.l}%`, top: `${e.t}%`, background: "rgba(255,157,61,0.75)", animationDelay: `${delayMs + e.d}ms` }}
+          />
+        ))}
+        {/* fiction: the CRY — a double golden ring pealing from its head */}
+        {[
+          { l: 45, t: 31, s: 10, d: 0 },
+          { l: 43, t: 29, s: 14, d: 150 },
+        ].map((r, i) => (
+          <span
+            key={`cry${i}`}
+            className="fx-sig-ring absolute block rounded-full"
+            style={{ left: `${r.l}%`, top: `${r.t}%`, width: `${r.s}%`, height: `${r.s}%`, border: "1.5px solid rgba(255,214,106,0.9)", animationDelay: `${delayMs + 880 + r.d}ms` }}
+          />
+        ))}
+        {/* settle: feather-embers flutter down in its wake */}
+        {[
+          { l: 36, t: 34, d: 0 },
+          { l: 58, t: 30, d: 160 },
+          { l: 48, t: 28, d: 320 },
+        ].map((f, i) => (
+          <span key={`fth${i}`} className="fx-sig-scrapfall absolute block h-[3.4%] w-[2.6%]" style={{ left: `${f.l}%`, top: `${f.t}%`, animationDelay: `${delayMs + 1050 + f.d}ms` }}>
+            <svg viewBox="0 0 8 12" className="h-full w-full" aria-hidden="true">
+              <path d="M4 1 C6.5 4 6.5 8 4 11 C1.5 8 1.5 4 4 1 Z" fill="#e0776b" stroke="#7a2f28" strokeWidth="0.6" strokeLinejoin="round" />
+              <path d="M4 2.5 V9.5" stroke="#ffd95e" strokeWidth="0.6" strokeLinecap="round" />
+            </svg>
+          </span>
+        ))}
+      </GodEvent>
     );
   }
   return (
@@ -5369,7 +5493,44 @@ function WorldEndBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
             <path d="M15 15 L20 21 L17 25 L25 29 L22 34 L28 39" fill="none" stroke="#eef4fa" strokeWidth="0.6" strokeLinejoin="round" />
           </svg>
         }
-      />
+      >
+        {/* tell: the sky bruises — two mourning veils drop over the crop */}
+        {[
+          { t: 21.5, d: 0 },
+          { t: 27, d: 110 },
+        ].map((v, i) => (
+          <span
+            key={`veil${i}`}
+            className="gp-drape absolute left-0 right-0 block"
+            style={{ top: `${v.t}%`, height: "5.5%", background: "rgba(40,50,64,0.45)", animationDelay: `${delayMs + v.d}ms` }}
+          />
+        ))}
+        {/* fiction: the killing crack FLARES — light escapes the dying globe
+            along its fault line, twice */}
+        {[
+          { r: "26deg", d: 0 },
+          { r: "-14deg", d: 140 },
+        ].map((c, i) => (
+          <span key={`crk${i}`} className="absolute left-[42%] top-[42%] block h-[16%] w-[16%]" style={{ transform: `rotate(${c.r})` }}>
+            <span
+              className="fx-sig-flash absolute left-[42%] top-0 block h-full w-[16%] rounded-full"
+              style={{ background: "rgba(238,244,250,0.85)", animationDelay: `${delayMs + 680 + c.d}ms` }}
+            />
+          </span>
+        ))}
+        {/* settle: grey world-ash sifts down after the shockwaves */}
+        {[
+          { l: 36, t: 30, dx: "-70%", rot: "140deg", d: 0 },
+          { l: 52, t: 26, dx: "60%", rot: "-120deg", d: 160 },
+          { l: 62, t: 32, dx: "-40%", rot: "100deg", d: 320 },
+        ].map((a, i) => (
+          <span
+            key={`wa${i}`}
+            className="fx-sig-driftmote absolute block h-[1.8%] w-[1.8%] rounded-[1px]"
+            style={{ left: `${a.l}%`, top: `${a.t}%`, background: "#a0b2c4", "--dx": a.dx, "--rot": a.rot, animationDelay: `${delayMs + 1050 + a.d}ms` } as React.CSSProperties}
+          />
+        ))}
+      </GodEvent>
     );
   }
   return (
