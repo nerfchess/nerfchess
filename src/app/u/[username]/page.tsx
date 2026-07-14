@@ -610,10 +610,10 @@ function ReportModal({ username, onClose }: { username: string; onClose: () => v
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-6"
       onClick={onClose}
     >
-      <div className="plate p-5 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+      <div className="plate p-5 w-full max-w-md max-h-[90dvh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         {status === "sent" ? (
           <>
             <h2 className="font-display text-2xl">Report sent</h2>

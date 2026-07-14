@@ -189,7 +189,7 @@ export function SettingsPanel({ open, onClose }: Props) {
       onClick={onClose}
     >
       <div
-        className="plate gilt relative flex max-h-[86vh] w-full max-w-[34rem] flex-col"
+        className="plate gilt relative flex max-h-[86dvh] w-full max-w-[34rem] flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -234,7 +234,7 @@ export function SettingsPanel({ open, onClose }: Props) {
 
         {/* Active tab's rows. Fixed height so switching tabs doesn't resize
             the panel; the pane scrolls when a tab outgrows it. */}
-        <div role="tabpanel" className="h-[24rem] max-h-[60vh] overflow-y-auto px-5 py-3">
+        <div role="tabpanel" className="h-[24rem] max-h-[60dvh] overflow-y-auto px-5 py-3">
           <div className="divide-y divide-white/[0.06]">
             {activeSection.rows.map((row) => (
               <SettingRow

@@ -75,7 +75,10 @@ function FpsMeter() {
   }, []);
 
   return (
-    <div className="pointer-events-none fixed bottom-2 left-2 z-[90] rounded-sm border border-white/15 bg-ink-900/80 px-1.5 py-0.5 font-mono text-[10px] tabular-nums text-parchment-300">
+    <div
+      className="pointer-events-none fixed left-2 z-[90] rounded-sm border border-white/15 bg-ink-900/80 px-1.5 py-0.5 font-mono text-[10px] tabular-nums text-parchment-300 opacity-70"
+      style={{ bottom: "calc(0.5rem + env(safe-area-inset-bottom))" }}
+    >
       {fps} fps
     </div>
   );

@@ -83,7 +83,7 @@ export function Podium({
           const card = (
             <div
               className={
-                "relative flex flex-col items-center rounded-t-md border border-b-0 px-3 pt-4 pb-3 text-center motion-safe:transition " +
+                "relative flex flex-col items-center rounded-md border px-3 pt-4 pb-3 text-center motion-safe:transition sm:rounded-b-none sm:border-b-0 " +
                 (mine ? "bg-gold/10 border-gold/40" : medal.wash + " border-white/10")
               }
               style={{ borderTopColor: medal.metal, borderTopWidth: 3 }}
