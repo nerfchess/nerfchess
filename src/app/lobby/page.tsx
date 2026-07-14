@@ -277,7 +277,7 @@ function LobbyInner() {
         <div
           role="tablist"
           aria-label="Lobby sections"
-          className="mt-6 flex flex-wrap gap-1.5 border-b border-white/10 pb-px"
+          className="mt-6 grid grid-cols-2 gap-1.5 sm:flex sm:flex-wrap sm:border-b sm:border-white/10 sm:pb-px"
         >
           {LOBBY_TABS.map((t) => {
             const count =
@@ -296,7 +296,7 @@ function LobbyInner() {
                 aria-controls={`lobby-panel-${t.id}`}
                 onClick={() => setTab(t.id)}
                 className={
-                  "flex items-center gap-2 border border-b-0 px-4 py-2.5 font-display text-sm sm:text-base transition-colors " +
+                  "flex items-center justify-center gap-2 border px-4 py-2.5 font-display text-sm transition-colors sm:justify-start sm:border-b-0 sm:text-base " +
                   (selected
                     ? "border-gold/50 bg-gold/10 text-gold-leaf"
                     : "border-white/10 bg-white/[0.03] text-parchment-300 hover:bg-white/[0.06] hover:text-parchment-100")
