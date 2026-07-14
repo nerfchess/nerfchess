@@ -11,10 +11,15 @@
    - all bsp-* classes are hidden outright under reduced motion (guard at the
      bottom of this file);
    - this is the BASIC band, hyped up (owner: "you don't need to make the
-     tier 1-4 animations so small"): one clean beat, ~1.2-1.6s, a bigger
-     centered emblem scene (~38% of the crop; tier-4 bold ~45%) with one
-     modest built-in flourish — but still NO shockwaves, NO board-darkening
-     washes, NO colossal figures. Plus a compact per-square target hit.
+     tier 1-4 animations so small"; size pass: "animations are too small in
+     general"): one clean beat, ~1.2-1.6s, a bigger centered emblem scene
+     (~44% of the crop; tier-4 bold ~49%) with one modest built-in flourish —
+     but still NO shockwaves, NO board-darkening washes, NO colossal figures.
+     Plus a compact per-square target hit.
+   - SOLE EXCEPTION: the bsp-hg-* tracks at the bottom belong to
+     ww_high_ground, the one TIER 7 card in this module — a bespoke
+     full-board takeover (wash + terraces + colossal summit + twin
+     shockwaves, ~2.1s) that intentionally breaks the basic-band rules.
    ========================================================================= */
 
 /* --- Target hits (per-square, zone-fed cards mount one per square) -------- */
@@ -321,6 +326,69 @@
   100% { opacity: 0; transform: translateX(220%) skewX(-18deg); }
 }
 .bsp-sweep { animation: bsp-sweep 0.9s ease-out both; }
+
+/* --- ww_high_ground: the TIER 7 full-board takeover (bsp-hg-*) --------------
+   The single sanctioned exception to the basic-band rules above. Same
+   discipline otherwise: transform/opacity only, one-shot `both` fills, every
+   track ends at opacity 0, and the reduced-motion guard below hides all of
+   it (bsp- prefix). */
+
+/* Board-wide gold-over-crimson wash — holds under the whole takeover. */
+@keyframes bsp-hg-wash {
+  0% { opacity: 0; }
+  16% { opacity: 1; }
+  70% { opacity: 0.55; }
+  100% { opacity: 0; }
+}
+.bsp-hg-wash { animation: bsp-hg-wash 2.1s ease-out both; }
+
+/* A terrace plateau heaving up out of the boards (rank by rank stagger). */
+@keyframes bsp-hg-terrace {
+  0% { opacity: 0; transform: scaleY(0.05); }
+  28% { opacity: 1; transform: scaleY(1.08); }
+  40% { transform: scaleY(1); }
+  82% { opacity: 0.9; }
+  100% { opacity: 0; transform: scaleY(1); }
+}
+.bsp-hg-terrace { animation: bsp-hg-terrace 1.5s cubic-bezier(0.2, 0.8, 0.2, 1) both; transform-origin: 50% 100%; }
+
+/* The colossal summit shouldering up and settling. */
+@keyframes bsp-hg-summit {
+  0% { opacity: 0; transform: translateY(28%) scale(0.72); }
+  32% { opacity: 1; transform: translateY(-1%) scale(1.04); }
+  44% { transform: translateY(0) scale(1); }
+  84% { opacity: 0.95; }
+  100% { opacity: 0; transform: translateY(-2%) scale(1.01); }
+}
+.bsp-hg-summit { animation: bsp-hg-summit 1.6s cubic-bezier(0.2, 0.8, 0.2, 1) both; transform-origin: 50% 100%; }
+
+/* The sunburst crown fanning open behind the peak. */
+@keyframes bsp-hg-rays {
+  0% { opacity: 0; transform: scale(0.2) rotate(-18deg); }
+  35% { opacity: 0.9; transform: scale(1) rotate(0deg); }
+  78% { opacity: 0.55; transform: scale(1.04) rotate(8deg); }
+  100% { opacity: 0; transform: scale(1.08) rotate(12deg); }
+}
+.bsp-hg-rays { animation: bsp-hg-rays 1.5s ease-out both; }
+
+/* The peak pennant snapping out sideways from the summit pole. */
+@keyframes bsp-hg-banner {
+  0% { opacity: 0; transform: scaleX(0.06); }
+  38% { opacity: 1; transform: scaleX(1.08); }
+  52% { transform: scaleX(1); }
+  85% { opacity: 0.95; }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.bsp-hg-banner { animation: bsp-hg-banner 1.1s cubic-bezier(0.2, 0.8, 0.2, 1) both; transform-origin: 0% 50%; }
+
+/* A takeover shockwave ring sweeping out PAST the board edges (fired twice,
+   gold then crimson, via inline delays). */
+@keyframes bsp-hg-shock {
+  0% { opacity: 0; transform: scale(0.12); }
+  16% { opacity: 1; transform: scale(0.5); }
+  100% { opacity: 0; transform: scale(2.15); }
+}
+.bsp-hg-shock { animation: bsp-hg-shock 1s ease-out both; }
 
 /* --- Reduced motion --------------------------------------------------------- */
 /* Defensive: the mounting layers already gate on prefers-reduced-motion, but

@@ -162,7 +162,7 @@ function CappuccinoAssassinoPlay({ lead, delayMs }: { lead: boolean; delayMs: nu
     <Wide>
       <Wash color="rgba(78,45,21,0.2)" delayMs={delayMs} />
       {/* the assassin blurs clean across the board */}
-      <Prop left="40%" top="34%" width="20%" height="24%" className="mnp-assassin" style={d(delayMs)}>
+      <Prop left="36.5%" top="30%" width="27%" height="32%" className="mnp-assassin" style={d(delayMs)}>
         <Figure id="cappuccino_assassino" />
       </Prop>
       {/* speed blur streaks trail the dash */}
@@ -245,14 +245,14 @@ function BallerinaCappuccinaPlay({ lead, delayMs }: { lead: boolean; delayMs: nu
     <Wide>
       <Wash color="rgba(245,168,192,0.16)" delayMs={delayMs} />
       {/* the ribbon spiral winds around her, spinning the other way */}
-      <Prop left="29%" top="26%" width="42%" height="46%" className="mnp-ribbonspin" style={d(delayMs + 150)}>
+      <Prop left="25%" top="22%" width="50%" height="54%" className="mnp-ribbonspin" style={d(delayMs + 150)}>
         <svg viewBox="0 0 100 100" className="h-full w-full">
           <RibbonSpiral color="rgba(245,168,192,0.9)" />
           <g transform="rotate(180 50 50)"><RibbonSpiral color="rgba(255,217,228,0.7)" /></g>
         </svg>
       </Prop>
       {/* the ballerina pirouettes dead center */}
-      <Prop left="41%" top="32%" width="18%" height="30%" className="mnp-pirouette" style={d(delayMs)}>
+      <Prop left="38%" top="27%" width="24%" height="39%" className="mnp-pirouette" style={d(delayMs)}>
         <Figure id="ballerina_cappuccina" />
       </Prop>
       {/* petals flung off the turn */}
@@ -308,7 +308,7 @@ function LaVacaPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
       </Prop>
       {/* the cow cruises one full orbit of the board center */}
       <Prop left="26%" top="26%" width="48%" height="48%" className="mnp-orbitpath" style={d(delayMs + 250)}>
-        <span className="absolute left-[38%] top-[-14%] block h-[36%] w-[24%]">
+        <span className="absolute left-[36%] top-[-18%] block h-[46%] w-[31%]">
           <Figure id="la_vaca_saturno_saturnita" className="mnp-orbitbob" />
         </span>
       </Prop>
@@ -354,7 +354,7 @@ function FrigoCameloPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) 
     <Wide>
       <Wash color="rgba(79,168,204,0.16)" delayMs={delayMs} />
       {/* the fridge-camel backs in from the left */}
-      <Prop left="27%" top="30%" width="20%" height="28%" className="mnp-slidein" style={d(delayMs)}>
+      <Prop left="24%" top="25%" width="26%" height="36%" className="mnp-slidein" style={d(delayMs)}>
         <Figure id="frigo_camelo" />
       </Prop>
       {/* the door: swings wide with a cold glow spilling from behind it */}
@@ -415,7 +415,7 @@ function TrippiTroppiPlay({ lead, delayMs }: { lead: boolean; delayMs: number })
     );
   }
   return (
-    <Stage inset="-110%">
+    <Stage inset="-140%">
       {/* chromatic ghost copies, out of phase */}
       <span className="mnp-glitch absolute left-[8%] top-[6%] block h-[80%] w-[80%] opacity-40" style={d(delayMs + 60)}>
         <Figure id="trippi_troppi" />
@@ -522,11 +522,11 @@ function MoaiHeadPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
       {/* the impact flash-wash: one hard pulse when it lands */}
       <Wash color="rgba(78,88,98,0.24)" delayMs={delayMs + 480} />
       {/* the moai descends. gravity means it. */}
-      <Prop left="41%" top="30%" width="18%" height="30%" className="mnp-moaidrop" style={d(delayMs)}>
+      <Prop left="37.5%" top="27%" width="25%" height="38%" className="mnp-moaidrop" style={d(delayMs)}>
         <Figure id="moai_head" />
       </Prop>
       {/* THUD: dust ring + debris at the base */}
-      <Prop left="36%" top="52%" width="28%" height="10%">
+      <Prop left="33%" top="57%" width="35%" height="11%">
         <svg viewBox="0 0 100 36" className="h-full w-full">
           <g className="mnp-dustring" style={d(delayMs + 500)}>
             <ellipse cx={50} cy={22} rx={40} ry={9} fill="none" stroke="rgba(180,188,196,0.85)" strokeWidth={4} />
@@ -628,10 +628,74 @@ function SkibidiFlushPlay({ lead, delayMs }: { lead: boolean; delayMs: number })
         </Prop>
       ))}
       {/* the porcelain culprit surfaces, delighted */}
-      <Prop left="43%" top="56%" width="14%" height="20%" className="mnp-surface" style={d(delayMs + 1050)}>
+      <Prop left="40.5%" top="52%" width="19%" height="27%" className="mnp-surface" style={d(delayMs + 1050)}>
         <Figure id="skibidi_flush" />
       </Prop>
       <Ring color="rgba(143,212,245,0.85)" delayMs={delayMs + 1250} />
+    </Wide>
+  );
+}
+
+/* ------------------------------------------------------------------------- */
+/* 9. Tung Tung Tung Sahur (t?) — HE marches the board himself, drum thunder  */
+/* ------------------------------------------------------------------------- */
+
+function TungTungSahurPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (!lead) {
+    return (
+      <Stage>
+        <svg viewBox="0 0 40 40" className="h-full w-full">
+          {/* the bat lands: impact burst + a stunned wobble ring */}
+          <g className="mnp-ringpop" style={d(delayMs)}>
+            <circle cx={20} cy={22} r={13} fill="none" stroke="#d99f5c" strokeWidth={3} />
+          </g>
+          <g className="mnp-star" style={d(delayMs + 160)}>
+            <path d="M20 8 L23 17 L32 17 L25 23 L28 32 L20 26.5 L12 32 L15 23 L8 17 L17 17 Z" fill="#ffd76a" stroke="#a8641c" strokeWidth={1.2} strokeLinejoin="round" />
+          </g>
+        </svg>
+      </Stage>
+    );
+  }
+  return (
+    <Wide>
+      <Wash color="rgba(122,74,32,0.22)" delayMs={delayMs} />
+      {/* the man himself — the glossy log, board-COLOSSAL, marching across
+          (~28% of the 14x14 canvas is ~half the visible board) */}
+      <Prop left="36%" top="24%" width="28%" height="44%" className="mnp-march" style={d(delayMs)}>
+        <Figure id="tung_tung_sahur" />
+      </Prop>
+      {/* drumbeat shockwaves ripple out of each stomp, in step */}
+      {[
+        { l: "24%", t: "56%", dl: 340 },
+        { l: "38%", t: "60%", dl: 740 },
+        { l: "52%", t: "58%", dl: 1140 },
+        { l: "66%", t: "60%", dl: 1540 },
+      ].map((sw, i) => (
+        <Prop key={i} left={sw.l} top={sw.t} width="16%" height="7%">
+          <svg viewBox="0 0 100 40" className="h-full w-full">
+            <g className="mnp-stomp" style={d(delayMs + sw.dl)}>
+              <ellipse cx={50} cy={20} rx={42} ry={12} fill="none" stroke="rgba(217,159,92,0.9)" strokeWidth={4} />
+              <ellipse cx={50} cy={20} rx={26} ry={7} fill="none" stroke="rgba(255,215,106,0.7)" strokeWidth={2.4} />
+            </g>
+          </svg>
+        </Prop>
+      ))}
+      {/* the chant stamps itself across the sky, beat by beat */}
+      {[
+        { l: "24%", t: "27%", txt: "TUNG", r: "-8deg", dl: 380 },
+        { l: "42%", t: "23%", txt: "TUNG", r: "6deg", dl: 780 },
+        { l: "60%", t: "27%", txt: "SAHUR", r: "-5deg", dl: 1180 },
+      ].map((st, i) => (
+        <Prop key={i} left={st.l} top={st.t} width="16%" height="7%">
+          <svg viewBox="0 0 120 40" className="h-full w-full">
+            <g className="mnp-stamp" style={dv(delayMs + st.dl, { "--mnp-r": st.r })}>
+              <text x={60} y={28} fontSize={24} fontWeight={900} fill="#ffd76a" stroke="#5c3a12" strokeWidth={1.6} textAnchor="middle" style={{ letterSpacing: "2px" }}>{st.txt}</text>
+            </g>
+          </svg>
+        </Prop>
+      ))}
+      <Ring color="rgba(217,159,92,0.9)" delayMs={delayMs + 1750} />
+      <Ring color="rgba(255,215,106,0.7)" delayMs={delayMs + 1900} />
     </Wide>
   );
 }
@@ -680,5 +744,12 @@ export const PLAYS: Record<string, SigPlugin> = {
   skibidi_flush: {
     config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall" },
     Render: SkibidiFlushPlay,
+  },
+  // The drum-man in PERSON (his core "drumbonk" entry was removed so this
+  // renders): same stun-zone read and siege thump as before, but the lead is
+  // HIM — the glossy /brainrot figure marching the board to his own beat.
+  tung_tung_sahur: {
+    config: { ordering: "radial", staggerMs: 60, victims: ["p", "n", "b", "r", "q"], hasLead: true, sound: "siege", source: "stun" },
+    Render: TungTungSahurPlay,
   },
 };

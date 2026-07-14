@@ -4,6 +4,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 import { type CSSProperties, useEffect, useMemo, useRef, useState } from "react";
+import { AbilityBar } from "@/components/AbilityBar";
 import { Board, QueuedPremove } from "@/components/Board";
 import { BoardPlayerRow } from "@/components/BoardPlayerRow";
 import { AdminGodPanel } from "@/components/AdminGodPanel";
@@ -2700,6 +2701,21 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                 </div>
               )}
             </div>
+            {/* Ability bar: the quick-cast surface, docked beside the board.
+                Same activation pipe as the dock's Use buttons (startBuffUse ->
+                useBuffTargeting); the dock stays the full inventory/ledger. */}
+            {isDraft && game.buffs && !isReviewingHistory && (
+              <AbilityBar
+                game={game}
+                myColor={myColor}
+                canAct={draftCanAct}
+                onStartUse={startBuffUse}
+                activeIndex={buffTargeting.targeting?.buffIndex ?? null}
+                orientation="vertical"
+                style={railHeightStyle}
+                className="hidden self-start sm:flex sm:max-h-[var(--board-height)]"
+              />
+            )}
             <div
               className={
                 "hidden min-h-0 overflow-hidden gap-3 sm:grid sm:h-[var(--board-height)] sm:w-72 sm:shrink-0 " +
@@ -2786,6 +2802,22 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           theirs={draftReveal.theirs}
           onDismiss={() => setDraftReveal(null)}
         />
+      )}
+
+      {/* Mobile quick-cast strip: the same ability bar, horizontal, floating
+          just above the move drawer's bar. Same activation pipe as the dock. */}
+      {isDraft && game.buffs && !isReviewingHistory && (
+        <div className="pointer-events-none fixed inset-x-0 bottom-[calc(2.75rem+env(safe-area-inset-bottom))] z-30 flex justify-center px-2 pb-1 sm:hidden">
+          <AbilityBar
+            game={game}
+            myColor={myColor}
+            canAct={draftCanAct}
+            onStartUse={startBuffUse}
+            activeIndex={buffTargeting.targeting?.buffIndex ?? null}
+            orientation="horizontal"
+            className="pointer-events-auto"
+          />
+        </div>
       )}
 
       <MobileMoveDrawer

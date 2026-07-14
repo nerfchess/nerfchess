@@ -15,10 +15,14 @@
 // takeover holds ~2.2s. All geometry is percentage-based so every scene
 // scales with the board.
 //
-// Which ids live here: ONLY personal-set cards with no core SIGNATURES entry
+// Which ids live here: personal-set cards with no core SIGNATURES entry
 // (core beats plugins at the resolve site — a duplicate here would be dead
-// code). The rest of the set (i_love_cam, minji, danielle, waist_25, ...)
-// already has bespoke core entries in BoardEffects.tsx.
+// code). The FLAGSHIPS live here too: all five NewJeans members (minji /
+// hanni / danielle / haerin / hyein) star their own /newjeans portrait
+// board-wide, and I Love Cami stars /companions/cami.svg with a rank+file
+// cross-sweep of light. Their old core entries were removed so these render.
+// The five members + i_love_cam are companion-placement cards engine-side,
+// so every one reads the "summon" zone (the placed piece's square).
 
 import type { CSSProperties, ReactNode } from "react";
 import type { SigPlugin } from "./sigPlugins";
@@ -93,6 +97,24 @@ function Ring({ color, delayMs }: { color: string; delayMs: number }) {
   );
 }
 
+/** A star portrait as a plain <img> (the BrainrotFigure pattern, rebuilt here
+ * so nothing imports the core): /newjeans/<id>.svg or /companions/<id>.svg. */
+function Portrait({ src, className }: { src: string; className?: string }) {
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={src}
+      alt=""
+      aria-hidden="true"
+      draggable={false}
+      className={
+        (className ? className + " " : "") +
+        "pointer-events-none h-full w-full select-none object-contain"
+      }
+    />
+  );
+}
+
 /** Chunky pawn silhouette (the personal set's everyman athlete). */
 function Pawn({ x = 0, y = 0, s = 1, fill = "#f2e5c9", stroke = "#7a6a4a" }: { x?: number; y?: number; s?: number; fill?: string; stroke?: string }) {
   return (
@@ -152,7 +174,7 @@ function MuscleUpPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   return (
     <Wide>
       <Wash color="rgba(232,237,246,0.14)" delayMs={delayMs} />
-      <Prop left="34%" top="30%" width="32%" height="32%">
+      <Prop left="29%" top="25%" width="42%" height="42%">
         <svg viewBox="0 0 100 100" className="h-full w-full">
           {/* the bar: two uprights, one knurled crossbar */}
           <g className="pnp-linger" style={d(delayMs)}>
@@ -208,7 +230,7 @@ function Bench225Play({ lead, delayMs }: { lead: boolean; delayMs: number }) {
     <Wide>
       <Wash color="rgba(57,68,92,0.2)" delayMs={delayMs} />
       {/* the bar spans the whole visible board */}
-      <Prop left="22%" top="40%" width="56%" height="18%">
+      <Prop left="17%" top="39%" width="66%" height="21%">
         <svg viewBox="0 0 200 64" className="h-full w-full">
           <g className="pnp-benchpress" style={d(delayMs)}>
             {/* bar + collars */}
@@ -279,7 +301,7 @@ function MonkeytypePlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
     );
   }
   return (
-    <Stage inset="-110%">
+    <Stage inset="-150%">
       <svg viewBox="0 0 100 100" className="h-full w-full">
         {/* the test line: a calm dark card, monkeytype-style */}
         <g className="pnp-linger" style={d(delayMs)}>
@@ -349,7 +371,7 @@ function RubiksCubePlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   return (
     <Wide>
       <Wash color="rgba(35,42,56,0.18)" delayMs={delayMs} />
-      <Prop left="36%" top="33%" width="28%" height="28%">
+      <Prop left="31%" top="28%" width="38%" height="38%">
         <svg viewBox="0 0 100 100" className="h-full w-full">
           {/* the face: black frame, 3x3 stickers, wrenched a quarter turn */}
           <g className="pnp-twist" style={d(delayMs)}>
@@ -430,7 +452,7 @@ function WhimperingAudiosPlay({ lead, delayMs }: { lead: boolean; delayMs: numbe
         </svg>
       </Prop>
       {/* the headphone halo descends like a crown */}
-      <Prop left="37%" top="33%" width="26%" height="26%">
+      <Prop left="33%" top="29%" width="34%" height="34%">
         <svg viewBox="0 0 100 100" className="h-full w-full">
           <g className="pnp-halopulse" style={d(delayMs + 550)}>
             <circle cx={50} cy={56} r={34} fill="rgba(242,119,143,0.18)" />
@@ -489,7 +511,7 @@ function ILoveMakingOutPlay({ lead, delayMs }: { lead: boolean; delayMs: number 
   return (
     <Wide>
       <Wash color="rgba(232,80,110,0.14)" delayMs={delayMs} />
-      <Prop left="36%" top="32%" width="28%" height="30%">
+      <Prop left="32%" top="28%" width="36%" height="38%">
         <svg viewBox="0 0 100 100" className="h-full w-full">
           {/* the pair: they tip toward each other and touch crowns */}
           <g className="pnp-lean-l" style={d(delayMs)}>
@@ -574,16 +596,10 @@ function HyeinPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           </svg>
         </Prop>
       ))}
-      {/* Hyein herself strides the same diagonal (public portrait asset) */}
-      <Prop left="37%" top="33%" width="26%" height="30%" className="pnp-stride" style={d(delayMs + 100)}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/newjeans/hyein.svg"
-          alt=""
-          aria-hidden="true"
-          draggable={false}
-          className="pointer-events-none h-full w-full select-none object-contain"
-        />
+      {/* Hyein herself strides the same diagonal (public portrait asset),
+          board-dominating: ~32% of the 14x14 canvas is ~56% of the board */}
+      <Prop left="34%" top="30%" width="32%" height="36%" className="pnp-stride" style={d(delayMs + 100)}>
+        <Portrait src="/newjeans/hyein.svg" />
       </Prop>
       {/* spring-green sparkles kicked up by the stride */}
       <Prop left="34%" top="52%" width="6%" height="6%">
@@ -645,7 +661,7 @@ function DanielCaesarPlay({ lead, delayMs }: { lead: boolean; delayMs: number })
         </svg>
       </Prop>
       {/* the record spins, best part on repeat */}
-      <Prop left="30%" top="34%" width="12%" height="12%">
+      <Prop left="28%" top="32%" width="16%" height="16%">
         <svg viewBox="0 0 40 40" className="h-full w-full">
           <g className="pnp-spin" style={d(delayMs + 200)}>
             <circle cx={20} cy={20} r={15} fill="#12182a" stroke="#4a7fd6" strokeWidth={1.8} />
@@ -791,7 +807,7 @@ function ForearmVeinsPlay({ lead, delayMs }: { lead: boolean; delayMs: number })
         </Prop>
       ))}
       {/* the grip-crush: a fist clenches dead center and pulses */}
-      <Prop left="42%" top="40%" width="16%" height="16%">
+      <Prop left="39%" top="37%" width="22%" height="22%">
         <svg viewBox="0 0 60 60" className="h-full w-full">
           <g className="pnp-grip" style={d(delayMs + 500)}>
             {/* forearm */}
@@ -807,6 +823,306 @@ function ForearmVeinsPlay({ lead, delayMs }: { lead: boolean; delayMs: number })
         </svg>
       </Prop>
       <Ring color="rgba(214,35,79,0.85)" delayMs={delayMs + 1200} />
+    </Wide>
+  );
+}
+
+/* ------------------------------------------------------------------------- */
+/* 11. Minji (leader) — the guardian descends, shield panes snap in           */
+/* ------------------------------------------------------------------------- */
+
+function HexPane({ color }: { color: string }) {
+  return (
+    <svg viewBox="0 0 40 44" className="h-full w-full">
+      <polygon points="20,2 37,12 37,32 20,42 3,32 3,12" fill="none" stroke={color} strokeWidth={3} strokeLinejoin="round" />
+      <polygon points="20,9 31,15.5 31,28.5 20,35 9,28.5 9,15.5" fill={color} opacity={0.22} />
+    </svg>
+  );
+}
+
+function MinjiPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (!lead) {
+    return (
+      <Stage>
+        <svg viewBox="0 0 40 40" className="h-full w-full">
+          <g className="pnp-pane" style={d(delayMs)}>
+            <polygon points="20,5 33,12.5 33,27.5 20,35 7,27.5 7,12.5" fill="rgba(90,127,214,0.25)" stroke="#5a7fd6" strokeWidth={2.6} strokeLinejoin="round" />
+          </g>
+          <g className="pnp-star" style={d(delayMs + 420)}><SparkStar x={30} y={9} s={0.8} fill="#9fc4ff" /></g>
+        </svg>
+      </Stage>
+    );
+  }
+  return (
+    <Wide>
+      <Wash color="rgba(90,127,214,0.17)" delayMs={delayMs} />
+      {/* the leader arrives, board-dominating (~32% canvas = ~56% board) */}
+      <Prop left="34%" top="29%" width="32%" height="34%" className="pnp-hero" style={d(delayMs)}>
+        <Portrait src="/newjeans/minji.svg" />
+      </Prop>
+      {/* shield panes snap in around her, a guard formation */}
+      {[
+        { left: "26%", top: "34%", dl: 420 },
+        { left: "66%", top: "34%", dl: 520 },
+        { left: "31%", top: "56%", dl: 620 },
+        { left: "61%", top: "56%", dl: 700 },
+      ].map((p, i) => (
+        <Prop key={i} left={p.left} top={p.top} width="8%" height="9%" className="pnp-pane" style={d(delayMs + p.dl)}>
+          <HexPane color={i % 2 ? "#9fc4ff" : "#5a7fd6"} />
+        </Prop>
+      ))}
+      {/* the picket of light along the home ranks */}
+      {[30, 40.5, 51, 61.5].map((l, i) => (
+        <Prop key={i} left={`${l}%`} top="63%" width="2%" height="9%">
+          <span className="pnp-partline absolute inset-0 block rounded-full" style={{ background: "linear-gradient(180deg, rgba(233,242,255,0.95), rgba(90,127,214,0.6))", ...d(delayMs + 760 + i * 90) }} />
+        </Prop>
+      ))}
+      <Ring color="rgba(159,196,255,0.9)" delayMs={delayMs + 1150} />
+      <Ring color="rgba(90,127,214,0.75)" delayMs={delayMs + 1300} />
+    </Wide>
+  );
+}
+
+/* ------------------------------------------------------------------------- */
+/* 12. Hanni (frost charm) — crystal bloom behind her, butterflies rise       */
+/* ------------------------------------------------------------------------- */
+
+function FrostArm({ color }: { color: string }) {
+  return (
+    <g>
+      <path d="M0 0 v-34 M0 -12 l-7 -7 M0 -12 l7 -7 M0 -23 l-5 -5 M0 -23 l5 -5" fill="none" stroke={color} strokeWidth={2.6} strokeLinecap="round" />
+    </g>
+  );
+}
+
+function HanniPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (!lead) {
+    return (
+      <Stage>
+        <svg viewBox="0 0 40 40" className="h-full w-full">
+          <g className="pnp-pane" style={d(delayMs)}>
+            <path d="M20 6 v28 M8 13 l24 14 M32 13 l-24 14" stroke="#bfe6a8" strokeWidth={2.8} strokeLinecap="round" />
+          </g>
+          <g className="pnp-star" style={d(delayMs + 430)}><SparkStar x={31} y={10} s={0.8} fill="#e8f7d8" /></g>
+        </svg>
+      </Stage>
+    );
+  }
+  return (
+    <Wide>
+      <Wash color="rgba(168,204,127,0.18)" delayMs={delayMs} />
+      {/* the giant crystal bloom turns slowly behind her */}
+      <Prop left="30%" top="26%" width="40%" height="40%" className="pnp-bloom" style={d(delayMs + 120)}>
+        <svg viewBox="0 0 100 100" className="h-full w-full">
+          {[0, 60, 120, 180, 240, 300].map((a) => (
+            <g key={a} transform={`translate(50 50) rotate(${a})`}>
+              <FrostArm color={a % 120 ? "rgba(191,230,168,0.9)" : "rgba(232,247,216,0.95)"} />
+            </g>
+          ))}
+          <circle cx={50} cy={50} r={6} fill="rgba(232,247,216,0.9)" />
+        </svg>
+      </Prop>
+      {/* Hanni front and center, board-dominating */}
+      <Prop left="34.5%" top="30%" width="31%" height="33%" className="pnp-hero" style={d(delayMs)}>
+        <Portrait src="/newjeans/hanni.svg" />
+      </Prop>
+      {/* her butterflies flutter up and away */}
+      {[
+        { l: "31%", t: "42%", dl: 700, f: "#f2e27a" },
+        { l: "64%", t: "36%", dl: 900, f: "#bfe6a8" },
+        { l: "58%", t: "56%", dl: 1100, f: "#f2e27a" },
+      ].map((b, i) => (
+        <Prop key={i} left={b.l} top={b.t} width="5%" height="5%">
+          <svg viewBox="0 0 20 20" className="h-full w-full">
+            <g className="pnp-rise" style={d(delayMs + b.dl)}>
+              <path d="M10 10 q-6 -7 -8 -1 q-1 5 8 3 q9 2 8 -3 q-2 -6 -8 1 Z" fill={b.f} stroke="#7a8a4a" strokeWidth={0.8} strokeLinejoin="round" />
+              <path d="M10 8.5 v4" stroke="#5a4632" strokeWidth={1.2} strokeLinecap="round" />
+            </g>
+          </svg>
+        </Prop>
+      ))}
+      <Ring color="rgba(191,230,168,0.9)" delayMs={delayMs + 1250} />
+    </Wide>
+  );
+}
+
+/* ------------------------------------------------------------------------- */
+/* 13. Danielle (sunshine) — dawn rays fan out, parachute pawns drift in      */
+/* ------------------------------------------------------------------------- */
+
+function DaniellePlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (!lead) {
+    return (
+      <Stage>
+        <svg viewBox="0 0 40 40" className="h-full w-full">
+          <g className="pnp-driftdown" style={dv(delayMs, { "--pnp-r": "-8deg" })}>
+            <path d="M11 12 a9 9 0 0 1 18 0 Z" fill="#f6cf9d" stroke="#c98d4b" strokeWidth={1.4} />
+            <path d="M12 12 L18 22 M28 12 L22 22" stroke="#c98d4b" strokeWidth={1.1} />
+            <Pawn x={20} y={27} s={0.75} fill="#fdf3dd" stroke="#c98d4b" />
+          </g>
+          <g className="pnp-star" style={d(delayMs + 500)}><SparkStar x={31} y={9} s={0.8} fill="#ffd76a" /></g>
+        </svg>
+      </Stage>
+    );
+  }
+  return (
+    <Wide>
+      <Wash color="rgba(246,207,157,0.2)" delayMs={delayMs} />
+      {/* dawn rays fan from behind her across the whole board */}
+      {[-52, -26, 0, 26, 52].map((a, i) => (
+        <Prop key={i} left="48.75%" top="18%" width="2.5%" height="42%" style={{ transform: `rotate(${a}deg)`, transformOrigin: "50% 90%" }}>
+          <span className="pnp-ray absolute inset-0 block rounded-full" style={{ background: "linear-gradient(0deg, transparent, rgba(255,215,106,0.55), rgba(255,242,201,0.8))", ...d(delayMs + 150 + i * 90) }} />
+        </Prop>
+      ))}
+      {/* Danielle beams at board scale */}
+      <Prop left="34%" top="30%" width="32%" height="34%" className="pnp-hero" style={d(delayMs + 80)}>
+        <Portrait src="/newjeans/danielle.svg" />
+      </Prop>
+      {/* her reinforcements parachute down the files */}
+      {[
+        { l: "27%", t: "30%", r: "-10deg", dl: 620 },
+        { l: "67%", t: "26%", r: "8deg", dl: 780 },
+        { l: "63%", t: "52%", r: "-6deg", dl: 940 },
+        { l: "30%", t: "54%", r: "10deg", dl: 1100 },
+      ].map((p, i) => (
+        <Prop key={i} left={p.l} top={p.t} width="7%" height="8%">
+          <svg viewBox="0 0 40 40" className="h-full w-full">
+            <g className="pnp-driftdown" style={dv(delayMs + p.dl, { "--pnp-r": p.r })}>
+              <path d="M9 12 a11 11 0 0 1 22 0 Z" fill="#f6cf9d" stroke="#c98d4b" strokeWidth={1.6} />
+              <path d="M10 12 L17 24 M30 12 L23 24" stroke="#c98d4b" strokeWidth={1.2} />
+              <Pawn x={20} y={30} s={0.9} fill="#fdf3dd" stroke="#c98d4b" />
+            </g>
+          </svg>
+        </Prop>
+      ))}
+      <Ring color="rgba(255,215,106,0.9)" delayMs={delayMs + 1250} />
+    </Wide>
+  );
+}
+
+/* ------------------------------------------------------------------------- */
+/* 14. Haerin (the cat) — ink slashes rake the board, she pounces through     */
+/* ------------------------------------------------------------------------- */
+
+function HaerinPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (!lead) {
+    return (
+      <Stage>
+        <svg viewBox="0 0 40 40" className="h-full w-full">
+          {/* the claw swipe: three quick raking lines */}
+          <g className="pnp-slashsweep" style={d(delayMs)}>
+            <path d="M9 10 L31 24" stroke="#eceff1" strokeWidth={3} strokeLinecap="round" />
+          </g>
+          <g className="pnp-slashsweep" style={d(delayMs + 110)}>
+            <path d="M8 17 L32 31" stroke="#c5ccd3" strokeWidth={3} strokeLinecap="round" />
+          </g>
+          <g className="pnp-slashsweep" style={d(delayMs + 220)}>
+            <path d="M7 24 L29 37" stroke="#8b95a0" strokeWidth={3} strokeLinecap="round" />
+          </g>
+        </svg>
+      </Stage>
+    );
+  }
+  return (
+    <Wide>
+      <Wash color="rgba(18,20,25,0.3)" delayMs={delayMs} />
+      {/* three colossal claw streaks rake corner to corner */}
+      {[
+        { top: "30%", dl: 260 },
+        { top: "42%", dl: 380 },
+        { top: "54%", dl: 500 },
+      ].map((s, i) => (
+        <Prop key={i} left="22%" top={s.top} width="56%" height="2.4%" style={{ transform: "rotate(-16deg)", transformOrigin: "50% 50%" }}>
+          <span className="pnp-slashsweep absolute inset-0 block rounded-full" style={{ background: "linear-gradient(90deg, transparent, rgba(236,239,241,0.95), transparent)", ...d(delayMs + s.dl) }} />
+        </Prop>
+      ))}
+      {/* Haerin pounces clean across the board, huge */}
+      <Prop left="35%" top="30%" width="30%" height="32%" className="pnp-pounce" style={d(delayMs)}>
+        <Portrait src="/newjeans/haerin.svg" />
+      </Prop>
+      {/* paw prints land where she passed */}
+      {[
+        { l: "33%", t: "58%", s: 0.9, dl: 640 },
+        { l: "47%", t: "48%", s: 1.1, dl: 800 },
+        { l: "61%", t: "38%", s: 1.3, dl: 960 },
+      ].map((p, i) => (
+        <Prop key={i} left={p.l} top={p.t} width="6%" height="6%">
+          <svg viewBox="0 0 40 40" className="h-full w-full">
+            <g className="pnp-foot" style={d(delayMs + p.dl)}>
+              <g transform={`translate(20 22) scale(${p.s})`}>
+                <ellipse cx={0} cy={2} rx={6} ry={5} fill="#eceff1" />
+                <circle cx={-6.5} cy={-5} r={2.4} fill="#eceff1" />
+                <circle cx={-2} cy={-7.5} r={2.4} fill="#eceff1" />
+                <circle cx={2.8} cy={-7.5} r={2.4} fill="#eceff1" />
+                <circle cx={7} cy={-5} r={2.4} fill="#eceff1" />
+              </g>
+            </g>
+          </svg>
+        </Prop>
+      ))}
+      <Ring color="rgba(236,239,241,0.85)" delayMs={delayMs + 1150} />
+    </Wide>
+  );
+}
+
+/* ------------------------------------------------------------------------- */
+/* 15. I Love Cami (t8) — Cami arrives; a rank+file cross-sweep of light      */
+/* ------------------------------------------------------------------------- */
+
+function ILoveCamPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (!lead) {
+    return (
+      <Stage>
+        <svg viewBox="0 0 40 40" className="h-full w-full">
+          {/* the cross of light snaps over the swept square */}
+          <g className="pnp-pane" style={d(delayMs)}>
+            <path d="M20 5 V35 M5 20 H35" stroke="#ff8fb1" strokeWidth={3.4} strokeLinecap="round" />
+          </g>
+          <g className="pnp-rise" style={d(delayMs + 320)}>
+            <path d="M20 16 c-2 -3.4 -6.8 -2 -6.8 1.4 c0 2.7 3.7 5 6.8 7 c3.1 -2 6.8 -4.3 6.8 -7 c0 -3.4 -4.8 -4.8 -6.8 -1.4 Z" fill="#ff8fb1" stroke="#c2557d" strokeWidth={1.1} strokeLinejoin="round" />
+          </g>
+        </svg>
+      </Stage>
+    );
+  }
+  return (
+    <Wide>
+      <Wash color="rgba(255,143,177,0.16)" delayMs={delayMs} />
+      {/* the FILE sweep: a vertical blade of light crosses every rank */}
+      <Prop left="47%" top="21.5%" width="6%" height="57%">
+        <span className="pnp-sweepx absolute inset-0 block rounded-full" style={{ background: "linear-gradient(90deg, transparent, rgba(255,214,231,0.95), rgba(255,143,177,0.7), transparent)", ...d(delayMs + 250) }} />
+      </Prop>
+      {/* the RANK sweep: a horizontal blade crosses every file */}
+      <Prop left="21.5%" top="47%" width="57%" height="6%">
+        <span className="pnp-sweepy absolute inset-0 block rounded-full" style={{ background: "linear-gradient(180deg, transparent, rgba(255,242,201,0.95), rgba(255,199,106,0.7), transparent)", ...d(delayMs + 550) }} />
+      </Prop>
+      {/* Cami herself — the anime companion, board-dominating */}
+      <Prop left="35.5%" top="26%" width="29%" height="42%" className="pnp-hero" style={d(delayMs)}>
+        <Portrait src="/companions/cami.svg" />
+      </Prop>
+      {/* charm hearts burst off the cross point */}
+      {[
+        { x: "-190%", y: "-110%", r: "22deg", s: 1, dl: 850 },
+        { x: "180%", y: "-140%", r: "-26deg", s: 0.85, dl: 910 },
+        { x: "-140%", y: "150%", r: "18deg", s: 0.8, dl: 970 },
+        { x: "200%", y: "100%", r: "-18deg", s: 0.9, dl: 1030 },
+      ].map((k, i) => (
+        <Prop key={i} left="47%" top="44%" width="6%" height="6%">
+          <svg viewBox="0 0 20 20" className="h-full w-full">
+            <g className="pnp-kissfetti" style={dv(delayMs + k.dl, { "--pnp-x": k.x, "--pnp-y": k.y, "--pnp-r": k.r })}>
+              <path transform={`translate(10 10) scale(${k.s})`} d="M0 -2 c-1.6 -2.8 -5.6 -1.6 -5.6 1.2 c0 2.2 3 4.1 5.6 5.8 c2.6 -1.7 5.6 -3.6 5.6 -5.8 c0 -2.8 -4 -4 -5.6 -1.2 Z" fill={i % 2 ? "#ffd76a" : "#ff8fb1"} />
+            </g>
+          </svg>
+        </Prop>
+      ))}
+      {/* gold star winks where the sweeps crossed */}
+      <Prop left="46.5%" top="46.5%" width="7%" height="7%">
+        <svg viewBox="0 0 20 20" className="h-full w-full">
+          <g className="pnp-star" style={d(delayMs + 780)}><SparkStar x={10} y={10} s={1.4} fill="#ffd76a" /></g>
+        </svg>
+      </Prop>
+      <Ring color="rgba(255,143,177,0.9)" delayMs={delayMs + 1200} />
+      <Ring color="rgba(255,215,106,0.75)" delayMs={delayMs + 1350} />
     </Wide>
   );
 }
@@ -848,9 +1164,31 @@ export const PLAYS: Record<string, SigPlugin> = {
     config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation" },
     Render: ILoveMakingOutPlay,
   },
+  // The five members + i_love_cam are companion placements engine-side: each
+  // reads the "summon" zone (the placed companion's square) for its targets.
   hyein: {
-    config: { ordering: "sweep", staggerMs: 60, victims: ["p"], hasLead: true, sound: "blitz", source: "rally" },
+    config: { ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "blitz", source: "summon" },
     Render: HyeinPlay,
+  },
+  minji: {
+    config: { ordering: "radial", staggerMs: 40, victims: "all", hasLead: true, sound: "aegis", source: "summon" },
+    Render: MinjiPlay,
+  },
+  hanni: {
+    config: { ordering: "radial", staggerMs: 45, victims: "all", hasLead: true, sound: "massfreeze", source: "summon" },
+    Render: HanniPlay,
+  },
+  danielle: {
+    config: { ordering: "sweep", staggerMs: 80, victims: "all", hasLead: true, sound: "wall", source: "summon" },
+    Render: DaniellePlay,
+  },
+  haerin: {
+    config: { ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "rampage", source: "summon" },
+    Render: HaerinPlay,
+  },
+  i_love_cam: {
+    config: { ordering: "radial", staggerMs: 40, victims: "all", hasLead: true, sound: "lightning", source: "summon" },
+    Render: ILoveCamPlay,
   },
   daniel_caesar: {
     config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze" },

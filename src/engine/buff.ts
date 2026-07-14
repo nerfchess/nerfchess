@@ -555,6 +555,15 @@ export interface Buff {
   onMovePlayed?: (inst: BuffInstance, move: Move, api: BuffApi) => void;
   /** Short live status line ("2 turns left", "bound to e4"). */
   status?: (inst: BuffInstance) => string | null;
+  /**
+   * Recharging activation (companion abilities): how many of the owner's
+   * turns remain before the card can be activated again, plus the full
+   * cooldown length for a progress ring. Display metadata only, a pure read
+   * of the instance state the mechanics already keep (never consulted by the
+   * engine, so it cannot desync anything). Return null while no cooldown
+   * applies (not yet online, or a once-per-game ability already used).
+   */
+  cooldown?: (inst: BuffInstance) => { left: number; total: number } | null;
 }
 
 /** True when the AI can pick this card and resolve it without a UI. */

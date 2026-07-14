@@ -46,6 +46,20 @@ import {
   type GenConfig,
 } from "./effects/genSignature";
 
+// Companion pieces (I Love Cami + the NewJeans pocket companions): each card
+// binds a placed piece whose square rides on the instance's state.sq
+// (trackBoundPiece pattern), and the board renders bespoke portrait art at
+// that square instead of the standard sprite. Art lives in public/; the id
+// set here must match the companion cards in engine/buffs/personal.ts.
+const COMPANION_ART: Record<string, string> = {
+  i_love_cam: "/companions/cami.svg",
+  minji: "/newjeans/minji.svg",
+  hanni: "/newjeans/hanni.svg",
+  danielle: "/newjeans/danielle.svg",
+  haerin: "/newjeans/haerin.svg",
+  hyein: "/newjeans/hyein.svg",
+};
+
 // Signature resolution: bespoke entries win; every other card falls back to
 // its deterministic generated choreography (see genSignature.tsx), so no card
 // is ever left without a play animation. Generated configs are cached: the
@@ -1678,6 +1692,27 @@ export function Board({
     }
     return s;
   }, [buffs, board.pieces]);
+  // Companion pieces: bespoke portrait art on the square each companion card
+  // tracks (state.sq, kept current by trackBoundPiece). Derived from the
+  // public buff state for BOTH sides so the opponent sees the same companion;
+  // the square must still hold the owner's piece (a captured companion's card
+  // is spent, so nothing stale can paint). Masked instances carry an empty
+  // id and never match.
+  const companionSquares = useMemo(() => {
+    const m = new Map<number, { art: string }>();
+    if (!buffs) return m;
+    for (const color of ["w", "b"] as Color[]) {
+      for (const inst of buffs.players[color].buffs) {
+        const art = COMPANION_ART[inst.id];
+        if (!art || inst.spent || inst.nullified) continue;
+        const sq = inst.state.sq as number | undefined;
+        if (typeof sq !== "number" || sq < 0 || sq > 63) continue;
+        const p = board.pieces[sq];
+        if (p && p.color === color) m.set(sq, { art });
+      }
+    }
+    return m;
+  }, [buffs, board.pieces]);
   // Movement-grant HYBRID sprites (owner request: an empowered piece should
   // look like a genuinely new piece). Every running card that declares a
   // movement grant (CardFx motif "empower" with moveAs) already paints a
@@ -3267,6 +3302,16 @@ export function Board({
                   >
                     {walnutSquares.has(sq) ? (
                       <WalnutPiece type={piece.type} color={piece.color} size="100%" />
+                    ) : companionSquares.has(sq) ? (
+                      // Companion piece: bespoke portrait art in place of the
+                      // standard sprite (mechanics stay the underlying piece).
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={companionSquares.get(sq)!.art}
+                        alt=""
+                        draggable={false}
+                        className="h-full w-full select-none object-contain drop-shadow"
+                      />
                     ) : (
                       <Piece
                         type={piece.type}
@@ -3524,7 +3569,17 @@ export function Board({
             willChange: "transform",
           }}
         >
-          <Piece type={draggedPiece.type} color={draggedPiece.color} size="100%" />
+          {companionSquares.has(drag.from) ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={companionSquares.get(drag.from)!.art}
+              alt=""
+              draggable={false}
+              className="h-full w-full select-none object-contain drop-shadow"
+            />
+          ) : (
+            <Piece type={draggedPiece.type} color={draggedPiece.color} size="100%" />
+          )}
         </div>
       )}
 

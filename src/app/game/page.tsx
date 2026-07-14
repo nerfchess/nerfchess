@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { AbilityBar } from "@/components/AbilityBar";
 import { Board } from "@/components/Board";
 import { BoardPlayerRow } from "@/components/BoardPlayerRow";
 import { ClockPill } from "@/components/ClockPill";
@@ -63,6 +64,7 @@ import { BoardState, Color, Move, Square } from "@/engine/types";
 import { cloneBoard, findKing, isInCheck, makeMove, moveToUCI } from "@/engine/board";
 import { computeMoveRisks } from "@/engine/moveSafety";
 import { loadSettings } from "@/lib/settings";
+import { ensureAccount } from "@/lib/authClient";
 import type { QueuedPremove } from "@/components/Board";
 import { buildCustomNerf, CustomNerf } from "@/engine/nerfs/custom";
 import { isMuted, playCapture, playCheck, playNerf, playMove as playMoveSfx, setMuted } from "@/lib/sounds";
@@ -126,6 +128,13 @@ function dealNerfOptions(exclude: Set<string>): Nerf[] {
   if (Math.random() < 0.5) second.reverse();
   return Math.random() < 0.5 ? [...first, ...second] : [...second, ...first];
 }
+
+// Starting a local bot game is real engagement, so it mints a guest account
+// (fire-and-forget) to make engaged visitors visible in the moderators' guest
+// counts — see the effect below. Module-level so remounts (color swaps,
+// rematches, strict-mode double effects) never re-trigger it: at most one
+// ensure per page load.
+let ensuredAccountForBotGame = false;
 
 const BOT_ELO: Record<AILevel, number> = {
   easy: 1100,
@@ -454,6 +463,19 @@ function GamePage() {
     queueMicrotask(bootstrapGame);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // A visitor who starts a local bot game is engaged: mint a guest account so
+  // they show up in the moderators' "guests created" counts (guests used to be
+  // created only on joining an online seek, leaving these visitors invisible).
+  // ensureAccount no-ops for signed-in users and dedupes; the module flag keeps
+  // it to one attempt per page load. Skipped for the guided tour (?tour=1),
+  // which isn't a self-initiated game. Fire-and-forget: the local game never
+  // waits on (or fails with) it.
+  useEffect(() => {
+    if (tourMode || ensuredAccountForBotGame) return;
+    ensuredAccountForBotGame = true;
+    void ensureAccount().catch(() => {});
+  }, [tourMode]);
 
   // Draft mode: the player picked their nerf; the bot picks one of its two
   // options at random and the game begins.
@@ -2052,6 +2074,23 @@ function GamePage() {
                 </div>
               )}
             </div>
+            {/* Ability bar: the quick-cast surface, docked beside the board.
+                Same activation pipe as the dock's Use buttons. */}
+            {game.buffs && !isReviewingHistory && (
+              <AbilityBar
+                game={game}
+                myColor={myColor}
+                canAct={!game.result && game.board.turn === myColor && !myOffer && !isReviewingHistory}
+                onStartUse={(i) => {
+                  snapshotMySignature(i);
+                  buffTargeting.start(i);
+                }}
+                activeIndex={buffTargeting.targeting?.buffIndex ?? null}
+                orientation="vertical"
+                style={railHeightStyle}
+                className="hidden self-start sm:flex sm:max-h-[var(--board-height)]"
+              />
+            )}
             <div
               className={
                 "hidden min-h-0 overflow-hidden gap-3 sm:grid sm:h-[var(--board-height)] sm:w-72 sm:shrink-0 " +
@@ -2088,6 +2127,25 @@ function GamePage() {
           </div>
         </div>
       </div>
+
+      {/* Mobile quick-cast strip: the same ability bar, horizontal, floating
+          just above the move drawer's bar. */}
+      {game.buffs && !isReviewingHistory && (
+        <div className="pointer-events-none fixed inset-x-0 bottom-[calc(2.75rem+env(safe-area-inset-bottom))] z-30 flex justify-center px-2 pb-1 sm:hidden">
+          <AbilityBar
+            game={game}
+            myColor={myColor}
+            canAct={!game.result && game.board.turn === myColor && !myOffer && !isReviewingHistory}
+            onStartUse={(i) => {
+              snapshotMySignature(i);
+              buffTargeting.start(i);
+            }}
+            activeIndex={buffTargeting.targeting?.buffIndex ?? null}
+            orientation="horizontal"
+            className="pointer-events-auto"
+          />
+        </div>
+      )}
 
       <MobileMoveDrawer
         moves={game.board.history}

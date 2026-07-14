@@ -1253,7 +1253,9 @@ function BoardWideLead({
     <BoardWideStage>
       <BoardWash color={wash} delayMs={delayMs} />
       {children && (
-        <span className={motifClass + " absolute inset-[34%] block"} style={{ animationDelay: `${delayMs + 100}ms` }}>
+        // Owner size pass: inset 31% leaves a 38%-of-canvas motif, ~2/3 of the
+        // visible board (was 34% / ~56%).
+        <span className={motifClass + " absolute inset-[31%] block"} style={{ animationDelay: `${delayMs + 100}ms` }}>
           {children}
         </span>
       )}
@@ -1340,9 +1342,11 @@ function GodEvent({
           />
         </span>
       ))}
-      {/* (b) the colossal manifestation, entering the board */}
+      {/* (b) the colossal manifestation, entering the board (owner size pass:
+          34% of the canvas is ~60% of the visible board — the god should feel
+          like it barely fits the arena) */}
       <span
-        className={(rise ? "fx-sig-rise" : "fx-sig-shade") + " absolute left-[35%] top-[21%] block h-[48%] w-[30%]"}
+        className={(rise ? "fx-sig-rise" : "fx-sig-shade") + " absolute left-[33%] top-[18%] block h-[54%] w-[34%]"}
         style={{ animationDelay: `${delayMs + 170}ms` }}
       >
         {figure}
@@ -1350,7 +1354,7 @@ function GodEvent({
       {children}
       {/* (c) climax: touchdown flare + sparks + twin shockwaves */}
       <span
-        className="fx-sig-flash absolute left-[38%] top-[55%] block h-[18%] w-[24%] rounded-full"
+        className="fx-sig-flash absolute left-[36%] top-[54%] block h-[21%] w-[28%] rounded-full"
         style={{ background: flare, animationDelay: `${delayMs + 470}ms` }}
       />
       <ShardBurst vectors={BURST_MED} fill={sparkFill} stroke={sparkStroke} delayMs={delayMs + 500} sizePct={7} />
@@ -3607,6 +3611,68 @@ function CanopyBurst({ delayMs }: { delayMs: number }) {
           <path d={leaf} fill="rgba(126,181,154,0.75)" stroke="#2f4a3c" strokeWidth="1" strokeLinejoin="round" />
         </svg>
       </span>
+    </span>
+  );
+}
+
+/** I Love My Sister (t7): the sheltering grove, writ god-scale. The revived
+ * piece comes home under a colossal world-tree that RISES out of the board in
+ * a full GodEvent arc (verdant wash, grave-light rays, rose-gold shockwaves);
+ * targets pop the compact leaf-shield. we_verdant_shield keeps the old
+ * square-local "canopy" visual — this one is the tier-7 takeover. */
+function SisterGroveBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  const leaf = "M22 20 C12 6 4 8 3 20 C7 16 12 17 15 21 C10 20 7 23 6 28 C11 23 16 22 22 22 Z";
+  if (lead) {
+    return (
+      <GodEvent
+        wash="rgba(126,181,154,0.22)"
+        rays="rgba(214,244,224,0.7)"
+        boom="rgba(242,168,190,0.85)"
+        flare="rgba(230,255,238,0.7)"
+        sparkFill="#a8d8bc"
+        sparkStroke="#2f4a3c"
+        motion="rise"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 44 44" className="h-full w-full" aria-hidden="true">
+            {/* the great trunk */}
+            <path d="M20 44 L20.5 26 Q18 20 14 17 M24 44 L23.5 26 Q26 20 30 17 M22 44 V22" stroke="#5a442c" strokeWidth="3.4" strokeLinecap="round" fill="none" />
+            {/* three-lobed crown, wide as a roof */}
+            <ellipse cx="12" cy="15" rx="11" ry="8.5" fill="rgba(126,181,154,0.9)" stroke="#2f4a3c" strokeWidth="1.1" />
+            <ellipse cx="32" cy="15" rx="11" ry="8.5" fill="rgba(105,160,132,0.9)" stroke="#2f4a3c" strokeWidth="1.1" />
+            <ellipse cx="22" cy="9" rx="13" ry="9" fill="rgba(150,204,172,0.95)" stroke="#2f4a3c" strokeWidth="1.1" />
+            {/* the heart nested in the boughs — she arrives protected */}
+            <path d="M22 12 c-2.2 -3.6 -7.2 -2.2 -7.2 1.4 c0 3 4 5.4 7.2 7.6 c3.2 -2.2 7.2 -4.6 7.2 -7.6 c0 -3.6 -5 -5 -7.2 -1.4 Z" fill="#f2a8be" stroke="#a8506e" strokeWidth="1.2" strokeLinejoin="round" />
+            {/* sheltering roots gripping the board */}
+            <path d="M20 44 Q14 41 9 42 M24 44 Q30 41 35 42" stroke="#5a442c" strokeWidth="2.4" strokeLinecap="round" fill="none" />
+          </svg>
+        }
+      >
+        {/* petals shaken loose, drifting down over the ranks */}
+        {[
+          { l: "34%", t: "34%", d: 620 },
+          { l: "60%", t: "30%", d: 760 },
+          { l: "46%", t: "26%", d: 900 },
+        ].map((p, i) => (
+          <span key={i} className="fx-sig-ash absolute block h-[4%] w-[4%] rounded-full" style={{ left: p.l, top: p.t, background: "rgba(242,168,190,0.85)", animationDelay: `${delayMs + p.d}ms` }} />
+        ))}
+      </GodEvent>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="fx-sig-rise absolute left-[44%] bottom-[8%] block h-[54%] w-[12%] rounded-[1px]" style={{ background: "rgba(90,68,44,0.85)", animationDelay: `${delayMs}ms` }} />
+      <span className="fx-sig-wing-l absolute left-[4%] top-[12%] block h-[52%] w-[52%]" style={{ animationDelay: `${delayMs + 60}ms` }}>
+        <svg viewBox="0 0 24 34" className="h-full w-full" aria-hidden="true">
+          <path d={leaf} fill="rgba(126,181,154,0.8)" stroke="#2f4a3c" strokeWidth="1" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <span className="fx-sig-wing-r absolute right-[4%] top-[12%] block h-[52%] w-[52%]" style={{ animationDelay: `${delayMs + 60}ms` }}>
+        <svg viewBox="0 0 24 34" className="h-full w-full" aria-hidden="true" style={{ transform: "scaleX(-1)" }}>
+          <path d={leaf} fill="rgba(126,181,154,0.8)" stroke="#2f4a3c" strokeWidth="1" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <span className="fx-sig-ring absolute inset-[14%] block rounded-full" style={{ border: "1.5px solid rgba(242,168,190,0.9)", animationDelay: `${delayMs + 200}ms` }} />
     </span>
   );
 }
@@ -10730,6 +10796,8 @@ export default function SignatureVisual({
       return <WardPulseBurst lead={lead} delayMs={delayMs} />;
     case "canopy":
       return <CanopyBurst delayMs={delayMs} />;
+    case "sistergrove":
+      return <SisterGroveBurst lead={lead} delayMs={delayMs} />;
     case "chronosteal":
       return <ChronoStealBurst lead={lead} delayMs={delayMs} />;
     case "blink":

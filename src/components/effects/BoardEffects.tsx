@@ -1347,6 +1347,7 @@ export type SigVisual =
   | "stonehide"
   | "wardpulse"
   | "canopy"
+  | "sistergrove" // ilovemysister (was canopy, shared with we_verdant_shield)
   | "chronosteal"
   | "blink"
   | "portal"
@@ -2036,8 +2037,8 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   // --- Batch 10: gambling wheels, the drum-man, and a slapstick funny batch.
   // The gambling cards (Wheel of Fortune / Jackpot / Gamble) join roulette with
   // their own spin-to-a-pointer wheel, a slot machine, and a coin flip; every
-  // one reuses an already-shipped SigZone + SigSoundKey. tung_tung_sahur finally
-  // gets its own drum-man bonk (it was the one brainrot card with no signature).
+  // one reuses an already-shipped SigZone + SigSoundKey. (tung_tung_sahur has
+  // since moved to memePlays.tsx, where the man himself marches the board.)
   // The rest are comedic library cards that used to fall back to a generic zone
   // overlay; each gets a bespoke gag. Every source !== "removal" entry rides the
   // same zone wiring as the rest of Batch 2-9.
@@ -2056,10 +2057,10 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   wa_high_roll: { ordering: "radial", staggerMs: 0, victims: "all", visual: "dicewheel", hasLead: true, sound: "snooze", source: "stun" },
   wa_arcane_reroll: { ordering: "radial", staggerMs: 0, victims: "all", visual: "runewheel", hasLead: true, sound: "snooze", source: "stun" },
 
-  // The one brainrot card still without a signature: the drum-man marches and
-  // bonks the nearest enemy (freeze skin "stun" + bonk), so it reads off the
-  // stun zone like Bombombini.
-  tung_tung_sahur: { ordering: "radial", staggerMs: 60, victims: ["p", "n", "b", "r", "q"], visual: "drumbonk", hasLead: true, sound: "siege", source: "stun" },
+  // tung_tung_sahur moved to the meme plugin set (memePlays.tsx): HE marches
+  // the board in person now (his /brainrot portrait), not the generic drum
+  // bonk. Core must NOT keep an entry — core beats plugins at the resolve
+  // site, so a duplicate here would shadow the portrait play.
 
   // Slapstick freezes (frozen zone, the snowball precedent): a rake to the face,
   // a fly swatter, a nap, a glue trap, a bear trap.
@@ -2181,26 +2182,25 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   // already ships and renders, matched to the card's actual mechanic (removal
   // diff, frozen zone, or shield zone), so it lights up the moment those cards
   // land. Cards not listed here still get a procedural genSignature. ---
-  i_love_cam: { ordering: "radial", staggerMs: 40, victims: "all", visual: "smite", hasLead: true, sound: "lightning" },
+  // i_love_cam / the NewJeans members (minji, hanni, danielle, haerin, hyein)
+  // live in the personal plugin set (personalPlays.tsx) — their plays star the
+  // /newjeans and /companions portrait art. No core entries: core beats
+  // plugins at the resolve site, so entries here would shadow the portraits.
   fur_elise: { ordering: "line", staggerMs: 90, victims: "all", mover: "b", visual: "arclight", hasLead: true, sound: "lightning" },
   geometry_dash: { ordering: "sweep", staggerMs: 110, victims: "all", visual: "strike", hasLead: true, sound: "lightning" },
-  haerin: { ordering: "line", staggerMs: 90, victims: "all", mover: "n", visual: "dive", hasLead: false, sound: "rampage" },
   check_out_our_socials: { ordering: "radial", staggerMs: 65, victims: ["p", "n", "b", "r", "q"], visual: "iceshatter", hasLead: true, sound: "massfreeze", source: "frozen" },
   bayview_secondary_school: { ordering: "radial", staggerMs: 55, victims: "all", visual: "deepglacier", hasLead: true, sound: "massfreeze", source: "frozen" },
-  hanni: { ordering: "radial", staggerMs: 45, victims: "all", visual: "snapfrost", hasLead: true, sound: "massfreeze", source: "frozen" },
   fingertip_maltese: { ordering: "radial", staggerMs: 0, victims: "all", visual: "chainfreeze", hasLead: true, sound: "massfreeze", source: "frozen" },
   i_love_my_gf: { ordering: "radial", staggerMs: 35, victims: "all", visual: "aegis", hasLead: true, sound: "aegis", source: "shield" },
   uniqlo_warrior: { ordering: "radial", staggerMs: 40, victims: "all", visual: "cathedral", hasLead: true, sound: "cathedral", source: "shield" },
   // Second batch: summon (piece placement), shield, and freeze cards, each on a
   // distinct shipped visual so they do not read the same.
   bee_swarm_simulator: { ordering: "radial", staggerMs: 60, victims: ["p"], visual: "geniepoof", hasLead: true, sound: "wall", source: "summon" },
-  danielle: { ordering: "sweep", staggerMs: 100, victims: ["p"], visual: "paradrop", hasLead: false, sound: "wall", source: "summon" },
   onett: { ordering: "radial", staggerMs: 0, victims: ["p"], visual: "cratedrop", hasLead: false, sound: "wall", source: "summon" },
-  minji: { ordering: "radial", staggerMs: 35, victims: "all", visual: "picketline", hasLead: true, sound: "aegis", source: "shield" },
   i_love_abs: { ordering: "radial", staggerMs: 30, victims: "all", visual: "dugin", hasLead: true, sound: "aegis", source: "shield" },
   full_planche: { ordering: "radial", staggerMs: 0, victims: "all", visual: "phylactery", hasLead: true, sound: "aegis", source: "shield" },
   ilovesmellingmygfshoodie: { ordering: "radial", staggerMs: 0, victims: "all", visual: "bubblewrap", hasLead: false, sound: "aegis", source: "shield" },
-  ilovemysister: { ordering: "radial", staggerMs: 0, victims: "all", visual: "canopy", hasLead: true, sound: "aegis", source: "shield" },
+  ilovemysister: { ordering: "radial", staggerMs: 0, victims: "all", visual: "sistergrove", hasLead: true, sound: "aegis", source: "shield" },
   ihatemyex: { ordering: "radial", staggerMs: 0, victims: ["p"], visual: "coldsnap", hasLead: false, sound: "massfreeze", source: "frozen" },
   // Third batch: empower / rally / shield grants. Each of these cards now
   // declares fx.pieces (added alongside), so its empower/rally motif paints a
