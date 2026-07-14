@@ -82,6 +82,22 @@ export default function ProfilePage() {
   const [me, setMe] = useState<AccountUser | null>(null);
   const [missing, setMissing] = useState(false);
   const [reporting, setReporting] = useState(false);
+  // "Add friend" (follow) control: one optimistic request per visit; the
+  // FriendsPanel manages pending/accept state in full.
+  const [friendState, setFriendState] = useState<"idle" | "sent" | "error">("idle");
+  const sendFriendRequest = async () => {
+    setFriendState("sent");
+    try {
+      const res = await fetch("/api/friends", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "request", username }),
+      });
+      if (!res.ok) setFriendState("error");
+    } catch {
+      setFriendState("error");
+    }
+  };
 
   // Client-side profile→profile navigation re-renders this component without a
   // remount: clear the previous player's state during render (React's sanctioned
@@ -93,6 +109,7 @@ export default function ProfilePage() {
     setMissing(false);
     setProfile(null);
     setStats(null);
+    setFriendState("idle");
   }
 
   useEffect(() => {
@@ -195,6 +212,19 @@ export default function ProfilePage() {
                     >
                       Challenge
                     </button>
+                    {!me.isGuest && (
+                      <button
+                        onClick={sendFriendRequest}
+                        disabled={friendState !== "idle"}
+                        className="px-4 py-2 rounded-sm btn-ghost text-sm font-display disabled:opacity-70"
+                      >
+                        {friendState === "sent"
+                          ? "Request sent"
+                          : friendState === "error"
+                            ? "Try again later"
+                            : "Add friend"}
+                      </button>
+                    )}
                     <Link
                       href={`/inbox/${encodeURIComponent(profile.user.username)}`}
                       className="px-4 py-2 rounded-sm btn-ghost text-sm font-display"

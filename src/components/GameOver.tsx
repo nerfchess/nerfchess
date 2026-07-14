@@ -1,7 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { fetchMe } from "@/lib/authClient";
 import { GameResult } from "@/engine/game";
 import { Color, Move } from "@/engine/types";
 import { Nerf } from "@/engine/nerf";
@@ -21,6 +23,9 @@ interface Props {
   // `provisional` = the post-game rating deviation is still wide (RD > 110),
   // so the new rating renders with a "?" suffix ("1500?").
   ratingChange?: { before: number; after: number; provisional?: boolean } | null;
+  // Which rating pool the change applies to ("nerf" | "buff"), so the pill
+  // reads "Buff rating" instead of an unlabeled number.
+  ratingMode?: "nerf" | "buff" | null;
   onRematch: () => void;
   onNewGame: () => void;
   onReview?: () => void;
@@ -258,6 +263,7 @@ export function GameOver({
   myNerf,
   opponentNerf,
   ratingChange,
+  ratingMode,
   onRematch,
   onNewGame,
   onReview,
@@ -282,6 +288,21 @@ export function GameOver({
   }, [onDismiss]);
   const [shared, setShared] = useState(false);
   const [pgnCopied, setPgnCopied] = useState(false);
+  // Guests get one quiet post-game nudge to keep what they just earned; it
+  // never blocks the actions below. Spectators are never nudged here.
+  const [isGuest, setIsGuest] = useState(false);
+  useEffect(() => {
+    if (spectator) return;
+    let cancelled = false;
+    fetchMe()
+      .then((me) => {
+        if (!cancelled) setIsGuest(!!me?.isGuest);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [spectator]);
   const [oppRevealed, setOppRevealed] = useState(!opponentHidden);
   const primaryRef = useRef<HTMLButtonElement | null>(null);
   const reduceMotion = useReducedMotion();
@@ -509,7 +530,9 @@ export function GameOver({
 
         {ratingChange && (
           <div className="mt-5 inline-flex items-center gap-2 rounded-sm border border-gold/25 bg-gold/5 px-3 py-2 font-mono text-sm">
-            <span className="smallcaps text-[10px] text-parchment-400">Rating</span>
+            <span className="smallcaps text-[10px] text-parchment-400">
+              {ratingMode === "nerf" ? "Nerf rating" : ratingMode === "buff" ? "Buff rating" : "Rating"}
+            </span>
             <span className="text-parchment tabular">
               {Math.round(ratingNow)}
               {ratingChange.provisional ? "?" : ""}
@@ -666,6 +689,12 @@ export function GameOver({
                 {pgnCopied ? "Copied" : "Copy PGN"}
               </button>
             )}
+            <Link
+              href="/tv"
+              className="rounded-sm px-5 py-2.5 btn-ghost font-display text-sm inline-flex items-center justify-center gap-2 sm:col-span-full"
+            >
+              Watch another game
+            </Link>
           </div>
         ) : (
         <>
@@ -771,6 +800,28 @@ export function GameOver({
             Replay
           </button>
         </div>
+        <div className="mt-2 grid gap-2 sm:grid-cols-2">
+          <Link
+            href="/lobby"
+            className="rounded-sm px-4 py-2 btn-ghost font-display text-sm inline-flex items-center justify-center gap-2"
+          >
+            Back to lobby
+          </Link>
+          <Link
+            href="/tv"
+            className="rounded-sm px-4 py-2 btn-ghost font-display text-sm inline-flex items-center justify-center gap-2"
+          >
+            Watch another game
+          </Link>
+        </div>
+        {isGuest && (
+          <p className="mt-4 border-t border-white/10 pt-3 text-xs text-parchment-400">
+            <Link href="/login?upgrade=1" className="text-gold-leaf hover:underline">
+              Create an account
+            </Link>{" "}
+            to save your rating and game history.
+          </p>
+        )}
         </>
         )}
       </motion.div>

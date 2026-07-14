@@ -37,14 +37,15 @@ export default function HomePage() {
             taller than the board beside it. */}
         <div className="order-2 stagger-in">
           <span className="eyebrow">Nerf Chess</span>
-          {/* OPEN LOBBY: a proper button now, in an airy light blue beside the
-              cyan Play Someone. */}
+          {/* ONE dominant action. It enters the lobby's Quick Play tab, where
+              Buff and 3+2 are already selected, so the next click is the
+              matchmaking button. */}
           <h1 className="mt-2">
             <Link
               href="/lobby"
-              className="btn-sky btn-cta w-full flex items-center justify-center gap-3 px-6 py-4 font-display text-2xl sm:text-3xl font-bold uppercase tracking-[0.05em] no-underline motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out motion-safe:hover:-translate-y-px motion-safe:active:scale-[0.98]"
+              className="btn-sky btn-cta cta-shine w-full flex items-center justify-center gap-3 px-6 py-5 font-display text-2xl sm:text-3xl font-bold uppercase tracking-[0.05em] no-underline motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out motion-safe:hover:-translate-y-px motion-safe:active:scale-[0.98]"
             >
-              Open Lobby
+              Play Nerf Chess
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 <path d="M5 12h14" />
                 <path d="m13 6 6 6-6 6" />
@@ -54,61 +55,56 @@ export default function HomePage() {
 
           <LiveNowStrip />
 
+          <ReturnToGameBanner />
+
+          {/* Three quieter ways in, one step below the big button. No mode
+              decision here: Buff is the site-wide default, and every setup
+              page lets you switch. */}
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3 border border-white/10 bg-white/[0.04] p-4">
+            <Link
+              href="/lobby"
+              className="btn-glass btn-glass--primary flex items-center justify-center gap-2 px-4 py-3 font-display text-base font-medium motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out motion-safe:hover:-translate-y-px motion-safe:active:scale-[0.98]"
+            >
+              Play Online
+            </Link>
+            <Link
+              href="/friend"
+              className="btn-glass flex items-center justify-center gap-2 px-4 py-3 font-display text-base font-medium motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out motion-safe:hover:-translate-y-px motion-safe:active:scale-[0.98]"
+            >
+              Play a Friend
+            </Link>
+            <Link
+              href="/play"
+              className="btn-glass flex items-center justify-center gap-2 px-4 py-3 font-display text-base font-medium motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out motion-safe:hover:-translate-y-px motion-safe:active:scale-[0.98]"
+            >
+              Play a Bot
+            </Link>
+          </div>
+
           {/* What the two words on the tin actually mean. Each card is a link
               into that mode's lobby; the titles carry the mode colors. */}
           <div className="mt-4 grid grid-cols-2 gap-3">
+            <Link href="/lobby?mode=buff" className="mode-def-card mode-def-card--buff plate block p-3.5 no-underline">
+              <span className="font-display text-lg font-bold uppercase tracking-wide text-mode-buffGlow underline decoration-mode-buff/60 decoration-2 underline-offset-4">
+                Buff
+              </span>
+              <span className="ml-2 smallcaps border border-gold/40 bg-gold/10 px-1.5 py-0.5 text-[8px] text-gold-leaf">
+                Best for your first game
+              </span>
+              <p className="mt-2 text-[13px] leading-snug text-parchment-300">
+                Start with normal chess. Draft{" "}
+                <span className="text-parchment-100">powers</span> for your own army.
+              </p>
+            </Link>
             <Link href="/lobby?mode=nerf" className="mode-def-card mode-def-card--nerf plate block p-3.5 no-underline">
               <span className="font-display text-lg font-bold uppercase tracking-wide text-mode-nerfGlow underline decoration-mode-nerf/60 decoration-2 underline-offset-4">
                 Nerf
               </span>
               <p className="mt-2 text-[13px] leading-snug text-parchment-300">
-                A <span className="text-parchment-100">handicap card</span> that weakens
-                pieces. You start with one, then draft more onto your opponent.
+                Start with a secret <span className="text-parchment-100">handicap</span>.
+                Draft curses for your opponent.
               </p>
             </Link>
-            <Link href="/lobby?mode=buff" className="mode-def-card mode-def-card--buff plate block p-3.5 no-underline">
-              <span className="font-display text-lg font-bold uppercase tracking-wide text-mode-buffGlow underline decoration-mode-buff/60 decoration-2 underline-offset-4">
-                Buff
-              </span>
-              <p className="mt-2 text-[13px] leading-snug text-parchment-300">
-                A <span className="text-parchment-100">power-up card</span> that
-                strengthens your pieces. Draft them to build the stronger army.
-              </p>
-            </Link>
-          </div>
-
-          <ReturnToGameBanner />
-
-          {/* Action hierarchy: playing a real person is THE flow. One big
-              primary into the lobby, two quieter options below it, all on a
-              flat bordered panel so the column reads as one control cluster. */}
-          <div className="mt-4 flex flex-col gap-3 border border-white/10 bg-white/[0.04] p-4">
-            <Link
-              href="/lobby"
-              className="btn-cyan btn-cta cta-shine w-full flex items-center justify-center gap-3 px-8 py-5 font-display text-xl sm:text-2xl font-semibold motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out motion-safe:hover:-translate-y-px motion-safe:active:scale-[0.98]"
-            >
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                <circle cx="9" cy="7" r="4" />
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-              </svg>
-              Play Someone
-            </Link>
-            <div className="grid grid-cols-2 gap-3">
-              <Link
-                href="/game?mode=ai"
-                className="btn-glass flex items-center justify-center gap-2 px-4 py-3 font-display text-base font-medium motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out motion-safe:hover:-translate-y-px motion-safe:active:scale-[0.98]"
-              >
-                Play a Bot
-              </Link>
-              <Link
-                href="/friend"
-                className="btn-glass flex items-center justify-center gap-2 px-4 py-3 font-display text-base font-medium motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out motion-safe:hover:-translate-y-px motion-safe:active:scale-[0.98]"
-              >
-                Play a Friend
-              </Link>
-            </div>
           </div>
 
           <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-parchment-300">
@@ -117,6 +113,8 @@ export default function HomePage() {
             <Link href="/tutorial" className="hover:text-parchment-100 transition-colors">How it works</Link>
             <span aria-hidden className="opacity-30">·</span>
             <Link href="/codex" className="hover:text-parchment-100 transition-colors">Browse the rules</Link>
+            <span aria-hidden className="opacity-30">·</span>
+            <Link href="/tv" className="hover:text-parchment-100 transition-colors">Watch live</Link>
           </div>
         </div>
       </section>
@@ -565,6 +563,7 @@ function HowItWorks() {
 function SiteFooter() {
   const footerLinks = [
     { href: "/contact", label: "Contact" },
+    { href: "/guidelines", label: "Guidelines" },
     { href: "/privacy-policy", label: "Privacy policy" },
     { href: "/about", label: "About" },
     { href: "/faq", label: "FAQ" },

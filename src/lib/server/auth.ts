@@ -30,6 +30,9 @@ export interface SessionUser {
   flair: string | null;
   is_guest: number;
   email: string | null;
+  // 1 = a moderator flagged this username; the owner must rename before
+  // playing on (the account itself is untouched).
+  name_flagged: number;
 }
 
 export function isModerator(user: Pick<SessionUser, "role"> | null): boolean {
@@ -144,7 +147,8 @@ export async function userForSession(db: D1Database, token: string | null): Prom
   const row = await db
     .prepare(
       `SELECT u.id, u.username, u.rating, u.rd, u.vol, u.games, u.wins, u.losses, u.draws, u.avatar,
-              u.role, u.muted_until, u.banned_until, u.bio, u.flair, u.is_guest, u.email, s.expires_at
+              u.role, u.muted_until, u.banned_until, u.bio, u.flair, u.is_guest, u.email,
+              COALESCE(u.name_flagged, 0) AS name_flagged, s.expires_at
        FROM sessions s JOIN users u ON u.id = s.user_id
        WHERE s.token_hash = ?`,
     )

@@ -11,6 +11,7 @@ import { AccountChip } from "@/components/AccountChip";
 import { MobileNavMenu } from "@/components/MobileNavMenu";
 import { Logo } from "@/components/Logo";
 import { QueueButton } from "@/components/QueueButton";
+import { useSharedMode } from "@/lib/modeState";
 import {
   FIRST_GAME_TOUR_HREF,
   TUTORIAL_DONE_KEY,
@@ -45,13 +46,14 @@ export default function PlayPage() {
   // Time control in seconds; base = 0 means unlimited (no clock).
   const [baseSec, setBaseSec] = useState<number>(10 * 60);
   const [incrementSec, setIncrementSec] = useState<number>(0);
-  // The two sections of the game: Buff mode (no nerfs, pure buff drafting)
-  // and Nerf mode (secret handicaps, revealed only when the game ends).
-  const [gameMode, setGameMode] = useState<"nerf" | "buff">("buff");
-  // The bot game's ruleset. Mirrors the mode cards above (Buff / Nerf) but adds
-  // Plain chess (no nerfs, no buffs) which only exists against the bot: the
-  // online queue and friend games are always Buff or Nerf.
-  const [botMode, setBotMode] = useState<"nerf" | "buff" | "plain">("buff");
+  // One shared mode for the whole page (Buff default, ?mode= override, last
+  // choice remembered): the top selector, the online queue, the friend link,
+  // and the bot game all read it, so no two sections can disagree.
+  const [gameMode, setSharedMode] = useSharedMode();
+  // Plain chess (no nerfs, no buffs) only exists against the bot; it is a
+  // deliberate bot-only override of the shared mode, never a page mode.
+  const [plainBot, setPlainBot] = useState(false);
+  const botMode: "nerf" | "buff" | "plain" = plainBot ? "plain" : gameMode;
   const [rating, setRating] = useState<number | null>(null);
   const [games, setGames] = useState<number>(0);
   // Signed-in account (null while unknown / signed out). Buff and Nerf bot
@@ -85,11 +87,12 @@ export default function PlayPage() {
       .catch(() => {});
   }, []);
 
-  // Selecting a mode card sets the online identity (used by the friend link)
-  // and pre-selects the same ruleset for the bot game below.
+  // Selecting a mode anywhere on the page updates the one shared mode: the
+  // online queue, friend link, and bot ruleset all follow. Picking Buff or
+  // Nerf also clears a Plain-chess bot override.
   const selectMode = (m: "nerf" | "buff") => {
-    setGameMode(m);
-    setBotMode(m);
+    setSharedMode(m);
+    setPlainBot(false);
   };
 
   // Local, offline AI game (Plain chess, signed-out play, or a fallback when
@@ -206,7 +209,8 @@ export default function PlayPage() {
             onClick={() => selectMode("buff")}
             title="Buff mode"
             tagline="Power-ups"
-            body="Draft buffs and cook your opponent."
+            body="Start with normal chess. Draft powers for your own army."
+            recommended
           />
           <ModeCard
             mode="nerf"
@@ -214,12 +218,12 @@ export default function PlayPage() {
             onClick={() => selectMode("nerf")}
             title="Nerf mode"
             tagline="Handicaps"
-            body="You start nerfed, then draft cards to cook your opponent even harder."
+            body="Start with a secret handicap. Draft curses for your opponent."
           />
         </div>
 
         <div className="mt-6">
-          <QueueButton />
+          <QueueButton mode={gameMode} onModeChange={selectMode} showModeCards={false} />
         </div>
 
         <div className="mt-4">
@@ -243,9 +247,9 @@ export default function PlayPage() {
         <div className="mt-8 plate p-6 sm:p-7 space-y-6">
           <div>
             <Group label="Game type">
-              <Pill selected={botMode === "buff"} onClick={() => setBotMode("buff")}>Buff</Pill>
-              <Pill selected={botMode === "nerf"} onClick={() => setBotMode("nerf")}>Nerf</Pill>
-              <Pill selected={botMode === "plain"} onClick={() => setBotMode("plain")}>Plain chess</Pill>
+              <Pill selected={botMode === "buff"} onClick={() => selectMode("buff")}>Buff</Pill>
+              <Pill selected={botMode === "nerf"} onClick={() => selectMode("nerf")}>Nerf</Pill>
+              <Pill selected={botMode === "plain"} onClick={() => setPlainBot(true)}>Plain chess</Pill>
             </Group>
             <p className="mt-2 text-[11px] text-parchment-400">
               {botMode === "plain"
@@ -382,6 +386,7 @@ function ModeCard({
   title,
   tagline,
   body,
+  recommended = false,
 }: {
   mode: "nerf" | "buff";
   selected: boolean;
@@ -389,6 +394,7 @@ function ModeCard({
   title: string;
   tagline: string;
   body: string;
+  recommended?: boolean;
 }) {
   const identity =
     mode === "nerf"
@@ -410,8 +416,15 @@ function ModeCard({
       aria-pressed={selected}
       className={"plate p-4 text-left transition " + identity.card}
     >
-      <div className={"font-display text-xl font-semibold " + identity.title}>
-        {title}
+      <div className="flex items-center gap-2">
+        <div className={"font-display text-xl font-semibold " + identity.title}>
+          {title}
+        </div>
+        {recommended && (
+          <span className="smallcaps border border-gold/40 bg-gold/10 px-1.5 py-0.5 text-[8px] text-gold-leaf">
+            Recommended
+          </span>
+        )}
       </div>
       <div className={"mt-0.5 smallcaps text-[9px] " + identity.title}>{tagline}</div>
       <p className="mt-1.5 text-[12px] leading-snug text-parchment-300">{body}</p>
@@ -436,6 +449,7 @@ function Pill({
   return (
     <button
       onClick={onClick}
+      aria-pressed={selected}
       className={
         "px-4 py-2 rounded-full border font-display transition " +
         (selected

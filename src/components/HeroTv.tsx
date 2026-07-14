@@ -19,6 +19,7 @@ type RecentGame = {
   white_rating_before: number | null;
   black_rating_before: number | null;
   moves: string;
+  category: string | null;
   white_avatar: string | null;
   black_avatar: string | null;
 };
@@ -120,6 +121,12 @@ export function HeroTv() {
 
   const shownId = live ? streamId : recent?.id ?? null;
   const shownPlayers = live ? players : recentPlayers;
+  // The shown game's mode (nerf/buff), when known: labels the seat ratings
+  // and feeds the caption below the board.
+  const rawMode = live
+    ? lobby?.games.find((g) => g.id === streamId)?.mode ?? null
+    : recent?.category ?? null;
+  const shownMode = rawMode === "nerf" || rawMode === "buff" ? rawMode : null;
 
   // Warm the route the hero links to so tapping "Watch"/"Replay" navigates
   // instantly instead of paying to load the /game/[id] chunk on click. Kept
@@ -151,7 +158,11 @@ export function HeroTv() {
         <PlayerAvatar name={p.name} avatar={p.avatar} size={24} />
         <span className="truncate font-display text-[15px] text-parchment-100 underline-offset-4 transition-colors group-hover/seat:text-gold-leaf group-hover/seat:underline group-hover/seat:decoration-gold/50">
           {p.name}
-          {p.rating != null && <span className="text-parchment-400 no-underline"> ({p.rating})</span>}
+          {p.rating != null && (
+            <span className="text-parchment-400 no-underline">
+              {" "}({p.rating}{shownMode ? ` ${shownMode === "nerf" ? "Nerf" : "Buff"}` : ""})
+            </span>
+          )}
         </span>
       </Link>
     );
@@ -168,6 +179,7 @@ export function HeroTv() {
             }
           />
           {live ? (over ? "Top board · just finished" : "Top board · live") : "Latest game"}
+          {shownMode ? ` · ${shownMode === "nerf" ? "Nerf" : "Buff"}` : ""}
         </span>
       </div>
       <Link href={`/game/${shownId}`} className="tv-frame group block no-underline" title={live ? "Watch this game" : "Replay this game"}>
@@ -184,6 +196,13 @@ export function HeroTv() {
           {live ? "Watch →" : "Replay →"}
         </Link>
       </div>
+      {/* One line for the first-time visitor: what this board is and why the
+          position can look nothing like normal chess. */}
+      <p className="mt-1.5 text-center text-[11px] leading-snug text-parchment-400">
+        {live && !over
+          ? "A real game, streaming live. Drafted cards bend the rules mid-game, so positions here can look impossible."
+          : "A recent real game. Drafted cards bend the rules mid-game, so positions here can look impossible."}
+      </p>
     </div>
   );
 }
