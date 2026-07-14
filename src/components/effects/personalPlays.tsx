@@ -150,6 +150,86 @@ function KissMark({ x, y, s = 1, fill = "#e8506e" }: { x: number; y: number; s?:
 }
 
 /* ------------------------------------------------------------------------- */
+/* Athlete scenes — the calisthenics cards star an actual figure DOING the   */
+/* skill (owner request): SMIL-animated chalk athletes from public/gym/,     */
+/* staged huge board-wide with a wash, gold honor ring, and chalk puffs.     */
+/* ------------------------------------------------------------------------- */
+
+function AthleteScene({
+  id,
+  lead,
+  delayMs,
+  wash = "rgba(232,237,246,0.14)",
+}: {
+  id: string;
+  lead: boolean;
+  delayMs: number;
+  wash?: string;
+}) {
+  if (!lead) {
+    return (
+      <Stage>
+        <svg viewBox="0 0 40 40" className="h-full w-full">
+          <g className="pnp-puff" style={dv(delayMs, { "--pnp-x": "-20%", "--pnp-y": "-24%" })}>
+            <circle cx={15} cy={25} r={3.2} fill="rgba(232,237,246,0.9)" />
+          </g>
+          <g className="pnp-puff" style={dv(delayMs + 110, { "--pnp-x": "22%", "--pnp-y": "-28%" })}>
+            <circle cx={25} cy={24} r={2.7} fill="rgba(232,237,246,0.85)" />
+          </g>
+          <circle cx={20} cy={20} r={11} fill="none" stroke="#ffd76a" strokeWidth={2} className="pnp-rise" style={d(delayMs + 160)} />
+        </svg>
+      </Stage>
+    );
+  }
+  return (
+    <Wide>
+      <Wash color={wash} delayMs={delayMs} />
+      {/* honor ring pulsing behind the athlete */}
+      <Prop left="30%" top="22%" width="40%" height="40%">
+        <svg viewBox="0 0 100 100" className="h-full w-full">
+          <circle cx={50} cy={54} r={40} fill="none" stroke="rgba(255,215,106,0.5)" strokeWidth={1.6} className="pnp-linger" style={d(delayMs)} />
+        </svg>
+      </Prop>
+      {/* THE GUY, doing the actual skill, huge (the SVG loops its own reps) */}
+      <Prop left="26%" top="18%" width="48%" height="48%">
+        <span className="pnp-linger block h-full w-full" style={d(delayMs + 80)}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={`/gym/${id}.svg`} alt="" aria-hidden draggable={false} className="h-full w-full select-none object-contain" />
+        </span>
+      </Prop>
+      {/* chalk clap puffs framing the effort */}
+      <Prop left="18%" top="30%" width="14%" height="14%">
+        <svg viewBox="0 0 30 30" className="h-full w-full">
+          <g className="pnp-puff" style={dv(delayMs + 260, { "--pnp-x": "-26%", "--pnp-y": "-20%" })}>
+            <circle cx={15} cy={15} r={7} fill="rgba(232,237,246,0.85)" />
+          </g>
+        </svg>
+      </Prop>
+      <Prop left="68%" top="28%" width="14%" height="14%">
+        <svg viewBox="0 0 30 30" className="h-full w-full">
+          <g className="pnp-puff" style={dv(delayMs + 340, { "--pnp-x": "28%", "--pnp-y": "-24%" })}>
+            <circle cx={15} cy={15} r={6} fill="rgba(232,237,246,0.8)" />
+          </g>
+        </svg>
+      </Prop>
+    </Wide>
+  );
+}
+
+const HandstandPushupPlay = ({ lead, delayMs }: { lead: boolean; delayMs: number }) => (
+  <AthleteScene id="handstand_pushup" lead={lead} delayMs={delayMs} />
+);
+const FullPlanchePlay = ({ lead, delayMs }: { lead: boolean; delayMs: number }) => (
+  <AthleteScene id="full_planche" lead={lead} delayMs={delayMs} wash="rgba(255,215,106,0.12)" />
+);
+const FingertipMaltesePlay = ({ lead, delayMs }: { lead: boolean; delayMs: number }) => (
+  <AthleteScene id="fingertip_maltese" lead={lead} delayMs={delayMs} wash="rgba(159,208,234,0.13)" />
+);
+const OneArmDreamPlay = ({ lead, delayMs }: { lead: boolean; delayMs: number }) => (
+  <AthleteScene id="onearmmuscleupismydream" lead={lead} delayMs={delayMs} wash="rgba(255,215,106,0.10)" />
+);
+
+/* ------------------------------------------------------------------------- */
 /* 1. Muscle Up (t4) — chalk hits the bar, dead hang, EXPLOSIVE rise          */
 /* ------------------------------------------------------------------------- */
 
@@ -1142,11 +1222,30 @@ function ILoveCamPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 export const PLAYS: Record<string, SigPlugin> = {
   muscle_up: {
     config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz" },
-    Render: MuscleUpPlay,
+    Render: ({ lead, delayMs }) => <AthleteScene id="muscle_up" lead={lead} delayMs={delayMs} />,
   },
   bench_225: {
     config: { ordering: "sweep", staggerMs: 70, victims: "all", hasLead: true, sound: "colossus" },
-    Render: Bench225Play,
+    Render: ({ lead, delayMs }) => <AthleteScene id="bench_225" lead={lead} delayMs={delayMs} />,
+  },
+  // Calisthenics athletes (owner request: show a GUY actually doing the
+  // skill). Configs copied from the retired core entries; the athlete SVG
+  // loops its own reps via SMIL.
+  handstand_pushup: {
+    config: { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "coronation", source: "empower" },
+    Render: HandstandPushupPlay,
+  },
+  full_planche: {
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis", source: "shield" },
+    Render: FullPlanchePlay,
+  },
+  fingertip_maltese: {
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "massfreeze", source: "frozen" },
+    Render: FingertipMaltesePlay,
+  },
+  onearmmuscleupismydream: {
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation", source: "empower" },
+    Render: OneArmDreamPlay,
   },
   monkeytype: {
     config: { ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "blitz" },

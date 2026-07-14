@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="One arm muscle up attempt">
+  <path d="M28 40 H172" stroke="#aab6c8" stroke-width="7" stroke-linecap="round"/>
+  <path d="M32 40 V186 M168 40 V186" stroke="#5c6880" stroke-width="6" stroke-linecap="round"/>
+  <g>
+    <animateTransform attributeName="transform" type="translate" values="0 0; 0 -18; 0 -18; 0 4; 0 0" keyTimes="0;0.3;0.42;0.75;1" dur="2.8s" repeatCount="indefinite"/>
+    <g stroke="#f4efe4" stroke-width="9" stroke-linecap="round" fill="none">
+      <path d="M92 44 L98 84"/>
+      <circle cx="104" cy="96" r="13" fill="#f4efe4" stroke="none"/>
+      <path d="M106 110 V140"/>
+      <path d="M108 88 L132 72"/>
+      <path d="M106 140 L92 168 M106 140 L122 166"/>
+    </g>
+  </g>
+  <g opacity="0.85">
+    <circle cx="152" cy="26" r="3" fill="#f4efe4" opacity="0.6"/>
+    <circle cx="162" cy="18" r="5" fill="#f4efe4" opacity="0.4"/>
+    <path d="M172 8 l2.2 4.6 4.6 2.2 -4.6 2.2 -2.2 4.6 -2.2 -4.6 -4.6 -2.2 4.6 -2.2 Z" fill="#ffd76a">
+      <animate attributeName="opacity" values="0.4;1;0.4" dur="2.8s" repeatCount="indefinite"/>
+    </path>
+  </g>
+</svg>

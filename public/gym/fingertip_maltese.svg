@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Fingertip maltese">
+  <ellipse cx="100" cy="186" rx="62" ry="7" fill="#000" opacity="0.25"/>
+  <g>
+    <animateTransform attributeName="transform" type="translate" values="0 0; 0 2.5; 0 0" dur="1.3s" repeatCount="indefinite"/>
+    <g stroke="#f4efe4" stroke-width="9" stroke-linecap="round" fill="none">
+      <path d="M30 150 Q100 142 176 152"/>
+      <circle cx="22" cy="144" r="13" fill="#f4efe4" stroke="none"/>
+      <path d="M62 150 L54 170 M138 152 L146 170" stroke-width="8"/>
+    </g>
+    <g stroke="#f4efe4" stroke-width="3.5" stroke-linecap="round">
+      <path d="M50 172 l-4 8 M54 172 l0 9 M58 172 l4 8"/>
+      <path d="M142 172 l-4 8 M146 172 l0 9 M150 172 l4 8"/>
+    </g>
+  </g>
+  <circle cx="30" cy="122" r="3" fill="#9fd0ea">
+    <animate attributeName="cy" values="122;140" dur="1.9s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0;0.9;0" dur="1.9s" repeatCount="indefinite"/>
+  </circle>
+</svg>

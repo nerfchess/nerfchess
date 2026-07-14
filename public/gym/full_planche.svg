@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Full planche">
+  <ellipse cx="100" cy="186" rx="56" ry="7" fill="#000" opacity="0.25"/>
+  <path d="M78 178 h10 M112 178 h10" stroke="#8a93a6" stroke-width="6" stroke-linecap="round"/>
+  <g>
+    <animateTransform attributeName="transform" type="rotate" values="-1.4 100 168; 1.4 100 168; -1.4 100 168" dur="1.6s" repeatCount="indefinite"/>
+    <g stroke="#f4efe4" stroke-width="9" stroke-linecap="round" fill="none">
+      <path d="M84 172 V128 M116 172 V128"/>
+      <path d="M64 118 Q100 108 178 122"/>
+      <circle cx="52" cy="114" r="13" fill="#f4efe4" stroke="none"/>
+    </g>
+    <path d="M148 120 L176 122" stroke="#ffd76a" stroke-width="4" stroke-linecap="round" opacity="0.9"/>
+  </g>
+  <circle cx="100" cy="176" r="30" fill="none" stroke="#ffd76a" stroke-width="2" opacity="0.5">
+    <animate attributeName="opacity" values="0.2;0.6;0.2" dur="1.6s" repeatCount="indefinite"/>
+  </circle>
+</svg>

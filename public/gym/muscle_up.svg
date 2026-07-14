@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Muscle up">
+  <path d="M24 56 H176" stroke="#aab6c8" stroke-width="7" stroke-linecap="round"/>
+  <path d="M28 56 V186 M172 56 V186" stroke="#5c6880" stroke-width="6" stroke-linecap="round"/>
+  <g>
+    <animateTransform attributeName="transform" type="translate" values="0 0; 0 -44; 0 -44; 0 0" keyTimes="0;0.4;0.6;1" dur="2.4s" repeatCount="indefinite"/>
+    <g stroke="#f4efe4" stroke-width="9" stroke-linecap="round" fill="none">
+      <path d="M84 60 L90 92 M116 60 L110 92"/>
+      <circle cx="100" cy="88" r="13" fill="#f4efe4" stroke="none"/>
+      <path d="M100 102 V136"/>
+      <path d="M100 136 L86 166 M100 136 L114 164"/>
+    </g>
+  </g>
+  <g fill="rgba(244,239,228,0.85)">
+    <circle cx="78" cy="60" r="5"><animate attributeName="opacity" values="0;0.9;0" dur="2.4s" repeatCount="indefinite"/></circle>
+    <circle cx="124" cy="58" r="4"><animate attributeName="opacity" values="0;0.8;0" dur="2.4s" begin="0.2s" repeatCount="indefinite"/></circle>
+  </g>
+</svg>

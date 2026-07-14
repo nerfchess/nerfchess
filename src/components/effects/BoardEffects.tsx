@@ -2037,7 +2037,9 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   // --- Batch 10: gambling wheels, the drum-man, and a slapstick funny batch.
   // The gambling cards (Wheel of Fortune / Jackpot / Gamble) join roulette with
   // their own spin-to-a-pointer wheel, a slot machine, and a coin flip; every
-  // one reuses an already-shipped SigZone + SigSoundKey. (tung_tung_sahur has
+  // one reuses an already-shipped SigZone + SigSoundKey. (tung_tung_sahur and
+// the four calisthenics-athlete cards (handstand/planche/maltese/one-arm)
+// moved to the plugin sets so their figure art wins. (tung_tung_sahur has
   // since moved to memePlays.tsx, where the man himself marches the board.)
   // The rest are comedic library cards that used to fall back to a generic zone
   // overlay; each gets a bespoke gag. Every source !== "removal" entry rides the
@@ -2190,7 +2192,6 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   geometry_dash: { ordering: "sweep", staggerMs: 110, victims: "all", visual: "strike", hasLead: true, sound: "lightning" },
   check_out_our_socials: { ordering: "radial", staggerMs: 65, victims: ["p", "n", "b", "r", "q"], visual: "iceshatter", hasLead: true, sound: "massfreeze", source: "frozen" },
   bayview_secondary_school: { ordering: "radial", staggerMs: 55, victims: "all", visual: "deepglacier", hasLead: true, sound: "massfreeze", source: "frozen" },
-  fingertip_maltese: { ordering: "radial", staggerMs: 0, victims: "all", visual: "chainfreeze", hasLead: true, sound: "massfreeze", source: "frozen" },
   i_love_my_gf: { ordering: "radial", staggerMs: 35, victims: "all", visual: "aegis", hasLead: true, sound: "aegis", source: "shield" },
   uniqlo_warrior: { ordering: "radial", staggerMs: 40, victims: "all", visual: "cathedral", hasLead: true, sound: "cathedral", source: "shield" },
   // Second batch: summon (piece placement), shield, and freeze cards, each on a
@@ -2198,7 +2199,6 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   bee_swarm_simulator: { ordering: "radial", staggerMs: 60, victims: ["p"], visual: "geniepoof", hasLead: true, sound: "wall", source: "summon" },
   onett: { ordering: "radial", staggerMs: 0, victims: ["p"], visual: "cratedrop", hasLead: false, sound: "wall", source: "summon" },
   i_love_abs: { ordering: "radial", staggerMs: 30, victims: "all", visual: "dugin", hasLead: true, sound: "aegis", source: "shield" },
-  full_planche: { ordering: "radial", staggerMs: 0, victims: "all", visual: "phylactery", hasLead: true, sound: "aegis", source: "shield" },
   ilovesmellingmygfshoodie: { ordering: "radial", staggerMs: 0, victims: "all", visual: "bubblewrap", hasLead: false, sound: "aegis", source: "shield" },
   ilovemysister: { ordering: "radial", staggerMs: 0, victims: "all", visual: "sistergrove", hasLead: true, sound: "aegis", source: "shield" },
   ihatemyex: { ordering: "radial", staggerMs: 0, victims: ["p"], visual: "coldsnap", hasLead: false, sound: "massfreeze", source: "frozen" },
@@ -2207,8 +2207,6 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   // real zone the signature reads, exactly like double_amazon (empower) and
   // blitzkrieg (rally). Cards without a resolvable zone stay on genSignature.
   waist_25: { ordering: "sweep", staggerMs: 70, victims: ["p"], visual: "bladegift", hasLead: true, sound: "coronation", source: "empower" },
-  handstand_pushup: { ordering: "radial", staggerMs: 0, victims: ["p"], visual: "coronation", hasLead: true, sound: "coronation", source: "empower" },
-  onearmmuscleupismydream: { ordering: "radial", staggerMs: 0, victims: "all", visual: "colossus", hasLead: true, sound: "coronation", source: "empower" },
   rgb_keyboard: { ordering: "sweep", staggerMs: 90, victims: ["n", "b", "r"], visual: "crownrain", hasLead: true, sound: "crownrain", source: "empower" },
   i_love_newjeans: { ordering: "radial", staggerMs: 40, victims: "all", visual: "bannerwar", hasLead: true, sound: "coronation", source: "empower" },
   white_monster: { ordering: "radial", staggerMs: 70, victims: "all", visual: "blitz", hasLead: true, sound: "blitz", source: "rally" },
