@@ -2003,7 +2003,8 @@ nav, header { position: relative; z-index: 30; }
 }
 
 @media (max-width: 640px) {
-  .btn-leaf, .btn-ghost { min-height: 44px; }
+  .btn-leaf, .btn-ghost, .btn-cyan, .btn-sky, .btn-mint,
+  .btn-glass, .btn-cta { min-height: 44px; }
 }
 
 ::selection { background: rgba(216,181,110,0.4); color: #1a1206; }
