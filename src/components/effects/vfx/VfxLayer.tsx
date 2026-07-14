@@ -3,10 +3,11 @@
 // Board-overlay canvas that hosts the VFX engine. Mount it inside the
 // board crop (a relatively-positioned container); it fills the parent,
 // subscribes to the vfx bus, and stands down when effects are hidden
-// (fx toggle) or the user prefers reduced motion.
+// (fx toggle) or animations are turned off in Settings.
 
 import { useEffect, useRef } from "react";
 import { useFxHidden } from "@/lib/fxToggle";
+import { motionOff } from "@/lib/settings";
 import { createVfxEngine } from "./engine";
 import { onVfx } from "./vfxBus";
 
@@ -38,11 +39,9 @@ export function VfxLayer({ onShake }: { onShake?: () => void } = {}) {
       onShake: () => shakeRef.current?.(),
     });
 
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-
     const unsubscribe = onVfx((spec) => {
       if (hiddenRef.current) return; // fx toggle: drop plays while hidden
-      if (reducedMotion.matches) return; // accessibility: drop all plays
+      if (motionOff()) return; // animations off in Settings: drop all plays
       engine.play(spec);
     });
 

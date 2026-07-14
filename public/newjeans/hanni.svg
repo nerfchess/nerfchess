@@ -19,7 +19,7 @@
   </defs>
 
   <!-- sunlit greenery -->
-  <rect width="200" height="200" fill="url(#hn-bg)"/>
+  <!-- background removed: portraits render as free-standing characters over the board -->
   <g fill="#7fae55" opacity="0.85">
     <ellipse cx="20" cy="60" rx="26" ry="40"/>
     <ellipse cx="182" cy="52" rx="30" ry="46"/>

@@ -2,6 +2,7 @@
 import React from "react";
 import type { CSSProperties } from "react";
 import { Color, PieceType } from "@/engine/types";
+import { motionOff, SETTINGS_CHANGED_EVENT } from "@/lib/settings";
 
 interface Props {
   type: PieceType;
@@ -99,10 +100,12 @@ function hybridPath(type: PieceType, grant: PieceType, color: Color): string {
   );
 }
 
-// A piece hexed into a walnut: the whole piece becomes a plump, glossy walnut
-// (the joke), with the original piece shrunk down and nestled in the shell so
-// you can still tell what got petrified. The shell wobbles like it is trying to
-// crack itself open (see .walnut-piece in globals.css). Gradient ids are
+// A piece hexed into a walnut: entombed in a dark polished burl-wood shell
+// veined with molten-gold kintsugi cracks that breathe light, the trapped
+// piece glowing through a gold-lit hollow so you can still tell what got
+// petrified. The shell wobbles like it is trying to crack itself open (see
+// .walnut-piece in globals.css); the seams pulse via SMIL, gated on the
+// animations-off setting like the trap markers below. Gradient ids are
 // per-instance (useId) so many walnuts on one board never collide.
 export const WalnutPiece = React.memo(function WalnutPiece({
   type,
@@ -116,6 +119,8 @@ export const WalnutPiece = React.memo(function WalnutPiece({
   const uid = React.useId().replace(/[:]/g, "");
   const body = `wn-body-${uid}`;
   const cav = `wn-cav-${uid}`;
+  const vein = `wn-vein-${uid}`;
+  const still = useReducedMotion();
   return (
     <span
       className="walnut-piece relative inline-grid place-items-center select-none"
@@ -126,50 +131,71 @@ export const WalnutPiece = React.memo(function WalnutPiece({
     >
       <svg viewBox="0 0 45 45" width="100%" height="100%" className="walnut-inline" aria-hidden="true">
         <defs>
-          <radialGradient id={body} cx="38%" cy="28%" r="80%">
-            <stop offset="0%" stopColor="#f0cf9c" />
-            <stop offset="42%" stopColor="#cd944f" />
-            <stop offset="100%" stopColor="#754319" />
+          <radialGradient id={body} cx="38%" cy="26%" r="82%">
+            <stop offset="0%" stopColor="#6b4a28" />
+            <stop offset="45%" stopColor="#3a2415" />
+            <stop offset="100%" stopColor="#1c1008" />
           </radialGradient>
-          <radialGradient id={cav} cx="50%" cy="40%" r="70%">
-            <stop offset="0%" stopColor="#8a5a2c" />
-            <stop offset="100%" stopColor="#3d2410" />
+          <radialGradient id={cav} cx="50%" cy="38%" r="72%">
+            <stop offset="0%" stopColor="#c98f2e" />
+            <stop offset="55%" stopColor="#6e4a14" />
+            <stop offset="100%" stopColor="#241304" />
           </radialGradient>
+          <linearGradient id={vein} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#ffe9a8" />
+            <stop offset="55%" stopColor="#ffd76a" />
+            <stop offset="100%" stopColor="#c98f2e" />
+          </linearGradient>
         </defs>
-        {/* shell */}
+        {/* burl shell */}
         <path
           d="M22.5 4.5C31.3 4.5 38.5 11.8 38.5 23C38.5 34.4 31.2 41.5 22.5 41.5C13.8 41.5 6.5 34.4 6.5 23C6.5 11.8 13.7 4.5 22.5 4.5Z"
           fill={`url(#${body})`}
-          stroke="#4a2b10"
+          stroke="#120a04"
           strokeWidth="1.3"
         />
-        {/* central seam */}
-        <path
-          d="M22.5 6C20.8 12 24 18 22.5 23.5C21 29 24.2 35 22.5 40"
-          fill="none"
-          stroke="#5c3714"
-          strokeWidth="1.3"
-          strokeLinecap="round"
-          opacity="0.9"
-        />
-        {/* brain-like ridges, both halves */}
-        <g fill="none" stroke="#6d3f18" strokeWidth="1" strokeLinecap="round" opacity="0.72">
-          <path d="M21.8 10.5C15.5 11.5 11.5 15.5 10.5 20.5" />
-          <path d="M22 16.5C16 17.5 12.8 21.5 12 26.5" />
-          <path d="M22.2 23C17 24 14.2 28 14.5 33" />
-          <path d="M23.2 10.5C29.5 11.5 33.5 15.5 34.5 20.5" />
-          <path d="M23 16.5C29 17.5 32.2 21.5 33 26.5" />
-          <path d="M22.8 23C28 24 30.8 28 30.5 33" />
+        {/* burl figure: faint swirling grain in the dark wood */}
+        <g fill="none" stroke="#7a5228" strokeWidth="0.9" strokeLinecap="round" opacity="0.45">
+          <path d="M13 12.5C10.5 16 10 20.5 11.5 24.5" />
+          <path d="M32 12.5C34.5 16 35 20.5 33.5 24.5" />
+          <path d="M14 31C16 34.5 19 36.5 22.5 37" />
+          <ellipse cx="14.5" cy="18.5" rx="2.4" ry="3.4" transform="rotate(-18 14.5 18.5)" />
+          <ellipse cx="30.5" cy="18.5" rx="2.4" ry="3.4" transform="rotate(18 30.5 18.5)" />
         </g>
-        {/* gloss highlight */}
-        <ellipse cx="16" cy="13.5" rx="6" ry="3.8" fill="#ffffff" opacity="0.22" />
-        {/* cavity the piece sits in */}
-        <ellipse cx="22.5" cy="25.5" rx="8.2" ry="9" fill={`url(#${cav})`} stroke="#4a2b10" strokeWidth="0.8" opacity="0.95" />
+        {/* kintsugi: molten-gold cracks branching off the central seam */}
+        <g
+          fill="none"
+          stroke={`url(#${vein})`}
+          strokeLinecap="round"
+          style={{ filter: "drop-shadow(0 0 1.6px #ffd76a)" }}
+        >
+          <path d="M22.5 6C20.8 12 24 18 22.5 23.5C21 29 24.2 35 22.5 40" strokeWidth="1.5">
+            {!still && (
+              <animate attributeName="opacity" values="0.65;1;0.65" dur="2.6s" repeatCount="indefinite" />
+            )}
+          </path>
+          <path d="M21.5 11.5C18 13.5 15.5 17 15 21.5M23.5 15C27 16.5 30 19.5 30.8 23.5M21.8 27.5C18.5 29 16.2 31.5 15.6 34.5" strokeWidth="1">
+            {!still && (
+              <animate attributeName="opacity" values="0.4;0.9;0.4" dur="2.6s" begin="0.7s" repeatCount="indefinite" />
+            )}
+          </path>
+        </g>
+        {/* polish highlight */}
+        <ellipse cx="16" cy="12.5" rx="5.6" ry="3.4" fill="#ffffff" opacity="0.13" />
+        {/* the gold-lit hollow the piece is sealed in */}
+        <ellipse cx="22.5" cy="25.5" rx="8.2" ry="9" fill={`url(#${cav})`} stroke="#120a04" strokeWidth="0.8" opacity="0.96" />
       </svg>
-      {/* the shrunken original piece, nestled in the shell */}
+      {/* the entombed original piece, lit from the gold below */}
       <span
         className="pointer-events-none absolute"
-        style={{ left: "50%", top: "56%", width: "40%", height: "40%", transform: "translate(-50%, -50%)" }}
+        style={{
+          left: "50%",
+          top: "56%",
+          width: "40%",
+          height: "40%",
+          transform: "translate(-50%, -50%)",
+          filter: "drop-shadow(0 0 3px rgba(255,215,106,0.55))",
+        }}
       >
         <Piece type={type} color={color} size="100%" />
       </span>
@@ -182,21 +208,19 @@ export const WalnutPiece = React.memo(function WalnutPiece({
 // All markers below follow the WalnutPiece pattern: per-instance gradient ids,
 // plump pseudo-3D shading, a soft ground shadow, and idle motion that is
 // TRANSFORM/OPACITY ONLY. Idle loops are SMIL (<animate*> inside the SVG) so
-// the markers stay self-contained; they are gated on prefers-reduced-motion by
-// the hook below, exactly like their CSS-animated neighbours (whose loops are
-// cut by the global reduced-motion block in globals.css).
+// the markers stay self-contained; they are gated on the animations-off setting
+// by the hook below, exactly like their CSS-animated neighbours (whose loops are
+// cut by the global animations-off block in globals.css).
 
-/** True when the viewer prefers reduced motion. SSR-safe (false on the server,
- * resolved on mount) and live (tracks the media query). */
+/** True when animations are turned off in Settings. SSR-safe (false on the
+ * server, resolved on mount) and live (tracks the in-app setting). */
 function useReducedMotion(): boolean {
   const [reduced, setReduced] = React.useState(false);
   React.useEffect(() => {
-    const mq = window.matchMedia?.("(prefers-reduced-motion: reduce)");
-    if (!mq) return;
-    const update = () => setReduced(mq.matches);
+    const update = () => setReduced(motionOff());
     update();
-    mq.addEventListener?.("change", update);
-    return () => mq.removeEventListener?.("change", update);
+    window.addEventListener(SETTINGS_CHANGED_EVENT, update);
+    return () => window.removeEventListener(SETTINGS_CHANGED_EVENT, update);
   }, []);
   return reduced;
 }

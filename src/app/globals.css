@@ -82,8 +82,8 @@ body {
   /* --- Motion vocabulary -----------------------------------------------------
      One named set of curves and durations so every interaction feels
      single-authored instead of the retyped-bezier AI-default. Scaled globally
-     by the data-anim override and cut by prefers-reduced-motion. Reserve
-     --ease-spring for reveal / seal / win, never for routine hovers. */
+     by the data-anim override and cut when animations are off in Settings.
+     Reserve --ease-spring for reveal / seal / win, never for routine hovers. */
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
   --ease-io: cubic-bezier(0.45, 0.03, 0.52, 0.96);
   --ease-spring: cubic-bezier(0.2, 1.4, 0.4, 1);
@@ -443,8 +443,8 @@ html[data-theme="light"] .mode-seam::after { background: #e4e0d6; }
 /* --- Shared interaction + figure utilities ---------------------------------
    A small vocabulary applied across surfaces so interactions feel single-
    authored rather than retyped per component. Every animation here is scaled by
-   the data-anim override and cut by prefers-reduced-motion (see the gates near
-   the foot of this file). */
+   the data-anim override and cut when animations are off in Settings (see the
+   gates near the foot of this file). */
 
 /* Tabular figures: stop Elo, deltas, clocks and ranks from jittering as digits
    change width. Inter and the mono face both carry the feature. */
@@ -550,9 +550,7 @@ html[data-theme="light"] .mode-seam::after { background: #e4e0d6; }
 @keyframes tv-tuning-spin {
   to { transform: rotate(360deg); }
 }
-@media (prefers-reduced-motion: reduce) {
-  .tv-tuning-ring { animation: none; }
-}
+html[data-anim="off"] .tv-tuning-ring { animation: none; }
 
 /* The in-game command rail: one machined control surface for the left column.
    A themed panel (follows every site theme via the surface vars) with a faint
@@ -736,7 +734,9 @@ html[data-theme="light"] .rail-panel {
    confirm, lock-in). A translucent pane over the ink with a hairline top
    highlight; the primary variant carries the accent inside the glass. */
 .btn-glass {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.035) 55%, rgba(255, 255, 255, 0.02));
+  /* Flat fill, no vertical gradient: the frosted read comes from the border,
+     inset hairline, and (on desktop) the backdrop blur. */
+  background: rgba(255, 255, 255, 0.06);
   color: var(--paper);
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 1px;
@@ -757,14 +757,14 @@ html[data-theme="light"] .rail-panel {
 }
 .btn-glass:hover:not(:disabled) {
   border-color: rgba(255, 255, 255, 0.32);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.05) 55%, rgba(255, 255, 255, 0.03));
+  background: rgba(255, 255, 255, 0.09);
 }
 .btn-glass:active:not(:disabled) { transform: translateY(1px); }
 .btn-glass:disabled { opacity: 0.45; cursor: not-allowed; }
 .btn-glass--primary {
   color: #fff;
   border-color: rgba(74, 159, 238, 0.55);
-  background: linear-gradient(180deg, rgba(74, 159, 238, 0.32), rgba(54, 146, 231, 0.16) 60%, rgba(54, 146, 231, 0.10));
+  background: rgba(64, 152, 234, 0.22);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.22),
     0 0 30px -10px rgba(54, 146, 231, 0.6),
@@ -772,11 +772,11 @@ html[data-theme="light"] .rail-panel {
 }
 .btn-glass--primary:hover:not(:disabled) {
   border-color: rgba(74, 159, 238, 0.85);
-  background: linear-gradient(180deg, rgba(74, 159, 238, 0.42), rgba(54, 146, 231, 0.22) 60%, rgba(54, 146, 231, 0.14));
+  background: rgba(64, 152, 234, 0.3);
 }
 
 .btn-ghost {
-  background: linear-gradient(to bottom, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
+  background: rgba(255, 255, 255, 0.045);
   color: var(--paper);
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 1px;
@@ -802,9 +802,7 @@ select:focus-visible {
   outline: 2px solid var(--accent-hi);
   outline-offset: 2px;
 }
-@media (prefers-reduced-motion: reduce) {
-  .btn-leaf, .btn-ghost { transition: none; }
-}
+html[data-anim="off"] .btn-leaf, html[data-anim="off"] .btn-ghost { transition: none; }
 
 /* Kept as an alias so any stale references stay on-brand (blue, not green). */
 .btn-lichess { }
@@ -877,8 +875,8 @@ html[data-theme="light"] .masthead {
 
 /* A very slow opacity pulse gives the ambient washes a sense of life without
    competing with the live-TV board's real motion. Opacity only — never size,
-   position, or hue — so it stays calm. Frozen when animations are off or the
-   viewer prefers reduced motion (handled by the global gates below). */
+   position, or hue — so it stays calm. Frozen when animations are off in
+   Settings (handled by the global gates below). */
 @keyframes aura-breathe {
   0%, 100% { opacity: 0.82; }
   50% { opacity: 1; }
@@ -975,7 +973,7 @@ html[data-theme="light"] .tv-frame {
    reads as subordinate to the saturated .btn-cyan primary below it. Same
    metal-button physics as .btn-leaf. */
 .btn-sky {
-  background: linear-gradient(to bottom, #aac2da, #89a6c4);
+  background: #9cb6d1;
   color: #16283a;
   border: 1px solid rgba(0, 0, 0, 0.28);
   border-radius: 1px;
@@ -1099,7 +1097,8 @@ html[data-theme="nebula"] .mode-def-card {
   pointer-events: none;
 }
 /* Neon course floor: a faint vertical grid scrolls left under the action to
-   sell speed, Geometry-Dash style. Decorative only, killed by reduced motion. */
+   sell speed, Geometry-Dash style. Decorative only, killed when animations are
+   off in Settings. */
 .knight-track::after {
   content: "";
   position: absolute;
@@ -1217,6 +1216,11 @@ html[data-theme="nebula"] .mode-def-card {
    color as an rgb triple so one hover rule lights the pair correctly. */
 .mode-def-card {
   --def-rgb: var(--accent-rgb);
+  /* Each card wears its mode at rest — a flat tinted fill and a colored
+     hairline border, no gradients — so the pair reads as two territories
+     before any hover. */
+  border-color: rgb(var(--def-rgb) / 0.35);
+  background: rgb(var(--def-rgb) / 0.08);
   transition: transform var(--dur-2) var(--ease-out),
     border-color var(--dur-2) var(--ease-out),
     box-shadow var(--dur-2) var(--ease-out);
@@ -1290,8 +1294,8 @@ html[data-theme="nebula"] .mode-def-card {
    The desktop nav links get a quiet, quality hover/press: a background wash
    that eases in, a thin accent underline that grows from the center, and a
    half-pixel press. Icon buttons lift a hair on hover and press in on active.
-   Deliberately subtle, never bouncy. Reduced motion is handled globally by the
-   `* { transition: none }` rule, so the states still appear, just without the
+   Deliberately subtle, never bouncy. Animations off in Settings is handled
+   globally by the `* { transition: none }` rule, so the states still appear, just without the
    tween. */
 .nav-item {
   position: relative;
@@ -1365,7 +1369,7 @@ html[data-piece-source="lichess"] .piece-asset {
    an unmissable red — the radial burst under the piece, a thick pulsing red
    ring, and a red-hot glow on the king itself (owner request: "turn the
    opponent's king red when you check"). Works for EITHER side's king; the
-   pulse is dropped under reduced motion but the red stays. */
+   pulse is dropped when animations are off in Settings but the red stays. */
 .sq-check {
   background-image: radial-gradient(
     ellipse at center,
@@ -1392,10 +1396,8 @@ html[data-piece-source="lichess"] .piece-asset {
 .sq-check .piece-asset {
   filter: drop-shadow(0 0 7px rgba(255, 46, 36, 0.95)) drop-shadow(0 0 2px rgba(255, 90, 70, 0.9));
 }
-@media (prefers-reduced-motion: reduce) {
-  .sq-check::after {
-    animation: none;
-  }
+html[data-anim="off"] .sq-check::after {
+  animation: none;
 }
 /* Frosted glass chip: the shared treatment for floating in-game chrome
    (targeting banner, opponent notices, draft chips). Translucent, blurred,
@@ -1414,7 +1416,7 @@ html[data-piece-source="lichess"] .piece-asset {
 
 /* Targeting pick squares: a clean breathing glow instead of a hard flicker.
    The soft ring swells and settles so candidates read instantly without
-   strobing the whole board. Static ring under reduced motion. */
+   strobing the whole board. Static ring when animations are off in Settings. */
 .sq-pickable {
   background: radial-gradient(circle, rgba(216, 181, 110, 0.28), rgba(216, 181, 110, 0.10) 68%, transparent 78%);
   box-shadow: inset 0 0 0 2px rgba(232, 202, 138, 0.95);
@@ -1427,10 +1429,8 @@ html[data-piece-source="lichess"] .piece-asset {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.72; }
 }
-@media (prefers-reduced-motion: reduce) {
-  .sq-pickable {
-    animation: none;
-  }
+html[data-anim="off"] .sq-pickable {
+  animation: none;
 }
 
 /* --- Empowered shine + passive edge aura ------------------------------------
@@ -1441,9 +1441,9 @@ html[data-piece-source="lichess"] .piece-asset {
    a whisper of the same tint along their edge of the board crop.
    Perf law (DraftOverlay.css header): keyframes touch only transform and
    opacity — the gradients and the ring are static paints. No big blurry
-   blobs: one crisp circle ring + a contained soft radial. Reduced motion
-   stills both to their static full-opacity paint (gate near the bottom of
-   this file). */
+   blobs: one crisp circle ring + a contained soft radial. Animations off in
+   Settings stills both to their static full-opacity paint (gate near the
+   bottom of this file). */
 .empower-shine::before {
   /* Soft radial halo pooled under the piece's feet. */
   content: "";
@@ -1543,8 +1543,8 @@ html[data-piece-source="lichess"] .piece-asset {
    piece), "diamond" (a pulsing diamond ring), "arcs" (twin arcs circling), or
    "halo" (no decoration — the calm pool alone). Same perf law: keyframes are
    transform/opacity only; alphas stay at or below the base aura's, so no
-   variant ever obscures the piece. Reduced motion stills the frames and hides
-   the transient motes (gate near the bottom of this file). */
+   variant ever obscures the piece. Animations off in Settings stills the frames
+   and hides the transient motes (gate near the bottom of this file). */
 .empower-rune {
   position: absolute;
   inset: 15%;
@@ -1830,20 +1830,17 @@ html[data-piece-source="lichess"] .piece-asset {
   26% { opacity: 0.9; transform: scale(1.05); }
   100% { opacity: 0; transform: scale(2.2); }
 }
-@keyframes walnut-squirrel-drop {
-  0% { transform: translate(-50%, -210%) scale(0.5) rotate(-20deg); opacity: 0; }
-  10% { opacity: 1; }
-  19% { transform: translate(-50%, -1%) scale(1.32) rotate(6deg); opacity: 1; }
-  26% { transform: translate(-50%, 10%) scaleX(1.36) scaleY(0.7) rotate(0deg); }
-  34% { transform: translate(-62%, -22%) scaleX(0.86) scaleY(1.2) rotate(-10deg); }
-  42% { transform: translate(-38%, -4%) scale(1.04) rotate(8deg); }
-  50% { transform: translate(-64%, -12%) scale(1.06) rotate(-14deg); }
-  58% { transform: translate(-36%, -3%) scale(1) rotate(13deg); }
-  66% { transform: translate(-60%, -10%) scale(1.05) rotate(-9deg); }
-  74% { transform: translate(-42%, -4%) scale(1) rotate(6deg); opacity: 1; }
-  100% { transform: translate(-50%, -232%) scale(0.55) rotate(26deg); opacity: 0; }
+/* Carved root-claws grip the walnutted square from its corners: each claw
+   slides in past center with a slight overshoot and settles, then PERSISTS as
+   the "held fast" mark for as long as the hex runs (WalnutPiece carries the
+   idle motion). Per-corner delay is set inline. */
+@keyframes walnut-root-grip {
+  0% { transform: translate(var(--rx, -60%), var(--ry, -60%)) scale(0.6); opacity: 0; }
+  40% { opacity: 1; }
+  70% { transform: translate(6%, 6%) scale(1.06); }
+  100% { transform: translate(0, 0) scale(1); opacity: 1; }
 }
-.walnut-squirrel { animation: walnut-squirrel-drop 1.8s ease-in-out both; }
+.walnut-root { animation: walnut-root-grip 0.55s cubic-bezier(0.3, 1.2, 0.4, 1) both; }
 
 /* Shackled (king-only / no-pawn-advance hex): a single grey clamp-down pulse
    when the lock lands, then a calm persistent pall. Runs once on mount. */
@@ -1917,8 +1914,8 @@ html[data-piece-source="lichess"] .piece-asset {
 
 /* --- Skeleton placeholders (first-load shimmer) ---
    Flat, square blocks tinted onto the ink surface. A single light sweep passes
-   across them; under prefers-reduced-motion the sweep is dropped and the block
-   holds as a static muted placeholder. */
+   across them; when animations are off in Settings the sweep is dropped and the
+   block holds as a static muted placeholder. */
 .skeleton {
   position: relative;
   overflow: hidden;
@@ -1941,9 +1938,7 @@ html[data-piece-source="lichess"] .piece-asset {
 @keyframes skeleton-sweep {
   100% { transform: translateX(100%); }
 }
-@media (prefers-reduced-motion: reduce) {
-  .skeleton::after { animation: none; content: none; }
-}
+html[data-anim="off"] .skeleton::after { animation: none; content: none; }
 
 main, footer { position: relative; z-index: 2; }
 /* Navs/headers host dropdown menus and the settings modal. They must paint
@@ -1975,32 +1970,32 @@ nav, header { position: relative; z-index: 30; }
      so 1px cards stay square and pills stay round. */
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .animate-rise, .animate-seal, .animate-sigil, .animate-flicker, .animate-reveal, .animate-bob,
-  .draft-in,
-  .hero-aura, .mode-field::before,
-  .dot-live::after, .cta-shine::after, .header-search-panel,
-  .gd-world, .gd-knight > span, .knight-track::before, .knight-track::after,
-  .board-splash, .board-splash-card,
-  .stagger-in > *,
-  .sq-strike, .sq-freeze, .sq-freeze-flake, .sq-shield-in, .walnut-piece, .banana-peel,
-  .sq-walnut,
-  .empower-shine::before, .empower-shine::after, .edge-aura,
-  .empower-orbit, .empower-glint,
-  .empower-rune, .empower-diamond, .empower-arcs {
-    animation: none !important;
-  }
-  /* Rising motes are transient particles: with the animation cut their base
-     opacity (0) hides them outright, matching the walnut-squirrel precedent. */
-  .empower-mote { animation: none !important; }
-  .walnut-squirrel { animation: none !important; opacity: 0 !important; }
-  .sq-walnut::after { animation: none !important; opacity: 0 !important; }
-  .dc-orbit-ring.spin, .dc-orbit-ring.spin-r,
-  .dc-orbit-counter.spin, .dc-orbit-counter.spin-r {
-    animation: none !important;
-  }
-  * { transition: none !important; }
+html[data-anim="off"] .animate-rise, html[data-anim="off"] .animate-seal, html[data-anim="off"] .animate-sigil, html[data-anim="off"] .animate-flicker, html[data-anim="off"] .animate-reveal, html[data-anim="off"] .animate-bob,
+html[data-anim="off"] .draft-in,
+html[data-anim="off"] .hero-aura, html[data-anim="off"] .mode-field::before,
+html[data-anim="off"] .dot-live::after, html[data-anim="off"] .cta-shine::after, html[data-anim="off"] .header-search-panel,
+html[data-anim="off"] .gd-world, html[data-anim="off"] .gd-knight > span, html[data-anim="off"] .knight-track::before, html[data-anim="off"] .knight-track::after,
+html[data-anim="off"] .board-splash, html[data-anim="off"] .board-splash-card,
+html[data-anim="off"] .stagger-in > *,
+html[data-anim="off"] .sq-strike, html[data-anim="off"] .sq-freeze, html[data-anim="off"] .sq-freeze-flake, html[data-anim="off"] .sq-shield-in, html[data-anim="off"] .walnut-piece, html[data-anim="off"] .banana-peel,
+html[data-anim="off"] .sq-walnut,
+html[data-anim="off"] .empower-shine::before, html[data-anim="off"] .empower-shine::after, html[data-anim="off"] .edge-aura,
+html[data-anim="off"] .empower-orbit, html[data-anim="off"] .empower-glint,
+html[data-anim="off"] .empower-rune, html[data-anim="off"] .empower-diamond, html[data-anim="off"] .empower-arcs {
+  animation: none !important;
 }
+/* Rising motes are transient particles: with the animation cut their base
+   opacity (0) hides them outright, matching the walnut-squirrel precedent. */
+html[data-anim="off"] .empower-mote { animation: none !important; }
+/* Root claws are persistent state (the grip lasts while the hex runs), so
+   animations-off shows their settled end state instead of hiding them. */
+html[data-anim="off"] .walnut-root { animation: none !important; transform: none; opacity: 1; }
+html[data-anim="off"] .sq-walnut::after { animation: none !important; opacity: 0 !important; }
+html[data-anim="off"] .dc-orbit-ring.spin, html[data-anim="off"] .dc-orbit-ring.spin-r,
+html[data-anim="off"] .dc-orbit-counter.spin, html[data-anim="off"] .dc-orbit-counter.spin-r {
+  animation: none !important;
+}
+html[data-anim="off"] * { transition: none !important; }
 
 @media (max-width: 640px) {
   .btn-leaf, .btn-ghost, .btn-cyan, .btn-sky, .btn-mint,
@@ -2039,11 +2034,9 @@ nav, header { position: relative; z-index: 30; }
 .card-juicy:active {
   transform: translateY(-1px) scale(0.985);
 }
-@media (prefers-reduced-motion: reduce) {
-  .card-juicy, .card-juicy:hover, .card-juicy:active {
-    transition: none;
-    transform: none;
-  }
+html[data-anim="off"] .card-juicy, html[data-anim="off"] .card-juicy:hover, html[data-anim="off"] .card-juicy:active {
+  transition: none;
+  transform: none;
 }
 
 /* Seam gradient text/border helpers: the two mode colors as one warm-to-cool
@@ -2103,23 +2096,21 @@ body::before {
 
 /* --- Performance mode: drop the paint-costliest DECORATIVE layers ------------
    Gated on data-perf="low" (the Performance-mode setting, auto-seeded on
-   low-end hardware) OR the OS reduced-motion flag, so users who never open
-   settings still benefit. Functional visuals (board, pieces, effect art) are
-   never touched here. */
+   low-end hardware) OR animations turned off in Settings, so users who never
+   open the effects settings still benefit. Functional visuals (board, pieces,
+   effect art) are never touched here. */
 html[data-perf="low"] body::before { display: none; }
-@media (prefers-reduced-motion: reduce) { body::before { display: none; } }
+html[data-anim="off"] body::before { display: none; }
 
 /* The hero "TV" panel blurs the LIVE animating board behind it — a backdrop
-   filter re-run every frame. Perf mode / reduced motion swaps it for a plain
+   filter re-run every frame. Perf mode / animations-off swaps it for a plain
    translucent panel (no blur), which reads nearly identical over the dark art. */
 html[data-perf="low"] .tv-frame,
 html[data-perf="low"] .btn-glass {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
-@media (prefers-reduced-motion: reduce) {
-  .tv-frame { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
-}
+html[data-anim="off"] .tv-frame { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
 /* Continuous decorative sweeps stop pinning the main thread/compositor. */
 html[data-perf="low"] .cta-shine::after { animation: none; opacity: 0; }
 
@@ -2317,16 +2308,14 @@ html[data-theme="light"] .bg-black\/70 {
   outline-offset: 2px;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .fx-board-shake.fx-board-shake--big {
-    animation: none !important;
-  }
+html[data-anim="off"] .fx-board-shake.fx-board-shake--big {
+  animation: none !important;
 }
 
 /* --- Extra-turns grant banner ------------------------------------------------
    The huge board-wide notification when a card grants extra moves: pops in
    hard, holds long enough to read the total, fades out. Functional (rules
-   information), so only reduced-motion softens it - the effects dial never
+   information), so only animations-off softens it - the effects dial never
    hides it. */
 @keyframes extra-turns-banner {
   0% { opacity: 0; transform: scale(0.6); }
@@ -2339,15 +2328,13 @@ html[data-theme="light"] .bg-black\/70 {
   border-radius: 1px;
   animation: extra-turns-banner 2.8s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
-@media (prefers-reduced-motion: reduce) {
-  @keyframes extra-turns-banner-fade {
-    0% { opacity: 0; }
-    8%, 82% { opacity: 1; }
-    100% { opacity: 0; }
-  }
-  .extra-turns-banner {
-    animation: extra-turns-banner-fade 2.8s linear both;
-  }
+@keyframes extra-turns-banner-fade {
+  0% { opacity: 0; }
+  8%, 82% { opacity: 1; }
+  100% { opacity: 0; }
+}
+html[data-anim="off"] .extra-turns-banner {
+  animation: extra-turns-banner-fade 2.8s linear both;
 }
 
 /* --- Nerf reveal splash ("the rule descends") ---------------------------------
@@ -2390,11 +2377,9 @@ html[data-theme="light"] .bg-black\/70 {
   100% { opacity: 0; }
 }
 .nerf-reveal-cell { animation: nerf-reveal-cell 2.5s ease-in-out both; }
-@media (prefers-reduced-motion: reduce) {
-  .nerf-reveal-wash, .nerf-reveal-stamp, .nerf-reveal-cell {
-    animation: none !important;
-    opacity: 0 !important;
-  }
+html[data-anim="off"] .nerf-reveal-wash, html[data-anim="off"] .nerf-reveal-stamp, html[data-anim="off"] .nerf-reveal-cell {
+  animation: none !important;
+  opacity: 0 !important;
 }
 
 /* --- Left-rail luxe (additive) -----------------------------------------------
@@ -2402,7 +2387,7 @@ html[data-theme="light"] .bg-black\/70 {
    gold corner filigree echoing the chamfered corner-cut, a glinting header
    hairline, and a breathing gold halo on whichever player's clock is running.
    All decoration is pointer-events-none; animation is opacity-only and fully
-   dropped under prefers-reduced-motion. */
+   dropped when animations are off in Settings. */
 .rail-lux {
   position: relative;
   background:
@@ -2493,25 +2478,23 @@ html[data-theme="light"] .bg-black\/70 {
   0%, 100% { opacity: 0.45; }
   50% { opacity: 1; }
 }
-@media (prefers-reduced-motion: reduce) {
-  .rail-lux::before,
-  .rail-lux::after,
-  .rail-glow-wrap--active::before {
-    animation: none;
-    opacity: 0.7;
-  }
-  .rail-header-sheen::before {
-    animation: none;
-    opacity: 0;
-  }
+html[data-anim="off"] .rail-lux::before,
+html[data-anim="off"] .rail-lux::after,
+html[data-anim="off"] .rail-glow-wrap--active::before {
+  animation: none;
+  opacity: 0.7;
+}
+html[data-anim="off"] .rail-header-sheen::before {
+  animation: none;
+  opacity: 0;
 }
 
 /* === Post-draft "waiting for opponent" notice ==============================
    Keeps the waiting card / collapsed banner reading as ALIVE (not soft-locked)
    while the opponent finishes their simultaneous draft. A soft gold breath on
    the box-shadow, a live "ping" ripple behind the status dot, and a gently
-   fading ellipsis — all compositor-cheap and all dropped under
-   prefers-reduced-motion so the notice stays legible without motion. */
+   fading ellipsis — all compositor-cheap and all dropped when animations are
+   off in Settings so the notice stays legible without motion. */
 .waiting-banner {
   animation: waiting-breathe 2.8s ease-in-out infinite;
 }
@@ -2542,15 +2525,13 @@ html[data-theme="light"] .bg-black\/70 {
   0%, 100% { opacity: 0.35; }
   50% { opacity: 1; }
 }
-@media (prefers-reduced-motion: reduce) {
-  .waiting-banner,
-  .waiting-ping,
-  .waiting-ellipsis::after {
-    animation: none;
-  }
-  .waiting-ping { opacity: 0; }
-  .waiting-ellipsis::after { opacity: 1; }
+html[data-anim="off"] .waiting-banner,
+html[data-anim="off"] .waiting-ping,
+html[data-anim="off"] .waiting-ellipsis::after {
+  animation: none;
 }
+html[data-anim="off"] .waiting-ping { opacity: 0; }
+html[data-anim="off"] .waiting-ellipsis::after { opacity: 1; }
 
 /* === Ambient gold-dust star field (home + lobby) =============================
    A fixed, pointer-events-none field of candlelight motes behind the page
@@ -2561,8 +2542,8 @@ html[data-theme="light"] .bg-black\/70 {
    no JS, no canvas. Node budget: 3 layers + 12 glints + 2 shooting = 17
    animated nodes (10 on phones). Colors are the brass/candle family
    (216 181 110 / 255 233 170) — gold dust, never sci-fi white.
-   Fully dropped under prefers-reduced-motion, perf mode, and the light theme
-   (pale dust on paper is just noise). */
+   Fully dropped when animations are off in Settings, in perf mode, and under
+   the light theme (pale dust on paper is just noise). */
 .starfield {
   position: fixed;
   inset: 0;
@@ -2739,22 +2720,20 @@ html[data-theme="light"] .hall-row {
   100% { opacity: 0; transform: translate3d(7px, -36px, 0) scale(1); }
 }
 
-/* Reduced motion: still the dust, hide the transients (shooting stars,
-   motes), keep every static paint. */
-@media (prefers-reduced-motion: reduce) {
-  .star-layer,
-  .star-glint {
-    animation: none !important;
-  }
-  .star-shoot,
-  .hall-mote {
-    animation: none !important;
-    opacity: 0 !important;
-  }
-  .star-glint {
-    opacity: 0.5;
-    transform: scale(0.8);
-  }
+/* Animations off in Settings: still the dust, hide the transients (shooting
+   stars, motes), keep every static paint. */
+html[data-anim="off"] .star-layer,
+html[data-anim="off"] .star-glint {
+  animation: none !important;
+}
+html[data-anim="off"] .star-shoot,
+html[data-anim="off"] .hall-mote {
+  animation: none !important;
+  opacity: 0 !important;
+}
+html[data-anim="off"] .star-glint {
+  opacity: 0.5;
+  transform: scale(0.8);
 }
 
 /* ============================================================

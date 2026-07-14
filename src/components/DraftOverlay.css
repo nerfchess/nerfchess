@@ -14,7 +14,7 @@
 
    Performance: animation touches only `transform` and `opacity` (GPU-cheap),
    never box-shadow or filter in a keyframe. Effects live on max ~3 cards at a
-   time. All motion is gated behind prefers-reduced-motion.
+   time. All motion is gated behind the animations-off setting (Settings).
    ============================================================================ */
 
 .draft-fx {
@@ -53,10 +53,8 @@
     transform: translateY(-3px);
   }
 }
-@media (prefers-reduced-motion: reduce) {
-  .draft-fx:hover .card-juicy {
-    transform: none;
-  }
+html[data-anim="off"] .draft-fx:hover .card-juicy {
+  transform: none;
 }
 
 /* Selected-for-confirm state: a firm gold outline over a thin tier line, and
@@ -426,8 +424,8 @@
    The legendary pull: when a tier 9/10 comes out of the pack the whole panel
    detonates — a white flash, a rotating god-ray fan (a second fan counter-
    rotating under it), and sparks climbing the air. Gold for tier 9, mythic
-   cyan for tier 10. One shot, pointer-events-none, dropped under reduced
-   motion with everything else. */
+   cyan for tier 10. One shot, pointer-events-none, dropped when animations are
+   off in Settings with everything else. */
 .draft-pull { z-index: 4; }
 .draft-pull[data-tier="9"] { --pull-rgb: 244 196 48; }
 .draft-pull[data-tier="10"] { --pull-rgb: 34 211 238; }
@@ -512,32 +510,30 @@
   50% { opacity: 1; transform: scale(1.04); }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .pack,
-  .pack-hint,
-  .pack--tearing .pack-flap,
-  .pack--tearing .pack-body,
-  .pack--tearing .pack-burst,
-  .draft-holo,
-  .draft-shake,
-  .confetti-bit,
-  .draft-pull__flash,
-  .draft-pull__rays,
-  .draft-pull__rays--rev,
-  .draft-pull__mote,
-  .draft-mythic-aura {
-    animation: none !important;
-  }
-  .draft-pull__flash,
-  .draft-pull__rays,
-  .draft-pull__rays--rev,
-  .draft-pull__mote {
-    opacity: 0;
-  }
-  .draft-card-front {
-    transform: none;
-    transition: none;
-  }
+html[data-anim="off"] .pack,
+html[data-anim="off"] .pack-hint,
+html[data-anim="off"] .pack--tearing .pack-flap,
+html[data-anim="off"] .pack--tearing .pack-body,
+html[data-anim="off"] .pack--tearing .pack-burst,
+html[data-anim="off"] .draft-holo,
+html[data-anim="off"] .draft-shake,
+html[data-anim="off"] .confetti-bit,
+html[data-anim="off"] .draft-pull__flash,
+html[data-anim="off"] .draft-pull__rays,
+html[data-anim="off"] .draft-pull__rays--rev,
+html[data-anim="off"] .draft-pull__mote,
+html[data-anim="off"] .draft-mythic-aura {
+  animation: none !important;
+}
+html[data-anim="off"] .draft-pull__flash,
+html[data-anim="off"] .draft-pull__rays,
+html[data-anim="off"] .draft-pull__rays--rev,
+html[data-anim="off"] .draft-pull__mote {
+  opacity: 0;
+}
+html[data-anim="off"] .draft-card-front {
+  transform: none;
+  transition: none;
 }
 
 /* ---------------------------------------------------------------------------
@@ -723,25 +719,23 @@
   25% { opacity: 1; }
   100% { opacity: 0; transform: translateX(700%) rotate(14deg); }
 }
-@media (prefers-reduced-motion: reduce) {
-  .reroll-spin,
-  .bank-pulse,
-  .bank-coin,
-  .bank-ring,
-  .bank-ring--echo,
-  .bank-gleam::before {
-    animation: none !important;
-  }
-  .bank-vault,
-  .bank-vault__wheel,
-  .bank-vault__flash {
-    animation: none !important;
-  }
-  .bank-coin,
-  .bank-ring,
-  .bank-ring--echo,
-  .bank-vault { opacity: 0; }
+html[data-anim="off"] .reroll-spin,
+html[data-anim="off"] .bank-pulse,
+html[data-anim="off"] .bank-coin,
+html[data-anim="off"] .bank-ring,
+html[data-anim="off"] .bank-ring--echo,
+html[data-anim="off"] .bank-gleam::before {
+  animation: none !important;
 }
+html[data-anim="off"] .bank-vault,
+html[data-anim="off"] .bank-vault__wheel,
+html[data-anim="off"] .bank-vault__flash {
+  animation: none !important;
+}
+html[data-anim="off"] .bank-coin,
+html[data-anim="off"] .bank-ring,
+html[data-anim="off"] .bank-ring--echo,
+html[data-anim="off"] .bank-vault { opacity: 0; }
 
 /* The floating draft timer: a flat ink chip, hard edges, quiet urgency. */
 .draft-timer {
@@ -766,9 +760,7 @@
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.03); }
 }
-@media (prefers-reduced-motion: reduce) {
-  .draft-timer--urgent { animation: none; }
-}
+html[data-anim="off"] .draft-timer--urgent { animation: none; }
 
 /* ---------------------------------------------------------------------------
    Draft panel frame: the seam gradient (warm Nerf terracotta to cool Buff sky)
@@ -809,7 +801,7 @@
    Dock pocket flash: the "Latest" slot in the buff dock blinks briefly when a
    fresh card lands in the pocket. Remounting the slot (React key on the card
    counts) replays it. Opacity/box-shadow only, one shot, and fully dropped
-   under prefers-reduced-motion. Amplitude halved per the deslop pass. */
+   when animations are off in Settings. Amplitude halved per the deslop pass. */
 @keyframes dock-pocket-flash {
   0% {
     box-shadow: inset 0 0 0 1px rgb(125 220 183 / 0), 0 0 0 -6px rgb(125 220 183 / 0);
@@ -831,9 +823,7 @@
 .dock-pocket-flash {
   animation: dock-pocket-flash 1.4s var(--ease-out, ease-out) both;
 }
-@media (prefers-reduced-motion: reduce) {
-  .dock-pocket-flash { animation: none; }
-}
+html[data-anim="off"] .dock-pocket-flash { animation: none; }
 
 /* Tier color + intensity table. Mirrors the tier palette used by tier-bg-N in
    globals.css so the edge accents match the card face. --fx ramps the drama:
@@ -928,28 +918,26 @@
   z-index: 1;
 }
 
-/* Respect reduced motion: drop every shine and pulse. The structure (edges,
+/* Animations off in Settings: drop every shine and pulse. The structure (edges,
    the static tier line) remains so the cards still read, just still. The
    deal/flip/bank choreography is skipped in the component itself via
    useReducedMotion. */
-@media (prefers-reduced-motion: reduce) {
-  .draft-fx__glow,
-  .draft-fx[data-tier="6"] .draft-fx__glow,
-  .draft-fx[data-tier="7"] .draft-fx__glow,
-  .draft-fx[data-tier="8"] .draft-fx__glow {
-    animation: none;
-    opacity: calc(0.12 + var(--fx, 0) * 0.3);
-  }
-  .draft-fx__sheen::before,
-  .draft-fx[data-tier="3"] .draft-fx__sheen::before,
-  .draft-fx[data-tier="4"] .draft-fx__sheen::before,
-  .draft-fx[data-tier="5"] .draft-fx__sheen::before,
-  .draft-fx[data-tier="6"] .draft-fx__sheen::before,
-  .draft-fx[data-tier="7"] .draft-fx__sheen::before,
-  .draft-fx[data-tier="8"] .draft-fx__sheen::before {
-    animation: none;
-    opacity: 0;
-  }
+html[data-anim="off"] .draft-fx__glow,
+html[data-anim="off"] .draft-fx[data-tier="6"] .draft-fx__glow,
+html[data-anim="off"] .draft-fx[data-tier="7"] .draft-fx__glow,
+html[data-anim="off"] .draft-fx[data-tier="8"] .draft-fx__glow {
+  animation: none;
+  opacity: calc(0.12 + var(--fx, 0) * 0.3);
+}
+html[data-anim="off"] .draft-fx__sheen::before,
+html[data-anim="off"] .draft-fx[data-tier="3"] .draft-fx__sheen::before,
+html[data-anim="off"] .draft-fx[data-tier="4"] .draft-fx__sheen::before,
+html[data-anim="off"] .draft-fx[data-tier="5"] .draft-fx__sheen::before,
+html[data-anim="off"] .draft-fx[data-tier="6"] .draft-fx__sheen::before,
+html[data-anim="off"] .draft-fx[data-tier="7"] .draft-fx__sheen::before,
+html[data-anim="off"] .draft-fx[data-tier="8"] .draft-fx__sheen::before {
+  animation: none;
+  opacity: 0;
 }
 
 /* ---------------------------------------------------------------------------
@@ -958,7 +946,7 @@
    along the top edge — and the frame carries a slow diagonal shine sweep that
    glides across the glass. Blur is a static property (never animated), the
    shine animates background-position only, and the whole sweep is dropped
-   under prefers-reduced-motion. */
+   when animations are off in Settings. */
 .draft-panel {
   /* Still glass, but noticeably darker (owner: the panel read too
      see-through): a heavier ink base under the same top-lit sheen keeps the
@@ -1009,11 +997,9 @@
   45% { transform: translateX(70%); }
   100% { transform: translateX(70%); }
 }
-@media (prefers-reduced-motion: reduce) {
-  .draft-frame::after {
-    animation: none;
-    opacity: 0;
-  }
+html[data-anim="off"] .draft-frame::after {
+  animation: none;
+  opacity: 0;
 }
 
 /* ===========================================================================
@@ -1021,7 +1007,7 @@
    reveals, pick-dissolve motes, and the double-ring timer. Same laws as the
    rest of this file: transform/opacity-only animation, deterministic vars set
    inline by the component, everything decorative is pointer-events-none and
-   dropped under prefers-reduced-motion.
+   dropped when animations are off in Settings.
    =========================================================================== */
 
 /* --- Ambient stage behind the draft ------------------------------------- */
@@ -1089,12 +1075,10 @@
   78% { opacity: 0.4; }
   100% { opacity: 0; transform: translate3d(var(--mdrift, 0vw), -104vh, 0) scale(var(--mscale, 1)); }
 }
-@media (prefers-reduced-motion: reduce) {
-  .draft-stage__aurora,
-  .draft-stage__mote {
-    animation: none !important;
-    opacity: 0;
-  }
+html[data-anim="off"] .draft-stage__aurora,
+html[data-anim="off"] .draft-stage__mote {
+  animation: none !important;
+  opacity: 0;
 }
 
 /* --- Pack-tear pyrotechnics ---------------------------------------------- */
@@ -1148,12 +1132,10 @@
   18% { opacity: 1; }
   100% { opacity: 0; transform: rotate(var(--ang, 0deg)) translateY(calc(var(--fdist, 70px) * -1)) scaleY(1); }
 }
-@media (prefers-reduced-motion: reduce) {
-  .pack-shockwave,
-  .pack-filament {
-    animation: none !important;
-    opacity: 0;
-  }
+html[data-anim="off"] .pack-shockwave,
+html[data-anim="off"] .pack-filament {
+  animation: none !important;
+  opacity: 0;
 }
 
 /* --- Rarity-scaled reveals ------------------------------------------------ */
@@ -1195,12 +1177,10 @@
   30% { opacity: 1; }
   100% { opacity: 0; }
 }
-@media (prefers-reduced-motion: reduce) {
-  .draft-reveal-ring,
-  .draft-edge-pulse {
-    animation: none !important;
-    opacity: 0;
-  }
+html[data-anim="off"] .draft-reveal-ring,
+html[data-anim="off"] .draft-edge-pulse {
+  animation: none !important;
+  opacity: 0;
 }
 
 /* --- Pick confirmation: flare + dissolve into motes ----------------------- */
@@ -1243,12 +1223,10 @@
   20% { opacity: 1; }
   100% { opacity: 0; transform: rotate(var(--ang, 0deg)) translateY(calc(var(--pd, 34px) * -1)) scale(1.15) rotate(120deg); }
 }
-@media (prefers-reduced-motion: reduce) {
-  .pick-dissolve__flare,
-  .pick-dissolve > i {
-    animation: none !important;
-    opacity: 0;
-  }
+html[data-anim="off"] .pick-dissolve__flare,
+html[data-anim="off"] .pick-dissolve > i {
+  animation: none !important;
+  opacity: 0;
 }
 
 /* --- Luxe timer chip ------------------------------------------------------ */
@@ -1371,9 +1349,7 @@ li > .dock-card.dock-pocket-flash {
     dock-pocket-flash 1.4s var(--ease-out, ease-out) both,
     dock-slide-in 0.35s var(--ease-out, ease-out) both;
 }
-@media (prefers-reduced-motion: reduce) {
-  .dock-shimmer::before,
-  li > .dock-card.dock-pocket-flash {
-    animation: none !important;
-  }
+html[data-anim="off"] .dock-shimmer::before,
+html[data-anim="off"] li > .dock-card.dock-pocket-flash {
+  animation: none !important;
 }

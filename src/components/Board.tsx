@@ -10,6 +10,9 @@ import React, {
   useState,
 } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Sparkles, type LucideIcon } from "lucide-react";
+import { CardEntrance } from "./effects/cardEntrance";
+import { cardFaceIcon } from "@/lib/cardIcon";
 import {
   Piece,
   WalnutPiece,
@@ -38,8 +41,8 @@ import {
   SIGNATURES,
   type SignatureConfig,
   SignatureOverlay,
+  RootClaws,
   SnowflakeGlyph,
-  SquirrelGlyph,
   StunSwirl,
   SummonPoof,
   TransformFlourish,
@@ -76,11 +79,12 @@ function resolveSignature(id: string): SignatureConfig | GenConfig | undefined {
   const bespoke = sigOf(id);
   if (bespoke) return bespoke;
   // Plugin-covered card whose entry has not been published yet (the lazy
-  // signature-visuals chunk is still loading): treat it as PENDING bespoke.
-  // Falling through to the generated config here played the wrong,
-  // default-looking art for a card that has a customized play — no art beats
-  // wrong art, and the chunk is prefetched on mount so the window is tiny.
-  if (PLUGIN_ID_SET.has(id)) return undefined;
+  // signature-visuals chunk is still loading). This used to return undefined
+  // ("no art beats wrong art"), but on slow connections a first play can beat
+  // the prefetch and the card then visibly did NOTHING for that player — the
+  // worse failure. The generated config is a solid themed play in its own
+  // right now, so it stands in until the chunk lands; later plays of the same
+  // card pick up the bespoke art automatically (this resolver runs per play).
   const def = BUFF_BY_ID[id];
   if (!def) return undefined;
   let cfg = genConfigCache.get(id);
@@ -103,7 +107,7 @@ import { EdgeAura, EmpowerShine, NerfAura, tierRgb } from "./effects/EmpowerAura
 import type { MotifMark } from "./effects/fxZones";
 import { EffectPopover, type EffectPopoverContent } from "./EffectPopover";
 import { FX_LEVELS, useFxHidden, useFxLevel } from "@/lib/fxToggle";
-import { fxDurationScale } from "@/lib/settings";
+import { fxDurationScale, motionOff } from "@/lib/settings";
 import { VfxLayer } from "./effects/vfx/VfxLayer";
 import { vfxPlay } from "./effects/vfx/vfxBus";
 import type { VfxPlay, VfxPoint } from "./effects/vfx/types";
@@ -325,7 +329,7 @@ function PlayAnnouncement({ name, tier, outcome }: { name: string; tier: number;
  * banner family), and a pulse of the hostile NerfAura styling on every square
  * the rule affects, all over ~2.5s. Decorative but informative; the caller
  * gates it behind the fx-hidden switch and the CSS drops every animation
- * under prefers-reduced-motion (the elements then hold at opacity 0). */
+ * when animations are off in Settings (the elements then hold at opacity 0). */
 function NerfRevealSplash({
   name,
   tier,
@@ -1276,7 +1280,7 @@ export function Board({
     const shake = FX_LEVELS[fxLevelRef.current].shake;
     if (shake === "none") return; // Calm and Off never thump the board
     const el = cropRef.current;
-    if (el && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    if (el && !motionOff()) {
       el.classList.remove("fx-board-shake", "fx-board-shake--big");
       void el.offsetWidth;
       el.classList.add("fx-board-shake");
@@ -1347,7 +1351,7 @@ export function Board({
   // tier. Runs for bespoke-signature cards too (their square art plays on
   // top); its per-play sound only fires for cards with NO bespoke entry so
   // nothing double-voices. Marquee-tier casts (8+) also thump the whole board
-  // crop with a transform-only shake, skipped under prefers-reduced-motion.
+  // crop with a transform-only shake, skipped when animations are off in Settings.
   const cropRef = useRef<HTMLDivElement | null>(null);
   const [cast, setCast] = useState<{
     key: number;
@@ -1374,6 +1378,62 @@ export function Board({
   // the cast-level generated lead only fires for diff-less plays (clock,
   // draft, info cards...) so a card never leads twice.
   const castLeadSuppressKeyRef = useRef(0);
+  // --- Acquire entrance: one shot the moment a card ENTERS a hand -----------
+  // Diffs the public buff lists (both sides) by per-card instance count, so
+  // draft picks, steals and grants each announce themselves the moment they
+  // exist — including pure passives (clock drains, draft locks) that never
+  // observably mutate the board and so never fire a play. Masked opponent
+  // picks have an empty id and stay silent until revealed; an instance that
+  // arrives already spent/nullified (an instant resolved at pick) is the
+  // play's job, not an acquisition. The first non-null snapshot only seeds
+  // the counts: a mid-game reload must not replay every held card.
+  const entranceKeyRef = useRef(0);
+  const entranceSeenRef = useRef<Map<string, number> | null>(null);
+  const [entrance, setEntrance] = useState<{
+    key: number;
+    category: BuffCategory;
+    tier: number;
+    icon: LucideIcon;
+    name: string;
+    mine: boolean;
+  } | null>(null);
+  useEffect(() => {
+    if (!buffs) return;
+    const counts = new Map<string, number>();
+    const liveArrival = new Map<string, { tier: number; mine: boolean }>();
+    for (const color of ["w", "b"] as Color[]) {
+      for (const inst of buffs.players[color].buffs) {
+        if (!inst.id) continue;
+        const k = `${color}:${inst.id}`;
+        counts.set(k, (counts.get(k) ?? 0) + 1);
+        if (!inst.spent && !inst.nullified) {
+          liveArrival.set(k, { tier: inst.tier, mine: color === myColor });
+        }
+      }
+    }
+    const prev = entranceSeenRef.current;
+    entranceSeenRef.current = counts;
+    if (!prev) return;
+    let fresh: { id: string; tier: number; mine: boolean } | null = null;
+    for (const [k, n] of counts) {
+      if (n <= (prev.get(k) ?? 0)) continue;
+      const live = liveArrival.get(k);
+      if (!live) continue; // arrived spent: the cast layer already told it
+      fresh = { id: k.slice(2), ...live };
+    }
+    if (!fresh) return;
+    const def = BUFF_BY_ID[fresh.id];
+    if (!def) return;
+    entranceKeyRef.current += 1;
+    setEntrance({
+      key: entranceKeyRef.current,
+      category: def.category,
+      tier: fresh.tier,
+      icon: cardFaceIcon(def.id, def.category, def.icon) ?? Sparkles,
+      name: def.name,
+      mine: fresh.mine,
+    });
+  }, [buffs, myColor]);
   // --- Nerf reveal splash: one shot per newly-known rule --------------------
   // Keys already played (color:id), so a reveal fires exactly once no matter
   // how often the host re-derives the prop array. The latest unseen entry
@@ -1398,9 +1458,9 @@ export function Board({
       fresh = r;
     }
     if (!fresh) return;
-    // Reduced motion: mark it seen (above) but never stage the splash. The
-    // rule text lives in the corner nerf card either way.
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    // Animations off in Settings: mark it seen (above) but never stage the
+    // splash. The rule text lives in the corner nerf card either way.
+    if (motionOff()) return;
     nerfRevealKeyRef.current += 1;
     setNerfReveal({
       key: nerfRevealKeyRef.current,
@@ -1437,7 +1497,7 @@ export function Board({
     }
     if (intensity === "marquee" && !fxCalmClockRef.current && FX_LEVELS[fxLevelRef.current].shake !== "none") {
       const el = cropRef.current;
-      if (el && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      if (el && !motionOff()) {
         el.classList.remove("fx-board-shake", "fx-board-shake--big");
         // Force a reflow so removing and re-adding the class restarts the
         // animation even when two marquee casts land back to back.
@@ -3003,8 +3063,9 @@ export function Board({
             // Corner claims for this square (see CORNER_FALLBACK above).
             // Fixed priority: countdown chip > freeze flake > bound sigil >
             // motif badge. The shield disc keeps its fixed bottom-left art, so
-            // its corner is seeded as taken; the walnut squirrel is transient
-            // and top-center (never corner-anchored), so it claims nothing.
+            // its corner is seeded as taken; the walnut root-claws are thin
+            // decorative corner slivers badges may sit over, so they claim
+            // nothing.
             const shieldShown = !!piece && (shieldedSquares.has(sq) || kingSafeSquares.has(sq));
             const claimedCorners = new Set<BadgeCorner>();
             if (shieldShown) claimedCorners.add("bl");
@@ -3133,18 +3194,12 @@ export function Board({
                   </>
                 )}
                 {walnutSquares.has(sq) && (
-                  /* Hexed into a walnut: a heavy nut that can only shuffle one
-                     square. It sinks into the board (sq-walnut-sink) and a big
-                     squirrel scurries in once to bury it (one-shot on mount;
-                     hidden for reduced-motion). */
+                  /* Hexed into a walnut: the piece is entombed in the kintsugi
+                     shell (WalnutPiece) while carved root-claws clamp in from
+                     the square's corners and hold it fast for the duration. */
                   <>
                     <div className="absolute inset-0 bg-amber-700/20 pointer-events-none sq-walnut" />
-                    <span
-                      aria-hidden
-                      className="absolute -top-2 left-1/2 z-20 -translate-x-1/2 leading-none pointer-events-none walnut-squirrel"
-                    >
-                      <SquirrelGlyph size={28} />
-                    </span>
+                    <RootClaws />
                   </>
                 )}
                 {bananaSquares.has(sq) && (
@@ -3327,7 +3382,7 @@ export function Board({
                       return (
                         <span
                           key={`fx-${boardFx.key}`}
-                          className="fx-one-shot pointer-events-none absolute inset-0 block"
+                          className="fx-one-shot pointer-events-none absolute inset-0 z-30 block"
                         >
                           <DetonationBurst />
                         </span>
@@ -3358,13 +3413,22 @@ export function Board({
                         : undefined;
                     // Generated configs carry their own renderer; bespoke ones
                     // go through the classic SignatureOverlay switch.
+                    // The z-30 on BOTH wrappers below is LOAD-BEARING: the
+                    // fx-one-shot guard animates opacity and the lead shift
+                    // applies a transform, and each of those makes its span a
+                    // STACKING CONTEXT that traps the art's own z-30 inside.
+                    // Without z-indexes of their own the wrappers paint in DOM
+                    // order, so every LATER square's opaque background covers
+                    // the overflowing board-wide scene — the "animation cut
+                    // off by an invisible wall" bug. Lifting the wrappers
+                    // keeps the whole stage above sibling squares.
                     return (
                       <span
                         key={`fx-${boardFx.key}`}
-                        className="fx-one-shot pointer-events-none absolute inset-0 block"
+                        className="fx-one-shot pointer-events-none absolute inset-0 z-30 block"
                         style={{ animationDelay: `${delay}ms` }}
                       >
-                        <span className="absolute inset-0 block" style={leadShift}>
+                        <span className="absolute inset-0 z-30 block" style={leadShift}>
                           {isGenConfig(sigCfg) ? (
                             <GenBurst config={sigCfg} role={sigRole} delayMs={delay} />
                           ) : (
@@ -3392,10 +3456,14 @@ export function Board({
                             };
                           })()
                         : undefined;
+                    // Same load-bearing z-30 as the removal path above: the
+                    // shift transform creates a stacking context, so without
+                    // its own z-index the lead scene is painted over by every
+                    // later square's opaque background.
                     return (
                       <span
                         key={`zsig-${zoneSig.key}`}
-                        className="absolute inset-0 block"
+                        className="absolute inset-0 z-30 block"
                         style={zShift}
                       >
                         <SignatureOverlay
@@ -3579,6 +3647,21 @@ export function Board({
             name={BUFF_BY_ID[cast.id]?.name}
             description={BUFF_BY_ID[cast.id]?.description}
             cardIcon={BUFF_BY_ID[cast.id]?.icon}
+            bespoke={!!sigOf(cast.id) || PLUGIN_ID_SET.has(cast.id)}
+          />
+        )}
+        {/* Acquire entrance: a card just ENTERED a hand (draft pick, steal,
+            grant). Fired from the buff-list diff above; passives and
+            off-board cards (clock drains, draft locks) announce themselves
+            here even though they never mutate the board. */}
+        {!fxHiddenPref && !fxCalmClock && entrance && (
+          <CardEntrance
+            key={`ent-${entrance.key}`}
+            category={entrance.category}
+            tier={entrance.tier}
+            icon={entrance.icon}
+            name={entrance.name}
+            mine={entrance.mine}
           />
         )}
         {/* extraBannerRef is staged during render by the extra-moves block
@@ -3599,7 +3682,7 @@ export function Board({
         {/* Nerf reveal: "the rule descends" — plays once per newly-known rule
             (the viewer's own at game start, the opponent's when revealed).
             Decorative layer, so the fx-hidden switch stands it down; the CSS
-            drops it entirely under prefers-reduced-motion. */}
+            drops it entirely when animations are off in Settings. */}
         {!fxHiddenPref && nerfReveal && (
           <NerfRevealSplash
             key={`nerfrev-${nerfReveal.key}`}

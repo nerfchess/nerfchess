@@ -713,7 +713,8 @@ function HouseBotEditor({
   };
 
   // Custom bio saver for BioSection: writes the bot's row and returns the
-  // stored (profanity-censored) value the server kept.
+  // stored (profanity-censored) value the server kept, read back from the
+  // roster payload the route echoes (this persona's effective.bio).
   const saveBio = async (nextBio: string | null): Promise<string | null> => {
     const res = await fetch("/api/mod/house/personas", {
       method: "POST",
@@ -721,8 +722,10 @@ function HouseBotEditor({
       body: JSON.stringify({ userId, bio: nextBio }),
     });
     if (!res.ok) throw new Error("save failed");
-    const data = (await res.json()) as { bio?: string | null };
-    return data.bio ?? null;
+    const data = (await res.json()) as {
+      personas?: { userId: string; effective: { bio: string | null } }[];
+    };
+    return data.personas?.find((p) => p.userId === userId)?.effective.bio ?? null;
   };
 
   return (

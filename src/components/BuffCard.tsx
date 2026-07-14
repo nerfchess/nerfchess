@@ -102,9 +102,10 @@ export function BuffCard({ buff, tier, status, spent, nullified, onClick, compac
       {/* Face watermark: a large glyph anchored bottom-right, behind the
           text. Faint by default; hovering the card brightens it in the tier
           (severity) color and nudges the scale. Transitions only (no
-          keyframes) so prefers-reduced-motion is respected; the scale nudge
-          is additionally gated behind motion-safe. Skipped on compact rows
-          where it would just smear. */}
+          keyframes), so the base fade is cut by the global animations-off
+          setting; the scale nudge is additionally gated behind motion-safe
+          (OS reduced-motion). Skipped on compact rows where it would just
+          smear. */}
       {!compact &&
         createElement(catIcon, {
           "aria-hidden": true,

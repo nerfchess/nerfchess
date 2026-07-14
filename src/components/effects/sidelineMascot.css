@@ -1,8 +1,8 @@
 /* ---------------------------------------------------------------------------
    Sideline mascot (SidelineMascot.tsx): the brainrot pet that loiters at the
    board edge. Same motion rules as effects.css: transform/opacity only, the
-   persistent loops end each cycle at their resting pose, and under
-   prefers-reduced-motion the pet renders STATIC (persistent prop) instead of
+   persistent loops end each cycle at their resting pose, and when animations
+   are off in Settings the pet renders STATIC (persistent prop) instead of
    being hidden.
 --------------------------------------------------------------------------- */
 
@@ -82,16 +82,14 @@
   transform-origin: 50% 100%;
 }
 
-/* Reduced motion: the pet is a persistent prop, so it stays visible but
-   perfectly still (no bob, no waddle, no reactions). */
-@media (prefers-reduced-motion: reduce) {
-  .slm-bob,
-  .slm-walk,
-  .slm-cheer,
-  .slm-sad {
-    animation: none;
-  }
-  .slm-walk {
-    transform: translateX(var(--slm-home));
-  }
+/* Animations off (Settings): the pet is a persistent prop, so it stays visible
+   but perfectly still (no bob, no waddle, no reactions). */
+html[data-anim="off"] .slm-bob,
+html[data-anim="off"] .slm-walk,
+html[data-anim="off"] .slm-cheer,
+html[data-anim="off"] .slm-sad {
+  animation: none;
+}
+html[data-anim="off"] .slm-walk {
+  transform: translateX(var(--slm-home));
 }

@@ -2,10 +2,11 @@
 
 // The leaderboard podium: a classic Olympic dais for the top three of the
 // active ladder — runner-up left, champion center and elevated, third right,
-// stacking to a single column on narrow screens. Purely a highlight above the
-// full table; it never replaces a row. Metal identity (gold / silver / bronze)
-// marks the places, while the frame wears the active mode's color (Nerf rose,
-// Buff blue) so switching tabs re-tints the whole dais.
+// on every screen size (phones get the same three-across dais, just tighter).
+// Purely a highlight above the full table; it never replaces a row. Metal
+// identity (gold / silver / bronze) marks the places, while the frame wears
+// the active mode's color (Nerf rose, Buff blue) so switching tabs re-tints
+// the whole dais. The riser under each card carries the player's bio.
 
 import Link from "next/link";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
@@ -17,6 +18,7 @@ export interface PodiumRow {
   username: string;
   avatar?: string | null;
   flair?: string | null;
+  bio?: string | null;
   rating: number;
   rd: number;
   games: number;
@@ -30,18 +32,14 @@ const MEDALS: Record<
   1 | 2 | 3,
   { metal: string; label: string; avatar: number; riser: string; wash: string }
 > = {
-  1: { metal: "#ffd97e", label: "1st", avatar: 72, riser: "h-14 sm:h-20", wash: "bg-sun/[0.06]" },
-  2: { metal: "#cac6bd", label: "2nd", avatar: 56, riser: "h-14 sm:h-12", wash: "bg-white/[0.02]" },
-  3: { metal: "#c98a5e", label: "3rd", avatar: 56, riser: "h-14 sm:h-7", wash: "bg-white/[0.02]" },
+  1: { metal: "#ffd97e", label: "1st", avatar: 72, riser: "min-h-16 sm:min-h-20", wash: "bg-sun/[0.06]" },
+  2: { metal: "#cac6bd", label: "2nd", avatar: 56, riser: "min-h-12 sm:min-h-12", wash: "bg-white/[0.02]" },
+  3: { metal: "#c98a5e", label: "3rd", avatar: 56, riser: "min-h-10 sm:min-h-7", wash: "bg-white/[0.02]" },
 };
 
-// DOM order is [2nd, 1st, 3rd] so the champion sits center on wide screens;
-// order-* classes re-sequence to [1st, 2nd, 3rd] when the dais stacks.
-const PLACES: { rank: 1 | 2 | 3; mobileOrder: string }[] = [
-  { rank: 2, mobileOrder: "order-2" },
-  { rank: 1, mobileOrder: "order-1" },
-  { rank: 3, mobileOrder: "order-3" },
-];
+// DOM order is [2nd, 1st, 3rd] so the champion sits center — the same
+// three-across dais on every screen size.
+const PLACES: { rank: 1 | 2 | 3 }[] = [{ rank: 2 }, { rank: 1 }, { rank: 3 }];
 
 export function Podium({
   rows,
@@ -73,8 +71,8 @@ export function Podium({
         <span className={"h-px w-8 " + accent.rule} aria-hidden="true" />
       </div>
 
-      <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-end sm:gap-3">
-        {PLACES.map(({ rank, mobileOrder }) => {
+      <div className="flex flex-row items-end gap-2 sm:gap-3">
+        {PLACES.map(({ rank }) => {
           const row = rows[rank - 1];
           if (!row) return null;
           const medal = MEDALS[rank];
@@ -83,7 +81,7 @@ export function Podium({
           const card = (
             <div
               className={
-                "relative flex flex-col items-center rounded-md border px-3 pt-4 pb-3 text-center motion-safe:transition sm:rounded-b-none sm:border-b-0 " +
+                "relative flex flex-col items-center rounded-md rounded-b-none border border-b-0 px-2 pt-4 pb-3 text-center motion-safe:transition sm:px-3 " +
                 (mine ? "bg-gold/10 border-gold/40" : medal.wash + " border-white/10")
               }
               style={{ borderTopColor: medal.metal, borderTopWidth: 3 }}
@@ -138,15 +136,24 @@ export function Podium({
                 {row.games} {row.games === 1 ? "game" : "games"}
               </span>
               {/* The dais riser: taller under the champion so the center rides
-                  high when the three align at their base on wide screens. */}
+                  high when the three align at their base. It carries the
+                  player's bio when they have one. */}
               <span
-                aria-hidden="true"
-                className={"mt-3 hidden w-full rounded-t-sm border-x border-t border-white/5 bg-white/[0.02] sm:block " + medal.riser}
-              />
+                className={
+                  "mt-3 flex w-full items-start justify-center rounded-t-sm border-x border-t border-white/5 bg-white/[0.02] px-2 py-1.5 " +
+                  medal.riser
+                }
+              >
+                {row.bio ? (
+                  <span className="line-clamp-3 max-w-full text-[10px] leading-snug text-parchment-400">
+                    {row.bio}
+                  </span>
+                ) : null}
+              </span>
             </div>
           );
 
-          const wrapClass = "min-w-0 flex-1 " + mobileOrder + " sm:order-none";
+          const wrapClass = "min-w-0 flex-1";
 
           if (row.guest) {
             return (

@@ -341,13 +341,16 @@ export const SCHEMA_STATEMENTS: string[] = [
     at INTEGER NOT NULL
   )`,
   `CREATE INDEX IF NOT EXISTS idx_coh_card ON card_override_history (kind, card_id, at DESC)`,
-  // Admin-editable identity overrides (username, avatar) for the house-bot
+  // Staff-editable identity overrides (username, avatar, bio) for the house-bot
   // personas; NULL column = no override, fall through to the code constant in
-  // lib/server/bots.ts. Mirrors migrations/0025_house_identity_overrides.sql.
+  // lib/server/bots.ts (bio has no code default — empty until a moderator sets
+  // one). Mirrors migrations/0025_house_identity_overrides.sql +
+  // migrations/0028_house_identity_bio.sql (bio column).
   `CREATE TABLE IF NOT EXISTS house_identity_overrides (
     user_id TEXT PRIMARY KEY,
     username TEXT,
     avatar TEXT,
+    bio TEXT,
     updated_at INTEGER NOT NULL DEFAULT 0
   )`,
   // Tiny key/value ledger for schema bookkeeping (see ADDITIVE_VERSION below).
@@ -481,11 +484,15 @@ const ADDITIVE_COLUMNS: string[] = [
        AND user_id = (SELECT id FROM users WHERE username_lower = 'ilovenewjeans')
        AND NOT EXISTS (SELECT 1 FROM schema_meta WHERE key = 'grant_ilovenewjeans_2180')`,
   `INSERT OR IGNORE INTO schema_meta (key, value) VALUES ('grant_ilovenewjeans_2180', '1')`,
+  // Moderator-set profile bio for a house persona (username + avatar were the
+  // original two override fields). NULL = no override, empty bio. Additive and
+  // non-destructive. Mirrors migrations/0028_house_identity_bio.sql.
+  `ALTER TABLE house_identity_overrides ADD COLUMN bio TEXT`,
   // One-time re-grant: bump ilovenewjeans's nerf and buff buckets to 2250 (peak
   // keeps whichever is higher). Same gated pattern as the 2180 grant above with
   // its OWN marker, so it fires exactly once even though both blocks live in the
   // append-only pass; games rated afterwards move the number normally (he can
-  // drop from here). Mirrors migrations/0028_ilovenewjeans_2250.sql.
+  // drop from here). Mirrors migrations/0029_ilovenewjeans_2250.sql.
   `INSERT OR IGNORE INTO user_ratings (user_id, category, rating, rd, vol, peak)
      SELECT id, 'nerf', 2250, 90, 0.06, 2250 FROM users
      WHERE username_lower = 'ilovenewjeans'

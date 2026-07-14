@@ -2939,7 +2939,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               className="waiting-banner plate pointer-events-none flex max-w-[92vw] items-center gap-2.5 border-gold/40 px-4 py-2 shadow-plate"
             >
               {/* Pulsing dot: a live "ping" ripple plus the shared flicker, both
-                  dropped under prefers-reduced-motion (see globals.css). */}
+                  dropped when animations are off in Settings (see globals.css). */}
               <span className="relative flex h-2 w-2 shrink-0" aria-hidden>
                 <span className="waiting-ping absolute inline-flex h-full w-full rounded-full bg-gold/60" />
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-gold animate-flicker" />

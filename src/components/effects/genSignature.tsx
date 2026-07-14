@@ -27,8 +27,8 @@
 // least two visible dimensions; runGenSelfCheck proves it in dev.
 //
 // Motion rules match effects.css: transform/opacity-only keyframes (all in
-// genSignature.css), one-shot `both` fill, whole overlay hidden under
-// prefers-reduced-motion, global html[data-anim] speed clamps apply for free.
+// genSignature.css), one-shot `both` fill, whole overlay hidden when animations
+// are off in Settings, global html[data-anim] speed clamps apply for free.
 // ---------------------------------------------------------------------------
 
 import React from "react";

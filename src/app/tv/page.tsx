@@ -8,7 +8,7 @@ import { Board } from "@/components/Board";
 import { ModeBadge } from "@/components/ModeBadge";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { SiteHeader } from "@/components/SiteHeader";
-import { arenaSocketUrl, isArenaGameId } from "@/lib/arenaLobby";
+import { arenaSocketUrl, isArenaGameId, isArenaGameLive } from "@/lib/arenaLobby";
 import { replayUci } from "@/lib/gameReview";
 import { useLobbySnapshot } from "@/lib/lobbyClient";
 import { MPLobbyGame, MPPlayers, MPSession } from "@/lib/multiplayer";
@@ -100,6 +100,10 @@ function TvView() {
   // id (not a boolean) so switching to another game clears it for free, with
   // no synchronous reset needed inside the watch effect.
   const [failedStreamId, setFailedStreamId] = useState<string | null>(null);
+  // Bumped on a timer after a tune-in failure so the watch effect re-runs and
+  // tries again on its own — the viewer never has to wait for the featured
+  // game to change.
+  const [retryTick, setRetryTick] = useState(0);
   const [recent, setRecent] = useState<RecentGame | null>(null);
   // null = fallback not answered yet; the empty state must not show before
   // BOTH the lobby snapshot and this lookup have resolved ("no games are
@@ -128,7 +132,11 @@ function TvView() {
     return sortLiveGames(filtered, sort);
   }, [lobby, modeFilter, sort]);
   const pinnedStillLive = pinnedId != null && liveGames.some((g) => g.id === pinnedId);
-  const targetId = pinnedStillLive ? pinnedId : liveGames[0]?.id ?? null;
+  // A featured game whose tune-in failed is skipped in favor of the next live
+  // board (a pinned pick is honored — the viewer chose it on purpose).
+  const firstWatchableId =
+    liveGames.find((g) => g.id !== failedStreamId)?.id ?? liveGames[0]?.id ?? null;
+  const targetId = pinnedStillLive ? pinnedId : firstWatchableId;
   const activeSort = TV_SORTS.find((s) => s.id === sort) ?? TV_SORTS[0];
 
   // With nothing live, pull the latest finished game (of this channel's mode,
@@ -178,28 +186,39 @@ function TvView() {
       }
     });
     // Tune in with a single retry: watch() now rejects on a ~10s timeout or a
-    // disconnect (rather than hanging forever), so one clean retry recovers from
-    // a transient miss — e.g. an arena replica that wasn't loaded on the first
-    // attempt but has streamed by the second. If it still fails, surface a brief
-    // non-blocking notice instead of spinning on "Tuning in…" indefinitely.
+    // disconnect (rather than hanging forever), so one clean retry recovers
+    // from a transient miss. Before the retry, re-check where the game lives
+    // with a fresh arena snapshot — a cold or stale arena cache can point the
+    // first attempt at the wrong socket (main DO vs arena), which used to fail
+    // both attempts and strand the page on the "couldn't tune in" notice. If
+    // it still fails, show the notice briefly and re-try on a timer instead of
+    // waiting for the featured game to change.
+    let retryTimer: number | undefined;
     const tuneIn = (retriesLeft: number) => {
-      session.watch(streamId).catch(() => {
+      session.watch(streamId).catch(async () => {
         if (cancelled) return;
         if (retriesLeft > 0) {
+          const arenaHosted = await isArenaGameLive(streamId).catch(() => false);
+          if (cancelled) return;
+          session.serverUrl = arenaHosted && arenaSocketUrl() ? arenaSocketUrl() : null;
           tuneIn(retriesLeft - 1);
         } else {
           setPlayers(null);
           setFailedStreamId(streamId);
+          retryTimer = window.setTimeout(() => {
+            if (!cancelled) setRetryTick((t) => t + 1);
+          }, 8000);
         }
       });
     };
     tuneIn(1);
     return () => {
       cancelled = true;
+      window.clearTimeout(retryTimer);
       off();
       session.destroy();
     };
-  }, [streamId]);
+  }, [streamId, retryTick]);
 
   const live = !!streamId && !!players;
   const recentPlayers = useMemo<MPPlayers | null>(() => {
@@ -312,8 +331,8 @@ function TvView() {
                  pick another), but the board area shows a brief notice. */
               <div className="grid aspect-square w-full place-items-center plate">
                 <p className="max-w-xs px-6 text-center text-sm text-parchment-400">
-                  Couldn&apos;t tune in to that game. Pick another from the list, or it
-                  will retry when the featured game changes.
+                  Couldn&apos;t tune in to that game — retrying automatically. You can
+                  also pick another game from the list.
                 </p>
               </div>
             ) : !lobby || !recentChecked ? (
