@@ -714,6 +714,11 @@ interface DragState {
   from: Square;
   pointerId: number;
   cell: number; // pixel size of one square
+  // Pointer position at pickup, in viewport pixels. Seeds the floating ghost's
+  // first paint via a layout effect so it never flashes at the top-left corner
+  // before the first move/rAF repositions it.
+  startX: number;
+  startY: number;
 }
 
 type RightClickMark = 1 | 2 | 3 | 4;
@@ -2560,15 +2565,13 @@ export function Board({
     setSelected(sq);
     setInspectSq(null);
     if (selected !== sq) playSelect();
-    setDrag({ from: sq, pointerId: e.pointerId, cell });
+    setDrag({ from: sq, pointerId: e.pointerId, cell, startX: e.clientX, startY: e.clientY });
     setHoverSq(sq);
     lastHoverRef.current = sq;
-    // Pre-position the ghost so the first frame is right
-    requestAnimationFrame(() => {
-      if (ghostRef.current) {
-        ghostRef.current.style.transform = `translate3d(${e.clientX - cell / 2}px, ${e.clientY - cell / 2}px, 0)`;
-      }
-    });
+    // The ghost is pre-positioned before its first paint by the layout effect
+    // below (keyed on `drag`), which reads startX/startY. An rAF here fired
+    // AFTER paint, so a slow commit could show the ghost at its top-left mount
+    // origin for a frame — the "piece flies in from the top-left corner" bug.
     e.preventDefault();
   };
 
@@ -2685,6 +2688,19 @@ export function Board({
   }, []);
 
   const draggedPiece = drag ? board.pieces[drag.from] : null;
+
+  // Seed the floating ghost's transform to the pickup point synchronously,
+  // before the browser paints the frame that mounts it. Without this the ghost
+  // mounts at its `left:0;top:0` origin and only slides to the cursor on a
+  // later rAF/pointermove, so a frame could paint it in the top-left corner
+  // first ("the piece flies in from the top-left corner"). Keyed on `drag`, so
+  // it runs once per pickup and never fights the imperative pointermove
+  // updates (hover-driven re-renders don't recreate `drag`).
+  useLayoutEffect(() => {
+    if (drag && ghostRef.current) {
+      ghostRef.current.style.transform = `translate3d(${drag.startX - drag.cell / 2}px, ${drag.startY - drag.cell / 2}px, 0)`;
+    }
+  }, [drag]);
 
   // Any *real* move wipes the scratchpad, like Lichess. A rejected/illegal move
   // attempt leaves the position untouched (the engine no-ops it), so drawn
